@@ -4,11 +4,11 @@ install:
 clean:
 	rm -rf build
 
-build: clean compile
-
 compile:
 	mkdir -p build
 	go build -o build/hubble ./main
+
+build: clean compile
 
 run:
 	./build/hubble
@@ -19,4 +19,4 @@ lint:
 test:
 	go test -v ./...
 
-.PHONY: install clean build compile run lint test
+.PHONY: install clean compile build run lint test
