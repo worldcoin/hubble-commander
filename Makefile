@@ -19,4 +19,4 @@ lint:
 test:
 	go test -v ./...
 
-.PHONY: install clean build lint test run
+.PHONY: install clean build compile run lint test
