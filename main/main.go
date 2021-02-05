@@ -4,8 +4,13 @@ import (
 	"log"
 
 	"github.com/Worldcoin/hubble-commander/api"
+	"github.com/Worldcoin/hubble-commander/config"
 )
 
 func main() {
-	log.Fatal(api.StartApiServer(":8080"))
+	cfg, err := config.GetConfig("config.yaml")
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Fatal(api.StartApiServer(cfg))
 }

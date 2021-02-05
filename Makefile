@@ -19,4 +19,7 @@ lint:
 test:
 	go test -v ./...
 
+config: config.template.yaml
+	cp config.template.yaml config.yaml
+
 .PHONY: install clean compile build run lint test
