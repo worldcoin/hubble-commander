@@ -4,9 +4,14 @@ install:
 clean:
 	rm -rf build
 
-build: clean
+build: clean compile
+
+compile:
 	mkdir -p build
-	go build -o build/hubble ./cmd
+	go build -o build/hubble ./main
+
+run:
+	./build/hubble
 
 lint:
 	golangci-lint run ./...
@@ -14,4 +19,4 @@ lint:
 test:
 	go test -v ./...
 
-.PHONY: install clean build lint test
+.PHONY: install clean build lint test run
