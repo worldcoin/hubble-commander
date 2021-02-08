@@ -18,7 +18,7 @@ func TestGetConfig(t *testing.T) {
 			Port:     8080,
 			DBName:   "hubble_test",
 			DBUser:   "hubble",
-			DBPasswd: "root",
+			DBPassword: "root",
 		},
 		cfg,
 	)

@@ -15,7 +15,7 @@ func GetDB(cfg *config.Config) (*sqlx.DB, error) {
 	datasource := fmt.Sprintf(
 		"user=%s password=%s dbname=%s sslmode=disable",
 		cfg.DBUser,
-		cfg.DBPasswd,
+		cfg.DBPassword,
 		cfg.DBName,
 	)
 
@@ -31,7 +31,7 @@ func GetTestDB(cfg *config.Config) (*sqlx.DB, error) {
 	datasource := fmt.Sprintf(
 		"user=%s password=%s sslmode=disable",
 		cfg.DBUser,
-		cfg.DBPasswd,
+		cfg.DBPassword,
 	)
 
 	db, err := sqlx.Connect("postgres", datasource)
@@ -58,7 +58,7 @@ func GetMigrator(cfg *config.Config) (*migrate.Migrate, error) {
 	datasource := fmt.Sprintf(
 		"postgres://%s:%s@localhost:5432/%s?sslmode=disable",
 		cfg.DBUser,
-		cfg.DBPasswd,
+		cfg.DBPassword,
 		cfg.DBName,
 	)
 
