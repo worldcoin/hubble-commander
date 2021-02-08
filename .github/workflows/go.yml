@@ -29,7 +29,7 @@ jobs:
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
     env:
       POSTGRES_HOST: postgres
-      POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
+      POSTGRES_PORT: 5432
     steps:
       - name: Setup Go
         uses: actions/setup-go@v2
