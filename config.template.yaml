@@ -1,2 +1,5 @@
 version: dev-0.1.0
 port: 8080
+dbname: hubble
+dbuser: hubble
+dbpasswd: root
