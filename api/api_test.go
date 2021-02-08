@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,18 +18,28 @@ type Result struct {
 }
 
 func TestApiServer(t *testing.T) {
-	var jsonStr = []byte(`{"jsonrpc": "2.0", "method": "hubble_sayHello", "id": "1"}`)
-	req, _ := http.NewRequest("POST", "", bytes.NewBuffer(jsonStr))
+	var jsonStr = []byte(`{"jsonrpc": "2.0", "method": "hubble_getVersion", "id": "1"}`)
+	req, err := http.NewRequest("POST", "", bytes.NewBuffer(jsonStr))
+	if err != nil {
+		t.Fatal(err)
+	}
 	req.Header.Set("Content-Type", "application/json")
 
-	server, _ := getApiServer()
+	cfg := config.Config{Version: "v0123"}
+	server, err := getApiServer(&cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
 	w := httptest.NewRecorder()
 	server.ServeHTTP(w, req)
 
-	actual := new(Result)
-	_ = json.Unmarshal(w.Body.Bytes(), actual)
+	actual := &Result{}
+	err = json.Unmarshal(w.Body.Bytes(), actual)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	expected := &Result{"2.0", "1", "Hello World!"}
+	expected := &Result{"2.0", "1", "v0123"}
 
 	assert.Equal(t, expected, actual)
 }
