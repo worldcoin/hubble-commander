@@ -16,7 +16,7 @@ func GetConfig(filename string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	cfg := new(Config)
+	cfg := &Config{}
 	err = yaml.Unmarshal(data, &cfg)
 	return cfg, err
 }

@@ -33,7 +33,7 @@ func TestApiServer(t *testing.T) {
 	w := httptest.NewRecorder()
 	server.ServeHTTP(w, req)
 
-	actual := new(Result)
+	actual := &Result{}
 	err = json.Unmarshal(w.Body.Bytes(), actual)
 	if err != nil {
 		t.Fatal(err)
