@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSayHello(t *testing.T) {
+func TestApi_GetVersion(t *testing.T) {
 	api := Api{&config.Config{Version: "v0123"}}
 	assert.Equal(t, "v0123", api.GetVersion())
 }
