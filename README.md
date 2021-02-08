@@ -13,7 +13,10 @@ For other environments refer to: https://golangci-lint.run/usage/install/#local-
 
 ## Install PostgreSQL
 
-You can either install the PostgreSQL locally or using provided docker-compose file. It also installs a handy GUI called pgAdmin4 to view the database changes.
+You can either install the PostgreSQL locally or use docker for that:
+```bash
+docker run --name postgres -p 5432:5432 -e POSTGRES_USER=hubble -e POSTGRES_PASSWORD=root -d postgres
+```
 
 ## Scripts
 
