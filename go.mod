@@ -5,6 +5,7 @@ go 1.15
 require (
 	github.com/Masterminds/squirrel v1.5.0
 	github.com/ethereum/go-ethereum v1.9.25
+	github.com/golang-migrate/migrate/v3 v3.5.2
 	github.com/jackc/pgx/v4 v4.10.1
 	github.com/jmoiron/sqlx v1.3.1
 	github.com/lib/pq v1.3.0
