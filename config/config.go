@@ -11,7 +11,7 @@ type Config struct {
 	Port     int    `yaml:"port"`
 	DBName   string `yaml:"dbname"`
 	DBUser   string `yaml:"dbuser"`
-	DBPassword string `yaml:"DBPassword"`
+	DBPassword string `yaml:"dbpassword"`
 }
 
 func GetConfig(filename string) (*Config, error) {
