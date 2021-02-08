@@ -11,5 +11,15 @@ func TestGetConfig(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert.Equal(t, &Config{Version: "dev-0.1.0", Port: 8080}, cfg)
+	assert.Equal(
+		t,
+		&Config{
+			Version:  "dev-0.1.0",
+			Port:     8080,
+			DBName:   "hubble_test",
+			DBUser:   "hubble",
+			DBPasswd: "root",
+		},
+		cfg,
+	)
 }
