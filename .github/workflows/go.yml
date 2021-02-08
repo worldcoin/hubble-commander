@@ -16,6 +16,20 @@ jobs:
   build-test:
     name: Build and test
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:13.1
+        env:
+          POSTGRES_USER: hubble
+          POSTGRES_PASSWORD: root
+          POSTGRES_DB: hubble_test
+        ports:
+          - 5432:5432
+        # Needed because the postgres container does not provide a health check
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
     steps:
       - name: Setup Go
         uses: actions/setup-go@v2
@@ -29,3 +43,4 @@ jobs:
         run: make build
       - name: Test
         run: make test
+    
