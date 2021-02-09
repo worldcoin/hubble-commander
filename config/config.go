@@ -7,8 +7,11 @@ import (
 )
 
 type Config struct {
-	Version string `yaml:"version"`
-	Port    int    `yaml:"port"`
+	Version  string `yaml:"version"`
+	Port     int    `yaml:"port"`
+	DBName   string `yaml:"dbname"`
+	DBUser   string `yaml:"dbuser"`
+	DBPassword string `yaml:"dbpassword"`
 }
 
 func GetConfig(filename string) (*Config, error) {

@@ -19,6 +19,6 @@ func TestApi_SendTransaction(t *testing.T) {
 		Signature: []byte{97, 100, 115, 97, 100, 115, 97, 115, 100, 97, 115, 100},
 	}
 	hash, err := api.SendTransaction(tx)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, common.HexToHash("0x3e136a19201d6fc73c4e3c76951edfb94eb9a7a0c7e15492696ffddb3e1b2c68"), hash)
 }
