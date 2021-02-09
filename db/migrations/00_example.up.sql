@@ -1,4 +1,3 @@
-
 CREATE TABLE person (
     first_name text,
     last_name text,
