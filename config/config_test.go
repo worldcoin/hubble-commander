@@ -8,9 +8,7 @@ import (
 
 func TestGetConfig(t *testing.T) {
 	cfg, err := GetConfig("../config.template.yaml")
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 	assert.Equal(
 		t,
 		&Config{

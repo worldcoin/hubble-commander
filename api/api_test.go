@@ -20,26 +20,21 @@ type Result struct {
 func TestStartApiServer(t *testing.T) {
 	var jsonStr = []byte(`{"jsonrpc": "2.0", "method": "hubble_getVersion", "id": "1"}`)
 	req, err := http.NewRequest("POST", "", bytes.NewBuffer(jsonStr))
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
+
 	req.Header.Set("Content-Type", "application/json")
 
 	cfg := config.Config{Version: "v0123"}
 	server, err := getApiServer(&cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
+
 	w := httptest.NewRecorder()
 	server.ServeHTTP(w, req)
 
 	actual := &Result{}
 	err = json.Unmarshal(w.Body.Bytes(), actual)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	expected := &Result{"2.0", "1", "v0123"}
-
 	assert.Equal(t, expected, actual)
 }
