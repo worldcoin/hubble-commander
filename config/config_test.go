@@ -9,18 +9,17 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	os.Setenv("Version", "dev-0.1.0")
-	os.Setenv("Port", "8080")
-	os.Setenv("DBName", "hubble_test")
-	os.Setenv("DBUser", "hubble")
-	os.Setenv("DBPassword", "root")
+	os.Setenv("HUBBLE_VERSION", "dev-0.1.0")
+	os.Setenv("HUBBLE_PORT", "8080")
+	os.Setenv("HUBBLE_DBNAME", "hubble_test")
+	os.Setenv("HUBBLE_DBUSER", "hubble")
+	os.Setenv("HUBBLE_DBPASSWORD", "root")
 	os.Exit(m.Run())
 }
 
 func TestGetConfig(t *testing.T) {
-	cfg, err := GetConfig()
+	cfg := GetConfig()
 	fmt.Println(cfg)
-	assert.NoError(t, err)
 	assert.Equal(
 		t,
 		&Config{

@@ -1,8 +1,9 @@
 package config
 
 import (
-	"os"
-	"strconv"
+	"log"
+
+	"github.com/spf13/viper"
 )
 
 type Config struct {
@@ -13,18 +14,45 @@ type Config struct {
 	DBPassword string
 }
 
-func GetConfig() (*Config, error) {
-	port, err := strconv.Atoi(os.Getenv("Port"))
-	if err != nil {
-		return nil, err
-	}
+func GetConfig() *Config {
+	setupEnvVariables()
+
 	cfg := &Config{
-		Version:    os.Getenv("Version"),
-		Port:       port,
-		DBName:     os.Getenv("DBName"),
-		DBUser:     os.Getenv("DBUser"),
-		DBPassword: os.Getenv("DBPassword"),
+		Version:    viper.GetString("version"),
+		Port:       viper.GetInt("port"),
+		DBName:     viper.GetString("dbname"),
+		DBUser:     viper.GetString("dbuser"),
+		DBPassword: viper.GetString("dbpassword"),
 	}
 
-	return cfg, err
+	return cfg
+}
+
+func setupEnvVariables() {
+	viper.SetEnvPrefix("hubble")
+
+	err := viper.BindEnv("version")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = viper.BindEnv("port")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = viper.BindEnv("dbname")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = viper.BindEnv("dbuser")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = viper.BindEnv("dbpassword")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
