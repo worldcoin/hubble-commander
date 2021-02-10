@@ -8,6 +8,12 @@ import (
 )
 
 func main() {
-	cfg := config.GetConfig()
+	cfg := config.CreateConfig(
+		"dev-0.1.0",
+		8080,
+		"hubble_test",
+		"hubble",
+		"root",
+	)
 	log.Fatal(api.StartApiServer(cfg))
 }

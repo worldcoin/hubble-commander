@@ -15,14 +15,44 @@ type Config struct {
 }
 
 func GetConfig() *Config {
+	var version, dbname, dbuser, dbpassword string
+	var port int
+
+	setupEnvVariables()
+	readAndSetEnvVariables(
+		&version,
+		&port,
+		&dbname,
+		&dbuser,
+		&dbpassword,
+	)
+
+	cfg := &Config{
+		Version:    version,
+		Port:       port,
+		DBName:     dbname,
+		DBUser:     dbuser,
+		DBPassword: dbpassword,
+	}
+
+	return cfg
+}
+
+func CreateConfig(
+	version string,
+	port int,
+	dbname,
+	dbuser,
+	dbpassword string,
+) *Config {
 	setupEnvVariables()
 
 	cfg := &Config{
-		Version:    viper.GetString("version"),
-		Port:       viper.GetInt("port"),
-		DBName:     viper.GetString("dbname"),
-		DBUser:     viper.GetString("dbuser"),
-		DBPassword: viper.GetString("dbpassword"),
+		Version:    version,
+		Port:       port,
+		DBName:     dbname,
+		DBUser:     dbuser,
+		DBPassword: dbpassword,
 	}
 
 	return cfg
@@ -54,5 +84,39 @@ func setupEnvVariables() {
 	err = viper.BindEnv("dbpassword")
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func readAndSetEnvVariables(
+	version *string,
+	port *int,
+	dbname,
+	dbuser,
+	dbpassword *string,
+) {
+	envVersion := viper.GetString("version")
+	if envVersion != "" {
+		*version = envVersion
+	}
+
+	envPort := viper.GetInt("port")
+	if envPort != 0 {
+		*port = envPort
+	}
+
+	envDBName := viper.GetString("dbname")
+	if envDBName != "" {
+		*dbname = envDBName
+	}
+
+
+	envDBUser := viper.GetString("dbuser")
+	if envDBUser != "" {
+		*dbuser = envDBUser
+	}
+
+	envDBPassword := viper.GetString("dbpassword")
+	if envDBPassword != "" {
+		*dbpassword = envDBPassword
 	}
 }
