@@ -1,5 +1,10 @@
 package config
 
+import (
+	"os"
+	"strconv"
+)
+
 type Config struct {
 	Version    string
 	Port       int
@@ -8,14 +13,18 @@ type Config struct {
 	DBPassword string
 }
 
-func GetConfig() *Config {
+func GetConfig() (*Config, error) {
+	port, err := strconv.Atoi(os.Getenv("Port"))
+	if err != nil {
+		return nil, err
+	}
 	cfg := &Config{
-		Version:    "dev-0.1.0",
-		Port:       8080,
-		DBName:     "hubble_test",
-		DBUser:     "hubble",
-		DBPassword: "root",
+		Version:    os.Getenv("Version"),
+		Port:       port,
+		DBName:     os.Getenv("DBName"),
+		DBUser:     os.Getenv("DBUser"),
+		DBPassword: os.Getenv("DBPassword"),
 	}
 
-	return cfg
+	return cfg, err
 }

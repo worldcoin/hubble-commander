@@ -8,6 +8,9 @@ import (
 )
 
 func main() {
-	cfg := config.GetConfig()
+	cfg, err := config.GetConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
 	log.Fatal(api.StartApiServer(cfg))
 }
