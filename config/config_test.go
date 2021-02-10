@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -19,7 +18,6 @@ func TestMain(m *testing.M) {
 
 func TestGetConfig(t *testing.T) {
 	cfg := GetConfig()
-	fmt.Println(cfg)
 	assert.Equal(
 		t,
 		&Config{
