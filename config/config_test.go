@@ -7,8 +7,7 @@ import (
 )
 
 func TestGetConfig(t *testing.T) {
-	cfg, err := GetConfig("../config.template.yaml")
-	assert.NoError(t, err)
+	cfg := GetConfig()
 	assert.Equal(
 		t,
 		&Config{

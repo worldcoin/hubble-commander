@@ -8,9 +8,6 @@ import (
 )
 
 func main() {
-	cfg, err := config.GetConfig("config.yaml")
-	if err != nil {
-		log.Fatal(err)
-	}
+	cfg := config.GetConfig()
 	log.Fatal(api.StartApiServer(cfg))
 }

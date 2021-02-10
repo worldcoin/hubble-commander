@@ -1,25 +1,21 @@
 package config
 
-import (
-	"io/ioutil"
-
-	"gopkg.in/yaml.v2"
-)
-
 type Config struct {
-	Version  string `yaml:"version"`
-	Port     int    `yaml:"port"`
-	DBName   string `yaml:"dbname"`
-	DBUser   string `yaml:"dbuser"`
-	DBPassword string `yaml:"dbpassword"`
+	Version    string
+	Port       int
+	DBName     string
+	DBUser     string
+	DBPassword string
 }
 
-func GetConfig(filename string) (*Config, error) {
-	data, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, err
+func GetConfig() *Config {
+	cfg := &Config{
+		Version:    "dev-0.1.0",
+		Port:       8080,
+		DBName:     "hubble_test",
+		DBUser:     "hubble",
+		DBPassword: "root",
 	}
-	cfg := &Config{}
-	err = yaml.Unmarshal(data, &cfg)
-	return cfg, err
+
+	return cfg
 }

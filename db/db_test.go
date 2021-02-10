@@ -9,8 +9,7 @@ import (
 )
 
 func TestGetDB(t *testing.T) {
-	cfg, err := config.GetConfig("../config.template.yaml")
-	assert.NoError(t, err)
+	cfg:= config.GetConfig()
 
 	db, err := GetTestDB(cfg)
 	assert.NoError(t, err)
@@ -20,8 +19,7 @@ func TestGetDB(t *testing.T) {
 }
 
 func TestMigrations(t *testing.T) {
-	cfg, err := config.GetConfig("../config.template.yaml")
-	assert.NoError(t, err)
+	cfg:= config.GetConfig()
 
 	db, err := GetTestDB(cfg)
 	assert.NoError(t, err)
