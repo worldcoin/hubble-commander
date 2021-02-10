@@ -10,33 +10,31 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	if os.Getenv("Version") == "" {
-		os.Setenv("Version", "dev-0.1.0")
+	if os.Getenv("HUBBLE_VERSION") == "" {
+		os.Setenv("HUBBLE_VERSION", "dev-0.1.0")
 	}
 
-	if os.Getenv("Port") == "" {
-		os.Setenv("Port", "8080")
+	if os.Getenv("HUBBLE_PORT") == "" {
+		os.Setenv("HUBBLE_PORT", "8080")
 	}
 	
-	if os.Getenv("DBName") == "" {
-		os.Setenv("DBName", "hubble_test")
+	if os.Getenv("HUBBLE_DBNAME") == "" {
+		os.Setenv("HUBBLE_DBNAME", "hubble_test")
 	}
 
-	if os.Getenv("DBUser") == "" {
-		os.Setenv("DBUser", "hubble")
+	if os.Getenv("HUBBLE_DBUSER") == "" {
+		os.Setenv("HUBBLE_DBUSER", "hubble")
 	}
 	
-	if os.Getenv("DBPassword") == "" {
-		os.Setenv("DBPassword", "root")
+	if os.Getenv("HUBBLE_DBPASSWORD") == "" {
+		os.Setenv("HUBBLE_DBPASSWORD", "root")
 	}
 	
 	os.Exit(m.Run())
 }
 
 func TestGetDB(t *testing.T) {
-	cfg, err := config.GetConfig()
-	assert.NoError(t, err)
-
+	cfg := config.GetConfig()
 	db, err := GetTestDB(cfg)
 	assert.NoError(t, err)
 	defer db.Close()
@@ -45,9 +43,7 @@ func TestGetDB(t *testing.T) {
 }
 
 func TestMigrations(t *testing.T) {
-	cfg, err := config.GetConfig()
-	assert.NoError(t, err)
-
+	cfg := config.GetConfig()
 	db, err := GetTestDB(cfg)
 	assert.NoError(t, err)
 	defer db.Close()
