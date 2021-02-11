@@ -15,9 +15,8 @@ def generate_bindings(path, type, pkg, filename):
         f'abigen --abi tmp.abi --pkg {pkg} --type {type} --out {filename}')
 
 
-def generate(artifact):
-    name = Path(artifact).with_suffix('').name
-    base = Path('hubble-contracts/artifacts/contracts')
+def generate(artifact, name):
+    base = Path('hubble-contracts/artifacts')
 
     path = base / artifact
     lower = name.lower()
@@ -27,14 +26,15 @@ def generate(artifact):
 
 os.system('rm -rf contracts')
 
-generate('rollup/Rollup.sol/Rollup.json')
-generate('client/FrontendGeneric.sol/FrontendGeneric.json')
-generate('DepositManager.sol/DepositManager.json')
-generate('TokenRegistry.sol/TokenRegistry.json')
-generate('proposers/BurnAuction.sol/BurnAuction.json')
-generate('client/FrontendTransfer.sol/FrontendTransfer.json')
-generate('client/FrontendMassMigration.sol/FrontendMassMigration.json')
-generate('client/FrontendCreate2Transfer.sol/FrontendCreate2Transfer.json')
-generate('BLSAccountRegistry.sol/BLSAccountRegistry.json')
+generate('contracts/rollup/Rollup.sol/Rollup.json', 'Rollup')
+generate('contracts/client/FrontendGeneric.sol/FrontendGeneric.json', 'Frontend')
+generate('contracts/DepositManager.sol/DepositManager.json', 'Deposit')
+generate('contracts/TokenRegistry.sol/TokenRegistry.json', 'TokenRegistry')
+generate('contracts/proposers/BurnAuction.sol/BurnAuction.json', 'BurnAuction')
+generate('contracts/client/FrontendTransfer.sol/FrontendTransfer.json', 'Transfer')
+generate('contracts/client/FrontendMassMigration.sol/FrontendMassMigration.json', 'MassMigration')
+generate('contracts/client/FrontendCreate2Transfer.sol/FrontendCreate2Transfer.json', 'Create2Transfer')
+generate('contracts/BLSAccountRegistry.sol/BLSAccountRegistry.json', 'AccountRegistry')
+generate('@openzeppelin/contracts/token/ERC20/IERC20.sol/IERC20.json', 'ERC20')
 
 os.remove('tmp.abi')
