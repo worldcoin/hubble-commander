@@ -25,6 +25,7 @@ There are a couple of scripts defined in the Makefile:
 * `make install` - install Go dependencies
 * `make clean` - remove build artifacts
 * `make compile` - build artifacts
+* `make generate` - generate bindings for smart contracts
 * `make build` - clean and build artifacts
 * `make run` - run the compiled binary
 * `make lint` - run linter
