@@ -2,3 +2,4 @@
 build
 .DS_Store
 config.yaml
+contracts
