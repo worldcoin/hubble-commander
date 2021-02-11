@@ -1,8 +1,9 @@
 package config
 
 import (
+	"os"
+
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/spf13/viper"
 )
 
 type Config struct {
@@ -10,53 +11,39 @@ type Config struct {
 	Port       string
 	DBHost     *string
 	DBPort     *string
-	DBName     *string
+	DBName     string
 	DBUser     *string
 	DBPassword *string
 }
 
-func GetConfig() *Config {
-	viper.SetEnvPrefix("hubble")
-
-	cfg := &Config{
+func GetConfig() Config {
+	return Config{
 		Version:    "dev-0.1.0",
-		Port:       *getEnvOrDefault("port", utils.MakeStringPointer("8080")),
-		DBHost:     getEnvOrDefault("dbhost", utils.MakeStringPointer("localhost")),
-		DBPort:     getEnvOrDefault("dbport", nil),
-		DBName:     getEnvOrDefault("dbname", utils.MakeStringPointer("hubble")),
-		DBUser:     getEnvOrDefault("dbuser", nil),
-		DBPassword: getEnvOrDefault("dbpassword", nil),
+		Port:       *getEnvOrDefault("HUBBLE_PORT", utils.String("8080")),
+		DBHost:     getEnvOrDefault("HUBBLE_DBHOST", nil),
+		DBPort:     getEnvOrDefault("HUBBLE_DBPORT", nil),
+		DBName:     *getEnvOrDefault("HUBBLE_DBNAME", utils.String("hubble")),
+		DBUser:     getEnvOrDefault("HUBBLE_DBUSER", nil),
+		DBPassword: getEnvOrDefault("HUBBLE_DBPASSWORD", nil),
 	}
-
-	return cfg
 }
 
-func GetTestConfig() *Config {
-	viper.SetEnvPrefix("hubble")
-
-	cfg := &Config{
+func GetTestConfig() Config {
+	return Config{
 		Version:    "dev-0.1.0",
-		Port:       *getEnvOrDefault("port", utils.MakeStringPointer("8080")),
-		DBHost:     getEnvOrDefault("dbhost", utils.MakeStringPointer("localhost")),
-		DBPort:     getEnvOrDefault("dbport", nil),
-		DBName:     getEnvOrDefault("dbname", utils.MakeStringPointer("hubble_test")),
-		DBUser:     getEnvOrDefault("dbuser", nil),
-		DBPassword: getEnvOrDefault("dbpassword", nil),
+		Port:       *getEnvOrDefault("HUBBLE_PORT", utils.String("8080")),
+		DBHost:     getEnvOrDefault("HUBBLE_DBHOST", nil),
+		DBPort:     getEnvOrDefault("HUBBLE_DBPORT", nil),
+		DBName:     *getEnvOrDefault("HUBBLE_DBNAME", utils.String("hubble_test")),
+		DBUser:     getEnvOrDefault("HUBBLE_DBUSER", nil),
+		DBPassword: getEnvOrDefault("HUBBLE_DBPASSWORD", nil),
 	}
-
-	return cfg
 }
 
-func getEnvOrDefault(name string, def *string) *string {
-	err := viper.BindEnv(name)
-	if err != nil {
-		return def
+func getEnvOrDefault(name string, fallback *string) *string {
+	value := os.Getenv(name)
+	if value == "" {
+		return fallback
 	}
-
-	val := viper.GetString(name)
-	if val == "" {
-		return def
-	}
-
-	return utils.MakeStringPointer(val)
+	return &value
 }

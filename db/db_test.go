@@ -10,20 +10,19 @@ import (
 
 func TestGetDB(t *testing.T) {
 	cfg := config.GetTestConfig()
-	db, err := GetTestDB(cfg)
+	db, err := GetTestDB(&cfg)
 	assert.NoError(t, err)
 	defer db.Close()
-
 	assert.NoError(t, db.Ping())
 }
 
 func TestMigrations(t *testing.T) {
 	cfg := config.GetTestConfig()
-	db, err := GetTestDB(cfg)
+	db, err := GetTestDB(&cfg)
 	assert.NoError(t, err)
 	defer db.Close()
 
-	migrator, err := GetMigrator(cfg)
+	migrator, err := GetMigrator(&cfg)
 	assert.NoError(t, err)
 
 	assert.NoError(t, migrator.Up())
