@@ -8,7 +8,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/golang-migrate/migrate/v3"
 	"github.com/golang-migrate/migrate/v3/database/postgres"
-	_ "github.com/golang-migrate/migrate/v3/database/postgres"
 	_ "github.com/golang-migrate/migrate/v3/source/file"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -38,7 +37,7 @@ func createDatasource(host, port, user, password, dbname *string) string {
 }
 
 func GetDB(cfg *config.Config) (*sqlx.DB, error) {
-	datasource := createDatasource(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName)
+	datasource := createDatasource(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, &cfg.DBName)
 	return sqlx.Connect("postgres", datasource)
 }
 
@@ -49,17 +48,17 @@ func GetTestDB(cfg *config.Config) (*sqlx.DB, error) {
 		return nil, err
 	}
 
-	query := fmt.Sprintf("DROP DATABASE IF EXISTS %s", *cfg.DBName)
+	query := fmt.Sprintf("DROP DATABASE IF EXISTS %s", cfg.DBName)
 	_, _ = db.Exec(query) // ignore errors
 
-	query = fmt.Sprintf("CREATE DATABASE %s", *cfg.DBName)
+	query = fmt.Sprintf("CREATE DATABASE %s", cfg.DBName)
 	_, _ = db.Exec(query) // ignore errors
 
 	return GetDB(cfg)
 }
 
 func GetMigrator(cfg *config.Config) (*migrate.Migrate, error) {
-	datasource := createDatasource(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName)
+	datasource := createDatasource(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, &cfg.DBName)
 
 	db, err := sql.Open("postgres", datasource)
 	if err != nil {
