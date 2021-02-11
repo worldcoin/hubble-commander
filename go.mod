@@ -7,7 +7,6 @@ require (
 	github.com/Masterminds/squirrel v1.5.0
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
 	github.com/ethereum/go-ethereum v1.9.25
-	github.com/golang-migrate/migrate v3.5.4+incompatible
 	github.com/golang-migrate/migrate/v3 v3.5.2
 	github.com/jmoiron/sqlx v1.3.1
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect

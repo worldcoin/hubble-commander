@@ -8,6 +8,11 @@ compile:
 	mkdir -p build
 	go build -o build/hubble ./main
 
+generate:
+	cd hubble-contracts && npm install
+	cd hubble-contracts && npm run compile
+	go generate
+
 build: clean compile
 
 run:
@@ -22,4 +27,4 @@ test:
 config:
 	cp config.template.yaml config.yaml
 
-.PHONY: install clean compile build run lint test config
+.PHONY: install clean compile generate build run lint test config
