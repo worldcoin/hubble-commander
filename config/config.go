@@ -1,122 +1,62 @@
 package config
 
 import (
-	"log"
-
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/spf13/viper"
 )
 
 type Config struct {
 	Version    string
-	Port       int
-	DBName     string
-	DBUser     string
-	DBPassword string
+	Port       string
+	DBHost     *string
+	DBPort     *string
+	DBName     *string
+	DBUser     *string
+	DBPassword *string
 }
 
 func GetConfig() *Config {
-	var version, dbname, dbuser, dbpassword string
-	var port int
-
-	setupEnvVariables()
-	readAndSetEnvVariables(
-		&version,
-		&port,
-		&dbname,
-		&dbuser,
-		&dbpassword,
-	)
-
-	cfg := &Config{
-		Version:    version,
-		Port:       port,
-		DBName:     dbname,
-		DBUser:     dbuser,
-		DBPassword: dbpassword,
-	}
-
-	return cfg
-}
-
-func CreateConfig(
-	version string,
-	port int,
-	dbname,
-	dbuser,
-	dbpassword string,
-) *Config {
-	setupEnvVariables()
-
-	cfg := &Config{
-		Version:    version,
-		Port:       port,
-		DBName:     dbname,
-		DBUser:     dbuser,
-		DBPassword: dbpassword,
-	}
-
-	return cfg
-}
-
-func setupEnvVariables() {
 	viper.SetEnvPrefix("hubble")
 
-	err := viper.BindEnv("version")
-	if err != nil {
-		log.Fatal(err)
+	cfg := &Config{
+		Version:    "dev-0.1.0",
+		Port:       *getEnvOrDefault("port", utils.MakeStringPointer("8080")),
+		DBHost:     getEnvOrDefault("dbhost", utils.MakeStringPointer("localhost")),
+		DBPort:     getEnvOrDefault("dbport", nil),
+		DBName:     getEnvOrDefault("dbname", utils.MakeStringPointer("hubble")),
+		DBUser:     getEnvOrDefault("dbuser", nil),
+		DBPassword: getEnvOrDefault("dbpassword", nil),
 	}
 
-	err = viper.BindEnv("port")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = viper.BindEnv("dbname")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = viper.BindEnv("dbuser")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = viper.BindEnv("dbpassword")
-	if err != nil {
-		log.Fatal(err)
-	}
+	return cfg
 }
 
-func readAndSetEnvVariables(
-	version *string,
-	port *int,
-	dbname,
-	dbuser,
-	dbpassword *string,
-) {
-	envVersion := viper.GetString("version")
-	if envVersion != "" {
-		*version = envVersion
+func GetTestConfig() *Config {
+	viper.SetEnvPrefix("hubble")
+
+	cfg := &Config{
+		Version:    "dev-0.1.0",
+		Port:       *getEnvOrDefault("port", utils.MakeStringPointer("8080")),
+		DBHost:     getEnvOrDefault("dbhost", utils.MakeStringPointer("localhost")),
+		DBPort:     getEnvOrDefault("dbport", nil),
+		DBName:     getEnvOrDefault("dbname", utils.MakeStringPointer("hubble_test")),
+		DBUser:     getEnvOrDefault("dbuser", nil),
+		DBPassword: getEnvOrDefault("dbpassword", nil),
 	}
 
-	envPort := viper.GetInt("port")
-	if envPort != 0 {
-		*port = envPort
+	return cfg
+}
+
+func getEnvOrDefault(name string, def *string) *string {
+	err := viper.BindEnv(name)
+	if err != nil {
+		return def
 	}
 
-	envDBName := viper.GetString("dbname")
-	if envDBName != "" {
-		*dbname = envDBName
+	val := viper.GetString(name)
+	if val == "" {
+		return def
 	}
 
-
-	envDBUser := viper.GetString("dbuser")
-	if envDBUser != "" {
-		*dbuser = envDBUser
-	}
-
-	envDBPassword := viper.GetString("dbpassword")
-	if envDBPassword != "" {
-		*dbpassword = envDBPassword
-	}
+	return utils.MakeStringPointer(val)
 }
