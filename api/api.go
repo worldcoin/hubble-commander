@@ -18,7 +18,7 @@ func StartApiServer(cfg *config.Config) error {
 		return err
 	}
 	http.HandleFunc("/", server.ServeHTTP)
-	addr := fmt.Sprintf(":%d", cfg.Port)
+	addr := fmt.Sprintf(":%s", cfg.Port)
 	return http.ListenAndServe(addr, nil)
 }
 

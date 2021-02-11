@@ -1,5 +1,0 @@
-version: dev-0.1.0
-port: 8080
-dbname: hubble_test
-dbuser: hubble
-dbpassword: root
