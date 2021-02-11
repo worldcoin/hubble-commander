@@ -27,9 +27,6 @@ jobs:
         # Needed because the postgres container does not provide a health check
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
     env:
-      HUBBLE_VERSION: dev-0.1.0
-      HUBBLE_PORT: 8080
-      HUBBLE_DBNAME: hubble_test
       HUBBLE_DBUSER: hubble
       HUBBLE_DBPASSWORD: root
     steps:
