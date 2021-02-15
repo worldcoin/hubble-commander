@@ -1,14 +1,14 @@
 use contracts::ContractsProvider;
 use anyhow::Result;
+use tokio;
 
 mod contracts;
 
-fn main() -> Result<()> {
-    // let contracts = ContractsProvider::new("http://localhost:8545").await?;
+#[tokio::main]
+async fn main() -> Result<()> {
+    let contracts = ContractsProvider::new("http://localhost:8545").await?;
 
-
-
-    println!("Hello, world!");
+    dbg!(contracts.accounts().await?);
 
     Ok(())
 }
