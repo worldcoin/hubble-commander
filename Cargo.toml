@@ -8,3 +8,5 @@ edition = "2018"
 
 [dependencies]
 amcl = "0.2.0"
+web3 = "0.14.0"
+anyhow = "1.0.38"
