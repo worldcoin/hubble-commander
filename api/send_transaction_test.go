@@ -5,13 +5,14 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 )
 
 func TestApi_SendTransaction(t *testing.T) {
 	api := Api{&config.Config{Version: "v0123"}}
-	tx := IncomingTransaction{
+	tx := models.IncomingTransaction{
 		FromIndex: big.NewInt(1),
 		ToIndex:   big.NewInt(2),
 		Amount:    big.NewInt(50),

@@ -2,23 +2,14 @@ package api
 
 import (
 	"fmt"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
 	"golang.org/x/crypto/sha3"
-	"math/big"
+	"github.com/Worldcoin/hubble-commander/models"
 )
 
-type IncomingTransaction struct {
-	FromIndex *big.Int
-	ToIndex   *big.Int
-	Amount    *big.Int
-	Fee       *big.Int
-	Nonce     *big.Int
-	// TODO: Right now decoder expects a base64 string here, we could define a custom type with interface implementation to expect a hex string
-	Signature []byte
-}
-
-func (a *Api) SendTransaction(tx IncomingTransaction) (common.Hash, error) {
+func (a *Api) SendTransaction(tx models.IncomingTransaction) (common.Hash, error) {
 	fmt.Printf("%+v\n", tx)
 	h, err := rlpHash(tx)
 	if err != nil {
