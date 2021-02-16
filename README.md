@@ -2,16 +2,27 @@
 
 ## Prerequisites
 
-In order to run lint script `golangci-lint` must be installed locally. On macOS run:
+### abigen
 
+In order to generate Go bindings for smart contracts `abigen` tool needs to be installed locally. 
+It comes along with Geth which can be installed on macOS using:
+```bash
+brew tap ethereum/ethereum
+brew install ethereum
+```
+For other environments refer to: https://geth.ethereum.org/docs/install-and-build/installing-geth
+
+### golangci-lint
+
+For the lint script to work `golangci-lint` must be installed locally.
+On macOS run:
 ```bash
 brew install golangci-lint
 brew upgrade golangci-lint
 ```
-
 For other environments refer to: https://golangci-lint.run/usage/install/#local-installation
 
-## Install PostgreSQL
+### PostgreSQL
 
 You can either install the PostgreSQL locally or use docker for that:
 ```bash
