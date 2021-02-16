@@ -9,6 +9,7 @@ require (
 	github.com/ethereum/go-ethereum v1.9.25
 	github.com/golang-migrate/migrate/v3 v3.5.2
 	github.com/jmoiron/sqlx v1.3.1
+	github.com/joho/godotenv v1.3.0
 	github.com/lib/pq v1.9.0
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/stretchr/testify v1.7.0
