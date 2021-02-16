@@ -9,6 +9,12 @@ import (
 )
 
 func init() {
+	if os.Getenv("CI") != "true" {
+		loadDotEnv()
+	}
+}
+
+func loadDotEnv() {
 	err := godotenv.Load("../.env")
 	if err != nil {
 		log.Fatal("Error loading .env file")
