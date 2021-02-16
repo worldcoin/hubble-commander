@@ -1,11 +1,12 @@
 package api
 
 import (
+	"math/big"
+	"testing"
+
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
-	"math/big"
-	"testing"
 )
 
 func TestApi_SendTransaction(t *testing.T) {
