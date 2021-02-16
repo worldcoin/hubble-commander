@@ -27,13 +27,13 @@ func TestMigrations(t *testing.T) {
 
 	require.NoError(t, migrator.Up())
 
-	_, err = sq.Select("*").From("person").
+	_, err = sq.Select("*").From("transaction").
 		RunWith(db).Query()
 	require.NoError(t, err)
 
 	require.NoError(t, migrator.Down())
 
-	_, err = sq.Select("*").From("person").
+	_, err = sq.Select("*").From("transaction").
 		RunWith(db).Query()
 	require.Error(t, err)
 
