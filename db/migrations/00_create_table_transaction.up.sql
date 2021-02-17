@@ -1,5 +1,5 @@
 CREATE TABLE "transaction" (
-	txHash text,
+	txHash bytea,
 	fromIndex NUMERIC(78),
 	toIndex NUMERIC(78),
 	amount NUMERIC(78),
