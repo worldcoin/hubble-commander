@@ -12,7 +12,7 @@ func TestGetDB(t *testing.T) {
 	cfg := config.GetTestConfig()
 	db, err := GetTestDB(&cfg)
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { require.NoError(t, db.Close()) }()
 	require.NoError(t, db.Ping())
 }
 
@@ -20,7 +20,7 @@ func TestMigrations(t *testing.T) {
 	cfg := config.GetTestConfig()
 	db, err := GetTestDB(&cfg)
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { require.NoError(t, db.Close()) }()
 
 	migrator, err := GetMigrator(&cfg)
 	require.NoError(t, err)
@@ -36,5 +36,4 @@ func TestMigrations(t *testing.T) {
 	_, err = sq.Select("*").From("transaction").
 		RunWith(db).Query()
 	require.Error(t, err)
-
 }
