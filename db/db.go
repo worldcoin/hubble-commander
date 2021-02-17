@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/golang-migrate/migrate/v3"
-	"github.com/golang-migrate/migrate/v3/database/postgres"
-	_ "github.com/golang-migrate/migrate/v3/source/file"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
