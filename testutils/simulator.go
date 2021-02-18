@@ -1,4 +1,4 @@
-package eth
+package testutils
 
 import (
 	"math/big"
@@ -26,25 +26,17 @@ func (sim *Simulator) Close() {
 	sim.backend.Close() // ignore error, it is always nil
 }
 
-func SetupDefaultSimulator() (*Simulator, error) {
-	return SetupSimulator(SimulatorConfig{})
+func NewSimulator() (*Simulator, error) {
+	return NewConfiguredSimulator(SimulatorConfig{})
 }
 
-func fillWithDefaults(config *SimulatorConfig) {
-	if config.numAccounts == nil {
-		config.numAccounts = utils.Uint64(10)
-	}
-	if config.blockGasLimit == nil {
-		config.blockGasLimit = utils.Uint64(12_500_000)
-	}
-}
-
-func SetupSimulator(config SimulatorConfig) (*Simulator, error) {
+func NewConfiguredSimulator(config SimulatorConfig) (*Simulator, error) {
 	fillWithDefaults(&config)
 
 	genesisAccounts := make(core.GenesisAlloc)
-	for i := uint64(0); i < *config.numAccounts; i++ {
+	accounts := make([]*bind.TransactOpts, 0, int(*config.numAccounts))
 
+	for i := uint64(0); i < *config.numAccounts; i++ {
 		key, err := crypto.GenerateKey()
 		if err != nil {
 			return nil, err
@@ -54,16 +46,29 @@ func SetupSimulator(config SimulatorConfig) (*Simulator, error) {
 		if err != nil {
 			return nil, err
 		}
-		genesisAccounts[auth.From] = core.GenesisAccount{Balance: big.NewInt(10000000000), PrivateKey: key.D.Bytes()}
+
+		accounts = append(accounts, auth)
+		genesisAccounts[auth.From] = core.GenesisAccount{
+			Balance:    big.NewInt(10000000000),
+			PrivateKey: key.D.Bytes(),
+		}
 	}
 
-	sim := backends.NewSimulatedBackend(genesisAccounts, 12_500_000)
-
-	Simulator{
-		backend:  sim,
+	sim := &Simulator{
+		backend:  backends.NewSimulatedBackend(genesisAccounts, 12_500_000),
 		config:   &config,
-		account:  nil,
-		accounts: nil,
+		account:  accounts[0],
+		accounts: accounts,
 	}
+
 	return sim, nil
+}
+
+func fillWithDefaults(config *SimulatorConfig) {
+	if config.numAccounts == nil {
+		config.numAccounts = utils.Uint64(10)
+	}
+	if config.blockGasLimit == nil {
+		config.blockGasLimit = utils.Uint64(12_500_000)
+	}
 }
