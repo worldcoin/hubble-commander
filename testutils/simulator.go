@@ -11,19 +11,19 @@ import (
 )
 
 type SimulatorConfig struct {
-	numAccounts   *uint64 // default 10
-	blockGasLimit *uint64 // default 12_500_000
+	NumAccounts   *uint64 // default 10
+	BlockGasLimit *uint64 // default 12_500_000
 }
 
 type Simulator struct {
-	backend  *backends.SimulatedBackend
-	config   *SimulatorConfig
-	account  *bind.TransactOpts
-	accounts []*bind.TransactOpts
+	Backend  *backends.SimulatedBackend
+	Config   *SimulatorConfig
+	Account  *bind.TransactOpts
+	Accounts []*bind.TransactOpts
 }
 
 func (sim *Simulator) Close() {
-	sim.backend.Close() // ignore error, it is always nil
+	sim.Backend.Close() // ignore error, it is always nil
 }
 
 func NewSimulator() (*Simulator, error) {
@@ -34,9 +34,9 @@ func NewConfiguredSimulator(config SimulatorConfig) (*Simulator, error) {
 	fillWithDefaults(&config)
 
 	genesisAccounts := make(core.GenesisAlloc)
-	accounts := make([]*bind.TransactOpts, 0, int(*config.numAccounts))
+	accounts := make([]*bind.TransactOpts, 0, int(*config.NumAccounts))
 
-	for i := uint64(0); i < *config.numAccounts; i++ {
+	for i := uint64(0); i < *config.NumAccounts; i++ {
 		key, err := crypto.GenerateKey()
 		if err != nil {
 			return nil, err
@@ -55,20 +55,20 @@ func NewConfiguredSimulator(config SimulatorConfig) (*Simulator, error) {
 	}
 
 	sim := &Simulator{
-		backend:  backends.NewSimulatedBackend(genesisAccounts, 12_500_000),
-		config:   &config,
-		account:  accounts[0],
-		accounts: accounts,
+		Backend:  backends.NewSimulatedBackend(genesisAccounts, 12_500_000),
+		Config:   &config,
+		Account:  accounts[0],
+		Accounts: accounts,
 	}
 
 	return sim, nil
 }
 
 func fillWithDefaults(config *SimulatorConfig) {
-	if config.numAccounts == nil {
-		config.numAccounts = utils.Uint64(10)
+	if config.NumAccounts == nil {
+		config.NumAccounts = utils.Uint64(10)
 	}
-	if config.blockGasLimit == nil {
-		config.blockGasLimit = utils.Uint64(12_500_000)
+	if config.BlockGasLimit == nil {
+		config.BlockGasLimit = utils.Uint64(12_500_000)
 	}
 }

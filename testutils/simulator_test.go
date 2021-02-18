@@ -13,10 +13,10 @@ func TestSimulator(t *testing.T) {
 	require.NoError(t, err)
 	defer sim.Close()
 
-	_, _, contract, err := transfer.DeployTransfer(sim.account, sim.backend)
+	_, _, contract, err := transfer.DeployTransfer(sim.Account, sim.Backend)
 	require.NoError(t, err)
 
-	sim.backend.Commit()
+	sim.Backend.Commit()
 
 	_, err = contract.Encode(nil, transfer.OffchainTransfer{
 		TxType:    big.NewInt(0),
