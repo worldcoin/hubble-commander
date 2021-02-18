@@ -2,8 +2,7 @@
 
 ## Prerequisites
 
-### abigen
-
+### Bindings
 In order to generate Go bindings for smart contracts `abigen` tool needs to be installed locally. 
 It comes along with Geth which can be installed on macOS using:
 ```bash
@@ -11,6 +10,8 @@ brew tap ethereum/ethereum
 brew install ethereum
 ```
 For other environments refer to: https://geth.ethereum.org/docs/install-and-build/installing-geth
+
+You also need python3 installed: https://www.python.org/
 
 ### golangci-lint
 
