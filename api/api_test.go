@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type Result struct {
@@ -20,21 +20,21 @@ type Result struct {
 func TestStartApiServer(t *testing.T) {
 	var jsonStr = []byte(`{"jsonrpc": "2.0", "method": "hubble_getVersion", "id": "1"}`)
 	req, err := http.NewRequest("POST", "", bytes.NewBuffer(jsonStr))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	req.Header.Set("Content-Type", "application/json")
 
 	cfg := config.Config{Version: "v0123"}
 	server, err := getApiServer(&cfg)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	w := httptest.NewRecorder()
 	server.ServeHTTP(w, req)
 
 	actual := &Result{}
 	err = json.Unmarshal(w.Body.Bytes(), actual)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	expected := &Result{"2.0", "1", "v0123"}
-	assert.Equal(t, expected, actual)
+	require.Equal(t, expected, actual)
 }

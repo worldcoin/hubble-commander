@@ -24,7 +24,7 @@ For other environments refer to: https://golangci-lint.run/usage/install/#local-
 
 ### PostgreSQL
 
-You can either install the PostgreSQL locally or use docker for that:
+You can either install the PostgreSQL locally or use Docker for that:
 ```bash
 docker run --name postgres -p 5432:5432 -e POSTGRES_USER=hubble -e POSTGRES_PASSWORD=root -d postgres
 ```
@@ -38,6 +38,10 @@ There are a couple of scripts defined in the Makefile:
 * `make compile` - build artifacts
 * `make generate` - generate bindings for smart contracts
 * `make build` - clean and build artifacts
+* `make setup-db` - create and run a Docker container with postgres
+* `make stop-db` - stop the postgres container
+* `make start-db` - start the postgres container
+* `make teardown-db` - stop and remove the postgres container
 * `make run` - run the compiled binary
 * `make lint` - run linter
 * `make test` - run all tests

@@ -4,10 +4,10 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestApi_GetVersion(t *testing.T) {
 	api := Api{&config.Config{Version: "v0123"}}
-	assert.Equal(t, "v0123", api.GetVersion())
+	require.Equal(t, "v0123", api.GetVersion())
 }
