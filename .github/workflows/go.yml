@@ -1,9 +1,20 @@
 name: Hubble Commander CI
-on: [push]
+on: [ push ]
 
 jobs:
-  ci:
-    name: CI
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.29
+
+  build-test:
+    name: Build and test
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -33,13 +44,10 @@ jobs:
           submodules: recursive
       - name: Install Go dependencies
         run: make install
-      - name: Generate bindings
+      - name: Generate
         run: make generate
-      - name: Lint
-        uses: golangci/golangci-lint-action@v2
-        with:
-          version: v1.29
       - name: Build
         run: make build
       - name: Test
         run: make test
+    
