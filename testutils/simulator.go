@@ -55,7 +55,7 @@ func NewConfiguredSimulator(config SimulatorConfig) (*Simulator, error) {
 	}
 
 	sim := &Simulator{
-		Backend:  backends.NewSimulatedBackend(genesisAccounts, 12_500_000),
+		Backend:  backends.NewSimulatedBackend(genesisAccounts, *config.BlockGasLimit),
 		Config:   &config,
 		Account:  accounts[0],
 		Accounts: accounts,
