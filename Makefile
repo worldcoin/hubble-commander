@@ -9,7 +9,7 @@ compile:
 	go build -o build/hubble ./main
 
 generate:
-	cd hubble-contracts && npm install
+	cd hubble-contracts && npm ci
 	cd hubble-contracts && npm run compile
 	go generate
 

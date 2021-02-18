@@ -11,8 +11,10 @@ def generate_bindings(path, type, pkg, filename):
         obj = json.loads(data)
         with open('tmp.abi', 'w') as out:
             out.write(json.dumps(obj['abi']))
+        with open('tmp.bin', 'w') as out:
+            out.write(obj['bytecode'])
     os.system(
-        f'abigen --abi tmp.abi --pkg {pkg} --type {type} --out {filename}')
+        f'abigen --abi tmp.abi --bin tmp.bin --pkg {pkg} --type {type} --out {filename}')
 
 
 def generate(artifact, name):
@@ -38,3 +40,4 @@ generate('contracts/BLSAccountRegistry.sol/BLSAccountRegistry.json', 'AccountReg
 generate('@openzeppelin/contracts/token/ERC20/IERC20.sol/IERC20.json', 'ERC20')
 
 os.remove('tmp.abi')
+os.remove('tmp.bin')
