@@ -1,9 +1,9 @@
 CREATE TABLE "transaction" (
-    txHash    bytea,
-    fromIndex NUMERIC(78),
-    toIndex   NUMERIC(78),
+    tx_hash    bytea,
+    from_index NUMERIC(78),
+    to_index   NUMERIC(78),
     amount    NUMERIC(78),
     fee       NUMERIC(78),
     nonce     NUMERIC(78),
-    signature bytea
+    "signature" bytea
 );
