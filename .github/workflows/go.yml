@@ -1,5 +1,5 @@
 name: Hubble Commander CI
-on: [ push ]
+on: [push]
 
 jobs:
   lint:
@@ -34,14 +34,31 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.15
-      - name: Setup Node
-        uses: actions/setup-node@v2
-        with:
-          node-version: 14.x
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Install Go dependencies
+        run: make install
+      - name: Build
+        run: make build
+      - name: Test
+        run: make test
+
+  generate:
+    name: Generate
+    runs-on: ubuntu-latest
+    steps:
       - name: Checkout code
         uses: actions/checkout@v2
         with:
           submodules: recursive
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.15
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14.x
       - name: Install Go dependencies
         run: make install
       - name: Install abigen
@@ -49,10 +66,9 @@ jobs:
           sudo add-apt-repository -y ppa:ethereum/ethereum
           sudo apt-get update
           sudo apt-get install ethereum
-      - name: Generate
+      - name: Move existing files
+        run: mv contracts tmp-contracts
+      - name: Generate bindings
         run: make generate
-      - name: Build
-        run: make build
-      - name: Test
-        run: make test
-    
+      - name: Check diff
+        run: diff -r contracts tmp-contracts
