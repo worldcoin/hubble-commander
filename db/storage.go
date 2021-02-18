@@ -1,8 +1,6 @@
 package db
 
 import (
-	"fmt"
-
 	sq "github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/jmoiron/sqlx"
@@ -13,21 +11,20 @@ type Storage struct {
 }
 
 func (storage *Storage) AddTransaction(tx *models.Transaction) error {
-	sql, args, err := sq.
+	_, err := sq.
 		Insert("transaction").
 		Values(
 			tx.Hash.String(),
-			tx.FromIndex,
-			tx.ToIndex,
-			tx.Amount,
-			tx.Fee,
-			tx.Nonce,
+			tx.FromIndex.Text(10),
+			tx.ToIndex.Text(10),
+			tx.Amount.Text(10),
+			tx.Fee.Text(10),
+			tx.Nonce.Text(10),
 			tx.Signature,
-		).ToSql()
-	if err != nil {
-		return err
-	}
-	fmt.Println(sql)
-	fmt.Println(args)
-	return nil
+		).
+		RunWith(storage.db).
+		PlaceholderFormat(sq.Dollar).
+		Exec()
+
+	return err
 }

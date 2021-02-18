@@ -21,6 +21,12 @@ type StorageTestSuite struct {
 
 func (s *StorageTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
+
+	cfg := config.GetTestConfig()
+	migrator, err := GetMigrator(&cfg)
+	s.NoError(err)
+
+	s.NoError(migrator.Up())
 }
 
 func (s *StorageTestSuite) SetupTest() {
@@ -32,7 +38,13 @@ func (s *StorageTestSuite) SetupTest() {
 }
 
 func (s *StorageTestSuite) TearDownTest() {
-	err := s.db.Close()
+	cfg := config.GetTestConfig()
+	migrator, err := GetMigrator(&cfg)
+	s.NoError(err)
+
+	s.NoError(migrator.Down())
+
+	err = s.db.Close()
 	s.NoError(err)
 }
 
