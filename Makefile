@@ -27,6 +27,12 @@ start-db:
 teardown-db: stop-db
 	docker rm hubble-postgres
 
+migration-up:
+	migrate -source file://db/migrations/ -database "postgres://localhost:5432/hubble_test?sslmode=disable" up
+
+migration-down:
+	migrate -source file://db/migrations/ -database "postgres://localhost:5432/hubble_test?sslmode=disable" down
+
 run:
 	./build/hubble
 
@@ -36,4 +42,18 @@ lint:
 test:
 	go test -v ./...
 
-.PHONY: install clean compile generate build setup-db stop-db start-db teardown-db run lint test
+.PHONY: 
+	install 
+	clean 
+	compile 
+	generate 
+	build 
+	setup-db 
+	stop-db 
+	start-db 
+	teardown-db 
+	migrate-up 
+	migrate-down 
+	run 
+	lint 
+	test
