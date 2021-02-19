@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"testing"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
@@ -60,6 +61,15 @@ func (s *StorageTestSuite) TestAddTransaction() {
 	}
 	err := s.storage.AddTransaction(tx)
 	s.NoError(err)
+
+	query := sq.Select("*").From("transaction")
+	result, err := query.RunWith(s.storage.DB).Exec()
+	s.NoError(err)
+
+	txs, err := result.RowsAffected()
+	s.NoError(err)
+	
+	s.Equal(int(txs), 1)
 }
 
 func TestStorageTestSuite(t *testing.T) {

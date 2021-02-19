@@ -69,8 +69,10 @@ func GetMigrator(cfg *config.Config) (*migrate.Migrate, error) {
 		return nil, err
 	}
 
+	projectRoot := "../db"
+
 	return migrate.NewWithDatabaseInstance(
-		"file://./migrations",
+		fmt.Sprintf("file://%s/migrations", projectRoot),
 		"postgres",
 		driver,
 	)
