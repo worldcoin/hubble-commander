@@ -6,35 +6,57 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/testutils"
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestGetDB(t *testing.T) {
-	cfg := config.GetTestConfig()
-	db, err := testutils.GetTestDB(&cfg)
-	require.NoError(t, err)
-	defer func() { require.NoError(t, db.Close()) }()
-	require.NoError(t, db.Ping())
+type DbTestSuite struct {
+	*require.Assertions
+	suite.Suite
+	db     *sqlx.DB
+	config *config.Config
 }
 
-func TestMigrations(t *testing.T) {
+func (s *DbTestSuite) SetupSuite() {
+	s.Assertions = require.New(s.T())
+}
+
+func (s *DbTestSuite) SetupTest() {
 	cfg := config.GetTestConfig()
-	db, err := testutils.GetTestDB(&cfg)
-	require.NoError(t, err)
-	defer func() { require.NoError(t, db.Close()) }()
+	err := testutils.RecreateDatabase(&cfg)
+	s.NoError(err)
 
-	migrator, err := GetMigrator(&cfg)
-	require.NoError(t, err)
+	db, err := GetDB(&cfg)
+	s.NoError(err)
+	s.db = db
+	s.config = &cfg
+}
 
-	require.NoError(t, migrator.Up())
+func (s *DbTestSuite) TearDownTest() {
+	err := s.db.Close()
+	s.NoError(err)
+}
 
+func (s *DbTestSuite) TestGetDB() {
+	s.NoError(s.db.Ping())
+}
+
+func (s *DbTestSuite) TestMigrations() {
+	migrator, err := GetMigrator(s.config)
+	s.NoError(err)
+
+	s.NoError(migrator.Up())
 	_, err = sq.Select("*").From("transaction").
-		RunWith(db).Query()
-	require.NoError(t, err)
+		RunWith(s.db).Query()
+	s.NoError(err)
 
-	require.NoError(t, migrator.Down())
-
+	s.NoError(migrator.Down())
 	_, err = sq.Select("*").From("transaction").
-		RunWith(db).Query()
-	require.Error(t, err)
+		RunWith(s.db).Query()
+	s.Error(err)
+}
+
+func TestDbTestSuite(t *testing.T) {
+	suite.Run(t, new(DbTestSuite))
 }

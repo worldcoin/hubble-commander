@@ -1,13 +1,13 @@
-package db
+package storage
 
 import (
 	"math/big"
 	"testing"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/testutils"
+	. "github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -22,32 +22,17 @@ type StorageTestSuite struct {
 
 func (s *StorageTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
-
-	cfg := config.GetTestConfig()
-	migrator, err := GetMigrator(&cfg)
-	s.NoError(err)
-
-	s.NoError(migrator.Up())
 }
 
 func (s *StorageTestSuite) SetupTest() {
-	cfg := config.GetTestConfig()
-	db, err := testutils.GetTestDB(&cfg)
+	testDB, err := testutils.GetTestDB()
 	s.NoError(err)
-	s.db = db
-	storage, err := testutils.GetTestStorage()
-	s.NoError(err)
-	s.storage = storage
+	s.storage = &Storage{DB: testDB.DB}
+	s.db = testDB
 }
 
 func (s *StorageTestSuite) TearDownTest() {
-	cfg := config.GetTestConfig()
-	migrator, err := GetMigrator(&cfg)
-	s.NoError(err)
-
-	s.NoError(migrator.Down())
-
-	err = s.db.Close()
+	err := s.db.Teardown()
 	s.NoError(err)
 }
 
@@ -64,14 +49,26 @@ func (s *StorageTestSuite) TestAddTransaction() {
 	err := s.storage.AddTransaction(tx)
 	s.NoError(err)
 
-	query := sq.Select("*").From("transaction")
-	result, err := query.RunWith(s.storage.DB).Exec()
+	var hash string
+	err = sq.Select("*").From("transaction").
+		RunWith(s.storage.DB).
+		Scan(
+			&hash,
+			String(""),
+			String(""),
+			String(""),
+			String(""),
+			String(""),
+			String(""),
+		)
 	s.NoError(err)
+	s.Equal("0x0000000000000000000000000000000000000000000000000000000102030405", hash)
 
-	txs, err := result.RowsAffected()
+	var count int
+	err = sq.Select("count(*)").From("transaction").
+		RunWith(s.storage.DB).Scan(&count)
 	s.NoError(err)
-
-	s.Equal(int(txs), 1)
+	s.Equal(1, count)
 }
 
 func TestStorageTestSuite(t *testing.T) {

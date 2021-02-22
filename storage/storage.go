@@ -1,8 +1,9 @@
-package db
+package storage
 
 import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/jmoiron/sqlx"
 )
@@ -12,11 +13,11 @@ type Storage struct {
 }
 
 func NewStorage(cfg *config.Config) (*Storage, error) {
-	db, err := GetDB(cfg)
+	dbInstance, err := db.GetDB(cfg)
 	if err != nil {
 		return nil, err
 	}
-	return &Storage{DB: db}, nil
+	return &Storage{DB: dbInstance}, nil
 }
 
 func (storage *Storage) AddTransaction(tx *models.Transaction) error {

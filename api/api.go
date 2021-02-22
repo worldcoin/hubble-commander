@@ -5,17 +5,17 @@ import (
 	"net/http"
 
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/db"
+	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
 type Api struct {
 	cfg     *config.Config
-	storage *db.Storage
+	storage *st.Storage
 }
 
 func StartApiServer(cfg *config.Config) error {
-	storage, err := db.NewStorage(cfg)
+	storage, err := st.NewStorage(cfg)
 	if err != nil {
 		return err
 	}
@@ -30,7 +30,7 @@ func StartApiServer(cfg *config.Config) error {
 	return http.ListenAndServe(addr, nil)
 }
 
-func getApiServer(cfg *config.Config, storage *db.Storage) (*rpc.Server, error) {
+func getApiServer(cfg *config.Config, storage *st.Storage) (*rpc.Server, error) {
 	api := Api{cfg, storage}
 	server := rpc.NewServer()
 

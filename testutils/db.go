@@ -13,13 +13,15 @@ type TestDB struct {
 	Teardown func() error
 }
 
-func GetTestDB(cfg *config.Config) (*TestDB, error) {
-	err := RecreateDatabase(cfg)
+func GetTestDB() (*TestDB, error) {
+	cfg := config.GetTestConfig()
+
+	err := RecreateDatabase(&cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	migrator, err := db.GetMigrator(cfg)
+	migrator, err := db.GetMigrator(&cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +31,7 @@ func GetTestDB(cfg *config.Config) (*TestDB, error) {
 		return nil, err
 	}
 
-	dbInstance, err := db.GetDB(cfg)
+	dbInstance, err := db.GetDB(&cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -72,11 +74,6 @@ func RecreateDatabase(cfg *config.Config) error {
 	if err != nil {
 		return err
 	}
-
-	return nil
-}
-
-func migrateUp(cfg *config.Config) error {
 
 	return nil
 }
