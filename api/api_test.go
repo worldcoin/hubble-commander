@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,14 +21,10 @@ func TestStartApiServer(t *testing.T) {
 	var jsonStr = []byte(`{"jsonrpc": "2.0", "method": "hubble_getVersion", "id": "1"}`)
 	req, err := http.NewRequest("POST", "", bytes.NewBuffer(jsonStr))
 	require.NoError(t, err)
-
 	req.Header.Set("Content-Type", "application/json")
 
 	cfg := config.Config{Version: "v0123"}
-	dbInstance, err := db.GetTestDB(&cfg)
-	require.NoError(t, err)
-
-	server, err := getApiServer(&cfg, &db.Storage{DB: dbInstance})
+	server, err := getApiServer(&cfg, nil)
 	require.NoError(t, err)
 
 	w := httptest.NewRecorder()
