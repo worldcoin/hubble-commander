@@ -1,7 +1,7 @@
 package storage
 
 import (
-	db2 "github.com/Worldcoin/hubble-commander/db"
+	"github.com/Worldcoin/hubble-commander/db"
 	"math/big"
 	"testing"
 
@@ -17,7 +17,7 @@ type StorageTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage *Storage
-	db      *db2.TestDB
+	db      *db.TestDB
 }
 
 func (s *StorageTestSuite) SetupSuite() {
@@ -25,7 +25,7 @@ func (s *StorageTestSuite) SetupSuite() {
 }
 
 func (s *StorageTestSuite) SetupTest() {
-	testDB, err := db2.GetTestDB()
+	testDB, err := db.GetTestDB()
 	s.NoError(err)
 	s.storage = &Storage{DB: testDB.DB}
 	s.db = testDB
