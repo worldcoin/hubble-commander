@@ -1,12 +1,12 @@
 package api
 
 import (
+	db2 "github.com/Worldcoin/hubble-commander/db"
 	"math/big"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -16,7 +16,7 @@ type SendTransactionTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	api *Api
-	db  *testutils.TestDB
+	db  *db2.TestDB
 }
 
 func (s *SendTransactionTestSuite) SetupSuite() {
@@ -24,7 +24,7 @@ func (s *SendTransactionTestSuite) SetupSuite() {
 }
 
 func (s *SendTransactionTestSuite) SetupTest() {
-	testDB, err := testutils.GetTestDB()
+	testDB, err := db2.GetTestDB()
 	s.NoError(err)
 
 	storage := &st.Storage{DB: testDB.DB}

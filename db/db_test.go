@@ -5,7 +5,6 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -24,7 +23,7 @@ func (s *DbTestSuite) SetupSuite() {
 
 func (s *DbTestSuite) SetupTest() {
 	cfg := config.GetTestConfig()
-	err := testutils.RecreateDatabase(&cfg)
+	err := recreateDatabase(&cfg)
 	s.NoError(err)
 
 	db, err := GetDB(&cfg)
