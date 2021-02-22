@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/contracts/transfer"
+	"github.com/Worldcoin/hubble-commander/contracts/frontendtransfer"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
@@ -15,7 +15,7 @@ type EncoderTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	sim      *testutils.Simulator
-	contract *transfer.Transfer
+	contract *frontendtransfer.FrontendTransfer
 }
 
 func (s *EncoderTestSuite) SetupSuite() {
@@ -27,7 +27,7 @@ func (s *EncoderTestSuite) SetupTest() {
 	s.NoError(err)
 	s.sim = sim
 
-	_, _, contract, err := transfer.DeployTransfer(sim.Account, sim.Backend)
+	_, _, contract, err := frontendtransfer.DeployFrontendTransfer(sim.Account, sim.Backend)
 	s.NoError(err)
 	sim.Backend.Commit()
 	s.contract = contract
@@ -38,7 +38,7 @@ func (s *EncoderTestSuite) TearDownTest() {
 }
 
 func (s *EncoderTestSuite) TestEncodeTransferZero() {
-	tx := transfer.OffchainTransfer{
+	tx := frontendtransfer.OffchainTransfer{
 		TxType:    big.NewInt(0),
 		FromIndex: big.NewInt(0),
 		ToIndex:   big.NewInt(0),
@@ -54,7 +54,7 @@ func (s *EncoderTestSuite) TestEncodeTransferZero() {
 }
 
 func (s *EncoderTestSuite) TestEncodeTransferNonZero() {
-	tx := transfer.OffchainTransfer{
+	tx := frontendtransfer.OffchainTransfer{
 		TxType:    big.NewInt(1),
 		FromIndex: big.NewInt(2),
 		ToIndex:   big.NewInt(3),
