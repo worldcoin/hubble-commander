@@ -12,7 +12,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func createDatasource(host, port, user, password, dbname *string) string {
+func CreateDatasource(host, port, user, password, dbname *string) string {
 	datasource := make([]string, 5)
 	datasource = append(datasource, "sslmode=disable")
 
@@ -36,28 +36,12 @@ func createDatasource(host, port, user, password, dbname *string) string {
 }
 
 func GetDB(cfg *config.Config) (*sqlx.DB, error) {
-	datasource := createDatasource(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, &cfg.DBName)
+	datasource := CreateDatasource(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, &cfg.DBName)
 	return sqlx.Connect("postgres", datasource)
 }
 
-func GetTestDB(cfg *config.Config) (*sqlx.DB, error) {
-	datasource := createDatasource(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, nil)
-	db, err := sqlx.Connect("postgres", datasource)
-	if err != nil {
-		return nil, err
-	}
-
-	query := fmt.Sprintf("DROP DATABASE IF EXISTS %s", cfg.DBName)
-	_, _ = db.Exec(query) // ignore errors
-
-	query = fmt.Sprintf("CREATE DATABASE %s", cfg.DBName)
-	_, _ = db.Exec(query) // ignore errors
-
-	return GetDB(cfg)
-}
-
 func GetMigrator(cfg *config.Config) (*migrate.Migrate, error) {
-	datasource := createDatasource(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, &cfg.DBName)
+	datasource := CreateDatasource(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, &cfg.DBName)
 
 	db, err := sql.Open("postgres", datasource)
 	if err != nil {

@@ -15,15 +15,16 @@ type Api struct {
 }
 
 func StartApiServer(cfg *config.Config) error {
-	dbInstance, err := db.GetDB(cfg)
+	storage, err := db.NewStorage(cfg)
 	if err != nil {
 		return err
 	}
-	storage := &db.Storage{DB: dbInstance}
+
 	server, err := getApiServer(cfg, storage)
 	if err != nil {
 		return err
 	}
+
 	http.HandleFunc("/", server.ServeHTTP)
 	addr := fmt.Sprintf(":%s", cfg.Port)
 	return http.ListenAndServe(addr, nil)
@@ -32,9 +33,11 @@ func StartApiServer(cfg *config.Config) error {
 func getApiServer(cfg *config.Config, storage *db.Storage) (*rpc.Server, error) {
 	api := Api{cfg, storage}
 	server := rpc.NewServer()
+
 	err := server.RegisterName("hubble", &api)
 	if err != nil {
 		return nil, err
 	}
+
 	return server, nil
 }

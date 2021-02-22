@@ -7,8 +7,8 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -16,8 +16,8 @@ import (
 type StorageTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage Storage
-	db      *sqlx.DB
+	storage *Storage
+	db      *testutils.TestDB
 }
 
 func (s *StorageTestSuite) SetupSuite() {
@@ -32,10 +32,12 @@ func (s *StorageTestSuite) SetupSuite() {
 
 func (s *StorageTestSuite) SetupTest() {
 	cfg := config.GetTestConfig()
-	db, err := GetTestDB(&cfg)
+	db, err := testutils.GetTestDB(&cfg)
 	s.NoError(err)
 	s.db = db
-	s.storage = Storage{db}
+	storage, err := testutils.GetTestStorage()
+	s.NoError(err)
+	s.storage = storage
 }
 
 func (s *StorageTestSuite) TearDownTest() {
@@ -68,7 +70,7 @@ func (s *StorageTestSuite) TestAddTransaction() {
 
 	txs, err := result.RowsAffected()
 	s.NoError(err)
-	
+
 	s.Equal(int(txs), 1)
 }
 

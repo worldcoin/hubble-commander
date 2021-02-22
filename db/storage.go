@@ -11,24 +11,12 @@ type Storage struct {
 	DB *sqlx.DB
 }
 
-func GetTestStorage() (Storage, error) {
-	cfg := config.GetTestConfig()
-	dbInstance, err := GetTestDB(&cfg)
+func NewStorage(cfg *config.Config) (*Storage, error) {
+	db, err := GetDB(cfg)
 	if err != nil {
-		return Storage{}, err
+		return nil, err
 	}
-
-	migrator, err := GetMigrator(&cfg)
-	if err != nil {
-		return Storage{}, err
-	}
-
-	err = migrator.Up()
-	if err != nil {
-		return Storage{}, err
-	}
-
-	return Storage{dbInstance}, nil
+	return &Storage{DB: db}, nil
 }
 
 func (storage *Storage) AddTransaction(tx *models.Transaction) error {

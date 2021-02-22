@@ -5,12 +5,13 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGetDB(t *testing.T) {
 	cfg := config.GetTestConfig()
-	db, err := GetTestDB(&cfg)
+	db, err := testutils.GetTestDB(&cfg)
 	require.NoError(t, err)
 	defer func() { require.NoError(t, db.Close()) }()
 	require.NoError(t, db.Ping())
@@ -18,7 +19,7 @@ func TestGetDB(t *testing.T) {
 
 func TestMigrations(t *testing.T) {
 	cfg := config.GetTestConfig()
-	db, err := GetTestDB(&cfg)
+	db, err := testutils.GetTestDB(&cfg)
 	require.NoError(t, err)
 	defer func() { require.NoError(t, db.Close()) }()
 
