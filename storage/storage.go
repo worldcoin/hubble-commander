@@ -1,13 +1,23 @@
-package db
+package storage
 
 import (
 	sq "github.com/Masterminds/squirrel"
+	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/jmoiron/sqlx"
 )
 
 type Storage struct {
-	db *sqlx.DB
+	DB *sqlx.DB
+}
+
+func NewStorage(cfg *config.Config) (*Storage, error) {
+	dbInstance, err := db.GetDB(cfg)
+	if err != nil {
+		return nil, err
+	}
+	return &Storage{DB: dbInstance}, nil
 }
 
 func (storage *Storage) AddTransaction(tx *models.Transaction) error {
@@ -22,7 +32,7 @@ func (storage *Storage) AddTransaction(tx *models.Transaction) error {
 			tx.Nonce.Text(10),
 			tx.Signature,
 		).
-		RunWith(storage.db).
+		RunWith(storage.DB).
 		PlaceholderFormat(sq.Dollar).
 		Exec()
 

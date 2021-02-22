@@ -8,6 +8,6 @@ import (
 )
 
 func TestApi_GetVersion(t *testing.T) {
-	api := Api{&config.Config{Version: "v0123"}}
+	api := Api{&config.Config{Version: "v0123"}, nil}
 	require.Equal(t, "v0123", api.GetVersion())
 }

@@ -1,5 +1,5 @@
 CREATE TABLE "transaction" (
-    tx_hash    bytea,
+    tx_hash    bytea PRIMARY KEY,
     from_index NUMERIC(78),
     to_index   NUMERIC(78),
     amount    NUMERIC(78),
