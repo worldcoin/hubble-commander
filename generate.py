@@ -28,17 +28,18 @@ def generate(artifact, name):
 
 os.system('rm -rf contracts')
 
-generate('contracts/rollup/Rollup.sol/Rollup.json', 'Rollup')
 generate('contracts/proposers/POB.sol/ProofOfBurn.json', 'ProofOfBurn')
+generate('contracts/TokenRegistry.sol/TokenRegistry.json', 'TokenRegistry')
+generate('contracts/SpokeRegistry.sol/SpokeRegistry.json', 'SpokeRegistry')
+generate('contracts/Vault.sol/Vault.json', 'Vault')
 generate('contracts/DepositManager.sol/DepositManager.json', 'DepositManager')
 generate('contracts/BLSAccountRegistry.sol/BLSAccountRegistry.json', 'AccountRegistry')
 generate('contracts/Transfer.sol/Transfer.json', 'Transfer')
 generate('contracts/MassMigrations.sol/MassMigration.json', 'MassMigration')
 generate('contracts/Create2Transfer.sol/Create2Transfer.json', 'Create2Transfer')
+generate('contracts/rollup/Rollup.sol/Rollup.json', 'Rollup')
 
 generate('contracts/client/FrontendGeneric.sol/FrontendGeneric.json', 'FrontendGeneric')
-generate('contracts/TokenRegistry.sol/TokenRegistry.json', 'TokenRegistry')
-generate('contracts/proposers/BurnAuction.sol/BurnAuction.json', 'BurnAuction')
 generate('contracts/client/FrontendTransfer.sol/FrontendTransfer.json', 'FrontendTransfer')
 generate('contracts/client/FrontendMassMigration.sol/FrontendMassMigration.json', 'FrontendMassMigration')
 generate('contracts/client/FrontendCreate2Transfer.sol/FrontendCreate2Transfer.json', 'FrontendCreate2Transfer')
