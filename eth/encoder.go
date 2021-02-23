@@ -3,7 +3,7 @@ package eth
 import (
 	"log"
 
-	"github.com/Worldcoin/hubble-commander/contracts/frontendtransfer"
+	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
@@ -17,7 +17,7 @@ func init() {
 	tUint256 = t
 }
 
-func EncodeTransfer(tx frontendtransfer.OffchainTransfer) ([]uint8, error) {
+func EncodeTransfer(tx transfer.OffchainTransfer) ([]uint8, error) {
 	arguments := abi.Arguments{
 		{Name: "txType", Type: tUint256},
 		{Name: "fromIndex", Type: tUint256},
