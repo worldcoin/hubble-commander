@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
+	"github.com/Worldcoin/hubble-commander/testutils/deployer"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
@@ -27,10 +28,9 @@ func (s *EncoderTestSuite) SetupTest() {
 	s.NoError(err)
 	s.sim = sim
 
-	_, _, contract, err := transfer.DeployFrontendTransfer(sim.Account, sim.Backend)
+	contracts, err := deployer.DeployFrontend(sim)
 	s.NoError(err)
-	sim.Backend.Commit()
-	s.contract = contract
+	s.contract = contracts.FrontendTransfer
 }
 
 func (s *EncoderTestSuite) TearDownTest() {
