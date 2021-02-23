@@ -7,7 +7,7 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
-func (a *Api) SendTransaction(incTx models.IncomingTransaction) (*common.Hash, error) {
+func (a *API) SendTransaction(incTx models.IncomingTransaction) (*common.Hash, error) {
 	hash, err := rlpHash(incTx)
 	if err != nil {
 		return nil, err

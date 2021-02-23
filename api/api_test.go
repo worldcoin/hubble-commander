@@ -12,8 +12,8 @@ import (
 )
 
 type Result struct {
-	JsonRpc string `json:"jsonrpc"`
-	Id      string `json:"id"`
+	JSONRPC string `json:"jsonrpc"`
+	ID      string `json:"id"`
 	Result  string `json:"result"`
 }
 
@@ -24,7 +24,7 @@ func TestStartApiServer(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	cfg := config.Config{Version: "v0123"}
-	server, err := getApiServer(&cfg, nil)
+	server, err := getAPIServer(&cfg, nil)
 	require.NoError(t, err)
 
 	w := httptest.NewRecorder()

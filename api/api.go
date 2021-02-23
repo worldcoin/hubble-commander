@@ -9,18 +9,18 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
-type Api struct {
+type API struct {
 	cfg     *config.Config
 	storage *st.Storage
 }
 
-func StartApiServer(cfg *config.Config) error {
+func StartAPIServer(cfg *config.Config) error {
 	storage, err := st.NewStorage(cfg)
 	if err != nil {
 		return err
 	}
 
-	server, err := getApiServer(cfg, storage)
+	server, err := getAPIServer(cfg, storage)
 	if err != nil {
 		return err
 	}
@@ -30,8 +30,8 @@ func StartApiServer(cfg *config.Config) error {
 	return http.ListenAndServe(addr, nil)
 }
 
-func getApiServer(cfg *config.Config, storage *st.Storage) (*rpc.Server, error) {
-	api := Api{cfg, storage}
+func getAPIServer(cfg *config.Config, storage *st.Storage) (*rpc.Server, error) {
+	api := API{cfg, storage}
 	server := rpc.NewServer()
 
 	err := server.RegisterName("hubble", &api)

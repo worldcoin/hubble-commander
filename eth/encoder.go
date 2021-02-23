@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
+// nolint
 var tUint256 abi.Type
 
 func init() {

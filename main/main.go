@@ -9,5 +9,5 @@ import (
 
 func main() {
 	cfg := config.GetConfig()
-	log.Fatal(api.StartApiServer(&cfg))
+	log.Fatal(api.StartAPIServer(&cfg))
 }

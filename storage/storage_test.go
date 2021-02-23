@@ -1,9 +1,9 @@
 package storage
 
 import (
-	"github.com/Worldcoin/hubble-commander/db"
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"

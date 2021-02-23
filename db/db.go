@@ -8,6 +8,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
+
+	// Needed for migrator
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jmoiron/sqlx"
 )
@@ -32,7 +34,7 @@ func CreateDatasource(host, port, user, password, dbname *string) string {
 		datasource = append(datasource, fmt.Sprintf("dbname=%s", *dbname))
 	}
 
-	return strings.Join(datasource[:], " ")
+	return strings.Join(datasource, " ")
 }
 
 func GetDB(cfg *config.Config) (*sqlx.DB, error) {
