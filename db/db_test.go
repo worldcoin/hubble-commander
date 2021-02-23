@@ -46,16 +46,18 @@ func (s *DBTestSuite) TestMigrations() {
 	s.NoError(err)
 
 	s.NoError(migrator.Up())
-	rows, err := sq.Select("*").From("transaction").
+
+	// nolint
+	_, err = sq.Select("*").From("transaction").
 		RunWith(s.db).Query()
 	s.NoError(err)
-	rows.Close()
 
 	s.NoError(migrator.Down())
-	rows, err = sq.Select("*").From("transaction").
+
+	// nolint
+	_, err = sq.Select("*").From("transaction").
 		RunWith(s.db).Query()
 	s.Error(err)
-	rows.Close()
 }
 
 func TestDbTestSuite(t *testing.T) {
