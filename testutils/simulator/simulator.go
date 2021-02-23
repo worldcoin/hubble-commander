@@ -1,4 +1,4 @@
-package testutils
+package simulator
 
 import (
 	"math/big"

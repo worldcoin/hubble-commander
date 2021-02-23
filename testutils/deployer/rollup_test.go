@@ -1,8 +1,10 @@
-package testutils
+package deployer
 
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/testutils/simulator"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -10,7 +12,7 @@ import (
 type DeployerTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	sim *Simulator
+	sim *simulator.Simulator
 }
 
 func (s *DeployerTestSuite) SetupSuite() {
@@ -18,7 +20,7 @@ func (s *DeployerTestSuite) SetupSuite() {
 }
 
 func (s *DeployerTestSuite) SetupTest() {
-	sim, err := NewSimulator()
+	sim, err := simulator.NewSimulator()
 	s.NoError(err)
 	s.sim = sim
 }
@@ -27,8 +29,15 @@ func (s *DeployerTestSuite) TearDownTest() {
 	s.sim.Close()
 }
 
-func (s *DeployerTestSuite) TestEncodeTransferZero() {
+func (s *DeployerTestSuite) TestNewRollup() {
+	rollupContracts, err := NewRollup(s.sim)
+	s.NoError(err)
 
+	id, err := rollupContracts.Rollup.AppID(&bind.CallOpts{})
+	s.NoError(err)
+
+	var emptyBytes [32]byte
+	s.NotEqual(emptyBytes, id)
 }
 
 func TestDeployerTestSuite(t *testing.T) {

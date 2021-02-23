@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/contracts/frontendtransfer"
-	"github.com/Worldcoin/hubble-commander/testutils"
+	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -14,7 +14,7 @@ import (
 type EncoderTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	sim      *testutils.Simulator
+	sim      *simulator.Simulator
 	contract *frontendtransfer.FrontendTransfer
 }
 
@@ -23,7 +23,7 @@ func (s *EncoderTestSuite) SetupSuite() {
 }
 
 func (s *EncoderTestSuite) SetupTest() {
-	sim, err := testutils.NewSimulator()
+	sim, err := simulator.NewSimulator()
 	s.NoError(err)
 	s.sim = sim
 
