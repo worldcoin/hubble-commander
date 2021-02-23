@@ -30,6 +30,7 @@ func (a *Api) SendTransaction(incTx models.IncomingTransaction) (*common.Hash, e
 	return hash, nil
 }
 
+// TODO: Test it with the smart contract encode method.
 func rlpHash(x interface{}) (*common.Hash, error) {
 	hw := sha3.NewLegacyKeccak256()
 	if err := rlp.Encode(hw, x); err != nil {
