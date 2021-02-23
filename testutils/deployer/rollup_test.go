@@ -30,7 +30,7 @@ func (s *DeployerTestSuite) TearDownTest() {
 }
 
 func (s *DeployerTestSuite) TestNewRollup() {
-	rollupContracts, err := NewRollup(s.sim)
+	rollupContracts, err := DeployRollup(s.sim)
 	s.NoError(err)
 
 	id, err := rollupContracts.Rollup.AppID(&bind.CallOpts{})

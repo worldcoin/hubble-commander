@@ -39,11 +39,11 @@ type RollupContracts struct {
 	Rollup          *rollup.Rollup
 }
 
-func NewRollup(sim *simulator.Simulator) (*RollupContracts, error) {
-	return NewConfiguredRollup(sim, DeploymentConfig{})
+func DeployRollup(sim *simulator.Simulator) (*RollupContracts, error) {
+	return DeployConfiguredRollup(sim, DeploymentConfig{})
 }
 
-func NewConfiguredRollup(sim *simulator.Simulator, config DeploymentConfig) (*RollupContracts, error) {
+func DeployConfiguredRollup(sim *simulator.Simulator, config DeploymentConfig) (*RollupContracts, error) {
 	fillWithDefaults(&config)
 	deployer := sim.Account
 
