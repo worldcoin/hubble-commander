@@ -1,5 +1,5 @@
 -- the root hash is stored with empty merkle_path
-CREATE TABLE "state" (
+CREATE TABLE "state_node" (
     merkle_path  BIT VARYING(32) primary key,
     data_hash    BYTEA
 );
