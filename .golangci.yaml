@@ -104,10 +104,11 @@ linters:
     - gci
     - gochecknoglobals
     - ifshort
+    - revive
+    - durationcheck
 
   # don't enable:
   # - asciicheck
-  # - gochecknoglobals
   # - gocognit
   # - godot
   # - godox
@@ -117,7 +118,6 @@ linters:
   # - nestif
   # - prealloc
   # - testpackage
-  # - revive
   # - wsl
 
 issues:
