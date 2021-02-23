@@ -9,7 +9,7 @@ CREATE TABLE "state_leaf" (
     data_hash      BYTEA primary key,
     account_index  NUMERIC(78),
     token_index    NUMERIC(78),
-    amount         NUMERIC(78),
+    balance        NUMERIC(78),
     nonce          NUMERIC(78)
 );
 
