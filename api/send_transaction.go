@@ -15,11 +15,11 @@ func (a *Api) SendTransaction(incTx models.IncomingTransaction) (*common.Hash, e
 
 	tx := &models.Transaction{
 		Hash:      *hash,
-		FromIndex: incTx.FromIndex,
-		ToIndex:   incTx.ToIndex,
-		Amount:    incTx.Amount,
-		Fee:       incTx.Fee,
-		Nonce:     incTx.Nonce,
+		FromIndex: models.MakeUint256FromBig(*incTx.FromIndex),
+		ToIndex:   models.MakeUint256FromBig(*incTx.ToIndex),
+		Amount:    models.MakeUint256FromBig(*incTx.Amount),
+		Fee:       models.MakeUint256FromBig(*incTx.Fee),
+		Nonce:     models.MakeUint256FromBig(*incTx.Nonce),
 		Signature: incTx.Signature,
 	}
 	err = a.storage.AddTransaction(tx)
@@ -30,6 +30,7 @@ func (a *Api) SendTransaction(incTx models.IncomingTransaction) (*common.Hash, e
 	return hash, nil
 }
 
+// TODO: Test it with the smart contract encode method.
 func rlpHash(x interface{}) (*common.Hash, error) {
 	hw := sha3.NewLegacyKeccak256()
 	if err := rlp.Encode(hw, x); err != nil {

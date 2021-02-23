@@ -5,6 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -24,12 +25,12 @@ func (storage *Storage) AddTransaction(tx *models.Transaction) error {
 	_, err := sq.
 		Insert("transaction").
 		Values(
-			tx.Hash.String(),
-			tx.FromIndex.Text(10),
-			tx.ToIndex.Text(10),
-			tx.Amount.Text(10),
-			tx.Fee.Text(10),
-			tx.Nonce.Text(10),
+			tx.Hash,
+			tx.FromIndex,
+			tx.ToIndex,
+			tx.Amount,
+			tx.Fee,
+			tx.Nonce,
 			tx.Signature,
 		).
 		RunWith(storage.DB).
@@ -37,4 +38,13 @@ func (storage *Storage) AddTransaction(tx *models.Transaction) error {
 		Exec()
 
 	return err
+}
+
+func (storage *Storage) GetTransaction(hash common.Hash) (*models.Transaction, error) {
+	res := make([]models.Transaction, 0, 1)
+	err := storage.DB.Select(&res, "SELECT * FROM transaction WHERE tx_hash = $1", hash)
+	if err != nil {
+		return nil, err
+	}
+	return &res[0], nil
 }

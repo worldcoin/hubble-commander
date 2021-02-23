@@ -2,12 +2,9 @@ package storage
 
 import (
 	"github.com/Worldcoin/hubble-commander/db"
-	"math/big"
 	"testing"
 
-	sq "github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
-	. "github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -39,36 +36,20 @@ func (s *StorageTestSuite) TearDownTest() {
 func (s *StorageTestSuite) TestAddTransaction() {
 	tx := &models.Transaction{
 		Hash:      common.BytesToHash([]byte{1, 2, 3, 4, 5}),
-		FromIndex: big.NewInt(1),
-		ToIndex:   big.NewInt(2),
-		Amount:    big.NewInt(1000),
-		Fee:       big.NewInt(100),
-		Nonce:     big.NewInt(0),
+		FromIndex: models.MakeUint256(1),
+		ToIndex:   models.MakeUint256(2),
+		Amount:    models.MakeUint256(1000),
+		Fee:       models.MakeUint256(100),
+		Nonce:     models.MakeUint256(0),
 		Signature: []byte{1, 2, 3, 4, 5},
 	}
 	err := s.storage.AddTransaction(tx)
 	s.NoError(err)
 
-	var hash string
-	err = sq.Select("*").From("transaction").
-		RunWith(s.storage.DB).
-		Scan(
-			&hash,
-			String(""),
-			String(""),
-			String(""),
-			String(""),
-			String(""),
-			String(""),
-		)
+	res, err := s.storage.GetTransaction(tx.Hash)
 	s.NoError(err)
-	s.Equal("0x0000000000000000000000000000000000000000000000000000000102030405", hash)
 
-	var count int
-	err = sq.Select("count(*)").From("transaction").
-		RunWith(s.storage.DB).Scan(&count)
-	s.NoError(err)
-	s.Equal(1, count)
+	s.Equal(tx, res)
 }
 
 func TestStorageTestSuite(t *testing.T) {
