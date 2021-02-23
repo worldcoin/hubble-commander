@@ -13,7 +13,7 @@ CREATE TABLE "state_leaf" (
     nonce          NUMERIC(78)
 );
 
-CREATE TABLE "state_updates" (
+CREATE TABLE "state_update" (
     id            BIGSERIAL primary key,
     merkle_path   BIT(32),
     current_hash  BYTEA,
