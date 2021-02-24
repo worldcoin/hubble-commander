@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/joho/godotenv"
 )
 
@@ -34,10 +34,10 @@ type Config struct {
 func GetConfig() Config {
 	return Config{
 		Version:    "dev-0.1.0",
-		Port:       *getEnvOrDefault("HUBBLE_PORT", utils.String("8080")),
+		Port:       *getEnvOrDefault("HUBBLE_PORT", ref.String("8080")),
 		DBHost:     getEnvOrDefault("HUBBLE_DBHOST", nil),
 		DBPort:     getEnvOrDefault("HUBBLE_DBPORT", nil),
-		DBName:     *getEnvOrDefault("HUBBLE_DBNAME", utils.String("hubble")),
+		DBName:     *getEnvOrDefault("HUBBLE_DBNAME", ref.String("hubble")),
 		DBUser:     getEnvOrDefault("HUBBLE_DBUSER", nil),
 		DBPassword: getEnvOrDefault("HUBBLE_DBPASSWORD", nil),
 	}
@@ -46,10 +46,10 @@ func GetConfig() Config {
 func GetTestConfig() Config {
 	return Config{
 		Version:    "dev-0.1.0",
-		Port:       *getEnvOrDefault("HUBBLE_PORT", utils.String("8080")),
+		Port:       *getEnvOrDefault("HUBBLE_PORT", ref.String("8080")),
 		DBHost:     getEnvOrDefault("HUBBLE_DBHOST", nil),
 		DBPort:     getEnvOrDefault("HUBBLE_DBPORT", nil),
-		DBName:     *getEnvOrDefault("HUBBLE_DBNAME", utils.String("hubble_test")),
+		DBName:     *getEnvOrDefault("HUBBLE_DBNAME", ref.String("hubble_test")),
 		DBUser:     getEnvOrDefault("HUBBLE_DBUSER", nil),
 		DBPassword: getEnvOrDefault("HUBBLE_DBPASSWORD", nil),
 	}

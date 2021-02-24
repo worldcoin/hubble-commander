@@ -3,7 +3,7 @@ package simulator
 import (
 	"math/big"
 
-	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
 	"github.com/ethereum/go-ethereum/core"
@@ -66,9 +66,9 @@ func NewConfiguredSimulator(config SimulatorConfig) (*Simulator, error) {
 
 func fillWithDefaults(config *SimulatorConfig) {
 	if config.NumAccounts == nil {
-		config.NumAccounts = utils.Uint64(10)
+		config.NumAccounts = ref.Uint64(10)
 	}
 	if config.BlockGasLimit == nil {
-		config.BlockGasLimit = utils.Uint64(12_500_000)
+		config.BlockGasLimit = ref.Uint64(12_500_000)
 	}
 }

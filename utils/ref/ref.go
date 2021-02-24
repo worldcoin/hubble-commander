@@ -1,12 +1,10 @@
-package utils
+package ref
 
 import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
 )
-
-// TODO move this to ref package for better code readability
 
 func Bool(b bool) *bool {
 	return &b
