@@ -1,6 +1,10 @@
-package utils
+package ref
 
-import "time"
+import (
+	"time"
+
+	"github.com/Worldcoin/hubble-commander/models"
+)
 
 func Bool(b bool) *bool {
 	return &b
@@ -24,4 +28,8 @@ func String(s string) *string {
 
 func Duration(d time.Duration) *time.Duration {
 	return &d
+}
+
+func Uint256(u models.Uint256) *models.Uint256 {
+	return &u
 }

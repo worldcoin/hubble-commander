@@ -4,8 +4,9 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/contracts/transfer"
-	"github.com/Worldcoin/hubble-commander/testutils"
+	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
+	"github.com/Worldcoin/hubble-commander/testutils/deployer"
+	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -14,8 +15,8 @@ import (
 type EncoderTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	sim      *testutils.Simulator
-	contract *transfer.Transfer
+	sim      *simulator.Simulator
+	contract *transfer.FrontendTransfer
 }
 
 func (s *EncoderTestSuite) SetupSuite() {
@@ -23,14 +24,13 @@ func (s *EncoderTestSuite) SetupSuite() {
 }
 
 func (s *EncoderTestSuite) SetupTest() {
-	sim, err := testutils.NewSimulator()
+	sim, err := simulator.NewSimulator()
 	s.NoError(err)
 	s.sim = sim
 
-	_, _, contract, err := transfer.DeployTransfer(sim.Account, sim.Backend)
+	contracts, err := deployer.DeployFrontend(sim)
 	s.NoError(err)
-	sim.Backend.Commit()
-	s.contract = contract
+	s.contract = contracts.FrontendTransfer
 }
 
 func (s *EncoderTestSuite) TearDownTest() {

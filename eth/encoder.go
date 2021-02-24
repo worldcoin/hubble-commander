@@ -3,7 +3,7 @@ package eth
 import (
 	"log"
 
-	"github.com/Worldcoin/hubble-commander/contracts/transfer"
+	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 

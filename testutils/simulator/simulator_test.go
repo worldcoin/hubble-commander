@@ -1,10 +1,10 @@
-package testutils
+package simulator
 
 import (
 	"math/big"
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/contracts/transfer"
+	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
 	"github.com/stretchr/testify/require"
 )
 
@@ -13,7 +13,7 @@ func TestSimulator(t *testing.T) {
 	require.NoError(t, err)
 	defer sim.Close()
 
-	_, _, contract, err := transfer.DeployTransfer(sim.Account, sim.Backend)
+	_, _, contract, err := transfer.DeployFrontendTransfer(sim.Account, sim.Backend)
 	require.NoError(t, err)
 
 	sim.Backend.Commit()
