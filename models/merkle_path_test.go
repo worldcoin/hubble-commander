@@ -97,3 +97,60 @@ func TestSubCreatesNewStruct(t *testing.T) {
 
 	require.NotEqual(t, a, b)
 }
+
+func TestSiblingOfLeft(t *testing.T) {
+	a, err := NewMerklePath("0000")
+	require.NoError(t, err)
+
+	b, err := a.Sibling()
+	require.NoError(t, err)
+
+	expected, err := NewMerklePath("0001")
+	require.NoError(t, err)
+
+	require.Equal(t, expected, b)
+}
+
+func TestSiblingOfRight(t *testing.T) {
+	a, err := NewMerklePath("0001")
+	require.NoError(t, err)
+
+	b, err := a.Sibling()
+	require.NoError(t, err)
+
+	expected, err := NewMerklePath("0000")
+	require.NoError(t, err)
+
+	require.Equal(t, expected, b)
+}
+
+func TestSiblingUint32(t *testing.T) {
+	a, err := NewMerklePath("11111111111111111111111111111111")
+	require.NoError(t, err)
+
+	b, err := a.Sibling()
+	require.NoError(t, err)
+
+	expected, err := NewMerklePath("11111111111111111111111111111110")
+	require.NoError(t, err)
+
+	require.Equal(t, expected, b)
+}
+
+func TestSiblingOfRoot(t *testing.T) {
+	root, err := NewMerklePath("")
+	require.NoError(t, err)
+
+	_, err = root.Sibling()
+	require.Error(t, err)
+}
+
+func TestSiblingCreatesNewStruct(t *testing.T) {
+	a, err := NewMerklePath("0010")
+	require.NoError(t, err)
+
+	b, err := a.Sibling()
+	require.NoError(t, err)
+
+	require.NotEqual(t, a, b)
+}

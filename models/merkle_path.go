@@ -94,3 +94,11 @@ func (p *MerklePath) Child(right bool) (*MerklePath, error) {
 		depth: p.depth + 1,
 	}, nil
 }
+
+func (p *MerklePath) Sibling() (*MerklePath, error) {
+	if p.path%2 == 0 {
+		return p.Add(1)
+	} else {
+		return p.Sub(1)
+	}
+}
