@@ -87,7 +87,6 @@ linters:
     - varcheck
     - whitespace
     - gci
-    - gochecknoglobals
     - ifshort
     - revive
     - durationcheck

@@ -12,7 +12,7 @@ type MerklePath struct {
 }
 
 func NewMerklePath(bits string) (*MerklePath, error) {
-	if len(bits) == 0 {
+	if bits == "" {
 		return &MerklePath{}, nil
 	}
 	if len(bits) > 32 {
@@ -36,7 +36,7 @@ func (p *MerklePath) Scan(src interface{}) error {
 	if !ok {
 		return fmt.Errorf("can't scan %T into Uint256", src)
 	}
-	p, err := NewMerklePath(value)
+	_, err := NewMerklePath(value)
 	if err != nil {
 		return err
 	}
@@ -85,7 +85,7 @@ func (p *MerklePath) Child(right bool) (*MerklePath, error) {
 	if p.depth >= 32 {
 		return nil, fmt.Errorf("cannot have a path deeper then 32")
 	}
-	var bit uint32 = 0
+	var bit uint32
 	if right {
 		bit = 1
 	}
@@ -98,7 +98,6 @@ func (p *MerklePath) Child(right bool) (*MerklePath, error) {
 func (p *MerklePath) Sibling() (*MerklePath, error) {
 	if p.path%2 == 0 {
 		return p.Add(1)
-	} else {
-		return p.Sub(1)
 	}
+	return p.Sub(1)
 }

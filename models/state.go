@@ -18,7 +18,7 @@ type StateLeaf struct {
 }
 
 type StateUpdate struct {
-	Id          uint64
+	ID          uint64
 	MerklePath  string      `db:"merkle_path"`
 	CurrentHash common.Hash `db:"current_hash"`
 	CurrentRoot common.Hash `db:"current_root"`
