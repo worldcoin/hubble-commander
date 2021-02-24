@@ -1,8 +1,9 @@
 package models
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewMerklePathLength(t *testing.T) {
@@ -48,6 +49,16 @@ func TestAddToRoot(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestAddCreatesNewStruct(t *testing.T) {
+	a, err := NewMerklePath("0000")
+	require.NoError(t, err)
+
+	b, err := a.Add(1)
+	require.NoError(t, err)
+
+	require.NotEqual(t, a, b)
+}
+
 func TestSubOne(t *testing.T) {
 	a, err := NewMerklePath("0010")
 	require.NoError(t, err)
@@ -67,4 +78,14 @@ func TestSubUnderflow(t *testing.T) {
 
 	_, err = a.Sub(1)
 	require.Error(t, err)
+}
+
+func TestSubCreatesNewStruct(t *testing.T) {
+	a, err := NewMerklePath("0010")
+	require.NoError(t, err)
+
+	b, err := a.Sub(1)
+	require.NoError(t, err)
+
+	require.NotEqual(t, a, b)
 }

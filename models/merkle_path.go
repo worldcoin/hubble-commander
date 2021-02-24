@@ -58,24 +58,20 @@ func (p MerklePath) Add(value uint32) (*MerklePath, error) {
 	if newPath > maxNodeIndex {
 		return nil, fmt.Errorf("invalid index %d at depth %d", newPath, p.depth)
 	}
-	return &MerklePath{
-		path:  newPath,
-		depth: p.depth,
-	}, nil
+	p.path = newPath
+	return &p, nil
 }
 
-func (p *MerklePath) Sub(value uint32) (*MerklePath, error) {
+func (p MerklePath) Sub(value uint32) (*MerklePath, error) {
 	newPath := p.path - value
 	if newPath < 0 || newPath > 1<<p.depth {
 		return nil, fmt.Errorf("invalid index %d at depth %d", newPath, p.depth)
 	}
-	return &MerklePath{
-		path:  newPath,
-		depth: p.depth,
-	}, nil
+	p.path = newPath
+	return &p, nil
 }
 
-func (p MerklePath) Parent() (*MerklePath, error) {
+func (p *MerklePath) Parent() (*MerklePath, error) {
 	if p.depth == 0 {
 		return nil, fmt.Errorf("cannot get parent at depth 0")
 	}
@@ -85,7 +81,7 @@ func (p MerklePath) Parent() (*MerklePath, error) {
 	}, nil
 }
 
-func (p MerklePath) Child(right bool) (*MerklePath, error) {
+func (p *MerklePath) Child(right bool) (*MerklePath, error) {
 	if p.depth >= 32 {
 		return nil, fmt.Errorf("cannot have a path deeper then 32")
 	}
