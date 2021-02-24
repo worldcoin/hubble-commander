@@ -64,8 +64,8 @@ func (p MerklePath) Add(value uint32) (*MerklePath, error) {
 
 func (p MerklePath) Sub(value uint32) (*MerklePath, error) {
 	newPath := p.path - value
-	if newPath < 0 || newPath > 1<<p.depth {
-		return nil, fmt.Errorf("invalid index %d at depth %d", newPath, p.depth)
+	if newPath > p.path {
+		return nil, fmt.Errorf("uint32 underflow")
 	}
 	p.path = newPath
 	return &p, nil

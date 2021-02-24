@@ -73,10 +73,18 @@ func TestSubOne(t *testing.T) {
 }
 
 func TestSubUnderflow(t *testing.T) {
-	a, err := NewMerklePath("0001")
+	a, err := NewMerklePath("0000")
 	require.NoError(t, err)
 
 	_, err = a.Sub(1)
+	require.Error(t, err)
+}
+
+func TestSubFromRoot(t *testing.T) {
+	root, err := NewMerklePath("")
+	require.NoError(t, err)
+
+	_, err = root.Sub(1)
 	require.Error(t, err)
 }
 
