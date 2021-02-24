@@ -1,5 +1,5 @@
 package api
 
-func (a *Api) GetVersion() string {
+func (a *API) GetVersion() string {
 	return a.cfg.Version
 }
