@@ -37,7 +37,6 @@ func (s *EncoderTestSuite) TearDownTest() {
 	s.sim.Close()
 }
 
-// nolint
 func (s *EncoderTestSuite) TestEncodeTransferZero() {
 	tx := transfer.OffchainTransfer{
 		TxType:    big.NewInt(0),
@@ -54,7 +53,6 @@ func (s *EncoderTestSuite) TestEncodeTransferZero() {
 	s.Equal(expected, bytes)
 }
 
-// nolint
 func (s *EncoderTestSuite) TestEncodeTransferNonZero() {
 	tx := transfer.OffchainTransfer{
 		TxType:    big.NewInt(1),

@@ -12,7 +12,8 @@ import (
 )
 
 type Result struct {
-	JSONRPC string `json:"jsonrpc"`
+	// nolint
+	JsonRpc string `json:"jsonrpc"`
 	ID      string `json:"id"`
 	Result  string `json:"result"`
 }
