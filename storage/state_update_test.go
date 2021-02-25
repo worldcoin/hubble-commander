@@ -36,7 +36,7 @@ func (s *StateUpdateTestSuite) TearDownTest() {
 func (s *StateUpdateTestSuite) TestAddStateUpdate() {
 	update := &models.StateUpdate{
 		ID:          1,
-		MerklePath:  "11111111111111111111111111111111",
+		MerklePath:  "00001111111111001111111111111111",
 		CurrentHash: common.BytesToHash([]byte{1, 2}),
 		CurrentRoot: common.BytesToHash([]byte{1, 2, 3}),
 		PrevHash:    common.BytesToHash([]byte{1, 2, 3, 4}),
