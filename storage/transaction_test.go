@@ -54,11 +54,11 @@ func (s *TransactionTestSuite) TestAddTransaction() {
 
 func (s *TransactionTestSuite) TestAddLeaf() {
 	leaf := &models.StateLeaf{
-		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
+		DataHash:     common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		AccountIndex: models.MakeUint256(1),
-		TokenIndex: models.MakeUint256(1),
-		Balance: models.MakeUint256(420),
-		Nonce: models.MakeUint256(0),
+		TokenIndex:   models.MakeUint256(1),
+		Balance:      models.MakeUint256(420),
+		Nonce:        models.MakeUint256(0),
 	}
 	err := s.storage.AddLeaf(leaf)
 	s.NoError(err)
@@ -67,6 +67,24 @@ func (s *TransactionTestSuite) TestAddLeaf() {
 	s.NoError(err)
 
 	s.Equal(leaf, res)
+}
+
+func (s *TransactionTestSuite) TestAddUpdate() {
+	update := &models.StateUpdate{
+		ID:          1,
+		MerklePath:  "11111111111111111111111111111111",
+		CurrentHash: common.BytesToHash([]byte{1, 2}),
+		CurrentRoot: common.BytesToHash([]byte{1, 2, 3}),
+		PrevHash:    common.BytesToHash([]byte{1, 2, 3, 4}),
+		PrevRoot:    common.BytesToHash([]byte{1, 2, 3, 4, 5}),
+	}
+	err := s.storage.AddUpdate(update)
+	s.NoError(err)
+
+	res, err := s.storage.GetUpdate(1)
+	s.NoError(err)
+
+	s.Equal(update, res)
 }
 
 func TestTransactionTestSuite(t *testing.T) {
