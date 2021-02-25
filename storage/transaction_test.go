@@ -52,6 +52,20 @@ func (s *TransactionTestSuite) TestAddTransaction() {
 	s.Equal(tx, res)
 }
 
+func (s *TransactionTestSuite) TestAddStateNode() {
+	node := &models.StateNode{
+		MerklePath: "0000111",
+		DataHash:   common.BytesToHash([]byte{1, 2, 3, 4, 5}),
+	}
+	err := s.storage.AddStateNode(node)
+	s.NoError(err)
+
+	res, err := s.storage.GetStateNode(node.DataHash)
+	s.NoError(err)
+
+	s.Equal(node, res)
+}
+
 func (s *TransactionTestSuite) TestAddStateLeaf() {
 	leaf := &models.StateLeaf{
 		DataHash:     common.BytesToHash([]byte{1, 2, 3, 4, 5}),
