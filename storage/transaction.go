@@ -26,11 +26,10 @@ func (s *Storage) AddTransaction(tx *models.Transaction) error {
 func (s *Storage) GetTransaction(hash common.Hash) (*models.Transaction, error) {
 	res := make([]models.Transaction, 0, 1)
 	err := storage.Query(
-		&res,
 		squirrel.Select("*").
 			From("transaction").
 			Where(squirrel.Eq{"tx_hash": hash}),
-	)
+	).Into(&res)
 	if err != nil {
 		return nil, err
 	}
@@ -41,14 +40,25 @@ func (s *Storage) GetTransaction(hash common.Hash) (*models.Transaction, error) 
 	return &res[0], nil
 }
 
-func (storage *Storage) Query(dest interface{}, query squirrel.SelectBuilder) error {
-	sql, args, err := query.PlaceholderFormat(squirrel.Dollar).ToSql()
-	if err != nil {
-		return err
+type QueryBuilder struct {
+	storage *Storage
+	sql     string
+	args    []interface{}
+	err     error
+}
+
+func (qb *QueryBuilder) Into(dest interface{}) error {
+	if qb.err != nil {
+		return qb.err
 	}
-	err = storage.DB.Select(&dest, sql, args...)
+	err := qb.storage.DB.Select(&dest, qb.sql, qb.args...)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (storage *Storage) Query(query squirrel.SelectBuilder) *QueryBuilder {
+	sql, args, err := query.PlaceholderFormat(squirrel.Dollar).ToSql()
+	return &QueryBuilder{storage, sql, args, err}
 }
