@@ -27,7 +27,7 @@ func (s *SendTransactionTestSuite) SetupTest() {
 	testDB, err := db.GetTestDB()
 	s.NoError(err)
 
-	storage := &st.Storage{DB: testDB.DB}
+	storage := st.NewTestStorage(testDB.DB)
 	s.api = &API{nil, storage}
 	s.db = testDB
 }

@@ -6,8 +6,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (storage *Storage) AddTransaction(tx *models.Transaction) error {
-	_, err := squirrel.Insert("transaction").
+func (s *Storage) AddTransaction(tx *models.Transaction) error {
+	_, err := s.QB.Insert("transaction").
 		Values(
 			tx.Hash,
 			tx.FromIndex,
@@ -17,16 +17,22 @@ func (storage *Storage) AddTransaction(tx *models.Transaction) error {
 			tx.Nonce,
 			tx.Signature,
 		).
-		RunWith(storage.DB).
-		PlaceholderFormat(squirrel.Dollar).
+		RunWith(s.DB).
 		Exec()
 
 	return err
 }
 
-func (storage *Storage) GetTransaction(hash common.Hash) (*models.Transaction, error) {
+func (s *Storage) GetTransaction(hash common.Hash) (*models.Transaction, error) {
 	res := make([]models.Transaction, 0, 1)
-	err := storage.DB.Select(&res, "SELECT * FROM transaction WHERE tx_hash = $1", hash)
+	sql, args, err := s.QB.Select("*").
+		From("transaction").
+		Where(squirrel.Eq{"tx_hash": hash}).
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+	err = s.DB.Select(&res, sql, args...)
 	if err != nil {
 		return nil, err
 	}

@@ -24,7 +24,7 @@ func (s *TransactionTestSuite) SetupSuite() {
 func (s *TransactionTestSuite) SetupTest() {
 	testDB, err := db.GetTestDB()
 	s.NoError(err)
-	s.storage = &Storage{DB: testDB.DB}
+	s.storage = NewTestStorage(testDB.DB)
 	s.db = testDB
 }
 

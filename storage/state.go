@@ -38,7 +38,7 @@ func keccak256(x []byte) common.Hash {
 	return hash
 }
 
-func (storage *Storage) GetWitness(path models.MerklePath) ([]common.Hash, error) {
+func (s *Storage) GetWitness(path models.MerklePath) ([]common.Hash, error) {
 	// TODO
 	return nil, nil
 }

@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/jmoiron/sqlx"
@@ -8,6 +9,7 @@ import (
 
 type Storage struct {
 	DB *sqlx.DB
+	QB squirrel.StatementBuilderType
 }
 
 func NewStorage(cfg *config.Config) (*Storage, error) {
@@ -15,5 +17,7 @@ func NewStorage(cfg *config.Config) (*Storage, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Storage{DB: dbInstance}, nil
+	queryBuilder := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
+
+	return &Storage{DB: dbInstance, QB: queryBuilder}, nil
 }
