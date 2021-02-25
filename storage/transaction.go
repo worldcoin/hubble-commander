@@ -25,10 +25,12 @@ func (s *Storage) AddTransaction(tx *models.Transaction) error {
 
 func (s *Storage) GetTransaction(hash common.Hash) (*models.Transaction, error) {
 	res := make([]models.Transaction, 0, 1)
-	sql, args, err := s.QB.Select("*").
-		From("transaction").
-		Where(squirrel.Eq{"tx_hash": hash}).
-		ToSql()
+	err := storage.Query(
+		&res,
+		squirrel.Select("*").
+			From("transaction").
+			Where(squirrel.Eq{"tx_hash": hash}),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -37,4 +39,16 @@ func (s *Storage) GetTransaction(hash common.Hash) (*models.Transaction, error) 
 		return nil, err
 	}
 	return &res[0], nil
+}
+
+func (storage *Storage) Query(dest interface{}, query squirrel.SelectBuilder) error {
+	sql, args, err := query.PlaceholderFormat(squirrel.Dollar).ToSql()
+	if err != nil {
+		return err
+	}
+	err = storage.DB.Select(&dest, sql, args...)
+	if err != nil {
+		return err
+	}
+	return nil
 }
