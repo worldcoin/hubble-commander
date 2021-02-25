@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 	"golang.org/x/crypto/sha3"
 )
@@ -36,9 +35,4 @@ func keccak256(x []byte) common.Hash {
 	hash := common.Hash{}
 	hashWriter.Sum(hash[:0])
 	return hash
-}
-
-func (s *Storage) GetWitness(path models.MerklePath) ([]common.Hash, error) {
-	// TODO
-	return nil, nil
 }

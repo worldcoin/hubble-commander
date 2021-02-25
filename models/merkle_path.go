@@ -102,3 +102,26 @@ func (p *MerklePath) Sibling() (*MerklePath, error) {
 	}
 	return p.Sub(1)
 }
+
+func (p *MerklePath) GetWitnesses() ([]MerklePath, error) {
+	witnesses := make([]MerklePath, 0, p.Depth)
+	currentPath := p
+	isRoot := false
+
+	for !isRoot {
+		sibling, err := currentPath.Sibling()
+		if err != nil {
+			return nil, err
+		}
+		witnesses = append(witnesses, *sibling)
+		currentPath, err = currentPath.Parent()
+		if err != nil {
+			return nil, err
+		}
+		if currentPath.Depth == 0 {
+			isRoot = true
+		}
+	}
+
+	return witnesses, nil
+}
