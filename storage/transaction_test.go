@@ -52,6 +52,23 @@ func (s *TransactionTestSuite) TestAddTransaction() {
 	s.Equal(tx, res)
 }
 
+func (s *TransactionTestSuite) TestAddLeaf() {
+	leaf := &models.StateLeaf{
+		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
+		AccountIndex: models.MakeUint256(1),
+		TokenIndex: models.MakeUint256(1),
+		Balance: models.MakeUint256(420),
+		Nonce: models.MakeUint256(0),
+	}
+	err := s.storage.AddLeaf(leaf)
+	s.NoError(err)
+
+	res, err := s.storage.GetLeaf(leaf.DataHash)
+	s.NoError(err)
+
+	s.Equal(leaf, res)
+}
+
 func TestTransactionTestSuite(t *testing.T) {
 	suite.Run(t, new(TransactionTestSuite))
 }
