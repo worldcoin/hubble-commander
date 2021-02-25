@@ -7,8 +7,8 @@ import (
 )
 
 type MerklePath struct {
-	path  uint32
-	depth uint8
+	Path  uint32
+	Depth uint8
 }
 
 func NewMerklePath(bits string) (*MerklePath, error) {
@@ -24,8 +24,8 @@ func NewMerklePath(bits string) (*MerklePath, error) {
 		return nil, err
 	}
 	result := &MerklePath{
-		path:  uint32(path),
-		depth: uint8(len(bits)),
+		Path:  uint32(path),
+		Depth: uint8(len(bits)),
 	}
 	return result, nil
 }
@@ -45,44 +45,45 @@ func (p *MerklePath) Scan(src interface{}) error {
 
 // Value implements valuer for database/sql.
 func (p MerklePath) Value() (driver.Value, error) {
-	return strconv.FormatInt(int64(p.path), 2), nil
+	path := strconv.FormatInt(int64(p.Path), 2)
+	return fmt.Sprintf("%0*s", p.Depth, path), nil
 }
 
 // Move pointer left/right on the same level
 func (p MerklePath) Add(value uint32) (*MerklePath, error) {
-	newPath := p.path + value
-	if newPath < p.path {
+	newPath := p.Path + value
+	if newPath < p.Path {
 		return nil, fmt.Errorf("uint32 overflow")
 	}
-	maxNodeIndex := (uint32(1) << p.depth) - 1
+	maxNodeIndex := (uint32(1) << p.Depth) - 1
 	if newPath > maxNodeIndex {
-		return nil, fmt.Errorf("invalid index %d at depth %d", newPath, p.depth)
+		return nil, fmt.Errorf("invalid index %d at depth %d", newPath, p.Depth)
 	}
-	p.path = newPath
+	p.Path = newPath
 	return &p, nil
 }
 
 func (p MerklePath) Sub(value uint32) (*MerklePath, error) {
-	newPath := p.path - value
-	if newPath > p.path {
+	newPath := p.Path - value
+	if newPath > p.Path {
 		return nil, fmt.Errorf("uint32 underflow")
 	}
-	p.path = newPath
+	p.Path = newPath
 	return &p, nil
 }
 
 func (p *MerklePath) Parent() (*MerklePath, error) {
-	if p.depth == 0 {
+	if p.Depth == 0 {
 		return nil, fmt.Errorf("cannot get parent at depth 0")
 	}
 	return &MerklePath{
-		path:  p.path >> 1,
-		depth: p.depth - 1,
+		Path:  p.Path >> 1,
+		Depth: p.Depth - 1,
 	}, nil
 }
 
 func (p *MerklePath) Child(right bool) (*MerklePath, error) {
-	if p.depth >= 32 {
+	if p.Depth >= 32 {
 		return nil, fmt.Errorf("cannot have a path deeper then 32")
 	}
 	var bit uint32
@@ -90,13 +91,13 @@ func (p *MerklePath) Child(right bool) (*MerklePath, error) {
 		bit = 1
 	}
 	return &MerklePath{
-		path:  p.path<<1 + bit,
-		depth: p.depth + 1,
+		Path:  p.Path<<1 + bit,
+		Depth: p.Depth + 1,
 	}, nil
 }
 
 func (p *MerklePath) Sibling() (*MerklePath, error) {
-	if p.path%2 == 0 {
+	if p.Path%2 == 0 {
 		return p.Add(1)
 	}
 	return p.Sub(1)
