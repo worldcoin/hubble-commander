@@ -194,9 +194,9 @@ func TestGetWitnessesOfDepth3(t *testing.T) {
 	require.NoError(t, err)
 
 	expected := make([]MerklePath, 0, 3)
-	exp_paths := []string{"100", "11", "0"}
-	for _, exp_path := range exp_paths {
-		p, err := NewMerklePath(exp_path)
+	expectedPaths := []string{"100", "11", "0"}
+	for _, paths := range expectedPaths {
+		p, err := NewMerklePath(paths)
 		require.NoError(t, err)
 		expected = append(expected, *p)
 	}
