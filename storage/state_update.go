@@ -5,7 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-func (s *Storage) AddUpdate(update *models.StateUpdate) error {
+func (s *Storage) AddStateUpdate(update *models.StateUpdate) error {
 	_, err := s.QB.Insert("state_update").
 		Columns(
 			"merkle_path",
@@ -27,7 +27,7 @@ func (s *Storage) AddUpdate(update *models.StateUpdate) error {
 	return err
 }
 
-func (s *Storage) GetUpdate(id uint64) (*models.StateUpdate, error) {
+func (s *Storage) GetStateUpdate(id uint64) (*models.StateUpdate, error) {
 	res := make([]models.StateUpdate, 0, 1)
 	sql, args, err := s.QB.Select("*").
 		From("state_update").

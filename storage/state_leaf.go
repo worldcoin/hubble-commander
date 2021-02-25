@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (s *Storage) AddLeaf(leaf *models.StateLeaf) error {
+func (s *Storage) AddStateLeaf(leaf *models.StateLeaf) error {
 	_, err := s.QB.Insert("state_leaf").
 		Values(
 			leaf.DataHash,
@@ -21,7 +21,7 @@ func (s *Storage) AddLeaf(leaf *models.StateLeaf) error {
 	return err
 }
 
-func (s *Storage) GetLeaf(hash common.Hash) (*models.StateLeaf, error) {
+func (s *Storage) GetStateLeaf(hash common.Hash) (*models.StateLeaf, error) {
 	res := make([]models.StateLeaf, 0, 1)
 	sql, args, err := s.QB.Select("*").
 		From("state_leaf").
