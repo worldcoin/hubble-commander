@@ -10,30 +10,30 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type StorageTestSuite struct {
+type TransactionTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage *Storage
 	db      *db.TestDB
 }
 
-func (s *StorageTestSuite) SetupSuite() {
+func (s *TransactionTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *StorageTestSuite) SetupTest() {
+func (s *TransactionTestSuite) SetupTest() {
 	testDB, err := db.GetTestDB()
 	s.NoError(err)
-	s.storage = &Storage{DB: testDB.DB}
+	s.storage = NewTestStorage(testDB.DB)
 	s.db = testDB
 }
 
-func (s *StorageTestSuite) TearDownTest() {
+func (s *TransactionTestSuite) TearDownTest() {
 	err := s.db.Teardown()
 	s.NoError(err)
 }
 
-func (s *StorageTestSuite) TestAddTransaction() {
+func (s *TransactionTestSuite) TestAddTransaction() {
 	tx := &models.Transaction{
 		Hash:      common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		FromIndex: models.MakeUint256(1),
@@ -52,6 +52,6 @@ func (s *StorageTestSuite) TestAddTransaction() {
 	s.Equal(tx, res)
 }
 
-func TestStorageTestSuite(t *testing.T) {
-	suite.Run(t, new(StorageTestSuite))
+func TestTransactionTestSuite(t *testing.T) {
+	suite.Run(t, new(TransactionTestSuite))
 }
