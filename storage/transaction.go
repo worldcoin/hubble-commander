@@ -54,7 +54,7 @@ func (qb *QueryBuilder) Into(dest interface{}) error {
 	return nil
 }
 
-func (storage *Storage) Query(query squirrel.SelectBuilder) *QueryBuilder {
+func (s *Storage) Query(query squirrel.SelectBuilder) *QueryBuilder {
 	sql, args, err := query.PlaceholderFormat(squirrel.Dollar).ToSql()
-	return &QueryBuilder{storage, sql, args, err}
+	return &QueryBuilder{s, sql, args, err}
 }
