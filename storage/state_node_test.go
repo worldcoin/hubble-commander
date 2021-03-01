@@ -34,11 +34,13 @@ func (s *StateNodeTestSuite) TearDownTest() {
 }
 
 func (s *StateNodeTestSuite) TestAddStateNode() {
+	path, err := models.NewMerklePath("0000111")
+	s.NoError(err)
 	node := &models.StateNode{
-		MerklePath: "0000111",
+		MerklePath: *path,
 		DataHash:   common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 	}
-	err := s.storage.AddStateNode(node)
+	err = s.storage.AddStateNode(node)
 	s.NoError(err)
 
 	res, err := s.storage.GetStateNodeByHash(node.DataHash)
@@ -46,8 +48,6 @@ func (s *StateNodeTestSuite) TestAddStateNode() {
 
 	s.Equal(node, res)
 
-	path, err := models.NewMerklePath(node.MerklePath)
-	s.NoError(err)
 	res, err = s.storage.GetStateNodeByPath(path)
 	s.NoError(err)
 

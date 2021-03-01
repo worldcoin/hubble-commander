@@ -1,9 +1,10 @@
-package eth
+package encoder
 
 import (
 	"math/big"
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
 	"github.com/Worldcoin/hubble-commander/testutils/deployer"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
@@ -16,7 +17,8 @@ type EncoderTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	sim      *simulator.Simulator
-	contract *transfer.FrontendTransfer
+	transfer *transfer.FrontendTransfer
+	generic  *generic.FrontendGeneric
 }
 
 func (s *EncoderTestSuite) SetupSuite() {
@@ -30,7 +32,8 @@ func (s *EncoderTestSuite) SetupTest() {
 
 	contracts, err := deployer.DeployFrontend(sim)
 	s.NoError(err)
-	s.contract = contracts.FrontendTransfer
+	s.transfer = contracts.FrontendTransfer
+	s.generic = contracts.FrontendGeneric
 }
 
 func (s *EncoderTestSuite) TearDownTest() {
@@ -48,7 +51,7 @@ func (s *EncoderTestSuite) TestEncodeTransferZero() {
 	}
 	bytes, err := EncodeTransfer(tx)
 	s.NoError(err)
-	expected, err := s.contract.Encode(&bind.CallOpts{Pending: false}, tx)
+	expected, err := s.transfer.Encode(&bind.CallOpts{Pending: false}, tx)
 	s.NoError(err)
 	s.Equal(expected, bytes)
 }
@@ -64,7 +67,22 @@ func (s *EncoderTestSuite) TestEncodeTransferNonZero() {
 	}
 	bytes, err := EncodeTransfer(tx)
 	s.NoError(err)
-	expected, err := s.contract.Encode(&bind.CallOpts{Pending: false}, tx)
+	expected, err := s.transfer.Encode(&bind.CallOpts{Pending: false}, tx)
+	s.NoError(err)
+	s.Equal(expected, bytes)
+}
+
+func (s *EncoderTestSuite) TestEncodeUserState() {
+	state := generic.TypesUserState{
+		PubkeyID: big.NewInt(1),
+		TokenID:  big.NewInt(2),
+		Balance:  big.NewInt(420),
+		Nonce:    big.NewInt(0),
+	}
+	bytes, err := EncodeUserState(state)
+	s.NoError(err)
+
+	expected, err := s.generic.Encode(&bind.CallOpts{Pending: false}, state)
 	s.NoError(err)
 	s.Equal(expected, bytes)
 }

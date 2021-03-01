@@ -32,14 +32,16 @@ func NewMerklePath(bits string) (*MerklePath, error) {
 
 // Scan implements Scanner for database/sql.
 func (p *MerklePath) Scan(src interface{}) error {
-	value, ok := src.(string)
+	value, ok := src.([]byte)
 	if !ok {
-		return fmt.Errorf("can't scan %T into Uint256", src)
+		return fmt.Errorf("can't scan %T into MerklePath", src)
 	}
-	_, err := NewMerklePath(value)
+	path, err := NewMerklePath(string(value))
 	if err != nil {
 		return err
 	}
+	p.Path = path.Path
+	p.Depth = path.Depth
 	return nil
 }
 
@@ -103,7 +105,7 @@ func (p *MerklePath) Sibling() (*MerklePath, error) {
 	return p.Sub(1)
 }
 
-func (p *MerklePath) GetWitnesses() ([]MerklePath, error) {
+func (p *MerklePath) GetWitnessPaths() ([]MerklePath, error) {
 	witnesses := make([]MerklePath, 0, p.Depth)
 	currentPath := p
 	isRoot := false

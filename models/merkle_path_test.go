@@ -1,14 +1,14 @@
 package models
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestNewMerklePathLength(t *testing.T) {
-	// 33 zeroes
-	_, err := NewMerklePath("000000000000000000000000000000000")
+	_, err := NewMerklePath(strings.Repeat("0", 33))
 	require.Error(t, err)
 }
 
@@ -43,7 +43,7 @@ func TestAddIndexOverflow(t *testing.T) {
 }
 
 func TestAddUint32Overflow(t *testing.T) {
-	a, err := NewMerklePath("11111111111111111111111111111111")
+	a, err := NewMerklePath(strings.Repeat("1", 32))
 	require.NoError(t, err)
 
 	_, err = a.Add(1)
@@ -168,7 +168,7 @@ func TestGetWitnessesOfRoot(t *testing.T) {
 	path, err := NewMerklePath("")
 	require.NoError(t, err)
 
-	_, err = path.GetWitnesses()
+	_, err = path.GetWitnessPaths()
 	require.Error(t, err)
 }
 
@@ -176,7 +176,7 @@ func TestGetWitnessesOfDepth1(t *testing.T) {
 	path, err := NewMerklePath("1")
 	require.NoError(t, err)
 
-	witnesses, err := path.GetWitnesses()
+	witnesses, err := path.GetWitnessPaths()
 	require.NoError(t, err)
 
 	p, err := NewMerklePath("0")
@@ -190,7 +190,7 @@ func TestGetWitnessesOfDepth3(t *testing.T) {
 	path, err := NewMerklePath("101")
 	require.NoError(t, err)
 
-	witnesses, err := path.GetWitnesses()
+	witnesses, err := path.GetWitnessPaths()
 	require.NoError(t, err)
 
 	expected := make([]MerklePath, 0, 3)
