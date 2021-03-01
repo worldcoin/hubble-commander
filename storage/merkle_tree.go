@@ -15,8 +15,8 @@ func NewStateTree(storage *Storage) *StateTree {
 	return &StateTree{storage}
 }
 
-func (s *StateTree) Set(index uint32, state models.UserState) error {
-	leaf, err := NewStateLeaf(&state)
+func (s *StateTree) Set(index uint32, state *models.UserState) error {
+	leaf, err := NewStateLeaf(state)
 	if err != nil {
 		return err
 	}

@@ -46,7 +46,7 @@ func (s *StateTreeTestSuite) TearDownTest() {
 }
 
 func (s *StateTreeTestSuite) Test_Set_StoresStateLeafRecord() {
-	err := s.tree.Set(0, s.leaf.UserState)
+	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
 	actualLeaf, err := s.storage.GetStateLeaf(s.leaf.DataHash)
@@ -55,7 +55,7 @@ func (s *StateTreeTestSuite) Test_Set_StoresStateLeafRecord() {
 }
 
 func (s *StateTreeTestSuite) Test_Set_StoresStateNodeRecord() {
-	err := s.tree.Set(0, s.leaf.UserState)
+	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
 	expectedNode := &models.StateNode{
