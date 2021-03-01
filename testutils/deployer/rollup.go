@@ -13,7 +13,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/vault"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 )
 
 type DeploymentConfig struct {
@@ -143,7 +142,7 @@ func DeployConfiguredRollup(sim *simulator.Simulator, config DeploymentConfig) (
 
 func fillWithDefaults(config *DeploymentConfig) {
 	if config.MaxDepositSubtreeDepth == nil {
-		config.MaxDepositSubtreeDepth = ref.Uint256(models.MakeUint256(2))
+		config.MaxDepositSubtreeDepth = models.NewUint256(2)
 	}
 	if config.GenesisStateRoot == nil {
 		// Result of getDefaultGenesisRoot function from deploy.ts
@@ -151,15 +150,15 @@ func fillWithDefaults(config *DeploymentConfig) {
 		config.GenesisStateRoot = &root
 	}
 	if config.StakeAmount == nil {
-		config.StakeAmount = ref.Uint256(models.MakeUint256(1e17))
+		config.StakeAmount = models.NewUint256(1e17)
 	}
 	if config.BlocksToFinalise == nil {
-		config.BlocksToFinalise = ref.Uint256(models.MakeUint256(7 * 24 * 60 * 4))
+		config.BlocksToFinalise = models.NewUint256(7 * 24 * 60 * 4)
 	}
 	if config.MinGasLeft == nil {
-		config.MinGasLeft = ref.Uint256(models.MakeUint256(10_000))
+		config.MinGasLeft = models.NewUint256(10_000)
 	}
 	if config.MaxTxsPerCommit == nil {
-		config.MaxTxsPerCommit = ref.Uint256(models.MakeUint256(32))
+		config.MaxTxsPerCommit = models.NewUint256(32)
 	}
 }

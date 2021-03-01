@@ -18,6 +18,11 @@ func MakeUint256FromBig(value big.Int) Uint256 {
 	return Uint256{value}
 }
 
+func NewUint256(value int64) *Uint256 {
+	uint256 := MakeUint256(value)
+	return &uint256
+}
+
 // Scan implements Scanner for database/sql.
 func (a *Uint256) Scan(src interface{}) error {
 	value, ok := src.([]uint8)
