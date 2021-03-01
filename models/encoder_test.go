@@ -1,4 +1,4 @@
-package eth
+package models
 
 import (
 	"math/big"
@@ -6,7 +6,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
-	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/testutils/deployer"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -74,11 +73,11 @@ func (s *EncoderTestSuite) TestEncodeTransferNonZero() {
 }
 
 func (s *EncoderTestSuite) TestEncodeUserState() {
-	state := models.UserState{
-		AccountIndex: models.MakeUint256(1),
-		TokenIndex:   models.MakeUint256(2),
-		Balance:      models.MakeUint256(420),
-		Nonce:        models.MakeUint256(0),
+	state := UserState{
+		AccountIndex: MakeUint256(1),
+		TokenIndex:   MakeUint256(2),
+		Balance:      MakeUint256(420),
+		Nonce:        MakeUint256(0),
 	}
 	expectedState := generic.TypesUserState{
 		PubkeyID: big.NewInt(1),

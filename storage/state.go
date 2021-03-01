@@ -2,7 +2,7 @@ package storage
 
 import (
 	"github.com/ethereum/go-ethereum/common"
-	"golang.org/x/crypto/sha3"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 var (
@@ -16,7 +16,7 @@ func init() {
 		buf := make([]byte, 64)
 		copy(buf[0:32], zeroHashes[i-1].Bytes())
 		copy(buf[32:64], zeroHashes[i-1].Bytes())
-		zeroHashes[i] = keccak256(buf)
+		zeroHashes[i] = crypto.Keccak256Hash(buf)
 	}
 }
 
@@ -26,13 +26,4 @@ func GetZeroHash(level uint) common.Hash {
 	}
 
 	return zeroHashes[level]
-}
-
-func keccak256(x []byte) common.Hash {
-	hashWriter := sha3.NewLegacyKeccak256()
-	// nolint
-	hashWriter.Write(x)
-	hash := common.Hash{}
-	hashWriter.Sum(hash[:0])
-	return hash
 }

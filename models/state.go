@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 type UserState struct {
@@ -28,4 +29,16 @@ type StateUpdate struct {
 	CurrentRoot common.Hash `db:"current_root"`
 	PrevHash    common.Hash `db:"prev_hash"`
 	PrevRoot    common.Hash `db:"prev_root"`
+}
+
+func NewStateLeaf(state UserState) (*StateLeaf, error) {
+	encodedState, err := EncodeUserState(state)
+	if err != nil {
+		return nil, err
+	}
+	dataHash := crypto.Keccak256Hash(encodedState)
+	return &StateLeaf{
+		DataHash:  dataHash,
+		UserState: state,
+	}, nil
 }
