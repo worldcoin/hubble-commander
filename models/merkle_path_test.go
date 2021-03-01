@@ -1,14 +1,14 @@
 package models
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestNewMerklePathLength(t *testing.T) {
-	// 33 zeroes
-	_, err := NewMerklePath("000000000000000000000000000000000")
+	_, err := NewMerklePath(strings.Repeat("0", 33))
 	require.Error(t, err)
 }
 
@@ -43,7 +43,7 @@ func TestAddIndexOverflow(t *testing.T) {
 }
 
 func TestAddUint32Overflow(t *testing.T) {
-	a, err := NewMerklePath("11111111111111111111111111111111")
+	a, err := NewMerklePath(strings.Repeat("1", 32))
 	require.NoError(t, err)
 
 	_, err = a.Add(1)
