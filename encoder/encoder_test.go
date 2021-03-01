@@ -1,4 +1,4 @@
-package models
+package encoder
 
 import (
 	"math/big"
@@ -73,13 +73,7 @@ func (s *EncoderTestSuite) TestEncodeTransferNonZero() {
 }
 
 func (s *EncoderTestSuite) TestEncodeUserState() {
-	state := UserState{
-		AccountIndex: MakeUint256(1),
-		TokenIndex:   MakeUint256(2),
-		Balance:      MakeUint256(420),
-		Nonce:        MakeUint256(0),
-	}
-	expectedState := generic.TypesUserState{
+	state := generic.TypesUserState{
 		PubkeyID: big.NewInt(1),
 		TokenID:  big.NewInt(2),
 		Balance:  big.NewInt(420),
@@ -87,7 +81,8 @@ func (s *EncoderTestSuite) TestEncodeUserState() {
 	}
 	bytes, err := EncodeUserState(state)
 	s.NoError(err)
-	expected, err := s.generic.Encode(&bind.CallOpts{Pending: false}, expectedState)
+
+	expected, err := s.generic.Encode(&bind.CallOpts{Pending: false}, state)
 	s.NoError(err)
 	s.Equal(expected, bytes)
 }

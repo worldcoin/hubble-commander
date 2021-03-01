@@ -1,8 +1,9 @@
-package models
+package encoder
 
 import (
 	"log"
 
+	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
@@ -40,7 +41,7 @@ func EncodeTransfer(tx transfer.OffchainTransfer) ([]uint8, error) {
 	return encodedBytes, nil
 }
 
-func EncodeUserState(state UserState) ([]uint8, error) {
+func EncodeUserState(state generic.TypesUserState) ([]uint8, error) {
 	arguments := abi.Arguments{
 		{Name: "pubkeyID", Type: tUint256},
 		{Name: "tokenID", Type: tUint256},
@@ -48,10 +49,10 @@ func EncodeUserState(state UserState) ([]uint8, error) {
 		{Name: "nonce", Type: tUint256},
 	}
 	encodedBytes, err := arguments.Pack(
-		&state.AccountIndex.Int,
-		&state.TokenIndex.Int,
-		&state.Balance.Int,
-		&state.Nonce.Int,
+		state.PubkeyID,
+		state.TokenID,
+		state.Balance,
+		state.Nonce,
 	)
 	if err != nil {
 		return nil, err
