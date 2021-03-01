@@ -29,14 +29,11 @@ func (s *Storage) AddStateUpdate(update *models.StateUpdate) error {
 
 func (s *Storage) GetStateUpdate(id uint64) (*models.StateUpdate, error) {
 	res := make([]models.StateUpdate, 0, 1)
-	sql, args, err := s.QB.Select("*").
-		From("state_update").
-		Where(squirrel.Eq{"id": id}).
-		ToSql()
-	if err != nil {
-		return nil, err
-	}
-	err = s.DB.Select(&res, sql, args...)
+	err := s.Query(
+		squirrel.Select("*").
+			From("state_update").
+			Where(squirrel.Eq{"id": id}),
+	).Into(&res)
 	if err != nil {
 		return nil, err
 	}

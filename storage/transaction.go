@@ -25,14 +25,11 @@ func (s *Storage) AddTransaction(tx *models.Transaction) error {
 
 func (s *Storage) GetTransaction(hash common.Hash) (*models.Transaction, error) {
 	res := make([]models.Transaction, 0, 1)
-	sql, args, err := s.QB.Select("*").
-		From("transaction").
-		Where(squirrel.Eq{"tx_hash": hash}).
-		ToSql()
-	if err != nil {
-		return nil, err
-	}
-	err = s.DB.Select(&res, sql, args...)
+	err := s.Query(
+		squirrel.Select("*").
+			From("transaction").
+			Where(squirrel.Eq{"tx_hash": hash}),
+	).Into(&res)
 	if err != nil {
 		return nil, err
 	}

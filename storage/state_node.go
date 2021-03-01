@@ -20,14 +20,11 @@ func (s *Storage) AddStateNode(node *models.StateNode) error {
 
 func (s *Storage) GetStateNodeByHash(hash common.Hash) (*models.StateNode, error) {
 	res := make([]models.StateNode, 0, 1)
-	sql, args, err := s.QB.Select("*").
-		From("state_node").
-		Where(squirrel.Eq{"data_hash": hash}).
-		ToSql()
-	if err != nil {
-		return nil, err
-	}
-	err = s.DB.Select(&res, sql, args...)
+	err := s.Query(
+		squirrel.Select("*").
+			From("state_node").
+			Where(squirrel.Eq{"data_hash": hash}),
+	).Into(&res)
 	if err != nil {
 		return nil, err
 	}
@@ -40,14 +37,11 @@ func (s *Storage) GetStateNodeByPath(path *models.MerklePath) (*models.StateNode
 	if err != nil {
 		return nil, err
 	}
-	sql, args, err := s.QB.Select("*").
-		From("state_node").
-		Where(squirrel.Eq{"merkle_path": pathValue}).
-		ToSql()
-	if err != nil {
-		return nil, err
-	}
-	err = s.DB.Select(&res, sql, args...)
+	err = s.Query(
+		squirrel.Select("*").
+			From("state_node").
+			Where(squirrel.Eq{"merkle_path": pathValue}),
+	).Into(&res)
 	if err != nil {
 		return nil, err
 	}
