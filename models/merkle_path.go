@@ -103,7 +103,7 @@ func (p *MerklePath) Sibling() (*MerklePath, error) {
 	return p.Sub(1)
 }
 
-func (p *MerklePath) GetWitnesses() ([]MerklePath, error) {
+func (p *MerklePath) GetWitnessPaths() ([]MerklePath, error) {
 	witnesses := make([]MerklePath, 0, p.Depth)
 	currentPath := p
 	isRoot := false

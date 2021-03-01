@@ -168,7 +168,7 @@ func TestGetWitnessesOfRoot(t *testing.T) {
 	path, err := NewMerklePath("")
 	require.NoError(t, err)
 
-	_, err = path.GetWitnesses()
+	_, err = path.GetWitnessPaths()
 	require.Error(t, err)
 }
 
@@ -176,7 +176,7 @@ func TestGetWitnessesOfDepth1(t *testing.T) {
 	path, err := NewMerklePath("1")
 	require.NoError(t, err)
 
-	witnesses, err := path.GetWitnesses()
+	witnesses, err := path.GetWitnessPaths()
 	require.NoError(t, err)
 
 	p, err := NewMerklePath("0")
@@ -190,7 +190,7 @@ func TestGetWitnessesOfDepth3(t *testing.T) {
 	path, err := NewMerklePath("101")
 	require.NoError(t, err)
 
-	witnesses, err := path.GetWitnesses()
+	witnesses, err := path.GetWitnessPaths()
 	require.NoError(t, err)
 
 	expected := make([]MerklePath, 0, 3)
