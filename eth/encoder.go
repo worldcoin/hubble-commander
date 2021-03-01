@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
@@ -33,6 +34,25 @@ func EncodeTransfer(tx transfer.OffchainTransfer) ([]uint8, error) {
 		tx.Amount,
 		tx.Fee,
 		tx.Nonce,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return encodedBytes, nil
+}
+
+func EncodeUserState(state models.UserState) ([]uint8, error) {
+	arguments := abi.Arguments{
+		{Name: "pubkeyID", Type: tUint256},
+		{Name: "tokenID", Type: tUint256},
+		{Name: "balance", Type: tUint256},
+		{Name: "nonce", Type: tUint256},
+	}
+	encodedBytes, err := arguments.Pack(
+		&state.AccountIndex.Int,
+		&state.TokenIndex.Int,
+		&state.Balance.Int,
+		&state.Nonce.Int,
 	)
 	if err != nil {
 		return nil, err

@@ -4,7 +4,9 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/testutils/deployer"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -16,7 +18,8 @@ type EncoderTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	sim      *simulator.Simulator
-	contract *transfer.FrontendTransfer
+	transfer *transfer.FrontendTransfer
+	generic  *generic.FrontendGeneric
 }
 
 func (s *EncoderTestSuite) SetupSuite() {
@@ -30,7 +33,8 @@ func (s *EncoderTestSuite) SetupTest() {
 
 	contracts, err := deployer.DeployFrontend(sim)
 	s.NoError(err)
-	s.contract = contracts.FrontendTransfer
+	s.transfer = contracts.FrontendTransfer
+	s.generic = contracts.FrontendGeneric
 }
 
 func (s *EncoderTestSuite) TearDownTest() {
@@ -48,7 +52,7 @@ func (s *EncoderTestSuite) TestEncodeTransferZero() {
 	}
 	bytes, err := EncodeTransfer(tx)
 	s.NoError(err)
-	expected, err := s.contract.Encode(&bind.CallOpts{Pending: false}, tx)
+	expected, err := s.transfer.Encode(&bind.CallOpts{Pending: false}, tx)
 	s.NoError(err)
 	s.Equal(expected, bytes)
 }
@@ -64,7 +68,27 @@ func (s *EncoderTestSuite) TestEncodeTransferNonZero() {
 	}
 	bytes, err := EncodeTransfer(tx)
 	s.NoError(err)
-	expected, err := s.contract.Encode(&bind.CallOpts{Pending: false}, tx)
+	expected, err := s.transfer.Encode(&bind.CallOpts{Pending: false}, tx)
+	s.NoError(err)
+	s.Equal(expected, bytes)
+}
+
+func (s *EncoderTestSuite) TestEncodeUserState() {
+	state := models.UserState{
+		AccountIndex: models.MakeUint256(1),
+		TokenIndex:   models.MakeUint256(2),
+		Balance:      models.MakeUint256(420),
+		Nonce:        models.MakeUint256(0),
+	}
+	expectedState := generic.TypesUserState{
+		PubkeyID: big.NewInt(1),
+		TokenID:  big.NewInt(2),
+		Balance:  big.NewInt(420),
+		Nonce:    big.NewInt(0),
+	}
+	bytes, err := EncodeUserState(state)
+	s.NoError(err)
+	expected, err := s.generic.Encode(&bind.CallOpts{Pending: false}, expectedState)
 	s.NoError(err)
 	s.Equal(expected, bytes)
 }
