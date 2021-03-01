@@ -23,14 +23,11 @@ func (s *Storage) AddStateLeaf(leaf *models.StateLeaf) error {
 
 func (s *Storage) GetStateLeaf(hash common.Hash) (*models.StateLeaf, error) {
 	res := make([]models.StateLeaf, 0, 1)
-	sql, args, err := s.QB.Select("*").
-		From("state_leaf").
-		Where(squirrel.Eq{"data_hash": hash}).
-		ToSql()
-	if err != nil {
-		return nil, err
-	}
-	err = s.DB.Select(&res, sql, args...)
+	err := s.Query(
+		squirrel.Select("*").
+			From("state_leaf").
+			Where(squirrel.Eq{"data_hash": hash}),
+	).Into(&res)
 	if err != nil {
 		return nil, err
 	}
