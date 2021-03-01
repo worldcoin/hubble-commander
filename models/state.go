@@ -12,7 +12,7 @@ type UserState struct {
 }
 
 type StateNode struct {
-	MerklePath string      `db:"merkle_path"`
+	MerklePath MerklePath  `db:"merkle_path"`
 	DataHash   common.Hash `db:"data_hash"`
 }
 
@@ -23,7 +23,7 @@ type StateLeaf struct {
 
 type StateUpdate struct {
 	ID          uint64
-	MerklePath  string      `db:"merkle_path"`
+	MerklePath  MerklePath  `db:"merkle_path"`
 	CurrentHash common.Hash `db:"current_hash"`
 	CurrentRoot common.Hash `db:"current_root"`
 	PrevHash    common.Hash `db:"prev_hash"`
