@@ -79,7 +79,7 @@ func EncodeDecimal(value models.Uint256) (uint16, error) {
 		}
 	}
 
-	if exponent.Cmp(big.NewInt(0xfff)) > 0 {
+	if mantissa.Cmp(big.NewInt(0xfff)) > 0 {
 		return 0, fmt.Errorf("value is not encodable as multi-percission decimal")
 	}
 

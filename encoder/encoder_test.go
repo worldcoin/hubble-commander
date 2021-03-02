@@ -1,6 +1,7 @@
 package encoder
 
 import (
+	"github.com/Worldcoin/hubble-commander/contracts/test/tx"
 	"github.com/Worldcoin/hubble-commander/models"
 	"math/big"
 	"testing"
@@ -20,6 +21,7 @@ type EncoderTestSuite struct {
 	sim      *simulator.Simulator
 	transfer *transfer.FrontendTransfer
 	generic  *generic.FrontendGeneric
+	testTx   *tx.TestTx
 }
 
 func (s *EncoderTestSuite) SetupSuite() {
@@ -31,10 +33,12 @@ func (s *EncoderTestSuite) SetupTest() {
 	s.NoError(err)
 	s.sim = sim
 
-	contracts, err := deployer.DeployFrontend(sim)
+	frontend, err := deployer.DeployFrontend(sim)
+	test, err := deployer.DeployTest(sim)
 	s.NoError(err)
-	s.transfer = contracts.FrontendTransfer
-	s.generic = contracts.FrontendGeneric
+	s.transfer = frontend.FrontendTransfer
+	s.generic = frontend.FrontendGeneric
+	s.testTx = test.TestTx
 }
 
 func (s *EncoderTestSuite) TearDownTest() {
@@ -88,11 +92,15 @@ func (s *EncoderTestSuite) TestEncodeUserState() {
 	s.Equal(expected, bytes)
 }
 
-func (s *EncoderTestSuite) DecimalEncoding() {
-	num := models.MakeUint256(1234500000)
+func (s *EncoderTestSuite) TestDecimalEncoding() {
+	num := models.MakeUint256(123400000)
 	encoded, err := EncodeDecimal(num)
 	s.NoError(err)
 
+	expected, err := s.testTx.TestEncodeDecimal(&bind.CallOpts{Pending: false}, &num.Int)
+	s.NoError(err)
+
+	s.Equal(uint16(expected.Uint64()), encoded)
 }
 
 func TestEncoderTestSuite(t *testing.T) {
