@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"fmt"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
@@ -14,6 +16,27 @@ func (s *Storage) AddStateNode(node *models.StateNode) error {
 		).
 		RunWith(s.DB).
 		Exec()
+
+	return err
+}
+
+func (s *Storage) UpdateStateNode(node *models.StateNode) error {
+	result, err := s.QB.Update("state_node").
+		Set("data_hash", squirrel.Expr("?", node.DataHash)).
+		Where("merkle_path = ?", node.MerklePath).
+		RunWith(s.DB).
+		Exec()
+	if err != nil {
+		return err
+	}
+
+	updatedRows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if updatedRows == 0 {
+		return fmt.Errorf("no rows were affected by the update")
+	}
 
 	return err
 }
