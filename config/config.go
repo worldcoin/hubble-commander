@@ -14,6 +14,7 @@ func init() {
 }
 
 func loadDotEnv() {
+	// nolint
 	godotenv.Load(".env")
 }
 

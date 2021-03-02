@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
