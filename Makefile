@@ -28,10 +28,10 @@ teardown-db: stop-db
 	docker rm hubble-postgres
 
 migration-up:
-	migrate -source file://db/migrations/ -database "postgres://localhost:5432/hubble_test?sslmode=disable" up
+	migrate -source file://db/migrations/ -database "postgres://localhost:5432/hubble?sslmode=disable" up
 
 migration-down:
-	migrate -source file://db/migrations/ -database "postgres://localhost:5432/hubble_test?sslmode=disable" down
+	migrate -source file://db/migrations/ -database "postgres://localhost:5432/hubble?sslmode=disable" down
 
 run:
 	./build/hubble
