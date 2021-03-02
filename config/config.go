@@ -1,7 +1,6 @@
 package config
 
 import (
-	"log"
 	"os"
 
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -15,10 +14,8 @@ func init() {
 }
 
 func loadDotEnv() {
-	err := godotenv.Load("../.env")
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	// nolint
+	godotenv.Load(".env")
 }
 
 type Config struct {
