@@ -38,7 +38,3 @@ func (a *Uint256) Scan(src interface{}) error {
 func (a Uint256) Value() (driver.Value, error) {
 	return a.Text(10), nil
 }
-
-func (a Uint256) IsZero() bool {
-	return a.Cmp(big.NewInt(0)) == 0
-}
