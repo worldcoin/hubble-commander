@@ -41,14 +41,14 @@ func (p *MerklePath) Scan(src interface{}) error {
 		return err
 	}
 	p.Path = path.Path
-	p.Depth = path.Depth
+	p.Depth = path.Depth - 1
 	return nil
 }
 
 // Value implements valuer for database/sql.
 func (p MerklePath) Value() (driver.Value, error) {
 	path := strconv.FormatInt(int64(p.Path), 2)
-	return fmt.Sprintf("%0*s", p.Depth, path), nil
+	return fmt.Sprintf("%0*s", p.Depth + 1, path), nil
 }
 
 // Move pointer left/right on the same level

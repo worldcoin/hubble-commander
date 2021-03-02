@@ -54,6 +54,35 @@ func (s *StateNodeTestSuite) Test_AddStateNode_AddAndRetrieve() {
 	s.Equal(node, res)
 }
 
+func (s *StateNodeTestSuite) Test_AddStateNode_AddAndRetrieveRoot() {
+	pathRoot, err := models.NewMerklePath("")
+	s.NoError(err)
+	pathNode, err := models.NewMerklePath("0")
+	s.NoError(err)
+	root := &models.StateNode{
+		MerklePath: *pathRoot,
+		DataHash:   common.BytesToHash([]byte{1, 2, 3, 4, 5}),
+	}
+	node := &models.StateNode{
+		MerklePath: *pathNode,
+		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
+	}
+	err = s.storage.AddStateNode(root)
+	s.NoError(err)
+	err = s.storage.AddStateNode(node)
+	s.NoError(err)
+
+	res, err := s.storage.GetStateNodeByPath(pathRoot)
+	s.NoError(err)
+
+	s.Equal(root, res)
+
+	res, err = s.storage.GetStateNodeByPath(pathNode)
+	s.NoError(err)
+
+	s.Equal(node, res)
+}
+
 func (s *StateNodeTestSuite) Test_UpdateStateNode_UpdateAndRetrieve() {
 	path, err := models.NewMerklePath("0000111")
 	s.NoError(err)

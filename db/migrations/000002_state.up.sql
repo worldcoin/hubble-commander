@@ -1,6 +1,6 @@
 -- the root hash is stored with empty merkle_path
 CREATE TABLE "state_node" (
-    merkle_path  BIT VARYING(32) PRIMARY KEY,
+    merkle_path  BIT VARYING(33) PRIMARY KEY,
     data_hash    BYTEA
 );
 
@@ -15,7 +15,7 @@ CREATE TABLE "state_leaf" (
 
 CREATE TABLE "state_update" (
     id            BIGSERIAL PRIMARY KEY,
-    merkle_path   BIT(32),
+    merkle_path   BIT(33),
     current_hash  BYTEA,
     current_root  BYTEA,
     prev_hash     BYTEA,
