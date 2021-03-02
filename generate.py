@@ -25,12 +25,13 @@ def generate(artifact, name):
     generate_bindings(path, name, lower, filename)
 
 
-def generate_frontend(artifact, name):
+def generate_subdir(subdir, artifact, name):
     base = Path('hubble-contracts/artifacts')
     path = base / artifact
-    pkg = name[8:].lower()
-    os.makedirs(Path("contracts/frontend") / pkg, exist_ok=True)
-    filename = (Path('contracts/frontend') / pkg / pkg).with_suffix('.go')
+    prefix_len = len(subdir)
+    pkg = name[prefix_len:].lower()
+    os.makedirs(Path("contracts") / subdir / pkg, exist_ok=True)
+    filename = (Path('contracts') / subdir / pkg / pkg).with_suffix('.go')
     generate_bindings(path, name, pkg, filename)
 
 
@@ -47,10 +48,12 @@ generate('contracts/MassMigrations.sol/MassMigration.json', 'MassMigration')
 generate('contracts/Create2Transfer.sol/Create2Transfer.json', 'Create2Transfer')
 generate('contracts/rollup/Rollup.sol/Rollup.json', 'Rollup')
 
-generate_frontend('contracts/client/FrontendGeneric.sol/FrontendGeneric.json', 'FrontendGeneric')
-generate_frontend('contracts/client/FrontendTransfer.sol/FrontendTransfer.json', 'FrontendTransfer')
-generate_frontend('contracts/client/FrontendMassMigration.sol/FrontendMassMigration.json', 'FrontendMassMigration')
-generate_frontend('contracts/client/FrontendCreate2Transfer.sol/FrontendCreate2Transfer.json', 'FrontendCreate2Transfer')
+generate_subdir('frontend', 'contracts/client/FrontendGeneric.sol/FrontendGeneric.json', 'FrontendGeneric')
+generate_subdir('frontend', 'contracts/client/FrontendTransfer.sol/FrontendTransfer.json', 'FrontendTransfer')
+generate_subdir('frontend', 'contracts/client/FrontendMassMigration.sol/FrontendMassMigration.json', 'FrontendMassMigration')
+generate_subdir('frontend', 'contracts/client/FrontendCreate2Transfer.sol/FrontendCreate2Transfer.json', 'FrontendCreate2Transfer')
+
+generate_subdir('test', 'contracts/test/TestTx.sol/TestTx.json', 'TestTx')
 
 generate('@openzeppelin/contracts/token/ERC20/IERC20.sol/IERC20.json', 'ERC20')
 
