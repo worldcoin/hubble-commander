@@ -1,6 +1,7 @@
 package encoder
 
 import (
+	"github.com/Worldcoin/hubble-commander/models"
 	"math/big"
 	"testing"
 
@@ -85,6 +86,13 @@ func (s *EncoderTestSuite) TestEncodeUserState() {
 	expected, err := s.generic.Encode(&bind.CallOpts{Pending: false}, state)
 	s.NoError(err)
 	s.Equal(expected, bytes)
+}
+
+func (s *EncoderTestSuite) DecimalEncoding() {
+	num := models.MakeUint256(1234500000)
+	encoded, err := EncodeDecimal(num)
+	s.NoError(err)
+
 }
 
 func TestEncoderTestSuite(t *testing.T) {
