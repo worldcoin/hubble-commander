@@ -33,7 +33,7 @@ func (s *StateNodeTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *StateNodeTestSuite) TestAddStateNode() {
+func (s *StateNodeTestSuite) Test_AddStateNode_AddAndRetrieve() {
 	path, err := models.NewMerklePath("0000111")
 	s.NoError(err)
 	node := &models.StateNode{
@@ -52,6 +52,22 @@ func (s *StateNodeTestSuite) TestAddStateNode() {
 	s.NoError(err)
 
 	s.Equal(node, res)
+}
+
+func (s *StateNodeTestSuite) Test_GetStateNodeByHash_NonExistentNode() {
+	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
+	res, err := s.storage.GetStateNodeByHash(hash)
+	s.NoError(err)
+	s.Nil(res)
+}
+
+func (s *StateNodeTestSuite) Test_GetStateNodeByPath_NonExistentNode() {
+	path, err := models.NewMerklePath("0000111")
+	s.NoError(err)
+
+	res, err := s.storage.GetStateNodeByPath(path)
+	s.NoError(err)
+	s.Nil(res)
 }
 
 func TestStateNodeTestSuite(t *testing.T) {

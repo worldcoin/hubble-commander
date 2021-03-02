@@ -33,7 +33,7 @@ func (s *StateUpdateTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *StateUpdateTestSuite) TestAddStateUpdate() {
+func (s *StateUpdateTestSuite) Test_AddStateUpdate_AddAndRetrieve() {
 	path, err := models.NewMerklePath("00001111111111001111111111111111")
 	s.NoError(err)
 	update := &models.StateUpdate{
@@ -51,6 +51,12 @@ func (s *StateUpdateTestSuite) TestAddStateUpdate() {
 	s.NoError(err)
 
 	s.Equal(update, res)
+}
+
+func (s *StateUpdateTestSuite) Test_GetStateUpdate_NonExistentUpdate() {
+	res, err := s.storage.GetStateUpdate(1)
+	s.NoError(err)
+	s.Nil(res)
 }
 
 func TestStateUpdateTestSuite(t *testing.T) {

@@ -33,7 +33,7 @@ func (s *TransactionTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *TransactionTestSuite) TestAddTransaction() {
+func (s *TransactionTestSuite) Test_AddTransaction_AddAndRetrieve() {
 	tx := &models.Transaction{
 		Hash:      common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		FromIndex: models.MakeUint256(1),
@@ -50,6 +50,13 @@ func (s *TransactionTestSuite) TestAddTransaction() {
 	s.NoError(err)
 
 	s.Equal(tx, res)
+}
+
+func (s *TransactionTestSuite) Test_GetTransaction_NonExistentTransaction() {
+	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
+	res, err := s.storage.GetTransaction(hash)
+	s.NoError(err)
+	s.Nil(res)
 }
 
 func TestTransactionTestSuite(t *testing.T) {

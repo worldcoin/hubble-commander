@@ -34,7 +34,7 @@ func (s *Storage) GetStateUpdate(id uint64) (*models.StateUpdate, error) {
 			From("state_update").
 			Where(squirrel.Eq{"id": id}),
 	).Into(&res)
-	if err != nil {
+	if err != nil || len(res) == 0 {
 		return nil, err
 	}
 	return &res[0], nil

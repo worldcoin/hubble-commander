@@ -28,7 +28,7 @@ func (s *Storage) GetStateLeaf(hash common.Hash) (*models.StateLeaf, error) {
 			From("state_leaf").
 			Where(squirrel.Eq{"data_hash": hash}),
 	).Into(&res)
-	if err != nil {
+	if err != nil || len(res) == 0 {
 		return nil, err
 	}
 	return &res[0], nil

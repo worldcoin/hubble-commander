@@ -33,7 +33,7 @@ func (s *StateLeafTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *StateLeafTestSuite) TestAddStateLeaf() {
+func (s *StateLeafTestSuite) Test_AddStateLeaf_AddAndRetrieve() {
 	leaf := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
@@ -50,6 +50,13 @@ func (s *StateLeafTestSuite) TestAddStateLeaf() {
 	s.NoError(err)
 
 	s.Equal(leaf, res)
+}
+
+func (s *StateLeafTestSuite) Test_GetStateLeaf_NonExistentLeaf() {
+	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
+	res, err := s.storage.GetStateLeaf(hash)
+	s.NoError(err)
+	s.Nil(res)
 }
 
 func TestStateLeafTestSuite(t *testing.T) {
