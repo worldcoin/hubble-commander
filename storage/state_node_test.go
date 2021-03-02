@@ -90,6 +90,46 @@ func (s *StateNodeTestSuite) Test_UpdateStateNode_NotExistantNode() {
 	s.Error(err)
 }
 
+func (s *StateNodeTestSuite) Test_AddOrUpdateStateNode_AddAndRetrieve() {
+	path, err := models.NewMerklePath("0000111")
+	s.NoError(err)
+	node := &models.StateNode{
+		MerklePath: *path,
+		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
+	}
+	err = s.storage.AddOrUpdateStateNode(node)
+	s.NoError(err)
+
+	res, err := s.storage.GetStateNodeByPath(path)
+	s.NoError(err)
+
+	s.Equal(node, res)
+}
+
+func (s *StateNodeTestSuite) Test_AddOrUpdateStateNode_UpdateAndRetrieve() {
+	path, err := models.NewMerklePath("0000111")
+	s.NoError(err)
+	node := &models.StateNode{
+		MerklePath: *path,
+		DataHash:   common.BytesToHash([]byte{1, 2, 3, 4, 5}),
+	}
+	err = s.storage.AddStateNode(node)
+	s.NoError(err)
+
+	s.NoError(err)
+	expectedNode := &models.StateNode{
+		MerklePath: *path,
+		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
+	}
+	err = s.storage.AddOrUpdateStateNode(expectedNode)
+	s.NoError(err)
+
+	res, err := s.storage.GetStateNodeByPath(path)
+	s.NoError(err)
+
+	s.Equal(expectedNode, res)
+}
+
 func (s *StateNodeTestSuite) Test_GetStateNodeByHash_NonExistentNode() {
 	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
 	res, err := s.storage.GetStateNodeByHash(hash)
