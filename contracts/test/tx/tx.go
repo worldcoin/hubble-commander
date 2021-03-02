@@ -178,7 +178,7 @@ func bindTestTx(address common.Address, caller bind.ContractCaller, transactor b
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_TestTx *TestTxRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_TestTx *TestTxRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _TestTx.Contract.TestTxCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -197,7 +197,7 @@ func (_TestTx *TestTxRaw) Transact(opts *bind.TransactOpts, method string, param
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_TestTx *TestTxCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_TestTx *TestTxCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _TestTx.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -216,12 +216,17 @@ func (_TestTx *TestTxTransactorRaw) Transact(opts *bind.TransactOpts, method str
 //
 // Solidity: function create2TransferDecode(bytes txs, uint256 index) pure returns((uint256,uint256,uint256,uint256,uint256))
 func (_TestTx *TestTxCaller) Create2TransferDecode(opts *bind.CallOpts, txs []byte, index *big.Int) (TxCreate2Transfer, error) {
-	var (
-		ret0 = new(TxCreate2Transfer)
-	)
-	out := ret0
-	err := _TestTx.contract.Call(opts, out, "create2TransferDecode", txs, index)
-	return *ret0, err
+	var out []interface{}
+	err := _TestTx.contract.Call(opts, &out, "create2TransferDecode", txs, index)
+
+	if err != nil {
+		return *new(TxCreate2Transfer), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(TxCreate2Transfer)).(*TxCreate2Transfer)
+
+	return out0, err
+
 }
 
 // Create2TransferDecode is a free data retrieval call binding the contract method 0xc2b37836.
@@ -242,12 +247,17 @@ func (_TestTx *TestTxCallerSession) Create2TransferDecode(txs []byte, index *big
 //
 // Solidity: function create2TransferMessageOf(bytes txs, uint256 index, uint256 nonce, uint256[4] to) pure returns(bytes)
 func (_TestTx *TestTxCaller) Create2TransferMessageOf(opts *bind.CallOpts, txs []byte, index *big.Int, nonce *big.Int, to [4]*big.Int) ([]byte, error) {
-	var (
-		ret0 = new([]byte)
-	)
-	out := ret0
-	err := _TestTx.contract.Call(opts, out, "create2TransferMessageOf", txs, index, nonce, to)
-	return *ret0, err
+	var out []interface{}
+	err := _TestTx.contract.Call(opts, &out, "create2TransferMessageOf", txs, index, nonce, to)
+
+	if err != nil {
+		return *new([]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
+
+	return out0, err
+
 }
 
 // Create2TransferMessageOf is a free data retrieval call binding the contract method 0x419dce2a.
@@ -268,12 +278,17 @@ func (_TestTx *TestTxCallerSession) Create2TransferMessageOf(txs []byte, index *
 //
 // Solidity: function create2transferHasExcessData(bytes txs) pure returns(bool)
 func (_TestTx *TestTxCaller) Create2transferHasExcessData(opts *bind.CallOpts, txs []byte) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _TestTx.contract.Call(opts, out, "create2transferHasExcessData", txs)
-	return *ret0, err
+	var out []interface{}
+	err := _TestTx.contract.Call(opts, &out, "create2transferHasExcessData", txs)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // Create2transferHasExcessData is a free data retrieval call binding the contract method 0x61dd4671.
@@ -294,12 +309,17 @@ func (_TestTx *TestTxCallerSession) Create2transferHasExcessData(txs []byte) (bo
 //
 // Solidity: function create2transferSerialize((uint256,uint256,uint256,uint256,uint256)[] txs) pure returns(bytes)
 func (_TestTx *TestTxCaller) Create2transferSerialize(opts *bind.CallOpts, txs []TxCreate2Transfer) ([]byte, error) {
-	var (
-		ret0 = new([]byte)
-	)
-	out := ret0
-	err := _TestTx.contract.Call(opts, out, "create2transferSerialize", txs)
-	return *ret0, err
+	var out []interface{}
+	err := _TestTx.contract.Call(opts, &out, "create2transferSerialize", txs)
+
+	if err != nil {
+		return *new([]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
+
+	return out0, err
+
 }
 
 // Create2transferSerialize is a free data retrieval call binding the contract method 0x1c5f31f7.
@@ -320,12 +340,17 @@ func (_TestTx *TestTxCallerSession) Create2transferSerialize(txs []TxCreate2Tran
 //
 // Solidity: function create2transferSize(bytes txs) pure returns(uint256)
 func (_TestTx *TestTxCaller) Create2transferSize(opts *bind.CallOpts, txs []byte) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TestTx.contract.Call(opts, out, "create2transferSize", txs)
-	return *ret0, err
+	var out []interface{}
+	err := _TestTx.contract.Call(opts, &out, "create2transferSize", txs)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // Create2transferSize is a free data retrieval call binding the contract method 0x3283ae43.
@@ -346,12 +371,17 @@ func (_TestTx *TestTxCallerSession) Create2transferSize(txs []byte) (*big.Int, e
 //
 // Solidity: function massMigrationDecode(bytes txs, uint256 index) pure returns((uint256,uint256,uint256) _tx)
 func (_TestTx *TestTxCaller) MassMigrationDecode(opts *bind.CallOpts, txs []byte, index *big.Int) (TxMassMigration, error) {
-	var (
-		ret0 = new(TxMassMigration)
-	)
-	out := ret0
-	err := _TestTx.contract.Call(opts, out, "massMigrationDecode", txs, index)
-	return *ret0, err
+	var out []interface{}
+	err := _TestTx.contract.Call(opts, &out, "massMigrationDecode", txs, index)
+
+	if err != nil {
+		return *new(TxMassMigration), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(TxMassMigration)).(*TxMassMigration)
+
+	return out0, err
+
 }
 
 // MassMigrationDecode is a free data retrieval call binding the contract method 0xc0bea13c.
@@ -372,12 +402,17 @@ func (_TestTx *TestTxCallerSession) MassMigrationDecode(txs []byte, index *big.I
 //
 // Solidity: function massMigrationSize(bytes txs) pure returns(uint256)
 func (_TestTx *TestTxCaller) MassMigrationSize(opts *bind.CallOpts, txs []byte) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TestTx.contract.Call(opts, out, "massMigrationSize", txs)
-	return *ret0, err
+	var out []interface{}
+	err := _TestTx.contract.Call(opts, &out, "massMigrationSize", txs)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // MassMigrationSize is a free data retrieval call binding the contract method 0xe177b4fe.
@@ -398,12 +433,17 @@ func (_TestTx *TestTxCallerSession) MassMigrationSize(txs []byte) (*big.Int, err
 //
 // Solidity: function testEncodeDecimal(uint256 amount) pure returns(uint256)
 func (_TestTx *TestTxCaller) TestEncodeDecimal(opts *bind.CallOpts, amount *big.Int) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TestTx.contract.Call(opts, out, "testEncodeDecimal", amount)
-	return *ret0, err
+	var out []interface{}
+	err := _TestTx.contract.Call(opts, &out, "testEncodeDecimal", amount)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // TestEncodeDecimal is a free data retrieval call binding the contract method 0x64ab8e80.
@@ -424,12 +464,17 @@ func (_TestTx *TestTxCallerSession) TestEncodeDecimal(amount *big.Int) (*big.Int
 //
 // Solidity: function testMassMigrationMessageOf((uint256,uint256,uint256) _tx, uint256 nonce, uint256 spokeID) pure returns(bytes)
 func (_TestTx *TestTxCaller) TestMassMigrationMessageOf(opts *bind.CallOpts, _tx TxMassMigration, nonce *big.Int, spokeID *big.Int) ([]byte, error) {
-	var (
-		ret0 = new([]byte)
-	)
-	out := ret0
-	err := _TestTx.contract.Call(opts, out, "testMassMigrationMessageOf", _tx, nonce, spokeID)
-	return *ret0, err
+	var out []interface{}
+	err := _TestTx.contract.Call(opts, &out, "testMassMigrationMessageOf", _tx, nonce, spokeID)
+
+	if err != nil {
+		return *new([]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
+
+	return out0, err
+
 }
 
 // TestMassMigrationMessageOf is a free data retrieval call binding the contract method 0xe9b344cb.
@@ -450,12 +495,17 @@ func (_TestTx *TestTxCallerSession) TestMassMigrationMessageOf(_tx TxMassMigrati
 //
 // Solidity: function transferDecode(bytes txs, uint256 index) pure returns((uint256,uint256,uint256,uint256))
 func (_TestTx *TestTxCaller) TransferDecode(opts *bind.CallOpts, txs []byte, index *big.Int) (TxTransfer, error) {
-	var (
-		ret0 = new(TxTransfer)
-	)
-	out := ret0
-	err := _TestTx.contract.Call(opts, out, "transferDecode", txs, index)
-	return *ret0, err
+	var out []interface{}
+	err := _TestTx.contract.Call(opts, &out, "transferDecode", txs, index)
+
+	if err != nil {
+		return *new(TxTransfer), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(TxTransfer)).(*TxTransfer)
+
+	return out0, err
+
 }
 
 // TransferDecode is a free data retrieval call binding the contract method 0x6e0af50f.
@@ -476,12 +526,17 @@ func (_TestTx *TestTxCallerSession) TransferDecode(txs []byte, index *big.Int) (
 //
 // Solidity: function transferHasExcessData(bytes txs) pure returns(bool)
 func (_TestTx *TestTxCaller) TransferHasExcessData(opts *bind.CallOpts, txs []byte) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _TestTx.contract.Call(opts, out, "transferHasExcessData", txs)
-	return *ret0, err
+	var out []interface{}
+	err := _TestTx.contract.Call(opts, &out, "transferHasExcessData", txs)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // TransferHasExcessData is a free data retrieval call binding the contract method 0x7cef563f.
@@ -502,12 +557,17 @@ func (_TestTx *TestTxCallerSession) TransferHasExcessData(txs []byte) (bool, err
 //
 // Solidity: function transferMessageOf(bytes txs, uint256 index, uint256 nonce) pure returns(bytes)
 func (_TestTx *TestTxCaller) TransferMessageOf(opts *bind.CallOpts, txs []byte, index *big.Int, nonce *big.Int) ([]byte, error) {
-	var (
-		ret0 = new([]byte)
-	)
-	out := ret0
-	err := _TestTx.contract.Call(opts, out, "transferMessageOf", txs, index, nonce)
-	return *ret0, err
+	var out []interface{}
+	err := _TestTx.contract.Call(opts, &out, "transferMessageOf", txs, index, nonce)
+
+	if err != nil {
+		return *new([]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
+
+	return out0, err
+
 }
 
 // TransferMessageOf is a free data retrieval call binding the contract method 0xbf20a9df.
@@ -528,12 +588,17 @@ func (_TestTx *TestTxCallerSession) TransferMessageOf(txs []byte, index *big.Int
 //
 // Solidity: function transferSerialize((uint256,uint256,uint256,uint256)[] txs) pure returns(bytes)
 func (_TestTx *TestTxCaller) TransferSerialize(opts *bind.CallOpts, txs []TxTransfer) ([]byte, error) {
-	var (
-		ret0 = new([]byte)
-	)
-	out := ret0
-	err := _TestTx.contract.Call(opts, out, "transferSerialize", txs)
-	return *ret0, err
+	var out []interface{}
+	err := _TestTx.contract.Call(opts, &out, "transferSerialize", txs)
+
+	if err != nil {
+		return *new([]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
+
+	return out0, err
+
 }
 
 // TransferSerialize is a free data retrieval call binding the contract method 0x9a06678f.
@@ -554,12 +619,17 @@ func (_TestTx *TestTxCallerSession) TransferSerialize(txs []TxTransfer) ([]byte,
 //
 // Solidity: function transferSize(bytes txs) pure returns(uint256)
 func (_TestTx *TestTxCaller) TransferSize(opts *bind.CallOpts, txs []byte) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TestTx.contract.Call(opts, out, "transferSize", txs)
-	return *ret0, err
+	var out []interface{}
+	err := _TestTx.contract.Call(opts, &out, "transferSize", txs)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // TransferSize is a free data retrieval call binding the contract method 0x3bad0c7f.
