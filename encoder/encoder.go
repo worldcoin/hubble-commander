@@ -2,12 +2,12 @@ package encoder
 
 import (
 	"fmt"
-	"github.com/Worldcoin/hubble-commander/models"
 	"log"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
@@ -80,7 +80,7 @@ func EncodeDecimal(value models.Uint256) (uint16, error) {
 	}
 
 	if mantissa.Cmp(big.NewInt(0xfff)) > 0 {
-		return 0, fmt.Errorf("value is not encodable as multi-percission decimal")
+		return 0, fmt.Errorf("value is not encodable as multi-precission decimal")
 	}
 
 	return uint16(exponent.Uint64())<<12 + uint16(mantissa.Uint64()), nil

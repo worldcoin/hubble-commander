@@ -1,13 +1,13 @@
 package encoder
 
 import (
-	"github.com/Worldcoin/hubble-commander/contracts/test/tx"
-	"github.com/Worldcoin/hubble-commander/models"
 	"math/big"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
+	testtx "github.com/Worldcoin/hubble-commander/contracts/test/tx"
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/testutils/deployer"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -21,7 +21,7 @@ type EncoderTestSuite struct {
 	sim      *simulator.Simulator
 	transfer *transfer.FrontendTransfer
 	generic  *generic.FrontendGeneric
-	testTx   *tx.TestTx
+	testTx   *testtx.TestTx
 }
 
 func (s *EncoderTestSuite) SetupSuite() {
@@ -34,8 +34,10 @@ func (s *EncoderTestSuite) SetupTest() {
 	s.sim = sim
 
 	frontend, err := deployer.DeployFrontend(sim)
+	s.NoError(err)
 	test, err := deployer.DeployTest(sim)
 	s.NoError(err)
+
 	s.transfer = frontend.FrontendTransfer
 	s.generic = frontend.FrontendGeneric
 	s.testTx = test.TestTx
