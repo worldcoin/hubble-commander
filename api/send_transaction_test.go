@@ -1,7 +1,6 @@
 package api
 
 import (
-	"math/big"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/db"
@@ -39,16 +38,16 @@ func (s *SendTransactionTestSuite) TearDownTest() {
 
 func (s *SendTransactionTestSuite) TestApi_SendTransaction() {
 	tx := models.IncomingTransaction{
-		FromIndex: big.NewInt(1),
-		ToIndex:   big.NewInt(2),
-		Amount:    big.NewInt(50),
-		Fee:       big.NewInt(10),
-		Nonce:     big.NewInt(0),
+		FromIndex: models.NewUint256(1),
+		ToIndex:   models.NewUint256(2),
+		Amount:    models.NewUint256(50),
+		Fee:       models.NewUint256(10),
+		Nonce:     models.NewUint256(0),
 		Signature: []byte{97, 100, 115, 97, 100, 115, 97, 115, 100, 97, 115, 100},
 	}
 	hash, err := s.api.SendTransaction(tx)
 	s.NoError(err)
-	s.Equal(common.HexToHash("0x3e136a19201d6fc73c4e3c76951edfb94eb9a7a0c7e15492696ffddb3e1b2c68"), *hash)
+	s.Equal(common.HexToHash("0x0757e6b9b057336b010007d26489dc3a46d89a5349824965b9129ca26ff72340"), *hash)
 }
 
 func TestSendTransactionTestSuite(t *testing.T) {

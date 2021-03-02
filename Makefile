@@ -34,7 +34,7 @@ migration-down:
 	migrate -source file://db/migrations/ -database "postgres://localhost:5432/hubble?sslmode=disable" down
 
 run:
-	./build/hubble
+	go run ./main/main.go
 
 lint:
 	golangci-lint run ./...
