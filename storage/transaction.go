@@ -30,7 +30,7 @@ func (s *Storage) GetTransaction(hash common.Hash) (*models.Transaction, error) 
 			From("transaction").
 			Where(squirrel.Eq{"tx_hash": hash}),
 	).Into(&res)
-	if err != nil {
+	if err != nil || len(res) == 0 {
 		return nil, err
 	}
 	return &res[0], nil

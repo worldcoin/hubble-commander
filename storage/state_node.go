@@ -25,7 +25,7 @@ func (s *Storage) GetStateNodeByHash(hash common.Hash) (*models.StateNode, error
 			From("state_node").
 			Where(squirrel.Eq{"data_hash": hash}),
 	).Into(&res)
-	if err != nil {
+	if err != nil || len(res) == 0 {
 		return nil, err
 	}
 	return &res[0], nil
@@ -42,7 +42,7 @@ func (s *Storage) GetStateNodeByPath(path *models.MerklePath) (*models.StateNode
 			From("state_node").
 			Where(squirrel.Eq{"merkle_path": pathValue}),
 	).Into(&res)
-	if err != nil {
+	if err != nil || len(res) == 0 {
 		return nil, err
 	}
 	return &res[0], nil
