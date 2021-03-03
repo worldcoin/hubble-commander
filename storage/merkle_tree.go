@@ -65,7 +65,11 @@ func (s *StateTree) Set(index uint32, state *models.UserState) error {
 			return err
 		}
 
-		currentHash = hashTwo(currentHash, witness.DataHash) // TODO
+		if currentPath.IsLeftNode() {
+			currentHash = hashTwo(currentHash, witness.DataHash)
+		} else {
+			currentHash = hashTwo(witness.DataHash, currentHash)
+		}
 		currentPath, err = currentPath.Parent()
 		if err != nil {
 			return err

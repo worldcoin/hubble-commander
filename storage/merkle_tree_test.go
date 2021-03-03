@@ -55,7 +55,7 @@ func (s *StateTreeTestSuite) Test_Set_StoresStateLeafRecord() {
 	s.Equal(s.leaf, actualLeaf)
 }
 
-func (s *StateTreeTestSuite) Test_Set_StoresStateNodeRecord() {
+func (s *StateTreeTestSuite) Test_Set_StoresLeafStateNodeRecord() {
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
@@ -72,22 +72,40 @@ func (s *StateTreeTestSuite) Test_Set_StoresStateNodeRecord() {
 	s.Equal(expectedNode, node)
 }
 
-// Test that checks that root is: 0xd8cb702fc833817dccdc3889282af96755b2909274ca2f1a3827a60d11d796eb
-func (s *StateTreeTestSuite) Test_Set_UpdatesRootNodeRecord() {
+func (s *StateTreeTestSuite) Test_Set_UpdatesRootStateNodeRecord_Index0() {
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
-	path := models.MerklePath{
+	rootPath := models.MerklePath{
 		Path:  0,
 		Depth: 0,
 	}
 
 	expectedRoot := &models.StateNode{
-		MerklePath: path,
+		MerklePath: rootPath,
 		DataHash:   common.HexToHash("0xd8cb702fc833817dccdc3889282af96755b2909274ca2f1a3827a60d11d796eb"),
 	}
 
-	root, err := s.storage.GetStateNodeByPath(&path)
+	root, err := s.storage.GetStateNodeByPath(&rootPath)
+	s.NoError(err)
+	s.Equal(expectedRoot, root)
+}
+
+func (s *StateTreeTestSuite) Test_Set_UpdatesRootStateNodeRecord_Index1() {
+	err := s.tree.Set(1, &s.leaf.UserState)
+	s.NoError(err)
+
+	rootPath := models.MerklePath{
+		Path:  0,
+		Depth: 0,
+	}
+
+	expectedRoot := &models.StateNode{
+		MerklePath: rootPath,
+		DataHash:   common.HexToHash("0xbec68099063e1499a5144a2d5b41f6a3e005ceac77caef6a171d77573570a000"),
+	}
+
+	root, err := s.storage.GetStateNodeByPath(&rootPath)
 	s.NoError(err)
 	s.Equal(expectedRoot, root)
 }

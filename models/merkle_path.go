@@ -99,7 +99,7 @@ func (p *MerklePath) Child(right bool) (*MerklePath, error) {
 }
 
 func (p *MerklePath) Sibling() (*MerklePath, error) {
-	if p.Path%2 == 0 {
+	if p.IsLeftNode() {
 		return p.Add(1)
 	}
 	return p.Sub(1)
@@ -126,4 +126,13 @@ func (p *MerklePath) GetWitnessPaths() ([]MerklePath, error) {
 	}
 
 	return witnesses, nil
+}
+
+
+func (p *MerklePath) IsLeftNode() bool {
+	return p.Path%2 == 0
+}
+
+func (p *MerklePath) IsRightNode() bool {
+	return !p.IsLeftNode()
 }
