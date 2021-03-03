@@ -81,8 +81,19 @@ func (s *Storage) GetStateNodeByPath(path *models.MerklePath) (*models.StateNode
 			From("state_node").
 			Where(squirrel.Eq{"merkle_path": pathValue}),
 	).Into(&res)
-	if err != nil || len(res) == 0 {
+	if err != nil {
 		return nil, err
 	}
+	if len(res) == 0 {
+		return newZeroStateNode(path), nil
+	}
+
 	return &res[0], nil
+}
+
+func newZeroStateNode(path *models.MerklePath) *models.StateNode {
+	return &models.StateNode{
+		MerklePath: *path,
+		DataHash: GetZeroHash(32 - uint(path.Depth)),
+	}
 }

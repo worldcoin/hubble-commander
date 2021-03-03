@@ -166,13 +166,36 @@ func (s *StateNodeTestSuite) Test_GetStateNodeByHash_NonExistentNode() {
 	s.Nil(res)
 }
 
-func (s *StateNodeTestSuite) Test_GetStateNodeByPath_NonExistentNode() {
-	path, err := models.NewMerklePath("0000111")
-	s.NoError(err)
+func (s *StateNodeTestSuite) Test_GetStateNodeByPath_NonExistentLeaf() {
+	path := models.MerklePath{
+		Path: 0,
+		Depth: 32,
+	}
 
-	res, err := s.storage.GetStateNodeByPath(path)
+	expected := &models.StateNode{
+		MerklePath: path,
+		DataHash: GetZeroHash(0),
+	}
+
+	res, err := s.storage.GetStateNodeByPath(&path)
 	s.NoError(err)
-	s.Nil(res)
+	s.Equal(expected, res)
+}
+
+func (s *StateNodeTestSuite) Test_GetStateNodeByPath_NonExistentRoot() {
+	path := models.MerklePath{
+		Path: 0,
+		Depth: 0,
+	}
+
+	expected := &models.StateNode{
+		MerklePath: path,
+		DataHash: GetZeroHash(32),
+	}
+
+	res, err := s.storage.GetStateNodeByPath(&path)
+	s.NoError(err)
+	s.Equal(expected, res)
 }
 
 func TestStateNodeTestSuite(t *testing.T) {
