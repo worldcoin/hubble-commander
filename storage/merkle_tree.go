@@ -28,12 +28,20 @@ func (s *StateTree) Root() (*common.Hash, error) {
 	return &root.DataHash, nil
 }
 
-func (s *StateTree) Set(index uint32, state *models.UserState) error {
+func (s *StateTree) LeafNode(index uint32) (*models.StateNode, error) {
 	leafPath := &models.MerklePath{
 		Path:  index,
 		Depth: 32,
 	}
-	prevLeaf, err := s.storage.GetStateNodeByPath(leafPath)
+	leaf, err := s.storage.GetStateNodeByPath(leafPath)
+	if err != nil {
+		return nil, err
+	}
+	return leaf, nil
+}
+
+func (s *StateTree) Set(index uint32, state *models.UserState) error {
+	prevLeaf, err := s.LeafNode(index)
 	if err != nil {
 		return err
 	}
@@ -52,7 +60,7 @@ func (s *StateTree) Set(index uint32, state *models.UserState) error {
 		return err
 	}
 
-	witnessPaths, err := leafPath.GetWitnessPaths()
+	witnessPaths, err := prevLeaf.MerklePath.GetWitnessPaths()
 	if err != nil {
 		return err
 	}
@@ -94,7 +102,7 @@ func (s *StateTree) Set(index uint32, state *models.UserState) error {
 	}
 
 	update := &models.StateUpdate{
-		MerklePath:  *leafPath,
+		MerklePath:  prevLeaf.MerklePath,
 		CurrentHash: leaf.DataHash,
 		CurrentRoot: currentHash,
 		PrevHash:    prevLeaf.DataHash,
