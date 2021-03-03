@@ -1,6 +1,7 @@
 package encoder
 
 import (
+	"encoding/binary"
 	"fmt"
 	"log"
 	"math/big"
@@ -84,4 +85,26 @@ func EncodeDecimal(value models.Uint256) (uint16, error) {
 	}
 
 	return uint16(exponent.Uint64())<<12 + uint16(mantissa.Uint64()), nil
+}
+
+// Encodes a transaction in compact format (without signatures) for the inclusion in the commitment
+func EncodeTransaction(transaction *models.Transaction) ([]uint8, error) {
+	amount, err := EncodeDecimal(transaction.Amount)
+	if err != nil {
+		return nil, err
+	}
+
+	fee, err := EncodeDecimal(transaction.Fee)
+	if err != nil {
+		return nil, err
+	}
+
+	arr := make([]byte, 12)
+
+	binary.BigEndian.PutUint32(arr[0:4], uint32(transaction.FromIndex.Uint64()))
+	binary.BigEndian.PutUint32(arr[4:8], uint32(transaction.ToIndex.Uint64()))
+	binary.BigEndian.PutUint16(arr[8:10], amount)
+	binary.BigEndian.PutUint16(arr[10:12], fee)
+
+	return arr, nil
 }
