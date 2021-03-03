@@ -87,6 +87,7 @@ func (s *StateTree) updateStateNodes(leafPath *models.MerklePath, newLeafHash *c
 
 	currentHash := *newLeafHash
 	for _, witnessPath := range witnessPaths {
+		// nolint:govet
 		currentPath, err := witnessPath.Sibling()
 		if err != nil {
 			return nil, err
@@ -100,8 +101,10 @@ func (s *StateTree) updateStateNodes(leafPath *models.MerklePath, newLeafHash *c
 			return nil, err
 		}
 
-		// nolint:gosec,govet
-		currentHash, err = s.calculateParentHash(&currentHash, currentPath, &witnessPath)
+		currentHash, err = s.calculateParentHash(&currentHash, currentPath, witnessPath)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	err = s.storage.AddOrUpdateStateNode(&models.StateNode{
@@ -115,17 +118,21 @@ func (s *StateTree) updateStateNodes(leafPath *models.MerklePath, newLeafHash *c
 	return &currentHash, nil
 }
 
-func (s *StateTree) calculateParentHash(currentHash *common.Hash, currentPath, witnessPath *models.MerklePath) (common.Hash, error) {
-	witness, err := s.storage.GetStateNodeByPath(witnessPath)
+func (s *StateTree) calculateParentHash(
+	currentHash *common.Hash,
+	currentPath *models.MerklePath,
+	witnessPath models.MerklePath,
+) (common.Hash, error) {
+	witness, err := s.storage.GetStateNodeByPath(&witnessPath)
 	if err != nil {
 		return common.Hash{}, err
 	}
 
 	if currentPath.IsLeftNode() {
 		return hashTwo(*currentHash, witness.DataHash), nil
-	} else {
-		return hashTwo(witness.DataHash, *currentHash), nil
 	}
+
+	return hashTwo(witness.DataHash, *currentHash), nil
 }
 
 func NewStateLeaf(state *models.UserState) (*models.StateLeaf, error) {
