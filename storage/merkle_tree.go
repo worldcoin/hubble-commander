@@ -16,6 +16,23 @@ func NewStateTree(storage *Storage) *StateTree {
 }
 
 func (s *StateTree) Set(index uint32, state *models.UserState) error {
+	leafPath := &models.MerklePath{
+		Path:  index,
+		Depth: 32,
+	}
+	rootPath := &models.MerklePath{
+		Path:  0,
+		Depth: 0,
+	}
+	prevLeaf, err := s.storage.GetStateNodeByPath(leafPath)
+	if err != nil {
+		return err
+	}
+	prevRoot, err := s.storage.GetStateNodeByPath(rootPath)
+	if err != nil {
+		return err
+	}
+
 	leaf, err := NewStateLeaf(state)
 	if err != nil {
 		return err
@@ -26,13 +43,51 @@ func (s *StateTree) Set(index uint32, state *models.UserState) error {
 		return err
 	}
 
-	err = s.storage.AddStateNode(&models.StateNode{
-		MerklePath: models.MerklePath{
-			Path:  index,
-			Depth: 32,
-		},
-		DataHash: leaf.DataHash,
+	witnessPaths, err := leafPath.GetWitnessPaths()
+	if err != nil {
+		return err
+	}
+
+	currentPath := leafPath
+	currentHash := leaf.DataHash
+	for _, witnessPath := range witnessPaths {
+		err = s.storage.AddOrUpdateStateNode(&models.StateNode{
+			MerklePath: *currentPath,
+			DataHash:   currentHash,
+		})
+		if err != nil {
+			return err
+		}
+
+		// nolint:gosec,govet
+		witness, err := s.storage.GetStateNodeByPath(&witnessPath)
+		if err != nil {
+			return err
+		}
+
+		currentHash = hashTwo(currentHash, witness.DataHash) // TODO
+		currentPath, err = currentPath.Parent()
+		if err != nil {
+			return err
+		}
+	}
+
+	err = s.storage.AddOrUpdateStateNode(&models.StateNode{
+		MerklePath: *currentPath,
+		DataHash:   currentHash,
 	})
+	if err != nil {
+		return err
+	}
+
+	update := &models.StateUpdate{
+		MerklePath:  *leafPath,
+		CurrentHash: leaf.DataHash,
+		CurrentRoot: currentHash,
+		PrevHash:    prevLeaf.DataHash,
+		PrevRoot:    prevRoot.DataHash,
+	}
+	err = s.storage.AddStateUpdate(update)
 	if err != nil {
 		return err
 	}

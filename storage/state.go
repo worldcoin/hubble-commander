@@ -17,7 +17,7 @@ func init() {
 	}
 }
 
-func hashTwo(a common.Hash, b common.Hash) common.Hash {
+func hashTwo(a, b common.Hash) common.Hash {
 	buf := make([]byte, 64)
 	copy(buf[0:32], a.Bytes())
 	copy(buf[32:64], b.Bytes())
