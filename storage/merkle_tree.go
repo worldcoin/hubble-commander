@@ -4,7 +4,12 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+)
+
+var (
+	rootPath = models.MerklePath{Path: 0, Depth: 0}
 )
 
 type StateTree struct {
@@ -15,20 +20,24 @@ func NewStateTree(storage *Storage) *StateTree {
 	return &StateTree{storage}
 }
 
+func (s *StateTree) Root() (*common.Hash, error) {
+	root, err := s.storage.GetStateNodeByPath(&rootPath)
+	if err != nil {
+		return nil, err
+	}
+	return &root.DataHash, nil
+}
+
 func (s *StateTree) Set(index uint32, state *models.UserState) error {
 	leafPath := &models.MerklePath{
 		Path:  index,
 		Depth: 32,
 	}
-	rootPath := &models.MerklePath{
-		Path:  0,
-		Depth: 0,
-	}
 	prevLeaf, err := s.storage.GetStateNodeByPath(leafPath)
 	if err != nil {
 		return err
 	}
-	prevRoot, err := s.storage.GetStateNodeByPath(rootPath)
+	prevRoot, err := s.Root()
 	if err != nil {
 		return err
 	}
@@ -48,9 +57,13 @@ func (s *StateTree) Set(index uint32, state *models.UserState) error {
 		return err
 	}
 
-	currentPath := leafPath
 	currentHash := leaf.DataHash
 	for _, witnessPath := range witnessPaths {
+		currentPath, err := witnessPath.Sibling()
+		if err != nil {
+			return err
+		}
+
 		err = s.storage.AddOrUpdateStateNode(&models.StateNode{
 			MerklePath: *currentPath,
 			DataHash:   currentHash,
@@ -70,14 +83,10 @@ func (s *StateTree) Set(index uint32, state *models.UserState) error {
 		} else {
 			currentHash = hashTwo(witness.DataHash, currentHash)
 		}
-		currentPath, err = currentPath.Parent()
-		if err != nil {
-			return err
-		}
 	}
 
 	err = s.storage.AddOrUpdateStateNode(&models.StateNode{
-		MerklePath: *currentPath,
+		MerklePath: rootPath,
 		DataHash:   currentHash,
 	})
 	if err != nil {
@@ -89,7 +98,7 @@ func (s *StateTree) Set(index uint32, state *models.UserState) error {
 		CurrentHash: leaf.DataHash,
 		CurrentRoot: currentHash,
 		PrevHash:    prevLeaf.DataHash,
-		PrevRoot:    prevRoot.DataHash,
+		PrevRoot:    *prevRoot,
 	}
 	err = s.storage.AddStateUpdate(update)
 	if err != nil {
