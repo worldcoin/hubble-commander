@@ -88,7 +88,7 @@ func EncodeDecimal(value models.Uint256) (uint16, error) {
 }
 
 // Encodes a transaction in compact format (without signatures) for the inclusion in the commitment
-func EncodeTransaction(transaction models.Transaction) ([]uint8, error) {
+func EncodeTransaction(transaction *models.Transaction) ([]uint8, error) {
 	amount, err := EncodeDecimal(transaction.Amount)
 	if err != nil {
 		return nil, err

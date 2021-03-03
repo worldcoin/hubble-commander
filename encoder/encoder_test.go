@@ -117,7 +117,7 @@ func (s *EncoderTestSuite) TestTransactionEncoding() {
 		Signature: nil,
 	}
 
-	encoded, err := EncodeTransaction(tx)
+	encoded, err := EncodeTransaction(&tx)
 	s.NoError(err)
 
 	txTransfer := testtx.TxTransfer{
