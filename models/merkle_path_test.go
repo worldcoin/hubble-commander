@@ -18,7 +18,7 @@ func TestValue(t *testing.T) {
 
 	b, err := a.Value()
 	require.NoError(t, err)
-	require.Equal(t, "000111", b)
+	require.Equal(t, "0000111", b)
 }
 
 func TestAddOne(t *testing.T) {
