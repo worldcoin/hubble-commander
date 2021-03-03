@@ -1,10 +1,28 @@
 package storage
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 )
+
+func (s *Storage) AddOrUpdateStateNode(node *models.StateNode) error {
+	err := s.UpdateStateNode(node)
+	if err != nil {
+		isConstraintError := strings.Contains(err.Error(), "no rows were affected by the update")
+		if isConstraintError {
+			err = s.AddStateNode(node)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return err
+}
 
 func (s *Storage) AddStateNode(node *models.StateNode) error {
 	_, err := s.QB.Insert("state_node").
@@ -14,6 +32,27 @@ func (s *Storage) AddStateNode(node *models.StateNode) error {
 		).
 		RunWith(s.DB).
 		Exec()
+
+	return err
+}
+
+func (s *Storage) UpdateStateNode(node *models.StateNode) error {
+	result, err := s.QB.Update("state_node").
+		Set("data_hash", squirrel.Expr("?", node.DataHash)).
+		Where("merkle_path = ?", node.MerklePath).
+		RunWith(s.DB).
+		Exec()
+	if err != nil {
+		return err
+	}
+
+	updatedRows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if updatedRows == 0 {
+		return fmt.Errorf("no rows were affected by the update")
+	}
 
 	return err
 }
@@ -42,8 +81,19 @@ func (s *Storage) GetStateNodeByPath(path *models.MerklePath) (*models.StateNode
 			From("state_node").
 			Where(squirrel.Eq{"merkle_path": pathValue}),
 	).Into(&res)
-	if err != nil || len(res) == 0 {
+	if err != nil {
 		return nil, err
 	}
+	if len(res) == 0 {
+		return newZeroStateNode(path), nil
+	}
+
 	return &res[0], nil
+}
+
+func newZeroStateNode(path *models.MerklePath) *models.StateNode {
+	return &models.StateNode{
+		MerklePath: *path,
+		DataHash:   GetZeroHash(32 - uint(path.Depth)),
+	}
 }

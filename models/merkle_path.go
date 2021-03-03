@@ -11,6 +11,7 @@ type MerklePath struct {
 	Depth uint8
 }
 
+// Root is represented by empty string
 func NewMerklePath(bits string) (*MerklePath, error) {
 	if bits == "" {
 		return &MerklePath{}, nil
@@ -36,7 +37,7 @@ func (p *MerklePath) Scan(src interface{}) error {
 	if !ok {
 		return fmt.Errorf("can't scan %T into MerklePath", src)
 	}
-	path, err := NewMerklePath(string(value))
+	path, err := NewMerklePath(string(value[1:]))
 	if err != nil {
 		return err
 	}
@@ -48,7 +49,7 @@ func (p *MerklePath) Scan(src interface{}) error {
 // Value implements valuer for database/sql.
 func (p MerklePath) Value() (driver.Value, error) {
 	path := strconv.FormatInt(int64(p.Path), 2)
-	return fmt.Sprintf("%0*s", p.Depth, path), nil
+	return fmt.Sprintf("%0*s", p.Depth+1, path), nil
 }
 
 // Move pointer left/right on the same level
@@ -99,7 +100,7 @@ func (p *MerklePath) Child(right bool) (*MerklePath, error) {
 }
 
 func (p *MerklePath) Sibling() (*MerklePath, error) {
-	if p.Path%2 == 0 {
+	if p.IsLeftNode() {
 		return p.Add(1)
 	}
 	return p.Sub(1)
@@ -126,4 +127,12 @@ func (p *MerklePath) GetWitnessPaths() ([]MerklePath, error) {
 	}
 
 	return witnesses, nil
+}
+
+func (p *MerklePath) IsLeftNode() bool {
+	return p.Path%2 == 0
+}
+
+func (p *MerklePath) IsRightNode() bool {
+	return !p.IsLeftNode()
 }
