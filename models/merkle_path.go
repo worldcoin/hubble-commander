@@ -128,7 +128,6 @@ func (p *MerklePath) GetWitnessPaths() ([]MerklePath, error) {
 	return witnesses, nil
 }
 
-
 func (p *MerklePath) IsLeftNode() bool {
 	return p.Path%2 == 0
 }

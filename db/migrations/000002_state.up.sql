@@ -13,6 +13,7 @@ CREATE TABLE "state_leaf" (
     nonce          NUMERIC(78)
 );
 
+-- this table is append only
 CREATE TABLE "state_update" (
     id            BIGSERIAL PRIMARY KEY,
     merkle_path   BIT(33),
