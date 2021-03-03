@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
@@ -8,22 +10,40 @@ import (
 )
 
 func (a *API) SendTransaction(incTx models.IncomingTransaction) (*common.Hash, error) {
+	if incTx.FromIndex == nil {
+		return nil, fmt.Errorf("fromIndex is required")
+	}
+	if incTx.ToIndex == nil {
+		return nil, fmt.Errorf("toIndex is required")
+	}
+	if incTx.Amount == nil {
+		return nil, fmt.Errorf("amount is required")
+	}
+	if incTx.Fee == nil {
+		return nil, fmt.Errorf("fee is required")
+	}
+	if incTx.Nonce == nil {
+		return nil, fmt.Errorf("nonce is required")
+	}
+
 	hash, err := rlpHash(incTx)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 
 	tx := &models.Transaction{
 		Hash:      *hash,
-		FromIndex: models.MakeUint256FromBig(*incTx.FromIndex),
-		ToIndex:   models.MakeUint256FromBig(*incTx.ToIndex),
-		Amount:    models.MakeUint256FromBig(*incTx.Amount),
-		Fee:       models.MakeUint256FromBig(*incTx.Fee),
-		Nonce:     models.MakeUint256FromBig(*incTx.Nonce),
+		FromIndex: *incTx.FromIndex,
+		ToIndex:   *incTx.ToIndex,
+		Amount:    *incTx.Amount,
+		Fee:       *incTx.Fee,
+		Nonce:     *incTx.Nonce,
 		Signature: incTx.Signature,
 	}
 	err = a.storage.AddTransaction(tx)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 
@@ -31,6 +51,7 @@ func (a *API) SendTransaction(incTx models.IncomingTransaction) (*common.Hash, e
 }
 
 // TODO: Test it with the smart contract encode method.
+// TODO: Use stable encoding with geth abiencode
 func rlpHash(x interface{}) (*common.Hash, error) {
 	hw := sha3.NewLegacyKeccak256()
 	if err := rlp.Encode(hw, x); err != nil {
