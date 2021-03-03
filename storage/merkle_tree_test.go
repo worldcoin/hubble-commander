@@ -10,6 +10,15 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+var (
+	updatedUserState = models.UserState{
+		AccountIndex: models.MakeUint256(1),
+		TokenIndex:   models.MakeUint256(1),
+		Balance:      models.MakeUint256(800),
+		Nonce:        models.MakeUint256(1),
+	}
+)
+
 type StateTreeTestSuite struct {
 	*require.Assertions
 	suite.Suite
@@ -166,13 +175,7 @@ func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_CorrectRootStateNode() 
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
-	state := models.UserState{
-		AccountIndex: models.MakeUint256(1),
-		TokenIndex:   models.MakeUint256(1),
-		Balance:      models.MakeUint256(800),
-		Nonce:        models.MakeUint256(1),
-	}
-	err = s.tree.Set(0, &state)
+	err = s.tree.Set(0, &updatedUserState)
 	s.NoError(err)
 
 	rootPath := models.MerklePath{
@@ -194,15 +197,9 @@ func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_CorrectLeafStateNode() 
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
-	state := models.UserState{
-		AccountIndex: models.MakeUint256(1),
-		TokenIndex:   models.MakeUint256(1),
-		Balance:      models.MakeUint256(800),
-		Nonce:        models.MakeUint256(1),
-	}
-	leaf, err := NewStateLeaf(&state)
+	leaf, err := NewStateLeaf(&updatedUserState)
 	s.NoError(err)
-	err = s.tree.Set(0, &state)
+	err = s.tree.Set(0, &updatedUserState)
 	s.NoError(err)
 
 	leafPath := models.MerklePath{
@@ -224,15 +221,9 @@ func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_NewStateLeafRecord() {
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
-	state := models.UserState{
-		AccountIndex: models.MakeUint256(1),
-		TokenIndex:   models.MakeUint256(1),
-		Balance:      models.MakeUint256(800),
-		Nonce:        models.MakeUint256(1),
-	}
-	expectedLeaf, err := NewStateLeaf(&state)
+	expectedLeaf, err := NewStateLeaf(&updatedUserState)
 	s.NoError(err)
-	err = s.tree.Set(0, &state)
+	err = s.tree.Set(0, &updatedUserState)
 	s.NoError(err)
 
 	leaf, err := s.storage.GetStateLeaf(expectedLeaf.DataHash)
@@ -244,15 +235,9 @@ func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_AddsStateUpdateRecord()
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
-	state := models.UserState{
-		AccountIndex: models.MakeUint256(1),
-		TokenIndex:   models.MakeUint256(1),
-		Balance:      models.MakeUint256(800),
-		Nonce:        models.MakeUint256(1),
-	}
-	updatedLeaf, err := NewStateLeaf(&state)
+	updatedLeaf, err := NewStateLeaf(&updatedUserState)
 	s.NoError(err)
-	err = s.tree.Set(0, &state)
+	err = s.tree.Set(0, &updatedUserState)
 	s.NoError(err)
 
 	path := models.MerklePath{
