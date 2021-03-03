@@ -1,4 +1,4 @@
--- the root hash is stored with empty merkle_path
+-- the root hash is stored as [0], all merkle paths are prepended with 0
 CREATE TABLE "state_node" (
     merkle_path  BIT VARYING(33) PRIMARY KEY,
     data_hash    BYTEA

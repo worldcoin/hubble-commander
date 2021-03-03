@@ -11,6 +11,7 @@ type MerklePath struct {
 	Depth uint8
 }
 
+// Root is represented by empty string
 func NewMerklePath(bits string) (*MerklePath, error) {
 	if bits == "" {
 		return &MerklePath{}, nil
