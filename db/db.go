@@ -14,6 +14,10 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type Database struct {
+	*sqlx.DB
+}
+
 func CreateDatasource(host, port, user, password, dbname *string) string {
 	datasource := make([]string, 5)
 	datasource = append(datasource, "sslmode=disable")
@@ -37,9 +41,13 @@ func CreateDatasource(host, port, user, password, dbname *string) string {
 	return strings.Join(datasource, " ")
 }
 
-func GetDB(cfg *config.Config) (*sqlx.DB, error) {
+func GetDB(cfg *config.Config) (*Database, error) {
 	datasource := CreateDatasource(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, &cfg.DBName)
-	return sqlx.Connect("postgres", datasource)
+	db, err := sqlx.Connect("postgres", datasource)
+	if err != nil {
+		return nil, err
+	}
+	return &Database{DB: db}, nil
 }
 
 func GetMigrator(cfg *config.Config) (*migrate.Migrate, error) {

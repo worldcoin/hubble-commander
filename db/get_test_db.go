@@ -2,11 +2,10 @@ package db
 
 import (
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/jmoiron/sqlx"
 )
 
 type TestDB struct {
-	*sqlx.DB
+	DB       *Database
 	Teardown func() error
 }
 

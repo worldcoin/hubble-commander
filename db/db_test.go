@@ -5,7 +5,6 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -13,7 +12,7 @@ import (
 type DBTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	db     *sqlx.DB
+	db     *Database
 	config *config.Config
 }
 

@@ -4,11 +4,10 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
-	"github.com/jmoiron/sqlx"
 )
 
 type Storage struct {
-	DB *sqlx.DB
+	DB *db.Database
 	QB squirrel.StatementBuilderType
 }
 
