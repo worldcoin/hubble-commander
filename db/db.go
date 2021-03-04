@@ -14,8 +14,16 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type DatabaseLike interface {
+	Select(dest interface{}, query string, args ...interface{}) error
+	Exec(query string, args ...interface{}) (sql.Result, error)
+	Query(query string, args ...interface{}) (*sql.Rows, error)
+	Close() error
+	Ping() error
+}
+
 type Database struct {
-	*sqlx.DB
+	DatabaseLike
 }
 
 func NewDatabase(cfg *config.Config) (*Database, error) {
@@ -24,7 +32,7 @@ func NewDatabase(cfg *config.Config) (*Database, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Database{DB: db}, nil
+	return &Database{DatabaseLike: db}, nil
 }
 
 func GetMigrator(cfg *config.Config) (*migrate.Migrate, error) {
