@@ -35,3 +35,15 @@ func (s *Storage) GetTransaction(hash common.Hash) (*models.Transaction, error) 
 	}
 	return &res[0], nil
 }
+
+func (s *Storage) GetTransactions() ([]models.Transaction, error) {
+	res := make([]models.Transaction, 0, 16)
+	err := s.Query(
+		squirrel.Select("*").
+			From("transaction"),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}

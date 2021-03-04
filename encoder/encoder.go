@@ -3,24 +3,22 @@ package encoder
 import (
 	"encoding/binary"
 	"fmt"
-	"log"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
-var tUint256 abi.Type
-
-func init() {
-	t, err := abi.NewType("uint256", "", nil)
-	if err != nil {
-		log.Fatal("Failed to create tUint256 constant")
-	}
-	tUint256 = t
-}
+var (
+	tUint256, _       = abi.NewType("uint256", "", nil)
+	tBytes32, _       = abi.NewType("bytes32", "", nil)
+	tSignatureType, _ = abi.NewType("uint256[2]", "", nil)
+	tBytes, _         = abi.NewType("bytes", "", nil)
+)
 
 func EncodeTransfer(tx transfer.OffchainTransfer) ([]uint8, error) {
 	arguments := abi.Arguments{
@@ -107,4 +105,26 @@ func EncodeTransaction(transaction *models.Transaction) ([]uint8, error) {
 	binary.BigEndian.PutUint16(arr[10:12], fee)
 
 	return arr, nil
+}
+
+func GetCommitmentBodyHash(accountRoot common.Hash, signature models.Signature, feeReceiver models.Uint256, transactions []byte) (*common.Hash, error) {
+	arguments := abi.Arguments{
+		{Name: "accountRoot", Type: tBytes32},
+		{Name: "signature", Type: tSignatureType},
+		{Name: "feeReceiver", Type: tUint256},
+		{Name: "txs", Type: tBytes},
+	}
+	encodedBytes, err := arguments.Pack(
+		accountRoot,
+		[2]*big.Int{&signature[0].Int, &signature[1].Int},
+		&feeReceiver.Int,
+		transactions,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	hash := crypto.Keccak256Hash(encodedBytes)
+	return &hash, nil
+
 }

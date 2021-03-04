@@ -1,5 +1,6 @@
 CREATE TABLE "commitment" (
     leaf_hash BYTEA PRIMARY KEY,
+    post_state_root BYTEA,
     body_hash BYTEA,
     account_tree_root BYTEA,
     combined_signature BYTEA,
