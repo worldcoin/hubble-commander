@@ -18,29 +18,6 @@ type Database struct {
 	*sqlx.DB
 }
 
-func CreateDatasource(host, port, user, password, dbname *string) string {
-	datasource := make([]string, 5)
-	datasource = append(datasource, "sslmode=disable")
-
-	if host != nil {
-		datasource = append(datasource, fmt.Sprintf("host=%s", *host))
-	}
-	if port != nil {
-		datasource = append(datasource, fmt.Sprintf("port=%s", *port))
-	}
-	if user != nil {
-		datasource = append(datasource, fmt.Sprintf("user=%s", *user))
-	}
-	if password != nil {
-		datasource = append(datasource, fmt.Sprintf("password=%s", *password))
-	}
-	if dbname != nil {
-		datasource = append(datasource, fmt.Sprintf("dbname=%s", *dbname))
-	}
-
-	return strings.Join(datasource, " ")
-}
-
 func NewDatabase(cfg *config.Config) (*Database, error) {
 	datasource := CreateDatasource(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, &cfg.DBName)
 	db, err := sqlx.Connect("postgres", datasource)
@@ -70,4 +47,27 @@ func GetMigrator(cfg *config.Config) (*migrate.Migrate, error) {
 		"postgres",
 		driver,
 	)
+}
+
+func CreateDatasource(host, port, user, password, dbname *string) string {
+	datasource := make([]string, 5)
+	datasource = append(datasource, "sslmode=disable")
+
+	if host != nil {
+		datasource = append(datasource, fmt.Sprintf("host=%s", *host))
+	}
+	if port != nil {
+		datasource = append(datasource, fmt.Sprintf("port=%s", *port))
+	}
+	if user != nil {
+		datasource = append(datasource, fmt.Sprintf("user=%s", *user))
+	}
+	if password != nil {
+		datasource = append(datasource, fmt.Sprintf("password=%s", *password))
+	}
+	if dbname != nil {
+		datasource = append(datasource, fmt.Sprintf("dbname=%s", *dbname))
+	}
+
+	return strings.Join(datasource, " ")
 }
