@@ -9,7 +9,7 @@ type TestDB struct {
 	Teardown func() error
 }
 
-func GetTestDB() (*TestDB, error) {
+func NewTestDB() (*TestDB, error) {
 	cfg := config.GetTestConfig()
 
 	err := recreateDatabase(&cfg)
@@ -27,7 +27,7 @@ func GetTestDB() (*TestDB, error) {
 		return nil, err
 	}
 
-	dbInstance, err := GetDB(&cfg)
+	dbInstance, err := NewDatabase(&cfg)
 	if err != nil {
 		return nil, err
 	}

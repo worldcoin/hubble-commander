@@ -12,7 +12,7 @@ type Storage struct {
 }
 
 func NewStorage(cfg *config.Config) (*Storage, error) {
-	dbInstance, err := db.GetDB(cfg)
+	dbInstance, err := db.NewDatabase(cfg)
 	if err != nil {
 		return nil, err
 	}

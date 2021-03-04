@@ -41,7 +41,7 @@ func CreateDatasource(host, port, user, password, dbname *string) string {
 	return strings.Join(datasource, " ")
 }
 
-func GetDB(cfg *config.Config) (*Database, error) {
+func NewDatabase(cfg *config.Config) (*Database, error) {
 	datasource := CreateDatasource(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, &cfg.DBName)
 	db, err := sqlx.Connect("postgres", datasource)
 	if err != nil {

@@ -33,7 +33,7 @@ func (s *StateTreeTestSuite) SetupSuite() {
 }
 
 func (s *StateTreeTestSuite) SetupTest() {
-	testDB, err := db.GetTestDB()
+	testDB, err := db.NewTestDB()
 	s.NoError(err)
 	s.db = testDB
 	s.storage = NewTestStorage(testDB.DB)
