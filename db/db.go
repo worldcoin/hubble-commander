@@ -18,8 +18,6 @@ type DatabaseLike interface {
 	Select(dest interface{}, query string, args ...interface{}) error
 	Exec(query string, args ...interface{}) (sql.Result, error)
 	Query(query string, args ...interface{}) (*sql.Rows, error)
-	Close() error
-	Ping() error
 }
 
 type Database struct {
@@ -33,6 +31,45 @@ func NewDatabase(cfg *config.Config) (*Database, error) {
 		return nil, err
 	}
 	return &Database{DatabaseLike: db}, nil
+}
+
+func (d *Database) Close() error {
+	switch v := d.DatabaseLike.(type) {
+	case *sqlx.DB:
+		return v.Close()
+	default:
+		return nil
+	}
+}
+
+func (d *Database) Ping() error {
+	switch v := d.DatabaseLike.(type) {
+	case *sqlx.DB:
+		return v.Ping()
+	default:
+		return nil
+	}
+}
+
+func (d *Database) BeginTx() (*TransactionController, *Database, error) {
+	switch v := d.DatabaseLike.(type) {
+	case *sqlx.DB:
+		tx, err := v.Beginx()
+		if err != nil {
+			return nil, nil, err
+		}
+
+		db := &Database{DatabaseLike: tx}
+		controller := &TransactionController{tx: tx, isLocked: false}
+		return controller, db, nil
+
+	case *sqlx.Tx:
+		// Already in a transaction
+		db := &Database{DatabaseLike: d.DatabaseLike}
+		controller := &TransactionController{tx: v, isLocked: true}
+		return controller, db, nil
+	}
+	return nil, nil, fmt.Errorf("Database object created with unsupported DatabaseLike implementation")
 }
 
 func GetMigrator(cfg *config.Config) (*migrate.Migrate, error) {
