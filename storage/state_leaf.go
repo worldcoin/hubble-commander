@@ -7,16 +7,19 @@ import (
 )
 
 func (s *Storage) AddStateLeaf(leaf *models.StateLeaf) error {
-	_, err := s.QB.Insert("state_leaf").
+	sql, args, err := s.QB.Insert("state_leaf").
 		Values(
 			leaf.DataHash,
 			leaf.AccountIndex,
 			leaf.TokenIndex,
 			leaf.Balance,
 			leaf.Nonce,
-		).
-		RunWith(s.DB).
-		Exec()
+		).ToSql()
+	if err != nil {
+		return err
+	}
+
+	_, err = s.DB.Exec(sql, args...)
 
 	return err
 }
