@@ -6,7 +6,7 @@ import (
 )
 
 func (s *Storage) AddStateUpdate(update *models.StateUpdate) error {
-	_, err := s.QB.Insert("state_update").
+	sql, args, err := s.QB.Insert("state_update").
 		Columns(
 			"merkle_path",
 			"current_hash",
@@ -20,9 +20,12 @@ func (s *Storage) AddStateUpdate(update *models.StateUpdate) error {
 			update.CurrentRoot,
 			update.PrevHash,
 			update.PrevRoot,
-		).
-		RunWith(s.DB).
-		Exec()
+		).ToSql()
+	if err != nil {
+		return err
+	}
+
+	_, err = s.DB.Exec(sql, args...)
 
 	return err
 }
