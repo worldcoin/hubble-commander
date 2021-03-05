@@ -16,6 +16,7 @@ func (s *Storage) AddTransaction(tx *models.Transaction) error {
 			tx.Fee,
 			tx.Nonce,
 			tx.Signature,
+			tx.IncludedInCommitment,
 		).
 		RunWith(s.DB).
 		Exec()
@@ -36,14 +37,25 @@ func (s *Storage) GetTransaction(hash common.Hash) (*models.Transaction, error) 
 	return &res[0], nil
 }
 
-func (s *Storage) GetTransactions() ([]models.Transaction, error) {
+func (s *Storage) GetPendingTransactions() ([]models.Transaction, error) {
 	res := make([]models.Transaction, 0, 16)
 	err := s.Query(
 		squirrel.Select("*").
-			From("transaction"),
+			From("transaction").
+			Where("length(included_in_commitment) = 0"),
 	).Into(&res)
 	if err != nil {
 		return nil, err
 	}
 	return res, nil
+}
+
+func (s *Storage) MarkTransactionAsIncluded(txHash, commitmentHash common.Hash) error {
+	_, err := s.QB.
+		Update("transaction").
+		Where(squirrel.Eq{"tx_hash": txHash}).
+		Set("included_in_commitment", commitmentHash).
+		RunWith(s.DB).
+		Exec()
+	return err
 }

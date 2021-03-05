@@ -27,13 +27,15 @@ func RollupLoop(cfg *config.Config) {
 	}
 
 	for {
-		transactions, err := storage.GetTransactions()
+		transactions, err := storage.GetPendingTransactions()
 		if err != nil {
 			log.Fatal(err)
 		}
 
+		println("txs = %d", len(transactions))
+
 		if len(transactions) < 2 { // TODO: change to 32 transactions
-			time.Sleep(500)
+			time.Sleep(500 * time.Millisecond)
 			continue
 		}
 		includedTransactions := transactions[0:2]
@@ -71,6 +73,16 @@ func RollupLoop(cfg *config.Config) {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		for _, tx := range includedTransactions {
+			err := storage.MarkTransactionAsIncluded(tx.Hash, commitment.LeafHash)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+		}
+
+		time.Sleep(500)
 	}
 }
 
