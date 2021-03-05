@@ -48,6 +48,9 @@ func (s *Storage) UpdateStateNode(node *models.StateNode) error {
 	}
 
 	result, err := s.DB.Exec(sql, args...)
+	if err != nil {
+		return err
+	}
 
 	updatedRows, err := result.RowsAffected()
 	if err != nil {

@@ -20,3 +20,17 @@ func NewStorage(cfg *config.Config) (*Storage, error) {
 
 	return &Storage{DB: dbInstance, QB: queryBuilder}, nil
 }
+
+func (s *Storage) BeginTransaction() (*db.TransactionController, *Storage, error) {
+	tx, txDB, err := s.DB.BeginTransaction()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	storage := &Storage{
+		DB: txDB,
+		QB: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+	}
+
+	return tx, storage, nil
+}

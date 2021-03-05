@@ -51,7 +51,7 @@ func (d *Database) Ping() error {
 	}
 }
 
-func (d *Database) BeginTx() (*TransactionController, *Database, error) {
+func (d *Database) BeginTransaction() (*TransactionController, *Database, error) {
 	switch v := d.DatabaseLike.(type) {
 	case *sqlx.DB:
 		tx, err := v.Beginx()
