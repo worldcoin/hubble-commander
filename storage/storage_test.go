@@ -79,7 +79,8 @@ func (s *StorageTestSuite) Test_BeginTransaction_Rollback() {
 	err = storage.AddStateLeaf(leaf)
 	s.Error(err)
 
-	tx.Rollback()
+	err = tx.Rollback(err)
+	s.Error(err)
 
 	res, err := s.storage.GetStateLeaf(leaf.DataHash)
 	s.NoError(err)
@@ -118,7 +119,8 @@ func (s *StorageTestSuite) Test_BeginTransaction_Lock() {
 	err = nestedStorage.AddStateLeaf(leafTwo)
 	s.NoError(err)
 
-	nestedTx.Rollback()
+	err = nestedTx.Rollback(nil)
+	s.NoError(err)
 
 	res, err := s.storage.GetStateLeaf(leafOne.DataHash)
 	s.NoError(err)

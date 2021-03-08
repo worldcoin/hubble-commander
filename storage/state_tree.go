@@ -45,7 +45,7 @@ func (s *StateTree) Set(index uint32, state *models.UserState) (err error) {
 	if err != nil {
 		return
 	}
-	defer tx.Rollback()
+	defer func() { err = tx.Rollback(err) }()
 
 	err = NewStateTree(storage).unsafeSet(index, state)
 	if err != nil {

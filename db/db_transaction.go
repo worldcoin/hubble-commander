@@ -1,6 +1,8 @@
 package db
 
 import (
+	"fmt"
+
 	"github.com/jmoiron/sqlx"
 )
 
@@ -9,14 +11,14 @@ type TransactionController struct {
 	isLocked bool
 }
 
-func (t *TransactionController) Rollback() {
+func (t *TransactionController) Rollback(cause error) error {
 	if !t.isLocked {
 		t.isLocked = true
-		err := t.tx.Rollback()
-		if err != nil {
-			panic(err)
+		if rollbackErr := t.tx.Rollback(); rollbackErr != nil {
+			return fmt.Errorf("rollback caused by: %w, failed with: %v", cause, rollbackErr)
 		}
 	}
+	return cause
 }
 
 func (t *TransactionController) Commit() error {
