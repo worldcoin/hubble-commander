@@ -7,17 +7,18 @@ import (
 )
 
 func (s *Storage) AddTransaction(tx *models.Transaction) error {
-	_, err := s.DB.Insert(s.QB.Insert("transaction").
-		Values(
-			tx.Hash,
-			tx.FromIndex,
-			tx.ToIndex,
-			tx.Amount,
-			tx.Fee,
-			tx.Nonce,
-			tx.Signature,
-			tx.IncludedInCommitment,
-		),
+	_, err := s.DB.ExecBuilder(
+		s.QB.Insert("transaction").
+			Values(
+				tx.Hash,
+				tx.FromIndex,
+				tx.ToIndex,
+				tx.Amount,
+				tx.Fee,
+				tx.Nonce,
+				tx.Signature,
+				tx.IncludedInCommitment,
+			),
 	)
 
 	return err
@@ -38,7 +39,7 @@ func (s *Storage) GetTransaction(hash common.Hash) (*models.Transaction, error) 
 
 func (s *Storage) GetPendingTransactions() ([]models.Transaction, error) {
 	res := make([]models.Transaction, 0, 32)
-	err := s.Query(
+	err := s.DB.Query(
 		squirrel.Select("*").
 			From("transaction").
 			Where("length(included_in_commitment) = 0"),
@@ -50,11 +51,13 @@ func (s *Storage) GetPendingTransactions() ([]models.Transaction, error) {
 }
 
 func (s *Storage) MarkTransactionAsIncluded(txHash, commitmentHash common.Hash) error {
-	_, err := s.QB.
-		Update("transaction").
-		Where(squirrel.Eq{"tx_hash": txHash}).
-		Set("included_in_commitment", commitmentHash).
-		RunWith(s.DB).
-		Exec()
+	_, err := s.DB.ExecBuilder(
+		s.QB.Update("transaction").
+			Where(squirrel.Eq{"tx_hash": txHash}).
+			Set("included_in_commitment", commitmentHash),
+	)
+	if err != nil {
+		return err
+	}
 	return err
 }

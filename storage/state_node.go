@@ -25,7 +25,7 @@ func (s *Storage) AddOrUpdateStateNode(node *models.StateNode) error {
 }
 
 func (s *Storage) AddStateNode(node *models.StateNode) error {
-	_, err := s.DB.Insert(
+	_, err := s.DB.ExecBuilder(
 		s.QB.Insert("state_node").
 			Values(
 				node.MerklePath,
