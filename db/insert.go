@@ -4,11 +4,11 @@ import (
 	"database/sql"
 )
 
-type SqlBuilder interface {
+type SQLBuilder interface {
 	ToSql() (string, []interface{}, error)
 }
 
-func (d *Database) ExecBuilder(query SqlBuilder) (sql.Result, error) {
+func (d *Database) ExecBuilder(query SQLBuilder) (sql.Result, error) {
 	sqlQuery, args, err := query.ToSql()
 	if err != nil {
 		return nil, err

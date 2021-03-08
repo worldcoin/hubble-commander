@@ -75,12 +75,12 @@ func RollupLoop(cfg *config.Config) {
 			log.Fatal(err)
 		}
 
-		for _, tx := range includedTransactions {
+		for i := range includedTransactions {
+			tx := includedTransactions[i]
 			err := storage.MarkTransactionAsIncluded(tx.Hash, commitment.LeafHash)
 			if err != nil {
 				log.Fatal(err)
 			}
-
 		}
 
 		time.Sleep(500)
@@ -90,8 +90,8 @@ func RollupLoop(cfg *config.Config) {
 func serializeTransactions(transactions []models.Transaction) ([]byte, error) {
 	buf := make([]byte, 0, len(transactions)*12)
 
-	for _, tx := range transactions {
-		encoded, err := encoder.EncodeTransaction(&tx)
+	for i := range transactions {
+		encoded, err := encoder.EncodeTransaction(&transactions[i])
 		if err != nil {
 			return nil, err
 		}

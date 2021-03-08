@@ -107,7 +107,12 @@ func EncodeTransaction(transaction *models.Transaction) ([]uint8, error) {
 	return arr, nil
 }
 
-func GetCommitmentBodyHash(accountRoot common.Hash, signature models.Signature, feeReceiver models.Uint256, transactions []byte) (*common.Hash, error) {
+func GetCommitmentBodyHash(
+	accountRoot common.Hash,
+	signature models.Signature,
+	feeReceiver models.Uint256,
+	transactions []byte,
+) (*common.Hash, error) {
 	arguments := abi.Arguments{
 		{Name: "accountRoot", Type: tBytes32},
 		{Name: "signature", Type: tSignatureType},
@@ -126,5 +131,4 @@ func GetCommitmentBodyHash(accountRoot common.Hash, signature models.Signature, 
 
 	hash := crypto.Keccak256Hash(encodedBytes)
 	return &hash, nil
-
 }
