@@ -66,7 +66,7 @@ func (s *StateTree) Set(index uint32, state *models.UserState) (err error) {
 		return
 	}
 
-	currentRoot, err := s.updateStateNodes(storage, &prevLeaf.MerklePath, &currentLeaf.DataHash)
+	currentRoot, err := storage.updateStateNodes(&prevLeaf.MerklePath, &currentLeaf.DataHash)
 	if err != nil {
 		return
 	}
@@ -90,7 +90,7 @@ func (s *StateTree) Set(index uint32, state *models.UserState) (err error) {
 	return nil
 }
 
-func (s *StateTree) updateStateNodes(storage *Storage, leafPath *models.MerklePath, newLeafHash *common.Hash) (*common.Hash, error) {
+func (s *Storage) updateStateNodes(leafPath *models.MerklePath, newLeafHash *common.Hash) (*common.Hash, error) {
 	witnessPaths, err := leafPath.GetWitnessPaths()
 	if err != nil {
 		return nil, err
@@ -104,7 +104,7 @@ func (s *StateTree) updateStateNodes(storage *Storage, leafPath *models.MerklePa
 			return nil, err
 		}
 
-		err = storage.AddOrUpdateStateNode(&models.StateNode{
+		err = s.AddOrUpdateStateNode(&models.StateNode{
 			MerklePath: *currentPath,
 			DataHash:   currentHash,
 		})
@@ -112,13 +112,13 @@ func (s *StateTree) updateStateNodes(storage *Storage, leafPath *models.MerklePa
 			return nil, err
 		}
 
-		currentHash, err = s.calculateParentHash(storage, &currentHash, currentPath, witnessPath)
+		currentHash, err = s.calculateParentHash(&currentHash, currentPath, witnessPath)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	err = storage.AddOrUpdateStateNode(&models.StateNode{
+	err = s.AddOrUpdateStateNode(&models.StateNode{
 		MerklePath: rootPath,
 		DataHash:   currentHash,
 	})
@@ -129,13 +129,12 @@ func (s *StateTree) updateStateNodes(storage *Storage, leafPath *models.MerklePa
 	return &currentHash, nil
 }
 
-func (s *StateTree) calculateParentHash(
-	storage *Storage,
+func (s *Storage) calculateParentHash(
 	currentHash *common.Hash,
 	currentPath *models.MerklePath,
 	witnessPath models.MerklePath,
 ) (common.Hash, error) {
-	witness, err := storage.GetStateNodeByPath(&witnessPath)
+	witness, err := s.GetStateNodeByPath(&witnessPath)
 	if err != nil {
 		return common.Hash{}, err
 	}
