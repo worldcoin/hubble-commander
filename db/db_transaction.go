@@ -9,12 +9,14 @@ type TransactionController struct {
 	isLocked bool
 }
 
-func (t *TransactionController) Rollback() error {
+func (t *TransactionController) Rollback() {
 	if !t.isLocked {
 		t.isLocked = true
-		return t.tx.Rollback()
+		err := t.tx.Rollback()
+		if err != nil {
+			panic(err)
+		}
 	}
-	return nil
 }
 
 func (t *TransactionController) Commit() error {
