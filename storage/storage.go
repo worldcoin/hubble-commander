@@ -16,9 +16,7 @@ func NewStorage(cfg *config.Config) (*Storage, error) {
 	if err != nil {
 		return nil, err
 	}
-	queryBuilder := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
-
-	return &Storage{DB: dbInstance, QB: queryBuilder}, nil
+	return &Storage{DB: dbInstance, QB: getQueryBuilder()}, nil
 }
 
 func (s *Storage) BeginTransaction() (*db.TransactionController, *Storage, error) {
@@ -29,8 +27,12 @@ func (s *Storage) BeginTransaction() (*db.TransactionController, *Storage, error
 
 	storage := &Storage{
 		DB: txDB,
-		QB: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		QB: getQueryBuilder(),
 	}
 
 	return tx, storage, nil
+}
+
+func getQueryBuilder() squirrel.StatementBuilderType {
+	return squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 }
