@@ -5,7 +5,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/jmoiron/sqlx"
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -13,7 +13,7 @@ import (
 type DBTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	db     *sqlx.DB
+	db     *Database
 	config *config.Config
 }
 
@@ -26,7 +26,7 @@ func (s *DBTestSuite) SetupTest() {
 	err := recreateDatabase(&cfg)
 	s.NoError(err)
 
-	db, err := GetDB(&cfg)
+	db, err := NewDatabase(&cfg)
 	s.NoError(err)
 	s.db = db
 	s.config = &cfg
@@ -47,16 +47,17 @@ func (s *DBTestSuite) TestMigrations() {
 
 	s.NoError(migrator.Up())
 
-	// nolint
-	_, err = sq.Select("*").From("transaction").
-		RunWith(s.db).Query()
+	res := make([]models.Transaction, 0, 1)
+	err = s.db.Query(
+		sq.Select("*").From("transaction"),
+	).Into(&res)
 	s.NoError(err)
 
 	s.NoError(migrator.Down())
 
-	// nolint
-	_, err = sq.Select("*").From("transaction").
-		RunWith(s.db).Query()
+	err = s.db.Query(
+		sq.Select("*").From("transaction"),
+	).Into(&res)
 	s.Error(err)
 }
 
