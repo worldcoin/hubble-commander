@@ -473,9 +473,12 @@ func (_FrontendCreate2Transfer *FrontendCreate2TransferCaller) Process(opts *bin
 		NewRoot [32]byte
 		Result  uint8
 	})
+	if err != nil {
+		return *outstruct, err
+	}
 
-	outstruct.NewRoot = out[0].([32]byte)
-	outstruct.Result = out[1].(uint8)
+	outstruct.NewRoot = *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+	outstruct.Result = *abi.ConvertType(out[1], new(uint8)).(*uint8)
 
 	return *outstruct, err
 
@@ -579,10 +582,13 @@ func (_FrontendCreate2Transfer *FrontendCreate2TransferCaller) ValidateAndApply(
 		NewReceiver []byte
 		Result      uint8
 	})
+	if err != nil {
+		return *outstruct, err
+	}
 
-	outstruct.NewSender = out[0].([]byte)
-	outstruct.NewReceiver = out[1].([]byte)
-	outstruct.Result = out[2].(uint8)
+	outstruct.NewSender = *abi.ConvertType(out[0], new([]byte)).(*[]byte)
+	outstruct.NewReceiver = *abi.ConvertType(out[1], new([]byte)).(*[]byte)
+	outstruct.Result = *abi.ConvertType(out[2], new(uint8)).(*uint8)
 
 	return *outstruct, err
 
