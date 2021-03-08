@@ -23,7 +23,7 @@ func (s *SendTransactionTestSuite) SetupSuite() {
 }
 
 func (s *SendTransactionTestSuite) SetupTest() {
-	testDB, err := db.GetTestDB()
+	testDB, err := db.NewTestDB()
 	s.NoError(err)
 
 	storage := st.NewTestStorage(testDB.DB)

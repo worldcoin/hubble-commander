@@ -22,7 +22,7 @@ func (s *StateUpdateTestSuite) SetupSuite() {
 }
 
 func (s *StateUpdateTestSuite) SetupTest() {
-	testDB, err := db.GetTestDB()
+	testDB, err := db.NewTestDB()
 	s.NoError(err)
 	s.storage = NewTestStorage(testDB.DB)
 	s.db = testDB

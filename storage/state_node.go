@@ -25,23 +25,26 @@ func (s *Storage) AddOrUpdateStateNode(node *models.StateNode) error {
 }
 
 func (s *Storage) AddStateNode(node *models.StateNode) error {
-	_, err := s.QB.Insert("state_node").
-		Values(
-			node.MerklePath,
-			node.DataHash,
-		).
-		RunWith(s.DB).
-		Exec()
+	_, err := s.DB.Insert(
+		s.QB.Insert("state_node").
+			Values(
+				node.MerklePath,
+				node.DataHash,
+			),
+	)
 
 	return err
 }
 
 func (s *Storage) UpdateStateNode(node *models.StateNode) error {
-	result, err := s.QB.Update("state_node").
+	sql, args, err := s.QB.Update("state_node").
 		Set("data_hash", squirrel.Expr("?", node.DataHash)).
-		Where("merkle_path = ?", node.MerklePath).
-		RunWith(s.DB).
-		Exec()
+		Where("merkle_path = ?", node.MerklePath).ToSql()
+	if err != nil {
+		return err
+	}
+
+	result, err := s.DB.Exec(sql, args...)
 	if err != nil {
 		return err
 	}
@@ -59,7 +62,7 @@ func (s *Storage) UpdateStateNode(node *models.StateNode) error {
 
 func (s *Storage) GetStateNodeByHash(hash common.Hash) (*models.StateNode, error) {
 	res := make([]models.StateNode, 0, 1)
-	err := s.Query(
+	err := s.DB.Query(
 		squirrel.Select("*").
 			From("state_node").
 			Where(squirrel.Eq{"data_hash": hash}),
@@ -76,7 +79,7 @@ func (s *Storage) GetStateNodeByPath(path *models.MerklePath) (*models.StateNode
 	if err != nil {
 		return nil, err
 	}
-	err = s.Query(
+	err = s.DB.Query(
 		squirrel.Select("*").
 			From("state_node").
 			Where(squirrel.Eq{"merkle_path": pathValue}),
