@@ -6,6 +6,7 @@ func (s *Storage) AddCommitment(commitment *models.Commitment) error {
 	_, err := s.QB.Insert("commitment").
 		Values(
 			commitment.LeafHash,
+			commitment.PostStateRoot,
 			commitment.BodyHash,
 			commitment.AccountTreeRoot,
 			commitment.CombinedSignature,

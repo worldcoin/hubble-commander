@@ -62,6 +62,7 @@ func RollupLoop(cfg *config.Config) {
 
 		commitment := models.Commitment{
 			LeafHash:          leafHash,
+			PostStateRoot:     stateRoot,
 			BodyHash:          *bodyHash,
 			AccountTreeRoot:   accountRoot,
 			CombinedSignature: combinedSignature,

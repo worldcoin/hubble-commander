@@ -38,7 +38,7 @@ func (s *Storage) GetTransaction(hash common.Hash) (*models.Transaction, error) 
 }
 
 func (s *Storage) GetPendingTransactions() ([]models.Transaction, error) {
-	res := make([]models.Transaction, 0, 16)
+	res := make([]models.Transaction, 0, 32)
 	err := s.Query(
 		squirrel.Select("*").
 			From("transaction").
