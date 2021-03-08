@@ -37,27 +37,23 @@ func (s *Storage) AddStateNode(node *models.StateNode) error {
 }
 
 func (s *Storage) UpdateStateNode(node *models.StateNode) error {
-	sql, args, err := s.QB.Update("state_node").
-		Set("data_hash", squirrel.Expr("?", node.DataHash)).
-		Where("merkle_path = ?", node.MerklePath).ToSql()
+	result, err := s.DB.ExecBuilder(
+		s.QB.Update("state_node").
+			Set("data_hash", squirrel.Expr("?", node.DataHash)).
+			Where("merkle_path = ?", node.MerklePath),
+	)
 	if err != nil {
 		return err
 	}
 
-	result, err := s.DB.Exec(sql, args...)
+	numUpdatedRows, err := result.RowsAffected()
 	if err != nil {
 		return err
 	}
-
-	updatedRows, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if updatedRows == 0 {
+	if numUpdatedRows == 0 {
 		return fmt.Errorf("no rows were affected by the update")
 	}
-
-	return err
+	return nil
 }
 
 func (s *Storage) GetStateNodeByHash(hash common.Hash) (*models.StateNode, error) {

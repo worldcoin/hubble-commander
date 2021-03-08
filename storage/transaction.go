@@ -56,8 +56,5 @@ func (s *Storage) MarkTransactionAsIncluded(txHash, commitmentHash common.Hash) 
 			Where(squirrel.Eq{"tx_hash": txHash}).
 			Set("included_in_commitment", commitmentHash),
 	)
-	if err != nil {
-		return err
-	}
 	return err
 }
