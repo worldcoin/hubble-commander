@@ -2,6 +2,7 @@ package simulator
 
 import (
 	"math/big"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -11,8 +12,9 @@ import (
 )
 
 type SimulatorConfig struct {
-	NumAccounts   *uint64 // default 10
-	BlockGasLimit *uint64 // default 12_500_000
+	NumAccounts      *uint64        // default 10
+	BlockGasLimit    *uint64        // default 12_500_000
+	AutomineInterval *time.Duration // default 100ms
 }
 
 type Simulator struct {
@@ -20,6 +22,26 @@ type Simulator struct {
 	Config   *SimulatorConfig
 	Account  *bind.TransactOpts
 	Accounts []*bind.TransactOpts
+}
+
+func (sim *Simulator) StartAutomine() (stopAutomine func()) {
+	ticker := time.NewTicker(*sim.Config.AutomineInterval)
+	quit := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				sim.Backend.Commit()
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
+
+	return func() {
+		close(quit)
+	}
 }
 
 func (sim *Simulator) Close() {
@@ -70,5 +92,8 @@ func fillWithDefaults(config *SimulatorConfig) {
 	}
 	if config.BlockGasLimit == nil {
 		config.BlockGasLimit = ref.Uint64(12_500_000)
+	}
+	if config.AutomineInterval == nil {
+		config.AutomineInterval = ref.Duration(100 * time.Millisecond)
 	}
 }
