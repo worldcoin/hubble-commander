@@ -14,6 +14,7 @@ type TransactionController struct {
 	isLocked bool
 }
 
+// nolint:gocritic
 func (t *TransactionController) Rollback(cause *error) {
 	if !t.isLocked {
 		t.isLocked = true
