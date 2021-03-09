@@ -7,7 +7,7 @@ import (
 )
 
 func (s *Storage) AddTransaction(tx *models.Transaction) error {
-	_, err := s.DB.Insert(
+	_, err := s.DB.ExecBuilder(
 		s.QB.Insert("transaction").
 			Values(
 				tx.Hash,
@@ -17,6 +17,7 @@ func (s *Storage) AddTransaction(tx *models.Transaction) error {
 				tx.Fee,
 				tx.Nonce,
 				tx.Signature,
+				tx.IncludedInCommitment,
 			),
 	)
 
@@ -34,4 +35,26 @@ func (s *Storage) GetTransaction(hash common.Hash) (*models.Transaction, error) 
 		return nil, err
 	}
 	return &res[0], nil
+}
+
+func (s *Storage) GetPendingTransactions() ([]models.Transaction, error) {
+	res := make([]models.Transaction, 0, 32)
+	err := s.DB.Query(
+		squirrel.Select("*").
+			From("transaction").
+			Where("length(included_in_commitment) = 0"),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (s *Storage) MarkTransactionAsIncluded(txHash, commitmentHash common.Hash) error {
+	_, err := s.DB.ExecBuilder(
+		s.QB.Update("transaction").
+			Where(squirrel.Eq{"tx_hash": txHash}).
+			Set("included_in_commitment", commitmentHash),
+	)
+	return err
 }

@@ -7,7 +7,7 @@ import (
 )
 
 func (s *Storage) AddStateLeaf(leaf *models.StateLeaf) error {
-	_, err := s.DB.Insert(
+	_, err := s.DB.ExecBuilder(
 		s.QB.Insert("state_leaf").
 			Values(
 				leaf.DataHash,

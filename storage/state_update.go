@@ -6,7 +6,7 @@ import (
 )
 
 func (s *Storage) AddStateUpdate(update *models.StateUpdate) error {
-	_, err := s.DB.Insert(
+	_, err := s.DB.ExecBuilder(
 		s.QB.Insert("state_update").
 			Columns(
 				"merkle_path",
