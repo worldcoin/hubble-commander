@@ -5,7 +5,47 @@ import (
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/storage"
 )
+
+func ApplyTransfer(stateTree *storage.StateTree, tx *models.Transaction) error {
+	if stateTree == nil {
+		return fmt.Errorf("state tree cannot be nil")
+	}
+	if tx == nil {
+		return fmt.Errorf("transaction cannot be nil")
+	}
+
+	senderIndex := uint32(tx.FromIndex.Uint64())
+	senderLeaf, err := stateTree.Leaf(senderIndex)
+	if err != nil {
+		return err
+	}
+	receiverIndex := uint32(tx.ToIndex.Uint64())
+	receiverLeaf, err := stateTree.Leaf(receiverIndex)
+	if err != nil {
+		return err
+	}
+
+	senderState := senderLeaf.UserState
+	receiverState := receiverLeaf.UserState
+
+	newSenderState, newReceiverState, err := CalculateStateAfterTransfer(&senderState, &receiverState, tx)
+	if err != nil {
+		return err
+	}
+
+	err = stateTree.Set(senderIndex, &newSenderState)
+	if err != nil {
+		return err
+	}
+	err = stateTree.Set(receiverIndex, &newReceiverState)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func CalculateStateAfterTransfer(
 	senderState,
