@@ -37,7 +37,7 @@ func (d *Database) Close() error {
 	case *sqlx.DB:
 		return v.Close()
 	default:
-		return nil
+		return fmt.Errorf("cannot close Database in transaction mode")
 	}
 }
 
@@ -46,7 +46,7 @@ func (d *Database) Ping() error {
 	case *sqlx.DB:
 		return v.Ping()
 	default:
-		return nil
+		return fmt.Errorf("cannot ping Database in transaction mode")
 	}
 }
 

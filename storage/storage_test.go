@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/db"
@@ -79,7 +80,8 @@ func (s *StorageTestSuite) Test_BeginTransaction_Rollback() {
 	err = storage.AddStateLeaf(leaf)
 	s.Error(err)
 
-	tx.Rollback()
+	tx.Rollback(&err)
+	s.Nil(errors.Unwrap(err))
 
 	res, err := s.storage.GetStateLeaf(leaf.DataHash)
 	s.NoError(err)
@@ -118,7 +120,8 @@ func (s *StorageTestSuite) Test_BeginTransaction_Lock() {
 	err = nestedStorage.AddStateLeaf(leafTwo)
 	s.NoError(err)
 
-	nestedTx.Rollback()
+	nestedTx.Rollback(&err)
+	s.NoError(err)
 
 	res, err := s.storage.GetStateLeaf(leafOne.DataHash)
 	s.NoError(err)

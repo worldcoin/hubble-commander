@@ -1,20 +1,25 @@
 package db
 
 import (
-	"github.com/jmoiron/sqlx"
+	"fmt"
 )
 
+type rawController interface {
+	Rollback() error
+	Commit() error
+}
+
 type TransactionController struct {
-	tx       *sqlx.Tx
+	tx       rawController
 	isLocked bool
 }
 
-func (t *TransactionController) Rollback() {
+// nolint:gocritic
+func (t *TransactionController) Rollback(cause *error) {
 	if !t.isLocked {
 		t.isLocked = true
-		err := t.tx.Rollback()
-		if err != nil {
-			panic(err)
+		if rollbackErr := t.tx.Rollback(); rollbackErr != nil {
+			*cause = fmt.Errorf("rollback caused by: %w, failed with: %v", *cause, rollbackErr)
 		}
 	}
 }
