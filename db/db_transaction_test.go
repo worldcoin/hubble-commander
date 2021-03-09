@@ -29,14 +29,35 @@ func (s *TxControllerTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *TxControllerTestSuite) Test_Rollback_ReturnsCauseError() {
+func (s *TxControllerTestSuite) Test_Rollback_DoesNotModifyCauseError() {
 	tx, _, err := s.db.DB.BeginTransaction()
 	s.NoError(err)
 
 	cause := errors.New("cause of rollback")
+	tx.Rollback(&cause)
+	s.Equal("cause of rollback", cause.Error())
+}
 
-	err = tx.Rollback(cause)
-	s.Equal(cause, err)
+type MockController struct{}
+
+func (m MockController) Rollback() error {
+	return errors.New("rollback error #1")
+}
+
+func (m MockController) Commit() error {
+	return nil
+}
+
+func (s *TxControllerTestSuite) Test_Rollback_WrapsCauseErrorWithRollbackError() {
+	tx := TransactionController{
+		tx:       MockController{},
+		isLocked: false,
+	}
+
+	err := errors.New("cause of rollback")
+	tx.Rollback(&err)
+	s.Equal("rollback caused by: cause of rollback, failed with: rollback error #1", err.Error())
+	s.Equal("cause of rollback", errors.Unwrap(err).Error())
 }
 
 func TestTxControllerTestSuite(t *testing.T) {
