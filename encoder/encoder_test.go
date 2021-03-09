@@ -132,6 +132,17 @@ func (s *EncoderTestSuite) TestTransactionEncoding() {
 	s.Equal(expected, encoded)
 }
 
+func (s *EncoderTestSuite) TestGetCommitmentBodyHash() {
+	// TODO: Test this better
+	_, err := GetCommitmentBodyHash(
+		common.Hash{},
+		models.Signature{models.MakeUint256(1), models.MakeUint256(2)},
+		models.MakeUint256(1),
+		[]byte{1, 2, 3},
+	)
+	s.NoError(err)
+}
+
 func TestEncoderTestSuite(t *testing.T) {
 	suite.Run(t, new(EncoderTestSuite))
 }

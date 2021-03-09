@@ -2,11 +2,13 @@ package db
 
 import (
 	"database/sql"
-
-	"github.com/Masterminds/squirrel"
 )
 
-func (d *Database) Insert(query squirrel.InsertBuilder) (sql.Result, error) {
+type SQLBuilder interface {
+	ToSql() (string, []interface{}, error)
+}
+
+func (d *Database) ExecBuilder(query SQLBuilder) (sql.Result, error) {
 	sqlQuery, args, err := query.ToSql()
 	if err != nil {
 		return nil, err

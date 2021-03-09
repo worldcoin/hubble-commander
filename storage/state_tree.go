@@ -140,10 +140,10 @@ func (s *Storage) calculateParentHash(
 	}
 
 	if currentPath.IsLeftNode() {
-		return hashTwo(*currentHash, witness.DataHash), nil
+		return HashTwo(*currentHash, witness.DataHash), nil
 	}
 
-	return hashTwo(witness.DataHash, *currentHash), nil
+	return HashTwo(witness.DataHash, *currentHash), nil
 }
 
 func NewStateLeaf(state *models.UserState) (*models.StateLeaf, error) {
