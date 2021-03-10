@@ -7,21 +7,82 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 const TxTimeout = 30 * time.Second
 
+type NewClientParams struct {
+	ethNodeAddress string
+	rollupAddress  common.Address
+	ClientConfig
+}
+
+type ClientConfig struct {
+	txTimeout   *time.Duration  // default 60s
+	stakeAmount *models.Uint256 // default 0.1 ether
+}
+
 type Client struct {
-	account *bind.TransactOpts
+	account bind.TransactOpts
+	config  ClientConfig
 	Rollup  *rollup.Rollup
 }
 
-func NewClient(rollupContract *rollup.Rollup) *Client {
-	return &Client{Rollup: rollupContract}
+func NewClient(account *bind.TransactOpts, params NewClientParams) (*Client, error) {
+	fillWithDefaults(&params.ClientConfig)
+
+	backend, err := ethclient.Dial(params.ethNodeAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	rollupContract, err := rollup.NewRollup(params.rollupAddress, backend)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Client{
+		account: *account,
+		config:  params.ClientConfig,
+		Rollup:  rollupContract,
+	}, nil
 }
 
-func (c *Client) SubmitTransfer(commitments []*models.Commitment) error {
+func NewTestClient(account *bind.TransactOpts, rollupContract *rollup.Rollup) *Client {
+	return &Client{
+		account: *account,
+		config:  getDefaultConfig(),
+		Rollup:  rollupContract,
+	}
+}
+
+func fillWithDefaults(c *ClientConfig) {
+	if c.txTimeout == nil {
+		c.txTimeout = ref.Duration(60 * time.Second)
+	}
+	if c.stakeAmount == nil {
+		c.stakeAmount = models.NewUint256(1e17)
+	}
+}
+
+func getDefaultConfig() ClientConfig {
+	var config ClientConfig
+	fillWithDefaults(&config)
+	return config
+}
+
+func (c *Client) withValue(value *models.Uint256) *bind.TransactOpts {
+	opts := c.account
+	opts.Value = &value.Int
+	return &opts
+}
+
+// TODO move to a separate file
+func (c *Client) SubmitTransfersBatch(commitments []*models.Commitment) (batchID *models.Uint256, err error) {
 	count := len(commitments)
 
 	stateRoots := make([][32]byte, 0, count)
@@ -35,25 +96,33 @@ func (c *Client) SubmitTransfer(commitments []*models.Commitment) error {
 		feeReceivers = append(feeReceivers, &commitment.FeeReceiver.Int)
 		transactions = append(transactions, commitment.Transactions)
 	}
-	_, err := c.Rollup.SubmitTransfer(c.account, stateRoots, signatures, feeReceivers, transactions)
-	if err != nil {
-		return err
-	}
 
 	sink := make(chan *rollup.RollupNewBatch)
 	subscription, err := c.Rollup.WatchNewBatch(&bind.WatchOpts{}, sink)
 	if err != nil {
-		return err
+		return
 	}
+
+	tx, err := c.Rollup.SubmitTransfer(
+		c.withValue(c.config.stakeAmount),
+		stateRoots,
+		signatures,
+		feeReceivers,
+		transactions,
+	)
+	if err != nil {
+		return
+	}
+
 	for {
 		select {
 		case newBatch := <-sink:
-			if c.account.From == newBatch.Committer {
+			if newBatch.Raw.TxHash == tx.Hash() {
 				subscription.Unsubscribe()
-				break
+				return models.NewUint256FromBig(*newBatch.Index), nil
 			}
 		case <-time.After(TxTimeout):
-			return fmt.Errorf("timeout")
+			return nil, fmt.Errorf("timeout")
 		}
 	}
 }
