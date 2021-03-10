@@ -38,7 +38,7 @@ func RollupLoop(cfg *config.Config) {
 			time.Sleep(500 * time.Millisecond)
 			continue
 		}
-		includedTransactions := transactions[0:2]
+		includedTransactions := transactions[0:2] // TODO execute txs, one by one until we get the full commitment
 
 		feeReceiver := models.MakeUint256(0) // TODO: Get from config
 

@@ -42,7 +42,7 @@ func (s *TransactionTestSuite) Test_AddTransaction_AddAndRetrieve() {
 		Fee:                  models.MakeUint256(100),
 		Nonce:                models.MakeUint256(0),
 		Signature:            []byte{1, 2, 3, 4, 5},
-		IncludedInCommitment: common.Hash{},
+		IncludedInCommitment: nil,
 	}
 	err := s.storage.AddTransaction(tx)
 	s.NoError(err)
