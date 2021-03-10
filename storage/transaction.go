@@ -42,7 +42,7 @@ func (s *Storage) GetPendingTransactions() ([]models.Transaction, error) {
 	err := s.DB.Query(
 		squirrel.Select("*").
 			From("transaction").
-			Where("length(included_in_commitment) = 0"),
+			Where(squirrel.Eq{"included_in_commitment": nil}),
 	).Into(&res)
 	if err != nil {
 		return nil, err

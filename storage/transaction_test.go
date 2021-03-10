@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"math/big"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/db"
@@ -8,6 +9,19 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+)
+
+var (
+	tx = models.Transaction{
+		Hash:                 common.BigToHash(big.NewInt(1234)),
+		FromIndex:            models.MakeUint256(1),
+		ToIndex:              models.MakeUint256(2),
+		Amount:               models.MakeUint256(1000),
+		Fee:                  models.MakeUint256(100),
+		Nonce:                models.MakeUint256(0),
+		Signature:            []byte{1, 2, 3, 4, 5},
+		IncludedInCommitment: nil,
+	}
 )
 
 type TransactionTestSuite struct {
@@ -34,23 +48,13 @@ func (s *TransactionTestSuite) TearDownTest() {
 }
 
 func (s *TransactionTestSuite) Test_AddTransaction_AddAndRetrieve() {
-	tx := &models.Transaction{
-		Hash:                 common.BytesToHash([]byte{1, 2, 3, 4, 5}),
-		FromIndex:            models.MakeUint256(1),
-		ToIndex:              models.MakeUint256(2),
-		Amount:               models.MakeUint256(1000),
-		Fee:                  models.MakeUint256(100),
-		Nonce:                models.MakeUint256(0),
-		Signature:            []byte{1, 2, 3, 4, 5},
-		IncludedInCommitment: common.Hash{},
-	}
-	err := s.storage.AddTransaction(tx)
+	err := s.storage.AddTransaction(&tx)
 	s.NoError(err)
 
 	res, err := s.storage.GetTransaction(tx.Hash)
 	s.NoError(err)
 
-	s.Equal(tx, res)
+	s.Equal(tx, *res)
 }
 
 func (s *TransactionTestSuite) Test_GetTransaction_NonExistentTransaction() {
@@ -58,6 +62,26 @@ func (s *TransactionTestSuite) Test_GetTransaction_NonExistentTransaction() {
 	res, err := s.storage.GetTransaction(hash)
 	s.NoError(err)
 	s.Nil(res)
+}
+
+func (s *TransactionTestSuite) Test_GetPendingTransactions_AddAndRetrieve() {
+	commitmentHash := common.BigToHash(big.NewInt(1234))
+
+	tx2 := tx
+	tx2.Hash = common.BigToHash(big.NewInt(2345))
+	tx3 := tx
+	tx3.Hash = common.BigToHash(big.NewInt(3456))
+	tx3.IncludedInCommitment = &commitmentHash
+
+	for _, tx := range []*models.Transaction{&tx, &tx2, &tx3} {
+		err := s.storage.AddTransaction(tx)
+		s.NoError(err)
+	}
+
+	res, err := s.storage.GetPendingTransactions()
+	s.NoError(err)
+
+	s.Equal([]models.Transaction{tx, tx2}, res)
 }
 
 func TestTransactionTestSuite(t *testing.T) {
