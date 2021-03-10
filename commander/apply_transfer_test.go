@@ -1,4 +1,4 @@
-package main
+package commander
 
 import (
 	"testing"
@@ -129,10 +129,12 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer_Validation() {
 		Nonce:     models.MakeUint256(0),
 	}
 
-	err := ApplyTransfer(s.tree, nil)
-	s.Error(err)
-	err = ApplyTransfer(nil, &tx)
-	s.Error(err)
+	txError, appError := ApplyTransfer(s.tree, nil)
+	s.NoError(appError)
+	s.Error(txError)
+	txError, appError = ApplyTransfer(nil, &tx)
+	s.NoError(appError)
+	s.Error(txError)
 }
 
 func (s *ApplyTransferTestSuite) Test_ApplyTransfer() {
@@ -152,8 +154,9 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer() {
 	err = s.tree.Set(receiverIndex, &receiverState)
 	s.NoError(err)
 
-	err = ApplyTransfer(s.tree, &tx)
-	s.NoError(err)
+	txError, appError := ApplyTransfer(s.tree, &tx)
+	s.NoError(appError)
+	s.Error(txError)
 
 	senderLeaf, err := s.tree.Leaf(senderIndex)
 	s.NoError(err)

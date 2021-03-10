@@ -1,4 +1,4 @@
-package main
+package commander
 
 import (
 	"fmt"
@@ -8,23 +8,27 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 )
 
-func ApplyTransfer(stateTree *storage.StateTree, tx *models.Transaction) error {
+func ApplyTransfer(stateTree *storage.StateTree, tx *models.Transaction) (txError error, appError error) {
 	if stateTree == nil {
-		return fmt.Errorf("state tree cannot be nil")
+		return nil, fmt.Errorf("state tree cannot be nil")
 	}
 	if tx == nil {
-		return fmt.Errorf("transaction cannot be nil")
+		return nil, fmt.Errorf("transaction cannot be nil")
 	}
 
 	senderIndex := uint32(tx.FromIndex.Uint64())
 	senderLeaf, err := stateTree.Leaf(senderIndex)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	receiverIndex := uint32(tx.ToIndex.Uint64())
 	receiverLeaf, err := stateTree.Leaf(receiverIndex)
 	if err != nil {
-		return err
+		return nil, err
+	}
+
+	if senderLeaf == nil || receiverLeaf == nil {
+		return fmt.Errorf("sender/receiver cannot be nil"), nil
 	}
 
 	senderState := senderLeaf.UserState
@@ -32,19 +36,19 @@ func ApplyTransfer(stateTree *storage.StateTree, tx *models.Transaction) error {
 
 	newSenderState, newReceiverState, err := CalculateStateAfterTransfer(&senderState, &receiverState, tx)
 	if err != nil {
-		return err
+		return err, nil
 	}
 
 	err = stateTree.Set(senderIndex, &newSenderState)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	err = stateTree.Set(receiverIndex, &newReceiverState)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return nil, nil
 }
 
 func CalculateStateAfterTransfer(
@@ -57,17 +61,6 @@ func CalculateStateAfterTransfer(
 	err error,
 ) {
 	// TODO: Signature validation
-	// TODO: Do we check if sender and receiver states exist?
-
-	if tx == nil {
-		err = fmt.Errorf("transaction cannot be nil")
-		return
-	}
-
-	if senderState == nil || receiverState == nil {
-		err = fmt.Errorf("sender/receiver cannot be nil")
-		return
-	}
 
 	if senderState.Nonce.Cmp(&tx.Nonce.Int) != 0 {
 		err = fmt.Errorf("incorrect nonce")
