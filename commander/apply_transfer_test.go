@@ -34,12 +34,9 @@ var (
 type ApplyTransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	db              *db.TestDB
-	storage         *storage.Storage
-	tree            *storage.StateTree
-	senderLeaf      *models.StateLeaf
-	receiverLeaf    *models.StateLeaf
-	feeReceiverLeaf *models.StateLeaf
+	db      *db.TestDB
+	storage *storage.Storage
+	tree    *storage.StateTree
 }
 
 func (s *ApplyTransferTestSuite) SetupSuite() {
@@ -52,13 +49,6 @@ func (s *ApplyTransferTestSuite) SetupTest() {
 	s.db = testDB
 	s.storage = storage.NewTestStorage(testDB.DB)
 	s.tree = storage.NewStateTree(s.storage)
-
-	s.senderLeaf, err = storage.NewStateLeaf(&senderState)
-	s.NoError(err)
-	s.receiverLeaf, err = storage.NewStateLeaf(&receiverState)
-	s.NoError(err)
-	s.feeReceiverLeaf, err = storage.NewStateLeaf(&feeReceiverState)
-	s.NoError(err)
 }
 
 func (s *ApplyTransferTestSuite) TearDownTest() {
