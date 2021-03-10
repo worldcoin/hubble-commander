@@ -28,12 +28,12 @@ func (sim *Simulator) StartAutomine() (stopAutomine func()) {
 	ticker := time.NewTicker(*sim.Config.AutomineInterval)
 	quit := make(chan struct{})
 	go func() {
+		defer ticker.Stop()
 		for {
 			select {
 			case <-ticker.C:
 				sim.Backend.Commit()
 			case <-quit:
-				ticker.Stop()
 				return
 			}
 		}
