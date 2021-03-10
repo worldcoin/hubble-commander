@@ -38,38 +38,12 @@ func RollupLoop(cfg *config.Config) {
 			log.Fatal(err)
 		}
 
-		combinedSignature := models.Signature{models.MakeUint256(1), models.MakeUint256(2)} // TODO: Actually combine signatures
-
-		transactionsSerialized, err := serializeTransactions(includedTransactions)
+		commitment, err := CreateCommitment(stateTree, includedTransactions, &feeReceiver)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		accountRoot := common.Hash{} // TODO: Read from account tree
-
-		bodyHash, err := encoder.GetCommitmentBodyHash(accountRoot, combinedSignature, feeReceiver, transactionsSerialized)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		stateRoot, err := stateTree.Root()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		leafHash := st.HashTwo(*stateRoot, *bodyHash)
-
-		commitment := models.Commitment{
-			LeafHash:          leafHash,
-			PostStateRoot:     *stateRoot,
-			BodyHash:          *bodyHash,
-			AccountTreeRoot:   accountRoot,
-			CombinedSignature: combinedSignature,
-			FeeReceiver:       feeReceiver,
-			Transactions:      transactionsSerialized,
-		}
-
-		err = storage.AddCommitment(&commitment)
+		err = storage.AddCommitment(commitment)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -112,6 +86,7 @@ func applyTransactions(
 ) {
 	validTxs := make([]models.Transaction, 0, 32)
 
+	// TODO: handle too many transaction
 	for i := range transactions {
 		tx := transactions[i]
 		txError, appError := ApplyTransfer(stateTree, &tx, feeReceiverIndex)
@@ -124,4 +99,40 @@ func applyTransactions(
 	}
 
 	return validTxs, nil
+}
+
+// TODO: Test me
+func CreateCommitment(stateTree *st.StateTree, transactions []models.Transaction, feeReceiver *models.Uint256) (*models.Commitment, error) {
+	combinedSignature := models.Signature{models.MakeUint256(1), models.MakeUint256(2)} // TODO: Actually combine signatures
+
+	transactionsSerialized, err := serializeTransactions(transactions)
+	if err != nil {
+		return nil, err
+	}
+
+	accountRoot := common.Hash{} // TODO: Read from account tree
+
+	bodyHash, err := encoder.GetCommitmentBodyHash(accountRoot, combinedSignature, *feeReceiver, transactionsSerialized)
+	if err != nil {
+		return nil, err
+	}
+
+	stateRoot, err := stateTree.Root()
+	if err != nil {
+		return nil, err
+	}
+
+	leafHash := st.HashTwo(*stateRoot, *bodyHash)
+
+	commitment := models.Commitment{
+		LeafHash:          leafHash,
+		PostStateRoot:     *stateRoot,
+		BodyHash:          *bodyHash,
+		AccountTreeRoot:   accountRoot,
+		CombinedSignature: combinedSignature,
+		FeeReceiver:       *feeReceiver,
+		Transactions:      transactionsSerialized,
+	}
+
+	return &commitment, err
 }
