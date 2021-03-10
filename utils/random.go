@@ -10,6 +10,7 @@ import (
 
 func RandomBytes(size uint64) []byte {
 	bytes := make([]byte, size)
+	// nolint:gosec
 	rand.Read(bytes)
 	return bytes
 }
@@ -27,5 +28,6 @@ func RandomAddress() common.Address {
 }
 
 func RandomBigInt() *big.Int {
+	// nolint:gosec
 	return new(big.Int).SetUint64(rand.Uint64())
 }
