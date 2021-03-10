@@ -8,7 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 )
 
-func ApplyTransfer(stateTree *storage.StateTree, tx *models.Transaction) (txError error, appError error) {
+func ApplyTransfer(stateTree *storage.StateTree, tx *models.Transaction, feeReceiverIndex uint32) (txError, appError error) {
 	if stateTree == nil {
 		return nil, fmt.Errorf("state tree cannot be nil")
 	}
@@ -26,15 +26,25 @@ func ApplyTransfer(stateTree *storage.StateTree, tx *models.Transaction) (txErro
 	if err != nil {
 		return nil, err
 	}
+	feeReceiverLeaf, err := stateTree.Leaf(feeReceiverIndex)
+	if err != nil {
+		return nil, err
+	}
 
-	if senderLeaf == nil || receiverLeaf == nil {
-		return fmt.Errorf("sender/receiver cannot be nil"), nil
+	if senderLeaf == nil || receiverLeaf == nil || feeReceiverLeaf == nil {
+		return fmt.Errorf("sender/receiver/fee receiver cannot be nil"), nil
 	}
 
 	senderState := senderLeaf.UserState
 	receiverState := receiverLeaf.UserState
+	feeReceiverState := feeReceiverLeaf.UserState
 
-	newSenderState, newReceiverState, err := CalculateStateAfterTransfer(&senderState, &receiverState, tx)
+	newSenderState, newReceiverState, newFeeReceiverState, err := CalculateStateAfterTransfer(
+		&senderState,
+		&receiverState,
+		&feeReceiverState,
+		tx,
+	)
 	if err != nil {
 		return err, nil
 	}
@@ -47,17 +57,23 @@ func ApplyTransfer(stateTree *storage.StateTree, tx *models.Transaction) (txErro
 	if err != nil {
 		return nil, err
 	}
+	err = stateTree.Set(feeReceiverIndex, &newFeeReceiverState)
+	if err != nil {
+		return nil, err
+	}
 
 	return nil, nil
 }
 
 func CalculateStateAfterTransfer(
 	senderState,
-	receiverState *models.UserState,
+	receiverState,
+	feeReceiverState *models.UserState,
 	tx *models.Transaction,
 ) (
 	newSenderState models.UserState,
 	newReceiverState models.UserState,
+	newFeeReceiverState models.UserState,
 	err error,
 ) {
 	// TODO: Signature validation
@@ -77,12 +93,14 @@ func CalculateStateAfterTransfer(
 
 	newSenderState = *senderState
 	newReceiverState = *receiverState
+	newFeeReceiverState = *feeReceiverState
 
 	newSenderState.Nonce.Add(&senderState.Nonce.Int, big.NewInt(1))
 
 	newSenderState.Balance.Sub(&senderState.Balance.Int, totalAmount)
 
 	newReceiverState.Balance.Add(&receiverState.Balance.Int, &tx.Amount.Int)
+	newFeeReceiverState.Balance.Add(&feeReceiverState.Balance.Int, &tx.Fee.Int)
 
-	return newSenderState, newReceiverState, nil
+	return newSenderState, newReceiverState, newFeeReceiverState, nil
 }

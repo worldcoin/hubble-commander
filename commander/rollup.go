@@ -31,9 +31,12 @@ func RollupLoop(cfg *config.Config) {
 			continue
 		}
 
-		includedTransactions, err := applyTransactions(stateTree, transactions)
-
 		feeReceiver := models.MakeUint256(0) // TODO: Get from config
+
+		includedTransactions, err := applyTransactions(stateTree, transactions, uint32(feeReceiver.Uint64()))
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		combinedSignature := models.Signature{models.MakeUint256(1), models.MakeUint256(2)} // TODO: Actually combine signatures
 
@@ -102,14 +105,16 @@ func serializeTransactions(transactions []models.Transaction) ([]byte, error) {
 func applyTransactions(
 	stateTree *st.StateTree,
 	transactions []models.Transaction,
+	feeReceiverIndex uint32,
 ) (
 	[]models.Transaction,
 	error,
 ) {
 	validTxs := make([]models.Transaction, 0, 32)
 
-	for _, tx := range transactions {
-		txError, appError := ApplyTransfer(stateTree, &tx)
+	for i := range transactions {
+		tx := transactions[i]
+		txError, appError := ApplyTransfer(stateTree, &tx, feeReceiverIndex)
 		if appError != nil {
 			return nil, appError
 		}

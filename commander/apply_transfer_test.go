@@ -23,16 +23,23 @@ var (
 		Balance:      models.MakeUint256(0),
 		Nonce:        models.MakeUint256(0),
 	}
+	feeReceiverState = models.UserState{
+		AccountIndex: models.MakeUint256(3),
+		TokenIndex:   models.MakeUint256(1),
+		Balance:      models.MakeUint256(1000),
+		Nonce:        models.MakeUint256(0),
+	}
 )
 
 type ApplyTransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	db           *db.TestDB
-	storage      *storage.Storage
-	tree         *storage.StateTree
-	senderLeaf   *models.StateLeaf
-	receiverLeaf *models.StateLeaf
+	db              *db.TestDB
+	storage         *storage.Storage
+	tree            *storage.StateTree
+	senderLeaf      *models.StateLeaf
+	receiverLeaf    *models.StateLeaf
+	feeReceiverLeaf *models.StateLeaf
 }
 
 func (s *ApplyTransferTestSuite) SetupSuite() {
@@ -50,6 +57,8 @@ func (s *ApplyTransferTestSuite) SetupTest() {
 	s.NoError(err)
 	s.receiverLeaf, err = storage.NewStateLeaf(&receiverState)
 	s.NoError(err)
+	s.feeReceiverLeaf, err = storage.NewStateLeaf(&feeReceiverState)
+	s.NoError(err)
 }
 
 func (s *ApplyTransferTestSuite) TearDownTest() {
@@ -57,7 +66,7 @@ func (s *ApplyTransferTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_UpdatesSenderAndReceiverStates() {
+func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_UpdatesStates() {
 	tx := models.Transaction{
 		FromIndex: models.MakeUint256(1),
 		ToIndex:   models.MakeUint256(2),
@@ -66,17 +75,26 @@ func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_UpdatesSenderA
 		Nonce:     models.MakeUint256(0),
 	}
 
-	newSenderState, newReceiverState, err := CalculateStateAfterTransfer(&senderState, &receiverState, &tx)
+	newSenderState, newReceiverState, newFeeReceiverState, err := CalculateStateAfterTransfer(
+		&senderState,
+		&receiverState,
+		&feeReceiverState,
+		&tx,
+	)
 	s.NoError(err)
 
-	s.Equal(newSenderState.Nonce, models.MakeUint256(1))
-	s.Equal(newSenderState.Balance, models.MakeUint256(310))
+	s.Equal(models.MakeUint256(1), newSenderState.Nonce)
+	s.Equal(models.MakeUint256(310), newSenderState.Balance)
 
-	s.Equal(newReceiverState.Nonce, models.MakeUint256(0))
-	s.Equal(newReceiverState.Balance, models.MakeUint256(100))
+	s.Equal(models.MakeUint256(0), newReceiverState.Nonce)
+	s.Equal(models.MakeUint256(100), newReceiverState.Balance)
+
+	s.Equal(models.MakeUint256(0), newFeeReceiverState.Nonce)
+	s.Equal(models.MakeUint256(1010), newFeeReceiverState.Balance)
 
 	s.NotEqual(&newSenderState, &senderState)
 	s.NotEqual(&newReceiverState, &receiverState)
+	s.NotEqual(&newFeeReceiverState, &feeReceiverState)
 }
 
 func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_Validation_Nonce() {
@@ -88,7 +106,8 @@ func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_Validation_Non
 		Nonce:     models.MakeUint256(1),
 	}
 
-	_, _, err := CalculateStateAfterTransfer(&senderState, &receiverState, &tx)
+	// nolint
+	_, _, _, err := CalculateStateAfterTransfer(&senderState, &receiverState, &feeReceiverState, &tx)
 	s.Error(err)
 }
 
@@ -101,22 +120,8 @@ func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_Validation_Bal
 		Nonce:     models.MakeUint256(0),
 	}
 
-	_, _, err := CalculateStateAfterTransfer(&senderState, &receiverState, &tx)
-	s.Error(err)
-}
-
-func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_Validation_Account() {
-	tx := models.Transaction{
-		Nonce: models.MakeUint256(0),
-	}
-
-	_, _, err := CalculateStateAfterTransfer(nil, &receiverState, &tx)
-	s.Error(err)
-
-	_, _, err = CalculateStateAfterTransfer(&senderState, nil, &tx)
-	s.Error(err)
-
-	_, _, err = CalculateStateAfterTransfer(&senderState, &receiverState, nil)
+	// nolint
+	_, _, _, err := CalculateStateAfterTransfer(&senderState, &receiverState, &feeReceiverState, &tx)
 	s.Error(err)
 }
 
@@ -129,12 +134,12 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer_Validation() {
 		Nonce:     models.MakeUint256(0),
 	}
 
-	txError, appError := ApplyTransfer(s.tree, nil)
-	s.NoError(appError)
-	s.Error(txError)
-	txError, appError = ApplyTransfer(nil, &tx)
-	s.NoError(appError)
-	s.Error(txError)
+	txError, appError := ApplyTransfer(s.tree, nil, 3)
+	s.Error(appError)
+	s.NoError(txError)
+	txError, appError = ApplyTransfer(nil, &tx, 3)
+	s.Error(appError)
+	s.NoError(txError)
 }
 
 func (s *ApplyTransferTestSuite) Test_ApplyTransfer() {
@@ -148,23 +153,29 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer() {
 
 	senderIndex := uint32(senderState.AccountIndex.Uint64())
 	receiverIndex := uint32(receiverState.AccountIndex.Uint64())
+	feeReceiverIndex := uint32(3)
 
 	err := s.tree.Set(senderIndex, &senderState)
 	s.NoError(err)
 	err = s.tree.Set(receiverIndex, &receiverState)
 	s.NoError(err)
+	err = s.tree.Set(feeReceiverIndex, &feeReceiverState)
+	s.NoError(err)
 
-	txError, appError := ApplyTransfer(s.tree, &tx)
+	txError, appError := ApplyTransfer(s.tree, &tx, feeReceiverIndex)
 	s.NoError(appError)
-	s.Error(txError)
+	s.NoError(txError)
 
 	senderLeaf, err := s.tree.Leaf(senderIndex)
 	s.NoError(err)
 	receiverLeaf, err := s.tree.Leaf(receiverIndex)
 	s.NoError(err)
+	feeReceiverLeaf, err := s.tree.Leaf(feeReceiverIndex)
+	s.NoError(err)
 
 	s.Equal(int64(270), senderLeaf.Balance.Int64())
 	s.Equal(int64(100), receiverLeaf.Balance.Int64())
+	s.Equal(int64(1050), feeReceiverLeaf.Balance.Int64())
 }
 
 func TestApplyTransferTestSuite(t *testing.T) {
