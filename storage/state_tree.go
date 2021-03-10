@@ -40,6 +40,18 @@ func (s *StateTree) LeafNode(index uint32) (*models.StateNode, error) {
 	return leaf, nil
 }
 
+func (s *StateTree) Leaf(index uint32) (*models.StateLeaf, error) {
+	leafNode, err := s.LeafNode(index)
+	if err != nil {
+		return nil, err
+	}
+	leaf, err := s.storage.GetStateLeaf(leafNode.DataHash)
+	if err != nil {
+		return nil, err
+	}
+	return leaf, nil
+}
+
 func (s *StateTree) Set(index uint32, state *models.UserState) (err error) {
 	tx, storage, err := s.storage.BeginTransaction()
 	if err != nil {
