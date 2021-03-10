@@ -33,7 +33,7 @@ func RollupLoop(cfg *config.Config) {
 
 		feeReceiver := models.MakeUint256(0) // TODO: Get from config
 
-		includedTransactions, err := applyTransactions(stateTree, transactions, uint32(feeReceiver.Uint64()))
+		includedTransactions, err := ApplyTransactions(stateTree, transactions, uint32(feeReceiver.Uint64()))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -73,32 +73,6 @@ func serializeTransactions(transactions []models.Transaction) ([]byte, error) {
 	}
 
 	return buf, nil
-}
-
-// TODO: add tests
-func applyTransactions(
-	stateTree *st.StateTree,
-	transactions []models.Transaction,
-	feeReceiverIndex uint32,
-) (
-	[]models.Transaction,
-	error,
-) {
-	validTxs := make([]models.Transaction, 0, 32)
-
-	// TODO: handle too many transaction
-	for i := range transactions {
-		tx := transactions[i]
-		txError, appError := ApplyTransfer(stateTree, &tx, feeReceiverIndex)
-		if appError != nil {
-			return nil, appError
-		}
-		if txError == nil {
-			validTxs = append(validTxs, tx)
-		}
-	}
-
-	return validTxs, nil
 }
 
 // TODO: Test me
