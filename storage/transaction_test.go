@@ -73,8 +73,8 @@ func (s *TransactionTestSuite) Test_GetPendingTransactions_AddAndRetrieve() {
 	tx3.Hash = common.BigToHash(big.NewInt(3456))
 	tx3.IncludedInCommitment = &commitmentHash
 
-	for _, cTx := range []models.Transaction{tx, tx2, tx3} {
-		err := s.storage.AddTransaction(&cTx)
+	for _, tx := range []*models.Transaction{&tx, &tx2, &tx3} {
+		err := s.storage.AddTransaction(tx)
 		s.NoError(err)
 	}
 
