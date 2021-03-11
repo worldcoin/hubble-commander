@@ -1,6 +1,8 @@
 package commander
 
 import (
+	"log"
+
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
 )
@@ -23,6 +25,8 @@ func ApplyTransactions(
 		}
 		if txError == nil {
 			validTxs = append(validTxs, tx)
+		} else {
+			log.Printf("Transaction failed: %e", txError)
 		}
 
 		if len(validTxs) == 32 {

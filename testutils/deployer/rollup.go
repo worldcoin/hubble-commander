@@ -13,11 +13,12 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/vault"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type DeploymentConfig struct {
 	MaxDepositSubtreeDepth *models.Uint256
-	GenesisStateRoot       *models.Bytes32
+	GenesisStateRoot       *common.Hash
 	StakeAmount            *models.Uint256
 	BlocksToFinalise       *models.Uint256
 	MinGasLeft             *models.Uint256
@@ -104,6 +105,8 @@ func DeployConfiguredRollup(sim *simulator.Simulator, config DeploymentConfig) (
 		return nil, err
 	}
 
+	stateRoot := [32]byte{}
+	copy(stateRoot[:], config.GenesisStateRoot.Bytes())
 	_, _, rollupContract, err := rollup.DeployRollup(
 		deployer,
 		sim.Backend,
@@ -113,7 +116,7 @@ func DeployConfiguredRollup(sim *simulator.Simulator, config DeploymentConfig) (
 		transferAddress,
 		massMigrationAddress,
 		create2TransferAddress,
-		config.GenesisStateRoot.Bytes,
+		stateRoot,
 		&config.StakeAmount.Int,
 		&config.BlocksToFinalise.Int,
 		&config.MinGasLeft.Int,
@@ -146,8 +149,8 @@ func fillWithDefaults(config *DeploymentConfig) {
 	}
 	if config.GenesisStateRoot == nil {
 		// Result of getDefaultGenesisRoot function from deploy.ts
-		root, _ := models.MakeBytes32("cf277fb80a82478460e8988570b718f1e083ceb76f7e271a1a1497e5975f53ae")
-		config.GenesisStateRoot = &root
+		hash := common.HexToHash("cf277fb80a82478460e8988570b718f1e083ceb76f7e271a1a1497e5975f53ae")
+		config.GenesisStateRoot = &hash
 	}
 	if config.StakeAmount == nil {
 		config.StakeAmount = models.NewUint256(1e17)
