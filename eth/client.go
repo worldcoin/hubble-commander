@@ -81,7 +81,6 @@ func (c *Client) withValue(value *models.Uint256) *bind.TransactOpts {
 	return &opts
 }
 
-// TODO move to a separate file
 func (c *Client) SubmitTransfersBatch(commitments []*models.Commitment) (batchID *models.Uint256, err error) {
 	count := len(commitments)
 
