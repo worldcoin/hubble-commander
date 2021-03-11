@@ -42,6 +42,8 @@ func (s *ClientTestSuite) TearDownTest() {
 }
 
 func (s *ClientTestSuite) Test_SubmitTransfersBatch() {
+	s.T().Skip()
+
 	accountRoot, err := s.contracts.AccountRegistry.Root(nil)
 	s.NoError(err)
 
