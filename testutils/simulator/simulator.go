@@ -2,7 +2,9 @@ package simulator
 
 import (
 	"math/big"
+	"time"
 
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
@@ -11,8 +13,10 @@ import (
 )
 
 type SimulatorConfig struct {
-	NumAccounts   *uint64 // default 10
-	BlockGasLimit *uint64 // default 12_500_000
+	NumAccounts      *uint64        // default 10
+	BlockGasLimit    *uint64        // default 12_500_000
+	AutomineEnabled  *bool          // default false
+	AutomineInterval *time.Duration // default 100ms
 }
 
 type Simulator struct {
@@ -20,14 +24,18 @@ type Simulator struct {
 	Config   *SimulatorConfig
 	Account  *bind.TransactOpts
 	Accounts []*bind.TransactOpts
-}
 
-func (sim *Simulator) Close() {
-	sim.Backend.Close() // ignore error, it is always nil
+	stopAutomine func()
 }
 
 func NewSimulator() (*Simulator, error) {
 	return NewConfiguredSimulator(SimulatorConfig{})
+}
+
+func NewAutominingSimulator() (*Simulator, error) {
+	return NewConfiguredSimulator(SimulatorConfig{
+		AutomineEnabled: ref.Bool(true),
+	})
 }
 
 func NewConfiguredSimulator(config SimulatorConfig) (*Simulator, error) {
@@ -49,7 +57,7 @@ func NewConfiguredSimulator(config SimulatorConfig) (*Simulator, error) {
 
 		accounts = append(accounts, auth)
 		genesisAccounts[auth.From] = core.GenesisAccount{
-			Balance:    big.NewInt(10000000000),
+			Balance:    utils.ParseEther("100"),
 			PrivateKey: key.D.Bytes(),
 		}
 	}
@@ -61,7 +69,52 @@ func NewConfiguredSimulator(config SimulatorConfig) (*Simulator, error) {
 		Accounts: accounts,
 	}
 
+	if *config.AutomineEnabled {
+		sim.StartAutomine()
+	}
+
 	return sim, nil
+}
+
+func (sim *Simulator) IsAutomineEnabled() bool {
+	return sim.stopAutomine != nil
+}
+
+func (sim *Simulator) StartAutomine() func() {
+	if sim.IsAutomineEnabled() {
+		return sim.stopAutomine
+	}
+
+	ticker := time.NewTicker(*sim.Config.AutomineInterval)
+	quit := make(chan struct{})
+	go func() {
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				sim.Backend.Commit()
+			case <-quit:
+				return
+			}
+		}
+	}()
+
+	sim.stopAutomine = func() {
+		close(quit)
+		sim.stopAutomine = nil
+	}
+	return sim.stopAutomine
+}
+
+func (sim *Simulator) StopAutomine() {
+	if sim.IsAutomineEnabled() {
+		sim.stopAutomine()
+	}
+}
+
+func (sim *Simulator) Close() {
+	sim.StopAutomine()
+	sim.Backend.Close() // ignore error, it is always nil
 }
 
 func fillWithDefaults(config *SimulatorConfig) {
@@ -70,5 +123,11 @@ func fillWithDefaults(config *SimulatorConfig) {
 	}
 	if config.BlockGasLimit == nil {
 		config.BlockGasLimit = ref.Uint64(12_500_000)
+	}
+	if config.AutomineEnabled == nil {
+		config.AutomineEnabled = ref.Bool(false)
+	}
+	if config.AutomineInterval == nil {
+		config.AutomineInterval = ref.Duration(100 * time.Millisecond)
 	}
 }

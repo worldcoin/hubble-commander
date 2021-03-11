@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql/driver"
 	"fmt"
+	"math/big"
 )
 
 // TODO: Consider representing this as a 64 byte array instead
@@ -30,4 +31,8 @@ func (s Signature) Value() (driver.Value, error) {
 	buf = append(buf, s[1].Bytes()...)
 
 	return buf, nil
+}
+
+func (s *Signature) ToBigIntPointers() [2]*big.Int {
+	return [2]*big.Int{&s[0].Int, &s[1].Int}
 }
