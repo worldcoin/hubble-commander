@@ -7,10 +7,11 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
 	testtx "github.com/Worldcoin/hubble-commander/contracts/test/tx"
+	"github.com/Worldcoin/hubble-commander/contracts/test/types"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/testutils/deployer"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -19,10 +20,11 @@ import (
 type EncoderTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	sim      *simulator.Simulator
-	transfer *transfer.FrontendTransfer
-	generic  *generic.FrontendGeneric
-	testTx   *testtx.TestTx
+	sim       *simulator.Simulator
+	transfer  *transfer.FrontendTransfer
+	generic   *generic.FrontendGeneric
+	testTx    *testtx.TestTx
+	testTypes *types.TestTypes
 }
 
 func (s *EncoderTestSuite) SetupSuite() {
@@ -42,6 +44,7 @@ func (s *EncoderTestSuite) SetupTest() {
 	s.transfer = frontend.FrontendTransfer
 	s.generic = frontend.FrontendGeneric
 	s.testTx = test.TestTx
+	s.testTypes = test.TestTypes
 }
 
 func (s *EncoderTestSuite) TearDownTest() {
@@ -59,7 +62,7 @@ func (s *EncoderTestSuite) TestEncodeTransferZero() {
 	}
 	bytes, err := EncodeTransfer(tx)
 	s.NoError(err)
-	expected, err := s.transfer.Encode(&bind.CallOpts{Pending: false}, tx)
+	expected, err := s.transfer.Encode(nil, tx)
 	s.NoError(err)
 	s.Equal(expected, bytes)
 }
@@ -75,7 +78,7 @@ func (s *EncoderTestSuite) TestEncodeTransferNonZero() {
 	}
 	bytes, err := EncodeTransfer(tx)
 	s.NoError(err)
-	expected, err := s.transfer.Encode(&bind.CallOpts{Pending: false}, tx)
+	expected, err := s.transfer.Encode(nil, tx)
 	s.NoError(err)
 	s.Equal(expected, bytes)
 }
@@ -90,7 +93,7 @@ func (s *EncoderTestSuite) TestEncodeUserState() {
 	bytes, err := EncodeUserState(state)
 	s.NoError(err)
 
-	expected, err := s.generic.Encode(&bind.CallOpts{Pending: false}, state)
+	expected, err := s.generic.Encode(nil, state)
 	s.NoError(err)
 	s.Equal(expected, bytes)
 }
@@ -100,7 +103,7 @@ func (s *EncoderTestSuite) TestDecimalEncoding() {
 	encoded, err := EncodeDecimal(num)
 	s.NoError(err)
 
-	expected, err := s.testTx.TestEncodeDecimal(&bind.CallOpts{Pending: false}, &num.Int)
+	expected, err := s.testTx.TestEncodeDecimal(nil, &num.Int)
 	s.NoError(err)
 
 	s.Equal(uint16(expected.Uint64()), encoded)
@@ -126,21 +129,35 @@ func (s *EncoderTestSuite) TestTransactionEncoding() {
 		Amount:    &tx.Amount.Int,
 		Fee:       &tx.Fee.Int,
 	}
-	expected, err := s.testTx.TransferSerialize(&bind.CallOpts{Pending: false}, []testtx.TxTransfer{txTransfer})
+	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{txTransfer})
 	s.NoError(err)
 
 	s.Equal(expected, encoded)
 }
 
 func (s *EncoderTestSuite) TestGetCommitmentBodyHash() {
-	// TODO: Test this better
-	_, err := GetCommitmentBodyHash(
-		common.Hash{},
-		models.Signature{models.MakeUint256(1), models.MakeUint256(2)},
-		models.MakeUint256(1),
-		[]byte{1, 2, 3},
+	accountRoot := utils.RandomHash()
+	signature := models.Signature{models.MakeUint256(1), models.MakeUint256(2)}
+	feeReceiver := models.MakeUint256(1234)
+	txs := utils.RandomBytes(32)
+
+	expectedHash, err := s.testTypes.HashTransferBody(nil, types.TypesTransferBody{
+		AccountRoot: accountRoot,
+		Signature:   [2]*big.Int{&signature[0].Int, &signature[1].Int},
+		FeeReceiver: &feeReceiver.Int,
+		Txs:         txs,
+	})
+	s.NoError(err)
+
+	bodyHash, err := GetCommitmentBodyHash(
+		accountRoot,
+		signature,
+		feeReceiver,
+		txs,
 	)
 	s.NoError(err)
+
+	s.Equal(expectedHash[:], bodyHash.Bytes())
 }
 
 func TestEncoderTestSuite(t *testing.T) {
