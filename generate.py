@@ -54,6 +54,7 @@ generate_subdir('frontend', 'contracts/client/FrontendMassMigration.sol/Frontend
 generate_subdir('frontend', 'contracts/client/FrontendCreate2Transfer.sol/FrontendCreate2Transfer.json', 'FrontendCreate2Transfer')
 
 generate_subdir('test', 'contracts/test/TestTx.sol/TestTx.json', 'TestTx')
+generate_subdir('test', 'contracts/test/TestTypes.sol/TestTypes.json', 'TestTypes')
 
 generate('@openzeppelin/contracts/token/ERC20/IERC20.sol/IERC20.json', 'ERC20')
 
