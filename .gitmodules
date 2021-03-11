@@ -1,3 +1,3 @@
 [submodule "hubble-contracts"]
 	path = hubble-contracts
-	url = git@github.com:thehubbleproject/hubble-contracts.git
+	url = git@github.com:Worldcoin/hubble-contracts.git
