@@ -8,16 +8,14 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
 var (
-	tUint256, _       = abi.NewType("uint256", "", nil)
-	tBytes32, _       = abi.NewType("bytes32", "", nil)
-	tSignatureType, _ = abi.NewType("uint256[2]", "", nil)
-	tBytes, _         = abi.NewType("bytes", "", nil)
+	tUint256, _ = abi.NewType("uint256", "", nil)
 )
 
 func EncodeTransfer(tx transfer.OffchainTransfer) ([]uint8, error) {
@@ -113,22 +111,14 @@ func GetCommitmentBodyHash(
 	feeReceiver models.Uint256,
 	transactions []byte,
 ) (*common.Hash, error) {
-	arguments := abi.Arguments{
-		{Name: "accountRoot", Type: tBytes32},
-		{Name: "signature", Type: tSignatureType},
-		{Name: "feeReceiver", Type: tUint256},
-		{Name: "txs", Type: tBytes},
-	}
-	encodedBytes, err := arguments.Pack(
-		accountRoot,
-		[2]*big.Int{&signature[0].Int, &signature[1].Int},
-		&feeReceiver.Int,
-		transactions,
-	)
-	if err != nil {
-		return nil, err
-	}
+	arr := make([]byte, 32+64+32+len(transactions))
 
-	hash := crypto.Keccak256Hash(encodedBytes)
+	copy(arr[0:32], accountRoot.Bytes())
+	copy(arr[32:64], utils.PadLeft(signature[0].Bytes(), 32))
+	copy(arr[64:96], utils.PadLeft(signature[1].Bytes(), 32))
+	copy(arr[96:128], utils.PadLeft(feeReceiver.Bytes(), 32))
+	copy(arr[128:], transactions)
+
+	hash := crypto.Keccak256Hash(arr)
 	return &hash, nil
 }

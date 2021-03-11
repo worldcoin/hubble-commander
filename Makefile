@@ -33,6 +33,9 @@ migration-up:
 migration-down:
 	migrate -source file://db/migrations/ -database "postgres://localhost:5432/hubble?sslmode=disable" down
 
+update-contracts:
+	git submodule update --remote
+
 run:
 	go run ./main/main.go
 
@@ -53,7 +56,8 @@ test:
 	start-db 
 	teardown-db 
 	migrate-up 
-	migrate-down 
+	migrate-down
+	update-contracts
 	run 
 	lint 
 	test
