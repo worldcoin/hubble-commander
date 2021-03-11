@@ -13,8 +13,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-const TxTimeout = 30 * time.Second
-
 type NewClientParams struct {
 	ethNodeAddress string
 	rollupAddress  common.Address
@@ -101,6 +99,7 @@ func (c *Client) SubmitTransfersBatch(commitments []*models.Commitment) (batchID
 	if err != nil {
 		return
 	}
+	defer subscription.Unsubscribe()
 
 	tx, err := c.Rollup.SubmitTransfer(
 		c.withValue(c.config.stakeAmount),
@@ -117,10 +116,9 @@ func (c *Client) SubmitTransfersBatch(commitments []*models.Commitment) (batchID
 		select {
 		case newBatch := <-sink:
 			if newBatch.Raw.TxHash == tx.Hash() {
-				subscription.Unsubscribe()
 				return models.NewUint256FromBig(*newBatch.Index), nil
 			}
-		case <-time.After(TxTimeout):
+		case <-time.After(*c.config.txTimeout):
 			return nil, fmt.Errorf("timeout")
 		}
 	}

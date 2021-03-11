@@ -91,10 +91,10 @@ func (sim *Simulator) StartAutomine() func() {
 		defer ticker.Stop()
 		for {
 			select {
-			case <-ticker.C:
-				sim.Backend.Commit()
 			case <-quit:
 				return
+			case <-ticker.C:
+				sim.Backend.Commit()
 			}
 		}
 	}()
