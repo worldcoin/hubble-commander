@@ -53,7 +53,7 @@ func NewSimulatedClient(stateTree *st.StateTree, accounts []commander.GenesisAcc
 		return nil, err
 	}
 
-	simulator, err := simulator.NewAutominingSimulator()
+	sim, err := simulator.NewAutominingSimulator()
 	if err != nil {
 		return nil, err
 	}
@@ -63,13 +63,13 @@ func NewSimulatedClient(stateTree *st.StateTree, accounts []commander.GenesisAcc
 		return nil, err
 	}
 
-	contracts, err := deployer.DeployConfiguredRollup(simulator, deployer.DeploymentConfig{
+	contracts, err := deployer.DeployConfiguredRollup(sim, deployer.DeploymentConfig{
 		GenesisStateRoot: stateRoot,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	client := eth.NewTestClient(simulator.Account, contracts.Rollup)
+	client := eth.NewTestClient(sim.Account, contracts.Rollup)
 	return client, nil
 }
