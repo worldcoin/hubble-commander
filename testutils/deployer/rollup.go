@@ -23,7 +23,7 @@ type DeploymentConfig struct {
 	BlocksToFinalise       *models.Uint256
 	MinGasLeft             *models.Uint256
 	MaxTxsPerCommit        *models.Uint256
-	AccountRegistryAddress  *common.Address
+	AccountRegistryAddress *common.Address
 }
 
 type RollupContracts struct {
@@ -41,7 +41,14 @@ type RollupContracts struct {
 }
 
 func DeployRollup(sim *simulator.Simulator) (*RollupContracts, error) {
-	return DeployConfiguredRollup(sim, DeploymentConfig{})
+	accountRegistryAddress, _, err := DeployAccountRegistry(sim)
+	if err != nil {
+		return nil, err
+	}
+	config := DeploymentConfig{
+		AccountRegistryAddress: accountRegistryAddress,
+	}
+	return DeployConfiguredRollup(sim, config)
 }
 
 func DeployConfiguredRollup(sim *simulator.Simulator, config DeploymentConfig) (*RollupContracts, error) {
