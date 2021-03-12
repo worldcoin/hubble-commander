@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -14,8 +15,9 @@ import (
 )
 
 type NewClientParams struct {
-	ethNodeAddress string
-	rollupAddress  common.Address
+	ethNodeAddress         string
+	rollupAddress          common.Address
+	accountRegistryAddress common.Address
 	ClientConfig
 }
 
@@ -25,9 +27,10 @@ type ClientConfig struct {
 }
 
 type Client struct {
-	account bind.TransactOpts
-	config  ClientConfig
-	Rollup  *rollup.Rollup
+	account         bind.TransactOpts
+	config          ClientConfig
+	Rollup          *rollup.Rollup
+	AccountRegistry *accountregistry.AccountRegistry
 }
 
 func NewClient(account *bind.TransactOpts, params NewClientParams) (*Client, error) {
@@ -43,18 +46,25 @@ func NewClient(account *bind.TransactOpts, params NewClientParams) (*Client, err
 		return nil, err
 	}
 
+	accountRegistryContract, err := accountregistry.NewAccountRegistry(params.accountRegistryAddress, backend)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Client{
-		account: *account,
-		config:  params.ClientConfig,
-		Rollup:  rollupContract,
+		account:         *account,
+		config:          params.ClientConfig,
+		Rollup:          rollupContract,
+		AccountRegistry: accountRegistryContract,
 	}, nil
 }
 
-func NewTestClient(account *bind.TransactOpts, rollupContract *rollup.Rollup) *Client {
+func NewTestClient(account *bind.TransactOpts, rollupContract *rollup.Rollup, accountRegistryContract *accountregistry.AccountRegistry) *Client {
 	return &Client{
-		account: *account,
-		config:  getDefaultConfig(),
-		Rollup:  rollupContract,
+		account:         *account,
+		config:          getDefaultConfig(),
+		Rollup:          rollupContract,
+		AccountRegistry: accountRegistryContract,
 	}
 }
 
