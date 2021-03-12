@@ -34,7 +34,7 @@ func (s *ClientTestSuite) SetupTest() {
 	contracts, err := deployer.DeployRollup(sim)
 	s.NoError(err)
 	s.contracts = contracts
-	s.client = NewTestClient(sim.Account, contracts.Rollup)
+	s.client = NewTestClient(sim.Account, contracts.Rollup, contracts.AccountRegistry)
 }
 
 func (s *ClientTestSuite) TearDownTest() {
