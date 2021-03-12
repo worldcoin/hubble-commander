@@ -149,6 +149,20 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer() {
 	s.Equal(int64(100), receiverLeaf.Balance.Int64())
 }
 
+func (s *ApplyTransferTestSuite) Test_ApplyFee() {
+	receiverIndex := uint32(receiverState.AccountIndex.Uint64())
+	err := s.tree.Set(receiverIndex, &receiverState)
+	s.NoError(err)
+
+	err = ApplyFee(s.tree, receiverIndex, models.MakeUint256(555))
+	s.NoError(err)
+
+	receiverLeaf, err := s.tree.Leaf(receiverIndex)
+	s.NoError(err)
+
+	s.Equal(int64(555), receiverLeaf.Balance.Int64())
+}
+
 func TestApplyTransferTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplyTransferTestSuite))
 }

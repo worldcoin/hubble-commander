@@ -10,8 +10,23 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils/deployer"
-	simulator2 "github.com/Worldcoin/hubble-commander/testutils/simulator"
+	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 )
+
+var genesisAccounts = []commander.GenesisAccount{
+	{
+		AccountIndex: 0,
+		Balance:      models.MakeUint256(1000),
+	},
+	{
+		AccountIndex: 1,
+		Balance:      models.MakeUint256(1000),
+	},
+	{
+		AccountIndex: 2,
+		Balance:      models.MakeUint256(1000),
+	},
+}
 
 func main() {
 	cfg := config.GetConfig()
@@ -22,20 +37,7 @@ func main() {
 	}
 	stateTree := st.NewStateTree(storage)
 
-	client, err := NewSimulatedClient(stateTree, []commander.GenesisAccount{
-		{
-			AccountIndex: 0,
-			Balance:      models.MakeUint256(1000),
-		},
-		{
-			AccountIndex: 1,
-			Balance:      models.MakeUint256(1000),
-		},
-		{
-			AccountIndex: 2,
-			Balance:      models.MakeUint256(1000),
-		},
-	})
+	client, err := NewSimulatedClient(stateTree, genesisAccounts)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -51,7 +53,7 @@ func NewSimulatedClient(stateTree *st.StateTree, accounts []commander.GenesisAcc
 		return nil, err
 	}
 
-	simulator, err := simulator2.NewAutominingSimulator()
+	simulator, err := simulator.NewAutominingSimulator()
 	if err != nil {
 		return nil, err
 	}
