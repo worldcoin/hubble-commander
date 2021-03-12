@@ -51,7 +51,7 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.Config) {
 
 		for i := range includedTransactions {
 			tx := includedTransactions[i]
-			err := storage.MarkTransactionAsIncluded(tx.Hash, commitment.LeafHash)
+			err = storage.MarkTransactionAsIncluded(tx.Hash, commitment.LeafHash)
 			if err != nil {
 				log.Fatal(err)
 			}
