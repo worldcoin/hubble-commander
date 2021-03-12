@@ -8,6 +8,6 @@ type Commitment struct {
 	BodyHash          common.Hash `db:"body_hash"`
 	AccountTreeRoot   common.Hash `db:"account_tree_root"`
 	CombinedSignature Signature   `db:"combined_signature"`
-	FeeReceiver       Uint256     `db:"fee_receiver"` // TODO: change to uint32
+	FeeReceiver       uint32      `db:"fee_receiver"`
 	Transactions      []byte
 }

@@ -60,7 +60,7 @@ func (s *ClientTestSuite) Test_SubmitTransfersBatch() {
 		BodyHash:          *bodyHash,
 		AccountTreeRoot:   accountRoot,
 		CombinedSignature: signature,
-		FeeReceiver:       models.MakeUint256(int64(feeReceiver)),
+		FeeReceiver:       feeReceiver,
 		Transactions:      txs,
 	}
 

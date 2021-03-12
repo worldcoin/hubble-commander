@@ -111,7 +111,7 @@ func CreateCommitment(stateTree *st.StateTree, transactions []models.Transaction
 		BodyHash:          *bodyHash,
 		AccountTreeRoot:   accountRoot,
 		CombinedSignature: combinedSignature,
-		FeeReceiver:       models.MakeUint256(int64(feeReceiver)),
+		FeeReceiver:       feeReceiver,
 		Transactions:      transactionsSerialized,
 	}
 

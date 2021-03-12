@@ -90,7 +90,7 @@ func (c *Client) SubmitTransfersBatch(commitments []*models.Commitment) (batchID
 	for _, commitment := range commitments {
 		stateRoots = append(stateRoots, commitment.PostStateRoot)
 		signatures = append(signatures, commitment.CombinedSignature.ToBigIntPointers())
-		feeReceivers = append(feeReceivers, &commitment.FeeReceiver.Int)
+		feeReceivers = append(feeReceivers, new(big.Int).SetUint64(uint64(commitment.FeeReceiver)))
 		transactions = append(transactions, commitment.Transactions)
 	}
 
