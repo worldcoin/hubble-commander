@@ -6,16 +6,13 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func RollupLoop(cfg *config.Config) {
-	storage, err := st.NewStorage(cfg)
-	if err != nil {
-		log.Fatal(err)
-	}
+func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.Config) {
 	stateTree := st.NewStateTree(storage)
 
 	for {
@@ -24,21 +21,25 @@ func RollupLoop(cfg *config.Config) {
 			log.Fatal(err)
 		}
 
-		println("txs = %d", len(transactions))
+		log.Printf("%d transactions in the pool", len(transactions))
 
 		if len(transactions) < 2 { // TODO: change to 32 transactions
 			time.Sleep(500 * time.Millisecond)
 			continue
 		}
 
-		feeReceiver := models.MakeUint256(0) // TODO: Get from config
+		feeReceiver := cfg.FeeReceiverIndex
 
-		includedTransactions, err := ApplyTransactions(stateTree, transactions, uint32(feeReceiver.Uint64()))
+		log.Printf("Applying %d transactions", len(transactions))
+
+		includedTransactions, err := ApplyTransactions(stateTree, transactions, feeReceiver)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		commitment, err := CreateCommitment(stateTree, includedTransactions, &feeReceiver)
+		log.Printf("Creating a commitment from %d transactions", len(includedTransactions))
+
+		commitment, err := CreateCommitment(stateTree, includedTransactions, feeReceiver)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -50,11 +51,17 @@ func RollupLoop(cfg *config.Config) {
 
 		for i := range includedTransactions {
 			tx := includedTransactions[i]
-			err := storage.MarkTransactionAsIncluded(tx.Hash, commitment.LeafHash)
+			err = storage.MarkTransactionAsIncluded(tx.Hash, commitment.LeafHash)
 			if err != nil {
 				log.Fatal(err)
 			}
 		}
+
+		_, err = client.SubmitTransfersBatch([]*models.Commitment{commitment})
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("Sumbmited commitment %s on chain", commitment.LeafHash.Hex())
 
 		time.Sleep(500)
 	}
@@ -76,7 +83,7 @@ func serializeTransactions(transactions []models.Transaction) ([]byte, error) {
 }
 
 // TODO: Test me
-func CreateCommitment(stateTree *st.StateTree, transactions []models.Transaction, feeReceiver *models.Uint256) (*models.Commitment, error) {
+func CreateCommitment(stateTree *st.StateTree, transactions []models.Transaction, feeReceiver uint32) (*models.Commitment, error) {
 	combinedSignature := models.Signature{models.MakeUint256(1), models.MakeUint256(2)} // TODO: Actually combine signatures
 
 	transactionsSerialized, err := serializeTransactions(transactions)
@@ -86,7 +93,7 @@ func CreateCommitment(stateTree *st.StateTree, transactions []models.Transaction
 
 	accountRoot := common.Hash{} // TODO: Read from account tree
 
-	bodyHash, err := encoder.GetCommitmentBodyHash(accountRoot, combinedSignature, *feeReceiver, transactionsSerialized)
+	bodyHash, err := encoder.GetCommitmentBodyHash(accountRoot, combinedSignature, feeReceiver, transactionsSerialized)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +111,7 @@ func CreateCommitment(stateTree *st.StateTree, transactions []models.Transaction
 		BodyHash:          *bodyHash,
 		AccountTreeRoot:   accountRoot,
 		CombinedSignature: combinedSignature,
-		FeeReceiver:       *feeReceiver,
+		FeeReceiver:       feeReceiver,
 		Transactions:      transactionsSerialized,
 	}
 

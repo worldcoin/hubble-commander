@@ -40,7 +40,7 @@ func (s *CommitmentTestSuite) Test_AddCommitment_AddAndRetrieve() {
 		BodyHash:          common.Hash{},
 		AccountTreeRoot:   common.Hash{},
 		CombinedSignature: models.Signature{models.MakeUint256(1), models.MakeUint256(2)},
-		FeeReceiver:       models.MakeUint256(1),
+		FeeReceiver:       uint32(1),
 		Transactions:      []byte{1, 2, 3},
 	}
 

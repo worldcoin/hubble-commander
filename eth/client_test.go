@@ -46,7 +46,7 @@ func (s *ClientTestSuite) Test_SubmitTransfersBatch() {
 	s.NoError(err)
 
 	signature := models.Signature{models.MakeUint256(1), models.MakeUint256(2)}
-	feeReceiver := models.MakeUint256(1234)
+	feeReceiver := uint32(1234)
 	txs := utils.RandomBytes(12)
 	bodyHash, err := encoder.GetCommitmentBodyHash(accountRoot, signature, feeReceiver, txs)
 	s.NoError(err)
