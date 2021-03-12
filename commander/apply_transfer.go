@@ -8,7 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 )
 
-func ApplyTransfer(stateTree *storage.StateTree, tx *models.Transaction, feeReceiverIndex uint32) (txError, appError error) {
+func ApplyTransfer(stateTree *storage.StateTree, tx *models.Transaction) (txError, appError error) {
 	if stateTree == nil {
 		return nil, fmt.Errorf("state tree cannot be nil")
 	}
@@ -26,23 +26,17 @@ func ApplyTransfer(stateTree *storage.StateTree, tx *models.Transaction, feeRece
 	if err != nil {
 		return nil, err
 	}
-	feeReceiverLeaf, err := stateTree.Leaf(feeReceiverIndex)
-	if err != nil {
-		return nil, err
-	}
 
-	if senderLeaf == nil || receiverLeaf == nil || feeReceiverLeaf == nil {
-		return fmt.Errorf("sender/receiver/fee receiver cannot be nil"), nil
+	if senderLeaf == nil || receiverLeaf == nil {
+		return fmt.Errorf("sender/receiver state cannot be nil"), nil
 	}
 
 	senderState := senderLeaf.UserState
 	receiverState := receiverLeaf.UserState
-	feeReceiverState := feeReceiverLeaf.UserState
 
-	newSenderState, newReceiverState, newFeeReceiverState, err := CalculateStateAfterTransfer(
+	newSenderState, newReceiverState, err := CalculateStateAfterTransfer(
 		&senderState,
 		&receiverState,
-		&feeReceiverState,
 		tx,
 	)
 	if err != nil {
@@ -57,29 +51,23 @@ func ApplyTransfer(stateTree *storage.StateTree, tx *models.Transaction, feeRece
 	if err != nil {
 		return nil, err
 	}
-	err = stateTree.Set(feeReceiverIndex, &newFeeReceiverState)
-	if err != nil {
-		return nil, err
-	}
 
 	return nil, nil
 }
 
 func CalculateStateAfterTransfer(
 	senderState,
-	receiverState,
-	feeReceiverState *models.UserState,
+	receiverState *models.UserState,
 	tx *models.Transaction,
 ) (
 	newSenderState models.UserState,
 	newReceiverState models.UserState,
-	newFeeReceiverState models.UserState,
 	err error,
 ) {
 	// TODO: Signature validation
 
 	if senderState.Nonce.Cmp(&tx.Nonce.Int) != 0 {
-		err = fmt.Errorf("incorrect nonce")
+		err = fmt.Errorf("incorrect nonce, expected: %s got %s", senderState.Nonce.String(), tx.Nonce.Int.String())
 		return
 	}
 
@@ -93,14 +81,29 @@ func CalculateStateAfterTransfer(
 
 	newSenderState = *senderState
 	newReceiverState = *receiverState
-	newFeeReceiverState = *feeReceiverState
 
 	newSenderState.Nonce.Add(&senderState.Nonce.Int, big.NewInt(1))
 
 	newSenderState.Balance.Sub(&senderState.Balance.Int, totalAmount)
 
 	newReceiverState.Balance.Add(&receiverState.Balance.Int, &tx.Amount.Int)
-	newFeeReceiverState.Balance.Add(&feeReceiverState.Balance.Int, &tx.Fee.Int)
 
-	return newSenderState, newReceiverState, newFeeReceiverState, nil
+	return newSenderState, newReceiverState, nil
+}
+
+func ApplyFee(stateTree *storage.StateTree, feeReceiverIndex uint32, fee models.Uint256) error {
+	feeReceiverLeaf, err := stateTree.Leaf(feeReceiverIndex)
+	if err != nil {
+		return err
+	}
+
+	feeReceiverState := feeReceiverLeaf.UserState
+	feeReceiverState.Balance.Add(&feeReceiverState.Balance.Int, &fee.Int)
+
+	err = stateTree.Set(feeReceiverIndex, &feeReceiverState)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
