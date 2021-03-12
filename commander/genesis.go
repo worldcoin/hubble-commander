@@ -62,7 +62,7 @@ func RegisterGenesisAccounts(opts *bind.TransactOpts, accountRegistry *accountre
 			}
 		}
 
-		log.Printf("Registered genesis pubkey %s at %d", account.PublicKey, accountIndex)
+		log.Printf("Registered genesis pubkey %s at %d", account.PublicKey.String(), accountIndex)
 
 		registeredAccounts = append(registeredAccounts, RegisteredGenesisAccount{
 			GenesisAccount: account,

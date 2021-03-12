@@ -12,8 +12,27 @@ import (
 )
 
 func WatchAccounts(storage *storage.Storage, client *eth.Client) {
-	ev := make(chan *accountregistry.AccountRegistryPubkeyRegistered)
+	ProcessEvent := func(event *accountregistry.AccountRegistryPubkeyRegistered) {
+		account := models.Account{
+			AccountIndex: uint32(event.PubkeyID.Uint64()),
+			PublicKey:    models.MakePublicKeyFromUint256(event.Pubkey),
+		}
+		log.Printf("Account %s registered at index %d", account.PublicKey.String(), account.AccountIndex)
 
+		storage.AddAccount(&account)
+	}
+
+	it, err := client.AccountRegistry.FilterPubkeyRegistered(&bind.FilterOpts{
+		Start: 0,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	for it.Next() {
+		ProcessEvent(it.Event)
+	}
+
+	ev := make(chan *accountregistry.AccountRegistryPubkeyRegistered)
 	sub, err := client.AccountRegistry.AccountRegistryFilterer.WatchPubkeyRegistered(&bind.WatchOpts{
 		Start: ref.Uint64(0),
 	}, ev)
@@ -29,14 +48,6 @@ func WatchAccounts(storage *storage.Storage, client *eth.Client) {
 		if !ok {
 			log.Fatal("Account event watcher is closed")
 		}
-
-		// [4]uint256   32*4 = 128
-		account := models.Account{
-			AccountIndex: uint32(event.PubkeyID.Uint64()),
-			PublicKey:    models.MakePublicKeyFromUint256(event.Pubkey),
-		}
-		log.Printf("Account registered %s at index %d", account.PublicKey, account.AccountIndex)
-
-		storage.AddAccount(&account)
+		ProcessEvent(event)
 	}
 }

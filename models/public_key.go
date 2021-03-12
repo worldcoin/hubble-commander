@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql/driver"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 )
@@ -21,6 +22,10 @@ func (p *PublicKey) IntArray() [4]*big.Int {
 	ints[3] = new(big.Int).SetBytes(p[96:128])
 
 	return ints
+}
+
+func (p *PublicKey) String() string {
+	return hex.EncodeToString(p.Bytes())
 }
 
 func MakePublicKeyFromUint256(ints [4]*big.Int) PublicKey {
