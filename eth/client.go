@@ -59,7 +59,11 @@ func NewClient(account *bind.TransactOpts, params NewClientParams) (*Client, err
 	}, nil
 }
 
-func NewTestClient(account *bind.TransactOpts, rollupContract *rollup.Rollup, accountRegistryContract *accountregistry.AccountRegistry) *Client {
+func NewTestClient(
+	account *bind.TransactOpts,
+	rollupContract *rollup.Rollup,
+	accountRegistryContract *accountregistry.AccountRegistry,
+) *Client {
 	return &Client{
 		account:         *account,
 		config:          getDefaultConfig(),

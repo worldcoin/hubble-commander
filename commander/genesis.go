@@ -20,7 +20,8 @@ type RegisteredGenesisAccount struct {
 }
 
 func PopulateGenesisAccounts(stateTree *storage.StateTree, accounts []RegisteredGenesisAccount) error {
-	for i, account := range accounts {
+	for i := range accounts {
+		account := accounts[i]
 		err := stateTree.Set(uint32(i), &models.UserState{
 			AccountIndex: models.MakeUint256(int64(account.AccountIndex)),
 			TokenIndex:   models.MakeUint256(0),
@@ -34,7 +35,11 @@ func PopulateGenesisAccounts(stateTree *storage.StateTree, accounts []Registered
 	return nil
 }
 
-func RegisterGenesisAccounts(opts *bind.TransactOpts, accountRegistry *accountregistry.AccountRegistry, accounts []GenesisAccount) ([]RegisteredGenesisAccount, error) {
+func RegisterGenesisAccounts(
+	opts *bind.TransactOpts,
+	accountRegistry *accountregistry.AccountRegistry,
+	accounts []GenesisAccount,
+) ([]RegisteredGenesisAccount, error) {
 	ev := make(chan *accountregistry.AccountRegistryPubkeyRegistered)
 
 	sub, err := accountRegistry.AccountRegistryFilterer.WatchPubkeyRegistered(&bind.WatchOpts{}, ev)
@@ -45,7 +50,8 @@ func RegisterGenesisAccounts(opts *bind.TransactOpts, accountRegistry *accountre
 
 	registeredAccounts := make([]RegisteredGenesisAccount, 0, len(accounts))
 
-	for _, account := range accounts {
+	for i := range accounts {
+		account := accounts[i]
 		tx, err := accountRegistry.Register(opts, account.PublicKey.IntArray())
 		if err != nil {
 			return nil, err
@@ -54,6 +60,7 @@ func RegisterGenesisAccounts(opts *bind.TransactOpts, accountRegistry *accountre
 		for {
 			event, ok := <-ev
 			if !ok {
+				// nolint:gocritic
 				log.Fatal("Account event watcher is closed")
 			}
 			if event.Raw.TxHash == tx.Hash() {

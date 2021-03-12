@@ -6,12 +6,12 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/storage"
+	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
-func WatchAccounts(storage *storage.Storage, client *eth.Client) {
+func WatchAccounts(storage *st.Storage, client *eth.Client) {
 	ProcessEvent := func(event *accountregistry.AccountRegistryPubkeyRegistered) {
 		account := models.Account{
 			AccountIndex: uint32(event.PubkeyID.Uint64()),
@@ -19,7 +19,10 @@ func WatchAccounts(storage *storage.Storage, client *eth.Client) {
 		}
 		log.Printf("Account %s registered at index %d", account.PublicKey.String(), account.AccountIndex)
 
-		storage.AddAccount(&account)
+		err := storage.AddAccount(&account)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	it, err := client.AccountRegistry.FilterPubkeyRegistered(&bind.FilterOpts{
@@ -46,6 +49,7 @@ func WatchAccounts(storage *storage.Storage, client *eth.Client) {
 	for {
 		event, ok := <-ev
 		if !ok {
+			// nolint:gocritic
 			log.Fatal("Account event watcher is closed")
 		}
 		ProcessEvent(event)

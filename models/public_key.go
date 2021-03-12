@@ -9,7 +9,7 @@ import (
 
 type PublicKey [128]byte
 
-func (p PublicKey) Bytes() []byte {
+func (p *PublicKey) Bytes() []byte {
 	return p[:]
 }
 
@@ -52,6 +52,6 @@ func (p *PublicKey) Scan(src interface{}) error {
 }
 
 // Value implements valuer for database/sql.
-func (p PublicKey) Value() (driver.Value, error) {
+func (p *PublicKey) Value() (driver.Value, error) {
 	return p.Bytes(), nil
 }
