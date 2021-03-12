@@ -51,7 +51,7 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.Config) {
 
 		for i := range includedTransactions {
 			tx := includedTransactions[i]
-			err := storage.MarkTransactionAsIncluded(tx.Hash, commitment.LeafHash)
+			err = storage.MarkTransactionAsIncluded(tx.Hash, commitment.LeafHash)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -111,7 +111,7 @@ func CreateCommitment(stateTree *st.StateTree, transactions []models.Transaction
 		BodyHash:          *bodyHash,
 		AccountTreeRoot:   accountRoot,
 		CombinedSignature: combinedSignature,
-		FeeReceiver:       models.MakeUint256(int64(feeReceiver)),
+		FeeReceiver:       feeReceiver,
 		Transactions:      transactionsSerialized,
 	}
 

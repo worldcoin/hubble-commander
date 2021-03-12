@@ -23,12 +23,6 @@ var (
 		Balance:      models.MakeUint256(0),
 		Nonce:        models.MakeUint256(0),
 	}
-	feeReceiverState = models.UserState{
-		AccountIndex: models.MakeUint256(3),
-		TokenIndex:   models.MakeUint256(1),
-		Balance:      models.MakeUint256(1000),
-		Nonce:        models.MakeUint256(0),
-	}
 )
 
 type ApplyTransferTestSuite struct {
@@ -91,7 +85,6 @@ func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_Validation_Non
 		Nonce:     models.MakeUint256(1),
 	}
 
-	// nolint
 	_, _, err := CalculateStateAfterTransfer(&senderState, &receiverState, &tx)
 	s.Error(err)
 }
@@ -105,7 +98,6 @@ func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_Validation_Bal
 		Nonce:     models.MakeUint256(0),
 	}
 
-	// nolint
 	_, _, err := CalculateStateAfterTransfer(&senderState, &receiverState, &tx)
 	s.Error(err)
 }
