@@ -6,16 +6,16 @@ import (
 )
 
 type GenesisAccount struct {
-	accountIndex uint32 // TODO: Replace with pubkey
-	balance      models.Uint256
+	AccountIndex uint32 // TODO: Replace with pubkey
+	Balance      models.Uint256
 }
 
 func PopulateGenesisAccounts(stateTree *storage.StateTree, accounts []GenesisAccount) error {
 	for i, account := range accounts {
 		err := stateTree.Set(uint32(i), &models.UserState{
-			AccountIndex: models.MakeUint256(int64(account.accountIndex)),
+			AccountIndex: models.MakeUint256(int64(account.AccountIndex)),
 			TokenIndex:   models.MakeUint256(0),
-			Balance:      account.balance,
+			Balance:      account.Balance,
 			Nonce:        models.MakeUint256(0),
 		})
 		if err != nil {

@@ -108,7 +108,7 @@ func EncodeTransaction(transaction *models.Transaction) ([]uint8, error) {
 func GetCommitmentBodyHash(
 	accountRoot common.Hash,
 	signature models.Signature,
-	feeReceiver models.Uint256,
+	feeReceiver uint32,
 	transactions []byte,
 ) (*common.Hash, error) {
 	arr := make([]byte, 32+64+32+len(transactions))
@@ -116,7 +116,7 @@ func GetCommitmentBodyHash(
 	copy(arr[0:32], accountRoot.Bytes())
 	copy(arr[32:64], utils.PadLeft(signature[0].Bytes(), 32))
 	copy(arr[64:96], utils.PadLeft(signature[1].Bytes(), 32))
-	copy(arr[96:128], utils.PadLeft(feeReceiver.Bytes(), 32))
+	binary.BigEndian.PutUint32(arr[124:128], feeReceiver)
 	copy(arr[128:], transactions)
 
 	hash := crypto.Keccak256Hash(arr)

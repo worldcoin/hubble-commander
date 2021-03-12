@@ -152,7 +152,7 @@ func (s *EncoderTestSuite) TestGetCommitmentBodyHash() {
 	bodyHash, err := GetCommitmentBodyHash(
 		accountRoot,
 		signature,
-		feeReceiver,
+		uint32(feeReceiver.Uint64()),
 		txs,
 	)
 	s.NoError(err)
