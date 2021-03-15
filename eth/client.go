@@ -46,7 +46,7 @@ func NewClient(account *bind.TransactOpts, params NewClientParams) (*Client, err
 		return nil, err
 	}
 
-	accountRegistryContract, err := accountregistry.NewAccountRegistry(params.accountRegistryAddress, backend)
+	accountRegistry, err := accountregistry.NewAccountRegistry(params.accountRegistryAddress, backend)
 	if err != nil {
 		return nil, err
 	}
@@ -55,20 +55,20 @@ func NewClient(account *bind.TransactOpts, params NewClientParams) (*Client, err
 		account:         *account,
 		config:          params.ClientConfig,
 		Rollup:          rollupContract,
-		AccountRegistry: accountRegistryContract,
+		AccountRegistry: accountRegistry,
 	}, nil
 }
 
 func NewTestClient(
 	account *bind.TransactOpts,
 	rollupContract *rollup.Rollup,
-	accountRegistryContract *accountregistry.AccountRegistry,
+	accountRegistry *accountregistry.AccountRegistry,
 ) *Client {
 	return &Client{
 		account:         *account,
 		config:          getDefaultConfig(),
 		Rollup:          rollupContract,
-		AccountRegistry: accountRegistryContract,
+		AccountRegistry: accountRegistry,
 	}
 }
 
