@@ -45,10 +45,9 @@ func DeployRollup(sim *simulator.Simulator) (*RollupContracts, error) {
 	if err != nil {
 		return nil, err
 	}
-	config := DeploymentConfig{
+	return DeployConfiguredRollup(sim, DeploymentConfig{
 		AccountRegistryAddress: accountRegistryAddress,
-	}
-	return DeployConfiguredRollup(sim, config)
+	})
 }
 
 func DeployConfiguredRollup(sim *simulator.Simulator, config DeploymentConfig) (*RollupContracts, error) {
