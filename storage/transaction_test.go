@@ -84,6 +84,21 @@ func (s *TransactionTestSuite) Test_GetPendingTransactions_AddAndRetrieve() {
 	s.Equal([]models.Transaction{tx, tx2}, res)
 }
 
+func (s *TransactionTestSuite) Test_SetTransactionError() {
+	err := s.storage.AddTransaction(&tx)
+	s.NoError(err)
+
+	errorMessage := "Quack"
+
+	err = s.storage.SetTransactionError(tx.Hash, errorMessage)
+	s.NoError(err)
+
+	res, err := s.storage.GetTransaction(tx.Hash)
+	s.NoError(err)
+
+	s.Equal(errorMessage, res.ErrorMessage)
+}
+
 func TestTransactionTestSuite(t *testing.T) {
 	suite.Run(t, new(TransactionTestSuite))
 }

@@ -18,6 +18,7 @@ func (s *Storage) AddTransaction(tx *models.Transaction) error {
 				tx.Nonce,
 				tx.Signature,
 				tx.IncludedInCommitment,
+				tx.ErrorMessage,
 			),
 	)
 
@@ -55,6 +56,15 @@ func (s *Storage) MarkTransactionAsIncluded(txHash, commitmentHash common.Hash) 
 		s.QB.Update("transaction").
 			Where(squirrel.Eq{"tx_hash": txHash}).
 			Set("included_in_commitment", commitmentHash),
+	)
+	return err
+}
+
+func (s *Storage) SetTransactionError(txHash common.Hash, errorMessage string) error {
+	_, err := s.DB.ExecBuilder(
+		s.QB.Update("transaction").
+			Where(squirrel.Eq{"tx_hash": txHash}).
+			Set("error_message", errorMessage),
 	)
 	return err
 }
