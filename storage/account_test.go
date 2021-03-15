@@ -35,7 +35,7 @@ func (s *AccountTestSuite) TearDownTest() {
 func (s *AccountTestSuite) Test_AddAccount_AddAndRetrieve() {
 	account := models.Account{
 		AccountIndex: 0,
-		PublicKey:    [128]byte{},
+		PublicKey:    models.PublicKey{1, 2, 3},
 	}
 
 	err := s.storage.AddAccount(&account)
@@ -45,6 +45,27 @@ func (s *AccountTestSuite) Test_AddAccount_AddAndRetrieve() {
 	s.NoError(err)
 
 	s.Equal([]models.Account{account}, res)
+}
+
+func (s *AccountTestSuite) Test_GetAccounts_ReturnsAllAccounts() {
+	pubKey := models.PublicKey{1, 2, 3}
+	accounts := []models.Account{{
+		AccountIndex: 0,
+		PublicKey:    pubKey,
+	}, {
+		AccountIndex: 1,
+		PublicKey:    pubKey,
+	}}
+
+	err := s.storage.AddAccount(&accounts[0])
+	s.NoError(err)
+	err = s.storage.AddAccount(&accounts[1])
+	s.NoError(err)
+
+	res, err := s.storage.GetAccounts(&pubKey)
+	s.NoError(err)
+
+	s.Equal(accounts, res)
 }
 
 func TestAccountTestSuite(t *testing.T) {
