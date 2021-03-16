@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
@@ -11,28 +12,18 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
-func WatchAccounts(storage *st.Storage, client *eth.Client) {
-	ProcessEvent := func(event *accountregistry.AccountRegistryPubkeyRegistered) {
-		account := models.Account{
-			AccountIndex: uint32(event.PubkeyID.Uint64()),
-			PublicKey:    models.MakePublicKeyFromUint256(event.Pubkey),
-		}
-		log.Printf("Account %s registered at index %d", account.PublicKey.String(), account.AccountIndex)
-
-		err := storage.AddAccount(&account)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
+func WatchAccounts(storage *st.Storage, client *eth.Client) error {
 	it, err := client.AccountRegistry.FilterPubkeyRegistered(&bind.FilterOpts{
 		Start: 0,
 	})
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	for it.Next() {
-		ProcessEvent(it.Event)
+		err := ProcessEvent(storage, it.Event)
+		if err != nil {
+			return err
+		}
 	}
 
 	ev := make(chan *accountregistry.AccountRegistryPubkeyRegistered)
@@ -40,7 +31,7 @@ func WatchAccounts(storage *st.Storage, client *eth.Client) {
 		Start: ref.Uint64(0),
 	}, ev)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer sub.Unsubscribe()
 
@@ -49,9 +40,25 @@ func WatchAccounts(storage *st.Storage, client *eth.Client) {
 	for {
 		event, ok := <-ev
 		if !ok {
-			// nolint:gocritic
-			log.Fatal("Account event watcher is closed")
+			return fmt.Errorf("account event watcher is closed")
 		}
-		ProcessEvent(event)
+		err := ProcessEvent(storage, event)
+		if err != nil {
+			return err
+		}
 	}
+}
+
+func ProcessEvent(storage *st.Storage, event *accountregistry.AccountRegistryPubkeyRegistered) error {
+	account := models.Account{
+		AccountIndex: uint32(event.PubkeyID.Uint64()),
+		PublicKey:    models.MakePublicKeyFromInts(event.Pubkey),
+	}
+	log.Printf("Account %s registered at index %d", account.PublicKey.String(), account.AccountIndex)
+
+	err := storage.AddAccount(&account)
+	if err != nil {
+		return err
+	}
+	return nil
 }

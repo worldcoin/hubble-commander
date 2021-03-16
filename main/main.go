@@ -43,7 +43,12 @@ func main() {
 	}
 
 	go commander.RollupLoop(storage, client, &cfg)
-	go commander.WatchAccounts(storage, client)
+	go func() {
+		err := commander.WatchAccounts(storage, client)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	log.Fatal(api.StartAPIServer(&cfg))
 }

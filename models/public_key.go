@@ -29,7 +29,7 @@ func (p *PublicKey) String() string {
 	return hex.EncodeToString(p.Bytes())
 }
 
-func MakePublicKeyFromUint256(ints [4]*big.Int) PublicKey {
+func MakePublicKeyFromInts(ints [4]*big.Int) PublicKey {
 	publicKey := PublicKey{}
 	copy(publicKey[0:32], ints[0].Bytes())
 	copy(publicKey[32:64], ints[1].Bytes())

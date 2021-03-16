@@ -1,7 +1,9 @@
 package commander
 
 import (
+	"fmt"
 	"log"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -42,40 +44,49 @@ func RegisterGenesisAccounts(
 ) ([]RegisteredGenesisAccount, error) {
 	ev := make(chan *accountregistry.AccountRegistryPubkeyRegistered)
 
-	sub, err := accountRegistry.AccountRegistryFilterer.WatchPubkeyRegistered(&bind.WatchOpts{}, ev)
+	sub, err := accountRegistry.WatchPubkeyRegistered(&bind.WatchOpts{}, ev)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	defer sub.Unsubscribe()
 
 	registeredAccounts := make([]RegisteredGenesisAccount, 0, len(accounts))
 
-	for i := range accounts {
-		account := accounts[i]
-		tx, err := accountRegistry.Register(opts, account.PublicKey.IntArray())
+	for _, account := range accounts {
+		registeredAccount, err := registerGenesisAccount(opts, accountRegistry, account, ev)
 		if err != nil {
 			return nil, err
 		}
-		var accountIndex uint32
-		for {
-			event, ok := <-ev
-			if !ok {
-				// nolint:gocritic
-				log.Fatal("Account event watcher is closed")
-			}
-			if event.Raw.TxHash == tx.Hash() {
-				accountIndex = uint32(event.PubkeyID.Uint64())
-				break
-			}
-		}
 
-		log.Printf("Registered genesis pubkey %s at %d", account.PublicKey.String(), accountIndex)
+		log.Printf("Registered genesis pubkey %s at %d", account.PublicKey.String(), registeredAccount.AccountIndex)
 
-		registeredAccounts = append(registeredAccounts, RegisteredGenesisAccount{
-			GenesisAccount: account,
-			AccountIndex:   accountIndex,
-		})
+		registeredAccounts = append(registeredAccounts, *registeredAccount)
 	}
 
 	return registeredAccounts, nil
+}
+
+func registerGenesisAccount(opts *bind.TransactOpts, accountRegistry *accountregistry.AccountRegistry, account GenesisAccount, ev chan *accountregistry.AccountRegistryPubkeyRegistered) (*RegisteredGenesisAccount, error) {
+	tx, err := accountRegistry.Register(opts, account.PublicKey.IntArray())
+	if err != nil {
+		return nil, err
+	}
+
+	for {
+		select {
+		case event, ok := <-ev:
+			if !ok {
+				return nil, fmt.Errorf("account event watcher is closed")
+			}
+			if event.Raw.TxHash == tx.Hash() {
+				accountIndex := uint32(event.PubkeyID.Uint64())
+				return &RegisteredGenesisAccount{
+					GenesisAccount: account,
+					AccountIndex:   accountIndex,
+				}, nil
+			}
+		case <-time.After(500 * time.Millisecond):
+			return nil, fmt.Errorf("timeout")
+		}
+	}
 }

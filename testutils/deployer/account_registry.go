@@ -12,5 +12,7 @@ func DeployAccountRegistry(sim *simulator.Simulator) (*common.Address, *accountr
 		return nil, nil, err
 	}
 
+	sim.Backend.Commit()
+
 	return &accountRegistryAddress, accountRegistry, err
 }
