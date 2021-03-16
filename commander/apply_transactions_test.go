@@ -64,7 +64,7 @@ func (s *ApplyTransactionsTestSuite) TearDownTest() {
 func (s *ApplyTransactionsTestSuite) Test_ApplyTransfers_AllValid() {
 	transactions := generateValidTransactions(10)
 
-	validTransactions, err := ApplyTransactions(s.tree, transactions, uint32(3))
+	validTransactions, err := ApplyTransactions(s.storage, transactions, uint32(3))
 	s.NoError(err)
 
 	s.Len(validTransactions, 10)
@@ -74,7 +74,7 @@ func (s *ApplyTransactionsTestSuite) Test_ApplyTransfers_SomeValid() {
 	transactions := generateValidTransactions(10)
 	transactions = append(transactions, generateInvalidTransactions(10)...)
 
-	validTransactions, err := ApplyTransactions(s.tree, transactions, uint32(3))
+	validTransactions, err := ApplyTransactions(s.storage, transactions, uint32(3))
 	s.NoError(err)
 
 	s.Len(validTransactions, 10)
@@ -83,7 +83,7 @@ func (s *ApplyTransactionsTestSuite) Test_ApplyTransfers_SomeValid() {
 func (s *ApplyTransactionsTestSuite) Test_ApplyTransfers_MoreThan32() {
 	transactions := generateValidTransactions(60)
 
-	validTransactions, err := ApplyTransactions(s.tree, transactions, uint32(3))
+	validTransactions, err := ApplyTransactions(s.storage, transactions, uint32(3))
 	s.NoError(err)
 
 	s.Len(validTransactions, 32)

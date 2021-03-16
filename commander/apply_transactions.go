@@ -4,17 +4,18 @@ import (
 	"log"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/storage"
+	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
 func ApplyTransactions(
-	stateTree *storage.StateTree,
+	storage *st.Storage,
 	transactions []models.Transaction,
 	feeReceiverIndex uint32,
 ) (
 	[]models.Transaction,
 	error,
 ) {
+	stateTree := st.NewStateTree(storage)
 	validTxs := make([]models.Transaction, 0, 32)
 	combinedFee := models.MakeUint256(0)
 
@@ -28,6 +29,10 @@ func ApplyTransactions(
 			validTxs = append(validTxs, tx)
 			combinedFee.Add(&combinedFee.Int, &tx.Fee.Int)
 		} else {
+			err := storage.SetTransactionError(tx.Hash, txError.Error())
+			if err != nil {
+				log.Printf("Setting transaction error failed: %s", txError)
+			}
 			log.Printf("Transaction failed: %s", txError)
 		}
 

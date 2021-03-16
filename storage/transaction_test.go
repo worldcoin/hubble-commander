@@ -6,6 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -72,8 +73,11 @@ func (s *TransactionTestSuite) Test_GetPendingTransactions_AddAndRetrieve() {
 	tx3 := tx
 	tx3.Hash = common.BigToHash(big.NewInt(3456))
 	tx3.IncludedInCommitment = &commitmentHash
+	tx4 := tx
+	tx4.Hash = common.BigToHash(big.NewInt(4567))
+	tx4.ErrorMessage = ref.String("A very boring error message")
 
-	for _, tx := range []*models.Transaction{&tx, &tx2, &tx3} {
+	for _, tx := range []*models.Transaction{&tx, &tx2, &tx3, &tx4} {
 		err := s.storage.AddTransaction(tx)
 		s.NoError(err)
 	}
@@ -82,6 +86,21 @@ func (s *TransactionTestSuite) Test_GetPendingTransactions_AddAndRetrieve() {
 	s.NoError(err)
 
 	s.Equal([]models.Transaction{tx, tx2}, res)
+}
+
+func (s *TransactionTestSuite) Test_SetTransactionError() {
+	err := s.storage.AddTransaction(&tx)
+	s.NoError(err)
+
+	errorMessage := ref.String("Quack")
+
+	err = s.storage.SetTransactionError(tx.Hash, *errorMessage)
+	s.NoError(err)
+
+	res, err := s.storage.GetTransaction(tx.Hash)
+	s.NoError(err)
+
+	s.Equal(errorMessage, res.ErrorMessage)
 }
 
 func TestTransactionTestSuite(t *testing.T) {

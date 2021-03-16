@@ -32,7 +32,7 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.Config) {
 
 		log.Printf("Applying %d transactions", len(transactions))
 
-		includedTransactions, err := ApplyTransactions(stateTree, transactions, feeReceiver)
+		includedTransactions, err := ApplyTransactions(storage, transactions, feeReceiver)
 		if err != nil {
 			log.Fatal(err)
 		}
