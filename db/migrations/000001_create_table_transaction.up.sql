@@ -6,5 +6,6 @@ CREATE TABLE "transaction" (
     fee          NUMERIC(78),
     nonce        NUMERIC(78),
     "signature"  BYTEA,
-    included_in_commitment BYTEA
+    included_in_commitment BYTEA,
+    error_message TEXT
 );
