@@ -6,6 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -88,9 +89,9 @@ func (s *TransactionTestSuite) Test_SetTransactionError() {
 	err := s.storage.AddTransaction(&tx)
 	s.NoError(err)
 
-	errorMessage := "Quack"
+	errorMessage := ref.String("Quack")
 
-	err = s.storage.SetTransactionError(tx.Hash, errorMessage)
+	err = s.storage.SetTransactionError(tx.Hash, *errorMessage)
 	s.NoError(err)
 
 	res, err := s.storage.GetTransaction(tx.Hash)
