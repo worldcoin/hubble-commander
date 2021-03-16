@@ -15,16 +15,16 @@ import (
 
 var genesisAccounts = []commander.GenesisAccount{
 	{
-		AccountIndex: 0,
-		Balance:      models.MakeUint256(1000),
+		PublicKey: models.PublicKey{1, 2, 3},
+		Balance:   models.MakeUint256(1000),
 	},
 	{
-		AccountIndex: 1,
-		Balance:      models.MakeUint256(1000),
+		PublicKey: models.PublicKey{2, 3, 4},
+		Balance:   models.MakeUint256(1000),
 	},
 	{
-		AccountIndex: 2,
-		Balance:      models.MakeUint256(1000),
+		PublicKey: models.PublicKey{3, 4, 5},
+		Balance:   models.MakeUint256(1000),
 	},
 }
 
@@ -43,17 +43,32 @@ func main() {
 	}
 
 	go commander.RollupLoop(storage, client, &cfg)
+	go func() {
+		err := commander.WatchAccounts(storage, client)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	log.Fatal(api.StartAPIServer(&cfg))
 }
 
 func NewSimulatedClient(stateTree *st.StateTree, accounts []commander.GenesisAccount) (*eth.Client, error) {
-	err := commander.PopulateGenesisAccounts(stateTree, accounts)
+	sim, err := simulator.NewAutominingSimulator()
+	if err != nil {
+		return nil, err
+	}
+	accountRegistryAddress, accountRegistry, err := deployer.DeployAccountRegistry(sim)
 	if err != nil {
 		return nil, err
 	}
 
-	sim, err := simulator.NewAutominingSimulator()
+	registeredAccounts, err := commander.RegisterGenesisAccounts(sim.Account, accountRegistry, accounts)
+	if err != nil {
+		return nil, err
+	}
+
+	err = commander.PopulateGenesisAccounts(stateTree, registeredAccounts)
 	if err != nil {
 		return nil, err
 	}
@@ -64,12 +79,13 @@ func NewSimulatedClient(stateTree *st.StateTree, accounts []commander.GenesisAcc
 	}
 
 	contracts, err := deployer.DeployConfiguredRollup(sim, deployer.DeploymentConfig{
-		GenesisStateRoot: stateRoot,
+		AccountRegistryAddress: accountRegistryAddress,
+		GenesisStateRoot:       stateRoot,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	client := eth.NewTestClient(sim.Account, contracts.Rollup)
+	client := eth.NewTestClient(sim.Account, contracts.Rollup, contracts.AccountRegistry)
 	return client, nil
 }
