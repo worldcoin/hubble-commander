@@ -26,19 +26,19 @@ func (s TransactionStatus) String() string {
 
 func (s TransactionStatus) Message() string {
 	switch s {
-	case 1001:
+	case Pending:
 		return "PENDING"
 
-	case 1002:
+	case Committed:
 		return "COMMITTED"
 
-	case 1003:
+	case InBatch:
 		return "IN_BATCH"
 
-	case 1004:
+	case Finalized:
 		return "FINALIZED"
 
-	case 5000:
+	case Error:
 		return "ERROR"
 
 	default:
