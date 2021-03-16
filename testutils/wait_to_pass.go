@@ -9,7 +9,7 @@ var timeout = 1 * time.Second
 
 func WaitToPass(fn func() bool) {
 	startTime := time.Now()
-	for time.Now().Sub(startTime) < timeout {
+	for time.Since(startTime) < timeout {
 		if fn() {
 			return
 		}
