@@ -52,13 +52,13 @@ func RegisterGenesisAccounts(
 
 	registeredAccounts := make([]RegisteredGenesisAccount, 0, len(accounts))
 
-	for _, account := range accounts {
-		registeredAccount, err := registerGenesisAccount(opts, accountRegistry, account, ev)
+	for i := range accounts {
+		registeredAccount, err := registerGenesisAccount(opts, accountRegistry, &accounts[i], ev)
 		if err != nil {
 			return nil, err
 		}
 
-		log.Printf("Registered genesis pubkey %s at %d", account.PublicKey.String(), registeredAccount.AccountIndex)
+		log.Printf("Registered genesis pubkey %s at %d", registeredAccount.PublicKey.String(), registeredAccount.AccountIndex)
 
 		registeredAccounts = append(registeredAccounts, *registeredAccount)
 	}
@@ -66,7 +66,12 @@ func RegisterGenesisAccounts(
 	return registeredAccounts, nil
 }
 
-func registerGenesisAccount(opts *bind.TransactOpts, accountRegistry *accountregistry.AccountRegistry, account GenesisAccount, ev chan *accountregistry.AccountRegistryPubkeyRegistered) (*RegisteredGenesisAccount, error) {
+func registerGenesisAccount(
+	opts *bind.TransactOpts,
+	accountRegistry *accountregistry.AccountRegistry,
+	account *GenesisAccount,
+	ev chan *accountregistry.AccountRegistryPubkeyRegistered,
+) (*RegisteredGenesisAccount, error) {
 	tx, err := accountRegistry.Register(opts, account.PublicKey.IntArray())
 	if err != nil {
 		return nil, err
@@ -81,7 +86,7 @@ func registerGenesisAccount(opts *bind.TransactOpts, accountRegistry *accountreg
 			if event.Raw.TxHash == tx.Hash() {
 				accountIndex := uint32(event.PubkeyID.Uint64())
 				return &RegisteredGenesisAccount{
-					GenesisAccount: account,
+					GenesisAccount: *account,
 					AccountIndex:   accountIndex,
 				}, nil
 			}

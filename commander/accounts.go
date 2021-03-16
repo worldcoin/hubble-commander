@@ -20,7 +20,7 @@ func WatchAccounts(storage *st.Storage, client *eth.Client) error {
 		return err
 	}
 	for it.Next() {
-		err := ProcessEvent(storage, it.Event)
+		err = ProcessEvent(storage, it.Event)
 		if err != nil {
 			return err
 		}
