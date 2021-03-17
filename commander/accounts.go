@@ -27,7 +27,7 @@ func WatchAccounts(storage *st.Storage, client *eth.Client) error {
 	}
 
 	ev := make(chan *accountregistry.AccountRegistryPubkeyRegistered)
-	sub, err := client.AccountRegistry.AccountRegistryFilterer.WatchPubkeyRegistered(&bind.WatchOpts{
+	sub, err := client.AccountRegistry.WatchPubkeyRegistered(&bind.WatchOpts{
 		Start: ref.Uint64(0),
 	}, ev)
 	if err != nil {
