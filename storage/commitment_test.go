@@ -5,9 +5,22 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+)
+
+var (
+	commitment = models.Commitment{
+		LeafHash:          utils.RandomHash(),
+		PostStateRoot:     utils.RandomHash(),
+		BodyHash:          utils.RandomHash(),
+		AccountTreeRoot:   utils.RandomHash(),
+		CombinedSignature: models.Signature{models.MakeUint256(1), models.MakeUint256(2)},
+		FeeReceiver:       uint32(1),
+		Transactions:      []byte{1, 2, 3},
+		IncludedInBatch:   nil,
+	}
 )
 
 type CommitmentTestSuite struct {
@@ -34,18 +47,29 @@ func (s *CommitmentTestSuite) TearDownTest() {
 }
 
 func (s *CommitmentTestSuite) Test_AddCommitment_AddAndRetrieve() {
-	commitment := models.Commitment{
-		LeafHash:          common.Hash{},
-		PostStateRoot:     common.Hash{},
-		BodyHash:          common.Hash{},
-		AccountTreeRoot:   common.Hash{},
-		CombinedSignature: models.Signature{models.MakeUint256(1), models.MakeUint256(2)},
-		FeeReceiver:       uint32(1),
-		Transactions:      []byte{1, 2, 3},
-	}
-
 	err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
+
+	actual, err := s.storage.GetCommitment(commitment.LeafHash)
+	s.NoError(err)
+	s.Equal(commitment, *actual)
+}
+
+func (s *CommitmentTestSuite) Test_MarkCommitmentAsIncluded_UpdatesRecord() {
+	err := s.storage.AddCommitment(&commitment)
+	s.NoError(err)
+
+	batchHash := utils.RandomHash()
+	err = s.storage.MarkCommitmentAsIncluded(commitment.LeafHash, batchHash)
+	s.NoError(err)
+
+	expected := commitment
+	expected.IncludedInBatch = &batchHash
+
+	actual, err := s.storage.GetCommitment(commitment.LeafHash)
+	s.NoError(err)
+
+	s.Equal(expected, *actual)
 }
 
 func TestCommitmentTestSuite(t *testing.T) {
