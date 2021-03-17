@@ -25,7 +25,7 @@ func PopulateGenesisAccounts(stateTree *storage.StateTree, accounts []Registered
 	for i := range accounts {
 		account := accounts[i]
 		err := stateTree.Set(uint32(i), &models.UserState{
-			AccountIndex: models.MakeUint256(int64(account.AccountIndex)),
+			AccountIndex: account.AccountIndex,
 			TokenIndex:   models.MakeUint256(0),
 			Balance:      account.Balance,
 			Nonce:        models.MakeUint256(0),

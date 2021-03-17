@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"math/big"
+
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -171,7 +173,7 @@ func NewStateLeaf(state *models.UserState) (*models.StateLeaf, error) {
 
 func toContractUserState(state *models.UserState) generic.TypesUserState {
 	return generic.TypesUserState{
-		PubkeyID: &state.AccountIndex.Int,
+		PubkeyID: big.NewInt(int64(state.AccountIndex)),
 		TokenID:  &state.TokenIndex.Int,
 		Balance:  &state.Balance.Int,
 		Nonce:    &state.Nonce.Int,

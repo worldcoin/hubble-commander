@@ -34,7 +34,7 @@ func (s *Storage) GetStateLeaf(hash common.Hash) (*models.StateLeaf, error) {
 	return &res[0], nil
 }
 
-func (s *Storage) GetStateLeafs(accountIndex models.Uint256) ([]models.StateLeaf, error) {
+func (s *Storage) GetStateLeafs(accountIndex uint32) ([]models.StateLeaf, error) {
 	res := make([]models.StateLeaf, 0, 1)
 	err := s.DB.Query(
 		squirrel.Select("*").

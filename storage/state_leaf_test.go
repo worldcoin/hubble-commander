@@ -37,7 +37,7 @@ func (s *StateLeafTestSuite) Test_AddStateLeaf_AddAndRetrieve() {
 	leaf := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
-			AccountIndex: models.MakeUint256(1),
+			AccountIndex: 1,
 			TokenIndex:   models.MakeUint256(1),
 			Balance:      models.MakeUint256(420),
 			Nonce:        models.MakeUint256(0),
@@ -60,7 +60,7 @@ func (s *StateLeafTestSuite) Test_GetStateLeaf_NonExistentLeaf() {
 }
 
 func (s *StateLeafTestSuite) Test_GetStateLeafs() {
-	accountIndex := models.MakeUint256(1)
+	var accountIndex uint32 = 1
 
 	leafs := []models.StateLeaf{
 		{

@@ -12,7 +12,7 @@ import (
 
 var (
 	updatedUserState = models.UserState{
-		AccountIndex: models.MakeUint256(1),
+		AccountIndex: 1,
 		TokenIndex:   models.MakeUint256(1),
 		Balance:      models.MakeUint256(800),
 		Nonce:        models.MakeUint256(1),
@@ -40,7 +40,7 @@ func (s *StateTreeTestSuite) SetupTest() {
 	s.tree = NewStateTree(s.storage)
 
 	state := models.UserState{
-		AccountIndex: models.MakeUint256(1),
+		AccountIndex: 1,
 		TokenIndex:   models.MakeUint256(1),
 		Balance:      models.MakeUint256(420),
 		Nonce:        models.MakeUint256(0),
@@ -124,7 +124,7 @@ func (s *StateTreeTestSuite) Test_Set_CalculatesCorrectRootForTwoLeaves() {
 	s.NoError(err)
 
 	state := models.UserState{
-		AccountIndex: models.MakeUint256(2),
+		AccountIndex: 2,
 		TokenIndex:   models.MakeUint256(1),
 		Balance:      models.MakeUint256(420),
 		Nonce:        models.MakeUint256(0),
