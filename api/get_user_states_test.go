@@ -94,7 +94,7 @@ func (s *GetUserStatesTestSuite) TestApi_GetTransaction() {
 	err = s.api.storage.AddStateLeaf(&leafs[2])
 	s.NoError(err)
 
-	userStates, err := s.api.GetUserStates(account.PublicKey)
+	userStates, err := s.api.GetUserStates(&account.PublicKey)
 	s.NoError(err)
 
 	s.Len(userStates, 3)
