@@ -84,9 +84,3 @@ func getDefaultConfig() ClientConfig {
 	fillWithDefaults(&config)
 	return config
 }
-
-func (c *Client) withValue(value *models.Uint256) *bind.TransactOpts {
-	opts := c.account
-	opts.Value = &value.Int
-	return &opts
-}
