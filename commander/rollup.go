@@ -20,7 +20,6 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.Config) err
 		if err != nil {
 			return err
 		}
-
 		log.Printf("%d transactions in the pool", len(transactions))
 
 		if len(transactions) < 2 { // TODO: change to 32 transactions
@@ -31,14 +30,12 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.Config) err
 		feeReceiver := cfg.FeeReceiverIndex
 
 		log.Printf("Applying %d transactions", len(transactions))
-
 		includedTransactions, err := ApplyTransactions(storage, transactions, feeReceiver)
 		if err != nil {
 			return err
 		}
 
 		log.Printf("Creating a commitment from %d transactions", len(includedTransactions))
-
 		commitment, err := CreateCommitment(stateTree, includedTransactions, feeReceiver)
 		if err != nil {
 			return err
@@ -49,6 +46,12 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.Config) err
 			return err
 		}
 
+		_, err = client.SubmitTransfersBatch([]*models.Commitment{commitment})
+		if err != nil {
+			return err
+		}
+		log.Printf("Sumbmited commitment %s on chain", commitment.LeafHash.Hex())
+
 		for i := range includedTransactions {
 			tx := includedTransactions[i]
 			err = storage.MarkTransactionAsIncluded(tx.Hash, commitment.LeafHash)
@@ -56,12 +59,6 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.Config) err
 				return err
 			}
 		}
-
-		_, err = client.SubmitTransfersBatch([]*models.Commitment{commitment})
-		if err != nil {
-			return err
-		}
-		log.Printf("Sumbmited commitment %s on chain", commitment.LeafHash.Hex())
 
 		time.Sleep(500)
 	}
