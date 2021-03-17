@@ -12,13 +12,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.Config) {
+func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.Config) error {
 	stateTree := st.NewStateTree(storage)
 
 	for {
 		transactions, err := storage.GetPendingTransactions()
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		log.Printf("%d transactions in the pool", len(transactions))
@@ -34,32 +34,32 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.Config) {
 
 		includedTransactions, err := ApplyTransactions(storage, transactions, feeReceiver)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		log.Printf("Creating a commitment from %d transactions", len(includedTransactions))
 
 		commitment, err := CreateCommitment(stateTree, includedTransactions, feeReceiver)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		err = storage.AddCommitment(commitment)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		for i := range includedTransactions {
 			tx := includedTransactions[i]
 			err = storage.MarkTransactionAsIncluded(tx.Hash, commitment.LeafHash)
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 		}
 
 		_, err = client.SubmitTransfersBatch([]*models.Commitment{commitment})
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		log.Printf("Sumbmited commitment %s on chain", commitment.LeafHash.Hex())
 

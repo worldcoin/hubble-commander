@@ -42,7 +42,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	go commander.RollupLoop(storage, client, &cfg)
+	go func() {
+		err := commander.RollupLoop(storage, client, &cfg)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 	go func() {
 		err := commander.WatchAccounts(storage, client)
 		if err != nil {
