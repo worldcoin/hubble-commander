@@ -68,6 +68,24 @@ func (s *AccountTestSuite) Test_GetAccounts_ReturnsAllAccounts() {
 	s.Equal(accounts, res)
 }
 
+func (s *AccountTestSuite) Test_AddAccount_Idempotent() {
+	account := models.Account{
+		AccountIndex: 0,
+		PublicKey:    models.PublicKey{1, 2, 3},
+	}
+
+	err := s.storage.AddAccount(&account)
+	s.NoError(err)
+
+	err = s.storage.AddAccount(&account)
+	s.NoError(err)
+
+	res, err := s.storage.GetAccounts(&account.PublicKey)
+	s.NoError(err)
+
+	s.Equal([]models.Account{account}, res)
+}
+
 func TestAccountTestSuite(t *testing.T) {
 	suite.Run(t, new(AccountTestSuite))
 }

@@ -11,7 +11,8 @@ func (s *Storage) AddAccount(account *models.Account) error {
 			Values(
 				account.AccountIndex,
 				account.PublicKey,
-			),
+			).
+			Suffix("ON CONFLICT DO NOTHING"),
 	)
 
 	return err

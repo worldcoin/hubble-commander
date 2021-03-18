@@ -8,6 +8,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/commander"
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
+	rollup2 "github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -46,14 +48,29 @@ func main() {
 		log.Fatal(err)
 	}
 
-	client, chainState, err := BootstrapState(stateTree, dep, genesisAccounts)
+	chainState, err := storage.GetChainState(dep.GetChainID())
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = storage.SetChainState(chainState)
-	if err != nil {
-		log.Fatal(err)
+	var client *eth.Client
+	if chainState == nil {
+		fmt.Println("Bootstrapping genesis state")
+		client, chainState, err = BootstrapState(stateTree, dep, genesisAccounts)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = storage.SetChainState(chainState)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		fmt.Println("Continuing from saved state")
+		client, err = CreateClientFromChainState(dep, chainState)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	go func() {
@@ -70,6 +87,28 @@ func main() {
 	}()
 
 	log.Fatal(api.StartAPIServer(&cfg))
+}
+
+func CreateClientFromChainState(dep deployer.Deployer, chainState *models.ChainState) (*eth.Client, error) {
+	accountRegistry, err := accountregistry.NewAccountRegistry(chainState.AccountRegistry, dep.GetBackend())
+	if err != nil {
+		return nil, err
+	}
+
+	rollup, err := rollup2.NewRollup(chainState.Rollup, dep.GetBackend())
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := eth.NewClient(dep.TransactionOpts(), eth.NewClientParams{
+		Rollup:          rollup,
+		AccountRegistry: accountRegistry,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
 }
 
 func GetDeployer(cfg *config.Config) (deployer.Deployer, error) {
