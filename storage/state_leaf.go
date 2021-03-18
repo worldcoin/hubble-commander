@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"fmt"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
@@ -28,8 +30,11 @@ func (s *Storage) GetStateLeaf(hash common.Hash) (*models.StateLeaf, error) {
 			From("state_leaf").
 			Where(squirrel.Eq{"data_hash": hash}),
 	).Into(&res)
-	if err != nil || len(res) == 0 {
+	if err != nil {
 		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, fmt.Errorf("state leaf not found")
 	}
 	return &res[0], nil
 }

@@ -51,7 +51,7 @@ func (s *StorageTestSuite) Test_BeginTransaction_Commit() {
 	s.NoError(err)
 
 	res, err := s.storage.GetStateLeaf(leaf.DataHash)
-	s.NoError(err)
+	s.Error(err)
 	s.Nil(res)
 
 	err = tx.Commit()
@@ -84,7 +84,7 @@ func (s *StorageTestSuite) Test_BeginTransaction_Rollback() {
 	s.Nil(errors.Unwrap(err))
 
 	res, err := s.storage.GetStateLeaf(leaf.DataHash)
-	s.NoError(err)
+	s.Error(err)
 	s.Nil(res)
 }
 
@@ -124,7 +124,7 @@ func (s *StorageTestSuite) Test_BeginTransaction_Lock() {
 	s.NoError(err)
 
 	res, err := s.storage.GetStateLeaf(leafOne.DataHash)
-	s.NoError(err)
+	s.Error(err)
 	s.Nil(res)
 
 	err = tx.Commit()
