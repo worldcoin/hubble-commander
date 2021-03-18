@@ -85,21 +85,6 @@ func CommitTransactions(storage *st.Storage, client *eth.Client, cfg *config.Rol
 	return nil
 }
 
-func serializeTransactions(transactions []models.Transaction) ([]byte, error) {
-	buf := make([]byte, 0, len(transactions)*12)
-
-	for i := range transactions {
-		encoded, err := encoder.EncodeTransaction(&transactions[i])
-		if err != nil {
-			return nil, err
-		}
-
-		buf = append(buf, encoded...)
-	}
-
-	return buf, nil
-}
-
 // TODO: Test me
 func CreateCommitment(stateTree *st.StateTree, transactions []models.Transaction, feeReceiver uint32) (*models.Commitment, error) {
 	combinedSignature := models.Signature{models.MakeUint256(1), models.MakeUint256(2)} // TODO: Actually combine signatures
@@ -134,4 +119,19 @@ func CreateCommitment(stateTree *st.StateTree, transactions []models.Transaction
 	}
 
 	return &commitment, err
+}
+
+func serializeTransactions(transactions []models.Transaction) ([]byte, error) {
+	buf := make([]byte, 0, len(transactions)*12)
+
+	for i := range transactions {
+		encoded, err := encoder.EncodeTransaction(&transactions[i])
+		if err != nil {
+			return nil, err
+		}
+
+		buf = append(buf, encoded...)
+	}
+
+	return buf, nil
 }
