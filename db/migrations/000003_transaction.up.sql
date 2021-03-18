@@ -6,6 +6,6 @@ CREATE TABLE "transaction" (
     fee                    NUMERIC(78),
     nonce                  NUMERIC(78),
     signature              BYTEA,
-    included_in_commitment BYTEA, -- commitment leaf hash
+    included_in_commitment BYTEA REFERENCES commitment,
     error_message          TEXT
 );
