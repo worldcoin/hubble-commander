@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/commander"
@@ -11,6 +13,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 var genesisAccounts = []commander.GenesisAccount{
@@ -37,12 +41,12 @@ func main() {
 	}
 	stateTree := st.NewStateTree(storage)
 
-	sim, err := simulator.NewAutominingSimulator()
+	dep, err := GetDeployer(&cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	client, err := DeployContracts(stateTree, sim, genesisAccounts)
+	client, err := DeployContracts(stateTree, dep, genesisAccounts)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -61,6 +65,42 @@ func main() {
 	}()
 
 	log.Fatal(api.StartAPIServer(&cfg))
+}
+
+func GetDeployer(cfg *config.Config) (deployer.Deployer, error) {
+	if cfg.EthereumRpcUrl != nil {
+		if cfg.EthereumChainId == nil {
+			return nil, fmt.Errorf("chain id should be specified in the config when connecting to remote ethereum RPC")
+		}
+
+		chainId, ok := big.NewInt(0).SetString(*cfg.EthereumChainId, 10)
+		if !ok {
+			return nil, fmt.Errorf("invalid chain id")
+		}
+
+		if cfg.EthereumPrivateKey == nil {
+			return nil, fmt.Errorf("private key should be specified in the config when connecting to remote ethereum RPC")
+		}
+
+		key, err := crypto.HexToECDSA(*cfg.EthereumPrivateKey)
+		if err != nil {
+			return nil, err
+		}
+
+		account, err := bind.NewKeyedTransactorWithChainID(key, chainId)
+		if err != nil {
+			return nil, err
+		}
+
+		return deployer.NewRPCDeployer(*cfg.EthereumRpcUrl, account)
+	} else {
+		sim, err := simulator.NewAutominingSimulator()
+		if err != nil {
+			return nil, err
+		}
+
+		return sim, nil
+	}
 }
 
 func DeployContracts(stateTree *st.StateTree, d deployer.Deployer, accounts []commander.GenesisAccount) (*eth.Client, error) {

@@ -19,26 +19,32 @@ func loadDotEnv() {
 }
 
 type Config struct {
-	Version          string
-	Port             string
-	DBHost           *string
-	DBPort           *string
-	DBName           string
-	DBUser           *string
-	DBPassword       *string
-	FeeReceiverIndex uint32
+	Version            string
+	Port               string
+	DBHost             *string
+	DBPort             *string
+	DBName             string
+	DBUser             *string
+	DBPassword         *string
+	FeeReceiverIndex   uint32
+	EthereumRpcUrl     *string
+	EthereumPrivateKey *string
+	EthereumChainId    *string
 }
 
 func GetConfig() Config {
 	return Config{
-		Version:          "dev-0.1.0",
-		Port:             *getEnvOrDefault("HUBBLE_PORT", ref.String("8080")),
-		DBHost:           getEnvOrDefault("HUBBLE_DBHOST", nil),
-		DBPort:           getEnvOrDefault("HUBBLE_DBPORT", nil),
-		DBName:           *getEnvOrDefault("HUBBLE_DBNAME", ref.String("hubble")),
-		DBUser:           getEnvOrDefault("HUBBLE_DBUSER", nil),
-		DBPassword:       getEnvOrDefault("HUBBLE_DBPASSWORD", nil),
-		FeeReceiverIndex: 0,
+		Version:            "dev-0.1.0",
+		Port:               *getEnvOrDefault("HUBBLE_PORT", ref.String("8080")),
+		DBHost:             getEnvOrDefault("HUBBLE_DBHOST", nil),
+		DBPort:             getEnvOrDefault("HUBBLE_DBPORT", nil),
+		DBName:             *getEnvOrDefault("HUBBLE_DBNAME", ref.String("hubble")),
+		DBUser:             getEnvOrDefault("HUBBLE_DBUSER", nil),
+		DBPassword:         getEnvOrDefault("HUBBLE_DBPASSWORD", nil),
+		FeeReceiverIndex:   0,
+		EthereumRpcUrl:     getEnvOrDefault("ETHEREUM_RPC_URL", nil),
+		EthereumChainId:    getEnvOrDefault("ETHEREUM_CHAIN_ID", nil),
+		EthereumPrivateKey: getEnvOrDefault("ETHEREUM_PRIVATE_KEY", nil),
 	}
 }
 

@@ -2,6 +2,7 @@ package deployer
 
 import "github.com/ethereum/go-ethereum/accounts/abi/bind"
 
+// TODO: Potentially rename to ChainConnection and have Client make use of it
 type Deployer interface {
 	TransactionOpts() *bind.TransactOpts
 
