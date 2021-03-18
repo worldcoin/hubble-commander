@@ -9,7 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/commander"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
-	rollup2 "github.com/Worldcoin/hubble-commander/contracts/rollup"
+	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -95,13 +95,13 @@ func CreateClientFromChainState(dep deployer.Deployer, chainState *models.ChainS
 		return nil, err
 	}
 
-	rollup, err := rollup2.NewRollup(chainState.Rollup, dep.GetBackend())
+	rollupContract, err := rollup.NewRollup(chainState.Rollup, dep.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
 	client, err := eth.NewClient(dep.TransactionOpts(), eth.NewClientParams{
-		Rollup:          rollup,
+		Rollup:          rollupContract,
 		AccountRegistry: accountRegistry,
 	})
 	if err != nil {
