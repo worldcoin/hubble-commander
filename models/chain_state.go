@@ -5,7 +5,7 @@ import (
 )
 
 type ChainState struct {
-	ChainId         Uint256        `db:"chain_id"`
+	ChainID         Uint256        `db:"chain_id"`
 	AccountRegistry common.Address `db:"account_registry"`
 	Rollup          common.Address
 }

@@ -12,7 +12,7 @@ import (
 
 var (
 	chainState = models.ChainState{
-		ChainId:         models.MakeUint256(1),
+		ChainID:         models.MakeUint256(1),
 		AccountRegistry: common.HexToAddress("0x9f758331b439c1B664e86f2050F2360370F06849"),
 		Rollup:          common.HexToAddress("0x1480c1b6bF90678820B259FCaFFbb751D3e3960B"),
 	}
@@ -45,7 +45,7 @@ func (s *ChainStateTestSuite) Test_SetChainState() {
 	err := s.storage.SetChainState(&chainState)
 	s.NoError(err)
 
-	actual, err := s.storage.GetChainState(chainState.ChainId)
+	actual, err := s.storage.GetChainState(chainState.ChainID)
 	s.NoError(err)
 	s.Equal(chainState, *actual)
 }

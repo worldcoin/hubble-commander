@@ -147,7 +147,11 @@ func GetDeployer(cfg *config.Config) (deployer.Deployer, error) {
 	return deployer.NewRPCDeployer(*cfg.EthereumRPCURL, chainID, account)
 }
 
-func BootstrapState(stateTree *st.StateTree, d deployer.Deployer, accounts []commander.GenesisAccount) (*eth.Client, *models.ChainState, error) {
+func BootstrapState(
+	stateTree *st.StateTree,
+	d deployer.Deployer,
+	accounts []commander.GenesisAccount,
+) (*eth.Client, *models.ChainState, error) {
 	accountRegistryAddress, accountRegistry, err := deployer.DeployAccountRegistry(d)
 	if err != nil {
 		return nil, nil, err
@@ -185,7 +189,7 @@ func BootstrapState(stateTree *st.StateTree, d deployer.Deployer, accounts []com
 	}
 
 	chainState := &models.ChainState{
-		ChainId:         d.GetChainID(),
+		ChainID:         d.GetChainID(),
 		AccountRegistry: *accountRegistryAddress,
 		Rollup:          contracts.RollupAddress,
 	}

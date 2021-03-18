@@ -5,12 +5,12 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-func (s *Storage) GetChainState(chainId models.Uint256) (*models.ChainState, error) {
+func (s *Storage) GetChainState(chainID models.Uint256) (*models.ChainState, error) {
 	res := make([]models.ChainState, 0, 1)
 	err := s.DB.Query(
 		s.QB.Select("*").
 			From("chain_state").
-			Where(squirrel.Eq{"chain_id": chainId}),
+			Where(squirrel.Eq{"chain_id": chainID}),
 	).Into(&res)
 	if err != nil || len(res) == 0 {
 		return nil, err
@@ -22,7 +22,7 @@ func (s *Storage) SetChainState(chainState *models.ChainState) error {
 	_, err := s.DB.ExecBuilder(
 		s.QB.
 			Insert("chain_state").
-			Values(chainState.ChainId, chainState.AccountRegistry, chainState.Rollup),
+			Values(chainState.ChainID, chainState.AccountRegistry, chainState.Rollup),
 	)
 	return err
 }
