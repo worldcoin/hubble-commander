@@ -34,7 +34,7 @@ func (s *BatchTestSuite) TearDownTest() {
 }
 
 func (s *BatchTestSuite) Test_AddBatch_AddAndRetrieve() {
-	batch := models.Batch{
+	batch := &models.Batch{
 		Hash:              utils.RandomHash(),
 		ID:                models.MakeUint256(1),
 		FinalisationBlock: models.MakeUint256(1234),
@@ -45,7 +45,7 @@ func (s *BatchTestSuite) Test_AddBatch_AddAndRetrieve() {
 	actual, err := s.storage.GetBatch(batch.Hash)
 	s.NoError(err)
 
-	s.Equal(batch, *actual)
+	s.Equal(batch, actual)
 }
 
 func TestBatchTestSuite(t *testing.T) {

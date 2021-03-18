@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (s *Storage) AddBatch(batch models.Batch) error {
+func (s *Storage) AddBatch(batch *models.Batch) error {
 	_, err := s.DB.ExecBuilder(
 		s.QB.Insert("batch").
 			Values(
