@@ -29,7 +29,7 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.Config) err
 			continue
 		}
 
-		feeReceiver := cfg.FeeReceiverIndex
+		feeReceiver := cfg.Rollup.FeeReceiverIndex
 
 		log.Printf("Applying %d transactions", len(transactions))
 		includedTransactions, err := ApplyTransactions(storage, transactions, feeReceiver)

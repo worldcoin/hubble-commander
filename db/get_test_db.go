@@ -12,12 +12,12 @@ type TestDB struct {
 func NewTestDB() (*TestDB, error) {
 	cfg := config.GetTestConfig()
 
-	err := recreateDatabase(&cfg)
+	err := recreateDatabase(&cfg.DB)
 	if err != nil {
 		return nil, err
 	}
 
-	migrator, err := GetMigrator(&cfg)
+	migrator, err := GetMigrator(&cfg.DB)
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +27,7 @@ func NewTestDB() (*TestDB, error) {
 		return nil, err
 	}
 
-	dbInstance, err := NewDatabase(&cfg)
+	dbInstance, err := NewDatabase(&cfg.DB)
 	if err != nil {
 		return nil, err
 	}

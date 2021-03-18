@@ -14,7 +14,7 @@ type DBTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	db     *Database
-	config *config.Config
+	config *config.DBConfig
 }
 
 func (s *DBTestSuite) SetupSuite() {
@@ -23,13 +23,13 @@ func (s *DBTestSuite) SetupSuite() {
 
 func (s *DBTestSuite) SetupTest() {
 	cfg := config.GetTestConfig()
-	err := recreateDatabase(&cfg)
+	err := recreateDatabase(&cfg.DB)
 	s.NoError(err)
 
-	db, err := NewDatabase(&cfg)
+	db, err := NewDatabase(&cfg.DB)
 	s.NoError(err)
 	s.db = db
-	s.config = &cfg
+	s.config = &cfg.DB
 }
 
 func (s *DBTestSuite) TearDownTest() {
