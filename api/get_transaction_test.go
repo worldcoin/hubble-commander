@@ -32,6 +32,17 @@ func (s *GetTransactionTestSuite) SetupTest() {
 	s.api = &API{nil, storage}
 	s.db = testDB
 
+	userState := models.UserState{
+		AccountIndex: models.MakeUint256(1),
+		TokenIndex:   models.MakeUint256(1),
+		Balance:      models.MakeUint256(420),
+		Nonce:        models.MakeUint256(0),
+	}
+
+	tree := st.NewStateTree(storage)
+	err = tree.Set(1, &userState)
+	s.NoError(err)
+
 	tx := &models.Transaction{
 		FromIndex: *models.NewUint256(1),
 		ToIndex:   *models.NewUint256(2),

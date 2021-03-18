@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
 	"golang.org/x/crypto/sha3"
@@ -24,6 +25,11 @@ func (a *API) SendTransaction(incTx models.IncomingTransaction) (*common.Hash, e
 	}
 	if incTx.Nonce == nil {
 		return nil, fmt.Errorf("nonce is required")
+	}
+
+	err := a.verifyNonce(&incTx)
+	if err != nil {
+		return nil, err
 	}
 
 	hash, err := rlpHash(incTx)
@@ -60,4 +66,23 @@ func rlpHash(x interface{}) (*common.Hash, error) {
 	hash := common.Hash{}
 	hw.Sum(hash[:0])
 	return &hash, nil
+}
+
+func (a *API) verifyNonce(incTx *models.IncomingTransaction) error {
+	stateTree := storage.NewStateTree(a.storage)
+	stateLeaf, err := stateTree.Leaf(uint32(incTx.FromIndex.Int64()))
+	if err != nil {
+		return err
+	}
+
+	userNonce := stateLeaf.Nonce
+
+	comparision := incTx.Nonce.Cmp(&userNonce.Int)
+	if comparision > 0 {
+		return fmt.Errorf("nonce too high")
+	} else if comparision < 0 {
+		return fmt.Errorf("nonce too low")
+	}
+
+	return nil
 }
