@@ -38,7 +38,7 @@ func (s *AccountTestSuite) Test_AddAccount_AddAndRetrieve() {
 		PublicKey:    models.PublicKey{1, 2, 3},
 	}
 
-	err := s.storage.AddAccount(&account)
+	err := s.storage.AddAccountIfNotExists(&account)
 	s.NoError(err)
 
 	res, err := s.storage.GetAccounts(&account.PublicKey)
@@ -57,9 +57,9 @@ func (s *AccountTestSuite) Test_GetAccounts_ReturnsAllAccounts() {
 		PublicKey:    pubKey,
 	}}
 
-	err := s.storage.AddAccount(&accounts[0])
+	err := s.storage.AddAccountIfNotExists(&accounts[0])
 	s.NoError(err)
-	err = s.storage.AddAccount(&accounts[1])
+	err = s.storage.AddAccountIfNotExists(&accounts[1])
 	s.NoError(err)
 
 	res, err := s.storage.GetAccounts(&pubKey)
@@ -74,10 +74,10 @@ func (s *AccountTestSuite) Test_AddAccount_Idempotent() {
 		PublicKey:    models.PublicKey{1, 2, 3},
 	}
 
-	err := s.storage.AddAccount(&account)
+	err := s.storage.AddAccountIfNotExists(&account)
 	s.NoError(err)
 
-	err = s.storage.AddAccount(&account)
+	err = s.storage.AddAccountIfNotExists(&account)
 	s.NoError(err)
 
 	res, err := s.storage.GetAccounts(&account.PublicKey)

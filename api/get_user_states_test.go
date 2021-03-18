@@ -54,7 +54,7 @@ func (s *GetUserStatesTestSuite) TestApi_GetTransaction() {
 		PublicKey:    models.PublicKey{1, 2, 3},
 	}
 
-	err := s.api.storage.AddAccount(&account)
+	err := s.api.storage.AddAccountIfNotExists(&account)
 	s.NoError(err)
 
 	leafs := []models.StateLeaf{
