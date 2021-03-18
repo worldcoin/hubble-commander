@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -100,7 +101,7 @@ func CreateCommitment(stateTree *st.StateTree, transactions []models.Transaction
 		return nil, err
 	}
 
-	leafHash := st.HashTwo(*stateRoot, *bodyHash)
+	leafHash := utils.HashTwo(*stateRoot, *bodyHash)
 
 	commitment := models.Commitment{
 		LeafHash:          leafHash,

@@ -52,7 +52,7 @@ func (s *RollupTestSuite) Test_SubmitTransfersBatch() {
 	s.NoError(err)
 
 	postStateRoot := utils.RandomHash()
-	leafHash := storage.HashTwo(postStateRoot, *bodyHash)
+	leafHash := utils.HashTwo(postStateRoot, *bodyHash)
 
 	commitment := models.Commitment{
 		LeafHash:          leafHash,
@@ -70,7 +70,7 @@ func (s *RollupTestSuite) Test_SubmitTransfersBatch() {
 	batch, err := s.contracts.Rollup.GetBatch(nil, &batchID.Int)
 	s.NoError(err)
 
-	commitmentRoot := storage.HashTwo(leafHash, storage.GetZeroHash(0))
+	commitmentRoot := utils.HashTwo(leafHash, storage.GetZeroHash(0))
 	s.Equal(commitmentRoot, common.BytesToHash(batch.CommitmentRoot[:]))
 }
 
