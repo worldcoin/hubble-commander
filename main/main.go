@@ -37,7 +37,12 @@ func main() {
 	}
 	stateTree := st.NewStateTree(storage)
 
-	client, err := NewSimulatedClient(stateTree, genesisAccounts)
+	sim, err := simulator.NewAutominingSimulator()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	client, err := DeployContracts(stateTree, sim, genesisAccounts)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -58,17 +63,13 @@ func main() {
 	log.Fatal(api.StartAPIServer(&cfg))
 }
 
-func NewSimulatedClient(stateTree *st.StateTree, accounts []commander.GenesisAccount) (*eth.Client, error) {
-	sim, err := simulator.NewAutominingSimulator()
-	if err != nil {
-		return nil, err
-	}
-	accountRegistryAddress, accountRegistry, err := deployer.DeployAccountRegistry(sim)
+func DeployContracts(stateTree *st.StateTree, d deployer.Deployer, accounts []commander.GenesisAccount) (*eth.Client, error) {
+	accountRegistryAddress, accountRegistry, err := deployer.DeployAccountRegistry(d)
 	if err != nil {
 		return nil, err
 	}
 
-	registeredAccounts, err := commander.RegisterGenesisAccounts(sim.Account, accountRegistry, accounts)
+	registeredAccounts, err := commander.RegisterGenesisAccounts(d.TransactionOpts(), accountRegistry, accounts)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +84,7 @@ func NewSimulatedClient(stateTree *st.StateTree, accounts []commander.GenesisAcc
 		return nil, err
 	}
 
-	contracts, err := deployer.DeployConfiguredRollup(sim, deployer.DeploymentConfig{
+	contracts, err := deployer.DeployConfiguredRollup(d, deployer.DeploymentConfig{
 		AccountRegistryAddress: accountRegistryAddress,
 		GenesisStateRoot:       stateRoot,
 	})
@@ -91,7 +92,7 @@ func NewSimulatedClient(stateTree *st.StateTree, accounts []commander.GenesisAcc
 		return nil, err
 	}
 
-	client, err := eth.NewClient(sim.Account, eth.NewClientParams{
+	client, err := eth.NewClient(d.TransactionOpts(), eth.NewClientParams{
 		Rollup:          contracts.Rollup,
 		AccountRegistry: contracts.AccountRegistry,
 	})
