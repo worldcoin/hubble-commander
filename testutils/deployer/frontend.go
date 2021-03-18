@@ -5,7 +5,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/massmigration"
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
-	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 )
 
 type FrontendContracts struct {
@@ -15,30 +14,28 @@ type FrontendContracts struct {
 	FrontendCreate2Transfer *create2transfer.FrontendCreate2Transfer
 }
 
-func DeployFrontend(sim *simulator.Simulator) (*FrontendContracts, error) {
-	deployer := sim.Account
-
-	_, _, genericContract, err := generic.DeployFrontendGeneric(deployer, sim.Backend)
+func DeployFrontend(d Deployer) (*FrontendContracts, error) {
+	_, _, genericContract, err := generic.DeployFrontendGeneric(d.TransactionOpts(), d.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
-	_, _, transferContract, err := transfer.DeployFrontendTransfer(deployer, sim.Backend)
+	_, _, transferContract, err := transfer.DeployFrontendTransfer(d.TransactionOpts(), d.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
-	_, _, migrationContract, err := massmigration.DeployFrontendMassMigration(deployer, sim.Backend)
+	_, _, migrationContract, err := massmigration.DeployFrontendMassMigration(d.TransactionOpts(), d.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
-	_, _, createContract, err := create2transfer.DeployFrontendCreate2Transfer(deployer, sim.Backend)
+	_, _, createContract, err := create2transfer.DeployFrontendCreate2Transfer(d.TransactionOpts(), d.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
-	sim.Backend.Commit()
+	d.Commit()
 
 	return &FrontendContracts{
 		FrontendGeneric:         genericContract,

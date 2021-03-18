@@ -117,6 +117,21 @@ func (sim *Simulator) Close() {
 	sim.Backend.Close() // ignore error, it is always nil
 }
 
+// Implements Deployer
+func (sim *Simulator) TransactionOpts() *bind.TransactOpts {
+	return sim.Account
+}
+
+// Implements Deployer
+func (sim *Simulator) GetBackend() bind.ContractBackend {
+	return sim.Backend
+}
+
+// Implements Deployer
+func (sim *Simulator) Commit() {
+	sim.Backend.Commit()
+}
+
 func fillWithDefaults(config *SimulatorConfig) {
 	if config.NumAccounts == nil {
 		config.NumAccounts = ref.Uint64(10)

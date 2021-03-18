@@ -12,7 +12,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/transfer"
 	"github.com/Worldcoin/hubble-commander/contracts/vault"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -40,38 +39,36 @@ type RollupContracts struct {
 	Rollup          *rollup.Rollup
 }
 
-func DeployRollup(sim *simulator.Simulator) (*RollupContracts, error) {
-	accountRegistryAddress, _, err := DeployAccountRegistry(sim)
+func DeployRollup(d Deployer) (*RollupContracts, error) {
+	accountRegistryAddress, _, err := DeployAccountRegistry(d)
 	if err != nil {
 		return nil, err
 	}
-	return DeployConfiguredRollup(sim, DeploymentConfig{
+	return DeployConfiguredRollup(d, DeploymentConfig{
 		AccountRegistryAddress: accountRegistryAddress,
 	})
 }
 
-func DeployConfiguredRollup(sim *simulator.Simulator, config DeploymentConfig) (*RollupContracts, error) {
+func DeployConfiguredRollup(d Deployer, config DeploymentConfig) (*RollupContracts, error) {
 	fillWithDefaults(&config)
-	deployer := sim.Account
-
-	proofOfBurnAddress, _, proofOfBurn, err := proofofburn.DeployProofOfBurn(deployer, sim.Backend)
+	proofOfBurnAddress, _, proofOfBurn, err := proofofburn.DeployProofOfBurn(d.TransactionOpts(), d.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
-	tokenRegistryAddress, _, tokenRegistry, err := tokenregistry.DeployTokenRegistry(deployer, sim.Backend)
+	tokenRegistryAddress, _, tokenRegistry, err := tokenregistry.DeployTokenRegistry(d.TransactionOpts(), d.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
-	spokeRegistryAddress, _, spokeRegistry, err := spokeregistry.DeploySpokeRegistry(deployer, sim.Backend)
+	spokeRegistryAddress, _, spokeRegistry, err := spokeregistry.DeploySpokeRegistry(d.TransactionOpts(), d.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
 	vaultAddress, _, vaultContract, err := vault.DeployVault(
-		deployer,
-		sim.Backend,
+		d.TransactionOpts(),
+		d.GetBackend(),
 		tokenRegistryAddress,
 		spokeRegistryAddress,
 	)
@@ -80,8 +77,8 @@ func DeployConfiguredRollup(sim *simulator.Simulator, config DeploymentConfig) (
 	}
 
 	depositManagerAddress, _, depositManager, err := depositmanager.DeployDepositManager(
-		deployer,
-		sim.Backend,
+		d.TransactionOpts(),
+		d.GetBackend(),
 		tokenRegistryAddress,
 		vaultAddress,
 		&config.MaxDepositSubtreeDepth.Int,
@@ -90,24 +87,24 @@ func DeployConfiguredRollup(sim *simulator.Simulator, config DeploymentConfig) (
 		return nil, err
 	}
 
-	accountRegistry, err := accountregistry.NewAccountRegistry(*config.AccountRegistryAddress, sim.Backend)
+	accountRegistry, err := accountregistry.NewAccountRegistry(*config.AccountRegistryAddress, d.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
-	transferAddress, _, transferContract, err := transfer.DeployTransfer(deployer, sim.Backend)
+	transferAddress, _, transferContract, err := transfer.DeployTransfer(d.TransactionOpts(), d.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
-	massMigrationAddress, _, massMigration, err := massmigration.DeployMassMigration(deployer, sim.Backend)
+	massMigrationAddress, _, massMigration, err := massmigration.DeployMassMigration(d.TransactionOpts(), d.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
-	sim.Backend.Commit()
+	d.Commit()
 
-	create2TransferAddress, _, create2Transfer, err := create2transfer.DeployCreate2Transfer(deployer, sim.Backend)
+	create2TransferAddress, _, create2Transfer, err := create2transfer.DeployCreate2Transfer(d.TransactionOpts(), d.GetBackend())
 	if err != nil {
 		return nil, err
 	}
@@ -115,8 +112,8 @@ func DeployConfiguredRollup(sim *simulator.Simulator, config DeploymentConfig) (
 	stateRoot := [32]byte{}
 	copy(stateRoot[:], config.GenesisStateRoot.Bytes())
 	_, _, rollupContract, err := rollup.DeployRollup(
-		deployer,
-		sim.Backend,
+		d.TransactionOpts(),
+		d.GetBackend(),
 		proofOfBurnAddress,
 		depositManagerAddress,
 		*config.AccountRegistryAddress,
@@ -133,7 +130,7 @@ func DeployConfiguredRollup(sim *simulator.Simulator, config DeploymentConfig) (
 		return nil, err
 	}
 
-	sim.Backend.Commit()
+	d.Commit()
 
 	return &RollupContracts{
 		Config:          config,
