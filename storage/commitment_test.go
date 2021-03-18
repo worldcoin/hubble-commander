@@ -56,15 +56,18 @@ func (s *CommitmentTestSuite) Test_AddCommitment_AddAndRetrieve() {
 }
 
 func (s *CommitmentTestSuite) Test_MarkCommitmentAsIncluded_UpdatesRecord() {
-	err := s.storage.AddCommitment(&commitment)
+	batch := models.Batch{Hash: utils.RandomHash()}
+	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
 
-	batchHash := utils.RandomHash()
-	err = s.storage.MarkCommitmentAsIncluded(commitment.LeafHash, batchHash)
+	err = s.storage.AddCommitment(&commitment)
+	s.NoError(err)
+
+	err = s.storage.MarkCommitmentAsIncluded(commitment.LeafHash, batch.Hash)
 	s.NoError(err)
 
 	expected := commitment
-	expected.IncludedInBatch = &batchHash
+	expected.IncludedInBatch = &batch.Hash
 
 	actual, err := s.storage.GetCommitment(commitment.LeafHash)
 	s.NoError(err)
