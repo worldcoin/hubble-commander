@@ -1,7 +1,6 @@
 package commander
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
@@ -20,14 +19,14 @@ func WatchAccounts(storage *st.Storage, client *eth.Client) error {
 		return err
 	}
 	for it.Next() {
-		err = ProcessEvent(storage, it.Event)
+		err = ProcessPubkeyRegistered(storage, it.Event)
 		if err != nil {
 			return err
 		}
 	}
 
 	ev := make(chan *accountregistry.AccountRegistryPubkeyRegistered)
-	sub, err := client.AccountRegistry.AccountRegistryFilterer.WatchPubkeyRegistered(&bind.WatchOpts{
+	sub, err := client.AccountRegistry.WatchPubkeyRegistered(&bind.WatchOpts{
 		Start: ref.Uint64(0),
 	}, ev)
 	if err != nil {
@@ -38,18 +37,14 @@ func WatchAccounts(storage *st.Storage, client *eth.Client) error {
 	log.Printf("Account watcher started")
 
 	for {
-		event, ok := <-ev
-		if !ok {
-			return fmt.Errorf("account event watcher is closed")
-		}
-		err := ProcessEvent(storage, event)
+		err := ProcessPubkeyRegistered(storage, <-ev)
 		if err != nil {
 			return err
 		}
 	}
 }
 
-func ProcessEvent(storage *st.Storage, event *accountregistry.AccountRegistryPubkeyRegistered) error {
+func ProcessPubkeyRegistered(storage *st.Storage, event *accountregistry.AccountRegistryPubkeyRegistered) error {
 	account := models.Account{
 		AccountIndex: uint32(event.PubkeyID.Uint64()),
 		PublicKey:    models.MakePublicKeyFromInts(event.Pubkey),

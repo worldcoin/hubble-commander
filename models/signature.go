@@ -4,6 +4,8 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"math/big"
+
+	"github.com/Worldcoin/hubble-commander/utils"
 )
 
 // TODO: Consider representing this as a 64 byte array instead
@@ -27,8 +29,8 @@ func (s *Signature) Scan(src interface{}) error {
 func (s Signature) Value() (driver.Value, error) {
 	buf := make([]byte, 0, 64)
 
-	buf = append(buf, s[0].Bytes()...)
-	buf = append(buf, s[1].Bytes()...)
+	buf = append(buf, utils.PadLeft(s[0].Bytes(), 32)...)
+	buf = append(buf, utils.PadLeft(s[1].Bytes(), 32)...)
 
 	return buf, nil
 }

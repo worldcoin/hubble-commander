@@ -10,4 +10,5 @@ type Commitment struct {
 	CombinedSignature Signature   `db:"combined_signature"`
 	FeeReceiver       uint32      `db:"fee_receiver"`
 	Transactions      []byte
+	IncludedInBatch   *common.Hash `db:"included_in_batch"`
 }

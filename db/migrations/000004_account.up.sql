@@ -1,4 +1,4 @@
-CREATE TABLE "account" (
+CREATE TABLE account (
     account_index BIGINT PRIMARY KEY,
-    public_key BYTEA
+    public_key    BYTEA NOT NULL
 );

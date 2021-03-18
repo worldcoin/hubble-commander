@@ -9,18 +9,18 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.Config) {
+func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.Config) error {
 	stateTree := st.NewStateTree(storage)
 
 	for {
 		transactions, err := storage.GetPendingTransactions()
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
-
 		log.Printf("%d transactions in the pool", len(transactions))
 
 		if len(transactions) < 2 { // TODO: change to 32 transactions
@@ -31,37 +31,35 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.Config) {
 		feeReceiver := cfg.FeeReceiverIndex
 
 		log.Printf("Applying %d transactions", len(transactions))
-
 		includedTransactions, err := ApplyTransactions(storage, transactions, feeReceiver)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		log.Printf("Creating a commitment from %d transactions", len(includedTransactions))
-
 		commitment, err := CreateCommitment(stateTree, includedTransactions, feeReceiver)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		err = storage.AddCommitment(commitment)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
+
+		_, err = client.SubmitTransfersBatch([]*models.Commitment{commitment})
+		if err != nil {
+			return err
+		}
+		log.Printf("Sumbmited commitment %s on chain", commitment.LeafHash.Hex())
 
 		for i := range includedTransactions {
 			tx := includedTransactions[i]
 			err = storage.MarkTransactionAsIncluded(tx.Hash, commitment.LeafHash)
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 		}
-
-		_, err = client.SubmitTransfersBatch([]*models.Commitment{commitment})
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.Printf("Sumbmited commitment %s on chain", commitment.LeafHash.Hex())
 
 		time.Sleep(500)
 	}
@@ -103,7 +101,7 @@ func CreateCommitment(stateTree *st.StateTree, transactions []models.Transaction
 		return nil, err
 	}
 
-	leafHash := st.HashTwo(*stateRoot, *bodyHash)
+	leafHash := utils.HashTwo(*stateRoot, *bodyHash)
 
 	commitment := models.Commitment{
 		LeafHash:          leafHash,

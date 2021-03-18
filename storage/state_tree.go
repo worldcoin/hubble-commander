@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -153,10 +154,10 @@ func (s *StateTree) calculateParentHash(
 	}
 
 	if currentPath.IsLeftNode() {
-		return HashTwo(*currentHash, witness.DataHash), nil
+		return utils.HashTwo(*currentHash, witness.DataHash), nil
 	}
 
-	return HashTwo(witness.DataHash, *currentHash), nil
+	return utils.HashTwo(witness.DataHash, *currentHash), nil
 }
 
 func NewStateLeaf(state *models.UserState) (*models.StateLeaf, error) {

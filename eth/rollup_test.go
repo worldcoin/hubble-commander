@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type ClientTestSuite struct {
+type RollupTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	sim       *simulator.Simulator
@@ -22,11 +22,11 @@ type ClientTestSuite struct {
 	client    *Client
 }
 
-func (s *ClientTestSuite) SetupSuite() {
+func (s *RollupTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *ClientTestSuite) SetupTest() {
+func (s *RollupTestSuite) SetupTest() {
 	sim, err := simulator.NewAutominingSimulator()
 	s.NoError(err)
 	s.sim = sim
@@ -37,11 +37,11 @@ func (s *ClientTestSuite) SetupTest() {
 	s.client = NewTestClient(sim.Account, contracts.Rollup, contracts.AccountRegistry)
 }
 
-func (s *ClientTestSuite) TearDownTest() {
+func (s *RollupTestSuite) TearDownTest() {
 	s.sim.Close()
 }
 
-func (s *ClientTestSuite) Test_SubmitTransfersBatch() {
+func (s *RollupTestSuite) Test_SubmitTransfersBatch() {
 	accountRoot, err := s.contracts.AccountRegistry.Root(nil)
 	s.NoError(err)
 
@@ -52,7 +52,7 @@ func (s *ClientTestSuite) Test_SubmitTransfersBatch() {
 	s.NoError(err)
 
 	postStateRoot := utils.RandomHash()
-	leafHash := storage.HashTwo(postStateRoot, *bodyHash)
+	leafHash := utils.HashTwo(postStateRoot, *bodyHash)
 
 	commitment := models.Commitment{
 		LeafHash:          leafHash,
@@ -70,10 +70,10 @@ func (s *ClientTestSuite) Test_SubmitTransfersBatch() {
 	batch, err := s.contracts.Rollup.GetBatch(nil, &batchID.Int)
 	s.NoError(err)
 
-	commitmentRoot := storage.HashTwo(leafHash, storage.GetZeroHash(0))
+	commitmentRoot := utils.HashTwo(leafHash, storage.GetZeroHash(0))
 	s.Equal(commitmentRoot, common.BytesToHash(batch.CommitmentRoot[:]))
 }
 
-func TestClientTestSuite(t *testing.T) {
-	suite.Run(t, new(ClientTestSuite))
+func TestRollupTestSuite(t *testing.T) {
+	suite.Run(t, new(RollupTestSuite))
 }

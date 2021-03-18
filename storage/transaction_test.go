@@ -6,6 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -66,19 +67,23 @@ func (s *TransactionTestSuite) Test_GetTransaction_NonExistentTransaction() {
 }
 
 func (s *TransactionTestSuite) Test_GetPendingTransactions_AddAndRetrieve() {
-	commitmentHash := common.BigToHash(big.NewInt(1234))
+	commitment := &models.Commitment{
+		LeafHash: utils.RandomHash(),
+	}
+	err := s.storage.AddCommitment(commitment)
+	s.NoError(err)
 
 	tx2 := tx
-	tx2.Hash = common.BigToHash(big.NewInt(2345))
+	tx2.Hash = utils.RandomHash()
 	tx3 := tx
-	tx3.Hash = common.BigToHash(big.NewInt(3456))
-	tx3.IncludedInCommitment = &commitmentHash
+	tx3.Hash = utils.RandomHash()
+	tx3.IncludedInCommitment = &commitment.LeafHash
 	tx4 := tx
-	tx4.Hash = common.BigToHash(big.NewInt(4567))
+	tx4.Hash = utils.RandomHash()
 	tx4.ErrorMessage = ref.String("A very boring error message")
 
 	for _, tx := range []*models.Transaction{&tx, &tx2, &tx3, &tx4} {
-		err := s.storage.AddTransaction(tx)
+		err = s.storage.AddTransaction(tx)
 		s.NoError(err)
 	}
 
