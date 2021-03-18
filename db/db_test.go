@@ -22,14 +22,14 @@ func (s *DBTestSuite) SetupSuite() {
 }
 
 func (s *DBTestSuite) SetupTest() {
-	cfg := config.GetTestConfig()
-	err := recreateDatabase(&cfg.DB)
+	cfg := config.GetTestConfig().DB
+	err := recreateDatabase(&cfg)
 	s.NoError(err)
 
-	db, err := NewDatabase(&cfg.DB)
+	db, err := NewDatabase(&cfg)
 	s.NoError(err)
 	s.db = db
-	s.config = &cfg.DB
+	s.config = &cfg
 }
 
 func (s *DBTestSuite) TearDownTest() {
