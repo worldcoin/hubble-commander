@@ -91,6 +91,13 @@ func NewSimulatedClient(stateTree *st.StateTree, accounts []commander.GenesisAcc
 		return nil, err
 	}
 
-	client := eth.NewTestClient(sim.Account, contracts.Rollup, contracts.AccountRegistry)
+	client, err := eth.NewClient(sim.Account, eth.NewClientParams{
+		Rollup:          contracts.Rollup,
+		AccountRegistry: contracts.AccountRegistry,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	return client, nil
 }

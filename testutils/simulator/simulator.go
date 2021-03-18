@@ -117,17 +117,14 @@ func (sim *Simulator) Close() {
 	sim.Backend.Close() // ignore error, it is always nil
 }
 
-// Implements Deployer
 func (sim *Simulator) TransactionOpts() *bind.TransactOpts {
 	return sim.Account
 }
 
-// Implements Deployer
 func (sim *Simulator) GetBackend() bind.ContractBackend {
 	return sim.Backend
 }
 
-// Implements Deployer
 func (sim *Simulator) Commit() {
 	sim.Backend.Commit()
 }
