@@ -5,7 +5,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/storage"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -17,7 +16,7 @@ type SendTransactionTestSuite struct {
 	suite.Suite
 	api  *API
 	db   *db.TestDB
-	tree *storage.StateTree
+	tree *st.StateTree
 }
 
 func (s *SendTransactionTestSuite) SetupSuite() {
@@ -34,7 +33,7 @@ func (s *SendTransactionTestSuite) SetupTest() {
 	s.db = testDB
 
 	userState := models.UserState{
-		AccountIndex: models.MakeUint256(1),
+		AccountIndex: 1,
 		TokenIndex:   models.MakeUint256(1),
 		Balance:      models.MakeUint256(420),
 		Nonce:        models.MakeUint256(0),
@@ -78,7 +77,7 @@ func (s *SendTransactionTestSuite) TestApi_SendTransaction_VerifyNonce_TooHigh()
 
 func (s *SendTransactionTestSuite) TestApi_SendTransaction_VerifyNonce_TooLow() {
 	userState := models.UserState{
-		AccountIndex: models.MakeUint256(1),
+		AccountIndex: 1,
 		TokenIndex:   models.MakeUint256(1),
 		Balance:      models.MakeUint256(420),
 		Nonce:        models.MakeUint256(1),
