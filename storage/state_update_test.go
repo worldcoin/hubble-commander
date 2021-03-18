@@ -55,7 +55,7 @@ func (s *StateUpdateTestSuite) Test_AddStateUpdate_AddAndRetrieve() {
 
 func (s *StateUpdateTestSuite) Test_GetStateUpdate_NonExistentUpdate() {
 	res, err := s.storage.GetStateUpdate(1)
-	s.NoError(err)
+	s.EqualError(err, "state update not found", err.Error())
 	s.Nil(res)
 }
 
