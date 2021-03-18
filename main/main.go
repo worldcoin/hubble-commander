@@ -56,7 +56,7 @@ func main() {
 	var client *eth.Client
 	if chainState == nil {
 		fmt.Println("Bootstrapping genesis state")
-		client, chainState, err = BootstrapState(stateTree, dep, genesisAccounts)
+		chainState, err = BootstrapState(stateTree, dep, genesisAccounts)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -67,10 +67,11 @@ func main() {
 		}
 	} else {
 		fmt.Println("Continuing from saved state")
-		client, err = CreateClientFromChainState(dep, chainState)
-		if err != nil {
-			log.Fatal(err)
-		}
+	}
+
+	client, err = CreateClientFromChainState(dep, chainState)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	go func() {
@@ -151,25 +152,25 @@ func BootstrapState(
 	stateTree *st.StateTree,
 	d deployer.Deployer,
 	accounts []commander.GenesisAccount,
-) (*eth.Client, *models.ChainState, error) {
+) (*models.ChainState, error) {
 	accountRegistryAddress, accountRegistry, err := deployer.DeployAccountRegistry(d)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	registeredAccounts, err := commander.RegisterGenesisAccounts(d.TransactionOpts(), accountRegistry, accounts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	err = commander.PopulateGenesisAccounts(stateTree, registeredAccounts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	stateRoot, err := stateTree.Root()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	contracts, err := deployer.DeployConfiguredRollup(d, deployer.DeploymentConfig{
@@ -177,15 +178,7 @@ func BootstrapState(
 		GenesisStateRoot:       stateRoot,
 	})
 	if err != nil {
-		return nil, nil, err
-	}
-
-	client, err := eth.NewClient(d.TransactionOpts(), eth.NewClientParams{
-		Rollup:          contracts.Rollup,
-		AccountRegistry: contracts.AccountRegistry,
-	})
-	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	chainState := &models.ChainState{
@@ -194,5 +187,5 @@ func BootstrapState(
 		Rollup:          contracts.RollupAddress,
 	}
 
-	return client, chainState, nil
+	return chainState, nil
 }
