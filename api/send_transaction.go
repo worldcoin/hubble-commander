@@ -78,9 +78,7 @@ func (a *API) verifyNonce(incTx *models.IncomingTransaction) error {
 	userNonce := stateLeaf.Nonce
 
 	comparison := incTx.Nonce.Cmp(&userNonce.Int)
-	if comparison > 0 {
-		return fmt.Errorf("nonce too high")
-	} else if comparison < 0 {
+	if comparison < 0 {
 		return fmt.Errorf("nonce too low")
 	}
 

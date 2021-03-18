@@ -1,19 +1,28 @@
 package commander
 
 import (
-	"fmt"
+	"errors"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
 )
 
+var (
+	ErrStateTreeIsNil   = errors.New("state tree cannot be nil")
+	ErrTransactionIsNil = errors.New("transaction cannot be nil")
+	ErrUserStateIsNil   = errors.New("sender/receiver state cannot be nil")
+	ErrNonceTooLow      = errors.New("nonce too low")
+	ErrNonceTooHigh     = errors.New("nonce too high")
+	ErrBalanceTooLow    = errors.New("amount exceeds balance")
+)
+
 func ApplyTransfer(stateTree *storage.StateTree, tx *models.Transaction) (txError, appError error) {
 	if stateTree == nil {
-		return nil, fmt.Errorf("state tree cannot be nil")
+		return nil, ErrStateTreeIsNil
 	}
 	if tx == nil {
-		return nil, fmt.Errorf("transaction cannot be nil")
+		return nil, ErrTransactionIsNil
 	}
 
 	senderIndex := uint32(tx.FromIndex.Uint64())
@@ -28,7 +37,7 @@ func ApplyTransfer(stateTree *storage.StateTree, tx *models.Transaction) (txErro
 	}
 
 	if senderLeaf == nil || receiverLeaf == nil {
-		return fmt.Errorf("sender/receiver state cannot be nil"), nil
+		return ErrUserStateIsNil, nil
 	}
 
 	senderState := senderLeaf.UserState
@@ -66,8 +75,12 @@ func CalculateStateAfterTransfer(
 ) {
 	// TODO: Signature validation
 
-	if senderState.Nonce.Cmp(&tx.Nonce.Int) != 0 {
-		err = fmt.Errorf("incorrect nonce, expected: %s got %s", senderState.Nonce.String(), tx.Nonce.Int.String())
+	comparison := tx.Nonce.Cmp(&senderState.Nonce.Int)
+	if comparison > 0 {
+		err = ErrNonceTooHigh
+		return
+	} else if comparison < 0 {
+		err = ErrNonceTooLow
 		return
 	}
 
@@ -75,7 +88,7 @@ func CalculateStateAfterTransfer(
 	totalAmount.Add(&tx.Amount.Int, &tx.Fee.Int)
 
 	if senderState.Balance.Cmp(totalAmount) < 0 {
-		err = fmt.Errorf("amount exceeds balance")
+		err = ErrBalanceTooLow
 		return
 	}
 
