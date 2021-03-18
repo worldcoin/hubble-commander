@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/encoder"
+	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/testutils/deployer"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
@@ -34,7 +34,11 @@ func (s *RollupTestSuite) SetupTest() {
 	contracts, err := deployer.DeployRollup(sim)
 	s.NoError(err)
 	s.contracts = contracts
-	s.client = NewTestClient(sim.Account, contracts.Rollup, contracts.AccountRegistry)
+	s.client, err = NewClient(sim.Account, NewClientParams{
+		Rollup:          contracts.Rollup,
+		AccountRegistry: contracts.AccountRegistry,
+	})
+	s.NoError(err)
 }
 
 func (s *RollupTestSuite) TearDownTest() {

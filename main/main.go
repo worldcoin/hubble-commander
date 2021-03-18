@@ -1,16 +1,20 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/commander"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/testutils/deployer"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 var genesisAccounts = []commander.GenesisAccount{
@@ -37,7 +41,12 @@ func main() {
 	}
 	stateTree := st.NewStateTree(storage)
 
-	client, err := NewSimulatedClient(stateTree, genesisAccounts)
+	dep, err := GetDeployer(&cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	client, err := DeployContracts(stateTree, dep, genesisAccounts)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -58,17 +67,49 @@ func main() {
 	log.Fatal(api.StartAPIServer(&cfg))
 }
 
-func NewSimulatedClient(stateTree *st.StateTree, accounts []commander.GenesisAccount) (*eth.Client, error) {
-	sim, err := simulator.NewAutominingSimulator()
-	if err != nil {
-		return nil, err
+func GetDeployer(cfg *config.Config) (deployer.Deployer, error) {
+	if cfg.EthereumRPCURL == nil {
+		sim, err := simulator.NewAutominingSimulator()
+		if err != nil {
+			return nil, err
+		}
+
+		return sim, nil
 	}
-	accountRegistryAddress, accountRegistry, err := deployer.DeployAccountRegistry(sim)
+
+	if cfg.EthereumChainID == nil {
+		return nil, fmt.Errorf("chain id should be specified in the config when connecting to remote ethereum RPC")
+	}
+
+	chainID, ok := big.NewInt(0).SetString(*cfg.EthereumChainID, 10)
+	if !ok {
+		return nil, fmt.Errorf("invalid chain id")
+	}
+
+	if cfg.EthereumPrivateKey == nil {
+		return nil, fmt.Errorf("private key should be specified in the config when connecting to remote ethereum RPC")
+	}
+
+	key, err := crypto.HexToECDSA(*cfg.EthereumPrivateKey)
 	if err != nil {
 		return nil, err
 	}
 
-	registeredAccounts, err := commander.RegisterGenesisAccounts(sim.Account, accountRegistry, accounts)
+	account, err := bind.NewKeyedTransactorWithChainID(key, chainID)
+	if err != nil {
+		return nil, err
+	}
+
+	return deployer.NewRPCDeployer(*cfg.EthereumRPCURL, account)
+}
+
+func DeployContracts(stateTree *st.StateTree, d deployer.Deployer, accounts []commander.GenesisAccount) (*eth.Client, error) {
+	accountRegistryAddress, accountRegistry, err := deployer.DeployAccountRegistry(d)
+	if err != nil {
+		return nil, err
+	}
+
+	registeredAccounts, err := commander.RegisterGenesisAccounts(d.TransactionOpts(), accountRegistry, accounts)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +124,7 @@ func NewSimulatedClient(stateTree *st.StateTree, accounts []commander.GenesisAcc
 		return nil, err
 	}
 
-	contracts, err := deployer.DeployConfiguredRollup(sim, deployer.DeploymentConfig{
+	contracts, err := deployer.DeployConfiguredRollup(d, deployer.DeploymentConfig{
 		AccountRegistryAddress: accountRegistryAddress,
 		GenesisStateRoot:       stateRoot,
 	})
@@ -91,6 +132,13 @@ func NewSimulatedClient(stateTree *st.StateTree, accounts []commander.GenesisAcc
 		return nil, err
 	}
 
-	client := eth.NewTestClient(sim.Account, contracts.Rollup, contracts.AccountRegistry)
+	client, err := eth.NewClient(d.TransactionOpts(), eth.NewClientParams{
+		Rollup:          contracts.Rollup,
+		AccountRegistry: contracts.AccountRegistry,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	return client, nil
 }

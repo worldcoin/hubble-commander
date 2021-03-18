@@ -46,3 +46,13 @@ There are a couple of scripts defined in the Makefile:
 * `make run` - run the compiled binary
 * `make lint` - run linter
 * `make test` - run all tests
+
+## Running with Ganache
+
+Start ganache cli in a separate terminal. Use the following config to make the node connect to the local instance:
+
+```shell
+ETHEREUM_RPC_URL=ws://127.0.0.1:8545
+ETHEREUM_CHAIN_ID=1616067554748
+ETHEREUM_PRIVATE_KEY=ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
+```
