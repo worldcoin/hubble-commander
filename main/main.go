@@ -68,32 +68,7 @@ func main() {
 }
 
 func GetDeployer(cfg *config.Config) (deployer.Deployer, error) {
-	if cfg.EthereumRpcUrl != nil {
-		if cfg.EthereumChainId == nil {
-			return nil, fmt.Errorf("chain id should be specified in the config when connecting to remote ethereum RPC")
-		}
-
-		chainId, ok := big.NewInt(0).SetString(*cfg.EthereumChainId, 10)
-		if !ok {
-			return nil, fmt.Errorf("invalid chain id")
-		}
-
-		if cfg.EthereumPrivateKey == nil {
-			return nil, fmt.Errorf("private key should be specified in the config when connecting to remote ethereum RPC")
-		}
-
-		key, err := crypto.HexToECDSA(*cfg.EthereumPrivateKey)
-		if err != nil {
-			return nil, err
-		}
-
-		account, err := bind.NewKeyedTransactorWithChainID(key, chainId)
-		if err != nil {
-			return nil, err
-		}
-
-		return deployer.NewRPCDeployer(*cfg.EthereumRpcUrl, account)
-	} else {
+	if cfg.EthereumRPCURL == nil {
 		sim, err := simulator.NewAutominingSimulator()
 		if err != nil {
 			return nil, err
@@ -101,6 +76,31 @@ func GetDeployer(cfg *config.Config) (deployer.Deployer, error) {
 
 		return sim, nil
 	}
+
+	if cfg.EthereumChainID == nil {
+		return nil, fmt.Errorf("chain id should be specified in the config when connecting to remote ethereum RPC")
+	}
+
+	chainID, ok := big.NewInt(0).SetString(*cfg.EthereumChainID, 10)
+	if !ok {
+		return nil, fmt.Errorf("invalid chain id")
+	}
+
+	if cfg.EthereumPrivateKey == nil {
+		return nil, fmt.Errorf("private key should be specified in the config when connecting to remote ethereum RPC")
+	}
+
+	key, err := crypto.HexToECDSA(*cfg.EthereumPrivateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	account, err := bind.NewKeyedTransactorWithChainID(key, chainID)
+	if err != nil {
+		return nil, err
+	}
+
+	return deployer.NewRPCDeployer(*cfg.EthereumRPCURL, account)
 }
 
 func DeployContracts(stateTree *st.StateTree, d deployer.Deployer, accounts []commander.GenesisAccount) (*eth.Client, error) {

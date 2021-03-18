@@ -27,9 +27,9 @@ type Config struct {
 	DBUser             *string
 	DBPassword         *string
 	FeeReceiverIndex   uint32
-	EthereumRpcUrl     *string
+	EthereumRPCURL     *string
 	EthereumPrivateKey *string
-	EthereumChainId    *string
+	EthereumChainID    *string
 }
 
 func GetConfig() Config {
@@ -42,8 +42,8 @@ func GetConfig() Config {
 		DBUser:             getEnvOrDefault("HUBBLE_DBUSER", nil),
 		DBPassword:         getEnvOrDefault("HUBBLE_DBPASSWORD", nil),
 		FeeReceiverIndex:   0,
-		EthereumRpcUrl:     getEnvOrDefault("ETHEREUM_RPC_URL", nil),
-		EthereumChainId:    getEnvOrDefault("ETHEREUM_CHAIN_ID", nil),
+		EthereumRPCURL:     getEnvOrDefault("ETHEREUM_RPC_URL", nil),
+		EthereumChainID:    getEnvOrDefault("ETHEREUM_CHAIN_ID", nil),
 		EthereumPrivateKey: getEnvOrDefault("ETHEREUM_PRIVATE_KEY", nil),
 	}
 }

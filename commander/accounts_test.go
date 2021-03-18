@@ -7,10 +7,10 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
-	"github.com/Worldcoin/hubble-commander/testutils/deployer"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -40,10 +40,13 @@ func (s *AccountsTestSuite) SetupTest() {
 
 	contracts, err := deployer.DeployRollup(sim)
 	s.NoError(err)
-	s.NoError(err)
 
 	s.accountRegistry = contracts.AccountRegistry
-	s.client = eth.NewTestClient(sim.Account, contracts.Rollup, contracts.AccountRegistry)
+	s.client, err = eth.NewClient(sim.Account, eth.NewClientParams{
+		Rollup:          contracts.Rollup,
+		AccountRegistry: contracts.AccountRegistry,
+	})
+	s.NoError(err)
 }
 
 func (s *AccountsTestSuite) TearDownTest() {
