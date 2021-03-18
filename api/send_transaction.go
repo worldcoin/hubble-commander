@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 
+	"github.com/Worldcoin/hubble-commander/commander"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
@@ -79,7 +80,7 @@ func (a *API) verifyNonce(incTx *models.IncomingTransaction) error {
 
 	comparison := incTx.Nonce.Cmp(&userNonce.Int)
 	if comparison < 0 {
-		return fmt.Errorf("nonce too low")
+		return commander.ErrNonceTooLow
 	}
 
 	return nil
