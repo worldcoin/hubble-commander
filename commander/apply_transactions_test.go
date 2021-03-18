@@ -30,19 +30,19 @@ func (s *ApplyTransactionsTestSuite) SetupTest() {
 	s.tree = storage.NewStateTree(s.storage)
 
 	senderState := models.UserState{
-		AccountIndex: models.MakeUint256(1),
+		AccountIndex: 1,
 		TokenIndex:   models.MakeUint256(1),
 		Balance:      models.MakeUint256(420),
 		Nonce:        models.MakeUint256(0),
 	}
 	receiverState := models.UserState{
-		AccountIndex: models.MakeUint256(2),
+		AccountIndex: 2,
 		TokenIndex:   models.MakeUint256(1),
 		Balance:      models.MakeUint256(0),
 		Nonce:        models.MakeUint256(0),
 	}
 	feeReceiverState := models.UserState{
-		AccountIndex: models.MakeUint256(3),
+		AccountIndex: 3,
 		TokenIndex:   models.MakeUint256(1),
 		Balance:      models.MakeUint256(1000),
 		Nonce:        models.MakeUint256(0),

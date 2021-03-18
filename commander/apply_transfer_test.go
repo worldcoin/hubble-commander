@@ -12,13 +12,13 @@ import (
 
 var (
 	senderState = models.UserState{
-		AccountIndex: models.MakeUint256(1),
+		AccountIndex: 1,
 		TokenIndex:   models.MakeUint256(1),
 		Balance:      models.MakeUint256(420),
 		Nonce:        models.MakeUint256(0),
 	}
 	receiverState = models.UserState{
-		AccountIndex: models.MakeUint256(2),
+		AccountIndex: 2,
 		TokenIndex:   models.MakeUint256(1),
 		Balance:      models.MakeUint256(0),
 		Nonce:        models.MakeUint256(0),
@@ -128,8 +128,8 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer() {
 		Nonce:     models.MakeUint256(0),
 	}
 
-	senderIndex := uint32(senderState.AccountIndex.Uint64())
-	receiverIndex := uint32(receiverState.AccountIndex.Uint64())
+	senderIndex := senderState.AccountIndex
+	receiverIndex := receiverState.AccountIndex
 
 	err := s.tree.Set(senderIndex, &senderState)
 	s.NoError(err)
@@ -150,7 +150,7 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer() {
 }
 
 func (s *ApplyTransferTestSuite) Test_ApplyFee() {
-	receiverIndex := uint32(receiverState.AccountIndex.Uint64())
+	receiverIndex := receiverState.AccountIndex
 	err := s.tree.Set(receiverIndex, &receiverState)
 	s.NoError(err)
 

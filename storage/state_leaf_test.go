@@ -37,7 +37,7 @@ func (s *StateLeafTestSuite) Test_AddStateLeaf_AddAndRetrieve() {
 	leaf := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
-			AccountIndex: models.MakeUint256(1),
+			AccountIndex: 1,
 			TokenIndex:   models.MakeUint256(1),
 			Balance:      models.MakeUint256(420),
 			Nonce:        models.MakeUint256(0),
@@ -57,6 +57,41 @@ func (s *StateLeafTestSuite) Test_GetStateLeaf_NonExistentLeaf() {
 	res, err := s.storage.GetStateLeaf(hash)
 	s.NoError(err)
 	s.Nil(res)
+}
+
+func (s *StateLeafTestSuite) Test_GetStateLeafs() {
+	var accountIndex uint32 = 1
+
+	leafs := []models.StateLeaf{
+		{
+			DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
+			UserState: models.UserState{
+				AccountIndex: accountIndex,
+				TokenIndex:   models.MakeUint256(1),
+				Balance:      models.MakeUint256(420),
+				Nonce:        models.MakeUint256(0),
+			},
+		},
+		{
+			DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
+			UserState: models.UserState{
+				AccountIndex: accountIndex,
+				TokenIndex:   models.MakeUint256(2),
+				Balance:      models.MakeUint256(500),
+				Nonce:        models.MakeUint256(0),
+			},
+		},
+	}
+
+	err := s.storage.AddStateLeaf(&leafs[0])
+	s.NoError(err)
+	err = s.storage.AddStateLeaf(&leafs[1])
+	s.NoError(err)
+
+	res, err := s.storage.GetStateLeafs(accountIndex)
+	s.NoError(err)
+
+	s.Equal(leafs, res)
 }
 
 func TestStateLeafTestSuite(t *testing.T) {

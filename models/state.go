@@ -5,7 +5,7 @@ import (
 )
 
 type UserState struct {
-	AccountIndex Uint256 `db:"account_index"`
+	AccountIndex uint32  `db:"account_index"`
 	TokenIndex   Uint256 `db:"token_index"`
 	Balance      Uint256
 	Nonce        Uint256
