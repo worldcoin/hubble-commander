@@ -39,11 +39,11 @@ func CommitTransactions(storage *st.Storage, client *eth.Client, cfg *config.Rol
 	stateTree := st.NewStateTree(storage)
 
 	// TODO: wrap in a db transaction
-	transactions, err := storage.GetPendingTransactions()
+	txs, err := storage.GetPendingTransactions()
 	if err != nil {
 		return err
 	}
-	txsCount := uint32(len(transactions))
+	txsCount := uint32(len(txs))
 	log.Printf("%d transactions in the pool", txsCount)
 
 	if txsCount < cfg.TxsPerCommitment {
@@ -51,14 +51,14 @@ func CommitTransactions(storage *st.Storage, client *eth.Client, cfg *config.Rol
 	}
 
 	log.Printf("Applying %d transactions", txsCount)
-	includedTransactions, err := ApplyTransactions(storage, transactions, cfg)
+	includedTxs, err := ApplyTransactions(storage, txs, cfg)
 	if err != nil {
 		return err
 	}
-	// TODO: if len(includedTransactions) != txCountPerCommitment then fail and rollback
+	// TODO: if len(includedTxs) != txCountPerCommitment then fail and rollback
 
-	log.Printf("Creating a commitment from %d transactions", len(includedTransactions))
-	commitment, err := CreateCommitment(stateTree, includedTransactions, cfg.FeeReceiverIndex)
+	log.Printf("Creating a commitment from %d transactions", len(includedTxs))
+	commitment, err := CreateCommitment(stateTree, includedTxs, cfg.FeeReceiverIndex)
 	if err != nil {
 		return err
 	}
@@ -74,8 +74,8 @@ func CommitTransactions(storage *st.Storage, client *eth.Client, cfg *config.Rol
 	}
 	log.Printf("Sumbmited commitment %s on chain", commitment.LeafHash.Hex())
 
-	for i := range includedTransactions {
-		tx := includedTransactions[i]
+	for i := range includedTxs {
+		tx := includedTxs[i]
 		err = storage.MarkTransactionAsIncluded(tx.Hash, commitment.LeafHash)
 		if err != nil {
 			return err
@@ -86,17 +86,17 @@ func CommitTransactions(storage *st.Storage, client *eth.Client, cfg *config.Rol
 }
 
 // TODO: Test me
-func CreateCommitment(stateTree *st.StateTree, transactions []models.Transaction, feeReceiver uint32) (*models.Commitment, error) {
+func CreateCommitment(stateTree *st.StateTree, txs []models.Transaction, feeReceiver uint32) (*models.Commitment, error) {
 	combinedSignature := models.Signature{models.MakeUint256(1), models.MakeUint256(2)} // TODO: Actually combine signatures
 
-	transactionsSerialized, err := serializeTransactions(transactions)
+	serializedTxs, err := serializeTransactions(txs)
 	if err != nil {
 		return nil, err
 	}
 
 	accountRoot := common.Hash{} // TODO: Read from account tree
 
-	bodyHash, err := encoder.GetCommitmentBodyHash(accountRoot, combinedSignature, feeReceiver, transactionsSerialized)
+	bodyHash, err := encoder.GetCommitmentBodyHash(accountRoot, combinedSignature, feeReceiver, serializedTxs)
 	if err != nil {
 		return nil, err
 	}
@@ -108,28 +108,25 @@ func CreateCommitment(stateTree *st.StateTree, transactions []models.Transaction
 
 	leafHash := utils.HashTwo(*stateRoot, *bodyHash)
 
-	commitment := models.Commitment{
+	return &models.Commitment{
 		LeafHash:          leafHash,
 		PostStateRoot:     *stateRoot,
 		BodyHash:          *bodyHash,
 		AccountTreeRoot:   accountRoot,
 		CombinedSignature: combinedSignature,
 		FeeReceiver:       feeReceiver,
-		Transactions:      transactionsSerialized,
-	}
-
-	return &commitment, err
+		Transactions:      serializedTxs,
+	}, nil
 }
 
-func serializeTransactions(transactions []models.Transaction) ([]byte, error) {
-	buf := make([]byte, 0, len(transactions)*12)
+func serializeTransactions(txs []models.Transaction) ([]byte, error) {
+	buf := make([]byte, 0, len(txs)*12)
 
-	for i := range transactions {
-		encoded, err := encoder.EncodeTransaction(&transactions[i])
+	for i := range txs {
+		encoded, err := encoder.EncodeTransaction(&txs[i])
 		if err != nil {
 			return nil, err
 		}
-
 		buf = append(buf, encoded...)
 	}
 

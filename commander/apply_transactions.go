@@ -17,7 +17,7 @@ func ApplyTransactions(
 	error,
 ) {
 	stateTree := st.NewStateTree(storage)
-	validTxs := make([]models.Transaction, 0, 32)
+	validTxs := make([]models.Transaction, 0, cfg.TxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
 	for i := range transactions {
