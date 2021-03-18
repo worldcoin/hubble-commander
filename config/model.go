@@ -9,6 +9,7 @@ type Config struct {
 
 type RollupConfig struct {
 	FeeReceiverIndex uint32
+	TxsPerCommitment uint32
 }
 
 type APIConfig struct {

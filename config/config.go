@@ -21,6 +21,7 @@ func GetConfig() Config {
 	return Config{
 		Rollup: RollupConfig{
 			FeeReceiverIndex: 0,
+			TxsPerCommitment: 2,
 		},
 		API: APIConfig{
 			Version: "dev-0.1.0",
@@ -45,6 +46,7 @@ func GetTestConfig() Config {
 	return Config{
 		Rollup: RollupConfig{
 			FeeReceiverIndex: 0,
+			TxsPerCommitment: 2,
 		},
 		API: APIConfig{
 			Version: "dev-0.1.0",

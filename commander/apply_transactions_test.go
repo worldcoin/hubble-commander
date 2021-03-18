@@ -3,12 +3,18 @@ package commander
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
+
+var cfg = config.RollupConfig{
+	FeeReceiverIndex: 3,
+	TxsPerCommitment: 32,
+}
 
 type ApplyTransactionsTestSuite struct {
 	*require.Assertions
@@ -64,7 +70,7 @@ func (s *ApplyTransactionsTestSuite) TearDownTest() {
 func (s *ApplyTransactionsTestSuite) Test_ApplyTransfers_AllValid() {
 	transactions := generateValidTransactions(10)
 
-	validTransactions, err := ApplyTransactions(s.storage, transactions, uint32(3))
+	validTransactions, err := ApplyTransactions(s.storage, transactions, &cfg)
 	s.NoError(err)
 
 	s.Len(validTransactions, 10)
@@ -74,7 +80,7 @@ func (s *ApplyTransactionsTestSuite) Test_ApplyTransfers_SomeValid() {
 	transactions := generateValidTransactions(10)
 	transactions = append(transactions, generateInvalidTransactions(10)...)
 
-	validTransactions, err := ApplyTransactions(s.storage, transactions, uint32(3))
+	validTransactions, err := ApplyTransactions(s.storage, transactions, &cfg)
 	s.NoError(err)
 
 	s.Len(validTransactions, 10)
@@ -83,7 +89,7 @@ func (s *ApplyTransactionsTestSuite) Test_ApplyTransfers_SomeValid() {
 func (s *ApplyTransactionsTestSuite) Test_ApplyTransfers_MoreThan32() {
 	transactions := generateValidTransactions(60)
 
-	validTransactions, err := ApplyTransactions(s.storage, transactions, uint32(3))
+	validTransactions, err := ApplyTransactions(s.storage, transactions, &cfg)
 	s.NoError(err)
 
 	s.Len(validTransactions, 32)

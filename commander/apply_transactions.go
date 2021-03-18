@@ -3,6 +3,7 @@ package commander
 import (
 	"log"
 
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
@@ -10,7 +11,7 @@ import (
 func ApplyTransactions(
 	storage *st.Storage,
 	transactions []models.Transaction,
-	feeReceiverIndex uint32,
+	cfg *config.RollupConfig,
 ) (
 	[]models.Transaction,
 	error,
@@ -34,17 +35,17 @@ func ApplyTransactions(
 			}
 			err := storage.SetTransactionError(tx.Hash, txError.Error())
 			if err != nil {
-				log.Printf("Setting transaction error failed: %s", txError)
+				log.Printf("Setting transaction error failed: %s", err)
 			}
 			log.Printf("Transaction failed: %s", txError)
 		}
 
-		if len(validTxs) == 32 {
+		if uint32(len(validTxs)) == cfg.TxsPerCommitment {
 			break
 		}
 	}
 
-	err := ApplyFee(stateTree, feeReceiverIndex, combinedFee)
+	err := ApplyFee(stateTree, cfg.FeeReceiverIndex, combinedFee)
 	if err != nil {
 		return nil, err
 	}

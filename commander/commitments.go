@@ -43,23 +43,22 @@ func CommitTransactions(storage *st.Storage, client *eth.Client, cfg *config.Rol
 	if err != nil {
 		return err
 	}
-	log.Printf("%d transactions in the pool", len(transactions))
+	txsCount := uint32(len(transactions))
+	log.Printf("%d transactions in the pool", txsCount)
 
-	if len(transactions) < 2 { // TODO: change to 32 transactions
+	if txsCount < cfg.TxsPerCommitment {
 		return nil
 	}
 
-	feeReceiver := cfg.FeeReceiverIndex
-
-	log.Printf("Applying %d transactions", len(transactions))
-	includedTransactions, err := ApplyTransactions(storage, transactions, feeReceiver)
+	log.Printf("Applying %d transactions", txsCount)
+	includedTransactions, err := ApplyTransactions(storage, transactions, cfg)
 	if err != nil {
 		return err
 	}
 	// TODO: if len(includedTransactions) != txCountPerCommitment then fail and rollback
 
 	log.Printf("Creating a commitment from %d transactions", len(includedTransactions))
-	commitment, err := CreateCommitment(stateTree, includedTransactions, feeReceiver)
+	commitment, err := CreateCommitment(stateTree, includedTransactions, cfg.FeeReceiverIndex)
 	if err != nil {
 		return err
 	}
