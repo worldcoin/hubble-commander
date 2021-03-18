@@ -1,6 +1,9 @@
 package deployer
 
-import "github.com/ethereum/go-ethereum/accounts/abi/bind"
+import (
+	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+)
 
 // TODO: Potentially rename to ChainConnection and have Client make use of it
 type Deployer interface {
@@ -10,4 +13,6 @@ type Deployer interface {
 
 	// Force a block creation if running on a simulator. Noop otherwise.
 	Commit()
+
+	GetChainID() models.Uint256
 }

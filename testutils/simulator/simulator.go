@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -127,6 +128,10 @@ func (sim *Simulator) GetBackend() bind.ContractBackend {
 
 func (sim *Simulator) Commit() {
 	sim.Backend.Commit()
+}
+
+func (sim *Simulator) GetChainID() models.Uint256 {
+	return models.MakeUint256FromBig(*sim.Backend.Blockchain().Config().ChainID)
 }
 
 func fillWithDefaults(config *SimulatorConfig) {

@@ -1,6 +1,9 @@
 package deployer
 
 import (
+	"math/big"
+
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
@@ -8,9 +11,10 @@ import (
 type RPCDeployer struct {
 	account *bind.TransactOpts
 	backend *ethclient.Client
+	chainID *big.Int
 }
 
-func NewRPCDeployer(rpc string, account *bind.TransactOpts) (*RPCDeployer, error) {
+func NewRPCDeployer(rpc string, chainID *big.Int, account *bind.TransactOpts) (*RPCDeployer, error) {
 	backend, err := ethclient.Dial(rpc)
 	if err != nil {
 		return nil, err
@@ -19,6 +23,7 @@ func NewRPCDeployer(rpc string, account *bind.TransactOpts) (*RPCDeployer, error
 	return &RPCDeployer{
 		account,
 		backend,
+		chainID,
 	}, nil
 }
 
@@ -32,4 +37,8 @@ func (d *RPCDeployer) GetBackend() bind.ContractBackend {
 
 func (d *RPCDeployer) Commit() {
 	// NOOP
+}
+
+func (d *RPCDeployer) GetChainID() models.Uint256 {
+	return models.MakeUint256FromBig(*d.chainID)
 }

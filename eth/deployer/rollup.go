@@ -37,6 +37,7 @@ type RollupContracts struct {
 	MassMigration   *massmigration.MassMigration
 	Create2Transfer *create2transfer.Create2Transfer
 	Rollup          *rollup.Rollup
+	RollupAddress   common.Address
 }
 
 func DeployRollup(d Deployer) (*RollupContracts, error) {
@@ -111,7 +112,7 @@ func DeployConfiguredRollup(d Deployer, config DeploymentConfig) (*RollupContrac
 
 	stateRoot := [32]byte{}
 	copy(stateRoot[:], config.GenesisStateRoot.Bytes())
-	_, _, rollupContract, err := rollup.DeployRollup(
+	rollupAddress, _, rollupContract, err := rollup.DeployRollup(
 		d.TransactionOpts(),
 		d.GetBackend(),
 		proofOfBurnAddress,
@@ -144,6 +145,7 @@ func DeployConfiguredRollup(d Deployer, config DeploymentConfig) (*RollupContrac
 		MassMigration:   massMigration,
 		Create2Transfer: create2Transfer,
 		Rollup:          rollupContract,
+		RollupAddress:   rollupAddress,
 	}, nil
 }
 

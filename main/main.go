@@ -46,7 +46,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	client, err := DeployContracts(stateTree, dep, genesisAccounts)
+	client, chainState, err := BootstrapState(stateTree, dep, genesisAccounts)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = storage.SetChainState(chainState)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -100,28 +105,28 @@ func GetDeployer(cfg *config.Config) (deployer.Deployer, error) {
 		return nil, err
 	}
 
-	return deployer.NewRPCDeployer(*cfg.EthereumRPCURL, account)
+	return deployer.NewRPCDeployer(*cfg.EthereumRPCURL, chainID, account)
 }
 
-func DeployContracts(stateTree *st.StateTree, d deployer.Deployer, accounts []commander.GenesisAccount) (*eth.Client, error) {
+func BootstrapState(stateTree *st.StateTree, d deployer.Deployer, accounts []commander.GenesisAccount) (*eth.Client, *models.ChainState, error) {
 	accountRegistryAddress, accountRegistry, err := deployer.DeployAccountRegistry(d)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	registeredAccounts, err := commander.RegisterGenesisAccounts(d.TransactionOpts(), accountRegistry, accounts)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	err = commander.PopulateGenesisAccounts(stateTree, registeredAccounts)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	stateRoot, err := stateTree.Root()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	contracts, err := deployer.DeployConfiguredRollup(d, deployer.DeploymentConfig{
@@ -129,7 +134,7 @@ func DeployContracts(stateTree *st.StateTree, d deployer.Deployer, accounts []co
 		GenesisStateRoot:       stateRoot,
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	client, err := eth.NewClient(d.TransactionOpts(), eth.NewClientParams{
@@ -137,8 +142,14 @@ func DeployContracts(stateTree *st.StateTree, d deployer.Deployer, accounts []co
 		AccountRegistry: contracts.AccountRegistry,
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return client, nil
+	chainState := &models.ChainState{
+		ChainId:         d.GetChainID(),
+		AccountRegistry: *accountRegistryAddress,
+		Rollup:          contracts.RollupAddress,
+	}
+
+	return client, chainState, nil
 }
