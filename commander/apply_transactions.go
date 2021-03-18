@@ -29,6 +29,9 @@ func ApplyTransactions(
 			validTxs = append(validTxs, tx)
 			combinedFee.Add(&combinedFee.Int, &tx.Fee.Int)
 		} else {
+			if txError == ErrNonceTooHigh {
+				continue
+			}
 			err := storage.SetTransactionError(tx.Hash, txError.Error())
 			if err != nil {
 				log.Printf("Setting transaction error failed: %s", txError)

@@ -17,6 +17,7 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.Config) err
 	stateTree := st.NewStateTree(storage)
 
 	for {
+		// TODO: wrap in a db transaction
 		transactions, err := storage.GetPendingTransactions()
 		if err != nil {
 			return err
@@ -35,6 +36,7 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.Config) err
 		if err != nil {
 			return err
 		}
+		// TODO: if len(includedTransactions) != txCountPerCommitment then fail and rollback
 
 		log.Printf("Creating a commitment from %d transactions", len(includedTransactions))
 		commitment, err := CreateCommitment(stateTree, includedTransactions, feeReceiver)
@@ -60,6 +62,8 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.Config) err
 				return err
 			}
 		}
+
+		// tx.Commit()
 
 		time.Sleep(500)
 	}
