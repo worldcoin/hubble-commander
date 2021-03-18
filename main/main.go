@@ -8,6 +8,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/commander"
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
+	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -46,7 +48,28 @@ func main() {
 		log.Fatal(err)
 	}
 
-	client, err := DeployContracts(stateTree, dep, genesisAccounts)
+	chainState, err := storage.GetChainState(dep.GetChainID())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var client *eth.Client
+	if chainState == nil {
+		fmt.Println("Bootstrapping genesis state")
+		chainState, err = BootstrapState(stateTree, dep, genesisAccounts)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = storage.SetChainState(chainState)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		fmt.Println("Continuing from saved state")
+	}
+
+	client, err = CreateClientFromChainState(dep, chainState)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -65,6 +88,28 @@ func main() {
 	}()
 
 	log.Fatal(api.StartAPIServer(&cfg))
+}
+
+func CreateClientFromChainState(dep deployer.Deployer, chainState *models.ChainState) (*eth.Client, error) {
+	accountRegistry, err := accountregistry.NewAccountRegistry(chainState.AccountRegistry, dep.GetBackend())
+	if err != nil {
+		return nil, err
+	}
+
+	rollupContract, err := rollup.NewRollup(chainState.Rollup, dep.GetBackend())
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := eth.NewClient(dep.TransactionOpts(), eth.NewClientParams{
+		Rollup:          rollupContract,
+		AccountRegistry: accountRegistry,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
 }
 
 func GetDeployer(cfg *config.Config) (deployer.Deployer, error) {
@@ -100,10 +145,14 @@ func GetDeployer(cfg *config.Config) (deployer.Deployer, error) {
 		return nil, err
 	}
 
-	return deployer.NewRPCDeployer(*cfg.EthereumRPCURL, account)
+	return deployer.NewRPCDeployer(*cfg.EthereumRPCURL, chainID, account)
 }
 
-func DeployContracts(stateTree *st.StateTree, d deployer.Deployer, accounts []commander.GenesisAccount) (*eth.Client, error) {
+func BootstrapState(
+	stateTree *st.StateTree,
+	d deployer.Deployer,
+	accounts []commander.GenesisAccount,
+) (*models.ChainState, error) {
 	accountRegistryAddress, accountRegistry, err := deployer.DeployAccountRegistry(d)
 	if err != nil {
 		return nil, err
@@ -132,13 +181,11 @@ func DeployContracts(stateTree *st.StateTree, d deployer.Deployer, accounts []co
 		return nil, err
 	}
 
-	client, err := eth.NewClient(d.TransactionOpts(), eth.NewClientParams{
-		Rollup:          contracts.Rollup,
-		AccountRegistry: contracts.AccountRegistry,
-	})
-	if err != nil {
-		return nil, err
+	chainState := &models.ChainState{
+		ChainID:         d.GetChainID(),
+		AccountRegistry: *accountRegistryAddress,
+		Rollup:          contracts.RollupAddress,
 	}
 
-	return client, nil
+	return chainState, nil
 }

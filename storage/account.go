@@ -5,13 +5,14 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-func (s *Storage) AddAccount(account *models.Account) error {
+func (s *Storage) AddAccountIfNotExists(account *models.Account) error {
 	_, err := s.DB.ExecBuilder(
 		s.QB.Insert("account").
 			Values(
 				account.AccountIndex,
 				account.PublicKey,
-			),
+			).
+			Suffix("ON CONFLICT DO NOTHING"),
 	)
 
 	return err
