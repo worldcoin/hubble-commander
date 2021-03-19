@@ -93,6 +93,32 @@ func (s *TransactionTestSuite) Test_GetPendingTransactions_AddAndRetrieve() {
 	s.Equal([]models.Transaction{tx, tx2}, res)
 }
 
+func (s *TransactionTestSuite) Test_GetUserTransactions() {
+	tx1 := tx
+	tx1.Hash = utils.RandomHash()
+	tx1.FromIndex = models.MakeUint256(1)
+	tx2 := tx
+	tx2.Hash = utils.RandomHash()
+	tx2.FromIndex = models.MakeUint256(2)
+	tx3 := tx
+	tx3.Hash = utils.RandomHash()
+	tx3.FromIndex = models.MakeUint256(1)
+
+	err := s.storage.AddTransaction(&tx1)
+	s.NoError(err)
+	err = s.storage.AddTransaction(&tx2)
+	s.NoError(err)
+	err = s.storage.AddTransaction(&tx3)
+	s.NoError(err)
+
+	userTransactions, err := s.storage.GetUserTransactions(models.MakeUint256(1))
+	s.NoError(err)
+
+	s.Len(userTransactions, 2)
+	s.Contains(userTransactions, tx1)
+	s.Contains(userTransactions, tx3)
+}
+
 func (s *TransactionTestSuite) Test_SetTransactionError() {
 	err := s.storage.AddTransaction(&tx)
 	s.NoError(err)
