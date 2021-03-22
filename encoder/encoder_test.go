@@ -135,7 +135,7 @@ func (s *EncoderTestSuite) TestTransactionEncoding() {
 	s.Equal(expected, encoded)
 }
 
-func (s *EncoderTestSuite) TestGetCommitmentBodyHash() {
+func (s *EncoderTestSuite) TestCommitmentBodyHash() {
 	accountRoot := utils.RandomHash()
 	signature := models.Signature{models.MakeUint256(1), models.MakeUint256(2)}
 	feeReceiver := models.MakeUint256(1234)
@@ -149,15 +149,14 @@ func (s *EncoderTestSuite) TestGetCommitmentBodyHash() {
 	})
 	s.NoError(err)
 
-	bodyHash, err := GetCommitmentBodyHash(
-		accountRoot,
-		signature,
-		uint32(feeReceiver.Uint64()),
-		txs,
-	)
-	s.NoError(err)
+	commitment := models.Commitment{
+		Transactions:      txs,
+		FeeReceiver:       uint32(feeReceiver.Uint64()),
+		CombinedSignature: signature,
+		AccountTreeRoot:   &accountRoot,
+	}
 
-	s.Equal(expectedHash[:], bodyHash.Bytes())
+	s.Equal(expectedHash[:], commitment.BodyHash().Bytes())
 }
 
 func TestEncoderTestSuite(t *testing.T) {

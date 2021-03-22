@@ -9,7 +9,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -63,7 +62,7 @@ func CommitTransactions(storage *st.Storage, client *eth.Client, cfg *config.Rol
 		return err
 	}
 
-	err = storage.AddCommitment(commitment)
+	commitmentID, err := storage.AddCommitment(commitment)
 	if err != nil {
 		return err
 	}
@@ -72,11 +71,11 @@ func CommitTransactions(storage *st.Storage, client *eth.Client, cfg *config.Rol
 	if err != nil {
 		return err
 	}
-	log.Printf("Sumbmited commitment %s on chain", commitment.LeafHash.Hex())
+	log.Printf("Sumbmited commitment %s on chain", commitment.LeafHash().Hex())
 
 	for i := range includedTxs {
 		tx := includedTxs[i]
-		err = storage.MarkTransactionAsIncluded(tx.Hash, commitment.LeafHash)
+		err = storage.MarkTransactionAsIncluded(tx.Hash, *commitmentID)
 		if err != nil {
 			return err
 		}
@@ -94,28 +93,19 @@ func CreateCommitment(stateTree *st.StateTree, txs []models.Transaction, feeRece
 		return nil, err
 	}
 
-	accountRoot := common.Hash{} // TODO: Read from account tree
-
-	bodyHash, err := encoder.GetCommitmentBodyHash(accountRoot, combinedSignature, feeReceiver, serializedTxs)
-	if err != nil {
-		return nil, err
-	}
+	accountRoot := &common.Hash{} // TODO: Read from account tree
 
 	stateRoot, err := stateTree.Root()
 	if err != nil {
 		return nil, err
 	}
 
-	leafHash := utils.HashTwo(*stateRoot, *bodyHash)
-
 	return &models.Commitment{
-		LeafHash:          leafHash,
-		PostStateRoot:     *stateRoot,
-		BodyHash:          *bodyHash,
-		AccountTreeRoot:   accountRoot,
-		CombinedSignature: combinedSignature,
-		FeeReceiver:       feeReceiver,
 		Transactions:      serializedTxs,
+		FeeReceiver:       feeReceiver,
+		CombinedSignature: combinedSignature,
+		PostStateRoot:     *stateRoot,
+		AccountTreeRoot:   accountRoot,
 	}, nil
 }
 

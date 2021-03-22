@@ -1,10 +1,9 @@
 CREATE TABLE commitment (
-    leaf_hash          BYTEA PRIMARY KEY,
-    post_state_root    BYTEA       NOT NULL,
-    body_hash          BYTEA       NOT NULL,
-    account_tree_root  BYTEA       NOT NULL,
-    combined_signature BYTEA       NOT NULL,
-    fee_receiver       NUMERIC(78) NOT NULL, -- state index of tree receiver
-    transactions       BYTEA       NOT NULL, -- 32 transactions encoded in compact format
+    commitment_id      SERIAL PRIMARY KEY,
+    transactions       BYTEA  NOT NULL, -- 32 transactions encoded in compact format
+    fee_receiver       BIGINT NOT NULL, -- state index of tree receiver
+    combined_signature BYTEA  NOT NULL,
+    post_state_root    BYTEA  NOT NULL,
+    account_tree_root  BYTEA,
     included_in_batch  BYTEA REFERENCES batch
 );
