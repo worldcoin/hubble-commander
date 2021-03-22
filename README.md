@@ -56,3 +56,8 @@ ETHEREUM_RPC_URL=ws://127.0.0.1:8545
 ETHEREUM_CHAIN_ID=1616067554748
 ETHEREUM_PRIVATE_KEY=ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
 ```
+
+To run ganache with proper account config run this command:
+```shell
+ganache-cli --account 0xee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82,0x56BC75E2D63100000
+```
