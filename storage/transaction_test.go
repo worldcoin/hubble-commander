@@ -67,17 +67,15 @@ func (s *TransactionTestSuite) Test_GetTransaction_NonExistentTransaction() {
 }
 
 func (s *TransactionTestSuite) Test_GetPendingTransactions_AddAndRetrieve() {
-	commitment := &models.Commitment{
-		LeafHash: utils.RandomHash(),
-	}
-	err := s.storage.AddCommitment(commitment)
+	commitment := &models.Commitment{}
+	id, err := s.storage.AddCommitment(commitment)
 	s.NoError(err)
 
 	tx2 := tx
 	tx2.Hash = utils.RandomHash()
 	tx3 := tx
 	tx3.Hash = utils.RandomHash()
-	tx3.IncludedInCommitment = &commitment.LeafHash
+	tx3.IncludedInCommitment = id
 	tx4 := tx
 	tx4.Hash = utils.RandomHash()
 	tx4.ErrorMessage = ref.String("A very boring error message")
