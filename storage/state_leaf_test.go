@@ -96,20 +96,52 @@ func (s *StateLeafTestSuite) Test_GetStateLeafs() {
 				Nonce:        models.MakeUint256(1),
 			},
 		},
+		{
+			DataHash: common.BytesToHash([]byte{4, 5, 6, 7, 8}),
+			UserState: models.UserState{
+				AccountIndex: accountIndex,
+				TokenIndex:   models.MakeUint256(1),
+				Balance:      models.MakeUint256(500),
+				Nonce:        models.MakeUint256(0),
+			},
+		},
+		{
+			DataHash: common.BytesToHash([]byte{5, 6, 7, 8, 9}),
+			UserState: models.UserState{
+				AccountIndex: accountIndex,
+				TokenIndex:   models.MakeUint256(1),
+				Balance:      models.MakeUint256(505),
+				Nonce:        models.MakeUint256(0),
+			},
+		},
 	}
 
-	err := s.storage.AddStateLeaf(&leafs[0])
+	for i := range leafs {
+		err := s.storage.AddStateLeaf(&leafs[i])
+		s.NoError(err)
+	}
+
+	path, err := models.NewMerklePath("01")
 	s.NoError(err)
-	err = s.storage.AddStateLeaf(&leafs[1])
+	err = s.storage.AddOrUpdateStateNode(&models.StateNode{
+		DataHash:   common.BytesToHash([]byte{5, 6, 7, 8, 9}),
+		MerklePath: *path,
+	})
 	s.NoError(err)
-	err = s.storage.AddStateLeaf(&leafs[2])
+
+	path, err = models.NewMerklePath("10")
+	s.NoError(err)
+	err = s.storage.AddOrUpdateStateNode(&models.StateNode{
+		DataHash:   common.BytesToHash([]byte{3, 4, 5, 6, 7}),
+		MerklePath: *path,
+	})
 	s.NoError(err)
 
 	res, err := s.storage.GetStateLeafs(accountIndex)
 	s.NoError(err)
 
 	s.Len(res, 2)
-	s.Equal(leafs[0].DataHash, res[0].DataHash)
+	s.Equal(leafs[4].DataHash, res[0].DataHash)
 	s.Equal(leafs[2].DataHash, res[1].DataHash)
 }
 
