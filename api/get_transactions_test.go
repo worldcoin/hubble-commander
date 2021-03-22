@@ -113,7 +113,7 @@ func (s *GetTransactionsTestSuite) TestApi_GetTransactions() {
 			ToIndex:              models.MakeUint256(1),
 			Amount:               models.MakeUint256(2),
 			Fee:                  models.MakeUint256(5),
-			Nonce:                models.MakeUint256(0),
+			Nonce:                models.MakeUint256(1),
 			Signature:            []byte{2, 3, 4, 5, 6},
 			IncludedInCommitment: nil,
 		},
@@ -127,6 +127,16 @@ func (s *GetTransactionsTestSuite) TestApi_GetTransactions() {
 			Signature:            []byte{3, 4, 5, 6, 7},
 			IncludedInCommitment: nil,
 		},
+		{
+			Hash:                 common.BigToHash(big.NewInt(4567)),
+			FromIndex:            models.MakeUint256(0),
+			ToIndex:              models.MakeUint256(1),
+			Amount:               models.MakeUint256(2),
+			Fee:                  models.MakeUint256(5),
+			Nonce:                models.MakeUint256(2),
+			Signature:            []byte{2, 3, 4, 5, 6},
+			IncludedInCommitment: nil,
+		},
 	}
 
 	err = s.storage.AddTransaction(&transactions[0])
@@ -135,13 +145,16 @@ func (s *GetTransactionsTestSuite) TestApi_GetTransactions() {
 	s.NoError(err)
 	err = s.storage.AddTransaction(&transactions[2])
 	s.NoError(err)
+	err = s.storage.AddTransaction(&transactions[3])
+	s.NoError(err)
 
 	userTransactions, err := s.api.GetTransactions(&account.PublicKey)
 	s.NoError(err)
 
-	s.Len(userTransactions, 2)
+	s.Len(userTransactions, 3)
 	s.Equal(userTransactions[0].Transaction.Hash, transactions[0].Hash)
 	s.Equal(userTransactions[1].Transaction.Hash, transactions[1].Hash)
+	s.Equal(userTransactions[2].Transaction.Hash, transactions[3].Hash)
 }
 
 func TestGetTransactionsTestSuite(t *testing.T) {
