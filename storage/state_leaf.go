@@ -41,36 +41,32 @@ func (s *Storage) GetStateLeaf(hash common.Hash) (*models.StateLeaf, error) {
 
 func (s *Storage) GetStateLeafs(accountIndex uint32) ([]models.StateLeaf, error) {
 	query := `
-		select 
-			* 
-		from 
-			state_leaf 
-		natural join (
-			select 
-				data_hash 
-			from (
-				select 
-					data_hash, token_index, nonce 
-				from 
-					state_leaf 
-				where 
-					account_index = $1
-			) l1 
-			join (
-				select 
-					token_index, max(nonce) as nonce 
-				from 
-					state_leaf 
-				where 
-					account_index = $2 
-				group by 
-					token_index
-			) l2 
-			on 
-				l1.token_index = l2.token_index 
-			and 
-				l1.nonce = l2.nonce
-		) grouped_leafs`
+		SELECT
+			*
+		FROM
+			state_leaf
+			NATURAL JOIN (
+				SELECT
+					data_hash
+				FROM (
+					SELECT
+						data_hash,
+						token_index,
+						nonce
+					FROM
+						state_leaf
+					WHERE
+						account_index = $1) l1
+					JOIN (
+						SELECT
+							token_index, max(nonce) AS nonce
+						FROM
+							state_leaf
+						WHERE
+							account_index = $2
+						GROUP BY
+							token_index) l2 ON l1.token_index = l2.token_index
+						AND l1.nonce = l2.nonce) grouped_leafs`
 
 	res := []models.StateLeaf{}
 	err := s.DB.Select(&res, query, accountIndex, accountIndex)
