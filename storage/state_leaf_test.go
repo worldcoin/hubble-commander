@@ -59,6 +59,12 @@ func (s *StateLeafTestSuite) Test_GetStateLeaf_NonExistentLeaf() {
 	s.Nil(res)
 }
 
+func (s *StateLeafTestSuite) Test_GetStateLeafs_NoLeafs() {
+	res, err := s.storage.GetStateLeafs(1)
+	s.EqualError(err, "no state leafs found", err.Error())
+	s.Nil(res)
+}
+
 func (s *StateLeafTestSuite) Test_GetStateLeafs() {
 	var accountIndex uint32 = 1
 
@@ -81,17 +87,30 @@ func (s *StateLeafTestSuite) Test_GetStateLeafs() {
 				Nonce:        models.MakeUint256(0),
 			},
 		},
+		{
+			DataHash: common.BytesToHash([]byte{3, 4, 5, 6, 7}),
+			UserState: models.UserState{
+				AccountIndex: accountIndex,
+				TokenIndex:   models.MakeUint256(2),
+				Balance:      models.MakeUint256(500),
+				Nonce:        models.MakeUint256(1),
+			},
+		},
 	}
 
 	err := s.storage.AddStateLeaf(&leafs[0])
 	s.NoError(err)
 	err = s.storage.AddStateLeaf(&leafs[1])
 	s.NoError(err)
+	err = s.storage.AddStateLeaf(&leafs[2])
+	s.NoError(err)
 
 	res, err := s.storage.GetStateLeafs(accountIndex)
 	s.NoError(err)
 
-	s.Equal(leafs, res)
+	s.Len(res, 2)
+	s.Equal(leafs[0].DataHash, res[0].DataHash)
+	s.Equal(leafs[2].DataHash, res[1].DataHash)
 }
 
 func TestStateLeafTestSuite(t *testing.T) {
