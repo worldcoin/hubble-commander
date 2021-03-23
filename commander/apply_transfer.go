@@ -3,6 +3,7 @@ package commander
 import (
 	"errors"
 	"math/big"
+	"reflect"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
@@ -25,13 +26,11 @@ func ApplyTransfer(stateTree *storage.StateTree, tx *models.Transaction) (txErro
 		return nil, ErrTransactionIsNil
 	}
 
-	senderIndex := uint32(tx.FromIndex.Uint64())
-	senderLeaf, err := stateTree.Leaf(senderIndex)
+	senderLeaf, err := stateTree.Leaf(tx.FromIndex)
 	if err != nil {
 		return nil, err
 	}
-	receiverIndex := uint32(tx.ToIndex.Uint64())
-	receiverLeaf, err := stateTree.Leaf(receiverIndex)
+	receiverLeaf, err := stateTree.Leaf(tx.ToIndex)
 	if err != nil {
 		return nil, err
 	}
@@ -51,12 +50,15 @@ func ApplyTransfer(stateTree *storage.StateTree, tx *models.Transaction) (txErro
 	if err != nil {
 		return err, nil
 	}
+	if reflect.DeepEqual(newSenderState, senderState) && reflect.DeepEqual(newReceiverState, receiverState) {
+		return nil, nil
+	}
 
-	err = stateTree.Set(senderIndex, &newSenderState)
+	err = stateTree.Set(tx.FromIndex, &newSenderState)
 	if err != nil {
 		return nil, err
 	}
-	err = stateTree.Set(receiverIndex, &newReceiverState)
+	err = stateTree.Set(tx.ToIndex, &newReceiverState)
 	if err != nil {
 		return nil, err
 	}

@@ -16,8 +16,8 @@ import (
 var (
 	tx = models.Transaction{
 		Hash:                 common.BigToHash(big.NewInt(1234)),
-		FromIndex:            models.MakeUint256(1),
-		ToIndex:              models.MakeUint256(2),
+		FromIndex:            1,
+		ToIndex:              2,
 		Amount:               models.MakeUint256(1000),
 		Fee:                  models.MakeUint256(100),
 		Nonce:                models.MakeUint256(0),
@@ -89,6 +89,32 @@ func (s *TransactionTestSuite) Test_GetPendingTransactions_AddAndRetrieve() {
 	s.NoError(err)
 
 	s.Equal([]models.Transaction{tx, tx2}, res)
+}
+
+func (s *TransactionTestSuite) Test_GetUserTransactions() {
+	tx1 := tx
+	tx1.Hash = utils.RandomHash()
+	tx1.FromIndex = 1
+	tx2 := tx
+	tx2.Hash = utils.RandomHash()
+	tx2.FromIndex = 2
+	tx3 := tx
+	tx3.Hash = utils.RandomHash()
+	tx3.FromIndex = 1
+
+	err := s.storage.AddTransaction(&tx1)
+	s.NoError(err)
+	err = s.storage.AddTransaction(&tx2)
+	s.NoError(err)
+	err = s.storage.AddTransaction(&tx3)
+	s.NoError(err)
+
+	userTransactions, err := s.storage.GetUserTransactions(models.MakeUint256(1))
+	s.NoError(err)
+
+	s.Len(userTransactions, 2)
+	s.Contains(userTransactions, tx1)
+	s.Contains(userTransactions, tx3)
 }
 
 func (s *TransactionTestSuite) Test_SetTransactionError() {

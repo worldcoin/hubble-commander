@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql/driver"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math/big"
 )
@@ -56,4 +57,24 @@ func (p *PublicKey) Scan(src interface{}) error {
 // Value implements valuer for database/sql.
 func (p PublicKey) Value() (driver.Value, error) {
 	return p.Bytes(), nil
+}
+
+func (p *PublicKey) UnmarshalJSON(b []byte) error {
+	decodedBytes, err := hex.Decode(p[:], b[1:len(b)-1])
+	if err != nil {
+		return err
+	}
+	if decodedBytes != 128 {
+		return fmt.Errorf("invalid public key")
+	}
+
+	return nil
+}
+
+func (p *PublicKey) MarshalJSON() ([]byte, error) {
+	marshalizedPublicKey, err := json.Marshal(hex.EncodeToString(p[:]))
+	if err != nil {
+		return nil, err
+	}
+	return marshalizedPublicKey, nil
 }
