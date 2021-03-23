@@ -1,5 +1,7 @@
 FROM golang:1.15
 
+LABEL org.opencontainers.image.source="https://github.com/Worldcoin/hubble-commander"
+
 WORKDIR /go/src/app
 COPY . .
 
