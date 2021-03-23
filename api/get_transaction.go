@@ -5,7 +5,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (a *API) GetTransaction(hash common.Hash) (*models.ReturnTransaction, error) {
+func (a *API) GetTransaction(hash common.Hash) (*models.TransactionReceipt, error) {
 	tx, err := a.storage.GetTransaction(hash)
 	if err != nil {
 		return nil, err
@@ -13,7 +13,7 @@ func (a *API) GetTransaction(hash common.Hash) (*models.ReturnTransaction, error
 
 	status := CalculateTransactionStatus(tx)
 
-	returnTx := &models.ReturnTransaction{
+	returnTx := &models.TransactionReceipt{
 		Transaction: *tx,
 		Status:      status,
 	}
