@@ -41,17 +41,10 @@ func (s *Storage) GetStateLeaf(hash common.Hash) (*models.StateLeaf, error) {
 
 func (s *Storage) GetStateLeafs(accountIndex uint32) ([]models.StateLeaf, error) {
 	query := `
-	SELECT
-		*
-	FROM
-		state_leaf
-		NATURAL JOIN (
-			SELECT
-				data_hash
-			FROM
-				state_node) node
-	WHERE
-		account_index = $1`
+	SELECT state_leaf.*
+	FROM state_leaf
+	NATURAL JOIN state_node
+	WHERE account_index = $1`
 
 	res := []models.StateLeaf{}
 	err := s.DB.Select(&res, query, accountIndex)
