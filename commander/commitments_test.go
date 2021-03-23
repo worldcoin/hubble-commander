@@ -96,6 +96,40 @@ func (s *CommitmentsLoopTestSuite) TestCommitTransactions_ReturnsErrorWhenThereA
 	s.ErrorIs(err, ErrNotEnoughTransactions)
 }
 
+func (s *CommitmentsLoopTestSuite) TestCommitTransactions_StoresCorrectCommitment() {
+	txs := generateValidTransactions(2)
+	s.addTransactions(txs)
+
+	err := CommitTransactions(s.storage, s.cfg)
+	s.NoError(err)
+
+	commitment, err := s.storage.GetCommitment(1)
+	s.NoError(err)
+
+	s.Len(commitment.Transactions, 24)
+	s.Equal(commitment.FeeReceiver, uint32(2))
+	s.Nil(commitment.AccountTreeRoot)
+	s.Nil(commitment.IncludedInBatch)
+
+	root, err := storage.NewStateTree(s.storage).Root()
+	s.NoError(err)
+	s.Equal(commitment.PostStateRoot, *root)
+}
+
+func (s *CommitmentsLoopTestSuite) TestCommitTransactions_MarksTransactionsAsIncludedInCommitment() {
+	txs := generateValidTransactions(2)
+	s.addTransactions(txs)
+
+	err := CommitTransactions(s.storage, s.cfg)
+	s.NoError(err)
+
+	for i := range txs {
+		tx, err := s.storage.GetTransaction(txs[i].Hash)
+		s.NoError(err)
+		s.Equal(*tx.IncludedInCommitment, int32(1))
+	}
+}
+
 func TestCommitmentsLoopTestSuite(t *testing.T) {
 	suite.Run(t, new(CommitmentsLoopTestSuite))
 }
