@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -68,7 +69,7 @@ func (s *ApplyTransactionsTestSuite) TearDownTest() {
 }
 
 func (s *ApplyTransactionsTestSuite) Test_ApplyTransactions_AllValid() {
-	txs := GenerateValidTransactions(10)
+	txs := generateValidTransactions(10)
 
 	validTxs, err := ApplyTransactions(s.storage, txs, &cfg)
 	s.NoError(err)
@@ -77,7 +78,7 @@ func (s *ApplyTransactionsTestSuite) Test_ApplyTransactions_AllValid() {
 }
 
 func (s *ApplyTransactionsTestSuite) Test_ApplyTransactions_SomeValid() {
-	txs := GenerateValidTransactions(10)
+	txs := generateValidTransactions(10)
 	txs = append(txs, generateInvalidTransactions(10)...)
 
 	validTxs, err := ApplyTransactions(s.storage, txs, &cfg)
@@ -87,7 +88,7 @@ func (s *ApplyTransactionsTestSuite) Test_ApplyTransactions_SomeValid() {
 }
 
 func (s *ApplyTransactionsTestSuite) Test_ApplyTransactions_MoreThan32() {
-	txs := GenerateValidTransactions(60)
+	txs := generateValidTransactions(60)
 
 	validTxs, err := ApplyTransactions(s.storage, txs, &cfg)
 	s.NoError(err)
@@ -102,10 +103,11 @@ func TestApplyTransactionsTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplyTransactionsTestSuite))
 }
 
-func GenerateValidTransactions(txAmount int) []models.Transaction {
+func generateValidTransactions(txAmount int) []models.Transaction {
 	txs := make([]models.Transaction, 0, txAmount)
 	for i := 0; i < txAmount; i++ {
 		tx := models.Transaction{
+			Hash:      utils.RandomHash(),
 			FromIndex: models.MakeUint256(1),
 			ToIndex:   models.MakeUint256(2),
 			Amount:    models.MakeUint256(1),
