@@ -9,7 +9,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 var (
@@ -103,16 +102,13 @@ func unsafeCommitTransactions(storage *st.Storage, cfg *config.RollupConfig) err
 	return nil
 }
 
-// TODO: Test me
 func CreateCommitment(stateTree *st.StateTree, txs []models.Transaction, feeReceiver uint32) (*models.Commitment, error) {
 	combinedSignature := models.Signature{models.MakeUint256(1), models.MakeUint256(2)} // TODO: Actually combine signatures
 
-	serializedTxs, err := serializeTransactions(txs)
+	serializedTxs, err := encoder.SerializeTransactions(txs)
 	if err != nil {
 		return nil, err
 	}
-
-	accountRoot := &common.Hash{} // TODO: Read from account tree
 
 	stateRoot, err := stateTree.Root()
 	if err != nil {
@@ -124,20 +120,5 @@ func CreateCommitment(stateTree *st.StateTree, txs []models.Transaction, feeRece
 		FeeReceiver:       feeReceiver,
 		CombinedSignature: combinedSignature,
 		PostStateRoot:     *stateRoot,
-		AccountTreeRoot:   accountRoot,
 	}, nil
-}
-
-func serializeTransactions(txs []models.Transaction) ([]byte, error) {
-	buf := make([]byte, 0, len(txs)*12)
-
-	for i := range txs {
-		encoded, err := encoder.EncodeTransaction(&txs[i])
-		if err != nil {
-			return nil, err
-		}
-		buf = append(buf, encoded...)
-	}
-
-	return buf, nil
 }
