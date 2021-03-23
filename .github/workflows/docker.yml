@@ -17,6 +17,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+      - run: echo ${{ github.repository_owner }}
       - name: Build docker image
         id: docker_build
         uses: docker/build-push-action@v2
