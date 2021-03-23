@@ -58,8 +58,6 @@ func CommitTransactions(storage *st.Storage, cfg *config.RollupConfig) (err erro
 }
 
 func unsafeCommitTransactions(storage *st.Storage, cfg *config.RollupConfig) error {
-	stateTree := st.NewStateTree(storage)
-
 	txs, err := storage.GetPendingTransactions()
 	if err != nil {
 		return err
@@ -77,32 +75,26 @@ func unsafeCommitTransactions(storage *st.Storage, cfg *config.RollupConfig) err
 	if err != nil {
 		return err
 	}
-	if uint32(len(includedTxs)) != cfg.TxsPerCommitment {
+
+	txsCount = uint32(len(includedTxs))
+	if txsCount != cfg.TxsPerCommitment {
 		return ErrNotEnoughTransactions
 	}
 
 	log.Printf("Creating a commitment from %d transactions", len(includedTxs))
-	commitment, err := CreateCommitment(stateTree, includedTxs, cfg.FeeReceiverIndex)
+	commitmentID, err := createAndStoreCommitment(storage, includedTxs, cfg.FeeReceiverIndex)
 	if err != nil {
 		return err
 	}
 
-	commitmentID, err := storage.AddCommitment(commitment)
+	err = markTransactionsAsCommitted(storage, includedTxs, *commitmentID)
 	if err != nil {
 		return err
-	}
-
-	for i := range includedTxs {
-		tx := includedTxs[i]
-		err = storage.MarkTransactionAsIncluded(tx.Hash, *commitmentID)
-		if err != nil {
-			return err
-		}
 	}
 	return nil
 }
 
-func CreateCommitment(stateTree *st.StateTree, txs []models.Transaction, feeReceiver uint32) (*models.Commitment, error) {
+func createAndStoreCommitment(storage *st.Storage, txs []models.Transaction, feeReceiverIndex uint32) (*int32, error) {
 	combinedSignature := models.Signature{models.MakeUint256(1), models.MakeUint256(2)} // TODO: Actually combine signatures
 
 	serializedTxs, err := encoder.SerializeTransactions(txs)
@@ -110,15 +102,26 @@ func CreateCommitment(stateTree *st.StateTree, txs []models.Transaction, feeRece
 		return nil, err
 	}
 
-	stateRoot, err := stateTree.Root()
+	stateRoot, err := st.NewStateTree(storage).Root()
 	if err != nil {
 		return nil, err
 	}
 
-	return &models.Commitment{
+	commitment := models.Commitment{
 		Transactions:      serializedTxs,
-		FeeReceiver:       feeReceiver,
+		FeeReceiver:       feeReceiverIndex,
 		CombinedSignature: combinedSignature,
 		PostStateRoot:     *stateRoot,
-	}, nil
+	}
+	return storage.AddCommitment(&commitment)
+}
+
+func markTransactionsAsCommitted(storage *st.Storage, txs []models.Transaction, commitmentID int32) error {
+	for i := range txs {
+		err := storage.MarkTransactionAsIncluded(txs[i].Hash, commitmentID)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
