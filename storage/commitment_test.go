@@ -12,13 +12,11 @@ import (
 
 var (
 	commitment = models.Commitment{
-		LeafHash:          utils.RandomHash(),
-		PostStateRoot:     utils.RandomHash(),
-		BodyHash:          utils.RandomHash(),
-		AccountTreeRoot:   utils.RandomHash(),
-		CombinedSignature: models.Signature{models.MakeUint256(1), models.MakeUint256(2)},
-		FeeReceiver:       uint32(1),
 		Transactions:      []byte{1, 2, 3},
+		FeeReceiver:       uint32(1),
+		CombinedSignature: models.Signature{models.MakeUint256(1), models.MakeUint256(2)},
+		PostStateRoot:     utils.RandomHash(),
+		AccountTreeRoot:   nil,
 		IncludedInBatch:   nil,
 	}
 )
@@ -46,13 +44,19 @@ func (s *CommitmentTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
+func (s *CommitmentTestSuite) getCommitment(id int32) *models.Commitment {
+	clone := commitment
+	clone.ID = id
+	return &clone
+}
+
 func (s *CommitmentTestSuite) Test_AddCommitment_AddAndRetrieve() {
-	err := s.storage.AddCommitment(&commitment)
+	id, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	actual, err := s.storage.GetCommitment(commitment.LeafHash)
+	actual, err := s.storage.GetCommitment(*id)
 	s.NoError(err)
-	s.Equal(commitment, *actual)
+	s.Equal(s.getCommitment(*id), actual)
 }
 
 func (s *CommitmentTestSuite) Test_MarkCommitmentAsIncluded_UpdatesRecord() {
@@ -60,19 +64,19 @@ func (s *CommitmentTestSuite) Test_MarkCommitmentAsIncluded_UpdatesRecord() {
 	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
 
-	err = s.storage.AddCommitment(&commitment)
+	id, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	err = s.storage.MarkCommitmentAsIncluded(commitment.LeafHash, batch.Hash)
+	err = s.storage.MarkCommitmentAsIncluded(*id, batch.Hash)
 	s.NoError(err)
 
-	expected := commitment
+	expected := s.getCommitment(*id)
 	expected.IncludedInBatch = &batch.Hash
 
-	actual, err := s.storage.GetCommitment(commitment.LeafHash)
+	actual, err := s.storage.GetCommitment(*id)
 	s.NoError(err)
 
-	s.Equal(expected, *actual)
+	s.Equal(expected, actual)
 }
 
 func TestCommitmentTestSuite(t *testing.T) {

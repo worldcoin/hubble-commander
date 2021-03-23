@@ -13,6 +13,6 @@ type Transaction struct {
 	Nonce     Uint256
 	// TODO: Right now decoder expects a base64 string here, we could define a custom type with interface implementation to expect a hex string
 	Signature            []byte
-	IncludedInCommitment *common.Hash `db:"included_in_commitment"`
-	ErrorMessage         *string      `db:"error_message"`
+	IncludedInCommitment *int32  `db:"included_in_commitment"`
+	ErrorMessage         *string `db:"error_message"`
 }
