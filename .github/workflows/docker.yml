@@ -22,6 +22,5 @@ jobs:
         uses: docker/build-push-action@v1
         with:
           push: true
-          tags: |
-            ghcr.io/worldcoin/hubble-commander:latest
-            ghcr.io/worldcoin/hubble-commander:${{ github.sha }}
+          repository: ghcr.io/worldcoin/hubble-commander
+          tags: latest,${{ github.sha }}
