@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"errors"
 	"log"
 	"time"
 
@@ -9,6 +10,10 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
+)
+
+var (
+	ErrNotEnoughTransactions = NewCommitmentError("not enough transactions")
 )
 
 func CommitmentsEndlessLoop(storage *st.Storage, cfg *config.RollupConfig) error {
@@ -27,6 +32,11 @@ func CommitmentsLoop(storage *st.Storage, cfg *config.RollupConfig, done <-chan 
 		case <-ticker.C:
 			err := CommitTransactions(storage, cfg)
 			if err != nil {
+				var e *CommitmentError
+				if errors.As(err, &e) {
+					log.Println(e.Error())
+					continue
+				}
 				return err
 			}
 		}
@@ -60,7 +70,7 @@ func unsafeCommitTransactions(storage *st.Storage, cfg *config.RollupConfig) err
 	log.Printf("%d transactions in the pool", txsCount)
 
 	if txsCount < cfg.TxsPerCommitment {
-		return nil
+		return ErrNotEnoughTransactions
 	}
 
 	log.Printf("Applying %d transactions", txsCount)
