@@ -40,10 +40,38 @@ func (s *GetTransactionsTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *GetTransactionsTestSuite) XDDD() {
+func (s *GetTransactionsTestSuite) TestApi_GetTransaction() {
+	account := models.Account{
+		AccountIndex: 1,
+		PublicKey:    models.PublicKey{1, 2, 3},
+	}
+
+	err := s.storage.AddAccountIfNotExists(&account)
+	s.NoError(err)
+
+	userStates := []models.UserState{
+		{
+			AccountIndex: account.AccountIndex,
+			TokenIndex:   models.MakeUint256(1),
+			Balance:      models.MakeUint256(420),
+			Nonce:        models.MakeUint256(0),
+		},
+		{
+			AccountIndex: 2,
+			TokenIndex:   models.MakeUint256(2),
+			Balance:      models.MakeUint256(500),
+			Nonce:        models.MakeUint256(0),
+		},
+	}
+
+	err = s.tree.Set(0, &userStates[0])
+	s.NoError(err)
+	err = s.tree.Set(1, &userStates[1])
+	s.NoError(err)
+
 	incomingTx := models.IncomingTransaction{
-		FromIndex: models.NewUint256(1),
-		ToIndex:   models.NewUint256(2),
+		FromIndex: models.NewUint256(0),
+		ToIndex:   models.NewUint256(1),
 		Amount:    models.NewUint256(50),
 		Fee:       models.NewUint256(10),
 		Nonce:     models.NewUint256(0),
