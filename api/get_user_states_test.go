@@ -131,15 +131,15 @@ func (s *GetUserStatesTestSuite) TestApi_GetUserStates() {
 
 	s.Len(userStates, 3)
 	s.Contains(userStates, models.ReturnUserState{
-		StateId:   0,
+		StateID:   0,
 		UserState: leafs[0].UserState,
 	})
 	s.Contains(userStates, models.ReturnUserState{
-		StateId:   1,
+		StateID:   1,
 		UserState: leafs[1].UserState,
 	})
 	s.Contains(userStates, models.ReturnUserState{
-		StateId:   2,
+		StateID:   2,
 		UserState: leafs[2].UserState,
 	})
 }

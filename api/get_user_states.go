@@ -25,7 +25,7 @@ func (a *API) GetUserStates(publicKey *models.PublicKey) ([]models.ReturnUserSta
 			}
 			userState := models.ReturnUserState{
 				UserState: stateLeafs[i].UserState,
-				StateId: path.MerklePath.Path,
+				StateID:   path.MerklePath.Path,
 			}
 			userStates = append(userStates, userState)
 		}

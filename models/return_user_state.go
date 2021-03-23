@@ -1,6 +1,6 @@
 package models
 
 type ReturnUserState struct {
-	StateId   uint32
+	StateID   uint32
 	UserState UserState
 }
