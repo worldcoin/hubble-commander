@@ -2,6 +2,7 @@ package commander
 
 import (
 	"log"
+	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -44,9 +45,11 @@ func ApplyTransactions(
 		}
 	}
 
-	err := ApplyFee(stateTree, feeReceiverIndex, combinedFee)
-	if err != nil {
-		return nil, err
+	if combinedFee.Cmp(big.NewInt(0)) == 1 {
+		err := ApplyFee(stateTree, feeReceiverIndex, combinedFee)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return validTxs, nil
