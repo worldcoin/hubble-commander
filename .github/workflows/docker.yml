@@ -25,4 +25,4 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ghcr.io/worldcoin/hubble-commander:latest
+          tags: ghcr.io/worldcoin/hubble-commander/commander:latest
