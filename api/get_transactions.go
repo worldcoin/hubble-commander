@@ -6,7 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-func (a *API) GetTransactions(publicKey *models.PublicKey) ([]models.ReturnTransaction, error) {
+func (a *API) GetTransactions(publicKey *models.PublicKey) ([]models.TransactionReceipt, error) {
 	accounts, err := a.storage.GetAccounts(publicKey)
 	if err != nil {
 		return nil, err
@@ -30,7 +30,7 @@ func (a *API) GetTransactions(publicKey *models.PublicKey) ([]models.ReturnTrans
 		}
 	}
 
-	userTransactions := make([]models.ReturnTransaction, 0, 1)
+	userTransactions := make([]models.TransactionReceipt, 0, 1)
 
 	for i := range userStatesIndexes {
 		transactions, err := a.storage.GetUserTransactions(userStatesIndexes[i])
@@ -40,7 +40,7 @@ func (a *API) GetTransactions(publicKey *models.PublicKey) ([]models.ReturnTrans
 
 		for i := range transactions {
 			status := CalculateTransactionStatus(&transactions[i])
-			returnTx := &models.ReturnTransaction{
+			returnTx := &models.TransactionReceipt{
 				Transaction: transactions[i],
 				Status:      status,
 			}
