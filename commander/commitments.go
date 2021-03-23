@@ -21,7 +21,7 @@ func CommitmentsEndlessLoop(storage *st.Storage, cfg *config.RollupConfig) error
 }
 
 func CommitmentsLoop(storage *st.Storage, cfg *config.RollupConfig, done <-chan bool) error {
-	ticker := time.NewTicker(500 * time.Millisecond) // TODO take from config
+	ticker := time.NewTicker(cfg.CommitmentLoopInterval)
 
 	for {
 		select {

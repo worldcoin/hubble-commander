@@ -1,5 +1,7 @@
 package config
 
+import "time"
+
 type Config struct {
 	Rollup   RollupConfig
 	API      APIConfig
@@ -8,8 +10,9 @@ type Config struct {
 }
 
 type RollupConfig struct {
-	FeeReceiverIndex uint32
-	TxsPerCommitment uint32
+	FeeReceiverIndex       uint32
+	TxsPerCommitment       uint32
+	CommitmentLoopInterval time.Duration
 }
 
 type APIConfig struct {
