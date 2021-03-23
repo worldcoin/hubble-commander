@@ -67,17 +67,15 @@ func (s *TransactionTestSuite) Test_GetTransaction_NonExistentTransaction() {
 }
 
 func (s *TransactionTestSuite) Test_GetPendingTransactions_AddAndRetrieve() {
-	commitment := &models.Commitment{
-		LeafHash: utils.RandomHash(),
-	}
-	err := s.storage.AddCommitment(commitment)
+	commitment := &models.Commitment{}
+	id, err := s.storage.AddCommitment(commitment)
 	s.NoError(err)
 
 	tx2 := tx
 	tx2.Hash = utils.RandomHash()
 	tx3 := tx
 	tx3.Hash = utils.RandomHash()
-	tx3.IncludedInCommitment = &commitment.LeafHash
+	tx3.IncludedInCommitment = id
 	tx4 := tx
 	tx4.Hash = utils.RandomHash()
 	tx4.ErrorMessage = ref.String("A very boring error message")
@@ -91,6 +89,32 @@ func (s *TransactionTestSuite) Test_GetPendingTransactions_AddAndRetrieve() {
 	s.NoError(err)
 
 	s.Equal([]models.Transaction{tx, tx2}, res)
+}
+
+func (s *TransactionTestSuite) Test_GetUserTransactions() {
+	tx1 := tx
+	tx1.Hash = utils.RandomHash()
+	tx1.FromIndex = models.MakeUint256(1)
+	tx2 := tx
+	tx2.Hash = utils.RandomHash()
+	tx2.FromIndex = models.MakeUint256(2)
+	tx3 := tx
+	tx3.Hash = utils.RandomHash()
+	tx3.FromIndex = models.MakeUint256(1)
+
+	err := s.storage.AddTransaction(&tx1)
+	s.NoError(err)
+	err = s.storage.AddTransaction(&tx2)
+	s.NoError(err)
+	err = s.storage.AddTransaction(&tx3)
+	s.NoError(err)
+
+	userTransactions, err := s.storage.GetUserTransactions(models.MakeUint256(1))
+	s.NoError(err)
+
+	s.Len(userTransactions, 2)
+	s.Contains(userTransactions, tx1)
+	s.Contains(userTransactions, tx3)
 }
 
 func (s *TransactionTestSuite) Test_SetTransactionError() {

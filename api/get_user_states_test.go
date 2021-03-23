@@ -48,20 +48,28 @@ func (s *GetUserStatesTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *GetUserStatesTestSuite) TestApi_GetTransaction() {
-	account := models.Account{
-		AccountIndex: 1,
-		PublicKey:    models.PublicKey{1, 2, 3},
+func (s *GetUserStatesTestSuite) TestApi_GetUserStates() {
+	accounts := []models.Account{
+		{
+			AccountIndex: 1,
+			PublicKey:    models.PublicKey{1, 2, 3},
+		},
+		{
+			AccountIndex: 2,
+			PublicKey:    models.PublicKey{1, 2, 3},
+		},
 	}
 
-	err := s.api.storage.AddAccountIfNotExists(&account)
+	err := s.api.storage.AddAccountIfNotExists(&accounts[0])
+	s.NoError(err)
+	err = s.api.storage.AddAccountIfNotExists(&accounts[1])
 	s.NoError(err)
 
 	leafs := []models.StateLeaf{
 		{
 			DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 			UserState: models.UserState{
-				AccountIndex: account.AccountIndex,
+				AccountIndex: accounts[0].AccountIndex,
 				TokenIndex:   models.MakeUint256(1),
 				Balance:      models.MakeUint256(420),
 				Nonce:        models.MakeUint256(0),
@@ -70,7 +78,7 @@ func (s *GetUserStatesTestSuite) TestApi_GetTransaction() {
 		{
 			DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 			UserState: models.UserState{
-				AccountIndex: account.AccountIndex,
+				AccountIndex: accounts[1].AccountIndex,
 				TokenIndex:   models.MakeUint256(2),
 				Balance:      models.MakeUint256(500),
 				Nonce:        models.MakeUint256(0),
@@ -79,7 +87,7 @@ func (s *GetUserStatesTestSuite) TestApi_GetTransaction() {
 		{
 			DataHash: common.BytesToHash([]byte{3, 4, 5, 6, 7}),
 			UserState: models.UserState{
-				AccountIndex: account.AccountIndex,
+				AccountIndex: accounts[0].AccountIndex,
 				TokenIndex:   models.MakeUint256(25),
 				Balance:      models.MakeUint256(1),
 				Nonce:        models.MakeUint256(73),
@@ -94,13 +102,46 @@ func (s *GetUserStatesTestSuite) TestApi_GetTransaction() {
 	err = s.api.storage.AddStateLeaf(&leafs[2])
 	s.NoError(err)
 
-	userStates, err := s.api.GetUserStates(&account.PublicKey)
+	path, err := models.NewMerklePath("00")
+	s.NoError(err)
+	err = s.api.storage.AddOrUpdateStateNode(&models.StateNode{
+		DataHash:   common.BytesToHash([]byte{1, 2, 3, 4, 5}),
+		MerklePath: *path,
+	})
+	s.NoError(err)
+
+	path, err = models.NewMerklePath("01")
+	s.NoError(err)
+	err = s.api.storage.AddOrUpdateStateNode(&models.StateNode{
+		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
+		MerklePath: *path,
+	})
+	s.NoError(err)
+
+	path, err = models.NewMerklePath("10")
+	s.NoError(err)
+	err = s.api.storage.AddOrUpdateStateNode(&models.StateNode{
+		DataHash:   common.BytesToHash([]byte{3, 4, 5, 6, 7}),
+		MerklePath: *path,
+	})
+	s.NoError(err)
+
+	userStates, err := s.api.GetUserStates(&accounts[0].PublicKey)
 	s.NoError(err)
 
 	s.Len(userStates, 3)
-	s.Equal(leafs[0].UserState, userStates[0])
-	s.Equal(leafs[1].UserState, userStates[1])
-	s.Equal(leafs[2].UserState, userStates[2])
+	s.Contains(userStates, models.ReturnUserState{
+		StateID:   0,
+		UserState: leafs[0].UserState,
+	})
+	s.Contains(userStates, models.ReturnUserState{
+		StateID:   1,
+		UserState: leafs[1].UserState,
+	})
+	s.Contains(userStates, models.ReturnUserState{
+		StateID:   2,
+		UserState: leafs[2].UserState,
+	})
 }
 
 func TestGetUserStatesTestSuite(t *testing.T) {

@@ -7,7 +7,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -86,7 +85,7 @@ func (s *GetTransactionTestSuite) TestApi_CalculateTransactionStatus_Pending() {
 }
 
 func (s *GetTransactionTestSuite) TestApi_CalculateTransactionStatus_Committed() {
-	s.tx.IncludedInCommitment = &common.Hash{1, 2, 3, 4, 5}
+	s.tx.IncludedInCommitment = ref.Int32(1234)
 	status := CalculateTransactionStatus(s.tx)
 
 	s.Equal(models.Committed, status)

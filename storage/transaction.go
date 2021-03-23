@@ -38,6 +38,19 @@ func (s *Storage) GetTransaction(hash common.Hash) (*models.Transaction, error) 
 	return &res[0], nil
 }
 
+func (s *Storage) GetUserTransactions(fromIndex models.Uint256) ([]models.Transaction, error) {
+	res := make([]models.Transaction, 0, 1)
+	err := s.DB.Query(
+		squirrel.Select("*").
+			From("transaction").
+			Where(squirrel.Eq{"from_index": fromIndex}),
+	).Into(&res)
+	if err != nil || len(res) == 0 {
+		return nil, err
+	}
+	return res, nil
+}
+
 func (s *Storage) GetPendingTransactions() ([]models.Transaction, error) {
 	res := make([]models.Transaction, 0, 32)
 	err := s.DB.Query(
@@ -51,11 +64,11 @@ func (s *Storage) GetPendingTransactions() ([]models.Transaction, error) {
 	return res, nil
 }
 
-func (s *Storage) MarkTransactionAsIncluded(txHash, commitmentHash common.Hash) error {
+func (s *Storage) MarkTransactionAsIncluded(txHash common.Hash, commitmentID int32) error {
 	_, err := s.DB.ExecBuilder(
 		s.QB.Update("transaction").
 			Where(squirrel.Eq{"tx_hash": txHash}).
-			Set("included_in_commitment", commitmentHash),
+			Set("included_in_commitment", commitmentID),
 	)
 	return err
 }

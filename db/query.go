@@ -26,3 +26,8 @@ func (d *Database) Query(query squirrel.SelectBuilder) *QueryBuilder {
 	sql, args, err := query.PlaceholderFormat(squirrel.Dollar).ToSql()
 	return &QueryBuilder{d, sql, args, err}
 }
+
+func (d *Database) InsertQuery(query squirrel.InsertBuilder) *QueryBuilder {
+	sql, args, err := query.PlaceholderFormat(squirrel.Dollar).ToSql()
+	return &QueryBuilder{d, sql, args, err}
+}
