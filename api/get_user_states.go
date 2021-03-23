@@ -4,13 +4,13 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-func (a *API) GetUserStates(publicKey *models.PublicKey) ([]models.UserState, error) {
+func (a *API) GetUserStates(publicKey *models.PublicKey) ([]models.ReturnUserState, error) {
 	accounts, err := a.storage.GetAccounts(publicKey)
 	if err != nil {
 		return nil, err
 	}
 
-	userStates := make([]models.UserState, 0, 1)
+	userStates := make([]models.ReturnUserState, 0, 1)
 
 	for i := range accounts {
 		stateLeafs, err := a.storage.GetStateLeafs(accounts[i].AccountIndex)
@@ -19,7 +19,15 @@ func (a *API) GetUserStates(publicKey *models.PublicKey) ([]models.UserState, er
 		}
 
 		for i := range stateLeafs {
-			userStates = append(userStates, stateLeafs[i].UserState)
+			path, err := a.storage.GetStateNodeByHash(stateLeafs[i].DataHash)
+			if err != nil {
+				return nil, err
+			}
+			userState := models.ReturnUserState{
+				UserState: stateLeafs[i].UserState,
+				StateId: path.MerklePath.Path,
+			}
+			userStates = append(userStates, userState)
 		}
 	}
 

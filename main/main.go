@@ -32,6 +32,10 @@ var genesisAccounts = []commander.GenesisAccount{
 		PublicKey: models.PublicKey{3, 4, 5},
 		Balance:   models.MakeUint256(1000),
 	},
+	{
+		PublicKey: models.PublicKey{2, 3, 4},
+		Balance:   models.MakeUint256(1000),
+	},
 }
 
 func main() {
