@@ -94,6 +94,30 @@ func (s *GetUserStatesTestSuite) TestApi_GetTransaction() {
 	err = s.api.storage.AddStateLeaf(&leafs[2])
 	s.NoError(err)
 
+	path, err := models.NewMerklePath("00")
+	s.NoError(err)
+	err = s.api.storage.AddOrUpdateStateNode(&models.StateNode{
+		DataHash:   common.BytesToHash([]byte{1, 2, 3, 4, 5}),
+		MerklePath: *path,
+	})
+	s.NoError(err)
+
+	path, err = models.NewMerklePath("01")
+	s.NoError(err)
+	err = s.api.storage.AddOrUpdateStateNode(&models.StateNode{
+		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
+		MerklePath: *path,
+	})
+	s.NoError(err)
+
+	path, err = models.NewMerklePath("10")
+	s.NoError(err)
+	err = s.api.storage.AddOrUpdateStateNode(&models.StateNode{
+		DataHash:   common.BytesToHash([]byte{3, 4, 5, 6, 7}),
+		MerklePath: *path,
+	})
+	s.NoError(err)
+
 	userStates, err := s.api.GetUserStates(&account.PublicKey)
 	s.NoError(err)
 
