@@ -94,13 +94,13 @@ func (s *TransactionTestSuite) Test_GetPendingTransactions_AddAndRetrieve() {
 func (s *TransactionTestSuite) Test_GetUserTransactions() {
 	tx1 := tx
 	tx1.Hash = utils.RandomHash()
-	tx1.FromIndex = models.MakeUint256(1)
+	tx1.FromIndex = 1
 	tx2 := tx
 	tx2.Hash = utils.RandomHash()
-	tx2.FromIndex = models.MakeUint256(2)
+	tx2.FromIndex = 2
 	tx3 := tx
 	tx3.Hash = utils.RandomHash()
-	tx3.FromIndex = models.MakeUint256(1)
+	tx3.FromIndex = 1
 
 	err := s.storage.AddTransaction(&tx1)
 	s.NoError(err)

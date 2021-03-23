@@ -127,8 +127,8 @@ func (s *GetTransactionsTestSuite) TestApi_GetTransactions() {
 	transactions := []models.Transaction{
 		{
 			Hash:                 common.BigToHash(big.NewInt(1234)),
-			FromIndex:            models.MakeUint256(0),
-			ToIndex:              models.MakeUint256(1),
+			FromIndex:            0,
+			ToIndex:              1,
 			Amount:               models.MakeUint256(1),
 			Fee:                  models.MakeUint256(5),
 			Nonce:                models.MakeUint256(0),
@@ -137,8 +137,8 @@ func (s *GetTransactionsTestSuite) TestApi_GetTransactions() {
 		},
 		{
 			Hash:                 common.BigToHash(big.NewInt(2345)),
-			FromIndex:            models.MakeUint256(0),
-			ToIndex:              models.MakeUint256(1),
+			FromIndex:            0,
+			ToIndex:              1,
 			Amount:               models.MakeUint256(2),
 			Fee:                  models.MakeUint256(5),
 			Nonce:                models.MakeUint256(1),
@@ -147,8 +147,8 @@ func (s *GetTransactionsTestSuite) TestApi_GetTransactions() {
 		},
 		{
 			Hash:                 common.BigToHash(big.NewInt(3456)),
-			FromIndex:            models.MakeUint256(1),
-			ToIndex:              models.MakeUint256(0),
+			FromIndex:            1,
+			ToIndex:              0,
 			Amount:               models.MakeUint256(3),
 			Fee:                  models.MakeUint256(5),
 			Nonce:                models.MakeUint256(0),
@@ -157,8 +157,8 @@ func (s *GetTransactionsTestSuite) TestApi_GetTransactions() {
 		},
 		{
 			Hash:                 common.BigToHash(big.NewInt(4567)),
-			FromIndex:            models.MakeUint256(0),
-			ToIndex:              models.MakeUint256(1),
+			FromIndex:            0,
+			ToIndex:              1,
 			Amount:               models.MakeUint256(2),
 			Fee:                  models.MakeUint256(5),
 			Nonce:                models.MakeUint256(2),
