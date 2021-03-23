@@ -7,8 +7,8 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func recreateDatabase(cfg *config.Config) error {
-	datasource := CreateDatasource(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, nil)
+func recreateDatabase(cfg *config.DBConfig) error {
+	datasource := CreateDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, nil)
 	dbInstance, err := sqlx.Connect("postgres", datasource)
 	if err != nil {
 		return err
@@ -18,19 +18,19 @@ func recreateDatabase(cfg *config.Config) error {
 		SELECT pg_terminate_backend(pg_stat_activity.pid) 
 		FROM pg_stat_activity 
 		WHERE pg_stat_activity.datname = '%s' AND pid <> pg_backend_pid();`,
-		cfg.DBName,
+		cfg.Name,
 	)
 	_, err = dbInstance.Exec(query)
 	if err != nil {
 		return err
 	}
 
-	_, err = dbInstance.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", cfg.DBName))
+	_, err = dbInstance.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", cfg.Name))
 	if err != nil {
 		return err
 	}
 
-	_, err = dbInstance.Exec(fmt.Sprintf("CREATE DATABASE %s", cfg.DBName))
+	_, err = dbInstance.Exec(fmt.Sprintf("CREATE DATABASE %s", cfg.Name))
 	if err != nil {
 		return err
 	}

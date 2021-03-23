@@ -23,8 +23,8 @@ type Database struct {
 	DatabaseLike
 }
 
-func NewDatabase(cfg *config.Config) (*Database, error) {
-	datasource := CreateDatasource(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, &cfg.DBName)
+func NewDatabase(cfg *config.DBConfig) (*Database, error) {
+	datasource := CreateDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, &cfg.Name)
 	db, err := sqlx.Connect("postgres", datasource)
 	if err != nil {
 		return nil, err
@@ -71,8 +71,8 @@ func (d *Database) BeginTransaction() (*TransactionController, *Database, error)
 	return nil, nil, fmt.Errorf("Database object created with unsupported DatabaseLike implementation")
 }
 
-func GetMigrator(cfg *config.Config) (*migrate.Migrate, error) {
-	datasource := CreateDatasource(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, &cfg.DBName)
+func GetMigrator(cfg *config.DBConfig) (*migrate.Migrate, error) {
+	datasource := CreateDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, &cfg.Name)
 
 	db, err := sql.Open("postgres", datasource)
 	if err != nil {
