@@ -6,19 +6,18 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func CommitmentsEndlessLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
+func CommitmentsEndlessLoop(storage *st.Storage, cfg *config.RollupConfig) error {
 	done := make(chan bool)
-	return CommitmentsLoop(storage, client, cfg, done)
+	return CommitmentsLoop(storage, cfg, done)
 }
 
-func CommitmentsLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig, done <-chan bool) error {
-	ticker := time.NewTicker(500 * time.Millisecond)
+func CommitmentsLoop(storage *st.Storage, cfg *config.RollupConfig, done <-chan bool) error {
+	ticker := time.NewTicker(500 * time.Millisecond) // TODO take from config
 
 	for {
 		select {
@@ -26,7 +25,7 @@ func CommitmentsLoop(storage *st.Storage, client *eth.Client, cfg *config.Rollup
 			ticker.Stop()
 			return nil
 		case <-ticker.C:
-			err := CommitTransactions(storage, client, cfg)
+			err := CommitTransactions(storage, cfg)
 			if err != nil {
 				return err
 			}
@@ -34,14 +33,29 @@ func CommitmentsLoop(storage *st.Storage, client *eth.Client, cfg *config.Rollup
 	}
 }
 
-func CommitTransactions(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
+func CommitTransactions(storage *st.Storage, cfg *config.RollupConfig) (err error) {
+	tx, txStorage, err := storage.BeginTransaction()
+	if err != nil {
+		return
+	}
+	defer tx.Rollback(&err)
+
+	err = unsafeCommitTransactions(txStorage, cfg)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+func unsafeCommitTransactions(storage *st.Storage, cfg *config.RollupConfig) error {
 	stateTree := st.NewStateTree(storage)
 
-	// TODO: wrap in a db transaction
 	txs, err := storage.GetPendingTransactions()
 	if err != nil {
 		return err
 	}
+
 	txsCount := uint32(len(txs))
 	log.Printf("%d transactions in the pool", txsCount)
 
@@ -54,7 +68,9 @@ func CommitTransactions(storage *st.Storage, client *eth.Client, cfg *config.Rol
 	if err != nil {
 		return err
 	}
-	// TODO: if len(includedTxs) != txCountPerCommitment then fail and rollback
+	if uint32(len(includedTxs)) != cfg.TxsPerCommitment {
+		return nil
+	}
 
 	log.Printf("Creating a commitment from %d transactions", len(includedTxs))
 	commitment, err := CreateCommitment(stateTree, includedTxs, cfg.FeeReceiverIndex)
@@ -67,12 +83,6 @@ func CommitTransactions(storage *st.Storage, client *eth.Client, cfg *config.Rol
 		return err
 	}
 
-	_, err = client.SubmitTransfersBatch([]*models.Commitment{commitment})
-	if err != nil {
-		return err
-	}
-	log.Printf("Sumbmited commitment %s on chain", commitment.LeafHash().Hex())
-
 	for i := range includedTxs {
 		tx := includedTxs[i]
 		err = storage.MarkTransactionAsIncluded(tx.Hash, *commitmentID)
@@ -80,7 +90,6 @@ func CommitTransactions(storage *st.Storage, client *eth.Client, cfg *config.Rol
 			return err
 		}
 	}
-	// tx.Commit()
 	return nil
 }
 
