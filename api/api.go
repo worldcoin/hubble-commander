@@ -10,27 +10,27 @@ import (
 )
 
 type API struct {
-	cfg     *config.Config
+	cfg     *config.APIConfig
 	storage *st.Storage
 }
 
 func StartAPIServer(cfg *config.Config) error {
-	storage, err := st.NewStorage(cfg)
+	storage, err := st.NewStorage(&cfg.DB)
 	if err != nil {
 		return err
 	}
 
-	server, err := getAPIServer(cfg, storage)
+	server, err := getAPIServer(&cfg.API, storage)
 	if err != nil {
 		return err
 	}
 
 	http.HandleFunc("/", server.ServeHTTP)
-	addr := fmt.Sprintf(":%s", cfg.Port)
+	addr := fmt.Sprintf(":%s", cfg.API.Port)
 	return http.ListenAndServe(addr, nil)
 }
 
-func getAPIServer(cfg *config.Config, storage *st.Storage) (*rpc.Server, error) {
+func getAPIServer(cfg *config.APIConfig, storage *st.Storage) (*rpc.Server, error) {
 	api := API{cfg, storage}
 	server := rpc.NewServer()
 

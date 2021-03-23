@@ -9,7 +9,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -29,7 +28,7 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.Config) err
 			continue
 		}
 
-		feeReceiver := cfg.FeeReceiverIndex
+		feeReceiver := cfg.Rollup.FeeReceiverIndex
 
 		log.Printf("Applying %d transactions", len(transactions))
 		includedTransactions, err := ApplyTransactions(storage, transactions, feeReceiver)
@@ -44,7 +43,7 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.Config) err
 			return err
 		}
 
-		err = storage.AddCommitment(commitment)
+		commitmentID, err := storage.AddCommitment(commitment)
 		if err != nil {
 			return err
 		}
@@ -53,11 +52,11 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.Config) err
 		if err != nil {
 			return err
 		}
-		log.Printf("Sumbmited commitment %s on chain", commitment.LeafHash.Hex())
+		log.Printf("Sumbmited commitment %s on chain", commitment.LeafHash().Hex())
 
 		for i := range includedTransactions {
 			tx := includedTransactions[i]
-			err = storage.MarkTransactionAsIncluded(tx.Hash, commitment.LeafHash)
+			err = storage.MarkTransactionAsIncluded(tx.Hash, *commitmentID)
 			if err != nil {
 				return err
 			}
@@ -93,29 +92,18 @@ func CreateCommitment(stateTree *st.StateTree, transactions []models.Transaction
 		return nil, err
 	}
 
-	accountRoot := common.Hash{} // TODO: Read from account tree
-
-	bodyHash, err := encoder.GetCommitmentBodyHash(accountRoot, combinedSignature, feeReceiver, transactionsSerialized)
-	if err != nil {
-		return nil, err
-	}
+	accountRoot := &common.Hash{} // TODO: Read from account tree
 
 	stateRoot, err := stateTree.Root()
 	if err != nil {
 		return nil, err
 	}
 
-	leafHash := utils.HashTwo(*stateRoot, *bodyHash)
-
-	commitment := models.Commitment{
-		LeafHash:          leafHash,
-		PostStateRoot:     *stateRoot,
-		BodyHash:          *bodyHash,
-		AccountTreeRoot:   accountRoot,
-		CombinedSignature: combinedSignature,
-		FeeReceiver:       feeReceiver,
+	return &models.Commitment{
 		Transactions:      transactionsSerialized,
-	}
-
-	return &commitment, err
+		FeeReceiver:       feeReceiver,
+		CombinedSignature: combinedSignature,
+		PostStateRoot:     *stateRoot,
+		AccountTreeRoot:   accountRoot,
+	}, nil
 }

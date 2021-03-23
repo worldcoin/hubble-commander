@@ -8,10 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 )
 
 var (
@@ -103,22 +100,4 @@ func EncodeTransaction(transaction *models.Transaction) ([]uint8, error) {
 	binary.BigEndian.PutUint16(arr[10:12], fee)
 
 	return arr, nil
-}
-
-func GetCommitmentBodyHash(
-	accountRoot common.Hash,
-	signature models.Signature,
-	feeReceiver uint32,
-	transactions []byte,
-) (*common.Hash, error) {
-	arr := make([]byte, 32+64+32+len(transactions))
-
-	copy(arr[0:32], accountRoot.Bytes())
-	copy(arr[32:64], utils.PadLeft(signature[0].Bytes(), 32))
-	copy(arr[64:96], utils.PadLeft(signature[1].Bytes(), 32))
-	binary.BigEndian.PutUint32(arr[124:128], feeReceiver)
-	copy(arr[128:], transactions)
-
-	hash := crypto.Keccak256Hash(arr)
-	return &hash, nil
 }

@@ -11,7 +11,7 @@ type Storage struct {
 	QB squirrel.StatementBuilderType
 }
 
-func NewStorage(cfg *config.Config) (*Storage, error) {
+func NewStorage(cfg *config.DBConfig) (*Storage, error) {
 	dbInstance, err := db.NewDatabase(cfg)
 	if err != nil {
 		return nil, err

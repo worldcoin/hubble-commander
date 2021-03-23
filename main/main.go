@@ -41,13 +41,13 @@ var genesisAccounts = []commander.GenesisAccount{
 func main() {
 	cfg := config.GetConfig()
 
-	storage, err := st.NewStorage(&cfg)
+	storage, err := st.NewStorage(&cfg.DB)
 	if err != nil {
 		log.Fatal(err)
 	}
 	stateTree := st.NewStateTree(storage)
 
-	dep, err := GetDeployer(&cfg)
+	dep, err := GetDeployer(cfg.Ethereum)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -116,30 +116,17 @@ func CreateClientFromChainState(dep deployer.Deployer, chainState *models.ChainS
 	return client, nil
 }
 
-func GetDeployer(cfg *config.Config) (deployer.Deployer, error) {
-	if cfg.EthereumRPCURL == nil {
-		sim, err := simulator.NewAutominingSimulator()
-		if err != nil {
-			return nil, err
-		}
-
-		return sim, nil
+func GetDeployer(cfg *config.EthereumConfig) (deployer.Deployer, error) {
+	if cfg == nil {
+		return simulator.NewAutominingSimulator()
 	}
 
-	if cfg.EthereumChainID == nil {
-		return nil, fmt.Errorf("chain id should be specified in the config when connecting to remote ethereum RPC")
-	}
-
-	chainID, ok := big.NewInt(0).SetString(*cfg.EthereumChainID, 10)
+	chainID, ok := big.NewInt(0).SetString(cfg.ChainID, 10)
 	if !ok {
 		return nil, fmt.Errorf("invalid chain id")
 	}
 
-	if cfg.EthereumPrivateKey == nil {
-		return nil, fmt.Errorf("private key should be specified in the config when connecting to remote ethereum RPC")
-	}
-
-	key, err := crypto.HexToECDSA(*cfg.EthereumPrivateKey)
+	key, err := crypto.HexToECDSA(cfg.PrivateKey)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +136,7 @@ func GetDeployer(cfg *config.Config) (deployer.Deployer, error) {
 		return nil, err
 	}
 
-	return deployer.NewRPCDeployer(*cfg.EthereumRPCURL, chainID, account)
+	return deployer.NewRPCDeployer(cfg.RPCURL, chainID, account)
 }
 
 func BootstrapState(

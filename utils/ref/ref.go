@@ -2,6 +2,8 @@ package ref
 
 import (
 	"time"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 func Bool(b bool) *bool {
@@ -10,6 +12,18 @@ func Bool(b bool) *bool {
 
 func Int(i int) *int {
 	return &i
+}
+
+func Uint(u uint) *uint {
+	return &u
+}
+
+func Int32(i int32) *int32 {
+	return &i
+}
+
+func Uint32(u uint32) *uint32 {
+	return &u
 }
 
 func Int64(i int64) *int64 {
@@ -26,4 +40,8 @@ func String(s string) *string {
 
 func Duration(d time.Duration) *time.Duration {
 	return &d
+}
+
+func Hash(h common.Hash) *common.Hash {
+	return &h
 }
