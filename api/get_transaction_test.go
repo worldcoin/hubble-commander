@@ -43,8 +43,8 @@ func (s *GetTransactionTestSuite) SetupTest() {
 	s.NoError(err)
 
 	tx := &models.Transaction{
-		FromIndex: *models.NewUint256(1),
-		ToIndex:   *models.NewUint256(2),
+		FromIndex: 1,
+		ToIndex:   2,
 		Amount:    *models.NewUint256(50),
 		Fee:       *models.NewUint256(10),
 		Nonce:     *models.NewUint256(0),

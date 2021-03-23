@@ -6,8 +6,8 @@ import (
 
 type Transaction struct {
 	Hash      common.Hash `db:"tx_hash"`
-	FromIndex Uint256     `db:"from_index"` // TODO change type to uint32
-	ToIndex   Uint256     `db:"to_index"`   // TODO change type to uint32
+	FromIndex uint32      `db:"from_index"`
+	ToIndex   uint32      `db:"to_index"`
 	Amount    Uint256
 	Fee       Uint256
 	Nonce     Uint256

@@ -94,8 +94,8 @@ func EncodeTransaction(transaction *models.Transaction) ([]uint8, error) {
 
 	arr := make([]byte, 12)
 
-	binary.BigEndian.PutUint32(arr[0:4], uint32(transaction.FromIndex.Uint64()))
-	binary.BigEndian.PutUint32(arr[4:8], uint32(transaction.ToIndex.Uint64()))
+	binary.BigEndian.PutUint32(arr[0:4], transaction.FromIndex)
+	binary.BigEndian.PutUint32(arr[4:8], transaction.ToIndex)
 	binary.BigEndian.PutUint16(arr[8:10], amount)
 	binary.BigEndian.PutUint16(arr[10:12], fee)
 

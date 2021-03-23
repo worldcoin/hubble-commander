@@ -112,8 +112,8 @@ func (s *EncoderTestSuite) TestDecimalEncoding() {
 func (s *EncoderTestSuite) TestTransactionEncoding() {
 	tx := models.Transaction{
 		Hash:      common.Hash{},
-		FromIndex: models.MakeUint256(1),
-		ToIndex:   models.MakeUint256(2),
+		FromIndex: 1,
+		ToIndex:   2,
 		Amount:    models.MakeUint256(50),
 		Fee:       models.MakeUint256(10),
 		Nonce:     models.MakeUint256(22),
@@ -124,8 +124,8 @@ func (s *EncoderTestSuite) TestTransactionEncoding() {
 	s.NoError(err)
 
 	txTransfer := testtx.TxTransfer{
-		FromIndex: &tx.FromIndex.Int,
-		ToIndex:   &tx.ToIndex.Int,
+		FromIndex: big.NewInt(int64(tx.FromIndex)),
+		ToIndex:   big.NewInt(int64(tx.ToIndex)),
 		Amount:    &tx.Amount.Int,
 		Fee:       &tx.Fee.Int,
 	}
