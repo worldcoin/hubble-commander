@@ -79,7 +79,7 @@ func unsafeCommitTransactions(storage *st.Storage, cfg *config.RollupConfig) err
 		return err
 	}
 	if uint32(len(includedTxs)) != cfg.TxsPerCommitment {
-		return nil
+		return ErrNotEnoughTransactions
 	}
 
 	log.Printf("Creating a commitment from %d transactions", len(includedTxs))

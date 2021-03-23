@@ -47,6 +47,7 @@ func ApplyTransactions(
 	}
 
 	if combinedFee.Cmp(big.NewInt(0)) == 1 {
+		// TODO cfg.FeeReceiverIndex actually represents PubKeyID and is used and StateID here
 		err := ApplyFee(stateTree, cfg.FeeReceiverIndex, combinedFee)
 		if err != nil {
 			return nil, err

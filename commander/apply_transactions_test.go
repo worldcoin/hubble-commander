@@ -123,6 +123,7 @@ func generateInvalidTransactions(txAmount int) []models.Transaction {
 	txs := make([]models.Transaction, 0, txAmount)
 	for i := 0; i < txAmount; i++ {
 		tx := models.Transaction{
+			Hash:      utils.RandomHash(),
 			FromIndex: 1,
 			ToIndex:   2,
 			Amount:    models.MakeUint256(1),

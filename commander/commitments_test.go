@@ -18,21 +18,21 @@ var (
 			PublicKey: models.PublicKey{1, 2, 3},
 			Balance:   models.MakeUint256(1000),
 		},
-		AccountIndex: 1,
+		AccountIndex: 0,
 	}
 	receiver = RegisteredGenesisAccount{
 		GenesisAccount: GenesisAccount{
 			PublicKey: models.PublicKey{2, 3, 4},
 			Balance:   models.MakeUint256(1000),
 		},
-		AccountIndex: 2,
+		AccountIndex: 1,
 	}
 	feeReceiver = RegisteredGenesisAccount{
 		GenesisAccount: GenesisAccount{
 			PublicKey: models.PublicKey{3, 4, 5},
 			Balance:   models.MakeUint256(1000),
 		},
-		AccountIndex: 3,
+		AccountIndex: 2,
 	}
 	genesisAccounts = []RegisteredGenesisAccount{sender, receiver, feeReceiver}
 )
@@ -56,7 +56,7 @@ func (s *CommitmentsLoopTestSuite) SetupTest() {
 	s.storage = storage.NewTestStorage(testDB.DB)
 	s.cfg = &config.RollupConfig{
 		TxsPerCommitment: 2,
-		FeeReceiverIndex: 3,
+		FeeReceiverIndex: 2,
 	}
 	err = PopulateGenesisAccounts(storage.NewStateTree(s.storage), genesisAccounts)
 	s.NoError(err)
@@ -75,6 +75,16 @@ func (s *CommitmentsLoopTestSuite) TestCommitTransactions_ReturnsErrorWhenThereA
 func (s *CommitmentsLoopTestSuite) TestCommitTransactions_ReturnsErrorWhenThereAreNotEnoughPendingTxs() {
 	txs := generateValidTransactions(2)
 	txs[1].ErrorMessage = ref.String("some error")
+	for i := range txs {
+		err := s.storage.AddTransaction(&txs[i])
+		s.NoError(err)
+	}
+	err := CommitTransactions(s.storage, s.cfg)
+	s.ErrorIs(err, ErrNotEnoughTransactions)
+}
+
+func (s *CommitmentsLoopTestSuite) TestCommitTransactions_ReturnsErrorWhenThereAreNotEnoughValidTxs() {
+	txs := generateInvalidTransactions(2)
 	for i := range txs {
 		err := s.storage.AddTransaction(&txs[i])
 		s.NoError(err)
