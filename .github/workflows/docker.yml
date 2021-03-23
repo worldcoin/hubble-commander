@@ -22,4 +22,4 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: ghcr.io/Worldcoin/hubble:latest
+          tags: ghcr.io/Worldcoin/hubble-commander:latest
