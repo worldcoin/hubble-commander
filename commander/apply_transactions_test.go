@@ -100,8 +100,8 @@ func generateValidTransactions(txAmount int) []models.Transaction {
 	transactions := make([]models.Transaction, 0, txAmount)
 	for i := 0; i < txAmount; i++ {
 		transaction := models.Transaction{
-			FromIndex: models.MakeUint256(1),
-			ToIndex:   models.MakeUint256(2),
+			FromIndex: 1,
+			ToIndex:   2,
 			Amount:    models.MakeUint256(1),
 			Fee:       models.MakeUint256(1),
 			Nonce:     models.MakeUint256(int64(i)),
@@ -116,8 +116,8 @@ func generateInvalidTransactions(txAmount int) []models.Transaction {
 	transactions := make([]models.Transaction, 0, txAmount)
 	for i := 0; i < txAmount; i++ {
 		transaction := models.Transaction{
-			FromIndex: models.MakeUint256(1),
-			ToIndex:   models.MakeUint256(2),
+			FromIndex: 1,
+			ToIndex:   2,
 			Amount:    models.MakeUint256(1),
 			Fee:       models.MakeUint256(1),
 			Nonce:     models.MakeUint256(0),

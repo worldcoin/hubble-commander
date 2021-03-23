@@ -16,8 +16,8 @@ import (
 var (
 	tx = models.Transaction{
 		Hash:                 common.BigToHash(big.NewInt(1234)),
-		FromIndex:            models.MakeUint256(1),
-		ToIndex:              models.MakeUint256(2),
+		FromIndex:            1,
+		ToIndex:              2,
 		Amount:               models.MakeUint256(1000),
 		Fee:                  models.MakeUint256(100),
 		Nonce:                models.MakeUint256(0),

@@ -41,8 +41,8 @@ func (a *API) SendTransaction(incTx models.IncomingTransaction) (*common.Hash, e
 
 	tx := &models.Transaction{
 		Hash:      *hash,
-		FromIndex: *incTx.FromIndex,
-		ToIndex:   *incTx.ToIndex,
+		FromIndex: uint32(incTx.FromIndex.Uint64()),
+		ToIndex:   uint32(incTx.ToIndex.Uint64()),
 		Amount:    *incTx.Amount,
 		Fee:       *incTx.Fee,
 		Nonce:     *incTx.Nonce,

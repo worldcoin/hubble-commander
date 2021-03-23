@@ -52,8 +52,8 @@ func (s *ApplyTransferTestSuite) TearDownTest() {
 
 func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_UpdatesStates() {
 	tx := models.Transaction{
-		FromIndex: models.MakeUint256(1),
-		ToIndex:   models.MakeUint256(2),
+		FromIndex: 1,
+		ToIndex:   2,
 		Amount:    models.MakeUint256(100),
 		Fee:       models.MakeUint256(10),
 		Nonce:     models.MakeUint256(0),
@@ -78,8 +78,8 @@ func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_UpdatesStates(
 
 func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_Validation_Nonce() {
 	tx := models.Transaction{
-		FromIndex: models.MakeUint256(1),
-		ToIndex:   models.MakeUint256(2),
+		FromIndex: 1,
+		ToIndex:   2,
 		Amount:    models.MakeUint256(100),
 		Fee:       models.MakeUint256(10),
 		Nonce:     models.MakeUint256(1),
@@ -91,8 +91,8 @@ func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_Validation_Non
 
 func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_Validation_Balance() {
 	tx := models.Transaction{
-		FromIndex: models.MakeUint256(1),
-		ToIndex:   models.MakeUint256(2),
+		FromIndex: 1,
+		ToIndex:   2,
 		Amount:    models.MakeUint256(400),
 		Fee:       models.MakeUint256(50),
 		Nonce:     models.MakeUint256(0),
@@ -104,8 +104,8 @@ func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_Validation_Bal
 
 func (s *ApplyTransferTestSuite) Test_ApplyTransfer_Validation() {
 	tx := models.Transaction{
-		FromIndex: models.MakeUint256(1),
-		ToIndex:   models.MakeUint256(2),
+		FromIndex: 1,
+		ToIndex:   2,
 		Amount:    models.MakeUint256(400),
 		Fee:       models.MakeUint256(50),
 		Nonce:     models.MakeUint256(0),
@@ -121,8 +121,8 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer_Validation() {
 
 func (s *ApplyTransferTestSuite) Test_ApplyTransfer() {
 	tx := models.Transaction{
-		FromIndex: models.MakeUint256(1),
-		ToIndex:   models.MakeUint256(2),
+		FromIndex: 1,
+		ToIndex:   2,
 		Amount:    models.MakeUint256(100),
 		Fee:       models.MakeUint256(50),
 		Nonce:     models.MakeUint256(0),
