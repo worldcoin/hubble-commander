@@ -72,23 +72,26 @@ func (s *CommitmentsLoopTestSuite) TestCommitTransactions_ReturnsErrorWhenThereA
 	s.ErrorIs(err, ErrNotEnoughTransactions)
 }
 
-func (s *CommitmentsLoopTestSuite) TestCommitTransactions_ReturnsErrorWhenThereAreNotEnoughPendingTxs() {
-	txs := generateValidTransactions(2)
-	txs[1].ErrorMessage = ref.String("some error")
+func (s *CommitmentsLoopTestSuite) addTransactions(txs []models.Transaction) {
 	for i := range txs {
 		err := s.storage.AddTransaction(&txs[i])
 		s.NoError(err)
 	}
+}
+
+func (s *CommitmentsLoopTestSuite) TestCommitTransactions_ReturnsErrorWhenThereAreNotEnoughPendingTxs() {
+	txs := generateValidTransactions(2)
+	txs[1].ErrorMessage = ref.String("some error")
+	s.addTransactions(txs)
+
 	err := CommitTransactions(s.storage, s.cfg)
 	s.ErrorIs(err, ErrNotEnoughTransactions)
 }
 
 func (s *CommitmentsLoopTestSuite) TestCommitTransactions_ReturnsErrorWhenThereAreNotEnoughValidTxs() {
 	txs := generateInvalidTransactions(2)
-	for i := range txs {
-		err := s.storage.AddTransaction(&txs[i])
-		s.NoError(err)
-	}
+	s.addTransactions(txs)
+
 	err := CommitTransactions(s.storage, s.cfg)
 	s.ErrorIs(err, ErrNotEnoughTransactions)
 }
