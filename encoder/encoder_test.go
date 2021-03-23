@@ -108,7 +108,7 @@ func (s *EncoderTestSuite) TestEncodeDecimal() {
 	s.Equal(uint16(expected.Uint64()), encoded)
 }
 
-func newTxTransfer(tx models.Transaction) testtx.TxTransfer {
+func newTxTransfer(tx *models.Transaction) testtx.TxTransfer {
 	return testtx.TxTransfer{
 		FromIndex: big.NewInt(int64(tx.FromIndex)),
 		ToIndex:   big.NewInt(int64(tx.ToIndex)),
@@ -118,7 +118,7 @@ func newTxTransfer(tx models.Transaction) testtx.TxTransfer {
 }
 
 func (s *EncoderTestSuite) TestEncodeTransaction() {
-	tx := models.Transaction{
+	tx := &models.Transaction{
 		FromIndex: 1,
 		ToIndex:   2,
 		Amount:    models.MakeUint256(50),
@@ -128,7 +128,7 @@ func (s *EncoderTestSuite) TestEncodeTransaction() {
 	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{newTxTransfer(tx)})
 	s.NoError(err)
 
-	encoded, err := EncodeTransaction(&tx)
+	encoded, err := EncodeTransaction(tx)
 	s.NoError(err)
 
 	s.Equal(expected, encoded)
@@ -148,10 +148,11 @@ func (s *EncoderTestSuite) TestSerializeTransactions() {
 		Fee:       models.MakeUint256(10),
 	}
 
-	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{newTxTransfer(tx), newTxTransfer(tx2)})
+	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{newTxTransfer(&tx), newTxTransfer(&tx2)})
 	s.NoError(err)
 
 	serialized, err := SerializeTransactions([]models.Transaction{tx, tx2})
+	s.NoError(err)
 
 	s.Equal(expected, serialized)
 }
