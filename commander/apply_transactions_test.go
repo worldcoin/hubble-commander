@@ -67,32 +67,32 @@ func (s *ApplyTransactionsTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *ApplyTransactionsTestSuite) Test_ApplyTransfers_AllValid() {
-	transactions := generateValidTransactions(10)
+func (s *ApplyTransactionsTestSuite) Test_ApplyTransactions_AllValid() {
+	txs := GenerateValidTransactions(10)
 
-	validTransactions, err := ApplyTransactions(s.storage, transactions, &cfg)
+	validTxs, err := ApplyTransactions(s.storage, txs, &cfg)
 	s.NoError(err)
 
-	s.Len(validTransactions, 10)
+	s.Len(validTxs, 10)
 }
 
-func (s *ApplyTransactionsTestSuite) Test_ApplyTransfers_SomeValid() {
-	transactions := generateValidTransactions(10)
-	transactions = append(transactions, generateInvalidTransactions(10)...)
+func (s *ApplyTransactionsTestSuite) Test_ApplyTransactions_SomeValid() {
+	txs := GenerateValidTransactions(10)
+	txs = append(txs, generateInvalidTransactions(10)...)
 
-	validTransactions, err := ApplyTransactions(s.storage, transactions, &cfg)
+	validTxs, err := ApplyTransactions(s.storage, txs, &cfg)
 	s.NoError(err)
 
-	s.Len(validTransactions, 10)
+	s.Len(validTxs, 10)
 }
 
-func (s *ApplyTransactionsTestSuite) Test_ApplyTransfers_MoreThan32() {
-	transactions := generateValidTransactions(60)
+func (s *ApplyTransactionsTestSuite) Test_ApplyTransactions_MoreThan32() {
+	txs := GenerateValidTransactions(60)
 
-	validTransactions, err := ApplyTransactions(s.storage, transactions, &cfg)
+	validTxs, err := ApplyTransactions(s.storage, txs, &cfg)
 	s.NoError(err)
 
-	s.Len(validTransactions, 32)
+	s.Len(validTxs, 32)
 
 	state, _ := s.tree.Leaf(1)
 	s.Equal(models.MakeUint256(32), state.Nonce)
@@ -102,34 +102,32 @@ func TestApplyTransactionsTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplyTransactionsTestSuite))
 }
 
-func generateValidTransactions(txAmount int) []models.Transaction {
-	transactions := make([]models.Transaction, 0, txAmount)
+func GenerateValidTransactions(txAmount int) []models.Transaction {
+	txs := make([]models.Transaction, 0, txAmount)
 	for i := 0; i < txAmount; i++ {
-		transaction := models.Transaction{
+		tx := models.Transaction{
 			FromIndex: models.MakeUint256(1),
 			ToIndex:   models.MakeUint256(2),
 			Amount:    models.MakeUint256(1),
 			Fee:       models.MakeUint256(1),
 			Nonce:     models.MakeUint256(int64(i)),
 		}
-		transactions = append(transactions, transaction)
+		txs = append(txs, tx)
 	}
-
-	return transactions
+	return txs
 }
 
 func generateInvalidTransactions(txAmount int) []models.Transaction {
-	transactions := make([]models.Transaction, 0, txAmount)
+	txs := make([]models.Transaction, 0, txAmount)
 	for i := 0; i < txAmount; i++ {
-		transaction := models.Transaction{
+		tx := models.Transaction{
 			FromIndex: models.MakeUint256(1),
 			ToIndex:   models.MakeUint256(2),
 			Amount:    models.MakeUint256(1),
 			Fee:       models.MakeUint256(1),
 			Nonce:     models.MakeUint256(0),
 		}
-		transactions = append(transactions, transaction)
+		txs = append(txs, tx)
 	}
-
-	return transactions
+	return txs
 }
