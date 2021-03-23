@@ -36,7 +36,7 @@ func (c *Client) SubmitTransfersBatch(commitments []*models.Commitment) (batchID
 		select {
 		case newBatch := <-sink:
 			if newBatch.Raw.TxHash == tx.Hash() {
-				return models.NewUint256FromBig(*newBatch.Index), nil
+				return models.NewUint256FromBig(*newBatch.BatchID), nil
 			}
 		case <-time.After(*c.config.txTimeout):
 			return nil, fmt.Errorf("timeout")
