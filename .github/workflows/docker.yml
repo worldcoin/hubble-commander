@@ -1,8 +1,8 @@
 name: Hubble Commander CI
 on:
   push:
-#    branches:
-#      - master
+    branches:
+      - master
 
 jobs:
   build-image:
