@@ -10,15 +10,16 @@ import (
 )
 
 var (
-	ErrStateTreeIsNil   = errors.New("state tree cannot be nil")
-	ErrTransactionIsNil = errors.New("transaction cannot be nil")
-	ErrUserStateIsNil   = errors.New("sender/receiver state cannot be nil")
-	ErrNonceTooLow      = errors.New("nonce too low")
-	ErrNonceTooHigh     = errors.New("nonce too high")
-	ErrBalanceTooLow    = errors.New("amount exceeds balance")
+	ErrStateTreeIsNil        = errors.New("state tree cannot be nil")
+	ErrTransactionIsNil      = errors.New("transaction cannot be nil")
+	ErrUserStateIsNil        = errors.New("sender/receiver state cannot be nil")
+	ErrIncorrectTokenIndices = errors.New("sender's, receiver's and fee receiver's token indices are not the same")
+	ErrNonceTooLow           = errors.New("nonce too low")
+	ErrNonceTooHigh          = errors.New("nonce too high")
+	ErrBalanceTooLow         = errors.New("amount exceeds balance")
 )
 
-func ApplyTransfer(stateTree *storage.StateTree, tx *models.Transaction) (txError, appError error) {
+func ApplyTransfer(stateTree *storage.StateTree, tx *models.Transaction, feeReceiverTokenIndex models.Uint256) (txError, appError error) {
 	if stateTree == nil {
 		return nil, ErrStateTreeIsNil
 	}
@@ -41,6 +42,10 @@ func ApplyTransfer(stateTree *storage.StateTree, tx *models.Transaction) (txErro
 
 	senderState := senderLeaf.UserState
 	receiverState := receiverLeaf.UserState
+
+	if senderState.TokenIndex.Cmp(&feeReceiverTokenIndex.Int) != 0 && receiverState.TokenIndex.Cmp(&feeReceiverTokenIndex.Int) != 0 {
+		return nil, ErrIncorrectTokenIndices
+	}
 
 	newSenderState, newReceiverState, err := CalculateStateAfterTransfer(
 		&senderState,

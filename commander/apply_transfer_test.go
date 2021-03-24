@@ -111,11 +111,23 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer_Validation() {
 		Nonce:     models.MakeUint256(0),
 	}
 
-	txError, appError := ApplyTransfer(s.tree, nil)
+	txError, appError := ApplyTransfer(s.tree, nil, models.MakeUint256(1))
 	s.Error(appError)
 	s.NoError(txError)
-	txError, appError = ApplyTransfer(nil, &tx)
+	txError, appError = ApplyTransfer(nil, &tx, models.MakeUint256(1))
 	s.Error(appError)
+	s.NoError(txError)
+
+	senderIndex := senderState.AccountIndex
+	receiverIndex := receiverState.AccountIndex
+
+	err := s.tree.Set(senderIndex, &senderState)
+	s.NoError(err)
+	err = s.tree.Set(receiverIndex, &receiverState)
+	s.NoError(err)
+
+	txError, appError = ApplyTransfer(s.tree, &tx, models.MakeUint256(3))
+	s.EqualError(appError, ErrIncorrectTokenIndices.Error(), appError.Error())
 	s.NoError(txError)
 }
 
@@ -136,7 +148,7 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer() {
 	err = s.tree.Set(receiverIndex, &receiverState)
 	s.NoError(err)
 
-	txError, appError := ApplyTransfer(s.tree, &tx)
+	txError, appError := ApplyTransfer(s.tree, &tx, models.MakeUint256(1))
 	s.NoError(appError)
 	s.NoError(txError)
 
