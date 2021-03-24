@@ -85,6 +85,29 @@ func (s *SendTransactionTestSuite) TestApi_SendTransaction_VerifyNonce_TooLow() 
 	s.EqualErrorf(err, "nonce too low", err.Error())
 }
 
+func (s *SendTransactionTestSuite) TestApi_SendTransaction_VerifyFee() {
+	userState := models.UserState{
+		AccountIndex: 1,
+		TokenIndex:   models.MakeUint256(1),
+		Balance:      models.MakeUint256(420),
+		Nonce:        models.MakeUint256(1),
+	}
+
+	err := s.tree.Set(2, &userState)
+	s.NoError(err)
+
+	tx := models.IncomingTransaction{
+		FromIndex: models.NewUint256(2),
+		ToIndex:   models.NewUint256(1),
+		Amount:    models.NewUint256(50),
+		Fee:       models.NewUint256(0),
+		Nonce:     models.NewUint256(1),
+		Signature: []byte{97, 100, 115, 97, 100, 115, 97, 115, 100, 97, 115, 100},
+	}
+	_, err = s.api.SendTransaction(tx)
+	s.EqualErrorf(err, "fee must be greater than 0", err.Error())
+}
+
 func TestSendTransactionTestSuite(t *testing.T) {
 	suite.Run(t, new(SendTransactionTestSuite))
 }

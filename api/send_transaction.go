@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/commander"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -26,6 +27,9 @@ func (a *API) SendTransaction(incTx models.IncomingTransaction) (*common.Hash, e
 	}
 	if incTx.Nonce == nil {
 		return nil, fmt.Errorf("nonce is required")
+	}
+	if incTx.Fee.Cmp(big.NewInt(0)) != 1 {
+		return nil, fmt.Errorf("fee must be greater than 0")
 	}
 
 	err := a.verifyNonce(&incTx)
