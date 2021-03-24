@@ -50,12 +50,13 @@ func (s *Storage) MarkCommitmentAsIncluded(id int32, batchHash common.Hash) erro
 	return err
 }
 
-func (s *Storage) GetPendingCommitments() ([]models.Commitment, error) {
+func (s *Storage) GetPendingCommitments(maxFetched uint64) ([]models.Commitment, error) {
 	res := make([]models.Commitment, 0, 32)
 	err := s.DB.Query(
 		s.QB.Select("*").
 			From("commitment").
-			Where(squirrel.Eq{"included_in_batch": nil}),
+			Where(squirrel.Eq{"included_in_batch": nil}).
+			Limit(maxFetched),
 	).Into(&res)
 	if err != nil {
 		return nil, err

@@ -86,7 +86,7 @@ func (s *CommitmentTestSuite) Test_MarkCommitmentAsIncluded_UpdatesRecord() {
 	s.Equal(expected, actual)
 }
 
-func (s *CommitmentTestSuite) Test_GetPendingCommitments() {
+func (s *CommitmentTestSuite) Test_GetPendingCommitments_ReturnsOnlyPending() {
 	id, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
@@ -95,13 +95,24 @@ func (s *CommitmentTestSuite) Test_GetPendingCommitments() {
 	_, err = s.storage.AddCommitment(&includedCommitment)
 	s.NoError(err)
 
-	actual, err := s.storage.GetPendingCommitments()
+	actual, err := s.storage.GetPendingCommitments(10)
 	s.NoError(err)
 
 	expected := commitment
 	expected.ID = *id
 
 	s.Equal([]models.Commitment{expected}, actual)
+}
+
+func (s *CommitmentTestSuite) Test_GetPendingCommitments_ReturnsOnlyGivenNumberOfRows() {
+	for i := 0; i < 3; i++ {
+		_, err := s.storage.AddCommitment(&commitment)
+		s.NoError(err)
+	}
+
+	commitments, err := s.storage.GetPendingCommitments(2)
+	s.NoError(err)
+	s.Len(commitments, 2)
 }
 
 func TestCommitmentTestSuite(t *testing.T) {
