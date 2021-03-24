@@ -45,7 +45,24 @@ func (s *RollupTestSuite) TearDownTest() {
 	s.sim.Close()
 }
 
-func (s *RollupTestSuite) Test_SubmitTransfersBatch() {
+func (s *RollupTestSuite) Test_SubmitTransfersBatch_ReturnsAccountTreeRootUsed() {
+	expected, err := s.contracts.AccountRegistry.Root(nil)
+	s.NoError(err)
+
+	commitment := models.Commitment{
+		Transactions:      utils.RandomBytes(12),
+		FeeReceiver:       uint32(1234),
+		CombinedSignature: models.MakeSignature(1, 2),
+		PostStateRoot:     utils.RandomHash(),
+	}
+
+	_, accountRoot, err := s.client.SubmitTransfersBatch([]models.Commitment{commitment})
+	s.NoError(err)
+
+	s.Equal(common.BytesToHash(expected[:]), *accountRoot)
+}
+
+func (s *RollupTestSuite) Test_SubmitTransfersBatch_ReturnsBatchWithCorrectHash() {
 	accountRoot, err := s.contracts.AccountRegistry.Root(nil)
 	s.NoError(err)
 
@@ -57,14 +74,11 @@ func (s *RollupTestSuite) Test_SubmitTransfersBatch() {
 		AccountTreeRoot:   ref.Hash(accountRoot),
 	}
 
-	batchID, err := s.client.SubmitTransfersBatch([]*models.Commitment{&commitment})
-	s.NoError(err)
-
-	batch, err := s.contracts.Rollup.GetBatch(nil, &batchID.Int)
+	batch, _, err := s.client.SubmitTransfersBatch([]models.Commitment{commitment})
 	s.NoError(err)
 
 	commitmentRoot := utils.HashTwo(commitment.LeafHash(), storage.GetZeroHash(0))
-	s.Equal(commitmentRoot, common.BytesToHash(batch.CommitmentRoot[:]))
+	s.Equal(commitmentRoot, batch.Hash)
 }
 
 func TestRollupTestSuite(t *testing.T) {
