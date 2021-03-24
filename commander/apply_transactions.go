@@ -4,6 +4,7 @@ import (
 	"log"
 	"math/big"
 
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
@@ -11,13 +12,13 @@ import (
 func ApplyTransactions(
 	storage *st.Storage,
 	transactions []models.Transaction,
-	feeReceiverIndex uint32,
+	cfg *config.RollupConfig,
 ) (
 	[]models.Transaction,
 	error,
 ) {
 	stateTree := st.NewStateTree(storage)
-	validTxs := make([]models.Transaction, 0, 32)
+	validTxs := make([]models.Transaction, 0, cfg.TxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
 	for i := range transactions {
@@ -35,18 +36,19 @@ func ApplyTransactions(
 			}
 			err := storage.SetTransactionError(tx.Hash, txError.Error())
 			if err != nil {
-				log.Printf("Setting transaction error failed: %s", txError)
+				log.Printf("Setting transaction error failed: %s", err)
 			}
 			log.Printf("Transaction failed: %s", txError)
 		}
 
-		if len(validTxs) == 32 {
+		if uint32(len(validTxs)) == cfg.TxsPerCommitment {
 			break
 		}
 	}
 
 	if combinedFee.Cmp(big.NewInt(0)) == 1 {
-		err := ApplyFee(stateTree, feeReceiverIndex, combinedFee)
+		// TODO cfg.FeeReceiverIndex actually represents PubKeyID and is used as StateID here
+		err := ApplyFee(stateTree, cfg.FeeReceiverIndex, combinedFee)
 		if err != nil {
 			return nil, err
 		}

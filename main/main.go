@@ -79,7 +79,7 @@ func main() {
 	}
 
 	go func() {
-		err := commander.RollupLoop(storage, client, &cfg)
+		err := commander.CommitmentsEndlessLoop(storage, &cfg.Rollup)
 		if err != nil {
 			log.Fatal(err)
 		}

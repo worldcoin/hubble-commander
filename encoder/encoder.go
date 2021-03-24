@@ -101,3 +101,17 @@ func EncodeTransaction(transaction *models.Transaction) ([]uint8, error) {
 
 	return arr, nil
 }
+
+func SerializeTransactions(txs []models.Transaction) ([]byte, error) {
+	buf := make([]byte, 0, len(txs)*12)
+
+	for i := range txs {
+		encoded, err := EncodeTransaction(&txs[i])
+		if err != nil {
+			return nil, err
+		}
+		buf = append(buf, encoded...)
+	}
+
+	return buf, nil
+}

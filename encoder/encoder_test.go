@@ -12,7 +12,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -51,7 +50,7 @@ func (s *EncoderTestSuite) TearDownTest() {
 	s.sim.Close()
 }
 
-func (s *EncoderTestSuite) TestEncodeTransferZero() {
+func (s *EncoderTestSuite) TestEncodeTransfer_Zero() {
 	tx := transfer.OffchainTransfer{
 		TxType:    big.NewInt(0),
 		FromIndex: big.NewInt(0),
@@ -67,7 +66,7 @@ func (s *EncoderTestSuite) TestEncodeTransferZero() {
 	s.Equal(expected, bytes)
 }
 
-func (s *EncoderTestSuite) TestEncodeTransferNonZero() {
+func (s *EncoderTestSuite) TestEncodeTransfer_NonZero() {
 	tx := transfer.OffchainTransfer{
 		TxType:    big.NewInt(1),
 		FromIndex: big.NewInt(2),
@@ -98,7 +97,7 @@ func (s *EncoderTestSuite) TestEncodeUserState() {
 	s.Equal(expected, bytes)
 }
 
-func (s *EncoderTestSuite) TestDecimalEncoding() {
+func (s *EncoderTestSuite) TestEncodeDecimal() {
 	num := models.MakeUint256(123400000)
 	encoded, err := EncodeDecimal(num)
 	s.NoError(err)
@@ -109,30 +108,53 @@ func (s *EncoderTestSuite) TestDecimalEncoding() {
 	s.Equal(uint16(expected.Uint64()), encoded)
 }
 
-func (s *EncoderTestSuite) TestTransactionEncoding() {
-	tx := models.Transaction{
-		Hash:      common.Hash{},
-		FromIndex: 1,
-		ToIndex:   2,
-		Amount:    models.MakeUint256(50),
-		Fee:       models.MakeUint256(10),
-		Nonce:     models.MakeUint256(22),
-		Signature: nil,
-	}
-
-	encoded, err := EncodeTransaction(&tx)
-	s.NoError(err)
-
-	txTransfer := testtx.TxTransfer{
+func newTxTransfer(tx *models.Transaction) testtx.TxTransfer {
+	return testtx.TxTransfer{
 		FromIndex: big.NewInt(int64(tx.FromIndex)),
 		ToIndex:   big.NewInt(int64(tx.ToIndex)),
 		Amount:    &tx.Amount.Int,
 		Fee:       &tx.Fee.Int,
 	}
-	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{txTransfer})
+}
+
+func (s *EncoderTestSuite) TestEncodeTransaction() {
+	tx := &models.Transaction{
+		FromIndex: 1,
+		ToIndex:   2,
+		Amount:    models.MakeUint256(50),
+		Fee:       models.MakeUint256(10),
+	}
+
+	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{newTxTransfer(tx)})
+	s.NoError(err)
+
+	encoded, err := EncodeTransaction(tx)
 	s.NoError(err)
 
 	s.Equal(expected, encoded)
+}
+
+func (s *EncoderTestSuite) TestSerializeTransactions() {
+	tx := models.Transaction{
+		FromIndex: 1,
+		ToIndex:   2,
+		Amount:    models.MakeUint256(50),
+		Fee:       models.MakeUint256(10),
+	}
+	tx2 := models.Transaction{
+		FromIndex: 2,
+		ToIndex:   3,
+		Amount:    models.MakeUint256(200),
+		Fee:       models.MakeUint256(10),
+	}
+
+	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{newTxTransfer(&tx), newTxTransfer(&tx2)})
+	s.NoError(err)
+
+	serialized, err := SerializeTransactions([]models.Transaction{tx, tx2})
+	s.NoError(err)
+
+	s.Equal(expected, serialized)
 }
 
 func (s *EncoderTestSuite) TestCommitmentBodyHash() {

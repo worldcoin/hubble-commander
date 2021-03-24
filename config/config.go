@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/joho/godotenv"
@@ -20,7 +21,9 @@ func loadDotEnv() {
 func GetConfig() Config {
 	return Config{
 		Rollup: RollupConfig{
-			FeeReceiverIndex: 0,
+			FeeReceiverIndex:       0,
+			TxsPerCommitment:       2,
+			CommitmentLoopInterval: 500 * time.Millisecond,
 		},
 		API: APIConfig{
 			Version: "dev-0.1.0",
@@ -44,7 +47,9 @@ func GetConfig() Config {
 func GetTestConfig() Config {
 	return Config{
 		Rollup: RollupConfig{
-			FeeReceiverIndex: 0,
+			FeeReceiverIndex:       0,
+			TxsPerCommitment:       2,
+			CommitmentLoopInterval: 500 * time.Millisecond,
 		},
 		API: APIConfig{
 			Version: "dev-0.1.0",

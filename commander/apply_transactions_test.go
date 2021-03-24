@@ -3,12 +3,19 @@ package commander
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
+
+var cfg = config.RollupConfig{
+	FeeReceiverIndex: 3,
+	TxsPerCommitment: 32,
+}
 
 type ApplyTransactionsTestSuite struct {
 	*require.Assertions
@@ -61,32 +68,32 @@ func (s *ApplyTransactionsTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *ApplyTransactionsTestSuite) Test_ApplyTransfers_AllValid() {
-	transactions := generateValidTransactions(10)
+func (s *ApplyTransactionsTestSuite) Test_ApplyTransactions_AllValid() {
+	txs := generateValidTransactions(10)
 
-	validTransactions, err := ApplyTransactions(s.storage, transactions, uint32(3))
+	validTxs, err := ApplyTransactions(s.storage, txs, &cfg)
 	s.NoError(err)
 
-	s.Len(validTransactions, 10)
+	s.Len(validTxs, 10)
 }
 
-func (s *ApplyTransactionsTestSuite) Test_ApplyTransfers_SomeValid() {
-	transactions := generateValidTransactions(10)
-	transactions = append(transactions, generateInvalidTransactions(10)...)
+func (s *ApplyTransactionsTestSuite) Test_ApplyTransactions_SomeValid() {
+	txs := generateValidTransactions(10)
+	txs = append(txs, generateInvalidTransactions(10)...)
 
-	validTransactions, err := ApplyTransactions(s.storage, transactions, uint32(3))
+	validTxs, err := ApplyTransactions(s.storage, txs, &cfg)
 	s.NoError(err)
 
-	s.Len(validTransactions, 10)
+	s.Len(validTxs, 10)
 }
 
-func (s *ApplyTransactionsTestSuite) Test_ApplyTransfers_MoreThan32() {
-	transactions := generateValidTransactions(60)
+func (s *ApplyTransactionsTestSuite) Test_ApplyTransactions_MoreThan32() {
+	txs := generateValidTransactions(60)
 
-	validTransactions, err := ApplyTransactions(s.storage, transactions, uint32(3))
+	validTxs, err := ApplyTransactions(s.storage, txs, &cfg)
 	s.NoError(err)
 
-	s.Len(validTransactions, 32)
+	s.Len(validTxs, 32)
 
 	state, _ := s.tree.Leaf(1)
 	s.Equal(models.MakeUint256(32), state.Nonce)
@@ -97,33 +104,33 @@ func TestApplyTransactionsTestSuite(t *testing.T) {
 }
 
 func generateValidTransactions(txAmount int) []models.Transaction {
-	transactions := make([]models.Transaction, 0, txAmount)
+	txs := make([]models.Transaction, 0, txAmount)
 	for i := 0; i < txAmount; i++ {
-		transaction := models.Transaction{
+		tx := models.Transaction{
+			Hash:      utils.RandomHash(),
 			FromIndex: 1,
 			ToIndex:   2,
 			Amount:    models.MakeUint256(1),
 			Fee:       models.MakeUint256(1),
 			Nonce:     models.MakeUint256(int64(i)),
 		}
-		transactions = append(transactions, transaction)
+		txs = append(txs, tx)
 	}
-
-	return transactions
+	return txs
 }
 
 func generateInvalidTransactions(txAmount int) []models.Transaction {
-	transactions := make([]models.Transaction, 0, txAmount)
+	txs := make([]models.Transaction, 0, txAmount)
 	for i := 0; i < txAmount; i++ {
-		transaction := models.Transaction{
+		tx := models.Transaction{
+			Hash:      utils.RandomHash(),
 			FromIndex: 1,
 			ToIndex:   2,
 			Amount:    models.MakeUint256(1),
 			Fee:       models.MakeUint256(1),
 			Nonce:     models.MakeUint256(0),
 		}
-		transactions = append(transactions, transaction)
+		txs = append(txs, tx)
 	}
-
-	return transactions
+	return txs
 }
