@@ -1,11 +1,17 @@
 package commander
 
 import (
+	"errors"
+	"log"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	st "github.com/Worldcoin/hubble-commander/storage"
+)
+
+var (
+	ErrNotEnoughCommitments = NewBatchError("not enough commitments")
 )
 
 func BatchesEndlessLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
@@ -22,19 +28,42 @@ func BatchesLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConf
 			ticker.Stop()
 			return nil
 		case <-ticker.C:
-			err := SubmitTransactionBatch(storage, client, cfg)
+			err := SubmitBatch(storage, client, cfg)
 			if err != nil {
+				var e *BatchError
+				if errors.As(err, &e) {
+					log.Println(e.Error())
+					continue
+				}
 				return err
 			}
 		}
 	}
 }
 
-func SubmitTransactionBatch(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
-	// _, err = client.SubmitTransfersBatch([]*models.Commitment{commitment})
-	// if err != nil {
-	// 	return err
-	// }
-	// log.Printf("Sumbmited commitment %s on chain", commitment.LeafHash().Hex())
+func SubmitBatch(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) (err error) {
+	tx, txStorage, err := storage.BeginTransaction()
+	if err != nil {
+		return
+	}
+	defer tx.Rollback(&err)
+
+	err = unsafeSubmitBatch(txStorage, client, cfg)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+// nolint:unparam
+func unsafeSubmitBatch(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
+	commitments, err := storage.GetPendingCommitments()
+	if err != nil {
+		return err
+	}
+	if len(commitments) < int(cfg.MinCommitmentsPerBatch) {
+		return ErrNotEnoughCommitments
+	}
 	return nil
 }
