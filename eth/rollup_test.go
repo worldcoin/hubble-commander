@@ -46,19 +46,14 @@ func (s *RollupTestSuite) TearDownTest() {
 }
 
 func (s *RollupTestSuite) Test_SubmitTransfersBatch() {
-	txs := utils.RandomBytes(12)
-	feeReceiver := uint32(1234)
-	signature := models.MakeSignature(1, 2)
-	postStateRoot := utils.RandomHash()
-
 	accountRoot, err := s.contracts.AccountRegistry.Root(nil)
 	s.NoError(err)
 
 	commitment := models.Commitment{
-		Transactions:      txs,
-		FeeReceiver:       feeReceiver,
-		CombinedSignature: signature,
-		PostStateRoot:     postStateRoot,
+		Transactions:      utils.RandomBytes(12),
+		FeeReceiver:       uint32(1234),
+		CombinedSignature: models.MakeSignature(1, 2),
+		PostStateRoot:     utils.RandomHash(),
 		AccountTreeRoot:   ref.Hash(accountRoot),
 	}
 
