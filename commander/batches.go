@@ -58,7 +58,7 @@ func SubmitBatch(storage *st.Storage, client *eth.Client, cfg *config.RollupConf
 
 // nolint:unparam
 func unsafeSubmitBatch(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
-	commitments, err := storage.GetPendingCommitments()
+	commitments, err := storage.GetPendingCommitments(uint64(cfg.MaxCommitmentsPerBatch))
 	if err != nil {
 		return err
 	}

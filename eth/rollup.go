@@ -81,11 +81,11 @@ func parseCommitments(commitments []models.Commitment) (
 	feeReceivers = make([]*big.Int, 0, count)
 	transactions = make([][]byte, 0, count)
 
-	for _, commitment := range commitments {
-		stateRoots = append(stateRoots, commitment.PostStateRoot)
-		signatures = append(signatures, commitment.CombinedSignature.ToBigIntPointers())
-		feeReceivers = append(feeReceivers, new(big.Int).SetUint64(uint64(commitment.FeeReceiver)))
-		transactions = append(transactions, commitment.Transactions)
+	for i := range commitments {
+		stateRoots = append(stateRoots, commitments[i].PostStateRoot)
+		signatures = append(signatures, commitments[i].CombinedSignature.ToBigIntPointers())
+		feeReceivers = append(feeReceivers, new(big.Int).SetUint64(uint64(commitments[i].FeeReceiver)))
+		transactions = append(transactions, commitments[i].Transactions)
 	}
 	return
 }

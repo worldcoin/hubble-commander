@@ -47,6 +47,7 @@ func (s *DecoderTestSuite) TestDecodeMeta() {
 		utils.RandomAddress(),
 		big.NewInt(30_000_000),
 	)
+	s.NoError(err)
 
 	output, err := s.testTypes.DecodeMeta(nil, input)
 	s.NoError(err)
