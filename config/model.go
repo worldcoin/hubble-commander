@@ -13,6 +13,7 @@ type RollupConfig struct {
 	FeeReceiverIndex       uint32
 	TxsPerCommitment       uint32
 	CommitmentLoopInterval time.Duration
+	BatchLoopInterval      time.Duration
 }
 
 type APIConfig struct {

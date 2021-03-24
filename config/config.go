@@ -24,6 +24,7 @@ func GetConfig() Config {
 			FeeReceiverIndex:       0,
 			TxsPerCommitment:       2,
 			CommitmentLoopInterval: 500 * time.Millisecond,
+			BatchLoopInterval:      500 * time.Millisecond,
 		},
 		API: APIConfig{
 			Version: "dev-0.1.0",
@@ -50,6 +51,7 @@ func GetTestConfig() Config {
 			FeeReceiverIndex:       0,
 			TxsPerCommitment:       2,
 			CommitmentLoopInterval: 500 * time.Millisecond,
+			BatchLoopInterval:      500 * time.Millisecond,
 		},
 		API: APIConfig{
 			Version: "dev-0.1.0",
