@@ -16,7 +16,7 @@ var (
 	commitment = models.Commitment{
 		Transactions:      []byte{1, 2, 3},
 		FeeReceiver:       uint32(1),
-		CombinedSignature: models.Signature{models.MakeUint256(1), models.MakeUint256(2)},
+		CombinedSignature: models.MakeSignature(1, 2),
 		PostStateRoot:     utils.RandomHash(),
 		AccountTreeRoot:   nil,
 		IncludedInBatch:   nil,

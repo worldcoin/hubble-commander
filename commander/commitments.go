@@ -95,7 +95,7 @@ func unsafeCommitTransactions(storage *st.Storage, cfg *config.RollupConfig) err
 }
 
 func createAndStoreCommitment(storage *st.Storage, txs []models.Transaction, feeReceiverIndex uint32) (*int32, error) {
-	combinedSignature := models.Signature{models.MakeUint256(1), models.MakeUint256(2)} // TODO: Actually combine signatures
+	combinedSignature := models.MakeSignature(1, 2) // TODO: Actually combine signatures
 
 	serializedTxs, err := encoder.SerializeTransactions(txs)
 	if err != nil {

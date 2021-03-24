@@ -11,6 +11,10 @@ import (
 // TODO: Consider representing this as a 64 byte array instead
 type Signature [2]Uint256
 
+func MakeSignature(first, second int64) Signature {
+	return Signature{MakeUint256(first), MakeUint256(second)}
+}
+
 func (s *Signature) Scan(src interface{}) error {
 	value, ok := src.([]byte)
 	if !ok {

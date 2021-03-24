@@ -48,7 +48,7 @@ func (s *RollupTestSuite) TearDownTest() {
 func (s *RollupTestSuite) Test_SubmitTransfersBatch() {
 	txs := utils.RandomBytes(12)
 	feeReceiver := uint32(1234)
-	signature := models.Signature{models.MakeUint256(1), models.MakeUint256(2)}
+	signature := models.MakeSignature(1, 2)
 	postStateRoot := utils.RandomHash()
 
 	accountRoot, err := s.contracts.AccountRegistry.Root(nil)
