@@ -21,7 +21,7 @@ func ApplyTransactions(
 	validTxs := make([]models.Transaction, 0, cfg.TxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
-	feeReceiverLeaf, err := stateTree.Leaf(feeReceiverIndex)
+	feeReceiverLeaf, err := stateTree.Leaf(cfg.FeeReceiverIndex)
 	if err != nil {
 		return nil, err
 	}
