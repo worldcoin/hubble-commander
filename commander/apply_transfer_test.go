@@ -102,7 +102,7 @@ func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_Validation_Bal
 	s.Error(err)
 }
 
-func (s *ApplyTransferTestSuite) Test_ApplyTransfer_Validation() {
+func (s *ApplyTransferTestSuite) Test_ApplyTransfer_Validation_Nil() {
 	tx := models.Transaction{
 		FromIndex: 1,
 		ToIndex:   2,
@@ -111,11 +111,33 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer_Validation() {
 		Nonce:     models.MakeUint256(0),
 	}
 
-	txError, appError := ApplyTransfer(s.tree, nil)
-	s.Error(appError)
+	txError, appError := ApplyTransfer(s.tree, nil, models.MakeUint256(1))
+	s.Error(appError, ErrTransactionIsNil)
 	s.NoError(txError)
-	txError, appError = ApplyTransfer(nil, &tx)
-	s.Error(appError)
+	txError, appError = ApplyTransfer(nil, &tx, models.MakeUint256(1))
+	s.Equal(appError, ErrStateTreeIsNil)
+	s.NoError(txError)
+}
+
+func (s *ApplyTransferTestSuite) Test_ApplyTransfer_Validation_TokenIndex() {
+	tx := models.Transaction{
+		FromIndex: 1,
+		ToIndex:   2,
+		Amount:    models.MakeUint256(400),
+		Fee:       models.MakeUint256(50),
+		Nonce:     models.MakeUint256(0),
+	}
+
+	senderIndex := senderState.AccountIndex
+	receiverIndex := receiverState.AccountIndex
+
+	err := s.tree.Set(senderIndex, &senderState)
+	s.NoError(err)
+	err = s.tree.Set(receiverIndex, &receiverState)
+	s.NoError(err)
+
+	txError, appError := ApplyTransfer(s.tree, &tx, models.MakeUint256(3))
+	s.Equal(appError, ErrIncorrectTokenIndices)
 	s.NoError(txError)
 }
 
@@ -136,7 +158,7 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer() {
 	err = s.tree.Set(receiverIndex, &receiverState)
 	s.NoError(err)
 
-	txError, appError := ApplyTransfer(s.tree, &tx)
+	txError, appError := ApplyTransfer(s.tree, &tx, models.MakeUint256(1))
 	s.NoError(appError)
 	s.NoError(txError)
 

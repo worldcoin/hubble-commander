@@ -21,9 +21,16 @@ func ApplyTransactions(
 	validTxs := make([]models.Transaction, 0, cfg.TxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
+	feeReceiverLeaf, err := stateTree.Leaf(cfg.FeeReceiverIndex)
+	if err != nil {
+		return nil, err
+	}
+
+	feeReceiverTokenIndex := feeReceiverLeaf.TokenIndex
+
 	for i := range transactions {
 		tx := transactions[i]
-		txError, appError := ApplyTransfer(stateTree, &tx)
+		txError, appError := ApplyTransfer(stateTree, &tx, feeReceiverTokenIndex)
 		if appError != nil {
 			return nil, appError
 		}
