@@ -45,41 +45,25 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	stateTree := st.NewStateTree(storage)
 
-	dep, err := GetDeployer(cfg.Ethereum)
+	dep, err := getDeployer(cfg.Ethereum)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	chainState, err := storage.GetChainState(dep.GetChainID())
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var client *eth.Client
-	if chainState == nil {
-		fmt.Println("Bootstrapping genesis state")
-		chainState, err = BootstrapState(stateTree, dep, genesisAccounts)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		err = storage.SetChainState(chainState)
-		if err != nil {
-			log.Fatal(err)
-		}
-	} else {
-		fmt.Println("Continuing from saved state")
-	}
-
-	client, err = CreateClientFromChainState(dep, chainState)
+	client, err := getClient(storage, dep)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	go func() {
 		err := commander.CommitmentsEndlessLoop(storage, &cfg.Rollup)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+	go func() {
+		err := commander.BatchesEndlessLoop(storage, client, &cfg.Rollup)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -94,7 +78,32 @@ func main() {
 	log.Fatal(api.StartAPIServer(&cfg))
 }
 
-func CreateClientFromChainState(dep deployer.Deployer, chainState *models.ChainState) (*eth.Client, error) {
+func getClient(storage *st.Storage, dep deployer.Deployer) (*eth.Client, error) {
+	chainState, err := storage.GetChainState(dep.GetChainID())
+	if err != nil {
+		return nil, err
+	}
+
+	if chainState == nil {
+		fmt.Println("Bootstrapping genesis state")
+		stateTree := st.NewStateTree(storage)
+		chainState, err = bootstrapState(stateTree, dep, genesisAccounts)
+		if err != nil {
+			return nil, err
+		}
+
+		err = storage.SetChainState(chainState)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		fmt.Println("Continuing from saved state")
+	}
+
+	return createClientFromChainState(dep, chainState)
+}
+
+func createClientFromChainState(dep deployer.Deployer, chainState *models.ChainState) (*eth.Client, error) {
 	accountRegistry, err := accountregistry.NewAccountRegistry(chainState.AccountRegistry, dep.GetBackend())
 	if err != nil {
 		return nil, err
@@ -116,7 +125,7 @@ func CreateClientFromChainState(dep deployer.Deployer, chainState *models.ChainS
 	return client, nil
 }
 
-func GetDeployer(cfg *config.EthereumConfig) (deployer.Deployer, error) {
+func getDeployer(cfg *config.EthereumConfig) (deployer.Deployer, error) {
 	if cfg == nil {
 		return simulator.NewAutominingSimulator()
 	}
@@ -139,7 +148,7 @@ func GetDeployer(cfg *config.EthereumConfig) (deployer.Deployer, error) {
 	return deployer.NewRPCDeployer(cfg.RPCURL, chainID, account)
 }
 
-func BootstrapState(
+func bootstrapState(
 	stateTree *st.StateTree,
 	d deployer.Deployer,
 	accounts []commander.GenesisAccount,

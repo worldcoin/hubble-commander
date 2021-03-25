@@ -87,7 +87,7 @@ func unsafeCommitTransactions(storage *st.Storage, cfg *config.RollupConfig) err
 		return err
 	}
 
-	err = markTransactionsAsCommitted(storage, includedTxs, *commitmentID)
+	err = markTransactionsAsIncluded(storage, includedTxs, *commitmentID)
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func createAndStoreCommitment(storage *st.Storage, txs []models.Transaction, fee
 	return storage.AddCommitment(&commitment)
 }
 
-func markTransactionsAsCommitted(storage *st.Storage, txs []models.Transaction, commitmentID int32) error {
+func markTransactionsAsIncluded(storage *st.Storage, txs []models.Transaction, commitmentID int32) error {
 	for i := range txs {
 		err := storage.MarkTransactionAsIncluded(txs[i].Hash, commitmentID)
 		if err != nil {
