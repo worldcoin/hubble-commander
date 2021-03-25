@@ -50,13 +50,12 @@ func SubmitBatch(storage *st.Storage, client *eth.Client, cfg *config.RollupConf
 
 	err = unsafeSubmitBatch(txStorage, client, cfg)
 	if err != nil {
-		return err
+		return
 	}
 
 	return tx.Commit()
 }
 
-// nolint:unparam
 func unsafeSubmitBatch(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
 	commitments, err := storage.GetPendingCommitments(uint64(cfg.MaxCommitmentsPerBatch))
 	if err != nil {
@@ -65,5 +64,11 @@ func unsafeSubmitBatch(storage *st.Storage, client *eth.Client, cfg *config.Roll
 	if len(commitments) < int(cfg.MinCommitmentsPerBatch) {
 		return ErrNotEnoughCommitments
 	}
+
+	batch, _, err := client.SubmitTransfersBatch(commitments)
+	if err != nil {
+		return err
+	}
+	log.Printf("Sumbmited %d commitment(s) on chain. Batch ID: %d. Batch Hash: %v", len(commitments), batch.ID.Uint64(), batch.Hash)
 	return nil
 }

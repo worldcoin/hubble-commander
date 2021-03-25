@@ -51,7 +51,7 @@ func CommitTransactions(storage *st.Storage, cfg *config.RollupConfig) (err erro
 
 	err = unsafeCommitTransactions(txStorage, cfg)
 	if err != nil {
-		return err
+		return
 	}
 
 	return tx.Commit()

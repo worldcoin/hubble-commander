@@ -1,10 +1,12 @@
 package commander
 
 import (
+	"math/big"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -15,9 +17,10 @@ import (
 type BatchTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	db      *db.TestDB
-	storage *storage.Storage
-	cfg     *config.RollupConfig
+	db         *db.TestDB
+	storage    *storage.Storage
+	cfg        *config.RollupConfig
+	testClient *eth.TestClient
 }
 
 func (s *BatchTestSuite) SetupSuite() {
@@ -33,15 +36,19 @@ func (s *BatchTestSuite) SetupTest() {
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
 	}
+
+	s.testClient, err = eth.NewTestClient()
+	s.NoError(err)
 }
 
 func (s *BatchTestSuite) TearDownTest() {
+	s.testClient.Close()
 	err := s.db.Teardown()
 	s.NoError(err)
 }
 
 func (s *BatchTestSuite) TestSubmitBatch_ReturnsErrorWhenThereAreNotEnoughCommitments() {
-	err := SubmitBatch(s.storage, nil, s.cfg)
+	err := SubmitBatch(s.storage, s.testClient.Client, s.cfg)
 	s.ErrorIs(err, ErrNotEnoughCommitments)
 }
 
@@ -60,8 +67,26 @@ func (s *BatchTestSuite) TestSubmitBatch_ReturnsErrorWhenThereAreNotEnoughPendin
 	_, err = s.storage.AddCommitment(commitment)
 	s.NoError(err)
 
-	err = SubmitBatch(s.storage, nil, s.cfg)
+	err = SubmitBatch(s.storage, s.testClient.Client, s.cfg)
 	s.ErrorIs(err, ErrNotEnoughCommitments)
+}
+
+func (s *BatchTestSuite) TestSubmitBatch_SubmitsCommitmentsOnChain() {
+	commitment := &models.Commitment{
+		Transactions:      utils.RandomBytes(24),
+		FeeReceiver:       1,
+		CombinedSignature: models.MakeSignature(1, 2),
+		PostStateRoot:     utils.RandomHash(),
+	}
+	_, err := s.storage.AddCommitment(commitment)
+	s.NoError(err)
+
+	err = SubmitBatch(s.storage, s.testClient.Client, s.cfg)
+	s.NoError(err)
+
+	nextBatchID, err := s.testClient.Rollup.NextBatchID(nil)
+	s.NoError(err)
+	s.Equal(big.NewInt(2), nextBatchID)
 }
 
 func TestBatchTestSuite(t *testing.T) {
