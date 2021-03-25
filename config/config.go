@@ -27,6 +27,7 @@ func GetConfig() Config {
 			MaxCommitmentsPerBatch: 32,
 			CommitmentLoopInterval: 500 * time.Millisecond,
 			BatchLoopInterval:      500 * time.Millisecond,
+			BlockNumberLoopInterval: 500 * time.Millisecond,
 		},
 		API: APIConfig{
 			Version: "dev-0.1.0",

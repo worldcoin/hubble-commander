@@ -16,6 +16,7 @@ type RollupConfig struct {
 	MaxCommitmentsPerBatch uint32
 	CommitmentLoopInterval time.Duration
 	BatchLoopInterval      time.Duration
+	BlockNumberLoopInterval time.Duration
 }
 
 type APIConfig struct {
