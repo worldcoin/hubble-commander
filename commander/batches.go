@@ -7,7 +7,9 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 var (
@@ -69,6 +71,27 @@ func unsafeSubmitBatch(storage *st.Storage, client *eth.Client, cfg *config.Roll
 	if err != nil {
 		return err
 	}
+
+	err = storage.AddBatch(batch)
+	if err != nil {
+		return err
+	}
+
+	err = markCommitmentsAsIncluded(storage, commitments, batch.Hash)
+	if err != nil {
+		return err
+	}
+
 	log.Printf("Sumbmited %d commitment(s) on chain. Batch ID: %d. Batch Hash: %v", len(commitments), batch.ID.Uint64(), batch.Hash)
+	return nil
+}
+
+func markCommitmentsAsIncluded(storage *st.Storage, commitments []models.Commitment, batchHash common.Hash) error {
+	for i := range commitments {
+		err := storage.MarkCommitmentAsIncluded(commitments[i].ID, batchHash)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }

@@ -14,6 +14,15 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+var (
+	commitment = models.Commitment{
+		Transactions:      utils.RandomBytes(24),
+		FeeReceiver:       1,
+		CombinedSignature: models.MakeSignature(1, 2),
+		PostStateRoot:     utils.RandomHash(),
+	}
+)
+
 type BatchTestSuite struct {
 	*require.Assertions
 	suite.Suite
@@ -57,14 +66,9 @@ func (s *BatchTestSuite) TestSubmitBatch_ReturnsErrorWhenThereAreNotEnoughPendin
 	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
 
-	commitment := &models.Commitment{
-		Transactions:      utils.RandomBytes(24),
-		FeeReceiver:       1,
-		CombinedSignature: models.MakeSignature(1, 2),
-		PostStateRoot:     utils.RandomHash(),
-		IncludedInBatch:   &batch.Hash,
-	}
-	_, err = s.storage.AddCommitment(commitment)
+	includedCommitment := commitment
+	includedCommitment.IncludedInBatch = &batch.Hash
+	_, err = s.storage.AddCommitment(&includedCommitment)
 	s.NoError(err)
 
 	err = SubmitBatch(s.storage, s.testClient.Client, s.cfg)
@@ -72,13 +76,7 @@ func (s *BatchTestSuite) TestSubmitBatch_ReturnsErrorWhenThereAreNotEnoughPendin
 }
 
 func (s *BatchTestSuite) TestSubmitBatch_SubmitsCommitmentsOnChain() {
-	commitment := &models.Commitment{
-		Transactions:      utils.RandomBytes(24),
-		FeeReceiver:       1,
-		CombinedSignature: models.MakeSignature(1, 2),
-		PostStateRoot:     utils.RandomHash(),
-	}
-	_, err := s.storage.AddCommitment(commitment)
+	_, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
 	err = SubmitBatch(s.storage, s.testClient.Client, s.cfg)
@@ -87,6 +85,37 @@ func (s *BatchTestSuite) TestSubmitBatch_SubmitsCommitmentsOnChain() {
 	nextBatchID, err := s.testClient.Rollup.NextBatchID(nil)
 	s.NoError(err)
 	s.Equal(big.NewInt(2), nextBatchID)
+}
+
+func (s *BatchTestSuite) TestSubmitBatch_StoresBatchRecord() {
+	_, err := s.storage.AddCommitment(&commitment)
+	s.NoError(err)
+
+	err = SubmitBatch(s.storage, s.testClient.Client, s.cfg)
+	s.NoError(err)
+
+	batch, err := s.storage.GetBatchByID(models.MakeUint256(1))
+	s.NoError(err)
+	s.NotNil(batch)
+}
+
+func (s *BatchTestSuite) TestSubmitBatch_MarksCommitmentsAsIncluded() {
+	id, err := s.storage.AddCommitment(&commitment)
+	s.NoError(err)
+	id2, err := s.storage.AddCommitment(&commitment)
+	s.NoError(err)
+
+	err = SubmitBatch(s.storage, s.testClient.Client, s.cfg)
+	s.NoError(err)
+
+	batch, err := s.storage.GetBatchByID(models.MakeUint256(1))
+	s.NoError(err)
+
+	for _, id := range []int32{*id, *id2} {
+		commit, err := s.storage.GetCommitment(id)
+		s.NoError(err)
+		s.Equal(batch.Hash, *commit.IncludedInBatch)
+	}
 }
 
 func TestBatchTestSuite(t *testing.T) {
