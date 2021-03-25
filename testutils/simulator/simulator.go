@@ -134,6 +134,11 @@ func (sim *Simulator) GetChainID() models.Uint256 {
 	return models.MakeUint256FromBig(*sim.Backend.Blockchain().Config().ChainID)
 }
 
+func (sim *Simulator) GetBlockNumber() (*models.Uint256, error) {
+	blockNumber := models.MakeUint256FromBig(*sim.Backend.Blockchain().CurrentHeader().Number)
+	return &blockNumber, nil
+}
+
 func fillWithDefaults(config *SimulatorConfig) {
 	if config.NumAccounts == nil {
 		config.NumAccounts = ref.Uint64(10)

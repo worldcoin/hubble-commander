@@ -15,4 +15,6 @@ type Deployer interface {
 	Commit()
 
 	GetChainID() models.Uint256
+
+	GetBlockNumber() (*models.Uint256, error)
 }

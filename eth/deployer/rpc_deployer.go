@@ -1,6 +1,7 @@
 package deployer
 
 import (
+	"context"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/models"
@@ -41,4 +42,13 @@ func (d *RPCDeployer) Commit() {
 
 func (d *RPCDeployer) GetChainID() models.Uint256 {
 	return models.MakeUint256FromBig(*d.chainID)
+}
+
+func (d *RPCDeployer) GetBlockNumber() (*models.Uint256, error) {
+	blockNumber, err := d.backend.BlockNumber(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	blockNumberUint256 := models.MakeUint256(int64(blockNumber))
+	return &blockNumberUint256, nil
 }
