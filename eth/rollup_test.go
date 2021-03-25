@@ -3,10 +3,8 @@ package eth
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
@@ -17,9 +15,7 @@ import (
 type RollupTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	sim       *simulator.Simulator
-	contracts *deployer.RollupContracts
-	client    *Client
+	client *TestClient
 }
 
 func (s *RollupTestSuite) SetupSuite() {
@@ -27,26 +23,17 @@ func (s *RollupTestSuite) SetupSuite() {
 }
 
 func (s *RollupTestSuite) SetupTest() {
-	sim, err := simulator.NewAutominingSimulator()
+	client, err := NewTestClient()
 	s.NoError(err)
-	s.sim = sim
-
-	contracts, err := deployer.DeployRollup(sim)
-	s.NoError(err)
-	s.contracts = contracts
-	s.client, err = NewClient(sim.Account, NewClientParams{
-		Rollup:          contracts.Rollup,
-		AccountRegistry: contracts.AccountRegistry,
-	})
-	s.NoError(err)
+	s.client = client
 }
 
 func (s *RollupTestSuite) TearDownTest() {
-	s.sim.Close()
+	s.client.Close()
 }
 
 func (s *RollupTestSuite) Test_SubmitTransfersBatch_ReturnsAccountTreeRootUsed() {
-	expected, err := s.contracts.AccountRegistry.Root(nil)
+	expected, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
 
 	commitment := models.Commitment{
@@ -63,7 +50,7 @@ func (s *RollupTestSuite) Test_SubmitTransfersBatch_ReturnsAccountTreeRootUsed()
 }
 
 func (s *RollupTestSuite) Test_SubmitTransfersBatch_ReturnsBatchWithCorrectHash() {
-	accountRoot, err := s.contracts.AccountRegistry.Root(nil)
+	accountRoot, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
 
 	commitment := models.Commitment{
