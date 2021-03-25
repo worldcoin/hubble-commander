@@ -39,10 +39,10 @@ jobs:
         # Needed because the postgres container does not provide a health check
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
     env:
-      HUBBLE_DBHOST: host.docker.internal
+      HUBBLE_DBHOST: localhost
       HUBBLE_DBUSER: hubble
       HUBBLE_DBPASSWORD: root
-      ETHEREUM_RPC_URL: ws://host.docker.internal:8545
+      ETHEREUM_RPC_URL: ws://localhost:8545
       ETHEREUM_CHAIN_ID: 1616067554748
       ETHEREUM_PRIVATE_KEY: ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
 

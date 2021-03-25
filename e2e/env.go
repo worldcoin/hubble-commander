@@ -10,12 +10,21 @@ import (
 )
 
 type StartOptions struct {
-	Image string
+	Image             string
+	UseHostNetworking bool
 }
 
 func StartCommander(opts StartOptions) (*TestCommander, error) {
+	var networkType string
+	if opts.UseHostNetworking {
+		networkType = "host"
+	} else {
+		networkType = "bridge"
+	}
+
 	cmd := exec.Command(
 		"docker", "run", "-t", "--rm",
+		"--network", networkType,
 		"-p", "8080:8080",
 		"-e", "ETHEREUM_RPC_URL",
 		"-e", "ETHEREUM_CHAIN_ID",
@@ -43,7 +52,7 @@ func StartCommander(opts StartOptions) (*TestCommander, error) {
 		if err == nil {
 			return &TestCommander{Process: cmd.Process, Client: client}, nil
 		}
-		fmt.Printf("%e", err)
+		fmt.Printf("%s\n", err.Error())
 		time.Sleep(1 * time.Second)
 	}
 }
