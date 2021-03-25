@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"time"
@@ -42,7 +43,7 @@ func StartCommander(opts StartOptions) (*TestCommander, error) {
 		if err == nil {
 			return &TestCommander{Process: cmd.Process, Client: client}, nil
 		}
-		println(err)
+		fmt.Printf("%e", err)
 		time.Sleep(1 * time.Second)
 	}
 }
