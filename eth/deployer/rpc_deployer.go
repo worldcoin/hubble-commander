@@ -44,7 +44,7 @@ func (d *RPCDeployer) GetChainID() models.Uint256 {
 	return models.MakeUint256FromBig(*d.chainID)
 }
 
-func (d *RPCDeployer) GetBlockNumber() (*models.Uint256, error) {
+func (d *RPCDeployer) GetLatestBlockNumber() (*models.Uint256, error) {
 	blockNumber, err := d.backend.BlockNumber(context.Background())
 	if err != nil {
 		return nil, err
