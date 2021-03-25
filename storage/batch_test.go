@@ -48,6 +48,21 @@ func (s *BatchTestSuite) Test_AddBatch_AddAndRetrieve() {
 	s.Equal(batch, actual)
 }
 
+func (s *BatchTestSuite) Test_GetBatchByID() {
+	batch := &models.Batch{
+		Hash:              utils.RandomHash(),
+		ID:                models.MakeUint256(1234),
+		FinalisationBlock: 1234,
+	}
+	err := s.storage.AddBatch(batch)
+	s.NoError(err)
+
+	actual, err := s.storage.GetBatchByID(batch.ID)
+	s.NoError(err)
+
+	s.Equal(batch, actual)
+}
+
 func TestBatchTestSuite(t *testing.T) {
 	suite.Run(t, new(BatchTestSuite))
 }

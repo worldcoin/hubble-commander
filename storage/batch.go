@@ -30,3 +30,16 @@ func (s *Storage) GetBatch(batchHash common.Hash) (*models.Batch, error) {
 	}
 	return &res[0], nil
 }
+
+func (s *Storage) GetBatchByID(batchID models.Uint256) (*models.Batch, error) {
+	res := make([]models.Batch, 0, 1)
+	err := s.DB.Query(
+		squirrel.Select("*").
+			From("batch").
+			Where(squirrel.Eq{"batch_id": batchID}),
+	).Into(&res)
+	if err != nil || len(res) == 0 {
+		return nil, err
+	}
+	return &res[0], nil
+}
