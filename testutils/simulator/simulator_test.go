@@ -81,14 +81,14 @@ func (s *SimulatorTestSuite) Test_Close_StopsAutomine() {
 func (s *SimulatorTestSuite) Test_GetLatestBlockNumber() {
 	blockNumberBefore, err := s.sim.GetLatestBlockNumber()
 	s.NoError(err)
-	
+
 	s.sim.Backend.Commit()
-	
+
 	blockNumberAfter, err := s.sim.GetLatestBlockNumber()
 	s.NoError(err)
 
-	expectedBlockNumber := blockNumberBefore.Int64() + 1
-	s.Equal(expectedBlockNumber, blockNumberAfter.Int64())
+	expectedBlockNumber := *blockNumberBefore + 1
+	s.Equal(expectedBlockNumber, *blockNumberAfter)
 }
 
 func TestSimulatorTestSuite(t *testing.T) {

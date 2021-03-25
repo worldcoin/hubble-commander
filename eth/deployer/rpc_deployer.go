@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
@@ -44,11 +45,10 @@ func (d *RPCDeployer) GetChainID() models.Uint256 {
 	return models.MakeUint256FromBig(*d.chainID)
 }
 
-func (d *RPCDeployer) GetLatestBlockNumber() (*models.Uint256, error) {
+func (d *RPCDeployer) GetLatestBlockNumber() (*uint32, error) {
 	blockNumber, err := d.backend.BlockNumber(context.Background())
 	if err != nil {
 		return nil, err
 	}
-	blockNumberUint256 := models.MakeUint256(int64(blockNumber))
-	return &blockNumberUint256, nil
+	return ref.Uint32(uint32(blockNumber)), nil
 }

@@ -15,5 +15,5 @@ type ChainConnection interface {
 
 	GetChainID() models.Uint256
 
-	GetLatestBlockNumber() (*models.Uint256, error)
+	GetLatestBlockNumber() (*uint32, error)
 }

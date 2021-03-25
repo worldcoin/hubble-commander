@@ -6,10 +6,9 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/models"
 )
 
-var latestBlockNumber models.Uint256
+var latestBlockNumber uint32
 
 func BlockNumberEndlessLoop(client *eth.Client, cfg *config.RollupConfig) error {
 	done := make(chan bool)
@@ -30,7 +29,7 @@ func BlockNumberLoop(client *eth.Client, cfg *config.RollupConfig, done <-chan b
 				log.Println(err.Error())
 				return err
 			}
-			if blockNumber.Cmp(&latestBlockNumber.Int) != 0 {
+			if *blockNumber > latestBlockNumber {
 				log.Printf("New block was mined: %d", blockNumber)
 			}
 			latestBlockNumber = *blockNumber

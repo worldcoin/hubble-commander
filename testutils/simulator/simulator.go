@@ -134,9 +134,8 @@ func (sim *Simulator) GetChainID() models.Uint256 {
 	return models.MakeUint256FromBig(*sim.Backend.Blockchain().Config().ChainID)
 }
 
-func (sim *Simulator) GetLatestBlockNumber() (*models.Uint256, error) {
-	blockNumber := models.MakeUint256FromBig(*sim.Backend.Blockchain().CurrentHeader().Number)
-	return &blockNumber, nil
+func (sim *Simulator) GetLatestBlockNumber() (*uint32, error) {
+	return ref.Uint32(uint32(sim.Backend.Blockchain().CurrentHeader().Number.Uint64())), nil
 }
 
 func fillWithDefaults(config *SimulatorConfig) {
