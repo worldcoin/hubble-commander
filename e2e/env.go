@@ -1,10 +1,11 @@
 package e2e
 
 import (
-	"github.com/ybbus/jsonrpc/v2"
 	"os"
 	"os/exec"
 	"time"
+
+	"github.com/ybbus/jsonrpc/v2"
 )
 
 type StartOptions struct {
@@ -33,11 +34,17 @@ func StartCommander(opts StartOptions) (*TestCommander, error) {
 		return nil, err
 	}
 
-	time.Sleep(1 * time.Second)
-
 	client := jsonrpc.NewClient("http://localhost:8080")
 
-	return &TestCommander{Process: cmd.Process, Client: client}, nil
+	for {
+		var version string
+		err = client.CallFor(&version, "hubble_getVersion", []interface{}{})
+		if err == nil {
+			return &TestCommander{Process: cmd.Process, Client: client}, nil
+		}
+		println(err)
+		time.Sleep(1 * time.Second)
+	}
 }
 
 type TestCommander struct {
