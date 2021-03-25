@@ -114,7 +114,7 @@ func createClientFromChainState(dep deployer.ChainConnection, chainState *models
 		return nil, err
 	}
 
-	client, err := eth.NewClient(dep.GetAccount(), eth.NewClientParams{
+	client, err := eth.NewClient(dep, eth.NewClientParams{
 		Rollup:          rollupContract,
 		AccountRegistry: accountRegistry,
 	})
