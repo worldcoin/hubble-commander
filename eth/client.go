@@ -7,7 +7,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 )
 
@@ -35,17 +34,6 @@ func NewClient(chainConnection deployer.ChainConnection, params NewClientParams)
 	return &Client{
 		config:          params.ClientConfig,
 		ChainConnection: chainConnection,
-		Rollup:          params.Rollup,
-		AccountRegistry: params.AccountRegistry,
-	}, nil
-}
-
-func NewTestClient(chainConnection simulator.Simulator, params NewClientParams) (*Client, error) {
-	fillWithDefaults(&params.ClientConfig)
-
-	return &Client{
-		config:          params.ClientConfig,
-		ChainConnection: &chainConnection,
 		Rollup:          params.Rollup,
 		AccountRegistry: params.AccountRegistry,
 	}, nil
