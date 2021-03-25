@@ -114,7 +114,7 @@ func createClientFromChainState(dep deployer.ChainConnection, chainState *models
 		return nil, err
 	}
 
-	client, err := eth.NewClient(dep.TransactionOpts(), eth.NewClientParams{
+	client, err := eth.NewClient(dep.GetAccount(), eth.NewClientParams{
 		Rollup:          rollupContract,
 		AccountRegistry: accountRegistry,
 	})
@@ -158,7 +158,7 @@ func bootstrapState(
 		return nil, err
 	}
 
-	registeredAccounts, err := commander.RegisterGenesisAccounts(d.TransactionOpts(), accountRegistry, accounts)
+	registeredAccounts, err := commander.RegisterGenesisAccounts(d.GetAccount(), accountRegistry, accounts)
 	if err != nil {
 		return nil, err
 	}

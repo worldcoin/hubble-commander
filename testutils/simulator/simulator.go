@@ -118,7 +118,7 @@ func (sim *Simulator) Close() {
 	sim.Backend.Close() // ignore error, it is always nil
 }
 
-func (sim *Simulator) TransactionOpts() *bind.TransactOpts {
+func (sim *Simulator) GetAccount() *bind.TransactOpts {
 	return sim.Account
 }
 

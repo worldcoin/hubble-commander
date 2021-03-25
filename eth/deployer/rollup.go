@@ -52,23 +52,23 @@ func DeployRollup(d ChainConnection) (*RollupContracts, error) {
 
 func DeployConfiguredRollup(d ChainConnection, config DeploymentConfig) (*RollupContracts, error) {
 	fillWithDefaults(&config)
-	proofOfBurnAddress, _, proofOfBurn, err := proofofburn.DeployProofOfBurn(d.TransactionOpts(), d.GetBackend())
+	proofOfBurnAddress, _, proofOfBurn, err := proofofburn.DeployProofOfBurn(d.GetAccount(), d.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
-	tokenRegistryAddress, _, tokenRegistry, err := tokenregistry.DeployTokenRegistry(d.TransactionOpts(), d.GetBackend())
+	tokenRegistryAddress, _, tokenRegistry, err := tokenregistry.DeployTokenRegistry(d.GetAccount(), d.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
-	spokeRegistryAddress, _, spokeRegistry, err := spokeregistry.DeploySpokeRegistry(d.TransactionOpts(), d.GetBackend())
+	spokeRegistryAddress, _, spokeRegistry, err := spokeregistry.DeploySpokeRegistry(d.GetAccount(), d.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
 	vaultAddress, _, vaultContract, err := vault.DeployVault(
-		d.TransactionOpts(),
+		d.GetAccount(),
 		d.GetBackend(),
 		tokenRegistryAddress,
 		spokeRegistryAddress,
@@ -78,7 +78,7 @@ func DeployConfiguredRollup(d ChainConnection, config DeploymentConfig) (*Rollup
 	}
 
 	depositManagerAddress, _, depositManager, err := depositmanager.DeployDepositManager(
-		d.TransactionOpts(),
+		d.GetAccount(),
 		d.GetBackend(),
 		tokenRegistryAddress,
 		vaultAddress,
@@ -93,19 +93,19 @@ func DeployConfiguredRollup(d ChainConnection, config DeploymentConfig) (*Rollup
 		return nil, err
 	}
 
-	transferAddress, _, transferContract, err := transfer.DeployTransfer(d.TransactionOpts(), d.GetBackend())
+	transferAddress, _, transferContract, err := transfer.DeployTransfer(d.GetAccount(), d.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
-	massMigrationAddress, _, massMigration, err := massmigration.DeployMassMigration(d.TransactionOpts(), d.GetBackend())
+	massMigrationAddress, _, massMigration, err := massmigration.DeployMassMigration(d.GetAccount(), d.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
 	d.Commit()
 
-	create2TransferAddress, _, create2Transfer, err := create2transfer.DeployCreate2Transfer(d.TransactionOpts(), d.GetBackend())
+	create2TransferAddress, _, create2Transfer, err := create2transfer.DeployCreate2Transfer(d.GetAccount(), d.GetBackend())
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func DeployConfiguredRollup(d ChainConnection, config DeploymentConfig) (*Rollup
 	stateRoot := [32]byte{}
 	copy(stateRoot[:], config.GenesisStateRoot.Bytes())
 	rollupAddress, _, rollupContract, err := rollup.DeployRollup(
-		d.TransactionOpts(),
+		d.GetAccount(),
 		d.GetBackend(),
 		proofOfBurnAddress,
 		depositManagerAddress,

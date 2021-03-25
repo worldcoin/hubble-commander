@@ -6,7 +6,7 @@ import (
 )
 
 type ChainConnection interface {
-	TransactionOpts() *bind.TransactOpts
+	GetAccount() *bind.TransactOpts
 
 	GetBackend() bind.ContractBackend
 

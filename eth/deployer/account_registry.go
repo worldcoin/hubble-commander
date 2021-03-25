@@ -6,7 +6,7 @@ import (
 )
 
 func DeployAccountRegistry(d ChainConnection) (*common.Address, *accountregistry.AccountRegistry, error) {
-	accountRegistryAddress, _, accountRegistry, err := accountregistry.DeployAccountRegistry(d.TransactionOpts(), d.GetBackend())
+	accountRegistryAddress, _, accountRegistry, err := accountregistry.DeployAccountRegistry(d.GetAccount(), d.GetBackend())
 	if err != nil {
 		return nil, nil, err
 	}

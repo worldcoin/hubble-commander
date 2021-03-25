@@ -28,7 +28,7 @@ func NewRPCDeployer(rpc string, chainID *big.Int, account *bind.TransactOpts) (*
 	}, nil
 }
 
-func (d *RPCDeployer) TransactionOpts() *bind.TransactOpts {
+func (d *RPCDeployer) GetAccount() *bind.TransactOpts {
 	return d.account
 }
 
