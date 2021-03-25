@@ -78,6 +78,19 @@ func (s *SimulatorTestSuite) Test_Close_StopsAutomine() {
 	s.Equal(uint64(1), s.sim.Backend.Blockchain().CurrentHeader().Number.Uint64())
 }
 
+func (s *SimulatorTestSuite) Test_GetLatestBlockNumber() {
+	blockNumberBefore, err := s.sim.GetLatestBlockNumber()
+	s.NoError(err)
+	
+	s.sim.Backend.Commit()
+	
+	blockNumberAfter, err := s.sim.GetLatestBlockNumber()
+	s.NoError(err)
+
+	expectedBlockNumber := blockNumberBefore.Int64() + 1
+	s.Equal(expectedBlockNumber, blockNumberAfter.Int64())
+}
+
 func TestSimulatorTestSuite(t *testing.T) {
 	suite.Run(t, new(SimulatorTestSuite))
 }
