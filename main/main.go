@@ -57,6 +57,12 @@ func main() {
 	}
 
 	go func() {
+		err := commander.BlockNumberEndlessLoop(client, &cfg.Rollup)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+	go func() {
 		err := commander.CommitmentsEndlessLoop(storage, &cfg.Rollup)
 		if err != nil {
 			log.Fatal(err)
