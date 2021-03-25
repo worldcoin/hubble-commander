@@ -37,12 +37,27 @@ func (s *BatchTestSuite) Test_AddBatch_AddAndRetrieve() {
 	batch := &models.Batch{
 		Hash:              utils.RandomHash(),
 		ID:                models.MakeUint256(1),
-		FinalisationBlock: models.MakeUint256(1234),
+		FinalisationBlock: 1234,
 	}
 	err := s.storage.AddBatch(batch)
 	s.NoError(err)
 
 	actual, err := s.storage.GetBatch(batch.Hash)
+	s.NoError(err)
+
+	s.Equal(batch, actual)
+}
+
+func (s *BatchTestSuite) Test_GetBatchByID() {
+	batch := &models.Batch{
+		Hash:              utils.RandomHash(),
+		ID:                models.MakeUint256(1234),
+		FinalisationBlock: 1234,
+	}
+	err := s.storage.AddBatch(batch)
+	s.NoError(err)
+
+	actual, err := s.storage.GetBatchByID(batch.ID)
 	s.NoError(err)
 
 	s.Equal(batch, actual)

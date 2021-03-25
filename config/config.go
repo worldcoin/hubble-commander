@@ -23,7 +23,10 @@ func GetConfig() Config {
 		Rollup: RollupConfig{
 			FeeReceiverIndex:       0,
 			TxsPerCommitment:       2,
+			MinCommitmentsPerBatch: 1,
+			MaxCommitmentsPerBatch: 32,
 			CommitmentLoopInterval: 500 * time.Millisecond,
+			BatchLoopInterval:      500 * time.Millisecond,
 		},
 		API: APIConfig{
 			Version: "dev-0.1.0",
@@ -49,7 +52,10 @@ func GetTestConfig() Config {
 		Rollup: RollupConfig{
 			FeeReceiverIndex:       0,
 			TxsPerCommitment:       2,
+			MinCommitmentsPerBatch: 1,
+			MaxCommitmentsPerBatch: 32,
 			CommitmentLoopInterval: 500 * time.Millisecond,
+			BatchLoopInterval:      500 * time.Millisecond,
 		},
 		API: APIConfig{
 			Version: "dev-0.1.0",
