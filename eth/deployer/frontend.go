@@ -14,7 +14,7 @@ type FrontendContracts struct {
 	FrontendCreate2Transfer *create2transfer.FrontendCreate2Transfer
 }
 
-func DeployFrontend(d Deployer) (*FrontendContracts, error) {
+func DeployFrontend(d ChainConnection) (*FrontendContracts, error) {
 	_, _, genericContract, err := generic.DeployFrontendGeneric(d.TransactionOpts(), d.GetBackend())
 	if err != nil {
 		return nil, err

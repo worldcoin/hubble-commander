@@ -40,7 +40,7 @@ type RollupContracts struct {
 	RollupAddress   common.Address
 }
 
-func DeployRollup(d Deployer) (*RollupContracts, error) {
+func DeployRollup(d ChainConnection) (*RollupContracts, error) {
 	accountRegistryAddress, _, err := DeployAccountRegistry(d)
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func DeployRollup(d Deployer) (*RollupContracts, error) {
 	})
 }
 
-func DeployConfiguredRollup(d Deployer, config DeploymentConfig) (*RollupContracts, error) {
+func DeployConfiguredRollup(d ChainConnection, config DeploymentConfig) (*RollupContracts, error) {
 	fillWithDefaults(&config)
 	proofOfBurnAddress, _, proofOfBurn, err := proofofburn.DeployProofOfBurn(d.TransactionOpts(), d.GetBackend())
 	if err != nil {
