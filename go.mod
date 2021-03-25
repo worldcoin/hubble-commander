@@ -10,6 +10,7 @@ require (
 	github.com/joho/godotenv v1.3.0
 	github.com/lib/pq v1.9.0 // indirect
 	github.com/stretchr/testify v1.7.0
+	github.com/ybbus/jsonrpc/v2 v2.1.6
 	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83
 	golang.org/x/sys v0.0.0-20210309074719-68d13333faf2 // indirect
 )
