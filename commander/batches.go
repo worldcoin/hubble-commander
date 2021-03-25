@@ -67,7 +67,7 @@ func unsafeSubmitBatch(storage *st.Storage, client *eth.Client, cfg *config.Roll
 		return ErrNotEnoughCommitments
 	}
 
-	batch, _, err := client.SubmitTransfersBatch(commitments)
+	batch, accountRoot, err := client.SubmitTransfersBatch(commitments)
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func unsafeSubmitBatch(storage *st.Storage, client *eth.Client, cfg *config.Roll
 		return err
 	}
 
-	err = markCommitmentsAsIncluded(storage, commitments, batch.Hash)
+	err = markCommitmentsAsIncluded(storage, commitments, &batch.Hash, accountRoot)
 	if err != nil {
 		return err
 	}
@@ -86,9 +86,9 @@ func unsafeSubmitBatch(storage *st.Storage, client *eth.Client, cfg *config.Roll
 	return nil
 }
 
-func markCommitmentsAsIncluded(storage *st.Storage, commitments []models.Commitment, batchHash common.Hash) error {
+func markCommitmentsAsIncluded(storage *st.Storage, commitments []models.Commitment, batchHash, accountRoot *common.Hash) error {
 	for i := range commitments {
-		err := storage.MarkCommitmentAsIncluded(commitments[i].ID, batchHash)
+		err := storage.MarkCommitmentAsIncluded(commitments[i].ID, batchHash, accountRoot)
 		if err != nil {
 			return err
 		}

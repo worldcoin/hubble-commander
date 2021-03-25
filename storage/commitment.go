@@ -41,11 +41,12 @@ func (s *Storage) GetCommitment(id int32) (*models.Commitment, error) {
 	return &res[0], nil
 }
 
-func (s *Storage) MarkCommitmentAsIncluded(id int32, batchHash common.Hash) error {
+func (s *Storage) MarkCommitmentAsIncluded(id int32, batchHash, accountRoot *common.Hash) error {
 	_, err := s.DB.ExecBuilder(
 		s.QB.Update("commitment").
 			Where(squirrel.Eq{"commitment_id": id}).
-			Set("included_in_batch", batchHash),
+			Set("included_in_batch", *batchHash).
+			Set("account_tree_root", *accountRoot),
 	)
 	return err
 }

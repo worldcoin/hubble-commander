@@ -6,7 +6,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -61,24 +60,26 @@ func (s *CommitmentTestSuite) Test_AddCommitment_AddAndRetrieve() {
 	s.Equal(s.getCommitment(*id), actual)
 }
 
-func (s *CommitmentTestSuite) addRandomBatch() common.Hash {
+func (s *CommitmentTestSuite) addRandomBatch() *common.Hash {
 	batch := models.Batch{Hash: utils.RandomHash()}
 	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
-	return batch.Hash
+	return &batch.Hash
 }
 
 func (s *CommitmentTestSuite) Test_MarkCommitmentAsIncluded_UpdatesRecord() {
 	batchHash := s.addRandomBatch()
+	accountRoot := utils.RandomHash()
 
 	id, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	err = s.storage.MarkCommitmentAsIncluded(*id, batchHash)
+	err = s.storage.MarkCommitmentAsIncluded(*id, batchHash, &accountRoot)
 	s.NoError(err)
 
 	expected := s.getCommitment(*id)
-	expected.IncludedInBatch = &batchHash
+	expected.IncludedInBatch = batchHash
+	expected.AccountTreeRoot = &accountRoot
 
 	actual, err := s.storage.GetCommitment(*id)
 	s.NoError(err)
@@ -91,7 +92,7 @@ func (s *CommitmentTestSuite) Test_GetPendingCommitments_ReturnsOnlyPending() {
 	s.NoError(err)
 
 	includedCommitment := commitment
-	includedCommitment.IncludedInBatch = ref.Hash(s.addRandomBatch())
+	includedCommitment.IncludedInBatch = s.addRandomBatch()
 	_, err = s.storage.AddCommitment(&includedCommitment)
 	s.NoError(err)
 

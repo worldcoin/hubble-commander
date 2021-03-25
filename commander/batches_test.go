@@ -10,6 +10,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -99,22 +100,45 @@ func (s *BatchTestSuite) TestSubmitBatch_StoresBatchRecord() {
 	s.NotNil(batch)
 }
 
-func (s *BatchTestSuite) TestSubmitBatch_MarksCommitmentsAsIncluded() {
-	id, err := s.storage.AddCommitment(&commitment)
-	s.NoError(err)
-	id2, err := s.storage.AddCommitment(&commitment)
-	s.NoError(err)
+func (s *BatchTestSuite) addCommitments(count int) []int32 {
+	ids := make([]int32, 0, count)
+	for i := 0; i < count; i++ {
+		id, err := s.storage.AddCommitment(&commitment)
+		s.NoError(err)
+		ids = append(ids, *id)
+	}
+	return ids
+}
 
-	err = SubmitBatch(s.storage, s.testClient.Client, s.cfg)
+func (s *BatchTestSuite) TestSubmitBatch_MarksCommitmentsAsIncluded() {
+	ids := s.addCommitments(2)
+
+	err := SubmitBatch(s.storage, s.testClient.Client, s.cfg)
 	s.NoError(err)
 
 	batch, err := s.storage.GetBatchByID(models.MakeUint256(1))
 	s.NoError(err)
 
-	for _, id := range []int32{*id, *id2} {
+	for _, id := range ids {
 		commit, err := s.storage.GetCommitment(id)
 		s.NoError(err)
 		s.Equal(batch.Hash, *commit.IncludedInBatch)
+	}
+}
+
+func (s *BatchTestSuite) TestSubmitBatch_UpdatesCommitmentsAccountRoot() {
+	ids := s.addCommitments(2)
+
+	err := SubmitBatch(s.storage, s.testClient.Client, s.cfg)
+	s.NoError(err)
+
+	accountRoot, err := s.testClient.AccountRegistry.Root(nil)
+	s.NoError(err)
+
+	for _, id := range ids {
+		commit, err := s.storage.GetCommitment(id)
+		s.NoError(err)
+		s.Equal(common.BytesToHash(accountRoot[:]), *commit.AccountTreeRoot)
 	}
 }
 
