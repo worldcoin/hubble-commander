@@ -8,7 +8,8 @@ const (
 	Pending   TransactionStatus = 1001
 	Committed TransactionStatus = 1002
 	InBatch   TransactionStatus = 1003
-	Finalized TransactionStatus = 1004
+	// nolint:misspell
+	Finalised TransactionStatus = 1004
 	Error     TransactionStatus = 5000
 )
 
@@ -16,7 +17,8 @@ var TransactionsStatuses = [5]TransactionStatus{
 	Pending,
 	Committed,
 	InBatch,
-	Finalized,
+	// nolint:misspell
+	Finalised,
 	Error,
 }
 
@@ -35,8 +37,10 @@ func (s TransactionStatus) Message() string {
 	case InBatch:
 		return "IN_BATCH"
 
-	case Finalized:
-		return "FINALIZED"
+	// nolint:misspell
+	case Finalised:
+		// nolint:misspell
+		return "FINALISED"
 
 	case Error:
 		return "ERROR"

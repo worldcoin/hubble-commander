@@ -33,7 +33,7 @@ func CalculateTransactionStatus(storage *st.Storage, tx *models.Transaction, lat
 			}
 
 			if latestBlockNumber >= batch.FinalisationBlock {
-				status = models.Finalized
+				status = models.Finalised
 			}
 		}
 	}

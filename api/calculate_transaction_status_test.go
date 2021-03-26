@@ -116,6 +116,7 @@ func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus
 	s.Equal(models.InBatch.Message(), status.Message())
 }
 
+// nolint:misspell
 func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus_Finalised() {
 	currentBlockNumber, err := s.sim.GetLatestBlockNumber()
 	batch := models.Batch{
@@ -129,17 +130,17 @@ func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus
 	includedCommitment.IncludedInBatch = &batch.Hash
 	commitmentId, err := s.storage.AddCommitment(&includedCommitment)
 	s.NoError(err)
-	
+
 	s.tx.IncludedInCommitment = commitmentId
-	
+
 	s.sim.Commit()
-	latestBlockNumber, err := s.sim.GetLatestBlockNumber()	
+	latestBlockNumber, err := s.sim.GetLatestBlockNumber()
 	s.NoError(err)
 
 	status, err := CalculateTransactionStatus(s.storage, s.tx, *latestBlockNumber)
 	s.NoError(err)
 
-	s.Equal(models.Finalized.Message(), status.Message())
+	s.Equal(models.Finalised.Message(), status.Message())
 }
 
 func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus_Error() {
