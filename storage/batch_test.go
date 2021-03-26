@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -61,6 +62,18 @@ func (s *BatchTestSuite) Test_GetBatchByID() {
 	s.NoError(err)
 
 	s.Equal(batch, actual)
+}
+
+func (s *StateUpdateTestSuite) Test_GetBatch_NonExistentBatch() {
+	res, err := s.storage.GetBatch(common.Hash{1, 2, 3, 4})
+	s.EqualError(err, "batch not found", err.Error())
+	s.Nil(res)
+}
+
+func (s *StateUpdateTestSuite) Test_GetBatchById_NonExistentBatch() {
+	res, err := s.storage.GetBatchByID(models.MakeUint256(42))
+	s.EqualError(err, "batch not found", err.Error())
+	s.Nil(res)
 }
 
 func TestBatchTestSuite(t *testing.T) {
