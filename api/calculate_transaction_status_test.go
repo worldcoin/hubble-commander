@@ -6,7 +6,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/storage"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -28,7 +27,7 @@ type CalculateTransactionStatusTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	db      *db.TestDB
-	storage *storage.Storage
+	storage *st.Storage
 	sim     *simulator.Simulator
 	tx      *models.Transaction
 }
@@ -84,10 +83,10 @@ func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus
 }
 
 func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus_Committed() {
-	commitmentId, err := s.storage.AddCommitment(&commitment)
+	commitmentID, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	s.tx.IncludedInCommitment = commitmentId
+	s.tx.IncludedInCommitment = commitmentID
 
 	status, err := CalculateTransactionStatus(s.storage, s.tx, 0)
 	s.NoError(err)
@@ -105,10 +104,10 @@ func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus
 
 	includedCommitment := commitment
 	includedCommitment.IncludedInBatch = &batch.Hash
-	commitmentId, err := s.storage.AddCommitment(&includedCommitment)
+	commitmentID, err := s.storage.AddCommitment(&includedCommitment)
 	s.NoError(err)
 
-	s.tx.IncludedInCommitment = commitmentId
+	s.tx.IncludedInCommitment = commitmentID
 
 	status, err := CalculateTransactionStatus(s.storage, s.tx, 0)
 	s.NoError(err)
@@ -119,6 +118,7 @@ func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus
 // nolint:misspell
 func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus_Finalised() {
 	currentBlockNumber, err := s.sim.GetLatestBlockNumber()
+	s.NoError(err)
 	batch := models.Batch{
 		Hash:              utils.RandomHash(),
 		FinalisationBlock: *currentBlockNumber + 1,
@@ -128,10 +128,10 @@ func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus
 
 	includedCommitment := commitment
 	includedCommitment.IncludedInBatch = &batch.Hash
-	commitmentId, err := s.storage.AddCommitment(&includedCommitment)
+	commitmentID, err := s.storage.AddCommitment(&includedCommitment)
 	s.NoError(err)
 
-	s.tx.IncludedInCommitment = commitmentId
+	s.tx.IncludedInCommitment = commitmentID
 
 	s.sim.Commit()
 	latestBlockNumber, err := s.sim.GetLatestBlockNumber()
