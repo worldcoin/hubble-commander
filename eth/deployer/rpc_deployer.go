@@ -1,9 +1,11 @@
 package deployer
 
 import (
+	"context"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
@@ -27,7 +29,7 @@ func NewRPCDeployer(rpc string, chainID *big.Int, account *bind.TransactOpts) (*
 	}, nil
 }
 
-func (d *RPCDeployer) TransactionOpts() *bind.TransactOpts {
+func (d *RPCDeployer) GetAccount() *bind.TransactOpts {
 	return d.account
 }
 
@@ -41,4 +43,12 @@ func (d *RPCDeployer) Commit() {
 
 func (d *RPCDeployer) GetChainID() models.Uint256 {
 	return models.MakeUint256FromBig(*d.chainID)
+}
+
+func (d *RPCDeployer) GetLatestBlockNumber() (*uint32, error) {
+	blockNumber, err := d.backend.BlockNumber(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	return ref.Uint32(uint32(blockNumber)), nil
 }

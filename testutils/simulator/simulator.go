@@ -118,7 +118,7 @@ func (sim *Simulator) Close() {
 	sim.Backend.Close() // ignore error, it is always nil
 }
 
-func (sim *Simulator) TransactionOpts() *bind.TransactOpts {
+func (sim *Simulator) GetAccount() *bind.TransactOpts {
 	return sim.Account
 }
 
@@ -132,6 +132,10 @@ func (sim *Simulator) Commit() {
 
 func (sim *Simulator) GetChainID() models.Uint256 {
 	return models.MakeUint256FromBig(*sim.Backend.Blockchain().Config().ChainID)
+}
+
+func (sim *Simulator) GetLatestBlockNumber() (*uint32, error) {
+	return ref.Uint32(uint32(sim.Backend.Blockchain().CurrentHeader().Number.Uint64())), nil
 }
 
 func fillWithDefaults(config *SimulatorConfig) {

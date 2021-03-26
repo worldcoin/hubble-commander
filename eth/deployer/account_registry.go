@@ -5,8 +5,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func DeployAccountRegistry(d Deployer) (*common.Address, *accountregistry.AccountRegistry, error) {
-	accountRegistryAddress, _, accountRegistry, err := accountregistry.DeployAccountRegistry(d.TransactionOpts(), d.GetBackend())
+func DeployAccountRegistry(d ChainConnection) (*common.Address, *accountregistry.AccountRegistry, error) {
+	accountRegistryAddress, _, accountRegistry, err := accountregistry.DeployAccountRegistry(d.GetAccount(), d.GetBackend())
 	if err != nil {
 		return nil, nil, err
 	}

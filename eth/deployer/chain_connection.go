@@ -5,9 +5,8 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
-// TODO: Potentially rename to ChainConnection and have Client make use of it
-type Deployer interface {
-	TransactionOpts() *bind.TransactOpts
+type ChainConnection interface {
+	GetAccount() *bind.TransactOpts
 
 	GetBackend() bind.ContractBackend
 
@@ -15,4 +14,6 @@ type Deployer interface {
 	Commit()
 
 	GetChainID() models.Uint256
+
+	GetLatestBlockNumber() (*uint32, error)
 }

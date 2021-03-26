@@ -15,7 +15,7 @@ import (
 func (c *Client) rollup() *RollupSessionBuilder {
 	return &RollupSessionBuilder{rollup.RollupSession{
 		Contract:     c.Rollup,
-		TransactOpts: c.account,
+		TransactOpts: *c.ChainConnection.GetAccount(),
 	}}
 }
 

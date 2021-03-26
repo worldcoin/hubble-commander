@@ -21,7 +21,7 @@ func NewTestClient() (*TestClient, error) {
 		return nil, err
 	}
 
-	client, err := NewClient(sim.Account, NewClientParams{
+	client, err := NewClient(sim, NewClientParams{
 		Rollup:          contracts.Rollup,
 		AccountRegistry: contracts.AccountRegistry,
 	})

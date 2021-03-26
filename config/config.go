@@ -21,12 +21,13 @@ func loadDotEnv() {
 func GetConfig() Config {
 	return Config{
 		Rollup: RollupConfig{
-			FeeReceiverIndex:       0,
-			TxsPerCommitment:       2,
-			MinCommitmentsPerBatch: 1,
-			MaxCommitmentsPerBatch: 32,
-			CommitmentLoopInterval: 500 * time.Millisecond,
-			BatchLoopInterval:      500 * time.Millisecond,
+			FeeReceiverIndex:        0,
+			TxsPerCommitment:        2,
+			MinCommitmentsPerBatch:  1,
+			MaxCommitmentsPerBatch:  32,
+			CommitmentLoopInterval:  500 * time.Millisecond,
+			BatchLoopInterval:       500 * time.Millisecond,
+			BlockNumberLoopInterval: 500 * time.Millisecond,
 		},
 		API: APIConfig{
 			Version: "dev-0.1.0",

@@ -57,6 +57,12 @@ func main() {
 	}
 
 	go func() {
+		err := commander.BlockNumberEndlessLoop(client, &cfg.Rollup)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+	go func() {
 		err := commander.CommitmentsEndlessLoop(storage, &cfg.Rollup)
 		if err != nil {
 			log.Fatal(err)
@@ -78,7 +84,7 @@ func main() {
 	log.Fatal(api.StartAPIServer(&cfg))
 }
 
-func getClient(storage *st.Storage, dep deployer.Deployer) (*eth.Client, error) {
+func getClient(storage *st.Storage, dep deployer.ChainConnection) (*eth.Client, error) {
 	chainState, err := storage.GetChainState(dep.GetChainID())
 	if err != nil {
 		return nil, err
@@ -103,7 +109,7 @@ func getClient(storage *st.Storage, dep deployer.Deployer) (*eth.Client, error) 
 	return createClientFromChainState(dep, chainState)
 }
 
-func createClientFromChainState(dep deployer.Deployer, chainState *models.ChainState) (*eth.Client, error) {
+func createClientFromChainState(dep deployer.ChainConnection, chainState *models.ChainState) (*eth.Client, error) {
 	accountRegistry, err := accountregistry.NewAccountRegistry(chainState.AccountRegistry, dep.GetBackend())
 	if err != nil {
 		return nil, err
@@ -114,7 +120,7 @@ func createClientFromChainState(dep deployer.Deployer, chainState *models.ChainS
 		return nil, err
 	}
 
-	client, err := eth.NewClient(dep.TransactionOpts(), eth.NewClientParams{
+	client, err := eth.NewClient(dep, eth.NewClientParams{
 		Rollup:          rollupContract,
 		AccountRegistry: accountRegistry,
 	})
@@ -125,7 +131,7 @@ func createClientFromChainState(dep deployer.Deployer, chainState *models.ChainS
 	return client, nil
 }
 
-func getDeployer(cfg *config.EthereumConfig) (deployer.Deployer, error) {
+func getDeployer(cfg *config.EthereumConfig) (deployer.ChainConnection, error) {
 	if cfg == nil {
 		return simulator.NewAutominingSimulator()
 	}
@@ -150,7 +156,7 @@ func getDeployer(cfg *config.EthereumConfig) (deployer.Deployer, error) {
 
 func bootstrapState(
 	stateTree *st.StateTree,
-	d deployer.Deployer,
+	d deployer.ChainConnection,
 	accounts []commander.GenesisAccount,
 ) (*models.ChainState, error) {
 	accountRegistryAddress, accountRegistry, err := deployer.DeployAccountRegistry(d)
@@ -158,7 +164,7 @@ func bootstrapState(
 		return nil, err
 	}
 
-	registeredAccounts, err := commander.RegisterGenesisAccounts(d.TransactionOpts(), accountRegistry, accounts)
+	registeredAccounts, err := commander.RegisterGenesisAccounts(d.GetAccount(), accountRegistry, accounts)
 	if err != nil {
 		return nil, err
 	}
