@@ -13,7 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-type SimulatorConfig struct {
+type Config struct {
 	NumAccounts      *uint64        // default 10
 	BlockGasLimit    *uint64        // default 12_500_000
 	AutomineEnabled  *bool          // default false
@@ -22,7 +22,7 @@ type SimulatorConfig struct {
 
 type Simulator struct {
 	Backend  *backends.SimulatedBackend
-	Config   *SimulatorConfig
+	Config   *Config
 	Account  *bind.TransactOpts
 	Accounts []*bind.TransactOpts
 
@@ -30,16 +30,16 @@ type Simulator struct {
 }
 
 func NewSimulator() (*Simulator, error) {
-	return NewConfiguredSimulator(SimulatorConfig{})
+	return NewConfiguredSimulator(Config{})
 }
 
 func NewAutominingSimulator() (*Simulator, error) {
-	return NewConfiguredSimulator(SimulatorConfig{
+	return NewConfiguredSimulator(Config{
 		AutomineEnabled: ref.Bool(true),
 	})
 }
 
-func NewConfiguredSimulator(config SimulatorConfig) (*Simulator, error) {
+func NewConfiguredSimulator(config Config) (*Simulator, error) {
 	fillWithDefaults(&config)
 
 	genesisAccounts := make(core.GenesisAlloc)
@@ -138,7 +138,7 @@ func (sim *Simulator) GetLatestBlockNumber() (*uint32, error) {
 	return ref.Uint32(uint32(sim.Backend.Blockchain().CurrentHeader().Number.Uint64())), nil
 }
 
-func fillWithDefaults(config *SimulatorConfig) {
+func fillWithDefaults(config *Config) {
 	if config.NumAccounts == nil {
 		config.NumAccounts = ref.Uint64(10)
 	}
