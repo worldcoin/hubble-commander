@@ -79,7 +79,7 @@ func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus
 	status, err := CalculateTransactionStatus(s.storage, s.tx, 0)
 	s.NoError(err)
 
-	s.Equal(models.Pending.Message(), status.Message())
+	s.Equal(models.Pending, *status)
 }
 
 func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus_Committed() {
@@ -91,7 +91,7 @@ func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus
 	status, err := CalculateTransactionStatus(s.storage, s.tx, 0)
 	s.NoError(err)
 
-	s.Equal(models.Committed.Message(), status.Message())
+	s.Equal(models.Committed, *status)
 }
 
 func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus_InBatch() {
@@ -112,7 +112,7 @@ func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus
 	status, err := CalculateTransactionStatus(s.storage, s.tx, 0)
 	s.NoError(err)
 
-	s.Equal(models.InBatch.Message(), status.Message())
+	s.Equal(models.InBatch, *status)
 }
 
 // nolint:misspell
@@ -140,7 +140,7 @@ func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus
 	status, err := CalculateTransactionStatus(s.storage, s.tx, *latestBlockNumber)
 	s.NoError(err)
 
-	s.Equal(models.Finalised.Message(), status.Message())
+	s.Equal(models.Finalised, *status)
 }
 
 func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus_Error() {
@@ -148,7 +148,7 @@ func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus
 	status, err := CalculateTransactionStatus(s.storage, s.tx, 0)
 	s.NoError(err)
 
-	s.Equal(models.Error.Message(), status.Message())
+	s.Equal(models.Error, *status)
 }
 
 func TestCalculateTransactionStatusTestSuite(t *testing.T) {
