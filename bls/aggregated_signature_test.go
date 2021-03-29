@@ -3,7 +3,6 @@ package bls
 import (
 	"testing"
 
-	"github.com/kilic/bn254/bls"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,7 +13,7 @@ func TestAggregatedSignature_Verify(t *testing.T) {
 		[]byte("0x333333"),
 	}
 
-	publicKeys := make([]*bls.PublicKey, 0, 3)
+	publicKeys := make([]*PublicKey, 0, 3)
 	signatures := make([]*Signature, 0, 3)
 
 	for _, msg := range messages {

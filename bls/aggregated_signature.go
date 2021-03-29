@@ -24,7 +24,11 @@ func NewAggregatedSignatureFromBls(signatures []*bls.Signature, domain Domain) *
 }
 
 func (s *AggregatedSignature) Verify(messages [][]byte, publicKeys []*PublicKey) (bool, error) {
-	return s.verifier.VerifyAggregate(messages, publicKeys, s.sig)
+	keys := make([]*bls.PublicKey, 0, len(publicKeys))
+	for _, pk := range publicKeys {
+		keys = append(keys, pk.key)
+	}
+	return s.verifier.VerifyAggregate(messages, keys, s.sig)
 }
 
 func signaturesToBls(signatures []*Signature, domain Domain) []*bls.Signature {

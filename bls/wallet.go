@@ -7,9 +7,8 @@ import (
 )
 
 type (
-	PublicKey = bls.PublicKey
-	KeyPair   = bls.KeyPair
-	Domain    = [32]byte
+	KeyPair = bls.KeyPair
+	Domain  = [32]byte
 )
 
 var testDomain = Domain{0x00, 0x00, 0x00, 0x00}
@@ -57,7 +56,7 @@ func (w *Wallet) Domain() Domain {
 }
 
 func (w *Wallet) PublicKey() *PublicKey {
-	return w.signer.Account.Public
+	return &PublicKey{key: w.signer.Account.Public}
 }
 
 func (w *Wallet) Bytes() (secretKey, publicKey []byte) {
