@@ -12,22 +12,28 @@ type Wallet struct {
 	signer bls.BLSSigner
 }
 
-func NewWallet(domain [32]byte) (*Wallet, error) {
-	newAccount, err := bls.NewKeyPair(rand.Reader)
-	if err != nil {
-		return nil, err
-	}
-	signer := bls.BLSSigner{Account: newAccount, Domain: domain[:]}
-	return &Wallet{signer: signer}, nil
-}
-
-func SecretToWallet(secretKey []byte, domain [32]byte) (*Wallet, error) {
+func NewWallet(secretKey []byte, domain [32]byte) (*Wallet, error) {
 	keyPair, err := bls.NewKeyPairFromSecret(secretKey)
 	if err != nil {
 		return nil, err
 	}
-	signer := bls.BLSSigner{Account: keyPair, Domain: domain[:]}
-	return &Wallet{signer: signer}, nil
+	return NewWalletFromKeyPair(keyPair, domain), nil
+}
+
+func NewRandomWallet(domain [32]byte) (*Wallet, error) {
+	keyPair, err := bls.NewKeyPair(rand.Reader)
+	if err != nil {
+		return nil, err
+	}
+	return NewWalletFromKeyPair(keyPair, domain), nil
+}
+
+func NewWalletFromKeyPair(account *bls.KeyPair, domain [32]byte) *Wallet {
+	signer := bls.BLSSigner{
+		Account: account,
+		Domain:  domain[:],
+	}
+	return &Wallet{signer: signer}
 }
 
 func BytesToSignature(b []byte) (*bls.Signature, error) {
