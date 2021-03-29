@@ -6,8 +6,8 @@ const (
 	Pending TransactionStatus = iota + 1000
 	Committed
 	InBatch
-	Finalised // nolint:misspell
-	Error     = 5000
+	Finalised                   // nolint:misspell
+	Error     TransactionStatus = 5000
 )
 
 var TransactionStatuses = map[TransactionStatus]string{
