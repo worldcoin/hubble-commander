@@ -39,7 +39,7 @@ func (s *Storage) GetStateLeaf(hash common.Hash) (*models.StateLeaf, error) {
 	return &res[0], nil
 }
 
-func (s *Storage) GetStateLeafs(accountIndex uint32) ([]models.StateLeaf, error) {
+func (s *Storage) GetStateLeaves(accountIndex uint32) ([]models.StateLeaf, error) {
 	query := `
 	SELECT state_leaf.*
 	FROM state_leaf
@@ -52,7 +52,7 @@ func (s *Storage) GetStateLeafs(accountIndex uint32) ([]models.StateLeaf, error)
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, fmt.Errorf("no state leafs found")
+		return nil, fmt.Errorf("no state leaves found")
 	}
 	return res, nil
 }

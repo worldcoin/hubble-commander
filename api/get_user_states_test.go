@@ -65,7 +65,7 @@ func (s *GetUserStatesTestSuite) TestApi_GetUserStates() {
 	err = s.api.storage.AddAccountIfNotExists(&accounts[1])
 	s.NoError(err)
 
-	leafs := []models.StateLeaf{
+	leaves := []models.StateLeaf{
 		{
 			DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 			UserState: models.UserState{
@@ -95,11 +95,11 @@ func (s *GetUserStatesTestSuite) TestApi_GetUserStates() {
 		},
 	}
 
-	err = s.api.storage.AddStateLeaf(&leafs[0])
+	err = s.api.storage.AddStateLeaf(&leaves[0])
 	s.NoError(err)
-	err = s.api.storage.AddStateLeaf(&leafs[1])
+	err = s.api.storage.AddStateLeaf(&leaves[1])
 	s.NoError(err)
-	err = s.api.storage.AddStateLeaf(&leafs[2])
+	err = s.api.storage.AddStateLeaf(&leaves[2])
 	s.NoError(err)
 
 	path, err := models.NewMerklePath("00")
@@ -132,15 +132,15 @@ func (s *GetUserStatesTestSuite) TestApi_GetUserStates() {
 	s.Len(userStates, 3)
 	s.Contains(userStates, models.ReturnUserState{
 		StateID:   0,
-		UserState: leafs[0].UserState,
+		UserState: leaves[0].UserState,
 	})
 	s.Contains(userStates, models.ReturnUserState{
 		StateID:   1,
-		UserState: leafs[1].UserState,
+		UserState: leaves[1].UserState,
 	})
 	s.Contains(userStates, models.ReturnUserState{
 		StateID:   2,
-		UserState: leafs[2].UserState,
+		UserState: leaves[2].UserState,
 	})
 }
 

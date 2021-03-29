@@ -16,13 +16,13 @@ func (a *API) GetTransactions(publicKey *models.PublicKey) ([]models.Transaction
 	userStatesIndexes := make([]models.Uint256, 0, 1)
 
 	for i := range accounts {
-		stateLeafs, err := a.storage.GetStateLeafs(accounts[i].AccountIndex)
+		stateLeaves, err := a.storage.GetStateLeaves(accounts[i].AccountIndex)
 		if err != nil {
 			return nil, err
 		}
 
-		for i := range stateLeafs {
-			node, err := a.storage.GetStateNodeByHash(stateLeafs[i].DataHash)
+		for i := range stateLeaves {
+			node, err := a.storage.GetStateNodeByHash(stateLeaves[i].DataHash)
 			if err != nil {
 				return nil, err
 			}
