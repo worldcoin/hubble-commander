@@ -46,7 +46,7 @@ func (s *Storage) GetStateLeaves(accountIndex uint32) ([]models.StateLeaf, error
 	NATURAL JOIN state_node
 	WHERE account_index = $1`
 
-	res := []models.StateLeaf{}
+	res := make([]models.StateLeaf, 0, 1)
 	err := s.DB.Select(&res, query, accountIndex)
 	if err != nil {
 		return nil, err

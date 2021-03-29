@@ -107,7 +107,7 @@ func (s *StateNodeTestSuite) Test_UpdateStateNode_UpdateAndRetrieve() {
 	s.Equal(expectedNode, res)
 }
 
-func (s *StateNodeTestSuite) Test_UpdateStateNode_NotExistantNode() {
+func (s *StateNodeTestSuite) Test_UpdateStateNode_NotExistentNode() {
 	path, err := models.NewMerklePath("0000111")
 	s.NoError(err)
 	node := &models.StateNode{

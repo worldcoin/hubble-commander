@@ -68,7 +68,7 @@ func (d *Database) BeginTransaction() (*TransactionController, *Database, error)
 		controller := &TransactionController{tx: v, isLocked: true}
 		return controller, db, nil
 	}
-	return nil, nil, fmt.Errorf("Database object created with unsupported DatabaseLike implementation")
+	return nil, nil, fmt.Errorf("database object created with unsupported DatabaseLike implementation")
 }
 
 func GetMigrator(cfg *config.DBConfig) (*migrate.Migrate, error) {
