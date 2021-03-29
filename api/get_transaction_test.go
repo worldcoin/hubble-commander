@@ -6,7 +6,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -76,26 +75,6 @@ func (s *GetTransactionTestSuite) TestApi_GetTransaction() {
 	s.NoError(err)
 
 	s.Equal(models.Pending, res.Status)
-}
-
-func (s *GetTransactionTestSuite) TestApi_CalculateTransactionStatus_Pending() {
-	status := CalculateTransactionStatus(s.tx)
-
-	s.Equal(models.Pending, status)
-}
-
-func (s *GetTransactionTestSuite) TestApi_CalculateTransactionStatus_Committed() {
-	s.tx.IncludedInCommitment = ref.Int32(1234)
-	status := CalculateTransactionStatus(s.tx)
-
-	s.Equal(models.Committed, status)
-}
-
-func (s *GetTransactionTestSuite) TestApi_CalculateTransactionStatus_Error() {
-	s.tx.ErrorMessage = ref.String("Gold Duck Error")
-	status := CalculateTransactionStatus(s.tx)
-
-	s.Equal(models.Error, status)
 }
 
 func TestGetTransactionTestSuite(t *testing.T) {

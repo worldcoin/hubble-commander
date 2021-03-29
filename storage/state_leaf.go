@@ -39,20 +39,20 @@ func (s *Storage) GetStateLeaf(hash common.Hash) (*models.StateLeaf, error) {
 	return &res[0], nil
 }
 
-func (s *Storage) GetStateLeafs(accountIndex uint32) ([]models.StateLeaf, error) {
+func (s *Storage) GetStateLeaves(accountIndex uint32) ([]models.StateLeaf, error) {
 	query := `
 	SELECT state_leaf.*
 	FROM state_leaf
 	NATURAL JOIN state_node
 	WHERE account_index = $1`
 
-	res := []models.StateLeaf{}
+	res := make([]models.StateLeaf, 0, 1)
 	err := s.DB.Select(&res, query, accountIndex)
 	if err != nil {
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, fmt.Errorf("no state leafs found")
+		return nil, fmt.Errorf("no state leaves found")
 	}
 	return res, nil
 }

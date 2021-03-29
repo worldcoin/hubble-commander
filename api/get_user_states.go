@@ -13,18 +13,18 @@ func (a *API) GetUserStates(publicKey *models.PublicKey) ([]models.ReturnUserSta
 	userStates := make([]models.ReturnUserState, 0, 1)
 
 	for i := range accounts {
-		stateLeafs, err := a.storage.GetStateLeafs(accounts[i].AccountIndex)
+		stateLeaves, err := a.storage.GetStateLeaves(accounts[i].AccountIndex)
 		if err != nil {
 			return nil, err
 		}
 
-		for i := range stateLeafs {
-			path, err := a.storage.GetStateNodeByHash(stateLeafs[i].DataHash)
+		for i := range stateLeaves {
+			path, err := a.storage.GetStateNodeByHash(stateLeaves[i].DataHash)
 			if err != nil {
 				return nil, err
 			}
 			userState := models.ReturnUserState{
-				UserState: stateLeafs[i].UserState,
+				UserState: stateLeaves[i].UserState,
 				StateID:   path.MerklePath.Path,
 			}
 			userStates = append(userStates, userState)

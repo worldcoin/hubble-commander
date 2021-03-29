@@ -46,12 +46,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	dep, err := getDeployer(cfg.Ethereum)
+	chain, err := getDeployer(cfg.Ethereum)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	client, err := getClient(storage, dep)
+	client, err := getClient(storage, chain)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -84,8 +84,8 @@ func main() {
 	log.Fatal(api.StartAPIServer(&cfg))
 }
 
-func getClient(storage *st.Storage, dep deployer.ChainConnection) (*eth.Client, error) {
-	chainState, err := storage.GetChainState(dep.GetChainID())
+func getClient(storage *st.Storage, chain deployer.ChainConnection) (*eth.Client, error) {
+	chainState, err := storage.GetChainState(chain.GetChainID())
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func getClient(storage *st.Storage, dep deployer.ChainConnection) (*eth.Client, 
 	if chainState == nil {
 		fmt.Println("Bootstrapping genesis state")
 		stateTree := st.NewStateTree(storage)
-		chainState, err = bootstrapState(stateTree, dep, genesisAccounts)
+		chainState, err = bootstrapState(stateTree, chain, genesisAccounts)
 		if err != nil {
 			return nil, err
 		}
@@ -106,21 +106,21 @@ func getClient(storage *st.Storage, dep deployer.ChainConnection) (*eth.Client, 
 		fmt.Println("Continuing from saved state")
 	}
 
-	return createClientFromChainState(dep, chainState)
+	return createClientFromChainState(chain, chainState)
 }
 
-func createClientFromChainState(dep deployer.ChainConnection, chainState *models.ChainState) (*eth.Client, error) {
-	accountRegistry, err := accountregistry.NewAccountRegistry(chainState.AccountRegistry, dep.GetBackend())
+func createClientFromChainState(chain deployer.ChainConnection, chainState *models.ChainState) (*eth.Client, error) {
+	accountRegistry, err := accountregistry.NewAccountRegistry(chainState.AccountRegistry, chain.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
-	rollupContract, err := rollup.NewRollup(chainState.Rollup, dep.GetBackend())
+	rollupContract, err := rollup.NewRollup(chainState.Rollup, chain.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
-	client, err := eth.NewClient(dep, eth.NewClientParams{
+	client, err := eth.NewClient(chain, eth.NewClientParams{
 		Rollup:          rollupContract,
 		AccountRegistry: accountRegistry,
 	})
@@ -156,15 +156,15 @@ func getDeployer(cfg *config.EthereumConfig) (deployer.ChainConnection, error) {
 
 func bootstrapState(
 	stateTree *st.StateTree,
-	d deployer.ChainConnection,
+	chain deployer.ChainConnection,
 	accounts []commander.GenesisAccount,
 ) (*models.ChainState, error) {
-	accountRegistryAddress, accountRegistry, err := deployer.DeployAccountRegistry(d)
+	accountRegistryAddress, accountRegistry, err := deployer.DeployAccountRegistry(chain)
 	if err != nil {
 		return nil, err
 	}
 
-	registeredAccounts, err := commander.RegisterGenesisAccounts(d.GetAccount(), accountRegistry, accounts)
+	registeredAccounts, err := commander.RegisterGenesisAccounts(chain.GetAccount(), accountRegistry, accounts)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +179,7 @@ func bootstrapState(
 		return nil, err
 	}
 
-	contracts, err := deployer.DeployConfiguredRollup(d, deployer.DeploymentConfig{
+	contracts, err := deployer.DeployConfiguredRollup(chain, deployer.DeploymentConfig{
 		AccountRegistryAddress: accountRegistryAddress,
 		GenesisStateRoot:       stateRoot,
 	})
@@ -188,7 +188,7 @@ func bootstrapState(
 	}
 
 	chainState := &models.ChainState{
-		ChainID:         d.GetChainID(),
+		ChainID:         chain.GetChainID(),
 		AccountRegistry: *accountRegistryAddress,
 		Rollup:          contracts.RollupAddress,
 	}

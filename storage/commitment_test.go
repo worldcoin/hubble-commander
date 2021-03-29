@@ -116,6 +116,12 @@ func (s *CommitmentTestSuite) Test_GetPendingCommitments_ReturnsOnlyGivenNumberO
 	s.Len(commitments, 2)
 }
 
+func (s *StateUpdateTestSuite) Test_GetCommitment_NonExistentCommitment() {
+	res, err := s.storage.GetCommitment(42)
+	s.EqualError(err, "commitment not found")
+	s.Nil(res)
+}
+
 func TestCommitmentTestSuite(t *testing.T) {
 	suite.Run(t, new(CommitmentTestSuite))
 }

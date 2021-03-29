@@ -14,28 +14,28 @@ type FrontendContracts struct {
 	FrontendCreate2Transfer *create2transfer.FrontendCreate2Transfer
 }
 
-func DeployFrontend(d ChainConnection) (*FrontendContracts, error) {
-	_, _, genericContract, err := generic.DeployFrontendGeneric(d.GetAccount(), d.GetBackend())
+func DeployFrontend(c ChainConnection) (*FrontendContracts, error) {
+	_, _, genericContract, err := generic.DeployFrontendGeneric(c.GetAccount(), c.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
-	_, _, transferContract, err := transfer.DeployFrontendTransfer(d.GetAccount(), d.GetBackend())
+	_, _, transferContract, err := transfer.DeployFrontendTransfer(c.GetAccount(), c.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
-	_, _, migrationContract, err := massmigration.DeployFrontendMassMigration(d.GetAccount(), d.GetBackend())
+	_, _, migrationContract, err := massmigration.DeployFrontendMassMigration(c.GetAccount(), c.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
-	_, _, createContract, err := create2transfer.DeployFrontendCreate2Transfer(d.GetAccount(), d.GetBackend())
+	_, _, createContract, err := create2transfer.DeployFrontendCreate2Transfer(c.GetAccount(), c.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
-	d.Commit()
+	c.Commit()
 
 	return &FrontendContracts{
 		FrontendGeneric:         genericContract,

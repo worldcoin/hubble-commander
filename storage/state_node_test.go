@@ -107,7 +107,7 @@ func (s *StateNodeTestSuite) Test_UpdateStateNode_UpdateAndRetrieve() {
 	s.Equal(expectedNode, res)
 }
 
-func (s *StateNodeTestSuite) Test_UpdateStateNode_NotExistantNode() {
+func (s *StateNodeTestSuite) Test_UpdateStateNode_NotExistentNode() {
 	path, err := models.NewMerklePath("0000111")
 	s.NoError(err)
 	node := &models.StateNode{
@@ -162,7 +162,7 @@ func (s *StateNodeTestSuite) Test_AddOrUpdateStateNode_UpdateAndRetrieve() {
 func (s *StateNodeTestSuite) Test_GetStateNodeByHash_NonExistentNode() {
 	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
 	res, err := s.storage.GetStateNodeByHash(hash)
-	s.EqualError(err, "state node not found", err.Error())
+	s.EqualError(err, "state node not found")
 	s.Nil(res)
 }
 
