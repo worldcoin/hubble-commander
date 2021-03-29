@@ -8,7 +8,7 @@ import (
 )
 
 func Test_Wallet_SignAndVerify(t *testing.T) {
-	bytesToSign := []byte("0x123221")
+	bytesToSign := []byte("0xdeadbeef")
 
 	wallet, err := NewRandomWallet(DefaultDomain)
 	r.NoError(t, err)
@@ -16,7 +16,7 @@ func Test_Wallet_SignAndVerify(t *testing.T) {
 	signature, err := wallet.Sign(bytesToSign)
 	r.NoError(t, err)
 
-	isValid, err := wallet.VerifySignature(signature, bytesToSign, wallet.signer.Account.Public)
+	isValid, err := wallet.VerifySignature(signature, bytesToSign, wallet.PublicKey())
 	r.NoError(t, err)
 	r.True(t, isValid)
 }
@@ -40,7 +40,7 @@ func Test_Wallet_SignAndVerifyAggregatedSignature(t *testing.T) {
 		signature, err := wallet.Sign(bytesToSign[i])
 		r.NoError(t, err)
 
-		publicKeys = append(publicKeys, wallet.signer.Account.Public)
+		publicKeys = append(publicKeys, wallet.PublicKey())
 		messages = append(messages, bytesToSign[i])
 		signatures = append(signatures, signature)
 	}

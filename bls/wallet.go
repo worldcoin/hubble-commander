@@ -59,6 +59,10 @@ func (w *Wallet) Sign(data []byte) (*bls.Signature, error) {
 	return signature, nil
 }
 
+func (w *Wallet) PublicKey() *bls.PublicKey {
+	return w.signer.Account.Public
+}
+
 func (w *Wallet) VerifySignature(signature *bls.Signature, data []byte, pubkey *bls.PublicKey) (bool, error) {
 	verifier := bls.NewBLSVerifier(w.signer.Domain)
 	valid, err := verifier.Verify(data, signature, pubkey)
