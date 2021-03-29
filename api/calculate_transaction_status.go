@@ -6,37 +6,30 @@ import (
 )
 
 func CalculateTransactionStatus(storage *st.Storage, tx *models.Transaction, latestBlockNumber uint32) (*models.TransactionStatus, error) {
-	var status models.TransactionStatus
+	if tx.ErrorMessage != nil {
+		return models.Error.Ref(), nil
+	}
 
 	if tx.IncludedInCommitment == nil {
-		status = models.Pending
-	} else {
-		status = models.Committed
+		return models.Pending.Ref(), nil
 	}
 
-	if tx.ErrorMessage != nil {
-		status = models.Error
+	commitment, err := storage.GetCommitment(*tx.IncludedInCommitment)
+	if err != nil {
+		return nil, err
 	}
 
-	if status == models.Committed {
-		commitment, err := storage.GetCommitment(*tx.IncludedInCommitment)
-		if err != nil {
-			return nil, err
-		}
-
-		if commitment.IncludedInBatch != nil {
-			status = models.InBatch
-
-			batch, err := storage.GetBatch(*commitment.IncludedInBatch)
-			if err != nil {
-				return nil, err
-			}
-
-			if latestBlockNumber >= batch.FinalisationBlock {
-				status = models.Finalised
-			}
-		}
+	if commitment.IncludedInBatch == nil {
+		return models.Committed.Ref(), nil
 	}
 
-	return &status, nil
+	batch, err := storage.GetBatch(*commitment.IncludedInBatch)
+	if err != nil {
+		return nil, err
+	}
+
+	if latestBlockNumber < batch.FinalisationBlock {
+		return models.InBatch.Ref(), nil
+	}
+	return models.Finalised.Ref(), nil
 }
