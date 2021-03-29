@@ -6,13 +6,19 @@ import (
 	"github.com/kilic/bn254/bls"
 )
 
-var DefaultDomain = [32]byte{0x00, 0x00, 0x00, 0x00}
+type (
+	PublicKey = bls.PublicKey
+	KeyPair   = bls.KeyPair
+	Domain    = [32]byte
+)
+
+var testDomain = Domain{0x00, 0x00, 0x00, 0x00}
 
 type Wallet struct {
 	signer bls.BLSSigner
 }
 
-func NewWallet(secretKey []byte, domain [32]byte) (*Wallet, error) {
+func NewWallet(secretKey []byte, domain Domain) (*Wallet, error) {
 	keyPair, err := bls.NewKeyPairFromSecret(secretKey)
 	if err != nil {
 		return nil, err
@@ -20,7 +26,7 @@ func NewWallet(secretKey []byte, domain [32]byte) (*Wallet, error) {
 	return NewWalletFromKeyPair(keyPair, domain), nil
 }
 
-func NewRandomWallet(domain [32]byte) (*Wallet, error) {
+func NewRandomWallet(domain Domain) (*Wallet, error) {
 	keyPair, err := bls.NewKeyPair(rand.Reader)
 	if err != nil {
 		return nil, err
@@ -28,7 +34,7 @@ func NewRandomWallet(domain [32]byte) (*Wallet, error) {
 	return NewWalletFromKeyPair(keyPair, domain), nil
 }
 
-func NewWalletFromKeyPair(account *bls.KeyPair, domain [32]byte) *Wallet {
+func NewWalletFromKeyPair(account *KeyPair, domain Domain) *Wallet {
 	signer := bls.BLSSigner{
 		Account: account,
 		Domain:  domain[:],
@@ -36,50 +42,25 @@ func NewWalletFromKeyPair(account *bls.KeyPair, domain [32]byte) *Wallet {
 	return &Wallet{signer: signer}
 }
 
-func BytesToSignature(b []byte) (*bls.Signature, error) {
-	sig, err := bls.SignatureFromBytes(b)
-	if err != nil {
-		return nil, err
-	}
-	return sig, nil
-}
-
-func (w *Wallet) Bytes() (secretKey, pubkey []byte) {
-	accountBytes := w.signer.Account.ToBytes()
-	secretBytes := accountBytes[128:]
-	pubkeyBytes := accountBytes[:128]
-	return secretBytes, pubkeyBytes
-}
-
-func (w *Wallet) Sign(data []byte) (*bls.Signature, error) {
+func (w *Wallet) Sign(data []byte) (*Signature, error) {
 	signature, err := w.signer.Sign(data)
 	if err != nil {
 		return nil, err
 	}
-	return signature, nil
+	return NewSignature(signature, w.Domain()), nil
 }
 
-func (w *Wallet) PublicKey() *bls.PublicKey {
+func (w *Wallet) Domain() Domain {
+	var domain [32]byte
+	copy(domain[:], w.signer.Domain)
+	return domain
+}
+
+func (w *Wallet) PublicKey() *PublicKey {
 	return w.signer.Account.Public
 }
 
-func (w *Wallet) VerifySignature(signature *bls.Signature, data []byte, pubkey *bls.PublicKey) (bool, error) {
-	verifier := bls.NewBLSVerifier(w.signer.Domain)
-	valid, err := verifier.Verify(data, signature, pubkey)
-	return valid, err
-}
-
-func VerifyAggregatedSignature(
-	aggregateSignature bls.Signature,
-	data []bls.Message,
-	pubkeys []*bls.PublicKey,
-	domain [32]byte,
-) (bool, error) {
-	verifier := bls.NewBLSVerifier(domain[:])
-	return verifier.VerifyAggregate(data, pubkeys, &aggregateSignature)
-}
-
-func NewAggregateSignature(signatures []*bls.Signature) bls.Signature {
-	aggregatedSig := bls.AggregateSignatures(signatures)
-	return *aggregatedSig
+func (w *Wallet) Bytes() (secretKey, publicKey []byte) {
+	accountBytes := w.signer.Account.ToBytes()
+	return accountBytes[128:], accountBytes[:128]
 }
