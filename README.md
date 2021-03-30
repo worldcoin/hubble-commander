@@ -63,7 +63,17 @@ ganache-cli --account 0xee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947
 ```
 
 ## Running docker image on Docker for Mac
+Create `.env.docker` file and set necessary env variables:
+```
+ETHEREUM_RPC_URL=ws://docker.for.mac.localhost:8545
+ETHEREUM_CHAIN_ID=1616067554748
+ETHEREUM_PRIVATE_KEY=ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
+HUBBLE_DBHOST=docker.for.mac.localhost
+HUBBLE_DBUSER=hubble
+HUBBLE_DBPASSWORD=root
 
+```
+Then run:
 ```shell
-docker run -it --rm --network host -e ETHEREUM_RPC_URL=ws://docker.for.mac.localhost:8545 -e ETHEREUM_CHAIN_ID=1616067554748 -e ETHEREUM_PRIVATE_KEY=ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82 -e HUBBLE_DBHOST=docker.for.mac.localhost ghcr.io/worldcoin/hubble-commander:latest
+docker run -it --rm -p 8080:8080 --env-file .env.docker ghcr.io/worldcoin/hubble-commander:latest
 ```
