@@ -46,6 +46,7 @@ func StartCommander(opts StartOptions) (*TestCommander, error) {
 
 	client := jsonrpc.NewClient("http://localhost:8080")
 
+	start := time.Now()
 	for {
 		var version string
 		err = client.CallFor(&version, "hubble_getVersion", []interface{}{})
@@ -54,6 +55,10 @@ func StartCommander(opts StartOptions) (*TestCommander, error) {
 		}
 		fmt.Printf("%s\n", err.Error())
 		time.Sleep(1 * time.Second)
+
+		if time.Since(start) > 30*time.Second {
+			return nil, fmt.Errorf("cannot connect to the node after timeout")
+		}
 	}
 }
 
