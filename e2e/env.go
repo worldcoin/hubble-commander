@@ -54,8 +54,11 @@ func StartCommander(opts StartOptions) (*TestCommander, error) {
 			return &TestCommander{Process: cmd.Process, Client: client}, nil
 		}
 		fmt.Printf("%s\n", err.Error())
-		time.Sleep(1 * time.Second)
+		if cmd.ProcessState.Exited() {
+			return nil, fmt.Errorf("node exited")
+		}
 
+		time.Sleep(1 * time.Second)
 		if time.Since(start) > 30*time.Second {
 			return nil, fmt.Errorf("cannot connect to the node after timeout")
 		}
