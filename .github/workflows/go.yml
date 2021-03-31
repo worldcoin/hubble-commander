@@ -45,7 +45,7 @@ jobs:
         run: make test
 
   test-on-hardhat:
-    name: Run tests that use hardhat node
+    name: Run tests using hardhat
     runs-on: ubuntu-latest
     env:
       ETHEREUM_RPC_URL: http://localhost:8545

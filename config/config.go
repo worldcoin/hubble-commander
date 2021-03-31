@@ -77,8 +77,8 @@ func GetTestConfig() Config {
 }
 
 func getEthereumConfig() *EthereumConfig {
-	rpcUrl := getEnvOrDefault("ETHEREUM_RPC_URL", nil)
-	if rpcUrl == nil {
+	rpcURL := getEnvOrDefault("ETHEREUM_RPC_URL", nil)
+	if rpcURL == nil {
 		return nil
 	}
 	return &EthereumConfig{
