@@ -1,11 +1,14 @@
+// +build hardhat
+
 package bls
 
 import (
+	"encoding/hex"
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/test/bls"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
-	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -13,7 +16,6 @@ import (
 type WalletTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	sim     *simulator.Simulator
 	testBLS *bls.TestBLS
 }
 
@@ -22,26 +24,26 @@ func (s *WalletTestSuite) SetupSuite() {
 }
 
 func (s *WalletTestSuite) SetupTest() {
-	sim, err := simulator.NewSimulator()
-	s.NoError(err)
-	s.sim = sim
+	cfg := config.GetTestConfig()
+	s.NotNil(cfg.Ethereum, "This test must be run against hardhat node instance with gas estimator contract deployed")
 
-	contracts, err := deployer.DeployTest(sim)
+	dep, err := deployer.NewRPCDeployer(cfg.Ethereum)
 	s.NoError(err)
-	s.testBLS = contracts.TestBLS
-}
 
-func (s *WalletTestSuite) TearDownTest() {
-	s.sim.Close()
+	opts := *dep.GetAccount()
+	opts.GasLimit = 3_000_000
+	_, _, testBLS, err := bls.DeployTestBLS(&opts, dep.GetBackend())
+	s.NoError(err)
+	s.testBLS = testBLS
 }
 
 func (s *WalletTestSuite) TestSign() {
-	s.T().Skip("Signature verification in smart contract doesn't work for some reason")
-
 	wallet, err := NewRandomWallet(testDomain)
 	s.NoError(err)
 
-	data := []byte("0xdeadbeef")
+	data, err := hex.DecodeString("deadbeef")
+	s.NoError(err)
+
 	signature, err := wallet.Sign(data)
 	s.NoError(err)
 
@@ -55,8 +57,8 @@ func (s *WalletTestSuite) TestSign() {
 		point,
 	)
 	s.NoError(err)
-	s.True(checkSuccess)
 	s.True(callSuccess)
+	s.True(checkSuccess)
 }
 
 func TestWalletTestSuite(t *testing.T) {

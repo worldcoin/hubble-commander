@@ -2,8 +2,10 @@ package config
 
 import (
 	"os"
+	"path"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/joho/godotenv"
 )
@@ -15,7 +17,8 @@ func init() {
 }
 
 func loadDotEnv() {
-	_ = godotenv.Load(".env")
+	dotEnvFilePath := path.Join(utils.GetProjectRoot(), ".env")
+	_ = godotenv.Load(dotEnvFilePath)
 }
 
 func GetConfig() Config {
@@ -69,5 +72,18 @@ func GetTestConfig() Config {
 			User:     getEnvOrDefault("HUBBLE_DBUSER", nil),
 			Password: getEnvOrDefault("HUBBLE_DBPASSWORD", nil),
 		},
+		Ethereum: getEthereumConfig(),
+	}
+}
+
+func getEthereumConfig() *EthereumConfig {
+	rpcUrl := getEnvOrDefault("ETHEREUM_RPC_URL", nil)
+	if rpcUrl == nil {
+		return nil
+	}
+	return &EthereumConfig{
+		RPCURL:     getEnv("ETHEREUM_RPC_URL"),
+		ChainID:    getEnv("ETHEREUM_CHAIN_ID"),
+		PrivateKey: getEnv("ETHEREUM_PRIVATE_KEY"),
 	}
 }
