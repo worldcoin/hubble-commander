@@ -4,6 +4,7 @@ package bls
 
 import (
 	"encoding/hex"
+	"math/big"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
@@ -21,9 +22,7 @@ type WalletTestSuite struct {
 
 func (s *WalletTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
-}
 
-func (s *WalletTestSuite) SetupTest() {
 	cfg := config.GetTestConfig()
 	s.NotNil(cfg.Ethereum, "This test must be run against hardhat node instance with gas estimator contract deployed")
 
@@ -37,7 +36,7 @@ func (s *WalletTestSuite) SetupTest() {
 	s.testBLS = testBLS
 }
 
-func (s *WalletTestSuite) TestSign() {
+func (s *WalletTestSuite) TestSign_VerifySingle() {
 	wallet, err := NewRandomWallet(testDomain)
 	s.NoError(err)
 
@@ -55,6 +54,42 @@ func (s *WalletTestSuite) TestSign() {
 		signature.ToBigInts(),
 		wallet.PublicKey().ToBigInts(),
 		point,
+	)
+	s.NoError(err)
+	s.True(callSuccess)
+	s.True(checkSuccess)
+}
+
+func (s *WalletTestSuite) TestSign_VerifyMultiple() {
+	hexStrings := []string{"deadbeef", "cafebabe", "baadf00d"}
+	signatures := make([]*Signature, 0, 3)
+	publicKeys := make([][4]*big.Int, 0, 3)
+	dataPoints := make([][2]*big.Int, 0, 3)
+
+	for _, str := range hexStrings {
+		bytes, err := hex.DecodeString(str)
+		s.NoError(err)
+
+		wallet, err := NewRandomWallet(testDomain)
+		s.NoError(err)
+
+		signature, err := wallet.Sign(bytes)
+		s.NoError(err)
+
+		dataPoint, err := s.testBLS.HashToPoint(nil, testDomain, bytes)
+		s.NoError(err)
+
+		signatures = append(signatures, signature)
+		publicKeys = append(publicKeys, wallet.PublicKey().ToBigInts())
+		dataPoints = append(dataPoints, dataPoint)
+	}
+	aggregatedSignature := NewAggregatedSignature(signatures)
+
+	checkSuccess, callSuccess, err := s.testBLS.VerifyMultiple(
+		nil,
+		aggregatedSignature.ToBigInts(),
+		publicKeys,
+		dataPoints,
 	)
 	s.NoError(err)
 	s.True(callSuccess)

@@ -82,7 +82,7 @@ func getEthereumConfig() *EthereumConfig {
 		return nil
 	}
 	return &EthereumConfig{
-		RPCURL:     getEnv("ETHEREUM_RPC_URL"),
+		RPCURL:     *rpcURL,
 		ChainID:    getEnv("ETHEREUM_CHAIN_ID"),
 		PrivateKey: getEnv("ETHEREUM_PRIVATE_KEY"),
 	}
