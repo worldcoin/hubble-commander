@@ -10,7 +10,7 @@ import (
 func Test_Commander(t *testing.T) {
 	commander, err := StartCommander(StartOptions{
 		Image:             "ghcr.io/worldcoin/hubble-commander:latest",
-		UseHostNetworking: true,
+		UseHostNetworking: false,
 	})
 	require.NoError(t, err)
 
