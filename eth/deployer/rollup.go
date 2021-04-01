@@ -40,36 +40,36 @@ type RollupContracts struct {
 	RollupAddress   common.Address
 }
 
-func DeployRollup(d Deployer) (*RollupContracts, error) {
-	accountRegistryAddress, _, err := DeployAccountRegistry(d)
+func DeployRollup(c ChainConnection) (*RollupContracts, error) {
+	accountRegistryAddress, _, err := DeployAccountRegistry(c)
 	if err != nil {
 		return nil, err
 	}
-	return DeployConfiguredRollup(d, DeploymentConfig{
+	return DeployConfiguredRollup(c, DeploymentConfig{
 		AccountRegistryAddress: accountRegistryAddress,
 	})
 }
 
-func DeployConfiguredRollup(d Deployer, config DeploymentConfig) (*RollupContracts, error) {
+func DeployConfiguredRollup(c ChainConnection, config DeploymentConfig) (*RollupContracts, error) {
 	fillWithDefaults(&config)
-	proofOfBurnAddress, _, proofOfBurn, err := proofofburn.DeployProofOfBurn(d.TransactionOpts(), d.GetBackend())
+	proofOfBurnAddress, _, proofOfBurn, err := proofofburn.DeployProofOfBurn(c.GetAccount(), c.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
-	tokenRegistryAddress, _, tokenRegistry, err := tokenregistry.DeployTokenRegistry(d.TransactionOpts(), d.GetBackend())
+	tokenRegistryAddress, _, tokenRegistry, err := tokenregistry.DeployTokenRegistry(c.GetAccount(), c.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
-	spokeRegistryAddress, _, spokeRegistry, err := spokeregistry.DeploySpokeRegistry(d.TransactionOpts(), d.GetBackend())
+	spokeRegistryAddress, _, spokeRegistry, err := spokeregistry.DeploySpokeRegistry(c.GetAccount(), c.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
 	vaultAddress, _, vaultContract, err := vault.DeployVault(
-		d.TransactionOpts(),
-		d.GetBackend(),
+		c.GetAccount(),
+		c.GetBackend(),
 		tokenRegistryAddress,
 		spokeRegistryAddress,
 	)
@@ -78,8 +78,8 @@ func DeployConfiguredRollup(d Deployer, config DeploymentConfig) (*RollupContrac
 	}
 
 	depositManagerAddress, _, depositManager, err := depositmanager.DeployDepositManager(
-		d.TransactionOpts(),
-		d.GetBackend(),
+		c.GetAccount(),
+		c.GetBackend(),
 		tokenRegistryAddress,
 		vaultAddress,
 		&config.MaxDepositSubtreeDepth.Int,
@@ -88,24 +88,24 @@ func DeployConfiguredRollup(d Deployer, config DeploymentConfig) (*RollupContrac
 		return nil, err
 	}
 
-	accountRegistry, err := accountregistry.NewAccountRegistry(*config.AccountRegistryAddress, d.GetBackend())
+	accountRegistry, err := accountregistry.NewAccountRegistry(*config.AccountRegistryAddress, c.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
-	transferAddress, _, transferContract, err := transfer.DeployTransfer(d.TransactionOpts(), d.GetBackend())
+	transferAddress, _, transferContract, err := transfer.DeployTransfer(c.GetAccount(), c.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
-	massMigrationAddress, _, massMigration, err := massmigration.DeployMassMigration(d.TransactionOpts(), d.GetBackend())
+	massMigrationAddress, _, massMigration, err := massmigration.DeployMassMigration(c.GetAccount(), c.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
-	d.Commit()
+	c.Commit()
 
-	create2TransferAddress, _, create2Transfer, err := create2transfer.DeployCreate2Transfer(d.TransactionOpts(), d.GetBackend())
+	create2TransferAddress, _, create2Transfer, err := create2transfer.DeployCreate2Transfer(c.GetAccount(), c.GetBackend())
 	if err != nil {
 		return nil, err
 	}
@@ -113,8 +113,8 @@ func DeployConfiguredRollup(d Deployer, config DeploymentConfig) (*RollupContrac
 	stateRoot := [32]byte{}
 	copy(stateRoot[:], config.GenesisStateRoot.Bytes())
 	rollupAddress, _, rollupContract, err := rollup.DeployRollup(
-		d.TransactionOpts(),
-		d.GetBackend(),
+		c.GetAccount(),
+		c.GetBackend(),
 		proofOfBurnAddress,
 		depositManagerAddress,
 		*config.AccountRegistryAddress,
@@ -131,7 +131,7 @@ func DeployConfiguredRollup(d Deployer, config DeploymentConfig) (*RollupContrac
 		return nil, err
 	}
 
-	d.Commit()
+	c.Commit()
 
 	return &RollupContracts{
 		Config:          config,

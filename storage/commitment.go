@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"fmt"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -35,17 +37,35 @@ func (s *Storage) GetCommitment(id int32) (*models.Commitment, error) {
 			From("commitment").
 			Where(squirrel.Eq{"commitment_id": id}),
 	).Into(&res)
-	if err != nil || len(res) == 0 {
+	if err != nil {
 		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, fmt.Errorf("commitment not found")
 	}
 	return &res[0], nil
 }
 
-func (s *Storage) MarkCommitmentAsIncluded(id int32, batchHash common.Hash) error {
+func (s *Storage) MarkCommitmentAsIncluded(id int32, batchHash, accountRoot *common.Hash) error {
 	_, err := s.DB.ExecBuilder(
 		s.QB.Update("commitment").
 			Where(squirrel.Eq{"commitment_id": id}).
-			Set("included_in_batch", batchHash),
+			Set("included_in_batch", *batchHash).
+			Set("account_tree_root", *accountRoot),
 	)
 	return err
+}
+
+func (s *Storage) GetPendingCommitments(maxFetched uint64) ([]models.Commitment, error) {
+	res := make([]models.Commitment, 0, 32)
+	err := s.DB.Query(
+		s.QB.Select("*").
+			From("commitment").
+			Where(squirrel.Eq{"included_in_batch": nil}).
+			Limit(maxFetched),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }

@@ -3,6 +3,7 @@ package api
 import (
 	"math/big"
 
+	"github.com/Worldcoin/hubble-commander/commander"
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
@@ -15,13 +16,13 @@ func (a *API) GetTransactions(publicKey *models.PublicKey) ([]models.Transaction
 	userStatesIndexes := make([]models.Uint256, 0, 1)
 
 	for i := range accounts {
-		stateLeafs, err := a.storage.GetStateLeafs(accounts[i].AccountIndex)
+		stateLeaves, err := a.storage.GetStateLeaves(accounts[i].AccountIndex)
 		if err != nil {
 			return nil, err
 		}
 
-		for i := range stateLeafs {
-			node, err := a.storage.GetStateNodeByHash(stateLeafs[i].DataHash)
+		for i := range stateLeaves {
+			node, err := a.storage.GetStateNodeByHash(stateLeaves[i].DataHash)
 			if err != nil {
 				return nil, err
 			}
@@ -39,10 +40,13 @@ func (a *API) GetTransactions(publicKey *models.PublicKey) ([]models.Transaction
 		}
 
 		for i := range transactions {
-			status := CalculateTransactionStatus(&transactions[i])
+			status, err := CalculateTransactionStatus(a.storage, &transactions[i], commander.LatestBlockNumber)
+			if err != nil {
+				return nil, err
+			}
 			returnTx := &models.TransactionReceipt{
 				Transaction: transactions[i],
-				Status:      status,
+				Status:      *status,
 			}
 			userTransactions = append(userTransactions, *returnTx)
 		}

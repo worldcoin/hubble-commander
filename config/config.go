@@ -17,7 +17,8 @@ func init() {
 }
 
 func loadDotEnv() {
-	_ = godotenv.Load(".env")
+	dotEnvFilePath := path.Join(utils.GetProjectRoot(), ".env")
+	_ = godotenv.Load(dotEnvFilePath)
 }
 
 func getMigrationsPath() string {
@@ -27,9 +28,13 @@ func getMigrationsPath() string {
 func GetConfig() Config {
 	return Config{
 		Rollup: RollupConfig{
-			FeeReceiverIndex:       0,
-			TxsPerCommitment:       2,
-			CommitmentLoopInterval: 500 * time.Millisecond,
+			FeeReceiverIndex:        0,
+			TxsPerCommitment:        2,
+			MinCommitmentsPerBatch:  1,
+			MaxCommitmentsPerBatch:  32,
+			CommitmentLoopInterval:  500 * time.Millisecond,
+			BatchLoopInterval:       500 * time.Millisecond,
+			BlockNumberLoopInterval: 500 * time.Millisecond,
 		},
 		API: APIConfig{
 			Version: "dev-0.1.0",
@@ -56,7 +61,10 @@ func GetTestConfig() Config {
 		Rollup: RollupConfig{
 			FeeReceiverIndex:       0,
 			TxsPerCommitment:       2,
+			MinCommitmentsPerBatch: 1,
+			MaxCommitmentsPerBatch: 32,
 			CommitmentLoopInterval: 500 * time.Millisecond,
+			BatchLoopInterval:      500 * time.Millisecond,
 		},
 		API: APIConfig{
 			Version: "dev-0.1.0",
@@ -70,5 +78,18 @@ func GetTestConfig() Config {
 			Password:       getEnvOrDefault("HUBBLE_DBPASSWORD", nil),
 			MigrationsPath: getMigrationsPath(),
 		},
+		Ethereum: getEthereumConfig(),
+	}
+}
+
+func getEthereumConfig() *EthereumConfig {
+	rpcURL := getEnvOrDefault("ETHEREUM_RPC_URL", nil)
+	if rpcURL == nil {
+		return nil
+	}
+	return &EthereumConfig{
+		RPCURL:     *rpcURL,
+		ChainID:    getEnv("ETHEREUM_CHAIN_ID"),
+		PrivateKey: getEnv("ETHEREUM_PRIVATE_KEY"),
 	}
 }

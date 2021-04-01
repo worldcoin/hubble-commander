@@ -51,7 +51,7 @@ func CommitTransactions(storage *st.Storage, cfg *config.RollupConfig) (err erro
 
 	err = unsafeCommitTransactions(txStorage, cfg)
 	if err != nil {
-		return err
+		return
 	}
 
 	return tx.Commit()
@@ -87,7 +87,7 @@ func unsafeCommitTransactions(storage *st.Storage, cfg *config.RollupConfig) err
 		return err
 	}
 
-	err = markTransactionsAsCommitted(storage, includedTxs, *commitmentID)
+	err = markTransactionsAsIncluded(storage, includedTxs, *commitmentID)
 	if err != nil {
 		return err
 	}
@@ -95,7 +95,7 @@ func unsafeCommitTransactions(storage *st.Storage, cfg *config.RollupConfig) err
 }
 
 func createAndStoreCommitment(storage *st.Storage, txs []models.Transaction, feeReceiverIndex uint32) (*int32, error) {
-	combinedSignature := models.Signature{models.MakeUint256(1), models.MakeUint256(2)} // TODO: Actually combine signatures
+	combinedSignature := models.MakeSignature(1, 2) // TODO: Actually combine signatures
 
 	serializedTxs, err := encoder.SerializeTransactions(txs)
 	if err != nil {
@@ -116,7 +116,7 @@ func createAndStoreCommitment(storage *st.Storage, txs []models.Transaction, fee
 	return storage.AddCommitment(&commitment)
 }
 
-func markTransactionsAsCommitted(storage *st.Storage, txs []models.Transaction, commitmentID int32) error {
+func markTransactionsAsIncluded(storage *st.Storage, txs []models.Transaction, commitmentID int32) error {
 	for i := range txs {
 		err := storage.MarkTransactionAsIncluded(txs[i].Hash, commitmentID)
 		if err != nil {

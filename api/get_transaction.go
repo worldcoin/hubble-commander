@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/Worldcoin/hubble-commander/commander"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -11,28 +12,15 @@ func (a *API) GetTransaction(hash common.Hash) (*models.TransactionReceipt, erro
 		return nil, err
 	}
 
-	status := CalculateTransactionStatus(tx)
+	status, err := CalculateTransactionStatus(a.storage, tx, commander.LatestBlockNumber)
+	if err != nil {
+		return nil, err
+	}
 
 	returnTx := &models.TransactionReceipt{
 		Transaction: *tx,
-		Status:      status,
+		Status:      *status,
 	}
 
 	return returnTx, nil
-}
-
-func CalculateTransactionStatus(tx *models.Transaction) models.TransactionStatus {
-	var status models.TransactionStatus
-
-	if tx.IncludedInCommitment == nil {
-		status = models.Pending
-	} else {
-		status = models.Committed
-	}
-
-	if tx.ErrorMessage != nil {
-		status = models.Error
-	}
-
-	return status
 }

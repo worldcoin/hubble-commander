@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/commander"
@@ -57,41 +56,31 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	stateTree := st.NewStateTree(storage)
 
-	dep, err := GetDeployer(cfg.Ethereum)
+	chain, err := getDeployer(cfg.Ethereum)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	chainState, err := storage.GetChainState(dep.GetChainID())
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var client *eth.Client
-	if chainState == nil {
-		fmt.Println("Bootstrapping genesis state")
-		chainState, err = BootstrapState(stateTree, dep, genesisAccounts)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		err = storage.SetChainState(chainState)
-		if err != nil {
-			log.Fatal(err)
-		}
-	} else {
-		fmt.Println("Continuing from saved state")
-	}
-
-	client, err = CreateClientFromChainState(dep, chainState)
+	client, err := getClient(storage, chain)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	go func() {
+		err := commander.BlockNumberEndlessLoop(client, &cfg.Rollup)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+	go func() {
 		err := commander.CommitmentsEndlessLoop(storage, &cfg.Rollup)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+	go func() {
+		err := commander.BatchesEndlessLoop(storage, client, &cfg.Rollup)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -106,18 +95,43 @@ func main() {
 	log.Fatal(api.StartAPIServer(&cfg))
 }
 
-func CreateClientFromChainState(dep deployer.Deployer, chainState *models.ChainState) (*eth.Client, error) {
-	accountRegistry, err := accountregistry.NewAccountRegistry(chainState.AccountRegistry, dep.GetBackend())
+func getClient(storage *st.Storage, chain deployer.ChainConnection) (*eth.Client, error) {
+	chainState, err := storage.GetChainState(chain.GetChainID())
 	if err != nil {
 		return nil, err
 	}
 
-	rollupContract, err := rollup.NewRollup(chainState.Rollup, dep.GetBackend())
+	if chainState == nil {
+		fmt.Println("Bootstrapping genesis state")
+		stateTree := st.NewStateTree(storage)
+		chainState, err = bootstrapState(stateTree, chain, genesisAccounts)
+		if err != nil {
+			return nil, err
+		}
+
+		err = storage.SetChainState(chainState)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		fmt.Println("Continuing from saved state")
+	}
+
+	return createClientFromChainState(chain, chainState)
+}
+
+func createClientFromChainState(chain deployer.ChainConnection, chainState *models.ChainState) (*eth.Client, error) {
+	accountRegistry, err := accountregistry.NewAccountRegistry(chainState.AccountRegistry, chain.GetBackend())
 	if err != nil {
 		return nil, err
 	}
 
-	client, err := eth.NewClient(dep.TransactionOpts(), eth.NewClientParams{
+	rollupContract, err := rollup.NewRollup(chainState.Rollup, chain.GetBackend())
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := eth.NewClient(chain, eth.NewClientParams{
 		Rollup:          rollupContract,
 		AccountRegistry: accountRegistry,
 	})
@@ -128,40 +142,24 @@ func CreateClientFromChainState(dep deployer.Deployer, chainState *models.ChainS
 	return client, nil
 }
 
-func GetDeployer(cfg *config.EthereumConfig) (deployer.Deployer, error) {
+func getDeployer(cfg *config.EthereumConfig) (deployer.ChainConnection, error) {
 	if cfg == nil {
 		return simulator.NewAutominingSimulator()
 	}
-
-	chainID, ok := big.NewInt(0).SetString(cfg.ChainID, 10)
-	if !ok {
-		return nil, fmt.Errorf("invalid chain id")
-	}
-
-	key, err := crypto.HexToECDSA(cfg.PrivateKey)
-	if err != nil {
-		return nil, err
-	}
-
-	account, err := bind.NewKeyedTransactorWithChainID(key, chainID)
-	if err != nil {
-		return nil, err
-	}
-
-	return deployer.NewRPCDeployer(cfg.RPCURL, chainID, account)
+	return deployer.NewRPCDeployer(cfg)
 }
 
-func BootstrapState(
+func bootstrapState(
 	stateTree *st.StateTree,
-	d deployer.Deployer,
+	chain deployer.ChainConnection,
 	accounts []commander.GenesisAccount,
 ) (*models.ChainState, error) {
-	accountRegistryAddress, accountRegistry, err := deployer.DeployAccountRegistry(d)
+	accountRegistryAddress, accountRegistry, err := deployer.DeployAccountRegistry(chain)
 	if err != nil {
 		return nil, err
 	}
 
-	registeredAccounts, err := commander.RegisterGenesisAccounts(d.TransactionOpts(), accountRegistry, accounts)
+	registeredAccounts, err := commander.RegisterGenesisAccounts(chain.GetAccount(), accountRegistry, accounts)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +174,7 @@ func BootstrapState(
 		return nil, err
 	}
 
-	contracts, err := deployer.DeployConfiguredRollup(d, deployer.DeploymentConfig{
+	contracts, err := deployer.DeployConfiguredRollup(chain, deployer.DeploymentConfig{
 		AccountRegistryAddress: accountRegistryAddress,
 		GenesisStateRoot:       stateRoot,
 	})
@@ -185,7 +183,7 @@ func BootstrapState(
 	}
 
 	chainState := &models.ChainState{
-		ChainID:         d.GetChainID(),
+		ChainID:         chain.GetChainID(),
 		AccountRegistry: *accountRegistryAddress,
 		Rollup:          contracts.RollupAddress,
 	}

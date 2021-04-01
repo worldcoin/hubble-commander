@@ -5,9 +5,9 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
+	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
 type NewClientParams struct {
@@ -22,18 +22,18 @@ type ClientConfig struct {
 }
 
 type Client struct {
-	account         bind.TransactOpts
 	config          ClientConfig
+	ChainConnection deployer.ChainConnection
 	Rollup          *rollup.Rollup
 	AccountRegistry *accountregistry.AccountRegistry
 }
 
-func NewClient(account *bind.TransactOpts, params NewClientParams) (*Client, error) {
+func NewClient(chainConnection deployer.ChainConnection, params NewClientParams) (*Client, error) {
 	fillWithDefaults(&params.ClientConfig)
 
 	return &Client{
-		account:         *account,
 		config:          params.ClientConfig,
+		ChainConnection: chainConnection,
 		Rollup:          params.Rollup,
 		AccountRegistry: params.AccountRegistry,
 	}, nil
