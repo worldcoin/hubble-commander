@@ -3,7 +3,6 @@
 package e2e
 
 import (
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -11,8 +10,8 @@ import (
 
 func Test_Commander(t *testing.T) {
 	commander, err := StartCommander(StartOptions{
-		Image:             "ghcr.io/worldcoin/hubble-commander:latest",
-		UseHostNetworking: true, // TODO: This needs to be on when running on linux & off when running on mac.
+		Image:             "a260c06daf13", //"ghcr.io/worldcoin/hubble-commander:latest",
+		UseHostNetworking: true,           // TODO: This needs to be on when running on linux & off when running on mac.
 	})
 	require.NoError(t, err)
 
@@ -22,6 +21,6 @@ func Test_Commander(t *testing.T) {
 
 	require.Equal(t, "dev-0.1.0", version)
 
-	err = commander.Process.Signal(os.Interrupt)
+	err = commander.Stop()
 	require.NoError(t, err)
 }
