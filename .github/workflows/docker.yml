@@ -1,4 +1,4 @@
-name: Hubble Commander CI
+name: E2E Test
 on:
   push:
     branches:

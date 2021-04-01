@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/commander"
@@ -15,8 +14,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/crypto"
 )
 
 var genesisAccounts = []commander.GenesisAccount{
@@ -135,23 +132,7 @@ func getDeployer(cfg *config.EthereumConfig) (deployer.ChainConnection, error) {
 	if cfg == nil {
 		return simulator.NewAutominingSimulator()
 	}
-
-	chainID, ok := big.NewInt(0).SetString(cfg.ChainID, 10)
-	if !ok {
-		return nil, fmt.Errorf("invalid chain id")
-	}
-
-	key, err := crypto.HexToECDSA(cfg.PrivateKey)
-	if err != nil {
-		return nil, err
-	}
-
-	account, err := bind.NewKeyedTransactorWithChainID(key, chainID)
-	if err != nil {
-		return nil, err
-	}
-
-	return deployer.NewRPCDeployer(cfg.RPCURL, chainID, account)
+	return deployer.NewRPCDeployer(cfg)
 }
 
 func bootstrapState(

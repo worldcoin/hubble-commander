@@ -1,5 +1,5 @@
 name: Hubble Commander CI
-on: [push]
+on: [ push ]
 
 jobs:
   lint:
@@ -43,6 +43,43 @@ jobs:
         run: make build
       - name: Test
         run: make test
+
+  test-on-hardhat:
+    name: Run tests using hardhat
+    runs-on: ubuntu-latest
+    env:
+      ETHEREUM_RPC_URL: http://localhost:8545
+      ETHEREUM_CHAIN_ID: 123
+      ETHEREUM_PRIVATE_KEY: ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 # hardhat node 1st account private key
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.15
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14.x
+      - name: Install Go dependencies
+        run: make install
+      - name: Install JavaScript dependancies
+        run: npm ci
+        working-directory: hubble-contracts
+      - name: Compile contracts and generate ts types
+        run: npm run generate
+        working-directory: hubble-contracts
+      - name: Run node in the background
+        run: npm run node &
+        working-directory: hubble-contracts
+      - name: Deploy gas estimator contracts
+        run: npm run keyless:deploy
+        working-directory: hubble-contracts
+      - name: Test
+        run: make test-hardhat
 
   generate:
     name: Generate
