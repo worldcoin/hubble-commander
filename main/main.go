@@ -9,11 +9,13 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
+	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
+	"github.com/golang-migrate/migrate/v4"
 )
 
 var genesisAccounts = []commander.GenesisAccount{
@@ -37,6 +39,16 @@ var genesisAccounts = []commander.GenesisAccount{
 
 func main() {
 	cfg := config.GetConfig()
+
+	migrator, err := db.GetMigrator(&cfg.DB)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = migrator.Up()
+	if err != nil && err != migrate.ErrNoChange {
+		log.Fatal(err)
+	}
 
 	storage, err := st.NewStorage(&cfg.DB)
 	if err != nil {

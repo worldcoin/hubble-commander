@@ -1,6 +1,7 @@
 FROM golang:1.15
 
 LABEL org.opencontainers.image.source="https://github.com/Worldcoin/hubble-commander"
+ENV HUBBLE_MIGRATIONS_PATH="/go/src/app/db/migrations"
 
 WORKDIR /go/src/app
 COPY . .

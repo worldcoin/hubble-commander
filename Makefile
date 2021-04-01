@@ -43,10 +43,13 @@ lint:
 	golangci-lint run ./...
 
 test:
-	go test -p 1 -v -tags fast ./...
+	go test -p 1 -v ./...
 
 test-hardhat:
 	go test -v -tags hardhat -run TestWalletTestSuite ./bls
+
+test-e2e:
+	go test -v -tags e2e ./e2e
 
 .PHONY: 
 	install 

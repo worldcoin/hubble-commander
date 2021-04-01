@@ -21,6 +21,10 @@ func loadDotEnv() {
 	_ = godotenv.Load(dotEnvFilePath)
 }
 
+func getMigrationsPath() string {
+	return path.Join(utils.GetProjectRoot(), "db", "migrations")
+}
+
 func GetConfig() Config {
 	return Config{
 		Rollup: RollupConfig{
@@ -37,11 +41,12 @@ func GetConfig() Config {
 			Port:    *getEnvOrDefault("HUBBLE_PORT", ref.String("8080")),
 		},
 		DB: DBConfig{
-			Host:     getEnvOrDefault("HUBBLE_DBHOST", nil),
-			Port:     getEnvOrDefault("HUBBLE_DBPORT", nil),
-			Name:     *getEnvOrDefault("HUBBLE_DBNAME", ref.String("hubble")),
-			User:     getEnvOrDefault("HUBBLE_DBUSER", nil),
-			Password: getEnvOrDefault("HUBBLE_DBPASSWORD", nil),
+			Host:           getEnvOrDefault("HUBBLE_DBHOST", nil),
+			Port:           getEnvOrDefault("HUBBLE_DBPORT", nil),
+			Name:           *getEnvOrDefault("HUBBLE_DBNAME", ref.String("hubble")),
+			User:           getEnvOrDefault("HUBBLE_DBUSER", nil),
+			Password:       getEnvOrDefault("HUBBLE_DBPASSWORD", nil),
+			MigrationsPath: *getEnvOrDefault("HUBBLE_MIGRATIONS_PATH", ref.String(getMigrationsPath())),
 		},
 		Ethereum: &EthereumConfig{
 			RPCURL:     getEnv("ETHEREUM_RPC_URL"),
@@ -66,11 +71,12 @@ func GetTestConfig() Config {
 			Port:    *getEnvOrDefault("HUBBLE_PORT", ref.String("8080")),
 		},
 		DB: DBConfig{
-			Host:     getEnvOrDefault("HUBBLE_DBHOST", nil),
-			Port:     getEnvOrDefault("HUBBLE_DBPORT", nil),
-			Name:     *getEnvOrDefault("HUBBLE_DBNAME", ref.String("hubble_test")),
-			User:     getEnvOrDefault("HUBBLE_DBUSER", nil),
-			Password: getEnvOrDefault("HUBBLE_DBPASSWORD", nil),
+			Host:           getEnvOrDefault("HUBBLE_DBHOST", nil),
+			Port:           getEnvOrDefault("HUBBLE_DBPORT", nil),
+			Name:           *getEnvOrDefault("HUBBLE_DBNAME", ref.String("hubble_test")),
+			User:           getEnvOrDefault("HUBBLE_DBUSER", nil),
+			Password:       getEnvOrDefault("HUBBLE_DBPASSWORD", nil),
+			MigrationsPath: getMigrationsPath(),
 		},
 		Ethereum: getEthereumConfig(),
 	}

@@ -25,11 +25,12 @@ type APIConfig struct {
 }
 
 type DBConfig struct {
-	Host     *string
-	Port     *string
-	Name     string
-	User     *string
-	Password *string
+	Host           *string
+	Port           *string
+	Name           string
+	User           *string
+	Password       *string
+	MigrationsPath string
 }
 
 type EthereumConfig struct {
