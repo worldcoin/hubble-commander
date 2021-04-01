@@ -61,5 +61,5 @@ jobs:
       - name: Run E2E tests
         run: |
           npx ganache-cli --account 0xee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82,0x56BC75E2D63100000 &
-          go test github.com/Worldcoin/hubble-commander/e2e -v
+          make test-e2e
 

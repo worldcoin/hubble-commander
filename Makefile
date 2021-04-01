@@ -48,6 +48,9 @@ test:
 test-hardhat:
 	go test -v -tags hardhat -run TestWalletTestSuite ./bls
 
+test-e2e:
+	go test -v -tags e2e ./e2e
+
 .PHONY: 
 	install 
 	clean 
