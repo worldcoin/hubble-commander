@@ -54,7 +54,7 @@ func StartCommander(opts StartOptions) (*TestCommander, error) {
 			return &TestCommander{Process: cmd.Process, Client: client}, nil
 		}
 		fmt.Printf("%s\n", err.Error())
-		if cmd.ProcessState.Exited() {
+		if cmd.ProcessState != nil && cmd.ProcessState.Exited() {
 			return nil, fmt.Errorf("node exited")
 		}
 
