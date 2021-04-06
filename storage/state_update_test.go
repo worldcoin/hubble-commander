@@ -93,6 +93,40 @@ func (s *StateUpdateTestSuite) Test_GetLatestStateUpdate() {
 	s.Equal(&updates[1], res)
 }
 
+func (s *StateUpdateTestSuite) Test_DeleteLatestStateUpdate() {
+	path, err := models.NewMerklePath("00001111111111001111111111111111")
+	s.NoError(err)
+	updates := []models.StateUpdate{
+		{
+			ID:          1,
+			MerklePath:  *path,
+			CurrentHash: common.BytesToHash([]byte{1}),
+			CurrentRoot: common.BytesToHash([]byte{1}),
+			PrevHash:    common.BytesToHash([]byte{1}),
+			PrevRoot:    common.BytesToHash([]byte{2}),
+		},
+		{
+			ID:          2,
+			MerklePath:  *path,
+			CurrentHash: common.BytesToHash([]byte{2}),
+			CurrentRoot: common.BytesToHash([]byte{2}),
+			PrevHash:    common.BytesToHash([]byte{2}),
+			PrevRoot:    common.BytesToHash([]byte{2}),
+		},
+	}
+	err = s.storage.AddStateUpdate(&updates[0])
+	s.NoError(err)
+	err = s.storage.AddStateUpdate(&updates[1])
+	s.NoError(err)
+
+	err = s.storage.DeleteLatestStateUpdate()
+	s.NoError(err)
+
+	res, err := s.storage.GetLatestStateUpdate()
+	s.NoError(err)
+	s.Equal(&updates[0], res)
+}
+
 func TestStateUpdateTestSuite(t *testing.T) {
 	suite.Run(t, new(StateUpdateTestSuite))
 }
