@@ -25,7 +25,7 @@ func TestStartApiServer(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	cfg := config.APIConfig{Version: "v0123"}
-	server, err := getAPIServer(&cfg, nil)
+	server, err := getAPIServer(&cfg, nil, nil)
 	require.NoError(t, err)
 
 	w := httptest.NewRecorder()

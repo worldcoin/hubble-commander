@@ -27,7 +27,7 @@ func (s *GetTransactionTestSuite) SetupTest() {
 	s.NoError(err)
 
 	storage := st.NewTestStorage(testDB.DB)
-	s.api = &API{nil, storage}
+	s.api = &API{nil, storage, nil}
 	s.db = testDB
 
 	userState := models.UserState{

@@ -29,7 +29,7 @@ func (s *SendTransactionTestSuite) SetupTest() {
 
 	storage := st.NewTestStorage(testDB.DB)
 	s.tree = st.NewStateTree(storage)
-	s.api = &API{nil, storage}
+	s.api = &API{nil, storage, nil}
 	s.db = testDB
 
 	userState := models.UserState{

@@ -11,6 +11,7 @@ import (
 )
 
 type NewClientParams struct {
+	ChainState      models.ChainState
 	Rollup          *rollup.Rollup
 	AccountRegistry *accountregistry.AccountRegistry
 	ClientConfig
@@ -23,16 +24,18 @@ type ClientConfig struct {
 
 type Client struct {
 	config          ClientConfig
+	ChainState      models.ChainState
 	ChainConnection deployer.ChainConnection
 	Rollup          *rollup.Rollup
 	AccountRegistry *accountregistry.AccountRegistry
 }
 
-func NewClient(chainConnection deployer.ChainConnection, params NewClientParams) (*Client, error) {
+func NewClient(chainConnection deployer.ChainConnection, params *NewClientParams) (*Client, error) {
 	fillWithDefaults(&params.ClientConfig)
 
 	return &Client{
 		config:          params.ClientConfig,
+		ChainState:      params.ChainState,
 		ChainConnection: chainConnection,
 		Rollup:          params.Rollup,
 		AccountRegistry: params.AccountRegistry,

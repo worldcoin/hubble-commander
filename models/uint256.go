@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 	"math/big"
 )
@@ -42,4 +43,12 @@ func (a *Uint256) Scan(src interface{}) error {
 // Value implements valuer for database/sql.
 func (a Uint256) Value() (driver.Value, error) {
 	return a.Text(10), nil
+}
+
+func (a Uint256) MarshalJSON() ([]byte, error) {
+	jsonText, err := json.Marshal(a.Text(10))
+	if err != nil {
+		return nil, err
+	}
+	return jsonText, nil
 }

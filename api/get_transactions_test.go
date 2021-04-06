@@ -30,7 +30,7 @@ func (s *GetTransactionsTestSuite) SetupTest() {
 	s.NoError(err)
 
 	s.storage = st.NewTestStorage(testDB.DB)
-	s.api = &API{nil, s.storage}
+	s.api = &API{nil, s.storage, nil}
 	s.db = testDB
 	s.tree = st.NewStateTree(s.storage)
 }

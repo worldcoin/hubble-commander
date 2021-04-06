@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/eth"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/rpc"
 )
@@ -12,15 +13,16 @@ import (
 type API struct {
 	cfg     *config.APIConfig
 	storage *st.Storage
+	client  *eth.Client
 }
 
-func StartAPIServer(cfg *config.Config) error {
+func StartAPIServer(cfg *config.Config, client *eth.Client) error {
 	storage, err := st.NewStorage(&cfg.DB)
 	if err != nil {
 		return err
 	}
 
-	server, err := getAPIServer(&cfg.API, storage)
+	server, err := getAPIServer(&cfg.API, storage, client)
 	if err != nil {
 		return err
 	}
@@ -30,8 +32,12 @@ func StartAPIServer(cfg *config.Config) error {
 	return http.ListenAndServe(addr, nil)
 }
 
-func getAPIServer(cfg *config.APIConfig, storage *st.Storage) (*rpc.Server, error) {
-	api := API{cfg, storage}
+func getAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client) (*rpc.Server, error) {
+	api := API{
+		cfg:     cfg,
+		storage: storage,
+		client:  client,
+	}
 	server := rpc.NewServer()
 
 	err := server.RegisterName("hubble", &api)

@@ -90,7 +90,7 @@ func main() {
 		}
 	}()
 
-	log.Fatal(api.StartAPIServer(&cfg))
+	log.Fatal(api.StartAPIServer(&cfg, client))
 }
 
 func getClient(storage *st.Storage, chain deployer.ChainConnection) (*eth.Client, error) {
@@ -129,7 +129,8 @@ func createClientFromChainState(chain deployer.ChainConnection, chainState *mode
 		return nil, err
 	}
 
-	client, err := eth.NewClient(chain, eth.NewClientParams{
+	client, err := eth.NewClient(chain, &eth.NewClientParams{
+		ChainState:      *chainState,
 		Rollup:          rollupContract,
 		AccountRegistry: accountRegistry,
 	})
