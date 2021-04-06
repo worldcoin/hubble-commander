@@ -5,6 +5,7 @@ import (
 
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 func (s *Storage) AddStateUpdate(update *models.StateUpdate) error {
@@ -29,12 +30,28 @@ func (s *Storage) AddStateUpdate(update *models.StateUpdate) error {
 	return err
 }
 
-func (s *Storage) GetStateUpdate(id uint64) (*models.StateUpdate, error) {
+func (s *Storage) GetStateUpdateByID(id uint64) (*models.StateUpdate, error) {
 	res := make([]models.StateUpdate, 0, 1)
 	err := s.DB.Query(
 		squirrel.Select("*").
 			From("state_update").
 			Where(squirrel.Eq{"id": id}),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, fmt.Errorf("state update not found")
+	}
+	return &res[0], nil
+}
+
+func (s *Storage) GetStateUpdateByRoot(stateRootHash common.Hash) (*models.StateUpdate, error) {
+	res := make([]models.StateUpdate, 0, 1)
+	err := s.DB.Query(
+		squirrel.Select("*").
+			From("state_update").
+			Where(squirrel.Eq{"current_root": stateRootHash}),
 	).Into(&res)
 	if err != nil {
 		return nil, err

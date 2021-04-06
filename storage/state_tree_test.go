@@ -165,7 +165,7 @@ func (s *StateTreeTestSuite) Test_Set_StoresStateUpdateRecord() {
 		PrevRoot:    GetZeroHash(32),
 	}
 
-	update, err := s.storage.GetStateUpdate(1)
+	update, err := s.storage.GetStateUpdateByID(1)
 	s.NoError(err)
 
 	s.Equal(expectedUpdate, update)
@@ -254,7 +254,7 @@ func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_AddsStateUpdateRecord()
 		PrevRoot:    common.HexToHash("0xd8cb702fc833817dccdc3889282af96755b2909274ca2f1a3827a60d11d796eb"),
 	}
 
-	update, err := s.storage.GetStateUpdate(2)
+	update, err := s.storage.GetStateUpdateByID(2)
 	s.NoError(err)
 
 	s.Equal(expectedUpdate, update)
