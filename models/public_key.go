@@ -71,7 +71,7 @@ func (p *PublicKey) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (p *PublicKey) MarshalJSON() ([]byte, error) {
+func (p PublicKey) MarshalJSON() ([]byte, error) {
 	marshalizedPublicKey, err := json.Marshal(hex.EncodeToString(p[:]))
 	if err != nil {
 		return nil, err

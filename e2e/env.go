@@ -135,7 +135,7 @@ func (c *TestCommander) Start() error {
 		}
 
 		if time.Since(start) > 30*time.Second {
-			return fmt.Errorf("cannot connect to the node after timeout")
+			return fmt.Errorf("node start timeout")
 		}
 
 		time.Sleep(1 * time.Second)
