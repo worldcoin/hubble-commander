@@ -68,17 +68,17 @@ func StartCommander(opts StartOptions) (*TestCommander, error) {
 		return nil, err
 	}
 
-	containerId := created.ID
+	containerID := created.ID
 
 	client := jsonrpc.NewClient("http://localhost:8080")
 
 	commander := &TestCommander{
 		cli:         cli,
-		containerId: containerId,
+		containerID: containerID,
 		Client:      client,
 	}
 
-	stream, err := cli.ContainerAttach(context.Background(), containerId, types.ContainerAttachOptions{
+	stream, err := cli.ContainerAttach(context.Background(), containerID, types.ContainerAttachOptions{
 		Stream: true,
 		Stdin:  true,
 		Stdout: true,
@@ -89,7 +89,7 @@ func StartCommander(opts StartOptions) (*TestCommander, error) {
 		return nil, err
 	}
 	go func() {
-		_, err := stdcopy.StdCopy(os.Stdout, os.Stderr, stream.Reader)
+		_, err = stdcopy.StdCopy(os.Stdout, os.Stderr, stream.Reader)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -105,12 +105,12 @@ func StartCommander(opts StartOptions) (*TestCommander, error) {
 
 type TestCommander struct {
 	cli         *docker.Client
-	containerId string
+	containerID string
 	Client      jsonrpc.RPCClient
 }
 
 func (c *TestCommander) Start() error {
-	err := c.cli.ContainerStart(context.Background(), c.containerId, types.ContainerStartOptions{})
+	err := c.cli.ContainerStart(context.Background(), c.containerID, types.ContainerStartOptions{})
 	if err != nil {
 		return err
 	}
@@ -146,7 +146,7 @@ func (c *TestCommander) Start() error {
 }
 
 func (c *TestCommander) IsHealthy() (bool, error) {
-	info, err := c.cli.ContainerInspect(context.Background(), c.containerId)
+	info, err := c.cli.ContainerInspect(context.Background(), c.containerID)
 	if err != nil {
 		return false, err
 	}
@@ -155,7 +155,7 @@ func (c *TestCommander) IsHealthy() (bool, error) {
 }
 
 func (c *TestCommander) HasExited() (bool, error) {
-	info, err := c.cli.ContainerInspect(context.Background(), c.containerId)
+	info, err := c.cli.ContainerInspect(context.Background(), c.containerID)
 	if err != nil {
 		return false, err
 	}
@@ -164,7 +164,7 @@ func (c *TestCommander) HasExited() (bool, error) {
 }
 
 func (c *TestCommander) Stop() error {
-	err := c.cli.ContainerStop(context.Background(), c.containerId, nil)
+	err := c.cli.ContainerStop(context.Background(), c.containerID, nil)
 	if err != nil {
 		return err
 	}
