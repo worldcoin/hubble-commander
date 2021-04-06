@@ -61,3 +61,20 @@ func (s *Storage) GetStateUpdateByRoot(stateRootHash common.Hash) (*models.State
 	}
 	return &res[0], nil
 }
+
+func (s *Storage) GetLatestStateUpdate() (*models.StateUpdate, error) {
+	res := make([]models.StateUpdate, 0, 1)
+	err := s.DB.Query(
+		squirrel.Select("*").
+			From("state_update").
+			OrderBy("id desc").
+			Limit(1),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, fmt.Errorf("state update not found")
+	}
+	return &res[0], nil
+}
