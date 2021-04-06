@@ -3,6 +3,7 @@ package e2e
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	docker "github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/go-connections/nat"
 	"github.com/ybbus/jsonrpc/v2"
 )
@@ -75,6 +77,23 @@ func StartCommander(opts StartOptions) (*TestCommander, error) {
 		containerId: containerId,
 		Client:      client,
 	}
+
+	stream, err := cli.ContainerAttach(context.Background(), containerId, types.ContainerAttachOptions{
+		Stream: true,
+		Stdin:  true,
+		Stdout: true,
+		Stderr: true,
+		Logs:   true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	go func() {
+		_, err := stdcopy.StdCopy(os.Stdout, os.Stderr, stream.Reader)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	err = commander.Start()
 	if err != nil {
