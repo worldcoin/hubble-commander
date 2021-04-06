@@ -28,7 +28,7 @@ func (s *GetUserStatesTestSuite) SetupTest() {
 	s.NoError(err)
 
 	storage := st.NewTestStorage(testDB.DB)
-	s.api = &API{nil, storage}
+	s.api = &API{nil, storage, nil}
 	s.db = testDB
 
 	tx := &models.Transaction{
