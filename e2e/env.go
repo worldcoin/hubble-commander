@@ -17,8 +17,7 @@ import (
 )
 
 type StartOptions struct {
-	Image             string
-	UseHostNetworking bool
+	Image string
 }
 
 func StartCommander(opts StartOptions) (*TestCommander, error) {

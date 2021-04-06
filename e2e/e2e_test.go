@@ -10,8 +10,7 @@ import (
 
 func Test_Commander(t *testing.T) {
 	commander, err := StartCommander(StartOptions{
-		Image:             "a260c06daf13", //"ghcr.io/worldcoin/hubble-commander:latest",
-		UseHostNetworking: true,           // TODO: This needs to be on when running on linux & off when running on mac.
+		Image: "ghcr.io/worldcoin/hubble-commander:latest",
 	})
 	require.NoError(t, err)
 
