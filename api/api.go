@@ -16,13 +16,13 @@ type API struct {
 	client  *eth.Client
 }
 
-func StartAPIServer(cfg *config.Config, eth *eth.Client) error {
+func StartAPIServer(cfg *config.Config, client *eth.Client) error {
 	storage, err := st.NewStorage(&cfg.DB)
 	if err != nil {
 		return err
 	}
 
-	server, err := getAPIServer(&cfg.API, storage, eth)
+	server, err := getAPIServer(&cfg.API, storage, client)
 	if err != nil {
 		return err
 	}
@@ -32,11 +32,11 @@ func StartAPIServer(cfg *config.Config, eth *eth.Client) error {
 	return http.ListenAndServe(addr, nil)
 }
 
-func getAPIServer(cfg *config.APIConfig, storage *st.Storage, eth *eth.Client) (*rpc.Server, error) {
+func getAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client) (*rpc.Server, error) {
 	api := API{
 		cfg:     cfg,
 		storage: storage,
-		client:  eth,
+		client:  client,
 	}
 	server := rpc.NewServer()
 

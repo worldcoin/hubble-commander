@@ -30,7 +30,7 @@ type Client struct {
 	AccountRegistry *accountregistry.AccountRegistry
 }
 
-func NewClient(chainConnection deployer.ChainConnection, params NewClientParams) (*Client, error) {
+func NewClient(chainConnection deployer.ChainConnection, params *NewClientParams) (*Client, error) {
 	fillWithDefaults(&params.ClientConfig)
 
 	return &Client{
