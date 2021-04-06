@@ -83,7 +83,7 @@ func (s *StateTree) RevertTo(stateRootHash common.Hash) error {
 
 	isTargetRoot := false
 
-	for isTargetRoot == false {
+	for !isTargetRoot {
 		latestStateUpdate, err := s.storage.GetLatestStateUpdate()
 		if err != nil {
 			return err
@@ -104,7 +104,7 @@ func (s *StateTree) RevertTo(stateRootHash common.Hash) error {
 		}
 	}
 
-	if isTargetRoot == false {
+	if !isTargetRoot {
 		panic("StateTree.RevertTo() failed")
 	}
 

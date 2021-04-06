@@ -93,7 +93,7 @@ func (s *StateUpdateTestSuite) Test_GetLatestStateUpdate() {
 	s.Equal(&updates[1], res)
 }
 
-func (s *StateUpdateTestSuite) Test_DeleteLatestStateUpdate() {
+func (s *StateUpdateTestSuite) Test_DeleteStateUpdate() {
 	path, err := models.NewMerklePath("00001111111111001111111111111111")
 	s.NoError(err)
 	updates := []models.StateUpdate{
