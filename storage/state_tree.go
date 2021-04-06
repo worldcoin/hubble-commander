@@ -98,7 +98,7 @@ func (s *StateTree) RevertTo(stateRootHash common.Hash) error {
 			isTargetRoot = true
 		}
 
-		err = s.storage.DeleteLatestStateUpdate()
+		err = s.storage.DeleteStateUpdate(latestStateUpdate.ID)
 		if err != nil {
 			return err
 		}

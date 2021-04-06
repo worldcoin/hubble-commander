@@ -119,7 +119,7 @@ func (s *StateUpdateTestSuite) Test_DeleteLatestStateUpdate() {
 	err = s.storage.AddStateUpdate(&updates[1])
 	s.NoError(err)
 
-	err = s.storage.DeleteLatestStateUpdate()
+	err = s.storage.DeleteStateUpdate(2)
 	s.NoError(err)
 
 	res, err := s.storage.GetLatestStateUpdate()

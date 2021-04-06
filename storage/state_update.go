@@ -79,15 +79,11 @@ func (s *Storage) GetLatestStateUpdate() (*models.StateUpdate, error) {
 	return &res[0], nil
 }
 
-func (s *Storage) DeleteLatestStateUpdate() error {
+func (s *Storage) DeleteStateUpdate(id uint64) error {
 	query := `
-	DELETE FROM state_update WHERE id IN (
-		SELECT id
-		FROM state_update
-		ORDER BY id DESC
-		LIMIT 1	
-	)`
-	_, err := s.DB.Exec(query)
+	DELETE FROM state_update WHERE id = $1
+	`
+	_, err := s.DB.Exec(query, id)
 
 	return err
 }
