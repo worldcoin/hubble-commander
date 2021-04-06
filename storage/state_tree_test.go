@@ -260,6 +260,51 @@ func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_AddsStateUpdateRecord()
 	s.Equal(expectedUpdate, update)
 }
 
+func (s *StateTreeTestSuite) Test_RevertTo() {
+	states := []models.UserState{
+		{
+			AccountIndex: 1,
+			TokenIndex:   models.MakeUint256(1),
+			Balance:      models.MakeUint256(420),
+			Nonce:        models.MakeUint256(0),
+		},
+		{
+			AccountIndex: 2,
+			TokenIndex:   models.MakeUint256(5),
+			Balance:      models.MakeUint256(100),
+			Nonce:        models.MakeUint256(0),
+		},
+		{
+			AccountIndex: 1,
+			TokenIndex:   models.MakeUint256(1),
+			Balance:      models.MakeUint256(500),
+			Nonce:        models.MakeUint256(0),
+		},
+	}
+
+	err := s.tree.Set(0, &states[0])
+	s.NoError(err)
+
+	stateRoot, err := s.tree.Root()
+	s.NoError(err)
+
+	err = s.tree.Set(1, &states[1])
+	s.NoError(err)
+	err = s.tree.Set(0, &states[2])
+	s.NoError(err)
+
+	err = s.tree.RevertTo(*stateRoot)
+	s.NoError(err)
+
+	newStateRoot, err := s.tree.Root()
+	s.NoError(err)
+	s.Equal(stateRoot, newStateRoot)
+
+	leaf, err := s.tree.Leaf(0)
+	s.NoError(err)
+	s.Equal(states[0], leaf.UserState)
+}
+
 func TestMerkleTreeTestSuite(t *testing.T) {
 	suite.Run(t, new(StateTreeTestSuite))
 }
