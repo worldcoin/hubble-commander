@@ -51,7 +51,7 @@ func (s *StateUpdateTestSuite) Test_AddStateUpdate_AddAndRetrieve() {
 	s.NoError(err)
 	s.Equal(update, res)
 
-	res, err = s.storage.GetStateUpdateByRoot(common.BytesToHash([]byte{1, 2, 3}))
+	res, err = s.storage.GetStateUpdateByRootHash(common.BytesToHash([]byte{1, 2, 3}))
 	s.NoError(err)
 	s.Equal(update, res)
 }
@@ -60,37 +60,6 @@ func (s *StateUpdateTestSuite) Test_GetStateUpdate_NonExistentUpdate() {
 	res, err := s.storage.GetStateUpdateByID(1)
 	s.EqualError(err, "state update not found")
 	s.Nil(res)
-}
-
-func (s *StateUpdateTestSuite) Test_GetLatestStateUpdate() {
-	path, err := models.NewMerklePath("00001111111111001111111111111111")
-	s.NoError(err)
-	updates := []models.StateUpdate{
-		{
-			ID:          1,
-			MerklePath:  *path,
-			CurrentHash: common.BytesToHash([]byte{1}),
-			CurrentRoot: common.BytesToHash([]byte{1}),
-			PrevHash:    common.BytesToHash([]byte{1}),
-			PrevRoot:    common.BytesToHash([]byte{2}),
-		},
-		{
-			ID:          2,
-			MerklePath:  *path,
-			CurrentHash: common.BytesToHash([]byte{2}),
-			CurrentRoot: common.BytesToHash([]byte{2}),
-			PrevHash:    common.BytesToHash([]byte{2}),
-			PrevRoot:    common.BytesToHash([]byte{2}),
-		},
-	}
-	err = s.storage.AddStateUpdate(&updates[0])
-	s.NoError(err)
-	err = s.storage.AddStateUpdate(&updates[1])
-	s.NoError(err)
-
-	res, err := s.storage.GetLatestStateUpdate()
-	s.NoError(err)
-	s.Equal(&updates[1], res)
 }
 
 func (s *StateUpdateTestSuite) Test_DeleteStateUpdate() {
@@ -122,7 +91,10 @@ func (s *StateUpdateTestSuite) Test_DeleteStateUpdate() {
 	err = s.storage.DeleteStateUpdate(2)
 	s.NoError(err)
 
-	res, err := s.storage.GetLatestStateUpdate()
+	stateTree := NewStateTree(s.storage)
+	currentRootHash, err := stateTree.Root()
+	s.NoError(err)
+	res, err := s.storage.GetStateUpdateByRootHash(*currentRootHash)
 	s.NoError(err)
 	s.Equal(&updates[0], res)
 }

@@ -72,7 +72,7 @@ func (s *StateTree) Set(index uint32, state *models.UserState) (err error) {
 }
 
 func (s *StateTree) RevertTo(stateRootHash common.Hash) error {
-	_, err := s.storage.GetStateUpdateByRoot(stateRootHash)
+	_, err := s.storage.GetStateUpdateByRootHash(stateRootHash)
 	if err != nil {
 		if err.Error() == "state update not found" {
 			return fmt.Errorf("cannot revert to not existent state")
@@ -81,20 +81,26 @@ func (s *StateTree) RevertTo(stateRootHash common.Hash) error {
 		return err
 	}
 
+
+	stateTree := NewStateTree(s.storage)
 	isTargetRoot := false
 
 	for !isTargetRoot {
-		latestStateUpdate, err := s.storage.GetLatestStateUpdate()
+		currentRootHash, err := stateTree.Root()
+		if err != nil {
+			return err
+		}
+		latestStateUpdate, err := s.storage.GetStateUpdateByRootHash(*currentRootHash)
 		if err != nil {
 			return err
 		}
 
-		currentRootHash, err := s.updateStateNodes(&latestStateUpdate.MerklePath, &latestStateUpdate.PrevHash)
+		newRootHash, err := s.updateStateNodes(&latestStateUpdate.MerklePath, &latestStateUpdate.PrevHash)
 		if err != nil {
 			return err
 		}
 		if latestStateUpdate.PrevRoot == stateRootHash &&
-			currentRootHash.Hex() == stateRootHash.Hex() {
+			newRootHash.Hex() == stateRootHash.Hex() {
 			isTargetRoot = true
 		}
 
