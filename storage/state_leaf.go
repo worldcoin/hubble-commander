@@ -9,7 +9,7 @@ import (
 )
 
 func (s *Storage) AddStateLeaf(leaf *models.StateLeaf) error {
-	_, err := s.DB.ExecBuilder(
+	_, err := s.DB.Query(
 		s.QB.Insert("state_leaf").
 			Values(
 				leaf.DataHash,
@@ -18,7 +18,7 @@ func (s *Storage) AddStateLeaf(leaf *models.StateLeaf) error {
 				leaf.Balance,
 				leaf.Nonce,
 			),
-	)
+	).Exec()
 
 	return err
 }
@@ -26,7 +26,7 @@ func (s *Storage) AddStateLeaf(leaf *models.StateLeaf) error {
 func (s *Storage) GetStateLeaf(hash common.Hash) (*models.StateLeaf, error) {
 	res := make([]models.StateLeaf, 0, 1)
 	err := s.DB.Query(
-		squirrel.Select("*").
+		s.QB.Select("*").
 			From("state_leaf").
 			Where(squirrel.Eq{"data_hash": hash}),
 	).Into(&res)

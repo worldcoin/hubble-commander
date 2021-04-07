@@ -11,7 +11,7 @@ import (
 
 func (s *Storage) AddCommitment(commitment *models.Commitment) (*int32, error) {
 	res := make([]int32, 0, 1)
-	err := s.DB.InsertQuery(
+	err := s.DB.Query(
 		s.QB.Insert("commitment").
 			Values(
 				squirrel.Expr("DEFAULT"),
@@ -33,7 +33,7 @@ func (s *Storage) AddCommitment(commitment *models.Commitment) (*int32, error) {
 func (s *Storage) GetCommitment(id int32) (*models.Commitment, error) {
 	res := make([]models.Commitment, 0, 1)
 	err := s.DB.Query(
-		squirrel.Select("*").
+		s.QB.Select("*").
 			From("commitment").
 			Where(squirrel.Eq{"commitment_id": id}),
 	).Into(&res)
@@ -47,12 +47,12 @@ func (s *Storage) GetCommitment(id int32) (*models.Commitment, error) {
 }
 
 func (s *Storage) MarkCommitmentAsIncluded(id int32, batchHash, accountRoot *common.Hash) error {
-	_, err := s.DB.ExecBuilder(
+	_, err := s.DB.Query(
 		s.QB.Update("commitment").
 			Where(squirrel.Eq{"commitment_id": id}).
 			Set("included_in_batch", *batchHash).
 			Set("account_tree_root", *accountRoot),
-	)
+	).Exec()
 	return err
 }
 

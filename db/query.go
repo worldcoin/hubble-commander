@@ -1,7 +1,7 @@
 package db
 
 import (
-	"github.com/Masterminds/squirrel"
+	"database/sql"
 )
 
 type QueryBuilder struct {
@@ -9,6 +9,10 @@ type QueryBuilder struct {
 	sql  string
 	args []interface{}
 	err  error
+}
+
+type SQLBuilder interface {
+	ToSql() (string, []interface{}, error)
 }
 
 func (qb *QueryBuilder) Into(dest interface{}) error {
@@ -22,12 +26,18 @@ func (qb *QueryBuilder) Into(dest interface{}) error {
 	return nil
 }
 
-func (d *Database) Query(query squirrel.SelectBuilder) *QueryBuilder {
-	sql, args, err := query.PlaceholderFormat(squirrel.Dollar).ToSql()
-	return &QueryBuilder{d, sql, args, err}
+func (qb *QueryBuilder) Exec() (sql.Result, error) {
+	if qb.err != nil {
+		return nil, qb.err
+	}
+	sqlRes, err := qb.db.Exec(qb.sql, qb.args...)
+	if err != nil {
+		return nil, err
+	}
+	return sqlRes, nil
 }
 
-func (d *Database) InsertQuery(query squirrel.InsertBuilder) *QueryBuilder {
-	sql, args, err := query.PlaceholderFormat(squirrel.Dollar).ToSql()
-	return &QueryBuilder{d, sql, args, err}
+func (d *Database) Query(query SQLBuilder) *QueryBuilder {
+	sqlQuery, args, err := query.ToSql()
+	return &QueryBuilder{d, sqlQuery, args, err}
 }

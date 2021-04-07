@@ -7,7 +7,7 @@ import (
 )
 
 func (s *Storage) AddTransaction(tx *models.Transaction) error {
-	_, err := s.DB.ExecBuilder(
+	_, err := s.DB.Query(
 		s.QB.Insert("transaction").
 			Values(
 				tx.Hash,
@@ -20,7 +20,7 @@ func (s *Storage) AddTransaction(tx *models.Transaction) error {
 				tx.IncludedInCommitment,
 				tx.ErrorMessage,
 			),
-	)
+	).Exec()
 
 	return err
 }
@@ -28,7 +28,7 @@ func (s *Storage) AddTransaction(tx *models.Transaction) error {
 func (s *Storage) GetTransaction(hash common.Hash) (*models.Transaction, error) {
 	res := make([]models.Transaction, 0, 1)
 	err := s.DB.Query(
-		squirrel.Select("*").
+		s.QB.Select("*").
 			From("transaction").
 			Where(squirrel.Eq{"tx_hash": hash}),
 	).Into(&res)
@@ -41,7 +41,7 @@ func (s *Storage) GetTransaction(hash common.Hash) (*models.Transaction, error) 
 func (s *Storage) GetUserTransactions(fromIndex models.Uint256) ([]models.Transaction, error) {
 	res := make([]models.Transaction, 0, 1)
 	err := s.DB.Query(
-		squirrel.Select("*").
+		s.QB.Select("*").
 			From("transaction").
 			Where(squirrel.Eq{"from_index": fromIndex}),
 	).Into(&res)
@@ -54,7 +54,7 @@ func (s *Storage) GetUserTransactions(fromIndex models.Uint256) ([]models.Transa
 func (s *Storage) GetPendingTransactions() ([]models.Transaction, error) {
 	res := make([]models.Transaction, 0, 32)
 	err := s.DB.Query(
-		squirrel.Select("*").
+		s.QB.Select("*").
 			From("transaction").
 			Where(squirrel.Eq{"included_in_commitment": nil, "error_message": nil}), // TODO order by nonce asc, then order by fee desc
 	).Into(&res)
@@ -65,19 +65,19 @@ func (s *Storage) GetPendingTransactions() ([]models.Transaction, error) {
 }
 
 func (s *Storage) MarkTransactionAsIncluded(txHash common.Hash, commitmentID int32) error {
-	_, err := s.DB.ExecBuilder(
+	_, err := s.DB.Query(
 		s.QB.Update("transaction").
 			Where(squirrel.Eq{"tx_hash": txHash}).
 			Set("included_in_commitment", commitmentID),
-	)
+	).Exec()
 	return err
 }
 
 func (s *Storage) SetTransactionError(txHash common.Hash, errorMessage string) error {
-	_, err := s.DB.ExecBuilder(
+	_, err := s.DB.Query(
 		s.QB.Update("transaction").
 			Where(squirrel.Eq{"tx_hash": txHash}).
 			Set("error_message", errorMessage),
-	)
+	).Exec()
 	return err
 }

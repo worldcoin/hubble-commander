@@ -9,7 +9,7 @@ import (
 )
 
 func (s *Storage) AddStateUpdate(update *models.StateUpdate) error {
-	_, err := s.DB.ExecBuilder(
+	_, err := s.DB.Query(
 		s.QB.Insert("state_update").
 			Columns(
 				"merkle_path",
@@ -25,7 +25,7 @@ func (s *Storage) AddStateUpdate(update *models.StateUpdate) error {
 				update.PrevHash,
 				update.PrevRoot,
 			),
-	)
+	).Exec()
 
 	return err
 }
@@ -33,7 +33,7 @@ func (s *Storage) AddStateUpdate(update *models.StateUpdate) error {
 func (s *Storage) GetStateUpdateByRootHash(stateRootHash common.Hash) (*models.StateUpdate, error) {
 	res := make([]models.StateUpdate, 0, 1)
 	err := s.DB.Query(
-		squirrel.Select("*").
+		s.QB.Select("*").
 			From("state_update").
 			Where(squirrel.Eq{"current_root": stateRootHash}),
 	).Into(&res)
@@ -47,10 +47,10 @@ func (s *Storage) GetStateUpdateByRootHash(stateRootHash common.Hash) (*models.S
 }
 
 func (s *Storage) DeleteStateUpdate(id uint64) error {
-	query := `
-	DELETE FROM state_update WHERE id = $1
-	`
-	_, err := s.DB.Exec(query, id)
+	_, err := s.DB.Query(
+		s.QB.Delete("state_update").
+			Where(squirrel.Eq{"id": id}),
+	).Exec()
 
 	return err
 }
