@@ -156,16 +156,17 @@ func (s *StateTreeTestSuite) Test_Set_StoresStateUpdateRecord() {
 		Depth: 32,
 	}
 
+	currentRoot := common.HexToHash("0xd8cb702fc833817dccdc3889282af96755b2909274ca2f1a3827a60d11d796eb")
 	expectedUpdate := &models.StateUpdate{
 		ID:          1,
 		MerklePath:  path,
 		CurrentHash: s.leaf.DataHash,
-		CurrentRoot: common.HexToHash("0xd8cb702fc833817dccdc3889282af96755b2909274ca2f1a3827a60d11d796eb"),
+		CurrentRoot: currentRoot,
 		PrevHash:    GetZeroHash(0),
 		PrevRoot:    GetZeroHash(32),
 	}
 
-	update, err := s.storage.GetStateUpdateByID(1)
+	update, err := s.storage.GetStateUpdateByRootHash(currentRoot)
 	s.NoError(err)
 
 	s.Equal(expectedUpdate, update)
@@ -245,16 +246,17 @@ func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_AddsStateUpdateRecord()
 		Depth: 32,
 	}
 
+	currentRoot := common.HexToHash("0x406515786640be8c51eacf1221f017e7f59e04ef59637a27dcb2b2f054b309bf")
 	expectedUpdate := &models.StateUpdate{
 		ID:          2,
 		MerklePath:  path,
 		CurrentHash: updatedLeaf.DataHash,
-		CurrentRoot: common.HexToHash("0x406515786640be8c51eacf1221f017e7f59e04ef59637a27dcb2b2f054b309bf"),
+		CurrentRoot: currentRoot,
 		PrevHash:    s.leaf.DataHash,
 		PrevRoot:    common.HexToHash("0xd8cb702fc833817dccdc3889282af96755b2909274ca2f1a3827a60d11d796eb"),
 	}
 
-	update, err := s.storage.GetStateUpdateByID(2)
+	update, err := s.storage.GetStateUpdateByRootHash(currentRoot)
 	s.NoError(err)
 
 	s.Equal(expectedUpdate, update)

@@ -47,17 +47,13 @@ func (s *StateUpdateTestSuite) Test_AddStateUpdate_AddAndRetrieve() {
 	err = s.storage.AddStateUpdate(update)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateUpdateByID(1)
-	s.NoError(err)
-	s.Equal(update, res)
-
-	res, err = s.storage.GetStateUpdateByRootHash(common.BytesToHash([]byte{1, 2, 3}))
+	res, err := s.storage.GetStateUpdateByRootHash(common.BytesToHash([]byte{1, 2, 3}))
 	s.NoError(err)
 	s.Equal(update, res)
 }
 
 func (s *StateUpdateTestSuite) Test_GetStateUpdate_NonExistentUpdate() {
-	res, err := s.storage.GetStateUpdateByID(1)
+	res, err := s.storage.GetStateUpdateByRootHash(common.BytesToHash([]byte{9, 4, 1, 2}))
 	s.EqualError(err, "state update not found")
 	s.Nil(res)
 }
