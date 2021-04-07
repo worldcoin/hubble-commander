@@ -47,12 +47,12 @@ func (s *Storage) GetCommitment(id int32) (*models.Commitment, error) {
 }
 
 func (s *Storage) MarkCommitmentAsIncluded(id int32, batchHash, accountRoot *common.Hash) error {
-	_, err := s.DB.ExecBuilder(
+	_, err := s.DB.Query(
 		s.QB.Update("commitment").
 			Where(squirrel.Eq{"commitment_id": id}).
 			Set("included_in_batch", *batchHash).
 			Set("account_tree_root", *accountRoot),
-	)
+	).Exec()
 	return err
 }
 

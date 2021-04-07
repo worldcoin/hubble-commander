@@ -11,6 +11,10 @@ type QueryBuilder struct {
 	err  error
 }
 
+type SQLBuilder interface {
+	ToSql() (string, []interface{}, error)
+}
+
 func (qb *QueryBuilder) Into(dest interface{}) error {
 	if qb.err != nil {
 		return qb.err
