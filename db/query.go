@@ -34,6 +34,6 @@ func (qb *QueryBuilder) Exec() (sql.Result, error) {
 }
 
 func (d *Database) Query(query SQLBuilder) *QueryBuilder {
-	sql, args, err := query.ToSql()
-	return &QueryBuilder{d, sql, args, err}
+	sqlQuery, args, err := query.ToSql()
+	return &QueryBuilder{d, sqlQuery, args, err}
 }
