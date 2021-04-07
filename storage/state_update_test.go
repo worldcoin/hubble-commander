@@ -87,10 +87,10 @@ func (s *StateUpdateTestSuite) Test_DeleteStateUpdate() {
 	err = s.storage.DeleteStateUpdate(2)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateUpdateByRootHash(updates[1].CurrentHash)
+	_, err = s.storage.GetStateUpdateByRootHash(updates[1].CurrentHash)
 	s.EqualError(err, "state update not found")
 
-	res, err = s.storage.GetStateUpdateByRootHash(updates[0].CurrentHash)
+	res, err := s.storage.GetStateUpdateByRootHash(updates[0].CurrentHash)
 	s.NoError(err)
 	s.Equal(&updates[0], res)
 }
