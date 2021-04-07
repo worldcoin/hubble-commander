@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
@@ -68,6 +69,46 @@ func (s *StateTree) Set(index uint32, state *models.UserState) (err error) {
 	}
 
 	return tx.Commit()
+}
+
+func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
+	_, err := s.storage.GetStateUpdateByRootHash(targetRootHash)
+	if err != nil {
+		if err.Error() == "state update not found" {
+			return fmt.Errorf("cannot revert to not existent state")
+		}
+
+		return err
+	}
+
+	stateTree := NewStateTree(s.storage)
+
+	currentRootHash, err := stateTree.Root()
+	if err != nil {
+		return err
+	}
+
+	for *currentRootHash != targetRootHash {
+		latestStateUpdate, err := s.storage.GetStateUpdateByRootHash(*currentRootHash)
+		if err != nil {
+			return err
+		}
+
+		currentRootHash, err = s.updateStateNodes(&latestStateUpdate.MerklePath, &latestStateUpdate.PrevHash)
+		if err != nil {
+			return err
+		}
+		if *currentRootHash != latestStateUpdate.PrevRoot {
+			return fmt.Errorf("unexpected state root after state update rollback")
+		}
+
+		err = s.storage.DeleteStateUpdate(latestStateUpdate.ID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (err error) {

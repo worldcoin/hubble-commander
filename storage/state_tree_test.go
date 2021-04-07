@@ -156,16 +156,17 @@ func (s *StateTreeTestSuite) Test_Set_StoresStateUpdateRecord() {
 		Depth: 32,
 	}
 
+	currentRoot := common.HexToHash("0xd8cb702fc833817dccdc3889282af96755b2909274ca2f1a3827a60d11d796eb")
 	expectedUpdate := &models.StateUpdate{
 		ID:          1,
 		MerklePath:  path,
 		CurrentHash: s.leaf.DataHash,
-		CurrentRoot: common.HexToHash("0xd8cb702fc833817dccdc3889282af96755b2909274ca2f1a3827a60d11d796eb"),
+		CurrentRoot: currentRoot,
 		PrevHash:    GetZeroHash(0),
 		PrevRoot:    GetZeroHash(32),
 	}
 
-	update, err := s.storage.GetStateUpdate(1)
+	update, err := s.storage.GetStateUpdateByRootHash(currentRoot)
 	s.NoError(err)
 
 	s.Equal(expectedUpdate, update)
@@ -245,19 +246,65 @@ func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_AddsStateUpdateRecord()
 		Depth: 32,
 	}
 
+	currentRoot := common.HexToHash("0x406515786640be8c51eacf1221f017e7f59e04ef59637a27dcb2b2f054b309bf")
 	expectedUpdate := &models.StateUpdate{
 		ID:          2,
 		MerklePath:  path,
 		CurrentHash: updatedLeaf.DataHash,
-		CurrentRoot: common.HexToHash("0x406515786640be8c51eacf1221f017e7f59e04ef59637a27dcb2b2f054b309bf"),
+		CurrentRoot: currentRoot,
 		PrevHash:    s.leaf.DataHash,
 		PrevRoot:    common.HexToHash("0xd8cb702fc833817dccdc3889282af96755b2909274ca2f1a3827a60d11d796eb"),
 	}
 
-	update, err := s.storage.GetStateUpdate(2)
+	update, err := s.storage.GetStateUpdateByRootHash(currentRoot)
 	s.NoError(err)
 
 	s.Equal(expectedUpdate, update)
+}
+
+func (s *StateTreeTestSuite) Test_RevertTo() {
+	states := []models.UserState{
+		{
+			AccountIndex: 1,
+			TokenIndex:   models.MakeUint256(1),
+			Balance:      models.MakeUint256(420),
+			Nonce:        models.MakeUint256(0),
+		},
+		{
+			AccountIndex: 2,
+			TokenIndex:   models.MakeUint256(5),
+			Balance:      models.MakeUint256(100),
+			Nonce:        models.MakeUint256(0),
+		},
+		{
+			AccountIndex: 1,
+			TokenIndex:   models.MakeUint256(1),
+			Balance:      models.MakeUint256(500),
+			Nonce:        models.MakeUint256(0),
+		},
+	}
+
+	err := s.tree.Set(0, &states[0])
+	s.NoError(err)
+
+	stateRoot, err := s.tree.Root()
+	s.NoError(err)
+
+	err = s.tree.Set(1, &states[1])
+	s.NoError(err)
+	err = s.tree.Set(0, &states[2])
+	s.NoError(err)
+
+	err = s.tree.RevertTo(*stateRoot)
+	s.NoError(err)
+
+	newStateRoot, err := s.tree.Root()
+	s.NoError(err)
+	s.Equal(stateRoot, newStateRoot)
+
+	leaf, err := s.tree.Leaf(0)
+	s.NoError(err)
+	s.Equal(states[0], leaf.UserState)
 }
 
 func TestMerkleTreeTestSuite(t *testing.T) {
