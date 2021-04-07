@@ -19,10 +19,10 @@ func (s *Storage) GetChainState(chainID models.Uint256) (*models.ChainState, err
 }
 
 func (s *Storage) SetChainState(chainState *models.ChainState) error {
-	_, err := s.DB.ExecBuilder(
+	_, err := s.DB.Query(
 		s.QB.
 			Insert("chain_state").
 			Values(chainState.ChainID, chainState.AccountRegistry, chainState.Rollup),
-	)
+	).Exec()
 	return err
 }

@@ -6,14 +6,14 @@ import (
 )
 
 func (s *Storage) AddAccountIfNotExists(account *models.Account) error {
-	_, err := s.DB.ExecBuilder(
+	_, err := s.DB.Query(
 		s.QB.Insert("account").
 			Values(
 				account.AccountIndex,
 				account.PublicKey,
 			).
 			Suffix("ON CONFLICT DO NOTHING"),
-	)
+	).Exec()
 
 	return err
 }
@@ -21,7 +21,7 @@ func (s *Storage) AddAccountIfNotExists(account *models.Account) error {
 func (s *Storage) GetAccounts(publicKey *models.PublicKey) ([]models.Account, error) {
 	res := make([]models.Account, 0, 1)
 	err := s.DB.Query(
-		squirrel.Select("*").
+		s.QB.Select("*").
 			From("account").
 			Where(squirrel.Eq{"public_key": publicKey}),
 	).Into(&res)

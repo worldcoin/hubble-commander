@@ -9,21 +9,21 @@ import (
 )
 
 func (s *Storage) AddBatch(batch *models.Batch) error {
-	_, err := s.DB.ExecBuilder(
+	_, err := s.DB.Query(
 		s.QB.Insert("batch").
 			Values(
 				batch.Hash,
 				batch.ID,
 				batch.FinalisationBlock,
 			),
-	)
+	).Exec()
 	return err
 }
 
 func (s *Storage) GetBatch(batchHash common.Hash) (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
 	err := s.DB.Query(
-		squirrel.Select("*").
+		s.QB.Select("*").
 			From("batch").
 			Where(squirrel.Eq{"batch_hash": batchHash}),
 	).Into(&res)
@@ -39,7 +39,7 @@ func (s *Storage) GetBatch(batchHash common.Hash) (*models.Batch, error) {
 func (s *Storage) GetBatchByID(batchID models.Uint256) (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
 	err := s.DB.Query(
-		squirrel.Select("*").
+		s.QB.Select("*").
 			From("batch").
 			Where(squirrel.Eq{"batch_id": batchID}),
 	).Into(&res)
