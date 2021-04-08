@@ -30,7 +30,7 @@ func BlockNumberLoop(client *eth.Client, cfg *config.RollupConfig, done <-chan b
 				return err
 			}
 			if *blockNumber > LatestBlockNumber {
-				log.Printf("New block was mined: %d", blockNumber)
+				log.Printf("New block was mined: %d", *blockNumber)
 			}
 			LatestBlockNumber = *blockNumber
 		}
