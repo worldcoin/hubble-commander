@@ -13,7 +13,7 @@ func (s *Signature) UnmarshalJSON(bytes []byte) error {
 	if err != nil {
 		return err
 	}
-	if len(temp) == 0 {
+	if temp == "" {
 		*s = Signature{}
 		return nil
 	}

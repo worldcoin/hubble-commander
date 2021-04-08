@@ -32,6 +32,10 @@ func (tx *Transaction) UnmarshalJSON(bytes []byte) error {
 	case txtype.Transfer:
 		tx.Parsed = Transfer{}
 		return json.Unmarshal(bytes, tx.Parsed)
+	case txtype.Create2Transfer:
+		return fmt.Errorf("not implemented")
+	case txtype.MassMigration:
+		return fmt.Errorf("not implemented")
 	default:
 		return fmt.Errorf("unsupported type")
 	}
