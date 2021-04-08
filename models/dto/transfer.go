@@ -45,11 +45,13 @@ func (t *Transfer) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 
-	t.FromStateID = transfer.FromStateID
-	t.ToStateID = transfer.ToStateID
-	t.Amount = transfer.Amount
-	t.Fee = transfer.Fee
-	t.Nonce = transfer.Nonce
-	t.Signature = transfer.Signature
+	*t = Transfer{
+		FromStateID: transfer.FromStateID,
+		ToStateID:   transfer.ToStateID,
+		Amount:      transfer.Amount,
+		Fee:         transfer.Fee,
+		Nonce:       transfer.Nonce,
+		Signature:   transfer.Signature,
+	}
 	return nil
 }
