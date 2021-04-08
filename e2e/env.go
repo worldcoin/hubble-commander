@@ -135,7 +135,7 @@ func (c *TestCommander) Start() error {
 		}
 
 		if time.Since(start) > 30*time.Second {
-			return fmt.Errorf("cannot connect to the node after timeout")
+			return fmt.Errorf("node start timeout")
 		}
 
 		time.Sleep(1 * time.Second)
@@ -164,6 +164,11 @@ func (c *TestCommander) HasExited() (bool, error) {
 
 func (c *TestCommander) Stop() error {
 	err := c.cli.ContainerStop(context.Background(), c.containerID, nil)
+	if err != nil {
+		return err
+	}
+
+	err = c.cli.ContainerRemove(context.Background(), c.containerID, types.ContainerRemoveOptions{Force: true})
 	if err != nil {
 		return err
 	}

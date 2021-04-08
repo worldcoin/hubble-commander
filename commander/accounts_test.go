@@ -51,7 +51,7 @@ func (s *AccountsTestSuite) Test_WatchAccounts_PreviousAccounts() {
 		accounts, err = s.storage.GetAccounts(&publicKey)
 		s.NoError(err)
 		return len(accounts) > 0
-	})
+	}, 1*time.Second)
 
 	s.Len(accounts, 1)
 }
@@ -73,7 +73,7 @@ func (s *AccountsTestSuite) Test_WatchAccounts_NewAccounts() {
 		accounts, err = s.storage.GetAccounts(&publicKey)
 		s.NoError(err)
 		return len(accounts) > 0
-	})
+	}, 1*time.Second)
 
 	s.Len(accounts, 1)
 }

@@ -3,10 +3,14 @@ FROM golang:1.15
 LABEL org.opencontainers.image.source="https://github.com/Worldcoin/hubble-commander"
 
 WORKDIR /go/src/app
+
+COPY go.mod .
+COPY go.sum .
+
+RUN go mod download
+
 COPY . .
 
-RUN go get -d -v ./...
-RUN go install -v ./...
 RUN make build
 
 ENV HUBBLE_MIGRATIONS_PATH="/go/src/app/db/migrations"
