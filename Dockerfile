@@ -8,8 +8,6 @@ COPY go.mod .
 COPY go.sum .
 
 RUN go mod download
-RUN go get -d -v ./...
-RUN go install -v ./...
 
 COPY . .
 
