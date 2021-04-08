@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"log"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/commander"
@@ -57,6 +58,7 @@ func (a *API) SendTransaction(incTx models.IncomingTransaction) (*common.Hash, e
 		fmt.Println(err)
 		return nil, err
 	}
+	log.Println("New transaction: ", tx.Hash.Hex())
 
 	return hash, nil
 }

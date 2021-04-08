@@ -82,19 +82,19 @@ func unsafeCommitTransactions(storage *st.Storage, cfg *config.RollupConfig) err
 	}
 
 	log.Printf("Creating a commitment from %d transactions", len(includedTxs))
-	commitmentID, err := createAndStoreCommitment(storage, includedTxs, cfg.FeeReceiverIndex)
+	commitment, err := createAndStoreCommitment(storage, includedTxs, cfg.FeeReceiverIndex)
 	if err != nil {
 		return err
 	}
 
-	err = markTransactionsAsIncluded(storage, includedTxs, *commitmentID)
+	err = markTransactionsAsIncluded(storage, includedTxs, commitment.ID)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func createAndStoreCommitment(storage *st.Storage, txs []models.Transaction, feeReceiverIndex uint32) (*int32, error) {
+func createAndStoreCommitment(storage *st.Storage, txs []models.Transaction, feeReceiverIndex uint32) (*models.Commitment, error) {
 	combinedSignature := models.MakeSignature(1, 2) // TODO: Actually combine signatures
 
 	serializedTxs, err := encoder.SerializeTransactions(txs)
@@ -113,7 +113,15 @@ func createAndStoreCommitment(storage *st.Storage, txs []models.Transaction, fee
 		CombinedSignature: combinedSignature,
 		PostStateRoot:     *stateRoot,
 	}
-	return storage.AddCommitment(&commitment)
+
+	id, err := storage.AddCommitment(&commitment)
+	if err != nil {
+		return nil, err
+	}
+
+	commitment.ID = *id
+
+	return &commitment, nil
 }
 
 func markTransactionsAsIncluded(storage *st.Storage, txs []models.Transaction, commitmentID int32) error {

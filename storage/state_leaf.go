@@ -17,7 +17,8 @@ func (s *Storage) AddStateLeaf(leaf *models.StateLeaf) error {
 				leaf.TokenIndex,
 				leaf.Balance,
 				leaf.Nonce,
-			),
+			).
+			Suffix("ON CONFLICT DO NOTHING"),
 	).Exec()
 
 	return err
