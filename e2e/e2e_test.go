@@ -3,7 +3,6 @@
 package e2e
 
 import (
-	"math/big"
 	"testing"
 	"time"
 
@@ -31,8 +30,8 @@ func Test_Commander(t *testing.T) {
 	var userStates []models.ReturnUserState
 	err = commander.Client.CallFor(&userStates, "hubble_getUserStates", []interface{}{models.PublicKey{1, 2, 3}})
 	require.NoError(t, err)
-	require.Equal(t, 1, len(userStates))
-	require.Equal(t, 0, userStates[0].Nonce.Cmp(big.NewInt(0)))
+	require.Len(t, userStates, 1)
+	require.EqualValues(t, models.MakeUint256(0), userStates[0].Nonce)
 
 	tx := models.IncomingTransaction{
 		FromIndex: models.NewUint256(1),
