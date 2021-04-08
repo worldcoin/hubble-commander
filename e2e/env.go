@@ -168,5 +168,10 @@ func (c *TestCommander) Stop() error {
 		return err
 	}
 
+	err = c.cli.ContainerRemove(context.Background(), c.containerID, types.ContainerRemoveOptions{Force: true})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

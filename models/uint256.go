@@ -54,8 +54,13 @@ func (a Uint256) MarshalJSON() ([]byte, error) {
 }
 
 func (a *Uint256) UnmarshalJSON(b []byte) error {
-	str := string(b)
-	_, ok := a.SetString(str[1:len(str)-1], 10)
+	var str string
+	err := json.Unmarshal(b, &str)
+	if err != nil {
+		return err
+	}
+
+	_, ok := a.SetString(str, 10)
 
 	if !ok {
 		return fmt.Errorf("error unmarshaling Uint256")

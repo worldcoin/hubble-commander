@@ -5,9 +5,7 @@ import (
 	"time"
 )
 
-var timeout = 1 * time.Second
-
-func WaitToPass(fn func() bool) {
+func WaitToPass(fn func() bool, timeout time.Duration) {
 	startTime := time.Now()
 	for time.Since(startTime) < timeout {
 		if fn() {

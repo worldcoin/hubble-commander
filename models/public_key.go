@@ -71,6 +71,7 @@ func (p *PublicKey) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// nolint:gocritic
 func (p PublicKey) MarshalJSON() ([]byte, error) {
 	marshalizedPublicKey, err := json.Marshal(hex.EncodeToString(p[:]))
 	if err != nil {
