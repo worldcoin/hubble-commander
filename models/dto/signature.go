@@ -3,6 +3,7 @@ package dto
 import (
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 )
 
 type Signature []byte
@@ -16,6 +17,10 @@ func (s *Signature) UnmarshalJSON(bytes []byte) error {
 	if temp == "" {
 		*s = Signature{}
 		return nil
+	}
+
+	if len(temp) < 2 || temp[:2] != "0x" {
+		return errors.New("hex string must be 0x prepended")
 	}
 
 	str, err := hex.DecodeString(temp[2:])
