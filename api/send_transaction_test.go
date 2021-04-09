@@ -100,6 +100,19 @@ func (s *SendTransactionTestSuite) TestApi_SendTransaction_ValidateFee() {
 	s.Equal(ErrFeeTooLow, err)
 }
 
+func (s *SendTransactionTestSuite) TestApi_SendTransaction_ValidateBalance() {
+	transfer := dto.Transfer{
+		FromStateID: ref.Uint32(1),
+		ToStateID:   ref.Uint32(2),
+		Amount:      models.NewUint256(500),
+		Fee:         models.NewUint256(10),
+		Nonce:       models.NewUint256(0),
+		Signature:   utils.RandomBytes(12),
+	}
+	_, err := s.api.SendTransaction(dto.MakeTransaction(transfer))
+	s.Equal(ErrNotEnoughBalance, err)
+}
+
 func TestSendTransactionTestSuite(t *testing.T) {
 	suite.Run(t, new(SendTransactionTestSuite))
 }

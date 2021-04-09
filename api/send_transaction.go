@@ -80,7 +80,7 @@ func (a *API) sanitizeTransfer(transfer dto.Transfer) (*models.Transfer, error) 
 		return nil, NewMissingFieldError("signature")
 	}
 
-	if transfer.Fee.CmpN(0) > 0 {
+	if transfer.Fee.CmpN(0) != 1 {
 		return nil, ErrFeeTooLow
 	}
 
@@ -109,6 +109,10 @@ func (a *API) validateNonceAndBalance(transfer *dto.Transfer) error {
 	}
 	if transfer.Nonce.Cmp(&senderState.Nonce) < 0 {
 		return ErrNonceTooLow
+	}
+	// TODO validate that there are no gaps in nonce sequence
+	if transfer.Amount.Add(transfer.Fee).Cmp(&senderState.Balance) > 0 {
+		return ErrNotEnoughBalance
 	}
 	return nil
 }
