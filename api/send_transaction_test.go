@@ -5,8 +5,10 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -48,18 +50,18 @@ func (s *SendTransactionTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *SendTransactionTestSuite) TestApi_SendTransaction() {
-	tx := models.IncomingTransaction{
-		FromIndex: models.NewUint256(1),
-		ToIndex:   models.NewUint256(2),
-		Amount:    models.NewUint256(50),
-		Fee:       models.NewUint256(10),
-		Nonce:     models.NewUint256(0),
-		Signature: []byte{97, 100, 115, 97, 100, 115, 97, 115, 100, 97, 115, 100},
+func (s *SendTransactionTestSuite) TestApi_SendTransaction_ReturnsNonNilHash() {
+	transfer := dto.Transfer{
+		FromStateID: ref.Uint32(1),
+		ToStateID:   ref.Uint32(2),
+		Amount:      models.NewUint256(50),
+		Fee:         models.NewUint256(10),
+		Nonce:       models.NewUint256(0),
+		Signature:   utils.RandomBytes(12),
 	}
-	hash, err := s.api.SendTransaction(tx)
+	hash, err := s.api.SendTransaction(dto.MakeTransaction(transfer))
 	s.NoError(err)
-	s.Equal(common.HexToHash("0x0757e6b9b057336b010007d26489dc3a46d89a5349824965b9129ca26ff72340"), *hash)
+	s.NotNil(hash)
 }
 
 func (s *SendTransactionTestSuite) TestApi_SendTransaction_VerifyNonce_TooLow() {
@@ -73,39 +75,29 @@ func (s *SendTransactionTestSuite) TestApi_SendTransaction_VerifyNonce_TooLow() 
 	err := s.tree.Set(2, &userState)
 	s.NoError(err)
 
-	tx := models.IncomingTransaction{
-		FromIndex: models.NewUint256(2),
-		ToIndex:   models.NewUint256(1),
-		Amount:    models.NewUint256(50),
-		Fee:       models.NewUint256(10),
-		Nonce:     models.NewUint256(0),
-		Signature: []byte{97, 100, 115, 97, 100, 115, 97, 115, 100, 97, 115, 100},
+	transfer := dto.Transfer{
+		FromStateID: ref.Uint32(2),
+		ToStateID:   ref.Uint32(1),
+		Amount:      models.NewUint256(50),
+		Fee:         models.NewUint256(10),
+		Nonce:       models.NewUint256(0),
+		Signature:   utils.RandomBytes(12),
 	}
-	_, err = s.api.SendTransaction(tx)
-	s.EqualError(err, "nonce too low")
+	_, err = s.api.SendTransaction(dto.MakeTransaction(transfer))
+	s.Equal(ErrNonceTooLow, err)
 }
 
 func (s *SendTransactionTestSuite) TestApi_SendTransaction_VerifyFee() {
-	userState := models.UserState{
-		AccountIndex: 1,
-		TokenIndex:   models.MakeUint256(1),
-		Balance:      models.MakeUint256(420),
-		Nonce:        models.MakeUint256(1),
+	transfer := dto.Transfer{
+		FromStateID: ref.Uint32(1),
+		ToStateID:   ref.Uint32(2),
+		Amount:      models.NewUint256(50),
+		Fee:         models.NewUint256(0),
+		Nonce:       models.NewUint256(0),
+		Signature:   utils.RandomBytes(12),
 	}
-
-	err := s.tree.Set(2, &userState)
-	s.NoError(err)
-
-	tx := models.IncomingTransaction{
-		FromIndex: models.NewUint256(2),
-		ToIndex:   models.NewUint256(1),
-		Amount:    models.NewUint256(50),
-		Fee:       models.NewUint256(0),
-		Nonce:     models.NewUint256(1),
-		Signature: []byte{97, 100, 115, 97, 100, 115, 97, 115, 100, 97, 115, 100},
-	}
-	_, err = s.api.SendTransaction(tx)
-	s.EqualError(err, "fee must be greater than 0")
+	_, err := s.api.SendTransaction(dto.MakeTransaction(transfer))
+	s.Equal(ErrFeeTooLow, err)
 }
 
 func TestSendTransactionTestSuite(t *testing.T) {

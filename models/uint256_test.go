@@ -50,22 +50,3 @@ func TestUint256_UnmarshalNumber(t *testing.T) {
 	err := json.Unmarshal([]byte("5123123"), &unmarshalled)
 	require.Error(t, err)
 }
-
-func TestIncomingTransaction_JSONMarshaling(t *testing.T) {
-	tx := IncomingTransaction{
-		FromIndex: NewUint256(1),
-		ToIndex:   NewUint256(2),
-		Amount:    NewUint256(50),
-		Fee:       NewUint256(10),
-		Nonce:     NewUint256(0),
-		Signature: []byte{97, 100, 115, 97, 100, 115, 97, 115, 100, 97, 115, 100},
-	}
-	data, err := json.Marshal(tx)
-	require.NoError(t, err)
-
-	var unmarshalled IncomingTransaction
-	err = json.Unmarshal(data, &unmarshalled)
-	require.NoError(t, err)
-
-	require.Equal(t, tx, unmarshalled)
-}

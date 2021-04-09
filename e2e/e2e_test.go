@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/testutils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 )
@@ -33,13 +35,13 @@ func Test_Commander(t *testing.T) {
 	require.Len(t, userStates, 1)
 	require.EqualValues(t, models.MakeUint256(0), userStates[0].Nonce)
 
-	tx := models.IncomingTransaction{
-		FromIndex: models.NewUint256(1),
-		ToIndex:   models.NewUint256(2),
-		Amount:    models.NewUint256(50),
-		Fee:       models.NewUint256(10),
-		Nonce:     models.NewUint256(0),
-		Signature: []byte{97, 100, 115, 97, 100, 115, 97, 115, 100, 97, 115, 100},
+	tx := dto.Transfer{
+		FromStateID: ref.Uint32(1),
+		ToStateID:   ref.Uint32(2),
+		Amount:      models.NewUint256(50),
+		Fee:         models.NewUint256(10),
+		Nonce:       models.NewUint256(0),
+		Signature:   []byte{97, 100, 115, 97, 100, 115, 97, 115, 100, 97, 115, 100},
 	}
 
 	var txHash1 common.Hash
@@ -52,13 +54,13 @@ func Test_Commander(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, models.Pending, sentTx.Status)
 
-	tx2 := models.IncomingTransaction{
-		FromIndex: models.NewUint256(1),
-		ToIndex:   models.NewUint256(2),
-		Amount:    models.NewUint256(10),
-		Fee:       models.NewUint256(10),
-		Nonce:     models.NewUint256(1),
-		Signature: []byte{97, 100, 115, 97, 100, 115, 97, 115, 100, 97, 115, 100},
+	tx2 := dto.Transfer{
+		FromStateID: ref.Uint32(1),
+		ToStateID:   ref.Uint32(2),
+		Amount:      models.NewUint256(10),
+		Fee:         models.NewUint256(10),
+		Nonce:       models.NewUint256(1),
+		Signature:   []byte{97, 100, 115, 97, 100, 115, 97, 115, 100, 97, 115, 100},
 	}
 
 	var txHash2 common.Hash

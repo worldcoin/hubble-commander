@@ -6,7 +6,9 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -69,16 +71,16 @@ func (s *GetTransactionsTestSuite) TestApi_GetTransaction() {
 	err = s.tree.Set(1, &userStates[1])
 	s.NoError(err)
 
-	incomingTx := models.IncomingTransaction{
-		FromIndex: models.NewUint256(0),
-		ToIndex:   models.NewUint256(1),
-		Amount:    models.NewUint256(50),
-		Fee:       models.NewUint256(10),
-		Nonce:     models.NewUint256(0),
-		Signature: []byte{1, 2, 3, 4},
+	transfer := dto.Transfer{
+		FromStateID: ref.Uint32(0),
+		ToStateID:   ref.Uint32(1),
+		Amount:      models.NewUint256(50),
+		Fee:         models.NewUint256(10),
+		Nonce:       models.NewUint256(0),
+		Signature:   []byte{1, 2, 3, 4},
 	}
 
-	hash, err := s.api.SendTransaction(incomingTx)
+	hash, err := s.api.SendTransaction(dto.MakeTransaction(transfer))
 	s.NoError(err)
 
 	res, err := s.api.GetTransaction(*hash)

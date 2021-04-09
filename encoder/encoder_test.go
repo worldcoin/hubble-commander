@@ -50,36 +50,25 @@ func (s *EncoderTestSuite) TearDownTest() {
 	s.sim.Close()
 }
 
-func (s *EncoderTestSuite) TestEncodeTransfer_Zero() {
-	tx := transfer.OffchainTransfer{
-		TxType:    big.NewInt(0),
-		FromIndex: big.NewInt(0),
-		ToIndex:   big.NewInt(0),
-		Amount:    big.NewInt(0),
-		Fee:       big.NewInt(0),
-		Nonce:     big.NewInt(0),
-	}
-	bytes, err := EncodeTransfer(tx)
+func (s *EncoderTestSuite) TestEncodeTransfer() {
+	encodedTransfer, err := EncodeTransfer(&models.Transfer{
+		FromStateID: 2,
+		ToStateID:   3,
+		Amount:      models.MakeUint256(4),
+		Fee:         models.MakeUint256(5),
+		Nonce:       models.MakeUint256(6),
+	})
 	s.NoError(err)
-	expected, err := s.transfer.Encode(nil, tx)
-	s.NoError(err)
-	s.Equal(expected, bytes)
-}
-
-func (s *EncoderTestSuite) TestEncodeTransfer_NonZero() {
-	tx := transfer.OffchainTransfer{
+	expected, err := s.transfer.Encode(nil, transfer.OffchainTransfer{
 		TxType:    big.NewInt(1),
 		FromIndex: big.NewInt(2),
 		ToIndex:   big.NewInt(3),
 		Amount:    big.NewInt(4),
 		Fee:       big.NewInt(5),
 		Nonce:     big.NewInt(6),
-	}
-	bytes, err := EncodeTransfer(tx)
+	})
 	s.NoError(err)
-	expected, err := s.transfer.Encode(nil, tx)
-	s.NoError(err)
-	s.Equal(expected, bytes)
+	s.Equal(expected, encodedTransfer)
 }
 
 func (s *EncoderTestSuite) TestEncodeUserState() {
