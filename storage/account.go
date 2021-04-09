@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"fmt"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 )
@@ -29,4 +31,20 @@ func (s *Storage) GetAccounts(publicKey *models.PublicKey) ([]models.Account, er
 		return nil, err
 	}
 	return res, nil
+}
+
+func (s *Storage) GetPublicKey(accountIndex uint32) (*models.PublicKey, error) {
+	res := make([]models.PublicKey, 0, 1)
+	err := s.DB.Query(
+		s.QB.Select("public_key").
+			From("account").
+			Where(squirrel.Eq{"account_index": accountIndex}),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, fmt.Errorf("account not found")
+	}
+	return &res[0], nil
 }
