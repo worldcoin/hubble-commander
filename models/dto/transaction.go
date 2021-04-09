@@ -2,9 +2,15 @@ package dto
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+)
+
+var (
+	ErrMissingType     = errors.New("missing type")
+	ErrUnsupportedType = errors.New("unsupported type")
+	ErrNotImplemented  = errors.New("not implemented")
 )
 
 type Transaction struct {
@@ -25,18 +31,18 @@ func (tx *Transaction) UnmarshalJSON(bytes []byte) error {
 	}
 
 	if rawTx.Type == nil {
-		return fmt.Errorf("missing type")
+		return ErrMissingType
 	}
 
 	switch *rawTx.Type {
 	case txtype.Transfer:
 		return tx.unmarshalTransfer(bytes)
 	case txtype.Create2Transfer:
-		return fmt.Errorf("not implemented")
+		return ErrNotImplemented
 	case txtype.MassMigration:
-		return fmt.Errorf("not implemented")
+		return ErrNotImplemented
 	default:
-		return fmt.Errorf("unsupported type")
+		return ErrUnsupportedType
 	}
 }
 

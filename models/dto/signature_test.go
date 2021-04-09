@@ -52,5 +52,5 @@ func TestSignature_UnmarshalJSON_Empty(t *testing.T) {
 func TestSignature_UnmarshalJSON_Error(t *testing.T) {
 	var dest Signature
 	err := json.Unmarshal([]byte(`"deadbeef"`), &dest)
-	require.Errorf(t, err, "hex string must be 0x prepended")
+	require.EqualError(t, err, "hex string must be 0x prepended")
 }
