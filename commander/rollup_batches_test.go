@@ -16,16 +16,6 @@ import (
 )
 
 var (
-	baseTx = models.Transaction{
-		Hash:                 common.BigToHash(big.NewInt(1234)),
-		FromIndex:            1,
-		ToIndex:              2,
-		Amount:               models.MakeUint256(50),
-		Fee:                  models.MakeUint256(10),
-		Nonce:                models.MakeUint256(0),
-		Signature:            []byte{1, 2, 3, 4, 5},
-		IncludedInCommitment: nil,
-	}
 	baseCommitment = models.Commitment{
 		Transactions:      utils.RandomBytes(24),
 		FeeReceiver:       1,
@@ -34,7 +24,7 @@ var (
 	}
 )
 
-type RollupLoopTestSuite struct {
+type RollupLoopBacthesTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	db         *db.TestDB
@@ -44,11 +34,11 @@ type RollupLoopTestSuite struct {
 	testClient *eth.TestClient
 }
 
-func (s *RollupLoopTestSuite) SetupSuite() {
+func (s *RollupLoopBacthesTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *RollupLoopTestSuite) SetupTest() {
+func (s *RollupLoopBacthesTestSuite) SetupTest() {
 	testDB, err := db.NewTestDB()
 	s.NoError(err)
 	s.db = testDB
@@ -73,13 +63,13 @@ func (s *RollupLoopTestSuite) SetupTest() {
 	s.NoError(err)
 }
 
-func (s *RollupLoopTestSuite) TearDownTest() {
+func (s *RollupLoopBacthesTestSuite) TearDownTest() {
 	s.testClient.Close()
 	err := s.db.Teardown()
 	s.NoError(err)
 }
 
-func (s *RollupLoopTestSuite) Test_SubmitBatch_SubmitsCommitmentsOnChain() {
+func (s *RollupLoopBacthesTestSuite) Test_SubmitBatch_SubmitsCommitmentsOnChain() {
 	commitmentID, err := s.storage.AddCommitment(&baseCommitment)
 	s.NoError(err)
 
@@ -94,7 +84,7 @@ func (s *RollupLoopTestSuite) Test_SubmitBatch_SubmitsCommitmentsOnChain() {
 	s.Equal(big.NewInt(2), nextBatchID)
 }
 
-func (s *RollupLoopTestSuite) Test_SubmitBatch_StoresBatchRecord() {
+func (s *RollupLoopBacthesTestSuite) Test_SubmitBatch_StoresBatchRecord() {
 	commitmentID, err := s.storage.AddCommitment(&baseCommitment)
 	s.NoError(err)
 
@@ -109,7 +99,7 @@ func (s *RollupLoopTestSuite) Test_SubmitBatch_StoresBatchRecord() {
 	s.NotNil(batch)
 }
 
-func (s *RollupLoopTestSuite) addCommitments(count int) ([]int32, []models.Commitment) {
+func (s *RollupLoopBacthesTestSuite) addCommitments(count int) ([]int32, []models.Commitment) {
 	ids := make([]int32, 0, count)
 	commitments := make([]models.Commitment, 0, count)
 	for i := 0; i < count; i++ {
@@ -124,7 +114,7 @@ func (s *RollupLoopTestSuite) addCommitments(count int) ([]int32, []models.Commi
 	return ids, commitments
 }
 
-func (s *RollupLoopTestSuite) Test_SubmitBatch_MarksCommitmentsAsIncluded() {
+func (s *RollupLoopBacthesTestSuite) Test_SubmitBatch_MarksCommitmentsAsIncluded() {
 	ids, commitments := s.addCommitments(2)
 
 	err := SubmitBatch(commitments, s.storage, s.testClient.Client, s.cfg)
@@ -140,12 +130,12 @@ func (s *RollupLoopTestSuite) Test_SubmitBatch_MarksCommitmentsAsIncluded() {
 	}
 }
 
-func (s *RollupLoopTestSuite) Test_SubmitBatch_MarksCommitmentsAsIncluded_UnsavedCommitment() {
+func (s *RollupLoopBacthesTestSuite) Test_SubmitBatch_MarksCommitmentsAsIncluded_UnsavedCommitment() {
 	err := SubmitBatch([]models.Commitment{baseCommitment}, s.storage, s.testClient.Client, s.cfg)
 	s.EqualError(err, "no rows were affected by the update")
 }
 
-func (s *RollupLoopTestSuite) Test_SubmitBatch_UpdatesCommitmentsAccountRoot() {
+func (s *RollupLoopBacthesTestSuite) Test_SubmitBatch_UpdatesCommitmentsAccountRoot() {
 	ids, commitments := s.addCommitments(2)
 
 	err := SubmitBatch(commitments, s.storage, s.testClient.Client, s.cfg)
@@ -161,6 +151,6 @@ func (s *RollupLoopTestSuite) Test_SubmitBatch_UpdatesCommitmentsAccountRoot() {
 	}
 }
 
-func TestRollupLoopTestSuite(t *testing.T) {
-	suite.Run(t, new(RollupLoopTestSuite))
+func TestRollupLoopBacthesTestSuite(t *testing.T) {
+	suite.Run(t, new(RollupLoopBacthesTestSuite))
 }
