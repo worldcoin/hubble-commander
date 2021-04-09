@@ -15,7 +15,7 @@ var (
 	tUint256, _ = abi.NewType("uint256", "", nil)
 )
 
-func EncodeTransfer(tx models.Transfer) ([]byte, error) {
+func EncodeTransfer(tx *models.Transfer) ([]byte, error) {
 	arguments := abi.Arguments{
 		{Name: "txType", Type: tUint256},
 		{Name: "fromIndex", Type: tUint256},

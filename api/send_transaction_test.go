@@ -84,7 +84,7 @@ func (s *SendTransactionTestSuite) TestApi_SendTransaction_VerifyNonce_TooLow() 
 		Signature:   utils.RandomBytes(12),
 	}
 	_, err = s.api.SendTransaction(dto.MakeTransaction(transfer))
-	s.EqualError(err, "nonce too low")
+	s.Equal(ErrNonceTooLow, err)
 }
 
 func (s *SendTransactionTestSuite) TestApi_SendTransaction_VerifyFee() {
@@ -97,7 +97,7 @@ func (s *SendTransactionTestSuite) TestApi_SendTransaction_VerifyFee() {
 		Signature:   utils.RandomBytes(12),
 	}
 	_, err := s.api.SendTransaction(dto.MakeTransaction(transfer))
-	s.EqualError(err, "fee must be greater than 0")
+	s.Equal(ErrFeeTooLow, err)
 }
 
 func TestSendTransactionTestSuite(t *testing.T) {

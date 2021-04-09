@@ -51,7 +51,7 @@ func (s *EncoderTestSuite) TearDownTest() {
 }
 
 func (s *EncoderTestSuite) TestEncodeTransfer() {
-	encodedTransfer, err := EncodeTransfer(models.Transfer{
+	encodedTransfer, err := EncodeTransfer(&models.Transfer{
 		FromStateID: 2,
 		ToStateID:   3,
 		Amount:      models.MakeUint256(4),
