@@ -64,7 +64,7 @@ func (s *SendTransactionTestSuite) TestApi_SendTransaction_ReturnsNonNilHash() {
 	s.NotNil(hash)
 }
 
-func (s *SendTransactionTestSuite) TestApi_SendTransaction_VerifyNonce_TooLow() {
+func (s *SendTransactionTestSuite) TestApi_SendTransaction_ValidateNonce_TooLow() {
 	userState := models.UserState{
 		PubkeyID:   1,
 		TokenIndex: models.MakeUint256(1),
@@ -87,7 +87,7 @@ func (s *SendTransactionTestSuite) TestApi_SendTransaction_VerifyNonce_TooLow() 
 	s.Equal(ErrNonceTooLow, err)
 }
 
-func (s *SendTransactionTestSuite) TestApi_SendTransaction_VerifyFee() {
+func (s *SendTransactionTestSuite) TestApi_SendTransaction_ValidateFee() {
 	transfer := dto.Transfer{
 		FromStateID: ref.Uint32(1),
 		ToStateID:   ref.Uint32(2),

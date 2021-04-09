@@ -50,3 +50,29 @@ func TestUint256_UnmarshalNumber(t *testing.T) {
 	err := json.Unmarshal([]byte("5123123"), &unmarshalled)
 	require.Error(t, err)
 }
+
+func TestUint256_Add(t *testing.T) {
+	one := NewUint256(1)
+	two := NewUint256(2)
+	three := NewUint256(3)
+	require.Equal(t, three, one.Add(two))
+}
+
+func TestUint256_Sub(t *testing.T) {
+	one := NewUint256(1)
+	two := NewUint256(2)
+	three := NewUint256(3)
+	require.Equal(t, one, three.Sub(two))
+}
+
+func TestUint256_Mul(t *testing.T) {
+	two := NewUint256(2)
+	four := NewUint256(4)
+	require.Equal(t, four, two.Mul(two))
+}
+
+func TestUint256_Div(t *testing.T) {
+	two := NewUint256(2)
+	four := NewUint256(4)
+	require.Equal(t, two, four.Div(two))
+}

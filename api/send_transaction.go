@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -15,8 +14,9 @@ import (
 )
 
 var (
-	ErrFeeTooLow   = errors.New("fee must be greater than 0")
-	ErrNonceTooLow = errors.New("nonce too low")
+	ErrFeeTooLow        = errors.New("fee must be greater than 0")
+	ErrNonceTooLow      = errors.New("nonce too low")
+	ErrNotEnoughBalance = errors.New("not enough balance")
 )
 
 func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
@@ -80,11 +80,11 @@ func (a *API) sanitizeTransfer(transfer dto.Transfer) (*models.Transfer, error) 
 		return nil, NewMissingFieldError("signature")
 	}
 
-	if transfer.Fee.Cmp(big.NewInt(0)) != 1 {
+	if transfer.Fee.CmpN(0) > 0 {
 		return nil, ErrFeeTooLow
 	}
 
-	err := a.validateNonce(&transfer)
+	err := a.validateNonceAndBalance(&transfer)
 	if err != nil {
 		return nil, err
 	}
@@ -101,14 +101,13 @@ func (a *API) sanitizeTransfer(transfer dto.Transfer) (*models.Transfer, error) 
 	}, nil
 }
 
-func (a *API) validateNonce(transfer *dto.Transfer) error {
+func (a *API) validateNonceAndBalance(transfer *dto.Transfer) error {
 	stateTree := storage.NewStateTree(a.storage)
-	senderStateLeaf, err := stateTree.Leaf(*transfer.FromStateID)
+	senderState, err := stateTree.Leaf(*transfer.FromStateID)
 	if err != nil {
 		return err
 	}
-	senderNonce := &senderStateLeaf.Nonce.Int
-	if transfer.Nonce.Cmp(senderNonce) < 0 {
+	if transfer.Nonce.Cmp(&senderState.Nonce) < 0 {
 		return ErrNonceTooLow
 	}
 	return nil
