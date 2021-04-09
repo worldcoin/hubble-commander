@@ -30,8 +30,13 @@ func (tx *Transaction) UnmarshalJSON(bytes []byte) error {
 
 	switch *rawTx.Type {
 	case txtype.Transfer:
-		tx.Parsed = Transfer{}
-		return json.Unmarshal(bytes, tx.Parsed)
+		var transfer Transfer
+		err = json.Unmarshal(bytes, &transfer)
+		if err != nil {
+			return err
+		}
+		tx.Parsed = transfer
+		return nil
 	case txtype.Create2Transfer:
 		return fmt.Errorf("not implemented")
 	case txtype.MassMigration:
