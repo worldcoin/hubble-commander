@@ -59,7 +59,7 @@ ETHEREUM_PRIVATE_KEY=ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330
 
 To run ganache with proper account config run this command:
 ```shell
-ganache-cli --account 0xee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82,0x56BC75E2D63100000
+npx ganache-cli --account 0xee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82,0x56BC75E2D63100000
 ```
 
 ## Running docker image on Docker for Mac
