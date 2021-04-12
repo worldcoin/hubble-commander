@@ -6,8 +6,8 @@ import (
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
-	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
@@ -15,7 +15,7 @@ var (
 	tUint256, _ = abi.NewType("uint256", "", nil)
 )
 
-func EncodeTransfer(tx transfer.OffchainTransfer) ([]uint8, error) {
+func EncodeTransfer(tx *models.Transfer) ([]byte, error) {
 	arguments := abi.Arguments{
 		{Name: "txType", Type: tUint256},
 		{Name: "fromIndex", Type: tUint256},
@@ -24,37 +24,29 @@ func EncodeTransfer(tx transfer.OffchainTransfer) ([]uint8, error) {
 		{Name: "fee", Type: tUint256},
 		{Name: "nonce", Type: tUint256},
 	}
-	encodedBytes, err := arguments.Pack(
-		tx.TxType,
-		tx.FromIndex,
-		tx.ToIndex,
-		tx.Amount,
-		tx.Fee,
-		tx.Nonce,
+	return arguments.Pack(
+		big.NewInt(int64(txtype.Transfer)),
+		big.NewInt(int64(tx.FromStateID)),
+		big.NewInt(int64(tx.ToStateID)),
+		&tx.Amount.Int,
+		&tx.Fee.Int,
+		&tx.Nonce.Int,
 	)
-	if err != nil {
-		return nil, err
-	}
-	return encodedBytes, nil
 }
 
-func EncodeUserState(state generic.TypesUserState) ([]uint8, error) {
+func EncodeUserState(state generic.TypesUserState) ([]byte, error) {
 	arguments := abi.Arguments{
 		{Name: "pubkeyID", Type: tUint256},
 		{Name: "tokenID", Type: tUint256},
 		{Name: "balance", Type: tUint256},
 		{Name: "nonce", Type: tUint256},
 	}
-	encodedBytes, err := arguments.Pack(
+	return arguments.Pack(
 		state.PubkeyID,
 		state.TokenID,
 		state.Balance,
 		state.Nonce,
 	)
-	if err != nil {
-		return nil, err
-	}
-	return encodedBytes, nil
 }
 
 // Encodes a 256-bit integer as a number with mantissa and a decimal exponent.
@@ -81,7 +73,7 @@ func EncodeDecimal(value models.Uint256) (uint16, error) {
 }
 
 // Encodes a transaction in compact format (without signatures) for the inclusion in the commitment
-func EncodeTransaction(transaction *models.Transaction) ([]uint8, error) {
+func EncodeTransaction(transaction *models.Transaction) ([]byte, error) {
 	amount, err := EncodeDecimal(transaction.Amount)
 	if err != nil {
 		return nil, err

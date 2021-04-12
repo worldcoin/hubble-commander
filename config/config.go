@@ -48,11 +48,7 @@ func GetConfig() Config {
 			Password:       getEnvOrDefault("HUBBLE_DBPASSWORD", nil),
 			MigrationsPath: *getEnvOrDefault("HUBBLE_MIGRATIONS_PATH", ref.String(getMigrationsPath())),
 		},
-		Ethereum: &EthereumConfig{
-			RPCURL:     getEnv("ETHEREUM_RPC_URL"),
-			ChainID:    getEnv("ETHEREUM_CHAIN_ID"),
-			PrivateKey: getEnv("ETHEREUM_PRIVATE_KEY"),
-		},
+		Ethereum: getEthereumConfig(),
 	}
 }
 

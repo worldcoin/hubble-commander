@@ -1,93 +1,111 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"math/big"
 
-	"github.com/Worldcoin/hubble-commander/commander"
+	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/rlp"
-	"golang.org/x/crypto/sha3"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
-func (a *API) SendTransaction(incTx models.IncomingTransaction) (*common.Hash, error) {
-	if incTx.FromIndex == nil {
-		return nil, fmt.Errorf("fromIndex is required")
-	}
-	if incTx.ToIndex == nil {
-		return nil, fmt.Errorf("toIndex is required")
-	}
-	if incTx.Amount == nil {
-		return nil, fmt.Errorf("amount is required")
-	}
-	if incTx.Fee == nil {
-		return nil, fmt.Errorf("fee is required")
-	}
-	if incTx.Nonce == nil {
-		return nil, fmt.Errorf("nonce is required")
-	}
-	if incTx.Fee.Cmp(big.NewInt(0)) != 1 {
-		return nil, fmt.Errorf("fee must be greater than 0")
-	}
+var (
+	ErrFeeTooLow   = errors.New("fee must be greater than 0")
+	ErrNonceTooLow = errors.New("nonce too low")
+)
 
-	err := a.verifyNonce(&incTx)
+func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
+	switch t := tx.Parsed.(type) {
+	case dto.Transfer:
+		return a.handleTransfer(t)
+	default:
+		return nil, fmt.Errorf("not supported transaction type")
+	}
+}
+
+func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
+	transfer, err := a.sanitizeTransfer(transferDTO)
 	if err != nil {
 		return nil, err
 	}
 
-	hash, err := rlpHash(incTx)
+	encodedTransfer, err := encoder.EncodeTransfer(transfer)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
+	hash := crypto.Keccak256Hash(encodedTransfer)
 
 	tx := &models.Transaction{
-		Hash:      *hash,
-		FromIndex: uint32(incTx.FromIndex.Uint64()),
-		ToIndex:   uint32(incTx.ToIndex.Uint64()),
-		Amount:    *incTx.Amount,
-		Fee:       *incTx.Fee,
-		Nonce:     *incTx.Nonce,
-		Signature: incTx.Signature,
+		Hash:      hash,
+		FromIndex: transfer.FromStateID,
+		ToIndex:   transfer.ToStateID,
+		Amount:    transfer.Amount,
+		Fee:       transfer.Fee,
+		Nonce:     transfer.Nonce,
+		Signature: transfer.Signature,
 	}
 	err = a.storage.AddTransaction(tx)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 	log.Println("New transaction: ", tx.Hash.Hex())
 
-	return hash, nil
-}
-
-// TODO: Test it with the smart contract encode method.
-// TODO: Use stable encoding with geth abiencode
-func rlpHash(x interface{}) (*common.Hash, error) {
-	hw := sha3.NewLegacyKeccak256()
-	if err := rlp.Encode(hw, x); err != nil {
-		return nil, err
-	}
-	hash := common.Hash{}
-	hw.Sum(hash[:0])
 	return &hash, nil
 }
 
-func (a *API) verifyNonce(incTx *models.IncomingTransaction) error {
+func (a *API) sanitizeTransfer(transfer dto.Transfer) (*models.Transfer, error) {
+	if transfer.FromStateID == nil {
+		return nil, NewMissingFieldError("fromStateID")
+	}
+	if transfer.ToStateID == nil {
+		return nil, NewMissingFieldError("toStateID")
+	}
+	if transfer.Amount == nil {
+		return nil, NewMissingFieldError("amount")
+	}
+	if transfer.Fee == nil {
+		return nil, NewMissingFieldError("fee")
+	}
+	if transfer.Nonce == nil {
+		return nil, NewMissingFieldError("nonce")
+	}
+	if transfer.Signature == nil {
+		return nil, NewMissingFieldError("signature")
+	}
+
+	if transfer.Fee.Cmp(big.NewInt(0)) != 1 {
+		return nil, ErrFeeTooLow
+	}
+
+	err := a.validateNonce(&transfer)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.Transfer{
+		FromStateID: *transfer.FromStateID,
+		ToStateID:   *transfer.ToStateID,
+		Amount:      *transfer.Amount,
+		Fee:         *transfer.Fee,
+		Nonce:       *transfer.Nonce,
+		Signature:   transfer.Signature,
+	}, nil
+}
+
+func (a *API) validateNonce(transfer *dto.Transfer) error {
 	stateTree := storage.NewStateTree(a.storage)
-	stateLeaf, err := stateTree.Leaf(uint32(incTx.FromIndex.Int64()))
+	senderStateLeaf, err := stateTree.Leaf(*transfer.FromStateID)
 	if err != nil {
 		return err
 	}
-
-	userNonce := stateLeaf.Nonce
-
-	comparison := incTx.Nonce.Cmp(&userNonce.Int)
-	if comparison < 0 {
-		return commander.ErrNonceTooLow
+	senderNonce := &senderStateLeaf.Nonce.Int
+	if transfer.Nonce.Cmp(senderNonce) < 0 {
+		return ErrNonceTooLow
 	}
-
 	return nil
 }
