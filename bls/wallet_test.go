@@ -51,7 +51,7 @@ func (s *WalletTestSuite) TestSign_VerifySingle() {
 
 	checkSuccess, callSuccess, err := s.testBLS.VerifySingle(
 		nil,
-		signature.ToBigInts(),
+		signature.BigInts(),
 		wallet.PublicKey().ToBigInts(),
 		point,
 	)
@@ -87,7 +87,7 @@ func (s *WalletTestSuite) TestSign_VerifyMultiple() {
 
 	checkSuccess, callSuccess, err := s.testBLS.VerifyMultiple(
 		nil,
-		aggregatedSignature.ToBigInts(),
+		aggregatedSignature.BigInts(),
 		publicKeys,
 		dataPoints,
 	)

@@ -18,6 +18,14 @@ func NewSignature(signature *bls.Signature, domain Domain) *Signature {
 	}
 }
 
+func NewSignatureFromBytes(signatureBytes []byte, domain Domain) (*Signature, error) {
+	signature, err := bls.SignatureFromBytes(signatureBytes)
+	if err != nil {
+		return nil, err
+	}
+	return NewSignature(signature, domain), nil
+}
+
 func (s *Signature) Domain() [32]byte {
 	var domain [32]byte
 	copy(domain[:], s.verifier.Domain)
@@ -28,10 +36,14 @@ func (s *Signature) Verify(message []byte, publicKey *PublicKey) (bool, error) {
 	return s.verifier.Verify(message, s.sig, publicKey.key)
 }
 
-func (s *Signature) ToBigInts() [2]*big.Int {
+func (s *Signature) BigInts() [2]*big.Int {
 	bytes := s.sig.ToBytes()
 	return [2]*big.Int{
 		new(big.Int).SetBytes(bytes[:32]),
 		new(big.Int).SetBytes(bytes[32:]),
 	}
+}
+
+func (s *Signature) Bytes() []byte {
+	return s.sig.ToBytes()
 }
