@@ -36,19 +36,19 @@ var (
 	genesisAccounts = []RegisteredGenesisAccount{sender, receiver, feeReceiver}
 )
 
-type RollupLoopCommitmentsTestSuite struct {
+type CreateCommitmentsTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	db        *db.TestDB
-	storage   *storage.Storage
-	cfg       *config.RollupConfig
+	db      *db.TestDB
+	storage *storage.Storage
+	cfg     *config.RollupConfig
 }
 
-func (s *RollupLoopCommitmentsTestSuite) SetupSuite() {
+func (s *CreateCommitmentsTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *RollupLoopCommitmentsTestSuite) SetupTest() {
+func (s *CreateCommitmentsTestSuite) SetupTest() {
 	testDB, err := db.NewTestDB()
 	s.NoError(err)
 	s.db = testDB
@@ -63,18 +63,18 @@ func (s *RollupLoopCommitmentsTestSuite) SetupTest() {
 	s.NoError(err)
 }
 
-func (s *RollupLoopCommitmentsTestSuite) TearDownTest() {
+func (s *CreateCommitmentsTestSuite) TearDownTest() {
 	err := s.db.Teardown()
 	s.NoError(err)
 }
 
-func (s *RollupLoopCommitmentsTestSuite) Test_CommitmentsLoop_DoNothingWhenThereAreNotEnoughPendingTxs() {
-	commitments, err := CommitmentsLoop([]models.Transaction{}, s.storage, s.cfg)
+func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_DoNothingWhenThereAreNotEnoughPendingTxs() {
+	commitments, err := createCommitments([]models.Transaction{}, s.storage, s.cfg)
 	s.NoError(err)
 	s.Len(commitments, 0)
 }
 
-func (s *RollupLoopCommitmentsTestSuite) Test_CommitmentsLoop_DoNothingWhenThereAreNotEnoughValidTxs() {
+func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_DoNothingWhenThereAreNotEnoughValidTxs() {
 	txs := generateValidTransactions(2)
 	txs[1].Amount = models.MakeUint256(99999999999)
 	s.addTransactions(txs)
@@ -82,17 +82,16 @@ func (s *RollupLoopCommitmentsTestSuite) Test_CommitmentsLoop_DoNothingWhenThere
 	pendingTransactions, err := s.storage.GetPendingTransactions()
 	s.NoError(err)
 	s.Len(pendingTransactions, 2)
-	
-	commitments, err := CommitmentsLoop(pendingTransactions, s.storage, s.cfg)
+
+	commitments, err := createCommitments(pendingTransactions, s.storage, s.cfg)
 	s.NoError(err)
 	s.Len(commitments, 0)
 }
 
-
-func (s *RollupLoopCommitmentsTestSuite) Test_CommitmentsLoop_StoresCorrectCommitment() {
+func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_StoresCorrectCommitment() {
 	pendingTransactions := s.prepareAndReturnPendingTransactions(3)
 
-	commitments, err := CommitmentsLoop(pendingTransactions, s.storage, s.cfg)
+	commitments, err := createCommitments(pendingTransactions, s.storage, s.cfg)
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, 24)
@@ -105,10 +104,10 @@ func (s *RollupLoopCommitmentsTestSuite) Test_CommitmentsLoop_StoresCorrectCommi
 	s.Equal(commitments[0].PostStateRoot, *root)
 }
 
-func (s *RollupLoopCommitmentsTestSuite) Test_CommitmentsLoop_MarksTransactionsAsIncludedInCommitment() {
+func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_MarksTransactionsAsIncludedInCommitment() {
 	pendingTransactions := s.prepareAndReturnPendingTransactions(2)
 
-	commitments, err := CommitmentsLoop(pendingTransactions, s.storage, s.cfg)
+	commitments, err := createCommitments(pendingTransactions, s.storage, s.cfg)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -119,18 +118,18 @@ func (s *RollupLoopCommitmentsTestSuite) Test_CommitmentsLoop_MarksTransactionsA
 	}
 }
 
-func TestRollupLoopCommitmentsTestSuite(t *testing.T) {
-	suite.Run(t, new(RollupLoopCommitmentsTestSuite))
+func TestCreateCommitmentsTestSuite(t *testing.T) {
+	suite.Run(t, new(CreateCommitmentsTestSuite))
 }
 
-func (s *RollupLoopCommitmentsTestSuite) addTransactions(txs []models.Transaction) {
+func (s *CreateCommitmentsTestSuite) addTransactions(txs []models.Transaction) {
 	for i := range txs {
 		err := s.storage.AddTransaction(&txs[i])
 		s.NoError(err)
 	}
 }
 
-func (s *RollupLoopCommitmentsTestSuite) prepareAndReturnPendingTransactions(txAmount int) []models.Transaction {
+func (s *CreateCommitmentsTestSuite) prepareAndReturnPendingTransactions(txAmount int) []models.Transaction {
 	txs := generateValidTransactions(txAmount)
 	s.addTransactions(txs)
 
@@ -140,4 +139,3 @@ func (s *RollupLoopCommitmentsTestSuite) prepareAndReturnPendingTransactions(txA
 
 	return pendingTransactions
 }
-

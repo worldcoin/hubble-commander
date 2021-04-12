@@ -24,7 +24,7 @@ var (
 	}
 )
 
-type RollupLoopBacthesTestSuite struct {
+type SubmitBatchTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	db         *db.TestDB
@@ -34,11 +34,11 @@ type RollupLoopBacthesTestSuite struct {
 	testClient *eth.TestClient
 }
 
-func (s *RollupLoopBacthesTestSuite) SetupSuite() {
+func (s *SubmitBatchTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *RollupLoopBacthesTestSuite) SetupTest() {
+func (s *SubmitBatchTestSuite) SetupTest() {
 	testDB, err := db.NewTestDB()
 	s.NoError(err)
 	s.db = testDB
@@ -63,20 +63,20 @@ func (s *RollupLoopBacthesTestSuite) SetupTest() {
 	s.NoError(err)
 }
 
-func (s *RollupLoopBacthesTestSuite) TearDownTest() {
+func (s *SubmitBatchTestSuite) TearDownTest() {
 	s.testClient.Close()
 	err := s.db.Teardown()
 	s.NoError(err)
 }
 
-func (s *RollupLoopBacthesTestSuite) Test_SubmitBatch_SubmitsCommitmentsOnChain() {
+func (s *SubmitBatchTestSuite) Test_SubmitBatch_SubmitsCommitmentsOnChain() {
 	commitmentID, err := s.storage.AddCommitment(&baseCommitment)
 	s.NoError(err)
 
 	commitment, err := s.storage.GetCommitment(*commitmentID)
 	s.NoError(err)
 
-	err = SubmitBatch([]models.Commitment{*commitment}, s.storage, s.testClient.Client, s.cfg)
+	err = submitBatch([]models.Commitment{*commitment}, s.storage, s.testClient.Client, s.cfg)
 	s.NoError(err)
 
 	nextBatchID, err := s.testClient.Rollup.NextBatchID(nil)
@@ -84,14 +84,14 @@ func (s *RollupLoopBacthesTestSuite) Test_SubmitBatch_SubmitsCommitmentsOnChain(
 	s.Equal(big.NewInt(2), nextBatchID)
 }
 
-func (s *RollupLoopBacthesTestSuite) Test_SubmitBatch_StoresBatchRecord() {
+func (s *SubmitBatchTestSuite) Test_SubmitBatch_StoresBatchRecord() {
 	commitmentID, err := s.storage.AddCommitment(&baseCommitment)
 	s.NoError(err)
 
 	commitment, err := s.storage.GetCommitment(*commitmentID)
 	s.NoError(err)
 
-	err = SubmitBatch([]models.Commitment{*commitment}, s.storage, s.testClient.Client, s.cfg)
+	err = submitBatch([]models.Commitment{*commitment}, s.storage, s.testClient.Client, s.cfg)
 	s.NoError(err)
 
 	batch, err := s.storage.GetBatchByID(models.MakeUint256(1))
@@ -99,7 +99,7 @@ func (s *RollupLoopBacthesTestSuite) Test_SubmitBatch_StoresBatchRecord() {
 	s.NotNil(batch)
 }
 
-func (s *RollupLoopBacthesTestSuite) addCommitments(count int) ([]int32, []models.Commitment) {
+func (s *SubmitBatchTestSuite) addCommitments(count int) ([]int32, []models.Commitment) {
 	ids := make([]int32, 0, count)
 	commitments := make([]models.Commitment, 0, count)
 	for i := 0; i < count; i++ {
@@ -114,10 +114,10 @@ func (s *RollupLoopBacthesTestSuite) addCommitments(count int) ([]int32, []model
 	return ids, commitments
 }
 
-func (s *RollupLoopBacthesTestSuite) Test_SubmitBatch_MarksCommitmentsAsIncluded() {
+func (s *SubmitBatchTestSuite) Test_SubmitBatch_MarksCommitmentsAsIncluded() {
 	ids, commitments := s.addCommitments(2)
 
-	err := SubmitBatch(commitments, s.storage, s.testClient.Client, s.cfg)
+	err := submitBatch(commitments, s.storage, s.testClient.Client, s.cfg)
 	s.NoError(err)
 
 	batch, err := s.storage.GetBatchByID(models.MakeUint256(1))
@@ -130,15 +130,15 @@ func (s *RollupLoopBacthesTestSuite) Test_SubmitBatch_MarksCommitmentsAsIncluded
 	}
 }
 
-func (s *RollupLoopBacthesTestSuite) Test_SubmitBatch_MarksCommitmentsAsIncluded_UnsavedCommitment() {
-	err := SubmitBatch([]models.Commitment{baseCommitment}, s.storage, s.testClient.Client, s.cfg)
+func (s *SubmitBatchTestSuite) Test_SubmitBatch_MarksCommitmentsAsIncluded_UnsavedCommitment() {
+	err := submitBatch([]models.Commitment{baseCommitment}, s.storage, s.testClient.Client, s.cfg)
 	s.EqualError(err, "no rows were affected by the update")
 }
 
-func (s *RollupLoopBacthesTestSuite) Test_SubmitBatch_UpdatesCommitmentsAccountRoot() {
+func (s *SubmitBatchTestSuite) Test_SubmitBatch_UpdatesCommitmentsAccountRoot() {
 	ids, commitments := s.addCommitments(2)
 
-	err := SubmitBatch(commitments, s.storage, s.testClient.Client, s.cfg)
+	err := submitBatch(commitments, s.storage, s.testClient.Client, s.cfg)
 	s.NoError(err)
 
 	accountRoot, err := s.testClient.AccountRegistry.Root(nil)
@@ -151,6 +151,6 @@ func (s *RollupLoopBacthesTestSuite) Test_SubmitBatch_UpdatesCommitmentsAccountR
 	}
 }
 
-func TestRollupLoopBacthesTestSuite(t *testing.T) {
-	suite.Run(t, new(RollupLoopBacthesTestSuite))
+func TestSubmitBatchTestSuite(t *testing.T) {
+	suite.Run(t, new(SubmitBatchTestSuite))
 }
