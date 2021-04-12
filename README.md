@@ -77,3 +77,30 @@ Then run:
 ```shell
 docker run -it --rm -p 8080:8080 --env-file .env.docker ghcr.io/worldcoin/hubble-commander:latest
 ```
+
+## Running E2E tests locally
+
+Build the docker image:
+```shell
+docker build . -t ghcr.io/worldcoin/hubble-commander:latest
+```
+
+Clean the database:
+```shell
+make migration-down
+```
+
+Export variables from the `.env.docker` to the currently running shell:
+```shell
+export $(grep -v '#.*' .env.docker | xargs)
+```
+
+Run the tests:
+```shell
+make test-e2e
+```
+
+**TIP:** Use this command to clean the test cache:
+```shell
+go clean -testcache
+```
