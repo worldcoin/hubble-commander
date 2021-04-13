@@ -14,7 +14,7 @@ func (s *Storage) UpsertStateNode(node *models.StateNode) error {
 			Values(
 				node.MerklePath,
 				node.DataHash,
-			).Suffix("ON CONFLICT DO UPDATE"),
+			).Suffix("ON CONFLICT (merkle_path) DO UPDATE SET data_hash = ?", node.DataHash),
 	).Exec()
 
 	return err
