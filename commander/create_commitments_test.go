@@ -69,9 +69,17 @@ func (s *CreateCommitmentsTestSuite) TearDownTest() {
 }
 
 func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_DoNothingWhenThereAreNotEnoughPendingTxs() {
+	preRoot, err := storage.NewStateTree(s.storage).Root()
+	s.NoError(err)
+
 	commitments, err := createCommitments([]models.Transaction{}, s.storage, s.cfg)
 	s.NoError(err)
 	s.Len(commitments, 0)
+	
+	postRoot, err := storage.NewStateTree(s.storage).Root()
+	s.NoError(err)
+
+	s.Equal(preRoot, postRoot)
 }
 
 func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_DoNothingWhenThereAreNotEnoughValidTxs() {
@@ -83,13 +91,24 @@ func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_DoNothingWhenThereAr
 	s.NoError(err)
 	s.Len(pendingTransactions, 2)
 
+	preRoot, err := storage.NewStateTree(s.storage).Root()
+	s.NoError(err)
+
 	commitments, err := createCommitments(pendingTransactions, s.storage, s.cfg)
 	s.NoError(err)
 	s.Len(commitments, 0)
+
+	postRoot, err := storage.NewStateTree(s.storage).Root()
+	s.NoError(err)
+
+	s.Equal(preRoot, postRoot)
 }
 
 func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_StoresCorrectCommitment() {
 	pendingTransactions := s.prepareAndReturnPendingTransactions(3)
+
+	preRoot, err := storage.NewStateTree(s.storage).Root()
+	s.NoError(err)
 
 	commitments, err := createCommitments(pendingTransactions, s.storage, s.cfg)
 	s.NoError(err)
@@ -99,9 +118,10 @@ func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_StoresCorrectCommitm
 	s.Nil(commitments[0].AccountTreeRoot)
 	s.Nil(commitments[0].IncludedInBatch)
 
-	root, err := storage.NewStateTree(s.storage).Root()
+	postRoot, err := storage.NewStateTree(s.storage).Root()
 	s.NoError(err)
-	s.Equal(commitments[0].PostStateRoot, *root)
+	s.NotEqual(preRoot, postRoot)
+	s.Equal(commitments[0].PostStateRoot, *postRoot)
 }
 
 func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_MarksTransactionsAsIncludedInCommitment() {
