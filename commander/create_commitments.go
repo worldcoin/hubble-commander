@@ -60,24 +60,20 @@ func createCommitments(
 }
 
 func removeIncludedTransactionsFromPending(includedTransactions, pendingTransactions []models.Transaction) []models.Transaction {
-	oldPendingTxs := pendingTransactions
-	pendingTransactions = make([]models.Transaction, 0)
-	for i := range oldPendingTxs {
-		tx := oldPendingTxs[i]
-		included := false
+	output_index := 0
+	for i := range pendingTransactions {
+		tx := pendingTransactions[i]
 
-		for i := range includedTransactions {
-			includedTransaction := includedTransactions[i]
+		for j := range includedTransactions {
+			includedTransaction := includedTransactions[j]
 			if includedTransaction.Hash == tx.Hash {
-				included = true
-				break
+				pendingTransactions[output_index] = tx
+				output_index++
 			}
 		}
-
-		if !included {
-			pendingTransactions = append(pendingTransactions, tx)
-		}
 	}
+
+	pendingTransactions = pendingTransactions[:]
 
 	return pendingTransactions
 }
