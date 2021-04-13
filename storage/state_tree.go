@@ -37,24 +37,15 @@ func (s *StateTree) LeafNode(index uint32) (*models.StateNode, error) {
 		Path:  index,
 		Depth: 32,
 	}
-	leaf, err := s.storage.GetStateNodeByPath(leafPath)
-	if err != nil {
-		return nil, err
-	}
-	return leaf, nil
+	return s.storage.GetStateNodeByPath(leafPath)
 }
 
 func (s *StateTree) Leaf(index uint32) (*models.StateLeaf, error) {
-	// TODO do it using single SQL query
-	leafNode, err := s.LeafNode(index)
-	if err != nil {
-		return nil, err
+	leafPath := &models.MerklePath{
+		Path:  index,
+		Depth: 32,
 	}
-	leaf, err := s.storage.GetStateLeafByHash(leafNode.DataHash)
-	if err != nil {
-		return nil, err
-	}
-	return leaf, nil
+	return s.storage.GetStateLeafByPath(leafPath)
 }
 
 func (s *StateTree) Set(index uint32, state *models.UserState) (err error) {
