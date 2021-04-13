@@ -74,6 +74,24 @@ func (s *EncoderTestSuite) TestEncodeTransfer() {
 	s.Equal(expected, encodedTransfer)
 }
 
+func (s *EncoderTestSuite) TestEncodeTransferForSigning() {
+	tx := &models.Transfer{
+		FromStateID: 2,
+		ToStateID:   3,
+		Amount:      models.MakeUint256(4),
+		Fee:         models.MakeUint256(5),
+		Nonce:       models.MakeUint256(6),
+	}
+	encodedTransfer, err := EncodeTransfer(tx)
+	s.NoError(err)
+	expected, err := s.transfer.SignBytes(nil, encodedTransfer)
+	s.NoError(err)
+
+	actual, err := EncodeTransferForSigning(tx)
+	s.NoError(err)
+	s.Equal(expected, actual)
+}
+
 func (s *EncoderTestSuite) TestEncodeUserState() {
 	state := generic.TypesUserState{
 		PubkeyID: big.NewInt(1),
