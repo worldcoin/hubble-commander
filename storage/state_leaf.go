@@ -56,3 +56,28 @@ func (s *Storage) GetStateLeaves(accountIndex uint32) ([]models.StateLeaf, error
 	}
 	return res, nil
 }
+
+func (s *Storage) GetUserStates(publicKey *models.PublicKey) ([]models.ReturnUserState2, error) {
+	res := make([]models.ReturnUserState2, 0, 1)
+	err := s.DB.Query(
+		s.QB.
+			Select(
+				"state_leaf.account_index",
+				"state_leaf.token_index",
+				"state_leaf.balance",
+				"state_leaf.nonce",
+				"state_node.merkle_path",
+			).
+			From("account").
+			InnerJoin("state_leaf on state_leaf.account_index = account.account_index").
+			InnerJoin("state_node on state_node.data_hash = state_leaf.data_hash").
+			Where(squirrel.Eq{"account.public_key": publicKey}),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, fmt.Errorf("no state leaves found")
+	}
+	return res, nil
+}

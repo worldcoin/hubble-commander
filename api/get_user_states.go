@@ -5,30 +5,18 @@ import (
 )
 
 func (a *API) GetUserStates(publicKey *models.PublicKey) ([]models.ReturnUserState, error) {
-	accounts, err := a.storage.GetAccounts(publicKey)
+	states, err := a.storage.GetUserStates(publicKey)
 	if err != nil {
 		return nil, err
 	}
 
-	userStates := make([]models.ReturnUserState, 0, 1)
-
-	for i := range accounts {
-		stateLeaves, err := a.storage.GetStateLeaves(accounts[i].AccountIndex)
-		if err != nil {
-			return nil, err
+	userStates := make([]models.ReturnUserState, 0, len(states))
+	for i := range states {
+		userState := models.ReturnUserState{
+			UserState: states[i].UserState,
+			StateID:   states[i].MerklePath.Path,
 		}
-
-		for i := range stateLeaves {
-			path, err := a.storage.GetStateNodeByHash(stateLeaves[i].DataHash)
-			if err != nil {
-				return nil, err
-			}
-			userState := models.ReturnUserState{
-				UserState: stateLeaves[i].UserState,
-				StateID:   path.MerklePath.Path,
-			}
-			userStates = append(userStates, userState)
-		}
+		userStates = append(userStates, userState)
 	}
 
 	return userStates, nil
