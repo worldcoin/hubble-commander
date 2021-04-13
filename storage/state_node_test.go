@@ -119,7 +119,7 @@ func (s *StateNodeTestSuite) Test_UpdateStateNode_NotExistentNode() {
 	s.Error(err)
 }
 
-func (s *StateNodeTestSuite) Test_AddOrUpdateStateNode_AddAndRetrieve() {
+func (s *StateNodeTestSuite) Test_UpsertStateNode_AddAndRetrieve() {
 	path, err := models.NewMerklePath("0000111")
 	s.NoError(err)
 	node := &models.StateNode{
@@ -135,7 +135,7 @@ func (s *StateNodeTestSuite) Test_AddOrUpdateStateNode_AddAndRetrieve() {
 	s.Equal(node, res)
 }
 
-func (s *StateNodeTestSuite) Test_AddOrUpdateStateNode_UpdateAndRetrieve() {
+func (s *StateNodeTestSuite) Test_UpsertStateNode_UpdateAndRetrieve() {
 	path, err := models.NewMerklePath("0000111")
 	s.NoError(err)
 	node := &models.StateNode{
