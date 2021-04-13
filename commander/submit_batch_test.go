@@ -69,6 +69,11 @@ func (s *SubmitBatchTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
+func (s *SubmitBatchTestSuite) Test_SubmitBatch_ErrorsIfNotEnoughCommitments() {
+	err := submitBatch([]models.Commitment{}, s.storage, s.testClient.Client, s.cfg)
+	s.Equal(ErrNotEnoughCommitments, err)
+}
+
 func (s *SubmitBatchTestSuite) Test_SubmitBatch_SubmitsCommitmentsOnChain() {
 	commitmentID, err := s.storage.AddCommitment(&baseCommitment)
 	s.NoError(err)

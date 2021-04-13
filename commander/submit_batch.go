@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"errors"
 	"log"
 
 	"github.com/Worldcoin/hubble-commander/config"
@@ -10,9 +11,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+var (
+	ErrNotEnoughCommitments = errors.New("not enough commitments")
+)
+
 func submitBatch(commitments []models.Commitment, storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
 	if len(commitments) < int(cfg.MinCommitmentsPerBatch) {
-		return nil
+		return ErrNotEnoughCommitments
 	}
 
 	batch, accountRoot, err := client.SubmitTransfersBatch(commitments)
