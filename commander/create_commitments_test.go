@@ -75,7 +75,7 @@ func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_DoesNothingWhenThere
 	commitments, err := createCommitments([]models.Transaction{}, s.storage, s.cfg)
 	s.NoError(err)
 	s.Len(commitments, 0)
-	
+
 	postRoot, err := storage.NewStateTree(s.storage).Root()
 	s.NoError(err)
 

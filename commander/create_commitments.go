@@ -32,7 +32,6 @@ func createCommitments(
 			return nil, err
 		}
 
-		
 		if len(includedTransactions) < int(cfg.TxsPerCommitment) {
 			err = stateTree.RevertTo(*initialStateRoot)
 			if err != nil {
@@ -61,20 +60,18 @@ func createCommitments(
 }
 
 func removeIncludedTransactionsFromPending(includedTransactions, pendingTransactions []models.Transaction) []models.Transaction {
-	output_index := 0
+	outputIndex := 0
 	for i := range pendingTransactions {
 		tx := pendingTransactions[i]
 
 		for j := range includedTransactions {
 			includedTransaction := includedTransactions[j]
 			if includedTransaction.Hash == tx.Hash {
-				pendingTransactions[output_index] = tx
-				output_index++
+				pendingTransactions[outputIndex] = tx
+				outputIndex++
 			}
 		}
 	}
-
-	pendingTransactions = pendingTransactions[:]
 
 	return pendingTransactions
 }
