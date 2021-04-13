@@ -68,7 +68,7 @@ func (s *CreateCommitmentsTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_DoNothingWhenThereAreNotEnoughPendingTxs() {
+func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_DoesNothingWhenThereAreNotEnoughPendingTxs() {
 	preRoot, err := storage.NewStateTree(s.storage).Root()
 	s.NoError(err)
 
@@ -82,7 +82,7 @@ func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_DoNothingWhenThereAr
 	s.Equal(preRoot, postRoot)
 }
 
-func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_DoNothingWhenThereAreNotEnoughValidTxs() {
+func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_DoesNothingWhenThereAreNotEnoughValidTxs() {
 	txs := generateValidTransactions(2)
 	txs[1].Amount = models.MakeUint256(99999999999)
 	s.addTransactions(txs)
