@@ -45,11 +45,12 @@ func (s *StateTree) LeafNode(index uint32) (*models.StateNode, error) {
 }
 
 func (s *StateTree) Leaf(index uint32) (*models.StateLeaf, error) {
+	// TODO do it using single SQL query
 	leafNode, err := s.LeafNode(index)
 	if err != nil {
 		return nil, err
 	}
-	leaf, err := s.storage.GetStateLeaf(leafNode.DataHash)
+	leaf, err := s.storage.GetStateLeafByHash(leafNode.DataHash)
 	if err != nil {
 		return nil, err
 	}

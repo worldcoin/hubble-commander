@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/db"
@@ -48,17 +49,53 @@ func (s *StateLeafTestSuite) Test_AddStateLeaf_AddAndRetrieve() {
 	err := s.storage.AddStateLeaf(leaf)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateLeaf(leaf.DataHash)
+	res, err := s.storage.GetStateLeafByHash(leaf.DataHash)
 	s.NoError(err)
 
 	s.Equal(leaf, res)
 }
 
-func (s *StateLeafTestSuite) Test_GetStateLeaf_NonExistentLeaf() {
+func (s *StateLeafTestSuite) Test_GetStateLeafByHash_NonExistentLeaf() {
 	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
-	res, err := s.storage.GetStateLeaf(hash)
+	res, err := s.storage.GetStateLeafByHash(hash)
 	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
+}
+
+func (s *StateLeafTestSuite) Test_GetStateLeafByPath_ReturnsCorrectStruct() {
+	leaf := &models.StateLeaf{
+		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
+		UserState: models.UserState{
+			AccountIndex: 1,
+			TokenIndex:   models.MakeUint256(1),
+			Balance:      models.MakeUint256(420),
+			Nonce:        models.MakeUint256(0),
+		},
+	}
+	path, err := models.NewMerklePath(strings.Repeat("0", 32))
+	s.NoError(err)
+
+	node := &models.StateNode{
+		MerklePath: *path,
+		DataHash:   leaf.DataHash,
+	}
+
+	err = s.storage.AddStateLeaf(leaf)
+	s.NoError(err)
+
+	err = s.storage.AddStateNode(node)
+	s.NoError(err)
+
+	actual, err := s.storage.GetStateLeafByPath(path)
+	s.NoError(err)
+	s.Equal(leaf, actual)
+}
+
+func (s *StateLeafTestSuite) Test_GetStateLeafByPath_NonExistentLeaf() {
+	path, err := models.NewMerklePath(strings.Repeat("0", 32))
+	s.NoError(err)
+	_, err = s.storage.GetStateLeafByPath(path)
+	s.Equal(ErrStateLeafNotFound, err)
 }
 
 func (s *StateLeafTestSuite) Test_GetStateLeaves_NoLeaves() {
@@ -143,8 +180,8 @@ func (s *StateLeafTestSuite) Test_GetStateLeaves() {
 	s.NoError(err)
 
 	s.Len(res, 2)
-	s.Equal(leaves[4].DataHash, res[0].DataHash)
-	s.Equal(leaves[2].DataHash, res[1].DataHash)
+	s.Equal(common.BytesToHash([]byte{5, 6, 7, 8, 9}), res[0].DataHash)
+	s.Equal(common.BytesToHash([]byte{3, 4, 5, 6, 7}), res[1].DataHash)
 }
 
 func (s *StateLeafTestSuite) Test_GetNextAvailableLeafPath_NoLeavesInStateTree() {

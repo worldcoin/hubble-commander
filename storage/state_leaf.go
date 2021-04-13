@@ -23,7 +23,7 @@ func (s *Storage) AddStateLeaf(leaf *models.StateLeaf) error {
 	return err
 }
 
-func (s *Storage) GetStateLeaf(hash common.Hash) (*models.StateLeaf, error) {
+func (s *Storage) GetStateLeafByHash(hash common.Hash) (*models.StateLeaf, error) {
 	res := make([]models.StateLeaf, 0, 1)
 	err := s.DB.Query(
 		s.QB.Select("*").
@@ -35,6 +35,23 @@ func (s *Storage) GetStateLeaf(hash common.Hash) (*models.StateLeaf, error) {
 	}
 	if len(res) == 0 {
 		return nil, NewNotFoundError("state leaf")
+	}
+	return &res[0], nil
+}
+
+func (s *Storage) GetStateLeafByPath(path *models.MerklePath) (*models.StateLeaf, error) {
+	res := make([]models.StateLeaf, 0, 1)
+	err := s.DB.Query(
+		s.QB.Select("state_leaf.*").
+			From("state_node").
+			Join("state_leaf ON state_leaf.data_hash = state_node.data_hash").
+			Where(squirrel.Eq{"merkle_path": *path}),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, ErrStateLeafNotFound
 	}
 	return &res[0], nil
 }
