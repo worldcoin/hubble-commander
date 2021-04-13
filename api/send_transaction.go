@@ -97,6 +97,9 @@ func sanitizeTransfer(transfer dto.Transfer) (*models.Transfer, error) {
 }
 
 func (a *API) validateTransfer(transfer *models.Transfer) error {
+	if err := validateAmount(&transfer.Amount); err != nil {
+		return err
+	}
 	if err := validateFee(&transfer.Fee); err != nil {
 		return err
 	}
@@ -110,14 +113,17 @@ func (a *API) validateTransfer(transfer *models.Transfer) error {
 	if err = validateNonce(&transfer.Nonce, &senderState.UserState); err != nil {
 		return err
 	}
-
 	if err = validateBalance(transfer, &senderState.UserState); err != nil {
 		return err
 	}
-
 	if err = a.validateSignature(transfer, &senderState.UserState); err != nil {
 		return err
 	}
+	return nil
+}
+
+func validateAmount(amount *models.Uint256) error {
+	// TODO validate decimal encoding
 	return nil
 }
 
@@ -125,6 +131,7 @@ func validateFee(fee *models.Uint256) error {
 	if fee.CmpN(0) != 1 {
 		return ErrFeeTooLow
 	}
+	// TODO validate decimal encoding
 	return nil
 }
 
