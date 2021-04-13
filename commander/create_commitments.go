@@ -32,8 +32,7 @@ func createCommitments(
 			return nil, err
 		}
 
-		pendingTransactions = removeIncludedTransactionsFromPending(includedTransactions, pendingTransactions)
-
+		
 		if len(includedTransactions) < int(cfg.TxsPerCommitment) {
 			err = stateTree.RevertTo(*initialStateRoot)
 			if err != nil {
@@ -41,6 +40,8 @@ func createCommitments(
 			}
 			break
 		}
+
+		pendingTransactions = removeIncludedTransactionsFromPending(includedTransactions, pendingTransactions)
 
 		log.Printf("Creating a commitment from %d transactions", len(includedTransactions))
 		commitment, err := createAndStoreCommitment(storage, includedTransactions, cfg.FeeReceiverIndex)
