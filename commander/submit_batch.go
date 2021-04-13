@@ -10,24 +10,24 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func submitBatch(commitments []models.Commitment, storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) (err error) {
+func submitBatch(commitments []models.Commitment, storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
 	if len(commitments) < int(cfg.MinCommitmentsPerBatch) {
-		return
+		return nil
 	}
 
 	batch, accountRoot, err := client.SubmitTransfersBatch(commitments)
 	if err != nil {
-		return
+		return err
 	}
 
 	err = storage.AddBatch(batch)
 	if err != nil {
-		return
+		return err
 	}
 
 	err = markCommitmentsAsIncluded(storage, commitments, &batch.Hash, accountRoot)
 	if err != nil {
-		return
+		return err
 	}
 
 	log.Printf("Submitted %d commitment(s) on chain. Batch ID: %d. Batch Hash: %v", len(commitments), batch.ID.Uint64(), batch.Hash)

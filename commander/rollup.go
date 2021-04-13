@@ -37,21 +37,21 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConfi
 	}
 }
 
-func commitTransactions(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) (err error) {
+func commitTransactions(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
 	tx, txStorage, err := storage.BeginTransaction()
 	if err != nil {
-		return
+		return err
 	}
 	defer tx.Rollback(&err)
 
 	pendingTransactions, err := storage.GetPendingTransactions()
 	if err != nil {
-		return
+		return err
 	}
 
 	commitments, err := createCommitments(pendingTransactions, txStorage, cfg)
 	if err != nil {
-		return
+		return err
 	}
 
 	err = submitBatch(commitments, txStorage, client, cfg)
