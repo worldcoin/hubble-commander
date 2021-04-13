@@ -19,7 +19,7 @@ func TestTransaction_UnmarshalJSON_Transfer(t *testing.T) {
 }
 
 func TestTransaction_UnmarshalJSON_Create2Transfer(t *testing.T) {
-	input := `{"Type":3,"FromStateID":1,"ToStateID":2,"ToPubkeyID":3,"Amount":"50","Fee":"10","Nonce":"0","Signature":"0xdeadbeef"}` // nolint:goconst
+	input := `{"Type":3,"FromStateID":1,"ToStateID":2,"ToPubkeyID":3,"Amount":"50","Fee":"10","Nonce":"0","Signature":"0xdeadbeef"}` // nolint:goconst,lll
 	var tx Transaction
 	err := json.Unmarshal([]byte(input), &tx)
 	require.NoError(t, err)

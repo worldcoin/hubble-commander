@@ -38,7 +38,7 @@ func TestCreate2Transfer_MarshalJSON(t *testing.T) {
 	transfer := Create2Transfer{
 		FromStateID: ref.Uint32(1),
 		ToStateID:   ref.Uint32(2),
-		ToPubkeyID:   ref.Uint32(3),
+		ToPubkeyID:  ref.Uint32(3),
 		Amount:      models.NewUint256(50),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(0),
@@ -47,6 +47,7 @@ func TestCreate2Transfer_MarshalJSON(t *testing.T) {
 	data, err := json.Marshal(transfer)
 	require.NoError(t, err)
 
+	// nolint:goconst,lll
 	expected := `{"Type":3,"FromStateID":1,"ToStateID":2,"ToPubkeyID":3,"Amount":"50","Fee":"10","Nonce":"0","Signature":"0xdeadbeef"}`
 	require.Equal(t, expected, string(data))
 }
