@@ -159,7 +159,7 @@ func (s *StateTree) updateStateNodes(leafPath *models.MerklePath, newLeafHash *c
 			return nil, err
 		}
 
-		err = s.storage.AddOrUpdateStateNode(&models.StateNode{
+		err = s.storage.UpsertStateNode(&models.StateNode{
 			MerklePath: *currentPath,
 			DataHash:   currentHash,
 		})
@@ -173,7 +173,7 @@ func (s *StateTree) updateStateNodes(leafPath *models.MerklePath, newLeafHash *c
 		}
 	}
 
-	err = s.storage.AddOrUpdateStateNode(&models.StateNode{
+	err = s.storage.UpsertStateNode(&models.StateNode{
 		MerklePath: rootPath,
 		DataHash:   currentHash,
 	})

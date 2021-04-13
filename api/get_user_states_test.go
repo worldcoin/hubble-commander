@@ -104,7 +104,7 @@ func (s *GetUserStatesTestSuite) TestApi_GetUserStates() {
 
 	path, err := models.NewMerklePath("00")
 	s.NoError(err)
-	err = s.api.storage.AddOrUpdateStateNode(&models.StateNode{
+	err = s.api.storage.UpsertStateNode(&models.StateNode{
 		DataHash:   common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		MerklePath: *path,
 	})
@@ -112,7 +112,7 @@ func (s *GetUserStatesTestSuite) TestApi_GetUserStates() {
 
 	path, err = models.NewMerklePath("01")
 	s.NoError(err)
-	err = s.api.storage.AddOrUpdateStateNode(&models.StateNode{
+	err = s.api.storage.UpsertStateNode(&models.StateNode{
 		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 		MerklePath: *path,
 	})
@@ -120,7 +120,7 @@ func (s *GetUserStatesTestSuite) TestApi_GetUserStates() {
 
 	path, err = models.NewMerklePath("10")
 	s.NoError(err)
-	err = s.api.storage.AddOrUpdateStateNode(&models.StateNode{
+	err = s.api.storage.UpsertStateNode(&models.StateNode{
 		DataHash:   common.BytesToHash([]byte{3, 4, 5, 6, 7}),
 		MerklePath: *path,
 	})

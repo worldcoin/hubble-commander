@@ -2,24 +2,20 @@ package storage
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (s *Storage) AddOrUpdateStateNode(node *models.StateNode) error {
-	err := s.UpdateStateNode(node)
-	if err != nil {
-		isConstraintError := strings.Contains(err.Error(), "no rows were affected by the update")
-		if isConstraintError {
-			err = s.AddStateNode(node)
-			if err != nil {
-				return err
-			}
-		}
-	}
+func (s *Storage) UpsertStateNode(node *models.StateNode) error {
+	_, err := s.DB.Query(
+		s.QB.Insert("state_node").
+			Values(
+				node.MerklePath,
+				node.DataHash,
+			).Suffix("ON CONFLICT (merkle_path) DO UPDATE SET data_hash = ?", node.DataHash),
+	).Exec()
 
 	return err
 }
