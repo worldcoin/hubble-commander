@@ -70,6 +70,7 @@ func removeIncludedTransactionsFromPending(includedTransactions, pendingTransact
 			includedTransaction := includedTransactions[i]
 			if includedTransaction.Hash == tx.Hash {
 				included = true
+				break
 			}
 		}
 
