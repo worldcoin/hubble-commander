@@ -92,7 +92,7 @@ func GetMigrator(cfg *config.DBConfig) (*migrate.Migrate, error) {
 }
 
 func CreateDatasource(host, port, user, password, dbname *string) string {
-	datasource := make([]string, 5)
+	datasource := make([]string, 0, 6)
 	datasource = append(datasource, "sslmode=disable")
 
 	if host != nil {
