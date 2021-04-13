@@ -126,7 +126,7 @@ func (s *StateNodeTestSuite) Test_AddOrUpdateStateNode_AddAndRetrieve() {
 		MerklePath: *path,
 		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 	}
-	err = s.storage.AddOrUpdateStateNode(node)
+	err = s.storage.UpsertStateNode(node)
 	s.NoError(err)
 
 	res, err := s.storage.GetStateNodeByPath(path)
@@ -150,7 +150,7 @@ func (s *StateNodeTestSuite) Test_AddOrUpdateStateNode_UpdateAndRetrieve() {
 		MerklePath: *path,
 		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 	}
-	err = s.storage.AddOrUpdateStateNode(expectedNode)
+	err = s.storage.UpsertStateNode(expectedNode)
 	s.NoError(err)
 
 	res, err := s.storage.GetStateNodeByPath(path)
