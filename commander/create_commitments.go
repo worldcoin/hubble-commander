@@ -63,13 +63,13 @@ func removeTransactions(txList, toRemove []models.Transaction) []models.Transact
 	outputIndex := 0
 	for i := range txList {
 		tx := &txList[i]
-		if transactionExists(toRemove, tx) {
+		if !transactionExists(toRemove, tx) {
 			txList[outputIndex] = *tx
 			outputIndex++
 		}
 	}
 
-	return txList
+	return txList[:outputIndex]
 }
 
 func transactionExists(txList []models.Transaction, tx *models.Transaction) bool {

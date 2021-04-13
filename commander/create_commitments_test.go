@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -136,6 +137,17 @@ func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_MarksTransactionsAsI
 		s.NoError(err)
 		s.Equal(*tx.IncludedInCommitment, int32(1))
 	}
+}
+
+func (s *CreateCommitmentsTestSuite) Test_removeTransactions() {
+	tx1 := models.Transaction{Hash: utils.RandomHash()}
+	tx2 := models.Transaction{Hash: utils.RandomHash()}
+	tx3 := models.Transaction{Hash: utils.RandomHash()}
+
+	txs := []models.Transaction{tx1, tx2, tx3}
+	toRemove := []models.Transaction{tx2}
+
+	s.Equal([]models.Transaction{tx1, tx3}, removeTransactions(txs, toRemove))
 }
 
 func TestCreateCommitmentsTestSuite(t *testing.T) {
