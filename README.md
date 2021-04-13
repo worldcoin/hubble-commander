@@ -59,7 +59,7 @@ ETHEREUM_PRIVATE_KEY=ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330
 
 To run ganache with proper account config run this command:
 ```shell
-ganache-cli --account 0xee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82,0x56BC75E2D63100000
+npx ganache-cli --account 0xee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82,0x56BC75E2D63100000
 ```
 
 ## Running docker image on Docker for Mac
@@ -76,4 +76,31 @@ HUBBLE_DBPASSWORD=root
 Then run:
 ```shell
 docker run -it --rm -p 8080:8080 --env-file .env.docker ghcr.io/worldcoin/hubble-commander:latest
+```
+
+## Running E2E tests locally
+
+Build the docker image:
+```shell
+docker build . -t ghcr.io/worldcoin/hubble-commander:latest
+```
+
+Clean the database:
+```shell
+make migration-down
+```
+
+Export variables from the `.env.docker` to the currently running shell:
+```shell
+export $(grep -v '#.*' .env.docker | xargs)
+```
+
+Run the tests:
+```shell
+make test-e2e
+```
+
+**TIP:** Use this command to clean the test cache:
+```shell
+go clean -testcache
 ```
