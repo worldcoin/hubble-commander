@@ -29,8 +29,12 @@ func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
 }
 
 func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
-	transfer, err := a.sanitizeTransfer(transferDTO)
+	transfer, err := sanitizeTransfer(transferDTO)
 	if err != nil {
+		return nil, err
+	}
+
+	if err = a.validateTransfer(transfer); err != nil {
 		return nil, err
 	}
 
@@ -60,30 +64,24 @@ func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 	return &hash, nil
 }
 
-func (a *API) sanitizeTransfer(transfer dto.Transfer) (*models.Transfer, error) {
-	if err := validateRequiredFields(&transfer); err != nil {
-		return nil, err
+func sanitizeTransfer(transfer dto.Transfer) (*models.Transfer, error) {
+	if transfer.FromStateID == nil {
+		return nil, NewMissingFieldError("fromStateID")
 	}
-	if err := validateFee(transfer.Fee); err != nil {
-		return nil, err
+	if transfer.ToStateID == nil {
+		return nil, NewMissingFieldError("toStateID")
 	}
-
-	stateTree := storage.NewStateTree(a.storage)
-	senderState, err := stateTree.Leaf(*transfer.FromStateID)
-	if err != nil {
-		return nil, err
+	if transfer.Amount == nil {
+		return nil, NewMissingFieldError("amount")
 	}
-
-	if err = validateNonce(transfer.Nonce, &senderState.UserState); err != nil {
-		return nil, err
+	if transfer.Fee == nil {
+		return nil, NewMissingFieldError("fee")
 	}
-
-	if err = validateBalance(&transfer, &senderState.UserState); err != nil {
-		return nil, err
+	if transfer.Nonce == nil {
+		return nil, NewMissingFieldError("nonce")
 	}
-
-	if err = a.validateSignature(&transfer, &senderState.UserState); err != nil {
-		return nil, err
+	if transfer.Signature == nil {
+		return nil, NewMissingFieldError("signature")
 	}
 
 	return &models.Transfer{
@@ -98,24 +96,27 @@ func (a *API) sanitizeTransfer(transfer dto.Transfer) (*models.Transfer, error) 
 	}, nil
 }
 
-func validateRequiredFields(transfer *dto.Transfer) error {
-	if transfer.FromStateID == nil {
-		return NewMissingFieldError("fromStateID")
+func (a *API) validateTransfer(transfer *models.Transfer) error {
+	if err := validateFee(&transfer.Fee); err != nil {
+		return err
 	}
-	if transfer.ToStateID == nil {
-		return NewMissingFieldError("toStateID")
+
+	stateTree := storage.NewStateTree(a.storage)
+	senderState, err := stateTree.Leaf(transfer.FromStateID)
+	if err != nil {
+		return err
 	}
-	if transfer.Amount == nil {
-		return NewMissingFieldError("amount")
+
+	if err = validateNonce(&transfer.Nonce, &senderState.UserState); err != nil {
+		return err
 	}
-	if transfer.Fee == nil {
-		return NewMissingFieldError("fee")
+
+	if err = validateBalance(transfer, &senderState.UserState); err != nil {
+		return err
 	}
-	if transfer.Nonce == nil {
-		return NewMissingFieldError("nonce")
-	}
-	if transfer.Signature == nil {
-		return NewMissingFieldError("signature")
+
+	if err = a.validateSignature(transfer, &senderState.UserState); err != nil {
+		return err
 	}
 	return nil
 }
@@ -135,14 +136,14 @@ func validateNonce(nonce *models.Uint256, senderState *models.UserState) error {
 	return nil
 }
 
-func validateBalance(transfer *dto.Transfer, senderState *models.UserState) error {
-	if transfer.Amount.Add(transfer.Fee).Cmp(&senderState.Balance) > 0 {
+func validateBalance(transfer *models.Transfer, senderState *models.UserState) error {
+	if transfer.Amount.Add(&transfer.Fee).Cmp(&senderState.Balance) > 0 {
 		return ErrNotEnoughBalance
 	}
 	return nil
 }
 
-func (a *API) validateSignature(transfer *dto.Transfer, senderState *models.UserState) error {
+func (a *API) validateSignature(transfer *models.Transfer, senderState *models.UserState) error {
 	// TODO
 	return nil
 }
