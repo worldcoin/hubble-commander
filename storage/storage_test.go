@@ -77,8 +77,6 @@ func (s *StorageTestSuite) Test_BeginTransaction_Rollback() {
 	s.NoError(err)
 	err = storage.AddStateLeaf(leaf)
 	s.NoError(err)
-	err = storage.AddStateLeaf(leaf)
-	s.Error(err)
 
 	tx.Rollback(&err)
 	s.Nil(errors.Unwrap(err))

@@ -33,7 +33,7 @@ func (s *Storage) AddStateNode(node *models.StateNode) error {
 }
 
 func (s *Storage) UpdateStateNode(node *models.StateNode) error {
-	result, err := s.DB.Query(
+	res, err := s.DB.Query(
 		s.QB.Update("state_node").
 			Set("data_hash", squirrel.Expr("?", node.DataHash)).
 			Where("merkle_path = ?", node.MerklePath),
@@ -42,7 +42,7 @@ func (s *Storage) UpdateStateNode(node *models.StateNode) error {
 		return err
 	}
 
-	numUpdatedRows, err := result.RowsAffected()
+	numUpdatedRows, err := res.RowsAffected()
 	if err != nil {
 		return err
 	}
