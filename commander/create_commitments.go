@@ -40,7 +40,7 @@ func createCommitments(
 			break
 		}
 
-		pendingTransactions = removeIncludedTransactionsFromPending(includedTransactions, pendingTransactions)
+		pendingTransactions = removeTransactions(includedTransactions, pendingTransactions)
 
 		log.Printf("Creating a commitment from %d transactions", len(includedTransactions))
 		commitment, err := createAndStoreCommitment(storage, includedTransactions, cfg.FeeReceiverIndex)
@@ -59,21 +59,26 @@ func createCommitments(
 	return commitments, nil
 }
 
-func removeIncludedTransactionsFromPending(includedTransactions, pendingTransactions []models.Transaction) []models.Transaction {
+func removeTransactions(toRemove, txList []models.Transaction) []models.Transaction {
 	outputIndex := 0
-	for i := range pendingTransactions {
-		tx := pendingTransactions[i]
-
-		for j := range includedTransactions {
-			includedTransaction := includedTransactions[j]
-			if includedTransaction.Hash == tx.Hash {
-				pendingTransactions[outputIndex] = tx
-				outputIndex++
-			}
+	for i := range txList {
+		tx := &txList[i]
+		if transactionExists(toRemove, tx) {
+			txList[outputIndex] = *tx
+			outputIndex++
 		}
 	}
 
-	return pendingTransactions
+	return txList
+}
+
+func transactionExists(txSlice []models.Transaction, tx *models.Transaction) bool {
+	for i := range txSlice {
+		if txSlice[i].Hash == tx.Hash {
+			return true
+		}
+	}
+	return false
 }
 
 func createAndStoreCommitment(storage *st.Storage, txs []models.Transaction, feeReceiverIndex uint32) (*models.Commitment, error) {
