@@ -40,16 +40,16 @@ func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 	}
 	hash := crypto.Keccak256Hash(encodedTransfer)
 
-	tx := &models.Transaction{
-		Hash:      hash,
-		FromIndex: transfer.FromStateID,
-		ToIndex:   transfer.ToStateID,
-		Amount:    transfer.Amount,
-		Fee:       transfer.Fee,
-		Nonce:     transfer.Nonce,
-		Signature: transfer.Signature,
+	transfer = &models.Transfer{
+		Hash:        hash,
+		FromStateID: transfer.FromStateID,
+		ToStateID:   transfer.ToStateID,
+		Amount:      transfer.Amount,
+		Fee:         transfer.Fee,
+		Nonce:       transfer.Nonce,
+		Signature:   transfer.Signature,
 	}
-	err = a.storage.AddTransaction(tx)
+	err = a.storage.AddTransfer(transfer)
 	if err != nil {
 		return nil, err
 	}
