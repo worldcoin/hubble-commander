@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
@@ -17,7 +18,10 @@ var (
 	ErrFeeTooLow        = errors.New("fee must be greater than 0")
 	ErrNonceTooLow      = errors.New("nonce too low")
 	ErrNotEnoughBalance = errors.New("not enough balance")
+	ErrInvalidSignature = errors.New("invalid signature")
 )
+
+var mockDomain = bls.Domain{0x00, 0x00, 0x00, 0x00} // TODO use real domain
 
 func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
 	switch t := tx.Parsed.(type) {
@@ -148,6 +152,27 @@ func validateBalance(transfer *models.Transfer, senderState *models.UserState) e
 }
 
 func (a *API) validateSignature(transfer *models.Transfer, senderState *models.UserState) error {
-	// TODO
+	encodedTransfer, err := encoder.EncodeTransferForSigning(transfer)
+	if err != nil {
+		return err
+	}
+
+	publicKey, err := a.storage.GetPublicKey(senderState.AccountIndex)
+	if err != nil {
+		return err
+	}
+
+	signature, err := bls.NewSignatureFromBytes(transfer.Signature, mockDomain)
+	if err != nil {
+		return err
+	}
+
+	isValid, err := signature.Verify(encodedTransfer, publicKey)
+	if err != nil {
+		return err
+	}
+	if !isValid {
+		return ErrInvalidSignature
+	}
 	return nil
 }
