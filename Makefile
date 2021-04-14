@@ -27,17 +27,14 @@ start-db:
 teardown-db: stop-db
 	docker rm hubble-postgres
 
-migration-up:
-	migrate -source file://db/migrations/ -database "postgres://localhost:5432/hubble?sslmode=disable" up
-
-migration-down:
-	migrate -source file://db/migrations/ -database "postgres://localhost:5432/hubble?sslmode=disable" down
-
 update-contracts:
 	git submodule update --remote
 
 run:
 	go run ./main/main.go
+
+prune-run:
+	go run ./main/main.go --prune=true
 
 lint:
 	golangci-lint run ./...
@@ -60,10 +57,9 @@ test-e2e:
 	setup-db 
 	stop-db 
 	start-db 
-	teardown-db 
-	migrate-up 
-	migrate-down
+	teardown-db
 	update-contracts
-	run 
+	run
+	prune-run
 	lint 
 	test

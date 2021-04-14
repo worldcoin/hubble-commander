@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 
@@ -38,11 +39,21 @@ var genesisAccounts = []commander.GenesisAccount{
 }
 
 func main() {
+	prune := flag.Bool("prune", false, "drop database before running app")
+	flag.Parse()
+
 	cfg := config.GetConfig()
 
 	migrator, err := db.GetMigrator(&cfg.DB)
 	if err != nil {
 		log.Fatalf("%+v", err)
+	}
+
+	if *prune {
+		err = migrator.Down()
+		if err != nil && err != migrate.ErrNoChange {
+			log.Fatal(err)
+		}
 	}
 
 	err = migrator.Up()

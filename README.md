@@ -44,6 +44,7 @@ There are a couple of scripts defined in the Makefile:
 * `make start-db` - start the postgres container
 * `make teardown-db` - stop and remove the postgres container
 * `make run` - run the compiled binary
+* `make prune-run` - clean database and run the compiled binary
 * `make lint` - run linter
 * `make test` - run all tests
 
@@ -83,11 +84,6 @@ docker run -it --rm -p 8080:8080 --env-file .env.docker ghcr.io/worldcoin/hubble
 Build the docker image:
 ```shell
 docker build . -t ghcr.io/worldcoin/hubble-commander:latest
-```
-
-Clean the database:
-```shell
-make migration-down
 ```
 
 Export variables from the `.env.docker` to the currently running shell:
