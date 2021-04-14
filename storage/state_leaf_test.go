@@ -200,21 +200,21 @@ func (s *StateLeafTestSuite) Test_GetUserStatesByPublicKey() {
 	s.NoError(err)
 
 	s.Len(returnUserStates, 3)
-	s.Contains(returnUserStates, models.ReturnUserState{
+	s.Contains(returnUserStates, models.UserStateReceipt{
 		MerklePath: models.MerklePath{
 			Path:  0,
 			Depth: 32,
 		},
 		UserState: userStates[0],
 	})
-	s.Contains(returnUserStates, models.ReturnUserState{
+	s.Contains(returnUserStates, models.UserStateReceipt{
 		MerklePath: models.MerklePath{
 			Path:  2,
 			Depth: 32,
 		},
 		UserState: userStates[2],
 	})
-	s.Contains(returnUserStates, models.ReturnUserState{
+	s.Contains(returnUserStates, models.UserStateReceipt{
 		MerklePath: models.MerklePath{
 			Path:  3,
 			Depth: 32,
