@@ -2,14 +2,14 @@ package commander
 
 import "fmt"
 
-type BatchError struct {
+type RollupError struct {
 	Reason string
 }
 
-func NewBatchError(reason string) *BatchError {
-	return &BatchError{Reason: reason}
+func NewRollupError(reason string) *RollupError {
+	return &RollupError{Reason: reason}
 }
 
-func (e BatchError) Error() string {
+func (e RollupError) Error() string {
 	return fmt.Sprintf("failed to submit batch: %s", e.Reason)
 }
