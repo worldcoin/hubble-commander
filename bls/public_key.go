@@ -1,21 +1,14 @@
 package bls
 
 import (
-	"math/big"
-
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/kilic/bn254/bls"
 )
 
-type PublicKey struct {
-	key *bls.PublicKey
-}
-
-func (p *PublicKey) ToBigInts() [4]*big.Int {
-	bytes := p.key.ToBytes()
-	return [4]*big.Int{
-		new(big.Int).SetBytes(bytes[32:64]),
-		new(big.Int).SetBytes(bytes[:32]),
-		new(big.Int).SetBytes(bytes[96:]),
-		new(big.Int).SetBytes(bytes[64:96]),
+func toBLSPublicKey(pk *models.PublicKey) *bls.PublicKey {
+	blsPK, err := bls.PublicKeyFromBytes(pk[:])
+	if err != nil {
+		panic("failed to convert public key byte array to bls type")
 	}
+	return blsPK
 }

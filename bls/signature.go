@@ -3,6 +3,7 @@ package bls
 import (
 	"math/big"
 
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/kilic/bn254/bls"
 )
 
@@ -32,8 +33,8 @@ func (s *Signature) Domain() [32]byte {
 	return domain
 }
 
-func (s *Signature) Verify(message []byte, publicKey *PublicKey) (bool, error) {
-	return s.verifier.Verify(message, s.sig, publicKey.key)
+func (s *Signature) Verify(message []byte, publicKey *models.PublicKey) (bool, error) {
+	return s.verifier.Verify(message, s.sig, toBLSPublicKey(publicKey))
 }
 
 func (s *Signature) BigInts() [2]*big.Int {
