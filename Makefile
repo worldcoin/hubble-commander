@@ -39,6 +39,9 @@ update-contracts:
 run:
 	go run ./main/main.go
 
+prune-run:
+	go run ./main/main.go --prune=true
+
 lint:
 	golangci-lint run ./...
 
@@ -64,6 +67,7 @@ test-e2e:
 	migrate-up 
 	migrate-down
 	update-contracts
-	run 
+	run
+	prune-run
 	lint 
 	test
