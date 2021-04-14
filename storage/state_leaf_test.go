@@ -125,7 +125,7 @@ func (s *StateLeafTestSuite) Test_GetStateLeaves() {
 
 	path, err := models.NewMerklePath("01")
 	s.NoError(err)
-	err = s.storage.AddOrUpdateStateNode(&models.StateNode{
+	err = s.storage.UpsertStateNode(&models.StateNode{
 		DataHash:   common.BytesToHash([]byte{5, 6, 7, 8, 9}),
 		MerklePath: *path,
 	})
@@ -133,7 +133,7 @@ func (s *StateLeafTestSuite) Test_GetStateLeaves() {
 
 	path, err = models.NewMerklePath("10")
 	s.NoError(err)
-	err = s.storage.AddOrUpdateStateNode(&models.StateNode{
+	err = s.storage.UpsertStateNode(&models.StateNode{
 		DataHash:   common.BytesToHash([]byte{3, 4, 5, 6, 7}),
 		MerklePath: *path,
 	})

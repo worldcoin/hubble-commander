@@ -67,21 +67,43 @@ func (s *Storage) GetPendingTransactions() ([]models.Transaction, error) {
 }
 
 func (s *Storage) MarkTransactionAsIncluded(txHash common.Hash, commitmentID int32) error {
-	_, err := s.DB.Query(
+	res, err := s.DB.Query(
 		s.QB.Update("transaction").
 			Where(squirrel.Eq{"tx_hash": txHash}).
 			Set("included_in_commitment", commitmentID),
 	).Exec()
-	return err
+	if err != nil {
+		return err
+	}
+
+	numUpdatedRows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if numUpdatedRows == 0 {
+		return fmt.Errorf("no rows were affected by the update")
+	}
+	return nil
 }
 
 func (s *Storage) SetTransactionError(txHash common.Hash, errorMessage string) error {
-	_, err := s.DB.Query(
+	res, err := s.DB.Query(
 		s.QB.Update("transaction").
 			Where(squirrel.Eq{"tx_hash": txHash}).
 			Set("error_message", errorMessage),
 	).Exec()
-	return err
+	if err != nil {
+		return err
+	}
+
+	numUpdatedRows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if numUpdatedRows == 0 {
+		return fmt.Errorf("no rows were affected by the update")
+	}
+	return nil
 }
 
 func (s *Storage) GetTransactionsByPublicKey(publicKey *models.PublicKey) ([]models.Transaction, error) {

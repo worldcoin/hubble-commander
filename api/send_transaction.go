@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"log"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/encoder"
@@ -52,6 +53,7 @@ func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 	if err != nil {
 		return nil, err
 	}
+	log.Println("New transaction: ", tx.Hash.Hex())
 
 	return &hash, nil
 }
