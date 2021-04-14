@@ -3,6 +3,7 @@
 package e2e
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -81,6 +82,18 @@ func Test_Commander(t *testing.T) {
 	err = commander.Client.CallFor(&userStates, "hubble_getUserStates", []interface{}{models.PublicKey{2, 3, 4}})
 	require.NoError(t, err)
 	require.Len(t, userStates, 2)
-	require.EqualValues(t, models.MakeUint256(2), userStates[0].Nonce)
-	require.EqualValues(t, models.MakeUint256(920), userStates[0].Balance)
+
+	userState, err := getUserState(userStates, 1)
+	require.NoError(t, err)
+	require.EqualValues(t, models.MakeUint256(2), userState.Nonce)
+	require.EqualValues(t, models.MakeUint256(920), userState.Balance)
+}
+
+func getUserState(userStates []dto.UserState, stateID uint) (*dto.UserState, error) {
+	for i := range userStates {
+		if userStates[i].StateID == 1 {
+			return &userStates[i], nil
+		}
+	}
+	return nil, errors.New("user state with given stateID not found")
 }
