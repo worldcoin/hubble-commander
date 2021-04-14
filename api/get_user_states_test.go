@@ -131,15 +131,15 @@ func (s *GetUserStatesTestSuite) TestApi_GetUserStates() {
 	s.NoError(err)
 
 	s.Len(userStates, 3)
-	s.Contains(userStates, dto.UserStateReceipt{
+	s.Contains(userStates, dto.UserState{
 		StateID:   0,
 		UserState: leaves[0].UserState,
 	})
-	s.Contains(userStates, dto.UserStateReceipt{
+	s.Contains(userStates, dto.UserState{
 		StateID:   1,
 		UserState: leaves[1].UserState,
 	})
-	s.Contains(userStates, dto.UserStateReceipt{
+	s.Contains(userStates, dto.UserState{
 		StateID:   2,
 		UserState: leaves[2].UserState,
 	})

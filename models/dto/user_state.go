@@ -2,7 +2,7 @@ package dto
 
 import "github.com/Worldcoin/hubble-commander/models"
 
-type UserStateReceipt struct {
+type UserState struct {
 	StateID uint32
 	models.UserState
 }
