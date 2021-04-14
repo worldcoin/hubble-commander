@@ -15,6 +15,7 @@ type StateLeafTestSuite struct {
 	suite.Suite
 	storage *Storage
 	db      *db.TestDB
+	tree    *StateTree
 }
 
 func (s *StateLeafTestSuite) SetupSuite() {
@@ -26,6 +27,7 @@ func (s *StateLeafTestSuite) SetupTest() {
 	s.NoError(err)
 	s.storage = NewTestStorage(testDB.DB)
 	s.db = testDB
+	s.tree = NewStateTree(s.storage)
 }
 
 func (s *StateLeafTestSuite) TearDownTest() {
@@ -143,6 +145,82 @@ func (s *StateLeafTestSuite) Test_GetStateLeaves() {
 	s.Len(res, 2)
 	s.Equal(leaves[4].DataHash, res[0].DataHash)
 	s.Equal(leaves[2].DataHash, res[1].DataHash)
+}
+
+func (s *StateLeafTestSuite) Test_GetUserStatesByPublicKey() {
+	accounts := []models.Account{
+		{
+			AccountIndex: 1,
+			PublicKey:    models.PublicKey{1, 2, 3},
+		},
+		{
+			AccountIndex: 3,
+			PublicKey:    models.PublicKey{1, 2, 3},
+		},
+	}
+
+	for i := range accounts {
+		err := s.storage.AddAccountIfNotExists(&accounts[i])
+		s.NoError(err)
+	}
+
+	userStates := []models.UserState{
+		{
+			AccountIndex: accounts[0].AccountIndex,
+			TokenIndex:   models.MakeUint256(1),
+			Balance:      models.MakeUint256(420),
+			Nonce:        models.MakeUint256(0),
+		},
+		{
+			AccountIndex: 2,
+			TokenIndex:   models.MakeUint256(2),
+			Balance:      models.MakeUint256(500),
+			Nonce:        models.MakeUint256(0),
+		},
+		{
+			AccountIndex: accounts[0].AccountIndex,
+			TokenIndex:   models.MakeUint256(25),
+			Balance:      models.MakeUint256(1),
+			Nonce:        models.MakeUint256(73),
+		},
+		{
+			AccountIndex: accounts[1].AccountIndex,
+			TokenIndex:   models.MakeUint256(25),
+			Balance:      models.MakeUint256(1),
+			Nonce:        models.MakeUint256(73),
+		},
+	}
+
+	for i := range userStates {
+		err := s.tree.Set(uint32(i), &userStates[i])
+		s.NoError(err)
+	}
+
+	returnUserStates, err := s.storage.GetUserStatesByPublicKey(&accounts[0].PublicKey)
+	s.NoError(err)
+
+	s.Len(returnUserStates, 3)
+	s.Contains(returnUserStates, models.ReturnUserState{
+		MerklePath: models.MerklePath{
+			Path:  0,
+			Depth: 32,
+		},
+		UserState: userStates[0],
+	})
+	s.Contains(returnUserStates, models.ReturnUserState{
+		MerklePath: models.MerklePath{
+			Path:  2,
+			Depth: 32,
+		},
+		UserState: userStates[2],
+	})
+	s.Contains(returnUserStates, models.ReturnUserState{
+		MerklePath: models.MerklePath{
+			Path:  3,
+			Depth: 32,
+		},
+		UserState: userStates[3],
+	})
 }
 
 func TestStateLeafTestSuite(t *testing.T) {
