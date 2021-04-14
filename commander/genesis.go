@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/pkg/errors"
 )
 
 type GenesisAccount struct {
@@ -46,7 +47,7 @@ func RegisterGenesisAccounts(
 
 	sub, err := accountRegistry.WatchPubkeyRegistered(&bind.WatchOpts{}, ev)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	defer sub.Unsubscribe()
 
@@ -74,14 +75,14 @@ func registerGenesisAccount(
 ) (*RegisteredGenesisAccount, error) {
 	tx, err := accountRegistry.Register(opts, account.PublicKey.IntArray())
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	for {
 		select {
 		case event, ok := <-ev:
 			if !ok {
-				return nil, fmt.Errorf("account event watcher is closed")
+				return nil, errors.WithStack(fmt.Errorf("account event watcher is closed"))
 			}
 			if event.Raw.TxHash == tx.Hash() {
 				accountIndex := uint32(event.PubkeyID.Uint64())
@@ -91,7 +92,7 @@ func registerGenesisAccount(
 				}, nil
 			}
 		case <-time.After(500 * time.Millisecond):
-			return nil, fmt.Errorf("timeout")
+			return nil, errors.WithStack(fmt.Errorf("timeout"))
 		}
 	}
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/vault"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 )
 
 type DeploymentConfig struct {
@@ -90,7 +91,7 @@ func DeployConfiguredRollup(c ChainConnection, config DeploymentConfig) (*Rollup
 
 	accountRegistry, err := accountregistry.NewAccountRegistry(*config.AccountRegistryAddress, c.GetBackend())
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	transferAddress, _, transferContract, err := transfer.DeployTransfer(c.GetAccount(), c.GetBackend())
