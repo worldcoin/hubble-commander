@@ -51,6 +51,7 @@ func StartCommander(opts StartOptions) (*TestCommander, error) {
 			ExposedPorts: map[nat.Port]struct{}{
 				"8080/tcp": {},
 			},
+			Cmd: []string{"build/hubble", "--prune=true"},
 		},
 		&container.HostConfig{
 			NetworkMode: networkMode,

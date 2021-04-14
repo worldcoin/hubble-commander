@@ -50,7 +50,7 @@ func main() {
 	}
 
 	if *prune {
-		err := migrator.Down()
+		err = migrator.Down()
 		if err != nil && err != migrate.ErrNoChange {
 			log.Fatal(err)
 		}
