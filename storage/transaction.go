@@ -68,7 +68,7 @@ func (s *Storage) GetPendingTransactions() ([]models.Transaction, error) {
 
 func (s *Storage) MarkTransactionAsIncluded(txHash common.Hash, commitmentID int32) error {
 	res, err := s.DB.Query(
-		s.QB.Update("transaction").
+		s.QB.Update("transaction_base").
 			Where(squirrel.Eq{"tx_hash": txHash}).
 			Set("included_in_commitment", commitmentID),
 	).Exec()
