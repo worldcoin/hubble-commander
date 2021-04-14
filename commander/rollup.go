@@ -56,7 +56,10 @@ func commitTransactions(storage *st.Storage, client *eth.Client, cfg *config.Rol
 
 	err = submitBatch(commitments, txStorage, client, cfg)
 	if err != nil {
-		return err
+		// ! Temporary solutions - handle it better when other types of batches are added
+		if err != ErrNotEnoughCommitments {
+			return err
+		}
 	}
 
 	err = tx.Commit()
