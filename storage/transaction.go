@@ -105,3 +105,22 @@ func (s *Storage) SetTransactionError(txHash common.Hash, errorMessage string) e
 	}
 	return nil
 }
+
+func (s *Storage) GetTransactionsByPublicKey(publicKey *models.PublicKey) ([]models.Transaction, error) {
+	res := make([]models.Transaction, 0, 1)
+	err := s.DB.Query(
+		s.QB.Select("transaction.*").
+			From("account").
+			JoinClause("NATURAL JOIN state_leaf").
+			JoinClause("NATURAL JOIN state_node").
+			Join("transaction on transaction.from_index::bit(33) = state_node.merkle_path").
+			Where(squirrel.Eq{"account.public_key": publicKey}),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, fmt.Errorf("no transactions found")
+	}
+	return res, nil
+}
