@@ -57,7 +57,7 @@ func (s *CreateCommitmentsTestSuite) SetupTest() {
 	s.cfg = &config.RollupConfig{
 		TxsPerCommitment:       2,
 		FeeReceiverIndex:       2,
-		MaxCommitmentsPerBatch: 1,
+		MaxCommitmentsPerBatch: 10,
 	}
 	err = PopulateGenesisAccounts(storage.NewStateTree(s.storage), genesisAccounts)
 
@@ -123,6 +123,14 @@ func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_StoresCorrectCommitm
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
+}
+
+func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_CreatesMaximallyAsManyCommitmentsAsSpecifiedInConfig() {
+	pendingTransactions := s.prepareAndReturnPendingTransactions(20)
+
+	commitments, err := createCommitments(pendingTransactions, s.storage, s.cfg)
+	s.NoError(err)
+	s.Len(commitments, 10)
 }
 
 func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_MarksTransactionsAsIncludedInCommitment() {
