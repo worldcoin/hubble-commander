@@ -1,4 +1,4 @@
-name: Hubble Commander CI
+name: CI
 on: [ push ]
 
 jobs:

@@ -26,7 +26,7 @@ jobs:
           push: true
           tags: ghcr.io/worldcoin/hubble-commander:latest
   e2e:
-    name: E2E test
+    name: Run E2E test
     needs: build-image
     runs-on: ubuntu-20.04
     services:

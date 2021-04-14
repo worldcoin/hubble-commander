@@ -57,3 +57,44 @@ func (s *Storage) GetStateLeaves(accountIndex uint32) ([]models.StateLeaf, error
 	}
 	return res, nil
 }
+
+type userStateWithPath struct {
+	MerklePath models.MerklePath `db:"merkle_path"`
+	models.UserState
+}
+
+func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]models.UserStateWithID, error) {
+	res := make([]userStateWithPath, 0, 1)
+	err := s.DB.Query(
+		s.QB.
+			Select(
+				"state_leaf.account_index",
+				"state_leaf.token_index",
+				"state_leaf.balance",
+				"state_leaf.nonce",
+				"state_node.merkle_path",
+			).
+			From("account").
+			JoinClause("NATURAL JOIN state_leaf").
+			JoinClause("NATURAL JOIN state_node").
+			Where(squirrel.Eq{"account.public_key": publicKey}),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, fmt.Errorf("no state leaves found")
+	}
+	return toUserStateWithID(res), nil
+}
+
+func toUserStateWithID(userStates []userStateWithPath) []models.UserStateWithID {
+	res := make([]models.UserStateWithID, 0, len(userStates))
+	for i := range userStates {
+		res = append(res, models.UserStateWithID{
+			StateID:   userStates[i].MerklePath.Path,
+			UserState: userStates[i].UserState,
+		})
+	}
+	return res
+}
