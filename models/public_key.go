@@ -15,24 +15,13 @@ func (p PublicKey) Bytes() []byte {
 	return p[:]
 }
 
-func (p *PublicKey) ToBigInts() [4]*big.Int {
+func (p *PublicKey) BigInts() [4]*big.Int {
 	return [4]*big.Int{
-		new(big.Int).SetBytes(p[32:64]),
 		new(big.Int).SetBytes(p[:32]),
-		new(big.Int).SetBytes(p[96:]),
+		new(big.Int).SetBytes(p[32:64]),
 		new(big.Int).SetBytes(p[64:96]),
+		new(big.Int).SetBytes(p[96:]),
 	}
-}
-
-func (p *PublicKey) IntArray() [4]*big.Int {
-	ints := [4]*big.Int{}
-
-	ints[0] = new(big.Int).SetBytes(p[0:32])
-	ints[1] = new(big.Int).SetBytes(p[32:64])
-	ints[2] = new(big.Int).SetBytes(p[64:96])
-	ints[3] = new(big.Int).SetBytes(p[96:128])
-
-	return ints
 }
 
 func (p *PublicKey) String() string {

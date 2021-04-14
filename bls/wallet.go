@@ -58,7 +58,11 @@ func (w *Wallet) Domain() Domain {
 
 func (w *Wallet) PublicKey() *models.PublicKey {
 	var pk models.PublicKey
-	copy(pk[:], w.signer.Account.Public.ToBytes())
+	pkBytes := w.signer.Account.Public.ToBytes()
+	copy(pk[:32], pkBytes[32:64])
+	copy(pk[32:64], pkBytes[:32])
+	copy(pk[64:96], pkBytes[96:])
+	copy(pk[96:], pkBytes[64:96])
 	return &pk
 }
 

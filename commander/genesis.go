@@ -74,7 +74,7 @@ func registerGenesisAccount(
 	account *GenesisAccount,
 	ev chan *accountregistry.AccountRegistryPubkeyRegistered,
 ) (*RegisteredGenesisAccount, error) {
-	tx, err := accountRegistry.Register(opts, account.PublicKey.IntArray())
+	tx, err := accountRegistry.Register(opts, account.PublicKey.BigInts())
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

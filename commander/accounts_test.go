@@ -38,7 +38,7 @@ func (s *AccountsTestSuite) TearDownTest() {
 
 func (s *AccountsTestSuite) Test_WatchAccounts_PreviousAccounts() {
 	publicKey := models.PublicKey{2, 3, 4}
-	_, err := s.testClient.AccountRegistry.Register(s.testClient.Account, publicKey.IntArray())
+	_, err := s.testClient.AccountRegistry.Register(s.testClient.Account, publicKey.BigInts())
 	s.NoError(err)
 
 	go func() {
@@ -65,7 +65,7 @@ func (s *AccountsTestSuite) Test_WatchAccounts_NewAccounts() {
 	time.Sleep(10 * time.Millisecond)
 
 	publicKey := models.PublicKey{2, 3, 4}
-	_, err := s.testClient.AccountRegistry.Register(s.testClient.Account, publicKey.IntArray())
+	_, err := s.testClient.AccountRegistry.Register(s.testClient.Account, publicKey.BigInts())
 	s.NoError(err)
 
 	var accounts []models.Account
