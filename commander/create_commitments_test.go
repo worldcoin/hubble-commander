@@ -125,6 +125,14 @@ func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_StoresCorrectCommitm
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
 }
 
+func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_CreatesMaximallyAsManyCommitmentsAsSpecifiedInConfig() {
+	pendingTransactions := s.prepareAndReturnPendingTransactions(2)
+
+	commitments, err := createCommitments(pendingTransactions, s.storage, s.cfg)
+	s.NoError(err)
+	s.Len(commitments, 1)
+}
+
 func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_MarksTransactionsAsIncludedInCommitment() {
 	pendingTransactions := s.prepareAndReturnPendingTransactions(2)
 

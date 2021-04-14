@@ -46,7 +46,7 @@ func main() {
 
 	migrator, err := db.GetMigrator(&cfg.DB)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("%+v", err)
 	}
 
 	if *prune {
@@ -58,40 +58,40 @@ func main() {
 
 	err = migrator.Up()
 	if err != nil && err != migrate.ErrNoChange {
-		log.Fatal(err)
+		log.Fatalf("%+v", err)
 	}
 
 	storage, err := st.NewStorage(&cfg.DB)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("%+v", err)
 	}
 
 	chain, err := getDeployer(cfg.Ethereum)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("%+v", err)
 	}
 
 	client, err := getClient(storage, chain)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("%+v", err)
 	}
 
 	go func() {
 		err := commander.BlockNumberEndlessLoop(client, &cfg.Rollup)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("%+v", err)
 		}
 	}()
 	go func() {
 		err := commander.RollupEndlessLoop(storage, client, &cfg.Rollup)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("%+v", err)
 		}
 	}()
 	go func() {
 		err := commander.WatchAccounts(storage, client)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("%+v", err)
 		}
 	}()
 
