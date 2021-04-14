@@ -88,7 +88,7 @@ func (s *Storage) MarkTransactionAsIncluded(txHash common.Hash, commitmentID int
 
 func (s *Storage) SetTransactionError(txHash common.Hash, errorMessage string) error {
 	res, err := s.DB.Query(
-		s.QB.Update("transaction").
+		s.QB.Update("transaction_base").
 			Where(squirrel.Eq{"tx_hash": txHash}).
 			Set("error_message", errorMessage),
 	).Exec()
