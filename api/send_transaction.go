@@ -34,8 +34,8 @@ func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 		return nil, err
 	}
 
-	if err = a.validateTransfer(transfer); err != nil {
-		return nil, err
+	if validationErr := a.validateTransfer(transfer); validationErr != nil {
+		return nil, validationErr
 	}
 
 	encodedTransfer, err := encoder.EncodeTransfer(transfer)
@@ -110,16 +110,13 @@ func (a *API) validateTransfer(transfer *models.Transfer) error {
 		return err
 	}
 
-	if err = validateNonce(&transfer.Nonce, &senderState.UserState); err != nil {
+	if err := validateNonce(&transfer.Nonce, &senderState.UserState); err != nil {
 		return err
 	}
-	if err = validateBalance(transfer, &senderState.UserState); err != nil {
+	if err := validateBalance(transfer, &senderState.UserState); err != nil {
 		return err
 	}
-	if err = a.validateSignature(transfer, &senderState.UserState); err != nil {
-		return err
-	}
-	return nil
+	return a.validateSignature(transfer, &senderState.UserState)
 }
 
 func validateAmount(amount *models.Uint256) error {
