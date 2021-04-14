@@ -2,7 +2,6 @@ package commander
 
 import (
 	"errors"
-	"log"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/config"
@@ -24,11 +23,10 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConfi
 			ticker.Stop()
 			return nil
 		case <-ticker.C:
-			err := commitTransactions(storage, client, cfg)
+			err := createAndSubmitBatch(storage, client, cfg)
 			if err != nil {
-				var e *BatchError
+				var e *RollupError
 				if errors.As(err, &e) {
-					log.Println(e.Error())
 					continue
 				}
 				return err
@@ -37,7 +35,7 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConfi
 	}
 }
 
-func commitTransactions(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
+func createAndSubmitBatch(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
 	tx, txStorage, err := storage.BeginTransaction()
 	if err != nil {
 		return err

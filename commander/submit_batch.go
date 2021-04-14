@@ -1,7 +1,6 @@
 package commander
 
 import (
-	"errors"
 	"log"
 
 	"github.com/Worldcoin/hubble-commander/config"
@@ -12,7 +11,7 @@ import (
 )
 
 var (
-	ErrNotEnoughCommitments = errors.New("not enough commitments")
+	ErrNotEnoughCommitments = NewRollupError("not enough commitments")
 )
 
 func submitBatch(commitments []models.Commitment, storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
