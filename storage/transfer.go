@@ -63,3 +63,27 @@ func (s *Storage) GetTransfer(hash common.Hash) (*models.Transfer, error) {
 	}
 	return &res[0], nil
 }
+
+func (s *Storage) GetPendingTransfers() ([]models.Transfer, error) {
+	res := make([]models.Transfer, 0, 32)
+	err := s.DB.Query(
+		s.QB.Select(
+			"transaction_base.tx_hash",
+			"transaction_base.from_state_id",
+			"transaction_base.amount",
+			"transaction_base.fee",
+			"transaction_base.nonce",
+			"transaction_base.signature",
+			"transaction_base.included_in_commitment",
+			"transaction_base.error_message",
+			"transfer.to_state_id",
+		).
+			From("transaction_base").
+			JoinClause("NATURAL JOIN transfer").
+			Where(squirrel.Eq{"included_in_commitment": nil, "error_message": nil}), // TODO order by nonce asc, then order by fee desc
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
