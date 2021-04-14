@@ -111,9 +111,9 @@ func (s *Storage) GetTransactionsByPublicKey(publicKey *models.PublicKey) ([]mod
 	err := s.DB.Query(
 		s.QB.Select("transaction.*").
 			From("account").
-			InnerJoin("state_leaf on state_leaf.account_index = account.account_index").
-			InnerJoin("state_node on state_node.data_hash = state_leaf.data_hash").
-			InnerJoin("transaction on transaction.from_index::bit(33) = state_node.merkle_path").
+			JoinClause("NATURAL JOIN state_leaf").
+			JoinClause("NATURAL JOIN state_node").
+			Join("transaction on transaction.from_index::bit(33) = state_node.merkle_path").
 			Where(squirrel.Eq{"account.public_key": publicKey}),
 	).Into(&res)
 	if err != nil {

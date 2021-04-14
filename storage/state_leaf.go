@@ -75,8 +75,8 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]model
 				"state_node.merkle_path",
 			).
 			From("account").
-			InnerJoin("state_leaf on state_leaf.account_index = account.account_index").
-			InnerJoin("state_node on state_node.data_hash = state_leaf.data_hash").
+			JoinClause("NATURAL JOIN state_leaf").
+			JoinClause("NATURAL JOIN state_node").
 			Where(squirrel.Eq{"account.public_key": publicKey}),
 	).Into(&res)
 	if err != nil {
