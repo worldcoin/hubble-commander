@@ -41,14 +41,12 @@ func (s *Storage) GetStateLeaf(hash common.Hash) (*models.StateLeaf, error) {
 }
 
 func (s *Storage) GetStateLeaves(accountIndex uint32) ([]models.StateLeaf, error) {
-	query := `
-	SELECT state_leaf.*
-	FROM state_leaf
-	NATURAL JOIN state_node
-	WHERE account_index = $1`
-
 	res := make([]models.StateLeaf, 0, 1)
-	err := s.DB.Select(&res, query, accountIndex)
+	err := s.DB.Query(s.QB.Select("state_leaf.*").
+		From("state_leaf").
+		JoinClause("NATURAL JOIN state_node").
+		Where(squirrel.Eq{"account_index": accountIndex}),
+	).Into(&res)
 	if err != nil {
 		return nil, err
 	}
