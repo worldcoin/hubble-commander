@@ -90,7 +90,7 @@ func StartCommander(opts StartOptions) (*TestCommander, error) {
 	go func() {
 		_, err = stdcopy.StdCopy(os.Stdout, os.Stderr, stream.Reader)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("%+v", err)
 		}
 	}()
 
