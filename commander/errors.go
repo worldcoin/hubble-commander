@@ -2,18 +2,6 @@ package commander
 
 import "fmt"
 
-type CommitmentError struct {
-	Reason string
-}
-
-func NewCommitmentError(reason string) *CommitmentError {
-	return &CommitmentError{Reason: reason}
-}
-
-func (e CommitmentError) Error() string {
-	return fmt.Sprintf("failed to commit transactions: %s", e.Reason)
-}
-
 type BatchError struct {
 	Reason string
 }
