@@ -29,7 +29,7 @@ func Test_Commander(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "dev-0.1.0", version)
 
-	var userStates []models.ReturnUserState
+	var userStates []dto.ReturnUserState
 	err = commander.Client.CallFor(&userStates, "hubble_getUserStates", []interface{}{models.PublicKey{1, 2, 3}})
 	require.NoError(t, err)
 	require.Len(t, userStates, 1)

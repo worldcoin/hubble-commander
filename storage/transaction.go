@@ -84,7 +84,7 @@ func (s *Storage) SetTransactionError(txHash common.Hash, errorMessage string) e
 	return err
 }
 
-func (s *Storage) GetTransactions(publicKey *models.PublicKey) ([]models.Transaction, error) {
+func (s *Storage) GetTransactionsByPublicKey(publicKey *models.PublicKey) ([]models.Transaction, error) {
 	res := make([]models.Transaction, 0, 1)
 	err := s.DB.Query(
 		s.QB.Select("transaction.*").

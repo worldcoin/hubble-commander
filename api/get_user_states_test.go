@@ -5,6 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -130,15 +131,15 @@ func (s *GetUserStatesTestSuite) TestApi_GetUserStates() {
 	s.NoError(err)
 
 	s.Len(userStates, 3)
-	s.Contains(userStates, models.ReturnUserState{
+	s.Contains(userStates, dto.ReturnUserState{
 		StateID:   0,
 		UserState: leaves[0].UserState,
 	})
-	s.Contains(userStates, models.ReturnUserState{
+	s.Contains(userStates, dto.ReturnUserState{
 		StateID:   1,
 		UserState: leaves[1].UserState,
 	})
-	s.Contains(userStates, models.ReturnUserState{
+	s.Contains(userStates, dto.ReturnUserState{
 		StateID:   2,
 		UserState: leaves[2].UserState,
 	})

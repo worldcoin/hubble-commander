@@ -57,8 +57,8 @@ func (s *Storage) GetStateLeaves(accountIndex uint32) ([]models.StateLeaf, error
 	return res, nil
 }
 
-func (s *Storage) GetUserStates(publicKey *models.PublicKey) ([]models.ReturnUserState2, error) {
-	res := make([]models.ReturnUserState2, 0, 1)
+func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]models.ReturnUserState, error) {
+	res := make([]models.ReturnUserState, 0, 1)
 	err := s.DB.Query(
 		s.QB.
 			Select(

@@ -2,17 +2,18 @@ package api
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/dto"
 )
 
-func (a *API) GetUserStates(publicKey *models.PublicKey) ([]models.ReturnUserState, error) {
-	states, err := a.storage.GetUserStates(publicKey)
+func (a *API) GetUserStates(publicKey *models.PublicKey) ([]dto.ReturnUserState, error) {
+	states, err := a.storage.GetUserStatesByPublicKey(publicKey)
 	if err != nil {
 		return nil, err
 	}
 
-	userStates := make([]models.ReturnUserState, 0, len(states))
+	userStates := make([]dto.ReturnUserState, 0, len(states))
 	for i := range states {
-		userState := models.ReturnUserState{
+		userState := dto.ReturnUserState{
 			UserState: states[i].UserState,
 			StateID:   states[i].MerklePath.Path,
 		}

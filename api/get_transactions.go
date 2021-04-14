@@ -6,7 +6,7 @@ import (
 )
 
 func (a *API) GetTransactions(publicKey *models.PublicKey) ([]models.TransactionReceipt, error) {
-	transactions, err := a.storage.GetTransactions(publicKey)
+	transactions, err := a.storage.GetTransactionsByPublicKey(publicKey)
 	if err != nil {
 		return nil, err
 	}
