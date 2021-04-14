@@ -53,7 +53,7 @@ func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Println("New transaction: ", tx.Hash.Hex())
+	log.Println("New transaction: ", transfer.Hash.Hex())
 
 	return &hash, nil
 }
