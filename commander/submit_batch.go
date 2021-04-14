@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	ErrNotEnoughCommitments = errors.New("not enough commitments")
+	ErrNotEnoughCommitments = errors.New("not enough commitments for a batch")
 )
 
 func submitBatch(commitments []models.Commitment, storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
