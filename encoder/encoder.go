@@ -72,47 +72,33 @@ func EncodeDecimal(value models.Uint256) (uint16, error) {
 	return uint16(exponent.Uint64())<<12 + uint16(mantissa.Uint64()), nil
 }
 
-// Encodes a transaction in compact format (without signatures) for the inclusion in the commitment
-func EncodeTransaction(transaction *models.Transaction) ([]byte, error) {
-	amount, err := EncodeDecimal(transaction.Amount)
+// Encodes a transfer in compact format (without signatures) for the inclusion in the commitment
+func EncodeTransferForCommitment(transfer *models.Transfer) ([]byte, error) {
+	amount, err := EncodeDecimal(transfer.Amount)
 	if err != nil {
 		return nil, err
 	}
 
-	fee, err := EncodeDecimal(transaction.Fee)
+	fee, err := EncodeDecimal(transfer.Fee)
 	if err != nil {
 		return nil, err
 	}
 
 	arr := make([]byte, 12)
 
-	binary.BigEndian.PutUint32(arr[0:4], transaction.FromIndex)
-	binary.BigEndian.PutUint32(arr[4:8], transaction.ToIndex)
+	binary.BigEndian.PutUint32(arr[0:4], transfer.FromStateID)
+	binary.BigEndian.PutUint32(arr[4:8], transfer.ToStateID)
 	binary.BigEndian.PutUint16(arr[8:10], amount)
 	binary.BigEndian.PutUint16(arr[10:12], fee)
 
 	return arr, nil
 }
 
-func SerializeTransactions(txs []models.Transaction) ([]byte, error) {
-	buf := make([]byte, 0, len(txs)*12)
-
-	for i := range txs {
-		encoded, err := EncodeTransaction(&txs[i])
-		if err != nil {
-			return nil, err
-		}
-		buf = append(buf, encoded...)
-	}
-
-	return buf, nil
-}
-
 func SerializeTransfers(transfers []models.Transfer) ([]byte, error) {
 	buf := make([]byte, 0, len(transfers)*12)
 
 	for i := range transfers {
-		encoded, err := EncodeTransfer(&transfers[i])
+		encoded, err := EncodeTransferForCommitment(&transfers[i])
 		if err != nil {
 			return nil, err
 		}

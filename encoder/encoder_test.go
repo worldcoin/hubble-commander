@@ -98,50 +98,50 @@ func (s *EncoderTestSuite) TestEncodeDecimal() {
 	s.Equal(uint16(expected.Uint64()), encoded)
 }
 
-func newTxTransfer(tx *models.Transaction) testtx.TxTransfer {
+func newTxTransfer(transfer *models.Transfer) testtx.TxTransfer {
 	return testtx.TxTransfer{
-		FromIndex: big.NewInt(int64(tx.FromIndex)),
-		ToIndex:   big.NewInt(int64(tx.ToIndex)),
-		Amount:    &tx.Amount.Int,
-		Fee:       &tx.Fee.Int,
+		FromIndex: big.NewInt(int64(transfer.FromStateID)),
+		ToIndex:   big.NewInt(int64(transfer.ToStateID)),
+		Amount:    &transfer.Amount.Int,
+		Fee:       &transfer.Fee.Int,
 	}
 }
 
-func (s *EncoderTestSuite) TestEncodeTransaction() {
-	tx := &models.Transaction{
-		FromIndex: 1,
-		ToIndex:   2,
+func (s *EncoderTestSuite) TestEncodeTransferForCommitment() {
+	transfer := &models.Transfer{
+		FromStateID: 1,
+		ToStateID:   2,
 		Amount:    models.MakeUint256(50),
 		Fee:       models.MakeUint256(10),
 	}
 
-	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{newTxTransfer(tx)})
+	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{newTxTransfer(transfer)})
 	s.NoError(err)
 
-	encoded, err := EncodeTransaction(tx)
+	encoded, err := EncodeTransferForCommitment(transfer)
 	s.NoError(err)
 
 	s.Equal(expected, encoded)
 }
 
-func (s *EncoderTestSuite) TestSerializeTransactions() {
-	tx := models.Transaction{
-		FromIndex: 1,
-		ToIndex:   2,
+func (s *EncoderTestSuite) TestSerializeTransfers() {
+	transfer := models.Transfer{
+		FromStateID: 1,
+		ToStateID:   2,
 		Amount:    models.MakeUint256(50),
 		Fee:       models.MakeUint256(10),
 	}
-	tx2 := models.Transaction{
-		FromIndex: 2,
-		ToIndex:   3,
+	transfer2 := models.Transfer{
+		FromStateID: 2,
+		ToStateID:   3,
 		Amount:    models.MakeUint256(200),
 		Fee:       models.MakeUint256(10),
 	}
 
-	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{newTxTransfer(&tx), newTxTransfer(&tx2)})
+	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{newTxTransfer(&transfer), newTxTransfer(&transfer2)})
 	s.NoError(err)
 
-	serialized, err := SerializeTransactions([]models.Transaction{tx, tx2})
+	serialized, err := SerializeTransfers([]models.Transfer{transfer, transfer2})
 	s.NoError(err)
 
 	s.Equal(expected, serialized)
