@@ -75,4 +75,5 @@ jobs:
         username: ec2-user
         key: ${{ secrets.AWS_SSH_KEY }}
         script: |
-          whoami
+          docker-compose pull
+          docker-compose up -d
