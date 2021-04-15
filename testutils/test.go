@@ -1,4 +1,4 @@
-package deployer
+package testutils
 
 import (
 	"github.com/Worldcoin/hubble-commander/contracts/test/tx"

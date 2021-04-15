@@ -51,7 +51,7 @@ func (d *RPCDeployer) GetAccount() *bind.TransactOpts {
 	return d.account
 }
 
-func (d *RPCDeployer) GetBackend() bind.ContractBackend {
+func (d *RPCDeployer) GetBackend() ChainBackend {
 	return d.backend
 }
 

@@ -91,7 +91,7 @@ func registerGenesisAccount(
 					AccountIndex:   accountIndex,
 				}, nil
 			}
-		case <-time.After(500 * time.Millisecond):
+		case <-time.After(5 * time.Minute):
 			return nil, errors.WithStack(fmt.Errorf("timeout"))
 		}
 	}
