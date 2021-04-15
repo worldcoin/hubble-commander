@@ -39,6 +39,7 @@ type SendTransactionTestSuite struct {
 	db       *db.TestDB
 	tree     *st.StateTree
 	transfer dto.Transfer
+	wallet   *bls.Wallet
 }
 
 func (s *SendTransactionTestSuite) SetupSuite() {
@@ -54,29 +55,33 @@ func (s *SendTransactionTestSuite) SetupTest() {
 	s.tree = st.NewStateTree(storage)
 	s.api = &API{nil, storage, nil}
 
-	wallet, err := bls.NewRandomWallet(mockDomain)
+	s.wallet, err = bls.NewRandomWallet(mockDomain)
 	s.NoError(err)
 
 	err = storage.AddAccountIfNotExists(&models.Account{
 		AccountIndex: 123,
-		PublicKey:    *wallet.PublicKey(),
+		PublicKey:    *s.wallet.PublicKey(),
 	})
 	s.NoError(err)
 
 	err = s.tree.Set(1, &userState)
 	s.NoError(err)
 
-	sanitizedTransfer, err := sanitizeTransfer(transferWithoutSignature)
+	s.transfer = s.signTransfer(transferWithoutSignature)
+}
+
+func (s *SendTransactionTestSuite) signTransfer(transfer dto.Transfer) dto.Transfer {
+	sanitizedTransfer, err := sanitizeTransfer(transfer)
 	s.NoError(err)
 
 	encodedTransfer, err := encoder.EncodeTransferForSigning(sanitizedTransfer)
 	s.NoError(err)
 
-	signature, err := wallet.Sign(encodedTransfer)
+	signature, err := s.wallet.Sign(encodedTransfer)
 	s.NoError(err)
 
-	s.transfer = transferWithoutSignature
-	s.transfer.Signature = signature.Bytes()
+	transfer.Signature = signature.Bytes()
+	return transfer
 }
 
 func (s *SendTransactionTestSuite) TearDownTest() {
@@ -98,6 +103,54 @@ func (s *SendTransactionTestSuite) TestApi_SendTransaction_ValidatesNonce_TooLow
 	s.NoError(err)
 
 	_, err = s.api.SendTransaction(dto.MakeTransaction(s.transfer))
+	s.Equal(ErrNonceTooLow, err)
+}
+
+func (s *SendTransactionTestSuite) TestApi_SendTransaction_ValidatesNonce_NoTransactions() {
+	userStateWithIncreasedNonce := userState
+	userStateWithIncreasedNonce.Nonce = *models.NewUint256(1)
+
+	err := s.tree.Set(1, &userStateWithIncreasedNonce)
+	s.NoError(err)
+
+	transferWithIncreasedNonce := s.transfer
+	transferWithIncreasedNonce.Nonce = models.NewUint256(2)
+	transferWithIncreasedNonce = s.signTransfer(transferWithIncreasedNonce)
+
+	_, err = s.api.SendTransaction(dto.MakeTransaction(transferWithIncreasedNonce))
+	s.EqualError(err, "nonce should be 1")
+}
+
+func (s *SendTransactionTestSuite) TestApi_SendTransaction_ValidatesNonce_TooHigh() {
+	_, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
+	s.NoError(err)
+
+	transferWithIncreasedNonce := s.transfer
+	transferWithIncreasedNonce.Nonce = models.NewUint256(2)
+	transferWithIncreasedNonce = s.signTransfer(transferWithIncreasedNonce)
+
+	_, err = s.api.SendTransaction(dto.MakeTransaction(transferWithIncreasedNonce))
+	s.Equal(ErrNonceTooHigh, err)
+}
+
+func (s *SendTransactionTestSuite) TestApi_SendTransaction_ValidatesNonce_LowerThenLatestTransferNonce() {
+	_, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
+	s.NoError(err)
+
+	transferWithDifferentFee := s.transfer
+	transferWithDifferentFee.Nonce = models.NewUint256(1)
+	transferWithDifferentFee.Fee = models.NewUint256(20)
+	transferWithDifferentFee = s.signTransfer(transferWithDifferentFee)
+
+	_, err = s.api.SendTransaction(dto.MakeTransaction(transferWithDifferentFee))
+	s.NoError(err)
+
+	transferWithIncreasedNonce := s.transfer
+	transferWithIncreasedNonce.Nonce = models.NewUint256(0)
+	transferWithIncreasedNonce.Fee = models.NewUint256(30)
+	transferWithIncreasedNonce = s.signTransfer(transferWithIncreasedNonce)
+
+	_, err = s.api.SendTransaction(dto.MakeTransaction(transferWithIncreasedNonce))
 	s.Equal(ErrNonceTooLow, err)
 }
 

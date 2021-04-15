@@ -17,6 +17,7 @@ import (
 var (
 	ErrFeeTooLow        = errors.New("fee must be greater than 0")
 	ErrNonceTooLow      = errors.New("nonce too low")
+	ErrNonceTooHigh     = errors.New("nonce too high")
 	ErrNotEnoughBalance = errors.New("not enough balance")
 	ErrInvalidSignature = errors.New("invalid signature")
 )
@@ -114,7 +115,7 @@ func (a *API) validateTransfer(transfer *models.Transfer) error {
 		return err
 	}
 
-	if err := validateNonce(&transfer.Nonce, &senderState.UserState); err != nil {
+	if err := validateNonce(a.storage, &transfer.Nonce, &senderState.UserState.Nonce, transfer.FromStateID); err != nil {
 		return err
 	}
 	if err := validateBalance(transfer, &senderState.UserState); err != nil {
@@ -124,7 +125,10 @@ func (a *API) validateTransfer(transfer *models.Transfer) error {
 }
 
 func validateAmount(amount *models.Uint256) error {
-	// TODO validate decimal encoding
+	_, err := encoder.EncodeDecimal(*amount)
+	if err != nil {
+		return NewNotDecimalEncodableError("amount")
+	}
 	return nil
 }
 
@@ -132,15 +136,34 @@ func validateFee(fee *models.Uint256) error {
 	if fee.CmpN(0) != 1 {
 		return ErrFeeTooLow
 	}
-	// TODO validate decimal encoding
+	_, err := encoder.EncodeDecimal(*fee)
+	if err != nil {
+		return NewNotDecimalEncodableError("fee")
+	}
 	return nil
 }
 
-func validateNonce(nonce *models.Uint256, senderState *models.UserState) error {
-	if nonce.Cmp(&senderState.Nonce) < 0 {
+func validateNonce(s *storage.Storage, transferNonce *models.Uint256, senderNonce *models.Uint256, fromStateID uint32) error {
+	if transferNonce.Cmp(senderNonce) < 0 {
 		return ErrNonceTooLow
 	}
-	// TODO validate that there are no gaps in nonce sequence
+
+	latestNonce, err := s.GetLatestTransactionNonce(fromStateID)
+	if errors.Is(err, storage.ErrTransactionNotFound) {
+		if transferNonce.Cmp(senderNonce) != 0 {
+			return fmt.Errorf("nonce should be %v", senderNonce)
+		}
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if transferNonce.Cmp(latestNonce) <= 0 {
+		return ErrNonceTooLow
+	}
+	if transferNonce.Cmp(latestNonce.AddN(1)) > 0 {
+		return ErrNonceTooHigh
+	}
 	return nil
 }
 
