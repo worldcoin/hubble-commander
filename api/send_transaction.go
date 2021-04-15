@@ -115,7 +115,7 @@ func (a *API) validateTransfer(transfer *models.Transfer) error {
 		return err
 	}
 
-	if err := validateNonce(a.storage, &transfer.Nonce, &senderState.UserState.Nonce, transfer.FromStateID); err != nil {
+	if err := a.validateNonce(transfer, &senderState.UserState.Nonce); err != nil {
 		return err
 	}
 	if err := validateBalance(transfer, &senderState.UserState); err != nil {
@@ -143,14 +143,14 @@ func validateFee(fee *models.Uint256) error {
 	return nil
 }
 
-func validateNonce(s *storage.Storage, transferNonce *models.Uint256, senderNonce *models.Uint256, fromStateID uint32) error {
-	if transferNonce.Cmp(senderNonce) < 0 {
+func (a *API) validateNonce(transfer *models.Transfer, senderNonce *models.Uint256) error {
+	if transfer.Nonce.Cmp(senderNonce) < 0 {
 		return ErrNonceTooLow
 	}
 
-	latestNonce, err := s.GetLatestTransactionNonce(fromStateID)
+	latestNonce, err := a.storage.GetLatestTransactionNonce(transfer.FromStateID)
 	if errors.Is(err, storage.ErrTransactionNotFound) {
-		if transferNonce.Cmp(senderNonce) != 0 {
+		if transfer.Nonce.Cmp(senderNonce) != 0 {
 			return fmt.Errorf("nonce should be %v", senderNonce)
 		}
 		return nil
@@ -158,10 +158,10 @@ func validateNonce(s *storage.Storage, transferNonce *models.Uint256, senderNonc
 	if err != nil {
 		return err
 	}
-	if transferNonce.Cmp(latestNonce) <= 0 {
+	if transfer.Nonce.Cmp(latestNonce) <= 0 {
 		return ErrNonceTooLow
 	}
-	if transferNonce.Cmp(latestNonce.AddN(1)) > 0 {
+	if transfer.Nonce.Cmp(latestNonce.AddN(1)) > 0 {
 		return ErrNonceTooHigh
 	}
 	return nil
