@@ -36,7 +36,7 @@ func Test_Commander(t *testing.T) {
 	require.Len(t, userStates, 1)
 	require.EqualValues(t, models.MakeUint256(0), userStates[0].Nonce)
 
-	tx := dto.Transfer{
+	transfer := dto.Transfer{
 		FromStateID: ref.Uint32(1),
 		ToStateID:   ref.Uint32(2),
 		Amount:      models.NewUint256(50),
@@ -45,17 +45,17 @@ func Test_Commander(t *testing.T) {
 		Signature:   []byte{97, 100, 115, 97, 100, 115, 97, 115, 100, 97, 115, 100},
 	}
 
-	var txHash1 common.Hash
-	err = commander.Client.CallFor(&txHash1, "hubble_sendTransaction", []interface{}{tx})
+	var transferHash1 common.Hash
+	err = commander.Client.CallFor(&transferHash1, "hubble_sendTransaction", []interface{}{transfer})
 	require.NoError(t, err)
-	require.NotNil(t, txHash1)
+	require.NotNil(t, transferHash1)
 
-	var sentTx models.TransactionReceipt
-	err = commander.Client.CallFor(&sentTx, "hubble_getTransaction", []interface{}{txHash1})
+	var sentTransfer models.TransferReceipt
+	err = commander.Client.CallFor(&sentTransfer, "hubble_getTransfer", []interface{}{transferHash1})
 	require.NoError(t, err)
-	require.Equal(t, models.Pending, sentTx.Status)
+	require.Equal(t, models.Pending, sentTransfer.Status)
 
-	tx2 := dto.Transfer{
+	transfer2 := dto.Transfer{
 		FromStateID: ref.Uint32(1),
 		ToStateID:   ref.Uint32(2),
 		Amount:      models.NewUint256(10),
@@ -64,20 +64,20 @@ func Test_Commander(t *testing.T) {
 		Signature:   []byte{97, 100, 115, 97, 100, 115, 97, 115, 100, 97, 115, 100},
 	}
 
-	var txHash2 common.Hash
-	err = commander.Client.CallFor(&txHash2, "hubble_sendTransaction", []interface{}{tx2})
+	var transferHash2 common.Hash
+	err = commander.Client.CallFor(&transferHash2, "hubble_sendTransaction", []interface{}{transfer2})
 	require.NoError(t, err)
-	require.NotNil(t, txHash2)
+	require.NotNil(t, transferHash2)
 
 	testutils.WaitToPass(func() bool {
-		err = commander.Client.CallFor(&sentTx, "hubble_getTransaction", []interface{}{txHash1})
+		err = commander.Client.CallFor(&sentTransfer, "hubble_getTransfer", []interface{}{transferHash1})
 		require.NoError(t, err)
-		return sentTx.Status == models.InBatch
+		return sentTransfer.Status == models.InBatch
 	}, 10*time.Second)
 
-	err = commander.Client.CallFor(&sentTx, "hubble_getTransaction", []interface{}{txHash2})
+	err = commander.Client.CallFor(&sentTransfer, "hubble_getTransfer", []interface{}{transferHash2})
 	require.NoError(t, err)
-	require.Equal(t, models.InBatch, sentTx.Status)
+	require.Equal(t, models.InBatch, sentTransfer.Status)
 
 	err = commander.Client.CallFor(&userStates, "hubble_getUserStates", []interface{}{models.PublicKey{2, 3, 4}})
 	require.NoError(t, err)
