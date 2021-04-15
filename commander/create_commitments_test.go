@@ -148,9 +148,21 @@ func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_MarksTransfersAsIncl
 }
 
 func (s *CreateCommitmentsTestSuite) Test_removeTransactions() {
-	transfer1 := models.Transfer{Hash: utils.RandomHash()}
-	transfer2 := models.Transfer{Hash: utils.RandomHash()}
-	transfer3 := models.Transfer{Hash: utils.RandomHash()}
+	transfer1 := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			Hash: utils.RandomHash(),
+		},
+	}
+	transfer2 := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			Hash: utils.RandomHash(),
+		},
+	}
+	transfer3 := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			Hash: utils.RandomHash(),
+		},
+	}
 
 	transfers := []models.Transfer{transfer1, transfer2, transfer3}
 	toRemove := []models.Transfer{transfer2}

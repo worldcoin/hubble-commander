@@ -41,13 +41,15 @@ func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 	hash := crypto.Keccak256Hash(encodedTransfer)
 
 	transfer = &models.Transfer{
-		Hash:        hash,
-		FromStateID: transfer.FromStateID,
-		ToStateID:   transfer.ToStateID,
-		Amount:      transfer.Amount,
-		Fee:         transfer.Fee,
-		Nonce:       transfer.Nonce,
-		Signature:   transfer.Signature,
+		TransactionBase: models.TransactionBase{
+			Hash:        hash,
+			FromStateID: transfer.FromStateID,
+			Amount:      transfer.Amount,
+			Fee:         transfer.Fee,
+			Nonce:       transfer.Nonce,
+			Signature:   transfer.Signature,
+		},
+		ToStateID: transfer.ToStateID,
 	}
 	err = a.storage.AddTransfer(transfer)
 	if err != nil {
@@ -88,12 +90,14 @@ func (a *API) sanitizeTransfer(transfer dto.Transfer) (*models.Transfer, error) 
 	}
 
 	return &models.Transfer{
-		FromStateID: *transfer.FromStateID,
-		ToStateID:   *transfer.ToStateID,
-		Amount:      *transfer.Amount,
-		Fee:         *transfer.Fee,
-		Nonce:       *transfer.Nonce,
-		Signature:   transfer.Signature,
+		TransactionBase: models.TransactionBase{
+			FromStateID: *transfer.FromStateID,
+			Amount:      *transfer.Amount,
+			Fee:         *transfer.Fee,
+			Nonce:       *transfer.Nonce,
+			Signature:   transfer.Signature,
+		},
+		ToStateID: *transfer.ToStateID,
 	}, nil
 }
 

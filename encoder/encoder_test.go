@@ -53,11 +53,13 @@ func (s *EncoderTestSuite) TearDownTest() {
 
 func (s *EncoderTestSuite) TestEncodeTransfer() {
 	encodedTransfer, err := EncodeTransfer(&models.Transfer{
-		FromStateID: 2,
-		ToStateID:   3,
-		Amount:      models.MakeUint256(4),
-		Fee:         models.MakeUint256(5),
-		Nonce:       models.MakeUint256(6),
+		TransactionBase: models.TransactionBase{
+			FromStateID: 2,
+			Amount:      models.MakeUint256(4),
+			Fee:         models.MakeUint256(5),
+			Nonce:       models.MakeUint256(6),
+		},
+		ToStateID: 3,
 	})
 	s.NoError(err)
 	expected, err := s.transfer.Encode(nil, contractTransfer.OffchainTransfer{
@@ -109,10 +111,12 @@ func newTxTransfer(transfer *models.Transfer) testtx.TxTransfer {
 
 func (s *EncoderTestSuite) TestEncodeTransferForCommitment() {
 	transfer := &models.Transfer{
-		FromStateID: 1,
-		ToStateID:   2,
-		Amount:      models.MakeUint256(50),
-		Fee:         models.MakeUint256(10),
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(50),
+			Fee:         models.MakeUint256(10),
+		},
+		ToStateID: 2,
 	}
 
 	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{newTxTransfer(transfer)})
@@ -126,16 +130,20 @@ func (s *EncoderTestSuite) TestEncodeTransferForCommitment() {
 
 func (s *EncoderTestSuite) TestSerializeTransfers() {
 	transfer := models.Transfer{
-		FromStateID: 1,
-		ToStateID:   2,
-		Amount:      models.MakeUint256(50),
-		Fee:         models.MakeUint256(10),
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(50),
+			Fee:         models.MakeUint256(10),
+		},
+		ToStateID: 2,
 	}
 	transfer2 := models.Transfer{
-		FromStateID: 2,
-		ToStateID:   3,
-		Amount:      models.MakeUint256(200),
-		Fee:         models.MakeUint256(10),
+		TransactionBase: models.TransactionBase{
+			FromStateID: 2,
+			Amount:      models.MakeUint256(200),
+			Fee:         models.MakeUint256(10),
+		},
+		ToStateID: 3,
 	}
 
 	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{newTxTransfer(&transfer), newTxTransfer(&transfer2)})

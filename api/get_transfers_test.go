@@ -89,6 +89,7 @@ func (s *GetTransfersTestSuite) TestApi_GetTransfer() {
 	s.Equal(models.Pending, res.Status)
 }
 
+// nolint:funlen
 func (s *GetTransfersTestSuite) TestApi_GetTransfers() {
 	account := models.Account{
 		AccountIndex: 1,
@@ -128,44 +129,52 @@ func (s *GetTransfersTestSuite) TestApi_GetTransfers() {
 
 	transfers := []models.Transfer{
 		{
-			Hash:                 common.BigToHash(big.NewInt(1234)),
-			FromStateID:          0,
-			ToStateID:            1,
-			Amount:               models.MakeUint256(1),
-			Fee:                  models.MakeUint256(5),
-			Nonce:                models.MakeUint256(0),
-			Signature:            []byte{1, 2, 3, 4, 5},
-			IncludedInCommitment: nil,
+			TransactionBase: models.TransactionBase{
+				Hash:                 common.BigToHash(big.NewInt(1234)),
+				FromStateID:          0,
+				Amount:               models.MakeUint256(1),
+				Fee:                  models.MakeUint256(5),
+				Nonce:                models.MakeUint256(0),
+				Signature:            []byte{1, 2, 3, 4, 5},
+				IncludedInCommitment: nil,
+			},
+			ToStateID: 1,
 		},
 		{
-			Hash:                 common.BigToHash(big.NewInt(2345)),
-			FromStateID:          0,
-			ToStateID:            1,
-			Amount:               models.MakeUint256(2),
-			Fee:                  models.MakeUint256(5),
-			Nonce:                models.MakeUint256(1),
-			Signature:            []byte{2, 3, 4, 5, 6},
-			IncludedInCommitment: nil,
+			TransactionBase: models.TransactionBase{
+				Hash:                 common.BigToHash(big.NewInt(2345)),
+				FromStateID:          0,
+				Amount:               models.MakeUint256(2),
+				Fee:                  models.MakeUint256(5),
+				Nonce:                models.MakeUint256(1),
+				Signature:            []byte{2, 3, 4, 5, 6},
+				IncludedInCommitment: nil,
+			},
+			ToStateID: 1,
 		},
 		{
-			Hash:                 common.BigToHash(big.NewInt(3456)),
-			FromStateID:          1,
-			ToStateID:            0,
-			Amount:               models.MakeUint256(3),
-			Fee:                  models.MakeUint256(5),
-			Nonce:                models.MakeUint256(0),
-			Signature:            []byte{3, 4, 5, 6, 7},
-			IncludedInCommitment: nil,
+			TransactionBase: models.TransactionBase{
+				Hash:                 common.BigToHash(big.NewInt(3456)),
+				FromStateID:          1,
+				Amount:               models.MakeUint256(3),
+				Fee:                  models.MakeUint256(5),
+				Nonce:                models.MakeUint256(0),
+				Signature:            []byte{3, 4, 5, 6, 7},
+				IncludedInCommitment: nil,
+			},
+			ToStateID: 0,
 		},
 		{
-			Hash:                 common.BigToHash(big.NewInt(4567)),
-			FromStateID:          0,
-			ToStateID:            1,
-			Amount:               models.MakeUint256(2),
-			Fee:                  models.MakeUint256(5),
-			Nonce:                models.MakeUint256(2),
-			Signature:            []byte{2, 3, 4, 5, 6},
-			IncludedInCommitment: nil,
+			TransactionBase: models.TransactionBase{
+				Hash:                 common.BigToHash(big.NewInt(4567)),
+				FromStateID:          0,
+				Amount:               models.MakeUint256(2),
+				Fee:                  models.MakeUint256(5),
+				Nonce:                models.MakeUint256(2),
+				Signature:            []byte{2, 3, 4, 5, 6},
+				IncludedInCommitment: nil,
+			},
+			ToStateID: 1,
 		},
 	}
 

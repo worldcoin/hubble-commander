@@ -107,12 +107,14 @@ func generateValidTransfers(transfersAmount int) []models.Transfer {
 	transfers := make([]models.Transfer, 0, transfersAmount)
 	for i := 0; i < transfersAmount; i++ {
 		transfer := models.Transfer{
-			Hash:        utils.RandomHash(),
-			FromStateID: 1,
-			ToStateID:   2,
-			Amount:      models.MakeUint256(1),
-			Fee:         models.MakeUint256(1),
-			Nonce:       models.MakeUint256(int64(i)),
+			TransactionBase: models.TransactionBase{
+				Hash:        utils.RandomHash(),
+				FromStateID: 1,
+				Amount:      models.MakeUint256(1),
+				Fee:         models.MakeUint256(1),
+				Nonce:       models.MakeUint256(int64(i)),
+			},
+			ToStateID: 2,
 		}
 		transfers = append(transfers, transfer)
 	}
@@ -123,12 +125,14 @@ func generateInvalidTransfers(transfersAmount int) []models.Transfer {
 	transfers := make([]models.Transfer, 0, transfersAmount)
 	for i := 0; i < transfersAmount; i++ {
 		transfer := models.Transfer{
-			Hash:        utils.RandomHash(),
-			FromStateID: 1,
-			ToStateID:   2,
-			Amount:      models.MakeUint256(1),
-			Fee:         models.MakeUint256(1),
-			Nonce:       models.MakeUint256(0),
+			TransactionBase: models.TransactionBase{
+				Hash:        utils.RandomHash(),
+				FromStateID: 1,
+				Amount:      models.MakeUint256(1),
+				Fee:         models.MakeUint256(1),
+				Nonce:       models.MakeUint256(0),
+			},
+			ToStateID: 2,
 		}
 		transfers = append(transfers, transfer)
 	}

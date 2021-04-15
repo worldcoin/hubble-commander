@@ -52,11 +52,13 @@ func (s *ApplyTransferTestSuite) TearDownTest() {
 
 func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_UpdatesStates() {
 	transfer := models.Transfer{
-		FromStateID: 1,
-		ToStateID:   2,
-		Amount:      models.MakeUint256(100),
-		Fee:         models.MakeUint256(10),
-		Nonce:       models.MakeUint256(0),
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(100),
+			Fee:         models.MakeUint256(10),
+			Nonce:       models.MakeUint256(0),
+		},
+		ToStateID: 2,
 	}
 
 	newSenderState, newReceiverState, err := CalculateStateAfterTransfer(
@@ -78,11 +80,13 @@ func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_UpdatesStates(
 
 func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_Validation_Nonce() {
 	transfer := models.Transfer{
-		FromStateID: 1,
-		ToStateID:   2,
-		Amount:      models.MakeUint256(100),
-		Fee:         models.MakeUint256(10),
-		Nonce:       models.MakeUint256(1),
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(100),
+			Fee:         models.MakeUint256(10),
+			Nonce:       models.MakeUint256(1),
+		},
+		ToStateID: 2,
 	}
 
 	_, _, err := CalculateStateAfterTransfer(&senderState, &receiverState, &transfer)
@@ -91,11 +95,13 @@ func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_Validation_Non
 
 func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_Validation_Balance() {
 	transfer := models.Transfer{
-		FromStateID: 1,
-		ToStateID:   2,
-		Amount:      models.MakeUint256(400),
-		Fee:         models.MakeUint256(50),
-		Nonce:       models.MakeUint256(0),
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(400),
+			Fee:         models.MakeUint256(50),
+			Nonce:       models.MakeUint256(0),
+		},
+		ToStateID: 2,
 	}
 
 	_, _, err := CalculateStateAfterTransfer(&senderState, &receiverState, &transfer)
@@ -104,11 +110,13 @@ func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_Validation_Bal
 
 func (s *ApplyTransferTestSuite) Test_ApplyTransfer_Validation_Nil() {
 	transfer := models.Transfer{
-		FromStateID: 1,
-		ToStateID:   2,
-		Amount:      models.MakeUint256(400),
-		Fee:         models.MakeUint256(50),
-		Nonce:       models.MakeUint256(0),
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(400),
+			Fee:         models.MakeUint256(50),
+			Nonce:       models.MakeUint256(0),
+		},
+		ToStateID: 2,
 	}
 
 	transferError, appError := ApplyTransfer(s.tree, nil, models.MakeUint256(1))
@@ -121,11 +129,13 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer_Validation_Nil() {
 
 func (s *ApplyTransferTestSuite) Test_ApplyTransfer_Validation_TokenIndex() {
 	transfer := models.Transfer{
-		FromStateID: 1,
-		ToStateID:   2,
-		Amount:      models.MakeUint256(400),
-		Fee:         models.MakeUint256(50),
-		Nonce:       models.MakeUint256(0),
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(400),
+			Fee:         models.MakeUint256(50),
+			Nonce:       models.MakeUint256(0),
+		},
+		ToStateID: 2,
 	}
 
 	senderIndex := senderState.AccountIndex
@@ -143,11 +153,13 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer_Validation_TokenIndex() {
 
 func (s *ApplyTransferTestSuite) Test_ApplyTransfer() {
 	transfer := models.Transfer{
-		FromStateID: 1,
-		ToStateID:   2,
-		Amount:      models.MakeUint256(100),
-		Fee:         models.MakeUint256(50),
-		Nonce:       models.MakeUint256(0),
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(100),
+			Fee:         models.MakeUint256(50),
+			Nonce:       models.MakeUint256(0),
+		},
+		ToStateID: 2,
 	}
 
 	senderIndex := senderState.AccountIndex
