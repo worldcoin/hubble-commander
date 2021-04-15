@@ -200,21 +200,6 @@ func (s *TransferTestSuite) Test_GetTransfersByPublicKey() {
 	s.Contains(userTransactions, transfer4)
 }
 
-func (s *TransferTestSuite) Test_SetTransactionError() {
-	err := s.storage.AddTransfer(&transfer)
-	s.NoError(err)
-
-	errorMessage := ref.String("Quack")
-
-	err = s.storage.SetTransactionError(transfer.Hash, *errorMessage)
-	s.NoError(err)
-
-	res, err := s.storage.GetTransfer(transfer.Hash)
-	s.NoError(err)
-
-	s.Equal(errorMessage, res.ErrorMessage)
-}
-
 func TestTransferTestSuite(t *testing.T) {
 	suite.Run(t, new(TransferTestSuite))
 }
