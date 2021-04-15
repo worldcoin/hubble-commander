@@ -23,5 +23,5 @@ func NewNotDecimalEncodableError(field string) *NotDecimalEncodableError {
 }
 
 func (e NotDecimalEncodableError) Error() string {
-	return fmt.Sprintf("%s field not decimal encodable", e.field)
+	return fmt.Sprintf("%s is not encodable as multi-precission decimal", e.field)
 }
