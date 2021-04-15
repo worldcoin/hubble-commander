@@ -14,8 +14,8 @@ func DeployAccountRegistry(c ChainConnection) (*common.Address, *accountregistry
 	if err != nil {
 		return nil, nil, errors.WithStack(err)
 	}
-	c.Commit()
 
+	c.Commit()
 	_, err = WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, nil, errors.WithStack(err)

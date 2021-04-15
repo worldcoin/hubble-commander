@@ -64,6 +64,7 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 		return nil, errors.WithStack(err)
 	}
 
+	c.Commit()
 	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
@@ -75,6 +76,7 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 		return nil, errors.WithStack(err)
 	}
 
+	c.Commit()
 	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
@@ -86,6 +88,7 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 		return nil, errors.WithStack(err)
 	}
 
+	c.Commit()
 	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
@@ -102,6 +105,7 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 		return nil, errors.WithStack(err)
 	}
 
+	c.Commit()
 	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
@@ -119,6 +123,7 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 		return nil, errors.WithStack(err)
 	}
 
+	c.Commit()
 	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
@@ -135,6 +140,7 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 		return nil, errors.WithStack(err)
 	}
 
+	c.Commit()
 	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
@@ -147,7 +153,6 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 	}
 
 	c.Commit()
-
 	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
@@ -159,6 +164,7 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 		return nil, errors.WithStack(err)
 	}
 
+	c.Commit()
 	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
@@ -187,7 +193,6 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 	}
 
 	c.Commit()
-
 	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
