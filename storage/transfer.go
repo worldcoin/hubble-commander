@@ -22,6 +22,9 @@ func (s *Storage) AddTransfer(t *models.Transfer) error {
 				t.ErrorMessage,
 			),
 	).Exec()
+	if err != nil {
+		return err
+	}
 
 	_, err = s.DB.Query(
 		s.QB.Insert("transfer").
@@ -30,8 +33,11 @@ func (s *Storage) AddTransfer(t *models.Transfer) error {
 				t.ToStateID,
 			),
 	).Exec()
+	if err != nil {
+		return err
+	}
 
-	return err
+	return nil
 }
 
 func (s *Storage) GetTransfer(hash common.Hash) (*models.Transfer, error) {
