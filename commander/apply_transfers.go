@@ -30,22 +30,22 @@ func ApplyTransfers(
 
 	for i := range transfers {
 		transfer := transfers[i]
-		txError, appError := ApplyTransfer(stateTree, &transfer, feeReceiverTokenIndex)
+		transferError, appError := ApplyTransfer(stateTree, &transfer, feeReceiverTokenIndex)
 		if appError != nil {
 			return nil, appError
 		}
-		if txError == nil {
+		if transferError == nil {
 			validTransfers = append(validTransfers, transfer)
 			combinedFee.Add(&combinedFee.Int, &transfer.Fee.Int)
 		} else {
-			if txError == ErrNonceTooHigh {
+			if transferError == ErrNonceTooHigh {
 				continue
 			}
-			err := storage.SetTransactionError(transfer.Hash, txError.Error())
+			err := storage.SetTransactionError(transfer.Hash, transferError.Error())
 			if err != nil {
 				log.Printf("Setting transaction error failed: %s", err)
 			}
-			log.Printf("Transfer failed: %s", txError)
+			log.Printf("Transfer failed: %s", transferError)
 		}
 
 		if uint32(len(validTransfers)) == cfg.TxsPerCommitment {
