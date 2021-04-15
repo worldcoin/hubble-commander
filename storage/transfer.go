@@ -9,6 +9,18 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+var transferColumns = []string{
+	"transaction_base.tx_hash",
+	"transaction_base.from_state_id",
+	"transaction_base.amount",
+	"transaction_base.fee",
+	"transaction_base.nonce",
+	"transaction_base.signature",
+	"transaction_base.included_in_commitment",
+	"transaction_base.error_message",
+	"transfer.to_state_id",
+}
+
 func (s *Storage) AddTransfer(t *models.Transfer) error {
 	_, err := s.DB.Query(
 		s.QB.Insert("transaction_base").
@@ -45,17 +57,7 @@ func (s *Storage) AddTransfer(t *models.Transfer) error {
 func (s *Storage) GetTransfer(hash common.Hash) (*models.Transfer, error) {
 	res := make([]models.Transfer, 0, 1)
 	err := s.DB.Query(
-		s.QB.Select(
-			"transaction_base.tx_hash",
-			"transaction_base.from_state_id",
-			"transaction_base.amount",
-			"transaction_base.fee",
-			"transaction_base.nonce",
-			"transaction_base.signature",
-			"transaction_base.included_in_commitment",
-			"transaction_base.error_message",
-			"transfer.to_state_id",
-		).
+		s.QB.Select(transferColumns...).
 			From("transaction_base").
 			JoinClause("NATURAL JOIN transfer").
 			Where(squirrel.Eq{"tx_hash": hash}),
@@ -69,17 +71,7 @@ func (s *Storage) GetTransfer(hash common.Hash) (*models.Transfer, error) {
 func (s *Storage) GetUserTransfers(fromStateID models.Uint256) ([]models.Transfer, error) {
 	res := make([]models.Transfer, 0, 1)
 	err := s.DB.Query(
-		s.QB.Select(
-			"transaction_base.tx_hash",
-			"transaction_base.from_state_id",
-			"transaction_base.amount",
-			"transaction_base.fee",
-			"transaction_base.nonce",
-			"transaction_base.signature",
-			"transaction_base.included_in_commitment",
-			"transaction_base.error_message",
-			"transfer.to_state_id",
-		).
+		s.QB.Select(transferColumns...).
 			From("transaction_base").
 			JoinClause("NATURAL JOIN transfer").
 			Where(squirrel.Eq{"from_state_id": fromStateID}),
@@ -93,17 +85,7 @@ func (s *Storage) GetUserTransfers(fromStateID models.Uint256) ([]models.Transfe
 func (s *Storage) GetPendingTransfers() ([]models.Transfer, error) {
 	res := make([]models.Transfer, 0, 32)
 	err := s.DB.Query(
-		s.QB.Select(
-			"transaction_base.tx_hash",
-			"transaction_base.from_state_id",
-			"transaction_base.amount",
-			"transaction_base.fee",
-			"transaction_base.nonce",
-			"transaction_base.signature",
-			"transaction_base.included_in_commitment",
-			"transaction_base.error_message",
-			"transfer.to_state_id",
-		).
+		s.QB.Select(transferColumns...).
 			From("transaction_base").
 			JoinClause("NATURAL JOIN transfer").
 			Where(squirrel.Eq{"included_in_commitment": nil, "error_message": nil}), // TODO order by nonce asc, then order by fee desc
@@ -117,17 +99,7 @@ func (s *Storage) GetPendingTransfers() ([]models.Transfer, error) {
 func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models.Transfer, error) {
 	res := make([]models.Transfer, 0, 1)
 	err := s.DB.Query(
-		s.QB.Select(
-			"transaction_base.tx_hash",
-			"transaction_base.from_state_id",
-			"transaction_base.amount",
-			"transaction_base.fee",
-			"transaction_base.nonce",
-			"transaction_base.signature",
-			"transaction_base.included_in_commitment",
-			"transaction_base.error_message",
-			"transfer.to_state_id",
-		).
+		s.QB.Select(transferColumns...).
 			From("account").
 			JoinClause("NATURAL JOIN state_leaf").
 			JoinClause("NATURAL JOIN state_node").
