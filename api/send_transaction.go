@@ -150,18 +150,19 @@ func (a *API) validateNonce(transfer *models.Transfer, senderNonce *models.Uint2
 
 	latestNonce, err := a.storage.GetLatestTransactionNonce(transfer.FromStateID)
 	if errors.Is(err, storage.ErrTransactionNotFound) {
-		if transfer.Nonce.Cmp(senderNonce) != 0 {
-			return fmt.Errorf("nonce should be %v", senderNonce)
-		}
-		return nil
+		return checkNonce(&transfer.Nonce, senderNonce)
 	}
 	if err != nil {
 		return err
 	}
-	if transfer.Nonce.Cmp(latestNonce) <= 0 {
+	return checkNonce(&transfer.Nonce, latestNonce.AddN(1))
+}
+
+func checkNonce(transferNonce, executableSenderNonce *models.Uint256) error {
+	if transferNonce.Cmp(executableSenderNonce) < 0 {
 		return ErrNonceTooLow
 	}
-	if transfer.Nonce.Cmp(latestNonce.AddN(1)) > 0 {
+	if transferNonce.Cmp(executableSenderNonce) > 0 {
 		return ErrNonceTooHigh
 	}
 	return nil
