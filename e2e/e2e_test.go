@@ -89,9 +89,9 @@ func Test_Commander(t *testing.T) {
 	require.EqualValues(t, models.MakeUint256(920), userState.Balance)
 }
 
-func getUserState(userStates []dto.UserState, stateID uint) (*dto.UserState, error) {
+func getUserState(userStates []dto.UserState, stateID uint32) (*dto.UserState, error) {
 	for i := range userStates {
-		if userStates[i].StateID == 1 {
+		if userStates[i].StateID == stateID {
 			return &userStates[i], nil
 		}
 	}
