@@ -181,13 +181,13 @@ func (s *CreateCommitmentsTestSuite) addTransfers(transfers []models.Transfer) {
 	}
 }
 
-func (s *CreateCommitmentsTestSuite) prepareAndReturnPendingTransfers(transferAmount int) []models.Transfer {
-	transfers := generateValidTransfers(transferAmount)
+func (s *CreateCommitmentsTestSuite) prepareAndReturnPendingTransfers(transfersAmount int) []models.Transfer {
+	transfers := generateValidTransfers(transfersAmount)
 	s.addTransfers(transfers)
 
 	pendingTransfers, err := s.storage.GetPendingTransfers()
 	s.NoError(err)
-	s.Len(pendingTransfers, transferAmount)
+	s.Len(pendingTransfers, transfersAmount)
 
 	return pendingTransfers
 }
