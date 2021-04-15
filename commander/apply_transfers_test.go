@@ -17,7 +17,7 @@ var cfg = config.RollupConfig{
 	TxsPerCommitment: 32,
 }
 
-type ApplyTransactionsTestSuite struct {
+type ApplyTransfersTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	db      *db.TestDB
@@ -25,11 +25,11 @@ type ApplyTransactionsTestSuite struct {
 	tree    *storage.StateTree
 }
 
-func (s *ApplyTransactionsTestSuite) SetupSuite() {
+func (s *ApplyTransfersTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *ApplyTransactionsTestSuite) SetupTest() {
+func (s *ApplyTransfersTestSuite) SetupTest() {
 	testDB, err := db.NewTestDB()
 	s.NoError(err)
 	s.db = testDB
@@ -63,74 +63,74 @@ func (s *ApplyTransactionsTestSuite) SetupTest() {
 	s.NoError(err)
 }
 
-func (s *ApplyTransactionsTestSuite) TearDownTest() {
+func (s *ApplyTransfersTestSuite) TearDownTest() {
 	err := s.db.Teardown()
 	s.NoError(err)
 }
 
-func (s *ApplyTransactionsTestSuite) Test_ApplyTransactions_AllValid() {
-	txs := generateValidTransactions(10)
+func (s *ApplyTransfersTestSuite) Test_ApplyTransfers_AllValid() {
+	transfers := generateValidTransfers(10)
 
-	validTxs, err := ApplyTransactions(s.storage, txs, &cfg)
+	validTransfers, err := ApplyTransfers(s.storage, transfers, &cfg)
 	s.NoError(err)
 
-	s.Len(validTxs, 10)
+	s.Len(validTransfers, 10)
 }
 
-func (s *ApplyTransactionsTestSuite) Test_ApplyTransactions_SomeValid() {
-	txs := generateValidTransactions(10)
-	txs = append(txs, generateInvalidTransactions(10)...)
+func (s *ApplyTransfersTestSuite) Test_ApplyTransfers_SomeValid() {
+	transfers := generateValidTransfers(10)
+	transfers = append(transfers, generateInvalidTransfers(10)...)
 
-	validTxs, err := ApplyTransactions(s.storage, txs, &cfg)
+	validTransfers, err := ApplyTransfers(s.storage, transfers, &cfg)
 	s.NoError(err)
 
-	s.Len(validTxs, 10)
+	s.Len(validTransfers, 10)
 }
 
-func (s *ApplyTransactionsTestSuite) Test_ApplyTransactions_MoreThan32() {
-	txs := generateValidTransactions(60)
+func (s *ApplyTransfersTestSuite) Test_ApplyTransfers_MoreThan32() {
+	transfers := generateValidTransfers(60)
 
-	validTxs, err := ApplyTransactions(s.storage, txs, &cfg)
+	validTransfers, err := ApplyTransfers(s.storage, transfers, &cfg)
 	s.NoError(err)
 
-	s.Len(validTxs, 32)
+	s.Len(validTransfers, 32)
 
 	state, _ := s.tree.Leaf(1)
 	s.Equal(models.MakeUint256(32), state.Nonce)
 }
 
-func TestApplyTransactionsTestSuite(t *testing.T) {
-	suite.Run(t, new(ApplyTransactionsTestSuite))
+func TestApplyTransfersTestSuite(t *testing.T) {
+	suite.Run(t, new(ApplyTransfersTestSuite))
 }
 
-func generateValidTransactions(txAmount int) []models.Transaction {
-	txs := make([]models.Transaction, 0, txAmount)
-	for i := 0; i < txAmount; i++ {
-		tx := models.Transaction{
+func generateValidTransfers(transfersAmount int) []models.Transfer {
+	transfers := make([]models.Transfer, 0, transfersAmount)
+	for i := 0; i < transfersAmount; i++ {
+		transfer := models.Transfer{
 			Hash:      utils.RandomHash(),
-			FromIndex: 1,
-			ToIndex:   2,
+			FromStateID: 1,
+			ToStateID:   2,
 			Amount:    models.MakeUint256(1),
 			Fee:       models.MakeUint256(1),
 			Nonce:     models.MakeUint256(int64(i)),
 		}
-		txs = append(txs, tx)
+		transfers = append(transfers, transfer)
 	}
-	return txs
+	return transfers
 }
 
-func generateInvalidTransactions(txAmount int) []models.Transaction {
-	txs := make([]models.Transaction, 0, txAmount)
-	for i := 0; i < txAmount; i++ {
-		tx := models.Transaction{
+func generateInvalidTransfers(transfersAmount int) []models.Transfer {
+	transfers := make([]models.Transfer, 0, transfersAmount)
+	for i := 0; i < transfersAmount; i++ {
+		transfer := models.Transfer{
 			Hash:      utils.RandomHash(),
-			FromIndex: 1,
-			ToIndex:   2,
+			FromStateID: 1,
+			ToStateID:   2,
 			Amount:    models.MakeUint256(1),
 			Fee:       models.MakeUint256(1),
 			Nonce:     models.MakeUint256(0),
 		}
-		txs = append(txs, tx)
+		transfers = append(transfers, transfer)
 	}
-	return txs
+	return transfers
 }
