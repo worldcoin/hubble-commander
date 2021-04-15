@@ -17,7 +17,6 @@ type GetUserStatesTestSuite struct {
 	suite.Suite
 	api *API
 	db  *db.TestDB
-	tx  *models.Transaction
 }
 
 func (s *GetUserStatesTestSuite) SetupSuite() {
@@ -31,17 +30,6 @@ func (s *GetUserStatesTestSuite) SetupTest() {
 	storage := st.NewTestStorage(testDB.DB)
 	s.api = &API{nil, storage, nil}
 	s.db = testDB
-
-	tx := &models.Transaction{
-		FromIndex: 1,
-		ToIndex:   2,
-		Amount:    *models.NewUint256(50),
-		Fee:       *models.NewUint256(10),
-		Nonce:     *models.NewUint256(0),
-		Signature: []byte{1, 2, 3, 4},
-	}
-
-	s.tx = tx
 }
 
 func (s *GetUserStatesTestSuite) TearDownTest() {
