@@ -1,65 +1,78 @@
 name: E2E Test
 on:
   push:
-    branches:
-      - master
+#    branches:
+#      - master
 
 jobs:
-  build-image:
-    name: Build Docker image
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Build docker image
-        id: docker_build
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: ghcr.io/worldcoin/hubble-commander:latest
-  e2e:
-    name: Run E2E test
-    needs: build-image
+#  build-image:
+#    name: Build Docker image
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v2
+#      - name: Login to GitHub Container Registry
+#        uses: docker/login-action@v1
+#        with:
+#          registry: ghcr.io
+#          username: ${{ github.repository_owner }}
+#          password: ${{ secrets.DOCKER_PASSWORD }}
+#      - name: Build docker image
+#        id: docker_build
+#        uses: docker/build-push-action@v2
+#        with:
+#          context: .
+#          file: ./Dockerfile
+#          push: true
+#          tags: ghcr.io/worldcoin/hubble-commander:latest
+#  e2e:
+#    name: Run E2E test
+#    needs: build-image
+#    runs-on: ubuntu-20.04
+#    services:
+#      postgres:
+#        image: postgres:13.1
+#        env:
+#          POSTGRES_USER: hubble
+#          POSTGRES_PASSWORD: root
+#        ports:
+#          - 5432:5432
+#        # Needed because the postgres container does not provide a health check
+#        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+#    env:
+#      HUBBLE_DBHOST: localhost
+#      HUBBLE_DBUSER: hubble
+#      HUBBLE_DBPASSWORD: root
+#      ETHEREUM_RPC_URL: ws://localhost:8545
+#      ETHEREUM_CHAIN_ID: 1616067554748
+#      ETHEREUM_PRIVATE_KEY: ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
+
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v2
+#      - name: Login to GitHub Container Registry
+#        uses: docker/login-action@v1
+#        with:
+#          registry: ghcr.io
+#          username: ${{ github.repository_owner }}
+#          password: ${{ secrets.DOCKER_PASSWORD }}
+#      - name: Pull the commander image
+#        run: docker pull ghcr.io/worldcoin/hubble-commander:latest
+#      - name: Run E2E tests
+#        run: |
+#          npx ganache-cli --account 0xee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82,0x56BC75E2D63100000 &
+#          make test-e2e
+
+  deploy:
+    name: Deploy to AWS
+#    needs: e2e
     runs-on: ubuntu-20.04
-    services:
-      postgres:
-        image: postgres:13.1
-        env:
-          POSTGRES_USER: hubble
-          POSTGRES_PASSWORD: root
-        ports:
-          - 5432:5432
-        # Needed because the postgres container does not provide a health check
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-    env:
-      HUBBLE_DBHOST: localhost
-      HUBBLE_DBUSER: hubble
-      HUBBLE_DBPASSWORD: root
-      ETHEREUM_RPC_URL: ws://localhost:8545
-      ETHEREUM_CHAIN_ID: 1616067554748
-      ETHEREUM_PRIVATE_KEY: ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Pull the commander image
-        run: docker pull ghcr.io/worldcoin/hubble-commander:latest
-      - name: Run E2E tests
-        run: |
-          npx ganache-cli --account 0xee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82,0x56BC75E2D63100000 &
-          make test-e2e
-
+    - name: Deploy to AWS
+      uses: appleboy/ssh-action@master
+      with:
+        host: ec2-3-236-56-115.compute-1.amazonaws.com
+        username: ec2-user
+        key: ${{ secrets.AWS_SSH_KEY }}
+        script: |
+          whoami
