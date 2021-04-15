@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
-	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
+	contractTransfer "github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
 	testtx "github.com/Worldcoin/hubble-commander/contracts/test/tx"
 	"github.com/Worldcoin/hubble-commander/contracts/test/types"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
@@ -21,7 +21,7 @@ type EncoderTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	sim       *simulator.Simulator
-	transfer  *transfer.FrontendTransfer
+	transfer  *contractTransfer.FrontendTransfer
 	generic   *generic.FrontendGeneric
 	testTx    *testtx.TestTx
 	testTypes *types.TestTypes
@@ -53,14 +53,16 @@ func (s *EncoderTestSuite) TearDownTest() {
 
 func (s *EncoderTestSuite) TestEncodeTransfer() {
 	encodedTransfer, err := EncodeTransfer(&models.Transfer{
-		FromStateID: 2,
-		ToStateID:   3,
-		Amount:      models.MakeUint256(4),
-		Fee:         models.MakeUint256(5),
-		Nonce:       models.MakeUint256(6),
+		TransactionBase: models.TransactionBase{
+			FromStateID: 2,
+			Amount:      models.MakeUint256(4),
+			Fee:         models.MakeUint256(5),
+			Nonce:       models.MakeUint256(6),
+		},
+		ToStateID: 3,
 	})
 	s.NoError(err)
-	expected, err := s.transfer.Encode(nil, transfer.OffchainTransfer{
+	expected, err := s.transfer.Encode(nil, contractTransfer.OffchainTransfer{
 		TxType:    big.NewInt(1),
 		FromIndex: big.NewInt(2),
 		ToIndex:   big.NewInt(3),
@@ -98,50 +100,56 @@ func (s *EncoderTestSuite) TestEncodeDecimal() {
 	s.Equal(uint16(expected.Uint64()), encoded)
 }
 
-func newTxTransfer(tx *models.Transaction) testtx.TxTransfer {
+func newTxTransfer(transfer *models.Transfer) testtx.TxTransfer {
 	return testtx.TxTransfer{
-		FromIndex: big.NewInt(int64(tx.FromIndex)),
-		ToIndex:   big.NewInt(int64(tx.ToIndex)),
-		Amount:    &tx.Amount.Int,
-		Fee:       &tx.Fee.Int,
+		FromIndex: big.NewInt(int64(transfer.FromStateID)),
+		ToIndex:   big.NewInt(int64(transfer.ToStateID)),
+		Amount:    &transfer.Amount.Int,
+		Fee:       &transfer.Fee.Int,
 	}
 }
 
-func (s *EncoderTestSuite) TestEncodeTransaction() {
-	tx := &models.Transaction{
-		FromIndex: 1,
-		ToIndex:   2,
-		Amount:    models.MakeUint256(50),
-		Fee:       models.MakeUint256(10),
+func (s *EncoderTestSuite) TestEncodeTransferForCommitment() {
+	transfer := &models.Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(50),
+			Fee:         models.MakeUint256(10),
+		},
+		ToStateID: 2,
 	}
 
-	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{newTxTransfer(tx)})
+	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{newTxTransfer(transfer)})
 	s.NoError(err)
 
-	encoded, err := EncodeTransaction(tx)
+	encoded, err := EncodeTransferForCommitment(transfer)
 	s.NoError(err)
 
 	s.Equal(expected, encoded)
 }
 
-func (s *EncoderTestSuite) TestSerializeTransactions() {
-	tx := models.Transaction{
-		FromIndex: 1,
-		ToIndex:   2,
-		Amount:    models.MakeUint256(50),
-		Fee:       models.MakeUint256(10),
+func (s *EncoderTestSuite) TestSerializeTransfers() {
+	transfer := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(50),
+			Fee:         models.MakeUint256(10),
+		},
+		ToStateID: 2,
 	}
-	tx2 := models.Transaction{
-		FromIndex: 2,
-		ToIndex:   3,
-		Amount:    models.MakeUint256(200),
-		Fee:       models.MakeUint256(10),
+	transfer2 := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 2,
+			Amount:      models.MakeUint256(200),
+			Fee:         models.MakeUint256(10),
+		},
+		ToStateID: 3,
 	}
 
-	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{newTxTransfer(&tx), newTxTransfer(&tx2)})
+	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{newTxTransfer(&transfer), newTxTransfer(&transfer2)})
 	s.NoError(err)
 
-	serialized, err := SerializeTransactions([]models.Transaction{tx, tx2})
+	serialized, err := SerializeTransfers([]models.Transfer{transfer, transfer2})
 	s.NoError(err)
 
 	s.Equal(expected, serialized)

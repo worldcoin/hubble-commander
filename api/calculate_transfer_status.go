@@ -5,16 +5,16 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func CalculateTransactionStatus(storage *st.Storage, tx *models.Transaction, latestBlockNumber uint32) (*models.TransactionStatus, error) {
-	if tx.ErrorMessage != nil {
+func CalculateTransferStatus(storage *st.Storage, transfer *models.Transfer, latestBlockNumber uint32) (*models.TransferStatus, error) {
+	if transfer.ErrorMessage != nil {
 		return models.Error.Ref(), nil
 	}
 
-	if tx.IncludedInCommitment == nil {
+	if transfer.IncludedInCommitment == nil {
 		return models.Pending.Ref(), nil
 	}
 
-	commitment, err := storage.GetCommitment(*tx.IncludedInCommitment)
+	commitment, err := storage.GetCommitment(*transfer.IncludedInCommitment)
 	if err != nil {
 		return nil, err
 	}

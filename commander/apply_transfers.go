@@ -9,16 +9,16 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func ApplyTransactions(
+func ApplyTransfers(
 	storage *st.Storage,
-	transactions []models.Transaction,
+	transfers []models.Transfer,
 	cfg *config.RollupConfig,
 ) (
-	[]models.Transaction,
+	[]models.Transfer,
 	error,
 ) {
 	stateTree := st.NewStateTree(storage)
-	validTxs := make([]models.Transaction, 0, cfg.TxsPerCommitment)
+	validTransfers := make([]models.Transfer, 0, cfg.TxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
 	feeReceiverLeaf, err := stateTree.Leaf(cfg.FeeReceiverIndex)
@@ -28,27 +28,27 @@ func ApplyTransactions(
 
 	feeReceiverTokenIndex := feeReceiverLeaf.TokenIndex
 
-	for i := range transactions {
-		tx := transactions[i]
-		txError, appError := ApplyTransfer(stateTree, &tx, feeReceiverTokenIndex)
+	for i := range transfers {
+		transfer := transfers[i]
+		transferError, appError := ApplyTransfer(stateTree, &transfer, feeReceiverTokenIndex)
 		if appError != nil {
 			return nil, appError
 		}
-		if txError == nil {
-			validTxs = append(validTxs, tx)
-			combinedFee.Add(&combinedFee.Int, &tx.Fee.Int)
+		if transferError == nil {
+			validTransfers = append(validTransfers, transfer)
+			combinedFee.Add(&combinedFee.Int, &transfer.Fee.Int)
 		} else {
-			if txError == ErrNonceTooHigh {
+			if transferError == ErrNonceTooHigh {
 				continue
 			}
-			err := storage.SetTransactionError(tx.Hash, txError.Error())
+			err := storage.SetTransactionError(transfer.Hash, transferError.Error())
 			if err != nil {
 				log.Printf("Setting transaction error failed: %s", err)
 			}
-			log.Printf("Transaction failed: %s", txError)
+			log.Printf("Transfer failed: %s", transferError)
 		}
 
-		if uint32(len(validTxs)) == cfg.TxsPerCommitment {
+		if uint32(len(validTransfers)) == cfg.TxsPerCommitment {
 			break
 		}
 	}
@@ -61,5 +61,5 @@ func ApplyTransactions(
 		}
 	}
 
-	return validTxs, nil
+	return validTransfers, nil
 }

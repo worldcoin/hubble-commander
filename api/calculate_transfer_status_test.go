@@ -23,20 +23,20 @@ var (
 	}
 )
 
-type CalculateTransactionStatusTestSuite struct {
+type CalculateTransferStatusTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	db      *db.TestDB
-	storage *st.Storage
-	sim     *simulator.Simulator
-	tx      *models.Transaction
+	db       *db.TestDB
+	storage  *st.Storage
+	sim      *simulator.Simulator
+	transfer *models.Transfer
 }
 
-func (s *CalculateTransactionStatusTestSuite) SetupSuite() {
+func (s *CalculateTransferStatusTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *CalculateTransactionStatusTestSuite) SetupTest() {
+func (s *CalculateTransferStatusTestSuite) SetupTest() {
 	testDB, err := db.NewTestDB()
 	s.NoError(err)
 
@@ -58,43 +58,45 @@ func (s *CalculateTransactionStatusTestSuite) SetupTest() {
 	err = tree.Set(1, &userState)
 	s.NoError(err)
 
-	tx := &models.Transaction{
-		FromIndex: 1,
-		ToIndex:   2,
-		Amount:    *models.NewUint256(50),
-		Fee:       *models.NewUint256(10),
-		Nonce:     *models.NewUint256(0),
-		Signature: []byte{1, 2, 3, 4},
+	transfer := &models.Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      *models.NewUint256(50),
+			Fee:         *models.NewUint256(10),
+			Nonce:       *models.NewUint256(0),
+			Signature:   []byte{1, 2, 3, 4},
+		},
+		ToStateID: 2,
 	}
 
-	s.tx = tx
+	s.transfer = transfer
 }
 
-func (s *CalculateTransactionStatusTestSuite) TearDownTest() {
+func (s *CalculateTransferStatusTestSuite) TearDownTest() {
 	err := s.db.Teardown()
 	s.NoError(err)
 }
 
-func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus_Pending() {
-	status, err := CalculateTransactionStatus(s.storage, s.tx, 0)
+func (s *CalculateTransferStatusTestSuite) TestApi_CalculateTransferStatus_Pending() {
+	status, err := CalculateTransferStatus(s.storage, s.transfer, 0)
 	s.NoError(err)
 
 	s.Equal(models.Pending, *status)
 }
 
-func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus_Committed() {
+func (s *CalculateTransferStatusTestSuite) TestApi_CalculateTransferStatus_Committed() {
 	commitmentID, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	s.tx.IncludedInCommitment = commitmentID
+	s.transfer.IncludedInCommitment = commitmentID
 
-	status, err := CalculateTransactionStatus(s.storage, s.tx, 0)
+	status, err := CalculateTransferStatus(s.storage, s.transfer, 0)
 	s.NoError(err)
 
 	s.Equal(models.Committed, *status)
 }
 
-func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus_InBatch() {
+func (s *CalculateTransferStatusTestSuite) TestApi_CalculateTransferStatus_InBatch() {
 	batch := models.Batch{
 		Hash:              utils.RandomHash(),
 		FinalisationBlock: math.MaxUint32,
@@ -107,16 +109,16 @@ func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus
 	commitmentID, err := s.storage.AddCommitment(&includedCommitment)
 	s.NoError(err)
 
-	s.tx.IncludedInCommitment = commitmentID
+	s.transfer.IncludedInCommitment = commitmentID
 
-	status, err := CalculateTransactionStatus(s.storage, s.tx, 0)
+	status, err := CalculateTransferStatus(s.storage, s.transfer, 0)
 	s.NoError(err)
 
 	s.Equal(models.InBatch, *status)
 }
 
 // nolint:misspell
-func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus_Finalised() {
+func (s *CalculateTransferStatusTestSuite) TestApi_CalculateTransferStatus_Finalised() {
 	currentBlockNumber, err := s.sim.GetLatestBlockNumber()
 	s.NoError(err)
 	batch := models.Batch{
@@ -131,26 +133,26 @@ func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus
 	commitmentID, err := s.storage.AddCommitment(&includedCommitment)
 	s.NoError(err)
 
-	s.tx.IncludedInCommitment = commitmentID
+	s.transfer.IncludedInCommitment = commitmentID
 
 	s.sim.Commit()
 	latestBlockNumber, err := s.sim.GetLatestBlockNumber()
 	s.NoError(err)
 
-	status, err := CalculateTransactionStatus(s.storage, s.tx, *latestBlockNumber)
+	status, err := CalculateTransferStatus(s.storage, s.transfer, *latestBlockNumber)
 	s.NoError(err)
 
 	s.Equal(models.Finalised, *status)
 }
 
-func (s *CalculateTransactionStatusTestSuite) TestApi_CalculateTransactionStatus_Error() {
-	s.tx.ErrorMessage = ref.String("Gold Duck Error")
-	status, err := CalculateTransactionStatus(s.storage, s.tx, 0)
+func (s *CalculateTransferStatusTestSuite) TestApi_CalculateTransferStatus_Error() {
+	s.transfer.ErrorMessage = ref.String("Gold Duck Error")
+	status, err := CalculateTransferStatus(s.storage, s.transfer, 0)
 	s.NoError(err)
 
 	s.Equal(models.Error, *status)
 }
 
-func TestCalculateTransactionStatusTestSuite(t *testing.T) {
-	suite.Run(t, new(CalculateTransactionStatusTestSuite))
+func TestCalculateTransferStatusTestSuite(t *testing.T) {
+	suite.Run(t, new(CalculateTransferStatusTestSuite))
 }

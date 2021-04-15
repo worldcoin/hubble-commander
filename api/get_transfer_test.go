@@ -12,19 +12,19 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type GetTransactionTestSuite struct {
+type GetTransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	api *API
-	db  *db.TestDB
-	tx  *models.Transaction
+	api      *API
+	db       *db.TestDB
+	transfer *models.Transfer
 }
 
-func (s *GetTransactionTestSuite) SetupSuite() {
+func (s *GetTransferTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *GetTransactionTestSuite) SetupTest() {
+func (s *GetTransferTestSuite) SetupTest() {
 	testDB, err := db.NewTestDB()
 	s.NoError(err)
 
@@ -43,24 +43,26 @@ func (s *GetTransactionTestSuite) SetupTest() {
 	err = tree.Set(1, &userState)
 	s.NoError(err)
 
-	tx := &models.Transaction{
-		FromIndex: 1,
-		ToIndex:   2,
-		Amount:    *models.NewUint256(50),
-		Fee:       *models.NewUint256(10),
-		Nonce:     *models.NewUint256(0),
-		Signature: []byte{1, 2, 3, 4},
+	transfer := &models.Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      *models.NewUint256(50),
+			Fee:         *models.NewUint256(10),
+			Nonce:       *models.NewUint256(0),
+			Signature:   []byte{1, 2, 3, 4},
+		},
+		ToStateID: 2,
 	}
 
-	s.tx = tx
+	s.transfer = transfer
 }
 
-func (s *GetTransactionTestSuite) TearDownTest() {
+func (s *GetTransferTestSuite) TearDownTest() {
 	err := s.db.Teardown()
 	s.NoError(err)
 }
 
-func (s *GetTransactionTestSuite) TestApi_GetTransaction() {
+func (s *GetTransferTestSuite) TestApi_GetTransfer() {
 	transfer := dto.Transfer{
 		FromStateID: ref.Uint32(1),
 		ToStateID:   ref.Uint32(2),
@@ -73,12 +75,12 @@ func (s *GetTransactionTestSuite) TestApi_GetTransaction() {
 	hash, err := s.api.SendTransaction(dto.MakeTransaction(transfer))
 	s.NoError(err)
 
-	res, err := s.api.GetTransaction(*hash)
+	res, err := s.api.GetTransfer(*hash)
 	s.NoError(err)
 
 	s.Equal(models.Pending, res.Status)
 }
 
-func TestGetTransactionTestSuite(t *testing.T) {
-	suite.Run(t, new(GetTransactionTestSuite))
+func TestGetTransferTestSuite(t *testing.T) {
+	suite.Run(t, new(GetTransferTestSuite))
 }

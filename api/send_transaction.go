@@ -40,20 +40,22 @@ func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 	}
 	hash := crypto.Keccak256Hash(encodedTransfer)
 
-	tx := &models.Transaction{
-		Hash:      hash,
-		FromIndex: transfer.FromStateID,
-		ToIndex:   transfer.ToStateID,
-		Amount:    transfer.Amount,
-		Fee:       transfer.Fee,
-		Nonce:     transfer.Nonce,
-		Signature: transfer.Signature,
+	transfer = &models.Transfer{
+		TransactionBase: models.TransactionBase{
+			Hash:        hash,
+			FromStateID: transfer.FromStateID,
+			Amount:      transfer.Amount,
+			Fee:         transfer.Fee,
+			Nonce:       transfer.Nonce,
+			Signature:   transfer.Signature,
+		},
+		ToStateID: transfer.ToStateID,
 	}
-	err = a.storage.AddTransaction(tx)
+	err = a.storage.AddTransfer(transfer)
 	if err != nil {
 		return nil, err
 	}
-	log.Println("New transaction: ", tx.Hash.Hex())
+	log.Println("New transaction: ", transfer.Hash.Hex())
 
 	return &hash, nil
 }
@@ -88,12 +90,14 @@ func (a *API) sanitizeTransfer(transfer dto.Transfer) (*models.Transfer, error) 
 	}
 
 	return &models.Transfer{
-		FromStateID: *transfer.FromStateID,
-		ToStateID:   *transfer.ToStateID,
-		Amount:      *transfer.Amount,
-		Fee:         *transfer.Fee,
-		Nonce:       *transfer.Nonce,
-		Signature:   transfer.Signature,
+		TransactionBase: models.TransactionBase{
+			FromStateID: *transfer.FromStateID,
+			Amount:      *transfer.Amount,
+			Fee:         *transfer.Fee,
+			Nonce:       *transfer.Nonce,
+			Signature:   transfer.Signature,
+		},
+		ToStateID: *transfer.ToStateID,
 	}, nil
 }
 

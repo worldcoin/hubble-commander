@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type GetTransactionsTestSuite struct {
+type GetTransfersTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	api     *API
@@ -23,11 +23,11 @@ type GetTransactionsTestSuite struct {
 	tree    *st.StateTree
 }
 
-func (s *GetTransactionsTestSuite) SetupSuite() {
+func (s *GetTransfersTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *GetTransactionsTestSuite) SetupTest() {
+func (s *GetTransfersTestSuite) SetupTest() {
 	testDB, err := db.NewTestDB()
 	s.NoError(err)
 
@@ -37,12 +37,12 @@ func (s *GetTransactionsTestSuite) SetupTest() {
 	s.tree = st.NewStateTree(s.storage)
 }
 
-func (s *GetTransactionsTestSuite) TearDownTest() {
+func (s *GetTransfersTestSuite) TearDownTest() {
 	err := s.db.Teardown()
 	s.NoError(err)
 }
 
-func (s *GetTransactionsTestSuite) TestApi_GetTransaction() {
+func (s *GetTransfersTestSuite) TestApi_GetTransfer() {
 	account := models.Account{
 		AccountIndex: 1,
 		PublicKey:    models.PublicKey{1, 2, 3},
@@ -83,13 +83,14 @@ func (s *GetTransactionsTestSuite) TestApi_GetTransaction() {
 	hash, err := s.api.SendTransaction(dto.MakeTransaction(transfer))
 	s.NoError(err)
 
-	res, err := s.api.GetTransaction(*hash)
+	res, err := s.api.GetTransfer(*hash)
 	s.NoError(err)
 
 	s.Equal(models.Pending, res.Status)
 }
 
-func (s *GetTransactionsTestSuite) TestApi_GetTransactions() {
+// nolint:funlen
+func (s *GetTransfersTestSuite) TestApi_GetTransfers() {
 	account := models.Account{
 		AccountIndex: 1,
 		PublicKey:    models.PublicKey{1, 2, 3},
@@ -126,67 +127,75 @@ func (s *GetTransactionsTestSuite) TestApi_GetTransactions() {
 	err = s.tree.Set(2, &userStates[2])
 	s.NoError(err)
 
-	transactions := []models.Transaction{
+	transfers := []models.Transfer{
 		{
-			Hash:                 common.BigToHash(big.NewInt(1234)),
-			FromIndex:            0,
-			ToIndex:              1,
-			Amount:               models.MakeUint256(1),
-			Fee:                  models.MakeUint256(5),
-			Nonce:                models.MakeUint256(0),
-			Signature:            []byte{1, 2, 3, 4, 5},
-			IncludedInCommitment: nil,
+			TransactionBase: models.TransactionBase{
+				Hash:                 common.BigToHash(big.NewInt(1234)),
+				FromStateID:          0,
+				Amount:               models.MakeUint256(1),
+				Fee:                  models.MakeUint256(5),
+				Nonce:                models.MakeUint256(0),
+				Signature:            []byte{1, 2, 3, 4, 5},
+				IncludedInCommitment: nil,
+			},
+			ToStateID: 1,
 		},
 		{
-			Hash:                 common.BigToHash(big.NewInt(2345)),
-			FromIndex:            0,
-			ToIndex:              1,
-			Amount:               models.MakeUint256(2),
-			Fee:                  models.MakeUint256(5),
-			Nonce:                models.MakeUint256(1),
-			Signature:            []byte{2, 3, 4, 5, 6},
-			IncludedInCommitment: nil,
+			TransactionBase: models.TransactionBase{
+				Hash:                 common.BigToHash(big.NewInt(2345)),
+				FromStateID:          0,
+				Amount:               models.MakeUint256(2),
+				Fee:                  models.MakeUint256(5),
+				Nonce:                models.MakeUint256(1),
+				Signature:            []byte{2, 3, 4, 5, 6},
+				IncludedInCommitment: nil,
+			},
+			ToStateID: 1,
 		},
 		{
-			Hash:                 common.BigToHash(big.NewInt(3456)),
-			FromIndex:            1,
-			ToIndex:              0,
-			Amount:               models.MakeUint256(3),
-			Fee:                  models.MakeUint256(5),
-			Nonce:                models.MakeUint256(0),
-			Signature:            []byte{3, 4, 5, 6, 7},
-			IncludedInCommitment: nil,
+			TransactionBase: models.TransactionBase{
+				Hash:                 common.BigToHash(big.NewInt(3456)),
+				FromStateID:          1,
+				Amount:               models.MakeUint256(3),
+				Fee:                  models.MakeUint256(5),
+				Nonce:                models.MakeUint256(0),
+				Signature:            []byte{3, 4, 5, 6, 7},
+				IncludedInCommitment: nil,
+			},
+			ToStateID: 0,
 		},
 		{
-			Hash:                 common.BigToHash(big.NewInt(4567)),
-			FromIndex:            0,
-			ToIndex:              1,
-			Amount:               models.MakeUint256(2),
-			Fee:                  models.MakeUint256(5),
-			Nonce:                models.MakeUint256(2),
-			Signature:            []byte{2, 3, 4, 5, 6},
-			IncludedInCommitment: nil,
+			TransactionBase: models.TransactionBase{
+				Hash:                 common.BigToHash(big.NewInt(4567)),
+				FromStateID:          0,
+				Amount:               models.MakeUint256(2),
+				Fee:                  models.MakeUint256(5),
+				Nonce:                models.MakeUint256(2),
+				Signature:            []byte{2, 3, 4, 5, 6},
+				IncludedInCommitment: nil,
+			},
+			ToStateID: 1,
 		},
 	}
 
-	err = s.storage.AddTransaction(&transactions[0])
+	err = s.storage.AddTransfer(&transfers[0])
 	s.NoError(err)
-	err = s.storage.AddTransaction(&transactions[1])
+	err = s.storage.AddTransfer(&transfers[1])
 	s.NoError(err)
-	err = s.storage.AddTransaction(&transactions[2])
+	err = s.storage.AddTransfer(&transfers[2])
 	s.NoError(err)
-	err = s.storage.AddTransaction(&transactions[3])
-	s.NoError(err)
-
-	userTransactions, err := s.api.GetTransactions(&account.PublicKey)
+	err = s.storage.AddTransfer(&transfers[3])
 	s.NoError(err)
 
-	s.Len(userTransactions, 3)
-	s.Equal(userTransactions[0].Transaction.Hash, transactions[0].Hash)
-	s.Equal(userTransactions[1].Transaction.Hash, transactions[1].Hash)
-	s.Equal(userTransactions[2].Transaction.Hash, transactions[3].Hash)
+	userTransfers, err := s.api.GetTransfers(&account.PublicKey)
+	s.NoError(err)
+
+	s.Len(userTransfers, 3)
+	s.Equal(userTransfers[0].Transfer.Hash, transfers[0].Hash)
+	s.Equal(userTransfers[1].Transfer.Hash, transfers[1].Hash)
+	s.Equal(userTransfers[2].Transfer.Hash, transfers[3].Hash)
 }
 
-func TestGetTransactionsTestSuite(t *testing.T) {
-	suite.Run(t, new(GetTransactionsTestSuite))
+func TestGetTransfersTestSuite(t *testing.T) {
+	suite.Run(t, new(GetTransfersTestSuite))
 }
