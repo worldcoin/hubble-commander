@@ -47,16 +47,16 @@ func (s *DBTestSuite) TestMigrations() {
 
 	s.NoError(migrator.Up())
 
-	res := make([]models.Transaction, 0, 1)
+	res := make([]models.Batch, 0, 1)
 	err = s.db.Query(
-		sq.Select("*").From("transaction"),
+		sq.Select("*").From("batch"),
 	).Into(&res)
 	s.NoError(err)
 
 	s.NoError(migrator.Down())
 
 	err = s.db.Query(
-		sq.Select("*").From("transaction"),
+		sq.Select("*").From("batch"),
 	).Into(&res)
 	s.Error(err)
 }
