@@ -8,7 +8,6 @@ import (
 
 type Create2Transfer struct {
 	FromStateID *uint32
-	ToStateID   *uint32
 	ToPubkeyID  *uint32
 	Amount      *models.Uint256
 	Fee         *models.Uint256
@@ -19,7 +18,6 @@ type Create2Transfer struct {
 type create2transferWithType struct {
 	Type        uint8
 	FromStateID *uint32
-	ToStateID   *uint32
 	ToPubkeyID  *uint32
 	Amount      *models.Uint256
 	Fee         *models.Uint256
@@ -31,7 +29,6 @@ func (t Create2Transfer) MarshalJSON() ([]byte, error) {
 	transfer := create2transferWithType{
 		Type:        3,
 		FromStateID: t.FromStateID,
-		ToStateID:   t.ToStateID,
 		ToPubkeyID:  t.ToPubkeyID,
 		Amount:      t.Amount,
 		Fee:         t.Fee,
@@ -50,7 +47,6 @@ func (t *Create2Transfer) UnmarshalJSON(bytes []byte) error {
 
 	*t = Create2Transfer{
 		FromStateID: transfer.FromStateID,
-		ToStateID:   transfer.ToStateID,
 		ToPubkeyID:  transfer.ToPubkeyID,
 		Amount:      transfer.Amount,
 		Fee:         transfer.Fee,
