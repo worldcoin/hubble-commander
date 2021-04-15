@@ -9,6 +9,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+var ChainTimeout = 5 * time.Minute
+
 func WaitToBeMined(c ChainBackend, tx *types.Transaction) (*types.Receipt, error) {
 	begin := time.Now()
 	for {
@@ -21,7 +23,7 @@ func WaitToBeMined(c ChainBackend, tx *types.Transaction) (*types.Receipt, error
 			return receipt, nil
 		}
 
-		if time.Since(begin) > 5*time.Minute {
+		if time.Since(begin) > ChainTimeout {
 			return nil, errors.Errorf("timeout on waiting for transcation to be mined")
 		}
 	}
