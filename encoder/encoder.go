@@ -107,3 +107,17 @@ func SerializeTransactions(txs []models.Transaction) ([]byte, error) {
 
 	return buf, nil
 }
+
+func SerializeTransfers(transfers []models.Transfer) ([]byte, error) {
+	buf := make([]byte, 0, len(transfers)*12)
+
+	for i := range transfers {
+		encoded, err := EncodeTransfer(&transfers[i])
+		if err != nil {
+			return nil, err
+		}
+		buf = append(buf, encoded...)
+	}
+
+	return buf, nil
+}

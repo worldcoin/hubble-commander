@@ -10,7 +10,7 @@ import (
 )
 
 func createCommitments(
-	pendingTransactions []models.Transaction,
+	pendingTransfers []models.Transfer,
 	storage *st.Storage,
 	cfg *config.RollupConfig,
 ) ([]models.Commitment, error) {
@@ -27,12 +27,12 @@ func createCommitments(
 			return nil, err
 		}
 
-		includedTransactions, err := ApplyTransactions(storage, pendingTransactions, cfg)
+		includedTransfers, err := ApplyTransfers(storage, pendingTransfers, cfg)
 		if err != nil {
 			return nil, err
 		}
 
-		if len(includedTransactions) < int(cfg.TxsPerCommitment) {
+		if len(includedTransfers) < int(cfg.TxsPerCommitment) {
 			err = stateTree.RevertTo(*initialStateRoot)
 			if err != nil {
 				return nil, err
@@ -40,17 +40,17 @@ func createCommitments(
 			break
 		}
 
-		pendingTransactions = removeTransactions(pendingTransactions, includedTransactions)
+		pendingTransfers = removeTransfer(pendingTransfers, includedTransfers)
 
-		log.Printf("Creating a commitment from %d transactions", len(includedTransactions))
-		commitment, err := createAndStoreCommitment(storage, includedTransactions, cfg.FeeReceiverIndex)
+		log.Printf("Creating a commitment from %d transactions", len(includedTransfers))
+		commitment, err := createAndStoreCommitment(storage, includedTransfers, cfg.FeeReceiverIndex)
 		if err != nil {
 			return nil, err
 		}
 
 		commitments = append(commitments, *commitment)
 
-		err = markTransactionsAsIncluded(storage, includedTransactions, commitment.ID)
+		err = markTransactionsAsIncluded(storage, includedTransfers, commitment.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -59,32 +59,32 @@ func createCommitments(
 	return commitments, nil
 }
 
-func removeTransactions(txList, toRemove []models.Transaction) []models.Transaction {
+func removeTransfer(transferList, toRemove []models.Transfer) []models.Transfer {
 	outputIndex := 0
-	for i := range txList {
-		tx := &txList[i]
-		if !transactionExists(toRemove, tx) {
-			txList[outputIndex] = *tx
+	for i := range transferList {
+		transfer := &transferList[i]
+		if !transactionExists(toRemove, transfer) {
+			transferList[outputIndex] = *transfer
 			outputIndex++
 		}
 	}
 
-	return txList[:outputIndex]
+	return transferList[:outputIndex]
 }
 
-func transactionExists(txList []models.Transaction, tx *models.Transaction) bool {
-	for i := range txList {
-		if txList[i].Hash == tx.Hash {
+func transactionExists(transferList []models.Transfer, tx *models.Transfer) bool {
+	for i := range transferList {
+		if transferList[i].Hash == tx.Hash {
 			return true
 		}
 	}
 	return false
 }
 
-func createAndStoreCommitment(storage *st.Storage, txs []models.Transaction, feeReceiverIndex uint32) (*models.Commitment, error) {
+func createAndStoreCommitment(storage *st.Storage, transfers []models.Transfer, feeReceiverIndex uint32) (*models.Commitment, error) {
 	combinedSignature := models.MakeSignature(1, 2) // TODO: Actually combine signatures
 
-	serializedTxs, err := encoder.SerializeTransactions(txs)
+	serializedTxs, err := encoder.SerializeTransfers(transfers)
 	if err != nil {
 		return nil, err
 	}
@@ -111,9 +111,9 @@ func createAndStoreCommitment(storage *st.Storage, txs []models.Transaction, fee
 	return &commitment, nil
 }
 
-func markTransactionsAsIncluded(storage *st.Storage, txs []models.Transaction, commitmentID int32) error {
-	for i := range txs {
-		err := storage.MarkTransactionAsIncluded(txs[i].Hash, commitmentID)
+func markTransactionsAsIncluded(storage *st.Storage, transfers []models.Transfer, commitmentID int32) error {
+	for i := range transfers {
+		err := storage.MarkTransactionAsIncluded(transfers[i].Hash, commitmentID)
 		if err != nil {
 			return err
 		}

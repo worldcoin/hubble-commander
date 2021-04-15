@@ -19,19 +19,19 @@ var (
 	ErrBalanceTooLow         = errors.New("amount exceeds balance")
 )
 
-func ApplyTransfer(stateTree *storage.StateTree, tx *models.Transaction, feeReceiverTokenIndex models.Uint256) (txError, appError error) {
+func ApplyTransfer(stateTree *storage.StateTree, transfer *models.Transfer, feeReceiverTokenIndex models.Uint256) (txError, appError error) {
 	if stateTree == nil {
 		return nil, ErrStateTreeIsNil
 	}
-	if tx == nil {
+	if transfer == nil {
 		return nil, ErrTransactionIsNil
 	}
 
-	senderLeaf, err := stateTree.Leaf(tx.FromIndex)
+	senderLeaf, err := stateTree.Leaf(transfer.FromStateID)
 	if err != nil {
 		return nil, err
 	}
-	receiverLeaf, err := stateTree.Leaf(tx.ToIndex)
+	receiverLeaf, err := stateTree.Leaf(transfer.ToStateID)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func ApplyTransfer(stateTree *storage.StateTree, tx *models.Transaction, feeRece
 	newSenderState, newReceiverState, err := CalculateStateAfterTransfer(
 		&senderState,
 		&receiverState,
-		tx,
+		transfer,
 	)
 	if err != nil {
 		return err, nil
@@ -59,11 +59,11 @@ func ApplyTransfer(stateTree *storage.StateTree, tx *models.Transaction, feeRece
 		return nil, nil
 	}
 
-	err = stateTree.Set(tx.FromIndex, &newSenderState)
+	err = stateTree.Set(transfer.FromStateID, &newSenderState)
 	if err != nil {
 		return nil, err
 	}
-	err = stateTree.Set(tx.ToIndex, &newReceiverState)
+	err = stateTree.Set(transfer.ToStateID, &newReceiverState)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func ApplyTransfer(stateTree *storage.StateTree, tx *models.Transaction, feeRece
 func CalculateStateAfterTransfer(
 	senderState,
 	receiverState *models.UserState,
-	tx *models.Transaction,
+	transfer *models.Transfer,
 ) (
 	newSenderState models.UserState,
 	newReceiverState models.UserState,
@@ -82,7 +82,7 @@ func CalculateStateAfterTransfer(
 ) {
 	// TODO: Signature validation
 
-	comparison := tx.Nonce.Cmp(&senderState.Nonce.Int)
+	comparison := transfer.Nonce.Cmp(&senderState.Nonce.Int)
 	if comparison > 0 {
 		err = ErrNonceTooHigh
 		return
@@ -92,7 +92,7 @@ func CalculateStateAfterTransfer(
 	}
 
 	totalAmount := big.NewInt(0)
-	totalAmount.Add(&tx.Amount.Int, &tx.Fee.Int)
+	totalAmount.Add(&transfer.Amount.Int, &transfer.Fee.Int)
 
 	if senderState.Balance.Cmp(totalAmount) < 0 {
 		err = ErrBalanceTooLow
@@ -106,7 +106,7 @@ func CalculateStateAfterTransfer(
 
 	newSenderState.Balance.Sub(&senderState.Balance.Int, totalAmount)
 
-	newReceiverState.Balance.Add(&receiverState.Balance.Int, &tx.Amount.Int)
+	newReceiverState.Balance.Add(&receiverState.Balance.Int, &transfer.Amount.Int)
 
 	return newSenderState, newReceiverState, nil
 }

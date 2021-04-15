@@ -42,12 +42,12 @@ func createAndSubmitBatch(storage *st.Storage, client *eth.Client, cfg *config.R
 	}
 	defer tx.Rollback(&err)
 
-	pendingTransactions, err := storage.GetPendingTransactions()
+	pendingTransfers, err := storage.GetPendingTransfers()
 	if err != nil {
 		return err
 	}
 
-	commitments, err := createCommitments(pendingTransactions, txStorage, cfg)
+	commitments, err := createCommitments(pendingTransfers, txStorage, cfg)
 	if err != nil {
 		return err
 	}
