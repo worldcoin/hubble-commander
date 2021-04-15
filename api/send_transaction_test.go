@@ -145,12 +145,28 @@ func (s *SendTransactionTestSuite) TestApi_SendTransaction_ValidatesNonceTooLow_
 	s.Equal(ErrNonceTooLow, err)
 }
 
-func (s *SendTransactionTestSuite) TestApi_SendTransaction_ValidatesFee() {
+func (s *SendTransactionTestSuite) TestApi_SendTransaction_ValidatesFeeValue() {
 	transferWithZeroFee := s.transfer
 	transferWithZeroFee.Fee = models.NewUint256(0)
 
 	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithZeroFee))
 	s.Equal(ErrFeeTooLow, err)
+}
+
+func (s *SendTransactionTestSuite) TestApi_SendTransaction_ValidatesFeeEncodability() {
+	transferWithBadFee := s.transfer
+	transferWithBadFee.Fee = models.NewUint256(66666666)
+
+	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithBadFee))
+	s.Equal(NewNotDecimalEncodableError("fee"), err)
+}
+
+func (s *SendTransactionTestSuite) TestApi_SendTransaction_ValidatesAmountEncodability() {
+	transferWithBadAmount := s.transfer
+	transferWithBadAmount.Amount = models.NewUint256(66666666)
+
+	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithBadAmount))
+	s.Equal(NewNotDecimalEncodableError("amount"), err)
 }
 
 func (s *SendTransactionTestSuite) TestApi_SendTransaction_ValidatesBalance() {
