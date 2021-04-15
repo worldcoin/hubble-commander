@@ -26,10 +26,10 @@ var (
 type CalculateTransferStatusTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	db      *db.TestDB
-	storage *st.Storage
-	sim     *simulator.Simulator
-	transfer      *models.Transfer
+	db       *db.TestDB
+	storage  *st.Storage
+	sim      *simulator.Simulator
+	transfer *models.Transfer
 }
 
 func (s *CalculateTransferStatusTestSuite) SetupSuite() {
@@ -61,10 +61,10 @@ func (s *CalculateTransferStatusTestSuite) SetupTest() {
 	transfer := &models.Transfer{
 		FromStateID: 1,
 		ToStateID:   2,
-		Amount:    *models.NewUint256(50),
-		Fee:       *models.NewUint256(10),
-		Nonce:     *models.NewUint256(0),
-		Signature: []byte{1, 2, 3, 4},
+		Amount:      *models.NewUint256(50),
+		Fee:         *models.NewUint256(10),
+		Nonce:       *models.NewUint256(0),
+		Signature:   []byte{1, 2, 3, 4},
 	}
 
 	s.transfer = transfer

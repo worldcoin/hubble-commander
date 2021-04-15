@@ -129,8 +129,8 @@ func (s *GetTransfersTestSuite) TestApi_GetTransfers() {
 	transfers := []models.Transfer{
 		{
 			Hash:                 common.BigToHash(big.NewInt(1234)),
-			FromStateID:            0,
-			ToStateID:              1,
+			FromStateID:          0,
+			ToStateID:            1,
 			Amount:               models.MakeUint256(1),
 			Fee:                  models.MakeUint256(5),
 			Nonce:                models.MakeUint256(0),
@@ -139,8 +139,8 @@ func (s *GetTransfersTestSuite) TestApi_GetTransfers() {
 		},
 		{
 			Hash:                 common.BigToHash(big.NewInt(2345)),
-			FromStateID:            0,
-			ToStateID:              1,
+			FromStateID:          0,
+			ToStateID:            1,
 			Amount:               models.MakeUint256(2),
 			Fee:                  models.MakeUint256(5),
 			Nonce:                models.MakeUint256(1),
@@ -149,8 +149,8 @@ func (s *GetTransfersTestSuite) TestApi_GetTransfers() {
 		},
 		{
 			Hash:                 common.BigToHash(big.NewInt(3456)),
-			FromStateID:            1,
-			ToStateID:              0,
+			FromStateID:          1,
+			ToStateID:            0,
 			Amount:               models.MakeUint256(3),
 			Fee:                  models.MakeUint256(5),
 			Nonce:                models.MakeUint256(0),
@@ -159,8 +159,8 @@ func (s *GetTransfersTestSuite) TestApi_GetTransfers() {
 		},
 		{
 			Hash:                 common.BigToHash(big.NewInt(4567)),
-			FromStateID:            0,
-			ToStateID:              1,
+			FromStateID:          0,
+			ToStateID:            1,
 			Amount:               models.MakeUint256(2),
 			Fee:                  models.MakeUint256(5),
 			Nonce:                models.MakeUint256(2),

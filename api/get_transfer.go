@@ -19,7 +19,7 @@ func (a *API) GetTransfer(hash common.Hash) (*models.TransferReceipt, error) {
 
 	returnTx := &models.TransferReceipt{
 		Transfer: *transfer,
-		Status:      *status,
+		Status:   *status,
 	}
 
 	return returnTx, nil

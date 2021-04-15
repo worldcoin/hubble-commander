@@ -6,7 +6,7 @@ const (
 	Pending TransferStatus = iota + 1000
 	Committed
 	InBatch
-	Finalised                   // nolint:misspell
+	Finalised                // nolint:misspell
 	Error     TransferStatus = 5000
 )
 

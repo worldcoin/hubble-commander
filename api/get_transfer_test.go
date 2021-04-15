@@ -15,9 +15,9 @@ import (
 type GetTransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	api *API
-	db  *db.TestDB
-	transfer  *models.Transfer
+	api      *API
+	db       *db.TestDB
+	transfer *models.Transfer
 }
 
 func (s *GetTransferTestSuite) SetupSuite() {
@@ -46,10 +46,10 @@ func (s *GetTransferTestSuite) SetupTest() {
 	transfer := &models.Transfer{
 		FromStateID: 1,
 		ToStateID:   2,
-		Amount:    *models.NewUint256(50),
-		Fee:       *models.NewUint256(10),
-		Nonce:     *models.NewUint256(0),
-		Signature: []byte{1, 2, 3, 4},
+		Amount:      *models.NewUint256(50),
+		Fee:         *models.NewUint256(10),
+		Nonce:       *models.NewUint256(0),
+		Signature:   []byte{1, 2, 3, 4},
 	}
 
 	s.transfer = transfer

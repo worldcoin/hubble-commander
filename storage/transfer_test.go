@@ -198,7 +198,6 @@ func (s *TransferTestSuite) Test_GetTransfersByPublicKey() {
 	s.Contains(userTransactions, transfer4)
 }
 
-
 func (s *TransferTestSuite) Test_SetTransactionError() {
 	err := s.storage.AddTransfer(&transfer)
 	s.NoError(err)

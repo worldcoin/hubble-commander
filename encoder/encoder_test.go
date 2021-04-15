@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
-	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
+	contractTransfer "github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
 	testtx "github.com/Worldcoin/hubble-commander/contracts/test/tx"
 	"github.com/Worldcoin/hubble-commander/contracts/test/types"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
@@ -21,7 +21,7 @@ type EncoderTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	sim       *simulator.Simulator
-	transfer  *transfer.FrontendTransfer
+	transfer  *contractTransfer.FrontendTransfer
 	generic   *generic.FrontendGeneric
 	testTx    *testtx.TestTx
 	testTypes *types.TestTypes
@@ -60,7 +60,7 @@ func (s *EncoderTestSuite) TestEncodeTransfer() {
 		Nonce:       models.MakeUint256(6),
 	})
 	s.NoError(err)
-	expected, err := s.transfer.Encode(nil, transfer.OffchainTransfer{
+	expected, err := s.transfer.Encode(nil, contractTransfer.OffchainTransfer{
 		TxType:    big.NewInt(1),
 		FromIndex: big.NewInt(2),
 		ToIndex:   big.NewInt(3),
@@ -111,8 +111,8 @@ func (s *EncoderTestSuite) TestEncodeTransferForCommitment() {
 	transfer := &models.Transfer{
 		FromStateID: 1,
 		ToStateID:   2,
-		Amount:    models.MakeUint256(50),
-		Fee:       models.MakeUint256(10),
+		Amount:      models.MakeUint256(50),
+		Fee:         models.MakeUint256(10),
 	}
 
 	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{newTxTransfer(transfer)})
@@ -128,14 +128,14 @@ func (s *EncoderTestSuite) TestSerializeTransfers() {
 	transfer := models.Transfer{
 		FromStateID: 1,
 		ToStateID:   2,
-		Amount:    models.MakeUint256(50),
-		Fee:       models.MakeUint256(10),
+		Amount:      models.MakeUint256(50),
+		Fee:         models.MakeUint256(10),
 	}
 	transfer2 := models.Transfer{
 		FromStateID: 2,
 		ToStateID:   3,
-		Amount:    models.MakeUint256(200),
-		Fee:       models.MakeUint256(10),
+		Amount:      models.MakeUint256(200),
+		Fee:         models.MakeUint256(10),
 	}
 
 	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{newTxTransfer(&transfer), newTxTransfer(&transfer2)})

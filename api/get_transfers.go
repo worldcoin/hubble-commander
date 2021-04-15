@@ -19,7 +19,7 @@ func (a *API) GetTransfers(publicKey *models.PublicKey) ([]models.TransferReceip
 		}
 		returnTransfer := &models.TransferReceipt{
 			Transfer: transfers[i],
-			Status:      *status,
+			Status:   *status,
 		}
 		userTransfers = append(userTransfers, *returnTransfer)
 	}

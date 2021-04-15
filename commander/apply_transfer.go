@@ -19,7 +19,11 @@ var (
 	ErrBalanceTooLow         = errors.New("amount exceeds balance")
 )
 
-func ApplyTransfer(stateTree *storage.StateTree, transfer *models.Transfer, feeReceiverTokenIndex models.Uint256) (transferError, appError error) {
+func ApplyTransfer(
+	stateTree *storage.StateTree,
+	transfer *models.Transfer,
+	feeReceiverTokenIndex models.Uint256,
+) (transferError, appError error) {
 	if stateTree == nil {
 		return nil, ErrStateTreeIsNil
 	}
