@@ -13,6 +13,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	ethRollup "github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
@@ -178,7 +179,7 @@ func bootstrapState(
 		return nil, err
 	}
 
-	contracts, err := deployer.DeployConfiguredRollup(chain, deployer.DeploymentConfig{
+	contracts, err := ethRollup.DeployConfiguredRollup(chain, ethRollup.DeploymentConfig{
 		AccountRegistryAddress: accountRegistryAddress,
 		GenesisStateRoot:       stateRoot,
 	})

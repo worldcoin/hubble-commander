@@ -1,7 +1,7 @@
 package eth
 
 import (
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 )
 
@@ -16,7 +16,7 @@ func NewTestClient() (*TestClient, error) {
 		return nil, err
 	}
 
-	contracts, err := deployer.DeployRollup(sim)
+	contracts, err := rollup.DeployRollup(sim)
 	if err != nil {
 		return nil, err
 	}

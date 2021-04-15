@@ -1,6 +1,8 @@
-package deployer
+package rollup
 
 import (
+	"log"
+
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/create2transfer"
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
@@ -11,6 +13,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/transfer"
 	"github.com/Worldcoin/hubble-commander/contracts/vault"
+	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
@@ -41,8 +44,8 @@ type RollupContracts struct {
 	RollupAddress   common.Address
 }
 
-func DeployRollup(c ChainConnection) (*RollupContracts, error) {
-	accountRegistryAddress, _, err := DeployAccountRegistry(c)
+func DeployRollup(c deployer.ChainConnection) (*RollupContracts, error) {
+	accountRegistryAddress, _, err := deployer.DeployAccountRegistry(c)
 	if err != nil {
 		return nil, err
 	}
@@ -51,40 +54,77 @@ func DeployRollup(c ChainConnection) (*RollupContracts, error) {
 	})
 }
 
-func DeployConfiguredRollup(c ChainConnection, config DeploymentConfig) (*RollupContracts, error) {
+// nolint:funlen,gocyclo
+func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig) (*RollupContracts, error) {
 	fillWithDefaults(&config)
-	proofOfBurnAddress, _, proofOfBurn, err := proofofburn.DeployProofOfBurn(c.GetAccount(), c.GetBackend())
+
+	log.Println("Deploying ProofOfBurn")
+	proofOfBurnAddress, tx, proofOfBurn, err := proofofburn.DeployProofOfBurn(c.GetAccount(), c.GetBackend())
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	c.Commit()
+	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
 	}
 
-	tokenRegistryAddress, _, tokenRegistry, err := tokenregistry.DeployTokenRegistry(c.GetAccount(), c.GetBackend())
+	log.Println("Deploying TokenRegistry")
+	tokenRegistryAddress, tx, tokenRegistry, err := tokenregistry.DeployTokenRegistry(c.GetAccount(), c.GetBackend())
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	c.Commit()
+	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
 	}
 
-	spokeRegistryAddress, _, spokeRegistry, err := spokeregistry.DeploySpokeRegistry(c.GetAccount(), c.GetBackend())
+	log.Println("Deploying SpokeRegistry")
+	spokeRegistryAddress, tx, spokeRegistry, err := spokeregistry.DeploySpokeRegistry(c.GetAccount(), c.GetBackend())
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	c.Commit()
+	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
 	}
 
-	vaultAddress, _, vaultContract, err := vault.DeployVault(
+	log.Println("Deploying Vault")
+	vaultAddress, tx, vaultContract, err := vault.DeployVault(
 		c.GetAccount(),
 		c.GetBackend(),
 		tokenRegistryAddress,
 		spokeRegistryAddress,
 	)
 	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	c.Commit()
+	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
+	if err != nil {
 		return nil, err
 	}
 
-	depositManagerAddress, _, depositManager, err := depositmanager.DeployDepositManager(
+	log.Println("Deploying DepositManager")
+	depositManagerAddress, tx, depositManager, err := depositmanager.DeployDepositManager(
 		c.GetAccount(),
 		c.GetBackend(),
 		tokenRegistryAddress,
 		vaultAddress,
 		&config.MaxDepositSubtreeDepth.Int,
 	)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	c.Commit()
+	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
 	}
@@ -94,26 +134,46 @@ func DeployConfiguredRollup(c ChainConnection, config DeploymentConfig) (*Rollup
 		return nil, errors.WithStack(err)
 	}
 
-	transferAddress, _, transferContract, err := transfer.DeployTransfer(c.GetAccount(), c.GetBackend())
+	log.Println("Deploying Transfer")
+	transferAddress, tx, transferContract, err := transfer.DeployTransfer(c.GetAccount(), c.GetBackend())
 	if err != nil {
-		return nil, err
-	}
-
-	massMigrationAddress, _, massMigration, err := massmigration.DeployMassMigration(c.GetAccount(), c.GetBackend())
-	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	c.Commit()
-
-	create2TransferAddress, _, create2Transfer, err := create2transfer.DeployCreate2Transfer(c.GetAccount(), c.GetBackend())
+	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
 	}
 
+	log.Println("Deploying MassMigration")
+	massMigrationAddress, tx, massMigration, err := massmigration.DeployMassMigration(c.GetAccount(), c.GetBackend())
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	c.Commit()
+	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Println("Deploying Create2Transfer")
+	create2TransferAddress, tx, create2Transfer, err := create2transfer.DeployCreate2Transfer(c.GetAccount(), c.GetBackend())
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	c.Commit()
+	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Println("Deploying Rollup")
 	stateRoot := [32]byte{}
 	copy(stateRoot[:], config.GenesisStateRoot.Bytes())
-	rollupAddress, _, rollupContract, err := rollup.DeployRollup(
+	rollupAddress, tx, rollupContract, err := rollup.DeployRollup(
 		c.GetAccount(),
 		c.GetBackend(),
 		proofOfBurnAddress,
@@ -129,10 +189,14 @@ func DeployConfiguredRollup(c ChainConnection, config DeploymentConfig) (*Rollup
 		&config.MaxTxsPerCommit.Int,
 	)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	c.Commit()
+	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
+	if err != nil {
+		return nil, err
+	}
 
 	return &RollupContracts{
 		Config:          config,

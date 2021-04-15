@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
+	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -91,7 +92,7 @@ func registerGenesisAccount(
 					AccountIndex:   accountIndex,
 				}, nil
 			}
-		case <-time.After(500 * time.Millisecond):
+		case <-time.After(deployer.ChainTimeout):
 			return nil, errors.WithStack(fmt.Errorf("timeout"))
 		}
 	}

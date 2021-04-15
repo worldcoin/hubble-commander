@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/contracts/test/types"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
@@ -29,7 +29,7 @@ func (s *DecoderTestSuite) SetupTest() {
 	s.NoError(err)
 	s.sim = sim
 
-	test, err := deployer.DeployTest(sim)
+	test, err := testutils.DeployTest(sim)
 	s.NoError(err)
 
 	s.testTypes = test.TestTypes
