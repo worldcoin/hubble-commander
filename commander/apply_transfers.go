@@ -45,7 +45,7 @@ func ApplyTransfers(
 			if err != nil {
 				log.Printf("Setting transaction error failed: %s", err)
 			}
-			log.Printf("Transaction failed: %s", txError)
+			log.Printf("Transfer failed: %s", txError)
 		}
 
 		if uint32(len(validTransfers)) == cfg.TxsPerCommitment {
