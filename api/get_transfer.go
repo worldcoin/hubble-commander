@@ -6,19 +6,19 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (a *API) GetTransaction(hash common.Hash) (*models.TransactionReceipt, error) {
-	tx, err := a.storage.GetTransaction(hash)
+func (a *API) GetTransfer(hash common.Hash) (*models.TransferReceipt, error) {
+	transfer, err := a.storage.GetTransfer(hash)
 	if err != nil {
 		return nil, err
 	}
 
-	status, err := CalculateTransactionStatus(a.storage, tx, commander.LatestBlockNumber)
+	status, err := CalculateTransferStatus(a.storage, transfer, commander.LatestBlockNumber)
 	if err != nil {
 		return nil, err
 	}
 
-	returnTx := &models.TransactionReceipt{
-		Transaction: *tx,
+	returnTx := &models.TransferReceipt{
+		Transfer: *transfer,
 		Status:      *status,
 	}
 

@@ -1,16 +1,16 @@
 package models
 
-type TransactionStatus uint
+type TransferStatus uint
 
 const (
-	Pending TransactionStatus = iota + 1000
+	Pending TransferStatus = iota + 1000
 	Committed
 	InBatch
 	Finalised                   // nolint:misspell
-	Error     TransactionStatus = 5000
+	Error     TransferStatus = 5000
 )
 
-var TransactionStatuses = map[TransactionStatus]string{
+var TransferStatuses = map[TransferStatus]string{
 	Pending:   "PENDING",
 	Committed: "COMMITTED",
 	InBatch:   "IN_BATCH",
@@ -18,12 +18,12 @@ var TransactionStatuses = map[TransactionStatus]string{
 	Error:     "ERROR",
 }
 
-func (s TransactionStatus) Ref() *TransactionStatus {
+func (s TransferStatus) Ref() *TransferStatus {
 	return &s
 }
 
-func (s TransactionStatus) String() string {
-	msg, exists := TransactionStatuses[s]
+func (s TransferStatus) String() string {
+	msg, exists := TransferStatuses[s]
 	if !exists {
 		return "UNKNOWN"
 	}
