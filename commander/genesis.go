@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -13,17 +14,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type GenesisAccount struct {
-	PublicKey models.PublicKey
-	Balance   models.Uint256
-}
-
-type RegisteredGenesisAccount struct {
-	GenesisAccount
-	PubkeyID uint32
-}
-
-func PopulateGenesisAccounts(stateTree *storage.StateTree, accounts []RegisteredGenesisAccount) error {
+func PopulateGenesisAccounts(stateTree *storage.StateTree, accounts []models.RegisteredGenesisAccount) error {
 	for i := range accounts {
 		account := accounts[i]
 		err := stateTree.Set(uint32(i), &models.UserState{
@@ -42,8 +33,8 @@ func PopulateGenesisAccounts(stateTree *storage.StateTree, accounts []Registered
 func RegisterGenesisAccounts(
 	opts *bind.TransactOpts,
 	accountRegistry *accountregistry.AccountRegistry,
-	accounts []GenesisAccount,
-) ([]RegisteredGenesisAccount, error) {
+	accounts []models.GenesisAccount,
+) ([]models.RegisteredGenesisAccount, error) {
 	ev := make(chan *accountregistry.AccountRegistryPubkeyRegistered)
 
 	sub, err := accountRegistry.WatchPubkeyRegistered(&bind.WatchOpts{}, ev)
@@ -52,15 +43,20 @@ func RegisterGenesisAccounts(
 	}
 	defer sub.Unsubscribe()
 
-	registeredAccounts := make([]RegisteredGenesisAccount, 0, len(accounts))
+	registeredAccounts := make([]models.RegisteredGenesisAccount, 0, len(accounts))
 
 	for i := range accounts {
-		registeredAccount, err := registerGenesisAccount(opts, accountRegistry, &accounts[i], ev)
+		wallet, err := bls.NewWallet(accounts[i].PrivateKey, bls.Domain{1, 2, 3})
 		if err != nil {
 			return nil, err
 		}
 
-		log.Printf("Registered genesis pubkey %s at %d", registeredAccount.PublicKey.String(), registeredAccount.PubkeyID)
+		registeredAccount, err := registerGenesisAccount(opts, accountRegistry, &accounts[i], wallet.PublicKey(), ev)
+		if err != nil {
+			return nil, err
+		}
+
+		log.Printf("Registered genesis pubkey %s at %d", wallet.PublicKey().String(), registeredAccount.PubkeyID)
 
 		registeredAccounts = append(registeredAccounts, *registeredAccount)
 	}
@@ -71,10 +67,11 @@ func RegisterGenesisAccounts(
 func registerGenesisAccount(
 	opts *bind.TransactOpts,
 	accountRegistry *accountregistry.AccountRegistry,
-	account *GenesisAccount,
+	account *models.GenesisAccount,
+	publicKey *models.PublicKey,
 	ev chan *accountregistry.AccountRegistryPubkeyRegistered,
-) (*RegisteredGenesisAccount, error) {
-	tx, err := accountRegistry.Register(opts, account.PublicKey.BigInts())
+) (*models.RegisteredGenesisAccount, error) {
+	tx, err := accountRegistry.Register(opts, publicKey.BigInts())
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -87,7 +84,7 @@ func registerGenesisAccount(
 			}
 			if event.Raw.TxHash == tx.Hash() {
 				pubkeyID := uint32(event.PubkeyID.Uint64())
-				return &RegisteredGenesisAccount{
+				return &models.RegisteredGenesisAccount{
 					GenesisAccount: *account,
 					PubkeyID:       pubkeyID,
 				}, nil

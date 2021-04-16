@@ -20,22 +20,18 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 )
 
-var genesisAccounts = []commander.GenesisAccount{
+var genesisAccounts = []models.GenesisAccount{
 	{
-		PublicKey: models.PublicKey{1, 2, 3},
-		Balance:   models.MakeUint256(1000),
+		Balance: models.MakeUint256(1000),
 	},
 	{
-		PublicKey: models.PublicKey{2, 3, 4},
-		Balance:   models.MakeUint256(1000),
+		Balance: models.MakeUint256(1000),
 	},
 	{
-		PublicKey: models.PublicKey{3, 4, 5},
-		Balance:   models.MakeUint256(1000),
+		Balance: models.MakeUint256(1000),
 	},
 	{
-		PublicKey: models.PublicKey{2, 3, 4},
-		Balance:   models.MakeUint256(1000),
+		Balance: models.MakeUint256(1000),
 	},
 }
 
@@ -156,7 +152,7 @@ func getDeployer(cfg *config.EthereumConfig) (deployer.ChainConnection, error) {
 func bootstrapState(
 	stateTree *st.StateTree,
 	chain deployer.ChainConnection,
-	accounts []commander.GenesisAccount,
+	accounts []models.GenesisAccount,
 ) (*models.ChainState, error) {
 	accountRegistryAddress, accountRegistry, err := deployer.DeployAccountRegistry(chain)
 	if err != nil {
