@@ -131,12 +131,12 @@ func (s *TransferTestSuite) Test_GetUserTransfers_NoTransfers() {
 func (s *TransferTestSuite) Test_GetTransfersByPublicKey() {
 	accounts := []models.Account{
 		{
-			AccountIndex: 1,
-			PublicKey:    models.PublicKey{1, 2, 3},
+			PubkeyID:  1,
+			PublicKey: models.PublicKey{1, 2, 3},
 		},
 		{
-			AccountIndex: 3,
-			PublicKey:    models.PublicKey{1, 2, 3},
+			PubkeyID:  3,
+			PublicKey: models.PublicKey{1, 2, 3},
 		},
 	}
 	for i := range accounts {
@@ -146,28 +146,28 @@ func (s *TransferTestSuite) Test_GetTransfersByPublicKey() {
 
 	userStates := []models.UserState{
 		{
-			AccountIndex: accounts[0].AccountIndex,
-			TokenIndex:   models.MakeUint256(1),
-			Balance:      models.MakeUint256(420),
-			Nonce:        models.MakeUint256(0),
+			PubkeyID:   accounts[0].PubkeyID,
+			TokenIndex: models.MakeUint256(1),
+			Balance:    models.MakeUint256(420),
+			Nonce:      models.MakeUint256(0),
 		},
 		{
-			AccountIndex: 2,
-			TokenIndex:   models.MakeUint256(2),
-			Balance:      models.MakeUint256(500),
-			Nonce:        models.MakeUint256(0),
+			PubkeyID:   2,
+			TokenIndex: models.MakeUint256(2),
+			Balance:    models.MakeUint256(500),
+			Nonce:      models.MakeUint256(0),
 		},
 		{
-			AccountIndex: accounts[0].AccountIndex,
-			TokenIndex:   models.MakeUint256(25),
-			Balance:      models.MakeUint256(1),
-			Nonce:        models.MakeUint256(73),
+			PubkeyID:   accounts[0].PubkeyID,
+			TokenIndex: models.MakeUint256(25),
+			Balance:    models.MakeUint256(1),
+			Nonce:      models.MakeUint256(73),
 		},
 		{
-			AccountIndex: accounts[1].AccountIndex,
-			TokenIndex:   models.MakeUint256(30),
-			Balance:      models.MakeUint256(50),
-			Nonce:        models.MakeUint256(71),
+			PubkeyID:   accounts[1].PubkeyID,
+			TokenIndex: models.MakeUint256(30),
+			Balance:    models.MakeUint256(50),
+			Nonce:      models.MakeUint256(71),
 		},
 	}
 

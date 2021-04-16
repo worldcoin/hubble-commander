@@ -9,7 +9,7 @@ func (s *Storage) AddAccountIfNotExists(account *models.Account) error {
 	_, err := s.DB.Query(
 		s.QB.Insert("account").
 			Values(
-				account.AccountIndex,
+				account.PubkeyID,
 				account.PublicKey,
 			).
 			Suffix("ON CONFLICT DO NOTHING"),

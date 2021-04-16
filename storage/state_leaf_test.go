@@ -39,10 +39,10 @@ func (s *StateLeafTestSuite) Test_AddStateLeaf_AddAndRetrieve() {
 	leaf := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
-			AccountIndex: 1,
-			TokenIndex:   models.MakeUint256(1),
-			Balance:      models.MakeUint256(420),
-			Nonce:        models.MakeUint256(0),
+			PubkeyID:   1,
+			TokenIndex: models.MakeUint256(1),
+			Balance:    models.MakeUint256(420),
+			Nonce:      models.MakeUint256(0),
 		},
 	}
 	err := s.storage.AddStateLeaf(leaf)
@@ -68,52 +68,52 @@ func (s *StateLeafTestSuite) Test_GetStateLeaves_NoLeaves() {
 }
 
 func (s *StateLeafTestSuite) Test_GetStateLeaves() {
-	var accountIndex uint32 = 1
+	var pubkeyID uint32 = 1
 
 	leaves := []models.StateLeaf{
 		{
 			DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 			UserState: models.UserState{
-				AccountIndex: accountIndex,
-				TokenIndex:   models.MakeUint256(1),
-				Balance:      models.MakeUint256(420),
-				Nonce:        models.MakeUint256(0),
+				PubkeyID:   pubkeyID,
+				TokenIndex: models.MakeUint256(1),
+				Balance:    models.MakeUint256(420),
+				Nonce:      models.MakeUint256(0),
 			},
 		},
 		{
 			DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 			UserState: models.UserState{
-				AccountIndex: accountIndex,
-				TokenIndex:   models.MakeUint256(2),
-				Balance:      models.MakeUint256(500),
-				Nonce:        models.MakeUint256(0),
+				PubkeyID:   pubkeyID,
+				TokenIndex: models.MakeUint256(2),
+				Balance:    models.MakeUint256(500),
+				Nonce:      models.MakeUint256(0),
 			},
 		},
 		{
 			DataHash: common.BytesToHash([]byte{3, 4, 5, 6, 7}),
 			UserState: models.UserState{
-				AccountIndex: accountIndex,
-				TokenIndex:   models.MakeUint256(2),
-				Balance:      models.MakeUint256(500),
-				Nonce:        models.MakeUint256(1),
+				PubkeyID:   pubkeyID,
+				TokenIndex: models.MakeUint256(2),
+				Balance:    models.MakeUint256(500),
+				Nonce:      models.MakeUint256(1),
 			},
 		},
 		{
 			DataHash: common.BytesToHash([]byte{4, 5, 6, 7, 8}),
 			UserState: models.UserState{
-				AccountIndex: accountIndex,
-				TokenIndex:   models.MakeUint256(1),
-				Balance:      models.MakeUint256(500),
-				Nonce:        models.MakeUint256(0),
+				PubkeyID:   pubkeyID,
+				TokenIndex: models.MakeUint256(1),
+				Balance:    models.MakeUint256(500),
+				Nonce:      models.MakeUint256(0),
 			},
 		},
 		{
 			DataHash: common.BytesToHash([]byte{5, 6, 7, 8, 9}),
 			UserState: models.UserState{
-				AccountIndex: accountIndex,
-				TokenIndex:   models.MakeUint256(1),
-				Balance:      models.MakeUint256(505),
-				Nonce:        models.MakeUint256(0),
+				PubkeyID:   pubkeyID,
+				TokenIndex: models.MakeUint256(1),
+				Balance:    models.MakeUint256(505),
+				Nonce:      models.MakeUint256(0),
 			},
 		},
 	}
@@ -139,7 +139,7 @@ func (s *StateLeafTestSuite) Test_GetStateLeaves() {
 	})
 	s.NoError(err)
 
-	res, err := s.storage.GetStateLeaves(accountIndex)
+	res, err := s.storage.GetStateLeaves(pubkeyID)
 	s.NoError(err)
 
 	s.Len(res, 2)
@@ -150,12 +150,12 @@ func (s *StateLeafTestSuite) Test_GetStateLeaves() {
 func (s *StateLeafTestSuite) Test_GetUserStatesByPublicKey() {
 	accounts := []models.Account{
 		{
-			AccountIndex: 1,
-			PublicKey:    models.PublicKey{1, 2, 3},
+			PubkeyID:  1,
+			PublicKey: models.PublicKey{1, 2, 3},
 		},
 		{
-			AccountIndex: 3,
-			PublicKey:    models.PublicKey{1, 2, 3},
+			PubkeyID:  3,
+			PublicKey: models.PublicKey{1, 2, 3},
 		},
 	}
 
@@ -166,28 +166,28 @@ func (s *StateLeafTestSuite) Test_GetUserStatesByPublicKey() {
 
 	userStates := []models.UserState{
 		{
-			AccountIndex: accounts[0].AccountIndex,
-			TokenIndex:   models.MakeUint256(1),
-			Balance:      models.MakeUint256(420),
-			Nonce:        models.MakeUint256(0),
+			PubkeyID:   accounts[0].PubkeyID,
+			TokenIndex: models.MakeUint256(1),
+			Balance:    models.MakeUint256(420),
+			Nonce:      models.MakeUint256(0),
 		},
 		{
-			AccountIndex: 2,
-			TokenIndex:   models.MakeUint256(2),
-			Balance:      models.MakeUint256(500),
-			Nonce:        models.MakeUint256(0),
+			PubkeyID:   2,
+			TokenIndex: models.MakeUint256(2),
+			Balance:    models.MakeUint256(500),
+			Nonce:      models.MakeUint256(0),
 		},
 		{
-			AccountIndex: accounts[0].AccountIndex,
-			TokenIndex:   models.MakeUint256(25),
-			Balance:      models.MakeUint256(1),
-			Nonce:        models.MakeUint256(73),
+			PubkeyID:   accounts[0].PubkeyID,
+			TokenIndex: models.MakeUint256(25),
+			Balance:    models.MakeUint256(1),
+			Nonce:      models.MakeUint256(73),
 		},
 		{
-			AccountIndex: accounts[1].AccountIndex,
-			TokenIndex:   models.MakeUint256(25),
-			Balance:      models.MakeUint256(1),
-			Nonce:        models.MakeUint256(73),
+			PubkeyID:   accounts[1].PubkeyID,
+			TokenIndex: models.MakeUint256(25),
+			Balance:    models.MakeUint256(1),
+			Nonce:      models.MakeUint256(73),
 		},
 	}
 

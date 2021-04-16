@@ -33,10 +33,10 @@ func (s *GetTransferTestSuite) SetupTest() {
 	s.db = testDB
 
 	userState := models.UserState{
-		AccountIndex: 1,
-		TokenIndex:   models.MakeUint256(1),
-		Balance:      models.MakeUint256(420),
-		Nonce:        models.MakeUint256(0),
+		PubkeyID:   1,
+		TokenIndex: models.MakeUint256(1),
+		Balance:    models.MakeUint256(420),
+		Nonce:      models.MakeUint256(0),
 	}
 
 	tree := st.NewStateTree(storage)

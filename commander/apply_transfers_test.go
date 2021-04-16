@@ -37,22 +37,22 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 	s.tree = storage.NewStateTree(s.storage)
 
 	senderState := models.UserState{
-		AccountIndex: 1,
-		TokenIndex:   models.MakeUint256(1),
-		Balance:      models.MakeUint256(420),
-		Nonce:        models.MakeUint256(0),
+		PubkeyID:   1,
+		TokenIndex: models.MakeUint256(1),
+		Balance:    models.MakeUint256(420),
+		Nonce:      models.MakeUint256(0),
 	}
 	receiverState := models.UserState{
-		AccountIndex: 2,
-		TokenIndex:   models.MakeUint256(1),
-		Balance:      models.MakeUint256(0),
-		Nonce:        models.MakeUint256(0),
+		PubkeyID:   2,
+		TokenIndex: models.MakeUint256(1),
+		Balance:    models.MakeUint256(0),
+		Nonce:      models.MakeUint256(0),
 	}
 	feeReceiverState := models.UserState{
-		AccountIndex: 3,
-		TokenIndex:   models.MakeUint256(1),
-		Balance:      models.MakeUint256(1000),
-		Nonce:        models.MakeUint256(0),
+		PubkeyID:   3,
+		TokenIndex: models.MakeUint256(1),
+		Balance:    models.MakeUint256(1000),
+		Nonce:      models.MakeUint256(0),
 	}
 
 	err = s.tree.Set(1, &senderState)

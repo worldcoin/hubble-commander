@@ -20,17 +20,17 @@ type GenesisAccount struct {
 
 type RegisteredGenesisAccount struct {
 	GenesisAccount
-	AccountIndex uint32
+	PubkeyID uint32
 }
 
 func PopulateGenesisAccounts(stateTree *storage.StateTree, accounts []RegisteredGenesisAccount) error {
 	for i := range accounts {
 		account := accounts[i]
 		err := stateTree.Set(uint32(i), &models.UserState{
-			AccountIndex: account.AccountIndex,
-			TokenIndex:   models.MakeUint256(0),
-			Balance:      account.Balance,
-			Nonce:        models.MakeUint256(0),
+			PubkeyID:   account.PubkeyID,
+			TokenIndex: models.MakeUint256(0),
+			Balance:    account.Balance,
+			Nonce:      models.MakeUint256(0),
 		})
 		if err != nil {
 			return err
@@ -60,7 +60,7 @@ func RegisterGenesisAccounts(
 			return nil, err
 		}
 
-		log.Printf("Registered genesis pubkey %s at %d", registeredAccount.PublicKey.String(), registeredAccount.AccountIndex)
+		log.Printf("Registered genesis pubkey %s at %d", registeredAccount.PublicKey.String(), registeredAccount.PubkeyID)
 
 		registeredAccounts = append(registeredAccounts, *registeredAccount)
 	}
@@ -86,10 +86,10 @@ func registerGenesisAccount(
 				return nil, errors.WithStack(fmt.Errorf("account event watcher is closed"))
 			}
 			if event.Raw.TxHash == tx.Hash() {
-				accountIndex := uint32(event.PubkeyID.Uint64())
+				pubkeyID := uint32(event.PubkeyID.Uint64())
 				return &RegisteredGenesisAccount{
 					GenesisAccount: *account,
-					AccountIndex:   accountIndex,
+					PubkeyID:       pubkeyID,
 				}, nil
 			}
 		case <-time.After(deployer.ChainTimeout):

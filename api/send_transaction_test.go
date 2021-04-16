@@ -35,10 +35,10 @@ func (s *SendTransactionTestSuite) SetupTest() {
 	s.db = testDB
 
 	userState := models.UserState{
-		AccountIndex: 1,
-		TokenIndex:   models.MakeUint256(1),
-		Balance:      models.MakeUint256(420),
-		Nonce:        models.MakeUint256(0),
+		PubkeyID:   1,
+		TokenIndex: models.MakeUint256(1),
+		Balance:    models.MakeUint256(420),
+		Nonce:      models.MakeUint256(0),
 	}
 
 	err = s.tree.Set(1, &userState)
@@ -66,10 +66,10 @@ func (s *SendTransactionTestSuite) TestApi_SendTransaction_ReturnsNonNilHash() {
 
 func (s *SendTransactionTestSuite) TestApi_SendTransaction_VerifyNonce_TooLow() {
 	userState := models.UserState{
-		AccountIndex: 1,
-		TokenIndex:   models.MakeUint256(1),
-		Balance:      models.MakeUint256(420),
-		Nonce:        models.MakeUint256(1),
+		PubkeyID:   1,
+		TokenIndex: models.MakeUint256(1),
+		Balance:    models.MakeUint256(420),
+		Nonce:      models.MakeUint256(1),
 	}
 
 	err := s.tree.Set(2, &userState)

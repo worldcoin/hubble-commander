@@ -12,16 +12,16 @@ import (
 
 var (
 	senderState = models.UserState{
-		AccountIndex: 1,
-		TokenIndex:   models.MakeUint256(1),
-		Balance:      models.MakeUint256(420),
-		Nonce:        models.MakeUint256(0),
+		PubkeyID:   1,
+		TokenIndex: models.MakeUint256(1),
+		Balance:    models.MakeUint256(420),
+		Nonce:      models.MakeUint256(0),
 	}
 	receiverState = models.UserState{
-		AccountIndex: 2,
-		TokenIndex:   models.MakeUint256(1),
-		Balance:      models.MakeUint256(0),
-		Nonce:        models.MakeUint256(0),
+		PubkeyID:   2,
+		TokenIndex: models.MakeUint256(1),
+		Balance:    models.MakeUint256(0),
+		Nonce:      models.MakeUint256(0),
 	}
 )
 
@@ -138,8 +138,8 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer_Validation_TokenIndex() {
 		ToStateID: 2,
 	}
 
-	senderIndex := senderState.AccountIndex
-	receiverIndex := receiverState.AccountIndex
+	senderIndex := senderState.PubkeyID
+	receiverIndex := receiverState.PubkeyID
 
 	err := s.tree.Set(senderIndex, &senderState)
 	s.NoError(err)
@@ -162,8 +162,8 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer() {
 		ToStateID: 2,
 	}
 
-	senderIndex := senderState.AccountIndex
-	receiverIndex := receiverState.AccountIndex
+	senderIndex := senderState.PubkeyID
+	receiverIndex := receiverState.PubkeyID
 
 	err := s.tree.Set(senderIndex, &senderState)
 	s.NoError(err)
@@ -184,7 +184,7 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer() {
 }
 
 func (s *ApplyTransferTestSuite) Test_ApplyFee() {
-	receiverIndex := receiverState.AccountIndex
+	receiverIndex := receiverState.PubkeyID
 	err := s.tree.Set(receiverIndex, &receiverState)
 	s.NoError(err)
 

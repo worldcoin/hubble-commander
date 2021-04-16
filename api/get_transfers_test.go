@@ -44,8 +44,8 @@ func (s *GetTransfersTestSuite) TearDownTest() {
 
 func (s *GetTransfersTestSuite) TestApi_GetTransfer() {
 	account := models.Account{
-		AccountIndex: 1,
-		PublicKey:    models.PublicKey{1, 2, 3},
+		PubkeyID:  1,
+		PublicKey: models.PublicKey{1, 2, 3},
 	}
 
 	err := s.storage.AddAccountIfNotExists(&account)
@@ -53,16 +53,16 @@ func (s *GetTransfersTestSuite) TestApi_GetTransfer() {
 
 	userStates := []models.UserState{
 		{
-			AccountIndex: account.AccountIndex,
-			TokenIndex:   models.MakeUint256(1),
-			Balance:      models.MakeUint256(420),
-			Nonce:        models.MakeUint256(0),
+			PubkeyID:   account.PubkeyID,
+			TokenIndex: models.MakeUint256(1),
+			Balance:    models.MakeUint256(420),
+			Nonce:      models.MakeUint256(0),
 		},
 		{
-			AccountIndex: 2,
-			TokenIndex:   models.MakeUint256(2),
-			Balance:      models.MakeUint256(500),
-			Nonce:        models.MakeUint256(0),
+			PubkeyID:   2,
+			TokenIndex: models.MakeUint256(2),
+			Balance:    models.MakeUint256(500),
+			Nonce:      models.MakeUint256(0),
 		},
 	}
 
@@ -92,8 +92,8 @@ func (s *GetTransfersTestSuite) TestApi_GetTransfer() {
 // nolint:funlen
 func (s *GetTransfersTestSuite) TestApi_GetTransfers() {
 	account := models.Account{
-		AccountIndex: 1,
-		PublicKey:    models.PublicKey{1, 2, 3},
+		PubkeyID:  1,
+		PublicKey: models.PublicKey{1, 2, 3},
 	}
 
 	err := s.storage.AddAccountIfNotExists(&account)
@@ -101,22 +101,22 @@ func (s *GetTransfersTestSuite) TestApi_GetTransfers() {
 
 	userStates := []models.UserState{
 		{
-			AccountIndex: account.AccountIndex,
-			TokenIndex:   models.MakeUint256(1),
-			Balance:      models.MakeUint256(420),
-			Nonce:        models.MakeUint256(0),
+			PubkeyID:   account.PubkeyID,
+			TokenIndex: models.MakeUint256(1),
+			Balance:    models.MakeUint256(420),
+			Nonce:      models.MakeUint256(0),
 		},
 		{
-			AccountIndex: 2,
-			TokenIndex:   models.MakeUint256(2),
-			Balance:      models.MakeUint256(500),
-			Nonce:        models.MakeUint256(0),
+			PubkeyID:   2,
+			TokenIndex: models.MakeUint256(2),
+			Balance:    models.MakeUint256(500),
+			Nonce:      models.MakeUint256(0),
 		},
 		{
-			AccountIndex: account.AccountIndex,
-			TokenIndex:   models.MakeUint256(25),
-			Balance:      models.MakeUint256(1),
-			Nonce:        models.MakeUint256(73),
+			PubkeyID:   account.PubkeyID,
+			TokenIndex: models.MakeUint256(25),
+			Balance:    models.MakeUint256(1),
+			Nonce:      models.MakeUint256(73),
 		},
 	}
 

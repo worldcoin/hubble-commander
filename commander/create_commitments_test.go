@@ -18,21 +18,21 @@ var (
 			PublicKey: models.PublicKey{1, 2, 3},
 			Balance:   models.MakeUint256(1000),
 		},
-		AccountIndex: 0,
+		PubkeyID: 0,
 	}
 	receiver = RegisteredGenesisAccount{
 		GenesisAccount: GenesisAccount{
 			PublicKey: models.PublicKey{2, 3, 4},
 			Balance:   models.MakeUint256(1000),
 		},
-		AccountIndex: 1,
+		PubkeyID: 1,
 	}
 	feeReceiver = RegisteredGenesisAccount{
 		GenesisAccount: GenesisAccount{
 			PublicKey: models.PublicKey{3, 4, 5},
 			Balance:   models.MakeUint256(1000),
 		},
-		AccountIndex: 2,
+		PubkeyID: 2,
 	}
 	genesisAccounts = []RegisteredGenesisAccount{sender, receiver, feeReceiver}
 )
