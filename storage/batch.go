@@ -31,7 +31,7 @@ func (s *Storage) GetBatch(batchHash common.Hash) (*models.Batch, error) {
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, fmt.Errorf("batch not found")
+		return nil, NewNotFoundErr("batch")
 	}
 	return &res[0], nil
 }
