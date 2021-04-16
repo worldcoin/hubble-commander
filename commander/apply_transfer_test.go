@@ -120,7 +120,7 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer_Validation_Nil() {
 	}
 
 	transferError, appError := ApplyTransfer(s.tree, nil, models.MakeUint256(1))
-	s.Error(appError, ErrTransferIsNil)
+	s.Error(appError, ErrTransactionIsNil)
 	s.NoError(transferError)
 	transferError, appError = ApplyTransfer(nil, &transfer, models.MakeUint256(1))
 	s.Equal(appError, ErrStateTreeIsNil)
