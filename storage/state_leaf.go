@@ -55,6 +55,32 @@ func (s *Storage) GetStateLeaves(pubkeyID uint32) ([]models.StateLeaf, error) {
 	return res, nil
 }
 
+func (s *Storage) GetNextAvailableLeafPath() (*models.MerklePath, error) {
+	res := make([]uint32, 0, 1)
+	err := s.DB.Query(
+		s.QB.Select("lpad(merkle_path::text, 33, '0')::bit(33)::bigint + 1 AS next_available_leaf_slot").
+			From("state_leaf").
+			JoinClause("NATURAL JOIN state_node").
+			OrderBy("next_available_leaf_slot DESC").
+			Limit(1),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return &models.MerklePath{
+			Path:  0,
+			Depth: 32,
+		}, nil
+	}
+
+	merklePath := models.MerklePath{
+		Path:  res[0],
+		Depth: 32,
+	}
+	return &merklePath, nil
+}
+
 type userStateWithPath struct {
 	MerklePath models.MerklePath `db:"merkle_path"`
 	models.UserState

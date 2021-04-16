@@ -147,6 +147,38 @@ func (s *StateLeafTestSuite) Test_GetStateLeaves() {
 	s.Equal(leaves[2].DataHash, res[1].DataHash)
 }
 
+func (s *StateLeafTestSuite) Test_GetNextAvailableLeafPath_NoLeavesInStateTree() {
+	expected := &models.MerklePath{
+		Path:  0,
+		Depth: 32,
+	}
+	merklePath, err := s.storage.GetNextAvailableLeafPath()
+	s.NoError(err)
+	s.Equal(expected, merklePath)
+}
+
+func (s *StateLeafTestSuite) Test_GetNextAvailableLeafPath() {
+	expected := &models.MerklePath{
+		Path:  3,
+		Depth: 32,
+	}
+
+	userState := &models.UserState{
+		PubkeyID:   1,
+		TokenIndex: models.MakeUint256(1),
+		Balance:    models.MakeUint256(420),
+		Nonce:      models.MakeUint256(0),
+	}
+
+	s.tree.Set(0, userState)
+	s.tree.Set(1, userState)
+	s.tree.Set(2, userState)
+
+	merklePath, err := s.storage.GetNextAvailableLeafPath()
+	s.NoError(err)
+	s.Equal(expected, merklePath)
+}
+
 func (s *StateLeafTestSuite) Test_GetUserStatesByPublicKey() {
 	accounts := []models.Account{
 		{
