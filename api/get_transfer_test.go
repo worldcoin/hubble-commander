@@ -3,11 +3,12 @@ package api
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/db"
+	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -17,7 +18,8 @@ type GetTransferTestSuite struct {
 	suite.Suite
 	api      *API
 	db       *db.TestDB
-	transfer *models.Transfer
+	transfer dto.Transfer
+	wallet   *bls.Wallet
 }
 
 func (s *GetTransferTestSuite) SetupSuite() {
@@ -32,29 +34,33 @@ func (s *GetTransferTestSuite) SetupTest() {
 	s.api = &API{nil, storage, nil}
 	s.db = testDB
 
-	userState := models.UserState{
-		PubkeyID:   1,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(420),
-		Nonce:      models.MakeUint256(0),
-	}
-
-	tree := st.NewStateTree(storage)
-	err = tree.Set(1, &userState)
+	s.wallet, err = bls.NewRandomWallet(mockDomain)
 	s.NoError(err)
 
-	transfer := &models.Transfer{
-		TransactionBase: models.TransactionBase{
-			FromStateID: 1,
-			Amount:      *models.NewUint256(50),
-			Fee:         *models.NewUint256(10),
-			Nonce:       *models.NewUint256(0),
-			Signature:   []byte{1, 2, 3, 4},
-		},
-		ToStateID: 2,
-	}
+	err = storage.AddAccountIfNotExists(&models.Account{
+		AccountIndex: 123,
+		PublicKey:    *s.wallet.PublicKey(),
+	})
+	s.NoError(err)
 
-	s.transfer = transfer
+	err = st.NewStateTree(storage).Set(1, &userState)
+	s.NoError(err)
+
+	s.transfer = s.signTransfer(transferWithoutSignature)
+}
+
+func (s *GetTransferTestSuite) signTransfer(transfer dto.Transfer) dto.Transfer {
+	sanitizedTransfer, err := sanitizeTransfer(transfer)
+	s.NoError(err)
+
+	encodedTransfer, err := encoder.EncodeTransferForSigning(sanitizedTransfer)
+	s.NoError(err)
+
+	signature, err := s.wallet.Sign(encodedTransfer)
+	s.NoError(err)
+
+	transfer.Signature = signature.Bytes()
+	return transfer
 }
 
 func (s *GetTransferTestSuite) TearDownTest() {
@@ -63,16 +69,7 @@ func (s *GetTransferTestSuite) TearDownTest() {
 }
 
 func (s *GetTransferTestSuite) TestApi_GetTransfer() {
-	transfer := dto.Transfer{
-		FromStateID: ref.Uint32(1),
-		ToStateID:   ref.Uint32(2),
-		Amount:      models.NewUint256(50),
-		Fee:         models.NewUint256(10),
-		Nonce:       models.NewUint256(0),
-		Signature:   []byte{1, 2, 3, 4},
-	}
-
-	hash, err := s.api.SendTransaction(dto.MakeTransaction(transfer))
+	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
 	s.NoError(err)
 
 	res, err := s.api.GetTransfer(*hash)
