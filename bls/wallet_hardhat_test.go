@@ -14,13 +14,13 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type WalletTestSuite struct {
+type WalletHardhatTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	testBLS *bls.TestBLS
 }
 
-func (s *WalletTestSuite) SetupSuite() {
+func (s *WalletHardhatTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 
 	cfg := config.GetTestConfig()
@@ -36,7 +36,7 @@ func (s *WalletTestSuite) SetupSuite() {
 	s.testBLS = testBLS
 }
 
-func (s *WalletTestSuite) TestSign_VerifySingle() {
+func (s *WalletHardhatTestSuite) TestSign_VerifySingle() {
 	wallet, err := NewRandomWallet(testDomain)
 	s.NoError(err)
 
@@ -60,7 +60,7 @@ func (s *WalletTestSuite) TestSign_VerifySingle() {
 	s.True(checkSuccess)
 }
 
-func (s *WalletTestSuite) TestSign_VerifyMultiple() {
+func (s *WalletHardhatTestSuite) TestSign_VerifyMultiple() {
 	hexStrings := []string{"deadbeef", "cafebabe", "baadf00d"}
 	signatures := make([]*Signature, 0, 3)
 	publicKeys := make([][4]*big.Int, 0, 3)
@@ -96,6 +96,6 @@ func (s *WalletTestSuite) TestSign_VerifyMultiple() {
 	s.True(checkSuccess)
 }
 
-func TestWalletTestSuite(t *testing.T) {
-	suite.Run(t, new(WalletTestSuite))
+func TestWalletHardhatTestSuite(t *testing.T) {
+	suite.Run(t, new(WalletHardhatTestSuite))
 }
