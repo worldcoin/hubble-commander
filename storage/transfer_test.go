@@ -66,7 +66,7 @@ func (s *TransferTestSuite) Test_AddTransfer_AddAndRetrieve() {
 func (s *TransferTestSuite) Test_GetTransfer_NonExistentTransaction() {
 	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
 	res, err := s.storage.GetTransfer(hash)
-	s.NoError(err)
+	s.Equal(NewNotFoundError("transfer"), err)
 	s.Nil(res)
 }
 
@@ -119,6 +119,13 @@ func (s *TransferTestSuite) Test_GetUserTransfers() {
 	s.Len(userTransactions, 2)
 	s.Contains(userTransactions, transfer1)
 	s.Contains(userTransactions, transfer3)
+}
+
+func (s *TransferTestSuite) Test_GetUserTransfers_NoTransfers() {
+	userTransactions, err := s.storage.GetUserTransfers(models.MakeUint256(1))
+
+	s.NoError(err)
+	s.Len(userTransactions, 0)
 }
 
 func (s *TransferTestSuite) Test_GetTransfersByPublicKey() {

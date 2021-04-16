@@ -66,13 +66,13 @@ func (s *BatchTestSuite) Test_GetBatchByID() {
 
 func (s *StateUpdateTestSuite) Test_GetBatch_NonExistentBatch() {
 	res, err := s.storage.GetBatch(common.Hash{1, 2, 3, 4})
-	s.EqualError(err, "batch not found")
+	s.Equal(NewNotFoundError("batch"), err)
 	s.Nil(res)
 }
 
 func (s *StateUpdateTestSuite) Test_GetBatchById_NonExistentBatch() {
 	res, err := s.storage.GetBatchByID(models.MakeUint256(42))
-	s.EqualError(err, "batch not found")
+	s.Equal(NewNotFoundError("batch"), err)
 	s.Nil(res)
 }
 

@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"fmt"
-
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -62,8 +60,11 @@ func (s *Storage) GetTransfer(hash common.Hash) (*models.Transfer, error) {
 			JoinClause("NATURAL JOIN transfer").
 			Where(squirrel.Eq{"tx_hash": hash}),
 	).Into(&res)
-	if err != nil || len(res) == 0 {
+	if err != nil {
 		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, NewNotFoundError("transfer")
 	}
 	return &res[0], nil
 }
@@ -76,10 +77,7 @@ func (s *Storage) GetUserTransfers(fromStateID models.Uint256) ([]models.Transfe
 			JoinClause("NATURAL JOIN transfer").
 			Where(squirrel.Eq{"from_state_id": fromStateID}),
 	).Into(&res)
-	if err != nil || len(res) == 0 {
-		return nil, err
-	}
-	return res, nil
+	return res, err
 }
 
 func (s *Storage) GetPendingTransfers() ([]models.Transfer, error) {
@@ -111,7 +109,7 @@ func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, fmt.Errorf("no transfers found")
+		return nil, NewNotFoundError("transfers")
 	}
 	return res, nil
 }

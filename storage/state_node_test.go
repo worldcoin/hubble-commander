@@ -162,7 +162,7 @@ func (s *StateNodeTestSuite) Test_UpsertStateNode_UpdateAndRetrieve() {
 func (s *StateNodeTestSuite) Test_GetStateNodeByHash_NonExistentNode() {
 	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
 	res, err := s.storage.GetStateNodeByHash(hash)
-	s.EqualError(err, "state node not found")
+	s.Equal(NewNotFoundError("state node"), err)
 	s.Nil(res)
 }
 

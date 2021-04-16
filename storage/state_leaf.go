@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"fmt"
-
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
@@ -35,7 +33,7 @@ func (s *Storage) GetStateLeaf(hash common.Hash) (*models.StateLeaf, error) {
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, fmt.Errorf("state leaf not found")
+		return nil, NewNotFoundError("state leaf")
 	}
 	return &res[0], nil
 }
@@ -52,7 +50,7 @@ func (s *Storage) GetStateLeaves(accountIndex uint32) ([]models.StateLeaf, error
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, fmt.Errorf("no state leaves found")
+		return nil, NewNotFoundError("state leaves")
 	}
 	return res, nil
 }
@@ -82,7 +80,7 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]model
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, fmt.Errorf("no state leaves found")
+		return nil, NewNotFoundError("user states")
 	}
 	return toUserStateWithID(res), nil
 }

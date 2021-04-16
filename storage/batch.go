@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"fmt"
-
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
@@ -31,7 +29,7 @@ func (s *Storage) GetBatch(batchHash common.Hash) (*models.Batch, error) {
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, fmt.Errorf("batch not found")
+		return nil, NewNotFoundError("batch")
 	}
 	return &res[0], nil
 }
@@ -47,7 +45,7 @@ func (s *Storage) GetBatchByID(batchID models.Uint256) (*models.Batch, error) {
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, fmt.Errorf("batch not found")
+		return nil, NewNotFoundError("batch")
 	}
 	return &res[0], nil
 }
