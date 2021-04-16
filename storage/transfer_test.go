@@ -121,6 +121,13 @@ func (s *TransferTestSuite) Test_GetUserTransfers() {
 	s.Contains(userTransactions, transfer3)
 }
 
+func (s *TransferTestSuite) Test_GetUserTransfers_NoTransfers() {
+	userTransactions, err := s.storage.GetUserTransfers(models.MakeUint256(1))
+
+	s.NoError(err)
+	s.Len(userTransactions, 0)
+}
+
 func (s *TransferTestSuite) Test_GetTransfersByPublicKey() {
 	accounts := []models.Account{
 		{

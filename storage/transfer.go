@@ -77,13 +77,7 @@ func (s *Storage) GetUserTransfers(fromStateID models.Uint256) ([]models.Transfe
 			JoinClause("NATURAL JOIN transfer").
 			Where(squirrel.Eq{"from_state_id": fromStateID}),
 	).Into(&res)
-	if err != nil {
-		return nil, err
-	}
-	if len(res) == 0 {
-		return nil, NewNotFoundErr("transfers")
-	}
-	return res, nil
+	return res, err
 }
 
 func (s *Storage) GetPendingTransfers() ([]models.Transfer, error) {

@@ -12,8 +12,11 @@ func (s *Storage) GetChainState(chainID models.Uint256) (*models.ChainState, err
 			From("chain_state").
 			Where(squirrel.Eq{"chain_id": chainID}),
 	).Into(&res)
-	if err != nil || len(res) == 0 {
+	if err != nil {
 		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, NewNotFoundErr("chain state")
 	}
 	return &res[0], nil
 }

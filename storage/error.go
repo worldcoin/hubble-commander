@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -14,4 +15,12 @@ func NewNotFoundErr(field string) *NotFoundErr {
 
 func (n *NotFoundErr) Error() string {
 	return fmt.Sprintf("%s not found", n.field)
+}
+
+func IsNotFoundErr(err error) bool {
+	if err == nil {
+		return false
+	}
+	target := &NotFoundErr{}
+	return errors.As(err, &target)
 }
