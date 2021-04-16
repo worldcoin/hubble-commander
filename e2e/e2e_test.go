@@ -9,7 +9,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -42,20 +41,17 @@ func Test_Commander(t *testing.T) {
 	require.Len(t, userStates, 1)
 	require.EqualValues(t, models.MakeUint256(0), userStates[0].Nonce)
 
-	transfer := dto.Transfer{
+	transfer, err := testutils.SignTransfer(&wallets[1], dto.Transfer{
 		FromStateID: ref.Uint32(1),
 		ToStateID:   ref.Uint32(2),
 		Amount:      models.NewUint256(50),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(0),
-	}
-
-	signature, err := signTransfer(&wallets[*transfer.FromStateID], transfer)
+	})
 	require.NoError(t, err)
-	transfer.Signature = signature
 
 	var transferHash1 common.Hash
-	err = commander.Client.CallFor(&transferHash1, "hubble_sendTransaction", []interface{}{transfer})
+	err = commander.Client.CallFor(&transferHash1, "hubble_sendTransaction", []interface{}{*transfer})
 	require.NoError(t, err)
 	require.NotNil(t, transferHash1)
 
@@ -64,20 +60,17 @@ func Test_Commander(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, models.Pending, sentTransfer.Status)
 
-	transfer2 := dto.Transfer{
+	transfer2, err := testutils.SignTransfer(&wallets[1], dto.Transfer{
 		FromStateID: ref.Uint32(1),
 		ToStateID:   ref.Uint32(2),
 		Amount:      models.NewUint256(10),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(1),
-	}
-
-	signature, err = signTransfer(&wallets[*transfer2.FromStateID], transfer2)
+	})
 	require.NoError(t, err)
-	transfer2.Signature = signature
 
 	var transferHash2 common.Hash
-	err = commander.Client.CallFor(&transferHash2, "hubble_sendTransaction", []interface{}{transfer2})
+	err = commander.Client.CallFor(&transferHash2, "hubble_sendTransaction", []interface{}{*transfer2})
 	require.NoError(t, err)
 	require.NotNil(t, transferHash2)
 
@@ -108,27 +101,6 @@ func getUserState(userStates []dto.UserState, stateID uint32) (*dto.UserState, e
 		}
 	}
 	return nil, errors.New("user state with given stateID not found")
-}
-
-func signTransfer(wallet *bls.Wallet, t dto.Transfer) ([]byte, error) {
-	encodedTransfer, err := encoder.EncodeTransferForSigning(&models.Transfer{
-		TransactionBase: models.TransactionBase{
-			FromStateID: *t.FromStateID,
-			Amount:      *t.Amount,
-			Fee:         *t.Fee,
-			Nonce:       *t.Nonce,
-		},
-		ToStateID: *t.ToStateID,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	signature, err := wallet.Sign(encodedTransfer)
-	if err != nil {
-		return nil, err
-	}
-	return signature.Bytes(), nil
 }
 
 func createWallet(stateID uint32, cfg *config.RollupConfig) (*bls.Wallet, error) {
