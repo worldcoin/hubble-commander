@@ -22,7 +22,7 @@ var (
 	ErrInvalidSignature = errors.New("invalid signature")
 )
 
-var mockDomain = bls.Domain{0x00, 0x00, 0x00, 0x00} // TODO use real domain
+var mockDomain = bls.Domain{1, 2, 3, 4} // TODO use real domain
 
 func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
 	switch t := tx.Parsed.(type) {

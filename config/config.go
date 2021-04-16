@@ -13,8 +13,7 @@ import (
 )
 
 var (
-	Domain          = bls.Domain{0x00, 0x00, 0x00, 0x00}
-	GenesisAccounts = []models.GenesisAccount{
+	genesisAccounts = []models.GenesisAccount{
 		{
 			PrivateKey: [32]byte{47, 122, 85, 155, 45, 45, 78, 193, 227, 186, 188, 1, 34, 231, 239, 12, 106, 69, 205, 180, 204, 209, 103, 244, 86, 202, 202, 82, 17, 35, 254, 158},
 			Balance:    models.MakeUint256(1000),
@@ -59,8 +58,8 @@ func GetConfig() Config {
 			CommitmentLoopInterval:  500 * time.Millisecond,
 			BatchLoopInterval:       500 * time.Millisecond,
 			BlockNumberLoopInterval: 500 * time.Millisecond,
-			GenesisAccounts:         GenesisAccounts,
-			Domain:                  bls.Domain{0x00, 0x00, 0x00, 0x00},
+			GenesisAccounts:         genesisAccounts,
+			Domain:                  bls.Domain{1, 2, 3, 4},
 		},
 		API: APIConfig{
 			Version: "dev-0.1.0",
@@ -81,12 +80,15 @@ func GetConfig() Config {
 func GetTestConfig() Config {
 	return Config{
 		Rollup: RollupConfig{
-			FeeReceiverIndex:       0,
-			TxsPerCommitment:       2,
-			MinCommitmentsPerBatch: 1,
-			MaxCommitmentsPerBatch: 32,
-			CommitmentLoopInterval: 500 * time.Millisecond,
-			BatchLoopInterval:      500 * time.Millisecond,
+			FeeReceiverIndex:        0,
+			TxsPerCommitment:        2,
+			MinCommitmentsPerBatch:  1,
+			MaxCommitmentsPerBatch:  32,
+			CommitmentLoopInterval:  500 * time.Millisecond,
+			BatchLoopInterval:       500 * time.Millisecond,
+			BlockNumberLoopInterval: 500 * time.Millisecond,
+			GenesisAccounts:         genesisAccounts,
+			Domain:                  bls.Domain{1, 2, 3, 4},
 		},
 		API: APIConfig{
 			Version: "dev-0.1.0",

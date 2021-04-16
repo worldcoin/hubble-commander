@@ -111,16 +111,13 @@ func getUserState(userStates []dto.UserState, stateID uint32) (*dto.UserState, e
 }
 
 func signTransfer(wallet *bls.Wallet, t dto.Transfer) ([]byte, error) {
-	transfer := &models.Transfer{
+	encodedTransfer, err := encoder.EncodeTransferForSigning(&models.Transfer{
 		FromStateID: *t.FromStateID,
 		ToStateID:   *t.ToStateID,
 		Amount:      *t.Amount,
 		Fee:         *t.Fee,
 		Nonce:       *t.Nonce,
-		Signature:   t.Signature,
-	}
-
-	encodedTransfer, err := encoder.EncodeTransferForSigning(transfer)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -132,20 +129,21 @@ func signTransfer(wallet *bls.Wallet, t dto.Transfer) ([]byte, error) {
 	return signature.Bytes(), nil
 }
 
-func createWallet(stateID uint32) (*bls.Wallet, error) {
-	if int(stateID) >= len(config.GenesisAccounts) {
+func createWallet(stateID uint32, cfg *config.RollupConfig) (*bls.Wallet, error) {
+	if int(stateID) >= len(cfg.GenesisAccounts) {
 		return nil, errors.New("invalid state id")
 	}
-	genesisAccount := config.GenesisAccounts[stateID]
+	genesisAccount := cfg.GenesisAccounts[stateID]
 
-	wallet, err := bls.NewWallet(genesisAccount.PrivateKey[:], config.Domain)
+	wallet, err := bls.NewWallet(genesisAccount.PrivateKey[:], cfg.Domain)
 	return wallet, err
 }
 
 func createWallets() ([]bls.Wallet, error) {
-	wallets := make([]bls.Wallet, 0, len(config.GenesisAccounts))
-	for i := range config.GenesisAccounts {
-		wallet, err := createWallet(uint32(i))
+	cfg := config.GetConfig().Rollup
+	wallets := make([]bls.Wallet, 0, len(cfg.GenesisAccounts))
+	for i := range cfg.GenesisAccounts {
+		wallet, err := createWallet(uint32(i), &cfg)
 		if err != nil {
 			return nil, err
 		}
