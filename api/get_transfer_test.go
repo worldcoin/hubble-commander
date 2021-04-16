@@ -5,10 +5,10 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/db"
-	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -50,17 +50,9 @@ func (s *GetTransferTestSuite) SetupTest() {
 }
 
 func (s *GetTransferTestSuite) signTransfer(transfer dto.Transfer) dto.Transfer {
-	sanitizedTransfer, err := sanitizeTransfer(transfer)
+	signedTransfer, err := testutils.SignTransfer(s.wallet, transfer)
 	s.NoError(err)
-
-	encodedTransfer, err := encoder.EncodeTransferForSigning(sanitizedTransfer)
-	s.NoError(err)
-
-	signature, err := s.wallet.Sign(encodedTransfer)
-	s.NoError(err)
-
-	transfer.Signature = signature.Bytes()
-	return transfer
+	return *signedTransfer
 }
 
 func (s *GetTransferTestSuite) TearDownTest() {
