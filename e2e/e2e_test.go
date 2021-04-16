@@ -50,9 +50,9 @@ func Test_Commander(t *testing.T) {
 		Nonce:       models.NewUint256(0),
 	}
 
-	signature, err := signTransfer(&wallets[*tx.FromStateID], tx)
+	signature, err := signTransfer(&wallets[*transfer.FromStateID], transfer)
 	require.NoError(t, err)
-	tx.Signature = signature
+	transfer.Signature = signature
 
 	var transferHash1 common.Hash
 	err = commander.Client.CallFor(&transferHash1, "hubble_sendTransaction", []interface{}{transfer})
@@ -72,9 +72,9 @@ func Test_Commander(t *testing.T) {
 		Nonce:       models.NewUint256(1),
 	}
 
-	signature, err = signTransfer(&wallets[*tx2.FromStateID], tx2)
+	signature, err = signTransfer(&wallets[*transfer2.FromStateID], transfer2)
 	require.NoError(t, err)
-	tx2.Signature = signature
+	transfer2.Signature = signature
 
 	var transferHash2 common.Hash
 	err = commander.Client.CallFor(&transferHash2, "hubble_sendTransaction", []interface{}{transfer2})
@@ -112,11 +112,13 @@ func getUserState(userStates []dto.UserState, stateID uint32) (*dto.UserState, e
 
 func signTransfer(wallet *bls.Wallet, t dto.Transfer) ([]byte, error) {
 	encodedTransfer, err := encoder.EncodeTransferForSigning(&models.Transfer{
-		FromStateID: *t.FromStateID,
-		ToStateID:   *t.ToStateID,
-		Amount:      *t.Amount,
-		Fee:         *t.Fee,
-		Nonce:       *t.Nonce,
+		TransactionBase: models.TransactionBase{
+			FromStateID: *t.FromStateID,
+			Amount:      *t.Amount,
+			Fee:         *t.Fee,
+			Nonce:       *t.Nonce,
+		},
+		ToStateID: *t.ToStateID,
 	})
 	if err != nil {
 		return nil, err
