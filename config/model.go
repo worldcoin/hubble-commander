@@ -3,8 +3,8 @@ package config
 import (
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/kilic/bn254/bls"
 )
 
 type Config struct {

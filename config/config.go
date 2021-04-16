@@ -5,16 +5,15 @@ import (
 	"path"
 	"time"
 
-	hbls "github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/joho/godotenv"
-	"github.com/kilic/bn254/bls"
 )
 
 var (
-	Domain          = hbls.Domain{0x00, 0x00, 0x00, 0x00}
+	Domain          = bls.Domain{0x00, 0x00, 0x00, 0x00}
 	GenesisAccounts = []models.GenesisAccount{
 		{
 			PrivateKey: []byte{47, 122, 85, 155, 45, 45, 78, 193, 227, 186, 188, 1, 34, 231, 239, 12, 106, 69, 205, 180, 204, 209, 103, 244, 86, 202, 202, 82, 17, 35, 254, 158},
