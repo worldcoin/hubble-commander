@@ -13,28 +13,25 @@ import (
 )
 
 var (
-	sender = RegisteredGenesisAccount{
-		GenesisAccount: GenesisAccount{
-			PublicKey: models.PublicKey{1, 2, 3},
+	sender = models.RegisteredGenesisAccount{
+		GenesisAccount: models.GenesisAccount{
 			Balance:   models.MakeUint256(1000),
 		},
 		PubkeyID: 0,
 	}
-	receiver = RegisteredGenesisAccount{
-		GenesisAccount: GenesisAccount{
-			PublicKey: models.PublicKey{2, 3, 4},
+	receiver = models.RegisteredGenesisAccount{
+		GenesisAccount: models.GenesisAccount{
 			Balance:   models.MakeUint256(1000),
 		},
 		PubkeyID: 1,
 	}
-	feeReceiver = RegisteredGenesisAccount{
-		GenesisAccount: GenesisAccount{
-			PublicKey: models.PublicKey{3, 4, 5},
+	feeReceiver = models.RegisteredGenesisAccount{
+		GenesisAccount: models.GenesisAccount{
 			Balance:   models.MakeUint256(1000),
 		},
 		PubkeyID: 2,
 	}
-	genesisAccounts = []RegisteredGenesisAccount{sender, receiver, feeReceiver}
+	genesisAccounts = []models.RegisteredGenesisAccount{sender, receiver, feeReceiver}
 )
 
 type CreateCommitmentsTestSuite struct {
