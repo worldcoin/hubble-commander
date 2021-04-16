@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"fmt"
-
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
@@ -41,7 +39,7 @@ func (s *Storage) GetStateUpdateByRootHash(stateRootHash common.Hash) (*models.S
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, fmt.Errorf("state update not found")
+		return nil, NewNotFoundError("state update")
 	}
 	return &res[0], nil
 }
