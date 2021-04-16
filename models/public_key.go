@@ -32,7 +32,7 @@ func MakePublicKeyFromInts(ints [4]*big.Int) PublicKey {
 	publicKey := PublicKey{}
 	copy(publicKey[0:32], ints[0].Bytes())
 	copy(publicKey[32:64], ints[1].Bytes())
-	copy(publicKey[64:86], ints[2].Bytes())
+	copy(publicKey[64:96], ints[2].Bytes())
 	copy(publicKey[96:128], ints[3].Bytes())
 
 	return publicKey
