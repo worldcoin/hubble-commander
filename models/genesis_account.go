@@ -7,5 +7,6 @@ type GenesisAccount struct {
 
 type RegisteredGenesisAccount struct {
 	GenesisAccount
-	AccountIndex uint32
+	PublicKey PublicKey
+	PubKeyID  uint32
 }

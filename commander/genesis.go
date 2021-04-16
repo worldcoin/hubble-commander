@@ -46,18 +46,11 @@ func RegisterGenesisAccounts(
 	registeredAccounts := make([]models.RegisteredGenesisAccount, 0, len(accounts))
 
 	for i := range accounts {
-		wallet, err := bls.NewWallet(accounts[i].PrivateKey, bls.Domain{1, 2, 3})
+		registeredAccount, err := registerGenesisAccount(opts, accountRegistry, &accounts[i], ev)
 		if err != nil {
 			return nil, err
 		}
-
-		registeredAccount, err := registerGenesisAccount(opts, accountRegistry, &accounts[i], wallet.PublicKey(), ev)
-		if err != nil {
-			return nil, err
-		}
-
-		log.Printf("Registered genesis pubkey %s at %d", wallet.PublicKey().String(), registeredAccount.PubkeyID)
-
+		log.Printf("Registered genesis pubkey %s at %d", registeredAccount.PublicKey.String(), registeredAccount.PubKeyID)
 		registeredAccounts = append(registeredAccounts, *registeredAccount)
 	}
 
@@ -68,9 +61,13 @@ func registerGenesisAccount(
 	opts *bind.TransactOpts,
 	accountRegistry *accountregistry.AccountRegistry,
 	account *models.GenesisAccount,
-	publicKey *models.PublicKey,
 	ev chan *accountregistry.AccountRegistryPubkeyRegistered,
 ) (*models.RegisteredGenesisAccount, error) {
+	publicKey, err := bls.PrivateToPublicKey(account.PrivateKey)
+	if err != nil {
+		return nil, err
+	}
+
 	tx, err := accountRegistry.Register(opts, publicKey.BigInts())
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -83,10 +80,11 @@ func registerGenesisAccount(
 				return nil, errors.WithStack(fmt.Errorf("account event watcher is closed"))
 			}
 			if event.Raw.TxHash == tx.Hash() {
-				pubkeyID := uint32(event.PubkeyID.Uint64())
+				accountIndex := uint32(event.PubkeyID.Uint64())
 				return &models.RegisteredGenesisAccount{
 					GenesisAccount: *account,
-					PubkeyID:       pubkeyID,
+					PublicKey:      *publicKey,
+					PubKeyID:       accountIndex,
 				}, nil
 			}
 		case <-time.After(deployer.ChainTimeout):

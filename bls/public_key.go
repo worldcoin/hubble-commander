@@ -29,3 +29,11 @@ func toBLSPublicKey(pk *models.PublicKey) *bls.PublicKey {
 	}
 	return blsPK
 }
+
+func PrivateToPublicKey(privateKeyBytes []byte) (*models.PublicKey, error) {
+	keyPair, err := bls.NewKeyPairFromSecret(privateKeyBytes)
+	if err != nil {
+		return nil, err
+	}
+	return fromBLSPublicKey(keyPair.Public), nil
+}

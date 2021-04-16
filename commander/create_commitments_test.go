@@ -15,21 +15,21 @@ import (
 var (
 	sender = models.RegisteredGenesisAccount{
 		GenesisAccount: models.GenesisAccount{
-			Balance:   models.MakeUint256(1000),
+			Balance: models.MakeUint256(1000),
 		},
-		PubkeyID: 0,
+		PubKeyID: 0,
 	}
 	receiver = models.RegisteredGenesisAccount{
 		GenesisAccount: models.GenesisAccount{
-			Balance:   models.MakeUint256(1000),
+			Balance: models.MakeUint256(1000),
 		},
-		PubkeyID: 1,
+		PubKeyID: 1,
 	}
 	feeReceiver = models.RegisteredGenesisAccount{
 		GenesisAccount: models.GenesisAccount{
-			Balance:   models.MakeUint256(1000),
+			Balance: models.MakeUint256(1000),
 		},
-		PubkeyID: 2,
+		PubKeyID: 2,
 	}
 	genesisAccounts = []models.RegisteredGenesisAccount{sender, receiver, feeReceiver}
 )
