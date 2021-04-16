@@ -104,26 +104,17 @@ func getUserState(userStates []dto.UserState, stateID uint32) (*dto.UserState, e
 	return nil, errors.New("user state with given stateID not found")
 }
 
-func createWallet(stateID uint32, cfg *config.RollupConfig) (*bls.Wallet, error) {
-	if int(stateID) >= len(cfg.GenesisAccounts) {
-		return nil, errors.New("invalid state id")
-	}
-	genesisAccount := cfg.GenesisAccounts[stateID]
-
-	wallet, err := bls.NewWallet(genesisAccount.PrivateKey[:], cfg.Domain)
-	return wallet, err
-}
-
 func createWallets() ([]bls.Wallet, error) {
 	cfg := config.GetConfig().Rollup
-	wallets := make([]bls.Wallet, 0, len(cfg.GenesisAccounts))
-	for i := range cfg.GenesisAccounts {
-		wallet, err := createWallet(uint32(i), &cfg)
+	accounts := cfg.GenesisAccounts
+
+	wallets := make([]bls.Wallet, 0, len(accounts))
+	for i := range accounts {
+		wallet, err := bls.NewWallet(accounts[i].PrivateKey[:], cfg.Domain)
 		if err != nil {
 			return nil, err
 		}
 		wallets = append(wallets, *wallet)
 	}
-
 	return wallets, nil
 }
