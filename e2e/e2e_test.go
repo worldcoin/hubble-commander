@@ -138,7 +138,7 @@ func createWallet(stateID uint32) (*bls.Wallet, error) {
 	}
 	genesisAccount := config.GenesisAccounts[stateID]
 
-	wallet, err := bls.NewWallet(genesisAccount.PrivateKey, config.Domain)
+	wallet, err := bls.NewWallet(genesisAccount.PrivateKey[:], config.Domain)
 	return wallet, err
 }
 

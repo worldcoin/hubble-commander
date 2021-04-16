@@ -1,7 +1,7 @@
 package models
 
 type GenesisAccount struct {
-	PrivateKey []byte
+	PrivateKey [32]byte
 	Balance    Uint256
 }
 
