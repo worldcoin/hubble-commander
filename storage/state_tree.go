@@ -74,7 +74,7 @@ func (s *StateTree) Set(index uint32, state *models.UserState) (err error) {
 func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 	_, err := s.storage.GetStateUpdateByRootHash(targetRootHash)
 	if err != nil {
-		if IsNotFoundErr(err) {
+		if IsNotFoundError(err) {
 			return fmt.Errorf("cannot revert to not existent state")
 		}
 

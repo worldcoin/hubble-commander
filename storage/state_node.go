@@ -63,7 +63,7 @@ func (s *Storage) GetStateNodeByHash(hash common.Hash) (*models.StateNode, error
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, NewNotFoundErr("state node")
+		return nil, NewNotFoundError("state node")
 	}
 	return &res[0], nil
 }

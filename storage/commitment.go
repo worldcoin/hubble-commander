@@ -41,7 +41,7 @@ func (s *Storage) GetCommitment(id int32) (*models.Commitment, error) {
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, NewNotFoundErr("commitment")
+		return nil, NewNotFoundError("commitment")
 	}
 	return &res[0], nil
 }

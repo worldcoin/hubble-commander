@@ -52,8 +52,8 @@ func (s *ChainStateTestSuite) Test_SetChainState() {
 
 func (s *ChainStateTestSuite) Test_GetChainState_NotFound() {
 	_, err := s.storage.GetChainState(chainState.ChainID)
-	s.Equal(NewNotFoundErr("chain state"), err)
-	s.True(IsNotFoundErr(err))
+	s.Equal(NewNotFoundError("chain state"), err)
+	s.True(IsNotFoundError(err))
 }
 
 func TestChainStateTestSuite(t *testing.T) {

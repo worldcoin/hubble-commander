@@ -64,7 +64,7 @@ func (s *Storage) GetTransfer(hash common.Hash) (*models.Transfer, error) {
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, NewNotFoundErr("transfer")
+		return nil, NewNotFoundError("transfer")
 	}
 	return &res[0], nil
 }
@@ -109,7 +109,7 @@ func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, NewNotFoundErr("transfers")
+		return nil, NewNotFoundError("transfers")
 	}
 	return res, nil
 }

@@ -16,7 +16,7 @@ func (s *Storage) GetChainState(chainID models.Uint256) (*models.ChainState, err
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, NewNotFoundErr("chain state")
+		return nil, NewNotFoundError("chain state")
 	}
 	return &res[0], nil
 }

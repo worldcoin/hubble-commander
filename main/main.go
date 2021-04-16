@@ -102,7 +102,7 @@ func main() {
 func getClient(storage *st.Storage, chain deployer.ChainConnection) (*eth.Client, error) {
 	chainState, err := storage.GetChainState(chain.GetChainID())
 
-	if st.IsNotFoundErr(err) {
+	if st.IsNotFoundError(err) {
 		fmt.Println("Bootstrapping genesis state")
 		stateTree := st.NewStateTree(storage)
 		chainState, err = bootstrapState(stateTree, chain, genesisAccounts)

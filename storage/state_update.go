@@ -39,7 +39,7 @@ func (s *Storage) GetStateUpdateByRootHash(stateRootHash common.Hash) (*models.S
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, NewNotFoundErr("state update")
+		return nil, NewNotFoundError("state update")
 	}
 	return &res[0], nil
 }

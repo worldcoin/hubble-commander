@@ -29,7 +29,7 @@ func (s *Storage) GetBatch(batchHash common.Hash) (*models.Batch, error) {
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, NewNotFoundErr("batch")
+		return nil, NewNotFoundError("batch")
 	}
 	return &res[0], nil
 }
@@ -45,7 +45,7 @@ func (s *Storage) GetBatchByID(batchID models.Uint256) (*models.Batch, error) {
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, NewNotFoundErr("batch")
+		return nil, NewNotFoundError("batch")
 	}
 	return &res[0], nil
 }
