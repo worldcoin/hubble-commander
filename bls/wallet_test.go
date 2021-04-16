@@ -15,9 +15,9 @@ func TestNewWallet(t *testing.T) {
 	signature, err := wallet.Sign(data)
 	require.NoError(t, err)
 
-	secretKey, _ := wallet.Bytes()
+	privateKey, _ := wallet.Bytes()
 
-	newWallet, err := NewWallet(secretKey, testDomain)
+	newWallet, err := NewWallet(privateKey, testDomain)
 	require.NoError(t, err)
 
 	isValid, err := signature.Verify(data, newWallet.PublicKey())
