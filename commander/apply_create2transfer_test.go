@@ -47,18 +47,20 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 	s.db = testDB
 	s.tree = st.NewStateTree(s.storage)
 
-	s.tree.Set(0, &models.UserState{
+	err = s.tree.Set(0, &models.UserState{
 		PubkeyID:   0,
 		TokenIndex: senderTokenIndex,
 		Balance:    models.MakeUint256(10000),
 		Nonce:      models.MakeUint256(0),
 	})
-	s.tree.Set(1, &models.UserState{
+	s.NoError(err)
+	err = s.tree.Set(1, &models.UserState{
 		PubkeyID:   1,
 		TokenIndex: senderTokenIndex,
 		Balance:    models.MakeUint256(0),
 		Nonce:      models.MakeUint256(0),
 	})
+	s.NoError(err)
 }
 
 func (s *ApplyCreate2TransferTestSuite) TearDownTest() {

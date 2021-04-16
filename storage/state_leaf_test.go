@@ -170,9 +170,12 @@ func (s *StateLeafTestSuite) Test_GetNextAvailableLeafPath() {
 		Nonce:      models.MakeUint256(0),
 	}
 
-	s.tree.Set(0, userState)
-	s.tree.Set(1, userState)
-	s.tree.Set(2, userState)
+	err := s.tree.Set(0, userState)
+	s.NoError(err)
+	err = s.tree.Set(1, userState)
+	s.NoError(err)
+	err = s.tree.Set(2, userState)
+	s.NoError(err)
 
 	merklePath, err := s.storage.GetNextAvailableLeafPath()
 	s.NoError(err)

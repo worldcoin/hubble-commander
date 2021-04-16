@@ -5,7 +5,11 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func ApplyCreate2Transfer(storage *st.Storage, create2transfer *models.Create2Transfer, feeReceiverTokenIndex models.Uint256) (transferError, appError error) {
+func ApplyCreate2Transfer(
+	storage *st.Storage,
+	create2transfer *models.Create2Transfer,
+	feeReceiverTokenIndex models.Uint256,
+) (create2transferError, appError error) {
 	stateTree := st.NewStateTree(storage)
 	senderUserState, err := stateTree.Leaf(create2transfer.FromStateID)
 	if err != nil {
@@ -23,16 +27,19 @@ func ApplyCreate2Transfer(storage *st.Storage, create2transfer *models.Create2Tr
 		return nil, err
 	}
 
-	stateTree.Set(nextAvailableLeafPath.Path, &emptyUserState)
+	err = stateTree.Set(nextAvailableLeafPath.Path, &emptyUserState)
+	if err != nil {
+		return nil, err
+	}
 
 	transfer := models.Transfer{
 		TransactionBase: create2transfer.TransactionBase,
 		ToStateID:       nextAvailableLeafPath.Path,
 	}
 
-	transferError, appError = ApplyTransfer(stateTree, &transfer, feeReceiverTokenIndex)
-	if transferError != nil || appError != nil {
-		return transferError, appError
+	create2transferError, appError = ApplyTransfer(stateTree, &transfer, feeReceiverTokenIndex)
+	if create2transferError != nil || appError != nil {
+		return create2transferError, appError
 	}
 
 	return nil, nil
