@@ -5,7 +5,6 @@ import (
 	"path"
 	"time"
 
-	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -63,7 +62,7 @@ func GetConfig() Config {
 			BatchLoopInterval:       500 * time.Millisecond,
 			BlockNumberLoopInterval: 500 * time.Millisecond,
 			GenesisAccounts:         genesisAccounts,
-			Domain:                  bls.Domain{1, 2, 3, 4},
+			Domain:                  [32]byte{1, 2, 3, 4},
 		},
 		API: APIConfig{
 			Version: "dev-0.1.0",
@@ -92,7 +91,7 @@ func GetTestConfig() Config {
 			BatchLoopInterval:       500 * time.Millisecond,
 			BlockNumberLoopInterval: 500 * time.Millisecond,
 			GenesisAccounts:         genesisAccounts,
-			Domain:                  bls.Domain{1, 2, 3, 4},
+			Domain:                  [32]byte{1, 2, 3, 4},
 		},
 		API: APIConfig{
 			Version: "dev-0.1.0",

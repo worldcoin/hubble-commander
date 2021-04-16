@@ -3,7 +3,6 @@ package config
 import (
 	"time"
 
-	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
@@ -23,7 +22,7 @@ type RollupConfig struct {
 	BatchLoopInterval       time.Duration
 	BlockNumberLoopInterval time.Duration
 	GenesisAccounts         []models.GenesisAccount
-	Domain                  bls.Domain
+	Domain                  [32]byte
 }
 
 type APIConfig struct {
