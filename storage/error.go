@@ -8,7 +8,7 @@ type NotFoundErr struct {
 	field string
 }
 
-func NewNotFoundError(field string) *NotFoundErr {
+func NewNotFoundErr(field string) *NotFoundErr {
 	return &NotFoundErr{field: field}
 }
 

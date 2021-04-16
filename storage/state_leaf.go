@@ -33,7 +33,7 @@ func (s *Storage) GetStateLeaf(hash common.Hash) (*models.StateLeaf, error) {
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, NewNotFoundError("state leaf")
+		return nil, NewNotFoundErr("state leaf")
 	}
 	return &res[0], nil
 }
@@ -50,7 +50,7 @@ func (s *Storage) GetStateLeaves(accountIndex uint32) ([]models.StateLeaf, error
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, NewNotFoundError("state leaves")
+		return nil, NewNotFoundErr("state leaves")
 	}
 	return res, nil
 }
@@ -80,7 +80,7 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]model
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, NewNotFoundError("state leaves")
+		return nil, NewNotFoundErr("state leaves")
 	}
 	return toUserStateWithID(res), nil
 }
