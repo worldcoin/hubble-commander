@@ -110,7 +110,7 @@ func createWallets() ([]bls.Wallet, error) {
 
 	wallets := make([]bls.Wallet, 0, len(accounts))
 	for i := range accounts {
-		wallet, err := bls.NewWallet(accounts[i].PrivateKey[:], cfg.Domain)
+		wallet, err := bls.NewWallet(accounts[i].PrivateKey[:], cfg.SignaturesDomain)
 		if err != nil {
 			return nil, err
 		}

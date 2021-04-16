@@ -62,7 +62,7 @@ func GetConfig() Config {
 			BatchLoopInterval:       500 * time.Millisecond,
 			BlockNumberLoopInterval: 500 * time.Millisecond,
 			GenesisAccounts:         genesisAccounts,
-			Domain:                  [32]byte{1, 2, 3, 4},
+			SignaturesDomain:        [32]byte{1, 2, 3, 4},
 		},
 		API: APIConfig{
 			Version: "dev-0.1.0",
@@ -91,7 +91,7 @@ func GetTestConfig() Config {
 			BatchLoopInterval:       500 * time.Millisecond,
 			BlockNumberLoopInterval: 500 * time.Millisecond,
 			GenesisAccounts:         genesisAccounts,
-			Domain:                  [32]byte{1, 2, 3, 4},
+			SignaturesDomain:        [32]byte{1, 2, 3, 4},
 		},
 		API: APIConfig{
 			Version: "dev-0.1.0",
