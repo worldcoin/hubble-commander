@@ -53,7 +53,7 @@ func main() {
 		log.Fatalf("%+v", err)
 	}
 
-	client, err := getClient(storage, chain)
+	client, err := getClient(storage, chain, &cfg.Rollup)
 	if err != nil {
 		log.Fatalf("%+v", err)
 	}
@@ -80,13 +80,13 @@ func main() {
 	log.Fatal(api.StartAPIServer(&cfg, client))
 }
 
-func getClient(storage *st.Storage, chain deployer.ChainConnection) (*eth.Client, error) {
+func getClient(storage *st.Storage, chain deployer.ChainConnection, cfg *config.RollupConfig) (*eth.Client, error) {
 	chainState, err := storage.GetChainState(chain.GetChainID())
 
 	if st.IsNotFoundError(err) {
 		fmt.Println("Bootstrapping genesis state")
 		stateTree := st.NewStateTree(storage)
-		chainState, err = bootstrapState(stateTree, chain, config.GenesisAccounts)
+		chainState, err = bootstrapState(stateTree, chain, cfg.GenesisAccounts)
 		if err != nil {
 			return nil, err
 		}
