@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"fmt"
-
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 )
@@ -44,7 +42,7 @@ func (s *Storage) GetPublicKey(accountIndex uint32) (*models.PublicKey, error) {
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, fmt.Errorf("account not found")
+		return nil, NewNotFoundError("account")
 	}
 	return &res[0], nil
 }

@@ -4,8 +4,27 @@ import (
 	"fmt"
 
 	"github.com/Masterminds/squirrel"
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 )
+
+func (s *Storage) GetLatestTransactionNonce(accountIndex uint32) (*models.Uint256, error) {
+	res := make([]models.Uint256, 0, 1)
+	err := s.DB.Query(
+		s.QB.Select("transaction_base.nonce").
+			From("transaction_base").
+			Where(squirrel.Eq{"from_state_id": accountIndex}).
+			OrderBy("nonce DESC").
+			Limit(1),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, NewNotFoundError("transaction")
+	}
+	return &res[0], nil
+}
 
 func (s *Storage) MarkTransactionAsIncluded(txHash common.Hash, commitmentID int32) error {
 	res, err := s.DB.Query(

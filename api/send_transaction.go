@@ -149,7 +149,7 @@ func (a *API) validateNonce(transfer *models.Transfer, senderNonce *models.Uint2
 	}
 
 	latestNonce, err := a.storage.GetLatestTransactionNonce(transfer.FromStateID)
-	if errors.Is(err, storage.ErrTransactionNotFound) {
+	if storage.IsNotFoundError(err) {
 		return checkNonce(&transfer.Nonce, senderNonce)
 	}
 	if err != nil {

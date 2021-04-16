@@ -95,7 +95,7 @@ func (s *StateLeafTestSuite) Test_GetStateLeafByPath_NonExistentLeaf() {
 	path, err := models.NewMerklePath(strings.Repeat("0", 32))
 	s.NoError(err)
 	_, err = s.storage.GetStateLeafByPath(path)
-	s.Equal(ErrStateLeafNotFound, err)
+	s.Equal(NewNotFoundError("state leaf"), err)
 }
 
 func (s *StateLeafTestSuite) Test_GetStateLeaves_NoLeaves() {

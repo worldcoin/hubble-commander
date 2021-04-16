@@ -94,7 +94,7 @@ func CalculateStateAfterTransfer(
 		return
 	}
 
-	totalAmount := tx.Amount.Add(&transfer.Fee)
+	totalAmount := transfer.Amount.Add(&transfer.Fee)
 	if senderState.Balance.Cmp(totalAmount) < 0 {
 		err = ErrBalanceTooLow
 		return

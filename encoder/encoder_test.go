@@ -76,11 +76,13 @@ func (s *EncoderTestSuite) TestEncodeTransfer() {
 
 func (s *EncoderTestSuite) TestEncodeTransferForSigning() {
 	tx := &models.Transfer{
-		FromStateID: 2,
-		ToStateID:   3,
-		Amount:      models.MakeUint256(4),
-		Fee:         models.MakeUint256(5),
-		Nonce:       models.MakeUint256(6),
+		TransactionBase: models.TransactionBase{
+			FromStateID: 2,
+			Amount:      models.MakeUint256(4),
+			Fee:         models.MakeUint256(5),
+			Nonce:       models.MakeUint256(6),
+		},
+		ToStateID: 3,
 	}
 	encodedTransfer, err := EncodeTransfer(tx)
 	s.NoError(err)

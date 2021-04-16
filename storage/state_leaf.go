@@ -51,7 +51,7 @@ func (s *Storage) GetStateLeafByPath(path *models.MerklePath) (*models.StateLeaf
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, ErrStateLeafNotFound
+		return nil, NewNotFoundError("state leaf")
 	}
 	return &res[0], nil
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -63,6 +64,37 @@ func (s *TransactionBaseTestSuite) Test_SetTransactionError() {
 	s.NoError(err)
 
 	s.Equal(errorMessage, res.ErrorMessage)
+}
+
+func (s *TransactionBaseTestSuite) Test_GetLatestTransactionNonce() {
+	account := models.Account{
+		AccountIndex: 1,
+		PublicKey:    models.PublicKey{1, 2, 3},
+	}
+
+	err := s.storage.AddAccountIfNotExists(&account)
+	s.NoError(err)
+
+	tx1 := transferTransaction
+	tx1.Hash = utils.RandomHash()
+	tx1.Nonce = models.MakeUint256(3)
+	tx2 := transferTransaction
+	tx2.Hash = utils.RandomHash()
+	tx2.Nonce = models.MakeUint256(5)
+	tx3 := transferTransaction
+	tx3.Hash = utils.RandomHash()
+	tx3.Nonce = models.MakeUint256(1)
+
+	err = s.storage.AddTransfer(&tx1)
+	s.NoError(err)
+	err = s.storage.AddTransfer(&tx2)
+	s.NoError(err)
+	err = s.storage.AddTransfer(&tx3)
+	s.NoError(err)
+
+	userTransactions, err := s.storage.GetLatestTransactionNonce(account.AccountIndex)
+	s.NoError(err)
+	s.Equal(models.NewUint256(5), userTransactions)
 }
 
 func TestTransactionBaseTestSuite(t *testing.T) {
