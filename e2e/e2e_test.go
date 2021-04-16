@@ -4,6 +4,7 @@ package e2e
 
 import (
 	"errors"
+	"log"
 	"testing"
 	"time"
 
@@ -28,13 +29,16 @@ func Test_Commander(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
+	wallets, err := createWallets()
+	require.NoError(t, err)
+
 	var version string
 	err = commander.Client.CallFor(&version, "hubble_getVersion")
 	require.NoError(t, err)
 	require.Equal(t, "dev-0.1.0", version)
 
 	var userStates []dto.UserState
-	err = commander.Client.CallFor(&userStates, "hubble_getUserStates", []interface{}{models.PublicKey{1, 2, 3}})
+	err = commander.Client.CallFor(&userStates, "hubble_getUserStates", []interface{}{wallets[0].PublicKey()})
 	require.NoError(t, err)
 	require.Len(t, userStates, 1)
 	require.EqualValues(t, models.MakeUint256(0), userStates[0].Nonce)
@@ -47,10 +51,7 @@ func Test_Commander(t *testing.T) {
 		Nonce:       models.NewUint256(0),
 	}
 
-	wallet, err := createWallet(*tx.FromStateID)
-	require.NoError(t, err)
-
-	signature, err := signTransfer(wallet, tx)
+	signature, err := signTransfer(&wallets[*tx.FromStateID], tx)
 	require.NoError(t, err)
 	tx.Signature = signature
 
@@ -70,13 +71,9 @@ func Test_Commander(t *testing.T) {
 		Amount:      models.NewUint256(10),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(1),
-		Signature:   []byte{97, 100, 115, 97, 100, 115, 97, 115, 100, 97, 115, 100},
 	}
 
-	wallet, err = createWallet(*tx2.FromStateID)
-	require.NoError(t, err)
-
-	signature, err = signTransfer(wallet, tx2)
+	signature, err = signTransfer(&wallets[*tx2.FromStateID], tx2)
 	require.NoError(t, err)
 	tx2.Signature = signature
 
@@ -95,7 +92,7 @@ func Test_Commander(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, models.InBatch, sentTransfer.Status)
 
-	err = commander.Client.CallFor(&userStates, "hubble_getUserStates", []interface{}{models.PublicKey{2, 3, 4}})
+	err = commander.Client.CallFor(&userStates, "hubble_getUserStates", []interface{}{wallets[1].PublicKey()})
 	require.NoError(t, err)
 	require.Len(t, userStates, 2)
 
@@ -144,4 +141,17 @@ func createWallet(stateID uint32) (*bls.Wallet, error) {
 
 	wallet, err := bls.NewWallet(genesisAccount.PrivateKey, config.Domain)
 	return wallet, err
+}
+
+func createWallets() ([]bls.Wallet, error) {
+	wallets := make([]bls.Wallet, 0, len(config.GenesisAccounts))
+	for i := range config.GenesisAccounts {
+		wallet, err := createWallet(uint32(i))
+		if err != nil {
+			return nil, err
+		}
+		wallets = append(wallets, *wallet)
+	}
+
+	return wallets, nil
 }

@@ -20,21 +20,6 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 )
 
-var genesisAccounts = []models.GenesisAccount{
-	{
-		Balance: models.MakeUint256(1000),
-	},
-	{
-		Balance: models.MakeUint256(1000),
-	},
-	{
-		Balance: models.MakeUint256(1000),
-	},
-	{
-		Balance: models.MakeUint256(1000),
-	},
-}
-
 func main() {
 	prune := flag.Bool("prune", false, "drop database before running app")
 	flag.Parse()
@@ -101,7 +86,7 @@ func getClient(storage *st.Storage, chain deployer.ChainConnection) (*eth.Client
 	if st.IsNotFoundError(err) {
 		fmt.Println("Bootstrapping genesis state")
 		stateTree := st.NewStateTree(storage)
-		chainState, err = bootstrapState(stateTree, chain, genesisAccounts)
+		chainState, err = bootstrapState(stateTree, chain, config.GenesisAccounts)
 		if err != nil {
 			return nil, err
 		}
