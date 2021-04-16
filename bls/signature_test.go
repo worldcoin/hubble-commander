@@ -1,6 +1,7 @@
 package bls
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -42,6 +43,24 @@ func (s *SignatureTestSuite) TestNewSignatureFromBytes() {
 	s.NoError(err)
 
 	isValid, err := signatureFromBytes.Verify(data, s.wallet.PublicKey())
+	s.NoError(err)
+	s.True(isValid)
+}
+
+func (s *SignatureTestSuite) TestNewWallet() {
+	wallet, err := NewRandomWallet(testDomain)
+	s.NoError(err)
+	secretKey, _ := wallet.Bytes()
+	fmt.Println(len(secretKey))
+
+	wallet2, err := NewWallet(secretKey, testDomain)
+	s.NoError(err)
+
+	sig, err := wallet.Sign([]byte{1,2,3})
+	s.NoError(err)
+	pk := wallet2.PublicKey()
+
+	isValid, err := sig.Verify([]byte{1,2,3}, pk)
 	s.NoError(err)
 	s.True(isValid)
 }
