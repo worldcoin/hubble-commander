@@ -6,6 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -15,6 +16,7 @@ var (
 	create2transfer = models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
 			Hash:                 common.BigToHash(big.NewInt(1234)),
+			TxType:               txtype.Create2Transfer,
 			FromStateID:          1,
 			Amount:               models.MakeUint256(1000),
 			Fee:                  models.MakeUint256(100),

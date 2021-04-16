@@ -1,10 +1,14 @@
 package models
 
-import "github.com/ethereum/go-ethereum/common"
+import (
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/ethereum/go-ethereum/common"
+)
 
 type TransactionBase struct {
-	Hash                 common.Hash `db:"tx_hash"`
-	FromStateID          uint32      `db:"from_state_id"`
+	Hash                 common.Hash            `db:"tx_hash"`
+	TxType               txtype.TransactionType `db:"tx_type"`
+	FromStateID          uint32                 `db:"from_state_id"`
 	Amount               Uint256
 	Fee                  Uint256
 	Nonce                Uint256

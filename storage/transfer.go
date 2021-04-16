@@ -8,14 +8,7 @@ import (
 )
 
 var transferColumns = []string{
-	"transaction_base.tx_hash",
-	"transaction_base.from_state_id",
-	"transaction_base.amount",
-	"transaction_base.fee",
-	"transaction_base.nonce",
-	"transaction_base.signature",
-	"transaction_base.included_in_commitment",
-	"transaction_base.error_message",
+	"transaction_base.*",
 	"transfer.to_state_id",
 }
 
