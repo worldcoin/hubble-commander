@@ -1,4 +1,4 @@
-// +build e2e
+//+build e2e
 
 package e2e
 
@@ -7,6 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -42,8 +45,14 @@ func Test_Commander(t *testing.T) {
 		Amount:      models.NewUint256(50),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(0),
-		Signature:   []byte{97, 100, 115, 97, 100, 115, 97, 115, 100, 97, 115, 100},
 	}
+
+	wallet, err := createWallet(*tx.FromStateID)
+	require.NoError(t, err)
+
+	signature, err := signTransfer(wallet, tx)
+	require.NoError(t, err)
+	tx.Signature = signature
 
 	var transferHash1 common.Hash
 	err = commander.Client.CallFor(&transferHash1, "hubble_sendTransaction", []interface{}{transfer})
@@ -63,6 +72,13 @@ func Test_Commander(t *testing.T) {
 		Nonce:       models.NewUint256(1),
 		Signature:   []byte{97, 100, 115, 97, 100, 115, 97, 115, 100, 97, 115, 100},
 	}
+
+	wallet, err = createWallet(*tx2.FromStateID)
+	require.NoError(t, err)
+
+	signature, err = signTransfer(wallet, tx2)
+	require.NoError(t, err)
+	tx2.Signature = signature
 
 	var transferHash2 common.Hash
 	err = commander.Client.CallFor(&transferHash2, "hubble_sendTransaction", []interface{}{transfer2})
@@ -96,4 +112,36 @@ func getUserState(userStates []dto.UserState, stateID uint32) (*dto.UserState, e
 		}
 	}
 	return nil, errors.New("user state with given stateID not found")
+}
+
+func signTransfer(wallet *bls.Wallet, t dto.Transfer) ([]byte, error) {
+	transfer := &models.Transfer{
+		FromStateID: *t.FromStateID,
+		ToStateID:   *t.ToStateID,
+		Amount:      *t.Amount,
+		Fee:         *t.Fee,
+		Nonce:       *t.Nonce,
+		Signature:   t.Signature,
+	}
+
+	encodedTransfer, err := encoder.EncodeTransferForSigning(transfer)
+	if err != nil {
+		return nil, err
+	}
+
+	signature, err := wallet.Sign(encodedTransfer)
+	if err != nil {
+		return nil, err
+	}
+	return signature.Bytes(), nil
+}
+
+func createWallet(stateID uint32) (*bls.Wallet, error) {
+	if int(stateID) >= len(config.GenesisAccounts) {
+		return nil, errors.New("invalid state id")
+	}
+	genesisAccount := config.GenesisAccounts[stateID]
+
+	wallet, err := bls.NewWallet(genesisAccount.PrivateKey, config.Domain)
+	return wallet, err
 }
