@@ -80,7 +80,7 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]model
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, NewNotFoundError("state leaves")
+		return nil, NewNotFoundError("user states")
 	}
 	return toUserStateWithID(res), nil
 }
