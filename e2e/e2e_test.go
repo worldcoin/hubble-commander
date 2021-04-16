@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -41,7 +42,7 @@ func Test_Commander(t *testing.T) {
 	require.Len(t, userStates, 1)
 	require.EqualValues(t, models.MakeUint256(0), userStates[0].Nonce)
 
-	transfer, err := testutils.SignTransfer(&wallets[1], dto.Transfer{
+	transfer, err := api.SignTransfer(&wallets[1], dto.Transfer{
 		FromStateID: ref.Uint32(1),
 		ToStateID:   ref.Uint32(2),
 		Amount:      models.NewUint256(50),
@@ -60,7 +61,7 @@ func Test_Commander(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, models.Pending, sentTransfer.Status)
 
-	transfer2, err := testutils.SignTransfer(&wallets[1], dto.Transfer{
+	transfer2, err := api.SignTransfer(&wallets[1], dto.Transfer{
 		FromStateID: ref.Uint32(1),
 		ToStateID:   ref.Uint32(2),
 		Amount:      models.NewUint256(10),

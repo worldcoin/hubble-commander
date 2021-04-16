@@ -1,4 +1,4 @@
-package testutils
+package api
 
 import (
 	"github.com/Worldcoin/hubble-commander/bls"

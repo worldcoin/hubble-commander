@@ -8,7 +8,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
@@ -71,7 +70,7 @@ func (s *SendTransactionTestSuite) SetupTest() {
 }
 
 func (s *SendTransactionTestSuite) signTransfer(transfer dto.Transfer) dto.Transfer {
-	signedTransfer, err := testutils.SignTransfer(s.wallet, transfer)
+	signedTransfer, err := SignTransfer(s.wallet, transfer)
 	s.NoError(err)
 	return *signedTransfer
 }
