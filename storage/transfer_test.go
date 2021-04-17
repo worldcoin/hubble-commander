@@ -207,6 +207,13 @@ func (s *TransferTestSuite) Test_GetTransfersByPublicKey() {
 	s.Contains(userTransactions, transfer4)
 }
 
+func (s *TransferTestSuite) Test_GetUserTransfersByPublicKey_NoTransfers() {
+	userTransactions, err := s.storage.GetTransfersByPublicKey(&models.PublicKey{1, 2, 3})
+
+	s.NoError(err)
+	s.Len(userTransactions, 0)
+}
+
 func TestTransferTestSuite(t *testing.T) {
 	suite.Run(t, new(TransferTestSuite))
 }
