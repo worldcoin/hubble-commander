@@ -212,6 +212,7 @@ func (s *GetTransfersTestSuite) TestApi_GetTransfers_NoTransfers() {
 		Nonce:        models.MakeUint256(0),
 	}
 	err = s.tree.Set(0, userState)
+	s.NoError(err)
 
 	userTransfers, err := s.api.GetTransfers(&account.PublicKey)
 	s.NoError(err)
