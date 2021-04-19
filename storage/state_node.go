@@ -12,9 +12,9 @@ func (s *Storage) UpsertStateNode(node *models.StateNode) error {
 	_, err := s.DB.Query(
 		s.QB.Insert("state_node").
 			Values(
-				node.MerklePath,
+				node.StateID,
 				node.DataHash,
-			).Suffix("ON CONFLICT (merkle_path) DO UPDATE SET data_hash = ?", node.DataHash),
+			).Suffix("ON CONFLICT (state_id) DO UPDATE SET data_hash = ?", node.DataHash),
 	).Exec()
 
 	return err
@@ -24,7 +24,7 @@ func (s *Storage) AddStateNode(node *models.StateNode) error {
 	_, err := s.DB.Query(
 		s.QB.Insert("state_node").
 			Values(
-				node.MerklePath,
+				node.StateID,
 				node.DataHash,
 			),
 	).Exec()
@@ -36,7 +36,7 @@ func (s *Storage) UpdateStateNode(node *models.StateNode) error {
 	res, err := s.DB.Query(
 		s.QB.Update("state_node").
 			Set("data_hash", squirrel.Expr("?", node.DataHash)).
-			Where("merkle_path = ?", node.MerklePath),
+			Where("state_id = ?", node.StateID),
 	).Exec()
 	if err != nil {
 		return err
@@ -68,30 +68,30 @@ func (s *Storage) GetStateNodeByHash(hash common.Hash) (*models.StateNode, error
 	return &res[0], nil
 }
 
-func (s *Storage) GetStateNodeByPath(path *models.MerklePath) (*models.StateNode, error) {
+func (s *Storage) GetStateNodeByStateID(stateID *models.MerklePath) (*models.StateNode, error) {
 	res := make([]models.StateNode, 0, 1)
-	pathValue, err := path.Value()
+	pathValue, err := stateID.Value()
 	if err != nil {
 		return nil, err
 	}
 	err = s.DB.Query(
 		s.QB.Select("*").
 			From("state_node").
-			Where(squirrel.Eq{"merkle_path": pathValue}),
+			Where(squirrel.Eq{"state_id": pathValue}),
 	).Into(&res)
 	if err != nil {
 		return nil, err
 	}
 	if len(res) == 0 {
-		return newZeroStateNode(path), nil
+		return newZeroStateNode(stateID), nil
 	}
 
 	return &res[0], nil
 }
 
-func newZeroStateNode(path *models.MerklePath) *models.StateNode {
+func newZeroStateNode(stateID *models.MerklePath) *models.StateNode {
 	return &models.StateNode{
-		MerklePath: *path,
-		DataHash:   GetZeroHash(32 - uint(path.Depth)),
+		StateID:  *stateID,
+		DataHash: GetZeroHash(32 - uint(stateID.Depth)),
 	}
 }

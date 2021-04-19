@@ -37,8 +37,8 @@ func (s *StateNodeTestSuite) Test_AddStateNode_AddAndRetrieve() {
 	path, err := models.NewMerklePath("0000111")
 	s.NoError(err)
 	node := &models.StateNode{
-		MerklePath: *path,
-		DataHash:   common.BytesToHash([]byte{1, 2, 3, 4, 5}),
+		StateID:  *path,
+		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 	}
 	err = s.storage.AddStateNode(node)
 	s.NoError(err)
@@ -48,7 +48,7 @@ func (s *StateNodeTestSuite) Test_AddStateNode_AddAndRetrieve() {
 
 	s.Equal(node, res)
 
-	res, err = s.storage.GetStateNodeByPath(path)
+	res, err = s.storage.GetStateNodeByStateID(path)
 	s.NoError(err)
 
 	s.Equal(node, res)
@@ -60,24 +60,24 @@ func (s *StateNodeTestSuite) Test_AddStateNode_AddAndRetrieveRoot() {
 	pathNode, err := models.NewMerklePath("0")
 	s.NoError(err)
 	root := &models.StateNode{
-		MerklePath: *pathRoot,
-		DataHash:   common.BytesToHash([]byte{1, 2, 3, 4, 5}),
+		StateID:  *pathRoot,
+		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 	}
 	node := &models.StateNode{
-		MerklePath: *pathNode,
-		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
+		StateID:  *pathNode,
+		DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 	}
 	err = s.storage.AddStateNode(root)
 	s.NoError(err)
 	err = s.storage.AddStateNode(node)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateNodeByPath(pathRoot)
+	res, err := s.storage.GetStateNodeByStateID(pathRoot)
 	s.NoError(err)
 
 	s.Equal(root, res)
 
-	res, err = s.storage.GetStateNodeByPath(pathNode)
+	res, err = s.storage.GetStateNodeByStateID(pathNode)
 	s.NoError(err)
 
 	s.Equal(node, res)
@@ -87,21 +87,21 @@ func (s *StateNodeTestSuite) Test_UpdateStateNode_UpdateAndRetrieve() {
 	path, err := models.NewMerklePath("0000111")
 	s.NoError(err)
 	node := &models.StateNode{
-		MerklePath: *path,
-		DataHash:   common.BytesToHash([]byte{1, 2, 3, 4, 5}),
+		StateID:  *path,
+		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 	}
 	err = s.storage.AddStateNode(node)
 	s.NoError(err)
 
 	expectedNode := &models.StateNode{
-		MerklePath: *path,
-		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
+		StateID:  *path,
+		DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 	}
 
 	err = s.storage.UpdateStateNode(expectedNode)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateNodeByPath(path)
+	res, err := s.storage.GetStateNodeByStateID(path)
 	s.NoError(err)
 
 	s.Equal(expectedNode, res)
@@ -111,8 +111,8 @@ func (s *StateNodeTestSuite) Test_UpdateStateNode_NotExistentNode() {
 	path, err := models.NewMerklePath("0000111")
 	s.NoError(err)
 	node := &models.StateNode{
-		MerklePath: *path,
-		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
+		StateID:  *path,
+		DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 	}
 
 	err = s.storage.UpdateStateNode(node)
@@ -123,13 +123,13 @@ func (s *StateNodeTestSuite) Test_UpsertStateNode_AddAndRetrieve() {
 	path, err := models.NewMerklePath("0000111")
 	s.NoError(err)
 	node := &models.StateNode{
-		MerklePath: *path,
-		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
+		StateID:  *path,
+		DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 	}
 	err = s.storage.UpsertStateNode(node)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateNodeByPath(path)
+	res, err := s.storage.GetStateNodeByStateID(path)
 	s.NoError(err)
 
 	s.Equal(node, res)
@@ -139,21 +139,21 @@ func (s *StateNodeTestSuite) Test_UpsertStateNode_UpdateAndRetrieve() {
 	path, err := models.NewMerklePath("0000111")
 	s.NoError(err)
 	node := &models.StateNode{
-		MerklePath: *path,
-		DataHash:   common.BytesToHash([]byte{1, 2, 3, 4, 5}),
+		StateID:  *path,
+		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 	}
 	err = s.storage.AddStateNode(node)
 	s.NoError(err)
 
 	s.NoError(err)
 	expectedNode := &models.StateNode{
-		MerklePath: *path,
-		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
+		StateID:  *path,
+		DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 	}
 	err = s.storage.UpsertStateNode(expectedNode)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateNodeByPath(path)
+	res, err := s.storage.GetStateNodeByStateID(path)
 	s.NoError(err)
 
 	s.Equal(expectedNode, res)
@@ -173,11 +173,11 @@ func (s *StateNodeTestSuite) Test_GetStateNodeByPath_NonExistentLeaf() {
 	}
 
 	expected := &models.StateNode{
-		MerklePath: path,
-		DataHash:   GetZeroHash(0),
+		StateID:  path,
+		DataHash: GetZeroHash(0),
 	}
 
-	res, err := s.storage.GetStateNodeByPath(&path)
+	res, err := s.storage.GetStateNodeByStateID(&path)
 	s.NoError(err)
 	s.Equal(expected, res)
 }
@@ -189,11 +189,11 @@ func (s *StateNodeTestSuite) Test_GetStateNodeByPath_NonExistentRoot() {
 	}
 
 	expected := &models.StateNode{
-		MerklePath: path,
-		DataHash:   GetZeroHash(32),
+		StateID:  path,
+		DataHash: GetZeroHash(32),
 	}
 
-	res, err := s.storage.GetStateNodeByPath(&path)
+	res, err := s.storage.GetStateNodeByStateID(&path)
 	s.NoError(err)
 	s.Equal(expected, res)
 }

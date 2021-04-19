@@ -69,7 +69,7 @@ func (s *StateTreeTestSuite) Test_Set_StoresLeafStateNodeRecord() {
 	s.NoError(err)
 
 	expectedNode := &models.StateNode{
-		MerklePath: models.MerklePath{
+		StateID: models.MerklePath{
 			Path:  0,
 			Depth: 32,
 		},
@@ -91,11 +91,11 @@ func (s *StateTreeTestSuite) Test_Set_UpdatesRootStateNodeRecord() {
 	}
 
 	expectedRoot := &models.StateNode{
-		MerklePath: rootPath,
-		DataHash:   common.HexToHash("0xd8cb702fc833817dccdc3889282af96755b2909274ca2f1a3827a60d11d796eb"),
+		StateID:  rootPath,
+		DataHash: common.HexToHash("0xd8cb702fc833817dccdc3889282af96755b2909274ca2f1a3827a60d11d796eb"),
 	}
 
-	root, err := s.storage.GetStateNodeByPath(&rootPath)
+	root, err := s.storage.GetStateNodeByStateID(&rootPath)
 	s.NoError(err)
 	s.Equal(expectedRoot, root)
 }
@@ -110,11 +110,11 @@ func (s *StateTreeTestSuite) Test_Set_CalculatesCorrectRootForLeafOfIndex1() {
 	}
 
 	expectedRoot := &models.StateNode{
-		MerklePath: rootPath,
-		DataHash:   common.HexToHash("0xbec68099063e1499a5144a2d5b41f6a3e005ceac77caef6a171d77573570a000"),
+		StateID:  rootPath,
+		DataHash: common.HexToHash("0xbec68099063e1499a5144a2d5b41f6a3e005ceac77caef6a171d77573570a000"),
 	}
 
-	root, err := s.storage.GetStateNodeByPath(&rootPath)
+	root, err := s.storage.GetStateNodeByStateID(&rootPath)
 	s.NoError(err)
 	s.Equal(expectedRoot, root)
 }
@@ -138,11 +138,11 @@ func (s *StateTreeTestSuite) Test_Set_CalculatesCorrectRootForTwoLeaves() {
 	}
 
 	expectedRoot := &models.StateNode{
-		MerklePath: rootPath,
-		DataHash:   common.HexToHash("0x7b1b0382bdffda7f4a6b24d974189c60797b87ce76836de6f18039e1dc73c050"),
+		StateID:  rootPath,
+		DataHash: common.HexToHash("0x7b1b0382bdffda7f4a6b24d974189c60797b87ce76836de6f18039e1dc73c050"),
 	}
 
-	root, err := s.storage.GetStateNodeByPath(&rootPath)
+	root, err := s.storage.GetStateNodeByStateID(&rootPath)
 	s.NoError(err)
 	s.Equal(expectedRoot, root)
 }
@@ -159,7 +159,7 @@ func (s *StateTreeTestSuite) Test_Set_StoresStateUpdateRecord() {
 	currentRoot := common.HexToHash("0xd8cb702fc833817dccdc3889282af96755b2909274ca2f1a3827a60d11d796eb")
 	expectedUpdate := &models.StateUpdate{
 		ID:          1,
-		MerklePath:  path,
+		StateID:     path,
 		CurrentHash: s.leaf.DataHash,
 		CurrentRoot: currentRoot,
 		PrevHash:    GetZeroHash(0),
@@ -185,11 +185,11 @@ func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_CorrectRootStateNode() 
 	}
 
 	expectedRoot := &models.StateNode{
-		MerklePath: rootPath,
-		DataHash:   common.HexToHash("0x406515786640be8c51eacf1221f017e7f59e04ef59637a27dcb2b2f054b309bf"),
+		StateID:  rootPath,
+		DataHash: common.HexToHash("0x406515786640be8c51eacf1221f017e7f59e04ef59637a27dcb2b2f054b309bf"),
 	}
 
-	root, err := s.storage.GetStateNodeByPath(&rootPath)
+	root, err := s.storage.GetStateNodeByStateID(&rootPath)
 	s.NoError(err)
 	s.Equal(expectedRoot, root)
 }
@@ -209,11 +209,11 @@ func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_CorrectLeafStateNode() 
 	}
 
 	expectedLeaf := &models.StateNode{
-		MerklePath: leafPath,
-		DataHash:   leaf.DataHash,
+		StateID:  leafPath,
+		DataHash: leaf.DataHash,
 	}
 
-	leafNode, err := s.storage.GetStateNodeByPath(&leafPath)
+	leafNode, err := s.storage.GetStateNodeByStateID(&leafPath)
 	s.NoError(err)
 	s.Equal(expectedLeaf, leafNode)
 }
@@ -249,7 +249,7 @@ func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_AddsStateUpdateRecord()
 	currentRoot := common.HexToHash("0x406515786640be8c51eacf1221f017e7f59e04ef59637a27dcb2b2f054b309bf")
 	expectedUpdate := &models.StateUpdate{
 		ID:          2,
-		MerklePath:  path,
+		StateID:     path,
 		CurrentHash: updatedLeaf.DataHash,
 		CurrentRoot: currentRoot,
 		PrevHash:    s.leaf.DataHash,

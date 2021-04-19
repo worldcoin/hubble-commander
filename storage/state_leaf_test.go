@@ -163,16 +163,16 @@ func (s *StateLeafTestSuite) Test_GetStateLeaves() {
 	path, err := models.NewMerklePath("01")
 	s.NoError(err)
 	err = s.storage.UpsertStateNode(&models.StateNode{
-		DataHash:   common.BytesToHash([]byte{5, 6, 7, 8, 9}),
-		MerklePath: *path,
+		DataHash: common.BytesToHash([]byte{5, 6, 7, 8, 9}),
+		StateID:  *path,
 	})
 	s.NoError(err)
 
 	path, err = models.NewMerklePath("10")
 	s.NoError(err)
 	err = s.storage.UpsertStateNode(&models.StateNode{
-		DataHash:   common.BytesToHash([]byte{3, 4, 5, 6, 7}),
-		MerklePath: *path,
+		DataHash: common.BytesToHash([]byte{3, 4, 5, 6, 7}),
+		StateID:  *path,
 	})
 	s.NoError(err)
 
@@ -184,13 +184,13 @@ func (s *StateLeafTestSuite) Test_GetStateLeaves() {
 	s.Equal(common.BytesToHash([]byte{3, 4, 5, 6, 7}), res[1].DataHash)
 }
 
-func (s *StateLeafTestSuite) Test_GetNextAvailableLeafPath_NoLeavesInStateTree() {
-	path, err := s.storage.GetNextAvailableLeafPath()
+func (s *StateLeafTestSuite) Test_GetNextAvailableStateID_NoLeavesInStateTree() {
+	path, err := s.storage.GetNextAvailableStateID()
 	s.NoError(err)
 	s.Equal(uint32(0), *path)
 }
 
-func (s *StateLeafTestSuite) Test_GetNextAvailableLeafPath() {
+func (s *StateLeafTestSuite) Test_GetNextAvailableStateID() {
 	userState := &models.UserState{
 		PubkeyID:   1,
 		TokenIndex: models.MakeUint256(1),
@@ -205,7 +205,7 @@ func (s *StateLeafTestSuite) Test_GetNextAvailableLeafPath() {
 	err = s.tree.Set(2, userState)
 	s.NoError(err)
 
-	path, err := s.storage.GetNextAvailableLeafPath()
+	path, err := s.storage.GetNextAvailableStateID()
 	s.NoError(err)
 	s.Equal(uint32(3), *path)
 }

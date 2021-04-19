@@ -10,14 +10,14 @@ func (s *Storage) AddStateUpdate(update *models.StateUpdate) error {
 	_, err := s.DB.Query(
 		s.QB.Insert("state_update").
 			Columns(
-				"merkle_path",
+				"state_id",
 				"current_hash",
 				"current_root",
 				"prev_hash",
 				"prev_root",
 			).
 			Values(
-				update.MerklePath,
+				update.StateID,
 				update.CurrentHash,
 				update.CurrentRoot,
 				update.PrevHash,

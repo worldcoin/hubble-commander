@@ -73,10 +73,10 @@ func (s *Storage) GetStateLeaves(pubkeyID uint32) ([]models.StateLeaf, error) {
 	return res, nil
 }
 
-func (s *Storage) GetNextAvailableLeafPath() (*uint32, error) {
+func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
 	res := make([]uint32, 0, 1)
 	err := s.DB.Query(
-		s.QB.Select("lpad(merkle_path::text, 33, '0')::bit(33)::bigint + 1 AS next_available_leaf_slot").
+		s.QB.Select("lpad(state_id::text, 33, '0')::bit(33)::bigint + 1 AS next_available_leaf_slot").
 			From("state_leaf").
 			JoinClause("NATURAL JOIN state_node").
 			OrderBy("next_available_leaf_slot DESC").
@@ -92,13 +92,13 @@ func (s *Storage) GetNextAvailableLeafPath() (*uint32, error) {
 	return &res[0], nil
 }
 
-type userStateWithPath struct {
-	MerklePath models.MerklePath `db:"merkle_path"`
+type userStateWithStateID struct {
+	StateID models.MerklePath `db:"state_id"`
 	models.UserState
 }
 
 func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]models.UserStateWithID, error) {
-	res := make([]userStateWithPath, 0, 1)
+	res := make([]userStateWithStateID, 0, 1)
 	err := s.DB.Query(
 		s.QB.
 			Select(
@@ -106,7 +106,7 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]model
 				"state_leaf.token_index",
 				"state_leaf.balance",
 				"state_leaf.nonce",
-				"state_node.merkle_path",
+				"state_node.state_id",
 			).
 			From("account").
 			JoinClause("NATURAL JOIN state_leaf").
@@ -122,11 +122,11 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]model
 	return toUserStateWithID(res), nil
 }
 
-func toUserStateWithID(userStates []userStateWithPath) []models.UserStateWithID {
+func toUserStateWithID(userStates []userStateWithStateID) []models.UserStateWithID {
 	res := make([]models.UserStateWithID, 0, len(userStates))
 	for i := range userStates {
 		res = append(res, models.UserStateWithID{
-			StateID:   userStates[i].MerklePath.Path,
+			StateID:   userStates[i].StateID.Path,
 			UserState: userStates[i].UserState,
 		})
 	}

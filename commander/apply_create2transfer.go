@@ -22,7 +22,7 @@ func ApplyCreate2Transfer(
 		Nonce:      models.MakeUint256(0),
 	}
 
-	nextAvailableLeafPath, err := storage.GetNextAvailableLeafPath()
+	nextAvailableLeafPath, err := storage.GetNextAvailableStateID()
 	if err != nil {
 		return nil, err
 	}
