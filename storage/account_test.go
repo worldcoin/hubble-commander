@@ -47,7 +47,7 @@ func (s *AccountTestSuite) TestAddAccountIfNotExists_AddAndRetrieve() {
 	s.Equal([]models.Account{account}, res)
 }
 
-func (s *AccountTestSuite) TestAddAccountIfNotExists_ReturnsAllAccounts() {
+func (s *AccountTestSuite) TestGetAccounts_ReturnsAllAccounts() {
 	pubKey := models.PublicKey{1, 2, 3}
 	accounts := []models.Account{{
 		PubKeyID:  0,

@@ -55,7 +55,7 @@ func (s *StateLeafTestSuite) TestAddStateLeaf_AddAndRetrieve() {
 	s.Equal(leaf, res)
 }
 
-func (s *StateLeafTestSuite) TestGetStateLeaf_NonExistentLeaf() {
+func (s *StateLeafTestSuite) TestGetStateLeafByHash_NonExistentLeaf() {
 	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
 	res, err := s.storage.GetStateLeafByHash(hash)
 	s.Equal(NewNotFoundError("state leaf"), err)
