@@ -162,21 +162,21 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer() {
 		ToStateID: 2,
 	}
 
-	senderIndex := senderState.PubKeyID
-	receiverIndex := receiverState.PubKeyID
+	senderStateID := senderState.PubKeyID
+	receiverStateID := receiverState.PubKeyID
 
-	err := s.tree.Set(senderIndex, &senderState)
+	err := s.tree.Set(senderStateID, &senderState)
 	s.NoError(err)
-	err = s.tree.Set(receiverIndex, &receiverState)
+	err = s.tree.Set(receiverStateID, &receiverState)
 	s.NoError(err)
 
 	transferError, appError := ApplyTransfer(s.tree, &transfer, models.MakeUint256(1))
 	s.NoError(appError)
 	s.NoError(transferError)
 
-	senderLeaf, err := s.tree.Leaf(senderIndex)
+	senderLeaf, err := s.tree.Leaf(senderStateID)
 	s.NoError(err)
-	receiverLeaf, err := s.tree.Leaf(receiverIndex)
+	receiverLeaf, err := s.tree.Leaf(receiverStateID)
 	s.NoError(err)
 
 	s.Equal(int64(270), senderLeaf.Balance.Int64())

@@ -32,30 +32,30 @@ func (s *StateTree) Root() (*common.Hash, error) {
 	return &root.DataHash, nil
 }
 
-func (s *StateTree) LeafNode(index uint32) (*models.StateNode, error) {
+func (s *StateTree) LeafNode(id uint32) (*models.StateNode, error) {
 	leafPath := &models.MerklePath{
-		Path:  index,
+		Path:  id,
 		Depth: 32,
 	}
 	return s.storage.GetStateNodeByPath(leafPath)
 }
 
-func (s *StateTree) Leaf(index uint32) (*models.StateLeaf, error) {
+func (s *StateTree) Leaf(id uint32) (*models.StateLeaf, error) {
 	leafPath := &models.MerklePath{
-		Path:  index,
+		Path:  id,
 		Depth: 32,
 	}
 	return s.storage.GetStateLeafByPath(leafPath)
 }
 
-func (s *StateTree) Set(index uint32, state *models.UserState) (err error) {
+func (s *StateTree) Set(id uint32, state *models.UserState) (err error) {
 	tx, storage, err := s.storage.BeginTransaction()
 	if err != nil {
 		return
 	}
 	defer tx.Rollback(&err)
 
-	err = NewStateTree(storage).unsafeSet(index, state)
+	err = NewStateTree(storage).unsafeSet(id, state)
 	if err != nil {
 		return
 	}
