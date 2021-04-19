@@ -13,7 +13,7 @@ var create2transferColumns = []string{
 	"create2transfer.to_pubkey_id",
 }
 
-func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) (err error){
+func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) (err error) {
 	tx, txStorage, err := s.BeginTransaction()
 	if err != nil {
 		return err
