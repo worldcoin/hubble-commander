@@ -100,7 +100,7 @@ func (s *StateTreeTestSuite) Test_Set_UpdatesRootStateNodeRecord() {
 	s.Equal(expectedRoot, root)
 }
 
-func (s *StateTreeTestSuite) Test_Set_CalculatesCorrectRootForLeafOfIndex1() {
+func (s *StateTreeTestSuite) Test_Set_CalculatesCorrectRootForLeafOfId1() {
 	err := s.tree.Set(1, &s.leaf.UserState)
 	s.NoError(err)
 
