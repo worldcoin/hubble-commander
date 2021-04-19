@@ -5,7 +5,7 @@
 ### Bindings
 In order to generate Go bindings for smart contracts `abigen` tool needs to be installed locally. 
 It comes along with Geth which can be installed on macOS using:
-```bash
+```shell
 brew tap ethereum/ethereum
 brew install ethereum
 ```
@@ -17,7 +17,7 @@ You also need python3 installed: https://www.python.org/
 
 For the lint script to work `golangci-lint` must be installed locally.
 On macOS run:
-```bash
+```shell
 brew install golangci-lint
 brew upgrade golangci-lint
 ```
@@ -26,7 +26,7 @@ For other environments refer to: https://golangci-lint.run/usage/install/#local-
 ### PostgreSQL
 
 You can either install the PostgreSQL locally or use Docker for that:
-```bash
+```shell
 make setup-db
 ```
 
@@ -76,14 +76,14 @@ ETHEREUM_PRIVATE_KEY=ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330
 HUBBLE_DBHOST=docker.for.mac.localhost
 HUBBLE_DBUSER=hubble
 HUBBLE_DBPASSWORD=root
-
 ```
+
 Then run:
 ```shell
 docker run -it --rm -p 8080:8080 --env-file .env.docker ghcr.io/worldcoin/hubble-commander:latest
 ```
 
-## Running E2E tests locally
+## Running E2E tests against a Docker image
 
 Build the docker image:
 ```shell
@@ -95,12 +95,20 @@ Export variables from the `.env.docker` to the currently running shell:
 export $(grep -v '#.*' .env.docker | xargs)
 ```
 
-Run the tests:
+Run the E2E tests:
 ```shell
 make test-e2e
 ```
+The Docker container will be started and stopped automatically.
 
-**TIP:** Use this command to clean the test cache:
+## Running E2E tests locally
+
+Start commander in a separate terminal window and wait until it finished bootstrapping:
 ```shell
-go clean -testcache
+make prune-run
+```
+
+Run the E2E tests:
+```shell
+make test-e2e-locally
 ```
