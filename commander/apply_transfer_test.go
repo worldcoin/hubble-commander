@@ -184,14 +184,14 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer() {
 }
 
 func (s *ApplyTransferTestSuite) Test_ApplyFee() {
-	receiverIndex := receiverState.PubKeyID
-	err := s.tree.Set(receiverIndex, &receiverState)
+	receiverStateID := receiverState.PubKeyID
+	err := s.tree.Set(receiverStateID, &receiverState)
 	s.NoError(err)
 
-	err = ApplyFee(s.tree, receiverIndex, models.MakeUint256(555))
+	err = ApplyFee(s.tree, receiverStateID, models.MakeUint256(555))
 	s.NoError(err)
 
-	receiverLeaf, err := s.tree.Leaf(receiverIndex)
+	receiverLeaf, err := s.tree.Leaf(receiverStateID)
 	s.NoError(err)
 
 	s.Equal(int64(555), receiverLeaf.Balance.Int64())
