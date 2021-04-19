@@ -43,7 +43,7 @@ func (s *GetTransfersTestSuite) TearDownTest() {
 // nolint:funlen
 func (s *GetTransfersTestSuite) TestApi_GetTransfers() {
 	account := models.Account{
-		PubkeyID:  1,
+		PubKeyID:  1,
 		PublicKey: models.PublicKey{1, 2, 3},
 	}
 
@@ -52,19 +52,19 @@ func (s *GetTransfersTestSuite) TestApi_GetTransfers() {
 
 	userStates := []models.UserState{
 		{
-			PubkeyID:   account.PubkeyID,
+			PubKeyID:   account.PubKeyID,
 			TokenIndex: models.MakeUint256(1),
 			Balance:    models.MakeUint256(420),
 			Nonce:      models.MakeUint256(0),
 		},
 		{
-			PubkeyID:   2,
+			PubKeyID:   2,
 			TokenIndex: models.MakeUint256(2),
 			Balance:    models.MakeUint256(500),
 			Nonce:      models.MakeUint256(0),
 		},
 		{
-			PubkeyID:   account.PubkeyID,
+			PubKeyID:   account.PubKeyID,
 			TokenIndex: models.MakeUint256(25),
 			Balance:    models.MakeUint256(1),
 			Nonce:      models.MakeUint256(73),
@@ -149,7 +149,7 @@ func (s *GetTransfersTestSuite) TestApi_GetTransfers() {
 
 func (s *GetTransfersTestSuite) TestApi_GetTransfers_NoTransfers() {
 	account := models.Account{
-		PubkeyID:  1,
+		PubKeyID:  1,
 		PublicKey: models.PublicKey{1, 2, 3},
 	}
 
@@ -157,7 +157,7 @@ func (s *GetTransfersTestSuite) TestApi_GetTransfers_NoTransfers() {
 	s.NoError(err)
 
 	userState := &models.UserState{
-		PubkeyID:   account.PubkeyID,
+		PubKeyID:   account.PubKeyID,
 		TokenIndex: models.MakeUint256(1),
 		Balance:    models.MakeUint256(420),
 		Nonce:      models.MakeUint256(0),
