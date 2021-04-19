@@ -51,7 +51,7 @@ func (s *TransactionBaseTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *TransactionBaseTestSuite) Test_SetTransactionError() {
+func (s *TransactionBaseTestSuite) TestSetTransactionError() {
 	err := s.storage.AddTransfer(&transferTransaction)
 	s.NoError(err)
 

@@ -33,7 +33,7 @@ func (s *StateNodeTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *StateNodeTestSuite) Test_AddStateNode_AddAndRetrieve() {
+func (s *StateNodeTestSuite) TestAddStateNode_AddAndRetrieve() {
 	path, err := models.NewMerklePath("0000111")
 	s.NoError(err)
 	node := &models.StateNode{
@@ -54,7 +54,7 @@ func (s *StateNodeTestSuite) Test_AddStateNode_AddAndRetrieve() {
 	s.Equal(node, res)
 }
 
-func (s *StateNodeTestSuite) Test_AddStateNode_AddAndRetrieveRoot() {
+func (s *StateNodeTestSuite) TestAddStateNode_AddAndRetrieveRoot() {
 	pathRoot, err := models.NewMerklePath("")
 	s.NoError(err)
 	pathNode, err := models.NewMerklePath("0")
@@ -83,7 +83,7 @@ func (s *StateNodeTestSuite) Test_AddStateNode_AddAndRetrieveRoot() {
 	s.Equal(node, res)
 }
 
-func (s *StateNodeTestSuite) Test_UpdateStateNode_UpdateAndRetrieve() {
+func (s *StateNodeTestSuite) TestUpdateStateNode_UpdateAndRetrieve() {
 	path, err := models.NewMerklePath("0000111")
 	s.NoError(err)
 	node := &models.StateNode{
@@ -107,7 +107,7 @@ func (s *StateNodeTestSuite) Test_UpdateStateNode_UpdateAndRetrieve() {
 	s.Equal(expectedNode, res)
 }
 
-func (s *StateNodeTestSuite) Test_UpdateStateNode_NotExistentNode() {
+func (s *StateNodeTestSuite) TestUpdateStateNode_NotExistentNode() {
 	path, err := models.NewMerklePath("0000111")
 	s.NoError(err)
 	node := &models.StateNode{
@@ -119,7 +119,7 @@ func (s *StateNodeTestSuite) Test_UpdateStateNode_NotExistentNode() {
 	s.Error(err)
 }
 
-func (s *StateNodeTestSuite) Test_UpsertStateNode_AddAndRetrieve() {
+func (s *StateNodeTestSuite) TestUpsertStateNode_AddAndRetrieve() {
 	path, err := models.NewMerklePath("0000111")
 	s.NoError(err)
 	node := &models.StateNode{
@@ -135,7 +135,7 @@ func (s *StateNodeTestSuite) Test_UpsertStateNode_AddAndRetrieve() {
 	s.Equal(node, res)
 }
 
-func (s *StateNodeTestSuite) Test_UpsertStateNode_UpdateAndRetrieve() {
+func (s *StateNodeTestSuite) TestUpsertStateNode_UpdateAndRetrieve() {
 	path, err := models.NewMerklePath("0000111")
 	s.NoError(err)
 	node := &models.StateNode{
@@ -159,14 +159,14 @@ func (s *StateNodeTestSuite) Test_UpsertStateNode_UpdateAndRetrieve() {
 	s.Equal(expectedNode, res)
 }
 
-func (s *StateNodeTestSuite) Test_GetStateNodeByHash_NonExistentNode() {
+func (s *StateNodeTestSuite) TestGetStateNodeByHash_NonExistentNode() {
 	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
 	res, err := s.storage.GetStateNodeByHash(hash)
 	s.Equal(NewNotFoundError("state node"), err)
 	s.Nil(res)
 }
 
-func (s *StateNodeTestSuite) Test_GetStateNodeByPath_NonExistentLeaf() {
+func (s *StateNodeTestSuite) TestGetStateNodeByPath_NonExistentLeaf() {
 	path := models.MerklePath{
 		Path:  0,
 		Depth: 32,
@@ -182,7 +182,7 @@ func (s *StateNodeTestSuite) Test_GetStateNodeByPath_NonExistentLeaf() {
 	s.Equal(expected, res)
 }
 
-func (s *StateNodeTestSuite) Test_GetStateNodeByPath_NonExistentRoot() {
+func (s *StateNodeTestSuite) TestGetStateNodeByPath_NonExistentRoot() {
 	path := models.MerklePath{
 		Path:  0,
 		Depth: 0,

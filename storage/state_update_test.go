@@ -33,7 +33,7 @@ func (s *StateUpdateTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *StateUpdateTestSuite) Test_AddStateUpdate_AddAndRetrieve() {
+func (s *StateUpdateTestSuite) TestAddStateUpdate_AddAndRetrieve() {
 	path, err := models.NewMerklePath("00001111111111001111111111111111")
 	s.NoError(err)
 	update := &models.StateUpdate{
@@ -52,13 +52,13 @@ func (s *StateUpdateTestSuite) Test_AddStateUpdate_AddAndRetrieve() {
 	s.Equal(update, res)
 }
 
-func (s *StateUpdateTestSuite) Test_GetStateUpdate_NonExistentUpdate() {
+func (s *StateUpdateTestSuite) TestGetStateUpdateByRootHash_NonExistentUpdate() {
 	res, err := s.storage.GetStateUpdateByRootHash(common.BytesToHash([]byte{9, 4, 1, 2}))
 	s.Equal(NewNotFoundError("state update"), err)
 	s.Nil(res)
 }
 
-func (s *StateUpdateTestSuite) Test_DeleteStateUpdate() {
+func (s *StateUpdateTestSuite) TestDeleteStateUpdate() {
 	path, err := models.NewMerklePath("00001111111111001111111111111111")
 	s.NoError(err)
 	updates := []models.StateUpdate{

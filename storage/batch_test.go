@@ -34,7 +34,7 @@ func (s *BatchTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *BatchTestSuite) Test_AddBatch_AddAndRetrieve() {
+func (s *BatchTestSuite) TestAddBatch_AddAndRetrieve() {
 	batch := &models.Batch{
 		Hash:              utils.RandomHash(),
 		ID:                models.MakeUint256(1),
@@ -49,7 +49,7 @@ func (s *BatchTestSuite) Test_AddBatch_AddAndRetrieve() {
 	s.Equal(batch, actual)
 }
 
-func (s *BatchTestSuite) Test_GetBatchByID() {
+func (s *BatchTestSuite) TestGetBatchByID() {
 	batch := &models.Batch{
 		Hash:              utils.RandomHash(),
 		ID:                models.MakeUint256(1234),
@@ -64,13 +64,13 @@ func (s *BatchTestSuite) Test_GetBatchByID() {
 	s.Equal(batch, actual)
 }
 
-func (s *StateUpdateTestSuite) Test_GetBatch_NonExistentBatch() {
+func (s *StateUpdateTestSuite) TestGetBatch_NonExistentBatch() {
 	res, err := s.storage.GetBatch(common.Hash{1, 2, 3, 4})
 	s.Equal(NewNotFoundError("batch"), err)
 	s.Nil(res)
 }
 
-func (s *StateUpdateTestSuite) Test_GetBatchById_NonExistentBatch() {
+func (s *StateUpdateTestSuite) TestGetBatchByID_NonExistentBatch() {
 	res, err := s.storage.GetBatchByID(models.MakeUint256(42))
 	s.Equal(NewNotFoundError("batch"), err)
 	s.Nil(res)

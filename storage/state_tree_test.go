@@ -55,7 +55,7 @@ func (s *StateTreeTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *StateTreeTestSuite) Test_Set_StoresStateLeafRecord() {
+func (s *StateTreeTestSuite) TestSet_StoresStateLeafRecord() {
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
@@ -64,7 +64,7 @@ func (s *StateTreeTestSuite) Test_Set_StoresStateLeafRecord() {
 	s.Equal(s.leaf, actualLeaf)
 }
 
-func (s *StateTreeTestSuite) Test_Set_StoresLeafStateNodeRecord() {
+func (s *StateTreeTestSuite) TestSet_StoresLeafStateNodeRecord() {
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
@@ -81,7 +81,7 @@ func (s *StateTreeTestSuite) Test_Set_StoresLeafStateNodeRecord() {
 	s.Equal(expectedNode, node)
 }
 
-func (s *StateTreeTestSuite) Test_Set_UpdatesRootStateNodeRecord() {
+func (s *StateTreeTestSuite) TestSet_UpdatesRootStateNodeRecord() {
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
@@ -100,7 +100,7 @@ func (s *StateTreeTestSuite) Test_Set_UpdatesRootStateNodeRecord() {
 	s.Equal(expectedRoot, root)
 }
 
-func (s *StateTreeTestSuite) Test_Set_CalculatesCorrectRootForLeafOfId1() {
+func (s *StateTreeTestSuite) TestSet_CalculatesCorrectRootForLeafOfId1() {
 	err := s.tree.Set(1, &s.leaf.UserState)
 	s.NoError(err)
 
@@ -119,7 +119,7 @@ func (s *StateTreeTestSuite) Test_Set_CalculatesCorrectRootForLeafOfId1() {
 	s.Equal(expectedRoot, root)
 }
 
-func (s *StateTreeTestSuite) Test_Set_CalculatesCorrectRootForTwoLeaves() {
+func (s *StateTreeTestSuite) TestSet_CalculatesCorrectRootForTwoLeaves() {
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
@@ -147,7 +147,7 @@ func (s *StateTreeTestSuite) Test_Set_CalculatesCorrectRootForTwoLeaves() {
 	s.Equal(expectedRoot, root)
 }
 
-func (s *StateTreeTestSuite) Test_Set_StoresStateUpdateRecord() {
+func (s *StateTreeTestSuite) TestSet_StoresStateUpdateRecord() {
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
@@ -172,7 +172,7 @@ func (s *StateTreeTestSuite) Test_Set_StoresStateUpdateRecord() {
 	s.Equal(expectedUpdate, update)
 }
 
-func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_CorrectRootStateNode() {
+func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectRootStateNode() {
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
@@ -194,7 +194,7 @@ func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_CorrectRootStateNode() 
 	s.Equal(expectedRoot, root)
 }
 
-func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_CorrectLeafStateNode() {
+func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectLeafStateNode() {
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
@@ -218,7 +218,7 @@ func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_CorrectLeafStateNode() 
 	s.Equal(expectedLeaf, leafNode)
 }
 
-func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_NewStateLeafRecord() {
+func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafNewStateLeafRecord() {
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
@@ -232,7 +232,7 @@ func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_NewStateLeafRecord() {
 	s.Equal(expectedLeaf, leaf)
 }
 
-func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_AddsStateUpdateRecord() {
+func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafAddsStateUpdateRecord() {
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
@@ -262,7 +262,7 @@ func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_AddsStateUpdateRecord()
 	s.Equal(expectedUpdate, update)
 }
 
-func (s *StateTreeTestSuite) Test_RevertTo() {
+func (s *StateTreeTestSuite) TestRevertTo() {
 	states := []models.UserState{
 		{
 			PubKeyID:   1,
