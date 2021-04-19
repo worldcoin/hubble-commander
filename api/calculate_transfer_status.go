@@ -14,16 +14,7 @@ func CalculateTransferStatus(storage *st.Storage, transfer *models.Transfer, lat
 		return models.Pending.Ref(), nil
 	}
 
-	commitment, err := storage.GetCommitment(*transfer.IncludedInCommitment)
-	if err != nil {
-		return nil, err
-	}
-
-	if commitment.IncludedInBatch == nil {
-		return models.Committed.Ref(), nil
-	}
-
-	batch, err := storage.GetBatch(*commitment.IncludedInBatch)
+	batch, err := storage.GetBatchByCommitmentID(*transfer.IncludedInCommitment)
 	if err != nil {
 		return nil, err
 	}

@@ -49,3 +49,20 @@ func (s *Storage) GetBatchByID(batchID models.Uint256) (*models.Batch, error) {
 	}
 	return &res[0], nil
 }
+
+func (s *Storage) GetBatchByCommitmentID(commitmentID int32) (*models.Batch, error) {
+	res := make([]models.Batch, 0, 1)
+	err := s.DB.Query(
+		s.QB.Select("batch.*").
+			From("batch").
+			JoinClause("NATURAL JOIN commitment").
+			Where(squirrel.Eq{"commitment_id": commitmentID}),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, NewNotFoundError("batch")
+	}
+	return &res[0], nil
+}

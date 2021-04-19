@@ -196,6 +196,31 @@ func (s *GetTransfersTestSuite) TestApi_GetTransfers() {
 	s.Equal(userTransfers[2].Transfer.Hash, transfers[3].Hash)
 }
 
+func (s *GetTransfersTestSuite) TestApi_GetTransfers_NoTransfers() {
+	account := models.Account{
+		AccountIndex: 1,
+		PublicKey:    models.PublicKey{1, 2, 3},
+	}
+
+	err := s.storage.AddAccountIfNotExists(&account)
+	s.NoError(err)
+
+	userState := &models.UserState{
+		AccountIndex: account.AccountIndex,
+		TokenIndex:   models.MakeUint256(1),
+		Balance:      models.MakeUint256(420),
+		Nonce:        models.MakeUint256(0),
+	}
+	err = s.tree.Set(0, userState)
+	s.NoError(err)
+
+	userTransfers, err := s.api.GetTransfers(&account.PublicKey)
+	s.NoError(err)
+
+	s.Len(userTransfers, 0)
+	s.NotNil(userTransfers)
+}
+
 func TestGetTransfersTestSuite(t *testing.T) {
 	suite.Run(t, new(GetTransfersTestSuite))
 }

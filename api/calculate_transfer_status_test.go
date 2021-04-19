@@ -84,18 +84,6 @@ func (s *CalculateTransferStatusTestSuite) TestApi_CalculateTransferStatus_Pendi
 	s.Equal(models.Pending, *status)
 }
 
-func (s *CalculateTransferStatusTestSuite) TestApi_CalculateTransferStatus_Committed() {
-	commitmentID, err := s.storage.AddCommitment(&commitment)
-	s.NoError(err)
-
-	s.transfer.IncludedInCommitment = commitmentID
-
-	status, err := CalculateTransferStatus(s.storage, s.transfer, 0)
-	s.NoError(err)
-
-	s.Equal(models.Committed, *status)
-}
-
 func (s *CalculateTransferStatusTestSuite) TestApi_CalculateTransferStatus_InBatch() {
 	batch := models.Batch{
 		Hash:              utils.RandomHash(),

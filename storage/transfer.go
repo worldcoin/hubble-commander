@@ -101,8 +101,5 @@ func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models
 	if err != nil {
 		return nil, err
 	}
-	if len(res) == 0 {
-		return nil, NewNotFoundError("transfers")
-	}
 	return res, nil
 }
