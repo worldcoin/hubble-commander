@@ -55,7 +55,7 @@ func EncodeTransferForSigning(tx *models.Transfer) ([]byte, error) {
 
 func EncodeUserState(state generic.TypesUserState) ([]byte, error) {
 	arguments := abi.Arguments{
-		{Name: "PubKeyID", Type: tUint256},
+		{Name: "pubkeyID", Type: tUint256},
 		{Name: "tokenID", Type: tUint256},
 		{Name: "balance", Type: tUint256},
 		{Name: "nonce", Type: tUint256},

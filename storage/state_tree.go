@@ -45,7 +45,7 @@ func (s *StateTree) Leaf(index uint32) (*models.StateLeaf, error) {
 		Path:  index,
 		Depth: 32,
 	}
-	return s.storage.GetStateLeafByPath(leafPath)
+	return s.storage.GetStateLeafByStateID(leafPath)
 }
 
 func (s *StateTree) Set(index uint32, state *models.UserState) (err error) {

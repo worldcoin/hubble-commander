@@ -66,7 +66,7 @@ func (s *StateLeafTestSuite) Test_GetStateLeafByPath_ReturnsCorrectStruct() {
 	leaf := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
-			PubkeyID:   1,
+			PubKeyID:   1,
 			TokenIndex: models.MakeUint256(1),
 			Balance:    models.MakeUint256(420),
 			Nonce:      models.MakeUint256(0),
@@ -76,8 +76,8 @@ func (s *StateLeafTestSuite) Test_GetStateLeafByPath_ReturnsCorrectStruct() {
 	s.NoError(err)
 
 	node := &models.StateNode{
-		MerklePath: *path,
-		DataHash:   leaf.DataHash,
+		StateID:  *path,
+		DataHash: leaf.DataHash,
 	}
 
 	err = s.storage.AddStateLeaf(leaf)
@@ -86,7 +86,7 @@ func (s *StateLeafTestSuite) Test_GetStateLeafByPath_ReturnsCorrectStruct() {
 	err = s.storage.AddStateNode(node)
 	s.NoError(err)
 
-	actual, err := s.storage.GetStateLeafByPath(path)
+	actual, err := s.storage.GetStateLeafByStateID(path)
 	s.NoError(err)
 	s.Equal(leaf, actual)
 }
@@ -94,7 +94,7 @@ func (s *StateLeafTestSuite) Test_GetStateLeafByPath_ReturnsCorrectStruct() {
 func (s *StateLeafTestSuite) Test_GetStateLeafByPath_NonExistentLeaf() {
 	path, err := models.NewMerklePath(strings.Repeat("0", 32))
 	s.NoError(err)
-	_, err = s.storage.GetStateLeafByPath(path)
+	_, err = s.storage.GetStateLeafByStateID(path)
 	s.Equal(NewNotFoundError("state leaf"), err)
 }
 
@@ -105,13 +105,13 @@ func (s *StateLeafTestSuite) Test_GetStateLeaves_NoLeaves() {
 }
 
 func (s *StateLeafTestSuite) Test_GetStateLeaves() {
-	var PubKeyID uint32 = 1
+	var pubKeyID uint32 = 1
 
 	leaves := []models.StateLeaf{
 		{
 			DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 			UserState: models.UserState{
-				PubKeyID:   PubKeyID,
+				PubKeyID:   pubKeyID,
 				TokenIndex: models.MakeUint256(1),
 				Balance:    models.MakeUint256(420),
 				Nonce:      models.MakeUint256(0),
@@ -120,7 +120,7 @@ func (s *StateLeafTestSuite) Test_GetStateLeaves() {
 		{
 			DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 			UserState: models.UserState{
-				PubKeyID:   PubKeyID,
+				PubKeyID:   pubKeyID,
 				TokenIndex: models.MakeUint256(2),
 				Balance:    models.MakeUint256(500),
 				Nonce:      models.MakeUint256(0),
@@ -129,7 +129,7 @@ func (s *StateLeafTestSuite) Test_GetStateLeaves() {
 		{
 			DataHash: common.BytesToHash([]byte{3, 4, 5, 6, 7}),
 			UserState: models.UserState{
-				PubKeyID:   PubKeyID,
+				PubKeyID:   pubKeyID,
 				TokenIndex: models.MakeUint256(2),
 				Balance:    models.MakeUint256(500),
 				Nonce:      models.MakeUint256(1),
@@ -138,7 +138,7 @@ func (s *StateLeafTestSuite) Test_GetStateLeaves() {
 		{
 			DataHash: common.BytesToHash([]byte{4, 5, 6, 7, 8}),
 			UserState: models.UserState{
-				PubKeyID:   PubKeyID,
+				PubKeyID:   pubKeyID,
 				TokenIndex: models.MakeUint256(1),
 				Balance:    models.MakeUint256(500),
 				Nonce:      models.MakeUint256(0),
@@ -147,7 +147,7 @@ func (s *StateLeafTestSuite) Test_GetStateLeaves() {
 		{
 			DataHash: common.BytesToHash([]byte{5, 6, 7, 8, 9}),
 			UserState: models.UserState{
-				PubKeyID:   PubKeyID,
+				PubKeyID:   pubKeyID,
 				TokenIndex: models.MakeUint256(1),
 				Balance:    models.MakeUint256(505),
 				Nonce:      models.MakeUint256(0),
@@ -176,7 +176,7 @@ func (s *StateLeafTestSuite) Test_GetStateLeaves() {
 	})
 	s.NoError(err)
 
-	res, err := s.storage.GetStateLeaves(PubKeyID)
+	res, err := s.storage.GetStateLeaves(pubKeyID)
 	s.NoError(err)
 
 	s.Len(res, 2)

@@ -88,7 +88,7 @@ func (s *AccountTestSuite) Test_AddAccountIfNotExists_Idempotent() {
 
 func (s *AccountTestSuite) Test_GetPublicKey_ReturnsPublicKey() {
 	account := models.Account{
-		PubkeyID:  0,
+		PubKeyID:  0,
 		PublicKey: models.PublicKey{1, 2, 3},
 	}
 

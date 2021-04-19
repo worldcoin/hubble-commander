@@ -36,7 +36,7 @@ func (s *Storage) GetPublicKey(pubKeyID uint32) (*models.PublicKey, error) {
 	err := s.DB.Query(
 		s.QB.Select("public_key").
 			From("account").
-			Where(squirrel.Eq{"pubkey_id": pubKeyID}),
+			Where(squirrel.Eq{"pub_key_id": pubKeyID}),
 	).Into(&res)
 	if err != nil {
 		return nil, err
