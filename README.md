@@ -27,12 +27,12 @@ For other environments refer to: https://golangci-lint.run/usage/install/#local-
 
 You can either install the PostgreSQL locally or use Docker for that:
 ```bash
-docker run --name postgres -p 5432:5432 -e POSTGRES_USER=hubble -e POSTGRES_PASSWORD=root -d postgres
+make setup-db
 ```
 
 ## Scripts
 
-There are a couple of scripts defined in the Makefile:
+There is a number of scripts defined in the Makefile:
 
 * `make install` - install Go dependencies
 * `make clean` - remove build artifacts
@@ -55,17 +55,16 @@ There are a couple of scripts defined in the Makefile:
 
 ## Running with Ganache
 
-Start ganache cli in a separate terminal. Use the following config to make the node connect to the local instance:
+Start Ganache CLI in a separate terminal:
+```shell
+npx ganache-cli --account 0xee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82,0x56BC75E2D63100000
+```
 
+Use the following config to make commander connect to the local node
 ```shell
 ETHEREUM_RPC_URL=ws://127.0.0.1:8545
 ETHEREUM_CHAIN_ID=1616067554748
 ETHEREUM_PRIVATE_KEY=ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
-```
-
-To run ganache with proper account config run this command:
-```shell
-npx ganache-cli --account 0xee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82,0x56BC75E2D63100000
 ```
 
 ## Running docker image on Docker for Mac
