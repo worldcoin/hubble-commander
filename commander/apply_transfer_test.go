@@ -138,12 +138,12 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer_Validation_TokenIndex() {
 		ToStateID: 2,
 	}
 
-	senderIndex := senderState.PubKeyID
-	receiverIndex := receiverState.PubKeyID
+	senderStateID := senderState.PubKeyID
+	receiverStateID := receiverState.PubKeyID
 
-	err := s.tree.Set(senderIndex, &senderState)
+	err := s.tree.Set(senderStateID, &senderState)
 	s.NoError(err)
-	err = s.tree.Set(receiverIndex, &receiverState)
+	err = s.tree.Set(receiverStateID, &receiverState)
 	s.NoError(err)
 
 	transferError, appError := ApplyTransfer(s.tree, &transfer, models.MakeUint256(3))
