@@ -12,8 +12,8 @@ type UserState struct {
 }
 
 type StateNode struct {
-	StateID  MerklePath  `db:"state_id"`
-	DataHash common.Hash `db:"data_hash"`
+	MerklePath MerklePath  `db:"merkle_path"`
+	DataHash   common.Hash `db:"data_hash"`
 }
 
 type StateLeaf struct {

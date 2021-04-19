@@ -22,19 +22,19 @@ func ApplyCreate2Transfer(
 		Nonce:      models.MakeUint256(0),
 	}
 
-	nextAvailableLeafPath, err := storage.GetNextAvailableStateID()
+	nextAvailableStateID, err := storage.GetNextAvailableStateID()
 	if err != nil {
 		return nil, err
 	}
 
-	err = stateTree.Set(*nextAvailableLeafPath, &emptyUserState)
+	err = stateTree.Set(*nextAvailableStateID, &emptyUserState)
 	if err != nil {
 		return nil, err
 	}
 
 	transfer := models.Transfer{
 		TransactionBase: create2transfer.TransactionBase,
-		ToStateID:       *nextAvailableLeafPath,
+		ToStateID:       *nextAvailableStateID,
 	}
 
 	create2transferError, appError = ApplyTransfer(stateTree, &transfer, feeReceiverTokenIndex)

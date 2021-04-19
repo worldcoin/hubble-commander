@@ -76,8 +76,8 @@ func (s *StateLeafTestSuite) Test_GetStateLeafByPath_ReturnsCorrectStruct() {
 	s.NoError(err)
 
 	node := &models.StateNode{
-		StateID:  *path,
-		DataHash: leaf.DataHash,
+		MerklePath: *path,
+		DataHash:   leaf.DataHash,
 	}
 
 	err = s.storage.AddStateLeaf(leaf)
@@ -86,7 +86,7 @@ func (s *StateLeafTestSuite) Test_GetStateLeafByPath_ReturnsCorrectStruct() {
 	err = s.storage.AddStateNode(node)
 	s.NoError(err)
 
-	actual, err := s.storage.GetStateLeafByStateID(path)
+	actual, err := s.storage.GetStateLeafByPath(path)
 	s.NoError(err)
 	s.Equal(leaf, actual)
 }
@@ -94,7 +94,7 @@ func (s *StateLeafTestSuite) Test_GetStateLeafByPath_ReturnsCorrectStruct() {
 func (s *StateLeafTestSuite) Test_GetStateLeafByPath_NonExistentLeaf() {
 	path, err := models.NewMerklePath(strings.Repeat("0", 32))
 	s.NoError(err)
-	_, err = s.storage.GetStateLeafByStateID(path)
+	_, err = s.storage.GetStateLeafByPath(path)
 	s.Equal(NewNotFoundError("state leaf"), err)
 }
 
@@ -163,16 +163,16 @@ func (s *StateLeafTestSuite) Test_GetStateLeaves() {
 	path, err := models.NewMerklePath("01")
 	s.NoError(err)
 	err = s.storage.UpsertStateNode(&models.StateNode{
-		DataHash: common.BytesToHash([]byte{5, 6, 7, 8, 9}),
-		StateID:  *path,
+		DataHash:   common.BytesToHash([]byte{5, 6, 7, 8, 9}),
+		MerklePath: *path,
 	})
 	s.NoError(err)
 
 	path, err = models.NewMerklePath("10")
 	s.NoError(err)
 	err = s.storage.UpsertStateNode(&models.StateNode{
-		DataHash: common.BytesToHash([]byte{3, 4, 5, 6, 7}),
-		StateID:  *path,
+		DataHash:   common.BytesToHash([]byte{3, 4, 5, 6, 7}),
+		MerklePath: *path,
 	})
 	s.NoError(err)
 

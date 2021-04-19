@@ -94,7 +94,7 @@ func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models
 			From("account").
 			JoinClause("NATURAL JOIN state_leaf").
 			JoinClause("NATURAL JOIN state_node").
-			Join("transaction_base on transaction_base.from_state_id::bit(33) = state_node.state_id").
+			Join("transaction_base on transaction_base.from_state_id::bit(33) = state_node.merkle_path").
 			JoinClause("NATURAL JOIN transfer").
 			Where(squirrel.Eq{"account.public_key": publicKey}),
 	).Into(&res)

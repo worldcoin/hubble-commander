@@ -39,13 +39,13 @@ func (s *Storage) GetStateLeafByHash(hash common.Hash) (*models.StateLeaf, error
 	return &res[0], nil
 }
 
-func (s *Storage) GetStateLeafByStateID(stateID *models.MerklePath) (*models.StateLeaf, error) {
+func (s *Storage) GetStateLeafByPath(path *models.MerklePath) (*models.StateLeaf, error) {
 	res := make([]models.StateLeaf, 0, 1)
 	err := s.DB.Query(
 		s.QB.Select("state_leaf.*").
 			From("state_node").
 			Join("state_leaf ON state_leaf.data_hash = state_node.data_hash").
-			Where(squirrel.Eq{"state_id": *stateID}),
+			Where(squirrel.Eq{"merkle_path": *path}),
 	).Into(&res)
 	if err != nil {
 		return nil, err
@@ -76,7 +76,7 @@ func (s *Storage) GetStateLeaves(pubKeyID uint32) ([]models.StateLeaf, error) {
 func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
 	res := make([]uint32, 0, 1)
 	err := s.DB.Query(
-		s.QB.Select("lpad(state_id::text, 33, '0')::bit(33)::bigint + 1 AS next_available_leaf_slot").
+		s.QB.Select("lpad(merkle_path::text, 33, '0')::bit(33)::bigint + 1 AS next_available_leaf_slot").
 			From("state_leaf").
 			JoinClause("NATURAL JOIN state_node").
 			OrderBy("next_available_leaf_slot DESC").
@@ -93,7 +93,7 @@ func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
 }
 
 type userStateWithStateID struct {
-	StateID models.MerklePath `db:"state_id"`
+	StateID models.MerklePath `db:"merkle_path"`
 	models.UserState
 }
 
@@ -106,7 +106,7 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]model
 				"state_leaf.token_index",
 				"state_leaf.balance",
 				"state_leaf.nonce",
-				"state_node.state_id",
+				"state_node.merkle_path",
 			).
 			From("account").
 			JoinClause("NATURAL JOIN state_leaf").
