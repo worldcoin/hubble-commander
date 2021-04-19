@@ -69,12 +69,12 @@ func (s *SubmitBatchTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *SubmitBatchTestSuite) Test_SubmitBatch_ErrorsIfNotEnoughCommitments() {
+func (s *SubmitBatchTestSuite) TestSubmitBatch_ErrorsIfNotEnoughCommitments() {
 	err := submitBatch([]models.Commitment{}, s.storage, s.testClient.Client, s.cfg)
 	s.Equal(ErrNotEnoughCommitments, err)
 }
 
-func (s *SubmitBatchTestSuite) Test_SubmitBatch_SubmitsCommitmentsOnChain() {
+func (s *SubmitBatchTestSuite) TestSubmitBatch_SubmitsCommitmentsOnChain() {
 	commitmentID, err := s.storage.AddCommitment(&baseCommitment)
 	s.NoError(err)
 
@@ -89,7 +89,7 @@ func (s *SubmitBatchTestSuite) Test_SubmitBatch_SubmitsCommitmentsOnChain() {
 	s.Equal(big.NewInt(2), nextBatchID)
 }
 
-func (s *SubmitBatchTestSuite) Test_SubmitBatch_StoresBatchRecord() {
+func (s *SubmitBatchTestSuite) TestSubmitBatch_StoresBatchRecord() {
 	commitmentID, err := s.storage.AddCommitment(&baseCommitment)
 	s.NoError(err)
 
@@ -119,7 +119,7 @@ func (s *SubmitBatchTestSuite) addCommitments(count int) ([]int32, []models.Comm
 	return ids, commitments
 }
 
-func (s *SubmitBatchTestSuite) Test_SubmitBatch_MarksCommitmentsAsIncluded() {
+func (s *SubmitBatchTestSuite) TestSubmitBatch_MarksCommitmentsAsIncluded() {
 	ids, commitments := s.addCommitments(2)
 
 	err := submitBatch(commitments, s.storage, s.testClient.Client, s.cfg)
@@ -135,12 +135,12 @@ func (s *SubmitBatchTestSuite) Test_SubmitBatch_MarksCommitmentsAsIncluded() {
 	}
 }
 
-func (s *SubmitBatchTestSuite) Test_SubmitBatch_MarksCommitmentsAsIncluded_UnsavedCommitment() {
+func (s *SubmitBatchTestSuite) TestSubmitBatch_MarksCommitmentsAsIncluded_UnsavedCommitment() {
 	err := submitBatch([]models.Commitment{baseCommitment}, s.storage, s.testClient.Client, s.cfg)
 	s.EqualError(err, "no rows were affected by the update")
 }
 
-func (s *SubmitBatchTestSuite) Test_SubmitBatch_UpdatesCommitmentsAccountRoot() {
+func (s *SubmitBatchTestSuite) TestSubmitBatch_UpdatesCommitmentsAccountRoot() {
 	ids, commitments := s.addCommitments(2)
 
 	err := submitBatch(commitments, s.storage, s.testClient.Client, s.cfg)
