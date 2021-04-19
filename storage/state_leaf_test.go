@@ -184,13 +184,13 @@ func (s *StateLeafTestSuite) TestGetStateLeaves() {
 	s.Equal(common.BytesToHash([]byte{3, 4, 5, 6, 7}), res[1].DataHash)
 }
 
-func (s *StateLeafTestSuite) Test_GetNextAvailableStateID_NoLeavesInStateTree() {
+func (s *StateLeafTestSuite) TestGetNextAvailableStateID_NoLeavesInStateTree() {
 	path, err := s.storage.GetNextAvailableStateID()
 	s.NoError(err)
 	s.Equal(uint32(0), *path)
 }
 
-func (s *StateLeafTestSuite) Test_GetNextAvailableStateID() {
+func (s *StateLeafTestSuite) TestGetNextAvailableStateID() {
 	userState := &models.UserState{
 		PubKeyID:   1,
 		TokenIndex: models.MakeUint256(1),

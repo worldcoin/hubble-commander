@@ -76,7 +76,7 @@ func (s *StateUpdateTestSuite) TestGetBatchByID_NonExistentBatch() {
 	s.Nil(res)
 }
 
-func (s *StateUpdateTestSuite) Test_GetBatchByCommitmentID() {
+func (s *StateUpdateTestSuite) TestGetBatchByCommitmentID() {
 	batchHash := utils.RandomHash()
 
 	batch := &models.Batch{
@@ -105,7 +105,7 @@ func (s *StateUpdateTestSuite) Test_GetBatchByCommitmentID() {
 	s.Equal(batch, actual)
 }
 
-func (s *StateUpdateTestSuite) Test_GetBatchByCommitmentID_NotExistentBatch() {
+func (s *StateUpdateTestSuite) TestGetBatchByCommitmentID_NotExistentBatch() {
 	commitment := &models.Commitment{
 		Transactions:      []byte{1, 2, 3},
 		FeeReceiver:       uint32(1),

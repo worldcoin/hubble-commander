@@ -66,7 +66,7 @@ func (s *TransactionBaseTestSuite) TestSetTransactionError() {
 	s.Equal(errorMessage, res.ErrorMessage)
 }
 
-func (s *TransactionBaseTestSuite) Test_GetLatestTransactionNonce() {
+func (s *TransactionBaseTestSuite) TestGetLatestTransactionNonce() {
 	account := models.Account{
 		PubKeyID:  1,
 		PublicKey: models.PublicKey{1, 2, 3},
