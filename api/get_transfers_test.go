@@ -217,6 +217,7 @@ func (s *GetTransfersTestSuite) TestApi_GetTransfers_NoTransfers() {
 	s.NoError(err)
 
 	s.Len(userTransfers, 0)
+	s.NotNil(userTransfers)
 }
 
 func TestGetTransfersTestSuite(t *testing.T) {

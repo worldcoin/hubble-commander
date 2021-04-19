@@ -208,10 +208,11 @@ func (s *TransferTestSuite) Test_GetTransfersByPublicKey() {
 }
 
 func (s *TransferTestSuite) Test_GetUserTransfersByPublicKey_NoTransfers() {
-	userTransactions, err := s.storage.GetTransfersByPublicKey(&models.PublicKey{1, 2, 3})
+	userTransfers, err := s.storage.GetTransfersByPublicKey(&models.PublicKey{1, 2, 3})
 
 	s.NoError(err)
-	s.Len(userTransactions, 0)
+	s.Len(userTransfers, 0)
+	s.NotNil(userTransfers)
 }
 
 func TestTransferTestSuite(t *testing.T) {
