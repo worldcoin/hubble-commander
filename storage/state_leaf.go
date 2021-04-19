@@ -3,6 +3,7 @@ package storage
 import (
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -55,7 +56,7 @@ func (s *Storage) GetStateLeaves(pubkeyID uint32) ([]models.StateLeaf, error) {
 	return res, nil
 }
 
-func (s *Storage) GetNextAvailableLeafPath() (*models.MerklePath, error) {
+func (s *Storage) GetNextAvailableLeafPath() (*uint32, error) {
 	res := make([]uint32, 0, 1)
 	err := s.DB.Query(
 		s.QB.Select("lpad(merkle_path::text, 33, '0')::bit(33)::bigint + 1 AS next_available_leaf_slot").
@@ -68,17 +69,10 @@ func (s *Storage) GetNextAvailableLeafPath() (*models.MerklePath, error) {
 		return nil, err
 	}
 	if len(res) == 0 {
-		return &models.MerklePath{
-			Path:  0,
-			Depth: 32,
-		}, nil
+		return ref.Uint32(0), nil
 	}
 
-	merklePath := models.MerklePath{
-		Path:  res[0],
-		Depth: 32,
-	}
-	return &merklePath, nil
+	return &res[0], nil
 }
 
 type userStateWithPath struct {

@@ -27,14 +27,14 @@ func ApplyCreate2Transfer(
 		return nil, err
 	}
 
-	err = stateTree.Set(nextAvailableLeafPath.Path, &emptyUserState)
+	err = stateTree.Set(*nextAvailableLeafPath, &emptyUserState)
 	if err != nil {
 		return nil, err
 	}
 
 	transfer := models.Transfer{
 		TransactionBase: create2transfer.TransactionBase,
-		ToStateID:       nextAvailableLeafPath.Path,
+		ToStateID:       *nextAvailableLeafPath,
 	}
 
 	create2transferError, appError = ApplyTransfer(stateTree, &transfer, feeReceiverTokenIndex)
