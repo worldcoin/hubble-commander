@@ -4,6 +4,9 @@ install:
 clean:
 	rm -rf build
 
+clean-testcache:
+	go clean -testcache
+
 compile:
 	mkdir -p build
 	go build -o build/hubble ./main
@@ -45,21 +48,28 @@ test:
 test-hardhat:
 	go test -v -tags hardhat -run TestWalletHardhatTestSuite ./bls
 
-test-e2e:
-	go test -v -tags e2e ./e2e
+test-e2e: clean-testcache
+	go test -v -tags e2e -run TestCommanderUsingDocker ./e2e
+
+test-e2e-locally: clean-testcache
+	go test -v -tags e2e -run TestCommanderLocally ./e2e
 
 .PHONY: 
-	install 
-	clean 
-	compile 
-	generate 
-	build 
-	setup-db 
-	stop-db 
-	start-db 
+	install
+	clean
+	clean-testcache
+	compile
+	generate
+	build
+	setup-db
+	stop-db
+	start-db
 	teardown-db
 	update-contracts
 	run
 	prune-run
-	lint 
+	lint
 	test
+	test-hardhat
+	test-e2e
+	test-e2e-locally
