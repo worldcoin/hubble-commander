@@ -148,21 +148,12 @@ func (s *StateLeafTestSuite) Test_GetStateLeaves() {
 }
 
 func (s *StateLeafTestSuite) Test_GetNextAvailableLeafPath_NoLeavesInStateTree() {
-	expected := &models.MerklePath{
-		Path:  0,
-		Depth: 32,
-	}
-	merklePath, err := s.storage.GetNextAvailableLeafPath()
+	path, err := s.storage.GetNextAvailableLeafPath()
 	s.NoError(err)
-	s.Equal(expected, merklePath)
+	s.Equal(uint32(0), *path)
 }
 
 func (s *StateLeafTestSuite) Test_GetNextAvailableLeafPath() {
-	expected := &models.MerklePath{
-		Path:  3,
-		Depth: 32,
-	}
-
 	userState := &models.UserState{
 		PubkeyID:   1,
 		TokenIndex: models.MakeUint256(1),
@@ -177,9 +168,9 @@ func (s *StateLeafTestSuite) Test_GetNextAvailableLeafPath() {
 	err = s.tree.Set(2, userState)
 	s.NoError(err)
 
-	merklePath, err := s.storage.GetNextAvailableLeafPath()
+	path, err := s.storage.GetNextAvailableLeafPath()
 	s.NoError(err)
-	s.Equal(expected, merklePath)
+	s.Equal(uint32(3), *path)
 }
 
 func (s *StateLeafTestSuite) Test_GetUserStatesByPublicKey() {
