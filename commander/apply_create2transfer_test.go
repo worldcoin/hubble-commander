@@ -25,7 +25,7 @@ var (
 		},
 		ToPubkeyID: 2,
 	}
-	senderTokenIndex = models.MakeUint256(5)
+	feeReceiverTokenIndex = models.MakeUint256(5)
 )
 
 type ApplyCreate2TransferTestSuite struct {
@@ -49,14 +49,14 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 
 	err = s.tree.Set(0, &models.UserState{
 		PubkeyID:   0,
-		TokenIndex: senderTokenIndex,
+		TokenIndex: feeReceiverTokenIndex,
 		Balance:    models.MakeUint256(10000),
 		Nonce:      models.MakeUint256(0),
 	})
 	s.NoError(err)
 	err = s.tree.Set(1, &models.UserState{
 		PubkeyID:   1,
-		TokenIndex: senderTokenIndex,
+		TokenIndex: feeReceiverTokenIndex,
 		Balance:    models.MakeUint256(0),
 		Nonce:      models.MakeUint256(0),
 	})
@@ -69,7 +69,7 @@ func (s *ApplyCreate2TransferTestSuite) TearDownTest() {
 }
 
 func (s *ApplyCreate2TransferTestSuite) Test_ApplyCreate2Transfer_InsertsNewEmptyStateLeaf() {
-	transferError, appError := ApplyCreate2Transfer(s.storage, &create2transfer, senderTokenIndex)
+	transferError, appError := ApplyCreate2Transfer(s.storage, &create2transfer, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -77,11 +77,11 @@ func (s *ApplyCreate2TransferTestSuite) Test_ApplyCreate2Transfer_InsertsNewEmpt
 	s.NoError(err)
 	s.NotNil(leaf)
 	s.Equal(models.MakeUint256(0), leaf.Nonce)
-	s.Equal(senderTokenIndex, leaf.TokenIndex)
+	s.Equal(feeReceiverTokenIndex, leaf.TokenIndex)
 }
 
 func (s *ApplyCreate2TransferTestSuite) Test_ApplyCreate2Transfer_ApplyTransfer() {
-	transferError, appError := ApplyCreate2Transfer(s.storage, &create2transfer, senderTokenIndex)
+	transferError, appError := ApplyCreate2Transfer(s.storage, &create2transfer, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)
 
