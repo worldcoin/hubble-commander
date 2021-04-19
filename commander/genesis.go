@@ -18,7 +18,7 @@ func PopulateGenesisAccounts(stateTree *storage.StateTree, accounts []models.Reg
 	for i := range accounts {
 		account := accounts[i]
 		err := stateTree.Set(uint32(i), &models.UserState{
-			PubkeyID:   account.PubKeyID,
+			PubKeyID:   account.PubKeyID,
 			TokenIndex: models.MakeUint256(0),
 			Balance:    account.Balance,
 			Nonce:      models.MakeUint256(0),
@@ -50,7 +50,7 @@ func RegisterGenesisAccounts(
 		if err != nil {
 			return nil, err
 		}
-		log.Printf("Registered genesis pubkey %s at %d", registeredAccount.PublicKey.String(), registeredAccount.PubKeyID)
+		log.Printf("Registered genesis public key %s at id %d", registeredAccount.PublicKey.String(), registeredAccount.PubKeyID)
 		registeredAccounts = append(registeredAccounts, *registeredAccount)
 	}
 

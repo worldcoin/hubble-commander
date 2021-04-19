@@ -181,7 +181,7 @@ func (a *API) validateSignature(transfer *models.Transfer, senderState *models.U
 		return err
 	}
 
-	publicKey, err := a.storage.GetPublicKey(senderState.PubkeyID)
+	publicKey, err := a.storage.GetPublicKey(senderState.PubKeyID)
 	if err != nil {
 		return err
 	}

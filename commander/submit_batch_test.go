@@ -55,7 +55,7 @@ func (s *SubmitBatchTestSuite) SetupTest() {
 	s.NoError(err)
 
 	userState := models.UserState{
-		PubkeyID:   1,
+		PubKeyID:   1,
 		TokenIndex: models.MakeUint256(1),
 		Balance:    models.MakeUint256(1000),
 		Nonce:      models.MakeUint256(0),

@@ -25,7 +25,7 @@ var (
 			IncludedInCommitment: nil,
 		},
 		ToStateID:  2,
-		ToPubkeyID: 2,
+		ToPubKeyID: 2,
 	}
 )
 

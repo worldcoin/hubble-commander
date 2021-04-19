@@ -12,7 +12,7 @@ func (s *Storage) AddStateLeaf(leaf *models.StateLeaf) error {
 		s.QB.Insert("state_leaf").
 			Values(
 				leaf.DataHash,
-				leaf.PubkeyID,
+				leaf.PubKeyID,
 				leaf.TokenIndex,
 				leaf.Balance,
 				leaf.Nonce,
@@ -56,13 +56,13 @@ func (s *Storage) GetStateLeafByPath(path *models.MerklePath) (*models.StateLeaf
 	return &res[0], nil
 }
 
-func (s *Storage) GetStateLeaves(pubkeyID uint32) ([]models.StateLeaf, error) {
+func (s *Storage) GetStateLeaves(pubKeyID uint32) ([]models.StateLeaf, error) {
 	res := make([]models.StateLeaf, 0, 1)
 	err := s.DB.Query(
 		s.QB.Select("state_leaf.*").
 			From("state_leaf").
 			JoinClause("NATURAL JOIN state_node").
-			Where(squirrel.Eq{"pubkey_id": pubkeyID}),
+			Where(squirrel.Eq{"pub_key_id": pubKeyID}),
 	).Into(&res)
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (s *Storage) GetStateLeaves(pubkeyID uint32) ([]models.StateLeaf, error) {
 	return res, nil
 }
 
-func (s *Storage) GetNextAvailableLeafPath() (*uint32, error) {
+func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
 	res := make([]uint32, 0, 1)
 	err := s.DB.Query(
 		s.QB.Select("lpad(merkle_path::text, 33, '0')::bit(33)::bigint + 1 AS next_available_leaf_slot").
@@ -92,17 +92,17 @@ func (s *Storage) GetNextAvailableLeafPath() (*uint32, error) {
 	return &res[0], nil
 }
 
-type userStateWithPath struct {
-	MerklePath models.MerklePath `db:"merkle_path"`
+type userStateWithStateID struct {
+	StateID models.MerklePath `db:"merkle_path"`
 	models.UserState
 }
 
 func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]models.UserStateWithID, error) {
-	res := make([]userStateWithPath, 0, 1)
+	res := make([]userStateWithStateID, 0, 1)
 	err := s.DB.Query(
 		s.QB.
 			Select(
-				"state_leaf.pubkey_id",
+				"state_leaf.pub_key_id",
 				"state_leaf.token_index",
 				"state_leaf.balance",
 				"state_leaf.nonce",
@@ -122,11 +122,11 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]model
 	return toUserStateWithID(res), nil
 }
 
-func toUserStateWithID(userStates []userStateWithPath) []models.UserStateWithID {
+func toUserStateWithID(userStates []userStateWithStateID) []models.UserStateWithID {
 	res := make([]models.UserStateWithID, 0, len(userStates))
 	for i := range userStates {
 		res = append(res, models.UserStateWithID{
-			StateID:   userStates[i].MerklePath.Path,
+			StateID:   userStates[i].StateID.Path,
 			UserState: userStates[i].UserState,
 		})
 	}
