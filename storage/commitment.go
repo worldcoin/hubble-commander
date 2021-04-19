@@ -15,6 +15,7 @@ func (s *Storage) AddCommitment(commitment *models.Commitment) (*int32, error) {
 		s.QB.Insert("commitment").
 			Values(
 				squirrel.Expr("DEFAULT"),
+				commitment.Type,
 				commitment.Transactions,
 				commitment.FeeReceiver,
 				commitment.CombinedSignature,
