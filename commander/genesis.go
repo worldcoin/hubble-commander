@@ -80,11 +80,10 @@ func registerGenesisAccount(
 				return nil, errors.WithStack(fmt.Errorf("account event watcher is closed"))
 			}
 			if event.Raw.TxHash == tx.Hash() {
-				accountIndex := uint32(event.PubkeyID.Uint64())
 				return &models.RegisteredGenesisAccount{
 					GenesisAccount: *account,
 					PublicKey:      *publicKey,
-					PubKeyID:       accountIndex,
+					PubKeyID:       uint32(event.PubkeyID.Uint64()),
 				}, nil
 			}
 		case <-time.After(deployer.ChainTimeout):
