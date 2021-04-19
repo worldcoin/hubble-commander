@@ -50,7 +50,7 @@ func RegisterGenesisAccounts(
 		if err != nil {
 			return nil, err
 		}
-		log.Printf("Registered genesis pubkey %s at %d", registeredAccount.PublicKey.String(), registeredAccount.PubKeyID)
+		log.Printf("Registered genesis public key %s at id %d", registeredAccount.PublicKey.String(), registeredAccount.PubKeyID)
 		registeredAccounts = append(registeredAccounts, *registeredAccount)
 	}
 

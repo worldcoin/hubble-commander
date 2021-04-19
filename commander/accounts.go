@@ -49,7 +49,7 @@ func ProcessPubkeyRegistered(storage *st.Storage, event *accountregistry.Account
 		PubKeyID:  uint32(event.PubkeyID.Uint64()),
 		PublicKey: models.MakePublicKeyFromInts(event.Pubkey),
 	}
-	log.Printf("Account %s registered at index %d", account.PublicKey.String(), account.PubKeyID)
+	log.Printf("Public key %s registered at id %d", account.PublicKey.String(), account.PubKeyID)
 
 	err := storage.AddAccountIfNotExists(&account)
 	if err != nil {
