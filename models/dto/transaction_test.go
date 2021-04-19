@@ -26,7 +26,7 @@ func TestTransaction_UnmarshalJSON_Create2Transfer(t *testing.T) {
 	require.NotNil(t, tx.Parsed)
 	require.IsType(t, Create2Transfer{}, tx.Parsed)
 	require.Equal(t, models.NewUint256(50), tx.Parsed.(Create2Transfer).Amount)
-	require.Equal(t, uint32(3), *tx.Parsed.(Create2Transfer).ToPubkeyID)
+	require.Equal(t, uint32(3), *tx.Parsed.(Create2Transfer).PublicKey)
 }
 
 func TestTransaction_UnmarshalJSON_UnknownType(t *testing.T) {
