@@ -5,6 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -37,6 +38,7 @@ func (s *BatchTestSuite) TearDownTest() {
 func (s *BatchTestSuite) TestAddBatch_AddAndRetrieve() {
 	batch := &models.Batch{
 		Hash:              utils.RandomHash(),
+		Type:              txtype.Transfer,
 		ID:                models.MakeUint256(1),
 		FinalisationBlock: 1234,
 	}
@@ -52,6 +54,7 @@ func (s *BatchTestSuite) TestAddBatch_AddAndRetrieve() {
 func (s *BatchTestSuite) TestGetBatchByID() {
 	batch := &models.Batch{
 		Hash:              utils.RandomHash(),
+		Type:              txtype.Transfer,
 		ID:                models.MakeUint256(1234),
 		FinalisationBlock: 1234,
 	}
@@ -81,6 +84,7 @@ func (s *StateUpdateTestSuite) TestGetBatchByCommitmentID() {
 
 	batch := &models.Batch{
 		Hash:              batchHash,
+		Type:              txtype.Transfer,
 		ID:                models.MakeUint256(1),
 		FinalisationBlock: 1234,
 	}
@@ -89,6 +93,7 @@ func (s *StateUpdateTestSuite) TestGetBatchByCommitmentID() {
 	s.NoError(err)
 
 	commitment := &models.Commitment{
+		Type:              txtype.Transfer,
 		Transactions:      []byte{1, 2, 3},
 		FeeReceiver:       uint32(1),
 		CombinedSignature: models.MakeSignature(1, 2),
@@ -107,6 +112,7 @@ func (s *StateUpdateTestSuite) TestGetBatchByCommitmentID() {
 
 func (s *StateUpdateTestSuite) TestGetBatchByCommitmentID_NotExistentBatch() {
 	commitment := &models.Commitment{
+		Type:              txtype.Transfer,
 		Transactions:      []byte{1, 2, 3},
 		FeeReceiver:       uint32(1),
 		CombinedSignature: models.MakeSignature(1, 2),

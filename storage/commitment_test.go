@@ -5,6 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -13,6 +14,7 @@ import (
 
 var (
 	commitment = models.Commitment{
+		Type:              txtype.Transfer,
 		Transactions:      []byte{1, 2, 3},
 		FeeReceiver:       uint32(1),
 		CombinedSignature: models.MakeSignature(1, 2),
