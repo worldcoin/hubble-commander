@@ -68,7 +68,7 @@ func (s *ApplyTransfersTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *ApplyTransfersTestSuite) Test_ApplyTransfers_AllValid() {
+func (s *ApplyTransfersTestSuite) TestApplyTransfers_AllValid() {
 	transfers := generateValidTransfers(10)
 
 	validTransfers, err := ApplyTransfers(s.storage, transfers, &cfg)
@@ -77,7 +77,7 @@ func (s *ApplyTransfersTestSuite) Test_ApplyTransfers_AllValid() {
 	s.Len(validTransfers, 10)
 }
 
-func (s *ApplyTransfersTestSuite) Test_ApplyTransfers_SomeValid() {
+func (s *ApplyTransfersTestSuite) TestApplyTransfers_SomeValid() {
 	transfers := generateValidTransfers(10)
 	transfers = append(transfers, generateInvalidTransfers(10)...)
 
@@ -87,7 +87,7 @@ func (s *ApplyTransfersTestSuite) Test_ApplyTransfers_SomeValid() {
 	s.Len(validTransfers, 10)
 }
 
-func (s *ApplyTransfersTestSuite) Test_ApplyTransfers_MoreThan32() {
+func (s *ApplyTransfersTestSuite) TestApplyTransfers_MoreThan32() {
 	transfers := generateValidTransfers(60)
 
 	validTransfers, err := ApplyTransfers(s.storage, transfers, &cfg)

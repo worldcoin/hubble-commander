@@ -37,7 +37,7 @@ func (s *GetUserStatesTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *GetUserStatesTestSuite) TestApi_GetUserStates() {
+func (s *GetUserStatesTestSuite) TestGetUserStates() {
 	accounts := []models.Account{
 		{
 			PubKeyID:  1,

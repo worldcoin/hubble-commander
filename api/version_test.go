@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestApi_GetVersion(t *testing.T) {
+func TestGetVersion(t *testing.T) {
 	api := API{&config.APIConfig{Version: "v0123"}, nil, nil}
 	require.Equal(t, "v0123", api.GetVersion())
 }

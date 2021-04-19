@@ -53,7 +53,7 @@ func (s *CommitmentTestSuite) getCommitment(id int32) *models.Commitment {
 	return &clone
 }
 
-func (s *CommitmentTestSuite) Test_AddCommitment_AddAndRetrieve() {
+func (s *CommitmentTestSuite) TestAddCommitment_AddAndRetrieve() {
 	id, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
@@ -69,7 +69,7 @@ func (s *CommitmentTestSuite) addRandomBatch() *common.Hash {
 	return &batch.Hash
 }
 
-func (s *CommitmentTestSuite) Test_MarkCommitmentAsIncluded_UpdatesRecord() {
+func (s *CommitmentTestSuite) TestMarkCommitmentAsIncluded_UpdatesRecord() {
 	batchHash := s.addRandomBatch()
 	accountRoot := utils.RandomHash()
 
@@ -89,7 +89,7 @@ func (s *CommitmentTestSuite) Test_MarkCommitmentAsIncluded_UpdatesRecord() {
 	s.Equal(expected, actual)
 }
 
-func (s *CommitmentTestSuite) Test_GetPendingCommitments_ReturnsOnlyPending() {
+func (s *CommitmentTestSuite) TestGetPendingCommitments_ReturnsOnlyPending() {
 	id, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
@@ -107,7 +107,7 @@ func (s *CommitmentTestSuite) Test_GetPendingCommitments_ReturnsOnlyPending() {
 	s.Equal([]models.Commitment{expected}, actual)
 }
 
-func (s *CommitmentTestSuite) Test_GetPendingCommitments_ReturnsOnlyGivenNumberOfRows() {
+func (s *CommitmentTestSuite) TestGetPendingCommitments_ReturnsOnlyGivenNumberOfRows() {
 	for i := 0; i < 3; i++ {
 		_, err := s.storage.AddCommitment(&commitment)
 		s.NoError(err)
@@ -118,7 +118,7 @@ func (s *CommitmentTestSuite) Test_GetPendingCommitments_ReturnsOnlyGivenNumberO
 	s.Len(commitments, 2)
 }
 
-func (s *StateUpdateTestSuite) Test_GetCommitment_NonExistentCommitment() {
+func (s *StateUpdateTestSuite) TestGetCommitment_NonExistentCommitment() {
 	res, err := s.storage.GetCommitment(42)
 	s.Equal(NewNotFoundError("commitment"), err)
 	s.Nil(res)

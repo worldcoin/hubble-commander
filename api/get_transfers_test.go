@@ -41,7 +41,7 @@ func (s *GetTransfersTestSuite) TearDownTest() {
 }
 
 // nolint:funlen
-func (s *GetTransfersTestSuite) TestApi_GetTransfers() {
+func (s *GetTransfersTestSuite) TestGetTransfers() {
 	account := models.Account{
 		PubKeyID:  1,
 		PublicKey: models.PublicKey{1, 2, 3},
@@ -147,7 +147,7 @@ func (s *GetTransfersTestSuite) TestApi_GetTransfers() {
 	s.Equal(userTransfers[2].Transfer.Hash, transfers[3].Hash)
 }
 
-func (s *GetTransfersTestSuite) TestApi_GetTransfers_NoTransfers() {
+func (s *GetTransfersTestSuite) TestGetTransfers_NoTransfers() {
 	account := models.Account{
 		PubKeyID:  1,
 		PublicKey: models.PublicKey{1, 2, 3},

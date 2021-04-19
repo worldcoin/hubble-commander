@@ -79,14 +79,14 @@ func (s *CalculateTransferStatusTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *CalculateTransferStatusTestSuite) TestApi_CalculateTransferStatus_Pending() {
+func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Pending() {
 	status, err := CalculateTransferStatus(s.storage, s.transfer, 0)
 	s.NoError(err)
 
 	s.Equal(models.Pending, *status)
 }
 
-func (s *CalculateTransferStatusTestSuite) TestApi_CalculateTransferStatus_InBatch() {
+func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_InBatch() {
 	batch := models.Batch{
 		Hash:              utils.RandomHash(),
 		Type:              txtype.Transfer,
@@ -109,7 +109,7 @@ func (s *CalculateTransferStatusTestSuite) TestApi_CalculateTransferStatus_InBat
 }
 
 // nolint:misspell
-func (s *CalculateTransferStatusTestSuite) TestApi_CalculateTransferStatus_Finalised() {
+func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Finalised() {
 	currentBlockNumber, err := s.sim.GetLatestBlockNumber()
 	s.NoError(err)
 	batch := models.Batch{
@@ -137,7 +137,7 @@ func (s *CalculateTransferStatusTestSuite) TestApi_CalculateTransferStatus_Final
 	s.Equal(models.Finalised, *status)
 }
 
-func (s *CalculateTransferStatusTestSuite) TestApi_CalculateTransferStatus_Error() {
+func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Error() {
 	s.transfer.ErrorMessage = ref.String("Gold Duck Error")
 	status, err := CalculateTransferStatus(s.storage, s.transfer, 0)
 	s.NoError(err)

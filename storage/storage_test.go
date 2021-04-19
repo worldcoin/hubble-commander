@@ -34,7 +34,7 @@ func (s *StorageTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *StorageTestSuite) Test_BeginTransaction_Commit() {
+func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	leaf := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
@@ -62,7 +62,7 @@ func (s *StorageTestSuite) Test_BeginTransaction_Commit() {
 	s.Equal(leaf, res)
 }
 
-func (s *StorageTestSuite) Test_BeginTransaction_Rollback() {
+func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 	leaf := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
@@ -86,7 +86,7 @@ func (s *StorageTestSuite) Test_BeginTransaction_Rollback() {
 	s.Nil(res)
 }
 
-func (s *StorageTestSuite) Test_BeginTransaction_Lock() {
+func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 	leafOne := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{

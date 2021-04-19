@@ -66,7 +66,7 @@ func (s *CreateCommitmentsTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_DoesNothingWhenThereAreNotEnoughPendingTransfers() {
+func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNothingWhenThereAreNotEnoughPendingTransfers() {
 	preRoot, err := storage.NewStateTree(s.storage).Root()
 	s.NoError(err)
 
@@ -80,7 +80,7 @@ func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_DoesNothingWhenThere
 	s.Equal(preRoot, postRoot)
 }
 
-func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_DoesNothingWhenThereAreNotEnoughValidTransfers() {
+func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNothingWhenThereAreNotEnoughValidTransfers() {
 	transfers := generateValidTransfers(2)
 	transfers[1].Amount = models.MakeUint256(99999999999)
 	s.addTransfers(transfers)
@@ -102,7 +102,7 @@ func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_DoesNothingWhenThere
 	s.Equal(preRoot, postRoot)
 }
 
-func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_StoresCorrectCommitment() {
+func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresCorrectCommitment() {
 	pendingTransfers := s.prepareAndReturnPendingTransfers(3)
 
 	preRoot, err := storage.NewStateTree(s.storage).Root()
@@ -122,7 +122,7 @@ func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_StoresCorrectCommitm
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
 }
 
-func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_CreatesMaximallyAsManyCommitmentsAsSpecifiedInConfig() {
+func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CreatesMaximallyAsManyCommitmentsAsSpecifiedInConfig() {
 	pendingTransfers := s.prepareAndReturnPendingTransfers(2)
 
 	commitments, err := createCommitments(pendingTransfers, s.storage, s.cfg)
@@ -130,7 +130,7 @@ func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_CreatesMaximallyAsMa
 	s.Len(commitments, 1)
 }
 
-func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_MarksTransfersAsIncludedInCommitment() {
+func (s *CreateCommitmentsTestSuite) TestCreateCommitments_MarksTransfersAsIncludedInCommitment() {
 	pendingTransfers := s.prepareAndReturnPendingTransfers(2)
 
 	commitments, err := createCommitments(pendingTransfers, s.storage, s.cfg)
@@ -144,7 +144,7 @@ func (s *CreateCommitmentsTestSuite) Test_CreateCommitments_MarksTransfersAsIncl
 	}
 }
 
-func (s *CreateCommitmentsTestSuite) Test_removeTransactions() {
+func (s *CreateCommitmentsTestSuite) TestRemoveTransactions() {
 	transfer1 := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			Hash: utils.RandomHash(),

@@ -59,7 +59,7 @@ func (s *GetTransferTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *GetTransferTestSuite) TestApi_GetTransfer() {
+func (s *GetTransferTestSuite) TestGetTransfer() {
 	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
 	s.NoError(err)
 

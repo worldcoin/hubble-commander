@@ -50,7 +50,7 @@ func (s *ApplyTransferTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_UpdatesStates() {
+func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_UpdatesStates() {
 	transfer := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
@@ -78,7 +78,7 @@ func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_UpdatesStates(
 	s.NotEqual(&newReceiverState, &receiverState)
 }
 
-func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_Validation_Nonce() {
+func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_Validation_Nonce() {
 	transfer := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
@@ -93,7 +93,7 @@ func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_Validation_Non
 	s.Error(err)
 }
 
-func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_Validation_Balance() {
+func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_Validation_Balance() {
 	transfer := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
@@ -108,7 +108,7 @@ func (s *ApplyTransferTestSuite) Test_CalculateStateAfterTransfer_Validation_Bal
 	s.Error(err)
 }
 
-func (s *ApplyTransferTestSuite) Test_ApplyTransfer_Validation_Nil() {
+func (s *ApplyTransferTestSuite) TestApplyTransfer_Validation_Nil() {
 	transfer := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
@@ -127,7 +127,7 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer_Validation_Nil() {
 	s.NoError(transferError)
 }
 
-func (s *ApplyTransferTestSuite) Test_ApplyTransfer_Validation_TokenIndex() {
+func (s *ApplyTransferTestSuite) TestApplyTransfer_Validation_TokenIndex() {
 	transfer := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
@@ -151,7 +151,7 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer_Validation_TokenIndex() {
 	s.NoError(transferError)
 }
 
-func (s *ApplyTransferTestSuite) Test_ApplyTransfer() {
+func (s *ApplyTransferTestSuite) TestApplyTransfer() {
 	transfer := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
@@ -183,7 +183,7 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer() {
 	s.Equal(int64(100), receiverLeaf.Balance.Int64())
 }
 
-func (s *ApplyTransferTestSuite) Test_ApplyFee() {
+func (s *ApplyTransferTestSuite) TestApplyFee() {
 	receiverStateID := receiverState.PubKeyID
 	err := s.tree.Set(receiverStateID, &receiverState)
 	s.NoError(err)

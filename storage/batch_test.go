@@ -35,7 +35,7 @@ func (s *BatchTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *BatchTestSuite) Test_AddBatch_AddAndRetrieve() {
+func (s *BatchTestSuite) TestAddBatch_AddAndRetrieve() {
 	batch := &models.Batch{
 		Hash:              utils.RandomHash(),
 		Type:              txtype.Transfer,
@@ -51,7 +51,7 @@ func (s *BatchTestSuite) Test_AddBatch_AddAndRetrieve() {
 	s.Equal(batch, actual)
 }
 
-func (s *BatchTestSuite) Test_GetBatchByID() {
+func (s *BatchTestSuite) TestGetBatchByID() {
 	batch := &models.Batch{
 		Hash:              utils.RandomHash(),
 		Type:              txtype.Transfer,
@@ -67,19 +67,19 @@ func (s *BatchTestSuite) Test_GetBatchByID() {
 	s.Equal(batch, actual)
 }
 
-func (s *StateUpdateTestSuite) Test_GetBatch_NonExistentBatch() {
+func (s *StateUpdateTestSuite) TestGetBatch_NonExistentBatch() {
 	res, err := s.storage.GetBatch(common.Hash{1, 2, 3, 4})
 	s.Equal(NewNotFoundError("batch"), err)
 	s.Nil(res)
 }
 
-func (s *StateUpdateTestSuite) Test_GetBatchById_NonExistentBatch() {
+func (s *StateUpdateTestSuite) TestGetBatchByID_NonExistentBatch() {
 	res, err := s.storage.GetBatchByID(models.MakeUint256(42))
 	s.Equal(NewNotFoundError("batch"), err)
 	s.Nil(res)
 }
 
-func (s *StateUpdateTestSuite) Test_GetBatchByCommitmentID() {
+func (s *StateUpdateTestSuite) TestGetBatchByCommitmentID() {
 	batchHash := utils.RandomHash()
 
 	batch := &models.Batch{
@@ -110,7 +110,7 @@ func (s *StateUpdateTestSuite) Test_GetBatchByCommitmentID() {
 	s.Equal(batch, actual)
 }
 
-func (s *StateUpdateTestSuite) Test_GetBatchByCommitmentID_NotExistentBatch() {
+func (s *StateUpdateTestSuite) TestGetBatchByCommitmentID_NotExistentBatch() {
 	commitment := &models.Commitment{
 		Type:              txtype.Transfer,
 		Transactions:      []byte{1, 2, 3},

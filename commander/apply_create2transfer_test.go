@@ -68,7 +68,7 @@ func (s *ApplyCreate2TransferTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *ApplyCreate2TransferTestSuite) Test_ApplyCreate2Transfer_InsertsNewEmptyStateLeaf() {
+func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InsertsNewEmptyStateLeaf() {
 	transferError, appError := ApplyCreate2Transfer(s.storage, &create2transfer, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)
@@ -80,7 +80,7 @@ func (s *ApplyCreate2TransferTestSuite) Test_ApplyCreate2Transfer_InsertsNewEmpt
 	s.Equal(feeReceiverTokenIndex, leaf.TokenIndex)
 }
 
-func (s *ApplyCreate2TransferTestSuite) Test_ApplyCreate2Transfer_ApplyTransfer() {
+func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer() {
 	transferError, appError := ApplyCreate2Transfer(s.storage, &create2transfer, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)

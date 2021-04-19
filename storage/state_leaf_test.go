@@ -36,7 +36,7 @@ func (s *StateLeafTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *StateLeafTestSuite) Test_AddStateLeaf_AddAndRetrieve() {
+func (s *StateLeafTestSuite) TestAddStateLeaf_AddAndRetrieve() {
 	leaf := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
@@ -55,14 +55,14 @@ func (s *StateLeafTestSuite) Test_AddStateLeaf_AddAndRetrieve() {
 	s.Equal(leaf, res)
 }
 
-func (s *StateLeafTestSuite) Test_GetStateLeafByHash_NonExistentLeaf() {
+func (s *StateLeafTestSuite) TestGetStateLeafByHash_NonExistentLeaf() {
 	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
 	res, err := s.storage.GetStateLeafByHash(hash)
 	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
 }
 
-func (s *StateLeafTestSuite) Test_GetStateLeafByPath_ReturnsCorrectStruct() {
+func (s *StateLeafTestSuite) TestGetStateLeafByPath_ReturnsCorrectStruct() {
 	leaf := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
@@ -91,20 +91,20 @@ func (s *StateLeafTestSuite) Test_GetStateLeafByPath_ReturnsCorrectStruct() {
 	s.Equal(leaf, actual)
 }
 
-func (s *StateLeafTestSuite) Test_GetStateLeafByPath_NonExistentLeaf() {
+func (s *StateLeafTestSuite) TestGetStateLeafByPath_NonExistentLeaf() {
 	path, err := models.NewMerklePath(strings.Repeat("0", 32))
 	s.NoError(err)
 	_, err = s.storage.GetStateLeafByPath(path)
 	s.Equal(NewNotFoundError("state leaf"), err)
 }
 
-func (s *StateLeafTestSuite) Test_GetStateLeaves_NoLeaves() {
+func (s *StateLeafTestSuite) TestGetStateLeaves_NoLeaves() {
 	res, err := s.storage.GetStateLeaves(1)
 	s.Equal(NewNotFoundError("state leaves"), err)
 	s.Nil(res)
 }
 
-func (s *StateLeafTestSuite) Test_GetStateLeaves() {
+func (s *StateLeafTestSuite) TestGetStateLeaves() {
 	var pubKeyID uint32 = 1
 
 	leaves := []models.StateLeaf{
@@ -184,13 +184,13 @@ func (s *StateLeafTestSuite) Test_GetStateLeaves() {
 	s.Equal(common.BytesToHash([]byte{3, 4, 5, 6, 7}), res[1].DataHash)
 }
 
-func (s *StateLeafTestSuite) Test_GetNextAvailableStateID_NoLeavesInStateTree() {
+func (s *StateLeafTestSuite) TestGetNextAvailableStateID_NoLeavesInStateTree() {
 	path, err := s.storage.GetNextAvailableStateID()
 	s.NoError(err)
 	s.Equal(uint32(0), *path)
 }
 
-func (s *StateLeafTestSuite) Test_GetNextAvailableStateID() {
+func (s *StateLeafTestSuite) TestGetNextAvailableStateID() {
 	userState := &models.UserState{
 		PubKeyID:   1,
 		TokenIndex: models.MakeUint256(1),
@@ -210,7 +210,7 @@ func (s *StateLeafTestSuite) Test_GetNextAvailableStateID() {
 	s.Equal(uint32(3), *path)
 }
 
-func (s *StateLeafTestSuite) Test_GetUserStatesByPublicKey() {
+func (s *StateLeafTestSuite) TestGetUserStatesByPublicKey() {
 	accounts := []models.Account{
 		{
 			PubKeyID:  1,

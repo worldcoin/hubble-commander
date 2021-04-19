@@ -33,7 +33,7 @@ func (s *RollupTestSuite) TearDownTest() {
 	s.client.Close()
 }
 
-func (s *RollupTestSuite) Test_SubmitTransfersBatch_ReturnsAccountTreeRootUsed() {
+func (s *RollupTestSuite) TestSubmitTransfersBatch_ReturnsAccountTreeRootUsed() {
 	expected, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
 
@@ -51,7 +51,7 @@ func (s *RollupTestSuite) Test_SubmitTransfersBatch_ReturnsAccountTreeRootUsed()
 	s.Equal(common.BytesToHash(expected[:]), *accountRoot)
 }
 
-func (s *RollupTestSuite) Test_SubmitTransfersBatch_ReturnsBatchWithCorrectHash() {
+func (s *RollupTestSuite) TestSubmitTransfersBatch_ReturnsBatchWithCorrectHash() {
 	accountRoot, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
 

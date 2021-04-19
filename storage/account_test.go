@@ -32,7 +32,7 @@ func (s *AccountTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *AccountTestSuite) Test_AddAccountIfNotExists_AddAndRetrieve() {
+func (s *AccountTestSuite) TestAddAccountIfNotExists_AddAndRetrieve() {
 	account := models.Account{
 		PubKeyID:  0,
 		PublicKey: models.PublicKey{1, 2, 3},
@@ -47,7 +47,7 @@ func (s *AccountTestSuite) Test_AddAccountIfNotExists_AddAndRetrieve() {
 	s.Equal([]models.Account{account}, res)
 }
 
-func (s *AccountTestSuite) Test_GetAccounts_ReturnsAllAccounts() {
+func (s *AccountTestSuite) TestGetAccounts_ReturnsAllAccounts() {
 	pubKey := models.PublicKey{1, 2, 3}
 	accounts := []models.Account{{
 		PubKeyID:  0,
@@ -68,7 +68,7 @@ func (s *AccountTestSuite) Test_GetAccounts_ReturnsAllAccounts() {
 	s.Equal(accounts, res)
 }
 
-func (s *AccountTestSuite) Test_AddAccountIfNotExists_Idempotent() {
+func (s *AccountTestSuite) TestAddAccountIfNotExists_Idempotent() {
 	account := models.Account{
 		PubKeyID:  0,
 		PublicKey: models.PublicKey{1, 2, 3},
@@ -86,7 +86,7 @@ func (s *AccountTestSuite) Test_AddAccountIfNotExists_Idempotent() {
 	s.Equal([]models.Account{account}, res)
 }
 
-func (s *AccountTestSuite) Test_GetPublicKey_ReturnsPublicKey() {
+func (s *AccountTestSuite) TestGetPublicKey_ReturnsPublicKey() {
 	account := models.Account{
 		PubKeyID:  0,
 		PublicKey: models.PublicKey{1, 2, 3},
