@@ -16,10 +16,10 @@ import (
 
 var (
 	userState = models.UserState{
-		AccountIndex: 123,
-		TokenIndex:   models.MakeUint256(1),
-		Balance:      models.MakeUint256(420),
-		Nonce:        models.MakeUint256(0),
+		PubkeyID:   123,
+		TokenIndex: models.MakeUint256(1),
+		Balance:    models.MakeUint256(420),
+		Nonce:      models.MakeUint256(0),
 	}
 	transferWithoutSignature = dto.Transfer{
 		FromStateID: ref.Uint32(1),
@@ -58,8 +58,8 @@ func (s *SendTransactionTestSuite) SetupTest() {
 	s.NoError(err)
 
 	err = storage.AddAccountIfNotExists(&models.Account{
-		AccountIndex: 123,
-		PublicKey:    *s.wallet.PublicKey(),
+		PubkeyID:  123,
+		PublicKey: *s.wallet.PublicKey(),
 	})
 	s.NoError(err)
 

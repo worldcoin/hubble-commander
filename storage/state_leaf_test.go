@@ -66,10 +66,10 @@ func (s *StateLeafTestSuite) Test_GetStateLeafByPath_ReturnsCorrectStruct() {
 	leaf := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
-			AccountIndex: 1,
-			TokenIndex:   models.MakeUint256(1),
-			Balance:      models.MakeUint256(420),
-			Nonce:        models.MakeUint256(0),
+			PubkeyID:   1,
+			TokenIndex: models.MakeUint256(1),
+			Balance:    models.MakeUint256(420),
+			Nonce:      models.MakeUint256(0),
 		},
 	}
 	path, err := models.NewMerklePath(strings.Repeat("0", 32))

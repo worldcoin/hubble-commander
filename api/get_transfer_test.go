@@ -37,8 +37,8 @@ func (s *GetTransferTestSuite) SetupTest() {
 	s.NoError(err)
 
 	err = storage.AddAccountIfNotExists(&models.Account{
-		AccountIndex: 123,
-		PublicKey:    *s.wallet.PublicKey(),
+		PubkeyID:  123,
+		PublicKey: *s.wallet.PublicKey(),
 	})
 	s.NoError(err)
 

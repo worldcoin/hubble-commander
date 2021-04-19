@@ -68,8 +68,8 @@ func (s *TransactionBaseTestSuite) Test_SetTransactionError() {
 
 func (s *TransactionBaseTestSuite) Test_GetLatestTransactionNonce() {
 	account := models.Account{
-		AccountIndex: 1,
-		PublicKey:    models.PublicKey{1, 2, 3},
+		PubkeyID:  1,
+		PublicKey: models.PublicKey{1, 2, 3},
 	}
 
 	err := s.storage.AddAccountIfNotExists(&account)
@@ -92,7 +92,7 @@ func (s *TransactionBaseTestSuite) Test_GetLatestTransactionNonce() {
 	err = s.storage.AddTransfer(&tx3)
 	s.NoError(err)
 
-	userTransactions, err := s.storage.GetLatestTransactionNonce(account.AccountIndex)
+	userTransactions, err := s.storage.GetLatestTransactionNonce(account.PubkeyID)
 	s.NoError(err)
 	s.Equal(models.NewUint256(5), userTransactions)
 }

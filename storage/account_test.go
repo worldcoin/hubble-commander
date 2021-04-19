@@ -88,8 +88,8 @@ func (s *AccountTestSuite) Test_AddAccountIfNotExists_Idempotent() {
 
 func (s *AccountTestSuite) Test_GetPublicKey_ReturnsPublicKey() {
 	account := models.Account{
-		AccountIndex: 0,
-		PublicKey:    models.PublicKey{1, 2, 3},
+		PubkeyID:  0,
+		PublicKey: models.PublicKey{1, 2, 3},
 	}
 
 	err := s.storage.AddAccountIfNotExists(&account)
