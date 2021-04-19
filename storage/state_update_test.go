@@ -38,7 +38,7 @@ func (s *StateUpdateTestSuite) Test_AddStateUpdate_AddAndRetrieve() {
 	s.NoError(err)
 	update := &models.StateUpdate{
 		ID:          1,
-		MerklePath:  *path,
+		StateID:     *path,
 		CurrentHash: common.BytesToHash([]byte{1, 2}),
 		CurrentRoot: common.BytesToHash([]byte{1, 2, 3}),
 		PrevHash:    common.BytesToHash([]byte{1, 2, 3, 4}),
@@ -64,7 +64,7 @@ func (s *StateUpdateTestSuite) Test_DeleteStateUpdate() {
 	updates := []models.StateUpdate{
 		{
 			ID:          1,
-			MerklePath:  *path,
+			StateID:     *path,
 			CurrentHash: common.BytesToHash([]byte{1}),
 			CurrentRoot: common.BytesToHash([]byte{1}),
 			PrevHash:    common.BytesToHash([]byte{1}),
@@ -72,7 +72,7 @@ func (s *StateUpdateTestSuite) Test_DeleteStateUpdate() {
 		},
 		{
 			ID:          2,
-			MerklePath:  *path,
+			StateID:     *path,
 			CurrentHash: common.BytesToHash([]byte{2}),
 			CurrentRoot: common.BytesToHash([]byte{2}),
 			PrevHash:    common.BytesToHash([]byte{2}),

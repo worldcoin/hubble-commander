@@ -40,11 +40,11 @@ func (s *GetUserStatesTestSuite) TearDownTest() {
 func (s *GetUserStatesTestSuite) TestApi_GetUserStates() {
 	accounts := []models.Account{
 		{
-			PubkeyID:  1,
+			PubKeyID:  1,
 			PublicKey: models.PublicKey{1, 2, 3},
 		},
 		{
-			PubkeyID:  2,
+			PubKeyID:  2,
 			PublicKey: models.PublicKey{1, 2, 3},
 		},
 	}
@@ -58,7 +58,7 @@ func (s *GetUserStatesTestSuite) TestApi_GetUserStates() {
 		{
 			DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 			UserState: models.UserState{
-				PubkeyID:   accounts[0].PubkeyID,
+				PubKeyID:   accounts[0].PubKeyID,
 				TokenIndex: models.MakeUint256(1),
 				Balance:    models.MakeUint256(420),
 				Nonce:      models.MakeUint256(0),
@@ -67,7 +67,7 @@ func (s *GetUserStatesTestSuite) TestApi_GetUserStates() {
 		{
 			DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 			UserState: models.UserState{
-				PubkeyID:   accounts[1].PubkeyID,
+				PubKeyID:   accounts[1].PubKeyID,
 				TokenIndex: models.MakeUint256(2),
 				Balance:    models.MakeUint256(500),
 				Nonce:      models.MakeUint256(0),
@@ -76,7 +76,7 @@ func (s *GetUserStatesTestSuite) TestApi_GetUserStates() {
 		{
 			DataHash: common.BytesToHash([]byte{3, 4, 5, 6, 7}),
 			UserState: models.UserState{
-				PubkeyID:   accounts[0].PubkeyID,
+				PubKeyID:   accounts[0].PubKeyID,
 				TokenIndex: models.MakeUint256(25),
 				Balance:    models.MakeUint256(1),
 				Nonce:      models.MakeUint256(73),

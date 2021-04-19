@@ -23,7 +23,7 @@ var (
 			Signature:            []byte{1, 2, 3, 4, 5},
 			IncludedInCommitment: nil,
 		},
-		ToPubkeyID: 2,
+		ToPubKeyID: 2,
 	}
 	feeReceiverTokenIndex = models.MakeUint256(5)
 )
@@ -48,14 +48,14 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 	s.tree = st.NewStateTree(s.storage)
 
 	err = s.tree.Set(0, &models.UserState{
-		PubkeyID:   0,
+		PubKeyID:   0,
 		TokenIndex: feeReceiverTokenIndex,
 		Balance:    models.MakeUint256(10000),
 		Nonce:      models.MakeUint256(0),
 	})
 	s.NoError(err)
 	err = s.tree.Set(1, &models.UserState{
-		PubkeyID:   1,
+		PubKeyID:   1,
 		TokenIndex: feeReceiverTokenIndex,
 		Balance:    models.MakeUint256(0),
 		Nonce:      models.MakeUint256(0),

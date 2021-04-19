@@ -12,13 +12,13 @@ import (
 
 var (
 	senderState = models.UserState{
-		PubkeyID:   1,
+		PubKeyID:   1,
 		TokenIndex: models.MakeUint256(1),
 		Balance:    models.MakeUint256(420),
 		Nonce:      models.MakeUint256(0),
 	}
 	receiverState = models.UserState{
-		PubkeyID:   2,
+		PubKeyID:   2,
 		TokenIndex: models.MakeUint256(1),
 		Balance:    models.MakeUint256(0),
 		Nonce:      models.MakeUint256(0),
@@ -138,12 +138,12 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer_Validation_TokenIndex() {
 		ToStateID: 2,
 	}
 
-	senderIndex := senderState.PubkeyID
-	receiverIndex := receiverState.PubkeyID
+	senderStateID := senderState.PubKeyID
+	receiverStateID := receiverState.PubKeyID
 
-	err := s.tree.Set(senderIndex, &senderState)
+	err := s.tree.Set(senderStateID, &senderState)
 	s.NoError(err)
-	err = s.tree.Set(receiverIndex, &receiverState)
+	err = s.tree.Set(receiverStateID, &receiverState)
 	s.NoError(err)
 
 	transferError, appError := ApplyTransfer(s.tree, &transfer, models.MakeUint256(3))
@@ -162,21 +162,21 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer() {
 		ToStateID: 2,
 	}
 
-	senderIndex := senderState.PubkeyID
-	receiverIndex := receiverState.PubkeyID
+	senderStateID := senderState.PubKeyID
+	receiverStateID := receiverState.PubKeyID
 
-	err := s.tree.Set(senderIndex, &senderState)
+	err := s.tree.Set(senderStateID, &senderState)
 	s.NoError(err)
-	err = s.tree.Set(receiverIndex, &receiverState)
+	err = s.tree.Set(receiverStateID, &receiverState)
 	s.NoError(err)
 
 	transferError, appError := ApplyTransfer(s.tree, &transfer, models.MakeUint256(1))
 	s.NoError(appError)
 	s.NoError(transferError)
 
-	senderLeaf, err := s.tree.Leaf(senderIndex)
+	senderLeaf, err := s.tree.Leaf(senderStateID)
 	s.NoError(err)
-	receiverLeaf, err := s.tree.Leaf(receiverIndex)
+	receiverLeaf, err := s.tree.Leaf(receiverStateID)
 	s.NoError(err)
 
 	s.Equal(int64(270), senderLeaf.Balance.Int64())
@@ -184,14 +184,14 @@ func (s *ApplyTransferTestSuite) Test_ApplyTransfer() {
 }
 
 func (s *ApplyTransferTestSuite) Test_ApplyFee() {
-	receiverIndex := receiverState.PubkeyID
-	err := s.tree.Set(receiverIndex, &receiverState)
+	receiverStateID := receiverState.PubKeyID
+	err := s.tree.Set(receiverStateID, &receiverState)
 	s.NoError(err)
 
-	err = ApplyFee(s.tree, receiverIndex, models.MakeUint256(555))
+	err = ApplyFee(s.tree, receiverStateID, models.MakeUint256(555))
 	s.NoError(err)
 
-	receiverLeaf, err := s.tree.Leaf(receiverIndex)
+	receiverLeaf, err := s.tree.Leaf(receiverStateID)
 	s.NoError(err)
 
 	s.Equal(int64(555), receiverLeaf.Balance.Int64())
