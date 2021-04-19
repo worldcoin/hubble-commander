@@ -89,9 +89,9 @@ func (s *Storage) GetStateNodeByPath(path *models.MerklePath) (*models.StateNode
 	return &res[0], nil
 }
 
-func newZeroStateNode(stateID *models.MerklePath) *models.StateNode {
+func newZeroStateNode(path *models.MerklePath) *models.StateNode {
 	return &models.StateNode{
-		MerklePath: *stateID,
-		DataHash:   GetZeroHash(32 - uint(stateID.Depth)),
+		MerklePath: *path,
+		DataHash:   GetZeroHash(32 - uint(path.Depth)),
 	}
 }
