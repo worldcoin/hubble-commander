@@ -29,7 +29,7 @@ func (s *TxControllerTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *TxControllerTestSuite) Test_Rollback_DoesNotModifyCauseError() {
+func (s *TxControllerTestSuite) TestRollback_DoesNotModifyCauseError() {
 	tx, _, err := s.db.DB.BeginTransaction()
 	s.NoError(err)
 
@@ -48,7 +48,7 @@ func (m MockController) Commit() error {
 	return nil
 }
 
-func (s *TxControllerTestSuite) Test_Rollback_WrapsCauseErrorWithRollbackError() {
+func (s *TxControllerTestSuite) TestRollback_WrapsCauseErrorWithRollbackError() {
 	tx := TransactionController{
 		tx:       MockController{},
 		isLocked: false,
