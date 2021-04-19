@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+
+	"github.com/Worldcoin/hubble-commander/utils"
 )
 
 type PublicKey [128]byte
@@ -30,11 +32,10 @@ func (p *PublicKey) String() string {
 
 func MakePublicKeyFromInts(ints [4]*big.Int) PublicKey {
 	publicKey := PublicKey{}
-	copy(publicKey[0:32], ints[0].Bytes())
-	copy(publicKey[32:64], ints[1].Bytes())
-	copy(publicKey[64:96], ints[2].Bytes())
-	copy(publicKey[96:128], ints[3].Bytes())
-
+	copy(publicKey[:32], utils.PadLeft(ints[0].Bytes(), 32))
+	copy(publicKey[32:64], utils.PadLeft(ints[1].Bytes(), 32))
+	copy(publicKey[64:96], utils.PadLeft(ints[2].Bytes(), 32))
+	copy(publicKey[96:], utils.PadLeft(ints[3].Bytes(), 32))
 	return publicKey
 }
 
