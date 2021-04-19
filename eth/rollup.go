@@ -54,6 +54,7 @@ func (c *Client) GetBatch(batchID *models.Uint256) (*models.Batch, error) {
 	meta := encoder.DecodeMeta(batch.Meta)
 	return &models.Batch{
 		Hash:              common.BytesToHash(batch.CommitmentRoot[:]),
+		Type:              meta.BatchType,
 		ID:                *batchID,
 		FinalisationBlock: meta.FinaliseOn,
 	}, nil

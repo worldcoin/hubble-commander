@@ -6,6 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/contracts/test/types"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -53,7 +54,7 @@ func (s *DecoderTestSuite) TestDecodeMeta() {
 	s.NoError(err)
 
 	expectedMeta := models.Meta{
-		BatchType:  uint8(output.BatchType.Uint64()),
+		BatchType:  txtype.TransactionType(output.BatchType.Uint64()),
 		Size:       uint8(output.Size.Uint64()),
 		Committer:  output.Committer,
 		FinaliseOn: uint32(output.FinaliseOn.Uint64()),

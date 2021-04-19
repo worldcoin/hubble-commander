@@ -6,6 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -16,6 +17,7 @@ import (
 
 var (
 	commitment = models.Commitment{
+		Type:              txtype.Transfer,
 		Transactions:      utils.RandomBytes(24),
 		FeeReceiver:       1,
 		CombinedSignature: models.MakeSignature(1, 2),
@@ -87,6 +89,7 @@ func (s *CalculateTransferStatusTestSuite) TestApi_CalculateTransferStatus_Pendi
 func (s *CalculateTransferStatusTestSuite) TestApi_CalculateTransferStatus_InBatch() {
 	batch := models.Batch{
 		Hash:              utils.RandomHash(),
+		Type:              txtype.Transfer,
 		FinalisationBlock: math.MaxUint32,
 	}
 	err := s.storage.AddBatch(&batch)
@@ -111,6 +114,7 @@ func (s *CalculateTransferStatusTestSuite) TestApi_CalculateTransferStatus_Final
 	s.NoError(err)
 	batch := models.Batch{
 		Hash:              utils.RandomHash(),
+		Type:              txtype.Transfer,
 		FinalisationBlock: *currentBlockNumber + 1,
 	}
 	err = s.storage.AddBatch(&batch)

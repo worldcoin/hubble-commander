@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -37,6 +38,7 @@ func (s *RollupTestSuite) Test_SubmitTransfersBatch_ReturnsAccountTreeRootUsed()
 	s.NoError(err)
 
 	commitment := models.Commitment{
+		Type:              txtype.Transfer,
 		Transactions:      utils.RandomBytes(12),
 		FeeReceiver:       uint32(1234),
 		CombinedSignature: models.MakeSignature(1, 2),
@@ -54,6 +56,7 @@ func (s *RollupTestSuite) Test_SubmitTransfersBatch_ReturnsBatchWithCorrectHash(
 	s.NoError(err)
 
 	commitment := models.Commitment{
+		Type:              txtype.Transfer,
 		Transactions:      utils.RandomBytes(12),
 		FeeReceiver:       uint32(1234),
 		CombinedSignature: models.MakeSignature(1, 2),

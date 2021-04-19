@@ -12,6 +12,7 @@ func (s *Storage) AddBatch(batch *models.Batch) error {
 			Values(
 				batch.Hash,
 				batch.ID,
+				batch.Type,
 				batch.FinalisationBlock,
 			),
 	).Exec()
