@@ -36,6 +36,7 @@ There are a couple of scripts defined in the Makefile:
 
 * `make install` - install Go dependencies
 * `make clean` - remove build artifacts
+* `make clean-testcache` - remove cached test results 
 * `make compile` - build artifacts
 * `make generate` - generate bindings for smart contracts
 * `make build` - clean and build artifacts
@@ -43,10 +44,14 @@ There are a couple of scripts defined in the Makefile:
 * `make stop-db` - stop the postgres container
 * `make start-db` - start the postgres container
 * `make teardown-db` - stop and remove the postgres container
+* `make update-contracts` - update the `hubble-contracts` git submodule
 * `make run` - run the compiled binary
 * `make prune-run` - clean database and run the compiled binary
 * `make lint` - run linter
-* `make test` - run all tests
+* `make test` - run all tests unit tests
+* `make test-hardhat` - run all tests with Hardhat dependency
+* `make test-e2e` - run E2E tests on a pre-built docker image
+* `make test-e2e-locally` - run E2E tests against a local commander instance
 
 ## Running with Ganache
 
