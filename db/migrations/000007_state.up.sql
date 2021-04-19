@@ -1,6 +1,6 @@
 -- the root hash is stored as [0], all merkle paths are prepended with 0
 CREATE TABLE state_node (
-    state_id    BIT VARYING(33) PRIMARY KEY,
+    merkle_path BIT VARYING(33) PRIMARY KEY,
     data_hash   BYTEA NOT NULL
 );
 
