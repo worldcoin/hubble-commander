@@ -13,9 +13,15 @@ var create2transferColumns = []string{
 	"create2transfer.to_pubkey_id",
 }
 
-func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) error {
-	_, err := s.DB.Query(
-		s.QB.Insert("transaction_base").
+func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) (err error){
+	tx, txStorage, err := s.BeginTransaction()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(&err)
+
+	_, err = txStorage.DB.Query(
+		txStorage.QB.Insert("transaction_base").
 			Values(
 				t.Hash,
 				txtype.Create2Transfer,
@@ -32,8 +38,8 @@ func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) error {
 		return err
 	}
 
-	_, err = s.DB.Query(
-		s.QB.Insert("create2transfer").
+	_, err = txStorage.DB.Query(
+		txStorage.QB.Insert("create2transfer").
 			Values(
 				t.Hash,
 				t.ToStateID,
@@ -44,7 +50,7 @@ func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) error {
 		return err
 	}
 
-	return nil
+	return tx.Commit()
 }
 
 func (s *Storage) GetCreate2Transfer(hash common.Hash) (*models.Create2Transfer, error) {
