@@ -215,7 +215,7 @@ func NewStateLeaf(state *models.UserState) (*models.StateLeaf, error) {
 
 func toContractUserState(state *models.UserState) generic.TypesUserState {
 	return generic.TypesUserState{
-		PubkeyID: big.NewInt(int64(state.AccountIndex)),
+		PubkeyID: big.NewInt(int64(state.PubkeyID)),
 		TokenID:  &state.TokenIndex.Int,
 		Balance:  &state.Balance.Int,
 		Nonce:    &state.Nonce.Int,

@@ -14,7 +14,7 @@ func RollupEndlessLoop(storage *st.Storage, client *eth.Client, cfg *config.Roll
 	return RollupLoop(storage, client, cfg, done)
 }
 
-func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig, done <-chan bool) error {
+func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig, done <-chan bool) (err error) {
 	ticker := time.NewTicker(cfg.BatchLoopInterval)
 
 	for {
@@ -23,7 +23,7 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConfi
 			ticker.Stop()
 			return nil
 		case <-ticker.C:
-			err := createAndSubmitBatch(storage, client, cfg)
+			err = createAndSubmitBatch(storage, client, cfg)
 			if err != nil {
 				var e *RollupError
 				if errors.As(err, &e) {
@@ -35,7 +35,7 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConfi
 	}
 }
 
-func createAndSubmitBatch(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
+func createAndSubmitBatch(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) (err error) {
 	tx, txStorage, err := storage.BeginTransaction()
 	if err != nil {
 		return err
@@ -57,10 +57,5 @@ func createAndSubmitBatch(storage *st.Storage, client *eth.Client, cfg *config.R
 		return err
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return tx.Commit()
 }

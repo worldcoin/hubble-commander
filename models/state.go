@@ -5,10 +5,10 @@ import (
 )
 
 type UserState struct {
-	AccountIndex uint32  `db:"account_index"`
-	TokenIndex   Uint256 `db:"token_index"`
-	Balance      Uint256
-	Nonce        Uint256
+	PubkeyID   uint32  `db:"pubkey_id"`
+	TokenIndex Uint256 `db:"token_index"`
+	Balance    Uint256
+	Nonce      Uint256
 }
 
 type StateNode struct {

@@ -12,10 +12,10 @@ import (
 
 var (
 	updatedUserState = models.UserState{
-		AccountIndex: 1,
-		TokenIndex:   models.MakeUint256(1),
-		Balance:      models.MakeUint256(800),
-		Nonce:        models.MakeUint256(1),
+		PubkeyID:   1,
+		TokenIndex: models.MakeUint256(1),
+		Balance:    models.MakeUint256(800),
+		Nonce:      models.MakeUint256(1),
 	}
 )
 
@@ -40,10 +40,10 @@ func (s *StateTreeTestSuite) SetupTest() {
 	s.tree = NewStateTree(s.storage)
 
 	state := models.UserState{
-		AccountIndex: 1,
-		TokenIndex:   models.MakeUint256(1),
-		Balance:      models.MakeUint256(420),
-		Nonce:        models.MakeUint256(0),
+		PubkeyID:   1,
+		TokenIndex: models.MakeUint256(1),
+		Balance:    models.MakeUint256(420),
+		Nonce:      models.MakeUint256(0),
 	}
 	leaf, err := NewStateLeaf(&state)
 	s.NoError(err)
@@ -124,10 +124,10 @@ func (s *StateTreeTestSuite) Test_Set_CalculatesCorrectRootForTwoLeaves() {
 	s.NoError(err)
 
 	state := models.UserState{
-		AccountIndex: 2,
-		TokenIndex:   models.MakeUint256(1),
-		Balance:      models.MakeUint256(420),
-		Nonce:        models.MakeUint256(0),
+		PubkeyID:   2,
+		TokenIndex: models.MakeUint256(1),
+		Balance:    models.MakeUint256(420),
+		Nonce:      models.MakeUint256(0),
 	}
 	err = s.tree.Set(1, &state)
 	s.NoError(err)
@@ -265,22 +265,22 @@ func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_AddsStateUpdateRecord()
 func (s *StateTreeTestSuite) Test_RevertTo() {
 	states := []models.UserState{
 		{
-			AccountIndex: 1,
-			TokenIndex:   models.MakeUint256(1),
-			Balance:      models.MakeUint256(420),
-			Nonce:        models.MakeUint256(0),
+			PubkeyID:   1,
+			TokenIndex: models.MakeUint256(1),
+			Balance:    models.MakeUint256(420),
+			Nonce:      models.MakeUint256(0),
 		},
 		{
-			AccountIndex: 2,
-			TokenIndex:   models.MakeUint256(5),
-			Balance:      models.MakeUint256(100),
-			Nonce:        models.MakeUint256(0),
+			PubkeyID:   2,
+			TokenIndex: models.MakeUint256(5),
+			Balance:    models.MakeUint256(100),
+			Nonce:      models.MakeUint256(0),
 		},
 		{
-			AccountIndex: 1,
-			TokenIndex:   models.MakeUint256(1),
-			Balance:      models.MakeUint256(500),
-			Nonce:        models.MakeUint256(0),
+			PubkeyID:   1,
+			TokenIndex: models.MakeUint256(1),
+			Balance:    models.MakeUint256(500),
+			Nonce:      models.MakeUint256(0),
 		},
 	}
 

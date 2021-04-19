@@ -7,7 +7,7 @@ CREATE TABLE state_node (
 -- this table is append only
 CREATE TABLE state_leaf (
     data_hash     BYTEA PRIMARY KEY,
-    account_index BIGINT      NOT NULL,
+    pubkey_id     BIGINT      NOT NULL,
     token_index   NUMERIC(78) NOT NULL,
     balance       NUMERIC(78) NOT NULL,
     nonce         NUMERIC(78) NOT NULL
