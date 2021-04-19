@@ -19,14 +19,15 @@ func TestTransaction_UnmarshalJSON_Transfer(t *testing.T) {
 }
 
 func TestTransaction_UnmarshalJSON_Create2Transfer(t *testing.T) {
-	input := `{"Type":3,"FromStateID":1,"ToStateID":2,"ToPubkeyID":3,"Amount":"50","Fee":"10","Nonce":"0","Signature":"0xdeadbeef"}` // nolint:goconst,lll
+	// nolint:lll
+	input := `{"Type":3,"FromStateID":1,"ToStateID":2,"PublicKey":"0102030000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","Amount":"50","Fee":"10","Nonce":"0","Signature":"0xdeadbeef"}` // nolint:goconst,lll
 	var tx Transaction
 	err := json.Unmarshal([]byte(input), &tx)
 	require.NoError(t, err)
 	require.NotNil(t, tx.Parsed)
 	require.IsType(t, Create2Transfer{}, tx.Parsed)
 	require.Equal(t, models.NewUint256(50), tx.Parsed.(Create2Transfer).Amount)
-	require.Equal(t, uint32(3), *tx.Parsed.(Create2Transfer).PublicKey)
+	require.Equal(t, models.PublicKey{1, 2, 3}, *tx.Parsed.(Create2Transfer).PublicKey)
 }
 
 func TestTransaction_UnmarshalJSON_UnknownType(t *testing.T) {
