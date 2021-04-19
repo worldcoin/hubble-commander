@@ -76,6 +76,53 @@ func (s *StateUpdateTestSuite) Test_GetBatchById_NonExistentBatch() {
 	s.Nil(res)
 }
 
+func (s *StateUpdateTestSuite) Test_GetBatchByCommitmentID() {
+	batchHash := utils.RandomHash()
+
+	batch := &models.Batch{
+		Hash:              batchHash,
+		ID:                models.MakeUint256(1),
+		FinalisationBlock: 1234,
+	}
+
+	err := s.storage.AddBatch(batch)
+	s.NoError(err)
+
+	commitment := &models.Commitment{
+		Transactions:      []byte{1, 2, 3},
+		FeeReceiver:       uint32(1),
+		CombinedSignature: models.MakeSignature(1, 2),
+		PostStateRoot:     utils.RandomHash(),
+		AccountTreeRoot:   nil,
+		IncludedInBatch:   &batchHash,
+	}
+
+	commitmentID, err := s.storage.AddCommitment(commitment)
+	s.NoError(err)
+
+	actual, err := s.storage.GetBatchByCommitmentID(*commitmentID)
+	s.NoError(err)
+	s.Equal(batch, actual)
+}
+
+func (s *StateUpdateTestSuite) Test_GetBatchByCommitmentID_NotExistentBatch() {
+	commitment := &models.Commitment{
+		Transactions:      []byte{1, 2, 3},
+		FeeReceiver:       uint32(1),
+		CombinedSignature: models.MakeSignature(1, 2),
+		PostStateRoot:     utils.RandomHash(),
+		AccountTreeRoot:   nil,
+		IncludedInBatch:   nil,
+	}
+
+	commitmentID, err := s.storage.AddCommitment(commitment)
+	s.NoError(err)
+
+	batch, err := s.storage.GetBatchByCommitmentID(*commitmentID)
+	s.Equal(NewNotFoundError("batch"), err)
+	s.Nil(batch)
+}
+
 func TestBatchTestSuite(t *testing.T) {
 	suite.Run(t, new(BatchTestSuite))
 }
