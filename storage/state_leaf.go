@@ -12,7 +12,7 @@ func (s *Storage) AddStateLeaf(leaf *models.StateLeaf) error {
 		s.QB.Insert("state_leaf").
 			Values(
 				leaf.DataHash,
-				leaf.PubkeyID,
+				leaf.PubKeyID,
 				leaf.TokenIndex,
 				leaf.Balance,
 				leaf.Nonce,
@@ -56,13 +56,13 @@ func (s *Storage) GetStateLeafByPath(path *models.MerklePath) (*models.StateLeaf
 	return &res[0], nil
 }
 
-func (s *Storage) GetStateLeaves(pubkeyID uint32) ([]models.StateLeaf, error) {
+func (s *Storage) GetStateLeaves(pubKeyID uint32) ([]models.StateLeaf, error) {
 	res := make([]models.StateLeaf, 0, 1)
 	err := s.DB.Query(
 		s.QB.Select("state_leaf.*").
 			From("state_leaf").
 			JoinClause("NATURAL JOIN state_node").
-			Where(squirrel.Eq{"pubkey_id": pubkeyID}),
+			Where(squirrel.Eq{"pub_key_id": pubKeyID}),
 	).Into(&res)
 	if err != nil {
 		return nil, err
@@ -102,7 +102,7 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]model
 	err := s.DB.Query(
 		s.QB.
 			Select(
-				"state_leaf.pubkey_id",
+				"state_leaf.pub_key_id",
 				"state_leaf.token_index",
 				"state_leaf.balance",
 				"state_leaf.nonce",

@@ -10,7 +10,7 @@ import (
 var create2transferColumns = []string{
 	"transaction_base.*",
 	"create2transfer.to_state_id",
-	"create2transfer.to_pubkey_id",
+	"create2transfer.to_pub_key_id",
 }
 
 func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) (err error) {
@@ -43,7 +43,7 @@ func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) (err error) {
 			Values(
 				t.Hash,
 				t.ToStateID,
-				t.ToPubkeyID,
+				t.ToPubKeyID,
 			),
 	).Exec()
 	if err != nil {

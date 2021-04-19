@@ -16,7 +16,7 @@ func ApplyCreate2Transfer(
 		return nil, err
 	}
 	emptyUserState := models.UserState{
-		PubkeyID:   create2transfer.ToPubkeyID,
+		PubKeyID:   create2transfer.ToPubKeyID,
 		TokenIndex: senderUserState.TokenIndex,
 		Balance:    models.MakeUint256(0),
 		Nonce:      models.MakeUint256(0),

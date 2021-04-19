@@ -46,10 +46,10 @@ func WatchAccounts(storage *st.Storage, client *eth.Client) error {
 
 func ProcessPubkeyRegistered(storage *st.Storage, event *accountregistry.AccountRegistryPubkeyRegistered) error {
 	account := models.Account{
-		PubkeyID:  uint32(event.PubkeyID.Uint64()),
+		PubKeyID:  uint32(event.PubkeyID.Uint64()),
 		PublicKey: models.MakePublicKeyFromInts(event.Pubkey),
 	}
-	log.Printf("Account %s registered at index %d", account.PublicKey.String(), account.PubkeyID)
+	log.Printf("Account %s registered at index %d", account.PublicKey.String(), account.PubKeyID)
 
 	err := storage.AddAccountIfNotExists(&account)
 	if err != nil {

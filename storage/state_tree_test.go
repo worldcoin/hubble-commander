@@ -12,7 +12,7 @@ import (
 
 var (
 	updatedUserState = models.UserState{
-		PubkeyID:   1,
+		PubKeyID:   1,
 		TokenIndex: models.MakeUint256(1),
 		Balance:    models.MakeUint256(800),
 		Nonce:      models.MakeUint256(1),
@@ -40,7 +40,7 @@ func (s *StateTreeTestSuite) SetupTest() {
 	s.tree = NewStateTree(s.storage)
 
 	state := models.UserState{
-		PubkeyID:   1,
+		PubKeyID:   1,
 		TokenIndex: models.MakeUint256(1),
 		Balance:    models.MakeUint256(420),
 		Nonce:      models.MakeUint256(0),
@@ -124,7 +124,7 @@ func (s *StateTreeTestSuite) Test_Set_CalculatesCorrectRootForTwoLeaves() {
 	s.NoError(err)
 
 	state := models.UserState{
-		PubkeyID:   2,
+		PubKeyID:   2,
 		TokenIndex: models.MakeUint256(1),
 		Balance:    models.MakeUint256(420),
 		Nonce:      models.MakeUint256(0),
@@ -265,19 +265,19 @@ func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_AddsStateUpdateRecord()
 func (s *StateTreeTestSuite) Test_RevertTo() {
 	states := []models.UserState{
 		{
-			PubkeyID:   1,
+			PubKeyID:   1,
 			TokenIndex: models.MakeUint256(1),
 			Balance:    models.MakeUint256(420),
 			Nonce:      models.MakeUint256(0),
 		},
 		{
-			PubkeyID:   2,
+			PubKeyID:   2,
 			TokenIndex: models.MakeUint256(5),
 			Balance:    models.MakeUint256(100),
 			Nonce:      models.MakeUint256(0),
 		},
 		{
-			PubkeyID:   1,
+			PubKeyID:   1,
 			TokenIndex: models.MakeUint256(1),
 			Balance:    models.MakeUint256(500),
 			Nonce:      models.MakeUint256(0),

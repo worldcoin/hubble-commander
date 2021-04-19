@@ -34,7 +34,7 @@ func (s *AccountTestSuite) TearDownTest() {
 
 func (s *AccountTestSuite) Test_AddAccountIfNotExists_AddAndRetrieve() {
 	account := models.Account{
-		PubkeyID:  0,
+		PubKeyID:  0,
 		PublicKey: models.PublicKey{1, 2, 3},
 	}
 
@@ -50,10 +50,10 @@ func (s *AccountTestSuite) Test_AddAccountIfNotExists_AddAndRetrieve() {
 func (s *AccountTestSuite) Test_GetAccounts_ReturnsAllAccounts() {
 	pubKey := models.PublicKey{1, 2, 3}
 	accounts := []models.Account{{
-		PubkeyID:  0,
+		PubKeyID:  0,
 		PublicKey: pubKey,
 	}, {
-		PubkeyID:  1,
+		PubKeyID:  1,
 		PublicKey: pubKey,
 	}}
 
@@ -70,7 +70,7 @@ func (s *AccountTestSuite) Test_GetAccounts_ReturnsAllAccounts() {
 
 func (s *AccountTestSuite) Test_AddAccountIfNotExists_Idempotent() {
 	account := models.Account{
-		PubkeyID:  0,
+		PubKeyID:  0,
 		PublicKey: models.PublicKey{1, 2, 3},
 	}
 

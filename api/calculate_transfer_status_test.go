@@ -48,7 +48,7 @@ func (s *CalculateTransferStatusTestSuite) SetupTest() {
 	s.sim = sim
 
 	userState := models.UserState{
-		PubkeyID:   1,
+		PubKeyID:   1,
 		TokenIndex: models.MakeUint256(1),
 		Balance:    models.MakeUint256(420),
 		Nonce:      models.MakeUint256(0),
