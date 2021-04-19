@@ -34,6 +34,25 @@ func EncodeTransfer(tx *models.Transfer) ([]byte, error) {
 	)
 }
 
+func EncodeTransferForSigning(tx *models.Transfer) ([]byte, error) {
+	arguments := abi.Arguments{
+		{Name: "txType", Type: tUint256},
+		{Name: "fromIndex", Type: tUint256},
+		{Name: "toIndex", Type: tUint256},
+		{Name: "nonce", Type: tUint256},
+		{Name: "amount", Type: tUint256},
+		{Name: "fee", Type: tUint256},
+	}
+	return arguments.Pack(
+		big.NewInt(int64(txtype.Transfer)),
+		big.NewInt(int64(tx.FromStateID)),
+		big.NewInt(int64(tx.ToStateID)),
+		&tx.Nonce.Int,
+		&tx.Amount.Int,
+		&tx.Fee.Int,
+	)
+}
+
 func EncodeUserState(state generic.TypesUserState) ([]byte, error) {
 	arguments := abi.Arguments{
 		{Name: "pubkeyID", Type: tUint256},

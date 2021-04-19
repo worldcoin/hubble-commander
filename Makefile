@@ -43,7 +43,7 @@ test:
 	go test -p 1 -v ./...
 
 test-hardhat:
-	go test -v -tags hardhat -run TestWalletTestSuite ./bls
+	go test -v -tags hardhat -run TestWalletHardhatTestSuite ./bls
 
 test-e2e:
 	go test -v -tags e2e ./e2e

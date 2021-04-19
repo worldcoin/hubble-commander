@@ -7,6 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/api"
+	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -25,28 +28,31 @@ func Test_Commander(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
+	wallets, err := createWallets()
+	require.NoError(t, err)
+
 	var version string
 	err = commander.Client.CallFor(&version, "hubble_getVersion")
 	require.NoError(t, err)
 	require.Equal(t, "dev-0.1.0", version)
 
 	var userStates []dto.UserState
-	err = commander.Client.CallFor(&userStates, "hubble_getUserStates", []interface{}{models.PublicKey{1, 2, 3}})
+	err = commander.Client.CallFor(&userStates, "hubble_getUserStates", []interface{}{wallets[0].PublicKey()})
 	require.NoError(t, err)
 	require.Len(t, userStates, 1)
 	require.EqualValues(t, models.MakeUint256(0), userStates[0].Nonce)
 
-	transfer := dto.Transfer{
+	transfer, err := api.SignTransfer(&wallets[1], dto.Transfer{
 		FromStateID: ref.Uint32(1),
 		ToStateID:   ref.Uint32(2),
 		Amount:      models.NewUint256(50),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(0),
-		Signature:   []byte{97, 100, 115, 97, 100, 115, 97, 115, 100, 97, 115, 100},
-	}
+	})
+	require.NoError(t, err)
 
 	var transferHash1 common.Hash
-	err = commander.Client.CallFor(&transferHash1, "hubble_sendTransaction", []interface{}{transfer})
+	err = commander.Client.CallFor(&transferHash1, "hubble_sendTransaction", []interface{}{*transfer})
 	require.NoError(t, err)
 	require.NotNil(t, transferHash1)
 
@@ -55,17 +61,17 @@ func Test_Commander(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, models.Pending, sentTransfer.Status)
 
-	transfer2 := dto.Transfer{
+	transfer2, err := api.SignTransfer(&wallets[1], dto.Transfer{
 		FromStateID: ref.Uint32(1),
 		ToStateID:   ref.Uint32(2),
 		Amount:      models.NewUint256(10),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(1),
-		Signature:   []byte{97, 100, 115, 97, 100, 115, 97, 115, 100, 97, 115, 100},
-	}
+	})
+	require.NoError(t, err)
 
 	var transferHash2 common.Hash
-	err = commander.Client.CallFor(&transferHash2, "hubble_sendTransaction", []interface{}{transfer2})
+	err = commander.Client.CallFor(&transferHash2, "hubble_sendTransaction", []interface{}{*transfer2})
 	require.NoError(t, err)
 	require.NotNil(t, transferHash2)
 
@@ -79,7 +85,7 @@ func Test_Commander(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, models.InBatch, sentTransfer.Status)
 
-	err = commander.Client.CallFor(&userStates, "hubble_getUserStates", []interface{}{models.PublicKey{2, 3, 4}})
+	err = commander.Client.CallFor(&userStates, "hubble_getUserStates", []interface{}{wallets[1].PublicKey()})
 	require.NoError(t, err)
 	require.Len(t, userStates, 2)
 
@@ -96,4 +102,19 @@ func getUserState(userStates []dto.UserState, stateID uint32) (*dto.UserState, e
 		}
 	}
 	return nil, errors.New("user state with given stateID not found")
+}
+
+func createWallets() ([]bls.Wallet, error) {
+	cfg := config.GetConfig().Rollup
+	accounts := cfg.GenesisAccounts
+
+	wallets := make([]bls.Wallet, 0, len(accounts))
+	for i := range accounts {
+		wallet, err := bls.NewWallet(accounts[i].PrivateKey[:], cfg.SignaturesDomain)
+		if err != nil {
+			return nil, err
+		}
+		wallets = append(wallets, *wallet)
+	}
+	return wallets, nil
 }

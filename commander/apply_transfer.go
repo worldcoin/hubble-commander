@@ -2,7 +2,6 @@ package commander
 
 import (
 	"errors"
-	"math/big"
 	"reflect"
 
 	"github.com/Worldcoin/hubble-commander/models"
@@ -16,7 +15,7 @@ var (
 	ErrIncorrectTokenIndices = errors.New("sender's, receiver's and fee receiver's token indices are not the same")
 	ErrNonceTooLow           = errors.New("nonce too low")
 	ErrNonceTooHigh          = errors.New("nonce too high")
-	ErrBalanceTooLow         = errors.New("amount exceeds balance")
+	ErrBalanceTooLow         = errors.New("not enough balance")
 )
 
 func ApplyTransfer(
@@ -47,7 +46,7 @@ func ApplyTransfer(
 	senderState := senderLeaf.UserState
 	receiverState := receiverLeaf.UserState
 
-	if senderState.TokenIndex.Cmp(&feeReceiverTokenIndex.Int) != 0 && receiverState.TokenIndex.Cmp(&feeReceiverTokenIndex.Int) != 0 {
+	if senderState.TokenIndex.Cmp(&feeReceiverTokenIndex) != 0 && receiverState.TokenIndex.Cmp(&feeReceiverTokenIndex) != 0 {
 		return nil, ErrIncorrectTokenIndices
 	}
 
@@ -86,7 +85,7 @@ func CalculateStateAfterTransfer(
 ) {
 	// TODO: Signature validation
 
-	comparison := transfer.Nonce.Cmp(&senderState.Nonce.Int)
+	comparison := transfer.Nonce.Cmp(&senderState.Nonce)
 	if comparison > 0 {
 		err = ErrNonceTooHigh
 		return
@@ -95,9 +94,7 @@ func CalculateStateAfterTransfer(
 		return
 	}
 
-	totalAmount := big.NewInt(0)
-	totalAmount.Add(&transfer.Amount.Int, &transfer.Fee.Int)
-
+	totalAmount := transfer.Amount.Add(&transfer.Fee)
 	if senderState.Balance.Cmp(totalAmount) < 0 {
 		err = ErrBalanceTooLow
 		return
@@ -106,25 +103,22 @@ func CalculateStateAfterTransfer(
 	newSenderState = *senderState
 	newReceiverState = *receiverState
 
-	newSenderState.Nonce.Add(&senderState.Nonce.Int, big.NewInt(1))
-
-	newSenderState.Balance.Sub(&senderState.Balance.Int, totalAmount)
-
-	newReceiverState.Balance.Add(&receiverState.Balance.Int, &transfer.Amount.Int)
+	newSenderState.Nonce = *newSenderState.Nonce.AddN(1)
+	newSenderState.Balance = *newSenderState.Balance.Sub(totalAmount)
+	newReceiverState.Balance = *newReceiverState.Balance.Add(&transfer.Amount)
 
 	return newSenderState, newReceiverState, nil
 }
 
 func ApplyFee(stateTree *storage.StateTree, feeReceiverIndex uint32, fee models.Uint256) error {
-	feeReceiverLeaf, err := stateTree.Leaf(feeReceiverIndex)
+	feeReceiver, err := stateTree.Leaf(feeReceiverIndex)
 	if err != nil {
 		return err
 	}
 
-	feeReceiverState := feeReceiverLeaf.UserState
-	feeReceiverState.Balance.Add(&feeReceiverState.Balance.Int, &fee.Int)
+	feeReceiver.Balance = *feeReceiver.Balance.Add(&fee)
 
-	err = stateTree.Set(feeReceiverIndex, &feeReceiverState)
+	err = stateTree.Set(feeReceiverIndex, &feeReceiver.UserState)
 	if err != nil {
 		return err
 	}

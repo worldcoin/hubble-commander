@@ -1,6 +1,10 @@
 package config
 
-import "time"
+import (
+	"time"
+
+	"github.com/Worldcoin/hubble-commander/models"
+)
 
 type Config struct {
 	Rollup   RollupConfig
@@ -17,6 +21,8 @@ type RollupConfig struct {
 	CommitmentLoopInterval  time.Duration
 	BatchLoopInterval       time.Duration
 	BlockNumberLoopInterval time.Duration
+	GenesisAccounts         []models.GenesisAccount
+	SignaturesDomain        [32]byte
 }
 
 type APIConfig struct {

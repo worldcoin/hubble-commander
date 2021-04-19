@@ -1,6 +1,7 @@
 package bls
 
 import (
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/kilic/bn254/bls"
 )
 
@@ -23,10 +24,10 @@ func NewAggregatedSignatureFromBls(signatures []*bls.Signature, domain Domain) *
 	}
 }
 
-func (s *AggregatedSignature) Verify(messages [][]byte, publicKeys []*PublicKey) (bool, error) {
+func (s *AggregatedSignature) Verify(messages [][]byte, publicKeys []*models.PublicKey) (bool, error) {
 	keys := make([]*bls.PublicKey, 0, len(publicKeys))
 	for _, pk := range publicKeys {
-		keys = append(keys, pk.key)
+		keys = append(keys, toBLSPublicKey(pk))
 	}
 	return s.verifier.VerifyAggregate(messages, keys, s.sig)
 }

@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+
+	"github.com/Worldcoin/hubble-commander/utils"
 )
 
 type PublicKey [128]byte
@@ -15,15 +17,13 @@ func (p PublicKey) Bytes() []byte {
 	return p[:]
 }
 
-func (p *PublicKey) IntArray() [4]*big.Int {
-	ints := [4]*big.Int{}
-
-	ints[0] = new(big.Int).SetBytes(p[0:32])
-	ints[1] = new(big.Int).SetBytes(p[32:64])
-	ints[2] = new(big.Int).SetBytes(p[64:96])
-	ints[3] = new(big.Int).SetBytes(p[96:128])
-
-	return ints
+func (p *PublicKey) BigInts() [4]*big.Int {
+	return [4]*big.Int{
+		new(big.Int).SetBytes(p[:32]),
+		new(big.Int).SetBytes(p[32:64]),
+		new(big.Int).SetBytes(p[64:96]),
+		new(big.Int).SetBytes(p[96:]),
+	}
 }
 
 func (p *PublicKey) String() string {
@@ -32,11 +32,10 @@ func (p *PublicKey) String() string {
 
 func MakePublicKeyFromInts(ints [4]*big.Int) PublicKey {
 	publicKey := PublicKey{}
-	copy(publicKey[0:32], ints[0].Bytes())
-	copy(publicKey[32:64], ints[1].Bytes())
-	copy(publicKey[64:86], ints[2].Bytes())
-	copy(publicKey[96:128], ints[3].Bytes())
-
+	copy(publicKey[:32], utils.PadLeft(ints[0].Bytes(), 32))
+	copy(publicKey[32:64], utils.PadLeft(ints[1].Bytes(), 32))
+	copy(publicKey[64:96], utils.PadLeft(ints[2].Bytes(), 32))
+	copy(publicKey[96:], utils.PadLeft(ints[3].Bytes(), 32))
 	return publicKey
 }
 

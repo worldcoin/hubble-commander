@@ -30,3 +30,19 @@ func (s *Storage) GetAccounts(publicKey *models.PublicKey) ([]models.Account, er
 	}
 	return res, nil
 }
+
+func (s *Storage) GetPublicKey(pubKeyID uint32) (*models.PublicKey, error) {
+	res := make([]models.PublicKey, 0, 1)
+	err := s.DB.Query(
+		s.QB.Select("public_key").
+			From("account").
+			Where(squirrel.Eq{"pubkey_id": pubKeyID}),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, NewNotFoundError("account")
+	}
+	return &res[0], nil
+}

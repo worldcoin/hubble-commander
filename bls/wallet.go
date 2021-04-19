@@ -3,6 +3,7 @@ package bls
 import (
 	"crypto/rand"
 
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/kilic/bn254/bls"
 )
 
@@ -17,8 +18,8 @@ type Wallet struct {
 	signer bls.BLSSigner
 }
 
-func NewWallet(secretKey []byte, domain Domain) (*Wallet, error) {
-	keyPair, err := bls.NewKeyPairFromSecret(secretKey)
+func NewWallet(privateKey []byte, domain Domain) (*Wallet, error) {
+	keyPair, err := bls.NewKeyPairFromSecret(privateKey)
 	if err != nil {
 		return nil, err
 	}
@@ -55,11 +56,11 @@ func (w *Wallet) Domain() Domain {
 	return domain
 }
 
-func (w *Wallet) PublicKey() *PublicKey {
-	return &PublicKey{key: w.signer.Account.Public}
+func (w *Wallet) PublicKey() *models.PublicKey {
+	return fromBLSPublicKey(w.signer.Account.Public)
 }
 
-func (w *Wallet) Bytes() (secretKey, publicKey []byte) {
+func (w *Wallet) Bytes() (privateKey, publicKey []byte) {
 	accountBytes := w.signer.Account.ToBytes()
 	return accountBytes[128:], accountBytes[:128]
 }

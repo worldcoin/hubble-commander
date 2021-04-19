@@ -2,7 +2,6 @@ package commander
 
 import (
 	"log"
-	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -36,7 +35,7 @@ func ApplyTransfers(
 		}
 		if transferError == nil {
 			validTransfers = append(validTransfers, transfer)
-			combinedFee.Add(&combinedFee.Int, &transfer.Fee.Int)
+			combinedFee = *combinedFee.Add(&transfer.Fee)
 		} else {
 			if transferError == ErrNonceTooHigh {
 				continue
@@ -53,7 +52,7 @@ func ApplyTransfers(
 		}
 	}
 
-	if combinedFee.Cmp(big.NewInt(0)) == 1 {
+	if combinedFee.CmpN(0) == 1 {
 		// TODO cfg.FeeReceiverIndex actually represents PubKeyID and is used as StateID here
 		err := ApplyFee(stateTree, cfg.FeeReceiverIndex, combinedFee)
 		if err != nil {

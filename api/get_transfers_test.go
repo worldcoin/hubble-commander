@@ -6,9 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -40,53 +38,6 @@ func (s *GetTransfersTestSuite) SetupTest() {
 func (s *GetTransfersTestSuite) TearDownTest() {
 	err := s.db.Teardown()
 	s.NoError(err)
-}
-
-func (s *GetTransfersTestSuite) TestApi_GetTransfer() {
-	account := models.Account{
-		PubkeyID:  1,
-		PublicKey: models.PublicKey{1, 2, 3},
-	}
-
-	err := s.storage.AddAccountIfNotExists(&account)
-	s.NoError(err)
-
-	userStates := []models.UserState{
-		{
-			PubkeyID:   account.PubkeyID,
-			TokenIndex: models.MakeUint256(1),
-			Balance:    models.MakeUint256(420),
-			Nonce:      models.MakeUint256(0),
-		},
-		{
-			PubkeyID:   2,
-			TokenIndex: models.MakeUint256(2),
-			Balance:    models.MakeUint256(500),
-			Nonce:      models.MakeUint256(0),
-		},
-	}
-
-	err = s.tree.Set(0, &userStates[0])
-	s.NoError(err)
-	err = s.tree.Set(1, &userStates[1])
-	s.NoError(err)
-
-	transfer := dto.Transfer{
-		FromStateID: ref.Uint32(0),
-		ToStateID:   ref.Uint32(1),
-		Amount:      models.NewUint256(50),
-		Fee:         models.NewUint256(10),
-		Nonce:       models.NewUint256(0),
-		Signature:   []byte{1, 2, 3, 4},
-	}
-
-	hash, err := s.api.SendTransaction(dto.MakeTransaction(transfer))
-	s.NoError(err)
-
-	res, err := s.api.GetTransfer(*hash)
-	s.NoError(err)
-
-	s.Equal(models.Pending, res.Status)
 }
 
 // nolint:funlen

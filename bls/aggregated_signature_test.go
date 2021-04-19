@@ -3,6 +3,7 @@ package bls
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/stretchr/testify/require"
 )
 
@@ -13,7 +14,7 @@ func TestAggregatedSignature_Verify(t *testing.T) {
 		[]byte("0x333333"),
 	}
 
-	publicKeys := make([]*PublicKey, 0, 3)
+	publicKeys := make([]*models.PublicKey, 0, 3)
 	signatures := make([]*Signature, 0, 3)
 
 	for _, msg := range messages {
