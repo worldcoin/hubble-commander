@@ -6,5 +6,5 @@ CREATE TABLE commitment (
     combined_signature BYTEA    NOT NULL,
     post_state_root    BYTEA    NOT NULL,
     account_tree_root  BYTEA,
-    included_in_batch  BYTEA REFERENCES batch,
+    included_in_batch  BYTEA REFERENCES batch
 );

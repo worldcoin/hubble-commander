@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
@@ -95,6 +96,7 @@ func createAndStoreCommitment(storage *st.Storage, transfers []models.Transfer, 
 	}
 
 	commitment := models.Commitment{
+		Type:              txtype.Transfer,
 		Transactions:      serializedTxs,
 		FeeReceiver:       feeReceiverIndex,
 		CombinedSignature: combinedSignature,

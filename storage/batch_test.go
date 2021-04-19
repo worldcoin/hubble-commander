@@ -112,6 +112,7 @@ func (s *StateUpdateTestSuite) Test_GetBatchByCommitmentID() {
 
 func (s *StateUpdateTestSuite) Test_GetBatchByCommitmentID_NotExistentBatch() {
 	commitment := &models.Commitment{
+		Type:              txtype.Transfer,
 		Transactions:      []byte{1, 2, 3},
 		FeeReceiver:       uint32(1),
 		CombinedSignature: models.MakeSignature(1, 2),
