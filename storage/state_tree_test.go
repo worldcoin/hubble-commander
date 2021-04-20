@@ -56,7 +56,10 @@ func (s *StateTreeTestSuite) TearDownTest() {
 }
 
 func (s *StateTreeTestSuite) TestSet_StoresStateLeafRecord() {
-	err := s.tree.Set(0, &s.leaf.UserState)
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
+
+	err = s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
 	actualLeaf, err := s.storage.GetStateLeafByHash(s.leaf.DataHash)
@@ -65,7 +68,10 @@ func (s *StateTreeTestSuite) TestSet_StoresStateLeafRecord() {
 }
 
 func (s *StateTreeTestSuite) TestSet_StoresLeafStateNodeRecord() {
-	err := s.tree.Set(0, &s.leaf.UserState)
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
+
+	err = s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
 	expectedNode := &models.StateNode{
@@ -82,7 +88,10 @@ func (s *StateTreeTestSuite) TestSet_StoresLeafStateNodeRecord() {
 }
 
 func (s *StateTreeTestSuite) TestSet_UpdatesRootStateNodeRecord() {
-	err := s.tree.Set(0, &s.leaf.UserState)
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
+
+	err = s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
 	rootPath := models.MerklePath{
@@ -101,10 +110,7 @@ func (s *StateTreeTestSuite) TestSet_UpdatesRootStateNodeRecord() {
 }
 
 func (s *StateTreeTestSuite) TestSet_CalculatesCorrectRootForLeafOfId1() {
-	err := s.storage.AddAccountIfNotExists(&models.Account{
-		PubKeyID:  1,
-		PublicKey: models.PublicKey{1, 2, 3},
-	})
+	err := s.storage.AddAccountIfNotExists(&account1)
 	s.NoError(err)
 
 	err = s.tree.Set(1, &s.leaf.UserState)
@@ -126,7 +132,13 @@ func (s *StateTreeTestSuite) TestSet_CalculatesCorrectRootForLeafOfId1() {
 }
 
 func (s *StateTreeTestSuite) TestSet_CalculatesCorrectRootForTwoLeaves() {
-	err := s.tree.Set(0, &s.leaf.UserState)
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
+
+	err = s.storage.AddAccountIfNotExists(&account2)
+	s.NoError(err)
+
+	err = s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
 	state := models.UserState{
@@ -154,7 +166,10 @@ func (s *StateTreeTestSuite) TestSet_CalculatesCorrectRootForTwoLeaves() {
 }
 
 func (s *StateTreeTestSuite) TestSet_StoresStateUpdateRecord() {
-	err := s.tree.Set(0, &s.leaf.UserState)
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
+
+	err = s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
 	path := models.MerklePath{
@@ -179,7 +194,10 @@ func (s *StateTreeTestSuite) TestSet_StoresStateUpdateRecord() {
 }
 
 func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectRootStateNode() {
-	err := s.tree.Set(0, &s.leaf.UserState)
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
+
+	err = s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
 	err = s.tree.Set(0, &updatedUserState)
@@ -201,7 +219,10 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectRootStateNode() {
 }
 
 func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectLeafStateNode() {
-	err := s.tree.Set(0, &s.leaf.UserState)
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
+
+	err = s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
 	leaf, err := NewStateLeaf(&updatedUserState)
@@ -225,7 +246,10 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectLeafStateNode() {
 }
 
 func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafNewStateLeafRecord() {
-	err := s.tree.Set(0, &s.leaf.UserState)
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
+
+	err = s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
 	expectedLeaf, err := NewStateLeaf(&updatedUserState)
@@ -239,7 +263,10 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafNewStateLeafRecord() {
 }
 
 func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafAddsStateUpdateRecord() {
-	err := s.tree.Set(0, &s.leaf.UserState)
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
+
+	err = s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
 	updatedLeaf, err := NewStateLeaf(&updatedUserState)
@@ -269,16 +296,10 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafAddsStateUpdateRecord() {
 }
 
 func (s *StateTreeTestSuite) TestRevertTo() {
-	err := s.storage.AddAccountIfNotExists(&models.Account{
-		PubKeyID:  1,
-		PublicKey: models.PublicKey{1, 2, 3},
-	})
+	err := s.storage.AddAccountIfNotExists(&account1)
 	s.NoError(err)
 
-	err = s.storage.AddAccountIfNotExists(&models.Account{
-		PubKeyID:  2,
-		PublicKey: models.PublicKey{2, 3, 4},
-	})
+	err = s.storage.AddAccountIfNotExists(&account2)
 	s.NoError(err)
 
 	states := []models.UserState{

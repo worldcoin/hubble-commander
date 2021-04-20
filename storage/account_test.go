@@ -9,6 +9,17 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+var (
+	account1 = models.Account{
+		PubKeyID:  1,
+		PublicKey: models.PublicKey{3, 4, 5},
+	}
+	account2 = models.Account{
+		PubKeyID:  2,
+		PublicKey: models.PublicKey{4, 5, 6},
+	}
+)
+
 type AccountTestSuite struct {
 	*require.Assertions
 	suite.Suite
@@ -33,18 +44,13 @@ func (s *AccountTestSuite) TearDownTest() {
 }
 
 func (s *AccountTestSuite) TestAddAccountIfNotExists_AddAndRetrieve() {
-	account := models.Account{
-		PubKeyID:  0,
-		PublicKey: models.PublicKey{1, 2, 3},
-	}
-
-	err := s.storage.AddAccountIfNotExists(&account)
+	err := s.storage.AddAccountIfNotExists(&account1)
 	s.NoError(err)
 
-	res, err := s.storage.GetAccounts(&account.PublicKey)
+	res, err := s.storage.GetAccounts(&account1.PublicKey)
 	s.NoError(err)
 
-	s.Equal([]models.Account{account}, res)
+	s.Equal([]models.Account{account1}, res)
 }
 
 func (s *AccountTestSuite) TestGetAccounts_ReturnsAllAccounts() {
@@ -69,21 +75,16 @@ func (s *AccountTestSuite) TestGetAccounts_ReturnsAllAccounts() {
 }
 
 func (s *AccountTestSuite) TestAddAccountIfNotExists_Idempotent() {
-	account := models.Account{
-		PubKeyID:  0,
-		PublicKey: models.PublicKey{1, 2, 3},
-	}
-
-	err := s.storage.AddAccountIfNotExists(&account)
+	err := s.storage.AddAccountIfNotExists(&account1)
 	s.NoError(err)
 
-	err = s.storage.AddAccountIfNotExists(&account)
+	err = s.storage.AddAccountIfNotExists(&account1)
 	s.NoError(err)
 
-	res, err := s.storage.GetAccounts(&account.PublicKey)
+	res, err := s.storage.GetAccounts(&account1.PublicKey)
 	s.NoError(err)
 
-	s.Equal([]models.Account{account}, res)
+	s.Equal([]models.Account{account1}, res)
 }
 
 func (s *AccountTestSuite) TestGetPublicKey_ReturnsPublicKey() {
