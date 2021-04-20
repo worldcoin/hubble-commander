@@ -94,6 +94,25 @@ func EncodeTransferForSigning(tx *models.Transfer) ([]byte, error) {
 	)
 }
 
+func EncodeCreate2TransferForSigning(tx *models.Create2Transfer, publicKey models.PublicKey) ([]byte, error) {
+	arguments := abi.Arguments{
+		{Name: "txType", Type: tUint256},
+		{Name: "fromIndex", Type: tUint256},
+		{Name: "toPubkey", Type: tUint256Array4},
+		{Name: "nonce", Type: tUint256},
+		{Name: "amount", Type: tUint256},
+		{Name: "fee", Type: tUint256},
+	}
+	return arguments.Pack(
+		big.NewInt(int64(txtype.Create2Transfer)),
+		big.NewInt(int64(tx.FromStateID)),
+		publicKey.BigInts(),
+		&tx.Nonce.Int,
+		&tx.Amount.Int,
+		&tx.Fee.Int,
+	)
+}
+
 func EncodeUserState(state generic.TypesUserState) ([]byte, error) {
 	arguments := abi.Arguments{
 		{Name: "pubkeyID", Type: tUint256},
