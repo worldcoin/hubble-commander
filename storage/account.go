@@ -46,3 +46,23 @@ func (s *Storage) GetPublicKey(pubKeyID uint32) (*models.PublicKey, error) {
 	}
 	return &res[0], nil
 }
+
+func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey) (*uint32, error) {
+	res := make([]uint32, 0, 1)
+	err := s.DB.Query(
+		s.QB.Select("account.pubkey_id").
+			From("account").
+			JoinClause("FULL OUTER JOIN state_leaf ON account.pubkey_id = state_leaf.pubkey_id").
+			Where(squirrel.Eq{"public_key": publicKey}).
+			Where(squirrel.Eq{"state_leaf.pubkey_id": nil}).
+			OrderBy("account.pubkey_id ASC").
+			Limit(1),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, NewNotFoundError("account")
+	}
+	return &res[0], nil
+}
