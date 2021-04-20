@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"testing"
 
+	contractCreate2Transfer "github.com/Worldcoin/hubble-commander/contracts/frontend/create2transfer"
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
 	contractTransfer "github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
 	testtx "github.com/Worldcoin/hubble-commander/contracts/test/tx"
@@ -20,11 +21,12 @@ import (
 type EncoderTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	sim       *simulator.Simulator
-	transfer  *contractTransfer.FrontendTransfer
-	generic   *generic.FrontendGeneric
-	testTx    *testtx.TestTx
-	testTypes *types.TestTypes
+	sim             *simulator.Simulator
+	transfer        *contractTransfer.FrontendTransfer
+	create2transfer *contractCreate2Transfer.FrontendCreate2Transfer
+	generic         *generic.FrontendGeneric
+	testTx          *testtx.TestTx
+	testTypes       *types.TestTypes
 }
 
 func (s *EncoderTestSuite) SetupSuite() {
@@ -42,6 +44,7 @@ func (s *EncoderTestSuite) SetupTest() {
 	s.NoError(err)
 
 	s.transfer = frontend.FrontendTransfer
+	s.create2transfer = frontend.FrontendCreate2Transfer
 	s.generic = frontend.FrontendGeneric
 	s.testTx = test.TestTx
 	s.testTypes = test.TestTypes
@@ -72,6 +75,31 @@ func (s *EncoderTestSuite) TestEncodeTransfer() {
 	})
 	s.NoError(err)
 	s.Equal(expected, encodedTransfer)
+}
+
+func (s *EncoderTestSuite) TestEncodeCreate2Transfer() {
+	encodedCreate2Transfer, err := EncodeCreate2Transfer(&models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 4,
+			Amount:      models.MakeUint256(7),
+			Fee:         models.MakeUint256(8),
+			Nonce:       models.MakeUint256(9),
+		},
+		ToStateID:  5,
+		ToPubkeyID: 6,
+	})
+	s.NoError(err)
+	expected, err := s.create2transfer.Encode(nil, contractCreate2Transfer.OffchainCreate2Transfer{
+		TxType:     big.NewInt(3),
+		FromIndex:  big.NewInt(4),
+		ToIndex:    big.NewInt(5),
+		ToPubkeyID: big.NewInt(6),
+		Amount:     big.NewInt(7),
+		Fee:        big.NewInt(8),
+		Nonce:      big.NewInt(9),
+	})
+	s.NoError(err)
+	s.Equal(expected, encodedCreate2Transfer)
 }
 
 func (s *EncoderTestSuite) TestEncodeTransferForSigning() {
