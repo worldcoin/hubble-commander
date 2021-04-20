@@ -51,7 +51,7 @@ func (s *SubmitTransferTestSuite) TestSubmitTransfersBatch_ReturnsAccountTreeRoo
 	s.Equal(common.BytesToHash(expected[:]), *accountRoot)
 }
 
-func (s *SubmitTransferTestSuite) TestSubmitTransfersBatch_ReturnsBatchWithCorrectHash() {
+func (s *SubmitTransferTestSuite) TestSubmitTransfersBatch_ReturnsBatchWithCorrectHashAndType() {
 	accountRoot, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
 
@@ -79,7 +79,7 @@ func (s *SubmitTransferTestSuite) TestSubmitTransfersBatch_Create2TransferReturn
 	s.Equal(common.BytesToHash(expected[:]), *accountRoot)
 }
 
-func (s *SubmitTransferTestSuite) TestSubmitTransfersBatch_Create2TransferReturnsBatchWithCorrectHash() {
+func (s *SubmitTransferTestSuite) TestSubmitTransfersBatch_Create2TransferReturnsBatchWithCorrectHashAndType() {
 	accountRoot, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
 
