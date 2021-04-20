@@ -3,15 +3,12 @@ package api
 import (
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
-	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 )
 
 var (
@@ -33,97 +30,6 @@ func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
 	}
 }
 
-func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
-	transfer, err := sanitizeTransfer(transferDTO)
-	if err != nil {
-		return nil, err
-	}
-
-	if validationErr := a.validateTransfer(transfer); validationErr != nil {
-		return nil, validationErr
-	}
-
-	encodedTransfer, err := encoder.EncodeTransfer(transfer)
-	if err != nil {
-		return nil, err
-	}
-	hash := crypto.Keccak256Hash(encodedTransfer)
-
-	transfer = &models.Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash:        hash,
-			FromStateID: transfer.FromStateID,
-			Amount:      transfer.Amount,
-			Fee:         transfer.Fee,
-			Nonce:       transfer.Nonce,
-			Signature:   transfer.Signature,
-		},
-		ToStateID: transfer.ToStateID,
-	}
-	err = a.storage.AddTransfer(transfer)
-	if err != nil {
-		return nil, err
-	}
-	log.Println("New transaction: ", transfer.Hash.Hex())
-
-	return &hash, nil
-}
-
-func sanitizeTransfer(transfer dto.Transfer) (*models.Transfer, error) {
-	if transfer.FromStateID == nil {
-		return nil, NewMissingFieldError("fromStateID")
-	}
-	if transfer.ToStateID == nil {
-		return nil, NewMissingFieldError("toStateID")
-	}
-	if transfer.Amount == nil {
-		return nil, NewMissingFieldError("amount")
-	}
-	if transfer.Fee == nil {
-		return nil, NewMissingFieldError("fee")
-	}
-	if transfer.Nonce == nil {
-		return nil, NewMissingFieldError("nonce")
-	}
-	if transfer.Signature == nil {
-		return nil, NewMissingFieldError("signature")
-	}
-
-	return &models.Transfer{
-		TransactionBase: models.TransactionBase{
-			FromStateID: *transfer.FromStateID,
-			Amount:      *transfer.Amount,
-			Fee:         *transfer.Fee,
-			Nonce:       *transfer.Nonce,
-			Signature:   transfer.Signature,
-		},
-		ToStateID: *transfer.ToStateID,
-	}, nil
-}
-
-func (a *API) validateTransfer(transfer *models.Transfer) error {
-	if err := validateAmount(&transfer.Amount); err != nil {
-		return err
-	}
-	if err := validateFee(&transfer.Fee); err != nil {
-		return err
-	}
-
-	stateTree := storage.NewStateTree(a.storage)
-	senderState, err := stateTree.Leaf(transfer.FromStateID)
-	if err != nil {
-		return err
-	}
-
-	if err := a.validateNonce(transfer, &senderState.UserState.Nonce); err != nil {
-		return err
-	}
-	if err := validateBalance(transfer, &senderState.UserState); err != nil {
-		return err
-	}
-	return a.validateSignature(transfer, &senderState.UserState)
-}
-
 func validateAmount(amount *models.Uint256) error {
 	_, err := encoder.EncodeDecimal(*amount)
 	if err != nil {
@@ -143,19 +49,16 @@ func validateFee(fee *models.Uint256) error {
 	return nil
 }
 
-func (a *API) validateNonce(transfer *models.Transfer, senderNonce *models.Uint256) error {
-	if transfer.Nonce.Cmp(senderNonce) < 0 {
+func (a *API) validateNonce(transactionNonce, latestTransactionNonce, senderNonce *models.Uint256) error {
+	if transactionNonce.Cmp(senderNonce) < 0 {
 		return ErrNonceTooLow
 	}
 
-	latestNonce, err := a.storage.GetLatestTransactionNonce(transfer.FromStateID)
-	if storage.IsNotFoundError(err) {
-		return checkNonce(&transfer.Nonce, senderNonce)
+	if latestTransactionNonce == nil {
+		return checkNonce(transactionNonce, senderNonce)
 	}
-	if err != nil {
-		return err
-	}
-	return checkNonce(&transfer.Nonce, latestNonce.AddN(1))
+
+	return checkNonce(transactionNonce, latestTransactionNonce.AddN(1))
 }
 
 func checkNonce(transferNonce, executableSenderNonce *models.Uint256) error {
@@ -168,30 +71,25 @@ func checkNonce(transferNonce, executableSenderNonce *models.Uint256) error {
 	return nil
 }
 
-func validateBalance(transfer *models.Transfer, senderState *models.UserState) error {
-	if transfer.Amount.Add(&transfer.Fee).Cmp(&senderState.Balance) > 0 {
+func validateBalance(transactionAmount, transactionFee *models.Uint256, senderState *models.UserState) error {
+	if transactionAmount.Add(transactionFee).Cmp(&senderState.Balance) > 0 {
 		return ErrNotEnoughBalance
 	}
 	return nil
 }
 
-func (a *API) validateSignature(transfer *models.Transfer, senderState *models.UserState) error {
-	encodedTransfer, err := encoder.EncodeTransferForSigning(transfer)
-	if err != nil {
-		return err
-	}
-
+func (a *API) validateSignature(encodedTransaction, transactionSignature []byte, senderState *models.UserState) error {
 	publicKey, err := a.storage.GetPublicKey(senderState.PubkeyID)
 	if err != nil {
 		return err
 	}
 
-	signature, err := bls.NewSignatureFromBytes(transfer.Signature, mockDomain)
+	signature, err := bls.NewSignatureFromBytes(transactionSignature, mockDomain)
 	if err != nil {
 		return err
 	}
 
-	isValid, err := signature.Verify(encodedTransfer, publicKey)
+	isValid, err := signature.Verify(encodedTransaction, publicKey)
 	if err != nil {
 		return err
 	}
