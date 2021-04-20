@@ -12,7 +12,8 @@ import (
 )
 
 var (
-	tUint256, _ = abi.NewType("uint256", "", nil)
+	tUint256, _       = abi.NewType("uint256", "", nil)
+	tUint256Array4, _ = abi.NewType("uint256[4]", "", nil)
 )
 
 func EncodeTransfer(tx *models.Transfer) ([]byte, error) {
@@ -49,6 +50,25 @@ func EncodeCreate2Transfer(tx *models.Create2Transfer) ([]byte, error) {
 		big.NewInt(int64(tx.FromStateID)),
 		big.NewInt(int64(tx.ToStateID)),
 		big.NewInt(int64(tx.ToPubkeyID)),
+		&tx.Amount.Int,
+		&tx.Fee.Int,
+		&tx.Nonce.Int,
+	)
+}
+
+func EncodeCreate2TransferWithPubKey(tx *models.Create2Transfer, publicKey *models.PublicKey) ([]byte, error) {
+	arguments := abi.Arguments{
+		{Name: "txType", Type: tUint256},
+		{Name: "fromIndex", Type: tUint256},
+		{Name: "toPubkey", Type: tUint256Array4},
+		{Name: "amount", Type: tUint256},
+		{Name: "fee", Type: tUint256},
+		{Name: "nonce", Type: tUint256},
+	}
+	return arguments.Pack(
+		big.NewInt(int64(txtype.Create2Transfer)),
+		big.NewInt(int64(tx.FromStateID)),
+		publicKey.BigInts(),
 		&tx.Amount.Int,
 		&tx.Fee.Int,
 		&tx.Nonce.Int,

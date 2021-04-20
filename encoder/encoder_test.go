@@ -102,6 +102,29 @@ func (s *EncoderTestSuite) TestEncodeCreate2Transfer() {
 	s.Equal(expected, encodedCreate2Transfer)
 }
 
+func (s *EncoderTestSuite) TestEncodeCreate2TransferWithPubKey() {
+	publicKey := models.PublicKey{1, 2, 3, 4, 5, 6}
+	encodedCreate2Transfer, err := EncodeCreate2TransferWithPubKey(&models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 4,
+			Amount:      models.MakeUint256(5),
+			Fee:         models.MakeUint256(6),
+			Nonce:       models.MakeUint256(7),
+		},
+	}, &publicKey)
+	s.NoError(err)
+	expected, err := s.create2transfer.EncodeWithPub(nil, contractCreate2Transfer.OffchainCreate2TransferWithPub{
+		TxType:    big.NewInt(3),
+		FromIndex: big.NewInt(4),
+		ToPubkey:  publicKey.BigInts(),
+		Amount:    big.NewInt(5),
+		Fee:       big.NewInt(6),
+		Nonce:     big.NewInt(7),
+	})
+	s.NoError(err)
+	s.Equal(expected, encodedCreate2Transfer)
+}
+
 func (s *EncoderTestSuite) TestEncodeTransferForSigning() {
 	tx := &models.Transfer{
 		TransactionBase: models.TransactionBase{
