@@ -11,27 +11,35 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-type SubmitTransferFunc func(commitments []models.Commitment) (*types.Transaction, error)
+type SubmitBatchFunc func(commitments []models.Commitment) (*types.Transaction, error)
 
-func (c *Client) SubmitTransfer() SubmitTransferFunc {
-	return func(commitments []models.Commitment) (*types.Transaction, error) {
+func (c *Client) SubmitTransfersBatch(commitments []models.Commitment) (
+	batch *models.Batch,
+	accountTreeRoot *common.Hash,
+	err error,
+) {
+	return c.submitBatch(commitments, func(commitments []models.Commitment) (*types.Transaction, error) {
 		return c.rollup().
 			WithValue(c.config.stakeAmount.Int).
 			SubmitTransfer(parseCommitments(commitments))
-	}
+	})
 }
 
-func (c *Client) SubmitCreate2Transfer() SubmitTransferFunc {
-	return func(commitments []models.Commitment) (*types.Transaction, error) {
+func (c *Client) SubmitCreate2TransfersBatch(commitments []models.Commitment) (
+	batch *models.Batch,
+	accountTreeRoot *common.Hash,
+	err error,
+) {
+	return c.submitBatch(commitments, func(commitments []models.Commitment) (*types.Transaction, error) {
 		return c.rollup().
 			WithValue(c.config.stakeAmount.Int).
 			SubmitCreate2Transfer(parseCommitments(commitments))
-	}
+	})
 }
 
-func (c *Client) SubmitTransfersBatch(
+func (c *Client) submitBatch(
 	commitments []models.Commitment,
-	f SubmitTransferFunc,
+	submit SubmitBatchFunc,
 ) (batch *models.Batch, accountTreeRoot *common.Hash, err error) {
 	sink := make(chan *rollup.RollupNewBatch)
 	subscription, err := c.Rollup.WatchNewBatch(&bind.WatchOpts{}, sink)
@@ -40,7 +48,7 @@ func (c *Client) SubmitTransfersBatch(
 	}
 	defer subscription.Unsubscribe()
 
-	tx, err := f(commitments)
+	tx, err := submit(commitments)
 	if err != nil {
 		return
 	}
