@@ -56,6 +56,12 @@ func (s *CalculateTransferStatusTestSuite) SetupTest() {
 		Nonce:      models.MakeUint256(0),
 	}
 
+	err = s.storage.AddAccountIfNotExists(&models.Account{
+		PubKeyID:  userState.PubKeyID,
+		PublicKey: models.PublicKey{1, 2, 3},
+	})
+	s.NoError(err)
+
 	tree := st.NewStateTree(s.storage)
 	err = tree.Set(1, &userState)
 	s.NoError(err)

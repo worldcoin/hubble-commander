@@ -42,36 +42,44 @@ func (s *GetTransfersTestSuite) TearDownTest() {
 
 // nolint:funlen
 func (s *GetTransfersTestSuite) TestGetTransfers() {
-	account := models.Account{
-		PubKeyID:  1,
-		PublicKey: models.PublicKey{1, 2, 3},
+	accounts := []models.Account{
+		{
+			PubKeyID:  1,
+			PublicKey: models.PublicKey{1, 2, 3},
+		},
+		{
+			PubKeyID:  2,
+			PublicKey: models.PublicKey{2, 3, 4},
+		},
 	}
+	for i := range accounts {
+		err := s.storage.AddAccountIfNotExists(&accounts[i])
+		s.NoError(err)
 
-	err := s.storage.AddAccountIfNotExists(&account)
-	s.NoError(err)
+	}
 
 	userStates := []models.UserState{
 		{
-			PubKeyID:   account.PubKeyID,
+			PubKeyID:   accounts[0].PubKeyID,
 			TokenIndex: models.MakeUint256(1),
 			Balance:    models.MakeUint256(420),
 			Nonce:      models.MakeUint256(0),
 		},
 		{
-			PubKeyID:   2,
+			PubKeyID:   accounts[1].PubKeyID,
 			TokenIndex: models.MakeUint256(2),
 			Balance:    models.MakeUint256(500),
 			Nonce:      models.MakeUint256(0),
 		},
 		{
-			PubKeyID:   account.PubKeyID,
+			PubKeyID:   accounts[0].PubKeyID,
 			TokenIndex: models.MakeUint256(25),
 			Balance:    models.MakeUint256(1),
 			Nonce:      models.MakeUint256(73),
 		},
 	}
 
-	err = s.tree.Set(0, &userStates[0])
+	err := s.tree.Set(0, &userStates[0])
 	s.NoError(err)
 	err = s.tree.Set(1, &userStates[1])
 	s.NoError(err)
@@ -138,7 +146,7 @@ func (s *GetTransfersTestSuite) TestGetTransfers() {
 	err = s.storage.AddTransfer(&transfers[3])
 	s.NoError(err)
 
-	userTransfers, err := s.api.GetTransfers(&account.PublicKey)
+	userTransfers, err := s.api.GetTransfers(&accounts[0].PublicKey)
 	s.NoError(err)
 
 	s.Len(userTransfers, 3)
