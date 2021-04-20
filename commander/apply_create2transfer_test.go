@@ -47,6 +47,25 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 	s.db = testDB
 	s.tree = st.NewStateTree(s.storage)
 
+	accounts := []models.Account{
+		{
+			PubKeyID:  0,
+			PublicKey: models.PublicKey{1, 2, 3},
+		},
+		{
+			PubKeyID:  1,
+			PublicKey: models.PublicKey{2, 3, 4},
+		},
+		{
+			PubKeyID:  2,
+			PublicKey: models.PublicKey{3, 4, 5},
+		},
+	}
+	for i := range accounts {
+		err = s.storage.AddAccountIfNotExists(&accounts[i])
+		s.NoError(err)
+	}
+
 	err = s.tree.Set(0, &models.UserState{
 		PubKeyID:   0,
 		TokenIndex: feeReceiverTokenIndex,

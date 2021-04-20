@@ -37,6 +37,9 @@ func (s *StateLeafTestSuite) TearDownTest() {
 }
 
 func (s *StateLeafTestSuite) TestAddStateLeaf_AddAndRetrieve() {
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
+
 	leaf := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
@@ -46,7 +49,7 @@ func (s *StateLeafTestSuite) TestAddStateLeaf_AddAndRetrieve() {
 			Nonce:      models.MakeUint256(0),
 		},
 	}
-	err := s.storage.AddStateLeaf(leaf)
+	err = s.storage.AddStateLeaf(leaf)
 	s.NoError(err)
 
 	res, err := s.storage.GetStateLeafByHash(leaf.DataHash)
@@ -63,6 +66,9 @@ func (s *StateLeafTestSuite) TestGetStateLeafByHash_NonExistentLeaf() {
 }
 
 func (s *StateLeafTestSuite) TestGetStateLeafByPath_ReturnsCorrectStruct() {
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
+
 	leaf := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
@@ -105,13 +111,14 @@ func (s *StateLeafTestSuite) TestGetStateLeaves_NoLeaves() {
 }
 
 func (s *StateLeafTestSuite) TestGetStateLeaves() {
-	var pubKeyID uint32 = 1
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
 
 	leaves := []models.StateLeaf{
 		{
 			DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 			UserState: models.UserState{
-				PubKeyID:   pubKeyID,
+				PubKeyID:   account1.PubKeyID,
 				TokenIndex: models.MakeUint256(1),
 				Balance:    models.MakeUint256(420),
 				Nonce:      models.MakeUint256(0),
@@ -120,7 +127,7 @@ func (s *StateLeafTestSuite) TestGetStateLeaves() {
 		{
 			DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 			UserState: models.UserState{
-				PubKeyID:   pubKeyID,
+				PubKeyID:   account1.PubKeyID,
 				TokenIndex: models.MakeUint256(2),
 				Balance:    models.MakeUint256(500),
 				Nonce:      models.MakeUint256(0),
@@ -129,7 +136,7 @@ func (s *StateLeafTestSuite) TestGetStateLeaves() {
 		{
 			DataHash: common.BytesToHash([]byte{3, 4, 5, 6, 7}),
 			UserState: models.UserState{
-				PubKeyID:   pubKeyID,
+				PubKeyID:   account1.PubKeyID,
 				TokenIndex: models.MakeUint256(2),
 				Balance:    models.MakeUint256(500),
 				Nonce:      models.MakeUint256(1),
@@ -138,7 +145,7 @@ func (s *StateLeafTestSuite) TestGetStateLeaves() {
 		{
 			DataHash: common.BytesToHash([]byte{4, 5, 6, 7, 8}),
 			UserState: models.UserState{
-				PubKeyID:   pubKeyID,
+				PubKeyID:   account1.PubKeyID,
 				TokenIndex: models.MakeUint256(1),
 				Balance:    models.MakeUint256(500),
 				Nonce:      models.MakeUint256(0),
@@ -147,7 +154,7 @@ func (s *StateLeafTestSuite) TestGetStateLeaves() {
 		{
 			DataHash: common.BytesToHash([]byte{5, 6, 7, 8, 9}),
 			UserState: models.UserState{
-				PubKeyID:   pubKeyID,
+				PubKeyID:   account1.PubKeyID,
 				TokenIndex: models.MakeUint256(1),
 				Balance:    models.MakeUint256(505),
 				Nonce:      models.MakeUint256(0),
@@ -156,7 +163,7 @@ func (s *StateLeafTestSuite) TestGetStateLeaves() {
 	}
 
 	for i := range leaves {
-		err := s.storage.AddStateLeaf(&leaves[i])
+		err = s.storage.AddStateLeaf(&leaves[i])
 		s.NoError(err)
 	}
 
@@ -176,7 +183,7 @@ func (s *StateLeafTestSuite) TestGetStateLeaves() {
 	})
 	s.NoError(err)
 
-	res, err := s.storage.GetStateLeaves(pubKeyID)
+	res, err := s.storage.GetStateLeaves(account1.PubKeyID)
 	s.NoError(err)
 
 	s.Len(res, 2)
@@ -191,6 +198,9 @@ func (s *StateLeafTestSuite) TestGetNextAvailableStateID_NoLeavesInStateTree() {
 }
 
 func (s *StateLeafTestSuite) TestGetNextAvailableStateID() {
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
+
 	userState := &models.UserState{
 		PubKeyID:   1,
 		TokenIndex: models.MakeUint256(1),
@@ -198,7 +208,7 @@ func (s *StateLeafTestSuite) TestGetNextAvailableStateID() {
 		Nonce:      models.MakeUint256(0),
 	}
 
-	err := s.tree.Set(0, userState)
+	err = s.tree.Set(0, userState)
 	s.NoError(err)
 	err = s.tree.Set(1, userState)
 	s.NoError(err)
@@ -217,6 +227,10 @@ func (s *StateLeafTestSuite) TestGetUserStatesByPublicKey() {
 			PublicKey: models.PublicKey{1, 2, 3},
 		},
 		{
+			PubKeyID:  2,
+			PublicKey: models.PublicKey{3, 4, 5},
+		},
+		{
 			PubKeyID:  3,
 			PublicKey: models.PublicKey{1, 2, 3},
 		},
@@ -229,7 +243,7 @@ func (s *StateLeafTestSuite) TestGetUserStatesByPublicKey() {
 
 	userStates := []models.UserState{
 		{
-			PubKeyID:   accounts[0].PubKeyID,
+			PubKeyID:   1,
 			TokenIndex: models.MakeUint256(1),
 			Balance:    models.MakeUint256(420),
 			Nonce:      models.MakeUint256(0),
@@ -241,13 +255,13 @@ func (s *StateLeafTestSuite) TestGetUserStatesByPublicKey() {
 			Nonce:      models.MakeUint256(0),
 		},
 		{
-			PubKeyID:   accounts[0].PubKeyID,
+			PubKeyID:   1,
 			TokenIndex: models.MakeUint256(25),
 			Balance:    models.MakeUint256(1),
 			Nonce:      models.MakeUint256(73),
 		},
 		{
-			PubKeyID:   accounts[1].PubKeyID,
+			PubKeyID:   3,
 			TokenIndex: models.MakeUint256(25),
 			Balance:    models.MakeUint256(1),
 			Nonce:      models.MakeUint256(73),

@@ -85,8 +85,7 @@ func getClient(storage *st.Storage, chain deployer.ChainConnection, cfg *config.
 
 	if st.IsNotFoundError(err) {
 		fmt.Println("Bootstrapping genesis state")
-		stateTree := st.NewStateTree(storage)
-		chainState, err = bootstrapState(stateTree, chain, cfg.GenesisAccounts)
+		chainState, err = bootstrapState(storage, chain, cfg.GenesisAccounts)
 		if err != nil {
 			return nil, err
 		}
@@ -135,7 +134,7 @@ func getDeployer(cfg *config.EthereumConfig) (deployer.ChainConnection, error) {
 }
 
 func bootstrapState(
-	stateTree *st.StateTree,
+	storage *st.Storage,
 	chain deployer.ChainConnection,
 	accounts []models.GenesisAccount,
 ) (*models.ChainState, error) {
@@ -149,12 +148,12 @@ func bootstrapState(
 		return nil, err
 	}
 
-	err = commander.PopulateGenesisAccounts(stateTree, registeredAccounts)
+	err = commander.PopulateGenesisAccounts(storage, registeredAccounts)
 	if err != nil {
 		return nil, err
 	}
 
-	stateRoot, err := stateTree.Root()
+	stateRoot, err := st.NewStateTree(storage).Root()
 	if err != nil {
 		return nil, err
 	}

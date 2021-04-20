@@ -56,7 +56,7 @@ func (s *CreateCommitmentsTestSuite) SetupTest() {
 		FeeReceiverIndex:       2,
 		MaxCommitmentsPerBatch: 1,
 	}
-	err = PopulateGenesisAccounts(storage.NewStateTree(s.storage), genesisAccounts)
+	err = PopulateGenesisAccounts(s.storage, genesisAccounts)
 
 	s.NoError(err)
 }

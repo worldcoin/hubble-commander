@@ -137,6 +137,10 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 			PublicKey: models.PublicKey{1, 2, 3},
 		},
 		{
+			PubKeyID:  2,
+			PublicKey: models.PublicKey{2, 3, 4},
+		},
+		{
 			PubKeyID:  3,
 			PublicKey: models.PublicKey{1, 2, 3},
 		},
@@ -148,7 +152,7 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 
 	userStates := []models.UserState{
 		{
-			PubKeyID:   accounts[0].PubKeyID,
+			PubKeyID:   1,
 			TokenIndex: models.MakeUint256(1),
 			Balance:    models.MakeUint256(420),
 			Nonce:      models.MakeUint256(0),
@@ -160,13 +164,13 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 			Nonce:      models.MakeUint256(0),
 		},
 		{
-			PubKeyID:   accounts[0].PubKeyID,
+			PubKeyID:   1,
 			TokenIndex: models.MakeUint256(25),
 			Balance:    models.MakeUint256(1),
 			Nonce:      models.MakeUint256(73),
 		},
 		{
-			PubKeyID:   accounts[1].PubKeyID,
+			PubKeyID:   3,
 			TokenIndex: models.MakeUint256(30),
 			Balance:    models.MakeUint256(50),
 			Nonce:      models.MakeUint256(71),

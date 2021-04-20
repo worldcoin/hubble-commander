@@ -48,6 +48,9 @@ func (s *StateTreeTestSuite) SetupTest() {
 	leaf, err := NewStateLeaf(&state)
 	s.NoError(err)
 	s.leaf = leaf
+
+	err = s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
 }
 
 func (s *StateTreeTestSuite) TearDownTest() {
@@ -120,7 +123,10 @@ func (s *StateTreeTestSuite) TestSet_CalculatesCorrectRootForLeafOfId1() {
 }
 
 func (s *StateTreeTestSuite) TestSet_CalculatesCorrectRootForTwoLeaves() {
-	err := s.tree.Set(0, &s.leaf.UserState)
+	err := s.storage.AddAccountIfNotExists(&account2)
+	s.NoError(err)
+
+	err = s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
 	state := models.UserState{
@@ -263,6 +269,9 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafAddsStateUpdateRecord() {
 }
 
 func (s *StateTreeTestSuite) TestRevertTo() {
+	err := s.storage.AddAccountIfNotExists(&account2)
+	s.NoError(err)
+
 	states := []models.UserState{
 		{
 			PubKeyID:   1,
@@ -284,7 +293,7 @@ func (s *StateTreeTestSuite) TestRevertTo() {
 		},
 	}
 
-	err := s.tree.Set(0, &states[0])
+	err = s.tree.Set(0, &states[0])
 	s.NoError(err)
 
 	stateRoot, err := s.tree.Root()
