@@ -17,7 +17,7 @@ func (c *Client) SubmitTransfer() SubmitTransferFunc {
 	return func(commitments []models.Commitment) (*types.Transaction, error) {
 		return c.rollup().
 			WithValue(c.config.stakeAmount.Int).
-			SubmitCreate2Transfer(parseCommitments(commitments))
+			SubmitTransfer(parseCommitments(commitments))
 	}
 }
 
