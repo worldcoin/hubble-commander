@@ -45,7 +45,7 @@ func (s *RollupTestSuite) TestSubmitTransfersBatch_ReturnsAccountTreeRootUsed() 
 		PostStateRoot:     utils.RandomHash(),
 	}
 
-	_, accountRoot, err := s.client.SubmitTransfersBatch([]models.Commitment{commitment})
+	_, accountRoot, err := s.client.SubmitTransfersBatch([]models.Commitment{commitment}, s.client.SubmitTransfer())
 	s.NoError(err)
 
 	s.Equal(common.BytesToHash(expected[:]), *accountRoot)
@@ -64,7 +64,27 @@ func (s *RollupTestSuite) TestSubmitTransfersBatch_ReturnsBatchWithCorrectHash()
 		AccountTreeRoot:   ref.Hash(accountRoot),
 	}
 
-	batch, _, err := s.client.SubmitTransfersBatch([]models.Commitment{commitment})
+	batch, _, err := s.client.SubmitTransfersBatch([]models.Commitment{commitment}, s.client.SubmitTransfer())
+	s.NoError(err)
+
+	commitmentRoot := utils.HashTwo(commitment.LeafHash(), storage.GetZeroHash(0))
+	s.Equal(commitmentRoot, batch.Hash)
+}
+
+func (s *RollupTestSuite) TestSubmitTransfersBatch_Create2TransferReturnsBatchWithCorrectHash() {
+	accountRoot, err := s.client.AccountRegistry.Root(nil)
+	s.NoError(err)
+
+	commitment := models.Commitment{
+		Type:              txtype.Create2Transfer,
+		Transactions:      utils.RandomBytes(12),
+		FeeReceiver:       uint32(1234),
+		CombinedSignature: models.MakeSignature(1, 2),
+		PostStateRoot:     utils.RandomHash(),
+		AccountTreeRoot:   ref.Hash(accountRoot),
+	}
+
+	batch, _, err := s.client.SubmitTransfersBatch([]models.Commitment{commitment}, s.client.SubmitCreate2Transfer())
 	s.NoError(err)
 
 	commitmentRoot := utils.HashTwo(commitment.LeafHash(), storage.GetZeroHash(0))
