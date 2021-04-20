@@ -27,6 +27,9 @@ func (s *StorageTestSuite) SetupTest() {
 	s.NoError(err)
 	s.storage = NewTestStorage(testDB.DB)
 	s.db = testDB
+
+	err = s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
 }
 
 func (s *StorageTestSuite) TearDownTest() {
@@ -35,9 +38,6 @@ func (s *StorageTestSuite) TearDownTest() {
 }
 
 func (s *StorageTestSuite) TestBeginTransaction_Commit() {
-	err := s.storage.AddAccountIfNotExists(&account1)
-	s.NoError(err)
-
 	leaf := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
@@ -66,9 +66,6 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 }
 
 func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
-	err := s.storage.AddAccountIfNotExists(&account1)
-	s.NoError(err)
-
 	leaf := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
@@ -93,10 +90,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 }
 
 func (s *StorageTestSuite) TestBeginTransaction_Lock() {
-	err := s.storage.AddAccountIfNotExists(&account1)
-	s.NoError(err)
-
-	err = s.storage.AddAccountIfNotExists(&account2)
+	err := s.storage.AddAccountIfNotExists(&account2)
 	s.NoError(err)
 
 	leafOne := &models.StateLeaf{
