@@ -37,10 +37,7 @@ func (s *StateLeafTestSuite) TearDownTest() {
 }
 
 func (s *StateLeafTestSuite) TestAddStateLeaf_AddAndRetrieve() {
-	err := s.storage.AddAccountIfNotExists(&models.Account{
-		PubKeyID:  1,
-		PublicKey: models.PublicKey{1, 2, 3},
-	})
+	err := s.storage.AddAccountIfNotExists(&account1)
 	s.NoError(err)
 
 	leaf := &models.StateLeaf{
