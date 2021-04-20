@@ -140,6 +140,10 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 			PubKeyID:  3,
 			PublicKey: models.PublicKey{1, 2, 3},
 		},
+		{
+			PubKeyID:  2,
+			PublicKey: models.PublicKey{2, 3, 4},
+		},
 	}
 	for i := range accounts {
 		err := s.storage.AddAccountIfNotExists(&accounts[i])

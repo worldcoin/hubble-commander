@@ -101,7 +101,13 @@ func (s *StateTreeTestSuite) TestSet_UpdatesRootStateNodeRecord() {
 }
 
 func (s *StateTreeTestSuite) TestSet_CalculatesCorrectRootForLeafOfId1() {
-	err := s.tree.Set(1, &s.leaf.UserState)
+	err := s.storage.AddAccountIfNotExists(&models.Account{
+		PubKeyID:  1,
+		PublicKey: models.PublicKey{1, 2, 3},
+	})
+	s.NoError(err)
+
+	err = s.tree.Set(1, &s.leaf.UserState)
 	s.NoError(err)
 
 	rootPath := models.MerklePath{
@@ -263,6 +269,18 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafAddsStateUpdateRecord() {
 }
 
 func (s *StateTreeTestSuite) TestRevertTo() {
+	err := s.storage.AddAccountIfNotExists(&models.Account{
+		PubKeyID:  1,
+		PublicKey: models.PublicKey{1, 2, 3},
+	})
+	s.NoError(err)
+
+	err = s.storage.AddAccountIfNotExists(&models.Account{
+		PubKeyID:  2,
+		PublicKey: models.PublicKey{2, 3, 4},
+	})
+	s.NoError(err)
+
 	states := []models.UserState{
 		{
 			PubKeyID:   1,
@@ -284,7 +302,7 @@ func (s *StateTreeTestSuite) TestRevertTo() {
 		},
 	}
 
-	err := s.tree.Set(0, &states[0])
+	err = s.tree.Set(0, &states[0])
 	s.NoError(err)
 
 	stateRoot, err := s.tree.Root()

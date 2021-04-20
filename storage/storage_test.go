@@ -35,6 +35,12 @@ func (s *StorageTestSuite) TearDownTest() {
 }
 
 func (s *StorageTestSuite) TestBeginTransaction_Commit() {
+	err := s.storage.AddAccountIfNotExists(&models.Account{
+		PubKeyID:  1,
+		PublicKey: models.PublicKey{1, 2, 3},
+	})
+	s.NoError(err)
+
 	leaf := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
@@ -87,6 +93,18 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 }
 
 func (s *StorageTestSuite) TestBeginTransaction_Lock() {
+	err := s.storage.AddAccountIfNotExists(&models.Account{
+		PubKeyID:  1,
+		PublicKey: models.PublicKey{1, 2, 3},
+	})
+	s.NoError(err)
+
+	err = s.storage.AddAccountIfNotExists(&models.Account{
+		PubKeyID:  1,
+		PublicKey: models.PublicKey{2, 3, 4},
+	})
+	s.NoError(err)
+
 	leafOne := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{

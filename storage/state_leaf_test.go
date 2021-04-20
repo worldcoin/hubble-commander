@@ -37,6 +37,12 @@ func (s *StateLeafTestSuite) TearDownTest() {
 }
 
 func (s *StateLeafTestSuite) TestAddStateLeaf_AddAndRetrieve() {
+	err := s.storage.AddAccountIfNotExists(&models.Account{
+		PubKeyID:  1,
+		PublicKey: models.PublicKey{1, 2, 3},
+	})
+	s.NoError(err)
+
 	leaf := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
@@ -46,7 +52,7 @@ func (s *StateLeafTestSuite) TestAddStateLeaf_AddAndRetrieve() {
 			Nonce:      models.MakeUint256(0),
 		},
 	}
-	err := s.storage.AddStateLeaf(leaf)
+	err = s.storage.AddStateLeaf(leaf)
 	s.NoError(err)
 
 	res, err := s.storage.GetStateLeafByHash(leaf.DataHash)
@@ -191,6 +197,12 @@ func (s *StateLeafTestSuite) TestGetNextAvailableStateID_NoLeavesInStateTree() {
 }
 
 func (s *StateLeafTestSuite) TestGetNextAvailableStateID() {
+	err := s.storage.AddAccountIfNotExists(&models.Account{
+		PubKeyID:  1,
+		PublicKey: models.PublicKey{1, 2, 3},
+	})
+	s.NoError(err)
+
 	userState := &models.UserState{
 		PubKeyID:   1,
 		TokenIndex: models.MakeUint256(1),
@@ -198,7 +210,7 @@ func (s *StateLeafTestSuite) TestGetNextAvailableStateID() {
 		Nonce:      models.MakeUint256(0),
 	}
 
-	err := s.tree.Set(0, userState)
+	err = s.tree.Set(0, userState)
 	s.NoError(err)
 	err = s.tree.Set(1, userState)
 	s.NoError(err)
