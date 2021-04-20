@@ -13,18 +13,18 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type SubmitTransferTestSuite struct {
+type SubmitBatchTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	client     *TestClient
 	commitment models.Commitment
 }
 
-func (s *SubmitTransferTestSuite) SetupSuite() {
+func (s *SubmitBatchTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *SubmitTransferTestSuite) SetupTest() {
+func (s *SubmitBatchTestSuite) SetupTest() {
 	client, err := NewTestClient()
 	s.NoError(err)
 	s.client = client
@@ -37,11 +37,11 @@ func (s *SubmitTransferTestSuite) SetupTest() {
 	}
 }
 
-func (s *SubmitTransferTestSuite) TearDownTest() {
+func (s *SubmitBatchTestSuite) TearDownTest() {
 	s.client.Close()
 }
 
-func (s *SubmitTransferTestSuite) TestSubmitTransfersBatch_ReturnsAccountTreeRootUsed() {
+func (s *SubmitBatchTestSuite) TestSubmitTransfersBatch_ReturnsAccountTreeRootUsed() {
 	expected, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
 
@@ -51,7 +51,7 @@ func (s *SubmitTransferTestSuite) TestSubmitTransfersBatch_ReturnsAccountTreeRoo
 	s.Equal(common.BytesToHash(expected[:]), *accountRoot)
 }
 
-func (s *SubmitTransferTestSuite) TestSubmitTransfersBatch_ReturnsBatchWithCorrectHashAndType() {
+func (s *SubmitBatchTestSuite) TestSubmitTransfersBatch_ReturnsBatchWithCorrectHashAndType() {
 	accountRoot, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
 
@@ -66,7 +66,7 @@ func (s *SubmitTransferTestSuite) TestSubmitTransfersBatch_ReturnsBatchWithCorre
 	s.Equal(txtype.Transfer, batch.Type)
 }
 
-func (s *SubmitTransferTestSuite) TestSubmitTransfersBatch_Create2TransferReturnsAccountTreeRootUsed() {
+func (s *SubmitBatchTestSuite) TestSubmitTransfersBatch_Create2TransferReturnsAccountTreeRootUsed() {
 	expected, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
 
@@ -79,7 +79,7 @@ func (s *SubmitTransferTestSuite) TestSubmitTransfersBatch_Create2TransferReturn
 	s.Equal(common.BytesToHash(expected[:]), *accountRoot)
 }
 
-func (s *SubmitTransferTestSuite) TestSubmitTransfersBatch_Create2TransferReturnsBatchWithCorrectHashAndType() {
+func (s *SubmitBatchTestSuite) TestSubmitTransfersBatch_Create2TransferReturnsBatchWithCorrectHashAndType() {
 	accountRoot, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
 
@@ -96,5 +96,5 @@ func (s *SubmitTransferTestSuite) TestSubmitTransfersBatch_Create2TransferReturn
 }
 
 func TestSubmitTransferTestSuite(t *testing.T) {
-	suite.Run(t, new(SubmitTransferTestSuite))
+	suite.Run(t, new(SubmitBatchTestSuite))
 }
