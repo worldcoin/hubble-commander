@@ -70,7 +70,7 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 		},
 	}
 	for i := range accounts {
-		err := s.storage.AddAccountIfNotExists(&accounts[i])
+		err = s.storage.AddAccountIfNotExists(&accounts[i])
 		s.NoError(err)
 	}
 

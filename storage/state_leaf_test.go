@@ -166,7 +166,7 @@ func (s *StateLeafTestSuite) TestGetStateLeaves() {
 	}
 
 	for i := range leaves {
-		err := s.storage.AddStateLeaf(&leaves[i])
+		err = s.storage.AddStateLeaf(&leaves[i])
 		s.NoError(err)
 	}
 

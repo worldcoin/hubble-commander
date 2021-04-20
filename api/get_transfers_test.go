@@ -55,7 +55,6 @@ func (s *GetTransfersTestSuite) TestGetTransfers() {
 	for i := range accounts {
 		err := s.storage.AddAccountIfNotExists(&accounts[i])
 		s.NoError(err)
-
 	}
 
 	userStates := []models.UserState{
