@@ -6,17 +6,17 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 )
 
-type RollupSessionBuilder struct {
+type rollupSessionBuilder struct {
 	rollup.RollupSession
 }
 
-func (b *RollupSessionBuilder) WithValue(value big.Int) *RollupSessionBuilder {
+func (b *rollupSessionBuilder) WithValue(value big.Int) *rollupSessionBuilder {
 	b.TransactOpts.Value = &value
 	return b
 }
 
-func (c *Client) rollup() *RollupSessionBuilder {
-	return &RollupSessionBuilder{rollup.RollupSession{
+func (c *Client) rollup() *rollupSessionBuilder {
+	return &rollupSessionBuilder{rollup.RollupSession{
 		Contract:     c.Rollup,
 		TransactOpts: *c.ChainConnection.GetAccount(),
 	}}
