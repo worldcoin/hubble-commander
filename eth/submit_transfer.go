@@ -29,7 +29,10 @@ func (c *Client) SubmitCreate2Transfer() SubmitTransferFunc {
 	}
 }
 
-func (c *Client) SubmitTransfersBatch(commitments []models.Commitment, f SubmitTransferFunc) (batch *models.Batch, accountTreeRoot *common.Hash, err error) {
+func (c *Client) SubmitTransfersBatch(
+	commitments []models.Commitment,
+	f SubmitTransferFunc,
+) (batch *models.Batch, accountTreeRoot *common.Hash, err error) {
 	sink := make(chan *rollup.RollupNewBatch)
 	subscription, err := c.Rollup.WatchNewBatch(&bind.WatchOpts{}, sink)
 	if err != nil {
