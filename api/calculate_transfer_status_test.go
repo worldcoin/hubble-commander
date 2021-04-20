@@ -6,6 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -16,6 +17,7 @@ import (
 
 var (
 	commitment = models.Commitment{
+		Type:              txtype.Transfer,
 		Transactions:      utils.RandomBytes(24),
 		FeeReceiver:       1,
 		CombinedSignature: models.MakeSignature(1, 2),
@@ -48,7 +50,7 @@ func (s *CalculateTransferStatusTestSuite) SetupTest() {
 	s.sim = sim
 
 	userState := models.UserState{
-		PubkeyID:   1,
+		PubKeyID:   1,
 		TokenIndex: models.MakeUint256(1),
 		Balance:    models.MakeUint256(420),
 		Nonce:      models.MakeUint256(0),
@@ -77,16 +79,17 @@ func (s *CalculateTransferStatusTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *CalculateTransferStatusTestSuite) TestApi_CalculateTransferStatus_Pending() {
+func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Pending() {
 	status, err := CalculateTransferStatus(s.storage, s.transfer, 0)
 	s.NoError(err)
 
 	s.Equal(models.Pending, *status)
 }
 
-func (s *CalculateTransferStatusTestSuite) TestApi_CalculateTransferStatus_InBatch() {
+func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_InBatch() {
 	batch := models.Batch{
 		Hash:              utils.RandomHash(),
+		Type:              txtype.Transfer,
 		FinalisationBlock: math.MaxUint32,
 	}
 	err := s.storage.AddBatch(&batch)
@@ -106,11 +109,12 @@ func (s *CalculateTransferStatusTestSuite) TestApi_CalculateTransferStatus_InBat
 }
 
 // nolint:misspell
-func (s *CalculateTransferStatusTestSuite) TestApi_CalculateTransferStatus_Finalised() {
+func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Finalised() {
 	currentBlockNumber, err := s.sim.GetLatestBlockNumber()
 	s.NoError(err)
 	batch := models.Batch{
 		Hash:              utils.RandomHash(),
+		Type:              txtype.Transfer,
 		FinalisationBlock: *currentBlockNumber + 1,
 	}
 	err = s.storage.AddBatch(&batch)
@@ -133,7 +137,7 @@ func (s *CalculateTransferStatusTestSuite) TestApi_CalculateTransferStatus_Final
 	s.Equal(models.Finalised, *status)
 }
 
-func (s *CalculateTransferStatusTestSuite) TestApi_CalculateTransferStatus_Error() {
+func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Error() {
 	s.transfer.ErrorMessage = ref.String("Gold Duck Error")
 	status, err := CalculateTransferStatus(s.storage, s.transfer, 0)
 	s.NoError(err)

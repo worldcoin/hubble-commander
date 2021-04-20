@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
@@ -17,6 +18,7 @@ import (
 
 var (
 	baseCommitment = models.Commitment{
+		Type:              txtype.Transfer,
 		Transactions:      utils.RandomBytes(24),
 		FeeReceiver:       1,
 		CombinedSignature: models.MakeSignature(1, 2),
@@ -53,7 +55,7 @@ func (s *SubmitBatchTestSuite) SetupTest() {
 	s.NoError(err)
 
 	userState := models.UserState{
-		PubkeyID:   1,
+		PubKeyID:   1,
 		TokenIndex: models.MakeUint256(1),
 		Balance:    models.MakeUint256(1000),
 		Nonce:      models.MakeUint256(0),
@@ -69,12 +71,12 @@ func (s *SubmitBatchTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *SubmitBatchTestSuite) Test_SubmitBatch_ErrorsIfNotEnoughCommitments() {
+func (s *SubmitBatchTestSuite) TestSubmitBatch_ErrorsIfNotEnoughCommitments() {
 	err := submitBatch([]models.Commitment{}, s.storage, s.testClient.Client, s.cfg)
 	s.Equal(ErrNotEnoughCommitments, err)
 }
 
-func (s *SubmitBatchTestSuite) Test_SubmitBatch_SubmitsCommitmentsOnChain() {
+func (s *SubmitBatchTestSuite) TestSubmitBatch_SubmitsCommitmentsOnChain() {
 	commitmentID, err := s.storage.AddCommitment(&baseCommitment)
 	s.NoError(err)
 
@@ -89,7 +91,7 @@ func (s *SubmitBatchTestSuite) Test_SubmitBatch_SubmitsCommitmentsOnChain() {
 	s.Equal(big.NewInt(2), nextBatchID)
 }
 
-func (s *SubmitBatchTestSuite) Test_SubmitBatch_StoresBatchRecord() {
+func (s *SubmitBatchTestSuite) TestSubmitBatch_StoresBatchRecord() {
 	commitmentID, err := s.storage.AddCommitment(&baseCommitment)
 	s.NoError(err)
 
@@ -119,7 +121,7 @@ func (s *SubmitBatchTestSuite) addCommitments(count int) ([]int32, []models.Comm
 	return ids, commitments
 }
 
-func (s *SubmitBatchTestSuite) Test_SubmitBatch_MarksCommitmentsAsIncluded() {
+func (s *SubmitBatchTestSuite) TestSubmitBatch_MarksCommitmentsAsIncluded() {
 	ids, commitments := s.addCommitments(2)
 
 	err := submitBatch(commitments, s.storage, s.testClient.Client, s.cfg)
@@ -135,12 +137,12 @@ func (s *SubmitBatchTestSuite) Test_SubmitBatch_MarksCommitmentsAsIncluded() {
 	}
 }
 
-func (s *SubmitBatchTestSuite) Test_SubmitBatch_MarksCommitmentsAsIncluded_UnsavedCommitment() {
+func (s *SubmitBatchTestSuite) TestSubmitBatch_MarksCommitmentsAsIncluded_UnsavedCommitment() {
 	err := submitBatch([]models.Commitment{baseCommitment}, s.storage, s.testClient.Client, s.cfg)
 	s.EqualError(err, "no rows were affected by the update")
 }
 
-func (s *SubmitBatchTestSuite) Test_SubmitBatch_UpdatesCommitmentsAccountRoot() {
+func (s *SubmitBatchTestSuite) TestSubmitBatch_UpdatesCommitmentsAccountRoot() {
 	ids, commitments := s.addCommitments(2)
 
 	err := submitBatch(commitments, s.storage, s.testClient.Client, s.cfg)

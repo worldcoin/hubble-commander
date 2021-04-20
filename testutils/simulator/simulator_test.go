@@ -30,7 +30,7 @@ func (s *SimulatorTestSuite) TearDownTest() {
 	s.sim.Close()
 }
 
-func (s *SimulatorTestSuite) Test_NewSimulator() {
+func (s *SimulatorTestSuite) TestNewSimulator() {
 	_, _, contract, err := transfer.DeployFrontendTransfer(s.sim.Account, s.sim.Backend)
 	s.NoError(err)
 
@@ -47,7 +47,7 @@ func (s *SimulatorTestSuite) Test_NewSimulator() {
 	s.NoError(err)
 }
 
-func (s *SimulatorTestSuite) Test_NewAutominingSimulator() {
+func (s *SimulatorTestSuite) TestNewAutominingSimulator() {
 	sim, err := NewAutominingSimulator()
 	s.NoError(err)
 
@@ -55,14 +55,14 @@ func (s *SimulatorTestSuite) Test_NewAutominingSimulator() {
 	sim.StopAutomine()
 }
 
-func (s *SimulatorTestSuite) Test_StartAutomine() {
+func (s *SimulatorTestSuite) TestStartAutomine() {
 	stop := s.sim.StartAutomine()
 	defer stop()
 	time.Sleep(220 * time.Millisecond)
 	s.Equal(uint64(2), s.sim.Backend.Blockchain().CurrentHeader().Number.Uint64())
 }
 
-func (s *SimulatorTestSuite) Test_StopAutomine() {
+func (s *SimulatorTestSuite) TestStopAutomine() {
 	s.sim.StartAutomine()
 	time.Sleep(120 * time.Millisecond)
 	s.sim.StopAutomine()
@@ -70,7 +70,7 @@ func (s *SimulatorTestSuite) Test_StopAutomine() {
 	s.Equal(uint64(1), s.sim.Backend.Blockchain().CurrentHeader().Number.Uint64())
 }
 
-func (s *SimulatorTestSuite) Test_Close_StopsAutomine() {
+func (s *SimulatorTestSuite) TestClose_StopsAutomine() {
 	s.sim.StartAutomine()
 	time.Sleep(120 * time.Millisecond)
 	s.sim.Close()
@@ -78,7 +78,7 @@ func (s *SimulatorTestSuite) Test_Close_StopsAutomine() {
 	s.Equal(uint64(1), s.sim.Backend.Blockchain().CurrentHeader().Number.Uint64())
 }
 
-func (s *SimulatorTestSuite) Test_GetLatestBlockNumber() {
+func (s *SimulatorTestSuite) TestGetLatestBlockNumber() {
 	blockNumberBefore, err := s.sim.GetLatestBlockNumber()
 	s.NoError(err)
 

@@ -5,7 +5,7 @@ import (
 )
 
 type UserState struct {
-	PubkeyID   uint32  `db:"pubkey_id"`
+	PubKeyID   uint32  `db:"pub_key_id"`
 	TokenIndex Uint256 `db:"token_index"`
 	Balance    Uint256
 	Nonce      Uint256
@@ -23,7 +23,7 @@ type StateLeaf struct {
 
 type StateUpdate struct {
 	ID          uint64
-	MerklePath  MerklePath  `db:"merkle_path"`
+	StateID     MerklePath  `db:"state_id"`
 	CurrentHash common.Hash `db:"current_hash"`
 	CurrentRoot common.Hash `db:"current_root"`
 	PrevHash    common.Hash `db:"prev_hash"`

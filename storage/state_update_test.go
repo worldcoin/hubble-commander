@@ -33,12 +33,12 @@ func (s *StateUpdateTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *StateUpdateTestSuite) Test_AddStateUpdate_AddAndRetrieve() {
+func (s *StateUpdateTestSuite) TestAddStateUpdate_AddAndRetrieve() {
 	path, err := models.NewMerklePath("00001111111111001111111111111111")
 	s.NoError(err)
 	update := &models.StateUpdate{
 		ID:          1,
-		MerklePath:  *path,
+		StateID:     *path,
 		CurrentHash: common.BytesToHash([]byte{1, 2}),
 		CurrentRoot: common.BytesToHash([]byte{1, 2, 3}),
 		PrevHash:    common.BytesToHash([]byte{1, 2, 3, 4}),
@@ -52,19 +52,19 @@ func (s *StateUpdateTestSuite) Test_AddStateUpdate_AddAndRetrieve() {
 	s.Equal(update, res)
 }
 
-func (s *StateUpdateTestSuite) Test_GetStateUpdate_NonExistentUpdate() {
+func (s *StateUpdateTestSuite) TestGetStateUpdateByRootHash_NonExistentUpdate() {
 	res, err := s.storage.GetStateUpdateByRootHash(common.BytesToHash([]byte{9, 4, 1, 2}))
 	s.Equal(NewNotFoundError("state update"), err)
 	s.Nil(res)
 }
 
-func (s *StateUpdateTestSuite) Test_DeleteStateUpdate() {
+func (s *StateUpdateTestSuite) TestDeleteStateUpdate() {
 	path, err := models.NewMerklePath("00001111111111001111111111111111")
 	s.NoError(err)
 	updates := []models.StateUpdate{
 		{
 			ID:          1,
-			MerklePath:  *path,
+			StateID:     *path,
 			CurrentHash: common.BytesToHash([]byte{1}),
 			CurrentRoot: common.BytesToHash([]byte{1}),
 			PrevHash:    common.BytesToHash([]byte{1}),
@@ -72,7 +72,7 @@ func (s *StateUpdateTestSuite) Test_DeleteStateUpdate() {
 		},
 		{
 			ID:          2,
-			MerklePath:  *path,
+			StateID:     *path,
 			CurrentHash: common.BytesToHash([]byte{2}),
 			CurrentRoot: common.BytesToHash([]byte{2}),
 			PrevHash:    common.BytesToHash([]byte{2}),

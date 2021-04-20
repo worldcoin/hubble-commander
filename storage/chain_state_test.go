@@ -41,7 +41,7 @@ func (s *ChainStateTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *ChainStateTestSuite) Test_SetChainState() {
+func (s *ChainStateTestSuite) TestSetChainState_SetAndRetrieve() {
 	err := s.storage.SetChainState(&chainState)
 	s.NoError(err)
 
@@ -50,7 +50,7 @@ func (s *ChainStateTestSuite) Test_SetChainState() {
 	s.Equal(chainState, *actual)
 }
 
-func (s *ChainStateTestSuite) Test_GetChainState_NotFound() {
+func (s *ChainStateTestSuite) TestGetChainState_NotFound() {
 	_, err := s.storage.GetChainState(chainState.ChainID)
 	s.Equal(NewNotFoundError("chain state"), err)
 	s.True(IsNotFoundError(err))

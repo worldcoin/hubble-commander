@@ -12,7 +12,7 @@ import (
 
 var (
 	updatedUserState = models.UserState{
-		PubkeyID:   1,
+		PubKeyID:   1,
 		TokenIndex: models.MakeUint256(1),
 		Balance:    models.MakeUint256(800),
 		Nonce:      models.MakeUint256(1),
@@ -40,7 +40,7 @@ func (s *StateTreeTestSuite) SetupTest() {
 	s.tree = NewStateTree(s.storage)
 
 	state := models.UserState{
-		PubkeyID:   1,
+		PubKeyID:   1,
 		TokenIndex: models.MakeUint256(1),
 		Balance:    models.MakeUint256(420),
 		Nonce:      models.MakeUint256(0),
@@ -55,7 +55,7 @@ func (s *StateTreeTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *StateTreeTestSuite) Test_Set_StoresStateLeafRecord() {
+func (s *StateTreeTestSuite) TestSet_StoresStateLeafRecord() {
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
@@ -64,7 +64,7 @@ func (s *StateTreeTestSuite) Test_Set_StoresStateLeafRecord() {
 	s.Equal(s.leaf, actualLeaf)
 }
 
-func (s *StateTreeTestSuite) Test_Set_StoresLeafStateNodeRecord() {
+func (s *StateTreeTestSuite) TestSet_StoresLeafStateNodeRecord() {
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
@@ -81,7 +81,7 @@ func (s *StateTreeTestSuite) Test_Set_StoresLeafStateNodeRecord() {
 	s.Equal(expectedNode, node)
 }
 
-func (s *StateTreeTestSuite) Test_Set_UpdatesRootStateNodeRecord() {
+func (s *StateTreeTestSuite) TestSet_UpdatesRootStateNodeRecord() {
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
@@ -100,7 +100,7 @@ func (s *StateTreeTestSuite) Test_Set_UpdatesRootStateNodeRecord() {
 	s.Equal(expectedRoot, root)
 }
 
-func (s *StateTreeTestSuite) Test_Set_CalculatesCorrectRootForLeafOfIndex1() {
+func (s *StateTreeTestSuite) TestSet_CalculatesCorrectRootForLeafOfId1() {
 	err := s.tree.Set(1, &s.leaf.UserState)
 	s.NoError(err)
 
@@ -119,12 +119,12 @@ func (s *StateTreeTestSuite) Test_Set_CalculatesCorrectRootForLeafOfIndex1() {
 	s.Equal(expectedRoot, root)
 }
 
-func (s *StateTreeTestSuite) Test_Set_CalculatesCorrectRootForTwoLeaves() {
+func (s *StateTreeTestSuite) TestSet_CalculatesCorrectRootForTwoLeaves() {
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
 	state := models.UserState{
-		PubkeyID:   2,
+		PubKeyID:   2,
 		TokenIndex: models.MakeUint256(1),
 		Balance:    models.MakeUint256(420),
 		Nonce:      models.MakeUint256(0),
@@ -147,7 +147,7 @@ func (s *StateTreeTestSuite) Test_Set_CalculatesCorrectRootForTwoLeaves() {
 	s.Equal(expectedRoot, root)
 }
 
-func (s *StateTreeTestSuite) Test_Set_StoresStateUpdateRecord() {
+func (s *StateTreeTestSuite) TestSet_StoresStateUpdateRecord() {
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
@@ -159,7 +159,7 @@ func (s *StateTreeTestSuite) Test_Set_StoresStateUpdateRecord() {
 	currentRoot := common.HexToHash("0xd8cb702fc833817dccdc3889282af96755b2909274ca2f1a3827a60d11d796eb")
 	expectedUpdate := &models.StateUpdate{
 		ID:          1,
-		MerklePath:  path,
+		StateID:     path,
 		CurrentHash: s.leaf.DataHash,
 		CurrentRoot: currentRoot,
 		PrevHash:    GetZeroHash(0),
@@ -172,7 +172,7 @@ func (s *StateTreeTestSuite) Test_Set_StoresStateUpdateRecord() {
 	s.Equal(expectedUpdate, update)
 }
 
-func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_CorrectRootStateNode() {
+func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectRootStateNode() {
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
@@ -194,7 +194,7 @@ func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_CorrectRootStateNode() 
 	s.Equal(expectedRoot, root)
 }
 
-func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_CorrectLeafStateNode() {
+func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectLeafStateNode() {
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
@@ -218,7 +218,7 @@ func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_CorrectLeafStateNode() 
 	s.Equal(expectedLeaf, leafNode)
 }
 
-func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_NewStateLeafRecord() {
+func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafNewStateLeafRecord() {
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
@@ -232,7 +232,7 @@ func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_NewStateLeafRecord() {
 	s.Equal(expectedLeaf, leaf)
 }
 
-func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_AddsStateUpdateRecord() {
+func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafAddsStateUpdateRecord() {
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
@@ -249,7 +249,7 @@ func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_AddsStateUpdateRecord()
 	currentRoot := common.HexToHash("0x406515786640be8c51eacf1221f017e7f59e04ef59637a27dcb2b2f054b309bf")
 	expectedUpdate := &models.StateUpdate{
 		ID:          2,
-		MerklePath:  path,
+		StateID:     path,
 		CurrentHash: updatedLeaf.DataHash,
 		CurrentRoot: currentRoot,
 		PrevHash:    s.leaf.DataHash,
@@ -262,22 +262,22 @@ func (s *StateTreeTestSuite) Test_Set_UpdateExistingLeaf_AddsStateUpdateRecord()
 	s.Equal(expectedUpdate, update)
 }
 
-func (s *StateTreeTestSuite) Test_RevertTo() {
+func (s *StateTreeTestSuite) TestRevertTo() {
 	states := []models.UserState{
 		{
-			PubkeyID:   1,
+			PubKeyID:   1,
 			TokenIndex: models.MakeUint256(1),
 			Balance:    models.MakeUint256(420),
 			Nonce:      models.MakeUint256(0),
 		},
 		{
-			PubkeyID:   2,
+			PubKeyID:   2,
 			TokenIndex: models.MakeUint256(5),
 			Balance:    models.MakeUint256(100),
 			Nonce:      models.MakeUint256(0),
 		},
 		{
-			PubkeyID:   1,
+			PubKeyID:   1,
 			TokenIndex: models.MakeUint256(1),
 			Balance:    models.MakeUint256(500),
 			Nonce:      models.MakeUint256(0),

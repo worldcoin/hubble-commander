@@ -6,20 +6,42 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
-	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
-func (c *Client) rollup() *RollupSessionBuilder {
-	return &RollupSessionBuilder{rollup.RollupSession{
-		Contract:     c.Rollup,
-		TransactOpts: *c.ChainConnection.GetAccount(),
-	}}
+type SubmitBatchFunc func(commitments []models.Commitment) (*types.Transaction, error)
+
+func (c *Client) SubmitTransfersBatch(commitments []models.Commitment) (
+	batch *models.Batch,
+	accountTreeRoot *common.Hash,
+	err error,
+) {
+	return c.submitBatch(commitments, func(commitments []models.Commitment) (*types.Transaction, error) {
+		return c.rollup().
+			WithValue(c.config.stakeAmount.Int).
+			SubmitTransfer(parseCommitments(commitments))
+	})
 }
 
-func (c *Client) SubmitTransfersBatch(commitments []models.Commitment) (batch *models.Batch, accountTreeRoot *common.Hash, err error) {
+func (c *Client) SubmitCreate2TransfersBatch(commitments []models.Commitment) (
+	batch *models.Batch,
+	accountTreeRoot *common.Hash,
+	err error,
+) {
+	return c.submitBatch(commitments, func(commitments []models.Commitment) (*types.Transaction, error) {
+		return c.rollup().
+			WithValue(c.config.stakeAmount.Int).
+			SubmitCreate2Transfer(parseCommitments(commitments))
+	})
+}
+
+func (c *Client) submitBatch(
+	commitments []models.Commitment,
+	submit SubmitBatchFunc,
+) (batch *models.Batch, accountTreeRoot *common.Hash, err error) {
 	sink := make(chan *rollup.RollupNewBatch)
 	subscription, err := c.Rollup.WatchNewBatch(&bind.WatchOpts{}, sink)
 	if err != nil {
@@ -27,9 +49,7 @@ func (c *Client) SubmitTransfersBatch(commitments []models.Commitment) (batch *m
 	}
 	defer subscription.Unsubscribe()
 
-	tx, err := c.rollup().
-		WithValue(c.config.stakeAmount.Int).
-		SubmitTransfer(parseCommitments(commitments))
+	tx, err := submit(commitments)
 	if err != nil {
 		return
 	}
@@ -44,19 +64,6 @@ func (c *Client) SubmitTransfersBatch(commitments []models.Commitment) (batch *m
 			return nil, nil, fmt.Errorf("timeout")
 		}
 	}
-}
-
-func (c *Client) GetBatch(batchID *models.Uint256) (*models.Batch, error) {
-	batch, err := c.Rollup.GetBatch(nil, &batchID.Int)
-	if err != nil {
-		return nil, err
-	}
-	meta := encoder.DecodeMeta(batch.Meta)
-	return &models.Batch{
-		Hash:              common.BytesToHash(batch.CommitmentRoot[:]),
-		ID:                *batchID,
-		FinalisationBlock: meta.FinaliseOn,
-	}, nil
 }
 
 func (c *Client) handleNewBatchEvent(event *rollup.RollupNewBatch) (*models.Batch, *common.Hash, error) {

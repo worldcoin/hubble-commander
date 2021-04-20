@@ -20,7 +20,7 @@ type StartOptions struct {
 	Image string
 }
 
-func StartCommander(opts StartOptions) (*TestCommander, error) {
+func StartCommander(opts StartOptions) (*E2ECommander, error) {
 	cli, err := docker.NewClientWithOpts(docker.FromEnv)
 	if err != nil {
 		return nil, err
@@ -72,7 +72,7 @@ func StartCommander(opts StartOptions) (*TestCommander, error) {
 
 	client := jsonrpc.NewClient("http://localhost:8080")
 
-	commander := &TestCommander{
+	commander := &E2ECommander{
 		cli:         cli,
 		containerID: containerID,
 		Client:      client,
@@ -103,13 +103,13 @@ func StartCommander(opts StartOptions) (*TestCommander, error) {
 	return commander, nil
 }
 
-type TestCommander struct {
+type E2ECommander struct {
 	cli         *docker.Client
 	containerID string
 	Client      jsonrpc.RPCClient
 }
 
-func (c *TestCommander) Start() error {
+func (c *E2ECommander) Start() error {
 	err := c.cli.ContainerStart(context.Background(), c.containerID, types.ContainerStartOptions{})
 	if err != nil {
 		return err
@@ -145,7 +145,7 @@ func (c *TestCommander) Start() error {
 	return nil
 }
 
-func (c *TestCommander) IsHealthy() (bool, error) {
+func (c *E2ECommander) IsHealthy() (bool, error) {
 	info, err := c.cli.ContainerInspect(context.Background(), c.containerID)
 	if err != nil {
 		return false, err
@@ -154,7 +154,7 @@ func (c *TestCommander) IsHealthy() (bool, error) {
 	return info.State != nil && info.State.Health != nil && info.State.Health.Status == "healthy", nil
 }
 
-func (c *TestCommander) HasExited() (bool, error) {
+func (c *E2ECommander) HasExited() (bool, error) {
 	info, err := c.cli.ContainerInspect(context.Background(), c.containerID)
 	if err != nil {
 		return false, err
@@ -163,7 +163,7 @@ func (c *TestCommander) HasExited() (bool, error) {
 	return info.State != nil && info.State.Status == "exited", nil
 }
 
-func (c *TestCommander) Stop() error {
+func (c *E2ECommander) Stop() error {
 	err := c.cli.ContainerStop(context.Background(), c.containerID, nil)
 	if err != nil {
 		return err
