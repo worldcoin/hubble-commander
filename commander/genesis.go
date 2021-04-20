@@ -9,15 +9,25 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/storage"
+	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
 )
 
-func PopulateGenesisAccounts(stateTree *storage.StateTree, accounts []models.RegisteredGenesisAccount) error {
+func PopulateGenesisAccounts(storage *st.Storage, accounts []models.RegisteredGenesisAccount) error {
+	stateTree := st.NewStateTree(storage)
+
 	for i := range accounts {
 		account := accounts[i]
-		err := stateTree.Set(uint32(i), &models.UserState{
+		err := storage.AddAccountIfNotExists(&models.Account{
+			PubKeyID:  account.PubKeyID,
+			PublicKey: account.PublicKey,
+		})
+		if err != nil {
+			return err
+		}
+
+		err = stateTree.Set(uint32(i), &models.UserState{
 			PubKeyID:   account.PubKeyID,
 			TokenIndex: models.MakeUint256(0),
 			Balance:    account.Balance,
