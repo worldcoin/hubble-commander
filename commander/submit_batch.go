@@ -19,7 +19,7 @@ func submitBatch(commitments []models.Commitment, storage *st.Storage, client *e
 		return ErrNotEnoughCommitments
 	}
 
-	batch, accountRoot, err := client.SubmitTransfersBatch(commitments)
+	batch, accountRoot, err := client.SubmitTransfersBatch(commitments, client.SubmitTransfer())
 	if err != nil {
 		return err
 	}
