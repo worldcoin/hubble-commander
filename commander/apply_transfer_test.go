@@ -43,6 +43,21 @@ func (s *ApplyTransferTestSuite) SetupTest() {
 	s.db = testDB
 	s.storage = storage.NewTestStorage(testDB.DB)
 	s.tree = storage.NewStateTree(s.storage)
+
+	accounts := []models.Account{
+		{
+			PubKeyID:  1,
+			PublicKey: models.PublicKey{1, 2, 3},
+		},
+		{
+			PubKeyID:  2,
+			PublicKey: models.PublicKey{2, 3, 4},
+		},
+	}
+	for i := range accounts {
+		err = s.storage.AddAccountIfNotExists(&accounts[i])
+		s.NoError(err)
+	}
 }
 
 func (s *ApplyTransferTestSuite) TearDownTest() {
