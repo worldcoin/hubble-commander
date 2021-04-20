@@ -227,12 +227,12 @@ func (s *StateLeafTestSuite) TestGetUserStatesByPublicKey() {
 			PublicKey: models.PublicKey{1, 2, 3},
 		},
 		{
-			PubKeyID:  3,
-			PublicKey: models.PublicKey{1, 2, 3},
-		},
-		{
 			PubKeyID:  2,
 			PublicKey: models.PublicKey{3, 4, 5},
+		},
+		{
+			PubKeyID:  3,
+			PublicKey: models.PublicKey{1, 2, 3},
 		},
 	}
 
@@ -243,7 +243,7 @@ func (s *StateLeafTestSuite) TestGetUserStatesByPublicKey() {
 
 	userStates := []models.UserState{
 		{
-			PubKeyID:   accounts[0].PubKeyID,
+			PubKeyID:   1,
 			TokenIndex: models.MakeUint256(1),
 			Balance:    models.MakeUint256(420),
 			Nonce:      models.MakeUint256(0),
@@ -255,13 +255,13 @@ func (s *StateLeafTestSuite) TestGetUserStatesByPublicKey() {
 			Nonce:      models.MakeUint256(0),
 		},
 		{
-			PubKeyID:   accounts[0].PubKeyID,
+			PubKeyID:   1,
 			TokenIndex: models.MakeUint256(25),
 			Balance:    models.MakeUint256(1),
 			Nonce:      models.MakeUint256(73),
 		},
 		{
-			PubKeyID:   accounts[1].PubKeyID,
+			PubKeyID:   3,
 			TokenIndex: models.MakeUint256(25),
 			Balance:    models.MakeUint256(1),
 			Nonce:      models.MakeUint256(73),
