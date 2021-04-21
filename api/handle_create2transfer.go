@@ -27,7 +27,7 @@ func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*co
 	}
 	create2Transfer.ToPubKeyID = *pubKeyID
 
-	encodedCreate2Transfer, err := encoder.EncodeCreate2Transfer(create2Transfer)
+	encodedCreate2Transfer, err := encoder.EncodeCreate2TransferWithPubKey(create2Transfer, toPublicKey)
 	if err != nil {
 		return nil, err
 	}
