@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"testing"
 
+	contractCreate2Transfer "github.com/Worldcoin/hubble-commander/contracts/frontend/create2transfer"
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
 	contractTransfer "github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
 	testtx "github.com/Worldcoin/hubble-commander/contracts/test/tx"
@@ -21,11 +22,12 @@ import (
 type EncoderTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	sim       *simulator.Simulator
-	transfer  *contractTransfer.FrontendTransfer
-	generic   *generic.FrontendGeneric
-	testTx    *testtx.TestTx
-	testTypes *types.TestTypes
+	sim             *simulator.Simulator
+	transfer        *contractTransfer.FrontendTransfer
+	create2Transfer *contractCreate2Transfer.FrontendCreate2Transfer
+	generic         *generic.FrontendGeneric
+	testTx          *testtx.TestTx
+	testTypes       *types.TestTypes
 }
 
 func (s *EncoderTestSuite) SetupSuite() {
@@ -43,6 +45,7 @@ func (s *EncoderTestSuite) SetupTest() {
 	s.NoError(err)
 
 	s.transfer = frontend.FrontendTransfer
+	s.create2Transfer = frontend.FrontendCreate2Transfer
 	s.generic = frontend.FrontendGeneric
 	s.testTx = test.TestTx
 	s.testTypes = test.TestTypes
@@ -75,6 +78,54 @@ func (s *EncoderTestSuite) TestEncodeTransfer() {
 	s.Equal(expected, encodedTransfer)
 }
 
+func (s *EncoderTestSuite) TestEncodeCreate2Transfer() {
+	encodedCreate2Transfer, err := EncodeCreate2Transfer(&models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 4,
+			Amount:      models.MakeUint256(7),
+			Fee:         models.MakeUint256(8),
+			Nonce:       models.MakeUint256(9),
+		},
+		ToStateID:  5,
+		ToPubKeyID: 6,
+	})
+	s.NoError(err)
+	expected, err := s.create2Transfer.Encode(nil, contractCreate2Transfer.OffchainCreate2Transfer{
+		TxType:     big.NewInt(3),
+		FromIndex:  big.NewInt(4),
+		ToIndex:    big.NewInt(5),
+		ToPubkeyID: big.NewInt(6),
+		Amount:     big.NewInt(7),
+		Fee:        big.NewInt(8),
+		Nonce:      big.NewInt(9),
+	})
+	s.NoError(err)
+	s.Equal(expected, encodedCreate2Transfer)
+}
+
+func (s *EncoderTestSuite) TestEncodeCreate2TransferWithPubKey() {
+	publicKey := models.PublicKey{1, 2, 3, 4, 5, 6}
+	encodedCreate2Transfer, err := EncodeCreate2TransferWithPubKey(&models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 4,
+			Amount:      models.MakeUint256(5),
+			Fee:         models.MakeUint256(6),
+			Nonce:       models.MakeUint256(7),
+		},
+	}, &publicKey)
+	s.NoError(err)
+	expected, err := s.create2Transfer.EncodeWithPub(nil, contractCreate2Transfer.OffchainCreate2TransferWithPub{
+		TxType:    big.NewInt(3),
+		FromIndex: big.NewInt(4),
+		ToPubkey:  publicKey.BigInts(),
+		Amount:    big.NewInt(5),
+		Fee:       big.NewInt(6),
+		Nonce:     big.NewInt(7),
+	})
+	s.NoError(err)
+	s.Equal(expected, encodedCreate2Transfer)
+}
+
 func (s *EncoderTestSuite) TestEncodeTransferForSigning() {
 	tx := &models.Transfer{
 		TransactionBase: models.TransactionBase{
@@ -91,6 +142,26 @@ func (s *EncoderTestSuite) TestEncodeTransferForSigning() {
 	s.NoError(err)
 
 	actual, err := EncodeTransferForSigning(tx)
+	s.NoError(err)
+	s.Equal(expected, actual)
+}
+
+func (s *EncoderTestSuite) TestEncodeCreate2TransferForSigning() {
+	tx := &models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 4,
+			Amount:      models.MakeUint256(5),
+			Fee:         models.MakeUint256(6),
+			Nonce:       models.MakeUint256(7),
+		},
+	}
+	publicKey := models.PublicKey{1, 2, 3, 4, 5, 6}
+	encodedCreate2Transfer, err := EncodeCreate2TransferWithPubKey(tx, &publicKey)
+	s.NoError(err)
+	expected, err := s.create2Transfer.SignBytes(nil, encodedCreate2Transfer)
+	s.NoError(err)
+
+	actual, err := EncodeCreate2TransferForSigning(tx, &publicKey)
 	s.NoError(err)
 	s.Equal(expected, actual)
 }

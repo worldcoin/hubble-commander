@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	create2transfer = models.Create2Transfer{
+	create2Transfer = models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
 			Hash:                 common.BigToHash(big.NewInt(1234)),
 			FromStateID:          0,
@@ -88,7 +88,7 @@ func (s *ApplyCreate2TransferTestSuite) TearDownTest() {
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InsertsNewEmptyStateLeaf() {
-	transferError, appError := ApplyCreate2Transfer(s.storage, &create2transfer, feeReceiverTokenIndex)
+	transferError, appError := ApplyCreate2Transfer(s.storage, &create2Transfer, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -100,13 +100,13 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InsertsNewEmpty
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer() {
-	transferError, appError := ApplyCreate2Transfer(s.storage, &create2transfer, feeReceiverTokenIndex)
+	transferError, appError := ApplyCreate2Transfer(s.storage, &create2Transfer, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)
 
 	receiverLeaf, err := s.tree.Leaf(2)
 	s.NoError(err)
-	senderLeaf, err := s.tree.Leaf(create2transfer.FromStateID)
+	senderLeaf, err := s.tree.Leaf(create2Transfer.FromStateID)
 	s.NoError(err)
 
 	s.Equal(int64(8900), senderLeaf.Balance.Int64())
