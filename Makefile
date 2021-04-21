@@ -70,8 +70,8 @@ test-e2e-locally: clean-testcache
 	teardown-db
 	update-contracts
 	run
-	prune-run
-	dev-run
+	run-prune
+	run-dev
 	lint
 	test
 	test-hardhat
