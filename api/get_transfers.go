@@ -1,23 +1,23 @@
 package api
 
 import (
-	"github.com/Worldcoin/hubble-commander/commander"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/dto"
 )
 
-func (a *API) GetTransfers(publicKey *models.PublicKey) ([]models.TransferReceipt, error) {
+func (a *API) GetTransfers(publicKey *models.PublicKey) ([]dto.TransferReceipt, error) {
 	transfers, err := a.storage.GetTransfersByPublicKey(publicKey)
 	if err != nil {
 		return nil, err
 	}
 
-	userTransfers := make([]models.TransferReceipt, 0, len(transfers))
+	userTransfers := make([]dto.TransferReceipt, 0, len(transfers))
 	for i := range transfers {
-		status, err := CalculateTransferStatus(a.storage, &transfers[i], commander.LatestBlockNumber)
+		status, err := CalculateTransferStatus(a.storage, &transfers[i], a.storage.GetLatestBlockNumber())
 		if err != nil {
 			return nil, err
 		}
-		returnTransfer := &models.TransferReceipt{
+		returnTransfer := &dto.TransferReceipt{
 			Transfer: transfers[i],
 			Status:   *status,
 		}
