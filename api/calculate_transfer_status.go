@@ -6,7 +6,11 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func CalculateTransferStatus(storage *st.Storage, transfer *models.Transfer, latestBlockNumber uint32) (*txstatus.TransactionStatus, error) {
+func CalculateTransferStatus(
+	storage *st.Storage,
+	transfer *models.Transfer,
+	latestBlockNumber uint32,
+) (*txstatus.TransactionStatus, error) {
 	if transfer.ErrorMessage != nil {
 		return txstatus.Error.Ref(), nil
 	}
