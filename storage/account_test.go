@@ -5,6 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -99,6 +100,78 @@ func (s *AccountTestSuite) TestGetPublicKey_ReturnsPublicKey() {
 	key, err := s.storage.GetPublicKey(0)
 	s.NoError(err)
 	s.Equal(account.PublicKey, *key)
+}
+
+func (s *AccountTestSuite) Test_GetUnusedPubKeyID_NoPublicKeys() {
+	_, err := s.storage.GetUnusedPubKeyID(&models.PublicKey{1, 2, 3})
+	s.Equal(NewNotFoundError("pub key id"), err)
+}
+
+func (s *AccountTestSuite) Test_GetUnusedPubKeyID_NoUnusedPublicIDs() {
+	account := models.Account{
+		PubKeyID:  0,
+		PublicKey: models.PublicKey{1, 2, 3},
+	}
+
+	err := s.storage.AddAccountIfNotExists(&account)
+	s.NoError(err)
+
+	leaf := &models.StateLeaf{
+		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
+		UserState: models.UserState{
+			PubKeyID:   0,
+			TokenIndex: models.MakeUint256(1),
+			Balance:    models.MakeUint256(420),
+			Nonce:      models.MakeUint256(0),
+		},
+	}
+	err = s.storage.AddStateLeaf(leaf)
+	s.NoError(err)
+
+	_, err = s.storage.GetUnusedPubKeyID(&models.PublicKey{1, 2, 3})
+	s.Equal(NewNotFoundError("pub key id"), err)
+}
+
+func (s *AccountTestSuite) Test_GetUnusedPubKeyID() {
+	accounts := []models.Account{
+		{
+			PubKeyID:  0,
+			PublicKey: models.PublicKey{1, 2, 3},
+		},
+		{
+			PubKeyID:  1,
+			PublicKey: models.PublicKey{2, 3, 4},
+		},
+		{
+			PubKeyID:  2,
+			PublicKey: models.PublicKey{2, 3, 4},
+		},
+		{
+			PubKeyID:  3,
+			PublicKey: models.PublicKey{2, 3, 4},
+		},
+	}
+
+	for i := range accounts {
+		err := s.storage.AddAccountIfNotExists(&accounts[i])
+		s.NoError(err)
+	}
+
+	leaf := &models.StateLeaf{
+		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
+		UserState: models.UserState{
+			PubKeyID:   1,
+			TokenIndex: models.MakeUint256(1),
+			Balance:    models.MakeUint256(420),
+			Nonce:      models.MakeUint256(0),
+		},
+	}
+	err := s.storage.AddStateLeaf(leaf)
+	s.NoError(err)
+
+	pubKeyID, err := s.storage.GetUnusedPubKeyID(&accounts[1].PublicKey)
+	s.NoError(err)
+	s.Equal(uint32(2), *pubKeyID)
 }
 
 func TestAccountTestSuite(t *testing.T) {

@@ -7,16 +7,16 @@ import (
 
 func ApplyCreate2Transfer(
 	storage *st.Storage,
-	create2transfer *models.Create2Transfer,
+	create2Transfer *models.Create2Transfer,
 	feeReceiverTokenIndex models.Uint256,
-) (create2transferError, appError error) {
+) (create2TransferError, appError error) {
 	stateTree := st.NewStateTree(storage)
-	senderUserState, err := stateTree.Leaf(create2transfer.FromStateID)
+	senderUserState, err := stateTree.Leaf(create2Transfer.FromStateID)
 	if err != nil {
 		return nil, err
 	}
 	emptyUserState := models.UserState{
-		PubKeyID:   create2transfer.ToPubKeyID,
+		PubKeyID:   create2Transfer.ToPubKeyID,
 		TokenIndex: senderUserState.TokenIndex,
 		Balance:    models.MakeUint256(0),
 		Nonce:      models.MakeUint256(0),
@@ -33,13 +33,13 @@ func ApplyCreate2Transfer(
 	}
 
 	transfer := models.Transfer{
-		TransactionBase: create2transfer.TransactionBase,
+		TransactionBase: create2Transfer.TransactionBase,
 		ToStateID:       *nextAvailableStateID,
 	}
 
-	create2transferError, appError = ApplyTransfer(stateTree, &transfer, feeReceiverTokenIndex)
-	if create2transferError != nil || appError != nil {
-		return create2transferError, appError
+	create2TransferError, appError = ApplyTransfer(stateTree, &transfer, feeReceiverTokenIndex)
+	if create2TransferError != nil || appError != nil {
+		return create2TransferError, appError
 	}
 
 	return nil, nil
