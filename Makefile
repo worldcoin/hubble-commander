@@ -37,7 +37,10 @@ run:
 	go run ./main/main.go
 
 prune-run:
-	go run ./main/main.go --prune=true
+	go run ./main/main.go -prune
+
+dev-run:
+	go run ./main/main.go -prune -dev
 
 lint:
 	golangci-lint run ./...
@@ -68,6 +71,7 @@ test-e2e-locally: clean-testcache
 	update-contracts
 	run
 	prune-run
+	dev-run
 	lint
 	test
 	test-hardhat
