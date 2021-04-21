@@ -36,8 +36,11 @@ update-contracts:
 run:
 	go run ./main/main.go
 
-prune-run:
-	go run ./main/main.go --prune=true
+run-prune:
+	go run ./main/main.go -prune
+
+run-dev:
+	go run ./main/main.go -prune -dev
 
 lint:
 	golangci-lint run ./...
@@ -67,7 +70,8 @@ test-e2e-locally: clean-testcache
 	teardown-db
 	update-contracts
 	run
-	prune-run
+	run-prune
+	run-dev
 	lint
 	test
 	test-hardhat

@@ -103,5 +103,9 @@ func (a *API) validateTransfer(transfer *models.Transfer) error {
 	if err != nil {
 		return err
 	}
-	return a.validateSignature(encodedTransfer, transfer.Signature, &senderState.UserState)
+
+	if !a.cfg.DevMode {
+		return a.validateSignature(encodedTransfer, transfer.Signature, &senderState.UserState)
+	}
+	return nil
 }
