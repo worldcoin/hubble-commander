@@ -187,16 +187,6 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesSignature() {
 	s.Equal(ErrInvalidSignature, err)
 }
 
-func (s *SendTransferTestSuite) TestSendTransfer_AddsTransferToStorage() {
-	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
-	s.NoError(err)
-	s.NotNil(hash)
-
-	transfer, err := s.api.storage.GetTransfer(*hash)
-	s.NoError(err)
-	s.NotNil(transfer)
-}
-
 func (s *SendTransferTestSuite) TestSendTransaction_ValidatesSignature_DevMode() {
 	s.api.cfg = &config.APIConfig{DevMode: true}
 
@@ -210,6 +200,16 @@ func (s *SendTransferTestSuite) TestSendTransaction_ValidatesSignature_DevMode()
 
 	_, err = s.api.SendTransaction(dto.MakeTransaction(transfer))
 	s.NoError(err)
+}
+
+func (s *SendTransferTestSuite) TestSendTransfer_AddsTransferToStorage() {
+	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
+	s.NoError(err)
+	s.NotNil(hash)
+
+	transfer, err := s.api.storage.GetTransfer(*hash)
+	s.NoError(err)
+	s.NotNil(transfer)
 }
 
 func TestSendTransactionTestSuite(t *testing.T) {
