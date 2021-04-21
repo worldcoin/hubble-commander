@@ -2,6 +2,8 @@ package db
 
 import (
 	"database/sql"
+
+	"github.com/pkg/errors"
 )
 
 type QueryBuilder struct {
@@ -21,7 +23,7 @@ func (qb *QueryBuilder) Into(dest interface{}) error {
 	}
 	err := qb.db.Select(dest, qb.sql, qb.args...)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	return nil
 }
@@ -32,12 +34,12 @@ func (qb *QueryBuilder) Exec() (sql.Result, error) {
 	}
 	sqlRes, err := qb.db.Exec(qb.sql, qb.args...)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	return sqlRes, nil
 }
 
 func (d *Database) Query(query SQLBuilder) *QueryBuilder {
 	sqlQuery, args, err := query.ToSql()
-	return &QueryBuilder{d, sqlQuery, args, err}
+	return &QueryBuilder{d, sqlQuery, args, errors.WithStack(err)}
 }
