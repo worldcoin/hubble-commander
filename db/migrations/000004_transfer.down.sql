@@ -1,1 +1,1 @@
-DROP TABLE "transfer";
+DROP TABLE transfer;
