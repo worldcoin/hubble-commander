@@ -102,3 +102,23 @@ func (s *Storage) GetLatestFinalisedBatch(currentBlockNumber uint32) (*models.Ba
 	}
 	return &res[0], nil
 }
+
+func (s *Storage) GetBatchesInRange(from, to *models.Uint256) ([]models.Batch, error) {
+	qb := s.QB.Select("*").
+		From("batch")
+
+	if from != nil {
+		qb = qb.Where(squirrel.GtOrEq{"batch_id": from})
+	}
+
+	if to != nil {
+		qb = qb.Where(squirrel.LtOrEq{"batch_id": to})
+	}
+
+	res := make([]models.Batch, 0, 32)
+	err := s.DB.Query(qb).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}

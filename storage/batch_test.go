@@ -67,19 +67,19 @@ func (s *BatchTestSuite) TestGetBatchByID() {
 	s.Equal(batch, actual)
 }
 
-func (s *StateUpdateTestSuite) TestGetBatch_NonExistentBatch() {
+func (s *BatchTestSuite) TestGetBatch_NonExistentBatch() {
 	res, err := s.storage.GetBatch(common.Hash{1, 2, 3, 4})
 	s.Equal(NewNotFoundError("batch"), err)
 	s.Nil(res)
 }
 
-func (s *StateUpdateTestSuite) TestGetBatchByID_NonExistentBatch() {
+func (s *BatchTestSuite) TestGetBatchByID_NonExistentBatch() {
 	res, err := s.storage.GetBatchByID(models.MakeUint256(42))
 	s.Equal(NewNotFoundError("batch"), err)
 	s.Nil(res)
 }
 
-func (s *StateUpdateTestSuite) TestGetBatchByCommitmentID() {
+func (s *BatchTestSuite) TestGetBatchByCommitmentID() {
 	batchHash := utils.RandomHash()
 
 	batch := &models.Batch{
@@ -110,7 +110,7 @@ func (s *StateUpdateTestSuite) TestGetBatchByCommitmentID() {
 	s.Equal(batch, actual)
 }
 
-func (s *StateUpdateTestSuite) TestGetBatchByCommitmentID_NotExistentBatch() {
+func (s *BatchTestSuite) TestGetBatchByCommitmentID_NotExistentBatch() {
 	commitment := &models.Commitment{
 		Type:              txtype.Transfer,
 		Transactions:      []byte{1, 2, 3},
@@ -155,7 +155,7 @@ func (s *BatchTestSuite) TestGetLatestBatch() {
 	s.Equal(batches[1], *actual)
 }
 
-func (s *StateUpdateTestSuite) TestGetLatestBatch_NoBatches() {
+func (s *BatchTestSuite) TestGetLatestBatch_NoBatches() {
 	res, err := s.storage.GetLatestBatch()
 	s.Equal(NewNotFoundError("batch"), err)
 	s.Nil(res)
@@ -182,12 +182,10 @@ func (s *BatchTestSuite) TestGetLatestFinalisedBatch() {
 			FinalisationBlock: 2000,
 		},
 	}
-	err := s.storage.AddBatch(&batches[0])
-	s.NoError(err)
-	err = s.storage.AddBatch(&batches[1])
-	s.NoError(err)
-	err = s.storage.AddBatch(&batches[2])
-	s.NoError(err)
+	for i := range batches {
+		err := s.storage.AddBatch(&batches[i])
+		s.NoError(err)
+	}
 
 	finalisedBatch, err := s.storage.GetLatestFinalisedBatch(1800)
 	s.NoError(err)
@@ -195,10 +193,65 @@ func (s *BatchTestSuite) TestGetLatestFinalisedBatch() {
 	s.Equal(batches[1], *finalisedBatch)
 }
 
-func (s *StateUpdateTestSuite) TestGetLatestFinalisedBatch_NoBatches() {
+func (s *BatchTestSuite) TestGetLatestFinalisedBatch_NoBatches() {
 	res, err := s.storage.GetLatestFinalisedBatch(500)
 	s.Equal(NewNotFoundError("batch"), err)
 	s.Nil(res)
+}
+
+func (s *BatchTestSuite) TestGetBatchesInRange_ReturnsCorrectBatches() {
+	batches := []models.Batch{
+		{Hash: utils.RandomHash(), ID: models.MakeUint256(1)},
+		{Hash: utils.RandomHash(), ID: models.MakeUint256(2)},
+		{Hash: utils.RandomHash(), ID: models.MakeUint256(3)},
+		{Hash: utils.RandomHash(), ID: models.MakeUint256(4)},
+	}
+	for i := range batches {
+		err := s.storage.AddBatch(&batches[i])
+		s.NoError(err)
+	}
+	actual, err := s.storage.GetBatchesInRange(models.NewUint256(2), models.NewUint256(3))
+	s.NoError(err)
+	s.Equal(batches[1:3], actual)
+}
+
+func (s *BatchTestSuite) TestGetBatchesInRange_ReturnsEmptySliceWhenThereAreNoBatchesInRange() {
+	err := s.storage.AddBatch(&models.Batch{Hash: utils.RandomHash(), ID: models.MakeUint256(1)})
+	s.NoError(err)
+
+	actual, err := s.storage.GetBatchesInRange(models.NewUint256(2), models.NewUint256(3))
+	s.NoError(err)
+	s.Len(actual, 0)
+}
+
+func (s *BatchTestSuite) TestGetBatchesInRange_ReturnsAllBatchesStartingWithLowerBound() {
+	batches := []models.Batch{
+		{Hash: utils.RandomHash(), ID: models.MakeUint256(1)},
+		{Hash: utils.RandomHash(), ID: models.MakeUint256(2)},
+		{Hash: utils.RandomHash(), ID: models.MakeUint256(3)},
+	}
+	for i := range batches {
+		err := s.storage.AddBatch(&batches[i])
+		s.NoError(err)
+	}
+	actual, err := s.storage.GetBatchesInRange(models.NewUint256(2), nil)
+	s.NoError(err)
+	s.Equal(batches[1:], actual)
+}
+
+func (s *BatchTestSuite) TestGetBatchesInRange_ReturnsAllBatchesUpUntilUpperBound() {
+	batches := []models.Batch{
+		{Hash: utils.RandomHash(), ID: models.MakeUint256(1)},
+		{Hash: utils.RandomHash(), ID: models.MakeUint256(2)},
+		{Hash: utils.RandomHash(), ID: models.MakeUint256(3)},
+	}
+	for i := range batches {
+		err := s.storage.AddBatch(&batches[i])
+		s.NoError(err)
+	}
+	actual, err := s.storage.GetBatchesInRange(nil, models.NewUint256(2))
+	s.NoError(err)
+	s.Equal(batches[:2], actual)
 }
 
 func TestBatchTestSuite(t *testing.T) {
