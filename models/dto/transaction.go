@@ -8,9 +8,8 @@ import (
 )
 
 var (
-	ErrMissingType     = errors.New("missing type")
-	ErrUnsupportedType = errors.New("unsupported type")
-	ErrNotImplemented  = errors.New("not implemented")
+	ErrMissingType    = errors.New("missing type")
+	ErrNotImplemented = errors.New("not implemented")
 )
 
 type Transaction struct {
@@ -39,10 +38,8 @@ func (tx *Transaction) UnmarshalJSON(bytes []byte) error {
 		return tx.unmarshalTransfer(bytes)
 	case txtype.Create2Transfer:
 		return tx.unmarshalCreate2Transfer(bytes)
-	case txtype.MassMigration:
-		return ErrNotImplemented
 	default:
-		return ErrUnsupportedType
+		return ErrNotImplemented
 	}
 }
 
