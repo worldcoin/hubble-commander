@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
@@ -30,7 +31,11 @@ func (s *GetTransferTestSuite) SetupTest() {
 	s.NoError(err)
 
 	storage := st.NewTestStorage(testDB.DB)
-	s.api = &API{nil, storage, nil}
+	s.api = &API{
+		cfg:     &config.APIConfig{},
+		storage: storage,
+		client:  nil,
+	}
 	s.db = testDB
 
 	s.wallet, err = bls.NewRandomWallet(mockDomain)
@@ -42,7 +47,12 @@ func (s *GetTransferTestSuite) SetupTest() {
 	})
 	s.NoError(err)
 
-	err = st.NewStateTree(storage).Set(1, &userState)
+	err = st.NewStateTree(storage).Set(1, &models.UserState{
+		PubKeyID:   123,
+		TokenIndex: models.MakeUint256(1),
+		Balance:    models.MakeUint256(420),
+		Nonce:      models.MakeUint256(0),
+	})
 	s.NoError(err)
 
 	s.transfer = s.signTransfer(transferWithoutSignature)

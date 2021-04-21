@@ -1,1 +1,1 @@
-DROP TABLE "transaction_base";
+DROP TABLE transaction_base;
