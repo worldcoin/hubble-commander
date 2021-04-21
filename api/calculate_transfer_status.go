@@ -2,16 +2,21 @@ package api
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func CalculateTransferStatus(storage *st.Storage, transfer *models.Transfer, latestBlockNumber uint32) (*models.TransferStatus, error) {
+func CalculateTransferStatus(
+	storage *st.Storage,
+	transfer *models.Transfer,
+	latestBlockNumber uint32,
+) (*txstatus.TransactionStatus, error) {
 	if transfer.ErrorMessage != nil {
-		return models.Error.Ref(), nil
+		return txstatus.Error.Ref(), nil
 	}
 
 	if transfer.IncludedInCommitment == nil {
-		return models.Pending.Ref(), nil
+		return txstatus.Pending.Ref(), nil
 	}
 
 	batch, err := storage.GetBatchByCommitmentID(*transfer.IncludedInCommitment)
@@ -20,7 +25,7 @@ func CalculateTransferStatus(storage *st.Storage, transfer *models.Transfer, lat
 	}
 
 	if latestBlockNumber < batch.FinalisationBlock {
-		return models.InBatch.Ref(), nil
+		return txstatus.InBatch.Ref(), nil
 	}
-	return models.Finalised.Ref(), nil
+	return txstatus.Finalised.Ref(), nil
 }

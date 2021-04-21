@@ -6,6 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
@@ -89,7 +90,7 @@ func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Pending()
 	status, err := CalculateTransferStatus(s.storage, s.transfer, 0)
 	s.NoError(err)
 
-	s.Equal(models.Pending, *status)
+	s.Equal(txstatus.Pending, *status)
 }
 
 func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_InBatch() {
@@ -111,7 +112,7 @@ func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_InBatch()
 	status, err := CalculateTransferStatus(s.storage, s.transfer, 0)
 	s.NoError(err)
 
-	s.Equal(models.InBatch, *status)
+	s.Equal(txstatus.InBatch, *status)
 }
 
 // nolint:misspell
@@ -140,7 +141,7 @@ func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Finalised
 	status, err := CalculateTransferStatus(s.storage, s.transfer, *latestBlockNumber)
 	s.NoError(err)
 
-	s.Equal(models.Finalised, *status)
+	s.Equal(txstatus.Finalised, *status)
 }
 
 func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Error() {
@@ -148,7 +149,7 @@ func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Error() {
 	status, err := CalculateTransferStatus(s.storage, s.transfer, 0)
 	s.NoError(err)
 
-	s.Equal(models.Error, *status)
+	s.Equal(txstatus.Error, *status)
 }
 
 func TestCalculateTransferStatusTestSuite(t *testing.T) {
