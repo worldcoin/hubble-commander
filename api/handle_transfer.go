@@ -94,13 +94,15 @@ func (a *API) validateTransfer(transfer *models.Transfer) error {
 	}
 
 	latestNonce, err := a.storage.GetLatestTransactionNonce(transfer.FromStateID)
-	if err != nil && !storage.IsNotFoundError(err)  {
+	if err != nil && !storage.IsNotFoundError(err) {
 		return err
 	}
 
+	// nolint:govet
 	if err := a.validateNonce(&transfer.Nonce, latestNonce, &senderState.UserState.Nonce); err != nil {
 		return err
 	}
+	// nolint:govet
 	if err := validateBalance(&transfer.Amount, &transfer.Fee, &senderState.UserState); err != nil {
 		return err
 	}

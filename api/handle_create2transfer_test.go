@@ -27,12 +27,12 @@ var (
 type SendCreate2TransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	api      *API
-	db       *db.TestDB
-	tree     *st.StateTree
-	userState *models.UserState
+	api             *API
+	db              *db.TestDB
+	tree            *st.StateTree
+	userState       *models.UserState
 	create2Transfer dto.Create2Transfer
-	senderWallet   *bls.Wallet
+	senderWallet    *bls.Wallet
 }
 
 func (s *SendCreate2TransferTestSuite) SetupSuite() {

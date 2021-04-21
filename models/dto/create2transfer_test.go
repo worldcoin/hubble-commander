@@ -14,7 +14,7 @@ import (
 func TestCreate2Transfer_JSONMarshaling(t *testing.T) {
 	transfer := Create2Transfer{
 		FromStateID: ref.Uint32(1),
-		ToPublicKey:   &models.PublicKey{1, 2, 3},
+		ToPublicKey: &models.PublicKey{1, 2, 3},
 		Amount:      models.NewUint256(50),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(0),
@@ -36,7 +36,7 @@ func TestCreate2Transfer_MarshalJSON(t *testing.T) {
 
 	transfer := Create2Transfer{
 		FromStateID: ref.Uint32(1),
-		ToPublicKey:   &models.PublicKey{1, 2, 3},
+		ToPublicKey: &models.PublicKey{1, 2, 3},
 		Amount:      models.NewUint256(50),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(0),
