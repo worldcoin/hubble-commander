@@ -27,6 +27,9 @@ func (s *StorageTestSuite) SetupTest() {
 	s.NoError(err)
 	s.storage = NewTestStorage(testDB.DB)
 	s.db = testDB
+
+	err = s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
 }
 
 func (s *StorageTestSuite) TearDownTest() {
@@ -34,11 +37,11 @@ func (s *StorageTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *StorageTestSuite) Test_BeginTransaction_Commit() {
+func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	leaf := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
-			PubkeyID:   1,
+			PubKeyID:   1,
 			TokenIndex: models.MakeUint256(1),
 			Balance:    models.MakeUint256(420),
 			Nonce:      models.MakeUint256(0),
@@ -62,11 +65,11 @@ func (s *StorageTestSuite) Test_BeginTransaction_Commit() {
 	s.Equal(leaf, res)
 }
 
-func (s *StorageTestSuite) Test_BeginTransaction_Rollback() {
+func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 	leaf := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
-			PubkeyID:   1,
+			PubKeyID:   1,
 			TokenIndex: models.MakeUint256(1),
 			Balance:    models.MakeUint256(420),
 			Nonce:      models.MakeUint256(0),
@@ -86,11 +89,14 @@ func (s *StorageTestSuite) Test_BeginTransaction_Rollback() {
 	s.Nil(res)
 }
 
-func (s *StorageTestSuite) Test_BeginTransaction_Lock() {
+func (s *StorageTestSuite) TestBeginTransaction_Lock() {
+	err := s.storage.AddAccountIfNotExists(&account2)
+	s.NoError(err)
+
 	leafOne := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
-			PubkeyID:   1,
+			PubKeyID:   1,
 			TokenIndex: models.MakeUint256(1),
 			Balance:    models.MakeUint256(420),
 			Nonce:      models.MakeUint256(0),
@@ -99,7 +105,7 @@ func (s *StorageTestSuite) Test_BeginTransaction_Lock() {
 	leafTwo := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 		UserState: models.UserState{
-			PubkeyID:   2,
+			PubKeyID:   2,
 			TokenIndex: models.MakeUint256(1),
 			Balance:    models.MakeUint256(1000),
 			Nonce:      models.MakeUint256(0),

@@ -24,7 +24,7 @@ func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*co
 
 	create2Transfer := models.Create2Transfer{
 		TransactionBase: *create2TransferBase,
-		ToPubkeyID:      *pubKeyID,
+		ToPubKeyID:      *pubKeyID,
 	}
 
 	if validationErr := a.validateCreate2Transfer(&create2Transfer, create2TransferDTO.ToPublicKey); validationErr != nil {
@@ -47,7 +47,7 @@ func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*co
 			Signature:   create2TransferBase.Signature,
 		},
 		ToStateID:  create2Transfer.ToStateID,
-		ToPubkeyID: *pubKeyID,
+		ToPubKeyID: *pubKeyID,
 	}
 	err = a.storage.AddCreate2Transfer(&create2Transfer)
 	if err != nil {

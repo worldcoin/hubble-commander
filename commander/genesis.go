@@ -9,16 +9,26 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/storage"
+	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
 )
 
-func PopulateGenesisAccounts(stateTree *storage.StateTree, accounts []models.RegisteredGenesisAccount) error {
+func PopulateGenesisAccounts(storage *st.Storage, accounts []models.RegisteredGenesisAccount) error {
+	stateTree := st.NewStateTree(storage)
+
 	for i := range accounts {
 		account := accounts[i]
-		err := stateTree.Set(uint32(i), &models.UserState{
-			PubkeyID:   account.PubKeyID,
+		err := storage.AddAccountIfNotExists(&models.Account{
+			PubKeyID:  account.PubKeyID,
+			PublicKey: account.PublicKey,
+		})
+		if err != nil {
+			return err
+		}
+
+		err = stateTree.Set(uint32(i), &models.UserState{
+			PubKeyID:   account.PubKeyID,
 			TokenIndex: models.MakeUint256(0),
 			Balance:    account.Balance,
 			Nonce:      models.MakeUint256(0),
@@ -50,7 +60,7 @@ func RegisterGenesisAccounts(
 		if err != nil {
 			return nil, err
 		}
-		log.Printf("Registered genesis pubkey %s at %d", registeredAccount.PublicKey.String(), registeredAccount.PubKeyID)
+		log.Printf("Registered genesis public key %s at id %d", registeredAccount.PublicKey.String(), registeredAccount.PubKeyID)
 		registeredAccounts = append(registeredAccounts, *registeredAccount)
 	}
 

@@ -23,7 +23,7 @@ var (
 			Signature:            []byte{1, 2, 3, 4, 5},
 			IncludedInCommitment: nil,
 		},
-		ToPubkeyID: 2,
+		ToPubKeyID: 2,
 	}
 	feeReceiverTokenIndex = models.MakeUint256(5)
 )
@@ -47,15 +47,34 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 	s.db = testDB
 	s.tree = st.NewStateTree(s.storage)
 
+	accounts := []models.Account{
+		{
+			PubKeyID:  0,
+			PublicKey: models.PublicKey{1, 2, 3},
+		},
+		{
+			PubKeyID:  1,
+			PublicKey: models.PublicKey{2, 3, 4},
+		},
+		{
+			PubKeyID:  2,
+			PublicKey: models.PublicKey{3, 4, 5},
+		},
+	}
+	for i := range accounts {
+		err = s.storage.AddAccountIfNotExists(&accounts[i])
+		s.NoError(err)
+	}
+
 	err = s.tree.Set(0, &models.UserState{
-		PubkeyID:   0,
+		PubKeyID:   0,
 		TokenIndex: feeReceiverTokenIndex,
 		Balance:    models.MakeUint256(10000),
 		Nonce:      models.MakeUint256(0),
 	})
 	s.NoError(err)
 	err = s.tree.Set(1, &models.UserState{
-		PubkeyID:   1,
+		PubKeyID:   1,
 		TokenIndex: feeReceiverTokenIndex,
 		Balance:    models.MakeUint256(0),
 		Nonce:      models.MakeUint256(0),
@@ -68,7 +87,7 @@ func (s *ApplyCreate2TransferTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *ApplyCreate2TransferTestSuite) Test_ApplyCreate2Transfer_InsertsNewEmptyStateLeaf() {
+func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InsertsNewEmptyStateLeaf() {
 	transferError, appError := ApplyCreate2Transfer(s.storage, &create2Transfer, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)
@@ -80,7 +99,7 @@ func (s *ApplyCreate2TransferTestSuite) Test_ApplyCreate2Transfer_InsertsNewEmpt
 	s.Equal(feeReceiverTokenIndex, leaf.TokenIndex)
 }
 
-func (s *ApplyCreate2TransferTestSuite) Test_ApplyCreate2Transfer_ApplyTransfer() {
+func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer() {
 	transferError, appError := ApplyCreate2Transfer(s.storage, &create2Transfer, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)

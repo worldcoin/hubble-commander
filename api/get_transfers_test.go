@@ -41,37 +41,44 @@ func (s *GetTransfersTestSuite) TearDownTest() {
 }
 
 // nolint:funlen
-func (s *GetTransfersTestSuite) TestApi_GetTransfers() {
-	account := models.Account{
-		PubkeyID:  1,
-		PublicKey: models.PublicKey{1, 2, 3},
+func (s *GetTransfersTestSuite) TestGetTransfers() {
+	accounts := []models.Account{
+		{
+			PubKeyID:  1,
+			PublicKey: models.PublicKey{1, 2, 3},
+		},
+		{
+			PubKeyID:  2,
+			PublicKey: models.PublicKey{2, 3, 4},
+		},
 	}
-
-	err := s.storage.AddAccountIfNotExists(&account)
-	s.NoError(err)
+	for i := range accounts {
+		err := s.storage.AddAccountIfNotExists(&accounts[i])
+		s.NoError(err)
+	}
 
 	userStates := []models.UserState{
 		{
-			PubkeyID:   account.PubkeyID,
+			PubKeyID:   accounts[0].PubKeyID,
 			TokenIndex: models.MakeUint256(1),
 			Balance:    models.MakeUint256(420),
 			Nonce:      models.MakeUint256(0),
 		},
 		{
-			PubkeyID:   2,
+			PubKeyID:   accounts[1].PubKeyID,
 			TokenIndex: models.MakeUint256(2),
 			Balance:    models.MakeUint256(500),
 			Nonce:      models.MakeUint256(0),
 		},
 		{
-			PubkeyID:   account.PubkeyID,
+			PubKeyID:   accounts[0].PubKeyID,
 			TokenIndex: models.MakeUint256(25),
 			Balance:    models.MakeUint256(1),
 			Nonce:      models.MakeUint256(73),
 		},
 	}
 
-	err = s.tree.Set(0, &userStates[0])
+	err := s.tree.Set(0, &userStates[0])
 	s.NoError(err)
 	err = s.tree.Set(1, &userStates[1])
 	s.NoError(err)
@@ -138,7 +145,7 @@ func (s *GetTransfersTestSuite) TestApi_GetTransfers() {
 	err = s.storage.AddTransfer(&transfers[3])
 	s.NoError(err)
 
-	userTransfers, err := s.api.GetTransfers(&account.PublicKey)
+	userTransfers, err := s.api.GetTransfers(&accounts[0].PublicKey)
 	s.NoError(err)
 
 	s.Len(userTransfers, 3)
@@ -147,9 +154,9 @@ func (s *GetTransfersTestSuite) TestApi_GetTransfers() {
 	s.Equal(userTransfers[2].Transfer.Hash, transfers[3].Hash)
 }
 
-func (s *GetTransfersTestSuite) TestApi_GetTransfers_NoTransfers() {
+func (s *GetTransfersTestSuite) TestGetTransfers_NoTransfers() {
 	account := models.Account{
-		PubkeyID:  1,
+		PubKeyID:  1,
 		PublicKey: models.PublicKey{1, 2, 3},
 	}
 
@@ -157,7 +164,7 @@ func (s *GetTransfersTestSuite) TestApi_GetTransfers_NoTransfers() {
 	s.NoError(err)
 
 	userState := &models.UserState{
-		PubkeyID:   account.PubkeyID,
+		PubKeyID:   account.PubKeyID,
 		TokenIndex: models.MakeUint256(1),
 		Balance:    models.MakeUint256(420),
 		Nonce:      models.MakeUint256(0),

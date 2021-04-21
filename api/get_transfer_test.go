@@ -37,13 +37,13 @@ func (s *GetTransferTestSuite) SetupTest() {
 	s.NoError(err)
 
 	err = storage.AddAccountIfNotExists(&models.Account{
-		PubkeyID:  123,
+		PubKeyID:  123,
 		PublicKey: *s.wallet.PublicKey(),
 	})
 	s.NoError(err)
 
 	err = st.NewStateTree(storage).Set(1, &models.UserState{
-		PubkeyID:   123,
+		PubKeyID:   123,
 		TokenIndex: models.MakeUint256(1),
 		Balance:    models.MakeUint256(420),
 		Nonce:      models.MakeUint256(0),
@@ -64,7 +64,7 @@ func (s *GetTransferTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *GetTransferTestSuite) TestApi_GetTransfer() {
+func (s *GetTransferTestSuite) TestGetTransfer() {
 	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
 	s.NoError(err)
 

@@ -16,11 +16,11 @@ func RollupEndlessLoop(storage *st.Storage, client *eth.Client, cfg *config.Roll
 
 func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig, done <-chan bool) (err error) {
 	ticker := time.NewTicker(cfg.BatchLoopInterval)
+	defer ticker.Stop()
 
 	for {
 		select {
 		case <-done:
-			ticker.Stop()
 			return nil
 		case <-ticker.C:
 			err = createAndSubmitBatch(storage, client, cfg)

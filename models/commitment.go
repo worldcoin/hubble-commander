@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/binary"
 
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -10,6 +11,7 @@ import (
 
 type Commitment struct {
 	ID                int32 `db:"commitment_id"`
+	Type              txtype.TransactionType
 	Transactions      []byte
 	FeeReceiver       uint32       `db:"fee_receiver"`
 	CombinedSignature Signature    `db:"combined_signature"`

@@ -16,25 +16,25 @@ func ApplyCreate2Transfer(
 		return nil, err
 	}
 	emptyUserState := models.UserState{
-		PubkeyID:   create2Transfer.ToPubkeyID,
+		PubKeyID:   create2Transfer.ToPubKeyID,
 		TokenIndex: senderUserState.TokenIndex,
 		Balance:    models.MakeUint256(0),
 		Nonce:      models.MakeUint256(0),
 	}
 
-	nextAvailableLeafPath, err := storage.GetNextAvailableLeafPath()
+	nextAvailableStateID, err := storage.GetNextAvailableStateID()
 	if err != nil {
 		return nil, err
 	}
 
-	err = stateTree.Set(*nextAvailableLeafPath, &emptyUserState)
+	err = stateTree.Set(*nextAvailableStateID, &emptyUserState)
 	if err != nil {
 		return nil, err
 	}
 
 	transfer := models.Transfer{
 		TransactionBase: create2Transfer.TransactionBase,
-		ToStateID:       *nextAvailableLeafPath,
+		ToStateID:       *nextAvailableStateID,
 	}
 
 	create2TransferError, appError = ApplyTransfer(stateTree, &transfer, feeReceiverTokenIndex)

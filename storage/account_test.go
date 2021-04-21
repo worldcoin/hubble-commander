@@ -10,6 +10,17 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+var (
+	account1 = models.Account{
+		PubKeyID:  1,
+		PublicKey: models.PublicKey{3, 4, 5},
+	}
+	account2 = models.Account{
+		PubKeyID:  2,
+		PublicKey: models.PublicKey{4, 5, 6},
+	}
+)
+
 type AccountTestSuite struct {
 	*require.Assertions
 	suite.Suite
@@ -33,28 +44,23 @@ func (s *AccountTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *AccountTestSuite) Test_AddAccountIfNotExists_AddAndRetrieve() {
-	account := models.Account{
-		PubkeyID:  0,
-		PublicKey: models.PublicKey{1, 2, 3},
-	}
-
-	err := s.storage.AddAccountIfNotExists(&account)
+func (s *AccountTestSuite) TestAddAccountIfNotExists_AddAndRetrieve() {
+	err := s.storage.AddAccountIfNotExists(&account1)
 	s.NoError(err)
 
-	res, err := s.storage.GetAccounts(&account.PublicKey)
+	res, err := s.storage.GetAccounts(&account1.PublicKey)
 	s.NoError(err)
 
-	s.Equal([]models.Account{account}, res)
+	s.Equal([]models.Account{account1}, res)
 }
 
-func (s *AccountTestSuite) Test_GetAccounts_ReturnsAllAccounts() {
+func (s *AccountTestSuite) TestGetAccounts_ReturnsAllAccounts() {
 	pubKey := models.PublicKey{1, 2, 3}
 	accounts := []models.Account{{
-		PubkeyID:  0,
+		PubKeyID:  0,
 		PublicKey: pubKey,
 	}, {
-		PubkeyID:  1,
+		PubKeyID:  1,
 		PublicKey: pubKey,
 	}}
 
@@ -69,27 +75,22 @@ func (s *AccountTestSuite) Test_GetAccounts_ReturnsAllAccounts() {
 	s.Equal(accounts, res)
 }
 
-func (s *AccountTestSuite) Test_AddAccountIfNotExists_Idempotent() {
-	account := models.Account{
-		PubkeyID:  0,
-		PublicKey: models.PublicKey{1, 2, 3},
-	}
-
-	err := s.storage.AddAccountIfNotExists(&account)
+func (s *AccountTestSuite) TestAddAccountIfNotExists_Idempotent() {
+	err := s.storage.AddAccountIfNotExists(&account1)
 	s.NoError(err)
 
-	err = s.storage.AddAccountIfNotExists(&account)
+	err = s.storage.AddAccountIfNotExists(&account1)
 	s.NoError(err)
 
-	res, err := s.storage.GetAccounts(&account.PublicKey)
+	res, err := s.storage.GetAccounts(&account1.PublicKey)
 	s.NoError(err)
 
-	s.Equal([]models.Account{account}, res)
+	s.Equal([]models.Account{account1}, res)
 }
 
-func (s *AccountTestSuite) Test_GetPublicKey_ReturnsPublicKey() {
+func (s *AccountTestSuite) TestGetPublicKey_ReturnsPublicKey() {
 	account := models.Account{
-		PubkeyID:  0,
+		PubKeyID:  0,
 		PublicKey: models.PublicKey{1, 2, 3},
 	}
 
@@ -104,15 +105,15 @@ func (s *AccountTestSuite) Test_GetPublicKey_ReturnsPublicKey() {
 func (s *AccountTestSuite) Test_GetUnusedPubKeyID() {
 	accounts := []models.Account{
 		{
-			PubkeyID:  0,
+			PubKeyID:  0,
 			PublicKey: models.PublicKey{1, 2, 3},
 		},
 		{
-			PubkeyID:  1,
+			PubKeyID:  1,
 			PublicKey: models.PublicKey{2, 3, 4},
 		},
 		{
-			PubkeyID:  2,
+			PubKeyID:  2,
 			PublicKey: models.PublicKey{2, 3, 4},
 		},
 	}
@@ -125,7 +126,7 @@ func (s *AccountTestSuite) Test_GetUnusedPubKeyID() {
 	leaf := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
-			PubkeyID:   0,
+			PubKeyID:   0,
 			TokenIndex: models.MakeUint256(1),
 			Balance:    models.MakeUint256(420),
 			Nonce:      models.MakeUint256(0),

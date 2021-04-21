@@ -55,7 +55,7 @@ func (s *TransferTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *TransferTestSuite) Test_AddTransfer_AddAndRetrieve() {
+func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieve() {
 	err := s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 
@@ -65,14 +65,14 @@ func (s *TransferTestSuite) Test_AddTransfer_AddAndRetrieve() {
 	s.Equal(transfer, *res)
 }
 
-func (s *TransferTestSuite) Test_GetTransfer_NonExistentTransaction() {
+func (s *TransferTestSuite) TestGetTransfer_NonExistentTransfer() {
 	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
 	res, err := s.storage.GetTransfer(hash)
 	s.Equal(NewNotFoundError("transfer"), err)
 	s.Nil(res)
 }
 
-func (s *TransferTestSuite) Test_GetPendingTransfer_AddAndRetrieve() {
+func (s *TransferTestSuite) TestGetPendingTransfers_AddAndRetrieve() {
 	commitment := &models.Commitment{}
 	id, err := s.storage.AddCommitment(commitment)
 	s.NoError(err)
@@ -97,7 +97,7 @@ func (s *TransferTestSuite) Test_GetPendingTransfer_AddAndRetrieve() {
 	s.Equal([]models.Transfer{transfer, transfer2}, res)
 }
 
-func (s *TransferTestSuite) Test_GetUserTransfers() {
+func (s *TransferTestSuite) TestGetUserTransfers() {
 	transfer1 := transfer
 	transfer1.Hash = utils.RandomHash()
 	transfer1.FromStateID = 1
@@ -123,21 +123,25 @@ func (s *TransferTestSuite) Test_GetUserTransfers() {
 	s.Contains(userTransactions, transfer3)
 }
 
-func (s *TransferTestSuite) Test_GetUserTransfers_NoTransfers() {
+func (s *TransferTestSuite) TestGetUserTransfers_NoTransfers() {
 	userTransactions, err := s.storage.GetUserTransfers(models.MakeUint256(1))
 
 	s.NoError(err)
 	s.Len(userTransactions, 0)
 }
 
-func (s *TransferTestSuite) Test_GetTransfersByPublicKey() {
+func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 	accounts := []models.Account{
 		{
-			PubkeyID:  1,
+			PubKeyID:  1,
 			PublicKey: models.PublicKey{1, 2, 3},
 		},
 		{
-			PubkeyID:  3,
+			PubKeyID:  2,
+			PublicKey: models.PublicKey{2, 3, 4},
+		},
+		{
+			PubKeyID:  3,
 			PublicKey: models.PublicKey{1, 2, 3},
 		},
 	}
@@ -148,25 +152,25 @@ func (s *TransferTestSuite) Test_GetTransfersByPublicKey() {
 
 	userStates := []models.UserState{
 		{
-			PubkeyID:   accounts[0].PubkeyID,
+			PubKeyID:   1,
 			TokenIndex: models.MakeUint256(1),
 			Balance:    models.MakeUint256(420),
 			Nonce:      models.MakeUint256(0),
 		},
 		{
-			PubkeyID:   2,
+			PubKeyID:   2,
 			TokenIndex: models.MakeUint256(2),
 			Balance:    models.MakeUint256(500),
 			Nonce:      models.MakeUint256(0),
 		},
 		{
-			PubkeyID:   accounts[0].PubkeyID,
+			PubKeyID:   1,
 			TokenIndex: models.MakeUint256(25),
 			Balance:    models.MakeUint256(1),
 			Nonce:      models.MakeUint256(73),
 		},
 		{
-			PubkeyID:   accounts[1].PubkeyID,
+			PubKeyID:   3,
 			TokenIndex: models.MakeUint256(30),
 			Balance:    models.MakeUint256(50),
 			Nonce:      models.MakeUint256(71),
@@ -209,7 +213,7 @@ func (s *TransferTestSuite) Test_GetTransfersByPublicKey() {
 	s.Contains(userTransactions, transfer4)
 }
 
-func (s *TransferTestSuite) Test_GetUserTransfersByPublicKey_NoTransfers() {
+func (s *TransferTestSuite) TestGetUserTransfersByPublicKey_NoTransfers() {
 	userTransfers, err := s.storage.GetTransfersByPublicKey(&models.PublicKey{1, 2, 3})
 
 	s.NoError(err)

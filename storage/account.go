@@ -9,7 +9,7 @@ func (s *Storage) AddAccountIfNotExists(account *models.Account) error {
 	_, err := s.DB.Query(
 		s.QB.Insert("account").
 			Values(
-				account.PubkeyID,
+				account.PubKeyID,
 				account.PublicKey,
 			).
 			Suffix("ON CONFLICT DO NOTHING"),
@@ -36,7 +36,7 @@ func (s *Storage) GetPublicKey(pubKeyID uint32) (*models.PublicKey, error) {
 	err := s.DB.Query(
 		s.QB.Select("public_key").
 			From("account").
-			Where(squirrel.Eq{"pubkey_id": pubKeyID}),
+			Where(squirrel.Eq{"pub_key_id": pubKeyID}),
 	).Into(&res)
 	if err != nil {
 		return nil, err
@@ -50,12 +50,12 @@ func (s *Storage) GetPublicKey(pubKeyID uint32) (*models.PublicKey, error) {
 func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey) (*uint32, error) {
 	res := make([]uint32, 0, 1)
 	err := s.DB.Query(
-		s.QB.Select("account.pubkey_id").
+		s.QB.Select("account.pub_key_id").
 			From("account").
-			JoinClause("FULL OUTER JOIN state_leaf ON account.pubkey_id = state_leaf.pubkey_id").
+			JoinClause("FULL OUTER JOIN state_leaf ON account.pub_key_id = state_leaf.pub_key_id").
 			Where(squirrel.Eq{"public_key": publicKey}).
-			Where(squirrel.Eq{"state_leaf.pubkey_id": nil}).
-			OrderBy("account.pubkey_id ASC").
+			Where(squirrel.Eq{"state_leaf.pub_key_id": nil}).
+			OrderBy("account.pub_key_id ASC").
 			Limit(1),
 	).Into(&res)
 	if err != nil {

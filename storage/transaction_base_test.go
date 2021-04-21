@@ -51,7 +51,7 @@ func (s *TransactionBaseTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *TransactionBaseTestSuite) Test_SetTransactionError() {
+func (s *TransactionBaseTestSuite) TestSetTransactionError() {
 	err := s.storage.AddTransfer(&transferTransaction)
 	s.NoError(err)
 
@@ -66,9 +66,9 @@ func (s *TransactionBaseTestSuite) Test_SetTransactionError() {
 	s.Equal(errorMessage, res.ErrorMessage)
 }
 
-func (s *TransactionBaseTestSuite) Test_GetLatestTransactionNonce() {
+func (s *TransactionBaseTestSuite) TestGetLatestTransactionNonce() {
 	account := models.Account{
-		PubkeyID:  1,
+		PubKeyID:  1,
 		PublicKey: models.PublicKey{1, 2, 3},
 	}
 
@@ -92,7 +92,7 @@ func (s *TransactionBaseTestSuite) Test_GetLatestTransactionNonce() {
 	err = s.storage.AddTransfer(&tx3)
 	s.NoError(err)
 
-	userTransactions, err := s.storage.GetLatestTransactionNonce(account.PubkeyID)
+	userTransactions, err := s.storage.GetLatestTransactionNonce(account.PubKeyID)
 	s.NoError(err)
 	s.Equal(models.NewUint256(5), userTransactions)
 }

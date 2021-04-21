@@ -25,7 +25,7 @@ var (
 			IncludedInCommitment: nil,
 		},
 		ToStateID:  2,
-		ToPubkeyID: 2,
+		ToPubKeyID: 2,
 	}
 )
 
@@ -54,7 +54,7 @@ func (s *Create2TransferTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *Create2TransferTestSuite) Test_AddCreate2Transfer_AddAndRetrieve() {
+func (s *Create2TransferTestSuite) TestAddCreate2Transfer_AddAndRetrieve() {
 	err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
 
@@ -64,7 +64,7 @@ func (s *Create2TransferTestSuite) Test_AddCreate2Transfer_AddAndRetrieve() {
 	s.Equal(create2Transfer, *res)
 }
 
-func (s *Create2TransferTestSuite) Test_GetCreate2Transfer_NonExistentTransaction() {
+func (s *Create2TransferTestSuite) TestGetCreate2Transfer_NonExistentTransaction() {
 	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
 	res, err := s.storage.GetCreate2Transfer(hash)
 	s.Equal(NewNotFoundError("create2transfer"), err)

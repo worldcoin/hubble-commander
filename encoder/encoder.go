@@ -49,7 +49,7 @@ func EncodeCreate2Transfer(tx *models.Create2Transfer) ([]byte, error) {
 		big.NewInt(int64(txtype.Create2Transfer)),
 		big.NewInt(int64(tx.FromStateID)),
 		big.NewInt(int64(tx.ToStateID)),
-		big.NewInt(int64(tx.ToPubkeyID)),
+		big.NewInt(int64(tx.ToPubKeyID)),
 		&tx.Amount.Int,
 		&tx.Fee.Int,
 		&tx.Nonce.Int,
