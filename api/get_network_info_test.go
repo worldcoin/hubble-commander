@@ -47,8 +47,8 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo_NoBatches() {
 	networkInfo, err := s.api.GetNetworkInfo()
 	s.NoError(err)
 	s.NotNil(networkInfo)
-	s.Equal("", networkInfo.LatestBatch)
-	s.Equal("", networkInfo.LatestFinalisedBatch)
+	s.Nil(networkInfo.LatestBatch)
+	s.Nil(networkInfo.LatestFinalisedBatch)
 }
 
 func (s *NetworkInfoTestSuite) TestGetNetworkInfo_NoFinalisedBatches() {
@@ -74,8 +74,8 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo_NoFinalisedBatches() {
 	networkInfo, err := s.api.GetNetworkInfo()
 	s.NoError(err)
 	s.NotNil(networkInfo)
-	s.Equal("2000", networkInfo.LatestBatch)
-	s.Equal("", networkInfo.LatestFinalisedBatch)
+	s.Equal("2000", *networkInfo.LatestBatch)
+	s.Nil(networkInfo.LatestFinalisedBatch)
 }
 
 func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
@@ -104,8 +104,8 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
 	s.NoError(err)
 	s.NotNil(networkInfo)
 	s.Equal(uint32(1), networkInfo.BlockNumber)
-	s.Equal("2000", networkInfo.LatestBatch)
-	s.Equal("1234", networkInfo.LatestFinalisedBatch)
+	s.Equal("2000", *networkInfo.LatestBatch)
+	s.Equal("1234", *networkInfo.LatestFinalisedBatch)
 }
 
 func TestNetworkInfoTestSuite(t *testing.T) {
