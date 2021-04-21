@@ -5,7 +5,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func CalculateTransferStatus(storage *st.Storage, transfer *models.Transfer, latestBlockNumber uint32) (*models.TransferStatus, error) {
+func CalculateTransferStatus(storage *st.Storage, transfer *models.Transfer, latestBlockNumber uint32) (*models.TransactionStatus, error) {
 	if transfer.ErrorMessage != nil {
 		return models.Error.Ref(), nil
 	}

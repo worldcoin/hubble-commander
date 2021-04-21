@@ -4,5 +4,5 @@ import "github.com/Worldcoin/hubble-commander/models"
 
 type TransferReceipt struct {
 	models.Transfer
-	Status models.TransferStatus
+	Status models.TransactionStatus
 }
