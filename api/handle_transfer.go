@@ -93,12 +93,7 @@ func (a *API) validateTransfer(transfer *models.Transfer) error {
 		return err
 	}
 
-	latestNonce, err := a.storage.GetLatestTransactionNonce(transfer.FromStateID)
-	if err != nil && !storage.IsNotFoundError(err) {
-		return err
-	}
-
-	if vErr := a.validateNonce(&transfer.Nonce, latestNonce, &senderState.UserState.Nonce); vErr != nil {
+	if vErr := a.validateNonce(&transfer.TransactionBase, &senderState.UserState.Nonce); vErr != nil {
 		return vErr
 	}
 	if vErr := validateBalance(&transfer.Amount, &transfer.Fee, &senderState.UserState); vErr != nil {

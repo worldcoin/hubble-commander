@@ -89,12 +89,7 @@ func (a *API) validateCreate2Transfer(create2Transfer *models.Create2Transfer, t
 		return err
 	}
 
-	latestNonce, err := a.storage.GetLatestTransactionNonce(create2Transfer.FromStateID)
-	if err != nil && !storage.IsNotFoundError(err) {
-		return err
-	}
-
-	if vErr := a.validateNonce(&create2Transfer.Nonce, latestNonce, &senderState.UserState.Nonce); vErr != nil {
+	if vErr := a.validateNonce(&create2Transfer.TransactionBase, &senderState.UserState.Nonce); vErr != nil {
 		return vErr
 	}
 	if vErr := validateBalance(&create2Transfer.Amount, &create2Transfer.Fee, &senderState.UserState); vErr != nil {
