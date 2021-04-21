@@ -45,6 +45,6 @@ func TestTransfer_MarshalJSON(t *testing.T) {
 	data, err := json.Marshal(transfer)
 	require.NoError(t, err)
 
-	expected := `{"Type":1,"FromStateID":1,"ToStateID":2,"Amount":"50","Fee":"10","Nonce":"0","Signature":"0xdeadbeef"}`
+	expected := `{"Type":"TRANSFER","FromStateID":1,"ToStateID":2,"Amount":"50","Fee":"10","Nonce":"0","Signature":"0xdeadbeef"}`
 	require.Equal(t, expected, string(data))
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 )
 
 type Create2Transfer struct {
@@ -16,7 +17,7 @@ type Create2Transfer struct {
 }
 
 type create2TransferWithType struct {
-	Type        uint8
+	Type        txtype.TransactionType
 	FromStateID *uint32
 	ToPublicKey *models.PublicKey
 	Amount      *models.Uint256
