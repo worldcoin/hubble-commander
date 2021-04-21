@@ -5,7 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 )
 
-func (a *API) GetNetworkInfo() (models.NetworkInfo, error) {
+func (a *API) GetNetworkInfo() (*models.NetworkInfo, error) {
 	networkInfo := models.NetworkInfo{
 		ChainState:  a.client.ChainState,
 		BlockNumber: a.storage.GetLatestBlockNumber(),
@@ -13,7 +13,7 @@ func (a *API) GetNetworkInfo() (models.NetworkInfo, error) {
 
 	latestBatch, err := a.storage.GetLatestBatch()
 	if err != nil && !storage.IsNotFoundError(err) {
-		return models.NetworkInfo{}, err
+		return nil, err
 	}
 	if latestBatch != nil {
 		networkInfo.LatestBatch = latestBatch.ID.String()
@@ -21,11 +21,11 @@ func (a *API) GetNetworkInfo() (models.NetworkInfo, error) {
 
 	latestFinalisedBatch, err := a.storage.GetLatestFinalisedBatch(networkInfo.BlockNumber)
 	if err != nil && !storage.IsNotFoundError(err) {
-		return models.NetworkInfo{}, err
+		return nil, err
 	}
 	if latestFinalisedBatch != nil {
 		networkInfo.LatestFinalisedBatch = latestFinalisedBatch.ID.String()
 	}
 
-	return networkInfo, nil
+	return &networkInfo, nil
 }
