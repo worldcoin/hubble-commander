@@ -49,7 +49,6 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo_NoBatches() {
 	s.NotNil(networkInfo)
 	s.Equal("", networkInfo.LatestBatch)
 	s.Equal("", networkInfo.LatestFinalisedBatch)
-
 }
 
 func (s *NetworkInfoTestSuite) TestGetNetworkInfo_NoFinalisedBatches() {
@@ -77,7 +76,6 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo_NoFinalisedBatches() {
 	s.NotNil(networkInfo)
 	s.Equal("2000", networkInfo.LatestBatch)
 	s.Equal("", networkInfo.LatestFinalisedBatch)
-
 }
 
 func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {

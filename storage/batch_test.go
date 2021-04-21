@@ -201,8 +201,6 @@ func (s *StateUpdateTestSuite) TestGetLatestFinalisedBatch_NoBatches() {
 	s.Nil(res)
 }
 
-
-
 func TestBatchTestSuite(t *testing.T) {
 	suite.Run(t, new(BatchTestSuite))
 }
