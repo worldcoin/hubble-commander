@@ -82,13 +82,13 @@ func (s *SendTransferTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *SendTransferTestSuite) Test_SendTransaction_ReturnsNonNilHash() {
+func (s *SendTransferTestSuite) TestSendTransfer_ReturnsNonNilHash() {
 	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
 	s.NoError(err)
 	s.NotNil(hash)
 }
 
-func (s *SendTransferTestSuite) Test_SendTransaction_ValidatesNonceTooLow_NoTransactions() {
+func (s *SendTransferTestSuite) TestSendTransfer_ValidatesNonceTooLow_NoTransactions() {
 	userStateWithIncreasedNonce := s.userState
 	userStateWithIncreasedNonce.Nonce = *models.NewUint256(1)
 
@@ -99,7 +99,7 @@ func (s *SendTransferTestSuite) Test_SendTransaction_ValidatesNonceTooLow_NoTran
 	s.Equal(ErrNonceTooLow, err)
 }
 
-func (s *SendTransferTestSuite) Test_SendTransaction_ValidatesNonceTooHigh_NoTransactions() {
+func (s *SendTransferTestSuite) TestSendTransfer_ValidatesNonceTooHigh_NoTransactions() {
 	transferWithIncreasedNonce := s.transfer
 	transferWithIncreasedNonce.Nonce = models.NewUint256(1)
 	transferWithIncreasedNonce = s.signTransfer(transferWithIncreasedNonce)
@@ -108,7 +108,7 @@ func (s *SendTransferTestSuite) Test_SendTransaction_ValidatesNonceTooHigh_NoTra
 	s.Equal(ErrNonceTooHigh, err)
 }
 
-func (s *SendTransferTestSuite) Test_SendTransaction_ValidatesNonceTooHigh_ExistingTransactions() {
+func (s *SendTransferTestSuite) TestSendTransfer_ValidatesNonceTooHigh_ExistingTransactions() {
 	_, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
 	s.NoError(err)
 
@@ -120,7 +120,7 @@ func (s *SendTransferTestSuite) Test_SendTransaction_ValidatesNonceTooHigh_Exist
 	s.Equal(ErrNonceTooHigh, err)
 }
 
-func (s *SendTransferTestSuite) Test_SendTransaction_ValidatesNonceTooLow_ExistingTransactions() {
+func (s *SendTransferTestSuite) TestSendTransfer_ValidatesNonceTooLow_ExistingTransactions() {
 	_, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
 	s.NoError(err)
 
@@ -138,7 +138,7 @@ func (s *SendTransferTestSuite) Test_SendTransaction_ValidatesNonceTooLow_Existi
 	s.Equal(ErrNonceTooLow, err)
 }
 
-func (s *SendTransferTestSuite) Test_SendTransaction_ValidatesFeeValue() {
+func (s *SendTransferTestSuite) TestSendTransfer_ValidatesFeeValue() {
 	transferWithZeroFee := s.transfer
 	transferWithZeroFee.Fee = models.NewUint256(0)
 
@@ -146,7 +146,7 @@ func (s *SendTransferTestSuite) Test_SendTransaction_ValidatesFeeValue() {
 	s.Equal(ErrFeeTooLow, err)
 }
 
-func (s *SendTransferTestSuite) Test_SendTransaction_ValidatesFeeEncodability() {
+func (s *SendTransferTestSuite) TestSendTransfer_ValidatesFeeEncodability() {
 	transferWithBadFee := s.transfer
 	transferWithBadFee.Fee = models.NewUint256(66666666)
 
@@ -154,7 +154,7 @@ func (s *SendTransferTestSuite) Test_SendTransaction_ValidatesFeeEncodability() 
 	s.Equal(NewNotDecimalEncodableError("fee"), err)
 }
 
-func (s *SendTransferTestSuite) Test_SendTransaction_ValidatesAmountEncodability() {
+func (s *SendTransferTestSuite) TestSendTransfer_ValidatesAmountEncodability() {
 	transferWithBadAmount := s.transfer
 	transferWithBadAmount.Amount = models.NewUint256(66666666)
 
@@ -162,14 +162,14 @@ func (s *SendTransferTestSuite) Test_SendTransaction_ValidatesAmountEncodability
 	s.Equal(NewNotDecimalEncodableError("amount"), err)
 }
 
-func (s *SendTransferTestSuite) Test_SendTransaction_ValidatesBalance() {
+func (s *SendTransferTestSuite) TestSendTransfer_ValidatesBalance() {
 	transferWithHugeAmount := s.transfer
 	transferWithHugeAmount.Amount = models.NewUint256(500)
 	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithHugeAmount))
 	s.Equal(ErrNotEnoughBalance, err)
 }
 
-func (s *SendTransferTestSuite) Test_SendTransaction_ValidatesSignature() {
+func (s *SendTransferTestSuite) TestSendTransfer_ValidatesSignature() {
 	wallet, err := bls.NewRandomWallet(mockDomain)
 	s.NoError(err)
 	fakeSignature, err := wallet.Sign(utils.RandomBytes(2))
