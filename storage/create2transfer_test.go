@@ -47,6 +47,9 @@ func (s *Create2TransferTestSuite) SetupTest() {
 	s.storage = NewTestStorage(testDB.DB)
 	s.db = testDB
 	s.tree = NewStateTree(s.storage)
+
+	err = s.storage.AddAccountIfNotExists(&account2)
+	s.NoError(err)
 }
 
 func (s *Create2TransferTestSuite) TearDownTest() {
