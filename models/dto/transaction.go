@@ -33,7 +33,7 @@ func (tx *Transaction) UnmarshalJSON(bytes []byte) error {
 		return ErrMissingType
 	}
 
-	switch *rawTx.Type {
+	switch *rawTx.Type { // nolint:exhaustive
 	case txtype.Transfer:
 		return tx.unmarshalTransfer(bytes)
 	case txtype.Create2Transfer:
