@@ -14,7 +14,7 @@ import (
 func TestCreate2Transfer_JSONMarshaling(t *testing.T) {
 	transfer := Create2Transfer{
 		FromStateID: ref.Uint32(1),
-		PublicKey:   &models.PublicKey{1, 2, 3},
+		ToPublicKey:   &models.PublicKey{1, 2, 3},
 		Amount:      models.NewUint256(50),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(0),
@@ -36,7 +36,7 @@ func TestCreate2Transfer_MarshalJSON(t *testing.T) {
 
 	transfer := Create2Transfer{
 		FromStateID: ref.Uint32(1),
-		PublicKey:   &models.PublicKey{1, 2, 3},
+		ToPublicKey:   &models.PublicKey{1, 2, 3},
 		Amount:      models.NewUint256(50),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(0),
@@ -46,6 +46,6 @@ func TestCreate2Transfer_MarshalJSON(t *testing.T) {
 	require.NoError(t, err)
 
 	// nolint:goconst,lll
-	expected := `{"Type":3,"FromStateID":1,"PublicKey":"0102030000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","Amount":"50","Fee":"10","Nonce":"0","Signature":"0xdeadbeef"}`
+	expected := `{"Type":3,"ToFromStateID":1,"PublicKey":"0102030000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","Amount":"50","Fee":"10","Nonce":"0","Signature":"0xdeadbeef"}`
 	require.Equal(t, expected, string(data))
 }

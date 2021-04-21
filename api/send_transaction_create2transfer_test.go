@@ -76,8 +76,7 @@ func (s *SendCreate2TransferTestSuite) SetupTest() {
 	err = s.tree.Set(1, s.userState)
 	s.NoError(err)
 
-	// TODO: rename to "ToPublicKey"
-	create2TransferWithoutSignature.PublicKey = newWallet.PublicKey()
+	create2TransferWithoutSignature.ToPublicKey = newWallet.PublicKey()
 	s.create2Transfer = s.signCreate2Transfer(create2TransferWithoutSignature)
 }
 

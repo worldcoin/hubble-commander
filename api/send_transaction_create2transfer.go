@@ -17,7 +17,7 @@ func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*co
 		return nil, err
 	}
 
-	pubKeyID, err := a.storage.GetUnusedPubKeyID(create2TransferDTO.PublicKey)
+	pubKeyID, err := a.storage.GetUnusedPubKeyID(create2TransferDTO.ToPublicKey)
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +27,7 @@ func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*co
 		ToPubkeyID:      *pubKeyID,
 	}
 
-	if validationErr := a.validateCreate2Transfer(&create2Transfer, create2TransferDTO.PublicKey); validationErr != nil {
+	if validationErr := a.validateCreate2Transfer(&create2Transfer, create2TransferDTO.ToPublicKey); validationErr != nil {
 		return nil, validationErr
 	}
 
@@ -62,7 +62,7 @@ func sanitizeCreate2Transfer(create2Transfer dto.Create2Transfer) (*models.Trans
 	if create2Transfer.FromStateID == nil {
 		return nil, NewMissingFieldError("fromStateID")
 	}
-	if create2Transfer.PublicKey == nil {
+	if create2Transfer.ToPublicKey == nil {
 		return nil, NewMissingFieldError("publicKey")
 	}
 	if create2Transfer.Amount == nil {
