@@ -121,7 +121,7 @@ func (a *API) validateTransfer(transfer *models.Transfer) error {
 	if err := validateBalance(transfer, &senderState.UserState); err != nil {
 		return err
 	}
-	if !a.cfg.Dev {
+	if !a.cfg.DevMode {
 		return a.validateSignature(transfer, &senderState.UserState)
 	}
 	return nil

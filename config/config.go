@@ -67,7 +67,7 @@ func GetConfig() Config {
 		API: APIConfig{
 			Version: "dev-0.1.0",
 			Port:    *getEnvOrDefault("HUBBLE_PORT", ref.String("8080")),
-			Dev:     false,
+			DevMode: false,
 		},
 		DB: DBConfig{
 			Host:           getEnvOrDefault("HUBBLE_DBHOST", nil),
@@ -97,7 +97,7 @@ func GetTestConfig() Config {
 		API: APIConfig{
 			Version: "dev-0.1.0",
 			Port:    *getEnvOrDefault("HUBBLE_PORT", ref.String("8080")),
-			Dev:     false,
+			DevMode: false,
 		},
 		DB: DBConfig{
 			Host:           getEnvOrDefault("HUBBLE_DBHOST", nil),

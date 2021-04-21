@@ -28,7 +28,7 @@ type RollupConfig struct {
 type APIConfig struct {
 	Version string
 	Port    string
-	Dev     bool
+	DevMode bool
 }
 
 type DBConfig struct {

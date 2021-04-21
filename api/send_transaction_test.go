@@ -186,7 +186,7 @@ func (s *SendTransactionTestSuite) TestSendTransaction_ValidatesSignature() {
 }
 
 func (s *SendTransactionTestSuite) TestSendTransaction_ValidatesSignature_DevMode() {
-	s.api.cfg = &config.APIConfig{Dev: true}
+	s.api.cfg = &config.APIConfig{DevMode: true}
 
 	wallet, err := bls.NewRandomWallet(mockDomain)
 	s.NoError(err)
