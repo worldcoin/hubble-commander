@@ -27,7 +27,7 @@ func TestUnmarshalJSON_UnsupportedType(t *testing.T) {
 
 func TestMarshalJSON_SupportedType(t *testing.T) {
 	input := Create2Transfer
-	expected := fmt.Sprintf("\"%s\"", TransactionTypes[input])
+	expected := fmt.Sprintf(`"%s"`, TransactionTypes[input])
 	bytes, err := json.Marshal(input)
 	require.NoError(t, err)
 	require.Equal(t, expected, string(bytes))
