@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -76,7 +77,7 @@ func (s *GetTransferTestSuite) TestGetTransfer() {
 	res, err := s.api.GetTransfer(*hash)
 	s.NoError(err)
 
-	s.Equal(models.Pending, res.Status)
+	s.Equal(txstatus.Pending, res.Status)
 }
 
 func TestGetTransferTestSuite(t *testing.T) {

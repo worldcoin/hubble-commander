@@ -12,6 +12,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -63,7 +64,7 @@ func runE2ETest(t *testing.T, client jsonrpc.RPCClient) {
 	var sentTransfer dto.TransferReceipt
 	err = client.CallFor(&sentTransfer, "hubble_getTransfer", []interface{}{transferHash1})
 	require.NoError(t, err)
-	require.Equal(t, models.Pending, sentTransfer.Status)
+	require.Equal(t, txstatus.Pending, sentTransfer.Status)
 
 	transfer2, err := api.SignTransfer(&wallets[1], dto.Transfer{
 		FromStateID: ref.Uint32(1),
@@ -82,12 +83,12 @@ func runE2ETest(t *testing.T, client jsonrpc.RPCClient) {
 	testutils.WaitToPass(func() bool {
 		err = client.CallFor(&sentTransfer, "hubble_getTransfer", []interface{}{transferHash1})
 		require.NoError(t, err)
-		return sentTransfer.Status == models.InBatch
+		return sentTransfer.Status == txstatus.InBatch
 	}, 10*time.Second)
 
 	err = client.CallFor(&sentTransfer, "hubble_getTransfer", []interface{}{transferHash2})
 	require.NoError(t, err)
-	require.Equal(t, models.InBatch, sentTransfer.Status)
+	require.Equal(t, txstatus.InBatch, sentTransfer.Status)
 
 	err = client.CallFor(&userStates, "hubble_getUserStates", []interface{}{wallets[1].PublicKey()})
 	require.NoError(t, err)

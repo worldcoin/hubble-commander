@@ -1,4 +1,4 @@
-package models
+package txstatus
 
 type TransactionStatus uint
 
