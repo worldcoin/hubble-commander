@@ -22,9 +22,11 @@ import (
 
 func main() {
 	prune := flag.Bool("prune", false, "drop database before running app")
+	dev := flag.Bool("dev", false, "disable signature verification")
 	flag.Parse()
 
 	cfg := config.GetConfig()
+	cfg.API.Dev = *dev
 
 	migrator, err := db.GetMigrator(&cfg.DB)
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
@@ -52,7 +53,11 @@ func (s *SendTransactionTestSuite) SetupTest() {
 
 	storage := st.NewTestStorage(testDB.DB)
 	s.tree = st.NewStateTree(storage)
-	s.api = &API{nil, storage, nil}
+	s.api = &API{
+		cfg:     &config.APIConfig{},
+		storage: storage,
+		client:  nil,
+	}
 
 	s.wallet, err = bls.NewRandomWallet(mockDomain)
 	s.NoError(err)
@@ -178,6 +183,21 @@ func (s *SendTransactionTestSuite) TestSendTransaction_ValidatesSignature() {
 
 	_, err = s.api.SendTransaction(dto.MakeTransaction(transfer))
 	s.Equal(ErrInvalidSignature, err)
+}
+
+func (s *SendTransactionTestSuite) TestSendTransaction_ValidatesSignature_DevMode() {
+	s.api.cfg = &config.APIConfig{Dev: true}
+
+	wallet, err := bls.NewRandomWallet(mockDomain)
+	s.NoError(err)
+	fakeSignature, err := wallet.Sign(utils.RandomBytes(2))
+	s.NoError(err)
+
+	transfer := transferWithoutSignature
+	transfer.Signature = fakeSignature.Bytes()
+
+	_, err = s.api.SendTransaction(dto.MakeTransaction(transfer))
+	s.NoError(err)
 }
 
 func TestSendTransactionTestSuite(t *testing.T) {
