@@ -12,6 +12,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
@@ -102,6 +103,8 @@ func runE2ETest(t *testing.T, client jsonrpc.RPCClient) {
 
 	require.NoError(t, err)
 	require.Len(t, batches, 1)
+	require.Equal(t, txtype.Transfer, batches[0].Type)
+	require.Equal(t, models.MakeUint256(1), batches[0].ID)
 }
 
 func createWallets() ([]bls.Wallet, error) {
