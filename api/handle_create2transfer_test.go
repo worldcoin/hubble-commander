@@ -191,6 +191,16 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesSignatur
 	s.Equal(ErrInvalidSignature, err)
 }
 
+func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_AddsTransferToStorage() {
+	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.create2Transfer))
+	s.NoError(err)
+	s.NotNil(hash)
+
+	transfer, err := s.api.storage.GetCreate2Transfer(*hash)
+	s.NoError(err)
+	s.NotNil(transfer)
+}
+
 func TestSendCreate2TransferTestSuite(t *testing.T) {
 	suite.Run(t, new(SendCreate2TransferTestSuite))
 }
