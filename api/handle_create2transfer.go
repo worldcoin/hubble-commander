@@ -88,13 +88,11 @@ func sanitizeCreate2Transfer(create2Transfer dto.Create2Transfer) (*models.Trans
 }
 
 func (a *API) validateCreate2Transfer(create2Transfer *models.Create2Transfer, publicKey *models.PublicKey) error {
-	// nolint:govet
-	if err := validateAmount(&create2Transfer.Amount); err != nil {
-		return err
+	if validationErr := validateAmount(&create2Transfer.Amount); validationErr != nil {
+		return validationErr
 	}
-	// nolint:govet
-	if err := validateFee(&create2Transfer.Fee); err != nil {
-		return err
+	if validationErr := validateFee(&create2Transfer.Fee); validationErr != nil {
+		return validationErr
 	}
 
 	stateTree := storage.NewStateTree(a.storage)
@@ -108,13 +106,11 @@ func (a *API) validateCreate2Transfer(create2Transfer *models.Create2Transfer, p
 		return err
 	}
 
-	// nolint:govet
-	if err := a.validateNonce(&create2Transfer.Nonce, latestNonce, &senderState.UserState.Nonce); err != nil {
-		return err
+	if validationErr := a.validateNonce(&create2Transfer.Nonce, latestNonce, &senderState.UserState.Nonce); validationErr != nil {
+		return validationErr
 	}
-	// nolint:govet
-	if err := validateBalance(&create2Transfer.Amount, &create2Transfer.Fee, &senderState.UserState); err != nil {
-		return err
+	if validationErr := validateBalance(&create2Transfer.Amount, &create2Transfer.Fee, &senderState.UserState); validationErr != nil {
+		return validationErr
 	}
 	encodedCreate2Transfer, err := encoder.EncodeCreate2TransferForSigning(create2Transfer, publicKey)
 	if err != nil {

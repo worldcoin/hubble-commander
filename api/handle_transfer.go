@@ -98,13 +98,11 @@ func (a *API) validateTransfer(transfer *models.Transfer) error {
 		return err
 	}
 
-	// nolint:govet
-	if err := a.validateNonce(&transfer.Nonce, latestNonce, &senderState.UserState.Nonce); err != nil {
-		return err
+	if validationErr := a.validateNonce(&transfer.Nonce, latestNonce, &senderState.UserState.Nonce); validationErr != nil {
+		return validationErr
 	}
-	// nolint:govet
-	if err := validateBalance(&transfer.Amount, &transfer.Fee, &senderState.UserState); err != nil {
-		return err
+	if validationErr := validateBalance(&transfer.Amount, &transfer.Fee, &senderState.UserState); validationErr != nil {
+		return validationErr
 	}
 	encodedTransfer, err := encoder.EncodeTransferForSigning(transfer)
 	if err != nil {
