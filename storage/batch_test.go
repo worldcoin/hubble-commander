@@ -67,19 +67,19 @@ func (s *BatchTestSuite) TestGetBatchByID() {
 	s.Equal(batch, actual)
 }
 
-func (s *StateUpdateTestSuite) TestGetBatch_NonExistentBatch() {
+func (s *BatchTestSuite) TestGetBatch_NonExistentBatch() {
 	res, err := s.storage.GetBatch(common.Hash{1, 2, 3, 4})
 	s.Equal(NewNotFoundError("batch"), err)
 	s.Nil(res)
 }
 
-func (s *StateUpdateTestSuite) TestGetBatchByID_NonExistentBatch() {
+func (s *BatchTestSuite) TestGetBatchByID_NonExistentBatch() {
 	res, err := s.storage.GetBatchByID(models.MakeUint256(42))
 	s.Equal(NewNotFoundError("batch"), err)
 	s.Nil(res)
 }
 
-func (s *StateUpdateTestSuite) TestGetBatchByCommitmentID() {
+func (s *BatchTestSuite) TestGetBatchByCommitmentID() {
 	batchHash := utils.RandomHash()
 
 	batch := &models.Batch{
@@ -110,7 +110,7 @@ func (s *StateUpdateTestSuite) TestGetBatchByCommitmentID() {
 	s.Equal(batch, actual)
 }
 
-func (s *StateUpdateTestSuite) TestGetBatchByCommitmentID_NotExistentBatch() {
+func (s *BatchTestSuite) TestGetBatchByCommitmentID_NotExistentBatch() {
 	commitment := &models.Commitment{
 		Type:              txtype.Transfer,
 		Transactions:      []byte{1, 2, 3},
@@ -155,7 +155,7 @@ func (s *BatchTestSuite) TestGetLatestBatch() {
 	s.Equal(batches[1], *actual)
 }
 
-func (s *StateUpdateTestSuite) TestGetLatestBatch_NoBatches() {
+func (s *BatchTestSuite) TestGetLatestBatch_NoBatches() {
 	res, err := s.storage.GetLatestBatch()
 	s.Equal(NewNotFoundError("batch"), err)
 	s.Nil(res)
@@ -195,7 +195,7 @@ func (s *BatchTestSuite) TestGetLatestFinalisedBatch() {
 	s.Equal(batches[1], *finalisedBatch)
 }
 
-func (s *StateUpdateTestSuite) TestGetLatestFinalisedBatch_NoBatches() {
+func (s *BatchTestSuite) TestGetLatestFinalisedBatch_NoBatches() {
 	res, err := s.storage.GetLatestFinalisedBatch(500)
 	s.Equal(NewNotFoundError("batch"), err)
 	s.Nil(res)
