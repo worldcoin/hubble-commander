@@ -59,7 +59,7 @@ func main() {
 	}
 
 	go func() {
-		err := commander.BlockNumberEndlessLoop(client, &cfg.Rollup)
+		err := commander.BlockNumberEndlessLoop(storage, client, &cfg.Rollup)
 		if err != nil {
 			log.Fatalf("%+v", err)
 		}

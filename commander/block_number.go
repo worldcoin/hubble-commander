@@ -6,16 +6,15 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
+	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-var LatestBlockNumber uint32
-
-func BlockNumberEndlessLoop(client *eth.Client, cfg *config.RollupConfig) error {
+func BlockNumberEndlessLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
 	done := make(chan bool)
-	return BlockNumberLoop(client, cfg, done)
+	return BlockNumberLoop(storage, client, cfg, done)
 }
 
-func BlockNumberLoop(client *eth.Client, cfg *config.RollupConfig, done <-chan bool) error {
+func BlockNumberLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig, done <-chan bool) error {
 	ticker := time.NewTicker(cfg.BlockNumberLoopInterval)
 
 	for {
@@ -29,10 +28,11 @@ func BlockNumberLoop(client *eth.Client, cfg *config.RollupConfig, done <-chan b
 				log.Println(err.Error())
 				return err
 			}
-			if *blockNumber > LatestBlockNumber {
+			latestBlockNumber := storage.GetLatestBlockNumber()
+			if *blockNumber > latestBlockNumber {
 				log.Printf("New block was mined: %d", *blockNumber)
 			}
-			LatestBlockNumber = *blockNumber
+			storage.SetLatestBlockNumber(*blockNumber)
 		}
 	}
 }

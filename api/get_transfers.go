@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/Worldcoin/hubble-commander/commander"
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
@@ -13,7 +12,7 @@ func (a *API) GetTransfers(publicKey *models.PublicKey) ([]models.TransferReceip
 
 	userTransfers := make([]models.TransferReceipt, 0, len(transfers))
 	for i := range transfers {
-		status, err := CalculateTransferStatus(a.storage, &transfers[i], commander.LatestBlockNumber)
+		status, err := CalculateTransferStatus(a.storage, &transfers[i], a.storage.GetLatestBlockNumber())
 		if err != nil {
 			return nil, err
 		}
