@@ -7,11 +7,21 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/stretchr/testify/require"
 )
 
 func TestTransaction_UnmarshalJSON_Transfer(t *testing.T) {
-	input := `{"Type":1,"FromStateID":1,"ToStateID":2,"Amount":"50","Fee":"10","Nonce":"0","Signature":"0xdeadbeef"}` // nolint:goconst
+	input := `{
+		"Type":"TRANSFER",
+		"FromStateID":1,
+		"ToStateID":2,
+		"Amount":"50",
+		"Fee":"10",
+		"Nonce":"0",
+		"Signature":"0xdeadbeef"
+	}`
+
 	var tx Transaction
 	err := json.Unmarshal([]byte(input), &tx)
 	require.NoError(t, err)
@@ -21,8 +31,16 @@ func TestTransaction_UnmarshalJSON_Transfer(t *testing.T) {
 }
 
 func TestTransaction_UnmarshalJSON_Create2Transfer(t *testing.T) {
-	input := fmt.Sprintf(
-		`{"Type":3,"FromStateID":1,"ToStateID":2,"ToPublicKey":"%s","Amount":"50","Fee":"10","Nonce":"0","Signature":"0xdeadbeef"}`,
+	input := fmt.Sprintf(`{
+			"Type":"CREATE2TRANSFER",
+			"FromStateID":1,
+			"ToStateID":2,
+			"ToPublicKey":"%s",
+			"Amount":"50",
+			"Fee":"10",
+			"Nonce":"0",
+			"Signature":"0xdeadbeef"
+		}`,
 		"010203"+strings.Repeat("0", 250),
 	)
 	var tx Transaction
@@ -35,8 +53,8 @@ func TestTransaction_UnmarshalJSON_Create2Transfer(t *testing.T) {
 }
 
 func TestTransaction_UnmarshalJSON_UnknownType(t *testing.T) {
-	input := `{"Type":123,"FromStateID":1,"ToStateID":2,"Amount":"50","Fee":"10","Nonce":"0","Signature":"0xdeadbeef"}`
+	input := `{"Type":"UNSUPPORTED_TYPE","FromStateID":1,"ToStateID":2,"Amount":"50","Fee":"10","Nonce":"0","Signature":"0xdeadbeef"}`
 	var tx Transaction
 	err := json.Unmarshal([]byte(input), &tx)
-	require.Equal(t, ErrUnsupportedType, err)
+	require.Equal(t, txtype.ErrUnsupportedTransactionType, err)
 }

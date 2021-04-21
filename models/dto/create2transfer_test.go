@@ -37,7 +37,6 @@ func TestCreate2Transfer_MarshalJSON(t *testing.T) {
 	require.NoError(t, err)
 
 	transfer := Create2Transfer{
-
 		FromStateID: ref.Uint32(1),
 		ToPublicKey: &models.PublicKey{1, 2, 3},
 		Amount:      models.NewUint256(50),
@@ -49,7 +48,7 @@ func TestCreate2Transfer_MarshalJSON(t *testing.T) {
 	require.NoError(t, err)
 
 	expected := fmt.Sprintf(
-		`{"Type":3,"FromStateID":1,"ToPublicKey":"%s","Amount":"50","Fee":"10","Nonce":"0","Signature":"0xdeadbeef"}`,
+		`{"Type":"CREATE2TRANSFER","FromStateID":1,"ToPublicKey":"%s","Amount":"50","Fee":"10","Nonce":"0","Signature":"0xdeadbeef"}`,
 		"010203"+strings.Repeat("0", 250),
 	)
 	require.Equal(t, expected, string(data))
