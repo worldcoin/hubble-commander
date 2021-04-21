@@ -12,82 +12,70 @@ import (
 )
 
 func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*common.Hash, error) {
-	create2TransferBase, err := sanitizeCreate2Transfer(create2TransferDTO)
+	create2Transfer, toPublicKey, err := sanitizeCreate2Transfer(create2TransferDTO)
 	if err != nil {
 		return nil, err
 	}
 
-	pubKeyID, err := a.storage.GetUnusedPubKeyID(create2TransferDTO.ToPublicKey)
-	if err != nil {
-		return nil, err
-	}
-
-	create2Transfer := models.Create2Transfer{
-		TransactionBase: *create2TransferBase,
-		ToPubKeyID:      *pubKeyID,
-	}
-
-	if vErr := a.validateCreate2Transfer(&create2Transfer, create2TransferDTO.ToPublicKey); vErr != nil {
+	if vErr := a.validateCreate2Transfer(create2Transfer, toPublicKey); vErr != nil {
 		return nil, vErr
 	}
 
-	encodedCreate2Transfer, err := encoder.EncodeCreate2Transfer(&create2Transfer)
+	pubKeyID, err := a.storage.GetUnusedPubKeyID(toPublicKey)
 	if err != nil {
 		return nil, err
 	}
-	hash := crypto.Keccak256Hash(encodedCreate2Transfer)
+	create2Transfer.ToPubKeyID = *pubKeyID
 
-	create2Transfer = models.Create2Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash:        hash,
-			FromStateID: create2TransferBase.FromStateID,
-			Amount:      create2TransferBase.Amount,
-			Fee:         create2TransferBase.Fee,
-			Nonce:       create2TransferBase.Nonce,
-			Signature:   create2TransferBase.Signature,
-		},
-		ToStateID:  create2Transfer.ToStateID,
-		ToPubKeyID: *pubKeyID,
+	encodedCreate2Transfer, err := encoder.EncodeCreate2Transfer(create2Transfer)
+	if err != nil {
+		return nil, err
 	}
-	err = a.storage.AddCreate2Transfer(&create2Transfer)
+	create2Transfer.Hash = crypto.Keccak256Hash(encodedCreate2Transfer)
+
+	err = a.storage.AddCreate2Transfer(create2Transfer)
 	if err != nil {
 		return nil, err
 	}
 	log.Println("New create2transaction: ", create2Transfer.Hash.Hex())
 
-	return &hash, nil
+	return &create2Transfer.Hash, nil
 }
 
-func sanitizeCreate2Transfer(create2Transfer dto.Create2Transfer) (*models.TransactionBase, error) {
+func sanitizeCreate2Transfer(create2Transfer dto.Create2Transfer) (*models.Create2Transfer, *models.PublicKey, error) {
 	if create2Transfer.FromStateID == nil {
-		return nil, NewMissingFieldError("fromStateID")
+		return nil, nil, NewMissingFieldError("fromStateID")
 	}
 	if create2Transfer.ToPublicKey == nil {
-		return nil, NewMissingFieldError("publicKey")
+		return nil, nil, NewMissingFieldError("publicKey")
 	}
 	if create2Transfer.Amount == nil {
-		return nil, NewMissingFieldError("amount")
+		return nil, nil, NewMissingFieldError("amount")
 	}
 	if create2Transfer.Fee == nil {
-		return nil, NewMissingFieldError("fee")
+		return nil, nil, NewMissingFieldError("fee")
 	}
 	if create2Transfer.Nonce == nil {
-		return nil, NewMissingFieldError("nonce")
+		return nil, nil, NewMissingFieldError("nonce")
 	}
 	if create2Transfer.Signature == nil {
-		return nil, NewMissingFieldError("signature")
+		return nil, nil, NewMissingFieldError("signature")
 	}
 
-	return &models.TransactionBase{
-		FromStateID: *create2Transfer.FromStateID,
-		Amount:      *create2Transfer.Amount,
-		Fee:         *create2Transfer.Fee,
-		Nonce:       *create2Transfer.Nonce,
-		Signature:   create2Transfer.Signature,
-	}, nil
+	return &models.Create2Transfer{
+			TransactionBase: models.TransactionBase{
+				FromStateID: *create2Transfer.FromStateID,
+				Amount:      *create2Transfer.Amount,
+				Fee:         *create2Transfer.Fee,
+				Nonce:       *create2Transfer.Nonce,
+				Signature:   create2Transfer.Signature,
+			},
+		},
+		create2Transfer.ToPublicKey,
+		nil
 }
 
-func (a *API) validateCreate2Transfer(create2Transfer *models.Create2Transfer, publicKey *models.PublicKey) error {
+func (a *API) validateCreate2Transfer(create2Transfer *models.Create2Transfer, toPublicKey *models.PublicKey) error {
 	if vErr := validateAmount(&create2Transfer.Amount); vErr != nil {
 		return vErr
 	}
@@ -112,7 +100,7 @@ func (a *API) validateCreate2Transfer(create2Transfer *models.Create2Transfer, p
 	if vErr := validateBalance(&create2Transfer.Amount, &create2Transfer.Fee, &senderState.UserState); vErr != nil {
 		return vErr
 	}
-	encodedCreate2Transfer, err := encoder.EncodeCreate2TransferForSigning(create2Transfer, publicKey)
+	encodedCreate2Transfer, err := encoder.EncodeCreate2TransferForSigning(create2Transfer, toPublicKey)
 	if err != nil {
 		return err
 	}
