@@ -52,20 +52,20 @@ func validateFee(fee *models.Uint256) error {
 	return nil
 }
 
-func (a *API) validateNonce(transactionBase *models.TransactionBase, senderNonce *models.Uint256) error {
-	if transactionBase.Nonce.Cmp(senderNonce) < 0 {
+func (a *API) validateNonce(transaction *models.TransactionBase, senderNonce *models.Uint256) error {
+	if transaction.Nonce.Cmp(senderNonce) < 0 {
 		return ErrNonceTooLow
 	}
 
-	latestNonce, err := a.storage.GetLatestTransactionNonce(transactionBase.FromStateID)
+	latestNonce, err := a.storage.GetLatestTransactionNonce(transaction.FromStateID)
 	if storage.IsNotFoundError(err) {
-		return checkNonce(&transactionBase.Nonce, senderNonce)
+		return checkNonce(&transaction.Nonce, senderNonce)
 	}
 	if err != nil {
 		return err
 	}
 
-	return checkNonce(&transactionBase.Nonce, latestNonce.AddN(1))
+	return checkNonce(&transaction.Nonce, latestNonce.AddN(1))
 }
 
 func checkNonce(transactionNonce, executableSenderNonce *models.Uint256) error {
