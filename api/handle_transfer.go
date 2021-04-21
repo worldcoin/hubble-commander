@@ -17,8 +17,8 @@ func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 		return nil, err
 	}
 
-	if validationErr := a.validateTransfer(transfer); validationErr != nil {
-		return nil, validationErr
+	if vErr := a.validateTransfer(transfer); vErr != nil {
+		return nil, vErr
 	}
 
 	encodedTransfer, err := encoder.EncodeTransfer(transfer)
@@ -80,11 +80,11 @@ func sanitizeTransfer(transfer dto.Transfer) (*models.Transfer, error) {
 }
 
 func (a *API) validateTransfer(transfer *models.Transfer) error {
-	if err := validateAmount(&transfer.Amount); err != nil {
-		return err
+	if vErr := validateAmount(&transfer.Amount); vErr != nil {
+		return vErr
 	}
-	if err := validateFee(&transfer.Fee); err != nil {
-		return err
+	if vErr := validateFee(&transfer.Fee); vErr != nil {
+		return vErr
 	}
 
 	stateTree := storage.NewStateTree(a.storage)
@@ -98,11 +98,11 @@ func (a *API) validateTransfer(transfer *models.Transfer) error {
 		return err
 	}
 
-	if validationErr := a.validateNonce(&transfer.Nonce, latestNonce, &senderState.UserState.Nonce); validationErr != nil {
-		return validationErr
+	if vErr := a.validateNonce(&transfer.Nonce, latestNonce, &senderState.UserState.Nonce); vErr != nil {
+		return vErr
 	}
-	if validationErr := validateBalance(&transfer.Amount, &transfer.Fee, &senderState.UserState); validationErr != nil {
-		return validationErr
+	if vErr := validateBalance(&transfer.Amount, &transfer.Fee, &senderState.UserState); vErr != nil {
+		return vErr
 	}
 	encodedTransfer, err := encoder.EncodeTransferForSigning(transfer)
 	if err != nil {

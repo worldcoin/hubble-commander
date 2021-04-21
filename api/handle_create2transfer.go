@@ -27,8 +27,8 @@ func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*co
 		ToPubKeyID:      *pubKeyID,
 	}
 
-	if validationErr := a.validateCreate2Transfer(&create2Transfer, create2TransferDTO.ToPublicKey); validationErr != nil {
-		return nil, validationErr
+	if vErr := a.validateCreate2Transfer(&create2Transfer, create2TransferDTO.ToPublicKey); vErr != nil {
+		return nil, vErr
 	}
 
 	encodedCreate2Transfer, err := encoder.EncodeCreate2Transfer(&create2Transfer)
@@ -88,11 +88,11 @@ func sanitizeCreate2Transfer(create2Transfer dto.Create2Transfer) (*models.Trans
 }
 
 func (a *API) validateCreate2Transfer(create2Transfer *models.Create2Transfer, publicKey *models.PublicKey) error {
-	if validationErr := validateAmount(&create2Transfer.Amount); validationErr != nil {
-		return validationErr
+	if vErr := validateAmount(&create2Transfer.Amount); vErr != nil {
+		return vErr
 	}
-	if validationErr := validateFee(&create2Transfer.Fee); validationErr != nil {
-		return validationErr
+	if vErr := validateFee(&create2Transfer.Fee); vErr != nil {
+		return vErr
 	}
 
 	stateTree := storage.NewStateTree(a.storage)
@@ -106,11 +106,11 @@ func (a *API) validateCreate2Transfer(create2Transfer *models.Create2Transfer, p
 		return err
 	}
 
-	if validationErr := a.validateNonce(&create2Transfer.Nonce, latestNonce, &senderState.UserState.Nonce); validationErr != nil {
-		return validationErr
+	if vErr := a.validateNonce(&create2Transfer.Nonce, latestNonce, &senderState.UserState.Nonce); vErr != nil {
+		return vErr
 	}
-	if validationErr := validateBalance(&create2Transfer.Amount, &create2Transfer.Fee, &senderState.UserState); validationErr != nil {
-		return validationErr
+	if vErr := validateBalance(&create2Transfer.Amount, &create2Transfer.Fee, &senderState.UserState); vErr != nil {
+		return vErr
 	}
 	encodedCreate2Transfer, err := encoder.EncodeCreate2TransferForSigning(create2Transfer, publicKey)
 	if err != nil {
