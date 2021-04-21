@@ -1,11 +1,11 @@
 package api
 
 import (
-	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (a *API) GetTransfer(hash common.Hash) (*models.TransferReceipt, error) {
+func (a *API) GetTransfer(hash common.Hash) (*dto.TransferReceipt, error) {
 	transfer, err := a.storage.GetTransfer(hash)
 	if err != nil {
 		return nil, err
@@ -16,7 +16,7 @@ func (a *API) GetTransfer(hash common.Hash) (*models.TransferReceipt, error) {
 		return nil, err
 	}
 
-	returnTx := &models.TransferReceipt{
+	returnTx := &dto.TransferReceipt{
 		Transfer: *transfer,
 		Status:   *status,
 	}
