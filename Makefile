@@ -36,10 +36,10 @@ update-contracts:
 run:
 	go run ./main/main.go
 
-prune-run:
+run-prune:
 	go run ./main/main.go -prune
 
-dev-run:
+run-dev:
 	go run ./main/main.go -prune -dev
 
 lint:
