@@ -62,7 +62,7 @@ func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey) (*uint32, error
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, NewNotFoundError("account")
+		return nil, NewNotFoundError("pub key id")
 	}
 	return &res[0], nil
 }
