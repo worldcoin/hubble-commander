@@ -182,12 +182,10 @@ func (s *BatchTestSuite) TestGetLatestFinalisedBatch() {
 			FinalisationBlock: 2000,
 		},
 	}
-	err := s.storage.AddBatch(&batches[0])
-	s.NoError(err)
-	err = s.storage.AddBatch(&batches[1])
-	s.NoError(err)
-	err = s.storage.AddBatch(&batches[2])
-	s.NoError(err)
+	for i := range batches {
+		err := s.storage.AddBatch(&batches[i])
+		s.NoError(err)
+	}
 
 	finalisedBatch, err := s.storage.GetLatestFinalisedBatch(1800)
 	s.NoError(err)
