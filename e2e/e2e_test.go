@@ -59,7 +59,7 @@ func runE2ETest(t *testing.T, client jsonrpc.RPCClient) {
 	require.NoError(t, err)
 	require.NotNil(t, transferHash1)
 
-	var sentTransfer models.TransferReceipt
+	var sentTransfer dto.TransferReceipt
 	err = client.CallFor(&sentTransfer, "hubble_getTransfer", []interface{}{transferHash1})
 	require.NoError(t, err)
 	require.Equal(t, models.Pending, sentTransfer.Status)
