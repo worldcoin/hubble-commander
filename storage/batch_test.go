@@ -199,6 +199,61 @@ func (s *BatchTestSuite) TestGetLatestFinalisedBatch_NoBatches() {
 	s.Nil(res)
 }
 
+func (s *BatchTestSuite) TestGetBatchesInRange_ReturnsCorrectBatches() {
+	batches := []models.Batch{
+		{Hash: utils.RandomHash(), ID: models.MakeUint256(1)},
+		{Hash: utils.RandomHash(), ID: models.MakeUint256(2)},
+		{Hash: utils.RandomHash(), ID: models.MakeUint256(3)},
+		{Hash: utils.RandomHash(), ID: models.MakeUint256(4)},
+	}
+	for i := range batches {
+		err := s.storage.AddBatch(&batches[i])
+		s.NoError(err)
+	}
+	actual, err := s.storage.GetBatchesInRange(models.NewUint256(2), models.NewUint256(3))
+	s.NoError(err)
+	s.Equal(batches[1:3], actual)
+}
+
+func (s *BatchTestSuite) TestGetBatchesInRange_ReturnsEmptySliceWhenThereAreNoBatchesInRange() {
+	err := s.storage.AddBatch(&models.Batch{Hash: utils.RandomHash(), ID: models.MakeUint256(1)})
+	s.NoError(err)
+
+	actual, err := s.storage.GetBatchesInRange(models.NewUint256(2), models.NewUint256(3))
+	s.NoError(err)
+	s.Len(actual, 0)
+}
+
+func (s *BatchTestSuite) TestGetBatchesInRange_ReturnsAllBatchesStartingWithLowerBound() {
+	batches := []models.Batch{
+		{Hash: utils.RandomHash(), ID: models.MakeUint256(1)},
+		{Hash: utils.RandomHash(), ID: models.MakeUint256(2)},
+		{Hash: utils.RandomHash(), ID: models.MakeUint256(3)},
+	}
+	for i := range batches {
+		err := s.storage.AddBatch(&batches[i])
+		s.NoError(err)
+	}
+	actual, err := s.storage.GetBatchesInRange(models.NewUint256(2), nil)
+	s.NoError(err)
+	s.Equal(batches[1:], actual)
+}
+
+func (s *BatchTestSuite) TestGetBatchesInRange_ReturnsAllBatchesUpUntilUpperBound() {
+	batches := []models.Batch{
+		{Hash: utils.RandomHash(), ID: models.MakeUint256(1)},
+		{Hash: utils.RandomHash(), ID: models.MakeUint256(2)},
+		{Hash: utils.RandomHash(), ID: models.MakeUint256(3)},
+	}
+	for i := range batches {
+		err := s.storage.AddBatch(&batches[i])
+		s.NoError(err)
+	}
+	actual, err := s.storage.GetBatchesInRange(nil, models.NewUint256(2))
+	s.NoError(err)
+	s.Equal(batches[:2], actual)
+}
+
 func TestBatchTestSuite(t *testing.T) {
 	suite.Run(t, new(BatchTestSuite))
 }
