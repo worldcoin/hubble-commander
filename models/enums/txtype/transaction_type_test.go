@@ -2,6 +2,7 @@ package txtype
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -37,5 +38,5 @@ func TestMarshalJSON_UnsupportedType(t *testing.T) {
 	bytes, err := json.Marshal(input)
 	require.Error(t, err)
 	require.Nil(t, bytes)
-	require.Equal(t, ErrUnsupportedTransactionType, err)
+	require.Equal(t, ErrUnsupportedTransactionType, errors.Unwrap(err))
 }
