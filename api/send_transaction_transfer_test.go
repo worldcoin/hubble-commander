@@ -15,12 +15,6 @@ import (
 )
 
 var (
-	userState = models.UserState{
-		PubkeyID:   123,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(420),
-		Nonce:      models.MakeUint256(0),
-	}
 	transferWithoutSignature = dto.Transfer{
 		FromStateID: ref.Uint32(1),
 		ToStateID:   ref.Uint32(2),
@@ -34,11 +28,12 @@ var (
 type SendTransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	api      *API
-	db       *db.TestDB
-	tree     *st.StateTree
-	transfer dto.Transfer
-	wallet   *bls.Wallet
+	api       *API
+	db        *db.TestDB
+	tree      *st.StateTree
+	userState *models.UserState
+	transfer  dto.Transfer
+	wallet    *bls.Wallet
 }
 
 func (s *SendTransferTestSuite) SetupSuite() {
@@ -63,7 +58,14 @@ func (s *SendTransferTestSuite) SetupTest() {
 	})
 	s.NoError(err)
 
-	err = s.tree.Set(1, &userState)
+	s.userState = &models.UserState{
+		PubkeyID:   123,
+		TokenIndex: models.MakeUint256(1),
+		Balance:    models.MakeUint256(420),
+		Nonce:      models.MakeUint256(0),
+	}
+
+	err = s.tree.Set(1, s.userState)
 	s.NoError(err)
 
 	s.transfer = s.signTransfer(transferWithoutSignature)
@@ -87,10 +89,10 @@ func (s *SendTransferTestSuite) Test_SendTransaction_ReturnsNonNilHash() {
 }
 
 func (s *SendTransferTestSuite) Test_SendTransaction_ValidatesNonceTooLow_NoTransactions() {
-	userStateWithIncreasedNonce := userState
+	userStateWithIncreasedNonce := s.userState
 	userStateWithIncreasedNonce.Nonce = *models.NewUint256(1)
 
-	err := s.tree.Set(1, &userStateWithIncreasedNonce)
+	err := s.tree.Set(1, userStateWithIncreasedNonce)
 	s.NoError(err)
 
 	_, err = s.api.SendTransaction(dto.MakeTransaction(s.transfer))

@@ -23,7 +23,7 @@ type EncoderTestSuite struct {
 	suite.Suite
 	sim             *simulator.Simulator
 	transfer        *contractTransfer.FrontendTransfer
-	create2transfer *contractCreate2Transfer.FrontendCreate2Transfer
+	create2Transfer *contractCreate2Transfer.FrontendCreate2Transfer
 	generic         *generic.FrontendGeneric
 	testTx          *testtx.TestTx
 	testTypes       *types.TestTypes
@@ -44,7 +44,7 @@ func (s *EncoderTestSuite) SetupTest() {
 	s.NoError(err)
 
 	s.transfer = frontend.FrontendTransfer
-	s.create2transfer = frontend.FrontendCreate2Transfer
+	s.create2Transfer = frontend.FrontendCreate2Transfer
 	s.generic = frontend.FrontendGeneric
 	s.testTx = test.TestTx
 	s.testTypes = test.TestTypes
@@ -89,7 +89,7 @@ func (s *EncoderTestSuite) TestEncodeCreate2Transfer() {
 		ToPubkeyID: 6,
 	})
 	s.NoError(err)
-	expected, err := s.create2transfer.Encode(nil, contractCreate2Transfer.OffchainCreate2Transfer{
+	expected, err := s.create2Transfer.Encode(nil, contractCreate2Transfer.OffchainCreate2Transfer{
 		TxType:     big.NewInt(3),
 		FromIndex:  big.NewInt(4),
 		ToIndex:    big.NewInt(5),
@@ -113,7 +113,7 @@ func (s *EncoderTestSuite) TestEncodeCreate2TransferWithPubKey() {
 		},
 	}, &publicKey)
 	s.NoError(err)
-	expected, err := s.create2transfer.EncodeWithPub(nil, contractCreate2Transfer.OffchainCreate2TransferWithPub{
+	expected, err := s.create2Transfer.EncodeWithPub(nil, contractCreate2Transfer.OffchainCreate2TransferWithPub{
 		TxType:    big.NewInt(3),
 		FromIndex: big.NewInt(4),
 		ToPubkey:  publicKey.BigInts(),
@@ -157,10 +157,10 @@ func (s *EncoderTestSuite) TestEncodeCreate2TransferForSigning() {
 	publicKey := models.PublicKey{1, 2, 3, 4, 5, 6}
 	encodedCreate2Transfer, err := EncodeCreate2TransferWithPubKey(tx, &publicKey)
 	s.NoError(err)
-	expected, err := s.create2transfer.SignBytes(nil, encodedCreate2Transfer)
+	expected, err := s.create2Transfer.SignBytes(nil, encodedCreate2Transfer)
 	s.NoError(err)
 
-	actual, err := EncodeCreate2TransferForSigning(tx, publicKey)
+	actual, err := EncodeCreate2TransferForSigning(tx, &publicKey)
 	s.NoError(err)
 	s.Equal(expected, actual)
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-var create2transferColumns = []string{
+var create2TransferColumns = []string{
 	"transaction_base.*",
 	"create2transfer.to_state_id",
 	"create2transfer.to_pubkey_id",
@@ -56,7 +56,7 @@ func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) (err error) {
 func (s *Storage) GetCreate2Transfer(hash common.Hash) (*models.Create2Transfer, error) {
 	res := make([]models.Create2Transfer, 0, 1)
 	err := s.DB.Query(
-		s.QB.Select(create2transferColumns...).
+		s.QB.Select(create2TransferColumns...).
 			From("transaction_base").
 			JoinClause("NATURAL JOIN create2transfer").
 			Where(squirrel.Eq{"tx_hash": hash}),

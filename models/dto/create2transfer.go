@@ -15,7 +15,7 @@ type Create2Transfer struct {
 	Signature   HexString
 }
 
-type create2transferWithType struct {
+type create2TransferWithType struct {
 	Type        uint8
 	FromStateID *uint32
 	PublicKey   *models.PublicKey
@@ -26,7 +26,7 @@ type create2transferWithType struct {
 }
 
 func (t Create2Transfer) MarshalJSON() ([]byte, error) {
-	transfer := create2transferWithType{
+	transfer := create2TransferWithType{
 		Type:        3,
 		FromStateID: t.FromStateID,
 		PublicKey:   t.PublicKey,
@@ -39,7 +39,7 @@ func (t Create2Transfer) MarshalJSON() ([]byte, error) {
 }
 
 func (t *Create2Transfer) UnmarshalJSON(bytes []byte) error {
-	var transfer create2transferWithType
+	var transfer create2TransferWithType
 	err := json.Unmarshal(bytes, &transfer)
 	if err != nil {
 		return err

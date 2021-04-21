@@ -25,6 +25,8 @@ func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
 	switch t := tx.Parsed.(type) {
 	case dto.Transfer:
 		return a.handleTransfer(t)
+	case dto.Create2Transfer:
+		return a.handleCreate2Transfer(t)
 	default:
 		return nil, fmt.Errorf("not supported transaction type")
 	}
@@ -61,11 +63,11 @@ func (a *API) validateNonce(transactionNonce, latestTransactionNonce, senderNonc
 	return checkNonce(transactionNonce, latestTransactionNonce.AddN(1))
 }
 
-func checkNonce(transferNonce, executableSenderNonce *models.Uint256) error {
-	if transferNonce.Cmp(executableSenderNonce) < 0 {
+func checkNonce(transactionNonce, executableSenderNonce *models.Uint256) error {
+	if transactionNonce.Cmp(executableSenderNonce) < 0 {
 		return ErrNonceTooLow
 	}
-	if transferNonce.Cmp(executableSenderNonce) > 0 {
+	if transactionNonce.Cmp(executableSenderNonce) > 0 {
 		return ErrNonceTooHigh
 	}
 	return nil

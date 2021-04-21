@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	create2transfer = models.Create2Transfer{
+	create2Transfer = models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
 			Hash:                 common.BigToHash(big.NewInt(1234)),
 			TxType:               txtype.Create2Transfer,
@@ -55,13 +55,13 @@ func (s *Create2TransferTestSuite) TearDownTest() {
 }
 
 func (s *Create2TransferTestSuite) Test_AddCreate2Transfer_AddAndRetrieve() {
-	err := s.storage.AddCreate2Transfer(&create2transfer)
+	err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
 
-	res, err := s.storage.GetCreate2Transfer(create2transfer.Hash)
+	res, err := s.storage.GetCreate2Transfer(create2Transfer.Hash)
 	s.NoError(err)
 
-	s.Equal(create2transfer, *res)
+	s.Equal(create2Transfer, *res)
 }
 
 func (s *Create2TransferTestSuite) Test_GetCreate2Transfer_NonExistentTransaction() {

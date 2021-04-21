@@ -94,7 +94,7 @@ func EncodeTransferForSigning(tx *models.Transfer) ([]byte, error) {
 	)
 }
 
-func EncodeCreate2TransferForSigning(tx *models.Create2Transfer, publicKey models.PublicKey) ([]byte, error) {
+func EncodeCreate2TransferForSigning(tx *models.Create2Transfer, publicKey *models.PublicKey) ([]byte, error) {
 	arguments := abi.Arguments{
 		{Name: "txType", Type: tUint256},
 		{Name: "fromIndex", Type: tUint256},
