@@ -129,6 +129,40 @@ func (s *StateUpdateTestSuite) TestGetBatchByCommitmentID_NotExistentBatch() {
 	s.Nil(batch)
 }
 
+func (s *BatchTestSuite) TestGetLatestBatch() {
+	batches := []models.Batch{
+		{
+			Hash:              utils.RandomHash(),
+			Type:              txtype.Transfer,
+			ID:                models.MakeUint256(1234),
+			FinalisationBlock: 1234,
+		},
+		{
+			Hash:              utils.RandomHash(),
+			Type:              txtype.Create2Transfer,
+			ID:                models.MakeUint256(2000),
+			FinalisationBlock: 2000,
+		},
+	}
+	err := s.storage.AddBatch(&batches[0])
+	s.NoError(err)
+	err = s.storage.AddBatch(&batches[1])
+	s.NoError(err)
+
+	actual, err := s.storage.GetLatestBatch()
+	s.NoError(err)
+
+	s.Equal(batches[1], *actual)
+}
+
+func (s *StateUpdateTestSuite) TestGetLatestBatch_NoBatches() {
+	res, err := s.storage.GetLatestBatch()
+	s.Equal(NewNotFoundError("batch"), err)
+	s.Nil(res)
+}
+
+
+
 func TestBatchTestSuite(t *testing.T) {
 	suite.Run(t, new(BatchTestSuite))
 }

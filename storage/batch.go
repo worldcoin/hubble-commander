@@ -67,3 +67,20 @@ func (s *Storage) GetBatchByCommitmentID(commitmentID int32) (*models.Batch, err
 	}
 	return &res[0], nil
 }
+
+func (s *Storage) GetLatestBatch() (*models.Batch, error) {
+	res := make([]models.Batch, 0, 1)
+	err := s.DB.Query(
+		s.QB.Select("*").
+			From("batch").
+			OrderBy("batch_id DESC").
+			Limit(1),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, NewNotFoundError("batch")
+	}
+	return &res[0], nil
+}
