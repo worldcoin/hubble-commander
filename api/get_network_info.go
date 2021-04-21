@@ -1,13 +1,13 @@
 package api
 
 import (
-	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 )
 
-func (a *API) GetNetworkInfo() (*models.NetworkInfo, error) {
-	networkInfo := models.NetworkInfo{
+func (a *API) GetNetworkInfo() (*dto.NetworkInfo, error) {
+	networkInfo := dto.NetworkInfo{
 		ChainState:  a.client.ChainState,
 		BlockNumber: a.storage.GetLatestBlockNumber(),
 	}
