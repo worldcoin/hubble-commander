@@ -85,13 +85,12 @@ func (s *Storage) GetLatestBatch() (*models.Batch, error) {
 	return &res[0], nil
 }
 
-
 func (s *Storage) GetLatestFinalisedBatch(currentBlockNumber uint32) (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
 	err := s.DB.Query(
 		s.QB.Select("*").
 			From("batch").
-			Where(squirrel.GtOrEq{"finalisation_block": currentBlockNumber}).
+			Where(squirrel.LtOrEq{"finalisation_block": currentBlockNumber}).
 			OrderBy("finalisation_block DESC").
 			Limit(1),
 	).Into(&res)

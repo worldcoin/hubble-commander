@@ -192,7 +192,7 @@ func (s *BatchTestSuite) TestGetLatestFinalisedBatch() {
 	finalisedBatch, err := s.storage.GetLatestFinalisedBatch(1800)
 	s.NoError(err)
 
-	s.Equal(batches[2], *finalisedBatch)
+	s.Equal(batches[1], *finalisedBatch)
 }
 
 func (s *StateUpdateTestSuite) TestGetLatestFinalisedBatch_NoBatches() {
