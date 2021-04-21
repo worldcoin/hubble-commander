@@ -32,7 +32,7 @@ type SendCreate2TransferTestSuite struct {
 	tree            *st.StateTree
 	userState       *models.UserState
 	create2Transfer dto.Create2Transfer
-	wallet    *bls.Wallet
+	wallet          *bls.Wallet
 }
 
 func (s *SendCreate2TransferTestSuite) SetupSuite() {
