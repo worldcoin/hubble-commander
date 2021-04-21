@@ -32,7 +32,7 @@ type SendCreate2TransferTestSuite struct {
 	tree            *st.StateTree
 	userState       *models.UserState
 	create2Transfer dto.Create2Transfer
-	senderWallet    *bls.Wallet
+	wallet    *bls.Wallet
 }
 
 func (s *SendCreate2TransferTestSuite) SetupSuite() {
@@ -48,21 +48,21 @@ func (s *SendCreate2TransferTestSuite) SetupTest() {
 	s.tree = st.NewStateTree(storage)
 	s.api = &API{nil, storage, nil}
 
-	s.senderWallet, err = bls.NewRandomWallet(mockDomain)
+	s.wallet, err = bls.NewRandomWallet(mockDomain)
 	s.NoError(err)
 
-	newWallet, err := bls.NewRandomWallet(mockDomain)
+	receiverWallet, err := bls.NewRandomWallet(mockDomain)
 	s.NoError(err)
 
 	err = storage.AddAccountIfNotExists(&models.Account{
 		PubKeyID:  123,
-		PublicKey: *s.senderWallet.PublicKey(),
+		PublicKey: *s.wallet.PublicKey(),
 	})
 	s.NoError(err)
 
 	err = storage.AddAccountIfNotExists(&models.Account{
 		PubKeyID:  10,
-		PublicKey: *newWallet.PublicKey(),
+		PublicKey: *receiverWallet.PublicKey(),
 	})
 	s.NoError(err)
 
@@ -76,12 +76,12 @@ func (s *SendCreate2TransferTestSuite) SetupTest() {
 	err = s.tree.Set(1, s.userState)
 	s.NoError(err)
 
-	create2TransferWithoutSignature.ToPublicKey = newWallet.PublicKey()
+	create2TransferWithoutSignature.ToPublicKey = receiverWallet.PublicKey()
 	s.create2Transfer = s.signCreate2Transfer(create2TransferWithoutSignature)
 }
 
 func (s *SendCreate2TransferTestSuite) signCreate2Transfer(create2Transfer dto.Create2Transfer) dto.Create2Transfer {
-	signedTransfer, err := SignCreate2Transfer(s.senderWallet, create2Transfer)
+	signedTransfer, err := SignCreate2Transfer(s.wallet, create2Transfer)
 	s.NoError(err)
 	return *signedTransfer
 }
