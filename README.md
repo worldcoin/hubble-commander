@@ -47,7 +47,7 @@ There is a number of scripts defined in the Makefile:
 * `make update-contracts` - update the `hubble-contracts` git submodule
 * `make run` - run the compiled binary
 * `make run-prune` - clean database and run the compiled binary
-* `make run-dev` - run run-dev without transaction signature validation
+* `make run-dev` - run-prune without transaction signature validation
 * `make lint` - run linter
 * `make test` - run all tests unit tests
 * `make test-hardhat` - run all tests with Hardhat dependency
