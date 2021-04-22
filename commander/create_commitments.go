@@ -83,7 +83,7 @@ func transactionExists(transferList []models.Transfer, tx *models.Transfer) bool
 }
 
 func createAndStoreCommitment(storage *st.Storage, transfers []models.Transfer, feeReceiverIndex uint32) (*models.Commitment, error) {
-	combinedSignature := models.MakeSignature(1, 2) // TODO: Actually combine signatures
+	combinedSignature := models.MakeRandomSignature() // TODO: Actually combine signatures
 
 	serializedTxs, err := encoder.SerializeTransfers(transfers)
 	if err != nil {

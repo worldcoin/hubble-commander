@@ -17,7 +17,7 @@ var (
 		Type:              txtype.Transfer,
 		Transactions:      []byte{1, 2, 3},
 		FeeReceiver:       uint32(1),
-		CombinedSignature: models.MakeSignature(1, 2),
+		CombinedSignature: models.MakeRandomSignature(),
 		PostStateRoot:     utils.RandomHash(),
 		AccountTreeRoot:   nil,
 		IncludedInBatch:   nil,

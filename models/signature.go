@@ -12,10 +12,9 @@ import (
 
 type Signature [64]byte
 
-func MakeSignature(first, second int64) Signature {
-	var signature [64]byte
-	copy(signature[:32], utils.PadLeft(big.NewInt(first).Bytes(), 32))
-	copy(signature[32:], utils.PadLeft(big.NewInt(second).Bytes(), 32))
+func MakeRandomSignature() Signature {
+	var signature Signature
+	copy(signature[:], utils.RandomBytes(64))
 	return signature
 }
 

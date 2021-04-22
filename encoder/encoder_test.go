@@ -249,7 +249,7 @@ func (s *EncoderTestSuite) TestSerializeTransfers() {
 
 func (s *EncoderTestSuite) TestCommitmentBodyHash() {
 	accountRoot := utils.RandomHash()
-	signature := models.MakeSignature(1, 2)
+	signature := models.MakeRandomSignature()
 	feeReceiver := models.MakeUint256(1234)
 	txs := utils.RandomBytes(32)
 
