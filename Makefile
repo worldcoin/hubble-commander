@@ -57,6 +57,9 @@ test-e2e: clean-testcache
 test-e2e-locally: clean-testcache
 	HUBBLE_E2E=local go test -v -tags e2e -run TestCommander ./e2e
 
+bench-e2e: clean-testcache
+	go test -v -tags e2e -run TestBenchCommander ./e2e
+
 .PHONY: 
 	install
 	clean
