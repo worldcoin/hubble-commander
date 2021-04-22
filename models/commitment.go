@@ -24,8 +24,7 @@ func (c *Commitment) BodyHash() common.Hash {
 	arr := make([]byte, 32+64+32+len(c.Transactions))
 
 	copy(arr[0:32], c.AccountTreeRoot.Bytes())
-	copy(arr[32:64], utils.PadLeft(c.CombinedSignature[0].Bytes(), 32))
-	copy(arr[64:96], utils.PadLeft(c.CombinedSignature[1].Bytes(), 32))
+	copy(arr[32:96], c.CombinedSignature.Bytes())
 	binary.BigEndian.PutUint32(arr[124:128], c.FeeReceiver)
 	copy(arr[128:], c.Transactions)
 

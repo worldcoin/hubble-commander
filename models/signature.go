@@ -8,11 +8,17 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils"
 )
 
-// TODO: Consider representing this as a 64 byte array instead
-type Signature [2]Uint256
+type Signature [64]byte
 
 func MakeSignature(first, second int64) Signature {
-	return Signature{MakeUint256(first), MakeUint256(second)}
+	var signature [64]byte
+	copy(signature[:32], utils.PadLeft(big.NewInt(first).Bytes(), 32))
+	copy(signature[32:], utils.PadLeft(big.NewInt(second).Bytes(), 32))
+	return signature
+}
+
+func (s Signature) Bytes() []byte {
+	return s[:]
 }
 
 func (s *Signature) Scan(src interface{}) error {
@@ -24,21 +30,17 @@ func (s *Signature) Scan(src interface{}) error {
 		return fmt.Errorf("invalid signature length")
 	}
 
-	s[0].SetBytes(value[0:32])
-	s[1].SetBytes(value[32:64])
+	copy(s[:], value)
 	return nil
 }
 
-// Value implements valuer for database/sql.
 func (s Signature) Value() (driver.Value, error) {
-	buf := make([]byte, 0, 64)
-
-	buf = append(buf, utils.PadLeft(s[0].Bytes(), 32)...)
-	buf = append(buf, utils.PadLeft(s[1].Bytes(), 32)...)
-
-	return buf, nil
+	return s.Bytes(), nil
 }
 
 func (s *Signature) ToBigIntPointers() [2]*big.Int {
-	return [2]*big.Int{&s[0].Int, &s[1].Int}
+	return [2]*big.Int{
+		new(big.Int).SetBytes(s[:32]),
+		new(big.Int).SetBytes(s[32:]),
+	}
 }
