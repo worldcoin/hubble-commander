@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	enumerr "github.com/Worldcoin/hubble-commander/models/enums/errors"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,7 +23,8 @@ func TestUnmarshalJSON_UnsupportedType(t *testing.T) {
 	var res TransactionType
 	err := json.Unmarshal([]byte(input), &res)
 	require.Error(t, err)
-	require.Equal(t, ErrUnsupportedTransactionType, err)
+	require.Equal(t, enumerr.NewUnsupportedError("transaction type"), err)
+	require.True(t, enumerr.IsUnsupportedError(err))
 }
 
 func TestMarshalJSON_SupportedType(t *testing.T) {
@@ -38,5 +40,6 @@ func TestMarshalJSON_UnsupportedType(t *testing.T) {
 	bytes, err := json.Marshal(input)
 	require.Error(t, err)
 	require.Nil(t, bytes)
-	require.Equal(t, ErrUnsupportedTransactionType, errors.Unwrap(err))
+	require.Equal(t, enumerr.NewUnsupportedError("transaction type"), errors.Unwrap(err))
+	require.True(t, enumerr.IsUnsupportedError(err))
 }

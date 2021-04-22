@@ -2,7 +2,8 @@ package txstatus
 
 import (
 	"encoding/json"
-	"errors"
+
+	enumerr "github.com/Worldcoin/hubble-commander/models/enums/errors"
 )
 
 type TransactionStatus uint
@@ -14,16 +15,12 @@ const (
 	Error     TransactionStatus = 5000
 )
 
-var (
-	TransactionStatuses = map[TransactionStatus]string{
-		Pending:   "PENDING",
-		InBatch:   "IN_BATCH",
-		Finalised: "FINALISED", // nolint:misspell
-		Error:     "ERROR",
-	}
-
-	ErrUnsupportedTransactionStatus = errors.New("unsupported transaction status")
-)
+var TransactionStatuses = map[TransactionStatus]string{
+	Pending:   "PENDING",
+	InBatch:   "IN_BATCH",
+	Finalised: "FINALISED", // nolint:misspell
+	Error:     "ERROR",
+}
 
 func (s TransactionStatus) Ref() *TransactionStatus {
 	return &s
@@ -50,13 +47,13 @@ func (s *TransactionStatus) UnmarshalJSON(bytes []byte) error {
 			return nil
 		}
 	}
-	return ErrUnsupportedTransactionStatus
+	return enumerr.NewUnsupportedError("transaction status")
 }
 
 func (s TransactionStatus) MarshalJSON() ([]byte, error) {
 	msg, exists := TransactionStatuses[s]
 	if !exists {
-		return nil, ErrUnsupportedTransactionStatus
+		return nil, enumerr.NewUnsupportedError("transaction status")
 	}
 	return json.Marshal(msg)
 }
