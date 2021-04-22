@@ -45,7 +45,7 @@ func (p *PublicKey) Scan(src interface{}) error {
 		return fmt.Errorf("can't scan %T into PublicKey", src)
 	}
 	if len(value) != 128 {
-		return fmt.Errorf("invalid signature length")
+		return fmt.Errorf("invalid public key length")
 	}
 
 	copy(p[:], value)
@@ -53,7 +53,6 @@ func (p *PublicKey) Scan(src interface{}) error {
 }
 
 // nolint:gocritic
-// Value implements valuer for database/sql.
 func (p PublicKey) Value() (driver.Value, error) {
 	return p.Bytes(), nil
 }
