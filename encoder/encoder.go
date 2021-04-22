@@ -209,3 +209,17 @@ func SerializeTransfers(transfers []models.Transfer) ([]byte, error) {
 
 	return buf, nil
 }
+
+func SerializeCreate2Transfers(transfers []models.Create2Transfer) ([]byte, error) {
+	buf := make([]byte, 0, len(transfers)*16)
+
+	for i := range transfers {
+		encoded, err := EncodeCreate2TransferForCommitment(&transfers[i])
+		if err != nil {
+			return nil, err
+		}
+		buf = append(buf, encoded...)
+	}
+
+	return buf, nil
+}

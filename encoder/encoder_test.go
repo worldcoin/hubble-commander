@@ -277,6 +277,41 @@ func (s *EncoderTestSuite) TestSerializeTransfers() {
 	s.Equal(expected, serialized)
 }
 
+func (s *EncoderTestSuite) TestSerializeCreate2Transfers() {
+	transfer := models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(50),
+			Fee:         models.MakeUint256(10),
+		},
+		ToStateID:  2,
+		ToPubKeyID: 6,
+	}
+	transfer2 := models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 2,
+			Amount:      models.MakeUint256(200),
+			Fee:         models.MakeUint256(10),
+		},
+		ToStateID:  3,
+		ToPubKeyID: 5,
+	}
+
+	expected, err := s.testTx.Create2transferSerialize(
+		nil,
+		[]testtx.TxCreate2Transfer{
+			newTxCreate2Transfer(&transfer),
+			newTxCreate2Transfer(&transfer2),
+		},
+	)
+	s.NoError(err)
+
+	serialized, err := SerializeCreate2Transfers([]models.Create2Transfer{transfer, transfer2})
+	s.NoError(err)
+
+	s.Equal(expected, serialized)
+}
+
 func (s *EncoderTestSuite) TestCommitmentBodyHash() {
 	accountRoot := utils.RandomHash()
 	signature := models.MakeSignature(1, 2)
