@@ -15,8 +15,7 @@ func recreateDatabase(cfg *config.DBConfig) error {
 	}
 
 	query := fmt.Sprintf(`
-		SELECT pg_terminate_back
-end(pg_stat_activity.pid) 
+		SELECT pg_terminate_backend(pg_stat_activity.pid) 
 		FROM pg_stat_activity 
 		WHERE pg_stat_activity.datname = '%s' AND pid <> pg_backend_pid();`,
 		cfg.Name,
