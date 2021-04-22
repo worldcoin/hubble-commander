@@ -7,6 +7,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -72,6 +74,33 @@ func (s *Create2TransferTestSuite) TestGetCreate2Transfer_NonExistentTransaction
 	res, err := s.storage.GetCreate2Transfer(hash)
 	s.Equal(NewNotFoundError("create2transfer"), err)
 	s.Nil(res)
+}
+
+func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers() {
+	commitment := &models.Commitment{}
+	id, err := s.storage.AddCommitment(commitment)
+	s.NoError(err)
+
+	create2Transfer2 := create2Transfer
+	create2Transfer2.Hash = utils.RandomHash()
+	create2Transfer3 := create2Transfer
+	create2Transfer3.Hash = utils.RandomHash()
+	create2Transfer3.IncludedInCommitment = id
+	create2Transfer4 := create2Transfer
+	create2Transfer4.Hash = utils.RandomHash()
+	create2Transfer4.ErrorMessage = ref.String("A very boring error message")
+
+	create2Transfers := []*models.Create2Transfer{&create2Transfer, &create2Transfer2, &create2Transfer3, &create2Transfer4}
+
+	for _, create2Transfer := range create2Transfers {
+		err = s.storage.AddCreate2Transfer(create2Transfer)
+		s.NoError(err)
+	}
+
+	res, err := s.storage.GetPendingCreate2Transfers()
+	s.NoError(err)
+
+	s.Equal([]models.Create2Transfer{create2Transfer, create2Transfer2}, res)
 }
 
 func TestCreate2TransferTestSuite(t *testing.T) {
