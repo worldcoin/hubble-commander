@@ -91,3 +91,14 @@ func (s *Storage) GetCommitmentsByBatchHash(hash *common.Hash) ([]models.Commitm
 	).Into(&res)
 	return res, err
 }
+
+func (s *Storage) GetCommitmentsByBatchID(id models.Uint256) ([]models.Commitment, error) {
+	res := make([]models.Commitment, 0, 32)
+	err := s.DB.Query(
+		s.QB.Select("commitment.*").
+			From("batch").
+			Join("commitment on commitment.included_in_batch = batch.batch_hash").
+			Where(squirrel.Eq{"batch_id": id}),
+	).Into(&res)
+	return res, err
+}

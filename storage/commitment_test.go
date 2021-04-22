@@ -144,6 +144,26 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchHash_NonExistentCommitmen
 	s.Len(commitments, 0)
 }
 
+func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
+	commitmentWithHash := commitment
+	commitmentWithHash.IncludedInBatch = s.addRandomBatch()
+	for i := 0; i < 3; i++ {
+		_, err := s.storage.AddCommitment(&commitmentWithHash)
+		s.NoError(err)
+	}
+
+	commitments, err := s.storage.GetCommitmentsByBatchID(models.MakeUint256(0))
+	s.NoError(err)
+	s.Len(commitments, 3)
+}
+
+func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID_NonExistentCommitments() {
+	_ = s.addRandomBatch()
+	commitments, err := s.storage.GetCommitmentsByBatchID(models.MakeUint256(0))
+	s.NoError(err)
+	s.Len(commitments, 0)
+}
+
 func TestCommitmentTestSuite(t *testing.T) {
 	suite.Run(t, new(CommitmentTestSuite))
 }
