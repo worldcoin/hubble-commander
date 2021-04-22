@@ -11,3 +11,8 @@ type Batch struct {
 	ID                Uint256 `db:"batch_id"`
 	FinalisationBlock uint32  `db:"finalisation_block"` // nolint:misspell
 }
+
+type BatchWithCommitments struct {
+	Batch
+	Commitments []Commitment
+}
