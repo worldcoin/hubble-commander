@@ -26,7 +26,7 @@ var (
 	}
 )
 
-type SubmitBatchTestSuite struct {
+type SubmitTransferBatchTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	db         *db.TestDB
@@ -36,11 +36,11 @@ type SubmitBatchTestSuite struct {
 	testClient *eth.TestClient
 }
 
-func (s *SubmitBatchTestSuite) SetupSuite() {
+func (s *SubmitTransferBatchTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *SubmitBatchTestSuite) SetupTest() {
+func (s *SubmitTransferBatchTestSuite) SetupTest() {
 	testDB, err := db.NewTestDB()
 	s.NoError(err)
 	s.db = testDB
@@ -71,25 +71,25 @@ func (s *SubmitBatchTestSuite) SetupTest() {
 	s.NoError(err)
 }
 
-func (s *SubmitBatchTestSuite) TearDownTest() {
+func (s *SubmitTransferBatchTestSuite) TearDownTest() {
 	s.testClient.Close()
 	err := s.db.Teardown()
 	s.NoError(err)
 }
 
-func (s *SubmitBatchTestSuite) TestSubmitBatch_ErrorsIfNotEnoughCommitments() {
-	err := submitBatch([]models.Commitment{}, s.storage, s.testClient.Client, s.cfg)
+func (s *SubmitTransferBatchTestSuite) TestSubmitTransferBatch_ErrorsIfNotEnoughCommitments() {
+	err := submitTransferBatch([]models.Commitment{}, s.storage, s.testClient.Client, s.cfg)
 	s.Equal(ErrNotEnoughCommitments, err)
 }
 
-func (s *SubmitBatchTestSuite) TestSubmitBatch_SubmitsCommitmentsOnChain() {
+func (s *SubmitTransferBatchTestSuite) TestSubmitTransferBatch_SubmitsCommitmentsOnChain() {
 	commitmentID, err := s.storage.AddCommitment(&baseCommitment)
 	s.NoError(err)
 
 	commitment, err := s.storage.GetCommitment(*commitmentID)
 	s.NoError(err)
 
-	err = submitBatch([]models.Commitment{*commitment}, s.storage, s.testClient.Client, s.cfg)
+	err = submitTransferBatch([]models.Commitment{*commitment}, s.storage, s.testClient.Client, s.cfg)
 	s.NoError(err)
 
 	nextBatchID, err := s.testClient.Rollup.NextBatchID(nil)
@@ -97,14 +97,14 @@ func (s *SubmitBatchTestSuite) TestSubmitBatch_SubmitsCommitmentsOnChain() {
 	s.Equal(big.NewInt(2), nextBatchID)
 }
 
-func (s *SubmitBatchTestSuite) TestSubmitBatch_StoresBatchRecord() {
+func (s *SubmitTransferBatchTestSuite) TestSubmitTransferBatch_StoresBatchRecord() {
 	commitmentID, err := s.storage.AddCommitment(&baseCommitment)
 	s.NoError(err)
 
 	commitment, err := s.storage.GetCommitment(*commitmentID)
 	s.NoError(err)
 
-	err = submitBatch([]models.Commitment{*commitment}, s.storage, s.testClient.Client, s.cfg)
+	err = submitTransferBatch([]models.Commitment{*commitment}, s.storage, s.testClient.Client, s.cfg)
 	s.NoError(err)
 
 	batch, err := s.storage.GetBatchByID(models.MakeUint256(1))
@@ -112,7 +112,7 @@ func (s *SubmitBatchTestSuite) TestSubmitBatch_StoresBatchRecord() {
 	s.NotNil(batch)
 }
 
-func (s *SubmitBatchTestSuite) addCommitments(count int) ([]int32, []models.Commitment) {
+func (s *SubmitTransferBatchTestSuite) addCommitments(count int) ([]int32, []models.Commitment) {
 	ids := make([]int32, 0, count)
 	commitments := make([]models.Commitment, 0, count)
 	for i := 0; i < count; i++ {
@@ -127,10 +127,10 @@ func (s *SubmitBatchTestSuite) addCommitments(count int) ([]int32, []models.Comm
 	return ids, commitments
 }
 
-func (s *SubmitBatchTestSuite) TestSubmitBatch_MarksCommitmentsAsIncluded() {
+func (s *SubmitTransferBatchTestSuite) TestSubmitTransferBatch_MarksCommitmentsAsIncluded() {
 	ids, commitments := s.addCommitments(2)
 
-	err := submitBatch(commitments, s.storage, s.testClient.Client, s.cfg)
+	err := submitTransferBatch(commitments, s.storage, s.testClient.Client, s.cfg)
 	s.NoError(err)
 
 	batch, err := s.storage.GetBatchByID(models.MakeUint256(1))
@@ -143,15 +143,15 @@ func (s *SubmitBatchTestSuite) TestSubmitBatch_MarksCommitmentsAsIncluded() {
 	}
 }
 
-func (s *SubmitBatchTestSuite) TestSubmitBatch_MarksCommitmentsAsIncluded_UnsavedCommitment() {
-	err := submitBatch([]models.Commitment{baseCommitment}, s.storage, s.testClient.Client, s.cfg)
+func (s *SubmitTransferBatchTestSuite) TestSubmitTransferBatch_MarksCommitmentsAsIncluded_UnsavedCommitment() {
+	err := submitTransferBatch([]models.Commitment{baseCommitment}, s.storage, s.testClient.Client, s.cfg)
 	s.EqualError(err, "no rows were affected by the update")
 }
 
-func (s *SubmitBatchTestSuite) TestSubmitBatch_UpdatesCommitmentsAccountRoot() {
+func (s *SubmitTransferBatchTestSuite) TestSubmitTransferBatch_UpdatesCommitmentsAccountRoot() {
 	ids, commitments := s.addCommitments(2)
 
-	err := submitBatch(commitments, s.storage, s.testClient.Client, s.cfg)
+	err := submitTransferBatch(commitments, s.storage, s.testClient.Client, s.cfg)
 	s.NoError(err)
 
 	accountRoot, err := s.testClient.AccountRegistry.Root(nil)
@@ -164,6 +164,6 @@ func (s *SubmitBatchTestSuite) TestSubmitBatch_UpdatesCommitmentsAccountRoot() {
 	}
 }
 
-func TestSubmitBatchTestSuite(t *testing.T) {
-	suite.Run(t, new(SubmitBatchTestSuite))
+func TestSubmitTransferBatchTestSuite(t *testing.T) {
+	suite.Run(t, new(SubmitTransferBatchTestSuite))
 }

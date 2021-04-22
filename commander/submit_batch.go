@@ -14,7 +14,7 @@ var (
 	ErrNotEnoughCommitments = NewRollupError("not enough commitments")
 )
 
-func submitBatch(commitments []models.Commitment, storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
+func submitTransferBatch(commitments []models.Commitment, storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
 	if len(commitments) < int(cfg.MinCommitmentsPerBatch) {
 		return ErrNotEnoughCommitments
 	}

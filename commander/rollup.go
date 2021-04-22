@@ -52,7 +52,7 @@ func createAndSubmitBatch(storage *st.Storage, client *eth.Client, cfg *config.R
 		return err
 	}
 
-	err = submitBatch(commitments, txStorage, client, cfg)
+	err = submitTransferBatch(commitments, txStorage, client, cfg)
 	if err != nil {
 		return err
 	}
