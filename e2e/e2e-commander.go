@@ -15,9 +15,7 @@ type E2ECommander interface {
 
 func CreateCommanderFromEnv() (E2ECommander, error) {
 	switch os.Getenv("HUBBLE_E2E") {
-	case "":
-		fallthrough
-	case "docker":
+	case "", "docker":
 		return StartCommander(StartOptions{
 			Image: "ghcr.io/worldcoin/hubble-commander:latest",
 		})
