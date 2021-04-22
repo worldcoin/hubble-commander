@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql/driver"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 
@@ -26,6 +27,10 @@ func (s *Signature) BigInts() [2]*big.Int {
 		new(big.Int).SetBytes(s[:32]),
 		new(big.Int).SetBytes(s[32:]),
 	}
+}
+
+func (s *Signature) String() string {
+	return hex.EncodeToString(s.Bytes())
 }
 
 func (s *Signature) Scan(src interface{}) error {
