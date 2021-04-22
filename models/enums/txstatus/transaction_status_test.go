@@ -26,7 +26,7 @@ func TestUnmarshalJSON_UnsupportedType(t *testing.T) {
 }
 
 func TestMarshalJSON_SupportedType(t *testing.T) {
-	input := Finalised
+	input := InBatch
 	expected := fmt.Sprintf(`"%s"`, TransactionStatuses[input])
 	bytes, err := json.Marshal(input)
 	require.NoError(t, err)
