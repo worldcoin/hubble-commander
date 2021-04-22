@@ -12,20 +12,20 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type ApplyTransfersTestSuite struct {
+type ApplyCreate2TransfersTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	db      *db.TestDB
 	storage *storage.Storage
 	tree    *storage.StateTree
-	cfg     *config.RollupConfig
+	cfg *config.RollupConfig
 }
 
-func (s *ApplyTransfersTestSuite) SetupSuite() {
+func (s *ApplyCreate2TransfersTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *ApplyTransfersTestSuite) SetupTest() {
+func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 	testDB, err := db.NewTestDB()
 	s.NoError(err)
 	s.db = testDB
@@ -82,34 +82,34 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 	s.NoError(err)
 }
 
-func (s *ApplyTransfersTestSuite) TearDownTest() {
+func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
 	err := s.db.Teardown()
 	s.NoError(err)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTransfers_AllValid() {
-	transfers := generateValidTransfers(10)
+func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AllValid() {
+	transfers := generateValidCreate2Transfers(10)
 
-	validTransfers, err := ApplyTransfers(s.storage, transfers, s.cfg)
+	validTransfers, err := ApplyCreate2Transfers(s.storage, transfers, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 10)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTransfers_SomeValid() {
-	transfers := generateValidTransfers(10)
-	transfers = append(transfers, generateInvalidTransfers(10)...)
+func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
+	transfers := generateValidCreate2Transfers(10)
+	transfers = append(transfers, generateInvalidCreate2Transfers(10)...)
 
-	validTransfers, err := ApplyTransfers(s.storage, transfers, s.cfg)
+	validTransfers, err := ApplyCreate2Transfers(s.storage, transfers, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 10)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTransfers_MoreThan32() {
-	transfers := generateValidTransfers(60)
+func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_MoreThan32() {
+	transfers := generateValidCreate2Transfers(60)
 
-	validTransfers, err := ApplyTransfers(s.storage, transfers, s.cfg)
+	validTransfers, err := ApplyCreate2Transfers(s.storage, transfers, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 32)
@@ -118,14 +118,14 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_MoreThan32() {
 	s.Equal(models.MakeUint256(32), state.Nonce)
 }
 
-func TestApplyTransfersTestSuite(t *testing.T) {
-	suite.Run(t, new(ApplyTransfersTestSuite))
+func TestApplyCreate2TransfersTestSuite(t *testing.T) {
+	suite.Run(t, new(ApplyCreate2TransfersTestSuite))
 }
 
-func generateValidTransfers(transfersAmount int) []models.Transfer {
-	transfers := make([]models.Transfer, 0, transfersAmount)
+func generateValidCreate2Transfers(transfersAmount int) []models.Create2Transfer {
+	transfers := make([]models.Create2Transfer, 0, transfersAmount)
 	for i := 0; i < transfersAmount; i++ {
-		transfer := models.Transfer{
+		transfer := models.Create2Transfer{
 			TransactionBase: models.TransactionBase{
 				Hash:        utils.RandomHash(),
 				FromStateID: 1,
@@ -134,16 +134,17 @@ func generateValidTransfers(transfersAmount int) []models.Transfer {
 				Nonce:       models.MakeUint256(int64(i)),
 			},
 			ToStateID: 2,
+			ToPubKeyID: 2,
 		}
 		transfers = append(transfers, transfer)
 	}
 	return transfers
 }
 
-func generateInvalidTransfers(transfersAmount int) []models.Transfer {
-	transfers := make([]models.Transfer, 0, transfersAmount)
+func generateInvalidCreate2Transfers(transfersAmount int) []models.Create2Transfer {
+	transfers := make([]models.Create2Transfer, 0, transfersAmount)
 	for i := 0; i < transfersAmount; i++ {
-		transfer := models.Transfer{
+		transfer := models.Create2Transfer{
 			TransactionBase: models.TransactionBase{
 				Hash:        utils.RandomHash(),
 				FromStateID: 1,
@@ -152,6 +153,7 @@ func generateInvalidTransfers(transfersAmount int) []models.Transfer {
 				Nonce:       models.MakeUint256(0),
 			},
 			ToStateID: 2,
+			ToPubKeyID: 2,
 		}
 		transfers = append(transfers, transfer)
 	}
