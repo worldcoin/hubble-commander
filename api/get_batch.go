@@ -32,6 +32,7 @@ func (a *API) GetBatchByID(id models.Uint256) (*dto.BatchWithCommitments, error)
 	batchWithCommitments := &dto.BatchWithCommitments{
 		Batch: *batch,
 	}
+
 	batchWithCommitments.Commitments, err = a.storage.GetCommitmentsByBatchID(id)
 	if err != nil {
 		return nil, err
