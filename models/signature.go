@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql/driver"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math/big"
 
@@ -48,4 +49,19 @@ func (s *Signature) Scan(src interface{}) error {
 
 func (s Signature) Value() (driver.Value, error) {
 	return s.Bytes(), nil
+}
+
+func (s *Signature) UnmarshalJSON(b []byte) error {
+	decodedBytes, err := hex.Decode(s[:], b[1:len(b)-1])
+	if err != nil {
+		return err
+	}
+	if decodedBytes != 64 {
+		return fmt.Errorf("invalid signature")
+	}
+	return nil
+}
+
+func (s Signature) MarshalJSON() ([]byte, error) {
+	return json.Marshal(hex.EncodeToString(s[:]))
 }

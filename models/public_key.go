@@ -65,15 +65,10 @@ func (p *PublicKey) UnmarshalJSON(b []byte) error {
 	if decodedBytes != 128 {
 		return fmt.Errorf("invalid public key")
 	}
-
 	return nil
 }
 
 // nolint:gocritic
 func (p PublicKey) MarshalJSON() ([]byte, error) {
-	marshalizedPublicKey, err := json.Marshal(hex.EncodeToString(p[:]))
-	if err != nil {
-		return nil, err
-	}
-	return marshalizedPublicKey, nil
+	return json.Marshal(hex.EncodeToString(p[:]))
 }
