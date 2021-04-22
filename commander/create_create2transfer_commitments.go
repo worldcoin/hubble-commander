@@ -10,8 +10,8 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func createTransferCommitments(
-	pendingTransfers []models.Transfer,
+func createCreate2TransferCommitments(
+	pendingTransfers []models.Create2Transfer,
 	storage *st.Storage,
 	cfg *config.RollupConfig,
 ) ([]models.Commitment, error) {
@@ -28,7 +28,7 @@ func createTransferCommitments(
 			return nil, err
 		}
 
-		includedTransfers, err := ApplyTransfers(storage, pendingTransfers, cfg)
+		includedTransfers, err := ApplyCreate2Transfers(storage, pendingTransfers, cfg)
 		if err != nil {
 			return nil, err
 		}
@@ -41,10 +41,10 @@ func createTransferCommitments(
 			break
 		}
 
-		pendingTransfers = removeTransfer(pendingTransfers, includedTransfers)
+		pendingTransfers = removeCreate2Transfer(pendingTransfers, includedTransfers)
 
-		log.Printf("Creating a transfer commitment from %d transactions", len(includedTransfers))
-		commitment, err := createAndStoreTransferCommitment(storage, includedTransfers, cfg.FeeReceiverIndex)
+		log.Printf("Creating a create2Transfer commitment from %d transactions", len(includedTransfers))
+		commitment, err := createAndStoreCreate2TransferCommitment(storage, includedTransfers, cfg.FeeReceiverIndex)
 		if err != nil {
 			return nil, err
 		}
@@ -65,11 +65,11 @@ func createTransferCommitments(
 	return commitments, nil
 }
 
-func removeTransfer(transferList, toRemove []models.Transfer) []models.Transfer {
+func removeCreate2Transfer(transferList, toRemove []models.Create2Transfer) []models.Create2Transfer {
 	outputIndex := 0
 	for i := range transferList {
 		transfer := &transferList[i]
-		if !transferExists(toRemove, transfer) {
+		if !create2TransferExists(toRemove, transfer) {
 			transferList[outputIndex] = *transfer
 			outputIndex++
 		}
@@ -78,7 +78,7 @@ func removeTransfer(transferList, toRemove []models.Transfer) []models.Transfer 
 	return transferList[:outputIndex]
 }
 
-func transferExists(transferList []models.Transfer, tx *models.Transfer) bool {
+func create2TransferExists(transferList []models.Create2Transfer, tx *models.Create2Transfer) bool {
 	for i := range transferList {
 		if transferList[i].Hash == tx.Hash {
 			return true
@@ -87,10 +87,10 @@ func transferExists(transferList []models.Transfer, tx *models.Transfer) bool {
 	return false
 }
 
-func createAndStoreTransferCommitment(storage *st.Storage, transfers []models.Transfer, feeReceiverIndex uint32) (*models.Commitment, error) {
+func createAndStoreCreate2TransferCommitment(storage *st.Storage, transfers []models.Create2Transfer, feeReceiverIndex uint32) (*models.Commitment, error) {
 	combinedSignature := models.MakeSignature(1, 2) // TODO: Actually combine signatures
 
-	serializedTxs, err := encoder.SerializeTransfers(transfers)
+	serializedTxs, err := encoder.SerializeCreate2Transfers(transfers)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func createAndStoreTransferCommitment(storage *st.Storage, transfers []models.Tr
 	}
 
 	commitment := models.Commitment{
-		Type:              txtype.Transfer,
+		Type:              txtype.Create2Transfer,
 		Transactions:      serializedTxs,
 		FeeReceiver:       feeReceiverIndex,
 		CombinedSignature: combinedSignature,
@@ -116,14 +116,4 @@ func createAndStoreTransferCommitment(storage *st.Storage, transfers []models.Tr
 	commitment.ID = *id
 
 	return &commitment, nil
-}
-
-func markTransactionsAsIncluded(storage *st.Storage, transactions []models.TransactionBase, commitmentID int32) error {
-	for i := range transactions {
-		err := storage.MarkTransactionAsIncluded(transactions[i].Hash, commitmentID)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }

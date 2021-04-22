@@ -144,7 +144,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_MarksTransf
 	}
 }
 
-func (s *TransferCommitmentsTestSuite) TestRemoveTransactions() {
+func (s *TransferCommitmentsTestSuite) TestRemoveTransfer() {
 	transfer1 := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			Hash: utils.RandomHash(),
