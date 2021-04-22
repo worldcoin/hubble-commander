@@ -21,6 +21,13 @@ func (s Signature) Bytes() []byte {
 	return s[:]
 }
 
+func (s *Signature) BigInts() [2]*big.Int {
+	return [2]*big.Int{
+		new(big.Int).SetBytes(s[:32]),
+		new(big.Int).SetBytes(s[32:]),
+	}
+}
+
 func (s *Signature) Scan(src interface{}) error {
 	value, ok := src.([]byte)
 	if !ok {
@@ -36,11 +43,4 @@ func (s *Signature) Scan(src interface{}) error {
 
 func (s Signature) Value() (driver.Value, error) {
 	return s.Bytes(), nil
-}
-
-func (s *Signature) ToBigIntPointers() [2]*big.Int {
-	return [2]*big.Int{
-		new(big.Int).SetBytes(s[:32]),
-		new(big.Int).SetBytes(s[32:]),
-	}
 }

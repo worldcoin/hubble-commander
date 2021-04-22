@@ -255,7 +255,7 @@ func (s *EncoderTestSuite) TestCommitmentBodyHash() {
 
 	expectedHash, err := s.testTypes.HashTransferBody(nil, types.TypesTransferBody{
 		AccountRoot: accountRoot,
-		Signature:   signature.ToBigIntPointers(),
+		Signature:   signature.BigInts(),
 		FeeReceiver: &feeReceiver.Int,
 		Txs:         txs,
 	})

@@ -90,7 +90,7 @@ func parseCommitments(commitments []models.Commitment) (
 
 	for i := range commitments {
 		stateRoots = append(stateRoots, commitments[i].PostStateRoot)
-		signatures = append(signatures, commitments[i].CombinedSignature.ToBigIntPointers())
+		signatures = append(signatures, commitments[i].CombinedSignature.BigInts())
 		feeReceivers = append(feeReceivers, new(big.Int).SetUint64(uint64(commitments[i].FeeReceiver)))
 		transactions = append(transactions, commitments[i].Transactions)
 	}
