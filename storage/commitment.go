@@ -81,3 +81,13 @@ func (s *Storage) GetPendingCommitments(maxFetched uint64) ([]models.Commitment,
 	}
 	return res, nil
 }
+
+func (s *Storage) GetCommitmentsByBatchHash(hash *common.Hash) ([]models.Commitment, error) {
+	res := make([]models.Commitment, 0, 32)
+	err := s.DB.Query(
+		s.QB.Select("*").
+			From("commitment").
+			Where(squirrel.Eq{"included_in_batch": hash}),
+	).Into(&res)
+	return res, err
+}
