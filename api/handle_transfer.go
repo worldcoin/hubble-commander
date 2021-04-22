@@ -87,6 +87,10 @@ func (a *API) validateTransfer(transfer *models.Transfer) error {
 		return vErr
 	}
 
+	if vErr := a.validateFromTo(transfer); vErr != nil {
+		return vErr
+	}
+
 	stateTree := storage.NewStateTree(a.storage)
 	senderState, err := stateTree.Leaf(transfer.FromStateID)
 	if err != nil {
@@ -106,6 +110,13 @@ func (a *API) validateTransfer(transfer *models.Transfer) error {
 
 	if !a.cfg.DevMode {
 		return a.validateSignature(encodedTransfer, transfer.Signature, &senderState.UserState)
+	}
+	return nil
+}
+
+func (a *API) validateFromTo(transfer *models.Transfer) error {
+	if transfer.FromStateID == transfer.ToStateID {
+		return ErrTransferToSelf
 	}
 	return nil
 }

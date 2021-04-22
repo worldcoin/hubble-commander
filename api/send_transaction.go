@@ -18,6 +18,7 @@ var (
 	ErrNonceTooHigh     = errors.New("nonce too high")
 	ErrNotEnoughBalance = errors.New("not enough balance")
 	ErrInvalidSignature = errors.New("invalid signature")
+	ErrTransferToSelf   = errors.New("transfer to the same state id")
 )
 
 var mockDomain = bls.Domain{1, 2, 3, 4} // TODO use real domain

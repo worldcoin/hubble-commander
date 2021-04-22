@@ -28,10 +28,6 @@ func BlockNumberLoop(storage *st.Storage, client *eth.Client, cfg *config.Rollup
 				log.Println(err.Error())
 				return err
 			}
-			latestBlockNumber := storage.GetLatestBlockNumber()
-			if *blockNumber > latestBlockNumber {
-				log.Printf("New block was mined: %d", *blockNumber)
-			}
 			storage.SetLatestBlockNumber(*blockNumber)
 		}
 	}
