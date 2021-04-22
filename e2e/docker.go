@@ -20,7 +20,7 @@ type StartOptions struct {
 	Image string
 }
 
-func StartCommander(opts StartOptions) (*E2ECommander, error) {
+func StartCommander(opts StartOptions) (*E2EDockerCommander, error) {
 	cli, err := docker.NewClientWithOpts(docker.FromEnv)
 	if err != nil {
 		return nil, err
@@ -72,10 +72,10 @@ func StartCommander(opts StartOptions) (*E2ECommander, error) {
 
 	client := jsonrpc.NewClient("http://localhost:8080")
 
-	commander := &E2ECommander{
+	commander := &E2EDockerCommander{
 		cli:         cli,
 		containerID: containerID,
-		Client:      client,
+		client:      client,
 	}
 
 	stream, err := cli.ContainerAttach(context.Background(), containerID, types.ContainerAttachOptions{
@@ -103,13 +103,17 @@ func StartCommander(opts StartOptions) (*E2ECommander, error) {
 	return commander, nil
 }
 
-type E2ECommander struct {
+type E2EDockerCommander struct {
 	cli         *docker.Client
 	containerID string
-	Client      jsonrpc.RPCClient
+	client      jsonrpc.RPCClient
 }
 
-func (c *E2ECommander) Start() error {
+func (c *E2EDockerCommander) Client() jsonrpc.RPCClient {
+	return c.client
+}
+
+func (c *E2EDockerCommander) Start() error {
 	err := c.cli.ContainerStart(context.Background(), c.containerID, types.ContainerStartOptions{})
 	if err != nil {
 		return err
@@ -145,7 +149,7 @@ func (c *E2ECommander) Start() error {
 	return nil
 }
 
-func (c *E2ECommander) IsHealthy() (bool, error) {
+func (c *E2EDockerCommander) IsHealthy() (bool, error) {
 	info, err := c.cli.ContainerInspect(context.Background(), c.containerID)
 	if err != nil {
 		return false, err
@@ -154,7 +158,7 @@ func (c *E2ECommander) IsHealthy() (bool, error) {
 	return info.State != nil && info.State.Health != nil && info.State.Health.Status == "healthy", nil
 }
 
-func (c *E2ECommander) HasExited() (bool, error) {
+func (c *E2EDockerCommander) HasExited() (bool, error) {
 	info, err := c.cli.ContainerInspect(context.Background(), c.containerID)
 	if err != nil {
 		return false, err
@@ -163,7 +167,7 @@ func (c *E2ECommander) HasExited() (bool, error) {
 	return info.State != nil && info.State.Status == "exited", nil
 }
 
-func (c *E2ECommander) Stop() error {
+func (c *E2EDockerCommander) Stop() error {
 	err := c.cli.ContainerStop(context.Background(), c.containerID, nil)
 	if err != nil {
 		return err

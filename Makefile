@@ -52,10 +52,10 @@ test-hardhat:
 	go test -v -tags hardhat -run TestWalletHardhatTestSuite ./bls
 
 test-e2e: clean-testcache
-	go test -v -tags e2e -run TestCommanderUsingDocker ./e2e
+	HUBBLE_E2E=docker go test -v -tags e2e -run TestCommander ./e2e
 
 test-e2e-locally: clean-testcache
-	go test -v -tags e2e -run TestCommanderLocally ./e2e
+	HUBBLE_E2E=local go test -v -tags e2e -run TestCommander ./e2e
 
 .PHONY: 
 	install

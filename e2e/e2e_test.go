@@ -18,31 +18,25 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
-	"github.com/ybbus/jsonrpc/v2"
 )
 
-func TestCommanderUsingDocker(t *testing.T) {
-	commander, err := StartCommander(StartOptions{
-		Image: "ghcr.io/worldcoin/hubble-commander:latest",
-	})
+func TestCommander(t *testing.T) {
+	commander, err := CreateCommanderFromEnv()
 	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, commander.Stop())
 	}()
-	runE2ETest(t, commander.Client)
-}
 
-func runE2ETest(t *testing.T, client jsonrpc.RPCClient) {
 	wallets, err := createWallets()
 	require.NoError(t, err)
 
 	var version string
-	err = client.CallFor(&version, "hubble_getVersion")
+	err = commander.Client().CallFor(&version, "hubble_getVersion")
 	require.NoError(t, err)
 	require.Equal(t, "dev-0.1.0", version)
 
 	var userStates []dto.UserState
-	err = client.CallFor(&userStates, "hubble_getUserStates", []interface{}{wallets[0].PublicKey()})
+	err = commander.Client().CallFor(&userStates, "hubble_getUserStates", []interface{}{wallets[0].PublicKey()})
 	require.NoError(t, err)
 	require.Len(t, userStates, 1)
 	require.EqualValues(t, models.MakeUint256(0), userStates[0].Nonce)
@@ -57,12 +51,12 @@ func runE2ETest(t *testing.T, client jsonrpc.RPCClient) {
 	require.NoError(t, err)
 
 	var transferHash1 common.Hash
-	err = client.CallFor(&transferHash1, "hubble_sendTransaction", []interface{}{*transfer})
+	err = commander.Client().CallFor(&transferHash1, "hubble_sendTransaction", []interface{}{*transfer})
 	require.NoError(t, err)
 	require.NotNil(t, transferHash1)
 
 	var sentTransfer dto.TransferReceipt
-	err = client.CallFor(&sentTransfer, "hubble_getTransfer", []interface{}{transferHash1})
+	err = commander.Client().CallFor(&sentTransfer, "hubble_getTransfer", []interface{}{transferHash1})
 	require.NoError(t, err)
 	require.Equal(t, txstatus.Pending, sentTransfer.Status)
 
@@ -76,21 +70,21 @@ func runE2ETest(t *testing.T, client jsonrpc.RPCClient) {
 	require.NoError(t, err)
 
 	var transferHash2 common.Hash
-	err = client.CallFor(&transferHash2, "hubble_sendTransaction", []interface{}{*transfer2})
+	err = commander.Client().CallFor(&transferHash2, "hubble_sendTransaction", []interface{}{*transfer2})
 	require.NoError(t, err)
 	require.NotNil(t, transferHash2)
 
 	testutils.WaitToPass(func() bool {
-		err = client.CallFor(&sentTransfer, "hubble_getTransfer", []interface{}{transferHash1})
+		err = commander.Client().CallFor(&sentTransfer, "hubble_getTransfer", []interface{}{transferHash1})
 		require.NoError(t, err)
 		return sentTransfer.Status == txstatus.InBatch
 	}, 10*time.Second)
 
-	err = client.CallFor(&sentTransfer, "hubble_getTransfer", []interface{}{transferHash2})
+	err = commander.Client().CallFor(&sentTransfer, "hubble_getTransfer", []interface{}{transferHash2})
 	require.NoError(t, err)
 	require.Equal(t, txstatus.InBatch, sentTransfer.Status)
 
-	err = client.CallFor(&userStates, "hubble_getUserStates", []interface{}{wallets[1].PublicKey()})
+	err = commander.Client().CallFor(&userStates, "hubble_getUserStates", []interface{}{wallets[1].PublicKey()})
 	require.NoError(t, err)
 	require.Len(t, userStates, 2)
 
@@ -100,7 +94,7 @@ func runE2ETest(t *testing.T, client jsonrpc.RPCClient) {
 	require.EqualValues(t, models.MakeUint256(920), userState.Balance)
 
 	var batches []models.Batch
-	err = client.CallFor(&batches, "hubble_getBatches", []interface{}{nil, nil})
+	err = commander.Client().CallFor(&batches, "hubble_getBatches", []interface{}{nil, nil})
 
 	require.NoError(t, err)
 	require.Len(t, batches, 1)
