@@ -47,7 +47,7 @@ func createAndSubmitBatch(storage *st.Storage, client *eth.Client, cfg *config.R
 		return err
 	}
 
-	commitments, err := createCommitments(pendingTransfers, txStorage, cfg)
+	commitments, err := createTransferCommitments(pendingTransfers, txStorage, cfg)
 	if err != nil {
 		return err
 	}

@@ -10,7 +10,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func createCommitments(
+func createTransferCommitments(
 	pendingTransfers []models.Transfer,
 	storage *st.Storage,
 	cfg *config.RollupConfig,
@@ -43,8 +43,8 @@ func createCommitments(
 
 		pendingTransfers = removeTransfer(pendingTransfers, includedTransfers)
 
-		log.Printf("Creating a commitment from %d transactions", len(includedTransfers))
-		commitment, err := createAndStoreCommitment(storage, includedTransfers, cfg.FeeReceiverIndex)
+		log.Printf("Creating a transfer commitment from %d transactions", len(includedTransfers))
+		commitment, err := createAndStoreTransferCommitment(storage, includedTransfers, cfg.FeeReceiverIndex)
 		if err != nil {
 			return nil, err
 		}
@@ -64,7 +64,7 @@ func removeTransfer(transferList, toRemove []models.Transfer) []models.Transfer 
 	outputIndex := 0
 	for i := range transferList {
 		transfer := &transferList[i]
-		if !transactionExists(toRemove, transfer) {
+		if !transferExists(toRemove, transfer) {
 			transferList[outputIndex] = *transfer
 			outputIndex++
 		}
@@ -73,7 +73,7 @@ func removeTransfer(transferList, toRemove []models.Transfer) []models.Transfer 
 	return transferList[:outputIndex]
 }
 
-func transactionExists(transferList []models.Transfer, tx *models.Transfer) bool {
+func transferExists(transferList []models.Transfer, tx *models.Transfer) bool {
 	for i := range transferList {
 		if transferList[i].Hash == tx.Hash {
 			return true
@@ -82,7 +82,7 @@ func transactionExists(transferList []models.Transfer, tx *models.Transfer) bool
 	return false
 }
 
-func createAndStoreCommitment(storage *st.Storage, transfers []models.Transfer, feeReceiverIndex uint32) (*models.Commitment, error) {
+func createAndStoreTransferCommitment(storage *st.Storage, transfers []models.Transfer, feeReceiverIndex uint32) (*models.Commitment, error) {
 	combinedSignature := models.MakeSignature(1, 2) // TODO: Actually combine signatures
 
 	serializedTxs, err := encoder.SerializeTransfers(transfers)
