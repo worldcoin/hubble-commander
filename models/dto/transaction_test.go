@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	enumerr "github.com/Worldcoin/hubble-commander/models/enums/errors"
 	"github.com/stretchr/testify/require"
 )
 
@@ -56,5 +56,5 @@ func TestTransaction_UnmarshalJSON_UnknownType(t *testing.T) {
 	input := `{"Type":"UNSUPPORTED_TYPE","FromStateID":1,"ToStateID":2,"Amount":"50","Fee":"10","Nonce":"0","Signature":"0xdeadbeef"}`
 	var tx Transaction
 	err := json.Unmarshal([]byte(input), &tx)
-	require.Equal(t, txtype.ErrUnsupportedTransactionType, err)
+	require.Equal(t, enumerr.NewUnsupportedError("transaction type"), err)
 }
