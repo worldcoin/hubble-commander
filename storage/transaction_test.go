@@ -13,7 +13,6 @@ type TransactionTestSuite struct {
 	suite.Suite
 	storage *Storage
 	db      *db.TestDB
-	tree    *StateTree
 }
 
 func (s *TransactionTestSuite) SetupSuite() {
@@ -25,7 +24,6 @@ func (s *TransactionTestSuite) SetupTest() {
 	s.NoError(err)
 	s.storage = NewTestStorage(testDB.DB)
 	s.db = testDB
-	s.tree = NewStateTree(s.storage)
 }
 
 func (s *TransactionTestSuite) TearDownTest() {
@@ -58,7 +56,7 @@ func (s *TransactionTestSuite) TestGetTransaction_Create2Transfer() {
 
 func (s *TransactionTestSuite) TestGetTransaction_NonExistingTransaction() {
 	res, err := s.storage.GetTransaction(transfer.Hash)
-	s.True(IsNotFoundError(err))
+	s.Equal(NewNotFoundError("transaction"), err)
 	s.Nil(res)
 }
 
