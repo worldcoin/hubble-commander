@@ -77,7 +77,9 @@ func (s *GetTransactionTestSuite) TestGetTransaction() {
 	res, err := s.api.GetTransaction(*hash)
 	s.NoError(err)
 
-	s.Equal(txstatus.Pending, res.Status)
+	transfer, ok := res.(*dto.TransferReceipt)
+	s.True(ok)
+	s.Equal(txstatus.Pending, transfer.Status)
 }
 
 func TestGetTransactionTestSuite(t *testing.T) {

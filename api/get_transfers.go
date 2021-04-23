@@ -13,7 +13,7 @@ func (a *API) GetTransfers(publicKey *models.PublicKey) ([]dto.TransferReceipt, 
 
 	userTransfers := make([]dto.TransferReceipt, 0, len(transfers))
 	for i := range transfers {
-		status, err := CalculateTransferStatus(a.storage, &transfers[i], a.storage.GetLatestBlockNumber())
+		status, err := CalculateTransferStatus(a.storage, &transfers[i].TransactionBase, a.storage.GetLatestBlockNumber())
 		if err != nil {
 			return nil, err
 		}
