@@ -2,7 +2,7 @@ package storage
 
 import "github.com/ethereum/go-ethereum/common"
 
-func (s Storage) GetTransaction(hash common.Hash) (interface{}, error) {
+func (s *Storage) GetTransaction(hash common.Hash) (interface{}, error) {
 	transfer, err := s.GetTransfer(hash)
 	if err != nil && !IsNotFoundError(err) {
 		return nil, err
