@@ -276,8 +276,20 @@ func (s *BatchTestSuite) TestGetBatchWithAccountRoot_AddAndRetrieve() {
 
 	actual, err := s.storage.GetBatchWithAccountRoot(batch.Hash)
 	s.NoError(err)
-
 	s.Equal(batch, actual)
+
+	actual, err = s.storage.GetBatchWithAccountRootByID(batch.ID)
+	s.NoError(err)
+	s.Equal(batch, actual)
+}
+
+func (s *BatchTestSuite) TestGetBatchWithAccountRoot_NotExistingBatch() {
+	notFoundErr := NewNotFoundError("batch")
+	_, err := s.storage.GetBatchWithAccountRoot(utils.RandomHash())
+	s.Equal(notFoundErr, err)
+
+	_, err = s.storage.GetBatchWithAccountRootByID(models.MakeUint256(12))
+	s.Equal(notFoundErr, err)
 }
 
 func TestBatchTestSuite(t *testing.T) {
