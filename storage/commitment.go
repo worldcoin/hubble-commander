@@ -86,6 +86,7 @@ func (s *Storage) GetCommitmentsByBatchHash(hash *common.Hash) ([]models.Commitm
 	res := make([]models.CommitmentWithTokenID, 0, 32)
 	err := s.DB.Query(
 		s.QB.Select("commitment.commitment_id",
+			"commitment.transactions",
 			"commitment.fee_receiver",
 			"commitment.combined_signature",
 			"commitment.post_state_root",
@@ -103,6 +104,7 @@ func (s *Storage) GetCommitmentsByBatchID(id models.Uint256) ([]models.Commitmen
 	res := make([]models.CommitmentWithTokenID, 0, 32)
 	err := s.DB.Query(
 		s.QB.Select("commitment.commitment_id",
+			"commitment.transactions",
 			"commitment.fee_receiver",
 			"commitment.combined_signature",
 			"commitment.post_state_root",

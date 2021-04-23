@@ -37,11 +37,28 @@ func (c *Commitment) LeafHash() common.Hash {
 }
 
 type CommitmentWithTokenID struct {
-	ID       int32       `db:"commitment_id"`
-	LeafHash common.Hash //commitment.LeafHash()
-	//from feeReceiverStateID -> getStateLeafByPath
+	ID                 int32 `db:"commitment_id"`
+	LeafHash           common.Hash
+	Transactions       []byte      `json:"-"`
 	TokenID            Uint256     `db:"token_index"`
 	FeeReceiverStateID uint32      `db:"fee_receiver"`
 	CombinedSignature  Signature   `db:"combined_signature"`
 	PostStateRoot      common.Hash `db:"post_state_root"`
+}
+
+func (c *CommitmentWithTokenID) CalcLeafHash(accountTreeRoot *common.Hash) common.Hash {
+	bodyHash := bodyHash(c.FeeReceiverStateID, c.CombinedSignature, c.Transactions, accountTreeRoot.Bytes())
+	return utils.HashTwo(c.PostStateRoot, bodyHash)
+}
+
+func bodyHash(feeReceiver uint32, combinedSignature Signature, transactions, accountTreeRoot []byte) common.Hash {
+	arr := make([]byte, 32+64+32+len(transactions))
+
+	copy(arr[0:32], accountTreeRoot)
+	copy(arr[32:64], utils.PadLeft(combinedSignature[0].Bytes(), 32))
+	copy(arr[64:96], utils.PadLeft(combinedSignature[1].Bytes(), 32))
+	binary.BigEndian.PutUint32(arr[124:128], feeReceiver)
+	copy(arr[128:], transactions)
+
+	return crypto.Keccak256Hash(arr)
 }
