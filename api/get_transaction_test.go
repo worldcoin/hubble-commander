@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type GetTransferTestSuite struct {
+type GetTransactionTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	api      *API
@@ -23,11 +23,11 @@ type GetTransferTestSuite struct {
 	wallet   *bls.Wallet
 }
 
-func (s *GetTransferTestSuite) SetupSuite() {
+func (s *GetTransactionTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *GetTransferTestSuite) SetupTest() {
+func (s *GetTransactionTestSuite) SetupTest() {
 	testDB, err := db.NewTestDB()
 	s.NoError(err)
 
@@ -59,27 +59,27 @@ func (s *GetTransferTestSuite) SetupTest() {
 	s.transfer = s.signTransfer(transferWithoutSignature)
 }
 
-func (s *GetTransferTestSuite) signTransfer(transfer dto.Transfer) dto.Transfer {
+func (s *GetTransactionTestSuite) signTransfer(transfer dto.Transfer) dto.Transfer {
 	signedTransfer, err := SignTransfer(s.wallet, transfer)
 	s.NoError(err)
 	return *signedTransfer
 }
 
-func (s *GetTransferTestSuite) TearDownTest() {
+func (s *GetTransactionTestSuite) TearDownTest() {
 	err := s.db.Teardown()
 	s.NoError(err)
 }
 
-func (s *GetTransferTestSuite) TestGetTransfer() {
+func (s *GetTransactionTestSuite) TestGetTransaction() {
 	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
 	s.NoError(err)
 
-	res, err := s.api.GetTransfer(*hash)
+	res, err := s.api.GetTransaction(*hash)
 	s.NoError(err)
 
 	s.Equal(txstatus.Pending, res.Status)
 }
 
-func TestGetTransferTestSuite(t *testing.T) {
-	suite.Run(t, new(GetTransferTestSuite))
+func TestGetTransactionTestSuite(t *testing.T) {
+	suite.Run(t, new(GetTransactionTestSuite))
 }

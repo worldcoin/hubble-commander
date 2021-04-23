@@ -5,7 +5,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (a *API) GetTransfer(hash common.Hash) (*dto.TransferReceipt, error) {
+func (a *API) GetTransaction(hash common.Hash) (*dto.TransferReceipt, error) {
 	transfer, err := a.storage.GetTransfer(hash)
 	if err != nil {
 		return nil, err
