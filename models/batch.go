@@ -13,9 +13,6 @@ type Batch struct {
 }
 
 type BatchWithAccountRoot struct {
-	ID                Uint256
-	Hash              common.Hash
-	Type              txtype.TransactionType
-	AccountTreeRoot   *common.Hash `db:"account_tree_root"`
-	FinalisationBlock uint32       `db:"finalisation_block"` // nolint:misspell
+	Batch
+	AccountTreeRoot *common.Hash `db:"account_tree_root"`
 }
