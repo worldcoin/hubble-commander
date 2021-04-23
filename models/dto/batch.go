@@ -16,5 +16,5 @@ type Batch struct {
 
 type BatchWithCommitments struct {
 	Batch
-	Commitments []models.Commitment
+	Commitments []Commitment
 }
