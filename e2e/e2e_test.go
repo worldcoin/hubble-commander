@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/api"
-	"github.com/Worldcoin/hubble-commander/bls"
-	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
@@ -21,7 +19,7 @@ import (
 )
 
 func TestCommander(t *testing.T) {
-	commander, err := CreateCommanderFromEnv()
+	commander, err := NewCommanderFromEnv()
 	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, commander.Stop())
@@ -100,21 +98,6 @@ func TestCommander(t *testing.T) {
 	require.Len(t, batches, 1)
 	require.Equal(t, txtype.Transfer, batches[0].Type)
 	require.Equal(t, models.MakeUint256(1), batches[0].ID)
-}
-
-func createWallets() ([]bls.Wallet, error) {
-	cfg := config.GetConfig().Rollup
-	accounts := cfg.GenesisAccounts
-
-	wallets := make([]bls.Wallet, 0, len(accounts))
-	for i := range accounts {
-		wallet, err := bls.NewWallet(accounts[i].PrivateKey[:], cfg.SignaturesDomain)
-		if err != nil {
-			return nil, err
-		}
-		wallets = append(wallets, *wallet)
-	}
-	return wallets, nil
 }
 
 func getUserState(userStates []dto.UserState, stateID uint32) (*dto.UserState, error) {

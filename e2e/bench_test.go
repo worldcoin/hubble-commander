@@ -18,7 +18,7 @@ import (
 )
 
 func TestBenchCommander(t *testing.T) {
-	commander, err := CreateCommanderFromEnv()
+	commander, err := NewCommanderFromEnv()
 	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, commander.Stop())
@@ -95,7 +95,7 @@ func TestBenchCommander(t *testing.T) {
 	}
 }
 
-func sendTransfer(t *testing.T, commander E2ECommander, wallet bls.Wallet, from uint32, to uint32, nonce models.Uint256) *common.Hash {
+func sendTransfer(t *testing.T, commander Commander, wallet bls.Wallet, from uint32, to uint32, nonce models.Uint256) *common.Hash {
 	transfer, err := api.SignTransfer(&wallet, dto.Transfer{
 		FromStateID: &from,
 		ToStateID:   &to,
