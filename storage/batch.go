@@ -127,8 +127,7 @@ func (s *Storage) GetBatchWithAccountRoot(batchHash common.Hash) (*models.BatchW
 	res := make([]models.BatchWithAccountRoot, 0, 1)
 	err := s.DB.Query(
 		s.QB.Select("batch.*",
-			"commitment.account_tree_root",
-		).
+			"commitment.account_tree_root").
 			From("batch").
 			Join("commitment ON commitment.included_in_batch = batch.batch_hash").
 			Where(squirrel.Eq{"batch_hash": batchHash}).
@@ -147,8 +146,7 @@ func (s *Storage) GetBatchWithAccountRootByID(batchID models.Uint256) (*models.B
 	res := make([]models.BatchWithAccountRoot, 0, 1)
 	err := s.DB.Query(
 		s.QB.Select("batch.*",
-			"commitment.account_tree_root",
-		).
+			"commitment.account_tree_root").
 			From("batch").
 			Join("commitment ON commitment.included_in_batch = batch.batch_hash").
 			Where(squirrel.Eq{"batch_id": batchID}).
