@@ -121,8 +121,8 @@ func createAndStoreCommitment(storage *st.Storage, transfers []models.Transfer, 
 
 func combineSignatures(transfers []models.Transfer) (*models.Signature, error) {
 	signatures := make([]*bls.Signature, 0, len(transfers))
-	for _, transfer := range transfers {
-		sig, err := bls.NewSignatureFromBytes(transfer.Signature[:], mockDomain)
+	for i := range transfers {
+		sig, err := bls.NewSignatureFromBytes(transfers[i].Signature[:], mockDomain)
 		if err != nil {
 			return nil, err
 		}
