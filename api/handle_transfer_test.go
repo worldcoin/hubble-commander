@@ -180,7 +180,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesSignature() {
 	s.NoError(err)
 
 	transfer := transferWithoutSignature
-	transfer.Signature = fakeSignature.Bytes()
+	transfer.Signature = fakeSignature.ModelsSignature()
 
 	_, err = s.api.SendTransaction(dto.MakeTransaction(transfer))
 	s.Equal(ErrInvalidSignature, err)
@@ -195,7 +195,7 @@ func (s *SendTransferTestSuite) TestSendTransaction_ValidatesSignature_DevMode()
 	s.NoError(err)
 
 	transfer := transferWithoutSignature
-	transfer.Signature = fakeSignature.Bytes()
+	transfer.Signature = fakeSignature.ModelsSignature()
 
 	_, err = s.api.SendTransaction(dto.MakeTransaction(transfer))
 	s.NoError(err)

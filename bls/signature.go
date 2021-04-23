@@ -45,8 +45,12 @@ func (s *Signature) BigInts() [2]*big.Int {
 	}
 }
 
-func (s *Signature) Bytes() *models.Signature {
+func (s *Signature) ModelsSignature() *models.Signature {
 	var bytes models.Signature
 	copy(bytes[:], s.sig.ToBytes())
 	return &bytes
+}
+
+func (s *Signature) Bytes() []byte {
+	return s.sig.ToBytes()
 }
