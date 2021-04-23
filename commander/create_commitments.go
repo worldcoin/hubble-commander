@@ -3,12 +3,15 @@ package commander
 import (
 	"log"
 
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
+
+var mockDomain = bls.Domain{1, 2, 3, 4} // TODO use real domain
 
 func createCommitments(
 	pendingTransfers []models.Transfer,
@@ -83,9 +86,12 @@ func transactionExists(transferList []models.Transfer, tx *models.Transfer) bool
 }
 
 func createAndStoreCommitment(storage *st.Storage, transfers []models.Transfer, feeReceiverIndex uint32) (*models.Commitment, error) {
-	combinedSignature := models.MakeRandomSignature() // TODO: Actually combine signatures
-
 	serializedTxs, err := encoder.SerializeTransfers(transfers)
+	if err != nil {
+		return nil, err
+	}
+
+	combinedSignature, err := combineSignatures(transfers)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +105,7 @@ func createAndStoreCommitment(storage *st.Storage, transfers []models.Transfer, 
 		Type:              txtype.Transfer,
 		Transactions:      serializedTxs,
 		FeeReceiver:       feeReceiverIndex,
-		CombinedSignature: combinedSignature,
+		CombinedSignature: *combinedSignature,
 		PostStateRoot:     *stateRoot,
 	}
 
@@ -111,6 +117,18 @@ func createAndStoreCommitment(storage *st.Storage, transfers []models.Transfer, 
 	commitment.ID = *id
 
 	return &commitment, nil
+}
+
+func combineSignatures(transfers []models.Transfer) (*models.Signature, error) {
+	signatures := make([]*bls.Signature, 0, len(transfers))
+	for _, transfer := range transfers {
+		sig, err := bls.NewSignatureFromBytes(transfer.Signature[:], mockDomain)
+		if err != nil {
+			return nil, err
+		}
+		signatures = append(signatures, sig)
+	}
+	return bls.NewAggregatedSignature(signatures).ModelsSignature(), nil
 }
 
 func markTransactionsAsIncluded(storage *st.Storage, transfers []models.Transfer, commitmentID int32) error {
