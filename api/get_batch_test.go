@@ -18,6 +18,7 @@ type GetBatchTestSuite struct {
 	api        *API
 	storage    *st.Storage
 	db         *db.TestDB
+	tree       *st.StateTree
 	commitment models.Commitment
 	batch      models.Batch
 }
@@ -33,14 +34,17 @@ func (s *GetBatchTestSuite) SetupTest() {
 	s.storage = st.NewTestStorage(testDB.DB)
 	s.api = &API{nil, s.storage, nil}
 	s.db = testDB
+	s.tree = st.NewStateTree(s.storage)
 
 	hash := utils.RandomHash()
 	s.commitment = commitment
 	s.commitment.IncludedInBatch = &hash
+	s.commitment.AccountTreeRoot = &hash
 
 	s.batch = models.Batch{
-		Hash: hash,
-		Type: txtype.Transfer,
+		Hash:              hash,
+		Type:              txtype.Transfer,
+		FinalisationBlock: 113,
 	}
 }
 
@@ -50,6 +54,7 @@ func (s *GetBatchTestSuite) TearDownTest() {
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByHash() {
+	s.addLeaf()
 	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
@@ -64,18 +69,13 @@ func (s *GetBatchTestSuite) TestGetBatchByHash() {
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByHash_NoCommitments() {
-	batch := models.Batch{
-		Hash: *s.commitment.IncludedInBatch,
-		Type: txtype.Transfer,
-	}
-	err := s.storage.AddBatch(&batch)
+	s.addLeaf()
+	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
-	result, err := s.api.GetBatchByHash(batch.Hash)
-	s.NoError(err)
-	s.NotNil(result)
-	s.Len(result.Commitments, 0)
-	s.Equal(batch.Hash, result.Hash)
+	result, err := s.api.GetBatchByHash(s.batch.Hash)
+	s.Equal(st.NewNotFoundError("batch"), err)
+	s.Nil(result)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByHash_NonExistentBatch() {
@@ -85,6 +85,7 @@ func (s *GetBatchTestSuite) TestGetBatchByHash_NonExistentBatch() {
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByID() {
+	s.addLeaf()
 	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
@@ -103,16 +104,27 @@ func (s *GetBatchTestSuite) TestGetBatchByID_NoCommitments() {
 	s.NoError(err)
 
 	result, err := s.api.GetBatchByID(models.MakeUint256(0))
-	s.NoError(err)
-	s.NotNil(result)
-	s.Len(result.Commitments, 0)
-	s.Equal(s.batch.Hash, result.Hash)
+	s.Equal(st.NewNotFoundError("batch"), err)
+	s.Nil(result)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByID_NonExistentBatch() {
 	result, err := s.api.GetBatchByID(models.MakeUint256(0))
 	s.Equal(st.NewNotFoundError("batch"), err)
 	s.Nil(result)
+}
+
+func (s *GetBatchTestSuite) addLeaf() {
+	err := s.storage.AddAccountIfNotExists(&models.Account{PubKeyID: 1})
+	s.NoError(err)
+
+	err = s.tree.Set(uint32(1), &models.UserState{
+		PubKeyID:   1,
+		TokenIndex: models.MakeUint256(1),
+		Balance:    models.MakeUint256(420),
+		Nonce:      models.MakeUint256(0),
+	})
+	s.NoError(err)
 }
 
 func TestGetBatchTestSuite(t *testing.T) {

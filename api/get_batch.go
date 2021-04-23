@@ -16,6 +16,9 @@ func (a *API) GetBatchByHash(hash common.Hash) (*dto.BatchWithCommitments, error
 	if err != nil {
 		return nil, err
 	}
+	for i := range commitments {
+		commitments[i].LeafHash = commitments[i].CalcLeafHash(batch.AccountTreeRoot)
+	}
 	return &dto.BatchWithCommitments{
 		BatchWithAccountRoot: *batch,
 		Commitments:          commitments,
@@ -31,6 +34,9 @@ func (a *API) GetBatchByID(id models.Uint256) (*dto.BatchWithCommitments, error)
 	commitments, err := a.storage.GetCommitmentsByBatchID(id)
 	if err != nil {
 		return nil, err
+	}
+	for i := range commitments {
+		commitments[i].LeafHash = commitments[i].CalcLeafHash(batch.AccountTreeRoot)
 	}
 	return &dto.BatchWithCommitments{
 		BatchWithAccountRoot: *batch,
