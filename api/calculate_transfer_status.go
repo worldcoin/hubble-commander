@@ -8,7 +8,7 @@ import (
 
 func CalculateTransferStatus(
 	storage *st.Storage,
-	transfer *models.Transfer,
+	transfer *models.TransactionBase,
 	latestBlockNumber uint32,
 ) (*txstatus.TransactionStatus, error) {
 	if transfer.ErrorMessage != nil {

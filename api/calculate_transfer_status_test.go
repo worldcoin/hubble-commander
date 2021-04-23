@@ -87,7 +87,7 @@ func (s *CalculateTransferStatusTestSuite) TearDownTest() {
 }
 
 func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Pending() {
-	status, err := CalculateTransferStatus(s.storage, s.transfer, 0)
+	status, err := CalculateTransferStatus(s.storage, &s.transfer.TransactionBase, 0)
 	s.NoError(err)
 
 	s.Equal(txstatus.Pending, *status)
@@ -109,7 +109,7 @@ func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_InBatch()
 
 	s.transfer.IncludedInCommitment = commitmentID
 
-	status, err := CalculateTransferStatus(s.storage, s.transfer, 0)
+	status, err := CalculateTransferStatus(s.storage, &s.transfer.TransactionBase, 0)
 	s.NoError(err)
 
 	s.Equal(txstatus.InBatch, *status)
@@ -138,7 +138,7 @@ func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Finalised
 	latestBlockNumber, err := s.sim.GetLatestBlockNumber()
 	s.NoError(err)
 
-	status, err := CalculateTransferStatus(s.storage, s.transfer, *latestBlockNumber)
+	status, err := CalculateTransferStatus(s.storage, &s.transfer.TransactionBase, *latestBlockNumber)
 	s.NoError(err)
 
 	s.Equal(txstatus.Finalised, *status)
@@ -146,7 +146,7 @@ func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Finalised
 
 func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Error() {
 	s.transfer.ErrorMessage = ref.String("Gold Duck Error")
-	status, err := CalculateTransferStatus(s.storage, s.transfer, 0)
+	status, err := CalculateTransferStatus(s.storage, &s.transfer.TransactionBase, 0)
 	s.NoError(err)
 
 	s.Equal(txstatus.Error, *status)
