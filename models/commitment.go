@@ -35,3 +35,13 @@ func (c *Commitment) BodyHash() common.Hash {
 func (c *Commitment) LeafHash() common.Hash {
 	return utils.HashTwo(c.PostStateRoot, c.BodyHash())
 }
+
+type CommitmentWithTokenID struct {
+	ID       int32       `db:"commitment_id"`
+	LeafHash common.Hash //commitment.LeafHash()
+	//from feeReceiverStateID -> getStateLeafByPath
+	TokenID            Uint256     `db:"token_index"`
+	FeeReceiverStateID uint32      `db:"fee_receiver"`
+	CombinedSignature  Signature   `db:"combined_signature"`
+	PostStateRoot      common.Hash `db:"post_state_root"`
+}
