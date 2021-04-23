@@ -33,7 +33,7 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 	s.tree = storage.NewStateTree(s.storage)
 	s.cfg = &config.RollupConfig{
 		FeeReceiverIndex: 3,
-		TxsPerCommitment: 32,
+		TxsPerCommitment: 6,
 	}
 
 	senderState := models.UserState{
@@ -88,34 +88,58 @@ func (s *ApplyTransfersTestSuite) TearDownTest() {
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfers_AllValid() {
-	transfers := generateValidTransfers(10)
+	transfers := generateValidTransfers(3)
 
 	validTransfers, err := ApplyTransfers(s.storage, transfers, s.cfg)
 	s.NoError(err)
 
-	s.Len(validTransfers, 10)
+	s.Len(validTransfers, 3)
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfers_SomeValid() {
-	transfers := generateValidTransfers(10)
-	transfers = append(transfers, generateInvalidTransfers(10)...)
+	transfers := generateValidTransfers(2)
+	transfers = append(transfers, generateInvalidTransfers(3)...)
 
 	validTransfers, err := ApplyTransfers(s.storage, transfers, s.cfg)
 	s.NoError(err)
 
-	s.Len(validTransfers, 10)
+	s.Len(validTransfers, 2)
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfers_MoreThan32() {
-	transfers := generateValidTransfers(60)
+	transfers := generateValidTransfers(13)
 
 	validTransfers, err := ApplyTransfers(s.storage, transfers, s.cfg)
 	s.NoError(err)
 
-	s.Len(validTransfers, 32)
+	s.Len(validTransfers, 6)
 
 	state, _ := s.tree.Leaf(1)
-	s.Equal(models.MakeUint256(32), state.Nonce)
+	s.Equal(models.MakeUint256(6), state.Nonce)
+}
+
+func (s *ApplyTransfersTestSuite) TestApplyTransfersTestSuite_SavesTransferErrors() {
+	transfers := generateValidTransfers(3)
+	transfers = append(transfers, generateInvalidTransfers(2)...)
+
+	for i := range transfers {
+		s.storage.AddTransfer(&transfers[i])
+	}
+
+	validTransfers, err := ApplyTransfers(s.storage, transfers, s.cfg)
+	s.NoError(err)
+
+	s.Len(validTransfers, 3)
+
+	for i := range transfers {
+		transfer, err := s.storage.GetTransfer(transfers[i].Hash)
+		s.NoError(err)
+		if i < 3 {
+			s.Nil(transfer.ErrorMessage)
+		} else {
+			s.Equal(*transfer.ErrorMessage, ErrNonceTooLow.Error())
+		}
+	}
 }
 
 func TestApplyTransfersTestSuite(t *testing.T) {
