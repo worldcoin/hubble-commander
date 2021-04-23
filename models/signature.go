@@ -22,6 +22,11 @@ func MakeRandomSignature() Signature {
 	return signature
 }
 
+func NewRandomSignature() *Signature {
+	signature := MakeRandomSignature()
+	return &signature
+}
+
 func (s Signature) Bytes() []byte {
 	return s[:]
 }

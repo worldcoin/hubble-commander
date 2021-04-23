@@ -70,10 +70,9 @@ func (s *CalculateTransferStatusTestSuite) SetupTest() {
 	transfer := &models.Transfer{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
-			Amount:      *models.NewUint256(50),
-			Fee:         *models.NewUint256(10),
-			Nonce:       *models.NewUint256(0),
-			Signature:   []byte{1, 2, 3, 4},
+			Amount:      models.MakeUint256(50),
+			Fee:         models.MakeUint256(10),
+			Nonce:       models.MakeUint256(0),
 		},
 		ToStateID: 2,
 	}

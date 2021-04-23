@@ -1,12 +1,12 @@
 package dto
 
 import (
-	"encoding/hex"
 	"encoding/json"
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 )
@@ -18,7 +18,7 @@ func TestTransfer_JSONMarshaling(t *testing.T) {
 		Amount:      models.NewUint256(50),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(0),
-		Signature:   utils.RandomBytes(12),
+		Signature:   models.NewRandomSignature(),
 	}
 	data, err := json.Marshal(transfer)
 	require.NoError(t, err)
@@ -31,20 +31,20 @@ func TestTransfer_JSONMarshaling(t *testing.T) {
 }
 
 func TestTransfer_MarshalJSON(t *testing.T) {
-	sig, err := hex.DecodeString("deadbeef")
-	require.NoError(t, err)
-
 	transfer := Transfer{
 		FromStateID: ref.Uint32(1),
 		ToStateID:   ref.Uint32(2),
 		Amount:      models.NewUint256(50),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(0),
-		Signature:   sig,
+		Signature:   &models.Signature{1, 2, 3},
 	}
 	data, err := json.Marshal(transfer)
 	require.NoError(t, err)
 
-	expected := `{"Type":"TRANSFER","FromStateID":1,"ToStateID":2,"Amount":"50","Fee":"10","Nonce":"0","Signature":"0xdeadbeef"}`
+	expected := fmt.Sprintf(
+		`{"Type":"TRANSFER","FromStateID":1,"ToStateID":2,"Amount":"50","Fee":"10","Nonce":"0","Signature":"%s"}`,
+		"0x010203"+strings.Repeat("0", models.SignatureLength*2-6),
+	)
 	require.Equal(t, expected, string(data))
 }

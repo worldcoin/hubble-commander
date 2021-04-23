@@ -21,7 +21,6 @@ var (
 		Amount:      models.NewUint256(50),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(0),
-		Signature:   []byte{},
 	}
 )
 
