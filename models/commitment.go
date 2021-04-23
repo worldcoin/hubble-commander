@@ -21,7 +21,7 @@ type Commitment struct {
 }
 
 func (c *Commitment) BodyHash() common.Hash {
-	return bodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, c.AccountTreeRoot.Bytes())
+	return calcBodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, c.AccountTreeRoot.Bytes())
 }
 
 func (c *Commitment) LeafHash() common.Hash {
@@ -39,11 +39,11 @@ type CommitmentWithTokenID struct {
 }
 
 func (c *CommitmentWithTokenID) CalcLeafHash(accountTreeRoot *common.Hash) common.Hash {
-	bodyHash := bodyHash(c.FeeReceiverStateID, c.CombinedSignature, c.Transactions, accountTreeRoot.Bytes())
+	bodyHash := calcBodyHash(c.FeeReceiverStateID, c.CombinedSignature, c.Transactions, accountTreeRoot.Bytes())
 	return utils.HashTwo(c.PostStateRoot, bodyHash)
 }
 
-func bodyHash(feeReceiver uint32, combinedSignature Signature, transactions, accountTreeRoot []byte) common.Hash {
+func calcBodyHash(feeReceiver uint32, combinedSignature Signature, transactions, accountTreeRoot []byte) common.Hash {
 	arr := make([]byte, 32+64+32+len(transactions))
 
 	copy(arr[0:32], accountTreeRoot)
