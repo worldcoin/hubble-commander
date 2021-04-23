@@ -1,4 +1,4 @@
-package txtype
+package txstatus
 
 import (
 	"encoding/json"
@@ -10,36 +10,36 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestUnmarshalJSON_SupportedType(t *testing.T) {
-	input := `"TRANSFER"`
-	var res TransactionType
+func TestUnmarshalJSON_SupportedStatus(t *testing.T) {
+	input := `"PENDING"`
+	var res TransactionStatus
 	err := json.Unmarshal([]byte(input), &res)
 	require.NoError(t, err)
-	require.Equal(t, Transfer, res)
+	require.Equal(t, Pending, res)
 }
 
-func TestUnmarshalJSON_UnsupportedType(t *testing.T) {
+func TestUnmarshalJSON_UnsupportedStatus(t *testing.T) {
 	input := `"NOT_SUPPORTED"`
-	var res TransactionType
+	var res TransactionStatus
 	err := json.Unmarshal([]byte(input), &res)
 	require.Error(t, err)
-	require.Equal(t, enumerr.NewUnsupportedError("transaction type"), err)
+	require.Equal(t, enumerr.NewUnsupportedError("transaction status"), err)
 	require.True(t, enumerr.IsUnsupportedError(err))
 }
 
-func TestMarshalJSON_SupportedType(t *testing.T) {
-	input := Create2Transfer
-	expected := fmt.Sprintf(`"%s"`, TransactionTypes[input])
+func TestMarshalJSON_SupportedStatus(t *testing.T) {
+	input := InBatch
+	expected := fmt.Sprintf(`"%s"`, TransactionStatuses[input])
 	bytes, err := json.Marshal(input)
 	require.NoError(t, err)
 	require.Equal(t, expected, string(bytes))
 }
 
-func TestMarshalJSON_UnsupportedType(t *testing.T) {
-	input := TransactionType(0)
+func TestMarshalJSON_UnsupportedStatus(t *testing.T) {
+	input := TransactionStatus(0)
 	bytes, err := json.Marshal(input)
 	require.Error(t, err)
 	require.Nil(t, bytes)
-	require.Equal(t, enumerr.NewUnsupportedError("transaction type"), errors.Unwrap(err))
+	require.Equal(t, enumerr.NewUnsupportedError("transaction status"), errors.Unwrap(err))
 	require.True(t, enumerr.IsUnsupportedError(err))
 }
