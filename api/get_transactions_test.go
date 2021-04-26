@@ -101,7 +101,7 @@ func (s *GetTransactionsTestSuite) addTransfers() []models.Transfer {
 				Amount:      models.MakeUint256(10),
 				Fee:         models.MakeUint256(1),
 				Nonce:       models.MakeUint256(0),
-				Signature:   []byte{1, 2, 3},
+				Signature:   models.MakeRandomSignature(),
 			},
 			ToStateID: toStateID,
 		}
@@ -132,7 +132,7 @@ func (s *GetTransactionsTestSuite) addCreate2Transfers() []models.Create2Transfe
 				Amount:      models.MakeUint256(10),
 				Fee:         models.MakeUint256(1),
 				Nonce:       models.MakeUint256(1),
-				Signature:   []byte{1, 2, 3},
+				Signature:   models.MakeRandomSignature(),
 			},
 			ToStateID:  toStateID,
 			ToPubKeyID: toPubKeyID,
