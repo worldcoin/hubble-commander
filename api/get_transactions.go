@@ -2,7 +2,6 @@ package api
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/dto"
 )
 
 func (a *API) GetTransactions(publicKey *models.PublicKey) ([]interface{}, error) {
@@ -18,25 +17,19 @@ func (a *API) GetTransactions(publicKey *models.PublicKey) ([]interface{}, error
 
 	userTransfers := make([]interface{}, 0, len(transfers)+len(create2Transfers))
 	for i := range transfers {
-		status, err := CalculateTransferStatus(a.storage, &transfers[i].TransactionBase, a.storage.GetLatestBlockNumber())
+		receipt, err := a.returnTransferReceipt(&transfers[i])
 		if err != nil {
 			return nil, err
 		}
-		userTransfers = append(userTransfers, &dto.TransferReceipt{
-			Transfer: transfers[i],
-			Status:   *status,
-		})
+		userTransfers = append(userTransfers, receipt)
 	}
 
 	for i := range create2Transfers {
-		status, err := CalculateTransferStatus(a.storage, &create2Transfers[i], a.storage.GetLatestBlockNumber())
+		receipt, err := a.returnCreate2TransferReceipt(&create2Transfers[i])
 		if err != nil {
 			return nil, err
 		}
-		userTransfers = append(userTransfers, &dto.Create2TransferReceipt{
-			Create2Transfer: transfers[i],
-			Status:          *status,
-		})
+		userTransfers = append(userTransfers, receipt)
 	}
 
 	return userTransfers, nil

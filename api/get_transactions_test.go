@@ -6,6 +6,9 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -89,6 +92,7 @@ func (s *GetTransactionsTestSuite) TestGetTransactions() {
 		{
 			TransactionBase: models.TransactionBase{
 				Hash:                 common.BigToHash(big.NewInt(1234)),
+				TxType:               txtype.Transfer,
 				FromStateID:          0,
 				Amount:               models.MakeUint256(1),
 				Fee:                  models.MakeUint256(5),
@@ -101,6 +105,7 @@ func (s *GetTransactionsTestSuite) TestGetTransactions() {
 		{
 			TransactionBase: models.TransactionBase{
 				Hash:                 common.BigToHash(big.NewInt(2345)),
+				TxType:               txtype.Transfer,
 				FromStateID:          0,
 				Amount:               models.MakeUint256(2),
 				Fee:                  models.MakeUint256(5),
@@ -113,6 +118,7 @@ func (s *GetTransactionsTestSuite) TestGetTransactions() {
 		{
 			TransactionBase: models.TransactionBase{
 				Hash:                 common.BigToHash(big.NewInt(3456)),
+				TxType:               txtype.Transfer,
 				FromStateID:          1,
 				Amount:               models.MakeUint256(3),
 				Fee:                  models.MakeUint256(5),
@@ -125,6 +131,7 @@ func (s *GetTransactionsTestSuite) TestGetTransactions() {
 		{
 			TransactionBase: models.TransactionBase{
 				Hash:                 common.BigToHash(big.NewInt(4567)),
+				TxType:               txtype.Transfer,
 				FromStateID:          0,
 				Amount:               models.MakeUint256(2),
 				Fee:                  models.MakeUint256(5),
@@ -145,13 +152,33 @@ func (s *GetTransactionsTestSuite) TestGetTransactions() {
 	err = s.storage.AddTransfer(&transfers[3])
 	s.NoError(err)
 
+	create2Transfer := models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			Hash:        common.BigToHash(big.NewInt(1111)),
+			TxType:      txtype.Create2Transfer,
+			FromStateID: 0,
+			Amount:      models.MakeUint256(100),
+			Fee:         models.MakeUint256(5),
+			Nonce:       models.MakeUint256(1),
+		},
+		ToStateID:  1,
+		ToPubKeyID: accounts[1].PubKeyID,
+	}
+	err = s.storage.AddCreate2Transfer(&create2Transfer)
+	s.NoError(err)
+
 	userTransfers, err := s.api.GetTransactions(&accounts[0].PublicKey)
 	s.NoError(err)
 
-	s.Len(userTransfers, 3)
-	s.Equal(userTransfers[0].Transfer.Hash, transfers[0].Hash)
-	s.Equal(userTransfers[1].Transfer.Hash, transfers[1].Hash)
-	s.Equal(userTransfers[2].Transfer.Hash, transfers[3].Hash)
+	s.Len(userTransfers, 4)
+	s.Contains(userTransfers, &dto.TransferReceipt{
+		Transfer: transfers[0],
+		Status:   txstatus.Pending,
+	})
+	s.NotContains(userTransfers, &dto.TransferReceipt{
+		Transfer: transfers[2],
+		Status:   txstatus.Pending,
+	})
 }
 
 func (s *GetTransactionsTestSuite) TestGetTransactions_NoTransactions() {
