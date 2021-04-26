@@ -95,3 +95,16 @@ func newZeroStateNode(path *models.MerklePath) *models.StateNode {
 		DataHash:   GetZeroHash(32 - uint(path.Depth)),
 	}
 }
+
+func (s *Storage) getStateNodes(witnessPaths []models.MerklePath) ([]models.StateNode, error) {
+	res := make([]models.StateNode, 0, len(witnessPaths))
+	err := s.DB.Query(
+		s.QB.Select("*").
+			From("state_node").
+			Where(squirrel.Eq{"merkle_path": witnessPaths}),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
