@@ -69,3 +69,7 @@ func (s *Storage) GetCreate2Transfer(hash common.Hash) (*models.Create2Transfer,
 	}
 	return &res[0], nil
 }
+
+func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([]models.Create2Transfer, error) {
+	return nil, nil
+}
