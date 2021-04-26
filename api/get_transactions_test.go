@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type GetTransfersTestSuite struct {
+type GetTransactionsTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	api     *API
@@ -21,11 +21,11 @@ type GetTransfersTestSuite struct {
 	tree    *st.StateTree
 }
 
-func (s *GetTransfersTestSuite) SetupSuite() {
+func (s *GetTransactionsTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *GetTransfersTestSuite) SetupTest() {
+func (s *GetTransactionsTestSuite) SetupTest() {
 	testDB, err := db.NewTestDB()
 	s.NoError(err)
 
@@ -35,13 +35,13 @@ func (s *GetTransfersTestSuite) SetupTest() {
 	s.tree = st.NewStateTree(s.storage)
 }
 
-func (s *GetTransfersTestSuite) TearDownTest() {
+func (s *GetTransactionsTestSuite) TearDownTest() {
 	err := s.db.Teardown()
 	s.NoError(err)
 }
 
 // nolint:funlen
-func (s *GetTransfersTestSuite) TestGetTransfers() {
+func (s *GetTransactionsTestSuite) TestGetTransactions() {
 	accounts := []models.Account{
 		{
 			PubKeyID:  1,
@@ -145,7 +145,7 @@ func (s *GetTransfersTestSuite) TestGetTransfers() {
 	err = s.storage.AddTransfer(&transfers[3])
 	s.NoError(err)
 
-	userTransfers, err := s.api.GetTransfers(&accounts[0].PublicKey)
+	userTransfers, err := s.api.GetTransactions(&accounts[0].PublicKey)
 	s.NoError(err)
 
 	s.Len(userTransfers, 3)
@@ -154,7 +154,7 @@ func (s *GetTransfersTestSuite) TestGetTransfers() {
 	s.Equal(userTransfers[2].Transfer.Hash, transfers[3].Hash)
 }
 
-func (s *GetTransfersTestSuite) TestGetTransfers_NoTransfers() {
+func (s *GetTransactionsTestSuite) TestGetTransactions_NoTransactions() {
 	account := models.Account{
 		PubKeyID:  1,
 		PublicKey: models.PublicKey{1, 2, 3},
@@ -172,13 +172,13 @@ func (s *GetTransfersTestSuite) TestGetTransfers_NoTransfers() {
 	err = s.tree.Set(0, userState)
 	s.NoError(err)
 
-	userTransfers, err := s.api.GetTransfers(&account.PublicKey)
+	userTransfers, err := s.api.GetTransactions(&account.PublicKey)
 	s.NoError(err)
 
 	s.Len(userTransfers, 0)
 	s.NotNil(userTransfers)
 }
 
-func TestGetTransfersTestSuite(t *testing.T) {
-	suite.Run(t, new(GetTransfersTestSuite))
+func TestGetTransactionsTestSuite(t *testing.T) {
+	suite.Run(t, new(GetTransactionsTestSuite))
 }

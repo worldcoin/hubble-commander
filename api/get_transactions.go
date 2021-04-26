@@ -5,7 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 )
 
-func (a *API) GetTransfers(publicKey *models.PublicKey) ([]dto.TransferReceipt, error) {
+func (a *API) GetTransactions(publicKey *models.PublicKey) ([]dto.TransferReceipt, error) {
 	transfers, err := a.storage.GetTransfersByPublicKey(publicKey)
 	if err != nil {
 		return nil, err
