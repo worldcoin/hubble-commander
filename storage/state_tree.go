@@ -159,8 +159,9 @@ func (s *StateTree) updateStateNodes(leafPath *models.MerklePath, newLeafHash *c
 	nodesMap := nodesSliceToMap(nodes)
 	nodes = make([]models.StateNode, 0, len(witnessPaths))
 	currentHash := *newLeafHash
+	var currentPath *models.MerklePath
 	for _, witnessPath := range witnessPaths {
-		currentPath, err := witnessPath.Sibling()
+		currentPath, err = witnessPath.Sibling()
 		if err != nil {
 			return nil, err
 		}
