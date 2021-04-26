@@ -100,8 +100,9 @@ func (a *API) validateCreate2Transfer(create2Transfer *models.Create2Transfer, t
 		return err
 	}
 
-	if !a.cfg.DevMode {
-		return a.validateSignature(encodedCreate2Transfer, &create2Transfer.Signature, &senderState.UserState)
+	if a.cfg.DevMode {
+		create2Transfer.Signature = mockSignature
+		return nil
 	}
-	return nil
+	return a.validateSignature(encodedCreate2Transfer, &create2Transfer.Signature, &senderState.UserState)
 }
