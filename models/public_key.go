@@ -2,15 +2,28 @@ package models
 
 import (
 	"database/sql/driver"
-	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"math/big"
+	"reflect"
 
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
-type PublicKey [128]byte
+const PublicKeyLength = 128
+
+type PublicKey [PublicKeyLength]byte
+
+var publicKeyT = reflect.TypeOf(PublicKey{})
+
+func MakePublicKeyFromInts(ints [4]*big.Int) PublicKey {
+	publicKey := PublicKey{}
+	copy(publicKey[:32], utils.PadLeft(ints[0].Bytes(), 32))
+	copy(publicKey[32:64], utils.PadLeft(ints[1].Bytes(), 32))
+	copy(publicKey[64:96], utils.PadLeft(ints[2].Bytes(), 32))
+	copy(publicKey[96:], utils.PadLeft(ints[3].Bytes(), 32))
+	return publicKey
+}
 
 // nolint:gocritic
 func (p PublicKey) Bytes() []byte {
@@ -27,54 +40,31 @@ func (p *PublicKey) BigInts() [4]*big.Int {
 }
 
 func (p *PublicKey) String() string {
-	return hex.EncodeToString(p.Bytes())
-}
-
-func MakePublicKeyFromInts(ints [4]*big.Int) PublicKey {
-	publicKey := PublicKey{}
-	copy(publicKey[:32], utils.PadLeft(ints[0].Bytes(), 32))
-	copy(publicKey[32:64], utils.PadLeft(ints[1].Bytes(), 32))
-	copy(publicKey[64:96], utils.PadLeft(ints[2].Bytes(), 32))
-	copy(publicKey[96:], utils.PadLeft(ints[3].Bytes(), 32))
-	return publicKey
+	return hexutil.Encode(p[:])
 }
 
 func (p *PublicKey) Scan(src interface{}) error {
-	value, ok := src.([]byte)
+	srcBytes, ok := src.([]byte)
 	if !ok {
 		return fmt.Errorf("can't scan %T into PublicKey", src)
 	}
-	if len(value) != 128 {
-		return fmt.Errorf("invalid signature length")
+	if len(srcBytes) != PublicKeyLength {
+		return fmt.Errorf("can't scan []byte of len %d into PublicKey, want %d", len(srcBytes), PublicKeyLength)
 	}
-
-	copy(p[:], value)
+	copy(p[:], srcBytes)
 	return nil
 }
 
 // nolint:gocritic
-// Value implements valuer for database/sql.
 func (p PublicKey) Value() (driver.Value, error) {
-	return p.Bytes(), nil
+	return p[:], nil
 }
 
-func (p *PublicKey) UnmarshalJSON(b []byte) error {
-	decodedBytes, err := hex.Decode(p[:], b[1:len(b)-1])
-	if err != nil {
-		return err
-	}
-	if decodedBytes != 128 {
-		return fmt.Errorf("invalid public key")
-	}
-
-	return nil
+func (p *PublicKey) UnmarshalJSON(input []byte) error {
+	return hexutil.UnmarshalFixedJSON(publicKeyT, input, p[:])
 }
 
 // nolint:gocritic
-func (p PublicKey) MarshalJSON() ([]byte, error) {
-	marshalizedPublicKey, err := json.Marshal(hex.EncodeToString(p[:]))
-	if err != nil {
-		return nil, err
-	}
-	return marshalizedPublicKey, nil
+func (p PublicKey) MarshalText() ([]byte, error) {
+	return hexutil.Bytes(p[:]).MarshalText()
 }

@@ -65,7 +65,7 @@ func (s *Storage) GetCreate2Transfer(hash common.Hash) (*models.Create2Transfer,
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, NewNotFoundError("create2transfer")
+		return nil, NewNotFoundError("transaction")
 	}
 	return &res[0], nil
 }
@@ -77,6 +77,23 @@ func (s *Storage) GetPendingCreate2Transfers() ([]models.Create2Transfer, error)
 			From("transaction_base").
 			JoinClause("NATURAL JOIN create2transfer").
 			Where(squirrel.Eq{"included_in_commitment": nil, "error_message": nil}), // TODO order by nonce asc, then order by fee desc
+			).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([]models.Create2Transfer, error) {
+	res := make([]models.Create2Transfer, 0, 1)
+	err := s.DB.Query(
+		s.QB.Select(create2TransferColumns...).
+			From("account").
+			JoinClause("NATURAL JOIN state_leaf").
+			JoinClause("NATURAL JOIN state_node").
+			Join("transaction_base on transaction_base.from_state_id::bit(33) = state_node.merkle_path").
+			JoinClause("NATURAL JOIN create2transfer").
+			Where(squirrel.Eq{"account.public_key": publicKey}),
 	).Into(&res)
 	if err != nil {
 		return nil, err

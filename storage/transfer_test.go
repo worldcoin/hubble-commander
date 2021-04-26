@@ -23,7 +23,7 @@ var (
 			Amount:               models.MakeUint256(1000),
 			Fee:                  models.MakeUint256(100),
 			Nonce:                models.MakeUint256(0),
-			Signature:            []byte{1, 2, 3, 4, 5},
+			Signature:            models.MakeRandomSignature(),
 			IncludedInCommitment: nil,
 		},
 		ToStateID: 2,
@@ -68,7 +68,7 @@ func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieve() {
 func (s *TransferTestSuite) TestGetTransfer_NonExistentTransfer() {
 	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
 	res, err := s.storage.GetTransfer(hash)
-	s.Equal(NewNotFoundError("transfer"), err)
+	s.Equal(NewNotFoundError("transaction"), err)
 	s.Nil(res)
 }
 

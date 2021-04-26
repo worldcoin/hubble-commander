@@ -21,7 +21,7 @@ var (
 		Type:              txtype.Transfer,
 		Transactions:      utils.RandomBytes(24),
 		FeeReceiver:       1,
-		CombinedSignature: models.MakeSignature(1, 2),
+		CombinedSignature: models.MakeRandomSignature(),
 		PostStateRoot:     utils.RandomHash(),
 	}
 )

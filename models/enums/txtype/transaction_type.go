@@ -2,7 +2,8 @@ package txtype
 
 import (
 	"encoding/json"
-	"errors"
+
+	enumerr "github.com/Worldcoin/hubble-commander/models/enums/errors"
 )
 
 type TransactionType uint8
@@ -13,15 +14,11 @@ const (
 	MassMigration   TransactionType = 5
 )
 
-var (
-	TransactionTypes = map[TransactionType]string{
-		Transfer:        "TRANSFER",
-		Create2Transfer: "CREATE2TRANSFER",
-		MassMigration:   "MASS_MIGRATION",
-	}
-
-	ErrUnsupportedTransactionType = errors.New("unsupported transaction type")
-)
+var TransactionTypes = map[TransactionType]string{
+	Transfer:        "TRANSFER",
+	Create2Transfer: "CREATE2TRANSFER",
+	MassMigration:   "MASS_MIGRATION",
+}
 
 func (s TransactionType) Ref() *TransactionType {
 	return &s
@@ -48,13 +45,13 @@ func (s *TransactionType) UnmarshalJSON(bytes []byte) error {
 			return nil
 		}
 	}
-	return ErrUnsupportedTransactionType
+	return enumerr.NewUnsupportedError("transaction type")
 }
 
 func (s TransactionType) MarshalJSON() ([]byte, error) {
 	msg, exists := TransactionTypes[s]
 	if !exists {
-		return nil, ErrUnsupportedTransactionType
+		return nil, enumerr.NewUnsupportedError("transaction type")
 	}
 	return json.Marshal(msg)
 }

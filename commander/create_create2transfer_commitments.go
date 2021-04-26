@@ -3,6 +3,7 @@ package commander
 import (
 	"log"
 
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -93,9 +94,12 @@ func create2TransferExists(transferList []models.Create2Transfer, tx *models.Cre
 }
 
 func createAndStoreCreate2TransferCommitment(storage *st.Storage, transfers []models.Create2Transfer, feeReceiverIndex uint32) (*models.Commitment, error) {
-	combinedSignature := models.MakeSignature(1, 2) // TODO: Actually combine signatures
-
 	serializedTxs, err := encoder.SerializeCreate2Transfers(transfers)
+	if err != nil {
+		return nil, err
+	}
+
+	combinedSignature, err := combineCreate2TransferSignatures(transfers)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +113,7 @@ func createAndStoreCreate2TransferCommitment(storage *st.Storage, transfers []mo
 		Type:              txtype.Create2Transfer,
 		Transactions:      serializedTxs,
 		FeeReceiver:       feeReceiverIndex,
-		CombinedSignature: combinedSignature,
+		CombinedSignature: *combinedSignature,
 		PostStateRoot:     *stateRoot,
 	}
 
@@ -121,4 +125,16 @@ func createAndStoreCreate2TransferCommitment(storage *st.Storage, transfers []mo
 	commitment.ID = *id
 
 	return &commitment, nil
+}
+
+func combineCreate2TransferSignatures(transfers []models.Create2Transfer) (*models.Signature, error) {
+	signatures := make([]*bls.Signature, 0, len(transfers))
+	for i := range transfers {
+		sig, err := bls.NewSignatureFromBytes(transfers[i].Signature[:], mockDomain)
+		if err != nil {
+			return nil, err
+		}
+		signatures = append(signatures, sig)
+	}
+	return bls.NewAggregatedSignature(signatures).ModelsSignature(), nil
 }

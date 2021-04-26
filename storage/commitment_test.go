@@ -17,7 +17,7 @@ var (
 		Type:              txtype.Transfer,
 		Transactions:      []byte{1, 2, 3},
 		FeeReceiver:       uint32(1),
-		CombinedSignature: models.MakeSignature(1, 2),
+		CombinedSignature: models.MakeRandomSignature(),
 		PostStateRoot:     utils.RandomHash(),
 		AccountTreeRoot:   nil,
 		IncludedInBatch:   nil,
@@ -29,6 +29,7 @@ type CommitmentTestSuite struct {
 	suite.Suite
 	storage *Storage
 	db      *db.TestDB
+	tree    *StateTree
 }
 
 func (s *CommitmentTestSuite) SetupSuite() {
@@ -40,6 +41,7 @@ func (s *CommitmentTestSuite) SetupTest() {
 	s.NoError(err)
 	s.storage = NewTestStorage(testDB.DB)
 	s.db = testDB
+	s.tree = NewStateTree(s.storage)
 }
 
 func (s *CommitmentTestSuite) TearDownTest() {
@@ -118,10 +120,69 @@ func (s *CommitmentTestSuite) TestGetPendingCommitments_ReturnsOnlyGivenNumberOf
 	s.Len(commitments, 2)
 }
 
-func (s *StateUpdateTestSuite) TestGetCommitment_NonExistentCommitment() {
+func (s *CommitmentTestSuite) TestGetCommitment_NonExistentCommitment() {
 	res, err := s.storage.GetCommitment(42)
 	s.Equal(NewNotFoundError("commitment"), err)
 	s.Nil(res)
+}
+
+func (s *CommitmentTestSuite) TestGetCommitmentsByBatchHash() {
+	commitmentWithHash := commitment
+	commitmentWithHash.FeeReceiver = 0
+	commitmentWithHash.IncludedInBatch = s.addRandomBatch()
+	for i := 0; i < 3; i++ {
+		_, err := s.storage.AddCommitment(&commitmentWithHash)
+		s.NoError(err)
+	}
+
+	s.addLeaf()
+
+	commitments, err := s.storage.GetCommitmentsByBatchHash(commitmentWithHash.IncludedInBatch)
+	s.NoError(err)
+	s.Len(commitments, 3)
+}
+
+func (s *CommitmentTestSuite) TestGetCommitmentsByBatchHash_NonExistentCommitments() {
+	hash := utils.RandomHash()
+	commitments, err := s.storage.GetCommitmentsByBatchHash(&hash)
+	s.NoError(err)
+	s.Len(commitments, 0)
+}
+
+func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
+	commitmentWithHash := commitment
+	commitmentWithHash.FeeReceiver = 0
+	commitmentWithHash.IncludedInBatch = s.addRandomBatch()
+	for i := 0; i < 3; i++ {
+		_, err := s.storage.AddCommitment(&commitmentWithHash)
+		s.NoError(err)
+	}
+
+	s.addLeaf()
+
+	commitments, err := s.storage.GetCommitmentsByBatchID(models.MakeUint256(0))
+	s.NoError(err)
+	s.Len(commitments, 3)
+}
+
+func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID_NonExistentCommitments() {
+	_ = s.addRandomBatch()
+	commitments, err := s.storage.GetCommitmentsByBatchID(models.MakeUint256(0))
+	s.NoError(err)
+	s.Len(commitments, 0)
+}
+
+func (s *CommitmentTestSuite) addLeaf() {
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
+
+	err = s.tree.Set(uint32(0), &models.UserState{
+		PubKeyID:   1,
+		TokenIndex: models.MakeUint256(1),
+		Balance:    models.MakeUint256(420),
+		Nonce:      models.MakeUint256(0),
+	})
+	s.NoError(err)
 }
 
 func TestCommitmentTestSuite(t *testing.T) {
