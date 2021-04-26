@@ -77,7 +77,7 @@ func (s *Storage) GetPendingCreate2Transfers() ([]models.Create2Transfer, error)
 			From("transaction_base").
 			JoinClause("NATURAL JOIN create2transfer").
 			Where(squirrel.Eq{"included_in_commitment": nil, "error_message": nil}), // TODO order by nonce asc, then order by fee desc
-			).Into(&res)
+	).Into(&res)
 	if err != nil {
 		return nil, err
 	}

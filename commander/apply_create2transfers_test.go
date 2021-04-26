@@ -140,7 +140,8 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 	transfers = append(transfers, generateInvalidCreate2Transfers(2)...)
 
 	for i := range transfers {
-		s.storage.AddCreate2Transfer(&transfers[i])
+		err := s.storage.AddCreate2Transfer(&transfers[i])
+		s.NoError(err)
 	}
 
 	alreadyAddedAccounts := []uint32{10}

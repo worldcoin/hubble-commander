@@ -93,7 +93,11 @@ func create2TransferExists(transferList []models.Create2Transfer, tx *models.Cre
 	return false
 }
 
-func createAndStoreCreate2TransferCommitment(storage *st.Storage, transfers []models.Create2Transfer, feeReceiverIndex uint32) (*models.Commitment, error) {
+func createAndStoreCreate2TransferCommitment(
+	storage *st.Storage,
+	transfers []models.Create2Transfer,
+	feeReceiverIndex uint32,
+) (*models.Commitment, error) {
 	serializedTxs, err := encoder.SerializeCreate2Transfers(transfers)
 	if err != nil {
 		return nil, err

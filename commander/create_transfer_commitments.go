@@ -90,7 +90,11 @@ func transferExists(transferList []models.Transfer, tx *models.Transfer) bool {
 	return false
 }
 
-func createAndStoreTransferCommitment(storage *st.Storage, transfers []models.Transfer, feeReceiverIndex uint32) (*models.Commitment, error) {
+func createAndStoreTransferCommitment(
+	storage *st.Storage,
+	transfers []models.Transfer,
+	feeReceiverIndex uint32,
+) (*models.Commitment, error) {
 	serializedTxs, err := encoder.SerializeTransfers(transfers)
 	if err != nil {
 		return nil, err

@@ -123,7 +123,8 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersTestSuite_SavesTransferError
 	transfers = append(transfers, generateInvalidTransfers(2)...)
 
 	for i := range transfers {
-		s.storage.AddTransfer(&transfers[i])
+		err := s.storage.AddTransfer(&transfers[i])
+		s.NoError(err)
 	}
 
 	validTransfers, err := ApplyTransfers(s.storage, transfers, s.cfg)

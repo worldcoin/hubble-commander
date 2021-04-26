@@ -35,7 +35,6 @@ func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 		MaxCommitmentsPerBatch: 1,
 	}
 	err = PopulateGenesisAccounts(s.storage, genesisAccounts)
-
 	s.NoError(err)
 }
 
@@ -81,7 +80,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 }
 
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_StoresCorrectCommitment() {
-	pendingTransfers := s.prepareAndReturnPendingCreate2Transfers(3)
+	pendingTransfers := s.prepareAndReturnPendingCreate2Transfers(2)
 
 	preRoot, err := storage.NewStateTree(s.storage).Root()
 	s.NoError(err)
