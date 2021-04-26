@@ -70,7 +70,7 @@ func (s *Create2TransferTestSuite) TestAddCreate2Transfer_AddAndRetrieve() {
 func (s *Create2TransferTestSuite) TestGetCreate2Transfer_NonExistentTransaction() {
 	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
 	res, err := s.storage.GetCreate2Transfer(hash)
-	s.Equal(NewNotFoundError("create2transfer"), err)
+	s.Equal(NewNotFoundError("transaction"), err)
 	s.Nil(res)
 }
 

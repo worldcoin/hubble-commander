@@ -57,7 +57,7 @@ func (s *Storage) GetTransfer(hash common.Hash) (*models.Transfer, error) {
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, NewNotFoundError("transfer")
+		return nil, NewNotFoundError("transaction")
 	}
 	return &res[0], nil
 }

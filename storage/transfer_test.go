@@ -68,7 +68,7 @@ func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieve() {
 func (s *TransferTestSuite) TestGetTransfer_NonExistentTransfer() {
 	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
 	res, err := s.storage.GetTransfer(hash)
-	s.Equal(NewNotFoundError("transfer"), err)
+	s.Equal(NewNotFoundError("transaction"), err)
 	s.Nil(res)
 }
 
