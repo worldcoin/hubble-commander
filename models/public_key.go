@@ -44,14 +44,14 @@ func (p *PublicKey) String() string {
 }
 
 func (p *PublicKey) Scan(src interface{}) error {
-	srcB, ok := src.([]byte)
+	srcBytes, ok := src.([]byte)
 	if !ok {
 		return fmt.Errorf("can't scan %T into PublicKey", src)
 	}
-	if len(srcB) != PublicKeyLength {
-		return fmt.Errorf("can't scan []byte of len %d into PublicKey, want %d", len(srcB), PublicKeyLength)
+	if len(srcBytes) != PublicKeyLength {
+		return fmt.Errorf("can't scan []byte of len %d into PublicKey, want %d", len(srcBytes), PublicKeyLength)
 	}
-	copy(p[:], srcB)
+	copy(p[:], srcBytes)
 	return nil
 }
 

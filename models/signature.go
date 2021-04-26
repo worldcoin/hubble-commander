@@ -43,14 +43,14 @@ func (s *Signature) String() string {
 }
 
 func (s *Signature) Scan(src interface{}) error {
-	srcB, ok := src.([]byte)
+	srcBytes, ok := src.([]byte)
 	if !ok {
 		return fmt.Errorf("can't scan %T into Signature", src)
 	}
-	if len(srcB) != SignatureLength {
-		return fmt.Errorf("can't scan []byte of len %d into Signature, want %d", len(srcB), SignatureLength)
+	if len(srcBytes) != SignatureLength {
+		return fmt.Errorf("can't scan []byte of len %d into Signature, want %d", len(srcBytes), SignatureLength)
 	}
-	copy(s[:], srcB)
+	copy(s[:], srcBytes)
 	return nil
 }
 
