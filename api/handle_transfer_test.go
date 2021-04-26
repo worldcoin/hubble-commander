@@ -22,7 +22,6 @@ var (
 		Amount:      models.NewUint256(50),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(0),
-		Signature:   []byte{},
 	}
 )
 
@@ -95,7 +94,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ReturnsNonNilHash() {
 
 func (s *SendTransferTestSuite) TestSendTransfer_ValidatesNonceTooLow_NoTransactions() {
 	userStateWithIncreasedNonce := s.userState
-	userStateWithIncreasedNonce.Nonce = *models.NewUint256(1)
+	userStateWithIncreasedNonce.Nonce = models.MakeUint256(1)
 
 	err := s.tree.Set(1, userStateWithIncreasedNonce)
 	s.NoError(err)
@@ -181,7 +180,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesSignature() {
 	s.NoError(err)
 
 	transfer := transferWithoutSignature
-	transfer.Signature = fakeSignature.Bytes()
+	transfer.Signature = fakeSignature.ModelsSignature()
 
 	_, err = s.api.SendTransaction(dto.MakeTransaction(transfer))
 	s.Equal(ErrInvalidSignature, err)
@@ -196,7 +195,7 @@ func (s *SendTransferTestSuite) TestSendTransaction_ValidatesSignature_DevMode()
 	s.NoError(err)
 
 	transfer := transferWithoutSignature
-	transfer.Signature = fakeSignature.Bytes()
+	transfer.Signature = fakeSignature.ModelsSignature()
 
 	_, err = s.api.SendTransaction(dto.MakeTransaction(transfer))
 	s.NoError(err)

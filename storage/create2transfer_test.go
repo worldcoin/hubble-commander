@@ -21,7 +21,7 @@ var (
 			Amount:               models.MakeUint256(1000),
 			Fee:                  models.MakeUint256(100),
 			Nonce:                models.MakeUint256(0),
-			Signature:            []byte{1, 2, 3, 4, 5},
+			Signature:            models.MakeRandomSignature(),
 			IncludedInCommitment: nil,
 		},
 		ToStateID:  2,
@@ -72,6 +72,28 @@ func (s *Create2TransferTestSuite) TestGetCreate2Transfer_NonExistentTransaction
 	res, err := s.storage.GetCreate2Transfer(hash)
 	s.Equal(NewNotFoundError("transaction"), err)
 	s.Nil(res)
+}
+
+func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey() {
+	err := s.storage.AddCreate2Transfer(&create2Transfer)
+	s.NoError(err)
+
+	err = s.tree.Set(1, &models.UserState{
+		PubKeyID:   2,
+		TokenIndex: models.MakeUint256(1),
+		Balance:    models.MakeUint256(400),
+	})
+	s.NoError(err)
+
+	transfers, err := s.storage.GetCreate2TransfersByPublicKey(&account2.PublicKey)
+	s.NoError(err)
+	s.Len(transfers, 1)
+}
+
+func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey_NoCreate2Transfers() {
+	transfers, err := s.storage.GetCreate2TransfersByPublicKey(&account2.PublicKey)
+	s.NoError(err)
+	s.Len(transfers, 0)
 }
 
 func TestCreate2TransferTestSuite(t *testing.T) {

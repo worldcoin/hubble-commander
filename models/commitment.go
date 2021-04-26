@@ -47,8 +47,7 @@ func calcBodyHash(feeReceiver uint32, combinedSignature Signature, transactions,
 	arr := make([]byte, 32+64+32+len(transactions))
 
 	copy(arr[0:32], accountTreeRoot)
-	copy(arr[32:64], utils.PadLeft(combinedSignature[0].Bytes(), 32))
-	copy(arr[64:96], utils.PadLeft(combinedSignature[1].Bytes(), 32))
+	copy(arr[32:96], combinedSignature.Bytes())
 	binary.BigEndian.PutUint32(arr[124:128], feeReceiver)
 	copy(arr[128:], transactions)
 

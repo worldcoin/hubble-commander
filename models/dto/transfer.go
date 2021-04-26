@@ -13,7 +13,7 @@ type Transfer struct {
 	Amount      *models.Uint256
 	Fee         *models.Uint256
 	Nonce       *models.Uint256
-	Signature   HexString
+	Signature   *models.Signature
 }
 
 type transferWithType struct {
@@ -23,7 +23,7 @@ type transferWithType struct {
 	Amount      *models.Uint256
 	Fee         *models.Uint256
 	Nonce       *models.Uint256
-	Signature   HexString
+	Signature   *models.Signature
 }
 
 func (t Transfer) MarshalJSON() ([]byte, error) {
