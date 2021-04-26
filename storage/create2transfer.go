@@ -65,7 +65,7 @@ func (s *Storage) GetCreate2Transfer(hash common.Hash) (*models.Create2Transfer,
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, NewNotFoundError("create2transfer")
+		return nil, NewNotFoundError("transaction")
 	}
 	return &res[0], nil
 }
