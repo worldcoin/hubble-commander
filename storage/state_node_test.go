@@ -215,26 +215,7 @@ func (s *StateNodeTestSuite) TestGetStateNodes() {
 }
 
 func (s *StateNodeTestSuite) TestBatchUpsertStateNode_AddAndRetrieve() {
-	paths := []models.MerklePath{
-		{
-			Path:  7,
-			Depth: 7,
-		},
-		{
-			Path:  6,
-			Depth: 7,
-		},
-	}
-	nodes := []models.StateNode{
-		{
-			MerklePath: paths[0],
-			DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
-		},
-		{
-			MerklePath: paths[1],
-			DataHash:   common.BytesToHash([]byte{1, 2, 3, 5, 6}),
-		},
-	}
+	paths, nodes := getPathsAndNodes()
 	err := s.storage.BatchUpsertStateNodes(nodes)
 	s.NoError(err)
 
@@ -246,6 +227,25 @@ func (s *StateNodeTestSuite) TestBatchUpsertStateNode_AddAndRetrieve() {
 }
 
 func (s *StateNodeTestSuite) TestBatchUpsertStateNode_UpdateAndRetrieve() {
+	paths, nodes := getPathsAndNodes()
+	node := models.StateNode{
+		MerklePath: paths[0],
+		DataHash:   common.BytesToHash([]byte{8, 7, 6, 5, 4}),
+	}
+	err := s.storage.AddStateNode(&node)
+	s.NoError(err)
+
+	err = s.storage.BatchUpsertStateNodes(nodes)
+	s.NoError(err)
+
+	res, err := s.storage.getStateNodes(paths)
+	s.NoError(err)
+	s.Len(res, 2)
+	s.Contains(res, nodes[0])
+	s.Contains(res, nodes[1])
+}
+
+func getPathsAndNodes() ([]models.MerklePath, []models.StateNode) {
 	paths := []models.MerklePath{
 		{
 			Path:  7,
@@ -256,14 +256,6 @@ func (s *StateNodeTestSuite) TestBatchUpsertStateNode_UpdateAndRetrieve() {
 			Depth: 7,
 		},
 	}
-
-	node := models.StateNode{
-		MerklePath: paths[0],
-		DataHash:   common.BytesToHash([]byte{8, 7, 6, 5, 4}),
-	}
-	err := s.storage.AddStateNode(&node)
-	s.NoError(err)
-
 	nodes := []models.StateNode{
 		{
 			MerklePath: paths[0],
@@ -274,14 +266,7 @@ func (s *StateNodeTestSuite) TestBatchUpsertStateNode_UpdateAndRetrieve() {
 			DataHash:   common.BytesToHash([]byte{1, 2, 3, 5, 6}),
 		},
 	}
-	err = s.storage.BatchUpsertStateNodes(nodes)
-	s.NoError(err)
-
-	res, err := s.storage.getStateNodes(paths)
-	s.NoError(err)
-	s.Len(res, 2)
-	s.Contains(res, nodes[0])
-	s.Contains(res, nodes[1])
+	return paths, nodes
 }
 
 func TestStateNodeTestSuite(t *testing.T) {
