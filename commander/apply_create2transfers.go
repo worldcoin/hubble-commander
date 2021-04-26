@@ -27,8 +27,6 @@ func ApplyCreate2Transfers(
 	validTransfers := make([]models.Create2Transfer, 0, cfg.TxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
-	
-
 	feeReceiverLeaf, err := stateTree.Leaf(cfg.FeeReceiverIndex)
 	if err != nil {
 		return nil, nil, err
