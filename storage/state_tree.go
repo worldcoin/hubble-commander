@@ -137,10 +137,10 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (err error)
 	})
 }
 
-func nodesSliceToMap(nodes []models.StateNode) map[models.MerklePath]models.StateNode {
-	result := make(map[models.MerklePath]models.StateNode, len(nodes))
+func nodesSliceToMap(nodes []models.StateNode) map[models.MerklePath]common.Hash {
+	result := make(map[models.MerklePath]common.Hash, len(nodes))
 	for i := range nodes {
-		result[nodes[i].MerklePath] = nodes[i]
+		result[nodes[i].MerklePath] = nodes[i].DataHash
 	}
 	return result
 }
@@ -155,30 +155,32 @@ func (s *StateTree) updateStateNodes(leafPath *models.MerklePath, newLeafHash *c
 	if err != nil {
 		return nil, err
 	}
-	nodesMap := nodesSliceToMap(nodes)
-	nodesToUpsert := make([]models.StateNode, 0, len(witnessPaths))
 
+	nodesMap := nodesSliceToMap(nodes)
+	nodes = make([]models.StateNode, 0, len(witnessPaths))
 	currentHash := *newLeafHash
 	for _, witnessPath := range witnessPaths {
-		var currentPath *models.MerklePath
-		currentPath, err = witnessPath.Sibling()
+		currentPath, err := witnessPath.Sibling()
 		if err != nil {
 			return nil, err
 		}
 
-		nodesToUpsert = append(nodesToUpsert, models.StateNode{
+		nodes = append(nodes, models.StateNode{
 			MerklePath: *currentPath,
 			DataHash:   currentHash,
 		})
-
-		//TODO: maybe change map to [merklePath]dataHash
-		currentHash = s.calculateParentHash(&currentHash, currentPath, nodesMap[witnessPath].DataHash)
+		currentHash = s.calculateParentHash(&currentHash, currentPath, nodesMap[witnessPath])
 	}
 
-	nodesToUpsert = append(nodesToUpsert, models.StateNode{
+	nodes = append(nodes, models.StateNode{
 		MerklePath: rootPath,
 		DataHash:   currentHash,
 	})
+
+	err = s.storage.BatchUpsertStateNodes(nodes)
+	if err != nil {
+		return nil, err
+	}
 
 	return &currentHash, nil
 }
