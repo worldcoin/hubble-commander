@@ -21,7 +21,6 @@ var (
 		Amount:      models.NewUint256(50),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(0),
-		Signature:   []byte{},
 	}
 )
 
@@ -190,7 +189,7 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesSignatur
 	s.NoError(err)
 
 	transfer := create2TransferWithoutSignature
-	transfer.Signature = fakeSignature.Bytes()
+	transfer.Signature = fakeSignature.ModelsSignature()
 
 	_, err = s.api.SendTransaction(dto.MakeTransaction(transfer))
 	s.Equal(ErrInvalidSignature, err)
@@ -205,7 +204,7 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesSignatur
 	s.NoError(err)
 
 	transfer := create2TransferWithoutSignature
-	transfer.Signature = fakeSignature.Bytes()
+	transfer.Signature = fakeSignature.ModelsSignature()
 
 	_, err = s.api.SendTransaction(dto.MakeTransaction(transfer))
 	s.NoError(err)
