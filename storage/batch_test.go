@@ -254,6 +254,44 @@ func (s *BatchTestSuite) TestGetBatchesInRange_ReturnsAllBatchesUpUntilUpperBoun
 	s.Equal(batches[:2], actual)
 }
 
+func (s *BatchTestSuite) TestGetBatchWithAccountRoot_AddAndRetrieve() {
+	hash := utils.RandomHash()
+	batch := &models.BatchWithAccountRoot{
+		Batch: models.Batch{
+			Hash:              hash,
+			Type:              txtype.Transfer,
+			ID:                models.MakeUint256(1),
+			FinalisationBlock: 1234,
+		},
+		AccountTreeRoot: &hash,
+	}
+	err := s.storage.AddBatch(&batch.Batch)
+	s.NoError(err)
+
+	includedCommitment := commitment
+	includedCommitment.AccountTreeRoot = &hash
+	includedCommitment.IncludedInBatch = &batch.Hash
+	_, err = s.storage.AddCommitment(&includedCommitment)
+	s.NoError(err)
+
+	actual, err := s.storage.GetBatchWithAccountRoot(batch.Hash)
+	s.NoError(err)
+	s.Equal(batch, actual)
+
+	actual, err = s.storage.GetBatchWithAccountRootByID(batch.ID)
+	s.NoError(err)
+	s.Equal(batch, actual)
+}
+
+func (s *BatchTestSuite) TestGetBatchWithAccountRoot_NotExistingBatch() {
+	notFoundErr := NewNotFoundError("batch")
+	_, err := s.storage.GetBatchWithAccountRoot(utils.RandomHash())
+	s.Equal(notFoundErr, err)
+
+	_, err = s.storage.GetBatchWithAccountRootByID(models.MakeUint256(12))
+	s.Equal(notFoundErr, err)
+}
+
 func TestBatchTestSuite(t *testing.T) {
 	suite.Run(t, new(BatchTestSuite))
 }
