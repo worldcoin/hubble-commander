@@ -108,10 +108,11 @@ func (a *API) validateTransfer(transfer *models.Transfer) error {
 		return err
 	}
 
-	if !a.cfg.DevMode {
-		return a.validateSignature(encodedTransfer, &transfer.Signature, &senderState.UserState)
+	if a.cfg.DevMode {
+		transfer.Signature = mockSignature
+		return nil
 	}
-	return nil
+	return a.validateSignature(encodedTransfer, &transfer.Signature, &senderState.UserState)
 }
 
 func (a *API) validateFromTo(transfer *models.Transfer) error {
