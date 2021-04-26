@@ -170,7 +170,7 @@ func (s *StateTree) updateStateNodes(leafPath *models.MerklePath, newLeafHash *c
 			MerklePath: *currentPath,
 			DataHash:   currentHash,
 		})
-		currentHash = s.calculateParentHash(&currentHash, currentPath, nodesMap[witnessPath])
+		currentHash = s.calculateParentHash(&currentHash, currentPath, getWitnessHash(nodesMap, witnessPath))
 	}
 
 	nodes = append(nodes, models.StateNode{
@@ -184,6 +184,14 @@ func (s *StateTree) updateStateNodes(leafPath *models.MerklePath, newLeafHash *c
 	}
 
 	return &currentHash, nil
+}
+
+func getWitnessHash(nodes map[models.MerklePath]common.Hash, path models.MerklePath) common.Hash {
+	witnessHash, ok := nodes[path]
+	if !ok {
+		return GetZeroHash(32 - uint(path.Depth))
+	}
+	return witnessHash
 }
 
 func (s *StateTree) calculateParentHash(
