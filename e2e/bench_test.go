@@ -10,6 +10,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
@@ -30,7 +31,7 @@ func TestBenchCommander(t *testing.T) {
 	var version string
 	err = commander.Client().CallFor(&version, "hubble_getVersion")
 	require.NoError(t, err)
-	require.Equal(t, "dev-0.1.0", version)
+	require.Equal(t, config.GetConfig().API.Version, version)
 
 	stateIds := make([]uint32, 0)
 	nonces := map[uint32]*models.Uint256{}
