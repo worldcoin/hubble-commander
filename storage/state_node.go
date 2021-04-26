@@ -20,6 +20,19 @@ func (s *Storage) UpsertStateNode(node *models.StateNode) error {
 	return err
 }
 
+func (s *Storage) BatchUpsertStateNodes(nodes []models.StateNode) error {
+	insertQuery := s.QB.Insert("state_node").
+		Suffix("ON CONFLICT (merkle_path) DO UPDATE SET data_hash = excluded.data_hash")
+	for i := range nodes {
+		insertQuery = insertQuery.Values(
+			nodes[i].MerklePath,
+			nodes[i].DataHash,
+		)
+	}
+
+	_, err := s.DB.Query(insertQuery).Exec()
+	return err
+}
 func (s *Storage) AddStateNode(node *models.StateNode) error {
 	_, err := s.DB.Query(
 		s.QB.Insert("state_node").
