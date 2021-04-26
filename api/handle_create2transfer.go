@@ -68,7 +68,7 @@ func sanitizeCreate2Transfer(create2Transfer dto.Create2Transfer) (*models.Creat
 				Amount:      *create2Transfer.Amount,
 				Fee:         *create2Transfer.Fee,
 				Nonce:       *create2Transfer.Nonce,
-				Signature:   create2Transfer.Signature,
+				Signature:   *create2Transfer.Signature,
 			},
 		},
 		create2Transfer.ToPublicKey,
@@ -101,7 +101,7 @@ func (a *API) validateCreate2Transfer(create2Transfer *models.Create2Transfer, t
 	}
 
 	if !a.cfg.DevMode {
-		return a.validateSignature(encodedCreate2Transfer, create2Transfer.Signature, &senderState.UserState)
+		return a.validateSignature(encodedCreate2Transfer, &create2Transfer.Signature, &senderState.UserState)
 	}
 	return nil
 }

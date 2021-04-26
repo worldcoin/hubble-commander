@@ -25,6 +25,6 @@ func SignCreate2Transfer(wallet *bls.Wallet, create2Transfer dto.Create2Transfer
 		return nil, err
 	}
 
-	create2Transfer.Signature = signature.Bytes()
+	create2Transfer.Signature = signature.ModelsSignature()
 	return &create2Transfer, nil
 }

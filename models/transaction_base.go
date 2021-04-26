@@ -12,7 +12,7 @@ type TransactionBase struct {
 	Amount               Uint256
 	Fee                  Uint256
 	Nonce                Uint256
-	Signature            []byte
+	Signature            Signature
 	IncludedInCommitment *int32  `db:"included_in_commitment"`
 	ErrorMessage         *string `db:"error_message"`
 }

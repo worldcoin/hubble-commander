@@ -26,6 +26,6 @@ func SignTransfer(wallet *bls.Wallet, transfer dto.Transfer) (*dto.Transfer, err
 		return nil, err
 	}
 
-	transfer.Signature = signature.Bytes()
+	transfer.Signature = signature.ModelsSignature()
 	return &transfer, nil
 }

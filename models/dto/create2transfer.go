@@ -13,7 +13,7 @@ type Create2Transfer struct {
 	Amount      *models.Uint256
 	Fee         *models.Uint256
 	Nonce       *models.Uint256
-	Signature   HexString
+	Signature   *models.Signature
 }
 
 type create2TransferWithType struct {
@@ -23,7 +23,7 @@ type create2TransferWithType struct {
 	Amount      *models.Uint256
 	Fee         *models.Uint256
 	Nonce       *models.Uint256
-	Signature   HexString
+	Signature   *models.Signature
 }
 
 func (t Create2Transfer) MarshalJSON() ([]byte, error) {

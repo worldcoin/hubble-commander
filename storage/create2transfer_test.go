@@ -21,7 +21,7 @@ var (
 			Amount:               models.MakeUint256(1000),
 			Fee:                  models.MakeUint256(100),
 			Nonce:                models.MakeUint256(0),
-			Signature:            []byte{1, 2, 3, 4, 5},
+			Signature:            models.MakeRandomSignature(),
 			IncludedInCommitment: nil,
 		},
 		ToStateID:  2,

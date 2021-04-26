@@ -73,7 +73,7 @@ func sanitizeTransfer(transfer dto.Transfer) (*models.Transfer, error) {
 			Amount:      *transfer.Amount,
 			Fee:         *transfer.Fee,
 			Nonce:       *transfer.Nonce,
-			Signature:   transfer.Signature,
+			Signature:   *transfer.Signature,
 		},
 		ToStateID: *transfer.ToStateID,
 	}, nil
@@ -105,7 +105,7 @@ func (a *API) validateTransfer(transfer *models.Transfer) error {
 	}
 
 	if !a.cfg.DevMode {
-		return a.validateSignature(encodedTransfer, transfer.Signature, &senderState.UserState)
+		return a.validateSignature(encodedTransfer, &transfer.Signature, &senderState.UserState)
 	}
 	return nil
 }
