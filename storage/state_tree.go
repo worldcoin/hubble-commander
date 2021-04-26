@@ -156,6 +156,7 @@ func (s *StateTree) updateStateNodes(leafPath *models.MerklePath, newLeafHash *c
 		return nil, err
 	}
 	nodesMap := nodesSliceToMap(nodes)
+	nodesToUpsert := make([]models.StateNode, 0, len(witnessPaths))
 
 	currentHash := *newLeafHash
 	for _, witnessPath := range witnessPaths {
@@ -165,24 +166,19 @@ func (s *StateTree) updateStateNodes(leafPath *models.MerklePath, newLeafHash *c
 			return nil, err
 		}
 
-		err = s.storage.UpsertStateNode(&models.StateNode{
+		nodesToUpsert = append(nodesToUpsert, models.StateNode{
 			MerklePath: *currentPath,
 			DataHash:   currentHash,
 		})
-		if err != nil {
-			return nil, err
-		}
 
+		//TODO: maybe change map to [merklePath]dataHash
 		currentHash = s.calculateParentHash(&currentHash, currentPath, nodesMap[witnessPath].DataHash)
 	}
 
-	err = s.storage.UpsertStateNode(&models.StateNode{
+	nodesToUpsert = append(nodesToUpsert, models.StateNode{
 		MerklePath: rootPath,
 		DataHash:   currentHash,
 	})
-	if err != nil {
-		return nil, err
-	}
 
 	return &currentHash, nil
 }
