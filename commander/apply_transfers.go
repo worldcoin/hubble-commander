@@ -40,11 +40,8 @@ func ApplyTransfers(
 			if transferError == ErrNonceTooHigh {
 				continue
 			}
-			err := storage.SetTransactionError(transfer.Hash, transferError.Error())
-			if err != nil {
-				log.Printf("Setting transaction error failed: %s", err)
-			}
-			log.Printf("Transfer failed: %s", transferError)
+			
+			logAndSaveTransactionError(storage, &transfer.TransactionBase, transferError)
 		}
 
 		if uint32(len(validTransfers)) == cfg.TxsPerCommitment {
@@ -52,12 +49,9 @@ func ApplyTransfers(
 		}
 	}
 
-	if combinedFee.CmpN(0) == 1 {
-		// TODO cfg.FeeReceiverIndex actually represents PubKeyID and is used as StateID here
-		err := ApplyFee(stateTree, cfg.FeeReceiverIndex, combinedFee)
-		if err != nil {
-			return nil, err
-		}
+	err = ValidateAndApplyFee(stateTree, cfg.FeeReceiverIndex, combinedFee)
+	if err != nil {
+		return nil, err
 	}
 
 	return validTransfers, nil

@@ -49,18 +49,11 @@ func ApplyCreate2Transfers(
 				if transferError == ErrNonceTooHigh {
 					continue
 				}
-				err := storage.SetTransactionError(transfer.Hash, transferError.Error())
-				if err != nil {
-					log.Printf("Setting transaction error failed: %s", err)
-				}
-				log.Printf("Create2Transfer failed: %s", transferError)
+
+				logAndSaveTransactionError(storage, &transfer.TransactionBase, transferError)
 			}
 		} else {
-			err := storage.SetTransactionError(transfer.Hash, ErrAccountAlreadyExists.Error())
-			if err != nil {
-				log.Printf("Setting transaction error failed: %s", err)
-			}
-			log.Printf("Create2Transfer failed: %s", ErrAccountAlreadyExists)
+			logAndSaveTransactionError(storage, &transfer.TransactionBase, ErrAccountAlreadyExists)
 		}
 
 		if uint32(len(validTransfers)) == cfg.TxsPerCommitment {
@@ -68,12 +61,9 @@ func ApplyCreate2Transfers(
 		}
 	}
 
-	if combinedFee.CmpN(0) == 1 {
-		// TODO cfg.FeeReceiverIndex actually represents PubKeyID and is used as StateID here
-		err := ApplyFee(stateTree, cfg.FeeReceiverIndex, combinedFee)
-		if err != nil {
-			return nil, nil, err
-		}
+	err = ValidateAndApplyFee(stateTree, cfg.FeeReceiverIndex, combinedFee)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	return validTransfers, successfullyAddedPubKeyIDs, nil

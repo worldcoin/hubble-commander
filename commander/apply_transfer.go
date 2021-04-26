@@ -39,10 +39,6 @@ func ApplyTransfer(
 		return nil, err
 	}
 
-	if senderLeaf == nil || receiverLeaf == nil {
-		return ErrUserStateIsNil, nil
-	}
-
 	senderState := senderLeaf.UserState
 	receiverState := receiverLeaf.UserState
 
@@ -106,20 +102,4 @@ func CalculateStateAfterTransfer(
 	newReceiverState.Balance = *newReceiverState.Balance.Add(&transfer.Amount)
 
 	return newSenderState, newReceiverState, nil
-}
-
-func ApplyFee(stateTree *storage.StateTree, feeReceiverIndex uint32, fee models.Uint256) error {
-	feeReceiver, err := stateTree.Leaf(feeReceiverIndex)
-	if err != nil {
-		return err
-	}
-
-	feeReceiver.Balance = *feeReceiver.Balance.Add(&fee)
-
-	err = stateTree.Set(feeReceiverIndex, &feeReceiver.UserState)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
