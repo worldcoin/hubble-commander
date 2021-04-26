@@ -86,13 +86,13 @@ func validateBalance(transactionAmount, transactionFee *models.Uint256, senderSt
 	return nil
 }
 
-func (a *API) validateSignature(encodedTransaction, transactionSignature []byte, senderState *models.UserState) error {
+func (a *API) validateSignature(encodedTransaction []byte, transactionSignature *models.Signature, senderState *models.UserState) error {
 	publicKey, err := a.storage.GetPublicKey(senderState.PubKeyID)
 	if err != nil {
 		return err
 	}
 
-	signature, err := bls.NewSignatureFromBytes(transactionSignature, mockDomain)
+	signature, err := bls.NewSignatureFromBytes(transactionSignature[:], mockDomain)
 	if err != nil {
 		return err
 	}

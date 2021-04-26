@@ -32,7 +32,7 @@ func (s *SubmitBatchTestSuite) SetupTest() {
 		Type:              txtype.Transfer,
 		Transactions:      utils.RandomBytes(12),
 		FeeReceiver:       uint32(1234),
-		CombinedSignature: models.MakeSignature(1, 2),
+		CombinedSignature: models.MakeRandomSignature(),
 		PostStateRoot:     utils.RandomHash(),
 	}
 }

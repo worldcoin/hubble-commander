@@ -83,8 +83,6 @@ func CalculateStateAfterTransfer(
 	newReceiverState models.UserState,
 	err error,
 ) {
-	// TODO: Signature validation
-
 	comparison := transfer.Nonce.Cmp(&senderState.Nonce)
 	if comparison > 0 {
 		err = ErrNonceTooHigh

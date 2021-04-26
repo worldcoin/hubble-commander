@@ -249,13 +249,13 @@ func (s *EncoderTestSuite) TestSerializeTransfers() {
 
 func (s *EncoderTestSuite) TestCommitmentBodyHash() {
 	accountRoot := utils.RandomHash()
-	signature := models.MakeSignature(1, 2)
+	signature := models.MakeRandomSignature()
 	feeReceiver := models.MakeUint256(1234)
 	txs := utils.RandomBytes(32)
 
 	expectedHash, err := s.testTypes.HashTransferBody(nil, types.TypesTransferBody{
 		AccountRoot: accountRoot,
-		Signature:   [2]*big.Int{&signature[0].Int, &signature[1].Int},
+		Signature:   signature.BigInts(),
 		FeeReceiver: &feeReceiver.Int,
 		Txs:         txs,
 	})

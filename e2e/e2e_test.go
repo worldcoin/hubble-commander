@@ -54,7 +54,7 @@ func TestCommander(t *testing.T) {
 	require.NotNil(t, transferHash1)
 
 	var sentTransfer dto.TransferReceipt
-	err = commander.Client().CallFor(&sentTransfer, "hubble_getTransfer", []interface{}{transferHash1})
+	err = commander.Client().CallFor(&sentTransfer, "hubble_getTransaction", []interface{}{transferHash1})
 	require.NoError(t, err)
 	require.Equal(t, txstatus.Pending, sentTransfer.Status)
 
@@ -73,12 +73,12 @@ func TestCommander(t *testing.T) {
 	require.NotNil(t, transferHash2)
 
 	testutils.WaitToPass(func() bool {
-		err = commander.Client().CallFor(&sentTransfer, "hubble_getTransfer", []interface{}{transferHash1})
+		err = commander.Client().CallFor(&sentTransfer, "hubble_getTransaction", []interface{}{transferHash1})
 		require.NoError(t, err)
 		return sentTransfer.Status == txstatus.InBatch
 	}, 10*time.Second)
 
-	err = commander.Client().CallFor(&sentTransfer, "hubble_getTransfer", []interface{}{transferHash2})
+	err = commander.Client().CallFor(&sentTransfer, "hubble_getTransaction", []interface{}{transferHash2})
 	require.NoError(t, err)
 	require.Equal(t, txstatus.InBatch, sentTransfer.Status)
 

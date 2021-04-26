@@ -122,3 +122,41 @@ func (s *Storage) GetBatchesInRange(from, to *models.Uint256) ([]models.Batch, e
 	}
 	return res, nil
 }
+
+func (s *Storage) GetBatchWithAccountRoot(batchHash common.Hash) (*models.BatchWithAccountRoot, error) {
+	res := make([]models.BatchWithAccountRoot, 0, 1)
+	err := s.DB.Query(
+		s.QB.Select("batch.*",
+			"commitment.account_tree_root").
+			From("batch").
+			Join("commitment ON commitment.included_in_batch = batch.batch_hash").
+			Where(squirrel.Eq{"batch_hash": batchHash}).
+			Limit(1),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, NewNotFoundError("batch")
+	}
+	return &res[0], nil
+}
+
+func (s *Storage) GetBatchWithAccountRootByID(batchID models.Uint256) (*models.BatchWithAccountRoot, error) {
+	res := make([]models.BatchWithAccountRoot, 0, 1)
+	err := s.DB.Query(
+		s.QB.Select("batch.*",
+			"commitment.account_tree_root").
+			From("batch").
+			Join("commitment ON commitment.included_in_batch = batch.batch_hash").
+			Where(squirrel.Eq{"batch_id": batchID}).
+			Limit(1),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, NewNotFoundError("batch")
+	}
+	return &res[0], nil
+}

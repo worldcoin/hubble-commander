@@ -1,14 +1,11 @@
 package dto
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 )
@@ -16,11 +13,11 @@ import (
 func TestCreate2Transfer_JSONMarshaling(t *testing.T) {
 	transfer := Create2Transfer{
 		FromStateID: ref.Uint32(1),
-		ToPublicKey: &models.PublicKey{1, 2, 3},
+		ToPublicKey: &examplePublicKey,
 		Amount:      models.NewUint256(50),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(0),
-		Signature:   utils.RandomBytes(12),
+		Signature:   models.NewRandomSignature(),
 	}
 	data, err := json.Marshal(transfer)
 	require.NoError(t, err)
@@ -33,23 +30,21 @@ func TestCreate2Transfer_JSONMarshaling(t *testing.T) {
 }
 
 func TestCreate2Transfer_MarshalJSON(t *testing.T) {
-	sig, err := hex.DecodeString("deadbeef")
-	require.NoError(t, err)
-
 	transfer := Create2Transfer{
 		FromStateID: ref.Uint32(1),
-		ToPublicKey: &models.PublicKey{1, 2, 3},
+		ToPublicKey: &examplePublicKey,
 		Amount:      models.NewUint256(50),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(0),
-		Signature:   sig,
+		Signature:   &exampleSignature,
 	}
 	data, err := json.Marshal(transfer)
 	require.NoError(t, err)
 
 	expected := fmt.Sprintf(
-		`{"Type":"CREATE2TRANSFER","FromStateID":1,"ToPublicKey":"%s","Amount":"50","Fee":"10","Nonce":"0","Signature":"0xdeadbeef"}`,
-		"010203"+strings.Repeat("0", 250),
+		`{"Type":"CREATE2TRANSFER","FromStateID":1,"ToPublicKey":"%s","Amount":"50","Fee":"10","Nonce":"0","Signature":"%s"}`,
+		examplePublicKeyHex,
+		exampleSignatureHex,
 	)
 	require.Equal(t, expected, string(data))
 }

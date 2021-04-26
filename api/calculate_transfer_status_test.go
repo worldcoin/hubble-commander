@@ -21,7 +21,7 @@ var (
 		Type:              txtype.Transfer,
 		Transactions:      utils.RandomBytes(24),
 		FeeReceiver:       1,
-		CombinedSignature: models.MakeSignature(1, 2),
+		CombinedSignature: models.MakeRandomSignature(),
 		PostStateRoot:     utils.RandomHash(),
 	}
 )
@@ -70,10 +70,9 @@ func (s *CalculateTransferStatusTestSuite) SetupTest() {
 	transfer := &models.Transfer{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
-			Amount:      *models.NewUint256(50),
-			Fee:         *models.NewUint256(10),
-			Nonce:       *models.NewUint256(0),
-			Signature:   []byte{1, 2, 3, 4},
+			Amount:      models.MakeUint256(50),
+			Fee:         models.MakeUint256(10),
+			Nonce:       models.MakeUint256(0),
 		},
 		ToStateID: 2,
 	}
@@ -87,7 +86,7 @@ func (s *CalculateTransferStatusTestSuite) TearDownTest() {
 }
 
 func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Pending() {
-	status, err := CalculateTransferStatus(s.storage, s.transfer, 0)
+	status, err := CalculateTransferStatus(s.storage, &s.transfer.TransactionBase, 0)
 	s.NoError(err)
 
 	s.Equal(txstatus.Pending, *status)
@@ -109,7 +108,7 @@ func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_InBatch()
 
 	s.transfer.IncludedInCommitment = commitmentID
 
-	status, err := CalculateTransferStatus(s.storage, s.transfer, 0)
+	status, err := CalculateTransferStatus(s.storage, &s.transfer.TransactionBase, 0)
 	s.NoError(err)
 
 	s.Equal(txstatus.InBatch, *status)
@@ -138,7 +137,7 @@ func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Finalised
 	latestBlockNumber, err := s.sim.GetLatestBlockNumber()
 	s.NoError(err)
 
-	status, err := CalculateTransferStatus(s.storage, s.transfer, *latestBlockNumber)
+	status, err := CalculateTransferStatus(s.storage, &s.transfer.TransactionBase, *latestBlockNumber)
 	s.NoError(err)
 
 	s.Equal(txstatus.Finalised, *status)
@@ -146,7 +145,7 @@ func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Finalised
 
 func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Error() {
 	s.transfer.ErrorMessage = ref.String("Gold Duck Error")
-	status, err := CalculateTransferStatus(s.storage, s.transfer, 0)
+	status, err := CalculateTransferStatus(s.storage, &s.transfer.TransactionBase, 0)
 	s.NoError(err)
 
 	s.Equal(txstatus.Error, *status)

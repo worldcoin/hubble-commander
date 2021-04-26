@@ -4,41 +4,64 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"math/big"
+	"reflect"
 
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
-// TODO: Consider representing this as a 64 byte array instead
-type Signature [2]Uint256
+const SignatureLength = 64
 
-func MakeSignature(first, second int64) Signature {
-	return Signature{MakeUint256(first), MakeUint256(second)}
+type Signature [SignatureLength]byte
+
+var signatureT = reflect.TypeOf(Signature{})
+
+func MakeRandomSignature() Signature {
+	var signature Signature
+	copy(signature[:], utils.RandomBytes(64))
+	return signature
+}
+
+func NewRandomSignature() *Signature {
+	signature := MakeRandomSignature()
+	return &signature
+}
+
+func (s Signature) Bytes() []byte {
+	return s[:]
+}
+
+func (s *Signature) BigInts() [2]*big.Int {
+	return [2]*big.Int{
+		new(big.Int).SetBytes(s[:32]),
+		new(big.Int).SetBytes(s[32:]),
+	}
+}
+
+func (s *Signature) String() string {
+	return hexutil.Encode(s[:])
 }
 
 func (s *Signature) Scan(src interface{}) error {
-	value, ok := src.([]byte)
+	srcBytes, ok := src.([]byte)
 	if !ok {
 		return fmt.Errorf("can't scan %T into Signature", src)
 	}
-	if len(value) != 64 {
-		return fmt.Errorf("invalid signature length")
+	if len(srcBytes) != SignatureLength {
+		return fmt.Errorf("can't scan []byte of len %d into Signature, want %d", len(srcBytes), SignatureLength)
 	}
-
-	s[0].SetBytes(value[0:32])
-	s[1].SetBytes(value[32:64])
+	copy(s[:], srcBytes)
 	return nil
 }
 
-// Value implements valuer for database/sql.
 func (s Signature) Value() (driver.Value, error) {
-	buf := make([]byte, 0, 64)
-
-	buf = append(buf, utils.PadLeft(s[0].Bytes(), 32)...)
-	buf = append(buf, utils.PadLeft(s[1].Bytes(), 32)...)
-
-	return buf, nil
+	return s[:], nil
 }
 
-func (s *Signature) ToBigIntPointers() [2]*big.Int {
-	return [2]*big.Int{&s[0].Int, &s[1].Int}
+func (s *Signature) UnmarshalJSON(input []byte) error {
+	return hexutil.UnmarshalFixedJSON(signatureT, input, s[:])
+}
+
+func (s Signature) MarshalText() ([]byte, error) {
+	return hexutil.Bytes(s[:]).MarshalText()
 }
