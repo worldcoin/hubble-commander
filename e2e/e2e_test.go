@@ -40,7 +40,7 @@ func TestCommander(t *testing.T) {
 	testGetTransaction(t, commander.Client(), firstTransferHash)
 	send31MoreTransfers(t, commander.Client(), senderWallet)
 
-	testutils.WaitToPass(func() bool {
+	testutils.WaitToPass(t, func() bool {
 		var txReceipt dto.TransferReceipt
 		err := commander.Client().CallFor(&txReceipt, "hubble_getTransaction", []interface{}{firstTransferHash})
 		require.NoError(t, err)

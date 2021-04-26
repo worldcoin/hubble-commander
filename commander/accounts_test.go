@@ -47,7 +47,7 @@ func (s *AccountsTestSuite) TestWatchAccounts_PreviousAccounts() {
 	}()
 
 	var accounts []models.Account
-	testutils.WaitToPass(func() bool {
+	testutils.WaitToPass(s.T(), func() bool {
 		accounts, err = s.storage.GetAccounts(&publicKey)
 		s.NoError(err)
 		return len(accounts) > 0
@@ -69,7 +69,7 @@ func (s *AccountsTestSuite) TestWatchAccounts_NewAccounts() {
 	s.NoError(err)
 
 	var accounts []models.Account
-	testutils.WaitToPass(func() bool {
+	testutils.WaitToPass(s.T(), func() bool {
 		accounts, err = s.storage.GetAccounts(&publicKey)
 		s.NoError(err)
 		return len(accounts) > 0
