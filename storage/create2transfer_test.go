@@ -74,6 +74,28 @@ func (s *Create2TransferTestSuite) TestGetCreate2Transfer_NonExistentTransaction
 	s.Nil(res)
 }
 
+func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey() {
+	err := s.storage.AddCreate2Transfer(&create2Transfer)
+	s.NoError(err)
+
+	err = s.tree.Set(1, &models.UserState{
+		PubKeyID:   2,
+		TokenIndex: models.MakeUint256(1),
+		Balance:    models.MakeUint256(400),
+	})
+	s.NoError(err)
+
+	transfers, err := s.storage.GetCreate2TransfersByPublicKey(&account2.PublicKey)
+	s.NoError(err)
+	s.Len(transfers, 1)
+}
+
+func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey_NoCreate2Transfers() {
+	transfers, err := s.storage.GetCreate2TransfersByPublicKey(&account2.PublicKey)
+	s.NoError(err)
+	s.Len(transfers, 0)
+}
+
 func TestCreate2TransferTestSuite(t *testing.T) {
 	suite.Run(t, new(Create2TransferTestSuite))
 }
