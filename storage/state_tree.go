@@ -137,38 +137,48 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (err error)
 	})
 }
 
+func nodesSliceToMap(nodes []models.StateNode) map[models.MerklePath]common.Hash {
+	result := make(map[models.MerklePath]common.Hash, len(nodes))
+	for i := range nodes {
+		result[nodes[i].MerklePath] = nodes[i].DataHash
+	}
+	return result
+}
+
 func (s *StateTree) updateStateNodes(leafPath *models.MerklePath, newLeafHash *common.Hash) (*common.Hash, error) {
 	witnessPaths, err := leafPath.GetWitnessPaths()
 	if err != nil {
 		return nil, err
 	}
 
+	nodes, err := s.storage.getStateNodes(witnessPaths)
+	if err != nil {
+		return nil, err
+	}
+
+	nodesMap := nodesSliceToMap(nodes)
+	nodes = make([]models.StateNode, 0, len(witnessPaths))
 	currentHash := *newLeafHash
+	var currentPath *models.MerklePath
 	for _, witnessPath := range witnessPaths {
-		var currentPath *models.MerklePath
 		currentPath, err = witnessPath.Sibling()
 		if err != nil {
 			return nil, err
 		}
 
-		err = s.storage.UpsertStateNode(&models.StateNode{
+		nodes = append(nodes, models.StateNode{
 			MerklePath: *currentPath,
 			DataHash:   currentHash,
 		})
-		if err != nil {
-			return nil, err
-		}
-
-		currentHash, err = s.calculateParentHash(&currentHash, currentPath, witnessPath)
-		if err != nil {
-			return nil, err
-		}
+		currentHash = s.calculateParentHash(&currentHash, currentPath, getWitnessHash(nodesMap, witnessPath))
 	}
 
-	err = s.storage.UpsertStateNode(&models.StateNode{
+	nodes = append(nodes, models.StateNode{
 		MerklePath: rootPath,
 		DataHash:   currentHash,
 	})
+
+	err = s.storage.BatchUpsertStateNodes(nodes)
 	if err != nil {
 		return nil, err
 	}
@@ -176,21 +186,24 @@ func (s *StateTree) updateStateNodes(leafPath *models.MerklePath, newLeafHash *c
 	return &currentHash, nil
 }
 
+func getWitnessHash(nodes map[models.MerklePath]common.Hash, path models.MerklePath) common.Hash {
+	witnessHash, ok := nodes[path]
+	if !ok {
+		return GetZeroHash(32 - uint(path.Depth))
+	}
+	return witnessHash
+}
+
 func (s *StateTree) calculateParentHash(
 	currentHash *common.Hash,
 	currentPath *models.MerklePath,
-	witnessPath models.MerklePath,
-) (common.Hash, error) {
-	witness, err := s.storage.GetStateNodeByPath(&witnessPath)
-	if err != nil {
-		return common.Hash{}, err
-	}
-
+	witnessHash common.Hash,
+) common.Hash {
 	if currentPath.IsLeftNode() {
-		return utils.HashTwo(*currentHash, witness.DataHash), nil
+		return utils.HashTwo(*currentHash, witnessHash)
 	}
 
-	return utils.HashTwo(witness.DataHash, *currentHash), nil
+	return utils.HashTwo(witnessHash, *currentHash)
 }
 
 func NewStateLeaf(state *models.UserState) (*models.StateLeaf, error) {
