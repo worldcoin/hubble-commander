@@ -31,12 +31,12 @@ func createTransferCommitments(
 			return nil, err
 		}
 
-		includedTransfers, err := ApplyTransfers(storage, pendingTransfers, cfg)
+		appliedTransfers, err := ApplyTransfers(storage, pendingTransfers, cfg)
 		if err != nil {
 			return nil, err
 		}
 
-		if len(includedTransfers) < int(cfg.TxsPerCommitment) {
+		if len(appliedTransfers) < int(cfg.TxsPerCommitment) {
 			err = stateTree.RevertTo(*initialStateRoot)
 			if err != nil {
 				return nil, err
@@ -44,19 +44,19 @@ func createTransferCommitments(
 			break
 		}
 
-		pendingTransfers = removeTransfer(pendingTransfers, includedTransfers)
+		pendingTransfers = removeTransfer(pendingTransfers, appliedTransfers)
 
-		serializedTxs, err := encoder.SerializeTransfers(includedTransfers)
+		serializedTxs, err := encoder.SerializeTransfers(appliedTransfers)
 		if err != nil {
 			return nil, err
 		}
 
-		combinedSignature, err := combineTransferSignatures(includedTransfers)
+		combinedSignature, err := combineTransferSignatures(appliedTransfers)
 		if err != nil {
 			return nil, err
 		}
 
-		log.Printf("Creating a %s commitment from %d transactions", txtype.Transfer.String(), len(includedTransfers))
+		log.Printf("Creating a %s commitment from %d transactions", txtype.Transfer.String(), len(appliedTransfers))
 		commitment, err := createAndStoreCommitment(storage, txtype.Transfer, cfg.FeeReceiverIndex, serializedTxs, combinedSignature)
 		if err != nil {
 			return nil, err
@@ -64,7 +64,7 @@ func createTransferCommitments(
 
 		commitments = append(commitments, *commitment)
 
-		err = markTransfersAsIncluded(storage, includedTransfers, commitment.ID)
+		err = markTransfersAsIncluded(storage, appliedTransfers, commitment.ID)
 		if err != nil {
 			return nil, err
 		}

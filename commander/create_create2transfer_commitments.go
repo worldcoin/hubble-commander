@@ -30,7 +30,7 @@ func createCreate2TransferCommitments(
 			return nil, err
 		}
 
-		includedTransfers, addedPubKeyIDs, err := ApplyCreate2Transfers(storage, pendingTransfers, alreadyAddedPubKeyIDs, cfg)
+		appliedTransfers, addedPubKeyIDs, err := ApplyCreate2Transfers(storage, pendingTransfers, alreadyAddedPubKeyIDs, cfg)
 		if err != nil {
 			return nil, err
 		}
@@ -39,7 +39,7 @@ func createCreate2TransferCommitments(
 			alreadyAddedPubKeyIDs = append(alreadyAddedPubKeyIDs, addedPubKeyIDs[i])
 		}
 
-		if len(includedTransfers) < int(cfg.TxsPerCommitment) {
+		if len(appliedTransfers) < int(cfg.TxsPerCommitment) {
 			err = stateTree.RevertTo(*initialStateRoot)
 			if err != nil {
 				return nil, err
@@ -47,19 +47,19 @@ func createCreate2TransferCommitments(
 			break
 		}
 
-		pendingTransfers = removeCreate2Transfer(pendingTransfers, includedTransfers)
+		pendingTransfers = removeCreate2Transfer(pendingTransfers, appliedTransfers)
 
-		serializedTxs, err := encoder.SerializeCreate2Transfers(includedTransfers)
+		serializedTxs, err := encoder.SerializeCreate2Transfers(appliedTransfers)
 		if err != nil {
 			return nil, err
 		}
 
-		combinedSignature, err := combineCreate2TransferSignatures(includedTransfers)
+		combinedSignature, err := combineCreate2TransferSignatures(appliedTransfers)
 		if err != nil {
 			return nil, err
 		}
 
-		log.Printf("Creating a %s commitment from %d transactions", txtype.Create2Transfer.String(), len(includedTransfers))
+		log.Printf("Creating a %s commitment from %d transactions", txtype.Create2Transfer.String(), len(appliedTransfers))
 		commitment, err := createAndStoreCommitment(storage, txtype.Create2Transfer, cfg.FeeReceiverIndex, serializedTxs, combinedSignature)
 		if err != nil {
 			return nil, err
@@ -67,7 +67,7 @@ func createCreate2TransferCommitments(
 
 		commitments = append(commitments, *commitment)
 
-		err = markCreate2TransfersAsIncluded(storage, includedTransfers, commitment.ID)
+		err = markCreate2TransfersAsIncluded(storage, appliedTransfers, commitment.ID)
 		if err != nil {
 			return nil, err
 		}

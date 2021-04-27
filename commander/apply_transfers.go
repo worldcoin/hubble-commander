@@ -15,7 +15,7 @@ func ApplyTransfers(
 	error,
 ) {
 	stateTree := st.NewStateTree(storage)
-	validTransfers := make([]models.Transfer, 0, cfg.TxsPerCommitment)
+	appliedTransfers := make([]models.Transfer, 0, cfg.TxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
 	feeReceiverLeaf, err := stateTree.Leaf(cfg.FeeReceiverIndex)
@@ -37,20 +37,20 @@ func ApplyTransfers(
 			continue
 		}
 
-		validTransfers = append(validTransfers, transfer)
+		appliedTransfers = append(appliedTransfers, transfer)
 		combinedFee = *combinedFee.Add(&transfer.Fee)
 
-		if uint32(len(validTransfers)) == cfg.TxsPerCommitment {
+		if uint32(len(appliedTransfers)) == cfg.TxsPerCommitment {
 			break
 		}
 	}
 
-	if len(validTransfers) > 0 {
+	if len(appliedTransfers) > 0 {
 		err = ApplyFee(stateTree, cfg.FeeReceiverIndex, combinedFee)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return validTransfers, nil
+	return appliedTransfers, nil
 }
