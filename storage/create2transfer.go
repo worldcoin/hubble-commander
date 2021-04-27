@@ -86,3 +86,14 @@ func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([
 	}
 	return res, nil
 }
+
+func (s *Storage) GetCreate2TransfersByCommitmentID(id int32) ([]models.Create2Transfer, error) {
+	res := make([]models.Create2Transfer, 0, 32)
+	err := s.DB.Query(
+		s.QB.Select(create2TransferColumns...).
+			From("transaction_base").
+			JoinClause("NATURAL JOIN create2transfer").
+			Where(squirrel.Eq{"included_in_commitment": id}),
+	).Into(&res)
+	return res, err
+}
