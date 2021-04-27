@@ -142,6 +142,7 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_StoresBa
 	s.Equal(batch.Type, txtype.Create2Transfer)
 }
 
+// nolint:unparam
 func (s *SubmitTransferBatchTestSuite) addCommitments(count int) ([]int32, []models.Commitment) {
 	ids := make([]int32, 0, count)
 	commitments := make([]models.Commitment, 0, count)

@@ -56,6 +56,7 @@ func createAndSubmitBatch(batchType txtype.TransactionType, storage *st.Storage,
 	var commitments []models.Commitment
 
 	if batchType == txtype.Transfer {
+		// nolint:govet
 		pendingTransfers, err := storage.GetPendingTransfers()
 		if err != nil {
 			return err
@@ -66,6 +67,7 @@ func createAndSubmitBatch(batchType txtype.TransactionType, storage *st.Storage,
 			return err
 		}
 	} else {
+		// nolint:govet
 		pendingTransfers, err := storage.GetPendingCreate2Transfers()
 		if err != nil {
 			return err

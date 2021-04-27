@@ -15,7 +15,13 @@ var (
 	ErrNotEnoughCommitments = NewRollupError("not enough commitments")
 )
 
-func submitBatch(batchType txtype.TransactionType, commitments []models.Commitment, storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
+func submitBatch(
+	batchType txtype.TransactionType,
+	commitments []models.Commitment,
+	storage *st.Storage,
+	client *eth.Client,
+	cfg *config.RollupConfig,
+) error {
 	if len(commitments) < int(cfg.MinCommitmentsPerBatch) {
 		return ErrNotEnoughCommitments
 	}
@@ -23,7 +29,7 @@ func submitBatch(batchType txtype.TransactionType, commitments []models.Commitme
 	var batch *models.Batch
 	var accountRoot *common.Hash
 	var err error
-	
+
 	if batchType == txtype.Transfer {
 		batch, accountRoot, err = client.SubmitTransfersBatch(commitments)
 		if err != nil {

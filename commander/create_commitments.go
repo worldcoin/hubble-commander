@@ -2,10 +2,17 @@ package commander
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func createAndStoreCommitment(storage *st.Storage, txType txtype.TransactionType, feeReceiverIndex uint32, serializedTxs []byte, combinedSignature *models.Signature) (*models.Commitment, error) {
+func createAndStoreCommitment(
+	storage *st.Storage,
+	txType txtype.TransactionType,
+	feeReceiverIndex uint32,
+	serializedTxs []byte,
+	combinedSignature *models.Signature,
+) (*models.Commitment, error) {
 	stateRoot, err := st.NewStateTree(storage).Root()
 	if err != nil {
 		return nil, err
