@@ -21,106 +21,132 @@ import (
 	"github.com/ybbus/jsonrpc/v2"
 )
 
-func TestCommanderUsingDocker(t *testing.T) {
-	commander, err := StartCommander(StartOptions{
-		Image: "ghcr.io/worldcoin/hubble-commander:latest",
-	})
+func TestCommander(t *testing.T) {
+	commander, err := NewCommanderFromEnv()
 	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, commander.Stop())
 	}()
-	runE2ETest(t, commander.Client)
-}
 
-func runE2ETest(t *testing.T, client jsonrpc.RPCClient) {
 	wallets, err := createWallets()
 	require.NoError(t, err)
 
+	feeReceiverWallet := wallets[0]
+	senderWallet := wallets[1]
+
+	testGetVersion(t, commander.Client())
+	testGetUserStates(t, commander.Client(), senderWallet)
+	firstTransferHash := testSendTransfer(t, commander.Client(), senderWallet)
+	testGetTransaction(t, commander.Client(), firstTransferHash)
+	send31MoreTransfers(t, commander.Client(), senderWallet)
+
+	testutils.WaitToPass(t, func() bool {
+		var txReceipt dto.TransferReceipt
+		err := commander.Client().CallFor(&txReceipt, "hubble_getTransaction", []interface{}{firstTransferHash})
+		require.NoError(t, err)
+		return txReceipt.Status == txstatus.InBatch
+	}, 30*time.Second)
+
+	testSenderStateAfterTransfers(t, commander.Client(), senderWallet)
+	testFeeReceiverStateAfterTransfers(t, commander.Client(), feeReceiverWallet)
+	testGetBatches(t, commander.Client())
+}
+
+func testGetVersion(t *testing.T, client jsonrpc.RPCClient) {
 	var version string
-	err = client.CallFor(&version, "hubble_getVersion")
+	err := client.CallFor(&version, "hubble_getVersion")
 	require.NoError(t, err)
-	require.Equal(t, "dev-0.1.0", version)
+	require.Equal(t, config.GetConfig().API.Version, version)
+}
 
+func testGetUserStates(t *testing.T, client jsonrpc.RPCClient, wallet bls.Wallet) {
 	var userStates []dto.UserState
-	err = client.CallFor(&userStates, "hubble_getUserStates", []interface{}{wallets[0].PublicKey()})
+	err := client.CallFor(&userStates, "hubble_getUserStates", []interface{}{wallet.PublicKey()})
 	require.NoError(t, err)
-	require.Len(t, userStates, 1)
-	require.EqualValues(t, models.MakeUint256(0), userStates[0].Nonce)
+	require.Len(t, userStates, 2)
+	require.EqualValues(t, 1, userStates[0].StateID)
+	require.Equal(t, models.MakeUint256(0), userStates[0].Nonce)
+	require.EqualValues(t, 3, userStates[1].StateID)
+	require.Equal(t, models.MakeUint256(0), userStates[1].Nonce)
+}
 
-	transfer, err := api.SignTransfer(&wallets[1], dto.Transfer{
+func testSendTransfer(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet) common.Hash {
+	transfer, err := api.SignTransfer(&senderWallet, dto.Transfer{
 		FromStateID: ref.Uint32(1),
 		ToStateID:   ref.Uint32(2),
-		Amount:      models.NewUint256(50),
+		Amount:      models.NewUint256(90),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(0),
 	})
 	require.NoError(t, err)
 
-	var transferHash1 common.Hash
-	err = client.CallFor(&transferHash1, "hubble_sendTransaction", []interface{}{*transfer})
+	var txHash common.Hash
+	err = client.CallFor(&txHash, "hubble_sendTransaction", []interface{}{*transfer})
 	require.NoError(t, err)
-	require.NotNil(t, transferHash1)
+	require.NotZero(t, txHash)
+	return txHash
+}
 
-	var sentTransfer dto.TransferReceipt
-	err = client.CallFor(&sentTransfer, "hubble_getTransaction", []interface{}{transferHash1})
+func testGetTransaction(t *testing.T, client jsonrpc.RPCClient, txHash common.Hash) {
+	var txReceipt dto.TransferReceipt
+	err := client.CallFor(&txReceipt, "hubble_getTransaction", []interface{}{txHash})
 	require.NoError(t, err)
-	require.Equal(t, txstatus.Pending, sentTransfer.Status)
+	require.Equal(t, txHash, txReceipt.Hash)
+	require.Equal(t, txstatus.Pending, txReceipt.Status)
+}
 
-	transfer2, err := api.SignTransfer(&wallets[1], dto.Transfer{
-		FromStateID: ref.Uint32(1),
-		ToStateID:   ref.Uint32(2),
-		Amount:      models.NewUint256(10),
-		Fee:         models.NewUint256(10),
-		Nonce:       models.NewUint256(1),
-	})
-	require.NoError(t, err)
-
-	var transferHash2 common.Hash
-	err = client.CallFor(&transferHash2, "hubble_sendTransaction", []interface{}{*transfer2})
-	require.NoError(t, err)
-	require.NotNil(t, transferHash2)
-
-	testutils.WaitToPass(func() bool {
-		err = client.CallFor(&sentTransfer, "hubble_getTransaction", []interface{}{transferHash1})
+func send31MoreTransfers(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet) {
+	for nonce := int64(1); nonce < 32; nonce++ {
+		transfer, err := api.SignTransfer(&senderWallet, dto.Transfer{
+			FromStateID: ref.Uint32(1),
+			ToStateID:   ref.Uint32(2),
+			Amount:      models.NewUint256(90),
+			Fee:         models.NewUint256(10),
+			Nonce:       models.NewUint256(nonce),
+		})
 		require.NoError(t, err)
-		return sentTransfer.Status == txstatus.InBatch
-	}, 10*time.Second)
 
-	err = client.CallFor(&sentTransfer, "hubble_getTransaction", []interface{}{transferHash2})
+		var txHash common.Hash
+		err = client.CallFor(&txHash, "hubble_sendTransaction", []interface{}{*transfer})
+		require.NoError(t, err)
+		require.NotZero(t, txHash)
+	}
+}
+
+func testSenderStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet) {
+	var userStates []dto.UserState
+	err := client.CallFor(&userStates, "hubble_getUserStates", []interface{}{senderWallet.PublicKey()})
 	require.NoError(t, err)
-	require.Equal(t, txstatus.InBatch, sentTransfer.Status)
 
-	err = client.CallFor(&userStates, "hubble_getUserStates", []interface{}{wallets[1].PublicKey()})
+	senderState, err := getUserState(userStates, 1)
 	require.NoError(t, err)
-	require.Len(t, userStates, 2)
 
-	userState, err := getUserState(userStates, 1)
+	initialBalance := config.GetConfig().Rollup.GenesisAccounts[1].Balance
+	require.Equal(t, *initialBalance.SubN(32 * 100), senderState.Balance)
+	require.Equal(t, models.MakeUint256(32), senderState.Nonce)
+}
+
+func testFeeReceiverStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, feeReceiverWallet bls.Wallet) {
+	var userStates []dto.UserState
+	err := client.CallFor(&userStates, "hubble_getUserStates", []interface{}{feeReceiverWallet.PublicKey()})
 	require.NoError(t, err)
-	require.EqualValues(t, models.MakeUint256(2), userState.Nonce)
-	require.EqualValues(t, models.MakeUint256(920), userState.Balance)
 
+	feeReceiverState, err := getUserState(userStates, 0)
+	require.NoError(t, err)
+
+	initialBalance := config.GetConfig().Rollup.GenesisAccounts[1].Balance
+	require.Equal(t, *initialBalance.AddN(32 * 10), feeReceiverState.Balance)
+	require.Equal(t, models.MakeUint256(0), feeReceiverState.Nonce)
+}
+
+func testGetBatches(t *testing.T, client jsonrpc.RPCClient) {
 	var batches []models.Batch
-	err = client.CallFor(&batches, "hubble_getBatches", []interface{}{nil, nil})
+	err := client.CallFor(&batches, "hubble_getBatches", []interface{}{nil, nil})
 
 	require.NoError(t, err)
 	require.Len(t, batches, 1)
 	require.Equal(t, txtype.Transfer, batches[0].Type)
 	require.Equal(t, models.MakeUint256(1), batches[0].ID)
-}
-
-func createWallets() ([]bls.Wallet, error) {
-	cfg := config.GetConfig().Rollup
-	accounts := cfg.GenesisAccounts
-
-	wallets := make([]bls.Wallet, 0, len(accounts))
-	for i := range accounts {
-		wallet, err := bls.NewWallet(accounts[i].PrivateKey[:], cfg.SignaturesDomain)
-		if err != nil {
-			return nil, err
-		}
-		wallets = append(wallets, *wallet)
-	}
-	return wallets, nil
 }
 
 func getUserState(userStates []dto.UserState, stateID uint32) (*dto.UserState, error) {
