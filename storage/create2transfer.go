@@ -70,6 +70,20 @@ func (s *Storage) GetCreate2Transfer(hash common.Hash) (*models.Create2Transfer,
 	return &res[0], nil
 }
 
+func (s *Storage) GetPendingCreate2Transfers() ([]models.Create2Transfer, error) {
+	res := make([]models.Create2Transfer, 0, 32)
+	err := s.DB.Query(
+		s.QB.Select(create2TransferColumns...).
+			From("transaction_base").
+			JoinClause("NATURAL JOIN create2transfer").
+			Where(squirrel.Eq{"included_in_commitment": nil, "error_message": nil}),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([]models.Create2Transfer, error) {
 	res := make([]models.Create2Transfer, 0, 1)
 	err := s.DB.Query(

@@ -72,7 +72,7 @@ func (s *TransferTestSuite) TestGetTransfer_NonExistentTransfer() {
 	s.Nil(res)
 }
 
-func (s *TransferTestSuite) TestGetPendingTransfers_AddAndRetrieve() {
+func (s *TransferTestSuite) TestGetPendingTransfers() {
 	commitment := &models.Commitment{}
 	id, err := s.storage.AddCommitment(commitment)
 	s.NoError(err)

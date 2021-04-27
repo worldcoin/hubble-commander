@@ -27,14 +27,16 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.RegisteredGe
 			return err
 		}
 
-		err = stateTree.Set(uint32(i), &models.UserState{
-			PubKeyID:   account.PubKeyID,
-			TokenIndex: models.MakeUint256(0),
-			Balance:    account.Balance,
-			Nonce:      models.MakeUint256(0),
-		})
-		if err != nil {
-			return err
+		if account.Balance.CmpN(0) == 1 {
+			err = stateTree.Set(uint32(i), &models.UserState{
+				PubKeyID:   account.PubKeyID,
+				TokenIndex: models.MakeUint256(0),
+				Balance:    account.Balance,
+				Nonce:      models.MakeUint256(0),
+			})
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil

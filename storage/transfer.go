@@ -13,8 +13,14 @@ var transferColumns = []string{
 }
 
 func (s *Storage) AddTransfer(t *models.Transfer) error {
-	_, err := s.DB.Query(
-		s.QB.Insert("transaction_base").
+	tx, txStorage, err := s.BeginTransaction()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(&err)
+
+	_, err = txStorage.DB.Query(
+		txStorage.QB.Insert("transaction_base").
 			Values(
 				t.Hash,
 				txtype.Transfer,
@@ -31,8 +37,8 @@ func (s *Storage) AddTransfer(t *models.Transfer) error {
 		return err
 	}
 
-	_, err = s.DB.Query(
-		s.QB.Insert("transfer").
+	_, err = txStorage.DB.Query(
+		txStorage.QB.Insert("transfer").
 			Values(
 				t.Hash,
 				t.ToStateID,
@@ -42,7 +48,7 @@ func (s *Storage) AddTransfer(t *models.Transfer) error {
 		return err
 	}
 
-	return nil
+	return tx.Commit()
 }
 
 func (s *Storage) GetTransfer(hash common.Hash) (*models.Transfer, error) {
@@ -79,7 +85,7 @@ func (s *Storage) GetPendingTransfers() ([]models.Transfer, error) {
 		s.QB.Select(transferColumns...).
 			From("transaction_base").
 			JoinClause("NATURAL JOIN transfer").
-			Where(squirrel.Eq{"included_in_commitment": nil, "error_message": nil}), // TODO order by nonce asc, then order by fee desc
+			Where(squirrel.Eq{"included_in_commitment": nil, "error_message": nil}),
 	).Into(&res)
 	if err != nil {
 		return nil, err
