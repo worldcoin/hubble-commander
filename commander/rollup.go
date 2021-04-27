@@ -53,36 +53,45 @@ func createAndSubmitBatch(batchType txtype.TransactionType, storage *st.Storage,
 	}
 	defer tx.Rollback(&err)
 
-	var commitments []models.Commitment
-
-	if batchType == txtype.Transfer {
-		// nolint:govet
-		pendingTransfers, err := storage.GetPendingTransfers()
-		if err != nil {
-			return err
-		}
-
-		commitments, err = createTransferCommitments(pendingTransfers, txStorage, cfg)
-		if err != nil {
-			return err
-		}
-	} else {
-		// nolint:govet
-		pendingTransfers, err := storage.GetPendingCreate2Transfers()
-		if err != nil {
-			return err
-		}
-
-		commitments, err = createCreate2TransferCommitments(pendingTransfers, txStorage, cfg)
-		if err != nil {
-			return err
-		}
-	}
-
-	err = submitBatch(batchType, commitments, txStorage, client, cfg)
+	err = unsafeCreateAndSubmitBatch(batchType, txStorage, client, cfg)
 	if err != nil {
 		return err
 	}
 
 	return tx.Commit()
+}
+
+func unsafeCreateAndSubmitBatch(batchType txtype.TransactionType, storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) (err error) {
+	var commitments []models.Commitment
+
+	if batchType == txtype.Transfer {
+		commitments, err = buildTransferCommitments(storage, cfg)
+	} else {
+		commitments, err = buildCreate2TransfersCommitments(storage, cfg)
+	}
+	if err != nil {
+		return err
+	}
+
+	err = submitBatch(batchType, commitments, storage, client, cfg)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func buildTransferCommitments(storage *st.Storage, cfg *config.RollupConfig) ([]models.Commitment, error) {
+	pendingTransfers, err := storage.GetPendingTransfers()
+	if err != nil {
+		return nil, err
+	}
+	return createTransferCommitments(pendingTransfers, storage, cfg)
+}
+
+func buildCreate2TransfersCommitments(storage *st.Storage, cfg *config.RollupConfig) ([]models.Commitment, error) {
+	pendingTransfers, err := storage.GetPendingCreate2Transfers()
+	if err != nil {
+		return nil, err
+	}
+	return createCreate2TransferCommitments(pendingTransfers, storage, cfg)
 }
