@@ -22,7 +22,7 @@ func TestCommander(t *testing.T) {
 		log.Fatalf("%+v", err)
 	}
 
-	time.Sleep(30 * time.Second)
+	time.Sleep(60 * time.Second)
 
 	err = cmd.Stop()
 	if err != nil {
