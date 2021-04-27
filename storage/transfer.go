@@ -104,7 +104,7 @@ func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models
 	return res, nil
 }
 
-func (s *Storage) GetTransactionsByCommitmentID(id int32) ([]models.Transfer, error) {
+func (s *Storage) GetTransfersByCommitmentID(id int32) ([]models.Transfer, error) {
 	res := make([]models.Transfer, 0, 32)
 	err := s.DB.Query(
 		s.QB.Select(transferColumns...).
