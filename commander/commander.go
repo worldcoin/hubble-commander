@@ -73,20 +73,17 @@ func (c *Commander) Start() error {
 	c.apiServer = apiServer
 
 	go func() {
-		err := BlockNumberLoop(storage, client, &c.cfg.Rollup, c.stopChannel)
-		if err != nil {
+		if err := BlockNumberLoop(storage, client, &c.cfg.Rollup, c.stopChannel); err != nil {
 			log.Fatalf("%+v", err)
 		}
 	}()
 	go func() {
-		err := RollupLoop(storage, client, &c.cfg.Rollup, c.stopChannel)
-		if err != nil {
+		if err := RollupLoop(storage, client, &c.cfg.Rollup, c.stopChannel); err != nil {
 			log.Fatalf("%+v", err)
 		}
 	}()
 	go func() {
-		err := WatchAccounts(storage, client)
-		if err != nil {
+		if err := WatchAccounts(storage, client, c.stopChannel); err != nil {
 			log.Fatalf("%+v", err)
 		}
 	}()

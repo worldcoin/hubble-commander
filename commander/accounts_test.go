@@ -42,7 +42,7 @@ func (s *AccountsTestSuite) TestWatchAccounts_PreviousAccounts() {
 	s.NoError(err)
 
 	go func() {
-		err = WatchAccounts(s.storage, s.testClient.Client)
+		err = WatchAccounts(s.storage, s.testClient.Client, nil)
 		s.NoError(err)
 	}()
 
@@ -58,7 +58,7 @@ func (s *AccountsTestSuite) TestWatchAccounts_PreviousAccounts() {
 
 func (s *AccountsTestSuite) TestWatchAccounts_NewAccounts() {
 	go func() {
-		err := WatchAccounts(s.storage, s.testClient.Client)
+		err := WatchAccounts(s.storage, s.testClient.Client, nil)
 		s.NoError(err)
 	}()
 
