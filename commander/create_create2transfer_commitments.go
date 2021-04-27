@@ -18,7 +18,7 @@ func createCreate2TransferCommitments(
 ) ([]models.Commitment, error) {
 	stateTree := st.NewStateTree(storage)
 	commitments := make([]models.Commitment, 0, 32)
-	successfullyAddedPubKeyIDs := make([]uint32, 0, 1)
+	alreadyAddedPubKeyIDs := make([]uint32, 0, 1)
 
 	for {
 		if len(commitments) >= int(cfg.MaxCommitmentsPerBatch) {
@@ -30,13 +30,13 @@ func createCreate2TransferCommitments(
 			return nil, err
 		}
 
-		includedTransfers, addedPubKeyIDs, err := ApplyCreate2Transfers(storage, pendingTransfers, successfullyAddedPubKeyIDs, cfg)
+		includedTransfers, addedPubKeyIDs, err := ApplyCreate2Transfers(storage, pendingTransfers, alreadyAddedPubKeyIDs, cfg)
 		if err != nil {
 			return nil, err
 		}
 
 		for i := range addedPubKeyIDs {
-			successfullyAddedPubKeyIDs = append(successfullyAddedPubKeyIDs, addedPubKeyIDs[i])
+			alreadyAddedPubKeyIDs = append(alreadyAddedPubKeyIDs, addedPubKeyIDs[i])
 		}
 
 		if len(includedTransfers) < int(cfg.TxsPerCommitment) {

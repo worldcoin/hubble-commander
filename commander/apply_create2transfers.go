@@ -15,7 +15,7 @@ var (
 func ApplyCreate2Transfers(
 	storage *st.Storage,
 	transfers []models.Create2Transfer,
-	successfullyAddedPubKeyIDs []uint32,
+	alreadyAddedPubKeyIDs []uint32,
 	cfg *config.RollupConfig,
 ) (
 	[]models.Create2Transfer,
@@ -37,14 +37,14 @@ func ApplyCreate2Transfers(
 		transfer := transfers[i]
 		currentTransferError := ErrAccountAlreadyExists
 
-		if !uint32InSlice(transfer.ToPubKeyID, successfullyAddedPubKeyIDs) {
+		if !uint32InSlice(transfer.ToPubKeyID, alreadyAddedPubKeyIDs) {
 			addedPubKeyID, transferError, appError := ApplyCreate2Transfer(storage, &transfer, feeReceiverTokenIndex)
 			if appError != nil {
 				return nil, nil, appError
 			}
 			if transferError == nil {
 				validTransfers = append(validTransfers, transfer)
-				successfullyAddedPubKeyIDs = append(successfullyAddedPubKeyIDs, *addedPubKeyID)
+				alreadyAddedPubKeyIDs = append(alreadyAddedPubKeyIDs, *addedPubKeyID)
 				combinedFee = *combinedFee.Add(&transfer.Fee)
 			}
 			currentTransferError = transferError
@@ -62,7 +62,7 @@ func ApplyCreate2Transfers(
 		return nil, nil, err
 	}
 
-	return validTransfers, successfullyAddedPubKeyIDs, nil
+	return validTransfers, alreadyAddedPubKeyIDs, nil
 }
 
 func uint32InSlice(a uint32, list []uint32) bool {
