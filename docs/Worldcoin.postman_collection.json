@@ -1,269 +1,269 @@
 {
-	"info": {
-		"_postman_id": "5f2e5917-6300-484e-8f2f-8dd7781f015e",
-		"name": "Worldcoin",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-	},
-	"item": [
-		{
-			"name": "hubble_sendTransfer",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_sendTransaction\",\n    \"params\": [\n        {\n            \"Type\": \"TRANSFER\",\n            \"FromStateID\": 1,\n            \"ToStateID\": 2,\n            \"Amount\": \"50\",\n            \"Nonce\": \"2\",\n            \"Fee\": \"1\",\n            \"Signature\": \"0xABCD0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\"\n        }\n    ],\n    \"id\": 1\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "localhost:8080",
-					"host": [
-						"localhost"
-					],
-					"port": "8080"
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "hubble_sendCreate2Transfer",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_sendTransaction\",\n    \"params\": [\n        {\n            \"Type\": \"CREATE2TRANSFER\",\n            \"FromStateID\": 2,\n            \"ToPublicKey\": \"0x0097F465FE827CE4DAD751988F6CE5EC747458075992180CA11B0776B9EA3A910C3EE4DCA4A03D06C3863778AFFE91CE38D502138356A35AE12695C565B24EA6151B83EABD41A6090B8AC3BB25E173C84C3B080A5545260B1327495920C342C02D51CAC4418228DB1A3D98AA12E6FD7B3267C703475F5999B2EC7A197AD7D8BC\",\n            \"Amount\": \"50\",\n            \"Nonce\": \"0\",\n            \"Fee\": \"1\",\n            \"Signature\": \"0xABCD0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\"\n        }\n    ],\n    \"id\": 1\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "localhost:8080",
-					"host": [
-						"localhost"
-					],
-					"port": "8080"
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "hubble_getTransaction",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getTransaction\",\n    \"params\": [\n        \"0x6cbc0e7428308e2f0397e5f35d6f5eb8922cd67bdd2eda39d55bfd379c2f2f1a\"\n    ],\n    \"id\": 1\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "localhost:8080",
-					"host": [
-						"localhost"
-					],
-					"port": "8080"
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "hubble_getBatchByHash",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getBatchByHash\",\n    \"params\": [\n        \"0x05dc2502909e415e5f6c6b3d71e94192c277274816f65cd4fba000fda4706372\"\n    ],\n    \"id\": 1\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "localhost:8080",
-					"host": [
-						"localhost"
-					],
-					"port": "8080"
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "hubble_getBatchByID",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getBatchByID\",\n    \"params\": [\n        \"1\"\n    ],\n    \"id\": 1\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "localhost:8080",
-					"host": [
-						"localhost"
-					],
-					"port": "8080"
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "hubble_getBatches",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getBatches\",\n    \"params\": [\n        \"0\",\n        \"2\"\n    ],\n    \"id\": 1\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "localhost:8080",
-					"host": [
-						"localhost"
-					],
-					"port": "8080"
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "hubble_getTransactions",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getTransactions\",\n    \"params\": [\n        \"0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc\"\n    ],\n    \"id\": 1\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "localhost:8080",
-					"host": [
-						"localhost"
-					],
-					"port": "8080"
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "hubble_getUserStates",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getUserStates\",\n    \"params\": [\n        \"0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc\"\n    ],\n    \"id\": 1\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "localhost:8080",
-					"host": [
-						"localhost"
-					],
-					"port": "8080"
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "hubble_getVersion",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getVersion\",\n    \"params\": [],\n    \"id\": 1\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "localhost:8080",
-					"host": [
-						"localhost"
-					],
-					"port": "8080"
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "hubble_getNetworkInfo",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getNetworkInfo\",\n    \"params\": [],\n    \"id\": 1\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "localhost:8080",
-					"host": [
-						"localhost"
-					],
-					"port": "8080"
-				}
-			},
-			"response": []
-		}
-	],
-	"event": [
-		{
-			"listen": "prerequest",
-			"script": {
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
-		},
-		{
-			"listen": "test",
-			"script": {
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
-		}
-	]
+    "info": {
+        "_postman_id": "5f2e5917-6300-484e-8f2f-8dd7781f015e",
+        "name": "Worldcoin",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "hubble_sendTransfer",
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_sendTransaction\",\n    \"params\": [\n        {\n            \"Type\": \"TRANSFER\",\n            \"FromStateID\": 1,\n            \"ToStateID\": 2,\n            \"Amount\": \"50\",\n            \"Nonce\": \"2\",\n            \"Fee\": \"1\",\n            \"Signature\": \"0xABCD0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\"\n        }\n    ],\n    \"id\": 1\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "localhost:8080",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8080"
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "hubble_sendCreate2Transfer",
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_sendTransaction\",\n    \"params\": [\n        {\n            \"Type\": \"CREATE2TRANSFER\",\n            \"FromStateID\": 2,\n            \"ToPublicKey\": \"0x0097F465FE827CE4DAD751988F6CE5EC747458075992180CA11B0776B9EA3A910C3EE4DCA4A03D06C3863778AFFE91CE38D502138356A35AE12695C565B24EA6151B83EABD41A6090B8AC3BB25E173C84C3B080A5545260B1327495920C342C02D51CAC4418228DB1A3D98AA12E6FD7B3267C703475F5999B2EC7A197AD7D8BC\",\n            \"Amount\": \"50\",\n            \"Nonce\": \"0\",\n            \"Fee\": \"1\",\n            \"Signature\": \"0xABCD0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\"\n        }\n    ],\n    \"id\": 1\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "localhost:8080",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8080"
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "hubble_getTransaction",
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getTransaction\",\n    \"params\": [\n        \"0x6cbc0e7428308e2f0397e5f35d6f5eb8922cd67bdd2eda39d55bfd379c2f2f1a\"\n    ],\n    \"id\": 1\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "localhost:8080",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8080"
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "hubble_getBatchByHash",
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getBatchByHash\",\n    \"params\": [\n        \"0x05dc2502909e415e5f6c6b3d71e94192c277274816f65cd4fba000fda4706372\"\n    ],\n    \"id\": 1\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "localhost:8080",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8080"
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "hubble_getBatchByID",
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getBatchByID\",\n    \"params\": [\n        \"1\"\n    ],\n    \"id\": 1\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "localhost:8080",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8080"
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "hubble_getBatches",
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getBatches\",\n    \"params\": [\n        \"0\",\n        \"2\"\n    ],\n    \"id\": 1\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "localhost:8080",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8080"
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "hubble_getTransactions",
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getTransactions\",\n    \"params\": [\n        \"0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc\"\n    ],\n    \"id\": 1\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "localhost:8080",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8080"
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "hubble_getUserStates",
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getUserStates\",\n    \"params\": [\n        \"0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc\"\n    ],\n    \"id\": 1\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "localhost:8080",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8080"
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "hubble_getVersion",
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getVersion\",\n    \"params\": [],\n    \"id\": 1\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "localhost:8080",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8080"
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "hubble_getNetworkInfo",
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getNetworkInfo\",\n    \"params\": [],\n    \"id\": 1\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "localhost:8080",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8080"
+                }
+            },
+            "response": []
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    ""
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    ""
+                ]
+            }
+        }
+    ]
 }
