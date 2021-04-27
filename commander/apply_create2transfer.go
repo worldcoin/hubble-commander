@@ -11,13 +11,9 @@ func ApplyCreate2Transfer(
 	feeReceiverTokenIndex models.Uint256,
 ) (addedPubKeyID *uint32, create2TransferError, appError error) {
 	stateTree := st.NewStateTree(storage)
-	senderUserState, err := stateTree.Leaf(create2Transfer.FromStateID)
-	if err != nil {
-		return nil, nil, err
-	}
 	emptyUserState := models.UserState{
 		PubKeyID:   create2Transfer.ToPubKeyID,
-		TokenIndex: senderUserState.TokenIndex,
+		TokenIndex: feeReceiverTokenIndex,
 		Balance:    models.MakeUint256(0),
 		Nonce:      models.MakeUint256(0),
 	}
