@@ -9,8 +9,6 @@ import (
 )
 
 var (
-	ErrStateTreeIsNil        = errors.New("state tree cannot be nil")
-	ErrTransactionIsNil      = errors.New("transaction cannot be nil")
 	ErrIncorrectTokenIndices = errors.New("sender's, receiver's and fee receiver's token indices are not the same")
 	ErrNonceTooLow           = errors.New("nonce too low")
 	ErrNonceTooHigh          = errors.New("nonce too high")
@@ -22,13 +20,6 @@ func ApplyTransfer(
 	transfer *models.Transfer,
 	feeReceiverTokenIndex models.Uint256,
 ) (transferError, appError error) {
-	if stateTree == nil {
-		return nil, ErrStateTreeIsNil
-	}
-	if transfer == nil {
-		return nil, ErrTransactionIsNil
-	}
-
 	senderLeaf, err := stateTree.Leaf(transfer.FromStateID)
 	if err != nil {
 		return nil, err
