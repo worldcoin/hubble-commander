@@ -31,21 +31,24 @@ func ApplyTransfers(
 		if appError != nil {
 			return nil, appError
 		}
-		if transferError == nil {
-			validTransfers = append(validTransfers, transfer)
-			combinedFee = *combinedFee.Add(&transfer.Fee)
-		} else {
+		if transferError != nil {
 			logAndSaveTransactionError(storage, &transfer.TransactionBase, transferError)
+			continue
 		}
+
+		validTransfers = append(validTransfers, transfer)
+		combinedFee = *combinedFee.Add(&transfer.Fee)
 
 		if uint32(len(validTransfers)) == cfg.TxsPerCommitment {
 			break
 		}
 	}
 
-	err = ApplyFee(stateTree, cfg.FeeReceiverIndex, combinedFee)
-	if err != nil {
-		return nil, err
+	if len(validTransfers) > 0 {
+		err = ApplyFee(stateTree, cfg.FeeReceiverIndex, combinedFee)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return validTransfers, nil
