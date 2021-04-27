@@ -1,15 +1,10 @@
 package commander
 
 import (
-	"errors"
 	"log"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-)
-
-var (
-	ErrNegativeFee = errors.New("the fee cannot be negative")
 )
 
 func logAndSaveTransactionError(storage *st.Storage, transaction *models.TransactionBase, transactionError error) {
