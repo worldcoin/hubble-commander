@@ -44,17 +44,18 @@ func ApplyTransfer(
 	if err != nil {
 		return err, nil
 	}
-	if reflect.DeepEqual(newSenderState, senderState) && reflect.DeepEqual(newReceiverState, receiverState) {
-		return nil, nil
+	if !reflect.DeepEqual(newSenderState, senderState) {
+		err = stateTree.Set(transfer.FromStateID, &newSenderState)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	err = stateTree.Set(transfer.FromStateID, &newSenderState)
-	if err != nil {
-		return nil, err
-	}
-	err = stateTree.Set(transfer.ToStateID, &newReceiverState)
-	if err != nil {
-		return nil, err
+	if !reflect.DeepEqual(newReceiverState, receiverState) {
+		err = stateTree.Set(transfer.ToStateID, &newReceiverState)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return nil, nil
