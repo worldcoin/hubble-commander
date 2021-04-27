@@ -221,6 +221,30 @@ func (s *TransferTestSuite) TestGetUserTransfersByPublicKey_NoTransfers() {
 	s.NotNil(userTransfers)
 }
 
+func (s *TransferTestSuite) TestGetTransfersByCommitmentID() {
+	commitmentID, err := s.storage.AddCommitment(&commitment)
+	s.NoError(err)
+
+	transfer1 := transfer
+	transfer1.IncludedInCommitment = commitmentID
+
+	err = s.storage.AddTransfer(&transfer1)
+	s.NoError(err)
+
+	commitments, err := s.storage.GetTransactionsByCommitmentID(*commitmentID)
+	s.NoError(err)
+	s.Len(commitments, 1)
+}
+
+func (s *TransferTestSuite) TestGetTransfersByCommitmentID_NoTransfers() {
+	commitmentID, err := s.storage.AddCommitment(&commitment)
+	s.NoError(err)
+
+	commitments, err := s.storage.GetTransactionsByCommitmentID(*commitmentID)
+	s.NoError(err)
+	s.Len(commitments, 0)
+}
+
 func TestTransferTestSuite(t *testing.T) {
 	suite.Run(t, new(TransferTestSuite))
 }
