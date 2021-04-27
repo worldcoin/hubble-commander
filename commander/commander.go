@@ -96,10 +96,7 @@ func (c *Commander) Start() error {
 
 func (c *Commander) Stop() error {
 	c.stopChannel <- true
-
-	err := c.apiServer.Close()
-
-	return err
+	return c.apiServer.Close()
 }
 
 func getDeployer(cfg *config.EthereumConfig) (deployer.ChainConnection, error) {
