@@ -61,7 +61,12 @@ func createAndSubmitBatch(batchType txtype.TransactionType, storage *st.Storage,
 	return tx.Commit()
 }
 
-func unsafeCreateAndSubmitBatch(batchType txtype.TransactionType, storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) (err error) {
+func unsafeCreateAndSubmitBatch(
+	batchType txtype.TransactionType,
+	storage *st.Storage,
+	client *eth.Client,
+	cfg *config.RollupConfig,
+) (err error) {
 	var commitments []models.Commitment
 
 	if batchType == txtype.Transfer {
