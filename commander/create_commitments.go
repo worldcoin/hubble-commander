@@ -2,6 +2,7 @@ package commander
 
 import (
 	"log"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
@@ -31,6 +32,8 @@ func createCommitments(
 			return nil, err
 		}
 
+		startTime := time.Now()
+
 		includedTransfers, err := ApplyTransfers(storage, pendingTransfers, cfg)
 		if err != nil {
 			return nil, err
@@ -46,7 +49,7 @@ func createCommitments(
 
 		pendingTransfers = removeTransfer(pendingTransfers, includedTransfers)
 
-		log.Printf("Creating a commitment from %d transactions", len(includedTransfers))
+		log.Printf("Creating a commitment from %d transactions in %d ms", len(includedTransfers), time.Since(startTime).Milliseconds())
 		commitment, err := createAndStoreCommitment(storage, includedTransfers, cfg.FeeReceiverIndex)
 		if err != nil {
 			return nil, err
