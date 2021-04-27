@@ -26,13 +26,12 @@ func createCommitments(
 		if len(commitments) >= int(cfg.MaxCommitmentsPerBatch) {
 			break
 		}
+		startTime := time.Now()
 
 		initialStateRoot, err := stateTree.Root()
 		if err != nil {
 			return nil, err
 		}
-
-		startTime := time.Now()
 
 		includedTransfers, err := ApplyTransfers(storage, pendingTransfers, cfg)
 		if err != nil {
@@ -49,18 +48,18 @@ func createCommitments(
 
 		pendingTransfers = removeTransfer(pendingTransfers, includedTransfers)
 
-		log.Printf("Creating a commitment from %d transactions in %d ms", len(includedTransfers), time.Since(startTime).Milliseconds())
 		commitment, err := createAndStoreCommitment(storage, includedTransfers, cfg.FeeReceiverIndex)
 		if err != nil {
 			return nil, err
 		}
 
-		commitments = append(commitments, *commitment)
-
 		err = markTransactionsAsIncluded(storage, includedTransfers, commitment.ID)
 		if err != nil {
 			return nil, err
 		}
+
+		commitments = append(commitments, *commitment)
+		log.Printf("Created a commitment from %d transactions in %d ms", len(includedTransfers), time.Since(startTime).Milliseconds())
 	}
 
 	return commitments, nil
