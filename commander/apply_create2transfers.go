@@ -37,6 +37,7 @@ func ApplyCreate2Transfers(
 		transfer := transfers[i]
 
 		if uint32InSlice(transfer.ToPubKeyID, alreadyAddedPubKeyIDs) {
+			// TODO optimise to not process failed transactions for subsequent commitments
 			logAndSaveTransactionError(storage, &transfer.TransactionBase, ErrAccountAlreadyExists)
 			continue
 		}
@@ -46,6 +47,7 @@ func ApplyCreate2Transfers(
 			return nil, nil, appError
 		}
 		if transferError != nil {
+			// TODO optimise to not process failed transactions for subsequent commitments
 			logAndSaveTransactionError(storage, &transfer.TransactionBase, transferError)
 			continue
 		}
