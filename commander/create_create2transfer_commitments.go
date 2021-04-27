@@ -111,15 +111,11 @@ func combineCreate2TransferSignatures(transfers []models.Create2Transfer) (*mode
 }
 
 func markCreate2TransfersAsIncluded(storage *st.Storage, transfers []models.Create2Transfer, commitmentID int32) error {
-	includedTxBases := make([]models.TransactionBase, 0, len(transfers))
 	for i := range transfers {
-		includedTxBases = append(includedTxBases, transfers[i].TransactionBase)
+		err := storage.MarkTransactionAsIncluded(transfers[i].Hash, commitmentID)
+		if err != nil {
+			return err
+		}
 	}
-
-	err := markTransactionsAsIncluded(storage, includedTxBases, commitmentID)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
