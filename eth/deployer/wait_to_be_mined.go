@@ -21,6 +21,9 @@ func WaitToBeMined(c ChainBackend, tx *types.Transaction) (*types.Receipt, error
 
 	ticker := time.NewTicker(PollInterval)
 	defer ticker.Stop()
+
+	timeout := time.After(ChainTimeout)
+
 	for {
 		select {
 		case <-immediately:
@@ -39,7 +42,7 @@ func WaitToBeMined(c ChainBackend, tx *types.Transaction) (*types.Receipt, error
 			if receipt != nil && receipt.BlockNumber != nil {
 				return receipt, nil
 			}
-		case <-time.After(ChainTimeout):
+		case <-timeout:
 			return nil, errors.Errorf("timeout on waiting for transcation to be mined")
 		}
 	}

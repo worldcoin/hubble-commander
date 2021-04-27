@@ -1,16 +1,34 @@
 package testutils
 
 import (
-	"log"
+	"testing"
 	"time"
 )
 
-func WaitToPass(fn func() bool, timeout time.Duration) {
-	startTime := time.Now()
-	for time.Since(startTime) < timeout {
-		if fn() {
+var tryInterval = 250 * time.Millisecond
+
+func WaitToPass(t *testing.T, fn func() bool, timeout time.Duration) {
+	immediately := make(chan struct{}, 1)
+	immediately <- struct{}{}
+	defer close(immediately)
+
+	ticker := time.NewTicker(tryInterval)
+	defer ticker.Stop()
+
+	timeoutC := time.After(timeout)
+	for {
+		select {
+		case <-immediately:
+			if fn() {
+				return
+			}
+		case <-ticker.C:
+			if fn() {
+				return
+			}
+		case <-timeoutC:
+			t.Fatal("WaitToPass: timeout")
 			return
 		}
 	}
-	log.Fatal("WaitToPass: timeout")
 }
