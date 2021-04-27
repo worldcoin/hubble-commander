@@ -139,13 +139,3 @@ func combineTransferSignatures(transfers []models.Transfer) (*models.Signature, 
 	}
 	return bls.NewAggregatedSignature(signatures).ModelsSignature(), nil
 }
-
-func markTransactionsAsIncluded(storage *st.Storage, transactions []models.TransactionBase, commitmentID int32) error {
-	for i := range transactions {
-		err := storage.MarkTransactionAsIncluded(transactions[i].Hash, commitmentID)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
