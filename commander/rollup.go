@@ -6,6 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
@@ -27,10 +28,10 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConfi
 			return nil
 		case <-ticker.C:
 			if currentBatchType == txtype.Transfer {
-				err = createAndSubmitTransferBatch(storage, client, cfg)
+				err = createAndSubmitBatch(currentBatchType, storage, client, cfg)
 				currentBatchType = txtype.Create2Transfer
 			} else {
-				err = createAndSubmitCreate2TransferBatch(storage, client, cfg)
+				err = createAndSubmitBatch(currentBatchType, storage, client, cfg)
 				currentBatchType = txtype.Transfer
 			}
 
@@ -45,49 +46,38 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConfi
 	}
 }
 
-func createAndSubmitTransferBatch(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) (err error) {
+func createAndSubmitBatch(batchType txtype.TransactionType, storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) (err error) {
 	tx, txStorage, err := storage.BeginTransaction()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback(&err)
 
-	pendingTransfers, err := storage.GetPendingTransfers()
-	if err != nil {
-		return err
+	var commitments []models.Commitment
+
+	if batchType == txtype.Transfer {
+		pendingTransfers, err := storage.GetPendingTransfers()
+		if err != nil {
+			return err
+		}
+
+		commitments, err = createTransferCommitments(pendingTransfers, txStorage, cfg)
+		if err != nil {
+			return err
+		}
+	} else {
+		pendingTransfers, err := storage.GetPendingCreate2Transfers()
+		if err != nil {
+			return err
+		}
+
+		commitments, err = createCreate2TransferCommitments(pendingTransfers, txStorage, cfg)
+		if err != nil {
+			return err
+		}
 	}
 
-	commitments, err := createTransferCommitments(pendingTransfers, txStorage, cfg)
-	if err != nil {
-		return err
-	}
-
-	err = submitTransferBatch(commitments, txStorage, client, cfg)
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit()
-}
-
-func createAndSubmitCreate2TransferBatch(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) (err error) {
-	tx, txStorage, err := storage.BeginTransaction()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(&err)
-
-	pendingTransfers, err := storage.GetPendingCreate2Transfers()
-	if err != nil {
-		return err
-	}
-
-	commitments, err := createCreate2TransferCommitments(pendingTransfers, txStorage, cfg)
-	if err != nil {
-		return err
-	}
-
-	err = submitCreate2TransferBatch(commitments, txStorage, client, cfg)
+	err = submitBatch(batchType, commitments, txStorage, client, cfg)
 	if err != nil {
 		return err
 	}

@@ -77,19 +77,19 @@ func (s *SubmitTransferBatchTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *SubmitTransferBatchTestSuite) TestSubmitTransferBatch_ErrorsIfNotEnoughCommitments() {
-	err := submitTransferBatch([]models.Commitment{}, s.storage, s.testClient.Client, s.cfg)
+func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_ErrorsIfNotEnoughCommitments() {
+	err := submitBatch(txtype.Transfer, []models.Commitment{}, s.storage, s.testClient.Client, s.cfg)
 	s.Equal(ErrNotEnoughCommitments, err)
 }
 
-func (s *SubmitTransferBatchTestSuite) TestSubmitTransferBatch_SubmitsCommitmentsOnChain() {
+func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_SubmitsCommitmentsOnChain() {
 	commitmentID, err := s.storage.AddCommitment(&baseCommitment)
 	s.NoError(err)
 
 	commitment, err := s.storage.GetCommitment(*commitmentID)
 	s.NoError(err)
 
-	err = submitTransferBatch([]models.Commitment{*commitment}, s.storage, s.testClient.Client, s.cfg)
+	err = submitBatch(txtype.Transfer, []models.Commitment{*commitment}, s.storage, s.testClient.Client, s.cfg)
 	s.NoError(err)
 
 	nextBatchID, err := s.testClient.Rollup.NextBatchID(nil)
@@ -97,19 +97,49 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitTransferBatch_SubmitsCommitment
 	s.Equal(big.NewInt(2), nextBatchID)
 }
 
-func (s *SubmitTransferBatchTestSuite) TestSubmitTransferBatch_StoresBatchRecord() {
+func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_SubmitsCommitmentsOnChain() {
 	commitmentID, err := s.storage.AddCommitment(&baseCommitment)
 	s.NoError(err)
 
 	commitment, err := s.storage.GetCommitment(*commitmentID)
 	s.NoError(err)
 
-	err = submitTransferBatch([]models.Commitment{*commitment}, s.storage, s.testClient.Client, s.cfg)
+	err = submitBatch(txtype.Create2Transfer, []models.Commitment{*commitment}, s.storage, s.testClient.Client, s.cfg)
+	s.NoError(err)
+
+	nextBatchID, err := s.testClient.Rollup.NextBatchID(nil)
+	s.NoError(err)
+	s.Equal(big.NewInt(2), nextBatchID)
+}
+
+func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_StoresBatchRecord() {
+	commitmentID, err := s.storage.AddCommitment(&baseCommitment)
+	s.NoError(err)
+
+	commitment, err := s.storage.GetCommitment(*commitmentID)
+	s.NoError(err)
+
+	err = submitBatch(txtype.Transfer, []models.Commitment{*commitment}, s.storage, s.testClient.Client, s.cfg)
 	s.NoError(err)
 
 	batch, err := s.storage.GetBatchByID(models.MakeUint256(1))
 	s.NoError(err)
-	s.NotNil(batch)
+	s.Equal(batch.Type, txtype.Transfer)
+}
+
+func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_StoresBatchRecord() {
+	commitmentID, err := s.storage.AddCommitment(&baseCommitment)
+	s.NoError(err)
+
+	commitment, err := s.storage.GetCommitment(*commitmentID)
+	s.NoError(err)
+
+	err = submitBatch(txtype.Create2Transfer, []models.Commitment{*commitment}, s.storage, s.testClient.Client, s.cfg)
+	s.NoError(err)
+
+	batch, err := s.storage.GetBatchByID(models.MakeUint256(1))
+	s.NoError(err)
+	s.Equal(batch.Type, txtype.Create2Transfer)
 }
 
 func (s *SubmitTransferBatchTestSuite) addCommitments(count int) ([]int32, []models.Commitment) {
@@ -127,10 +157,10 @@ func (s *SubmitTransferBatchTestSuite) addCommitments(count int) ([]int32, []mod
 	return ids, commitments
 }
 
-func (s *SubmitTransferBatchTestSuite) TestSubmitTransferBatch_MarksCommitmentsAsIncluded() {
+func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_MarksCommitmentsAsIncluded() {
 	ids, commitments := s.addCommitments(2)
 
-	err := submitTransferBatch(commitments, s.storage, s.testClient.Client, s.cfg)
+	err := submitBatch(txtype.Transfer, commitments, s.storage, s.testClient.Client, s.cfg)
 	s.NoError(err)
 
 	batch, err := s.storage.GetBatchByID(models.MakeUint256(1))
@@ -143,15 +173,31 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitTransferBatch_MarksCommitmentsA
 	}
 }
 
-func (s *SubmitTransferBatchTestSuite) TestSubmitTransferBatch_MarksCommitmentsAsIncluded_UnsavedCommitment() {
-	err := submitTransferBatch([]models.Commitment{baseCommitment}, s.storage, s.testClient.Client, s.cfg)
+func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_MarksCommitmentsAsIncluded() {
+	ids, commitments := s.addCommitments(2)
+
+	err := submitBatch(txtype.Create2Transfer, commitments, s.storage, s.testClient.Client, s.cfg)
+	s.NoError(err)
+
+	batch, err := s.storage.GetBatchByID(models.MakeUint256(1))
+	s.NoError(err)
+
+	for _, id := range ids {
+		commit, err := s.storage.GetCommitment(id)
+		s.NoError(err)
+		s.Equal(batch.Hash, *commit.IncludedInBatch)
+	}
+}
+
+func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_MarksCommitmentsAsIncluded_UnsavedCommitment() {
+	err := submitBatch(txtype.Transfer, []models.Commitment{baseCommitment}, s.storage, s.testClient.Client, s.cfg)
 	s.EqualError(err, "no rows were affected by the update")
 }
 
-func (s *SubmitTransferBatchTestSuite) TestSubmitTransferBatch_UpdatesCommitmentsAccountRoot() {
+func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_UpdatesCommitmentsAccountRoot() {
 	ids, commitments := s.addCommitments(2)
 
-	err := submitTransferBatch(commitments, s.storage, s.testClient.Client, s.cfg)
+	err := submitBatch(txtype.Transfer, commitments, s.storage, s.testClient.Client, s.cfg)
 	s.NoError(err)
 
 	accountRoot, err := s.testClient.AccountRegistry.Root(nil)
@@ -164,6 +210,22 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitTransferBatch_UpdatesCommitment
 	}
 }
 
-func TestSubmitTransferBatchTestSuite(t *testing.T) {
+func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_UpdatesCommitmentsAccountRoot() {
+	ids, commitments := s.addCommitments(2)
+
+	err := submitBatch(txtype.Create2Transfer, commitments, s.storage, s.testClient.Client, s.cfg)
+	s.NoError(err)
+
+	accountRoot, err := s.testClient.AccountRegistry.Root(nil)
+	s.NoError(err)
+
+	for _, id := range ids {
+		commit, err := s.storage.GetCommitment(id)
+		s.NoError(err)
+		s.Equal(common.BytesToHash(accountRoot[:]), *commit.AccountTreeRoot)
+	}
+}
+
+func TestSubmitBatch_TransfersTestSuite(t *testing.T) {
 	suite.Run(t, new(SubmitTransferBatchTestSuite))
 }
