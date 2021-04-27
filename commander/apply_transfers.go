@@ -32,7 +32,7 @@ func ApplyTransfers(
 			return nil, appError
 		}
 		if transferError != nil {
-			// TODO optimise to not process failed transactions for subsequent commitments
+			// TODO optimize to not process failed transactions for subsequent commitments
 			logAndSaveTransactionError(storage, &transfer.TransactionBase, transferError)
 			continue
 		}
