@@ -27,7 +27,7 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.RegisteredGe
 			return err
 		}
 
-		if len(accounts) <= 3 || i < len(accounts)-2 {
+		if len(accounts) <= 3 || i < len(accounts)-2 { // TODO use balance here and replace usages of this fn in tests
 			err = stateTree.Set(uint32(i), &models.UserState{
 				PubKeyID:   account.PubKeyID,
 				TokenIndex: models.MakeUint256(0),
