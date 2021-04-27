@@ -102,6 +102,13 @@ func (c *Commander) Stop() error {
 	return err
 }
 
+func getDeployer(cfg *config.EthereumConfig) (deployer.ChainConnection, error) {
+	if cfg == nil {
+		return simulator.NewAutominingSimulator()
+	}
+	return deployer.NewRPCDeployer(cfg)
+}
+
 func getClient(storage *st.Storage, chain deployer.ChainConnection, cfg *config.RollupConfig) (*eth.Client, error) {
 	chainState, err := storage.GetChainState(chain.GetChainID())
 
@@ -146,13 +153,6 @@ func createClientFromChainState(chain deployer.ChainConnection, chainState *mode
 	}
 
 	return client, nil
-}
-
-func getDeployer(cfg *config.EthereumConfig) (deployer.ChainConnection, error) {
-	if cfg == nil {
-		return simulator.NewAutominingSimulator()
-	}
-	return deployer.NewRPCDeployer(cfg)
 }
 
 func bootstrapState(
