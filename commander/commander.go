@@ -66,7 +66,7 @@ func (c *Commander) Start() error {
 		return err
 	}
 
-	apiServer, err := api.StartAPIServer(c.cfg, client)
+	apiServer, err := api.StartAPIServer(&c.cfg.API, storage, client)
 	if err != nil {
 		return err
 	}
