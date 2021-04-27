@@ -46,20 +46,25 @@ func createTransferCommitments(
 
 		pendingTransfers = removeTransfer(pendingTransfers, includedTransfers)
 
+		serializedTxs, err := encoder.SerializeTransfers(includedTransfers)
+		if err != nil {
+			return nil, err
+		}
+
+		combinedSignature, err := combineTransferSignatures(includedTransfers)
+		if err != nil {
+			return nil, err
+		}
+
 		log.Printf("Creating a transfer commitment from %d transactions", len(includedTransfers))
-		commitment, err := createAndStoreTransferCommitment(storage, includedTransfers, cfg.FeeReceiverIndex)
+		commitment, err := createAndStoreCommitment(storage, txtype.Transfer, cfg.FeeReceiverIndex, serializedTxs, combinedSignature)
 		if err != nil {
 			return nil, err
 		}
 
 		commitments = append(commitments, *commitment)
 
-		includedTxBases := make([]models.TransactionBase, 0, len(includedTransfers))
-		for i := range includedTransfers {
-			includedTxBases = append(includedTxBases, includedTransfers[i].TransactionBase)
-		}
-
-		err = markTransactionsAsIncluded(storage, includedTxBases, commitment.ID)
+		err = markTransfersAsIncluded(storage, includedTransfers, commitment.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -90,44 +95,6 @@ func transferExists(transferList []models.Transfer, tx *models.Transfer) bool {
 	return false
 }
 
-func createAndStoreTransferCommitment(
-	storage *st.Storage,
-	transfers []models.Transfer,
-	feeReceiverIndex uint32,
-) (*models.Commitment, error) {
-	serializedTxs, err := encoder.SerializeTransfers(transfers)
-	if err != nil {
-		return nil, err
-	}
-
-	combinedSignature, err := combineTransferSignatures(transfers)
-	if err != nil {
-		return nil, err
-	}
-
-	stateRoot, err := st.NewStateTree(storage).Root()
-	if err != nil {
-		return nil, err
-	}
-
-	commitment := models.Commitment{
-		Type:              txtype.Transfer,
-		Transactions:      serializedTxs,
-		FeeReceiver:       feeReceiverIndex,
-		CombinedSignature: *combinedSignature,
-		PostStateRoot:     *stateRoot,
-	}
-
-	id, err := storage.AddCommitment(&commitment)
-	if err != nil {
-		return nil, err
-	}
-
-	commitment.ID = *id
-
-	return &commitment, nil
-}
-
 func combineTransferSignatures(transfers []models.Transfer) (*models.Signature, error) {
 	signatures := make([]*bls.Signature, 0, len(transfers))
 	for i := range transfers {
@@ -138,4 +105,18 @@ func combineTransferSignatures(transfers []models.Transfer) (*models.Signature, 
 		signatures = append(signatures, sig)
 	}
 	return bls.NewAggregatedSignature(signatures).ModelsSignature(), nil
+}
+
+func markTransfersAsIncluded(storage *st.Storage, transfers []models.Transfer, commitmentID int32) error {
+	includedTxBases := make([]models.TransactionBase, 0, len(transfers))
+	for i := range transfers {
+		includedTxBases = append(includedTxBases, transfers[i].TransactionBase)
+	}
+
+	err := markTransactionsAsIncluded(storage, includedTxBases, commitmentID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -49,20 +49,25 @@ func createCreate2TransferCommitments(
 
 		pendingTransfers = removeCreate2Transfer(pendingTransfers, includedTransfers)
 
+		serializedTxs, err := encoder.SerializeCreate2Transfers(includedTransfers)
+		if err != nil {
+			return nil, err
+		}
+
+		combinedSignature, err := combineCreate2TransferSignatures(includedTransfers)
+		if err != nil {
+			return nil, err
+		}
+
 		log.Printf("Creating a create2Transfer commitment from %d transactions", len(includedTransfers))
-		commitment, err := createAndStoreCreate2TransferCommitment(storage, includedTransfers, cfg.FeeReceiverIndex)
+		commitment, err := createAndStoreCommitment(storage, txtype.Create2Transfer, cfg.FeeReceiverIndex, serializedTxs, combinedSignature)
 		if err != nil {
 			return nil, err
 		}
 
 		commitments = append(commitments, *commitment)
 
-		includedTxBases := make([]models.TransactionBase, 0, len(includedTransfers))
-		for i := range includedTransfers {
-			includedTxBases = append(includedTxBases, includedTransfers[i].TransactionBase)
-		}
-
-		err = markTransactionsAsIncluded(storage, includedTxBases, commitment.ID)
+		err = markCreate2TransfersAsIncluded(storage, includedTransfers, commitment.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -93,44 +98,6 @@ func create2TransferExists(transferList []models.Create2Transfer, tx *models.Cre
 	return false
 }
 
-func createAndStoreCreate2TransferCommitment(
-	storage *st.Storage,
-	transfers []models.Create2Transfer,
-	feeReceiverIndex uint32,
-) (*models.Commitment, error) {
-	serializedTxs, err := encoder.SerializeCreate2Transfers(transfers)
-	if err != nil {
-		return nil, err
-	}
-
-	combinedSignature, err := combineCreate2TransferSignatures(transfers)
-	if err != nil {
-		return nil, err
-	}
-
-	stateRoot, err := st.NewStateTree(storage).Root()
-	if err != nil {
-		return nil, err
-	}
-
-	commitment := models.Commitment{
-		Type:              txtype.Create2Transfer,
-		Transactions:      serializedTxs,
-		FeeReceiver:       feeReceiverIndex,
-		CombinedSignature: *combinedSignature,
-		PostStateRoot:     *stateRoot,
-	}
-
-	id, err := storage.AddCommitment(&commitment)
-	if err != nil {
-		return nil, err
-	}
-
-	commitment.ID = *id
-
-	return &commitment, nil
-}
-
 func combineCreate2TransferSignatures(transfers []models.Create2Transfer) (*models.Signature, error) {
 	signatures := make([]*bls.Signature, 0, len(transfers))
 	for i := range transfers {
@@ -141,4 +108,18 @@ func combineCreate2TransferSignatures(transfers []models.Create2Transfer) (*mode
 		signatures = append(signatures, sig)
 	}
 	return bls.NewAggregatedSignature(signatures).ModelsSignature(), nil
+}
+
+func markCreate2TransfersAsIncluded(storage *st.Storage, transfers []models.Create2Transfer, commitmentID int32) error {
+	includedTxBases := make([]models.TransactionBase, 0, len(transfers))
+	for i := range transfers {
+		includedTxBases = append(includedTxBases, transfers[i].TransactionBase)
+	}
+
+	err := markTransactionsAsIncluded(storage, includedTxBases, commitmentID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
