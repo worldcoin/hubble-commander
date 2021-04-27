@@ -32,14 +32,11 @@ func submitBatch(
 
 	if batchType == txtype.Transfer {
 		batch, accountRoot, err = client.SubmitTransfersBatch(commitments)
-		if err != nil {
-			return err
-		}
 	} else {
 		batch, accountRoot, err = client.SubmitCreate2TransfersBatch(commitments)
-		if err != nil {
-			return err
-		}
+	}
+	if err != nil {
+		return err
 	}
 
 	err = storage.AddBatch(batch)
