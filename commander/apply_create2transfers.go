@@ -35,31 +35,35 @@ func ApplyCreate2Transfers(
 
 	for i := range transfers {
 		transfer := transfers[i]
-		currentTransferError := ErrAccountAlreadyExists
 
-		if !uint32InSlice(transfer.ToPubKeyID, alreadyAddedPubKeyIDs) {
-			addedPubKeyID, transferError, appError := ApplyCreate2Transfer(storage, &transfer, feeReceiverTokenIndex)
-			if appError != nil {
-				return nil, nil, appError
-			}
-			if transferError == nil {
-				validTransfers = append(validTransfers, transfer)
-				alreadyAddedPubKeyIDs = append(alreadyAddedPubKeyIDs, *addedPubKeyID)
-				combinedFee = *combinedFee.Add(&transfer.Fee)
-			}
-			currentTransferError = transferError
+		if uint32InSlice(transfer.ToPubKeyID, alreadyAddedPubKeyIDs) {
+			logAndSaveTransactionError(storage, &transfer.TransactionBase, ErrAccountAlreadyExists)
+			continue
 		}
 
-		logAndSaveTransactionError(storage, &transfer.TransactionBase, currentTransferError)
+		addedPubKeyID, transferError, appError := ApplyCreate2Transfer(storage, &transfer, feeReceiverTokenIndex)
+		if appError != nil {
+			return nil, nil, appError
+		}
+		if transferError != nil {
+			logAndSaveTransactionError(storage, &transfer.TransactionBase, transferError)
+			continue
+		}
+
+		validTransfers = append(validTransfers, transfer)
+		alreadyAddedPubKeyIDs = append(alreadyAddedPubKeyIDs, *addedPubKeyID)
+		combinedFee = *combinedFee.Add(&transfer.Fee)
 
 		if uint32(len(validTransfers)) == cfg.TxsPerCommitment {
 			break
 		}
 	}
 
-	err = ApplyFee(stateTree, cfg.FeeReceiverIndex, combinedFee)
-	if err != nil {
-		return nil, nil, err
+	if len(validTransfers) > 0 {
+		err = ApplyFee(stateTree, cfg.FeeReceiverIndex, combinedFee)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
 	return validTransfers, alreadyAddedPubKeyIDs, nil
