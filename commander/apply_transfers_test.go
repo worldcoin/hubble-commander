@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
@@ -153,6 +154,7 @@ func generateValidTransfers(transfersAmount int) []models.Transfer {
 		transfer := models.Transfer{
 			TransactionBase: models.TransactionBase{
 				Hash:        utils.RandomHash(),
+				TxType:      txtype.Transfer,
 				FromStateID: 1,
 				Amount:      models.MakeUint256(1),
 				Fee:         models.MakeUint256(1),
@@ -171,6 +173,7 @@ func generateInvalidTransfers(transfersAmount int) []models.Transfer {
 		transfer := models.Transfer{
 			TransactionBase: models.TransactionBase{
 				Hash:        utils.RandomHash(),
+				TxType:      txtype.Transfer,
 				FromStateID: 1,
 				Amount:      models.MakeUint256(1),
 				Fee:         models.MakeUint256(1),

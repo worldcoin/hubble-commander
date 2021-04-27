@@ -13,24 +13,14 @@ var (
 )
 
 func logAndSaveTransactionError(storage *st.Storage, transaction *models.TransactionBase, transactionError error) {
-	err := storage.SetTransactionError(transaction.Hash, transactionError.Error())
-	if err != nil {
-		log.Printf("Setting transaction error failed: %s", err)
-	}
-
-	log.Printf("%s failed: %s", transaction.TxType.String(), transactionError)
-}
-
-func ValidateAndApplyFee(stateTree *st.StateTree, feeReceiverIndex uint32, fee models.Uint256) error {
-	if fee.CmpN(0) == 1 {
-		// TODO cfg.FeeReceiverIndex actually represents PubKeyID and is used as StateID here
-		err := ApplyFee(stateTree, feeReceiverIndex, fee)
+	if transactionError != nil {
+		err := storage.SetTransactionError(transaction.Hash, transactionError.Error())
 		if err != nil {
-			return err
+			log.Printf("Setting transaction error failed: %s", err)
 		}
-	}
 
-	return ErrNegativeFee
+		log.Printf("%s failed: %s", transaction.TxType.String(), transactionError)
+	}
 }
 
 func ApplyFee(stateTree *st.StateTree, feeReceiverIndex uint32, fee models.Uint256) error {

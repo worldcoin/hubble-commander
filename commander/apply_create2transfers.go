@@ -2,7 +2,6 @@ package commander
 
 import (
 	"errors"
-	"log"
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -36,6 +35,8 @@ func ApplyCreate2Transfers(
 
 	for i := range transfers {
 		transfer := transfers[i]
+		currentTransferError := ErrAccountAlreadyExists
+
 		if !uint32InSlice(transfer.ToPubKeyID, successfullyAddedPubKeyIDs) {
 			addedPubKeyID, transferError, appError := ApplyCreate2Transfer(storage, &transfer, feeReceiverTokenIndex)
 			if appError != nil {
@@ -45,23 +46,18 @@ func ApplyCreate2Transfers(
 				validTransfers = append(validTransfers, transfer)
 				successfullyAddedPubKeyIDs = append(successfullyAddedPubKeyIDs, *addedPubKeyID)
 				combinedFee = *combinedFee.Add(&transfer.Fee)
-			} else {
-				if transferError == ErrNonceTooHigh {
-					continue
-				}
-
-				logAndSaveTransactionError(storage, &transfer.TransactionBase, transferError)
 			}
-		} else {
-			logAndSaveTransactionError(storage, &transfer.TransactionBase, ErrAccountAlreadyExists)
+			currentTransferError = transferError
 		}
+
+		logAndSaveTransactionError(storage, &transfer.TransactionBase, currentTransferError)
 
 		if uint32(len(validTransfers)) == cfg.TxsPerCommitment {
 			break
 		}
 	}
 
-	err = ValidateAndApplyFee(stateTree, cfg.FeeReceiverIndex, combinedFee)
+	err = ApplyFee(stateTree, cfg.FeeReceiverIndex, combinedFee)
 	if err != nil {
 		return nil, nil, err
 	}

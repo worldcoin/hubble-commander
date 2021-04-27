@@ -1,8 +1,6 @@
 package commander
 
 import (
-	"log"
-
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -37,10 +35,6 @@ func ApplyTransfers(
 			validTransfers = append(validTransfers, transfer)
 			combinedFee = *combinedFee.Add(&transfer.Fee)
 		} else {
-			if transferError == ErrNonceTooHigh {
-				continue
-			}
-			
 			logAndSaveTransactionError(storage, &transfer.TransactionBase, transferError)
 		}
 
@@ -49,7 +43,7 @@ func ApplyTransfers(
 		}
 	}
 
-	err = ValidateAndApplyFee(stateTree, cfg.FeeReceiverIndex, combinedFee)
+	err = ApplyFee(stateTree, cfg.FeeReceiverIndex, combinedFee)
 	if err != nil {
 		return nil, err
 	}
