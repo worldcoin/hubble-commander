@@ -12,7 +12,7 @@
                 "header": [],
                 "body": {
                     "mode": "raw",
-                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_sendTransaction\",\n    \"params\": [\n        {\n            \"Type\": \"TRANSFER\",\n            \"FromStateID\": 1,\n            \"ToStateID\": 2,\n            \"Amount\": \"50\",\n            \"Nonce\": \"2\",\n            \"Fee\": \"1\",\n            \"Signature\": \"0xABCD0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\"\n        }\n    ],\n    \"id\": 1\n}",
+                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_sendTransaction\",\n    \"params\": [\n        {\n            \"Type\": \"TRANSFER\",\n            \"FromStateID\": 1,\n            \"ToStateID\": 2,\n            \"Amount\": \"50\",\n            \"Nonce\": \"0\",\n            \"Fee\": \"1\",\n            \"Signature\": \"0xABCD0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\"\n        }\n    ],\n    \"id\": 1\n}",
                     "options": {
                         "raw": {
                             "language": "json"
@@ -205,6 +205,30 @@
                 "body": {
                     "mode": "raw",
                     "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getVersion\",\n    \"params\": [],\n    \"id\": 1\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "localhost:8080",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8080"
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "hubble_getCommitment",
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getCommitment\",\n    \"params\": [1],\n    \"id\": 1\n}",
                     "options": {
                         "raw": {
                             "language": "json"
