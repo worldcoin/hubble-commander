@@ -1,3 +1,5 @@
+// +build e2e
+
 package e2e
 
 import (
@@ -143,7 +145,7 @@ func send31MoreTransfers(t *testing.T, client jsonrpc.RPCClient, senderWallet bl
 
 func send31MoreCreate2Transfers(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, wallets []bls.Wallet) {
 	for nonce := 1; nonce < 32; nonce++ {
-		receiverWallet := wallets[len(wallets) - 32 + nonce]
+		receiverWallet := wallets[len(wallets)-32+nonce]
 		transfer, err := api.SignCreate2Transfer(&senderWallet, dto.Create2Transfer{
 			FromStateID: ref.Uint32(1),
 			ToPublicKey: receiverWallet.PublicKey(),
@@ -169,8 +171,8 @@ func testSenderStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, sende
 	require.NoError(t, err)
 
 	initialBalance := config.GetConfig().Rollup.GenesisAccounts[1].Balance
-	require.Equal(t, models.MakeUint256(32 + 32), senderState.Nonce)
-	require.Equal(t, *initialBalance.SubN(32 * 100 + 32 * 100), senderState.Balance)
+	require.Equal(t, models.MakeUint256(32+32), senderState.Nonce)
+	require.Equal(t, *initialBalance.SubN(32*100 + 32*100), senderState.Balance)
 }
 
 func testFeeReceiverStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, feeReceiverWallet bls.Wallet) {
@@ -182,7 +184,7 @@ func testFeeReceiverStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, 
 	require.NoError(t, err)
 
 	initialBalance := config.GetConfig().Rollup.GenesisAccounts[1].Balance
-	require.Equal(t, *initialBalance.AddN(32 * 10 + 32 * 10), feeReceiverState.Balance)
+	require.Equal(t, *initialBalance.AddN(32*10 + 32*10), feeReceiverState.Balance)
 	require.Equal(t, models.MakeUint256(0), feeReceiverState.Nonce)
 }
 
