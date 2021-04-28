@@ -1,5 +1,3 @@
-// +build e2e
-
 package e2e
 
 import (
@@ -40,9 +38,22 @@ func TestCommander(t *testing.T) {
 	testGetTransaction(t, commander.Client(), firstTransferHash)
 	send31MoreTransfers(t, commander.Client(), senderWallet)
 
+	firstC2TPublicKeyIndex := len(wallets) - 32
+	firstC2TWallet := wallets[firstC2TPublicKeyIndex]
+	firstCreate2TransferHash := testSendCreate2Transfer(t, commander.Client(), senderWallet, *firstC2TWallet.PublicKey())
+	testGetTransaction(t, commander.Client(), firstCreate2TransferHash)
+	send31MoreCreate2Transfers(t, commander.Client(), senderWallet, wallets)
+
 	testutils.WaitToPass(t, func() bool {
 		var txReceipt dto.TransferReceipt
 		err := commander.Client().CallFor(&txReceipt, "hubble_getTransaction", []interface{}{firstTransferHash})
+		require.NoError(t, err)
+		return txReceipt.Status == txstatus.InBatch
+	}, 30*time.Second)
+
+	testutils.WaitToPass(t, func() bool {
+		var txReceipt dto.TransferReceipt
+		err := commander.Client().CallFor(&txReceipt, "hubble_getTransaction", []interface{}{firstCreate2TransferHash})
 		require.NoError(t, err)
 		return txReceipt.Status == txstatus.InBatch
 	}, 30*time.Second)
@@ -87,6 +98,23 @@ func testSendTransfer(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.W
 	return txHash
 }
 
+func testSendCreate2Transfer(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, targetPublicKey models.PublicKey) common.Hash {
+	transfer, err := api.SignCreate2Transfer(&senderWallet, dto.Create2Transfer{
+		FromStateID: ref.Uint32(1),
+		ToPublicKey: &targetPublicKey,
+		Amount:      models.NewUint256(90),
+		Fee:         models.NewUint256(10),
+		Nonce:       models.NewUint256(32),
+	})
+	require.NoError(t, err)
+
+	var txHash common.Hash
+	err = client.CallFor(&txHash, "hubble_sendTransaction", []interface{}{*transfer})
+	require.NoError(t, err)
+	require.NotZero(t, txHash)
+	return txHash
+}
+
 func testGetTransaction(t *testing.T, client jsonrpc.RPCClient, txHash common.Hash) {
 	var txReceipt dto.TransferReceipt
 	err := client.CallFor(&txReceipt, "hubble_getTransaction", []interface{}{txHash})
@@ -113,6 +141,25 @@ func send31MoreTransfers(t *testing.T, client jsonrpc.RPCClient, senderWallet bl
 	}
 }
 
+func send31MoreCreate2Transfers(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, wallets []bls.Wallet) {
+	for nonce := 1; nonce < 32; nonce++ {
+		receiverWallet := wallets[len(wallets) - 32 + nonce]
+		transfer, err := api.SignCreate2Transfer(&senderWallet, dto.Create2Transfer{
+			FromStateID: ref.Uint32(1),
+			ToPublicKey: receiverWallet.PublicKey(),
+			Amount:      models.NewUint256(90),
+			Fee:         models.NewUint256(10),
+			Nonce:       models.NewUint256(32 + int64(nonce)),
+		})
+		require.NoError(t, err)
+
+		var txHash common.Hash
+		err = client.CallFor(&txHash, "hubble_sendTransaction", []interface{}{*transfer})
+		require.NoError(t, err)
+		require.NotZero(t, txHash)
+	}
+}
+
 func testSenderStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet) {
 	var userStates []dto.UserState
 	err := client.CallFor(&userStates, "hubble_getUserStates", []interface{}{senderWallet.PublicKey()})
@@ -122,8 +169,8 @@ func testSenderStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, sende
 	require.NoError(t, err)
 
 	initialBalance := config.GetConfig().Rollup.GenesisAccounts[1].Balance
-	require.Equal(t, *initialBalance.SubN(32 * 100), senderState.Balance)
-	require.Equal(t, models.MakeUint256(32), senderState.Nonce)
+	require.Equal(t, models.MakeUint256(32 + 32), senderState.Nonce)
+	require.Equal(t, *initialBalance.SubN(32 * 100 + 32 * 100), senderState.Balance)
 }
 
 func testFeeReceiverStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, feeReceiverWallet bls.Wallet) {
@@ -135,7 +182,7 @@ func testFeeReceiverStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, 
 	require.NoError(t, err)
 
 	initialBalance := config.GetConfig().Rollup.GenesisAccounts[1].Balance
-	require.Equal(t, *initialBalance.AddN(32 * 10), feeReceiverState.Balance)
+	require.Equal(t, *initialBalance.AddN(32 * 10 + 32 * 10), feeReceiverState.Balance)
 	require.Equal(t, models.MakeUint256(0), feeReceiverState.Nonce)
 }
 
@@ -144,9 +191,11 @@ func testGetBatches(t *testing.T, client jsonrpc.RPCClient) {
 	err := client.CallFor(&batches, "hubble_getBatches", []interface{}{nil, nil})
 
 	require.NoError(t, err)
-	require.Len(t, batches, 1)
-	require.Equal(t, txtype.Transfer, batches[0].Type)
+	require.Len(t, batches, 2)
 	require.Equal(t, models.MakeUint256(1), batches[0].ID)
+	batchTypes := []txtype.TransactionType{batches[0].Type, batches[1].Type}
+	require.Contains(t, batchTypes, txtype.Transfer)
+	require.Contains(t, batchTypes, txtype.Create2Transfer)
 }
 
 func getUserState(userStates []dto.UserState, stateID uint32) (*dto.UserState, error) {
