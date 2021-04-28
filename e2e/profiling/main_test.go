@@ -1,6 +1,6 @@
-// +build testmain
+// +build profiling
 
-package testmain
+package profiling
 
 import (
 	"log"
