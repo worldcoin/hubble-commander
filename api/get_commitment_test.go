@@ -15,11 +15,9 @@ import (
 type GetCommitmentTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	api        *API
-	storage    *st.Storage
-	db         *db.TestDB
-	tree       *st.StateTree
-	commitment models.Commitment
+	api     *API
+	storage *st.Storage
+	db      *db.TestDB
 }
 
 func (s *GetCommitmentTestSuite) SetupSuite() {
@@ -33,11 +31,6 @@ func (s *GetCommitmentTestSuite) SetupTest() {
 	s.storage = st.NewTestStorage(testDB.DB)
 	s.api = &API{nil, s.storage, nil}
 	s.db = testDB
-	s.tree = st.NewStateTree(s.storage)
-
-	hash := utils.RandomHash()
-	s.commitment = commitment
-	s.commitment.AccountTreeRoot = &hash
 }
 
 func (s *GetCommitmentTestSuite) TearDownTest() {
@@ -45,8 +38,8 @@ func (s *GetCommitmentTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *GetCommitmentTestSuite) TestGetCommitment() {
-	commitmentID, err := s.storage.AddCommitment(&s.commitment)
+func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
+	commitmentID, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
 	transfer := models.Transfer{
@@ -68,7 +61,46 @@ func (s *GetCommitmentTestSuite) TestGetCommitment() {
 	s.NoError(err)
 	s.NotNil(commitment)
 	s.Len(commitment.Transactions, 1)
-	s.Contains(commitment.Transactions, transfer)
+}
+
+func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
+	c2tCommitment := commitment
+	c2tCommitment.Type = txtype.Create2Transfer
+	commitmentID, err := s.storage.AddCommitment(&c2tCommitment)
+	s.NoError(err)
+
+	err = s.storage.AddAccountIfNotExists(&models.Account{
+		PubKeyID:  2,
+		PublicKey: models.PublicKey{1, 2, 3},
+	})
+	s.NoError(err)
+
+	create2Transfer := models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			Hash:                 utils.RandomHash(),
+			TxType:               txtype.Create2Transfer,
+			FromStateID:          1,
+			Amount:               models.MakeUint256(50),
+			Fee:                  models.MakeUint256(10),
+			Nonce:                models.MakeUint256(0),
+			IncludedInCommitment: commitmentID,
+		},
+		ToStateID:  2,
+		ToPubKeyID: 2,
+	}
+	err = s.storage.AddCreate2Transfer(&create2Transfer)
+	s.NoError(err)
+
+	commitment, err := s.api.GetCommitment(*commitmentID)
+	s.NoError(err)
+	s.NotNil(commitment)
+	s.Len(commitment.Transactions, 1)
+}
+
+func (s *GetCommitmentTestSuite) TestGetCommitment_NotExistingCommitment() {
+	commitment, err := s.api.GetCommitment(123)
+	s.Equal(st.NewNotFoundError("commitment"), err)
+	s.Nil(commitment)
 }
 
 func TestGetCommitmentTestSuite(t *testing.T) {
