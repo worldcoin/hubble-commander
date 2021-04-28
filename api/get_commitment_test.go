@@ -15,9 +15,11 @@ import (
 type GetCommitmentTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	api     *API
-	storage *st.Storage
-	db      *db.TestDB
+	api        *API
+	storage    *st.Storage
+	db         *db.TestDB
+	batch      models.Batch
+	commitment models.Commitment
 }
 
 func (s *GetCommitmentTestSuite) SetupSuite() {
@@ -31,6 +33,15 @@ func (s *GetCommitmentTestSuite) SetupTest() {
 	s.storage = st.NewTestStorage(testDB.DB)
 	s.api = &API{nil, s.storage, nil}
 	s.db = testDB
+
+	s.batch = models.Batch{
+		Hash:              utils.RandomHash(),
+		Type:              txtype.Transfer,
+		FinalisationBlock: 113,
+	}
+
+	s.commitment = commitment
+	s.commitment.IncludedInBatch = &s.batch.Hash
 }
 
 func (s *GetCommitmentTestSuite) TearDownTest() {
@@ -39,7 +50,10 @@ func (s *GetCommitmentTestSuite) TearDownTest() {
 }
 
 func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
-	commitmentID, err := s.storage.AddCommitment(&commitment)
+	err := s.storage.AddBatch(&s.batch)
+	s.NoError(err)
+
+	commitmentID, err := s.storage.AddCommitment(&s.commitment)
 	s.NoError(err)
 
 	transfer := models.Transfer{
@@ -64,7 +78,10 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 }
 
 func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
-	c2tCommitment := commitment
+	err := s.storage.AddBatch(&s.batch)
+	s.NoError(err)
+
+	c2tCommitment := s.commitment
 	c2tCommitment.Type = txtype.Create2Transfer
 	commitmentID, err := s.storage.AddCommitment(&c2tCommitment)
 	s.NoError(err)
