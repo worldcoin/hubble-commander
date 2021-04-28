@@ -12,7 +12,7 @@ import (
 )
 
 type Result struct {
-	// nolint:revive
+	// nolint:revive,stylecheck
 	JsonRpc string `json:"jsonrpc"`
 	ID      string `json:"id"`
 	Result  string `json:"result"`
