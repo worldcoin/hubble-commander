@@ -11,13 +11,12 @@ func ApplyTransfers(
 	transfers []models.Transfer,
 	cfg *config.RollupConfig,
 ) (
-	[]models.Transfer,
-	[]models.Transfer,
-	error,
+	appliedTransfers []models.Transfer,
+	invalidTransfers []models.Transfer,
+	err error,
 ) {
 	stateTree := st.NewStateTree(storage)
-	appliedTransfers := make([]models.Transfer, 0, cfg.TxsPerCommitment)
-	invalidTransfers := make([]models.Transfer, 0)
+	appliedTransfers = make([]models.Transfer, 0, cfg.TxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
 	feeReceiverLeaf, err := stateTree.Leaf(cfg.FeeReceiverIndex)

@@ -18,13 +18,12 @@ func ApplyCreate2Transfers(
 	addedPubKeyIDs map[uint32]struct{},
 	cfg *config.RollupConfig,
 ) (
-	[]models.Create2Transfer,
-	[]models.Create2Transfer,
-	error,
+	appliedTransfers []models.Create2Transfer,
+	invalidTransfers []models.Create2Transfer,
+	err error,
 ) {
 	stateTree := st.NewStateTree(storage)
-	appliedTransfers := make([]models.Create2Transfer, 0, cfg.TxsPerCommitment)
-	invalidTransfers := make([]models.Create2Transfer, 0)
+	appliedTransfers = make([]models.Create2Transfer, 0, cfg.TxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
 	feeReceiverLeaf, err := stateTree.Leaf(cfg.FeeReceiverIndex)
