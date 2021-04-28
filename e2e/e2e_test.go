@@ -40,25 +40,13 @@ func TestCommander(t *testing.T) {
 	testGetTransaction(t, commander.Client(), firstTransferHash)
 	send31MoreTransfers(t, commander.Client(), senderWallet)
 
-	firstC2TPublicKeyIndex := len(wallets) - 32
-	firstC2TWallet := wallets[firstC2TPublicKeyIndex]
+	firstC2TWallet := wallets[len(wallets) - 32]
 	firstCreate2TransferHash := testSendCreate2Transfer(t, commander.Client(), senderWallet, *firstC2TWallet.PublicKey())
 	testGetTransaction(t, commander.Client(), firstCreate2TransferHash)
 	send31MoreCreate2Transfers(t, commander.Client(), senderWallet, wallets)
 
-	testutils.WaitToPass(t, func() bool {
-		var txReceipt dto.TransferReceipt
-		err := commander.Client().CallFor(&txReceipt, "hubble_getTransaction", []interface{}{firstTransferHash})
-		require.NoError(t, err)
-		return txReceipt.Status == txstatus.InBatch
-	}, 30*time.Second)
-
-	testutils.WaitToPass(t, func() bool {
-		var txReceipt dto.TransferReceipt
-		err := commander.Client().CallFor(&txReceipt, "hubble_getTransaction", []interface{}{firstCreate2TransferHash})
-		require.NoError(t, err)
-		return txReceipt.Status == txstatus.InBatch
-	}, 30*time.Second)
+	waitForTxToBeIncludedInBatch(t, commander.Client(), firstTransferHash)
+	waitForTxToBeIncludedInBatch(t, commander.Client(), firstCreate2TransferHash)
 
 	testSenderStateAfterTransfers(t, commander.Client(), senderWallet)
 	testFeeReceiverStateAfterTransfers(t, commander.Client(), feeReceiverWallet)
@@ -160,6 +148,15 @@ func send31MoreCreate2Transfers(t *testing.T, client jsonrpc.RPCClient, senderWa
 		require.NoError(t, err)
 		require.NotZero(t, txHash)
 	}
+}
+
+func waitForTxToBeIncludedInBatch(t *testing.T, client jsonrpc.RPCClient, txHash common.Hash) {
+	testutils.WaitToPass(t, func() bool {
+		var txReceipt dto.TransferReceipt
+		err := client.CallFor(&txReceipt, "hubble_getTransaction", []interface{}{txHash})
+		require.NoError(t, err)
+		return txReceipt.Status == txstatus.InBatch
+	}, 30*time.Second)
 }
 
 func testSenderStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet) {
