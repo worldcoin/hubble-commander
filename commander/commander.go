@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/config"
@@ -22,18 +23,25 @@ import (
 type Commander struct {
 	cfg         *config.Config
 	stopChannel chan bool
+	workers     *sync.WaitGroup
 	apiServer   *http.Server
 }
 
 func NewCommander(cfg *config.Config) *Commander {
-	stopChannel := make(chan bool)
-	return &Commander{
-		cfg:         cfg,
-		stopChannel: stopChannel,
-	}
+	return &Commander{cfg: cfg}
+}
+
+func (c *Commander) IsRunning() bool {
+	return c.stopChannel != nil
 }
 
 func (c *Commander) Start() error {
+	if c.IsRunning() {
+		return nil
+	}
+	c.stopChannel = make(chan bool)
+	c.workers = new(sync.WaitGroup)
+
 	migrator, err := db.GetMigrator(&c.cfg.DB)
 	if err != nil {
 		return err
@@ -66,34 +74,67 @@ func (c *Commander) Start() error {
 		return err
 	}
 
-	apiServer, err := api.StartAPIServer(&c.cfg.API, storage, client)
+	c.apiServer, err = api.NewAPIServer(&c.cfg.API, storage, client)
 	if err != nil {
 		return err
 	}
-	c.apiServer = apiServer
 
-	go func() {
-		if err := BlockNumberLoop(storage, client, &c.cfg.Rollup, c.stopChannel); err != nil {
-			log.Fatalf("%+v", err)
+	c.startWorker(func() error {
+		err := c.apiServer.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
+			return err
 		}
-	}()
-	go func() {
-		if err := RollupLoop(storage, client, &c.cfg.Rollup, c.stopChannel); err != nil {
-			log.Fatalf("%+v", err)
-		}
-	}()
-	go func() {
-		if err := WatchAccounts(storage, client, c.stopChannel); err != nil {
-			log.Fatalf("%+v", err)
-		}
-	}()
+		return nil
+	})
+	c.startWorker(func() error { return BlockNumberLoop(storage, client, &c.cfg.Rollup, c.stopChannel) })
+	c.startWorker(func() error { return RollupLoop(storage, client, &c.cfg.Rollup, c.stopChannel) })
+	c.startWorker(func() error { return WatchAccounts(storage, client, c.stopChannel) })
+	return nil
+}
 
+func (c *Commander) startWorker(fn func() error) {
+	startGoroutine(func() {
+		c.workers.Add(1)
+		defer c.workers.Done()
+		if err := fn(); err != nil {
+			log.Fatalf("%+v", err)
+		}
+	})
+}
+
+func startGoroutine(fn func()) {
+	var start sync.WaitGroup
+	start.Add(1)
+	go func() {
+		start.Done()
+		fn()
+	}()
+	start.Wait()
+}
+
+func (c *Commander) StartAndWait() error {
+	if err := c.Start(); err != nil {
+		return err
+	}
+	c.workers.Wait()
 	return nil
 }
 
 func (c *Commander) Stop() error {
-	c.stopChannel <- true
-	return c.apiServer.Close()
+	if !c.IsRunning() {
+		return nil
+	}
+	close(c.stopChannel)
+	err := c.apiServer.Close()
+	c.workers.Wait()
+	c.clearState()
+	return err
+}
+
+func (c *Commander) clearState() {
+	c.stopChannel = nil
+	c.workers = nil
+	c.apiServer = nil
 }
 
 func getDeployer(cfg *config.EthereumConfig) (deployer.ChainConnection, error) {

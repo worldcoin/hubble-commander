@@ -2,7 +2,6 @@ package api
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/Worldcoin/hubble-commander/config"
@@ -17,7 +16,7 @@ type API struct {
 	client  *eth.Client
 }
 
-func StartAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client) (*http.Server, error) {
+func NewAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client) (*http.Server, error) {
 	server, err := getAPIServer(cfg, storage, client)
 	if err != nil {
 		return nil, err
@@ -25,16 +24,7 @@ func StartAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Clie
 
 	http.HandleFunc("/", server.ServeHTTP)
 	addr := fmt.Sprintf(":%s", cfg.Port)
-	httpServer := &http.Server{Addr: addr}
-
-	go func() {
-		err := httpServer.ListenAndServe()
-		if err != nil && err != http.ErrServerClosed {
-			log.Fatalf("%+v", err)
-		}
-	}()
-
-	return httpServer, nil
+	return &http.Server{Addr: addr}, nil
 }
 
 func getAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client) (*rpc.Server, error) {

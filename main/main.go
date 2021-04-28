@@ -24,7 +24,7 @@ func main() {
 
 	cmd := commander.NewCommander(&cfg)
 
-	err := cmd.Start()
+	err := cmd.StartAndWait()
 	if err != nil {
 		log.Fatalf("%+v", err)
 	}
