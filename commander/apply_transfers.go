@@ -12,15 +12,17 @@ func ApplyTransfers(
 	cfg *config.RollupConfig,
 ) (
 	[]models.Transfer,
+	[]models.Transfer,
 	error,
 ) {
 	stateTree := st.NewStateTree(storage)
 	appliedTransfers := make([]models.Transfer, 0, cfg.TxsPerCommitment)
+	invalidTransfers := make([]models.Transfer, 0)
 	combinedFee := models.MakeUint256(0)
 
 	feeReceiverLeaf, err := stateTree.Leaf(cfg.FeeReceiverIndex)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	feeReceiverTokenIndex := feeReceiverLeaf.TokenIndex
@@ -29,10 +31,11 @@ func ApplyTransfers(
 		transfer := transfers[i]
 		transferError, appError := ApplyTransfer(stateTree, &transfer, feeReceiverTokenIndex)
 		if appError != nil {
-			return nil, appError
+			return nil, nil, appError
 		}
 		if transferError != nil {
 			logAndSaveTransactionError(storage, &transfer.TransactionBase, transferError)
+			invalidTransfers = append(invalidTransfers, transfer)
 			continue
 		}
 
@@ -47,9 +50,9 @@ func ApplyTransfers(
 	if len(appliedTransfers) > 0 {
 		err = ApplyFee(stateTree, cfg.FeeReceiverIndex, combinedFee)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
-	return appliedTransfers, nil
+	return appliedTransfers, invalidTransfers, nil
 }
