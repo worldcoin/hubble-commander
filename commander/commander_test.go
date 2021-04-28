@@ -49,13 +49,15 @@ func (s *CommanderTestSuite) TestStartAndWait() {
 		s.NoError(err)
 		stopped = true
 	}()
-	time.Sleep(50 * time.Millisecond)
+	s.Eventually(func() bool {
+		return s.cmd.IsRunning()
+	}, 2*time.Second, 100*time.Millisecond)
 
 	err := s.cmd.Stop()
 	s.NoError(err)
 	s.Eventually(func() bool {
 		return stopped
-	}, 50*time.Millisecond, 10*time.Millisecond)
+	}, 1*time.Second, 100*time.Millisecond)
 }
 
 func TestCommanderTestSuite(t *testing.T) {

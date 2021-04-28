@@ -21,14 +21,18 @@ import (
 )
 
 type Commander struct {
-	cfg         *config.Config
+	cfg     *config.Config
+	workers sync.WaitGroup
+
 	stopChannel chan bool
-	workers     *sync.WaitGroup
 	apiServer   *http.Server
 }
 
 func NewCommander(cfg *config.Config) *Commander {
-	return &Commander{cfg: cfg}
+	return &Commander{
+		cfg:     cfg,
+		workers: sync.WaitGroup{},
+	}
 }
 
 func (c *Commander) IsRunning() bool {
@@ -39,9 +43,6 @@ func (c *Commander) Start() error {
 	if c.IsRunning() {
 		return nil
 	}
-	c.stopChannel = make(chan bool)
-	c.workers = new(sync.WaitGroup)
-
 	migrator, err := db.GetMigrator(&c.cfg.DB)
 	if err != nil {
 		return err
@@ -79,6 +80,7 @@ func (c *Commander) Start() error {
 		return err
 	}
 
+	stopChannel := make(chan bool)
 	c.startWorker(func() error {
 		err := c.apiServer.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
@@ -86,9 +88,10 @@ func (c *Commander) Start() error {
 		}
 		return nil
 	})
-	c.startWorker(func() error { return BlockNumberLoop(storage, client, &c.cfg.Rollup, c.stopChannel) })
-	c.startWorker(func() error { return RollupLoop(storage, client, &c.cfg.Rollup, c.stopChannel) })
-	c.startWorker(func() error { return WatchAccounts(storage, client, c.stopChannel) })
+	c.startWorker(func() error { return BlockNumberLoop(storage, client, &c.cfg.Rollup, stopChannel) })
+	c.startWorker(func() error { return RollupLoop(storage, client, &c.cfg.Rollup, stopChannel) })
+	c.startWorker(func() error { return WatchAccounts(storage, client, stopChannel) })
+	c.stopChannel = stopChannel
 	return nil
 }
 
@@ -133,7 +136,6 @@ func (c *Commander) Stop() error {
 
 func (c *Commander) clearState() {
 	c.stopChannel = nil
-	c.workers = nil
 	c.apiServer = nil
 }
 
