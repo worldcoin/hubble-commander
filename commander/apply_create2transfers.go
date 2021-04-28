@@ -15,12 +15,11 @@ var (
 func ApplyCreate2Transfers(
 	storage *st.Storage,
 	transfers []models.Create2Transfer,
-	alreadyAddedPubKeyIDs []uint32,
+	addedPubKeyIDs *[]uint32,
 	cfg *config.RollupConfig,
 ) (
 	[]models.Create2Transfer,
 	[]models.Create2Transfer,
-	[]uint32,
 	error,
 ) {
 	stateTree := st.NewStateTree(storage)
@@ -30,7 +29,7 @@ func ApplyCreate2Transfers(
 
 	feeReceiverLeaf, err := stateTree.Leaf(cfg.FeeReceiverIndex)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	feeReceiverTokenIndex := feeReceiverLeaf.TokenIndex
@@ -38,7 +37,7 @@ func ApplyCreate2Transfers(
 	for i := range transfers {
 		transfer := transfers[i]
 
-		if uint32InSlice(transfer.ToPubKeyID, alreadyAddedPubKeyIDs) {
+		if uint32InSlice(transfer.ToPubKeyID, *addedPubKeyIDs) {
 			logAndSaveTransactionError(storage, &transfer.TransactionBase, ErrAccountAlreadyExists)
 			invalidTransfers = append(invalidTransfers, transfer)
 			continue
@@ -46,7 +45,7 @@ func ApplyCreate2Transfers(
 
 		addedPubKeyID, transferError, appError := ApplyCreate2Transfer(storage, &transfer, feeReceiverTokenIndex)
 		if appError != nil {
-			return nil, nil, nil, appError
+			return nil, nil, appError
 		}
 		if transferError != nil {
 			logAndSaveTransactionError(storage, &transfer.TransactionBase, transferError)
@@ -55,7 +54,7 @@ func ApplyCreate2Transfers(
 		}
 
 		appliedTransfers = append(appliedTransfers, transfer)
-		alreadyAddedPubKeyIDs = append(alreadyAddedPubKeyIDs, *addedPubKeyID)
+		*addedPubKeyIDs = append(*addedPubKeyIDs, *addedPubKeyID)
 		combinedFee = *combinedFee.Add(&transfer.Fee)
 
 		if uint32(len(appliedTransfers)) == cfg.TxsPerCommitment {
@@ -66,11 +65,11 @@ func ApplyCreate2Transfers(
 	if len(appliedTransfers) > 0 {
 		err = ApplyFee(stateTree, cfg.FeeReceiverIndex, combinedFee)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, err
 		}
 	}
 
-	return appliedTransfers, invalidTransfers, alreadyAddedPubKeyIDs, nil
+	return appliedTransfers, invalidTransfers, nil
 }
 
 func uint32InSlice(a uint32, list []uint32) bool {

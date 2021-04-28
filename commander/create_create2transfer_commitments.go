@@ -30,12 +30,10 @@ func createCreate2TransferCommitments(
 			return nil, err
 		}
 
-		appliedTransfers, invalidTransfers, addedPubKeyIDs, err := ApplyCreate2Transfers(storage, pendingTransfers, alreadyAddedPubKeyIDs, cfg)
+		appliedTransfers, invalidTransfers, err := ApplyCreate2Transfers(storage, pendingTransfers, &alreadyAddedPubKeyIDs, cfg)
 		if err != nil {
 			return nil, err
 		}
-
-		alreadyAddedPubKeyIDs = append(alreadyAddedPubKeyIDs, addedPubKeyIDs...)
 
 		if len(appliedTransfers) < int(cfg.TxsPerCommitment) {
 			err = stateTree.RevertTo(*initialStateRoot)
