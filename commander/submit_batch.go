@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -14,12 +15,26 @@ var (
 	ErrNotEnoughCommitments = NewRollupError("not enough commitments")
 )
 
-func submitBatch(commitments []models.Commitment, storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
+func submitBatch(
+	batchType txtype.TransactionType,
+	commitments []models.Commitment,
+	storage *st.Storage,
+	client *eth.Client,
+	cfg *config.RollupConfig,
+) error {
 	if len(commitments) < int(cfg.MinCommitmentsPerBatch) {
 		return ErrNotEnoughCommitments
 	}
 
-	batch, accountRoot, err := client.SubmitTransfersBatch(commitments)
+	var batch *models.Batch
+	var accountRoot *common.Hash
+	var err error
+
+	if batchType == txtype.Transfer {
+		batch, accountRoot, err = client.SubmitTransfersBatch(commitments)
+	} else {
+		batch, accountRoot, err = client.SubmitCreate2TransfersBatch(commitments)
+	}
 	if err != nil {
 		return err
 	}

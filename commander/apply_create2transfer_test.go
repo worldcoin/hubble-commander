@@ -86,7 +86,7 @@ func (s *ApplyCreate2TransferTestSuite) TearDownTest() {
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InsertsNewEmptyStateLeaf() {
-	transferError, appError := ApplyCreate2Transfer(s.storage, &create2Transfer, feeReceiverTokenIndex)
+	_, transferError, appError := ApplyCreate2Transfer(s.storage, &create2Transfer, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -98,7 +98,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InsertsNewEmpty
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer() {
-	transferError, appError := ApplyCreate2Transfer(s.storage, &create2Transfer, feeReceiverTokenIndex)
+	_, transferError, appError := ApplyCreate2Transfer(s.storage, &create2Transfer, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -109,6 +109,13 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer()
 
 	s.Equal(int64(8900), senderLeaf.Balance.Int64())
 	s.Equal(int64(1000), receiverLeaf.Balance.Int64())
+}
+
+func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ReturnsCorrectPubKeyID() {
+	addedPubKeyID, transferError, appError := ApplyCreate2Transfer(s.storage, &create2Transfer, feeReceiverTokenIndex)
+	s.NoError(appError)
+	s.NoError(transferError)
+	s.Equal(create2Transfer.ToPubKeyID, *addedPubKeyID)
 }
 
 func TestApplyCreate2TransferTestSuite(t *testing.T) {

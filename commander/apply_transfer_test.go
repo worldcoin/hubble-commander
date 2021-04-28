@@ -123,25 +123,6 @@ func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_Validation_Bala
 	s.Error(err)
 }
 
-func (s *ApplyTransferTestSuite) TestApplyTransfer_Validation_Nil() {
-	transfer := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			FromStateID: 1,
-			Amount:      models.MakeUint256(400),
-			Fee:         models.MakeUint256(50),
-			Nonce:       models.MakeUint256(0),
-		},
-		ToStateID: 2,
-	}
-
-	transferError, appError := ApplyTransfer(s.tree, nil, models.MakeUint256(1))
-	s.Error(appError, ErrTransactionIsNil)
-	s.NoError(transferError)
-	transferError, appError = ApplyTransfer(nil, &transfer, models.MakeUint256(1))
-	s.Equal(appError, ErrStateTreeIsNil)
-	s.NoError(transferError)
-}
-
 func (s *ApplyTransferTestSuite) TestApplyTransfer_Validation_TokenIndex() {
 	transfer := models.Transfer{
 		TransactionBase: models.TransactionBase{

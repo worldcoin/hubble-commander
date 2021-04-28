@@ -7,6 +7,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -74,6 +76,33 @@ func (s *Create2TransferTestSuite) TestGetCreate2Transfer_NonExistentTransaction
 	s.Nil(res)
 }
 
+func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers() {
+	commitment := &models.Commitment{}
+	id, err := s.storage.AddCommitment(commitment)
+	s.NoError(err)
+
+	create2Transfer2 := create2Transfer
+	create2Transfer2.Hash = utils.RandomHash()
+	create2Transfer3 := create2Transfer
+	create2Transfer3.Hash = utils.RandomHash()
+	create2Transfer3.IncludedInCommitment = id
+	create2Transfer4 := create2Transfer
+	create2Transfer4.Hash = utils.RandomHash()
+	create2Transfer4.ErrorMessage = ref.String("A very boring error message")
+
+	create2Transfers := []*models.Create2Transfer{&create2Transfer, &create2Transfer2, &create2Transfer3, &create2Transfer4}
+
+	for _, create2Transfer := range create2Transfers {
+		err = s.storage.AddCreate2Transfer(create2Transfer)
+		s.NoError(err)
+	}
+
+	res, err := s.storage.GetPendingCreate2Transfers()
+	s.NoError(err)
+
+	s.Equal([]models.Create2Transfer{create2Transfer, create2Transfer2}, res)
+}
+
 func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey() {
 	err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
@@ -94,6 +123,30 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey_NoCreate2T
 	transfers, err := s.storage.GetCreate2TransfersByPublicKey(&account2.PublicKey)
 	s.NoError(err)
 	s.Len(transfers, 0)
+}
+
+func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID() {
+	commitmentID, err := s.storage.AddCommitment(&commitment)
+	s.NoError(err)
+
+	transfer1 := create2Transfer
+	transfer1.IncludedInCommitment = commitmentID
+
+	err = s.storage.AddCreate2Transfer(&transfer1)
+	s.NoError(err)
+
+	commitments, err := s.storage.GetCreate2TransfersByCommitmentID(*commitmentID)
+	s.NoError(err)
+	s.Len(commitments, 1)
+}
+
+func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID_NoCreate2Transfers() {
+	commitmentID, err := s.storage.AddCommitment(&commitment)
+	s.NoError(err)
+
+	commitments, err := s.storage.GetCreate2TransfersByCommitmentID(*commitmentID)
+	s.NoError(err)
+	s.Len(commitments, 0)
 }
 
 func TestCreate2TransferTestSuite(t *testing.T) {

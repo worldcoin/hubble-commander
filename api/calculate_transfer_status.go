@@ -24,8 +24,12 @@ func CalculateTransferStatus(
 		return nil, err
 	}
 
-	if latestBlockNumber < batch.FinalisationBlock {
-		return txstatus.InBatch.Ref(), nil
+	return calculateFinalisedStatus(latestBlockNumber, batch.FinalisationBlock), nil
+}
+
+func calculateFinalisedStatus(latestBlockNumber, batchFinalisationBlock uint32) *txstatus.TransactionStatus {
+	if latestBlockNumber < batchFinalisationBlock {
+		return txstatus.InBatch.Ref()
 	}
-	return txstatus.Finalised.Ref(), nil
+	return txstatus.Finalised.Ref()
 }

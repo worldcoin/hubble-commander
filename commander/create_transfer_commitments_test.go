@@ -34,7 +34,7 @@ var (
 	genesisAccounts = []models.RegisteredGenesisAccount{sender, receiver, feeReceiver}
 )
 
-type CreateCommitmentsTestSuite struct {
+type TransferCommitmentsTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	db      *db.TestDB
@@ -42,11 +42,11 @@ type CreateCommitmentsTestSuite struct {
 	cfg     *config.RollupConfig
 }
 
-func (s *CreateCommitmentsTestSuite) SetupSuite() {
+func (s *TransferCommitmentsTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *CreateCommitmentsTestSuite) SetupTest() {
+func (s *TransferCommitmentsTestSuite) SetupTest() {
 	testDB, err := db.NewTestDB()
 	s.NoError(err)
 	s.db = testDB
@@ -61,16 +61,16 @@ func (s *CreateCommitmentsTestSuite) SetupTest() {
 	s.NoError(err)
 }
 
-func (s *CreateCommitmentsTestSuite) TearDownTest() {
+func (s *TransferCommitmentsTestSuite) TearDownTest() {
 	err := s.db.Teardown()
 	s.NoError(err)
 }
 
-func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNothingWhenThereAreNotEnoughPendingTransfers() {
+func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothingWhenThereAreNotEnoughPendingTransfers() {
 	preRoot, err := storage.NewStateTree(s.storage).Root()
 	s.NoError(err)
 
-	commitments, err := createCommitments([]models.Transfer{}, s.storage, s.cfg)
+	commitments, err := createTransferCommitments([]models.Transfer{}, s.storage, s.cfg)
 	s.NoError(err)
 	s.Len(commitments, 0)
 
@@ -80,7 +80,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNothingWhenThereA
 	s.Equal(preRoot, postRoot)
 }
 
-func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNothingWhenThereAreNotEnoughValidTransfers() {
+func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothingWhenThereAreNotEnoughValidTransfers() {
 	transfers := generateValidTransfers(2)
 	transfers[1].Amount = models.MakeUint256(99999999999)
 	s.addTransfers(transfers)
@@ -92,7 +92,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNothingWhenThereA
 	preRoot, err := storage.NewStateTree(s.storage).Root()
 	s.NoError(err)
 
-	commitments, err := createCommitments(pendingTransfers, s.storage, s.cfg)
+	commitments, err := createTransferCommitments(pendingTransfers, s.storage, s.cfg)
 	s.NoError(err)
 	s.Len(commitments, 0)
 
@@ -102,13 +102,13 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNothingWhenThereA
 	s.Equal(preRoot, postRoot)
 }
 
-func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresCorrectCommitment() {
+func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_StoresCorrectCommitment() {
 	pendingTransfers := s.prepareAndReturnPendingTransfers(3)
 
 	preRoot, err := storage.NewStateTree(s.storage).Root()
 	s.NoError(err)
 
-	commitments, err := createCommitments(pendingTransfers, s.storage, s.cfg)
+	commitments, err := createTransferCommitments(pendingTransfers, s.storage, s.cfg)
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, 24)
@@ -122,18 +122,18 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresCorrectCommitme
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
 }
 
-func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CreatesMaximallyAsManyCommitmentsAsSpecifiedInConfig() {
+func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_CreatesMaximallyAsManyCommitmentsAsSpecifiedInConfig() {
 	pendingTransfers := s.prepareAndReturnPendingTransfers(2)
 
-	commitments, err := createCommitments(pendingTransfers, s.storage, s.cfg)
+	commitments, err := createTransferCommitments(pendingTransfers, s.storage, s.cfg)
 	s.NoError(err)
 	s.Len(commitments, 1)
 }
 
-func (s *CreateCommitmentsTestSuite) TestCreateCommitments_MarksTransfersAsIncludedInCommitment() {
+func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_MarksTransfersAsIncludedInCommitment() {
 	pendingTransfers := s.prepareAndReturnPendingTransfers(2)
 
-	commitments, err := createCommitments(pendingTransfers, s.storage, s.cfg)
+	commitments, err := createTransferCommitments(pendingTransfers, s.storage, s.cfg)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -144,7 +144,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_MarksTransfersAsInclu
 	}
 }
 
-func (s *CreateCommitmentsTestSuite) TestRemoveTransactions() {
+func (s *TransferCommitmentsTestSuite) TestRemoveTransfer() {
 	transfer1 := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			Hash: utils.RandomHash(),
@@ -167,18 +167,18 @@ func (s *CreateCommitmentsTestSuite) TestRemoveTransactions() {
 	s.Equal([]models.Transfer{transfer1, transfer3}, removeTransfer(transfers, toRemove))
 }
 
-func TestCreateCommitmentsTestSuite(t *testing.T) {
-	suite.Run(t, new(CreateCommitmentsTestSuite))
+func TestTransferCommitmentsTestSuite(t *testing.T) {
+	suite.Run(t, new(TransferCommitmentsTestSuite))
 }
 
-func (s *CreateCommitmentsTestSuite) addTransfers(transfers []models.Transfer) {
+func (s *TransferCommitmentsTestSuite) addTransfers(transfers []models.Transfer) {
 	for i := range transfers {
 		err := s.storage.AddTransfer(&transfers[i])
 		s.NoError(err)
 	}
 }
 
-func (s *CreateCommitmentsTestSuite) prepareAndReturnPendingTransfers(transfersAmount int) []models.Transfer {
+func (s *TransferCommitmentsTestSuite) prepareAndReturnPendingTransfers(transfersAmount int) []models.Transfer {
 	transfers := generateValidTransfers(transfersAmount)
 	s.addTransfers(transfers)
 

@@ -201,6 +201,16 @@ func newTxTransfer(transfer *models.Transfer) testtx.TxTransfer {
 	}
 }
 
+func newTxCreate2Transfer(transfer *models.Create2Transfer) testtx.TxCreate2Transfer {
+	return testtx.TxCreate2Transfer{
+		FromIndex:  big.NewInt(int64(transfer.FromStateID)),
+		ToIndex:    big.NewInt(int64(transfer.ToStateID)),
+		ToPubkeyID: big.NewInt(int64(transfer.ToPubKeyID)),
+		Amount:     &transfer.Amount.Int,
+		Fee:        &transfer.Fee.Int,
+	}
+}
+
 func (s *EncoderTestSuite) TestEncodeTransferForCommitment() {
 	transfer := &models.Transfer{
 		TransactionBase: models.TransactionBase{
@@ -215,6 +225,26 @@ func (s *EncoderTestSuite) TestEncodeTransferForCommitment() {
 	s.NoError(err)
 
 	encoded, err := EncodeTransferForCommitment(transfer)
+	s.NoError(err)
+
+	s.Equal(expected, encoded)
+}
+
+func (s *EncoderTestSuite) TestEncodeCreate2TransferForCommitment() {
+	transfer := &models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(50),
+			Fee:         models.MakeUint256(10),
+		},
+		ToStateID:  2,
+		ToPubKeyID: 6,
+	}
+
+	expected, err := s.testTx.Create2transferSerialize(nil, []testtx.TxCreate2Transfer{newTxCreate2Transfer(transfer)})
+	s.NoError(err)
+
+	encoded, err := EncodeCreate2TransferForCommitment(transfer)
 	s.NoError(err)
 
 	s.Equal(expected, encoded)
@@ -242,6 +272,41 @@ func (s *EncoderTestSuite) TestSerializeTransfers() {
 	s.NoError(err)
 
 	serialized, err := SerializeTransfers([]models.Transfer{transfer, transfer2})
+	s.NoError(err)
+
+	s.Equal(expected, serialized)
+}
+
+func (s *EncoderTestSuite) TestSerializeCreate2Transfers() {
+	transfer := models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(50),
+			Fee:         models.MakeUint256(10),
+		},
+		ToStateID:  2,
+		ToPubKeyID: 6,
+	}
+	transfer2 := models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 2,
+			Amount:      models.MakeUint256(200),
+			Fee:         models.MakeUint256(10),
+		},
+		ToStateID:  3,
+		ToPubKeyID: 5,
+	}
+
+	expected, err := s.testTx.Create2transferSerialize(
+		nil,
+		[]testtx.TxCreate2Transfer{
+			newTxCreate2Transfer(&transfer),
+			newTxCreate2Transfer(&transfer2),
+		},
+	)
+	s.NoError(err)
+
+	serialized, err := SerializeCreate2Transfers([]models.Create2Transfer{transfer, transfer2})
 	s.NoError(err)
 
 	s.Equal(expected, serialized)

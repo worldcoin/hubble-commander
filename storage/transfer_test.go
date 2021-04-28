@@ -72,7 +72,7 @@ func (s *TransferTestSuite) TestGetTransfer_NonExistentTransfer() {
 	s.Nil(res)
 }
 
-func (s *TransferTestSuite) TestGetPendingTransfers_AddAndRetrieve() {
+func (s *TransferTestSuite) TestGetPendingTransfers() {
 	commitment := &models.Commitment{}
 	id, err := s.storage.AddCommitment(commitment)
 	s.NoError(err)
@@ -219,6 +219,30 @@ func (s *TransferTestSuite) TestGetUserTransfersByPublicKey_NoTransfers() {
 	s.NoError(err)
 	s.Len(userTransfers, 0)
 	s.NotNil(userTransfers)
+}
+
+func (s *TransferTestSuite) TestGetTransfersByCommitmentID() {
+	commitmentID, err := s.storage.AddCommitment(&commitment)
+	s.NoError(err)
+
+	transfer1 := transfer
+	transfer1.IncludedInCommitment = commitmentID
+
+	err = s.storage.AddTransfer(&transfer1)
+	s.NoError(err)
+
+	commitments, err := s.storage.GetTransfersByCommitmentID(*commitmentID)
+	s.NoError(err)
+	s.Len(commitments, 1)
+}
+
+func (s *TransferTestSuite) TestGetTransfersByCommitmentID_NoTransfers() {
+	commitmentID, err := s.storage.AddCommitment(&commitment)
+	s.NoError(err)
+
+	commitments, err := s.storage.GetTransfersByCommitmentID(*commitmentID)
+	s.NoError(err)
+	s.Len(commitments, 0)
 }
 
 func TestTransferTestSuite(t *testing.T) {

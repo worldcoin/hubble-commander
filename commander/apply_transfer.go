@@ -9,9 +9,6 @@ import (
 )
 
 var (
-	ErrStateTreeIsNil        = errors.New("state tree cannot be nil")
-	ErrTransactionIsNil      = errors.New("transaction cannot be nil")
-	ErrUserStateIsNil        = errors.New("sender/receiver state cannot be nil")
 	ErrIncorrectTokenIndices = errors.New("sender's, receiver's and fee receiver's token indices are not the same")
 	ErrNonceTooLow           = errors.New("nonce too low")
 	ErrNonceTooHigh          = errors.New("nonce too high")
@@ -23,13 +20,6 @@ func ApplyTransfer(
 	transfer *models.Transfer,
 	feeReceiverTokenIndex models.Uint256,
 ) (transferError, appError error) {
-	if stateTree == nil {
-		return nil, ErrStateTreeIsNil
-	}
-	if transfer == nil {
-		return nil, ErrTransactionIsNil
-	}
-
 	senderLeaf, err := stateTree.Leaf(transfer.FromStateID)
 	if err != nil {
 		return nil, err
@@ -37,10 +27,6 @@ func ApplyTransfer(
 	receiverLeaf, err := stateTree.Leaf(transfer.ToStateID)
 	if err != nil {
 		return nil, err
-	}
-
-	if senderLeaf == nil || receiverLeaf == nil {
-		return ErrUserStateIsNil, nil
 	}
 
 	senderState := senderLeaf.UserState
@@ -58,17 +44,18 @@ func ApplyTransfer(
 	if err != nil {
 		return err, nil
 	}
-	if reflect.DeepEqual(newSenderState, senderState) && reflect.DeepEqual(newReceiverState, receiverState) {
-		return nil, nil
+	if !reflect.DeepEqual(newSenderState, senderState) {
+		err = stateTree.Set(transfer.FromStateID, &newSenderState)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	err = stateTree.Set(transfer.FromStateID, &newSenderState)
-	if err != nil {
-		return nil, err
-	}
-	err = stateTree.Set(transfer.ToStateID, &newReceiverState)
-	if err != nil {
-		return nil, err
+	if !reflect.DeepEqual(newReceiverState, receiverState) {
+		err = stateTree.Set(transfer.ToStateID, &newReceiverState)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return nil, nil
@@ -106,20 +93,4 @@ func CalculateStateAfterTransfer(
 	newReceiverState.Balance = *newReceiverState.Balance.Add(&transfer.Amount)
 
 	return newSenderState, newReceiverState, nil
-}
-
-func ApplyFee(stateTree *storage.StateTree, feeReceiverIndex uint32, fee models.Uint256) error {
-	feeReceiver, err := stateTree.Leaf(feeReceiverIndex)
-	if err != nil {
-		return err
-	}
-
-	feeReceiver.Balance = *feeReceiver.Balance.Add(&fee)
-
-	err = stateTree.Set(feeReceiverIndex, &feeReceiver.UserState)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
