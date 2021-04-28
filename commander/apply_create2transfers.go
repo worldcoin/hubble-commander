@@ -19,16 +19,18 @@ func ApplyCreate2Transfers(
 	cfg *config.RollupConfig,
 ) (
 	[]models.Create2Transfer,
+	[]models.Create2Transfer,
 	[]uint32,
 	error,
 ) {
 	stateTree := st.NewStateTree(storage)
 	appliedTransfers := make([]models.Create2Transfer, 0, cfg.TxsPerCommitment)
+	invalidTransfers := make([]models.Create2Transfer, 0)
 	combinedFee := models.MakeUint256(0)
 
 	feeReceiverLeaf, err := stateTree.Leaf(cfg.FeeReceiverIndex)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	feeReceiverTokenIndex := feeReceiverLeaf.TokenIndex
@@ -38,15 +40,17 @@ func ApplyCreate2Transfers(
 
 		if uint32InSlice(transfer.ToPubKeyID, alreadyAddedPubKeyIDs) {
 			logAndSaveTransactionError(storage, &transfer.TransactionBase, ErrAccountAlreadyExists)
+			invalidTransfers = append(invalidTransfers, transfer)
 			continue
 		}
 
 		addedPubKeyID, transferError, appError := ApplyCreate2Transfer(storage, &transfer, feeReceiverTokenIndex)
 		if appError != nil {
-			return nil, nil, appError
+			return nil, nil, nil, appError
 		}
 		if transferError != nil {
 			logAndSaveTransactionError(storage, &transfer.TransactionBase, transferError)
+			invalidTransfers = append(invalidTransfers, transfer)
 			continue
 		}
 
@@ -62,11 +66,11 @@ func ApplyCreate2Transfers(
 	if len(appliedTransfers) > 0 {
 		err = ApplyFee(stateTree, cfg.FeeReceiverIndex, combinedFee)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 	}
 
-	return appliedTransfers, alreadyAddedPubKeyIDs, nil
+	return appliedTransfers, invalidTransfers, alreadyAddedPubKeyIDs, nil
 }
 
 func uint32InSlice(a uint32, list []uint32) bool {

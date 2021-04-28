@@ -30,7 +30,7 @@ func createCreate2TransferCommitments(
 			return nil, err
 		}
 
-		appliedTransfers, addedPubKeyIDs, err := ApplyCreate2Transfers(storage, pendingTransfers, alreadyAddedPubKeyIDs, cfg)
+		appliedTransfers, invalidTransfers, addedPubKeyIDs, err := ApplyCreate2Transfers(storage, pendingTransfers, alreadyAddedPubKeyIDs, cfg)
 		if err != nil {
 			return nil, err
 		}
@@ -45,7 +45,7 @@ func createCreate2TransferCommitments(
 			break
 		}
 
-		pendingTransfers = removeCreate2Transfer(pendingTransfers, appliedTransfers)
+		pendingTransfers = removeCreate2Transfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
 
 		serializedTxs, err := encoder.SerializeCreate2Transfers(appliedTransfers)
 		if err != nil {
