@@ -35,9 +35,7 @@ func createCreate2TransferCommitments(
 			return nil, err
 		}
 
-		for i := range addedPubKeyIDs {
-			alreadyAddedPubKeyIDs = append(alreadyAddedPubKeyIDs, addedPubKeyIDs[i])
-		}
+		alreadyAddedPubKeyIDs = append(alreadyAddedPubKeyIDs, addedPubKeyIDs...)
 
 		if len(appliedTransfers) < int(cfg.TxsPerCommitment) {
 			err = stateTree.RevertTo(*initialStateRoot)
