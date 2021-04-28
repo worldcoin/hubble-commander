@@ -173,11 +173,48 @@ func EncodeTransferForCommitment(transfer *models.Transfer) ([]byte, error) {
 	return arr, nil
 }
 
+// Encodes a create2Transfer in compact format (without signatures) for the inclusion in the commitment
+func EncodeCreate2TransferForCommitment(transfer *models.Create2Transfer) ([]byte, error) {
+	amount, err := EncodeDecimal(transfer.Amount)
+	if err != nil {
+		return nil, err
+	}
+
+	fee, err := EncodeDecimal(transfer.Fee)
+	if err != nil {
+		return nil, err
+	}
+
+	arr := make([]byte, 16)
+
+	binary.BigEndian.PutUint32(arr[0:4], transfer.FromStateID)
+	binary.BigEndian.PutUint32(arr[4:8], transfer.ToStateID)
+	binary.BigEndian.PutUint32(arr[8:12], transfer.ToPubKeyID)
+	binary.BigEndian.PutUint16(arr[12:14], amount)
+	binary.BigEndian.PutUint16(arr[14:16], fee)
+
+	return arr, nil
+}
+
 func SerializeTransfers(transfers []models.Transfer) ([]byte, error) {
 	buf := make([]byte, 0, len(transfers)*12)
 
 	for i := range transfers {
 		encoded, err := EncodeTransferForCommitment(&transfers[i])
+		if err != nil {
+			return nil, err
+		}
+		buf = append(buf, encoded...)
+	}
+
+	return buf, nil
+}
+
+func SerializeCreate2Transfers(transfers []models.Create2Transfer) ([]byte, error) {
+	buf := make([]byte, 0, len(transfers)*16)
+
+	for i := range transfers {
+		encoded, err := EncodeCreate2TransferForCommitment(&transfers[i])
 		if err != nil {
 			return nil, err
 		}
