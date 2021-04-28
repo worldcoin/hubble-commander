@@ -88,8 +88,8 @@ func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AllValid() {
 	transfers := generateValidCreate2Transfers(3)
 
-	var addedAccounts []uint32
-	validTransfers, invalidTransfers, err := ApplyCreate2Transfers(s.storage, transfers, &addedAccounts, s.cfg)
+	addedAccounts := make(map[uint32]struct{})
+	validTransfers, invalidTransfers, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 3)
@@ -101,8 +101,8 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 	transfers := generateValidCreate2Transfers(2)
 	transfers = append(transfers, generateInvalidCreate2Transfers(3)...)
 
-	var addedAccounts []uint32
-	validTransfers, invalidTransfers, err := ApplyCreate2Transfers(s.storage, transfers, &addedAccounts, s.cfg)
+	addedAccounts := make(map[uint32]struct{})
+	validTransfers, invalidTransfers, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 2)
@@ -113,8 +113,8 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_MoreThanSpecifiedInConfigTxsPerCommitment() {
 	transfers := generateValidCreate2Transfers(13)
 
-	var addedAccounts []uint32
-	validTransfers, invalidTransfers, err := ApplyCreate2Transfers(s.storage, transfers, &addedAccounts, s.cfg)
+	addedAccounts := make(map[uint32]struct{})
+	validTransfers, invalidTransfers, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 6)
@@ -129,9 +129,11 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_FailsTransfer
 	transfers := generateValidCreate2Transfers(3)
 	transfers[2].ToPubKeyID = 10
 
-	addedAccounts := []uint32{10}
+	addedAccounts := map[uint32]struct{}{
+		10: {},
+	}
 
-	validTransfers, invalidTransfers, err := ApplyCreate2Transfers(s.storage, transfers, &addedAccounts, s.cfg)
+	validTransfers, invalidTransfers, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 2)
@@ -152,9 +154,11 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 		s.NoError(err)
 	}
 
-	addedAccounts := []uint32{10}
+	addedAccounts := map[uint32]struct{}{
+		10: {},
+	}
 
-	validTransfers, invalidTransfers, err := ApplyCreate2Transfers(s.storage, transfers, &addedAccounts, s.cfg)
+	validTransfers, invalidTransfers, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 2)

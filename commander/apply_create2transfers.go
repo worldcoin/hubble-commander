@@ -15,7 +15,7 @@ var (
 func ApplyCreate2Transfers(
 	storage *st.Storage,
 	transfers []models.Create2Transfer,
-	addedPubKeyIDs *[]uint32,
+	addedPubKeyIDs map[uint32]struct{},
 	cfg *config.RollupConfig,
 ) (
 	[]models.Create2Transfer,
@@ -37,7 +37,7 @@ func ApplyCreate2Transfers(
 	for i := range transfers {
 		transfer := transfers[i]
 
-		if uint32InSlice(transfer.ToPubKeyID, *addedPubKeyIDs) {
+		if _, ok := addedPubKeyIDs[transfer.ToPubKeyID]; ok {
 			logAndSaveTransactionError(storage, &transfer.TransactionBase, ErrAccountAlreadyExists)
 			invalidTransfers = append(invalidTransfers, transfer)
 			continue
@@ -54,7 +54,7 @@ func ApplyCreate2Transfers(
 		}
 
 		appliedTransfers = append(appliedTransfers, transfer)
-		*addedPubKeyIDs = append(*addedPubKeyIDs, *addedPubKeyID)
+		addedPubKeyIDs[*addedPubKeyID] = struct{}{}
 		combinedFee = *combinedFee.Add(&transfer.Fee)
 
 		if uint32(len(appliedTransfers)) == cfg.TxsPerCommitment {
@@ -70,13 +70,4 @@ func ApplyCreate2Transfers(
 	}
 
 	return appliedTransfers, invalidTransfers, nil
-}
-
-func uint32InSlice(a uint32, list []uint32) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
-	return false
 }
