@@ -3,33 +3,33 @@ package config
 import (
 	"encoding/hex"
 	"io/ioutil"
-	"path"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/utils"
 	"gopkg.in/yaml.v2"
 )
 
-func getGenesisAccounts(filename string) ([]models.GenesisAccount, error) {
-	var rawGenesisAccount []models.RawGenesisAccount
+func readGenesisFile(filepath string) ([]models.GenesisAccount, error) {
+	var rawGenesisAccounts []models.RawGenesisAccount
 
-	genesisFilePath := path.Join(utils.GetProjectRoot(), filename)
-
-	yamlFile, err := ioutil.ReadFile(genesisFilePath)
+	yamlFile, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		return nil, err
 	}
-	err = yaml.Unmarshal(yamlFile, &rawGenesisAccount)
+	err = yaml.Unmarshal(yamlFile, &rawGenesisAccounts)
 	if err != nil {
 		return nil, err
 	}
 
-	genesisAccounts := make([]models.GenesisAccount, 0, len(rawGenesisAccount))
+	return decodeRawGenesisAccounts(rawGenesisAccounts)
+}
 
-	for i := range rawGenesisAccount {
+func decodeRawGenesisAccounts(rawGenesisAccounts []models.RawGenesisAccount) ([]models.GenesisAccount, error) {
+	genesisAccounts := make([]models.GenesisAccount, 0, len(rawGenesisAccounts))
+
+	for i := range rawGenesisAccounts {
 		var privateKey [32]byte
 
-		decodedPrivateKey, err := hex.DecodeString(rawGenesisAccount[i].PrivateKey)
+		decodedPrivateKey, err := hex.DecodeString(rawGenesisAccounts[i].PrivateKey)
 		if err != nil {
 			return nil, err
 		}
@@ -37,7 +37,7 @@ func getGenesisAccounts(filename string) ([]models.GenesisAccount, error) {
 
 		genesisAccounts = append(genesisAccounts, models.GenesisAccount{
 			PrivateKey: privateKey,
-			Balance:    rawGenesisAccount[i].Balance,
+			Balance:    rawGenesisAccounts[i].Balance,
 		})
 	}
 
