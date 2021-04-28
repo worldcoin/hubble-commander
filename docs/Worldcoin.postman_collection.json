@@ -222,6 +222,30 @@
             "response": []
         },
         {
+            "name": "hubble_getCommitment",
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getCommitment\",\n    \"params\": [1],\n    \"id\": 1\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "localhost:8080",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8080"
+                }
+            },
+            "response": []
+        },
+        {
             "name": "hubble_getNetworkInfo",
             "request": {
                 "method": "POST",
