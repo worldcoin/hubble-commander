@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"math/rand"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/db"
@@ -318,4 +319,26 @@ func (s *StateTreeTestSuite) TestRevertTo() {
 
 func TestMerkleTreeTestSuite(t *testing.T) {
 	suite.Run(t, new(StateTreeTestSuite))
+}
+
+func BenchmarkStateTreeSet(b *testing.B) {
+	testDB, err := db.NewTestDB()
+	require.NoError(b, err)
+
+	storage := NewTestStorage(testDB.DB)
+	tree := NewStateTree(storage)
+
+	err = storage.AddAccountIfNotExists(&account1)
+	require.NoError(b, err)
+
+	for i := 0; i < b.N; i++ {
+		state := &models.UserState{
+			PubKeyID:   account1.PubKeyID,
+			TokenIndex: models.MakeUint256(int64(rand.Uint64())),
+			Balance:    models.MakeUint256(int64(rand.Uint64())),
+			Nonce:      models.MakeUint256(int64(rand.Uint64())),
+		}
+		err = tree.Set(rand.Uint32(), state)
+		require.NoError(b, err)
+	}
 }
