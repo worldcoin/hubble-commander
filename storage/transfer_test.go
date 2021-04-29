@@ -97,6 +97,30 @@ func (s *TransferTestSuite) TestGetPendingTransfers() {
 	s.Equal([]models.Transfer{transfer, transfer2}, res)
 }
 
+func (s *TransferTestSuite) TestGetPendingTransfers_OrdersTransfersByNonceAscending() {
+	transfer.TransactionBase.Nonce = models.MakeUint256(1)
+	transfer.Hash = utils.RandomHash()
+	transfer2 := transfer
+	transfer2.TransactionBase.Nonce = models.MakeUint256(4)
+	transfer2.Hash = utils.RandomHash()
+	transfer3 := transfer
+	transfer3.TransactionBase.Nonce = models.MakeUint256(7)
+	transfer3.Hash = utils.RandomHash()
+	transfer4 := transfer
+	transfer4.TransactionBase.Nonce = models.MakeUint256(5)
+	transfer4.Hash = utils.RandomHash()
+
+	for _, transfer := range []*models.Transfer{&transfer, &transfer2, &transfer3, &transfer4} {
+		err := s.storage.AddTransfer(transfer)
+		s.NoError(err)
+	}
+
+	res, err := s.storage.GetPendingTransfers()
+	s.NoError(err)
+
+	s.Equal([]models.Transfer{transfer, transfer2, transfer4, transfer3}, res)
+}
+
 func (s *TransferTestSuite) TestGetUserTransfers() {
 	transfer1 := transfer
 	transfer1.Hash = utils.RandomHash()
