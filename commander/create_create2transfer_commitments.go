@@ -58,7 +58,7 @@ func createCreate2TransferCommitments(
 		}
 
 		log.Printf("Creating a %s commitment from %d transactions", txtype.Create2Transfer.String(), len(appliedTransfers))
-		commitment, err := createAndStoreCommitment(storage, txtype.Create2Transfer, cfg.FeeReceiverIndex, serializedTxs, combinedSignature)
+		commitment, err := createAndStoreCommitment(storage, txtype.Create2Transfer, cfg.FeeReceiverPubKeyID, serializedTxs, combinedSignature)
 		if err != nil {
 			return nil, err
 		}

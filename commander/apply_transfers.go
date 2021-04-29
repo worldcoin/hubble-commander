@@ -19,7 +19,7 @@ func ApplyTransfers(
 	appliedTransfers = make([]models.Transfer, 0, cfg.TxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
-	feeReceiverLeaf, err := stateTree.Leaf(cfg.FeeReceiverIndex)
+	feeReceiverLeaf, err := stateTree.Leaf(cfg.FeeReceiverPubKeyID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -47,7 +47,7 @@ func ApplyTransfers(
 	}
 
 	if len(appliedTransfers) > 0 {
-		err = ApplyFee(stateTree, cfg.FeeReceiverIndex, combinedFee)
+		err = ApplyFee(stateTree, cfg.FeeReceiverPubKeyID, combinedFee)
 		if err != nil {
 			return nil, nil, err
 		}

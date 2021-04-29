@@ -33,8 +33,8 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 	s.storage = storage.NewTestStorage(testDB.DB)
 	s.tree = storage.NewStateTree(s.storage)
 	s.cfg = &config.RollupConfig{
-		FeeReceiverIndex: 3,
-		TxsPerCommitment: 6,
+		FeeReceiverPubKeyID: 3,
+		TxsPerCommitment:    6,
 	}
 
 	senderState := models.UserState{

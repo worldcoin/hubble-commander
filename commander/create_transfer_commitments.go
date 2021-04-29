@@ -58,7 +58,7 @@ func createTransferCommitments(
 			return nil, err
 		}
 
-		commitment, err := createAndStoreCommitment(storage, txtype.Transfer, cfg.FeeReceiverIndex, serializedTxs, combinedSignature)
+		commitment, err := createAndStoreCommitment(storage, txtype.Transfer, cfg.FeeReceiverPubKeyID, serializedTxs, combinedSignature)
 		if err != nil {
 			return nil, err
 		}
