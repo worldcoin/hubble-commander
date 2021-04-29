@@ -33,8 +33,8 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 	s.storage = storage.NewTestStorage(testDB.DB)
 	s.tree = storage.NewStateTree(s.storage)
 	s.cfg = &config.RollupConfig{
-		FeeReceiverIndex: 3,
-		TxsPerCommitment: 6,
+		FeeReceiverPubKeyID: 3,
+		TxsPerCommitment:    6,
 	}
 
 	senderState := models.UserState{
@@ -89,7 +89,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AllValid() {
 	transfers := generateValidCreate2Transfers(3)
 
 	addedAccounts := make(map[uint32]struct{})
-	validTransfers, invalidTransfers, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
+	validTransfers, invalidTransfers, _, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 3)
@@ -102,7 +102,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 	transfers = append(transfers, generateInvalidCreate2Transfers(3)...)
 
 	addedAccounts := make(map[uint32]struct{})
-	validTransfers, invalidTransfers, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
+	validTransfers, invalidTransfers, _, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 2)
@@ -114,7 +114,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_MoreThanSpeci
 	transfers := generateValidCreate2Transfers(13)
 
 	addedAccounts := make(map[uint32]struct{})
-	validTransfers, invalidTransfers, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
+	validTransfers, invalidTransfers, _, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 6)
@@ -133,7 +133,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_FailsTransfer
 		10: {},
 	}
 
-	validTransfers, invalidTransfers, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
+	validTransfers, invalidTransfers, _, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 2)
@@ -158,7 +158,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 		10: {},
 	}
 
-	validTransfers, invalidTransfers, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
+	validTransfers, invalidTransfers, _, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 2)
