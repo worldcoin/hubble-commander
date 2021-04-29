@@ -19,7 +19,7 @@ func createCreate2TransferCommitments(
 ) ([]models.Commitment, error) {
 	stateTree := st.NewStateTree(storage)
 	commitments := make([]models.Commitment, 0, 32)
-	alreadyAddedPubKeyIDs := make([]uint32, 0, 1)
+	alreadyAddedPubKeyIDs := make(map[uint32]struct{})
 
 	for {
 		if len(commitments) >= int(cfg.MaxCommitmentsPerBatch) {
@@ -32,13 +32,9 @@ func createCreate2TransferCommitments(
 			return nil, err
 		}
 
-		appliedTransfers, addedPubKeyIDs, err := ApplyCreate2Transfers(storage, pendingTransfers, alreadyAddedPubKeyIDs, cfg)
+		appliedTransfers, invalidTransfers, err := ApplyCreate2Transfers(storage, pendingTransfers, alreadyAddedPubKeyIDs, cfg)
 		if err != nil {
 			return nil, err
-		}
-
-		for i := range addedPubKeyIDs {
-			alreadyAddedPubKeyIDs = append(alreadyAddedPubKeyIDs, addedPubKeyIDs[i])
 		}
 
 		if len(appliedTransfers) < int(cfg.TxsPerCommitment) {
@@ -49,7 +45,7 @@ func createCreate2TransferCommitments(
 			break
 		}
 
-		pendingTransfers = removeCreate2Transfer(pendingTransfers, appliedTransfers)
+		pendingTransfers = removeCreate2Transfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
 
 		serializedTxs, err := encoder.SerializeCreate2Transfers(appliedTransfers)
 		if err != nil {

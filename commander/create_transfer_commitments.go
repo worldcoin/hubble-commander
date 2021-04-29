@@ -33,7 +33,7 @@ func createTransferCommitments(
 			return nil, err
 		}
 
-		appliedTransfers, err := ApplyTransfers(storage, pendingTransfers, cfg)
+		appliedTransfers, invalidTransfers, err := ApplyTransfers(storage, pendingTransfers, cfg)
 		if err != nil {
 			return nil, err
 		}
@@ -46,7 +46,7 @@ func createTransferCommitments(
 			break
 		}
 
-		pendingTransfers = removeTransfer(pendingTransfers, appliedTransfers)
+		pendingTransfers = removeTransfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
 
 		serializedTxs, err := encoder.SerializeTransfers(appliedTransfers)
 		if err != nil {
