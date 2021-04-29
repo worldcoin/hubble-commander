@@ -23,7 +23,7 @@ func (s *DBTestSuite) SetupSuite() {
 
 func (s *DBTestSuite) SetupTest() {
 	cfg := config.GetTestConfig().DB
-	err := recreateDatabase(&cfg)
+	err := RecreateDatabase(&cfg)
 	s.NoError(err)
 
 	db, err := NewDatabase(&cfg)

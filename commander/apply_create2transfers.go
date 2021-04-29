@@ -15,15 +15,15 @@ var (
 func ApplyCreate2Transfers(
 	storage *st.Storage,
 	transfers []models.Create2Transfer,
-	alreadyAddedPubKeyIDs []uint32,
+	addedPubKeyIDs map[uint32]struct{},
 	cfg *config.RollupConfig,
 ) (
-	[]models.Create2Transfer,
-	[]uint32,
-	error,
+	appliedTransfers []models.Create2Transfer,
+	invalidTransfers []models.Create2Transfer,
+	err error,
 ) {
 	stateTree := st.NewStateTree(storage)
-	appliedTransfers := make([]models.Create2Transfer, 0, cfg.TxsPerCommitment)
+	appliedTransfers = make([]models.Create2Transfer, 0, cfg.TxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
 	feeReceiverLeaf, err := stateTree.Leaf(cfg.FeeReceiverIndex)
@@ -36,8 +36,9 @@ func ApplyCreate2Transfers(
 	for i := range transfers {
 		transfer := transfers[i]
 
-		if uint32InSlice(transfer.ToPubKeyID, alreadyAddedPubKeyIDs) {
+		if _, ok := addedPubKeyIDs[transfer.ToPubKeyID]; ok {
 			logAndSaveTransactionError(storage, &transfer.TransactionBase, ErrAccountAlreadyExists)
+			invalidTransfers = append(invalidTransfers, transfer)
 			continue
 		}
 
@@ -47,11 +48,12 @@ func ApplyCreate2Transfers(
 		}
 		if transferError != nil {
 			logAndSaveTransactionError(storage, &transfer.TransactionBase, transferError)
+			invalidTransfers = append(invalidTransfers, transfer)
 			continue
 		}
 
 		appliedTransfers = append(appliedTransfers, transfer)
-		alreadyAddedPubKeyIDs = append(alreadyAddedPubKeyIDs, *addedPubKeyID)
+		addedPubKeyIDs[*addedPubKeyID] = struct{}{}
 		combinedFee = *combinedFee.Add(&transfer.Fee)
 
 		if uint32(len(appliedTransfers)) == cfg.TxsPerCommitment {
@@ -66,14 +68,5 @@ func ApplyCreate2Transfers(
 		}
 	}
 
-	return appliedTransfers, alreadyAddedPubKeyIDs, nil
-}
-
-func uint32InSlice(a uint32, list []uint32) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
-	return false
+	return appliedTransfers, invalidTransfers, nil
 }

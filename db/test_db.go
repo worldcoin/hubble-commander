@@ -12,7 +12,7 @@ type TestDB struct {
 func NewTestDB() (*TestDB, error) {
 	cfg := config.GetTestConfig().DB
 
-	err := recreateDatabase(&cfg)
+	err := RecreateDatabase(&cfg)
 	if err != nil {
 		return nil, err
 	}
