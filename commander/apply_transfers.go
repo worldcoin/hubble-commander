@@ -19,16 +19,16 @@ func ApplyTransfers(
 	appliedTransfers = make([]models.Transfer, 0, cfg.TxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
-	feeReceiverLeaf, err := stateTree.Leaf(cfg.FeeReceiverPubKeyID)
+	senderLeaf, err := stateTree.Leaf(transfers[0].FromStateID)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	feeReceiverTokenIndex := feeReceiverLeaf.TokenIndex
+	commitmentTokenIndex := senderLeaf.TokenIndex
 
 	for i := range transfers {
 		transfer := transfers[i]
-		transferError, appError := ApplyTransfer(stateTree, &transfer, feeReceiverTokenIndex)
+		transferError, appError := ApplyTransfer(stateTree, &transfer, commitmentTokenIndex)
 		if appError != nil {
 			return nil, nil, appError
 		}

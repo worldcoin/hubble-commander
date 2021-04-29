@@ -26,12 +26,12 @@ func ApplyCreate2Transfers(
 	appliedTransfers = make([]models.Create2Transfer, 0, cfg.TxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
-	feeReceiverLeaf, err := stateTree.Leaf(cfg.FeeReceiverPubKeyID)
+	senderLeaf, err := stateTree.Leaf(transfers[0].FromStateID)
 	if err != nil {
 		return nil, nil, err
 	}
-
-	feeReceiverTokenIndex := feeReceiverLeaf.TokenIndex
+	// TODO get token index from transfers[0].FromStateID -> SenderUserState.TokenIndex
+	commitmentTokenIndex := senderLeaf.TokenIndex
 
 	for i := range transfers {
 		transfer := transfers[i]
@@ -42,7 +42,7 @@ func ApplyCreate2Transfers(
 			continue
 		}
 
-		addedPubKeyID, transferError, appError := ApplyCreate2Transfer(storage, &transfer, feeReceiverTokenIndex)
+		addedPubKeyID, transferError, appError := ApplyCreate2Transfer(storage, &transfer, commitmentTokenIndex)
 		if appError != nil {
 			return nil, nil, appError
 		}
@@ -62,6 +62,7 @@ func ApplyCreate2Transfers(
 	}
 
 	if len(appliedTransfers) > 0 {
+		// TODO get fee receiver stateId by tokenindex
 		err = ApplyFee(stateTree, cfg.FeeReceiverPubKeyID, combinedFee)
 		if err != nil {
 			return nil, nil, err
