@@ -55,7 +55,7 @@ func (s *CommanderTestSuite) TestStartAndWait() {
 	}()
 	s.Eventually(func() bool {
 		return s.cmd.IsRunning()
-	}, 2*time.Second, 100*time.Millisecond)
+	}, 15*time.Second, 100*time.Millisecond)
 
 	err := s.cmd.Stop()
 	s.NoError(err)
