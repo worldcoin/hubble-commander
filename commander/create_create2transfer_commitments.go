@@ -32,12 +32,12 @@ func createCreate2TransferCommitments(
 			return nil, err
 		}
 
-		appliedTransfers, invalidTransfers, err := ApplyCreate2Transfers(storage, pendingTransfers, alreadyAddedPubKeyIDs, cfg)
+		appliedTx, invalidTx, feeReceiverStateID, err := ApplyCreate2Transfers(storage, pendingTransfers, alreadyAddedPubKeyIDs, cfg)
 		if err != nil {
 			return nil, err
 		}
 
-		if len(appliedTransfers) < int(cfg.TxsPerCommitment) {
+		if len(appliedTx) < int(cfg.TxsPerCommitment) {
 			err = stateTree.RevertTo(*initialStateRoot)
 			if err != nil {
 				return nil, err
@@ -45,25 +45,25 @@ func createCreate2TransferCommitments(
 			break
 		}
 
-		pendingTransfers = removeCreate2Transfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
+		pendingTransfers = removeCreate2Transfer(pendingTransfers, append(appliedTx, invalidTx...))
 
-		serializedTxs, err := encoder.SerializeCreate2Transfers(appliedTransfers)
+		serializedTxs, err := encoder.SerializeCreate2Transfers(appliedTx)
 		if err != nil {
 			return nil, err
 		}
 
-		combinedSignature, err := combineCreate2TransferSignatures(appliedTransfers)
+		combinedSignature, err := combineCreate2TransferSignatures(appliedTx)
 		if err != nil {
 			return nil, err
 		}
 
-		log.Printf("Creating a %s commitment from %d transactions", txtype.Create2Transfer.String(), len(appliedTransfers))
-		commitment, err := createAndStoreCommitment(storage, txtype.Create2Transfer, cfg.FeeReceiverIndex, serializedTxs, combinedSignature)
+		log.Printf("Creating a %s commitment from %d transactions", txtype.Create2Transfer.String(), len(appliedTx))
+		commitment, err := createAndStoreCommitment(storage, txtype.Create2Transfer, *feeReceiverStateID, serializedTxs, combinedSignature)
 		if err != nil {
 			return nil, err
 		}
 
-		err = markCreate2TransfersAsIncluded(storage, appliedTransfers, commitment.ID)
+		err = markCreate2TransfersAsIncluded(storage, appliedTx, commitment.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -72,7 +72,7 @@ func createCreate2TransferCommitments(
 		log.Printf(
 			"Created a %s commitment from %d transactions in %d ms",
 			txtype.Create2Transfer,
-			len(appliedTransfers),
+			len(appliedTx),
 			time.Since(startTime).Milliseconds(),
 		)
 	}

@@ -106,7 +106,7 @@ The Docker container will be started and stopped automatically.
 
 Start commander in a separate terminal window and wait until it finished bootstrapping:
 ```shell
-make prune-run
+make run-prune
 ```
 
 Run the E2E tests:

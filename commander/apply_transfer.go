@@ -18,7 +18,7 @@ var (
 func ApplyTransfer(
 	stateTree *storage.StateTree,
 	transfer *models.Transfer,
-	feeReceiverTokenIndex models.Uint256,
+	commitmentTokenIndex models.Uint256,
 ) (transferError, appError error) {
 	senderLeaf, err := stateTree.Leaf(transfer.FromStateID)
 	if err != nil {
@@ -32,7 +32,7 @@ func ApplyTransfer(
 	senderState := senderLeaf.UserState
 	receiverState := receiverLeaf.UserState
 
-	if senderState.TokenIndex.Cmp(&feeReceiverTokenIndex) != 0 && receiverState.TokenIndex.Cmp(&feeReceiverTokenIndex) != 0 {
+	if senderState.TokenIndex.Cmp(&commitmentTokenIndex) != 0 && receiverState.TokenIndex.Cmp(&commitmentTokenIndex) != 0 {
 		return nil, ErrIncorrectTokenIndices
 	}
 

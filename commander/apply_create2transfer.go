@@ -8,12 +8,12 @@ import (
 func ApplyCreate2Transfer(
 	storage *st.Storage,
 	create2Transfer *models.Create2Transfer,
-	feeReceiverTokenIndex models.Uint256,
+	commitmentTokenIndex models.Uint256,
 ) (addedPubKeyID *uint32, create2TransferError, appError error) {
 	stateTree := st.NewStateTree(storage)
 	emptyUserState := models.UserState{
 		PubKeyID:   create2Transfer.ToPubKeyID,
-		TokenIndex: feeReceiverTokenIndex,
+		TokenIndex: commitmentTokenIndex,
 		Balance:    models.MakeUint256(0),
 		Nonce:      models.MakeUint256(0),
 	}
@@ -33,7 +33,7 @@ func ApplyCreate2Transfer(
 		ToStateID:       *nextAvailableStateID,
 	}
 
-	create2TransferError, appError = ApplyTransfer(stateTree, &transfer, feeReceiverTokenIndex)
+	create2TransferError, appError = ApplyTransfer(stateTree, &transfer, commitmentTokenIndex)
 	if create2TransferError != nil || appError != nil {
 		return nil, create2TransferError, appError
 	}

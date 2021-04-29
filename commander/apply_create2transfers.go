@@ -20,18 +20,23 @@ func ApplyCreate2Transfers(
 ) (
 	appliedTransfers []models.Create2Transfer,
 	invalidTransfers []models.Create2Transfer,
+	feeReceiverStateID *uint32,
 	err error,
 ) {
+	if len(transfers) == 0 {
+		return
+	}
+
 	stateTree := st.NewStateTree(storage)
 	appliedTransfers = make([]models.Create2Transfer, 0, cfg.TxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
-	feeReceiverLeaf, err := stateTree.Leaf(cfg.FeeReceiverIndex)
+	senderLeaf, err := stateTree.Leaf(transfers[0].FromStateID)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	feeReceiverTokenIndex := feeReceiverLeaf.TokenIndex
+	commitmentTokenIndex := senderLeaf.TokenIndex
 
 	for i := range transfers {
 		transfer := transfers[i]
@@ -42,9 +47,9 @@ func ApplyCreate2Transfers(
 			continue
 		}
 
-		addedPubKeyID, transferError, appError := ApplyCreate2Transfer(storage, &transfer, feeReceiverTokenIndex)
+		addedPubKeyID, transferError, appError := ApplyCreate2Transfer(storage, &transfer, commitmentTokenIndex)
 		if appError != nil {
-			return nil, nil, appError
+			return nil, nil, nil, appError
 		}
 		if transferError != nil {
 			logAndSaveTransactionError(storage, &transfer.TransactionBase, transferError)
@@ -62,11 +67,11 @@ func ApplyCreate2Transfers(
 	}
 
 	if len(appliedTransfers) > 0 {
-		err = ApplyFee(stateTree, cfg.FeeReceiverIndex, combinedFee)
+		feeReceiverStateID, err = ApplyFee(stateTree, storage, cfg.FeeReceiverPubKeyID, commitmentTokenIndex, combinedFee)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 	}
 
-	return appliedTransfers, invalidTransfers, nil
+	return appliedTransfers, invalidTransfers, feeReceiverStateID, nil
 }
