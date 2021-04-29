@@ -65,13 +65,11 @@ func TestBenchCommander(t *testing.T) {
 
 				wallet := walletForState[stateId]
 				nonce := nonces[stateId]
-
-				var to uint32
+				to := stateId
 				
 				for to == stateId {
 					to = stateIds[rand.Intn(len(stateIds))]
 				}
-
 				
 				hash := sendTransfer(t, commander, wallet, stateId, to, *nonce)
 				if hash != nil {
