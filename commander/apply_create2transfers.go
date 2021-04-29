@@ -62,8 +62,8 @@ func ApplyCreate2Transfers(
 	}
 
 	if len(appliedTransfers) > 0 {
-		// TODO get fee receiver stateId by tokenindex
-		err = ApplyFee(stateTree, cfg.FeeReceiverPubKeyID, combinedFee)
+		// TODO get fee receiver stateId by tokenIndex
+		err = ApplyFee(stateTree, storage, cfg.FeeReceiverPubKeyID, commitmentTokenIndex, combinedFee)
 		if err != nil {
 			return nil, nil, err
 		}

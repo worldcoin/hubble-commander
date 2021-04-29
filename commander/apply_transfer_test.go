@@ -184,7 +184,7 @@ func (s *ApplyTransferTestSuite) TestApplyFee() {
 	err := s.tree.Set(receiverStateID, &receiverState)
 	s.NoError(err)
 
-	err = ApplyFee(s.tree, receiverStateID, models.MakeUint256(555))
+	err = ApplyFee(s.tree, s.storage, receiverStateID, models.MakeUint256(1), models.MakeUint256(555))
 	s.NoError(err)
 
 	receiverLeaf, err := s.tree.Leaf(receiverStateID)

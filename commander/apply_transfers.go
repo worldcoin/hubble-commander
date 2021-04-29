@@ -47,7 +47,7 @@ func ApplyTransfers(
 	}
 
 	if len(appliedTransfers) > 0 {
-		err = ApplyFee(stateTree, cfg.FeeReceiverPubKeyID, combinedFee)
+		err = ApplyFee(stateTree, storage, cfg.FeeReceiverPubKeyID, commitmentTokenIndex, combinedFee)
 		if err != nil {
 			return nil, nil, err
 		}
