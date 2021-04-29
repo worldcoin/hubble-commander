@@ -30,7 +30,7 @@ func ApplyCreate2Transfers(
 	if err != nil {
 		return nil, nil, err
 	}
-	// TODO get token index from transfers[0].FromStateID -> SenderUserState.TokenIndex
+
 	commitmentTokenIndex := senderLeaf.TokenIndex
 
 	for i := range transfers {
@@ -62,7 +62,6 @@ func ApplyCreate2Transfers(
 	}
 
 	if len(appliedTransfers) > 0 {
-		// TODO get fee receiver stateId by tokenIndex
 		err = ApplyFee(stateTree, storage, cfg.FeeReceiverPubKeyID, commitmentTokenIndex, combinedFee)
 		if err != nil {
 			return nil, nil, err
