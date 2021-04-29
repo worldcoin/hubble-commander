@@ -1,7 +1,7 @@
-// nolint:lll
 package config
 
 import (
+	"log"
 	"os"
 	"path"
 	"time"
@@ -10,40 +10,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/joho/godotenv"
-)
-
-var (
-	oneEther        = models.MakeUint256FromBig(*utils.ParseEther("1"))
-	genesisAccounts = []models.GenesisAccount{
-		{
-			// PublicKey: 0x0df68cb87856229b0bc3f158fff8b82b04deb1a4c23dadbf3ed2da4ec6f6efcb1c165c6b47d8c89ab2ddb0831c182237b27a4b3d9701775ad6c180303f87ef260566cb2f0bcc7b89c2260de2fee8ec29d7b5e575a1e36eb4bcead52a74a511b7188d7df7c9d08f94b9daa9d89105fbdf22bf14e30b84f8adefb3695ebff00e88
-			PrivateKey: [32]byte{47, 122, 85, 155, 45, 45, 78, 193, 227, 186, 188, 1, 34, 231, 239, 12, 106, 69, 205, 180, 204, 209, 103, 244, 86, 202, 202, 82, 17, 35, 254, 158},
-			Balance:    oneEther,
-		},
-		{
-			// PublicKey: 0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc
-			PrivateKey: [32]byte{1, 49, 177, 240, 47, 37, 4, 166, 10, 48, 38, 31, 163, 102, 92, 161, 46, 213, 66, 171, 1, 247, 61, 235, 177, 155, 175, 169, 150, 121, 2, 114},
-			Balance:    oneEther,
-		},
-		{
-			// PublicKey: 0x1ccf19871320b7e850475845d879a9f9717a6c9694fab19498e4261b442de4e011406bdc967984771508a2e50d774f49db36bf5b04b15f9f411b8c8733fe0d8e301f8f2e9aa98f7dde7de3635baa216fdc969e752f4ef646fd5f81d89e46d39804c0ac92c7ea4cc5957b4214ef41a0aa4f1a6f343cebfb577e9dcaf8ff2551d5
-			PrivateKey: [32]byte{10, 9, 162, 211, 112, 191, 164, 2, 77, 121, 49, 230, 55, 131, 232, 78, 138, 60, 51, 46, 182, 19, 63, 38, 141, 234, 171, 114, 217, 112, 209, 102},
-			Balance:    oneEther,
-		},
-		{
-			// PublicKey: 0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc
-			PrivateKey: [32]byte{1, 49, 177, 240, 47, 37, 4, 166, 10, 48, 38, 31, 163, 102, 92, 161, 46, 213, 66, 171, 1, 247, 61, 235, 177, 155, 175, 169, 150, 121, 2, 114},
-			Balance:    oneEther,
-		},
-		{
-			// PublicKey: 0x2007003172b5453c5468dc4181c1fb058f1adec22f5e955f59b25acdc18207c406f615ec693aa1c93c7c6cd0de0fb3a9a4ee68cd4c0791dd7b1c21aa61618bf7159c612bdbd04a8f28e440026f80c1fb7efc7edaad443bae643bb70154e11f0f1df929eefccfbeddb43290663f1a2b367cfb0bc86e9df1e849a5f19f9709f8b7
-			PrivateKey: [32]byte{28, 144, 144, 86, 206, 85, 56, 204, 99, 151, 175, 222, 43, 236, 189, 2, 69, 132, 135, 164, 229, 121, 134, 181, 231, 109, 56, 204, 16, 81, 134, 58},
-		},
-		{
-			// PublicKey: 0x022699f03c1c9fddd7cc29e5e3c837c1dcfcb402ed9b47d43bd9702321662d860ca2081d046a01e852b6e4ecd860edf85e0e0c1aef5e62af34c85f7ce221bc31179de95c4162111a605d09aaa66a63a7a502c904d42d7675dad5b48328b8ccdc1a10c6bcf774e7f5a12deab11c488e19fd3f3995f7d9c2090ffab88deb8b71f7
-			PrivateKey: [32]byte{33, 167, 159, 167, 55, 75, 126, 104, 141, 124, 210, 92, 208, 195, 87, 114, 79, 18, 225, 124, 61, 170, 42, 128, 231, 29, 48, 12, 37, 208, 219, 120},
-		},
-	}
 )
 
 func init() {
@@ -61,6 +27,10 @@ func getMigrationsPath() string {
 	return path.Join(utils.GetProjectRoot(), "db", "migrations")
 }
 
+func getGenesisPath() string {
+	return path.Join(utils.GetProjectRoot(), "genesis.yaml")
+}
+
 func GetConfig() Config {
 	return Config{
 		Rollup: RollupConfig{
@@ -71,7 +41,7 @@ func GetConfig() Config {
 			CommitmentLoopInterval:  500 * time.Millisecond,
 			BatchLoopInterval:       500 * time.Millisecond,
 			BlockNumberLoopInterval: 500 * time.Millisecond,
-			GenesisAccounts:         genesisAccounts,
+			GenesisAccounts:         getGenesisAccounts(),
 			SignaturesDomain:        [32]byte{1, 2, 3, 4},
 		},
 		API: APIConfig{
@@ -101,7 +71,7 @@ func GetTestConfig() Config {
 			CommitmentLoopInterval:  500 * time.Millisecond,
 			BatchLoopInterval:       500 * time.Millisecond,
 			BlockNumberLoopInterval: 500 * time.Millisecond,
-			GenesisAccounts:         genesisAccounts,
+			GenesisAccounts:         getGenesisAccounts(),
 			SignaturesDomain:        [32]byte{1, 2, 3, 4},
 		},
 		API: APIConfig{
@@ -119,6 +89,17 @@ func GetTestConfig() Config {
 		},
 		Ethereum: getEthereumConfig(),
 	}
+}
+
+func getGenesisAccounts() []models.GenesisAccount {
+	filename := *getEnvOrDefault("HUBBLE_GENESIS_PATH", ref.String(getGenesisPath()))
+
+	genesisAccounts, err := readGenesisFile(filename)
+	if err != nil {
+		log.Fatalf("error reading genesis file: %s", err.Error())
+	}
+
+	return genesisAccounts
 }
 
 func getEthereumConfig() *EthereumConfig {

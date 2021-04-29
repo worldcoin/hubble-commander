@@ -1,5 +1,10 @@
 package models
 
+type RawGenesisAccount struct {
+	PrivateKey string  `yaml:"privateKey"`
+	Balance    Uint256 `yaml:"balance"`
+}
+
 type GenesisAccount struct {
 	PrivateKey [32]byte
 	Balance    Uint256

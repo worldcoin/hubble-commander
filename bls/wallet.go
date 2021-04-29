@@ -62,5 +62,7 @@ func (w *Wallet) PublicKey() *models.PublicKey {
 
 func (w *Wallet) Bytes() (privateKey, publicKey []byte) {
 	accountBytes := w.signer.Account.ToBytes()
-	return accountBytes[128:], accountBytes[:128]
+	privateKey = accountBytes[128:]
+	publicKey = fromBLSPublicKey(w.signer.Account.Public).Bytes()
+	return
 }
