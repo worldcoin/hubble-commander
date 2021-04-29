@@ -291,6 +291,24 @@ func (s *StateLeafTestSuite) TestGetUserStatesByPublicKey() {
 	})
 }
 
+func (s *StateLeafTestSuite) TestGetStateLeafByPubKeyIDAndTokenIndex() {
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
+
+	userState := &models.UserState{
+		PubKeyID:   1,
+		TokenIndex: models.MakeUint256(1),
+		Balance:    models.MakeUint256(420),
+		Nonce:      models.MakeUint256(0),
+	}
+	err = s.tree.Set(0, userState)
+	s.NoError(err)
+
+	stateLeaf, err := s.storage.GetStateLeafByPubKeyIDAndTokenIndex(userState.PubKeyID, userState.TokenIndex)
+	s.NoError(err)
+	s.Equal(*userState, stateLeaf.UserState)
+}
+
 func TestStateLeafTestSuite(t *testing.T) {
 	suite.Run(t, new(StateLeafTestSuite))
 }
