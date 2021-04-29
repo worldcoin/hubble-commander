@@ -54,7 +54,7 @@ test-hardhat:
 test-e2e: clean-testcache
 	HUBBLE_E2E=docker go test -v -tags e2e ./e2e
 
-test-e2e-locally: clean-testcache
+test-commander-locally: clean-testcache
 	HUBBLE_E2E=local go test -v -tags e2e -run TestCommander ./e2e
 
 bench-e2e: clean-testcache
