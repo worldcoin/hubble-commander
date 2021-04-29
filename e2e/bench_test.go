@@ -80,7 +80,7 @@ func TestBenchCommander(t *testing.T) {
 			newTxsToWatch := make([]common.Hash, 0)
 			for _, tx := range txsToWatch[stateId] {
 				var sentTransfer dto.TransferReceipt
-				err = commander.Client().CallFor(&sentTransfer, "hubble_getTransfer", []interface{}{tx})
+				err = commander.Client().CallFor(&sentTransfer, "hubble_getTransaction", []interface{}{tx})
 				require.NoError(t, err)
 				if sentTransfer.Status == txstatus.Pending {
 					newTxsToWatch = append(newTxsToWatch, tx)
