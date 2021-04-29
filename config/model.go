@@ -15,7 +15,7 @@ type Config struct {
 
 type RollupConfig struct {
 	Prune                   bool
-	FeeReceiverIndex        uint32
+	FeeReceiverIndex        models.PublicKey
 	TxsPerCommitment        uint32
 	MinCommitmentsPerBatch  uint32
 	MaxCommitmentsPerBatch  uint32

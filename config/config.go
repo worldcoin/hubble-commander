@@ -6,6 +6,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -34,7 +35,7 @@ func getGenesisPath() string {
 func GetConfig() Config {
 	return Config{
 		Rollup: RollupConfig{
-			FeeReceiverIndex:        0,
+			FeeReceiverIndex:        getFeeReceiverPubKey(),
 			TxsPerCommitment:        32,
 			MinCommitmentsPerBatch:  1,
 			MaxCommitmentsPerBatch:  32,
@@ -64,7 +65,7 @@ func GetConfig() Config {
 func GetTestConfig() Config {
 	return Config{
 		Rollup: RollupConfig{
-			FeeReceiverIndex:        0,
+			FeeReceiverIndex:        getFeeReceiverPubKey(),
 			TxsPerCommitment:        2,
 			MinCommitmentsPerBatch:  1,
 			MaxCommitmentsPerBatch:  32,
@@ -112,4 +113,15 @@ func getEthereumConfig() *EthereumConfig {
 		ChainID:    getEnv("ETHEREUM_CHAIN_ID"),
 		PrivateKey: getEnv("ETHEREUM_PRIVATE_KEY"),
 	}
+}
+
+func getFeeReceiverPubKey() models.PublicKey {
+	if len(genesisAccounts) < 1 {
+		log.Fatalf("genesis accounts can't be empty")
+	}
+	publicKey, err := bls.PrivateToPublicKey(genesisAccounts[0].PrivateKey)
+	if err != nil {
+		log.Fatalf("couldn't decode fee receiver public key: %s", err)
+	}
+	return *publicKey
 }
