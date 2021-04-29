@@ -38,13 +38,14 @@ func TestBenchCommander(t *testing.T) {
 	walletForState := map[uint32]bls.Wallet{}
 	txsToWatch := map[uint32][]common.Hash{}
 
-	for _, wallet := range wallets {
+	for i := 0; i < 6; i++ {
 		var userStates []dto.UserState
-		err = commander.Client().CallFor(&userStates, "hubble_getUserStates", []interface{}{wallet.PublicKey()})
+		err = commander.Client().CallFor(&userStates, "hubble_getUserStates", []interface{}{wallets[i].PublicKey()})
+		require.NoError(t, err)
 		for _, state := range userStates {
 			stateIds = append(stateIds, state.StateID)
-			nonces[state.StateID] = models.NewUint256(0)
-			walletForState[state.StateID] = wallet
+			nonces[state.StateID] = &state.Nonce
+			walletForState[state.StateID] = wallets[i]
 			txsToWatch[state.StateID] = make([]common.Hash, 0)
 		}
 	}
