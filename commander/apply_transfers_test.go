@@ -33,8 +33,8 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 	s.storage = storage.NewTestStorage(testDB.DB)
 	s.tree = storage.NewStateTree(s.storage)
 	s.cfg = &config.RollupConfig{
-		FeeReceiverIndex: 3,
-		TxsPerCommitment: 6,
+		FeeReceiverPubKeyID: 3,
+		TxsPerCommitment:    6,
 	}
 
 	senderState := models.UserState{
@@ -91,7 +91,7 @@ func (s *ApplyTransfersTestSuite) TearDownTest() {
 func (s *ApplyTransfersTestSuite) TestApplyTransfers_AllValid() {
 	transfers := generateValidTransfers(3)
 
-	validTransfers, invalidTransfers, err := ApplyTransfers(s.storage, transfers, s.cfg)
+	validTransfers, invalidTransfers, _, err := ApplyTransfers(s.storage, transfers, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 3)
@@ -102,7 +102,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_SomeValid() {
 	transfers := generateValidTransfers(2)
 	transfers = append(transfers, generateInvalidTransfers(3)...)
 
-	validTransfers, invalidTransfers, err := ApplyTransfers(s.storage, transfers, s.cfg)
+	validTransfers, invalidTransfers, _, err := ApplyTransfers(s.storage, transfers, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 2)
@@ -112,7 +112,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_SomeValid() {
 func (s *ApplyTransfersTestSuite) TestApplyTransfers_MoreThan32() {
 	transfers := generateValidTransfers(13)
 
-	validTransfers, invalidTransfers, err := ApplyTransfers(s.storage, transfers, s.cfg)
+	validTransfers, invalidTransfers, _, err := ApplyTransfers(s.storage, transfers, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 6)
@@ -131,7 +131,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersTestSuite_SavesTransferError
 		s.NoError(err)
 	}
 
-	validTransfers, invalidTransfers, err := ApplyTransfers(s.storage, transfers, s.cfg)
+	validTransfers, invalidTransfers, _, err := ApplyTransfers(s.storage, transfers, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 3)

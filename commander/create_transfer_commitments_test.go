@@ -53,7 +53,7 @@ func (s *TransferCommitmentsTestSuite) SetupTest() {
 	s.storage = storage.NewTestStorage(testDB.DB)
 	s.cfg = &config.RollupConfig{
 		TxsPerCommitment:       2,
-		FeeReceiverIndex:       2,
+		FeeReceiverPubKeyID:    2,
 		MaxCommitmentsPerBatch: 1,
 	}
 	err = PopulateGenesisAccounts(s.storage, genesisAccounts)
