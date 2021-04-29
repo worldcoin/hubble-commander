@@ -32,7 +32,7 @@ func createCreate2TransferCommitments(
 			return nil, err
 		}
 
-		appliedTransfers, invalidTransfers, err := ApplyCreate2Transfers(storage, pendingTransfers, alreadyAddedPubKeyIDs, cfg)
+		appliedTransfers, invalidTransfers, feeReceiverStateID, err := ApplyCreate2Transfers(storage, pendingTransfers, alreadyAddedPubKeyIDs, cfg)
 		if err != nil {
 			return nil, err
 		}
@@ -58,7 +58,7 @@ func createCreate2TransferCommitments(
 		}
 
 		log.Printf("Creating a %s commitment from %d transactions", txtype.Create2Transfer.String(), len(appliedTransfers))
-		commitment, err := createAndStoreCommitment(storage, txtype.Create2Transfer, cfg.FeeReceiverPubKeyID, serializedTxs, combinedSignature)
+		commitment, err := createAndStoreCommitment(storage, txtype.Create2Transfer, *feeReceiverStateID, serializedTxs, combinedSignature)
 		if err != nil {
 			return nil, err
 		}

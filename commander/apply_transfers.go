@@ -13,6 +13,7 @@ func ApplyTransfers(
 ) (
 	appliedTransfers []models.Transfer,
 	invalidTransfers []models.Transfer,
+	feeReceiverStateID *uint32,
 	err error,
 ) {
 	stateTree := st.NewStateTree(storage)
@@ -21,7 +22,7 @@ func ApplyTransfers(
 
 	senderLeaf, err := stateTree.Leaf(transfers[0].FromStateID)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	commitmentTokenIndex := senderLeaf.TokenIndex
@@ -30,7 +31,7 @@ func ApplyTransfers(
 		transfer := transfers[i]
 		transferError, appError := ApplyTransfer(stateTree, &transfer, commitmentTokenIndex)
 		if appError != nil {
-			return nil, nil, appError
+			return nil, nil, nil, appError
 		}
 		if transferError != nil {
 			logAndSaveTransactionError(storage, &transfer.TransactionBase, transferError)
@@ -47,11 +48,11 @@ func ApplyTransfers(
 	}
 
 	if len(appliedTransfers) > 0 {
-		err = ApplyFee(stateTree, storage, cfg.FeeReceiverPubKeyID, commitmentTokenIndex, combinedFee)
+		feeReceiverStateID, err = ApplyFee(stateTree, storage, cfg.FeeReceiverPubKeyID, commitmentTokenIndex, combinedFee)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 	}
 
-	return appliedTransfers, invalidTransfers, nil
+	return appliedTransfers, invalidTransfers, feeReceiverStateID, nil
 }

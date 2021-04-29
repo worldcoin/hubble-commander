@@ -33,7 +33,7 @@ func createTransferCommitments(
 			return nil, err
 		}
 
-		appliedTransfers, invalidTransfers, err := ApplyTransfers(storage, pendingTransfers, cfg)
+		appliedTransfers, invalidTransfers, feeReceiverStateID, err := ApplyTransfers(storage, pendingTransfers, cfg)
 		if err != nil {
 			return nil, err
 		}
@@ -58,7 +58,7 @@ func createTransferCommitments(
 			return nil, err
 		}
 
-		commitment, err := createAndStoreCommitment(storage, txtype.Transfer, cfg.FeeReceiverPubKeyID, serializedTxs, combinedSignature)
+		commitment, err := createAndStoreCommitment(storage, txtype.Transfer, *feeReceiverStateID, serializedTxs, combinedSignature)
 		if err != nil {
 			return nil, err
 		}
