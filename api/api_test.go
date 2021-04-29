@@ -12,7 +12,7 @@ import (
 )
 
 type Result struct {
-	// nolint
+	// nolint:revive,stylecheck
 	JsonRpc string `json:"jsonrpc"`
 	ID      string `json:"id"`
 	Result  string `json:"result"`
@@ -35,6 +35,5 @@ func TestStartApiServer(t *testing.T) {
 	err = json.Unmarshal(w.Body.Bytes(), actual)
 	require.NoError(t, err)
 
-	expected := &Result{"2.0", "1", "v0123"}
-	require.Equal(t, expected, actual)
+	require.Equal(t, &Result{"2.0", "1", "v0123"}, actual)
 }

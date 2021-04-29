@@ -7,7 +7,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func recreateDatabase(cfg *config.DBConfig) error {
+func RecreateDatabase(cfg *config.DBConfig) error {
 	datasource := CreateDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, nil)
 	dbInstance, err := sqlx.Connect("postgres", datasource)
 	if err != nil {

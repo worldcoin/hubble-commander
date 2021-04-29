@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
-func WatchAccounts(storage *st.Storage, client *eth.Client) error {
+func WatchAccounts(storage *st.Storage, client *eth.Client, done <-chan bool) error {
 	it, err := client.AccountRegistry.FilterPubkeyRegistered(&bind.FilterOpts{
 		Start: 0,
 	})
@@ -25,10 +25,11 @@ func WatchAccounts(storage *st.Storage, client *eth.Client) error {
 		}
 	}
 
-	ev := make(chan *accountregistry.AccountRegistryPubkeyRegistered)
-	sub, err := client.AccountRegistry.WatchPubkeyRegistered(&bind.WatchOpts{
-		Start: ref.Uint64(0),
-	}, ev)
+	eventChannel := make(chan *accountregistry.AccountRegistryPubkeyRegistered)
+	sub, err := client.AccountRegistry.WatchPubkeyRegistered(
+		&bind.WatchOpts{Start: ref.Uint64(0)},
+		eventChannel,
+	)
 	if err != nil {
 		return err
 	}
@@ -37,9 +38,13 @@ func WatchAccounts(storage *st.Storage, client *eth.Client) error {
 	log.Printf("Account watcher started")
 
 	for {
-		err := ProcessPubkeyRegistered(storage, <-ev)
-		if err != nil {
-			return err
+		select {
+		case ev := <-eventChannel:
+			if err := ProcessPubkeyRegistered(storage, ev); err != nil {
+				return err
+			}
+		case <-done:
+			return nil
 		}
 	}
 }
