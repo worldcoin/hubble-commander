@@ -86,7 +86,7 @@ func (s *Storage) GetPendingTransfers() ([]models.Transfer, error) {
 			From("transaction_base").
 			JoinClause("NATURAL JOIN transfer").
 			Where(squirrel.Eq{"included_in_commitment": nil, "error_message": nil}).
-			OrderBy("transaction_base.nonce ASC"),			
+			OrderBy("transaction_base.nonce ASC"),
 	).Into(&res)
 	if err != nil {
 		return nil, err

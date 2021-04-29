@@ -44,7 +44,7 @@ func TestBenchCommander(t *testing.T) {
 		require.NoError(t, err)
 		for _, state := range userStates {
 			stateIds = append(stateIds, state.StateID)
-			nonces[state.StateID] = &state.Nonce
+			nonces[state.StateID] = models.NewUint256(0)
 			walletForState[state.StateID] = wallets[i]
 			txsToWatch[state.StateID] = make([]common.Hash, 0)
 		}
