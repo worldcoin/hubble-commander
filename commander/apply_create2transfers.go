@@ -23,6 +23,10 @@ func ApplyCreate2Transfers(
 	feeReceiverStateID *uint32,
 	err error,
 ) {
+	if len(transfers) == 0 {
+		return
+	}
+
 	stateTree := st.NewStateTree(storage)
 	appliedTransfers = make([]models.Create2Transfer, 0, cfg.TxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
