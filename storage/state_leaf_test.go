@@ -304,9 +304,10 @@ func (s *StateLeafTestSuite) TestGetStateLeafByPubKeyIDAndTokenIndex() {
 	err = s.tree.Set(0, userState)
 	s.NoError(err)
 
-	stateLeaf, err := s.storage.GetStateLeafByPubKeyIDAndTokenIndex(userState.PubKeyID, userState.TokenIndex)
+	userStateWithID, err := s.storage.GetUserStateByPubKeyIDAndTokenIndex(userState.PubKeyID, userState.TokenIndex)
 	s.NoError(err)
-	s.Equal(*userState, stateLeaf.UserState)
+	s.Equal(*userState, userStateWithID.UserState)
+	s.Equal(uint32(0), userStateWithID.StateID)
 }
 
 func TestStateLeafTestSuite(t *testing.T) {
