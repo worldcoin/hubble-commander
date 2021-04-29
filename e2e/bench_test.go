@@ -53,7 +53,7 @@ func TestBenchCommander(t *testing.T) {
 	transfersSent := 0
 	startTime := time.Now()
 
-	for {
+	for transfersSent < 1000 {
 		txSent := true
 		for txSent {
 			txSent = false
@@ -64,8 +64,15 @@ func TestBenchCommander(t *testing.T) {
 				}
 
 				wallet := walletForState[stateId]
-				to := stateIds[rand.Intn(len(stateIds))]
 				nonce := nonces[stateId]
+
+				var to uint32
+				
+				for to == stateId {
+					to = stateIds[rand.Intn(len(stateIds))]
+				}
+
+				
 				hash := sendTransfer(t, commander, wallet, stateId, to, *nonce)
 				if hash != nil {
 					nonces[stateId] = nonces[stateId].AddN(1)
@@ -109,9 +116,7 @@ func sendTransfer(t *testing.T, commander Commander, wallet bls.Wallet, from uin
 
 	var transferHash common.Hash
 	err = commander.Client().CallFor(&transferHash, "hubble_sendTransaction", []interface{}{*transfer})
-	if err != nil {
-		return nil
-	}
+	require.NoError(t, err)
 	require.NotNil(t, transferHash)
 
 	return &transferHash
