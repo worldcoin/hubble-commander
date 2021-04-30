@@ -92,13 +92,8 @@ func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
 	return &res[0], nil
 }
 
-type userStateWithStateID struct {
-	StateID models.MerklePath `db:"merkle_path"`
-	models.UserState
-}
-
 func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]models.UserStateWithID, error) {
-	res := make([]userStateWithStateID, 0, 1)
+	res := make([]models.UserStateWithID, 0, 1)
 	err := s.DB.Query(
 		s.QB.
 			Select(
@@ -106,7 +101,7 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]model
 				"state_leaf.token_index",
 				"state_leaf.balance",
 				"state_leaf.nonce",
-				"state_node.merkle_path",
+				"lpad(merkle_path::text, 33, '0')::bit(33)::bigint AS stateID",
 			).
 			From("account").
 			JoinClause("NATURAL JOIN state_leaf").
@@ -119,7 +114,7 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]model
 	if len(res) == 0 {
 		return nil, NewNotFoundError("user states")
 	}
-	return toUserStateWithID(res), nil
+	return res, nil
 }
 
 func (s *Storage) GetUserStateByPubKeyIDAndTokenIndex(pubKeyID uint32, tokenIndex models.Uint256) (*models.UserStateWithID, error) {
@@ -142,15 +137,4 @@ func (s *Storage) GetUserStateByPubKeyIDAndTokenIndex(pubKeyID uint32, tokenInde
 		return nil, NewNotFoundError("state leaf")
 	}
 	return &res[0], nil
-}
-
-func toUserStateWithID(userStates []userStateWithStateID) []models.UserStateWithID {
-	res := make([]models.UserStateWithID, 0, len(userStates))
-	for i := range userStates {
-		res = append(res, models.UserStateWithID{
-			StateID:   userStates[i].StateID.Path,
-			UserState: userStates[i].UserState,
-		})
-	}
-	return res
 }
