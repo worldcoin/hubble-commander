@@ -50,7 +50,7 @@ func (s *AccountsTestSuite) TestWatchAccounts_PreviousAccounts() {
 	s.Eventually(func() bool {
 		accounts, err = s.storage.GetAccounts(&publicKey)
 		s.NoError(err)
-		return len(accounts) == 0
+		return len(accounts) == 1
 	}, time.Second, testutils.TryInterval)
 }
 
