@@ -7,6 +7,14 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+var userStateWithIdCols = []string{
+	"state_leaf.pub_key_id",
+	"state_leaf.token_index",
+	"state_leaf.balance",
+	"state_leaf.nonce",
+	"lpad(merkle_path::text, 33, '0')::bit(33)::bigint AS stateID",
+}
+
 func (s *Storage) AddStateLeaf(leaf *models.StateLeaf) error {
 	_, err := s.DB.Query(
 		s.QB.Insert("state_leaf").
@@ -95,14 +103,7 @@ func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
 func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]models.UserStateWithID, error) {
 	res := make([]models.UserStateWithID, 0, 1)
 	err := s.DB.Query(
-		s.QB.
-			Select(
-				"state_leaf.pub_key_id",
-				"state_leaf.token_index",
-				"state_leaf.balance",
-				"state_leaf.nonce",
-				"lpad(merkle_path::text, 33, '0')::bit(33)::bigint AS stateID",
-			).
+		s.QB.Select(userStateWithIdCols...).
 			From("account").
 			JoinClause("NATURAL JOIN state_leaf").
 			JoinClause("NATURAL JOIN state_node").
@@ -120,11 +121,7 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]model
 func (s *Storage) GetUserStateByPubKeyIDAndTokenIndex(pubKeyID uint32, tokenIndex models.Uint256) (*models.UserStateWithID, error) {
 	res := make([]models.UserStateWithID, 0, 1)
 	err := s.DB.Query(
-		s.QB.Select("state_leaf.pub_key_id",
-			"state_leaf.token_index",
-			"state_leaf.balance",
-			"state_leaf.nonce",
-			"lpad(merkle_path::text, 33, '0')::bit(33)::bigint AS stateID").
+		s.QB.Select(userStateWithIdCols...).
 			From("state_leaf").
 			JoinClause("NATURAL JOIN state_node").
 			Where(squirrel.Eq{"pub_key_id": pubKeyID}).
