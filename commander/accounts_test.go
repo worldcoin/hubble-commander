@@ -8,7 +8,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -47,13 +46,11 @@ func (s *AccountsTestSuite) TestWatchAccounts_PreviousAccounts() {
 	}()
 
 	var accounts []models.Account
-	testutils.WaitToPass(s.T(), func() bool {
+	s.Eventually(func() bool {
 		accounts, err = s.storage.GetAccounts(&publicKey)
 		s.NoError(err)
-		return len(accounts) > 0
-	}, 1*time.Second)
-
-	s.Len(accounts, 1)
+		return len(accounts) == 0
+	}, time.Second, 250*time.Millisecond)
 }
 
 func (s *AccountsTestSuite) TestWatchAccounts_NewAccounts() {
@@ -69,13 +66,11 @@ func (s *AccountsTestSuite) TestWatchAccounts_NewAccounts() {
 	s.NoError(err)
 
 	var accounts []models.Account
-	testutils.WaitToPass(s.T(), func() bool {
+	s.Eventually(func() bool {
 		accounts, err = s.storage.GetAccounts(&publicKey)
 		s.NoError(err)
-		return len(accounts) > 0
-	}, 1*time.Second)
-
-	s.Len(accounts, 1)
+		return len(accounts) == 1
+	}, time.Second, 250*time.Millisecond)
 }
 
 func TestAccountsTestSuite(t *testing.T) {

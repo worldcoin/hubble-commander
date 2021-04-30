@@ -14,7 +14,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -40,7 +39,7 @@ func TestCommander(t *testing.T) {
 	testGetTransaction(t, commander.Client(), firstTransferHash)
 	send31MoreTransfers(t, commander.Client(), senderWallet)
 
-	firstC2TWallet := wallets[len(wallets) - 32]
+	firstC2TWallet := wallets[len(wallets)-32]
 	firstCreate2TransferHash := testSendCreate2Transfer(t, commander.Client(), senderWallet, *firstC2TWallet.PublicKey())
 	testGetTransaction(t, commander.Client(), firstCreate2TransferHash)
 	send31MoreCreate2Transfers(t, commander.Client(), senderWallet, wallets)
@@ -151,12 +150,12 @@ func send31MoreCreate2Transfers(t *testing.T, client jsonrpc.RPCClient, senderWa
 }
 
 func waitForTxToBeIncludedInBatch(t *testing.T, client jsonrpc.RPCClient, txHash common.Hash) {
-	testutils.WaitToPass(t, func() bool {
+	require.Eventually(t, func() bool {
 		var txReceipt dto.TransferReceipt
 		err := client.CallFor(&txReceipt, "hubble_getTransaction", []interface{}{txHash})
 		require.NoError(t, err)
 		return txReceipt.Status == txstatus.InBatch
-	}, 30*time.Second)
+	}, 30*time.Second, 250*time.Millisecond)
 }
 
 func testSenderStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet) {
