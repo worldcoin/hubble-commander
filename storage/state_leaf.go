@@ -139,7 +139,7 @@ func (s *Storage) GetUserStateByPubKeyIDAndTokenIndex(pubKeyID uint32, tokenInde
 func (s *Storage) GetUserStateByID(stateID uint32) (*models.UserStateWithID, error) {
 	path := models.MerklePath{
 		Path:  stateID,
-		Depth: 32,
+		Depth: leafDepth,
 	}
 	res := make([]models.UserStateWithID, 0, 1)
 	err := s.DB.Query(
