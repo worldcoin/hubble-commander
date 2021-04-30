@@ -54,7 +54,7 @@ func GetWalletPublicKey(privateKey *C.char) *C.char {
 }
 
 //export SignTransfer
-func SignTransfer(from C.uint, to C.uint, amount C.longlong, fee C.longlong, nonce C.longlong, privateKey *C.char) *C.char {
+func SignTransfer(from, to C.uint, amount, fee, nonce C.longlong, privateKey *C.char) *C.char {
 	wallet, err := parseWallet(privateKey)
 	if err != nil {
 		return nil
