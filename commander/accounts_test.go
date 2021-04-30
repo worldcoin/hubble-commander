@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -50,7 +51,7 @@ func (s *AccountsTestSuite) TestWatchAccounts_PreviousAccounts() {
 		accounts, err = s.storage.GetAccounts(&publicKey)
 		s.NoError(err)
 		return len(accounts) == 0
-	}, time.Second, 250*time.Millisecond)
+	}, time.Second, testutils.TryInterval)
 }
 
 func (s *AccountsTestSuite) TestWatchAccounts_NewAccounts() {
@@ -70,7 +71,7 @@ func (s *AccountsTestSuite) TestWatchAccounts_NewAccounts() {
 		accounts, err = s.storage.GetAccounts(&publicKey)
 		s.NoError(err)
 		return len(accounts) == 1
-	}, time.Second, 250*time.Millisecond)
+	}, time.Second, testutils.TryInterval)
 }
 
 func TestAccountsTestSuite(t *testing.T) {
