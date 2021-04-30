@@ -38,13 +38,14 @@ func TestBenchCommander(t *testing.T) {
 	walletForState := map[uint32]bls.Wallet{}
 	txsToWatch := map[uint32][]common.Hash{}
 
-	for _, wallet := range wallets {
+	for i := 0; i < 6; i++ {
 		var userStates []dto.UserState
-		err = commander.Client().CallFor(&userStates, "hubble_getUserStates", []interface{}{wallet.PublicKey()})
+		err = commander.Client().CallFor(&userStates, "hubble_getUserStates", []interface{}{wallets[i].PublicKey()})
+		require.NoError(t, err)
 		for _, state := range userStates {
 			stateIds = append(stateIds, state.StateID)
 			nonces[state.StateID] = models.NewUint256(0)
-			walletForState[state.StateID] = wallet
+			walletForState[state.StateID] = wallets[i]
 			txsToWatch[state.StateID] = make([]common.Hash, 0)
 		}
 	}
@@ -52,7 +53,7 @@ func TestBenchCommander(t *testing.T) {
 	transfersSent := 0
 	startTime := time.Now()
 
-	for {
+	for transfersSent < 1000 {
 		txSent := true
 		for txSent {
 			txSent = false
@@ -63,8 +64,14 @@ func TestBenchCommander(t *testing.T) {
 				}
 
 				wallet := walletForState[stateId]
-				to := stateIds[rand.Intn(len(stateIds))]
 				nonce := nonces[stateId]
+				to := stateId
+				
+                              // Pick random receiver id thats different from sender's.
+				for to == stateId {
+					to = stateIds[rand.Intn(len(stateIds))]
+				}
+				
 				hash := sendTransfer(t, commander, wallet, stateId, to, *nonce)
 				if hash != nil {
 					nonces[stateId] = nonces[stateId].AddN(1)
@@ -108,9 +115,7 @@ func sendTransfer(t *testing.T, commander Commander, wallet bls.Wallet, from uin
 
 	var transferHash common.Hash
 	err = commander.Client().CallFor(&transferHash, "hubble_sendTransaction", []interface{}{*transfer})
-	if err != nil {
-		return nil
-	}
+	require.NoError(t, err)
 	require.NotNil(t, transferHash)
 
 	return &transferHash
