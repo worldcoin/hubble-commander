@@ -67,6 +67,7 @@ func TestBenchCommander(t *testing.T) {
 				nonce := nonces[stateId]
 				to := stateId
 				
+                              // Pick random receiver id thats different from sender's.
 				for to == stateId {
 					to = stateIds[rand.Intn(len(stateIds))]
 				}
