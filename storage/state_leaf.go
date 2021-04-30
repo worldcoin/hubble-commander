@@ -135,3 +135,24 @@ func (s *Storage) GetUserStateByPubKeyIDAndTokenIndex(pubKeyID uint32, tokenInde
 	}
 	return &res[0], nil
 }
+
+func (s *Storage) GetUserStateByID(stateID uint32) (*models.UserStateWithID, error) {
+	path := models.MerklePath{
+		Path:  stateID,
+		Depth: 32,
+	}
+	res := make([]models.UserStateWithID, 0, 1)
+	err := s.DB.Query(
+		s.QB.Select(userStateWithIdCols...).
+			From("state_leaf").
+			JoinClause("NATURAL JOIN state_node").
+			Where(squirrel.Eq{"merkle_path": path}),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, NewNotFoundError("user state")
+	}
+	return &res[0], nil
+}
