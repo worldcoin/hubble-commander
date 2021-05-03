@@ -85,7 +85,8 @@ func (s *Storage) GetPendingTransfers() ([]models.Transfer, error) {
 		s.QB.Select(transferColumns...).
 			From("transaction_base").
 			JoinClause("NATURAL JOIN transfer").
-			Where(squirrel.Eq{"included_in_commitment": nil, "error_message": nil}),
+			Where(squirrel.Eq{"included_in_commitment": nil, "error_message": nil}).
+			OrderBy("transaction_base.nonce ASC"),
 	).Into(&res)
 	if err != nil {
 		return nil, err
@@ -108,4 +109,21 @@ func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models
 		return nil, err
 	}
 	return res, nil
+}
+
+func (s *Storage) GetTransfersByCommitmentID(id int32) ([]models.TransferForCommitment, error) {
+	res := make([]models.TransferForCommitment, 0, 32)
+	err := s.DB.Query(
+		s.QB.Select("transaction_base.tx_hash",
+			"transaction_base.from_state_id",
+			"transaction_base.amount",
+			"transaction_base.fee",
+			"transaction_base.nonce",
+			"transaction_base.signature",
+			"transfer.to_state_id").
+			From("transaction_base").
+			JoinClause("NATURAL JOIN transfer").
+			Where(squirrel.Eq{"included_in_commitment": id}),
+	).Into(&res)
+	return res, err
 }

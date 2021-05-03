@@ -122,6 +122,28 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]model
 	return toUserStateWithID(res), nil
 }
 
+func (s *Storage) GetUserStateByPubKeyIDAndTokenIndex(pubKeyID uint32, tokenIndex models.Uint256) (*models.UserStateWithID, error) {
+	res := make([]models.UserStateWithID, 0, 1)
+	err := s.DB.Query(
+		s.QB.Select("state_leaf.pub_key_id",
+			"state_leaf.token_index",
+			"state_leaf.balance",
+			"state_leaf.nonce",
+			"lpad(merkle_path::text, 33, '0')::bit(33)::bigint AS stateID").
+			From("state_leaf").
+			JoinClause("NATURAL JOIN state_node").
+			Where(squirrel.Eq{"pub_key_id": pubKeyID}).
+			Where(squirrel.Eq{"token_index": tokenIndex}),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, NewNotFoundError("state leaf")
+	}
+	return &res[0], nil
+}
+
 func toUserStateWithID(userStates []userStateWithStateID) []models.UserStateWithID {
 	res := make([]models.UserStateWithID, 0, len(userStates))
 	for i := range userStates {

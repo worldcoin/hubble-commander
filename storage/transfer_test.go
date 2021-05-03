@@ -97,6 +97,30 @@ func (s *TransferTestSuite) TestGetPendingTransfers() {
 	s.Equal([]models.Transfer{transfer, transfer2}, res)
 }
 
+func (s *TransferTestSuite) TestGetPendingTransfers_OrdersTransfersByNonceAscending() {
+	transfer.TransactionBase.Nonce = models.MakeUint256(1)
+	transfer.Hash = utils.RandomHash()
+	transfer2 := transfer
+	transfer2.TransactionBase.Nonce = models.MakeUint256(4)
+	transfer2.Hash = utils.RandomHash()
+	transfer3 := transfer
+	transfer3.TransactionBase.Nonce = models.MakeUint256(7)
+	transfer3.Hash = utils.RandomHash()
+	transfer4 := transfer
+	transfer4.TransactionBase.Nonce = models.MakeUint256(5)
+	transfer4.Hash = utils.RandomHash()
+
+	for _, transfer := range []*models.Transfer{&transfer, &transfer2, &transfer3, &transfer4} {
+		err := s.storage.AddTransfer(transfer)
+		s.NoError(err)
+	}
+
+	res, err := s.storage.GetPendingTransfers()
+	s.NoError(err)
+
+	s.Equal([]models.Transfer{transfer, transfer2, transfer4, transfer3}, res)
+}
+
 func (s *TransferTestSuite) TestGetUserTransfers() {
 	transfer1 := transfer
 	transfer1.Hash = utils.RandomHash()
@@ -219,6 +243,30 @@ func (s *TransferTestSuite) TestGetUserTransfersByPublicKey_NoTransfers() {
 	s.NoError(err)
 	s.Len(userTransfers, 0)
 	s.NotNil(userTransfers)
+}
+
+func (s *TransferTestSuite) TestGetTransfersByCommitmentID() {
+	commitmentID, err := s.storage.AddCommitment(&commitment)
+	s.NoError(err)
+
+	transfer1 := transfer
+	transfer1.IncludedInCommitment = commitmentID
+
+	err = s.storage.AddTransfer(&transfer1)
+	s.NoError(err)
+
+	commitments, err := s.storage.GetTransfersByCommitmentID(*commitmentID)
+	s.NoError(err)
+	s.Len(commitments, 1)
+}
+
+func (s *TransferTestSuite) TestGetTransfersByCommitmentID_NoTransfers() {
+	commitmentID, err := s.storage.AddCommitment(&commitment)
+	s.NoError(err)
+
+	commitments, err := s.storage.GetTransfersByCommitmentID(*commitmentID)
+	s.NoError(err)
+	s.Len(commitments, 0)
 }
 
 func TestTransferTestSuite(t *testing.T) {

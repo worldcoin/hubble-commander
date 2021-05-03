@@ -52,7 +52,7 @@ There is a number of scripts defined in the Makefile:
 * `make test` - run all tests unit tests
 * `make test-hardhat` - run all tests with Hardhat dependency
 * `make test-e2e` - run E2E tests on a pre-built docker image
-* `make test-e2e-locally` - run E2E tests against a local commander instance
+* `make test-commander-locally` - run E2E tests against a local commander instance
 
 ## Running with Ganache
 
@@ -106,10 +106,10 @@ The Docker container will be started and stopped automatically.
 
 Start commander in a separate terminal window and wait until it finished bootstrapping:
 ```shell
-make prune-run
+make run-prune
 ```
 
 Run the E2E tests:
 ```shell
-make test-e2e-locally
+make test-commander-locally
 ```

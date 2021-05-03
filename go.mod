@@ -17,4 +17,6 @@ require (
 	github.com/ybbus/jsonrpc/v2 v2.1.6
 	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
 	golang.org/x/sys v0.0.0-20210309074719-68d13333faf2 // indirect
+	gopkg.in/yaml.v2 v2.3.0
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

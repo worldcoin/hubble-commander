@@ -2,6 +2,7 @@ package commander
 
 import (
 	"log"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
@@ -25,18 +26,19 @@ func createTransferCommitments(
 		if len(commitments) >= int(cfg.MaxCommitmentsPerBatch) {
 			break
 		}
+		startTime := time.Now()
 
 		initialStateRoot, err := stateTree.Root()
 		if err != nil {
 			return nil, err
 		}
 
-		appliedTransfers, err := ApplyTransfers(storage, pendingTransfers, cfg)
+		appliedTx, invalidTx, feeReceiverStateID, err := ApplyTransfers(storage, pendingTransfers, cfg)
 		if err != nil {
 			return nil, err
 		}
 
-		if len(appliedTransfers) < int(cfg.TxsPerCommitment) {
+		if len(appliedTx) < int(cfg.TxsPerCommitment) {
 			err = stateTree.RevertTo(*initialStateRoot)
 			if err != nil {
 				return nil, err
@@ -44,30 +46,35 @@ func createTransferCommitments(
 			break
 		}
 
-		pendingTransfers = removeTransfer(pendingTransfers, appliedTransfers)
+		pendingTransfers = removeTransfer(pendingTransfers, append(appliedTx, invalidTx...))
 
-		serializedTxs, err := encoder.SerializeTransfers(appliedTransfers)
+		serializedTxs, err := encoder.SerializeTransfers(appliedTx)
 		if err != nil {
 			return nil, err
 		}
 
-		combinedSignature, err := combineTransferSignatures(appliedTransfers)
+		combinedSignature, err := combineTransferSignatures(appliedTx)
 		if err != nil {
 			return nil, err
 		}
 
-		log.Printf("Creating a %s commitment from %d transactions", txtype.Transfer.String(), len(appliedTransfers))
-		commitment, err := createAndStoreCommitment(storage, txtype.Transfer, cfg.FeeReceiverIndex, serializedTxs, combinedSignature)
+		commitment, err := createAndStoreCommitment(storage, txtype.Transfer, *feeReceiverStateID, serializedTxs, combinedSignature)
+		if err != nil {
+			return nil, err
+		}
+
+		err = markTransfersAsIncluded(storage, appliedTx, commitment.ID)
 		if err != nil {
 			return nil, err
 		}
 
 		commitments = append(commitments, *commitment)
-
-		err = markTransfersAsIncluded(storage, appliedTransfers, commitment.ID)
-		if err != nil {
-			return nil, err
-		}
+		log.Printf(
+			"Created a %s commitment from %d transactions in %d ms",
+			txtype.Transfer,
+			len(appliedTx),
+			time.Since(startTime).Milliseconds(),
+		)
 	}
 
 	return commitments, nil

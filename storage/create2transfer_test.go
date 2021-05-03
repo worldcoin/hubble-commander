@@ -103,6 +103,30 @@ func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers() {
 	s.Equal([]models.Create2Transfer{create2Transfer, create2Transfer2}, res)
 }
 
+func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers_OrdersTransfersByNonceAscending() {
+	create2Transfer.TransactionBase.Nonce = models.MakeUint256(1)
+	create2Transfer.Hash = utils.RandomHash()
+	create2Transfer2 := create2Transfer
+	create2Transfer2.TransactionBase.Nonce = models.MakeUint256(4)
+	create2Transfer2.Hash = utils.RandomHash()
+	create2Transfer3 := create2Transfer
+	create2Transfer3.TransactionBase.Nonce = models.MakeUint256(7)
+	create2Transfer3.Hash = utils.RandomHash()
+	create2Transfer4 := create2Transfer
+	create2Transfer4.TransactionBase.Nonce = models.MakeUint256(5)
+	create2Transfer4.Hash = utils.RandomHash()
+
+	for _, transfer := range []*models.Create2Transfer{&create2Transfer, &create2Transfer2, &create2Transfer3, &create2Transfer4} {
+		err := s.storage.AddCreate2Transfer(transfer)
+		s.NoError(err)
+	}
+
+	res, err := s.storage.GetPendingCreate2Transfers()
+	s.NoError(err)
+
+	s.Equal([]models.Create2Transfer{create2Transfer, create2Transfer2, create2Transfer4, create2Transfer3}, res)
+}
+
 func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey() {
 	err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
@@ -123,6 +147,30 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey_NoCreate2T
 	transfers, err := s.storage.GetCreate2TransfersByPublicKey(&account2.PublicKey)
 	s.NoError(err)
 	s.Len(transfers, 0)
+}
+
+func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID() {
+	commitmentID, err := s.storage.AddCommitment(&commitment)
+	s.NoError(err)
+
+	transfer1 := create2Transfer
+	transfer1.IncludedInCommitment = commitmentID
+
+	err = s.storage.AddCreate2Transfer(&transfer1)
+	s.NoError(err)
+
+	commitments, err := s.storage.GetCreate2TransfersByCommitmentID(*commitmentID)
+	s.NoError(err)
+	s.Len(commitments, 1)
+}
+
+func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID_NoCreate2Transfers() {
+	commitmentID, err := s.storage.AddCommitment(&commitment)
+	s.NoError(err)
+
+	commitments, err := s.storage.GetCreate2TransfersByCommitmentID(*commitmentID)
+	s.NoError(err)
+	s.Len(commitments, 0)
 }
 
 func TestCreate2TransferTestSuite(t *testing.T) {

@@ -14,7 +14,8 @@ type Config struct {
 }
 
 type RollupConfig struct {
-	FeeReceiverIndex        uint32
+	Prune                   bool
+	FeeReceiverPubKeyID     uint32
 	TxsPerCommitment        uint32
 	MinCommitmentsPerBatch  uint32
 	MaxCommitmentsPerBatch  uint32

@@ -33,8 +33,8 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 	s.storage = storage.NewTestStorage(testDB.DB)
 	s.tree = storage.NewStateTree(s.storage)
 	s.cfg = &config.RollupConfig{
-		FeeReceiverIndex: 3,
-		TxsPerCommitment: 6,
+		FeeReceiverPubKeyID: 3,
+		TxsPerCommitment:    6,
 	}
 
 	senderState := models.UserState{
@@ -88,10 +88,12 @@ func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AllValid() {
 	transfers := generateValidCreate2Transfers(3)
 
-	validTransfers, addedAccounts, err := ApplyCreate2Transfers(s.storage, transfers, []uint32{}, s.cfg)
+	addedAccounts := make(map[uint32]struct{})
+	validTransfers, invalidTransfers, _, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 3)
+	s.Len(invalidTransfers, 0)
 	s.Len(addedAccounts, 3)
 }
 
@@ -99,20 +101,24 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 	transfers := generateValidCreate2Transfers(2)
 	transfers = append(transfers, generateInvalidCreate2Transfers(3)...)
 
-	validTransfers, addedAccounts, err := ApplyCreate2Transfers(s.storage, transfers, []uint32{}, s.cfg)
+	addedAccounts := make(map[uint32]struct{})
+	validTransfers, invalidTransfers, _, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 2)
+	s.Len(invalidTransfers, 3)
 	s.Len(addedAccounts, 2)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_MoreThanSpecifiedInConfigTxsPerCommitment() {
 	transfers := generateValidCreate2Transfers(13)
 
-	validTransfers, addedAccounts, err := ApplyCreate2Transfers(s.storage, transfers, []uint32{}, s.cfg)
+	addedAccounts := make(map[uint32]struct{})
+	validTransfers, invalidTransfers, _, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 6)
+	s.Len(invalidTransfers, 0)
 	s.Len(addedAccounts, 6)
 
 	state, _ := s.tree.Leaf(1)
@@ -123,12 +129,15 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_FailsTransfer
 	transfers := generateValidCreate2Transfers(3)
 	transfers[2].ToPubKeyID = 10
 
-	alreadyAddedAccounts := []uint32{10}
+	addedAccounts := map[uint32]struct{}{
+		10: {},
+	}
 
-	validTransfers, addedAccounts, err := ApplyCreate2Transfers(s.storage, transfers, alreadyAddedAccounts, s.cfg)
+	validTransfers, invalidTransfers, _, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 2)
+	s.Len(invalidTransfers, 1)
 	s.Len(addedAccounts, 3)
 	s.Contains(addedAccounts, transfers[0].ToPubKeyID)
 	s.Contains(addedAccounts, transfers[1].ToPubKeyID)
@@ -145,12 +154,15 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 		s.NoError(err)
 	}
 
-	alreadyAddedAccounts := []uint32{10}
+	addedAccounts := map[uint32]struct{}{
+		10: {},
+	}
 
-	validTransfers, addedAccounts, err := ApplyCreate2Transfers(s.storage, transfers, alreadyAddedAccounts, s.cfg)
+	validTransfers, invalidTransfers, _, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 2)
+	s.Len(invalidTransfers, 3)
 	s.Len(addedAccounts, 3)
 
 	for i := range transfers {

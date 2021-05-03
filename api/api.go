@@ -16,20 +16,15 @@ type API struct {
 	client  *eth.Client
 }
 
-func StartAPIServer(cfg *config.Config, client *eth.Client) error {
-	storage, err := st.NewStorage(&cfg.DB)
+func NewAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client) (*http.Server, error) {
+	server, err := getAPIServer(cfg, storage, client)
 	if err != nil {
-		return err
-	}
-
-	server, err := getAPIServer(&cfg.API, storage, client)
-	if err != nil {
-		return err
+		return nil, err
 	}
 
 	http.HandleFunc("/", server.ServeHTTP)
-	addr := fmt.Sprintf(":%s", cfg.API.Port)
-	return http.ListenAndServe(addr, nil)
+	addr := fmt.Sprintf(":%s", cfg.Port)
+	return &http.Server{Addr: addr}, nil
 }
 
 func getAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client) (*rpc.Server, error) {
@@ -40,10 +35,8 @@ func getAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client
 	}
 	server := rpc.NewServer()
 
-	err := server.RegisterName("hubble", &api)
-	if err != nil {
+	if err := server.RegisterName("hubble", &api); err != nil {
 		return nil, err
 	}
-
 	return server, nil
 }
