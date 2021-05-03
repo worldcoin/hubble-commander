@@ -4,6 +4,7 @@ import "C"
 
 import (
 	"encoding/hex"
+	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -54,18 +55,27 @@ func GetWalletPublicKey(privateKey *C.char) *C.char {
 }
 
 //export SignTransfer
-func SignTransfer(from, to C.uint, amount, fee, nonce C.longlong, privateKey *C.char) *C.char {
+func SignTransfer(from, to C.uint, amount, fee, nonce, privateKey *C.char) *C.char {
 	wallet, err := parseWallet(privateKey)
 	if err != nil {
 		return nil
 	}
 
+	amountBigInt := new(big.Int)
+	amountBigInt.SetString(C.GoString(amount), 10)
+
+	feeBigInt := new(big.Int)
+	feeBigInt.SetString(C.GoString(fee), 10)
+
+	nonceBigInt := new(big.Int)
+	nonceBigInt.SetString(C.GoString(nonce), 10)
+
 	transfer, _ := api.SignTransfer(wallet, dto.Transfer{
 		FromStateID: ref.Uint32(uint32(from)),
 		ToStateID:   ref.Uint32(uint32(to)),
-		Amount:      models.NewUint256(int64(amount)),
-		Fee:         models.NewUint256(int64(fee)),
-		Nonce:       models.NewUint256(int64(nonce)),
+		Amount:      models.NewUint256FromBig(*amountBigInt),
+		Fee:         models.NewUint256FromBig(*feeBigInt),
+		Nonce:       models.NewUint256FromBig(*nonceBigInt),
 	})
 
 	return C.CString(hex.EncodeToString(transfer.Signature.Bytes()))
