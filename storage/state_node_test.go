@@ -169,7 +169,7 @@ func (s *StateNodeTestSuite) TestGetStateNodeByHash_NonExistentNode() {
 func (s *StateNodeTestSuite) TestGetStateNodeByPath_NonExistentLeaf() {
 	path := models.MerklePath{
 		Path:  0,
-		Depth: 32,
+		Depth: leafDepth,
 	}
 
 	expected := &models.StateNode{
@@ -190,7 +190,7 @@ func (s *StateNodeTestSuite) TestGetStateNodeByPath_NonExistentRoot() {
 
 	expected := &models.StateNode{
 		MerklePath: path,
-		DataHash:   GetZeroHash(32),
+		DataHash:   GetZeroHash(leafDepth),
 	}
 
 	res, err := s.storage.GetStateNodeByPath(&path)
