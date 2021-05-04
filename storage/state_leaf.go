@@ -7,6 +7,14 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+var userStateWithIDCols = []string{
+	"state_leaf.pub_key_id",
+	"state_leaf.token_index",
+	"state_leaf.balance",
+	"state_leaf.nonce",
+	"lpad(merkle_path::text, 33, '0')::bit(33)::bigint AS stateID",
+}
+
 func (s *Storage) AddStateLeaf(leaf *models.StateLeaf) error {
 	_, err := s.DB.Query(
 		s.QB.Insert("state_leaf").
@@ -92,22 +100,10 @@ func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
 	return &res[0], nil
 }
 
-type userStateWithStateID struct {
-	StateID models.MerklePath `db:"merkle_path"`
-	models.UserState
-}
-
 func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]models.UserStateWithID, error) {
-	res := make([]userStateWithStateID, 0, 1)
+	res := make([]models.UserStateWithID, 0, 1)
 	err := s.DB.Query(
-		s.QB.
-			Select(
-				"state_leaf.pub_key_id",
-				"state_leaf.token_index",
-				"state_leaf.balance",
-				"state_leaf.nonce",
-				"state_node.merkle_path",
-			).
+		s.QB.Select(userStateWithIDCols...).
 			From("account").
 			JoinClause("NATURAL JOIN state_leaf").
 			JoinClause("NATURAL JOIN state_node").
@@ -119,17 +115,13 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]model
 	if len(res) == 0 {
 		return nil, NewNotFoundError("user states")
 	}
-	return toUserStateWithID(res), nil
+	return res, nil
 }
 
 func (s *Storage) GetUserStateByPubKeyIDAndTokenIndex(pubKeyID uint32, tokenIndex models.Uint256) (*models.UserStateWithID, error) {
 	res := make([]models.UserStateWithID, 0, 1)
 	err := s.DB.Query(
-		s.QB.Select("state_leaf.pub_key_id",
-			"state_leaf.token_index",
-			"state_leaf.balance",
-			"state_leaf.nonce",
-			"lpad(merkle_path::text, 33, '0')::bit(33)::bigint AS stateID").
+		s.QB.Select(userStateWithIDCols...).
 			From("state_leaf").
 			JoinClause("NATURAL JOIN state_node").
 			Where(squirrel.Eq{"pub_key_id": pubKeyID}).
@@ -144,13 +136,23 @@ func (s *Storage) GetUserStateByPubKeyIDAndTokenIndex(pubKeyID uint32, tokenInde
 	return &res[0], nil
 }
 
-func toUserStateWithID(userStates []userStateWithStateID) []models.UserStateWithID {
-	res := make([]models.UserStateWithID, 0, len(userStates))
-	for i := range userStates {
-		res = append(res, models.UserStateWithID{
-			StateID:   userStates[i].StateID.Path,
-			UserState: userStates[i].UserState,
-		})
+func (s *Storage) GetUserStateByID(stateID uint32) (*models.UserStateWithID, error) {
+	path := models.MerklePath{
+		Path:  stateID,
+		Depth: leafDepth,
 	}
-	return res
+	res := make([]models.UserStateWithID, 0, 1)
+	err := s.DB.Query(
+		s.QB.Select(userStateWithIDCols...).
+			From("state_leaf").
+			JoinClause("NATURAL JOIN state_node").
+			Where(squirrel.Eq{"merkle_path": path}),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, NewNotFoundError("user state")
+	}
+	return &res[0], nil
 }

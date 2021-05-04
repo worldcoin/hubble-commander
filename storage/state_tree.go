@@ -12,6 +12,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
+const leafDepth = 32
+
 var (
 	rootPath = models.MerklePath{Path: 0, Depth: 0}
 )
@@ -35,7 +37,7 @@ func (s *StateTree) Root() (*common.Hash, error) {
 func (s *StateTree) LeafNode(id uint32) (*models.StateNode, error) {
 	leafPath := &models.MerklePath{
 		Path:  id,
-		Depth: 32,
+		Depth: leafDepth,
 	}
 	return s.storage.GetStateNodeByPath(leafPath)
 }
@@ -43,7 +45,7 @@ func (s *StateTree) LeafNode(id uint32) (*models.StateNode, error) {
 func (s *StateTree) Leaf(id uint32) (*models.StateLeaf, error) {
 	leafPath := &models.MerklePath{
 		Path:  id,
-		Depth: 32,
+		Depth: leafDepth,
 	}
 	return s.storage.GetStateLeafByPath(leafPath)
 }
@@ -189,7 +191,7 @@ func (s *StateTree) updateStateNodes(leafPath *models.MerklePath, newLeafHash *c
 func getWitnessHash(nodes map[models.MerklePath]common.Hash, path models.MerklePath) common.Hash {
 	witnessHash, ok := nodes[path]
 	if !ok {
-		return GetZeroHash(32 - uint(path.Depth))
+		return GetZeroHash(leafDepth - uint(path.Depth))
 	}
 	return witnessHash
 }
