@@ -144,6 +144,43 @@ func (c *DockerCommander) Start() error {
 	return nil
 }
 
+func (c *DockerCommander) Restart() error {
+	restartTimeout := 30 * time.Second
+	err := c.cli.ContainerRestart(context.Background(), c.containerID, &restartTimeout)
+	if err != nil {
+		return err
+	}
+
+	start := time.Now()
+	for {
+		healthy, err := c.IsHealthy()
+		if err != nil {
+			return err
+		}
+
+		if healthy {
+			break
+		}
+
+		hasExited, err := c.HasExited()
+		if err != nil {
+			return err
+		}
+
+		if hasExited {
+			return fmt.Errorf("container has exited")
+		}
+
+		if time.Since(start) > 30*time.Second {
+			return fmt.Errorf("node start timeout")
+		}
+
+		time.Sleep(1 * time.Second)
+	}
+
+	return nil
+}
+
 func (c *DockerCommander) IsHealthy() (bool, error) {
 	info, err := c.cli.ContainerInspect(context.Background(), c.containerID)
 	if err != nil {

@@ -55,7 +55,6 @@ func TestCommander(t *testing.T) {
 	testGetBatches(t, commander.Client())
 
 	testRestartCommander(t, commander, senderWallet)
-	testSendTransfer(t, commander.Client(), senderWallet, models.NewUint256(64))
 }
 
 func testGetVersion(t *testing.T, client jsonrpc.RPCClient) {
@@ -203,11 +202,10 @@ func testGetBatches(t *testing.T, client jsonrpc.RPCClient) {
 }
 
 func testRestartCommander(t *testing.T, commander Commander, senderWallet bls.Wallet) {
-	err := commander.Stop()
+	err := commander.Restart()
 	require.NoError(t, err)
 
-	err = commander.Start()
-	require.NoError(t, err)
+	testSendTransfer(t, commander.Client(), senderWallet, models.NewUint256(64))
 }
 
 func getUserState(userStates []dto.UserState, stateID uint32) (*dto.UserState, error) {
