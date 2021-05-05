@@ -1,10 +1,14 @@
 package testutils
 
 import (
+	"time"
+
 	"github.com/Worldcoin/hubble-commander/contracts/test/tx"
 	"github.com/Worldcoin/hubble-commander/contracts/test/types"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 )
+
+const TryInterval = 250 * time.Millisecond
 
 type TestContracts struct {
 	TestTx    *tx.TestTx
