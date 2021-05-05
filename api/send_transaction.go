@@ -20,6 +20,7 @@ var (
 	ErrNotEnoughBalance = errors.New("not enough balance")
 	ErrInvalidSignature = errors.New("invalid signature")
 	ErrTransferToSelf   = errors.New("transfer to the same state id")
+	ErrNegativeAmount   = errors.New("amount must be positive")
 )
 
 var (
@@ -54,6 +55,9 @@ func validateAmount(amount *models.Uint256) error {
 	_, err := encoder.EncodeDecimal(*amount)
 	if err != nil {
 		return NewNotDecimalEncodableError("amount")
+	}
+	if amount.CmpN(0) < 0 {
+		return ErrNegativeAmount
 	}
 	return nil
 }
