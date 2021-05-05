@@ -27,11 +27,7 @@ func (s *CommanderTestSuite) SetupTest() {
 	s.cmd = NewCommander(&cfg)
 }
 
-// TODO these two tests cannot run in the same process, skipping the first one for now
-
 func (s *CommanderTestSuite) TestStartStop() {
-	s.T().SkipNow()
-
 	s.False(s.cmd.IsRunning())
 
 	err := s.cmd.Start()

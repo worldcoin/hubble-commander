@@ -22,9 +22,10 @@ func NewAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client
 		return nil, err
 	}
 
-	http.HandleFunc("/", server.ServeHTTP)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", server.ServeHTTP)
 	addr := fmt.Sprintf(":%s", cfg.Port)
-	return &http.Server{Addr: addr}, nil
+	return &http.Server{Addr: addr, Handler: mux}, nil
 }
 
 func getAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client) (*rpc.Server, error) {
