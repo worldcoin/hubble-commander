@@ -60,6 +60,9 @@ test-commander-locally: clean-testcache
 bench-e2e: clean-testcache
 	go test -v -tags e2e -run TestBenchCommander ./e2e
 
+bench-e2e-profile: clean-testcache
+	HUBBLE_E2E=in-process go test -cpuprofile cpu.prof -v -tags e2e -run TestBenchCommander ./e2e
+
 .PHONY: 
 	install
 	clean

@@ -24,6 +24,8 @@ import (
 func TestCommander(t *testing.T) {
 	commander, err := NewCommanderFromEnv()
 	require.NoError(t, err)
+	err = commander.Start()
+	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, commander.Stop())
 	}()

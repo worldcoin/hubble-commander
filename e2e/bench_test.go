@@ -21,6 +21,8 @@ import (
 func TestBenchCommander(t *testing.T) {
 	commander, err := NewCommanderFromEnv()
 	require.NoError(t, err)
+	err = commander.Start()
+	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, commander.Stop())
 	}()
@@ -66,12 +68,12 @@ func TestBenchCommander(t *testing.T) {
 				wallet := walletForState[stateId]
 				nonce := nonces[stateId]
 				to := stateId
-				
-                              // Pick random receiver id thats different from sender's.
+
+				// Pick random receiver id thats different from sender's.
 				for to == stateId {
 					to = stateIds[rand.Intn(len(stateIds))]
 				}
-				
+
 				hash := sendTransfer(t, commander, wallet, stateId, to, *nonce)
 				if hash != nil {
 					nonces[stateId] = nonces[stateId].AddN(1)

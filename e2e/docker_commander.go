@@ -101,11 +101,6 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 		}
 	}()
 
-	err = commander.Start()
-	if err != nil {
-		return nil, err
-	}
-
 	return commander, nil
 }
 
