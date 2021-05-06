@@ -19,6 +19,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+const BlocksToFinalise = 7 * 24 * 60 * 4
+
 type DeploymentConfig struct {
 	MaxDepositSubtreeDepth *models.Uint256
 	GenesisStateRoot       *common.Hash
@@ -227,7 +229,7 @@ func fillWithDefaults(config *DeploymentConfig) {
 		config.StakeAmount = models.NewUint256(1e17)
 	}
 	if config.BlocksToFinalise == nil {
-		config.BlocksToFinalise = models.NewUint256(7 * 24 * 60 * 4)
+		config.BlocksToFinalise = models.NewUint256(BlocksToFinalise)
 	}
 	if config.MinGasLeft == nil {
 		config.MinGasLeft = models.NewUint256(10_000)
