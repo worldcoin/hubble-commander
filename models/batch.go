@@ -14,5 +14,6 @@ type Batch struct {
 
 type BatchWithAccountRoot struct {
 	Batch
+	SubmissionBlock uint32
 	AccountTreeRoot *common.Hash `db:"account_tree_root"`
 }

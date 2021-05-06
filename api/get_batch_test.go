@@ -40,7 +40,7 @@ func (s *GetBatchTestSuite) SetupTest() {
 	s.batch = models.Batch{
 		Hash:              hash,
 		Type:              txtype.Transfer,
-		FinalisationBlock: 113,
+		FinalisationBlock: 42000,
 	}
 }
 
@@ -61,7 +61,8 @@ func (s *GetBatchTestSuite) TestGetBatchByHash() {
 	s.NoError(err)
 	s.NotNil(result)
 	s.Len(result.Commitments, 1)
-	s.Equal(s.batch.Hash, result.Hash)
+	s.Equal(s.batch, result.Batch)
+	s.Equal(getSubmissionBlock(s.batch.FinalisationBlock), result.SubmissionBlock)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByHash_NoCommitments() {
@@ -92,7 +93,8 @@ func (s *GetBatchTestSuite) TestGetBatchByID() {
 	s.NoError(err)
 	s.NotNil(result)
 	s.Len(result.Commitments, 1)
-	s.Equal(s.batch.Hash, result.Hash)
+	s.Equal(s.batch, result.Batch)
+	s.Equal(getSubmissionBlock(s.batch.FinalisationBlock), result.SubmissionBlock)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByID_NoCommitments() {
