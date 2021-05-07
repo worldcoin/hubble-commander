@@ -32,12 +32,12 @@ func createCreate2TransferCommitments(
 			return nil, err
 		}
 
-		appliedTx, invalidTx, feeReceiverStateID, err := ApplyCreate2Transfers(storage, pendingTransfers, alreadyAddedPubKeyIDs, cfg)
+		appliedTxs, invalidTxs, feeReceiverStateID, err := ApplyCreate2Transfers(storage, pendingTransfers, alreadyAddedPubKeyIDs, cfg)
 		if err != nil {
 			return nil, err
 		}
 
-		if len(appliedTx) < int(cfg.TxsPerCommitment) {
+		if len(appliedTxs) < int(cfg.TxsPerCommitment) {
 			err = stateTree.RevertTo(*initialStateRoot)
 			if err != nil {
 				return nil, err
@@ -45,25 +45,25 @@ func createCreate2TransferCommitments(
 			break
 		}
 
-		pendingTransfers = removeCreate2Transfer(pendingTransfers, append(appliedTx, invalidTx...))
+		pendingTransfers = removeCreate2Transfer(pendingTransfers, append(appliedTxs, invalidTxs...))
 
-		serializedTxs, err := encoder.SerializeCreate2Transfers(appliedTx)
+		serializedTxs, err := encoder.SerializeCreate2Transfers(appliedTxs)
 		if err != nil {
 			return nil, err
 		}
 
-		combinedSignature, err := combineCreate2TransferSignatures(appliedTx)
+		combinedSignature, err := combineCreate2TransferSignatures(appliedTxs)
 		if err != nil {
 			return nil, err
 		}
 
-		log.Printf("Creating a %s commitment from %d transactions", txtype.Create2Transfer.String(), len(appliedTx))
+		log.Printf("Creating a %s commitment from %d transactions", txtype.Create2Transfer.String(), len(appliedTxs))
 		commitment, err := createAndStoreCommitment(storage, txtype.Create2Transfer, *feeReceiverStateID, serializedTxs, combinedSignature)
 		if err != nil {
 			return nil, err
 		}
 
-		err = markCreate2TransfersAsIncluded(storage, appliedTx, commitment.ID)
+		err = markCreate2TransfersAsIncluded(storage, appliedTxs, commitment.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -72,7 +72,7 @@ func createCreate2TransferCommitments(
 		log.Printf(
 			"Created a %s commitment from %d transactions in %d ms",
 			txtype.Create2Transfer,
-			len(appliedTx),
+			len(appliedTxs),
 			time.Since(startTime).Milliseconds(),
 		)
 	}
