@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -24,6 +25,7 @@ type DockerCommander struct {
 
 type StartOptions struct {
 	Image string
+	Prune bool
 }
 
 func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
@@ -57,7 +59,7 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 			ExposedPorts: map[nat.Port]struct{}{
 				"8080/tcp": {},
 			},
-			Cmd: []string{"build/hubble", "--prune=true"},
+			Cmd: []string{"build/hubble", fmt.Sprintf("--prune=%t", opts.Prune)},
 		},
 		&container.HostConfig{
 			NetworkMode: networkMode,
@@ -145,37 +147,15 @@ func (c *DockerCommander) Start() error {
 }
 
 func (c *DockerCommander) Restart() error {
-	restartTimeout := 30 * time.Second
-	err := c.cli.ContainerRestart(context.Background(), c.containerID, &restartTimeout)
+	err := c.cli.ContainerStop(context.Background(), c.containerID, nil)
 	if err != nil {
 		return err
 	}
 
-	start := time.Now()
-	for {
-		healthy, err := c.IsHealthy()
-		if err != nil {
-			return err
-		}
-
-		if healthy {
-			break
-		}
-
-		hasExited, err := c.HasExited()
-		if err != nil {
-			return err
-		}
-
-		if hasExited {
-			return fmt.Errorf("container has exited")
-		}
-
-		if time.Since(start) > 30*time.Second {
-			return fmt.Errorf("node start timeout")
-		}
-
-		time.Sleep(1 * time.Second)
+	cmd := exec.Command("docker run ghcr.io/worldcoin/hubble-commander:latest build/hubble --prune=false")
+	err = cmd.Run()
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -204,7 +184,6 @@ func (c *DockerCommander) Stop() error {
 	if err != nil {
 		return err
 	}
-
 	err = c.cli.ContainerRemove(context.Background(), c.containerID, types.ContainerRemoveOptions{Force: true})
 	if err != nil {
 		return err

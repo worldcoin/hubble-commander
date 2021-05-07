@@ -19,7 +19,7 @@ import (
 )
 
 func TestBenchCommander(t *testing.T) {
-	commander, err := NewCommanderFromEnv()
+	commander, err := NewCommanderFromEnv(true)
 	require.NoError(t, err)
 	err = commander.Start()
 	require.NoError(t, err)
