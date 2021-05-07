@@ -10,6 +10,7 @@ type Config struct {
 	Rollup   RollupConfig
 	API      APIConfig
 	DB       DBConfig
+	Badger   BadgerConfig
 	Ethereum *EthereumConfig
 }
 
@@ -39,6 +40,10 @@ type DBConfig struct {
 	User           *string
 	Password       *string
 	MigrationsPath string
+}
+
+type BadgerConfig struct {
+	Path string
 }
 
 type EthereumConfig struct {

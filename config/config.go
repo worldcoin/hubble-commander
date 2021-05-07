@@ -27,6 +27,10 @@ func getMigrationsPath() string {
 	return path.Join(utils.GetProjectRoot(), "db", "postgres", "migrations")
 }
 
+func getBadgerPath() string {
+	return path.Join(utils.GetProjectRoot(), "db", "badger", "data")
+}
+
 func getGenesisPath() string {
 	return path.Join(utils.GetProjectRoot(), "genesis.yaml")
 }
@@ -57,6 +61,9 @@ func GetConfig() Config {
 			Password:       getEnvOrDefault("HUBBLE_DBPASSWORD", nil),
 			MigrationsPath: *getEnvOrDefault("HUBBLE_MIGRATIONS_PATH", ref.String(getMigrationsPath())),
 		},
+		Badger: BadgerConfig{
+			Path: *getEnvOrDefault("HUBBLE_BADGER_PATH", ref.String(getBadgerPath())),
+		},
 		Ethereum: getEthereumConfig(),
 	}
 }
@@ -86,6 +93,9 @@ func GetTestConfig() Config {
 			User:           getEnvOrDefault("HUBBLE_DBUSER", nil),
 			Password:       getEnvOrDefault("HUBBLE_DBPASSWORD", nil),
 			MigrationsPath: getMigrationsPath(),
+		},
+		Badger: BadgerConfig{
+			Path: *getEnvOrDefault("HUBBLE_BADGER_PATH", ref.String(getBadgerPath())),
 		},
 		Ethereum: getEthereumConfig(),
 	}

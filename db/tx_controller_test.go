@@ -1,4 +1,4 @@
-package postgres
+package db
 
 import (
 	"errors"
@@ -11,46 +11,41 @@ import (
 type TxControllerTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	db *TestDB
 }
 
 func (s *TxControllerTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *TxControllerTestSuite) SetupTest() {
-	testDB, err := NewTestDB()
-	s.NoError(err)
-	s.db = testDB
+type MockController struct {
+	rollbackFails bool
 }
-
-func (s *TxControllerTestSuite) TearDownTest() {
-	err := s.db.Teardown()
-	s.NoError(err)
-}
-
-func (s *TxControllerTestSuite) TestRollback_DoesNotModifyCauseError() {
-	tx, _, err := s.db.DB.BeginTransaction()
-	s.NoError(err)
-
-	cause := errors.New("cause of rollback")
-	tx.Rollback(&cause)
-	s.Equal("cause of rollback", cause.Error())
-}
-
-type MockController struct{}
 
 func (m MockController) Rollback() error {
-	return errors.New("rollback error #1")
+	if m.rollbackFails {
+		return errors.New("rollback error #1")
+	}
+	return nil
 }
 
 func (m MockController) Commit() error {
 	return nil
 }
 
-func (s *TxControllerTestSuite) TestRollback_WrapsCauseErrorWithRollbackError() {
-	tx := TransactionController{
+func (s *TxControllerTestSuite) TestRollback_DoesNotModifyCauseError() {
+	tx := TxController{
 		tx:       MockController{},
+		isLocked: false,
+	}
+
+	cause := errors.New("cause of rollback")
+	tx.Rollback(&cause)
+	s.Equal("cause of rollback", cause.Error())
+}
+
+func (s *TxControllerTestSuite) TestRollback_WrapsCauseErrorWithRollbackError() {
+	tx := TxController{
+		tx:       MockController{rollbackFails: true},
 		isLocked: false,
 	}
 

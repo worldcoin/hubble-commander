@@ -33,15 +33,11 @@ func NewTestDB() (*TestDB, error) {
 	}
 
 	teardown := func() error {
-		err = migrator.Down()
+		err := migrator.Down() // nolint:govet
 		if err != nil {
 			return err
 		}
-		err = dbInstance.Close()
-		if err != nil {
-			return err
-		}
-		return nil
+		return dbInstance.Close()
 	}
 
 	testDB := &TestDB{
