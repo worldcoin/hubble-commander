@@ -77,4 +77,4 @@ jobs:
         script: |
           docker-compose pull
           docker-compose up -d
-          docker images -f "before=ghcr.io/worldcoin/hubble-commander:latest" -f "dangling=true" -q ghcr.io/worldcoin/hubble-commander | xargs docker image rm
+          docker images -f "before=ghcr.io/worldcoin/hubble-commander:latest" -f "dangling=true" -q ghcr.io/worldcoin/hubble-commander | xargs docker image rm || true
