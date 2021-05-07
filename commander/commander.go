@@ -10,7 +10,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
-	"github.com/Worldcoin/hubble-commander/db"
+	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	ethRollup "github.com/Worldcoin/hubble-commander/eth/rollup"
@@ -43,7 +43,7 @@ func (c *Commander) Start() error {
 	if c.IsRunning() {
 		return nil
 	}
-	migrator, err := db.GetMigrator(&c.cfg.DB)
+	migrator, err := postgres.GetMigrator(&c.cfg.DB)
 	if err != nil {
 		return err
 	}

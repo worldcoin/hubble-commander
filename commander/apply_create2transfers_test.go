@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/db"
+	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/storage"
@@ -16,7 +16,7 @@ import (
 type ApplyCreate2TransfersTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	db      *db.TestDB
+	db      *postgres.TestDB
 	storage *storage.Storage
 	tree    *storage.StateTree
 	cfg     *config.RollupConfig
@@ -27,7 +27,7 @@ func (s *ApplyCreate2TransfersTestSuite) SetupSuite() {
 }
 
 func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
-	testDB, err := db.NewTestDB()
+	testDB, err := postgres.NewTestDB()
 	s.NoError(err)
 	s.db = testDB
 	s.storage = storage.NewTestStorage(testDB.DB)

@@ -24,7 +24,7 @@ func loadDotEnv() {
 }
 
 func getMigrationsPath() string {
-	return path.Join(utils.GetProjectRoot(), "db", "migrations")
+	return path.Join(utils.GetProjectRoot(), "db", "postgres", "migrations")
 }
 
 func getGenesisPath() string {

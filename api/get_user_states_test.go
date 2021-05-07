@@ -3,7 +3,7 @@ package api
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/db"
+	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -16,7 +16,7 @@ type GetUserStatesTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	api *API
-	db  *db.TestDB
+	db  *postgres.TestDB
 }
 
 func (s *GetUserStatesTestSuite) SetupSuite() {
@@ -24,7 +24,7 @@ func (s *GetUserStatesTestSuite) SetupSuite() {
 }
 
 func (s *GetUserStatesTestSuite) SetupTest() {
-	testDB, err := db.NewTestDB()
+	testDB, err := postgres.NewTestDB()
 	s.NoError(err)
 
 	storage := st.NewTestStorage(testDB.DB)

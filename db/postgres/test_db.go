@@ -1,4 +1,4 @@
-package db
+package postgres
 
 import (
 	"github.com/Worldcoin/hubble-commander/config"

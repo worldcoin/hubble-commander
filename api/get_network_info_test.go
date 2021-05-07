@@ -3,7 +3,7 @@ package api
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/db"
+	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -17,7 +17,7 @@ type NetworkInfoTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	api        *API
-	db         *db.TestDB
+	db         *postgres.TestDB
 	testClient *eth.TestClient
 }
 
@@ -26,7 +26,7 @@ func (s *NetworkInfoTestSuite) SetupSuite() {
 }
 
 func (s *NetworkInfoTestSuite) SetupTest() {
-	testDB, err := db.NewTestDB()
+	testDB, err := postgres.NewTestDB()
 	s.NoError(err)
 
 	storage := st.NewTestStorage(testDB.DB)

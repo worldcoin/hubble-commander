@@ -3,7 +3,7 @@ package storage
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/db"
+	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -22,7 +22,7 @@ var (
 type StateTreeTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	db      *db.TestDB
+	db      *postgres.TestDB
 	storage *Storage
 	tree    *StateTree
 	leaf    *models.StateLeaf
@@ -33,7 +33,7 @@ func (s *StateTreeTestSuite) SetupSuite() {
 }
 
 func (s *StateTreeTestSuite) SetupTest() {
-	testDB, err := db.NewTestDB()
+	testDB, err := postgres.NewTestDB()
 	s.NoError(err)
 	s.db = testDB
 	s.storage = NewTestStorage(testDB.DB)

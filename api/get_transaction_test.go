@@ -5,7 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/db"
+	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
@@ -18,7 +18,7 @@ type GetTransactionTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	api      *API
-	db       *db.TestDB
+	db       *postgres.TestDB
 	transfer dto.Transfer
 	wallet   *bls.Wallet
 	storage  *st.Storage
@@ -29,7 +29,7 @@ func (s *GetTransactionTestSuite) SetupSuite() {
 }
 
 func (s *GetTransactionTestSuite) SetupTest() {
-	testDB, err := db.NewTestDB()
+	testDB, err := postgres.NewTestDB()
 	s.NoError(err)
 
 	s.storage = st.NewTestStorage(testDB.DB)
