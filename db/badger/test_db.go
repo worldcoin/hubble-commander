@@ -20,7 +20,7 @@ func NewTestDB() (*TestDB, error) {
 	}
 
 	return &TestDB{
-		DB:       &Database{DB: db},
+		DB:       &Database{badger: db},
 		Teardown: teardown,
 	}, nil
 }
