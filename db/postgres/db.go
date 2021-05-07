@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 
@@ -25,11 +26,11 @@ type Database struct {
 
 func NewDatabase(cfg *config.DBConfig) (*Database, error) {
 	datasource := CreateDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, &cfg.Name)
-	db, err := sqlx.Connect("postgres", datasource)
+	database, err := sqlx.Connect("postgres", datasource)
 	if err != nil {
 		return nil, err
 	}
-	return &Database{DatabaseLike: db}, nil
+	return &Database{DatabaseLike: database}, nil
 }
 
 func (d *Database) Close() error {
@@ -50,7 +51,7 @@ func (d *Database) Ping() error {
 	}
 }
 
-func (d *Database) BeginTransaction() (*TransactionController, *Database, error) {
+func (d *Database) BeginTransaction() (*db.TxController, *Database, error) {
 	switch v := d.DatabaseLike.(type) {
 	case *sqlx.DB:
 		tx, err := v.Beginx()
@@ -58,15 +59,15 @@ func (d *Database) BeginTransaction() (*TransactionController, *Database, error)
 			return nil, nil, err
 		}
 
-		db := &Database{DatabaseLike: tx}
-		controller := &TransactionController{tx: tx, isLocked: false}
-		return controller, db, nil
+		database := &Database{DatabaseLike: tx}
+		controller := db.NewTxController(tx, false)
+		return controller, database, nil
 
 	case *sqlx.Tx:
 		// Already in a transaction
-		db := &Database{DatabaseLike: d.DatabaseLike}
-		controller := &TransactionController{tx: v, isLocked: true}
-		return controller, db, nil
+		database := &Database{DatabaseLike: d.DatabaseLike}
+		controller := db.NewTxController(v, true)
+		return controller, database, nil
 	}
 	return nil, nil, fmt.Errorf("database object created with unsupported DatabaseLike implementation")
 }
@@ -74,12 +75,12 @@ func (d *Database) BeginTransaction() (*TransactionController, *Database, error)
 func GetMigrator(cfg *config.DBConfig) (*migrate.Migrate, error) {
 	datasource := CreateDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, &cfg.Name)
 
-	db, err := sql.Open("postgres", datasource)
+	database, err := sql.Open("postgres", datasource)
 	if err != nil {
 		return nil, err
 	}
 
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	driver, err := postgres.WithInstance(database, &postgres.Config{})
 	if err != nil {
 		return nil, err
 	}

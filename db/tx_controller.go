@@ -1,4 +1,4 @@
-package postgres
+package db
 
 import (
 	"fmt"
@@ -9,13 +9,17 @@ type rawController interface {
 	Commit() error
 }
 
-type TransactionController struct {
+type TxController struct {
 	tx       rawController
 	isLocked bool
 }
 
+func NewTxController(tx rawController, isLocked bool) *TxController {
+	return &TxController{tx, isLocked}
+}
+
 // nolint:gocritic
-func (t *TransactionController) Rollback(cause *error) {
+func (t *TxController) Rollback(cause *error) {
 	if !t.isLocked {
 		t.isLocked = true
 		if rollbackErr := t.tx.Rollback(); rollbackErr != nil {
@@ -24,7 +28,7 @@ func (t *TransactionController) Rollback(cause *error) {
 	}
 }
 
-func (t *TransactionController) Commit() error {
+func (t *TxController) Commit() error {
 	if !t.isLocked {
 		t.isLocked = true
 		return t.tx.Commit()
