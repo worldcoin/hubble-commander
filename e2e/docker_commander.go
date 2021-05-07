@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -141,21 +140,6 @@ func (c *DockerCommander) Start() error {
 		}
 
 		time.Sleep(1 * time.Second)
-	}
-
-	return nil
-}
-
-func (c *DockerCommander) Restart() error {
-	err := c.cli.ContainerStop(context.Background(), c.containerID, nil)
-	if err != nil {
-		return err
-	}
-
-	cmd := exec.Command("docker run ghcr.io/worldcoin/hubble-commander:latest build/hubble --prune=false")
-	err = cmd.Run()
-	if err != nil {
-		return err
 	}
 
 	return nil

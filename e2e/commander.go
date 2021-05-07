@@ -10,7 +10,6 @@ import (
 type Commander interface {
 	Start() error
 	Stop() error
-	Restart() error
 	Client() jsonrpc.RPCClient
 }
 
