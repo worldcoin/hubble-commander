@@ -15,12 +15,10 @@ import (
 type GetBatchesTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	api        *API
-	storage    *st.Storage
-	db         *postgres.TestDB
-	tree       *st.StateTree
-	commitment models.Commitment
-	batch      models.Batch
+	api     *API
+	storage *st.Storage
+	db      *postgres.TestDB
+	batch   models.Batch
 }
 
 func (s *GetBatchesTestSuite) SetupSuite() {
@@ -34,15 +32,9 @@ func (s *GetBatchesTestSuite) SetupTest() {
 	s.storage = st.NewTestStorage(testDB.DB)
 	s.api = &API{nil, s.storage, nil}
 	s.db = testDB
-	s.tree = st.NewStateTree(s.storage)
-
-	hash := utils.RandomHash()
-	s.commitment = commitment
-	s.commitment.IncludedInBatch = &hash
-	s.commitment.AccountTreeRoot = &hash
 
 	s.batch = models.Batch{
-		Hash:              hash,
+		Hash:              utils.RandomHash(),
 		Type:              txtype.Transfer,
 		FinalisationBlock: 42000,
 	}
@@ -54,26 +46,7 @@ func (s *GetBatchesTestSuite) TearDownTest() {
 }
 
 func (s *GetBatchesTestSuite) TestGetBatches() {
-	err := addLeaf(s.storage, s.tree)
-	s.NoError(err)
-	err = s.storage.AddBatch(&s.batch)
-	s.NoError(err)
-
-	_, err = s.storage.AddCommitment(&s.commitment)
-	s.NoError(err)
-
-	result, err := s.api.GetBatches(models.NewUint256(0), models.NewUint256(1))
-	s.NoError(err)
-	s.NotNil(result)
-	s.Len(result, 1)
-	s.Equal(s.batch, result[0].Batch)
-	s.Equal(getSubmissionBlock(s.batch.FinalisationBlock), result[0].SubmissionBlock)
-}
-
-func (s *GetBatchesTestSuite) TestGetBatchesByHash() {
-	err := addLeaf(s.storage, s.tree)
-	s.NoError(err)
-	err = s.storage.AddBatch(&s.batch)
+	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
 	result, err := s.api.GetBatches(models.NewUint256(0), models.NewUint256(1))
