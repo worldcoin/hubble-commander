@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/db"
+	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -29,7 +29,7 @@ var (
 type CalculateTransferStatusTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	db       *db.TestDB
+	db       *postgres.TestDB
 	storage  *st.Storage
 	sim      *simulator.Simulator
 	transfer *models.Transfer
@@ -40,7 +40,7 @@ func (s *CalculateTransferStatusTestSuite) SetupSuite() {
 }
 
 func (s *CalculateTransferStatusTestSuite) SetupTest() {
-	testDB, err := db.NewTestDB()
+	testDB, err := postgres.NewTestDB()
 	s.NoError(err)
 
 	s.storage = st.NewTestStorage(testDB.DB)

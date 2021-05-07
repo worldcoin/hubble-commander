@@ -3,7 +3,7 @@ package commander
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/db"
+	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/stretchr/testify/require"
@@ -28,7 +28,7 @@ var (
 type ApplyTransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	db      *db.TestDB
+	db      *postgres.TestDB
 	storage *storage.Storage
 	tree    *storage.StateTree
 }
@@ -38,7 +38,7 @@ func (s *ApplyTransferTestSuite) SetupSuite() {
 }
 
 func (s *ApplyTransferTestSuite) SetupTest() {
-	testDB, err := db.NewTestDB()
+	testDB, err := postgres.NewTestDB()
 	s.NoError(err)
 	s.db = testDB
 	s.storage = storage.NewTestStorage(testDB.DB)

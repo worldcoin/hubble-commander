@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/db"
+	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
@@ -30,7 +30,7 @@ type ApplyCreate2TransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage *st.Storage
-	db      *db.TestDB
+	db      *postgres.TestDB
 	tree    *st.StateTree
 }
 
@@ -39,7 +39,7 @@ func (s *ApplyCreate2TransferTestSuite) SetupSuite() {
 }
 
 func (s *ApplyCreate2TransferTestSuite) SetupTest() {
-	testDB, err := db.NewTestDB()
+	testDB, err := postgres.NewTestDB()
 	s.NoError(err)
 	s.storage = st.NewTestStorage(testDB.DB)
 	s.db = testDB

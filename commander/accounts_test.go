@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Worldcoin/hubble-commander/db"
+	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -25,7 +25,7 @@ func (s *AccountsTestSuite) SetupSuite() {
 }
 
 func (s *AccountsTestSuite) SetupTest() {
-	testDB, err := db.NewTestDB()
+	testDB, err := postgres.NewTestDB()
 	s.NoError(err)
 	s.storage = st.NewTestStorage(testDB.DB)
 	s.testClient, err = eth.NewTestClient()

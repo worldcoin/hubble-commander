@@ -3,7 +3,7 @@ package api
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/db"
+	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -17,7 +17,7 @@ type GetCommitmentTestSuite struct {
 	suite.Suite
 	api        *API
 	storage    *st.Storage
-	db         *db.TestDB
+	db         *postgres.TestDB
 	batch      models.Batch
 	commitment models.Commitment
 }
@@ -27,7 +27,7 @@ func (s *GetCommitmentTestSuite) SetupSuite() {
 }
 
 func (s *GetCommitmentTestSuite) SetupTest() {
-	testDB, err := db.NewTestDB()
+	testDB, err := postgres.NewTestDB()
 	s.NoError(err)
 
 	s.storage = st.NewTestStorage(testDB.DB)

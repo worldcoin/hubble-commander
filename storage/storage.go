@@ -3,23 +3,23 @@ package storage
 import (
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/db"
+	"github.com/Worldcoin/hubble-commander/db/postgres"
 )
 
 type Storage struct {
-	DB *db.Database
+	DB *postgres.Database
 	QB squirrel.StatementBuilderType
 }
 
 func NewStorage(cfg *config.DBConfig) (*Storage, error) {
-	dbInstance, err := db.NewDatabase(cfg)
+	dbInstance, err := postgres.NewDatabase(cfg)
 	if err != nil {
 		return nil, err
 	}
 	return &Storage{DB: dbInstance, QB: getQueryBuilder()}, nil
 }
 
-func (s *Storage) BeginTransaction() (*db.TransactionController, *Storage, error) {
+func (s *Storage) BeginTransaction() (*postgres.TransactionController, *Storage, error) {
 	tx, txDB, err := s.DB.BeginTransaction()
 	if err != nil {
 		return nil, nil, err

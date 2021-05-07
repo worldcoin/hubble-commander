@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/db"
+	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -32,7 +32,7 @@ type TransactionBaseTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage *Storage
-	db      *db.TestDB
+	db      *postgres.TestDB
 }
 
 func (s *TransactionBaseTestSuite) SetupSuite() {
@@ -40,7 +40,7 @@ func (s *TransactionBaseTestSuite) SetupSuite() {
 }
 
 func (s *TransactionBaseTestSuite) SetupTest() {
-	testDB, err := db.NewTestDB()
+	testDB, err := postgres.NewTestDB()
 	s.NoError(err)
 	s.storage = NewTestStorage(testDB.DB)
 	s.db = testDB

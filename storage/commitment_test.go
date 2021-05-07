@@ -3,7 +3,7 @@ package storage
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/db"
+	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -28,7 +28,7 @@ type CommitmentTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage *Storage
-	db      *db.TestDB
+	db      *postgres.TestDB
 	tree    *StateTree
 }
 
@@ -37,7 +37,7 @@ func (s *CommitmentTestSuite) SetupSuite() {
 }
 
 func (s *CommitmentTestSuite) SetupTest() {
-	testDB, err := db.NewTestDB()
+	testDB, err := postgres.NewTestDB()
 	s.NoError(err)
 	s.storage = NewTestStorage(testDB.DB)
 	s.db = testDB

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/db"
+	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -15,7 +15,7 @@ type StateLeafTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage *Storage
-	db      *db.TestDB
+	db      *postgres.TestDB
 	tree    *StateTree
 }
 
@@ -24,7 +24,7 @@ func (s *StateLeafTestSuite) SetupSuite() {
 }
 
 func (s *StateLeafTestSuite) SetupTest() {
-	testDB, err := db.NewTestDB()
+	testDB, err := postgres.NewTestDB()
 	s.NoError(err)
 	s.storage = NewTestStorage(testDB.DB)
 	s.db = testDB

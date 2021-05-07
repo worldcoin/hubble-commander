@@ -5,7 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/db"
+	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -29,7 +29,7 @@ type SendTransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	api       *API
-	db        *db.TestDB
+	db        *postgres.TestDB
 	tree      *st.StateTree
 	userState *models.UserState
 	transfer  dto.Transfer
@@ -41,7 +41,7 @@ func (s *SendTransferTestSuite) SetupSuite() {
 }
 
 func (s *SendTransferTestSuite) SetupTest() {
-	testDB, err := db.NewTestDB()
+	testDB, err := postgres.NewTestDB()
 	s.NoError(err)
 	s.db = testDB
 
