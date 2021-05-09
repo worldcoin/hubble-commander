@@ -207,6 +207,8 @@ func testRestartCommander(t *testing.T, commander Commander, senderWallet bls.Wa
 
 	commander, err = NewCommanderFromEnv(false)
 	require.NoError(t, err)
+	err = commander.Start()
+	require.NoError(t, err)
 
 	testSendTransfer(t, commander.Client(), senderWallet, models.NewUint256(64))
 	return commander
