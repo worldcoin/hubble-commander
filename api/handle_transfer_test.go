@@ -5,7 +5,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -29,7 +28,7 @@ type SendTransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	api       *API
-	db        *postgres.TestDB
+	teardown  func() error
 	tree      *st.StateTree
 	userState *models.UserState
 	transfer  dto.Transfer
@@ -41,22 +40,20 @@ func (s *SendTransferTestSuite) SetupSuite() {
 }
 
 func (s *SendTransferTestSuite) SetupTest() {
-	testDB, err := postgres.NewTestDB()
+	testStorage, err := st.NewTestStorage()
 	s.NoError(err)
-	s.db = testDB
-
-	storage := st.NewTestStorage(testDB.DB)
-	s.tree = st.NewStateTree(storage)
+	s.teardown = testStorage.Teardown
+	s.tree = st.NewStateTree(testStorage.Storage)
 	s.api = &API{
 		cfg:     &config.APIConfig{},
-		storage: storage,
+		storage: testStorage.Storage,
 		client:  nil,
 	}
 
 	s.wallet, err = bls.NewRandomWallet(mockDomain)
 	s.NoError(err)
 
-	err = storage.AddAccountIfNotExists(&models.Account{
+	err = testStorage.AddAccountIfNotExists(&models.Account{
 		PubKeyID:  123,
 		PublicKey: *s.wallet.PublicKey(),
 	})
@@ -82,7 +79,7 @@ func (s *SendTransferTestSuite) signTransfer(transfer dto.Transfer) dto.Transfer
 }
 
 func (s *SendTransferTestSuite) TearDownTest() {
-	err := s.db.Teardown()
+	err := s.teardown()
 	s.NoError(err)
 }
 

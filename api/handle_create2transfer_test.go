@@ -5,7 +5,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -28,7 +27,7 @@ type SendCreate2TransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	api             *API
-	db              *postgres.TestDB
+	teardown        func() error
 	tree            *st.StateTree
 	userState       *models.UserState
 	create2Transfer dto.Create2Transfer
@@ -40,15 +39,13 @@ func (s *SendCreate2TransferTestSuite) SetupSuite() {
 }
 
 func (s *SendCreate2TransferTestSuite) SetupTest() {
-	testDB, err := postgres.NewTestDB()
+	testStorage, err := st.NewTestStorage()
 	s.NoError(err)
-	s.db = testDB
-
-	storage := st.NewTestStorage(testDB.DB)
-	s.tree = st.NewStateTree(storage)
+	s.teardown = testStorage.Teardown
+	s.tree = st.NewStateTree(testStorage.Storage)
 	s.api = &API{
 		cfg:     &config.APIConfig{},
-		storage: storage,
+		storage: testStorage.Storage,
 		client:  nil,
 	}
 
@@ -58,13 +55,13 @@ func (s *SendCreate2TransferTestSuite) SetupTest() {
 	receiverWallet, err := bls.NewRandomWallet(mockDomain)
 	s.NoError(err)
 
-	err = storage.AddAccountIfNotExists(&models.Account{
+	err = testStorage.AddAccountIfNotExists(&models.Account{
 		PubKeyID:  123,
 		PublicKey: *s.wallet.PublicKey(),
 	})
 	s.NoError(err)
 
-	err = storage.AddAccountIfNotExists(&models.Account{
+	err = testStorage.AddAccountIfNotExists(&models.Account{
 		PubKeyID:  10,
 		PublicKey: *receiverWallet.PublicKey(),
 	})
@@ -91,7 +88,7 @@ func (s *SendCreate2TransferTestSuite) signCreate2Transfer(create2Transfer dto.C
 }
 
 func (s *SendCreate2TransferTestSuite) TearDownTest() {
-	err := s.db.Teardown()
+	err := s.teardown()
 	s.NoError(err)
 }
 

@@ -3,7 +3,6 @@ package api
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -16,8 +15,7 @@ type GetBatchTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	api        *API
-	storage    *st.Storage
-	db         *postgres.TestDB
+	storage    *st.TestStorage
 	tree       *st.StateTree
 	commitment models.Commitment
 	batch      models.Batch
@@ -28,13 +26,11 @@ func (s *GetBatchTestSuite) SetupSuite() {
 }
 
 func (s *GetBatchTestSuite) SetupTest() {
-	testDB, err := postgres.NewTestDB()
+	var err error
+	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-
-	s.storage = st.NewTestStorage(testDB.DB)
-	s.api = &API{nil, s.storage, nil}
-	s.db = testDB
-	s.tree = st.NewStateTree(s.storage)
+	s.api = &API{nil, s.storage.Storage, nil}
+	s.tree = st.NewStateTree(s.storage.Storage)
 
 	hash := utils.RandomHash()
 	s.commitment = commitment
@@ -49,7 +45,7 @@ func (s *GetBatchTestSuite) SetupTest() {
 }
 
 func (s *GetBatchTestSuite) TearDownTest() {
-	err := s.db.Teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
