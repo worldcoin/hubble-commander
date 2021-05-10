@@ -21,7 +21,7 @@ func (s *StateNodeTestSuite) SetupSuite() {
 
 func (s *StateNodeTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorage()
+	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
 }
 

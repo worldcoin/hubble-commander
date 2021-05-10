@@ -5,6 +5,7 @@ import (
 
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
+	bh "github.com/timshannon/badgerhold/v3"
 )
 
 func (s *Storage) UpsertStateNode(node *models.StateNode) error {
@@ -15,8 +16,11 @@ func (s *Storage) UpsertStateNode(node *models.StateNode) error {
 				node.DataHash,
 			).Suffix("ON CONFLICT (merkle_path) DO UPDATE SET data_hash = ?", node.DataHash),
 	).Exec()
+	if err != nil {
+		return err
+	}
 
-	return err
+	return s.Badger.Upsert(node.MerklePath, node)
 }
 
 func (s *Storage) BatchUpsertStateNodes(nodes []models.StateNode) error {
@@ -40,8 +44,10 @@ func (s *Storage) AddStateNode(node *models.StateNode) error {
 				node.DataHash,
 			),
 	).Exec()
-
-	return err
+	if err != nil {
+		return err
+	}
+	return s.Badger.Insert(node.MerklePath, node)
 }
 
 func (s *Storage) UpdateStateNode(node *models.StateNode) error {
@@ -61,28 +67,20 @@ func (s *Storage) UpdateStateNode(node *models.StateNode) error {
 	if numUpdatedRows == 0 {
 		return fmt.Errorf("no rows were affected by the update")
 	}
-	return nil
+
+	return s.Badger.Update(node.MerklePath, node)
 }
 
 func (s *Storage) GetStateNodeByPath(path *models.MerklePath) (*models.StateNode, error) {
-	res := make([]models.StateNode, 0, 1)
-	pathValue, err := path.Value()
-	if err != nil {
-		return nil, err
-	}
-	err = s.Postgres.Query(
-		s.QB.Select("*").
-			From("state_node").
-			Where(squirrel.Eq{"merkle_path": pathValue}),
-	).Into(&res)
-	if err != nil {
-		return nil, err
-	}
-	if len(res) == 0 {
+	var node models.StateNode
+	err := s.Badger.Get(path, &node)
+	if err == bh.ErrNotFound {
 		return newZeroStateNode(path), nil
 	}
-
-	return &res[0], nil
+	if err != nil {
+		return nil, err
+	}
+	return &node, nil
 }
 
 func newZeroStateNode(path *models.MerklePath) *models.StateNode {
