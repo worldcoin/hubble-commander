@@ -50,6 +50,20 @@ func (d *Database) Insert(key, data interface{}) error {
 	return d.store.Insert(key, data)
 }
 
+func (d *Database) Upsert(key, data interface{}) error {
+	if d.duringUpdateTransaction() {
+		return d.store.TxUpsert(d.txn, key, data)
+	}
+	return d.store.Upsert(key, data)
+}
+
+func (d *Database) Update(key interface{}, data interface{}) error {
+	if d.duringUpdateTransaction() {
+		return d.store.TxUpdate(d.txn, key, data)
+	}
+	return d.store.Update(key, data)
+}
+
 func (d *Database) BeginTransaction(update bool) (*db.TxController, *Database) {
 	if d.duringTransaction() {
 		return db.NewTxController(&ControllerAdapter{d.txn}, true), d
