@@ -40,12 +40,7 @@ func (s *StateNodeTestSuite) TestAddStateNode_AddAndRetrieve() {
 	err = s.storage.AddStateNode(node)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateNodeByHash(node.DataHash)
-	s.NoError(err)
-
-	s.Equal(node, res)
-
-	res, err = s.storage.GetStateNodeByPath(path)
+	res, err := s.storage.GetStateNodeByPath(path)
 	s.NoError(err)
 
 	s.Equal(node, res)
@@ -154,13 +149,6 @@ func (s *StateNodeTestSuite) TestUpsertStateNode_UpdateAndRetrieve() {
 	s.NoError(err)
 
 	s.Equal(expectedNode, res)
-}
-
-func (s *StateNodeTestSuite) TestGetStateNodeByHash_NonExistentNode() {
-	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
-	res, err := s.storage.GetStateNodeByHash(hash)
-	s.Equal(NewNotFoundError("state node"), err)
-	s.Nil(res)
 }
 
 func (s *StateNodeTestSuite) TestGetStateNodeByPath_NonExistentLeaf() {

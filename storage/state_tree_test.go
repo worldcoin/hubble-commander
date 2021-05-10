@@ -76,7 +76,7 @@ func (s *StateTreeTestSuite) TestSet_StoresLeafStateNodeRecord() {
 		DataHash: s.leaf.DataHash,
 	}
 
-	node, err := s.storage.GetStateNodeByHash(s.leaf.DataHash)
+	node, err := s.storage.GetStateNodeByPath(&expectedNode.MerklePath)
 	s.NoError(err)
 	s.Equal(expectedNode, node)
 }

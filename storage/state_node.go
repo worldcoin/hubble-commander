@@ -5,7 +5,6 @@ import (
 
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 func (s *Storage) UpsertStateNode(node *models.StateNode) error {
@@ -63,22 +62,6 @@ func (s *Storage) UpdateStateNode(node *models.StateNode) error {
 		return fmt.Errorf("no rows were affected by the update")
 	}
 	return nil
-}
-
-func (s *Storage) GetStateNodeByHash(hash common.Hash) (*models.StateNode, error) {
-	res := make([]models.StateNode, 0, 1)
-	err := s.Postgres.Query(
-		s.QB.Select("*").
-			From("state_node").
-			Where(squirrel.Eq{"data_hash": hash}),
-	).Into(&res)
-	if err != nil {
-		return nil, err
-	}
-	if len(res) == 0 {
-		return nil, NewNotFoundError("state node")
-	}
-	return &res[0], nil
 }
 
 func (s *Storage) GetStateNodeByPath(path *models.MerklePath) (*models.StateNode, error) {
