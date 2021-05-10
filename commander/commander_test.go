@@ -22,7 +22,7 @@ func (s *CommanderTestSuite) SetupSuite() {
 
 func (s *CommanderTestSuite) SetupTest() {
 	cfg := config.GetTestConfig()
-	err := postgres.RecreateDatabase(&cfg.DB)
+	err := postgres.RecreateDatabase(&cfg.Postgres)
 	s.NoError(err)
 	s.cmd = NewCommander(&cfg)
 }

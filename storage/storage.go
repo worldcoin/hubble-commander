@@ -14,8 +14,8 @@ type Storage struct {
 	QB       squirrel.StatementBuilderType
 }
 
-func NewStorage(dbConfig *config.DBConfig, badgerConfig *config.BadgerConfig) (*Storage, error) {
-	dbInstance, err := postgres.NewDatabase(dbConfig)
+func NewStorage(postgresConfig *config.PostgresConfig, badgerConfig *config.BadgerConfig) (*Storage, error) {
+	postgresDB, err := postgres.NewDatabase(postgresConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -25,7 +25,7 @@ func NewStorage(dbConfig *config.DBConfig, badgerConfig *config.BadgerConfig) (*
 		return nil, err
 	}
 
-	return &Storage{Postgres: dbInstance, Badger: badgerDB, QB: getQueryBuilder()}, nil
+	return &Storage{Postgres: postgresDB, Badger: badgerDB, QB: getQueryBuilder()}, nil
 }
 
 func (s *Storage) BeginTransaction() (*db.TxController, *Storage, error) {

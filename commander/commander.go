@@ -43,7 +43,7 @@ func (c *Commander) Start() error {
 	if c.IsRunning() {
 		return nil
 	}
-	migrator, err := postgres.GetMigrator(&c.cfg.DB)
+	migrator, err := postgres.GetMigrator(&c.cfg.Postgres)
 	if err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func (c *Commander) Start() error {
 		return err
 	}
 
-	storage, err := st.NewStorage(&c.cfg.DB, &c.cfg.Badger)
+	storage, err := st.NewStorage(&c.cfg.Postgres, &c.cfg.Badger)
 	if err != nil {
 		return err
 	}
