@@ -16,7 +16,7 @@ var userStateWithIDCols = []string{
 }
 
 func (s *Storage) AddStateLeaf(leaf *models.StateLeaf) error {
-	_, err := s.DB.Query(
+	_, err := s.Postgres.Query(
 		s.QB.Insert("state_leaf").
 			Values(
 				leaf.DataHash,
@@ -33,7 +33,7 @@ func (s *Storage) AddStateLeaf(leaf *models.StateLeaf) error {
 
 func (s *Storage) GetStateLeafByHash(hash common.Hash) (*models.StateLeaf, error) {
 	res := make([]models.StateLeaf, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select("*").
 			From("state_leaf").
 			Where(squirrel.Eq{"data_hash": hash}),
@@ -49,7 +49,7 @@ func (s *Storage) GetStateLeafByHash(hash common.Hash) (*models.StateLeaf, error
 
 func (s *Storage) GetStateLeafByPath(path *models.MerklePath) (*models.StateLeaf, error) {
 	res := make([]models.StateLeaf, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select("state_leaf.*").
 			From("state_node").
 			Join("state_leaf ON state_leaf.data_hash = state_node.data_hash").
@@ -66,7 +66,7 @@ func (s *Storage) GetStateLeafByPath(path *models.MerklePath) (*models.StateLeaf
 
 func (s *Storage) GetStateLeaves(pubKeyID uint32) ([]models.StateLeaf, error) {
 	res := make([]models.StateLeaf, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select("state_leaf.*").
 			From("state_leaf").
 			JoinClause("NATURAL JOIN state_node").
@@ -83,7 +83,7 @@ func (s *Storage) GetStateLeaves(pubKeyID uint32) ([]models.StateLeaf, error) {
 
 func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
 	res := make([]uint32, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select("lpad(merkle_path::text, 33, '0')::bit(33)::bigint + 1 AS next_available_leaf_slot").
 			From("state_leaf").
 			JoinClause("NATURAL JOIN state_node").
@@ -102,7 +102,7 @@ func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
 
 func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]models.UserStateWithID, error) {
 	res := make([]models.UserStateWithID, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select(userStateWithIDCols...).
 			From("account").
 			JoinClause("NATURAL JOIN state_leaf").
@@ -120,7 +120,7 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]model
 
 func (s *Storage) GetUserStateByPubKeyIDAndTokenIndex(pubKeyID uint32, tokenIndex models.Uint256) (*models.UserStateWithID, error) {
 	res := make([]models.UserStateWithID, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select(userStateWithIDCols...).
 			From("state_leaf").
 			JoinClause("NATURAL JOIN state_node").
@@ -142,7 +142,7 @@ func (s *Storage) GetUserStateByID(stateID uint32) (*models.UserStateWithID, err
 		Depth: leafDepth,
 	}
 	res := make([]models.UserStateWithID, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select(userStateWithIDCols...).
 			From("state_leaf").
 			JoinClause("NATURAL JOIN state_node").

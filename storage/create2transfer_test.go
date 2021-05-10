@@ -4,7 +4,6 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -34,8 +33,7 @@ var (
 type Create2TransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage *Storage
-	db      *postgres.TestDB
+	storage *TestStorage
 	tree    *StateTree
 }
 
@@ -44,18 +42,17 @@ func (s *Create2TransferTestSuite) SetupSuite() {
 }
 
 func (s *Create2TransferTestSuite) SetupTest() {
-	testDB, err := postgres.NewTestDB()
+	var err error
+	s.storage, err = NewTestStorage()
 	s.NoError(err)
-	s.storage = NewTestStorage(testDB.DB)
-	s.db = testDB
-	s.tree = NewStateTree(s.storage)
+	s.tree = NewStateTree(s.storage.Storage)
 
 	err = s.storage.AddAccountIfNotExists(&account2)
 	s.NoError(err)
 }
 
 func (s *Create2TransferTestSuite) TearDownTest() {
-	err := s.db.Teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 

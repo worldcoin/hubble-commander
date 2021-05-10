@@ -9,7 +9,7 @@ import (
 )
 
 func (s *Storage) UpsertStateNode(node *models.StateNode) error {
-	_, err := s.DB.Query(
+	_, err := s.Postgres.Query(
 		s.QB.Insert("state_node").
 			Values(
 				node.MerklePath,
@@ -30,11 +30,11 @@ func (s *Storage) BatchUpsertStateNodes(nodes []models.StateNode) error {
 		)
 	}
 
-	_, err := s.DB.Query(insertQuery).Exec()
+	_, err := s.Postgres.Query(insertQuery).Exec()
 	return err
 }
 func (s *Storage) AddStateNode(node *models.StateNode) error {
-	_, err := s.DB.Query(
+	_, err := s.Postgres.Query(
 		s.QB.Insert("state_node").
 			Values(
 				node.MerklePath,
@@ -46,7 +46,7 @@ func (s *Storage) AddStateNode(node *models.StateNode) error {
 }
 
 func (s *Storage) UpdateStateNode(node *models.StateNode) error {
-	res, err := s.DB.Query(
+	res, err := s.Postgres.Query(
 		s.QB.Update("state_node").
 			Set("data_hash", squirrel.Expr("?", node.DataHash)).
 			Where("merkle_path = ?", node.MerklePath),
@@ -67,7 +67,7 @@ func (s *Storage) UpdateStateNode(node *models.StateNode) error {
 
 func (s *Storage) GetStateNodeByHash(hash common.Hash) (*models.StateNode, error) {
 	res := make([]models.StateNode, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select("*").
 			From("state_node").
 			Where(squirrel.Eq{"data_hash": hash}),
@@ -87,7 +87,7 @@ func (s *Storage) GetStateNodeByPath(path *models.MerklePath) (*models.StateNode
 	if err != nil {
 		return nil, err
 	}
-	err = s.DB.Query(
+	err = s.Postgres.Query(
 		s.QB.Select("*").
 			From("state_node").
 			Where(squirrel.Eq{"merkle_path": pathValue}),
@@ -111,7 +111,7 @@ func newZeroStateNode(path *models.MerklePath) *models.StateNode {
 
 func (s *Storage) getStateNodes(witnessPaths []models.MerklePath) ([]models.StateNode, error) {
 	res := make([]models.StateNode, 0, len(witnessPaths))
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select("*").
 			From("state_node").
 			Where(squirrel.Eq{"merkle_path": witnessPaths}),

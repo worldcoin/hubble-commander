@@ -10,7 +10,7 @@ import (
 
 func (s *Storage) GetLatestTransactionNonce(accountStateID uint32) (*models.Uint256, error) {
 	res := make([]models.Uint256, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select("transaction_base.nonce").
 			From("transaction_base").
 			Where(squirrel.Eq{"from_state_id": accountStateID}).
@@ -27,7 +27,7 @@ func (s *Storage) GetLatestTransactionNonce(accountStateID uint32) (*models.Uint
 }
 
 func (s *Storage) MarkTransactionAsIncluded(txHash common.Hash, commitmentID int32) error {
-	res, err := s.DB.Query(
+	res, err := s.Postgres.Query(
 		s.QB.Update("transaction_base").
 			Where(squirrel.Eq{"tx_hash": txHash}).
 			Set("included_in_commitment", commitmentID),
@@ -47,7 +47,7 @@ func (s *Storage) MarkTransactionAsIncluded(txHash common.Hash, commitmentID int
 }
 
 func (s *Storage) SetTransactionError(txHash common.Hash, errorMessage string) error {
-	res, err := s.DB.Query(
+	res, err := s.Postgres.Query(
 		s.QB.Update("transaction_base").
 			Where(squirrel.Eq{"tx_hash": txHash}).
 			Set("error_message", errorMessage),

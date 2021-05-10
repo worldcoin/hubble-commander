@@ -9,7 +9,7 @@ import (
 type Config struct {
 	Rollup   RollupConfig
 	API      APIConfig
-	DB       DBConfig
+	Postgres PostgresConfig
 	Badger   BadgerConfig
 	Ethereum *EthereumConfig
 }
@@ -33,7 +33,7 @@ type APIConfig struct {
 	DevMode bool
 }
 
-type DBConfig struct {
+type PostgresConfig struct {
 	Host           *string
 	Port           *string
 	Name           string

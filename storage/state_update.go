@@ -7,7 +7,7 @@ import (
 )
 
 func (s *Storage) AddStateUpdate(update *models.StateUpdate) error {
-	_, err := s.DB.Query(
+	_, err := s.Postgres.Query(
 		s.QB.Insert("state_update").
 			Columns(
 				"state_id",
@@ -30,7 +30,7 @@ func (s *Storage) AddStateUpdate(update *models.StateUpdate) error {
 
 func (s *Storage) GetStateUpdateByRootHash(stateRootHash common.Hash) (*models.StateUpdate, error) {
 	res := make([]models.StateUpdate, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select("*").
 			From("state_update").
 			Where(squirrel.Eq{"current_root": stateRootHash}),
@@ -45,7 +45,7 @@ func (s *Storage) GetStateUpdateByRootHash(stateRootHash common.Hash) (*models.S
 }
 
 func (s *Storage) DeleteStateUpdate(id uint64) error {
-	_, err := s.DB.Query(
+	_, err := s.Postgres.Query(
 		s.QB.Delete("state_update").
 			Where(squirrel.Eq{"id": id}),
 	).Exec()
