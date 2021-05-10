@@ -60,7 +60,7 @@ func (c *Commander) Start() error {
 		return err
 	}
 
-	storage, err := st.NewStorage(&c.cfg.DB)
+	storage, err := st.NewStorage(&c.cfg.DB, &c.cfg.Badger)
 	if err != nil {
 		return err
 	}
