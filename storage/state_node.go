@@ -1,9 +1,6 @@
 package storage
 
 import (
-	"fmt"
-
-	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	bh "github.com/timshannon/badgerhold/v3"
 )
@@ -37,6 +34,7 @@ func (s *Storage) BatchUpsertStateNodes(nodes []models.StateNode) (err error) {
 	}
 	return tx.Commit()
 }
+
 func (s *Storage) AddStateNode(node *models.StateNode) error {
 	_, err := s.Postgres.Query(
 		s.QB.Insert("state_node").
@@ -49,31 +47,6 @@ func (s *Storage) AddStateNode(node *models.StateNode) error {
 		return err
 	}
 	return s.Badger.Insert(node.MerklePath, node)
-}
-
-func (s *Storage) UpdateStateNode(node *models.StateNode) error {
-	res, err := s.Postgres.Query(
-		s.QB.Update("state_node").
-			Set("data_hash", squirrel.Expr("?", node.DataHash)).
-			Where("merkle_path = ?", node.MerklePath),
-	).Exec()
-	if err != nil {
-		return err
-	}
-
-	numUpdatedRows, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if numUpdatedRows == 0 {
-		return fmt.Errorf("no rows were affected by the update")
-	}
-
-	err = s.Badger.Update(node.MerklePath, node)
-	if err == bh.ErrNotFound {
-		return fmt.Errorf("no rows were affected by the update")
-	}
-	return err
 }
 
 func (s *Storage) GetStateNodeByPath(path *models.MerklePath) (*models.StateNode, error) {

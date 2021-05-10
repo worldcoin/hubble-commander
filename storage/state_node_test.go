@@ -75,42 +75,6 @@ func (s *StateNodeTestSuite) TestAddStateNode_AddAndRetrieveRoot() {
 	s.Equal(node, res)
 }
 
-func (s *StateNodeTestSuite) TestUpdateStateNode_UpdateAndRetrieve() {
-	path, err := models.NewMerklePath("0000111")
-	s.NoError(err)
-	node := &models.StateNode{
-		MerklePath: *path,
-		DataHash:   common.BytesToHash([]byte{1, 2, 3, 4, 5}),
-	}
-	err = s.storage.AddStateNode(node)
-	s.NoError(err)
-
-	expectedNode := &models.StateNode{
-		MerklePath: *path,
-		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
-	}
-
-	err = s.storage.UpdateStateNode(expectedNode)
-	s.NoError(err)
-
-	res, err := s.storage.GetStateNodeByPath(path)
-	s.NoError(err)
-
-	s.Equal(expectedNode, res)
-}
-
-func (s *StateNodeTestSuite) TestUpdateStateNode_NotExistentNode() {
-	path, err := models.NewMerklePath("0000111")
-	s.NoError(err)
-	node := &models.StateNode{
-		MerklePath: *path,
-		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
-	}
-
-	err = s.storage.UpdateStateNode(node)
-	s.Error(err)
-}
-
 func (s *StateNodeTestSuite) TestUpsertStateNode_AddAndRetrieve() {
 	path, err := models.NewMerklePath("0000111")
 	s.NoError(err)
