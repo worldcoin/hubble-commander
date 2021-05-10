@@ -2,10 +2,10 @@ package eth
 
 import (
 	"fmt"
-	"math/big"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
+	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -22,7 +22,7 @@ func (c *Client) SubmitTransfersBatch(commitments []models.Commitment) (
 	return c.submitBatch(commitments, func(commitments []models.Commitment) (*types.Transaction, error) {
 		return c.rollup().
 			WithValue(c.config.stakeAmount.Int).
-			SubmitTransfer(parseCommitments(commitments))
+			SubmitTransfer(encoder.CommitmentToCalldataFields(commitments))
 	})
 }
 
@@ -34,7 +34,7 @@ func (c *Client) SubmitCreate2TransfersBatch(commitments []models.Commitment) (
 	return c.submitBatch(commitments, func(commitments []models.Commitment) (*types.Transaction, error) {
 		return c.rollup().
 			WithValue(c.config.stakeAmount.Int).
-			SubmitCreate2Transfer(parseCommitments(commitments))
+			SubmitCreate2Transfer(encoder.CommitmentToCalldataFields(commitments))
 	})
 }
 
@@ -73,26 +73,4 @@ func (c *Client) handleNewBatchEvent(event *rollup.RollupNewBatch) (*models.Batc
 	}
 	accountRoot := common.BytesToHash(event.AccountRoot[:])
 	return batch, &accountRoot, nil
-}
-
-func parseCommitments(commitments []models.Commitment) (
-	stateRoots [][32]byte,
-	signatures [][2]*big.Int,
-	feeReceivers []*big.Int,
-	transactions [][]byte,
-) {
-	count := len(commitments)
-
-	stateRoots = make([][32]byte, 0, count)
-	signatures = make([][2]*big.Int, 0, count)
-	feeReceivers = make([]*big.Int, 0, count)
-	transactions = make([][]byte, 0, count)
-
-	for i := range commitments {
-		stateRoots = append(stateRoots, commitments[i].PostStateRoot)
-		signatures = append(signatures, commitments[i].CombinedSignature.BigInts())
-		feeReceivers = append(feeReceivers, new(big.Int).SetUint64(uint64(commitments[i].FeeReceiver)))
-		transactions = append(transactions, commitments[i].Transactions)
-	}
-	return
 }

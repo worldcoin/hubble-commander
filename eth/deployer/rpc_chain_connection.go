@@ -11,11 +11,13 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 )
 
 type RPCChainConnection struct {
 	account *bind.TransactOpts
 	backend *ethclient.Client
+	rpc     *rpc.Client
 	chainID *big.Int
 }
 
@@ -35,14 +37,17 @@ func NewRPCChainConnection(cfg *config.EthereumConfig) (*RPCChainConnection, err
 		return nil, err
 	}
 
-	backend, err := ethclient.Dial(cfg.RPCURL)
+	rpc, err := rpc.Dial(cfg.RPCURL)
 	if err != nil {
 		return nil, err
 	}
 
+	backend := ethclient.NewClient(rpc)
+
 	return &RPCChainConnection{
 		account,
 		backend,
+		rpc,
 		chainID,
 	}, nil
 }
@@ -70,3 +75,8 @@ func (d *RPCChainConnection) GetLatestBlockNumber() (*uint32, error) {
 	}
 	return ref.Uint32(uint32(blockNumber)), nil
 }
+
+//
+//func (d *RPCChainConnection) TraceTransaction(hash common.Hash) {
+//	d.rpc.Call()
+//}

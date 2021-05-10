@@ -12,6 +12,7 @@ import (
 type ChainBackend interface {
 	bind.ContractBackend
 	TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error)
+	TransactionByHash(ctx context.Context, hash common.Hash) (tx *types.Transaction, isPending bool, err error)
 }
 
 type ChainConnection interface {
