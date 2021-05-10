@@ -4,24 +4,28 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/dgraph-io/badger/v3"
+	bh "github.com/timshannon/badgerhold/v3"
 )
 
 type Database struct {
-	badger            *badger.DB
+	store             *bh.Store
 	txn               *badger.Txn
 	updateTransaction bool
 }
 
 func NewDatabase(cfg *config.BadgerConfig) (*Database, error) {
-	database, err := badger.Open(badger.DefaultOptions(cfg.Path))
+	options := bh.DefaultOptions
+	options.Options = badger.DefaultOptions(cfg.Path)
+
+	store, err := bh.Open(options)
 	if err != nil {
 		return nil, err
 	}
-	return &Database{badger: database}, nil
+	return &Database{store: store}, nil
 }
 
 func (d *Database) Close() error {
-	return d.badger.Close()
+	return d.store.Close()
 }
 
 func (d *Database) duringTransaction() bool {
@@ -32,27 +36,27 @@ func (d *Database) duringUpdateTransaction() bool {
 	return d.duringTransaction() && d.updateTransaction
 }
 
-func (d *Database) View(fn func(txn *badger.Txn) error) error {
+func (d *Database) Get(key, result interface{}) error {
 	if d.duringTransaction() {
-		return fn(d.txn)
+		return d.store.TxGet(d.txn, key, result)
 	}
-	return d.badger.View(fn)
+	return d.store.Get(key, result)
 }
 
-func (d *Database) Update(fn func(txn *badger.Txn) error) error {
+func (d *Database) Insert(key, data interface{}) error {
 	if d.duringUpdateTransaction() {
-		return fn(d.txn)
+		return d.store.TxInsert(d.txn, key, data)
 	}
-	return d.badger.Update(fn)
+	return d.store.Insert(key, data)
 }
 
 func (d *Database) BeginTransaction(update bool) (*db.TxController, *Database) {
 	if d.duringTransaction() {
 		return db.NewTxController(&ControllerAdapter{d.txn}, true), d
 	}
-	txn := d.badger.NewTransaction(update)
+	txn := d.store.Badger().NewTransaction(update)
 	dbDuringTx := &Database{
-		badger:            d.badger,
+		store:             d.store,
 		txn:               txn,
 		updateTransaction: update,
 	}
