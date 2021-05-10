@@ -143,7 +143,7 @@ func getDeployer(cfg *config.EthereumConfig) (deployer.ChainConnection, error) {
 	if cfg == nil {
 		return simulator.NewAutominingSimulator()
 	}
-	return deployer.NewRPCDeployer(cfg)
+	return deployer.NewRPCChainConnection(cfg)
 }
 
 func getClient(storage *st.Storage, chain deployer.ChainConnection, cfg *config.RollupConfig) (*eth.Client, error) {
