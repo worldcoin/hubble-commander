@@ -42,6 +42,14 @@ func (s *Storage) BeginTransaction() (*db.TxController, *Storage, error) {
 	return tx, storage, nil
 }
 
+func (s *Storage) Close() error {
+	err := s.Postgres.Close()
+	if err != nil {
+		return err
+	}
+	return s.Badger.Close()
+}
+
 func getQueryBuilder() squirrel.StatementBuilderType {
 	return squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 }
