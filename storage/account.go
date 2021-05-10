@@ -6,7 +6,7 @@ import (
 )
 
 func (s *Storage) AddAccountIfNotExists(account *models.Account) error {
-	_, err := s.DB.Query(
+	_, err := s.Postgres.Query(
 		s.QB.Insert("account").
 			Values(
 				account.PubKeyID,
@@ -20,7 +20,7 @@ func (s *Storage) AddAccountIfNotExists(account *models.Account) error {
 
 func (s *Storage) GetAccounts(publicKey *models.PublicKey) ([]models.Account, error) {
 	res := make([]models.Account, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select("*").
 			From("account").
 			Where(squirrel.Eq{"public_key": publicKey}),
@@ -33,7 +33,7 @@ func (s *Storage) GetAccounts(publicKey *models.PublicKey) ([]models.Account, er
 
 func (s *Storage) GetPublicKey(pubKeyID uint32) (*models.PublicKey, error) {
 	res := make([]models.PublicKey, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select("public_key").
 			From("account").
 			Where(squirrel.Eq{"pub_key_id": pubKeyID}),
@@ -49,7 +49,7 @@ func (s *Storage) GetPublicKey(pubKeyID uint32) (*models.PublicKey, error) {
 
 func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey) (*uint32, error) {
 	res := make([]uint32, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select("account.pub_key_id").
 			From("account").
 			JoinClause("FULL OUTER JOIN state_leaf ON account.pub_key_id = state_leaf.pub_key_id").

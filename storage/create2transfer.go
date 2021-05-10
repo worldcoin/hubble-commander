@@ -20,7 +20,7 @@ func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) (err error) {
 	}
 	defer tx.Rollback(&err)
 
-	_, err = txStorage.DB.Query(
+	_, err = txStorage.Postgres.Query(
 		txStorage.QB.Insert("transaction_base").
 			Values(
 				t.Hash,
@@ -38,7 +38,7 @@ func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) (err error) {
 		return err
 	}
 
-	_, err = txStorage.DB.Query(
+	_, err = txStorage.Postgres.Query(
 		txStorage.QB.Insert("create2transfer").
 			Values(
 				t.Hash,
@@ -55,7 +55,7 @@ func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) (err error) {
 
 func (s *Storage) GetCreate2Transfer(hash common.Hash) (*models.Create2Transfer, error) {
 	res := make([]models.Create2Transfer, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select(create2TransferColumns...).
 			From("transaction_base").
 			JoinClause("NATURAL JOIN create2transfer").
@@ -72,7 +72,7 @@ func (s *Storage) GetCreate2Transfer(hash common.Hash) (*models.Create2Transfer,
 
 func (s *Storage) GetPendingCreate2Transfers() ([]models.Create2Transfer, error) {
 	res := make([]models.Create2Transfer, 0, 32)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select(create2TransferColumns...).
 			From("transaction_base").
 			JoinClause("NATURAL JOIN create2transfer").
@@ -87,7 +87,7 @@ func (s *Storage) GetPendingCreate2Transfers() ([]models.Create2Transfer, error)
 
 func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([]models.Create2Transfer, error) {
 	res := make([]models.Create2Transfer, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select(create2TransferColumns...).
 			From("account").
 			JoinClause("NATURAL JOIN state_leaf").
@@ -104,7 +104,7 @@ func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([
 
 func (s *Storage) GetCreate2TransfersByCommitmentID(id int32) ([]models.Create2TransferForCommitment, error) {
 	res := make([]models.Create2TransferForCommitment, 0, 32)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select("transaction_base.tx_hash",
 			"transaction_base.from_state_id",
 			"transaction_base.amount",

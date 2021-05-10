@@ -8,8 +8,8 @@ import (
 )
 
 type Storage struct {
-	DB *postgres.Database
-	QB squirrel.StatementBuilderType
+	Postgres *postgres.Database
+	QB       squirrel.StatementBuilderType
 }
 
 func NewStorage(cfg *config.DBConfig) (*Storage, error) {
@@ -17,18 +17,18 @@ func NewStorage(cfg *config.DBConfig) (*Storage, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Storage{DB: dbInstance, QB: getQueryBuilder()}, nil
+	return &Storage{Postgres: dbInstance, QB: getQueryBuilder()}, nil
 }
 
 func (s *Storage) BeginTransaction() (*db.TxController, *Storage, error) {
-	tx, txDB, err := s.DB.BeginTransaction()
+	tx, txDB, err := s.Postgres.BeginTransaction()
 	if err != nil {
 		return nil, nil, err
 	}
 
 	storage := &Storage{
-		DB: txDB,
-		QB: getQueryBuilder(),
+		Postgres: txDB,
+		QB:       getQueryBuilder(),
 	}
 
 	return tx, storage, nil

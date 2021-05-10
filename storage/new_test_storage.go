@@ -5,5 +5,5 @@ import (
 )
 
 func NewTestStorage(database *postgres.Database) *Storage {
-	return &Storage{DB: database, QB: getQueryBuilder()}
+	return &Storage{Postgres: database, QB: getQueryBuilder()}
 }
