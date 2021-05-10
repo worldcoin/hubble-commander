@@ -29,17 +29,23 @@ func NewStorage(postgresConfig *config.PostgresConfig, badgerConfig *config.Badg
 }
 
 func (s *Storage) BeginTransaction() (*db.TxController, *Storage, error) {
-	tx, txDB, err := s.Postgres.BeginTransaction()
+	postgresTx, postgresDB, err := s.Postgres.BeginTransaction()
 	if err != nil {
 		return nil, nil, err
 	}
 
+	badgerTx, badgerDB := s.Badger.BeginTransaction(true)
+
+	combinedController := NewCombinedController(postgresTx, badgerTx)
+	txController := db.NewTxController(combinedController, postgresTx.IsLocked())
+
 	storage := &Storage{
-		Postgres: txDB,
+		Postgres: postgresDB,
+		Badger:   badgerDB,
 		QB:       getQueryBuilder(),
 	}
 
-	return tx, storage, nil
+	return txController, storage, nil
 }
 
 func (s *Storage) Close() error {
