@@ -57,7 +57,7 @@ func (d *Database) Upsert(key, data interface{}) error {
 	return d.store.Upsert(key, data)
 }
 
-func (d *Database) Update(key interface{}, data interface{}) error {
+func (d *Database) Update(key, data interface{}) error {
 	if d.duringUpdateTransaction() {
 		return d.store.TxUpdate(d.txn, key, data)
 	}

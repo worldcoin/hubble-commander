@@ -69,7 +69,11 @@ func (s *Storage) UpdateStateNode(node *models.StateNode) error {
 		return fmt.Errorf("no rows were affected by the update")
 	}
 
-	return s.Badger.Update(node.MerklePath, node)
+	err = s.Badger.Update(node.MerklePath, node)
+	if err == bh.ErrNotFound {
+		return fmt.Errorf("no rows were affected by the update")
+	}
+	return err
 }
 
 func (s *Storage) GetStateNodeByPath(path *models.MerklePath) (*models.StateNode, error) {
@@ -91,15 +95,25 @@ func newZeroStateNode(path *models.MerklePath) *models.StateNode {
 	}
 }
 
-func (s *Storage) getStateNodes(witnessPaths []models.MerklePath) ([]models.StateNode, error) {
-	res := make([]models.StateNode, 0, len(witnessPaths))
-	err := s.Postgres.Query(
-		s.QB.Select("*").
-			From("state_node").
-			Where(squirrel.Eq{"merkle_path": witnessPaths}),
-	).Into(&res)
+func (s *Storage) getStateNodes(witnessPaths []models.MerklePath) (nodes []models.StateNode, err error) {
+	tx, storage, err := s.BeginTransaction()
 	if err != nil {
 		return nil, err
 	}
-	return res, nil
+	defer tx.Rollback(&err)
+
+	nodes = make([]models.StateNode, 0)
+	for i := range witnessPaths {
+		var node *models.StateNode
+		node, err = storage.GetStateNodeByPath(&witnessPaths[i])
+		if err != nil {
+			return nil, err
+		}
+		nodes = append(nodes, *node)
+	}
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+	return nodes, nil
 }
