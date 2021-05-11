@@ -35,6 +35,7 @@ type SendTransferTestSuite struct {
 	userState *models.UserState
 	transfer  dto.Transfer
 	wallet    *bls.Wallet
+	domain    *bls.Domain
 }
 
 func (s *SendTransferTestSuite) SetupSuite() {
@@ -60,9 +61,9 @@ func (s *SendTransferTestSuite) SetupTest() {
 
 	err = testStorage.SetChainState(chainState)
 	s.NoError(err)
-	domain, err := testStorage.GetDomain(chainState.ChainID)
+	s.domain, err = testStorage.GetDomain(chainState.ChainID)
 	s.NoError(err)
-	s.wallet, err = bls.NewRandomWallet(*domain)
+	s.wallet, err = bls.NewRandomWallet(*s.domain)
 	s.NoError(err)
 
 	err = testStorage.AddAccountIfNotExists(&models.Account{
@@ -191,7 +192,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesBalance() {
 }
 
 func (s *SendTransferTestSuite) TestSendTransfer_ValidatesSignature() {
-	wallet, err := bls.NewRandomWallet(mockDomain)
+	wallet, err := bls.NewRandomWallet(*s.domain)
 	s.NoError(err)
 	fakeSignature, err := wallet.Sign(utils.RandomBytes(2))
 	s.NoError(err)
@@ -206,7 +207,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesSignature() {
 func (s *SendTransferTestSuite) TestSendTransaction_ValidatesSignature_DevMode() {
 	s.api.cfg = &config.APIConfig{DevMode: true}
 
-	wallet, err := bls.NewRandomWallet(mockDomain)
+	wallet, err := bls.NewRandomWallet(*s.domain)
 	s.NoError(err)
 	fakeSignature, err := wallet.Sign(utils.RandomBytes(2))
 	s.NoError(err)

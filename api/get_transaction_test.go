@@ -22,6 +22,7 @@ type GetTransactionTestSuite struct {
 	transfer dto.Transfer
 	wallet   *bls.Wallet
 	storage  *st.TestStorage
+	domain   *bls.Domain
 }
 
 func (s *GetTransactionTestSuite) SetupSuite() {
@@ -46,9 +47,9 @@ func (s *GetTransactionTestSuite) SetupTest() {
 
 	err = s.storage.SetChainState(chainState)
 	s.NoError(err)
-	domain, err := s.storage.GetDomain(chainState.ChainID)
+	s.domain, err = s.storage.GetDomain(chainState.ChainID)
 	s.NoError(err)
-	s.wallet, err = bls.NewRandomWallet(*domain)
+	s.wallet, err = bls.NewRandomWallet(*s.domain)
 	s.NoError(err)
 
 	err = s.storage.AddAccountIfNotExists(&models.Account{
@@ -92,7 +93,7 @@ func (s *GetTransactionTestSuite) TestGetTransaction_Transfer() {
 }
 
 func (s *GetTransactionTestSuite) TestGetTransaction_Create2Transfer() {
-	receiverWallet, err := bls.NewRandomWallet(mockDomain)
+	receiverWallet, err := bls.NewRandomWallet(*s.domain)
 	s.NoError(err)
 
 	err = s.storage.AddAccountIfNotExists(&models.Account{
