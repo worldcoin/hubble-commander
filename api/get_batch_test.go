@@ -3,6 +3,7 @@ package api
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -29,7 +30,9 @@ func (s *GetBatchTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	s.api = &API{nil, s.storage.Storage, nil}
+	ethClient, err := eth.NewTestClient()
+	s.NoError(err)
+	s.api = &API{nil, s.storage.Storage, ethClient.Client}
 	s.tree = st.NewStateTree(s.storage.Storage)
 
 	hash := utils.RandomHash()
@@ -57,12 +60,15 @@ func (s *GetBatchTestSuite) TestGetBatchByHash() {
 	_, err = s.storage.AddCommitment(&s.commitment)
 	s.NoError(err)
 
+	expected, err := s.api.getSubmissionBlock(s.batch.FinalisationBlock)
+	s.NoError(err)
+
 	result, err := s.api.GetBatchByHash(s.batch.Hash)
 	s.NoError(err)
 	s.NotNil(result)
 	s.Len(result.Commitments, 1)
 	s.Equal(s.batch, result.Batch)
-	s.Equal(getSubmissionBlock(s.batch.FinalisationBlock), result.SubmissionBlock)
+	s.Equal(expected, result.SubmissionBlock)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByHash_NoCommitments() {
@@ -89,12 +95,15 @@ func (s *GetBatchTestSuite) TestGetBatchByID() {
 	_, err = s.storage.AddCommitment(&s.commitment)
 	s.NoError(err)
 
+	expectedBlock, err := s.api.getSubmissionBlock(s.batch.FinalisationBlock)
+	s.NoError(err)
+
 	result, err := s.api.GetBatchByID(models.MakeUint256(0))
 	s.NoError(err)
 	s.NotNil(result)
 	s.Len(result.Commitments, 1)
 	s.Equal(s.batch, result.Batch)
-	s.Equal(getSubmissionBlock(s.batch.FinalisationBlock), result.SubmissionBlock)
+	s.Equal(expectedBlock, result.SubmissionBlock)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByID_NoCommitments() {

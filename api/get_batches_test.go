@@ -3,7 +3,7 @@ package api
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/db/postgres"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -16,8 +16,7 @@ type GetBatchesTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	api     *API
-	storage *st.Storage
-	db      *postgres.TestDB
+	storage *st.TestStorage
 	batch   models.Batch
 }
 
@@ -26,12 +25,12 @@ func (s *GetBatchesTestSuite) SetupSuite() {
 }
 
 func (s *GetBatchesTestSuite) SetupTest() {
-	testDB, err := postgres.NewTestDB()
+	var err error
+	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-
-	s.storage = st.NewTestStorage(testDB.DB)
-	s.api = &API{nil, s.storage, nil}
-	s.db = testDB
+	ethClient, err := eth.NewTestClient()
+	s.NoError(err)
+	s.api = &API{nil, s.storage.Storage, ethClient.Client}
 
 	s.batch = models.Batch{
 		Hash:              utils.RandomHash(),
@@ -41,7 +40,7 @@ func (s *GetBatchesTestSuite) SetupTest() {
 }
 
 func (s *GetBatchesTestSuite) TearDownTest() {
-	err := s.db.Teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
@@ -49,12 +48,15 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
+	expectedBlock, err := s.api.getSubmissionBlock(s.batch.FinalisationBlock)
+	s.NoError(err)
+
 	result, err := s.api.GetBatches(models.NewUint256(0), models.NewUint256(1))
 	s.NoError(err)
 	s.NotNil(result)
 	s.Len(result, 1)
 	s.Equal(s.batch, result[0].Batch)
-	s.Equal(getSubmissionBlock(s.batch.FinalisationBlock), result[0].SubmissionBlock)
+	s.Equal(expectedBlock, result[0].SubmissionBlock)
 }
 
 func (s *GetBatchesTestSuite) TestGetBatchesByHash_NoBatches() {

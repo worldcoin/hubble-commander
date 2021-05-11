@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/ethereum/go-ethereum/common"
@@ -12,7 +11,10 @@ func (a *API) GetBatchByHash(hash common.Hash) (*dto.BatchWithCommitments, error
 	if err != nil {
 		return nil, err
 	}
-	batch.SubmissionBlock = getSubmissionBlock(batch.FinalisationBlock)
+	batch.SubmissionBlock, err = a.getSubmissionBlock(batch.FinalisationBlock)
+	if err != nil {
+		return nil, err
+	}
 
 	commitments, err := a.storage.GetCommitmentsByBatchHash(&hash)
 	if err != nil {
@@ -26,7 +28,10 @@ func (a *API) GetBatchByID(id models.Uint256) (*dto.BatchWithCommitments, error)
 	if err != nil {
 		return nil, err
 	}
-	batch.SubmissionBlock = getSubmissionBlock(batch.FinalisationBlock)
+	batch.SubmissionBlock, err = a.getSubmissionBlock(batch.FinalisationBlock)
+	if err != nil {
+		return nil, err
+	}
 
 	commitments, err := a.storage.GetCommitmentsByBatchID(id)
 	if err != nil {
@@ -48,6 +53,10 @@ func createBatchWithCommitments(
 	}, nil
 }
 
-func getSubmissionBlock(finalisationBlock uint32) uint32 {
-	return finalisationBlock - rollup.BlocksToFinalise
+func (a *API) getSubmissionBlock(finalisationBlock uint32) (uint32, error) {
+	blocks, err := a.client.GetBlocksToFinalise()
+	if err != nil {
+		return 0, err
+	}
+	return finalisationBlock - uint32(*blocks), nil
 }
