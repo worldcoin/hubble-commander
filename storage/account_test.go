@@ -3,7 +3,6 @@ package storage
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -24,8 +23,7 @@ var (
 type AccountTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage *Storage
-	db      *postgres.TestDB
+	storage *TestStorage
 }
 
 func (s *AccountTestSuite) SetupSuite() {
@@ -33,14 +31,13 @@ func (s *AccountTestSuite) SetupSuite() {
 }
 
 func (s *AccountTestSuite) SetupTest() {
-	testDB, err := postgres.NewTestDB()
+	var err error
+	s.storage, err = NewTestStorage()
 	s.NoError(err)
-	s.storage = NewTestStorage(testDB.DB)
-	s.db = testDB
 }
 
 func (s *AccountTestSuite) TearDownTest() {
-	err := s.db.Teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 

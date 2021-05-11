@@ -7,7 +7,7 @@ import (
 
 func (s *Storage) GetChainState(chainID models.Uint256) (*models.ChainState, error) {
 	res := make([]models.ChainState, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select("*").
 			From("chain_state").
 			Where(squirrel.Eq{"chain_id": chainID}),
@@ -22,7 +22,7 @@ func (s *Storage) GetChainState(chainID models.Uint256) (*models.ChainState, err
 }
 
 func (s *Storage) SetChainState(chainState *models.ChainState) error {
-	_, err := s.DB.Query(
+	_, err := s.Postgres.Query(
 		s.QB.
 			Insert("chain_state").
 			Values(chainState.ChainID, chainState.AccountRegistry, chainState.Rollup),

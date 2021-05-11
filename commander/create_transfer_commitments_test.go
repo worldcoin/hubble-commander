@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -37,9 +36,9 @@ var (
 type TransferCommitmentsTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	db      *postgres.TestDB
-	storage *storage.Storage
-	cfg     *config.RollupConfig
+	teardown func() error
+	storage  *storage.Storage
+	cfg      *config.RollupConfig
 }
 
 func (s *TransferCommitmentsTestSuite) SetupSuite() {
@@ -47,10 +46,10 @@ func (s *TransferCommitmentsTestSuite) SetupSuite() {
 }
 
 func (s *TransferCommitmentsTestSuite) SetupTest() {
-	testDB, err := postgres.NewTestDB()
+	testStorage, err := storage.NewTestStorage()
 	s.NoError(err)
-	s.db = testDB
-	s.storage = storage.NewTestStorage(testDB.DB)
+	s.storage = testStorage.Storage
+	s.teardown = testStorage.Teardown
 	s.cfg = &config.RollupConfig{
 		TxsPerCommitment:       2,
 		FeeReceiverPubKeyID:    2,
@@ -62,7 +61,7 @@ func (s *TransferCommitmentsTestSuite) SetupTest() {
 }
 
 func (s *TransferCommitmentsTestSuite) TearDownTest() {
-	err := s.db.Teardown()
+	err := s.teardown()
 	s.NoError(err)
 }
 

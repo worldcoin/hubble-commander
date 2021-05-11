@@ -3,7 +3,6 @@ package api
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
@@ -18,8 +17,7 @@ type GetTransactionsTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	api     *API
-	storage *st.Storage
-	db      *postgres.TestDB
+	storage *st.TestStorage
 	tree    *st.StateTree
 }
 
@@ -28,17 +26,15 @@ func (s *GetTransactionsTestSuite) SetupSuite() {
 }
 
 func (s *GetTransactionsTestSuite) SetupTest() {
-	testDB, err := postgres.NewTestDB()
+	var err error
+	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-
-	s.storage = st.NewTestStorage(testDB.DB)
-	s.api = &API{nil, s.storage, nil}
-	s.db = testDB
-	s.tree = st.NewStateTree(s.storage)
+	s.api = &API{nil, s.storage.Storage, nil}
+	s.tree = st.NewStateTree(s.storage.Storage)
 }
 
 func (s *GetTransactionsTestSuite) TearDownTest() {
-	err := s.db.Teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 

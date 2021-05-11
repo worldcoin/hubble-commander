@@ -20,7 +20,7 @@ var commitmentWithTokenIndexCols = []string{
 
 func (s *Storage) AddCommitment(commitment *models.Commitment) (*int32, error) {
 	res := make([]int32, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Insert("commitment").
 			Values(
 				squirrel.Expr("DEFAULT"),
@@ -42,7 +42,7 @@ func (s *Storage) AddCommitment(commitment *models.Commitment) (*int32, error) {
 
 func (s *Storage) GetCommitment(id int32) (*models.Commitment, error) {
 	res := make([]models.Commitment, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select("*").
 			From("commitment").
 			Where(squirrel.Eq{"commitment_id": id}),
@@ -57,7 +57,7 @@ func (s *Storage) GetCommitment(id int32) (*models.Commitment, error) {
 }
 
 func (s *Storage) MarkCommitmentAsIncluded(id int32, batchHash, accountRoot *common.Hash) error {
-	res, err := s.DB.Query(
+	res, err := s.Postgres.Query(
 		s.QB.Update("commitment").
 			Where(squirrel.Eq{"commitment_id": id}).
 			Set("included_in_batch", *batchHash).
@@ -79,7 +79,7 @@ func (s *Storage) MarkCommitmentAsIncluded(id int32, batchHash, accountRoot *com
 
 func (s *Storage) GetPendingCommitments(maxFetched uint64) ([]models.Commitment, error) {
 	res := make([]models.Commitment, 0, 32)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select("*").
 			From("commitment").
 			Where(squirrel.Eq{"included_in_batch": nil}).
@@ -93,7 +93,7 @@ func (s *Storage) GetPendingCommitments(maxFetched uint64) ([]models.Commitment,
 
 func (s *Storage) GetCommitmentsByBatchHash(hash *common.Hash) ([]models.CommitmentWithTokenID, error) {
 	res := make([]models.CommitmentWithTokenID, 0, 32)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select(commitmentWithTokenIndexCols...).
 			From("commitment").
 			Join("state_node ON lpad(state_node.merkle_path::text, 33, '0')::bit(33)::bigint = commitment.fee_receiver").
@@ -105,7 +105,7 @@ func (s *Storage) GetCommitmentsByBatchHash(hash *common.Hash) ([]models.Commitm
 
 func (s *Storage) GetCommitmentsByBatchID(id models.Uint256) ([]models.CommitmentWithTokenID, error) {
 	res := make([]models.CommitmentWithTokenID, 0, 32)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select(commitmentWithTokenIndexCols...).
 			From("batch").
 			Join("commitment ON commitment.included_in_batch = batch.batch_hash").

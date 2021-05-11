@@ -53,7 +53,7 @@ func GetConfig() Config {
 			Port:    *getEnvOrDefault("HUBBLE_PORT", ref.String("8080")),
 			DevMode: false,
 		},
-		DB: DBConfig{
+		Postgres: PostgresConfig{
 			Host:           getEnvOrDefault("HUBBLE_DBHOST", nil),
 			Port:           getEnvOrDefault("HUBBLE_DBPORT", nil),
 			Name:           *getEnvOrDefault("HUBBLE_DBNAME", ref.String("hubble")),
@@ -86,7 +86,7 @@ func GetTestConfig() Config {
 			Port:    *getEnvOrDefault("HUBBLE_PORT", ref.String("8080")),
 			DevMode: true,
 		},
-		DB: DBConfig{
+		Postgres: PostgresConfig{
 			Host:           getEnvOrDefault("HUBBLE_DBHOST", nil),
 			Port:           getEnvOrDefault("HUBBLE_DBPORT", nil),
 			Name:           *getEnvOrDefault("HUBBLE_DBNAME", ref.String("hubble_test")),
