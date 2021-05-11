@@ -54,7 +54,7 @@ func TestCommander(t *testing.T) {
 	testFeeReceiverStateAfterTransfers(t, commander.Client(), feeReceiverWallet)
 	testGetBatches(t, commander.Client())
 
-	testCommanderRestart(t, commander, senderWallet)
+	commander = testCommanderRestart(t, commander, senderWallet) // assignment needed for deferred function
 }
 
 func testGetVersion(t *testing.T, client jsonrpc.RPCClient) {
@@ -201,7 +201,7 @@ func testGetBatches(t *testing.T, client jsonrpc.RPCClient) {
 	require.Contains(t, batchTypes, txtype.Create2Transfer)
 }
 
-func testCommanderRestart(t *testing.T, commander Commander, senderWallet bls.Wallet) {
+func testCommanderRestart(t *testing.T, commander Commander, senderWallet bls.Wallet) Commander {
 	err := commander.Stop()
 	require.NoError(t, err)
 
@@ -211,6 +211,7 @@ func testCommanderRestart(t *testing.T, commander Commander, senderWallet bls.Wa
 	require.NoError(t, err)
 
 	testSendTransfer(t, commander.Client(), senderWallet, models.NewUint256(64))
+	return commander
 }
 
 func getUserState(userStates []dto.UserState, stateID uint32) (*dto.UserState, error) {
