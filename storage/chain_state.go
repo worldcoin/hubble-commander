@@ -4,6 +4,8 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 func (s *Storage) GetChainState(chainID models.Uint256) (*models.ChainState, error) {
@@ -36,9 +38,9 @@ func (s *Storage) GetDomain(chainID models.Uint256) (*bls.Domain, error) {
 		return s.domain, nil
 	}
 
-	res := make([]bls.Domain, 0, 1)
-	err := s.DB.Query(
-		s.QB.Select("rollup").
+	res := make([]common.Address, 0, 1)
+	err := s.Postgres.Query(
+		s.QB.Select("rollup as address").
 			From("chain_state").
 			Where(squirrel.Eq{"chain_id": chainID}),
 	).Into(&res)
@@ -48,5 +50,5 @@ func (s *Storage) GetDomain(chainID models.Uint256) (*bls.Domain, error) {
 	if len(res) == 0 {
 		return nil, NewNotFoundError("domain")
 	}
-	return &res[0], nil
+	return bls.DomainFromBytes(crypto.Keccak256(res[0].Bytes()))
 }
