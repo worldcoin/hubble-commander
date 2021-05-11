@@ -32,7 +32,7 @@ func (s *StateTreeTestSuite) SetupSuite() {
 
 func (s *StateTreeTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorage()
+	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
 	s.tree = NewStateTree(s.storage.Storage)
 
@@ -76,7 +76,7 @@ func (s *StateTreeTestSuite) TestSet_StoresLeafStateNodeRecord() {
 		DataHash: s.leaf.DataHash,
 	}
 
-	node, err := s.storage.GetStateNodeByHash(s.leaf.DataHash)
+	node, err := s.storage.GetStateNodeByPath(&expectedNode.MerklePath)
 	s.NoError(err)
 	s.Equal(expectedNode, node)
 }
