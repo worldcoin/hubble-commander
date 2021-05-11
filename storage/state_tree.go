@@ -51,7 +51,7 @@ func (s *StateTree) Leaf(id uint32) (*models.StateLeaf, error) {
 }
 
 func (s *StateTree) Set(id uint32, state *models.UserState) (err error) {
-	tx, storage, err := s.storage.BeginTransaction()
+	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	if err != nil {
 		return
 	}

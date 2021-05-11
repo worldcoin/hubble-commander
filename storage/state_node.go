@@ -21,7 +21,7 @@ func (s *Storage) UpsertStateNode(node *models.StateNode) error {
 }
 
 func (s *Storage) BatchUpsertStateNodes(nodes []models.StateNode) (err error) {
-	tx, storage, err := s.BeginTransaction()
+	tx, storage, err := s.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	if err != nil {
 		return err
 	}
@@ -70,7 +70,7 @@ func newZeroStateNode(path *models.MerklePath) *models.StateNode {
 
 // TODO consider rewriting to badgerhold.Find()
 func (s *Storage) getStateNodes(witnessPaths []models.MerklePath) (nodes []models.StateNode, err error) {
-	tx, storage, err := s.BeginTransaction()
+	tx, storage, err := s.BeginTransaction(TxOptions{Badger: true, ReadOnly: true})
 	if err != nil {
 		return nil, err
 	}

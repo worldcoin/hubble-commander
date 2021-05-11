@@ -34,6 +34,7 @@ func (s *StorageTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
+// TODO update
 func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	leaf := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
@@ -45,7 +46,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 		},
 	}
 
-	tx, storage, err := s.storage.BeginTransaction()
+	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true})
 	s.NoError(err)
 	err = storage.AddStateLeaf(leaf)
 	s.NoError(err)
@@ -73,7 +74,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 		},
 	}
 
-	tx, storage, err := s.storage.BeginTransaction()
+	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true})
 	s.NoError(err)
 	err = storage.AddStateLeaf(leaf)
 	s.NoError(err)
@@ -109,13 +110,13 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 		},
 	}
 
-	tx, storage, err := s.storage.BeginTransaction()
+	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true})
 	s.NoError(err)
 
 	err = storage.AddStateLeaf(leafOne)
 	s.NoError(err)
 
-	nestedTx, nestedStorage, err := storage.BeginTransaction()
+	nestedTx, nestedStorage, err := storage.BeginTransaction(TxOptions{Postgres: true})
 	s.NoError(err)
 
 	err = nestedStorage.AddStateLeaf(leafTwo)

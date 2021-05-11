@@ -14,6 +14,12 @@ type Storage struct {
 	QB       squirrel.StatementBuilderType
 }
 
+type TxOptions struct {
+	Postgres bool
+	Badger   bool
+	ReadOnly bool
+}
+
 func NewStorage(postgresConfig *config.PostgresConfig, badgerConfig *config.BadgerConfig) (*Storage, error) {
 	postgresDB, err := postgres.NewDatabase(postgresConfig)
 	if err != nil {
@@ -28,24 +34,32 @@ func NewStorage(postgresConfig *config.PostgresConfig, badgerConfig *config.Badg
 	return &Storage{Postgres: postgresDB, Badger: badgerDB, QB: getQueryBuilder()}, nil
 }
 
-func (s *Storage) BeginTransaction() (*db.TxController, *Storage, error) {
-	postgresTx, postgresDB, err := s.Postgres.BeginTransaction()
-	if err != nil {
-		return nil, nil, err
+func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, error) {
+	var txController *db.TxController
+	var storage Storage
+	storage.QB = getQueryBuilder()
+
+	if opts.Postgres {
+		postgresTx, postgresDB, err := s.Postgres.BeginTransaction()
+		if err != nil {
+			return nil, nil, err
+		}
+		txController = postgresTx
+		storage.Postgres = postgresDB
 	}
 
-	badgerTx, badgerDB := s.Badger.BeginTransaction(true)
-
-	combinedController := NewCombinedController(postgresTx, badgerTx)
-	txController := db.NewTxController(combinedController, postgresTx.IsLocked())
-
-	storage := &Storage{
-		Postgres: postgresDB,
-		Badger:   badgerDB,
-		QB:       getQueryBuilder(),
+	if opts.Badger {
+		badgerTx, badgerDB := s.Badger.BeginTransaction(true)
+		if txController != nil {
+			combinedController := NewCombinedController(txController, badgerTx)
+			txController = db.NewTxController(combinedController, txController.IsLocked())
+		} else {
+			txController = badgerTx
+		}
+		storage.Badger = badgerDB
 	}
 
-	return txController, storage, nil
+	return txController, &storage, nil
 }
 
 func (s *Storage) Close() error {
