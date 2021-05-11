@@ -13,7 +13,7 @@ var transferColumns = []string{
 }
 
 func (s *Storage) AddTransfer(t *models.Transfer) error {
-	tx, txStorage, err := s.BeginTransaction()
+	tx, txStorage, err := s.BeginTransaction(TxOptions{Postgres: true})
 	if err != nil {
 		return err
 	}

@@ -26,7 +26,7 @@ func (s *ApplyCreate2TransfersTestSuite) SetupSuite() {
 }
 
 func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
-	testStorage, err := storage.NewTestStorage()
+	testStorage, err := storage.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown

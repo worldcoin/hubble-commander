@@ -43,7 +43,7 @@ func (s *Create2TransferTestSuite) SetupSuite() {
 
 func (s *Create2TransferTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorage()
+	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
 	s.tree = NewStateTree(s.storage.Storage)
 

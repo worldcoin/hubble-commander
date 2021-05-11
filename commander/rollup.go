@@ -47,7 +47,7 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConfi
 }
 
 func createAndSubmitBatch(batchType txtype.TransactionType, storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) (err error) {
-	tx, txStorage, err := storage.BeginTransaction()
+	tx, txStorage, err := storage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
 	if err != nil {
 		return err
 	}
