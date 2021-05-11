@@ -229,7 +229,7 @@ func fillWithDefaults(config *DeploymentConfig) {
 		config.StakeAmount = models.NewUint256(1e17)
 	}
 	if config.BlocksToFinalise == nil {
-		config.BlocksToFinalise = models.NewUint256(BlocksToFinalise)
+		config.BlocksToFinalise = models.NewUint256(7 * 24 * 60 * 4)
 	}
 	if config.MinGasLeft == nil {
 		config.MinGasLeft = models.NewUint256(10_000)

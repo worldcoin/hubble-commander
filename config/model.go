@@ -25,7 +25,7 @@ type RollupConfig struct {
 	BlockNumberLoopInterval time.Duration
 	GenesisAccounts         []models.GenesisAccount
 	SignaturesDomain        [32]byte
-	BlocksToFinalise        uint32
+	BlocksToFinalise        int64
 }
 
 type APIConfig struct {

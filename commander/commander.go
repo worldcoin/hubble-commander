@@ -155,7 +155,7 @@ func getClient(storage *st.Storage, chain deployer.ChainConnection, cfg *config.
 
 	if st.IsNotFoundError(err) {
 		fmt.Println("Bootstrapping genesis state")
-		chainState, err = bootstrapState(storage, chain, cfg.GenesisAccounts)
+		chainState, err = bootstrapState(storage, chain, cfg.GenesisAccounts, cfg.BlocksToFinalise)
 		if err != nil {
 			return nil, err
 		}
@@ -200,6 +200,7 @@ func bootstrapState(
 	storage *st.Storage,
 	chain deployer.ChainConnection,
 	accounts []models.GenesisAccount,
+	blocksToFinalise int64,
 ) (*models.ChainState, error) {
 	accountRegistryAddress, accountRegistry, err := deployer.DeployAccountRegistry(chain)
 	if err != nil {
@@ -224,6 +225,7 @@ func bootstrapState(
 	contracts, err := ethRollup.DeployConfiguredRollup(chain, ethRollup.DeploymentConfig{
 		AccountRegistryAddress: accountRegistryAddress,
 		GenesisStateRoot:       stateRoot,
+		BlocksToFinalise:       models.NewUint256(blocksToFinalise),
 	})
 	if err != nil {
 		return nil, err
