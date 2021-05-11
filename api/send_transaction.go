@@ -112,7 +112,11 @@ func (a *API) validateSignature(encodedTransaction []byte, transactionSignature 
 		return err
 	}
 
-	signature, err := bls.NewSignatureFromBytes(transactionSignature[:], mockDomain)
+	domain, err := a.storage.GetDomain(a.client.ChainState.ChainID)
+	if err != nil {
+		return err
+	}
+	signature, err := bls.NewSignatureFromBytes(transactionSignature[:], *domain)
 	if err != nil {
 		return err
 	}
