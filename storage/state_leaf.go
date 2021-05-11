@@ -5,6 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
+	bh "github.com/timshannon/badgerhold/v3"
 )
 
 var userStateWithIDCols = []string{
@@ -27,24 +28,23 @@ func (s *Storage) AddStateLeaf(leaf *models.StateLeaf) error {
 			).
 			Suffix("ON CONFLICT DO NOTHING"),
 	).Exec()
+	if err != nil {
+		return err
+	}
 
-	return err
+	return s.Badger.Insert(leaf.DataHash, leaf)
 }
 
 func (s *Storage) GetStateLeafByHash(hash common.Hash) (*models.StateLeaf, error) {
-	res := make([]models.StateLeaf, 0, 1)
-	err := s.Postgres.Query(
-		s.QB.Select("*").
-			From("state_leaf").
-			Where(squirrel.Eq{"data_hash": hash}),
-	).Into(&res)
+	var leaf models.StateLeaf
+	err := s.Badger.Get(hash, &leaf)
+	if err == bh.ErrNotFound {
+		return nil, NewNotFoundError("state leaf")
+	}
 	if err != nil {
 		return nil, err
 	}
-	if len(res) == 0 {
-		return nil, NewNotFoundError("state leaf")
-	}
-	return &res[0], nil
+	return &leaf, nil
 }
 
 func (s *Storage) GetStateLeafByPath(path *models.MerklePath) (*models.StateLeaf, error) {
