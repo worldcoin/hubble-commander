@@ -23,7 +23,7 @@ func (s *StateLeafTestSuite) SetupSuite() {
 
 func (s *StateLeafTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorage()
+	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
 	s.tree = NewStateTree(s.storage.Storage)
 }

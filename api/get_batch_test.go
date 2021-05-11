@@ -27,7 +27,7 @@ func (s *GetBatchTestSuite) SetupSuite() {
 
 func (s *GetBatchTestSuite) SetupTest() {
 	var err error
-	s.storage, err = st.NewTestStorage()
+	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.api = &API{nil, s.storage.Storage, nil}
 	s.tree = st.NewStateTree(s.storage.Storage)

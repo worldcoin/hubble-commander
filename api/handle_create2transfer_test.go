@@ -39,7 +39,7 @@ func (s *SendCreate2TransferTestSuite) SetupSuite() {
 }
 
 func (s *SendCreate2TransferTestSuite) SetupTest() {
-	testStorage, err := st.NewTestStorage()
+	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.teardown = testStorage.Teardown
 	s.tree = st.NewStateTree(testStorage.Storage)
