@@ -19,8 +19,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const BlocksToFinalise = 7 * 24 * 60 * 4
-
 type DeploymentConfig struct {
 	MaxDepositSubtreeDepth *models.Uint256
 	GenesisStateRoot       *common.Hash
