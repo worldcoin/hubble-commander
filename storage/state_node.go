@@ -1,11 +1,8 @@
 package storage
 
 import (
-	"fmt"
-
-	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/ethereum/go-ethereum/common"
+	bh "github.com/timshannon/badgerhold/v3"
 )
 
 func (s *Storage) UpsertStateNode(node *models.StateNode) error {
@@ -16,23 +13,28 @@ func (s *Storage) UpsertStateNode(node *models.StateNode) error {
 				node.DataHash,
 			).Suffix("ON CONFLICT (merkle_path) DO UPDATE SET data_hash = ?", node.DataHash),
 	).Exec()
-
-	return err
-}
-
-func (s *Storage) BatchUpsertStateNodes(nodes []models.StateNode) error {
-	insertQuery := s.QB.Insert("state_node").
-		Suffix("ON CONFLICT (merkle_path) DO UPDATE SET data_hash = excluded.data_hash")
-	for i := range nodes {
-		insertQuery = insertQuery.Values(
-			nodes[i].MerklePath,
-			nodes[i].DataHash,
-		)
+	if err != nil {
+		return err
 	}
 
-	_, err := s.Postgres.Query(insertQuery).Exec()
-	return err
+	return s.Badger.Upsert(node.MerklePath, node)
 }
+
+func (s *Storage) BatchUpsertStateNodes(nodes []models.StateNode) (err error) {
+	tx, storage, err := s.BeginTransaction(TxOptions{Postgres: true, Badger: true})
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(&err)
+	for i := range nodes {
+		err = storage.UpsertStateNode(&nodes[i])
+		if err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
 func (s *Storage) AddStateNode(node *models.StateNode) error {
 	_, err := s.Postgres.Query(
 		s.QB.Insert("state_node").
@@ -41,65 +43,22 @@ func (s *Storage) AddStateNode(node *models.StateNode) error {
 				node.DataHash,
 			),
 	).Exec()
-
-	return err
-}
-
-func (s *Storage) UpdateStateNode(node *models.StateNode) error {
-	res, err := s.Postgres.Query(
-		s.QB.Update("state_node").
-			Set("data_hash", squirrel.Expr("?", node.DataHash)).
-			Where("merkle_path = ?", node.MerklePath),
-	).Exec()
 	if err != nil {
 		return err
 	}
-
-	numUpdatedRows, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if numUpdatedRows == 0 {
-		return fmt.Errorf("no rows were affected by the update")
-	}
-	return nil
-}
-
-func (s *Storage) GetStateNodeByHash(hash common.Hash) (*models.StateNode, error) {
-	res := make([]models.StateNode, 0, 1)
-	err := s.Postgres.Query(
-		s.QB.Select("*").
-			From("state_node").
-			Where(squirrel.Eq{"data_hash": hash}),
-	).Into(&res)
-	if err != nil {
-		return nil, err
-	}
-	if len(res) == 0 {
-		return nil, NewNotFoundError("state node")
-	}
-	return &res[0], nil
+	return s.Badger.Insert(node.MerklePath, node)
 }
 
 func (s *Storage) GetStateNodeByPath(path *models.MerklePath) (*models.StateNode, error) {
-	res := make([]models.StateNode, 0, 1)
-	pathValue, err := path.Value()
-	if err != nil {
-		return nil, err
-	}
-	err = s.Postgres.Query(
-		s.QB.Select("*").
-			From("state_node").
-			Where(squirrel.Eq{"merkle_path": pathValue}),
-	).Into(&res)
-	if err != nil {
-		return nil, err
-	}
-	if len(res) == 0 {
+	var node models.StateNode
+	err := s.Badger.Get(path, &node)
+	if err == bh.ErrNotFound {
 		return newZeroStateNode(path), nil
 	}
-
-	return &res[0], nil
+	if err != nil {
+		return nil, err
+	}
+	return &node, nil
 }
 
 func newZeroStateNode(path *models.MerklePath) *models.StateNode {
@@ -109,15 +68,26 @@ func newZeroStateNode(path *models.MerklePath) *models.StateNode {
 	}
 }
 
-func (s *Storage) getStateNodes(witnessPaths []models.MerklePath) ([]models.StateNode, error) {
-	res := make([]models.StateNode, 0, len(witnessPaths))
-	err := s.Postgres.Query(
-		s.QB.Select("*").
-			From("state_node").
-			Where(squirrel.Eq{"merkle_path": witnessPaths}),
-	).Into(&res)
+// TODO consider rewriting to badgerhold.Find()
+func (s *Storage) getStateNodes(witnessPaths []models.MerklePath) (nodes []models.StateNode, err error) {
+	tx, storage, err := s.BeginTransaction(TxOptions{Badger: true, ReadOnly: true})
 	if err != nil {
 		return nil, err
 	}
-	return res, nil
+	defer tx.Rollback(&err)
+
+	nodes = make([]models.StateNode, 0)
+	for i := range witnessPaths {
+		var node *models.StateNode
+		node, err = storage.GetStateNodeByPath(&witnessPaths[i])
+		if err != nil {
+			return nil, err
+		}
+		nodes = append(nodes, *node)
+	}
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+	return nodes, nil
 }

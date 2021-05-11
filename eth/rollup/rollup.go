@@ -19,6 +19,15 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	DefaultMaxDepositSubtreeDepth = 2
+	DefaultGenesisStateRoot       = "cf277fb80a82478460e8988570b718f1e083ceb76f7e271a1a1497e5975f53ae"
+	DefaultStakeAmount            = 1e17
+	DefaultBlocksToFinalise       = 7 * 24 * 60 * 4
+	DefaultMinGasLeft             = 10_000
+	DefaultMaxTxsPerCommit        = 32
+)
+
 type DeploymentConfig struct {
 	MaxDepositSubtreeDepth *models.Uint256
 	GenesisStateRoot       *common.Hash
@@ -216,23 +225,23 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 
 func fillWithDefaults(config *DeploymentConfig) {
 	if config.MaxDepositSubtreeDepth == nil {
-		config.MaxDepositSubtreeDepth = models.NewUint256(2)
+		config.MaxDepositSubtreeDepth = models.NewUint256(DefaultMaxDepositSubtreeDepth)
 	}
 	if config.GenesisStateRoot == nil {
 		// Result of getDefaultGenesisRoot function from deploy.ts
-		hash := common.HexToHash("cf277fb80a82478460e8988570b718f1e083ceb76f7e271a1a1497e5975f53ae")
+		hash := common.HexToHash(DefaultGenesisStateRoot)
 		config.GenesisStateRoot = &hash
 	}
 	if config.StakeAmount == nil {
-		config.StakeAmount = models.NewUint256(1e17)
+		config.StakeAmount = models.NewUint256(DefaultStakeAmount)
 	}
 	if config.BlocksToFinalise == nil {
-		config.BlocksToFinalise = models.NewUint256(7 * 24 * 60 * 4)
+		config.BlocksToFinalise = models.NewUint256(DefaultBlocksToFinalise)
 	}
 	if config.MinGasLeft == nil {
-		config.MinGasLeft = models.NewUint256(10_000)
+		config.MinGasLeft = models.NewUint256(DefaultMinGasLeft)
 	}
 	if config.MaxTxsPerCommit == nil {
-		config.MaxTxsPerCommit = models.NewUint256(32)
+		config.MaxTxsPerCommit = models.NewUint256(DefaultMaxTxsPerCommit)
 	}
 }

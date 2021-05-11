@@ -3,6 +3,8 @@ package api
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -27,9 +29,11 @@ func (s *GetBatchTestSuite) SetupSuite() {
 
 func (s *GetBatchTestSuite) SetupTest() {
 	var err error
-	s.storage, err = st.NewTestStorage()
+	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.api = &API{nil, s.storage.Storage, nil}
+	ethClient, err := eth.NewTestClient()
+	s.NoError(err)
+	s.api = &API{nil, s.storage.Storage, ethClient.Client}
 	s.tree = st.NewStateTree(s.storage.Storage)
 
 	hash := utils.RandomHash()
@@ -40,7 +44,7 @@ func (s *GetBatchTestSuite) SetupTest() {
 	s.batch = models.Batch{
 		Hash:              hash,
 		Type:              txtype.Transfer,
-		FinalisationBlock: 113,
+		FinalisationBlock: 42000,
 	}
 }
 
@@ -61,7 +65,8 @@ func (s *GetBatchTestSuite) TestGetBatchByHash() {
 	s.NoError(err)
 	s.NotNil(result)
 	s.Len(result.Commitments, 1)
-	s.Equal(s.batch.Hash, result.Hash)
+	s.Equal(s.batch, result.Batch)
+	s.Equal(s.batch.FinalisationBlock-rollup.DefaultBlocksToFinalise, result.SubmissionBlock)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByHash_NoCommitments() {
@@ -92,7 +97,8 @@ func (s *GetBatchTestSuite) TestGetBatchByID() {
 	s.NoError(err)
 	s.NotNil(result)
 	s.Len(result.Commitments, 1)
-	s.Equal(s.batch.Hash, result.Hash)
+	s.Equal(s.batch, result.Batch)
+	s.Equal(s.batch.FinalisationBlock-rollup.DefaultBlocksToFinalise, result.SubmissionBlock)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByID_NoCommitments() {

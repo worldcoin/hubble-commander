@@ -254,11 +254,13 @@ func (s *BatchTestSuite) TestGetBatchesInRange_ReturnsAllBatchesUpUntilUpperBoun
 func (s *BatchTestSuite) TestGetBatchWithAccountRoot_AddAndRetrieve() {
 	hash := utils.RandomHash()
 	batch := &models.BatchWithAccountRoot{
-		Batch: models.Batch{
-			Hash:              hash,
-			Type:              txtype.Transfer,
-			ID:                models.MakeUint256(1),
-			FinalisationBlock: 1234,
+		BatchWithSubmissionBlock: models.BatchWithSubmissionBlock{
+			Batch: models.Batch{
+				Hash:              hash,
+				Type:              txtype.Transfer,
+				ID:                models.MakeUint256(1),
+				FinalisationBlock: 1234,
+			},
 		},
 		AccountTreeRoot: &hash,
 	}

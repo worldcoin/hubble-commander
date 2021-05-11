@@ -21,7 +21,7 @@ func (s *StateNodeTestSuite) SetupSuite() {
 
 func (s *StateNodeTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorage()
+	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
 }
 
@@ -40,12 +40,7 @@ func (s *StateNodeTestSuite) TestAddStateNode_AddAndRetrieve() {
 	err = s.storage.AddStateNode(node)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateNodeByHash(node.DataHash)
-	s.NoError(err)
-
-	s.Equal(node, res)
-
-	res, err = s.storage.GetStateNodeByPath(path)
+	res, err := s.storage.GetStateNodeByPath(path)
 	s.NoError(err)
 
 	s.Equal(node, res)
@@ -78,42 +73,6 @@ func (s *StateNodeTestSuite) TestAddStateNode_AddAndRetrieveRoot() {
 	s.NoError(err)
 
 	s.Equal(node, res)
-}
-
-func (s *StateNodeTestSuite) TestUpdateStateNode_UpdateAndRetrieve() {
-	path, err := models.NewMerklePath("0000111")
-	s.NoError(err)
-	node := &models.StateNode{
-		MerklePath: *path,
-		DataHash:   common.BytesToHash([]byte{1, 2, 3, 4, 5}),
-	}
-	err = s.storage.AddStateNode(node)
-	s.NoError(err)
-
-	expectedNode := &models.StateNode{
-		MerklePath: *path,
-		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
-	}
-
-	err = s.storage.UpdateStateNode(expectedNode)
-	s.NoError(err)
-
-	res, err := s.storage.GetStateNodeByPath(path)
-	s.NoError(err)
-
-	s.Equal(expectedNode, res)
-}
-
-func (s *StateNodeTestSuite) TestUpdateStateNode_NotExistentNode() {
-	path, err := models.NewMerklePath("0000111")
-	s.NoError(err)
-	node := &models.StateNode{
-		MerklePath: *path,
-		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
-	}
-
-	err = s.storage.UpdateStateNode(node)
-	s.Error(err)
 }
 
 func (s *StateNodeTestSuite) TestUpsertStateNode_AddAndRetrieve() {
@@ -154,13 +113,6 @@ func (s *StateNodeTestSuite) TestUpsertStateNode_UpdateAndRetrieve() {
 	s.NoError(err)
 
 	s.Equal(expectedNode, res)
-}
-
-func (s *StateNodeTestSuite) TestGetStateNodeByHash_NonExistentNode() {
-	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
-	res, err := s.storage.GetStateNodeByHash(hash)
-	s.Equal(NewNotFoundError("state node"), err)
-	s.Nil(res)
 }
 
 func (s *StateNodeTestSuite) TestGetStateNodeByPath_NonExistentLeaf() {

@@ -14,7 +14,7 @@ var create2TransferColumns = []string{
 }
 
 func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) (err error) {
-	tx, txStorage, err := s.BeginTransaction()
+	tx, txStorage, err := s.BeginTransaction(TxOptions{Postgres: true})
 	if err != nil {
 		return err
 	}
