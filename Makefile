@@ -29,6 +29,7 @@ start-db:
 
 teardown-db: stop-db
 	docker rm hubble-postgres
+	rm -rf db/badger/data
 
 update-contracts:
 	git submodule update --remote

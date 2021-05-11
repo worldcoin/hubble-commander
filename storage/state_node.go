@@ -68,6 +68,7 @@ func newZeroStateNode(path *models.MerklePath) *models.StateNode {
 	}
 }
 
+// TODO consider rewriting to badgerhold.Find()
 func (s *Storage) getStateNodes(witnessPaths []models.MerklePath) (nodes []models.StateNode, err error) {
 	tx, storage, err := s.BeginTransaction()
 	if err != nil {
