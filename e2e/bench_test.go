@@ -27,7 +27,9 @@ func TestBenchCommander(t *testing.T) {
 		require.NoError(t, commander.Stop())
 	}()
 
-	wallets, err := createWallets()
+	domain := getDomain(t, commander.Client())
+
+	wallets, err := createWallets(domain)
 	require.NoError(t, err)
 
 	var version string
