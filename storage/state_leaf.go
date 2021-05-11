@@ -69,20 +69,30 @@ func (s *Storage) GetStateLeafByPath(path *models.MerklePath) (*models.StateLeaf
 }
 
 func (s *Storage) GetStateLeaves(pubKeyID uint32) ([]models.StateLeaf, error) {
-	res := make([]models.StateLeaf, 0, 1)
-	err := s.Postgres.Query(
-		s.QB.Select("state_leaf.*").
-			From("state_leaf").
-			JoinClause("NATURAL JOIN state_node").
-			Where(squirrel.Eq{"pub_key_id": pubKeyID}),
-	).Into(&res)
+	var nodes []models.StateNode
+	err := s.Badger.Find(&nodes, nil)
+	if err == bh.ErrNotFound || len(nodes) == 0 {
+		return nil, NewNotFoundError("state leaves")
+	}
 	if err != nil {
 		return nil, err
 	}
-	if len(res) == 0 {
+
+	hashes := make([]interface{}, 0, len(nodes))
+	for i := range nodes {
+		hashes = append(hashes, nodes[i].DataHash)
+	}
+
+	var leaves []models.StateLeaf
+	err = s.Badger.Find(&leaves, bh.Where("DataHash").In(hashes...).And("UserState.PubKeyID").Eq(pubKeyID))
+	if err == bh.ErrNotFound || len(leaves) == 0 {
 		return nil, NewNotFoundError("state leaves")
 	}
-	return res, nil
+	if err != nil {
+		return nil, err
+	}
+
+	return leaves, nil
 }
 
 func (s *Storage) GetNextAvailableStateID() (*uint32, error) {

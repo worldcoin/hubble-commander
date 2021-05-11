@@ -184,8 +184,10 @@ func (s *StateLeafTestSuite) TestGetStateLeaves() {
 	s.NoError(err)
 
 	s.Len(res, 2)
-	s.Equal(common.BytesToHash([]byte{5, 6, 7, 8, 9}), res[0].DataHash)
-	s.Equal(common.BytesToHash([]byte{3, 4, 5, 6, 7}), res[1].DataHash)
+
+	hashes := []common.Hash{res[0].DataHash, res[1].DataHash}
+	s.Contains(hashes, common.BytesToHash([]byte{5, 6, 7, 8, 9}))
+	s.Contains(hashes, common.BytesToHash([]byte{3, 4, 5, 6, 7}))
 }
 
 func (s *StateLeafTestSuite) TestGetNextAvailableStateID_NoLeavesInStateTree() {
