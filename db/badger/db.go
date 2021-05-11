@@ -36,6 +36,13 @@ func (d *Database) duringUpdateTransaction() bool {
 	return d.duringTransaction() && d.updateTransaction
 }
 
+func (d *Database) Find(result interface{}, query *bh.Query) error {
+	if d.duringTransaction() {
+		return d.store.TxFind(d.txn, result, query)
+	}
+	return d.store.Find(result, query)
+}
+
 func (d *Database) Get(key, result interface{}) error {
 	if d.duringTransaction() {
 		return d.store.TxGet(d.txn, key, result)

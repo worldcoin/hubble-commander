@@ -48,20 +48,24 @@ func (s *Storage) GetStateLeafByHash(hash common.Hash) (*models.StateLeaf, error
 }
 
 func (s *Storage) GetStateLeafByPath(path *models.MerklePath) (*models.StateLeaf, error) {
-	res := make([]models.StateLeaf, 0, 1)
-	err := s.Postgres.Query(
-		s.QB.Select("state_leaf.*").
-			From("state_node").
-			Join("state_leaf ON state_leaf.data_hash = state_node.data_hash").
-			Where(squirrel.Eq{"merkle_path": *path}),
-	).Into(&res)
+	var node []models.StateNode
+	err := s.Badger.Find(&node, bh.Where("MerklePath").Eq(path))
+	if err == bh.ErrNotFound || len(node) == 0 {
+		return nil, NewNotFoundError("state leaf")
+	}
 	if err != nil {
 		return nil, err
 	}
-	if len(res) == 0 {
+
+	var leaf []models.StateLeaf
+	err = s.Badger.Find(&leaf, bh.Where("DataHash").Eq(node[0].DataHash))
+	if err == bh.ErrNotFound || len(leaf) == 0 {
 		return nil, NewNotFoundError("state leaf")
 	}
-	return &res[0], nil
+	if err != nil {
+		return nil, err
+	}
+	return &leaf[0], nil
 }
 
 func (s *Storage) GetStateLeaves(pubKeyID uint32) ([]models.StateLeaf, error) {
