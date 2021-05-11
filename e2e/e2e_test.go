@@ -22,7 +22,7 @@ import (
 )
 
 func TestCommander(t *testing.T) {
-	commander, err := NewCommanderFromEnv()
+	commander, err := NewCommanderFromEnv(true)
 	require.NoError(t, err)
 	err = commander.Start()
 	require.NoError(t, err)
@@ -38,7 +38,7 @@ func TestCommander(t *testing.T) {
 
 	testGetVersion(t, commander.Client())
 	testGetUserStates(t, commander.Client(), senderWallet)
-	firstTransferHash := testSendTransfer(t, commander.Client(), senderWallet)
+	firstTransferHash := testSendTransfer(t, commander.Client(), senderWallet, models.NewUint256(0))
 	testGetTransaction(t, commander.Client(), firstTransferHash)
 	send31MoreTransfers(t, commander.Client(), senderWallet)
 
@@ -53,6 +53,8 @@ func TestCommander(t *testing.T) {
 	testSenderStateAfterTransfers(t, commander.Client(), senderWallet)
 	testFeeReceiverStateAfterTransfers(t, commander.Client(), feeReceiverWallet)
 	testGetBatches(t, commander.Client())
+
+	testCommanderRestart(t, commander, senderWallet)
 }
 
 func testGetVersion(t *testing.T, client jsonrpc.RPCClient) {
@@ -73,13 +75,13 @@ func testGetUserStates(t *testing.T, client jsonrpc.RPCClient, wallet bls.Wallet
 	require.Equal(t, models.MakeUint256(0), userStates[1].Nonce)
 }
 
-func testSendTransfer(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet) common.Hash {
+func testSendTransfer(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, nonce *models.Uint256) common.Hash {
 	transfer, err := api.SignTransfer(&senderWallet, dto.Transfer{
 		FromStateID: ref.Uint32(1),
 		ToStateID:   ref.Uint32(2),
 		Amount:      models.NewUint256(90),
 		Fee:         models.NewUint256(10),
-		Nonce:       models.NewUint256(0),
+		Nonce:       nonce,
 	})
 	require.NoError(t, err)
 
@@ -197,6 +199,18 @@ func testGetBatches(t *testing.T, client jsonrpc.RPCClient) {
 	batchTypes := []txtype.TransactionType{batches[0].Type, batches[1].Type}
 	require.Contains(t, batchTypes, txtype.Transfer)
 	require.Contains(t, batchTypes, txtype.Create2Transfer)
+}
+
+func testCommanderRestart(t *testing.T, commander Commander, senderWallet bls.Wallet) {
+	err := commander.Stop()
+	require.NoError(t, err)
+
+	commander, err = NewCommanderFromEnv(false)
+	require.NoError(t, err)
+	err = commander.Start()
+	require.NoError(t, err)
+
+	testSendTransfer(t, commander.Client(), senderWallet, models.NewUint256(64))
 }
 
 func getUserState(userStates []dto.UserState, stateID uint32) (*dto.UserState, error) {

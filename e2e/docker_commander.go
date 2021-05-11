@@ -24,6 +24,7 @@ type DockerCommander struct {
 
 type StartOptions struct {
 	Image string
+	Prune bool
 }
 
 func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
@@ -57,7 +58,7 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 			ExposedPorts: map[nat.Port]struct{}{
 				"8080/tcp": {},
 			},
-			Cmd: []string{"build/hubble", "--prune=true"},
+			Cmd: []string{"build/hubble", fmt.Sprintf("--prune=%t", opts.Prune)},
 		},
 		&container.HostConfig{
 			NetworkMode: networkMode,
@@ -167,7 +168,6 @@ func (c *DockerCommander) Stop() error {
 	if err != nil {
 		return err
 	}
-
 	err = c.cli.ContainerRemove(context.Background(), c.containerID, types.ContainerRemoveOptions{Force: true})
 	if err != nil {
 		return err
