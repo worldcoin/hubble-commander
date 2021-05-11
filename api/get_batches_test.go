@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -48,15 +49,12 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
-	expectedBlock, err := s.api.getSubmissionBlock(s.batch.FinalisationBlock)
-	s.NoError(err)
-
 	result, err := s.api.GetBatches(models.NewUint256(0), models.NewUint256(1))
 	s.NoError(err)
 	s.NotNil(result)
 	s.Len(result, 1)
 	s.Equal(s.batch, result[0].Batch)
-	s.Equal(expectedBlock, result[0].SubmissionBlock)
+	s.Equal(s.batch.FinalisationBlock-rollup.DefaultBlocksToFinalise, result[0].SubmissionBlock)
 }
 
 func (s *GetBatchesTestSuite) TestGetBatchesByHash_NoBatches() {
