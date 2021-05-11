@@ -80,6 +80,7 @@ func GetTestConfig() Config {
 			BlockNumberLoopInterval: 500 * time.Millisecond,
 			GenesisAccounts:         getGenesisAccounts(),
 			SignaturesDomain:        [32]byte{1, 2, 3, 4},
+			BlocksToFinalise:        7 * 24 * 60 * 4,
 		},
 		API: APIConfig{
 			Version: "dev-0.0.1",
