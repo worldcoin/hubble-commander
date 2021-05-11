@@ -12,7 +12,9 @@ type TestDB struct {
 
 func NewTestDB() (*TestDB, error) {
 	options := bh.DefaultOptions
-	options.Options = badger.DefaultOptions("").WithInMemory(true)
+	options.Options = badger.DefaultOptions("").
+		WithInMemory(true).
+		WithLoggingLevel(badger.ERROR)
 
 	store, err := bh.Open(options)
 	if err != nil {
