@@ -17,6 +17,7 @@ func NewCombinedController(postgresTx, badgerTx *db.TxController) *CombinedContr
 }
 
 func (c *CombinedController) Rollback() error {
+	// TODO make the error message better
 	var err error
 	c.postgresTx.Rollback(&err)
 	c.badgerTx.Rollback(&err)
