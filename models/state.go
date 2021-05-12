@@ -4,8 +4,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// TODO move fields directly to StateLeaf for indexing purposes
-// TODO add Unique constraint to datahash?
 type UserState struct {
 	PubKeyID   uint32  `db:"pub_key_id"`
 	TokenIndex Uint256 `db:"token_index"`
@@ -15,7 +13,7 @@ type UserState struct {
 
 type StateNode struct {
 	MerklePath MerklePath  `db:"merkle_path"`
-	DataHash   common.Hash `db:"data_hash" badgerhold:"index"`
+	DataHash   common.Hash `db:"data_hash" badgerhold:"unique"`
 }
 
 type StateLeaf struct {
