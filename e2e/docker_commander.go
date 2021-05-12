@@ -72,7 +72,7 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 			Mounts: []mount.Mount{
 				{
 					Type:   mount.TypeBind,
-					Source: utils.GetProjectRoot() + "/db/badger/data",
+					Source: utils.GetProjectRoot() + "/e2e-data",
 					Target: "/go/src/app/db/badger/data",
 				},
 			},

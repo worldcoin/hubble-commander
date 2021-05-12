@@ -53,7 +53,9 @@ test-hardhat:
 	go test -v -tags hardhat -run TestWalletHardhatTestSuite ./bls
 
 test-e2e: clean-testcache
+	mkdir -p "e2e-data"
 	HUBBLE_E2E=docker go test -v -tags e2e ./e2e
+	rm -r "e2e-data"
 
 test-commander-locally: clean-testcache
 	HUBBLE_E2E=local go test -v -tags e2e -run TestCommander ./e2e
