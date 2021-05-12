@@ -4,4 +4,5 @@ build
 config.yaml
 .env
 .env.docker
-db/badger/data
+db/badger/data/*
+!db/badger/data/.gitkeep
