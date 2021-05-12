@@ -62,7 +62,7 @@ func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
 	err := s.Badger.Find(
 		&nodes,
 		bh.Where("MerklePath").
-			MatchFunc(badger.MatchAll).
+			MatchFunc(badger.MatchAll). // TODO possibly performance killer
 			SortBy("MerklePath.Path").
 			Reverse().
 			Limit(1),
@@ -86,7 +86,7 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]model
 	pubKeyIDs := utils.ValueToInterfaceSlice(accounts, "PubKeyID")
 
 	nodes := make([]models.StateNode, 0)
-	err = s.Badger.Find(&nodes, nil)
+	err = s.Badger.Find(&nodes, nil) // TODO possibly performance killer
 	if err != nil {
 		return nil, err
 	}
@@ -99,8 +99,8 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) ([]model
 	leaves := make([]models.FlatStateLeaf, 0, 1)
 	err = s.Badger.Find(
 		&leaves,
-		bh.Where("DataHash").In(dataHashes...).
-			And("PubKeyID").In(pubKeyIDs...).Index("PubKeyID"),
+		bh.Where("DataHash").In(dataHashes...). // TODO possibly performance killer
+							And("PubKeyID").In(pubKeyIDs...).Index("PubKeyID"),
 	)
 	if err != nil {
 		return nil, err
@@ -177,34 +177,31 @@ func (s *Storage) GetUserStateByID(stateID uint32) (*models.UserStateWithID, err
 		Depth: leafDepth,
 	}
 
-	nodes := make([]models.StateNode, 0)
-	err := s.Badger.Find(&nodes, bh.Where("MerklePath").Eq(path))
+	var node models.StateNode
+	err := s.Badger.Get(path, &node)
+	if err == bh.ErrNotFound {
+		return nil, NewNotFoundError("user state")
+	}
 	if err != nil {
 		return nil, err
-	}
-	if len(nodes) == 0 {
-		return nil, NewNotFoundError("user state")
 	}
 
-	leaves := make([]models.FlatStateLeaf, 0, 1)
-	err = s.Badger.Find(
-		&leaves,
-		bh.Where("DataHash").Eq(nodes[0].DataHash),
-	)
+	var leaf models.FlatStateLeaf
+	err = s.Badger.Get(node.DataHash, &leaf)
+	if err == bh.ErrNotFound {
+		return nil, NewNotFoundError("user state")
+	}
 	if err != nil {
 		return nil, err
-	}
-	if len(leaves) == 0 {
-		return nil, NewNotFoundError("user state")
 	}
 
 	userState := &models.UserStateWithID{
 		StateID: stateID,
 		UserState: models.UserState{
-			PubKeyID:   leaves[0].PubKeyID,
-			TokenIndex: leaves[0].TokenIndex,
-			Balance:    leaves[0].Balance,
-			Nonce:      leaves[0].Nonce,
+			PubKeyID:   leaf.PubKeyID,
+			TokenIndex: leaf.TokenIndex,
+			Balance:    leaf.Balance,
+			Nonce:      leaf.Nonce,
 		},
 	}
 
