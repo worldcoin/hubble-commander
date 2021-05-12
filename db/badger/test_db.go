@@ -14,7 +14,7 @@ func NewTestDB() (*TestDB, error) {
 	options := bh.DefaultOptions
 	options.Options = badger.DefaultOptions("").
 		WithInMemory(true).
-		WithLoggingLevel(badger.ERROR)
+		WithLoggingLevel(badger.WARNING)
 
 	store, err := bh.Open(options)
 	if err != nil {

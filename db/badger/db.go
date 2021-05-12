@@ -15,7 +15,7 @@ type Database struct {
 
 func NewDatabase(cfg *config.BadgerConfig) (*Database, error) {
 	options := bh.DefaultOptions
-	options.Options = badger.DefaultOptions(cfg.Path).WithLoggingLevel(badger.ERROR)
+	options.Options = badger.DefaultOptions(cfg.Path).WithLoggingLevel(badger.WARNING)
 
 	store, err := bh.Open(options)
 	if err != nil {
