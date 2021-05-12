@@ -34,7 +34,8 @@ func (s *StorageTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-// TODO update
+// TODO expand those test to check postgres txs as well
+
 func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	leaf := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
