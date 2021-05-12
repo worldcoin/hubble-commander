@@ -9,14 +9,6 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-var userStateWithIDCols = []string{
-	"state_leaf.pub_key_id",
-	"state_leaf.token_index",
-	"state_leaf.balance",
-	"state_leaf.nonce",
-	"lpad(merkle_path::text, 33, '0')::bit(33)::bigint AS stateID",
-}
-
 func (s *Storage) AddStateLeaf(leaf *models.StateLeaf) error {
 	_, err := s.Postgres.Query(
 		s.QB.Insert("state_leaf").

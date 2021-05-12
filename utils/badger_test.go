@@ -29,5 +29,5 @@ func TestValueToInterfaceSlice_InvalidType(t *testing.T) {
 	input := testType{
 		First: 1,
 	}
-	require.Panics(t, func() {ValueToInterfaceSlice(input, "First")})
+	require.Panics(t, func() { ValueToInterfaceSlice(input, "First") })
 }
