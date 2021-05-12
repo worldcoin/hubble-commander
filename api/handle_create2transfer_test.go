@@ -11,7 +11,6 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -46,19 +45,15 @@ func (s *SendCreate2TransferTestSuite) SetupTest() {
 	s.NoError(err)
 	s.teardown = testStorage.Teardown
 	s.tree = st.NewStateTree(testStorage.Storage)
-	chainState := &models.ChainState{
-		ChainID: models.MakeUint256(1),
-		Rollup:  common.Address{1, 2, 3, 4},
-	}
 	s.api = &API{
 		cfg:     &config.APIConfig{},
 		storage: testStorage.Storage,
 		client: &eth.Client{
-			ChainState: *chainState,
+			ChainState: chainState,
 		},
 	}
 
-	err = testStorage.SetChainState(chainState)
+	err = testStorage.SetChainState(&chainState)
 	s.NoError(err)
 	s.domain, err = testStorage.GetDomain(chainState.ChainID)
 	s.NoError(err)

@@ -10,7 +10,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -33,19 +32,15 @@ func (s *GetTransactionTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-	chainState := &models.ChainState{
-		ChainID: models.MakeUint256(1),
-		Rollup:  common.Address{1, 2, 3, 4},
-	}
 	s.api = &API{
 		cfg:     &config.APIConfig{},
 		storage: s.storage.Storage,
 		client: &eth.Client{
-			ChainState: *chainState,
+			ChainState: chainState,
 		},
 	}
 
-	err = s.storage.SetChainState(chainState)
+	err = s.storage.SetChainState(&chainState)
 	s.NoError(err)
 	s.domain, err = s.storage.GetDomain(chainState.ChainID)
 	s.NoError(err)
