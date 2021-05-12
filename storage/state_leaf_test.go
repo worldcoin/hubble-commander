@@ -10,6 +10,21 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+var (
+	userState1 = &models.UserState{
+		PubKeyID:   1,
+		TokenIndex: models.MakeUint256(1),
+		Balance:    models.MakeUint256(420),
+		Nonce:      models.MakeUint256(0),
+	}
+	userState2 = &models.UserState{
+		PubKeyID:   2,
+		TokenIndex: models.MakeUint256(1),
+		Balance:    models.MakeUint256(420),
+		Nonce:      models.MakeUint256(0),
+	}
+)
+
 type StateLeafTestSuite struct {
 	*require.Assertions
 	suite.Suite
@@ -110,24 +125,17 @@ func (s *StateLeafTestSuite) TestGetNextAvailableStateID_NoLeavesInStateTree() {
 func (s *StateLeafTestSuite) TestGetNextAvailableStateID() {
 	err := s.storage.AddAccountIfNotExists(&account1)
 	s.NoError(err)
-
-	userState := &models.UserState{
-		PubKeyID:   1,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(420),
-		Nonce:      models.MakeUint256(0),
-	}
-
-	err = s.tree.Set(0, userState)
+	err = s.storage.AddAccountIfNotExists(&account2)
 	s.NoError(err)
-	err = s.tree.Set(1, userState)
+
+	err = s.tree.Set(0, userState1)
 	s.NoError(err)
-	err = s.tree.Set(2, userState)
+	err = s.tree.Set(1, userState2)
 	s.NoError(err)
 
 	path, err := s.storage.GetNextAvailableStateID()
 	s.NoError(err)
-	s.Equal(uint32(3), *path)
+	s.Equal(uint32(2), *path)
 }
 
 func (s *StateLeafTestSuite) TestGetUserStatesByPublicKey() {
@@ -204,56 +212,35 @@ func (s *StateLeafTestSuite) TestGetUserStatesByPublicKey() {
 func (s *StateLeafTestSuite) TestGetStateLeafByPubKeyIDAndTokenIndex() {
 	err := s.storage.AddAccountIfNotExists(&account1)
 	s.NoError(err)
-
-	userState := &models.UserState{
-		PubKeyID:   1,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(420),
-		Nonce:      models.MakeUint256(0),
-	}
-	err = s.tree.Set(0, userState)
+	err = s.storage.AddAccountIfNotExists(&account2)
 	s.NoError(err)
 
-	userState2 := &models.UserState{
-		PubKeyID:   1,
-		TokenIndex: models.MakeUint256(2),
-		Balance:    models.MakeUint256(420),
-		Nonce:      models.MakeUint256(0),
-	}
+	err = s.tree.Set(0, userState1)
+	s.NoError(err)
+
 	err = s.tree.Set(1, userState2)
 	s.NoError(err)
 
-	userStateWithID, err := s.storage.GetUserStateByPubKeyIDAndTokenIndex(userState.PubKeyID, userState.TokenIndex)
+	userStateWithID, err := s.storage.GetUserStateByPubKeyIDAndTokenIndex(userState1.PubKeyID, userState1.TokenIndex)
 	s.NoError(err)
-	s.Equal(*userState, userStateWithID.UserState)
+	s.Equal(*userState1, userStateWithID.UserState)
 	s.Equal(uint32(0), userStateWithID.StateID)
 }
 
 func (s *StateLeafTestSuite) TestGetUserStateByID() {
 	err := s.storage.AddAccountIfNotExists(&account1)
 	s.NoError(err)
-
-	userState := &models.UserState{
-		PubKeyID:   1,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(420),
-		Nonce:      models.MakeUint256(0),
-	}
-	err = s.tree.Set(0, userState)
+	err = s.storage.AddAccountIfNotExists(&account2)
 	s.NoError(err)
 
-	userState2 := &models.UserState{
-		PubKeyID:   1,
-		TokenIndex: models.MakeUint256(2),
-		Balance:    models.MakeUint256(420),
-		Nonce:      models.MakeUint256(0),
-	}
+	err = s.tree.Set(0, userState1)
+	s.NoError(err)
 	err = s.tree.Set(1, userState2)
 	s.NoError(err)
 
 	userStateWithID, err := s.storage.GetUserStateByID(0)
 	s.NoError(err)
-	s.Equal(*userState, userStateWithID.UserState)
+	s.Equal(*userState1, userStateWithID.UserState)
 	s.Equal(uint32(0), userStateWithID.StateID)
 }
 
