@@ -184,3 +184,20 @@ func (c *DockerCommander) Stop() error {
 
 	return nil
 }
+
+func (c *DockerCommander) Restart() error {
+	err := c.Stop()
+	if err != nil {
+		return err
+	}
+
+	commander, err := StartDockerCommander(StartOptions{
+		Image: "ghcr.io/worldcoin/hubble-commander:latest",
+		Prune: false,
+	})
+	if err != nil {
+		return err
+	}
+	c.containerID = commander.containerID
+	return commander.Start()
+}
