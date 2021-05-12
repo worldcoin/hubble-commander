@@ -2,7 +2,6 @@ package bls
 
 import (
 	"crypto/rand"
-	"errors"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/kilic/bn254/bls"
@@ -10,13 +9,6 @@ import (
 
 type (
 	KeyPair = bls.KeyPair
-	Domain  = [32]byte
-)
-
-var (
-	testDomain = Domain{0x00, 0x00, 0x00, 0x00}
-
-	ErrInvalidDomainLength = errors.New("invalid domain length")
 )
 
 type Wallet struct {
@@ -69,13 +61,4 @@ func (w *Wallet) Bytes() (privateKey, publicKey []byte) {
 	privateKey = accountBytes[128:]
 	publicKey = fromBLSPublicKey(w.signer.Account.Public).Bytes()
 	return
-}
-
-func DomainFromBytes(data []byte) (*Domain, error) {
-	if len(data) != 32 {
-		return nil, ErrInvalidDomainLength
-	}
-	var domain [32]byte
-	copy(domain[:], data)
-	return &domain, nil
 }
