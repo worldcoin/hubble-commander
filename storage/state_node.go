@@ -81,8 +81,7 @@ func newZeroStateNode(path *models.MerklePath) *models.StateNode {
 	}
 }
 
-// TODO consider rewriting to badgerhold.Find()
-func (s *Storage) getStateNodes(witnessPaths []models.MerklePath) (nodes []models.StateNode, err error) {
+func (s *Storage) GetStateNodes(paths []models.MerklePath) (nodes []models.StateNode, err error) {
 	tx, storage, err := s.BeginTransaction(TxOptions{Badger: true, ReadOnly: true})
 	if err != nil {
 		return nil, err
@@ -90,9 +89,9 @@ func (s *Storage) getStateNodes(witnessPaths []models.MerklePath) (nodes []model
 	defer tx.Rollback(&err)
 
 	nodes = make([]models.StateNode, 0)
-	for i := range witnessPaths {
+	for i := range paths {
 		var node *models.StateNode
-		node, err = storage.GetStateNodeByPath(&witnessPaths[i])
+		node, err = storage.GetStateNodeByPath(&paths[i])
 		if err != nil {
 			return nil, err
 		}

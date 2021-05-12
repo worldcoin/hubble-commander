@@ -168,7 +168,7 @@ func (s *StateNodeTestSuite) TestGetStateNodes() {
 	err = s.storage.AddStateNode(node)
 	s.NoError(err)
 
-	nodes, err := s.storage.getStateNodes([]models.MerklePath{*path})
+	nodes, err := s.storage.GetStateNodes([]models.MerklePath{*path})
 	s.NoError(err)
 	s.Len(nodes, 1)
 }
@@ -178,7 +178,7 @@ func (s *StateNodeTestSuite) TestBatchUpsertStateNode_AddAndRetrieve() {
 	err := s.storage.BatchUpsertStateNodes(nodes)
 	s.NoError(err)
 
-	res, err := s.storage.getStateNodes(paths)
+	res, err := s.storage.GetStateNodes(paths)
 	s.NoError(err)
 	s.Len(res, 2)
 	s.Contains(res, nodes[0])
@@ -197,7 +197,7 @@ func (s *StateNodeTestSuite) TestBatchUpsertStateNode_UpdateAndRetrieve() {
 	err = s.storage.BatchUpsertStateNodes(nodes)
 	s.NoError(err)
 
-	res, err := s.storage.getStateNodes(paths)
+	res, err := s.storage.GetStateNodes(paths)
 	s.NoError(err)
 	s.Len(res, 2)
 	s.Contains(res, nodes[0])
