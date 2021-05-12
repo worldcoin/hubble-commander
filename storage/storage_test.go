@@ -22,7 +22,7 @@ func (s *StorageTestSuite) SetupSuite() {
 
 func (s *StorageTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorage()
+	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
 
 	err = s.storage.AddAccountIfNotExists(&account1)
@@ -46,7 +46,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 		},
 	}
 
-	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true})
+	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
 	err = storage.AddStateLeaf(leaf)
 	s.NoError(err)
@@ -74,7 +74,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 		},
 	}
 
-	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true})
+	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
 	err = storage.AddStateLeaf(leaf)
 	s.NoError(err)
@@ -110,13 +110,13 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 		},
 	}
 
-	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true})
+	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
 
 	err = storage.AddStateLeaf(leafOne)
 	s.NoError(err)
 
-	nestedTx, nestedStorage, err := storage.BeginTransaction(TxOptions{Postgres: true})
+	nestedTx, nestedStorage, err := storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
 
 	err = nestedStorage.AddStateLeaf(leafTwo)
