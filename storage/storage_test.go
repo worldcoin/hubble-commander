@@ -52,7 +52,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	s.NoError(err)
 
 	res, err := s.storage.GetStateLeafByHash(leaf.DataHash)
-	s.Error(err)
+	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
 
 	err = tx.Commit()
@@ -83,7 +83,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 	s.Nil(errors.Unwrap(err))
 
 	res, err := s.storage.GetStateLeafByHash(leaf.DataHash)
-	s.Error(err)
+	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
 }
 
@@ -126,7 +126,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 	s.NoError(err)
 
 	res, err := s.storage.GetStateLeafByHash(leafOne.DataHash)
-	s.Error(err)
+	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
 
 	err = tx.Commit()
