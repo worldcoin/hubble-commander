@@ -101,95 +101,6 @@ func (s *StateLeafTestSuite) TestGetStateLeafByPath_NonExistentLeaf() {
 	s.Equal(NewNotFoundError("state leaf"), err)
 }
 
-func (s *StateLeafTestSuite) TestGetStateLeaves_NoLeaves() {
-	res, err := s.storage.GetStateLeaves(1)
-	s.Equal(NewNotFoundError("state leaves"), err)
-	s.Nil(res)
-}
-
-func (s *StateLeafTestSuite) TestGetStateLeaves() {
-	err := s.storage.AddAccountIfNotExists(&account1)
-	s.NoError(err)
-
-	leaves := []models.StateLeaf{
-		{
-			DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
-			UserState: models.UserState{
-				PubKeyID:   account1.PubKeyID,
-				TokenIndex: models.MakeUint256(1),
-				Balance:    models.MakeUint256(420),
-				Nonce:      models.MakeUint256(0),
-			},
-		},
-		{
-			DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
-			UserState: models.UserState{
-				PubKeyID:   account1.PubKeyID,
-				TokenIndex: models.MakeUint256(2),
-				Balance:    models.MakeUint256(500),
-				Nonce:      models.MakeUint256(0),
-			},
-		},
-		{
-			DataHash: common.BytesToHash([]byte{3, 4, 5, 6, 7}),
-			UserState: models.UserState{
-				PubKeyID:   account1.PubKeyID,
-				TokenIndex: models.MakeUint256(2),
-				Balance:    models.MakeUint256(500),
-				Nonce:      models.MakeUint256(1),
-			},
-		},
-		{
-			DataHash: common.BytesToHash([]byte{4, 5, 6, 7, 8}),
-			UserState: models.UserState{
-				PubKeyID:   account1.PubKeyID,
-				TokenIndex: models.MakeUint256(1),
-				Balance:    models.MakeUint256(500),
-				Nonce:      models.MakeUint256(0),
-			},
-		},
-		{
-			DataHash: common.BytesToHash([]byte{5, 6, 7, 8, 9}),
-			UserState: models.UserState{
-				PubKeyID:   account1.PubKeyID,
-				TokenIndex: models.MakeUint256(1),
-				Balance:    models.MakeUint256(505),
-				Nonce:      models.MakeUint256(0),
-			},
-		},
-	}
-
-	for i := range leaves {
-		err = s.storage.AddStateLeaf(&leaves[i])
-		s.NoError(err)
-	}
-
-	path, err := models.NewMerklePath("01")
-	s.NoError(err)
-	err = s.storage.UpsertStateNode(&models.StateNode{
-		DataHash:   common.BytesToHash([]byte{5, 6, 7, 8, 9}),
-		MerklePath: *path,
-	})
-	s.NoError(err)
-
-	path, err = models.NewMerklePath("10")
-	s.NoError(err)
-	err = s.storage.UpsertStateNode(&models.StateNode{
-		DataHash:   common.BytesToHash([]byte{3, 4, 5, 6, 7}),
-		MerklePath: *path,
-	})
-	s.NoError(err)
-
-	res, err := s.storage.GetStateLeaves(account1.PubKeyID)
-	s.NoError(err)
-
-	s.Len(res, 2)
-
-	hashes := []common.Hash{res[0].DataHash, res[1].DataHash}
-	s.Contains(hashes, common.BytesToHash([]byte{5, 6, 7, 8, 9}))
-	s.Contains(hashes, common.BytesToHash([]byte{3, 4, 5, 6, 7}))
-}
-
 func (s *StateLeafTestSuite) TestGetNextAvailableStateID_NoLeavesInStateTree() {
 	path, err := s.storage.GetNextAvailableStateID()
 	s.NoError(err)
@@ -303,6 +214,15 @@ func (s *StateLeafTestSuite) TestGetStateLeafByPubKeyIDAndTokenIndex() {
 	err = s.tree.Set(0, userState)
 	s.NoError(err)
 
+	userState2 := &models.UserState{
+		PubKeyID:   1,
+		TokenIndex: models.MakeUint256(2),
+		Balance:    models.MakeUint256(420),
+		Nonce:      models.MakeUint256(0),
+	}
+	err = s.tree.Set(1, userState2)
+	s.NoError(err)
+
 	userStateWithID, err := s.storage.GetUserStateByPubKeyIDAndTokenIndex(userState.PubKeyID, userState.TokenIndex)
 	s.NoError(err)
 	s.Equal(*userState, userStateWithID.UserState)
@@ -320,6 +240,15 @@ func (s *StateLeafTestSuite) TestGetUserStateByID() {
 		Nonce:      models.MakeUint256(0),
 	}
 	err = s.tree.Set(0, userState)
+	s.NoError(err)
+
+	userState2 := &models.UserState{
+		PubKeyID:   1,
+		TokenIndex: models.MakeUint256(2),
+		Balance:    models.MakeUint256(420),
+		Nonce:      models.MakeUint256(0),
+	}
+	err = s.tree.Set(1, userState2)
 	s.NoError(err)
 
 	userStateWithID, err := s.storage.GetUserStateByID(0)
