@@ -1,4 +1,4 @@
-// +build e2e
+//// +build e2e
 
 package e2e
 
@@ -54,7 +54,7 @@ func TestCommander(t *testing.T) {
 	testFeeReceiverStateAfterTransfers(t, commander.Client(), feeReceiverWallet)
 	testGetBatches(t, commander.Client())
 
-	commander = testCommanderRestart(t, commander, senderWallet) // assignment needed for deferred function
+	testCommanderRestart(t, commander, senderWallet)
 }
 
 func testGetVersion(t *testing.T, client jsonrpc.RPCClient) {
@@ -201,17 +201,11 @@ func testGetBatches(t *testing.T, client jsonrpc.RPCClient) {
 	require.Contains(t, batchTypes, txtype.Create2Transfer)
 }
 
-func testCommanderRestart(t *testing.T, commander Commander, senderWallet bls.Wallet) Commander {
-	err := commander.Stop()
-	require.NoError(t, err)
-
-	commander, err = NewCommanderFromEnv(false)
-	require.NoError(t, err)
-	err = commander.Start()
+func testCommanderRestart(t *testing.T, commander Commander, senderWallet bls.Wallet) {
+	err := commander.Restart()
 	require.NoError(t, err)
 
 	testSendTransfer(t, commander.Client(), senderWallet, models.NewUint256(64))
-	return commander
 }
 
 func getUserState(userStates []dto.UserState, stateID uint32) (*dto.UserState, error) {
