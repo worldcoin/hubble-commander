@@ -105,7 +105,7 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
 	s.NoError(err)
 
 	s.api.storage.SetLatestBlockNumber(1)
-	expectedDomain := crypto.Keccak256(s.testClient.ChainState.Rollup.Bytes())
+	expectedDomain := crypto.Keccak256(s.chainState.Rollup.Bytes())
 
 	networkInfo, err := s.api.GetNetworkInfo()
 	s.NoError(err)
