@@ -33,7 +33,7 @@ func (s *GetBatchTestSuite) SetupTest() {
 	s.NoError(err)
 	ethClient, err := eth.NewTestClient()
 	s.NoError(err)
-	s.api = &API{nil, s.storage.Storage, ethClient.Client}
+	s.api = &API{storage: s.storage.Storage, client: ethClient.Client}
 	s.tree = st.NewStateTree(s.storage.Storage)
 
 	hash := utils.RandomHash()

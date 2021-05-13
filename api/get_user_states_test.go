@@ -26,7 +26,7 @@ func (s *GetUserStatesTestSuite) SetupTest() {
 	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.teardown = testStorage.Teardown
-	s.api = &API{nil, testStorage.Storage, nil}
+	s.api = &API{storage: testStorage.Storage}
 }
 
 func (s *GetUserStatesTestSuite) TearDownTest() {
