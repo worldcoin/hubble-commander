@@ -8,6 +8,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -18,6 +20,7 @@ type NetworkInfoTestSuite struct {
 	api        *API
 	teardown   func() error
 	testClient *eth.TestClient
+	chainState models.ChainState
 }
 
 func (s *NetworkInfoTestSuite) SetupSuite() {
@@ -28,8 +31,14 @@ func (s *NetworkInfoTestSuite) SetupTest() {
 	testStorage, err := st.NewTestStorage()
 	s.NoError(err)
 	s.teardown = testStorage.Teardown
-
 	s.testClient, err = eth.NewTestClient()
+	s.NoError(err)
+
+	s.chainState = models.ChainState{
+		ChainID: models.MakeUint256(0),
+		Rollup:  common.Address{1, 2, 3, 4},
+	}
+	err = testStorage.SetChainState(&s.chainState)
 	s.NoError(err)
 
 	s.api = &API{storage: testStorage.Storage, client: s.testClient.Client}
@@ -96,6 +105,7 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
 	s.NoError(err)
 
 	s.api.storage.SetLatestBlockNumber(1)
+	expectedDomain := crypto.Keccak256(s.testClient.ChainState.Rollup.Bytes())
 
 	networkInfo, err := s.api.GetNetworkInfo()
 	s.NoError(err)
@@ -103,6 +113,7 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
 	s.Equal(uint32(1), networkInfo.BlockNumber)
 	s.Equal("2000", *networkInfo.LatestBatch)
 	s.Equal("1234", *networkInfo.LatestFinalisedBatch)
+	s.Equal(expectedDomain, networkInfo.SignatureDomain.Bytes())
 }
 
 func TestNetworkInfoTestSuite(t *testing.T) {
