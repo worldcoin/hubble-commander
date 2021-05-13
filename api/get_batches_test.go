@@ -31,7 +31,7 @@ func (s *GetBatchesTestSuite) SetupTest() {
 	s.NoError(err)
 	ethClient, err := eth.NewTestClient()
 	s.NoError(err)
-	s.api = &API{nil, s.storage.Storage, ethClient.Client}
+	s.api = &API{storage: s.storage.Storage, client: ethClient.Client}
 
 	s.batch = models.Batch{
 		Hash:              utils.RandomHash(),

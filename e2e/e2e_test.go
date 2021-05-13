@@ -17,6 +17,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"github.com/ybbus/jsonrpc/v2"
 )
@@ -30,7 +31,9 @@ func TestCommander(t *testing.T) {
 		require.NoError(t, commander.Stop())
 	}()
 
-	wallets, err := createWallets()
+	domain := getDomain(t, commander.Client())
+
+	wallets, err := createWallets(domain)
 	require.NoError(t, err)
 
 	feeReceiverWallet := wallets[0]
@@ -206,6 +209,16 @@ func testCommanderRestart(t *testing.T, commander Commander, senderWallet bls.Wa
 	require.NoError(t, err)
 
 	testSendTransfer(t, commander.Client(), senderWallet, models.NewUint256(64))
+}
+
+func getDomain(t *testing.T, client jsonrpc.RPCClient) bls.Domain {
+	var info dto.NetworkInfo
+	err := client.CallFor(&info, "hubble_getNetworkInfo")
+	require.NoError(t, err)
+
+	domain, err := bls.DomainFromBytes(crypto.Keccak256(info.Rollup.Bytes()))
+	require.NoError(t, err)
+	return *domain
 }
 
 func getUserState(userStates []dto.UserState, stateID uint32) (*dto.UserState, error) {

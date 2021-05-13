@@ -32,7 +32,7 @@ func (s *NetworkInfoTestSuite) SetupTest() {
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
 
-	s.api = &API{nil, testStorage.Storage, s.testClient.Client}
+	s.api = &API{storage: testStorage.Storage, client: s.testClient.Client}
 }
 
 func (s *NetworkInfoTestSuite) TearDownTest() {

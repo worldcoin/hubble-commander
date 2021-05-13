@@ -5,11 +5,13 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -22,6 +24,10 @@ var (
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(0),
 	}
+	chainState = models.ChainState{
+		ChainID: models.MakeUint256(1),
+		Rollup:  common.Address{1, 2, 3, 4},
+	}
 )
 
 type SendTransferTestSuite struct {
@@ -33,6 +39,7 @@ type SendTransferTestSuite struct {
 	userState *models.UserState
 	transfer  dto.Transfer
 	wallet    *bls.Wallet
+	domain    *bls.Domain
 }
 
 func (s *SendTransferTestSuite) SetupSuite() {
@@ -47,10 +54,16 @@ func (s *SendTransferTestSuite) SetupTest() {
 	s.api = &API{
 		cfg:     &config.APIConfig{},
 		storage: testStorage.Storage,
-		client:  nil,
+		client: &eth.Client{
+			ChainState: chainState,
+		},
 	}
 
-	s.wallet, err = bls.NewRandomWallet(mockDomain)
+	err = testStorage.SetChainState(&chainState)
+	s.NoError(err)
+	s.domain, err = testStorage.GetDomain(chainState.ChainID)
+	s.NoError(err)
+	s.wallet, err = bls.NewRandomWallet(*s.domain)
 	s.NoError(err)
 
 	err = testStorage.AddAccountIfNotExists(&models.Account{
@@ -179,7 +192,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesBalance() {
 }
 
 func (s *SendTransferTestSuite) TestSendTransfer_ValidatesSignature() {
-	wallet, err := bls.NewRandomWallet(mockDomain)
+	wallet, err := bls.NewRandomWallet(*s.domain)
 	s.NoError(err)
 	fakeSignature, err := wallet.Sign(utils.RandomBytes(2))
 	s.NoError(err)
@@ -194,7 +207,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesSignature() {
 func (s *SendTransferTestSuite) TestSendTransaction_ValidatesSignature_DevMode() {
 	s.api.cfg = &config.APIConfig{DevMode: true}
 
-	wallet, err := bls.NewRandomWallet(mockDomain)
+	wallet, err := bls.NewRandomWallet(*s.domain)
 	s.NoError(err)
 	fakeSignature, err := wallet.Sign(utils.RandomBytes(2))
 	s.NoError(err)
