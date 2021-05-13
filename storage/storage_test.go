@@ -34,8 +34,6 @@ func (s *StorageTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-// TODO expand those test to check postgres txs as well
-
 func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	leaf := &models.StateLeaf{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
@@ -51,10 +49,16 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	s.NoError(err)
 	err = storage.AddStateLeaf(leaf)
 	s.NoError(err)
+	err = storage.AddAccountIfNotExists(&account2)
+	s.NoError(err)
 
 	res, err := s.storage.GetStateLeafByHash(leaf.DataHash)
 	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
+
+	accounts, err := s.storage.GetAccounts(&account2.PublicKey)
+	s.NoError(err)
+	s.Len(accounts, 0)
 
 	err = tx.Commit()
 	s.NoError(err)
@@ -62,6 +66,10 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	res, err = s.storage.GetStateLeafByHash(leaf.DataHash)
 	s.NoError(err)
 	s.Equal(leaf, res)
+
+	accounts, err = s.storage.GetAccounts(&account2.PublicKey)
+	s.NoError(err)
+	s.Len(accounts, 1)
 }
 
 func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
@@ -79,6 +87,8 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 	s.NoError(err)
 	err = storage.AddStateLeaf(leaf)
 	s.NoError(err)
+	err = storage.AddAccountIfNotExists(&account2)
+	s.NoError(err)
 
 	tx.Rollback(&err)
 	s.Nil(errors.Unwrap(err))
@@ -86,6 +96,10 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 	res, err := s.storage.GetStateLeafByHash(leaf.DataHash)
 	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
+
+	accounts, err := s.storage.GetAccounts(&account2.PublicKey)
+	s.NoError(err)
+	s.Len(accounts, 0)
 }
 
 func (s *StorageTestSuite) TestBeginTransaction_Lock() {
