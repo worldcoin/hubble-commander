@@ -10,23 +10,8 @@ import (
 )
 
 func (s *Storage) AddStateLeaf(leaf *models.StateLeaf) error {
-	_, err := s.Postgres.Query(
-		s.QB.Insert("state_leaf").
-			Values(
-				leaf.DataHash,
-				leaf.PubKeyID,
-				leaf.TokenIndex,
-				leaf.Balance,
-				leaf.Nonce,
-			).
-			Suffix("ON CONFLICT DO NOTHING"),
-	).Exec()
-	if err != nil {
-		return err
-	}
-
 	flatLeaf := models.NewFlatStateLeaf(leaf)
-	err = s.Badger.Insert(leaf.DataHash, &flatLeaf)
+	err := s.Badger.Insert(leaf.DataHash, &flatLeaf)
 	if err == bh.ErrKeyExists {
 		return nil
 	}
