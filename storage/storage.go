@@ -50,7 +50,7 @@ func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, 
 	}
 
 	if opts.Badger {
-		badgerTx, badgerDB := s.Badger.BeginTransaction(opts.ReadOnly)
+		badgerTx, badgerDB := s.Badger.BeginTransaction(!opts.ReadOnly)
 		if txController != nil {
 			combinedController := NewCombinedController(txController, badgerTx)
 			txController = db.NewTxController(combinedController, txController.IsLocked())
