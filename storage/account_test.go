@@ -189,6 +189,21 @@ func (s *AccountTestSuite) Test_GetUnusedPubKeyID() {
 	s.Equal(uint32(3), *pubKeyID)
 }
 
+func (s *AccountTestSuite) Test_DoesAccountExist_Exists() {
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
+
+	exists, err := s.storage.DoesAccountExist(&account1.PublicKey)
+	s.NoError(err)
+	s.True(exists)
+}
+
+func (s *AccountTestSuite) Test_DoesAccountExist_NotExists() {
+	exists, err := s.storage.DoesAccountExist(&account1.PublicKey)
+	s.NoError(err)
+	s.False(exists)
+}
+
 func TestAccountTestSuite(t *testing.T) {
 	suite.Run(t, new(AccountTestSuite))
 }
