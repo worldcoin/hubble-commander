@@ -1,8 +1,11 @@
 package storage
 
 import (
+	"strconv"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils"
 )
 
 func (s *Storage) AddAccountIfNotExists(account *models.Account) error {
@@ -48,21 +51,42 @@ func (s *Storage) GetPublicKey(pubKeyID uint32) (*models.PublicKey, error) {
 }
 
 func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey) (*uint32, error) {
-	res := make([]uint32, 0, 1)
-	err := s.Postgres.Query(
-		s.QB.Select("account.pub_key_id").
-			From("account").
-			JoinClause("FULL OUTER JOIN state_leaf ON account.pub_key_id = state_leaf.pub_key_id").
-			Where(squirrel.Eq{"public_key": publicKey}).
-			Where(squirrel.Eq{"state_leaf.pub_key_id": nil}).
-			OrderBy("account.pub_key_id ASC").
-			Limit(1),
-	).Into(&res)
+	accounts, err := s.GetAccounts(publicKey)
 	if err != nil {
 		return nil, err
 	}
-	if len(res) == 0 {
+	if len(accounts) == 0 {
 		return nil, NewNotFoundError("pub key id")
 	}
-	return &res[0], nil
+
+	allPubKeyIDs := make([]string, 0, len(accounts))
+
+	for i := range accounts {
+		allPubKeyIDs = append(allPubKeyIDs, strconv.Itoa(int(accounts[i].PubKeyID)))
+	}
+
+	leaves := make([]models.FlatStateLeaf, 0, 1)
+	err = s.Badger.Find(&leaves, nil)
+	if err != nil {
+		return nil, err
+	}
+	if len(leaves) == 0 {
+		return nil, NewNotFoundError("pub key id")
+	}
+
+	usedPubKeyIDs := make([]string, 0, len(accounts))
+
+	for i := range leaves {
+		usedPubKeyIDs = append(usedPubKeyIDs, strconv.Itoa(int(leaves[i].PubKeyID)))
+	}
+
+	availablePubKeyIDs := utils.StringSliceDiff(allPubKeyIDs, usedPubKeyIDs)
+	if len(availablePubKeyIDs) == 0 {
+		return nil, NewNotFoundError("pub key id")
+	}
+
+	firstAvailablePubKeyIDUint64, err := strconv.ParseUint(availablePubKeyIDs[0], 10, 32)
+	firstAvailablePubKeyID := uint32(firstAvailablePubKeyIDUint64)
+
+	return &firstAvailablePubKeyID, nil
 }
