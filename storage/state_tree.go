@@ -153,7 +153,7 @@ func (s *StateTree) updateStateNodes(leafPath *models.MerklePath, newLeafHash *c
 		return nil, err
 	}
 
-	nodes, err := s.storage.getStateNodes(witnessPaths)
+	nodes, err := s.storage.GetStateNodes(witnessPaths)
 	if err != nil {
 		return nil, err
 	}

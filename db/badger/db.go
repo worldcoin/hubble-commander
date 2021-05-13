@@ -15,7 +15,7 @@ type Database struct {
 
 func NewDatabase(cfg *config.BadgerConfig) (*Database, error) {
 	options := bh.DefaultOptions
-	options.Options = badger.DefaultOptions(cfg.Path)
+	options.Options = badger.DefaultOptions(cfg.Path).WithLoggingLevel(badger.WARNING)
 
 	store, err := bh.Open(options)
 	if err != nil {
@@ -34,6 +34,13 @@ func (d *Database) duringTransaction() bool {
 
 func (d *Database) duringUpdateTransaction() bool {
 	return d.duringTransaction() && d.updateTransaction
+}
+
+func (d *Database) Find(result interface{}, query *bh.Query) error {
+	if d.duringTransaction() {
+		return d.store.TxFind(d.txn, result, query)
+	}
+	return d.store.Find(result, query)
 }
 
 func (d *Database) Get(key, result interface{}) error {

@@ -32,7 +32,7 @@ func (s *AccountTestSuite) SetupSuite() {
 
 func (s *AccountTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorage()
+	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
 }
 

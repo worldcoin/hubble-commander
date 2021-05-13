@@ -40,9 +40,12 @@ func (s *StateNodeTestSuite) TestAddStateNode_AddAndRetrieve() {
 	err = s.storage.AddStateNode(node)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateNodeByPath(path)
+	res, err := s.storage.GetStateNodeByHash(&node.DataHash)
 	s.NoError(err)
+	s.Equal(node, res)
 
+	res, err = s.storage.GetStateNodeByPath(path)
+	s.NoError(err)
 	s.Equal(node, res)
 }
 
@@ -115,6 +118,13 @@ func (s *StateNodeTestSuite) TestUpsertStateNode_UpdateAndRetrieve() {
 	s.Equal(expectedNode, res)
 }
 
+func (s *StateNodeTestSuite) TestGetStateNodeByHash_NonExistentNode() {
+	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
+	res, err := s.storage.GetStateNodeByHash(&hash)
+	s.Equal(NewNotFoundError("state node"), err)
+	s.Nil(res)
+}
+
 func (s *StateNodeTestSuite) TestGetStateNodeByPath_NonExistentLeaf() {
 	path := models.MerklePath{
 		Path:  0,
@@ -158,7 +168,7 @@ func (s *StateNodeTestSuite) TestGetStateNodes() {
 	err = s.storage.AddStateNode(node)
 	s.NoError(err)
 
-	nodes, err := s.storage.getStateNodes([]models.MerklePath{*path})
+	nodes, err := s.storage.GetStateNodes([]models.MerklePath{*path})
 	s.NoError(err)
 	s.Len(nodes, 1)
 }
@@ -168,7 +178,7 @@ func (s *StateNodeTestSuite) TestBatchUpsertStateNode_AddAndRetrieve() {
 	err := s.storage.BatchUpsertStateNodes(nodes)
 	s.NoError(err)
 
-	res, err := s.storage.getStateNodes(paths)
+	res, err := s.storage.GetStateNodes(paths)
 	s.NoError(err)
 	s.Len(res, 2)
 	s.Contains(res, nodes[0])
@@ -187,7 +197,7 @@ func (s *StateNodeTestSuite) TestBatchUpsertStateNode_UpdateAndRetrieve() {
 	err = s.storage.BatchUpsertStateNodes(nodes)
 	s.NoError(err)
 
-	res, err := s.storage.getStateNodes(paths)
+	res, err := s.storage.GetStateNodes(paths)
 	s.NoError(err)
 	s.Len(res, 2)
 	s.Contains(res, nodes[0])

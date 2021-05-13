@@ -39,9 +39,10 @@ func NewStorage(postgresConfig *config.PostgresConfig, badgerConfig *config.Badg
 func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, error) {
 	var txController *db.TxController
 	var storage Storage
+	storage.Postgres = s.Postgres
 	storage.QB = getQueryBuilder()
 
-	if opts.Postgres {
+	if opts.Postgres && !opts.ReadOnly {
 		postgresTx, postgresDB, err := s.Postgres.BeginTransaction()
 		if err != nil {
 			return nil, nil, err
@@ -51,7 +52,7 @@ func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, 
 	}
 
 	if opts.Badger {
-		badgerTx, badgerDB := s.Badger.BeginTransaction(true)
+		badgerTx, badgerDB := s.Badger.BeginTransaction(!opts.ReadOnly)
 		if txController != nil {
 			combinedController := NewCombinedController(txController, badgerTx)
 			txController = db.NewTxController(combinedController, txController.IsLocked())
