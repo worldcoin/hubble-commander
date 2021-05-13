@@ -124,6 +124,9 @@ func (s *CommitmentTestSuite) TestGetCommitment_NonExistentCommitment() {
 }
 
 func (s *CommitmentTestSuite) TestGetCommitmentsByBatchHash() {
+	_, err := s.storage.AddCommitment(&commitment)
+	s.NoError(err)
+
 	commitmentWithHash := commitment
 	commitmentWithHash.FeeReceiver = 0
 	commitmentWithHash.IncludedInBatch = s.addRandomBatch()
@@ -142,8 +145,8 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchHash() {
 func (s *CommitmentTestSuite) TestGetCommitmentsByBatchHash_NonExistentCommitments() {
 	hash := utils.RandomHash()
 	commitments, err := s.storage.GetCommitmentsByBatchHash(&hash)
-	s.NoError(err)
-	s.Len(commitments, 0)
+	s.Equal(NewNotFoundError("commitments"), err)
+	s.Nil(commitments)
 }
 
 func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
