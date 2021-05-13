@@ -21,13 +21,18 @@ func SyncBatches(storage *st.Storage, client *eth.Client, cfg *config.RollupConf
 		return err
 	}
 
+	var latestBatchId models.Uint256
 	latestBatch, err := storage.GetLatestBatch()
-	if err != nil {
+	if st.IsNotFoundError(err) {
+		latestBatchId = models.MakeUint256(0)
+	} else if err != nil {
 		return err
+	} else {
+		latestBatchId = latestBatch.ID
 	}
 
 	for _, batch := range newBatches {
-		if batch.ID.Cmp(&latestBatch.ID) <= 0 {
+		if batch.ID.Cmp(&latestBatchId) <= 0 {
 			continue
 		}
 
@@ -36,6 +41,16 @@ func SyncBatches(storage *st.Storage, client *eth.Client, cfg *config.RollupConf
 		}
 
 		// Apply batch
+
+		err = storage.AddBatch(&models.Batch{
+			Hash:              batch.Hash,
+			Type:              batch.Type,
+			ID:                batch.ID,
+			FinalisationBlock: batch.FinalisationBlock,
+		})
+		if err != nil {
+			return err
+		}
 
 		for _, commitment := range batch.Commitments {
 			transfers, err := encoder.DeserializeTransfers(commitment.Transactions)
@@ -69,13 +84,6 @@ func SyncBatches(storage *st.Storage, client *eth.Client, cfg *config.RollupConf
 				return err
 			}
 		}
-
-		err = storage.AddBatch(&models.Batch{
-			Hash:              batch.Hash,
-			Type:              batch.Type,
-			ID:                batch.ID,
-			FinalisationBlock: batch.FinalisationBlock,
-		})
 
 		log.Printf("synced new batch from chain #%s: %d commitments included", batch.ID.String(), len(batch.Commitments))
 	}

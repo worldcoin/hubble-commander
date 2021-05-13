@@ -27,27 +27,7 @@ func TestSyncBatches(t *testing.T) {
 	client, err := eth.NewTestClient()
 	require.NoError(t, err)
 
-	err = storage.AddAccountIfNotExists(&models.Account{
-		PubKeyID:  0,
-		PublicKey: models.PublicKey{},
-	})
-	require.NoError(t, err)
-
-	err = tree.Set(0, &models.UserState{
-		PubKeyID:   0,
-		TokenIndex: models.MakeUint256(0),
-		Balance:    models.MakeUint256(1000),
-		Nonce:      models.MakeUint256(0),
-	})
-	require.NoError(t, err)
-
-	err = tree.Set(1, &models.UserState{
-		PubKeyID:   0,
-		TokenIndex: models.MakeUint256(0),
-		Balance:    models.MakeUint256(0),
-		Nonce:      models.MakeUint256(0),
-	})
-	require.NoError(t, err)
+	seedDb(t, storage, tree)
 
 	tx := models.Transfer{
 		TransactionBase: models.TransactionBase{
@@ -76,6 +56,8 @@ func TestSyncBatches(t *testing.T) {
 	storage = st.NewTestStorage(db.DB)
 	tree = st.NewStateTree(storage)
 
+	seedDb(t, storage, tree)
+
 	err = SyncBatches(storage, client.Client, cfg)
 	require.NoError(t, err)
 
@@ -90,4 +72,28 @@ func TestSyncBatches(t *testing.T) {
 	batches, err := storage.GetBatchesInRange(nil, nil)
 	require.NoError(t, err)
 	require.Len(t, batches, 1)
+}
+
+func seedDb(t *testing.T, storage *st.Storage, tree *st.StateTree) {
+	err := storage.AddAccountIfNotExists(&models.Account{
+		PubKeyID:  0,
+		PublicKey: models.PublicKey{},
+	})
+	require.NoError(t, err)
+
+	err = tree.Set(0, &models.UserState{
+		PubKeyID:   0,
+		TokenIndex: models.MakeUint256(0),
+		Balance:    models.MakeUint256(1000),
+		Nonce:      models.MakeUint256(0),
+	})
+	require.NoError(t, err)
+
+	err = tree.Set(1, &models.UserState{
+		PubKeyID:   0,
+		TokenIndex: models.MakeUint256(0),
+		Balance:    models.MakeUint256(0),
+		Nonce:      models.MakeUint256(0),
+	})
+	require.NoError(t, err)
 }

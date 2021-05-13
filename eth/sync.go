@@ -1,12 +1,17 @@
 package eth
 
 import (
+	"bytes"
 	"context"
+	"strings"
 
+	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 )
 
 func (c *Client) GetBatches() ([]DecodedBatch, error) {
@@ -23,6 +28,15 @@ func (c *Client) GetBatches() ([]DecodedBatch, error) {
 		tx, _, err := c.ChainConnection.GetBackend().TransactionByHash(context.Background(), txHash)
 		if err != nil {
 			return nil, err
+		}
+
+		rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		if !bytes.Equal(tx.Data()[:4], rollupAbi.Methods["submitTransfer"].ID) {
+			continue // TODO: handle internal transactions
 		}
 
 		commitments, err := encoder.DecodeBatch(tx.Data())
