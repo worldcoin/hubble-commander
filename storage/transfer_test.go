@@ -45,6 +45,9 @@ func (s *TransferTestSuite) SetupTest() {
 	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
 	s.tree = NewStateTree(s.storage.Storage)
+
+	err = s.storage.AddAccountIfNotExists(&account2)
+	s.NoError(err)
 }
 
 func (s *TransferTestSuite) TearDownTest() {
@@ -235,11 +238,9 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 }
 
 func (s *TransferTestSuite) TestGetUserTransfersByPublicKey_NoTransfers() {
-	userTransfers, err := s.storage.GetTransfersByPublicKey(&models.PublicKey{1, 2, 3})
-
+	userTransfers, err := s.storage.GetTransfersByPublicKey(&account2.PublicKey)
 	s.NoError(err)
 	s.Len(userTransfers, 0)
-	s.NotNil(userTransfers)
 }
 
 func (s *TransferTestSuite) TestGetTransfersByCommitmentID() {
