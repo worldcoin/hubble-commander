@@ -1,6 +1,8 @@
 package bls
 
 import (
+	"reflect"
+
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/pkg/errors"
 )
@@ -11,6 +13,7 @@ type Domain [DomainLength]byte
 
 var (
 	testDomain = Domain{0x00, 0x00, 0x00, 0x00}
+	domainT    = reflect.TypeOf(Domain{})
 
 	ErrInvalidDomainLength = errors.New("invalid domain length")
 )
@@ -26,6 +29,10 @@ func DomainFromBytes(data []byte) (*Domain, error) {
 	var domain Domain
 	copy(domain[:], data)
 	return &domain, nil
+}
+
+func (d *Domain) UnmarshalJSON(input []byte) error {
+	return hexutil.UnmarshalFixedJSON(domainT, input, d[:])
 }
 
 func (d Domain) MarshalText() ([]byte, error) {

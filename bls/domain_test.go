@@ -30,4 +30,9 @@ func TestMarshalText(t *testing.T) {
 	data, err := json.Marshal(&domain)
 	require.NoError(t, err)
 	require.Equal(t, expected, string(data))
+
+	var result Domain
+	err = json.Unmarshal(data, &result)
+	require.NoError(t, err)
+	require.Equal(t, domain, result)
 }
