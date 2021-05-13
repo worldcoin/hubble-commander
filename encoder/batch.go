@@ -21,13 +21,13 @@ type DecodedCommitment struct {
 //        uint256[2][] calldata signatures,
 //        uint256[] calldata feeReceivers,
 //        bytes[] calldata txss
-func DecodeTransferBatch(data []byte) ([]DecodedCommitment, error) {
+func DecodeBatch(calldata []byte) ([]DecodedCommitment, error) {
 	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
 	if err != nil {
 		return nil, err
 	}
 
-	unpacked, err := rollupAbi.Methods["submitTransfer"].Inputs.Unpack(data[4:])
+	unpacked, err := rollupAbi.Methods["submitTransfer"].Inputs.Unpack(calldata[4:])
 	if err != nil {
 		return nil, err
 	}

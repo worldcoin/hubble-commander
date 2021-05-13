@@ -29,7 +29,7 @@ func TestDecodeTransferBatch(t *testing.T) {
 	calldata, err := rollupAbi.Pack("submitTransfer", arg1, arg2, arg3, arg4)
 	require.NoError(t, err)
 
-	decoded, err := DecodeTransferBatch(calldata)
+	decoded, err := DecodeBatch(calldata)
 	require.NoError(t, err)
 
 	require.Equal(t, len(commitments), len(decoded))
