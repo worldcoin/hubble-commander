@@ -7,7 +7,7 @@ import (
 )
 
 func TestDomainFromBytes(t *testing.T) {
-	data := make([]byte, 32)
+	data := make([]byte, DomainLength)
 	domain, err := DomainFromBytes(data)
 	require.NoError(t, err)
 	require.Equal(t, &Domain{}, domain)

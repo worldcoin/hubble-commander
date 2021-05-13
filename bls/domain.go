@@ -2,7 +2,9 @@ package bls
 
 import "github.com/pkg/errors"
 
-type Domain = [32]byte
+const DomainLength = 32
+
+type Domain = [DomainLength]byte
 
 var (
 	testDomain = Domain{0x00, 0x00, 0x00, 0x00}
@@ -11,10 +13,10 @@ var (
 )
 
 func DomainFromBytes(data []byte) (*Domain, error) {
-	if len(data) != 32 {
+	if len(data) != DomainLength {
 		return nil, ErrInvalidDomainLength
 	}
-	var domain [32]byte
+	var domain [DomainLength]byte
 	copy(domain[:], data)
 	return &domain, nil
 }
