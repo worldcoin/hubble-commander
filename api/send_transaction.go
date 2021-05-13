@@ -3,7 +3,6 @@ package api
 import (
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/encoder"
@@ -22,23 +21,6 @@ var (
 	ErrTransferToSelf   = errors.New("transfer to the same state id")
 	ErrNegativeAmount   = errors.New("amount must be positive")
 )
-
-var (
-	mockDomain    = bls.Domain{1, 2, 3, 4} // TODO use real domain
-	mockSignature models.Signature
-)
-
-func init() {
-	wallet, err := bls.NewRandomWallet(mockDomain)
-	if err != nil {
-		log.Fatalf("Failed to create mock signature: %v", err)
-	}
-	signature, err := wallet.Sign([]byte{1, 2, 3, 4})
-	if err != nil {
-		log.Fatalf("Failed to create mock signature: %v", err)
-	}
-	mockSignature = *signature.ModelsSignature()
-}
 
 func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
 	switch t := tx.Parsed.(type) {
@@ -112,7 +94,11 @@ func (a *API) validateSignature(encodedTransaction []byte, transactionSignature 
 		return err
 	}
 
-	signature, err := bls.NewSignatureFromBytes(transactionSignature[:], mockDomain)
+	domain, err := a.storage.GetDomain(a.client.ChainState.ChainID)
+	if err != nil {
+		return err
+	}
+	signature, err := bls.NewSignatureFromBytes(transactionSignature[:], *domain)
 	if err != nil {
 		return err
 	}

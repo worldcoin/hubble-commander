@@ -28,7 +28,7 @@ func (s *GetCommitmentTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	s.api = &API{nil, s.storage.Storage, nil}
+	s.api = &API{storage: s.storage.Storage}
 
 	s.batch = models.Batch{
 		Hash:              utils.RandomHash(),

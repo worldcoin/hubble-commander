@@ -11,6 +11,10 @@ func (a *API) GetBatchByHash(hash common.Hash) (*dto.BatchWithCommitments, error
 	if err != nil {
 		return nil, err
 	}
+	batch.SubmissionBlock, err = a.getSubmissionBlock(batch.FinalisationBlock)
+	if err != nil {
+		return nil, err
+	}
 
 	commitments, err := a.storage.GetCommitmentsByBatchHash(&hash)
 	if err != nil {
@@ -21,6 +25,10 @@ func (a *API) GetBatchByHash(hash common.Hash) (*dto.BatchWithCommitments, error
 
 func (a *API) GetBatchByID(id models.Uint256) (*dto.BatchWithCommitments, error) {
 	batch, err := a.storage.GetBatchWithAccountRootByID(id)
+	if err != nil {
+		return nil, err
+	}
+	batch.SubmissionBlock, err = a.getSubmissionBlock(batch.FinalisationBlock)
 	if err != nil {
 		return nil, err
 	}
@@ -43,4 +51,12 @@ func createBatchWithCommitments(
 		BatchWithAccountRoot: *batch,
 		Commitments:          commitments,
 	}, nil
+}
+
+func (a *API) getSubmissionBlock(finalisationBlock uint32) (uint32, error) {
+	blocks, err := a.client.GetBlocksToFinalise()
+	if err != nil {
+		return 0, err
+	}
+	return finalisationBlock - uint32(*blocks), nil
 }

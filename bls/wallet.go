@@ -9,10 +9,7 @@ import (
 
 type (
 	KeyPair = bls.KeyPair
-	Domain  = [32]byte
 )
-
-var testDomain = Domain{0x00, 0x00, 0x00, 0x00}
 
 type Wallet struct {
 	signer bls.BLSSigner
@@ -51,9 +48,8 @@ func (w *Wallet) Sign(data []byte) (*Signature, error) {
 }
 
 func (w *Wallet) Domain() Domain {
-	var domain [32]byte
-	copy(domain[:], w.signer.Domain)
-	return domain
+	domain, _ := DomainFromBytes(w.signer.Domain)
+	return *domain
 }
 
 func (w *Wallet) PublicKey() *models.PublicKey {

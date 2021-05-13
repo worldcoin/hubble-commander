@@ -7,8 +7,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	docker "github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
@@ -24,6 +26,7 @@ type DockerCommander struct {
 
 type StartOptions struct {
 	Image string
+	Prune bool
 }
 
 func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
@@ -57,13 +60,20 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 			ExposedPorts: map[nat.Port]struct{}{
 				"8080/tcp": {},
 			},
-			Cmd: []string{"build/hubble", "--prune=true"},
+			Cmd: []string{"build/hubble", fmt.Sprintf("--prune=%t", opts.Prune)},
 		},
 		&container.HostConfig{
 			NetworkMode: networkMode,
 			PortBindings: map[nat.Port][]nat.PortBinding{
 				"8080/tcp": {
 					nat.PortBinding{HostIP: "", HostPort: "8080"},
+				},
+			},
+			Mounts: []mount.Mount{
+				{
+					Type:   mount.TypeBind,
+					Source: utils.GetProjectRoot() + "/e2e-data",
+					Target: "/go/src/app/db/badger/data",
 				},
 			},
 		},
@@ -167,11 +177,27 @@ func (c *DockerCommander) Stop() error {
 	if err != nil {
 		return err
 	}
-
 	err = c.cli.ContainerRemove(context.Background(), c.containerID, types.ContainerRemoveOptions{Force: true})
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (c *DockerCommander) Restart() error {
+	err := c.Stop()
+	if err != nil {
+		return err
+	}
+
+	commander, err := StartDockerCommander(StartOptions{
+		Image: "ghcr.io/worldcoin/hubble-commander:latest",
+		Prune: false,
+	})
+	if err != nil {
+		return err
+	}
+	c.containerID = commander.containerID
+	return commander.Start()
 }

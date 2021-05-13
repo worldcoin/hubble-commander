@@ -46,7 +46,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	preRoot, err := storage.NewStateTree(s.storage).Root()
 	s.NoError(err)
 
-	commitments, err := createTransferCommitments([]models.Transfer{}, s.storage, s.cfg)
+	commitments, err := createTransferCommitments([]models.Transfer{}, s.storage, s.cfg, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 0)
 
@@ -68,7 +68,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	preRoot, err := storage.NewStateTree(s.storage).Root()
 	s.NoError(err)
 
-	commitments, err := createCreate2TransferCommitments(pendingTransfers, s.storage, s.cfg)
+	commitments, err := createCreate2TransferCommitments(pendingTransfers, s.storage, s.cfg, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 0)
 
@@ -84,7 +84,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	preRoot, err := storage.NewStateTree(s.storage).Root()
 	s.NoError(err)
 
-	commitments, err := createCreate2TransferCommitments(pendingTransfers, s.storage, s.cfg)
+	commitments, err := createCreate2TransferCommitments(pendingTransfers, s.storage, s.cfg, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, 32)
@@ -101,7 +101,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_CreatesMaximallyAsManyCommitmentsAsSpecifiedInConfig() {
 	pendingTransfers := s.prepareAndReturnPendingCreate2Transfers(2)
 
-	commitments, err := createCreate2TransferCommitments(pendingTransfers, s.storage, s.cfg)
+	commitments, err := createCreate2TransferCommitments(pendingTransfers, s.storage, s.cfg, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 }
@@ -109,7 +109,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_MarksTransfersAsIncludedInCommitment() {
 	pendingTransfers := s.prepareAndReturnPendingCreate2Transfers(2)
 
-	commitments, err := createCreate2TransferCommitments(pendingTransfers, s.storage, s.cfg)
+	commitments, err := createCreate2TransferCommitments(pendingTransfers, s.storage, s.cfg, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 

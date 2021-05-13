@@ -24,7 +24,6 @@ type RollupConfig struct {
 	BatchLoopInterval       time.Duration
 	BlockNumberLoopInterval time.Duration
 	GenesisAccounts         []models.GenesisAccount
-	SignaturesDomain        [32]byte
 }
 
 type APIConfig struct {

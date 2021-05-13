@@ -8,7 +8,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/bls"
-	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -16,14 +15,18 @@ import (
 
 func main() {}
 
-func parseWallet(privateKey *C.char) (*bls.Wallet, error) {
+func parseWallet(privateKey, domain *C.char) (*bls.Wallet, error) {
 	privateKeyDecoded, err := hex.DecodeString(C.GoString(privateKey))
 	if err != nil {
 		return nil, err
 	}
 
-	domain := config.GetConfig().Rollup.SignaturesDomain
-	wallet, err := bls.NewWallet(privateKeyDecoded, domain)
+	domainBls, err := parseDomain(domain)
+	if err != nil {
+		return nil, err
+	}
+
+	wallet, err := bls.NewWallet(privateKeyDecoded, *domainBls)
 	if err != nil {
 		return nil, err
 	}
@@ -31,10 +34,27 @@ func parseWallet(privateKey *C.char) (*bls.Wallet, error) {
 	return wallet, nil
 }
 
+func parseDomain(domain *C.char) (*bls.Domain, error) {
+	domainDecoded, err := hex.DecodeString(C.GoString(domain))
+	if err != nil {
+		return nil, err
+	}
+	domainBls, err := bls.DomainFromBytes(domainDecoded)
+	if err != nil {
+		return nil, err
+	}
+
+	return domainBls, nil
+}
+
 //export NewWalletPrivateKey
-func NewWalletPrivateKey() *C.char {
-	domain := config.GetConfig().Rollup.SignaturesDomain
-	wallet, err := bls.NewRandomWallet(domain)
+func NewWalletPrivateKey(domain *C.char) *C.char {
+	domainBls, err := parseDomain(domain)
+	if err != nil {
+		return nil
+	}
+
+	wallet, err := bls.NewRandomWallet(*domainBls)
 	if err != nil {
 		return nil
 	}
@@ -44,8 +64,8 @@ func NewWalletPrivateKey() *C.char {
 }
 
 //export GetWalletPublicKey
-func GetWalletPublicKey(privateKey *C.char) *C.char {
-	wallet, err := parseWallet(privateKey)
+func GetWalletPublicKey(privateKey, domain *C.char) *C.char {
+	wallet, err := parseWallet(privateKey, domain)
 	if err != nil {
 		return nil
 	}
@@ -55,8 +75,8 @@ func GetWalletPublicKey(privateKey *C.char) *C.char {
 }
 
 //export SignTransfer
-func SignTransfer(from, to C.uint, amount, fee, nonce, privateKey *C.char) *C.char {
-	wallet, err := parseWallet(privateKey)
+func SignTransfer(from, to C.uint, amount, fee, nonce, privateKey, domain *C.char) *C.char {
+	wallet, err := parseWallet(privateKey, domain)
 	if err != nil {
 		return nil
 	}
