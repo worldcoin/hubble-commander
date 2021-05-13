@@ -101,6 +101,7 @@ func (a *API) validateCreate2Transfer(create2Transfer *models.Create2Transfer, t
 	}
 
 	if a.cfg.DevMode {
+		create2Transfer.Signature = mockSignature
 		return nil
 	}
 	return a.validateSignature(encodedCreate2Transfer, &create2Transfer.Signature, &senderState.UserState)
