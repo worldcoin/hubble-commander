@@ -202,12 +202,7 @@ func testGetBatches(t *testing.T, client jsonrpc.RPCClient) {
 }
 
 func testCommanderRestart(t *testing.T, commander Commander, senderWallet bls.Wallet) {
-	err := commander.Stop()
-	require.NoError(t, err)
-
-	commander, err = NewCommanderFromEnv(false)
-	require.NoError(t, err)
-	err = commander.Start()
+	err := commander.Restart()
 	require.NoError(t, err)
 
 	testSendTransfer(t, commander.Client(), senderWallet, models.NewUint256(64))

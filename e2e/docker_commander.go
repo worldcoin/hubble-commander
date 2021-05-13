@@ -7,8 +7,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	docker "github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
@@ -65,6 +67,13 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 			PortBindings: map[nat.Port][]nat.PortBinding{
 				"8080/tcp": {
 					nat.PortBinding{HostIP: "", HostPort: "8080"},
+				},
+			},
+			Mounts: []mount.Mount{
+				{
+					Type:   mount.TypeBind,
+					Source: utils.GetProjectRoot() + "/e2e-data",
+					Target: "/go/src/app/db/badger/data",
 				},
 			},
 		},
@@ -174,4 +183,21 @@ func (c *DockerCommander) Stop() error {
 	}
 
 	return nil
+}
+
+func (c *DockerCommander) Restart() error {
+	err := c.Stop()
+	if err != nil {
+		return err
+	}
+
+	commander, err := StartDockerCommander(StartOptions{
+		Image: "ghcr.io/worldcoin/hubble-commander:latest",
+		Prune: false,
+	})
+	if err != nil {
+		return err
+	}
+	c.containerID = commander.containerID
+	return commander.Start()
 }
