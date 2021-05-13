@@ -36,5 +36,4 @@ func TestDecodeTransferBatch(t *testing.T) {
 	require.Equal(t, commitments[0].PostStateRoot, decoded[0].StateRoot)
 	require.Equal(t, commitments[0].Transactions, decoded[0].Transactions)
 	require.Equal(t, commitments[0].FeeReceiver, decoded[0].FeeReceiver)
-
 }

@@ -55,29 +55,6 @@ func (s *EncoderTestSuite) TearDownTest() {
 	s.sim.Close()
 }
 
-func (s *EncoderTestSuite) TestEncodeTransfer() {
-	encodedTransfer, err := EncodeTransfer(&models.Transfer{
-		TransactionBase: models.TransactionBase{
-			FromStateID: 2,
-			Amount:      models.MakeUint256(4),
-			Fee:         models.MakeUint256(5),
-			Nonce:       models.MakeUint256(6),
-		},
-		ToStateID: 3,
-	})
-	s.NoError(err)
-	expected, err := s.transfer.Encode(nil, contractTransfer.OffchainTransfer{
-		TxType:    big.NewInt(1),
-		FromIndex: big.NewInt(2),
-		ToIndex:   big.NewInt(3),
-		Amount:    big.NewInt(4),
-		Fee:       big.NewInt(5),
-		Nonce:     big.NewInt(6),
-	})
-	s.NoError(err)
-	s.Equal(expected, encodedTransfer)
-}
-
 func (s *EncoderTestSuite) TestEncodeCreate2Transfer() {
 	encodedCreate2Transfer, err := EncodeCreate2Transfer(&models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
@@ -126,26 +103,6 @@ func (s *EncoderTestSuite) TestEncodeCreate2TransferWithPubKey() {
 	s.Equal(expected, encodedCreate2Transfer)
 }
 
-func (s *EncoderTestSuite) TestEncodeTransferForSigning() {
-	tx := &models.Transfer{
-		TransactionBase: models.TransactionBase{
-			FromStateID: 2,
-			Amount:      models.MakeUint256(4),
-			Fee:         models.MakeUint256(5),
-			Nonce:       models.MakeUint256(6),
-		},
-		ToStateID: 3,
-	}
-	encodedTransfer, err := EncodeTransfer(tx)
-	s.NoError(err)
-	expected, err := s.transfer.SignBytes(nil, encodedTransfer)
-	s.NoError(err)
-
-	actual, err := EncodeTransferForSigning(tx)
-	s.NoError(err)
-	s.Equal(expected, actual)
-}
-
 func (s *EncoderTestSuite) TestEncodeCreate2TransferForSigning() {
 	tx := &models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
@@ -192,13 +149,14 @@ func (s *EncoderTestSuite) TestEncodeDecimal() {
 	s.Equal(uint16(expected.Uint64()), encoded)
 }
 
-func newTxTransfer(transfer *models.Transfer) testtx.TxTransfer {
-	return testtx.TxTransfer{
-		FromIndex: big.NewInt(int64(transfer.FromStateID)),
-		ToIndex:   big.NewInt(int64(transfer.ToStateID)),
-		Amount:    &transfer.Amount.Int,
-		Fee:       &transfer.Fee.Int,
-	}
+func (s *EncoderTestSuite) TestEncodeAndDecodeDecimal() {
+	num := models.MakeUint256(123400000)
+	encoded, err := EncodeDecimal(num)
+	s.NoError(err)
+
+	decoded := DecodeDecimal(encoded)
+
+	s.Equal(num, decoded)
 }
 
 func newTxCreate2Transfer(transfer *models.Create2Transfer) testtx.TxCreate2Transfer {
@@ -209,25 +167,6 @@ func newTxCreate2Transfer(transfer *models.Create2Transfer) testtx.TxCreate2Tran
 		Amount:     &transfer.Amount.Int,
 		Fee:        &transfer.Fee.Int,
 	}
-}
-
-func (s *EncoderTestSuite) TestEncodeTransferForCommitment() {
-	transfer := &models.Transfer{
-		TransactionBase: models.TransactionBase{
-			FromStateID: 1,
-			Amount:      models.MakeUint256(50),
-			Fee:         models.MakeUint256(10),
-		},
-		ToStateID: 2,
-	}
-
-	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{newTxTransfer(transfer)})
-	s.NoError(err)
-
-	encoded, err := EncodeTransferForCommitment(transfer)
-	s.NoError(err)
-
-	s.Equal(expected, encoded)
 }
 
 func (s *EncoderTestSuite) TestEncodeCreate2TransferForCommitment() {
@@ -248,33 +187,6 @@ func (s *EncoderTestSuite) TestEncodeCreate2TransferForCommitment() {
 	s.NoError(err)
 
 	s.Equal(expected, encoded)
-}
-
-func (s *EncoderTestSuite) TestSerializeTransfers() {
-	transfer := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			FromStateID: 1,
-			Amount:      models.MakeUint256(50),
-			Fee:         models.MakeUint256(10),
-		},
-		ToStateID: 2,
-	}
-	transfer2 := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			FromStateID: 2,
-			Amount:      models.MakeUint256(200),
-			Fee:         models.MakeUint256(10),
-		},
-		ToStateID: 3,
-	}
-
-	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{newTxTransfer(&transfer), newTxTransfer(&transfer2)})
-	s.NoError(err)
-
-	serialized, err := SerializeTransfers([]models.Transfer{transfer, transfer2})
-	s.NoError(err)
-
-	s.Equal(expected, serialized)
 }
 
 func (s *EncoderTestSuite) TestSerializeCreate2Transfers() {
