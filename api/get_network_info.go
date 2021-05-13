@@ -28,5 +28,11 @@ func (a *API) GetNetworkInfo() (*dto.NetworkInfo, error) {
 		networkInfo.LatestFinalisedBatch = ref.String(latestFinalisedBatch.ID.String())
 	}
 
+	domain, err := a.storage.GetDomain(a.client.ChainState.ChainID)
+	if err != nil {
+		return nil, err
+	}
+	networkInfo.SignatureDomain = *domain
+
 	return &networkInfo, nil
 }
