@@ -27,7 +27,7 @@ func TestSyncBatches(t *testing.T) {
 	client, err := eth.NewTestClient()
 	require.NoError(t, err)
 
-	seedDb(t, storage, tree)
+	seedDB(t, storage, tree)
 
 	tx := models.Transfer{
 		TransactionBase: models.TransactionBase{
@@ -56,7 +56,7 @@ func TestSyncBatches(t *testing.T) {
 	storage = st.NewTestStorage(db.DB)
 	tree = st.NewStateTree(storage)
 
-	seedDb(t, storage, tree)
+	seedDB(t, storage, tree)
 
 	err = SyncBatches(storage, client.Client, cfg)
 	require.NoError(t, err)
@@ -74,7 +74,7 @@ func TestSyncBatches(t *testing.T) {
 	require.Len(t, batches, 1)
 }
 
-func seedDb(t *testing.T, storage *st.Storage, tree *st.StateTree) {
+func seedDB(t *testing.T, storage *st.Storage, tree *st.StateTree) {
 	err := storage.AddAccountIfNotExists(&models.Account{
 		PubKeyID:  0,
 		PublicKey: models.PublicKey{},

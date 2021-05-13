@@ -37,17 +37,17 @@ func NewRPCChainConnection(cfg *config.EthereumConfig) (*RPCChainConnection, err
 		return nil, err
 	}
 
-	rpc, err := rpc.Dial(cfg.RPCURL)
+	rpcClient, err := rpc.Dial(cfg.RPCURL)
 	if err != nil {
 		return nil, err
 	}
 
-	backend := ethclient.NewClient(rpc)
+	backend := ethclient.NewClient(rpcClient)
 
 	return &RPCChainConnection{
 		account,
 		backend,
-		rpc,
+		rpcClient,
 		chainID,
 	}, nil
 }
@@ -75,8 +75,3 @@ func (d *RPCChainConnection) GetLatestBlockNumber() (*uint32, error) {
 	}
 	return ref.Uint32(uint32(blockNumber)), nil
 }
-
-//
-//func (d *RPCChainConnection) TraceTransaction(hash common.Hash) {
-//	d.rpc.Call()
-//}

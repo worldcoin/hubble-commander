@@ -66,7 +66,7 @@ type DecodedBatch struct {
 	Hash              common.Hash
 	Type              txtype.TransactionType
 	ID                models.Uint256
-	FinalisationBlock uint32 // nolint:misspell
+	FinalisationBlock uint32
 	AccountRoot       common.Hash
 	Commitments       []encoder.DecodedCommitment
 }

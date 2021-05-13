@@ -21,18 +21,19 @@ func SyncBatches(storage *st.Storage, client *eth.Client, cfg *config.RollupConf
 		return err
 	}
 
-	var latestBatchId models.Uint256
+	var latestBatchID models.Uint256
 	latestBatch, err := storage.GetLatestBatch()
 	if st.IsNotFoundError(err) {
-		latestBatchId = models.MakeUint256(0)
+		latestBatchID = models.MakeUint256(0)
 	} else if err != nil {
 		return err
 	} else {
-		latestBatchId = latestBatch.ID
+		latestBatchID = latestBatch.ID
 	}
 
-	for _, batch := range newBatches {
-		if batch.ID.Cmp(&latestBatchId) <= 0 {
+	for i := range newBatches {
+		batch := &newBatches[i]
+		if batch.ID.Cmp(&latestBatchID) <= 0 {
 			continue
 		}
 
@@ -52,7 +53,8 @@ func SyncBatches(storage *st.Storage, client *eth.Client, cfg *config.RollupConf
 			return err
 		}
 
-		for _, commitment := range batch.Commitments {
+		for i := range batch.Commitments {
+			commitment := &batch.Commitments[i]
 			transfers, err := encoder.DeserializeTransfers(commitment.Transactions)
 			if err != nil {
 				return err

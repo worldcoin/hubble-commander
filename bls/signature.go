@@ -64,7 +64,6 @@ func MockSignature() *Signature {
 	signature, err := wallet.Sign([]byte{1, 2, 3, 4})
 	if err != nil {
 		log.Fatal(err)
-
 	}
 	return signature
 }

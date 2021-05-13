@@ -42,7 +42,6 @@ func DecodeBatch(calldata []byte) ([]DecodedCommitment, error) {
 
 	commitments := make([]DecodedCommitment, size)
 	for i := 0; i < size; i++ {
-
 		commitments[i] = DecodedCommitment{
 			StateRoot:         common.BytesToHash(stateRoots[i][:]),
 			CombinedSignature: models.MakeSignatureFromBigInts(signatures[i][:]),
