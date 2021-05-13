@@ -3,6 +3,7 @@ package commander
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
@@ -31,6 +32,7 @@ var (
 		PubKeyID: 2,
 	}
 	genesisAccounts = []models.RegisteredGenesisAccount{sender, receiver, feeReceiver}
+	testDomain      = bls.Domain{1, 2, 3, 4}
 )
 
 type TransferCommitmentsTestSuite struct {
@@ -69,7 +71,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothing
 	preRoot, err := storage.NewStateTree(s.storage).Root()
 	s.NoError(err)
 
-	commitments, err := createTransferCommitments([]models.Transfer{}, s.storage, s.cfg)
+	commitments, err := createTransferCommitments([]models.Transfer{}, s.storage, s.cfg, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 0)
 
@@ -91,7 +93,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothing
 	preRoot, err := storage.NewStateTree(s.storage).Root()
 	s.NoError(err)
 
-	commitments, err := createTransferCommitments(pendingTransfers, s.storage, s.cfg)
+	commitments, err := createTransferCommitments(pendingTransfers, s.storage, s.cfg, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 0)
 
@@ -107,7 +109,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_StoresCorre
 	preRoot, err := storage.NewStateTree(s.storage).Root()
 	s.NoError(err)
 
-	commitments, err := createTransferCommitments(pendingTransfers, s.storage, s.cfg)
+	commitments, err := createTransferCommitments(pendingTransfers, s.storage, s.cfg, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, 24)
@@ -124,7 +126,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_StoresCorre
 func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_CreatesMaximallyAsManyCommitmentsAsSpecifiedInConfig() {
 	pendingTransfers := s.prepareAndReturnPendingTransfers(2)
 
-	commitments, err := createTransferCommitments(pendingTransfers, s.storage, s.cfg)
+	commitments, err := createTransferCommitments(pendingTransfers, s.storage, s.cfg, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 }
@@ -132,7 +134,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_CreatesMaxi
 func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_MarksTransfersAsIncludedInCommitment() {
 	pendingTransfers := s.prepareAndReturnPendingTransfers(2)
 
-	commitments, err := createTransferCommitments(pendingTransfers, s.storage, s.cfg)
+	commitments, err := createTransferCommitments(pendingTransfers, s.storage, s.cfg, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
