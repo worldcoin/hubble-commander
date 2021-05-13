@@ -71,6 +71,13 @@ func (d *Database) Update(key, data interface{}) error {
 	return d.store.Update(key, data)
 }
 
+func (d *Database) Delete(key, dataType interface{}) error {
+	if d.duringUpdateTransaction() {
+		return d.store.TxDelete(d.txn, key, dataType)
+	}
+	return d.store.Delete(key, dataType)
+}
+
 func (d *Database) BeginTransaction(update bool) (*db.TxController, *Database) {
 	if d.duringTransaction() {
 		return db.NewTxController(&ControllerAdapter{d.txn}, true), d

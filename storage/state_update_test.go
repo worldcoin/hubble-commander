@@ -21,7 +21,7 @@ func (s *StateUpdateTestSuite) SetupSuite() {
 
 func (s *StateUpdateTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorage()
+	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
 }
 
@@ -34,7 +34,7 @@ func (s *StateUpdateTestSuite) TestAddStateUpdate_AddAndRetrieve() {
 	path, err := models.NewMerklePath("00001111111111001111111111111111")
 	s.NoError(err)
 	update := &models.StateUpdate{
-		ID:          1,
+		ID:          0,
 		StateID:     *path,
 		CurrentHash: common.BytesToHash([]byte{1, 2}),
 		CurrentRoot: common.BytesToHash([]byte{1, 2, 3}),
@@ -60,7 +60,7 @@ func (s *StateUpdateTestSuite) TestDeleteStateUpdate() {
 	s.NoError(err)
 	updates := []models.StateUpdate{
 		{
-			ID:          1,
+			ID:          0,
 			StateID:     *path,
 			CurrentHash: common.BytesToHash([]byte{1}),
 			CurrentRoot: common.BytesToHash([]byte{1}),
@@ -68,7 +68,7 @@ func (s *StateUpdateTestSuite) TestDeleteStateUpdate() {
 			PrevRoot:    common.BytesToHash([]byte{2}),
 		},
 		{
-			ID:          2,
+			ID:          1,
 			StateID:     *path,
 			CurrentHash: common.BytesToHash([]byte{2}),
 			CurrentRoot: common.BytesToHash([]byte{2}),
@@ -81,7 +81,7 @@ func (s *StateUpdateTestSuite) TestDeleteStateUpdate() {
 	err = s.storage.AddStateUpdate(&updates[1])
 	s.NoError(err)
 
-	err = s.storage.DeleteStateUpdate(2)
+	err = s.storage.DeleteStateUpdate(1)
 	s.NoError(err)
 
 	_, err = s.storage.GetStateUpdateByRootHash(updates[1].CurrentHash)

@@ -22,10 +22,10 @@ type StateLeaf struct {
 }
 
 type StateUpdate struct {
-	ID          uint64
+	ID          uint64      `badgerhold:"key"`
 	StateID     MerklePath  `db:"state_id"`
 	CurrentHash common.Hash `db:"current_hash"`
-	CurrentRoot common.Hash `db:"current_root"`
+	CurrentRoot common.Hash `db:"current_root" badgerhold:"index"`
 	PrevHash    common.Hash `db:"prev_hash"`
 	PrevRoot    common.Hash `db:"prev_root"`
 }
