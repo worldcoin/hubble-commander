@@ -50,5 +50,6 @@ func (s *Storage) GetDomain(chainID models.Uint256) (*bls.Domain, error) {
 	if len(res) == 0 {
 		return nil, NewNotFoundError("domain")
 	}
-	return bls.DomainFromBytes(crypto.Keccak256(res[0].Bytes()))
+	s.domain, err = bls.DomainFromBytes(crypto.Keccak256(res[0].Bytes()))
+	return s.domain, err
 }

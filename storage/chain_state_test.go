@@ -65,6 +65,7 @@ func (s *ChainStateTestSuite) TestGetDomain() {
 	domain, err := s.storage.GetDomain(chainState.ChainID)
 	s.NoError(err)
 	s.Equal(expected, domain)
+	s.Equal(s.storage.domain, domain)
 }
 
 func (s *ChainStateTestSuite) TestGetDomain_NotFound() {
