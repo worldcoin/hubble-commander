@@ -36,6 +36,14 @@ func (e *InProcessCommander) Stop() error {
 	return e.commander.Stop()
 }
 
+func (e *InProcessCommander) Restart() error {
+	err := e.commander.Stop()
+	if err != nil {
+		return err
+	}
+	return e.commander.Start()
+}
+
 func (e *InProcessCommander) Client() jsonrpc.RPCClient {
 	return e.client
 }

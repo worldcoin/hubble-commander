@@ -26,6 +26,10 @@ func (e *LocalCommander) Stop() error {
 	return nil
 }
 
+func (e *LocalCommander) Restart() error {
+	return nil
+}
+
 func (e *LocalCommander) Client() jsonrpc.RPCClient {
 	return e.client
 }
