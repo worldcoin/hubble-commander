@@ -1,6 +1,7 @@
 package bls
 
 import (
+	"log"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/models"
@@ -53,4 +54,17 @@ func (s *Signature) ModelsSignature() *models.Signature {
 
 func (s *Signature) Bytes() []byte {
 	return s.sig.ToBytes()
+}
+
+func MockSignature() *Signature {
+	wallet, err := NewRandomWallet(Domain{1, 2, 3, 4})
+	if err != nil {
+		log.Fatal(err)
+	}
+	signature, err := wallet.Sign([]byte{1, 2, 3, 4})
+	if err != nil {
+		log.Fatal(err)
+
+	}
+	return signature
 }

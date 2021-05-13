@@ -2,7 +2,6 @@ package eth
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -18,7 +17,6 @@ func (c *Client) GetBatches() ([]DecodedBatch, error) {
 
 	res := make([]DecodedBatch, 0)
 	for it.Next() {
-		address := it.Event.Raw.Address
 		txHash := it.Event.Raw.TxHash
 
 		// TODO: handle internal transactions
@@ -27,11 +25,7 @@ func (c *Client) GetBatches() ([]DecodedBatch, error) {
 			return nil, err
 		}
 
-		if *tx.To() != address {
-			return nil, fmt.Errorf("log address is different from the contract address")
-		}
-
-		commitments, err := encoder.DecodeBatch(tx.Data()[4:])
+		commitments, err := encoder.DecodeBatch(tx.Data())
 		if err != nil {
 			return nil, err
 		}
@@ -46,7 +40,8 @@ func (c *Client) GetBatches() ([]DecodedBatch, error) {
 			Type:              txtype.TransactionType(it.Event.BatchType),
 			ID:                models.MakeUint256FromBig(*it.Event.BatchID),
 			FinalisationBlock: encoder.DecodeMeta(meta.Meta).FinaliseOn,
-			commitments:       commitments,
+			AccountRoot:       common.BytesToHash(it.Event.AccountRoot[:]),
+			Commitments:       commitments,
 		})
 	}
 
@@ -58,5 +53,6 @@ type DecodedBatch struct {
 	Type              txtype.TransactionType
 	ID                models.Uint256
 	FinalisationBlock uint32 // nolint:misspell
-	commitments       []encoder.DecodedCommitment
+	AccountRoot       common.Hash
+	Commitments       []encoder.DecodedCommitment
 }

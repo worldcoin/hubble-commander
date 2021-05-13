@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 )
 
 type DecodedCommitment struct {
@@ -24,12 +25,12 @@ type DecodedCommitment struct {
 func DecodeBatch(calldata []byte) ([]DecodedCommitment, error) {
 	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	unpacked, err := rollupAbi.Methods["submitTransfer"].Inputs.Unpack(calldata[4:])
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	stateRoots := unpacked[0].([][32]uint8)

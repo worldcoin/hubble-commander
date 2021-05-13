@@ -2,6 +2,7 @@ package encoder
 
 import (
 	"encoding/binary"
+	"fmt"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/models"
@@ -101,4 +102,23 @@ func SerializeTransfers(transfers []models.Transfer) ([]byte, error) {
 	}
 
 	return buf, nil
+}
+
+func DeserializeTransfers(data []byte) ([]models.Transfer, error) {
+	if len(data)%12 != 0 {
+		return nil, fmt.Errorf("invalid data length")
+	}
+	count := len(data) / 12
+
+	res := make([]models.Transfer, 0, count)
+	for i := 0; i < count; i++ {
+		transfer, err := DecodeTransferFromCommitment(data[i*12 : (i+1)*12])
+		if err != nil {
+			return nil, err
+		}
+
+		res = append(res, *transfer)
+	}
+
+	return res, nil
 }
