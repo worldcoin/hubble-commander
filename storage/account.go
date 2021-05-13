@@ -86,6 +86,9 @@ func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey) (*uint32, error
 	}
 
 	firstAvailablePubKeyIDUint64, err := strconv.ParseUint(availablePubKeyIDs[0], 10, 32)
+	if err != nil {
+		return nil, err
+	}
 	firstAvailablePubKeyID := uint32(firstAvailablePubKeyIDUint64)
 
 	return &firstAvailablePubKeyID, nil
