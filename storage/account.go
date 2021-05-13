@@ -31,6 +31,9 @@ func (s *Storage) GetAccounts(publicKey *models.PublicKey) ([]models.Account, er
 	if err != nil {
 		return nil, err
 	}
+	if len(res) == 0 {
+		return nil, NewNotFoundError("accounts")
+	}
 	return res, nil
 }
 
