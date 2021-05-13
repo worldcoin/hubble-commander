@@ -7,17 +7,6 @@ import (
 )
 
 func (s *Storage) UpsertStateNode(node *models.StateNode) error {
-	_, err := s.Postgres.Query(
-		s.QB.Insert("state_node").
-			Values(
-				node.MerklePath,
-				node.DataHash,
-			).Suffix("ON CONFLICT (merkle_path) DO UPDATE SET data_hash = ?", node.DataHash),
-	).Exec()
-	if err != nil {
-		return err
-	}
-
 	return s.Badger.Upsert(node.MerklePath, node)
 }
 
@@ -37,16 +26,6 @@ func (s *Storage) BatchUpsertStateNodes(nodes []models.StateNode) (err error) {
 }
 
 func (s *Storage) AddStateNode(node *models.StateNode) error {
-	_, err := s.Postgres.Query(
-		s.QB.Insert("state_node").
-			Values(
-				node.MerklePath,
-				node.DataHash,
-			),
-	).Exec()
-	if err != nil {
-		return err
-	}
 	return s.Badger.Insert(node.MerklePath, node)
 }
 
