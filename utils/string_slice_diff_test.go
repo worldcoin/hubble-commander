@@ -11,6 +11,7 @@ func TestStringSliceDiff_Unsorted(t *testing.T) {
 	b := []string{"all", "dogs", "are", "cuddly"}
 
 	diff := StringSliceDiff(a, b)
+	require.Len(t, diff, 4)
 	require.Contains(t, diff, "dogs", "ducks", "awesome", "cuddly")
 }
 
@@ -19,5 +20,6 @@ func TestStringSliceDiff_Sorted(t *testing.T) {
 	b := []string{"a", "c", "d"}
 
 	diff := StringSliceDiff(a, b)
+	require.Len(t, diff, 1)
 	require.Contains(t, diff, "b")
 }
