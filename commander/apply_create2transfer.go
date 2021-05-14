@@ -12,7 +12,7 @@ func ApplyCreate2Transfer(
 	create2Transfer *models.Create2Transfer,
 	commitmentTokenIndex models.Uint256,
 ) (addedPubKeyID *uint32, create2TransferError, appError error) {
-	pubKeyID, err := getPubKeyID(storage, client, create2Transfer)
+	pubKeyID, err := getPubKeyID(storage, client, create2Transfer, commitmentTokenIndex)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -48,8 +48,8 @@ func ApplyCreate2Transfer(
 	return pubKeyID, nil, nil
 }
 
-func getPubKeyID(storage *st.Storage, client *eth.Client, transfer *models.Create2Transfer) (*uint32, error) {
-	pubKeyID, err := storage.GetUnusedPubKeyID(&transfer.ToPublicKey)
+func getPubKeyID(storage *st.Storage, client *eth.Client, transfer *models.Create2Transfer, tokenIndex models.Uint256) (*uint32, error) {
+	pubKeyID, err := storage.GetUnusedPubKeyID(&transfer.ToPublicKey, tokenIndex)
 	if err != nil && !st.IsNotFoundError(err) {
 		return nil, err
 	}
