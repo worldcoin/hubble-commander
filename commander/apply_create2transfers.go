@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
@@ -15,11 +16,12 @@ var (
 func ApplyCreate2Transfers(
 	storage *st.Storage,
 	transfers []models.Create2Transfer,
-	addedPubKeyIDs map[uint32]struct{},
+	toRemove map[uint32]struct{},
 	cfg *config.RollupConfig,
 ) (
 	appliedTransfers []models.Create2Transfer,
 	invalidTransfers []models.Create2Transfer,
+	addedPubKeyIDs []uint32,
 	feeReceiverStateID *uint32,
 	err error,
 ) {
@@ -29,11 +31,12 @@ func ApplyCreate2Transfers(
 
 	stateTree := st.NewStateTree(storage)
 	appliedTransfers = make([]models.Create2Transfer, 0, cfg.TxsPerCommitment)
+	addedPubKeyIDs = make([]uint32, 0, cfg.TxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
 	senderLeaf, err := stateTree.Leaf(transfers[0].FromStateID)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	commitmentTokenIndex := senderLeaf.TokenIndex
@@ -41,15 +44,16 @@ func ApplyCreate2Transfers(
 	for i := range transfers {
 		transfer := transfers[i]
 
-		if _, ok := addedPubKeyIDs[transfer.ToPubKeyID]; ok {
-			logAndSaveTransactionError(storage, &transfer.TransactionBase, ErrAccountAlreadyExists)
-			invalidTransfers = append(invalidTransfers, transfer)
-			continue
-		}
+		//TODO: remove/think about rollback
+		//if _, ok := addedPubKeyIDs[transfer.ToPubKeyID]; ok {
+		//	logAndSaveTransactionError(storage, &transfer.TransactionBase, ErrAccountAlreadyExists)
+		//	invalidTransfers = append(invalidTransfers, transfer)
+		//	continue
+		//}
 
-		addedPubKeyID, transferError, appError := ApplyCreate2Transfer(storage, &transfer, commitmentTokenIndex)
+		addedPubKeyID, transferError, appError := ApplyCreate2Transfer(storage, &eth.Client{}, &transfer, commitmentTokenIndex)
 		if appError != nil {
-			return nil, nil, nil, appError
+			return nil, nil, nil, nil, appError
 		}
 		if transferError != nil {
 			logAndSaveTransactionError(storage, &transfer.TransactionBase, transferError)
@@ -57,8 +61,8 @@ func ApplyCreate2Transfers(
 			continue
 		}
 
+		addedPubKeyIDs = append(addedPubKeyIDs, *addedPubKeyID)
 		appliedTransfers = append(appliedTransfers, transfer)
-		addedPubKeyIDs[*addedPubKeyID] = struct{}{}
 		combinedFee = *combinedFee.Add(&transfer.Fee)
 
 		if uint32(len(appliedTransfers)) == cfg.TxsPerCommitment {
@@ -69,9 +73,9 @@ func ApplyCreate2Transfers(
 	if len(appliedTransfers) > 0 {
 		feeReceiverStateID, err = ApplyFee(stateTree, storage, cfg.FeeReceiverPubKeyID, commitmentTokenIndex, combinedFee)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, nil, nil, err
 		}
 	}
 
-	return appliedTransfers, invalidTransfers, feeReceiverStateID, nil
+	return appliedTransfers, invalidTransfers, addedPubKeyIDs, feeReceiverStateID, nil
 }
