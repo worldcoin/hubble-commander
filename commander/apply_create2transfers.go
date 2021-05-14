@@ -9,6 +9,7 @@ import (
 
 func ApplyCreate2Transfers(
 	storage *st.Storage,
+	client *eth.Client,
 	transfers []models.Create2Transfer,
 	cfg *config.RollupConfig,
 ) (
@@ -37,7 +38,7 @@ func ApplyCreate2Transfers(
 	for i := range transfers {
 		transfer := transfers[i]
 
-		addedPubKeyID, transferError, appError := ApplyCreate2Transfer(storage, &eth.Client{}, &transfer, commitmentTokenIndex)
+		addedPubKeyID, transferError, appError := ApplyCreate2Transfer(storage, client, &transfer, commitmentTokenIndex)
 		if appError != nil {
 			return nil, nil, nil, nil, appError
 		}

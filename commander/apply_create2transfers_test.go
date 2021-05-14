@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/storage"
@@ -19,6 +20,7 @@ type ApplyCreate2TransfersTestSuite struct {
 	storage   *storage.Storage
 	tree      *storage.StateTree
 	cfg       *config.RollupConfig
+	client    *eth.TestClient
 	publicKey models.PublicKey
 }
 
@@ -32,6 +34,8 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
 	s.tree = storage.NewStateTree(s.storage)
+	s.client, err = eth.NewTestClient()
+	s.NoError(err)
 	s.cfg = &config.RollupConfig{
 		FeeReceiverPubKeyID: 3,
 		TxsPerCommitment:    6,
@@ -82,6 +86,7 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
+	s.client.Close()
 	err := s.teardown()
 	s.NoError(err)
 }
@@ -89,7 +94,7 @@ func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AllValid() {
 	transfers := generateValidCreate2Transfers(3, s.publicKey)
 
-	validTransfers, invalidTransfers, addedAccounts, _, err := ApplyCreate2Transfers(s.storage, transfers, s.cfg)
+	validTransfers, invalidTransfers, addedAccounts, _, err := ApplyCreate2Transfers(s.storage, s.client.Client, transfers, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 3)
@@ -101,7 +106,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 	transfers := generateValidCreate2Transfers(2, s.publicKey)
 	transfers = append(transfers, generateInvalidCreate2Transfers(3, s.publicKey)...)
 
-	validTransfers, invalidTransfers, addedAccounts, _, err := ApplyCreate2Transfers(s.storage, transfers, s.cfg)
+	validTransfers, invalidTransfers, addedAccounts, _, err := ApplyCreate2Transfers(s.storage, s.client.Client, transfers, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 2)
@@ -112,7 +117,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_MoreThanSpecifiedInConfigTxsPerCommitment() {
 	transfers := generateValidCreate2Transfers(13, s.publicKey)
 
-	validTransfers, invalidTransfers, addedAccounts, _, err := ApplyCreate2Transfers(s.storage, transfers, s.cfg)
+	validTransfers, invalidTransfers, addedAccounts, _, err := ApplyCreate2Transfers(s.storage, s.client.Client, transfers, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 6)
@@ -132,7 +137,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 		s.NoError(err)
 	}
 
-	validTransfers, invalidTransfers, addedAccounts, _, err := ApplyCreate2Transfers(s.storage, transfers, s.cfg)
+	validTransfers, invalidTransfers, addedAccounts, _, err := ApplyCreate2Transfers(s.storage, s.client.Client, transfers, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 3)

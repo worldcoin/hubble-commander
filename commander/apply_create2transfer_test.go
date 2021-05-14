@@ -32,7 +32,7 @@ type ApplyCreate2TransferTestSuite struct {
 	storage  *st.Storage
 	teardown func() error
 	tree     *st.StateTree
-	client   *eth.Client
+	client   *eth.TestClient
 }
 
 func (s *ApplyCreate2TransferTestSuite) SetupSuite() {
@@ -45,9 +45,8 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
 	s.tree = st.NewStateTree(s.storage)
-	ethClient, err := eth.NewTestClient()
+	s.client, err = eth.NewTestClient()
 	s.NoError(err)
-	s.client = ethClient.Client
 
 	accounts := []models.Account{
 		{
@@ -85,12 +84,13 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 }
 
 func (s *ApplyCreate2TransferTestSuite) TearDownTest() {
+	s.client.Close()
 	err := s.teardown()
 	s.NoError(err)
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InsertsNewEmptyStateLeaf() {
-	_, transferError, appError := ApplyCreate2Transfer(s.storage, s.client, &create2Transfer, feeReceiverTokenIndex)
+	_, transferError, appError := ApplyCreate2Transfer(s.storage, s.client.Client, &create2Transfer, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -102,7 +102,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InsertsNewEmpty
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer() {
-	_, transferError, appError := ApplyCreate2Transfer(s.storage, s.client, &create2Transfer, feeReceiverTokenIndex)
+	_, transferError, appError := ApplyCreate2Transfer(s.storage, s.client.Client, &create2Transfer, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -116,7 +116,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer()
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ReturnsCorrectPubKeyID() {
-	addedPubKeyID, transferError, appError := ApplyCreate2Transfer(s.storage, s.client, &create2Transfer, feeReceiverTokenIndex)
+	addedPubKeyID, transferError, appError := ApplyCreate2Transfer(s.storage, s.client.Client, &create2Transfer, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)
 	s.Equal(uint32(2), *addedPubKeyID)
@@ -125,13 +125,13 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ReturnsCorrectP
 func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_AccountNotExists() {
 	transfer := create2Transfer
 	transfer.ToPublicKey = models.PublicKey{10, 11, 12}
-	pubKeyID, err := getPubKeyID(s.storage, s.client, &transfer)
+	pubKeyID, err := getPubKeyID(s.storage, s.client.Client, &transfer)
 	s.NoError(err)
 	s.Equal(uint32(0), *pubKeyID)
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_AccountAlreadyExists() {
-	pubKeyID, err := getPubKeyID(s.storage, s.client, &create2Transfer)
+	pubKeyID, err := getPubKeyID(s.storage, s.client.Client, &create2Transfer)
 	s.NoError(err)
 	s.Equal(uint32(2), *pubKeyID)
 }
