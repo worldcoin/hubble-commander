@@ -89,7 +89,7 @@ func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AllValid() {
 	transfers := generateValidCreate2Transfers(3, s.publicKey)
 
-	validTransfers, invalidTransfers, addedAccounts, _, err := ApplyCreate2Transfers(s.storage, transfers, map[uint32]struct{}{}, s.cfg)
+	validTransfers, invalidTransfers, addedAccounts, _, err := ApplyCreate2Transfers(s.storage, transfers, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 3)
@@ -101,7 +101,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 	transfers := generateValidCreate2Transfers(2, s.publicKey)
 	transfers = append(transfers, generateInvalidCreate2Transfers(3, s.publicKey)...)
 
-	validTransfers, invalidTransfers, addedAccounts, _, err := ApplyCreate2Transfers(s.storage, transfers, map[uint32]struct{}{}, s.cfg)
+	validTransfers, invalidTransfers, addedAccounts, _, err := ApplyCreate2Transfers(s.storage, transfers, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 2)
@@ -112,7 +112,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_MoreThanSpecifiedInConfigTxsPerCommitment() {
 	transfers := generateValidCreate2Transfers(13, s.publicKey)
 
-	validTransfers, invalidTransfers, addedAccounts, _, err := ApplyCreate2Transfers(s.storage, transfers, map[uint32]struct{}{}, s.cfg)
+	validTransfers, invalidTransfers, addedAccounts, _, err := ApplyCreate2Transfers(s.storage, transfers, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 6)
@@ -132,7 +132,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 		s.NoError(err)
 	}
 
-	validTransfers, invalidTransfers, addedAccounts, _, err := ApplyCreate2Transfers(s.storage, transfers, map[uint32]struct{}{}, s.cfg)
+	validTransfers, invalidTransfers, addedAccounts, _, err := ApplyCreate2Transfers(s.storage, transfers, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 3)

@@ -57,7 +57,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 }
 
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_DoesNothingWhenThereAreNotEnoughValidTransfers() {
-	transfers := generateValidCreate2Transfers(2)
+	transfers := generateValidCreate2Transfers(2, models.PublicKey{1, 2, 3})
 	transfers[1].Amount = models.MakeUint256(99999999999)
 	s.addCreate2Transfers(transfers)
 
@@ -155,7 +155,7 @@ func (s *Create2TransferCommitmentsTestSuite) addCreate2Transfers(transfers []mo
 }
 
 func (s *Create2TransferCommitmentsTestSuite) prepareAndReturnPendingCreate2Transfers(transfersAmount int) []models.Create2Transfer {
-	transfers := generateValidCreate2Transfers(transfersAmount)
+	transfers := generateValidCreate2Transfers(transfersAmount, models.PublicKey{1, 2, 3})
 	s.addCreate2Transfers(transfers)
 
 	pendingTransfers, err := s.storage.GetPendingCreate2Transfers()

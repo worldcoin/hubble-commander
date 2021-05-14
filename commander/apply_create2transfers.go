@@ -10,7 +10,6 @@ import (
 func ApplyCreate2Transfers(
 	storage *st.Storage,
 	transfers []models.Create2Transfer,
-	toRemove map[uint32]struct{},
 	cfg *config.RollupConfig,
 ) (
 	appliedTransfers []models.Create2Transfer,
