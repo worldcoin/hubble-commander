@@ -119,7 +119,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ReturnsCorrectP
 	addedPubKeyID, transferError, appError := ApplyCreate2Transfer(s.storage, s.client, &create2Transfer, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)
-	s.Equal(2, *addedPubKeyID)
+	s.Equal(uint32(2), *addedPubKeyID)
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_AccountNotExists() {

@@ -4,7 +4,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 )
 
 func ApplyCreate2Transfer(
@@ -55,10 +54,7 @@ func getPubKeyID(storage *st.Storage, client *eth.Client, transfer *models.Creat
 		return nil, err
 	}
 	if st.IsNotFoundError(err) {
-		//client stuff here
-		//pubkeyId = client.Register(create2Transfer.ToPublicKey)
-		return ref.Uint32(1), nil
+		return client.RegisterAccount(transfer.ToPublicKey)
 	}
-
 	return pubKeyID, nil
 }
