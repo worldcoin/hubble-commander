@@ -48,6 +48,7 @@ func (s *Storage) GetStateLeafByPath(path *models.MerklePath) (stateLeaf *models
 	return storage.GetStateLeafByHash(node.DataHash)
 }
 
+// TODO move to state_node, make sure to only iterate over keys (Badger PrefetchValues=false)
 func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
 	nodes := make([]models.StateNode, 0, 1)
 	err := s.Badger.Find(
@@ -125,6 +126,7 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) (userSta
 	return userStates, nil
 }
 
+// TODO this method is only used in ApplyFee to get the fee receiver UserState, this can be easily cached
 func (s *Storage) GetUserStateByPubKeyIDAndTokenIndex(pubKeyID uint32, tokenIndex models.Uint256) (*models.UserStateWithID, error) {
 	tx, storage, err := s.BeginTransaction(TxOptions{Postgres: true, Badger: true, ReadOnly: true})
 	if err != nil {
