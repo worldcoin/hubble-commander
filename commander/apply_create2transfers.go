@@ -1,16 +1,10 @@
 package commander
 
 import (
-	"errors"
-
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-)
-
-var (
-	ErrAccountAlreadyExists = errors.New("account with provided public key already exists")
 )
 
 func ApplyCreate2Transfers(
@@ -43,13 +37,6 @@ func ApplyCreate2Transfers(
 
 	for i := range transfers {
 		transfer := transfers[i]
-
-		//TODO: remove/think about rollback
-		//if _, ok := addedPubKeyIDs[transfer.ToPubKeyID]; ok {
-		//	logAndSaveTransactionError(storage, &transfer.TransactionBase, ErrAccountAlreadyExists)
-		//	invalidTransfers = append(invalidTransfers, transfer)
-		//	continue
-		//}
 
 		addedPubKeyID, transferError, appError := ApplyCreate2Transfer(storage, &eth.Client{}, &transfer, commitmentTokenIndex)
 		if appError != nil {

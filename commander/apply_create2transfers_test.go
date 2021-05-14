@@ -123,31 +123,8 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_MoreThanSpeci
 	s.Equal(models.MakeUint256(6), state.Nonce)
 }
 
-/*
-TODO: remove
-func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_NotFailsTransferIfAccountWasAlreadyAdded() {
-	transfers := generateValidCreate2Transfers(3)
-	//transfers[2].ToPubKeyID = 10
-
-	addedAccounts := map[uint32]struct{}{
-		10: {},
-	}
-
-	validTransfers, invalidTransfers, _, _, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
-	s.NoError(err)
-
-	s.Len(validTransfers, 2)
-	s.Len(invalidTransfers, 1)
-	s.Len(addedAccounts, 3)
-	//s.Contains(addedAccounts, transfers[0].ToPubKeyID)
-	//s.Contains(addedAccounts, transfers[1].ToPubKeyID)
-	//s.Contains(addedAccounts, transfers[2].ToPubKeyID)
-}
-*/
-
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransferErrors() {
 	transfers := generateValidCreate2Transfers(3, s.publicKey)
-	//transfers[2].ToPubKeyID = 10
 	transfers = append(transfers, generateInvalidCreate2Transfers(2, s.publicKey)...)
 
 	for i := range transfers {
