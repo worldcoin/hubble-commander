@@ -122,6 +122,20 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ReturnsCorrectP
 	s.Equal(2, *addedPubKeyID)
 }
 
+func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_AccountNotExists() {
+	transfer := create2Transfer
+	transfer.ToPublicKey = models.PublicKey{10, 11, 12}
+	pubKeyID, err := getPubKeyID(s.storage, s.client, &transfer)
+	s.NoError(err)
+	s.Equal(uint32(0), *pubKeyID)
+}
+
+func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_AccountAlreadyExists() {
+	pubKeyID, err := getPubKeyID(s.storage, s.client, &create2Transfer)
+	s.NoError(err)
+	s.Equal(uint32(2), *pubKeyID)
+}
+
 func TestApplyCreate2TransferTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplyCreate2TransferTestSuite))
 }
