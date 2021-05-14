@@ -51,6 +51,11 @@ func (s *AccountTestSuite) TestAddAccountIfNotExists_AddAndRetrieve() {
 	s.Equal([]models.Account{account1}, res)
 }
 
+func (s *AccountTestSuite) TestGetAccounts_NoPublicKeys() {
+	_, err := s.storage.GetAccounts(&models.PublicKey{1, 2, 3})
+	s.Equal(NewNotFoundError("accounts"), err)
+}
+
 func (s *AccountTestSuite) TestGetAccounts_ReturnsAllAccounts() {
 	pubKey := models.PublicKey{1, 2, 3}
 	accounts := []models.Account{{
@@ -100,7 +105,9 @@ func (s *AccountTestSuite) TestGetPublicKey_ReturnsPublicKey() {
 }
 
 func (s *AccountTestSuite) Test_GetUnusedPubKeyID_NoPublicKeys() {
-	_, err := s.storage.GetUnusedPubKeyID(&models.PublicKey{1, 2, 3})
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
+	_, err = s.storage.GetUnusedPubKeyID(&account1.PublicKey)
 	s.Equal(NewNotFoundError("pub key id"), err)
 }
 
@@ -163,12 +170,23 @@ func (s *AccountTestSuite) Test_GetUnusedPubKeyID() {
 			Nonce:      models.MakeUint256(0),
 		},
 	}
+	leaf2 := &models.StateLeaf{
+		DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
+		UserState: models.UserState{
+			PubKeyID:   2,
+			TokenIndex: models.MakeUint256(1),
+			Balance:    models.MakeUint256(420),
+			Nonce:      models.MakeUint256(0),
+		},
+	}
 	err := s.storage.AddStateLeaf(leaf)
+	s.NoError(err)
+	err = s.storage.AddStateLeaf(leaf2)
 	s.NoError(err)
 
 	pubKeyID, err := s.storage.GetUnusedPubKeyID(&accounts[1].PublicKey)
 	s.NoError(err)
-	s.Equal(uint32(2), *pubKeyID)
+	s.Equal(uint32(3), *pubKeyID)
 }
 
 func TestAccountTestSuite(t *testing.T) {

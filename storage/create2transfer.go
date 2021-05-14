@@ -4,7 +4,9 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
+	bh "github.com/timshannon/badgerhold/v3"
 )
 
 var create2TransferColumns = []string{
@@ -86,15 +88,40 @@ func (s *Storage) GetPendingCreate2Transfers() ([]models.Create2Transfer, error)
 }
 
 func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([]models.Create2Transfer, error) {
+	accounts, err := s.GetAccounts(publicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	pubKeyIDs := utils.ValueToInterfaceSlice(accounts, "PubKeyID")
+
+	// TODO possibly performance killer
+	// First get all state nodes and then query leaves by pubkey id and datahash
+	leaves := make([]models.FlatStateLeaf, 0, 1)
+	err = s.Badger.Find(&leaves, bh.Where("PubKeyID").In(pubKeyIDs...).Index("PubKeyID"))
+	if err != nil {
+		return nil, err
+	}
+
+	dataHashes := utils.ValueToInterfaceSlice(leaves, "DataHash")
+
+	nodes := make([]models.StateNode, 0, 1)
+	err = s.Badger.Find(&nodes, bh.Where("DataHash").In(dataHashes...).Index("DataHash"))
+	if err != nil {
+		return nil, err
+	}
+
+	stateIDs := make([]uint32, 0, 1)
+	for i := range nodes {
+		stateIDs = append(stateIDs, nodes[i].MerklePath.Path)
+	}
+
 	res := make([]models.Create2Transfer, 0, 1)
-	err := s.Postgres.Query(
+	err = s.Postgres.Query(
 		s.QB.Select(create2TransferColumns...).
-			From("account").
-			JoinClause("NATURAL JOIN state_leaf").
-			JoinClause("NATURAL JOIN state_node").
-			Join("transaction_base on transaction_base.from_state_id::bit(33) = state_node.merkle_path").
+			From("transaction_base").
 			JoinClause("NATURAL JOIN create2transfer").
-			Where(squirrel.Eq{"account.public_key": publicKey}),
+			Where(squirrel.Eq{"transaction_base.from_state_id": stateIDs}),
 	).Into(&res)
 	if err != nil {
 		return nil, err

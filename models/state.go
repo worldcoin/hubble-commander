@@ -5,19 +5,19 @@ import (
 )
 
 type UserState struct {
-	PubKeyID   uint32  `db:"pub_key_id"`
-	TokenIndex Uint256 `db:"token_index"`
+	PubKeyID   uint32
+	TokenIndex Uint256
 	Balance    Uint256
 	Nonce      Uint256
 }
 
 type StateNode struct {
-	MerklePath MerklePath  `db:"merkle_path"`
-	DataHash   common.Hash `db:"data_hash" badgerhold:"index"`
+	MerklePath MerklePath
+	DataHash   common.Hash `badgerhold:"index"`
 }
 
 type StateLeaf struct {
-	DataHash common.Hash `db:"data_hash"`
+	DataHash common.Hash
 	UserState
 }
 

@@ -15,7 +15,6 @@ var commitmentWithTokenIndexCols = []string{
 	"commitment.fee_receiver",
 	"commitment.combined_signature",
 	"commitment.post_state_root",
-	"state_leaf.token_index AS token_index",
 }
 
 func (s *Storage) AddCommitment(commitment *models.Commitment) (*int32, error) {
@@ -92,26 +91,78 @@ func (s *Storage) GetPendingCommitments(maxFetched uint64) ([]models.Commitment,
 }
 
 func (s *Storage) GetCommitmentsByBatchHash(hash *common.Hash) ([]models.CommitmentWithTokenID, error) {
-	res := make([]models.CommitmentWithTokenID, 0, 32)
+	commitments := make([]models.CommitmentWithTokenID, 0, 32)
 	err := s.Postgres.Query(
 		s.QB.Select(commitmentWithTokenIndexCols...).
 			From("commitment").
-			Join("state_node ON lpad(state_node.merkle_path::text, 33, '0')::bit(33)::bigint = commitment.fee_receiver").
-			JoinClause("NATURAL JOIN state_leaf").
 			Where(squirrel.Eq{"commitment.included_in_batch": hash}),
-	).Into(&res)
-	return res, err
+	).Into(&commitments)
+	if err != nil {
+		return nil, err
+	}
+	if len(commitments) == 0 {
+		return nil, NewNotFoundError("commitments")
+	}
+
+	for i := range commitments {
+		path := models.MerklePath{
+			Path:  commitments[i].FeeReceiverStateID,
+			Depth: 32,
+		}
+
+		var node models.StateNode
+		err := s.Badger.Get(path, &node)
+		if err != nil {
+			return nil, err
+		}
+
+		var leaf models.FlatStateLeaf
+		err = s.Badger.Get(node.DataHash, &leaf)
+		if err != nil {
+			return nil, err
+		}
+
+		commitments[i].TokenID = leaf.TokenIndex
+	}
+
+	return commitments, nil
 }
 
 func (s *Storage) GetCommitmentsByBatchID(id models.Uint256) ([]models.CommitmentWithTokenID, error) {
-	res := make([]models.CommitmentWithTokenID, 0, 32)
+	commitments := make([]models.CommitmentWithTokenID, 0, 32)
 	err := s.Postgres.Query(
 		s.QB.Select(commitmentWithTokenIndexCols...).
 			From("batch").
 			Join("commitment ON commitment.included_in_batch = batch.batch_hash").
-			Join("state_node ON lpad(state_node.merkle_path::text, 33, '0')::bit(33)::bigint = commitment.fee_receiver").
-			JoinClause("NATURAL JOIN state_leaf").
 			Where(squirrel.Eq{"batch.batch_id": id}),
-	).Into(&res)
-	return res, err
+	).Into(&commitments)
+	if err != nil {
+		return nil, err
+	}
+	if len(commitments) == 0 {
+		return nil, NewNotFoundError("commitments") // TODO TEST ME
+	}
+
+	for i := range commitments {
+		path := models.MerklePath{
+			Path:  commitments[i].FeeReceiverStateID,
+			Depth: 32,
+		}
+
+		var node models.StateNode
+		err := s.Badger.Get(path, &node)
+		if err != nil {
+			return nil, err
+		}
+
+		var leaf models.FlatStateLeaf
+		err = s.Badger.Get(node.DataHash, &leaf)
+		if err != nil {
+			return nil, err
+		}
+
+		commitments[i].TokenID = leaf.TokenIndex
+	}
+
+	return commitments, nil
 }

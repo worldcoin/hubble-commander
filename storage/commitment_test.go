@@ -124,11 +124,14 @@ func (s *CommitmentTestSuite) TestGetCommitment_NonExistentCommitment() {
 }
 
 func (s *CommitmentTestSuite) TestGetCommitmentsByBatchHash() {
+	_, err := s.storage.AddCommitment(&commitment)
+	s.NoError(err)
+
 	commitmentWithHash := commitment
 	commitmentWithHash.FeeReceiver = 0
 	commitmentWithHash.IncludedInBatch = s.addRandomBatch()
 	for i := 0; i < 3; i++ {
-		_, err := s.storage.AddCommitment(&commitmentWithHash)
+		_, err = s.storage.AddCommitment(&commitmentWithHash)
 		s.NoError(err)
 	}
 
@@ -142,16 +145,19 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchHash() {
 func (s *CommitmentTestSuite) TestGetCommitmentsByBatchHash_NonExistentCommitments() {
 	hash := utils.RandomHash()
 	commitments, err := s.storage.GetCommitmentsByBatchHash(&hash)
-	s.NoError(err)
-	s.Len(commitments, 0)
+	s.Equal(NewNotFoundError("commitments"), err)
+	s.Nil(commitments)
 }
 
 func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
+	_, err := s.storage.AddCommitment(&commitment)
+	s.NoError(err)
+
 	commitmentWithHash := commitment
 	commitmentWithHash.FeeReceiver = 0
 	commitmentWithHash.IncludedInBatch = s.addRandomBatch()
 	for i := 0; i < 3; i++ {
-		_, err := s.storage.AddCommitment(&commitmentWithHash)
+		_, err = s.storage.AddCommitment(&commitmentWithHash)
 		s.NoError(err)
 	}
 
@@ -165,8 +171,8 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
 func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID_NonExistentCommitments() {
 	_ = s.addRandomBatch()
 	commitments, err := s.storage.GetCommitmentsByBatchID(models.MakeUint256(0))
-	s.NoError(err)
-	s.Len(commitments, 0)
+	s.Equal(NewNotFoundError("commitments"), err)
+	s.Nil(commitments)
 }
 
 func (s *CommitmentTestSuite) addLeaf() {

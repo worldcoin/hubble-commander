@@ -57,8 +57,8 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	s.Nil(res)
 
 	accounts, err := s.storage.GetAccounts(&account2.PublicKey)
-	s.NoError(err)
-	s.Len(accounts, 0)
+	s.Equal(NewNotFoundError("accounts"), err)
+	s.Nil(accounts)
 
 	err = tx.Commit()
 	s.NoError(err)
@@ -98,8 +98,8 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 	s.Nil(res)
 
 	accounts, err := s.storage.GetAccounts(&account2.PublicKey)
-	s.NoError(err)
-	s.Len(accounts, 0)
+	s.Equal(NewNotFoundError("accounts"), err)
+	s.Nil(accounts)
 }
 
 func (s *StorageTestSuite) TestBeginTransaction_Lock() {
