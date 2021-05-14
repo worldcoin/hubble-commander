@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
@@ -20,7 +21,7 @@ var (
 			Fee:         models.MakeUint256(100),
 			Nonce:       models.MakeUint256(0),
 		},
-		ToPubKeyID: 2,
+		ToPublicKey: models.PublicKey{3, 4, 5},
 	}
 	feeReceiverTokenIndex = models.MakeUint256(5)
 )
@@ -31,6 +32,7 @@ type ApplyCreate2TransferTestSuite struct {
 	storage  *st.Storage
 	teardown func() error
 	tree     *st.StateTree
+	client   *eth.Client
 }
 
 func (s *ApplyCreate2TransferTestSuite) SetupSuite() {
@@ -43,6 +45,9 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
 	s.tree = st.NewStateTree(s.storage)
+	ethClient, err := eth.NewTestClient()
+	s.NoError(err)
+	s.client = ethClient.Client
 
 	accounts := []models.Account{
 		{
@@ -85,7 +90,7 @@ func (s *ApplyCreate2TransferTestSuite) TearDownTest() {
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InsertsNewEmptyStateLeaf() {
-	_, transferError, appError := ApplyCreate2Transfer(s.storage, &create2Transfer, feeReceiverTokenIndex)
+	_, transferError, appError := ApplyCreate2Transfer(s.storage, s.client, &create2Transfer, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -97,7 +102,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InsertsNewEmpty
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer() {
-	_, transferError, appError := ApplyCreate2Transfer(s.storage, &create2Transfer, feeReceiverTokenIndex)
+	_, transferError, appError := ApplyCreate2Transfer(s.storage, s.client, &create2Transfer, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -111,10 +116,10 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer()
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ReturnsCorrectPubKeyID() {
-	addedPubKeyID, transferError, appError := ApplyCreate2Transfer(s.storage, &create2Transfer, feeReceiverTokenIndex)
+	addedPubKeyID, transferError, appError := ApplyCreate2Transfer(s.storage, s.client, &create2Transfer, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)
-	s.Equal(create2Transfer.ToPubKeyID, *addedPubKeyID)
+	s.Equal(2, *addedPubKeyID)
 }
 
 func TestApplyCreate2TransferTestSuite(t *testing.T) {

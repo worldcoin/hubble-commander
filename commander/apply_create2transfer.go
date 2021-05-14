@@ -1,18 +1,25 @@
 package commander
 
 import (
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
 func ApplyCreate2Transfer(
 	storage *st.Storage,
+	client *eth.Client,
 	create2Transfer *models.Create2Transfer,
 	commitmentTokenIndex models.Uint256,
 ) (addedPubKeyID *uint32, create2TransferError, appError error) {
+	pubKeyID, err := getPubKeyID(storage, client, create2Transfer)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	stateTree := st.NewStateTree(storage)
 	emptyUserState := models.UserState{
-		PubKeyID:   create2Transfer.ToPubKeyID,
+		PubKeyID:   *pubKeyID,
 		TokenIndex: commitmentTokenIndex,
 		Balance:    models.MakeUint256(0),
 		Nonce:      models.MakeUint256(0),
@@ -38,5 +45,18 @@ func ApplyCreate2Transfer(
 		return nil, create2TransferError, appError
 	}
 
-	return &create2Transfer.ToPubKeyID, nil, nil
+	return pubKeyID, nil, nil
+}
+
+func getPubKeyID(storage *st.Storage, client *eth.Client, transfer *models.Create2Transfer) (*uint32, error) {
+	pubKeyID, err := storage.GetUnusedPubKeyID(&transfer.ToPublicKey)
+	if err != nil && !st.IsNotFoundError(err) {
+		return nil, err
+	}
+	if st.IsNotFoundError(err) {
+		//client stuff here
+		//pubkeyId = client.Register(create2Transfer.ToPublicKey)
+	}
+
+	return pubKeyID, nil
 }
