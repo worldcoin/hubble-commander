@@ -22,7 +22,7 @@ func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*co
 		return nil, vErr
 	}
 
-	encodedCreate2Transfer, err := encoder.EncodeCreate2TransferWithPubKey(create2Transfer, &create2Transfer.ToPublicKey)
+	encodedCreate2Transfer, err := encoder.EncodeCreate2Transfer(create2Transfer)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (a *API) validateCreate2Transfer(create2Transfer *models.Create2Transfer) e
 	if vErr := validateBalance(&create2Transfer.Amount, &create2Transfer.Fee, &senderState.UserState); vErr != nil {
 		return vErr
 	}
-	encodedCreate2Transfer, err := encoder.EncodeCreate2TransferForSigning(create2Transfer, &create2Transfer.ToPublicKey)
+	encodedCreate2Transfer, err := encoder.EncodeCreate2TransferForSigning(create2Transfer)
 	if err != nil {
 		return err
 	}

@@ -53,6 +53,7 @@ func (s *Storage) GetPublicKey(pubKeyID uint32) (*models.PublicKey, error) {
 	return &res[0], nil
 }
 
+//TODO add filtering by tokenIndex
 func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey) (*uint32, error) {
 	accounts, err := s.GetAccounts(publicKey)
 	if err != nil {
