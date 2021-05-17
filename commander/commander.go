@@ -25,6 +25,7 @@ type Commander struct {
 	workers sync.WaitGroup
 
 	stopChannel chan bool
+	storage     *st.Storage
 	apiServer   *http.Server
 }
 
@@ -43,7 +44,7 @@ func (c *Commander) Start() error {
 	if c.IsRunning() {
 		return nil
 	}
-	migrator, err := postgres.GetMigrator(&c.cfg.DB)
+	migrator, err := postgres.GetMigrator(&c.cfg.Postgres)
 	if err != nil {
 		return err
 	}
@@ -60,7 +61,7 @@ func (c *Commander) Start() error {
 		return err
 	}
 
-	storage, err := st.NewStorage(&c.cfg.DB)
+	c.storage, err = st.NewStorage(&c.cfg.Postgres, &c.cfg.Badger)
 	if err != nil {
 		return err
 	}
@@ -70,12 +71,12 @@ func (c *Commander) Start() error {
 		return err
 	}
 
-	client, err := getClient(chain, storage, &c.cfg.Rollup)
+	client, err := getClient(chain, c.storage, &c.cfg.Rollup)
 	if err != nil {
 		return err
 	}
 
-	c.apiServer, err = api.NewAPIServer(&c.cfg.API, storage, client)
+	c.apiServer, err = api.NewAPIServer(&c.cfg.API, c.storage, client)
 	if err != nil {
 		return err
 	}
@@ -88,9 +89,9 @@ func (c *Commander) Start() error {
 		}
 		return nil
 	})
-	c.startWorker(func() error { return BlockNumberLoop(storage, client, &c.cfg.Rollup, stopChannel) })
-	c.startWorker(func() error { return RollupLoop(storage, client, &c.cfg.Rollup, stopChannel) })
-	c.startWorker(func() error { return WatchAccounts(storage, client, stopChannel) })
+	c.startWorker(func() error { return BlockNumberLoop(c.storage, client, &c.cfg.Rollup, stopChannel) })
+	c.startWorker(func() error { return RollupLoop(c.storage, client, &c.cfg.Rollup, stopChannel) })
+	c.startWorker(func() error { return WatchAccounts(c.storage, client, stopChannel) })
 	c.stopChannel = stopChannel
 	return nil
 }
@@ -127,15 +128,18 @@ func (c *Commander) Stop() error {
 	if !c.IsRunning() {
 		return nil
 	}
+	defer c.clearState()
 	close(c.stopChannel)
-	err := c.apiServer.Close()
+	if err := c.apiServer.Close(); err != nil {
+		return err
+	}
 	c.workers.Wait()
-	c.clearState()
-	return err
+	return c.storage.Close()
 }
 
 func (c *Commander) clearState() {
 	c.stopChannel = nil
+	c.storage = nil
 	c.apiServer = nil
 }
 

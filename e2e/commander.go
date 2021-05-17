@@ -10,14 +10,16 @@ import (
 type Commander interface {
 	Start() error
 	Stop() error
+	Restart() error
 	Client() jsonrpc.RPCClient
 }
 
-func NewCommanderFromEnv() (Commander, error) {
+func NewCommanderFromEnv(prune bool) (Commander, error) {
 	switch os.Getenv("HUBBLE_E2E") {
 	case "", "docker":
 		return StartDockerCommander(StartOptions{
 			Image: "ghcr.io/worldcoin/hubble-commander:latest",
+			Prune: prune,
 		})
 	case "local":
 		return ConnectToLocalCommander(), nil

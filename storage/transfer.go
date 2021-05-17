@@ -4,7 +4,9 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
+	bh "github.com/timshannon/badgerhold/v3"
 )
 
 var transferColumns = []string{
@@ -13,13 +15,13 @@ var transferColumns = []string{
 }
 
 func (s *Storage) AddTransfer(t *models.Transfer) error {
-	tx, txStorage, err := s.BeginTransaction()
+	tx, txStorage, err := s.BeginTransaction(TxOptions{Postgres: true})
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback(&err)
 
-	_, err = txStorage.DB.Query(
+	_, err = txStorage.Postgres.Query(
 		txStorage.QB.Insert("transaction_base").
 			Values(
 				t.Hash,
@@ -37,7 +39,7 @@ func (s *Storage) AddTransfer(t *models.Transfer) error {
 		return err
 	}
 
-	_, err = txStorage.DB.Query(
+	_, err = txStorage.Postgres.Query(
 		txStorage.QB.Insert("transfer").
 			Values(
 				t.Hash,
@@ -53,7 +55,7 @@ func (s *Storage) AddTransfer(t *models.Transfer) error {
 
 func (s *Storage) GetTransfer(hash common.Hash) (*models.Transfer, error) {
 	res := make([]models.Transfer, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select(transferColumns...).
 			From("transaction_base").
 			JoinClause("NATURAL JOIN transfer").
@@ -70,7 +72,7 @@ func (s *Storage) GetTransfer(hash common.Hash) (*models.Transfer, error) {
 
 func (s *Storage) GetUserTransfers(fromStateID models.Uint256) ([]models.Transfer, error) {
 	res := make([]models.Transfer, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select(transferColumns...).
 			From("transaction_base").
 			JoinClause("NATURAL JOIN transfer").
@@ -81,7 +83,7 @@ func (s *Storage) GetUserTransfers(fromStateID models.Uint256) ([]models.Transfe
 
 func (s *Storage) GetPendingTransfers() ([]models.Transfer, error) {
 	res := make([]models.Transfer, 0, 32)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select(transferColumns...).
 			From("transaction_base").
 			JoinClause("NATURAL JOIN transfer").
@@ -95,15 +97,40 @@ func (s *Storage) GetPendingTransfers() ([]models.Transfer, error) {
 }
 
 func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models.Transfer, error) {
+	accounts, err := s.GetAccounts(publicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	pubKeyIDs := utils.ValueToInterfaceSlice(accounts, "PubKeyID")
+
+	// TODO possibly performance killer
+	// First get all state nodes and then query leaves by pubkey id and datahash
+	leaves := make([]models.FlatStateLeaf, 0, 1)
+	err = s.Badger.Find(&leaves, bh.Where("PubKeyID").In(pubKeyIDs...).Index("PubKeyID"))
+	if err != nil {
+		return nil, err
+	}
+
+	dataHashes := utils.ValueToInterfaceSlice(leaves, "DataHash")
+
+	nodes := make([]models.StateNode, 0, 1)
+	err = s.Badger.Find(&nodes, bh.Where("DataHash").In(dataHashes...).Index("DataHash"))
+	if err != nil {
+		return nil, err
+	}
+
+	stateIDs := make([]uint32, 0, 1)
+	for i := range nodes {
+		stateIDs = append(stateIDs, nodes[i].MerklePath.Path)
+	}
+
 	res := make([]models.Transfer, 0, 1)
-	err := s.DB.Query(
+	err = s.Postgres.Query(
 		s.QB.Select(transferColumns...).
-			From("account").
-			JoinClause("NATURAL JOIN state_leaf").
-			JoinClause("NATURAL JOIN state_node").
-			Join("transaction_base on transaction_base.from_state_id::bit(33) = state_node.merkle_path").
+			From("transaction_base").
 			JoinClause("NATURAL JOIN transfer").
-			Where(squirrel.Eq{"account.public_key": publicKey}),
+			Where(squirrel.Eq{"transaction_base.from_state_id": stateIDs}),
 	).Into(&res)
 	if err != nil {
 		return nil, err
@@ -113,7 +140,7 @@ func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models
 
 func (s *Storage) GetTransfersByCommitmentID(id int32) ([]models.TransferForCommitment, error) {
 	res := make([]models.TransferForCommitment, 0, 32)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select("transaction_base.tx_hash",
 			"transaction_base.from_state_id",
 			"transaction_base.amount",

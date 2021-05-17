@@ -3,7 +3,6 @@ package storage
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -22,8 +21,7 @@ var (
 type StateTreeTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	db      *postgres.TestDB
-	storage *Storage
+	storage *TestStorage
 	tree    *StateTree
 	leaf    *models.StateLeaf
 }
@@ -33,11 +31,10 @@ func (s *StateTreeTestSuite) SetupSuite() {
 }
 
 func (s *StateTreeTestSuite) SetupTest() {
-	testDB, err := postgres.NewTestDB()
+	var err error
+	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
-	s.db = testDB
-	s.storage = NewTestStorage(testDB.DB)
-	s.tree = NewStateTree(s.storage)
+	s.tree = NewStateTree(s.storage.Storage)
 
 	state := models.UserState{
 		PubKeyID:   1,
@@ -54,7 +51,7 @@ func (s *StateTreeTestSuite) SetupTest() {
 }
 
 func (s *StateTreeTestSuite) TearDownTest() {
-	err := s.db.Teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
@@ -79,7 +76,7 @@ func (s *StateTreeTestSuite) TestSet_StoresLeafStateNodeRecord() {
 		DataHash: s.leaf.DataHash,
 	}
 
-	node, err := s.storage.GetStateNodeByHash(s.leaf.DataHash)
+	node, err := s.storage.GetStateNodeByPath(&expectedNode.MerklePath)
 	s.NoError(err)
 	s.Equal(expectedNode, node)
 }
@@ -164,7 +161,7 @@ func (s *StateTreeTestSuite) TestSet_StoresStateUpdateRecord() {
 
 	currentRoot := common.HexToHash("0xd8cb702fc833817dccdc3889282af96755b2909274ca2f1a3827a60d11d796eb")
 	expectedUpdate := &models.StateUpdate{
-		ID:          1,
+		ID:          0,
 		StateID:     path,
 		CurrentHash: s.leaf.DataHash,
 		CurrentRoot: currentRoot,
@@ -254,7 +251,7 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafAddsStateUpdateRecord() {
 
 	currentRoot := common.HexToHash("0x406515786640be8c51eacf1221f017e7f59e04ef59637a27dcb2b2f054b309bf")
 	expectedUpdate := &models.StateUpdate{
-		ID:          2,
+		ID:          1,
 		StateID:     path,
 		CurrentHash: updatedLeaf.DataHash,
 		CurrentRoot: currentRoot,

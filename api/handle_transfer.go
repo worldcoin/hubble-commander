@@ -109,7 +109,7 @@ func (a *API) validateTransfer(transfer *models.Transfer) error {
 	}
 
 	if a.cfg.DevMode {
-		transfer.Signature = mockSignature
+		transfer.Signature = a.mockSignature
 		return nil
 	}
 	return a.validateSignature(encodedTransfer, &transfer.Signature, &senderState.UserState)

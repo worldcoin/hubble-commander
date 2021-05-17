@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -16,7 +15,7 @@ import (
 type AccountsTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	testDB     *postgres.TestDB
+	teardown   func() error
 	storage    *st.Storage
 	testClient *eth.TestClient
 }
@@ -26,18 +25,18 @@ func (s *AccountsTestSuite) SetupSuite() {
 }
 
 func (s *AccountsTestSuite) SetupTest() {
-	var err error
-	s.testDB, err = postgres.NewTestDB()
+	testStorage, err := st.NewTestStorage()
 	s.NoError(err)
-	s.storage = st.NewTestStorage(s.testDB.DB)
+	s.storage = testStorage.Storage
+	s.teardown = testStorage.Teardown
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
 }
 
 func (s *AccountsTestSuite) TearDownTest() {
-	err := s.testDB.Teardown()
-	s.NoError(err)
 	s.testClient.Close()
+	err := s.teardown()
+	s.NoError(err)
 }
 
 func (s *AccountsTestSuite) TestWatchAccounts_PreviousAccounts() {

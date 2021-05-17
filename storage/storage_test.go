@@ -4,7 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -14,8 +13,7 @@ import (
 type StorageTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage *Storage
-	db      *postgres.TestDB
+	storage *TestStorage
 }
 
 func (s *StorageTestSuite) SetupSuite() {
@@ -23,17 +21,16 @@ func (s *StorageTestSuite) SetupSuite() {
 }
 
 func (s *StorageTestSuite) SetupTest() {
-	testDB, err := postgres.NewTestDB()
+	var err error
+	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = NewTestStorage(testDB.DB)
-	s.db = testDB
 
 	err = s.storage.AddAccountIfNotExists(&account1)
 	s.NoError(err)
 }
 
 func (s *StorageTestSuite) TearDownTest() {
-	err := s.db.Teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
@@ -48,14 +45,20 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 		},
 	}
 
-	tx, storage, err := s.storage.BeginTransaction()
+	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
 	err = storage.AddStateLeaf(leaf)
 	s.NoError(err)
+	err = storage.AddAccountIfNotExists(&account2)
+	s.NoError(err)
 
 	res, err := s.storage.GetStateLeafByHash(leaf.DataHash)
-	s.Error(err)
+	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
+
+	accounts, err := s.storage.GetAccounts(&account2.PublicKey)
+	s.Equal(NewNotFoundError("accounts"), err)
+	s.Nil(accounts)
 
 	err = tx.Commit()
 	s.NoError(err)
@@ -63,6 +66,10 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	res, err = s.storage.GetStateLeafByHash(leaf.DataHash)
 	s.NoError(err)
 	s.Equal(leaf, res)
+
+	accounts, err = s.storage.GetAccounts(&account2.PublicKey)
+	s.NoError(err)
+	s.Len(accounts, 1)
 }
 
 func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
@@ -76,17 +83,23 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 		},
 	}
 
-	tx, storage, err := s.storage.BeginTransaction()
+	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
 	err = storage.AddStateLeaf(leaf)
+	s.NoError(err)
+	err = storage.AddAccountIfNotExists(&account2)
 	s.NoError(err)
 
 	tx.Rollback(&err)
 	s.Nil(errors.Unwrap(err))
 
 	res, err := s.storage.GetStateLeafByHash(leaf.DataHash)
-	s.Error(err)
+	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
+
+	accounts, err := s.storage.GetAccounts(&account2.PublicKey)
+	s.Equal(NewNotFoundError("accounts"), err)
+	s.Nil(accounts)
 }
 
 func (s *StorageTestSuite) TestBeginTransaction_Lock() {
@@ -112,13 +125,13 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 		},
 	}
 
-	tx, storage, err := s.storage.BeginTransaction()
+	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
 
 	err = storage.AddStateLeaf(leafOne)
 	s.NoError(err)
 
-	nestedTx, nestedStorage, err := storage.BeginTransaction()
+	nestedTx, nestedStorage, err := storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
 
 	err = nestedStorage.AddStateLeaf(leafTwo)
@@ -128,7 +141,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 	s.NoError(err)
 
 	res, err := s.storage.GetStateLeafByHash(leafOne.DataHash)
-	s.Error(err)
+	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
 
 	err = tx.Commit()

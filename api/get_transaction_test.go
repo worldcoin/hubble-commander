@@ -5,7 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/db/postgres"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
@@ -18,10 +18,10 @@ type GetTransactionTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	api      *API
-	db       *postgres.TestDB
 	transfer dto.Transfer
 	wallet   *bls.Wallet
-	storage  *st.Storage
+	storage  *st.TestStorage
+	domain   *bls.Domain
 }
 
 func (s *GetTransactionTestSuite) SetupSuite() {
@@ -29,18 +29,22 @@ func (s *GetTransactionTestSuite) SetupSuite() {
 }
 
 func (s *GetTransactionTestSuite) SetupTest() {
-	testDB, err := postgres.NewTestDB()
+	var err error
+	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-
-	s.storage = st.NewTestStorage(testDB.DB)
 	s.api = &API{
 		cfg:     &config.APIConfig{},
-		storage: s.storage,
-		client:  nil,
+		storage: s.storage.Storage,
+		client: &eth.Client{
+			ChainState: chainState,
+		},
 	}
-	s.db = testDB
 
-	s.wallet, err = bls.NewRandomWallet(mockDomain)
+	err = s.storage.SetChainState(&chainState)
+	s.NoError(err)
+	s.domain, err = s.storage.GetDomain(chainState.ChainID)
+	s.NoError(err)
+	s.wallet, err = bls.NewRandomWallet(*s.domain)
 	s.NoError(err)
 
 	err = s.storage.AddAccountIfNotExists(&models.Account{
@@ -49,7 +53,7 @@ func (s *GetTransactionTestSuite) SetupTest() {
 	})
 	s.NoError(err)
 
-	err = st.NewStateTree(s.storage).Set(1, &models.UserState{
+	err = st.NewStateTree(s.storage.Storage).Set(1, &models.UserState{
 		PubKeyID:   123,
 		TokenIndex: models.MakeUint256(1),
 		Balance:    models.MakeUint256(420),
@@ -67,7 +71,7 @@ func (s *GetTransactionTestSuite) signTransfer(transfer dto.Transfer) dto.Transf
 }
 
 func (s *GetTransactionTestSuite) TearDownTest() {
-	err := s.db.Teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
@@ -84,7 +88,7 @@ func (s *GetTransactionTestSuite) TestGetTransaction_Transfer() {
 }
 
 func (s *GetTransactionTestSuite) TestGetTransaction_Create2Transfer() {
-	receiverWallet, err := bls.NewRandomWallet(mockDomain)
+	receiverWallet, err := bls.NewRandomWallet(*s.domain)
 	s.NoError(err)
 
 	err = s.storage.AddAccountIfNotExists(&models.Account{

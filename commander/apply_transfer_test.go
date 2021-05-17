@@ -3,7 +3,6 @@ package commander
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/stretchr/testify/require"
@@ -28,8 +27,7 @@ var (
 type ApplyTransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	db      *postgres.TestDB
-	storage *storage.Storage
+	storage *storage.TestStorage
 	tree    *storage.StateTree
 }
 
@@ -38,11 +36,10 @@ func (s *ApplyTransferTestSuite) SetupSuite() {
 }
 
 func (s *ApplyTransferTestSuite) SetupTest() {
-	testDB, err := postgres.NewTestDB()
+	var err error
+	s.storage, err = storage.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.db = testDB
-	s.storage = storage.NewTestStorage(testDB.DB)
-	s.tree = storage.NewStateTree(s.storage)
+	s.tree = storage.NewStateTree(s.storage.Storage)
 
 	accounts := []models.Account{
 		{
@@ -61,7 +58,7 @@ func (s *ApplyTransferTestSuite) SetupTest() {
 }
 
 func (s *ApplyTransferTestSuite) TearDownTest() {
-	err := s.db.Teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
@@ -184,7 +181,7 @@ func (s *ApplyTransferTestSuite) TestApplyFee() {
 	err := s.tree.Set(receiverStateID, &receiverState)
 	s.NoError(err)
 
-	feeReceiverStateID, err := ApplyFee(s.tree, s.storage, receiverStateID, models.MakeUint256(1), models.MakeUint256(555))
+	feeReceiverStateID, err := ApplyFee(s.tree, s.storage.Storage, receiverStateID, models.MakeUint256(1), models.MakeUint256(555))
 	s.NoError(err)
 	s.Equal(receiverStateID, *feeReceiverStateID)
 

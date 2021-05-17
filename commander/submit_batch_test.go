@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -29,7 +28,7 @@ var (
 type SubmitTransferBatchTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	db         *postgres.TestDB
+	teardown   func() error
 	storage    *st.Storage
 	tree       *st.StateTree
 	cfg        *config.RollupConfig
@@ -41,10 +40,10 @@ func (s *SubmitTransferBatchTestSuite) SetupSuite() {
 }
 
 func (s *SubmitTransferBatchTestSuite) SetupTest() {
-	testDB, err := postgres.NewTestDB()
+	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.db = testDB
-	s.storage = st.NewTestStorage(testDB.DB)
+	s.storage = testStorage.Storage
+	s.teardown = testStorage.Teardown
 	s.tree = st.NewStateTree(s.storage)
 	s.cfg = &config.RollupConfig{
 		MinCommitmentsPerBatch: 1,
@@ -73,7 +72,7 @@ func (s *SubmitTransferBatchTestSuite) SetupTest() {
 
 func (s *SubmitTransferBatchTestSuite) TearDownTest() {
 	s.testClient.Close()
-	err := s.db.Teardown()
+	err := s.teardown()
 	s.NoError(err)
 }
 

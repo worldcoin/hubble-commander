@@ -7,7 +7,7 @@ import (
 )
 
 func (s *Storage) AddBatch(batch *models.Batch) error {
-	_, err := s.DB.Query(
+	_, err := s.Postgres.Query(
 		s.QB.Insert("batch").
 			Values(
 				batch.Hash,
@@ -21,7 +21,7 @@ func (s *Storage) AddBatch(batch *models.Batch) error {
 
 func (s *Storage) GetBatch(batchHash common.Hash) (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select("*").
 			From("batch").
 			Where(squirrel.Eq{"batch_hash": batchHash}),
@@ -37,7 +37,7 @@ func (s *Storage) GetBatch(batchHash common.Hash) (*models.Batch, error) {
 
 func (s *Storage) GetBatchByID(batchID models.Uint256) (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select("*").
 			From("batch").
 			Where(squirrel.Eq{"batch_id": batchID}),
@@ -53,7 +53,7 @@ func (s *Storage) GetBatchByID(batchID models.Uint256) (*models.Batch, error) {
 
 func (s *Storage) GetBatchByCommitmentID(commitmentID int32) (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select("batch.*").
 			From("batch").
 			JoinClause("NATURAL JOIN commitment").
@@ -70,7 +70,7 @@ func (s *Storage) GetBatchByCommitmentID(commitmentID int32) (*models.Batch, err
 
 func (s *Storage) GetLatestBatch() (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select("*").
 			From("batch").
 			OrderBy("batch_id DESC").
@@ -87,7 +87,7 @@ func (s *Storage) GetLatestBatch() (*models.Batch, error) {
 
 func (s *Storage) GetLatestFinalisedBatch(currentBlockNumber uint32) (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select("*").
 			From("batch").
 			Where(squirrel.LtOrEq{"finalisation_block": currentBlockNumber}). // nolint:misspell
@@ -116,7 +116,7 @@ func (s *Storage) GetBatchesInRange(from, to *models.Uint256) ([]models.Batch, e
 	}
 
 	res := make([]models.Batch, 0, 32)
-	err := s.DB.Query(qb).Into(&res)
+	err := s.Postgres.Query(qb).Into(&res)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +125,7 @@ func (s *Storage) GetBatchesInRange(from, to *models.Uint256) ([]models.Batch, e
 
 func (s *Storage) GetBatchWithAccountRoot(batchHash common.Hash) (*models.BatchWithAccountRoot, error) {
 	res := make([]models.BatchWithAccountRoot, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select("batch.*",
 			"commitment.account_tree_root").
 			From("batch").
@@ -144,7 +144,7 @@ func (s *Storage) GetBatchWithAccountRoot(batchHash common.Hash) (*models.BatchW
 
 func (s *Storage) GetBatchWithAccountRootByID(batchID models.Uint256) (*models.BatchWithAccountRoot, error) {
 	res := make([]models.BatchWithAccountRoot, 0, 1)
-	err := s.DB.Query(
+	err := s.Postgres.Query(
 		s.QB.Select("batch.*",
 			"commitment.account_tree_root").
 			From("batch").

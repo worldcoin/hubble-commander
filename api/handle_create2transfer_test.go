@@ -5,7 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/db/postgres"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -28,11 +28,12 @@ type SendCreate2TransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	api             *API
-	db              *postgres.TestDB
+	teardown        func() error
 	tree            *st.StateTree
 	userState       *models.UserState
 	create2Transfer dto.Create2Transfer
 	wallet          *bls.Wallet
+	domain          *bls.Domain
 }
 
 func (s *SendCreate2TransferTestSuite) SetupSuite() {
@@ -40,31 +41,35 @@ func (s *SendCreate2TransferTestSuite) SetupSuite() {
 }
 
 func (s *SendCreate2TransferTestSuite) SetupTest() {
-	testDB, err := postgres.NewTestDB()
+	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.db = testDB
-
-	storage := st.NewTestStorage(testDB.DB)
-	s.tree = st.NewStateTree(storage)
+	s.teardown = testStorage.Teardown
+	s.tree = st.NewStateTree(testStorage.Storage)
 	s.api = &API{
 		cfg:     &config.APIConfig{},
-		storage: storage,
-		client:  nil,
+		storage: testStorage.Storage,
+		client: &eth.Client{
+			ChainState: chainState,
+		},
 	}
 
-	s.wallet, err = bls.NewRandomWallet(mockDomain)
+	err = testStorage.SetChainState(&chainState)
+	s.NoError(err)
+	s.domain, err = testStorage.GetDomain(chainState.ChainID)
 	s.NoError(err)
 
-	receiverWallet, err := bls.NewRandomWallet(mockDomain)
+	s.wallet, err = bls.NewRandomWallet(*s.domain)
+	s.NoError(err)
+	receiverWallet, err := bls.NewRandomWallet(*s.domain)
 	s.NoError(err)
 
-	err = storage.AddAccountIfNotExists(&models.Account{
+	err = testStorage.AddAccountIfNotExists(&models.Account{
 		PubKeyID:  123,
 		PublicKey: *s.wallet.PublicKey(),
 	})
 	s.NoError(err)
 
-	err = storage.AddAccountIfNotExists(&models.Account{
+	err = testStorage.AddAccountIfNotExists(&models.Account{
 		PubKeyID:  10,
 		PublicKey: *receiverWallet.PublicKey(),
 	})
@@ -91,7 +96,7 @@ func (s *SendCreate2TransferTestSuite) signCreate2Transfer(create2Transfer dto.C
 }
 
 func (s *SendCreate2TransferTestSuite) TearDownTest() {
-	err := s.db.Teardown()
+	err := s.teardown()
 	s.NoError(err)
 }
 
@@ -183,7 +188,7 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesBalance(
 }
 
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesSignature() {
-	wallet, err := bls.NewRandomWallet(mockDomain)
+	wallet, err := bls.NewRandomWallet(*s.domain)
 	s.NoError(err)
 	fakeSignature, err := wallet.Sign(utils.RandomBytes(2))
 	s.NoError(err)
@@ -198,7 +203,7 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesSignatur
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesSignature_DevMode() {
 	s.api.cfg = &config.APIConfig{DevMode: true}
 
-	wallet, err := bls.NewRandomWallet(mockDomain)
+	wallet, err := bls.NewRandomWallet(*s.domain)
 	s.NoError(err)
 	fakeSignature, err := wallet.Sign(utils.RandomBytes(2))
 	s.NoError(err)

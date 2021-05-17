@@ -12,12 +12,11 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-var mockDomain = bls.Domain{1, 2, 3, 4} // TODO use real domain
-
 func createTransferCommitments(
 	pendingTransfers []models.Transfer,
 	storage *st.Storage,
 	cfg *config.RollupConfig,
+	domain bls.Domain,
 ) ([]models.Commitment, error) {
 	stateTree := st.NewStateTree(storage)
 	commitments := make([]models.Commitment, 0, 32)
@@ -57,7 +56,7 @@ func createTransferCommitments(
 			return nil, err
 		}
 
-		combinedSignature, err := combineTransferSignatures(appliedTxs)
+		combinedSignature, err := combineTransferSignatures(appliedTxs, domain)
 		if err != nil {
 			return nil, err
 		}
@@ -106,10 +105,10 @@ func transferExists(transferList []models.Transfer, tx *models.Transfer) bool {
 	return false
 }
 
-func combineTransferSignatures(transfers []models.Transfer) (*models.Signature, error) {
+func combineTransferSignatures(transfers []models.Transfer, domain bls.Domain) (*models.Signature, error) {
 	signatures := make([]*bls.Signature, 0, len(transfers))
 	for i := range transfers {
-		sig, err := bls.NewSignatureFromBytes(transfers[i].Signature[:], mockDomain)
+		sig, err := bls.NewSignatureFromBytes(transfers[i].Signature[:], domain)
 		if err != nil {
 			return nil, err
 		}

@@ -4,7 +4,6 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -33,8 +32,7 @@ var (
 type TransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage *Storage
-	db      *postgres.TestDB
+	storage *TestStorage
 	tree    *StateTree
 }
 
@@ -43,15 +41,17 @@ func (s *TransferTestSuite) SetupSuite() {
 }
 
 func (s *TransferTestSuite) SetupTest() {
-	testDB, err := postgres.NewTestDB()
+	var err error
+	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = NewTestStorage(testDB.DB)
-	s.db = testDB
-	s.tree = NewStateTree(s.storage)
+	s.tree = NewStateTree(s.storage.Storage)
+
+	err = s.storage.AddAccountIfNotExists(&account2)
+	s.NoError(err)
 }
 
 func (s *TransferTestSuite) TearDownTest() {
-	err := s.db.Teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
@@ -238,11 +238,9 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 }
 
 func (s *TransferTestSuite) TestGetUserTransfersByPublicKey_NoTransfers() {
-	userTransfers, err := s.storage.GetTransfersByPublicKey(&models.PublicKey{1, 2, 3})
-
+	userTransfers, err := s.storage.GetTransfersByPublicKey(&account2.PublicKey)
 	s.NoError(err)
 	s.Len(userTransfers, 0)
-	s.NotNil(userTransfers)
 }
 
 func (s *TransferTestSuite) TestGetTransfersByCommitmentID() {

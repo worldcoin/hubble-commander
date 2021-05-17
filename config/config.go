@@ -46,14 +46,13 @@ func GetConfig() Config {
 			BatchLoopInterval:       500 * time.Millisecond,
 			BlockNumberLoopInterval: 500 * time.Millisecond,
 			GenesisAccounts:         getGenesisAccounts(),
-			SignaturesDomain:        [32]byte{1, 2, 3, 4},
 		},
 		API: APIConfig{
 			Version: "0.0.1",
 			Port:    *getEnvOrDefault("HUBBLE_PORT", ref.String("8080")),
 			DevMode: false,
 		},
-		DB: DBConfig{
+		Postgres: PostgresConfig{
 			Host:           getEnvOrDefault("HUBBLE_DBHOST", nil),
 			Port:           getEnvOrDefault("HUBBLE_DBPORT", nil),
 			Name:           *getEnvOrDefault("HUBBLE_DBNAME", ref.String("hubble")),
@@ -79,14 +78,13 @@ func GetTestConfig() Config {
 			BatchLoopInterval:       500 * time.Millisecond,
 			BlockNumberLoopInterval: 500 * time.Millisecond,
 			GenesisAccounts:         getGenesisAccounts(),
-			SignaturesDomain:        [32]byte{1, 2, 3, 4},
 		},
 		API: APIConfig{
 			Version: "dev-0.0.1",
 			Port:    *getEnvOrDefault("HUBBLE_PORT", ref.String("8080")),
 			DevMode: true,
 		},
-		DB: DBConfig{
+		Postgres: PostgresConfig{
 			Host:           getEnvOrDefault("HUBBLE_DBHOST", nil),
 			Port:           getEnvOrDefault("HUBBLE_DBPORT", nil),
 			Name:           *getEnvOrDefault("HUBBLE_DBNAME", ref.String("hubble_test")),

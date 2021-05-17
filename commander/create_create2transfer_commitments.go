@@ -16,6 +16,7 @@ func createCreate2TransferCommitments(
 	pendingTransfers []models.Create2Transfer,
 	storage *st.Storage,
 	cfg *config.RollupConfig,
+	domain bls.Domain,
 ) ([]models.Commitment, error) {
 	stateTree := st.NewStateTree(storage)
 	commitments := make([]models.Commitment, 0, 32)
@@ -52,7 +53,7 @@ func createCreate2TransferCommitments(
 			return nil, err
 		}
 
-		combinedSignature, err := combineCreate2TransferSignatures(appliedTxs)
+		combinedSignature, err := combineCreate2TransferSignatures(appliedTxs, domain)
 		if err != nil {
 			return nil, err
 		}
@@ -102,10 +103,10 @@ func create2TransferExists(transferList []models.Create2Transfer, tx *models.Cre
 	return false
 }
 
-func combineCreate2TransferSignatures(transfers []models.Create2Transfer) (*models.Signature, error) {
+func combineCreate2TransferSignatures(transfers []models.Create2Transfer, domain bls.Domain) (*models.Signature, error) {
 	signatures := make([]*bls.Signature, 0, len(transfers))
 	for i := range transfers {
-		sig, err := bls.NewSignatureFromBytes(transfers[i].Signature[:], mockDomain)
+		sig, err := bls.NewSignatureFromBytes(transfers[i].Signature[:], domain)
 		if err != nil {
 			return nil, err
 		}

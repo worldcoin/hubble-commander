@@ -3,7 +3,6 @@ package storage
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -15,8 +14,7 @@ import (
 type BatchTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage *Storage
-	db      *postgres.TestDB
+	storage *TestStorage
 }
 
 func (s *BatchTestSuite) SetupSuite() {
@@ -24,14 +22,13 @@ func (s *BatchTestSuite) SetupSuite() {
 }
 
 func (s *BatchTestSuite) SetupTest() {
-	testDB, err := postgres.NewTestDB()
+	var err error
+	s.storage, err = NewTestStorage()
 	s.NoError(err)
-	s.storage = NewTestStorage(testDB.DB)
-	s.db = testDB
 }
 
 func (s *BatchTestSuite) TearDownTest() {
-	err := s.db.Teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
@@ -257,11 +254,13 @@ func (s *BatchTestSuite) TestGetBatchesInRange_ReturnsAllBatchesUpUntilUpperBoun
 func (s *BatchTestSuite) TestGetBatchWithAccountRoot_AddAndRetrieve() {
 	hash := utils.RandomHash()
 	batch := &models.BatchWithAccountRoot{
-		Batch: models.Batch{
-			Hash:              hash,
-			Type:              txtype.Transfer,
-			ID:                models.MakeUint256(1),
-			FinalisationBlock: 1234,
+		BatchWithSubmissionBlock: models.BatchWithSubmissionBlock{
+			Batch: models.Batch{
+				Hash:              hash,
+				Type:              txtype.Transfer,
+				ID:                models.MakeUint256(1),
+				FinalisationBlock: 1234,
+			},
 		},
 		AccountTreeRoot: &hash,
 	}

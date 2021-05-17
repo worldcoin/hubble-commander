@@ -3,7 +3,6 @@ package storage
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -13,8 +12,7 @@ import (
 type StateNodeTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage *Storage
-	db      *postgres.TestDB
+	storage *TestStorage
 }
 
 func (s *StateNodeTestSuite) SetupSuite() {
@@ -22,14 +20,13 @@ func (s *StateNodeTestSuite) SetupSuite() {
 }
 
 func (s *StateNodeTestSuite) SetupTest() {
-	testDB, err := postgres.NewTestDB()
+	var err error
+	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = NewTestStorage(testDB.DB)
-	s.db = testDB
 }
 
 func (s *StateNodeTestSuite) TearDownTest() {
-	err := s.db.Teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
@@ -43,14 +40,12 @@ func (s *StateNodeTestSuite) TestAddStateNode_AddAndRetrieve() {
 	err = s.storage.AddStateNode(node)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateNodeByHash(node.DataHash)
+	res, err := s.storage.GetStateNodeByHash(&node.DataHash)
 	s.NoError(err)
-
 	s.Equal(node, res)
 
 	res, err = s.storage.GetStateNodeByPath(path)
 	s.NoError(err)
-
 	s.Equal(node, res)
 }
 
@@ -81,42 +76,6 @@ func (s *StateNodeTestSuite) TestAddStateNode_AddAndRetrieveRoot() {
 	s.NoError(err)
 
 	s.Equal(node, res)
-}
-
-func (s *StateNodeTestSuite) TestUpdateStateNode_UpdateAndRetrieve() {
-	path, err := models.NewMerklePath("0000111")
-	s.NoError(err)
-	node := &models.StateNode{
-		MerklePath: *path,
-		DataHash:   common.BytesToHash([]byte{1, 2, 3, 4, 5}),
-	}
-	err = s.storage.AddStateNode(node)
-	s.NoError(err)
-
-	expectedNode := &models.StateNode{
-		MerklePath: *path,
-		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
-	}
-
-	err = s.storage.UpdateStateNode(expectedNode)
-	s.NoError(err)
-
-	res, err := s.storage.GetStateNodeByPath(path)
-	s.NoError(err)
-
-	s.Equal(expectedNode, res)
-}
-
-func (s *StateNodeTestSuite) TestUpdateStateNode_NotExistentNode() {
-	path, err := models.NewMerklePath("0000111")
-	s.NoError(err)
-	node := &models.StateNode{
-		MerklePath: *path,
-		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
-	}
-
-	err = s.storage.UpdateStateNode(node)
-	s.Error(err)
 }
 
 func (s *StateNodeTestSuite) TestUpsertStateNode_AddAndRetrieve() {
@@ -161,7 +120,7 @@ func (s *StateNodeTestSuite) TestUpsertStateNode_UpdateAndRetrieve() {
 
 func (s *StateNodeTestSuite) TestGetStateNodeByHash_NonExistentNode() {
 	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
-	res, err := s.storage.GetStateNodeByHash(hash)
+	res, err := s.storage.GetStateNodeByHash(&hash)
 	s.Equal(NewNotFoundError("state node"), err)
 	s.Nil(res)
 }
@@ -209,7 +168,7 @@ func (s *StateNodeTestSuite) TestGetStateNodes() {
 	err = s.storage.AddStateNode(node)
 	s.NoError(err)
 
-	nodes, err := s.storage.getStateNodes([]models.MerklePath{*path})
+	nodes, err := s.storage.GetStateNodes([]models.MerklePath{*path})
 	s.NoError(err)
 	s.Len(nodes, 1)
 }
@@ -219,7 +178,7 @@ func (s *StateNodeTestSuite) TestBatchUpsertStateNode_AddAndRetrieve() {
 	err := s.storage.BatchUpsertStateNodes(nodes)
 	s.NoError(err)
 
-	res, err := s.storage.getStateNodes(paths)
+	res, err := s.storage.GetStateNodes(paths)
 	s.NoError(err)
 	s.Len(res, 2)
 	s.Contains(res, nodes[0])
@@ -238,7 +197,7 @@ func (s *StateNodeTestSuite) TestBatchUpsertStateNode_UpdateAndRetrieve() {
 	err = s.storage.BatchUpsertStateNodes(nodes)
 	s.NoError(err)
 
-	res, err := s.storage.getStateNodes(paths)
+	res, err := s.storage.GetStateNodes(paths)
 	s.NoError(err)
 	s.Len(res, 2)
 	s.Contains(res, nodes[0])

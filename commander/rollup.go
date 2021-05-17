@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -52,7 +53,7 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConfi
 }
 
 func createAndSubmitBatch(batchType txtype.TransactionType, storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) (err error) {
-	tx, txStorage, err := storage.BeginTransaction()
+	tx, txStorage, err := storage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
 	if err != nil {
 		return err
 	}
@@ -74,10 +75,15 @@ func unsafeCreateAndSubmitBatch(
 ) (err error) {
 	var commitments []models.Commitment
 
+	domain, err := storage.GetDomain(client.ChainState.ChainID)
+	if err != nil {
+		return err
+	}
+
 	if batchType == txtype.Transfer {
-		commitments, err = buildTransferCommitments(storage, cfg)
+		commitments, err = buildTransferCommitments(storage, cfg, *domain)
 	} else {
-		commitments, err = buildCreate2TransfersCommitments(storage, cfg)
+		commitments, err = buildCreate2TransfersCommitments(storage, cfg, *domain)
 	}
 	if err != nil {
 		return err
@@ -90,18 +96,18 @@ func unsafeCreateAndSubmitBatch(
 	return nil
 }
 
-func buildTransferCommitments(storage *st.Storage, cfg *config.RollupConfig) ([]models.Commitment, error) {
+func buildTransferCommitments(storage *st.Storage, cfg *config.RollupConfig, domain bls.Domain) ([]models.Commitment, error) {
 	pendingTransfers, err := storage.GetPendingTransfers()
 	if err != nil {
 		return nil, err
 	}
-	return createTransferCommitments(pendingTransfers, storage, cfg)
+	return createTransferCommitments(pendingTransfers, storage, cfg, domain)
 }
 
-func buildCreate2TransfersCommitments(storage *st.Storage, cfg *config.RollupConfig) ([]models.Commitment, error) {
+func buildCreate2TransfersCommitments(storage *st.Storage, cfg *config.RollupConfig, domain bls.Domain) ([]models.Commitment, error) {
 	pendingTransfers, err := storage.GetPendingCreate2Transfers()
 	if err != nil {
 		return nil, err
 	}
-	return createCreate2TransferCommitments(pendingTransfers, storage, cfg)
+	return createCreate2TransferCommitments(pendingTransfers, storage, cfg, domain)
 }

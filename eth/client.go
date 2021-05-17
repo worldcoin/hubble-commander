@@ -23,11 +23,12 @@ type ClientConfig struct {
 }
 
 type Client struct {
-	config          ClientConfig
-	ChainState      models.ChainState
-	ChainConnection deployer.ChainConnection
-	Rollup          *rollup.Rollup
-	AccountRegistry *accountregistry.AccountRegistry
+	config           ClientConfig
+	ChainState       models.ChainState
+	ChainConnection  deployer.ChainConnection
+	Rollup           *rollup.Rollup
+	AccountRegistry  *accountregistry.AccountRegistry
+	blocksToFinalise *int64
 }
 
 func NewClient(chainConnection deployer.ChainConnection, params *NewClientParams) (*Client, error) {

@@ -10,7 +10,7 @@ type TestDB struct {
 }
 
 func NewTestDB() (*TestDB, error) {
-	cfg := config.GetTestConfig().DB
+	cfg := config.GetTestConfig().Postgres
 
 	err := RecreateDatabase(&cfg)
 	if err != nil {

@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/storage"
@@ -16,10 +15,10 @@ import (
 type ApplyTransfersTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	db      *postgres.TestDB
-	storage *storage.Storage
-	tree    *storage.StateTree
-	cfg     *config.RollupConfig
+	teardown func() error
+	storage  *storage.Storage
+	tree     *storage.StateTree
+	cfg      *config.RollupConfig
 }
 
 func (s *ApplyTransfersTestSuite) SetupSuite() {
@@ -27,10 +26,11 @@ func (s *ApplyTransfersTestSuite) SetupSuite() {
 }
 
 func (s *ApplyTransfersTestSuite) SetupTest() {
-	testDB, err := postgres.NewTestDB()
+	testStorage, err := storage.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.db = testDB
-	s.storage = storage.NewTestStorage(testDB.DB)
+	s.storage = testStorage.Storage
+	s.teardown = testStorage.Teardown
+	s.NoError(err)
 	s.tree = storage.NewStateTree(s.storage)
 	s.cfg = &config.RollupConfig{
 		FeeReceiverPubKeyID: 3,
@@ -84,7 +84,7 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 }
 
 func (s *ApplyTransfersTestSuite) TearDownTest() {
-	err := s.db.Teardown()
+	err := s.teardown()
 	s.NoError(err)
 }
 

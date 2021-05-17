@@ -3,7 +3,8 @@ package api
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/db/postgres"
+	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -16,8 +17,7 @@ type GetBatchTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	api        *API
-	storage    *st.Storage
-	db         *postgres.TestDB
+	storage    *st.TestStorage
 	tree       *st.StateTree
 	commitment models.Commitment
 	batch      models.Batch
@@ -28,13 +28,13 @@ func (s *GetBatchTestSuite) SetupSuite() {
 }
 
 func (s *GetBatchTestSuite) SetupTest() {
-	testDB, err := postgres.NewTestDB()
+	var err error
+	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-
-	s.storage = st.NewTestStorage(testDB.DB)
-	s.api = &API{nil, s.storage, nil}
-	s.db = testDB
-	s.tree = st.NewStateTree(s.storage)
+	ethClient, err := eth.NewTestClient()
+	s.NoError(err)
+	s.api = &API{storage: s.storage.Storage, client: ethClient.Client}
+	s.tree = st.NewStateTree(s.storage.Storage)
 
 	hash := utils.RandomHash()
 	s.commitment = commitment
@@ -44,12 +44,12 @@ func (s *GetBatchTestSuite) SetupTest() {
 	s.batch = models.Batch{
 		Hash:              hash,
 		Type:              txtype.Transfer,
-		FinalisationBlock: 113,
+		FinalisationBlock: 42000,
 	}
 }
 
 func (s *GetBatchTestSuite) TearDownTest() {
-	err := s.db.Teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
@@ -65,7 +65,8 @@ func (s *GetBatchTestSuite) TestGetBatchByHash() {
 	s.NoError(err)
 	s.NotNil(result)
 	s.Len(result.Commitments, 1)
-	s.Equal(s.batch.Hash, result.Hash)
+	s.Equal(s.batch, result.Batch)
+	s.Equal(s.batch.FinalisationBlock-rollup.DefaultBlocksToFinalise, result.SubmissionBlock)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByHash_NoCommitments() {
@@ -96,7 +97,8 @@ func (s *GetBatchTestSuite) TestGetBatchByID() {
 	s.NoError(err)
 	s.NotNil(result)
 	s.Len(result.Commitments, 1)
-	s.Equal(s.batch.Hash, result.Hash)
+	s.Equal(s.batch, result.Batch)
+	s.Equal(s.batch.FinalisationBlock-rollup.DefaultBlocksToFinalise, result.SubmissionBlock)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByID_NoCommitments() {

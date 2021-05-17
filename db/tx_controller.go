@@ -35,3 +35,7 @@ func (t *TxController) Commit() error {
 	}
 	return nil
 }
+
+func (t *TxController) IsLocked() bool {
+	return t.isLocked
+}
