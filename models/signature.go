@@ -33,7 +33,7 @@ func MakeSignatureFromBigInts(ints []*big.Int) Signature {
 	copy(signature[0:32], ints[0].Bytes())
 	copy(signature[32:64], ints[1].Bytes())
 
-	return Signature{}
+	return signature
 }
 
 func (s Signature) Bytes() []byte {
