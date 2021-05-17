@@ -5,7 +5,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -17,11 +16,11 @@ import (
 type SyncTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	db      *postgres.TestDB
-	storage *st.Storage
-	tree    *st.StateTree
-	client  *eth.TestClient
-	cfg     *config.RollupConfig
+	teardown func() error
+	storage  *st.Storage
+	tree     *st.StateTree
+	client   *eth.TestClient
+	cfg      *config.RollupConfig
 }
 
 func (s *SyncTestSuite) SetupSuite() {
@@ -42,11 +41,10 @@ func (s *SyncTestSuite) SetupTest() {
 }
 
 func (s *SyncTestSuite) setupDB() {
-	var err error
-	s.db, err = postgres.NewTestDB()
+	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
-
-	s.storage = st.NewTestStorage(s.db.DB)
+	s.storage = testStorage.Storage
+	s.teardown = testStorage.Teardown
 	s.tree = st.NewStateTree(s.storage)
 
 	s.seedDB()
@@ -84,7 +82,7 @@ func (s *SyncTestSuite) seedDB() {
 
 func (s *SyncTestSuite) TearDownTest() {
 	s.client.Close()
-	err := s.db.Teardown()
+	err := s.teardown()
 	s.NoError(err)
 }
 
@@ -96,14 +94,14 @@ func (s *SyncTestSuite) TestSyncBatches() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   *bls.MockSignature().ModelsSignature(),
+			Signature:   *bls.MockSignature().ModelsSignature(), // TODO move MockSignature here
 		},
 		ToStateID: 1,
 	}
 	err := s.storage.AddTransfer(&tx)
 	s.NoError(err)
 
-	commitments, err := createTransferCommitments([]models.Transfer{tx}, s.storage, s.cfg)
+	commitments, err := createTransferCommitments([]models.Transfer{tx}, s.storage, s.cfg, bls.Domain{1, 2, 3, 4}) // TODO extract
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -111,7 +109,7 @@ func (s *SyncTestSuite) TestSyncBatches() {
 	s.NoError(err)
 
 	// Recreate database
-	err = s.db.Teardown()
+	err = s.teardown()
 	s.NoError(err)
 	s.setupDB()
 
