@@ -312,6 +312,22 @@ func (s *EncoderTestSuite) TestSerializeCreate2Transfers() {
 	s.Equal(expected, serialized)
 }
 
+func (s *EncoderTestSuite) TestSerializeCreate2Transfers_InvalidLength() {
+	transfer := models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(50),
+			Fee:         models.MakeUint256(10),
+		},
+		ToStateID:   2,
+		ToPublicKey: models.PublicKey{1, 2, 3},
+	}
+
+	serialized, err := SerializeCreate2Transfers([]models.Create2Transfer{transfer}, []uint32{})
+	s.Equal(ErrInvalidSlicesLength, err)
+	s.Nil(serialized)
+}
+
 func (s *EncoderTestSuite) TestCommitmentBodyHash() {
 	accountRoot := utils.RandomHash()
 	signature := models.MakeRandomSignature()

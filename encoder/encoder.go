@@ -9,11 +9,14 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/pkg/errors"
 )
 
 var (
 	tUint256, _       = abi.NewType("uint256", "", nil)
 	tUint256Array4, _ = abi.NewType("uint256[4]", "", nil)
+
+	ErrInvalidSlicesLength = errors.New("invalid slices length")
 )
 
 func EncodeTransfer(tx *models.Transfer) ([]byte, error) {
@@ -211,6 +214,9 @@ func SerializeTransfers(transfers []models.Transfer) ([]byte, error) {
 }
 
 func SerializeCreate2Transfers(transfers []models.Create2Transfer, pubKeyIDs []uint32) ([]byte, error) {
+	if len(transfers) != len(pubKeyIDs) {
+		return nil, ErrInvalidSlicesLength
+	}
 	buf := make([]byte, 0, len(transfers)*16)
 
 	for i := range transfers {
