@@ -4,11 +4,8 @@ import (
 	"math/big"
 	"testing"
 
-	contractCreate2Transfer "github.com/Worldcoin/hubble-commander/contracts/frontend/create2transfer"
-	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
 	contractTransfer "github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
 	testtx "github.com/Worldcoin/hubble-commander/contracts/test/tx"
-	"github.com/Worldcoin/hubble-commander/contracts/test/types"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -21,12 +18,9 @@ import (
 type TransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	sim             *simulator.Simulator
-	transfer        *contractTransfer.FrontendTransfer
-	create2Transfer *contractCreate2Transfer.FrontendCreate2Transfer
-	generic         *generic.FrontendGeneric
-	testTx          *testtx.TestTx
-	testTypes       *types.TestTypes
+	sim      *simulator.Simulator
+	transfer *contractTransfer.FrontendTransfer
+	testTx   *testtx.TestTx
 }
 
 func (s *TransferTestSuite) SetupSuite() {
@@ -44,10 +38,7 @@ func (s *TransferTestSuite) SetupTest() {
 	s.NoError(err)
 
 	s.transfer = frontend.FrontendTransfer
-	s.create2Transfer = frontend.FrontendCreate2Transfer
-	s.generic = frontend.FrontendGeneric
 	s.testTx = test.TestTx
-	s.testTypes = test.TestTypes
 }
 
 func (s *TransferTestSuite) TearDownTest() {
