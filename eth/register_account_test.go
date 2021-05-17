@@ -29,12 +29,16 @@ func (s *RegisterAccountTestSuite) TearDownTest() {
 }
 
 func (s *RegisterAccountTestSuite) TestRegisterAccount() {
+	events, unsubscribe, err := s.client.WatchRegistrations(nil)
+	s.NoError(err)
+	defer unsubscribe()
+
 	publicKey := models.PublicKey{1, 2, 3}
-	pubKeyID, err := s.client.RegisterAccount(&publicKey)
+	pubKeyID, err := s.client.RegisterAccount(&publicKey, events)
 	s.NoError(err)
 	s.Equal(uint32(0), *pubKeyID)
 
-	pubKeyID, err = s.client.RegisterAccount(&publicKey)
+	pubKeyID, err = s.client.RegisterAccount(&publicKey, events)
 	s.NoError(err)
 	s.Equal(uint32(1), *pubKeyID)
 }

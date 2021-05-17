@@ -12,15 +12,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (c *Client) RegisterAccount(publicKey *models.PublicKey) (*uint32, error) {
-	ev := make(chan *accountregistry.AccountRegistryPubkeyRegistered)
-
-	sub, err := c.AccountRegistry.WatchPubkeyRegistered(&bind.WatchOpts{}, ev)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	defer sub.Unsubscribe()
-
+func (c *Client) RegisterAccount(publicKey *models.PublicKey, ev chan *accountregistry.AccountRegistryPubkeyRegistered) (*uint32, error) {
 	tx, err := c.AccountRegistry.Register(c.ChainConnection.GetAccount(), publicKey.BigInts())
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -39,4 +31,14 @@ func (c *Client) RegisterAccount(publicKey *models.PublicKey) (*uint32, error) {
 			return nil, errors.WithStack(fmt.Errorf("timeout"))
 		}
 	}
+}
+
+func (c *Client) WatchRegistrations(opts *bind.WatchOpts) (chan *accountregistry.AccountRegistryPubkeyRegistered, func(), error) {
+	ev := make(chan *accountregistry.AccountRegistryPubkeyRegistered)
+
+	sub, err := c.AccountRegistry.WatchPubkeyRegistered(opts, ev)
+	if err != nil {
+		return nil, nil, errors.WithStack(err)
+	}
+	return ev, sub.Unsubscribe, nil
 }
