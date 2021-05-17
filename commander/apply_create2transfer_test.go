@@ -125,14 +125,25 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ReturnsCorrectP
 func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_AccountNotExists() {
 	transfer := create2Transfer
 	transfer.ToPublicKey = models.PublicKey{10, 11, 12}
-	pubKeyID, err := getPubKeyID(s.storage, s.client.Client, &transfer, models.MakeUint256(1))
-	s.NoError(err)
+	pubKeyID, create2TransferErr, appErr := getPubKeyID(s.storage, s.client.Client, &transfer, models.MakeUint256(1))
+	s.NoError(create2TransferErr)
+	s.NoError(appErr)
 	s.Equal(uint32(0), *pubKeyID)
 }
 
-func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_AccountAlreadyExists() {
-	pubKeyID, err := getPubKeyID(s.storage, s.client.Client, &create2Transfer, feeReceiverTokenIndex)
-	s.NoError(err)
+func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_AccountForTokenIndexAlreadyExists() {
+	transfer := create2Transfer
+	transfer.ToPublicKey = models.PublicKey{2, 3, 4}
+	pubKeyID, create2TransferErr, appErr := getPubKeyID(s.storage, s.client.Client, &transfer, feeReceiverTokenIndex)
+	s.Equal(st.ErrAccountAlreadyExists, create2TransferErr)
+	s.NoError(appErr)
+	s.Nil(pubKeyID)
+}
+
+func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_AccountForTokenIndexNotExists() {
+	pubKeyID, create2TransferErr, appErr := getPubKeyID(s.storage, s.client.Client, &create2Transfer, models.MakeUint256(1))
+	s.NoError(create2TransferErr)
+	s.NoError(appErr)
 	s.Equal(uint32(2), *pubKeyID)
 }
 
