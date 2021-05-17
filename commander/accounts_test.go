@@ -16,6 +16,7 @@ import (
 type AccountsTestSuite struct {
 	*require.Assertions
 	suite.Suite
+	testDB     *postgres.TestDB
 	storage    *st.Storage
 	testClient *eth.TestClient
 }
@@ -25,14 +26,17 @@ func (s *AccountsTestSuite) SetupSuite() {
 }
 
 func (s *AccountsTestSuite) SetupTest() {
-	testDB, err := postgres.NewTestDB()
+	var err error
+	s.testDB, err = postgres.NewTestDB()
 	s.NoError(err)
-	s.storage = st.NewTestStorage(testDB.DB)
+	s.storage = st.NewTestStorage(s.testDB.DB)
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
 }
 
 func (s *AccountsTestSuite) TearDownTest() {
+	err := s.testDB.Teardown()
+	s.NoError(err)
 	s.testClient.Close()
 }
 
