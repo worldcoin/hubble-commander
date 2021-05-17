@@ -13,14 +13,13 @@ import (
 )
 
 var (
-	ErrFeeTooLow            = errors.New("fee must be greater than 0")
-	ErrNonceTooLow          = errors.New("nonce too low")
-	ErrNonceTooHigh         = errors.New("nonce too high")
-	ErrNotEnoughBalance     = errors.New("not enough balance")
-	ErrInvalidSignature     = errors.New("invalid signature")
-	ErrTransferToSelf       = errors.New("transfer to the same state id")
-	ErrNegativeAmount       = errors.New("amount must be positive")
-	ErrAccountAlreadyExists = errors.New("account already exists")
+	ErrFeeTooLow        = errors.New("fee must be greater than 0")
+	ErrNonceTooLow      = errors.New("nonce too low")
+	ErrNonceTooHigh     = errors.New("nonce too high")
+	ErrNotEnoughBalance = errors.New("not enough balance")
+	ErrInvalidSignature = errors.New("invalid signature")
+	ErrTransferToSelf   = errors.New("transfer to the same state id")
+	ErrNegativeAmount   = errors.New("amount must be positive")
 )
 
 func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
