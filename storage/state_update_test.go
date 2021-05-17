@@ -37,8 +37,8 @@ func (s *StateUpdateTestSuite) TestAddStateUpdate_AddAndRetrieve() {
 		CurrentRoot: common.BytesToHash([]byte{1, 2, 3}),
 		PrevRoot:    common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		PrevStateLeaf: models.StateLeaf{
-			StateID:   12,
-			DataHash:  [32]byte{1,2,3,4},
+			StateID:  12,
+			DataHash: [32]byte{1, 2, 3, 4},
 			UserState: models.UserState{
 				PubKeyID:   1,
 				TokenIndex: models.MakeUint256(1),
@@ -69,8 +69,8 @@ func (s *StateUpdateTestSuite) TestDeleteStateUpdate() {
 			CurrentRoot: common.BytesToHash([]byte{1}),
 			PrevRoot:    common.BytesToHash([]byte{2}),
 			PrevStateLeaf: models.StateLeaf{
-				StateID:   12,
-				DataHash:  [32]byte{1,2,3,4},
+				StateID:  12,
+				DataHash: [32]byte{1, 2, 3, 4},
 				UserState: models.UserState{
 					PubKeyID:   1,
 					TokenIndex: models.MakeUint256(1),
@@ -85,8 +85,8 @@ func (s *StateUpdateTestSuite) TestDeleteStateUpdate() {
 			CurrentRoot: common.BytesToHash([]byte{2}),
 			PrevRoot:    common.BytesToHash([]byte{2}),
 			PrevStateLeaf: models.StateLeaf{
-				StateID:   12,
-				DataHash:  [32]byte{1,2,3,4},
+				StateID:  12,
+				DataHash: [32]byte{1, 2, 3, 4},
 				UserState: models.UserState{
 					PubKeyID:   1,
 					TokenIndex: models.MakeUint256(1),
