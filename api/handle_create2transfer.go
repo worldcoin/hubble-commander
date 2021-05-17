@@ -17,7 +17,6 @@ func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*co
 		return nil, err
 	}
 
-	//TODO: add validation if given pubkey already has userState
 	if vErr := a.validateCreate2Transfer(create2Transfer); vErr != nil {
 		return nil, vErr
 	}
@@ -88,6 +87,9 @@ func (a *API) validateCreate2Transfer(create2Transfer *models.Create2Transfer) e
 		return vErr
 	}
 	if vErr := validateBalance(&create2Transfer.Amount, &create2Transfer.Fee, &senderState.UserState); vErr != nil {
+		return vErr
+	}
+	if vErr := a.validateToPublicKey(&create2Transfer.ToPublicKey, senderState.TokenIndex); vErr != nil {
 		return vErr
 	}
 	encodedCreate2Transfer, err := encoder.EncodeCreate2TransferForSigning(create2Transfer)

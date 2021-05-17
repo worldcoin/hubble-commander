@@ -13,13 +13,14 @@ import (
 )
 
 var (
-	ErrFeeTooLow        = errors.New("fee must be greater than 0")
-	ErrNonceTooLow      = errors.New("nonce too low")
-	ErrNonceTooHigh     = errors.New("nonce too high")
-	ErrNotEnoughBalance = errors.New("not enough balance")
-	ErrInvalidSignature = errors.New("invalid signature")
-	ErrTransferToSelf   = errors.New("transfer to the same state id")
-	ErrNegativeAmount   = errors.New("amount must be positive")
+	ErrFeeTooLow            = errors.New("fee must be greater than 0")
+	ErrNonceTooLow          = errors.New("nonce too low")
+	ErrNonceTooHigh         = errors.New("nonce too high")
+	ErrNotEnoughBalance     = errors.New("not enough balance")
+	ErrInvalidSignature     = errors.New("invalid signature")
+	ErrTransferToSelf       = errors.New("transfer to the same state id")
+	ErrNegativeAmount       = errors.New("amount must be positive")
+	ErrAccountAlreadyExists = errors.New("account already exists")
 )
 
 func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
@@ -109,6 +110,17 @@ func (a *API) validateSignature(encodedTransaction []byte, transactionSignature 
 	}
 	if !isValid {
 		return ErrInvalidSignature
+	}
+	return nil
+}
+
+func (a *API) validateToPublicKey(toPublicKey *models.PublicKey, tokenIndex models.Uint256) error {
+	exists, err := a.storage.AccountWithTokenExists(toPublicKey, tokenIndex)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return ErrAccountAlreadyExists
 	}
 	return nil
 }

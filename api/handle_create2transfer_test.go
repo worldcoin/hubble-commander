@@ -187,6 +187,16 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesBalance(
 	s.Equal(ErrNotEnoughBalance, err)
 }
 
+func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesToPublicKey() {
+	receiverUserState := s.userState
+	receiverUserState.PubKeyID = 10
+	err := s.tree.Set(2, receiverUserState)
+	s.NoError(err)
+
+	_, err = s.api.SendTransaction(dto.MakeTransaction(s.create2Transfer))
+	s.Equal(ErrAccountAlreadyExists, err)
+}
+
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesSignature() {
 	wallet, err := bls.NewRandomWallet(*s.domain)
 	s.NoError(err)
