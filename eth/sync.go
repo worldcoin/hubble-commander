@@ -20,23 +20,22 @@ func (c *Client) GetBatches() ([]DecodedBatch, error) {
 		return nil, err
 	}
 
+	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
 	res := make([]DecodedBatch, 0)
 	for it.Next() {
 		txHash := it.Event.Raw.TxHash
 
-		// TODO: handle internal transactions
 		tx, _, err := c.ChainConnection.GetBackend().TransactionByHash(context.Background(), txHash)
 		if err != nil {
 			return nil, err
 		}
 
-		rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
 		if !bytes.Equal(tx.Data()[:4], rollupAbi.Methods["submitTransfer"].ID) {
-			continue // TODO: handle internal transactions
+			continue // TODO handle internal transactions
 		}
 
 		commitments, err := encoder.DecodeBatch(tx.Data())
