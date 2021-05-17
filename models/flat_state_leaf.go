@@ -4,9 +4,9 @@ import "github.com/ethereum/go-ethereum/common"
 
 type FlatStateLeaf struct {
 	StateID    uint32
-	DataHash   common.Hash
-	PubKeyID   uint32  `badgerhold:"index"`
-	TokenIndex Uint256 `badgerhold:"index"`
+	DataHash   common.Hash `badgerhold:"index"`
+	PubKeyID   uint32      `badgerhold:"index"`
+	TokenIndex Uint256     `badgerhold:"index"`
 	Balance    Uint256
 	Nonce      Uint256
 }

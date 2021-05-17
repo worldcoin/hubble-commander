@@ -36,7 +36,7 @@ func (s *StorageTestSuite) TearDownTest() {
 
 func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	leaf := &models.StateLeaf{
-		StateID: 0,
+		StateID:  0,
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
 			PubKeyID:   1,
@@ -75,7 +75,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 
 func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 	leaf := &models.StateLeaf{
-		StateID: 0,
+		StateID:  0,
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
 			PubKeyID:   1,
@@ -109,7 +109,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 	s.NoError(err)
 
 	leafOne := &models.StateLeaf{
-		StateID: 0,
+		StateID:  0,
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
 			PubKeyID:   1,
@@ -119,7 +119,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 		},
 	}
 	leafTwo := &models.StateLeaf{
-		StateID: 1,
+		StateID:  1,
 		DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 		UserState: models.UserState{
 			PubKeyID:   2,

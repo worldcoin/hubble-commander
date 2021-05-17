@@ -162,6 +162,7 @@ func (s *AccountTestSuite) Test_GetUnusedPubKeyID() {
 	}
 
 	leaf := &models.StateLeaf{
+		StateID:  0,
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
 			PubKeyID:   1,
@@ -171,6 +172,7 @@ func (s *AccountTestSuite) Test_GetUnusedPubKeyID() {
 		},
 	}
 	leaf2 := &models.StateLeaf{
+		StateID:  1,
 		DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 		UserState: models.UserState{
 			PubKeyID:   2,

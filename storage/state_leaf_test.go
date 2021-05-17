@@ -87,7 +87,7 @@ func (s *StateLeafTestSuite) TestUpsertStateLeaf_UpdateAndRetrieve() {
 	}
 	err = s.storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
-	
+
 	leaf.UserState.Balance = models.MakeUint256(320)
 	err = s.storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
@@ -103,7 +103,7 @@ func (s *StateLeafTestSuite) TestGetStateLeafByStateID_ReturnsCorrectStruct() {
 	s.NoError(err)
 
 	leaf := &models.StateLeaf{
-		StateID: 0,
+		StateID:  0,
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
 			PubKeyID:   1,
