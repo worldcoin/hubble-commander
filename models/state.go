@@ -17,7 +17,7 @@ type StateNode struct {
 }
 
 type StateLeaf struct {
-	StateID  MerklePath
+	StateID  uint32
 	DataHash common.Hash
 	UserState
 }

@@ -3,7 +3,7 @@ package models
 import "github.com/ethereum/go-ethereum/common"
 
 type FlatStateLeaf struct {
-	StateID    MerklePath
+	StateID    uint32
 	DataHash   common.Hash
 	PubKeyID   uint32  `badgerhold:"index"`
 	TokenIndex Uint256 `badgerhold:"index"`
