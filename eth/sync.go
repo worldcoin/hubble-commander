@@ -8,7 +8,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
@@ -43,18 +42,15 @@ func (c *Client) GetBatches() ([]DecodedBatch, error) {
 			return nil, err
 		}
 
-		meta, err := c.Rollup.Batches(nil, it.Event.BatchID)
+		batch, err := c.GetBatch(models.NewUint256FromBig(*it.Event.BatchID))
 		if err != nil {
 			return nil, err
 		}
 
 		res = append(res, DecodedBatch{
-			Hash:              common.BytesToHash(meta.CommitmentRoot[:]),
-			Type:              txtype.TransactionType(it.Event.BatchType),
-			ID:                models.MakeUint256FromBig(*it.Event.BatchID),
-			FinalisationBlock: encoder.DecodeMeta(meta.Meta).FinaliseOn,
-			AccountRoot:       common.BytesToHash(it.Event.AccountRoot[:]),
-			Commitments:       commitments,
+			Batch:       *batch,
+			AccountRoot: common.BytesToHash(it.Event.AccountRoot[:]),
+			Commitments: commitments,
 		})
 	}
 
@@ -62,10 +58,7 @@ func (c *Client) GetBatches() ([]DecodedBatch, error) {
 }
 
 type DecodedBatch struct {
-	Hash              common.Hash
-	Type              txtype.TransactionType
-	ID                models.Uint256
-	FinalisationBlock uint32
-	AccountRoot       common.Hash
-	Commitments       []encoder.DecodedCommitment
+	models.Batch
+	AccountRoot common.Hash
+	Commitments []encoder.DecodedCommitment
 }
