@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	err "github.com/pkg/errors"
+	e "github.com/pkg/errors"
 )
 
 type NotFoundError struct {
@@ -12,7 +12,7 @@ type NotFoundError struct {
 }
 
 func NewNotFoundError(field string) error {
-	return err.WithStack(&NotFoundError{field: field})
+	return e.WithStack(&NotFoundError{field: field})
 }
 
 func (n *NotFoundError) Error() string {
