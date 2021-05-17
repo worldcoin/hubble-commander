@@ -83,7 +83,7 @@ func SyncBatches(storage *st.Storage, client *eth.Client, cfg *config.RollupConf
 			}
 		}
 
-		log.Printf("synced new batch from chain #%s: %d commitments included", batch.ID.String(), len(batch.Commitments))
+		log.Printf("Synced new batch #%s from chain: %d commitments included", batch.ID.String(), len(batch.Commitments))
 	}
 
 	return nil
