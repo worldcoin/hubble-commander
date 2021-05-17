@@ -48,7 +48,7 @@ func EncodeTransferForSigning(tx *models.Transfer) ([]byte, error) {
 	)
 }
 
-// Encodes a transfer in compact format (without signatures) for the inclusion in the commitment
+// EncodeTransferForCommitment Encodes a transfer in compact format (without signatures) for the inclusion in the commitment
 func EncodeTransferForCommitment(transfer *models.Transfer) ([]byte, error) {
 	amount, err := EncodeDecimal(transfer.Amount)
 	if err != nil {
@@ -105,18 +105,18 @@ func SerializeTransfers(transfers []models.Transfer) ([]byte, error) {
 }
 
 func DeserializeTransfers(data []byte) ([]models.Transfer, error) {
-	if len(data)%12 != 0 {
+	dataLength := len(data)
+	if dataLength%12 != 0 {
 		return nil, fmt.Errorf("invalid data length")
 	}
-	count := len(data) / 12
+	transfersCount := dataLength / 12
 
-	res := make([]models.Transfer, 0, count)
-	for i := 0; i < count; i++ {
+	res := make([]models.Transfer, 0, transfersCount)
+	for i := 0; i < transfersCount; i++ {
 		transfer, err := DecodeTransferFromCommitment(data[i*12 : (i+1)*12])
 		if err != nil {
 			return nil, err
 		}
-
 		res = append(res, *transfer)
 	}
 
