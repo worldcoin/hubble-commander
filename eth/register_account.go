@@ -13,7 +13,38 @@ import (
 )
 
 func (c *Client) RegisterAccount(publicKey *models.PublicKey, ev chan *accountregistry.AccountRegistryPubkeyRegistered) (*uint32, error) {
-	tx, err := c.AccountRegistry.Register(c.ChainConnection.GetAccount(), publicKey.BigInts())
+	return RegisterAccount(c.ChainConnection.GetAccount(), c.AccountRegistry, publicKey, ev)
+}
+
+func (c *Client) WatchRegistrations(opts *bind.WatchOpts) (
+	registrations chan *accountregistry.AccountRegistryPubkeyRegistered,
+	unsubscribe func(),
+	err error,
+) {
+	return WatchRegistrations(c.AccountRegistry, opts)
+}
+
+func WatchRegistrations(accountRegistry *accountregistry.AccountRegistry, opts *bind.WatchOpts) (
+	registrations chan *accountregistry.AccountRegistryPubkeyRegistered,
+	unsubscribe func(),
+	err error,
+) {
+	ev := make(chan *accountregistry.AccountRegistryPubkeyRegistered)
+
+	sub, err := accountRegistry.WatchPubkeyRegistered(opts, ev)
+	if err != nil {
+		return nil, nil, errors.WithStack(err)
+	}
+	return ev, sub.Unsubscribe, nil
+}
+
+func RegisterAccount(
+	opts *bind.TransactOpts,
+	accountRegistry *accountregistry.AccountRegistry,
+	publicKey *models.PublicKey,
+	ev chan *accountregistry.AccountRegistryPubkeyRegistered,
+) (*uint32, error) {
+	tx, err := accountRegistry.Register(opts, publicKey.BigInts())
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -31,18 +62,4 @@ func (c *Client) RegisterAccount(publicKey *models.PublicKey, ev chan *accountre
 			return nil, errors.WithStack(fmt.Errorf("timeout"))
 		}
 	}
-}
-
-func (c *Client) WatchRegistrations(opts *bind.WatchOpts) (
-	registrations chan *accountregistry.AccountRegistryPubkeyRegistered,
-	unsubscribe func(),
-	err error,
-) {
-	ev := make(chan *accountregistry.AccountRegistryPubkeyRegistered)
-
-	sub, err := c.AccountRegistry.WatchPubkeyRegistered(opts, ev)
-	if err != nil {
-		return nil, nil, errors.WithStack(err)
-	}
-	return ev, sub.Unsubscribe, nil
 }
