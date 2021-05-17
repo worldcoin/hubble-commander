@@ -34,7 +34,7 @@ func createCreate2TransferCommitments(
 			return nil, err
 		}
 
-		appliedTxs, invalidTxs, _, feeReceiverStateID, err := ApplyCreate2Transfers(storage, client, pendingTransfers, cfg)
+		appliedTxs, invalidTxs, addedPubKeyIDs, feeReceiverStateID, err := ApplyCreate2Transfers(storage, client, pendingTransfers, cfg)
 		if err != nil {
 			return nil, err
 		}
@@ -49,8 +49,7 @@ func createCreate2TransferCommitments(
 
 		pendingTransfers = removeCreate2Transfer(pendingTransfers, append(appliedTxs, invalidTxs...))
 
-		//TODO: fill pubKeyIDs slice
-		serializedTxs, err := encoder.SerializeCreate2Transfers(appliedTxs, make([]uint32, len(appliedTxs)))
+		serializedTxs, err := encoder.SerializeCreate2Transfers(appliedTxs, addedPubKeyIDs)
 		if err != nil {
 			return nil, err
 		}
