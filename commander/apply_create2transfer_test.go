@@ -123,7 +123,8 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer()
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ReturnsCorrectPubKeyID() {
-	addedPubKeyID, transferError, appError := ApplyCreate2Transfer(s.storage, s.client.Client, s.events, &create2Transfer, feeReceiverTokenIndex)
+	addedPubKeyID, transferError, appError :=
+		ApplyCreate2Transfer(s.storage, s.client.Client, s.events, &create2Transfer, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)
 	s.Equal(uint32(2), *addedPubKeyID)

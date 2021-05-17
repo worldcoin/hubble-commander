@@ -33,7 +33,11 @@ func (c *Client) RegisterAccount(publicKey *models.PublicKey, ev chan *accountre
 	}
 }
 
-func (c *Client) WatchRegistrations(opts *bind.WatchOpts) (chan *accountregistry.AccountRegistryPubkeyRegistered, func(), error) {
+func (c *Client) WatchRegistrations(opts *bind.WatchOpts) (
+	registrations chan *accountregistry.AccountRegistryPubkeyRegistered,
+	unsubscribe func(),
+	err error,
+) {
 	ev := make(chan *accountregistry.AccountRegistryPubkeyRegistered)
 
 	sub, err := c.AccountRegistry.WatchPubkeyRegistered(opts, ev)

@@ -11,11 +11,11 @@ import (
 func ApplyCreate2Transfer(
 	storage *st.Storage,
 	client *eth.Client,
-	events chan *accountregistry.AccountRegistryPubkeyRegistered,
+	registrations chan *accountregistry.AccountRegistryPubkeyRegistered,
 	create2Transfer *models.Create2Transfer,
 	commitmentTokenIndex models.Uint256,
 ) (addedPubKeyID *uint32, create2TransferError, appError error) {
-	pubKeyID, create2TransferError, appError := getPubKeyID(storage, client, events, create2Transfer, commitmentTokenIndex)
+	pubKeyID, create2TransferError, appError := getPubKeyID(storage, client, registrations, create2Transfer, commitmentTokenIndex)
 	if create2TransferError != nil || appError != nil {
 		return nil, create2TransferError, appError
 	}
