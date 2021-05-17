@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDecodeBatch(t *testing.T) {
+func TestDecodeBatchCalldata(t *testing.T) {
 	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
 	require.NoError(t, err)
 
@@ -27,7 +27,7 @@ func TestDecodeBatch(t *testing.T) {
 	calldata, err := rollupAbi.Pack("submitTransfer", arg1, arg2, arg3, arg4)
 	require.NoError(t, err)
 
-	decodedCommitments, err := DecodeBatch(calldata)
+	decodedCommitments, err := DecodeBatchCalldata(calldata)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(decodedCommitments))
 

@@ -37,7 +37,7 @@ func (c *Client) GetBatches() ([]DecodedBatch, error) {
 			continue // TODO handle internal transactions
 		}
 
-		commitments, err := encoder.DecodeBatch(tx.Data())
+		commitments, err := encoder.DecodeBatchCalldata(tx.Data())
 		if err != nil {
 			return nil, err
 		}

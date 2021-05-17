@@ -18,12 +18,12 @@ type DecodedCommitment struct {
 	Transactions      []byte
 }
 
-// DecodeBatch
+// DecodeBatchCalldata
 //   bytes32[] stateRoots,
 //   uint256[2][] signatures,
 //   uint256[] feeReceivers,
 //   bytes[] txss
-func DecodeBatch(calldata []byte) ([]DecodedCommitment, error) {
+func DecodeBatchCalldata(calldata []byte) ([]DecodedCommitment, error) {
 	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
 	if err != nil {
 		return nil, errors.WithStack(err)
