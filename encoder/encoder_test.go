@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
-	testtx "github.com/Worldcoin/hubble-commander/contracts/test/tx"
 	"github.com/Worldcoin/hubble-commander/contracts/test/types"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -22,7 +21,6 @@ type EncoderTestSuite struct {
 	suite.Suite
 	sim       *simulator.Simulator
 	generic   *generic.FrontendGeneric
-	testTx    *testtx.TestTx
 	testTypes *types.TestTypes
 }
 
@@ -41,7 +39,6 @@ func (s *EncoderTestSuite) SetupTest() {
 	s.NoError(err)
 
 	s.generic = frontend.FrontendGeneric
-	s.testTx = test.TestTx
 	s.testTypes = test.TestTypes
 }
 
@@ -62,27 +59,6 @@ func (s *EncoderTestSuite) TestEncodeUserState() {
 	expected, err := s.generic.Encode(nil, state)
 	s.NoError(err)
 	s.Equal(expected, bytes)
-}
-
-func (s *EncoderTestSuite) TestEncodeDecimal() {
-	num := models.MakeUint256(123400000)
-	encoded, err := EncodeDecimal(num)
-	s.NoError(err)
-
-	expected, err := s.testTx.TestEncodeDecimal(nil, &num.Int)
-	s.NoError(err)
-
-	s.Equal(uint16(expected.Uint64()), encoded)
-}
-
-func (s *EncoderTestSuite) TestEncodeAndDecodeDecimal() {
-	num := models.MakeUint256(123400000)
-	encoded, err := EncodeDecimal(num)
-	s.NoError(err)
-
-	decoded := DecodeDecimal(encoded)
-
-	s.Equal(num, decoded)
 }
 
 func (s *EncoderTestSuite) TestCommitmentBodyHash() {
