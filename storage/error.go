@@ -3,16 +3,14 @@ package storage
 import (
 	"errors"
 	"fmt"
-
-	e "github.com/pkg/errors"
 )
 
 type NotFoundError struct {
 	field string
 }
 
-func NewNotFoundError(field string) error {
-	return e.WithStack(&NotFoundError{field: field})
+func NewNotFoundError(field string) *NotFoundError {
+	return &NotFoundError{field: field}
 }
 
 func (n *NotFoundError) Error() string {
