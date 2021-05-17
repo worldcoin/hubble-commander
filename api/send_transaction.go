@@ -113,14 +113,3 @@ func (a *API) validateSignature(encodedTransaction []byte, transactionSignature 
 	}
 	return nil
 }
-
-func (a *API) validateToPublicKey(toPublicKey *models.PublicKey, tokenIndex models.Uint256) error {
-	exists, err := a.storage.AccountWithTokenExists(toPublicKey, tokenIndex)
-	if err != nil {
-		return err
-	}
-	if exists {
-		return ErrAccountAlreadyExists
-	}
-	return nil
-}
