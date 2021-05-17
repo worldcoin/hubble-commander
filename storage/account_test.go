@@ -129,7 +129,7 @@ func (s *AccountTestSuite) Test_GetUnusedPubKeyID_NoUnusedPublicIDs() {
 			Nonce:      models.MakeUint256(0),
 		},
 	}
-	err = s.storage.AddStateLeaf(leaf)
+	err = s.storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
 
 	_, err = s.storage.GetUnusedPubKeyID(&models.PublicKey{1, 2, 3})
@@ -179,9 +179,9 @@ func (s *AccountTestSuite) Test_GetUnusedPubKeyID() {
 			Nonce:      models.MakeUint256(0),
 		},
 	}
-	err := s.storage.AddStateLeaf(leaf)
+	err := s.storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
-	err = s.storage.AddStateLeaf(leaf2)
+	err = s.storage.UpsertStateLeaf(leaf2)
 	s.NoError(err)
 
 	pubKeyID, err := s.storage.GetUnusedPubKeyID(&accounts[1].PublicKey)

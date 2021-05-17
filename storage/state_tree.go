@@ -115,12 +115,12 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (err error)
 		return
 	}
 
-	currentLeaf, err := NewStateLeaf(state)
+	currentLeaf, err := NewStateLeaf(index, state)
 	if err != nil {
 		return
 	}
 
-	err = s.storage.AddStateLeaf(currentLeaf)
+	err = s.storage.UpsertStateLeaf(currentLeaf)
 	if err != nil {
 		return
 	}
@@ -208,13 +208,14 @@ func (s *StateTree) calculateParentHash(
 	return utils.HashTwo(witnessHash, *currentHash)
 }
 
-func NewStateLeaf(state *models.UserState) (*models.StateLeaf, error) {
+func NewStateLeaf(stateID uint32, state *models.UserState) (*models.StateLeaf, error) {
 	encodedState, err := encoder.EncodeUserState(toContractUserState(state))
 	if err != nil {
 		return nil, err
 	}
 	dataHash := crypto.Keccak256Hash(encodedState)
 	return &models.StateLeaf{
+		StateID:   stateID,
 		DataHash:  dataHash,
 		UserState: *state,
 	}, nil

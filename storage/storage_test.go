@@ -47,7 +47,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 
 	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
-	err = storage.AddStateLeaf(leaf)
+	err = storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
 	err = storage.AddAccountIfNotExists(&account2)
 	s.NoError(err)
@@ -85,7 +85,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 
 	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
-	err = storage.AddStateLeaf(leaf)
+	err = storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
 	err = storage.AddAccountIfNotExists(&account2)
 	s.NoError(err)
@@ -128,13 +128,13 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
 
-	err = storage.AddStateLeaf(leafOne)
+	err = storage.UpsertStateLeaf(leafOne)
 	s.NoError(err)
 
 	nestedTx, nestedStorage, err := storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
 
-	err = nestedStorage.AddStateLeaf(leafTwo)
+	err = nestedStorage.UpsertStateLeaf(leafTwo)
 	s.NoError(err)
 
 	nestedTx.Rollback(&err)

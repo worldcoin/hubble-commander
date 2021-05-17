@@ -81,11 +81,11 @@ func (s *GetUserStatesTestSuite) TestGetUserStates() {
 		},
 	}
 
-	err = s.api.storage.AddStateLeaf(&leaves[0])
+	err = s.api.storage.UpsertStateLeaf(&leaves[0])
 	s.NoError(err)
-	err = s.api.storage.AddStateLeaf(&leaves[1])
+	err = s.api.storage.UpsertStateLeaf(&leaves[1])
 	s.NoError(err)
-	err = s.api.storage.AddStateLeaf(&leaves[2])
+	err = s.api.storage.UpsertStateLeaf(&leaves[2])
 	s.NoError(err)
 
 	path, err := models.NewMerklePath("00")

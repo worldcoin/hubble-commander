@@ -48,11 +48,12 @@ func (s *StateLeafTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *StateLeafTestSuite) TestAddStateLeaf_AddAndRetrieve() {
+func (s *StateLeafTestSuite) TestUpsertStateLeaf_AddAndRetrieve() {
 	err := s.storage.AddAccountIfNotExists(&account1)
 	s.NoError(err)
 
 	leaf := &models.StateLeaf{
+		StateID:  0,
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
 			PubKeyID:   1,
@@ -61,27 +62,48 @@ func (s *StateLeafTestSuite) TestAddStateLeaf_AddAndRetrieve() {
 			Nonce:      models.MakeUint256(0),
 		},
 	}
-	err = s.storage.AddStateLeaf(leaf)
+	err = s.storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateLeafByHash(leaf.DataHash)
+	res, err := s.storage.GetStateLeafByStateID(leaf.StateID)
 	s.NoError(err)
 
 	s.Equal(leaf, res)
 }
 
-func (s *StateLeafTestSuite) TestGetStateLeafByHash_NonExistentLeaf() {
-	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
-	res, err := s.storage.GetStateLeafByHash(hash)
-	s.Equal(NewNotFoundError("state leaf"), err)
-	s.Nil(res)
-}
-
-func (s *StateLeafTestSuite) TestGetStateLeafByPath_ReturnsCorrectStruct() {
+func (s *StateLeafTestSuite) TestUpsertStateLeaf_UpdateAndRetrieve() {
 	err := s.storage.AddAccountIfNotExists(&account1)
 	s.NoError(err)
 
 	leaf := &models.StateLeaf{
+		StateID:  0,
+		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
+		UserState: models.UserState{
+			PubKeyID:   1,
+			TokenIndex: models.MakeUint256(1),
+			Balance:    models.MakeUint256(420),
+			Nonce:      models.MakeUint256(0),
+		},
+	}
+	err = s.storage.UpsertStateLeaf(leaf)
+	s.NoError(err)
+	
+	leaf.UserState.Balance = models.MakeUint256(320)
+	err = s.storage.UpsertStateLeaf(leaf)
+	s.NoError(err)
+
+	res, err := s.storage.GetStateLeafByStateID(leaf.StateID)
+	s.NoError(err)
+
+	s.Equal(leaf, res)
+}
+
+func (s *StateLeafTestSuite) TestGetStateLeafByStateID_ReturnsCorrectStruct() {
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
+
+	leaf := &models.StateLeaf{
+		StateID: 0,
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
 			PubKeyID:   1,
@@ -98,21 +120,19 @@ func (s *StateLeafTestSuite) TestGetStateLeafByPath_ReturnsCorrectStruct() {
 		DataHash:   leaf.DataHash,
 	}
 
-	err = s.storage.AddStateLeaf(leaf)
+	err = s.storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
 
 	err = s.storage.AddStateNode(node)
 	s.NoError(err)
 
-	actual, err := s.storage.GetStateLeafByPath(path)
+	actual, err := s.storage.GetStateLeafByStateID(leaf.StateID)
 	s.NoError(err)
 	s.Equal(leaf, actual)
 }
 
-func (s *StateLeafTestSuite) TestGetStateLeafByPath_NonExistentLeaf() {
-	path, err := models.NewMerklePath(strings.Repeat("0", 32))
-	s.NoError(err)
-	_, err = s.storage.GetStateLeafByPath(path)
+func (s *StateLeafTestSuite) TestGetStateLeafByStateID_NonExistentLeaf() {
+	_, err := s.storage.GetStateLeafByStateID(0)
 	s.Equal(NewNotFoundError("state leaf"), err)
 }
 
