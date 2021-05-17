@@ -101,13 +101,30 @@ func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey) (*uint32, error
 	return &firstAvailablePubKeyID, nil
 }
 
-func (s *Storage) DoesAccountExist(publicKey *models.PublicKey) (bool, error) {
+func (s *Storage) AccountExists(publicKey *models.PublicKey) (bool, error) {
 	res := make([]bool, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Select("1").
-			Prefix("select exists(").
+			Prefix("SELECT EXISTS(").
 			From("account").
 			Where(squirrel.Eq{"public_key": publicKey}).
+			Suffix(")"),
+	).Into(&res)
+	if err != nil {
+		return false, err
+	}
+	return res[0], err
+}
+
+func (s *Storage) AccountWithTokenExists(publicKey *models.PublicKey, tokenIndex models.Uint256) (bool, error) {
+	res := make([]bool, 0, 1)
+	err := s.Postgres.Query(
+		s.QB.Select("1").
+			Prefix("SELECT EXISTS(").
+			From("account").
+			JoinClause("NATURAL JOIN state_leaf").
+			Where(squirrel.Eq{"public_key": publicKey}).
+			Where(squirrel.Eq{"state_leaf.token_index": tokenIndex}).
 			Suffix(")"),
 	).Into(&res)
 	if err != nil {

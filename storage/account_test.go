@@ -244,13 +244,50 @@ func (s *AccountTestSuite) Test_DoesAccountExist_Exists() {
 	err := s.storage.AddAccountIfNotExists(&account1)
 	s.NoError(err)
 
-	exists, err := s.storage.DoesAccountExist(&account1.PublicKey)
+	exists, err := s.storage.AccountExists(&account1.PublicKey)
 	s.NoError(err)
 	s.True(exists)
 }
 
-func (s *AccountTestSuite) Test_DoesAccountExist_NotExists() {
-	exists, err := s.storage.DoesAccountExist(&account1.PublicKey)
+func (s *AccountTestSuite) TestAccountExists_NotExists() {
+	exists, err := s.storage.AccountExists(&account1.PublicKey)
+	s.NoError(err)
+	s.False(exists)
+}
+
+func (s *AccountTestSuite) TestAccountWithTokenExists_Exists() {
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
+
+	tokenIndex := models.MakeUint256(5)
+	leaf := &models.StateLeaf{
+		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
+		UserState: models.UserState{
+			PubKeyID:   1,
+			TokenIndex: tokenIndex,
+			Balance:    models.MakeUint256(420),
+			Nonce:      models.MakeUint256(0),
+		},
+	}
+	err = s.storage.AddStateLeaf(leaf)
+	s.NoError(err)
+
+	exists, err := s.storage.AccountWithTokenExists(&account1.PublicKey, tokenIndex)
+	s.NoError(err)
+	s.True(exists)
+}
+
+func (s *AccountTestSuite) TestAccountWithTokenExists_AccountNotExists() {
+	exists, err := s.storage.AccountWithTokenExists(&account1.PublicKey, models.MakeUint256(1))
+	s.NoError(err)
+	s.False(exists)
+}
+
+func (s *AccountTestSuite) TestAccountWithTokenExists_StateLeafWithTokenNotExists() {
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
+
+	exists, err := s.storage.AccountWithTokenExists(&account1.PublicKey, models.MakeUint256(1))
 	s.NoError(err)
 	s.False(exists)
 }
