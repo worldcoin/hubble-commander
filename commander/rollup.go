@@ -99,7 +99,12 @@ func buildTransferCommitments(storage *st.Storage, cfg *config.RollupConfig, dom
 	return createTransferCommitments(pendingTransfers, storage, cfg, domain)
 }
 
-func buildCreate2TransfersCommitments(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig, domain bls.Domain) ([]models.Commitment, error) {
+func buildCreate2TransfersCommitments(
+	storage *st.Storage,
+	client *eth.Client,
+	cfg *config.RollupConfig,
+	domain bls.Domain,
+) ([]models.Commitment, error) {
 	pendingTransfers, err := storage.GetPendingCreate2Transfers()
 	if err != nil {
 		return nil, err

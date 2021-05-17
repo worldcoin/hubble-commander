@@ -92,7 +92,7 @@ func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AllValid() {
-	transfers := generateValidCreate2Transfers(3, s.publicKey)
+	transfers := generateValidCreate2Transfers(3, &s.publicKey)
 
 	validTransfers, invalidTransfers, addedAccounts, _, err := ApplyCreate2Transfers(s.storage, s.client.Client, transfers, s.cfg)
 	s.NoError(err)
@@ -103,8 +103,8 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AllValid() {
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
-	transfers := generateValidCreate2Transfers(2, s.publicKey)
-	transfers = append(transfers, generateInvalidCreate2Transfers(3, s.publicKey)...)
+	transfers := generateValidCreate2Transfers(2, &s.publicKey)
+	transfers = append(transfers, generateInvalidCreate2Transfers(3, &s.publicKey)...)
 
 	validTransfers, invalidTransfers, addedAccounts, _, err := ApplyCreate2Transfers(s.storage, s.client.Client, transfers, s.cfg)
 	s.NoError(err)
@@ -115,7 +115,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_MoreThanSpecifiedInConfigTxsPerCommitment() {
-	transfers := generateValidCreate2Transfers(13, s.publicKey)
+	transfers := generateValidCreate2Transfers(13, &s.publicKey)
 
 	validTransfers, invalidTransfers, addedAccounts, _, err := ApplyCreate2Transfers(s.storage, s.client.Client, transfers, s.cfg)
 	s.NoError(err)
@@ -129,8 +129,8 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_MoreThanSpeci
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransferErrors() {
-	transfers := generateValidCreate2Transfers(3, s.publicKey)
-	transfers = append(transfers, generateInvalidCreate2Transfers(2, s.publicKey)...)
+	transfers := generateValidCreate2Transfers(3, &s.publicKey)
+	transfers = append(transfers, generateInvalidCreate2Transfers(2, &s.publicKey)...)
 
 	for i := range transfers {
 		err := s.storage.AddCreate2Transfer(&transfers[i])
@@ -159,7 +159,7 @@ func TestApplyCreate2TransfersTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplyCreate2TransfersTestSuite))
 }
 
-func generateValidCreate2Transfers(transfersAmount int, publicKey models.PublicKey) []models.Create2Transfer {
+func generateValidCreate2Transfers(transfersAmount int, publicKey *models.PublicKey) []models.Create2Transfer {
 	transfers := make([]models.Create2Transfer, 0, transfersAmount)
 	for i := 0; i < transfersAmount; i++ {
 		transfer := models.Create2Transfer{
@@ -172,14 +172,14 @@ func generateValidCreate2Transfers(transfersAmount int, publicKey models.PublicK
 				Nonce:       models.MakeUint256(int64(i)),
 			},
 			ToStateID:   2,
-			ToPublicKey: publicKey,
+			ToPublicKey: *publicKey,
 		}
 		transfers = append(transfers, transfer)
 	}
 	return transfers
 }
 
-func generateInvalidCreate2Transfers(transfersAmount int, publicKey models.PublicKey) []models.Create2Transfer {
+func generateInvalidCreate2Transfers(transfersAmount int, publicKey *models.PublicKey) []models.Create2Transfer {
 	transfers := make([]models.Create2Transfer, 0, transfersAmount)
 	for i := 0; i < transfersAmount; i++ {
 		transfer := models.Create2Transfer{
@@ -192,7 +192,7 @@ func generateInvalidCreate2Transfers(transfersAmount int, publicKey models.Publi
 				Nonce:       models.MakeUint256(0),
 			},
 			ToStateID:   2,
-			ToPublicKey: publicKey,
+			ToPublicKey: *publicKey,
 		}
 		transfers = append(transfers, transfer)
 	}

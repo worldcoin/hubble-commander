@@ -12,7 +12,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (c *Client) RegisterAccount(publicKey models.PublicKey) (*uint32, error) {
+func (c *Client) RegisterAccount(publicKey *models.PublicKey) (*uint32, error) {
 	ev := make(chan *accountregistry.AccountRegistryPubkeyRegistered)
 
 	sub, err := c.AccountRegistry.WatchPubkeyRegistered(&bind.WatchOpts{}, ev)
