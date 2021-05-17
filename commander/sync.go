@@ -13,9 +13,9 @@ import (
 )
 
 func SyncBatches(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
-	// TODO: Start a database transaction
+	// TODO start a database transaction
 
-	// TODO: Query batches starting from the submission block of the latest known batch.
+	// TODO query batches starting from the submission block of the latest known batch.
 	newBatches, err := client.GetBatches()
 	if err != nil {
 		return err
@@ -38,17 +38,13 @@ func SyncBatches(storage *st.Storage, client *eth.Client, cfg *config.RollupConf
 		}
 
 		if batch.Type != txtype.Transfer {
-			return fmt.Errorf("unsupported batch type for sync: " + txtype.TransactionTypes[batch.Type])
+			// TODO support create2Transfers
+			return fmt.Errorf("unsupported batch type for sync: %s", batch.Type)
 		}
 
 		// Apply batch
 
-		err = storage.AddBatch(&models.Batch{
-			Hash:              batch.Hash,
-			Type:              batch.Type,
-			ID:                batch.ID,
-			FinalisationBlock: batch.FinalisationBlock,
-		})
+		err = storage.AddBatch(&batch.Batch)
 		if err != nil {
 			return err
 		}
