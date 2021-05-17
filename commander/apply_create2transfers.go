@@ -22,6 +22,11 @@ func ApplyCreate2Transfers(
 	if len(transfers) == 0 {
 		return
 	}
+	events, unsubscribe, err := client.WatchRegistrations(nil)
+	if err != nil {
+		return
+	}
+	defer unsubscribe()
 
 	stateTree := st.NewStateTree(storage)
 	appliedTransfers = make([]models.Create2Transfer, 0, cfg.TxsPerCommitment)
@@ -38,7 +43,7 @@ func ApplyCreate2Transfers(
 	for i := range transfers {
 		transfer := transfers[i]
 
-		addedPubKeyID, transferError, appError := ApplyCreate2Transfer(storage, client, &transfer, commitmentTokenIndex)
+		addedPubKeyID, transferError, appError := ApplyCreate2Transfer(storage, client, events, &transfer, commitmentTokenIndex)
 		if appError != nil {
 			return nil, nil, nil, nil, appError
 		}

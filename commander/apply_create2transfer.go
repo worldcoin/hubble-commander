@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -10,10 +11,11 @@ import (
 func ApplyCreate2Transfer(
 	storage *st.Storage,
 	client *eth.Client,
+	events chan *accountregistry.AccountRegistryPubkeyRegistered,
 	create2Transfer *models.Create2Transfer,
 	commitmentTokenIndex models.Uint256,
 ) (addedPubKeyID *uint32, create2TransferError, appError error) {
-	pubKeyID, create2TransferError, appError := getPubKeyID(storage, client, create2Transfer, commitmentTokenIndex)
+	pubKeyID, create2TransferError, appError := getPubKeyID(storage, client, events, create2Transfer, commitmentTokenIndex)
 	if create2TransferError != nil || appError != nil {
 		return nil, create2TransferError, appError
 	}
@@ -52,12 +54,13 @@ func ApplyCreate2Transfer(
 func getPubKeyID(
 	storage *st.Storage,
 	client *eth.Client,
+	events chan *accountregistry.AccountRegistryPubkeyRegistered,
 	transfer *models.Create2Transfer,
 	tokenIndex models.Uint256,
 ) (*uint32, error, error) {
 	pubKeyID, err := storage.GetUnusedPubKeyID(&transfer.ToPublicKey, tokenIndex)
 	if st.IsNotFoundError(err) {
-		pubKeyID, err = client.RegisterAccount(&transfer.ToPublicKey)
+		pubKeyID, err = client.RegisterAccount(&transfer.ToPublicKey, events)
 		return pubKeyID, nil, err
 	} else if errors.Is(err, st.ErrAccountAlreadyExists) {
 		return nil, err, nil

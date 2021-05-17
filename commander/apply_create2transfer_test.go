@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -29,10 +30,12 @@ var (
 type ApplyCreate2TransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage  *st.Storage
-	teardown func() error
-	tree     *st.StateTree
-	client   *eth.TestClient
+	storage     *st.Storage
+	teardown    func() error
+	tree        *st.StateTree
+	client      *eth.TestClient
+	events      chan *accountregistry.AccountRegistryPubkeyRegistered
+	unsubscribe func()
 }
 
 func (s *ApplyCreate2TransferTestSuite) SetupSuite() {
@@ -81,16 +84,20 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 		Nonce:      models.MakeUint256(0),
 	})
 	s.NoError(err)
+
+	s.events, s.unsubscribe, err = s.client.WatchRegistrations(nil)
+	s.NoError(err)
 }
 
 func (s *ApplyCreate2TransferTestSuite) TearDownTest() {
+	s.unsubscribe()
 	s.client.Close()
 	err := s.teardown()
 	s.NoError(err)
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InsertsNewEmptyStateLeaf() {
-	_, transferError, appError := ApplyCreate2Transfer(s.storage, s.client.Client, &create2Transfer, feeReceiverTokenIndex)
+	_, transferError, appError := ApplyCreate2Transfer(s.storage, s.client.Client, s.events, &create2Transfer, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -102,7 +109,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InsertsNewEmpty
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer() {
-	_, transferError, appError := ApplyCreate2Transfer(s.storage, s.client.Client, &create2Transfer, feeReceiverTokenIndex)
+	_, transferError, appError := ApplyCreate2Transfer(s.storage, s.client.Client, s.events, &create2Transfer, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -116,7 +123,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer()
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ReturnsCorrectPubKeyID() {
-	addedPubKeyID, transferError, appError := ApplyCreate2Transfer(s.storage, s.client.Client, &create2Transfer, feeReceiverTokenIndex)
+	addedPubKeyID, transferError, appError := ApplyCreate2Transfer(s.storage, s.client.Client, s.events, &create2Transfer, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)
 	s.Equal(uint32(2), *addedPubKeyID)
@@ -125,7 +132,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ReturnsCorrectP
 func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_AccountNotExists() {
 	transfer := create2Transfer
 	transfer.ToPublicKey = models.PublicKey{10, 11, 12}
-	pubKeyID, create2TransferErr, appErr := getPubKeyID(s.storage, s.client.Client, &transfer, models.MakeUint256(1))
+	pubKeyID, create2TransferErr, appErr := getPubKeyID(s.storage, s.client.Client, s.events, &transfer, models.MakeUint256(1))
 	s.NoError(create2TransferErr)
 	s.NoError(appErr)
 	s.Equal(uint32(0), *pubKeyID)
@@ -134,14 +141,14 @@ func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_AccountNotExists() {
 func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_AccountForTokenIndexAlreadyExists() {
 	transfer := create2Transfer
 	transfer.ToPublicKey = models.PublicKey{2, 3, 4}
-	pubKeyID, create2TransferErr, appErr := getPubKeyID(s.storage, s.client.Client, &transfer, feeReceiverTokenIndex)
+	pubKeyID, create2TransferErr, appErr := getPubKeyID(s.storage, s.client.Client, s.events, &transfer, feeReceiverTokenIndex)
 	s.Equal(st.ErrAccountAlreadyExists, create2TransferErr)
 	s.NoError(appErr)
 	s.Nil(pubKeyID)
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_AccountForTokenIndexNotExists() {
-	pubKeyID, create2TransferErr, appErr := getPubKeyID(s.storage, s.client.Client, &create2Transfer, models.MakeUint256(1))
+	pubKeyID, create2TransferErr, appErr := getPubKeyID(s.storage, s.client.Client, s.events, &create2Transfer, models.MakeUint256(1))
 	s.NoError(create2TransferErr)
 	s.NoError(appErr)
 	s.Equal(uint32(2), *pubKeyID)
