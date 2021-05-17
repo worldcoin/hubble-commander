@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -29,7 +30,7 @@ func (s *RegisterAccountTestSuite) TearDownTest() {
 }
 
 func (s *RegisterAccountTestSuite) TestRegisterAccount() {
-	events, unsubscribe, err := s.client.WatchRegistrations(nil)
+	events, unsubscribe, err := s.client.WatchRegistrations(&bind.WatchOpts{})
 	s.NoError(err)
 	defer unsubscribe()
 

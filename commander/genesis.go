@@ -45,7 +45,7 @@ func RegisterGenesisAccounts(
 	accountRegistry *accountregistry.AccountRegistry,
 	accounts []models.GenesisAccount,
 ) ([]models.RegisteredGenesisAccount, error) {
-	registrations, unsubscribe, err := eth.WatchRegistrations(accountRegistry, nil)
+	registrations, unsubscribe, err := eth.WatchRegistrations(accountRegistry, &bind.WatchOpts{})
 	if err != nil {
 		return nil, err
 	}

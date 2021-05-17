@@ -5,6 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
 func ApplyCreate2Transfers(
@@ -22,7 +23,7 @@ func ApplyCreate2Transfers(
 	if len(transfers) == 0 {
 		return
 	}
-	events, unsubscribe, err := client.WatchRegistrations(nil)
+	events, unsubscribe, err := client.WatchRegistrations(&bind.WatchOpts{})
 	if err != nil {
 		return
 	}

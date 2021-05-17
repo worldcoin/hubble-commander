@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -85,7 +86,7 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 	})
 	s.NoError(err)
 
-	s.events, s.unsubscribe, err = s.client.WatchRegistrations(nil)
+	s.events, s.unsubscribe, err = s.client.WatchRegistrations(&bind.WatchOpts{})
 	s.NoError(err)
 }
 
