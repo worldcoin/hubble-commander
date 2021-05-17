@@ -2,11 +2,10 @@ package storage
 
 import (
 	"errors"
-	"strconv"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/utils"
+	bh "github.com/timshannon/badgerhold/v3"
 )
 
 var ErrAccountAlreadyExists = errors.New("account already exists")
@@ -56,8 +55,7 @@ func (s *Storage) GetPublicKey(pubKeyID uint32) (*models.PublicKey, error) {
 	return &res[0], nil
 }
 
-//TODO add filtering by tokenIndex
-func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey) (*uint32, error) {
+func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey, tokenIndex models.Uint256) (*uint32, error) {
 	accounts, err := s.GetAccounts(publicKey)
 	if err != nil {
 		return nil, err
@@ -66,69 +64,30 @@ func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey) (*uint32, error
 		return nil, NewNotFoundError("pub key id")
 	}
 
-	allPubKeyIDs := make([]string, 0, len(accounts))
-
+	userPubKeyIDs := make([]interface{}, 0, len(accounts))
+	usedPubKeyIDs := make(map[uint32]bool, len(accounts))
 	for i := range accounts {
-		allPubKeyIDs = append(allPubKeyIDs, strconv.Itoa(int(accounts[i].PubKeyID)))
+		usedPubKeyIDs[accounts[i].PubKeyID] = false
+		userPubKeyIDs = append(userPubKeyIDs, accounts[i].PubKeyID)
 	}
 
 	leaves := make([]models.FlatStateLeaf, 0, 1)
-	err = s.Badger.Find(&leaves, nil)
+	err = s.Badger.Find(&leaves, bh.Where("PubKeyID").In(userPubKeyIDs...))
 	if err != nil {
 		return nil, err
 	}
-	if len(leaves) == 0 {
-		return nil, NewNotFoundError("pub key id")
-	}
-
-	usedPubKeyIDs := make([]string, 0, len(accounts))
 
 	for i := range leaves {
-		usedPubKeyIDs = append(usedPubKeyIDs, strconv.Itoa(int(leaves[i].PubKeyID)))
+		if leaves[i].TokenIndex.Cmp(&tokenIndex) == 0 {
+			usedPubKeyIDs[leaves[i].PubKeyID] = true
+			continue
+		}
 	}
 
-	availablePubKeyIDs := utils.StringSliceDiff(allPubKeyIDs, usedPubKeyIDs)
-	if len(availablePubKeyIDs) == 0 {
-		return nil, NewNotFoundError("pub key id")
+	for pubKeyID, used := range usedPubKeyIDs {
+		if !used {
+			return &pubKeyID, nil
+		}
 	}
-
-	firstAvailablePubKeyIDUint64, err := strconv.ParseUint(availablePubKeyIDs[0], 10, 32)
-	if err != nil {
-		return nil, err
-	}
-	firstAvailablePubKeyID := uint32(firstAvailablePubKeyIDUint64)
-
-	return &firstAvailablePubKeyID, nil
-}
-
-func (s *Storage) AccountExists(publicKey *models.PublicKey) (bool, error) {
-	res := make([]bool, 0, 1)
-	err := s.Postgres.Query(
-		s.QB.Select("1").
-			Prefix("SELECT EXISTS(").
-			From("account").
-			Where(squirrel.Eq{"public_key": publicKey}).
-			Suffix(")"),
-	).Into(&res)
-	if err != nil {
-		return false, err
-	}
-	return res[0], err
-}
-
-func (s *Storage) AccountWithTokenExists(publicKey *models.PublicKey, tokenIndex models.Uint256) (bool, error) {
-	res := make([]bool, 0, 1)
-	err := s.Postgres.Query(
-		s.QB.Select("1").
-			Prefix("SELECT EXISTS(").
-			From("account").
-			JoinClause("NATURAL JOIN state_leaf").
-			Where(squirrel.Eq{"public_key": publicKey}).
-			Where(squirrel.Eq{"state_leaf.token_index": tokenIndex}).
-			Suffix(")"),
-	).Into(&res)
-	if err != nil {
-		return false, err
-	}
-	return res[0], err
+	return nil, NewNotFoundError("pub key id")
 }
