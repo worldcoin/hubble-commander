@@ -31,17 +31,23 @@ func (s *StateUpdateTestSuite) TearDownTest() {
 }
 
 func (s *StateUpdateTestSuite) TestAddStateUpdate_AddAndRetrieve() {
-	path, err := models.NewMerklePath("00001111111111001111111111111111")
-	s.NoError(err)
 	update := &models.StateUpdate{
 		ID:          0,
-		StateID:     *path,
-		CurrentHash: common.BytesToHash([]byte{1, 2}),
+		StateID:     12,
 		CurrentRoot: common.BytesToHash([]byte{1, 2, 3}),
-		PrevHash:    common.BytesToHash([]byte{1, 2, 3, 4}),
 		PrevRoot:    common.BytesToHash([]byte{1, 2, 3, 4, 5}),
+		PrevStateLeaf: models.StateLeaf{
+			StateID:   12,
+			DataHash:  [32]byte{1,2,3,4},
+			UserState: models.UserState{
+				PubKeyID:   1,
+				TokenIndex: models.MakeUint256(1),
+				Balance:    models.MakeUint256(100),
+				Nonce:      models.MakeUint256(0),
+			},
+		},
 	}
-	err = s.storage.AddStateUpdate(update)
+	err := s.storage.AddStateUpdate(update)
 	s.NoError(err)
 
 	res, err := s.storage.GetStateUpdateByRootHash(common.BytesToHash([]byte{1, 2, 3}))
@@ -56,27 +62,41 @@ func (s *StateUpdateTestSuite) TestGetStateUpdateByRootHash_NonExistentUpdate() 
 }
 
 func (s *StateUpdateTestSuite) TestDeleteStateUpdate() {
-	path, err := models.NewMerklePath("00001111111111001111111111111111")
-	s.NoError(err)
 	updates := []models.StateUpdate{
 		{
 			ID:          0,
-			StateID:     *path,
-			CurrentHash: common.BytesToHash([]byte{1}),
+			StateID:     1,
 			CurrentRoot: common.BytesToHash([]byte{1}),
-			PrevHash:    common.BytesToHash([]byte{1}),
 			PrevRoot:    common.BytesToHash([]byte{2}),
+			PrevStateLeaf: models.StateLeaf{
+				StateID:   12,
+				DataHash:  [32]byte{1,2,3,4},
+				UserState: models.UserState{
+					PubKeyID:   1,
+					TokenIndex: models.MakeUint256(1),
+					Balance:    models.MakeUint256(100),
+					Nonce:      models.MakeUint256(0),
+				},
+			},
 		},
 		{
 			ID:          1,
-			StateID:     *path,
-			CurrentHash: common.BytesToHash([]byte{2}),
+			StateID:     1,
 			CurrentRoot: common.BytesToHash([]byte{2}),
-			PrevHash:    common.BytesToHash([]byte{2}),
 			PrevRoot:    common.BytesToHash([]byte{2}),
+			PrevStateLeaf: models.StateLeaf{
+				StateID:   12,
+				DataHash:  [32]byte{1,2,3,4},
+				UserState: models.UserState{
+					PubKeyID:   1,
+					TokenIndex: models.MakeUint256(1),
+					Balance:    models.MakeUint256(100),
+					Nonce:      models.MakeUint256(0),
+				},
+			},
 		},
 	}
-	err = s.storage.AddStateUpdate(&updates[0])
+	err := s.storage.AddStateUpdate(&updates[0])
 	s.NoError(err)
 	err = s.storage.AddStateUpdate(&updates[1])
 	s.NoError(err)
@@ -84,10 +104,10 @@ func (s *StateUpdateTestSuite) TestDeleteStateUpdate() {
 	err = s.storage.DeleteStateUpdate(1)
 	s.NoError(err)
 
-	_, err = s.storage.GetStateUpdateByRootHash(updates[1].CurrentHash)
+	_, err = s.storage.GetStateUpdateByRootHash(updates[1].CurrentRoot)
 	s.Equal(NewNotFoundError("state update"), err)
 
-	res, err := s.storage.GetStateUpdateByRootHash(updates[0].CurrentHash)
+	res, err := s.storage.GetStateUpdateByRootHash(updates[0].CurrentRoot)
 	s.NoError(err)
 	s.Equal(&updates[0], res)
 }

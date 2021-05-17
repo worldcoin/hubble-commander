@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"log"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
@@ -162,4 +163,10 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 
 func TestStorageTestSuite(t *testing.T) {
 	suite.Run(t, new(StorageTestSuite))
+}
+
+func TestStuff(t *testing.T) {
+	log.Print(GetZeroHash(0))
+	log.Print(GetZeroHash(1))
+	log.Print(GetZeroHash(32))
 }

@@ -84,7 +84,8 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 			return err
 		}
 
-		currentRootHash, err = s.updateStateNodes(&latestStateUpdate.StateID, &latestStateUpdate.PrevHash)
+		leafPath := models.MakeMerklePathFromStateID(latestStateUpdate.StateID)
+		currentRootHash, err = s.updateStateNodes(&leafPath, &latestStateUpdate.PrevStateLeaf.DataHash)
 		if err != nil {
 			return err
 		}
@@ -102,10 +103,15 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 }
 
 func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (err error) {
-	prevLeaf, err := s.LeafNode(index)
-	if err != nil {
+	prevLeaf, err := s.Leaf(index)
+	if IsNotFoundError(err) {
+		prevLeaf = &models.StateLeaf{
+			StateID:   index,
+		}
+	} else if err != nil {
 		return
 	}
+
 	prevRoot, err := s.Root()
 	if err != nil {
 		return
@@ -121,17 +127,17 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (err error)
 		return
 	}
 
-	currentRoot, err := s.updateStateNodes(&prevLeaf.MerklePath, &currentLeaf.DataHash)
+	prevLeafPath := models.MakeMerklePathFromStateID(prevLeaf.StateID)
+	currentRoot, err := s.updateStateNodes(&prevLeafPath, &currentLeaf.DataHash)
 	if err != nil {
 		return
 	}
 
 	return s.storage.AddStateUpdate(&models.StateUpdate{
-		StateID:     prevLeaf.MerklePath,
-		CurrentHash: currentLeaf.DataHash,
+		StateID:     prevLeaf.StateID,
 		CurrentRoot: *currentRoot,
-		PrevHash:    prevLeaf.DataHash,
 		PrevRoot:    *prevRoot,
+		PrevStateLeaf: *prevLeaf,
 	})
 }
 
