@@ -18,10 +18,11 @@ type DecodedCommitment struct {
 	Transactions      []byte
 }
 
-//        bytes32[] calldata stateRoots,
-//        uint256[2][] calldata signatures,
-//        uint256[] calldata feeReceivers,
-//        bytes[] calldata txss
+// DecodeBatch
+//   bytes32[] stateRoots,
+//   uint256[2][] signatures,
+//   uint256[] feeReceivers,
+//   bytes[] txss
 func DecodeBatch(calldata []byte) ([]DecodedCommitment, error) {
 	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
 	if err != nil {
@@ -38,13 +39,13 @@ func DecodeBatch(calldata []byte) ([]DecodedCommitment, error) {
 	feeReceivers := unpacked[2].([]*big.Int)
 	txss := unpacked[3].([][]uint8)
 
-	size := len(unpacked[0].([][32]uint8))
+	size := len(stateRoots)
 
 	commitments := make([]DecodedCommitment, size)
 	for i := 0; i < size; i++ {
 		commitments[i] = DecodedCommitment{
 			StateRoot:         common.BytesToHash(stateRoots[i][:]),
-			CombinedSignature: models.MakeSignatureFromBigInts(signatures[i][:]),
+			CombinedSignature: models.MakeSignatureFromBigInts(signatures[i]),
 			FeeReceiver:       uint32(feeReceivers[i].Uint64()),
 			Transactions:      txss[i],
 		}

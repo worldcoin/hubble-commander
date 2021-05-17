@@ -27,7 +27,7 @@ func NewRandomSignature() *Signature {
 	return &signature
 }
 
-func MakeSignatureFromBigInts(ints []*big.Int) Signature {
+func MakeSignatureFromBigInts(ints [2]*big.Int) Signature {
 	var signature Signature
 
 	copy(signature[0:32], ints[0].Bytes())

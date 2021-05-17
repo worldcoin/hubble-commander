@@ -12,28 +12,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDecodeTransferBatch(t *testing.T) {
+func TestDecodeBatch(t *testing.T) {
 	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
 	require.NoError(t, err)
 
-	commitments := []models.Commitment{
-		{
-			Type:              txtype.Transfer,
-			Transactions:      utils.RandomBytes(12),
-			FeeReceiver:       uint32(1234),
-			CombinedSignature: models.MakeRandomSignature(),
-			PostStateRoot:     utils.RandomHash(),
-		},
+	commitment := models.Commitment{
+		Type:              txtype.Transfer,
+		Transactions:      utils.RandomBytes(12),
+		FeeReceiver:       uint32(1234),
+		CombinedSignature: models.MakeRandomSignature(),
+		PostStateRoot:     utils.RandomHash(),
 	}
-	arg1, arg2, arg3, arg4 := CommitmentToCalldataFields(commitments)
+	arg1, arg2, arg3, arg4 := CommitmentToCalldataFields([]models.Commitment{commitment})
 	calldata, err := rollupAbi.Pack("submitTransfer", arg1, arg2, arg3, arg4)
 	require.NoError(t, err)
 
-	decoded, err := DecodeBatch(calldata)
+	decodedCommitments, err := DecodeBatch(calldata)
 	require.NoError(t, err)
+	require.Equal(t, 1, len(decodedCommitments))
 
-	require.Equal(t, len(commitments), len(decoded))
-	require.Equal(t, commitments[0].PostStateRoot, decoded[0].StateRoot)
-	require.Equal(t, commitments[0].Transactions, decoded[0].Transactions)
-	require.Equal(t, commitments[0].FeeReceiver, decoded[0].FeeReceiver)
+	decoded := &decodedCommitments[0]
+	require.Equal(t, commitment.PostStateRoot, decoded.StateRoot)
+	require.Equal(t, commitment.CombinedSignature, decoded.CombinedSignature)
+	require.Equal(t, commitment.FeeReceiver, decoded.FeeReceiver)
+	require.Equal(t, commitment.Transactions, decoded.Transactions)
 }
