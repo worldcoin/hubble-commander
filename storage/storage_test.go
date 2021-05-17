@@ -36,6 +36,7 @@ func (s *StorageTestSuite) TearDownTest() {
 
 func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	leaf := &models.StateLeaf{
+		StateID: 0,
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
 			PubKeyID:   1,
@@ -52,7 +53,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	err = storage.AddAccountIfNotExists(&account2)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateLeafByHash(leaf.DataHash)
+	res, err := s.storage.GetStateLeafByStateID(leaf.StateID)
 	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
 
@@ -63,7 +64,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	err = tx.Commit()
 	s.NoError(err)
 
-	res, err = s.storage.GetStateLeafByHash(leaf.DataHash)
+	res, err = s.storage.GetStateLeafByStateID(leaf.StateID)
 	s.NoError(err)
 	s.Equal(leaf, res)
 
@@ -74,6 +75,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 
 func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 	leaf := &models.StateLeaf{
+		StateID: 0,
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
 			PubKeyID:   1,
@@ -93,7 +95,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 	tx.Rollback(&err)
 	s.Nil(errors.Unwrap(err))
 
-	res, err := s.storage.GetStateLeafByHash(leaf.DataHash)
+	res, err := s.storage.GetStateLeafByStateID(leaf.StateID)
 	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
 
@@ -107,6 +109,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 	s.NoError(err)
 
 	leafOne := &models.StateLeaf{
+		StateID: 0,
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
 			PubKeyID:   1,
@@ -116,6 +119,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 		},
 	}
 	leafTwo := &models.StateLeaf{
+		StateID: 1,
 		DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 		UserState: models.UserState{
 			PubKeyID:   2,
@@ -140,18 +144,18 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 	nestedTx.Rollback(&err)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateLeafByHash(leafOne.DataHash)
+	res, err := s.storage.GetStateLeafByStateID(leafOne.StateID)
 	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
 
 	err = tx.Commit()
 	s.NoError(err)
 
-	res, err = s.storage.GetStateLeafByHash(leafOne.DataHash)
+	res, err = s.storage.GetStateLeafByStateID(leafOne.StateID)
 	s.NoError(err)
 	s.Equal(leafOne, res)
 
-	res, err = s.storage.GetStateLeafByHash(leafTwo.DataHash)
+	res, err = s.storage.GetStateLeafByStateID(leafTwo.StateID)
 	s.NoError(err)
 	s.Equal(leafTwo, res)
 }

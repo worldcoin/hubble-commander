@@ -5,7 +5,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/ethereum/go-ethereum/common"
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
@@ -28,33 +27,6 @@ func (s *Storage) GetStateLeafByStateID(stateID uint32) (stateLeaf *models.State
 		return nil, err
 	}
 	return leaf.StateLeaf(), nil
-}
-
-
-// ! Should be removed because it is an equivalent to the GetStateLeafByStateID
-func (s *Storage) GetStateLeafByPath(path *models.MerklePath) (stateLeaf *models.StateLeaf, err error) {
-	var leaf models.FlatStateLeaf
-	err = s.Badger.Get(path, &leaf)
-	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("state leaf")
-	}
-	if err != nil {
-		return nil, err
-	}
-	return leaf.StateLeaf(), nil
-}
-
-// ! Should be removed
-func (s *Storage) GetStateLeafByHash(hash common.Hash) (*models.StateLeaf, error) {
-	leaves := make([]models.FlatStateLeaf, 0, 1)
-	err := s.Badger.Find(&leaves, bh.Where("DataHash").Eq(hash))
-	if err == bh.ErrNotFound || len(leaves) == 0 {
-		return nil, NewNotFoundError("state leaf")
-	}
-	if err != nil {
-		return nil, err
-	}
-	return leaves[0].StateLeaf(), nil
 }
 
 // TODO move to state_node, make sure to only iterate over keys (Badger PrefetchValues=false)

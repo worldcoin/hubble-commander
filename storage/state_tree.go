@@ -34,20 +34,16 @@ func (s *StateTree) Root() (*common.Hash, error) {
 	return &root.DataHash, nil
 }
 
-func (s *StateTree) LeafNode(id uint32) (*models.StateNode, error) {
+func (s *StateTree) LeafNode(stateID uint32) (*models.StateNode, error) {
 	leafPath := &models.MerklePath{
-		Path:  id,
+		Path:  stateID,
 		Depth: leafDepth,
 	}
 	return s.storage.GetStateNodeByPath(leafPath)
 }
 
-func (s *StateTree) Leaf(id uint32) (*models.StateLeaf, error) {
-	leafPath := &models.MerklePath{
-		Path:  id,
-		Depth: leafDepth,
-	}
-	return s.storage.GetStateLeafByPath(leafPath)
+func (s *StateTree) Leaf(stateID uint32) (*models.StateLeaf, error) {
+	return s.storage.GetStateLeafByStateID(stateID)
 }
 
 func (s *StateTree) Set(id uint32, state *models.UserState) (err error) {
