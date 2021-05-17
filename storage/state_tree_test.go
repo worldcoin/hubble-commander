@@ -161,7 +161,10 @@ func (s *StateTreeTestSuite) TestSet_StoresStateUpdateRecord() {
 		StateID:       0,
 		CurrentRoot:   currentRoot,
 		PrevRoot:      GetZeroHash(leafDepth),
-		PrevStateLeaf: models.StateLeaf{},
+		PrevStateLeaf: models.StateLeaf{
+			StateID: 0,
+			DataHash: GetZeroHash(0),
+		},
 	}
 
 	update, err := s.storage.GetStateUpdateByRootHash(currentRoot)
@@ -253,9 +256,6 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafAddsStateUpdateRecord() {
 }
 
 func (s *StateTreeTestSuite) TestRevertTo() {
-	// ! Temporary skip this test
-	s.T().Skip()
-
 	err := s.storage.AddAccountIfNotExists(&account2)
 	s.NoError(err)
 

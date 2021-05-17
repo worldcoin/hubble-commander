@@ -73,23 +73,27 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 
 	stateTree := NewStateTree(s.storage)
 
-	currentRootHash, err := stateTree.Root()
+	currentRoot, err := stateTree.Root()
 	if err != nil {
 		return err
 	}
 
-	for *currentRootHash != targetRootHash {
-		latestStateUpdate, err := s.storage.GetStateUpdateByRootHash(*currentRootHash)
+	for *currentRoot != targetRootHash {
+		latestStateUpdate, err := s.storage.GetStateUpdateByRootHash(*currentRoot)
 		if err != nil {
 			return err
 		}
 
-		leafPath := models.MakeMerklePathFromStateID(latestStateUpdate.StateID)
-		currentRootHash, err = s.updateStateNodes(&leafPath, &latestStateUpdate.PrevStateLeaf.DataHash)
+		err = s.storage.UpsertStateLeaf(&latestStateUpdate.PrevStateLeaf)
 		if err != nil {
 			return err
 		}
-		if *currentRootHash != latestStateUpdate.PrevRoot {
+		leafPath := models.MakeMerklePathFromStateID(latestStateUpdate.PrevStateLeaf.StateID)
+		currentRoot, err = s.updateStateNodes(&leafPath, &latestStateUpdate.PrevStateLeaf.DataHash)
+		if err != nil {
+			return err
+		}
+		if *currentRoot != latestStateUpdate.PrevRoot {
 			return fmt.Errorf("unexpected state root after state update rollback")
 		}
 
@@ -106,7 +110,8 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (err error)
 	prevLeaf, err := s.Leaf(index)
 	if IsNotFoundError(err) {
 		prevLeaf = &models.StateLeaf{
-			StateID:   index,
+			StateID:  index,
+			DataHash: GetZeroHash(0),
 		}
 	} else if err != nil {
 		return
@@ -134,9 +139,9 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (err error)
 	}
 
 	return s.storage.AddStateUpdate(&models.StateUpdate{
-		StateID:     prevLeaf.StateID,
-		CurrentRoot: *currentRoot,
-		PrevRoot:    *prevRoot,
+		StateID:       prevLeaf.StateID,
+		CurrentRoot:   *currentRoot,
+		PrevRoot:      *prevRoot,
 		PrevStateLeaf: *prevLeaf,
 	})
 }
