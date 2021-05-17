@@ -1,12 +1,15 @@
 package storage
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 )
+
+var ErrAccountAlreadyExists = errors.New("account already exists")
 
 func (s *Storage) AddAccountIfNotExists(account *models.Account) error {
 	_, err := s.Postgres.Query(
