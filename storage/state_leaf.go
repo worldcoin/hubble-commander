@@ -10,14 +10,10 @@ import (
 
 func (s *Storage) UpsertStateLeaf(leaf *models.StateLeaf) error {
 	flatLeaf := models.NewFlatStateLeaf(leaf)
-	err := s.Badger.Upsert(leaf.StateID, &flatLeaf)
-	if err == bh.ErrKeyExists {
-		return nil
-	}
-	return err
+	return s.Badger.Upsert(leaf.StateID, &flatLeaf)
 }
 
-func (s *Storage) GetStateLeafByStateID(stateID uint32) (stateLeaf *models.StateLeaf, err error) {
+func (s *Storage) GetStateLeaf(stateID uint32) (stateLeaf *models.StateLeaf, err error) {
 	var leaf models.FlatStateLeaf
 	err = s.Badger.Get(stateID, &leaf)
 	if err == bh.ErrNotFound {

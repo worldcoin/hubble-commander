@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"log"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
@@ -53,7 +54,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	err = storage.AddAccountIfNotExists(&account2)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateLeafByStateID(leaf.StateID)
+	res, err := s.storage.GetStateLeaf(leaf.StateID)
 	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
 
@@ -64,7 +65,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	err = tx.Commit()
 	s.NoError(err)
 
-	res, err = s.storage.GetStateLeafByStateID(leaf.StateID)
+	res, err = s.storage.GetStateLeaf(leaf.StateID)
 	s.NoError(err)
 	s.Equal(leaf, res)
 
@@ -95,7 +96,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 	tx.Rollback(&err)
 	s.Nil(errors.Unwrap(err))
 
-	res, err := s.storage.GetStateLeafByStateID(leaf.StateID)
+	res, err := s.storage.GetStateLeaf(leaf.StateID)
 	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
 
@@ -144,22 +145,28 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 	nestedTx.Rollback(&err)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateLeafByStateID(leafOne.StateID)
+	res, err := s.storage.GetStateLeaf(leafOne.StateID)
 	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
 
 	err = tx.Commit()
 	s.NoError(err)
 
-	res, err = s.storage.GetStateLeafByStateID(leafOne.StateID)
+	res, err = s.storage.GetStateLeaf(leafOne.StateID)
 	s.NoError(err)
 	s.Equal(leafOne, res)
 
-	res, err = s.storage.GetStateLeafByStateID(leafTwo.StateID)
+	res, err = s.storage.GetStateLeaf(leafTwo.StateID)
 	s.NoError(err)
 	s.Equal(leafTwo, res)
 }
 
 func TestStorageTestSuite(t *testing.T) {
 	suite.Run(t, new(StorageTestSuite))
+}
+
+func TestStuff(t *testing.T) {
+	log.Print(GetZeroHash(0))
+	log.Print(GetZeroHash(1))
+	log.Print(GetZeroHash(32))
 }

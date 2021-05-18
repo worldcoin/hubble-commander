@@ -42,7 +42,7 @@ func ApplyCreate2Transfer(
 		ToStateID:       *nextAvailableStateID,
 	}
 
-	create2TransferError, appError = ApplyTransfer(stateTree, &transfer, commitmentTokenIndex)
+	create2TransferError, appError = ApplyTransfer(storage, &transfer, commitmentTokenIndex)
 	if create2TransferError != nil || appError != nil {
 		return nil, create2TransferError, appError
 	}

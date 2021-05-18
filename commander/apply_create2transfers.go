@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
+// TODO Return a struct with 4 fields
 func ApplyCreate2Transfers(
 	storage *st.Storage,
 	client *eth.Client,
@@ -29,12 +30,11 @@ func ApplyCreate2Transfers(
 	}
 	defer unsubscribe()
 
-	stateTree := st.NewStateTree(storage)
 	appliedTransfers = make([]models.Create2Transfer, 0, cfg.TxsPerCommitment)
 	addedPubKeyIDs = make([]uint32, 0, cfg.TxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
-	senderLeaf, err := stateTree.Leaf(transfers[0].FromStateID)
+	senderLeaf, err := storage.GetStateLeaf(transfers[0].FromStateID)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
@@ -64,7 +64,7 @@ func ApplyCreate2Transfers(
 	}
 
 	if len(appliedTransfers) > 0 {
-		feeReceiverStateID, err = ApplyFee(stateTree, storage, cfg.FeeReceiverPubKeyID, commitmentTokenIndex, combinedFee)
+		feeReceiverStateID, err = ApplyFee(storage, cfg.FeeReceiverPubKeyID, commitmentTokenIndex, combinedFee)
 		if err != nil {
 			return nil, nil, nil, nil, err
 		}
