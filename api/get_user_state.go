@@ -3,7 +3,7 @@ package api
 import "github.com/Worldcoin/hubble-commander/models"
 
 func (a *API) GetUserState(id uint32) (*models.UserStateWithID, error) {
-	leaf, err := a.storage.GetStateLeafByStateID(id)
+	leaf, err := a.storage.GetStateLeaf(id)
 	if err != nil {
 		return nil, err
 	}
