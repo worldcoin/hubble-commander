@@ -51,39 +51,35 @@ func (s *Storage) GetPublicKey(pubKeyID uint32) (*models.PublicKey, error) {
 	return &res[0], nil
 }
 
-func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey, tokenIndex models.Uint256) (*uint32, error) {
+func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey, tokenIndex *models.Uint256) (*uint32, error) {
 	accounts, err := s.GetAccounts(publicKey)
 	if err != nil {
 		return nil, err
 	}
-	if len(accounts) == 0 {
-		return nil, NewNotFoundError("pub key id")
-	}
 
-	userPubKeyIDs := make([]interface{}, 0, len(accounts))
-	usedPubKeyIDs := make(map[uint32]bool, len(accounts))
+	var unusedPubKeyID uint32
+	isFound := false
+
 	for i := range accounts {
-		usedPubKeyIDs[accounts[i].PubKeyID] = false
-		userPubKeyIDs = append(userPubKeyIDs, accounts[i].PubKeyID)
-	}
-
-	leaves := make([]models.FlatStateLeaf, 0, 1)
-	err = s.Badger.Find(&leaves, bh.Where("PubKeyID").In(userPubKeyIDs...).Index("PubKeyID"))
-	if err != nil {
-		return nil, err
-	}
-
-	for i := range leaves {
-		if leaves[i].TokenIndex.Cmp(&tokenIndex) == 0 {
-			usedPubKeyIDs[leaves[i].PubKeyID] = true
-			continue
+		leaves := make([]models.FlatStateLeaf, 0, 1)
+		err = s.Badger.Find(
+			&leaves,
+			bh.Where("TokenIndex").Eq(tokenIndex).Index("TokenIndex").
+				And("PubKeyID").Eq(accounts[i].PubKeyID).Index("PubKeyID"),
+		)
+		if err != nil {
+			return nil, err
+		}
+		if len(leaves) == 0 {
+			unusedPubKeyID = accounts[i].PubKeyID
+			isFound = true
+			break
 		}
 	}
 
-	for pubKeyID, used := range usedPubKeyIDs {
-		if !used {
-			return &pubKeyID, nil
-		}
+	if isFound {
+		return &unusedPubKeyID, nil
 	}
+
 	return nil, NewNotFoundError("pub key id")
 }
