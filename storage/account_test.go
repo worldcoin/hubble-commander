@@ -243,7 +243,7 @@ func (s *AccountTestSuite) Test_GetUnusedPubKeyID_MultipleTokenIndexes() {
 
 	pubKeyID, err := s.storage.GetUnusedPubKeyID(&accounts[1].PublicKey, leaves[1].TokenIndex)
 	s.NoError(err)
-	s.Equal(uint32(1), *pubKeyID)
+	s.Contains([]uint32{1, 3}, *pubKeyID)
 }
 
 func TestAccountTestSuite(t *testing.T) {
