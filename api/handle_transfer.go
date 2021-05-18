@@ -87,7 +87,7 @@ func (a *API) validateTransfer(transfer *models.Transfer) error {
 		return vErr
 	}
 
-	senderState, err := a.storage.GetStateLeafByStateID(transfer.FromStateID)
+	senderState, err := a.storage.GetStateLeaf(transfer.FromStateID)
 	if err != nil {
 		return err
 	}

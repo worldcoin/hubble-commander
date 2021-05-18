@@ -118,7 +118,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_MoreThan32() {
 	s.Len(validTransfers, 6)
 	s.Len(invalidTransfers, 0)
 
-	state, err := s.storage.GetStateLeafByStateID(1)
+	state, err := s.storage.GetStateLeaf(1)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(6), state.Nonce)
 }

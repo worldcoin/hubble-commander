@@ -23,7 +23,7 @@ func ApplyTransfers(
 	appliedTransfers = make([]models.Transfer, 0, cfg.TxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
-	senderLeaf, err := storage.GetStateLeafByStateID(transfers[0].FromStateID)
+	senderLeaf, err := storage.GetStateLeaf(transfers[0].FromStateID)
 	if err != nil {
 		return nil, nil, nil, err
 	}

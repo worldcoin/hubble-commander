@@ -43,7 +43,7 @@ func (s *StateTree) LeafNode(stateID uint32) (*models.StateNode, error) {
 }
 
 func (s *StateTree) Leaf(stateID uint32) (*models.StateLeaf, error) {
-	leaf, err := s.storage.GetStateLeafByStateID(stateID)
+	leaf, err := s.storage.GetStateLeaf(stateID)
 	if IsNotFoundError(err) {
 		return &models.StateLeaf{
 			StateID:  stateID,

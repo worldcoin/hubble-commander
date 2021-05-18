@@ -20,11 +20,11 @@ func ApplyTransfer(
 	transfer *models.Transfer,
 	commitmentTokenIndex models.Uint256,
 ) (transferError, appError error) {
-	senderLeaf, err := storage.GetStateLeafByStateID(transfer.FromStateID)
+	senderLeaf, err := storage.GetStateLeaf(transfer.FromStateID)
 	if err != nil {
 		return nil, err
 	}
-	receiverLeaf, err := storage.GetStateLeafByStateID(transfer.ToStateID)
+	receiverLeaf, err := storage.GetStateLeaf(transfer.ToStateID)
 	if err != nil {
 		return nil, err
 	}
