@@ -21,19 +21,14 @@ func SyncBatches(storage *st.Storage, client *eth.Client, cfg *config.RollupConf
 		return err
 	}
 
-	var latestBatchID models.Uint256
-	latestBatch, err := storage.GetLatestBatch()
-	if st.IsNotFoundError(err) {
-		latestBatchID = models.MakeUint256(0)
-	} else if err != nil {
+	latestBatchID, err := getLatestBatchID(storage)
+	if err != nil {
 		return err
-	} else {
-		latestBatchID = latestBatch.ID
 	}
 
 	for i := range newBatches {
 		batch := &newBatches[i]
-		if batch.ID.Cmp(&latestBatchID) <= 0 {
+		if batch.ID.Cmp(latestBatchID) <= 0 {
 			continue
 		}
 
@@ -87,4 +82,17 @@ func SyncBatches(storage *st.Storage, client *eth.Client, cfg *config.RollupConf
 	}
 
 	return nil
+}
+
+func getLatestBatchID(storage *st.Storage) (*models.Uint256, error) {
+	var latestBatchID models.Uint256
+	latestBatch, err := storage.GetLatestBatch()
+	if st.IsNotFoundError(err) {
+		latestBatchID = models.MakeUint256(0)
+	} else if err != nil {
+		return nil, err
+	} else {
+		latestBatchID = latestBatch.ID
+	}
+	return &latestBatchID, nil
 }
