@@ -82,13 +82,12 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) (userSta
 	return userStates, nil
 }
 
-//TODO: check where stateLeaf with stateID is used
 func (s *Storage) GetFeeReceiverStateLeaf(pubKeyID uint32, tokenIndex models.Uint256) (*models.StateLeaf, error) {
 	stateID, ok := s.feeReceiver[tokenIndex.String()]
 	if ok {
 		return s.GetStateLeafByStateID(stateID)
 	}
-	stateLeaf, err := s.GetStateLeafByPubKeyIdAndTokenIndex(pubKeyID, tokenIndex)
+	stateLeaf, err := s.GetStateLeafByPubKeyIDAndTokenIndex(pubKeyID, tokenIndex)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +95,7 @@ func (s *Storage) GetFeeReceiverStateLeaf(pubKeyID uint32, tokenIndex models.Uin
 	return stateLeaf, nil
 }
 
-func (s *Storage) GetStateLeafByPubKeyIdAndTokenIndex(pubKeyID uint32, tokenIndex models.Uint256) (*models.StateLeaf, error) {
+func (s *Storage) GetStateLeafByPubKeyIDAndTokenIndex(pubKeyID uint32, tokenIndex models.Uint256) (*models.StateLeaf, error) {
 	leaves := make([]models.FlatStateLeaf, 0, 1)
 	err := s.Badger.Find(
 		&leaves,
