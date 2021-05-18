@@ -33,7 +33,6 @@ func (s *StateUpdateTestSuite) TearDownTest() {
 func (s *StateUpdateTestSuite) TestAddStateUpdate_AddAndRetrieve() {
 	update := &models.StateUpdate{
 		ID:          0,
-		StateID:     12,
 		CurrentRoot: common.BytesToHash([]byte{1, 2, 3}),
 		PrevRoot:    common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		PrevStateLeaf: models.StateLeaf{
@@ -65,7 +64,6 @@ func (s *StateUpdateTestSuite) TestDeleteStateUpdate() {
 	updates := []models.StateUpdate{
 		{
 			ID:          0,
-			StateID:     1,
 			CurrentRoot: common.BytesToHash([]byte{1}),
 			PrevRoot:    common.BytesToHash([]byte{2}),
 			PrevStateLeaf: models.StateLeaf{
@@ -81,7 +79,6 @@ func (s *StateUpdateTestSuite) TestDeleteStateUpdate() {
 		},
 		{
 			ID:          1,
-			StateID:     1,
 			CurrentRoot: common.BytesToHash([]byte{2}),
 			PrevRoot:    common.BytesToHash([]byte{2}),
 			PrevStateLeaf: models.StateLeaf{

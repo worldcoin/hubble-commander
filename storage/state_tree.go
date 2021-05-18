@@ -143,7 +143,6 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (err error)
 	}
 
 	return s.storage.AddStateUpdate(&models.StateUpdate{
-		StateID:       prevLeaf.StateID,
 		CurrentRoot:   *currentRoot,
 		PrevRoot:      *prevRoot,
 		PrevStateLeaf: *prevLeaf,

@@ -158,7 +158,6 @@ func (s *StateTreeTestSuite) TestSet_StoresStateUpdateRecord() {
 	currentRoot := common.HexToHash("0xd8cb702fc833817dccdc3889282af96755b2909274ca2f1a3827a60d11d796eb")
 	expectedUpdate := &models.StateUpdate{
 		ID:          0,
-		StateID:     0,
 		CurrentRoot: currentRoot,
 		PrevRoot:    GetZeroHash(leafDepth),
 		PrevStateLeaf: models.StateLeaf{
@@ -243,7 +242,6 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafAddsStateUpdateRecord() {
 	currentRoot := common.HexToHash("0x406515786640be8c51eacf1221f017e7f59e04ef59637a27dcb2b2f054b309bf")
 	expectedUpdate := &models.StateUpdate{
 		ID:            1,
-		StateID:       0,
 		CurrentRoot:   currentRoot,
 		PrevRoot:      common.HexToHash("0xd8cb702fc833817dccdc3889282af96755b2909274ca2f1a3827a60d11d796eb"),
 		PrevStateLeaf: *s.leaf,

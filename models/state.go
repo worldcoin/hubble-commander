@@ -23,8 +23,7 @@ type StateLeaf struct {
 }
 
 type StateUpdate struct {
-	ID            uint64 `badgerhold:"key"`
-	StateID       uint32
+	ID            uint64      `badgerhold:"key"`
 	CurrentRoot   common.Hash `badgerhold:"index"`
 	PrevRoot      common.Hash
 	PrevStateLeaf StateLeaf
