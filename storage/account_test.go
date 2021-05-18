@@ -135,7 +135,7 @@ func (s *AccountTestSuite) Test_GetUnusedPubKeyID_NoUnusedPublicIDs() {
 			Nonce:      models.MakeUint256(0),
 		},
 	}
-	err = s.storage.AddStateLeaf(leaf)
+	err = s.storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
 
 	_, err = s.storage.GetUnusedPubKeyID(&models.PublicKey{1, 2, 3}, leaf.TokenIndex)
@@ -168,6 +168,7 @@ func (s *AccountTestSuite) Test_GetUnusedPubKeyID() {
 	}
 
 	leaf := &models.StateLeaf{
+		StateID:  0,
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
 			PubKeyID:   1,
@@ -177,6 +178,7 @@ func (s *AccountTestSuite) Test_GetUnusedPubKeyID() {
 		},
 	}
 	leaf2 := &models.StateLeaf{
+		StateID:  1,
 		DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 		UserState: models.UserState{
 			PubKeyID:   2,
@@ -185,9 +187,9 @@ func (s *AccountTestSuite) Test_GetUnusedPubKeyID() {
 			Nonce:      models.MakeUint256(0),
 		},
 	}
-	err := s.storage.AddStateLeaf(leaf)
+	err := s.storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
-	err = s.storage.AddStateLeaf(leaf2)
+	err = s.storage.UpsertStateLeaf(leaf2)
 	s.NoError(err)
 
 	pubKeyID, err := s.storage.GetUnusedPubKeyID(&accounts[1].PublicKey, leaf.TokenIndex)
@@ -237,7 +239,7 @@ func (s *AccountTestSuite) Test_GetUnusedPubKeyID_MultipleTokenIndexes() {
 		},
 	}
 	for i := range leaves {
-		err := s.storage.AddStateLeaf(&leaves[i])
+		err := s.storage.UpsertStateLeaf(&leaves[i])
 		s.NoError(err)
 	}
 

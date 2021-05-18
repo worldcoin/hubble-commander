@@ -34,20 +34,16 @@ func (s *StateTree) Root() (*common.Hash, error) {
 	return &root.DataHash, nil
 }
 
-func (s *StateTree) LeafNode(id uint32) (*models.StateNode, error) {
+func (s *StateTree) LeafNode(stateID uint32) (*models.StateNode, error) {
 	leafPath := &models.MerklePath{
-		Path:  id,
+		Path:  stateID,
 		Depth: leafDepth,
 	}
 	return s.storage.GetStateNodeByPath(leafPath)
 }
 
-func (s *StateTree) Leaf(id uint32) (*models.StateLeaf, error) {
-	leafPath := &models.MerklePath{
-		Path:  id,
-		Depth: leafDepth,
-	}
-	return s.storage.GetStateLeafByPath(leafPath)
+func (s *StateTree) Leaf(stateID uint32) (*models.StateLeaf, error) {
+	return s.storage.GetStateLeafByStateID(stateID)
 }
 
 func (s *StateTree) Set(id uint32, state *models.UserState) (err error) {
@@ -115,12 +111,12 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (err error)
 		return
 	}
 
-	currentLeaf, err := NewStateLeaf(state)
+	currentLeaf, err := NewStateLeaf(index, state)
 	if err != nil {
 		return
 	}
 
-	err = s.storage.AddStateLeaf(currentLeaf)
+	err = s.storage.UpsertStateLeaf(currentLeaf)
 	if err != nil {
 		return
 	}
@@ -208,13 +204,14 @@ func (s *StateTree) calculateParentHash(
 	return utils.HashTwo(witnessHash, *currentHash)
 }
 
-func NewStateLeaf(state *models.UserState) (*models.StateLeaf, error) {
+func NewStateLeaf(stateID uint32, state *models.UserState) (*models.StateLeaf, error) {
 	encodedState, err := encoder.EncodeUserState(toContractUserState(state))
 	if err != nil {
 		return nil, err
 	}
 	dataHash := crypto.Keccak256Hash(encodedState)
 	return &models.StateLeaf{
+		StateID:   stateID,
 		DataHash:  dataHash,
 		UserState: *state,
 	}, nil

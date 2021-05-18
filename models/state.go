@@ -17,6 +17,7 @@ type StateNode struct {
 }
 
 type StateLeaf struct {
+	StateID  uint32
 	DataHash common.Hash
 	UserState
 }
