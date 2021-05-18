@@ -12,9 +12,22 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func SyncBatches(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
-	// TODO start a database transaction
+func SyncBatches(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) (err error) {
+	tx, txStorage, err := storage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
+	if err != nil {
+		return
+	}
+	defer tx.Rollback(&err)
 
+	err = unsafeSyncBatches(txStorage, client, cfg)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+func unsafeSyncBatches(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
 	newBatches, err := client.GetBatches() // TODO query batches starting from the submission block of the latest known batch.
 	if err != nil {
 		return err
