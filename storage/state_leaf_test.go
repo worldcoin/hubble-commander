@@ -136,28 +136,6 @@ func (s *StateLeafTestSuite) TestGetStateLeaf_NonExistentLeaf() {
 	s.Equal(NewNotFoundError("state leaf"), err)
 }
 
-func (s *StateLeafTestSuite) TestGetNextAvailableStateID_NoLeavesInStateTree() {
-	path, err := s.storage.GetNextAvailableStateID()
-	s.NoError(err)
-	s.Equal(uint32(0), *path)
-}
-
-func (s *StateLeafTestSuite) TestGetNextAvailableStateID() {
-	err := s.storage.AddAccountIfNotExists(&account1)
-	s.NoError(err)
-	err = s.storage.AddAccountIfNotExists(&account2)
-	s.NoError(err)
-
-	err = s.tree.Set(0, userState1)
-	s.NoError(err)
-	err = s.tree.Set(1, userState2)
-	s.NoError(err)
-
-	path, err := s.storage.GetNextAvailableStateID()
-	s.NoError(err)
-	s.Equal(uint32(2), *path)
-}
-
 func (s *StateLeafTestSuite) TestGetUserStatesByPublicKey() {
 	accounts := []models.Account{
 		{

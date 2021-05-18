@@ -1,7 +1,9 @@
 package storage
 
 import (
+	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	bh "github.com/timshannon/badgerhold/v3"
 )
@@ -81,4 +83,25 @@ func (s *Storage) GetStateNodes(paths []models.MerklePath) (nodes []models.State
 		return nil, err
 	}
 	return nodes, nil
+}
+
+// TODO move to state_node, make sure to only iterate over keys (Badger PrefetchValues=false)
+func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
+	nodes := make([]models.StateNode, 0, 1)
+	err := s.Badger.Find(
+		&nodes,
+		bh.Where("MerklePath").
+			MatchFunc(badger.MatchAll). // TODO possibly performance killer
+			SortBy("MerklePath.Path").
+			Reverse().
+			Limit(1),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if len(nodes) == 0 {
+		return ref.Uint32(0), nil
+	}
+	stateID := nodes[0].MerklePath.Path + 1
+	return &stateID, nil
 }

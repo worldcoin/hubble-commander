@@ -1,10 +1,8 @@
 package storage
 
 import (
-	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
@@ -23,27 +21,6 @@ func (s *Storage) GetStateLeaf(stateID uint32) (stateLeaf *models.StateLeaf, err
 		return nil, err
 	}
 	return leaf.StateLeaf(), nil
-}
-
-// TODO move to state_node, make sure to only iterate over keys (Badger PrefetchValues=false)
-func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
-	nodes := make([]models.StateNode, 0, 1)
-	err := s.Badger.Find(
-		&nodes,
-		bh.Where("MerklePath").
-			MatchFunc(badger.MatchAll). // TODO possibly performance killer
-			SortBy("MerklePath.Path").
-			Reverse().
-			Limit(1),
-	)
-	if err != nil {
-		return nil, err
-	}
-	if len(nodes) == 0 {
-		return ref.Uint32(0), nil
-	}
-	stateID := nodes[0].MerklePath.Path + 1
-	return &stateID, nil
 }
 
 func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) (userStates []models.UserStateWithID, err error) {
