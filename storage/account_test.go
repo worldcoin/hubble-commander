@@ -104,7 +104,6 @@ func (s *AccountTestSuite) TestGetPublicKey_ReturnsPublicKey() {
 	s.Equal(account.PublicKey, *key)
 }
 
-// ! TEST ME and test below
 func (s *AccountTestSuite) TestGetUnusedPubKeyID_NoPublicKeys() {
 	_, err := s.storage.GetUnusedPubKeyID(&account1.PublicKey, models.NewUint256(100))
 	s.Equal(NewNotFoundError("accounts"), err)

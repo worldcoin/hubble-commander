@@ -31,6 +31,10 @@ func (d *Database) Close() error {
 	return d.store.Close()
 }
 
+func (d *Database) BadgerInstance() *badger.DB {
+	return d.store.Badger()
+}
+
 func (d *Database) duringTransaction() bool {
 	return d.txn != nil
 }
