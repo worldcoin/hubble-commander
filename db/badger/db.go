@@ -15,7 +15,10 @@ type Database struct {
 
 func NewDatabase(cfg *config.BadgerConfig) (*Database, error) {
 	options := bh.DefaultOptions
-	options.Options = badger.DefaultOptions(cfg.Path).WithLoggingLevel(badger.WARNING)
+	options.Options = badger.
+		DefaultOptions(cfg.Path).
+		WithLoggingLevel(badger.WARNING).
+		WithMemTableSize(64 << 21) // TODO: Bench to see if there are performance degradations and remove if so.
 
 	store, err := bh.Open(options)
 	if err != nil {
