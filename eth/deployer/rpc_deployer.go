@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/pkg/errors"
 )
 
 type RPCDeployer struct {
@@ -37,7 +38,7 @@ func NewRPCDeployer(cfg *config.EthereumConfig) (*RPCDeployer, error) {
 
 	backend, err := ethclient.Dial(cfg.RPCURL)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	return &RPCDeployer{

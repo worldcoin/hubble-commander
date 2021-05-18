@@ -15,7 +15,8 @@ func SignCreate2Transfer(wallet *bls.Wallet, create2Transfer dto.Create2Transfer
 			Fee:         *create2Transfer.Fee,
 			Nonce:       *create2Transfer.Nonce,
 		},
-	}, create2Transfer.ToPublicKey)
+		ToPublicKey: *create2Transfer.ToPublicKey,
+	})
 	if err != nil {
 		return nil, err
 	}

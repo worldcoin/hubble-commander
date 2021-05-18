@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -16,6 +17,7 @@ type Create2TransferCommitmentsTestSuite struct {
 	suite.Suite
 	teardown func() error
 	storage  *storage.Storage
+	client   *eth.TestClient
 	cfg      *config.RollupConfig
 }
 
@@ -25,6 +27,8 @@ func (s *Create2TransferCommitmentsTestSuite) SetupSuite() {
 
 func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 	testStorage, err := storage.NewTestStorageWithBadger()
+	s.NoError(err)
+	s.client, err = eth.NewTestClient()
 	s.NoError(err)
 	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
@@ -38,6 +42,7 @@ func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 }
 
 func (s *Create2TransferCommitmentsTestSuite) TearDownTest() {
+	s.client.Close()
 	err := s.teardown()
 	s.NoError(err)
 }
@@ -57,7 +62,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 }
 
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_DoesNothingWhenThereAreNotEnoughValidTransfers() {
-	transfers := generateValidCreate2Transfers(2)
+	transfers := generateValidCreate2Transfers(2, &models.PublicKey{1, 2, 3})
 	transfers[1].Amount = models.MakeUint256(99999999999)
 	s.addCreate2Transfers(transfers)
 
@@ -68,7 +73,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	preRoot, err := storage.NewStateTree(s.storage).Root()
 	s.NoError(err)
 
-	commitments, err := createCreate2TransferCommitments(pendingTransfers, s.storage, s.cfg, testDomain)
+	commitments, err := createCreate2TransferCommitments(pendingTransfers, s.storage, s.client.Client, s.cfg, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 0)
 
@@ -84,7 +89,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	preRoot, err := storage.NewStateTree(s.storage).Root()
 	s.NoError(err)
 
-	commitments, err := createCreate2TransferCommitments(pendingTransfers, s.storage, s.cfg, testDomain)
+	commitments, err := createCreate2TransferCommitments(pendingTransfers, s.storage, s.client.Client, s.cfg, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, 32)
@@ -101,7 +106,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_CreatesMaximallyAsManyCommitmentsAsSpecifiedInConfig() {
 	pendingTransfers := s.prepareAndReturnPendingCreate2Transfers(2)
 
-	commitments, err := createCreate2TransferCommitments(pendingTransfers, s.storage, s.cfg, testDomain)
+	commitments, err := createCreate2TransferCommitments(pendingTransfers, s.storage, s.client.Client, s.cfg, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 }
@@ -109,7 +114,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_MarksTransfersAsIncludedInCommitment() {
 	pendingTransfers := s.prepareAndReturnPendingCreate2Transfers(2)
 
-	commitments, err := createCreate2TransferCommitments(pendingTransfers, s.storage, s.cfg, testDomain)
+	commitments, err := createCreate2TransferCommitments(pendingTransfers, s.storage, s.client.Client, s.cfg, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -155,7 +160,7 @@ func (s *Create2TransferCommitmentsTestSuite) addCreate2Transfers(transfers []mo
 }
 
 func (s *Create2TransferCommitmentsTestSuite) prepareAndReturnPendingCreate2Transfers(transfersAmount int) []models.Create2Transfer {
-	transfers := generateValidCreate2Transfers(transfersAmount)
+	transfers := generateValidCreate2Transfers(transfersAmount, &models.PublicKey{1, 2, 3})
 	s.addCreate2Transfers(transfers)
 
 	pendingTransfers, err := s.storage.GetPendingCreate2Transfers()

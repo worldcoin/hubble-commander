@@ -1,13 +1,11 @@
 package commander
 
 import (
-	"fmt"
 	"log"
-	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -47,18 +45,16 @@ func RegisterGenesisAccounts(
 	accountRegistry *accountregistry.AccountRegistry,
 	accounts []models.GenesisAccount,
 ) ([]models.RegisteredGenesisAccount, error) {
-	ev := make(chan *accountregistry.AccountRegistryPubkeyRegistered)
-
-	sub, err := accountRegistry.WatchPubkeyRegistered(&bind.WatchOpts{}, ev)
+	registrations, unsubscribe, err := eth.WatchRegistrations(accountRegistry, &bind.WatchOpts{})
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
-	defer sub.Unsubscribe()
+	defer unsubscribe()
 
 	registeredAccounts := make([]models.RegisteredGenesisAccount, 0, len(accounts))
 
 	for i := range accounts {
-		registeredAccount, err := registerGenesisAccount(opts, accountRegistry, &accounts[i], ev)
+		registeredAccount, err := registerGenesisAccount(opts, accountRegistry, &accounts[i], registrations)
 		if err != nil {
 			return nil, err
 		}
@@ -80,26 +76,14 @@ func registerGenesisAccount(
 		return nil, err
 	}
 
-	tx, err := accountRegistry.Register(opts, publicKey.BigInts())
+	pubKeyID, err := eth.RegisterAccount(opts, accountRegistry, publicKey, ev)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	for {
-		select {
-		case event, ok := <-ev:
-			if !ok {
-				return nil, errors.WithStack(fmt.Errorf("account event watcher is closed"))
-			}
-			if event.Raw.TxHash == tx.Hash() {
-				return &models.RegisteredGenesisAccount{
-					GenesisAccount: *account,
-					PublicKey:      *publicKey,
-					PubKeyID:       uint32(event.PubkeyID.Uint64()),
-				}, nil
-			}
-		case <-time.After(deployer.ChainTimeout):
-			return nil, errors.WithStack(fmt.Errorf("timeout"))
-		}
-	}
+	return &models.RegisteredGenesisAccount{
+		GenesisAccount: *account,
+		PublicKey:      *publicKey,
+		PubKeyID:       *pubKeyID,
+	}, nil
 }

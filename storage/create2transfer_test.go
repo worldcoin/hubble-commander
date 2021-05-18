@@ -25,8 +25,8 @@ var (
 			Signature:            models.MakeRandomSignature(),
 			IncludedInCommitment: nil,
 		},
-		ToStateID:  2,
-		ToPubKeyID: 2,
+		ToStateID:   2,
+		ToPublicKey: account2.PublicKey,
 	}
 )
 
