@@ -95,25 +95,15 @@ func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([
 
 	pubKeyIDs := utils.ValueToInterfaceSlice(accounts, "PubKeyID")
 
-	// TODO possibly performance killer
-	// First get all state nodes and then query leaves by pubkey id and datahash
 	leaves := make([]models.FlatStateLeaf, 0, 1)
 	err = s.Badger.Find(&leaves, bh.Where("PubKeyID").In(pubKeyIDs...).Index("PubKeyID"))
 	if err != nil {
 		return nil, err
 	}
 
-	dataHashes := utils.ValueToInterfaceSlice(leaves, "DataHash")
-
-	nodes := make([]models.StateNode, 0, 1)
-	err = s.Badger.Find(&nodes, bh.Where("DataHash").In(dataHashes...).Index("DataHash"))
-	if err != nil {
-		return nil, err
-	}
-
 	stateIDs := make([]uint32, 0, 1)
-	for i := range nodes {
-		stateIDs = append(stateIDs, nodes[i].MerklePath.Path)
+	for i := range leaves {
+		stateIDs = append(stateIDs, leaves[i].StateID)
 	}
 
 	res := make([]models.Create2Transfer, 0, 1)
