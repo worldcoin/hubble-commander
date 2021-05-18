@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/storage"
@@ -15,10 +16,12 @@ import (
 type ApplyCreate2TransfersTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	teardown func() error
-	storage  *storage.Storage
-	tree     *storage.StateTree
-	cfg      *config.RollupConfig
+	teardown  func() error
+	storage   *storage.Storage
+	tree      *storage.StateTree
+	cfg       *config.RollupConfig
+	client    *eth.TestClient
+	publicKey models.PublicKey
 }
 
 func (s *ApplyCreate2TransfersTestSuite) SetupSuite() {
@@ -31,6 +34,8 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
 	s.tree = storage.NewStateTree(s.storage)
+	s.client, err = eth.NewTestClient()
+	s.NoError(err)
 	s.cfg = &config.RollupConfig{
 		FeeReceiverPubKeyID: 3,
 		TxsPerCommitment:    6,
@@ -54,11 +59,12 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 		Balance:    models.MakeUint256(1000),
 		Nonce:      models.MakeUint256(0),
 	}
+	s.publicKey = models.PublicKey{1, 2, 3}
 
 	for i := 1; i <= 50; i++ {
 		err = s.storage.AddAccountIfNotExists(&models.Account{
 			PubKeyID:  uint32(i),
-			PublicKey: models.PublicKey{1, 2, 3},
+			PublicKey: s.publicKey,
 		})
 		s.NoError(err)
 	}
@@ -66,7 +72,7 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 	for i := 1; i <= 10; i++ {
 		err = s.storage.AddAccountIfNotExists(&models.Account{
 			PubKeyID:  uint32(100 + i),
-			PublicKey: models.PublicKey{1, 2, 3},
+			PublicKey: s.publicKey,
 		})
 		s.NoError(err)
 	}
@@ -80,15 +86,15 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
+	s.client.Close()
 	err := s.teardown()
 	s.NoError(err)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AllValid() {
-	transfers := generateValidCreate2Transfers(3)
+	transfers := generateValidCreate2Transfers(3, &s.publicKey)
 
-	addedAccounts := make(map[uint32]struct{})
-	validTransfers, invalidTransfers, _, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
+	validTransfers, invalidTransfers, addedAccounts, _, err := ApplyCreate2Transfers(s.storage, s.client.Client, transfers, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 3)
@@ -97,11 +103,10 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AllValid() {
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
-	transfers := generateValidCreate2Transfers(2)
-	transfers = append(transfers, generateInvalidCreate2Transfers(3)...)
+	transfers := generateValidCreate2Transfers(2, &s.publicKey)
+	transfers = append(transfers, generateInvalidCreate2Transfers(3, &s.publicKey)...)
 
-	addedAccounts := make(map[uint32]struct{})
-	validTransfers, invalidTransfers, _, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
+	validTransfers, invalidTransfers, addedAccounts, _, err := ApplyCreate2Transfers(s.storage, s.client.Client, transfers, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 2)
@@ -110,10 +115,9 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_MoreThanSpecifiedInConfigTxsPerCommitment() {
-	transfers := generateValidCreate2Transfers(13)
+	transfers := generateValidCreate2Transfers(13, &s.publicKey)
 
-	addedAccounts := make(map[uint32]struct{})
-	validTransfers, invalidTransfers, _, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
+	validTransfers, invalidTransfers, addedAccounts, _, err := ApplyCreate2Transfers(s.storage, s.client.Client, transfers, s.cfg)
 	s.NoError(err)
 
 	s.Len(validTransfers, 6)
@@ -124,53 +128,27 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_MoreThanSpeci
 	s.Equal(models.MakeUint256(6), state.Nonce)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_FailsTransferIfAccountWasAlreadyAdded() {
-	transfers := generateValidCreate2Transfers(3)
-	transfers[2].ToPubKeyID = 10
-
-	addedAccounts := map[uint32]struct{}{
-		10: {},
-	}
-
-	validTransfers, invalidTransfers, _, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
-	s.NoError(err)
-
-	s.Len(validTransfers, 2)
-	s.Len(invalidTransfers, 1)
-	s.Len(addedAccounts, 3)
-	s.Contains(addedAccounts, transfers[0].ToPubKeyID)
-	s.Contains(addedAccounts, transfers[1].ToPubKeyID)
-	s.Contains(addedAccounts, transfers[2].ToPubKeyID)
-}
-
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransferErrors() {
-	transfers := generateValidCreate2Transfers(3)
-	transfers[2].ToPubKeyID = 10
-	transfers = append(transfers, generateInvalidCreate2Transfers(2)...)
+	transfers := generateValidCreate2Transfers(3, &s.publicKey)
+	transfers = append(transfers, generateInvalidCreate2Transfers(2, &s.publicKey)...)
 
 	for i := range transfers {
 		err := s.storage.AddCreate2Transfer(&transfers[i])
 		s.NoError(err)
 	}
 
-	addedAccounts := map[uint32]struct{}{
-		10: {},
-	}
-
-	validTransfers, invalidTransfers, _, err := ApplyCreate2Transfers(s.storage, transfers, addedAccounts, s.cfg)
+	validTransfers, invalidTransfers, addedAccounts, _, err := ApplyCreate2Transfers(s.storage, s.client.Client, transfers, s.cfg)
 	s.NoError(err)
 
-	s.Len(validTransfers, 2)
-	s.Len(invalidTransfers, 3)
+	s.Len(validTransfers, 3)
+	s.Len(invalidTransfers, 2)
 	s.Len(addedAccounts, 3)
 
 	for i := range transfers {
 		transfer, err := s.storage.GetCreate2Transfer(transfers[i].Hash)
 		s.NoError(err)
-		if i < 2 {
+		if i < 3 {
 			s.Nil(transfer.ErrorMessage)
-		} else if i == 2 {
-			s.Equal(*transfer.ErrorMessage, ErrAccountAlreadyExists.Error())
 		} else {
 			s.Equal(*transfer.ErrorMessage, ErrNonceTooLow.Error())
 		}
@@ -181,7 +159,7 @@ func TestApplyCreate2TransfersTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplyCreate2TransfersTestSuite))
 }
 
-func generateValidCreate2Transfers(transfersAmount int) []models.Create2Transfer {
+func generateValidCreate2Transfers(transfersAmount int, publicKey *models.PublicKey) []models.Create2Transfer {
 	transfers := make([]models.Create2Transfer, 0, transfersAmount)
 	for i := 0; i < transfersAmount; i++ {
 		transfer := models.Create2Transfer{
@@ -193,15 +171,15 @@ func generateValidCreate2Transfers(transfersAmount int) []models.Create2Transfer
 				Fee:         models.MakeUint256(1),
 				Nonce:       models.MakeUint256(int64(i)),
 			},
-			ToStateID:  2,
-			ToPubKeyID: uint32(i + 1),
+			ToStateID:   2,
+			ToPublicKey: *publicKey,
 		}
 		transfers = append(transfers, transfer)
 	}
 	return transfers
 }
 
-func generateInvalidCreate2Transfers(transfersAmount int) []models.Create2Transfer {
+func generateInvalidCreate2Transfers(transfersAmount int, publicKey *models.PublicKey) []models.Create2Transfer {
 	transfers := make([]models.Create2Transfer, 0, transfersAmount)
 	for i := 0; i < transfersAmount; i++ {
 		transfer := models.Create2Transfer{
@@ -213,8 +191,8 @@ func generateInvalidCreate2Transfers(transfersAmount int) []models.Create2Transf
 				Fee:         models.MakeUint256(1),
 				Nonce:       models.MakeUint256(0),
 			},
-			ToStateID:  2,
-			ToPubKeyID: uint32(i + 101),
+			ToStateID:   2,
+			ToPublicKey: *publicKey,
 		}
 		transfers = append(transfers, transfer)
 	}

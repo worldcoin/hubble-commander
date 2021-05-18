@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/pkg/errors"
 )
 
 type RPCChainConnection struct {
@@ -39,7 +40,7 @@ func NewRPCChainConnection(cfg *config.EthereumConfig) (*RPCChainConnection, err
 
 	rpcClient, err := rpc.Dial(cfg.RPCURL)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	backend := ethclient.NewClient(rpcClient)

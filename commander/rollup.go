@@ -83,7 +83,7 @@ func unsafeCreateAndSubmitBatch(
 	if batchType == txtype.Transfer {
 		commitments, err = buildTransferCommitments(storage, cfg, *domain)
 	} else {
-		commitments, err = buildCreate2TransfersCommitments(storage, cfg, *domain)
+		commitments, err = buildCreate2TransfersCommitments(storage, client, cfg, *domain)
 	}
 	if err != nil {
 		return err
@@ -104,10 +104,15 @@ func buildTransferCommitments(storage *st.Storage, cfg *config.RollupConfig, dom
 	return createTransferCommitments(pendingTransfers, storage, cfg, domain)
 }
 
-func buildCreate2TransfersCommitments(storage *st.Storage, cfg *config.RollupConfig, domain bls.Domain) ([]models.Commitment, error) {
+func buildCreate2TransfersCommitments(
+	storage *st.Storage,
+	client *eth.Client,
+	cfg *config.RollupConfig,
+	domain bls.Domain,
+) ([]models.Commitment, error) {
 	pendingTransfers, err := storage.GetPendingCreate2Transfers()
 	if err != nil {
 		return nil, err
 	}
-	return createCreate2TransferCommitments(pendingTransfers, storage, cfg, domain)
+	return createCreate2TransferCommitments(pendingTransfers, storage, client, cfg, domain)
 }

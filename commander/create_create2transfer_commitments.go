@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -15,12 +16,12 @@ import (
 func createCreate2TransferCommitments(
 	pendingTransfers []models.Create2Transfer,
 	storage *st.Storage,
+	client *eth.Client,
 	cfg *config.RollupConfig,
 	domain bls.Domain,
 ) ([]models.Commitment, error) {
 	stateTree := st.NewStateTree(storage)
 	commitments := make([]models.Commitment, 0, 32)
-	alreadyAddedPubKeyIDs := make(map[uint32]struct{})
 
 	for {
 		if len(commitments) >= int(cfg.MaxCommitmentsPerBatch) {
@@ -33,7 +34,7 @@ func createCreate2TransferCommitments(
 			return nil, err
 		}
 
-		appliedTxs, invalidTxs, feeReceiverStateID, err := ApplyCreate2Transfers(storage, pendingTransfers, alreadyAddedPubKeyIDs, cfg)
+		appliedTxs, invalidTxs, addedPubKeyIDs, feeReceiverStateID, err := ApplyCreate2Transfers(storage, client, pendingTransfers, cfg)
 		if err != nil {
 			return nil, err
 		}
@@ -48,7 +49,7 @@ func createCreate2TransferCommitments(
 
 		pendingTransfers = removeCreate2Transfer(pendingTransfers, append(appliedTxs, invalidTxs...))
 
-		serializedTxs, err := encoder.SerializeCreate2Transfers(appliedTxs)
+		serializedTxs, err := encoder.SerializeCreate2Transfers(appliedTxs, addedPubKeyIDs)
 		if err != nil {
 			return nil, err
 		}
