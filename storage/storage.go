@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/db/postgres"
+	"github.com/golang-migrate/migrate/v4"
 )
 
 type Storage struct {
@@ -71,6 +72,14 @@ func (s *Storage) Close() error {
 		return err
 	}
 	return s.Badger.Close()
+}
+
+func (s *Storage) Prune(migrator *migrate.Migrate) error {
+	err := migrator.Down()
+	if err != nil && err != migrate.ErrNoChange {
+		return err
+	}
+	return s.Badger.Prune()
 }
 
 func getQueryBuilder() squirrel.StatementBuilderType {

@@ -119,7 +119,7 @@ func (s *GetTransactionsTestSuite) addTransfers() []models.Transfer {
 }
 
 func (s *GetTransactionsTestSuite) addCreate2Transfers() []models.Create2Transfer {
-	makeCreate2Transfer := func(fromStateID, toStateID, toPubKeyID uint32) models.Create2Transfer {
+	makeCreate2Transfer := func(fromStateID, toStateID uint32, toPublicKey models.PublicKey) models.Create2Transfer {
 		return models.Create2Transfer{
 			TransactionBase: models.TransactionBase{
 				Hash:        utils.RandomHash(),
@@ -130,14 +130,14 @@ func (s *GetTransactionsTestSuite) addCreate2Transfers() []models.Create2Transfe
 				Nonce:       models.MakeUint256(1),
 				Signature:   models.MakeRandomSignature(),
 			},
-			ToStateID:  toStateID,
-			ToPubKeyID: toPubKeyID,
+			ToStateID:   toStateID,
+			ToPublicKey: toPublicKey,
 		}
 	}
 
 	transfers := []models.Create2Transfer{
-		makeCreate2Transfer(0, 5, 3),
-		makeCreate2Transfer(4, 6, 3),
+		makeCreate2Transfer(0, 5, models.PublicKey{3, 4, 5}),
+		makeCreate2Transfer(4, 6, models.PublicKey{3, 4, 5}),
 	}
 
 	for i := range transfers {

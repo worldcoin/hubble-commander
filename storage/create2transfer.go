@@ -12,7 +12,7 @@ import (
 var create2TransferColumns = []string{
 	"transaction_base.*",
 	"create2transfer.to_state_id",
-	"create2transfer.to_pub_key_id",
+	"create2transfer.to_public_key",
 }
 
 func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) (err error) {
@@ -45,7 +45,7 @@ func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) (err error) {
 			Values(
 				t.Hash,
 				t.ToStateID,
-				t.ToPubKeyID,
+				t.ToPublicKey,
 			),
 	).Exec()
 	if err != nil {
@@ -139,7 +139,7 @@ func (s *Storage) GetCreate2TransfersByCommitmentID(id int32) ([]models.Create2T
 			"transaction_base.nonce",
 			"transaction_base.signature",
 			"create2transfer.to_state_id",
-			"create2transfer.to_pub_key_id").
+			"create2transfer.to_public_key").
 			From("transaction_base").
 			JoinClause("NATURAL JOIN create2transfer").
 			Where(squirrel.Eq{"included_in_commitment": id}),
