@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -94,14 +95,14 @@ func (s *SyncTestSuite) TestSyncBatches() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   *bls.MockSignature().ModelsSignature(), // TODO move MockSignature here
+			Signature:   *s.mockSignature(),
 		},
 		ToStateID: 1,
 	}
 	err := s.storage.AddTransfer(&tx)
 	s.NoError(err)
 
-	commitments, err := createTransferCommitments([]models.Transfer{tx}, s.storage, s.cfg, bls.Domain{1, 2, 3, 4}) // TODO extract
+	commitments, err := createTransferCommitments([]models.Transfer{tx}, s.storage, s.cfg, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -127,6 +128,14 @@ func (s *SyncTestSuite) TestSyncBatches() {
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 1)
+}
+
+func (s *SyncTestSuite) mockSignature() *models.Signature {
+	wallet, err := bls.NewRandomWallet(testDomain)
+	s.NoError(err)
+	signature, err := wallet.Sign(utils.RandomBytes(4))
+	s.NoError(err)
+	return signature.ModelsSignature()
 }
 
 func TestSyncTestSuite(t *testing.T) {
