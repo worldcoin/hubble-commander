@@ -239,7 +239,7 @@ func (s *AccountTestSuite) Test_GetUnusedPubKeyID_MultipleTokenIndexes() {
 		},
 	}
 	for i := range leaves {
-		err := s.storage.AddStateLeaf(&leaves[i])
+		err := s.storage.UpsertStateLeaf(&leaves[i])
 		s.NoError(err)
 	}
 
