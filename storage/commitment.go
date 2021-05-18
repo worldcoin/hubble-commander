@@ -144,7 +144,7 @@ func (s *Storage) GetCommitmentsByBatchID(id models.Uint256) ([]models.Commitmen
 		return nil, err
 	}
 	if len(commitments) == 0 {
-		return nil, NewNotFoundError("commitments") // TODO TEST ME
+		return nil, NewNotFoundError("commitments")
 	}
 
 	for i := range commitments {
