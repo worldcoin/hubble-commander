@@ -49,20 +49,20 @@ func (c *Commander) Start() error {
 		return err
 	}
 
+	c.storage, err = st.NewStorage(&c.cfg.Postgres, &c.cfg.Badger)
+	if err != nil {
+		return err
+	}
+
 	if c.cfg.Rollup.Prune {
-		err = migrator.Down()
-		if err != nil && err != migrate.ErrNoChange {
+		err = c.storage.Prune(migrator)
+		if err != nil {
 			return err
 		}
 	}
 
 	err = migrator.Up()
 	if err != nil && err != migrate.ErrNoChange {
-		return err
-	}
-
-	c.storage, err = st.NewStorage(&c.cfg.Postgres, &c.cfg.Badger)
-	if err != nil {
 		return err
 	}
 

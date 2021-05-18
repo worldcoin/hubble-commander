@@ -90,3 +90,7 @@ func (d *Database) BeginTransaction(update bool) (*db.TxController, *Database) {
 	}
 	return db.NewTxController(&ControllerAdapter{txn}, false), dbDuringTx
 }
+
+func (d *Database) Prune() error {
+	return d.store.Badger().DropAll()
+}

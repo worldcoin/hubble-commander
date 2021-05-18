@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	bh "github.com/timshannon/badgerhold/v3"
 )
 
 type someStruct struct {
@@ -11,22 +12,36 @@ type someStruct struct {
 	Age  uint
 }
 
+var testStruct = someStruct{
+	Name: "Duck",
+	Age:  4,
+}
+
 func TestNewTestDB(t *testing.T) {
 	bdg, err := NewTestDB()
 	require.NoError(t, err)
 
-	key := "Duck"
-	value := someStruct{
-		Name: key,
-		Age:  4,
-	}
-
-	err = bdg.DB.Insert(key, value)
+	err = bdg.DB.Insert(testStruct.Name, testStruct)
 	require.NoError(t, err)
 
 	var res someStruct
-	err = bdg.DB.Get(key, &res)
+	err = bdg.DB.Get(testStruct.Name, &res)
 	require.NoError(t, err)
 
-	require.Equal(t, value, res)
+	require.Equal(t, testStruct, res)
+}
+
+func TestPrune(t *testing.T) {
+	bdg, err := NewTestDB()
+	require.NoError(t, err)
+
+	err = bdg.DB.Insert(testStruct.Name, testStruct)
+	require.NoError(t, err)
+
+	err = bdg.DB.Prune()
+	require.NoError(t, err)
+
+	var res someStruct
+	err = bdg.DB.Get(testStruct.Name, &res)
+	require.Equal(t, bh.ErrNotFound, err)
 }
