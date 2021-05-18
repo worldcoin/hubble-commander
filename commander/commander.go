@@ -66,12 +66,12 @@ func (c *Commander) Start() error {
 		return err
 	}
 
-	chain, err := getDeployer(c.cfg.Ethereum)
+	chain, err := getChainConnection(c.cfg.Ethereum)
 	if err != nil {
 		return err
 	}
 
-	client, err := getClient(c.storage, chain, &c.cfg.Rollup)
+	client, err := getClient(chain, c.storage, &c.cfg.Rollup)
 	if err != nil {
 		return err
 	}
@@ -143,14 +143,14 @@ func (c *Commander) clearState() {
 	c.apiServer = nil
 }
 
-func getDeployer(cfg *config.EthereumConfig) (deployer.ChainConnection, error) {
+func getChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, error) {
 	if cfg == nil {
 		return simulator.NewAutominingSimulator()
 	}
-	return deployer.NewRPCDeployer(cfg)
+	return deployer.NewRPCChainConnection(cfg)
 }
 
-func getClient(storage *st.Storage, chain deployer.ChainConnection, cfg *config.RollupConfig) (*eth.Client, error) {
+func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.RollupConfig) (*eth.Client, error) {
 	chainState, err := storage.GetChainState(chain.GetChainID())
 
 	if st.IsNotFoundError(err) {

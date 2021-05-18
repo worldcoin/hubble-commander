@@ -26,7 +26,7 @@ func (s *WalletHardhatTestSuite) SetupSuite() {
 	cfg := config.GetTestConfig()
 	s.NotNil(cfg.Ethereum, "This test must be run against hardhat node instance with gas estimator contract deployed")
 
-	dep, err := deployer.NewRPCDeployer(cfg.Ethereum)
+	dep, err := deployer.NewRPCChainConnection(cfg.Ethereum)
 	s.NoError(err)
 
 	opts := *dep.GetAccount()

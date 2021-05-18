@@ -41,6 +41,7 @@ func (s *NetworkInfoTestSuite) SetupTest() {
 func (s *NetworkInfoTestSuite) TearDownTest() {
 	err := s.teardown()
 	s.NoError(err)
+	s.testClient.Close()
 }
 
 func (s *NetworkInfoTestSuite) TestGetNetworkInfo_NoBatches() {

@@ -14,18 +14,18 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type DecoderTestSuite struct {
+type MetaTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	sim       *simulator.Simulator
 	testTypes *types.TestTypes
 }
 
-func (s *DecoderTestSuite) SetupSuite() {
+func (s *MetaTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *DecoderTestSuite) SetupTest() {
+func (s *MetaTestSuite) SetupTest() {
 	sim, err := simulator.NewSimulator()
 	s.NoError(err)
 	s.sim = sim
@@ -36,11 +36,11 @@ func (s *DecoderTestSuite) SetupTest() {
 	s.testTypes = test.TestTypes
 }
 
-func (s *DecoderTestSuite) TearDownTest() {
+func (s *MetaTestSuite) TearDownTest() {
 	s.sim.Close()
 }
 
-func (s *DecoderTestSuite) TestDecodeMeta() {
+func (s *MetaTestSuite) TestDecodeMeta() {
 	input, err := s.testTypes.EncodeMeta(
 		nil,
 		big.NewInt(1),
@@ -65,6 +65,6 @@ func (s *DecoderTestSuite) TestDecodeMeta() {
 	s.Equal(expectedMeta, meta)
 }
 
-func TestDecoderTestSuite(t *testing.T) {
-	suite.Run(t, new(DecoderTestSuite))
+func TestMetaTestSuite(t *testing.T) {
+	suite.Run(t, new(MetaTestSuite))
 }

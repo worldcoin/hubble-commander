@@ -28,6 +28,11 @@ func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConfi
 		case <-done:
 			return nil
 		case <-ticker.C:
+			err = SyncBatches(storage, client, cfg) // TODO disable in benchmarks
+			if err != nil {
+				return err
+			}
+
 			if currentBatchType == txtype.Transfer {
 				err = createAndSubmitBatch(currentBatchType, storage, client, cfg)
 				currentBatchType = txtype.Create2Transfer
