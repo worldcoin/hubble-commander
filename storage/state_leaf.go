@@ -131,26 +131,3 @@ func (s *Storage) GetUserStateByPubKeyIDAndTokenIndex(pubKeyID uint32, tokenInde
 
 	return userState, nil
 }
-
-func (s *Storage) GetUserStateByID(stateID uint32) (*models.UserStateWithID, error) {
-	var leaf models.FlatStateLeaf
-	err := s.Badger.Get(stateID, &leaf)
-	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("user state")
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	userState := &models.UserStateWithID{
-		StateID: stateID,
-		UserState: models.UserState{
-			PubKeyID:   leaf.PubKeyID,
-			TokenIndex: leaf.TokenIndex,
-			Balance:    leaf.Balance,
-			Nonce:      leaf.Nonce,
-		},
-	}
-
-	return userState, nil
-}
