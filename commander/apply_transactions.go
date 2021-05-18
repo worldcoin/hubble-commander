@@ -27,7 +27,7 @@ func ApplyFee(storage *st.Storage, feeReceiverPubKeyID uint32, tokenIndex, fee m
 	feeReceiver.Balance = *feeReceiver.Balance.Add(&fee)
 
 	stateTree := st.NewStateTree(storage)
-	if err = stateTree.Set(feeReceiver.StateID, &feeReceiver.UserState); err != nil {
+	if err := stateTree.Set(feeReceiver.StateID, &feeReceiver.UserState); err != nil {
 		return nil, err
 	}
 
