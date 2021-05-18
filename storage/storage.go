@@ -11,11 +11,11 @@ import (
 )
 
 type Storage struct {
-	Postgres    *postgres.Database
-	Badger      *badger.Database
-	QB          squirrel.StatementBuilderType
-	domain      *bls.Domain
-	feeReceiver map[string]uint32
+	Postgres            *postgres.Database
+	Badger              *badger.Database
+	QB                  squirrel.StatementBuilderType
+	domain              *bls.Domain
+	feeReceiverStateIDs map[string]uint32
 }
 
 type TxOptions struct {
@@ -36,10 +36,10 @@ func NewStorage(postgresConfig *config.PostgresConfig, badgerConfig *config.Badg
 	}
 
 	return &Storage{
-		Postgres:    postgresDB,
-		Badger:      badgerDB,
-		QB:          getQueryBuilder(),
-		feeReceiver: make(map[string]uint32),
+		Postgres:            postgresDB,
+		Badger:              badgerDB,
+		QB:                  getQueryBuilder(),
+		feeReceiverStateIDs: make(map[string]uint32),
 	}, nil
 }
 

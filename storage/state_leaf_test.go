@@ -245,7 +245,7 @@ func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf() {
 	s.NoError(err)
 	s.Equal(*userState1, stateLeaf.UserState)
 	s.Equal(uint32(0), stateLeaf.StateID)
-	s.Equal(uint32(0), s.storage.feeReceiver[userState1.TokenIndex.String()])
+	s.Equal(uint32(0), s.storage.feeReceiverStateIDs[userState1.TokenIndex.String()])
 }
 
 func (s *StateLeafTestSuite) TestGetUserStateByID() {
