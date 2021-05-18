@@ -8,7 +8,7 @@ import (
 type TransactionBase struct {
 	Hash                 common.Hash            `db:"tx_hash"`
 	TxType               txtype.TransactionType `db:"tx_type"`
-	FromStateID          uint32                 `db:"from_state_id"` // TODO consider adding an index
+	FromStateID          uint32                 `db:"from_state_id"`
 	Amount               Uint256
 	Fee                  Uint256
 	Nonce                Uint256
