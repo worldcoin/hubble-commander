@@ -14,7 +14,7 @@ func ApplyCreate2Transfer(
 	create2Transfer *models.Create2Transfer,
 	commitmentTokenIndex models.Uint256,
 ) (addedPubKeyID *uint32, create2TransferError, appError error) {
-	pubKeyID, err := getPubKeyID(storage, client, registrations, create2Transfer, commitmentTokenIndex)
+	pubKeyID, err := getOrRegisterPubkeyID(storage, client, registrations, create2Transfer, commitmentTokenIndex)
 	if err != nil {
 		return nil, create2TransferError, appError
 	}
@@ -50,7 +50,7 @@ func ApplyCreate2Transfer(
 	return pubKeyID, nil, nil
 }
 
-func getPubKeyID(
+func getOrRegisterPubkeyID(
 	storage *st.Storage,
 	client *eth.Client,
 	events chan *accountregistry.AccountRegistryPubkeyRegistered,

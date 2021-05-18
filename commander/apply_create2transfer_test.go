@@ -134,13 +134,13 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ReturnsCorrectP
 func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_AccountNotExists() {
 	transfer := create2Transfer
 	transfer.ToPublicKey = models.PublicKey{10, 11, 12}
-	pubKeyID, err := getPubKeyID(s.storage, s.client.Client, s.events, &transfer, models.MakeUint256(1))
+	pubKeyID, err := getOrRegisterPubkeyID(s.storage, s.client.Client, s.events, &transfer, models.MakeUint256(1))
 	s.NoError(err)
 	s.Equal(uint32(0), *pubKeyID)
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_AccountForTokenIndexNotExists() {
-	pubKeyID, err := getPubKeyID(s.storage, s.client.Client, s.events, &create2Transfer, models.MakeUint256(1))
+	pubKeyID, err := getOrRegisterPubkeyID(s.storage, s.client.Client, s.events, &create2Transfer, models.MakeUint256(1))
 	s.NoError(err)
 	s.Equal(uint32(2), *pubKeyID)
 }
