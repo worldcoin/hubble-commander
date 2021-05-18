@@ -11,16 +11,18 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/pkg/errors"
 )
 
-type RPCDeployer struct {
+type RPCChainConnection struct {
 	account *bind.TransactOpts
 	backend *ethclient.Client
+	rpc     *rpc.Client
 	chainID *big.Int
 }
 
-func NewRPCDeployer(cfg *config.EthereumConfig) (*RPCDeployer, error) {
+func NewRPCChainConnection(cfg *config.EthereumConfig) (*RPCChainConnection, error) {
 	chainID, ok := big.NewInt(0).SetString(cfg.ChainID, 10)
 	if !ok {
 		return nil, fmt.Errorf("invalid chain id")
@@ -36,35 +38,38 @@ func NewRPCDeployer(cfg *config.EthereumConfig) (*RPCDeployer, error) {
 		return nil, err
 	}
 
-	backend, err := ethclient.Dial(cfg.RPCURL)
+	rpcClient, err := rpc.Dial(cfg.RPCURL)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	return &RPCDeployer{
+	backend := ethclient.NewClient(rpcClient)
+
+	return &RPCChainConnection{
 		account,
 		backend,
+		rpcClient,
 		chainID,
 	}, nil
 }
 
-func (d *RPCDeployer) GetAccount() *bind.TransactOpts {
+func (d *RPCChainConnection) GetAccount() *bind.TransactOpts {
 	return d.account
 }
 
-func (d *RPCDeployer) GetBackend() ChainBackend {
+func (d *RPCChainConnection) GetBackend() ChainBackend {
 	return d.backend
 }
 
-func (d *RPCDeployer) Commit() {
+func (d *RPCChainConnection) Commit() {
 	// NOOP
 }
 
-func (d *RPCDeployer) GetChainID() models.Uint256 {
+func (d *RPCChainConnection) GetChainID() models.Uint256 {
 	return models.MakeUint256FromBig(*d.chainID)
 }
 
-func (d *RPCDeployer) GetLatestBlockNumber() (*uint32, error) {
+func (d *RPCChainConnection) GetLatestBlockNumber() (*uint32, error) {
 	blockNumber, err := d.backend.BlockNumber(context.Background())
 	if err != nil {
 		return nil, err
