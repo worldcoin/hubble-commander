@@ -124,7 +124,8 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_MoreThanSpeci
 	s.Len(invalidTransfers, 0)
 	s.Len(addedAccounts, 6)
 
-	state, _ := s.tree.Leaf(1)
+	state, err := s.storage.GetStateLeafByStateID(1)
+	s.NoError(err)
 	s.Equal(models.MakeUint256(6), state.Nonce)
 }
 

@@ -117,11 +117,11 @@ func (s *SyncTestSuite) TestSyncBatches() {
 	err = SyncBatches(s.storage, s.client.Client, s.cfg)
 	s.NoError(err)
 
-	state0, err := s.tree.Leaf(0)
+	state0, err := s.storage.GetStateLeafByStateID(0)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(600), state0.Balance)
 
-	state1, err := s.tree.Leaf(1)
+	state1, err := s.storage.GetStateLeafByStateID(1)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(400), state1.Balance)
 

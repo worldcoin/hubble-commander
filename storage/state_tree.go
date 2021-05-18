@@ -43,7 +43,16 @@ func (s *StateTree) LeafNode(stateID uint32) (*models.StateNode, error) {
 }
 
 func (s *StateTree) Leaf(stateID uint32) (*models.StateLeaf, error) {
-	return s.storage.GetStateLeafByStateID(stateID)
+	leaf, err := s.storage.GetStateLeafByStateID(stateID)
+	if IsNotFoundError(err) {
+		return &models.StateLeaf{
+			StateID:  stateID,
+			DataHash: GetZeroHash(0),
+		}, nil
+	} else if err != nil {
+		return nil, err
+	}
+	return leaf, nil
 }
 
 func (s *StateTree) Set(id uint32, state *models.UserState) (err error) {
@@ -108,13 +117,8 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 
 func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (err error) {
 	prevLeaf, err := s.Leaf(index)
-	if IsNotFoundError(err) {
-		prevLeaf = &models.StateLeaf{
-			StateID:  index,
-			DataHash: GetZeroHash(0),
-		}
-	} else if err != nil {
-		return
+	if err != nil {
+		return err
 	}
 
 	prevRoot, err := s.Root()

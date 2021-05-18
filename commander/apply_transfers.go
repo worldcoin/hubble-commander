@@ -20,11 +20,10 @@ func ApplyTransfers(
 		return
 	}
 
-	stateTree := st.NewStateTree(storage)
 	appliedTransfers = make([]models.Transfer, 0, cfg.TxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
-	senderLeaf, err := stateTree.Leaf(transfers[0].FromStateID)
+	senderLeaf, err := storage.GetStateLeafByStateID(transfers[0].FromStateID)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -33,7 +32,7 @@ func ApplyTransfers(
 
 	for i := range transfers {
 		transfer := transfers[i]
-		transferError, appError := ApplyTransfer(stateTree, &transfer, commitmentTokenIndex)
+		transferError, appError := ApplyTransfer(storage, &transfer, commitmentTokenIndex)
 		if appError != nil {
 			return nil, nil, nil, appError
 		}
@@ -52,7 +51,7 @@ func ApplyTransfers(
 	}
 
 	if len(appliedTransfers) > 0 {
-		feeReceiverStateID, err = ApplyFee(stateTree, storage, cfg.FeeReceiverPubKeyID, commitmentTokenIndex, combinedFee)
+		feeReceiverStateID, err = ApplyFee(storage, cfg.FeeReceiverPubKeyID, commitmentTokenIndex, combinedFee)
 		if err != nil {
 			return nil, nil, nil, err
 		}

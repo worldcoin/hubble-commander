@@ -6,7 +6,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
-	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -77,8 +76,7 @@ func (a *API) validateCreate2Transfer(create2Transfer *models.Create2Transfer) e
 		return vErr
 	}
 
-	stateTree := storage.NewStateTree(a.storage)
-	senderState, err := stateTree.Leaf(create2Transfer.FromStateID)
+	senderState, err := a.storage.GetStateLeafByStateID(create2Transfer.FromStateID)
 	if err != nil {
 		return err
 	}

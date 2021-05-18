@@ -102,7 +102,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InsertsNewEmpty
 	s.NoError(appError)
 	s.NoError(transferError)
 
-	leaf, err := s.tree.Leaf(2)
+	leaf, err := s.storage.GetStateLeafByStateID(2)
 	s.NoError(err)
 	s.NotNil(leaf)
 	s.Equal(models.MakeUint256(0), leaf.Nonce)
@@ -114,9 +114,9 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer()
 	s.NoError(appError)
 	s.NoError(transferError)
 
-	receiverLeaf, err := s.tree.Leaf(2)
+	receiverLeaf, err := s.storage.GetStateLeafByStateID(2)
 	s.NoError(err)
-	senderLeaf, err := s.tree.Leaf(create2Transfer.FromStateID)
+	senderLeaf, err := s.storage.GetStateLeafByStateID(create2Transfer.FromStateID)
 	s.NoError(err)
 
 	s.Equal(int64(8900), senderLeaf.Balance.Int64())

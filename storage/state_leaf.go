@@ -17,6 +17,7 @@ func (s *Storage) UpsertStateLeaf(leaf *models.StateLeaf) error {
 	return err
 }
 
+// TODO rename
 func (s *Storage) GetStateLeafByStateID(stateID uint32) (stateLeaf *models.StateLeaf, err error) {
 	var leaf models.FlatStateLeaf
 	err = s.Badger.Get(stateID, &leaf)

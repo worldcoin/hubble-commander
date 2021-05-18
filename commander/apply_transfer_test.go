@@ -139,7 +139,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_Validation_TokenIndex() {
 	err = s.tree.Set(receiverStateID, &receiverState)
 	s.NoError(err)
 
-	transferError, appError := ApplyTransfer(s.tree, &transfer, models.MakeUint256(3))
+	transferError, appError := ApplyTransfer(s.storage.Storage, &transfer, models.MakeUint256(3))
 	s.Equal(appError, ErrIncorrectTokenIndices)
 	s.NoError(transferError)
 }
@@ -163,13 +163,13 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer() {
 	err = s.tree.Set(receiverStateID, &receiverState)
 	s.NoError(err)
 
-	transferError, appError := ApplyTransfer(s.tree, &transfer, models.MakeUint256(1))
+	transferError, appError := ApplyTransfer(s.storage.Storage, &transfer, models.MakeUint256(1))
 	s.NoError(appError)
 	s.NoError(transferError)
 
-	senderLeaf, err := s.tree.Leaf(senderStateID)
+	senderLeaf, err := s.storage.GetStateLeafByStateID(senderStateID)
 	s.NoError(err)
-	receiverLeaf, err := s.tree.Leaf(receiverStateID)
+	receiverLeaf, err := s.storage.GetStateLeafByStateID(receiverStateID)
 	s.NoError(err)
 
 	s.Equal(int64(270), senderLeaf.Balance.Int64())
@@ -181,11 +181,11 @@ func (s *ApplyTransferTestSuite) TestApplyFee() {
 	err := s.tree.Set(receiverStateID, &receiverState)
 	s.NoError(err)
 
-	feeReceiverStateID, err := ApplyFee(s.tree, s.storage.Storage, receiverStateID, models.MakeUint256(1), models.MakeUint256(555))
+	feeReceiverStateID, err := ApplyFee(s.storage.Storage, receiverStateID, models.MakeUint256(1), models.MakeUint256(555))
 	s.NoError(err)
 	s.Equal(receiverStateID, *feeReceiverStateID)
 
-	receiverLeaf, err := s.tree.Leaf(receiverStateID)
+	receiverLeaf, err := s.storage.GetStateLeafByStateID(receiverStateID)
 	s.NoError(err)
 
 	s.Equal(int64(555), receiverLeaf.Balance.Int64())
