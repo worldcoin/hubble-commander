@@ -58,7 +58,7 @@ func getOrRegisterPubKeyID(
 	transfer *models.Create2Transfer,
 	tokenIndex models.Uint256,
 ) (*uint32, error) {
-	pubKeyID, err := storage.GetUnusedPubKeyID(&transfer.ToPublicKey, tokenIndex)
+	pubKeyID, err := storage.GetUnusedPubKeyID(&transfer.ToPublicKey, &tokenIndex)
 	if err != nil && !st.IsNotFoundError(err) {
 		return nil, err
 	} else if st.IsNotFoundError(err) {

@@ -2,6 +2,7 @@ package storage
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
+	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	bh "github.com/timshannon/badgerhold/v3"
 )
@@ -81,4 +82,37 @@ func (s *Storage) GetStateNodes(paths []models.MerklePath) (nodes []models.State
 		return nil, err
 	}
 	return nodes, nil
+}
+
+func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
+	var nextAvailableStateID uint32
+
+	err := s.Badger.View(func(txn *bdg.Txn) error {
+		opts := bdg.DefaultIteratorOptions
+		opts.PrefetchValues = false
+		opts.Reverse = true
+		it := txn.NewIterator(opts)
+		defer it.Close()
+		prefix := []byte("bh_FlatStateLeaf")
+
+		seekPrefix := make([]byte, 0, len(prefix)+1)
+		seekPrefix = append(seekPrefix, prefix...)
+		seekPrefix = append(seekPrefix, 0xFF) // Required to loop backwards
+
+		it.Seek(seekPrefix)
+		if it.ValidForPrefix(prefix) {
+			lastItem := it.Item()
+			lastItemKey := lastItem.Key()
+			lastStateID := lastItemKey[len(lastItemKey)-1]
+
+			nextAvailableStateID = uint32(lastStateID) + 1
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &nextAvailableStateID, nil
 }
