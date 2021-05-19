@@ -69,6 +69,10 @@ func createCreate2TransferCommitments(
 		if err != nil {
 			return nil, err
 		}
+		err = setCreate2TransferToStateID(storage, appliedTxs)
+		if err != nil {
+			return nil, err
+		}
 
 		commitments = append(commitments, *commitment)
 		log.Printf(
@@ -119,6 +123,16 @@ func combineCreate2TransferSignatures(transfers []models.Create2Transfer, domain
 func markCreate2TransfersAsIncluded(storage *st.Storage, transfers []models.Create2Transfer, commitmentID int32) error {
 	for i := range transfers {
 		err := storage.MarkTransactionAsIncluded(transfers[i].Hash, commitmentID)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func setCreate2TransferToStateID(storage *st.Storage, transfers []models.Create2Transfer) error {
+	for i := range transfers {
+		err := storage.SetCreate2TransferToStateID(transfers[i].Hash, transfers[i].ToStateID)
 		if err != nil {
 			return err
 		}

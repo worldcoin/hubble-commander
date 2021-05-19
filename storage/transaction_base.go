@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"fmt"
-
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
@@ -41,7 +39,7 @@ func (s *Storage) MarkTransactionAsIncluded(txHash common.Hash, commitmentID int
 		return err
 	}
 	if numUpdatedRows == 0 {
-		return fmt.Errorf("no rows were affected by the update")
+		return ErrNoRowsAffected
 	}
 	return nil
 }
@@ -61,7 +59,7 @@ func (s *Storage) SetTransactionError(txHash common.Hash, errorMessage string) e
 		return err
 	}
 	if numUpdatedRows == 0 {
-		return fmt.Errorf("no rows were affected by the update")
+		return ErrNoRowsAffected
 	}
 	return nil
 }

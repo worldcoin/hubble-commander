@@ -34,6 +34,5 @@ func RecreateDatabase(cfg *config.PostgresConfig) error {
 	if err != nil {
 		return err
 	}
-
-	return nil
+	return dbInstance.Close()
 }

@@ -117,7 +117,7 @@ func (s *AccountTestSuite) TestGetUnusedPubKeyID_NoLeaves() {
 	s.NotNil(pubKeyID)
 }
 
-func (s *AccountTestSuite) Test_GetUnusedPubKeyID_NoUnusedPublicIDs() {
+func (s *AccountTestSuite) TestGetUnusedPubKeyID_NoUnusedPublicIDs() {
 	account := models.Account{
 		PubKeyID:  0,
 		PublicKey: models.PublicKey{1, 2, 3},
@@ -142,7 +142,7 @@ func (s *AccountTestSuite) Test_GetUnusedPubKeyID_NoUnusedPublicIDs() {
 	s.Equal(NewNotFoundError("pub key id"), err)
 }
 
-func (s *AccountTestSuite) Test_GetUnusedPubKeyID() {
+func (s *AccountTestSuite) TestGetUnusedPubKeyID() {
 	accounts := []models.Account{
 		{
 			PubKeyID:  0,
@@ -197,7 +197,7 @@ func (s *AccountTestSuite) Test_GetUnusedPubKeyID() {
 	s.Equal(uint32(3), *pubKeyID)
 }
 
-func (s *AccountTestSuite) Test_GetUnusedPubKeyID_MultipleTokenIndexes() {
+func (s *AccountTestSuite) TestGetUnusedPubKeyID_MultipleTokenIndexes() {
 	accounts := []models.Account{
 		{
 			PubKeyID:  1,

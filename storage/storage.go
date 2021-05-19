@@ -11,10 +11,11 @@ import (
 )
 
 type Storage struct {
-	Postgres *postgres.Database
-	Badger   *badger.Database
-	QB       squirrel.StatementBuilderType
-	domain   *bls.Domain
+	Postgres            *postgres.Database
+	Badger              *badger.Database
+	QB                  squirrel.StatementBuilderType
+	domain              *bls.Domain
+	feeReceiverStateIDs map[string]uint32 // token index => state id
 }
 
 type TxOptions struct {
@@ -34,12 +35,20 @@ func NewStorage(postgresConfig *config.PostgresConfig, badgerConfig *config.Badg
 		return nil, err
 	}
 
-	return &Storage{Postgres: postgresDB, Badger: badgerDB, QB: getQueryBuilder()}, nil
+	return &Storage{
+		Postgres:            postgresDB,
+		Badger:              badgerDB,
+		QB:                  getQueryBuilder(),
+		feeReceiverStateIDs: make(map[string]uint32),
+	}, nil
 }
 
 func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, error) {
 	var txController *db.TxController
-	var storage Storage
+	storage := Storage{
+		domain:              s.domain,
+		feeReceiverStateIDs: s.feeReceiverStateIDs,
+	}
 	storage.Postgres = s.Postgres
 	storage.QB = getQueryBuilder()
 

@@ -1,16 +1,13 @@
 package storage
 
 import (
-	"fmt"
-
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
-	bh "github.com/timshannon/badgerhold/v3"
 )
 
-var commitmentWithTokenIndexCols = []string{
+var selectedCommitmentCols = []string{
 	"commitment.commitment_id",
 	"commitment.transactions",
 	"commitment.fee_receiver",
@@ -72,7 +69,7 @@ func (s *Storage) MarkCommitmentAsIncluded(id int32, batchHash, accountRoot *com
 		return err
 	}
 	if numUpdatedRows == 0 {
-		return fmt.Errorf("no rows were affected by the update")
+		return ErrNoRowsAffected
 	}
 	return nil
 }
@@ -94,7 +91,7 @@ func (s *Storage) GetPendingCommitments(maxFetched uint64) ([]models.Commitment,
 func (s *Storage) GetCommitmentsByBatchHash(hash *common.Hash) ([]models.CommitmentWithTokenID, error) {
 	commitments := make([]models.CommitmentWithTokenID, 0, 32)
 	err := s.Postgres.Query(
-		s.QB.Select(commitmentWithTokenIndexCols...).
+		s.QB.Select(selectedCommitmentCols...).
 			From("commitment").
 			Where(squirrel.Eq{"commitment.included_in_batch": hash}),
 	).Into(&commitments)
@@ -106,27 +103,11 @@ func (s *Storage) GetCommitmentsByBatchHash(hash *common.Hash) ([]models.Commitm
 	}
 
 	for i := range commitments {
-		path := models.MerklePath{
-			Path:  commitments[i].FeeReceiverStateID,
-			Depth: 32,
-		}
-
-		var node models.StateNode
-		err := s.Badger.Get(path, &node)
+		stateLeaf, err := s.GetStateLeaf(commitments[i].FeeReceiverStateID)
 		if err != nil {
 			return nil, err
 		}
-
-		leaves := make([]models.FlatStateLeaf, 0, 1)
-		err = s.Badger.Find(&leaves, bh.Where("DataHash").Eq(node.DataHash).Index("DataHash"))
-		if err != nil {
-			return nil, err
-		}
-		if len(leaves) != 1 {
-			return nil, NewNotFoundError("commitments")
-		}
-
-		commitments[i].TokenID = leaves[0].TokenIndex
+		commitments[i].TokenID = stateLeaf.TokenIndex
 	}
 
 	return commitments, nil
@@ -135,7 +116,7 @@ func (s *Storage) GetCommitmentsByBatchHash(hash *common.Hash) ([]models.Commitm
 func (s *Storage) GetCommitmentsByBatchID(id models.Uint256) ([]models.CommitmentWithTokenID, error) {
 	commitments := make([]models.CommitmentWithTokenID, 0, 32)
 	err := s.Postgres.Query(
-		s.QB.Select(commitmentWithTokenIndexCols...).
+		s.QB.Select(selectedCommitmentCols...).
 			From("batch").
 			Join("commitment ON commitment.included_in_batch = batch.batch_hash").
 			Where(squirrel.Eq{"batch.batch_id": id}),
@@ -148,27 +129,11 @@ func (s *Storage) GetCommitmentsByBatchID(id models.Uint256) ([]models.Commitmen
 	}
 
 	for i := range commitments {
-		path := models.MerklePath{
-			Path:  commitments[i].FeeReceiverStateID,
-			Depth: 32,
-		}
-
-		var node models.StateNode
-		err := s.Badger.Get(path, &node)
+		stateLeaf, err := s.GetStateLeaf(commitments[i].FeeReceiverStateID)
 		if err != nil {
 			return nil, err
 		}
-
-		leaves := make([]models.FlatStateLeaf, 0, 1)
-		err = s.Badger.Find(&leaves, bh.Where("DataHash").Eq(node.DataHash).Index("DataHash"))
-		if err != nil {
-			return nil, err
-		}
-		if len(leaves) != 1 {
-			return nil, NewNotFoundError("commitments")
-		}
-
-		commitments[i].TokenID = leaves[0].TokenIndex
+		commitments[i].TokenID = stateLeaf.TokenIndex
 	}
 
 	return commitments, nil
