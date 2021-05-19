@@ -111,7 +111,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.Len(commitments, 1)
 }
 
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_MarksTransfersAsIncludedInCommitment() {
+func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_UpdateTransfers() {
 	pendingTransfers := s.prepareAndReturnPendingCreate2Transfers(2)
 
 	commitments, err := createCreate2TransferCommitments(pendingTransfers, s.storage, s.client.Client, s.cfg, testDomain)
@@ -121,7 +121,8 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	for i := range pendingTransfers {
 		tx, err := s.storage.GetCreate2Transfer(pendingTransfers[i].Hash)
 		s.NoError(err)
-		s.Equal(*tx.IncludedInCommitment, int32(1))
+		s.Equal(int32(1), *tx.IncludedInCommitment)
+		s.Equal(uint32(i+3), tx.ToStateID)
 	}
 }
 
