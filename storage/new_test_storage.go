@@ -30,7 +30,7 @@ func NewTestStorageWithBadger() (*TestStorage, error) {
 }
 
 func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
-	var storage Storage
+	storage := Storage{feeReceiverStateIDs: make(map[string]uint32)}
 	var teardown = func() error {
 		return nil
 	}
