@@ -57,9 +57,6 @@ func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey, tokenIndex *mod
 		return nil, err
 	}
 
-	var unusedPubKeyID uint32
-	isFound := false
-
 	for i := range accounts {
 		leaves := make([]models.FlatStateLeaf, 0, 1)
 		err = s.Badger.Find(
@@ -71,14 +68,8 @@ func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey, tokenIndex *mod
 			return nil, err
 		}
 		if len(leaves) == 0 {
-			unusedPubKeyID = accounts[i].PubKeyID
-			isFound = true
-			break
+			return &accounts[i].PubKeyID, nil
 		}
-	}
-
-	if isFound {
-		return &unusedPubKeyID, nil
 	}
 
 	return nil, NewNotFoundError("pub key id")
