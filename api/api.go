@@ -28,7 +28,7 @@ func NewAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client
 	}
 
 	mux := http.NewServeMux()
-	mux.Handle("/", middleware.Logging(cfg.DevMode, server))
+	mux.Handle("/", middleware.Logger(cfg.DevMode, server))
 	addr := fmt.Sprintf(":%s", cfg.Port)
 	return &http.Server{Addr: addr, Handler: mux}, nil
 }

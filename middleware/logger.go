@@ -16,7 +16,7 @@ type payload struct {
 	ID      interface{}   `json:"id"`
 }
 
-func Logging(devMode bool, next http.Handler) http.Handler {
+func Logger(devMode bool, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if devMode {
 			start := time.Now()
