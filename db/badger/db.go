@@ -38,7 +38,7 @@ func (d *Database) BadgerInstance() *badger.DB {
 func (d *Database) Tx() *badger.Txn {
 	return d.txn
 }
- 
+
 func (d *Database) DuringTransaction() bool {
 	return d.txn != nil
 }
