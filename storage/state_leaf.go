@@ -85,7 +85,7 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) (userSta
 func (s *Storage) GetFeeReceiverStateLeaf(pubKeyID uint32, tokenIndex models.Uint256) (*models.StateLeaf, error) {
 	stateID, ok := s.feeReceiverStateIDs[tokenIndex.String()]
 	if ok {
-		return s.GetStateLeafByStateID(stateID)
+		return s.GetStateLeaf(stateID)
 	}
 	stateLeaf, err := s.GetStateLeafByPubKeyIDAndTokenIndex(pubKeyID, tokenIndex)
 	if err != nil {

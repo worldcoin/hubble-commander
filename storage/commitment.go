@@ -105,7 +105,7 @@ func (s *Storage) GetCommitmentsByBatchHash(hash *common.Hash) ([]models.Commitm
 	}
 
 	for i := range commitments {
-		stateLeaf, err := s.GetStateLeafByStateID(commitments[i].FeeReceiverStateID)
+		stateLeaf, err := s.GetStateLeaf(commitments[i].FeeReceiverStateID)
 		if err != nil {
 			return nil, err
 		}
@@ -131,7 +131,7 @@ func (s *Storage) GetCommitmentsByBatchID(id models.Uint256) ([]models.Commitmen
 	}
 
 	for i := range commitments {
-		stateLeaf, err := s.GetStateLeafByStateID(commitments[i].FeeReceiverStateID)
+		stateLeaf, err := s.GetStateLeaf(commitments[i].FeeReceiverStateID)
 		if err != nil {
 			return nil, err
 		}
