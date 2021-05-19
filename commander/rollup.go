@@ -2,7 +2,6 @@ package commander
 
 import (
 	"errors"
-	"log"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
