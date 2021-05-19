@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"fmt"
-
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -71,7 +69,7 @@ func (s *Storage) MarkCommitmentAsIncluded(id int32, batchHash, accountRoot *com
 		return err
 	}
 	if numUpdatedRows == 0 {
-		return fmt.Errorf("no rows were affected by the update")
+		return ErrNoRowsAffected
 	}
 	return nil
 }

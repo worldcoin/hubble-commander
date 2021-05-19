@@ -37,6 +37,7 @@ func ApplyCreate2Transfer(
 		return nil, nil, err
 	}
 
+	create2Transfer.ToStateID = *nextAvailableStateID
 	transfer := models.Transfer{
 		TransactionBase: create2Transfer.TransactionBase,
 		ToStateID:       *nextAvailableStateID,

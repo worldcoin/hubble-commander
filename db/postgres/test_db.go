@@ -37,6 +37,13 @@ func NewTestDB() (*TestDB, error) {
 		if err != nil {
 			return err
 		}
+		srcErr, dbErr := migrator.Close()
+		if srcErr != nil {
+			return srcErr
+		}
+		if dbErr != nil {
+			return dbErr
+		}
 		return dbInstance.Close()
 	}
 
