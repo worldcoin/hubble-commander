@@ -39,19 +39,21 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) (userSta
 	if err != nil {
 		return nil, err
 	}
-	if len(leaves) == 0 {
+	numLeaves := len(leaves)
+	if numLeaves == 0 {
 		return nil, NewNotFoundError("user states")
 	}
 
-	userStates = make([]models.UserStateWithID, 0, 1)
+	userStates = make([]models.UserStateWithID, 0, numLeaves)
 	for i := range leaves {
+		leaf := &leaves[i]
 		userStates = append(userStates, models.UserStateWithID{
-			StateID: leaves[i].StateID,
+			StateID: leaf.StateID,
 			UserState: models.UserState{
-				PubKeyID:   leaves[i].PubKeyID,
-				TokenIndex: leaves[i].TokenIndex,
-				Balance:    leaves[i].Balance,
-				Nonce:      leaves[i].Nonce,
+				PubKeyID:   leaf.PubKeyID,
+				TokenIndex: leaf.TokenIndex,
+				Balance:    leaf.Balance,
+				Nonce:      leaf.Nonce,
 			},
 		})
 	}
