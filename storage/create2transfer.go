@@ -146,3 +146,23 @@ func (s *Storage) GetCreate2TransfersByCommitmentID(id int32) ([]models.Create2T
 	).Into(&res)
 	return res, err
 }
+
+func (s *Storage) SetCreate2TransferToStateID(txHash common.Hash, toStateID uint32) error {
+	res, err := s.Postgres.Query(
+		s.QB.Update("create2transfer").
+			Where(squirrel.Eq{"tx_hash": txHash}).
+			Set("to_state_id", toStateID),
+	).Exec()
+	if err != nil {
+		return err
+	}
+
+	numUpdatedRows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if numUpdatedRows == 0 {
+		return ErrNoRowsAffected
+	}
+	return nil
+}
