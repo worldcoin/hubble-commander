@@ -45,7 +45,10 @@ func NewStorage(postgresConfig *config.PostgresConfig, badgerConfig *config.Badg
 
 func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, error) {
 	var txController *db.TxController
-	var storage Storage
+	storage := Storage{
+		domain:              s.domain,
+		feeReceiverStateIDs: s.feeReceiverStateIDs,
+	}
 	storage.Postgres = s.Postgres
 	storage.QB = getQueryBuilder()
 
