@@ -35,23 +35,27 @@ func (d *Database) BadgerInstance() *badger.DB {
 	return d.store.Badger()
 }
 
-func (d *Database) duringTransaction() bool {
+func (d *Database) Tx() *badger.Txn {
+	return d.txn
+}
+ 
+func (d *Database) DuringTransaction() bool {
 	return d.txn != nil
 }
 
 func (d *Database) duringUpdateTransaction() bool {
-	return d.duringTransaction() && d.updateTransaction
+	return d.DuringTransaction() && d.updateTransaction
 }
 
 func (d *Database) Find(result interface{}, query *bh.Query) error {
-	if d.duringTransaction() {
+	if d.DuringTransaction() {
 		return d.store.TxFind(d.txn, result, query)
 	}
 	return d.store.Find(result, query)
 }
 
 func (d *Database) Get(key, result interface{}) error {
-	if d.duringTransaction() {
+	if d.DuringTransaction() {
 		return d.store.TxGet(d.txn, key, result)
 	}
 	return d.store.Get(key, result)
@@ -86,7 +90,7 @@ func (d *Database) Delete(key, dataType interface{}) error {
 }
 
 func (d *Database) BeginTransaction(update bool) (*db.TxController, *Database) {
-	if d.duringTransaction() {
+	if d.DuringTransaction() {
 		return db.NewTxController(&ControllerAdapter{d.txn}, true), d
 	}
 	txn := d.store.Badger().NewTransaction(update)

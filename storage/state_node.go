@@ -86,32 +86,32 @@ func (s *Storage) GetStateNodes(paths []models.MerklePath) (nodes []models.State
 
 func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
 	var nextAvailableStateID uint32
+	var tx *bdg.Txn
 
-	err := s.Badger.BadgerInstance().View(func(txn *bdg.Txn) error {
-		opts := bdg.DefaultIteratorOptions
-		opts.PrefetchValues = false
-		opts.Reverse = true
-		it := txn.NewIterator(opts)
-		defer it.Close()
-		prefix := []byte("bh_FlatStateLeaf")
+	if s.Badger.DuringTransaction() {
+		tx = s.Badger.Tx()
+	} else {
+		tx = s.Badger.BadgerInstance().NewTransaction(false)
+	}
 
-		seekPrefix := make([]byte, 0, len(prefix)+1)
-		seekPrefix = append(seekPrefix, prefix...)
-		seekPrefix = append(seekPrefix, 0xFF) // Required to loop backwards
+	opts := bdg.DefaultIteratorOptions
+	opts.PrefetchValues = false
+	opts.Reverse = true
+	it := tx.NewIterator(opts)
+	defer it.Close()
+	prefix := []byte("bh_FlatStateLeaf")
 
-		it.Seek(seekPrefix)
-		if it.ValidForPrefix(prefix) {
-			lastItem := it.Item()
-			lastItemKey := lastItem.Key()
-			lastStateID := lastItemKey[len(lastItemKey)-1]
+	seekPrefix := make([]byte, 0, len(prefix)+1)
+	seekPrefix = append(seekPrefix, prefix...)
+	seekPrefix = append(seekPrefix, 0xFF) // Required to loop backwards
 
-			nextAvailableStateID = uint32(lastStateID) + 1
-		}
+	it.Seek(seekPrefix)
+	if it.ValidForPrefix(prefix) {
+		lastItem := it.Item()
+		lastItemKey := lastItem.Key()
+		lastStateID := lastItemKey[len(lastItemKey)-1]
 
-		return nil
-	})
-	if err != nil {
-		return nil, err
+		nextAvailableStateID = uint32(lastStateID) + 1
 	}
 
 	return &nextAvailableStateID, nil
