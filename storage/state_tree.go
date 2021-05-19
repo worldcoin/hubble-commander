@@ -34,20 +34,25 @@ func (s *StateTree) Root() (*common.Hash, error) {
 	return &root.DataHash, nil
 }
 
-func (s *StateTree) LeafNode(id uint32) (*models.StateNode, error) {
+func (s *StateTree) LeafNode(stateID uint32) (*models.StateNode, error) {
 	leafPath := &models.MerklePath{
-		Path:  id,
+		Path:  stateID,
 		Depth: leafDepth,
 	}
 	return s.storage.GetStateNodeByPath(leafPath)
 }
 
-func (s *StateTree) Leaf(id uint32) (*models.StateLeaf, error) {
-	leafPath := &models.MerklePath{
-		Path:  id,
-		Depth: leafDepth,
+func (s *StateTree) Leaf(stateID uint32) (*models.StateLeaf, error) {
+	leaf, err := s.storage.GetStateLeaf(stateID)
+	if IsNotFoundError(err) {
+		return &models.StateLeaf{
+			StateID:  stateID,
+			DataHash: GetZeroHash(0),
+		}, nil
+	} else if err != nil {
+		return nil, err
 	}
-	return s.storage.GetStateLeafByPath(leafPath)
+	return leaf, nil
 }
 
 func (s *StateTree) Set(id uint32, state *models.UserState) (err error) {
@@ -77,22 +82,27 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 
 	stateTree := NewStateTree(s.storage)
 
-	currentRootHash, err := stateTree.Root()
+	currentRoot, err := stateTree.Root()
 	if err != nil {
 		return err
 	}
 
-	for *currentRootHash != targetRootHash {
-		latestStateUpdate, err := s.storage.GetStateUpdateByRootHash(*currentRootHash)
+	for *currentRoot != targetRootHash {
+		latestStateUpdate, err := s.storage.GetStateUpdateByRootHash(*currentRoot)
 		if err != nil {
 			return err
 		}
 
-		currentRootHash, err = s.updateStateNodes(&latestStateUpdate.StateID, &latestStateUpdate.PrevHash)
+		err = s.storage.UpsertStateLeaf(&latestStateUpdate.PrevStateLeaf)
 		if err != nil {
 			return err
 		}
-		if *currentRootHash != latestStateUpdate.PrevRoot {
+		leafPath := models.MakeMerklePathFromStateID(latestStateUpdate.PrevStateLeaf.StateID)
+		currentRoot, err = s.updateStateNodes(&leafPath, &latestStateUpdate.PrevStateLeaf.DataHash)
+		if err != nil {
+			return err
+		}
+		if *currentRoot != latestStateUpdate.PrevRoot {
 			return fmt.Errorf("unexpected state root after state update rollback")
 		}
 
@@ -106,36 +116,36 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 }
 
 func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (err error) {
-	prevLeaf, err := s.LeafNode(index)
+	prevLeaf, err := s.Leaf(index)
 	if err != nil {
-		return
+		return err
 	}
+
 	prevRoot, err := s.Root()
 	if err != nil {
 		return
 	}
 
-	currentLeaf, err := NewStateLeaf(state)
+	currentLeaf, err := NewStateLeaf(index, state)
 	if err != nil {
 		return
 	}
 
-	err = s.storage.AddStateLeaf(currentLeaf)
+	err = s.storage.UpsertStateLeaf(currentLeaf)
 	if err != nil {
 		return
 	}
 
-	currentRoot, err := s.updateStateNodes(&prevLeaf.MerklePath, &currentLeaf.DataHash)
+	prevLeafPath := models.MakeMerklePathFromStateID(prevLeaf.StateID)
+	currentRoot, err := s.updateStateNodes(&prevLeafPath, &currentLeaf.DataHash)
 	if err != nil {
 		return
 	}
 
 	return s.storage.AddStateUpdate(&models.StateUpdate{
-		StateID:     prevLeaf.MerklePath,
-		CurrentHash: currentLeaf.DataHash,
-		CurrentRoot: *currentRoot,
-		PrevHash:    prevLeaf.DataHash,
-		PrevRoot:    *prevRoot,
+		CurrentRoot:   *currentRoot,
+		PrevRoot:      *prevRoot,
+		PrevStateLeaf: *prevLeaf,
 	})
 }
 
@@ -208,13 +218,14 @@ func (s *StateTree) calculateParentHash(
 	return utils.HashTwo(witnessHash, *currentHash)
 }
 
-func NewStateLeaf(state *models.UserState) (*models.StateLeaf, error) {
+func NewStateLeaf(stateID uint32, state *models.UserState) (*models.StateLeaf, error) {
 	encodedState, err := encoder.EncodeUserState(toContractUserState(state))
 	if err != nil {
 		return nil, err
 	}
 	dataHash := crypto.Keccak256Hash(encodedState)
 	return &models.StateLeaf{
+		StateID:   stateID,
 		DataHash:  dataHash,
 		UserState: *state,
 	}, nil

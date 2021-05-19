@@ -31,6 +31,13 @@ func NewMerklePath(bits string) (*MerklePath, error) {
 	return result, nil
 }
 
+func MakeMerklePathFromStateID(stateID uint32) MerklePath {
+	return MerklePath{
+		Path:  stateID,
+		Depth: 32,
+	}
+}
+
 // Scan implements Scanner for database/sql.
 func (p *MerklePath) Scan(src interface{}) error {
 	value, ok := src.([]byte)

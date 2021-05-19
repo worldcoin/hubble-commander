@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
+	bh "github.com/timshannon/badgerhold/v3"
 )
 
 var commitmentWithTokenIndexCols = []string{
@@ -116,13 +117,16 @@ func (s *Storage) GetCommitmentsByBatchHash(hash *common.Hash) ([]models.Commitm
 			return nil, err
 		}
 
-		var leaf models.FlatStateLeaf
-		err = s.Badger.Get(node.DataHash, &leaf)
+		leaves := make([]models.FlatStateLeaf, 0, 1)
+		err = s.Badger.Find(&leaves, bh.Where("DataHash").Eq(node.DataHash).Index("DataHash"))
 		if err != nil {
 			return nil, err
 		}
+		if len(leaves) != 1 {
+			return nil, NewNotFoundError("commitments")
+		}
 
-		commitments[i].TokenID = leaf.TokenIndex
+		commitments[i].TokenID = leaves[0].TokenIndex
 	}
 
 	return commitments, nil
@@ -155,13 +159,16 @@ func (s *Storage) GetCommitmentsByBatchID(id models.Uint256) ([]models.Commitmen
 			return nil, err
 		}
 
-		var leaf models.FlatStateLeaf
-		err = s.Badger.Get(node.DataHash, &leaf)
+		leaves := make([]models.FlatStateLeaf, 0, 1)
+		err = s.Badger.Find(&leaves, bh.Where("DataHash").Eq(node.DataHash).Index("DataHash"))
 		if err != nil {
 			return nil, err
 		}
+		if len(leaves) != 1 {
+			return nil, NewNotFoundError("commitments")
+		}
 
-		commitments[i].TokenID = leaf.TokenIndex
+		commitments[i].TokenID = leaves[0].TokenIndex
 	}
 
 	return commitments, nil

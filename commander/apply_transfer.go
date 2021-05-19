@@ -5,7 +5,7 @@ import (
 	"reflect"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/storage"
+	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
 var (
@@ -16,15 +16,15 @@ var (
 )
 
 func ApplyTransfer(
-	stateTree *storage.StateTree,
+	storage *st.Storage,
 	transfer *models.Transfer,
 	commitmentTokenIndex models.Uint256,
 ) (transferError, appError error) {
-	senderLeaf, err := stateTree.Leaf(transfer.FromStateID)
+	senderLeaf, err := storage.GetStateLeaf(transfer.FromStateID)
 	if err != nil {
 		return nil, err
 	}
-	receiverLeaf, err := stateTree.Leaf(transfer.ToStateID)
+	receiverLeaf, err := storage.GetStateLeaf(transfer.ToStateID)
 	if err != nil {
 		return nil, err
 	}
@@ -44,13 +44,14 @@ func ApplyTransfer(
 	if err != nil {
 		return err, nil
 	}
+
+	stateTree := st.NewStateTree(storage)
 	if !reflect.DeepEqual(newSenderState, senderState) {
 		err = stateTree.Set(transfer.FromStateID, &newSenderState)
 		if err != nil {
 			return nil, err
 		}
 	}
-
 	if !reflect.DeepEqual(newReceiverState, receiverState) {
 		err = stateTree.Set(transfer.ToStateID, &newReceiverState)
 		if err != nil {

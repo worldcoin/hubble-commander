@@ -53,6 +53,7 @@ func (s *GetUserStatesTestSuite) TestGetUserStates() {
 
 	leaves := []models.StateLeaf{
 		{
+			StateID:  0,
 			DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 			UserState: models.UserState{
 				PubKeyID:   accounts[0].PubKeyID,
@@ -62,6 +63,7 @@ func (s *GetUserStatesTestSuite) TestGetUserStates() {
 			},
 		},
 		{
+			StateID:  1,
 			DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 			UserState: models.UserState{
 				PubKeyID:   accounts[1].PubKeyID,
@@ -71,6 +73,7 @@ func (s *GetUserStatesTestSuite) TestGetUserStates() {
 			},
 		},
 		{
+			StateID:  2,
 			DataHash: common.BytesToHash([]byte{3, 4, 5, 6, 7}),
 			UserState: models.UserState{
 				PubKeyID:   accounts[0].PubKeyID,
@@ -81,34 +84,28 @@ func (s *GetUserStatesTestSuite) TestGetUserStates() {
 		},
 	}
 
-	err = s.api.storage.AddStateLeaf(&leaves[0])
+	err = s.api.storage.UpsertStateLeaf(&leaves[0])
 	s.NoError(err)
-	err = s.api.storage.AddStateLeaf(&leaves[1])
+	err = s.api.storage.UpsertStateLeaf(&leaves[1])
 	s.NoError(err)
-	err = s.api.storage.AddStateLeaf(&leaves[2])
+	err = s.api.storage.UpsertStateLeaf(&leaves[2])
 	s.NoError(err)
 
-	path, err := models.NewMerklePath("00")
-	s.NoError(err)
 	err = s.api.storage.UpsertStateNode(&models.StateNode{
 		DataHash:   common.BytesToHash([]byte{1, 2, 3, 4, 5}),
-		MerklePath: *path,
+		MerklePath: models.MakeMerklePathFromStateID(leaves[0].StateID),
 	})
 	s.NoError(err)
 
-	path, err = models.NewMerklePath("01")
-	s.NoError(err)
 	err = s.api.storage.UpsertStateNode(&models.StateNode{
 		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
-		MerklePath: *path,
+		MerklePath: models.MakeMerklePathFromStateID(leaves[1].StateID),
 	})
 	s.NoError(err)
 
-	path, err = models.NewMerklePath("10")
-	s.NoError(err)
 	err = s.api.storage.UpsertStateNode(&models.StateNode{
 		DataHash:   common.BytesToHash([]byte{3, 4, 5, 6, 7}),
-		MerklePath: *path,
+		MerklePath: models.MakeMerklePathFromStateID(leaves[2].StateID),
 	})
 	s.NoError(err)
 

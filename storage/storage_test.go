@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"log"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
@@ -36,6 +37,7 @@ func (s *StorageTestSuite) TearDownTest() {
 
 func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	leaf := &models.StateLeaf{
+		StateID:  0,
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
 			PubKeyID:   1,
@@ -47,12 +49,12 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 
 	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
-	err = storage.AddStateLeaf(leaf)
+	err = storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
 	err = storage.AddAccountIfNotExists(&account2)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateLeafByHash(leaf.DataHash)
+	res, err := s.storage.GetStateLeaf(leaf.StateID)
 	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
 
@@ -63,7 +65,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	err = tx.Commit()
 	s.NoError(err)
 
-	res, err = s.storage.GetStateLeafByHash(leaf.DataHash)
+	res, err = s.storage.GetStateLeaf(leaf.StateID)
 	s.NoError(err)
 	s.Equal(leaf, res)
 
@@ -74,6 +76,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 
 func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 	leaf := &models.StateLeaf{
+		StateID:  0,
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
 			PubKeyID:   1,
@@ -85,7 +88,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 
 	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
-	err = storage.AddStateLeaf(leaf)
+	err = storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
 	err = storage.AddAccountIfNotExists(&account2)
 	s.NoError(err)
@@ -93,7 +96,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 	tx.Rollback(&err)
 	s.Nil(errors.Unwrap(err))
 
-	res, err := s.storage.GetStateLeafByHash(leaf.DataHash)
+	res, err := s.storage.GetStateLeaf(leaf.StateID)
 	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
 
@@ -107,6 +110,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 	s.NoError(err)
 
 	leafOne := &models.StateLeaf{
+		StateID:  0,
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
 			PubKeyID:   1,
@@ -116,6 +120,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 		},
 	}
 	leafTwo := &models.StateLeaf{
+		StateID:  1,
 		DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 		UserState: models.UserState{
 			PubKeyID:   2,
@@ -128,34 +133,40 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
 
-	err = storage.AddStateLeaf(leafOne)
+	err = storage.UpsertStateLeaf(leafOne)
 	s.NoError(err)
 
 	nestedTx, nestedStorage, err := storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
 
-	err = nestedStorage.AddStateLeaf(leafTwo)
+	err = nestedStorage.UpsertStateLeaf(leafTwo)
 	s.NoError(err)
 
 	nestedTx.Rollback(&err)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateLeafByHash(leafOne.DataHash)
+	res, err := s.storage.GetStateLeaf(leafOne.StateID)
 	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
 
 	err = tx.Commit()
 	s.NoError(err)
 
-	res, err = s.storage.GetStateLeafByHash(leafOne.DataHash)
+	res, err = s.storage.GetStateLeaf(leafOne.StateID)
 	s.NoError(err)
 	s.Equal(leafOne, res)
 
-	res, err = s.storage.GetStateLeafByHash(leafTwo.DataHash)
+	res, err = s.storage.GetStateLeaf(leafTwo.StateID)
 	s.NoError(err)
 	s.Equal(leafTwo, res)
 }
 
 func TestStorageTestSuite(t *testing.T) {
 	suite.Run(t, new(StorageTestSuite))
+}
+
+func TestStuff(t *testing.T) {
+	log.Print(GetZeroHash(0))
+	log.Print(GetZeroHash(1))
+	log.Print(GetZeroHash(32))
 }

@@ -5,22 +5,17 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/ethereum/go-ethereum/common"
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-func (s *Storage) AddStateLeaf(leaf *models.StateLeaf) error {
+func (s *Storage) UpsertStateLeaf(leaf *models.StateLeaf) error {
 	flatLeaf := models.NewFlatStateLeaf(leaf)
-	err := s.Badger.Insert(leaf.DataHash, &flatLeaf)
-	if err == bh.ErrKeyExists {
-		return nil
-	}
-	return err
+	return s.Badger.Upsert(leaf.StateID, &flatLeaf)
 }
 
-func (s *Storage) GetStateLeafByHash(hash common.Hash) (*models.StateLeaf, error) {
+func (s *Storage) GetStateLeaf(stateID uint32) (stateLeaf *models.StateLeaf, err error) {
 	var leaf models.FlatStateLeaf
-	err := s.Badger.Get(hash, &leaf)
+	err = s.Badger.Get(stateID, &leaf)
 	if err == bh.ErrNotFound {
 		return nil, NewNotFoundError("state leaf")
 	}
@@ -28,24 +23,6 @@ func (s *Storage) GetStateLeafByHash(hash common.Hash) (*models.StateLeaf, error
 		return nil, err
 	}
 	return leaf.StateLeaf(), nil
-}
-
-func (s *Storage) GetStateLeafByPath(path *models.MerklePath) (stateLeaf *models.StateLeaf, err error) {
-	tx, storage, err := s.BeginTransaction(TxOptions{Badger: true, ReadOnly: true})
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback(&err)
-
-	var node models.StateNode
-	err = storage.Badger.Get(path, &node)
-	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("state leaf")
-	}
-	if err != nil {
-		return nil, err
-	}
-	return storage.GetStateLeafByHash(node.DataHash)
 }
 
 // TODO move to state_node, make sure to only iterate over keys (Badger PrefetchValues=false)
@@ -70,35 +47,17 @@ func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
 }
 
 func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) (userStates []models.UserStateWithID, err error) {
-	tx, storage, err := s.BeginTransaction(TxOptions{Postgres: true, Badger: true, ReadOnly: true})
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback(&err)
-
-	accounts, err := storage.GetAccounts(publicKey)
+	accounts, err := s.GetAccounts(publicKey)
 	if err != nil {
 		return nil, err
 	}
 
 	pubKeyIDs := utils.ValueToInterfaceSlice(accounts, "PubKeyID")
 
-	nodes := make([]models.StateNode, 0)
-	err = storage.Badger.Find(&nodes, nil) // TODO possibly performance killer
-	if err != nil {
-		return nil, err
-	}
-	if len(nodes) == 0 {
-		return nil, NewNotFoundError("user states")
-	}
-
-	dataHashes := utils.ValueToInterfaceSlice(nodes, "DataHash")
-
 	leaves := make([]models.FlatStateLeaf, 0, 1)
-	err = storage.Badger.Find(
+	err = s.Badger.Find(
 		&leaves,
-		bh.Where("DataHash").In(dataHashes...). // TODO possibly performance killer
-							And("PubKeyID").In(pubKeyIDs...).Index("PubKeyID"),
+		bh.Where("PubKeyID").In(pubKeyIDs...).Index("PubKeyID"),
 	)
 	if err != nil {
 		return nil, err
@@ -109,12 +68,8 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) (userSta
 
 	userStates = make([]models.UserStateWithID, 0, 1)
 	for i := range leaves {
-		stateNode, err := s.GetStateNodeByHash(&leaves[i].DataHash)
-		if err != nil {
-			return nil, err
-		}
 		userStates = append(userStates, models.UserStateWithID{
-			StateID: stateNode.MerklePath.Path,
+			StateID: leaves[i].StateID,
 			UserState: models.UserState{
 				PubKeyID:   leaves[i].PubKeyID,
 				TokenIndex: leaves[i].TokenIndex,
@@ -123,6 +78,7 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) (userSta
 			},
 		})
 	}
+
 	return userStates, nil
 }
 
@@ -177,28 +133,8 @@ func (s *Storage) GetUserStateByPubKeyIDAndTokenIndex(pubKeyID uint32, tokenInde
 }
 
 func (s *Storage) GetUserStateByID(stateID uint32) (*models.UserStateWithID, error) {
-	tx, storage, err := s.BeginTransaction(TxOptions{Postgres: true, Badger: true, ReadOnly: true})
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback(&err)
-
-	path := models.MerklePath{
-		Path:  stateID,
-		Depth: leafDepth,
-	}
-
-	var node models.StateNode
-	err = storage.Badger.Get(path, &node)
-	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("user state")
-	}
-	if err != nil {
-		return nil, err
-	}
-
 	var leaf models.FlatStateLeaf
-	err = storage.Badger.Get(node.DataHash, &leaf)
+	err := s.Badger.Get(stateID, &leaf)
 	if err == bh.ErrNotFound {
 		return nil, NewNotFoundError("user state")
 	}
