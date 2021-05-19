@@ -82,54 +82,33 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) (userSta
 	return userStates, nil
 }
 
-// TODO this method is only used in ApplyFee to get the fee receiver UserState, this can be easily cached
-func (s *Storage) GetUserStateByPubKeyIDAndTokenIndex(pubKeyID uint32, tokenIndex models.Uint256) (*models.UserStateWithID, error) {
-	tx, storage, err := s.BeginTransaction(TxOptions{Postgres: true, Badger: true, ReadOnly: true})
+func (s *Storage) GetFeeReceiverStateLeaf(pubKeyID uint32, tokenIndex models.Uint256) (*models.StateLeaf, error) {
+	stateID, ok := s.feeReceiverStateIDs[tokenIndex.String()]
+	if ok {
+		return s.GetStateLeaf(stateID)
+	}
+	stateLeaf, err := s.GetStateLeafByPubKeyIDAndTokenIndex(pubKeyID, tokenIndex)
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback(&err)
+	s.feeReceiverStateIDs[stateLeaf.TokenIndex.String()] = stateLeaf.StateID
+	return stateLeaf, nil
+}
 
-	nodes := make([]models.StateNode, 0)
-	err = storage.Badger.Find(&nodes, nil)
-	if err != nil {
-		return nil, err
-	}
-	if len(nodes) == 0 {
-		return nil, NewNotFoundError("user state")
-	}
-
-	dataHashes := utils.ValueToInterfaceSlice(nodes, "DataHash")
-
+func (s *Storage) GetStateLeafByPubKeyIDAndTokenIndex(pubKeyID uint32, tokenIndex models.Uint256) (*models.StateLeaf, error) {
 	leaves := make([]models.FlatStateLeaf, 0, 1)
-	err = storage.Badger.Find(
+	err := s.Badger.Find(
 		&leaves,
-		bh.Where("DataHash").In(dataHashes...).
-			And("TokenIndex").Eq(tokenIndex).Index("TokenIndex").
+		bh.Where("TokenIndex").Eq(tokenIndex).Index("TokenIndex").
 			And("PubKeyID").Eq(pubKeyID).Index("PubKeyID"),
 	)
 	if err != nil {
 		return nil, err
 	}
 	if len(leaves) == 0 {
-		return nil, NewNotFoundError("user state")
+		return nil, NewNotFoundError("state leaf")
 	}
-
-	stateNode, err := s.GetStateNodeByHash(&leaves[0].DataHash)
-	if err != nil {
-		return nil, err
-	}
-	userState := &models.UserStateWithID{
-		StateID: stateNode.MerklePath.Path,
-		UserState: models.UserState{
-			PubKeyID:   leaves[0].PubKeyID,
-			TokenIndex: leaves[0].TokenIndex,
-			Balance:    leaves[0].Balance,
-			Nonce:      leaves[0].Nonce,
-		},
-	}
-
-	return userState, nil
+	return leaves[0].StateLeaf(), nil
 }
 
 func (s *Storage) GetUserStateByID(stateID uint32) (*models.UserStateWithID, error) {
