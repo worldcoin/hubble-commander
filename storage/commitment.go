@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-var commitmentWithTokenIndexCols = []string{
+var selectedCommitmentCols = []string{
 	"commitment.commitment_id",
 	"commitment.transactions",
 	"commitment.fee_receiver",
@@ -93,7 +93,7 @@ func (s *Storage) GetPendingCommitments(maxFetched uint64) ([]models.Commitment,
 func (s *Storage) GetCommitmentsByBatchHash(hash *common.Hash) ([]models.CommitmentWithTokenID, error) {
 	commitments := make([]models.CommitmentWithTokenID, 0, 32)
 	err := s.Postgres.Query(
-		s.QB.Select(commitmentWithTokenIndexCols...).
+		s.QB.Select(selectedCommitmentCols...).
 			From("commitment").
 			Where(squirrel.Eq{"commitment.included_in_batch": hash}),
 	).Into(&commitments)
@@ -118,7 +118,7 @@ func (s *Storage) GetCommitmentsByBatchHash(hash *common.Hash) ([]models.Commitm
 func (s *Storage) GetCommitmentsByBatchID(id models.Uint256) ([]models.CommitmentWithTokenID, error) {
 	commitments := make([]models.CommitmentWithTokenID, 0, 32)
 	err := s.Postgres.Query(
-		s.QB.Select(commitmentWithTokenIndexCols...).
+		s.QB.Select(selectedCommitmentCols...).
 			From("batch").
 			Join("commitment ON commitment.included_in_batch = batch.batch_hash").
 			Where(squirrel.Eq{"batch.batch_id": id}),
