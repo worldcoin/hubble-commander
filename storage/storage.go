@@ -15,7 +15,7 @@ type Storage struct {
 	Badger              *badger.Database
 	QB                  squirrel.StatementBuilderType
 	domain              *bls.Domain
-	feeReceiverStateIDs map[string]uint32
+	feeReceiverStateIDs map[string]uint32 // token index => state id
 }
 
 type TxOptions struct {

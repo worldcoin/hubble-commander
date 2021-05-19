@@ -248,6 +248,28 @@ func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf() {
 	s.Equal(uint32(0), s.storage.feeReceiverStateIDs[userState1.TokenIndex.String()])
 }
 
+func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf_WorkWithCachedValue() {
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
+	err = s.storage.AddAccountIfNotExists(&account2)
+	s.NoError(err)
+
+	err = s.tree.Set(0, userState1)
+	s.NoError(err)
+
+	err = s.tree.Set(1, userState2)
+	s.NoError(err)
+
+	_, err = s.storage.GetFeeReceiverStateLeaf(userState2.PubKeyID, userState2.TokenIndex)
+	s.NoError(err)
+	s.Equal(uint32(1), s.storage.feeReceiverStateIDs[userState2.TokenIndex.String()])
+
+	stateLeaf, err := s.storage.GetFeeReceiverStateLeaf(userState2.PubKeyID, userState2.TokenIndex)
+	s.NoError(err)
+	s.Equal(*userState2, stateLeaf.UserState)
+	s.Equal(uint32(1), stateLeaf.StateID)
+}
+
 func (s *StateLeafTestSuite) TestGetUserStateByID() {
 	err := s.storage.AddAccountIfNotExists(&account1)
 	s.NoError(err)
