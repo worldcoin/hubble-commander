@@ -16,6 +16,7 @@ type Config struct {
 
 type RollupConfig struct {
 	Prune                   bool
+	SyncBatches             bool
 	FeeReceiverPubKeyID     uint32
 	TxsPerCommitment        uint32
 	MinCommitmentsPerBatch  uint32
