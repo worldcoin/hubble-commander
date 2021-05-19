@@ -5,6 +5,8 @@ import (
 	"fmt"
 )
 
+var ErrNoRowsAffected = errors.New("no rows were affected by the update")
+
 type NotFoundError struct {
 	field string
 }
