@@ -88,7 +88,7 @@ func (s *SyncTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *SyncTestSuite) TestSyncBatches() {
+func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	tx := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			TxType:      txtype.Transfer,
@@ -108,6 +108,50 @@ func (s *SyncTestSuite) TestSyncBatches() {
 	s.Len(commitments, 1)
 
 	err = submitBatch(txtype.Transfer, commitments, s.storage, s.client.Client, s.cfg)
+	s.NoError(err)
+
+	// Recreate database
+	err = s.teardown()
+	s.NoError(err)
+	s.setupDB()
+
+	err = SyncBatches(s.storage, s.client.Client, s.cfg)
+	s.NoError(err)
+
+	state0, err := s.storage.GetStateLeaf(0)
+	s.NoError(err)
+	s.Equal(models.MakeUint256(600), state0.Balance)
+
+	state1, err := s.storage.GetStateLeaf(1)
+	s.NoError(err)
+	s.Equal(models.MakeUint256(400), state1.Balance)
+
+	batches, err := s.storage.GetBatchesInRange(nil, nil)
+	s.NoError(err)
+	s.Len(batches, 1)
+}
+
+func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
+	tx := models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			TxType:      txtype.Create2Transfer,
+			FromStateID: 0,
+			Amount:      models.MakeUint256(400),
+			Fee:         models.MakeUint256(0),
+			Nonce:       models.MakeUint256(0),
+			Signature:   *s.mockSignature(),
+		},
+		ToStateID:   1,
+		ToPublicKey: models.PublicKey{2, 3, 4},
+	}
+	err := s.storage.AddCreate2Transfer(&tx)
+	s.NoError(err)
+
+	commitments, err := createCreate2TransferCommitments([]models.Create2Transfer{tx}, s.storage, s.client.Client, s.cfg, testDomain)
+	s.NoError(err)
+	s.Len(commitments, 1)
+
+	err = submitBatch(txtype.Create2Transfer, commitments, s.storage, s.client.Client, s.cfg)
 	s.NoError(err)
 
 	// Recreate database
