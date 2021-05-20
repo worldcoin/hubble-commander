@@ -100,10 +100,10 @@ func EncodeCreate2TransferForCommitment(transfer *models.Create2Transfer, toPubK
 	return arr, nil
 }
 
-func DecodeCreate2TransferFromCommitment(data []byte) (*models.Create2Transfer, uint32) {
+func DecodeCreate2TransferFromCommitment(data []byte) (transfer *models.Create2Transfer, toPubKeyID uint32) {
 	fromStateID := binary.BigEndian.Uint32(data[0:4])
 	toStateID := binary.BigEndian.Uint32(data[4:8])
-	toPubKeyID := binary.BigEndian.Uint32(data[8:12])
+	toPubKeyID = binary.BigEndian.Uint32(data[8:12])
 	amountEncoded := binary.BigEndian.Uint16(data[12:14])
 	feeEncoded := binary.BigEndian.Uint16(data[14:16])
 
