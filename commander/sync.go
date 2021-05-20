@@ -10,6 +10,12 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/pkg/errors"
+)
+
+var (
+	ErrFraudulentTransfer  = errors.New("fraudulent transfer encountered when syncing")
+	ErrTransfersNotApplied = errors.New("could not apply all transfers from synced batch")
 )
 
 func SyncBatches(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) (err error) {
@@ -110,11 +116,11 @@ func syncTransfersCommitment(
 	}
 
 	if len(invalidTransfers) > 0 {
-		return fmt.Errorf("fraduelent transfer encountered when syncing")
+		return ErrFraudulentTransfer
 	}
 
 	if len(appliedTransfers) != len(transfers) {
-		return fmt.Errorf("could not apply all transfers from synced batch")
+		return ErrTransfersNotApplied
 	}
 
 	_, err = storage.AddCommitment(&models.Commitment{
@@ -146,11 +152,11 @@ func syncCreate2TransfersCommitment(
 	}
 
 	if len(invalidTxs) > 0 {
-		return fmt.Errorf("fraduelent transfer encountered when syncing")
+		return ErrFraudulentTransfer
 	}
 
 	if len(appliedTxs) != len(transfers) {
-		return fmt.Errorf("could not apply all transfers from synced batch")
+		return ErrTransfersNotApplied
 	}
 
 	_, err = storage.AddCommitment(&models.Commitment{

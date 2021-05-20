@@ -156,6 +156,40 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 	}
 }
 
+func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_SomeValid() {
+	transfers := generateValidCreate2Transfers(2, &s.publicKey)
+	transfers = append(transfers, generateInvalidCreate2Transfers(3, &s.publicKey)...)
+
+	validTransfers, invalidTransfers, err := ApplyCreate2TransfersForSync(s.storage, transfers, []uint32{1, 2, 3, 4, 5}, s.cfg)
+	s.NoError(err)
+	s.Len(validTransfers, 2)
+	s.Len(invalidTransfers, 3)
+}
+
+func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_MoreThanSpecifiedInConfigTxsPerCommitment() {
+	transfers := generateValidCreate2Transfers(13, &s.publicKey)
+	pubKeyIDs := make([]uint32, 0, len(transfers))
+	for i := range transfers {
+		pubKeyIDs = append(pubKeyIDs, uint32(i+1))
+	}
+
+	validTransfers, invalidTransfers, err := ApplyCreate2TransfersForSync(s.storage, transfers, pubKeyIDs, s.cfg)
+	s.NoError(err)
+
+	s.Len(validTransfers, 6)
+	s.Len(invalidTransfers, 0)
+
+	state, err := s.storage.GetStateLeaf(1)
+	s.NoError(err)
+	s.Equal(models.MakeUint256(6), state.Nonce)
+}
+
+func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidSlicesLength() {
+	transfers := generateValidCreate2Transfers(3, &s.publicKey)
+	_, _, err := ApplyCreate2TransfersForSync(s.storage, transfers, []uint32{1, 2}, s.cfg)
+	s.Equal(ErrInvalidSliceLength, err)
+}
+
 func TestApplyCreate2TransfersTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplyCreate2TransfersTestSuite))
 }
