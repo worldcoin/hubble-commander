@@ -3,6 +3,7 @@ package encoder
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/models"
@@ -97,6 +98,27 @@ func EncodeCreate2TransferForCommitment(transfer *models.Create2Transfer, toPubK
 	return arr, nil
 }
 
+func DecodeCreate2TransferFromCommitment(data []byte) (*models.Create2Transfer, uint32) {
+	fromStateID := binary.BigEndian.Uint32(data[0:4])
+	toStateID := binary.BigEndian.Uint32(data[4:8])
+	toPubKeyID := binary.BigEndian.Uint32(data[8:12])
+	amountEncoded := binary.BigEndian.Uint16(data[12:14])
+	feeEncoded := binary.BigEndian.Uint16(data[14:16])
+
+	amount := DecodeDecimal(amountEncoded)
+	fee := DecodeDecimal(feeEncoded)
+
+	return &models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			TxType:      txtype.Create2Transfer,
+			FromStateID: fromStateID,
+			Amount:      amount,
+			Fee:         fee,
+		},
+		ToStateID: toStateID,
+	}, toPubKeyID
+}
+
 func SerializeCreate2Transfers(transfers []models.Create2Transfer, pubKeyIDs []uint32) ([]byte, error) {
 	if len(transfers) != len(pubKeyIDs) {
 		return nil, ErrInvalidSlicesLength
@@ -112,4 +134,22 @@ func SerializeCreate2Transfers(transfers []models.Create2Transfer, pubKeyIDs []u
 	}
 
 	return buf, nil
+}
+
+func DeserializeCreate2Transfers(data []byte) ([]models.Create2Transfer, []uint32, error) {
+	dataLength := len(data)
+	if dataLength%16 != 0 {
+		return nil, nil, fmt.Errorf("invalid data length")
+	}
+	transfersCount := dataLength / 16
+
+	transfers := make([]models.Create2Transfer, 0, transfersCount)
+	pubKeyIDs := make([]uint32, 0, transfersCount)
+	for i := 0; i < transfersCount; i++ {
+		transfer, pubKeyID := DecodeCreate2TransferFromCommitment(data[i*16 : (i+1)*16])
+		transfers = append(transfers, *transfer)
+		pubKeyIDs = append(pubKeyIDs, pubKeyID)
+	}
+
+	return transfers, pubKeyIDs, nil
 }
