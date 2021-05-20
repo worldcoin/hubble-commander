@@ -6,7 +6,7 @@ type FlatStateLeaf struct {
 	StateID    uint32
 	DataHash   common.Hash
 	PubKeyID   uint32  `badgerhold:"index"`
-	TokenIndex Uint256 `badgerhold:"index"` // TODO: Consider removing or updating to the tuple of (Pubkey; tokenIdx)
+	TokenIndex Uint256 // TODO: Consider adding a tuple index of (Pubkey; tokenIdx)
 	Balance    Uint256
 	Nonce      Uint256
 }
