@@ -36,7 +36,7 @@ func (s *Storage) AddStateNode(node *models.StateNode) error {
 }
 
 func (s *Storage) GetStateNodeByPath(path *models.MerklePath) (*models.StateNode, error) {
-	var node models.StateNode
+	node := models.StateNode{MerklePath: *path}
 	err := s.Badger.Get(path, &node)
 	if err == bh.ErrNotFound {
 		return newZeroStateNode(path), nil
