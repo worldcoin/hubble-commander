@@ -38,6 +38,7 @@ func getGenesisPath() string {
 func GetConfig() Config {
 	return Config{
 		Rollup: RollupConfig{
+			SyncBatches:             true,
 			FeeReceiverPubKeyID:     0,
 			TxsPerCommitment:        32,
 			MinCommitmentsPerBatch:  1,
@@ -70,6 +71,7 @@ func GetConfig() Config {
 func GetTestConfig() Config {
 	return Config{
 		Rollup: RollupConfig{
+			SyncBatches:             false,
 			FeeReceiverPubKeyID:     0,
 			TxsPerCommitment:        2,
 			MinCommitmentsPerBatch:  1,
