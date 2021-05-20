@@ -2,12 +2,12 @@ package storage
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/ethereum/go-ethereum/common"
+	bdg "github.com/dgraph-io/badger/v3"
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
 func (s *Storage) UpsertStateNode(node *models.StateNode) error {
-	return s.Badger.Upsert(node.MerklePath, node)
+	return s.Badger.Upsert(node.MerklePath.Bytes(), node)
 }
 
 func (s *Storage) BatchUpsertStateNodes(nodes []models.StateNode) (err error) {
@@ -26,12 +26,12 @@ func (s *Storage) BatchUpsertStateNodes(nodes []models.StateNode) (err error) {
 }
 
 func (s *Storage) AddStateNode(node *models.StateNode) error {
-	return s.Badger.Insert(node.MerklePath, node)
+	return s.Badger.Insert(node.MerklePath.Bytes(), node)
 }
 
 func (s *Storage) GetStateNodeByPath(path *models.MerklePath) (*models.StateNode, error) {
 	var node models.StateNode
-	err := s.Badger.Get(path, &node)
+	err := s.Badger.Get(path.Bytes(), &node)
 	if err == bh.ErrNotFound {
 		return newZeroStateNode(path), nil
 	}
@@ -39,18 +39,6 @@ func (s *Storage) GetStateNodeByPath(path *models.MerklePath) (*models.StateNode
 		return nil, err
 	}
 	return &node, nil
-}
-
-func (s *Storage) GetStateNodeByHash(dataHash *common.Hash) (*models.StateNode, error) {
-	nodes := make([]models.StateNode, 0, 1)
-	err := s.Badger.Find(&nodes, bh.Where("DataHash").Eq(dataHash).Index("DataHash"))
-	if err != nil {
-		return nil, err
-	}
-	if len(nodes) == 0 {
-		return nil, NewNotFoundError("state node")
-	}
-	return &nodes[0], nil
 }
 
 func newZeroStateNode(path *models.MerklePath) *models.StateNode {
@@ -81,4 +69,37 @@ func (s *Storage) GetStateNodes(paths []models.MerklePath) (nodes []models.State
 		return nil, err
 	}
 	return nodes, nil
+}
+
+func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
+	var nextAvailableStateID uint32
+
+	err := s.Badger.View(func(txn *bdg.Txn) error {
+		opts := bdg.DefaultIteratorOptions
+		opts.PrefetchValues = false
+		opts.Reverse = true
+		it := txn.NewIterator(opts)
+		defer it.Close()
+		prefix := []byte("bh_FlatStateLeaf")
+
+		seekPrefix := make([]byte, 0, len(prefix)+1)
+		seekPrefix = append(seekPrefix, prefix...)
+		seekPrefix = append(seekPrefix, 0xFF) // Required to loop backwards
+
+		it.Seek(seekPrefix)
+		if it.ValidForPrefix(prefix) {
+			lastItem := it.Item()
+			lastItemKey := lastItem.Key()
+			lastStateID := lastItemKey[len(lastItemKey)-1]
+
+			nextAvailableStateID = uint32(lastStateID) + 1
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &nextAvailableStateID, nil
 }

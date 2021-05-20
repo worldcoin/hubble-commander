@@ -40,11 +40,7 @@ func (s *StateNodeTestSuite) TestAddStateNode_AddAndRetrieve() {
 	err = s.storage.AddStateNode(node)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateNodeByHash(&node.DataHash)
-	s.NoError(err)
-	s.Equal(node, res)
-
-	res, err = s.storage.GetStateNodeByPath(path)
+	res, err := s.storage.GetStateNodeByPath(path)
 	s.NoError(err)
 	s.Equal(node, res)
 }
@@ -116,13 +112,6 @@ func (s *StateNodeTestSuite) TestUpsertStateNode_UpdateAndRetrieve() {
 	s.NoError(err)
 
 	s.Equal(expectedNode, res)
-}
-
-func (s *StateNodeTestSuite) TestGetStateNodeByHash_NonExistentNode() {
-	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
-	res, err := s.storage.GetStateNodeByHash(&hash)
-	s.Equal(NewNotFoundError("state node"), err)
-	s.Nil(res)
 }
 
 func (s *StateNodeTestSuite) TestGetStateNodeByPath_NonExistentLeaf() {
@@ -204,6 +193,34 @@ func (s *StateNodeTestSuite) TestBatchUpsertStateNode_UpdateAndRetrieve() {
 	s.Contains(res, nodes[1])
 }
 
+func (s *StateNodeTestSuite) TestGetNextAvailableStateID_NoLeavesInStateTree() {
+	path, err := s.storage.GetNextAvailableStateID()
+	s.NoError(err)
+	s.Equal(uint32(0), *path)
+}
+
+func (s *StateNodeTestSuite) TestGetNextAvailableStateID() {
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
+	err = s.storage.AddAccountIfNotExists(&account2)
+	s.NoError(err)
+
+	tree := NewStateTree(s.storage.Storage)
+
+	err = tree.Set(0, userState1)
+	s.NoError(err)
+	err = tree.Set(1, userState2)
+	s.NoError(err)
+
+	path, err := s.storage.GetNextAvailableStateID()
+	s.NoError(err)
+	s.Equal(uint32(2), *path)
+}
+
+func TestStateNodeTestSuite(t *testing.T) {
+	suite.Run(t, new(StateNodeTestSuite))
+}
+
 func getPathsAndNodes() ([]models.MerklePath, []models.StateNode) {
 	paths := []models.MerklePath{
 		{
@@ -226,8 +243,4 @@ func getPathsAndNodes() ([]models.MerklePath, []models.StateNode) {
 		},
 	}
 	return paths, nodes
-}
-
-func TestStateNodeTestSuite(t *testing.T) {
-	suite.Run(t, new(StateNodeTestSuite))
 }

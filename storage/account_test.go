@@ -105,14 +105,14 @@ func (s *AccountTestSuite) TestGetPublicKey_ReturnsPublicKey() {
 }
 
 func (s *AccountTestSuite) TestGetUnusedPubKeyID_NoPublicKeys() {
-	_, err := s.storage.GetUnusedPubKeyID(&account1.PublicKey, models.MakeUint256(100))
+	_, err := s.storage.GetUnusedPubKeyID(&account1.PublicKey, models.NewUint256(100))
 	s.Equal(NewNotFoundError("accounts"), err)
 }
 
 func (s *AccountTestSuite) TestGetUnusedPubKeyID_NoLeaves() {
 	err := s.storage.AddAccountIfNotExists(&account1)
 	s.NoError(err)
-	pubKeyID, err := s.storage.GetUnusedPubKeyID(&account1.PublicKey, models.MakeUint256(100))
+	pubKeyID, err := s.storage.GetUnusedPubKeyID(&account1.PublicKey, models.NewUint256(100))
 	s.NoError(err)
 	s.NotNil(pubKeyID)
 }
@@ -138,7 +138,7 @@ func (s *AccountTestSuite) TestGetUnusedPubKeyID_NoUnusedPublicIDs() {
 	err = s.storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
 
-	_, err = s.storage.GetUnusedPubKeyID(&models.PublicKey{1, 2, 3}, leaf.TokenIndex)
+	_, err = s.storage.GetUnusedPubKeyID(&models.PublicKey{1, 2, 3}, &leaf.TokenIndex)
 	s.Equal(NewNotFoundError("pub key id"), err)
 }
 
@@ -192,7 +192,7 @@ func (s *AccountTestSuite) TestGetUnusedPubKeyID() {
 	err = s.storage.UpsertStateLeaf(leaf2)
 	s.NoError(err)
 
-	pubKeyID, err := s.storage.GetUnusedPubKeyID(&accounts[1].PublicKey, leaf.TokenIndex)
+	pubKeyID, err := s.storage.GetUnusedPubKeyID(&accounts[1].PublicKey, models.NewUint256(1))
 	s.NoError(err)
 	s.Equal(uint32(3), *pubKeyID)
 }
@@ -243,7 +243,7 @@ func (s *AccountTestSuite) TestGetUnusedPubKeyID_MultipleTokenIndexes() {
 		s.NoError(err)
 	}
 
-	pubKeyID, err := s.storage.GetUnusedPubKeyID(&accounts[1].PublicKey, leaves[1].TokenIndex)
+	pubKeyID, err := s.storage.GetUnusedPubKeyID(&accounts[1].PublicKey, &leaves[1].TokenIndex)
 	s.NoError(err)
 	s.Contains([]uint32{1, 3}, *pubKeyID)
 }

@@ -39,6 +39,13 @@ func (d *Database) duringUpdateTransaction() bool {
 	return d.duringTransaction() && d.updateTransaction
 }
 
+func (d *Database) View(fn func(txn *badger.Txn) error) error {
+	if d.duringTransaction() {
+		return fn(d.txn)
+	}
+	return d.store.Badger().View(fn)
+}
+
 func (d *Database) Find(result interface{}, query *bh.Query) error {
 	if d.duringTransaction() {
 		return d.store.TxFind(d.txn, result, query)

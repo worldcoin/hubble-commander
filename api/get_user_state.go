@@ -1,7 +1,25 @@
 package api
 
-import "github.com/Worldcoin/hubble-commander/models"
+import (
+	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/dto"
+)
 
-func (a *API) GetUserState(id uint32) (*models.UserStateWithID, error) {
-	return a.storage.GetUserStateByID(id)
+func (a *API) GetUserState(id uint32) (*dto.UserState, error) {
+	leaf, err := a.storage.GetStateLeaf(id)
+	if err != nil {
+		return nil, err
+	}
+
+	userState := &models.UserStateWithID{
+		StateID: leaf.StateID,
+		UserState: models.UserState{
+			PubKeyID:   leaf.PubKeyID,
+			TokenIndex: leaf.TokenIndex,
+			Balance:    leaf.Balance,
+			Nonce:      leaf.Nonce,
+		},
+	}
+
+	return userState, nil
 }
