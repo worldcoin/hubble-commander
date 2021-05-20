@@ -1,10 +1,16 @@
 package storage
 
 import (
+	"bytes"
+	"encoding/gob"
+	"reflect"
+
 	"github.com/Worldcoin/hubble-commander/models"
 	bdg "github.com/dgraph-io/badger/v3"
 	bh "github.com/timshannon/badgerhold/v3"
 )
+
+var flatStateLeafPrefix = []byte("bh_" + reflect.TypeOf(models.FlatStateLeaf{}).Name())
 
 func (s *Storage) UpsertStateNode(node *models.StateNode) error {
 	return s.Badger.Upsert(node.MerklePath.Bytes(), node)
@@ -72,7 +78,7 @@ func (s *Storage) GetStateNodes(paths []models.MerklePath) (nodes []models.State
 }
 
 func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
-	var nextAvailableStateID uint32
+	nextAvailableStateID := uint32(0)
 
 	err := s.Badger.View(func(txn *bdg.Txn) error {
 		opts := bdg.DefaultIteratorOptions
@@ -80,19 +86,19 @@ func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
 		opts.Reverse = true
 		it := txn.NewIterator(opts)
 		defer it.Close()
-		prefix := []byte("bh_FlatStateLeaf")
 
-		seekPrefix := make([]byte, 0, len(prefix)+1)
-		seekPrefix = append(seekPrefix, prefix...)
+		seekPrefix := make([]byte, 0, len(flatStateLeafPrefix)+1)
+		seekPrefix = append(seekPrefix, flatStateLeafPrefix...)
 		seekPrefix = append(seekPrefix, 0xFF) // Required to loop backwards
 
 		it.Seek(seekPrefix)
-		if it.ValidForPrefix(prefix) {
-			lastItem := it.Item()
-			lastItemKey := lastItem.Key()
-			lastStateID := lastItemKey[len(lastItemKey)-1]
-
-			nextAvailableStateID = uint32(lastStateID) + 1
+		if it.ValidForPrefix(flatStateLeafPrefix) {
+			var key uint32
+			err := decodeKey(it.Item().Key(), &key, flatStateLeafPrefix)
+			if err != nil {
+				return err
+			}
+			nextAvailableStateID = key + 1
 		}
 
 		return nil
@@ -102,4 +108,16 @@ func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
 	}
 
 	return &nextAvailableStateID, nil
+}
+
+func decodeKey(data []byte, key interface{}, prefix []byte) error {
+	var buff bytes.Buffer
+	de := gob.NewDecoder(&buff)
+
+	_, err := buff.Write(data[len(prefix):])
+	if err != nil {
+		return err
+	}
+
+	return de.Decode(key)
 }
