@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql/driver"
+	"encoding/binary"
 	"fmt"
 	"strconv"
 )
@@ -57,6 +58,15 @@ func (p *MerklePath) Scan(src interface{}) error {
 func (p MerklePath) Value() (driver.Value, error) {
 	path := strconv.FormatInt(int64(p.Path), 2)
 	return fmt.Sprintf("%0*s", p.Depth+1, path), nil
+}
+
+func (p *MerklePath) Bytes() []byte {
+	bytes := make([]byte, 5)
+
+	bytes[0] = p.Depth
+	binary.LittleEndian.PutUint32(bytes[1:5], p.Path)
+
+	return bytes
 }
 
 // Move pointer left/right on the same level

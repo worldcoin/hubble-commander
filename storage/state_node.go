@@ -3,12 +3,11 @@ package storage
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	bdg "github.com/dgraph-io/badger/v3"
-	"github.com/ethereum/go-ethereum/common"
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
 func (s *Storage) UpsertStateNode(node *models.StateNode) error {
-	return s.Badger.Upsert(node.MerklePath, node)
+	return s.Badger.Upsert(node.MerklePath.Bytes(), node)
 }
 
 func (s *Storage) BatchUpsertStateNodes(nodes []models.StateNode) (err error) {
@@ -27,12 +26,12 @@ func (s *Storage) BatchUpsertStateNodes(nodes []models.StateNode) (err error) {
 }
 
 func (s *Storage) AddStateNode(node *models.StateNode) error {
-	return s.Badger.Insert(node.MerklePath, node)
+	return s.Badger.Insert(node.MerklePath.Bytes(), node)
 }
 
 func (s *Storage) GetStateNodeByPath(path *models.MerklePath) (*models.StateNode, error) {
 	var node models.StateNode
-	err := s.Badger.Get(path, &node)
+	err := s.Badger.Get(path.Bytes(), &node)
 	if err == bh.ErrNotFound {
 		return newZeroStateNode(path), nil
 	}
@@ -40,18 +39,6 @@ func (s *Storage) GetStateNodeByPath(path *models.MerklePath) (*models.StateNode
 		return nil, err
 	}
 	return &node, nil
-}
-
-func (s *Storage) GetStateNodeByHash(dataHash *common.Hash) (*models.StateNode, error) {
-	nodes := make([]models.StateNode, 0, 1)
-	err := s.Badger.Find(&nodes, bh.Where("DataHash").Eq(dataHash).Index("DataHash"))
-	if err != nil {
-		return nil, err
-	}
-	if len(nodes) == 0 {
-		return nil, NewNotFoundError("state node")
-	}
-	return &nodes[0], nil
 }
 
 func newZeroStateNode(path *models.MerklePath) *models.StateNode {

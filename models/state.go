@@ -13,7 +13,7 @@ type UserState struct {
 
 type StateNode struct {
 	MerklePath MerklePath
-	DataHash   common.Hash `badgerhold:"index"`
+	DataHash   common.Hash
 }
 
 type StateLeaf struct {
