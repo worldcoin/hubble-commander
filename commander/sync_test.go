@@ -144,7 +144,7 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	tx := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
 			TxType:      txtype.Create2Transfer,
-			FromStateID: 0,
+			FromStateID: *senderPubKeyID,
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),

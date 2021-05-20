@@ -74,7 +74,7 @@ func syncBatch(storage *st.Storage, cfg *config.RollupConfig, batch *eth.Decoded
 	case txtype.Transfer:
 		for i := range batch.Commitments {
 			commitment := &batch.Commitments[i]
-			if err := syncCommitment(storage, cfg, batch, commitment); err != nil {
+			if err := syncTransfersCommitment(storage, cfg, batch, commitment); err != nil {
 				return err
 			}
 		}
@@ -93,7 +93,12 @@ func syncBatch(storage *st.Storage, cfg *config.RollupConfig, batch *eth.Decoded
 	return nil
 }
 
-func syncCommitment(storage *st.Storage, cfg *config.RollupConfig, batch *eth.DecodedBatch, commitment *encoder.DecodedCommitment) error {
+func syncTransfersCommitment(
+	storage *st.Storage,
+	cfg *config.RollupConfig,
+	batch *eth.DecodedBatch,
+	commitment *encoder.DecodedCommitment,
+) error {
 	transfers, err := encoder.DeserializeTransfers(commitment.Transactions)
 	if err != nil {
 		return err
