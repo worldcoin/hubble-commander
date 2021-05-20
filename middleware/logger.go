@@ -10,10 +10,7 @@ import (
 )
 
 type payload struct {
-	JSONRpc interface{}   `json:"jsonrpc"`
-	Method  string        `json:"method"`
-	Params  []interface{} `json:"params"`
-	ID      interface{}   `json:"id"`
+	Method string `json:"method"`
 }
 
 func Logger(next http.Handler) http.Handler {
