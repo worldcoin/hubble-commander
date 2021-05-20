@@ -43,25 +43,25 @@ func ApplyCreate2Transfers(
 	var pubKeyID *uint32
 
 	for i := range transfers {
-		transfer := transfers[i]
+		transfer := &transfers[i]
 
-		pubKeyID, err = getOrRegisterPubKeyID(storage, client, events, &transfer, commitmentTokenIndex)
+		pubKeyID, err = getOrRegisterPubKeyID(storage, client, events, transfer, commitmentTokenIndex)
 		if err != nil {
 			return nil, nil, nil, nil, err
 		}
 
-		transferError, appError := ApplyCreate2Transfer(storage, &transfer, *pubKeyID, commitmentTokenIndex)
+		transferError, appError := ApplyCreate2Transfer(storage, transfer, *pubKeyID, commitmentTokenIndex)
 		if appError != nil {
 			return nil, nil, nil, nil, appError
 		}
 		if transferError != nil {
 			logAndSaveTransactionError(storage, &transfer.TransactionBase, transferError)
-			invalidTransfers = append(invalidTransfers, transfer)
+			invalidTransfers = append(invalidTransfers, *transfer)
 			continue
 		}
 
 		addedPubKeyIDs = append(addedPubKeyIDs, *pubKeyID)
-		appliedTransfers = append(appliedTransfers, transfer)
+		appliedTransfers = append(appliedTransfers, *transfer)
 		combinedFee = *combinedFee.Add(&transfer.Fee)
 
 		if uint32(len(appliedTransfers)) == cfg.TxsPerCommitment {
@@ -92,6 +92,9 @@ func ApplyCreate2TransfersForSync(
 	if len(transfers) == 0 {
 		return
 	}
+	if len(transfers) != len(pubKeyIDs) {
+		return nil, nil, ErrInvalidSliceLength
+	}
 
 	appliedTransfers = make([]models.Create2Transfer, 0, cfg.TxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
@@ -103,20 +106,19 @@ func ApplyCreate2TransfersForSync(
 	commitmentTokenIndex := senderLeaf.TokenIndex
 
 	for i := range transfers {
-		transfer := transfers[i]
-		pubKeyID := pubKeyIDs[i]
+		transfer := &transfers[i]
 
-		transferError, appError := ApplyCreate2Transfer(storage, &transfer, pubKeyID, commitmentTokenIndex)
+		transferError, appError := ApplyCreate2Transfer(storage, transfer, pubKeyIDs[i], commitmentTokenIndex)
 		if appError != nil {
 			return nil, nil, appError
 		}
 		if transferError != nil {
 			logAndSaveTransactionError(storage, &transfer.TransactionBase, transferError)
-			invalidTransfers = append(invalidTransfers, transfer)
+			invalidTransfers = append(invalidTransfers, *transfer)
 			continue
 		}
 
-		appliedTransfers = append(appliedTransfers, transfer)
+		appliedTransfers = append(appliedTransfers, *transfer)
 		combinedFee = *combinedFee.Add(&transfer.Fee)
 
 		if uint32(len(appliedTransfers)) == cfg.TxsPerCommitment {

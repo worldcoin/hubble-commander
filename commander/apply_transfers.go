@@ -31,18 +31,18 @@ func ApplyTransfers(
 	commitmentTokenIndex := senderLeaf.TokenIndex
 
 	for i := range transfers {
-		transfer := transfers[i]
-		transferError, appError := ApplyTransfer(storage, &transfer, commitmentTokenIndex)
+		transfer := &transfers[i]
+		transferError, appError := ApplyTransfer(storage, transfer, commitmentTokenIndex)
 		if appError != nil {
 			return nil, nil, nil, appError
 		}
 		if transferError != nil {
 			logAndSaveTransactionError(storage, &transfer.TransactionBase, transferError)
-			invalidTransfers = append(invalidTransfers, transfer)
+			invalidTransfers = append(invalidTransfers, *transfer)
 			continue
 		}
 
-		appliedTransfers = append(appliedTransfers, transfer)
+		appliedTransfers = append(appliedTransfers, *transfer)
 		combinedFee = *combinedFee.Add(&transfer.Fee)
 
 		if uint32(len(appliedTransfers)) == cfg.TxsPerCommitment {

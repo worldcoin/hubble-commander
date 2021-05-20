@@ -13,6 +13,7 @@ var (
 	ErrNonceTooLow           = errors.New("nonce too low")
 	ErrNonceTooHigh          = errors.New("nonce too high")
 	ErrBalanceTooLow         = errors.New("not enough balance")
+	ErrInvalidSliceLength    = errors.New("invalid slices length")
 )
 
 func ApplyTransfer(
