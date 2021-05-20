@@ -13,7 +13,7 @@ import (
 var flatStateLeafPrefix = []byte("bh_" + reflect.TypeOf(models.FlatStateLeaf{}).Name())
 
 func (s *Storage) UpsertStateNode(node *models.StateNode) error {
-	return s.Badger.Upsert(node.MerklePath.Bytes(), node)
+	return s.Badger.Upsert(node.MerklePath, node)
 }
 
 func (s *Storage) BatchUpsertStateNodes(nodes []models.StateNode) (err error) {
@@ -32,12 +32,12 @@ func (s *Storage) BatchUpsertStateNodes(nodes []models.StateNode) (err error) {
 }
 
 func (s *Storage) AddStateNode(node *models.StateNode) error {
-	return s.Badger.Insert(node.MerklePath.Bytes(), node)
+	return s.Badger.Insert(node.MerklePath, node)
 }
 
 func (s *Storage) GetStateNodeByPath(path *models.MerklePath) (*models.StateNode, error) {
 	var node models.StateNode
-	err := s.Badger.Get(path.Bytes(), &node)
+	err := s.Badger.Get(path, &node)
 	if err == bh.ErrNotFound {
 		return newZeroStateNode(path), nil
 	}
