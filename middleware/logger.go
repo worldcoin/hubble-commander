@@ -16,18 +16,16 @@ type payload struct {
 	ID      interface{}   `json:"id"`
 }
 
-func Logger(devMode bool, next http.Handler) http.Handler {
+func Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if devMode {
-			start := time.Now()
-			body, err := ioutil.ReadAll(r.Body)
-			if err != nil {
-				log.Printf("API: failed to read request body: %s", err)
-			}
-			r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
-
-			defer logRequest(body, start)
+		start := time.Now()
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Printf("API: failed to read request body: %s", err)
 		}
+		r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+
+		defer logRequest(body, start)
 		next.ServeHTTP(w, r)
 	})
 }
