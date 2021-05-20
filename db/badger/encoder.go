@@ -9,8 +9,8 @@ func Encode(value interface{}) ([]byte, error) {
 	switch v := value.(type) {
 	case *models.MerklePath:
 		return v.Bytes(), nil
-	case *models.StateNode:
-		return EncodeDataHash(v)
+	case models.StateNode:
+		return EncodeDataHash(&v)
 	default:
 		return bh.DefaultEncode(value)
 	}
