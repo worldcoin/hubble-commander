@@ -231,6 +231,11 @@ func (s *Create2TestSuite) TestDeserializeCreate2Transfers() {
 	s.Contains(toPubKeyIDs, uint32(5))
 }
 
+func (s *Create2TestSuite) TestDeserializeCreate2Transfers_InvalidDataLength() {
+	_, _, err := DeserializeCreate2Transfers([]byte{1, 2, 3})
+	s.Equal(ErrInvalidDataLength, err)
+}
+
 func TestCreate2TestSuite(t *testing.T) {
 	suite.Run(t, new(Create2TestSuite))
 }

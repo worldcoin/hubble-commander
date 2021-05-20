@@ -129,8 +129,7 @@ func (s *TransferTestSuite) TestDecodeTransferForCommitment() {
 	encoded, err := EncodeTransferForCommitment(txTransfer)
 	s.NoError(err)
 
-	decoded, err := DecodeTransferFromCommitment(encoded)
-	s.NoError(err)
+	decoded := DecodeTransferFromCommitment(encoded)
 
 	s.Equal(txTransfer, decoded)
 }
