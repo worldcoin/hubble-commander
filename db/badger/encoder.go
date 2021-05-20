@@ -11,6 +11,8 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Bytes(), nil
 	case models.StateNode:
 		return EncodeDataHash(&v)
+	case models.FlatStateLeaf:
+		return v.Bytes(), nil
 	default:
 		return bh.DefaultEncode(value)
 	}
@@ -22,6 +24,8 @@ func Decode(data []byte, value interface{}) error {
 		return v.SetBytes(data)
 	case *models.StateNode:
 		return DecodeDataHash(data, v)
+	case *models.FlatStateLeaf:
+		return v.SetBytes(data)
 	default:
 		return bh.DefaultDecode(data, value)
 	}

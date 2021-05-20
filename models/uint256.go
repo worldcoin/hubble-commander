@@ -112,3 +112,10 @@ func (u *Uint256) UnmarshalJSON(b []byte) error {
 
 	return nil
 }
+
+func (u *Uint256) SetBytes(data []byte) {
+	u.Int.SetBytes(data)
+	if u.CmpN(0) == 0 {
+		*u = MakeUint256(0)
+	}
+}

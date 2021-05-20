@@ -7,8 +7,8 @@ import (
 )
 
 func (s *Storage) UpsertStateLeaf(leaf *models.StateLeaf) error {
-	flatLeaf := models.NewFlatStateLeaf(leaf)
-	return s.Badger.Upsert(leaf.StateID, &flatLeaf)
+	flatLeaf := models.MakeFlatStateLeaf(leaf)
+	return s.Badger.Upsert(leaf.StateID, flatLeaf)
 }
 
 func (s *Storage) GetStateLeaf(stateID uint32) (stateLeaf *models.StateLeaf, err error) {
