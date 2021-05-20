@@ -44,7 +44,12 @@ func ApplyCreate2Transfers(
 	for i := range transfers {
 		transfer := transfers[i]
 
-		addedPubKeyID, transferError, appError := ApplyCreate2Transfer(storage, client, events, &transfer, commitmentTokenIndex)
+		pubKeyID, err := getOrRegisterPubKeyID(storage, client, events, &transfer, commitmentTokenIndex)
+		if err != nil {
+			return nil, nil, nil, nil, err
+		}
+
+		transferError, appError := ApplyCreate2Transfer(storage, &transfer, *pubKeyID, commitmentTokenIndex)
 		if appError != nil {
 			return nil, nil, nil, nil, appError
 		}
@@ -54,7 +59,7 @@ func ApplyCreate2Transfers(
 			continue
 		}
 
-		addedPubKeyIDs = append(addedPubKeyIDs, *addedPubKeyID)
+		addedPubKeyIDs = append(addedPubKeyIDs, *pubKeyID)
 		appliedTransfers = append(appliedTransfers, transfer)
 		combinedFee = *combinedFee.Add(&transfer.Fee)
 
