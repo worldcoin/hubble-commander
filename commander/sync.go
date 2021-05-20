@@ -65,20 +65,28 @@ func getLatestBatchID(storage *st.Storage) (*models.Uint256, error) {
 }
 
 func syncBatch(storage *st.Storage, cfg *config.RollupConfig, batch *eth.DecodedBatch) error {
-	if batch.Type != txtype.Transfer {
-		return fmt.Errorf("unsupported batch type for sync: %s", batch.Type) // TODO support create2Transfers
-	}
-
 	err := storage.AddBatch(&batch.Batch)
 	if err != nil {
 		return err
 	}
 
-	for i := range batch.Commitments {
-		commitment := &batch.Commitments[i]
-		if err := syncCommitment(storage, cfg, batch, commitment); err != nil {
-			return err
+	switch batch.Type {
+	case txtype.Transfer:
+		for i := range batch.Commitments {
+			commitment := &batch.Commitments[i]
+			if err := syncCommitment(storage, cfg, batch, commitment); err != nil {
+				return err
+			}
 		}
+	case txtype.Create2Transfer:
+		for i := range batch.Commitments {
+			commitment := &batch.Commitments[i]
+			if err := syncCreate2TransfersCommitment(storage, cfg, batch, commitment); err != nil {
+				return err
+			}
+		}
+	case txtype.MassMigration:
+		return fmt.Errorf("unsupported batch type for sync: %s", batch.Type)
 	}
 
 	log.Printf("Synced new batch #%s from chain: %d commitments included", batch.ID.String(), len(batch.Commitments))
@@ -101,6 +109,42 @@ func syncCommitment(storage *st.Storage, cfg *config.RollupConfig, batch *eth.De
 	}
 
 	if len(appliedTransfers) != len(transfers) {
+		return fmt.Errorf("could not apply all transfers from synced batch")
+	}
+
+	_, err = storage.AddCommitment(&models.Commitment{
+		Type:              batch.Type,
+		Transactions:      commitment.Transactions,
+		FeeReceiver:       commitment.FeeReceiver,
+		CombinedSignature: commitment.CombinedSignature,
+		PostStateRoot:     commitment.StateRoot,
+		AccountTreeRoot:   &batch.AccountRoot,
+		IncludedInBatch:   &batch.Hash,
+	})
+	return err
+}
+
+func syncCreate2TransfersCommitment(
+	storage *st.Storage,
+	cfg *config.RollupConfig,
+	batch *eth.DecodedBatch,
+	commitment *encoder.DecodedCommitment,
+) error {
+	transfers, pubKeyIDs, err := encoder.DeserializeCreate2Transfers(commitment.Transactions)
+	if err != nil {
+		return err
+	}
+
+	appliedTxs, invalidTxs, err := ApplyCreate2TransfersForSync(storage, transfers, pubKeyIDs, cfg)
+	if err != nil {
+		return err
+	}
+
+	if len(invalidTxs) > 0 {
+		return fmt.Errorf("fraduelent transfer encountered when syncing")
+	}
+
+	if len(appliedTxs) != len(transfers) {
 		return fmt.Errorf("could not apply all transfers from synced batch")
 	}
 

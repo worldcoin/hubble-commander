@@ -10,6 +10,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -132,6 +133,14 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 }
 
 func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
+	// register sender account on chain
+	registrations, unsubscribe, err := s.client.WatchRegistrations(&bind.WatchOpts{})
+	s.NoError(err)
+	defer unsubscribe()
+	senderPubKeyID, err := s.client.RegisterAccount(&models.PublicKey{1, 2, 3}, registrations)
+	s.NoError(err)
+	s.Equal(uint32(0), *senderPubKeyID)
+
 	tx := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
 			TxType:      txtype.Create2Transfer,
@@ -144,7 +153,7 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 		ToStateID:   1,
 		ToPublicKey: models.PublicKey{2, 3, 4},
 	}
-	err := s.storage.AddCreate2Transfer(&tx)
+	err = s.storage.AddCreate2Transfer(&tx)
 	s.NoError(err)
 
 	commitments, err := createCreate2TransferCommitments([]models.Create2Transfer{tx}, s.storage, s.client.Client, s.cfg, testDomain)
@@ -166,9 +175,10 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	s.NoError(err)
 	s.Equal(models.MakeUint256(600), state0.Balance)
 
-	state1, err := s.storage.GetStateLeaf(1)
+	state1, err := s.storage.GetStateLeaf(2)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(400), state1.Balance)
+	s.Equal(uint32(1), state1.PubKeyID)
 
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
