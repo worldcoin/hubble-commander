@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (c *Client) GetBatches() ([]DecodedBatch, error) {
+func (c *Client) GetBatches(latestBatchSumissionBlock uint32) ([]DecodedBatch, error) {
 	it, err := c.Rollup.FilterNewBatch(nil)
 	if err != nil {
 		return nil, err
@@ -37,21 +37,28 @@ func (c *Client) GetBatches() ([]DecodedBatch, error) {
 			continue // TODO handle internal transactions
 		}
 
-		commitments, err := encoder.DecodeBatchCalldata(tx.Data())
+		txReceipt, err := c.ChainConnection.GetBackend().TransactionReceipt(context.Background(), txHash)
 		if err != nil {
 			return nil, err
 		}
 
-		batch, err := c.GetBatch(models.NewUint256FromBig(*it.Event.BatchID))
-		if err != nil {
-			return nil, err
-		}
+		if txReceipt.BlockNumber.Uint64() >= uint64(latestBatchSumissionBlock) {
+			commitments, err := encoder.DecodeBatchCalldata(tx.Data())
+			if err != nil {
+				return nil, err
+			}
 
-		res = append(res, DecodedBatch{
-			Batch:       *batch,
-			AccountRoot: common.BytesToHash(it.Event.AccountRoot[:]),
-			Commitments: commitments,
-		})
+			batch, err := c.GetBatch(models.NewUint256FromBig(*it.Event.BatchID))
+			if err != nil {
+				return nil, err
+			}
+
+			res = append(res, DecodedBatch{
+				Batch:       *batch,
+				AccountRoot: common.BytesToHash(it.Event.AccountRoot[:]),
+				Commitments: commitments,
+			})
+		}
 	}
 
 	return res, nil
