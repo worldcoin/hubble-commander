@@ -190,6 +190,35 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_Invali
 	s.Equal(ErrInvalidSliceLength, err)
 }
 
+func (s *ApplyCreate2TransfersTestSuite) TestHandleApplyC2T_ValidTransfer() {
+	validTransfers := make([]models.Create2Transfer, 0)
+	invalidTransfers := make([]models.Create2Transfer, 0)
+	transfers := generateValidCreate2Transfers(1, &s.publicKey)
+	combinedFee := models.NewUint256(100)
+
+	ok, err := handleApplyC2T(s.storage, &transfers[0], 1, &validTransfers, &invalidTransfers, combinedFee, models.NewUint256(1))
+	s.NoError(err)
+	s.True(ok)
+	s.Len(validTransfers, 1)
+	s.Len(invalidTransfers, 0)
+	s.Equal(*transfers[0].Amount.AddN(100), *combinedFee)
+}
+
+func (s *ApplyCreate2TransfersTestSuite) TestHandleApplyC2T_InvalidTransfer() {
+	validTransfers := make([]models.Create2Transfer, 0)
+	invalidTransfers := make([]models.Create2Transfer, 0)
+	transfers := generateInvalidCreate2Transfers(1, &s.publicKey)
+	transfers[0].Amount = models.MakeUint256(500)
+	combinedFee := models.NewUint256(100)
+
+	ok, err := handleApplyC2T(s.storage, &transfers[0], 1, &validTransfers, &invalidTransfers, combinedFee, models.NewUint256(1))
+	s.NoError(err)
+	s.False(ok)
+	s.Len(validTransfers, 0)
+	s.Len(invalidTransfers, 1)
+	s.Equal(uint64(100), combinedFee.Uint64())
+}
+
 func TestApplyCreate2TransfersTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplyCreate2TransfersTestSuite))
 }

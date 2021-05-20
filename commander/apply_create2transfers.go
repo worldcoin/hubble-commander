@@ -32,45 +32,39 @@ func ApplyCreate2Transfers(
 
 	appliedTransfers = make([]models.Create2Transfer, 0, cfg.TxsPerCommitment)
 	addedPubKeyIDs = make([]uint32, 0, cfg.TxsPerCommitment)
-	combinedFee := models.MakeUint256(0)
+	combinedFee := models.NewUint256(0)
 
-	senderLeaf, err := storage.GetStateLeaf(transfers[0].FromStateID)
+	commitmentTokenIndex, err := getTokenIndex(storage, transfers[0].FromStateID)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
-
-	commitmentTokenIndex := senderLeaf.TokenIndex
 	var pubKeyID *uint32
+	var ok bool
 
 	for i := range transfers {
 		transfer := &transfers[i]
 
-		pubKeyID, err = getOrRegisterPubKeyID(storage, client, events, transfer, commitmentTokenIndex)
+		pubKeyID, err = getOrRegisterPubKeyID(storage, client, events, transfer, *commitmentTokenIndex)
 		if err != nil {
 			return nil, nil, nil, nil, err
 		}
 
-		transferError, appError := ApplyCreate2Transfer(storage, transfer, *pubKeyID, commitmentTokenIndex)
-		if appError != nil {
-			return nil, nil, nil, nil, appError
+		ok, err = handleApplyC2T(storage, transfer, *pubKeyID, &appliedTransfers, &invalidTransfers, combinedFee, commitmentTokenIndex)
+		if err != nil {
+			return nil, nil, nil, nil, err
 		}
-		if transferError != nil {
-			logAndSaveTransactionError(storage, &transfer.TransactionBase, transferError)
-			invalidTransfers = append(invalidTransfers, *transfer)
+		if !ok {
 			continue
 		}
 
 		addedPubKeyIDs = append(addedPubKeyIDs, *pubKeyID)
-		appliedTransfers = append(appliedTransfers, *transfer)
-		combinedFee = *combinedFee.Add(&transfer.Fee)
-
 		if uint32(len(appliedTransfers)) == cfg.TxsPerCommitment {
 			break
 		}
 	}
 
 	if len(appliedTransfers) > 0 {
-		feeReceiverStateID, err = ApplyFee(storage, cfg.FeeReceiverPubKeyID, commitmentTokenIndex, combinedFee)
+		feeReceiverStateID, err = ApplyFee(storage, cfg.FeeReceiverPubKeyID, *commitmentTokenIndex, *combinedFee)
 		if err != nil {
 			return nil, nil, nil, nil, err
 		}
@@ -97,29 +91,20 @@ func ApplyCreate2TransfersForSync(
 	}
 
 	appliedTransfers = make([]models.Create2Transfer, 0, cfg.TxsPerCommitment)
-	combinedFee := models.MakeUint256(0)
+	combinedFee := models.NewUint256(0)
 
-	senderLeaf, err := storage.GetStateLeaf(transfers[0].FromStateID)
+	commitmentTokenIndex, err := getTokenIndex(storage, transfers[0].FromStateID)
 	if err != nil {
 		return nil, nil, err
 	}
-	commitmentTokenIndex := senderLeaf.TokenIndex
 
 	for i := range transfers {
 		transfer := &transfers[i]
 
-		transferError, appError := ApplyCreate2Transfer(storage, transfer, pubKeyIDs[i], commitmentTokenIndex)
-		if appError != nil {
-			return nil, nil, appError
+		_, err = handleApplyC2T(storage, transfer, pubKeyIDs[i], &appliedTransfers, &invalidTransfers, combinedFee, commitmentTokenIndex)
+		if err != nil {
+			return nil, nil, err
 		}
-		if transferError != nil {
-			logAndSaveTransactionError(storage, &transfer.TransactionBase, transferError)
-			invalidTransfers = append(invalidTransfers, *transfer)
-			continue
-		}
-
-		appliedTransfers = append(appliedTransfers, *transfer)
-		combinedFee = *combinedFee.Add(&transfer.Fee)
 
 		if uint32(len(appliedTransfers)) == cfg.TxsPerCommitment {
 			break
@@ -127,11 +112,41 @@ func ApplyCreate2TransfersForSync(
 	}
 
 	if len(appliedTransfers) > 0 {
-		_, err = ApplyFee(storage, cfg.FeeReceiverPubKeyID, commitmentTokenIndex, combinedFee)
+		_, err = ApplyFee(storage, cfg.FeeReceiverPubKeyID, *commitmentTokenIndex, *combinedFee)
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 
 	return appliedTransfers, invalidTransfers, nil
+}
+
+func getTokenIndex(storage *st.Storage, stateID uint32) (*models.Uint256, error) {
+	senderLeaf, err := storage.GetStateLeaf(stateID)
+	if err != nil {
+		return nil, err
+	}
+	return &senderLeaf.TokenIndex, nil
+}
+
+func handleApplyC2T(
+	storage *st.Storage,
+	transfer *models.Create2Transfer,
+	pubKeyID uint32,
+	appliedTxs, invalidTxs *[]models.Create2Transfer,
+	combinedFee, tokenIndex *models.Uint256,
+) (bool, error) {
+	transferError, appError := ApplyCreate2Transfer(storage, transfer, pubKeyID, *tokenIndex)
+	if appError != nil {
+		return false, appError
+	}
+	if transferError != nil {
+		logAndSaveTransactionError(storage, &transfer.TransactionBase, transferError)
+		*invalidTxs = append(*invalidTxs, *transfer)
+		return false, nil
+	}
+
+	*appliedTxs = append(*appliedTxs, *transfer)
+	*combinedFee = *combinedFee.Add(&transfer.Fee)
+	return true, nil
 }
