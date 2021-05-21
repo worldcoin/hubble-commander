@@ -6,7 +6,7 @@ import (
 )
 
 func (s *Storage) AddStateUpdate(update *models.StateUpdate) error {
-	return s.Badger.Insert(bh.NextSequence(), update)
+	return s.Badger.Insert(bh.NextSequence(), *update)
 }
 
 func (s *Storage) GetStateUpdate(id uint64) (*models.StateUpdate, error) {
@@ -22,5 +22,5 @@ func (s *Storage) GetStateUpdate(id uint64) (*models.StateUpdate, error) {
 }
 
 func (s *Storage) DeleteStateUpdate(id uint64) error {
-	return s.Badger.Delete(id, &models.StateUpdate{})
+	return s.Badger.Delete(id, models.StateUpdate{})
 }
