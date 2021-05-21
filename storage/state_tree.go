@@ -76,15 +76,6 @@ func (s *StateTree) Set(id uint32, state *models.UserState) (err error) {
 }
 
 func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
-	//maybe remove
-	_, err := s.storage.GetStateUpdateByRootHash(targetRootHash)
-	if err != nil {
-		if IsNotFoundError(err) {
-			return fmt.Errorf("cannot revert to not existent state")
-		}
-		return err
-	}
-
 	txn, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return err
@@ -92,9 +83,9 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 	defer txn.Rollback(&err)
 
 	stateTree := NewStateTree(storage)
-
+	var currentRootHash *common.Hash
 	err = storage.Badger.View(func(txn *bdg.Txn) error {
-		currentRootHash, err := stateTree.Root()
+		currentRootHash, err = stateTree.Root()
 		if err != nil {
 			return err
 		}
@@ -110,16 +101,15 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 			if *currentRootHash == targetRootHash {
 				return nil
 			}
-			stateUpdate, err := decodeStateUpdate(it.Item())
+			var stateUpdate *models.StateUpdate
+			stateUpdate, err = decodeStateUpdate(it.Item())
 			if err != nil {
 				return err
 			}
-
-			fmt.Printf("%+v\n", stateUpdate)
-			//why needed?
 			if stateUpdate.CurrentRoot != *currentRootHash {
 				continue
 			}
+
 			err = storage.UpsertStateLeaf(&stateUpdate.PrevStateLeaf)
 			if err != nil {
 				return err
@@ -130,7 +120,6 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 			if err != nil {
 				return err
 			}
-			fmt.Printf("hash after update: %v\n", currentRootHash)
 			if *currentRootHash != stateUpdate.PrevRoot {
 				return fmt.Errorf("unexpected state root after state update rollback")
 			}
@@ -145,11 +134,14 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 	if err != nil {
 		return err
 	}
+	if *currentRootHash != targetRootHash {
+		return ErrNotExistentState
+	}
 	return txn.Commit()
 }
 
 func decodeStateUpdate(item *bdg.Item) (*models.StateUpdate, error) {
-	var stateUpdate models.StateUpdate
+	var stateUpdate *models.StateUpdate
 	err := item.Value(func(v []byte) error {
 		// TODO - implement new decoding after rebase
 		return gob.NewDecoder(bytes.NewReader(v)).
@@ -162,7 +154,7 @@ func decodeStateUpdate(item *bdg.Item) (*models.StateUpdate, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &stateUpdate, err
+	return stateUpdate, nil
 }
 
 func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (err error) {

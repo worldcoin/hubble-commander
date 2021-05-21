@@ -276,12 +276,6 @@ func (s *StateTreeTestSuite) TestRevertTo() {
 			Balance:    models.MakeUint256(500),
 			Nonce:      models.MakeUint256(0),
 		},
-		{
-			PubKeyID:   1,
-			TokenIndex: models.MakeUint256(1),
-			Balance:    models.MakeUint256(600),
-			Nonce:      models.MakeUint256(0),
-		},
 	}
 
 	err = s.tree.Set(0, &states[0])
@@ -294,21 +288,6 @@ func (s *StateTreeTestSuite) TestRevertTo() {
 	s.NoError(err)
 	err = s.tree.Set(0, &states[2])
 	s.NoError(err)
-	err = s.tree.Set(0, &states[3])
-	s.NoError(err)
-
-	//txn, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
-	//s.NoError(err)
-	//
-	//stateTree := NewStateTree(storage)
-	//
-	//for i := 0; i < 16000; i++ {
-	//	err = stateTree.Set(uint32(i), &states[1])
-	//	s.NoError(err)
-	//}
-
-	//err = txn.Commit()
-	//s.NoError(err)
 
 	err = s.tree.RevertTo(*stateRoot)
 	s.NoError(err)
@@ -320,6 +299,41 @@ func (s *StateTreeTestSuite) TestRevertTo() {
 	leaf, err := s.tree.Leaf(0)
 	s.NoError(err)
 	s.Equal(states[0], leaf.UserState)
+}
+func (s *StateTreeTestSuite) TestRevertTo_NotExistentRootHash() {
+	err := s.storage.AddAccountIfNotExists(&account2)
+	s.NoError(err)
+
+	states := []models.UserState{
+		{
+			PubKeyID:   1,
+			TokenIndex: models.MakeUint256(1),
+			Balance:    models.MakeUint256(420),
+			Nonce:      models.MakeUint256(0),
+		},
+		{
+			PubKeyID:   2,
+			TokenIndex: models.MakeUint256(5),
+			Balance:    models.MakeUint256(100),
+			Nonce:      models.MakeUint256(0),
+		},
+		{
+			PubKeyID:   1,
+			TokenIndex: models.MakeUint256(1),
+			Balance:    models.MakeUint256(500),
+			Nonce:      models.MakeUint256(0),
+		},
+	}
+
+	err = s.tree.Set(0, &states[0])
+	s.NoError(err)
+	err = s.tree.Set(1, &states[1])
+	s.NoError(err)
+	err = s.tree.Set(0, &states[2])
+	s.NoError(err)
+
+	err = s.tree.RevertTo(common.Hash{1, 2, 3})
+	s.Equal(ErrNotExistentState, err)
 }
 
 func TestMerkleTreeTestSuite(t *testing.T) {
