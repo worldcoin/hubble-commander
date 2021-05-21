@@ -57,7 +57,7 @@ func TestBenchCommander(t *testing.T) {
 	transfersSent := 0
 	startTime := time.Now()
 
-	for transfersSent < 10000 {
+	for transfersSent < 1000 {
 		txSent := true
 		for txSent {
 			txSent = false
