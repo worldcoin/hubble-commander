@@ -276,6 +276,12 @@ func (s *StateTreeTestSuite) TestRevertTo() {
 			Balance:    models.MakeUint256(500),
 			Nonce:      models.MakeUint256(0),
 		},
+		{
+			PubKeyID:   1,
+			TokenIndex: models.MakeUint256(1),
+			Balance:    models.MakeUint256(600),
+			Nonce:      models.MakeUint256(0),
+		},
 	}
 
 	err = s.tree.Set(0, &states[0])
@@ -288,6 +294,21 @@ func (s *StateTreeTestSuite) TestRevertTo() {
 	s.NoError(err)
 	err = s.tree.Set(0, &states[2])
 	s.NoError(err)
+	err = s.tree.Set(0, &states[3])
+	s.NoError(err)
+
+	//txn, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
+	//s.NoError(err)
+	//
+	//stateTree := NewStateTree(storage)
+	//
+	//for i := 0; i < 16000; i++ {
+	//	err = stateTree.Set(uint32(i), &states[1])
+	//	s.NoError(err)
+	//}
+
+	//err = txn.Commit()
+	//s.NoError(err)
 
 	err = s.tree.RevertTo(*stateRoot)
 	s.NoError(err)

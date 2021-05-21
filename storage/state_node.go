@@ -94,6 +94,7 @@ func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
 		it.Seek(seekPrefix)
 		if it.ValidForPrefix(flatStateLeafPrefix) {
 			var key uint32
+			//TODO: change decoding after rebase
 			err := decodeKey(it.Item().Key(), &key, flatStateLeafPrefix)
 			if err != nil {
 				return err
@@ -111,13 +112,6 @@ func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
 }
 
 func decodeKey(data []byte, key interface{}, prefix []byte) error {
-	var buff bytes.Buffer
-	de := gob.NewDecoder(&buff)
-
-	_, err := buff.Write(data[len(prefix):])
-	if err != nil {
-		return err
-	}
-
-	return de.Decode(key)
+	return gob.NewDecoder(bytes.NewReader(data[len(prefix):])).
+		Decode(key)
 }

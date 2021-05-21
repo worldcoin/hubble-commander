@@ -1,13 +1,17 @@
 package storage
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"math/big"
+	"reflect"
 
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
+	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -15,7 +19,8 @@ import (
 const leafDepth = 32
 
 var (
-	rootPath = models.MerklePath{Path: 0, Depth: 0}
+	rootPath          = models.MerklePath{Path: 0, Depth: 0}
+	stateUpdatePrefix = []byte("bh_" + reflect.TypeOf(models.StateUpdate{}).Name())
 )
 
 type StateTree struct {
@@ -71,48 +76,93 @@ func (s *StateTree) Set(id uint32, state *models.UserState) (err error) {
 }
 
 func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
+	//maybe remove
 	_, err := s.storage.GetStateUpdateByRootHash(targetRootHash)
 	if err != nil {
 		if IsNotFoundError(err) {
 			return fmt.Errorf("cannot revert to not existent state")
 		}
-
 		return err
 	}
 
-	stateTree := NewStateTree(s.storage)
-
-	currentRoot, err := stateTree.Root()
+	txn, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return err
 	}
+	defer txn.Rollback(&err)
 
-	for *currentRoot != targetRootHash {
-		latestStateUpdate, err := s.storage.GetStateUpdateByRootHash(*currentRoot)
-		if err != nil {
-			return err
-		}
+	stateTree := NewStateTree(storage)
 
-		err = s.storage.UpsertStateLeaf(&latestStateUpdate.PrevStateLeaf)
+	err = storage.Badger.View(func(txn *bdg.Txn) error {
+		currentRootHash, err := stateTree.Root()
 		if err != nil {
 			return err
-		}
-		leafPath := models.MakeMerklePathFromStateID(latestStateUpdate.PrevStateLeaf.StateID)
-		currentRoot, err = s.updateStateNodes(&leafPath, &latestStateUpdate.PrevStateLeaf.DataHash)
-		if err != nil {
-			return err
-		}
-		if *currentRoot != latestStateUpdate.PrevRoot {
-			return fmt.Errorf("unexpected state root after state update rollback")
 		}
 
-		err = s.storage.DeleteStateUpdate(latestStateUpdate.ID)
-		if err != nil {
-			return err
+		opts := bdg.DefaultIteratorOptions
+		opts.Reverse = true
+		it := txn.NewIterator(opts)
+		defer it.Close()
+
+		seekPrefix := make([]byte, 0, len(stateUpdatePrefix)+1)
+		seekPrefix = append(seekPrefix, 0xFF)
+		for it.Seek(seekPrefix); it.ValidForPrefix(stateUpdatePrefix); it.Next() {
+			if *currentRootHash == targetRootHash {
+				return nil
+			}
+			stateUpdate, err := decodeStateUpdate(it.Item())
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("%+v\n", stateUpdate)
+			//why needed?
+			if stateUpdate.CurrentRoot != *currentRootHash {
+				continue
+			}
+			err = storage.UpsertStateLeaf(&stateUpdate.PrevStateLeaf)
+			if err != nil {
+				return err
+			}
+
+			leafPath := models.MakeMerklePathFromStateID(stateUpdate.PrevStateLeaf.StateID)
+			currentRootHash, err = stateTree.updateStateNodes(&leafPath, &stateUpdate.PrevStateLeaf.DataHash)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("hash after update: %v\n", currentRootHash)
+			if *currentRootHash != stateUpdate.PrevRoot {
+				return fmt.Errorf("unexpected state root after state update rollback")
+			}
+
+			err = storage.DeleteStateUpdate(stateUpdate.ID)
+			if err != nil {
+				return err
+			}
 		}
+		return nil
+	})
+	if err != nil {
+		return err
 	}
+	return txn.Commit()
+}
 
-	return nil
+func decodeStateUpdate(item *bdg.Item) (*models.StateUpdate, error) {
+	var stateUpdate models.StateUpdate
+	err := item.Value(func(v []byte) error {
+		// TODO - implement new decoding after rebase
+		return gob.NewDecoder(bytes.NewReader(v)).
+			Decode(&stateUpdate)
+	})
+	if err != nil {
+		return nil, err
+	}
+	err = decodeKey(item.Key(), &stateUpdate.ID, stateUpdatePrefix)
+	if err != nil {
+		return nil, err
+	}
+	return &stateUpdate, err
 }
 
 func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (err error) {
