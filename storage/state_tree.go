@@ -106,7 +106,7 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 				return err
 			}
 			if stateUpdate.CurrentRoot != *currentRootHash {
-				continue
+				panic("invalid current root of a previous state update, this should never happen")
 			}
 
 			err = storage.UpsertStateLeaf(&stateUpdate.PrevStateLeaf)
