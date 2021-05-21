@@ -69,6 +69,15 @@ func (p *MerklePath) Bytes() []byte {
 	return bytes
 }
 
+func (p *MerklePath) SetBytes(data []byte) error {
+	if len(data) != 5 {
+		return fmt.Errorf("invalid length")
+	}
+	p.Depth = data[0]
+	p.Path = binary.LittleEndian.Uint32(data[1:5])
+	return nil
+}
+
 // Move pointer left/right on the same level
 func (p MerklePath) Add(value uint32) (*MerklePath, error) {
 	newPath := p.Path + value

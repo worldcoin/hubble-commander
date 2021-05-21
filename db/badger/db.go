@@ -15,6 +15,8 @@ type Database struct {
 
 func NewDatabase(cfg *config.BadgerConfig) (*Database, error) {
 	options := bh.DefaultOptions
+	options.Encoder = Encode
+	options.Decoder = Decode
 	options.Options = badger.
 		DefaultOptions(cfg.Path).
 		WithLoggingLevel(badger.WARNING).

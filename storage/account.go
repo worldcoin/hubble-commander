@@ -61,7 +61,7 @@ func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey, tokenIndex *mod
 		leaves := make([]models.FlatStateLeaf, 0, 1)
 		err = s.Badger.Find(
 			&leaves,
-			bh.Where("TokenIndex").Eq(tokenIndex).Index("TokenIndex").
+			bh.Where("TokenIndex").Eq(tokenIndex).
 				And("PubKeyID").Eq(accounts[i].PubKeyID).Index("PubKeyID"),
 		)
 		if err != nil {
