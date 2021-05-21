@@ -1,13 +1,12 @@
 package storage
 
 import (
-	"bytes"
-	"encoding/gob"
 	"fmt"
 	"math/big"
 	"reflect"
 
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
+	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -141,11 +140,9 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 }
 
 func decodeStateUpdate(item *bdg.Item) (*models.StateUpdate, error) {
-	var stateUpdate *models.StateUpdate
+	var stateUpdate models.StateUpdate
 	err := item.Value(func(v []byte) error {
-		// TODO - implement new decoding after rebase
-		return gob.NewDecoder(bytes.NewReader(v)).
-			Decode(&stateUpdate)
+		return badger.Decode(v, &stateUpdate)
 	})
 	if err != nil {
 		return nil, err
@@ -154,7 +151,7 @@ func decodeStateUpdate(item *bdg.Item) (*models.StateUpdate, error) {
 	if err != nil {
 		return nil, err
 	}
-	return stateUpdate, nil
+	return &stateUpdate, nil
 }
 
 func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (err error) {

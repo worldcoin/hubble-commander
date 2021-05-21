@@ -94,7 +94,6 @@ func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
 		it.Seek(seekPrefix)
 		if it.ValidForPrefix(flatStateLeafPrefix) {
 			var key uint32
-			//TODO: change decoding after rebase
 			err := decodeKey(it.Item().Key(), &key, flatStateLeafPrefix)
 			if err != nil {
 				return err
