@@ -9,9 +9,9 @@ func (s *Storage) AddStateUpdate(update *models.StateUpdate) error {
 	return s.Badger.Insert(bh.NextSequence(), update)
 }
 
-func (s *Storage) GetStateUpdate(ID uint64) (*models.StateUpdate, error) {
+func (s *Storage) GetStateUpdate(id uint64) (*models.StateUpdate, error) {
 	var stateUpdate models.StateUpdate
-	err := s.Badger.Get(ID, &stateUpdate)
+	err := s.Badger.Get(id, &stateUpdate)
 	if err == bh.ErrNotFound {
 		return nil, NewNotFoundError("state update")
 	}
