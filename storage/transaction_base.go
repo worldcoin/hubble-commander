@@ -44,6 +44,26 @@ func (s *Storage) MarkTransactionAsIncluded(txHash common.Hash, commitmentID int
 	return nil
 }
 
+func (s *Storage) BatchMarkTransactionAsIncluded(txHashes []common.Hash, commitmentID int32) error {
+	res, err := s.Postgres.Query(
+		s.QB.Update("transaction_base").
+			Where(squirrel.Eq{"tx_hash": txHashes}).
+			Set("included_in_commitment", commitmentID),
+	).Exec()
+	if err != nil {
+		return err
+	}
+
+	numUpdatedRows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if numUpdatedRows == 0 {
+		return ErrNoRowsAffected
+	}
+	return nil
+}
+
 func (s *Storage) SetTransactionError(txHash common.Hash, errorMessage string) error {
 	res, err := s.Postgres.Query(
 		s.QB.Update("transaction_base").
