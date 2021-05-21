@@ -28,23 +28,9 @@ func SyncBatches(storage *st.Storage, client *eth.Client, cfg *config.RollupConf
 }
 
 func unsafeSyncBatches(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
-	var submissionBlock uint32
-	var latestBatchID *models.Uint256
-
-	latestBatch, err := storage.GetLatestBatch()
-	if st.IsNotFoundError(err) {
-		submissionBlock = 0
-		latestBatchID = models.NewUint256(0)
-	} else if err != nil {
+	submissionBlock, latestBatchID, err := getLatestSubmissionBlockAndBatchID(storage, client)
+	if err != nil {
 		return err
-	} else {
-		// nolint:govet
-		blocks, err := client.GetBlocksToFinalise()
-		if err != nil {
-			return err
-		}
-		submissionBlock = latestBatch.FinalisationBlock - uint32(*blocks)
-		latestBatchID = &latestBatch.ID
 	}
 
 	newBatches, err := client.GetBatches(submissionBlock) // TODO query batches starting from the submission block of the latest known batch.
@@ -63,6 +49,28 @@ func unsafeSyncBatches(storage *st.Storage, client *eth.Client, cfg *config.Roll
 	}
 
 	return nil
+}
+
+func getLatestSubmissionBlockAndBatchID(storage *st.Storage, client *eth.Client) (*uint32, *models.Uint256, error) {
+	var submissionBlock uint32
+	var latestBatchID *models.Uint256
+
+	latestBatch, err := storage.GetLatestBatch()
+	if st.IsNotFoundError(err) {
+		submissionBlock = 0
+		latestBatchID = models.NewUint256(0)
+	} else if err != nil {
+		return nil, nil, err
+	} else {
+		blocks, err := client.GetBlocksToFinalise()
+		if err != nil {
+			return nil, nil, err
+		}
+		submissionBlock = latestBatch.FinalisationBlock - uint32(*blocks)
+		latestBatchID = &latestBatch.ID
+	}
+
+	return &submissionBlock, latestBatchID, nil
 }
 
 func syncBatch(storage *st.Storage, cfg *config.RollupConfig, batch *eth.DecodedBatch) error {
