@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -78,18 +77,14 @@ func syncBatch(storage *st.Storage, cfg *config.RollupConfig, batch *eth.Decoded
 
 	switch batch.Type {
 	case txtype.Transfer:
-		for i := range batch.Commitments {
-			commitment := &batch.Commitments[i]
-			if err := syncTransfersCommitment(storage, cfg, batch, commitment); err != nil {
-				return err
-			}
+		err = syncTransferCommitments(storage, cfg, batch)
+		if err != nil {
+			return err
 		}
 	case txtype.Create2Transfer:
-		for i := range batch.Commitments {
-			commitment := &batch.Commitments[i]
-			if err := syncCreate2TransfersCommitment(storage, cfg, batch, commitment); err != nil {
-				return err
-			}
+		err = syncCreate2TransferCommitments(storage, cfg, batch)
+		if err != nil {
+			return err
 		}
 	case txtype.MassMigration:
 		return fmt.Errorf("unsupported batch type for sync: %s", batch.Type)
@@ -97,76 +92,4 @@ func syncBatch(storage *st.Storage, cfg *config.RollupConfig, batch *eth.Decoded
 
 	log.Printf("Synced new batch #%s from chain: %d commitments included", batch.ID.String(), len(batch.Commitments))
 	return nil
-}
-
-func syncTransfersCommitment(
-	storage *st.Storage,
-	cfg *config.RollupConfig,
-	batch *eth.DecodedBatch,
-	commitment *encoder.DecodedCommitment,
-) error {
-	transfers, err := encoder.DeserializeTransfers(commitment.Transactions)
-	if err != nil {
-		return err
-	}
-
-	appliedTransfers, invalidTransfers, _, err := ApplyTransfers(storage, transfers, cfg)
-	if err != nil {
-		return err
-	}
-
-	if len(invalidTransfers) > 0 {
-		return ErrFraudulentTransfer
-	}
-
-	if len(appliedTransfers) != len(transfers) {
-		return ErrTransfersNotApplied
-	}
-
-	_, err = storage.AddCommitment(&models.Commitment{
-		Type:              batch.Type,
-		Transactions:      commitment.Transactions,
-		FeeReceiver:       commitment.FeeReceiver,
-		CombinedSignature: commitment.CombinedSignature,
-		PostStateRoot:     commitment.StateRoot,
-		AccountTreeRoot:   &batch.AccountRoot,
-		IncludedInBatch:   &batch.Hash,
-	})
-	return err
-}
-
-func syncCreate2TransfersCommitment(
-	storage *st.Storage,
-	cfg *config.RollupConfig,
-	batch *eth.DecodedBatch,
-	commitment *encoder.DecodedCommitment,
-) error {
-	transfers, pubKeyIDs, err := encoder.DeserializeCreate2Transfers(commitment.Transactions)
-	if err != nil {
-		return err
-	}
-
-	appliedTxs, invalidTxs, err := ApplyCreate2TransfersForSync(storage, transfers, pubKeyIDs, cfg)
-	if err != nil {
-		return err
-	}
-
-	if len(invalidTxs) > 0 {
-		return ErrFraudulentTransfer
-	}
-
-	if len(appliedTxs) != len(transfers) {
-		return ErrTransfersNotApplied
-	}
-
-	_, err = storage.AddCommitment(&models.Commitment{
-		Type:              batch.Type,
-		Transactions:      commitment.Transactions,
-		FeeReceiver:       commitment.FeeReceiver,
-		CombinedSignature: commitment.CombinedSignature,
-		PostStateRoot:     commitment.StateRoot,
-		AccountTreeRoot:   &batch.AccountRoot,
-		IncludedInBatch:   &batch.Hash,
-	})
-	return err
 }

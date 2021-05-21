@@ -24,10 +24,6 @@ func createCreate2TransferCommitments(
 	commitments := make([]models.Commitment, 0, 32)
 
 	for {
-		if len(pendingTransfers) == 0 {
-			break
-		}
-
 		if len(commitments) >= int(cfg.MaxCommitmentsPerBatch) {
 			break
 		}
