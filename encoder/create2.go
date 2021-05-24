@@ -33,9 +33,9 @@ func EncodeCreate2TransferWithStateID(tx *models.Create2Transfer, toPubKeyID uin
 		big.NewInt(int64(tx.FromStateID)),
 		big.NewInt(int64(tx.ToStateID)),
 		big.NewInt(int64(toPubKeyID)),
-		&tx.Amount.Int,
-		&tx.Fee.Int,
-		&tx.Nonce.Int,
+		tx.Amount.ToBig(),
+		tx.Fee.ToBig(),
+		tx.Nonce.ToBig(),
 	)
 }
 
@@ -52,9 +52,9 @@ func EncodeCreate2Transfer(tx *models.Create2Transfer) ([]byte, error) {
 		big.NewInt(int64(txtype.Create2Transfer)),
 		big.NewInt(int64(tx.FromStateID)),
 		tx.ToPublicKey.BigInts(),
-		&tx.Amount.Int,
-		&tx.Fee.Int,
-		&tx.Nonce.Int,
+		tx.Amount.ToBig(),
+		tx.Fee.ToBig(),
+		tx.Nonce.ToBig(),
 	)
 }
 
@@ -71,9 +71,9 @@ func EncodeCreate2TransferForSigning(tx *models.Create2Transfer) ([]byte, error)
 		big.NewInt(int64(txtype.Create2Transfer)),
 		big.NewInt(int64(tx.FromStateID)),
 		tx.ToPublicKey.BigInts(),
-		&tx.Nonce.Int,
-		&tx.Amount.Int,
-		&tx.Fee.Int,
+		tx.Nonce.ToBig(),
+		tx.Amount.ToBig(),
+		tx.Fee.ToBig(),
 	)
 }
 

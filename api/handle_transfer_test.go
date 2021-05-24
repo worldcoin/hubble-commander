@@ -176,14 +176,6 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesAmountEncodability() {
 	s.Equal(NewNotDecimalEncodableError("amount"), err)
 }
 
-func (s *SendTransferTestSuite) TestSendTransfer_ValidatesNegativeAmount() {
-	transferWithNegativeAmount := s.transfer
-	transferWithNegativeAmount.Amount = models.NewUint256(-10)
-
-	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithNegativeAmount))
-	s.Equal(ErrNegativeAmount, err)
-}
-
 func (s *SendTransferTestSuite) TestSendTransfer_ValidatesBalance() {
 	transferWithHugeAmount := s.transfer
 	transferWithHugeAmount.Amount = models.NewUint256(500)

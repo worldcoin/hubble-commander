@@ -92,8 +92,8 @@ func newTxTransfer(transfer *models.Transfer) testtx.TxTransfer {
 	return testtx.TxTransfer{
 		FromIndex: big.NewInt(int64(transfer.FromStateID)),
 		ToIndex:   big.NewInt(int64(transfer.ToStateID)),
-		Amount:    &transfer.Amount.Int,
-		Fee:       &transfer.Fee.Int,
+		Amount:    transfer.Amount.ToBig(),
+		Fee:       transfer.Fee.ToBig(),
 	}
 }
 

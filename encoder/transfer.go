@@ -24,9 +24,9 @@ func EncodeTransfer(tx *models.Transfer) ([]byte, error) {
 		big.NewInt(int64(txtype.Transfer)),
 		big.NewInt(int64(tx.FromStateID)),
 		big.NewInt(int64(tx.ToStateID)),
-		&tx.Amount.Int,
-		&tx.Fee.Int,
-		&tx.Nonce.Int,
+		tx.Amount.ToBig(),
+		tx.Fee.ToBig(),
+		tx.Nonce.ToBig(),
 	)
 }
 
@@ -43,9 +43,9 @@ func EncodeTransferForSigning(tx *models.Transfer) ([]byte, error) {
 		big.NewInt(int64(txtype.Transfer)),
 		big.NewInt(int64(tx.FromStateID)),
 		big.NewInt(int64(tx.ToStateID)),
-		&tx.Nonce.Int,
-		&tx.Amount.Int,
-		&tx.Fee.Int,
+		tx.Nonce.ToBig(),
+		tx.Amount.ToBig(),
+		tx.Fee.ToBig(),
 	)
 }
 

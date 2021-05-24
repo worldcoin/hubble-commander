@@ -163,7 +163,7 @@ func generateValidTransfers(transfersAmount int) []models.Transfer {
 				FromStateID: 1,
 				Amount:      models.MakeUint256(1),
 				Fee:         models.MakeUint256(1),
-				Nonce:       models.MakeUint256(int64(i)),
+				Nonce:       models.MakeUint256(uint64(i)),
 			},
 			ToStateID: 2,
 		}
