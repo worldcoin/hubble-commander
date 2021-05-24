@@ -1,13 +1,9 @@
 package storage
 
 import (
-	"bytes"
-	"encoding/gob"
 	"reflect"
 
-	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/models"
-	bdg "github.com/dgraph-io/badger/v3"
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
@@ -76,43 +72,4 @@ func (s *Storage) GetStateNodes(paths []models.MerklePath) (nodes []models.State
 		return nil, err
 	}
 	return nodes, nil
-}
-
-func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
-	nextAvailableStateID := uint32(0)
-
-	err := s.Badger.View(func(txn *bdg.Txn) error {
-		opts := bdg.DefaultIteratorOptions
-		opts.PrefetchValues = false
-		opts.Reverse = true
-		it := txn.NewIterator(opts)
-		defer it.Close()
-
-		seekPrefix := make([]byte, 0, len(flatStateLeafPrefix)+1)
-		seekPrefix = append(seekPrefix, flatStateLeafPrefix...)
-		seekPrefix = append(seekPrefix, 0xFF) // Required to loop backwards
-
-		it.Seek(seekPrefix)
-		if it.ValidForPrefix(flatStateLeafPrefix) {
-			var key uint32
-			decodedKey := it.Item().Key()[len(flatStateLeafPrefix):]
-			err := badger.DecodeUint32(decodedKey, &key)
-			if err != nil {
-				return err
-			}
-			nextAvailableStateID = key + 1
-		}
-
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &nextAvailableStateID, nil
-}
-
-func decodeKey(data []byte, key interface{}, prefix []byte) error {
-	return gob.NewDecoder(bytes.NewReader(data[len(prefix):])).
-		Decode(key)
 }
