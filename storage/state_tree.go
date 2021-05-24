@@ -154,7 +154,7 @@ func decodeStateUpdate(item *bdg.Item) (*models.StateUpdate, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = badger.DecodeUint64(item.Key()[len(stateUpdatePrefix):], &stateUpdate.ID)
+	err = badger.DecodeKey(item.Key(), &stateUpdate.ID, stateUpdatePrefix)
 	if err != nil {
 		return nil, err
 	}

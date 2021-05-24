@@ -91,3 +91,7 @@ func DecodeUint64(data []byte, value *uint64) error {
 	*value = newUint64
 	return nil
 }
+
+func DecodeKey(data []byte, key interface{}, prefix []byte) error {
+	return Decode(data[len(prefix):], key)
+}
