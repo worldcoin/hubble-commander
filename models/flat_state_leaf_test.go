@@ -5,7 +5,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
-	bh "github.com/timshannon/badgerhold/v3"
 )
 
 func TestFlatStateLeaf_ByteEncoding(t *testing.T) {
@@ -29,7 +28,7 @@ func Test_pubKeyIDIndex(t *testing.T) {
 	require.NoError(t, err)
 
 	var decoded uint32
-	err = bh.DefaultDecode(encoded, &decoded)
+	err = Decode(encoded, &decoded)
 	require.NoError(t, err)
 	require.Equal(t, leaf.PubKeyID, decoded)
 }

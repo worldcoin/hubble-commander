@@ -15,7 +15,7 @@ var flatStateLeafT = reflect.TypeOf(FlatStateLeaf{})
 type FlatStateLeaf struct {
 	StateID    uint32
 	DataHash   common.Hash
-	PubKeyID   uint32  `badgerhold:"index"`
+	PubKeyID   uint32
 	TokenIndex Uint256 // TODO: Consider adding a tuple index of (Pubkey; tokenIdx)
 	Balance    Uint256
 	Nonce      Uint256
