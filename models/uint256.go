@@ -14,15 +14,18 @@ type Uint256 struct {
 }
 
 func MakeUint256(value uint64) Uint256 {
-	return Uint256{*uint256.NewInt().SetUint64(value)}
+	res := Uint256{}
+	res.Int.SetUint64(value)
+	return res
 }
 
 func MakeUint256FromBig(value big.Int) Uint256 {
-	newUint256, overflow := uint256.FromBig(&value)
+	res := Uint256{}
+	overflow := res.Int.SetFromBig(&value)
 	if overflow {
 		panic("overflow occurred")
 	}
-	return Uint256{*newUint256}
+	return res
 }
 
 func NewUint256(value uint64) *Uint256 {
