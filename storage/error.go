@@ -5,7 +5,10 @@ import (
 	"fmt"
 )
 
-var ErrNoRowsAffected = errors.New("no rows were affected by the update")
+var (
+	ErrNoRowsAffected   = errors.New("no rows were affected by the update")
+	ErrNotExistentState = errors.New("cannot revert to not existent state")
+)
 
 type NotFoundError struct {
 	field string

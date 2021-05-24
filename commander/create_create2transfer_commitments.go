@@ -27,6 +27,9 @@ func createCreate2TransferCommitments(
 		if len(commitments) >= int(cfg.MaxCommitmentsPerBatch) {
 			break
 		}
+		if len(pendingTransfers) < int(cfg.TxsPerCommitment) {
+			break
+		}
 		startTime := time.Now()
 
 		initialStateRoot, err := stateTree.Root()

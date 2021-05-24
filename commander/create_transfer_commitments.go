@@ -22,13 +22,13 @@ func createTransferCommitments(
 	commitments := make([]models.Commitment, 0, 32)
 
 	for {
-		if len(pendingTransfers) == 0 {
-			break
-		}
-
 		if len(commitments) >= int(cfg.MaxCommitmentsPerBatch) {
 			break
 		}
+		if len(pendingTransfers) < int(cfg.TxsPerCommitment) {
+			break
+		}
+
 		startTime := time.Now()
 
 		initialStateRoot, err := stateTree.Root()

@@ -7,8 +7,8 @@ import (
 )
 
 func (s *Storage) UpsertStateLeaf(leaf *models.StateLeaf) error {
-	flatLeaf := models.NewFlatStateLeaf(leaf)
-	return s.Badger.Upsert(leaf.StateID, &flatLeaf)
+	flatLeaf := models.MakeFlatStateLeaf(leaf)
+	return s.Badger.Upsert(leaf.StateID, flatLeaf)
 }
 
 func (s *Storage) GetStateLeaf(stateID uint32) (stateLeaf *models.StateLeaf, err error) {
@@ -78,7 +78,7 @@ func (s *Storage) GetStateLeafByPubKeyIDAndTokenIndex(pubKeyID uint32, tokenInde
 	leaves := make([]models.FlatStateLeaf, 0, 1)
 	err := s.Badger.Find(
 		&leaves,
-		bh.Where("TokenIndex").Eq(tokenIndex).Index("TokenIndex").
+		bh.Where("TokenIndex").Eq(tokenIndex).
 			And("PubKeyID").Eq(pubKeyID).Index("PubKeyID"),
 	)
 	if err != nil {

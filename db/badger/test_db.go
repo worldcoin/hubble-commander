@@ -12,6 +12,8 @@ type TestDB struct {
 
 func NewTestDB() (*TestDB, error) {
 	options := bh.DefaultOptions
+	options.Encoder = Encode
+	options.Decoder = Decode
 	options.Options = badger.DefaultOptions("").
 		WithInMemory(true).
 		WithLoggingLevel(badger.WARNING)

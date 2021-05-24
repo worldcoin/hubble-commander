@@ -112,3 +112,12 @@ func (u *Uint256) UnmarshalJSON(b []byte) error {
 
 	return nil
 }
+
+// TODO this is a quickfix caused by an issue described here: https://stackoverflow.com/q/44696881
+//  Remove this after changing internal representation of Uint256 to [32]byte
+func (u *Uint256) SetBytes(data []byte) {
+	u.Int.SetBytes(data)
+	if u.CmpN(0) == 0 {
+		*u = MakeUint256(0)
+	}
+}
