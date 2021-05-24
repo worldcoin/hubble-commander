@@ -26,13 +26,13 @@ func MakeUint256FromBig(value big.Int) Uint256 {
 }
 
 func NewUint256(value uint64) *Uint256 {
-	uint256 := MakeUint256(value)
-	return &uint256
+	newUint256 := MakeUint256(value)
+	return &newUint256
 }
 
 func NewUint256FromBig(value big.Int) *Uint256 {
-	uint256 := MakeUint256FromBig(value)
-	return &uint256
+	newUint256 := MakeUint256FromBig(value)
+	return &newUint256
 }
 
 func (u *Uint256) Add(other *Uint256) *Uint256 {

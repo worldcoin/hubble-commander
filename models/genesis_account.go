@@ -1,7 +1,7 @@
 package models
 
 type RawGenesisAccount struct {
-	PrivateKey string  `yaml:"privateKey"`
+	PrivateKey string `yaml:"privateKey"`
 	Balance    uint64 `yaml:"balance"`
 }
 
