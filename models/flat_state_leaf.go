@@ -15,7 +15,7 @@ var flatStateLeafT = reflect.TypeOf(FlatStateLeaf{})
 type FlatStateLeaf struct {
 	StateID    uint32
 	DataHash   common.Hash
-	PubKeyID   uint32  `badgerhold:"index"`
+	PubKeyID   uint32
 	TokenIndex Uint256 // TODO: Consider adding a tuple index of (Pubkey; tokenIdx)
 	Balance    Uint256
 	Nonce      Uint256
@@ -76,7 +76,7 @@ func (l FlatStateLeaf) Type() string {
 // Indexes implements badgerhold.Storer
 func (l FlatStateLeaf) Indexes() map[string]badgerhold.Index {
 	return map[string]badgerhold.Index{
-		"PubKeyID": {
+		"Combined": {
 			IndexFunc: PubKeyIDIndex,
 			Unique:    false,
 		},
@@ -88,5 +88,27 @@ func PubKeyIDIndex(_ string, value interface{}) ([]byte, error) {
 	if !ok {
 		return nil, errors.New("invalid type for FlatStateLeaf index")
 	}
-	return Encode(leaf.PubKeyID)
+	index := &StateLeafIndex{
+		PubKeyID:   leaf.PubKeyID,
+		TokenIndex: leaf.TokenIndex,
+	}
+	return Encode(index)
+}
+
+type StateLeafIndex struct {
+	PubKeyID   uint32
+	TokenIndex Uint256
+}
+
+func (c *StateLeafIndex) Bytes() []byte {
+	b := make([]byte, 36)
+	binary.BigEndian.PutUint32(b[0:4], c.PubKeyID)
+	copy(b[4:36], utils.PadLeft(c.TokenIndex.Bytes(), 32))
+	return b
+}
+
+func (c *StateLeafIndex) SetBytes(data []byte) error {
+	c.PubKeyID = binary.BigEndian.Uint32(data[0:4])
+	c.TokenIndex.SetBytes(data[4:36])
+	return nil
 }
