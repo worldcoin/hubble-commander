@@ -248,6 +248,48 @@ func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf_WorkWithCachedValue() {
 	s.Equal(uint32(1), stateLeaf.StateID)
 }
 
+func (s *StateLeafTestSuite) TestGetNextAvailableStateID_NoLeavesInStateTree() {
+	path, err := s.storage.GetNextAvailableStateID()
+	s.NoError(err)
+	s.Equal(uint32(0), *path)
+}
+
+func (s *StateLeafTestSuite) TestGetNextAvailableStateID_OneBytes() {
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
+	err = s.storage.AddAccountIfNotExists(&account2)
+	s.NoError(err)
+
+	tree := NewStateTree(s.storage.Storage)
+
+	err = tree.Set(0, userState1)
+	s.NoError(err)
+	err = tree.Set(2, userState2)
+	s.NoError(err)
+
+	path, err := s.storage.GetNextAvailableStateID()
+	s.NoError(err)
+	s.Equal(uint32(3), *path)
+}
+
+func (s *StateLeafTestSuite) TestGetNextAvailableStateID_TwoBytes() {
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
+	err = s.storage.AddAccountIfNotExists(&account2)
+	s.NoError(err)
+
+	tree := NewStateTree(s.storage.Storage)
+
+	err = tree.Set(0, userState1)
+	s.NoError(err)
+	err = tree.Set(13456, userState2)
+	s.NoError(err)
+
+	path, err := s.storage.GetNextAvailableStateID()
+	s.NoError(err)
+	s.Equal(uint32(13457), *path)
+}
+
 func TestStateLeafTestSuite(t *testing.T) {
 	suite.Run(t, new(StateLeafTestSuite))
 }
