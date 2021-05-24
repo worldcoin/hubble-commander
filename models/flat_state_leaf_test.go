@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/binary"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -20,4 +21,13 @@ func TestFlatStateLeaf_ByteEncoding(t *testing.T) {
 	var decodedLeaf FlatStateLeaf
 	_ = decodedLeaf.SetBytes(leaf.Bytes())
 	require.Equal(t, leaf, decodedLeaf)
+}
+
+func Test_pubKeyIDIndex(t *testing.T) {
+	leaf := FlatStateLeaf{PubKeyID: 26}
+	encoded, err := pubKeyIDIndex("PubKeyID", leaf)
+	require.NoError(t, err)
+
+	decoded := binary.BigEndian.Uint32(encoded)
+	require.Equal(t, leaf.PubKeyID, decoded)
 }
