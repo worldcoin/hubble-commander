@@ -3,6 +3,7 @@ package badger
 import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/dgraph-io/badger/v3"
 	bh "github.com/timshannon/badgerhold/v3"
 )
@@ -15,8 +16,8 @@ type Database struct {
 
 func NewDatabase(cfg *config.BadgerConfig) (*Database, error) {
 	options := bh.DefaultOptions
-	options.Encoder = Encode
-	options.Decoder = Decode
+	options.Encoder = models.Encode
+	options.Decoder = models.Decode
 	options.Options = badger.
 		DefaultOptions(cfg.Path).
 		WithLoggingLevel(badger.WARNING)

@@ -1,9 +1,8 @@
-package badger
+package models
 
 import (
 	"encoding/binary"
 
-	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v3"
 )
@@ -11,21 +10,21 @@ import (
 // Encode Remember to provide cases for both value and pointer types when adding new encoders
 func Encode(value interface{}) ([]byte, error) {
 	switch v := value.(type) {
-	case models.MerklePath:
+	case MerklePath:
 		return v.Bytes(), nil
-	case *models.MerklePath:
+	case *MerklePath:
 		return nil, errors.Errorf("pass by value")
-	case models.StateNode:
+	case StateNode:
 		return EncodeDataHash(&v)
-	case *models.StateNode:
+	case *StateNode:
 		return nil, errors.Errorf("pass by value")
-	case models.FlatStateLeaf:
+	case FlatStateLeaf:
 		return v.Bytes(), nil
-	case *models.FlatStateLeaf:
+	case *FlatStateLeaf:
 		return nil, errors.Errorf("pass by value")
-	case models.StateUpdate:
+	case StateUpdate:
 		return v.Bytes(), nil
-	case *models.StateUpdate:
+	case *StateUpdate:
 		return nil, errors.Errorf("pass by value")
 	case uint32:
 		return EncodeUint32(&v)
@@ -42,13 +41,13 @@ func Encode(value interface{}) ([]byte, error) {
 
 func Decode(data []byte, value interface{}) error {
 	switch v := value.(type) {
-	case *models.MerklePath:
+	case *MerklePath:
 		return v.SetBytes(data)
-	case *models.StateNode:
+	case *StateNode:
 		return DecodeDataHash(data, v)
-	case *models.FlatStateLeaf:
+	case *FlatStateLeaf:
 		return v.SetBytes(data)
-	case *models.StateUpdate:
+	case *StateUpdate:
 		return v.SetBytes(data)
 	case *uint32:
 		return DecodeUint32(data, v)
@@ -59,7 +58,7 @@ func Decode(data []byte, value interface{}) error {
 	}
 }
 
-func EncodeDataHash(node *models.StateNode) ([]byte, error) {
+func EncodeDataHash(node *StateNode) ([]byte, error) {
 	return node.DataHash.Bytes(), nil
 }
 
@@ -69,7 +68,7 @@ func EncodeUint32(number *uint32) ([]byte, error) {
 	return b, nil
 }
 
-func DecodeDataHash(data []byte, node *models.StateNode) error {
+func DecodeDataHash(data []byte, node *StateNode) error {
 	node.DataHash.SetBytes(data)
 	return nil
 }
