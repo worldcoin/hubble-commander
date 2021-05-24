@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/middleware"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -27,7 +28,12 @@ func NewAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", server.ServeHTTP)
+	if cfg.DevMode {
+		mux.Handle("/", middleware.Logger(server))
+	} else {
+		mux.HandleFunc("/", server.ServeHTTP)
+	}
+
 	addr := fmt.Sprintf(":%s", cfg.Port)
 	return &http.Server{Addr: addr, Handler: mux}, nil
 }
