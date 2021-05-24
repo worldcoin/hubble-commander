@@ -11,6 +11,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 func createCreate2TransferCommitments(
@@ -124,13 +125,11 @@ func combineCreate2TransferSignatures(transfers []models.Create2Transfer, domain
 }
 
 func markCreate2TransfersAsIncluded(storage *st.Storage, transfers []models.Create2Transfer, commitmentID int32) error {
+	hashes := make([]common.Hash, 0, len(transfers))
 	for i := range transfers {
-		err := storage.MarkTransactionAsIncluded(transfers[i].Hash, commitmentID)
-		if err != nil {
-			return err
-		}
+		hashes = append(hashes, transfers[i].Hash)
 	}
-	return nil
+	return storage.BatchMarkTransactionAsIncluded(hashes, commitmentID)
 }
 
 func setCreate2TransferToStateID(storage *st.Storage, transfers []models.Create2Transfer) error {

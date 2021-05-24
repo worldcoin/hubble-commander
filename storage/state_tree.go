@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -137,6 +139,11 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 		return ErrNotExistentState
 	}
 	return txn.Commit()
+}
+
+func decodeKey(data []byte, key interface{}, prefix []byte) error {
+	return gob.NewDecoder(bytes.NewReader(data[len(prefix):])).
+		Decode(key)
 }
 
 func decodeStateUpdate(item *bdg.Item) (*models.StateUpdate, error) {

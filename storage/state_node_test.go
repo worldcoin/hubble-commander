@@ -21,7 +21,7 @@ func (s *StateNodeTestSuite) SetupSuite() {
 
 func (s *StateNodeTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorageWithBadger()
+	s.storage, err = NewTestStorageWithoutPostgres()
 	s.NoError(err)
 }
 
@@ -191,48 +191,6 @@ func (s *StateNodeTestSuite) TestBatchUpsertStateNode_UpdateAndRetrieve() {
 	s.Len(res, 2)
 	s.Contains(res, nodes[0])
 	s.Contains(res, nodes[1])
-}
-
-func (s *StateNodeTestSuite) TestGetNextAvailableStateID_NoLeavesInStateTree() {
-	path, err := s.storage.GetNextAvailableStateID()
-	s.NoError(err)
-	s.Equal(uint32(0), *path)
-}
-
-func (s *StateNodeTestSuite) TestGetNextAvailableStateID_OneBytes() {
-	err := s.storage.AddAccountIfNotExists(&account1)
-	s.NoError(err)
-	err = s.storage.AddAccountIfNotExists(&account2)
-	s.NoError(err)
-
-	tree := NewStateTree(s.storage.Storage)
-
-	err = tree.Set(0, userState1)
-	s.NoError(err)
-	err = tree.Set(2, userState2)
-	s.NoError(err)
-
-	path, err := s.storage.GetNextAvailableStateID()
-	s.NoError(err)
-	s.Equal(uint32(3), *path)
-}
-
-func (s *StateNodeTestSuite) TestGetNextAvailableStateID_TwoBytes() {
-	err := s.storage.AddAccountIfNotExists(&account1)
-	s.NoError(err)
-	err = s.storage.AddAccountIfNotExists(&account2)
-	s.NoError(err)
-
-	tree := NewStateTree(s.storage.Storage)
-
-	err = tree.Set(0, userState1)
-	s.NoError(err)
-	err = tree.Set(13456, userState2)
-	s.NoError(err)
-
-	path, err := s.storage.GetNextAvailableStateID()
-	s.NoError(err)
-	s.Equal(uint32(13457), *path)
 }
 
 func TestStateNodeTestSuite(t *testing.T) {

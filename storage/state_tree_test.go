@@ -155,10 +155,9 @@ func (s *StateTreeTestSuite) TestSet_StoresStateUpdateRecord() {
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
-	currentRoot := common.HexToHash("0xd8cb702fc833817dccdc3889282af96755b2909274ca2f1a3827a60d11d796eb")
 	expectedUpdate := &models.StateUpdate{
 		ID:          0,
-		CurrentRoot: currentRoot,
+		CurrentRoot: common.HexToHash("0xd8cb702fc833817dccdc3889282af96755b2909274ca2f1a3827a60d11d796eb"),
 		PrevRoot:    GetZeroHash(leafDepth),
 		PrevStateLeaf: models.StateLeaf{
 			StateID:  0,
@@ -166,9 +165,8 @@ func (s *StateTreeTestSuite) TestSet_StoresStateUpdateRecord() {
 		},
 	}
 
-	update, err := s.storage.GetStateUpdateByRootHash(currentRoot)
+	update, err := s.storage.GetStateUpdate(expectedUpdate.ID)
 	s.NoError(err)
-
 	s.Equal(expectedUpdate, update)
 }
 
@@ -239,17 +237,15 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafAddsStateUpdateRecord() {
 	err = s.tree.Set(0, &updatedUserState)
 	s.NoError(err)
 
-	currentRoot := common.HexToHash("0x406515786640be8c51eacf1221f017e7f59e04ef59637a27dcb2b2f054b309bf")
 	expectedUpdate := &models.StateUpdate{
 		ID:            1,
-		CurrentRoot:   currentRoot,
+		CurrentRoot:   common.HexToHash("0x406515786640be8c51eacf1221f017e7f59e04ef59637a27dcb2b2f054b309bf"),
 		PrevRoot:      common.HexToHash("0xd8cb702fc833817dccdc3889282af96755b2909274ca2f1a3827a60d11d796eb"),
 		PrevStateLeaf: *s.leaf,
 	}
 
-	update, err := s.storage.GetStateUpdateByRootHash(currentRoot)
+	update, err := s.storage.GetStateUpdate(expectedUpdate.ID)
 	s.NoError(err)
-
 	s.Equal(expectedUpdate, update)
 }
 
