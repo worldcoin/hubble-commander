@@ -7,6 +7,7 @@ import (
 	"math/big"
 
 	"github.com/holiman/uint256"
+	"github.com/pkg/errors"
 )
 
 type Uint256 struct {
@@ -88,16 +89,17 @@ func (u *Uint256) Scan(src interface{}) error {
 
 	value, ok := src.([]uint8)
 	if !ok {
-		return fmt.Errorf(errorMessage, src)
+		return errors.Errorf(errorMessage, src)
 	}
-
-	bigValue, ok := u.Int.ToBig().SetString(string(value), 10)
+	bigValue, ok := new(big.Int).SetString(string(value), 10)
 	if !ok {
-		return fmt.Errorf(errorMessage, src)
+		return errors.Errorf(errorMessage, src)
 	}
 
-	// Return value of `SetFromBig` is broken
-	_ = u.Int.SetFromBig(bigValue)
+	overflow := u.Int.SetFromBig(bigValue)
+	if overflow {
+		return errors.Errorf(errorMessage, src)
+	}
 
 	return nil
 }
