@@ -2,10 +2,16 @@ package models
 
 import (
 	"encoding/binary"
+	"fmt"
+	"reflect"
 
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
+	"github.com/timshannon/badgerhold/v3"
 )
+
+var flatStateLeafT = reflect.TypeOf(FlatStateLeaf{})
 
 type FlatStateLeaf struct {
 	StateID    uint32
@@ -59,4 +65,30 @@ func (l *FlatStateLeaf) SetBytes(data []byte) error {
 	l.Balance.SetBytes(data[72:104])
 	l.Nonce.SetBytes(data[104:136])
 	return nil
+}
+
+// Type implements Storer for database/sql.
+func (l FlatStateLeaf) Type() string {
+	return flatStateLeafT.Name()
+}
+
+// Indexes implements Storer for database/sql.
+func (l FlatStateLeaf) Indexes() map[string]badgerhold.Index {
+	return map[string]badgerhold.Index{
+		"PubKeyID": {
+			IndexFunc: pubKeyIDIndex,
+			Unique:    false,
+		},
+	}
+}
+
+func pubKeyIDIndex(name string, value interface{}) ([]byte, error) {
+	b := make([]byte, 4)
+	fmt.Println("Hello")
+	leaf, ok := value.(FlatStateLeaf)
+	if !ok {
+		return nil, errors.New("invalid type for FlatStateLeaf indexes")
+	}
+	binary.BigEndian.PutUint32(b[0:4], leaf.PubKeyID)
+	return b, nil
 }
