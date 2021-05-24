@@ -31,6 +31,10 @@ func Encode(value interface{}) ([]byte, error) {
 		return EncodeUint32(&v)
 	case *uint32:
 		return nil, errors.Errorf("pass by value")
+	case uint64:
+		return EncodeUint64(&v)
+	case *uint64:
+		return nil, errors.Errorf("pass by value")
 	default:
 		return bh.DefaultEncode(value)
 	}
@@ -48,6 +52,8 @@ func Decode(data []byte, value interface{}) error {
 		return v.SetBytes(data)
 	case *uint32:
 		return DecodeUint32(data, v)
+	case *uint64:
+		return DecodeUint64(data, v)
 	default:
 		return bh.DefaultDecode(data, value)
 	}
@@ -71,5 +77,17 @@ func DecodeDataHash(data []byte, node *models.StateNode) error {
 func DecodeUint32(data []byte, number *uint32) error {
 	newUint32 := binary.BigEndian.Uint32(data)
 	*number = newUint32
+	return nil
+}
+
+func EncodeUint64(value *uint64) ([]byte, error) {
+	b := make([]byte, 8)
+	binary.BigEndian.PutUint64(b[0:8], *value)
+	return b, nil
+}
+
+func DecodeUint64(data []byte, value *uint64) error {
+	newUint64 := binary.BigEndian.Uint64(data)
+	*value = newUint64
 	return nil
 }
