@@ -33,7 +33,8 @@ func (c *Client) GetBatches() ([]DecodedBatch, error) {
 			return nil, err
 		}
 
-		if !bytes.Equal(tx.Data()[:4], rollupAbi.Methods["submitTransfer"].ID) {
+		if !bytes.Equal(tx.Data()[:4], rollupAbi.Methods["submitTransfer"].ID) &&
+			!bytes.Equal(tx.Data()[:4], rollupAbi.Methods["submitCreate2Transfer"].ID) {
 			continue // TODO handle internal transactions
 		}
 
