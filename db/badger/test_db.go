@@ -1,6 +1,7 @@
 package badger
 
 import (
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/dgraph-io/badger/v3"
 	bh "github.com/timshannon/badgerhold/v3"
 )
@@ -12,8 +13,8 @@ type TestDB struct {
 
 func NewTestDB() (*TestDB, error) {
 	options := bh.DefaultOptions
-	options.Encoder = Encode
-	options.Decoder = Decode
+	options.Encoder = models.Encode
+	options.Decoder = models.Decode
 	options.Options = badger.DefaultOptions("").
 		WithInMemory(true).
 		WithLoggingLevel(badger.WARNING)
