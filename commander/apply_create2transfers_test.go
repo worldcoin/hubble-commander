@@ -167,7 +167,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_SomeVa
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_MoreThanSpecifiedInConfigTxsPerCommitment() {
-	transfers := generateValidCreate2Transfers(13, &s.publicKey)
+	transfers := generateValidCreate2Transfers(7, &s.publicKey)
 	pubKeyIDs := make([]uint32, 0, len(transfers))
 	for i := range transfers {
 		pubKeyIDs = append(pubKeyIDs, uint32(i+1))
