@@ -121,7 +121,7 @@ func testGetTransaction(t *testing.T, client jsonrpc.RPCClient, txHash common.Ha
 }
 
 func send31MoreTransfers(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet) {
-	for nonce := int64(1); nonce < 32; nonce++ {
+	for nonce := uint64(1); nonce < 32; nonce++ {
 		transfer, err := api.SignTransfer(&senderWallet, dto.Transfer{
 			FromStateID: ref.Uint32(1),
 			ToStateID:   ref.Uint32(2),
@@ -146,7 +146,7 @@ func send31MoreCreate2Transfers(t *testing.T, client jsonrpc.RPCClient, senderWa
 			ToPublicKey: receiverWallet.PublicKey(),
 			Amount:      models.NewUint256(90),
 			Fee:         models.NewUint256(10),
-			Nonce:       models.NewUint256(32 + int64(nonce)),
+			Nonce:       models.NewUint256(uint64(32) + uint64(nonce)),
 		})
 		require.NoError(t, err)
 
