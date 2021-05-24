@@ -88,5 +88,5 @@ func PubKeyIDIndex(_ string, value interface{}) ([]byte, error) {
 	if !ok {
 		return nil, errors.New("invalid type for FlatStateLeaf index")
 	}
-	return badgerhold.DefaultEncode(leaf.PubKeyID)
+	return Encode(leaf.PubKeyID)
 }

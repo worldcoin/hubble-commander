@@ -6,7 +6,6 @@ import (
 	"reflect"
 
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
-	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -142,7 +141,7 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 func decodeStateUpdate(item *bdg.Item) (*models.StateUpdate, error) {
 	var stateUpdate models.StateUpdate
 	err := item.Value(func(v []byte) error {
-		return badger.Decode(v, &stateUpdate)
+		return models.Decode(v, &stateUpdate)
 	})
 	if err != nil {
 		return nil, err
