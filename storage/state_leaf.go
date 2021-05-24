@@ -80,8 +80,10 @@ func (s *Storage) GetStateLeafByPubKeyIDAndTokenIndex(pubKeyID uint32, tokenInde
 	leaves := make([]models.FlatStateLeaf, 0, 1)
 	err := s.Badger.Find(
 		&leaves,
-		bh.Where("TokenIndex").Eq(tokenIndex).
-			And("PubKeyID").Eq(pubKeyID).Index("PubKeyID"),
+		bh.Where("Combined").Eq(models.StateLeafIndex{
+			PubKeyID:   pubKeyID,
+			TokenIndex: tokenIndex,
+		}).Index("Combined"),
 	)
 	if err != nil {
 		return nil, err
