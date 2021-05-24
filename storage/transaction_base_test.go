@@ -94,6 +94,28 @@ func (s *TransactionBaseTestSuite) TestGetLatestTransactionNonce() {
 	s.Equal(models.NewUint256(5), userTransactions)
 }
 
+func (s *TransactionBaseTestSuite) TestBatchMarkTransactionAsIncluded() {
+	txs := make([]models.Transfer, 2)
+	for i := 0; i < len(txs); i++ {
+		txs[i] = transferTransaction
+		txs[i].Hash = utils.RandomHash()
+		err := s.storage.AddTransfer(&txs[i])
+		s.NoError(err)
+	}
+
+	commitmentID, err := s.storage.AddCommitment(&commitment)
+	s.NoError(err)
+
+	err = s.storage.BatchMarkTransactionAsIncluded([]common.Hash{txs[0].Hash, txs[1].Hash}, *commitmentID)
+	s.NoError(err)
+
+	for i := range txs {
+		tx, err := s.storage.GetTransfer(txs[i].Hash)
+		s.NoError(err)
+		s.Equal(commitmentID, tx.IncludedInCommitment)
+	}
+}
+
 func TestTransactionBaseTestSuite(t *testing.T) {
 	suite.Run(t, new(TransactionBaseTestSuite))
 }
