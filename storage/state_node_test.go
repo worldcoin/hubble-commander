@@ -21,7 +21,7 @@ func (s *StateNodeTestSuite) SetupSuite() {
 
 func (s *StateNodeTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorageWithBadger()
+	s.storage, err = NewTestStorageWithoutPostgres()
 	s.NoError(err)
 }
 

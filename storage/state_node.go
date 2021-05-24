@@ -14,7 +14,7 @@ func (s *Storage) UpsertStateNode(node *models.StateNode) error {
 }
 
 func (s *Storage) BatchUpsertStateNodes(nodes []models.StateNode) (err error) {
-	tx, storage, err := s.BeginTransaction(TxOptions{Postgres: true, Badger: true})
+	tx, storage, err := s.BeginTransaction(TxOptions{Postgres: false, Badger: true})
 	if err != nil {
 		return err
 	}
