@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"reflect"
 
+	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/models"
 	bdg "github.com/dgraph-io/badger/v3"
 	bh "github.com/timshannon/badgerhold/v3"
@@ -94,7 +95,8 @@ func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
 		it.Seek(seekPrefix)
 		if it.ValidForPrefix(flatStateLeafPrefix) {
 			var key uint32
-			err := decodeKey(it.Item().Key(), &key, flatStateLeafPrefix)
+			decodedKey := it.Item().Key()[len(flatStateLeafPrefix):]
+			err := badger.DecodeUint32(decodedKey, &key)
 			if err != nil {
 				return err
 			}
