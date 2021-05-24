@@ -128,15 +128,17 @@ func (u *Uint256) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	errorMessage := "error unmarshaling Uint256"
+	errorMessage := "error unmarshalling Uint256"
 
-	bigValue, ok := u.Int.ToBig().SetString(str, 10)
+	bigValue, ok := new(big.Int).SetString(str, 10)
 	if !ok {
 		return fmt.Errorf(errorMessage)
 	}
 
-	// Return value of `SetFromBig` is broken
-	_ = u.Int.SetFromBig(bigValue)
+	overflow := u.Int.SetFromBig(bigValue)
+	if overflow {
+		return errors.Errorf(errorMessage)
+	}
 
 	return nil
 }
