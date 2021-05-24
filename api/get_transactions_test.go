@@ -64,7 +64,7 @@ func (s *GetTransactionsTestSuite) addAccounts() {
 }
 
 func (s *GetTransactionsTestSuite) addUserStates() {
-	makeUserState := func(tokenIndex int64, pubKeyID uint32) models.UserState {
+	makeUserState := func(tokenIndex uint64, pubKeyID uint32) models.UserState {
 		return models.UserState{
 			PubKeyID:   pubKeyID,
 			TokenIndex: models.MakeUint256(tokenIndex),

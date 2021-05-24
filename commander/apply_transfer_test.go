@@ -172,8 +172,8 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer() {
 	receiverLeaf, err := s.storage.GetStateLeaf(receiverStateID)
 	s.NoError(err)
 
-	s.Equal(int64(270), senderLeaf.Balance.Int64())
-	s.Equal(int64(100), receiverLeaf.Balance.Int64())
+	s.Equal(int64(270), senderLeaf.Balance.ToBig().Int64())
+	s.Equal(int64(100), receiverLeaf.Balance.ToBig().Int64())
 }
 
 func (s *ApplyTransferTestSuite) TestApplyFee() {
@@ -188,7 +188,7 @@ func (s *ApplyTransferTestSuite) TestApplyFee() {
 	receiverLeaf, err := s.storage.GetStateLeaf(receiverStateID)
 	s.NoError(err)
 
-	s.Equal(int64(555), receiverLeaf.Balance.Int64())
+	s.Equal(int64(555), receiverLeaf.Balance.ToBig().Int64())
 }
 
 func TestApplyTransferTestSuite(t *testing.T) {

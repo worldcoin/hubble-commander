@@ -126,7 +126,7 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 		c.GetBackend(),
 		tokenRegistryAddress,
 		vaultAddress,
-		&config.MaxDepositSubtreeDepth.Int,
+		config.MaxDepositSubtreeDepth.ToBig(),
 	)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -192,10 +192,10 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 		massMigrationAddress,
 		create2TransferAddress,
 		stateRoot,
-		&config.StakeAmount.Int,
-		&config.BlocksToFinalise.Int,
-		&config.MinGasLeft.Int,
-		&config.MaxTxsPerCommit.Int,
+		config.StakeAmount.ToBig(),
+		config.BlocksToFinalise.ToBig(),
+		config.MinGasLeft.ToBig(),
+		config.MaxTxsPerCommit.ToBig(),
 	)
 	if err != nil {
 		return nil, errors.WithStack(err)

@@ -42,7 +42,7 @@ func (s *DecimalTestSuite) TestEncodeDecimal() {
 	encoded, err := EncodeDecimal(num)
 	s.NoError(err)
 
-	expected, err := s.testTx.TestEncodeDecimal(nil, &num.Int)
+	expected, err := s.testTx.TestEncodeDecimal(nil, num.ToBig())
 	s.NoError(err)
 
 	s.Equal(uint16(expected.Uint64()), encoded)

@@ -118,8 +118,8 @@ func newTxCreate2Transfer(transfer *models.Create2Transfer, toPubKeyID uint32) t
 		FromIndex:  big.NewInt(int64(transfer.FromStateID)),
 		ToIndex:    big.NewInt(int64(transfer.ToStateID)),
 		ToPubkeyID: big.NewInt(int64(toPubKeyID)),
-		Amount:     &transfer.Amount.Int,
-		Fee:        &transfer.Fee.Int,
+		Amount:     transfer.Amount.ToBig(),
+		Fee:        transfer.Fee.ToBig(),
 	}
 }
 

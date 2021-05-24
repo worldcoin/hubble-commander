@@ -20,11 +20,11 @@ func TestDecodeRawGenesisAccounts(t *testing.T) {
 	rawGenesisAccounts := []models.RawGenesisAccount{
 		{
 			PrivateKey: "2f7a559b2d2d4ec1e3babc0122e7ef0c6a45cdb4ccd167f456caca521123fe9e",
-			Balance:    models.MakeUint256(1024),
+			Balance:    1024,
 		},
 		{
 			PrivateKey: "0131b1f02f2504a60a30261fa3665ca12ed542ab01f73debb19bafa996790272",
-			Balance:    models.MakeUint256(0),
+			Balance:    0,
 		},
 	}
 

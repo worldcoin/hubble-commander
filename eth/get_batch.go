@@ -7,7 +7,7 @@ import (
 )
 
 func (c *Client) GetBatch(batchID *models.Uint256) (*models.Batch, error) {
-	batch, err := c.Rollup.GetBatch(nil, &batchID.Int)
+	batch, err := c.Rollup.GetBatch(nil, batchID.ToBig())
 	if err != nil {
 		return nil, err
 	}

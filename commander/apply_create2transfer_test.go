@@ -119,8 +119,8 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer()
 	senderLeaf, err := s.storage.GetStateLeaf(create2Transfer.FromStateID)
 	s.NoError(err)
 
-	s.Equal(int64(8900), senderLeaf.Balance.Int64())
-	s.Equal(int64(1000), receiverLeaf.Balance.Int64())
+	s.Equal(int64(8900), senderLeaf.Balance.ToBig().Int64())
+	s.Equal(int64(1000), receiverLeaf.Balance.ToBig().Int64())
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ReturnsCorrectPubKeyID() {

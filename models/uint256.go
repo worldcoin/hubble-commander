@@ -5,21 +5,27 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+
+	"github.com/holiman/uint256"
 )
 
 type Uint256 struct {
-	big.Int
+	uint256.Int
 }
 
-func MakeUint256(value int64) Uint256 {
-	return Uint256{*big.NewInt(value)}
+func MakeUint256(value uint64) Uint256 {
+	return Uint256{*uint256.NewInt().SetUint64(value)}
 }
 
 func MakeUint256FromBig(value big.Int) Uint256 {
-	return Uint256{value}
+	newUint256, overflow := uint256.FromBig(&value)
+	if overflow {
+		panic("overflow occurred")
+	}
+	return Uint256{*newUint256}
 }
 
-func NewUint256(value int64) *Uint256 {
+func NewUint256(value uint64) *Uint256 {
 	uint256 := MakeUint256(value)
 	return &uint256
 }
@@ -30,38 +36,38 @@ func NewUint256FromBig(value big.Int) *Uint256 {
 }
 
 func (u *Uint256) Add(other *Uint256) *Uint256 {
-	sum := new(big.Int).Add(&u.Int, &other.Int)
+	sum := uint256.NewInt().Add(&u.Int, &other.Int)
 	return &Uint256{*sum}
 }
 
 func (u *Uint256) Sub(other *Uint256) *Uint256 {
-	diff := new(big.Int).Sub(&u.Int, &other.Int)
+	diff := uint256.NewInt().Sub(&u.Int, &other.Int)
 	return &Uint256{*diff}
 }
 
 func (u *Uint256) Mul(other *Uint256) *Uint256 {
-	product := new(big.Int).Mul(&u.Int, &other.Int)
+	product := uint256.NewInt().Mul(&u.Int, &other.Int)
 	return &Uint256{*product}
 }
 
 func (u *Uint256) Div(other *Uint256) *Uint256 {
-	quotient := new(big.Int).Div(&u.Int, &other.Int)
+	quotient := uint256.NewInt().Div(&u.Int, &other.Int)
 	return &Uint256{*quotient}
 }
 
-func (u *Uint256) AddN(other int64) *Uint256 {
+func (u *Uint256) AddN(other uint64) *Uint256 {
 	return u.Add(NewUint256(other))
 }
 
-func (u *Uint256) SubN(other int64) *Uint256 {
+func (u *Uint256) SubN(other uint64) *Uint256 {
 	return u.Sub(NewUint256(other))
 }
 
-func (u *Uint256) MulN(other int64) *Uint256 {
+func (u *Uint256) MulN(other uint64) *Uint256 {
 	return u.Mul(NewUint256(other))
 }
 
-func (u *Uint256) DivN(other int64) *Uint256 {
+func (u *Uint256) DivN(other uint64) *Uint256 {
 	return u.Div(NewUint256(other))
 }
 
@@ -69,28 +75,41 @@ func (u *Uint256) Cmp(other *Uint256) int {
 	return u.Int.Cmp(&other.Int)
 }
 
-func (u *Uint256) CmpN(other int64) int {
+func (u *Uint256) CmpN(other uint64) int {
 	return u.Cmp(NewUint256(other))
 }
 
 // Scan implements Scanner for database/sql.
 func (u *Uint256) Scan(src interface{}) error {
+	errorMessage := "can't scan %T into Uint256"
+
 	value, ok := src.([]uint8)
 	if !ok {
-		return fmt.Errorf("can't scan %T into Uint256", src)
+		return fmt.Errorf(errorMessage, src)
 	}
 
-	u.SetString(string(value), 10)
+	bigValue, ok := u.Int.ToBig().SetString(string(value), 10)
+	if !ok {
+		return fmt.Errorf(errorMessage, src)
+	}
+
+	// Return value of `SetFromBig` is broken
+	_ = u.Int.SetFromBig(bigValue)
+
 	return nil
 }
 
 // Value implements valuer for database/sql.
 func (u Uint256) Value() (driver.Value, error) {
-	return u.Text(10), nil
+	return u.Int.ToBig().Text(10), nil
+}
+
+func (u *Uint256) String() string {
+	return u.Int.ToBig().Text(10)
 }
 
 func (u Uint256) MarshalJSON() ([]byte, error) {
-	jsonText, err := json.Marshal(u.Text(10))
+	jsonText, err := json.Marshal(u.Int.ToBig().Text(10))
 	if err != nil {
 		return nil, err
 	}
@@ -104,20 +123,19 @@ func (u *Uint256) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	_, ok := u.SetString(str, 10)
+	errorMessage := "error unmarshaling Uint256"
 
+	bigValue, ok := u.Int.ToBig().SetString(str, 10)
 	if !ok {
-		return fmt.Errorf("error unmarshaling Uint256")
+		return fmt.Errorf(errorMessage)
 	}
+
+	// Return value of `SetFromBig` is broken
+	_ = u.Int.SetFromBig(bigValue)
 
 	return nil
 }
 
-// TODO this is a quickfix caused by an issue described here: https://stackoverflow.com/q/44696881
-//  Remove this after changing internal representation of Uint256 to [32]byte
 func (u *Uint256) SetBytes(data []byte) {
 	u.Int.SetBytes(data)
-	if u.CmpN(0) == 0 {
-		*u = MakeUint256(0)
-	}
 }

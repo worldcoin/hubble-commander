@@ -170,7 +170,7 @@ func generateValidCreate2Transfers(transfersAmount int, publicKey *models.Public
 				FromStateID: 1,
 				Amount:      models.MakeUint256(1),
 				Fee:         models.MakeUint256(1),
-				Nonce:       models.MakeUint256(int64(i)),
+				Nonce:       models.MakeUint256(uint64(i)),
 			},
 			ToStateID:   2,
 			ToPublicKey: *publicKey,
