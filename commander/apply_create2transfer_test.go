@@ -98,7 +98,7 @@ func (s *ApplyCreate2TransferTestSuite) TearDownTest() {
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InsertsNewEmptyStateLeaf() {
-	_, transferError, appError := ApplyCreate2Transfer(s.storage, s.client.Client, s.events, &create2Transfer, feeReceiverTokenIndex)
+	transferError, appError := ApplyCreate2Transfer(s.storage, &create2Transfer, 2, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -110,7 +110,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InsertsNewEmpty
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer() {
-	_, transferError, appError := ApplyCreate2Transfer(s.storage, s.client.Client, s.events, &create2Transfer, feeReceiverTokenIndex)
+	transferError, appError := ApplyCreate2Transfer(s.storage, &create2Transfer, 2, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -123,15 +123,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer()
 	s.Equal(int64(1000), receiverLeaf.Balance.Int64())
 }
 
-func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ReturnsCorrectPubKeyID() {
-	addedPubKeyID, transferError, appError :=
-		ApplyCreate2Transfer(s.storage, s.client.Client, s.events, &create2Transfer, feeReceiverTokenIndex)
-	s.NoError(appError)
-	s.NoError(transferError)
-	s.Equal(uint32(2), *addedPubKeyID)
-}
-
-func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_AccountNotExists() {
+func (s *ApplyCreate2TransferTestSuite) TestGetOrRegisterPubKeyID_AccountNotExists() {
 	transfer := create2Transfer
 	transfer.ToPublicKey = models.PublicKey{10, 11, 12}
 	pubKeyID, err := getOrRegisterPubKeyID(s.storage, s.client.Client, s.events, &transfer, models.MakeUint256(1))
@@ -139,7 +131,7 @@ func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_AccountNotExists() {
 	s.Equal(uint32(0), *pubKeyID)
 }
 
-func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_AccountForTokenIndexNotExists() {
+func (s *ApplyCreate2TransferTestSuite) TestGetOrRegisterPubKeyID_AccountForTokenIndexNotExists() {
 	pubKeyID, err := getOrRegisterPubKeyID(s.storage, s.client.Client, s.events, &create2Transfer, models.MakeUint256(1))
 	s.NoError(err)
 	s.Equal(uint32(2), *pubKeyID)
