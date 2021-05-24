@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"math/big"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -18,14 +17,6 @@ func TestUint256_JSONMarshaling(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, value, unmarshalled)
-}
-
-func TestDupa(t *testing.T) {
-	uint256 := NewUint256(0)
-	bigint, ok := new(big.Int).SetString("115792089237316195423570985008687907853269984665640564039457584007913129639935", 10)
-	require.True(t, ok)
-	overflow := uint256.Int.SetFromBig(bigint)
-	require.False(t, overflow)
 }
 
 func TestUint256_JSONPtrMarshaling(t *testing.T) {
