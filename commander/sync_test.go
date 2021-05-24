@@ -118,6 +118,12 @@ func (s *SyncTestSuite) TestSyncBatches() {
 	err = SyncBatches(s.storage, s.client.Client, s.cfg)
 	s.NoError(err)
 
+	// Begin tx
+	// create a new batch and submit it on chain
+	// rollback tx
+	// SyncBatches
+	// assert
+
 	state0, err := s.storage.GetStateLeaf(0)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(600), state0.Balance)
