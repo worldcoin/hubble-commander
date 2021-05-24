@@ -4,21 +4,33 @@ import (
 	"encoding/binary"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
+// Encode Remember to provide cases for both value and pointer types when adding new encoders
 func Encode(value interface{}) ([]byte, error) {
 	switch v := value.(type) {
-	case *models.MerklePath:
+	case models.MerklePath:
 		return v.Bytes(), nil
+	case *models.MerklePath:
+		return nil, errors.Errorf("pass by value")
 	case models.StateNode:
 		return EncodeDataHash(&v)
+	case *models.StateNode:
+		return nil, errors.Errorf("pass by value")
 	case models.FlatStateLeaf:
 		return v.Bytes(), nil
+	case *models.FlatStateLeaf:
+		return nil, errors.Errorf("pass by value")
 	case models.StateUpdate:
 		return v.Bytes(), nil
+	case *models.StateUpdate:
+		return nil, errors.Errorf("pass by value")
 	case uint32:
 		return EncodeUint32(&v)
+	case *uint32:
+		return nil, errors.Errorf("pass by value")
 	default:
 		return bh.DefaultEncode(value)
 	}
