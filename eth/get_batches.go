@@ -14,9 +14,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (c *Client) GetBatches(latestBatchSumissionBlock *uint32) ([]DecodedBatch, error) {
+func (c *Client) GetBatches(latestBatchSubmissionBlock *uint32) ([]DecodedBatch, error) {
 	it, err := c.Rollup.FilterNewBatch(&bind.FilterOpts{
-		Start: uint64(*latestBatchSumissionBlock) + 1,
+		Start: uint64(*latestBatchSubmissionBlock) + 1,
 	})
 	if err != nil {
 		return nil, err

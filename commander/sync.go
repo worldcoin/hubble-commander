@@ -33,7 +33,7 @@ func unsafeSyncBatches(storage *st.Storage, client *eth.Client, cfg *config.Roll
 		return err
 	}
 
-	newBatches, err := client.GetBatches(submissionBlock) // TODO query batches starting from the submission block of the latest known batch.
+	newBatches, err := client.GetBatches(submissionBlock)
 	if err != nil {
 		return err
 	}
