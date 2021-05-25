@@ -107,6 +107,7 @@ func (t *transactionExecutor) Commit() error {
 	return t.tx.Commit()
 }
 
+// nolint:gocritic
 func (t *transactionExecutor) Rollback(cause *error) {
 	t.tx.Rollback(cause)
 }
