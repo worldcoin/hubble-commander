@@ -26,6 +26,7 @@ type Commander struct {
 
 	stopChannel chan bool
 	storage     *st.Storage
+	client      *eth.Client
 	apiServer   *http.Server
 }
 
@@ -71,12 +72,12 @@ func (c *Commander) Start() error {
 		return err
 	}
 
-	client, err := getClient(chain, c.storage, &c.cfg.Rollup)
+	c.client, err = getClientOrBootstrapChainState(chain, c.storage, &c.cfg.Rollup)
 	if err != nil {
 		return err
 	}
 
-	c.apiServer, err = api.NewAPIServer(&c.cfg.API, c.storage, client)
+	c.apiServer, err = api.NewAPIServer(&c.cfg.API, c.storage, c.client)
 	if err != nil {
 		return err
 	}
@@ -89,31 +90,21 @@ func (c *Commander) Start() error {
 		}
 		return nil
 	})
-	c.startWorker(func() error { return BlockNumberLoop(c.storage, client, &c.cfg.Rollup, stopChannel) })
-	c.startWorker(func() error { return RollupLoop(c.storage, client, &c.cfg.Rollup, stopChannel) })
-	c.startWorker(func() error { return WatchAccounts(c.storage, client, stopChannel) })
+	c.startWorker(func() error { return BlockNumberLoop(c.storage, c.client, &c.cfg.Rollup, stopChannel) })
+	c.startWorker(func() error { return RollupLoop(c.storage, c.client, &c.cfg.Rollup, stopChannel) })
+	c.startWorker(func() error { return WatchAccounts(c.storage, c.client, stopChannel) })
 	c.stopChannel = stopChannel
 	return nil
 }
 
 func (c *Commander) startWorker(fn func() error) {
-	startGoroutine(func() {
-		c.workers.Add(1)
-		defer c.workers.Done()
+	c.workers.Add(1)
+	go func() {
 		if err := fn(); err != nil {
 			log.Fatalf("%+v", err)
 		}
-	})
-}
-
-func startGoroutine(fn func()) {
-	var start sync.WaitGroup
-	start.Add(1)
-	go func() {
-		start.Done()
-		fn()
+		c.workers.Done()
 	}()
-	start.Wait()
 }
 
 func (c *Commander) StartAndWait() error {
@@ -150,7 +141,7 @@ func getChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, e
 	return deployer.NewRPCChainConnection(cfg)
 }
 
-func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.RollupConfig) (*eth.Client, error) {
+func getClientOrBootstrapChainState(chain deployer.ChainConnection, storage *st.Storage, cfg *config.RollupConfig) (*eth.Client, error) {
 	chainState, err := storage.GetChainState(chain.GetChainID())
 
 	if st.IsNotFoundError(err) {
