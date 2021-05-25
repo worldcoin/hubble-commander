@@ -53,9 +53,8 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 
 	batch1, _, err := s.client.SubmitTransfersBatch([]models.Commitment{commitment1})
 	s.NoError(err)
-	batch2, _, err := s.client.SubmitTransfersBatch([]models.Commitment{commitment2})
+	_, _, err = s.client.SubmitTransfersBatch([]models.Commitment{commitment2})
 	s.NoError(err)
-	s.Equal(batch2.FinalisationBlock, batch1.FinalisationBlock+1)
 
 	submissionBlockBatch1 := batch1.FinalisationBlock - uint32(*finalisationBlocks)
 
