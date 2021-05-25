@@ -149,6 +149,10 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 
 	txn.Rollback(nil)
 
+	batches, err = s.storage.GetBatchesInRange(nil, nil)
+	s.NoError(err)
+	s.Len(batches, 1)
+
 	err = SyncBatches(s.storage, s.client.Client, s.cfg)
 	s.NoError(err)
 
