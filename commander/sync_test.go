@@ -18,11 +18,12 @@ import (
 type SyncTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	teardown func() error
-	storage  *st.Storage
-	tree     *st.StateTree
-	client   *eth.TestClient
-	cfg      *config.RollupConfig
+	teardown            func() error
+	storage             *st.Storage
+	tree                *st.StateTree
+	client              *eth.TestClient
+	cfg                 *config.RollupConfig
+	transactionExecutor *transactionExecutor
 }
 
 func (s *SyncTestSuite) SetupSuite() {
@@ -116,7 +117,13 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	s.NoError(err)
 	s.setupDB()
 
-	err = SyncBatches(s.storage, s.client.Client, s.cfg)
+	s.transactionExecutor, err = newTransactionExecutor(s.storage, s.client.Client, s.cfg)
+	s.NoError(err)
+
+	err = s.transactionExecutor.SyncBatches()
+	s.NoError(err)
+
+	err = s.transactionExecutor.Commit()
 	s.NoError(err)
 
 	state0, err := s.storage.GetStateLeaf(0)
@@ -168,7 +175,13 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	s.NoError(err)
 	s.setupDB()
 
-	err = SyncBatches(s.storage, s.client.Client, s.cfg)
+	s.transactionExecutor, err = newTransactionExecutor(s.storage, s.client.Client, s.cfg)
+	s.NoError(err)
+
+	err = s.transactionExecutor.SyncBatches()
+	s.NoError(err)
+
+	err = s.transactionExecutor.Commit()
 	s.NoError(err)
 
 	state0, err := s.storage.GetStateLeaf(0)

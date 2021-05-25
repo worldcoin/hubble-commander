@@ -24,43 +24,50 @@ func (c *Commander) rollupLoop() (err error) {
 		case <-c.stopChannel:
 			return nil
 		case <-ticker.C:
-			if c.cfg.Rollup.SyncBatches {
-				err = SyncBatches(c.storage, c.client, &c.cfg.Rollup)
-				if err != nil {
-					return err
-				}
-			}
-
-			var transactionExecutor *transactionExecutor
-			transactionExecutor, err = newTransactionExecutor(c.storage, c.client, &c.cfg.Rollup)
-			if err != nil {
-				return err
-			}
-
-			if currentBatchType == txtype.Transfer {
-				err = transactionExecutor.CreateAndSubmitBatch(currentBatchType)
-				currentBatchType = txtype.Create2Transfer
-			} else {
-				err = transactionExecutor.CreateAndSubmitBatch(currentBatchType)
-				currentBatchType = txtype.Transfer
-			}
-
-			if err != nil {
-				transactionExecutor.Rollback(&err)
-
-				var e *RollupError
-				if errors.As(err, &e) {
-					continue
-				}
-				return err
-			}
-
-			err = transactionExecutor.Commit()
+			err := c.rollupLoopIteration(&currentBatchType)
 			if err != nil {
 				return err
 			}
 		}
 	}
+}
+
+func (c *Commander) rollupLoopIteration(currentBatchType *txtype.TransactionType) (err error) {
+	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, &c.cfg.Rollup)
+	if err != nil {
+		return err
+	}
+	defer transactionExecutor.Rollback(&err)
+
+	if c.cfg.Rollup.SyncBatches {
+		err = transactionExecutor.SyncBatches()
+		if err != nil {
+			return err
+		}
+	}
+
+	if *currentBatchType == txtype.Transfer {
+		err = transactionExecutor.CreateAndSubmitBatch(*currentBatchType)
+		*currentBatchType = txtype.Create2Transfer
+	} else {
+		err = transactionExecutor.CreateAndSubmitBatch(*currentBatchType)
+		*currentBatchType = txtype.Transfer
+	}
+
+	if err != nil {
+		var e *RollupError
+		if errors.As(err, &e) {
+			return nil
+		}
+		return err
+	}
+
+	err = transactionExecutor.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // transactionExecutor executes transactions & syncs batches. Manages a database transaction.
@@ -93,7 +100,7 @@ func (t *transactionExecutor) Rollback(cause *error) {
 	t.tx.Rollback(cause)
 }
 
-func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionType) (err error) {
+func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionType) error {
 	var commitments []models.Commitment
 
 	domain, err := t.storage.GetDomain(t.client.ChainState.ChainID)

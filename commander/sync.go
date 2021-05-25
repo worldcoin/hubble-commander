@@ -17,28 +17,13 @@ var (
 	ErrTransfersNotApplied = errors.New("could not apply all transfers from synced batch")
 )
 
-func SyncBatches(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) (err error) {
-	tx, txStorage, err := storage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
-	if err != nil {
-		return
-	}
-	defer tx.Rollback(&err)
-
-	err = unsafeSyncBatches(txStorage, client, cfg)
+func (t *transactionExecutor) SyncBatches() error {
+	newBatches, err := t.client.GetBatches() // TODO query batches starting from the submission block of the latest known batch.
 	if err != nil {
 		return err
 	}
 
-	return tx.Commit()
-}
-
-func unsafeSyncBatches(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
-	newBatches, err := client.GetBatches() // TODO query batches starting from the submission block of the latest known batch.
-	if err != nil {
-		return err
-	}
-
-	latestBatchID, err := getLatestBatchID(storage)
+	latestBatchID, err := getLatestBatchID(t.storage)
 	if err != nil {
 		return err
 	}
@@ -48,7 +33,7 @@ func unsafeSyncBatches(storage *st.Storage, client *eth.Client, cfg *config.Roll
 		if batch.ID.Cmp(latestBatchID) <= 0 {
 			continue
 		}
-		if err := syncBatch(storage, cfg, batch); err != nil {
+		if err := syncBatch(t.storage, t.cfg, batch); err != nil {
 			return err
 		}
 	}
