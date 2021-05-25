@@ -10,6 +10,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/joho/godotenv"
+	"github.com/spf13/viper"
 )
 
 func init() {
@@ -120,4 +121,15 @@ func getEthereumConfig() *EthereumConfig {
 		ChainID:    getEnv("ETHEREUM_CHAIN_ID"),
 		PrivateKey: getEnv("ETHEREUM_PRIVATE_KEY"),
 	}
+}
+
+func getViperConfig() (*Config, error) {
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	if err := viper.ReadInConfig(); err != nil {
+		return nil, err
+	}
+
+	viper.Unmarshal()
+
 }

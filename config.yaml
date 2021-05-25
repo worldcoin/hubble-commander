@@ -1,0 +1,28 @@
+rollup:
+  prune: false
+  syncBatches: true
+  feeReceiverPubKeyID: 0
+  txsPerCommitment: 32
+  minCommitmentsPerBatch: 1
+  maxCommitmentsPerBatch: 32
+  commitmentloopinterval: 500ms
+  batchLoopInterval: 500ms
+  blockNumberLoopInterval: 500ms
+  genesisAccounts:
+api:
+  version: 0.0.1
+  port: "8080"
+  devMode: false
+postgres:
+  host: localhost
+  port: "5432"
+  name: hubble
+  user: hubble
+  password: root
+  migrationsPath: db/postgres/migrations
+badger:
+  path: db/badger/data
+ethereum:
+  rpcURL: ws://localhost:8545
+  privateKey: ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
+  chainID: "1616067554748"
