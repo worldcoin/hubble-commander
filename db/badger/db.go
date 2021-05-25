@@ -19,9 +19,7 @@ func NewDatabase(cfg *config.BadgerConfig) (*Database, error) {
 	options.Decoder = Decode
 	options.Options = badger.
 		DefaultOptions(cfg.Path).
-		WithLoggingLevel(badger.WARNING).
-		WithMemTableSize(64 << 21) // TODO: Bench to see if there are performance degradations and remove if so.
-
+		WithLoggingLevel(badger.WARNING)
 	store, err := bh.Open(options)
 	if err != nil {
 		return nil, err
