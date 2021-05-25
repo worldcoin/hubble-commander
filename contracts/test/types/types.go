@@ -214,11 +214,14 @@ func (_TestTypes *TestTypesCaller) DecodeMeta(opts *bind.CallOpts, meta [32]byte
 		Committer  common.Address
 		FinaliseOn *big.Int
 	})
+	if err != nil {
+		return *outstruct, err
+	}
 
-	outstruct.BatchType = out[0].(*big.Int)
-	outstruct.Size = out[1].(*big.Int)
-	outstruct.Committer = out[2].(common.Address)
-	outstruct.FinaliseOn = out[3].(*big.Int)
+	outstruct.BatchType = *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+	outstruct.Size = *abi.ConvertType(out[1], new(*big.Int)).(**big.Int)
+	outstruct.Committer = *abi.ConvertType(out[2], new(common.Address)).(*common.Address)
+	outstruct.FinaliseOn = *abi.ConvertType(out[3], new(*big.Int)).(**big.Int)
 
 	return *outstruct, err
 

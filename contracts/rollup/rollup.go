@@ -399,9 +399,12 @@ func (_Rollup *RollupCaller) Batches(opts *bind.CallOpts, arg0 *big.Int) (struct
 		CommitmentRoot [32]byte
 		Meta           [32]byte
 	})
+	if err != nil {
+		return *outstruct, err
+	}
 
-	outstruct.CommitmentRoot = out[0].([32]byte)
-	outstruct.Meta = out[1].([32]byte)
+	outstruct.CommitmentRoot = *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+	outstruct.Meta = *abi.ConvertType(out[1], new([32]byte)).(*[32]byte)
 
 	return *outstruct, err
 
