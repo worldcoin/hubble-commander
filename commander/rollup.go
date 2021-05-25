@@ -12,34 +12,29 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func RollupEndlessLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
-	done := make(chan bool)
-	return RollupLoop(storage, client, cfg, done)
-}
-
-func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig, done <-chan bool) (err error) {
-	ticker := time.NewTicker(cfg.BatchLoopInterval)
+func (c *Commander) rollupLoop() (err error) {
+	ticker := time.NewTicker(c.cfg.Rollup.BatchLoopInterval)
 	defer ticker.Stop()
 
 	currentBatchType := txtype.Transfer
 
 	for {
 		select {
-		case <-done:
+		case <-c.stopChannel:
 			return nil
 		case <-ticker.C:
-			if cfg.SyncBatches {
-				err = SyncBatches(storage, client, cfg)
+			if c.cfg.Rollup.SyncBatches {
+				err = SyncBatches(c.storage, c.client, &c.cfg.Rollup)
 				if err != nil {
 					return err
 				}
 			}
 
 			if currentBatchType == txtype.Transfer {
-				err = createAndSubmitBatch(currentBatchType, storage, client, cfg)
+				err = createAndSubmitBatch(currentBatchType, c.storage, c.client, &c.cfg.Rollup)
 				currentBatchType = txtype.Create2Transfer
 			} else {
-				err = createAndSubmitBatch(currentBatchType, storage, client, cfg)
+				err = createAndSubmitBatch(currentBatchType, c.storage, c.client, &c.cfg.Rollup)
 				currentBatchType = txtype.Transfer
 			}
 
