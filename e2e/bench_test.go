@@ -86,20 +86,22 @@ func TestBenchCommander(t *testing.T) {
 
 			// Check phase
 			newTxsToWatch := make([]common.Hash, 0)
-			skip := false
+			continueChecking := true
 			for _, tx := range txsToWatch {
-				var sentTransfer dto.TransferReceipt
-				if !skip {
+				if continueChecking {
+					var sentTransfer dto.TransferReceipt
 					err = commander.Client().CallFor(&sentTransfer, "hubble_getTransaction", []interface{}{tx})
 					require.NoError(t, err)
-				}
-				if skip || sentTransfer.Status == txstatus.Pending {
-					newTxsToWatch = append(newTxsToWatch, tx)
-					skip = true
-				} else {
-					atomic.AddInt64(&transfersSent, txBatchSize)
-					atomic.AddInt64(&txsQueued, -txBatchSize)
 
+					if sentTransfer.Status != txstatus.Pending {
+						atomic.AddInt64(&transfersSent, txBatchSize)
+						atomic.AddInt64(&txsQueued, -txBatchSize)
+					} else {
+						continueChecking = false
+						newTxsToWatch = append(newTxsToWatch, tx)
+					}
+				} else {
+					newTxsToWatch = append(newTxsToWatch, tx)
 				}
 			}
 			txsToWatch = newTxsToWatch
