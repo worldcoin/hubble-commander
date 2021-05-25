@@ -48,7 +48,7 @@ func TestBenchCommander(t *testing.T) {
 	const txBatchSize = 32
 
 	// Maximum number of tx batches in queue.
-	const maxQueuedBatchCount = 20
+	const maxQueuedBatchesCount = 20
 
 	// Only use atomic operations to increment those two counters.
 	transfersSent := int64(0)
@@ -61,13 +61,13 @@ func TestBenchCommander(t *testing.T) {
 	runForWallet := func(wallet bls.Wallet, stateId uint32) {
 		fmt.Printf("Starting worker on stateId %d address=%s\n", stateId, wallet.PublicKey().String())
 
-		txsToWatch := make([]common.Hash, 0, maxQueuedBatchCount)
+		txsToWatch := make([]common.Hash, 0, maxQueuedBatchesCount)
 		nonce := models.MakeUint256(0)
 
 		for transfersSent < txCount {
 
 			// Send phase
-			for len(txsToWatch) <= maxQueuedBatchCount {
+			for len(txsToWatch) <= maxQueuedBatchesCount {
 				var hash common.Hash
 				for i := 0; i < txBatchSize; i++ {
 
