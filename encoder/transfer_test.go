@@ -92,8 +92,8 @@ func newTxTransfer(transfer *models.Transfer) testtx.TxTransfer {
 	return testtx.TxTransfer{
 		FromIndex: big.NewInt(int64(transfer.FromStateID)),
 		ToIndex:   big.NewInt(int64(transfer.ToStateID)),
-		Amount:    &transfer.Amount.Int,
-		Fee:       &transfer.Fee.Int,
+		Amount:    transfer.Amount.ToBig(),
+		Fee:       transfer.Fee.ToBig(),
 	}
 }
 
@@ -129,8 +129,7 @@ func (s *TransferTestSuite) TestDecodeTransferForCommitment() {
 	encoded, err := EncodeTransferForCommitment(txTransfer)
 	s.NoError(err)
 
-	decoded, err := DecodeTransferFromCommitment(encoded)
-	s.NoError(err)
+	decoded := DecodeTransferFromCommitment(encoded)
 
 	s.Equal(txTransfer, decoded)
 }

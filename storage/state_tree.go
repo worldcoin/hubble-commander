@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -139,6 +141,11 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 	return txn.Commit()
 }
 
+func decodeKey(data []byte, key interface{}, prefix []byte) error {
+	return gob.NewDecoder(bytes.NewReader(data[len(prefix):])).
+		Decode(key)
+}
+
 func decodeStateUpdate(item *bdg.Item) (*models.StateUpdate, error) {
 	var stateUpdate models.StateUpdate
 	err := item.Value(func(v []byte) error {
@@ -273,8 +280,8 @@ func NewStateLeaf(stateID uint32, state *models.UserState) (*models.StateLeaf, e
 func toContractUserState(state *models.UserState) generic.TypesUserState {
 	return generic.TypesUserState{
 		PubkeyID: big.NewInt(int64(state.PubKeyID)),
-		TokenID:  &state.TokenIndex.Int,
-		Balance:  &state.Balance.Int,
-		Nonce:    &state.Nonce.Int,
+		TokenID:  state.TokenIndex.ToBig(),
+		Balance:  state.Balance.ToBig(),
+		Nonce:    state.Nonce.ToBig(),
 	}
 }

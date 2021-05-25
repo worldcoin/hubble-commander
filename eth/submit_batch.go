@@ -21,7 +21,7 @@ func (c *Client) SubmitTransfersBatch(commitments []models.Commitment) (
 ) {
 	return c.submitBatch(commitments, func(commitments []models.Commitment) (*types.Transaction, error) {
 		return c.rollup().
-			WithValue(c.config.stakeAmount.Int).
+			WithValue(*c.config.stakeAmount.ToBig()).
 			SubmitTransfer(encoder.CommitmentToCalldataFields(commitments))
 	})
 }
@@ -33,7 +33,7 @@ func (c *Client) SubmitCreate2TransfersBatch(commitments []models.Commitment) (
 ) {
 	return c.submitBatch(commitments, func(commitments []models.Commitment) (*types.Transaction, error) {
 		return c.rollup().
-			WithValue(c.config.stakeAmount.Int).
+			WithValue(*c.config.stakeAmount.ToBig()).
 			SubmitCreate2Transfer(encoder.CommitmentToCalldataFields(commitments))
 	})
 }

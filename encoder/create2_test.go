@@ -8,6 +8,7 @@ import (
 	testtx "github.com/Worldcoin/hubble-commander/contracts/test/tx"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/stretchr/testify/require"
@@ -118,8 +119,8 @@ func newTxCreate2Transfer(transfer *models.Create2Transfer, toPubKeyID uint32) t
 		FromIndex:  big.NewInt(int64(transfer.FromStateID)),
 		ToIndex:    big.NewInt(int64(transfer.ToStateID)),
 		ToPubkeyID: big.NewInt(int64(toPubKeyID)),
-		Amount:     &transfer.Amount.Int,
-		Fee:        &transfer.Fee.Int,
+		Amount:     transfer.Amount.ToBig(),
+		Fee:        transfer.Fee.ToBig(),
 	}
 }
 
@@ -191,6 +192,48 @@ func (s *Create2TestSuite) TestSerializeCreate2Transfers_InvalidLength() {
 	serialized, err := SerializeCreate2Transfers([]models.Create2Transfer{transfer}, []uint32{})
 	s.Equal(ErrInvalidSlicesLength, err)
 	s.Nil(serialized)
+}
+
+func (s *Create2TestSuite) TestDeserializeCreate2Transfers() {
+	transfer := models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			TxType:      txtype.Create2Transfer,
+			FromStateID: 1,
+			Amount:      models.MakeUint256(50),
+			Fee:         models.MakeUint256(10),
+		},
+		ToStateID: 2,
+	}
+	transfer2 := models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			TxType:      txtype.Create2Transfer,
+			FromStateID: 2,
+			Amount:      models.MakeUint256(200),
+			Fee:         models.MakeUint256(10),
+		},
+		ToStateID: 3,
+	}
+
+	serialized, err := s.testTx.Create2transferSerialize(
+		nil,
+		[]testtx.TxCreate2Transfer{
+			newTxCreate2Transfer(&transfer, 6),
+			newTxCreate2Transfer(&transfer2, 5),
+		},
+	)
+	s.NoError(err)
+
+	transfers, toPubKeyIDs, err := DeserializeCreate2Transfers(serialized)
+	s.NoError(err)
+	s.Contains(transfers, transfer)
+	s.Contains(transfers, transfer2)
+	s.Contains(toPubKeyIDs, uint32(6))
+	s.Contains(toPubKeyIDs, uint32(5))
+}
+
+func (s *Create2TestSuite) TestDeserializeCreate2Transfers_InvalidDataLength() {
+	_, _, err := DeserializeCreate2Transfers([]byte{1, 2, 3})
+	s.Equal(ErrInvalidDataLength, err)
 }
 
 func TestCreate2TestSuite(t *testing.T) {

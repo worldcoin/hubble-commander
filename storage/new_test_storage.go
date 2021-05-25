@@ -29,6 +29,13 @@ func NewTestStorageWithBadger() (*TestStorage, error) {
 	})
 }
 
+func NewTestStorageWithoutPostgres() (*TestStorage, error) {
+	return NewConfiguredTestStorage(TestStorageConfig{
+		Postgres: false,
+		Badger:   true,
+	})
+}
+
 func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 	storage := Storage{feeReceiverStateIDs: make(map[string]uint32)}
 	var teardown = func() error {

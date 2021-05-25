@@ -37,7 +37,7 @@ func decodeRawGenesisAccounts(rawGenesisAccounts []models.RawGenesisAccount) ([]
 
 		genesisAccounts = append(genesisAccounts, models.GenesisAccount{
 			PrivateKey: privateKey,
-			Balance:    rawGenesisAccounts[i].Balance,
+			Balance:    models.MakeUint256(rawGenesisAccounts[i].Balance),
 		})
 	}
 

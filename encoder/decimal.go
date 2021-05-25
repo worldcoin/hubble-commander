@@ -12,7 +12,7 @@ import (
 // Exponent is 4 bits is packed in front of 12-bit mantissa.
 // The original number can be recovered using following formula: V = M * 10^E
 func EncodeDecimal(value models.Uint256) (uint16, error) {
-	mantissa := new(big.Int).Set(&value.Int)
+	mantissa := new(big.Int).Set(value.ToBig())
 	exponent := big.NewInt(0)
 
 	for i := 0; i < 15; i++ {

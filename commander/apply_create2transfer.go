@@ -9,19 +9,13 @@ import (
 
 func ApplyCreate2Transfer(
 	storage *st.Storage,
-	client *eth.Client,
-	registrations chan *accountregistry.AccountRegistryPubkeyRegistered,
 	create2Transfer *models.Create2Transfer,
+	pubKeyID uint32,
 	commitmentTokenIndex models.Uint256,
-) (addedPubKeyID *uint32, create2TransferError, appError error) {
-	pubKeyID, err := getOrRegisterPubKeyID(storage, client, registrations, create2Transfer, commitmentTokenIndex)
-	if err != nil {
-		return nil, create2TransferError, appError
-	}
-
+) (create2TransferError, appError error) {
 	stateTree := st.NewStateTree(storage)
 	emptyUserState := models.UserState{
-		PubKeyID:   *pubKeyID,
+		PubKeyID:   pubKeyID,
 		TokenIndex: commitmentTokenIndex,
 		Balance:    models.MakeUint256(0),
 		Nonce:      models.MakeUint256(0),
@@ -29,12 +23,12 @@ func ApplyCreate2Transfer(
 
 	nextAvailableStateID, err := storage.GetNextAvailableStateID()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	err = stateTree.Set(*nextAvailableStateID, &emptyUserState)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	create2Transfer.ToStateID = *nextAvailableStateID
@@ -43,12 +37,7 @@ func ApplyCreate2Transfer(
 		ToStateID:       *nextAvailableStateID,
 	}
 
-	create2TransferError, appError = ApplyTransfer(storage, &transfer, commitmentTokenIndex)
-	if create2TransferError != nil || appError != nil {
-		return nil, create2TransferError, appError
-	}
-
-	return pubKeyID, nil, nil
+	return ApplyTransfer(storage, &transfer, commitmentTokenIndex)
 }
 
 func getOrRegisterPubKeyID(

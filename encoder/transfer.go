@@ -2,13 +2,14 @@ package encoder
 
 import (
 	"encoding/binary"
-	"fmt"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
+
+const transferLength = 12
 
 func EncodeTransfer(tx *models.Transfer) ([]byte, error) {
 	arguments := abi.Arguments{
@@ -23,9 +24,9 @@ func EncodeTransfer(tx *models.Transfer) ([]byte, error) {
 		big.NewInt(int64(txtype.Transfer)),
 		big.NewInt(int64(tx.FromStateID)),
 		big.NewInt(int64(tx.ToStateID)),
-		&tx.Amount.Int,
-		&tx.Fee.Int,
-		&tx.Nonce.Int,
+		tx.Amount.ToBig(),
+		tx.Fee.ToBig(),
+		tx.Nonce.ToBig(),
 	)
 }
 
@@ -42,9 +43,9 @@ func EncodeTransferForSigning(tx *models.Transfer) ([]byte, error) {
 		big.NewInt(int64(txtype.Transfer)),
 		big.NewInt(int64(tx.FromStateID)),
 		big.NewInt(int64(tx.ToStateID)),
-		&tx.Nonce.Int,
-		&tx.Amount.Int,
-		&tx.Fee.Int,
+		tx.Nonce.ToBig(),
+		tx.Amount.ToBig(),
+		tx.Fee.ToBig(),
 	)
 }
 
@@ -60,7 +61,7 @@ func EncodeTransferForCommitment(transfer *models.Transfer) ([]byte, error) {
 		return nil, err
 	}
 
-	arr := make([]byte, 12)
+	arr := make([]byte, transferLength)
 
 	binary.BigEndian.PutUint32(arr[0:4], transfer.FromStateID)
 	binary.BigEndian.PutUint32(arr[4:8], transfer.ToStateID)
@@ -70,7 +71,7 @@ func EncodeTransferForCommitment(transfer *models.Transfer) ([]byte, error) {
 	return arr, nil
 }
 
-func DecodeTransferFromCommitment(data []byte) (*models.Transfer, error) {
+func DecodeTransferFromCommitment(data []byte) *models.Transfer {
 	fromStateID := binary.BigEndian.Uint32(data[0:4])
 	toStateID := binary.BigEndian.Uint32(data[4:8])
 	amountEncoded := binary.BigEndian.Uint16(data[8:10])
@@ -87,11 +88,11 @@ func DecodeTransferFromCommitment(data []byte) (*models.Transfer, error) {
 			Fee:         fee,
 		},
 		ToStateID: toStateID,
-	}, nil
+	}
 }
 
 func SerializeTransfers(transfers []models.Transfer) ([]byte, error) {
-	buf := make([]byte, 0, len(transfers)*12)
+	buf := make([]byte, 0, len(transfers)*transferLength)
 
 	for i := range transfers {
 		encoded, err := EncodeTransferForCommitment(&transfers[i])
@@ -106,17 +107,14 @@ func SerializeTransfers(transfers []models.Transfer) ([]byte, error) {
 
 func DeserializeTransfers(data []byte) ([]models.Transfer, error) {
 	dataLength := len(data)
-	if dataLength%12 != 0 {
-		return nil, fmt.Errorf("invalid data length")
+	if dataLength%transferLength != 0 {
+		return nil, ErrInvalidDataLength
 	}
-	transfersCount := dataLength / 12
+	transfersCount := dataLength / transferLength
 
 	res := make([]models.Transfer, 0, transfersCount)
 	for i := 0; i < transfersCount; i++ {
-		transfer, err := DecodeTransferFromCommitment(data[i*12 : (i+1)*12])
-		if err != nil {
-			return nil, err
-		}
+		transfer := DecodeTransferFromCommitment(data[i*transferLength : (i+1)*transferLength])
 		res = append(res, *transfer)
 	}
 
