@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	bdg "github.com/dgraph-io/badger/v3"
@@ -110,7 +109,7 @@ func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
 		if it.ValidForPrefix(flatStateLeafPrefix) {
 			var key uint32
 			decodedKey := it.Item().Key()[len(flatStateLeafPrefix):]
-			err := badger.DecodeUint32(decodedKey, &key)
+			err := models.DecodeUint32(decodedKey, &key)
 			if err != nil {
 				return err
 			}
