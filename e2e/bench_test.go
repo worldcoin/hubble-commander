@@ -57,32 +57,45 @@ func TestBenchCommander(t *testing.T) {
 	transfersSent := 0
 	startTime := time.Now()
 
-	for transfersSent < 1000 {
+	// Total number of transactions to be sent.
+	const txCount = 10_000
+
+	// Number of transaction that will be sent in a single batch (unrelated to rollup "batches").
+	const txBatchSize = 32
+
+	// Maximum number of tx batches in queue.
+	const maxQueuedBatchCount = 20
+
+	for transfersSent < txCount {
 		txSent := true
 		for txSent {
 			txSent = false
 
 			for _, stateId := range stateIds {
-				if len(txsToWatch[stateId]) > 40 { // max txs in queue
+				if len(txsToWatch[stateId]) > maxQueuedBatchCount { // max txs in queue
 					continue
 				}
 
-				wallet := walletForState[stateId]
-				nonce := nonces[stateId]
-				to := stateId
+				var hash *common.Hash
+				for i := 0; i < txBatchSize; i++ {
+					wallet := walletForState[stateId]
+					nonce := nonces[stateId]
+					to := stateId
 
-				// Pick random receiver id thats different from sender's.
-				for to == stateId {
-					to = stateIds[rand.Intn(len(stateIds))]
+					// Pick random receiver id thats different from sender's.
+					for to == stateId {
+						to = stateIds[rand.Intn(len(stateIds))]
+					}
+
+					hash = sendTransfer(t, commander, wallet, stateId, to, *nonce)
+					if hash != nil {
+						nonces[stateId] = nonces[stateId].AddN(1)
+						txSent = true
+					}
 				}
-
-				hash := sendTransfer(t, commander, wallet, stateId, to, *nonce)
 				if hash != nil {
-					nonces[stateId] = nonces[stateId].AddN(1)
 					txsToWatch[stateId] = append(txsToWatch[stateId], *hash)
-					txSent = true
 				}
-
 			}
 		}
 
@@ -95,9 +108,9 @@ func TestBenchCommander(t *testing.T) {
 				require.NoError(t, err)
 				if sentTransfer.Status == txstatus.Pending {
 					newTxsToWatch = append(newTxsToWatch, tx)
-					txInQueue += 1
+					txInQueue += txBatchSize
 				} else {
-					transfersSent += 1
+					transfersSent += txBatchSize
 				}
 			}
 			txsToWatch[stateId] = newTxsToWatch
