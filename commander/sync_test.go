@@ -52,6 +52,8 @@ func (s *SyncTestSuite) setupDB() {
 	s.tree = st.NewStateTree(s.storage)
 
 	s.seedDB()
+
+	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg)
 }
 
 func (s *SyncTestSuite) seedDB() {
@@ -117,13 +119,7 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	s.NoError(err)
 	s.setupDB()
 
-	s.transactionExecutor, err = newTransactionExecutor(s.storage, s.client.Client, s.cfg)
-	s.NoError(err)
-
 	err = s.transactionExecutor.SyncBatches()
-	s.NoError(err)
-
-	err = s.transactionExecutor.Commit()
 	s.NoError(err)
 
 	state0, err := s.storage.GetStateLeaf(0)
@@ -175,13 +171,7 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	s.NoError(err)
 	s.setupDB()
 
-	s.transactionExecutor, err = newTransactionExecutor(s.storage, s.client.Client, s.cfg)
-	s.NoError(err)
-
 	err = s.transactionExecutor.SyncBatches()
-	s.NoError(err)
-
-	err = s.transactionExecutor.Commit()
 	s.NoError(err)
 
 	state0, err := s.storage.GetStateLeaf(0)

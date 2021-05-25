@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -33,7 +32,7 @@ func (t *transactionExecutor) SyncBatches() error {
 		if batch.ID.Cmp(latestBatchID) <= 0 {
 			continue
 		}
-		if err := syncBatch(t.storage, t.cfg, batch); err != nil {
+		if err := t.syncBatch(batch); err != nil {
 			return err
 		}
 	}
@@ -54,20 +53,20 @@ func getLatestBatchID(storage *st.Storage) (*models.Uint256, error) {
 	return &latestBatchID, nil
 }
 
-func syncBatch(storage *st.Storage, cfg *config.RollupConfig, batch *eth.DecodedBatch) error {
-	err := storage.AddBatch(&batch.Batch)
+func (t *transactionExecutor) syncBatch(batch *eth.DecodedBatch) error {
+	err := t.storage.AddBatch(&batch.Batch)
 	if err != nil {
 		return err
 	}
 
 	switch batch.Type {
 	case txtype.Transfer:
-		err = syncTransferCommitments(storage, cfg, batch)
+		err = t.syncTransferCommitments(batch)
 		if err != nil {
 			return err
 		}
 	case txtype.Create2Transfer:
-		err = syncCreate2TransferCommitments(storage, cfg, batch)
+		err = t.syncCreate2TransferCommitments(batch)
 		if err != nil {
 			return err
 		}
