@@ -12,110 +12,67 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/bls"
-	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestBenchCommander(t *testing.T) {
-	commander, err := NewCommanderFromEnv(true)
-	require.NoError(t, err)
-	err = commander.Start()
-	require.NoError(t, err)
-	defer func() {
-		require.NoError(t, commander.Stop())
-	}()
+// Total number of transactions to be sent.
+const txCount = 10_000
 
-	domain := getDomain(t, commander.Client())
+// Number of transaction that will be sent in a single batch (unrelated to rollup "batches").
+const txBatchSize = 32
 
-	wallets, err := createWallets(domain)
-	require.NoError(t, err)
+// Maximum number of tx batches in queue.
+const maxQueuedBatchesCount = 20
 
-	var version string
-	err = commander.Client().CallFor(&version, "hubble_getVersion")
-	require.NoError(t, err)
-	require.Equal(t, config.GetConfig().API.Version, version)
+type BenchmarkSuite struct {
+	*require.Assertions
+	suite.Suite
 
-	stateIds := make([]uint32, 0)
+	commander Commander
+	wallets   []bls.Wallet
+	stateIds  []uint32
 
-	// Total number of transactions to be sent.
-	const txCount = 10_000
-
-	// Number of transaction that will be sent in a single batch (unrelated to rollup "batches").
-	const txBatchSize = 32
-
-	// Maximum number of tx batches in queue.
-	const maxQueuedBatchesCount = 20
+	startTime time.Time
+	waitGroup sync.WaitGroup
 
 	// Only use atomic operations to increment those two counters.
-	transfersSent := int64(0)
-	txsQueued := int64(0)
+	transfersSent int64
+	txsQueued     int64
+}
 
-	startTime := time.Now()
+func (s *BenchmarkSuite) SetupSuite() {
+	s.Assertions = require.New(s.T())
 
-	var waitGroup sync.WaitGroup
+	commander, err := NewCommanderFromEnv(true)
+	s.NoError(err)
 
-	runForWallet := func(senderWallet bls.Wallet, senderStateId uint32) {
-		fmt.Printf("Starting worker on stateId %d address=%s\n", senderStateId, senderWallet.PublicKey().String())
+	err = commander.Start()
+	s.NoError(err)
 
-		txsToWatch := make([]common.Hash, 0, maxQueuedBatchesCount)
-		nonce := models.MakeUint256(0)
+	domain := getDomain(s.T(), commander.Client())
+	wallets, err := createWallets(domain)
+	s.NoError(err)
 
-		for transfersSent < txCount {
+	s.commander = commander
+	s.wallets = wallets
+	s.stateIds = make([]uint32, 0)
+}
 
-			// Send phase
-			for len(txsToWatch) <= maxQueuedBatchesCount {
-				var lastTxHash common.Hash
-				for i := 0; i < txBatchSize; i++ {
+func (s *BenchmarkSuite) TearDownSuite() {
+	s.NoError(s.commander.Stop())
+}
 
-					// Pick random receiver id that's different from sender's.
-					to := stateIds[rand.Intn(len(stateIds))]
-					for to == senderStateId {
-						to = stateIds[rand.Intn(len(stateIds))]
-					}
+func (s *BenchmarkSuite) TestBenchCommander() {
+	s.startTime = time.Now()
 
-					lastTxHash = sendTransfer(t, commander, senderWallet, senderStateId, to, nonce)
-					nonce = *nonce.AddN(1)
-				}
-				txsToWatch = append(txsToWatch, lastTxHash)
-				atomic.AddInt64(&txsQueued, txBatchSize)
-			}
-
-			// Check phase
-			newTxsToWatch := make([]common.Hash, 0)
-			continueChecking := true
-			for _, tx := range txsToWatch {
-				if continueChecking {
-					var sentTransfer dto.TransferReceipt
-					err = commander.Client().CallFor(&sentTransfer, "hubble_getTransaction", []interface{}{tx})
-					require.NoError(t, err)
-
-					if sentTransfer.Status != txstatus.Pending {
-						atomic.AddInt64(&transfersSent, txBatchSize)
-						atomic.AddInt64(&txsQueued, -txBatchSize)
-					} else {
-						continueChecking = false
-						newTxsToWatch = append(newTxsToWatch, tx)
-					}
-				} else {
-					newTxsToWatch = append(newTxsToWatch, tx)
-				}
-			}
-			txsToWatch = newTxsToWatch
-
-			// Report phase
-			fmt.Printf("Transfers sent: %d, throughput: %f tx/s, txs in queue: %d\n", transfersSent, float64(transfersSent)/(time.Since(startTime).Seconds()), txsQueued)
-		}
-
-		waitGroup.Done()
-	}
-
-	for _, wallet := range wallets {
+	for _, wallet := range s.wallets {
 		var userStates []dto.UserState
-		err = commander.Client().CallFor(&userStates, "hubble_getUserStates", []interface{}{wallet.PublicKey()})
+		err := s.commander.Client().CallFor(&userStates, "hubble_getUserStates", []interface{}{wallet.PublicKey()})
 		if err != nil {
 			continue
 		}
@@ -123,19 +80,75 @@ func TestBenchCommander(t *testing.T) {
 		fmt.Printf("%d states found for wallet %s\n", len(userStates), wallet.PublicKey().String())
 
 		for _, state := range userStates {
-			stateIds = append(stateIds, state.StateID)
+			s.stateIds = append(s.stateIds, state.StateID)
 
-			waitGroup.Add(1)
-			go runForWallet(wallet, state.StateID)
+			s.waitGroup.Add(1)
+			go s.runForWallet(wallet, state.StateID)
 		}
 	}
 
-	require.Greater(t, len(stateIds), 0)
+	s.Greater(len(s.stateIds), 0)
 
-	waitGroup.Wait()
+	s.waitGroup.Wait()
 }
 
-func sendTransfer(t *testing.T, commander Commander, wallet bls.Wallet, from uint32, to uint32, nonce models.Uint256) common.Hash {
+func (s *BenchmarkSuite) runForWallet(senderWallet bls.Wallet, senderStateId uint32) {
+	fmt.Printf("Starting worker on stateId %d address=%s\n", senderStateId, senderWallet.PublicKey().String())
+
+	txsToWatch := make([]common.Hash, 0, maxQueuedBatchesCount)
+	nonce := models.MakeUint256(0)
+
+	for s.transfersSent < txCount {
+
+		// Send phase
+		for len(txsToWatch) <= maxQueuedBatchesCount {
+			var lastTxHash common.Hash
+			for i := 0; i < txBatchSize; i++ {
+
+				// Pick random receiver id that's different from sender's.
+				to := s.stateIds[rand.Intn(len(s.stateIds))]
+				for to == senderStateId {
+					to = s.stateIds[rand.Intn(len(s.stateIds))]
+				}
+
+				lastTxHash = s.sendTransfer(senderWallet, senderStateId, to, nonce)
+				nonce = *nonce.AddN(1)
+			}
+			txsToWatch = append(txsToWatch, lastTxHash)
+			atomic.AddInt64(&s.txsQueued, txBatchSize)
+		}
+
+		// Check phase
+		newTxsToWatch := make([]common.Hash, 0)
+		continueChecking := true
+		for _, tx := range txsToWatch {
+			if continueChecking {
+				var sentTransfer dto.TransferReceipt
+				err := s.commander.Client().CallFor(&sentTransfer, "hubble_getTransaction", []interface{}{tx})
+				s.NoError(err)
+
+				if sentTransfer.Status != txstatus.Pending {
+					atomic.AddInt64(&s.transfersSent, txBatchSize)
+					atomic.AddInt64(&s.txsQueued, -txBatchSize)
+				} else {
+					continueChecking = false
+					newTxsToWatch = append(newTxsToWatch, tx)
+				}
+			} else {
+				newTxsToWatch = append(newTxsToWatch, tx)
+			}
+		}
+		txsToWatch = newTxsToWatch
+
+		// Report phase
+		fmt.Printf("Transfers sent: %d, throughput: %f tx/s, txs in queue: %d\n", s.transfersSent, float64(s.transfersSent)/(time.Since(s.startTime).Seconds()), s.txsQueued)
+
+	}
+
+	s.waitGroup.Done()
+}
+
+func (s *BenchmarkSuite) sendTransfer(wallet bls.Wallet, from uint32, to uint32, nonce models.Uint256) common.Hash {
 	transfer, err := api.SignTransfer(&wallet, dto.Transfer{
 		FromStateID: &from,
 		ToStateID:   &to,
@@ -143,12 +156,16 @@ func sendTransfer(t *testing.T, commander Commander, wallet bls.Wallet, from uin
 		Fee:         models.NewUint256(1),
 		Nonce:       &nonce,
 	})
-	require.NoError(t, err)
+	s.NoError(err)
 
 	var transferHash common.Hash
-	err = commander.Client().CallFor(&transferHash, "hubble_sendTransaction", []interface{}{*transfer})
-	require.NoError(t, err)
-	require.NotNil(t, transferHash)
+	err = s.commander.Client().CallFor(&transferHash, "hubble_sendTransaction", []interface{}{*transfer})
+	s.NoError(err)
+	s.NotNil(transferHash)
 
 	return transferHash
+}
+
+func TestBenchmarkSuite(t *testing.T) {
+	suite.Run(t, new(BenchmarkSuite))
 }
