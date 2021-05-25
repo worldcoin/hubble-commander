@@ -68,7 +68,7 @@ func TestBenchCommander(t *testing.T) {
 
 			// Send phase
 			for len(txsToWatch) <= maxQueuedBatchesCount {
-				var hash common.Hash
+				var lastTxHash common.Hash
 				for i := 0; i < txBatchSize; i++ {
 
 					// Pick random receiver id that's different from sender's.
@@ -77,10 +77,10 @@ func TestBenchCommander(t *testing.T) {
 						to = stateIds[rand.Intn(len(stateIds))]
 					}
 
-					hash = sendTransfer(t, commander, senderWallet, senderStateId, to, nonce)
+					lastTxHash = sendTransfer(t, commander, senderWallet, senderStateId, to, nonce)
 					nonce = *nonce.AddN(1)
 				}
-				txsToWatch = append(txsToWatch, hash)
+				txsToWatch = append(txsToWatch, lastTxHash)
 				atomic.AddInt64(&txsQueued, txBatchSize)
 			}
 
