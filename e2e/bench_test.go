@@ -102,13 +102,17 @@ func TestBenchCommander(t *testing.T) {
 		txInQueue := 0
 		for _, stateId := range stateIds {
 			newTxsToWatch := make([]common.Hash, 0)
+			skip := false
 			for _, tx := range txsToWatch[stateId] {
 				var sentTransfer dto.TransferReceipt
-				err = commander.Client().CallFor(&sentTransfer, "hubble_getTransaction", []interface{}{tx})
-				require.NoError(t, err)
-				if sentTransfer.Status == txstatus.Pending {
+				if !skip {
+					err = commander.Client().CallFor(&sentTransfer, "hubble_getTransaction", []interface{}{tx})
+					require.NoError(t, err)
+				}
+				if skip || sentTransfer.Status == txstatus.Pending {
 					newTxsToWatch = append(newTxsToWatch, tx)
 					txInQueue += txBatchSize
+					skip = true
 				} else {
 					transfersSent += txBatchSize
 				}
