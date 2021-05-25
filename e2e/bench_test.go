@@ -58,8 +58,8 @@ func TestBenchCommander(t *testing.T) {
 
 	var waitGroup sync.WaitGroup
 
-	runForWallet := func(wallet bls.Wallet, stateId uint32) {
-		fmt.Printf("Starting worker on stateId %d address=%s\n", stateId, wallet.PublicKey().String())
+	runForWallet := func(senderWallet bls.Wallet, senderStateId uint32) {
+		fmt.Printf("Starting worker on stateId %d address=%s\n", senderStateId, senderWallet.PublicKey().String())
 
 		txsToWatch := make([]common.Hash, 0, maxQueuedBatchesCount)
 		nonce := models.MakeUint256(0)
@@ -71,13 +71,13 @@ func TestBenchCommander(t *testing.T) {
 				var hash common.Hash
 				for i := 0; i < txBatchSize; i++ {
 
-					// Pick random receiver id thats different from sender's.
+					// Pick random receiver id that's different from sender's.
 					to := stateIds[rand.Intn(len(stateIds))]
-					for to == stateId {
+					for to == senderStateId {
 						to = stateIds[rand.Intn(len(stateIds))]
 					}
 
-					hash = sendTransfer(t, commander, wallet, stateId, to, nonce)
+					hash = sendTransfer(t, commander, senderWallet, senderStateId, to, nonce)
 					nonce = *nonce.AddN(1)
 				}
 				txsToWatch = append(txsToWatch, hash)
