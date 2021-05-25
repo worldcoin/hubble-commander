@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type testKeyList [][]byte
+
 func TestEncodeKeyList(t *testing.T) {
 	keyList := make(testKeyList, 1)
 	keyList[0] = append([]byte("_bhIndex:FlatStateLeaf:PubKeyID"), []byte{0, 0, 0, 4}...)

@@ -7,8 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type testKeyList [][]byte
-
 func TestDataHash_ByteEncoding(t *testing.T) {
 	node := StateNode{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
