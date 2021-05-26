@@ -105,7 +105,7 @@ func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models
 	pubKeyIDs := utils.ValueToInterfaceSlice(accounts, "PubKeyID")
 
 	leaves := make([]models.FlatStateLeaf, 0, 1)
-	err = s.Badger.Find(&leaves, bh.Where("PubKeyID").In(pubKeyIDs...).Index("PubKeyID"))
+	err = s.Badger.Find(&leaves, bh.Where("PubKeyID").In(pubKeyIDs...))
 	if err != nil {
 		return nil, err
 	}
