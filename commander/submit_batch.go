@@ -39,9 +39,9 @@ func submitBatch(
 	}
 
 	if batchType == txtype.Transfer {
-		batch, accountRoot, err = client.SubmitTransfersBatch(commitments)
+		batch, accountRoot, err = client.SubmitTransfersBatchAndMine(commitments)
 	} else {
-		batch, accountRoot, err = client.SubmitCreate2TransfersBatch(commitments)
+		batch, accountRoot, err = client.SubmitCreate2TransfersBatchAndMine(commitments)
 	}
 	if err != nil {
 		return err
