@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -17,12 +16,10 @@ func TestGetEnvOrDefault(t *testing.T) {
 	require.Equal(t, "bar", *getEnvOrDefault("HUBBLE_BAR", ref.String("bar")))
 }
 
-func TestGetTestConfig(t *testing.T) {
-	config := GetViperConfig()
-	fmt.Printf("%+v\n", config.Ethereum)
-	fmt.Println(viper.GetBool("rollup.sync_batches"))
-	WatchConfig(config)
+func TestGetFromViperOrDefault(t *testing.T) {
+	_ = os.Setenv("HUBBLE_VERSION", "env")
 
-	oldConfig := GetConfig()
-	require.Equal(t, oldConfig, *config)
+	viper.AutomaticEnv()
+	require.Equal(t, "env", *getFromViperOrDefault("hubble_version", ref.String("default")))
+	require.Equal(t, "default", *getFromViperOrDefault("hubble_default", ref.String("default")))
 }

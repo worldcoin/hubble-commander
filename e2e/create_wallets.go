@@ -8,7 +8,7 @@ import (
 )
 
 func createWallets(domain bls.Domain) ([]bls.Wallet, error) {
-	cfg := config.GetViperConfig().Rollup
+	cfg := config.GetConfig().Rollup
 	accounts := cfg.GenesisAccounts
 
 	walletsSeen := make(map[string]bool)

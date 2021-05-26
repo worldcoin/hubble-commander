@@ -12,7 +12,7 @@ import (
 )
 
 func TestCommander(t *testing.T) {
-	cfg := config.GetViperConfig()
+	cfg := config.GetConfig()
 	cfg.Rollup.Prune = true
 
 	cmd := commander.NewCommander(cfg)

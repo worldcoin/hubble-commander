@@ -12,7 +12,7 @@ type LocalCommander struct {
 }
 
 func ConnectToLocalCommander() *LocalCommander {
-	cfg := config.GetViperConfig()
+	cfg := config.GetConfig()
 	endpoint := fmt.Sprintf("http://localhost:%s", cfg.API.Port)
 	client := jsonrpc.NewClient(endpoint)
 	return &LocalCommander{client}

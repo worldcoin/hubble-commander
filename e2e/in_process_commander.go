@@ -14,7 +14,7 @@ type InProcessCommander struct {
 }
 
 func CreateInProcessCommander() *InProcessCommander {
-	cfg := config.GetViperConfig()
+	cfg := config.GetConfig()
 	cfg.Rollup.Prune = true
 	cfg.Rollup.SyncBatches = false
 
