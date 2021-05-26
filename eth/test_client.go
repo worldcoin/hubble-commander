@@ -10,6 +10,8 @@ type TestClient struct {
 	*simulator.Simulator
 }
 
+// NewTestClient Sets up a TestClient backed by automining simulator.
+// Remember to call Close() at the end of the test
 func NewTestClient() (*TestClient, error) {
 	sim, err := simulator.NewAutominingSimulator()
 	if err != nil {

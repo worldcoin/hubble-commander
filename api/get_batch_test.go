@@ -18,6 +18,7 @@ type GetBatchTestSuite struct {
 	suite.Suite
 	api        *API
 	storage    *st.TestStorage
+	testClient *eth.TestClient
 	tree       *st.StateTree
 	commitment models.Commitment
 	batch      models.Batch
@@ -31,9 +32,9 @@ func (s *GetBatchTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-	ethClient, err := eth.NewTestClient()
+	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
-	s.api = &API{storage: s.storage.Storage, client: ethClient.Client}
+	s.api = &API{storage: s.storage.Storage, client: s.testClient.Client}
 	s.tree = st.NewStateTree(s.storage.Storage)
 
 	hash := utils.RandomHash()
@@ -49,6 +50,7 @@ func (s *GetBatchTestSuite) SetupTest() {
 }
 
 func (s *GetBatchTestSuite) TearDownTest() {
+	s.testClient.Close()
 	err := s.storage.Teardown()
 	s.NoError(err)
 }
