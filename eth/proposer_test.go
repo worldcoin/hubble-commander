@@ -9,6 +9,7 @@ import (
 func TestClient_IsActiveProposer(t *testing.T) {
 	client, err := NewTestClient()
 	require.NoError(t, err)
+	defer client.Close()
 
 	isActiveProposer, err := client.IsActiveProposer()
 	require.NoError(t, err)

@@ -16,9 +16,10 @@ import (
 type GetBatchesTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	api     *API
-	storage *st.TestStorage
-	batch   models.Batch
+	api        *API
+	storage    *st.TestStorage
+	testClient *eth.TestClient
+	batch      models.Batch
 }
 
 func (s *GetBatchesTestSuite) SetupSuite() {
@@ -29,9 +30,9 @@ func (s *GetBatchesTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	ethClient, err := eth.NewTestClient()
+	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
-	s.api = &API{storage: s.storage.Storage, client: ethClient.Client}
+	s.api = &API{storage: s.storage.Storage, client: s.testClient.Client}
 
 	s.batch = models.Batch{
 		Hash:              utils.RandomHash(),
@@ -41,6 +42,7 @@ func (s *GetBatchesTestSuite) SetupTest() {
 }
 
 func (s *GetBatchesTestSuite) TearDownTest() {
+	s.testClient.Close()
 	err := s.storage.Teardown()
 	s.NoError(err)
 }
