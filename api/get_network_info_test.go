@@ -108,6 +108,7 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
 		},
 		ToStateID: 1,
 	})
+	s.NoError(err)
 
 	s.api.storage.SetLatestBlockNumber(1)
 	expectedDomain := crypto.Keccak256(chainState.Rollup.Bytes())
