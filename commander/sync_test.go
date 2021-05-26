@@ -18,11 +18,12 @@ import (
 type SyncTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	teardown func() error
-	storage  *st.Storage
-	tree     *st.StateTree
-	client   *eth.TestClient
-	cfg      *config.RollupConfig
+	teardown            func() error
+	storage             *st.Storage
+	tree                *st.StateTree
+	client              *eth.TestClient
+	cfg                 *config.RollupConfig
+	transactionExecutor *transactionExecutor
 }
 
 func (s *SyncTestSuite) SetupSuite() {
@@ -51,6 +52,8 @@ func (s *SyncTestSuite) setupDB() {
 	s.tree = st.NewStateTree(s.storage)
 
 	s.seedDB()
+
+	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg)
 }
 
 func (s *SyncTestSuite) seedDB() {
@@ -116,20 +119,57 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	s.NoError(err)
 	s.setupDB()
 
-	err = SyncBatches(s.storage, s.client.Client, s.cfg)
+	err = s.transactionExecutor.SyncBatches()
+	s.NoError(err)
+
+	txn, txStorage, err := s.storage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
+	s.NoError(err)
+
+	tx2 := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			TxType:      txtype.Transfer,
+			FromStateID: 1,
+			Amount:      models.MakeUint256(100),
+			Fee:         models.MakeUint256(0),
+			Nonce:       models.MakeUint256(0),
+			Signature:   *s.mockSignature(),
+		},
+		ToStateID: 0,
+	}
+	err = txStorage.AddTransfer(&tx2)
+	s.NoError(err)
+
+	commitments, err = createTransferCommitments([]models.Transfer{tx2}, txStorage, s.cfg, testDomain)
+	s.NoError(err)
+	s.Len(commitments, 1)
+
+	err = submitBatch(txtype.Transfer, commitments, txStorage, s.client.Client, s.cfg)
+	s.NoError(err)
+
+	batches, err := txStorage.GetBatchesInRange(nil, nil)
+	s.NoError(err)
+	s.Len(batches, 2)
+
+	txn.Rollback(nil)
+
+	batches, err = s.storage.GetBatchesInRange(nil, nil)
+	s.NoError(err)
+	s.Len(batches, 1)
+
+	err = s.transactionExecutor.SyncBatches()
 	s.NoError(err)
 
 	state0, err := s.storage.GetStateLeaf(0)
 	s.NoError(err)
-	s.Equal(models.MakeUint256(600), state0.Balance)
+	s.Equal(models.MakeUint256(700), state0.Balance)
 
 	state1, err := s.storage.GetStateLeaf(1)
 	s.NoError(err)
-	s.Equal(models.MakeUint256(400), state1.Balance)
+	s.Equal(models.MakeUint256(300), state1.Balance)
 
-	batches, err := s.storage.GetBatchesInRange(nil, nil)
+	batches, err = s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
-	s.Len(batches, 1)
+	s.Len(batches, 2)
 }
 
 func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
@@ -168,7 +208,7 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	s.NoError(err)
 	s.setupDB()
 
-	err = SyncBatches(s.storage, s.client.Client, s.cfg)
+	err = s.transactionExecutor.SyncBatches()
 	s.NoError(err)
 
 	state0, err := s.storage.GetStateLeaf(0)

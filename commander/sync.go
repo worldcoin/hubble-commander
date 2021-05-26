@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -17,28 +16,13 @@ var (
 	ErrTransfersNotApplied = errors.New("could not apply all transfers from synced batch")
 )
 
-func SyncBatches(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) (err error) {
-	tx, txStorage, err := storage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
-	if err != nil {
-		return
-	}
-	defer tx.Rollback(&err)
-
-	err = unsafeSyncBatches(txStorage, client, cfg)
+func (t *transactionExecutor) SyncBatches() error {
+	submissionBlock, latestBatchID, err := getLatestSubmissionBlockAndBatchID(t.storage, t.client)
 	if err != nil {
 		return err
 	}
 
-	return tx.Commit()
-}
-
-func unsafeSyncBatches(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
-	newBatches, err := client.GetBatches() // TODO query batches starting from the submission block of the latest known batch.
-	if err != nil {
-		return err
-	}
-
-	latestBatchID, err := getLatestBatchID(storage)
+	newBatches, err := t.client.GetBatches(submissionBlock)
 	if err != nil {
 		return err
 	}
@@ -48,7 +32,7 @@ func unsafeSyncBatches(storage *st.Storage, client *eth.Client, cfg *config.Roll
 		if batch.ID.Cmp(latestBatchID) <= 0 {
 			continue
 		}
-		if err := syncBatch(storage, cfg, batch); err != nil {
+		if err := t.syncBatch(batch); err != nil {
 			return err
 		}
 	}
@@ -56,33 +40,42 @@ func unsafeSyncBatches(storage *st.Storage, client *eth.Client, cfg *config.Roll
 	return nil
 }
 
-func getLatestBatchID(storage *st.Storage) (*models.Uint256, error) {
-	var latestBatchID models.Uint256
+func getLatestSubmissionBlockAndBatchID(storage *st.Storage, client *eth.Client) (*uint32, *models.Uint256, error) {
+	var submissionBlock uint32
+	var latestBatchID *models.Uint256
+
 	latestBatch, err := storage.GetLatestBatch()
 	if st.IsNotFoundError(err) {
-		latestBatchID = models.MakeUint256(0)
+		submissionBlock = 0
+		latestBatchID = models.NewUint256(0)
 	} else if err != nil {
-		return nil, err
+		return nil, nil, err
 	} else {
-		latestBatchID = latestBatch.ID
+		blocks, err := client.GetBlocksToFinalise()
+		if err != nil {
+			return nil, nil, err
+		}
+		submissionBlock = latestBatch.FinalisationBlock - uint32(*blocks)
+		latestBatchID = &latestBatch.ID
 	}
-	return &latestBatchID, nil
+
+	return &submissionBlock, latestBatchID, nil
 }
 
-func syncBatch(storage *st.Storage, cfg *config.RollupConfig, batch *eth.DecodedBatch) error {
-	err := storage.AddBatch(&batch.Batch)
+func (t *transactionExecutor) syncBatch(batch *eth.DecodedBatch) error {
+	err := t.storage.AddBatch(&batch.Batch)
 	if err != nil {
 		return err
 	}
 
 	switch batch.Type {
 	case txtype.Transfer:
-		err = syncTransferCommitments(storage, cfg, batch)
+		err = t.syncTransferCommitments(batch)
 		if err != nil {
 			return err
 		}
 	case txtype.Create2Transfer:
-		err = syncCreate2TransferCommitments(storage, cfg, batch)
+		err = t.syncCreate2TransferCommitments(batch)
 		if err != nil {
 			return err
 		}

@@ -8,9 +8,9 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func syncTransferCommitments(storage *st.Storage, cfg *config.RollupConfig, batch *eth.DecodedBatch) error {
+func (t *transactionExecutor) syncTransferCommitments(batch *eth.DecodedBatch) error {
 	for i := range batch.Commitments {
-		if err := syncTransferCommitment(storage, cfg, batch, &batch.Commitments[i]); err != nil {
+		if err := syncTransferCommitment(t.storage, t.cfg, batch, &batch.Commitments[i]); err != nil {
 			return err
 		}
 	}
