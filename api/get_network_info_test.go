@@ -27,7 +27,7 @@ func (s *NetworkInfoTestSuite) SetupSuite() {
 }
 
 func (s *NetworkInfoTestSuite) SetupTest() {
-	testStorage, err := st.NewTestStorage()
+	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.teardown = testStorage.Teardown
 	s.testClient, err = eth.NewTestClient()
@@ -116,6 +116,7 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
 	s.NoError(err)
 	s.NotNil(networkInfo)
 	s.Equal(uint32(1), networkInfo.BlockNumber)
+	s.Equal(uint32(0), networkInfo.AccountCount)
 	s.Equal(1, networkInfo.TransactionCount)
 	s.Equal("2000", *networkInfo.LatestBatch)
 	s.Equal("1234", *networkInfo.LatestFinalisedBatch)

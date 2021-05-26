@@ -40,5 +40,12 @@ func (a *API) GetNetworkInfo() (*dto.NetworkInfo, error) {
 	}
 	networkInfo.TransactionCount = *txCount
 
+	//TODO: sync with other nodes
+	accountCount, err := a.storage.GetNextAvailableStateID()
+	if err != nil {
+		return nil, err
+	}
+	networkInfo.AccountCount = *accountCount
+
 	return &networkInfo, nil
 }
