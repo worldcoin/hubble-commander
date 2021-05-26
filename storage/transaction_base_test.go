@@ -116,6 +116,26 @@ func (s *TransactionBaseTestSuite) TestBatchMarkTransactionAsIncluded() {
 	}
 }
 
+func (s *TransactionBaseTestSuite) TestGetTransactionsCount() {
+	err := s.storage.AddTransfer(&transferTransaction)
+	s.NoError(err)
+
+	c2t := create2Transfer
+	c2t.Hash = common.Hash{3, 4, 5}
+	err = s.storage.AddCreate2Transfer(&c2t)
+	s.NoError(err)
+
+	count, err := s.storage.GetTransactionsCount()
+	s.NoError(err)
+	s.Equal(2, *count)
+}
+
+func (s *TransactionBaseTestSuite) TestGetTransactionsCount_NoTransactions() {
+	count, err := s.storage.GetTransactionsCount()
+	s.NoError(err)
+	s.Equal(0, *count)
+}
+
 func TestTransactionBaseTestSuite(t *testing.T) {
 	suite.Run(t, new(TransactionBaseTestSuite))
 }

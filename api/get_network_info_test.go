@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -99,6 +100,15 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
 	err = s.api.storage.AddBatch(&batches[1])
 	s.NoError(err)
 
+	err = s.api.storage.AddTransfer(&models.Transfer{
+		TransactionBase: models.TransactionBase{
+			Hash:        common.Hash{1, 2, 3},
+			TxType:      txtype.Transfer,
+			FromStateID: 0,
+		},
+		ToStateID: 1,
+	})
+
 	s.api.storage.SetLatestBlockNumber(1)
 	expectedDomain := crypto.Keccak256(chainState.Rollup.Bytes())
 
@@ -106,6 +116,7 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
 	s.NoError(err)
 	s.NotNil(networkInfo)
 	s.Equal(uint32(1), networkInfo.BlockNumber)
+	s.Equal(1, networkInfo.TransactionCount)
 	s.Equal("2000", *networkInfo.LatestBatch)
 	s.Equal("1234", *networkInfo.LatestFinalisedBatch)
 	s.Equal(expectedDomain, networkInfo.SignatureDomain.Bytes())

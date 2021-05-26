@@ -3,6 +3,7 @@ package storage
 import (
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -62,4 +63,19 @@ func (s *Storage) SetTransactionError(txHash common.Hash, errorMessage string) e
 		return ErrNoRowsAffected
 	}
 	return nil
+}
+
+func (s *Storage) GetTransactionsCount() (*int, error) {
+	res := make([]int, 0, 1)
+	err := s.Postgres.Query(
+		s.QB.Select("COUNT(1)").
+			From("transaction_base"),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) < 1 {
+		return ref.Int(0), nil
+	}
+	return &res[0], nil
 }
