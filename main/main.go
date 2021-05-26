@@ -17,16 +17,17 @@ func main() {
 	devMode := flag.Bool("dev", false, "disable signature verification")
 	flag.Parse()
 
-	var cfg config.Config
+	var cfg *config.Config
 	if *devMode {
 		cfg = config.GetTestConfig()
 	} else {
-		cfg = *config.GetConfig()
+		cfg = config.GetConfig()
 	}
 
 	cfg.Rollup.Prune = *prune
+	config.WatchConfig(cfg)
 
-	cmd := commander.NewCommander(&cfg)
+	cmd := commander.NewCommander(cfg)
 
 	setupCloseHandler(cmd)
 

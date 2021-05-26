@@ -54,8 +54,8 @@ func GetConfig() *Config {
 	return &config
 }
 
-func GetTestConfig() Config {
-	return Config{
+func GetTestConfig() *Config {
+	return &Config{
 		Rollup: &RollupConfig{
 			SyncBatches:            false,
 			FeeReceiverPubKeyID:    0,
@@ -90,7 +90,6 @@ func updateConfig(cfg *Config) {
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("failed to read in config: %s", err)
 	}
-
 	cfg.Rollup.SyncBatches = viper.GetBool("sync_batches")
 	cfg.Rollup.FeeReceiverPubKeyID = viper.GetUint32("fee_receiver_pub_key_id")
 	cfg.Rollup.TxsPerCommitment = viper.GetUint32("txs_per_commitment")

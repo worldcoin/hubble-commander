@@ -23,13 +23,13 @@ func (s *DBTestSuite) SetupSuite() {
 
 func (s *DBTestSuite) SetupTest() {
 	cfg := config.GetTestConfig().Postgres
-	err := RecreateDatabase(&cfg)
+	err := RecreateDatabase(cfg)
 	s.NoError(err)
 
-	db, err := NewDatabase(&cfg)
+	db, err := NewDatabase(cfg)
 	s.NoError(err)
 	s.db = db
-	s.config = &cfg
+	s.config = cfg
 }
 
 func (s *DBTestSuite) TearDownTest() {
