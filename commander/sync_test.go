@@ -18,11 +18,12 @@ import (
 type SyncTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	teardown func() error
-	storage  *st.Storage
-	tree     *st.StateTree
-	client   *eth.TestClient
-	cfg      *config.RollupConfig
+	teardown            func() error
+	storage             *st.Storage
+	tree                *st.StateTree
+	client              *eth.TestClient
+	cfg                 *config.RollupConfig
+	transactionExecutor *transactionExecutor
 }
 
 func (s *SyncTestSuite) SetupSuite() {
@@ -51,6 +52,8 @@ func (s *SyncTestSuite) setupDB() {
 	s.tree = st.NewStateTree(s.storage)
 
 	s.seedDB()
+
+	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg)
 }
 
 func (s *SyncTestSuite) seedDB() {
@@ -116,7 +119,7 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	s.NoError(err)
 	s.setupDB()
 
-	err = SyncBatches(s.storage, s.client.Client, s.cfg)
+	err = s.transactionExecutor.SyncBatches()
 	s.NoError(err)
 
 	txn, txStorage, err := s.storage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
@@ -153,7 +156,7 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	s.NoError(err)
 	s.Len(batches, 1)
 
-	err = SyncBatches(s.storage, s.client.Client, s.cfg)
+	err = s.transactionExecutor.SyncBatches()
 	s.NoError(err)
 
 	state0, err := s.storage.GetStateLeaf(0)
@@ -205,7 +208,7 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	s.NoError(err)
 	s.setupDB()
 
-	err = SyncBatches(s.storage, s.client.Client, s.cfg)
+	err = s.transactionExecutor.SyncBatches()
 	s.NoError(err)
 
 	state0, err := s.storage.GetStateLeaf(0)

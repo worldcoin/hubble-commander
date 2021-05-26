@@ -3,32 +3,23 @@ package commander
 import (
 	"log"
 	"time"
-
-	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/eth"
-	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func BlockNumberEndlessLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
-	done := make(chan bool)
-	return BlockNumberLoop(storage, client, cfg, done)
-}
-
-func BlockNumberLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig, done <-chan bool) error {
-	ticker := time.NewTicker(cfg.BlockNumberLoopInterval)
+func (c *Commander) blockNumberLoop() error {
+	ticker := time.NewTicker(c.cfg.Rollup.BlockNumberLoopInterval)
 
 	for {
 		select {
-		case <-done:
+		case <-c.stopChannel:
 			ticker.Stop()
 			return nil
 		case <-ticker.C:
-			blockNumber, err := client.ChainConnection.GetLatestBlockNumber()
+			blockNumber, err := c.client.ChainConnection.GetLatestBlockNumber()
 			if err != nil {
 				log.Println(err.Error())
 				return err
 			}
-			storage.SetLatestBlockNumber(*blockNumber)
+			c.storage.SetLatestBlockNumber(*blockNumber)
 		}
 	}
 }

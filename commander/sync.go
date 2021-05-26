@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -17,28 +16,13 @@ var (
 	ErrTransfersNotApplied = errors.New("could not apply all transfers from synced batch")
 )
 
-func SyncBatches(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) (err error) {
-	tx, txStorage, err := storage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
-	if err != nil {
-		return
-	}
-	defer tx.Rollback(&err)
-
-	err = unsafeSyncBatches(txStorage, client, cfg)
+func (t *transactionExecutor) SyncBatches() error {
+	submissionBlock, latestBatchID, err := getLatestSubmissionBlockAndBatchID(t.storage, t.client)
 	if err != nil {
 		return err
 	}
 
-	return tx.Commit()
-}
-
-func unsafeSyncBatches(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
-	submissionBlock, latestBatchID, err := getLatestSubmissionBlockAndBatchID(storage, client)
-	if err != nil {
-		return err
-	}
-
-	newBatches, err := client.GetBatches(submissionBlock)
+	newBatches, err := t.client.GetBatches(submissionBlock)
 	if err != nil {
 		return err
 	}
@@ -48,7 +32,7 @@ func unsafeSyncBatches(storage *st.Storage, client *eth.Client, cfg *config.Roll
 		if batch.ID.Cmp(latestBatchID) <= 0 {
 			continue
 		}
-		if err := syncBatch(storage, cfg, batch); err != nil {
+		if err := t.syncBatch(batch); err != nil {
 			return err
 		}
 	}
@@ -78,20 +62,20 @@ func getLatestSubmissionBlockAndBatchID(storage *st.Storage, client *eth.Client)
 	return &submissionBlock, latestBatchID, nil
 }
 
-func syncBatch(storage *st.Storage, cfg *config.RollupConfig, batch *eth.DecodedBatch) error {
-	err := storage.AddBatch(&batch.Batch)
+func (t *transactionExecutor) syncBatch(batch *eth.DecodedBatch) error {
+	err := t.storage.AddBatch(&batch.Batch)
 	if err != nil {
 		return err
 	}
 
 	switch batch.Type {
 	case txtype.Transfer:
-		err = syncTransferCommitments(storage, cfg, batch)
+		err = t.syncTransferCommitments(batch)
 		if err != nil {
 			return err
 		}
 	case txtype.Create2Transfer:
-		err = syncCreate2TransferCommitments(storage, cfg, batch)
+		err = t.syncCreate2TransferCommitments(batch)
 		if err != nil {
 			return err
 		}

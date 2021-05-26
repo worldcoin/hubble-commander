@@ -12,86 +12,81 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func RollupEndlessLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) error {
-	done := make(chan bool)
-	return RollupLoop(storage, client, cfg, done)
-}
-
-func RollupLoop(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig, done <-chan bool) (err error) {
-	ticker := time.NewTicker(cfg.BatchLoopInterval)
+func (c *Commander) rollupLoop() (err error) {
+	ticker := time.NewTicker(c.cfg.Rollup.BatchLoopInterval)
 	defer ticker.Stop()
 
 	currentBatchType := txtype.Transfer
 
 	for {
 		select {
-		case <-done:
+		case <-c.stopChannel:
 			return nil
 		case <-ticker.C:
-			if cfg.SyncBatches {
-				err = SyncBatches(storage, client, cfg)
-				if err != nil {
-					return err
-				}
-			}
-
-			if currentBatchType == txtype.Transfer {
-				err = createAndSubmitBatch(currentBatchType, storage, client, cfg)
-				currentBatchType = txtype.Create2Transfer
-			} else {
-				err = createAndSubmitBatch(currentBatchType, storage, client, cfg)
-				currentBatchType = txtype.Transfer
-			}
-
+			err := c.rollupLoopIteration(&currentBatchType)
 			if err != nil {
-				var e *RollupError
-				if errors.As(err, &e) {
-					continue
-				}
 				return err
 			}
 		}
 	}
 }
 
-func createAndSubmitBatch(batchType txtype.TransactionType, storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) (err error) {
-	tx, txStorage, err := storage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
+func (c *Commander) rollupLoopIteration(currentBatchType *txtype.TransactionType) (err error) {
+	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, &c.cfg.Rollup)
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(&err)
+	defer transactionExecutor.Rollback(&err)
 
-	err = unsafeCreateAndSubmitBatch(batchType, txStorage, client, cfg)
+	if c.cfg.Rollup.SyncBatches {
+		err = transactionExecutor.SyncBatches()
+		if err != nil {
+			return err
+		}
+	}
+
+	if *currentBatchType == txtype.Transfer {
+		err = transactionExecutor.CreateAndSubmitBatch(*currentBatchType)
+		*currentBatchType = txtype.Create2Transfer
+	} else {
+		err = transactionExecutor.CreateAndSubmitBatch(*currentBatchType)
+		*currentBatchType = txtype.Transfer
+	}
+
+	if err != nil {
+		var e *RollupError
+		if errors.As(err, &e) {
+			return nil
+		}
+		return err
+	}
+
+	err = transactionExecutor.Commit()
 	if err != nil {
 		return err
 	}
 
-	return tx.Commit()
+	return nil
 }
 
-func unsafeCreateAndSubmitBatch(
-	batchType txtype.TransactionType,
-	storage *st.Storage,
-	client *eth.Client,
-	cfg *config.RollupConfig,
-) (err error) {
+func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionType) error {
 	var commitments []models.Commitment
 
-	domain, err := storage.GetDomain(client.ChainState.ChainID)
+	domain, err := t.storage.GetDomain(t.client.ChainState.ChainID)
 	if err != nil {
 		return err
 	}
 
 	if batchType == txtype.Transfer {
-		commitments, err = buildTransferCommitments(storage, cfg, *domain)
+		commitments, err = buildTransferCommitments(t.storage, t.cfg, *domain)
 	} else {
-		commitments, err = buildCreate2TransfersCommitments(storage, client, cfg, *domain)
+		commitments, err = buildCreate2TransfersCommitments(t.storage, t.client, t.cfg, *domain)
 	}
 	if err != nil {
 		return err
 	}
 
-	err = submitBatch(batchType, commitments, storage, client, cfg)
+	err = submitBatch(batchType, commitments, t.storage, t.client, t.cfg)
 	if err != nil {
 		return err
 	}
