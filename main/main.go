@@ -21,7 +21,7 @@ func main() {
 	if *devMode {
 		cfg = config.GetTestConfig()
 	} else {
-		cfg = config.GetConfig()
+		cfg = *config.GetViperConfig()
 	}
 
 	cfg.Rollup.Prune = *prune

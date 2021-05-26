@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
+	"github.com/fsnotify/fsnotify"
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
@@ -124,44 +125,52 @@ func getEthereumConfig() *EthereumConfig {
 	}
 }
 
-func getViperConfig() *Config {
+func GetViperConfig() *Config {
 	viper.SetConfigFile(path.Join(utils.GetProjectRoot(), "config.yml"))
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("HUBBLE")
 
+	var config Config
+	updateConfig(&config)
+	return &config
+}
+
+func updateConfig(config *Config) {
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("failed to read in config: %s", err)
 	}
 
-	return &Config{
-		Rollup: RollupConfig{
-			Prune:                   viper.GetBool("prune"),
-			SyncBatches:             viper.GetBool("sync_batches"),
-			FeeReceiverPubKeyID:     viper.GetUint32("fee_receiver_pub_key_id"),
-			TxsPerCommitment:        viper.GetUint32("txs_per_commitment"),
-			MinCommitmentsPerBatch:  viper.GetUint32("min_commitments_per_batch"),
-			MaxCommitmentsPerBatch:  viper.GetUint32("max_commitments_per_batch"),
-			CommitmentLoopInterval:  viper.GetDuration("commitment_loop_interval"),
-			BatchLoopInterval:       viper.GetDuration("batch_loop_interval"),
-			BlockNumberLoopInterval: viper.GetDuration("block_number_loop_interval"),
-			GenesisAccounts:         getGenesisAccounts(),
-		},
-		API: APIConfig{
-			Version: viper.GetString("version"),
-			Port:    viper.GetString("port"),
-			DevMode: viper.GetBool("dev_mode"),
-		},
-		Postgres: PostgresConfig{
-			Host:           getFromViperOrDefault("dbhost", nil),
-			Port:           getFromViperOrDefault("dbport", nil),
-			Name:           viper.GetString("dbname"),
-			User:           getFromViperOrDefault("dbuser", nil),
-			Password:       getFromViperOrDefault("dbpassword", nil),
-			MigrationsPath: *getFromViperOrDefault("migrations_path", ref.String(getMigrationsPath())),
-		},
-		Badger: BadgerConfig{
-			Path: *getFromViperOrDefault("badger_path", ref.String(getBadgerPath())),
-		},
-		Ethereum: getEthereumConfig(),
-	}
+	//config.Rollup.Prune = viper.GetBool("prune")
+	config.Rollup.SyncBatches = viper.GetBool("sync_batches")
+	config.Rollup.FeeReceiverPubKeyID = viper.GetUint32("fee_receiver_pub_key_id")
+	config.Rollup.TxsPerCommitment = viper.GetUint32("txs_per_commitment")
+	config.Rollup.MinCommitmentsPerBatch = viper.GetUint32("min_commitments_per_batch")
+	config.Rollup.MaxCommitmentsPerBatch = viper.GetUint32("max_commitments_per_batch")
+	config.Rollup.CommitmentLoopInterval = viper.GetDuration("commitment_loop_interval")
+	config.Rollup.BatchLoopInterval = viper.GetDuration("batch_loop_interval")
+	config.Rollup.BlockNumberLoopInterval = viper.GetDuration("block_number_loop_interval")
+	config.Rollup.GenesisAccounts = getGenesisAccounts()
+
+	config.API.Version = viper.GetString("version")
+	config.API.Port = viper.GetString("port")
+	//config.API.DevMode = viper.GetBool("dev_mode")
+
+	config.Postgres.Host = getFromViperOrDefault("dbhost", nil)
+	config.Postgres.Port = getFromViperOrDefault("dbport", nil)
+	config.Postgres.Name = viper.GetString("dbname")
+	config.Postgres.User = getFromViperOrDefault("dbuser", nil)
+	config.Postgres.Password = getFromViperOrDefault("dbpassword", nil)
+	config.Postgres.MigrationsPath = *getFromViperOrDefault("migrations_path", ref.String(getMigrationsPath()))
+
+	config.Badger.Path = *getFromViperOrDefault("badger_path", ref.String(getBadgerPath()))
+	config.Ethereum = getEthereumConfig()
+	viper.SetEnvPrefix("HUBBLE")
+}
+
+func WatchConfig(config *Config) {
+	viper.WatchConfig()
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		log.Printf("config file changed: %s", e.Name)
+		updateConfig(config)
+	})
 }

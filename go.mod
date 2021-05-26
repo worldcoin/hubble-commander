@@ -8,6 +8,7 @@ require (
 	github.com/docker/docker v17.12.0-ce-rc1.0.20200618181300-9dc6525e6118+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/ethereum/go-ethereum v1.10.1
+	github.com/fsnotify/fsnotify v1.4.9
 	github.com/golang-migrate/migrate/v4 v4.14.1
 	github.com/holiman/uint256 v1.1.1
 	github.com/jmoiron/sqlx v1.3.1
@@ -16,7 +17,7 @@ require (
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/lib/pq v1.9.0 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/spf13/viper v1.7.1 // indirect
+	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0
 	github.com/timshannon/badgerhold/v3 v3.0.0-20210415132401-e7c90fb5919f
 	github.com/ybbus/jsonrpc/v2 v2.1.6
