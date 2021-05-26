@@ -65,7 +65,7 @@ func (s *Storage) SetTransactionError(txHash common.Hash, errorMessage string) e
 	return nil
 }
 
-func (s *Storage) GetTransactionsCount() (*int, error) {
+func (s *Storage) GetTransactionCount() (*int, error) {
 	res := make([]int, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Select("COUNT(1)").

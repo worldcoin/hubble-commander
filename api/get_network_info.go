@@ -34,7 +34,7 @@ func (a *API) GetNetworkInfo() (*dto.NetworkInfo, error) {
 	}
 	networkInfo.SignatureDomain = *domain
 
-	txCount, err := a.storage.GetTransactionsCount()
+	txCount, err := a.storage.GetTransactionCount()
 	if err != nil {
 		return nil, err
 	}
