@@ -9,12 +9,15 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 )
 
-func (c *Client) GetBatches() ([]DecodedBatch, error) {
-	it, err := c.Rollup.FilterNewBatch(nil)
+func (c *Client) GetBatches(latestBatchSubmissionBlock *uint32) ([]DecodedBatch, error) {
+	it, err := c.Rollup.FilterNewBatch(&bind.FilterOpts{
+		Start: uint64(*latestBatchSubmissionBlock) + 1,
+	})
 	if err != nil {
 		return nil, err
 	}

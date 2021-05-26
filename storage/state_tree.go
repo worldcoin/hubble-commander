@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"bytes"
-	"encoding/gob"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -141,11 +139,6 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 	return txn.Commit()
 }
 
-func decodeKey(data []byte, key interface{}, prefix []byte) error {
-	return gob.NewDecoder(bytes.NewReader(data[len(prefix):])).
-		Decode(key)
-}
-
 func decodeStateUpdate(item *bdg.Item) (*models.StateUpdate, error) {
 	var stateUpdate models.StateUpdate
 	err := item.Value(func(v []byte) error {
@@ -154,7 +147,7 @@ func decodeStateUpdate(item *bdg.Item) (*models.StateUpdate, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = decodeKey(item.Key(), &stateUpdate.ID, stateUpdatePrefix)
+	err = badger.DecodeKey(item.Key(), &stateUpdate.ID, stateUpdatePrefix)
 	if err != nil {
 		return nil, err
 	}
