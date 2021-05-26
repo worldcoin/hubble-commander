@@ -42,7 +42,13 @@ func GetConfig() *Config {
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("HUBBLE")
 
-	var config Config
+	config := Config{
+		Rollup:   &RollupConfig{},
+		API:      &APIConfig{},
+		Postgres: &PostgresConfig{},
+		Badger:   &BadgerConfig{},
+		Ethereum: &EthereumConfig{},
+	}
 	updateConfig(&config)
 	config.Rollup.GenesisAccounts = getGenesisAccounts()
 	return &config
@@ -50,22 +56,22 @@ func GetConfig() *Config {
 
 func GetTestConfig() Config {
 	return Config{
-		Rollup: RollupConfig{
-			SyncBatches:             false,
-			FeeReceiverPubKeyID:     0,
-			TxsPerCommitment:        2,
-			MinCommitmentsPerBatch:  1,
-			MaxCommitmentsPerBatch:  32,
-			CommitmentLoopInterval:  500 * time.Millisecond,
-			BatchLoopInterval:       500 * time.Millisecond,
-			GenesisAccounts:         getGenesisAccounts(),
+		Rollup: &RollupConfig{
+			SyncBatches:            false,
+			FeeReceiverPubKeyID:    0,
+			TxsPerCommitment:       2,
+			MinCommitmentsPerBatch: 1,
+			MaxCommitmentsPerBatch: 32,
+			CommitmentLoopInterval: 500 * time.Millisecond,
+			BatchLoopInterval:      500 * time.Millisecond,
+			GenesisAccounts:        getGenesisAccounts(),
 		},
-		API: APIConfig{
+		API: &APIConfig{
 			Version: "dev-0.0.1",
 			Port:    *getEnvOrDefault("HUBBLE_PORT", ref.String("8080")),
 			DevMode: true,
 		},
-		Postgres: PostgresConfig{
+		Postgres: &PostgresConfig{
 			Host:           getEnvOrDefault("HUBBLE_DBHOST", nil),
 			Port:           getEnvOrDefault("HUBBLE_DBPORT", nil),
 			Name:           *getEnvOrDefault("HUBBLE_DBNAME", ref.String("hubble_test")),
@@ -73,38 +79,42 @@ func GetTestConfig() Config {
 			Password:       getEnvOrDefault("HUBBLE_DBPASSWORD", nil),
 			MigrationsPath: getMigrationsPath(),
 		},
-		Badger: BadgerConfig{
+		Badger: &BadgerConfig{
 			Path: *getEnvOrDefault("HUBBLE_BADGER_PATH", ref.String(getBadgerPath())),
 		},
 		Ethereum: getEthereumConfig(),
 	}
 }
 
-func updateConfig(config *Config) {
+func updateConfig(cfg *Config) {
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("failed to read in config: %s", err)
 	}
 
-	config.Rollup.SyncBatches = viper.GetBool("sync_batches")
-	config.Rollup.FeeReceiverPubKeyID = viper.GetUint32("fee_receiver_pub_key_id")
-	config.Rollup.TxsPerCommitment = viper.GetUint32("txs_per_commitment")
-	config.Rollup.MinCommitmentsPerBatch = viper.GetUint32("min_commitments_per_batch")
-	config.Rollup.MaxCommitmentsPerBatch = viper.GetUint32("max_commitments_per_batch")
-	config.Rollup.CommitmentLoopInterval = viper.GetDuration("commitment_loop_interval")
-	config.Rollup.BatchLoopInterval = viper.GetDuration("batch_loop_interval")
+	cfg.Rollup.SyncBatches = viper.GetBool("sync_batches")
+	cfg.Rollup.FeeReceiverPubKeyID = viper.GetUint32("fee_receiver_pub_key_id")
+	cfg.Rollup.TxsPerCommitment = viper.GetUint32("txs_per_commitment")
+	cfg.Rollup.MinCommitmentsPerBatch = viper.GetUint32("min_commitments_per_batch")
+	cfg.Rollup.MaxCommitmentsPerBatch = viper.GetUint32("max_commitments_per_batch")
+	cfg.Rollup.CommitmentLoopInterval = viper.GetDuration("commitment_loop_interval")
+	cfg.Rollup.BatchLoopInterval = viper.GetDuration("batch_loop_interval")
 
-	config.API.Version = viper.GetString("version")
-	config.API.Port = viper.GetString("port")
+	cfg.API.Version = viper.GetString("version")
+	cfg.API.Port = viper.GetString("port")
 
-	config.Postgres.Host = getFromViperOrDefault("dbhost", nil)
-	config.Postgres.Port = getFromViperOrDefault("dbport", nil)
-	config.Postgres.Name = viper.GetString("dbname")
-	config.Postgres.User = getFromViperOrDefault("dbuser", nil)
-	config.Postgres.Password = getFromViperOrDefault("dbpassword", nil)
-	config.Postgres.MigrationsPath = *getFromViperOrDefault("migrations_path", ref.String(getMigrationsPath()))
+	cfg.Postgres.Host = getFromViperOrDefault("dbhost", nil)
+	cfg.Postgres.Port = getFromViperOrDefault("dbport", nil)
+	cfg.Postgres.Name = viper.GetString("dbname")
+	cfg.Postgres.User = getFromViperOrDefault("dbuser", nil)
+	cfg.Postgres.Password = getFromViperOrDefault("dbpassword", nil)
+	cfg.Postgres.MigrationsPath = *getFromViperOrDefault("migrations_path", ref.String(getMigrationsPath()))
 
-	config.Badger.Path = *getFromViperOrDefault("badger_path", ref.String(getBadgerPath()))
-	config.Ethereum = getEthereumConfig()
+	cfg.Badger.Path = *getFromViperOrDefault("badger_path", ref.String(getBadgerPath()))
+
+	viper.SetEnvPrefix("ETHEREUM")
+	cfg.Ethereum.RPCURL = viper.GetString("rpc_url")
+	cfg.Ethereum.ChainID = viper.GetString("chain_id")
+	cfg.Ethereum.PrivateKey = viper.GetString("private_key")
 	viper.SetEnvPrefix("HUBBLE")
 }
 
@@ -120,15 +130,14 @@ func getGenesisAccounts() []models.GenesisAccount {
 }
 
 func getEthereumConfig() *EthereumConfig {
-	viper.SetEnvPrefix("ETHEREUM")
-	rpcURL := viper.GetString("rpc_url")
-	if len(rpcURL) < 1 {
+	rpcURL := getEnvOrDefault("ETHEREUM_RPC_URL", nil)
+	if rpcURL == nil {
 		return nil
 	}
 	return &EthereumConfig{
-		RPCURL:     rpcURL,
-		ChainID:    viper.GetString("chain_id"),
-		PrivateKey: viper.GetString("private_key"),
+		RPCURL:     *rpcURL,
+		ChainID:    getEnv("ETHEREUM_CHAIN_ID"),
+		PrivateKey: getEnv("ETHEREUM_PRIVATE_KEY"),
 	}
 }
 

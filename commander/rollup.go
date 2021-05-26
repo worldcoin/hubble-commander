@@ -36,7 +36,7 @@ func (c *Commander) rollupLoopIteration(currentBatchType *txtype.TransactionType
 		return nil
 	}
 
-	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, &c.cfg.Rollup)
+	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, c.cfg.Rollup)
 	if err != nil {
 		return err
 	}
