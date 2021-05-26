@@ -22,7 +22,7 @@ func TestFlatStateLeaf_ByteEncoding(t *testing.T) {
 	require.Equal(t, leaf, decodedLeaf)
 }
 
-func Test_pubKeyIDIndex(t *testing.T) {
+func TestTupleIndex(t *testing.T) {
 	leaf := FlatStateLeaf{
 		PubKeyID:   26,
 		TokenIndex: MakeUint256(25),
