@@ -27,7 +27,7 @@ func Test_pubKeyIDIndex(t *testing.T) {
 		PubKeyID:   26,
 		TokenIndex: MakeUint256(25),
 	}
-	encoded, err := PubKeyIDIndex("Combined", leaf)
+	encoded, err := tupleIndex("Tuple", leaf)
 	require.NoError(t, err)
 
 	var decoded StateLeafIndex

@@ -16,7 +16,7 @@ type FlatStateLeaf struct {
 	StateID    uint32
 	DataHash   common.Hash
 	PubKeyID   uint32
-	TokenIndex Uint256 // TODO: Consider adding a tuple index of (Pubkey; tokenIdx)
+	TokenIndex Uint256
 	Balance    Uint256
 	Nonce      Uint256
 }
@@ -76,19 +76,19 @@ func (l FlatStateLeaf) Type() string {
 // Indexes implements badgerhold.Storer
 func (l FlatStateLeaf) Indexes() map[string]badgerhold.Index {
 	return map[string]badgerhold.Index{
-		"Combined": {
-			IndexFunc: PubKeyIDIndex,
+		"Tuple": {
+			IndexFunc: tupleIndex,
 			Unique:    false,
 		},
 	}
 }
 
-func PubKeyIDIndex(_ string, value interface{}) ([]byte, error) {
+func tupleIndex(_ string, value interface{}) ([]byte, error) {
 	leaf, ok := value.(FlatStateLeaf)
 	if !ok {
 		return nil, errors.New("invalid type for FlatStateLeaf index")
 	}
-	index := &StateLeafIndex{
+	index := StateLeafIndex{
 		PubKeyID:   leaf.PubKeyID,
 		TokenIndex: leaf.TokenIndex,
 	}

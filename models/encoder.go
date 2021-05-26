@@ -24,9 +24,11 @@ func Encode(value interface{}) ([]byte, error) {
 		return nil, errors.Errorf("pass by value")
 	case StateUpdate:
 		return v.Bytes(), nil
-	case *StateLeafIndex:
-		return v.Bytes(), nil
 	case *StateUpdate:
+		return nil, errors.Errorf("pass by value")
+	case StateLeafIndex:
+		return v.Bytes(), nil
+	case *StateLeafIndex:
 		return nil, errors.Errorf("pass by value")
 	case uint32:
 		return EncodeUint32(&v)

@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	bdg "github.com/dgraph-io/badger/v3"
@@ -36,7 +35,7 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) (userSta
 	leaves := make([]models.FlatStateLeaf, 0, 1)
 	err = s.Badger.Find(
 		&leaves,
-		bh.Where("PubKeyID").In(pubKeyIDs...).Index("PubKeyID"),
+		bh.Where("PubKeyID").In(pubKeyIDs...),
 	)
 	if err != nil {
 		return nil, err
@@ -80,10 +79,10 @@ func (s *Storage) GetStateLeafByPubKeyIDAndTokenIndex(pubKeyID uint32, tokenInde
 	leaves := make([]models.FlatStateLeaf, 0, 1)
 	err := s.Badger.Find(
 		&leaves,
-		bh.Where("Combined").Eq(models.StateLeafIndex{
+		bh.Where("Tuple").Eq(models.StateLeafIndex{
 			PubKeyID:   pubKeyID,
 			TokenIndex: tokenIndex,
-		}).Index("Combined"),
+		}).Index("Tuple"),
 	)
 	if err != nil {
 		return nil, err
@@ -112,7 +111,7 @@ func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
 		if it.ValidForPrefix(flatStateLeafPrefix) {
 			var key uint32
 			decodedKey := it.Item().Key()[len(flatStateLeafPrefix):]
-			err := badger.DecodeUint32(decodedKey, &key)
+			err := models.DecodeUint32(decodedKey, &key)
 			if err != nil {
 				return err
 			}
