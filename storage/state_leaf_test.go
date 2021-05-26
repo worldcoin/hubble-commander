@@ -249,9 +249,9 @@ func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf_WorkWithCachedValue() {
 }
 
 func (s *StateLeafTestSuite) TestGetNextAvailableStateID_NoLeavesInStateTree() {
-	path, err := s.storage.GetNextAvailableStateID()
+	stateID, err := s.storage.GetNextAvailableStateID()
 	s.NoError(err)
-	s.Equal(uint32(0), *path)
+	s.Equal(uint32(0), *stateID)
 }
 
 func (s *StateLeafTestSuite) TestGetNextAvailableStateID_OneBytes() {
@@ -267,9 +267,9 @@ func (s *StateLeafTestSuite) TestGetNextAvailableStateID_OneBytes() {
 	err = tree.Set(2, userState2)
 	s.NoError(err)
 
-	path, err := s.storage.GetNextAvailableStateID()
+	stateID, err := s.storage.GetNextAvailableStateID()
 	s.NoError(err)
-	s.Equal(uint32(3), *path)
+	s.Equal(uint32(3), *stateID)
 }
 
 func (s *StateLeafTestSuite) TestGetNextAvailableStateID_TwoBytes() {
@@ -285,9 +285,9 @@ func (s *StateLeafTestSuite) TestGetNextAvailableStateID_TwoBytes() {
 	err = tree.Set(13456, userState2)
 	s.NoError(err)
 
-	path, err := s.storage.GetNextAvailableStateID()
+	stateID, err := s.storage.GetNextAvailableStateID()
 	s.NoError(err)
-	s.Equal(uint32(13457), *path)
+	s.Equal(uint32(13457), *stateID)
 }
 
 func TestStateLeafTestSuite(t *testing.T) {
