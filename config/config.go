@@ -38,7 +38,7 @@ func getGenesisPath() string {
 }
 
 func GetConfig() *Config {
-	viper.SetConfigFile(path.Join(utils.GetProjectRoot(), "config.yml"))
+	viper.SetConfigFile(path.Join(utils.GetProjectRoot(), "config.yaml"))
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("HUBBLE")
 
