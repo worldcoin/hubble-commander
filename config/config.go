@@ -132,6 +132,7 @@ func GetViperConfig() *Config {
 
 	var config Config
 	updateConfig(&config)
+	config.Rollup.GenesisAccounts = getGenesisAccounts()
 	return &config
 }
 
@@ -149,7 +150,6 @@ func updateConfig(config *Config) {
 	config.Rollup.CommitmentLoopInterval = viper.GetDuration("commitment_loop_interval")
 	config.Rollup.BatchLoopInterval = viper.GetDuration("batch_loop_interval")
 	config.Rollup.BlockNumberLoopInterval = viper.GetDuration("block_number_loop_interval")
-	config.Rollup.GenesisAccounts = getGenesisAccounts()
 
 	config.API.Version = viper.GetString("version")
 	config.API.Port = viper.GetString("port")

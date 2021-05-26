@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/spf13/viper"
@@ -25,8 +24,5 @@ func TestGetTestConfig(t *testing.T) {
 	WatchConfig(config)
 
 	oldConfig := GetConfig()
-	time.Sleep(10 * time.Second)
-	fmt.Println(config.API.Version)
-
 	require.Equal(t, oldConfig, *config)
 }

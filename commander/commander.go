@@ -49,6 +49,9 @@ func (c *Commander) Start() error {
 	if err != nil {
 		return err
 	}
+	defer func() {
+		fmt.Println(err)
+	}()
 
 	c.storage, err = st.NewStorage(&c.cfg.Postgres, &c.cfg.Badger)
 	if err != nil {
