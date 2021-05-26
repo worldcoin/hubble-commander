@@ -1,10 +1,12 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/utils/ref"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 )
 
@@ -13,4 +15,14 @@ func TestGetEnvOrDefault(t *testing.T) {
 
 	require.Equal(t, "foo", *getEnvOrDefault("HUBBLE_FOO", ref.String("bar")))
 	require.Equal(t, "bar", *getEnvOrDefault("HUBBLE_BAR", ref.String("bar")))
+}
+
+func TestGetTestConfig(t *testing.T) {
+	config := getViperConfig()
+	fmt.Printf("%+v\n", config.Ethereum)
+	fmt.Println(viper.GetBool("rollup.sync_batches"))
+
+	oldConfig := GetConfig()
+
+	require.Equal(t, oldConfig, *config)
 }

@@ -112,24 +112,56 @@ func getGenesisAccounts() []models.GenesisAccount {
 }
 
 func getEthereumConfig() *EthereumConfig {
-	rpcURL := getEnvOrDefault("ETHEREUM_RPC_URL", nil)
-	if rpcURL == nil {
+	viper.SetEnvPrefix("ETHEREUM")
+	rpcURL := viper.GetString("rpc_url")
+	if len(rpcURL) < 1 {
 		return nil
 	}
 	return &EthereumConfig{
-		RPCURL:     *rpcURL,
-		ChainID:    getEnv("ETHEREUM_CHAIN_ID"),
-		PrivateKey: getEnv("ETHEREUM_PRIVATE_KEY"),
+		RPCURL:     rpcURL,
+		ChainID:    viper.GetString("chain_id"),
+		PrivateKey: viper.GetString("private_key"),
 	}
 }
 
-func getViperConfig() (*Config, error) {
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
+func getViperConfig() *Config {
+	viper.SetConfigFile(path.Join(utils.GetProjectRoot(), "config.yml"))
+	viper.AutomaticEnv()
+	viper.SetEnvPrefix("HUBBLE")
+
 	if err := viper.ReadInConfig(); err != nil {
-		return nil, err
+		log.Fatalf("failed to read in config: %s", err)
 	}
 
-	viper.Unmarshal()
-
+	return &Config{
+		Rollup: RollupConfig{
+			Prune:                   viper.GetBool("prune"),
+			SyncBatches:             viper.GetBool("sync_batches"),
+			FeeReceiverPubKeyID:     viper.GetUint32("fee_receiver_pub_key_id"),
+			TxsPerCommitment:        viper.GetUint32("txs_per_commitment"),
+			MinCommitmentsPerBatch:  viper.GetUint32("min_commitments_per_batch"),
+			MaxCommitmentsPerBatch:  viper.GetUint32("max_commitments_per_batch"),
+			CommitmentLoopInterval:  viper.GetDuration("commitment_loop_interval"),
+			BatchLoopInterval:       viper.GetDuration("batch_loop_interval"),
+			BlockNumberLoopInterval: viper.GetDuration("block_number_loop_interval"),
+			GenesisAccounts:         getGenesisAccounts(),
+		},
+		API: APIConfig{
+			Version: viper.GetString("version"),
+			Port:    viper.GetString("port"),
+			DevMode: viper.GetBool("dev_mode"),
+		},
+		Postgres: PostgresConfig{
+			Host:           getFromViperOrDefault("dbhost", nil),
+			Port:           getFromViperOrDefault("dbport", nil),
+			Name:           viper.GetString("dbname"),
+			User:           getFromViperOrDefault("dbuser", nil),
+			Password:       getFromViperOrDefault("dbpassword", nil),
+			MigrationsPath: *getFromViperOrDefault("migrations_path", ref.String(getMigrationsPath())),
+		},
+		Badger: BadgerConfig{
+			Path: *getFromViperOrDefault("badger_path", ref.String(getBadgerPath())),
+		},
+		Ethereum: getEthereumConfig(),
+	}
 }
