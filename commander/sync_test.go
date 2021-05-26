@@ -156,7 +156,7 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	s.NoError(err)
 	s.Len(batches, 1)
 
-	err = SyncBatches(s.storage, s.client.Client, s.cfg)
+	err = s.transactionExecutor.SyncBatches()
 	s.NoError(err)
 
 	state0, err := s.storage.GetStateLeaf(0)
