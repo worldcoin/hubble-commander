@@ -28,17 +28,19 @@ func (c *Commander) newBlockLoop() error {
 			}
 			c.storage.SetProposer(isProposer)
 
-			if !isProposer {
-				err = c.SyncBatches()
-				if err != nil {
-					return err
-				}
+			err = c.SyncBatches(isProposer)
+			if err != nil {
+				return err
 			}
 		}
 	}
 }
 
-func (c *Commander) SyncBatches() (err error) {
+func (c *Commander) SyncBatches(isProposer bool) (err error) {
+	if isProposer {
+		return nil
+	}
+
 	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, &c.cfg.Rollup)
 	if err != nil {
 		return err
