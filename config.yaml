@@ -14,14 +14,9 @@ port: "8080"
 
 #postgres
 dbhost: localhost
-dbport:
 dbname: hubble
 dbuser: hubble
 dbpassword: root
-migrations_path:
-
-#badger
-badger_path:
 
 #ethereum
 rpc_url: ws://localhost:8545
