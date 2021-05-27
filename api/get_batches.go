@@ -19,7 +19,7 @@ func (a *API) GetBatches(from, to *models.Uint256) ([]models.BatchWithSubmission
 	for i := range batches {
 		batchesWithSubmission = append(batchesWithSubmission, models.BatchWithSubmissionBlock{
 			Batch:           batches[i],
-			SubmissionBlock: batches[i].FinalisationBlock - uint32(*blocksToFinalise),
+			SubmissionBlock: *batches[i].FinalisationBlock - uint32(*blocksToFinalise),
 		})
 	}
 	return batchesWithSubmission, nil

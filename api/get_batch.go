@@ -11,12 +11,12 @@ func (a *API) GetBatchByHash(hash common.Hash) (*dto.BatchWithCommitments, error
 	if err != nil {
 		return nil, err
 	}
-	batch.SubmissionBlock, err = a.getSubmissionBlock(batch.FinalisationBlock)
+	batch.SubmissionBlock, err = a.getSubmissionBlock(*batch.FinalisationBlock)
 	if err != nil {
 		return nil, err
 	}
 
-	commitments, err := a.storage.GetCommitmentsByBatchHash(&hash)
+	commitments, err := a.storage.GetCommitmentsByBatchNumber(*batch.Number)
 	if err != nil {
 		return nil, err
 	}
@@ -24,16 +24,16 @@ func (a *API) GetBatchByHash(hash common.Hash) (*dto.BatchWithCommitments, error
 }
 
 func (a *API) GetBatchByID(id models.Uint256) (*dto.BatchWithCommitments, error) {
-	batch, err := a.storage.GetBatchWithAccountRootByID(id)
+	batch, err := a.storage.GetBatchWithAccountRootByNumber(id)
 	if err != nil {
 		return nil, err
 	}
-	batch.SubmissionBlock, err = a.getSubmissionBlock(batch.FinalisationBlock)
+	batch.SubmissionBlock, err = a.getSubmissionBlock(*batch.FinalisationBlock)
 	if err != nil {
 		return nil, err
 	}
 
-	commitments, err := a.storage.GetCommitmentsByBatchID(id)
+	commitments, err := a.storage.GetCommitmentsByBatchNumber(id)
 	if err != nil {
 		return nil, err
 	}

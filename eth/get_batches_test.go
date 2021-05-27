@@ -56,7 +56,7 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 	_, _, err = s.client.SubmitTransfersBatch([]models.Commitment{commitment2})
 	s.NoError(err)
 
-	submissionBlockBatch1 := batch1.FinalisationBlock - uint32(*finalisationBlocks)
+	submissionBlockBatch1 := *batch1.FinalisationBlock - uint32(*finalisationBlocks)
 
 	batches, err := s.client.GetBatches(&submissionBlockBatch1)
 	s.NoError(err)

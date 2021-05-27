@@ -39,12 +39,12 @@ func submitBatch(
 		return err
 	}
 
-	_, err = storage.AddBatch(batch)
+	batchID, err := storage.AddBatch(batch)
 	if err != nil {
 		return err
 	}
 
-	err = markCommitmentsAsIncluded(storage, commitments, &batch.Hash, accountRoot)
+	err = markCommitmentsAsIncluded(storage, commitments, *batchID, accountRoot)
 	if err != nil {
 		return err
 	}
@@ -54,9 +54,9 @@ func submitBatch(
 	return nil
 }
 
-func markCommitmentsAsIncluded(storage *st.Storage, commitments []models.Commitment, batchHash, accountRoot *common.Hash) error {
+func markCommitmentsAsIncluded(storage *st.Storage, commitments []models.Commitment, batchID int32, accountRoot *common.Hash) error {
 	for i := range commitments {
-		err := storage.MarkCommitmentAsIncluded(commitments[i].ID, batchHash, accountRoot)
+		err := storage.MarkCommitmentAsIncluded(commitments[i].ID, batchID, accountRoot)
 		if err != nil {
 			return err
 		}

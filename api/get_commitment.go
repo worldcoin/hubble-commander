@@ -24,14 +24,14 @@ func (a *API) GetCommitment(id int32) (*dto.Commitment, error) {
 		return nil, err
 	}
 
-	batch, err := a.storage.GetBatch(*commitment.IncludedInBatch)
+	batch, err := a.storage.GetBatchByCommitmentID(commitment.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &dto.Commitment{
 		Commitment:   *commitment,
-		Status:       *calculateFinalisedStatus(a.storage.GetLatestBlockNumber(), batch.FinalisationBlock),
+		Status:       *calculateFinalisedStatus(a.storage.GetLatestBlockNumber(), *batch.FinalisationBlock),
 		Transactions: transactions,
 	}, nil
 }

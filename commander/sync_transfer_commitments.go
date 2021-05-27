@@ -48,7 +48,7 @@ func syncTransferCommitment(
 		CombinedSignature: commitment.CombinedSignature,
 		PostStateRoot:     commitment.StateRoot,
 		AccountTreeRoot:   &batch.AccountRoot,
-		IncludedInBatch:   &batch.Hash,
+		IncludedInBatch:   &batch.ID,
 	})
 	return err
 }

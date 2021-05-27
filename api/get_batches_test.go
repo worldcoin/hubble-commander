@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -35,9 +36,11 @@ func (s *GetBatchesTestSuite) SetupTest() {
 	s.api = &API{storage: s.storage.Storage, client: s.testClient.Client}
 
 	s.batch = models.Batch{
-		Hash:              utils.RandomHash(),
+		ID:                1,
+		Hash:              utils.NewRandomHash(),
 		Type:              txtype.Transfer,
-		FinalisationBlock: 42000,
+		FinalisationBlock: ref.Uint32(42000),
+		Number:            models.NewUint256(1),
 	}
 }
 
@@ -56,7 +59,7 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 	s.NotNil(result)
 	s.Len(result, 1)
 	s.Equal(s.batch, result[0].Batch)
-	s.Equal(s.batch.FinalisationBlock-rollup.DefaultBlocksToFinalise, result[0].SubmissionBlock)
+	s.Equal(*s.batch.FinalisationBlock-rollup.DefaultBlocksToFinalise, result[0].SubmissionBlock)
 }
 
 func (s *GetBatchesTestSuite) TestGetBatchesByHash_NoBatches() {

@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -31,13 +32,15 @@ func (s *GetCommitmentTestSuite) SetupTest() {
 	s.api = &API{storage: s.storage.Storage}
 
 	s.batch = models.Batch{
-		Hash:              utils.RandomHash(),
+		ID:                1,
+		Hash:              utils.NewRandomHash(),
 		Type:              txtype.Transfer,
-		FinalisationBlock: 113,
+		FinalisationBlock: ref.Uint32(113),
+		Number:            models.NewUint256(1),
 	}
 
 	s.commitment = commitment
-	s.commitment.IncludedInBatch = &s.batch.Hash
+	s.commitment.IncludedInBatch = &s.batch.ID
 }
 
 func (s *GetCommitmentTestSuite) TearDownTest() {

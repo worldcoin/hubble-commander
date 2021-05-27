@@ -24,7 +24,7 @@ func CalculateTransferStatus(
 		return nil, err
 	}
 
-	return calculateFinalisedStatus(latestBlockNumber, batch.FinalisationBlock), nil
+	return calculateFinalisedStatus(latestBlockNumber, *batch.FinalisationBlock), nil
 }
 
 func calculateFinalisedStatus(latestBlockNumber, batchFinalisationBlock uint32) *txstatus.TransactionStatus {
