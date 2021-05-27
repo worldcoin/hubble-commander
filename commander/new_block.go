@@ -47,7 +47,7 @@ func (c *Commander) SyncBatches(isProposer bool) (err error) {
 		return nil
 	}
 
-	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, &c.cfg.Rollup)
+	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, c.cfg.Rollup)
 	if err != nil {
 		return err
 	}

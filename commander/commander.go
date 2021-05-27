@@ -44,12 +44,12 @@ func (c *Commander) Start() error {
 	if c.IsRunning() {
 		return nil
 	}
-	migrator, err := postgres.GetMigrator(&c.cfg.Postgres)
+	migrator, err := postgres.GetMigrator(c.cfg.Postgres)
 	if err != nil {
 		return err
 	}
 
-	c.storage, err = st.NewStorage(&c.cfg.Postgres, &c.cfg.Badger)
+	c.storage, err = st.NewStorage(c.cfg.Postgres, c.cfg.Badger)
 	if err != nil {
 		return err
 	}
@@ -71,12 +71,12 @@ func (c *Commander) Start() error {
 		return err
 	}
 
-	c.client, err = getClientOrBootstrapChainState(chain, c.storage, &c.cfg.Rollup)
+	c.client, err = getClientOrBootstrapChainState(chain, c.storage, c.cfg.Rollup)
 	if err != nil {
 		return err
 	}
 
-	c.apiServer, err = api.NewAPIServer(&c.cfg.API, c.storage, c.client)
+	c.apiServer, err = api.NewAPIServer(c.cfg.API, c.storage, c.client)
 	if err != nil {
 		return err
 	}

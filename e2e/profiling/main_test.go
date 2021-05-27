@@ -15,7 +15,7 @@ func TestCommander(t *testing.T) {
 	cfg := config.GetConfig()
 	cfg.Rollup.Prune = true
 
-	cmd := commander.NewCommander(&cfg)
+	cmd := commander.NewCommander(cfg)
 
 	err := cmd.Start()
 	if err != nil {

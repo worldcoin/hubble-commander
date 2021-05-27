@@ -7,10 +7,10 @@ import (
 )
 
 type Config struct {
-	Rollup   RollupConfig
-	API      APIConfig
-	Postgres PostgresConfig
-	Badger   BadgerConfig
+	Rollup   *RollupConfig
+	API      *APIConfig
+	Postgres *PostgresConfig
+	Badger   *BadgerConfig
 	Ethereum *EthereumConfig
 }
 
