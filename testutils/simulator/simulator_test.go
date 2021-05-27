@@ -98,15 +98,14 @@ func (s *SimulatorTestSuite) TestSubscribeNewHead() {
 	s.NoError(err)
 	defer subscription.Unsubscribe()
 
-	s.sim.StartAutomine()
-	defer s.sim.stopAutomine()
+	s.sim.Commit()
 	timeout := time.After(*s.sim.Config.AutomineInterval * 2)
 
 	select {
 	case err := <-subscription.Err():
 		s.Failf("unexpected SubscribeNewHead error: %s", err.Error())
 	case header := <-headers:
-		s.Equal(s.sim.Backend.Blockchain().CurrentHeader().Number.Uint64(), header.Number.Uint64())
+		s.Equal(uint64(1), header.Number.Uint64())
 		return
 	case <-timeout:
 		s.Fail("timeout on SubscribeNewHead")
