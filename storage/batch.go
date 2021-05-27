@@ -3,20 +3,45 @@ package storage
 import (
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (s *Storage) AddBatch(batch *models.Batch) error {
-	_, err := s.Postgres.Query(
+func (s *Storage) AddPendingBatchBatch(batch *models.PendingBatch) (*int32, error) {
+	res := make([]int32, 0, 1)
+	err := s.Postgres.Query(
 		s.QB.Insert("batch").
 			Values(
-				batch.Hash,
-				batch.ID,
+				squirrel.Expr("DEFAULT"),
 				batch.Type,
+				batch.TransactionHash,
+			).
+			Suffix("RETURNING batch_id"),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	return ref.Int32(res[0]), nil
+}
+
+func (s *Storage) AddBatch(batch *models.Batch) (*int32, error) {
+	res := make([]int32, 0, 1)
+	err := s.Postgres.Query(
+		s.QB.Insert("batch").
+			Values(
+				squirrel.Expr("DEFAULT"),
+				batch.Type,
+				batch.TransactionHash,
+				batch.Hash,
+				batch.Number,
 				batch.FinalisationBlock,
-			),
-	).Exec()
-	return err
+			).
+			Suffix("RETURNING batch_id"),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	return ref.Int32(res[0]), nil
 }
 
 func (s *Storage) GetBatch(batchHash common.Hash) (*models.Batch, error) {
@@ -35,6 +60,7 @@ func (s *Storage) GetBatch(batchHash common.Hash) (*models.Batch, error) {
 	return &res[0], nil
 }
 
+// TODO - rename to GetBatchByNumber
 func (s *Storage) GetBatchByID(batchID models.Uint256) (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
 	err := s.Postgres.Query(
@@ -51,6 +77,7 @@ func (s *Storage) GetBatchByID(batchID models.Uint256) (*models.Batch, error) {
 	return &res[0], nil
 }
 
+// TODO - check if it is indeed working right now
 func (s *Storage) GetBatchByCommitmentID(commitmentID int32) (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
 	err := s.Postgres.Query(
@@ -68,6 +95,8 @@ func (s *Storage) GetBatchByCommitmentID(commitmentID int32) (*models.Batch, err
 	return &res[0], nil
 }
 
+// TODO - should return any latest batch or only finalised ones?
+// TODO - do we need also GetLatestPendingBatch?
 func (s *Storage) GetLatestBatch() (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
 	err := s.Postgres.Query(
@@ -85,6 +114,7 @@ func (s *Storage) GetLatestBatch() (*models.Batch, error) {
 	return &res[0], nil
 }
 
+// TODO - pretty sure it will only work with finalised batches but check for sure
 func (s *Storage) GetLatestFinalisedBatch(currentBlockNumber uint32) (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
 	err := s.Postgres.Query(
@@ -108,11 +138,11 @@ func (s *Storage) GetBatchesInRange(from, to *models.Uint256) ([]models.Batch, e
 		From("batch")
 
 	if from != nil {
-		qb = qb.Where(squirrel.GtOrEq{"batch_id": from})
+		qb = qb.Where(squirrel.GtOrEq{"batch_number": from})
 	}
 
 	if to != nil {
-		qb = qb.Where(squirrel.LtOrEq{"batch_id": to})
+		qb = qb.Where(squirrel.LtOrEq{"batch_number": to})
 	}
 
 	res := make([]models.Batch, 0, 32)
@@ -142,6 +172,7 @@ func (s *Storage) GetBatchWithAccountRoot(batchHash common.Hash) (*models.BatchW
 	return &res[0], nil
 }
 
+// TODO - rename to GetBatchWithAccountRootByNumber
 func (s *Storage) GetBatchWithAccountRootByID(batchID models.Uint256) (*models.BatchWithAccountRoot, error) {
 	res := make([]models.BatchWithAccountRoot, 0, 1)
 	err := s.Postgres.Query(
