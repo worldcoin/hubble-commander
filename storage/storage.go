@@ -49,9 +49,12 @@ func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, 
 	var txController *db.TxController
 	storage := Storage{
 		Postgres:            s.Postgres,
+		Badger:              s.Badger,
 		QB:                  s.QB,
 		domain:              s.domain,
 		feeReceiverStateIDs: s.feeReceiverStateIDs,
+		isProposer:          s.isProposer,
+		latestBlockNumber:   s.latestBlockNumber,
 	}
 
 	if opts.Postgres && !opts.ReadOnly {
