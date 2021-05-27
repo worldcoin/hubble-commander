@@ -8,6 +8,8 @@ import (
 type NetworkInfo struct {
 	models.ChainState
 	BlockNumber          uint32     `json:"blockNumber"`
+	TransactionCount     int        `json:"transactionCount"`
+	AccountCount         uint32     `json:"accountCount"`
 	LatestBatch          *string    `json:"latestBatch"`
 	LatestFinalisedBatch *string    `json:"latestFinalisedBatch"`
 	SignatureDomain      bls.Domain `json:"signatureDomain"`

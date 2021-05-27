@@ -109,8 +109,7 @@ func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
 		it.Seek(seekPrefix)
 		if it.ValidForPrefix(flatStateLeafPrefix) {
 			var key uint32
-			decodedKey := it.Item().Key()[len(flatStateLeafPrefix):]
-			err := badger.DecodeUint32(decodedKey, &key)
+			err := badger.DecodeKey(it.Item().Key(), &key, flatStateLeafPrefix)
 			if err != nil {
 				return err
 			}
