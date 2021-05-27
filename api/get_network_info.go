@@ -34,13 +34,14 @@ func (a *API) GetNetworkInfo() (*dto.NetworkInfo, error) {
 	}
 	networkInfo.SignatureDomain = *domain
 
+	// TODO replace with a more effective approach when we get to a huge number of txs
 	txCount, err := a.storage.GetTransactionCount()
 	if err != nil {
 		return nil, err
 	}
 	networkInfo.TransactionCount = *txCount
 
-	//TODO: sync with other nodes
+	// TODO this ignores the fact that other nodes can put new accounts in arbitrary state leaves; to be revisited in the future
 	accountCount, err := a.storage.GetNextAvailableStateID()
 	if err != nil {
 		return nil, err
