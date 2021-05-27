@@ -162,7 +162,7 @@ func getClientOrBootstrapChainState(chain deployer.ChainConnection, storage *st.
 	if st.IsNotFoundError(err) {
 		if cfg.BootstrapNodeURL != nil {
 			log.Printf("Bootstrapping genesis state from node %s", *cfg.BootstrapNodeURL)
-			chainState, err := fetchChainStateFromRemoteNode(*cfg.BootstrapNodeURL)
+			chainState, err = fetchChainStateFromRemoteNode(*cfg.BootstrapNodeURL)
 			if err != nil {
 				return nil, err
 			}
