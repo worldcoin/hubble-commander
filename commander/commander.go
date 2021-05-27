@@ -1,7 +1,6 @@
 package commander
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"sync"
@@ -94,6 +93,9 @@ func (c *Commander) Start() error {
 	c.startWorker(func() error { return c.rollupLoop() })
 	c.startWorker(func() error { return WatchAccounts(c.storage, c.client, stopChannel) })
 	c.stopChannel = stopChannel
+
+	log.Printf("Commander started and listening on port %s.\n", c.cfg.API.Port)
+
 	return nil
 }
 
@@ -125,7 +127,14 @@ func (c *Commander) Stop() error {
 		return err
 	}
 	c.workers.Wait()
-	return c.storage.Close()
+	err := c.storage.Close()
+	if err != nil {
+		return err
+	}
+
+	log.Println("Commander stopped.")
+
+	return nil
 }
 
 func (c *Commander) clearState() {
@@ -142,10 +151,11 @@ func getChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, e
 }
 
 func getClientOrBootstrapChainState(chain deployer.ChainConnection, storage *st.Storage, cfg *config.RollupConfig) (*eth.Client, error) {
-	chainState, err := storage.GetChainState(chain.GetChainID())
+	chainID := chain.GetChainID()
+	chainState, err := storage.GetChainState(chainID)
 
 	if st.IsNotFoundError(err) {
-		fmt.Println("Bootstrapping genesis state")
+		log.Printf("Bootstrapping genesis state with %d accounts on chainId=%s.\n", len(cfg.GenesisAccounts), chainID.String())
 		chainState, err = bootstrapState(storage, chain, cfg.GenesisAccounts)
 		if err != nil {
 			return nil, err
@@ -158,7 +168,7 @@ func getClientOrBootstrapChainState(chain deployer.ChainConnection, storage *st.
 	} else if err != nil {
 		return nil, err
 	} else {
-		fmt.Println("Continuing from saved state")
+		log.Printf("Continuing from saved state on chainId=%s.\n", chainID.String())
 	}
 
 	return createClientFromChainState(chain, chainState)
@@ -202,7 +212,7 @@ func bootstrapState(
 		return nil, err
 	}
 
-	err = PopulateGenesisAccounts(storage, registeredAccounts)
+	populatedAccounts, err := PopulateGenesisAccounts(storage, registeredAccounts)
 	if err != nil {
 		return nil, err
 	}
@@ -224,6 +234,7 @@ func bootstrapState(
 		ChainID:         chain.GetChainID(),
 		AccountRegistry: *accountRegistryAddress,
 		Rollup:          contracts.RollupAddress,
+		GenesisAccounts: populatedAccounts,
 	}
 
 	return chainState, nil
