@@ -1,8 +1,6 @@
 package commander
 
 import (
-	"log"
-
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -66,7 +64,6 @@ func RegisterGenesisAccounts(
 		if err != nil {
 			return nil, err
 		}
-		log.Printf("Registered genesis public key %s at id %d", registeredAccount.PublicKey.String(), registeredAccount.PubKeyID)
 		registeredAccounts = append(registeredAccounts, *registeredAccount)
 	}
 

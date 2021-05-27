@@ -1,7 +1,6 @@
 package commander
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"sync"
@@ -94,6 +93,9 @@ func (c *Commander) Start() error {
 	c.startWorker(func() error { return c.rollupLoop() })
 	c.startWorker(func() error { return WatchAccounts(c.storage, c.client, stopChannel) })
 	c.stopChannel = stopChannel
+
+	log.Printf("Commander started and listening on port %s.\n", c.cfg.API.Port)
+
 	return nil
 }
 
@@ -125,7 +127,14 @@ func (c *Commander) Stop() error {
 		return err
 	}
 	c.workers.Wait()
-	return c.storage.Close()
+	err := c.storage.Close()
+	if err != nil {
+		return err
+	}
+
+	log.Println("Commander stopped.")
+
+	return nil
 }
 
 func (c *Commander) clearState() {
@@ -145,7 +154,7 @@ func getClientOrBootstrapChainState(chain deployer.ChainConnection, storage *st.
 	chainState, err := storage.GetChainState(chain.GetChainID())
 
 	if st.IsNotFoundError(err) {
-		fmt.Println("Bootstrapping genesis state")
+		log.Printf("Bootstrapping genesis state with %d accounts.\n", len(cfg.GenesisAccounts))
 		chainState, err = bootstrapState(storage, chain, cfg.GenesisAccounts)
 		if err != nil {
 			return nil, err
@@ -158,7 +167,7 @@ func getClientOrBootstrapChainState(chain deployer.ChainConnection, storage *st.
 	} else if err != nil {
 		return nil, err
 	} else {
-		fmt.Println("Continuing from saved state")
+		log.Println("Continuing from saved state.")
 	}
 
 	return createClientFromChainState(chain, chainState)
