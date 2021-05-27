@@ -51,42 +51,40 @@ func newConfig(fileName string) *Config {
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("failed to read in config: %s", err)
 	}
-	cfg := &Config{
+	return &Config{
 		Rollup: &RollupConfig{
-			SyncBatches:            viper.GetBool("sync_batches"),
-			FeeReceiverPubKeyID:    viper.GetUint32("fee_receiver_pub_key_id"),
-			TxsPerCommitment:       viper.GetUint32("txs_per_commitment"),
-			MinCommitmentsPerBatch: viper.GetUint32("min_commitments_per_batch"),
-			MaxCommitmentsPerBatch: viper.GetUint32("max_commitments_per_batch"),
-			CommitmentLoopInterval: viper.GetDuration("commitment_loop_interval"),
-			BatchLoopInterval:      viper.GetDuration("batch_loop_interval"),
+			SyncBatches:            viper.GetBool("rollup.sync_batches"),
+			FeeReceiverPubKeyID:    viper.GetUint32("rollup.fee_receiver_pub_key_id"),
+			TxsPerCommitment:       viper.GetUint32("rollup.txs_per_commitment"),
+			MinCommitmentsPerBatch: viper.GetUint32("rollup.min_commitments_per_batch"),
+			MaxCommitmentsPerBatch: viper.GetUint32("rollup.max_commitments_per_batch"),
+			CommitmentLoopInterval: viper.GetDuration("rollup.commitment_loop_interval"),
+			BatchLoopInterval:      viper.GetDuration("rollup.batch_loop_interval"),
 			GenesisAccounts:        getGenesisAccounts(),
 			BootstrapNodeURL:       getFromViperOrDefault("bootstrap_node_url", nil),
 		},
 		API: &APIConfig{
-			Version: viper.GetString("version"),
-			Port:    viper.GetString("port"),
-			DevMode: viper.GetBool("dev_mode"),
+			Version: viper.GetString("api.version"),
+			Port:    viper.GetString("api.port"),
+			DevMode: viper.GetBool("api.dev_mode"),
 		},
 		Postgres: &PostgresConfig{
-			Host:           getFromViperOrDefault("dbhost", nil),
-			Port:           getFromViperOrDefault("dbport", nil),
-			Name:           viper.GetString("dbname"),
-			User:           getFromViperOrDefault("dbuser", nil),
-			Password:       getFromViperOrDefault("dbpassword", nil),
-			MigrationsPath: *getFromViperOrDefault("migrations_path", ref.String(getMigrationsPath())),
+			Host:           getFromViperOrDefault("postgres.host", nil),
+			Port:           getFromViperOrDefault("postgres.port", nil),
+			Name:           viper.GetString("postgres.name"),
+			User:           getFromViperOrDefault("postgres.user", nil),
+			Password:       getFromViperOrDefault("postgres.password", nil),
+			MigrationsPath: *getFromViperOrDefault("postgres.migrations_path", ref.String(getMigrationsPath())),
 		},
 		Badger: &BadgerConfig{
-			Path: *getFromViperOrDefault("badger_path", ref.String(getBadgerPath())),
+			Path: *getFromViperOrDefault("badger.path", ref.String(getBadgerPath())),
 		},
-		Ethereum: &EthereumConfig{},
+		Ethereum: &EthereumConfig{
+			RPCURL:     viper.GetString("ethereum.rpc_url"),
+			ChainID:    viper.GetString("ethereum.chain_id"),
+			PrivateKey: viper.GetString("ethereum.private_key"),
+		},
 	}
-
-	viper.SetEnvPrefix("ETHEREUM")
-	cfg.Ethereum.RPCURL = viper.GetString("rpc_url")
-	cfg.Ethereum.ChainID = viper.GetString("chain_id")
-	cfg.Ethereum.PrivateKey = viper.GetString("private_key")
-	return cfg
 }
 
 func getGenesisAccounts() []models.GenesisAccount {
