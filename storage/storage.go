@@ -17,6 +17,7 @@ type Storage struct {
 	domain              *bls.Domain
 	feeReceiverStateIDs map[string]uint32 // token index => state id
 	isProposer          bool
+	latestBlockNumber   uint32
 }
 
 type TxOptions struct {
@@ -47,11 +48,11 @@ func NewStorage(postgresConfig *config.PostgresConfig, badgerConfig *config.Badg
 func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, error) {
 	var txController *db.TxController
 	storage := Storage{
+		Postgres:            s.Postgres,
+		QB:                  s.QB,
 		domain:              s.domain,
 		feeReceiverStateIDs: s.feeReceiverStateIDs,
 	}
-	storage.Postgres = s.Postgres
-	storage.QB = getQueryBuilder()
 
 	if opts.Postgres && !opts.ReadOnly {
 		postgresTx, postgresDB, err := s.Postgres.BeginTransaction()
@@ -90,16 +91,6 @@ func (s *Storage) Prune(migrator *migrate.Migrate) error {
 		return err
 	}
 	return s.Badger.Prune()
-}
-
-func (s *Storage) SetProposer(isProposer bool) {
-	if s.isProposer != isProposer {
-		s.isProposer = isProposer
-	}
-}
-
-func (s *Storage) IsProposer() bool {
-	return s.isProposer
 }
 
 func getQueryBuilder() squirrel.StatementBuilderType {
