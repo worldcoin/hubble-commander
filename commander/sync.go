@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 )
 
@@ -22,7 +23,7 @@ func (t *transactionExecutor) SyncBatches() error {
 		return err
 	}
 
-	newBatches, err := t.client.GetBatches(submissionBlock)
+	newBatches, txHashes, err := t.client.GetBatches(submissionBlock)
 	if err != nil {
 		return err
 	}
@@ -32,7 +33,7 @@ func (t *transactionExecutor) SyncBatches() error {
 		if batch.Number.Cmp(latestBatchID) <= 0 {
 			continue
 		}
-		if err := t.syncBatch(batch); err != nil {
+		if err := t.syncBatch(batch, txHashes[i]); err != nil {
 			return err
 		}
 	}
@@ -62,7 +63,8 @@ func getLatestSubmissionBlockAndBatchNumber(storage *st.Storage, client *eth.Cli
 	return &submissionBlock, latestBatchNumber, nil
 }
 
-func (t *transactionExecutor) syncBatch(batch *eth.DecodedBatch) error {
+func (t *transactionExecutor) syncBatch(batch *eth.DecodedBatch, txHash common.Hash) error {
+	batch.Batch.TransactionHash = txHash
 	batchID, err := t.storage.AddBatch(&batch.Batch)
 	if err != nil {
 		return err

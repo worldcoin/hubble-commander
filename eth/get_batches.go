@@ -14,26 +14,27 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (c *Client) GetBatches(latestBatchSubmissionBlock *uint32) ([]DecodedBatch, error) {
+func (c *Client) GetBatches(latestBatchSubmissionBlock *uint32) ([]DecodedBatch, []common.Hash, error) {
 	it, err := c.Rollup.FilterNewBatch(&bind.FilterOpts{
 		Start: uint64(*latestBatchSubmissionBlock) + 1,
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, nil, errors.WithStack(err)
 	}
 
 	res := make([]DecodedBatch, 0)
+	txHashes := make([]common.Hash, 0)
 	for it.Next() {
 		txHash := it.Event.Raw.TxHash
 
 		tx, _, err := c.ChainConnection.GetBackend().TransactionByHash(context.Background(), txHash)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		if !bytes.Equal(tx.Data()[:4], rollupAbi.Methods["submitTransfer"].ID) &&
@@ -43,12 +44,12 @@ func (c *Client) GetBatches(latestBatchSubmissionBlock *uint32) ([]DecodedBatch,
 
 		commitments, err := encoder.DecodeBatchCalldata(tx.Data())
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		batch, err := c.GetBatch(models.NewUint256FromBig(*it.Event.BatchID))
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		res = append(res, DecodedBatch{
@@ -56,9 +57,10 @@ func (c *Client) GetBatches(latestBatchSubmissionBlock *uint32) ([]DecodedBatch,
 			AccountRoot: common.BytesToHash(it.Event.AccountRoot[:]),
 			Commitments: commitments,
 		})
+		txHashes = append(txHashes, txHash)
 	}
 
-	return res, nil
+	return res, txHashes, nil
 }
 
 type DecodedBatch struct {
