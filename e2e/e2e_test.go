@@ -198,7 +198,7 @@ func testGetBatches(t *testing.T, client jsonrpc.RPCClient) {
 
 	require.NoError(t, err)
 	require.Len(t, batches, 2)
-	require.Equal(t, models.MakeUint256(1), batches[0].ID)
+	require.Equal(t, int32(1), batches[0].ID)
 	batchTypes := []txtype.TransactionType{batches[0].Type, batches[1].Type}
 	require.Contains(t, batchTypes, txtype.Transfer)
 	require.Contains(t, batchTypes, txtype.Create2Transfer)
