@@ -15,7 +15,7 @@ func (c *Client) GetBatch(batchID *models.Uint256) (*models.Batch, error) {
 	return &models.Batch{
 		Hash:              common.BytesToHash(batch.CommitmentRoot[:]),
 		Type:              meta.BatchType,
-		ID:                *batchID,
+		Number:                *batchID,
 		FinalisationBlock: meta.FinaliseOn,
 	}, nil
 }

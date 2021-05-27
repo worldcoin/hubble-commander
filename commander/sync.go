@@ -29,7 +29,7 @@ func (t *transactionExecutor) SyncBatches() error {
 
 	for i := range newBatches {
 		batch := &newBatches[i]
-		if batch.ID.Cmp(latestBatchID) <= 0 {
+		if batch.Number.Cmp(latestBatchID) <= 0 {
 			continue
 		}
 		if err := t.syncBatch(batch); err != nil {
@@ -56,7 +56,7 @@ func getLatestSubmissionBlockAndBatchID(storage *st.Storage, client *eth.Client)
 			return nil, nil, err
 		}
 		submissionBlock = latestBatch.FinalisationBlock - uint32(*blocks)
-		latestBatchID = &latestBatch.ID
+		latestBatchID = &latestBatch.Number
 	}
 
 	return &submissionBlock, latestBatchID, nil
@@ -83,6 +83,6 @@ func (t *transactionExecutor) syncBatch(batch *eth.DecodedBatch) error {
 		return fmt.Errorf("unsupported batch type for sync: %s", batch.Type)
 	}
 
-	log.Printf("Synced new batch #%s from chain: %d commitments included", batch.ID.String(), len(batch.Commitments))
+	log.Printf("Synced new batch #%s from chain: %d commitments included", batch.Number.String(), len(batch.Commitments))
 	return nil
 }
