@@ -25,7 +25,6 @@ func main() {
 	}
 
 	cfg.Rollup.Prune = *prune
-	config.WatchConfig(cfg)
 
 	cmd := commander.NewCommander(cfg)
 
