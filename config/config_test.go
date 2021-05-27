@@ -9,13 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetEnvOrDefault(t *testing.T) {
-	_ = os.Setenv("HUBBLE_FOO", "foo")
-
-	require.Equal(t, "foo", *getEnvOrDefault("HUBBLE_FOO", ref.String("bar")))
-	require.Equal(t, "bar", *getEnvOrDefault("HUBBLE_BAR", ref.String("bar")))
-}
-
 func TestGetFromViperOrDefault(t *testing.T) {
 	_ = os.Setenv("HUBBLE_VERSION", "env")
 

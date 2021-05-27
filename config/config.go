@@ -89,7 +89,7 @@ func newConfig(fileName string) *Config {
 }
 
 func getGenesisAccounts() []models.GenesisAccount {
-	filename := *getEnvOrDefault("HUBBLE_GENESIS_PATH", ref.String(getGenesisPath()))
+	filename := *getFromViperOrDefault("genesis_path", ref.String(getGenesisPath()))
 
 	genesisAccounts, err := readGenesisFile(filename)
 	if err != nil {
