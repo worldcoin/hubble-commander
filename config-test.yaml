@@ -11,6 +11,7 @@ block_number_loop_interval: 500ms
 #api:
 version: dev-0.0.1
 port: "8080"
+dev_mode: true
 
 #postgres:
 dbhost: localhost
