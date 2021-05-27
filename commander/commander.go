@@ -151,10 +151,11 @@ func getChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, e
 }
 
 func getClientOrBootstrapChainState(chain deployer.ChainConnection, storage *st.Storage, cfg *config.RollupConfig) (*eth.Client, error) {
-	chainState, err := storage.GetChainState(chain.GetChainID())
+	chainID := chain.GetChainID()
+	chainState, err := storage.GetChainState(chainID)
 
 	if st.IsNotFoundError(err) {
-		log.Printf("Bootstrapping genesis state with %d accounts on chainId=%s.\n", len(cfg.GenesisAccounts), chainState.ChainID.String())
+		log.Printf("Bootstrapping genesis state with %d accounts on chainId=%s.\n", len(cfg.GenesisAccounts), chainID.String())
 		chainState, err = bootstrapState(storage, chain, cfg.GenesisAccounts)
 		if err != nil {
 			return nil, err
@@ -167,7 +168,7 @@ func getClientOrBootstrapChainState(chain deployer.ChainConnection, storage *st.
 	} else if err != nil {
 		return nil, err
 	} else {
-		log.Printf("Continuing from saved state on chainId=%s.\n", chainState.ChainID.String())
+		log.Printf("Continuing from saved state on chainId=%s.\n", chainID.String())
 	}
 
 	return createClientFromChainState(chain, chainState)
