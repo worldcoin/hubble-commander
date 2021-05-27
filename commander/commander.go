@@ -14,9 +14,11 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	ethRollup "github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/golang-migrate/migrate/v4"
+	"github.com/ybbus/jsonrpc/v2"
 )
 
 type Commander struct {
@@ -153,25 +155,57 @@ func getChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, e
 func getClientOrBootstrapChainState(chain deployer.ChainConnection, storage *st.Storage, cfg *config.RollupConfig) (*eth.Client, error) {
 	chainID := chain.GetChainID()
 	chainState, err := storage.GetChainState(chainID)
+	if err != nil && !st.IsNotFoundError(err) {
+		return nil, err
+	}
 
 	if st.IsNotFoundError(err) {
-		log.Printf("Bootstrapping genesis state with %d accounts on chainId=%s.\n", len(cfg.GenesisAccounts), chainID.String())
-		chainState, err = bootstrapState(storage, chain, cfg.GenesisAccounts)
-		if err != nil {
-			return nil, err
+		if cfg.BootstrapNodeURL != nil {
+			log.Printf("Bootstrapping genesis state from node %s", *cfg.BootstrapNodeURL)
+			chainState, err = fetchChainStateFromRemoteNode(*cfg.BootstrapNodeURL)
+			if err != nil {
+				return nil, err
+			}
+
+			err = PopulateGenesisAccounts(storage, chainState.GenesisAccounts)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			log.Printf("Bootstrapping genesis state with %d accounts on chainId=%s.\n", len(cfg.GenesisAccounts), chainID.String())
+			chainState, err = bootstrapState(storage, chain, cfg.GenesisAccounts)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		err = storage.SetChainState(chainState)
 		if err != nil {
 			return nil, err
 		}
-	} else if err != nil {
-		return nil, err
 	} else {
 		log.Printf("Continuing from saved state on chainId=%s.\n", chainID.String())
 	}
 
 	return createClientFromChainState(chain, chainState)
+
+	// TODO: Verify commitment root of batch #0 (for multi-operator sync).
+}
+
+func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {
+	client := jsonrpc.NewClient(url)
+	var info dto.NetworkInfo
+	err := client.CallFor(&info, "hubble_getNetworkInfo")
+	if err != nil {
+		return nil, err
+	}
+
+	err = client.CallFor(&info.ChainState.GenesisAccounts, "hubble_getGenesisAccounts")
+	if err != nil {
+		return nil, err
+	}
+
+	return &info.ChainState, nil
 }
 
 func createClientFromChainState(chain deployer.ChainConnection, chainState *models.ChainState) (*eth.Client, error) {
@@ -212,7 +246,8 @@ func bootstrapState(
 		return nil, err
 	}
 
-	populatedAccounts, err := PopulateGenesisAccounts(storage, registeredAccounts)
+	populatedAccounts := AssignStateIDs(registeredAccounts)
+	err = PopulateGenesisAccounts(storage, populatedAccounts)
 	if err != nil {
 		return nil, err
 	}

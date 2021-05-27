@@ -15,15 +15,19 @@ type Config struct {
 }
 
 type RollupConfig struct {
-	Prune                  bool
-	SyncBatches            bool
+	// TODO: Extract to a separate BootstrapConfig.
+	Prune            bool
+	GenesisAccounts  []models.GenesisAccount
+	BootstrapNodeURL *string
+
+	SyncBatches bool
+
 	FeeReceiverPubKeyID    uint32
 	TxsPerCommitment       uint32
 	MinCommitmentsPerBatch uint32
 	MaxCommitmentsPerBatch uint32
 	CommitmentLoopInterval time.Duration
 	BatchLoopInterval      time.Duration
-	GenesisAccounts        []models.GenesisAccount
 }
 
 type APIConfig struct {
