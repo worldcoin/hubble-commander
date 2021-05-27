@@ -1,6 +1,7 @@
 package simulator
 
 import (
+	"context"
 	"math/big"
 	"time"
 
@@ -8,9 +9,11 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
 	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
@@ -137,6 +140,10 @@ func (sim *Simulator) GetChainID() models.Uint256 {
 
 func (sim *Simulator) GetLatestBlockNumber() (*uint32, error) {
 	return ref.Uint32(uint32(sim.Backend.Blockchain().CurrentHeader().Number.Uint64())), nil
+}
+
+func (sim *Simulator) SubscribeNewHead(ch chan<- *types.Header) (ethereum.Subscription, error) {
+	return sim.Backend.SubscribeNewHead(context.Background(), ch)
 }
 
 func fillWithDefaults(config *Config) {

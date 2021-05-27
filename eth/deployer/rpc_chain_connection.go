@@ -8,7 +8,9 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -75,4 +77,8 @@ func (d *RPCChainConnection) GetLatestBlockNumber() (*uint32, error) {
 		return nil, err
 	}
 	return ref.Uint32(uint32(blockNumber)), nil
+}
+
+func (d *RPCChainConnection) SubscribeNewHead(ch chan<- *types.Header) (ethereum.Subscription, error) {
+	return d.backend.SubscribeNewHead(context.Background(), ch)
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -20,10 +21,12 @@ type ChainConnection interface {
 
 	GetBackend() ChainBackend
 
-	// Force a block creation if running on a simulator. Noop otherwise.
+	// Commit force a block creation if running on a simulator. Noop otherwise.
 	Commit()
 
 	GetChainID() models.Uint256
 
 	GetLatestBlockNumber() (*uint32, error)
+
+	SubscribeNewHead(ch chan<- *types.Header) (ethereum.Subscription, error)
 }
