@@ -52,5 +52,10 @@ func (c *Commander) SyncBatches(isProposer bool) (err error) {
 		return err
 	}
 	defer transactionExecutor.Rollback(&err)
+
+	err = transactionExecutor.SyncBatches()
+	if err != nil {
+		return err
+	}
 	return transactionExecutor.Commit()
 }
