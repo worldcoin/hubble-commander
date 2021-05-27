@@ -12,9 +12,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-func PopulateGenesisAccounts(storage *st.Storage, accounts []models.RegisteredGenesisAccount) error {
+func PopulateGenesisAccounts(storage *st.Storage, accounts []models.RegisteredGenesisAccount) ([]models.PopulatedGenesisAccount, error) {
 	stateTree := st.NewStateTree(storage)
 
+	populatedAccounts := make([]models.PopulatedGenesisAccount, 0, len(accounts))
 	for i := range accounts {
 		account := accounts[i]
 		err := storage.AddAccountIfNotExists(&models.Account{
@@ -22,7 +23,7 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.RegisteredGe
 			PublicKey: account.PublicKey,
 		})
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if account.Balance.CmpN(0) == 1 {
@@ -33,11 +34,18 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.RegisteredGe
 				Nonce:      models.MakeUint256(0),
 			})
 			if err != nil {
-				return err
+				return nil, err
 			}
+
+			populatedAccounts = append(populatedAccounts, models.PopulatedGenesisAccount{
+				PublicKey: account.PublicKey,
+				PubKeyID:  account.PubKeyID,
+				StateID:   uint32(i),
+				Balance:   account.Balance,
+			})
 		}
 	}
-	return nil
+	return populatedAccounts, nil
 }
 
 func RegisterGenesisAccounts(

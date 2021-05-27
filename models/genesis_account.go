@@ -15,3 +15,10 @@ type RegisteredGenesisAccount struct {
 	PublicKey PublicKey
 	PubKeyID  uint32
 }
+
+type PopulatedGenesisAccount struct {
+	PublicKey PublicKey
+	PubKeyID  uint32
+	StateID   uint32
+	Balance   Uint256
+}

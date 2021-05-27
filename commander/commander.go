@@ -202,7 +202,7 @@ func bootstrapState(
 		return nil, err
 	}
 
-	err = PopulateGenesisAccounts(storage, registeredAccounts)
+	populatedAccounts, err := PopulateGenesisAccounts(storage, registeredAccounts)
 	if err != nil {
 		return nil, err
 	}
@@ -224,6 +224,7 @@ func bootstrapState(
 		ChainID:         chain.GetChainID(),
 		AccountRegistry: *accountRegistryAddress,
 		Rollup:          contracts.RollupAddress,
+		GenesisAccounts: populatedAccounts,
 	}
 
 	return chainState, nil
