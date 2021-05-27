@@ -16,10 +16,6 @@ func (c *Commander) rollupLoop() (err error) {
 	ticker := time.NewTicker(c.cfg.Rollup.BatchLoopInterval)
 	defer ticker.Stop()
 
-	isProposer, err := c.client.IsActiveProposer()
-	if err != nil {
-		return err
-	}
 	currentBatchType := txtype.Transfer
 
 	for {
@@ -27,7 +23,7 @@ func (c *Commander) rollupLoop() (err error) {
 		case <-c.stopChannel:
 			return nil
 		case <-ticker.C:
-			err := c.rollupLoopIteration(&currentBatchType, isProposer)
+			err := c.rollupLoopIteration(&currentBatchType)
 			if err != nil {
 				return err
 			}
@@ -35,35 +31,30 @@ func (c *Commander) rollupLoop() (err error) {
 	}
 }
 
-func (c *Commander) rollupLoopIteration(currentBatchType *txtype.TransactionType, isProposer bool) (err error) {
+func (c *Commander) rollupLoopIteration(currentBatchType *txtype.TransactionType) (err error) {
+	if !c.storage.IsProposer() {
+		return nil
+	}
+
 	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, &c.cfg.Rollup)
 	if err != nil {
 		return err
 	}
 	defer transactionExecutor.Rollback(&err)
 
-	if c.cfg.Rollup.SyncBatches && !isProposer {
-		err = transactionExecutor.SyncBatches()
-		if err != nil {
-			return err
-		}
+	if *currentBatchType == txtype.Transfer {
+		err = transactionExecutor.CreateAndSubmitBatch(*currentBatchType)
+		*currentBatchType = txtype.Create2Transfer
+	} else {
+		err = transactionExecutor.CreateAndSubmitBatch(*currentBatchType)
+		*currentBatchType = txtype.Transfer
 	}
-
-	if isProposer {
-		if *currentBatchType == txtype.Transfer {
-			err = transactionExecutor.CreateAndSubmitBatch(*currentBatchType)
-			*currentBatchType = txtype.Create2Transfer
-		} else {
-			err = transactionExecutor.CreateAndSubmitBatch(*currentBatchType)
-			*currentBatchType = txtype.Transfer
+	if err != nil {
+		var e *RollupError
+		if errors.As(err, &e) {
+			return nil
 		}
-		if err != nil {
-			var e *RollupError
-			if errors.As(err, &e) {
-				return nil
-			}
-			return err
-		}
+		return err
 	}
 
 	err = transactionExecutor.Commit()

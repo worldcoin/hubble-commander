@@ -16,6 +16,7 @@ type Storage struct {
 	QB                  squirrel.StatementBuilderType
 	domain              *bls.Domain
 	feeReceiverStateIDs map[string]uint32 // token index => state id
+	isProposer          bool
 }
 
 type TxOptions struct {
@@ -89,6 +90,16 @@ func (s *Storage) Prune(migrator *migrate.Migrate) error {
 		return err
 	}
 	return s.Badger.Prune()
+}
+
+func (s *Storage) SetProposer(isProposer bool) {
+	if s.isProposer != isProposer {
+		s.isProposer = isProposer
+	}
+}
+
+func (s *Storage) IsProposer() bool {
+	return s.isProposer
 }
 
 func getQueryBuilder() squirrel.StatementBuilderType {
