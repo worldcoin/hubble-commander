@@ -57,12 +57,7 @@ func (c *Commander) rollupLoopIteration(currentBatchType *txtype.TransactionType
 		return err
 	}
 
-	err = transactionExecutor.Commit()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return transactionExecutor.Commit()
 }
 
 func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionType) error {
