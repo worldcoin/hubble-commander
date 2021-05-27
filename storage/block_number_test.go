@@ -15,4 +15,5 @@ func TestSetLatestBlockNumber(t *testing.T) {
 	latestBlockNumber := storage.GetLatestBlockNumber()
 
 	require.Equal(t, currentBlockNumber, latestBlockNumber)
+	require.Equal(t, currentBlockNumber, storage.latestBlockNumber)
 }
