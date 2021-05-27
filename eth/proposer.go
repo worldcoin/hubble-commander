@@ -1,6 +1,8 @@
 package eth
 
-import "github.com/Worldcoin/hubble-commander/contracts/chooser"
+import (
+	"github.com/Worldcoin/hubble-commander/contracts/chooser"
+)
 
 // IsActiveProposer checks if the current wallet is the active batch proposer.
 func (c *Client) IsActiveProposer() (bool, error) {

@@ -38,15 +38,14 @@ func getGenesisPath() string {
 func GetConfig() Config {
 	return Config{
 		Rollup: RollupConfig{
-			SyncBatches:             true,
-			FeeReceiverPubKeyID:     0,
-			TxsPerCommitment:        32,
-			MinCommitmentsPerBatch:  1,
-			MaxCommitmentsPerBatch:  32,
-			CommitmentLoopInterval:  500 * time.Millisecond,
-			BatchLoopInterval:       500 * time.Millisecond,
-			BlockNumberLoopInterval: 500 * time.Millisecond,
-			GenesisAccounts:         getGenesisAccounts(),
+			SyncBatches:            true,
+			FeeReceiverPubKeyID:    0,
+			TxsPerCommitment:       32,
+			MinCommitmentsPerBatch: 1,
+			MaxCommitmentsPerBatch: 32,
+			CommitmentLoopInterval: 500 * time.Millisecond,
+			BatchLoopInterval:      500 * time.Millisecond,
+			GenesisAccounts:        getGenesisAccounts(),
 		},
 		API: APIConfig{
 			Version: "0.0.1",
@@ -71,15 +70,14 @@ func GetConfig() Config {
 func GetTestConfig() Config {
 	return Config{
 		Rollup: RollupConfig{
-			SyncBatches:             false,
-			FeeReceiverPubKeyID:     0,
-			TxsPerCommitment:        2,
-			MinCommitmentsPerBatch:  1,
-			MaxCommitmentsPerBatch:  32,
-			CommitmentLoopInterval:  500 * time.Millisecond,
-			BatchLoopInterval:       500 * time.Millisecond,
-			BlockNumberLoopInterval: 500 * time.Millisecond,
-			GenesisAccounts:         getGenesisAccounts(),
+			SyncBatches:            false,
+			FeeReceiverPubKeyID:    0,
+			TxsPerCommitment:       2,
+			MinCommitmentsPerBatch: 1,
+			MaxCommitmentsPerBatch: 32,
+			CommitmentLoopInterval: 500 * time.Millisecond,
+			BatchLoopInterval:      500 * time.Millisecond,
+			GenesisAccounts:        getGenesisAccounts(),
 		},
 		API: APIConfig{
 			Version: "dev-0.0.1",
