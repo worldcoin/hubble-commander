@@ -45,7 +45,7 @@ func getLatestSubmissionBlockAndBatchNumber(storage *st.Storage, client *eth.Cli
 	var submissionBlock uint32
 	var latestBatchNumber *models.Uint256
 
-	latestBatch, err := storage.GetLatestBatch()
+	latestBatch, err := storage.GetLatestSubmittedBatch()
 	if st.IsNotFoundError(err) {
 		submissionBlock = 0
 		latestBatchNumber = models.NewUint256(0)

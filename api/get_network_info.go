@@ -12,7 +12,7 @@ func (a *API) GetNetworkInfo() (*dto.NetworkInfo, error) {
 		BlockNumber: a.storage.GetLatestBlockNumber(),
 	}
 
-	latestBatch, err := a.storage.GetLatestBatch()
+	latestBatch, err := a.storage.GetLatestSubmittedBatch()
 	if err != nil && !storage.IsNotFoundError(err) {
 		return nil, err
 	}

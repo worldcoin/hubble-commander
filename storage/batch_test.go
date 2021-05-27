@@ -147,7 +147,7 @@ func (s *BatchTestSuite) TestGetBatchByCommitmentID_NotExistentBatch() {
 	s.Nil(batch)
 }
 
-func (s *BatchTestSuite) TestGetLatestBatch() {
+func (s *BatchTestSuite) TestGetLatestSubmittedBatch() {
 	batches := []models.Batch{
 		{
 			ID:                1,
@@ -175,14 +175,14 @@ func (s *BatchTestSuite) TestGetLatestBatch() {
 	_, err = s.storage.AddPendingBatch(&pendingBatch)
 	s.NoError(err)
 
-	actual, err := s.storage.GetLatestBatch()
+	actual, err := s.storage.GetLatestSubmittedBatch()
 	s.NoError(err)
 
 	s.Equal(batches[1], *actual)
 }
 
-func (s *BatchTestSuite) TestGetLatestBatch_NoBatches() {
-	res, err := s.storage.GetLatestBatch()
+func (s *BatchTestSuite) TestGetLatestSubmittedBatch_NoBatches() {
+	res, err := s.storage.GetLatestSubmittedBatch()
 	s.Equal(NewNotFoundError("batch"), err)
 	s.Nil(res)
 }

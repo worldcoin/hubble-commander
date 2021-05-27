@@ -93,9 +93,7 @@ func (s *Storage) GetBatchByCommitmentID(commitmentID int32) (*models.Batch, err
 	return &res[0], nil
 }
 
-// TODO - Rename to something like GetLatestFinalizedBatch
-// TODO - with that rename the method below MUST be distinguishable
-func (s *Storage) GetLatestBatch() (*models.Batch, error) {
+func (s *Storage) GetLatestSubmittedBatch() (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Select("*").
@@ -110,6 +108,7 @@ func (s *Storage) GetLatestBatch() (*models.Batch, error) {
 	if len(res) == 0 {
 		return nil, NewNotFoundError("batch")
 	}
+
 	return &res[0], nil
 }
 
