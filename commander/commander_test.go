@@ -60,11 +60,6 @@ func (s *CommanderTestSuite) TestStartAndWait() {
 	}, 1*time.Second, 100*time.Millisecond)
 }
 
-func (s *CommanderTestSuite) TestT() {
-	err := s.cmd.SyncBatches()
-	s.NoError(err)
-}
-
 func TestCommanderTestSuite(t *testing.T) {
 	suite.Run(t, new(CommanderTestSuite))
 }

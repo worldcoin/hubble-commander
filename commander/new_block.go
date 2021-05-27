@@ -13,6 +13,12 @@ func (c *Commander) newBlockLoop() error {
 	}
 	defer subscription.Unsubscribe()
 
+	isProposer, err := c.client.IsActiveProposer()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	c.storage.SetProposer(isProposer)
+
 	for {
 		select {
 		case <-c.stopChannel:
@@ -22,7 +28,7 @@ func (c *Commander) newBlockLoop() error {
 		case newBlock := <-blocks:
 			c.storage.SetLatestBlockNumber(uint32(newBlock.Number.Uint64()))
 
-			isProposer, err := c.client.IsActiveProposer()
+			isProposer, err = c.client.IsActiveProposer()
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -30,7 +36,7 @@ func (c *Commander) newBlockLoop() error {
 
 			err = c.SyncBatches(isProposer)
 			if err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 		}
 	}
