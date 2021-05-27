@@ -1,6 +1,8 @@
 CREATE TABLE batch (
-    batch_hash         BYTEA PRIMARY KEY,
-    batch_id           NUMERIC(78) NOT NULL,
-    type               SMALLINT    NOT NULL,
-    finalisation_block BIGINT      NOT NULL
+    batch_id           SERIAL   PRIMARY KEY,
+    type               SMALLINT NOT NULL,
+    transaction_hash   BYTEA    NOT NULL,
+    batch_hash         BYTEA,
+    batch_number       NUMERIC(78),
+    finalisation_block BIGINT
 );
