@@ -23,6 +23,11 @@ func RandomHash() common.Hash {
 	return common.BytesToHash(RandomBytes(32))
 }
 
+func NewRandomHash() *common.Hash {
+	newHash := RandomHash()
+	return &newHash
+}
+
 func RandomAddress() common.Address {
 	return common.BytesToAddress(RandomBytes(20))
 }
