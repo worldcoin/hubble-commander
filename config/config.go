@@ -61,6 +61,7 @@ func newConfig(fileName string) *Config {
 			CommitmentLoopInterval: viper.GetDuration("commitment_loop_interval"),
 			BatchLoopInterval:      viper.GetDuration("batch_loop_interval"),
 			GenesisAccounts:        getGenesisAccounts(),
+			BootstrapNodeURL:       getFromViperOrDefault("bootstrap_node_url", nil),
 		},
 		API: &APIConfig{
 			Version: viper.GetString("version"),
