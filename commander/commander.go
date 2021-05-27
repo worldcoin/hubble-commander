@@ -90,7 +90,7 @@ func (c *Commander) Start() error {
 		}
 		return nil
 	})
-	c.startWorker(func() error { return c.blockNumberLoop() })
+	c.startWorker(func() error { return c.newBlockLoop() })
 	c.startWorker(func() error { return c.rollupLoop() })
 	c.startWorker(func() error { return WatchAccounts(c.storage, c.client, stopChannel) })
 	c.stopChannel = stopChannel
