@@ -28,7 +28,7 @@ func (s *Storage) SetChainState(chainState *models.ChainState) error {
 	_, err := s.Postgres.Query(
 		s.QB.
 			Insert("chain_state").
-			Values(chainState.ChainID, chainState.AccountRegistry, chainState.Rollup),
+			Values(chainState.ChainID, chainState.AccountRegistry, chainState.Rollup, chainState.GenesisAccounts),
 	).Exec()
 	return err
 }

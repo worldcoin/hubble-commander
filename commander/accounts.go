@@ -1,8 +1,6 @@
 package commander
 
 import (
-	"log"
-
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -35,8 +33,6 @@ func WatchAccounts(storage *st.Storage, client *eth.Client, done <-chan bool) er
 	}
 	defer sub.Unsubscribe()
 
-	log.Printf("Account watcher started")
-
 	for {
 		select {
 		case ev := <-eventChannel:
@@ -54,7 +50,6 @@ func ProcessPubkeyRegistered(storage *st.Storage, event *accountregistry.Account
 		PubKeyID:  uint32(event.PubkeyID.Uint64()),
 		PublicKey: models.MakePublicKeyFromInts(event.Pubkey),
 	}
-	log.Printf("Public key %s registered at id %d", account.PublicKey.String(), account.PubKeyID)
 
 	err := storage.AddAccountIfNotExists(&account)
 	if err != nil {
