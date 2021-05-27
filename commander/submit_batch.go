@@ -39,7 +39,7 @@ func submitBatch(
 		return err
 	}
 
-	err = storage.AddBatch(batch)
+	_, err = storage.AddBatch(batch)
 	if err != nil {
 		return err
 	}

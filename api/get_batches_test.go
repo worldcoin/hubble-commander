@@ -48,7 +48,7 @@ func (s *GetBatchesTestSuite) TearDownTest() {
 }
 
 func (s *GetBatchesTestSuite) TestGetBatches() {
-	err := s.storage.AddBatch(&s.batch)
+	_, err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
 	result, err := s.api.GetBatches(models.NewUint256(0), models.NewUint256(1))

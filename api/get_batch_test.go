@@ -57,7 +57,7 @@ func (s *GetBatchTestSuite) TearDownTest() {
 
 func (s *GetBatchTestSuite) TestGetBatchByHash() {
 	s.addLeaf()
-	err := s.storage.AddBatch(&s.batch)
+	_, err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
 	_, err = s.storage.AddCommitment(&s.commitment)
@@ -73,7 +73,7 @@ func (s *GetBatchTestSuite) TestGetBatchByHash() {
 
 func (s *GetBatchTestSuite) TestGetBatchByHash_NoCommitments() {
 	s.addLeaf()
-	err := s.storage.AddBatch(&s.batch)
+	_, err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
 	result, err := s.api.GetBatchByHash(s.batch.Hash)
@@ -89,7 +89,7 @@ func (s *GetBatchTestSuite) TestGetBatchByHash_NonExistentBatch() {
 
 func (s *GetBatchTestSuite) TestGetBatchByID() {
 	s.addLeaf()
-	err := s.storage.AddBatch(&s.batch)
+	_, err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
 	_, err = s.storage.AddCommitment(&s.commitment)
@@ -104,7 +104,7 @@ func (s *GetBatchTestSuite) TestGetBatchByID() {
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByID_NoCommitments() {
-	err := s.storage.AddBatch(&s.batch)
+	_, err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
 	result, err := s.api.GetBatchByID(models.MakeUint256(0))

@@ -63,7 +63,7 @@ func getLatestSubmissionBlockAndBatchID(storage *st.Storage, client *eth.Client)
 }
 
 func (t *transactionExecutor) syncBatch(batch *eth.DecodedBatch) error {
-	err := t.storage.AddBatch(&batch.Batch)
+	_, err := t.storage.AddBatch(&batch.Batch)
 	if err != nil {
 		return err
 	}

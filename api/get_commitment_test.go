@@ -46,7 +46,7 @@ func (s *GetCommitmentTestSuite) TearDownTest() {
 }
 
 func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
-	err := s.storage.AddBatch(&s.batch)
+	_, err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
 	commitmentID, err := s.storage.AddCommitment(&s.commitment)
@@ -74,7 +74,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 }
 
 func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
-	err := s.storage.AddBatch(&s.batch)
+	_, err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
 	c2tCommitment := s.commitment

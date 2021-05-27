@@ -68,9 +68,9 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo_NoFinalisedBatches() {
 			FinalisationBlock: 2000,
 		},
 	}
-	err := s.api.storage.AddBatch(&batches[0])
+	_, err := s.api.storage.AddBatch(&batches[0])
 	s.NoError(err)
-	err = s.api.storage.AddBatch(&batches[1])
+	_, err = s.api.storage.AddBatch(&batches[1])
 	s.NoError(err)
 
 	networkInfo, err := s.api.GetNetworkInfo()
@@ -95,9 +95,9 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
 			FinalisationBlock: 2000,
 		},
 	}
-	err := s.api.storage.AddBatch(&batches[0])
+	_, err := s.api.storage.AddBatch(&batches[0])
 	s.NoError(err)
-	err = s.api.storage.AddBatch(&batches[1])
+	_, err = s.api.storage.AddBatch(&batches[1])
 	s.NoError(err)
 
 	err = s.api.storage.AddTransfer(&models.Transfer{

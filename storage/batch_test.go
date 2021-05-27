@@ -39,7 +39,7 @@ func (s *BatchTestSuite) TestAddBatch_AddAndRetrieve() {
 		ID:                models.MakeUint256(1),
 		FinalisationBlock: 1234,
 	}
-	err := s.storage.AddBatch(batch)
+	_, err := s.storage.AddBatch(batch)
 	s.NoError(err)
 
 	actual, err := s.storage.GetBatch(batch.Hash)
@@ -55,7 +55,7 @@ func (s *BatchTestSuite) TestGetBatchByID() {
 		ID:                models.MakeUint256(1234),
 		FinalisationBlock: 1234,
 	}
-	err := s.storage.AddBatch(batch)
+	_, err := s.storage.AddBatch(batch)
 	s.NoError(err)
 
 	actual, err := s.storage.GetBatchByID(batch.ID)
@@ -86,7 +86,7 @@ func (s *BatchTestSuite) TestGetBatchByCommitmentID() {
 		FinalisationBlock: 1234,
 	}
 
-	err := s.storage.AddBatch(batch)
+	_, err := s.storage.AddBatch(batch)
 	s.NoError(err)
 
 	commitment := &models.Commitment{
@@ -141,9 +141,9 @@ func (s *BatchTestSuite) TestGetLatestBatch() {
 			FinalisationBlock: 2000,
 		},
 	}
-	err := s.storage.AddBatch(&batches[0])
+	_, err := s.storage.AddBatch(&batches[0])
 	s.NoError(err)
-	err = s.storage.AddBatch(&batches[1])
+	_, err = s.storage.AddBatch(&batches[1])
 	s.NoError(err)
 
 	actual, err := s.storage.GetLatestBatch()
@@ -180,7 +180,7 @@ func (s *BatchTestSuite) TestGetLatestFinalisedBatch() {
 		},
 	}
 	for i := range batches {
-		err := s.storage.AddBatch(&batches[i])
+		_, err := s.storage.AddBatch(&batches[i])
 		s.NoError(err)
 	}
 
@@ -204,7 +204,7 @@ func (s *BatchTestSuite) TestGetBatchesInRange_ReturnsCorrectBatches() {
 		{Hash: utils.RandomHash(), ID: models.MakeUint256(4)},
 	}
 	for i := range batches {
-		err := s.storage.AddBatch(&batches[i])
+		_, err := s.storage.AddBatch(&batches[i])
 		s.NoError(err)
 	}
 	actual, err := s.storage.GetBatchesInRange(models.NewUint256(2), models.NewUint256(3))
@@ -213,7 +213,7 @@ func (s *BatchTestSuite) TestGetBatchesInRange_ReturnsCorrectBatches() {
 }
 
 func (s *BatchTestSuite) TestGetBatchesInRange_ReturnsEmptySliceWhenThereAreNoBatchesInRange() {
-	err := s.storage.AddBatch(&models.Batch{Hash: utils.RandomHash(), ID: models.MakeUint256(1)})
+	_, err := s.storage.AddBatch(&models.Batch{Hash: utils.RandomHash(), ID: models.MakeUint256(1)})
 	s.NoError(err)
 
 	actual, err := s.storage.GetBatchesInRange(models.NewUint256(2), models.NewUint256(3))
@@ -228,7 +228,7 @@ func (s *BatchTestSuite) TestGetBatchesInRange_ReturnsAllBatchesStartingWithLowe
 		{Hash: utils.RandomHash(), ID: models.MakeUint256(3)},
 	}
 	for i := range batches {
-		err := s.storage.AddBatch(&batches[i])
+		_, err := s.storage.AddBatch(&batches[i])
 		s.NoError(err)
 	}
 	actual, err := s.storage.GetBatchesInRange(models.NewUint256(2), nil)
@@ -243,7 +243,7 @@ func (s *BatchTestSuite) TestGetBatchesInRange_ReturnsAllBatchesUpUntilUpperBoun
 		{Hash: utils.RandomHash(), ID: models.MakeUint256(3)},
 	}
 	for i := range batches {
-		err := s.storage.AddBatch(&batches[i])
+		_, err := s.storage.AddBatch(&batches[i])
 		s.NoError(err)
 	}
 	actual, err := s.storage.GetBatchesInRange(nil, models.NewUint256(2))
@@ -264,7 +264,7 @@ func (s *BatchTestSuite) TestGetBatchWithAccountRoot_AddAndRetrieve() {
 		},
 		AccountTreeRoot: &hash,
 	}
-	err := s.storage.AddBatch(&batch.Batch)
+	_, err := s.storage.AddBatch(&batch.Batch)
 	s.NoError(err)
 
 	includedCommitment := commitment

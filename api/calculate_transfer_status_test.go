@@ -96,7 +96,7 @@ func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_InBatch()
 		Type:              txtype.Transfer,
 		FinalisationBlock: math.MaxUint32,
 	}
-	err := s.storage.AddBatch(&batch)
+	_, err := s.storage.AddBatch(&batch)
 	s.NoError(err)
 
 	includedCommitment := commitment
@@ -121,7 +121,7 @@ func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Finalised
 		Type:              txtype.Transfer,
 		FinalisationBlock: *currentBlockNumber + 1,
 	}
-	err = s.storage.AddBatch(&batch)
+	_, err = s.storage.AddBatch(&batch)
 	s.NoError(err)
 
 	includedCommitment := commitment

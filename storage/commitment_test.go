@@ -63,7 +63,7 @@ func (s *CommitmentTestSuite) TestAddCommitment_AddAndRetrieve() {
 
 func (s *CommitmentTestSuite) addRandomBatch() *common.Hash {
 	batch := models.Batch{Hash: utils.RandomHash()}
-	err := s.storage.AddBatch(&batch)
+	_, err := s.storage.AddBatch(&batch)
 	s.NoError(err)
 	return &batch.Hash
 }
