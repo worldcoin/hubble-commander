@@ -8,11 +8,9 @@ require (
 	github.com/docker/docker v17.12.0-ce-rc1.0.20200618181300-9dc6525e6118+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/ethereum/go-ethereum v1.10.1
-	github.com/fsnotify/fsnotify v1.4.9
 	github.com/golang-migrate/migrate/v4 v4.14.1
 	github.com/holiman/uint256 v1.1.1
 	github.com/jmoiron/sqlx v1.3.1
-	github.com/joho/godotenv v1.3.0
 	github.com/kilic/bn254 v0.0.0-20201116081810-790649bc68fe
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/lib/pq v1.9.0 // indirect

@@ -28,8 +28,8 @@ jobs:
         # Needed because the postgres container does not provide a health check
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
     env:
-      HUBBLE_DBUSER: hubble
-      HUBBLE_DBPASSWORD: root
+      HUBBLE_POSTGRES_USER: hubble
+      HUBBLE_POSTGRES_PASSWORD: root
     steps:
       - name: Setup Go
         uses: actions/setup-go@v2
@@ -48,9 +48,9 @@ jobs:
     name: Run tests using hardhat
     runs-on: ubuntu-latest
     env:
-      ETHEREUM_RPC_URL: http://localhost:8545
-      ETHEREUM_CHAIN_ID: 123
-      ETHEREUM_PRIVATE_KEY: ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 # hardhat node 1st account private key
+      HUBBLE_ETHEREUM_RPC_URL: http://localhost:8545
+      HUBBLE_ETHEREUM_CHAIN_ID: 123
+      HUBBLE_ETHEREUM_PRIVATE_KEY: ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 # hardhat node 1st account private key
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
