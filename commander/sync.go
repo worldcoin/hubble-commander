@@ -18,7 +18,7 @@ var (
 )
 
 func (t *transactionExecutor) SyncBatches() error {
-	submissionBlock, latestBatchID, err := getLatestSubmissionBlockAndBatchNumber(t.storage, t.client)
+	submissionBlock, latestBatchNumber, err := getLatestSubmissionBlockAndBatchNumber(t.storage, t.client)
 	if err != nil {
 		return err
 	}
@@ -30,7 +30,7 @@ func (t *transactionExecutor) SyncBatches() error {
 
 	for i := range newBatches {
 		batch := &newBatches[i]
-		if batch.Number.Cmp(latestBatchID) <= 0 {
+		if batch.Number.Cmp(latestBatchNumber) <= 0 {
 			continue
 		}
 		if err := t.syncBatch(batch, txHashes[i]); err != nil {

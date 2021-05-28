@@ -108,7 +108,6 @@ func (s *Storage) GetLatestSubmittedBatch() (*models.Batch, error) {
 	if len(res) == 0 {
 		return nil, NewNotFoundError("batch")
 	}
-
 	return &res[0], nil
 }
 
