@@ -22,9 +22,10 @@ func (s *CommanderTestSuite) SetupSuite() {
 
 func (s *CommanderTestSuite) SetupTest() {
 	cfg := config.GetTestConfig()
-	err := postgres.RecreateDatabase(&cfg.Postgres)
+	err := postgres.RecreateDatabase(cfg.Postgres)
 	s.NoError(err)
-	s.cmd = NewCommander(&cfg)
+	s.cmd = NewCommander(cfg)
+	s.cmd.cfg.Ethereum = nil
 }
 
 func (s *CommanderTestSuite) TestStartStop() {

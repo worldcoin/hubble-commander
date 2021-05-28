@@ -32,18 +32,15 @@ func (c *Commander) rollupLoop() (err error) {
 }
 
 func (c *Commander) rollupLoopIteration(currentBatchType *txtype.TransactionType) (err error) {
-	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, &c.cfg.Rollup)
+	if !c.storage.IsProposer() {
+		return nil
+	}
+
+	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, c.cfg.Rollup)
 	if err != nil {
 		return err
 	}
 	defer transactionExecutor.Rollback(&err)
-
-	if c.cfg.Rollup.SyncBatches {
-		err = transactionExecutor.SyncBatches()
-		if err != nil {
-			return err
-		}
-	}
 
 	if *currentBatchType == txtype.Transfer {
 		err = transactionExecutor.CreateAndSubmitBatch(*currentBatchType)
@@ -52,7 +49,6 @@ func (c *Commander) rollupLoopIteration(currentBatchType *txtype.TransactionType
 		err = transactionExecutor.CreateAndSubmitBatch(*currentBatchType)
 		*currentBatchType = txtype.Transfer
 	}
-
 	if err != nil {
 		var e *RollupError
 		if errors.As(err, &e) {
@@ -61,12 +57,7 @@ func (c *Commander) rollupLoopIteration(currentBatchType *txtype.TransactionType
 		return err
 	}
 
-	err = transactionExecutor.Commit()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return transactionExecutor.Commit()
 }
 
 func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionType) error {

@@ -17,7 +17,7 @@ func main() {
 	devMode := flag.Bool("dev", false, "disable signature verification")
 	flag.Parse()
 
-	var cfg config.Config
+	var cfg *config.Config
 	if *devMode {
 		cfg = config.GetTestConfig()
 	} else {
@@ -26,7 +26,7 @@ func main() {
 
 	cfg.Rollup.Prune = *prune
 
-	cmd := commander.NewCommander(&cfg)
+	cmd := commander.NewCommander(cfg)
 
 	setupCloseHandler(cmd)
 

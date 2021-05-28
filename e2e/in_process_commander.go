@@ -18,7 +18,7 @@ func CreateInProcessCommander() *InProcessCommander {
 	cfg.Rollup.Prune = true
 	cfg.Rollup.SyncBatches = false
 
-	cmd := commander.NewCommander(&cfg)
+	cmd := commander.NewCommander(cfg)
 
 	endpoint := fmt.Sprintf("http://localhost:%s", cfg.API.Port)
 	client := jsonrpc.NewClient(endpoint)

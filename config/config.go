@@ -4,12 +4,12 @@ import (
 	"log"
 	"os"
 	"path"
-	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/joho/godotenv"
+	"github.com/spf13/viper"
 )
 
 func init() {
@@ -35,74 +35,62 @@ func getGenesisPath() string {
 	return path.Join(utils.GetProjectRoot(), "genesis.yaml")
 }
 
-func GetConfig() Config {
-	return Config{
-		Rollup: RollupConfig{
-			SyncBatches:             true,
-			FeeReceiverPubKeyID:     0,
-			TxsPerCommitment:        32,
-			MinCommitmentsPerBatch:  1,
-			MaxCommitmentsPerBatch:  32,
-			CommitmentLoopInterval:  500 * time.Millisecond,
-			BatchLoopInterval:       500 * time.Millisecond,
-			BlockNumberLoopInterval: 500 * time.Millisecond,
-			GenesisAccounts:         getGenesisAccounts(),
-		},
-		API: APIConfig{
-			Version: "0.0.1",
-			Port:    *getEnvOrDefault("HUBBLE_PORT", ref.String("8080")),
-			DevMode: false,
-		},
-		Postgres: PostgresConfig{
-			Host:           getEnvOrDefault("HUBBLE_DBHOST", nil),
-			Port:           getEnvOrDefault("HUBBLE_DBPORT", nil),
-			Name:           *getEnvOrDefault("HUBBLE_DBNAME", ref.String("hubble")),
-			User:           getEnvOrDefault("HUBBLE_DBUSER", nil),
-			Password:       getEnvOrDefault("HUBBLE_DBPASSWORD", nil),
-			MigrationsPath: *getEnvOrDefault("HUBBLE_MIGRATIONS_PATH", ref.String(getMigrationsPath())),
-		},
-		Badger: BadgerConfig{
-			Path: *getEnvOrDefault("HUBBLE_BADGER_PATH", ref.String(getBadgerPath())),
-		},
-		Ethereum: getEthereumConfig(),
-	}
+func GetConfig() *Config {
+	return newConfig("config.yaml")
 }
 
-func GetTestConfig() Config {
-	return Config{
-		Rollup: RollupConfig{
-			SyncBatches:             false,
-			FeeReceiverPubKeyID:     0,
-			TxsPerCommitment:        2,
-			MinCommitmentsPerBatch:  1,
-			MaxCommitmentsPerBatch:  32,
-			CommitmentLoopInterval:  500 * time.Millisecond,
-			BatchLoopInterval:       500 * time.Millisecond,
-			BlockNumberLoopInterval: 500 * time.Millisecond,
-			GenesisAccounts:         getGenesisAccounts(),
-		},
-		API: APIConfig{
-			Version: "dev-0.0.1",
-			Port:    *getEnvOrDefault("HUBBLE_PORT", ref.String("8080")),
-			DevMode: true,
-		},
-		Postgres: PostgresConfig{
-			Host:           getEnvOrDefault("HUBBLE_DBHOST", nil),
-			Port:           getEnvOrDefault("HUBBLE_DBPORT", nil),
-			Name:           *getEnvOrDefault("HUBBLE_DBNAME", ref.String("hubble_test")),
-			User:           getEnvOrDefault("HUBBLE_DBUSER", nil),
-			Password:       getEnvOrDefault("HUBBLE_DBPASSWORD", nil),
-			MigrationsPath: getMigrationsPath(),
-		},
-		Badger: BadgerConfig{
-			Path: *getEnvOrDefault("HUBBLE_BADGER_PATH", ref.String(getBadgerPath())),
-		},
-		Ethereum: getEthereumConfig(),
+func GetTestConfig() *Config {
+	return newConfig("config-test.yaml")
+}
+
+func newConfig(fileName string) *Config {
+	viper.SetConfigFile(path.Join(utils.GetProjectRoot(), fileName))
+	viper.AutomaticEnv()
+	viper.SetEnvPrefix("HUBBLE")
+
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatalf("failed to read in config: %s", err)
 	}
+	cfg := &Config{
+		Rollup: &RollupConfig{
+			SyncBatches:            viper.GetBool("sync_batches"),
+			FeeReceiverPubKeyID:    viper.GetUint32("fee_receiver_pub_key_id"),
+			TxsPerCommitment:       viper.GetUint32("txs_per_commitment"),
+			MinCommitmentsPerBatch: viper.GetUint32("min_commitments_per_batch"),
+			MaxCommitmentsPerBatch: viper.GetUint32("max_commitments_per_batch"),
+			CommitmentLoopInterval: viper.GetDuration("commitment_loop_interval"),
+			BatchLoopInterval:      viper.GetDuration("batch_loop_interval"),
+			GenesisAccounts:        getGenesisAccounts(),
+			BootstrapNodeURL:       getFromViperOrDefault("bootstrap_node_url", nil),
+		},
+		API: &APIConfig{
+			Version: viper.GetString("version"),
+			Port:    viper.GetString("port"),
+			DevMode: viper.GetBool("dev_mode"),
+		},
+		Postgres: &PostgresConfig{
+			Host:           getFromViperOrDefault("dbhost", nil),
+			Port:           getFromViperOrDefault("dbport", nil),
+			Name:           viper.GetString("dbname"),
+			User:           getFromViperOrDefault("dbuser", nil),
+			Password:       getFromViperOrDefault("dbpassword", nil),
+			MigrationsPath: *getFromViperOrDefault("migrations_path", ref.String(getMigrationsPath())),
+		},
+		Badger: &BadgerConfig{
+			Path: *getFromViperOrDefault("badger_path", ref.String(getBadgerPath())),
+		},
+		Ethereum: &EthereumConfig{},
+	}
+
+	viper.SetEnvPrefix("ETHEREUM")
+	cfg.Ethereum.RPCURL = viper.GetString("rpc_url")
+	cfg.Ethereum.ChainID = viper.GetString("chain_id")
+	cfg.Ethereum.PrivateKey = viper.GetString("private_key")
+	return cfg
 }
 
 func getGenesisAccounts() []models.GenesisAccount {
-	filename := *getEnvOrDefault("HUBBLE_GENESIS_PATH", ref.String(getGenesisPath()))
+	filename := *getFromViperOrDefault("genesis_path", ref.String(getGenesisPath()))
 
 	genesisAccounts, err := readGenesisFile(filename)
 	if err != nil {
@@ -110,16 +98,4 @@ func getGenesisAccounts() []models.GenesisAccount {
 	}
 
 	return genesisAccounts
-}
-
-func getEthereumConfig() *EthereumConfig {
-	rpcURL := getEnvOrDefault("ETHEREUM_RPC_URL", nil)
-	if rpcURL == nil {
-		return nil
-	}
-	return &EthereumConfig{
-		RPCURL:     *rpcURL,
-		ChainID:    getEnv("ETHEREUM_CHAIN_ID"),
-		PrivateKey: getEnv("ETHEREUM_PRIVATE_KEY"),
-	}
 }

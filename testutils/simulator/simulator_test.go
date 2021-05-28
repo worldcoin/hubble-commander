@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -89,6 +90,26 @@ func (s *SimulatorTestSuite) TestGetLatestBlockNumber() {
 
 	expectedBlockNumber := *blockNumberBefore + 1
 	s.Equal(expectedBlockNumber, *blockNumberAfter)
+}
+
+func (s *SimulatorTestSuite) TestSubscribeNewHead() {
+	headers := make(chan *types.Header)
+	subscription, err := s.sim.SubscribeNewHead(headers)
+	s.NoError(err)
+	defer subscription.Unsubscribe()
+
+	s.sim.Commit()
+	timeout := time.After(*s.sim.Config.AutomineInterval * 2)
+
+	select {
+	case err := <-subscription.Err():
+		s.Failf("unexpected SubscribeNewHead error: %s", err.Error())
+	case header := <-headers:
+		s.Equal(uint64(1), header.Number.Uint64())
+		return
+	case <-timeout:
+		s.Fail("timeout on SubscribeNewHead")
+	}
 }
 
 func TestSimulatorTestSuite(t *testing.T) {

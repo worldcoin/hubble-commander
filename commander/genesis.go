@@ -1,8 +1,6 @@
 package commander
 
 import (
-	"log"
-
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -12,11 +10,34 @@ import (
 	"github.com/pkg/errors"
 )
 
-func PopulateGenesisAccounts(storage *st.Storage, accounts []models.RegisteredGenesisAccount) error {
-	stateTree := st.NewStateTree(storage)
-
+func AssignStateIDs(accounts []models.RegisteredGenesisAccount) []models.PopulatedGenesisAccount {
+	populatedAccounts := make([]models.PopulatedGenesisAccount, 0, len(accounts))
 	for i := range accounts {
 		account := accounts[i]
+		if account.Balance.CmpN(0) == 1 {
+			populatedAccounts = append(populatedAccounts, models.PopulatedGenesisAccount{
+				PublicKey: account.PublicKey,
+				PubKeyID:  account.PubKeyID,
+				StateID:   uint32(i),
+				Balance:   account.Balance,
+			})
+		}
+	}
+	return populatedAccounts
+}
+
+func PopulateGenesisAccounts(storage *st.Storage, accounts []models.PopulatedGenesisAccount) error {
+	stateTree := st.NewStateTree(storage)
+
+	seenStateIDs := make(map[uint32]bool)
+	for i := range accounts {
+		account := &accounts[i]
+
+		if seenStateIDs[account.StateID] {
+			return errors.Errorf("accounts must have unique state IDs")
+		}
+		seenStateIDs[account.StateID] = true
+
 		err := storage.AddAccountIfNotExists(&models.Account{
 			PubKeyID:  account.PubKeyID,
 			PublicKey: account.PublicKey,
@@ -25,16 +46,14 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.RegisteredGe
 			return err
 		}
 
-		if account.Balance.CmpN(0) == 1 {
-			err = stateTree.Set(uint32(i), &models.UserState{
-				PubKeyID:   account.PubKeyID,
-				TokenIndex: models.MakeUint256(0),
-				Balance:    account.Balance,
-				Nonce:      models.MakeUint256(0),
-			})
-			if err != nil {
-				return err
-			}
+		err = stateTree.Set(account.StateID, &models.UserState{
+			PubKeyID:   account.PubKeyID,
+			TokenIndex: models.MakeUint256(0),
+			Balance:    account.Balance,
+			Nonce:      models.MakeUint256(0),
+		})
+		if err != nil {
+			return err
 		}
 	}
 	return nil
@@ -58,7 +77,6 @@ func RegisterGenesisAccounts(
 		if err != nil {
 			return nil, err
 		}
-		log.Printf("Registered genesis public key %s at id %d", registeredAccount.PublicKey.String(), registeredAccount.PubKeyID)
 		registeredAccounts = append(registeredAccounts, *registeredAccount)
 	}
 

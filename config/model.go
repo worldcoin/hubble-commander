@@ -7,24 +7,27 @@ import (
 )
 
 type Config struct {
-	Rollup   RollupConfig
-	API      APIConfig
-	Postgres PostgresConfig
-	Badger   BadgerConfig
+	Rollup   *RollupConfig
+	API      *APIConfig
+	Postgres *PostgresConfig
+	Badger   *BadgerConfig
 	Ethereum *EthereumConfig
 }
 
 type RollupConfig struct {
-	Prune                   bool
-	SyncBatches             bool
-	FeeReceiverPubKeyID     uint32
-	TxsPerCommitment        uint32
-	MinCommitmentsPerBatch  uint32
-	MaxCommitmentsPerBatch  uint32
-	CommitmentLoopInterval  time.Duration
-	BatchLoopInterval       time.Duration
-	BlockNumberLoopInterval time.Duration
-	GenesisAccounts         []models.GenesisAccount
+	// TODO: Extract to a separate BootstrapConfig.
+	Prune            bool
+	GenesisAccounts  []models.GenesisAccount
+	BootstrapNodeURL *string
+
+	SyncBatches bool
+
+	FeeReceiverPubKeyID    uint32
+	TxsPerCommitment       uint32
+	MinCommitmentsPerBatch uint32
+	MaxCommitmentsPerBatch uint32
+	CommitmentLoopInterval time.Duration
+	BatchLoopInterval      time.Duration
 }
 
 type APIConfig struct {
