@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (a *API) GetBatchByHash(hash common.Hash) (*dto.BatchWithCommitments, error) {
+func (a *API) GetBatchByHash(hash common.Hash) (*dto.BatchWithRootAndCommitments, error) {
 	batch, err := a.storage.GetBatchWithAccountRoot(hash)
 	if err != nil {
 		return nil, err
@@ -23,7 +23,7 @@ func (a *API) GetBatchByHash(hash common.Hash) (*dto.BatchWithCommitments, error
 	return createBatchWithCommitments(batch, commitments)
 }
 
-func (a *API) GetBatchByID(id models.Uint256) (*dto.BatchWithCommitments, error) {
+func (a *API) GetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommitments, error) {
 	batch, err := a.storage.GetBatchWithAccountRootByNumber(id)
 	if err != nil {
 		return nil, err
@@ -43,14 +43,11 @@ func (a *API) GetBatchByID(id models.Uint256) (*dto.BatchWithCommitments, error)
 func createBatchWithCommitments(
 	batch *models.BatchWithAccountRoot,
 	commitments []models.CommitmentWithTokenID,
-) (*dto.BatchWithCommitments, error) {
+) (*dto.BatchWithRootAndCommitments, error) {
 	for i := range commitments {
 		commitments[i].LeafHash = commitments[i].CalcLeafHash(batch.AccountTreeRoot)
 	}
-	return &dto.BatchWithCommitments{
-		BatchWithAccountRoot: *batch,
-		Commitments:          commitments,
-	}, nil
+	return dto.MakeBatchWithRootAndCommitments(batch, commitments), nil
 }
 
 func (a *API) getSubmissionBlock(finalisationBlock uint32) (uint32, error) {

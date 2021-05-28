@@ -70,8 +70,13 @@ func (s *GetBatchTestSuite) TestGetBatchByHash() {
 	s.NoError(err)
 	s.NotNil(result)
 	s.Len(result.Commitments, 1)
-	s.Equal(s.batch, result.Batch)
+	s.Equal(s.batch.Number, result.ID)
+	s.Equal(s.batch.Hash, result.Hash)
+	s.Equal(s.batch.Type, result.Type)
+	s.Equal(s.batch.TransactionHash, result.TransactionHash)
 	s.Equal(*s.batch.FinalisationBlock-rollup.DefaultBlocksToFinalise, result.SubmissionBlock)
+	s.Equal(s.batch.FinalisationBlock, result.FinalisationBlock)
+	s.NotNil(result.AccountTreeRoot)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByHash_NoCommitments() {
@@ -102,8 +107,13 @@ func (s *GetBatchTestSuite) TestGetBatchByID() {
 	s.NoError(err)
 	s.NotNil(result)
 	s.Len(result.Commitments, 1)
-	s.Equal(s.batch, result.Batch)
+	s.Equal(s.batch.Number, result.ID)
+	s.Equal(s.batch.Hash, result.Hash)
+	s.Equal(s.batch.Type, result.Type)
+	s.Equal(s.batch.TransactionHash, result.TransactionHash)
 	s.Equal(*s.batch.FinalisationBlock-rollup.DefaultBlocksToFinalise, result.SubmissionBlock)
+	s.Equal(s.batch.FinalisationBlock, result.FinalisationBlock)
+	s.NotNil(result.AccountTreeRoot)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByID_NoCommitments() {

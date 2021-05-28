@@ -58,8 +58,12 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 	s.NoError(err)
 	s.NotNil(result)
 	s.Len(result, 1)
-	s.Equal(s.batch, result[0].Batch)
+	s.Equal(s.batch.Number, result[0].ID)
+	s.Equal(s.batch.Hash, result[0].Hash)
+	s.Equal(s.batch.Type, result[0].Type)
+	s.Equal(s.batch.TransactionHash, result[0].TransactionHash)
 	s.Equal(*s.batch.FinalisationBlock-rollup.DefaultBlocksToFinalise, result[0].SubmissionBlock)
+	s.Equal(s.batch.FinalisationBlock, result[0].FinalisationBlock)
 }
 
 func (s *GetBatchesTestSuite) TestGetBatchesByHash_NoBatches() {
