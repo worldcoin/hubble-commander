@@ -32,7 +32,10 @@ func MakeBatch(batch *models.BatchWithSubmissionBlock) *Batch {
 	}
 }
 
-func MakeBatchWithRootAndCommitments(batch *models.BatchWithAccountRoot, commitments []models.CommitmentWithTokenID) *BatchWithRootAndCommitments {
+func MakeBatchWithRootAndCommitments(
+	batch *models.BatchWithAccountRoot,
+	commitments []models.CommitmentWithTokenID,
+) *BatchWithRootAndCommitments {
 	return &BatchWithRootAndCommitments{
 		Batch:           *MakeBatch(&batch.BatchWithSubmissionBlock),
 		AccountTreeRoot: batch.AccountTreeRoot,
