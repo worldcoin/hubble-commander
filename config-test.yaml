@@ -12,10 +12,10 @@ api:
   port: "8080"
   dev_mode: true
 postgres:
-  dbhost: localhost
-  dbname: hubble_test
-  dbuser: hubble
-  dbpassword: root
+  host: localhost
+  name: hubble_test
+  user: hubble
+  password: root
 ethereum:
   rpc_url: ws://localhost:8545
   private_key: ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82

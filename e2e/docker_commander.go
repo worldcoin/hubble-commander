@@ -55,7 +55,7 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 				"HUBBLE_POSTGRES_NAME=" + os.Getenv("HUBBLE_POSTGRES_NAME"),
 				"HUBBLE_POSTGRES_USER=" + os.Getenv("HUBBLE_POSTGRES_USER"),
 				"HUBBLE_POSTGRES_PASSWORD=" + os.Getenv("HUBBLE_POSTGRES_PASSWORD"),
-				"HUBBLE_POSTGRES_PORT=8080",
+				"HUBBLE_API_PORT=8080",
 			},
 			ExposedPorts: map[nat.Port]struct{}{
 				"8080/tcp": {},
