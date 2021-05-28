@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -47,6 +48,7 @@ func newConfig(fileName string) *Config {
 	viper.SetConfigFile(path.Join(utils.GetProjectRoot(), fileName))
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("HUBBLE")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("failed to read in config: %s", err)
