@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func getString(key string, fallback string) string {
+func getString(key, fallback string) string {
 	viper.SetDefault(key, fallback)
 	return viper.GetString(key)
 }
@@ -38,6 +38,7 @@ func getUint32(key string, fallback uint32) uint32 {
 	return viper.GetUint32(key)
 }
 
+// nolint:unparam
 func getDuration(key string, fallback time.Duration) time.Duration {
 	viper.SetDefault(key, fallback)
 	return viper.GetDuration(key)
