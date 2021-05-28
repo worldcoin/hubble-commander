@@ -7,6 +7,7 @@ require (
 	github.com/dgraph-io/badger/v3 v3.2011.1
 	github.com/docker/docker v17.12.0-ce-rc1.0.20200618181300-9dc6525e6118+incompatible
 	github.com/docker/go-connections v0.4.0
+	github.com/etclabscore/go-openrpc-reflect v0.0.36
 	github.com/ethereum/go-ethereum v1.10.1
 	github.com/golang-migrate/migrate/v4 v4.14.1
 	github.com/holiman/uint256 v1.1.1
@@ -14,6 +15,7 @@ require (
 	github.com/kilic/bn254 v0.0.0-20201116081810-790649bc68fe
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/lib/pq v1.9.0 // indirect
+	github.com/open-rpc/meta-schema v0.0.0-20201029221707-1b72ef2ea333
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0
