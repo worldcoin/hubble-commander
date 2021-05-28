@@ -2,27 +2,14 @@ package config
 
 import (
 	"log"
-	"os"
 	"path"
 	"strings"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
-
-func init() {
-	if os.Getenv("CI") != "true" {
-		loadDotEnv()
-	}
-}
-
-func loadDotEnv() {
-	dotEnvFilePath := path.Join(utils.GetProjectRoot(), ".env")
-	_ = godotenv.Load(dotEnvFilePath)
-}
 
 func getMigrationsPath() string {
 	return path.Join(utils.GetProjectRoot(), "db", "postgres", "migrations")
