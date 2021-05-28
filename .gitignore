@@ -5,3 +5,4 @@ build
 .env.docker
 db/badger/data
 e2e-data
+config.yaml

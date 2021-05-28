@@ -4,12 +4,114 @@ import (
 	"log"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/spf13/viper"
 )
+
+func setupViper() {
+	viper.SetConfigFile(getConfigPath())
+	viper.AutomaticEnv()
+	viper.SetEnvPrefix("HUBBLE")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	err := viper.ReadInConfig()
+	if err != nil {
+		if strings.Contains(err.Error(), "no such file or directory") {
+			log.Printf("Configuration file not found (%s). Continuing with default config.", getConfigPath())
+		} else {
+			log.Fatalf("failed to read in config: %s", err)
+		}
+	}
+}
+
+func GetConfig() *Config {
+	setupViper()
+
+	return &Config{
+		Rollup: &RollupConfig{
+			SyncBatches:            getBool("rollup.sync_batches", true),
+			FeeReceiverPubKeyID:    getUint32("rollup.fee_receiver_pub_key_id", 0),
+			TxsPerCommitment:       getUint32("rollup.txs_per_commitment", 32),
+			MinCommitmentsPerBatch: getUint32("rollup.min_commitments_per_batch", 1),
+			MaxCommitmentsPerBatch: getUint32("rollup.max_commitments_per_batch", 32),
+			CommitmentLoopInterval: getDuration("rollup.commitment_loop_interval", 500*time.Millisecond),
+			BatchLoopInterval:      getDuration("rollup.batch_loop_interval", 500*time.Millisecond),
+			GenesisAccounts:        getGenesisAccounts(),
+			BootstrapNodeURL:       getStringOrNil("rollup.bootstrap_node_url"),
+		},
+		API: &APIConfig{
+			Version: "0.0.1",
+			Port:    getString("api.port", "8080"),
+			DevMode: false,
+		},
+		Postgres: &PostgresConfig{
+			Host:           getStringOrNil("postgres.host"),
+			Port:           getStringOrNil("postgres.port"),
+			Name:           getString("postgres.name", "hubble"),
+			User:           getStringOrNil("postgres.user"),
+			Password:       getStringOrNil("postgres.password"),
+			MigrationsPath: getMigrationsPath(),
+		},
+		Badger: &BadgerConfig{
+			Path: getString("badger.path", getBadgerPath()),
+		},
+		Ethereum: getEthereumConfig(),
+	}
+}
+
+func GetTestConfig() *Config {
+	setupViper()
+
+	return &Config{
+		Rollup: &RollupConfig{
+			SyncBatches:            getBool("rollup.sync_batches", false),
+			FeeReceiverPubKeyID:    getUint32("rollup.fee_receiver_pub_key_id", 0),
+			TxsPerCommitment:       getUint32("rollup.txs_per_commitment", 2),
+			MinCommitmentsPerBatch: getUint32("rollup.min_commitments_per_batch", 1),
+			MaxCommitmentsPerBatch: getUint32("rollup.max_commitments_per_batch", 32),
+			CommitmentLoopInterval: getDuration("rollup.commitment_loop_interval", 500*time.Millisecond),
+			BatchLoopInterval:      getDuration("rollup.batch_loop_interval", 500*time.Millisecond),
+			GenesisAccounts:        getGenesisAccounts(),
+			BootstrapNodeURL:       getStringOrNil("rollup.bootstrap_node_url"),
+		},
+		API: &APIConfig{
+			Version: "dev-0.0.1",
+			Port:    getString("api.port", "8080"),
+			DevMode: true,
+		},
+		Postgres: &PostgresConfig{
+			Host:           getStringOrNil("postgres.host"),
+			Port:           getStringOrNil("postgres.port"),
+			Name:           getString("postgres.name", "hubble_test"),
+			User:           getStringOrNil("postgres.user"),
+			Password:       getStringOrNil("postgres.password"),
+			MigrationsPath: getMigrationsPath(),
+		},
+		Badger: &BadgerConfig{
+			Path: getString("badger.path", getBadgerPath()),
+		},
+		Ethereum: getEthereumConfig(),
+	}
+}
+
+func getConfigPath() string {
+	return path.Join(utils.GetProjectRoot(), "config.yaml")
+}
+
+func getGenesisAccounts() []models.GenesisAccount {
+	filename := getString("rollup.genesis_path", getGenesisPath())
+	genesisAccounts, err := readGenesisFile(filename)
+	if err != nil {
+		log.Fatalf("error reading genesis file: %s", err.Error())
+	}
+	return genesisAccounts
+}
+
+func getGenesisPath() string {
+	return path.Join(utils.GetProjectRoot(), "genesis.yaml")
+}
 
 func getMigrationsPath() string {
 	return path.Join(utils.GetProjectRoot(), "db", "postgres", "migrations")
@@ -19,70 +121,14 @@ func getBadgerPath() string {
 	return path.Join(utils.GetProjectRoot(), "db", "badger", "data")
 }
 
-func getGenesisPath() string {
-	return path.Join(utils.GetProjectRoot(), "genesis.yaml")
-}
-
-func GetConfig() *Config {
-	return newConfig("config.yaml")
-}
-
-func GetTestConfig() *Config {
-	return newConfig("config-test.yaml")
-}
-
-func newConfig(fileName string) *Config {
-	viper.SetConfigFile(path.Join(utils.GetProjectRoot(), fileName))
-	viper.AutomaticEnv()
-	viper.SetEnvPrefix("HUBBLE")
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-
-	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("failed to read in config: %s", err)
+func getEthereumConfig() *EthereumConfig {
+	rpcURL := getStringOrNil("ETHEREUM_RPC_URL")
+	if rpcURL == nil {
+		return nil
 	}
-	return &Config{
-		Rollup: &RollupConfig{
-			SyncBatches:            viper.GetBool("rollup.sync_batches"),
-			FeeReceiverPubKeyID:    viper.GetUint32("rollup.fee_receiver_pub_key_id"),
-			TxsPerCommitment:       viper.GetUint32("rollup.txs_per_commitment"),
-			MinCommitmentsPerBatch: viper.GetUint32("rollup.min_commitments_per_batch"),
-			MaxCommitmentsPerBatch: viper.GetUint32("rollup.max_commitments_per_batch"),
-			CommitmentLoopInterval: viper.GetDuration("rollup.commitment_loop_interval"),
-			BatchLoopInterval:      viper.GetDuration("rollup.batch_loop_interval"),
-			GenesisAccounts:        getGenesisAccounts(),
-			BootstrapNodeURL:       getFromViperOrDefault("rollup.bootstrap_node_url", nil),
-		},
-		API: &APIConfig{
-			Version: viper.GetString("api.version"),
-			Port:    viper.GetString("api.port"),
-			DevMode: viper.GetBool("api.dev_mode"),
-		},
-		Postgres: &PostgresConfig{
-			Host:           getFromViperOrDefault("postgres.host", nil),
-			Port:           getFromViperOrDefault("postgres.port", nil),
-			Name:           viper.GetString("postgres.name"),
-			User:           getFromViperOrDefault("postgres.user", nil),
-			Password:       getFromViperOrDefault("postgres.password", nil),
-			MigrationsPath: *getFromViperOrDefault("postgres.migrations_path", ref.String(getMigrationsPath())),
-		},
-		Badger: &BadgerConfig{
-			Path: *getFromViperOrDefault("badger.path", ref.String(getBadgerPath())),
-		},
-		Ethereum: &EthereumConfig{
-			RPCURL:     viper.GetString("ethereum.rpc_url"),
-			ChainID:    viper.GetString("ethereum.chain_id"),
-			PrivateKey: viper.GetString("ethereum.private_key"),
-		},
+	return &EthereumConfig{
+		RPCURL:     *rpcURL,
+		ChainID:    getStringOrThrow("ETHEREUM_CHAIN_ID"),
+		PrivateKey: getStringOrThrow("ETHEREUM_PRIVATE_KEY"),
 	}
-}
-
-func getGenesisAccounts() []models.GenesisAccount {
-	filename := *getFromViperOrDefault("rollup.genesis_path", ref.String(getGenesisPath()))
-
-	genesisAccounts, err := readGenesisFile(filename)
-	if err != nil {
-		log.Fatalf("error reading genesis file: %s", err.Error())
-	}
-
-	return genesisAccounts
 }
