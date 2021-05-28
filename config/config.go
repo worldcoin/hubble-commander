@@ -61,7 +61,7 @@ func newConfig(fileName string) *Config {
 			CommitmentLoopInterval: viper.GetDuration("rollup.commitment_loop_interval"),
 			BatchLoopInterval:      viper.GetDuration("rollup.batch_loop_interval"),
 			GenesisAccounts:        getGenesisAccounts(),
-			BootstrapNodeURL:       getFromViperOrDefault("bootstrap_node_url", nil),
+			BootstrapNodeURL:       getFromViperOrDefault("rollup.bootstrap_node_url", nil),
 		},
 		API: &APIConfig{
 			Version: viper.GetString("api.version"),
@@ -88,7 +88,7 @@ func newConfig(fileName string) *Config {
 }
 
 func getGenesisAccounts() []models.GenesisAccount {
-	filename := *getFromViperOrDefault("genesis_path", ref.String(getGenesisPath()))
+	filename := *getFromViperOrDefault("rollup.genesis_path", ref.String(getGenesisPath()))
 
 	genesisAccounts, err := readGenesisFile(filename)
 	if err != nil {
