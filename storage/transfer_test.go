@@ -209,15 +209,19 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 	transfer1 := transfer
 	transfer1.Hash = utils.RandomHash()
 	transfer1.FromStateID = 0
+	transfer1.ToStateID = 1
 	transfer2 := transfer
 	transfer2.Hash = utils.RandomHash()
 	transfer2.FromStateID = 1
+	transfer2.ToStateID = 3
 	transfer3 := transfer
 	transfer3.Hash = utils.RandomHash()
 	transfer3.FromStateID = 2
+	transfer3.ToStateID = 1
 	transfer4 := transfer
 	transfer4.Hash = utils.RandomHash()
 	transfer4.FromStateID = 3
+	transfer4.ToStateID = 1
 
 	err := s.storage.AddTransfer(&transfer1)
 	s.NoError(err)
@@ -231,8 +235,9 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 	userTransactions, err := s.storage.GetTransfersByPublicKey(&accounts[0].PublicKey)
 	s.NoError(err)
 
-	s.Len(userTransactions, 3)
+	s.Len(userTransactions, 4)
 	s.Contains(userTransactions, transfer1)
+	s.Contains(userTransactions, transfer2)
 	s.Contains(userTransactions, transfer3)
 	s.Contains(userTransactions, transfer4)
 }
