@@ -106,6 +106,7 @@ func (s *GetTransactionsTestSuite) addTransfers() []models.Transfer {
 	transfers := []models.Transfer{
 		makeTransfer(0, 2),
 		makeTransfer(1, 2),
+		makeTransfer(2, 4),
 		makeTransfer(2, 0),
 		makeTransfer(3, 4),
 		makeTransfer(4, 3),
@@ -138,6 +139,7 @@ func (s *GetTransactionsTestSuite) addCreate2Transfers() []models.Create2Transfe
 	transfers := []models.Create2Transfer{
 		makeCreate2Transfer(0, 5, models.PublicKey{3, 4, 5}),
 		makeCreate2Transfer(4, 6, models.PublicKey{3, 4, 5}),
+		makeCreate2Transfer(4, 3, models.PublicKey{3, 4, 5}),
 	}
 
 	for i := range transfers {
@@ -170,11 +172,14 @@ func (s *GetTransactionsTestSuite) TestGetTransactions() {
 		}
 	}
 
-	s.Len(txs, 4)
+	s.Len(txs, 7)
 	s.Contains(txs, newTransferReceipt(transfers[0]))
 	s.Contains(txs, newTransferReceipt(transfers[1]))
 	s.Contains(txs, newTransferReceipt(transfers[3]))
+	s.Contains(txs, newTransferReceipt(transfers[4]))
+	s.Contains(txs, newTransferReceipt(transfers[5]))
 	s.Contains(txs, newCreate2Receipt(create2Transfers[0]))
+	s.Contains(txs, newCreate2Receipt(create2Transfers[2]))
 }
 
 func (s *GetTransactionsTestSuite) TestGetTransactions_NoTransactions() {
