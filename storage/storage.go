@@ -18,6 +18,7 @@ type Storage struct {
 	feeReceiverStateIDs map[string]uint32 // token index => state id
 	isProposer          bool
 	latestBlockNumber   uint32
+	syncedBlock         *uint32
 }
 
 type TxOptions struct {
@@ -96,6 +97,7 @@ func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, 
 		feeReceiverStateIDs: s.feeReceiverStateIDs,
 		isProposer:          s.isProposer,
 		latestBlockNumber:   s.latestBlockNumber,
+		syncedBlock:         s.syncedBlock,
 	}
 
 	if opts.Postgres && !opts.ReadOnly {
