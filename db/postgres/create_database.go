@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"fmt"
-	"strings"
+	"log"
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/jmoiron/sqlx"
@@ -14,17 +14,19 @@ func CreateDatabaseIfNotExist(cfg *config.PostgresConfig) (err error) {
 	if err != nil {
 		return err
 	}
-	defer func() {
-		if closeErr := dbInstance.Close(); err == nil {
-			err = closeErr
-		}
-	}()
+	defer closeDB(dbInstance, &err)
 
-	_, err = dbInstance.Exec(fmt.Sprintf("CREATE DATABASE %s", cfg.Name))
-	if err != nil && !strings.Contains(err.Error(), "already exists") {
+	exists, err := databaseExists(dbInstance, cfg.Name)
+	if err != nil {
 		return err
 	}
-	return nil
+
+	if *exists {
+		return nil
+	}
+
+	log.Printf("Creating database %s", cfg.Name)
+	return createDatabase(dbInstance, cfg.Name)
 }
 
 func RecreateDatabase(cfg *config.PostgresConfig) (err error) {
@@ -33,11 +35,7 @@ func RecreateDatabase(cfg *config.PostgresConfig) (err error) {
 	if err != nil {
 		return err
 	}
-	defer func() {
-		if closeErr := dbInstance.Close(); err == nil {
-			err = closeErr
-		}
-	}()
+	defer closeDB(dbInstance, &err)
 
 	query := fmt.Sprintf(`
 		SELECT pg_terminate_backend(pg_stat_activity.pid) 
@@ -55,7 +53,28 @@ func RecreateDatabase(cfg *config.PostgresConfig) (err error) {
 		return err
 	}
 
-	_, err = dbInstance.Exec(fmt.Sprintf("CREATE DATABASE %s", cfg.Name))
+	return createDatabase(dbInstance, cfg.Name)
+}
+
+// nolint:gocritic
+func closeDB(dbInstance *sqlx.DB, err *error) {
+	if closeErr := dbInstance.Close(); *err == nil {
+		*err = closeErr
+	}
+}
+
+func databaseExists(dbInstance *sqlx.DB, dbName string) (*bool, error) {
+	query := fmt.Sprintf("SELECT EXISTS(SELECT datname FROM pg_catalog.pg_database WHERE datname = '%s')", dbName)
+	row := dbInstance.QueryRow(query)
+	var exists bool
+	if err := row.Scan(&exists); err != nil {
+		return nil, err
+	}
+	return &exists, nil
+}
+
+func createDatabase(dbInstance *sqlx.DB, dbName string) error {
+	_, err := dbInstance.Exec(fmt.Sprintf("CREATE DATABASE %s", dbName))
 	if err != nil {
 		return err
 	}
