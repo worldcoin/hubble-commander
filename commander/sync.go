@@ -23,7 +23,7 @@ func (t *transactionExecutor) SyncBatches() error {
 		return err
 	}
 
-	newBatches, txHashes, err := t.client.GetBatches(submissionBlock)
+	newBatches, err := t.client.GetBatches(submissionBlock)
 	if err != nil {
 		return err
 	}
@@ -33,7 +33,7 @@ func (t *transactionExecutor) SyncBatches() error {
 		if batch.Number.Cmp(latestBatchNumber) <= 0 {
 			continue
 		}
-		if err := t.syncBatch(batch, txHashes[i]); err != nil {
+		if err := t.syncBatch(batch, batch.TransactionHash); err != nil {
 			return err
 		}
 	}

@@ -58,7 +58,7 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 
 	submissionBlockBatch1 := *batch1.FinalisationBlock - uint32(*finalisationBlocks)
 
-	batches, _, err := s.client.GetBatches(&submissionBlockBatch1)
+	batches, err := s.client.GetBatches(&submissionBlockBatch1)
 	s.NoError(err)
 	s.Len(batches, 1)
 }
