@@ -24,7 +24,7 @@ func (a *API) GetCommitment(id int32) (*dto.Commitment, error) {
 		return nil, err
 	}
 
-	batch, err := a.storage.GetBatchByCommitmentID(commitment.ID)
+	batch, err := a.storage.GetBatch(*commitment.IncludedInBatch)
 	if err != nil {
 		return nil, err
 	}
