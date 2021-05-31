@@ -2,6 +2,7 @@ package commander
 
 import (
 	"testing"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -12,7 +13,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type NewBlockTestSuite struct {
+type InitialSyncTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	client   *eth.TestClient
@@ -20,13 +21,13 @@ type NewBlockTestSuite struct {
 	teardown func() error
 }
 
-func (s *NewBlockTestSuite) SetupSuite() {
+func (s *InitialSyncTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *NewBlockTestSuite) SetupTest() {
+func (s *InitialSyncTestSuite) SetupTest() {
 	var err error
-	storage, err := st.NewTestStorage()
+	storage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.teardown = storage.Teardown
 	s.client, err = eth.NewTestClient()
@@ -41,31 +42,43 @@ func (s *NewBlockTestSuite) SetupTest() {
 	}
 }
 
-func (s *NewBlockTestSuite) TearDownTest() {
+func (s *InitialSyncTestSuite) TearDownTest() {
 	s.client.Close()
 	err := s.teardown()
 	s.NoError(err)
 }
 
-func (s *NewBlockTestSuite) TestSyncOnStart() {
+func (s *InitialSyncTestSuite) TestInitialSync() {
 	number, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
 	s.cmd.storage.SetLatestBlockNumber(*number + 3)
 
-	// register sender account on chain
+	accounts := []models.Account{
+		{PublicKey: models.PublicKey{1, 2, 3}},
+		{PublicKey: models.PublicKey{2, 3, 4}},
+	}
+
 	registrations, unsubscribe, err := s.client.WatchRegistrations(&bind.WatchOpts{})
 	s.NoError(err)
 	defer unsubscribe()
-	senderPubKeyID, err := s.client.RegisterAccount(&models.PublicKey{1, 2, 3}, registrations)
-	s.NoError(err)
-	s.Equal(uint32(0), *senderPubKeyID)
+	for i := range accounts {
+		senderPubKeyID, err := s.client.RegisterAccount(&accounts[i].PublicKey, registrations)
+		s.NoError(err)
+		s.Equal(uint32(i), *senderPubKeyID)
+		accounts[i].PubKeyID = *senderPubKeyID
+	}
 
-	s.client.Commit()
-
+	time.Sleep(200 * time.Millisecond)
 	err = s.cmd.InitialSync()
 	s.NoError(err)
+	for i := range accounts {
+		userAccounts, err := s.cmd.storage.GetAccounts(&accounts[i].PublicKey)
+		s.NoError(err)
+		s.Len(userAccounts, 1)
+		s.Contains(accounts, userAccounts[0])
+	}
 }
 
 func TestTestSuite(t *testing.T) {
-	suite.Run(t, new(NewBlockTestSuite))
+	suite.Run(t, new(InitialSyncTestSuite))
 }
