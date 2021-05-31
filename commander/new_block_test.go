@@ -50,7 +50,7 @@ func (s *NewBlockTestSuite) TearDownTest() {
 func (s *NewBlockTestSuite) TestSyncOnStart() {
 	number, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
-	s.cmd.storage.SetLatestBlockNumber(uint32(*number) + 3)
+	s.cmd.storage.SetLatestBlockNumber(*number + 3)
 
 	// register sender account on chain
 	registrations, unsubscribe, err := s.client.WatchRegistrations(&bind.WatchOpts{})
@@ -60,12 +60,9 @@ func (s *NewBlockTestSuite) TestSyncOnStart() {
 	s.NoError(err)
 	s.Equal(uint32(0), *senderPubKeyID)
 
-	senderPubKeyID, err = s.client.RegisterAccount(&models.PublicKey{8, 9, 3}, registrations)
-	s.NoError(err)
-
 	s.client.Commit()
 
-	err = s.cmd.SyncOnStart(uint64(*number))
+	err = s.cmd.SyncOnStart()
 	s.NoError(err)
 }
 

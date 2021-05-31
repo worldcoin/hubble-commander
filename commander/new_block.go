@@ -2,6 +2,7 @@ package commander
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -9,6 +10,11 @@ import (
 )
 
 func (c *Commander) newBlockLoop() error {
+	err := c.SyncOnStart()
+	if err != nil {
+		return err
+	}
+
 	blocks := make(chan *types.Header)
 	subscription, err := c.client.ChainConnection.SubscribeNewHead(blocks)
 	if err != nil {
@@ -63,16 +69,21 @@ func (c *Commander) SyncBatches(isProposer bool, endBlock *uint64) (err error) {
 	return transactionExecutor.Commit()
 }
 
-func (c *Commander) SyncOnStart(number uint64) error {
+func (c *Commander) SyncOnStart() error {
+	log.Println("Started initial syncing")
+	latestBlockNumber, err := c.client.ChainConnection.GetLatestBlockNumber()
+	if err != nil {
+		return err
+	}
+
 	syncedBlock, err := c.storage.GetSyncedBlock(c.client.ChainState.ChainID)
 	if err != nil {
 		return err
 	}
-	//TODO: move to config
 	startBlock := uint64(*syncedBlock)
-	endBlock := number + uint64(c.cfg.Rollup.SyncSize)
+	endBlock := startBlock + uint64(c.cfg.Rollup.SyncSize)
 
-	for endBlock <= uint64(c.storage.GetLatestBlockNumber()) {
+	for endBlock <= uint64(*latestBlockNumber) {
 		err = c.RegisterAccounts(&bind.FilterOpts{
 			Start: startBlock,
 			End:   &endBlock,
@@ -95,6 +106,7 @@ func (c *Commander) SyncOnStart(number uint64) error {
 		endBlock += uint64(c.cfg.Rollup.SyncSize)
 	}
 
+	log.Println("Finished initial syncing")
 	return nil
 }
 
