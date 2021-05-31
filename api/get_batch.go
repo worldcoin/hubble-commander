@@ -11,7 +11,7 @@ func (a *API) GetBatchByHash(hash common.Hash) (*dto.BatchWithRootAndCommitments
 	if err != nil {
 		return nil, err
 	}
-	batch.SubmissionBlock, err = a.getSubmissionBlock(*batch.FinalisationBlock)
+	submissionBlock, err := a.getSubmissionBlock(*batch.FinalisationBlock)
 	if err != nil {
 		return nil, err
 	}
@@ -20,7 +20,7 @@ func (a *API) GetBatchByHash(hash common.Hash) (*dto.BatchWithRootAndCommitments
 	if err != nil {
 		return nil, err
 	}
-	return createBatchWithCommitments(batch, commitments)
+	return createBatchWithCommitments(batch, submissionBlock, commitments)
 }
 
 func (a *API) GetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommitments, error) {
@@ -28,7 +28,7 @@ func (a *API) GetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommitments,
 	if err != nil {
 		return nil, err
 	}
-	batch.SubmissionBlock, err = a.getSubmissionBlock(*batch.FinalisationBlock)
+	submissionBlock, err := a.getSubmissionBlock(*batch.FinalisationBlock)
 	if err != nil {
 		return nil, err
 	}
@@ -37,17 +37,18 @@ func (a *API) GetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommitments,
 	if err != nil {
 		return nil, err
 	}
-	return createBatchWithCommitments(batch, commitments)
+	return createBatchWithCommitments(batch, submissionBlock, commitments)
 }
 
 func createBatchWithCommitments(
 	batch *models.BatchWithAccountRoot,
+	submissionBlock uint32,
 	commitments []models.CommitmentWithTokenID,
 ) (*dto.BatchWithRootAndCommitments, error) {
 	for i := range commitments {
 		commitments[i].LeafHash = commitments[i].CalcLeafHash(batch.AccountTreeRoot)
 	}
-	return dto.MakeBatchWithRootAndCommitments(batch, commitments), nil
+	return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, commitments), nil
 }
 
 func (a *API) getSubmissionBlock(finalisationBlock uint32) (uint32, error) {

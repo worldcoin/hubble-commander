@@ -314,9 +314,7 @@ func (s *BatchTestSuite) TestGetBatchWithAccountRoot_AddAndRetrieve() {
 	s.NoError(err)
 
 	batchWithAccountRoot := &models.BatchWithAccountRoot{
-		BatchWithSubmissionBlock: models.BatchWithSubmissionBlock{
-			Batch: *batch,
-		},
+		Batch: *batch,
 		AccountTreeRoot: includedCommitment.AccountTreeRoot,
 	}
 

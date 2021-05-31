@@ -20,12 +20,7 @@ type Batch struct {
 	FinalisationBlock *uint32      `db:"finalisation_block"` // nolint:misspell
 }
 
-type BatchWithSubmissionBlock struct {
-	Batch
-	SubmissionBlock uint32
-}
-
 type BatchWithAccountRoot struct {
-	BatchWithSubmissionBlock
+	Batch
 	AccountTreeRoot *common.Hash `db:"account_tree_root"`
 }

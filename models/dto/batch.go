@@ -21,23 +21,24 @@ type BatchWithRootAndCommitments struct {
 	Commitments     []models.CommitmentWithTokenID
 }
 
-func MakeBatch(batch *models.BatchWithSubmissionBlock) *Batch {
+func MakeBatch(batch *models.Batch, submissionBlock uint32) *Batch {
 	return &Batch{
 		ID:                batch.Number,
 		Hash:              batch.Hash,
 		Type:              batch.Type,
 		TransactionHash:   batch.TransactionHash,
-		SubmissionBlock:   batch.SubmissionBlock,
+		SubmissionBlock:   submissionBlock,
 		FinalisationBlock: batch.FinalisationBlock,
 	}
 }
 
 func MakeBatchWithRootAndCommitments(
 	batch *models.BatchWithAccountRoot,
+	submissionBlock uint32,
 	commitments []models.CommitmentWithTokenID,
 ) *BatchWithRootAndCommitments {
 	return &BatchWithRootAndCommitments{
-		Batch:           *MakeBatch(&batch.BatchWithSubmissionBlock),
+		Batch:           *MakeBatch(&batch.Batch, submissionBlock),
 		AccountTreeRoot: batch.AccountTreeRoot,
 		Commitments:     commitments,
 	}
