@@ -2,10 +2,30 @@ package postgres
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/jmoiron/sqlx"
 )
+
+func CreateDatabaseIfNotExist(cfg *config.PostgresConfig) (err error) {
+	datasource := CreateDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, nil)
+	dbInstance, err := sqlx.Connect("postgres", datasource)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if closeErr := dbInstance.Close(); err == nil {
+			err = closeErr
+		}
+	}()
+
+	_, err = dbInstance.Exec(fmt.Sprintf("CREATE DATABASE %s", cfg.Name))
+	if err != nil && !strings.Contains(err.Error(), "already exists") {
+		return err
+	}
+	return nil
+}
 
 func RecreateDatabase(cfg *config.PostgresConfig) (err error) {
 	datasource := CreateDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, nil)
