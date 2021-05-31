@@ -1,6 +1,9 @@
 package commander
 
 import (
+	"fmt"
+
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
@@ -58,4 +61,58 @@ func (c *Commander) SyncBatches(isProposer bool) (err error) {
 		return err
 	}
 	return transactionExecutor.Commit()
+}
+
+func (c *Commander) SyncOnStart(number uint64) error {
+	syncedBlock, err := c.storage.GetSyncedBlock(c.client.ChainState.ChainID)
+	if err != nil {
+		return err
+	}
+	//TODO: move to config
+	offset := uint64(1)
+	startBlock := uint64(*syncedBlock)
+	endBlock := number + offset
+
+	for endBlock < uint64(c.storage.GetLatestBlockNumber()) {
+		err = c.RegisterAccounts(&bind.FilterOpts{
+			Start: startBlock,
+			End:   &endBlock,
+		})
+		if err != nil {
+			return err
+		}
+
+		err = c.SyncBatches(false)
+		if err != nil {
+			return err
+		}
+
+		err = c.storage.SetSyncedBlock(c.client.ChainState.ChainID, uint32(endBlock))
+		if err != nil {
+			return err
+		}
+
+		startBlock = endBlock
+		endBlock += offset
+	}
+
+	return nil
+}
+
+func (c *Commander) RegisterAccounts(opts *bind.FilterOpts) error {
+	it, err := c.client.AccountRegistry.FilterPubkeyRegistered(opts)
+	if err != nil {
+		return err
+	}
+	defer it.Close()
+	i := 0
+	for it.Next() {
+		fmt.Printf("i: %d\n", i)
+		i++
+		err = ProcessPubkeyRegistered(c.storage, it.Event)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
