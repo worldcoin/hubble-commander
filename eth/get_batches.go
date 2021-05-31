@@ -52,10 +52,10 @@ func (c *Client) GetBatches(latestBatchSubmissionBlock *uint32) ([]DecodedBatch,
 		}
 
 		res = append(res, DecodedBatch{
-			Batch:       *batch,
+			Batch:           *batch,
 			TransactionHash: txHash,
-			AccountRoot: common.BytesToHash(it.Event.AccountRoot[:]),
-			Commitments: commitments,
+			AccountRoot:     common.BytesToHash(it.Event.AccountRoot[:]),
+			Commitments:     commitments,
 		})
 	}
 
@@ -65,6 +65,6 @@ func (c *Client) GetBatches(latestBatchSubmissionBlock *uint32) ([]DecodedBatch,
 type DecodedBatch struct {
 	models.Batch
 	TransactionHash common.Hash
-	AccountRoot common.Hash
-	Commitments []encoder.DecodedCommitment
+	AccountRoot     common.Hash
+	Commitments     []encoder.DecodedCommitment
 }

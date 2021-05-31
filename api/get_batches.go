@@ -20,11 +20,11 @@ func (a *API) GetBatches(from, to *models.Uint256) ([]dto.Batch, error) {
 	for i := range batches {
 		submissionBlock := *batches[i].FinalisationBlock - uint32(*blocksToFinalise)
 		batchesWithSubmission = append(batchesWithSubmission, *dto.MakeBatch(&models.Batch{
-			ID: batches[i].ID,
-			Type: batches[i].Type,
-			TransactionHash: batches[i].TransactionHash,
-			Hash: batches[i].Hash,
-			Number: batches[i].Number,
+			ID:                batches[i].ID,
+			Type:              batches[i].Type,
+			TransactionHash:   batches[i].TransactionHash,
+			Hash:              batches[i].Hash,
+			Number:            batches[i].Number,
 			FinalisationBlock: batches[i].FinalisationBlock,
 		}, submissionBlock))
 	}
