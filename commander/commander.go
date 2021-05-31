@@ -73,6 +73,10 @@ func (c *Commander) Start() (err error) {
 		}
 		return nil
 	})
+	err = c.InitialSync()
+	if err != nil {
+		return err
+	}
 	c.startWorker(func() error { return c.newBlockLoop() })
 	c.startWorker(func() error { return c.rollupLoop() })
 	c.startWorker(func() error { return WatchAccounts(c.storage, c.client, stopChannel) })

@@ -9,11 +9,6 @@ import (
 )
 
 func (c *Commander) newBlockLoop() error {
-	err := c.SyncOnStart()
-	if err != nil {
-		return err
-	}
-
 	blocks := make(chan *types.Header)
 	subscription, err := c.client.ChainConnection.SubscribeNewHead(blocks)
 	if err != nil {
@@ -72,7 +67,7 @@ func (c *Commander) SyncBatches(isProposer bool, endBlock *uint64) (err error) {
 	return transactionExecutor.Commit()
 }
 
-func (c *Commander) SyncOnStart() error {
+func (c *Commander) InitialSync() error {
 	log.Println("Started initial syncing")
 	latestBlockNumber, err := c.client.ChainConnection.GetLatestBlockNumber()
 	if err != nil {

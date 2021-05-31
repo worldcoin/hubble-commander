@@ -62,7 +62,7 @@ func (s *NewBlockTestSuite) TestSyncOnStart() {
 
 	s.client.Commit()
 
-	err = s.cmd.SyncOnStart()
+	err = s.cmd.InitialSync()
 	s.NoError(err)
 }
 
