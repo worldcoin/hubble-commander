@@ -33,7 +33,7 @@ func (s *BatchTestSuite) TearDownTest() {
 }
 
 func (s *BatchTestSuite) TestAddPendingBatch_AddAndRetrieve() {
-	batch := &models.PendingBatch{
+	batch := &models.Batch{
 		Type:            txtype.Transfer,
 		TransactionHash: utils.RandomHash(),
 	}
@@ -164,7 +164,7 @@ func (s *BatchTestSuite) TestGetLatestSubmittedBatch() {
 			FinalisationBlock: ref.Uint32(1234),
 		},
 	}
-	pendingBatch := models.PendingBatch{
+	pendingBatch := models.Batch{
 		ID:   3,
 		Type: txtype.Create2Transfer,
 	}
@@ -214,7 +214,7 @@ func (s *BatchTestSuite) TestGetLatestFinalisedBatch() {
 			FinalisationBlock: ref.Uint32(2000),
 		},
 	}
-	pendingBatch := models.PendingBatch{
+	pendingBatch := models.Batch{
 		ID:              4,
 		Type:            txtype.Create2Transfer,
 		TransactionHash: utils.RandomHash(),

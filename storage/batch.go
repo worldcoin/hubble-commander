@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (s *Storage) AddPendingBatch(batch *models.PendingBatch) (*int32, error) {
+func (s *Storage) AddPendingBatch(batch *models.Batch) (*int32, error) {
 	res := make([]int32, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Insert("batch").

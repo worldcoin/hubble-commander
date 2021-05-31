@@ -5,12 +5,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type PendingBatch struct {
-	ID              int32 `db:"batch_id"`
-	Type            txtype.TransactionType
-	TransactionHash common.Hash `db:"transaction_hash"`
-}
-
 type Batch struct {
 	ID                int32 `db:"batch_id"`
 	Type              txtype.TransactionType
