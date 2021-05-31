@@ -72,7 +72,7 @@ func (c *Commander) SyncOnStart(number uint64) error {
 	startBlock := uint64(*syncedBlock)
 	endBlock := number + uint64(c.cfg.Rollup.SyncSize)
 
-	for endBlock < uint64(c.storage.GetLatestBlockNumber()) {
+	for endBlock <= uint64(c.storage.GetLatestBlockNumber()) {
 		err = c.RegisterAccounts(&bind.FilterOpts{
 			Start: startBlock,
 			End:   &endBlock,
