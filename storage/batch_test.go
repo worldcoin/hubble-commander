@@ -50,6 +50,31 @@ func (s *BatchTestSuite) TestAddBatch_AddAndRetrieve() {
 	s.Equal(batch, actual)
 }
 
+func (s *BatchTestSuite) TestMarkBatchAsSubmitted() {
+	pendingBatch := &models.PendingBatch{
+		Type:            txtype.Transfer,
+		TransactionHash: utils.RandomHash(),
+	}
+	batchID, err := s.storage.AddPendingBatch(pendingBatch)
+	s.NoError(err)
+
+	batch := &models.Batch{
+		ID: *batchID,
+		TransactionHash: pendingBatch.TransactionHash,
+		Hash:              utils.NewRandomHash(),
+		Type:              pendingBatch.Type,
+		Number:            models.NewUint256(124),
+		FinalisationBlock: ref.Uint32(1234),
+	}
+	err = s.storage.MarkBatchAsSubmitted(batch)
+	s.NoError(err)
+
+	actual, err := s.storage.GetBatch(*batchID)
+	s.NoError(err)
+
+	s.Equal(batch, actual)
+}
+
 func (s *BatchTestSuite) TestGetBatchByNumber() {
 	batch := &models.Batch{
 		Type:              txtype.Transfer,
