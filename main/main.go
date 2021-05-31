@@ -13,6 +13,17 @@ import (
 )
 
 func main() {
+	cmd := commander.NewCommander(getConfig())
+
+	setupCloseHandler(cmd)
+
+	err := cmd.StartAndWait()
+	if err != nil {
+		log.Fatalf("%+v", err)
+	}
+}
+
+func getConfig() *config.Config {
 	prune := flag.Bool("prune", false, "drop database before running app")
 	devMode := flag.Bool("dev", false, "disable signature verification")
 	flag.Parse()
@@ -23,17 +34,8 @@ func main() {
 	} else {
 		cfg = config.GetConfig()
 	}
-
 	cfg.Rollup.Prune = *prune
-
-	cmd := commander.NewCommander(cfg)
-
-	setupCloseHandler(cmd)
-
-	err := cmd.StartAndWait()
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
+	return cfg
 }
 
 func setupCloseHandler(cmd *commander.Commander) {
