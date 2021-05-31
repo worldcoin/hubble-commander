@@ -99,7 +99,7 @@ func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionT
 }
 
 func buildTransferCommitments(storage *st.Storage, cfg *config.RollupConfig, domain bls.Domain) ([]models.Commitment, error) {
-	pendingTransfers, err := storage.GetPendingTransfers()
+	pendingTransfers, err := storage.GetPendingTransfers(uint64(cfg.TxsPerCommitment))
 	if err != nil {
 		return nil, err
 	}

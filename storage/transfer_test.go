@@ -90,7 +90,7 @@ func (s *TransferTestSuite) TestGetPendingTransfers() {
 		s.NoError(err)
 	}
 
-	res, err := s.storage.GetPendingTransfers()
+	res, err := s.storage.GetPendingTransfers(32)
 	s.NoError(err)
 
 	s.Equal([]models.Transfer{transfer, transfer2}, res)
@@ -114,7 +114,7 @@ func (s *TransferTestSuite) TestGetPendingTransfers_OrdersTransfersByNonceAscend
 		s.NoError(err)
 	}
 
-	res, err := s.storage.GetPendingTransfers()
+	res, err := s.storage.GetPendingTransfers(32)
 	s.NoError(err)
 
 	s.Equal([]models.Transfer{transfer, transfer2, transfer4, transfer3}, res)

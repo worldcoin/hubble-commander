@@ -86,7 +86,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothing
 	transfers[1].Amount = models.MakeUint256(99999999999)
 	s.addTransfers(transfers)
 
-	pendingTransfers, err := s.storage.GetPendingTransfers()
+	pendingTransfers, err := s.storage.GetPendingTransfers(uint64(s.cfg.TxsPerCommitment))
 	s.NoError(err)
 	s.Len(pendingTransfers, 2)
 
@@ -183,7 +183,7 @@ func (s *TransferCommitmentsTestSuite) prepareAndReturnPendingTransfers(transfer
 	transfers := generateValidTransfers(transfersAmount)
 	s.addTransfers(transfers)
 
-	pendingTransfers, err := s.storage.GetPendingTransfers()
+	pendingTransfers, err := s.storage.GetPendingTransfers(uint64(s.cfg.TxsPerCommitment))
 	s.NoError(err)
 	s.Len(pendingTransfers, transfersAmount)
 
