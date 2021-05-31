@@ -81,7 +81,7 @@ func (s *Storage) GetBatchByCommitmentID(commitmentID int32) (*models.Batch, err
 	err := s.Postgres.Query(
 		s.QB.Select("batch.*").
 			From("batch").
-			Join("commitment ON commitment.included_in_batch = batch.batch_id").
+			JoinClause("NATURAL JOIN commitment").
 			Where(squirrel.Eq{"commitment_id": commitmentID}),
 	).Into(&res)
 	if err != nil {
