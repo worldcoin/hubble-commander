@@ -2,7 +2,6 @@ package commander
 
 import (
 	"context"
-	"log"
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -10,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 var (
@@ -28,8 +28,7 @@ func submitBatch(
 		return ErrNotEnoughCommitments
 	}
 
-	var batch *models.Batch
-	var accountRoot *common.Hash
+	var tx *types.Transaction
 	var err error
 
 	select {
@@ -39,32 +38,31 @@ func submitBatch(
 	}
 
 	if batchType == txtype.Transfer {
-		batch, accountRoot, err = client.SubmitTransfersBatchAndMine(commitments)
+		tx, err = client.SubmitTransfersBatch(commitments)
 	} else {
-		batch, accountRoot, err = client.SubmitCreate2TransfersBatchAndMine(commitments)
+		tx, err = client.SubmitCreate2TransfersBatch(commitments)
 	}
 	if err != nil {
 		return err
 	}
 
-	batchID, err := storage.AddBatch(batch)
+	newBatch := models.PendingBatch{
+		Type:            batchType,
+		TransactionHash: tx.Hash(),
+	}
+	_, err = storage.AddPendingBatch(&newBatch)
 	if err != nil {
 		return err
 	}
-
-	err = markCommitmentsAsIncluded(storage, commitments, *batchID, accountRoot)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("Submitted %d commitment(s) on chain. Batch ID: %d. Batch Hash: %v", len(commitments), batch.Number.Uint64(), batch.Hash)
 
 	return nil
 }
 
-func markCommitmentsAsIncluded(storage *st.Storage, commitments []models.Commitment, batchID int32, accountRoot *common.Hash) error {
-	for i := range commitments {
-		err := storage.MarkCommitmentAsIncluded(commitments[i].ID, batchID, accountRoot)
+// TODO - consinder changing the types here
+func markCommitmentsAsIncluded(storage *st.Storage, firstCommitmentID int32, numberOfCommitments int, batchID int32, accountRoot *common.Hash) error {
+	for i := 0; i < numberOfCommitments; i++ {
+		commitmentID := firstCommitmentID + int32(i)
+		err := storage.MarkCommitmentAsIncluded(commitmentID, batchID, accountRoot)
 		if err != nil {
 			return err
 		}
