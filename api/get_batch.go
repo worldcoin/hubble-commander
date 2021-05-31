@@ -16,7 +16,7 @@ func (a *API) GetBatchByHash(hash common.Hash) (*dto.BatchWithRootAndCommitments
 		return nil, err
 	}
 
-	commitments, err := a.storage.GetCommitmentsByBatchNumber(*batch.Number)
+	commitments, err := a.storage.GetCommitmentsByBatchID(batch.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +33,7 @@ func (a *API) GetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommitments,
 		return nil, err
 	}
 
-	commitments, err := a.storage.GetCommitmentsByBatchNumber(id)
+	commitments, err := a.storage.GetCommitmentsByBatchID(int32(id.ToBig().Int64()))
 	if err != nil {
 		return nil, err
 	}

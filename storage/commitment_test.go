@@ -129,7 +129,7 @@ func (s *CommitmentTestSuite) TestGetCommitment_NonExistentCommitment() {
 	s.Nil(res)
 }
 
-func (s *CommitmentTestSuite) TestGetCommitmentsByBatchNumber() {
+func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
 	_, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
@@ -143,14 +143,14 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchNumber() {
 
 	s.addLeaf()
 
-	commitments, err := s.storage.GetCommitmentsByBatchNumber(models.MakeUint256(1))
+	commitments, err := s.storage.GetCommitmentsByBatchID(1)
 	s.NoError(err)
 	s.Len(commitments, 3)
 }
 
 func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID_NonExistentCommitments() {
 	_ = s.addRandomBatch()
-	commitments, err := s.storage.GetCommitmentsByBatchNumber(models.MakeUint256(0))
+	commitments, err := s.storage.GetCommitmentsByBatchID(0)
 	s.Equal(NewNotFoundError("commitments"), err)
 	s.Nil(commitments)
 }

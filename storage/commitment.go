@@ -88,13 +88,12 @@ func (s *Storage) GetPendingCommitments(maxFetched uint64) ([]models.Commitment,
 	return res, nil
 }
 
-func (s *Storage) GetCommitmentsByBatchNumber(number models.Uint256) ([]models.CommitmentWithTokenID, error) {
+func (s *Storage) GetCommitmentsByBatchID(batchID int32) ([]models.CommitmentWithTokenID, error) {
 	commitments := make([]models.CommitmentWithTokenID, 0, 32)
 	err := s.Postgres.Query(
 		s.QB.Select(selectedCommitmentCols...).
-			From("batch").
-			Join("commitment ON commitment.included_in_batch = batch.batch_id").
-			Where(squirrel.Eq{"batch.batch_number": number}),
+			From("commitment").
+			Where(squirrel.Eq{"included_in_batch": batchID}),
 	).Into(&commitments)
 	if err != nil {
 		return nil, err
