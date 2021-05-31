@@ -32,6 +32,7 @@ func GetConfig() *Config {
 	return &Config{
 		Rollup: &RollupConfig{
 			SyncBatches:            getBool("rollup.sync_batches", true),
+			SyncSize:               getUint32("rollup.sync_size", 50),
 			FeeReceiverPubKeyID:    getUint32("rollup.fee_receiver_pub_key_id", 0),
 			TxsPerCommitment:       getUint32("rollup.txs_per_commitment", 32),
 			MinCommitmentsPerBatch: getUint32("rollup.min_commitments_per_batch", 1),
@@ -67,6 +68,7 @@ func GetTestConfig() *Config {
 	return &Config{
 		Rollup: &RollupConfig{
 			SyncBatches:            getBool("rollup.sync_batches", false),
+			SyncSize:               getUint32("rollup.sync_size", 50),
 			FeeReceiverPubKeyID:    getUint32("rollup.fee_receiver_pub_key_id", 0),
 			TxsPerCommitment:       getUint32("rollup.txs_per_commitment", 2),
 			MinCommitmentsPerBatch: getUint32("rollup.min_commitments_per_batch", 1),

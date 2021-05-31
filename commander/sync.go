@@ -24,7 +24,7 @@ func (t *transactionExecutor) SyncBatches(endBlock *uint64) error {
 	}
 
 	newBatches, err := t.client.GetBatches(&bind.FilterOpts{
-		Start: uint64(*submissionBlock),
+		Start: uint64(*submissionBlock + 1),
 		End:   endBlock,
 	})
 	if err != nil {

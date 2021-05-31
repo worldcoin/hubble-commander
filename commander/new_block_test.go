@@ -1,9 +1,9 @@
 package commander
 
 import (
-	"fmt"
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -32,7 +32,10 @@ func (s *NewBlockTestSuite) SetupTest() {
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
 
+	cfg := config.GetTestConfig()
+	cfg.Rollup.SyncSize = 1
 	s.cmd = &Commander{
+		cfg:     cfg,
 		storage: storage.Storage,
 		client:  s.client.Client,
 	}
@@ -47,7 +50,6 @@ func (s *NewBlockTestSuite) TearDownTest() {
 func (s *NewBlockTestSuite) TestSyncOnStart() {
 	number, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
-	fmt.Printf("Number %d\n", number)
 	s.cmd.storage.SetLatestBlockNumber(uint32(*number) + 3)
 
 	// register sender account on chain

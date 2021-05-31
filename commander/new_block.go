@@ -69,9 +69,8 @@ func (c *Commander) SyncOnStart(number uint64) error {
 		return err
 	}
 	//TODO: move to config
-	offset := uint64(1)
 	startBlock := uint64(*syncedBlock)
-	endBlock := number + offset
+	endBlock := number + uint64(c.cfg.Rollup.SyncSize)
 
 	for endBlock < uint64(c.storage.GetLatestBlockNumber()) {
 		err = c.RegisterAccounts(&bind.FilterOpts{
@@ -93,7 +92,7 @@ func (c *Commander) SyncOnStart(number uint64) error {
 		}
 
 		startBlock = endBlock
-		endBlock += offset
+		endBlock += uint64(c.cfg.Rollup.SyncSize)
 	}
 
 	return nil
