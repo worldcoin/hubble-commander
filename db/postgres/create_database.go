@@ -7,12 +7,17 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func RecreateDatabase(cfg *config.PostgresConfig) error {
+func RecreateDatabase(cfg *config.PostgresConfig) (err error) {
 	datasource := CreateDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, nil)
 	dbInstance, err := sqlx.Connect("postgres", datasource)
 	if err != nil {
 		return err
 	}
+	defer func() {
+		if closeErr := dbInstance.Close(); err == nil {
+			err = closeErr
+		}
+	}()
 
 	query := fmt.Sprintf(`
 		SELECT pg_terminate_backend(pg_stat_activity.pid) 
@@ -34,5 +39,5 @@ func RecreateDatabase(cfg *config.PostgresConfig) error {
 	if err != nil {
 		return err
 	}
-	return dbInstance.Close()
+	return nil
 }
