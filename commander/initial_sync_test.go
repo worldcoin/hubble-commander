@@ -26,7 +26,6 @@ func (s *InitialSyncTestSuite) SetupSuite() {
 }
 
 func (s *InitialSyncTestSuite) SetupTest() {
-	var err error
 	storage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.teardown = storage.Teardown
@@ -54,15 +53,16 @@ func (s *InitialSyncTestSuite) TestInitialSync() {
 	s.cmd.storage.SetLatestBlockNumber(*number + 3)
 
 	accounts := []models.Account{
-		{PublicKey: models.PublicKey{1, 2, 3}},
-		{PublicKey: models.PublicKey{2, 3, 4}},
+		{PublicKey: models.PublicKey{1, 1, 1}},
+		{PublicKey: models.PublicKey{2, 2, 2}},
 	}
 
 	registrations, unsubscribe, err := s.client.WatchRegistrations(&bind.WatchOpts{})
 	s.NoError(err)
 	defer unsubscribe()
 	for i := range accounts {
-		senderPubKeyID, err := s.client.RegisterAccount(&accounts[i].PublicKey, registrations)
+		var senderPubKeyID *uint32
+		senderPubKeyID, err = s.client.RegisterAccount(&accounts[i].PublicKey, registrations)
 		s.NoError(err)
 		s.Equal(uint32(i), *senderPubKeyID)
 		accounts[i].PubKeyID = *senderPubKeyID

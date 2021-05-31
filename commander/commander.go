@@ -67,7 +67,7 @@ func (c *Commander) Start() (err error) {
 
 	stopChannel := make(chan bool)
 	c.startWorker(func() error {
-		err := c.apiServer.ListenAndServe()
+		err = c.apiServer.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
 			return err
 		}

@@ -101,7 +101,7 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   *s.mockSignature(),
+			Signature:   *mockSignature(s.T()),
 		},
 		ToStateID: 1,
 	}
@@ -133,7 +133,7 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 			Amount:      models.MakeUint256(100),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   *s.mockSignature(),
+			Signature:   *mockSignature(s.T()),
 		},
 		ToStateID: 0,
 	}
@@ -189,7 +189,7 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   *s.mockSignature(),
+			Signature:   *mockSignature(s.T()),
 		},
 		ToStateID:   ref.Uint32(5),
 		ToPublicKey: models.PublicKey{2, 3, 4},
@@ -226,11 +226,11 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	s.Len(batches, 1)
 }
 
-func (s *SyncTestSuite) mockSignature() *models.Signature {
+func mockSignature(t *testing.T) *models.Signature {
 	wallet, err := bls.NewRandomWallet(testDomain)
-	s.NoError(err)
+	require.NoError(t, err)
 	signature, err := wallet.Sign(utils.RandomBytes(4))
-	s.NoError(err)
+	require.NoError(t, err)
 	return signature.ModelsSignature()
 }
 
