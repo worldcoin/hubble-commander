@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -61,10 +62,16 @@ func (s *CommitmentTestSuite) TestAddCommitment_AddAndRetrieve() {
 }
 
 func (s *CommitmentTestSuite) addRandomBatch() *int32 {
-	batch := models.Batch{ID: 1, Hash: utils.NewRandomHash(), Number: models.NewUint256(1)}
-	_, err := s.storage.AddBatch(&batch)
+	batch := models.Batch{
+		Type:              txtype.Transfer,
+		TransactionHash:   utils.RandomHash(),
+		Hash:              utils.NewRandomHash(),
+		Number:            models.NewUint256(1),
+		FinalisationBlock: ref.Uint32(1234),
+	}
+	id, err := s.storage.AddBatch(&batch)
 	s.NoError(err)
-	return &batch.ID
+	return id
 }
 
 func (s *CommitmentTestSuite) TestMarkCommitmentAsIncluded_UpdatesRecord() {
