@@ -131,6 +131,45 @@ func (s *BatchTestSuite) TestGetBatchByCommitmentID_NotExistentBatch() {
 	s.Nil(batch)
 }
 
+func (s *BatchTestSuite) TestGetOldestPendingBatch() {
+	pendingBatches := []models.PendingBatch{
+		{
+			ID:              2,
+			Type:            txtype.Transfer,
+			TransactionHash: utils.RandomHash(),
+		},
+		{
+			ID:              3,
+			Type:            txtype.Create2Transfer,
+			TransactionHash: utils.RandomHash(),
+		},
+	}
+	batch := models.Batch{
+		ID:                1,
+		Hash:              utils.NewRandomHash(),
+		Type:              txtype.Transfer,
+		Number:            models.NewUint256(1234),
+		FinalisationBlock: ref.Uint32(1234),
+	}
+	_, err := s.storage.AddBatch(&batch)
+	s.NoError(err)
+	_, err = s.storage.AddPendingBatch(&pendingBatches[0])
+	s.NoError(err)
+	_, err = s.storage.AddPendingBatch(&pendingBatches[1])
+	s.NoError(err)
+
+	actual, err := s.storage.GetOldestPendingBatch()
+	s.NoError(err)
+
+	s.Equal(pendingBatches[0], *actual)
+}
+
+func (s *BatchTestSuite) TestGetOldestPendingBatch_NoBatches() {
+	res, err := s.storage.GetOldestPendingBatch()
+	s.Equal(NewNotFoundError("batch"), err)
+	s.Nil(res)
+}
+
 func (s *BatchTestSuite) TestGetLatestSubmittedBatch() {
 	batches := []models.Batch{
 		{
