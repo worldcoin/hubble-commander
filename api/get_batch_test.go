@@ -38,17 +38,16 @@ func (s *GetBatchTestSuite) SetupTest() {
 	s.api = &API{storage: s.storage.Storage, client: s.testClient.Client}
 	s.tree = st.NewStateTree(s.storage.Storage)
 
-	hash := utils.RandomHash()
 	s.commitment = commitment
 	s.commitment.IncludedInBatch = ref.Int32(1)
-	s.commitment.AccountTreeRoot = &hash
+	s.commitment.AccountTreeRoot = utils.NewRandomHash()
 
 	s.batch = models.Batch{
-		ID:                1,
-		Hash:              &hash,
 		Type:              txtype.Transfer,
-		FinalisationBlock: ref.Uint32(42000),
+		TransactionHash:   utils.RandomHash(),
+		Hash:              utils.NewRandomHash(),
 		Number:            models.NewUint256(1),
+		FinalisationBlock: ref.Uint32(42000),
 	}
 }
 
@@ -76,7 +75,7 @@ func (s *GetBatchTestSuite) TestGetBatchByHash() {
 	s.Equal(s.batch.TransactionHash, result.TransactionHash)
 	s.Equal(*s.batch.FinalisationBlock-rollup.DefaultBlocksToFinalise, result.SubmissionBlock)
 	s.Equal(s.batch.FinalisationBlock, result.FinalisationBlock)
-	s.NotNil(result.AccountTreeRoot)
+	s.Equal(s.commitment.AccountTreeRoot, result.AccountTreeRoot)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByHash_NoCommitments() {
@@ -97,13 +96,13 @@ func (s *GetBatchTestSuite) TestGetBatchByHash_NonExistentBatch() {
 
 func (s *GetBatchTestSuite) TestGetBatchByID() {
 	s.addLeaf()
-	_, err := s.storage.AddBatch(&s.batch)
+	batchID, err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
 	_, err = s.storage.AddCommitment(&s.commitment)
 	s.NoError(err)
 
-	result, err := s.api.GetBatchByID(models.MakeUint256(1))
+	result, err := s.api.GetBatchByID(models.MakeUint256(uint64(*batchID)))
 	s.NoError(err)
 	s.NotNil(result)
 	s.Len(result.Commitments, 1)
@@ -113,7 +112,7 @@ func (s *GetBatchTestSuite) TestGetBatchByID() {
 	s.Equal(s.batch.TransactionHash, result.TransactionHash)
 	s.Equal(*s.batch.FinalisationBlock-rollup.DefaultBlocksToFinalise, result.SubmissionBlock)
 	s.Equal(s.batch.FinalisationBlock, result.FinalisationBlock)
-	s.NotNil(result.AccountTreeRoot)
+	s.Equal(s.commitment.AccountTreeRoot, result.AccountTreeRoot)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByID_NoCommitments() {

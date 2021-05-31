@@ -37,10 +37,11 @@ func (s *GetBatchesTestSuite) SetupTest() {
 
 	s.batch = models.Batch{
 		ID:                1,
-		Hash:              utils.NewRandomHash(),
 		Type:              txtype.Transfer,
-		FinalisationBlock: ref.Uint32(42000),
+		TransactionHash:   utils.RandomHash(),
+		Hash:              utils.NewRandomHash(),
 		Number:            models.NewUint256(1),
+		FinalisationBlock: ref.Uint32(42000),
 	}
 }
 

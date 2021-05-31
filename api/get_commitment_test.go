@@ -33,10 +33,11 @@ func (s *GetCommitmentTestSuite) SetupTest() {
 
 	s.batch = models.Batch{
 		ID:                1,
-		Hash:              utils.NewRandomHash(),
 		Type:              txtype.Transfer,
-		FinalisationBlock: ref.Uint32(113),
+		TransactionHash:   utils.RandomHash(),
+		Hash:              utils.NewRandomHash(),
 		Number:            models.NewUint256(1),
+		FinalisationBlock: ref.Uint32(113),
 	}
 
 	s.commitment = commitment
