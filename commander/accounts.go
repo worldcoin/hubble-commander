@@ -13,18 +13,6 @@ func WatchAccounts(storage *st.Storage, client *eth.Client, done <-chan bool) er
 	if err != nil {
 		return err
 	}
-	it, err := client.AccountRegistry.FilterPubkeyRegistered(&bind.FilterOpts{
-		Start: *syncedBlock,
-	})
-	if err != nil {
-		return err
-	}
-	for it.Next() {
-		err = ProcessPubkeyRegistered(storage, it.Event)
-		if err != nil {
-			return err
-		}
-	}
 
 	eventChannel := make(chan *accountregistry.AccountRegistryPubkeyRegistered)
 	sub, err := client.AccountRegistry.WatchPubkeyRegistered(
