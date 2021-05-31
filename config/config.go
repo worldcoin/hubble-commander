@@ -124,13 +124,13 @@ func getBadgerPath() string {
 }
 
 func getEthereumConfig() *EthereumConfig {
-	rpcURL := getStringOrNil("ETHEREUM_RPC_URL")
+	rpcURL := getStringOrNil("ethereum.rpc_url")
 	if rpcURL == nil {
 		return nil
 	}
 	return &EthereumConfig{
 		RPCURL:     *rpcURL,
-		ChainID:    getStringOrThrow("ETHEREUM_CHAIN_ID"),
-		PrivateKey: getStringOrThrow("ETHEREUM_PRIVATE_KEY"),
+		ChainID:    getStringOrThrow("ethereum.chain_id"),
+		PrivateKey: getStringOrThrow("ethereum.private_key"),
 	}
 }
