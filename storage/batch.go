@@ -157,7 +157,7 @@ func (s *Storage) GetBatchWithAccountRoot(batchHash common.Hash) (*models.BatchW
 			"commitment.account_tree_root",
 		).
 			From("batch").
-			JoinClause("NATURAL JOIN commitment").
+			Join("commitment ON commitment.included_in_batch = batch.batch_id").
 			Where(squirrel.Eq{"batch_hash": batchHash}).
 			Limit(1),
 	).Into(&res)
