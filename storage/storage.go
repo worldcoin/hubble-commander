@@ -18,7 +18,7 @@ type Storage struct {
 	feeReceiverStateIDs map[string]uint32 // token index => state id
 	isProposer          bool
 	latestBlockNumber   uint32
-	syncedBlock         *uint32
+	syncedBlock         *uint64
 }
 
 type TxOptions struct {

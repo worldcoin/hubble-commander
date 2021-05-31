@@ -5,13 +5,16 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
 func WatchAccounts(storage *st.Storage, client *eth.Client, done <-chan bool) error {
+	syncedBlock, err := storage.GetSyncedBlock(client.ChainState.ChainID)
+	if err != nil {
+		return err
+	}
 	it, err := client.AccountRegistry.FilterPubkeyRegistered(&bind.FilterOpts{
-		Start: 0,
+		Start: *syncedBlock,
 	})
 	if err != nil {
 		return err
@@ -25,7 +28,7 @@ func WatchAccounts(storage *st.Storage, client *eth.Client, done <-chan bool) er
 
 	eventChannel := make(chan *accountregistry.AccountRegistryPubkeyRegistered)
 	sub, err := client.AccountRegistry.WatchPubkeyRegistered(
-		&bind.WatchOpts{Start: ref.Uint64(0)},
+		&bind.WatchOpts{Start: syncedBlock},
 		eventChannel,
 	)
 	if err != nil {

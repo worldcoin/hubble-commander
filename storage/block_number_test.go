@@ -29,15 +29,14 @@ func (s *BlockNumberTestSuite) TearDownTest() {
 }
 
 func (s *BlockNumberTestSuite) TestSetLatestBlockNumber() {
-	storage := Storage{}
 	currentBlockNumber := uint32(420)
 
-	storage.SetLatestBlockNumber(currentBlockNumber)
+	s.storage.SetLatestBlockNumber(currentBlockNumber)
 
-	latestBlockNumber := storage.GetLatestBlockNumber()
+	latestBlockNumber := s.storage.GetLatestBlockNumber()
 
 	s.Equal(currentBlockNumber, latestBlockNumber)
-	s.Equal(currentBlockNumber, storage.latestBlockNumber)
+	s.Equal(currentBlockNumber, s.storage.latestBlockNumber)
 }
 
 func (s *BlockNumberTestSuite) TestGetSyncedBlock() {
@@ -54,14 +53,14 @@ func (s *BlockNumberTestSuite) TestGetSyncedBlock_NoExistentChainState() {
 	syncedBlock, err := s.storage.GetSyncedBlock(chainState.ChainID)
 	s.NoError(err)
 
-	s.Equal(uint32(0), *syncedBlock)
+	s.Equal(uint64(0), *syncedBlock)
 }
 
 func (s *BlockNumberTestSuite) TestSetSyncedBlock() {
 	err := s.storage.SetChainState(&chainState)
 	s.NoError(err)
 
-	blockNumber := uint32(450)
+	blockNumber := uint64(450)
 	err = s.storage.SetSyncedBlock(chainState.ChainID, blockNumber)
 	s.NoError(err)
 

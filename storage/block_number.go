@@ -14,7 +14,7 @@ func (s *Storage) GetLatestBlockNumber() uint32 {
 	return s.latestBlockNumber
 }
 
-func (s *Storage) SetSyncedBlock(chainID models.Uint256, blockNumber uint32) error {
+func (s *Storage) SetSyncedBlock(chainID models.Uint256, blockNumber uint64) error {
 	s.syncedBlock = &blockNumber
 	_, err := s.Postgres.Query(s.QB.Update("chain_state").
 		Set("synced_block", blockNumber).
@@ -22,12 +22,12 @@ func (s *Storage) SetSyncedBlock(chainID models.Uint256, blockNumber uint32) err
 	return err
 }
 
-func (s *Storage) GetSyncedBlock(chainID models.Uint256) (*uint32, error) {
+func (s *Storage) GetSyncedBlock(chainID models.Uint256) (*uint64, error) {
 	if s.syncedBlock != nil {
 		return s.syncedBlock, nil
 	}
 
-	res := make([]uint32, 0, 1)
+	res := make([]uint64, 0, 1)
 	err := s.Postgres.Query(s.QB.Select("synced_block").
 		From("chain_state").
 		Where(squirrel.Eq{"chain_id": chainID}),
@@ -36,7 +36,7 @@ func (s *Storage) GetSyncedBlock(chainID models.Uint256) (*uint32, error) {
 		return nil, err
 	}
 	if len(res) == 0 {
-		return ref.Uint32(0), nil
+		return ref.Uint64(0), nil
 	}
 	return &res[0], nil
 }

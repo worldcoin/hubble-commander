@@ -1,7 +1,6 @@
 package commander
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -47,6 +46,10 @@ func (c *Commander) newBlockLoop() error {
 			if err != nil {
 				return errors.WithStack(err)
 			}
+			err = c.storage.SetSyncedBlock(c.client.ChainState.ChainID, newBlock.Number.Uint64())
+			if err != nil {
+				return err
+			}
 		}
 	}
 }
@@ -80,7 +83,7 @@ func (c *Commander) SyncOnStart() error {
 	if err != nil {
 		return err
 	}
-	startBlock := uint64(*syncedBlock)
+	startBlock := *syncedBlock
 	endBlock := startBlock + uint64(c.cfg.Rollup.SyncSize)
 
 	for endBlock <= uint64(*latestBlockNumber) {
@@ -97,7 +100,7 @@ func (c *Commander) SyncOnStart() error {
 			return err
 		}
 
-		err = c.storage.SetSyncedBlock(c.client.ChainState.ChainID, uint32(endBlock))
+		err = c.storage.SetSyncedBlock(c.client.ChainState.ChainID, endBlock)
 		if err != nil {
 			return err
 		}
@@ -116,10 +119,7 @@ func (c *Commander) RegisterAccounts(opts *bind.FilterOpts) error {
 		return err
 	}
 	defer it.Close()
-	i := 0
 	for it.Next() {
-		fmt.Printf("i: %d\n", i)
-		i++
 		err = ProcessPubkeyRegistered(c.storage, it.Event)
 		if err != nil {
 			return err
