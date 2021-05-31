@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"math/big"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
@@ -16,7 +15,7 @@ import (
 var (
 	transfer = models.Transfer{
 		TransactionBase: models.TransactionBase{
-			Hash:                 common.BigToHash(big.NewInt(1234)),
+			Hash:                 utils.RandomHash(),
 			TxType:               txtype.Transfer,
 			FromStateID:          1,
 			Amount:               models.MakeUint256(1000),
@@ -98,16 +97,16 @@ func (s *TransferTestSuite) TestGetPendingTransfers() {
 }
 
 func (s *TransferTestSuite) TestGetPendingTransfers_OrdersTransfersByNonceAscending() {
-	transfer.TransactionBase.Nonce = models.MakeUint256(1)
+	transfer.Nonce = models.MakeUint256(1)
 	transfer.Hash = utils.RandomHash()
 	transfer2 := transfer
-	transfer2.TransactionBase.Nonce = models.MakeUint256(4)
+	transfer2.Nonce = models.MakeUint256(4)
 	transfer2.Hash = utils.RandomHash()
 	transfer3 := transfer
-	transfer3.TransactionBase.Nonce = models.MakeUint256(7)
+	transfer3.Nonce = models.MakeUint256(7)
 	transfer3.Hash = utils.RandomHash()
 	transfer4 := transfer
-	transfer4.TransactionBase.Nonce = models.MakeUint256(5)
+	transfer4.Nonce = models.MakeUint256(5)
 	transfer4.Hash = utils.RandomHash()
 
 	for _, transfer := range []*models.Transfer{&transfer, &transfer2, &transfer3, &transfer4} {
@@ -175,30 +174,11 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 	}
 
 	userStates := []models.UserState{
-		{
-			PubKeyID:   1,
-			TokenIndex: models.MakeUint256(1),
-			Balance:    models.MakeUint256(420),
-			Nonce:      models.MakeUint256(0),
-		},
-		{
-			PubKeyID:   2,
-			TokenIndex: models.MakeUint256(2),
-			Balance:    models.MakeUint256(500),
-			Nonce:      models.MakeUint256(0),
-		},
-		{
-			PubKeyID:   1,
-			TokenIndex: models.MakeUint256(25),
-			Balance:    models.MakeUint256(1),
-			Nonce:      models.MakeUint256(73),
-		},
-		{
-			PubKeyID:   3,
-			TokenIndex: models.MakeUint256(30),
-			Balance:    models.MakeUint256(50),
-			Nonce:      models.MakeUint256(71),
-		},
+		{PubKeyID: 1}, // StateID: 0
+		{PubKeyID: 2}, // StateID: 1
+		{PubKeyID: 1}, // StateID: 2
+		{PubKeyID: 3}, // StateID: 3
+		{PubKeyID: 2}, // StateID: 4
 	}
 
 	for i := range userStates {
@@ -206,35 +186,45 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 		s.NoError(err)
 	}
 
-	transfer1 := transfer
-	transfer1.Hash = utils.RandomHash()
-	transfer1.FromStateID = 0
-	transfer2 := transfer
-	transfer2.Hash = utils.RandomHash()
-	transfer2.FromStateID = 1
-	transfer3 := transfer
-	transfer3.Hash = utils.RandomHash()
-	transfer3.FromStateID = 2
-	transfer4 := transfer
-	transfer4.Hash = utils.RandomHash()
-	transfer4.FromStateID = 3
+	transfers := make([]models.Transfer, 5)
 
-	err := s.storage.AddTransfer(&transfer1)
-	s.NoError(err)
-	err = s.storage.AddTransfer(&transfer2)
-	s.NoError(err)
-	err = s.storage.AddTransfer(&transfer3)
-	s.NoError(err)
-	err = s.storage.AddTransfer(&transfer4)
-	s.NoError(err)
+	transfers[0] = transfer
+	transfers[0].Hash = utils.RandomHash()
+	transfers[0].FromStateID = 0
+	transfers[0].ToStateID = 1
 
-	userTransactions, err := s.storage.GetTransfersByPublicKey(&accounts[0].PublicKey)
-	s.NoError(err)
+	transfers[1] = transfer
+	transfers[1].Hash = utils.RandomHash()
+	transfers[1].FromStateID = 1
+	transfers[1].ToStateID = 4
 
-	s.Len(userTransactions, 3)
-	s.Contains(userTransactions, transfer1)
-	s.Contains(userTransactions, transfer3)
-	s.Contains(userTransactions, transfer4)
+	transfers[2] = transfer
+	transfers[2].Hash = utils.RandomHash()
+	transfers[2].FromStateID = 2
+	transfers[2].ToStateID = 1
+
+	transfers[3] = transfer
+	transfers[3].Hash = utils.RandomHash()
+	transfers[3].FromStateID = 3
+	transfers[3].ToStateID = 1
+
+	transfers[4] = transfer
+	transfers[4].Hash = utils.RandomHash()
+	transfers[4].FromStateID = 1
+	transfers[4].ToStateID = 2
+
+	for i := range transfers {
+		err := s.storage.AddTransfer(&transfers[i])
+		s.NoError(err)
+	}
+
+	userTransactions, err := s.storage.GetTransfersByPublicKey(&models.PublicKey{1, 2, 3})
+	s.NoError(err)
+	s.Len(userTransactions, 4)
+	s.Contains(userTransactions, transfers[0])
+	s.Contains(userTransactions, transfers[2])
+	s.Contains(userTransactions, transfers[3])
+	s.Contains(userTransactions, transfers[4])
 }
 
 func (s *TransferTestSuite) TestGetUserTransfersByPublicKey_NoTransfers() {

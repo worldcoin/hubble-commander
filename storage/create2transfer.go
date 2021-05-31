@@ -111,7 +111,10 @@ func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([
 		s.QB.Select(create2TransferColumns...).
 			From("transaction_base").
 			JoinClause("NATURAL JOIN create2transfer").
-			Where(squirrel.Eq{"transaction_base.from_state_id": stateIDs}),
+			Where(squirrel.Or{
+				squirrel.Eq{"transaction_base.from_state_id": stateIDs},
+				squirrel.Eq{"create2transfer.to_state_id": stateIDs},
+			}),
 	).Into(&res)
 	if err != nil {
 		return nil, err
