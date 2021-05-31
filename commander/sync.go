@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
 )
 
@@ -16,13 +17,16 @@ var (
 	ErrTransfersNotApplied = errors.New("could not apply all transfers from synced batch")
 )
 
-func (t *transactionExecutor) SyncBatches() error {
+func (t *transactionExecutor) SyncBatches(endBlock *uint64) error {
 	submissionBlock, latestBatchNumber, err := getLatestSubmissionBlockAndBatchNumber(t.storage, t.client)
 	if err != nil {
 		return err
 	}
 
-	newBatches, err := t.client.GetBatches(submissionBlock)
+	newBatches, err := t.client.GetBatches(&bind.FilterOpts{
+		Start: uint64(*submissionBlock),
+		End:   endBlock,
+	})
 	if err != nil {
 		return err
 	}

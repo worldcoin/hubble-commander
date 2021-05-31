@@ -37,7 +37,7 @@ func (c *Commander) newBlockLoop() error {
 			}
 			c.storage.SetProposer(isProposer)
 
-			err = c.SyncBatches(isProposer)
+			err = c.SyncBatches(isProposer, nil)
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -45,7 +45,7 @@ func (c *Commander) newBlockLoop() error {
 	}
 }
 
-func (c *Commander) SyncBatches(isProposer bool) (err error) {
+func (c *Commander) SyncBatches(isProposer bool, endBlock *uint64) (err error) {
 	if isProposer {
 		return nil
 	}
@@ -56,7 +56,7 @@ func (c *Commander) SyncBatches(isProposer bool) (err error) {
 	}
 	defer transactionExecutor.Rollback(&err)
 
-	err = transactionExecutor.SyncBatches()
+	err = transactionExecutor.SyncBatches(endBlock)
 	if err != nil {
 		return err
 	}
@@ -82,7 +82,7 @@ func (c *Commander) SyncOnStart(number uint64) error {
 			return err
 		}
 
-		err = c.SyncBatches(false)
+		err = c.SyncBatches(false, &endBlock)
 		if err != nil {
 			return err
 		}
