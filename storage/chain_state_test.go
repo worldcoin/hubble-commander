@@ -16,6 +16,7 @@ var (
 		ChainID:         models.MakeUint256(1),
 		AccountRegistry: common.HexToAddress("0x9f758331b439c1B664e86f2050F2360370F06849"),
 		Rollup:          common.HexToAddress("0x1480c1b6bF90678820B259FCaFFbb751D3e3960B"),
+		SyncedBlock:     10,
 	}
 )
 

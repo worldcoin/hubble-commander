@@ -252,6 +252,7 @@ func bootstrapState(
 		AccountRegistry: *accountRegistryAddress,
 		Rollup:          contracts.RollupAddress,
 		GenesisAccounts: populatedAccounts,
+		SyncedBlock:     0,
 	}
 
 	return chainState, nil

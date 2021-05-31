@@ -44,17 +44,17 @@ func (s *BlockNumberTestSuite) TestGetSyncedBlock() {
 	err := s.storage.SetChainState(&chainState)
 	s.NoError(err)
 
-	latestBlockNumber, err := s.storage.GetSyncedBlock(chainState.ChainID)
+	syncedBlock, err := s.storage.GetSyncedBlock(chainState.ChainID)
 	s.NoError(err)
 
-	s.Equal(chainState.SyncedBlock, *latestBlockNumber)
+	s.Equal(chainState.SyncedBlock, *syncedBlock)
 }
 
 func (s *BlockNumberTestSuite) TestGetSyncedBlock_NoExistentChainState() {
-	latestBlockNumber, err := s.storage.GetSyncedBlock(chainState.ChainID)
+	syncedBlock, err := s.storage.GetSyncedBlock(chainState.ChainID)
 	s.NoError(err)
 
-	s.Equal(uint32(0), *latestBlockNumber)
+	s.Equal(uint32(0), *syncedBlock)
 }
 
 func (s *BlockNumberTestSuite) TestSetSyncedBlock() {
@@ -65,10 +65,10 @@ func (s *BlockNumberTestSuite) TestSetSyncedBlock() {
 	err = s.storage.SetSyncedBlock(chainState.ChainID, blockNumber)
 	s.NoError(err)
 
-	latestBlockNumber, err := s.storage.GetSyncedBlock(chainState.ChainID)
+	syncedBlock, err := s.storage.GetSyncedBlock(chainState.ChainID)
 	s.NoError(err)
 
-	s.Equal(blockNumber, *latestBlockNumber)
+	s.Equal(blockNumber, *syncedBlock)
 	s.Equal(blockNumber, *s.storage.syncedBlock)
 }
 
