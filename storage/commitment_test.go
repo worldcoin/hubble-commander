@@ -66,7 +66,7 @@ func (s *CommitmentTestSuite) addRandomBatch() *int32 {
 		Type:              txtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
-		Number:            models.NewUint256(1),
+		Number:            models.NewUint256(123),
 		FinalisationBlock: ref.Uint32(1234),
 	}
 	id, err := s.storage.AddBatch(&batch)
@@ -133,24 +133,39 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
 	_, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	commitmentWithHash := commitment
-	commitmentWithHash.FeeReceiver = 0
-	commitmentWithHash.IncludedInBatch = s.addRandomBatch()
-	for i := 0; i < 3; i++ {
-		_, err = s.storage.AddCommitment(&commitmentWithHash)
+	batchID := s.addRandomBatch()
+	includedCommitment := commitment
+	includedCommitment.IncludedInBatch = batchID
+	includedCommitment.FeeReceiver = 0
+	includedCommitment.AccountTreeRoot = utils.NewRandomHash()
+
+	expectedCommitments := make([]models.CommitmentWithTokenID, 2)
+	for i := 0; i < 2; i++ {
+		var commitmentID *int32
+		commitmentID, err = s.storage.AddCommitment(&includedCommitment)
 		s.NoError(err)
+		expectedCommitments[i] = models.CommitmentWithTokenID{
+			ID:                 *commitmentID,
+			Transactions:       includedCommitment.Transactions,
+			TokenID:            models.MakeUint256(1),
+			FeeReceiverStateID: includedCommitment.FeeReceiver,
+			CombinedSignature:  includedCommitment.CombinedSignature,
+			PostStateRoot:      includedCommitment.PostStateRoot,
+		}
 	}
 
 	s.addLeaf()
 
-	commitments, err := s.storage.GetCommitmentsByBatchID(1)
+	commitments, err := s.storage.GetCommitmentsByBatchID(*batchID)
 	s.NoError(err)
-	s.Len(commitments, 3)
+	s.Len(commitments, 2)
+	s.Contains(commitments, expectedCommitments[0])
+	s.Contains(commitments, expectedCommitments[1])
 }
 
 func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID_NonExistentCommitments() {
-	_ = s.addRandomBatch()
-	commitments, err := s.storage.GetCommitmentsByBatchID(0)
+	batchID := s.addRandomBatch()
+	commitments, err := s.storage.GetCommitmentsByBatchID(*batchID)
 	s.Equal(NewNotFoundError("commitments"), err)
 	s.Nil(commitments)
 }
