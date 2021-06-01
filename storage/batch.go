@@ -7,23 +7,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (s *Storage) AddPendingBatch(batch *models.Batch) (*int32, error) {
-	res := make([]int32, 0, 1)
-	err := s.Postgres.Query(
-		s.QB.Insert("batch").
-			Values(
-				squirrel.Expr("DEFAULT"),
-				batch.Type,
-				batch.TransactionHash,
-			).
-			Suffix("RETURNING batch_id"),
-	).Into(&res)
-	if err != nil {
-		return nil, err
-	}
-	return ref.Int32(res[0]), nil
-}
-
 func (s *Storage) AddBatch(batch *models.Batch) (*int32, error) {
 	res := make([]int32, 0, 1)
 	err := s.Postgres.Query(

@@ -32,22 +32,6 @@ func (s *BatchTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *BatchTestSuite) TestAddPendingBatch_AddAndRetrieve() {
-	batch := &models.Batch{
-		Type:            txtype.Transfer,
-		TransactionHash: utils.RandomHash(),
-	}
-	id, err := s.storage.AddPendingBatch(batch)
-	s.NoError(err)
-
-	actual, err := s.storage.GetBatch(*id)
-	s.NoError(err)
-
-	s.Equal(*id, actual.ID)
-	s.Equal(batch.Type, actual.Type)
-	s.Equal(batch.TransactionHash, actual.TransactionHash)
-}
-
 func (s *BatchTestSuite) TestAddBatch_AddAndRetrieve() {
 	batch := &models.Batch{
 		Type:              txtype.Transfer,
@@ -172,7 +156,7 @@ func (s *BatchTestSuite) TestGetLatestSubmittedBatch() {
 	s.NoError(err)
 	_, err = s.storage.AddBatch(&batches[1])
 	s.NoError(err)
-	_, err = s.storage.AddPendingBatch(&pendingBatch)
+	_, err = s.storage.AddBatch(&pendingBatch)
 	s.NoError(err)
 
 	actual, err := s.storage.GetLatestSubmittedBatch()
@@ -225,7 +209,7 @@ func (s *BatchTestSuite) TestGetLatestFinalisedBatch() {
 		s.NoError(err)
 	}
 
-	_, err := s.storage.AddPendingBatch(&pendingBatch)
+	_, err := s.storage.AddBatch(&pendingBatch)
 	s.NoError(err)
 
 	finalisedBatch, err := s.storage.GetLatestFinalisedBatch(1800)
