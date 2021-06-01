@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -61,6 +62,7 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 	batches, err := s.client.GetBatches(&submissionBlockBatch1)
 	s.NoError(err)
 	s.Len(batches, 1)
+	s.NotEqual(common.Hash{}, batches[0].TransactionHash)
 }
 
 func (s *GetBatchesTestSuite) mockSignature() *models.Signature {
