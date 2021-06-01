@@ -211,6 +211,8 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	err = submitBatch(context.Background(), txtype.Create2Transfer, commitments, s.storage, s.client.Client, s.cfg)
 	s.NoError(err)
 
+	s.client.Commit()
+
 	// Recreate database
 	err = s.teardown()
 	s.NoError(err)
