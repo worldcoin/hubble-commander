@@ -50,9 +50,8 @@ func saveBatch(storage *st.Storage, client *eth.Client) error {
 		if err != nil {
 			return err
 		}
-		batch.ID = *batchID
 
-		err = storage.UpdateCommitmentsAccountTreeRoot(batch.Batch.TransactionHash, batch.AccountRoot)
+		err = storage.UpdateCommitmentsAccountTreeRoot(*batchID, batch.AccountRoot)
 		if err != nil {
 			return err
 		}
