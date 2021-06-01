@@ -116,6 +116,8 @@ func (s *SaveBatchTestSuite) TestSaveBatch() {
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 1)
+	s.Nil(batches[0].Number)
+	s.Nil(batches[0].Hash)
 
 	commitment, err := s.storage.GetCommitment(commitments[0].ID)
 	s.NoError(err)
@@ -130,6 +132,8 @@ func (s *SaveBatchTestSuite) TestSaveBatch() {
 	batches, err = s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 1)
+	s.NotNil(batches[0].Number)
+	s.NotNil(batches[0].Hash)
 
 	commitment, err = s.storage.GetCommitment(commitments[0].ID)
 	s.NoError(err)
