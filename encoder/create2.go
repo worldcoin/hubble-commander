@@ -31,7 +31,7 @@ func EncodeCreate2TransferWithStateID(tx *models.Create2Transfer, toPubKeyID uin
 	return arguments.Pack(
 		big.NewInt(int64(txtype.Create2Transfer)),
 		big.NewInt(int64(tx.FromStateID)),
-		big.NewInt(int64(tx.ToStateID)),
+		big.NewInt(int64(*tx.ToStateID)),
 		big.NewInt(int64(toPubKeyID)),
 		tx.Amount.ToBig(),
 		tx.Fee.ToBig(),
@@ -92,7 +92,7 @@ func EncodeCreate2TransferForCommitment(transfer *models.Create2Transfer, toPubK
 	arr := make([]byte, create2TransferLength)
 
 	binary.BigEndian.PutUint32(arr[0:4], transfer.FromStateID)
-	binary.BigEndian.PutUint32(arr[4:8], transfer.ToStateID)
+	binary.BigEndian.PutUint32(arr[4:8], *transfer.ToStateID)
 	binary.BigEndian.PutUint32(arr[8:12], toPubKeyID)
 	binary.BigEndian.PutUint16(arr[12:14], amount)
 	binary.BigEndian.PutUint16(arr[14:16], fee)
@@ -117,7 +117,7 @@ func DecodeCreate2TransferFromCommitment(data []byte) (transfer *models.Create2T
 			Amount:      amount,
 			Fee:         fee,
 		},
-		ToStateID: toStateID,
+		ToStateID: &toStateID,
 	}, toPubKeyID
 }
 

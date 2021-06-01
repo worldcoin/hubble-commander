@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -131,7 +132,7 @@ func (s *GetTransactionsTestSuite) addCreate2Transfers() []models.Create2Transfe
 				Nonce:       models.MakeUint256(1),
 				Signature:   models.MakeRandomSignature(),
 			},
-			ToStateID:   toStateID,
+			ToStateID:   ref.Uint32(toStateID),
 			ToPublicKey: toPublicKey,
 		}
 	}

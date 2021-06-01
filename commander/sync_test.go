@@ -10,6 +10,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -190,7 +191,7 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 			Nonce:       models.MakeUint256(0),
 			Signature:   *s.mockSignature(),
 		},
-		ToStateID:   1,
+		ToStateID:   ref.Uint32(1),
 		ToPublicKey: models.PublicKey{2, 3, 4},
 	}
 	err = s.storage.AddCreate2Transfer(&tx)

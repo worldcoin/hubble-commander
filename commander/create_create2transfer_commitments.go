@@ -133,7 +133,7 @@ func markCreate2TransfersAsIncluded(storage *st.Storage, transfers []models.Crea
 
 func setCreate2TransferToStateID(storage *st.Storage, transfers []models.Create2Transfer) error {
 	for i := range transfers {
-		err := storage.SetCreate2TransferToStateID(transfers[i].Hash, transfers[i].ToStateID)
+		err := storage.SetCreate2TransferToStateID(transfers[i].Hash, *transfers[i].ToStateID)
 		if err != nil {
 			return err
 		}
