@@ -103,6 +103,12 @@ func (s *InitialSyncTestSuite) TestInitialSync() {
 	s.Len(batches, 1)
 }
 
+func (s *InitialSyncTestSuite) TestCalculateEndBlock() {
+	latestBlock := uint64(100)
+	s.Equal(uint64(20), calculateEndBlock(10, latestBlock, 10))
+	s.Equal(uint64(100), calculateEndBlock(90, latestBlock, 20))
+}
+
 func (s *InitialSyncTestSuite) addBatch() {
 	tx := models.Transfer{
 		TransactionBase: models.TransactionBase{

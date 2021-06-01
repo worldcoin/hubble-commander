@@ -64,14 +64,6 @@ func (c *Commander) initialSyncAccounts(ctx context.Context, boundaries chan<- u
 	return nil
 }
 
-func calculateEndBlock(endBlock, latestBlock uint64, syncSize uint32) uint64 {
-	endBlock += uint64(syncSize)
-	if endBlock > latestBlock {
-		return latestBlock
-	}
-	return endBlock
-}
-
 func (c *Commander) initialSyncBatches(ctx context.Context, boundaries <-chan uint64) error {
 	for {
 		select {
@@ -87,6 +79,14 @@ func (c *Commander) initialSyncBatches(ctx context.Context, boundaries <-chan ui
 			}
 		}
 	}
+}
+
+func calculateEndBlock(endBlock, latestBlock uint64, syncSize uint32) uint64 {
+	endBlock += uint64(syncSize)
+	if endBlock > latestBlock {
+		return latestBlock
+	}
+	return endBlock
 }
 
 func (c *Commander) registerAccounts(opts *bind.FilterOpts) error {
