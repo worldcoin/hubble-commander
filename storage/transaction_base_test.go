@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
@@ -119,16 +118,16 @@ func (s *TransactionBaseTestSuite) TestBatchMarkTransactionAsIncluded() {
 
 func (s *TransactionBaseTestSuite) TestGetTransactionCount() {
 	batch := &models.Batch{
-		Hash:              utils.RandomHash(),
-		Type:              txtype.Transfer,
-		ID:                models.MakeUint256(1),
-		FinalisationBlock: 1234,
+		TransactionHash:   utils.RandomHash(),
+		Hash:              utils.NewRandomHash(),
+		Number:            models.NewUint256(1),
+		FinalisationBlock: ref.Uint32(1234),
 	}
-	err := s.storage.AddBatch(batch)
+	batchID, err := s.storage.AddBatch(batch)
 	s.NoError(err)
 
 	commitmentInBatch := commitment
-	commitmentInBatch.IncludedInBatch = &batch.Hash
+	commitmentInBatch.IncludedInBatch = batchID
 	commitmentID, err := s.storage.AddCommitment(&commitmentInBatch)
 	s.NoError(err)
 

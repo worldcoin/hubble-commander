@@ -100,13 +100,13 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
 			FinalisationBlock: ref.Uint32(2000),
 		},
 	}
-	_, err := s.api.storage.AddBatch(&batches[0])
+	batchID, err := s.api.storage.AddBatch(&batches[0])
 	s.NoError(err)
 	_, err = s.api.storage.AddBatch(&batches[1])
 	s.NoError(err)
 
 	commitmentInBatch := commitment
-	commitmentInBatch.IncludedInBatch = &batches[0].Hash
+	commitmentInBatch.IncludedInBatch = batchID
 	commitmentID, err := s.api.storage.AddCommitment(&commitmentInBatch)
 	s.NoError(err)
 	err = s.api.storage.AddTransfer(&models.Transfer{
