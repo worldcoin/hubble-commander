@@ -6,18 +6,15 @@ import (
 )
 
 type Batch struct {
-	Hash              common.Hash `db:"batch_hash"` // root of tree containing all commitments included in this batch
+	ID                int32 `db:"batch_id"`
 	Type              txtype.TransactionType
-	ID                Uint256 `db:"batch_id"`
-	FinalisationBlock uint32  `db:"finalisation_block"` // nolint:misspell
-}
-
-type BatchWithSubmissionBlock struct {
-	Batch
-	SubmissionBlock uint32
+	TransactionHash   common.Hash  `db:"transaction_hash"`
+	Hash              *common.Hash `db:"batch_hash"` // root of tree containing all commitments included in this batch
+	Number            *Uint256     `db:"batch_number"`
+	FinalisationBlock *uint32      `db:"finalisation_block"` // nolint:misspell
 }
 
 type BatchWithAccountRoot struct {
-	BatchWithSubmissionBlock
+	Batch
 	AccountTreeRoot *common.Hash `db:"account_tree_root"`
 }

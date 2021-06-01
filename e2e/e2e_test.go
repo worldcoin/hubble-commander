@@ -193,12 +193,12 @@ func testFeeReceiverStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, 
 }
 
 func testGetBatches(t *testing.T, client jsonrpc.RPCClient) {
-	var batches []models.Batch
+	var batches []dto.Batch
 	err := client.CallFor(&batches, "hubble_getBatches", []interface{}{nil, nil})
 
 	require.NoError(t, err)
 	require.Len(t, batches, 2)
-	require.Equal(t, models.MakeUint256(1), batches[0].ID)
+	require.Equal(t, models.NewUint256(1), batches[0].ID)
 	batchTypes := []txtype.TransactionType{batches[0].Type, batches[1].Type}
 	require.Contains(t, batchTypes, txtype.Transfer)
 	require.Contains(t, batchTypes, txtype.Create2Transfer)

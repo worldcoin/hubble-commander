@@ -2,12 +2,13 @@ package api
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/dto"
 )
 
-func (a *API) GetBatches(from, to *models.Uint256) ([]models.BatchWithSubmissionBlock, error) {
+func (a *API) GetBatches(from, to *models.Uint256) ([]dto.Batch, error) {
 	batches, err := a.storage.GetBatchesInRange(from, to)
 	if err != nil {
-		return []models.BatchWithSubmissionBlock{}, err
+		return []dto.Batch{}, err
 	}
 
 	blocksToFinalise, err := a.client.GetBlocksToFinalise()
@@ -15,12 +16,17 @@ func (a *API) GetBatches(from, to *models.Uint256) ([]models.BatchWithSubmission
 		return nil, err
 	}
 
-	batchesWithSubmission := make([]models.BatchWithSubmissionBlock, 0, len(batches))
+	batchesWithSubmission := make([]dto.Batch, 0, len(batches))
 	for i := range batches {
-		batchesWithSubmission = append(batchesWithSubmission, models.BatchWithSubmissionBlock{
-			Batch:           batches[i],
-			SubmissionBlock: batches[i].FinalisationBlock - uint32(*blocksToFinalise),
-		})
+		submissionBlock := *batches[i].FinalisationBlock - uint32(*blocksToFinalise)
+		batchesWithSubmission = append(batchesWithSubmission, *dto.MakeBatch(&models.Batch{
+			ID:                batches[i].ID,
+			Type:              batches[i].Type,
+			TransactionHash:   batches[i].TransactionHash,
+			Hash:              batches[i].Hash,
+			Number:            batches[i].Number,
+			FinalisationBlock: batches[i].FinalisationBlock,
+		}, submissionBlock))
 	}
 	return batchesWithSubmission, nil
 }

@@ -31,7 +31,7 @@ func (a *API) GetCommitment(id int32) (*dto.Commitment, error) {
 
 	return &dto.Commitment{
 		Commitment:   *commitment,
-		Status:       *calculateFinalisedStatus(a.storage.GetLatestBlockNumber(), batch.FinalisationBlock),
+		Status:       *calculateFinalisedStatus(a.storage.GetLatestBlockNumber(), *batch.FinalisationBlock),
 		Transactions: transactions,
 	}, nil
 }

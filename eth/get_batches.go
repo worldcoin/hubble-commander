@@ -51,6 +51,8 @@ func (c *Client) GetBatches(latestBatchSubmissionBlock *uint32) ([]DecodedBatch,
 			return nil, err
 		}
 
+		batch.TransactionHash = txHash
+
 		res = append(res, DecodedBatch{
 			Batch:       *batch,
 			AccountRoot: common.BytesToHash(it.Event.AccountRoot[:]),
