@@ -6,7 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -61,25 +61,31 @@ func (s *CommitmentTestSuite) TestAddCommitment_AddAndRetrieve() {
 	s.Equal(s.getCommitment(*id), actual)
 }
 
-func (s *CommitmentTestSuite) addRandomBatch() *common.Hash {
-	batch := models.Batch{Hash: utils.RandomHash()}
-	err := s.storage.AddBatch(&batch)
+func (s *CommitmentTestSuite) addRandomBatch() *int32 {
+	batch := models.Batch{
+		Type:              txtype.Transfer,
+		TransactionHash:   utils.RandomHash(),
+		Hash:              utils.NewRandomHash(),
+		Number:            models.NewUint256(123),
+		FinalisationBlock: ref.Uint32(1234),
+	}
+	id, err := s.storage.AddBatch(&batch)
 	s.NoError(err)
-	return &batch.Hash
+	return id
 }
 
 func (s *CommitmentTestSuite) TestMarkCommitmentAsIncluded_UpdatesRecord() {
-	batchHash := s.addRandomBatch()
+	batchID := s.addRandomBatch()
 	accountRoot := utils.RandomHash()
 
 	id, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	err = s.storage.MarkCommitmentAsIncluded(*id, batchHash, &accountRoot)
+	err = s.storage.MarkCommitmentAsIncluded(*id, *batchID, &accountRoot)
 	s.NoError(err)
 
 	expected := s.getCommitment(*id)
-	expected.IncludedInBatch = batchHash
+	expected.IncludedInBatch = batchID
 	expected.AccountTreeRoot = &accountRoot
 
 	actual, err := s.storage.GetCommitment(*id)
@@ -123,54 +129,43 @@ func (s *CommitmentTestSuite) TestGetCommitment_NonExistentCommitment() {
 	s.Nil(res)
 }
 
-func (s *CommitmentTestSuite) TestGetCommitmentsByBatchHash() {
-	_, err := s.storage.AddCommitment(&commitment)
-	s.NoError(err)
-
-	commitmentWithHash := commitment
-	commitmentWithHash.FeeReceiver = 0
-	commitmentWithHash.IncludedInBatch = s.addRandomBatch()
-	for i := 0; i < 3; i++ {
-		_, err = s.storage.AddCommitment(&commitmentWithHash)
-		s.NoError(err)
-	}
-
-	s.addLeaf()
-
-	commitments, err := s.storage.GetCommitmentsByBatchHash(commitmentWithHash.IncludedInBatch)
-	s.NoError(err)
-	s.Len(commitments, 3)
-}
-
-func (s *CommitmentTestSuite) TestGetCommitmentsByBatchHash_NonExistentCommitments() {
-	hash := utils.RandomHash()
-	commitments, err := s.storage.GetCommitmentsByBatchHash(&hash)
-	s.Equal(NewNotFoundError("commitments"), err)
-	s.Nil(commitments)
-}
-
 func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
 	_, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	commitmentWithHash := commitment
-	commitmentWithHash.FeeReceiver = 0
-	commitmentWithHash.IncludedInBatch = s.addRandomBatch()
-	for i := 0; i < 3; i++ {
-		_, err = s.storage.AddCommitment(&commitmentWithHash)
+	batchID := s.addRandomBatch()
+	includedCommitment := commitment
+	includedCommitment.IncludedInBatch = batchID
+	includedCommitment.FeeReceiver = 0
+	includedCommitment.AccountTreeRoot = utils.NewRandomHash()
+
+	expectedCommitments := make([]models.CommitmentWithTokenID, 2)
+	for i := 0; i < 2; i++ {
+		var commitmentID *int32
+		commitmentID, err = s.storage.AddCommitment(&includedCommitment)
 		s.NoError(err)
+		expectedCommitments[i] = models.CommitmentWithTokenID{
+			ID:                 *commitmentID,
+			Transactions:       includedCommitment.Transactions,
+			TokenID:            models.MakeUint256(1),
+			FeeReceiverStateID: includedCommitment.FeeReceiver,
+			CombinedSignature:  includedCommitment.CombinedSignature,
+			PostStateRoot:      includedCommitment.PostStateRoot,
+		}
 	}
 
 	s.addLeaf()
 
-	commitments, err := s.storage.GetCommitmentsByBatchID(models.MakeUint256(0))
+	commitments, err := s.storage.GetCommitmentsByBatchID(*batchID)
 	s.NoError(err)
-	s.Len(commitments, 3)
+	s.Len(commitments, 2)
+	s.Contains(commitments, expectedCommitments[0])
+	s.Contains(commitments, expectedCommitments[1])
 }
 
 func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID_NonExistentCommitments() {
-	_ = s.addRandomBatch()
-	commitments, err := s.storage.GetCommitmentsByBatchID(models.MakeUint256(0))
+	batchID := s.addRandomBatch()
+	commitments, err := s.storage.GetCommitmentsByBatchID(*batchID)
 	s.Equal(NewNotFoundError("commitments"), err)
 	s.Nil(commitments)
 }

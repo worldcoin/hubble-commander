@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -37,15 +38,16 @@ func (s *GetBatchTestSuite) SetupTest() {
 	s.api = &API{storage: s.storage.Storage, client: s.testClient.Client}
 	s.tree = st.NewStateTree(s.storage.Storage)
 
-	hash := utils.RandomHash()
 	s.commitment = commitment
-	s.commitment.IncludedInBatch = &hash
-	s.commitment.AccountTreeRoot = &hash
+	s.commitment.IncludedInBatch = ref.Int32(1)
+	s.commitment.AccountTreeRoot = utils.NewRandomHash()
 
 	s.batch = models.Batch{
-		Hash:              hash,
 		Type:              txtype.Transfer,
-		FinalisationBlock: 42000,
+		TransactionHash:   utils.RandomHash(),
+		Hash:              utils.NewRandomHash(),
+		Number:            models.NewUint256(1),
+		FinalisationBlock: ref.Uint32(42000),
 	}
 }
 
@@ -57,54 +59,64 @@ func (s *GetBatchTestSuite) TearDownTest() {
 
 func (s *GetBatchTestSuite) TestGetBatchByHash() {
 	s.addLeaf()
-	err := s.storage.AddBatch(&s.batch)
+	_, err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
 	_, err = s.storage.AddCommitment(&s.commitment)
 	s.NoError(err)
 
-	result, err := s.api.GetBatchByHash(s.batch.Hash)
+	result, err := s.api.GetBatchByHash(*s.batch.Hash)
 	s.NoError(err)
 	s.NotNil(result)
 	s.Len(result.Commitments, 1)
-	s.Equal(s.batch, result.Batch)
-	s.Equal(s.batch.FinalisationBlock-rollup.DefaultBlocksToFinalise, result.SubmissionBlock)
+	s.Equal(s.batch.Number, result.ID)
+	s.Equal(s.batch.Hash, result.Hash)
+	s.Equal(s.batch.Type, result.Type)
+	s.Equal(s.batch.TransactionHash, result.TransactionHash)
+	s.Equal(*s.batch.FinalisationBlock-rollup.DefaultBlocksToFinalise, result.SubmissionBlock)
+	s.Equal(s.batch.FinalisationBlock, result.FinalisationBlock)
+	s.Equal(s.commitment.AccountTreeRoot, result.AccountTreeRoot)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByHash_NoCommitments() {
 	s.addLeaf()
-	err := s.storage.AddBatch(&s.batch)
+	_, err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
-	result, err := s.api.GetBatchByHash(s.batch.Hash)
+	result, err := s.api.GetBatchByHash(*s.batch.Hash)
 	s.Equal(st.NewNotFoundError("batch"), err)
 	s.Nil(result)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByHash_NonExistentBatch() {
-	result, err := s.api.GetBatchByHash(*s.commitment.IncludedInBatch)
+	result, err := s.api.GetBatchByHash(utils.RandomHash())
 	s.Equal(st.NewNotFoundError("batch"), err)
 	s.Nil(result)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByID() {
 	s.addLeaf()
-	err := s.storage.AddBatch(&s.batch)
+	batchID, err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
 	_, err = s.storage.AddCommitment(&s.commitment)
 	s.NoError(err)
 
-	result, err := s.api.GetBatchByID(models.MakeUint256(0))
+	result, err := s.api.GetBatchByID(models.MakeUint256(uint64(*batchID)))
 	s.NoError(err)
 	s.NotNil(result)
 	s.Len(result.Commitments, 1)
-	s.Equal(s.batch, result.Batch)
-	s.Equal(s.batch.FinalisationBlock-rollup.DefaultBlocksToFinalise, result.SubmissionBlock)
+	s.Equal(s.batch.Number, result.ID)
+	s.Equal(s.batch.Hash, result.Hash)
+	s.Equal(s.batch.Type, result.Type)
+	s.Equal(s.batch.TransactionHash, result.TransactionHash)
+	s.Equal(*s.batch.FinalisationBlock-rollup.DefaultBlocksToFinalise, result.SubmissionBlock)
+	s.Equal(s.batch.FinalisationBlock, result.FinalisationBlock)
+	s.Equal(s.commitment.AccountTreeRoot, result.AccountTreeRoot)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByID_NoCommitments() {
-	err := s.storage.AddBatch(&s.batch)
+	_, err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
 	result, err := s.api.GetBatchByID(models.MakeUint256(0))

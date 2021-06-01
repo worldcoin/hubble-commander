@@ -121,7 +121,7 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_StoresBatchReco
 	err = submitBatch(txtype.Transfer, []models.Commitment{*commitment}, s.storage, s.testClient.Client, s.cfg)
 	s.NoError(err)
 
-	batch, err := s.storage.GetBatchByID(models.MakeUint256(1))
+	batch, err := s.storage.GetBatchByNumber(models.MakeUint256(1))
 	s.NoError(err)
 	s.Equal(batch.Type, txtype.Transfer)
 }
@@ -136,7 +136,7 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_StoresBa
 	err = submitBatch(txtype.Create2Transfer, []models.Commitment{*commitment}, s.storage, s.testClient.Client, s.cfg)
 	s.NoError(err)
 
-	batch, err := s.storage.GetBatchByID(models.MakeUint256(1))
+	batch, err := s.storage.GetBatchByNumber(models.MakeUint256(1))
 	s.NoError(err)
 	s.Equal(batch.Type, txtype.Create2Transfer)
 }
@@ -163,13 +163,13 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_MarksCommitment
 	err := submitBatch(txtype.Transfer, commitments, s.storage, s.testClient.Client, s.cfg)
 	s.NoError(err)
 
-	batch, err := s.storage.GetBatchByID(models.MakeUint256(1))
+	batch, err := s.storage.GetBatchByNumber(models.MakeUint256(1))
 	s.NoError(err)
 
 	for _, id := range ids {
 		commit, err := s.storage.GetCommitment(id)
 		s.NoError(err)
-		s.Equal(batch.Hash, *commit.IncludedInBatch)
+		s.Equal(batch.ID, *commit.IncludedInBatch)
 	}
 }
 
@@ -179,13 +179,13 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_MarksCom
 	err := submitBatch(txtype.Create2Transfer, commitments, s.storage, s.testClient.Client, s.cfg)
 	s.NoError(err)
 
-	batch, err := s.storage.GetBatchByID(models.MakeUint256(1))
+	batch, err := s.storage.GetBatchByNumber(models.MakeUint256(1))
 	s.NoError(err)
 
 	for _, id := range ids {
 		commit, err := s.storage.GetCommitment(id)
 		s.NoError(err)
-		s.Equal(batch.Hash, *commit.IncludedInBatch)
+		s.Equal(batch.ID, *commit.IncludedInBatch)
 	}
 }
 

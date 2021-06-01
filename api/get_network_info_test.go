@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
@@ -56,21 +57,23 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo_NoBatches() {
 func (s *NetworkInfoTestSuite) TestGetNetworkInfo_NoFinalisedBatches() {
 	batches := []models.Batch{
 		{
-			Hash:              utils.RandomHash(),
 			Type:              txtype.Transfer,
-			ID:                models.MakeUint256(1234),
-			FinalisationBlock: 1234,
+			TransactionHash:   utils.RandomHash(),
+			Hash:              utils.NewRandomHash(),
+			Number:            models.NewUint256(1234),
+			FinalisationBlock: ref.Uint32(1234),
 		},
 		{
-			Hash:              utils.RandomHash(),
 			Type:              txtype.Create2Transfer,
-			ID:                models.MakeUint256(2000),
-			FinalisationBlock: 2000,
+			TransactionHash:   utils.RandomHash(),
+			Hash:              utils.NewRandomHash(),
+			Number:            models.NewUint256(2000),
+			FinalisationBlock: ref.Uint32(2000),
 		},
 	}
-	err := s.api.storage.AddBatch(&batches[0])
+	_, err := s.api.storage.AddBatch(&batches[0])
 	s.NoError(err)
-	err = s.api.storage.AddBatch(&batches[1])
+	_, err = s.api.storage.AddBatch(&batches[1])
 	s.NoError(err)
 
 	networkInfo, err := s.api.GetNetworkInfo()
@@ -83,21 +86,23 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo_NoFinalisedBatches() {
 func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
 	batches := []models.Batch{
 		{
-			Hash:              utils.RandomHash(),
 			Type:              txtype.Transfer,
-			ID:                models.MakeUint256(1234),
-			FinalisationBlock: 1,
+			TransactionHash:   utils.RandomHash(),
+			Hash:              utils.NewRandomHash(),
+			Number:            models.NewUint256(1234),
+			FinalisationBlock: ref.Uint32(1),
 		},
 		{
-			Hash:              utils.RandomHash(),
 			Type:              txtype.Create2Transfer,
-			ID:                models.MakeUint256(2000),
-			FinalisationBlock: 2000,
+			TransactionHash:   utils.RandomHash(),
+			Hash:              utils.NewRandomHash(),
+			Number:            models.NewUint256(2000),
+			FinalisationBlock: ref.Uint32(2000),
 		},
 	}
-	err := s.api.storage.AddBatch(&batches[0])
+	_, err := s.api.storage.AddBatch(&batches[0])
 	s.NoError(err)
-	err = s.api.storage.AddBatch(&batches[1])
+	_, err = s.api.storage.AddBatch(&batches[1])
 	s.NoError(err)
 
 	commitmentInBatch := commitment

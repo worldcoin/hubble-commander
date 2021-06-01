@@ -53,11 +53,11 @@ func (s *Storage) GetCommitment(id int32) (*models.Commitment, error) {
 	return &res[0], nil
 }
 
-func (s *Storage) MarkCommitmentAsIncluded(id int32, batchHash, accountRoot *common.Hash) error {
+func (s *Storage) MarkCommitmentAsIncluded(commitmentID, batchID int32, accountRoot *common.Hash) error {
 	res, err := s.Postgres.Query(
 		s.QB.Update("commitment").
-			Where(squirrel.Eq{"commitment_id": id}).
-			Set("included_in_batch", *batchHash).
+			Where(squirrel.Eq{"commitment_id": commitmentID}).
+			Set("included_in_batch", batchID).
 			Set("account_tree_root", *accountRoot),
 	).Exec()
 	if err != nil {
@@ -88,38 +88,12 @@ func (s *Storage) GetPendingCommitments(maxFetched uint64) ([]models.Commitment,
 	return res, nil
 }
 
-func (s *Storage) GetCommitmentsByBatchHash(hash *common.Hash) ([]models.CommitmentWithTokenID, error) {
+func (s *Storage) GetCommitmentsByBatchID(batchID int32) ([]models.CommitmentWithTokenID, error) {
 	commitments := make([]models.CommitmentWithTokenID, 0, 32)
 	err := s.Postgres.Query(
 		s.QB.Select(selectedCommitmentCols...).
 			From("commitment").
-			Where(squirrel.Eq{"commitment.included_in_batch": hash}),
-	).Into(&commitments)
-	if err != nil {
-		return nil, err
-	}
-	if len(commitments) == 0 {
-		return nil, NewNotFoundError("commitments")
-	}
-
-	for i := range commitments {
-		stateLeaf, err := s.GetStateLeaf(commitments[i].FeeReceiverStateID)
-		if err != nil {
-			return nil, err
-		}
-		commitments[i].TokenID = stateLeaf.TokenIndex
-	}
-
-	return commitments, nil
-}
-
-func (s *Storage) GetCommitmentsByBatchID(id models.Uint256) ([]models.CommitmentWithTokenID, error) {
-	commitments := make([]models.CommitmentWithTokenID, 0, 32)
-	err := s.Postgres.Query(
-		s.QB.Select(selectedCommitmentCols...).
-			From("batch").
-			Join("commitment ON commitment.included_in_batch = batch.batch_hash").
-			Where(squirrel.Eq{"batch.batch_id": id}),
+			Where(squirrel.Eq{"included_in_batch": batchID}),
 	).Into(&commitments)
 	if err != nil {
 		return nil, err

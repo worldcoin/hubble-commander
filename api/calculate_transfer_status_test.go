@@ -92,15 +92,13 @@ func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Pending()
 
 func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_InBatch() {
 	batch := models.Batch{
-		Hash:              utils.RandomHash(),
-		Type:              txtype.Transfer,
-		FinalisationBlock: math.MaxUint32,
+		FinalisationBlock: ref.Uint32(math.MaxUint32),
 	}
-	err := s.storage.AddBatch(&batch)
+	batchID, err := s.storage.AddBatch(&batch)
 	s.NoError(err)
 
 	includedCommitment := commitment
-	includedCommitment.IncludedInBatch = &batch.Hash
+	includedCommitment.IncludedInBatch = batchID
 	commitmentID, err := s.storage.AddCommitment(&includedCommitment)
 	s.NoError(err)
 
@@ -117,15 +115,13 @@ func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Finalised
 	currentBlockNumber, err := s.sim.GetLatestBlockNumber()
 	s.NoError(err)
 	batch := models.Batch{
-		Hash:              utils.RandomHash(),
-		Type:              txtype.Transfer,
-		FinalisationBlock: *currentBlockNumber + 1,
+		FinalisationBlock: ref.Uint32(*currentBlockNumber + 1),
 	}
-	err = s.storage.AddBatch(&batch)
+	batchID, err := s.storage.AddBatch(&batch)
 	s.NoError(err)
 
 	includedCommitment := commitment
-	includedCommitment.IncludedInBatch = &batch.Hash
+	includedCommitment.IncludedInBatch = batchID
 	commitmentID, err := s.storage.AddCommitment(&includedCommitment)
 	s.NoError(err)
 

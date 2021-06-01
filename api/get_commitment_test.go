@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -31,13 +32,16 @@ func (s *GetCommitmentTestSuite) SetupTest() {
 	s.api = &API{storage: s.storage.Storage}
 
 	s.batch = models.Batch{
-		Hash:              utils.RandomHash(),
+		ID:                1,
 		Type:              txtype.Transfer,
-		FinalisationBlock: 113,
+		TransactionHash:   utils.RandomHash(),
+		Hash:              utils.NewRandomHash(),
+		Number:            models.NewUint256(1),
+		FinalisationBlock: ref.Uint32(113),
 	}
 
 	s.commitment = commitment
-	s.commitment.IncludedInBatch = &s.batch.Hash
+	s.commitment.IncludedInBatch = &s.batch.ID
 }
 
 func (s *GetCommitmentTestSuite) TearDownTest() {
@@ -46,7 +50,7 @@ func (s *GetCommitmentTestSuite) TearDownTest() {
 }
 
 func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
-	err := s.storage.AddBatch(&s.batch)
+	_, err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
 	commitmentID, err := s.storage.AddCommitment(&s.commitment)
@@ -74,7 +78,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 }
 
 func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
-	err := s.storage.AddBatch(&s.batch)
+	_, err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
 	c2tCommitment := s.commitment

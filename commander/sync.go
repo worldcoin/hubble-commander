@@ -17,7 +17,7 @@ var (
 )
 
 func (t *transactionExecutor) SyncBatches() error {
-	submissionBlock, latestBatchID, err := getLatestSubmissionBlockAndBatchID(t.storage, t.client)
+	submissionBlock, latestBatchNumber, err := getLatestSubmissionBlockAndBatchNumber(t.storage, t.client)
 	if err != nil {
 		return err
 	}
@@ -29,7 +29,7 @@ func (t *transactionExecutor) SyncBatches() error {
 
 	for i := range newBatches {
 		batch := &newBatches[i]
-		if batch.ID.Cmp(latestBatchID) <= 0 {
+		if batch.Number.Cmp(latestBatchNumber) <= 0 {
 			continue
 		}
 		if err := t.syncBatch(batch); err != nil {
@@ -40,14 +40,14 @@ func (t *transactionExecutor) SyncBatches() error {
 	return nil
 }
 
-func getLatestSubmissionBlockAndBatchID(storage *st.Storage, client *eth.Client) (*uint32, *models.Uint256, error) {
+func getLatestSubmissionBlockAndBatchNumber(storage *st.Storage, client *eth.Client) (*uint32, *models.Uint256, error) {
 	var submissionBlock uint32
-	var latestBatchID *models.Uint256
+	var latestBatchNumber *models.Uint256
 
-	latestBatch, err := storage.GetLatestBatch()
+	latestBatch, err := storage.GetLatestSubmittedBatch()
 	if st.IsNotFoundError(err) {
 		submissionBlock = 0
-		latestBatchID = models.NewUint256(0)
+		latestBatchNumber = models.NewUint256(0)
 	} else if err != nil {
 		return nil, nil, err
 	} else {
@@ -55,18 +55,20 @@ func getLatestSubmissionBlockAndBatchID(storage *st.Storage, client *eth.Client)
 		if err != nil {
 			return nil, nil, err
 		}
-		submissionBlock = latestBatch.FinalisationBlock - uint32(*blocks)
-		latestBatchID = &latestBatch.ID
+		submissionBlock = *latestBatch.FinalisationBlock - uint32(*blocks)
+		latestBatchNumber = latestBatch.Number
 	}
 
-	return &submissionBlock, latestBatchID, nil
+	return &submissionBlock, latestBatchNumber, nil
 }
 
 func (t *transactionExecutor) syncBatch(batch *eth.DecodedBatch) error {
-	err := t.storage.AddBatch(&batch.Batch)
+	batchID, err := t.storage.AddBatch(&batch.Batch)
 	if err != nil {
 		return err
 	}
+
+	batch.Batch.ID = *batchID
 
 	switch batch.Type {
 	case txtype.Transfer:
@@ -83,6 +85,6 @@ func (t *transactionExecutor) syncBatch(batch *eth.DecodedBatch) error {
 		return fmt.Errorf("unsupported batch type for sync: %s", batch.Type)
 	}
 
-	log.Printf("Synced new batch #%s from chain: %d commitments included", batch.ID.String(), len(batch.Commitments))
+	log.Printf("Synced new batch #%s from chain: %d commitments included", batch.Number.String(), len(batch.Commitments))
 	return nil
 }

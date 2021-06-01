@@ -62,7 +62,7 @@ func (s *SubmitBatchTestSuite) TestSubmitTransfersBatch_ReturnsBatchWithCorrectH
 	s.NoError(err)
 
 	commitmentRoot := utils.HashTwo(commitment.LeafHash(), storage.GetZeroHash(0))
-	s.Equal(commitmentRoot, batch.Hash)
+	s.Equal(commitmentRoot, *batch.Hash)
 	s.Equal(txtype.Transfer, batch.Type)
 }
 
@@ -91,7 +91,7 @@ func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatch_ReturnsBatchWithC
 	s.NoError(err)
 
 	commitmentRoot := utils.HashTwo(commitment.LeafHash(), storage.GetZeroHash(0))
-	s.Equal(commitmentRoot, batch.Hash)
+	s.Equal(commitmentRoot, *batch.Hash)
 	s.Equal(txtype.Create2Transfer, batch.Type)
 }
 

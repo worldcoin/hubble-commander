@@ -3,39 +3,31 @@ package storage
 import (
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (s *Storage) AddBatch(batch *models.Batch) error {
-	_, err := s.Postgres.Query(
+func (s *Storage) AddBatch(batch *models.Batch) (*int32, error) {
+	res := make([]int32, 0, 1)
+	err := s.Postgres.Query(
 		s.QB.Insert("batch").
 			Values(
-				batch.Hash,
-				batch.ID,
+				squirrel.Expr("DEFAULT"),
 				batch.Type,
+				batch.TransactionHash,
+				batch.Hash,
+				batch.Number,
 				batch.FinalisationBlock,
-			),
-	).Exec()
-	return err
-}
-
-func (s *Storage) GetBatch(batchHash common.Hash) (*models.Batch, error) {
-	res := make([]models.Batch, 0, 1)
-	err := s.Postgres.Query(
-		s.QB.Select("*").
-			From("batch").
-			Where(squirrel.Eq{"batch_hash": batchHash}),
+			).
+			Suffix("RETURNING batch_id"),
 	).Into(&res)
 	if err != nil {
 		return nil, err
 	}
-	if len(res) == 0 {
-		return nil, NewNotFoundError("batch")
-	}
-	return &res[0], nil
+	return ref.Int32(res[0]), nil
 }
 
-func (s *Storage) GetBatchByID(batchID models.Uint256) (*models.Batch, error) {
+func (s *Storage) GetBatch(batchID int32) (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Select("*").
@@ -51,12 +43,28 @@ func (s *Storage) GetBatchByID(batchID models.Uint256) (*models.Batch, error) {
 	return &res[0], nil
 }
 
+func (s *Storage) GetBatchByNumber(batchNumber models.Uint256) (*models.Batch, error) {
+	res := make([]models.Batch, 0, 1)
+	err := s.Postgres.Query(
+		s.QB.Select("*").
+			From("batch").
+			Where(squirrel.Eq{"batch_number": batchNumber}),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, NewNotFoundError("batch")
+	}
+	return &res[0], nil
+}
+
 func (s *Storage) GetBatchByCommitmentID(commitmentID int32) (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Select("batch.*").
 			From("batch").
-			JoinClause("NATURAL JOIN commitment").
+			Join("commitment ON commitment.included_in_batch = batch.batch_id").
 			Where(squirrel.Eq{"commitment_id": commitmentID}),
 	).Into(&res)
 	if err != nil {
@@ -68,11 +76,12 @@ func (s *Storage) GetBatchByCommitmentID(commitmentID int32) (*models.Batch, err
 	return &res[0], nil
 }
 
-func (s *Storage) GetLatestBatch() (*models.Batch, error) {
+func (s *Storage) GetLatestSubmittedBatch() (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Select("*").
 			From("batch").
+			Where(squirrel.NotEq{"batch_hash": nil}).
 			OrderBy("batch_id DESC").
 			Limit(1),
 	).Into(&res)
@@ -108,11 +117,11 @@ func (s *Storage) GetBatchesInRange(from, to *models.Uint256) ([]models.Batch, e
 		From("batch")
 
 	if from != nil {
-		qb = qb.Where(squirrel.GtOrEq{"batch_id": from})
+		qb = qb.Where(squirrel.GtOrEq{"batch_number": from})
 	}
 
 	if to != nil {
-		qb = qb.Where(squirrel.LtOrEq{"batch_id": to})
+		qb = qb.Where(squirrel.LtOrEq{"batch_number": to})
 	}
 
 	res := make([]models.Batch, 0, 32)
@@ -126,10 +135,12 @@ func (s *Storage) GetBatchesInRange(from, to *models.Uint256) ([]models.Batch, e
 func (s *Storage) GetBatchWithAccountRoot(batchHash common.Hash) (*models.BatchWithAccountRoot, error) {
 	res := make([]models.BatchWithAccountRoot, 0, 1)
 	err := s.Postgres.Query(
-		s.QB.Select("batch.*",
-			"commitment.account_tree_root").
+		s.QB.Select(
+			"batch.*",
+			"commitment.account_tree_root",
+		).
 			From("batch").
-			Join("commitment ON commitment.included_in_batch = batch.batch_hash").
+			Join("commitment ON commitment.included_in_batch = batch.batch_id").
 			Where(squirrel.Eq{"batch_hash": batchHash}).
 			Limit(1),
 	).Into(&res)
@@ -142,14 +153,16 @@ func (s *Storage) GetBatchWithAccountRoot(batchHash common.Hash) (*models.BatchW
 	return &res[0], nil
 }
 
-func (s *Storage) GetBatchWithAccountRootByID(batchID models.Uint256) (*models.BatchWithAccountRoot, error) {
+func (s *Storage) GetBatchWithAccountRootByNumber(batchNumber models.Uint256) (*models.BatchWithAccountRoot, error) {
 	res := make([]models.BatchWithAccountRoot, 0, 1)
 	err := s.Postgres.Query(
-		s.QB.Select("batch.*",
-			"commitment.account_tree_root").
+		s.QB.Select(
+			"batch.*",
+			"commitment.account_tree_root",
+		).
 			From("batch").
-			Join("commitment ON commitment.included_in_batch = batch.batch_hash").
-			Where(squirrel.Eq{"batch_id": batchID}).
+			Join("commitment ON commitment.included_in_batch = batch.batch_id").
+			Where(squirrel.Eq{"batch_number": batchNumber}).
 			Limit(1),
 	).Into(&res)
 	if err != nil {

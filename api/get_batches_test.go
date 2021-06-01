@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -35,9 +36,12 @@ func (s *GetBatchesTestSuite) SetupTest() {
 	s.api = &API{storage: s.storage.Storage, client: s.testClient.Client}
 
 	s.batch = models.Batch{
-		Hash:              utils.RandomHash(),
+		ID:                1,
 		Type:              txtype.Transfer,
-		FinalisationBlock: 42000,
+		TransactionHash:   utils.RandomHash(),
+		Hash:              utils.NewRandomHash(),
+		Number:            models.NewUint256(1),
+		FinalisationBlock: ref.Uint32(42000),
 	}
 }
 
@@ -48,15 +52,19 @@ func (s *GetBatchesTestSuite) TearDownTest() {
 }
 
 func (s *GetBatchesTestSuite) TestGetBatches() {
-	err := s.storage.AddBatch(&s.batch)
+	_, err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
 	result, err := s.api.GetBatches(models.NewUint256(0), models.NewUint256(1))
 	s.NoError(err)
 	s.NotNil(result)
 	s.Len(result, 1)
-	s.Equal(s.batch, result[0].Batch)
-	s.Equal(s.batch.FinalisationBlock-rollup.DefaultBlocksToFinalise, result[0].SubmissionBlock)
+	s.Equal(s.batch.Number, result[0].ID)
+	s.Equal(s.batch.Hash, result[0].Hash)
+	s.Equal(s.batch.Type, result[0].Type)
+	s.Equal(s.batch.TransactionHash, result[0].TransactionHash)
+	s.Equal(*s.batch.FinalisationBlock-rollup.DefaultBlocksToFinalise, result[0].SubmissionBlock)
+	s.Equal(s.batch.FinalisationBlock, result[0].FinalisationBlock)
 }
 
 func (s *GetBatchesTestSuite) TestGetBatchesByHash_NoBatches() {
