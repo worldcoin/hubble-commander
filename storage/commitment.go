@@ -73,7 +73,7 @@ func (s *Storage) MarkCommitmentAsIncluded(commitmentID, batchID int32) error {
 	return nil
 }
 
-func (s *Storage) UpdateCommitmentsAccountTreeRoot(batchTransactionHash common.Hash, accountRoot common.Hash) error {
+func (s *Storage) UpdateCommitmentsAccountTreeRoot(batchTransactionHash, accountRoot common.Hash) error {
 	batchID := make([]int32, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Select("batch_id").

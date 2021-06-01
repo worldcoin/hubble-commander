@@ -33,7 +33,7 @@ func (s *Storage) MarkBatchAsSubmitted(batch *models.Batch) error {
 			Where(squirrel.Eq{"transaction_hash": batch.TransactionHash}).
 			Set("batch_hash", batch.Hash).
 			Set("batch_number", batch.Number).
-			Set("finalisation_block", batch.FinalisationBlock),
+			Set("finalisation_block", batch.FinalisationBlock), // nolint:misspell
 	).Exec()
 	if err != nil {
 		return err
@@ -102,7 +102,7 @@ func (s *Storage) GetOldestPendingBatch() (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Select("*").
-		From("batch").
+			From("batch").
 			Where(squirrel.Eq{"batch_hash": nil}).
 			OrderBy("batch_id ASC").
 			Limit(1),

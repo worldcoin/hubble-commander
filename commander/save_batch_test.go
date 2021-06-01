@@ -115,7 +115,7 @@ func (s *SaveBatchTestSuite) TestSaveBatch() {
 
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
-	s.Len(batches,1)
+	s.Len(batches, 1)
 
 	commitment, err := s.storage.GetCommitment(commitments[0].ID)
 	s.NoError(err)

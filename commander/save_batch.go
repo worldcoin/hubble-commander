@@ -16,7 +16,7 @@ func saveBatch(storage *st.Storage, client *eth.Client) error {
 		return err
 	}
 
-	batchTxReceipt, err := client.ChainConnection.GetBackend().TransactionReceipt(context.Background(), *&pendingBatch.TransactionHash)
+	batchTxReceipt, err := client.ChainConnection.GetBackend().TransactionReceipt(context.Background(), pendingBatch.TransactionHash)
 	if err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func saveBatch(storage *st.Storage, client *eth.Client) error {
 				if batch.Number.Cmp(latestBatchNumber) <= 0 {
 					continue
 				}
-				
+
 				batch.TransactionHash = pendingBatch.TransactionHash
 				err := storage.MarkBatchAsSubmitted(&batch.Batch)
 				if err != nil {
@@ -49,13 +49,17 @@ func saveBatch(storage *st.Storage, client *eth.Client) error {
 					return err
 				}
 
-				log.Printf("Submitted %d commitment(s) on chain. Batch ID: %d. Batch Hash: %v", len(batch.Commitments), batch.Number.Uint64(), batch.Hash)
+				log.Printf(
+					"Submitted %d commitment(s) on chain. Batch ID: %d. Batch Hash: %v",
+					len(batch.Commitments),
+					batch.Number.Uint64(),
+					batch.Hash,
+				)
 			}
-
-		} else {
+		} else { // nolint:staticcheck
 			// TODO - Have a discussion with the team on how to handle the situation if transaction was mined unsuccessfully
 		}
-	} else {
+	} else { // nolint:staticcheck
 		// TODO - Have a discussion with the team on how to handle the situation when the sent transaction is stuck in the mempool
 	}
 

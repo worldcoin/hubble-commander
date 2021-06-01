@@ -59,8 +59,8 @@ func (s *BatchTestSuite) TestMarkBatchAsSubmitted() {
 	s.NoError(err)
 
 	batch := &models.Batch{
-		ID: *batchID,
-		TransactionHash: pendingBatch.TransactionHash,
+		ID:                *batchID,
+		TransactionHash:   pendingBatch.TransactionHash,
 		Hash:              utils.NewRandomHash(),
 		Type:              pendingBatch.Type,
 		Number:            models.NewUint256(124),
