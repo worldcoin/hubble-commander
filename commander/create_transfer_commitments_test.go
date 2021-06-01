@@ -185,7 +185,7 @@ func (s *TransferCommitmentsTestSuite) prepareAndReturnPendingTransfers(transfer
 
 	pendingTransfers, err := s.storage.GetPendingTransfers(uint64(s.cfg.TxsPerCommitment))
 	s.NoError(err)
-	s.Len(pendingTransfers, transfersAmount)
+	s.LessOrEqual(uint32(len(pendingTransfers)), s.cfg.TxsPerCommitment)
 
 	return pendingTransfers
 }

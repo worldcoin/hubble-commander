@@ -98,10 +98,10 @@ func (s *Storage) GetBatchByCommitmentID(commitmentID int32) (*models.Batch, err
 	return &res[0], nil
 }
 
-func (s *Storage) GetOldestPendingBatch() (*models.PendingBatch, error) {
-	res := make([]models.PendingBatch, 0, 1)
+func (s *Storage) GetOldestPendingBatch() (*models.Batch, error) {
+	res := make([]models.Batch, 0, 1)
 	err := s.Postgres.Query(
-		s.QB.Select("batch_id, type, transaction_hash").
+		s.QB.Select("*").
 		From("batch").
 			Where(squirrel.Eq{"batch_hash": nil}).
 			OrderBy("batch_id ASC").

@@ -93,8 +93,13 @@ func (s *CommitmentTestSuite) TestMarkCommitmentAsIncluded_UpdatesRecord() {
 }
 
 func (s *CommitmentTestSuite) TestUpdateCommitmentAccountTreeRoot_UpdatesRecord() {
+	s.addRandomBatch()
 	batchID := s.addRandomBatch()
+	s.addRandomBatch()
 	accountRoot := utils.RandomHash()
+
+	batch, err := s.storage.GetBatch(*batchID)
+	s.NoError(err)
 
 	id1, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
@@ -108,7 +113,7 @@ func (s *CommitmentTestSuite) TestUpdateCommitmentAccountTreeRoot_UpdatesRecord(
 	err = s.storage.MarkCommitmentAsIncluded(*id3, *batchID)
 	s.NoError(err)
 
-	err = s.storage.UpdateCommitmentsAccountTreeRoot(*batchID, accountRoot)
+	err = s.storage.UpdateCommitmentsAccountTreeRoot(batch.TransactionHash, accountRoot)
 	s.NoError(err)
 
 	expectedCommitment1 := s.getCommitment(*id1)

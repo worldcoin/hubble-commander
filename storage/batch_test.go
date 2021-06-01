@@ -51,11 +51,11 @@ func (s *BatchTestSuite) TestAddBatch_AddAndRetrieve() {
 }
 
 func (s *BatchTestSuite) TestMarkBatchAsSubmitted() {
-	pendingBatch := &models.PendingBatch{
+	pendingBatch := &models.Batch{
 		Type:            txtype.Transfer,
 		TransactionHash: utils.RandomHash(),
 	}
-	batchID, err := s.storage.AddPendingBatch(pendingBatch)
+	batchID, err := s.storage.AddBatch(pendingBatch)
 	s.NoError(err)
 
 	batch := &models.Batch{
@@ -157,7 +157,7 @@ func (s *BatchTestSuite) TestGetBatchByCommitmentID_NotExistentBatch() {
 }
 
 func (s *BatchTestSuite) TestGetOldestPendingBatch() {
-	pendingBatches := []models.PendingBatch{
+	pendingBatches := []models.Batch{
 		{
 			ID:              2,
 			Type:            txtype.Transfer,
@@ -178,9 +178,9 @@ func (s *BatchTestSuite) TestGetOldestPendingBatch() {
 	}
 	_, err := s.storage.AddBatch(&batch)
 	s.NoError(err)
-	_, err = s.storage.AddPendingBatch(&pendingBatches[0])
+	_, err = s.storage.AddBatch(&pendingBatches[0])
 	s.NoError(err)
-	_, err = s.storage.AddPendingBatch(&pendingBatches[1])
+	_, err = s.storage.AddBatch(&pendingBatches[1])
 	s.NoError(err)
 
 	actual, err := s.storage.GetOldestPendingBatch()

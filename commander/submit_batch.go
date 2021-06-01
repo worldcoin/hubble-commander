@@ -8,7 +8,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
@@ -46,11 +45,16 @@ func submitBatch(
 		return err
 	}
 
-	newBatch := models.PendingBatch{
+	newBatch := models.Batch{
 		Type:            batchType,
 		TransactionHash: tx.Hash(),
 	}
-	_, err = storage.AddPendingBatch(&newBatch)
+	batchID, err := storage.AddBatch(&newBatch)
+	if err != nil {
+		return err
+	}
+
+	err = markCommitmentsAsIncluded(storage, commitments, *batchID)
 	if err != nil {
 		return err
 	}
@@ -58,11 +62,9 @@ func submitBatch(
 	return nil
 }
 
-// TODO - consinder changing the types here
-func markCommitmentsAsIncluded(storage *st.Storage, firstCommitmentID int32, numberOfCommitments int, batchID int32, accountRoot *common.Hash) error {
-	for i := 0; i < numberOfCommitments; i++ {
-		commitmentID := firstCommitmentID + int32(i)
-		err := storage.MarkCommitmentAsIncluded(commitmentID, batchID, accountRoot)
+func markCommitmentsAsIncluded(storage *st.Storage, commitments []models.Commitment, batchID int32) error {
+	for i := range commitments {
+		err := storage.MarkCommitmentAsIncluded(commitments[i].ID, batchID)
 		if err != nil {
 			return err
 		}

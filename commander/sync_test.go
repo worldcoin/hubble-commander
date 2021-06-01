@@ -116,6 +116,8 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	err = submitBatch(context.Background(), txtype.Transfer, commitments, s.storage, s.client.Client, s.cfg)
 	s.NoError(err)
 
+	s.client.Commit()
+
 	// Recreate database
 	err = s.teardown()
 	s.NoError(err)
@@ -149,6 +151,8 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 
 	err = submitBatch(context.Background(), txtype.Transfer, commitments, txStorage, s.client.Client, s.cfg)
 	s.NoError(err)
+
+	s.client.Commit()
 
 	batches, err := txStorage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
