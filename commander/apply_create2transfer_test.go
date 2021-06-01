@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -115,6 +116,23 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer()
 	s.NoError(transferError)
 
 	receiverLeaf, err := s.storage.GetStateLeaf(2)
+	s.NoError(err)
+	senderLeaf, err := s.storage.GetStateLeaf(create2Transfer.FromStateID)
+	s.NoError(err)
+
+	s.Equal(uint64(8900), senderLeaf.Balance.Uint64())
+	s.Equal(uint64(1000), receiverLeaf.Balance.Uint64())
+}
+
+func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_TransferWithStateID() {
+	c2t := create2Transfer
+	c2t.ToStateID = ref.Uint32(5)
+	transferError, appError := ApplyCreate2Transfer(s.storage, &c2t, 2, feeReceiverTokenIndex)
+	s.NoError(appError)
+	s.NoError(transferError)
+	s.Equal(uint32(5), *c2t.ToStateID)
+
+	receiverLeaf, err := s.storage.GetStateLeaf(*c2t.ToStateID)
 	s.NoError(err)
 	senderLeaf, err := s.storage.GetStateLeaf(create2Transfer.FromStateID)
 	s.NoError(err)

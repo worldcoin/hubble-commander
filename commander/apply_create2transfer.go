@@ -21,20 +21,22 @@ func ApplyCreate2Transfer(
 		Nonce:      models.MakeUint256(0),
 	}
 
-	nextAvailableStateID, err := storage.GetNextAvailableStateID()
+	if create2Transfer.ToStateID == nil {
+		nextAvailableStateID, err := storage.GetNextAvailableStateID()
+		if err != nil {
+			return nil, err
+		}
+		create2Transfer.ToStateID = nextAvailableStateID
+	}
+
+	err := stateTree.Set(*create2Transfer.ToStateID, &emptyUserState)
 	if err != nil {
 		return nil, err
 	}
 
-	err = stateTree.Set(*nextAvailableStateID, &emptyUserState)
-	if err != nil {
-		return nil, err
-	}
-
-	create2Transfer.ToStateID = *nextAvailableStateID
 	transfer := models.Transfer{
 		TransactionBase: create2Transfer.TransactionBase,
-		ToStateID:       *nextAvailableStateID,
+		ToStateID:       *create2Transfer.ToStateID,
 	}
 
 	return ApplyTransfer(storage, &transfer, commitmentTokenIndex)

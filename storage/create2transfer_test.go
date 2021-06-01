@@ -25,7 +25,7 @@ var (
 			Signature:            models.MakeRandomSignature(),
 			IncludedInCommitment: nil,
 		},
-		ToStateID:   2,
+		ToStateID:   ref.Uint32(2),
 		ToPublicKey: account2.PublicKey,
 	}
 )
@@ -180,7 +180,7 @@ func (s *Create2TransferTestSuite) TestSetCreate2TransferToStateID() {
 
 	c2t, err := s.storage.GetCreate2Transfer(create2Transfer.Hash)
 	s.NoError(err)
-	s.Equal(toStateID, c2t.ToStateID)
+	s.Equal(toStateID, *c2t.ToStateID)
 }
 
 func (s *Create2TransferTestSuite) TestSetCreate2TransferToStateID_NoCreate2Transfer() {

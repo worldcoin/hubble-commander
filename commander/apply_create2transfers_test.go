@@ -235,7 +235,7 @@ func generateValidCreate2Transfers(transfersAmount int, publicKey *models.Public
 				Fee:         models.MakeUint256(1),
 				Nonce:       models.MakeUint256(uint64(i)),
 			},
-			ToStateID:   2,
+			ToStateID:   nil,
 			ToPublicKey: *publicKey,
 		}
 		transfers = append(transfers, transfer)
@@ -255,7 +255,7 @@ func generateInvalidCreate2Transfers(transfersAmount int, publicKey *models.Publ
 				Fee:         models.MakeUint256(1),
 				Nonce:       models.MakeUint256(0),
 			},
-			ToStateID:   2,
+			ToStateID:   nil,
 			ToPublicKey: *publicKey,
 		}
 		transfers = append(transfers, transfer)

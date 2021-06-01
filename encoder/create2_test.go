@@ -11,6 +11,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -53,7 +54,7 @@ func (s *Create2TestSuite) TestEncodeCreate2TransferWithStateID() {
 			Fee:         models.MakeUint256(8),
 			Nonce:       models.MakeUint256(9),
 		},
-		ToStateID:   5,
+		ToStateID:   ref.Uint32(5),
 		ToPublicKey: models.PublicKey{1, 2, 3},
 	}, 6)
 	s.NoError(err)
@@ -117,7 +118,7 @@ func (s *Create2TestSuite) TestEncodeCreate2TransferForSigning() {
 func newTxCreate2Transfer(transfer *models.Create2Transfer, toPubKeyID uint32) testtx.TxCreate2Transfer {
 	return testtx.TxCreate2Transfer{
 		FromIndex:  big.NewInt(int64(transfer.FromStateID)),
-		ToIndex:    big.NewInt(int64(transfer.ToStateID)),
+		ToIndex:    big.NewInt(int64(*transfer.ToStateID)),
 		ToPubkeyID: big.NewInt(int64(toPubKeyID)),
 		Amount:     transfer.Amount.ToBig(),
 		Fee:        transfer.Fee.ToBig(),
@@ -131,7 +132,7 @@ func (s *Create2TestSuite) TestEncodeCreate2TransferForCommitment() {
 			Amount:      models.MakeUint256(50),
 			Fee:         models.MakeUint256(10),
 		},
-		ToStateID: 2,
+		ToStateID: ref.Uint32(2),
 	}
 
 	expected, err := s.testTx.Create2transferSerialize(nil, []testtx.TxCreate2Transfer{newTxCreate2Transfer(transfer, 6)})
@@ -150,7 +151,7 @@ func (s *Create2TestSuite) TestSerializeCreate2Transfers() {
 			Amount:      models.MakeUint256(50),
 			Fee:         models.MakeUint256(10),
 		},
-		ToStateID:   2,
+		ToStateID:   ref.Uint32(2),
 		ToPublicKey: models.PublicKey{1, 2, 3},
 	}
 	transfer2 := models.Create2Transfer{
@@ -159,7 +160,7 @@ func (s *Create2TestSuite) TestSerializeCreate2Transfers() {
 			Amount:      models.MakeUint256(200),
 			Fee:         models.MakeUint256(10),
 		},
-		ToStateID:   3,
+		ToStateID:   ref.Uint32(3),
 		ToPublicKey: models.PublicKey{2, 3, 4},
 	}
 
@@ -185,7 +186,7 @@ func (s *Create2TestSuite) TestSerializeCreate2Transfers_InvalidLength() {
 			Amount:      models.MakeUint256(50),
 			Fee:         models.MakeUint256(10),
 		},
-		ToStateID:   2,
+		ToStateID:   ref.Uint32(2),
 		ToPublicKey: models.PublicKey{1, 2, 3},
 	}
 
@@ -202,7 +203,7 @@ func (s *Create2TestSuite) TestDeserializeCreate2Transfers() {
 			Amount:      models.MakeUint256(50),
 			Fee:         models.MakeUint256(10),
 		},
-		ToStateID: 2,
+		ToStateID: ref.Uint32(2),
 	}
 	transfer2 := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
@@ -211,7 +212,7 @@ func (s *Create2TestSuite) TestDeserializeCreate2Transfers() {
 			Amount:      models.MakeUint256(200),
 			Fee:         models.MakeUint256(10),
 		},
-		ToStateID: 3,
+		ToStateID: ref.Uint32(3),
 	}
 
 	serialized, err := s.testTx.Create2transferSerialize(
