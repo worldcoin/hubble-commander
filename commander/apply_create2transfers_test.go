@@ -9,7 +9,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -236,7 +235,7 @@ func generateValidCreate2Transfers(transfersAmount int, publicKey *models.Public
 				Fee:         models.MakeUint256(1),
 				Nonce:       models.MakeUint256(uint64(i)),
 			},
-			ToStateID:   ref.Uint32(2),
+			ToStateID:   nil,
 			ToPublicKey: *publicKey,
 		}
 		transfers = append(transfers, transfer)
@@ -256,7 +255,7 @@ func generateInvalidCreate2Transfers(transfersAmount int, publicKey *models.Publ
 				Fee:         models.MakeUint256(1),
 				Nonce:       models.MakeUint256(0),
 			},
-			ToStateID:   ref.Uint32(2),
+			ToStateID:   nil,
 			ToPublicKey: *publicKey,
 		}
 		transfers = append(transfers, transfer)

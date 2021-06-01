@@ -123,7 +123,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 		tx, err := s.storage.GetCreate2Transfer(pendingTransfers[i].Hash)
 		s.NoError(err)
 		s.Equal(int32(1), *tx.IncludedInCommitment)
-		s.Equal(uint32(i+3), tx.ToStateID)
+		s.Equal(uint32(i+3), *tx.ToStateID)
 	}
 }
 
