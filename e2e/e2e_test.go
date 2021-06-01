@@ -10,6 +10,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/e2e/setup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
@@ -23,7 +24,7 @@ import (
 )
 
 func TestCommander(t *testing.T) {
-	commander, err := NewCommanderFromEnv(true)
+	commander, err := setup.NewCommanderFromEnv(true)
 	require.NoError(t, err)
 	err = commander.Start()
 	require.NoError(t, err)
@@ -33,7 +34,7 @@ func TestCommander(t *testing.T) {
 
 	domain := getDomain(t, commander.Client())
 
-	wallets, err := createWallets(domain)
+	wallets, err := setup.CreateWallets(domain)
 	require.NoError(t, err)
 
 	feeReceiverWallet := wallets[0]
@@ -204,7 +205,7 @@ func testGetBatches(t *testing.T, client jsonrpc.RPCClient) {
 	require.Contains(t, batchTypes, txtype.Create2Transfer)
 }
 
-func testCommanderRestart(t *testing.T, commander Commander, senderWallet bls.Wallet) {
+func testCommanderRestart(t *testing.T, commander setup.Commander, senderWallet bls.Wallet) {
 	err := commander.Restart()
 	require.NoError(t, err)
 

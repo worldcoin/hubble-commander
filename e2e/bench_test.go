@@ -12,6 +12,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/e2e/setup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
@@ -33,7 +34,7 @@ type BenchmarkSuite struct {
 	*require.Assertions
 	suite.Suite
 
-	commander Commander
+	commander setup.Commander
 	wallets   []bls.Wallet
 	stateIds  []uint32
 
@@ -48,14 +49,14 @@ type BenchmarkSuite struct {
 func (s *BenchmarkSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 
-	commander, err := NewCommanderFromEnv(true)
+	commander, err := setup.NewCommanderFromEnv(true)
 	s.NoError(err)
 
 	err = commander.Start()
 	s.NoError(err)
 
 	domain := getDomain(s.T(), commander.Client())
-	wallets, err := createWallets(domain)
+	wallets, err := setup.CreateWallets(domain)
 	s.NoError(err)
 
 	s.commander = commander
