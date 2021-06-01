@@ -100,11 +100,16 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
 	err = s.api.storage.AddBatch(&batches[1])
 	s.NoError(err)
 
+	commitmentInBatch := commitment
+	commitmentInBatch.IncludedInBatch = &batches[0].Hash
+	commitmentID, err := s.api.storage.AddCommitment(&commitmentInBatch)
+	s.NoError(err)
 	err = s.api.storage.AddTransfer(&models.Transfer{
 		TransactionBase: models.TransactionBase{
-			Hash:        common.Hash{1, 2, 3},
-			TxType:      txtype.Transfer,
-			FromStateID: 0,
+			Hash:                 common.Hash{1, 2, 3},
+			TxType:               txtype.Transfer,
+			FromStateID:          0,
+			IncludedInCommitment: commitmentID,
 		},
 		ToStateID: 1,
 	})
