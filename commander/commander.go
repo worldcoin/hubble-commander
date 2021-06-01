@@ -9,7 +9,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
-	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	ethRollup "github.com/Worldcoin/hubble-commander/eth/rollup"
@@ -17,7 +16,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
-	"github.com/golang-migrate/migrate/v4"
 	"github.com/ybbus/jsonrpc/v2"
 )
 
@@ -42,29 +40,13 @@ func (c *Commander) IsRunning() bool {
 	return c.stopChannel != nil
 }
 
-func (c *Commander) Start() error {
+func (c *Commander) Start() (err error) {
 	if c.IsRunning() {
 		return nil
 	}
-	migrator, err := postgres.GetMigrator(c.cfg.Postgres)
+
+	c.storage, err = st.NewConfiguredStorage(c.cfg)
 	if err != nil {
-		return err
-	}
-
-	c.storage, err = st.NewStorage(c.cfg.Postgres, c.cfg.Badger)
-	if err != nil {
-		return err
-	}
-
-	if c.cfg.Rollup.Prune {
-		err = c.storage.Prune(migrator)
-		if err != nil {
-			return err
-		}
-	}
-
-	err = migrator.Up()
-	if err != nil && err != migrate.ErrNoChange {
 		return err
 	}
 
