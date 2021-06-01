@@ -45,6 +45,47 @@ func NewStorage(postgresConfig *config.PostgresConfig, badgerConfig *config.Badg
 	}, nil
 }
 
+func NewConfiguredStorage(cfg *config.Config) (storage *Storage, err error) {
+	err = postgres.CreateDatabaseIfNotExist(cfg.Postgres)
+	if err != nil {
+		return nil, err
+	}
+
+	migrator, err := postgres.GetMigrator(cfg.Postgres)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		srcErr, dbErr := migrator.Close()
+		if err == nil {
+			if srcErr != nil {
+				err = srcErr
+			} else {
+				err = dbErr
+			}
+		}
+	}()
+
+	storage, err = NewStorage(cfg.Postgres, cfg.Badger)
+	if err != nil {
+		return nil, err
+	}
+
+	if cfg.Rollup.Prune {
+		err = storage.Prune(migrator)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = migrator.Up()
+	if err != nil && err != migrate.ErrNoChange {
+		return nil, err
+	}
+
+	return storage, nil
+}
+
 func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, error) {
 	var txController *db.TxController
 	storage := Storage{
