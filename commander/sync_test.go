@@ -191,7 +191,7 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 			Nonce:       models.MakeUint256(0),
 			Signature:   *s.mockSignature(),
 		},
-		ToStateID:   ref.Uint32(1),
+		ToStateID:   ref.Uint32(5),
 		ToPublicKey: models.PublicKey{2, 3, 4},
 	}
 	err = s.storage.AddCreate2Transfer(&tx)
@@ -216,7 +216,7 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	s.NoError(err)
 	s.Equal(models.MakeUint256(600), state0.Balance)
 
-	state1, err := s.storage.GetStateLeaf(2)
+	state1, err := s.storage.GetStateLeaf(5)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(400), state1.Balance)
 	s.Equal(uint32(1), state1.PubKeyID)
