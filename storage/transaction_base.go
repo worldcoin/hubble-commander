@@ -69,7 +69,9 @@ func (s *Storage) GetTransactionCount() (*int, error) {
 	res := make([]int, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Select("COUNT(1)").
-			From("transaction_base"),
+			From("transaction_base").
+			Join("commitment on commitment.commitment_id = transaction_base.included_in_commitment").
+			Where(squirrel.NotEq{"included_in_batch": nil}),
 	).Into(&res)
 	if err != nil {
 		return nil, err
