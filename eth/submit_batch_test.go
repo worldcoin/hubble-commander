@@ -100,17 +100,15 @@ func (s *SubmitBatchTestSuite) TestSubmitTransfersBatch_SubmitsBatchWithoutMinin
 	s.NoError(err)
 	s.NotNil(tx)
 
-	batches, hashes, err := s.client.Client.GetBatches(ref.Uint32(0))
+	batches, err := s.client.Client.GetBatches(ref.Uint32(0))
 	s.NoError(err)
 	s.Len(batches, 0)
-	s.Len(hashes, 0)
 
 	s.client.Commit()
 
-	batches, hashes, err = s.client.Client.GetBatches(ref.Uint32(0))
+	batches, err = s.client.Client.GetBatches(ref.Uint32(0))
 	s.NoError(err)
 	s.Len(batches, 1)
-	s.Len(hashes, 1)
 }
 
 func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatch_SubmitsBatchWithoutMining() {
@@ -121,17 +119,15 @@ func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatch_SubmitsBatchWitho
 	s.NoError(err)
 	s.NotNil(tx)
 
-	batches, hashes, err := s.client.Client.GetBatches(ref.Uint32(0))
+	batches, err := s.client.Client.GetBatches(ref.Uint32(0))
 	s.NoError(err)
 	s.Len(batches, 0)
-	s.Len(hashes, 0)
 
 	s.client.Commit()
 
-	batches, hashes, err = s.client.Client.GetBatches(ref.Uint32(0))
+	batches, err = s.client.Client.GetBatches(ref.Uint32(0))
 	s.NoError(err)
 	s.Len(batches, 1)
-	s.Len(hashes, 1)
 }
 
 func TestSubmitTransferTestSuite(t *testing.T) {
