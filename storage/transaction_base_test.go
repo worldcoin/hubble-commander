@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
@@ -117,11 +118,31 @@ func (s *TransactionBaseTestSuite) TestBatchMarkTransactionAsIncluded() {
 }
 
 func (s *TransactionBaseTestSuite) TestGetTransactionCount() {
-	err := s.storage.AddTransfer(&transferTransaction)
+	batch := &models.Batch{
+		Hash:              utils.RandomHash(),
+		Type:              txtype.Transfer,
+		ID:                models.MakeUint256(1),
+		FinalisationBlock: 1234,
+	}
+	err := s.storage.AddBatch(batch)
+	s.NoError(err)
+
+	commitmentInBatch := commitment
+	commitmentInBatch.IncludedInBatch = &batch.Hash
+	commitmentID, err := s.storage.AddCommitment(&commitmentInBatch)
+	s.NoError(err)
+
+	transferInCommitment := transferTransaction
+	transferInCommitment.Hash = common.Hash{5, 5, 5}
+	transferInCommitment.IncludedInCommitment = commitmentID
+	err = s.storage.AddTransfer(&transferInCommitment)
+	s.NoError(err)
+	err = s.storage.AddTransfer(&transferTransaction)
 	s.NoError(err)
 
 	c2t := create2Transfer
 	c2t.Hash = common.Hash{3, 4, 5}
+	c2t.IncludedInCommitment = commitmentID
 	err = s.storage.AddCreate2Transfer(&c2t)
 	s.NoError(err)
 
