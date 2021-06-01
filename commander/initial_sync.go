@@ -23,7 +23,7 @@ func (c *Commander) InitialSync() error {
 	}
 
 	group, ctx := errgroup.WithContext(context.Background())
-	boundaries := make(chan uint64)
+	boundaries := make(chan uint64, 5)
 
 	group.Go(func() error {
 		return c.initialSyncAccounts(ctx, boundaries, *syncedBlock, uint64(*latestBlockNumber))
