@@ -27,26 +27,23 @@ func (s *Storage) AddBatch(batch *models.Batch) (*int32, error) {
 	return ref.Int32(res[0]), nil
 }
 
-func (s *Storage) MarkBatchAsSubmitted(batch *models.Batch) error {
-	res, err := s.Postgres.Query(
+func (s *Storage) MarkBatchAsSubmitted(batch *models.Batch) (*int32, error) {
+	res := make([]int32, 0, 1)
+	err := s.Postgres.Query(
 		s.QB.Update("batch").
 			Where(squirrel.Eq{"transaction_hash": batch.TransactionHash}).
 			Set("batch_hash", batch.Hash).
 			Set("batch_number", batch.Number).
-			Set("finalisation_block", batch.FinalisationBlock), // nolint:misspell
-	).Exec()
+			Set("finalisation_block", batch.FinalisationBlock). // nolint:misspell
+			Suffix("RETURNING batch_id"),
+	).Into(&res)
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	numUpdatedRows, err := res.RowsAffected()
-	if err != nil {
-		return err
+	if len(res) == 0 {
+		return nil, ErrNoRowsAffected
 	}
-	if numUpdatedRows == 0 {
-		return ErrNoRowsAffected
-	}
-	return nil
+	return &res[0], nil
 }
 
 func (s *Storage) GetBatch(batchID int32) (*models.Batch, error) {

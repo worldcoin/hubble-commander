@@ -46,11 +46,11 @@ func saveBatch(storage *st.Storage, client *eth.Client) error {
 			continue
 		}
 
-		batch.TransactionHash = pendingBatch.TransactionHash
-		err := storage.MarkBatchAsSubmitted(&batch.Batch)
+		batchID, err := storage.MarkBatchAsSubmitted(&batch.Batch)
 		if err != nil {
 			return err
 		}
+		batch.ID = *batchID
 
 		err = storage.UpdateCommitmentsAccountTreeRoot(batch.Batch.TransactionHash, batch.AccountRoot)
 		if err != nil {
