@@ -5,10 +5,13 @@ package e2e
 import (
 	"log"
 	"testing"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 )
@@ -66,7 +69,18 @@ func TestCommanderSync(t *testing.T) {
 		require.NoError(t, passiveCommander.Stop())
 	}()
 
-	waitForTxToBeIncludedInBatch(t, passiveCommander.Client(), firstCreate2TransferHash)
+	var networkInfo dto.NetworkInfo
+	err = passiveCommander.Client().CallFor(&networkInfo, "hubble_getNetworkInfo")
+	require.NoError(t, err)
+
+	latestBatch := networkInfo.LatestBatch
+
+	require.Eventually(t, func() bool {
+		var networkInfo dto.NetworkInfo
+		err := passiveCommander.Client().CallFor(&networkInfo, "hubble_getNetworkInfo")
+		require.NoError(t, err)
+		return networkInfo.LatestBatch != nil && networkInfo.LatestBatch.Cmp(latestBatch) >= 0
+	}, 30*time.Second, testutils.TryInterval)
 
 	testSenderStateAfterTransfers(t, passiveCommander.Client(), senderWallet)
 	testFeeReceiverStateAfterTransfers(t, passiveCommander.Client(), feeReceiverWallet)

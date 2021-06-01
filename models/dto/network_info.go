@@ -7,10 +7,10 @@ import (
 
 type NetworkInfo struct {
 	models.ChainState
-	BlockNumber          uint32     `json:"blockNumber"`
-	TransactionCount     int        `json:"transactionCount"`
-	AccountCount         uint32     `json:"accountCount"`
-	LatestBatch          *string    `json:"latestBatch"`
-	LatestFinalisedBatch *string    `json:"latestFinalisedBatch"`
-	SignatureDomain      bls.Domain `json:"signatureDomain"`
+	BlockNumber          uint32          `json:"blockNumber"`
+	TransactionCount     int             `json:"transactionCount"`
+	AccountCount         uint32          `json:"accountCount"`
+	LatestBatch          *models.Uint256 `json:"latestBatch"`
+	LatestFinalisedBatch *models.Uint256 `json:"latestFinalisedBatch"`
+	SignatureDomain      bls.Domain      `json:"signatureDomain"`
 }

@@ -3,7 +3,6 @@ package api
 import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 )
 
 func (a *API) GetNetworkInfo() (*dto.NetworkInfo, error) {
@@ -17,7 +16,7 @@ func (a *API) GetNetworkInfo() (*dto.NetworkInfo, error) {
 		return nil, err
 	}
 	if latestBatch != nil {
-		networkInfo.LatestBatch = ref.String(latestBatch.Number.String())
+		networkInfo.LatestBatch = latestBatch.Number
 	}
 
 	latestFinalisedBatch, err := a.storage.GetLatestFinalisedBatch(networkInfo.BlockNumber)
@@ -25,7 +24,7 @@ func (a *API) GetNetworkInfo() (*dto.NetworkInfo, error) {
 		return nil, err
 	}
 	if latestFinalisedBatch != nil {
-		networkInfo.LatestFinalisedBatch = ref.String(latestFinalisedBatch.Number.String())
+		networkInfo.LatestFinalisedBatch = latestFinalisedBatch.Number
 	}
 
 	domain, err := a.storage.GetDomain(a.client.ChainState.ChainID)
