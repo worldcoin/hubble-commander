@@ -33,7 +33,7 @@ func (a *API) GetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommitments,
 		return nil, err
 	}
 
-	commitments, err := a.storage.GetCommitmentsByBatchID(int32(id.ToBig().Int64()))
+	commitments, err := a.storage.GetCommitmentsByBatchID(batch.ID)
 	if err != nil {
 		return nil, err
 	}
