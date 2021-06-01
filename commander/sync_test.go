@@ -120,7 +120,9 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	s.NoError(err)
 	s.setupDB()
 
-	err = s.transactionExecutor.SyncBatches(nil)
+	latestBlockNumber, err := s.client.GetLatestBlockNumber()
+	s.NoError(err)
+	err = s.transactionExecutor.SyncBatches(0, uint64(*latestBlockNumber))
 	s.NoError(err)
 
 	txn, txStorage, err := s.storage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
@@ -157,7 +159,7 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	s.NoError(err)
 	s.Len(batches, 1)
 
-	err = s.transactionExecutor.SyncBatches(nil)
+	err = s.transactionExecutor.SyncBatches(0, uint64(*latestBlockNumber+2))
 	s.NoError(err)
 
 	state0, err := s.storage.GetStateLeaf(0)
@@ -209,7 +211,9 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	s.NoError(err)
 	s.setupDB()
 
-	err = s.transactionExecutor.SyncBatches(nil)
+	latestBlockNumber, err := s.client.GetLatestBlockNumber()
+	s.NoError(err)
+	err = s.transactionExecutor.SyncBatches(0, uint64(*latestBlockNumber))
 	s.NoError(err)
 
 	state0, err := s.storage.GetStateLeaf(0)

@@ -45,7 +45,7 @@ func (c *Commander) newBlockLoop() error {
 			if err != nil {
 				return errors.WithStack(err)
 			}
-			err = c.SyncBatches(isProposer, &endBlock)
+			err = c.syncBatches(*syncedBlock, endBlock)
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -57,18 +57,14 @@ func (c *Commander) newBlockLoop() error {
 	}
 }
 
-func (c *Commander) SyncBatches(isProposer bool, endBlock *uint64) (err error) {
-	if isProposer {
-		return nil
-	}
-
+func (c *Commander) syncBatches(startBlock, endBlock uint64) (err error) {
 	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, c.cfg.Rollup)
 	if err != nil {
 		return err
 	}
 	defer transactionExecutor.Rollback(&err)
 
-	err = transactionExecutor.SyncBatches(endBlock)
+	err = transactionExecutor.SyncBatches(startBlock, endBlock)
 	if err != nil {
 		return err
 	}
