@@ -29,6 +29,18 @@ func CreateInProcessCommander() *InProcessCommander {
 	}
 }
 
+func CreateInProcessCommanderWithConfig(cfg *config.Config) *InProcessCommander {
+	cmd := commander.NewCommander(cfg)
+
+	endpoint := fmt.Sprintf("http://localhost:%s", cfg.API.Port)
+	client := jsonrpc.NewClient(endpoint)
+
+	return &InProcessCommander{
+		client:    client,
+		commander: cmd,
+	}
+}
+
 func (e *InProcessCommander) Start() error {
 	return e.commander.Start()
 }
