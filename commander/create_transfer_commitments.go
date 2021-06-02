@@ -64,7 +64,7 @@ func (t *transactionExecutor) createTransferCommitments(
 			return nil, err
 		}
 
-		err = markTransfersAsIncluded(t.storage, transfers.appliedTransfers, commitment.ID)
+		err = t.markTransfersAsIncluded(transfers.appliedTransfers, commitment.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -115,10 +115,10 @@ func combineTransferSignatures(transfers []models.Transfer, domain *bls.Domain) 
 	return bls.NewAggregatedSignature(signatures).ModelsSignature(), nil
 }
 
-func markTransfersAsIncluded(storage *st.Storage, transfers []models.Transfer, commitmentID int32) error {
+func (t *transactionExecutor) markTransfersAsIncluded(transfers []models.Transfer, commitmentID int32) error {
 	hashes := make([]common.Hash, 0, len(transfers))
 	for i := range transfers {
 		hashes = append(hashes, transfers[i].Hash)
 	}
-	return storage.BatchMarkTransactionAsIncluded(hashes, commitmentID)
+	return t.storage.BatchMarkTransactionAsIncluded(hashes, commitmentID)
 }
