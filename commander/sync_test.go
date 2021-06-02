@@ -123,7 +123,7 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	err = s.transactionExecutor.SyncBatches()
 	s.NoError(err)
 
-	txn, txStorage, err := s.storage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
+	transactionExecutor, err := newTransactionExecutor(s.storage, s.client.Client, s.cfg)
 	s.NoError(err)
 
 	tx2 := models.Transfer{
@@ -137,21 +137,21 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 		},
 		ToStateID: 0,
 	}
-	err = txStorage.AddTransfer(&tx2)
+	err = transactionExecutor.storage.AddTransfer(&tx2)
 	s.NoError(err)
 
-	commitments, err = s.transactionExecutor.createTransferCommitments([]models.Transfer{tx2}, testDomain)
+	commitments, err = transactionExecutor.createTransferCommitments([]models.Transfer{tx2}, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	err = submitBatch(txtype.Transfer, commitments, txStorage, s.client.Client, s.cfg)
+	err = submitBatch(txtype.Transfer, commitments, transactionExecutor.storage, s.client.Client, s.cfg)
 	s.NoError(err)
 
-	batches, err := txStorage.GetBatchesInRange(nil, nil)
+	batches, err := transactionExecutor.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 2)
 
-	txn.Rollback(nil)
+	transactionExecutor.Rollback(nil)
 
 	batches, err = s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)

@@ -185,6 +185,8 @@ func (s *ApplyTransferTestSuite) TestApplyFee() {
 	err := s.tree.Set(receiverStateID, &receiverState)
 	s.NoError(err)
 
+	transactionExecutor.cfg.FeeReceiverPubKeyID = receiverStateID
+
 	feeReceiverStateID, err := transactionExecutor.ApplyFee(models.MakeUint256(1), models.MakeUint256(555))
 	s.NoError(err)
 	s.Equal(receiverStateID, *feeReceiverStateID)

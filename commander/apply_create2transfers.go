@@ -14,15 +14,17 @@ type AppliedC2Transfers struct {
 
 func (t *transactionExecutor) ApplyCreate2Transfers(
 	transfers []models.Create2Transfer,
-) (returnStruct *AppliedC2Transfers, err error) {
+) (*AppliedC2Transfers, error) {
 	if len(transfers) == 0 {
-		return
+		return nil, nil
 	}
 	events, unsubscribe, err := t.client.WatchRegistrations(&bind.WatchOpts{})
 	if err != nil {
-		return
+		return nil, err
 	}
 	defer unsubscribe()
+
+	returnStruct := &AppliedC2Transfers{}
 
 	returnStruct.appliedTransfers = make([]models.Create2Transfer, 0, t.cfg.TxsPerCommitment)
 	returnStruct.addedPubKeyIDs = make([]uint32, 0, t.cfg.TxsPerCommitment)
@@ -70,13 +72,15 @@ func (t *transactionExecutor) ApplyCreate2Transfers(
 func (t *transactionExecutor) ApplyCreate2TransfersForSync(
 	transfers []models.Create2Transfer,
 	pubKeyIDs []uint32,
-) (returnStruct *AppliedC2Transfers, err error) {
+) (*AppliedC2Transfers, error) {
 	if len(transfers) == 0 {
-		return
+		return nil, nil // ! FIX ME
 	}
 	if len(transfers) != len(pubKeyIDs) {
 		return nil, ErrInvalidSliceLength
 	}
+
+	returnStruct := &AppliedC2Transfers{}
 
 	returnStruct.appliedTransfers = make([]models.Create2Transfer, 0, t.cfg.TxsPerCommitment)
 	combinedFee := models.NewUint256(0)

@@ -12,10 +12,12 @@ type AppliedTransfers struct {
 
 func (t *transactionExecutor) ApplyTransfers(
 	transfers []models.Transfer,
-) (returnStruct *AppliedTransfers, err error) {
+) (*AppliedTransfers, error) {
 	if len(transfers) == 0 {
-		return
+		return nil, nil
 	}
+
+	returnStruct := &AppliedTransfers{}
 
 	returnStruct.appliedTransfers = make([]models.Transfer, 0, t.cfg.TxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
