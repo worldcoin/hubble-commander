@@ -67,7 +67,7 @@ func (t *transactionExecutor) createCreate2TransferCommitments(
 		if err != nil {
 			return nil, err
 		}
-		err = setCreate2TransferToStateID(t.storage, transfers.appliedTransfers)
+		err = t.setCreate2TransferToStateID(transfers.appliedTransfers)
 		if err != nil {
 			return nil, err
 		}
@@ -126,9 +126,9 @@ func (t *transactionExecutor) markCreate2TransfersAsIncluded(transfers []models.
 	return t.storage.BatchMarkTransactionAsIncluded(hashes, commitmentID)
 }
 
-func setCreate2TransferToStateID(storage *st.Storage, transfers []models.Create2Transfer) error {
+func (t *transactionExecutor) setCreate2TransferToStateID(transfers []models.Create2Transfer) error {
 	for i := range transfers {
-		err := storage.SetCreate2TransferToStateID(transfers[i].Hash, *transfers[i].ToStateID)
+		err := t.storage.SetCreate2TransferToStateID(transfers[i].Hash, *transfers[i].ToStateID)
 		if err != nil {
 			return err
 		}
