@@ -13,9 +13,10 @@ func (c *Commander) newBlockLoop() error {
 	}
 	defer subscription.Unsubscribe()
 
-	var syncedBlock *uint64
-	var isProposer bool
+	var endBlock *uint64
 	cancelRollup := make(chan struct{}, 1)
+	continueCh := make(chan struct{}, 1)
+	continueCh <- struct{}{}
 
 	for {
 		select {
@@ -23,37 +24,53 @@ func (c *Commander) newBlockLoop() error {
 			return nil
 		case err = <-subscription.Err():
 			return err
+		case <-continueCh:
+			latestBlockNumber := uint64(c.storage.GetLatestBlockNumber())
+			endBlock, err = c.newBlockIteration(cancelRollup, latestBlockNumber)
+			if err != nil {
+				return err
+			}
+			if *endBlock != latestBlockNumber {
+				continueCh <- struct{}{}
+			}
 		case newBlock := <-blocks:
 			latestBlockNumber := newBlock.Number.Uint64()
 			c.storage.SetLatestBlockNumber(uint32(latestBlockNumber))
-			syncedBlock, err = c.storage.GetSyncedBlock(c.client.ChainState.ChainID)
+			_, err = c.newBlockIteration(cancelRollup, latestBlockNumber)
 			if err != nil {
-				return errors.WithStack(err)
-			}
-			endBlock := min(latestBlockNumber, *syncedBlock+uint64(c.cfg.Rollup.SyncSize))
-
-			isProposer, err = c.client.IsActiveProposer()
-			if err != nil {
-				return errors.WithStack(err)
-			}
-			err = c.syncAccounts(*syncedBlock, endBlock)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-			err = c.syncBatches(*syncedBlock, endBlock)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-			err = c.storage.SetSyncedBlock(c.client.ChainState.ChainID, newBlock.Number.Uint64())
-			if err != nil {
-				return errors.WithStack(err)
-			}
-
-			if endBlock == latestBlockNumber {
-				c.manageRollupLoop(isProposer, cancelRollup)
+				return err
 			}
 		}
 	}
+}
+
+func (c *Commander) newBlockIteration(cancelRollup chan struct{}, latestBlockNumber uint64) (*uint64, error) {
+	syncedBlock, err := c.storage.GetSyncedBlock(c.client.ChainState.ChainID)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	endBlock := min(latestBlockNumber, *syncedBlock+uint64(c.cfg.Rollup.SyncSize))
+
+	isProposer, err := c.client.IsActiveProposer()
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	err = c.syncAccounts(*syncedBlock, endBlock)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	err = c.syncBatches(*syncedBlock, endBlock)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	err = c.storage.SetSyncedBlock(c.client.ChainState.ChainID, endBlock)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	if endBlock == latestBlockNumber {
+		c.manageRollupLoop(isProposer, cancelRollup)
+	}
+	return &endBlock, nil
 }
 
 func (c *Commander) syncBatches(startBlock, endBlock uint64) (err error) {
