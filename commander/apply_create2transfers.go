@@ -140,7 +140,7 @@ func (t *transactionExecutor) getOrRegisterPubKeyID(
 func (t *transactionExecutor) handleApplyC2T(
 	transfer *models.Create2Transfer,
 	pubKeyID uint32,
-	transactions *AppliedC2Transfers,
+	appliedTransfers *AppliedC2Transfers,
 	combinedFee, tokenIndex *models.Uint256,
 ) (bool, error) {
 	transferError, appError := ApplyCreate2Transfer(t.storage, transfer, pubKeyID, *tokenIndex)
@@ -149,11 +149,11 @@ func (t *transactionExecutor) handleApplyC2T(
 	}
 	if transferError != nil {
 		logAndSaveTransactionError(t.storage, &transfer.TransactionBase, transferError)
-		transactions.invalidTransfers = append(transactions.invalidTransfers, *transfer)
+		appliedTransfers.invalidTransfers = append(appliedTransfers.invalidTransfers, *transfer)
 		return false, nil
 	}
 
-	transactions.appliedTransfers = append(transactions.appliedTransfers, *transfer)
+	appliedTransfers.appliedTransfers = append(appliedTransfers.appliedTransfers, *transfer)
 	*combinedFee = *combinedFee.Add(&transfer.Fee)
 	return true, nil
 }
