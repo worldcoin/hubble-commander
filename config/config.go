@@ -19,7 +19,7 @@ func setupViper() {
 	err := viper.ReadInConfig()
 	if err != nil {
 		if strings.Contains(err.Error(), "no such file or directory") {
-			log.Printf("Configuration file not found (%s). Continuing with default config.", getConfigPath())
+			log.Printf("Configuration file not found (%s). Continuing with default config (possibly overriden by env vars).", getConfigPath())
 		} else {
 			log.Fatalf("failed to read in config: %s", err)
 		}
