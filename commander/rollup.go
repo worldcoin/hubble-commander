@@ -61,7 +61,7 @@ func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionT
 	var commitments []models.Commitment
 
 	if batchType == txtype.Transfer {
-		commitments, err= t.buildTransferCommitments(domain)
+		commitments, err = t.buildTransferCommitments(domain)
 	} else {
 		commitments, err = t.buildCreate2TransfersCommitments(domain)
 	}
