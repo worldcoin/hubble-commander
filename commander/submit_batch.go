@@ -30,6 +30,8 @@ func submitBatch(
 	var accountRoot *common.Hash
 	var err error
 
+	// TODO check if rollup hasn't been cancelled
+
 	if batchType == txtype.Transfer {
 		batch, accountRoot, err = client.SubmitTransfersBatch(commitments)
 	} else {

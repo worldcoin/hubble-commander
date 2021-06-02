@@ -15,7 +15,7 @@ func (c *Commander) syncAccounts(start, end uint64) error {
 	if err != nil {
 		return err
 	}
-	defer it.Close()
+	defer func() { _ = it.Close() }()
 	for it.Next() {
 		err = ProcessPubkeyRegistered(c.storage, it.Event)
 		if err != nil {

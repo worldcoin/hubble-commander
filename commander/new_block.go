@@ -18,6 +18,10 @@ func (c *Commander) newBlockLoop() error {
 	continueCh := make(chan struct{}, 1)
 	continueCh <- struct{}{}
 
+	// TODO Make a separate for loop here for syncing up to the latest block number queried at the end of each turn
+	// TODO start subscription from here
+	// TODO continue syncing
+
 	for {
 		select {
 		case <-c.stopChannel:
