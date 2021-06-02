@@ -1,42 +1,37 @@
 package commander
 
 import (
-	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
-// TODO Return a struct with 4 fields
-func ApplyCreate2Transfers(
-	storage *st.Storage,
-	client *eth.Client,
+type AppliedC2Transfers struct {
+	appliedTransfers   []models.Create2Transfer
+	invalidTransfers   []models.Create2Transfer
+	addedPubKeyIDs     []uint32
+	feeReceiverStateID *uint32
+}
+
+func (t *transactionExecutor) ApplyCreate2Transfers(
 	transfers []models.Create2Transfer,
-	cfg *config.RollupConfig,
-) (
-	appliedTransfers []models.Create2Transfer,
-	invalidTransfers []models.Create2Transfer,
-	addedPubKeyIDs []uint32,
-	feeReceiverStateID *uint32,
-	err error,
-) {
+) (returnStruct *AppliedC2Transfers, err error) {
 	if len(transfers) == 0 {
 		return
 	}
-	events, unsubscribe, err := client.WatchRegistrations(&bind.WatchOpts{})
+	events, unsubscribe, err := t.client.WatchRegistrations(&bind.WatchOpts{})
 	if err != nil {
 		return
 	}
 	defer unsubscribe()
 
-	appliedTransfers = make([]models.Create2Transfer, 0, cfg.TxsPerCommitment)
-	addedPubKeyIDs = make([]uint32, 0, cfg.TxsPerCommitment)
+	returnStruct.appliedTransfers = make([]models.Create2Transfer, 0, t.cfg.TxsPerCommitment)
+	returnStruct.addedPubKeyIDs = make([]uint32, 0, t.cfg.TxsPerCommitment)
 	combinedFee := models.NewUint256(0)
 
-	commitmentTokenIndex, err := getTokenIndex(storage, transfers[0].FromStateID)
+	commitmentTokenIndex, err := t.getTokenIndex(transfers[0].FromStateID)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, err
 	}
 	var pubKeyID *uint32
 	var ok bool
@@ -44,96 +39,90 @@ func ApplyCreate2Transfers(
 	for i := range transfers {
 		transfer := &transfers[i]
 
-		pubKeyID, err = getOrRegisterPubKeyID(storage, client, events, transfer, *commitmentTokenIndex)
+		pubKeyID, err = getOrRegisterPubKeyID(t.storage, t.client, events, transfer, *commitmentTokenIndex)
 		if err != nil {
-			return nil, nil, nil, nil, err
+			return nil, err
 		}
 
-		ok, err = handleApplyC2T(storage, transfer, *pubKeyID, &appliedTransfers, &invalidTransfers, combinedFee, commitmentTokenIndex)
+		ok, err = t.handleApplyC2T(t.storage, transfer, *pubKeyID, returnStruct, combinedFee, commitmentTokenIndex)
 		if err != nil {
-			return nil, nil, nil, nil, err
+			return nil, err
 		}
 		if !ok {
 			continue
 		}
 
-		addedPubKeyIDs = append(addedPubKeyIDs, *pubKeyID)
-		if uint32(len(appliedTransfers)) == cfg.TxsPerCommitment {
+		returnStruct.addedPubKeyIDs = append(returnStruct.addedPubKeyIDs, *pubKeyID)
+		if uint32(len(returnStruct.appliedTransfers)) == t.cfg.TxsPerCommitment {
 			break
 		}
 	}
 
-	if len(appliedTransfers) > 0 {
-		feeReceiverStateID, err = ApplyFee(storage, cfg.FeeReceiverPubKeyID, *commitmentTokenIndex, *combinedFee)
+	if len(returnStruct.appliedTransfers) > 0 {
+		returnStruct.feeReceiverStateID, err = t.ApplyFee(*commitmentTokenIndex, *combinedFee)
 		if err != nil {
-			return nil, nil, nil, nil, err
+			return nil, err
 		}
 	}
 
-	return appliedTransfers, invalidTransfers, addedPubKeyIDs, feeReceiverStateID, nil
+	return returnStruct, nil
 }
 
-func ApplyCreate2TransfersForSync(
-	storage *st.Storage,
+func (t *transactionExecutor) ApplyCreate2TransfersForSync(
 	transfers []models.Create2Transfer,
 	pubKeyIDs []uint32,
-	cfg *config.RollupConfig,
-) (
-	appliedTransfers []models.Create2Transfer,
-	invalidTransfers []models.Create2Transfer,
-	err error,
-) {
+) (returnStruct *AppliedC2Transfers, err error) {
 	if len(transfers) == 0 {
 		return
 	}
 	if len(transfers) != len(pubKeyIDs) {
-		return nil, nil, ErrInvalidSliceLength
+		return nil, ErrInvalidSliceLength
 	}
 
-	appliedTransfers = make([]models.Create2Transfer, 0, cfg.TxsPerCommitment)
+	returnStruct.appliedTransfers = make([]models.Create2Transfer, 0, t.cfg.TxsPerCommitment)
 	combinedFee := models.NewUint256(0)
 
-	commitmentTokenIndex, err := getTokenIndex(storage, transfers[0].FromStateID)
+	commitmentTokenIndex, err := t.getTokenIndex(transfers[0].FromStateID)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	for i := range transfers {
 		transfer := &transfers[i]
 
-		_, err = handleApplyC2T(storage, transfer, pubKeyIDs[i], &appliedTransfers, &invalidTransfers, combinedFee, commitmentTokenIndex)
+		_, err = t.handleApplyC2T(t.storage, transfer, pubKeyIDs[i], returnStruct, combinedFee, commitmentTokenIndex)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
-		if uint32(len(appliedTransfers)) == cfg.TxsPerCommitment {
+		if uint32(len(returnStruct.appliedTransfers)) == t.cfg.TxsPerCommitment {
 			break
 		}
 	}
 
-	if len(appliedTransfers) > 0 {
-		_, err = ApplyFee(storage, cfg.FeeReceiverPubKeyID, *commitmentTokenIndex, *combinedFee)
+	if len(returnStruct.appliedTransfers) > 0 {
+		_, err = t.ApplyFee(*commitmentTokenIndex, *combinedFee)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 	}
 
-	return appliedTransfers, invalidTransfers, nil
+	return returnStruct, nil
 }
 
-func getTokenIndex(storage *st.Storage, stateID uint32) (*models.Uint256, error) {
-	senderLeaf, err := storage.GetStateLeaf(stateID)
+func (t *transactionExecutor) getTokenIndex(stateID uint32) (*models.Uint256, error) {
+	senderLeaf, err := t.storage.GetStateLeaf(stateID)
 	if err != nil {
 		return nil, err
 	}
 	return &senderLeaf.TokenIndex, nil
 }
 
-func handleApplyC2T(
+func (t *transactionExecutor) handleApplyC2T(
 	storage *st.Storage,
 	transfer *models.Create2Transfer,
 	pubKeyID uint32,
-	appliedTxs, invalidTxs *[]models.Create2Transfer,
+	transactions *AppliedC2Transfers,
 	combinedFee, tokenIndex *models.Uint256,
 ) (bool, error) {
 	transferError, appError := ApplyCreate2Transfer(storage, transfer, pubKeyID, *tokenIndex)
@@ -142,11 +131,11 @@ func handleApplyC2T(
 	}
 	if transferError != nil {
 		logAndSaveTransactionError(storage, &transfer.TransactionBase, transferError)
-		*invalidTxs = append(*invalidTxs, *transfer)
+		transactions.invalidTransfers = append(transactions.invalidTransfers, *transfer)
 		return false, nil
 	}
 
-	*appliedTxs = append(*appliedTxs, *transfer)
+	transactions.appliedTransfers = append(transactions.appliedTransfers, *transfer)
 	*combinedFee = *combinedFee.Add(&transfer.Fee)
 	return true, nil
 }
