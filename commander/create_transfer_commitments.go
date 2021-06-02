@@ -59,7 +59,7 @@ func (t *transactionExecutor) createTransferCommitments(
 			return nil, err
 		}
 
-		commitment, err := createAndStoreCommitment(t.storage, txtype.Transfer, *transfers.feeReceiverStateID, serializedTxs, combinedSignature)
+		commitment, err := t.createAndStoreCommitment(txtype.Transfer, *transfers.feeReceiverStateID, serializedTxs, combinedSignature)
 		if err != nil {
 			return nil, err
 		}
