@@ -1,7 +1,6 @@
 package commander
 
 import (
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
@@ -69,24 +68,6 @@ func (c *Commander) syncBatches(startBlock, endBlock uint64) (err error) {
 		return err
 	}
 	return transactionExecutor.Commit()
-}
-
-func (c *Commander) syncAccounts(start, end uint64) error {
-	it, err := c.client.AccountRegistry.FilterPubkeyRegistered(&bind.FilterOpts{
-		Start: start,
-		End:   &end,
-	})
-	if err != nil {
-		return err
-	}
-	defer it.Close()
-	for it.Next() {
-		err = ProcessPubkeyRegistered(c.storage, it.Event)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func min(x, y uint64) uint64 {

@@ -75,7 +75,6 @@ func (c *Commander) Start() (err error) {
 		return nil
 	})
 	c.startWorker(func() error { return c.newBlockLoop() })
-	c.startWorker(func() error { return WatchAccounts(c.storage, c.client, stopChannel) })
 	c.stopChannel = stopChannel
 
 	log.Printf("Commander started and listening on port %s.\n", c.cfg.API.Port)
