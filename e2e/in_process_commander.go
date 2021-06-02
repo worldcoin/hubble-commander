@@ -42,6 +42,13 @@ func (e *InProcessCommander) Restart() error {
 	if err != nil {
 		return err
 	}
+
+	cfg := config.GetConfig()
+	cfg.Rollup.Prune = false
+	cfg.Rollup.SyncBatches = false
+
+	e.commander = commander.NewCommander(cfg)
+
 	return e.commander.Start()
 }
 
