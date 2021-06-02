@@ -34,7 +34,7 @@ func submitBatch(
 
 	select {
 	case <-ctx.Done():
-		return NewRollupError("commander is no longer active proposer")
+		return NewRollupError("commander is no longer an active proposer")
 	default:
 	}
 

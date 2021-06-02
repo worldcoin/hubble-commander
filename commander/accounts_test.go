@@ -41,7 +41,7 @@ func (s *AccountsTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *AccountsTestSuite) TestWatchAccounts_PreviousAccounts() {
+func (s *AccountsTestSuite) TestSyncAccounts() {
 	registrations, unsubscribe, err := s.testClient.WatchRegistrations(&bind.WatchOpts{Start: nil})
 	s.NoError(err)
 	defer unsubscribe()
