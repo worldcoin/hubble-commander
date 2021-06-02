@@ -63,7 +63,7 @@ func (t *transactionExecutor) createCreate2TransferCommitments(
 			return nil, err
 		}
 
-		err = markCreate2TransfersAsIncluded(t.storage, transfers.appliedTransfers, commitment.ID)
+		err = t.markCreate2TransfersAsIncluded(transfers.appliedTransfers, commitment.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -118,12 +118,12 @@ func combineCreate2TransferSignatures(transfers []models.Create2Transfer, domain
 	return bls.NewAggregatedSignature(signatures).ModelsSignature(), nil
 }
 
-func markCreate2TransfersAsIncluded(storage *st.Storage, transfers []models.Create2Transfer, commitmentID int32) error {
+func (t *transactionExecutor) markCreate2TransfersAsIncluded(transfers []models.Create2Transfer, commitmentID int32) error {
 	hashes := make([]common.Hash, 0, len(transfers))
 	for i := range transfers {
 		hashes = append(hashes, transfers[i].Hash)
 	}
-	return storage.BatchMarkTransactionAsIncluded(hashes, commitmentID)
+	return t.storage.BatchMarkTransactionAsIncluded(hashes, commitmentID)
 }
 
 func setCreate2TransferToStateID(storage *st.Storage, transfers []models.Create2Transfer) error {
