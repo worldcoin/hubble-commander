@@ -112,7 +112,7 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	err = submitBatch(txtype.Transfer, commitments, s.storage, s.client.Client, s.cfg)
+	err = s.transactionExecutor.submitBatch(txtype.Transfer, commitments)
 	s.NoError(err)
 
 	// Recreate database
@@ -144,7 +144,7 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	err = submitBatch(txtype.Transfer, commitments, transactionExecutor.storage, s.client.Client, s.cfg)
+	err = transactionExecutor.submitBatch(txtype.Transfer, commitments)
 	s.NoError(err)
 
 	batches, err := transactionExecutor.storage.GetBatchesInRange(nil, nil)
@@ -201,7 +201,7 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	err = submitBatch(txtype.Create2Transfer, commitments, s.storage, s.client.Client, s.cfg)
+	err = s.transactionExecutor.submitBatch(txtype.Create2Transfer, commitments)
 	s.NoError(err)
 
 	// Recreate database
