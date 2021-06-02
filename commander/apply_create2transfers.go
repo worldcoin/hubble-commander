@@ -1,7 +1,9 @@
 package commander
 
 import (
+	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/models"
+	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
@@ -40,7 +42,7 @@ func (t *transactionExecutor) ApplyCreate2Transfers(
 	for i := range transfers {
 		transfer := &transfers[i]
 
-		pubKeyID, err = getOrRegisterPubKeyID(t.storage, t.client, events, transfer, *commitmentTokenIndex)
+		pubKeyID, err = t.getOrRegisterPubKeyID(events, transfer, *commitmentTokenIndex)
 		if err != nil {
 			return nil, err
 		}
@@ -74,7 +76,7 @@ func (t *transactionExecutor) ApplyCreate2TransfersForSync(
 	pubKeyIDs []uint32,
 ) (*AppliedC2Transfers, error) {
 	if len(transfers) == 0 {
-		return nil, nil // ! FIX ME
+		return nil, nil
 	}
 	if len(transfers) != len(pubKeyIDs) {
 		return nil, ErrInvalidSliceLength
@@ -119,6 +121,20 @@ func (t *transactionExecutor) getTokenIndex(stateID uint32) (*models.Uint256, er
 		return nil, err
 	}
 	return &senderLeaf.TokenIndex, nil
+}
+
+func (t *transactionExecutor) getOrRegisterPubKeyID(
+	events chan *accountregistry.AccountRegistryPubkeyRegistered,
+	transfer *models.Create2Transfer,
+	tokenIndex models.Uint256,
+) (*uint32, error) {
+	pubKeyID, err := t.storage.GetUnusedPubKeyID(&transfer.ToPublicKey, &tokenIndex)
+	if err != nil && !st.IsNotFoundError(err) {
+		return nil, err
+	} else if st.IsNotFoundError(err) {
+		return t.client.RegisterAccount(&transfer.ToPublicKey, events)
+	}
+	return pubKeyID, nil
 }
 
 func (t *transactionExecutor) handleApplyC2T(
