@@ -82,7 +82,7 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 		s.NoError(err)
 	}
 
-	err = s.tree.Set(0, &senderState)
+	err = s.tree.Set(1, &senderState)
 	s.NoError(err)
 	err = s.tree.Set(2, &receiverState)
 	s.NoError(err)
