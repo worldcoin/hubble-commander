@@ -9,29 +9,9 @@ import (
 )
 
 func (c *Commander) newBlockLoop() error {
-	endBlock := ref.Uint64(0)
-	var rollupCancel context.CancelFunc
-	latestBlockNumber, err := c.client.ChainConnection.GetLatestBlockNumber()
+	err := c.initialSync()
 	if err != nil {
 		return err
-	}
-
-	for *endBlock != *latestBlockNumber {
-		endBlock, err = c.newBlockIteration(&rollupCancel, *latestBlockNumber)
-		if err != nil {
-			return err
-		}
-
-		latestBlockNumber, err = c.client.ChainConnection.GetLatestBlockNumber()
-		if err != nil {
-			return err
-		}
-		select {
-		case <-c.stopChannel:
-			return nil
-		default:
-			continue
-		}
 	}
 
 	blocks := make(chan *types.Header)
@@ -41,50 +21,98 @@ func (c *Commander) newBlockLoop() error {
 	}
 	defer subscription.Unsubscribe()
 
+	var rollupCancel context.CancelFunc
 	for {
 		select {
 		case <-c.stopChannel:
 			return nil
 		case err = <-subscription.Err():
 			return err
-		case newBlock := <-blocks:
-			currentBlockNumber := newBlock.Number.Uint64()
-			c.storage.SetLatestBlockNumber(uint32(currentBlockNumber))
-			_, err = c.newBlockIteration(&rollupCancel, currentBlockNumber)
+		case <-blocks:
+			latestBlockNumber, err := c.client.ChainConnection.GetLatestBlockNumber()
 			if err != nil {
 				return err
+			}
+			c.storage.SetLatestBlockNumber(uint32(*latestBlockNumber))
+
+			isProposer, err := c.client.IsActiveProposer()
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			syncedBlock, err := c.syncForward(*latestBlockNumber, isProposer)
+			if err != nil {
+				return err
+			}
+
+			if *syncedBlock == *latestBlockNumber {
+				rollupCancel = c.manageRollupLoop(rollupCancel, isProposer)
 			}
 		}
 	}
 }
 
-func (c *Commander) newBlockIteration(cancel *context.CancelFunc, latestBlockNumber uint64) (*uint64, error) {
+func (c *Commander) initialSync() error {
+	latestBlockNumber, err := c.client.ChainConnection.GetLatestBlockNumber()
+	if err != nil {
+		return err
+	}
+	c.storage.SetLatestBlockNumber(uint32(*latestBlockNumber))
+
+	syncedBlock := ref.Uint64(uint64(0))
+	for *syncedBlock != *latestBlockNumber {
+		syncedBlock, err = c.syncForward(*latestBlockNumber, false)
+		if err != nil {
+			return err
+		}
+
+		latestBlockNumber, err = c.client.ChainConnection.GetLatestBlockNumber()
+		if err != nil {
+			return err
+		}
+		c.storage.SetLatestBlockNumber(uint32(*latestBlockNumber))
+
+		select {
+		case <-c.stopChannel:
+			return nil
+		default:
+			continue
+		}
+	}
+	return nil
+}
+
+func (c *Commander) syncForward(latestBlockNumber uint64, isProposer bool) (*uint64, error) {
 	syncedBlock, err := c.storage.GetSyncedBlock(c.client.ChainState.ChainID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	endBlock := min(latestBlockNumber, *syncedBlock+uint64(c.cfg.Rollup.SyncSize))
+	startBlock := *syncedBlock + 1
+	endBlock := min(latestBlockNumber, startBlock+uint64(c.cfg.Rollup.SyncSize))
 
-	isProposer, err := c.client.IsActiveProposer()
+	err = c.syncRange(startBlock, endBlock, isProposer)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
-	err = c.syncAccounts(*syncedBlock, endBlock)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	err = c.syncBatches(*syncedBlock, endBlock)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
+
 	err = c.storage.SetSyncedBlock(c.client.ChainState.ChainID, endBlock)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	if endBlock == latestBlockNumber {
-		*cancel = c.manageRollupLoop(*cancel, isProposer)
-	}
 	return &endBlock, nil
+}
+
+func (c *Commander) syncRange(startBlock, endBlock uint64, isProposer bool) error {
+	err := c.syncAccounts(startBlock, endBlock)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	if !isProposer {
+		err = c.syncBatches(startBlock, endBlock)
+	}
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 func (c *Commander) syncBatches(startBlock, endBlock uint64) (err error) {
