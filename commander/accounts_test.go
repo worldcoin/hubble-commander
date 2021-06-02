@@ -52,7 +52,7 @@ func (s *AccountsTestSuite) TestWatchAccounts_PreviousAccounts() {
 
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)
-	err = s.cmd.syncAccounts(0, uint64(*latestBlockNumber))
+	err = s.cmd.syncAccounts(0, *latestBlockNumber)
 	s.NoError(err)
 
 	accounts, err := s.cmd.storage.GetAccounts(&publicKey)

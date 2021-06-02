@@ -71,12 +71,12 @@ func (d *RPCChainConnection) GetChainID() models.Uint256 {
 	return models.MakeUint256FromBig(*d.chainID)
 }
 
-func (d *RPCChainConnection) GetLatestBlockNumber() (*uint32, error) {
+func (d *RPCChainConnection) GetLatestBlockNumber() (*uint64, error) {
 	blockNumber, err := d.backend.BlockNumber(context.Background())
 	if err != nil {
 		return nil, err
 	}
-	return ref.Uint32(uint32(blockNumber)), nil
+	return ref.Uint64(blockNumber), nil
 }
 
 func (d *RPCChainConnection) SubscribeNewHead(ch chan<- *types.Header) (ethereum.Subscription, error) {

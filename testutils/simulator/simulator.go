@@ -138,8 +138,8 @@ func (sim *Simulator) GetChainID() models.Uint256 {
 	return models.MakeUint256FromBig(*sim.Backend.Blockchain().Config().ChainID)
 }
 
-func (sim *Simulator) GetLatestBlockNumber() (*uint32, error) {
-	return ref.Uint32(uint32(sim.Backend.Blockchain().CurrentHeader().Number.Uint64())), nil
+func (sim *Simulator) GetLatestBlockNumber() (*uint64, error) {
+	return ref.Uint64(sim.Backend.Blockchain().CurrentHeader().Number.Uint64()), nil
 }
 
 func (sim *Simulator) SubscribeNewHead(ch chan<- *types.Header) (ethereum.Subscription, error) {
