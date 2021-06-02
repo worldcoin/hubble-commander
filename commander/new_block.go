@@ -1,11 +1,37 @@
 package commander
 
 import (
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
 
 func (c *Commander) newBlockLoop() error {
+	endBlock := ref.Uint64(0)
+	cancelRollup := make(chan struct{}, 1)
+	latestBlockNumber, err := c.client.ChainConnection.GetLatestBlockNumber()
+	if err != nil {
+		return err
+	}
+
+	for *endBlock != *latestBlockNumber {
+		endBlock, err = c.newBlockIteration(cancelRollup, *latestBlockNumber)
+		if err != nil {
+			return err
+		}
+
+		latestBlockNumber, err = c.client.ChainConnection.GetLatestBlockNumber()
+		if err != nil {
+			return err
+		}
+		select {
+		case <-c.stopChannel:
+			return nil
+		default:
+			continue
+		}
+	}
+
 	blocks := make(chan *types.Header)
 	subscription, err := c.client.ChainConnection.SubscribeNewHead(blocks)
 	if err != nil {
@@ -13,34 +39,16 @@ func (c *Commander) newBlockLoop() error {
 	}
 	defer subscription.Unsubscribe()
 
-	var endBlock *uint64
-	cancelRollup := make(chan struct{}, 1)
-	continueCh := make(chan struct{}, 1)
-	continueCh <- struct{}{}
-
-	// TODO Make a separate for loop here for syncing up to the latest block number queried at the end of each turn
-	// TODO start subscription from here
-	// TODO continue syncing
-
 	for {
 		select {
 		case <-c.stopChannel:
 			return nil
 		case err = <-subscription.Err():
 			return err
-		case <-continueCh:
-			latestBlockNumber := uint64(c.storage.GetLatestBlockNumber())
-			endBlock, err = c.newBlockIteration(cancelRollup, latestBlockNumber)
-			if err != nil {
-				return err
-			}
-			if *endBlock != latestBlockNumber {
-				continueCh <- struct{}{}
-			}
 		case newBlock := <-blocks:
-			latestBlockNumber := newBlock.Number.Uint64()
-			c.storage.SetLatestBlockNumber(uint32(latestBlockNumber))
-			_, err = c.newBlockIteration(cancelRollup, latestBlockNumber)
+			currentBlockNumber := newBlock.Number.Uint64()
+			c.storage.SetLatestBlockNumber(uint32(currentBlockNumber))
+			_, err = c.newBlockIteration(cancelRollup, currentBlockNumber)
 			if err != nil {
 				return err
 			}
