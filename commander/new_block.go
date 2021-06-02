@@ -14,12 +14,8 @@ func (c *Commander) newBlockLoop() error {
 	}
 	defer subscription.Unsubscribe()
 
-	isProposer, err := c.client.IsActiveProposer()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	c.storage.SetProposer(isProposer)
 	var syncedBlock *uint64
+	cancelRollup := make(chan struct{}, 1)
 
 	for {
 		select {
@@ -32,15 +28,14 @@ func (c *Commander) newBlockLoop() error {
 			c.storage.SetLatestBlockNumber(uint32(latestBlockNumber))
 			syncedBlock, err = c.storage.GetSyncedBlock(c.client.ChainState.ChainID)
 			if err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 			endBlock := min(latestBlockNumber, *syncedBlock+uint64(c.cfg.Rollup.SyncSize))
 
-			isProposer, err = c.client.IsActiveProposer()
+			isProposer, err := c.client.IsActiveProposer()
 			if err != nil {
 				return errors.WithStack(err)
 			}
-			c.storage.SetProposer(isProposer)
 			err = c.syncAccounts(*syncedBlock, endBlock)
 			if err != nil {
 				return errors.WithStack(err)
@@ -51,7 +46,17 @@ func (c *Commander) newBlockLoop() error {
 			}
 			err = c.storage.SetSyncedBlock(c.client.ChainState.ChainID, newBlock.Number.Uint64())
 			if err != nil {
-				return err
+				return errors.WithStack(err)
+			}
+
+			if endBlock == latestBlockNumber {
+				if isProposer && !c.rollupLoopRunning {
+					c.startWorker(func() error { return c.rollupLoop(cancelRollup) })
+					c.rollupLoopRunning = true
+				} else if !isProposer && c.rollupLoopRunning {
+					cancelRollup <- struct{}{}
+					c.rollupLoopRunning = false
+				}
 			}
 		}
 	}

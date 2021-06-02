@@ -12,7 +12,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func (c *Commander) rollupLoop() (err error) {
+func (c *Commander) rollupLoop(cancel chan struct{}) (err error) {
 	ticker := time.NewTicker(c.cfg.Rollup.BatchLoopInterval)
 	defer ticker.Stop()
 
@@ -20,6 +20,8 @@ func (c *Commander) rollupLoop() (err error) {
 
 	for {
 		select {
+		case <-cancel:
+			return nil
 		case <-c.stopChannel:
 			return nil
 		case <-ticker.C:
@@ -32,10 +34,6 @@ func (c *Commander) rollupLoop() (err error) {
 }
 
 func (c *Commander) rollupLoopIteration(currentBatchType *txtype.TransactionType) (err error) {
-	if !c.storage.IsProposer() {
-		return nil
-	}
-
 	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, c.cfg.Rollup)
 	if err != nil {
 		return err

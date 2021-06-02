@@ -20,8 +20,9 @@ import (
 )
 
 type Commander struct {
-	cfg     *config.Config
-	workers sync.WaitGroup
+	cfg               *config.Config
+	workers           sync.WaitGroup
+	rollupLoopRunning bool
 
 	stopChannel chan bool
 	storage     *st.Storage
@@ -74,7 +75,6 @@ func (c *Commander) Start() (err error) {
 		return nil
 	})
 	c.startWorker(func() error { return c.newBlockLoop() })
-	c.startWorker(func() error { return c.rollupLoop() })
 	c.startWorker(func() error { return WatchAccounts(c.storage, c.client, stopChannel) })
 	c.stopChannel = stopChannel
 

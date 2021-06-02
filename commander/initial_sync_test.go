@@ -88,8 +88,6 @@ func (s *InitialSyncTestSuite) TestInitialSync() {
 	s.NoError(err)
 	s.setupDB(s.cmd.cfg)
 
-	//err = s.cmd.InitialSync()
-	//s.NoError(err)
 	for i := range accounts {
 		var userAccounts []models.Account
 		userAccounts, err = s.cmd.storage.GetAccounts(&accounts[i].PublicKey)
