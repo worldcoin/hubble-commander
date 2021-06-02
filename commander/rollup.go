@@ -33,6 +33,16 @@ func (c *Commander) rollupLoop(cancel chan struct{}) (err error) {
 	}
 }
 
+func (c *Commander) manageRollupLoop(isProposer bool, cancel chan struct{}) {
+	if isProposer && !c.rollupLoopRunning {
+		c.startWorker(func() error { return c.rollupLoop(cancel) })
+		c.rollupLoopRunning = true
+	} else if !isProposer && c.rollupLoopRunning {
+		cancel <- struct{}{}
+		c.rollupLoopRunning = false
+	}
+}
+
 func (c *Commander) rollupLoopIteration(currentBatchType *txtype.TransactionType) (err error) {
 	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, c.cfg.Rollup)
 	if err != nil {

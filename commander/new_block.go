@@ -15,6 +15,7 @@ func (c *Commander) newBlockLoop() error {
 	defer subscription.Unsubscribe()
 
 	var syncedBlock *uint64
+	var isProposer bool
 	cancelRollup := make(chan struct{}, 1)
 
 	for {
@@ -32,7 +33,7 @@ func (c *Commander) newBlockLoop() error {
 			}
 			endBlock := min(latestBlockNumber, *syncedBlock+uint64(c.cfg.Rollup.SyncSize))
 
-			isProposer, err := c.client.IsActiveProposer()
+			isProposer, err = c.client.IsActiveProposer()
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -50,13 +51,7 @@ func (c *Commander) newBlockLoop() error {
 			}
 
 			if endBlock == latestBlockNumber {
-				if isProposer && !c.rollupLoopRunning {
-					c.startWorker(func() error { return c.rollupLoop(cancelRollup) })
-					c.rollupLoopRunning = true
-				} else if !isProposer && c.rollupLoopRunning {
-					cancelRollup <- struct{}{}
-					c.rollupLoopRunning = false
-				}
+				c.manageRollupLoop(isProposer, cancelRollup)
 			}
 		}
 	}
