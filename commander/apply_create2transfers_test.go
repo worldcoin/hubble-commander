@@ -4,11 +4,13 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -23,6 +25,8 @@ type ApplyCreate2TransfersTestSuite struct {
 	client              *eth.TestClient
 	publicKey           models.PublicKey
 	transactionExecutor *transactionExecutor
+	events              chan *accountregistry.AccountRegistryPubkeyRegistered
+	unsubscribe         func()
 }
 
 func (s *ApplyCreate2TransfersTestSuite) SetupSuite() {
@@ -78,17 +82,21 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 		s.NoError(err)
 	}
 
-	err = s.tree.Set(1, &senderState)
+	err = s.tree.Set(0, &senderState)
 	s.NoError(err)
 	err = s.tree.Set(2, &receiverState)
 	s.NoError(err)
 	err = s.tree.Set(3, &feeReceiverState)
 	s.NoError(err)
 
+	s.events, s.unsubscribe, err = s.client.WatchRegistrations(&bind.WatchOpts{})
+	s.NoError(err)
+
 	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
+	s.unsubscribe()
 	s.client.Close()
 	err := s.teardown()
 	s.NoError(err)
@@ -190,6 +198,24 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_Invali
 	generatedTransfers := generateValidCreate2Transfers(3, &s.publicKey)
 	_, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, []uint32{1, 2})
 	s.Equal(ErrInvalidSliceLength, err)
+}
+
+func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_AccountNotExists() {
+	transfer := create2Transfer
+	transfer.ToPublicKey = models.PublicKey{10, 11, 12}
+
+	pubKeyID, err := s.transactionExecutor.getOrRegisterPubKeyID(s.events, &transfer, models.MakeUint256(1))
+	s.NoError(err)
+	s.Equal(uint32(0), *pubKeyID)
+}
+
+func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_AccountForTokenIndexNotExists() {
+	transfer := create2Transfer
+	transfer.ToPublicKey = s.publicKey
+
+	pubKeyID, err := s.transactionExecutor.getOrRegisterPubKeyID(s.events, &transfer, models.MakeUint256(1))
+	s.NoError(err)
+	s.Equal(uint32(4), *pubKeyID)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestHandleApplyC2T_ValidTransfer() {
