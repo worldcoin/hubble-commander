@@ -2,7 +2,6 @@ package commander
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
-	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
@@ -44,7 +43,7 @@ func (t *transactionExecutor) ApplyCreate2Transfers(
 			return nil, err
 		}
 
-		ok, err = t.handleApplyC2T(t.storage, transfer, *pubKeyID, returnStruct, combinedFee, commitmentTokenIndex)
+		ok, err = t.handleApplyC2T(transfer, *pubKeyID, returnStruct, combinedFee, commitmentTokenIndex)
 		if err != nil {
 			return nil, err
 		}
@@ -90,7 +89,7 @@ func (t *transactionExecutor) ApplyCreate2TransfersForSync(
 	for i := range transfers {
 		transfer := &transfers[i]
 
-		_, err = t.handleApplyC2T(t.storage, transfer, pubKeyIDs[i], returnStruct, combinedFee, commitmentTokenIndex)
+		_, err = t.handleApplyC2T(transfer, pubKeyIDs[i], returnStruct, combinedFee, commitmentTokenIndex)
 		if err != nil {
 			return nil, err
 		}
@@ -119,18 +118,17 @@ func (t *transactionExecutor) getTokenIndex(stateID uint32) (*models.Uint256, er
 }
 
 func (t *transactionExecutor) handleApplyC2T(
-	storage *st.Storage,
 	transfer *models.Create2Transfer,
 	pubKeyID uint32,
 	transactions *AppliedC2Transfers,
 	combinedFee, tokenIndex *models.Uint256,
 ) (bool, error) {
-	transferError, appError := ApplyCreate2Transfer(storage, transfer, pubKeyID, *tokenIndex)
+	transferError, appError := ApplyCreate2Transfer(t.storage, transfer, pubKeyID, *tokenIndex)
 	if appError != nil {
 		return false, appError
 	}
 	if transferError != nil {
-		logAndSaveTransactionError(storage, &transfer.TransactionBase, transferError)
+		logAndSaveTransactionError(t.storage, &transfer.TransactionBase, transferError)
 		transactions.invalidTransfers = append(transactions.invalidTransfers, *transfer)
 		return false, nil
 	}

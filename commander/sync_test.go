@@ -108,7 +108,7 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	err := s.storage.AddTransfer(&tx)
 	s.NoError(err)
 
-	commitments, err := createTransferCommitments([]models.Transfer{tx}, s.storage, s.cfg, testDomain)
+	commitments, err := s.transactionExecutor.createTransferCommitments([]models.Transfer{tx}, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -140,7 +140,7 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	err = txStorage.AddTransfer(&tx2)
 	s.NoError(err)
 
-	commitments, err = createTransferCommitments([]models.Transfer{tx2}, txStorage, s.cfg, testDomain)
+	commitments, err = s.transactionExecutor.createTransferCommitments([]models.Transfer{tx2}, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -197,7 +197,7 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	err = s.storage.AddCreate2Transfer(&tx)
 	s.NoError(err)
 
-	commitments, err := createCreate2TransferCommitments([]models.Create2Transfer{tx}, s.storage, s.client.Client, s.cfg, testDomain)
+	commitments, err := s.transactionExecutor.createCreate2TransferCommitments([]models.Create2Transfer{tx}, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -227,7 +227,7 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 }
 
 func (s *SyncTestSuite) mockSignature() *models.Signature {
-	wallet, err := bls.NewRandomWallet(testDomain)
+	wallet, err := bls.NewRandomWallet(*testDomain)
 	s.NoError(err)
 	signature, err := wallet.Sign(utils.RandomBytes(4))
 	s.NoError(err)

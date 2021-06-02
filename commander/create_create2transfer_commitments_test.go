@@ -15,10 +15,11 @@ import (
 type Create2TransferCommitmentsTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	teardown func() error
-	storage  *storage.Storage
-	client   *eth.TestClient
-	cfg      *config.RollupConfig
+	teardown            func() error
+	storage             *storage.Storage
+	client              *eth.TestClient
+	cfg                 *config.RollupConfig
+	transactionExecutor *transactionExecutor
 }
 
 func (s *Create2TransferCommitmentsTestSuite) SetupSuite() {
@@ -40,6 +41,8 @@ func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 
 	err = PopulateGenesisAccounts(s.storage, AssignStateIDs(genesisAccounts))
 	s.NoError(err)
+
+	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg)
 }
 
 func (s *Create2TransferCommitmentsTestSuite) TearDownTest() {
@@ -52,7 +55,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	preRoot, err := storage.NewStateTree(s.storage).Root()
 	s.NoError(err)
 
-	commitments, err := createTransferCommitments([]models.Transfer{}, s.storage, s.cfg, testDomain)
+	commitments, err := s.transactionExecutor.createCreate2TransferCommitments([]models.Create2Transfer{}, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 0)
 
@@ -74,7 +77,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	preRoot, err := storage.NewStateTree(s.storage).Root()
 	s.NoError(err)
 
-	commitments, err := createCreate2TransferCommitments(pendingTransfers, s.storage, s.client.Client, s.cfg, testDomain)
+	commitments, err := s.transactionExecutor.createCreate2TransferCommitments(pendingTransfers, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 0)
 
@@ -90,7 +93,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	preRoot, err := storage.NewStateTree(s.storage).Root()
 	s.NoError(err)
 
-	commitments, err := createCreate2TransferCommitments(pendingTransfers, s.storage, s.client.Client, s.cfg, testDomain)
+	commitments, err := s.transactionExecutor.createCreate2TransferCommitments(pendingTransfers, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, 32)
@@ -107,7 +110,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_CreatesMaximallyAsManyCommitmentsAsSpecifiedInConfig() {
 	pendingTransfers := s.prepareAndReturnPendingCreate2Transfers(2)
 
-	commitments, err := createCreate2TransferCommitments(pendingTransfers, s.storage, s.client.Client, s.cfg, testDomain)
+	commitments, err := s.transactionExecutor.createCreate2TransferCommitments(pendingTransfers, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 }
@@ -115,7 +118,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_UpdateTransfers() {
 	pendingTransfers := s.prepareAndReturnPendingCreate2Transfers(2)
 
-	commitments, err := createCreate2TransferCommitments(pendingTransfers, s.storage, s.client.Client, s.cfg, testDomain)
+	commitments, err := s.transactionExecutor.createCreate2TransferCommitments(pendingTransfers, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 

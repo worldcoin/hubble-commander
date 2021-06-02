@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/storage"
@@ -15,10 +16,11 @@ import (
 type ApplyTransfersTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	teardown func() error
-	storage  *storage.Storage
-	tree     *storage.StateTree
-	cfg      *config.RollupConfig
+	teardown            func() error
+	storage             *storage.Storage
+	tree                *storage.StateTree
+	cfg                 *config.RollupConfig
+	transactionExecutor *transactionExecutor
 }
 
 func (s *ApplyTransfersTestSuite) SetupSuite() {
@@ -81,6 +83,8 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 	s.NoError(err)
 	err = s.tree.Set(3, &feeReceiverState)
 	s.NoError(err)
+
+	s.transactionExecutor = newTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg)
 }
 
 func (s *ApplyTransfersTestSuite) TearDownTest() {
@@ -89,34 +93,34 @@ func (s *ApplyTransfersTestSuite) TearDownTest() {
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfers_AllValid() {
-	transfers := generateValidTransfers(3)
+	generatedTransfers := generateValidTransfers(3)
 
-	validTransfers, invalidTransfers, _, err := ApplyTransfers(s.storage, transfers, s.cfg)
+	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers)
 	s.NoError(err)
 
-	s.Len(validTransfers, 3)
-	s.Len(invalidTransfers, 0)
+	s.Len(transfers.appliedTransfers, 3)
+	s.Len(transfers.invalidTransfers, 0)
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfers_SomeValid() {
-	transfers := generateValidTransfers(2)
-	transfers = append(transfers, generateInvalidTransfers(3)...)
+	generatedTransfers := generateValidTransfers(2)
+	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(3)...)
 
-	validTransfers, invalidTransfers, _, err := ApplyTransfers(s.storage, transfers, s.cfg)
+	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers)
 	s.NoError(err)
 
-	s.Len(validTransfers, 2)
-	s.Len(invalidTransfers, 3)
+	s.Len(transfers.appliedTransfers, 2)
+	s.Len(transfers.invalidTransfers, 3)
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfers_MoreThan32() {
-	transfers := generateValidTransfers(13)
+	generatedTransfers := generateValidTransfers(13)
 
-	validTransfers, invalidTransfers, _, err := ApplyTransfers(s.storage, transfers, s.cfg)
+	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers)
 	s.NoError(err)
 
-	s.Len(validTransfers, 6)
-	s.Len(invalidTransfers, 0)
+	s.Len(transfers.appliedTransfers, 6)
+	s.Len(transfers.invalidTransfers, 0)
 
 	state, err := s.storage.GetStateLeaf(1)
 	s.NoError(err)
@@ -124,22 +128,22 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_MoreThan32() {
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfersTestSuite_SavesTransferErrors() {
-	transfers := generateValidTransfers(3)
-	transfers = append(transfers, generateInvalidTransfers(2)...)
+	generatedTransfers := generateValidTransfers(3)
+	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(2)...)
 
-	for i := range transfers {
-		err := s.storage.AddTransfer(&transfers[i])
+	for i := range generatedTransfers {
+		err := s.storage.AddTransfer(&generatedTransfers[i])
 		s.NoError(err)
 	}
 
-	validTransfers, invalidTransfers, _, err := ApplyTransfers(s.storage, transfers, s.cfg)
+	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers)
 	s.NoError(err)
 
-	s.Len(validTransfers, 3)
-	s.Len(invalidTransfers, 2)
+	s.Len(transfers.appliedTransfers, 3)
+	s.Len(transfers.invalidTransfers, 2)
 
-	for i := range transfers {
-		transfer, err := s.storage.GetTransfer(transfers[i].Hash)
+	for i := range generatedTransfers {
+		transfer, err := s.storage.GetTransfer(generatedTransfers[i].Hash)
 		s.NoError(err)
 		if i < 3 {
 			s.Nil(transfer.ErrorMessage)
