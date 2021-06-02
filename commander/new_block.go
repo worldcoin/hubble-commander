@@ -1,6 +1,8 @@
 package commander
 
 import (
+	"context"
+
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
@@ -8,14 +10,14 @@ import (
 
 func (c *Commander) newBlockLoop() error {
 	endBlock := ref.Uint64(0)
-	cancelRollup := make(chan struct{}, 1)
+	var rollupCancel context.CancelFunc
 	latestBlockNumber, err := c.client.ChainConnection.GetLatestBlockNumber()
 	if err != nil {
 		return err
 	}
 
 	for *endBlock != *latestBlockNumber {
-		endBlock, err = c.newBlockIteration(cancelRollup, *latestBlockNumber)
+		endBlock, err = c.newBlockIteration(&rollupCancel, *latestBlockNumber)
 		if err != nil {
 			return err
 		}
@@ -48,7 +50,7 @@ func (c *Commander) newBlockLoop() error {
 		case newBlock := <-blocks:
 			currentBlockNumber := newBlock.Number.Uint64()
 			c.storage.SetLatestBlockNumber(uint32(currentBlockNumber))
-			_, err = c.newBlockIteration(cancelRollup, currentBlockNumber)
+			_, err = c.newBlockIteration(&rollupCancel, currentBlockNumber)
 			if err != nil {
 				return err
 			}
@@ -56,7 +58,7 @@ func (c *Commander) newBlockLoop() error {
 	}
 }
 
-func (c *Commander) newBlockIteration(cancelRollup chan struct{}, latestBlockNumber uint64) (*uint64, error) {
+func (c *Commander) newBlockIteration(cancel *context.CancelFunc, latestBlockNumber uint64) (*uint64, error) {
 	syncedBlock, err := c.storage.GetSyncedBlock(c.client.ChainState.ChainID)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -80,7 +82,7 @@ func (c *Commander) newBlockIteration(cancelRollup chan struct{}, latestBlockNum
 		return nil, errors.WithStack(err)
 	}
 	if endBlock == latestBlockNumber {
-		c.manageRollupLoop(isProposer, cancelRollup)
+		*cancel = c.manageRollupLoop(*cancel, isProposer)
 	}
 	return &endBlock, nil
 }

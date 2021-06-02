@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -112,7 +113,7 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	err = submitBatch(txtype.Transfer, commitments, s.storage, s.client.Client, s.cfg)
+	err = submitBatch(context.Background(), txtype.Transfer, commitments, s.storage, s.client.Client, s.cfg)
 	s.NoError(err)
 
 	// Recreate database
@@ -146,7 +147,7 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	err = submitBatch(txtype.Transfer, commitments, txStorage, s.client.Client, s.cfg)
+	err = submitBatch(context.Background(), txtype.Transfer, commitments, txStorage, s.client.Client, s.cfg)
 	s.NoError(err)
 
 	batches, err := txStorage.GetBatchesInRange(nil, nil)
@@ -203,7 +204,7 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	err = submitBatch(txtype.Create2Transfer, commitments, s.storage, s.client.Client, s.cfg)
+	err = submitBatch(context.Background(), txtype.Create2Transfer, commitments, s.storage, s.client.Client, s.cfg)
 	s.NoError(err)
 
 	// Recreate database
