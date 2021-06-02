@@ -23,6 +23,7 @@ type Commander struct {
 	cfg               *config.Config
 	workers           sync.WaitGroup
 	rollupLoopRunning bool
+	mutex             sync.Mutex
 
 	stopChannel chan bool
 	storage     *st.Storage

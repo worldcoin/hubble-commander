@@ -88,6 +88,8 @@ func (c *Commander) newBlockIteration(cancel *context.CancelFunc, latestBlockNum
 }
 
 func (c *Commander) syncBatches(startBlock, endBlock uint64) (err error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, c.cfg.Rollup)
 	if err != nil {
 		return err
