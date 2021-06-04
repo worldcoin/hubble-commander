@@ -131,6 +131,23 @@ func (s *Storage) GetLatestSubmittedBatch() (*models.Batch, error) {
 	return &res[0], nil
 }
 
+func (s *Storage) GetNextBatchNumber() (*models.Uint256, error) {
+	res := make([]models.Uint256, 0, 1)
+	err := s.Postgres.Query(
+		s.QB.Select("batch_number").
+			From("batch").
+			OrderBy("batch_id DESC").
+			Limit(1),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return models.NewUint256(0), nil
+	}
+	return res[0].AddN(1), nil
+}
+
 func (s *Storage) GetLatestFinalisedBatch(currentBlockNumber uint32) (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
 	err := s.Postgres.Query(

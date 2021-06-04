@@ -385,6 +385,27 @@ func (s *BatchTestSuite) TestGetBatchWithAccountRoot_NotExistingBatch() {
 	s.Equal(notFoundErr, err)
 }
 
+func (s *BatchTestSuite) TestGetNextBatchNumber() {
+	batch := &models.Batch{
+		Type:            txtype.Transfer,
+		TransactionHash: utils.RandomHash(),
+		Hash:            utils.NewRandomHash(),
+		Number:          models.NewUint256(1),
+	}
+	_, err := s.storage.AddBatch(batch)
+	s.NoError(err)
+
+	batchNumber, err := s.storage.GetNextBatchNumber()
+	s.NoError(err)
+	s.Equal(models.NewUint256(2), batchNumber)
+}
+
+func (s *BatchTestSuite) TestGetNextBatchNumber_NoBatches() {
+	batchNumber, err := s.storage.GetNextBatchNumber()
+	s.NoError(err)
+	s.Equal(models.NewUint256(0), batchNumber)
+}
+
 func TestBatchTestSuite(t *testing.T) {
 	suite.Run(t, new(BatchTestSuite))
 }

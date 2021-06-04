@@ -45,9 +45,14 @@ func submitBatch(
 		return err
 	}
 
+	batchNumber, err := storage.GetNextBatchNumber()
+	if err != nil {
+		return err
+	}
 	newPendingBatch := models.Batch{
 		Type:            batchType,
 		TransactionHash: tx.Hash(),
+		Number:          batchNumber,
 	}
 	batchID, err := storage.AddBatch(&newPendingBatch)
 	if err != nil {
