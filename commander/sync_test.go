@@ -6,6 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -180,12 +181,10 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	s.Len(batches, 2)
 }
 
-// TODO fix this test
 func (s *SyncTestSuite) TestSyncBatches_Transfer2() {
 	txs := []models.Transfer{
 		{
 			TransactionBase: models.TransactionBase{
-				Hash:        utils.RandomHash(),
 				TxType:      txtype.Transfer,
 				FromStateID: 0,
 				Amount:      models.MakeUint256(400),
@@ -196,7 +195,6 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer2() {
 			ToStateID: 1,
 		}, {
 			TransactionBase: models.TransactionBase{
-				Hash:        utils.RandomHash(),
 				TxType:      txtype.Transfer,
 				FromStateID: 1,
 				Amount:      models.MakeUint256(100),
@@ -208,7 +206,10 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer2() {
 		},
 	}
 	for i := range txs {
-		err := s.storage.AddTransfer(&txs[i])
+		transferHash, err := encoder.HashTransfer(&txs[i])
+		s.NoError(err)
+		txs[i].Hash = *transferHash
+		err = s.storage.AddTransfer(&txs[i])
 		s.NoError(err)
 	}
 
@@ -243,15 +244,13 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer2() {
 		commitments[i].AccountTreeRoot = commitment.AccountTreeRoot
 		s.Equal(commitments[i], *commitment)
 
-		// nolint:gocritic
-		// transfer, err := s.storage.GetTransfer(txs[i].Hash)
-		// s.NoError(err)
-		// txs[i].IncludedInCommitment = &commitments[i].ID
-		// s.Equal(txs[i], *transfer)
+		transfer, err := s.storage.GetTransfer(txs[i].Hash)
+		s.NoError(err)
+		txs[i].IncludedInCommitment = &commitments[i].ID
+		s.Equal(txs[i], *transfer)
 	}
 }
 
-// TODO fix this test
 func (s *SyncTestSuite) TestSyncBatches_PendingBatch() {
 	tx := models.Transfer{
 		TransactionBase: models.TransactionBase{

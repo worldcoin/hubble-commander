@@ -8,6 +8,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 var (
@@ -100,7 +102,7 @@ func EncodeCreate2TransferForCommitment(transfer *models.Create2Transfer, toPubK
 	return arr, nil
 }
 
-func DecodeCreate2TransferFromCommitment(data []byte) (transfer *models.Create2Transfer, toPubKeyID uint32) {
+func DecodeCreate2TransferFromCommitment(data []byte) (transfer *models.Create2Transfer, toPubKeyID uint32, err error) {
 	fromStateID := binary.BigEndian.Uint32(data[0:4])
 	toStateID := binary.BigEndian.Uint32(data[4:8])
 	toPubKeyID = binary.BigEndian.Uint32(data[8:12])
@@ -110,7 +112,7 @@ func DecodeCreate2TransferFromCommitment(data []byte) (transfer *models.Create2T
 	amount := DecodeDecimal(amountEncoded)
 	fee := DecodeDecimal(feeEncoded)
 
-	return &models.Create2Transfer{
+	transfer = &models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
 			TxType:      txtype.Create2Transfer,
 			FromStateID: fromStateID,
@@ -118,7 +120,13 @@ func DecodeCreate2TransferFromCommitment(data []byte) (transfer *models.Create2T
 			Fee:         fee,
 		},
 		ToStateID: &toStateID,
-	}, toPubKeyID
+	}
+	transferHash, err := HashCreate2Transfer(transfer)
+	if err != nil {
+		return nil, 0, err
+	}
+	transfer.Hash = *transferHash
+	return transfer, toPubKeyID, nil
 }
 
 func SerializeCreate2Transfers(transfers []models.Create2Transfer, pubKeyIDs []uint32) ([]byte, error) {
@@ -148,10 +156,22 @@ func DeserializeCreate2Transfers(data []byte) ([]models.Create2Transfer, []uint3
 	transfers := make([]models.Create2Transfer, 0, transfersCount)
 	pubKeyIDs := make([]uint32, 0, transfersCount)
 	for i := 0; i < transfersCount; i++ {
-		transfer, pubKeyID := DecodeCreate2TransferFromCommitment(data[i*create2TransferLength : (i+1)*create2TransferLength])
+		transfer, pubKeyID, err := DecodeCreate2TransferFromCommitment(data[i*create2TransferLength : (i+1)*create2TransferLength])
+		if err != nil {
+			return nil, nil, err
+		}
 		transfers = append(transfers, *transfer)
 		pubKeyIDs = append(pubKeyIDs, pubKeyID)
 	}
 
 	return transfers, pubKeyIDs, nil
+}
+
+func HashCreate2Transfer(transfer *models.Create2Transfer) (*common.Hash, error) {
+	encodedTransfer, err := EncodeCreate2Transfer(transfer)
+	if err != nil {
+		return nil, err
+	}
+	hash := crypto.Keccak256Hash(encodedTransfer)
+	return &hash, nil
 }

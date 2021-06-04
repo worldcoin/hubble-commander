@@ -37,7 +37,7 @@ func (t *transactionExecutor) syncCreate2TransferCommitment(
 		return ErrTransfersNotApplied
 	}
 
-	_, err = t.storage.AddCommitment(&models.Commitment{
+	commitmentID, err := t.storage.AddCommitment(&models.Commitment{
 		Type:              batch.Type,
 		Transactions:      commitment.Transactions,
 		FeeReceiver:       commitment.FeeReceiver,
@@ -46,5 +46,9 @@ func (t *transactionExecutor) syncCreate2TransferCommitment(
 		AccountTreeRoot:   &batch.AccountRoot,
 		IncludedInBatch:   &batch.ID,
 	})
-	return err
+	for i := range transfers.appliedTransfers {
+		transfers.appliedTransfers[i].IncludedInCommitment = commitmentID
+	}
+	// TODO: signature is not passed, calculate it or omit
+	return t.storage.BatchAddCreat2Transfer(transfers.appliedTransfers)
 }
