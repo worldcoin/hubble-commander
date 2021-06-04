@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -51,10 +52,9 @@ func (s *SyncTestSuite) setupDB() {
 	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
 	s.tree = st.NewStateTree(s.storage)
+	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg)
 
 	s.seedDB()
-
-	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg)
 }
 
 func (s *SyncTestSuite) seedDB() {
@@ -125,7 +125,8 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	err = s.transactionExecutor.SyncBatches(0, *latestBlockNumber)
 	s.NoError(err)
 
-	transactionExecutor, err := newTransactionExecutor(s.storage, s.client.Client, s.cfg)
+	// Begin db transaction
+	transactionExecutor, err := newTransactionExecutorWithCtx(context.Background(), s.storage, s.client.Client, s.cfg)
 	s.NoError(err)
 
 	tx2 := models.Transfer{
