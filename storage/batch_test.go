@@ -203,6 +203,7 @@ func (s *BatchTestSuite) TestGetLatestSubmittedBatch() {
 			Type:              txtype.Transfer,
 			Number:            models.NewUint256(1234),
 			FinalisationBlock: ref.Uint32(1234),
+			TransactionHash:   utils.RandomHash(),
 		},
 		{
 			ID:                2,
@@ -210,6 +211,7 @@ func (s *BatchTestSuite) TestGetLatestSubmittedBatch() {
 			Type:              txtype.Create2Transfer,
 			Number:            models.NewUint256(2000),
 			FinalisationBlock: ref.Uint32(1234),
+			TransactionHash:   utils.RandomHash(),
 		},
 	}
 	pendingBatch := models.Batch{
@@ -290,10 +292,10 @@ func (s *BatchTestSuite) TestGetLatestFinalisedBatch_NoBatches() {
 
 func (s *BatchTestSuite) TestGetBatchesInRange_ReturnsCorrectBatches() {
 	batches := []models.Batch{
-		{ID: 1, Hash: utils.NewRandomHash(), Number: models.NewUint256(11)},
-		{ID: 2, Hash: utils.NewRandomHash(), Number: models.NewUint256(12)},
-		{ID: 3, Hash: utils.NewRandomHash(), Number: models.NewUint256(13)},
-		{ID: 4, Hash: utils.NewRandomHash(), Number: models.NewUint256(14)},
+		{ID: 1, Hash: utils.NewRandomHash(), Number: models.NewUint256(11), TransactionHash: utils.RandomHash()},
+		{ID: 2, Hash: utils.NewRandomHash(), Number: models.NewUint256(12), TransactionHash: utils.RandomHash()},
+		{ID: 3, Hash: utils.NewRandomHash(), Number: models.NewUint256(13), TransactionHash: utils.RandomHash()},
+		{ID: 4, Hash: utils.NewRandomHash(), Number: models.NewUint256(14), TransactionHash: utils.RandomHash()},
 	}
 	for i := range batches {
 		_, err := s.storage.AddBatch(&batches[i])
@@ -315,9 +317,9 @@ func (s *BatchTestSuite) TestGetBatchesInRange_ReturnsEmptySliceWhenThereAreNoBa
 
 func (s *BatchTestSuite) TestGetBatchesInRange_ReturnsAllBatchesStartingWithLowerBound() {
 	batches := []models.Batch{
-		{ID: 1, Hash: utils.NewRandomHash(), Number: models.NewUint256(1)},
-		{ID: 2, Hash: utils.NewRandomHash(), Number: models.NewUint256(2)},
-		{ID: 3, Hash: utils.NewRandomHash(), Number: models.NewUint256(3)},
+		{ID: 1, Hash: utils.NewRandomHash(), Number: models.NewUint256(1), TransactionHash: utils.RandomHash()},
+		{ID: 2, Hash: utils.NewRandomHash(), Number: models.NewUint256(2), TransactionHash: utils.RandomHash()},
+		{ID: 3, Hash: utils.NewRandomHash(), Number: models.NewUint256(3), TransactionHash: utils.RandomHash()},
 	}
 	for i := range batches {
 		_, err := s.storage.AddBatch(&batches[i])
@@ -330,9 +332,9 @@ func (s *BatchTestSuite) TestGetBatchesInRange_ReturnsAllBatchesStartingWithLowe
 
 func (s *BatchTestSuite) TestGetBatchesInRange_ReturnsAllBatchesUpUntilUpperBound() {
 	batches := []models.Batch{
-		{ID: 1, Hash: utils.NewRandomHash(), Number: models.NewUint256(1)},
-		{ID: 2, Hash: utils.NewRandomHash(), Number: models.NewUint256(2)},
-		{ID: 3, Hash: utils.NewRandomHash(), Number: models.NewUint256(3)},
+		{ID: 1, Hash: utils.NewRandomHash(), Number: models.NewUint256(1), TransactionHash: utils.RandomHash()},
+		{ID: 2, Hash: utils.NewRandomHash(), Number: models.NewUint256(2), TransactionHash: utils.RandomHash()},
+		{ID: 3, Hash: utils.NewRandomHash(), Number: models.NewUint256(3), TransactionHash: utils.RandomHash()},
 	}
 	for i := range batches {
 		_, err := s.storage.AddBatch(&batches[i])
