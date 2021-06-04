@@ -1,13 +1,10 @@
 package api
 
 import (
-	"log"
-
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 )
 
 func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*common.Hash, error) {
@@ -20,17 +17,16 @@ func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*co
 		return nil, vErr
 	}
 
-	encodedCreate2Transfer, err := encoder.EncodeCreate2Transfer(create2Transfer)
+	hash, err := encoder.HashCreate2Transfer(create2Transfer)
 	if err != nil {
 		return nil, err
 	}
-	create2Transfer.Hash = crypto.Keccak256Hash(encodedCreate2Transfer)
+	create2Transfer.Hash = *hash
 
 	err = a.storage.AddCreate2Transfer(create2Transfer)
 	if err != nil {
 		return nil, err
 	}
-	log.Println("New create2transaction: ", create2Transfer.Hash.Hex())
 
 	return &create2Transfer.Hash, nil
 }
