@@ -108,24 +108,14 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 		},
 		ToStateID: 1,
 	}
-	err := s.storage.AddTransfer(&tx)
-	s.NoError(err)
-
-	commitments, err := s.transactionExecutor.createTransferCommitments([]models.Transfer{tx}, testDomain)
-	s.NoError(err)
-	s.Len(commitments, 1)
-
-	err = s.transactionExecutor.submitBatch(txtype.Transfer, commitments)
-	s.NoError(err)
-
-	s.client.Commit()
+	s.createAndSubmitTransferBatch(&tx)
 
 	s.recreateDatabase()
-
 	s.syncAllBlocks()
 
-	// Begin db transaction
-	transactionExecutor, err := newTransactionExecutorWithCtx(context.Background(), s.storage, s.client.Client, s.cfg)
+	// Begin database transaction
+	var err error
+	s.transactionExecutor, err = newTransactionExecutorWithCtx(context.Background(), s.storage, s.client.Client, s.cfg)
 	s.NoError(err)
 
 	tx2 := models.Transfer{
@@ -139,23 +129,15 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 		},
 		ToStateID: 0,
 	}
-	err = transactionExecutor.storage.AddTransfer(&tx2)
-	s.NoError(err)
+	s.createAndSubmitTransferBatch(&tx2)
 
-	commitments, err = transactionExecutor.createTransferCommitments([]models.Transfer{tx2}, testDomain)
-	s.NoError(err)
-	s.Len(commitments, 1)
-
-	err = transactionExecutor.submitBatch(txtype.Transfer, commitments)
-	s.NoError(err)
-
-	s.client.Commit()
-
-	batches, err := transactionExecutor.storage.GetBatchesInRange(nil, nil)
+	batches, err := s.transactionExecutor.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 2)
 
-	transactionExecutor.Rollback(nil)
+	// Rollback changes to the database
+	s.transactionExecutor.Rollback(nil)
+	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg)
 
 	batches, err = s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
@@ -210,19 +192,19 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 		s.NoError(err)
 	}
 
-	expectedCommitments := make([]models.Commitment, 0, 2)
+	expectedCommitments := make([]models.Commitment, 2)
 	for i := range expectedCommitments {
 		createdCommitments, err := s.transactionExecutor.createTransferCommitments([]models.Transfer{txs[i]}, testDomain)
 		s.NoError(err)
 		s.Len(createdCommitments, 1)
 
-		expectedCommitments = append(expectedCommitments, createdCommitments[0])
+		expectedCommitments[i] = createdCommitments[0]
 		err = s.transactionExecutor.submitBatch(txtype.Transfer, createdCommitments)
 		s.NoError(err)
+		s.client.Commit()
 	}
 
 	s.recreateDatabase()
-
 	s.syncAllBlocks()
 
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
@@ -306,6 +288,20 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 1)
+}
+
+func (s *SyncTestSuite) createAndSubmitTransferBatch(tx *models.Transfer) {
+	err := s.storage.AddTransfer(tx)
+	s.NoError(err)
+
+	commitments, err := s.transactionExecutor.createTransferCommitments([]models.Transfer{*tx}, testDomain)
+	s.NoError(err)
+	s.Len(commitments, 1)
+
+	err = s.transactionExecutor.submitBatch(txtype.Transfer, commitments)
+	s.NoError(err)
+
+	s.client.Commit()
 }
 
 func (s *SyncTestSuite) registerAccountOnChain(publicKey *models.PublicKey, expectedPubKeyID uint32) {
