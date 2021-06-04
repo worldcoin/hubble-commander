@@ -116,6 +116,8 @@ func (c *Commander) syncRange(startBlock, endBlock uint64, isProposer bool) erro
 }
 
 func (c *Commander) syncBatches(startBlock, endBlock uint64) (err error) {
+	c.stateMutex.Lock()
+	defer c.stateMutex.Unlock()
 	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, c.cfg.Rollup)
 	if err != nil {
 		return err

@@ -48,6 +48,8 @@ func (c *Commander) rollupLoop(ctx context.Context) (err error) {
 }
 
 func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *txtype.TransactionType) (err error) {
+	c.stateMutex.Lock()
+	defer c.stateMutex.Unlock()
 	transactionExecutor, err := newTransactionExecutorWithCtx(ctx, c.storage, c.client, c.cfg.Rollup)
 	if err != nil {
 		return err
