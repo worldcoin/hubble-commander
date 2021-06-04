@@ -64,6 +64,29 @@ func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieve() {
 	s.Equal(transfer, *res)
 }
 
+func (s *TransferTestSuite) TestBatchAddTransfer() {
+	txs := make([]models.Transfer, 2)
+	txs[0] = transfer
+	txs[0].Hash = utils.RandomHash()
+	txs[1] = transfer
+	txs[1].Hash = utils.RandomHash()
+
+	err := s.storage.BatchAddTransfer(txs)
+	s.NoError(err)
+
+	transfer, err := s.storage.GetTransfer(txs[0].Hash)
+	s.NoError(err)
+	s.Equal(txs[0], *transfer)
+	transfer, err = s.storage.GetTransfer(txs[1].Hash)
+	s.NoError(err)
+	s.Equal(txs[1], *transfer)
+}
+
+func (s *TransferTestSuite) TestBatchAddTransfer_NoTransfers() {
+	err := s.storage.BatchAddTransfer([]models.Transfer{})
+	s.Equal(ErrNoRowsAffected, err)
+}
+
 func (s *TransferTestSuite) TestGetTransfer_NonExistentTransfer() {
 	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
 	res, err := s.storage.GetTransfer(hash)

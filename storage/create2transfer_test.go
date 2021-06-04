@@ -66,6 +66,29 @@ func (s *Create2TransferTestSuite) TestAddCreate2Transfer_AddAndRetrieve() {
 	s.Equal(create2Transfer, *res)
 }
 
+func (s *Create2TransferTestSuite) TestBatchAddCreate2Transfer() {
+	txs := make([]models.Create2Transfer, 2)
+	txs[0] = create2Transfer
+	txs[0].Hash = utils.RandomHash()
+	txs[1] = create2Transfer
+	txs[1].Hash = utils.RandomHash()
+
+	err := s.storage.BatchAddCreat2Transfer(txs)
+	s.NoError(err)
+
+	transfer, err := s.storage.GetCreate2Transfer(txs[0].Hash)
+	s.NoError(err)
+	s.Equal(txs[0], *transfer)
+	transfer, err = s.storage.GetCreate2Transfer(txs[1].Hash)
+	s.NoError(err)
+	s.Equal(txs[1], *transfer)
+}
+
+func (s *Create2TransferTestSuite) TestBatchAddCreate2Transfer_NoTransfers() {
+	err := s.storage.BatchAddCreat2Transfer([]models.Create2Transfer{})
+	s.Equal(ErrNoRowsAffected, err)
+}
+
 func (s *Create2TransferTestSuite) TestGetCreate2Transfer_NonExistentTransaction() {
 	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
 	res, err := s.storage.GetCreate2Transfer(hash)

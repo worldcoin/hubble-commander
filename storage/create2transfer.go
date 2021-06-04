@@ -55,6 +55,48 @@ func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) (err error) {
 	return tx.Commit()
 }
 
+func (s *Storage) BatchAddCreat2Transfer(txs []models.Create2Transfer) error {
+	if len(txs) < 1 {
+		return ErrNoRowsAffected
+	}
+
+	tx, txStorage, err := s.BeginTransaction(TxOptions{Postgres: true})
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(&err)
+
+	txBase := make([]models.TransactionBase, 0, len(txs))
+	for i := range txs {
+		txBase = append(txBase, txs[i].TransactionBase)
+	}
+	err = txStorage.BatchAddTransactionBase(txBase)
+	if err != nil {
+		return err
+	}
+
+	query := s.QB.Insert("create2transfer")
+	for i := range txs {
+		query = query.Values(
+			txs[i].Hash,
+			txs[i].ToStateID,
+			txs[i].ToPublicKey,
+		)
+	}
+	res, err := txStorage.Postgres.Query(query).Exec()
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrNoRowsAffected
+	}
+	return tx.Commit()
+}
+
 func (s *Storage) GetCreate2Transfer(hash common.Hash) (*models.Create2Transfer, error) {
 	res := make([]models.Create2Transfer, 0, 1)
 	err := s.Postgres.Query(
