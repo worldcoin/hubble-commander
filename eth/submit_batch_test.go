@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -100,13 +101,13 @@ func (s *SubmitBatchTestSuite) TestSubmitTransfersBatch_SubmitsBatchWithoutMinin
 	s.NoError(err)
 	s.NotNil(tx)
 
-	batches, err := s.client.Client.GetBatches(ref.Uint32(0))
+	batches, err := s.client.Client.GetBatches(&bind.FilterOpts{})
 	s.NoError(err)
 	s.Len(batches, 0)
 
 	s.client.Commit()
 
-	batches, err = s.client.Client.GetBatches(ref.Uint32(0))
+	batches, err = s.client.Client.GetBatches(&bind.FilterOpts{})
 	s.NoError(err)
 	s.Len(batches, 1)
 }
@@ -119,13 +120,13 @@ func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatch_SubmitsBatchWitho
 	s.NoError(err)
 	s.NotNil(tx)
 
-	batches, err := s.client.Client.GetBatches(ref.Uint32(0))
+	batches, err := s.client.Client.GetBatches(&bind.FilterOpts{})
 	s.NoError(err)
 	s.Len(batches, 0)
 
 	s.client.Commit()
 
-	batches, err = s.client.Client.GetBatches(ref.Uint32(0))
+	batches, err = s.client.Client.GetBatches(&bind.FilterOpts{})
 	s.NoError(err)
 	s.Len(batches, 1)
 }

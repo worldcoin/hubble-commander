@@ -1,14 +1,6 @@
 package commander
 
-import (
-	"context"
-	"log"
-
-	"github.com/Worldcoin/hubble-commander/eth"
-	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum"
-)
-
+/*
 func saveBatch(storage *st.Storage, client *eth.Client) error {
 	pendingBatch, err := storage.GetOldestPendingBatch()
 	if st.IsNotFoundError(err) {
@@ -66,3 +58,4 @@ func saveBatch(storage *st.Storage, client *eth.Client) error {
 
 	return nil
 }
+*/

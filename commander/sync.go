@@ -18,7 +18,7 @@ var (
 )
 
 func (t *transactionExecutor) SyncBatches(startBlock, endBlock uint64) error {
-	latestBatchNumber, err := getLatestBatchID(t.storage)
+	latestBatchNumber, err := getLatestBatchNumber(t.storage)
 	if err != nil {
 		return err
 	}
@@ -36,15 +36,44 @@ func (t *transactionExecutor) SyncBatches(startBlock, endBlock uint64) error {
 		if batch.Number.Cmp(latestBatchNumber) <= 0 {
 			continue
 		}
-		if err := t.syncBatch(batch); err != nil {
+
+		localBatch, err := t.storage.GetBatchByNumber(*batch.Number)
+		if st.IsNotFoundError(err) {
+			if err := t.syncBatch(batch); err != nil {
+				return err
+			}
+			continue
+		}
+		if err != nil {
 			return err
+		}
+
+		if batch.TransactionHash == localBatch.TransactionHash {
+			err = t.storage.MarkBatchAsSubmitted(&batch.Batch)
+			if err != nil {
+				return err
+			}
+
+			err = t.storage.UpdateCommitmentsAccountTreeRoot(localBatch.ID, batch.AccountRoot)
+			if err != nil {
+				return err
+			}
+
+			log.Printf(
+				"Submitted %d commitment(s) on chain. Batch ID: %d. Batch Hash: %v",
+				len(batch.Commitments),
+				batch.Number.Uint64(),
+				batch.Hash,
+			)
+		} else {
+			// race condition
 		}
 	}
 
 	return nil
 }
 
-func getLatestBatchID(storage *st.Storage) (*models.Uint256, error) {
+func getLatestBatchNumber(storage *st.Storage) (*models.Uint256, error) {
 	latestBatch, err := storage.GetLatestSubmittedBatch()
 	if st.IsNotFoundError(err) {
 		return models.NewUint256(0), nil
