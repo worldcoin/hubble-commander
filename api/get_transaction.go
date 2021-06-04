@@ -13,14 +13,14 @@ func (a *API) GetTransaction(hash common.Hash) (interface{}, error) {
 		return nil, err
 	}
 	if transfer != nil {
-		return a.returnTransferReceipt(transfer)
+		return a.returnTransferReceipt(&transfer.Transfer)
 	}
 
 	transaction, err := a.storage.GetCreate2Transfer(hash)
 	if err != nil {
 		return nil, err
 	}
-	return a.returnCreate2TransferReceipt(transaction)
+	return a.returnCreate2TransferReceipt(&transaction.Create2Transfer)
 }
 
 func (a *API) returnTransferReceipt(transfer *models.Transfer) (*dto.TransferReceipt, error) {

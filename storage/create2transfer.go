@@ -97,12 +97,17 @@ func (s *Storage) BatchAddCreate2Transfer(txs []models.Create2Transfer) error {
 	return tx.Commit()
 }
 
-func (s *Storage) GetCreate2Transfer(hash common.Hash) (*models.Create2Transfer, error) {
-	res := make([]models.Create2Transfer, 0, 1)
+func (s *Storage) GetCreate2Transfer(hash common.Hash) (*models.Create2TransferWithBatchHash, error) {
+	res := make([]models.Create2TransferWithBatchHash, 0, 1)
 	err := s.Postgres.Query(
-		s.QB.Select(create2TransferColumns...).
+		s.QB.Select("transaction_base.*",
+			"create2transfer.to_state_id",
+			"create2transfer.to_public_key",
+			"batch.batch_hash").
 			From("transaction_base").
 			JoinClause("NATURAL JOIN create2transfer").
+			LeftJoin("commitment on commitment.commitment_id = transaction_base.included_in_commitment").
+			LeftJoin("batch on batch.batch_id = commitment.included_in_batch").
 			Where(squirrel.Eq{"tx_hash": hash}),
 	).Into(&res)
 	if err != nil {
