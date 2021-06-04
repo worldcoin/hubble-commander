@@ -96,6 +96,7 @@ func (s *SyncTestSuite) TearDownTest() {
 }
 
 func (s *SyncTestSuite) TestSyncBatches_Transfer() {
+	// TODO split this test into two
 	tx := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			TxType:      txtype.Transfer,
@@ -121,10 +122,7 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 
 	s.recreateDatabase()
 
-	latestBlockNumber, err := s.client.GetLatestBlockNumber()
-	s.NoError(err)
-	err = s.transactionExecutor.SyncBatches(0, *latestBlockNumber)
-	s.NoError(err)
+	s.syncAllBlocks()
 
 	// Begin db transaction
 	transactionExecutor, err := newTransactionExecutorWithCtx(context.Background(), s.storage, s.client.Client, s.cfg)
@@ -163,10 +161,7 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	s.NoError(err)
 	s.Len(batches, 1)
 
-	latestBlockNumber, err = s.client.GetLatestBlockNumber()
-	s.NoError(err)
-	err = s.transactionExecutor.SyncBatches(0, *latestBlockNumber)
-	s.NoError(err)
+	s.syncAllBlocks()
 
 	state0, err := s.storage.GetStateLeaf(0)
 	s.NoError(err)
@@ -228,10 +223,7 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 
 	s.recreateDatabase()
 
-	latestBlockNumber, err := s.client.GetLatestBlockNumber()
-	s.NoError(err)
-	err = s.transactionExecutor.SyncBatches(0, *latestBlockNumber)
-	s.NoError(err)
+	s.syncAllBlocks()
 
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
@@ -279,6 +271,8 @@ func (s *SyncTestSuite) TestSyncBatches_PendingBatch() {
 	s.client.Commit()
 
 	s.recreateDatabase()
+
+	// TODO finish this test
 }
 
 func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
