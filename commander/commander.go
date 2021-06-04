@@ -26,11 +26,11 @@ type Commander struct {
 	rollupLoopRunning bool
 	stateMutex        sync.Mutex
 
-	stopChannel chan bool
-	storage     *st.Storage
-	client      *eth.Client
-	apiServer   *http.Server
-	domain      *bls.Domain
+	stopChannel      chan bool
+	storage          *st.Storage
+	client           *eth.Client
+	apiServer        *http.Server
+	signaturesDomain *bls.Domain
 }
 
 func NewCommander(cfg *config.Config) *Commander {
@@ -64,7 +64,7 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.domain, err = c.storage.GetDomain(c.client.ChainState.ChainID)
+	c.signaturesDomain, err = c.storage.GetDomain(c.client.ChainState.ChainID)
 	if err != nil {
 		return err
 	}

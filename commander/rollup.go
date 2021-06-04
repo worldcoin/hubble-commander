@@ -54,10 +54,10 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 	defer transactionExecutor.Rollback(&err)
 
 	if *currentBatchType == txtype.Transfer {
-		err = transactionExecutor.CreateAndSubmitBatch(*currentBatchType, c.domain)
+		err = transactionExecutor.CreateAndSubmitBatch(*currentBatchType, c.signaturesDomain)
 		*currentBatchType = txtype.Create2Transfer
 	} else {
-		err = transactionExecutor.CreateAndSubmitBatch(*currentBatchType, c.domain)
+		err = transactionExecutor.CreateAndSubmitBatch(*currentBatchType, c.signaturesDomain)
 		*currentBatchType = txtype.Transfer
 	}
 	if err != nil {
