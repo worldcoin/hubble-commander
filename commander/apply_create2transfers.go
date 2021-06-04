@@ -24,7 +24,13 @@ func ApplyCreate2Transfers(
 	if len(transfers) == 0 {
 		return
 	}
-	events, unsubscribe, err := client.WatchRegistrations(&bind.WatchOpts{})
+	syncedBlock, err := storage.GetSyncedBlock(client.ChainState.ChainID)
+	if err != nil {
+		return
+	}
+	events, unsubscribe, err := client.WatchRegistrations(&bind.WatchOpts{
+		Start: syncedBlock,
+	})
 	if err != nil {
 		return
 	}

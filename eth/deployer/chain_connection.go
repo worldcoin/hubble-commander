@@ -26,5 +26,7 @@ type ChainConnection interface {
 
 	GetChainID() models.Uint256
 
+	GetLatestBlockNumber() (*uint64, error)
+
 	SubscribeNewHead(ch chan<- *types.Header) (ethereum.Subscription, error)
 }

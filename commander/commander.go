@@ -20,8 +20,10 @@ import (
 )
 
 type Commander struct {
-	cfg     *config.Config
-	workers sync.WaitGroup
+	cfg               *config.Config
+	workers           sync.WaitGroup
+	rollupLoopRunning bool
+	stateMutex        sync.Mutex
 
 	stopChannel chan bool
 	storage     *st.Storage
@@ -67,15 +69,13 @@ func (c *Commander) Start() (err error) {
 
 	stopChannel := make(chan bool)
 	c.startWorker(func() error {
-		err := c.apiServer.ListenAndServe()
+		err = c.apiServer.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
 			return err
 		}
 		return nil
 	})
 	c.startWorker(func() error { return c.newBlockLoop() })
-	c.startWorker(func() error { return c.rollupLoop() })
-	c.startWorker(func() error { return WatchAccounts(c.storage, c.client, stopChannel) })
 	c.stopChannel = stopChannel
 
 	log.Printf("Commander started and listening on port %s.\n", c.cfg.API.Port)
@@ -252,6 +252,7 @@ func bootstrapState(
 		AccountRegistry: *accountRegistryAddress,
 		Rollup:          contracts.RollupAddress,
 		GenesisAccounts: populatedAccounts,
+		SyncedBlock:     0,
 	}
 
 	return chainState, nil

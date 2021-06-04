@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -12,7 +13,20 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func (c *Commander) rollupLoop() (err error) {
+func (c *Commander) manageRollupLoop(cancel context.CancelFunc, isProposer bool) context.CancelFunc {
+	if isProposer && !c.rollupLoopRunning {
+		var ctx context.Context
+		ctx, cancel = context.WithCancel(context.Background())
+		c.startWorker(func() error { return c.rollupLoop(ctx) })
+		c.rollupLoopRunning = true
+	} else if !isProposer && c.rollupLoopRunning {
+		cancel()
+		c.rollupLoopRunning = false
+	}
+	return cancel
+}
+
+func (c *Commander) rollupLoop(ctx context.Context) (err error) {
 	ticker := time.NewTicker(c.cfg.Rollup.BatchLoopInterval)
 	defer ticker.Stop()
 
@@ -20,10 +34,12 @@ func (c *Commander) rollupLoop() (err error) {
 
 	for {
 		select {
+		case <-ctx.Done():
+			return nil
 		case <-c.stopChannel:
 			return nil
 		case <-ticker.C:
-			err := c.rollupLoopIteration(&currentBatchType)
+			err := c.rollupLoopIteration(ctx, &currentBatchType)
 			if err != nil {
 				return err
 			}
@@ -31,12 +47,10 @@ func (c *Commander) rollupLoop() (err error) {
 	}
 }
 
-func (c *Commander) rollupLoopIteration(currentBatchType *txtype.TransactionType) (err error) {
-	if !c.storage.IsProposer() {
-		return nil
-	}
-
-	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, c.cfg.Rollup)
+func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *txtype.TransactionType) (err error) {
+	c.stateMutex.Lock()
+	defer c.stateMutex.Unlock()
+	transactionExecutor, err := newTransactionExecutorWithCtx(ctx, c.storage, c.client, c.cfg.Rollup)
 	if err != nil {
 		return err
 	}
@@ -77,7 +91,7 @@ func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionT
 		return err
 	}
 
-	err = submitBatch(batchType, commitments, t.storage, t.client, t.cfg)
+	err = submitBatch(t.ctx, batchType, commitments, t.storage, t.client, t.cfg)
 	if err != nil {
 		return err
 	}

@@ -21,7 +21,7 @@ import (
 )
 
 // Total number of transactions to be sent.
-const txCount = 10_000
+const txCount = 1_000
 
 // Number of transaction that will be sent in a single batch (unrelated to rollup "batches").
 const txBatchSize = 32

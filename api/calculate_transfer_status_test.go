@@ -115,7 +115,7 @@ func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Finalised
 	currentBlockNumber, err := s.sim.GetLatestBlockNumber()
 	s.NoError(err)
 	batch := models.Batch{
-		FinalisationBlock: ref.Uint32(*currentBlockNumber + 1),
+		FinalisationBlock: ref.Uint32(uint32(*currentBlockNumber) + 1),
 	}
 	batchID, err := s.storage.AddBatch(&batch)
 	s.NoError(err)
@@ -131,7 +131,7 @@ func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Finalised
 	latestBlockNumber, err := s.sim.GetLatestBlockNumber()
 	s.NoError(err)
 
-	status, err := CalculateTransferStatus(s.storage, &s.transfer.TransactionBase, *latestBlockNumber)
+	status, err := CalculateTransferStatus(s.storage, &s.transfer.TransactionBase, uint32(*latestBlockNumber))
 	s.NoError(err)
 
 	s.Equal(txstatus.Finalised, *status)

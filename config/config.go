@@ -19,7 +19,7 @@ func setupViper() {
 	err := viper.ReadInConfig()
 	if err != nil {
 		if strings.Contains(err.Error(), "no such file or directory") {
-			log.Printf("Configuration file not found (%s). Continuing with default config.", getConfigPath())
+			log.Printf("Configuration file not found (%s). Continuing with default config (possibly overridden by env vars).", getConfigPath())
 		} else {
 			log.Fatalf("failed to read in config: %s", err)
 		}
@@ -32,6 +32,7 @@ func GetConfig() *Config {
 	return &Config{
 		Rollup: &RollupConfig{
 			SyncBatches:            getBool("rollup.sync_batches", true),
+			SyncSize:               getUint32("rollup.sync_size", 50),
 			FeeReceiverPubKeyID:    getUint32("rollup.fee_receiver_pub_key_id", 0),
 			TxsPerCommitment:       getUint32("rollup.txs_per_commitment", 32),
 			MinCommitmentsPerBatch: getUint32("rollup.min_commitments_per_batch", 1),
@@ -67,6 +68,7 @@ func GetTestConfig() *Config {
 	return &Config{
 		Rollup: &RollupConfig{
 			SyncBatches:            getBool("rollup.sync_batches", false),
+			SyncSize:               getUint32("rollup.sync_size", 50),
 			FeeReceiverPubKeyID:    getUint32("rollup.fee_receiver_pub_key_id", 0),
 			TxsPerCommitment:       getUint32("rollup.txs_per_commitment", 2),
 			MinCommitmentsPerBatch: getUint32("rollup.min_commitments_per_batch", 1),
@@ -122,13 +124,13 @@ func getBadgerPath() string {
 }
 
 func getEthereumConfig() *EthereumConfig {
-	rpcURL := getStringOrNil("ETHEREUM_RPC_URL")
+	rpcURL := getStringOrNil("ethereum.rpc_url")
 	if rpcURL == nil {
 		return nil
 	}
 	return &EthereumConfig{
 		RPCURL:     *rpcURL,
-		ChainID:    getStringOrThrow("ETHEREUM_CHAIN_ID"),
-		PrivateKey: getStringOrThrow("ETHEREUM_PRIVATE_KEY"),
+		ChainID:    getStringOrThrow("ethereum.chain_id"),
+		PrivateKey: getStringOrThrow("ethereum.private_key"),
 	}
 }
