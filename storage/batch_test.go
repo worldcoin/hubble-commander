@@ -39,6 +39,7 @@ func (s *BatchTestSuite) TestAddBatch_AddAndRetrieve() {
 		Hash:              utils.NewRandomHash(),
 		Number:            models.MakeUint256(1),
 		FinalisationBlock: ref.Uint32(1234),
+		AccountTreeRoot:   utils.NewRandomHash(),
 	}
 	id, err := s.storage.AddBatch(batch)
 	s.NoError(err)
@@ -82,6 +83,7 @@ func (s *BatchTestSuite) TestGetBatchByNumber() {
 		Hash:              utils.NewRandomHash(),
 		Number:            models.MakeUint256(1234),
 		FinalisationBlock: ref.Uint32(1234),
+		AccountTreeRoot: utils.NewRandomHash(),
 	}
 	id, err := s.storage.AddBatch(batch)
 	s.NoError(err)
@@ -112,6 +114,7 @@ func (s *BatchTestSuite) TestGetBatchByCommitmentID() {
 		Hash:              utils.NewRandomHash(),
 		Number:            models.MakeUint256(1),
 		FinalisationBlock: ref.Uint32(1234),
+		AccountTreeRoot: utils.NewRandomHash(),
 	}
 
 	batchID, err := s.storage.AddBatch(batch)
@@ -165,6 +168,7 @@ func (s *BatchTestSuite) TestGetLatestSubmittedBatch() {
 			Number:            models.MakeUint256(1234),
 			FinalisationBlock: ref.Uint32(1234),
 			TransactionHash:   utils.RandomHash(),
+			AccountTreeRoot: utils.NewRandomHash(),
 		},
 		{
 			ID:                2,
@@ -173,6 +177,7 @@ func (s *BatchTestSuite) TestGetLatestSubmittedBatch() {
 			Number:            models.MakeUint256(2000),
 			FinalisationBlock: ref.Uint32(1234),
 			TransactionHash:   utils.RandomHash(),
+			AccountTreeRoot: utils.NewRandomHash(),
 		},
 	}
 	pendingBatch := models.Batch{
@@ -207,6 +212,7 @@ func (s *BatchTestSuite) TestGetLatestFinalisedBatch() {
 			Hash:              utils.NewRandomHash(),
 			Number:            models.MakeUint256(1234),
 			FinalisationBlock: ref.Uint32(1234),
+			AccountTreeRoot: utils.NewRandomHash(),
 		},
 		{
 			ID:                2,
@@ -215,6 +221,7 @@ func (s *BatchTestSuite) TestGetLatestFinalisedBatch() {
 			Hash:              utils.NewRandomHash(),
 			Number:            models.MakeUint256(1800),
 			FinalisationBlock: ref.Uint32(1800),
+			AccountTreeRoot: utils.NewRandomHash(),
 		},
 		{
 			ID:                3,
@@ -223,6 +230,7 @@ func (s *BatchTestSuite) TestGetLatestFinalisedBatch() {
 			Hash:              utils.NewRandomHash(),
 			Number:            models.MakeUint256(2000),
 			FinalisationBlock: ref.Uint32(2000),
+			AccountTreeRoot: utils.NewRandomHash(),
 		},
 	}
 	pendingBatch := models.Batch{
@@ -306,7 +314,7 @@ func (s *BatchTestSuite) TestGetBatchesInRange_ReturnsAllBatchesUpUntilUpperBoun
 	s.Equal(batches[:2], actual)
 }
 
-func (s *BatchTestSuite) TestGetBatchWithAccountRoot_AddAndRetrieve() {
+func (s *BatchTestSuite) TestGetBatchByHash_AddAndRetrieve() {
 	batch := &models.Batch{
 		ID:                1,
 		Type:              txtype.Transfer,
@@ -314,58 +322,19 @@ func (s *BatchTestSuite) TestGetBatchWithAccountRoot_AddAndRetrieve() {
 		Hash:              utils.NewRandomHash(),
 		Number:            models.MakeUint256(1),
 		FinalisationBlock: ref.Uint32(1234),
+		AccountTreeRoot:   utils.NewRandomHash(),
 	}
 	_, err := s.storage.AddBatch(batch)
 	s.NoError(err)
 
-	includedCommitment := commitment
-	includedCommitment.AccountTreeRoot = utils.NewRandomHash()
-	includedCommitment.IncludedInBatch = &batch.ID
-	_, err = s.storage.AddCommitment(&includedCommitment)
+	actual, err := s.storage.GetBatchByHash(*batch.Hash)
 	s.NoError(err)
-
-	batchWithAccountRoot := &models.BatchWithAccountRoot{
-		Batch:           *batch,
-		AccountTreeRoot: includedCommitment.AccountTreeRoot,
-	}
-
-	actual, err := s.storage.GetBatchWithAccountRoot(*batch.Hash)
-	s.NoError(err)
-	s.Equal(batchWithAccountRoot, actual)
-
-	actual, err = s.storage.GetBatchWithAccountRootByNumber(batch.Number)
-	s.NoError(err)
-	s.Equal(batchWithAccountRoot, actual)
+	s.Equal(batch, actual)
 }
 
-func (s *BatchTestSuite) TestGetBatchWithAccountRoot_NotExistingBatch() {
-	notFoundErr := NewNotFoundError("batch")
-	_, err := s.storage.GetBatchWithAccountRoot(utils.RandomHash())
-	s.Equal(notFoundErr, err)
-
-	_, err = s.storage.GetBatchWithAccountRootByNumber(models.MakeUint256(12))
-	s.Equal(notFoundErr, err)
-}
-
-func (s *BatchTestSuite) TestGetNextBatchNumber() {
-	batch := &models.Batch{
-		Type:            txtype.Transfer,
-		TransactionHash: utils.RandomHash(),
-		Hash:            utils.NewRandomHash(),
-		Number:          models.MakeUint256(1),
-	}
-	_, err := s.storage.AddBatch(batch)
-	s.NoError(err)
-
-	batchNumber, err := s.storage.GetNextBatchNumber()
-	s.NoError(err)
-	s.Equal(models.NewUint256(2), batchNumber)
-}
-
-func (s *BatchTestSuite) TestGetNextBatchNumber_NoBatches() {
-	batchNumber, err := s.storage.GetNextBatchNumber()
-	s.NoError(err)
-	s.Equal(models.NewUint256(1), batchNumber)
+func (s *BatchTestSuite) TestGetBatchByHash_NotExistingBatch() {
+	_, err := s.storage.GetBatchByHash(utils.RandomHash())
+	s.True(IsNotFoundError(err))
 }
 
 func TestBatchTestSuite(t *testing.T) {
