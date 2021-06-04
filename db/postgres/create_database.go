@@ -3,27 +3,29 @@ package postgres
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 )
 
 func CreateDatabaseIfNotExist(cfg *config.PostgresConfig) (err error) {
-	datasource := CreateDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, nil)
-	dbInstance, err := sqlx.Connect("postgres", datasource)
+	exists, err := databaseExists(cfg)
 	if err != nil {
 		return err
 	}
-	defer closeDB(dbInstance, &err)
-
-	exists, err := databaseExists(dbInstance, cfg.Name)
-	if err != nil {
-		return err
-	}
-
 	if *exists {
 		return nil
 	}
+
+	datasource := CreateDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, nil)
+	dbInstance, err := sqlx.Connect("postgres", datasource)
+	if err != nil {
+		return errors.Errorf("database %s does not exist and could not create it", cfg.Name)
+	}
+	defer closeDB(dbInstance, &err)
 
 	log.Printf("Creating database %s", cfg.Name)
 	return createDatabase(dbInstance, cfg.Name)
@@ -56,21 +58,28 @@ func RecreateDatabase(cfg *config.PostgresConfig) (err error) {
 	return createDatabase(dbInstance, cfg.Name)
 }
 
+func databaseExists(cfg *config.PostgresConfig) (*bool, error) {
+	datasource := CreateDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, &cfg.Name)
+	dbInstance, err := sqlx.Connect("postgres", datasource)
+	if err == nil {
+		return ref.Bool(true), dbInstance.Close()
+	}
+	if isDBNotExistsError(cfg.Name, err) {
+		return ref.Bool(false), nil
+	}
+	return nil, err
+}
+
+func isDBNotExistsError(dbName string, err error) bool {
+	notExistsMsg := fmt.Sprintf("database \"%s\" does not exist", dbName)
+	return strings.Contains(err.Error(), notExistsMsg)
+}
+
 // nolint:gocritic
 func closeDB(dbInstance *sqlx.DB, err *error) {
 	if closeErr := dbInstance.Close(); *err == nil {
 		*err = closeErr
 	}
-}
-
-func databaseExists(dbInstance *sqlx.DB, dbName string) (*bool, error) {
-	query := fmt.Sprintf("SELECT EXISTS(SELECT datname FROM pg_catalog.pg_database WHERE datname = '%s')", dbName)
-	row := dbInstance.QueryRow(query)
-	var exists bool
-	if err := row.Scan(&exists); err != nil {
-		return nil, err
-	}
-	return &exists, nil
 }
 
 func createDatabase(dbInstance *sqlx.DB, dbName string) error {

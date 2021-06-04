@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -101,7 +102,7 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   *s.mockSignature(),
+			Signature:   *mockSignature(s.T()),
 		},
 		ToStateID: 1,
 	}
@@ -112,7 +113,7 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	err = s.transactionExecutor.submitBatch(txtype.Transfer, commitments)
+	err = s.transactionExecutor.submitBatch(context.Background(), txtype.Transfer, commitments)
 	s.NoError(err)
 
 	// Recreate database
@@ -120,7 +121,9 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	s.NoError(err)
 	s.setupDB()
 
-	err = s.transactionExecutor.SyncBatches()
+	latestBlockNumber, err := s.client.GetLatestBlockNumber()
+	s.NoError(err)
+	err = s.transactionExecutor.SyncBatches(0, *latestBlockNumber)
 	s.NoError(err)
 
 	transactionExecutor, err := newTransactionExecutor(s.storage, s.client.Client, s.cfg)
@@ -133,7 +136,7 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 			Amount:      models.MakeUint256(100),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   *s.mockSignature(),
+			Signature:   *mockSignature(s.T()),
 		},
 		ToStateID: 0,
 	}
@@ -144,7 +147,7 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	err = transactionExecutor.submitBatch(txtype.Transfer, commitments)
+	err = transactionExecutor.submitBatch(context.Background(), txtype.Transfer, commitments)
 	s.NoError(err)
 
 	batches, err := transactionExecutor.storage.GetBatchesInRange(nil, nil)
@@ -157,7 +160,7 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	s.NoError(err)
 	s.Len(batches, 1)
 
-	err = s.transactionExecutor.SyncBatches()
+	err = s.transactionExecutor.SyncBatches(0, *latestBlockNumber+2)
 	s.NoError(err)
 
 	state0, err := s.storage.GetStateLeaf(0)
@@ -189,7 +192,7 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   *s.mockSignature(),
+			Signature:   *mockSignature(s.T()),
 		},
 		ToStateID:   ref.Uint32(5),
 		ToPublicKey: models.PublicKey{2, 3, 4},
@@ -201,7 +204,7 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	err = s.transactionExecutor.submitBatch(txtype.Create2Transfer, commitments)
+	err = s.transactionExecutor.submitBatch(context.Background(), txtype.Create2Transfer, commitments)
 	s.NoError(err)
 
 	// Recreate database
@@ -209,7 +212,9 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	s.NoError(err)
 	s.setupDB()
 
-	err = s.transactionExecutor.SyncBatches()
+	latestBlockNumber, err := s.client.GetLatestBlockNumber()
+	s.NoError(err)
+	err = s.transactionExecutor.SyncBatches(0, *latestBlockNumber)
 	s.NoError(err)
 
 	state0, err := s.storage.GetStateLeaf(0)
@@ -226,11 +231,11 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	s.Len(batches, 1)
 }
 
-func (s *SyncTestSuite) mockSignature() *models.Signature {
+func mockSignature(t *testing.T) *models.Signature {
 	wallet, err := bls.NewRandomWallet(*testDomain)
-	s.NoError(err)
+	require.NoError(t, err)
 	signature, err := wallet.Sign(utils.RandomBytes(4))
-	s.NoError(err)
+	require.NoError(t, err)
 	return signature.ModelsSignature()
 }
 

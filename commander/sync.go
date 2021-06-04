@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
 )
 
@@ -16,13 +17,16 @@ var (
 	ErrTransfersNotApplied = errors.New("could not apply all transfers from synced batch")
 )
 
-func (t *transactionExecutor) SyncBatches() error {
-	submissionBlock, latestBatchNumber, err := getLatestSubmissionBlockAndBatchNumber(t.storage, t.client)
+func (t *transactionExecutor) SyncBatches(startBlock, endBlock uint64) error {
+	latestBatchNumber, err := getLatestBatchID(t.storage)
 	if err != nil {
 		return err
 	}
 
-	newBatches, err := t.client.GetBatches(submissionBlock)
+	newBatches, err := t.client.GetBatches(&bind.FilterOpts{
+		Start: startBlock,
+		End:   &endBlock,
+	})
 	if err != nil {
 		return err
 	}
@@ -40,26 +44,14 @@ func (t *transactionExecutor) SyncBatches() error {
 	return nil
 }
 
-func getLatestSubmissionBlockAndBatchNumber(storage *st.Storage, client *eth.Client) (*uint32, *models.Uint256, error) {
-	var submissionBlock uint32
-	var latestBatchNumber *models.Uint256
-
+func getLatestBatchID(storage *st.Storage) (*models.Uint256, error) {
 	latestBatch, err := storage.GetLatestSubmittedBatch()
 	if st.IsNotFoundError(err) {
-		submissionBlock = 0
-		latestBatchNumber = models.NewUint256(0)
+		return models.NewUint256(0), nil
 	} else if err != nil {
-		return nil, nil, err
-	} else {
-		blocks, err := client.GetBlocksToFinalise()
-		if err != nil {
-			return nil, nil, err
-		}
-		submissionBlock = *latestBatch.FinalisationBlock - uint32(*blocks)
-		latestBatchNumber = latestBatch.Number
+		return nil, err
 	}
-
-	return &submissionBlock, latestBatchNumber, nil
+	return latestBatch.Number, nil
 }
 
 func (t *transactionExecutor) syncBatch(batch *eth.DecodedBatch) error {

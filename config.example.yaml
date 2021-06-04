@@ -1,5 +1,6 @@
 #rollup:
 #  sync_batches: true
+#  sync_size: 50
 #  fee_receiver_pub_key_id: 0
 #  txs_per_commitment: 32
 #  min_commitments_per_batch: 1

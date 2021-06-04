@@ -4,16 +4,73 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestSetLatestBlockNumber(t *testing.T) {
-	storage := Storage{}
+type BlockNumberTestSuite struct {
+	*require.Assertions
+	suite.Suite
+	storage *TestStorage
+}
+
+func (s *BlockNumberTestSuite) SetupSuite() {
+	s.Assertions = require.New(s.T())
+}
+
+func (s *BlockNumberTestSuite) SetupTest() {
+	var err error
+	s.storage, err = NewTestStorage()
+	s.NoError(err)
+}
+
+func (s *BlockNumberTestSuite) TearDownTest() {
+	err := s.storage.Teardown()
+	s.NoError(err)
+}
+
+func (s *BlockNumberTestSuite) TestSetLatestBlockNumber() {
 	currentBlockNumber := uint32(420)
 
-	storage.SetLatestBlockNumber(currentBlockNumber)
+	s.storage.SetLatestBlockNumber(currentBlockNumber)
 
-	latestBlockNumber := storage.GetLatestBlockNumber()
+	latestBlockNumber := s.storage.GetLatestBlockNumber()
 
-	require.Equal(t, currentBlockNumber, latestBlockNumber)
-	require.Equal(t, currentBlockNumber, storage.latestBlockNumber)
+	s.Equal(currentBlockNumber, latestBlockNumber)
+	s.Equal(currentBlockNumber, s.storage.latestBlockNumber)
+}
+
+func (s *BlockNumberTestSuite) TestGetSyncedBlock() {
+	err := s.storage.SetChainState(&chainState)
+	s.NoError(err)
+
+	syncedBlock, err := s.storage.GetSyncedBlock(chainState.ChainID)
+	s.NoError(err)
+
+	s.Equal(chainState.SyncedBlock, *syncedBlock)
+}
+
+func (s *BlockNumberTestSuite) TestGetSyncedBlock_NoExistentChainState() {
+	syncedBlock, err := s.storage.GetSyncedBlock(chainState.ChainID)
+	s.NoError(err)
+
+	s.Equal(uint64(0), *syncedBlock)
+}
+
+func (s *BlockNumberTestSuite) TestSetSyncedBlock() {
+	err := s.storage.SetChainState(&chainState)
+	s.NoError(err)
+
+	blockNumber := uint64(450)
+	err = s.storage.SetSyncedBlock(chainState.ChainID, blockNumber)
+	s.NoError(err)
+
+	syncedBlock, err := s.storage.GetSyncedBlock(chainState.ChainID)
+	s.NoError(err)
+
+	s.Equal(blockNumber, *syncedBlock)
+	s.Equal(blockNumber, *s.storage.syncedBlock)
+}
+
+func TestTestSuite(t *testing.T) {
+	suite.Run(t, new(BlockNumberTestSuite))
 }

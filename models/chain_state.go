@@ -13,6 +13,7 @@ type ChainState struct {
 	AccountRegistry common.Address  `db:"account_registry" json:"accountRegistry"`
 	Rollup          common.Address  `json:"rollup"`
 	GenesisAccounts GenesisAccounts `db:"genesis_accounts" json:"-"` // Will not be included in JSON serialized data.
+	SyncedBlock     uint64          `db:"synced_block" json:"-"`
 }
 
 type GenesisAccounts []PopulatedGenesisAccount

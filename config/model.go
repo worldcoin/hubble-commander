@@ -21,6 +21,7 @@ type RollupConfig struct {
 	BootstrapNodeURL *string
 
 	SyncBatches bool
+	SyncSize    uint32
 
 	FeeReceiverPubKeyID    uint32
 	TxsPerCommitment       uint32

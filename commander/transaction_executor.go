@@ -1,6 +1,8 @@
 package commander
 
 import (
+	"context"
+
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -13,6 +15,7 @@ type transactionExecutor struct {
 	storage *st.Storage
 	tx      *db.TxController
 	client  *eth.Client
+	ctx     context.Context
 }
 
 // newTransactionExecutor creates a transactionExecutor and starts a database transaction.
@@ -27,6 +30,27 @@ func newTransactionExecutor(storage *st.Storage, client *eth.Client, cfg *config
 		storage: txStorage,
 		tx:      tx,
 		client:  client,
+	}, nil
+}
+
+// newTransactionExecutor creates a transactionExecutor with context and starts a database transaction.
+func newTransactionExecutorWithCtx(
+	ctx context.Context,
+	storage *st.Storage,
+	client *eth.Client,
+	cfg *config.RollupConfig,
+) (*transactionExecutor, error) {
+	tx, txStorage, err := storage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
+	if err != nil {
+		return nil, err
+	}
+
+	return &transactionExecutor{
+		cfg:     cfg,
+		storage: txStorage,
+		tx:      tx,
+		client:  client,
+		ctx:     ctx,
 	}, nil
 }
 

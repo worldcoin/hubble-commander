@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -57,9 +58,9 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 	_, _, err = s.client.SubmitTransfersBatch([]models.Commitment{commitment2})
 	s.NoError(err)
 
-	submissionBlockBatch1 := *batch1.FinalisationBlock - uint32(*finalisationBlocks)
-
-	batches, err := s.client.GetBatches(&submissionBlockBatch1)
+	batches, err := s.client.GetBatches(&bind.FilterOpts{
+		Start: uint64(*batch1.FinalisationBlock - uint32(*finalisationBlocks) + 1),
+	})
 	s.NoError(err)
 	s.Len(batches, 1)
 	s.NotEqual(common.Hash{}, batches[0].TransactionHash)

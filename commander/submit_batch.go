@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"context"
 	"log"
 
 	"github.com/Worldcoin/hubble-commander/models"
@@ -13,6 +14,7 @@ var (
 )
 
 func (t *transactionExecutor) submitBatch(
+	ctx context.Context, // TODO take from txExecutor
 	batchType txtype.TransactionType,
 	commitments []models.Commitment,
 ) error {
@@ -23,6 +25,12 @@ func (t *transactionExecutor) submitBatch(
 	var batch *models.Batch
 	var accountRoot *common.Hash
 	var err error
+
+	select {
+	case <-ctx.Done():
+		return NewRollupError("commander is no longer an active proposer")
+	default:
+	}
 
 	if batchType == txtype.Transfer {
 		batch, accountRoot, err = t.client.SubmitTransfersBatch(commitments)

@@ -20,7 +20,13 @@ func (t *transactionExecutor) ApplyCreate2Transfers(
 	if len(transfers) == 0 {
 		return nil, nil
 	}
-	events, unsubscribe, err := t.client.WatchRegistrations(&bind.WatchOpts{})
+	syncedBlock, err := t.storage.GetSyncedBlock(t.client.ChainState.ChainID)
+	if err != nil {
+		return nil, err
+	}
+	events, unsubscribe, err := t.client.WatchRegistrations(&bind.WatchOpts{
+		Start: syncedBlock,
+	})
 	if err != nil {
 		return nil, err
 	}

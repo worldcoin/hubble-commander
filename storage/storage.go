@@ -16,8 +16,8 @@ type Storage struct {
 	QB                  squirrel.StatementBuilderType
 	domain              *bls.Domain
 	feeReceiverStateIDs map[string]uint32 // token index => state id
-	isProposer          bool
 	latestBlockNumber   uint32
+	syncedBlock         *uint64
 }
 
 type TxOptions struct {
@@ -88,15 +88,7 @@ func NewConfiguredStorage(cfg *config.Config) (storage *Storage, err error) {
 
 func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, error) {
 	var txController *db.TxController
-	storage := Storage{
-		Postgres:            s.Postgres,
-		Badger:              s.Badger,
-		QB:                  s.QB,
-		domain:              s.domain,
-		feeReceiverStateIDs: s.feeReceiverStateIDs,
-		isProposer:          s.isProposer,
-		latestBlockNumber:   s.latestBlockNumber,
-	}
+	storage := *s
 
 	if opts.Postgres && !opts.ReadOnly {
 		postgresTx, postgresDB, err := s.Postgres.BeginTransaction()
