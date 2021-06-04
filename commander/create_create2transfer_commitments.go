@@ -5,30 +5,25 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
-	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func createCreate2TransferCommitments(
+func (t *transactionExecutor) createCreate2TransferCommitments(
 	pendingTransfers []models.Create2Transfer,
-	storage *st.Storage,
-	client *eth.Client,
-	cfg *config.RollupConfig,
-	domain bls.Domain,
+	domain *bls.Domain,
 ) ([]models.Commitment, error) {
-	stateTree := st.NewStateTree(storage)
+	stateTree := st.NewStateTree(t.storage)
 	commitments := make([]models.Commitment, 0, 32)
 
 	for {
-		if len(commitments) >= int(cfg.MaxCommitmentsPerBatch) {
+		if len(commitments) >= int(t.cfg.MaxCommitmentsPerBatch) {
 			break
 		}
-		if len(pendingTransfers) < int(cfg.TxsPerCommitment) {
+		if len(pendingTransfers) < int(t.cfg.TxsPerCommitment) {
 			break
 		}
 		startTime := time.Now()
@@ -38,12 +33,12 @@ func createCreate2TransferCommitments(
 			return nil, err
 		}
 
-		appliedTxs, invalidTxs, addedPubKeyIDs, feeReceiverStateID, err := ApplyCreate2Transfers(storage, client, pendingTransfers, cfg)
+		transfers, err := t.ApplyCreate2Transfers(pendingTransfers)
 		if err != nil {
 			return nil, err
 		}
 
-		if len(appliedTxs) < int(cfg.TxsPerCommitment) {
+		if len(transfers.appliedTransfers) < int(t.cfg.TxsPerCommitment) {
 			err = stateTree.RevertTo(*initialStateRoot)
 			if err != nil {
 				return nil, err
@@ -51,28 +46,28 @@ func createCreate2TransferCommitments(
 			break
 		}
 
-		pendingTransfers = removeCreate2Transfer(pendingTransfers, append(appliedTxs, invalidTxs...))
+		pendingTransfers = removeCreate2Transfer(pendingTransfers, append(transfers.appliedTransfers, transfers.invalidTransfers...))
 
-		serializedTxs, err := encoder.SerializeCreate2Transfers(appliedTxs, addedPubKeyIDs)
+		serializedTxs, err := encoder.SerializeCreate2Transfers(transfers.appliedTransfers, transfers.addedPubKeyIDs)
 		if err != nil {
 			return nil, err
 		}
 
-		combinedSignature, err := combineCreate2TransferSignatures(appliedTxs, domain)
+		combinedSignature, err := combineCreate2TransferSignatures(transfers.appliedTransfers, domain)
 		if err != nil {
 			return nil, err
 		}
 
-		commitment, err := createAndStoreCommitment(storage, txtype.Create2Transfer, *feeReceiverStateID, serializedTxs, combinedSignature)
+		commitment, err := t.createAndStoreCommitment(txtype.Create2Transfer, *transfers.feeReceiverStateID, serializedTxs, combinedSignature)
 		if err != nil {
 			return nil, err
 		}
 
-		err = markCreate2TransfersAsIncluded(storage, appliedTxs, commitment.ID)
+		err = t.markCreate2TransfersAsIncluded(transfers.appliedTransfers, commitment.ID)
 		if err != nil {
 			return nil, err
 		}
-		err = setCreate2TransferToStateID(storage, appliedTxs)
+		err = t.setCreate2TransferToStateID(transfers.appliedTransfers)
 		if err != nil {
 			return nil, err
 		}
@@ -81,7 +76,7 @@ func createCreate2TransferCommitments(
 		log.Printf(
 			"Created a %s commitment from %d transactions in %d ms",
 			txtype.Create2Transfer,
-			len(appliedTxs),
+			len(transfers.appliedTransfers),
 			time.Since(startTime).Milliseconds(),
 		)
 	}
@@ -111,10 +106,10 @@ func create2TransferExists(transferList []models.Create2Transfer, tx *models.Cre
 	return false
 }
 
-func combineCreate2TransferSignatures(transfers []models.Create2Transfer, domain bls.Domain) (*models.Signature, error) {
+func combineCreate2TransferSignatures(transfers []models.Create2Transfer, domain *bls.Domain) (*models.Signature, error) {
 	signatures := make([]*bls.Signature, 0, len(transfers))
 	for i := range transfers {
-		sig, err := bls.NewSignatureFromBytes(transfers[i].Signature[:], domain)
+		sig, err := bls.NewSignatureFromBytes(transfers[i].Signature[:], *domain)
 		if err != nil {
 			return nil, err
 		}
@@ -123,17 +118,17 @@ func combineCreate2TransferSignatures(transfers []models.Create2Transfer, domain
 	return bls.NewAggregatedSignature(signatures).ModelsSignature(), nil
 }
 
-func markCreate2TransfersAsIncluded(storage *st.Storage, transfers []models.Create2Transfer, commitmentID int32) error {
+func (t *transactionExecutor) markCreate2TransfersAsIncluded(transfers []models.Create2Transfer, commitmentID int32) error {
 	hashes := make([]common.Hash, 0, len(transfers))
 	for i := range transfers {
 		hashes = append(hashes, transfers[i].Hash)
 	}
-	return storage.BatchMarkTransactionAsIncluded(hashes, commitmentID)
+	return t.storage.BatchMarkTransactionAsIncluded(hashes, commitmentID)
 }
 
-func setCreate2TransferToStateID(storage *st.Storage, transfers []models.Create2Transfer) error {
+func (t *transactionExecutor) setCreate2TransferToStateID(transfers []models.Create2Transfer) error {
 	for i := range transfers {
-		err := storage.SetCreate2TransferToStateID(transfers[i].Hash, *transfers[i].ToStateID)
+		err := t.storage.SetCreate2TransferToStateID(transfers[i].Hash, *transfers[i].ToStateID)
 		if err != nil {
 			return err
 		}

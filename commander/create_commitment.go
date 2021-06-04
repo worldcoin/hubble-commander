@@ -6,14 +6,13 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func createAndStoreCommitment(
-	storage *st.Storage,
+func (t *transactionExecutor) createAndStoreCommitment(
 	txType txtype.TransactionType,
 	feeReceiverIndex uint32,
 	serializedTxs []byte,
 	combinedSignature *models.Signature,
 ) (*models.Commitment, error) {
-	stateRoot, err := st.NewStateTree(storage).Root()
+	stateRoot, err := st.NewStateTree(t.storage).Root()
 	if err != nil {
 		return nil, err
 	}
@@ -26,7 +25,7 @@ func createAndStoreCommitment(
 		PostStateRoot:     *stateRoot,
 	}
 
-	id, err := storage.AddCommitment(&commitment)
+	id, err := t.storage.AddCommitment(&commitment)
 	if err != nil {
 		return nil, err
 	}

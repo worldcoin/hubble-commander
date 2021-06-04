@@ -1,61 +1,60 @@
 package commander
 
 import (
-	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
-	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func ApplyTransfers(
-	storage *st.Storage,
+type AppliedTransfers struct {
+	appliedTransfers   []models.Transfer
+	invalidTransfers   []models.Transfer
+	feeReceiverStateID *uint32
+}
+
+func (t *transactionExecutor) ApplyTransfers(
 	transfers []models.Transfer,
-	cfg *config.RollupConfig,
-) (
-	appliedTransfers []models.Transfer,
-	invalidTransfers []models.Transfer,
-	feeReceiverStateID *uint32,
-	err error,
-) {
+) (*AppliedTransfers, error) {
 	if len(transfers) == 0 {
-		return
+		return nil, nil
 	}
 
-	appliedTransfers = make([]models.Transfer, 0, cfg.TxsPerCommitment)
+	returnStruct := &AppliedTransfers{}
+
+	returnStruct.appliedTransfers = make([]models.Transfer, 0, t.cfg.TxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
-	senderLeaf, err := storage.GetStateLeaf(transfers[0].FromStateID)
+	senderLeaf, err := t.storage.GetStateLeaf(transfers[0].FromStateID)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, err
 	}
 
 	commitmentTokenIndex := senderLeaf.TokenIndex
 
 	for i := range transfers {
 		transfer := &transfers[i]
-		transferError, appError := ApplyTransfer(storage, transfer, commitmentTokenIndex)
+		transferError, appError := ApplyTransfer(t.storage, transfer, commitmentTokenIndex)
 		if appError != nil {
-			return nil, nil, nil, appError
+			return nil, appError
 		}
 		if transferError != nil {
-			logAndSaveTransactionError(storage, &transfer.TransactionBase, transferError)
-			invalidTransfers = append(invalidTransfers, *transfer)
+			logAndSaveTransactionError(t.storage, &transfer.TransactionBase, transferError)
+			returnStruct.invalidTransfers = append(returnStruct.invalidTransfers, *transfer)
 			continue
 		}
 
-		appliedTransfers = append(appliedTransfers, *transfer)
+		returnStruct.appliedTransfers = append(returnStruct.appliedTransfers, *transfer)
 		combinedFee = *combinedFee.Add(&transfer.Fee)
 
-		if uint32(len(appliedTransfers)) == cfg.TxsPerCommitment {
+		if uint32(len(returnStruct.appliedTransfers)) == t.cfg.TxsPerCommitment {
 			break
 		}
 	}
 
-	if len(appliedTransfers) > 0 {
-		feeReceiverStateID, err = ApplyFee(storage, cfg.FeeReceiverPubKeyID, commitmentTokenIndex, combinedFee)
+	if len(returnStruct.appliedTransfers) > 0 {
+		returnStruct.feeReceiverStateID, err = t.ApplyFee(commitmentTokenIndex, combinedFee)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, err
 		}
 	}
 
-	return appliedTransfers, invalidTransfers, feeReceiverStateID, nil
+	return returnStruct, nil
 }
