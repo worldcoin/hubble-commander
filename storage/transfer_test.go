@@ -58,10 +58,43 @@ func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieve() {
 	err := s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 
+	expected := models.TransferWithBatchHash{
+		Transfer:  transfer,
+		BatchHash: nil,
+	}
 	res, err := s.storage.GetTransfer(transfer.Hash)
 	s.NoError(err)
 
-	s.Equal(transfer, *res)
+	s.Equal(expected, *res)
+}
+
+func (s *TransferTestSuite) TestGetTransfer_WithBatchHash() {
+	batch := &models.Batch{
+		Type:            txtype.Transfer,
+		TransactionHash: utils.RandomHash(),
+		Hash:            utils.NewRandomHash(),
+		Number:          models.NewUint256(1),
+	}
+	batchID, err := s.storage.AddBatch(batch)
+	s.NoError(err)
+
+	commitmentInBatch := commitment
+	commitmentInBatch.IncludedInBatch = batchID
+	commitmentID, err := s.storage.AddCommitment(&commitmentInBatch)
+	s.NoError(err)
+
+	transferInBatch := transfer
+	transferInBatch.IncludedInCommitment = commitmentID
+	err = s.storage.AddTransfer(&transferInBatch)
+	s.NoError(err)
+
+	expected := models.TransferWithBatchHash{
+		Transfer:  transferInBatch,
+		BatchHash: batch.Hash,
+	}
+	res, err := s.storage.GetTransfer(transferInBatch.Hash)
+	s.NoError(err)
+	s.Equal(expected, *res)
 }
 
 func (s *TransferTestSuite) TestBatchAddTransfer() {
