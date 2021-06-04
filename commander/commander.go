@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/Worldcoin/hubble-commander/api"
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
@@ -25,10 +26,11 @@ type Commander struct {
 	rollupLoopRunning bool
 	stateMutex        sync.Mutex
 
-	stopChannel chan bool
-	storage     *st.Storage
-	client      *eth.Client
-	apiServer   *http.Server
+	stopChannel      chan bool
+	storage          *st.Storage
+	client           *eth.Client
+	apiServer        *http.Server
+	signaturesDomain *bls.Domain
 }
 
 func NewCommander(cfg *config.Config) *Commander {
@@ -58,6 +60,11 @@ func (c *Commander) Start() (err error) {
 	}
 
 	c.client, err = getClientOrBootstrapChainState(chain, c.storage, c.cfg.Rollup)
+	if err != nil {
+		return err
+	}
+
+	c.signaturesDomain, err = c.storage.GetDomain(c.client.ChainState.ChainID)
 	if err != nil {
 		return err
 	}

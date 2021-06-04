@@ -61,6 +61,7 @@ func newTestTransactionExecutor(storage *st.Storage, client *eth.Client, cfg *co
 		storage: storage,
 		tx:      nil,
 		client:  client,
+		ctx:     context.Background(),
 	}
 }
 

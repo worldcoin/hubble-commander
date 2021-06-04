@@ -52,10 +52,9 @@ func (s *SyncTestSuite) setupDB() {
 	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
 	s.tree = st.NewStateTree(s.storage)
+	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg)
 
 	s.seedDB()
-
-	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg)
 }
 
 func (s *SyncTestSuite) seedDB() {
@@ -109,11 +108,11 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	err := s.storage.AddTransfer(&tx)
 	s.NoError(err)
 
-	commitments, err := createTransferCommitments([]models.Transfer{tx}, s.storage, s.cfg, testDomain)
+	commitments, err := s.transactionExecutor.createTransferCommitments([]models.Transfer{tx}, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	err = submitBatch(context.Background(), txtype.Transfer, commitments, s.storage, s.client.Client, s.cfg)
+	err = s.transactionExecutor.submitBatch(txtype.Transfer, commitments)
 	s.NoError(err)
 
 	// Recreate database
@@ -126,7 +125,8 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	err = s.transactionExecutor.SyncBatches(0, *latestBlockNumber)
 	s.NoError(err)
 
-	txn, txStorage, err := s.storage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
+	// Begin db transaction
+	transactionExecutor, err := newTransactionExecutorWithCtx(context.Background(), s.storage, s.client.Client, s.cfg)
 	s.NoError(err)
 
 	tx2 := models.Transfer{
@@ -140,21 +140,21 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 		},
 		ToStateID: 0,
 	}
-	err = txStorage.AddTransfer(&tx2)
+	err = transactionExecutor.storage.AddTransfer(&tx2)
 	s.NoError(err)
 
-	commitments, err = createTransferCommitments([]models.Transfer{tx2}, txStorage, s.cfg, testDomain)
+	commitments, err = transactionExecutor.createTransferCommitments([]models.Transfer{tx2}, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	err = submitBatch(context.Background(), txtype.Transfer, commitments, txStorage, s.client.Client, s.cfg)
+	err = transactionExecutor.submitBatch(txtype.Transfer, commitments)
 	s.NoError(err)
 
-	batches, err := txStorage.GetBatchesInRange(nil, nil)
+	batches, err := transactionExecutor.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 2)
 
-	txn.Rollback(nil)
+	transactionExecutor.Rollback(nil)
 
 	batches, err = s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
@@ -200,11 +200,11 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	err = s.storage.AddCreate2Transfer(&tx)
 	s.NoError(err)
 
-	commitments, err := createCreate2TransferCommitments([]models.Create2Transfer{tx}, s.storage, s.client.Client, s.cfg, testDomain)
+	commitments, err := s.transactionExecutor.createCreate2TransferCommitments([]models.Create2Transfer{tx}, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	err = submitBatch(context.Background(), txtype.Create2Transfer, commitments, s.storage, s.client.Client, s.cfg)
+	err = s.transactionExecutor.submitBatch(txtype.Create2Transfer, commitments)
 	s.NoError(err)
 
 	// Recreate database
@@ -232,7 +232,7 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 }
 
 func mockSignature(t *testing.T) *models.Signature {
-	wallet, err := bls.NewRandomWallet(testDomain)
+	wallet, err := bls.NewRandomWallet(*testDomain)
 	require.NoError(t, err)
 	signature, err := wallet.Sign(utils.RandomBytes(4))
 	require.NoError(t, err)

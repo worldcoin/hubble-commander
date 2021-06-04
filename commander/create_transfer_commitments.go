@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
-	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -13,20 +12,18 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func createTransferCommitments(
+func (t *transactionExecutor) createTransferCommitments(
 	pendingTransfers []models.Transfer,
-	storage *st.Storage,
-	cfg *config.RollupConfig,
-	domain bls.Domain,
+	domain *bls.Domain,
 ) ([]models.Commitment, error) {
-	stateTree := st.NewStateTree(storage)
+	stateTree := st.NewStateTree(t.storage)
 	commitments := make([]models.Commitment, 0, 32)
 
 	for {
-		if len(commitments) >= int(cfg.MaxCommitmentsPerBatch) {
+		if len(commitments) >= int(t.cfg.MaxCommitmentsPerBatch) {
 			break
 		}
-		if len(pendingTransfers) < int(cfg.TxsPerCommitment) {
+		if len(pendingTransfers) < int(t.cfg.TxsPerCommitment) {
 			break
 		}
 
@@ -37,12 +34,12 @@ func createTransferCommitments(
 			return nil, err
 		}
 
-		appliedTxs, invalidTxs, feeReceiverStateID, err := ApplyTransfers(storage, pendingTransfers, cfg)
+		transfers, err := t.ApplyTransfers(pendingTransfers)
 		if err != nil {
 			return nil, err
 		}
 
-		if len(appliedTxs) < int(cfg.TxsPerCommitment) {
+		if len(transfers.appliedTransfers) < int(t.cfg.TxsPerCommitment) {
 			err = stateTree.RevertTo(*initialStateRoot)
 			if err != nil {
 				return nil, err
@@ -50,24 +47,24 @@ func createTransferCommitments(
 			break
 		}
 
-		pendingTransfers = removeTransfer(pendingTransfers, append(appliedTxs, invalidTxs...))
+		pendingTransfers = removeTransfer(pendingTransfers, append(transfers.appliedTransfers, transfers.invalidTransfers...))
 
-		serializedTxs, err := encoder.SerializeTransfers(appliedTxs)
+		serializedTxs, err := encoder.SerializeTransfers(transfers.appliedTransfers)
 		if err != nil {
 			return nil, err
 		}
 
-		combinedSignature, err := combineTransferSignatures(appliedTxs, domain)
+		combinedSignature, err := combineTransferSignatures(transfers.appliedTransfers, domain)
 		if err != nil {
 			return nil, err
 		}
 
-		commitment, err := createAndStoreCommitment(storage, txtype.Transfer, *feeReceiverStateID, serializedTxs, combinedSignature)
+		commitment, err := t.createAndStoreCommitment(txtype.Transfer, *transfers.feeReceiverStateID, serializedTxs, combinedSignature)
 		if err != nil {
 			return nil, err
 		}
 
-		err = markTransfersAsIncluded(storage, appliedTxs, commitment.ID)
+		err = t.markTransfersAsIncluded(transfers.appliedTransfers, commitment.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -76,7 +73,7 @@ func createTransferCommitments(
 		log.Printf(
 			"Created a %s commitment from %d transactions in %d ms",
 			txtype.Transfer,
-			len(appliedTxs),
+			len(transfers.appliedTransfers),
 			time.Since(startTime).Milliseconds(),
 		)
 	}
@@ -106,10 +103,10 @@ func transferExists(transferList []models.Transfer, tx *models.Transfer) bool {
 	return false
 }
 
-func combineTransferSignatures(transfers []models.Transfer, domain bls.Domain) (*models.Signature, error) {
+func combineTransferSignatures(transfers []models.Transfer, domain *bls.Domain) (*models.Signature, error) {
 	signatures := make([]*bls.Signature, 0, len(transfers))
 	for i := range transfers {
-		sig, err := bls.NewSignatureFromBytes(transfers[i].Signature[:], domain)
+		sig, err := bls.NewSignatureFromBytes(transfers[i].Signature[:], *domain)
 		if err != nil {
 			return nil, err
 		}
@@ -118,10 +115,10 @@ func combineTransferSignatures(transfers []models.Transfer, domain bls.Domain) (
 	return bls.NewAggregatedSignature(signatures).ModelsSignature(), nil
 }
 
-func markTransfersAsIncluded(storage *st.Storage, transfers []models.Transfer, commitmentID int32) error {
+func (t *transactionExecutor) markTransfersAsIncluded(transfers []models.Transfer, commitmentID int32) error {
 	hashes := make([]common.Hash, 0, len(transfers))
 	for i := range transfers {
 		hashes = append(hashes, transfers[i].Hash)
 	}
-	return storage.BatchMarkTransactionAsIncluded(hashes, commitmentID)
+	return t.storage.BatchMarkTransactionAsIncluded(hashes, commitmentID)
 }

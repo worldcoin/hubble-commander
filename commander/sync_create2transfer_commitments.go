@@ -1,47 +1,43 @@
 package commander
 
 import (
-	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
-	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
 func (t *transactionExecutor) syncCreate2TransferCommitments(batch *eth.DecodedBatch) error {
 	for i := range batch.Commitments {
-		if err := syncCreate2TransferCommitment(t.storage, t.cfg, batch, &batch.Commitments[i]); err != nil {
+		if err := t.syncCreate2TransferCommitment(batch, &batch.Commitments[i]); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func syncCreate2TransferCommitment(
-	storage *st.Storage,
-	cfg *config.RollupConfig,
+func (t *transactionExecutor) syncCreate2TransferCommitment(
 	batch *eth.DecodedBatch,
 	commitment *encoder.DecodedCommitment,
 ) error {
-	transfers, pubKeyIDs, err := encoder.DeserializeCreate2Transfers(commitment.Transactions)
+	deserializedTransfers, pubKeyIDs, err := encoder.DeserializeCreate2Transfers(commitment.Transactions)
 	if err != nil {
 		return err
 	}
 
-	appliedTxs, invalidTxs, err := ApplyCreate2TransfersForSync(storage, transfers, pubKeyIDs, cfg)
+	transfers, err := t.ApplyCreate2TransfersForSync(deserializedTransfers, pubKeyIDs)
 	if err != nil {
 		return err
 	}
 
-	if len(invalidTxs) > 0 {
+	if len(transfers.invalidTransfers) > 0 {
 		return ErrFraudulentTransfer
 	}
 
-	if len(appliedTxs) != len(transfers) {
+	if len(transfers.appliedTransfers) != len(deserializedTransfers) {
 		return ErrTransfersNotApplied
 	}
 
-	_, err = storage.AddCommitment(&models.Commitment{
+	_, err = t.storage.AddCommitment(&models.Commitment{
 		Type:              batch.Type,
 		Transactions:      commitment.Transactions,
 		FeeReceiver:       commitment.FeeReceiver,
