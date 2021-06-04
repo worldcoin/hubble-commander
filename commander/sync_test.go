@@ -282,18 +282,11 @@ func (s *SyncTestSuite) TestSyncBatches_PendingBatch() {
 }
 
 func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
-	// register sender account on chain
-	registrations, unsubscribe, err := s.client.WatchRegistrations(&bind.WatchOpts{})
-	s.NoError(err)
-	defer unsubscribe()
-	senderPubKeyID, err := s.client.RegisterAccount(&models.PublicKey{1, 2, 3}, registrations)
-	s.NoError(err)
-	s.Equal(uint32(0), *senderPubKeyID)
-
+	s.registerAccountOnChain(&models.PublicKey{1, 2, 3}, 0)
 	tx := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
 			TxType:      txtype.Create2Transfer,
-			FromStateID: *senderPubKeyID,
+			FromStateID: 0,
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
@@ -302,10 +295,40 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 		ToStateID:   ref.Uint32(5),
 		ToPublicKey: models.PublicKey{2, 3, 4},
 	}
-	err = s.storage.AddCreate2Transfer(&tx)
+	s.createAndSubmitC2TBatch(&tx)
+
+	s.recreateDatabase()
+	s.syncAllBlocks()
+
+	state0, err := s.storage.GetStateLeaf(0)
+	s.NoError(err)
+	s.Equal(models.MakeUint256(600), state0.Balance)
+
+	state5, err := s.storage.GetStateLeaf(5)
+	s.NoError(err)
+	s.Equal(models.MakeUint256(400), state5.Balance)
+	s.Equal(uint32(1), state5.PubKeyID)
+
+	batches, err := s.storage.GetBatchesInRange(nil, nil)
+	s.NoError(err)
+	s.Len(batches, 1)
+}
+
+func (s *SyncTestSuite) registerAccountOnChain(publicKey *models.PublicKey, expectedPubKeyID uint32) {
+	registrations, unsubscribe, err := s.client.WatchRegistrations(&bind.WatchOpts{})
+	s.NoError(err)
+	defer unsubscribe()
+
+	senderPubKeyID, err := s.client.RegisterAccount(publicKey, registrations)
+	s.NoError(err)
+	s.Equal(expectedPubKeyID, *senderPubKeyID)
+}
+
+func (s *SyncTestSuite) createAndSubmitC2TBatch(tx *models.Create2Transfer) {
+	err := s.storage.AddCreate2Transfer(tx)
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.createCreate2TransferCommitments([]models.Create2Transfer{tx}, testDomain)
+	commitments, err := s.transactionExecutor.createCreate2TransferCommitments([]models.Create2Transfer{*tx}, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -313,26 +336,13 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	s.NoError(err)
 
 	s.client.Commit()
+}
 
-	s.recreateDatabase()
-
+func (s *SyncTestSuite) syncAllBlocks() {
 	latestBlockNumber, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
 	err = s.transactionExecutor.SyncBatches(0, *latestBlockNumber)
 	s.NoError(err)
-
-	state0, err := s.storage.GetStateLeaf(0)
-	s.NoError(err)
-	s.Equal(models.MakeUint256(600), state0.Balance)
-
-	state1, err := s.storage.GetStateLeaf(5)
-	s.NoError(err)
-	s.Equal(models.MakeUint256(400), state1.Balance)
-	s.Equal(uint32(1), state1.PubKeyID)
-
-	batches, err := s.storage.GetBatchesInRange(nil, nil)
-	s.NoError(err)
-	s.Len(batches, 1)
 }
 
 func mockSignature(t *testing.T) *models.Signature {
