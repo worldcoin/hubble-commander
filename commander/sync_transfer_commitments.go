@@ -52,6 +52,5 @@ func (t *transactionExecutor) syncTransferCommitment(
 	for i := range transfers.appliedTransfers {
 		transfers.appliedTransfers[i].IncludedInCommitment = commitmentID
 	}
-	// TODO: signature is not passed, calculate it or omit
 	return t.storage.BatchAddTransfer(transfers.appliedTransfers)
 }

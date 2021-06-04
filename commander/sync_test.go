@@ -14,6 +14,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -118,10 +119,7 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 
 	s.client.Commit()
 
-	// Recreate database
-	err = s.teardown()
-	s.NoError(err)
-	s.setupDB()
+	s.recreateDatabase()
 
 	latestBlockNumber, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
@@ -165,7 +163,9 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	s.NoError(err)
 	s.Len(batches, 1)
 
-	err = s.transactionExecutor.SyncBatches(0, *latestBlockNumber+2)
+	latestBlockNumber, err = s.client.GetLatestBlockNumber()
+	s.NoError(err)
+	err = s.transactionExecutor.SyncBatches(0, *latestBlockNumber)
 	s.NoError(err)
 
 	state0, err := s.storage.GetStateLeaf(0)
@@ -181,7 +181,9 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	s.Len(batches, 2)
 }
 
-func (s *SyncTestSuite) TestSyncBatches_Transfer2() {
+func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
+	accountRoot := s.getAccountTreeRoot()
+
 	txs := []models.Transfer{
 		{
 			TransactionBase: models.TransactionBase{
@@ -213,20 +215,18 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer2() {
 		s.NoError(err)
 	}
 
-	commitments := make([]models.Commitment, 2)
-	for i := range commitments {
-		commitments1, err := s.transactionExecutor.createTransferCommitments([]models.Transfer{txs[i]}, testDomain)
+	expectedCommitments := make([]models.Commitment, 0, 2)
+	for i := range expectedCommitments {
+		createdCommitments, err := s.transactionExecutor.createTransferCommitments([]models.Transfer{txs[i]}, testDomain)
 		s.NoError(err)
-		s.Len(commitments1, 1)
-		commitments[i] = commitments1[0]
-		err = s.transactionExecutor.submitBatch(txtype.Transfer, commitments1)
+		s.Len(createdCommitments, 1)
+
+		expectedCommitments = append(expectedCommitments, createdCommitments[0])
+		err = s.transactionExecutor.submitBatch(txtype.Transfer, createdCommitments)
 		s.NoError(err)
 	}
 
-	// Recreate database
-	err := s.teardown()
-	s.NoError(err)
-	s.setupDB()
+	s.recreateDatabase()
 
 	latestBlockNumber, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
@@ -236,18 +236,21 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer2() {
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 2)
+	s.Equal(models.NewUint256(1), batches[0].Number)
+	s.Equal(models.NewUint256(2), batches[1].Number)
 
-	for i := range commitments {
-		commitment, err := s.storage.GetCommitment(commitments[i].ID)
+	for i := range expectedCommitments {
+		commitment, err := s.storage.GetCommitment(expectedCommitments[i].ID)
 		s.NoError(err)
-		commitments[i].IncludedInBatch = &batches[i].ID
-		commitments[i].AccountTreeRoot = commitment.AccountTreeRoot
-		s.Equal(commitments[i], *commitment)
+		expectedCommitments[i].IncludedInBatch = &batches[i].ID
+		expectedCommitments[i].AccountTreeRoot = &accountRoot
+		s.Equal(expectedCommitments[i], *commitment)
 
-		transfer, err := s.storage.GetTransfer(txs[i].Hash)
+		actualTx, err := s.storage.GetTransfer(txs[i].Hash)
 		s.NoError(err)
-		txs[i].IncludedInCommitment = &commitments[i].ID
-		s.Equal(txs[i], *transfer)
+		txs[i].IncludedInCommitment = &expectedCommitments[i].ID
+		txs[i].Signature = models.Signature{}
+		s.Equal(txs[i], *actualTx)
 	}
 }
 
@@ -275,10 +278,7 @@ func (s *SyncTestSuite) TestSyncBatches_PendingBatch() {
 
 	s.client.Commit()
 
-	// Recreate database
-	err = s.teardown()
-	s.NoError(err)
-	s.setupDB()
+	s.recreateDatabase()
 }
 
 func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
@@ -314,10 +314,7 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 
 	s.client.Commit()
 
-	// Recreate database
-	err = s.teardown()
-	s.NoError(err)
-	s.setupDB()
+	s.recreateDatabase()
 
 	latestBlockNumber, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
@@ -344,6 +341,18 @@ func mockSignature(t *testing.T) *models.Signature {
 	signature, err := wallet.Sign(utils.RandomBytes(4))
 	require.NoError(t, err)
 	return signature.ModelsSignature()
+}
+
+func (s *SyncTestSuite) recreateDatabase() {
+	err := s.teardown()
+	s.NoError(err)
+	s.setupDB()
+}
+
+func (s *SyncTestSuite) getAccountTreeRoot() common.Hash {
+	rawAccountRoot, err := s.client.AccountRegistry.Root(nil)
+	s.NoError(err)
+	return common.BytesToHash(rawAccountRoot[:])
 }
 
 func TestSyncTestSuite(t *testing.T) {
