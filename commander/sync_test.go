@@ -180,6 +180,105 @@ func (s *SyncTestSuite) TestSyncBatches_Transfer() {
 	s.Len(batches, 2)
 }
 
+func (s *SyncTestSuite) TestSyncBatches_Transfer2() {
+	txs := []models.Transfer{
+		{
+			TransactionBase: models.TransactionBase{
+				Hash:        utils.RandomHash(),
+				TxType:      txtype.Transfer,
+				FromStateID: 0,
+				Amount:      models.MakeUint256(400),
+				Fee:         models.MakeUint256(0),
+				Nonce:       models.MakeUint256(0),
+				Signature:   *mockSignature(s.T()),
+			},
+			ToStateID: 1,
+		}, {
+			TransactionBase: models.TransactionBase{
+				Hash:        utils.RandomHash(),
+				TxType:      txtype.Transfer,
+				FromStateID: 1,
+				Amount:      models.MakeUint256(100),
+				Fee:         models.MakeUint256(0),
+				Nonce:       models.MakeUint256(0),
+				Signature:   *mockSignature(s.T()),
+			},
+			ToStateID: 0,
+		},
+	}
+	for i := range txs {
+		err := s.storage.AddTransfer(&txs[i])
+		s.NoError(err)
+	}
+
+	commitments := make([]models.Commitment, 2)
+	for i := range commitments {
+		commitments1, err := createTransferCommitments([]models.Transfer{txs[i]}, s.storage, s.cfg, testDomain)
+		s.NoError(err)
+		s.Len(commitments1, 1)
+		commitments[i] = commitments1[0]
+		err = submitBatch(context.Background(), txtype.Transfer, commitments1, s.storage, s.client.Client, s.cfg)
+		s.NoError(err)
+	}
+
+	// Recreate database
+	err := s.teardown()
+	s.NoError(err)
+	s.setupDB()
+
+	latestBlockNumber, err := s.client.GetLatestBlockNumber()
+	s.NoError(err)
+	err = s.transactionExecutor.SyncBatches(0, *latestBlockNumber)
+	s.NoError(err)
+
+	batches, err := s.storage.GetBatchesInRange(nil, nil)
+	s.NoError(err)
+	s.Len(batches, 2)
+
+	for i := range commitments {
+		commitment, err := s.storage.GetCommitment(commitments[i].ID)
+		s.NoError(err)
+		commitments[i].IncludedInBatch = &batches[i].ID
+		commitments[i].AccountTreeRoot = commitment.AccountTreeRoot
+		s.Equal(commitments[i], *commitment)
+
+		// transfer, err := s.storage.GetTransfer(txs[i].Hash)
+		// s.NoError(err)
+		// txs[i].IncludedInCommitment = &commitments[i].ID
+		// s.Equal(txs[i], *transfer)
+	}
+}
+
+func (s *SyncTestSuite) TestSyncBatches_PendingBatch() {
+	tx := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			TxType:      txtype.Transfer,
+			FromStateID: 0,
+			Amount:      models.MakeUint256(400),
+			Fee:         models.MakeUint256(0),
+			Nonce:       models.MakeUint256(0),
+			Signature:   *mockSignature(s.T()),
+		},
+		ToStateID: 1,
+	}
+	err := s.storage.AddTransfer(&tx)
+	s.NoError(err)
+
+	commitments, err := createTransferCommitments([]models.Transfer{tx}, s.storage, s.cfg, testDomain)
+	s.NoError(err)
+	s.Len(commitments, 1)
+
+	err = submitBatch(context.Background(), txtype.Transfer, commitments, s.storage, s.client.Client, s.cfg)
+	s.NoError(err)
+
+	s.client.Commit()
+
+	// Recreate database
+	err = s.teardown()
+	s.NoError(err)
+	s.setupDB()
+}
+
 func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	// register sender account on chain
 	registrations, unsubscribe, err := s.client.WatchRegistrations(&bind.WatchOpts{})

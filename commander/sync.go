@@ -39,7 +39,8 @@ func (t *transactionExecutor) SyncBatches(startBlock, endBlock uint64) error {
 
 		localBatch, err := t.storage.GetBatchByNumber(*batch.Number)
 		if st.IsNotFoundError(err) {
-			if err := t.syncBatch(batch); err != nil {
+			err = t.syncBatch(batch)
+			if err != nil {
 				return err
 			}
 			continue
@@ -48,28 +49,36 @@ func (t *transactionExecutor) SyncBatches(startBlock, endBlock uint64) error {
 			return err
 		}
 
-		if batch.TransactionHash == localBatch.TransactionHash {
-			err = t.storage.MarkBatchAsSubmitted(&batch.Batch)
-			if err != nil {
-				return err
-			}
-
-			err = t.storage.UpdateCommitmentsAccountTreeRoot(localBatch.ID, batch.AccountRoot)
-			if err != nil {
-				return err
-			}
-
-			log.Printf(
-				"Submitted %d commitment(s) on chain. Batch ID: %d. Batch Hash: %v",
-				len(batch.Commitments),
-				batch.Number.Uint64(),
-				batch.Hash,
-			)
-		} else {
-			// race condition
+		err = t.syncExistingBatch(batch, localBatch)
+		if err != nil {
+			return err
 		}
 	}
 
+	return nil
+}
+
+func (t *transactionExecutor) syncExistingBatch(batch *eth.DecodedBatch, localBatch *models.Batch) error {
+	if batch.TransactionHash == localBatch.TransactionHash {
+		err := t.storage.MarkBatchAsSubmitted(&batch.Batch)
+		if err != nil {
+			return err
+		}
+
+		err = t.storage.UpdateCommitmentsAccountTreeRoot(localBatch.ID, batch.AccountRoot)
+		if err != nil {
+			return err
+		}
+
+		log.Printf(
+			"Submitted %d commitment(s) on chain. Batch ID: %d. Batch Hash: %v",
+			len(batch.Commitments),
+			batch.Number.Uint64(),
+			batch.Hash,
+		)
+	} else { // nolint:staticcheck
+		// TODO: handle race condition
+	}
 	return nil
 }
 

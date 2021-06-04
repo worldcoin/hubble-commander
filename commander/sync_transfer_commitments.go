@@ -50,5 +50,6 @@ func syncTransferCommitment(
 		AccountTreeRoot:   &batch.AccountRoot,
 		IncludedInBatch:   &batch.ID,
 	})
+	// TODO: insert appliedTransfers
 	return err
 }
