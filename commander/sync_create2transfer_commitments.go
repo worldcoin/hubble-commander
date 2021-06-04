@@ -46,9 +46,12 @@ func (t *transactionExecutor) syncCreate2TransferCommitment(
 		AccountTreeRoot:   &batch.AccountRoot,
 		IncludedInBatch:   &batch.ID,
 	})
+	if err != nil {
+		return err
+	}
 	for i := range transfers.appliedTransfers {
 		transfers.appliedTransfers[i].IncludedInCommitment = commitmentID
 	}
 	// TODO: signature is not passed, calculate it or omit
-	return t.storage.BatchAddCreat2Transfer(transfers.appliedTransfers)
+	return t.storage.BatchAddCreate2Transfer(transfers.appliedTransfers)
 }

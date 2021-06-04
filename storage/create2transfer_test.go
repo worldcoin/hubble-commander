@@ -73,7 +73,7 @@ func (s *Create2TransferTestSuite) TestBatchAddCreate2Transfer() {
 	txs[1] = create2Transfer
 	txs[1].Hash = utils.RandomHash()
 
-	err := s.storage.BatchAddCreat2Transfer(txs)
+	err := s.storage.BatchAddCreate2Transfer(txs)
 	s.NoError(err)
 
 	transfer, err := s.storage.GetCreate2Transfer(txs[0].Hash)
@@ -85,7 +85,7 @@ func (s *Create2TransferTestSuite) TestBatchAddCreate2Transfer() {
 }
 
 func (s *Create2TransferTestSuite) TestBatchAddCreate2Transfer_NoTransfers() {
-	err := s.storage.BatchAddCreat2Transfer([]models.Create2Transfer{})
+	err := s.storage.BatchAddCreate2Transfer([]models.Create2Transfer{})
 	s.Equal(ErrNoRowsAffected, err)
 }
 

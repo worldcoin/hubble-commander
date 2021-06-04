@@ -64,11 +64,11 @@ func (s *Storage) BatchAddTransfer(txs []models.Transfer) error {
 	}
 	defer tx.Rollback(&err)
 
-	txBase := make([]models.TransactionBase, 0, len(txs))
+	txBases := make([]models.TransactionBase, 0, len(txs))
 	for i := range txs {
-		txBase = append(txBase, txs[i].TransactionBase)
+		txBases = append(txBases, txs[i].TransactionBase)
 	}
-	err = txStorage.BatchAddTransactionBase(txBase)
+	err = txStorage.BatchAddTransactionBase(txBases)
 	if err != nil {
 		return err
 	}

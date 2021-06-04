@@ -46,6 +46,9 @@ func (t *transactionExecutor) syncTransferCommitment(
 		AccountTreeRoot:   &batch.AccountRoot,
 		IncludedInBatch:   &batch.ID,
 	})
+	if err != nil {
+		return err
+	}
 	for i := range transfers.appliedTransfers {
 		transfers.appliedTransfers[i].IncludedInCommitment = commitmentID
 	}

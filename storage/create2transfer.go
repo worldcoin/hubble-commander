@@ -55,7 +55,7 @@ func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) (err error) {
 	return tx.Commit()
 }
 
-func (s *Storage) BatchAddCreat2Transfer(txs []models.Create2Transfer) error {
+func (s *Storage) BatchAddCreate2Transfer(txs []models.Create2Transfer) error {
 	if len(txs) < 1 {
 		return ErrNoRowsAffected
 	}
@@ -66,11 +66,11 @@ func (s *Storage) BatchAddCreat2Transfer(txs []models.Create2Transfer) error {
 	}
 	defer tx.Rollback(&err)
 
-	txBase := make([]models.TransactionBase, 0, len(txs))
+	txBases := make([]models.TransactionBase, 0, len(txs))
 	for i := range txs {
-		txBase = append(txBase, txs[i].TransactionBase)
+		txBases = append(txBases, txs[i].TransactionBase)
 	}
-	err = txStorage.BatchAddTransactionBase(txBase)
+	err = txStorage.BatchAddTransactionBase(txBases)
 	if err != nil {
 		return err
 	}
