@@ -134,7 +134,7 @@ func (s *Storage) GetPendingCreate2Transfers() ([]models.Create2Transfer, error)
 	return res, nil
 }
 
-func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([]models.Create2Transfer, error) {
+func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([]models.Create2TransferWithBatchHash, error) {
 	accounts, err := s.GetAccounts(publicKey)
 	if err != nil {
 		return nil, err
@@ -153,11 +153,16 @@ func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([
 		stateIDs = append(stateIDs, leaves[i].StateID)
 	}
 
-	res := make([]models.Create2Transfer, 0, 1)
+	res := make([]models.Create2TransferWithBatchHash, 0, 1)
 	err = s.Postgres.Query(
-		s.QB.Select(create2TransferColumns...).
+		s.QB.Select("transaction_base.*",
+			"create2transfer.to_state_id",
+			"create2transfer.to_public_key",
+			"batch.batch_hash").
 			From("transaction_base").
 			JoinClause("NATURAL JOIN create2transfer").
+			LeftJoin("commitment on commitment.commitment_id = transaction_base.included_in_commitment").
+			LeftJoin("batch on batch.batch_id = commitment.included_in_batch").
 			Where(squirrel.Or{
 				squirrel.Eq{"transaction_base.from_state_id": stateIDs},
 				squirrel.Eq{"create2transfer.to_state_id": stateIDs},

@@ -141,7 +141,7 @@ func (s *Storage) GetPendingTransfers() ([]models.Transfer, error) {
 	return res, nil
 }
 
-func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models.Transfer, error) {
+func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models.TransferWithBatchHash, error) {
 	accounts, err := s.GetAccounts(publicKey)
 	if err != nil {
 		return nil, err
@@ -160,11 +160,15 @@ func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models
 		stateIDs = append(stateIDs, leaves[i].StateID)
 	}
 
-	res := make([]models.Transfer, 0, 1)
+	res := make([]models.TransferWithBatchHash, 0, 1)
 	err = s.Postgres.Query(
-		s.QB.Select(transferColumns...).
+		s.QB.Select("transaction_base.*",
+			"transfer.to_state_id",
+			"batch.batch_hash").
 			From("transaction_base").
 			JoinClause("NATURAL JOIN transfer").
+			LeftJoin("commitment on commitment.commitment_id = transaction_base.included_in_commitment").
+			LeftJoin("batch on batch.batch_id = commitment.included_in_batch").
 			Where(squirrel.Or{
 				squirrel.Eq{"transaction_base.from_state_id": stateIDs},
 				squirrel.Eq{"transfer.to_state_id": stateIDs},

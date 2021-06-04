@@ -17,7 +17,7 @@ func (a *API) GetTransactions(publicKey *models.PublicKey) ([]interface{}, error
 
 	userTransfers := make([]interface{}, 0, len(transfers)+len(create2Transfers))
 	for i := range transfers {
-		receipt, err := a.returnTransferReceipt(&transfers[i])
+		receipt, err := a.returnTransferReceipt(&transfers[i].Transfer)
 		if err != nil {
 			return nil, err
 		}
@@ -25,7 +25,7 @@ func (a *API) GetTransactions(publicKey *models.PublicKey) ([]interface{}, error
 	}
 
 	for i := range create2Transfers {
-		receipt, err := a.returnCreate2TransferReceipt(&create2Transfers[i])
+		receipt, err := a.returnCreate2TransferReceipt(&create2Transfers[i].Create2Transfer)
 		if err != nil {
 			return nil, err
 		}
