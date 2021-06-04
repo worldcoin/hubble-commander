@@ -1,7 +1,6 @@
 package commander
 
 import (
-	"context"
 	"log"
 
 	"github.com/Worldcoin/hubble-commander/models"
@@ -13,11 +12,7 @@ var (
 	ErrNotEnoughCommitments = NewRollupError("not enough commitments")
 )
 
-func (t *transactionExecutor) submitBatch(
-	ctx context.Context, // TODO take from txExecutor
-	batchType txtype.TransactionType,
-	commitments []models.Commitment,
-) error {
+func (t *transactionExecutor) submitBatch(batchType txtype.TransactionType, commitments []models.Commitment) error {
 	if len(commitments) < int(t.cfg.MinCommitmentsPerBatch) {
 		return ErrNotEnoughCommitments
 	}
@@ -27,7 +22,7 @@ func (t *transactionExecutor) submitBatch(
 	var err error
 
 	select {
-	case <-ctx.Done():
+	case <-t.ctx.Done():
 		return NewRollupError("commander is no longer an active proposer")
 	default:
 	}

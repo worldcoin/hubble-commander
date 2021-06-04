@@ -83,7 +83,7 @@ func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionT
 		return err
 	}
 
-	err = t.submitBatch(t.ctx, batchType, commitments)
+	err = t.submitBatch(batchType, commitments)
 	if err != nil {
 		return err
 	}
@@ -98,9 +98,7 @@ func (t *transactionExecutor) buildTransferCommitments(domain *bls.Domain) ([]mo
 	return t.createTransferCommitments(pendingTransfers, domain)
 }
 
-func (t *transactionExecutor) buildCreate2TransfersCommitments(
-	domain *bls.Domain,
-) ([]models.Commitment, error) {
+func (t *transactionExecutor) buildCreate2TransfersCommitments(domain *bls.Domain) ([]models.Commitment, error) {
 	pendingTransfers, err := t.storage.GetPendingCreate2Transfers()
 	if err != nil {
 		return nil, err
