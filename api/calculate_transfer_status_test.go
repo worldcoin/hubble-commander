@@ -25,7 +25,7 @@ var (
 	}
 )
 
-type CalculateTransferStatusTestSuite struct {
+type CalculateTransactionStatusTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	teardown func() error
@@ -34,11 +34,11 @@ type CalculateTransferStatusTestSuite struct {
 	transfer *models.Transfer
 }
 
-func (s *CalculateTransferStatusTestSuite) SetupSuite() {
+func (s *CalculateTransactionStatusTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *CalculateTransferStatusTestSuite) SetupTest() {
+func (s *CalculateTransactionStatusTestSuite) SetupTest() {
 	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.storage = testStorage.Storage
@@ -78,19 +78,19 @@ func (s *CalculateTransferStatusTestSuite) SetupTest() {
 	s.transfer = transfer
 }
 
-func (s *CalculateTransferStatusTestSuite) TearDownTest() {
+func (s *CalculateTransactionStatusTestSuite) TearDownTest() {
 	err := s.teardown()
 	s.NoError(err)
 }
 
-func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Pending() {
-	status, err := CalculateTransferStatus(s.storage, &s.transfer.TransactionBase, 0)
+func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_Pending() {
+	status, err := CalculateTransactionStatus(s.storage, &s.transfer.TransactionBase, 0)
 	s.NoError(err)
 
 	s.Equal(txstatus.Pending, *status)
 }
 
-func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_InBatch() {
+func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_InBatch() {
 	batch := models.Batch{
 		FinalisationBlock: ref.Uint32(math.MaxUint32),
 	}
@@ -104,14 +104,14 @@ func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_InBatch()
 
 	s.transfer.IncludedInCommitment = commitmentID
 
-	status, err := CalculateTransferStatus(s.storage, &s.transfer.TransactionBase, 0)
+	status, err := CalculateTransactionStatus(s.storage, &s.transfer.TransactionBase, 0)
 	s.NoError(err)
 
 	s.Equal(txstatus.InBatch, *status)
 }
 
 // nolint:misspell
-func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Finalised() {
+func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_Finalised() {
 	currentBlockNumber, err := s.sim.GetLatestBlockNumber()
 	s.NoError(err)
 	batch := models.Batch{
@@ -131,20 +131,20 @@ func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Finalised
 	latestBlockNumber, err := s.sim.GetLatestBlockNumber()
 	s.NoError(err)
 
-	status, err := CalculateTransferStatus(s.storage, &s.transfer.TransactionBase, uint32(*latestBlockNumber))
+	status, err := CalculateTransactionStatus(s.storage, &s.transfer.TransactionBase, uint32(*latestBlockNumber))
 	s.NoError(err)
 
 	s.Equal(txstatus.Finalised, *status)
 }
 
-func (s *CalculateTransferStatusTestSuite) TestCalculateTransferStatus_Error() {
+func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_Error() {
 	s.transfer.ErrorMessage = ref.String("Gold Duck Error")
-	status, err := CalculateTransferStatus(s.storage, &s.transfer.TransactionBase, 0)
+	status, err := CalculateTransactionStatus(s.storage, &s.transfer.TransactionBase, 0)
 	s.NoError(err)
 
 	s.Equal(txstatus.Error, *status)
 }
 
-func TestCalculateTransferStatusTestSuite(t *testing.T) {
-	suite.Run(t, new(CalculateTransferStatusTestSuite))
+func TestCalculateTransactionStatusTestSuite(t *testing.T) {
+	suite.Run(t, new(CalculateTransactionStatusTestSuite))
 }

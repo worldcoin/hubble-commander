@@ -6,7 +6,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func CalculateTransferStatus(
+func CalculateTransactionStatus(
 	storage *st.Storage,
 	transfer *models.TransactionBase,
 	latestBlockNumber uint32,

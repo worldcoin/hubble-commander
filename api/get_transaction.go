@@ -24,7 +24,7 @@ func (a *API) GetTransaction(hash common.Hash) (interface{}, error) {
 }
 
 func (a *API) returnTransferReceipt(transfer *models.Transfer) (*dto.TransferReceipt, error) {
-	status, err := CalculateTransferStatus(a.storage, &transfer.TransactionBase, a.storage.GetLatestBlockNumber())
+	status, err := CalculateTransactionStatus(a.storage, &transfer.TransactionBase, a.storage.GetLatestBlockNumber())
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +36,7 @@ func (a *API) returnTransferReceipt(transfer *models.Transfer) (*dto.TransferRec
 }
 
 func (a *API) returnCreate2TransferReceipt(transfer *models.Create2Transfer) (*dto.Create2TransferReceipt, error) {
-	status, err := CalculateTransferStatus(a.storage, &transfer.TransactionBase, a.storage.GetLatestBlockNumber())
+	status, err := CalculateTransactionStatus(a.storage, &transfer.TransactionBase, a.storage.GetLatestBlockNumber())
 	if err != nil {
 		return nil, err
 	}
