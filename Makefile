@@ -43,6 +43,10 @@ run-prune:
 run-dev:
 	go run ./main/main.go -prune -dev
 
+start-geth:
+	rm -rf e2e/geth-data/geth
+	geth --datadir e2e/geth-data --dev --dev.period 1 --http --ws
+
 lint:
 	golangci-lint run ./...
 
