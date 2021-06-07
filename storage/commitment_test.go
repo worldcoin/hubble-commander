@@ -66,7 +66,7 @@ func (s *CommitmentTestSuite) addRandomBatch() *int32 {
 		Type:              txtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
-		Number:            models.NewUint256(123),
+		Number:            models.MakeUint256(123),
 		FinalisationBlock: ref.Uint32(1234),
 	}
 	id, err := s.storage.AddBatch(&batch)

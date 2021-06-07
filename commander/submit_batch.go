@@ -41,7 +41,7 @@ func (t *transactionExecutor) submitBatch(batchType txtype.TransactionType, comm
 	newPendingBatch := models.Batch{
 		Type:            batchType,
 		TransactionHash: tx.Hash(),
-		Number:          batchNumber,
+		Number:          *batchNumber,
 	}
 	batchID, err := t.storage.AddBatch(&newPendingBatch)
 	if err != nil {

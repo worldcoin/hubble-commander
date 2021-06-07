@@ -147,8 +147,8 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 2)
-	s.Equal(models.NewUint256(1), batches[0].Number)
-	s.Equal(models.NewUint256(2), batches[1].Number)
+	s.Equal(models.MakeUint256(1), batches[0].Number)
+	s.Equal(models.MakeUint256(2), batches[1].Number)
 
 	for i := range expectedCommitments {
 		commitment, err := s.storage.GetCommitment(expectedCommitments[i].ID)

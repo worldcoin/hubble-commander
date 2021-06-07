@@ -37,7 +37,7 @@ func (t *transactionExecutor) SyncBatches(startBlock, endBlock uint64) error {
 			continue
 		}
 
-		localBatch, err := t.storage.GetBatchByNumber(*batch.Number)
+		localBatch, err := t.storage.GetBatchByNumber(batch.Number)
 		if err != nil && !st.IsNotFoundError(err) {
 			return err
 		}
@@ -90,7 +90,7 @@ func getLatestBatchNumber(storage *st.Storage) (*models.Uint256, error) {
 	} else if err != nil {
 		return nil, err
 	}
-	return latestBatch.Number, nil
+	return &latestBatch.Number, nil
 }
 
 func (t *transactionExecutor) syncBatch(batch *eth.DecodedBatch) error {
