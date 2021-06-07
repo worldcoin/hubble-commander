@@ -121,6 +121,8 @@ func DecodeCreate2TransferFromCommitment(data []byte) (transfer *models.Create2T
 		},
 		ToStateID: &toStateID,
 	}
+	// TODO: set nonce for batch syncing
+	// TODO: set publicKey for batch syncing
 	transferHash, err := HashCreate2Transfer(transfer)
 	if err != nil {
 		return nil, 0, err

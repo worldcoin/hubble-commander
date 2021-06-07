@@ -122,10 +122,8 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 		},
 	}
 	for i := range txs {
-		transferHash, err := encoder.HashTransfer(&txs[i])
-		s.NoError(err)
-		txs[i].Hash = *transferHash
-		err = s.storage.AddTransfer(&txs[i])
+		s.setTransferHash(&txs[i])
+		err := s.storage.AddTransfer(&txs[i])
 		s.NoError(err)
 	}
 
@@ -166,7 +164,6 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 }
 
 func (s *SyncTestSuite) TestSyncBatches_DoesNotSyncExistingBatchTwice() {
-	// TODO split this test into two
 	tx := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			TxType:      txtype.Transfer,
@@ -240,27 +237,14 @@ func (s *SyncTestSuite) TestSyncBatches_PendingBatch() {
 		},
 		ToStateID: 1,
 	}
-	hash, err := encoder.HashTransfer(&tx)
-	s.NoError(err)
-	tx.Hash = *hash
-
-	// TODO use createAndSubmitTransferBatch
-	err = s.storage.AddTransfer(&tx)
-	s.NoError(err)
-
-	commitments, err := s.transactionExecutor.createTransferCommitments([]models.Transfer{tx}, testDomain)
-	s.NoError(err)
-	s.Len(commitments, 1)
-
-	err = s.transactionExecutor.submitBatch(txtype.Transfer, commitments)
-	s.NoError(err)
+	s.setTransferHash(&tx)
+	s.createAndSubmitTransferBatch(&tx)
 
 	pendingBatch, err := s.storage.GetBatch(1)
 	s.NoError(err)
 	s.Nil(pendingBatch.Hash)
 	s.Nil(pendingBatch.FinalisationBlock)
 
-	s.client.Commit()
 	s.syncAllBlocks()
 
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
@@ -269,7 +253,7 @@ func (s *SyncTestSuite) TestSyncBatches_PendingBatch() {
 	s.NotNil(batches[0].Hash)
 	s.NotNil(batches[0].FinalisationBlock)
 
-	commitment, err := s.storage.GetCommitment(commitments[0].ID)
+	commitment, err := s.storage.GetCommitment(1)
 	s.NoError(err)
 	s.NotNil(commitment.AccountTreeRoot)
 }
@@ -286,9 +270,10 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 			Signature:   *mockSignature(s.T()),
 		},
 		ToStateID:   ref.Uint32(5),
-		ToPublicKey: models.PublicKey{2, 3, 4},
+		ToPublicKey: models.PublicKey{},
 	}
-	s.createAndSubmitC2TBatch(&tx)
+	s.setCreate2TransferHash(&tx)
+	expectedCommitment := s.createAndSubmitC2TBatch(&tx)
 
 	s.recreateDatabase()
 	s.syncAllBlocks()
@@ -306,15 +291,19 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	s.NoError(err)
 	s.Len(batches, 1)
 
-	commitments, err := s.storage.GetCommitmentsByBatchID(batches[0].ID)
+	commitment, err := s.storage.GetCommitment(expectedCommitment.ID)
 	s.NoError(err)
-	s.Len(commitments, 1)
+	expectedCommitment.IncludedInBatch = &batches[0].ID
+	treeRoot := s.getAccountTreeRoot()
+	expectedCommitment.AccountTreeRoot = &treeRoot
+	s.Equal(expectedCommitment, *commitment)
 
-	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(commitments[0].ID)
+	transfer, err := s.storage.GetCreate2Transfer(tx.Hash)
 	s.NoError(err)
-	s.Len(transfers, 1)
-
-	// TODO check more fields
+	transfer.Signature = tx.Signature
+	transfer.ToPublicKey = models.PublicKey{}
+	tx.IncludedInCommitment = &commitment.ID
+	s.Equal(tx, *transfer)
 }
 
 func (s *SyncTestSuite) createAndSubmitTransferBatch(tx *models.Transfer) {
@@ -341,7 +330,7 @@ func (s *SyncTestSuite) registerAccountOnChain(publicKey *models.PublicKey, expe
 	s.Equal(expectedPubKeyID, *senderPubKeyID)
 }
 
-func (s *SyncTestSuite) createAndSubmitC2TBatch(tx *models.Create2Transfer) {
+func (s *SyncTestSuite) createAndSubmitC2TBatch(tx *models.Create2Transfer) models.Commitment {
 	err := s.storage.AddCreate2Transfer(tx)
 	s.NoError(err)
 
@@ -353,6 +342,7 @@ func (s *SyncTestSuite) createAndSubmitC2TBatch(tx *models.Create2Transfer) {
 	s.NoError(err)
 
 	s.client.Commit()
+	return commitments[0]
 }
 
 func (s *SyncTestSuite) syncAllBlocks() {
@@ -381,6 +371,18 @@ func (s *SyncTestSuite) getAccountTreeRoot() common.Hash {
 	rawAccountRoot, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
 	return common.BytesToHash(rawAccountRoot[:])
+}
+
+func (s *SyncTestSuite) setTransferHash(tx *models.Transfer) {
+	hash, err := encoder.HashTransfer(tx)
+	s.NoError(err)
+	tx.Hash = *hash
+}
+
+func (s *SyncTestSuite) setCreate2TransferHash(tx *models.Create2Transfer) {
+	hash, err := encoder.HashCreate2Transfer(tx)
+	s.NoError(err)
+	tx.Hash = *hash
 }
 
 func TestSyncTestSuite(t *testing.T) {
