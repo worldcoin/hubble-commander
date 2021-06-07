@@ -4,7 +4,6 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 var selectedCommitmentCols = []string{
@@ -26,7 +25,6 @@ func (s *Storage) AddCommitment(commitment *models.Commitment) (*int32, error) {
 				commitment.FeeReceiver,
 				commitment.CombinedSignature,
 				commitment.PostStateRoot,
-				commitment.AccountTreeRoot,
 				commitment.IncludedInBatch,
 			).
 			Suffix("RETURNING commitment_id"),
