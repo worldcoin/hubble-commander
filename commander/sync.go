@@ -16,8 +16,9 @@ import (
 )
 
 var (
-	ErrFraudulentTransfer  = errors.New("fraudulent transfer encountered when syncing")
-	ErrTransfersNotApplied = errors.New("could not apply all transfers from synced batch")
+	ErrFraudulentTransfer    = errors.New("fraudulent transfer encountered when syncing")
+	ErrTransfersNotApplied   = errors.New("could not apply all transfers from synced batch")
+	ErrBatchSubmissionFailed = errors.New("previous submit batch transaction failed")
 )
 
 func (t *transactionExecutor) SyncBatches(stateMutex *sync.Mutex, startBlock, endBlock uint64) error {
@@ -92,10 +93,11 @@ func (t *transactionExecutor) syncExistingBatch(batch *eth.DecodedBatch, localBa
 		if err != nil {
 			return err
 		}
-		if *txSender != t.client.ChainConnection.GetAccount().From { // nolint:staticcheck
+		if *txSender != t.client.ChainConnection.GetAccount().From {
 			// TODO someone else's batch has been mined before ours (probably because our proposer slot ended)
-		} else { // nolint:staticcheck
+		} else {
 			// TODO our previous transaction must have failed this should never happen
+			return ErrBatchSubmissionFailed
 		}
 	}
 	return nil
