@@ -226,6 +226,7 @@ func (s *SyncTestSuite) TestSyncBatches_DoesNotSyncExistingBatchTwice() {
 }
 
 func (s *SyncTestSuite) TestSyncBatches_PendingBatch() {
+	accountRoot := s.getAccountTreeRoot()
 	tx := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			TxType:      txtype.Transfer,
@@ -255,7 +256,7 @@ func (s *SyncTestSuite) TestSyncBatches_PendingBatch() {
 
 	commitment, err := s.storage.GetCommitment(1)
 	s.NoError(err)
-	s.NotNil(commitment.AccountTreeRoot)
+	s.Equal(accountRoot, *commitment.AccountTreeRoot)
 }
 
 func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
@@ -366,7 +367,6 @@ func (s *SyncTestSuite) recreateDatabase() {
 	s.setupDB()
 }
 
-// TODO Use in every test that needs it
 func (s *SyncTestSuite) getAccountTreeRoot() common.Hash {
 	rawAccountRoot, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
