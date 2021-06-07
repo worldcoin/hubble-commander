@@ -24,6 +24,10 @@ func CalculateTransactionStatus(
 		return nil, err
 	}
 
+	if batch.FinalisationBlock == nil {
+		return txstatus.Pending.Ref(), nil
+	}
+
 	return calculateFinalisedStatus(latestBlockNumber, *batch.FinalisationBlock), nil
 }
 

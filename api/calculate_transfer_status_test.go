@@ -83,7 +83,24 @@ func (s *CalculateTransactionStatusTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_Pending() {
+func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_TxInMempool() {
+	status, err := CalculateTransactionStatus(s.storage, &s.transfer.TransactionBase, 0)
+	s.NoError(err)
+
+	s.Equal(txstatus.Pending, *status)
+}
+
+func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_TxInPendingBatch() {
+	batchID, err := s.storage.AddBatch(&models.Batch{})
+	s.NoError(err)
+
+	includedCommitment := commitment
+	includedCommitment.IncludedInBatch = batchID
+	commitmentID, err := s.storage.AddCommitment(&includedCommitment)
+	s.NoError(err)
+
+	s.transfer.IncludedInCommitment = commitmentID
+
 	status, err := CalculateTransactionStatus(s.storage, &s.transfer.TransactionBase, 0)
 	s.NoError(err)
 
