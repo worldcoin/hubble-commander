@@ -95,69 +95,6 @@ func (s *SyncTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *SyncTestSuite) TestSyncBatches_Transfer() {
-	// TODO split this test into two
-	tx := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			TxType:      txtype.Transfer,
-			FromStateID: 0,
-			Amount:      models.MakeUint256(400),
-			Fee:         models.MakeUint256(0),
-			Nonce:       models.MakeUint256(0),
-			Signature:   *mockSignature(s.T()),
-		},
-		ToStateID: 1,
-	}
-	s.createAndSubmitTransferBatch(&tx)
-
-	s.recreateDatabase()
-	s.syncAllBlocks()
-
-	// Begin database transaction
-	var err error
-	s.transactionExecutor, err = newTransactionExecutorWithCtx(context.Background(), s.storage, s.client.Client, s.cfg)
-	s.NoError(err)
-
-	tx2 := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			TxType:      txtype.Transfer,
-			FromStateID: 1,
-			Amount:      models.MakeUint256(100),
-			Fee:         models.MakeUint256(0),
-			Nonce:       models.MakeUint256(0),
-			Signature:   *mockSignature(s.T()),
-		},
-		ToStateID: 0,
-	}
-	s.createAndSubmitTransferBatch(&tx2)
-
-	batches, err := s.transactionExecutor.storage.GetBatchesInRange(nil, nil)
-	s.NoError(err)
-	s.Len(batches, 2)
-
-	// Rollback changes to the database
-	s.transactionExecutor.Rollback(nil)
-	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg)
-
-	batches, err = s.storage.GetBatchesInRange(nil, nil)
-	s.NoError(err)
-	s.Len(batches, 1)
-
-	s.syncAllBlocks()
-
-	state0, err := s.storage.GetStateLeaf(0)
-	s.NoError(err)
-	s.Equal(models.MakeUint256(700), state0.Balance)
-
-	state1, err := s.storage.GetStateLeaf(1)
-	s.NoError(err)
-	s.Equal(models.MakeUint256(300), state1.Balance)
-
-	batches, err = s.storage.GetBatchesInRange(nil, nil)
-	s.NoError(err)
-	s.Len(batches, 2)
-}
-
 func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 	accountRoot := s.getAccountTreeRoot()
 
@@ -228,6 +165,69 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 	}
 }
 
+func (s *SyncTestSuite) TestSyncBatches_DoesNotSyncExistingBatchTwice() {
+	// TODO split this test into two
+	tx := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			TxType:      txtype.Transfer,
+			FromStateID: 0,
+			Amount:      models.MakeUint256(400),
+			Fee:         models.MakeUint256(0),
+			Nonce:       models.MakeUint256(0),
+			Signature:   *mockSignature(s.T()),
+		},
+		ToStateID: 1,
+	}
+	s.createAndSubmitTransferBatch(&tx)
+
+	s.recreateDatabase()
+	s.syncAllBlocks()
+
+	// Begin database transaction
+	var err error
+	s.transactionExecutor, err = newTransactionExecutorWithCtx(context.Background(), s.storage, s.client.Client, s.cfg)
+	s.NoError(err)
+
+	tx2 := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			TxType:      txtype.Transfer,
+			FromStateID: 1,
+			Amount:      models.MakeUint256(100),
+			Fee:         models.MakeUint256(0),
+			Nonce:       models.MakeUint256(0),
+			Signature:   *mockSignature(s.T()),
+		},
+		ToStateID: 0,
+	}
+	s.createAndSubmitTransferBatch(&tx2)
+
+	batches, err := s.transactionExecutor.storage.GetBatchesInRange(nil, nil)
+	s.NoError(err)
+	s.Len(batches, 2)
+
+	// Rollback changes to the database
+	s.transactionExecutor.Rollback(nil)
+	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg)
+
+	batches, err = s.storage.GetBatchesInRange(nil, nil)
+	s.NoError(err)
+	s.Len(batches, 1)
+
+	s.syncAllBlocks()
+
+	state0, err := s.storage.GetStateLeaf(0)
+	s.NoError(err)
+	s.Equal(models.MakeUint256(700), state0.Balance)
+
+	state1, err := s.storage.GetStateLeaf(1)
+	s.NoError(err)
+	s.Equal(models.MakeUint256(300), state1.Balance)
+
+	batches, err = s.storage.GetBatchesInRange(nil, nil)
+	s.NoError(err)
+	s.Len(batches, 2)
+}
+
 func (s *SyncTestSuite) TestSyncBatches_PendingBatch() {
 	tx := models.Transfer{
 		TransactionBase: models.TransactionBase{
@@ -244,6 +244,7 @@ func (s *SyncTestSuite) TestSyncBatches_PendingBatch() {
 	s.NoError(err)
 	tx.Hash = *hash
 
+	// TODO use createAndSubmitTransferBatch
 	err = s.storage.AddTransfer(&tx)
 	s.NoError(err)
 
@@ -312,6 +313,8 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(commitments[0].ID)
 	s.NoError(err)
 	s.Len(transfers, 1)
+
+	// TODO check more fields
 }
 
 func (s *SyncTestSuite) createAndSubmitTransferBatch(tx *models.Transfer) {
@@ -373,6 +376,7 @@ func (s *SyncTestSuite) recreateDatabase() {
 	s.setupDB()
 }
 
+// TODO Use in every test that needs it
 func (s *SyncTestSuite) getAccountTreeRoot() common.Hash {
 	rawAccountRoot, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
