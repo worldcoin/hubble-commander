@@ -10,6 +10,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
 
@@ -31,9 +33,11 @@ func (t *transactionExecutor) SyncBatches(stateMutex *sync.Mutex, startBlock, en
 	if err != nil {
 		return err
 	}
+	log.Printf("SyncBatches: len(newBatches): %d", len(newBatches))
 
 	for i := range newBatches {
 		batch := &newBatches[i]
+		log.Printf("Syncing batch number: %d, tx_hash: %s", batch.Number.Uint64(), batch.TransactionHash.String())
 		if batch.Number.Cmp(latestBatchNumber) <= 0 {
 			continue
 		}
@@ -42,6 +46,12 @@ func (t *transactionExecutor) SyncBatches(stateMutex *sync.Mutex, startBlock, en
 		if err != nil && !st.IsNotFoundError(err) {
 			return err
 		}
+		log.Printf(
+			"Local batch number: %d, tx_hash: %s, id: %d",
+			localBatch.Number.Uint64(),
+			localBatch.TransactionHash.String(),
+			localBatch.ID,
+		)
 
 		if st.IsNotFoundError(err) {
 			err = t.syncBatch(stateMutex, batch)
@@ -73,15 +83,35 @@ func (t *transactionExecutor) syncExistingBatch(batch *eth.DecodedBatch, localBa
 		}
 
 		log.Printf(
-			"Submitted %d commitment(s) on chain. Batch number: %d. Batch Hash: %v",
-			len(batch.Commitments),
+			"Synced new existing batch. Batch number: %d. Batch Hash: %v",
 			batch.Number.Uint64(),
 			batch.Hash,
 		)
-	} else { // nolint:staticcheck
-		// TODO: handle race condition
+	} else {
+		txSender, err := t.getTransactionSender(batch.TransactionHash)
+		if err != nil {
+			return err
+		}
+		if *txSender != t.client.ChainConnection.GetAccount().From { // nolint:staticcheck
+			// TODO someone else's batch has been mined before ours (probably because our proposer slot ended)
+		} else { // nolint:staticcheck
+			// TODO our previous transaction must have failed this should never happen
+		}
 	}
 	return nil
+}
+
+func (t *transactionExecutor) getTransactionSender(txHash common.Hash) (*common.Address, error) {
+	tx, _, err := t.client.ChainConnection.GetBackend().TransactionByHash(t.ctx, txHash)
+	if err != nil {
+		return nil, err
+	}
+	message, err := tx.AsMessage(types.NewEIP155Signer(tx.ChainId()))
+	if err != nil {
+		return nil, err
+	}
+	sender := message.From()
+	return &sender, nil
 }
 
 func getLatestBatchNumber(storage *st.Storage) (*models.Uint256, error) {
