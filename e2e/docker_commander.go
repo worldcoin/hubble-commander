@@ -144,7 +144,7 @@ func (c *DockerCommander) Start() error {
 			return fmt.Errorf("container has exited")
 		}
 
-		if time.Since(start) > 60*time.Second {
+		if time.Since(start) > 120*time.Second {
 			return fmt.Errorf("node start timeout")
 		}
 
