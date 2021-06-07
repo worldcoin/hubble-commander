@@ -46,7 +46,7 @@ func (s *GetBatchTestSuite) SetupTest() {
 		Type:              txtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
-		Number:            models.NewUint256(1),
+		Number:            models.MakeUint256(1),
 		FinalisationBlock: ref.Uint32(42000),
 	}
 }

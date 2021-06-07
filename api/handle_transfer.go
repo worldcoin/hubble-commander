@@ -5,7 +5,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 )
 
 func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
@@ -18,29 +17,18 @@ func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 		return nil, vErr
 	}
 
-	encodedTransfer, err := encoder.EncodeTransfer(transfer)
+	hash, err := encoder.HashTransfer(transfer)
 	if err != nil {
 		return nil, err
 	}
-	hash := crypto.Keccak256Hash(encodedTransfer)
+	transfer.Hash = *hash
 
-	transfer = &models.Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash:        hash,
-			FromStateID: transfer.FromStateID,
-			Amount:      transfer.Amount,
-			Fee:         transfer.Fee,
-			Nonce:       transfer.Nonce,
-			Signature:   transfer.Signature,
-		},
-		ToStateID: transfer.ToStateID,
-	}
 	err = a.storage.AddTransfer(transfer)
 	if err != nil {
 		return nil, err
 	}
 
-	return &hash, nil
+	return &transfer.Hash, nil
 }
 
 func sanitizeTransfer(transfer dto.Transfer) (*models.Transfer, error) {

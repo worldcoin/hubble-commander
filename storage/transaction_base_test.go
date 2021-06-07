@@ -120,7 +120,7 @@ func (s *TransactionBaseTestSuite) TestGetTransactionCount() {
 	batch := &models.Batch{
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
-		Number:            models.NewUint256(1),
+		Number:            models.MakeUint256(1),
 		FinalisationBlock: ref.Uint32(1234),
 	}
 	batchID, err := s.storage.AddBatch(batch)

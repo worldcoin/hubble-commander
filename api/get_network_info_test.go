@@ -60,14 +60,14 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo_NoFinalisedBatches() {
 			Type:              txtype.Transfer,
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
-			Number:            models.NewUint256(1234),
+			Number:            models.MakeUint256(1234),
 			FinalisationBlock: ref.Uint32(1234),
 		},
 		{
 			Type:              txtype.Create2Transfer,
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
-			Number:            models.NewUint256(2000),
+			Number:            models.MakeUint256(2000),
 			FinalisationBlock: ref.Uint32(2000),
 		},
 	}
@@ -89,14 +89,14 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
 			Type:              txtype.Transfer,
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
-			Number:            models.NewUint256(1234),
+			Number:            models.MakeUint256(1234),
 			FinalisationBlock: ref.Uint32(1),
 		},
 		{
 			Type:              txtype.Create2Transfer,
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
-			Number:            models.NewUint256(2000),
+			Number:            models.MakeUint256(2000),
 			FinalisationBlock: ref.Uint32(2000),
 		},
 	}

@@ -35,8 +35,9 @@ type Commander struct {
 
 func NewCommander(cfg *config.Config) *Commander {
 	return &Commander{
-		cfg:     cfg,
-		workers: sync.WaitGroup{},
+		cfg:        cfg,
+		workers:    sync.WaitGroup{},
+		stateMutex: sync.Mutex{},
 	}
 }
 

@@ -43,6 +43,10 @@ run-prune:
 run-dev:
 	go run ./main/main.go -prune -dev
 
+start-geth:
+	rm -rf e2e/geth-data/geth
+	geth --datadir e2e/geth-data --dev --dev.period 1 --http --ws
+
 lint:
 	golangci-lint run ./...
 
@@ -61,7 +65,7 @@ test-commander-locally: clean-testcache
 	HUBBLE_E2E=local go test -v -tags e2e -run TestCommander ./e2e
 
 bench-e2e: clean-testcache
-	go test -v -tags e2e -run TestBenchmarkSuite ./e2e
+	HUBBLE_E2E=local go test -v -tags e2e -run TestBenchmarkSuite ./e2e
 
 bench-e2e-profile: clean-testcache
 	HUBBLE_E2E=in-process go test -cpuprofile cpu.prof -v -tags e2e -run TestBenchmarkSuite ./e2e

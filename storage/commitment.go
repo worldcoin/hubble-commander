@@ -53,12 +53,11 @@ func (s *Storage) GetCommitment(id int32) (*models.Commitment, error) {
 	return &res[0], nil
 }
 
-func (s *Storage) MarkCommitmentAsIncluded(commitmentID, batchID int32, accountRoot *common.Hash) error {
+func (s *Storage) MarkCommitmentAsIncluded(commitmentID, batchID int32) error {
 	res, err := s.Postgres.Query(
 		s.QB.Update("commitment").
 			Where(squirrel.Eq{"commitment_id": commitmentID}).
-			Set("included_in_batch", batchID).
-			Set("account_tree_root", *accountRoot),
+			Set("included_in_batch", batchID),
 	).Exec()
 	if err != nil {
 		return err
@@ -74,18 +73,24 @@ func (s *Storage) MarkCommitmentAsIncluded(commitmentID, batchID int32, accountR
 	return nil
 }
 
-func (s *Storage) GetPendingCommitments(maxFetched uint64) ([]models.Commitment, error) {
-	res := make([]models.Commitment, 0, 32)
-	err := s.Postgres.Query(
-		s.QB.Select("*").
-			From("commitment").
-			Where(squirrel.Eq{"included_in_batch": nil}).
-			Limit(maxFetched),
-	).Into(&res)
+func (s *Storage) UpdateCommitmentsAccountTreeRoot(batchID int32, accountRoot common.Hash) error {
+	res, err := s.Postgres.Query(
+		s.QB.Update("commitment").
+			Where(squirrel.Eq{"included_in_batch": batchID}).
+			Set("account_tree_root", accountRoot),
+	).Exec()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return res, nil
+
+	numUpdatedRows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if numUpdatedRows == 0 {
+		return ErrNoRowsAffected
+	}
+	return nil
 }
 
 func (s *Storage) GetCommitmentsByBatchID(batchID int32) ([]models.CommitmentWithTokenID, error) {

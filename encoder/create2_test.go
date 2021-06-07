@@ -215,6 +215,13 @@ func (s *Create2TestSuite) TestDeserializeCreate2Transfers() {
 		ToStateID: ref.Uint32(3),
 	}
 
+	transferHash, err := HashCreate2Transfer(&transfer)
+	s.NoError(err)
+	transfer.Hash = *transferHash
+	transferHash, err = HashCreate2Transfer(&transfer2)
+	s.NoError(err)
+	transfer2.Hash = *transferHash
+
 	serialized, err := s.testTx.Create2transferSerialize(
 		nil,
 		[]testtx.TxCreate2Transfer{

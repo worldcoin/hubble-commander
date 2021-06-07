@@ -6,7 +6,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func CalculateTransferStatus(
+func CalculateTransactionStatus(
 	storage *st.Storage,
 	transfer *models.TransactionBase,
 	latestBlockNumber uint32,
@@ -22,6 +22,10 @@ func CalculateTransferStatus(
 	batch, err := storage.GetBatchByCommitmentID(*transfer.IncludedInCommitment)
 	if err != nil {
 		return nil, err
+	}
+
+	if batch.FinalisationBlock == nil {
+		return txstatus.Pending.Ref(), nil
 	}
 
 	return calculateFinalisedStatus(latestBlockNumber, *batch.FinalisationBlock), nil

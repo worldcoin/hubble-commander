@@ -7,7 +7,7 @@ import (
 )
 
 type Batch struct {
-	ID                *models.Uint256
+	ID                models.Uint256
 	Hash              *common.Hash
 	Type              txtype.TransactionType
 	TransactionHash   common.Hash

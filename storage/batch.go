@@ -27,6 +27,26 @@ func (s *Storage) AddBatch(batch *models.Batch) (*int32, error) {
 	return ref.Int32(res[0]), nil
 }
 
+func (s *Storage) MarkBatchAsSubmitted(batch *models.Batch) error {
+	res, err := s.Postgres.Query(
+		s.QB.Update("batch").
+			Where(squirrel.Eq{"transaction_hash": batch.TransactionHash}).
+			Set("batch_hash", batch.Hash).
+			Set("finalisation_block", batch.FinalisationBlock), // nolint:misspell
+	).Exec()
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrNoRowsAffected
+	}
+	return nil
+}
+
 func (s *Storage) GetBatch(batchID int32) (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
 	err := s.Postgres.Query(
@@ -94,6 +114,23 @@ func (s *Storage) GetLatestSubmittedBatch() (*models.Batch, error) {
 	return &res[0], nil
 }
 
+func (s *Storage) GetNextBatchNumber() (*models.Uint256, error) {
+	res := make([]models.Uint256, 0, 1)
+	err := s.Postgres.Query(
+		s.QB.Select("batch_number").
+			From("batch").
+			OrderBy("batch_id DESC").
+			Limit(1),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return models.NewUint256(1), nil
+	}
+	return res[0].AddN(1), nil
+}
+
 func (s *Storage) GetLatestFinalisedBatch(currentBlockNumber uint32) (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
 	err := s.Postgres.Query(
@@ -114,7 +151,8 @@ func (s *Storage) GetLatestFinalisedBatch(currentBlockNumber uint32) (*models.Ba
 
 func (s *Storage) GetBatchesInRange(from, to *models.Uint256) ([]models.Batch, error) {
 	qb := s.QB.Select("*").
-		From("batch")
+		From("batch").
+		OrderBy("batch_number")
 
 	if from != nil {
 		qb = qb.Where(squirrel.GtOrEq{"batch_number": from})

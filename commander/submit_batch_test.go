@@ -96,6 +96,12 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_SubmitsCommitme
 
 	nextBatchID, err := s.client.Rollup.NextBatchID(nil)
 	s.NoError(err)
+	s.Equal(big.NewInt(1), nextBatchID)
+
+	s.client.Commit()
+
+	nextBatchID, err = s.client.Rollup.NextBatchID(nil)
+	s.NoError(err)
 	s.Equal(big.NewInt(2), nextBatchID)
 }
 
@@ -111,10 +117,16 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_SubmitsC
 
 	nextBatchID, err := s.client.Rollup.NextBatchID(nil)
 	s.NoError(err)
+	s.Equal(big.NewInt(1), nextBatchID)
+
+	s.client.Commit()
+
+	nextBatchID, err = s.client.Rollup.NextBatchID(nil)
+	s.NoError(err)
 	s.Equal(big.NewInt(2), nextBatchID)
 }
 
-func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_StoresBatchRecord() {
+func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_StoresPendingBatchRecord() {
 	commitmentID, err := s.storage.AddCommitment(&baseCommitment)
 	s.NoError(err)
 
@@ -124,12 +136,15 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_StoresBatchReco
 	err = s.transactionExecutor.submitBatch(txtype.Transfer, []models.Commitment{*commitment})
 	s.NoError(err)
 
-	batch, err := s.storage.GetBatchByNumber(models.MakeUint256(1))
+	batch, err := s.storage.GetBatch(1)
 	s.NoError(err)
-	s.Equal(batch.Type, txtype.Transfer)
+	s.Equal(txtype.Transfer, batch.Type)
+	s.Equal(models.MakeUint256(1), batch.Number)
+	s.NotEqual(common.Hash{}, batch.TransactionHash)
+	s.Nil(batch.Hash)
 }
 
-func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_StoresBatchRecord() {
+func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_StoresPendingBatchRecord() {
 	commitmentID, err := s.storage.AddCommitment(&baseCommitment)
 	s.NoError(err)
 
@@ -139,12 +154,14 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_StoresBa
 	err = s.transactionExecutor.submitBatch(txtype.Create2Transfer, []models.Commitment{*commitment})
 	s.NoError(err)
 
-	batch, err := s.storage.GetBatchByNumber(models.MakeUint256(1))
+	batch, err := s.storage.GetBatch(1)
 	s.NoError(err)
-	s.Equal(batch.Type, txtype.Create2Transfer)
+	s.Equal(txtype.Create2Transfer, batch.Type)
+	s.NotEqual(common.Hash{}, batch.TransactionHash)
+	s.Equal(models.MakeUint256(1), batch.Number)
+	s.Nil(batch.Hash)
 }
 
-// nolint:unparam
 func (s *SubmitTransferBatchTestSuite) addCommitments(count int) ([]int32, []models.Commitment) {
 	ids := make([]int32, 0, count)
 	commitments := make([]models.Commitment, 0, count)
@@ -166,7 +183,7 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_MarksCommitment
 	err := s.transactionExecutor.submitBatch(txtype.Transfer, commitments)
 	s.NoError(err)
 
-	batch, err := s.storage.GetBatchByNumber(models.MakeUint256(1))
+	batch, err := s.storage.GetBatch(1)
 	s.NoError(err)
 
 	for _, id := range ids {
@@ -182,7 +199,7 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_MarksCom
 	err := s.transactionExecutor.submitBatch(txtype.Create2Transfer, commitments)
 	s.NoError(err)
 
-	batch, err := s.storage.GetBatchByNumber(models.MakeUint256(1))
+	batch, err := s.storage.GetBatch(1)
 	s.NoError(err)
 
 	for _, id := range ids {
@@ -195,38 +212,6 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_MarksCom
 func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_MarksCommitmentsAsIncluded_UnsavedCommitment() {
 	err := s.transactionExecutor.submitBatch(txtype.Transfer, []models.Commitment{baseCommitment})
 	s.EqualError(err, "no rows were affected by the update")
-}
-
-func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_UpdatesCommitmentsAccountRoot() {
-	ids, commitments := s.addCommitments(2)
-
-	err := s.transactionExecutor.submitBatch(txtype.Transfer, commitments)
-	s.NoError(err)
-
-	accountRoot, err := s.client.AccountRegistry.Root(nil)
-	s.NoError(err)
-
-	for _, id := range ids {
-		commit, err := s.storage.GetCommitment(id)
-		s.NoError(err)
-		s.Equal(common.BytesToHash(accountRoot[:]), *commit.AccountTreeRoot)
-	}
-}
-
-func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_UpdatesCommitmentsAccountRoot() {
-	ids, commitments := s.addCommitments(2)
-
-	err := s.transactionExecutor.submitBatch(txtype.Create2Transfer, commitments)
-	s.NoError(err)
-
-	accountRoot, err := s.client.AccountRegistry.Root(nil)
-	s.NoError(err)
-
-	for _, id := range ids {
-		commit, err := s.storage.GetCommitment(id)
-		s.NoError(err)
-		s.Equal(common.BytesToHash(accountRoot[:]), *commit.AccountTreeRoot)
-	}
 }
 
 func TestSubmitBatch_TransfersTestSuite(t *testing.T) {

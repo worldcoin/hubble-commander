@@ -7,6 +7,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 const transferLength = 12
@@ -71,7 +73,7 @@ func EncodeTransferForCommitment(transfer *models.Transfer) ([]byte, error) {
 	return arr, nil
 }
 
-func DecodeTransferFromCommitment(data []byte) *models.Transfer {
+func DecodeTransferFromCommitment(data []byte) (*models.Transfer, error) {
 	fromStateID := binary.BigEndian.Uint32(data[0:4])
 	toStateID := binary.BigEndian.Uint32(data[4:8])
 	amountEncoded := binary.BigEndian.Uint16(data[8:10])
@@ -80,7 +82,7 @@ func DecodeTransferFromCommitment(data []byte) *models.Transfer {
 	amount := DecodeDecimal(amountEncoded)
 	fee := DecodeDecimal(feeEncoded)
 
-	return &models.Transfer{
+	transfer := &models.Transfer{
 		TransactionBase: models.TransactionBase{
 			TxType:      txtype.Transfer,
 			FromStateID: fromStateID,
@@ -89,6 +91,12 @@ func DecodeTransferFromCommitment(data []byte) *models.Transfer {
 		},
 		ToStateID: toStateID,
 	}
+	hashTransfer, err := HashTransfer(transfer)
+	if err != nil {
+		return nil, err
+	}
+	transfer.Hash = *hashTransfer
+	return transfer, nil
 }
 
 func SerializeTransfers(transfers []models.Transfer) ([]byte, error) {
@@ -114,9 +122,21 @@ func DeserializeTransfers(data []byte) ([]models.Transfer, error) {
 
 	res := make([]models.Transfer, 0, transfersCount)
 	for i := 0; i < transfersCount; i++ {
-		transfer := DecodeTransferFromCommitment(data[i*transferLength : (i+1)*transferLength])
+		transfer, err := DecodeTransferFromCommitment(data[i*transferLength : (i+1)*transferLength])
+		if err != nil {
+			return nil, err
+		}
 		res = append(res, *transfer)
 	}
 
 	return res, nil
+}
+
+func HashTransfer(transfer *models.Transfer) (*common.Hash, error) {
+	encodedTransfer, err := EncodeTransfer(transfer)
+	if err != nil {
+		return nil, err
+	}
+	hash := crypto.Keccak256Hash(encodedTransfer)
+	return &hash, nil
 }

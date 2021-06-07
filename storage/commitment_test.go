@@ -66,7 +66,7 @@ func (s *CommitmentTestSuite) addRandomBatch() *int32 {
 		Type:              txtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
-		Number:            models.NewUint256(123),
+		Number:            models.MakeUint256(123),
 		FinalisationBlock: ref.Uint32(1234),
 	}
 	id, err := s.storage.AddBatch(&batch)
@@ -76,17 +76,15 @@ func (s *CommitmentTestSuite) addRandomBatch() *int32 {
 
 func (s *CommitmentTestSuite) TestMarkCommitmentAsIncluded_UpdatesRecord() {
 	batchID := s.addRandomBatch()
-	accountRoot := utils.RandomHash()
 
 	id, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	err = s.storage.MarkCommitmentAsIncluded(*id, *batchID, &accountRoot)
+	err = s.storage.MarkCommitmentAsIncluded(*id, *batchID)
 	s.NoError(err)
 
 	expected := s.getCommitment(*id)
 	expected.IncludedInBatch = batchID
-	expected.AccountTreeRoot = &accountRoot
 
 	actual, err := s.storage.GetCommitment(*id)
 	s.NoError(err)
@@ -94,33 +92,45 @@ func (s *CommitmentTestSuite) TestMarkCommitmentAsIncluded_UpdatesRecord() {
 	s.Equal(expected, actual)
 }
 
-func (s *CommitmentTestSuite) TestGetPendingCommitments_ReturnsOnlyPending() {
-	id, err := s.storage.AddCommitment(&commitment)
+func (s *CommitmentTestSuite) TestUpdateCommitmentAccountTreeRoot_UpdatesRecord() {
+	batchID := s.addRandomBatch()
+	accountRoot := utils.RandomHash()
+
+	id1, err := s.storage.AddCommitment(&commitment)
+	s.NoError(err)
+	id2, err := s.storage.AddCommitment(&commitment)
+	s.NoError(err)
+	id3, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	includedCommitment := commitment
-	includedCommitment.IncludedInBatch = s.addRandomBatch()
-	_, err = s.storage.AddCommitment(&includedCommitment)
+	err = s.storage.MarkCommitmentAsIncluded(*id1, *batchID)
+	s.NoError(err)
+	err = s.storage.MarkCommitmentAsIncluded(*id3, *batchID)
 	s.NoError(err)
 
-	actual, err := s.storage.GetPendingCommitments(10)
+	err = s.storage.UpdateCommitmentsAccountTreeRoot(*batchID, accountRoot)
 	s.NoError(err)
 
-	expected := commitment
-	expected.ID = *id
+	expectedCommitment1 := s.getCommitment(*id1)
+	expectedCommitment1.IncludedInBatch = batchID
+	expectedCommitment1.AccountTreeRoot = &accountRoot
 
-	s.Equal([]models.Commitment{expected}, actual)
-}
+	expectedCommitment2 := s.getCommitment(*id2)
 
-func (s *CommitmentTestSuite) TestGetPendingCommitments_ReturnsOnlyGivenNumberOfRows() {
-	for i := 0; i < 3; i++ {
-		_, err := s.storage.AddCommitment(&commitment)
-		s.NoError(err)
-	}
+	expectedCommitment3 := s.getCommitment(*id3)
+	expectedCommitment3.IncludedInBatch = batchID
+	expectedCommitment3.AccountTreeRoot = &accountRoot
 
-	commitments, err := s.storage.GetPendingCommitments(2)
+	actualCommitment1, err := s.storage.GetCommitment(*id1)
 	s.NoError(err)
-	s.Len(commitments, 2)
+	actualCommitment2, err := s.storage.GetCommitment(*id2)
+	s.NoError(err)
+	actualCommitment3, err := s.storage.GetCommitment(*id3)
+	s.NoError(err)
+
+	s.Equal(expectedCommitment1, actualCommitment1)
+	s.Equal(expectedCommitment2, actualCommitment2)
+	s.Equal(expectedCommitment3, actualCommitment3)
 }
 
 func (s *CommitmentTestSuite) TestGetCommitment_NonExistentCommitment() {

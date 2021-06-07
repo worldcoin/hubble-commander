@@ -37,7 +37,7 @@ func (t *transactionExecutor) syncTransferCommitment(
 		return ErrTransfersNotApplied
 	}
 
-	_, err = t.storage.AddCommitment(&models.Commitment{
+	commitmentID, err := t.storage.AddCommitment(&models.Commitment{
 		Type:              batch.Type,
 		Transactions:      commitment.Transactions,
 		FeeReceiver:       commitment.FeeReceiver,
@@ -46,5 +46,11 @@ func (t *transactionExecutor) syncTransferCommitment(
 		AccountTreeRoot:   &batch.AccountRoot,
 		IncludedInBatch:   &batch.ID,
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	for i := range transfers.appliedTransfers {
+		transfers.appliedTransfers[i].IncludedInCommitment = commitmentID
+	}
+	return t.storage.BatchAddTransfer(transfers.appliedTransfers)
 }
