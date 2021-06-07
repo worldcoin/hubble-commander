@@ -114,15 +114,13 @@ func (c *Commander) syncRange(startBlock, endBlock uint64) error {
 }
 
 func (c *Commander) syncBatches(startBlock, endBlock uint64) (err error) {
-	c.stateMutex.Lock()
-	defer c.stateMutex.Unlock()
 	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, c.cfg.Rollup)
 	if err != nil {
 		return err
 	}
 	defer transactionExecutor.Rollback(&err)
 
-	err = transactionExecutor.SyncBatches(startBlock, endBlock)
+	err = transactionExecutor.SyncBatches(&c.stateMutex, startBlock, endBlock)
 	if err != nil {
 		return err
 	}

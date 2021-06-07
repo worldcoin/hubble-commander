@@ -3,6 +3,7 @@ package commander
 import (
 	"fmt"
 	"log"
+	"sync"
 
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -17,7 +18,7 @@ var (
 	ErrTransfersNotApplied = errors.New("could not apply all transfers from synced batch")
 )
 
-func (t *transactionExecutor) SyncBatches(startBlock, endBlock uint64) error {
+func (t *transactionExecutor) SyncBatches(stateMutex *sync.Mutex, startBlock, endBlock uint64) error {
 	latestBatchNumber, err := getLatestBatchNumber(t.storage)
 	if err != nil {
 		return err
@@ -43,7 +44,7 @@ func (t *transactionExecutor) SyncBatches(startBlock, endBlock uint64) error {
 		}
 
 		if st.IsNotFoundError(err) {
-			err = t.syncBatch(batch)
+			err = t.syncBatch(stateMutex, batch)
 			if err != nil {
 				return err
 			}
@@ -93,7 +94,10 @@ func getLatestBatchNumber(storage *st.Storage) (*models.Uint256, error) {
 	return &latestBatch.Number, nil
 }
 
-func (t *transactionExecutor) syncBatch(batch *eth.DecodedBatch) error {
+func (t *transactionExecutor) syncBatch(stateMutex *sync.Mutex, batch *eth.DecodedBatch) error {
+	stateMutex.Lock()
+	defer stateMutex.Unlock()
+
 	batchID, err := t.storage.AddBatch(&batch.Batch)
 	if err != nil {
 		return err

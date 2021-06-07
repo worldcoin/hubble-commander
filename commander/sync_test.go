@@ -2,6 +2,7 @@ package commander
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -28,6 +29,7 @@ type SyncTestSuite struct {
 	client              *eth.TestClient
 	cfg                 *config.RollupConfig
 	transactionExecutor *transactionExecutor
+	stateMutex          *sync.Mutex
 }
 
 func (s *SyncTestSuite) SetupSuite() {
@@ -44,6 +46,8 @@ func (s *SyncTestSuite) SetupTest() {
 		MaxCommitmentsPerBatch: 32,
 		TxsPerCommitment:       1,
 	}
+
+	s.stateMutex = &sync.Mutex{}
 
 	s.setupDB()
 }
@@ -349,7 +353,7 @@ func (s *SyncTestSuite) createAndSubmitC2TBatch(tx *models.Create2Transfer) mode
 func (s *SyncTestSuite) syncAllBlocks() {
 	latestBlockNumber, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
-	err = s.transactionExecutor.SyncBatches(0, *latestBlockNumber)
+	err = s.transactionExecutor.SyncBatches(s.stateMutex, 0, *latestBlockNumber)
 	s.NoError(err)
 }
 
