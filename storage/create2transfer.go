@@ -9,11 +9,19 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-var create2TransferColumns = []string{
-	"transaction_base.*",
-	"create2transfer.to_state_id",
-	"create2transfer.to_public_key",
-}
+var (
+	create2TransferColumns = []string{
+		"transaction_base.*",
+		"create2transfer.to_state_id",
+		"create2transfer.to_public_key",
+	}
+	create2TransferWithBatchColumns = []string{
+		"transaction_base.*",
+		"create2transfer.to_state_id",
+		"create2transfer.to_public_key",
+		"batch.batch_hash",
+	}
+)
 
 func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) (err error) {
 	tx, txStorage, err := s.BeginTransaction(TxOptions{Postgres: true})
@@ -100,10 +108,7 @@ func (s *Storage) BatchAddCreate2Transfer(txs []models.Create2Transfer) error {
 func (s *Storage) GetCreate2Transfer(hash common.Hash) (*models.Create2TransferWithBatchHash, error) {
 	res := make([]models.Create2TransferWithBatchHash, 0, 1)
 	err := s.Postgres.Query(
-		s.QB.Select("transaction_base.*",
-			"create2transfer.to_state_id",
-			"create2transfer.to_public_key",
-			"batch.batch_hash").
+		s.QB.Select(create2TransferWithBatchColumns...).
 			From("transaction_base").
 			JoinClause("NATURAL JOIN create2transfer").
 			LeftJoin("commitment on commitment.commitment_id = transaction_base.included_in_commitment").
@@ -155,10 +160,7 @@ func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([
 
 	res := make([]models.Create2TransferWithBatchHash, 0, 1)
 	err = s.Postgres.Query(
-		s.QB.Select("transaction_base.*",
-			"create2transfer.to_state_id",
-			"create2transfer.to_public_key",
-			"batch.batch_hash").
+		s.QB.Select(create2TransferWithBatchColumns...).
 			From("transaction_base").
 			JoinClause("NATURAL JOIN create2transfer").
 			LeftJoin("commitment on commitment.commitment_id = transaction_base.included_in_commitment").

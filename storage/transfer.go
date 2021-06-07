@@ -9,10 +9,17 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-var transferColumns = []string{
-	"transaction_base.*",
-	"transfer.to_state_id",
-}
+var (
+	transferColumns = []string{
+		"transaction_base.*",
+		"transfer.to_state_id",
+	}
+	transferWithBatchColumns = []string{
+		"transaction_base.*",
+		"transfer.to_state_id",
+		"batch.batch_hash",
+	}
+)
 
 func (s *Storage) AddTransfer(t *models.Transfer) error {
 	tx, txStorage, err := s.BeginTransaction(TxOptions{Postgres: true})
@@ -97,9 +104,7 @@ func (s *Storage) BatchAddTransfer(txs []models.Transfer) error {
 func (s *Storage) GetTransfer(hash common.Hash) (*models.TransferWithBatchHash, error) {
 	res := make([]models.TransferWithBatchHash, 0, 1)
 	err := s.Postgres.Query(
-		s.QB.Select("transaction_base.*",
-			"transfer.to_state_id",
-			"batch.batch_hash").
+		s.QB.Select(transferWithBatchColumns...).
 			From("transaction_base").
 			JoinClause("NATURAL JOIN transfer").
 			LeftJoin("commitment on commitment.commitment_id = transaction_base.included_in_commitment").
@@ -162,9 +167,7 @@ func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models
 
 	res := make([]models.TransferWithBatchHash, 0, 1)
 	err = s.Postgres.Query(
-		s.QB.Select("transaction_base.*",
-			"transfer.to_state_id",
-			"batch.batch_hash").
+		s.QB.Select(transferWithBatchColumns...).
 			From("transaction_base").
 			JoinClause("NATURAL JOIN transfer").
 			LeftJoin("commitment on commitment.commitment_id = transaction_base.included_in_commitment").
