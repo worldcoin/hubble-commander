@@ -38,20 +38,20 @@ func (t *transactionExecutor) SyncBatches(startBlock, endBlock uint64) error {
 		}
 
 		localBatch, err := t.storage.GetBatchByNumber(*batch.Number)
+		if err != nil && !st.IsNotFoundError(err) {
+			return err
+		}
+
 		if st.IsNotFoundError(err) {
 			err = t.syncBatch(batch)
 			if err != nil {
 				return err
 			}
-			continue
-		}
-		if err != nil {
-			return err
-		}
-
-		err = t.syncExistingBatch(batch, localBatch)
-		if err != nil {
-			return err
+		} else {
+			err = t.syncExistingBatch(batch, localBatch)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
