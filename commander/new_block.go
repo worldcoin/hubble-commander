@@ -2,6 +2,7 @@ package commander
 
 import (
 	"context"
+	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -9,17 +10,19 @@ import (
 )
 
 func (c *Commander) newBlockLoop() error {
-	err := c.initialSync()
-	if err != nil {
-		return err
-	}
-
-	blocks := make(chan *types.Header)
+	blocks := make(chan *types.Header, 5)
 	subscription, err := c.client.ChainConnection.SubscribeNewHead(blocks)
 	if err != nil {
 		return err
 	}
 	defer subscription.Unsubscribe()
+
+	latestBlockNumber, err := c.client.ChainConnection.GetLatestBlockNumber()
+	if err != nil {
+		return err
+	}
+	// TODO: remove mining every 1s from github actions as it will be no longer needed with below line
+	blocks <- &types.Header{Number: new(big.Int).SetUint64(*latestBlockNumber)}
 
 	var rollupCancel context.CancelFunc
 	for {
@@ -28,30 +31,26 @@ func (c *Commander) newBlockLoop() error {
 			return nil
 		case err = <-subscription.Err():
 			return err
-		case <-blocks:
-			latestBlockNumber, err := c.client.ChainConnection.GetLatestBlockNumber()
-			if err != nil {
-				return err
+		case currentBlock := <-blocks:
+			if currentBlock.Number.Uint64() <= uint64(c.storage.GetLatestBlockNumber()) {
+				continue
 			}
-			c.storage.SetLatestBlockNumber(uint32(*latestBlockNumber))
 
-			syncedBlock, err := c.syncForward(*latestBlockNumber)
+			err = c.syncToLastBlock()
 			if err != nil {
 				return err
 			}
 
-			if *syncedBlock == *latestBlockNumber {
-				isProposer, err := c.client.IsActiveProposer()
-				if err != nil {
-					return errors.WithStack(err)
-				}
-				rollupCancel = c.manageRollupLoop(rollupCancel, isProposer)
+			isProposer, err := c.client.IsActiveProposer()
+			if err != nil {
+				return errors.WithStack(err)
 			}
+			rollupCancel = c.manageRollupLoop(rollupCancel, isProposer)
 		}
 	}
 }
 
-func (c *Commander) initialSync() error {
+func (c *Commander) syncToLastBlock() error {
 	latestBlockNumber, err := c.client.ChainConnection.GetLatestBlockNumber()
 	if err != nil {
 		return err
