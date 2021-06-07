@@ -14,30 +14,6 @@ import (
 
 type SubmitBatchFunc func(commitments []models.Commitment) (*types.Transaction, error)
 
-func (c *Client) SubmitTransfersBatchAndMine(commitments []models.Commitment) (
-	batch *models.Batch,
-	accountTreeRoot *common.Hash,
-	err error,
-) {
-	return c.submitBatch(commitments, func(commitments []models.Commitment) (*types.Transaction, error) {
-		return c.rollup().
-			WithValue(*c.config.stakeAmount.ToBig()).
-			SubmitTransfer(encoder.CommitmentToCalldataFields(commitments))
-	})
-}
-
-func (c *Client) SubmitCreate2TransfersBatchAndMine(commitments []models.Commitment) (
-	batch *models.Batch,
-	accountTreeRoot *common.Hash,
-	err error,
-) {
-	return c.submitBatch(commitments, func(commitments []models.Commitment) (*types.Transaction, error) {
-		return c.rollup().
-			WithValue(*c.config.stakeAmount.ToBig()).
-			SubmitCreate2Transfer(encoder.CommitmentToCalldataFields(commitments))
-	})
-}
-
 func (c *Client) SubmitTransfersBatch(commitments []models.Commitment) (
 	*types.Transaction,
 	error,
@@ -46,6 +22,7 @@ func (c *Client) SubmitTransfersBatch(commitments []models.Commitment) (
 		WithValue(*c.config.stakeAmount.ToBig()).
 		SubmitTransfer(encoder.CommitmentToCalldataFields(commitments))
 }
+
 func (c *Client) SubmitCreate2TransfersBatch(commitments []models.Commitment) (
 	*types.Transaction,
 	error,
@@ -55,7 +32,22 @@ func (c *Client) SubmitCreate2TransfersBatch(commitments []models.Commitment) (
 		SubmitCreate2Transfer(encoder.CommitmentToCalldataFields(commitments))
 }
 
-func (c *Client) submitBatch(
+func (c *Client) SubmitTransfersBatchAndMine(commitments []models.Commitment) (
+	batch *models.Batch,
+	accountTreeRoot *common.Hash,
+	err error,
+) {
+	return c.submitBatchAndMine(commitments, c.SubmitTransfersBatch)
+}
+func (c *Client) SubmitCreate2TransfersBatchAndMine(commitments []models.Commitment) (
+	batch *models.Batch,
+	accountTreeRoot *common.Hash,
+	err error,
+) {
+	return c.submitBatchAndMine(commitments, c.SubmitCreate2TransfersBatch)
+}
+
+func (c *Client) submitBatchAndMine(
 	commitments []models.Commitment,
 	submit SubmitBatchFunc,
 ) (batch *models.Batch, accountTreeRoot *common.Hash, err error) {
