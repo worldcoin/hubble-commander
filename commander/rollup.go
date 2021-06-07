@@ -91,7 +91,7 @@ func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionT
 }
 
 func (t *transactionExecutor) buildTransferCommitments(domain *bls.Domain) ([]models.Commitment, error) {
-	pendingTransfers, err := t.storage.GetPendingTransfers(uint64(t.cfg.TxsPerCommitment))
+	pendingTransfers, err := t.storage.GetPendingTransfers()
 	if err != nil {
 		return nil, err
 	}
