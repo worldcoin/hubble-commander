@@ -34,11 +34,9 @@ func (t *transactionExecutor) SyncBatches(stateMutex *sync.Mutex, startBlock, en
 	if err != nil {
 		return err
 	}
-	log.Printf("SyncBatches: len(newBatches): %d", len(newBatches))
 
 	for i := range newBatches {
 		batch := &newBatches[i]
-		log.Printf("Syncing batch number: %d, tx_hash: %s", batch.Number.Uint64(), batch.TransactionHash.String())
 		if batch.Number.Cmp(latestBatchNumber) <= 0 {
 			continue
 		}
@@ -47,12 +45,6 @@ func (t *transactionExecutor) SyncBatches(stateMutex *sync.Mutex, startBlock, en
 		if err != nil && !st.IsNotFoundError(err) {
 			return err
 		}
-		log.Printf(
-			"Local batch number: %d, tx_hash: %s, id: %d",
-			localBatch.Number.Uint64(),
-			localBatch.TransactionHash.String(),
-			localBatch.ID,
-		)
 
 		if st.IsNotFoundError(err) {
 			err = t.syncBatch(stateMutex, batch)
