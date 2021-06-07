@@ -35,16 +35,16 @@ func (c *Commander) newBlockLoop() error {
 			}
 			c.storage.SetLatestBlockNumber(uint32(*latestBlockNumber))
 
-			isProposer, err := c.client.IsActiveProposer()
-			if err != nil {
-				return errors.WithStack(err)
-			}
-			syncedBlock, err := c.syncForward(*latestBlockNumber, isProposer)
+			syncedBlock, err := c.syncForward(*latestBlockNumber)
 			if err != nil {
 				return err
 			}
 
 			if *syncedBlock == *latestBlockNumber {
+				isProposer, err := c.client.IsActiveProposer()
+				if err != nil {
+					return errors.WithStack(err)
+				}
 				rollupCancel = c.manageRollupLoop(rollupCancel, isProposer)
 			}
 		}
@@ -60,7 +60,7 @@ func (c *Commander) initialSync() error {
 
 	syncedBlock := ref.Uint64(uint64(0))
 	for *syncedBlock != *latestBlockNumber {
-		syncedBlock, err = c.syncForward(*latestBlockNumber, false)
+		syncedBlock, err = c.syncForward(*latestBlockNumber)
 		if err != nil {
 			return err
 		}
@@ -81,7 +81,7 @@ func (c *Commander) initialSync() error {
 	return nil
 }
 
-func (c *Commander) syncForward(latestBlockNumber uint64, isProposer bool) (*uint64, error) {
+func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
 	syncedBlock, err := c.storage.GetSyncedBlock(c.client.ChainState.ChainID)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -89,7 +89,7 @@ func (c *Commander) syncForward(latestBlockNumber uint64, isProposer bool) (*uin
 	startBlock := *syncedBlock + 1
 	endBlock := min(latestBlockNumber, startBlock+uint64(c.cfg.Rollup.SyncSize))
 
-	err = c.syncRange(startBlock, endBlock, isProposer)
+	err = c.syncRange(startBlock, endBlock)
 	if err != nil {
 		return nil, err
 	}
@@ -101,14 +101,13 @@ func (c *Commander) syncForward(latestBlockNumber uint64, isProposer bool) (*uin
 	return &endBlock, nil
 }
 
-func (c *Commander) syncRange(startBlock, endBlock uint64, isProposer bool) error {
+func (c *Commander) syncRange(startBlock, endBlock uint64) error {
 	err := c.syncAccounts(startBlock, endBlock)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	if !isProposer {
-		err = c.syncBatches(startBlock, endBlock)
-	}
+
+	err = c.syncBatches(startBlock, endBlock)
 	if err != nil {
 		return errors.WithStack(err)
 	}
