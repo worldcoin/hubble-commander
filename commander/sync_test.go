@@ -240,7 +240,11 @@ func (s *SyncTestSuite) TestSyncBatches_PendingBatch() {
 		},
 		ToStateID: 1,
 	}
-	err := s.storage.AddTransfer(&tx)
+	hash, err := encoder.HashTransfer(&tx)
+	s.NoError(err)
+	tx.Hash = *hash
+
+	err = s.storage.AddTransfer(&tx)
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.createTransferCommitments([]models.Transfer{tx}, testDomain)
@@ -250,11 +254,23 @@ func (s *SyncTestSuite) TestSyncBatches_PendingBatch() {
 	err = s.transactionExecutor.submitBatch(txtype.Transfer, commitments)
 	s.NoError(err)
 
+	pendingBatch, err := s.storage.GetBatch(1)
+	s.NoError(err)
+	s.Nil(pendingBatch.Hash)
+	s.Nil(pendingBatch.FinalisationBlock)
+
 	s.client.Commit()
+	s.syncAllBlocks()
 
-	s.recreateDatabase()
+	batches, err := s.storage.GetBatchesInRange(nil, nil)
+	s.NoError(err)
+	s.Len(batches, 1)
+	s.NotNil(batches[0].Hash)
+	s.NotNil(batches[0].FinalisationBlock)
 
-	// TODO finish this test
+	commitment, err := s.storage.GetCommitment(commitments[0].ID)
+	s.NoError(err)
+	s.NotNil(commitment.AccountTreeRoot)
 }
 
 func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {

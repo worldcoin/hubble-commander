@@ -60,6 +60,7 @@ func (t *transactionExecutor) SyncBatches(startBlock, endBlock uint64) error {
 
 func (t *transactionExecutor) syncExistingBatch(batch *eth.DecodedBatch, localBatch *models.Batch) error {
 	if batch.TransactionHash == localBatch.TransactionHash {
+		batch.ID = localBatch.ID
 		err := t.storage.MarkBatchAsSubmitted(&batch.Batch)
 		if err != nil {
 			return err
@@ -71,7 +72,7 @@ func (t *transactionExecutor) syncExistingBatch(batch *eth.DecodedBatch, localBa
 		}
 
 		log.Printf(
-			"Submitted %d commitment(s) on chain. Batch ID: %d. Batch Hash: %v",
+			"Submitted %d commitment(s) on chain. Batch number: %d. Batch Hash: %v",
 			len(batch.Commitments),
 			batch.Number.Uint64(),
 			batch.Hash,
