@@ -8,6 +8,7 @@ import (
 
 var (
 	ErrNotEnoughCommitments = NewRollupError("not enough commitments")
+	ErrNoLongerProposer     = NewRollupError("commander is no longer an active proposer")
 )
 
 func (t *transactionExecutor) submitBatch(batchType txtype.TransactionType, commitments []models.Commitment) error {
@@ -20,7 +21,7 @@ func (t *transactionExecutor) submitBatch(batchType txtype.TransactionType, comm
 
 	select {
 	case <-t.ctx.Done():
-		return NewRollupError("commander is no longer an active proposer")
+		return ErrNoLongerProposer
 	default:
 	}
 
