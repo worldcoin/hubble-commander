@@ -320,7 +320,7 @@ func (s *TransferTestSuite) TestGetTransfersByCommitmentID_NoTransfers() {
 	s.Len(commitments, 0)
 }
 
-func (s *TransferTestSuite) addBatchAndCommitment() (common.Hash, int32) {
+func (s *TransferTestSuite) addBatchAndCommitment() (batchHash common.Hash, commitmentID int32) {
 	batch := &models.Batch{
 		Type:            txtype.Transfer,
 		TransactionHash: utils.RandomHash(),
@@ -332,10 +332,10 @@ func (s *TransferTestSuite) addBatchAndCommitment() (common.Hash, int32) {
 
 	commitmentInBatch := commitment
 	commitmentInBatch.IncludedInBatch = batchID
-	commitmentID, err := s.storage.AddCommitment(&commitmentInBatch)
+	id, err := s.storage.AddCommitment(&commitmentInBatch)
 	s.NoError(err)
 
-	return *batch.Hash, *commitmentID
+	return *batch.Hash, *id
 }
 
 func TestTransferTestSuite(t *testing.T) {
