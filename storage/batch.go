@@ -144,7 +144,7 @@ func (s *Storage) GetNextBatchNumber() (*models.Uint256, error) {
 		return nil, err
 	}
 	if len(res) == 0 {
-		return models.NewUint256(0), nil
+		return models.NewUint256(1), nil
 	}
 	return res[0].AddN(1), nil
 }

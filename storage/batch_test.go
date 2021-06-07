@@ -404,7 +404,7 @@ func (s *BatchTestSuite) TestGetNextBatchNumber() {
 func (s *BatchTestSuite) TestGetNextBatchNumber_NoBatches() {
 	batchNumber, err := s.storage.GetNextBatchNumber()
 	s.NoError(err)
-	s.Equal(models.NewUint256(0), batchNumber)
+	s.Equal(models.NewUint256(1), batchNumber)
 }
 
 func TestBatchTestSuite(t *testing.T) {
