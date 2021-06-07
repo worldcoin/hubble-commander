@@ -18,7 +18,6 @@ var (
 		FeeReceiver:       uint32(1),
 		CombinedSignature: models.MakeRandomSignature(),
 		PostStateRoot:     utils.RandomHash(),
-		AccountTreeRoot:   nil,
 		IncludedInBatch:   nil,
 	}
 )
@@ -147,7 +146,6 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
 	includedCommitment := commitment
 	includedCommitment.IncludedInBatch = batchID
 	includedCommitment.FeeReceiver = 0
-	includedCommitment.AccountTreeRoot = utils.NewRandomHash()
 
 	expectedCommitments := make([]models.CommitmentWithTokenID, 2)
 	for i := 0; i < 2; i++ {

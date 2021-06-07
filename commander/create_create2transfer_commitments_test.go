@@ -98,7 +98,6 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, 32)
 	s.Equal(commitments[0].FeeReceiver, uint32(2))
-	s.Nil(commitments[0].AccountTreeRoot)
 	s.Nil(commitments[0].IncludedInBatch)
 
 	postRoot, err := storage.NewStateTree(s.storage).Root()

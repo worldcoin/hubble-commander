@@ -83,7 +83,7 @@ func (s *BatchTestSuite) TestGetBatchByNumber() {
 		Hash:              utils.NewRandomHash(),
 		Number:            models.MakeUint256(1234),
 		FinalisationBlock: ref.Uint32(1234),
-		AccountTreeRoot: utils.NewRandomHash(),
+		AccountTreeRoot:   utils.NewRandomHash(),
 	}
 	id, err := s.storage.AddBatch(batch)
 	s.NoError(err)
@@ -114,7 +114,7 @@ func (s *BatchTestSuite) TestGetBatchByCommitmentID() {
 		Hash:              utils.NewRandomHash(),
 		Number:            models.MakeUint256(1),
 		FinalisationBlock: ref.Uint32(1234),
-		AccountTreeRoot: utils.NewRandomHash(),
+		AccountTreeRoot:   utils.NewRandomHash(),
 	}
 
 	batchID, err := s.storage.AddBatch(batch)
@@ -128,7 +128,6 @@ func (s *BatchTestSuite) TestGetBatchByCommitmentID() {
 		FeeReceiver:       uint32(1),
 		CombinedSignature: models.MakeRandomSignature(),
 		PostStateRoot:     utils.RandomHash(),
-		AccountTreeRoot:   nil,
 		IncludedInBatch:   &batch.ID,
 	}
 
@@ -147,7 +146,6 @@ func (s *BatchTestSuite) TestGetBatchByCommitmentID_NotExistentBatch() {
 		FeeReceiver:       uint32(1),
 		CombinedSignature: models.MakeRandomSignature(),
 		PostStateRoot:     utils.RandomHash(),
-		AccountTreeRoot:   nil,
 		IncludedInBatch:   nil,
 	}
 
@@ -168,7 +166,7 @@ func (s *BatchTestSuite) TestGetLatestSubmittedBatch() {
 			Number:            models.MakeUint256(1234),
 			FinalisationBlock: ref.Uint32(1234),
 			TransactionHash:   utils.RandomHash(),
-			AccountTreeRoot: utils.NewRandomHash(),
+			AccountTreeRoot:   utils.NewRandomHash(),
 		},
 		{
 			ID:                2,
@@ -177,7 +175,7 @@ func (s *BatchTestSuite) TestGetLatestSubmittedBatch() {
 			Number:            models.MakeUint256(2000),
 			FinalisationBlock: ref.Uint32(1234),
 			TransactionHash:   utils.RandomHash(),
-			AccountTreeRoot: utils.NewRandomHash(),
+			AccountTreeRoot:   utils.NewRandomHash(),
 		},
 	}
 	pendingBatch := models.Batch{
@@ -212,7 +210,7 @@ func (s *BatchTestSuite) TestGetLatestFinalisedBatch() {
 			Hash:              utils.NewRandomHash(),
 			Number:            models.MakeUint256(1234),
 			FinalisationBlock: ref.Uint32(1234),
-			AccountTreeRoot: utils.NewRandomHash(),
+			AccountTreeRoot:   utils.NewRandomHash(),
 		},
 		{
 			ID:                2,
@@ -221,7 +219,7 @@ func (s *BatchTestSuite) TestGetLatestFinalisedBatch() {
 			Hash:              utils.NewRandomHash(),
 			Number:            models.MakeUint256(1800),
 			FinalisationBlock: ref.Uint32(1800),
-			AccountTreeRoot: utils.NewRandomHash(),
+			AccountTreeRoot:   utils.NewRandomHash(),
 		},
 		{
 			ID:                3,
@@ -230,7 +228,7 @@ func (s *BatchTestSuite) TestGetLatestFinalisedBatch() {
 			Hash:              utils.NewRandomHash(),
 			Number:            models.MakeUint256(2000),
 			FinalisationBlock: ref.Uint32(2000),
-			AccountTreeRoot: utils.NewRandomHash(),
+			AccountTreeRoot:   utils.NewRandomHash(),
 		},
 	}
 	pendingBatch := models.Batch{
