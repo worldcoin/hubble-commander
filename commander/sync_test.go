@@ -304,6 +304,14 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 1)
+
+	commitments, err := s.storage.GetCommitmentsByBatchID(batches[0].ID)
+	s.NoError(err)
+	s.Len(commitments, 1)
+
+	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(commitments[0].ID)
+	s.NoError(err)
+	s.Len(transfers, 1)
 }
 
 func (s *SyncTestSuite) createAndSubmitTransferBatch(tx *models.Transfer) {
