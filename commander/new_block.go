@@ -10,19 +10,19 @@ import (
 )
 
 func (c *Commander) newBlockLoop() error {
+	latestBlockNumber, err := c.client.ChainConnection.GetLatestBlockNumber()
+	if err != nil {
+		return err
+	}
+
 	blocks := make(chan *types.Header, 5)
+	// TODO: remove mining every 1s from github actions as it will be no longer needed with below line
+	blocks <- &types.Header{Number: new(big.Int).SetUint64(*latestBlockNumber)}
 	subscription, err := c.client.ChainConnection.SubscribeNewHead(blocks)
 	if err != nil {
 		return err
 	}
 	defer subscription.Unsubscribe()
-
-	latestBlockNumber, err := c.client.ChainConnection.GetLatestBlockNumber()
-	if err != nil {
-		return err
-	}
-	// TODO: remove mining every 1s from github actions as it will be no longer needed with below line
-	blocks <- &types.Header{Number: new(big.Int).SetUint64(*latestBlockNumber)}
 
 	var rollupCancel context.CancelFunc
 	for {
