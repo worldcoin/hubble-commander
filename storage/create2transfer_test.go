@@ -60,18 +60,17 @@ func (s *Create2TransferTestSuite) TestAddCreate2Transfer_AddAndRetrieve() {
 	err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
 
-	expected := models.Create2TransferWithBatchHash{Create2Transfer: create2Transfer}
 	res, err := s.storage.GetCreate2Transfer(create2Transfer.Hash)
 	s.NoError(err)
-	s.Equal(expected, *res)
+	s.Equal(create2Transfer, *res)
 }
 
-func (s *Create2TransferTestSuite) TestGetCreate2Transfer_WithBatchHash() {
+func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchHash() {
 	batch := &models.Batch{
 		Type:            txtype.Create2Transfer,
 		TransactionHash: utils.RandomHash(),
 		Hash:            utils.NewRandomHash(),
-		Number:          models.NewUint256(1),
+		Number:          models.MakeUint256(1),
 	}
 	batchID, err := s.storage.AddBatch(batch)
 	s.NoError(err)
@@ -90,7 +89,7 @@ func (s *Create2TransferTestSuite) TestGetCreate2Transfer_WithBatchHash() {
 		Create2Transfer: transferInBatch,
 		BatchHash:       batch.Hash,
 	}
-	res, err := s.storage.GetCreate2Transfer(transferInBatch.Hash)
+	res, err := s.storage.GetCreate2TransferWithBatchHash(transferInBatch.Hash)
 	s.NoError(err)
 	s.Equal(expected, *res)
 }

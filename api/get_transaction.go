@@ -8,7 +8,7 @@ import (
 )
 
 func (a *API) GetTransaction(hash common.Hash) (interface{}, error) {
-	transfer, err := a.storage.GetTransfer(hash)
+	transfer, err := a.storage.GetTransferWithBatchHash(hash)
 	if err != nil && !st.IsNotFoundError(err) {
 		return nil, err
 	}
@@ -16,7 +16,7 @@ func (a *API) GetTransaction(hash common.Hash) (interface{}, error) {
 		return a.returnTransferReceipt(transfer)
 	}
 
-	transaction, err := a.storage.GetCreate2Transfer(hash)
+	transaction, err := a.storage.GetCreate2TransferWithBatchHash(hash)
 	if err != nil {
 		return nil, err
 	}

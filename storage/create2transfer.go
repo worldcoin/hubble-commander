@@ -105,7 +105,24 @@ func (s *Storage) BatchAddCreate2Transfer(txs []models.Create2Transfer) error {
 	return tx.Commit()
 }
 
-func (s *Storage) GetCreate2Transfer(hash common.Hash) (*models.Create2TransferWithBatchHash, error) {
+func (s *Storage) GetCreate2Transfer(hash common.Hash) (*models.Create2Transfer, error) {
+	res := make([]models.Create2Transfer, 0, 1)
+	err := s.Postgres.Query(
+		s.QB.Select(create2TransferColumns...).
+			From("transaction_base").
+			JoinClause("NATURAL JOIN create2transfer").
+			Where(squirrel.Eq{"tx_hash": hash}),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, NewNotFoundError("transaction")
+	}
+	return &res[0], nil
+}
+
+func (s *Storage) GetCreate2TransferWithBatchHash(hash common.Hash) (*models.Create2TransferWithBatchHash, error) {
 	res := make([]models.Create2TransferWithBatchHash, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Select(create2TransferWithBatchColumns...).

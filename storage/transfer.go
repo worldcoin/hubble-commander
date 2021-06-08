@@ -101,7 +101,24 @@ func (s *Storage) BatchAddTransfer(txs []models.Transfer) error {
 	return tx.Commit()
 }
 
-func (s *Storage) GetTransfer(hash common.Hash) (*models.TransferWithBatchHash, error) {
+func (s *Storage) GetTransfer(hash common.Hash) (*models.Transfer, error) {
+	res := make([]models.Transfer, 0, 1)
+	err := s.Postgres.Query(
+		s.QB.Select(transferColumns...).
+			From("transaction_base").
+			JoinClause("NATURAL JOIN transfer").
+			Where(squirrel.Eq{"tx_hash": hash}),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, NewNotFoundError("transaction")
+	}
+	return &res[0], nil
+}
+
+func (s *Storage) GetTransferWithBatchHash(hash common.Hash) (*models.TransferWithBatchHash, error) {
 	res := make([]models.TransferWithBatchHash, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Select(transferWithBatchColumns...).
