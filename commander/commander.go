@@ -261,7 +261,7 @@ func bootstrapState(
 		Rollup:                contracts.RollupAddress,
 		RollupDeploymentBlock: contracts.RollupDeploymentBlock,
 		GenesisAccounts:       populatedAccounts,
-		SyncedBlock:           0,
+		SyncedBlock:           contracts.RollupDeploymentBlock - 1,
 	}
 
 	return chainState, nil
