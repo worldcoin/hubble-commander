@@ -25,8 +25,9 @@ var (
 		Nonce:       models.NewUint256(0),
 	}
 	chainState = models.ChainState{
-		ChainID: models.MakeUint256(0),
-		Rollup:  common.Address{1, 2, 3, 4},
+		ChainID:               models.MakeUint256(0),
+		Rollup:                common.Address{1, 2, 3, 4},
+		RollupDeploymentBlock: 234,
 	}
 )
 

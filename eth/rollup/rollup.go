@@ -1,6 +1,7 @@
 package rollup
 
 import (
+	"context"
 	"log"
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
@@ -39,18 +40,19 @@ type DeploymentConfig struct {
 }
 
 type RollupContracts struct {
-	Config          DeploymentConfig
-	Chooser         *proofofburn.ProofOfBurn
-	AccountRegistry *accountregistry.AccountRegistry
-	TokenRegistry   *tokenregistry.TokenRegistry
-	SpokeRegistry   *spokeregistry.SpokeRegistry
-	Vault           *vault.Vault
-	DepositManager  *depositmanager.DepositManager
-	Transfer        *transfer.Transfer
-	MassMigration   *massmigration.MassMigration
-	Create2Transfer *create2transfer.Create2Transfer
-	Rollup          *rollup.Rollup
-	RollupAddress   common.Address
+	Config                DeploymentConfig
+	Chooser               *proofofburn.ProofOfBurn
+	AccountRegistry       *accountregistry.AccountRegistry
+	TokenRegistry         *tokenregistry.TokenRegistry
+	SpokeRegistry         *spokeregistry.SpokeRegistry
+	Vault                 *vault.Vault
+	DepositManager        *depositmanager.DepositManager
+	Transfer              *transfer.Transfer
+	MassMigration         *massmigration.MassMigration
+	Create2Transfer       *create2transfer.Create2Transfer
+	Rollup                *rollup.Rollup
+	RollupAddress         common.Address
+	RollupDeploymentBlock uint64
 }
 
 func DeployRollup(c deployer.ChainConnection) (*RollupContracts, error) {
@@ -207,19 +209,25 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 		return nil, err
 	}
 
+	rollupTxReceipt, err := c.GetBackend().TransactionReceipt(context.Background(), tx.Hash())
+	if err != nil {
+		return nil, err
+	}
+
 	return &RollupContracts{
-		Config:          config,
-		Chooser:         proofOfBurn,
-		AccountRegistry: accountRegistry,
-		TokenRegistry:   tokenRegistry,
-		SpokeRegistry:   spokeRegistry,
-		Vault:           vaultContract,
-		DepositManager:  depositManager,
-		Transfer:        transferContract,
-		MassMigration:   massMigration,
-		Create2Transfer: create2Transfer,
-		Rollup:          rollupContract,
-		RollupAddress:   rollupAddress,
+		Config:                config,
+		Chooser:               proofOfBurn,
+		AccountRegistry:       accountRegistry,
+		TokenRegistry:         tokenRegistry,
+		SpokeRegistry:         spokeRegistry,
+		Vault:                 vaultContract,
+		DepositManager:        depositManager,
+		Transfer:              transferContract,
+		MassMigration:         massMigration,
+		Create2Transfer:       create2Transfer,
+		Rollup:                rollupContract,
+		RollupAddress:         rollupAddress,
+		RollupDeploymentBlock: rollupTxReceipt.BlockNumber.Uint64(),
 	}, nil
 }
 

@@ -256,11 +256,12 @@ func bootstrapState(
 	}
 
 	chainState := &models.ChainState{
-		ChainID:         chain.GetChainID(),
-		AccountRegistry: *accountRegistryAddress,
-		Rollup:          contracts.RollupAddress,
-		GenesisAccounts: populatedAccounts,
-		SyncedBlock:     0,
+		ChainID:               chain.GetChainID(),
+		AccountRegistry:       *accountRegistryAddress,
+		Rollup:                contracts.RollupAddress,
+		RollupDeploymentBlock: contracts.RollupDeploymentBlock,
+		GenesisAccounts:       populatedAccounts,
+		SyncedBlock:           0,
 	}
 
 	return chainState, nil
