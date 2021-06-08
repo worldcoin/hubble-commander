@@ -92,6 +92,16 @@ func (s *TransferTestSuite) TestGetTransferWithBatchHash() {
 	s.Equal(expected, *res)
 }
 
+func (s *TransferTestSuite) TestGetTransferWithBatchHash_WithoutBatch() {
+	err := s.storage.AddTransfer(&transfer)
+	s.NoError(err)
+
+	expected := models.TransferWithBatchHash{Transfer: transfer}
+	res, err := s.storage.GetTransferWithBatchHash(transfer.Hash)
+	s.NoError(err)
+	s.Equal(expected, *res)
+}
+
 func (s *TransferTestSuite) TestBatchAddTransfer() {
 	txs := make([]models.Transfer, 2)
 	txs[0] = transfer
