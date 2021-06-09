@@ -1,6 +1,6 @@
 {
     "info": {
-        "_postman_id": "5f2e5917-6300-484e-8f2f-8dd7781f015e",
+        "_postman_id": "8d4ad8af-f0b0-41aa-9768-ca55b22d5adf",
         "name": "Worldcoin",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
@@ -20,11 +20,10 @@
                     }
                 },
                 "url": {
-                    "raw": "localhost:8080",
+                    "raw": "{{commander}}",
                     "host": [
-                        "localhost"
-                    ],
-                    "port": "8080"
+                        "{{commander}}"
+                    ]
                 }
             },
             "response": []
@@ -44,11 +43,10 @@
                     }
                 },
                 "url": {
-                    "raw": "localhost:8080",
+                    "raw": "{{commander}}",
                     "host": [
-                        "localhost"
-                    ],
-                    "port": "8080"
+                        "{{commander}}"
+                    ]
                 }
             },
             "response": []
@@ -68,11 +66,10 @@
                     }
                 },
                 "url": {
-                    "raw": "localhost:8080",
+                    "raw": "{{commander}}",
                     "host": [
-                        "localhost"
-                    ],
-                    "port": "8080"
+                        "{{commander}}"
+                    ]
                 }
             },
             "response": []
@@ -92,11 +89,10 @@
                     }
                 },
                 "url": {
-                    "raw": "localhost:8080",
+                    "raw": "{{commander}}",
                     "host": [
-                        "localhost"
-                    ],
-                    "port": "8080"
+                        "{{commander}}"
+                    ]
                 }
             },
             "response": []
@@ -116,11 +112,10 @@
                     }
                 },
                 "url": {
-                    "raw": "localhost:8080",
+                    "raw": "{{commander}}",
                     "host": [
-                        "localhost"
-                    ],
-                    "port": "8080"
+                        "{{commander}}"
+                    ]
                 }
             },
             "response": []
@@ -140,11 +135,10 @@
                     }
                 },
                 "url": {
-                    "raw": "localhost:8080",
+                    "raw": "{{commander}}",
                     "host": [
-                        "localhost"
-                    ],
-                    "port": "8080"
+                        "{{commander}}"
+                    ]
                 }
             },
             "response": []
@@ -164,11 +158,10 @@
                     }
                 },
                 "url": {
-                    "raw": "localhost:8080",
+                    "raw": "{{commander}}",
                     "host": [
-                        "localhost"
-                    ],
-                    "port": "8080"
+                        "{{commander}}"
+                    ]
                 }
             },
             "response": []
@@ -188,11 +181,10 @@
                     }
                 },
                 "url": {
-                    "raw": "localhost:8080",
+                    "raw": "{{commander}}",
                     "host": [
-                        "localhost"
-                    ],
-                    "port": "8080"
+                        "{{commander}}"
+                    ]
                 }
             },
             "response": []
@@ -212,11 +204,10 @@
                     }
                 },
                 "url": {
-                    "raw": "localhost:8080",
+                    "raw": "{{commander}}",
                     "host": [
-                        "localhost"
-                    ],
-                    "port": "8080"
+                        "{{commander}}"
+                    ]
                 }
             },
             "response": []
@@ -236,11 +227,10 @@
                     }
                 },
                 "url": {
-                    "raw": "localhost:8080",
+                    "raw": "{{commander}}",
                     "host": [
-                        "localhost"
-                    ],
-                    "port": "8080"
+                        "{{commander}}"
+                    ]
                 }
             },
             "response": []
@@ -260,11 +250,10 @@
                     }
                 },
                 "url": {
-                    "raw": "localhost:8080",
+                    "raw": "{{commander}}",
                     "host": [
-                        "localhost"
-                    ],
-                    "port": "8080"
+                        "{{commander}}"
+                    ]
                 }
             },
             "response": []
@@ -284,11 +273,10 @@
                     }
                 },
                 "url": {
-                    "raw": "localhost:8080",
+                    "raw": "{{commander}}",
                     "host": [
-                        "localhost"
-                    ],
-                    "port": "8080"
+                        "{{commander}}"
+                    ]
                 }
             },
             "response": []
@@ -332,11 +320,10 @@
                     }
                 },
                 "url": {
-                    "raw": "localhost:8080",
+                    "raw": "{{commander}}",
                     "host": [
-                        "localhost"
-                    ],
-                    "port": "8080"
+                        "{{commander}}"
+                    ]
                 }
             },
             "response": []
@@ -360,6 +347,12 @@
                     ""
                 ]
             }
+        }
+    ],
+    "variable": [
+        {
+            "key": "commander",
+            "value": "localhost:8080"
         }
     ]
 }
