@@ -43,9 +43,25 @@ run-prune:
 run-dev:
 	go run ./main/main.go -prune -dev
 
-start-geth:
+start-geth-locally:
 	rm -rf e2e/geth-data/geth
 	geth --datadir e2e/geth-data --dev --dev.period 1 --http --ws
+
+setup-geth:
+	docker run --name ethereum-node -d -v $(CURDIR)/e2e/geth-data:/root/ethereum \
+				-p 8545:8545 -p 8546:8546 -p 30303:30303 \
+				ethereum/client-go --datadir /root/ethereum \
+				--dev --dev.period 1 --http --http.addr 0.0.0.0 --ws --ws.addr 0.0.0.0
+
+stop-geth:
+	docker stop ethereum-node
+
+start-geth:
+	docker start ethereum-node
+
+teardown-geth:
+	docker rm ethereum-node
+	rm -rf e2e/geth-data/geth
 
 lint:
 	golangci-lint run ./...
@@ -85,6 +101,11 @@ bench-e2e-profile: clean-testcache
 	run
 	run-prune
 	run-dev
+	start-geth-locally
+	setup-geth
+	stop-geth
+	start-geth
+	teardown-geth
 	lint
 	test
 	test-hardhat
