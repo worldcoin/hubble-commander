@@ -91,12 +91,12 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_SubmitsCommitme
 	commitment, err := s.storage.GetCommitment(*commitmentID)
 	s.NoError(err)
 
-	err = s.transactionExecutor.submitBatch(txtype.Transfer, []models.Commitment{*commitment})
-	s.NoError(err)
-
 	nextBatchID, err := s.client.Rollup.NextBatchID(nil)
 	s.NoError(err)
 	s.Equal(big.NewInt(1), nextBatchID)
+
+	err = s.transactionExecutor.submitBatch(txtype.Transfer, []models.Commitment{*commitment})
+	s.NoError(err)
 
 	s.client.Commit()
 
@@ -112,12 +112,12 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_SubmitsC
 	commitment, err := s.storage.GetCommitment(*commitmentID)
 	s.NoError(err)
 
-	err = s.transactionExecutor.submitBatch(txtype.Create2Transfer, []models.Commitment{*commitment})
-	s.NoError(err)
-
 	nextBatchID, err := s.client.Rollup.NextBatchID(nil)
 	s.NoError(err)
 	s.Equal(big.NewInt(1), nextBatchID)
+
+	err = s.transactionExecutor.submitBatch(txtype.Create2Transfer, []models.Commitment{*commitment})
+	s.NoError(err)
 
 	s.client.Commit()
 
