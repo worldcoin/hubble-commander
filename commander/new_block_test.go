@@ -21,6 +21,7 @@ type NewBlockLoopTestSuite struct {
 	cmd        *Commander
 	testClient *eth.TestClient
 	cfg        *config.RollupConfig
+	transfer   models.Transfer
 	teardown   func() error
 }
 
@@ -30,6 +31,18 @@ func (s *NewBlockLoopTestSuite) SetupSuite() {
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
 		TxsPerCommitment:       1,
+	}
+
+	s.transfer = models.Transfer{
+		TransactionBase: models.TransactionBase{
+			TxType:      txtype.Transfer,
+			FromStateID: 0,
+			Amount:      models.MakeUint256(400),
+			Fee:         models.MakeUint256(0),
+			Nonce:       models.MakeUint256(0),
+			Signature:   *mockSignature(s.T()),
+		},
+		ToStateID: 1,
 	}
 }
 
@@ -49,17 +62,22 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 }
 
 func (s *NewBlockLoopTestSuite) TearDownTest() {
+	s.stopCommander()
 	err := s.teardown()
 	s.NoError(err)
 }
 
 func (s *NewBlockLoopTestSuite) TestNewBlockLoop_StartsRollupLoop() {
 	s.startBlockLoop()
-	defer s.stopCommander()
 
 	s.Eventually(func() bool {
 		return s.cmd.rollupLoopRunning
 	}, 1*time.Second, 100*time.Millisecond)
+
+	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
+	s.NoError(err)
+	blockNumber := s.cmd.storage.GetLatestBlockNumber()
+	s.Equal(*latestBlockNumber, uint64(blockNumber))
 }
 
 func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncBeforeLoopStarted() {
@@ -68,50 +86,48 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncBeforeLoopStarted() {
 		{PublicKey: models.PublicKey{2, 3, 4}},
 	}
 	s.registerAccounts(accounts)
-
-	s.startBlockLoop()
-	defer s.stopCommander()
+	s.createAndSubmitTransferBatch(&s.transfer)
 	s.testClient.Commit()
 
-	// TODO: change to eventually
+	s.startBlockLoop()
+
 	for i := range accounts {
 		userAccounts, err := s.cmd.storage.GetAccounts(&accounts[i].PublicKey)
 		s.NoError(err)
 		s.Len(userAccounts, 1)
 		s.Equal(accounts[i], userAccounts[0])
 	}
+
+	s.Eventually(func() bool {
+		batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
+		s.NoError(err)
+		return len(batches) == 1
+	}, 1*time.Second, 100*time.Millisecond)
 }
 
 func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncDuringLoop() {
 	s.startBlockLoop()
-	defer s.stopCommander()
 
 	accounts := []models.Account{
 		{PublicKey: models.PublicKey{1, 2, 3}},
 		{PublicKey: models.PublicKey{2, 3, 4}},
 	}
 	s.registerAccounts(accounts)
-	tx := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			TxType:      txtype.Transfer,
-			FromStateID: 0,
-			Amount:      models.MakeUint256(400),
-			Fee:         models.MakeUint256(0),
-			Nonce:       models.MakeUint256(0),
-			Signature:   *mockSignature(s.T()),
-		},
-		ToStateID: 1,
-	}
-	s.createAndSubmitTransferBatch(&tx)
+	s.createAndSubmitTransferBatch(&s.transfer)
 	s.testClient.Commit()
 
-	// TODO: change to eventually
 	for i := range accounts {
 		userAccounts, err := s.cmd.storage.GetAccounts(&accounts[i].PublicKey)
 		s.NoError(err)
 		s.Len(userAccounts, 1)
 		s.Equal(accounts[i], userAccounts[0])
 	}
+
+	s.Eventually(func() bool {
+		batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
+		s.NoError(err)
+		return len(batches) == 1
+	}, 1*time.Second, 100*time.Millisecond)
 }
 
 func (s *NewBlockLoopTestSuite) startBlockLoop() {
@@ -127,7 +143,6 @@ func (s *NewBlockLoopTestSuite) stopCommander() {
 		return
 	}
 	close(s.cmd.stopChannel)
-	// TODO: check if commander exited
 	s.cmd.workers.Wait()
 }
 
@@ -152,16 +167,15 @@ func (s *NewBlockLoopTestSuite) createAndSubmitTransferBatch(tx *models.Transfer
 
 	transactionExecutor, err := newTransactionExecutorWithCtx(context.Background(), s.cmd.storage, s.testClient.Client, s.cfg)
 	s.NoError(err)
-	defer func() {
-		err = transactionExecutor.Commit()
-		s.NoError(err)
-	}()
+
 	commitments, err := transactionExecutor.createTransferCommitments([]models.Transfer{*tx}, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
 	err = transactionExecutor.submitBatch(txtype.Transfer, commitments)
 	s.NoError(err)
+
+	transactionExecutor.Rollback(nil)
 }
 
 func TestNewBlockLoopTestSuite(t *testing.T) {
