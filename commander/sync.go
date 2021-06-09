@@ -90,6 +90,10 @@ func (t *transactionExecutor) syncExistingBatch(batch *eth.DecodedBatch, localBa
 	return nil
 }
 
+func (t *transactionExecutor) revertBatch(batch *eth.DecodedBatch, localBatch *models.Batch) {
+
+}
+
 func (t *transactionExecutor) getTransactionSender(txHash common.Hash) (*common.Address, error) {
 	tx, _, err := t.client.ChainConnection.GetBackend().TransactionByHash(t.ctx, txHash)
 	if err != nil {
