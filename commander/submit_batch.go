@@ -11,9 +11,9 @@ var (
 	ErrNoLongerProposer     = NewRollupError("commander is no longer an active proposer")
 )
 
-func (t *transactionExecutor) submitBatch(batchType txtype.TransactionType, commitments []models.Commitment) error {
+func (t *transactionExecutor) submitBatch(batchType txtype.TransactionType, commitments []models.Commitment) (*models.Batch, error) {
 	if len(commitments) < int(t.cfg.MinCommitmentsPerBatch) {
-		return ErrNotEnoughCommitments
+		return nil, ErrNotEnoughCommitments
 	}
 
 	var tx *types.Transaction
@@ -21,7 +21,7 @@ func (t *transactionExecutor) submitBatch(batchType txtype.TransactionType, comm
 
 	select {
 	case <-t.ctx.Done():
-		return ErrNoLongerProposer
+		return nil, ErrNoLongerProposer
 	default:
 	}
 
@@ -31,12 +31,12 @@ func (t *transactionExecutor) submitBatch(batchType txtype.TransactionType, comm
 		tx, err = t.client.SubmitCreate2TransfersBatch(commitments)
 	}
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	batchNumber, err := t.storage.GetNextBatchNumber()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	newPendingBatch := models.Batch{
 		Type:            batchType,
@@ -45,15 +45,15 @@ func (t *transactionExecutor) submitBatch(batchType txtype.TransactionType, comm
 	}
 	batchID, err := t.storage.AddBatch(&newPendingBatch)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = t.markCommitmentsAsIncluded(commitments, *batchID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &newPendingBatch, nil
 }
 
 func (t *transactionExecutor) markCommitmentsAsIncluded(commitments []models.Commitment, batchID int32) error {
