@@ -345,6 +345,13 @@ func (s *SyncTestSuite) TestRevertBatch_RevertsState() {
 	stateRoot, err := s.tree.Root()
 	s.NoError(err)
 	s.Equal(*initialStateRoot, *stateRoot)
+
+	state0, err := s.storage.GetStateLeaf(tx.FromStateID)
+	s.NoError(err)
+	s.Equal(uint64(1000), state0.Balance.Uint64())
+	state1, err := s.storage.GetStateLeaf(tx.ToStateID)
+	s.NoError(err)
+	s.Equal(uint64(0), state1.Balance.Uint64())
 }
 
 func (s *SyncTestSuite) createAndSubmitTransferBatch(tx *models.Transfer) *models.Batch {
