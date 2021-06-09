@@ -3,6 +3,7 @@ package commander
 import (
 	"context"
 	"errors"
+	"log"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -72,8 +73,8 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 }
 
 func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionType, domain *bls.Domain) (err error) {
+	startTime := time.Now()
 	var commitments []models.Commitment
-
 	if batchType == txtype.Transfer {
 		commitments, err = t.buildTransferCommitments(domain)
 	} else {
@@ -83,10 +84,19 @@ func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionT
 		return err
 	}
 
-	err = t.submitBatch(batchType, commitments)
+	batch, err := t.submitBatch(batchType, commitments)
 	if err != nil {
 		return err
 	}
+
+	log.Printf(
+		"Submitted a %s batch with %d commitment(s) on chain in %s. Batch number: %d. Transaction hash: %v",
+		batchType.String(),
+		len(commitments),
+		time.Since(startTime).Round(time.Millisecond).String(),
+		batch.Number.Uint64(),
+		batch.TransactionHash,
+	)
 	return nil
 }
 

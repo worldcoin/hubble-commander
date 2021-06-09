@@ -74,10 +74,10 @@ func (t *transactionExecutor) createCreate2TransferCommitments(
 
 		commitments = append(commitments, *commitment)
 		log.Printf(
-			"Created a %s commitment from %d transactions in %d ms",
+			"Created a %s commitment from %d transactions in %s",
 			txtype.Create2Transfer,
 			len(transfers.appliedTransfers),
-			time.Since(startTime).Milliseconds(),
+			time.Since(startTime).Round(time.Millisecond).String(),
 		)
 	}
 
