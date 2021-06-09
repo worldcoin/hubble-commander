@@ -6,11 +6,11 @@ import (
 )
 
 type TransferReceipt struct {
-	models.Transfer
+	models.TransferWithBatchHash
 	Status txstatus.TransactionStatus
 }
 
 type Create2TransferReceipt struct {
-	models.Create2Transfer
+	models.Create2TransferWithBatchHash
 	Status txstatus.TransactionStatus
 }

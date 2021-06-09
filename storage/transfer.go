@@ -9,10 +9,17 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-var transferColumns = []string{
-	"transaction_base.*",
-	"transfer.to_state_id",
-}
+var (
+	transferColumns = []string{
+		"transaction_base.*",
+		"transfer.to_state_id",
+	}
+	transferWithBatchColumns = []string{
+		"transaction_base.*",
+		"transfer.to_state_id",
+		"batch.batch_hash",
+	}
+)
 
 func (s *Storage) AddTransfer(t *models.Transfer) error {
 	tx, txStorage, err := s.BeginTransaction(TxOptions{Postgres: true})
@@ -111,6 +118,25 @@ func (s *Storage) GetTransfer(hash common.Hash) (*models.Transfer, error) {
 	return &res[0], nil
 }
 
+func (s *Storage) GetTransferWithBatchHash(hash common.Hash) (*models.TransferWithBatchHash, error) {
+	res := make([]models.TransferWithBatchHash, 0, 1)
+	err := s.Postgres.Query(
+		s.QB.Select(transferWithBatchColumns...).
+			From("transaction_base").
+			JoinClause("NATURAL JOIN transfer").
+			LeftJoin("commitment on commitment.commitment_id = transaction_base.included_in_commitment").
+			LeftJoin("batch on batch.batch_id = commitment.included_in_batch").
+			Where(squirrel.Eq{"tx_hash": hash}),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, NewNotFoundError("transaction")
+	}
+	return &res[0], nil
+}
+
 func (s *Storage) GetUserTransfers(fromStateID models.Uint256) ([]models.Transfer, error) {
 	res := make([]models.Transfer, 0, 1)
 	err := s.Postgres.Query(
@@ -137,7 +163,7 @@ func (s *Storage) GetPendingTransfers() ([]models.Transfer, error) {
 	return res, nil
 }
 
-func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models.Transfer, error) {
+func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models.TransferWithBatchHash, error) {
 	accounts, err := s.GetAccounts(publicKey)
 	if err != nil {
 		return nil, err
@@ -156,11 +182,13 @@ func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models
 		stateIDs = append(stateIDs, leaves[i].StateID)
 	}
 
-	res := make([]models.Transfer, 0, 1)
+	res := make([]models.TransferWithBatchHash, 0, 1)
 	err = s.Postgres.Query(
-		s.QB.Select(transferColumns...).
+		s.QB.Select(transferWithBatchColumns...).
 			From("transaction_base").
 			JoinClause("NATURAL JOIN transfer").
+			LeftJoin("commitment on commitment.commitment_id = transaction_base.included_in_commitment").
+			LeftJoin("batch on batch.batch_id = commitment.included_in_batch").
 			Where(squirrel.Or{
 				squirrel.Eq{"transaction_base.from_state_id": stateIDs},
 				squirrel.Eq{"transfer.to_state_id": stateIDs},

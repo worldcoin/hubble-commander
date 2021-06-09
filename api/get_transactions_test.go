@@ -161,15 +161,19 @@ func (s *GetTransactionsTestSuite) TestGetTransactions() {
 
 	newTransferReceipt := func(transfer models.Transfer) *dto.TransferReceipt {
 		return &dto.TransferReceipt{
-			Transfer: transfer,
-			Status:   txstatus.Pending,
+			TransferWithBatchHash: models.TransferWithBatchHash{
+				Transfer: transfer,
+			},
+			Status: txstatus.Pending,
 		}
 	}
 
 	newCreate2Receipt := func(transfer models.Create2Transfer) *dto.Create2TransferReceipt {
 		return &dto.Create2TransferReceipt{
-			Create2Transfer: transfer,
-			Status:          txstatus.Pending,
+			Create2TransferWithBatchHash: models.Create2TransferWithBatchHash{
+				Create2Transfer: transfer,
+			},
+			Status: txstatus.Pending,
 		}
 	}
 
