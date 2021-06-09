@@ -40,6 +40,7 @@ func (s *BatchTestSuite) TestAddBatch_AddAndRetrieve() {
 		Number:            models.MakeUint256(1),
 		FinalisationBlock: ref.Uint32(1234),
 		AccountTreeRoot:   utils.NewRandomHash(),
+		PrevStateRootHash: utils.NewRandomHash(),
 	}
 	id, err := s.storage.AddBatch(batch)
 	s.NoError(err)

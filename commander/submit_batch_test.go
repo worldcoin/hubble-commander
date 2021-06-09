@@ -149,6 +149,7 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_StoresPendingBa
 	s.Equal(txtype.Transfer, batch.Type)
 	s.Equal(models.MakeUint256(1), batch.Number)
 	s.NotEqual(common.Hash{}, batch.TransactionHash)
+	s.Equal(pendingBatch.PrevStateRootHash, batch.PrevStateRootHash)
 	s.Nil(batch.Hash)
 }
 
@@ -166,9 +167,10 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_StoresPe
 
 	batch, err := s.storage.GetBatch(1)
 	s.NoError(err)
-	s.Equal(txtype.Create2Transfer, batch.Type)
+	s.Equal(pendingBatch.Type, batch.Type)
 	s.NotEqual(common.Hash{}, batch.TransactionHash)
 	s.Equal(models.MakeUint256(1), batch.Number)
+	s.Equal(pendingBatch.PrevStateRootHash, batch.PrevStateRootHash)
 	s.Nil(batch.Hash)
 }
 
