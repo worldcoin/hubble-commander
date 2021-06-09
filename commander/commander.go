@@ -236,7 +236,11 @@ func bootstrapState(
 		return nil, err
 	}
 
-	populatedAccounts := AssignStateIDs(registeredAccounts)
+	populatedAccounts, err := AssignStateIDs(storage, registeredAccounts)
+	if err != nil {
+		return nil, err
+	}
+
 	err = PopulateGenesisAccounts(storage, populatedAccounts)
 	if err != nil {
 		return nil, err
