@@ -248,6 +248,49 @@ func (s *AccountTestSuite) TestGetUnusedPubKeyID_MultipleTokenIndexes() {
 	s.Contains([]uint32{1, 3}, *pubKeyID)
 }
 
+func (s *AccountTestSuite) TestGetPublicKeyByStateID() {
+	err := s.storage.AddAccountIfNotExists(&account1)
+	s.NoError(err)
+	err = s.storage.AddAccountIfNotExists(&account2)
+	s.NoError(err)
+
+	leaves := []models.StateLeaf{
+		{
+			StateID:  1,
+			DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
+			UserState: models.UserState{
+				PubKeyID:   1,
+				TokenIndex: models.MakeUint256(1),
+				Balance:    models.MakeUint256(420),
+				Nonce:      models.MakeUint256(0),
+			},
+		},
+		{
+			StateID:  2,
+			DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
+			UserState: models.UserState{
+				PubKeyID:   2,
+				TokenIndex: models.MakeUint256(2),
+				Balance:    models.MakeUint256(420),
+				Nonce:      models.MakeUint256(0),
+			},
+		},
+	}
+	for i := range leaves {
+		err = s.storage.UpsertStateLeaf(&leaves[i])
+		s.NoError(err)
+	}
+
+	publicKey, err := s.storage.GetPublicKeyByStateID(leaves[1].StateID)
+	s.NoError(err)
+	s.Equal(account2.PublicKey, *publicKey)
+}
+
+func (s *AccountTestSuite) TestGetPublicKeyByStateID_NonExistentStateLeaf() {
+	_, err := s.storage.GetPublicKeyByStateID(1)
+	s.Equal(NewNotFoundError("account"), err)
+}
+
 func TestAccountTestSuite(t *testing.T) {
 	suite.Run(t, new(AccountTestSuite))
 }

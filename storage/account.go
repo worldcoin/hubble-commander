@@ -74,3 +74,7 @@ func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey, tokenIndex *mod
 
 	return nil, NewNotFoundError("pub key id")
 }
+
+func (s *Storage) GetPublicKeyByStateID(stateID uint32) (*models.PublicKey, error) {
+	return nil, nil
+}
