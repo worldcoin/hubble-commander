@@ -214,42 +214,6 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_MarksCommitment
 	s.EqualError(err, "no rows were affected by the update")
 }
 
-func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_UpdatesCommitmentsAccountRoot() {
-	ids, commitments := s.addCommitments(2)
-
-	err := s.transactionExecutor.submitBatch(txtype.Transfer, commitments)
-	s.NoError(err)
-
-	accountRoot, err := s.client.AccountRegistry.Root(nil)
-	s.NoError(err)
-
-	for _, id := range ids {
-		commit, err := s.storage.GetCommitment(id)
-		s.NoError(err)
-		batch, err := s.storage.GetBatch(*commit.IncludedInBatch)
-		s.NoError(err)
-		s.Equal(common.BytesToHash(accountRoot[:]), *batch.AccountTreeRoot)
-	}
-}
-
-func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_UpdatesCommitmentsAccountRoot() {
-	ids, commitments := s.addCommitments(2)
-
-	err := s.transactionExecutor.submitBatch(txtype.Create2Transfer, commitments)
-	s.NoError(err)
-
-	accountRoot, err := s.client.AccountRegistry.Root(nil)
-	s.NoError(err)
-
-	for _, id := range ids {
-		commit, err := s.storage.GetCommitment(id)
-		s.NoError(err)
-		batch, err := s.storage.GetBatch(*commit.IncludedInBatch)
-		s.NoError(err)
-		s.Equal(common.BytesToHash(accountRoot[:]), *batch.AccountTreeRoot)
-	}
-}
-
 func TestSubmitBatch_TransfersTestSuite(t *testing.T) {
 	suite.Run(t, new(SubmitTransferBatchTestSuite))
 }

@@ -67,6 +67,7 @@ func (s *BatchTestSuite) TestMarkBatchAsSubmitted() {
 		Hash:              utils.NewRandomHash(),
 		Number:            pendingBatch.Number,
 		FinalisationBlock: ref.Uint32(1234),
+		AccountTreeRoot:   utils.NewRandomHash(),
 	}
 	err = s.storage.MarkBatchAsSubmitted(batch)
 	s.NoError(err)

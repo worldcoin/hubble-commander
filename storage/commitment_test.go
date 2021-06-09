@@ -91,47 +91,6 @@ func (s *CommitmentTestSuite) TestMarkCommitmentAsIncluded_UpdatesRecord() {
 	s.Equal(expected, actual)
 }
 
-func (s *CommitmentTestSuite) TestUpdateCommitmentAccountTreeRoot_UpdatesRecord() {
-	batchID := s.addRandomBatch()
-	accountRoot := utils.RandomHash()
-
-	id1, err := s.storage.AddCommitment(&commitment)
-	s.NoError(err)
-	id2, err := s.storage.AddCommitment(&commitment)
-	s.NoError(err)
-	id3, err := s.storage.AddCommitment(&commitment)
-	s.NoError(err)
-
-	err = s.storage.MarkCommitmentAsIncluded(*id1, *batchID)
-	s.NoError(err)
-	err = s.storage.MarkCommitmentAsIncluded(*id3, *batchID)
-	s.NoError(err)
-
-	err = s.storage.UpdateCommitmentsAccountTreeRoot(*batchID, accountRoot)
-	s.NoError(err)
-
-	expectedCommitment1 := s.getCommitment(*id1)
-	expectedCommitment1.IncludedInBatch = batchID
-	expectedCommitment1.AccountTreeRoot = &accountRoot
-
-	expectedCommitment2 := s.getCommitment(*id2)
-
-	expectedCommitment3 := s.getCommitment(*id3)
-	expectedCommitment3.IncludedInBatch = batchID
-	expectedCommitment3.AccountTreeRoot = &accountRoot
-
-	actualCommitment1, err := s.storage.GetCommitment(*id1)
-	s.NoError(err)
-	actualCommitment2, err := s.storage.GetCommitment(*id2)
-	s.NoError(err)
-	actualCommitment3, err := s.storage.GetCommitment(*id3)
-	s.NoError(err)
-
-	s.Equal(expectedCommitment1, actualCommitment1)
-	s.Equal(expectedCommitment2, actualCommitment2)
-	s.Equal(expectedCommitment3, actualCommitment3)
-}
-
 func (s *CommitmentTestSuite) TestGetCommitment_NonExistentCommitment() {
 	res, err := s.storage.GetCommitment(42)
 	s.Equal(NewNotFoundError("commitment"), err)

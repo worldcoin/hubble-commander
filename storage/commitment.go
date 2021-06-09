@@ -71,26 +71,6 @@ func (s *Storage) MarkCommitmentAsIncluded(commitmentID, batchID int32) error {
 	return nil
 }
 
-func (s *Storage) UpdateCommitmentsAccountTreeRoot(batchID int32, accountRoot common.Hash) error {
-	res, err := s.Postgres.Query(
-		s.QB.Update("commitment").
-			Where(squirrel.Eq{"included_in_batch": batchID}).
-			Set("account_tree_root", accountRoot),
-	).Exec()
-	if err != nil {
-		return err
-	}
-
-	numUpdatedRows, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if numUpdatedRows == 0 {
-		return ErrNoRowsAffected
-	}
-	return nil
-}
-
 func (s *Storage) GetCommitmentsByBatchID(batchID int32) ([]models.CommitmentWithTokenID, error) {
 	commitments := make([]models.CommitmentWithTokenID, 0, 32)
 	err := s.Postgres.Query(
