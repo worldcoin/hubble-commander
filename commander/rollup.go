@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
 func (c *Commander) manageRollupLoop(cancel context.CancelFunc, isProposer bool) context.CancelFunc {
@@ -75,6 +76,11 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionType, domain *bls.Domain) (err error) {
 	startTime := time.Now()
 	var commitments []models.Commitment
+	batch, err := newPendingBatch(t.storage, batchType)
+	if err != nil {
+		return err
+	}
+
 	if batchType == txtype.Transfer {
 		commitments, err = t.buildTransferCommitments(domain)
 	} else {
@@ -84,7 +90,7 @@ func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionT
 		return err
 	}
 
-	batch, err := t.submitBatch(batchType, commitments)
+	batch, err = t.submitBatch(batch, commitments)
 	if err != nil {
 		return err
 	}
@@ -114,4 +120,21 @@ func (t *transactionExecutor) buildCreate2TransfersCommitments(domain *bls.Domai
 		return nil, err
 	}
 	return t.createCreate2TransferCommitments(pendingTransfers, domain)
+}
+
+func newPendingBatch(storage *st.Storage, batchType txtype.TransactionType) (*models.Batch, error) {
+	stateTree := st.NewStateTree(storage)
+	prevStateRoot, err := stateTree.Root()
+	if err != nil {
+		return nil, err
+	}
+	batchNumber, err := storage.GetNextBatchNumber()
+	if err != nil {
+		return nil, err
+	}
+	return &models.Batch{
+		Type:              batchType,
+		Number:            *batchNumber,
+		PrevStateRootHash: prevStateRoot,
+	}, nil
 }

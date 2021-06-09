@@ -137,7 +137,9 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 		s.Len(createdCommitments, 1)
 
 		expectedCommitments[i] = createdCommitments[0]
-		_, err = s.transactionExecutor.submitBatch(txtype.Transfer, createdCommitments)
+		pendingBatch, err := newPendingBatch(s.storage, txtype.Transfer)
+		s.NoError(err)
+		err = s.transactionExecutor.submitBatch(pendingBatch, createdCommitments)
 		s.NoError(err)
 		s.client.Commit()
 
@@ -320,7 +322,9 @@ func (s *SyncTestSuite) createAndSubmitTransferBatch(tx *models.Transfer) {
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	_, err = s.transactionExecutor.submitBatch(txtype.Transfer, commitments)
+	pendingBatch, err := newPendingBatch(s.storage, txtype.Transfer)
+	s.NoError(err)
+	err = s.transactionExecutor.submitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.Commit()
@@ -344,7 +348,9 @@ func (s *SyncTestSuite) createAndSubmitC2TBatch(tx *models.Create2Transfer) mode
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	_, err = s.transactionExecutor.submitBatch(txtype.Create2Transfer, commitments)
+	pendingBatch, err := newPendingBatch(s.storage, txtype.Create2Transfer)
+	s.NoError(err)
+	err = s.transactionExecutor.submitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.Commit()
