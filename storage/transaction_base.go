@@ -110,3 +110,21 @@ func (s *Storage) GetTransactionCount() (*int, error) {
 	}
 	return &res[0], nil
 }
+
+func (s *Storage) GetTransactionHashesByBatchID(batchID int32) ([]common.Hash, error) {
+	res := make([]common.Hash, 0, 32)
+	err := s.Postgres.Query(
+		s.QB.Select("transaction_base.tx_hash").
+			From("transaction_base").
+			Join("commitment on commitment.commitment_id = transaction_base.included_in_commitment").
+			Join("batch on batch.batch_id = commitment.included_in_batch").
+			Where(squirrel.Eq{"batch.batch_id": batchID}),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, NewNotFoundError("transaction")
+	}
+	return res, nil
+}

@@ -325,7 +325,7 @@ func (s *SyncTestSuite) TestRevertBatch_RevertsState() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   *mockSignature(s.T()),
+			Signature:   s.mockSignature(),
 		},
 		ToStateID: 1,
 	}
