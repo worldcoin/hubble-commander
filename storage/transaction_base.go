@@ -54,7 +54,7 @@ func (s *Storage) GetLatestTransactionNonce(accountStateID uint32) (*models.Uint
 	return &res[0], nil
 }
 
-func (s *Storage) BatchMarkTransactionAsIncluded(txHashes []common.Hash, commitmentID int32) error {
+func (s *Storage) BatchMarkTransactionAsIncluded(txHashes []common.Hash, commitmentID *int32) error {
 	res, err := s.Postgres.Query(
 		s.QB.Update("transaction_base").
 			Where(squirrel.Eq{"tx_hash": txHashes}).

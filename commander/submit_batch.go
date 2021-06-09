@@ -39,6 +39,7 @@ func (t *transactionExecutor) submitBatch(batch *models.Batch, commitments []mod
 	if err != nil {
 		return err
 	}
+	batch.ID = *batchID
 
 	return t.markCommitmentsAsIncluded(commitments, *batchID)
 }

@@ -97,9 +97,20 @@ func (t *transactionExecutor) revertBatch(batch *eth.DecodedBatch, localBatch *m
 	if err != nil {
 		return err
 	}
-	//t.storage.BatchMarkTransactionAsIncluded()
+	err = t.excludeTransactionsFromCommitment(localBatch.ID)
+	if err != nil {
+		return err
+	}
 	// TODO: reapply all batches after this one
 	return nil
+}
+
+func (t *transactionExecutor) excludeTransactionsFromCommitment(batchID int32) error {
+	hashes, err := t.storage.GetTransactionHashesByBatchID(batchID)
+	if err != nil {
+		return err
+	}
+	return t.storage.BatchMarkTransactionAsIncluded(hashes, nil)
 }
 
 func (t *transactionExecutor) getTransactionSender(txHash common.Hash) (*common.Address, error) {

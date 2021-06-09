@@ -106,7 +106,7 @@ func (s *TransactionBaseTestSuite) TestBatchMarkTransactionAsIncluded() {
 	commitmentID, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	err = s.storage.BatchMarkTransactionAsIncluded([]common.Hash{txs[0].Hash, txs[1].Hash}, *commitmentID)
+	err = s.storage.BatchMarkTransactionAsIncluded([]common.Hash{txs[0].Hash, txs[1].Hash}, commitmentID)
 	s.NoError(err)
 
 	for i := range txs {

@@ -120,5 +120,5 @@ func (t *transactionExecutor) markTransfersAsIncluded(transfers []models.Transfe
 	for i := range transfers {
 		hashes = append(hashes, transfers[i].Hash)
 	}
-	return t.storage.BatchMarkTransactionAsIncluded(hashes, commitmentID)
+	return t.storage.BatchMarkTransactionAsIncluded(hashes, &commitmentID)
 }
