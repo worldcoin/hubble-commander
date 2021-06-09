@@ -7,5 +7,5 @@ func (a *API) GetPublicKeyByID(id uint32) (*models.PublicKey, error) {
 }
 
 func (a *API) GetPublicKeyByStateID(id uint32) (*models.PublicKey, error) {
-	return nil, nil
+	return a.storage.GetPublicKeyByStateID(id)
 }
