@@ -314,20 +314,55 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	s.Equal(tx, *transfer)
 }
 
-func (s *SyncTestSuite) createAndSubmitTransferBatch(tx *models.Transfer) {
+func (s *SyncTestSuite) TestRevertBatch_RevertsState() {
+	initialStateRoot, err := s.tree.Root()
+	s.NoError(err)
+
+	tx := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			TxType:      txtype.Transfer,
+			FromStateID: 0,
+			Amount:      models.MakeUint256(400),
+			Fee:         models.MakeUint256(0),
+			Nonce:       models.MakeUint256(0),
+			Signature:   *mockSignature(s.T()),
+		},
+		ToStateID: 1,
+	}
+	pendingBatch := s.createAndSubmitTransferBatch(&tx)
+	decodedBatch := &eth.DecodedBatch{
+		Batch: models.Batch{
+			Type:              txtype.Transfer,
+			TransactionHash:   utils.RandomHash(),
+			Number:            models.MakeUint256(1),
+			Hash:              utils.NewRandomHash(),
+			FinalisationBlock: ref.Uint32(20),
+		},
+	}
+	err = s.transactionExecutor.revertBatch(decodedBatch, pendingBatch)
+	s.NoError(err)
+
+	stateRoot, err := s.tree.Root()
+	s.NoError(err)
+	s.Equal(*initialStateRoot, *stateRoot)
+}
+
+func (s *SyncTestSuite) createAndSubmitTransferBatch(tx *models.Transfer) *models.Batch {
 	err := s.storage.AddTransfer(tx)
+	s.NoError(err)
+
+	pendingBatch, err := newPendingBatch(s.storage, txtype.Transfer)
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.createTransferCommitments([]models.Transfer{*tx}, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	pendingBatch, err := newPendingBatch(s.storage, txtype.Transfer)
-	s.NoError(err)
 	err = s.transactionExecutor.submitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.Commit()
+	return pendingBatch
 }
 
 func (s *SyncTestSuite) registerAccountOnChain(publicKey *models.PublicKey, expectedPubKeyID uint32) {

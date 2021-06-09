@@ -90,8 +90,16 @@ func (t *transactionExecutor) syncExistingBatch(batch *eth.DecodedBatch, localBa
 	return nil
 }
 
-func (t *transactionExecutor) revertBatch(batch *eth.DecodedBatch, localBatch *models.Batch) {
-
+func (t *transactionExecutor) revertBatch(batch *eth.DecodedBatch, localBatch *models.Batch) error {
+	// TODO: lock mutex
+	stateTree := st.NewStateTree(t.storage)
+	err := stateTree.RevertTo(*localBatch.PrevStateRootHash)
+	if err != nil {
+		return err
+	}
+	//t.storage.BatchMarkTransactionAsIncluded()
+	// TODO: reapply all batches after this one
+	return nil
 }
 
 func (t *transactionExecutor) getTransactionSender(txHash common.Hash) (*common.Address, error) {

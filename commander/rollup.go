@@ -90,7 +90,7 @@ func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionT
 		return err
 	}
 
-	batch, err = t.submitBatch(batch, commitments)
+	err = t.submitBatch(batch, commitments)
 	if err != nil {
 		return err
 	}
