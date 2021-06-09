@@ -2,8 +2,6 @@ package commander
 
 import (
 	"context"
-	"encoding/hex"
-	"fmt"
 	"sync"
 	"testing"
 
@@ -140,7 +138,6 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 		s.Len(createdCommitments, 1)
 
 		expectedCommitments[i] = createdCommitments[0]
-		fmt.Println("expectedCommitments[i].CombinedSignature =", hex.EncodeToString(expectedCommitments[i].CombinedSignature[:]))
 		err = s.transactionExecutor.submitBatch(txtype.Transfer, createdCommitments)
 		s.NoError(err)
 		s.client.Commit()
@@ -160,7 +157,6 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 		s.NoError(err)
 		expectedCommitments[i].IncludedInBatch = &batches[i].ID
 		expectedCommitments[i].AccountTreeRoot = &accountRoot
-		fmt.Println("commitment.CombinedSignature =", hex.EncodeToString(commitment.CombinedSignature[:]))
 		s.Equal(expectedCommitments[i], *commitment)
 
 		actualTx, err := s.storage.GetTransfer(txs[i].Hash)
