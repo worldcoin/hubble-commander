@@ -49,11 +49,13 @@ func (c *Client) GetBatches(opts *bind.FilterOpts) ([]DecodedBatch, error) {
 			return nil, err
 		}
 
+		accountRoot := common.BytesToHash(it.Event.AccountRoot[:])
+
 		batch.TransactionHash = txHash
+		batch.AccountTreeRoot = &accountRoot
 
 		res = append(res, DecodedBatch{
 			Batch:       *batch,
-			AccountRoot: common.BytesToHash(it.Event.AccountRoot[:]),
 			Commitments: commitments,
 		})
 	}
@@ -63,6 +65,5 @@ func (c *Client) GetBatches(opts *bind.FilterOpts) ([]DecodedBatch, error) {
 
 type DecodedBatch struct {
 	models.Batch
-	AccountRoot common.Hash
 	Commitments []encoder.DecodedCommitment
 }

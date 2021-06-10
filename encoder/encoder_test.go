@@ -80,10 +80,9 @@ func (s *EncoderTestSuite) TestCommitmentBodyHash() {
 		Transactions:      txs,
 		FeeReceiver:       uint32(feeReceiver.Uint64()),
 		CombinedSignature: signature,
-		AccountTreeRoot:   &accountRoot,
 	}
 
-	s.Equal(expectedHash[:], commitment.BodyHash().Bytes())
+	s.Equal(expectedHash[:], commitment.BodyHash(accountRoot).Bytes())
 }
 
 func TestEncoderTestSuite(t *testing.T) {

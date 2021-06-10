@@ -4,7 +4,6 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 var selectedCommitmentCols = []string{
@@ -26,7 +25,6 @@ func (s *Storage) AddCommitment(commitment *models.Commitment) (*int32, error) {
 				commitment.FeeReceiver,
 				commitment.CombinedSignature,
 				commitment.PostStateRoot,
-				commitment.AccountTreeRoot,
 				commitment.IncludedInBatch,
 			).
 			Suffix("RETURNING commitment_id"),
@@ -58,26 +56,6 @@ func (s *Storage) MarkCommitmentAsIncluded(commitmentID, batchID int32) error {
 		s.QB.Update("commitment").
 			Where(squirrel.Eq{"commitment_id": commitmentID}).
 			Set("included_in_batch", batchID),
-	).Exec()
-	if err != nil {
-		return err
-	}
-
-	numUpdatedRows, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if numUpdatedRows == 0 {
-		return ErrNoRowsAffected
-	}
-	return nil
-}
-
-func (s *Storage) UpdateCommitmentsAccountTreeRoot(batchID int32, accountRoot common.Hash) error {
-	res, err := s.Postgres.Query(
-		s.QB.Update("commitment").
-			Where(squirrel.Eq{"included_in_batch": batchID}).
-			Set("account_tree_root", accountRoot),
 	).Exec()
 	if err != nil {
 		return err
