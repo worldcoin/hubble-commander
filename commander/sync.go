@@ -99,8 +99,15 @@ func (t *transactionExecutor) revertBatches(mutex *sync.Mutex, batch *eth.Decode
 	if err != nil {
 		return err
 	}
+	err = t.revertBatchesInRange(&batch.Number)
+	if err != nil {
+		return err
+	}
+	return t.syncBatch(batch)
+}
 
-	batches, err := t.storage.GetBatchesInRange(&localBatch.Number, nil)
+func (t *transactionExecutor) revertBatchesInRange(startNumber *models.Uint256) error {
+	batches, err := t.storage.GetBatchesInRange(startNumber, nil)
 	if err != nil {
 		return err
 	}
@@ -116,11 +123,7 @@ func (t *transactionExecutor) revertBatches(mutex *sync.Mutex, batch *eth.Decode
 	if err != nil {
 		return err
 	}
-	err = t.storage.DeleteBatches(batchIDs...)
-	if err != nil {
-		return err
-	}
-	return t.syncBatch(batch)
+	return t.storage.DeleteBatches(batchIDs...)
 }
 
 func (t *transactionExecutor) excludeTransactionsFromCommitment(batchIDs ...int32) error {
