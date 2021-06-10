@@ -360,11 +360,30 @@ func (s *SyncTestSuite) TestRevertBatch_RevertsState() {
 	s.Nil(transfer.IncludedInCommitment)
 }
 
-func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatch() {
+func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {
 	initialStateRoot, err := s.tree.Root()
 	s.NoError(err)
 
-	pendingBatch := s.createAndSubmitTransferBatch(&s.transfer)
+	transfers := make([]models.Transfer, 2)
+	transfers[0] = s.transfer
+	transfers[1] = models.Transfer{
+		TransactionBase: models.TransactionBase{
+			Hash:        utils.RandomHash(),
+			TxType:      txtype.Transfer,
+			FromStateID: 0,
+			Amount:      models.MakeUint256(200),
+			Fee:         models.MakeUint256(10),
+			Nonce:       models.MakeUint256(1),
+			Signature:   s.mockSignature(),
+		},
+		ToStateID: 1,
+	}
+
+	pendingBatches := make([]models.Batch, 2)
+	for i := range pendingBatches {
+		pendingBatches[i] = *s.createAndSubmitTransferBatch(&transfers[i])
+	}
+
 	decodedBatch := &eth.DecodedBatch{
 		Batch: models.Batch{
 			Type:              txtype.Transfer,
@@ -374,18 +393,20 @@ func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatch() {
 			FinalisationBlock: ref.Uint32(20),
 		},
 	}
-	err = s.transactionExecutor.revertBatch(s.stateMutex, decodedBatch, pendingBatch)
+	err = s.transactionExecutor.revertBatch(s.stateMutex, decodedBatch, &pendingBatches[0])
 	s.NoError(err)
 
 	stateRoot, err := s.tree.Root()
 	s.NoError(err)
 	s.Equal(*initialStateRoot, *stateRoot)
 
-	_, err = s.storage.GetBatch(pendingBatch.ID)
-	s.Equal(st.NewNotFoundError("batch"), err)
+	for i := range pendingBatches {
+		_, err = s.storage.GetBatch(pendingBatches[i].ID)
+		s.Equal(st.NewNotFoundError("batch"), err)
 
-	_, err = s.storage.GetCommitmentsByBatchID(pendingBatch.ID)
-	s.Equal(st.NewNotFoundError("commitments"), err)
+		_, err = s.storage.GetCommitmentsByBatchID(pendingBatches[i].ID)
+		s.Equal(st.NewNotFoundError("commitments"), err)
+	}
 }
 
 func (s *SyncTestSuite) TestRevertBatch_SyncCorrectBatch() {

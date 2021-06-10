@@ -81,7 +81,6 @@ func (t *transactionExecutor) syncExistingBatch(mutex *sync.Mutex, batch *eth.De
 			return err
 		}
 		if *txSender != t.client.ChainConnection.GetAccount().From {
-			// TODO someone else's batch has been mined before ours (probably because our proposer slot ended)
 			return t.revertBatch(mutex, batch, localBatch)
 		} else {
 			// TODO our previous transaction must have failed this should never happen
@@ -100,24 +99,26 @@ func (t *transactionExecutor) revertBatch(mutex *sync.Mutex, batch *eth.DecodedB
 	if err != nil {
 		return err
 	}
-	err = t.excludeTransactionsFromCommitment(localBatch.ID)
+
+	batches, err := t.storage.GetBatchesInRange(&localBatch.Number, nil)
 	if err != nil {
 		return err
 	}
-	err = t.storage.DeleteCommitmentsByBatchID(localBatch.ID)
-	if err != nil {
-		return err
+	for i := range batches {
+		err = t.excludeTransactionsFromCommitment(batches[i].ID)
+		if err != nil {
+			return err
+		}
+		err = t.storage.DeleteCommitmentsByBatchID(batches[i].ID)
+		if err != nil {
+			return err
+		}
+		err = t.storage.DeleteBatch(batches[i].ID)
+		if err != nil {
+			return err
+		}
 	}
-	err = t.storage.DeleteBatch(localBatch.ID)
-	if err != nil {
-		return err
-	}
-	err = t.syncBatch(batch)
-	if err != nil {
-		return err
-	}
-	// TODO: reapply all batches after this one
-	return nil
+	return t.syncBatch(batch)
 }
 
 func (t *transactionExecutor) excludeTransactionsFromCommitment(batchID int32) error {
