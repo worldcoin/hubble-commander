@@ -30,10 +30,23 @@ type SyncTestSuite struct {
 	cfg                 *config.RollupConfig
 	transactionExecutor *transactionExecutor
 	stateMutex          *sync.Mutex
+	transfer            models.Transfer
 }
 
 func (s *SyncTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
+	s.transfer = models.Transfer{
+		TransactionBase: models.TransactionBase{
+			TxType:      txtype.Transfer,
+			FromStateID: 0,
+			Amount:      models.MakeUint256(400),
+			Fee:         models.MakeUint256(0),
+			Nonce:       models.MakeUint256(0),
+			Signature:   s.mockSignature(),
+		},
+		ToStateID: 1,
+	}
+	s.setTransferHash(&s.transfer)
 }
 
 func (s *SyncTestSuite) SetupTest() {
@@ -318,18 +331,7 @@ func (s *SyncTestSuite) TestRevertBatch_RevertsState() {
 	initialStateRoot, err := s.tree.Root()
 	s.NoError(err)
 
-	tx := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			TxType:      txtype.Transfer,
-			FromStateID: 0,
-			Amount:      models.MakeUint256(400),
-			Fee:         models.MakeUint256(0),
-			Nonce:       models.MakeUint256(0),
-			Signature:   s.mockSignature(),
-		},
-		ToStateID: 1,
-	}
-	pendingBatch := s.createAndSubmitTransferBatch(&tx)
+	pendingBatch := s.createAndSubmitTransferBatch(&s.transfer)
 	decodedBatch := &eth.DecodedBatch{
 		Batch: models.Batch{
 			Type:              txtype.Transfer,
@@ -339,23 +341,99 @@ func (s *SyncTestSuite) TestRevertBatch_RevertsState() {
 			FinalisationBlock: ref.Uint32(20),
 		},
 	}
-	err = s.transactionExecutor.revertBatch(decodedBatch, pendingBatch)
+	err = s.transactionExecutor.revertBatch(s.stateMutex, decodedBatch, pendingBatch)
 	s.NoError(err)
 
 	stateRoot, err := s.tree.Root()
 	s.NoError(err)
 	s.Equal(*initialStateRoot, *stateRoot)
 
-	state0, err := s.storage.GetStateLeaf(tx.FromStateID)
+	state0, err := s.storage.GetStateLeaf(s.transfer.FromStateID)
 	s.NoError(err)
 	s.Equal(uint64(1000), state0.Balance.Uint64())
-	state1, err := s.storage.GetStateLeaf(tx.ToStateID)
+	state1, err := s.storage.GetStateLeaf(s.transfer.ToStateID)
 	s.NoError(err)
 	s.Equal(uint64(0), state1.Balance.Uint64())
 
-	transfer, err := s.storage.GetTransfer(tx.Hash)
+	transfer, err := s.storage.GetTransfer(s.transfer.Hash)
 	s.NoError(err)
 	s.Nil(transfer.IncludedInCommitment)
+}
+
+func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatch() {
+	initialStateRoot, err := s.tree.Root()
+	s.NoError(err)
+
+	pendingBatch := s.createAndSubmitTransferBatch(&s.transfer)
+	decodedBatch := &eth.DecodedBatch{
+		Batch: models.Batch{
+			Type:              txtype.Transfer,
+			TransactionHash:   utils.RandomHash(),
+			Number:            models.MakeUint256(1),
+			Hash:              utils.NewRandomHash(),
+			FinalisationBlock: ref.Uint32(20),
+		},
+	}
+	err = s.transactionExecutor.revertBatch(s.stateMutex, decodedBatch, pendingBatch)
+	s.NoError(err)
+
+	stateRoot, err := s.tree.Root()
+	s.NoError(err)
+	s.Equal(*initialStateRoot, *stateRoot)
+
+	_, err = s.storage.GetBatch(pendingBatch.ID)
+	s.Equal(st.NewNotFoundError("batch"), err)
+
+	_, err = s.storage.GetCommitmentsByBatchID(pendingBatch.ID)
+	s.Equal(st.NewNotFoundError("commitments"), err)
+}
+
+func (s *SyncTestSuite) TestRevertBatch_SyncCorrectBatch() {
+	startBlock, err := s.client.GetLatestBlockNumber()
+	s.NoError(err)
+
+	pendingBatch := s.createAndSubmitTransferBatch(&s.transfer)
+	accountRoot := s.getAccountTreeRoot()
+	s.recreateDatabase()
+
+	localTransfer := s.transfer
+	localTransfer.Hash = utils.RandomHash()
+	localTransfer.Amount = models.MakeUint256(200)
+	localTransfer.Fee = models.MakeUint256(10)
+	localBatch := s.createTransferBatch(&localTransfer)
+
+	batches, err := s.client.GetBatches(&bind.FilterOpts{Start: *startBlock})
+	s.NoError(err)
+	s.Len(batches, 1)
+
+	err = s.transactionExecutor.revertBatch(s.stateMutex, &batches[0], localBatch)
+	s.NoError(err)
+
+	batches[0].Batch.ID = pendingBatch.ID + 1
+	batch, err := s.storage.GetBatchByNumber(pendingBatch.Number)
+	s.NoError(err)
+	s.Equal(batches[0].Batch, *batch)
+
+	expectedCommitment := models.Commitment{
+		ID:                2,
+		Type:              txtype.Transfer,
+		Transactions:      batches[0].Commitments[0].Transactions,
+		FeeReceiver:       batches[0].Commitments[0].FeeReceiver,
+		CombinedSignature: batches[0].Commitments[0].CombinedSignature,
+		PostStateRoot:     batches[0].Commitments[0].StateRoot,
+		AccountTreeRoot:   &accountRoot,
+		IncludedInBatch:   &batch.ID,
+	}
+	commitment, err := s.storage.GetCommitment(2)
+	s.NoError(err)
+	s.Equal(expectedCommitment, *commitment)
+
+	expectedTx := s.transfer
+	expectedTx.Signature = models.Signature{}
+	expectedTx.IncludedInCommitment = &commitment.ID
+	transfer, err := s.storage.GetTransfer(s.transfer.Hash)
+	s.NoError(err)
+	s.Equal(expectedTx, *transfer)
 }
 
 func (s *SyncTestSuite) createAndSubmitTransferBatch(tx *models.Transfer) *models.Batch {
@@ -370,6 +448,29 @@ func (s *SyncTestSuite) createAndSubmitTransferBatch(tx *models.Transfer) *model
 	s.Len(commitments, 1)
 
 	err = s.transactionExecutor.submitBatch(pendingBatch, commitments)
+	s.NoError(err)
+
+	s.client.Commit()
+	return pendingBatch
+}
+
+func (s *SyncTestSuite) createTransferBatch(tx *models.Transfer) *models.Batch {
+	err := s.storage.AddTransfer(tx)
+	s.NoError(err)
+
+	pendingBatch, err := newPendingBatch(s.storage, txtype.Transfer)
+	s.NoError(err)
+
+	commitments, err := s.transactionExecutor.createTransferCommitments([]models.Transfer{*tx}, testDomain)
+	s.NoError(err)
+	s.Len(commitments, 1)
+
+	pendingBatch.TransactionHash = utils.RandomHash()
+	batchID, err := s.storage.AddBatch(pendingBatch)
+	s.NoError(err)
+	pendingBatch.ID = *batchID
+
+	err = s.transactionExecutor.markCommitmentsAsIncluded(commitments, *batchID)
 	s.NoError(err)
 
 	s.client.Commit()

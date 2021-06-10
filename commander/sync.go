@@ -47,12 +47,12 @@ func (t *transactionExecutor) SyncBatches(stateMutex *sync.Mutex, startBlock, en
 		}
 
 		if st.IsNotFoundError(err) {
-			err = t.syncBatch(stateMutex, batch)
+			err = t.syncBatchWithLock(stateMutex, batch)
 			if err != nil {
 				return err
 			}
 		} else {
-			err = t.syncExistingBatch(batch, localBatch)
+			err = t.syncExistingBatch(stateMutex, batch, localBatch)
 			if err != nil {
 				return err
 			}
@@ -62,7 +62,7 @@ func (t *transactionExecutor) SyncBatches(stateMutex *sync.Mutex, startBlock, en
 	return nil
 }
 
-func (t *transactionExecutor) syncExistingBatch(batch *eth.DecodedBatch, localBatch *models.Batch) error {
+func (t *transactionExecutor) syncExistingBatch(mutex *sync.Mutex, batch *eth.DecodedBatch, localBatch *models.Batch) error {
 	if batch.TransactionHash == localBatch.TransactionHash {
 		batch.ID = localBatch.ID
 		err := t.storage.MarkBatchAsSubmitted(&batch.Batch)
@@ -82,6 +82,7 @@ func (t *transactionExecutor) syncExistingBatch(batch *eth.DecodedBatch, localBa
 		}
 		if *txSender != t.client.ChainConnection.GetAccount().From {
 			// TODO someone else's batch has been mined before ours (probably because our proposer slot ended)
+			return t.revertBatch(mutex, batch, localBatch)
 		} else {
 			// TODO our previous transaction must have failed this should never happen
 			return ErrBatchSubmissionFailed
@@ -90,14 +91,28 @@ func (t *transactionExecutor) syncExistingBatch(batch *eth.DecodedBatch, localBa
 	return nil
 }
 
-func (t *transactionExecutor) revertBatch(batch *eth.DecodedBatch, localBatch *models.Batch) error {
-	// TODO: lock mutex
+func (t *transactionExecutor) revertBatch(mutex *sync.Mutex, batch *eth.DecodedBatch, localBatch *models.Batch) error {
+	mutex.Lock()
+	defer mutex.Unlock()
+
 	stateTree := st.NewStateTree(t.storage)
 	err := stateTree.RevertTo(*localBatch.PrevStateRootHash)
 	if err != nil {
 		return err
 	}
 	err = t.excludeTransactionsFromCommitment(localBatch.ID)
+	if err != nil {
+		return err
+	}
+	err = t.storage.DeleteCommitmentsByBatchID(localBatch.ID)
+	if err != nil {
+		return err
+	}
+	err = t.storage.DeleteBatch(localBatch.ID)
+	if err != nil {
+		return err
+	}
+	err = t.syncBatch(batch)
 	if err != nil {
 		return err
 	}
@@ -136,10 +151,13 @@ func getLatestBatchNumber(storage *st.Storage) (*models.Uint256, error) {
 	return &latestBatch.Number, nil
 }
 
-func (t *transactionExecutor) syncBatch(stateMutex *sync.Mutex, batch *eth.DecodedBatch) error {
+func (t *transactionExecutor) syncBatchWithLock(stateMutex *sync.Mutex, batch *eth.DecodedBatch) error {
 	stateMutex.Lock()
 	defer stateMutex.Unlock()
+	return t.syncBatch(batch)
+}
 
+func (t *transactionExecutor) syncBatch(batch *eth.DecodedBatch) error {
 	batchID, err := t.storage.AddBatch(&batch.Batch)
 	if err != nil {
 		return err
