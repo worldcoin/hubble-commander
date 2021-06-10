@@ -83,7 +83,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_StartsRollupLoop() {
 	s.Equal(*latestBlockNumber, uint64(blockNumber))
 }
 
-func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncBeforeLoopStarted() {
+func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedBeforeStartup() {
 	accounts := []models.Account{
 		{PublicKey: models.PublicKey{1, 2, 3}},
 		{PublicKey: models.PublicKey{2, 3, 4}},
@@ -108,7 +108,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncBeforeLoopStarted() {
 	}, 1*time.Second, 100*time.Millisecond)
 }
 
-func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncDuringLoop() {
+func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedWhileRunning() {
 	s.startBlockLoop()
 
 	accounts := []models.Account{
