@@ -100,8 +100,6 @@ func (s *SyncTestSuite) TearDownTest() {
 }
 
 func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
-	accountRoot := s.getAccountTreeRoot()
-
 	txs := []models.Transfer{
 		{
 			TransactionBase: models.TransactionBase{
@@ -132,6 +130,7 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 	}
 
 	expectedCommitments := make([]models.Commitment, 2)
+	accountRoots := make([]common.Hash, 2)
 	for i := range expectedCommitments {
 		createdCommitments, err := s.transactionExecutor.createTransferCommitments([]models.Transfer{txs[i]}, testDomain)
 		s.NoError(err)
@@ -141,6 +140,8 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 		_, err = s.transactionExecutor.submitBatch(txtype.Transfer, createdCommitments)
 		s.NoError(err)
 		s.client.Commit()
+
+		accountRoots[i] = s.getAccountTreeRoot()
 	}
 
 	s.recreateDatabase()
@@ -151,12 +152,13 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 	s.Len(batches, 2)
 	s.Equal(models.MakeUint256(1), batches[0].Number)
 	s.Equal(models.MakeUint256(2), batches[1].Number)
+	s.Equal(accountRoots[0], *batches[0].AccountTreeRoot)
+	s.Equal(accountRoots[1], *batches[1].AccountTreeRoot)
 
 	for i := range expectedCommitments {
 		commitment, err := s.storage.GetCommitment(expectedCommitments[i].ID)
 		s.NoError(err)
 		expectedCommitments[i].IncludedInBatch = &batches[i].ID
-		expectedCommitments[i].AccountTreeRoot = &accountRoot
 		s.Equal(expectedCommitments[i], *commitment)
 
 		actualTx, err := s.storage.GetTransfer(txs[i].Hash)
@@ -249,6 +251,7 @@ func (s *SyncTestSuite) TestSyncBatches_PendingBatch() {
 	s.NoError(err)
 	s.Nil(pendingBatch.Hash)
 	s.Nil(pendingBatch.FinalisationBlock)
+	s.Nil(pendingBatch.AccountTreeRoot)
 
 	s.syncAllBlocks()
 
@@ -258,9 +261,7 @@ func (s *SyncTestSuite) TestSyncBatches_PendingBatch() {
 	s.NotNil(batches[0].Hash)
 	s.NotNil(batches[0].FinalisationBlock)
 
-	commitment, err := s.storage.GetCommitment(1)
-	s.NoError(err)
-	s.Equal(accountRoot, *commitment.AccountTreeRoot)
+	s.Equal(accountRoot, *batches[0].AccountTreeRoot)
 }
 
 func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
@@ -292,15 +293,15 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	s.Equal(models.MakeUint256(400), state5.Balance)
 	s.Equal(uint32(1), state5.PubKeyID)
 
+	treeRoot := s.getAccountTreeRoot()
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 1)
+	s.Equal(treeRoot, *batches[0].AccountTreeRoot)
 
 	commitment, err := s.storage.GetCommitment(expectedCommitment.ID)
 	s.NoError(err)
 	expectedCommitment.IncludedInBatch = &batches[0].ID
-	treeRoot := s.getAccountTreeRoot()
-	expectedCommitment.AccountTreeRoot = &treeRoot
 	s.Equal(expectedCommitment, *commitment)
 
 	transfer, err := s.storage.GetCreate2Transfer(tx.Hash)

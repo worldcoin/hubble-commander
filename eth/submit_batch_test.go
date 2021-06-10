@@ -7,7 +7,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -57,12 +56,11 @@ func (s *SubmitBatchTestSuite) TestSubmitTransfersBatchAndMine_ReturnsBatchWithC
 	s.NoError(err)
 
 	commitment := s.commitment
-	commitment.AccountTreeRoot = ref.Hash(accountRoot)
 
 	batch, _, err := s.client.SubmitTransfersBatchAndMine([]models.Commitment{commitment})
 	s.NoError(err)
 
-	commitmentRoot := utils.HashTwo(commitment.LeafHash(), storage.GetZeroHash(0))
+	commitmentRoot := utils.HashTwo(commitment.LeafHash(accountRoot), storage.GetZeroHash(0))
 	s.Equal(commitmentRoot, *batch.Hash)
 	s.Equal(txtype.Transfer, batch.Type)
 }
@@ -86,12 +84,11 @@ func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatchAndMine_ReturnsBat
 
 	commitment := s.commitment
 	commitment.Type = txtype.Create2Transfer
-	commitment.AccountTreeRoot = ref.Hash(accountRoot)
 
 	batch, _, err := s.client.SubmitCreate2TransfersBatchAndMine([]models.Commitment{commitment})
 	s.NoError(err)
 
-	commitmentRoot := utils.HashTwo(commitment.LeafHash(), storage.GetZeroHash(0))
+	commitmentRoot := utils.HashTwo(commitment.LeafHash(accountRoot), storage.GetZeroHash(0))
 	s.Equal(commitmentRoot, *batch.Hash)
 	s.Equal(txtype.Create2Transfer, batch.Type)
 }

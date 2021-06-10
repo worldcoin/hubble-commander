@@ -43,7 +43,6 @@ func (t *transactionExecutor) syncCreate2TransferCommitment(
 		FeeReceiver:       commitment.FeeReceiver,
 		CombinedSignature: commitment.CombinedSignature,
 		PostStateRoot:     commitment.StateRoot,
-		AccountTreeRoot:   &batch.AccountRoot,
 		IncludedInBatch:   &batch.ID,
 	})
 	if err != nil {
