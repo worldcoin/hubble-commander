@@ -1,18 +1,30 @@
 package commander
 
 import (
+	"context"
 	"errors"
+	"log"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
-	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func (c *Commander) rollupLoop() (err error) {
+func (c *Commander) manageRollupLoop(cancel context.CancelFunc, isProposer bool) context.CancelFunc {
+	if isProposer && !c.rollupLoopRunning {
+		var ctx context.Context
+		ctx, cancel = context.WithCancel(context.Background())
+		c.startWorker(func() error { return c.rollupLoop(ctx) })
+		c.rollupLoopRunning = true
+	} else if !isProposer && c.rollupLoopRunning {
+		cancel()
+		c.rollupLoopRunning = false
+	}
+	return cancel
+}
+
+func (c *Commander) rollupLoop(ctx context.Context) (err error) {
 	ticker := time.NewTicker(c.cfg.Rollup.BatchLoopInterval)
 	defer ticker.Stop()
 
@@ -20,10 +32,12 @@ func (c *Commander) rollupLoop() (err error) {
 
 	for {
 		select {
+		case <-ctx.Done():
+			return nil
 		case <-c.stopChannel:
 			return nil
 		case <-ticker.C:
-			err := c.rollupLoopIteration(&currentBatchType)
+			err := c.rollupLoopIteration(ctx, &currentBatchType)
 			if err != nil {
 				return err
 			}
@@ -31,22 +45,20 @@ func (c *Commander) rollupLoop() (err error) {
 	}
 }
 
-func (c *Commander) rollupLoopIteration(currentBatchType *txtype.TransactionType) (err error) {
-	if !c.storage.IsProposer() {
-		return nil
-	}
-
-	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, c.cfg.Rollup)
+func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *txtype.TransactionType) (err error) {
+	c.stateMutex.Lock()
+	defer c.stateMutex.Unlock()
+	transactionExecutor, err := newTransactionExecutorWithCtx(ctx, c.storage, c.client, c.cfg.Rollup)
 	if err != nil {
 		return err
 	}
 	defer transactionExecutor.Rollback(&err)
 
 	if *currentBatchType == txtype.Transfer {
-		err = transactionExecutor.CreateAndSubmitBatch(*currentBatchType)
+		err = transactionExecutor.CreateAndSubmitBatch(*currentBatchType, c.signaturesDomain)
 		*currentBatchType = txtype.Create2Transfer
 	} else {
-		err = transactionExecutor.CreateAndSubmitBatch(*currentBatchType)
+		err = transactionExecutor.CreateAndSubmitBatch(*currentBatchType, c.signaturesDomain)
 		*currentBatchType = txtype.Transfer
 	}
 	if err != nil {
@@ -60,47 +72,46 @@ func (c *Commander) rollupLoopIteration(currentBatchType *txtype.TransactionType
 	return transactionExecutor.Commit()
 }
 
-func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionType) error {
+func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionType, domain *bls.Domain) (err error) {
+	startTime := time.Now()
 	var commitments []models.Commitment
-
-	domain, err := t.storage.GetDomain(t.client.ChainState.ChainID)
-	if err != nil {
-		return err
-	}
-
 	if batchType == txtype.Transfer {
-		commitments, err = buildTransferCommitments(t.storage, t.cfg, *domain)
+		commitments, err = t.buildTransferCommitments(domain)
 	} else {
-		commitments, err = buildCreate2TransfersCommitments(t.storage, t.client, t.cfg, *domain)
+		commitments, err = t.buildCreate2TransfersCommitments(domain)
 	}
 	if err != nil {
 		return err
 	}
 
-	err = submitBatch(batchType, commitments, t.storage, t.client, t.cfg)
+	batch, err := t.submitBatch(batchType, commitments)
 	if err != nil {
 		return err
 	}
+
+	log.Printf(
+		"Submitted a %s batch with %d commitment(s) on chain in %s. Batch number: %d. Transaction hash: %v",
+		batchType.String(),
+		len(commitments),
+		time.Since(startTime).Round(time.Millisecond).String(),
+		batch.Number.Uint64(),
+		batch.TransactionHash,
+	)
 	return nil
 }
 
-func buildTransferCommitments(storage *st.Storage, cfg *config.RollupConfig, domain bls.Domain) ([]models.Commitment, error) {
-	pendingTransfers, err := storage.GetPendingTransfers()
+func (t *transactionExecutor) buildTransferCommitments(domain *bls.Domain) ([]models.Commitment, error) {
+	pendingTransfers, err := t.storage.GetPendingTransfers()
 	if err != nil {
 		return nil, err
 	}
-	return createTransferCommitments(pendingTransfers, storage, cfg, domain)
+	return t.createTransferCommitments(pendingTransfers, domain)
 }
 
-func buildCreate2TransfersCommitments(
-	storage *st.Storage,
-	client *eth.Client,
-	cfg *config.RollupConfig,
-	domain bls.Domain,
-) ([]models.Commitment, error) {
-	pendingTransfers, err := storage.GetPendingCreate2Transfers()
+func (t *transactionExecutor) buildCreate2TransfersCommitments(domain *bls.Domain) ([]models.Commitment, error) {
+	pendingTransfers, err := t.storage.GetPendingCreate2Transfers()
 	if err != nil {
 		return nil, err
 	}
-	return createCreate2TransferCommitments(pendingTransfers, storage, client, cfg, domain)
+	return t.createCreate2TransferCommitments(pendingTransfers, domain)
 }

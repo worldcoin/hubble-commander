@@ -40,14 +40,14 @@ func (s *GetBatchTestSuite) SetupTest() {
 
 	s.commitment = commitment
 	s.commitment.IncludedInBatch = ref.Int32(1)
-	s.commitment.AccountTreeRoot = utils.NewRandomHash()
 
 	s.batch = models.Batch{
 		Type:              txtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
-		Number:            models.NewUint256(1),
+		Number:            models.MakeUint256(1),
 		FinalisationBlock: ref.Uint32(42000),
+		AccountTreeRoot:   utils.NewRandomHash(),
 	}
 }
 
@@ -75,7 +75,6 @@ func (s *GetBatchTestSuite) TestGetBatchByHash() {
 	s.Equal(s.batch.TransactionHash, result.TransactionHash)
 	s.Equal(*s.batch.FinalisationBlock-rollup.DefaultBlocksToFinalise, result.SubmissionBlock)
 	s.Equal(s.batch.FinalisationBlock, result.FinalisationBlock)
-	s.Equal(s.commitment.AccountTreeRoot, result.AccountTreeRoot)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByHash_NoCommitments() {
@@ -84,7 +83,7 @@ func (s *GetBatchTestSuite) TestGetBatchByHash_NoCommitments() {
 	s.NoError(err)
 
 	result, err := s.api.GetBatchByHash(*s.batch.Hash)
-	s.Equal(st.NewNotFoundError("batch"), err)
+	s.Equal(st.NewNotFoundError("commitments"), err)
 	s.Nil(result)
 }
 
@@ -112,7 +111,6 @@ func (s *GetBatchTestSuite) TestGetBatchByID() {
 	s.Equal(s.batch.TransactionHash, result.TransactionHash)
 	s.Equal(*s.batch.FinalisationBlock-rollup.DefaultBlocksToFinalise, result.SubmissionBlock)
 	s.Equal(s.batch.FinalisationBlock, result.FinalisationBlock)
-	s.Equal(s.commitment.AccountTreeRoot, result.AccountTreeRoot)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByID_NoCommitments() {

@@ -18,7 +18,6 @@ var (
 		FeeReceiver:       uint32(1),
 		CombinedSignature: models.MakeRandomSignature(),
 		PostStateRoot:     utils.RandomHash(),
-		AccountTreeRoot:   nil,
 		IncludedInBatch:   nil,
 	}
 )
@@ -66,7 +65,7 @@ func (s *CommitmentTestSuite) addRandomBatch() *int32 {
 		Type:              txtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
-		Number:            models.NewUint256(123),
+		Number:            models.MakeUint256(123),
 		FinalisationBlock: ref.Uint32(1234),
 	}
 	id, err := s.storage.AddBatch(&batch)
@@ -76,51 +75,20 @@ func (s *CommitmentTestSuite) addRandomBatch() *int32 {
 
 func (s *CommitmentTestSuite) TestMarkCommitmentAsIncluded_UpdatesRecord() {
 	batchID := s.addRandomBatch()
-	accountRoot := utils.RandomHash()
 
 	id, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	err = s.storage.MarkCommitmentAsIncluded(*id, *batchID, &accountRoot)
+	err = s.storage.MarkCommitmentAsIncluded(*id, *batchID)
 	s.NoError(err)
 
 	expected := s.getCommitment(*id)
 	expected.IncludedInBatch = batchID
-	expected.AccountTreeRoot = &accountRoot
 
 	actual, err := s.storage.GetCommitment(*id)
 	s.NoError(err)
 
 	s.Equal(expected, actual)
-}
-
-func (s *CommitmentTestSuite) TestGetPendingCommitments_ReturnsOnlyPending() {
-	id, err := s.storage.AddCommitment(&commitment)
-	s.NoError(err)
-
-	includedCommitment := commitment
-	includedCommitment.IncludedInBatch = s.addRandomBatch()
-	_, err = s.storage.AddCommitment(&includedCommitment)
-	s.NoError(err)
-
-	actual, err := s.storage.GetPendingCommitments(10)
-	s.NoError(err)
-
-	expected := commitment
-	expected.ID = *id
-
-	s.Equal([]models.Commitment{expected}, actual)
-}
-
-func (s *CommitmentTestSuite) TestGetPendingCommitments_ReturnsOnlyGivenNumberOfRows() {
-	for i := 0; i < 3; i++ {
-		_, err := s.storage.AddCommitment(&commitment)
-		s.NoError(err)
-	}
-
-	commitments, err := s.storage.GetPendingCommitments(2)
-	s.NoError(err)
-	s.Len(commitments, 2)
 }
 
 func (s *CommitmentTestSuite) TestGetCommitment_NonExistentCommitment() {
@@ -137,7 +105,6 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
 	includedCommitment := commitment
 	includedCommitment.IncludedInBatch = batchID
 	includedCommitment.FeeReceiver = 0
-	includedCommitment.AccountTreeRoot = utils.NewRandomHash()
 
 	expectedCommitments := make([]models.CommitmentWithTokenID, 2)
 	for i := 0; i < 2; i++ {

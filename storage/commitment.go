@@ -4,7 +4,6 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 var selectedCommitmentCols = []string{
@@ -26,7 +25,6 @@ func (s *Storage) AddCommitment(commitment *models.Commitment) (*int32, error) {
 				commitment.FeeReceiver,
 				commitment.CombinedSignature,
 				commitment.PostStateRoot,
-				commitment.AccountTreeRoot,
 				commitment.IncludedInBatch,
 			).
 			Suffix("RETURNING commitment_id"),
@@ -53,12 +51,11 @@ func (s *Storage) GetCommitment(id int32) (*models.Commitment, error) {
 	return &res[0], nil
 }
 
-func (s *Storage) MarkCommitmentAsIncluded(commitmentID, batchID int32, accountRoot *common.Hash) error {
+func (s *Storage) MarkCommitmentAsIncluded(commitmentID, batchID int32) error {
 	res, err := s.Postgres.Query(
 		s.QB.Update("commitment").
 			Where(squirrel.Eq{"commitment_id": commitmentID}).
-			Set("included_in_batch", batchID).
-			Set("account_tree_root", *accountRoot),
+			Set("included_in_batch", batchID),
 	).Exec()
 	if err != nil {
 		return err
@@ -72,20 +69,6 @@ func (s *Storage) MarkCommitmentAsIncluded(commitmentID, batchID int32, accountR
 		return ErrNoRowsAffected
 	}
 	return nil
-}
-
-func (s *Storage) GetPendingCommitments(maxFetched uint64) ([]models.Commitment, error) {
-	res := make([]models.Commitment, 0, 32)
-	err := s.Postgres.Query(
-		s.QB.Select("*").
-			From("commitment").
-			Where(squirrel.Eq{"included_in_batch": nil}).
-			Limit(maxFetched),
-	).Into(&res)
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
 }
 
 func (s *Storage) GetCommitmentsByBatchID(batchID int32) ([]models.CommitmentWithTokenID, error) {

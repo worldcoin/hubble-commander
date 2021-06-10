@@ -7,6 +7,35 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+func (s *Storage) BatchAddTransactionBase(txs []models.TransactionBase) error {
+	query := s.QB.Insert("transaction_base")
+	for i := range txs {
+		query = query.Values(
+			txs[i].Hash,
+			txs[i].TxType,
+			txs[i].FromStateID,
+			txs[i].Amount,
+			txs[i].Fee,
+			txs[i].Nonce,
+			txs[i].Signature,
+			txs[i].IncludedInCommitment,
+			txs[i].ErrorMessage,
+		)
+	}
+	res, err := s.Postgres.Query(query).Exec()
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrNoRowsAffected
+	}
+	return nil
+}
+
 func (s *Storage) GetLatestTransactionNonce(accountStateID uint32) (*models.Uint256, error) {
 	res := make([]models.Uint256, 0, 1)
 	err := s.Postgres.Query(
@@ -69,7 +98,9 @@ func (s *Storage) GetTransactionCount() (*int, error) {
 	res := make([]int, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Select("COUNT(1)").
-			From("transaction_base"),
+			From("transaction_base").
+			Join("commitment on commitment.commitment_id = transaction_base.included_in_commitment").
+			Where(squirrel.NotEq{"included_in_batch": nil}),
 	).Into(&res)
 	if err != nil {
 		return nil, err

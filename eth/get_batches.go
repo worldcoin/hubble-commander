@@ -14,10 +14,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (c *Client) GetBatches(latestBatchSubmissionBlock *uint32) ([]DecodedBatch, error) {
-	it, err := c.Rollup.FilterNewBatch(&bind.FilterOpts{
-		Start: uint64(*latestBatchSubmissionBlock) + 1,
-	})
+func (c *Client) GetBatches(opts *bind.FilterOpts) ([]DecodedBatch, error) {
+	it, err := c.Rollup.FilterNewBatch(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -51,11 +49,13 @@ func (c *Client) GetBatches(latestBatchSubmissionBlock *uint32) ([]DecodedBatch,
 			return nil, err
 		}
 
+		accountRoot := common.BytesToHash(it.Event.AccountRoot[:])
+
 		batch.TransactionHash = txHash
+		batch.AccountTreeRoot = &accountRoot
 
 		res = append(res, DecodedBatch{
 			Batch:       *batch,
-			AccountRoot: common.BytesToHash(it.Event.AccountRoot[:]),
 			Commitments: commitments,
 		})
 	}
@@ -65,6 +65,5 @@ func (c *Client) GetBatches(latestBatchSubmissionBlock *uint32) ([]DecodedBatch,
 
 type DecodedBatch struct {
 	models.Batch
-	AccountRoot common.Hash
 	Commitments []encoder.DecodedCommitment
 }

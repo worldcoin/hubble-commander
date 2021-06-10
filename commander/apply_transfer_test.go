@@ -3,6 +3,8 @@ package commander
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/stretchr/testify/require"
@@ -177,11 +179,15 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer() {
 }
 
 func (s *ApplyTransferTestSuite) TestApplyFee() {
+	transactionExecutor := newTestTransactionExecutor(s.storage.Storage, &eth.Client{}, config.GetTestConfig().Rollup)
+
 	receiverStateID := receiverState.PubKeyID
 	err := s.tree.Set(receiverStateID, &receiverState)
 	s.NoError(err)
 
-	feeReceiverStateID, err := ApplyFee(s.storage.Storage, receiverStateID, models.MakeUint256(1), models.MakeUint256(555))
+	transactionExecutor.cfg.FeeReceiverPubKeyID = receiverStateID
+
+	feeReceiverStateID, err := transactionExecutor.ApplyFee(models.MakeUint256(1), models.MakeUint256(555))
 	s.NoError(err)
 	s.Equal(receiverStateID, *feeReceiverStateID)
 

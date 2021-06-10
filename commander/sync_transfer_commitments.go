@@ -1,54 +1,55 @@
 package commander
 
 import (
-	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
-	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
 func (t *transactionExecutor) syncTransferCommitments(batch *eth.DecodedBatch) error {
 	for i := range batch.Commitments {
-		if err := syncTransferCommitment(t.storage, t.cfg, batch, &batch.Commitments[i]); err != nil {
+		if err := t.syncTransferCommitment(batch, &batch.Commitments[i]); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func syncTransferCommitment(
-	storage *st.Storage,
-	cfg *config.RollupConfig,
+func (t *transactionExecutor) syncTransferCommitment(
 	batch *eth.DecodedBatch,
 	commitment *encoder.DecodedCommitment,
 ) error {
-	transfers, err := encoder.DeserializeTransfers(commitment.Transactions)
+	deserializedTransfers, err := encoder.DeserializeTransfers(commitment.Transactions)
 	if err != nil {
 		return err
 	}
 
-	appliedTransfers, invalidTransfers, _, err := ApplyTransfers(storage, transfers, cfg)
+	transfers, err := t.ApplyTransfers(deserializedTransfers)
 	if err != nil {
 		return err
 	}
 
-	if len(invalidTransfers) > 0 {
+	if len(transfers.invalidTransfers) > 0 {
 		return ErrFraudulentTransfer
 	}
 
-	if len(appliedTransfers) != len(transfers) {
+	if len(transfers.appliedTransfers) != len(deserializedTransfers) {
 		return ErrTransfersNotApplied
 	}
 
-	_, err = storage.AddCommitment(&models.Commitment{
+	commitmentID, err := t.storage.AddCommitment(&models.Commitment{
 		Type:              batch.Type,
 		Transactions:      commitment.Transactions,
 		FeeReceiver:       commitment.FeeReceiver,
 		CombinedSignature: commitment.CombinedSignature,
 		PostStateRoot:     commitment.StateRoot,
-		AccountTreeRoot:   &batch.AccountRoot,
 		IncludedInBatch:   &batch.ID,
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	for i := range transfers.appliedTransfers {
+		transfers.appliedTransfers[i].IncludedInCommitment = commitmentID
+	}
+	return t.storage.BatchAddTransfer(transfers.appliedTransfers)
 }

@@ -7,7 +7,7 @@ import (
 )
 
 type Batch struct {
-	ID                *models.Uint256
+	ID                models.Uint256
 	Hash              *common.Hash
 	Type              txtype.TransactionType
 	TransactionHash   common.Hash
@@ -33,12 +33,12 @@ func MakeBatch(batch *models.Batch, submissionBlock uint32) *Batch {
 }
 
 func MakeBatchWithRootAndCommitments(
-	batch *models.BatchWithAccountRoot,
+	batch *models.Batch,
 	submissionBlock uint32,
 	commitments []models.CommitmentWithTokenID,
 ) *BatchWithRootAndCommitments {
 	return &BatchWithRootAndCommitments{
-		Batch:           *MakeBatch(&batch.Batch, submissionBlock),
+		Batch:           *MakeBatch(batch, submissionBlock),
 		AccountTreeRoot: batch.AccountTreeRoot,
 		Commitments:     commitments,
 	}

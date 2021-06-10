@@ -2,12 +2,11 @@ package commander
 
 import (
 	"testing"
-	"time"
 
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/testutils"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -16,8 +15,8 @@ type AccountsTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	teardown   func() error
-	storage    *st.Storage
 	testClient *eth.TestClient
+	cmd        *Commander
 }
 
 func (s *AccountsTestSuite) SetupSuite() {
@@ -27,10 +26,13 @@ func (s *AccountsTestSuite) SetupSuite() {
 func (s *AccountsTestSuite) SetupTest() {
 	testStorage, err := st.NewTestStorage()
 	s.NoError(err)
-	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
+	s.cmd = &Commander{
+		storage: testStorage.Storage,
+		client:  s.testClient.Client,
+	}
 }
 
 func (s *AccountsTestSuite) TearDownTest() {
@@ -39,42 +41,24 @@ func (s *AccountsTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *AccountsTestSuite) TestWatchAccounts_PreviousAccounts() {
-	publicKey := models.PublicKey{2, 3, 4}
-	_, err := s.testClient.AccountRegistry.Register(s.testClient.Account, publicKey.BigInts())
+func (s *AccountsTestSuite) TestSyncAccounts() {
+	registrations, unsubscribe, err := s.testClient.WatchRegistrations(&bind.WatchOpts{Start: nil})
 	s.NoError(err)
-
-	go func() {
-		err = WatchAccounts(s.storage, s.testClient.Client, nil)
-		s.NoError(err)
-	}()
-
-	var accounts []models.Account
-	s.Eventually(func() bool {
-		accounts, err = s.storage.GetAccounts(&publicKey)
-		s.NoError(err)
-		return len(accounts) == 1
-	}, time.Second, testutils.TryInterval)
-}
-
-func (s *AccountsTestSuite) TestWatchAccounts_NewAccounts() {
-	go func() {
-		err := WatchAccounts(s.storage, s.testClient.Client, nil)
-		s.NoError(err)
-	}()
-
-	time.Sleep(10 * time.Millisecond)
+	defer unsubscribe()
 
 	publicKey := models.PublicKey{2, 3, 4}
-	_, err := s.testClient.AccountRegistry.Register(s.testClient.Account, publicKey.BigInts())
+	pubKeyID, err := s.testClient.RegisterAccount(&publicKey, registrations)
 	s.NoError(err)
 
-	var accounts []models.Account
-	s.Eventually(func() bool {
-		accounts, err = s.storage.GetAccounts(&publicKey)
-		s.NoError(err)
-		return len(accounts) == 1
-	}, time.Second, testutils.TryInterval)
+	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
+	s.NoError(err)
+	err = s.cmd.syncAccounts(0, *latestBlockNumber)
+	s.NoError(err)
+
+	accounts, err := s.cmd.storage.GetAccounts(&publicKey)
+	s.NoError(err)
+	s.Len(accounts, 1)
+	s.Equal(*pubKeyID, accounts[0].PubKeyID)
 }
 
 func TestAccountsTestSuite(t *testing.T) {

@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -52,17 +53,22 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 	finalisationBlocks, err := s.client.GetBlocksToFinalise()
 	s.NoError(err)
 
-	batch1, _, err := s.client.SubmitTransfersBatch([]models.Commitment{commitment1})
+	batch1, _, err := s.client.SubmitTransfersBatchAndMine([]models.Commitment{commitment1})
 	s.NoError(err)
-	_, _, err = s.client.SubmitTransfersBatch([]models.Commitment{commitment2})
+	_, _, err = s.client.SubmitTransfersBatchAndMine([]models.Commitment{commitment2})
 	s.NoError(err)
 
-	submissionBlockBatch1 := *batch1.FinalisationBlock - uint32(*finalisationBlocks)
+	rawAccountRoot, err := s.client.AccountRegistry.Root(nil)
+	s.NoError(err)
+	accountRoot := common.BytesToHash(rawAccountRoot[:])
 
-	batches, err := s.client.GetBatches(&submissionBlockBatch1)
+	batches, err := s.client.GetBatches(&bind.FilterOpts{
+		Start: uint64(*batch1.FinalisationBlock - uint32(*finalisationBlocks) + 1),
+	})
 	s.NoError(err)
 	s.Len(batches, 1)
 	s.NotEqual(common.Hash{}, batches[0].TransactionHash)
+	s.Equal(accountRoot, *batches[0].AccountTreeRoot)
 }
 
 func (s *GetBatchesTestSuite) mockSignature() *models.Signature {

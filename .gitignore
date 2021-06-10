@@ -6,3 +6,4 @@ build
 db/badger/data
 e2e-data
 config.yaml
+e2e/geth-data/geth

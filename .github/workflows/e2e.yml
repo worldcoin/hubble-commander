@@ -43,8 +43,8 @@ jobs:
       HUBBLE_POSTGRES_HOST: localhost
       HUBBLE_POSTGRES_USER: hubble
       HUBBLE_POSTGRES_PASSWORD: root
-      HUBBLE_ETHEREUM_RPC_URL: ws://localhost:8545
-      HUBBLE_ETHEREUM_CHAIN_ID: 1616067554748
+      HUBBLE_ETHEREUM_RPC_URL: ws://localhost:8546
+      HUBBLE_ETHEREUM_CHAIN_ID: 1337
       HUBBLE_ETHEREUM_PRIVATE_KEY: ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
 
     steps:
@@ -58,9 +58,14 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Pull the commander image
         run: docker pull ghcr.io/worldcoin/hubble-commander:latest
+      - name: Install geth
+        run: |
+          sudo add-apt-repository -y ppa:ethereum/ethereum
+          sudo apt-get update
+          sudo apt-get install ethereum
       - name: Run E2E tests
         run: |
-          npx ganache-cli --account 0xee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82,0x56BC75E2D63100000 &
+          make start-geth &
           HUBBLE_E2E=docker make test-e2e
 
   deploy:
@@ -68,13 +73,13 @@ jobs:
     needs: e2e
     runs-on: ubuntu-20.04
     steps:
-    - name: Deploy to AWS
-      uses: appleboy/ssh-action@master
-      with:
-        host: ec2-3-237-17-229.compute-1.amazonaws.com
-        username: ec2-user
-        key: ${{ secrets.AWS_SSH_KEY }}
-        script: |
-          docker-compose pull
-          docker-compose up -d
-          docker images -f "before=ghcr.io/worldcoin/hubble-commander:latest" -f "dangling=true" -q ghcr.io/worldcoin/hubble-commander | xargs docker image rm || true
+      - name: Deploy to AWS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ec2-3-237-17-229.compute-1.amazonaws.com
+          username: ec2-user
+          key: ${{ secrets.AWS_SSH_KEY }}
+          script: |
+            docker-compose pull
+            docker-compose up -d
+            docker images -f "before=ghcr.io/worldcoin/hubble-commander:latest" -f "dangling=true" -q ghcr.io/worldcoin/hubble-commander | xargs docker image rm || true

@@ -36,7 +36,7 @@ func (s *GetCommitmentTestSuite) SetupTest() {
 		Type:              txtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
-		Number:            models.NewUint256(1),
+		Number:            models.MakeUint256(1),
 		FinalisationBlock: ref.Uint32(113),
 	}
 
@@ -102,7 +102,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 			Nonce:                models.MakeUint256(0),
 			IncludedInCommitment: commitmentID,
 		},
-		ToStateID:   2,
+		ToStateID:   ref.Uint32(2),
 		ToPublicKey: models.PublicKey{2, 3, 4},
 	}
 	err = s.storage.AddCreate2Transfer(&create2Transfer)

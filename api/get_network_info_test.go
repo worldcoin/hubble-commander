@@ -60,14 +60,14 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo_NoFinalisedBatches() {
 			Type:              txtype.Transfer,
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
-			Number:            models.NewUint256(1234),
+			Number:            models.MakeUint256(1234),
 			FinalisationBlock: ref.Uint32(1234),
 		},
 		{
 			Type:              txtype.Create2Transfer,
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
-			Number:            models.NewUint256(2000),
+			Number:            models.MakeUint256(2000),
 			FinalisationBlock: ref.Uint32(2000),
 		},
 	}
@@ -89,27 +89,32 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
 			Type:              txtype.Transfer,
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
-			Number:            models.NewUint256(1234),
+			Number:            models.MakeUint256(1234),
 			FinalisationBlock: ref.Uint32(1),
 		},
 		{
 			Type:              txtype.Create2Transfer,
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
-			Number:            models.NewUint256(2000),
+			Number:            models.MakeUint256(2000),
 			FinalisationBlock: ref.Uint32(2000),
 		},
 	}
-	_, err := s.api.storage.AddBatch(&batches[0])
+	batchID, err := s.api.storage.AddBatch(&batches[0])
 	s.NoError(err)
 	_, err = s.api.storage.AddBatch(&batches[1])
 	s.NoError(err)
 
+	commitmentInBatch := commitment
+	commitmentInBatch.IncludedInBatch = batchID
+	commitmentID, err := s.api.storage.AddCommitment(&commitmentInBatch)
+	s.NoError(err)
 	err = s.api.storage.AddTransfer(&models.Transfer{
 		TransactionBase: models.TransactionBase{
-			Hash:        common.Hash{1, 2, 3},
-			TxType:      txtype.Transfer,
-			FromStateID: 0,
+			Hash:                 common.Hash{1, 2, 3},
+			TxType:               txtype.Transfer,
+			FromStateID:          0,
+			IncludedInCommitment: commitmentID,
 		},
 		ToStateID: 1,
 	})

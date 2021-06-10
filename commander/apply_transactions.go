@@ -18,15 +18,15 @@ func logAndSaveTransactionError(storage *st.Storage, transaction *models.Transac
 	}
 }
 
-func ApplyFee(storage *st.Storage, feeReceiverPubKeyID uint32, tokenIndex, fee models.Uint256) (*uint32, error) {
-	feeReceiver, err := storage.GetFeeReceiverStateLeaf(feeReceiverPubKeyID, tokenIndex)
+func (t *transactionExecutor) ApplyFee(tokenIndex, fee models.Uint256) (*uint32, error) {
+	feeReceiver, err := t.storage.GetFeeReceiverStateLeaf(t.cfg.FeeReceiverPubKeyID, tokenIndex)
 	if err != nil {
 		return nil, err
 	}
 
 	feeReceiver.Balance = *feeReceiver.Balance.Add(&fee)
 
-	stateTree := st.NewStateTree(storage)
+	stateTree := st.NewStateTree(t.storage)
 	if err := stateTree.Set(feeReceiver.StateID, &feeReceiver.UserState); err != nil {
 		return nil, err
 	}

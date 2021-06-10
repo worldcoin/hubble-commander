@@ -28,11 +28,12 @@ var (
 type SubmitTransferBatchTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	teardown   func() error
-	storage    *st.Storage
-	tree       *st.StateTree
-	cfg        *config.RollupConfig
-	testClient *eth.TestClient
+	teardown            func() error
+	storage             *st.Storage
+	tree                *st.StateTree
+	cfg                 *config.RollupConfig
+	client              *eth.TestClient
+	transactionExecutor *transactionExecutor
 }
 
 func (s *SubmitTransferBatchTestSuite) SetupSuite() {
@@ -50,7 +51,7 @@ func (s *SubmitTransferBatchTestSuite) SetupTest() {
 		MaxCommitmentsPerBatch: 32,
 	}
 
-	s.testClient, err = eth.NewTestClient()
+	s.client, err = eth.NewTestClient()
 	s.NoError(err)
 
 	err = s.storage.AddAccountIfNotExists(&models.Account{
@@ -68,16 +69,18 @@ func (s *SubmitTransferBatchTestSuite) SetupTest() {
 
 	err = s.tree.Set(1, &userState)
 	s.NoError(err)
+
+	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg)
 }
 
 func (s *SubmitTransferBatchTestSuite) TearDownTest() {
-	s.testClient.Close()
+	s.client.Close()
 	err := s.teardown()
 	s.NoError(err)
 }
 
 func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_ErrorsIfNotEnoughCommitments() {
-	err := submitBatch(txtype.Transfer, []models.Commitment{}, s.storage, s.testClient.Client, s.cfg)
+	_, err := s.transactionExecutor.submitBatch(txtype.Transfer, []models.Commitment{})
 	s.Equal(ErrNotEnoughCommitments, err)
 }
 
@@ -88,10 +91,16 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_SubmitsCommitme
 	commitment, err := s.storage.GetCommitment(*commitmentID)
 	s.NoError(err)
 
-	err = submitBatch(txtype.Transfer, []models.Commitment{*commitment}, s.storage, s.testClient.Client, s.cfg)
+	nextBatchID, err := s.client.Rollup.NextBatchID(nil)
+	s.NoError(err)
+	s.Equal(big.NewInt(1), nextBatchID)
+
+	_, err = s.transactionExecutor.submitBatch(txtype.Transfer, []models.Commitment{*commitment})
 	s.NoError(err)
 
-	nextBatchID, err := s.testClient.Rollup.NextBatchID(nil)
+	s.client.Commit()
+
+	nextBatchID, err = s.client.Rollup.NextBatchID(nil)
 	s.NoError(err)
 	s.Equal(big.NewInt(2), nextBatchID)
 }
@@ -103,45 +112,56 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_SubmitsC
 	commitment, err := s.storage.GetCommitment(*commitmentID)
 	s.NoError(err)
 
-	err = submitBatch(txtype.Create2Transfer, []models.Commitment{*commitment}, s.storage, s.testClient.Client, s.cfg)
+	nextBatchID, err := s.client.Rollup.NextBatchID(nil)
+	s.NoError(err)
+	s.Equal(big.NewInt(1), nextBatchID)
+
+	_, err = s.transactionExecutor.submitBatch(txtype.Create2Transfer, []models.Commitment{*commitment})
 	s.NoError(err)
 
-	nextBatchID, err := s.testClient.Rollup.NextBatchID(nil)
+	s.client.Commit()
+
+	nextBatchID, err = s.client.Rollup.NextBatchID(nil)
 	s.NoError(err)
 	s.Equal(big.NewInt(2), nextBatchID)
 }
 
-func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_StoresBatchRecord() {
+func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_StoresPendingBatchRecord() {
 	commitmentID, err := s.storage.AddCommitment(&baseCommitment)
 	s.NoError(err)
 
 	commitment, err := s.storage.GetCommitment(*commitmentID)
 	s.NoError(err)
 
-	err = submitBatch(txtype.Transfer, []models.Commitment{*commitment}, s.storage, s.testClient.Client, s.cfg)
+	_, err = s.transactionExecutor.submitBatch(txtype.Transfer, []models.Commitment{*commitment})
 	s.NoError(err)
 
-	batch, err := s.storage.GetBatchByNumber(models.MakeUint256(1))
+	batch, err := s.storage.GetBatch(1)
 	s.NoError(err)
-	s.Equal(batch.Type, txtype.Transfer)
+	s.Equal(txtype.Transfer, batch.Type)
+	s.Equal(models.MakeUint256(1), batch.Number)
+	s.NotEqual(common.Hash{}, batch.TransactionHash)
+	s.Nil(batch.Hash)
 }
 
-func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_StoresBatchRecord() {
+func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_StoresPendingBatchRecord() {
 	commitmentID, err := s.storage.AddCommitment(&baseCommitment)
 	s.NoError(err)
 
 	commitment, err := s.storage.GetCommitment(*commitmentID)
 	s.NoError(err)
 
-	err = submitBatch(txtype.Create2Transfer, []models.Commitment{*commitment}, s.storage, s.testClient.Client, s.cfg)
+	_, err = s.transactionExecutor.submitBatch(txtype.Create2Transfer, []models.Commitment{*commitment})
 	s.NoError(err)
 
-	batch, err := s.storage.GetBatchByNumber(models.MakeUint256(1))
+	batch, err := s.storage.GetBatch(1)
 	s.NoError(err)
-	s.Equal(batch.Type, txtype.Create2Transfer)
+	s.Equal(txtype.Create2Transfer, batch.Type)
+	s.NotEqual(common.Hash{}, batch.TransactionHash)
+	s.Equal(models.MakeUint256(1), batch.Number)
+	s.Nil(batch.Hash)
 }
 
-// nolint:unparam
 func (s *SubmitTransferBatchTestSuite) addCommitments(count int) ([]int32, []models.Commitment) {
 	ids := make([]int32, 0, count)
 	commitments := make([]models.Commitment, 0, count)
@@ -160,10 +180,10 @@ func (s *SubmitTransferBatchTestSuite) addCommitments(count int) ([]int32, []mod
 func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_MarksCommitmentsAsIncluded() {
 	ids, commitments := s.addCommitments(2)
 
-	err := submitBatch(txtype.Transfer, commitments, s.storage, s.testClient.Client, s.cfg)
+	_, err := s.transactionExecutor.submitBatch(txtype.Transfer, commitments)
 	s.NoError(err)
 
-	batch, err := s.storage.GetBatchByNumber(models.MakeUint256(1))
+	batch, err := s.storage.GetBatch(1)
 	s.NoError(err)
 
 	for _, id := range ids {
@@ -176,10 +196,10 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_MarksCommitment
 func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_MarksCommitmentsAsIncluded() {
 	ids, commitments := s.addCommitments(2)
 
-	err := submitBatch(txtype.Create2Transfer, commitments, s.storage, s.testClient.Client, s.cfg)
+	_, err := s.transactionExecutor.submitBatch(txtype.Create2Transfer, commitments)
 	s.NoError(err)
 
-	batch, err := s.storage.GetBatchByNumber(models.MakeUint256(1))
+	batch, err := s.storage.GetBatch(1)
 	s.NoError(err)
 
 	for _, id := range ids {
@@ -190,40 +210,8 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_MarksCom
 }
 
 func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_MarksCommitmentsAsIncluded_UnsavedCommitment() {
-	err := submitBatch(txtype.Transfer, []models.Commitment{baseCommitment}, s.storage, s.testClient.Client, s.cfg)
+	_, err := s.transactionExecutor.submitBatch(txtype.Transfer, []models.Commitment{baseCommitment})
 	s.EqualError(err, "no rows were affected by the update")
-}
-
-func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_UpdatesCommitmentsAccountRoot() {
-	ids, commitments := s.addCommitments(2)
-
-	err := submitBatch(txtype.Transfer, commitments, s.storage, s.testClient.Client, s.cfg)
-	s.NoError(err)
-
-	accountRoot, err := s.testClient.AccountRegistry.Root(nil)
-	s.NoError(err)
-
-	for _, id := range ids {
-		commit, err := s.storage.GetCommitment(id)
-		s.NoError(err)
-		s.Equal(common.BytesToHash(accountRoot[:]), *commit.AccountTreeRoot)
-	}
-}
-
-func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_UpdatesCommitmentsAccountRoot() {
-	ids, commitments := s.addCommitments(2)
-
-	err := submitBatch(txtype.Create2Transfer, commitments, s.storage, s.testClient.Client, s.cfg)
-	s.NoError(err)
-
-	accountRoot, err := s.testClient.AccountRegistry.Root(nil)
-	s.NoError(err)
-
-	for _, id := range ids {
-		commit, err := s.storage.GetCommitment(id)
-		s.NoError(err)
-		s.Equal(common.BytesToHash(accountRoot[:]), *commit.AccountTreeRoot)
-	}
 }
 
 func TestSubmitBatch_TransfersTestSuite(t *testing.T) {

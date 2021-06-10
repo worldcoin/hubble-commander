@@ -41,7 +41,8 @@ func TestCommander(t *testing.T) {
 	senderWallet := wallets[1]
 
 	testGetVersion(t, commander.Client())
-	testGetUserStates(t, commander.Client(), senderWallet)
+	firstUserState := testGetUserStates(t, commander.Client(), senderWallet)
+	testGetPublicKey(t, commander.Client(), &firstUserState, senderWallet)
 	firstTransferHash := testSendTransfer(t, commander.Client(), senderWallet, models.NewUint256(0))
 	testGetTransaction(t, commander.Client(), firstTransferHash)
 	send31MoreTransfers(t, commander.Client(), senderWallet)
@@ -68,7 +69,7 @@ func testGetVersion(t *testing.T, client jsonrpc.RPCClient) {
 	require.Equal(t, config.GetConfig().API.Version, version)
 }
 
-func testGetUserStates(t *testing.T, client jsonrpc.RPCClient, wallet bls.Wallet) {
+func testGetUserStates(t *testing.T, client jsonrpc.RPCClient, wallet bls.Wallet) dto.UserState {
 	var userStates []dto.UserState
 	err := client.CallFor(&userStates, "hubble_getUserStates", []interface{}{wallet.PublicKey()})
 	require.NoError(t, err)
@@ -77,6 +78,18 @@ func testGetUserStates(t *testing.T, client jsonrpc.RPCClient, wallet bls.Wallet
 	require.Equal(t, models.MakeUint256(0), userStates[0].Nonce)
 	require.EqualValues(t, 3, userStates[1].StateID)
 	require.Equal(t, models.MakeUint256(0), userStates[1].Nonce)
+	return userStates[0]
+}
+
+func testGetPublicKey(t *testing.T, client jsonrpc.RPCClient, state *dto.UserState, wallet bls.Wallet) {
+	var publicKey models.PublicKey
+	err := client.CallFor(&publicKey, "hubble_getPublicKeyByID", []interface{}{state.PubKeyID})
+	require.NoError(t, err)
+	require.Equal(t, *wallet.PublicKey(), publicKey)
+
+	err = client.CallFor(&publicKey, "hubble_getPublicKeyByStateID", []interface{}{state.StateID})
+	require.NoError(t, err)
+	require.Equal(t, *wallet.PublicKey(), publicKey)
 }
 
 func testSendTransfer(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, nonce *models.Uint256) common.Hash {
@@ -199,7 +212,7 @@ func testGetBatches(t *testing.T, client jsonrpc.RPCClient) {
 
 	require.NoError(t, err)
 	require.Len(t, batches, 2)
-	require.Equal(t, models.NewUint256(1), batches[0].ID)
+	require.Equal(t, models.MakeUint256(1), batches[0].ID)
 	batchTypes := []txtype.TransactionType{batches[0].Type, batches[1].Type}
 	require.Contains(t, batchTypes, txtype.Transfer)
 	require.Contains(t, batchTypes, txtype.Create2Transfer)

@@ -4,11 +4,10 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -31,12 +30,10 @@ var (
 type ApplyCreate2TransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage     *st.Storage
-	teardown    func() error
-	tree        *st.StateTree
-	client      *eth.TestClient
-	events      chan *accountregistry.AccountRegistryPubkeyRegistered
-	unsubscribe func()
+	storage  *st.Storage
+	teardown func() error
+	tree     *st.StateTree
+	client   *eth.TestClient
 }
 
 func (s *ApplyCreate2TransferTestSuite) SetupSuite() {
@@ -85,13 +82,9 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 		Nonce:      models.MakeUint256(0),
 	})
 	s.NoError(err)
-
-	s.events, s.unsubscribe, err = s.client.WatchRegistrations(&bind.WatchOpts{})
-	s.NoError(err)
 }
 
 func (s *ApplyCreate2TransferTestSuite) TearDownTest() {
-	s.unsubscribe()
 	s.client.Close()
 	err := s.teardown()
 	s.NoError(err)
@@ -123,18 +116,21 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer()
 	s.Equal(uint64(1000), receiverLeaf.Balance.Uint64())
 }
 
-func (s *ApplyCreate2TransferTestSuite) TestGetOrRegisterPubKeyID_AccountNotExists() {
-	transfer := create2Transfer
-	transfer.ToPublicKey = models.PublicKey{10, 11, 12}
-	pubKeyID, err := getOrRegisterPubKeyID(s.storage, s.client.Client, s.events, &transfer, models.MakeUint256(1))
-	s.NoError(err)
-	s.Equal(uint32(0), *pubKeyID)
-}
+func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_TransferWithStateID() {
+	c2t := create2Transfer
+	c2t.ToStateID = ref.Uint32(5)
+	transferError, appError := ApplyCreate2Transfer(s.storage, &c2t, 2, feeReceiverTokenIndex)
+	s.NoError(appError)
+	s.NoError(transferError)
+	s.Equal(uint32(5), *c2t.ToStateID)
 
-func (s *ApplyCreate2TransferTestSuite) TestGetOrRegisterPubKeyID_AccountForTokenIndexNotExists() {
-	pubKeyID, err := getOrRegisterPubKeyID(s.storage, s.client.Client, s.events, &create2Transfer, models.MakeUint256(1))
+	receiverLeaf, err := s.storage.GetStateLeaf(*c2t.ToStateID)
 	s.NoError(err)
-	s.Equal(uint32(2), *pubKeyID)
+	senderLeaf, err := s.storage.GetStateLeaf(create2Transfer.FromStateID)
+	s.NoError(err)
+
+	s.Equal(uint64(8900), senderLeaf.Balance.Uint64())
+	s.Equal(uint64(1000), receiverLeaf.Balance.Uint64())
 }
 
 func TestApplyCreate2TransferTestSuite(t *testing.T) {

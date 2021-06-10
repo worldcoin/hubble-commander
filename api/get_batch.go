@@ -7,7 +7,7 @@ import (
 )
 
 func (a *API) GetBatchByHash(hash common.Hash) (*dto.BatchWithRootAndCommitments, error) {
-	batch, err := a.storage.GetBatchWithAccountRoot(hash)
+	batch, err := a.storage.GetBatchByHash(hash)
 	if err != nil {
 		return nil, err
 	}
@@ -24,7 +24,7 @@ func (a *API) GetBatchByHash(hash common.Hash) (*dto.BatchWithRootAndCommitments
 }
 
 func (a *API) GetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommitments, error) {
-	batch, err := a.storage.GetBatchWithAccountRootByNumber(id)
+	batch, err := a.storage.GetBatchByNumber(id)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (a *API) GetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommitments,
 }
 
 func createBatchWithCommitments(
-	batch *models.BatchWithAccountRoot,
+	batch *models.Batch,
 	submissionBlock uint32,
 	commitments []models.CommitmentWithTokenID,
 ) (*dto.BatchWithRootAndCommitments, error) {

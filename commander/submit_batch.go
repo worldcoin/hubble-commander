@@ -1,62 +1,64 @@
 package commander
 
 import (
-	"log"
-
-	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 var (
 	ErrNotEnoughCommitments = NewRollupError("not enough commitments")
+	ErrNoLongerProposer     = NewRollupError("commander is no longer an active proposer")
 )
 
-func submitBatch(
-	batchType txtype.TransactionType,
-	commitments []models.Commitment,
-	storage *st.Storage,
-	client *eth.Client,
-	cfg *config.RollupConfig,
-) error {
-	if len(commitments) < int(cfg.MinCommitmentsPerBatch) {
-		return ErrNotEnoughCommitments
+func (t *transactionExecutor) submitBatch(batchType txtype.TransactionType, commitments []models.Commitment) (*models.Batch, error) {
+	if len(commitments) < int(t.cfg.MinCommitmentsPerBatch) {
+		return nil, ErrNotEnoughCommitments
 	}
 
-	var batch *models.Batch
-	var accountRoot *common.Hash
+	var tx *types.Transaction
 	var err error
 
+	select {
+	case <-t.ctx.Done():
+		return nil, ErrNoLongerProposer
+	default:
+	}
+
 	if batchType == txtype.Transfer {
-		batch, accountRoot, err = client.SubmitTransfersBatch(commitments)
+		tx, err = t.client.SubmitTransfersBatch(commitments)
 	} else {
-		batch, accountRoot, err = client.SubmitCreate2TransfersBatch(commitments)
+		tx, err = t.client.SubmitCreate2TransfersBatch(commitments)
 	}
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	batchID, err := storage.AddBatch(batch)
+	batchNumber, err := t.storage.GetNextBatchNumber()
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	err = markCommitmentsAsIncluded(storage, commitments, *batchID, accountRoot)
+	newPendingBatch := models.Batch{
+		Type:            batchType,
+		TransactionHash: tx.Hash(),
+		Number:          *batchNumber,
+	}
+	batchID, err := t.storage.AddBatch(&newPendingBatch)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	log.Printf("Submitted %d commitment(s) on chain. Batch ID: %d. Batch Hash: %v", len(commitments), batch.Number.Uint64(), batch.Hash)
+	err = t.markCommitmentsAsIncluded(commitments, *batchID)
+	if err != nil {
+		return nil, err
+	}
 
-	return nil
+	return &newPendingBatch, nil
 }
 
-func markCommitmentsAsIncluded(storage *st.Storage, commitments []models.Commitment, batchID int32, accountRoot *common.Hash) error {
+func (t *transactionExecutor) markCommitmentsAsIncluded(commitments []models.Commitment, batchID int32) error {
 	for i := range commitments {
-		err := storage.MarkCommitmentAsIncluded(commitments[i].ID, batchID, accountRoot)
+		err := t.storage.MarkCommitmentAsIncluded(commitments[i].ID, batchID)
 		if err != nil {
 			return err
 		}

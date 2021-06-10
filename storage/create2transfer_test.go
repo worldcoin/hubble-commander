@@ -25,7 +25,7 @@ var (
 			Signature:            models.MakeRandomSignature(),
 			IncludedInCommitment: nil,
 		},
-		ToStateID:   2,
+		ToStateID:   ref.Uint32(2),
 		ToPublicKey: account2.PublicKey,
 	}
 )
@@ -62,8 +62,69 @@ func (s *Create2TransferTestSuite) TestAddCreate2Transfer_AddAndRetrieve() {
 
 	res, err := s.storage.GetCreate2Transfer(create2Transfer.Hash)
 	s.NoError(err)
-
 	s.Equal(create2Transfer, *res)
+}
+
+func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchHash() {
+	batch := &models.Batch{
+		Type:            txtype.Create2Transfer,
+		TransactionHash: utils.RandomHash(),
+		Hash:            utils.NewRandomHash(),
+		Number:          models.MakeUint256(1),
+	}
+	batchID, err := s.storage.AddBatch(batch)
+	s.NoError(err)
+
+	commitmentInBatch := commitment
+	commitmentInBatch.IncludedInBatch = batchID
+	commitmentID, err := s.storage.AddCommitment(&commitmentInBatch)
+	s.NoError(err)
+
+	transferInBatch := create2Transfer
+	transferInBatch.IncludedInCommitment = commitmentID
+	err = s.storage.AddCreate2Transfer(&transferInBatch)
+	s.NoError(err)
+
+	expected := models.Create2TransferWithBatchHash{
+		Create2Transfer: transferInBatch,
+		BatchHash:       batch.Hash,
+	}
+	res, err := s.storage.GetCreate2TransferWithBatchHash(transferInBatch.Hash)
+	s.NoError(err)
+	s.Equal(expected, *res)
+}
+
+func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchHash_WithoutBatch() {
+	err := s.storage.AddCreate2Transfer(&create2Transfer)
+	s.NoError(err)
+
+	expected := models.Create2TransferWithBatchHash{Create2Transfer: create2Transfer}
+	res, err := s.storage.GetCreate2TransferWithBatchHash(create2Transfer.Hash)
+	s.NoError(err)
+	s.Equal(expected, *res)
+}
+
+func (s *Create2TransferTestSuite) TestBatchAddCreate2Transfer() {
+	txs := make([]models.Create2Transfer, 2)
+	txs[0] = create2Transfer
+	txs[0].Hash = utils.RandomHash()
+	txs[1] = create2Transfer
+	txs[1].Hash = utils.RandomHash()
+
+	err := s.storage.BatchAddCreate2Transfer(txs)
+	s.NoError(err)
+
+	transfer, err := s.storage.GetCreate2Transfer(txs[0].Hash)
+	s.NoError(err)
+	s.Equal(txs[0], *transfer)
+	transfer, err = s.storage.GetCreate2Transfer(txs[1].Hash)
+	s.NoError(err)
+	s.Equal(txs[1], *transfer)
+}
+
+func (s *Create2TransferTestSuite) TestBatchAddCreate2Transfer_NoTransfers() {
+	err := s.storage.BatchAddCreate2Transfer([]models.Create2Transfer{})
+	s.Equal(ErrNoRowsAffected, err)
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2Transfer_NonExistentTransaction() {
@@ -180,7 +241,7 @@ func (s *Create2TransferTestSuite) TestSetCreate2TransferToStateID() {
 
 	c2t, err := s.storage.GetCreate2Transfer(create2Transfer.Hash)
 	s.NoError(err)
-	s.Equal(toStateID, c2t.ToStateID)
+	s.Equal(toStateID, *c2t.ToStateID)
 }
 
 func (s *Create2TransferTestSuite) TestSetCreate2TransferToStateID_NoCreate2Transfer() {
