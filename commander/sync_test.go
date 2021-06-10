@@ -341,7 +341,7 @@ func (s *SyncTestSuite) TestRevertBatch_RevertsState() {
 			FinalisationBlock: ref.Uint32(20),
 		},
 	}
-	err = s.transactionExecutor.revertBatch(s.stateMutex, decodedBatch, pendingBatch)
+	err = s.transactionExecutor.revertBatches(s.stateMutex, decodedBatch, pendingBatch)
 	s.NoError(err)
 
 	stateRoot, err := s.tree.Root()
@@ -393,7 +393,7 @@ func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {
 			FinalisationBlock: ref.Uint32(20),
 		},
 	}
-	err = s.transactionExecutor.revertBatch(s.stateMutex, decodedBatch, &pendingBatches[0])
+	err = s.transactionExecutor.revertBatches(s.stateMutex, decodedBatch, &pendingBatches[0])
 	s.NoError(err)
 
 	stateRoot, err := s.tree.Root()
@@ -427,7 +427,7 @@ func (s *SyncTestSuite) TestRevertBatch_SyncCorrectBatch() {
 	s.NoError(err)
 	s.Len(batches, 1)
 
-	err = s.transactionExecutor.revertBatch(s.stateMutex, &batches[0], localBatch)
+	err = s.transactionExecutor.revertBatches(s.stateMutex, &batches[0], localBatch)
 	s.NoError(err)
 
 	batches[0].Batch.ID = pendingBatch.ID + 1

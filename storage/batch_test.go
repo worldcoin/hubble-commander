@@ -337,25 +337,38 @@ func (s *BatchTestSuite) TestGetBatchByHash_NotExistingBatch() {
 	s.True(IsNotFoundError(err))
 }
 
-func (s *BatchTestSuite) TestDeleteBatch() {
-	batch := &models.Batch{
-		Type:            txtype.Transfer,
-		TransactionHash: utils.RandomHash(),
-		Hash:            utils.NewRandomHash(),
-		Number:          models.MakeUint256(1),
+func (s *BatchTestSuite) TestBulkDeleteBatch() {
+	batches := []models.Batch{
+		{
+			Type:            txtype.Transfer,
+			TransactionHash: utils.RandomHash(),
+			Hash:            utils.NewRandomHash(),
+			Number:          models.MakeUint256(1),
+		},
+		{
+			Type:            txtype.Create2Transfer,
+			TransactionHash: utils.RandomHash(),
+			Hash:            utils.NewRandomHash(),
+			Number:          models.MakeUint256(2),
+		},
 	}
-	batchID, err := s.storage.AddBatch(batch)
+	for i := range batches {
+		batchID, err := s.storage.AddBatch(&batches[i])
+		s.NoError(err)
+		batches[i].ID = *batchID
+	}
+
+	err := s.storage.BulkDeleteBatch(batches[0].ID, batches[1].ID)
 	s.NoError(err)
 
-	err = s.storage.DeleteBatch(*batchID)
-	s.NoError(err)
-
-	_, err = s.storage.GetBatch(*batchID)
-	s.Equal(NewNotFoundError("batch"), err)
+	for i := range batches {
+		_, err = s.storage.GetBatch(batches[i].ID)
+		s.Equal(NewNotFoundError("batch"), err)
+	}
 }
 
-func (s *BatchTestSuite) TestDeleteBatch_NotExistentBatch() {
-	err := s.storage.DeleteBatch(1)
+func (s *BatchTestSuite) TestBulkDeleteBatch_NotExistentBatch() {
+	err := s.storage.BulkDeleteBatch(1)
 	s.Equal(ErrNoRowsAffected, err)
 }
 

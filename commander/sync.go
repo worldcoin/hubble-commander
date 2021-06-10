@@ -81,7 +81,7 @@ func (t *transactionExecutor) syncExistingBatch(mutex *sync.Mutex, batch *eth.De
 			return err
 		}
 		if *txSender != t.client.ChainConnection.GetAccount().From {
-			return t.revertBatch(mutex, batch, localBatch)
+			return t.revertBatches(mutex, batch, localBatch)
 		} else {
 			// TODO our previous transaction must have failed this should never happen
 			return ErrBatchSubmissionFailed
@@ -90,7 +90,7 @@ func (t *transactionExecutor) syncExistingBatch(mutex *sync.Mutex, batch *eth.De
 	return nil
 }
 
-func (t *transactionExecutor) revertBatch(mutex *sync.Mutex, batch *eth.DecodedBatch, localBatch *models.Batch) error {
+func (t *transactionExecutor) revertBatches(mutex *sync.Mutex, batch *eth.DecodedBatch, localBatch *models.Batch) error {
 	mutex.Lock()
 	defer mutex.Unlock()
 
@@ -113,7 +113,7 @@ func (t *transactionExecutor) revertBatch(mutex *sync.Mutex, batch *eth.DecodedB
 		if err != nil {
 			return err
 		}
-		err = t.storage.DeleteBatch(batches[i].ID)
+		err = t.storage.BulkDeleteBatch(batches[i].ID)
 		if err != nil {
 			return err
 		}
