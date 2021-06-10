@@ -337,6 +337,28 @@ func (s *BatchTestSuite) TestGetBatchByHash_NotExistingBatch() {
 	s.True(IsNotFoundError(err))
 }
 
+func (s *BatchTestSuite) TestDeleteBatch() {
+	batch := &models.Batch{
+		Type:            txtype.Transfer,
+		TransactionHash: utils.RandomHash(),
+		Hash:            utils.NewRandomHash(),
+		Number:          models.MakeUint256(1),
+	}
+	batchID, err := s.storage.AddBatch(batch)
+	s.NoError(err)
+
+	err = s.storage.DeleteBatch(*batchID)
+	s.NoError(err)
+
+	_, err = s.storage.GetBatch(*batchID)
+	s.Equal(NewNotFoundError("batch"), err)
+}
+
+func (s *BatchTestSuite) TestDeleteBatch_NotExistentBatch() {
+	err := s.storage.DeleteBatch(1)
+	s.Equal(ErrNoRowsAffected, err)
+}
+
 func TestBatchTestSuite(t *testing.T) {
 	suite.Run(t, new(BatchTestSuite))
 }
