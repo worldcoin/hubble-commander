@@ -16,7 +16,7 @@ func (a *API) GetNetworkInfo() (*dto.NetworkInfo, error) {
 		return nil, err
 	}
 	if latestBatch != nil {
-		networkInfo.LatestBatch = latestBatch.Number
+		networkInfo.LatestBatch = &latestBatch.Number
 	}
 
 	latestFinalisedBatch, err := a.storage.GetLatestFinalisedBatch(networkInfo.BlockNumber)
@@ -24,7 +24,7 @@ func (a *API) GetNetworkInfo() (*dto.NetworkInfo, error) {
 		return nil, err
 	}
 	if latestFinalisedBatch != nil {
-		networkInfo.LatestFinalisedBatch = latestFinalisedBatch.Number
+		networkInfo.LatestFinalisedBatch = &latestFinalisedBatch.Number
 	}
 
 	domain, err := a.storage.GetDomain(a.client.ChainState.ChainID)
