@@ -13,7 +13,7 @@ import (
 
 func TestCommander(t *testing.T) {
 	cfg := config.GetConfig()
-	cfg.Rollup.Prune = true
+	cfg.Bootstrap.Prune = true
 
 	cmd := commander.NewCommander(cfg)
 

@@ -8,7 +8,7 @@ import (
 )
 
 func createWallets(domain bls.Domain) ([]bls.Wallet, error) {
-	cfg := config.GetConfig().Rollup
+	cfg := config.GetConfig().Bootstrap
 	accounts := cfg.GenesisAccounts
 
 	walletsSeen := make(map[string]bool)
