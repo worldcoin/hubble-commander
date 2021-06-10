@@ -19,7 +19,7 @@ func (s *Storage) AddBatch(batch *models.Batch) (*int32, error) {
 				batch.Number,
 				batch.FinalisationBlock,
 				batch.AccountTreeRoot,
-				batch.PrevStateRootHash,
+				batch.PrevStateRoot,
 			).
 			Suffix("RETURNING batch_id"),
 	).Into(&res)

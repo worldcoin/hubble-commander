@@ -133,8 +133,8 @@ func newPendingBatch(storage *st.Storage, batchType txtype.TransactionType) (*mo
 		return nil, err
 	}
 	return &models.Batch{
-		Type:              batchType,
-		Number:            *batchNumber,
-		PrevStateRootHash: prevStateRoot,
+		Type:          batchType,
+		Number:        *batchNumber,
+		PrevStateRoot: prevStateRoot,
 	}, nil
 }

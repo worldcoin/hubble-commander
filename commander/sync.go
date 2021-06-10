@@ -95,7 +95,7 @@ func (t *transactionExecutor) revertBatches(mutex *sync.Mutex, batch *eth.Decode
 	defer mutex.Unlock()
 
 	stateTree := st.NewStateTree(t.storage)
-	err := stateTree.RevertTo(*localBatch.PrevStateRootHash)
+	err := stateTree.RevertTo(*localBatch.PrevStateRoot)
 	if err != nil {
 		return err
 	}
