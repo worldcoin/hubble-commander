@@ -19,17 +19,16 @@ generate:
 build: clean compile
 
 setup-db:
-	docker run --name hubble-postgres -p 5432:5432 -e POSTGRES_USER=hubble -e POSTGRES_PASSWORD=root -d postgres
-
-stop-db:
-	docker stop hubble-postgres
-
-start-db:
-	docker start hubble-postgres
-
-teardown-db: stop-db
-	docker rm hubble-postgres
 	rm -rf db/badger/data
+	docker-compose up -d postgres
+
+start-geth-locally:
+	rm -rf e2e/geth-data/geth
+	geth --datadir e2e/geth-data --dev --dev.period 1 --http --ws
+
+setup-geth:
+	rm -rf e2e/geth-data/geth
+	docker-compose up geth
 
 update-contracts:
 	git submodule update --remote
@@ -43,10 +42,6 @@ run-prune:
 run-dev:
 	go run ./main/main.go -prune -dev
 
-start-geth:
-	rm -rf e2e/geth-data/geth
-	geth --datadir e2e/geth-data --dev --dev.period 1 --http --ws
-
 lint:
 	golangci-lint run ./...
 
@@ -58,7 +53,7 @@ test-hardhat:
 
 test-e2e: clean-testcache
 	mkdir -p "e2e-data"
-	HUBBLE_E2E=docker go test -v -tags e2e ./e2e
+	go test -v -tags e2e ./e2e
 	rm -r "e2e-data"
 
 test-commander-locally: clean-testcache
@@ -78,9 +73,8 @@ bench-e2e-profile: clean-testcache
 	generate
 	build
 	setup-db
-	stop-db
-	start-db
-	teardown-db
+	start-geth-locally
+	setup-geth
 	update-contracts
 	run
 	run-prune
@@ -89,4 +83,6 @@ bench-e2e-profile: clean-testcache
 	test
 	test-hardhat
 	test-e2e
-	test-e2e-locally
+	test-commander-locally
+	bench-e2e
+	bench-e2e-profile

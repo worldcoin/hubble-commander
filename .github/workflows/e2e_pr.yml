@@ -34,12 +34,9 @@ jobs:
           context: .
           file: ./Dockerfile
           tags: ghcr.io/worldcoin/hubble-commander:latest
-      - name: Install geth
-        run: |
-          sudo add-apt-repository -y ppa:ethereum/ethereum
-          sudo apt-get update
-          sudo apt-get install ethereum
+      - name: Pull the go-ethereum image
+        run: docker pull ethereum/client-go:latest
       - name: Run E2E tests
         run: |
-          make start-geth &
+          make setup-geth &
           make test-e2e
