@@ -7,21 +7,22 @@ import (
 )
 
 type Config struct {
-	Rollup   *RollupConfig
-	API      *APIConfig
-	Postgres *PostgresConfig
-	Badger   *BadgerConfig
-	Ethereum *EthereumConfig
+	Bootstrap *BootstrapConfig
+	Rollup    *RollupConfig
+	API       *APIConfig
+	Postgres  *PostgresConfig
+	Badger    *BadgerConfig
+	Ethereum  *EthereumConfig
 }
 
-type RollupConfig struct {
-	// TODO: Extract to a separate BootstrapConfig.
+type BootstrapConfig struct {
 	Prune            bool
 	GenesisAccounts  []models.GenesisAccount
 	BootstrapNodeURL *string
+}
 
-	SyncSize uint32
-
+type RollupConfig struct {
+	SyncSize               uint32
 	FeeReceiverPubKeyID    uint32
 	TxsPerCommitment       uint32
 	MinCommitmentsPerBatch uint32

@@ -60,7 +60,7 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.client, err = getClientOrBootstrapChainState(chain, c.storage, c.cfg.Rollup)
+	c.client, err = getClientOrBootstrapChainState(chain, c.storage, c.cfg.Bootstrap)
 	if err != nil {
 		return err
 	}
@@ -142,7 +142,7 @@ func getChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, e
 	return deployer.NewRPCChainConnection(cfg)
 }
 
-func getClientOrBootstrapChainState(chain deployer.ChainConnection, storage *st.Storage, cfg *config.RollupConfig) (*eth.Client, error) {
+func getClientOrBootstrapChainState(chain deployer.ChainConnection, storage *st.Storage, cfg *config.BootstrapConfig) (*eth.Client, error) {
 	chainID := chain.GetChainID()
 	chainState, err := storage.GetChainState(chainID)
 	if err != nil && !st.IsNotFoundError(err) {
