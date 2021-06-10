@@ -34,7 +34,7 @@ func (s *Storage) SetChainState(chainState *models.ChainState) error {
 				chainState.Rollup,
 				chainState.GenesisAccounts,
 				chainState.SyncedBlock,
-				chainState.AccountRegistryDeploymentBlock,
+				chainState.DeploymentBlock,
 			),
 	).Exec()
 	return err
