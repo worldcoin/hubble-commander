@@ -1,7 +1,6 @@
 package deployer
 
 import (
-	"context"
 	"log"
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
@@ -17,12 +16,7 @@ func DeployAccountRegistry(c ChainConnection) (*common.Address, *uint64, *accoun
 	}
 
 	c.Commit()
-	_, err = WaitToBeMined(c.GetBackend(), tx)
-	if err != nil {
-		return nil, nil, nil, errors.WithStack(err)
-	}
-
-	txReceipt, err := c.GetBackend().TransactionReceipt(context.Background(), tx.Hash())
+	txReceipt, err := WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, nil, nil, errors.WithStack(err)
 	}
