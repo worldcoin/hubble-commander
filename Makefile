@@ -28,7 +28,7 @@ start-geth-locally:
 
 setup-geth:
 	rm -rf e2e/geth-data/geth
-	docker compose up ethereum-node
+	docker-compose up ethereum-node
 
 update-contracts:
 	git submodule update --remote
