@@ -83,4 +83,6 @@ bench-e2e-profile: clean-testcache
 	test
 	test-hardhat
 	test-e2e
-	test-e2e-locally
+	test-commander-locally
+	bench-e2e
+	bench-e2e-profile
