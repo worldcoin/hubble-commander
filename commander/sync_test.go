@@ -108,7 +108,7 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 				Amount:      models.MakeUint256(400),
 				Fee:         models.MakeUint256(0),
 				Nonce:       models.MakeUint256(0),
-				Signature:   s.mockSignature(),
+				Signature:   mockSignature(s.Assertions),
 			},
 			ToStateID: 1,
 		}, {
@@ -118,7 +118,7 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 				Amount:      models.MakeUint256(100),
 				Fee:         models.MakeUint256(0),
 				Nonce:       models.MakeUint256(0),
-				Signature:   s.mockSignature(),
+				Signature:   mockSignature(s.Assertions),
 			},
 			ToStateID: 0,
 		},
@@ -177,7 +177,7 @@ func (s *SyncTestSuite) TestSyncBatches_DoesNotSyncExistingBatchTwice() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   s.mockSignature(),
+			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID: 1,
 	}
@@ -198,7 +198,7 @@ func (s *SyncTestSuite) TestSyncBatches_DoesNotSyncExistingBatchTwice() {
 			Amount:      models.MakeUint256(100),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   s.mockSignature(),
+			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID: 0,
 	}
@@ -240,7 +240,7 @@ func (s *SyncTestSuite) TestSyncBatches_PendingBatch() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   s.mockSignature(),
+			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID: 1,
 	}
@@ -273,7 +273,7 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   s.mockSignature(),
+			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID:   ref.Uint32(5),
 		ToPublicKey: models.PublicKey{},
@@ -358,7 +358,7 @@ func (s *SyncTestSuite) syncAllBlocks() {
 	s.NoError(err)
 }
 
-func (s *SyncTestSuite) mockSignature() models.Signature {
+func mockSignature(s *require.Assertions) models.Signature {
 	wallet, err := bls.NewRandomWallet(*testDomain)
 	s.NoError(err)
 	signature, err := wallet.Sign(utils.RandomBytes(4))

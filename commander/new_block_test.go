@@ -5,13 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -42,7 +40,7 @@ func (s *NewBlockLoopTestSuite) SetupSuite() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   s.mockSignature(),
+			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID: 1,
 	}
@@ -179,14 +177,6 @@ func (s *NewBlockLoopTestSuite) createAndSubmitTransferBatch(tx *models.Transfer
 	s.NoError(err)
 
 	transactionExecutor.Rollback(nil)
-}
-
-func (s *NewBlockLoopTestSuite) mockSignature() models.Signature {
-	wallet, err := bls.NewRandomWallet(*testDomain)
-	s.NoError(err)
-	signature, err := wallet.Sign(utils.RandomBytes(4))
-	s.NoError(err)
-	return *signature.ModelsSignature()
 }
 
 func TestNewBlockLoopTestSuite(t *testing.T) {
