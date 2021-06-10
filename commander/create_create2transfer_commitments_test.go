@@ -39,9 +39,7 @@ func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 		MaxCommitmentsPerBatch: 1,
 	}
 
-	populatedAccounts, err := AssignStateIDs(s.storage, genesisAccounts)
-	s.NoError(err)
-	err = PopulateGenesisAccounts(s.storage, populatedAccounts)
+	err = PopulateGenesisAccounts(s.storage, AssignStateIDs(genesisAccounts))
 	s.NoError(err)
 
 	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg)

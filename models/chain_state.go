@@ -9,12 +9,12 @@ import (
 )
 
 type ChainState struct {
-	ChainID               Uint256         `db:"chain_id" json:"chainId"`
-	AccountRegistry       common.Address  `db:"account_registry" json:"accountRegistry"`
-	Rollup                common.Address  `json:"rollup"`
-	RollupDeploymentBlock uint64          `db:"rollup_deployment_block" json:"rollupDeploymentBlock"`
-	GenesisAccounts       GenesisAccounts `db:"genesis_accounts" json:"-"` // Will not be included in JSON serialized data.
-	SyncedBlock           uint64          `db:"synced_block" json:"-"`
+	ChainID                        Uint256         `db:"chain_id" json:"chainId"`
+	AccountRegistry                common.Address  `db:"account_registry" json:"accountRegistry"`
+	AccountRegistryDeploymentBlock uint64          `db:"account_registry_deployment_block" json:"account_registryDeploymentBlock"`
+	Rollup                         common.Address  `json:"rollup"`
+	GenesisAccounts                GenesisAccounts `db:"genesis_accounts" json:"-"` // Will not be included in JSON serialized data.
+	SyncedBlock                    uint64          `db:"synced_block" json:"-"`
 }
 
 type GenesisAccounts []PopulatedGenesisAccount

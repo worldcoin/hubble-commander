@@ -1,6 +1,7 @@
 package deployer
 
 import (
+	"context"
 	"log"
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
@@ -8,18 +9,25 @@ import (
 	"github.com/pkg/errors"
 )
 
-func DeployAccountRegistry(c ChainConnection) (*common.Address, *accountregistry.AccountRegistry, error) {
+func DeployAccountRegistry(c ChainConnection) (*common.Address, *uint64, *accountregistry.AccountRegistry, error) {
 	log.Println("Deploying AccountRegistry")
 	accountRegistryAddress, tx, accountRegistry, err := accountregistry.DeployAccountRegistry(c.GetAccount(), c.GetBackend())
 	if err != nil {
-		return nil, nil, errors.WithStack(err)
+		return nil, nil, nil, errors.WithStack(err)
 	}
 
 	c.Commit()
 	_, err = WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
-		return nil, nil, errors.WithStack(err)
+		return nil, nil, nil, errors.WithStack(err)
 	}
 
-	return &accountRegistryAddress, accountRegistry, nil
+	txReceipt, err := c.GetBackend().TransactionReceipt(context.Background(), tx.Hash())
+	if err != nil {
+		return nil, nil, nil, errors.WithStack(err)
+	}
+
+	deploymentBlockNumber := txReceipt.BlockNumber.Uint64()
+
+	return &accountRegistryAddress, &deploymentBlockNumber, accountRegistry, nil
 }

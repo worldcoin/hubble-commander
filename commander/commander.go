@@ -226,7 +226,7 @@ func bootstrapState(
 	chain deployer.ChainConnection,
 	accounts []models.GenesisAccount,
 ) (*models.ChainState, error) {
-	accountRegistryAddress, accountRegistry, err := deployer.DeployAccountRegistry(chain)
+	accountRegistryAddress, accountRegistryDeploymentBlock, accountRegistry, err := deployer.DeployAccountRegistry(chain)
 	if err != nil {
 		return nil, err
 	}
@@ -236,10 +236,7 @@ func bootstrapState(
 		return nil, err
 	}
 
-	populatedAccounts, err := AssignStateIDs(storage, registeredAccounts)
-	if err != nil {
-		return nil, err
-	}
+	populatedAccounts := AssignStateIDs(registeredAccounts)
 
 	err = PopulateGenesisAccounts(storage, populatedAccounts)
 	if err != nil {
@@ -260,12 +257,12 @@ func bootstrapState(
 	}
 
 	chainState := &models.ChainState{
-		ChainID:               chain.GetChainID(),
-		AccountRegistry:       *accountRegistryAddress,
-		Rollup:                contracts.RollupAddress,
-		RollupDeploymentBlock: contracts.RollupDeploymentBlock,
-		GenesisAccounts:       populatedAccounts,
-		SyncedBlock:           contracts.RollupDeploymentBlock - 1,
+		ChainID:                        chain.GetChainID(),
+		AccountRegistry:                *accountRegistryAddress,
+		AccountRegistryDeploymentBlock: *accountRegistryDeploymentBlock,
+		Rollup:                         contracts.RollupAddress,
+		GenesisAccounts:                populatedAccounts,
+		SyncedBlock:                    *accountRegistryDeploymentBlock - 1,
 	}
 
 	return chainState, nil

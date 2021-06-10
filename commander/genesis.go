@@ -10,18 +10,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-func AssignStateIDs(storage *st.Storage, accounts []models.RegisteredGenesisAccount) ([]models.PopulatedGenesisAccount, error) {
+func AssignStateIDs(accounts []models.RegisteredGenesisAccount) []models.PopulatedGenesisAccount {
 	populatedAccounts := make([]models.PopulatedGenesisAccount, 0, len(accounts))
 	for i := range accounts {
 		account := accounts[i]
-
-		err := storage.AddAccountIfNotExists(&models.Account{
-			PubKeyID:  account.PubKeyID,
-			PublicKey: account.PublicKey,
-		})
-		if err != nil {
-			return nil, err
-		}
 
 		if account.Balance.CmpN(0) == 1 {
 			populatedAccounts = append(populatedAccounts, models.PopulatedGenesisAccount{
@@ -32,7 +24,7 @@ func AssignStateIDs(storage *st.Storage, accounts []models.RegisteredGenesisAcco
 			})
 		}
 	}
-	return populatedAccounts, nil
+	return populatedAccounts
 }
 
 func PopulateGenesisAccounts(storage *st.Storage, accounts []models.PopulatedGenesisAccount) error {
