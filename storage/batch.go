@@ -157,7 +157,7 @@ func (s *Storage) GetLatestFinalisedBatch(currentBlockNumber uint32) (*models.Ba
 		s.QB.Select("*").
 			From("batch").
 			Where(squirrel.LtOrEq{"finalisation_block": currentBlockNumber}). // nolint:misspell
-			OrderBy("finalisation_block DESC"). // nolint:misspell
+			OrderBy("finalisation_block DESC").                               // nolint:misspell
 			Limit(1),
 	).Into(&res)
 	if err != nil {

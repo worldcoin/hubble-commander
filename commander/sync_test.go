@@ -414,7 +414,6 @@ func (s *SyncTestSuite) TestRevertBatch_SyncCorrectBatch() {
 	s.NoError(err)
 
 	pendingBatch := s.createAndSubmitTransferBatch(&s.transfer)
-	accountRoot := s.getAccountTreeRoot()
 	s.recreateDatabase()
 
 	localTransfer := s.transfer
@@ -442,7 +441,6 @@ func (s *SyncTestSuite) TestRevertBatch_SyncCorrectBatch() {
 		FeeReceiver:       batches[0].Commitments[0].FeeReceiver,
 		CombinedSignature: batches[0].Commitments[0].CombinedSignature,
 		PostStateRoot:     batches[0].Commitments[0].StateRoot,
-		AccountTreeRoot:   &accountRoot,
 		IncludedInBatch:   &batch.ID,
 	}
 	commitment, err := s.storage.GetCommitment(2)
