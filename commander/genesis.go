@@ -91,7 +91,7 @@ func RegisterGenesisAccounts(
 		txs = append(txs, *tx)
 	}
 
-	registeredAccounts := make([]models.RegisteredGenesisAccount, len(accounts), len(accounts))
+	registeredAccounts := make([]models.RegisteredGenesisAccount, len(accounts))
 	accountsRegistered := 0
 	for {
 		select {

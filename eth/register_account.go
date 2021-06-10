@@ -65,7 +65,11 @@ func RegisterAccountAndWait(
 	}
 }
 
-func RegisterAccount(opts *bind.TransactOpts, accountRegistry *accountregistry.AccountRegistry, publicKey *models.PublicKey) (*types.Transaction, error) {
+func RegisterAccount(
+	opts *bind.TransactOpts,
+	accountRegistry *accountregistry.AccountRegistry,
+	publicKey *models.PublicKey,
+) (*types.Transaction, error) {
 	tx, err := accountRegistry.Register(opts, publicKey.BigInts())
 	if err != nil {
 		return nil, errors.WithStack(err)
