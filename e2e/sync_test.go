@@ -61,6 +61,7 @@ func TestCommanderSync(t *testing.T) {
 	cfg.Badger.Path += "_passive"
 	cfg.Postgres.Name += "_passive"
 	cfg.Rollup.BootstrapNodeURL = ref.String("http://localhost:5001")
+	cfg.Ethereum.PrivateKey = "ab6919fd6ac00246bb78657e0696cf72058a4cb395133d074eabaddb83d8b00c"
 	passiveCommander := setup.CreateInProcessCommanderWithConfig(cfg)
 
 	err = passiveCommander.Start()
