@@ -73,18 +73,12 @@ bench-e2e-profile: clean-testcache
 	generate
 	build
 	setup-db
-	stop-db
-	start-db
-	teardown-db
+	start-geth-locally
+	setup-geth
 	update-contracts
 	run
 	run-prune
 	run-dev
-	start-geth-locally
-	setup-geth
-	stop-geth
-	start-geth
-	teardown-geth
 	lint
 	test
 	test-hardhat
