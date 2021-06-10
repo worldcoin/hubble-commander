@@ -337,7 +337,7 @@ func (s *BatchTestSuite) TestGetBatchByHash_NotExistingBatch() {
 	s.True(IsNotFoundError(err))
 }
 
-func (s *BatchTestSuite) TestBulkDeleteBatch() {
+func (s *BatchTestSuite) TestDeleteBatches() {
 	batches := []models.Batch{
 		{
 			Type:            txtype.Transfer,
@@ -358,7 +358,7 @@ func (s *BatchTestSuite) TestBulkDeleteBatch() {
 		batches[i].ID = *batchID
 	}
 
-	err := s.storage.BulkDeleteBatch(batches[0].ID, batches[1].ID)
+	err := s.storage.DeleteBatches(batches[0].ID, batches[1].ID)
 	s.NoError(err)
 
 	for i := range batches {
@@ -367,8 +367,8 @@ func (s *BatchTestSuite) TestBulkDeleteBatch() {
 	}
 }
 
-func (s *BatchTestSuite) TestBulkDeleteBatch_NotExistentBatch() {
-	err := s.storage.BulkDeleteBatch(1)
+func (s *BatchTestSuite) TestDeleteBatches_NotExistentBatch() {
+	err := s.storage.DeleteBatches(1)
 	s.Equal(ErrNoRowsAffected, err)
 }
 

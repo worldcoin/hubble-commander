@@ -104,25 +104,27 @@ func (t *transactionExecutor) revertBatches(mutex *sync.Mutex, batch *eth.Decode
 	if err != nil {
 		return err
 	}
+	batchIDs := make([]int32, 0, len(batches))
 	for i := range batches {
-		err = t.excludeTransactionsFromCommitment(batches[i].ID)
-		if err != nil {
-			return err
-		}
-		err = t.storage.DeleteCommitmentsByBatchID(batches[i].ID)
-		if err != nil {
-			return err
-		}
-		err = t.storage.BulkDeleteBatch(batches[i].ID)
-		if err != nil {
-			return err
-		}
+		batchIDs = append(batchIDs, batches[i].ID)
+	}
+	err = t.excludeTransactionsFromCommitment(batchIDs...)
+	if err != nil {
+		return err
+	}
+	err = t.storage.DeleteCommitmentsByBatchIDs(batchIDs...)
+	if err != nil {
+		return err
+	}
+	err = t.storage.DeleteBatches(batchIDs...)
+	if err != nil {
+		return err
 	}
 	return t.syncBatch(batch)
 }
 
-func (t *transactionExecutor) excludeTransactionsFromCommitment(batchID int32) error {
-	hashes, err := t.storage.GetTransactionHashesByBatchID(batchID)
+func (t *transactionExecutor) excludeTransactionsFromCommitment(batchIDs ...int32) error {
+	hashes, err := t.storage.GetTransactionHashesByBatchIDs(batchIDs...)
 	if err != nil {
 		return err
 	}

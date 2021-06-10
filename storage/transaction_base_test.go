@@ -156,37 +156,39 @@ func (s *TransactionBaseTestSuite) TestGetTransactionCount_NoTransactions() {
 	s.Equal(0, *count)
 }
 
-func (s *TransactionBaseTestSuite) TestGetTransactionHashesByBatchID() {
-	transfers := make([]models.Transfer, 2)
-	transfers[0] = transfer
-	transfers[1] = transfer
-	transfers[1].Hash = utils.RandomHash()
-	s.addTransfersInCommitment(transfers)
+func (s *TransactionBaseTestSuite) TestGetTransactionHashesByBatchIDs() {
+	batchIDs := []int32{1, 2}
+	for i := range batchIDs {
+		transfers := make([]models.Transfer, 2)
+		transfers[0] = transfer
+		transfers[0].Hash = utils.RandomHash()
+		transfers[1] = transfer
+		transfers[1].Hash = utils.RandomHash()
+		s.addTransfersInCommitment(models.NewUint256(uint64(batchIDs[i])), transfers)
+	}
 
-	hashes, err := s.storage.GetTransactionHashesByBatchID(1)
+	hashes, err := s.storage.GetTransactionHashesByBatchIDs(batchIDs...)
 	s.NoError(err)
-	s.Len(hashes, 2)
-	s.Contains(hashes, transfers[0].Hash)
-	s.Contains(hashes, transfers[1].Hash)
+	s.Len(hashes, 4)
 }
 
-func (s *TransactionBaseTestSuite) TestGetTransactionHashesByBatchID_NoTransactions() {
+func (s *TransactionBaseTestSuite) TestGetTransactionHashesByBatchIDs_NoTransactions() {
 	transfers := make([]models.Transfer, 2)
 	transfers[0] = transfer
 	transfers[1] = transfer
 	transfers[1].Hash = utils.RandomHash()
-	s.addTransfersInCommitment(transfers)
+	s.addTransfersInCommitment(models.NewUint256(1), transfers)
 
-	hashes, err := s.storage.GetTransactionHashesByBatchID(2)
+	hashes, err := s.storage.GetTransactionHashesByBatchIDs(2)
 	s.Equal(NewNotFoundError("transaction"), err)
 	s.Nil(hashes)
 }
 
-func (s *TransactionBaseTestSuite) addTransfersInCommitment(transfers []models.Transfer) {
+func (s *TransactionBaseTestSuite) addTransfersInCommitment(batchNumber *models.Uint256, transfers []models.Transfer) {
 	batch := &models.Batch{
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
-		Number:            models.MakeUint256(1),
+		Number:            *batchNumber,
 		FinalisationBlock: ref.Uint32(1234),
 	}
 	batchID, err := s.storage.AddBatch(batch)

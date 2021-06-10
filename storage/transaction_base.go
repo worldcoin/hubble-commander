@@ -111,14 +111,14 @@ func (s *Storage) GetTransactionCount() (*int, error) {
 	return &res[0], nil
 }
 
-func (s *Storage) GetTransactionHashesByBatchID(batchID int32) ([]common.Hash, error) {
-	res := make([]common.Hash, 0, 32)
+func (s *Storage) GetTransactionHashesByBatchIDs(batchIDs ...int32) ([]common.Hash, error) {
+	res := make([]common.Hash, 0, 32*len(batchIDs))
 	err := s.Postgres.Query(
 		s.QB.Select("transaction_base.tx_hash").
 			From("transaction_base").
 			Join("commitment on commitment.commitment_id = transaction_base.included_in_commitment").
 			Join("batch on batch.batch_id = commitment.included_in_batch").
-			Where(squirrel.Eq{"batch.batch_id": batchID}),
+			Where(squirrel.Eq{"batch.batch_id": batchIDs}),
 	).Into(&res)
 	if err != nil {
 		return nil, err

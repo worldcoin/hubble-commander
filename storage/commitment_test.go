@@ -137,29 +137,50 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID_NonExistentCommitments
 	s.Nil(commitments)
 }
 
-func (s *CommitmentTestSuite) TestDeleteCommitmentsByBatchID() {
-	batchID := s.addRandomBatch()
-
-	for i := 0; i < 2; i++ {
-		commitmentInBatch := commitment
-		commitmentInBatch.IncludedInBatch = batchID
-		_, err := s.storage.AddCommitment(&commitmentInBatch)
+func (s *CommitmentTestSuite) TestDeleteCommitmentsByBatchIDs() {
+	batches := []models.Batch{
+		{
+			Type:              txtype.Transfer,
+			TransactionHash:   utils.RandomHash(),
+			Hash:              utils.NewRandomHash(),
+			Number:            models.MakeUint256(111),
+			FinalisationBlock: ref.Uint32(1234),
+		},
+		{
+			Type:              txtype.Create2Transfer,
+			TransactionHash:   utils.RandomHash(),
+			Hash:              utils.NewRandomHash(),
+			Number:            models.MakeUint256(5),
+			FinalisationBlock: ref.Uint32(2345),
+		},
+	}
+	for i := range batches {
+		id, err := s.storage.AddBatch(&batches[i])
 		s.NoError(err)
+		batches[i].ID = *id
+
+		for j := 0; j < 2; j++ {
+			commitmentInBatch := commitment
+			commitmentInBatch.IncludedInBatch = id
+			_, err = s.storage.AddCommitment(&commitmentInBatch)
+			s.NoError(err)
+		}
 	}
 
-	err := s.storage.DeleteCommitmentsByBatchID(*batchID)
+	err := s.storage.DeleteCommitmentsByBatchIDs(batches[0].ID, batches[1].ID)
 	s.NoError(err)
-
-	_, err = s.storage.GetCommitmentsByBatchID(*batchID)
-	s.Equal(NewNotFoundError("commitments"), err)
+	for i := range batches {
+		_, err = s.storage.GetCommitmentsByBatchID(batches[i].ID)
+		s.Equal(NewNotFoundError("commitments"), err)
+	}
 }
 
-func (s *CommitmentTestSuite) TestDeleteCommitmentsByBatchID_NoCommitments() {
+func (s *CommitmentTestSuite) TestDeleteCommitmentsByBatchIDs_NoCommitments() {
 	batchID := s.addRandomBatch()
 	commitmentID, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	err = s.storage.DeleteCommitmentsByBatchID(*batchID)
+	err = s.storage.DeleteCommitmentsByBatchIDs(*batchID)
 	s.Equal(ErrNoRowsAffected, err)
 
 	_, err = s.storage.GetCommitment(*commitmentID)

@@ -190,7 +190,7 @@ func (s *Storage) GetBatchesInRange(from, to *models.Uint256) ([]models.Batch, e
 	return res, nil
 }
 
-func (s *Storage) BulkDeleteBatch(batchIDs ...int32) error {
+func (s *Storage) DeleteBatches(batchIDs ...int32) error {
 	res, err := s.Postgres.Query(
 		s.QB.Delete("batch").
 			Where(squirrel.Eq{"batch_id": batchIDs}),
