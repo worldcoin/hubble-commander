@@ -20,7 +20,7 @@ build: clean compile
 
 setup-db:
 	rm -rf db/badger/data
-	docker-compose up postgres -d
+	docker-compose up -d postgres
 
 start-geth-locally:
 	rm -rf e2e/geth-data/geth
