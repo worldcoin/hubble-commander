@@ -1,1 +1,0 @@
-DROP INDEX batch_transaction_hash_idx;
