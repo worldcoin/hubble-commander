@@ -52,12 +52,13 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.teardown = testStorage.Teardown
+	s.cmd.storage = testStorage.Storage
+
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
+	s.cmd.client = s.testClient.Client
 
 	s.cmd = NewCommander(config.GetTestConfig())
-	s.cmd.client = s.testClient.Client
-	s.cmd.storage = testStorage.Storage
 	s.cmd.stopChannel = make(chan bool)
 
 	seedDB(s.T(), testStorage.Storage, st.NewStateTree(testStorage.Storage))
