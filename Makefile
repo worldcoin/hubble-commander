@@ -19,17 +19,16 @@ generate:
 build: clean compile
 
 setup-db:
-	docker run --name hubble-postgres -p 5432:5432 -e POSTGRES_USER=hubble -e POSTGRES_PASSWORD=root -d postgres
-
-stop-db:
-	docker stop hubble-postgres
-
-start-db:
-	docker start hubble-postgres
-
-teardown-db: stop-db
-	docker rm hubble-postgres
 	rm -rf db/badger/data
+	docker-compose up postgres -d
+
+start-geth-locally:
+	rm -rf e2e/geth-data/geth
+	geth --datadir e2e/geth-data --dev --dev.period 1 --http --ws
+
+setup-geth:
+	rm -rf e2e/geth-data/geth
+	docker compose up ethereum-node
 
 update-contracts:
 	git submodule update --remote
@@ -42,26 +41,6 @@ run-prune:
 
 run-dev:
 	go run ./main/main.go -prune -dev
-
-start-geth-locally:
-	rm -rf e2e/geth-data/geth
-	geth --datadir e2e/geth-data --dev --dev.period 1 --http --ws
-
-setup-geth:
-	docker run --name ethereum-node -d -v $(CURDIR)/e2e/geth-data:/root/ethereum \
-				-p 8545:8545 -p 8546:8546 -p 30303:30303 \
-				ethereum/client-go --datadir /root/ethereum \
-				--dev --dev.period 1 --http --http.addr 0.0.0.0 --ws --ws.addr 0.0.0.0
-
-stop-geth:
-	docker stop ethereum-node
-
-start-geth:
-	docker start ethereum-node
-
-teardown-geth:
-	docker rm ethereum-node
-	rm -rf e2e/geth-data/geth
 
 lint:
 	golangci-lint run ./...

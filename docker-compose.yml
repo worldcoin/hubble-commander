@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgres
+    container_name: hubble-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: hubble
+      POSTGRES_PASSWORD: root
+  ethereum-node:
+    image: ethereum/client-go
+    container_name: hubble-ethereum-node
+    restart: unless-stopped
+    ports:
+      - "30303:30303"
+      - "30303:30303/udp"
+      - "8545:8545"
+      - "8546:8546"
+    volumes:
+      - ./e2e/geth-data:/root/ethereum
+    command:
+      - --datadir
+      - "/root/ethereum"
+      - --dev
+      - --dev.period=1
+      - --http
+      - --http.addr=0.0.0.0
+      - --ws
+      - --ws.addr=0.0.0.0
