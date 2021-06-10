@@ -15,8 +15,7 @@ type InProcessCommander struct {
 
 func CreateInProcessCommander() *InProcessCommander {
 	cfg := config.GetConfig()
-	cfg.Rollup.Prune = true
-	cfg.Rollup.SyncBatches = false
+	cfg.Bootstrap.Prune = true
 
 	cmd := commander.NewCommander(cfg)
 

@@ -34,7 +34,7 @@ func getConfig() *config.Config {
 	} else {
 		cfg = config.GetConfig()
 	}
-	cfg.Rollup.Prune = *prune
+	cfg.Bootstrap.Prune = *prune
 	return cfg
 }
 
