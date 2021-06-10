@@ -8,9 +8,9 @@ services:
     environment:
       POSTGRES_USER: hubble
       POSTGRES_PASSWORD: root
-  ethereum-node:
+  geth:
     image: ethereum/client-go
-    container_name: hubble-ethereum-node
+    container_name: hubble-geth
     restart: unless-stopped
     ports:
       - "30303:30303"
@@ -20,8 +20,7 @@ services:
     volumes:
       - ./e2e/geth-data:/root/ethereum
     command:
-      - --datadir
-      - "/root/ethereum"
+      - --datadir=/root/ethereum
       - --dev
       - --dev.period=1
       - --http
