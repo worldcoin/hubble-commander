@@ -184,18 +184,27 @@ func getClientOrBootstrapChainState(chain deployer.ChainConnection, storage *st.
 
 func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {
 	client := jsonrpc.NewClient(url)
+
 	var info dto.NetworkInfo
 	err := client.CallFor(&info, "hubble_getNetworkInfo")
 	if err != nil {
 		return nil, err
 	}
 
-	err = client.CallFor(&info.ChainState.GenesisAccounts, "hubble_getGenesisAccounts")
+	var genesisAccounts models.GenesisAccounts
+	err = client.CallFor(&genesisAccounts, "hubble_getGenesisAccounts")
 	if err != nil {
 		return nil, err
 	}
 
-	return &info.ChainState, nil
+	return &models.ChainState{
+		ChainID:         info.ChainID,
+		AccountRegistry: info.AccountRegistry,
+		DeploymentBlock: info.DeploymentBlock,
+		Rollup:          info.Rollup,
+		GenesisAccounts: genesisAccounts,
+		SyncedBlock:     getInitialSyncedBlock(info.DeploymentBlock),
+	}, nil
 }
 
 func createClientFromChainState(chain deployer.ChainConnection, chainState *models.ChainState) (*eth.Client, error) {
@@ -262,8 +271,12 @@ func bootstrapState(
 		DeploymentBlock: *accountRegistryDeploymentBlock,
 		Rollup:          contracts.RollupAddress,
 		GenesisAccounts: populatedAccounts,
-		SyncedBlock:     *accountRegistryDeploymentBlock - 1,
+		SyncedBlock:     getInitialSyncedBlock(*accountRegistryDeploymentBlock),
 	}
 
 	return chainState, nil
+}
+
+func getInitialSyncedBlock(deploymentBlock uint64) uint64 {
+	return deploymentBlock - 1
 }
