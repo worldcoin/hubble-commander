@@ -41,8 +41,8 @@ There is a number of scripts defined in the Makefile:
 * `make generate` - generate bindings for smart contracts
 * `make build` - clean and build artifacts
 * `make setup-db` - create and run a Docker container with postgres
-* `make start-geth-locally:` - start a new instance of go-ethereum node
-* `make setup-geth` - create and run a Docker container with go-ethereum node
+* `make start-geth-locally:` - start a new instance of Go-Ethereum node
+* `make setup-geth` - create and run a Docker container with Go-Ethereum node
 * `make update-contracts` - update the `hubble-contracts` git submodule
 * `make run` - run the compiled binary
 * `make run-prune` - clean database and run the compiled binary
@@ -53,7 +53,7 @@ There is a number of scripts defined in the Makefile:
 * `make test-e2e` - run E2E tests on a pre-built docker image
 * `make test-commander-locally` - run E2E tests against a local commander instance
 * `make bench-e2e` - run E2E benchmark test
-* `make bench-e2e-profile` - run E2E benchmark test with cpu profiling
+* `make bench-e2e-profile` - run E2E benchmark test with CPU profiling
 
 ## Running with Ganache
 
@@ -73,7 +73,7 @@ HUBBLE_ETHEREUM_PRIVATE_KEY=ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d8024
 
 Use the same config as with Ganache.
 
-Start Geth either locally or with docker:
+Start Geth either locally or with Docker:
 ```shell
 # Starts geth locally
 make start-geth-locally
