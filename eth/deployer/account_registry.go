@@ -8,18 +8,20 @@ import (
 	"github.com/pkg/errors"
 )
 
-func DeployAccountRegistry(c ChainConnection) (*common.Address, *accountregistry.AccountRegistry, error) {
+func DeployAccountRegistry(c ChainConnection) (*common.Address, *uint64, *accountregistry.AccountRegistry, error) {
 	log.Println("Deploying AccountRegistry")
 	accountRegistryAddress, tx, accountRegistry, err := accountregistry.DeployAccountRegistry(c.GetAccount(), c.GetBackend())
 	if err != nil {
-		return nil, nil, errors.WithStack(err)
+		return nil, nil, nil, errors.WithStack(err)
 	}
 
 	c.Commit()
-	_, err = WaitToBeMined(c.GetBackend(), tx)
+	txReceipt, err := WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
-		return nil, nil, errors.WithStack(err)
+		return nil, nil, nil, errors.WithStack(err)
 	}
 
-	return &accountRegistryAddress, accountRegistry, nil
+	deploymentBlockNumber := txReceipt.BlockNumber.Uint64()
+
+	return &accountRegistryAddress, &deploymentBlockNumber, accountRegistry, nil
 }

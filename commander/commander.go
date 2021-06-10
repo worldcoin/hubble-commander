@@ -184,18 +184,27 @@ func getClientOrBootstrapChainState(chain deployer.ChainConnection, storage *st.
 
 func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {
 	client := jsonrpc.NewClient(url)
+
 	var info dto.NetworkInfo
 	err := client.CallFor(&info, "hubble_getNetworkInfo")
 	if err != nil {
 		return nil, err
 	}
 
-	err = client.CallFor(&info.ChainState.GenesisAccounts, "hubble_getGenesisAccounts")
+	var genesisAccounts models.GenesisAccounts
+	err = client.CallFor(&genesisAccounts, "hubble_getGenesisAccounts")
 	if err != nil {
 		return nil, err
 	}
 
-	return &info.ChainState, nil
+	return &models.ChainState{
+		ChainID:         info.ChainID,
+		AccountRegistry: info.AccountRegistry,
+		DeploymentBlock: info.DeploymentBlock,
+		Rollup:          info.Rollup,
+		GenesisAccounts: genesisAccounts,
+		SyncedBlock:     getInitialSyncedBlock(info.DeploymentBlock),
+	}, nil
 }
 
 func createClientFromChainState(chain deployer.ChainConnection, chainState *models.ChainState) (*eth.Client, error) {
@@ -226,7 +235,7 @@ func bootstrapState(
 	chain deployer.ChainConnection,
 	accounts []models.GenesisAccount,
 ) (*models.ChainState, error) {
-	accountRegistryAddress, accountRegistry, err := deployer.DeployAccountRegistry(chain)
+	accountRegistryAddress, accountRegistryDeploymentBlock, accountRegistry, err := deployer.DeployAccountRegistry(chain)
 	if err != nil {
 		return nil, err
 	}
@@ -237,6 +246,7 @@ func bootstrapState(
 	}
 
 	populatedAccounts := AssignStateIDs(registeredAccounts)
+
 	err = PopulateGenesisAccounts(storage, populatedAccounts)
 	if err != nil {
 		return nil, err
@@ -258,10 +268,15 @@ func bootstrapState(
 	chainState := &models.ChainState{
 		ChainID:         chain.GetChainID(),
 		AccountRegistry: *accountRegistryAddress,
+		DeploymentBlock: *accountRegistryDeploymentBlock,
 		Rollup:          contracts.RollupAddress,
 		GenesisAccounts: populatedAccounts,
-		SyncedBlock:     0,
+		SyncedBlock:     getInitialSyncedBlock(*accountRegistryDeploymentBlock),
 	}
 
 	return chainState, nil
+}
+
+func getInitialSyncedBlock(deploymentBlock uint64) uint64 {
+	return deploymentBlock - 1
 }
