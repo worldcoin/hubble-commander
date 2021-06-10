@@ -20,8 +20,7 @@ type RollupConfig struct {
 	GenesisAccounts  []models.GenesisAccount
 	BootstrapNodeURL *string
 
-	SyncBatches bool
-	SyncSize    uint32
+	SyncSize uint32
 
 	FeeReceiverPubKeyID    uint32
 	TxsPerCommitment       uint32
