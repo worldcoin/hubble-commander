@@ -137,6 +137,35 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID_NonExistentCommitments
 	s.Nil(commitments)
 }
 
+func (s *CommitmentTestSuite) TestDeleteCommitmentsByBatchID() {
+	batchID := s.addRandomBatch()
+
+	for i := 0; i < 2; i++ {
+		commitmentInBatch := commitment
+		commitmentInBatch.IncludedInBatch = batchID
+		_, err := s.storage.AddCommitment(&commitmentInBatch)
+		s.NoError(err)
+	}
+
+	err := s.storage.DeleteCommitmentsByBatchID(*batchID)
+	s.NoError(err)
+
+	_, err = s.storage.GetCommitmentsByBatchID(*batchID)
+	s.Equal(NewNotFoundError("commitments"), err)
+}
+
+func (s *CommitmentTestSuite) TestDeleteCommitmentsByBatchID_NoCommitments() {
+	batchID := s.addRandomBatch()
+	commitmentID, err := s.storage.AddCommitment(&commitment)
+	s.NoError(err)
+
+	err = s.storage.DeleteCommitmentsByBatchID(*batchID)
+	s.Equal(ErrNoRowsAffected, err)
+
+	_, err = s.storage.GetCommitment(*commitmentID)
+	s.NoError(err)
+}
+
 func (s *CommitmentTestSuite) addLeaf() {
 	err := s.storage.AddAccountIfNotExists(&account1)
 	s.NoError(err)
