@@ -70,11 +70,6 @@ func (t *transactionExecutor) syncExistingBatch(batch *eth.DecodedBatch, localBa
 			return err
 		}
 
-		err = t.storage.UpdateCommitmentsAccountTreeRoot(localBatch.ID, batch.AccountRoot)
-		if err != nil {
-			return err
-		}
-
 		log.Printf(
 			"Synced new existing batch. Batch number: %d. Batch Hash: %v",
 			batch.Number.Uint64(),

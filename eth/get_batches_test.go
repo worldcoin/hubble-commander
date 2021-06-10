@@ -58,12 +58,17 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 	_, _, err = s.client.SubmitTransfersBatchAndMine([]models.Commitment{commitment2})
 	s.NoError(err)
 
+	rawAccountRoot, err := s.client.AccountRegistry.Root(nil)
+	s.NoError(err)
+	accountRoot := common.BytesToHash(rawAccountRoot[:])
+
 	batches, err := s.client.GetBatches(&bind.FilterOpts{
 		Start: uint64(*batch1.FinalisationBlock - uint32(*finalisationBlocks) + 1),
 	})
 	s.NoError(err)
 	s.Len(batches, 1)
 	s.NotEqual(common.Hash{}, batches[0].TransactionHash)
+	s.Equal(accountRoot, *batches[0].AccountTreeRoot)
 }
 
 func (s *GetBatchesTestSuite) mockSignature() *models.Signature {

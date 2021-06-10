@@ -13,19 +13,18 @@ type Commitment struct {
 	ID                int32 `db:"commitment_id"`
 	Type              txtype.TransactionType
 	Transactions      []byte
-	FeeReceiver       uint32       `db:"fee_receiver"`
-	CombinedSignature Signature    `db:"combined_signature"`
-	PostStateRoot     common.Hash  `db:"post_state_root"`
-	AccountTreeRoot   *common.Hash `db:"account_tree_root"`
-	IncludedInBatch   *int32       `db:"included_in_batch"`
+	FeeReceiver       uint32      `db:"fee_receiver"`
+	CombinedSignature Signature   `db:"combined_signature"`
+	PostStateRoot     common.Hash `db:"post_state_root"`
+	IncludedInBatch   *int32      `db:"included_in_batch"`
 }
 
-func (c *Commitment) BodyHash() common.Hash {
-	return calcBodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, c.AccountTreeRoot.Bytes())
+func (c *Commitment) BodyHash(accountRoot common.Hash) common.Hash {
+	return calcBodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, accountRoot.Bytes())
 }
 
-func (c *Commitment) LeafHash() common.Hash {
-	return utils.HashTwo(c.PostStateRoot, c.BodyHash())
+func (c *Commitment) LeafHash(accountRoot common.Hash) common.Hash {
+	return utils.HashTwo(c.PostStateRoot, c.BodyHash(accountRoot))
 }
 
 type CommitmentWithTokenID struct {

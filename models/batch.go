@@ -12,9 +12,5 @@ type Batch struct {
 	Number            Uint256      `db:"batch_number"`
 	Hash              *common.Hash `db:"batch_hash"`         // root of tree containing all commitments included in this batch
 	FinalisationBlock *uint32      `db:"finalisation_block"` // nolint:misspell
-}
-
-type BatchWithAccountRoot struct {
-	Batch
-	AccountTreeRoot *common.Hash `db:"account_tree_root"`
+	AccountTreeRoot   *common.Hash `db:"account_tree_root"`
 }
