@@ -9,11 +9,12 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
 
 func (c *Client) RegisterAccount(publicKey *models.PublicKey, ev chan *accountregistry.AccountRegistryPubkeyRegistered) (*uint32, error) {
-	return RegisterAccount(c.ChainConnection.GetAccount(), c.AccountRegistry, publicKey, ev)
+	return RegisterAccountAndWait(c.ChainConnection.GetAccount(), c.AccountRegistry, publicKey, ev)
 }
 
 func (c *Client) WatchRegistrations(opts *bind.WatchOpts) (
@@ -38,15 +39,15 @@ func WatchRegistrations(accountRegistry *accountregistry.AccountRegistry, opts *
 	return ev, sub.Unsubscribe, nil
 }
 
-func RegisterAccount(
+func RegisterAccountAndWait(
 	opts *bind.TransactOpts,
 	accountRegistry *accountregistry.AccountRegistry,
 	publicKey *models.PublicKey,
 	ev chan *accountregistry.AccountRegistryPubkeyRegistered,
 ) (*uint32, error) {
-	tx, err := accountRegistry.Register(opts, publicKey.BigInts())
+	tx, err := RegisterAccount(opts, accountRegistry, publicKey)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 
 	for {
@@ -62,4 +63,12 @@ func RegisterAccount(
 			return nil, errors.WithStack(fmt.Errorf("timeout"))
 		}
 	}
+}
+
+func RegisterAccount(opts *bind.TransactOpts, accountRegistry *accountregistry.AccountRegistry, publicKey *models.PublicKey) (*types.Transaction, error) {
+	tx, err := accountRegistry.Register(opts, publicKey.BigInts())
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return tx, nil
 }
