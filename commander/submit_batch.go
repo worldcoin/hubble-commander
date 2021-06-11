@@ -20,7 +20,7 @@ func (t *transactionExecutor) submitBatch(batchType txtype.TransactionType, comm
 	var err error
 
 	select {
-	case <-t.ctx.Done():
+	case <-t.opts.ctx.Done():
 		return nil, ErrNoLongerProposer
 	default:
 	}

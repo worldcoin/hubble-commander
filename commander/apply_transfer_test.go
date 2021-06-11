@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/stretchr/testify/require"
@@ -29,8 +28,9 @@ var (
 type ApplyTransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage *storage.TestStorage
-	tree    *storage.StateTree
+	storage             *storage.TestStorage
+	tree                *storage.StateTree
+	transactionExecutor *transactionExecutor
 }
 
 func (s *ApplyTransferTestSuite) SetupSuite() {
@@ -42,6 +42,7 @@ func (s *ApplyTransferTestSuite) SetupTest() {
 	s.storage, err = storage.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.tree = storage.NewStateTree(s.storage.Storage)
+	s.transactionExecutor = newTestTransactionExecutor(s.storage.Storage, nil, config.GetTestConfig().Rollup, transactionExecutorOpts{})
 
 	accounts := []models.Account{
 		{
@@ -141,7 +142,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_Validation_TokenIndex() {
 	err = s.tree.Set(receiverStateID, &receiverState)
 	s.NoError(err)
 
-	transferError, appError := ApplyTransfer(s.storage.Storage, &transfer, models.MakeUint256(3))
+	transferError, appError := s.transactionExecutor.ApplyTransfer(&transfer, models.MakeUint256(3))
 	s.Equal(appError, ErrIncorrectTokenIndices)
 	s.NoError(transferError)
 }
@@ -165,7 +166,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer() {
 	err = s.tree.Set(receiverStateID, &receiverState)
 	s.NoError(err)
 
-	transferError, appError := ApplyTransfer(s.storage.Storage, &transfer, models.MakeUint256(1))
+	transferError, appError := s.transactionExecutor.ApplyTransfer(&transfer, models.MakeUint256(1))
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -179,15 +180,13 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer() {
 }
 
 func (s *ApplyTransferTestSuite) TestApplyFee() {
-	transactionExecutor := newTestTransactionExecutor(s.storage.Storage, &eth.Client{}, config.GetTestConfig().Rollup)
-
 	receiverStateID := receiverState.PubKeyID
 	err := s.tree.Set(receiverStateID, &receiverState)
 	s.NoError(err)
 
-	transactionExecutor.cfg.FeeReceiverPubKeyID = receiverStateID
+	s.transactionExecutor.cfg.FeeReceiverPubKeyID = receiverStateID
 
-	feeReceiverStateID, err := transactionExecutor.ApplyFee(models.MakeUint256(1), models.MakeUint256(555))
+	feeReceiverStateID, err := s.transactionExecutor.ApplyFee(models.MakeUint256(1), models.MakeUint256(555))
 	s.NoError(err)
 	s.Equal(receiverStateID, *feeReceiverStateID)
 

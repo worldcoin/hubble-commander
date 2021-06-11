@@ -92,7 +92,7 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 	s.events, s.unsubscribe, err = s.client.WatchRegistrations(&bind.WatchOpts{})
 	s.NoError(err)
 
-	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg)
+	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg, transactionExecutorOpts{})
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
