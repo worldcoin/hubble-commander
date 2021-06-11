@@ -127,6 +127,9 @@ func (t *transactionExecutor) buildCreate2TransfersCommitments(domain *bls.Domai
 
 func validateStateRoot(storage *st.Storage) error {
 	latestCommitment, err := storage.GetLatestCommitment()
+	if st.IsNotFoundError(err) {
+		return nil
+	}
 	if err != nil {
 		return err
 	}

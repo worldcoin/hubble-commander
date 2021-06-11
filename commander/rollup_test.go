@@ -70,6 +70,17 @@ func (s *RollupTestSuite) TestValidateStateRoot_DifferentStateRootHash() {
 	s.Equal(ErrInvalidStateRoot, err)
 }
 
+func (s *RollupTestSuite) TestValidateStateRoot_FirstCommitment() {
+	err := s.storage.UpsertStateNode(&models.StateNode{
+		MerklePath: models.MerklePath{Path: 0, Depth: 0},
+		DataHash:   common.Hash{1, 2, 3},
+	})
+	s.NoError(err)
+
+	err = validateStateRoot(s.storage)
+	s.NoError(err)
+}
+
 func TestRollupTestSuite(t *testing.T) {
 	suite.Run(t, new(RollupTestSuite))
 }
