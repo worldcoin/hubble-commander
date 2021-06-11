@@ -23,7 +23,7 @@ type BatchWithRootAndCommitments struct {
 
 func MakeBatch(batch *models.Batch, submissionBlock uint32) *Batch {
 	return &Batch{
-		ID:                batch.Number,
+		ID:                batch.ID,
 		Hash:              batch.Hash,
 		Type:              batch.Type,
 		TransactionHash:   batch.TransactionHash,

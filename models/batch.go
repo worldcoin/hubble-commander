@@ -6,10 +6,9 @@ import (
 )
 
 type Batch struct {
-	ID                int32 `db:"batch_id"`
+	ID                Uint256 `db:"batch_id"`
 	Type              txtype.TransactionType
 	TransactionHash   common.Hash  `db:"transaction_hash"`
-	Number            Uint256      `db:"batch_number"`
 	Hash              *common.Hash `db:"batch_hash"`         // root of tree containing all commitments included in this batch
 	FinalisationBlock *uint32      `db:"finalisation_block"` // nolint:misspell
 	AccountTreeRoot   *common.Hash `db:"account_tree_root"`

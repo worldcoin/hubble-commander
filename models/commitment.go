@@ -16,7 +16,7 @@ type Commitment struct {
 	FeeReceiver       uint32      `db:"fee_receiver"`
 	CombinedSignature Signature   `db:"combined_signature"`
 	PostStateRoot     common.Hash `db:"post_state_root"`
-	IncludedInBatch   *int32      `db:"included_in_batch"`
+	IncludedInBatch   *Uint256    `db:"included_in_batch"`
 }
 
 func (c *Commitment) BodyHash(accountRoot common.Hash) common.Hash {
