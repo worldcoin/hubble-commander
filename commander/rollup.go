@@ -2,7 +2,6 @@ package commander
 
 import (
 	"context"
-	"errors"
 	"log"
 	"time"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/pkg/errors"
 )
 
 func (c *Commander) manageRollupLoop(cancel context.CancelFunc, isProposer bool) context.CancelFunc {
@@ -52,7 +52,7 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 
 	err = c.validateStateRoot()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	transactionExecutor, err := newTransactionExecutorWithCtx(ctx, c.storage, c.client, c.cfg.Rollup)
@@ -133,7 +133,7 @@ func (c *Commander) validateStateRoot() error {
 		return err
 	}
 	if latestCommitment.PostStateRoot != *stateRoot {
-		return errors.New("invalid state root")
+		return errors.New("latest commitment state root doesn't match current one")
 	}
 	return nil
 }

@@ -56,7 +56,7 @@ func (s *Storage) GetLatestCommitment() (*models.Commitment, error) {
 	err := s.Postgres.Query(
 		s.QB.Select("*").
 			From("commitment").
-			OrderBy("commitment_id").
+			OrderBy("commitment_id DESC").
 			Limit(1),
 	).Into(&res)
 	if err != nil {
