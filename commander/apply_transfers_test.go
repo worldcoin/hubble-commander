@@ -113,7 +113,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_SomeValid() {
 	s.Len(transfers.invalidTransfers, 3)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTransfers_MoreThan32() {
+func (s *ApplyTransfersTestSuite) TestApplyTransfers_MoreThanTxsPerCommitment() {
 	generatedTransfers := generateValidTransfers(13)
 
 	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers)
