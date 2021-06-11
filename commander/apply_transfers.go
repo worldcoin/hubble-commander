@@ -11,7 +11,7 @@ type AppliedTransfers struct {
 }
 
 type TransactionApplyOpts struct {
-	/// Ignore nonce field in the transaction, and assign it with the proper one from the state.
+	// Ignore nonce field in the transaction, and assign it with the proper one from the state.
 	AssumeNonces bool
 }
 
