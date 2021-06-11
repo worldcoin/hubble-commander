@@ -58,8 +58,6 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Pull the commander image
         run: docker pull ghcr.io/worldcoin/hubble-commander:latest
-      - name: Pull the go-ethereum image
-        run: docker pull ethereum/client-go:latest
       - name: Run E2E tests
         run: |
           make setup-geth &

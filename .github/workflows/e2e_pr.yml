@@ -28,8 +28,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Pull the go-ethereum image
-        run: docker pull ethereum/client-go:latest
       - name: Run E2E tests
         run: |
           make setup-geth &
