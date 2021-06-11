@@ -171,9 +171,9 @@ func TestApplyTransfersTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplyTransfersTestSuite))
 }
 
-func generateValidTransfers(transfersAmount int) []models.Transfer {
+func generateValidTransfers(transfersAmount uint64) []models.Transfer {
 	transfers := make([]models.Transfer, 0, transfersAmount)
-	for i := 0; i < transfersAmount; i++ {
+	for i := uint64(0); i < transfersAmount; i++ {
 		transfer := models.Transfer{
 			TransactionBase: models.TransactionBase{
 				Hash:        utils.RandomHash(),
@@ -181,7 +181,7 @@ func generateValidTransfers(transfersAmount int) []models.Transfer {
 				FromStateID: 1,
 				Amount:      models.MakeUint256(1),
 				Fee:         models.MakeUint256(1),
-				Nonce:       models.MakeUint256(uint64(i)),
+				Nonce:       models.MakeUint256(i),
 			},
 			ToStateID: 2,
 		}
@@ -190,9 +190,9 @@ func generateValidTransfers(transfersAmount int) []models.Transfer {
 	return transfers
 }
 
-func generateInvalidTransfers(transfersAmount int) []models.Transfer {
+func generateInvalidTransfers(transfersAmount uint64) []models.Transfer {
 	transfers := make([]models.Transfer, 0, transfersAmount)
-	for i := 0; i < transfersAmount; i++ {
+	for i := uint64(0); i < transfersAmount; i++ {
 		transfer := models.Transfer{
 			TransactionBase: models.TransactionBase{
 				Hash:        utils.RandomHash(),

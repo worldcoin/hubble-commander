@@ -34,37 +34,57 @@ func (t *transactionExecutor) createTransferCommitments(
 			return nil, err
 		}
 
-		transfers, err := t.ApplyTransfers(pendingTransfers)
-		if err != nil {
-			return nil, err
-		}
+		var feeReceiverStateID uint32
+		appliedTransfers := make([]models.Transfer, 0, t.cfg.TxsPerCommitment)
+		invalidTransfers := make([]models.Transfer, 0, 1)
 
-		if len(transfers.appliedTransfers) < int(t.cfg.TxsPerCommitment) {
-			err = stateTree.RevertTo(*initialStateRoot)
+		for {
+			// nolint:govet
+			transfers, err := t.ApplyTransfers(pendingTransfers)
 			if err != nil {
 				return nil, err
 			}
-			break
+
+			appliedTransfers = append(appliedTransfers, transfers.appliedTransfers...)
+			invalidTransfers = append(invalidTransfers, transfers.invalidTransfers...)
+
+			if len(appliedTransfers) >= int(t.cfg.TxsPerCommitment) {
+				feeReceiverStateID = *transfers.feeReceiverStateID
+				break
+			}
+
+			pendingTransfers, err = t.storage.GetPendingTransfers(t.cfg.TxsPerCommitment, transfers.lastTransferNonce.AddN(1))
+			if err != nil {
+				return nil, err
+			}
+
+			if len(pendingTransfers) == 0 {
+				err = stateTree.RevertTo(*initialStateRoot)
+				if err != nil {
+					return nil, err
+				}
+				return []models.Commitment{}, nil
+			}
 		}
 
-		pendingTransfers = removeTransfer(pendingTransfers, append(transfers.appliedTransfers, transfers.invalidTransfers...))
+		pendingTransfers = removeTransfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
 
-		serializedTxs, err := encoder.SerializeTransfers(transfers.appliedTransfers)
+		serializedTxs, err := encoder.SerializeTransfers(appliedTransfers)
 		if err != nil {
 			return nil, err
 		}
 
-		combinedSignature, err := combineTransferSignatures(transfers.appliedTransfers, domain)
+		combinedSignature, err := combineTransferSignatures(appliedTransfers, domain)
 		if err != nil {
 			return nil, err
 		}
 
-		commitment, err := t.createAndStoreCommitment(txtype.Transfer, *transfers.feeReceiverStateID, serializedTxs, combinedSignature)
+		commitment, err := t.createAndStoreCommitment(txtype.Transfer, feeReceiverStateID, serializedTxs, combinedSignature)
 		if err != nil {
 			return nil, err
 		}
 
-		err = t.markTransfersAsIncluded(transfers.appliedTransfers, commitment.ID)
+		err = t.markTransfersAsIncluded(appliedTransfers, commitment.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -73,7 +93,7 @@ func (t *transactionExecutor) createTransferCommitments(
 		log.Printf(
 			"Created a %s commitment from %d transactions in %s",
 			txtype.Transfer,
-			len(transfers.appliedTransfers),
+			len(appliedTransfers),
 			time.Since(startTime).Round(time.Millisecond).String(),
 		)
 	}
