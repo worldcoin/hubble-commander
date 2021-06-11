@@ -183,6 +183,7 @@ func (s *NewBlockLoopTestSuite) waitForLatestBlockSync() {
 	s.NoError(err)
 
 	ticker := time.NewTicker(100 * time.Millisecond)
+	timeout := time.After(time.Second)
 	defer ticker.Stop()
 	for {
 		select {
@@ -192,7 +193,7 @@ func (s *NewBlockLoopTestSuite) waitForLatestBlockSync() {
 			if *syncedBlock >= *latestBlockNumber {
 				return
 			}
-		case <-time.After(time.Second):
+		case <-timeout:
 			s.Fail("timeout when waiting for latest block sync")
 		}
 	}
