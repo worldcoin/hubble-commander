@@ -51,5 +51,14 @@ func (t *transactionExecutor) syncTransferCommitment(
 	for i := range transfers.appliedTransfers {
 		transfers.appliedTransfers[i].IncludedInCommitment = commitmentID
 	}
+
+	for i := range transfers.appliedTransfers {
+		hashTransfer, err := encoder.HashTransfer(&transfers.appliedTransfers[i])
+		if err != nil {
+			return err
+		}
+		transfers.appliedTransfers[i].Hash = *hashTransfer
+	}
+
 	return t.storage.BatchAddTransfer(transfers.appliedTransfers)
 }
