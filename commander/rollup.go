@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
 func (c *Commander) manageRollupLoop(cancel context.CancelFunc, isProposer bool) context.CancelFunc {
@@ -48,6 +49,12 @@ func (c *Commander) rollupLoop(ctx context.Context) (err error) {
 func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *txtype.TransactionType) (err error) {
 	c.stateMutex.Lock()
 	defer c.stateMutex.Unlock()
+
+	err = c.validateStateRoot()
+	if err != nil {
+		return err
+	}
+
 	transactionExecutor, err := newTransactionExecutorWithCtx(ctx, c.storage, c.client, c.cfg.Rollup)
 	if err != nil {
 		return err
@@ -114,4 +121,19 @@ func (t *transactionExecutor) buildCreate2TransfersCommitments(domain *bls.Domai
 		return nil, err
 	}
 	return t.createCreate2TransferCommitments(pendingTransfers, domain)
+}
+
+func (c *Commander) validateStateRoot() error {
+	latestCommitment, err := c.storage.GetLatestCommitment()
+	if err != nil {
+		return err
+	}
+	stateRoot, err := st.NewStateTree(c.storage).Root()
+	if err != nil {
+		return err
+	}
+	if latestCommitment.PostStateRoot != *stateRoot {
+		return errors.New("invalid state root")
+	}
+	return nil
 }
