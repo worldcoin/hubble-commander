@@ -30,8 +30,12 @@ func GetConfig() *Config {
 	setupViper()
 
 	return &Config{
+		Bootstrap: &BootstrapConfig{
+			Prune:            false, // overridden in main
+			GenesisAccounts:  getGenesisAccounts(),
+			BootstrapNodeURL: getStringOrNil("rollup.bootstrap_node_url"),
+		},
 		Rollup: &RollupConfig{
-			SyncBatches:            getBool("rollup.sync_batches", true),
 			SyncSize:               getUint32("rollup.sync_size", 50),
 			FeeReceiverPubKeyID:    getUint32("rollup.fee_receiver_pub_key_id", 0),
 			TxsPerCommitment:       getUint32("rollup.txs_per_commitment", 32),
@@ -39,8 +43,6 @@ func GetConfig() *Config {
 			MaxCommitmentsPerBatch: getUint32("rollup.max_commitments_per_batch", 32),
 			CommitmentLoopInterval: getDuration("rollup.commitment_loop_interval", 500*time.Millisecond),
 			BatchLoopInterval:      getDuration("rollup.batch_loop_interval", 500*time.Millisecond),
-			GenesisAccounts:        getGenesisAccounts(),
-			BootstrapNodeURL:       getStringOrNil("rollup.bootstrap_node_url"),
 		},
 		API: &APIConfig{
 			Version: "0.0.1",
@@ -66,8 +68,12 @@ func GetTestConfig() *Config {
 	setupViper()
 
 	return &Config{
+		Bootstrap: &BootstrapConfig{
+			Prune:            false, // overridden in main
+			GenesisAccounts:  getGenesisAccounts(),
+			BootstrapNodeURL: getStringOrNil("rollup.bootstrap_node_url"),
+		},
 		Rollup: &RollupConfig{
-			SyncBatches:            getBool("rollup.sync_batches", false),
 			SyncSize:               getUint32("rollup.sync_size", 50),
 			FeeReceiverPubKeyID:    getUint32("rollup.fee_receiver_pub_key_id", 0),
 			TxsPerCommitment:       getUint32("rollup.txs_per_commitment", 2),
@@ -75,8 +81,6 @@ func GetTestConfig() *Config {
 			MaxCommitmentsPerBatch: getUint32("rollup.max_commitments_per_batch", 32),
 			CommitmentLoopInterval: getDuration("rollup.commitment_loop_interval", 500*time.Millisecond),
 			BatchLoopInterval:      getDuration("rollup.batch_loop_interval", 500*time.Millisecond),
-			GenesisAccounts:        getGenesisAccounts(),
-			BootstrapNodeURL:       getStringOrNil("rollup.bootstrap_node_url"),
 		},
 		API: &APIConfig{
 			Version: "dev-0.0.1",

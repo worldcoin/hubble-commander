@@ -1,6 +1,6 @@
 {
     "info": {
-        "_postman_id": "cdb7ac05-97c9-4d46-a2e6-0cc5444f6f3f",
+        "_postman_id": "70518534-5857-4ce1-b001-01fa41dba33d",
         "name": "Worldcoin",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
@@ -288,7 +288,7 @@
                 "header": [],
                 "body": {
                     "mode": "raw",
-                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getPublicKeyByID\",\n    \"params\": [\n        1\n    ],\n    \"id\": 1\n}",
+                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getPublicKeyByStateID\",\n    \"params\": [\n        1\n    ],\n    \"id\": 1\n}",
                     "options": {
                         "raw": {
                             "language": "json"
@@ -312,6 +312,29 @@
                 "body": {
                     "mode": "raw",
                     "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getNetworkInfo\",\n    \"params\": [],\n    \"id\": 1\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{commander}}",
+                    "host": [
+                        "{{commander}}"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "hubble_getGenesisAccounts",
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getGenesisAccounts\",\n    \"params\": [],\n    \"id\": 1\n}",
                     "options": {
                         "raw": {
                             "language": "json"

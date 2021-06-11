@@ -28,11 +28,6 @@ func getStringOrThrow(key string) string {
 	return value
 }
 
-func getBool(key string, fallback bool) bool {
-	viper.SetDefault(key, fallback)
-	return viper.GetBool(key)
-}
-
 func getUint32(key string, fallback uint32) uint32 {
 	viper.SetDefault(key, fallback)
 	return viper.GetUint32(key)
