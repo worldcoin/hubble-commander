@@ -60,17 +60,17 @@ func (s *CommitmentTestSuite) TestAddCommitment_AddAndRetrieve() {
 	s.Equal(s.getCommitment(*id), actual)
 }
 
-func (s *CommitmentTestSuite) addRandomBatch() *int32 {
+func (s *CommitmentTestSuite) addRandomBatch() models.Uint256 {
 	batch := models.Batch{
+		ID:                models.MakeUint256(123),
 		Type:              txtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
-		Number:            models.MakeUint256(123),
 		FinalisationBlock: ref.Uint32(1234),
 	}
-	id, err := s.storage.AddBatch(&batch)
+	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
-	return id
+	return batch.ID
 }
 
 func (s *CommitmentTestSuite) TestMarkCommitmentAsIncluded_UpdatesRecord() {
@@ -79,11 +79,11 @@ func (s *CommitmentTestSuite) TestMarkCommitmentAsIncluded_UpdatesRecord() {
 	id, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	err = s.storage.MarkCommitmentAsIncluded(*id, *batchID)
+	err = s.storage.MarkCommitmentAsIncluded(*id, batchID)
 	s.NoError(err)
 
 	expected := s.getCommitment(*id)
-	expected.IncludedInBatch = batchID
+	expected.IncludedInBatch = &batchID
 
 	actual, err := s.storage.GetCommitment(*id)
 	s.NoError(err)
@@ -103,7 +103,7 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
 
 	batchID := s.addRandomBatch()
 	includedCommitment := commitment
-	includedCommitment.IncludedInBatch = batchID
+	includedCommitment.IncludedInBatch = &batchID
 	includedCommitment.FeeReceiver = 0
 
 	expectedCommitments := make([]models.CommitmentWithTokenID, 2)
@@ -123,7 +123,7 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
 
 	s.addLeaf()
 
-	commitments, err := s.storage.GetCommitmentsByBatchID(*batchID)
+	commitments, err := s.storage.GetCommitmentsByBatchID(batchID)
 	s.NoError(err)
 	s.Len(commitments, 2)
 	s.Contains(commitments, expectedCommitments[0])
@@ -132,7 +132,7 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
 
 func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID_NonExistentCommitments() {
 	batchID := s.addRandomBatch()
-	commitments, err := s.storage.GetCommitmentsByBatchID(*batchID)
+	commitments, err := s.storage.GetCommitmentsByBatchID(batchID)
 	s.Equal(NewNotFoundError("commitments"), err)
 	s.Nil(commitments)
 }

@@ -39,13 +39,13 @@ func (s *GetBatchTestSuite) SetupTest() {
 	s.tree = st.NewStateTree(s.storage.Storage)
 
 	s.commitment = commitment
-	s.commitment.IncludedInBatch = ref.Int32(1)
+	s.commitment.IncludedInBatch = models.NewUint256(1)
 
 	s.batch = models.Batch{
+		ID:                models.MakeUint256(1),
 		Type:              txtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
-		Number:            models.MakeUint256(1),
 		FinalisationBlock: ref.Uint32(42000),
 		AccountTreeRoot:   utils.NewRandomHash(),
 	}
@@ -59,7 +59,7 @@ func (s *GetBatchTestSuite) TearDownTest() {
 
 func (s *GetBatchTestSuite) TestGetBatchByHash() {
 	s.addLeaf()
-	_, err := s.storage.AddBatch(&s.batch)
+	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
 	_, err = s.storage.AddCommitment(&s.commitment)
@@ -69,7 +69,7 @@ func (s *GetBatchTestSuite) TestGetBatchByHash() {
 	s.NoError(err)
 	s.NotNil(result)
 	s.Len(result.Commitments, 1)
-	s.Equal(s.batch.Number, result.ID)
+	s.Equal(s.batch.ID, result.ID)
 	s.Equal(s.batch.Hash, result.Hash)
 	s.Equal(s.batch.Type, result.Type)
 	s.Equal(s.batch.TransactionHash, result.TransactionHash)
@@ -79,7 +79,7 @@ func (s *GetBatchTestSuite) TestGetBatchByHash() {
 
 func (s *GetBatchTestSuite) TestGetBatchByHash_NoCommitments() {
 	s.addLeaf()
-	_, err := s.storage.AddBatch(&s.batch)
+	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
 	result, err := s.api.GetBatchByHash(*s.batch.Hash)
@@ -95,17 +95,17 @@ func (s *GetBatchTestSuite) TestGetBatchByHash_NonExistentBatch() {
 
 func (s *GetBatchTestSuite) TestGetBatchByID() {
 	s.addLeaf()
-	batchID, err := s.storage.AddBatch(&s.batch)
+	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
 	_, err = s.storage.AddCommitment(&s.commitment)
 	s.NoError(err)
 
-	result, err := s.api.GetBatchByID(models.MakeUint256(uint64(*batchID)))
+	result, err := s.api.GetBatchByID(s.batch.ID)
 	s.NoError(err)
 	s.NotNil(result)
 	s.Len(result.Commitments, 1)
-	s.Equal(s.batch.Number, result.ID)
+	s.Equal(s.batch.ID, result.ID)
 	s.Equal(s.batch.Hash, result.Hash)
 	s.Equal(s.batch.Type, result.Type)
 	s.Equal(s.batch.TransactionHash, result.TransactionHash)
@@ -114,7 +114,7 @@ func (s *GetBatchTestSuite) TestGetBatchByID() {
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByID_NoCommitments() {
-	_, err := s.storage.AddBatch(&s.batch)
+	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
 	result, err := s.api.GetBatchByID(models.MakeUint256(0))

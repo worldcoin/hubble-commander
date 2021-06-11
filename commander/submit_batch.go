@@ -35,16 +35,15 @@ func (t *transactionExecutor) submitBatch(batch *models.Batch, commitments []mod
 	}
 
 	batch.TransactionHash = tx.Hash()
-	batchID, err := t.storage.AddBatch(batch)
+	err = t.storage.AddBatch(batch)
 	if err != nil {
 		return err
 	}
-	batch.ID = *batchID
 
-	return t.markCommitmentsAsIncluded(commitments, *batchID)
+	return t.markCommitmentsAsIncluded(commitments, batch.ID)
 }
 
-func (t *transactionExecutor) markCommitmentsAsIncluded(commitments []models.Commitment, batchID int32) error {
+func (t *transactionExecutor) markCommitmentsAsIncluded(commitments []models.Commitment, batchID models.Uint256) error {
 	for i := range commitments {
 		err := t.storage.MarkCommitmentAsIncluded(commitments[i].ID, batchID)
 		if err != nil {

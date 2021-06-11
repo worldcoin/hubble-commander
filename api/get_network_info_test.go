@@ -57,23 +57,23 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo_NoBatches() {
 func (s *NetworkInfoTestSuite) TestGetNetworkInfo_NoFinalisedBatches() {
 	batches := []models.Batch{
 		{
+			ID:                models.MakeUint256(1234),
 			Type:              txtype.Transfer,
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
-			Number:            models.MakeUint256(1234),
 			FinalisationBlock: ref.Uint32(1234),
 		},
 		{
+			ID:                models.MakeUint256(2000),
 			Type:              txtype.Create2Transfer,
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
-			Number:            models.MakeUint256(2000),
 			FinalisationBlock: ref.Uint32(2000),
 		},
 	}
-	_, err := s.api.storage.AddBatch(&batches[0])
+	err := s.api.storage.AddBatch(&batches[0])
 	s.NoError(err)
-	_, err = s.api.storage.AddBatch(&batches[1])
+	err = s.api.storage.AddBatch(&batches[1])
 	s.NoError(err)
 
 	networkInfo, err := s.api.GetNetworkInfo()
@@ -86,27 +86,27 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo_NoFinalisedBatches() {
 func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
 	batches := []models.Batch{
 		{
+			ID:                models.MakeUint256(1234),
 			Type:              txtype.Transfer,
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
-			Number:            models.MakeUint256(1234),
 			FinalisationBlock: ref.Uint32(1),
 		},
 		{
+			ID:                models.MakeUint256(2000),
 			Type:              txtype.Create2Transfer,
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
-			Number:            models.MakeUint256(2000),
 			FinalisationBlock: ref.Uint32(2000),
 		},
 	}
-	batchID, err := s.api.storage.AddBatch(&batches[0])
+	err := s.api.storage.AddBatch(&batches[0])
 	s.NoError(err)
-	_, err = s.api.storage.AddBatch(&batches[1])
+	err = s.api.storage.AddBatch(&batches[1])
 	s.NoError(err)
 
 	commitmentInBatch := commitment
-	commitmentInBatch.IncludedInBatch = batchID
+	commitmentInBatch.IncludedInBatch = &batches[0].ID
 	commitmentID, err := s.api.storage.AddCommitment(&commitmentInBatch)
 	s.NoError(err)
 	err = s.api.storage.AddTransfer(&models.Transfer{

@@ -118,16 +118,16 @@ func (s *TransactionBaseTestSuite) TestBatchMarkTransactionAsIncluded() {
 
 func (s *TransactionBaseTestSuite) TestGetTransactionCount() {
 	batch := &models.Batch{
+		ID:                models.MakeUint256(1),
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
-		Number:            models.MakeUint256(1),
 		FinalisationBlock: ref.Uint32(1234),
 	}
-	batchID, err := s.storage.AddBatch(batch)
+	err := s.storage.AddBatch(batch)
 	s.NoError(err)
 
 	commitmentInBatch := commitment
-	commitmentInBatch.IncludedInBatch = batchID
+	commitmentInBatch.IncludedInBatch = &batch.ID
 	commitmentID, err := s.storage.AddCommitment(&commitmentInBatch)
 	s.NoError(err)
 

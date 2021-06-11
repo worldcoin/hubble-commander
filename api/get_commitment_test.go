@@ -32,11 +32,10 @@ func (s *GetCommitmentTestSuite) SetupTest() {
 	s.api = &API{storage: s.storage.Storage}
 
 	s.batch = models.Batch{
-		ID:                1,
+		ID:                models.MakeUint256(1),
 		Type:              txtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
-		Number:            models.MakeUint256(1),
 		FinalisationBlock: ref.Uint32(113),
 	}
 
@@ -50,7 +49,7 @@ func (s *GetCommitmentTestSuite) TearDownTest() {
 }
 
 func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
-	_, err := s.storage.AddBatch(&s.batch)
+	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
 	commitmentID, err := s.storage.AddCommitment(&s.commitment)
@@ -78,7 +77,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 }
 
 func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
-	_, err := s.storage.AddBatch(&s.batch)
+	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
 	c2tCommitment := s.commitment
