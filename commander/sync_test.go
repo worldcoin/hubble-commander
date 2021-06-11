@@ -112,7 +112,6 @@ func (s *SyncTestSuite) TearDownTest() {
 }
 
 func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
-	s.T().Skip()
 	txs := []models.Transfer{
 		{
 			TransactionBase: models.TransactionBase{
