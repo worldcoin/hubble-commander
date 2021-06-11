@@ -149,7 +149,7 @@ func (t *transactionExecutor) handleApplyC2T(
 	appliedTransfers *AppliedC2Transfers,
 	combinedFee, tokenIndex *models.Uint256,
 ) (bool, error) {
-	transferError, appError := ApplyCreate2Transfer(t.storage, transfer, pubKeyID, *tokenIndex)
+	transferError, appError := t.ApplyCreate2Transfer(transfer, pubKeyID, *tokenIndex)
 	if appError != nil {
 		return false, appError
 	}

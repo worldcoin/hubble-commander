@@ -11,11 +11,12 @@ import (
 
 // transactionExecutor executes transactions & syncs batches. Manages a database transaction.
 type transactionExecutor struct {
-	cfg     *config.RollupConfig
-	storage *st.Storage
-	tx      *db.TxController
-	client  *eth.Client
-	ctx     context.Context
+	cfg       *config.RollupConfig
+	storage   *st.Storage
+	stateTree *st.StateTree
+	tx        *db.TxController
+	client    *eth.Client
+	ctx       context.Context
 }
 
 // newTransactionExecutor creates a transactionExecutor and starts a database transaction.
@@ -26,10 +27,11 @@ func newTransactionExecutor(storage *st.Storage, client *eth.Client, cfg *config
 	}
 
 	return &transactionExecutor{
-		cfg:     cfg,
-		storage: txStorage,
-		tx:      tx,
-		client:  client,
+		cfg:       cfg,
+		storage:   txStorage,
+		stateTree: st.NewStateTree(txStorage),
+		tx:        tx,
+		client:    client,
 	}, nil
 }
 
@@ -46,22 +48,24 @@ func newTransactionExecutorWithCtx(
 	}
 
 	return &transactionExecutor{
-		cfg:     cfg,
-		storage: txStorage,
-		tx:      tx,
-		client:  client,
-		ctx:     ctx,
+		cfg:       cfg,
+		storage:   txStorage,
+		stateTree: st.NewStateTree(txStorage),
+		tx:        tx,
+		client:    client,
+		ctx:       ctx,
 	}, nil
 }
 
 // newTestTransactionExecutor creates a transactionExecutor without a database transaction.
 func newTestTransactionExecutor(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) *transactionExecutor {
 	return &transactionExecutor{
-		cfg:     cfg,
-		storage: storage,
-		tx:      nil,
-		client:  client,
-		ctx:     context.Background(),
+		cfg:       cfg,
+		storage:   storage,
+		stateTree: st.NewStateTree(storage),
+		tx:        nil,
+		client:    client,
+		ctx:       context.Background(),
 	}
 }
 

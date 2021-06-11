@@ -5,7 +5,6 @@ import (
 	"reflect"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
 var (
@@ -16,16 +15,15 @@ var (
 	ErrInvalidSliceLength    = errors.New("invalid slices length")
 )
 
-func ApplyTransfer(
-	storage *st.Storage,
+func (t *transactionExecutor) ApplyTransfer(
 	transfer *models.Transfer,
 	commitmentTokenIndex models.Uint256,
 ) (transferError, appError error) {
-	senderLeaf, err := storage.GetStateLeaf(transfer.FromStateID)
+	senderLeaf, err := t.storage.GetStateLeaf(transfer.FromStateID)
 	if err != nil {
 		return nil, err
 	}
-	receiverLeaf, err := storage.GetStateLeaf(transfer.ToStateID)
+	receiverLeaf, err := t.storage.GetStateLeaf(transfer.ToStateID)
 	if err != nil {
 		return nil, err
 	}
@@ -46,15 +44,14 @@ func ApplyTransfer(
 		return err, nil
 	}
 
-	stateTree := st.NewStateTree(storage)
 	if !reflect.DeepEqual(newSenderState, senderState) {
-		err = stateTree.Set(transfer.FromStateID, &newSenderState)
+		err = t.stateTree.Set(transfer.FromStateID, &newSenderState)
 		if err != nil {
 			return nil, err
 		}
 	}
 	if !reflect.DeepEqual(newReceiverState, receiverState) {
-		err = stateTree.Set(transfer.ToStateID, &newReceiverState)
+		err = t.stateTree.Set(transfer.ToStateID, &newReceiverState)
 		if err != nil {
 			return nil, err
 		}

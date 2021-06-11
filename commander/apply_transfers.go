@@ -10,6 +10,11 @@ type AppliedTransfers struct {
 	feeReceiverStateID *uint32
 }
 
+type TransactionApplyOpts struct {
+	/// Ignore nonce field in the transaction, and assign it with the proper one from the state.
+	AssumeNonces bool
+}
+
 func (t *transactionExecutor) ApplyTransfers(
 	transfers []models.Transfer,
 ) (*AppliedTransfers, error) {
@@ -31,7 +36,7 @@ func (t *transactionExecutor) ApplyTransfers(
 
 	for i := range transfers {
 		transfer := &transfers[i]
-		transferError, appError := ApplyTransfer(t.storage, transfer, commitmentTokenIndex)
+		transferError, appError := t.ApplyTransfer(transfer, commitmentTokenIndex)
 		if appError != nil {
 			return nil, appError
 		}
