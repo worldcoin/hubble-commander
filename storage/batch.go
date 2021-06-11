@@ -28,7 +28,7 @@ func (s *Storage) AddBatch(batch *models.Batch) error {
 func (s *Storage) MarkBatchAsSubmitted(batch *models.Batch) error {
 	res, err := s.Postgres.Query(
 		s.QB.Update("batch").
-			Where(squirrel.Eq{"transaction_hash": batch.TransactionHash}).
+			Where(squirrel.Eq{"batch_id": batch.ID}).
 			Set("batch_hash", batch.Hash).
 			Set("finalisation_block", batch.FinalisationBlock). // nolint:misspell
 			Set("account_tree_root", batch.AccountTreeRoot),
