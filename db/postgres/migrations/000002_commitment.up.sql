@@ -5,5 +5,5 @@ CREATE TABLE commitment (
     fee_receiver       BIGINT   NOT NULL, -- state id of fee receiver
     combined_signature BYTEA    NOT NULL,
     post_state_root    BYTEA    NOT NULL,
-    included_in_batch  INT REFERENCES batch
+    included_in_batch  NUMERIC(78) REFERENCES batch
 );
