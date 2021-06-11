@@ -57,7 +57,7 @@ func (s *SyncTestSuite) setupDB() {
 	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
 	s.tree = st.NewStateTree(s.storage)
-	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg, transactionExecutorOpts{})
+	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg, transactionExecutorOpts{AssumeNonces: true})
 
 	s.seedDB()
 }
@@ -113,13 +113,13 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 		}, {
 			TransactionBase: models.TransactionBase{
 				TxType:      txtype.Transfer,
-				FromStateID: 1,
+				FromStateID: 0,
 				Amount:      models.MakeUint256(100),
 				Fee:         models.MakeUint256(0),
-				Nonce:       models.MakeUint256(0),
+				Nonce:       models.MakeUint256(1),
 				Signature:   s.mockSignature(),
 			},
-			ToStateID: 0,
+			ToStateID: 1,
 		},
 	}
 	for i := range txs {

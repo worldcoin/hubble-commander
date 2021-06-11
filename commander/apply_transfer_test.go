@@ -104,7 +104,7 @@ func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_Validation_Nonc
 		ToStateID: 2,
 	}
 
-	_, _, err := CalculateStateAfterTransfer(&senderState, &receiverState, &transfer)
+	err := validateTransferNonce(&senderState, &transfer)
 	s.Error(err)
 }
 

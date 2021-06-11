@@ -35,6 +35,15 @@ func (t *transactionExecutor) ApplyTransfer(
 		return nil, ErrIncorrectTokenIndices
 	}
 
+	if t.opts.AssumeNonces {
+		transfer.Nonce = senderState.Nonce
+	} else {
+		err = validateTransferNonce(&senderState, transfer)
+		if err != nil {
+			return err, nil
+		}
+	}
+
 	newSenderState, newReceiverState, err := CalculateStateAfterTransfer(
 		&senderState,
 		&receiverState,
@@ -69,15 +78,6 @@ func CalculateStateAfterTransfer(
 	newReceiverState models.UserState,
 	err error,
 ) {
-	comparison := transfer.Nonce.Cmp(&senderState.Nonce)
-	if comparison > 0 {
-		err = ErrNonceTooHigh
-		return
-	} else if comparison < 0 {
-		err = ErrNonceTooLow
-		return
-	}
-
 	totalAmount := transfer.Amount.Add(&transfer.Fee)
 	if senderState.Balance.Cmp(totalAmount) < 0 {
 		err = ErrBalanceTooLow
@@ -92,4 +92,14 @@ func CalculateStateAfterTransfer(
 	newReceiverState.Balance = *newReceiverState.Balance.Add(&transfer.Amount)
 
 	return newSenderState, newReceiverState, nil
+}
+
+func validateTransferNonce(senderState *models.UserState, transfer *models.Transfer) error {
+	comparison := transfer.Nonce.Cmp(&senderState.Nonce)
+	if comparison > 0 {
+		return ErrNonceTooHigh
+	} else if comparison < 0 {
+		return ErrNonceTooLow
+	}
+	return nil
 }
