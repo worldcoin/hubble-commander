@@ -151,7 +151,7 @@ func (s *TransferTestSuite) TestGetPendingTransfers() {
 		s.NoError(err)
 	}
 
-	res, err := s.storage.GetPendingTransfers()
+	res, err := s.storage.GetPendingTransfers(32, nil)
 	s.NoError(err)
 
 	s.Equal([]models.Transfer{transfer, transfer2}, res)
@@ -175,10 +175,58 @@ func (s *TransferTestSuite) TestGetPendingTransfers_OrdersTransfersByNonceAscend
 		s.NoError(err)
 	}
 
-	res, err := s.storage.GetPendingTransfers()
+	res, err := s.storage.GetPendingTransfers(32, nil)
 	s.NoError(err)
 
 	s.Equal([]models.Transfer{transfer, transfer2, transfer4, transfer3}, res)
+}
+
+func (s *TransferTestSuite) TestGetPendingTransfers_ReturnsCorrectNumberOfTransfers() {
+	transfer.Nonce = models.MakeUint256(1)
+	transfer.Hash = utils.RandomHash()
+	transfer2 := transfer
+	transfer2.Nonce = models.MakeUint256(4)
+	transfer2.Hash = utils.RandomHash()
+	transfer3 := transfer
+	transfer3.Nonce = models.MakeUint256(7)
+	transfer3.Hash = utils.RandomHash()
+	transfer4 := transfer
+	transfer4.Nonce = models.MakeUint256(5)
+	transfer4.Hash = utils.RandomHash()
+
+	for _, transfer := range []*models.Transfer{&transfer, &transfer2, &transfer3, &transfer4} {
+		err := s.storage.AddTransfer(transfer)
+		s.NoError(err)
+	}
+
+	res, err := s.storage.GetPendingTransfers(2, nil)
+	s.NoError(err)
+
+	s.Equal([]models.Transfer{transfer, transfer2}, res)
+}
+
+func (s *TransferTestSuite) TestGetPendingTransfers_ReturnsTransfersStartingFromGivenNonce() {
+	transfer.Nonce = models.MakeUint256(1)
+	transfer.Hash = utils.RandomHash()
+	transfer2 := transfer
+	transfer2.Nonce = models.MakeUint256(2)
+	transfer2.Hash = utils.RandomHash()
+	transfer3 := transfer
+	transfer3.Nonce = models.MakeUint256(3)
+	transfer3.Hash = utils.RandomHash()
+	transfer4 := transfer
+	transfer4.Nonce = models.MakeUint256(4)
+	transfer4.Hash = utils.RandomHash()
+
+	for _, transfer := range []*models.Transfer{&transfer, &transfer2, &transfer3, &transfer4} {
+		err := s.storage.AddTransfer(transfer)
+		s.NoError(err)
+	}
+
+	res, err := s.storage.GetPendingTransfers(2, models.NewUint256(2))
+	s.NoError(err)
+
+	s.Equal([]models.Transfer{transfer2, transfer3}, res)
 }
 
 func (s *TransferTestSuite) TestGetUserTransfers() {
