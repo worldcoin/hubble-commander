@@ -60,37 +60,37 @@ func (s *SyncTestSuite) setupDB() {
 	s.tree = st.NewStateTree(s.storage)
 	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg)
 
-	s.seedDB()
+	seedDB(s.T(), s.storage, s.tree)
 }
 
-func (s *SyncTestSuite) seedDB() {
-	err := s.storage.AddAccountIfNotExists(&models.Account{
+func seedDB(t *testing.T, storage *st.Storage, tree *st.StateTree) {
+	err := storage.AddAccountIfNotExists(&models.Account{
 		PubKeyID:  0,
 		PublicKey: models.PublicKey{1, 2, 3},
 	})
-	s.NoError(err)
+	require.NoError(t, err)
 
-	err = s.storage.AddAccountIfNotExists(&models.Account{
+	err = storage.AddAccountIfNotExists(&models.Account{
 		PubKeyID:  1,
 		PublicKey: models.PublicKey{2, 3, 4},
 	})
-	s.NoError(err)
+	require.NoError(t, err)
 
-	err = s.tree.Set(0, &models.UserState{
+	err = tree.Set(0, &models.UserState{
 		PubKeyID:   0,
 		TokenIndex: models.MakeUint256(0),
 		Balance:    models.MakeUint256(1000),
 		Nonce:      models.MakeUint256(0),
 	})
-	s.NoError(err)
+	require.NoError(t, err)
 
-	err = s.tree.Set(1, &models.UserState{
+	err = tree.Set(1, &models.UserState{
 		PubKeyID:   1,
 		TokenIndex: models.MakeUint256(0),
 		Balance:    models.MakeUint256(0),
 		Nonce:      models.MakeUint256(0),
 	})
-	s.NoError(err)
+	require.NoError(t, err)
 }
 
 func (s *SyncTestSuite) TearDownTest() {
@@ -108,7 +108,7 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 				Amount:      models.MakeUint256(400),
 				Fee:         models.MakeUint256(0),
 				Nonce:       models.MakeUint256(0),
-				Signature:   s.mockSignature(),
+				Signature:   mockSignature(s.Assertions),
 			},
 			ToStateID: 1,
 		}, {
@@ -118,7 +118,7 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 				Amount:      models.MakeUint256(100),
 				Fee:         models.MakeUint256(0),
 				Nonce:       models.MakeUint256(0),
-				Signature:   s.mockSignature(),
+				Signature:   mockSignature(s.Assertions),
 			},
 			ToStateID: 0,
 		},
@@ -177,7 +177,7 @@ func (s *SyncTestSuite) TestSyncBatches_DoesNotSyncExistingBatchTwice() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   s.mockSignature(),
+			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID: 1,
 	}
@@ -198,7 +198,7 @@ func (s *SyncTestSuite) TestSyncBatches_DoesNotSyncExistingBatchTwice() {
 			Amount:      models.MakeUint256(100),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   s.mockSignature(),
+			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID: 0,
 	}
@@ -240,7 +240,7 @@ func (s *SyncTestSuite) TestSyncBatches_PendingBatch() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   s.mockSignature(),
+			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID: 1,
 	}
@@ -273,7 +273,7 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   s.mockSignature(),
+			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID:   ref.Uint32(5),
 		ToPublicKey: models.PublicKey{},
@@ -358,7 +358,7 @@ func (s *SyncTestSuite) syncAllBlocks() {
 	s.NoError(err)
 }
 
-func (s *SyncTestSuite) mockSignature() models.Signature {
+func mockSignature(s *require.Assertions) models.Signature {
 	wallet, err := bls.NewRandomWallet(*testDomain)
 	s.NoError(err)
 	signature, err := wallet.Sign(utils.RandomBytes(4))
