@@ -33,4 +33,4 @@ jobs:
       - name: Run E2E tests
         run: |
           make setup-geth &
-          HUBBLE_E2E=in-process make test-e2e
+          make test-e2e-in-process

@@ -11,6 +11,7 @@ import (
 type InProcessCommander struct {
 	client    jsonrpc.RPCClient
 	commander *commander.Commander
+	cfg       *config.Config
 }
 
 func CreateInProcessCommander() *InProcessCommander {
@@ -25,6 +26,7 @@ func CreateInProcessCommander() *InProcessCommander {
 	return &InProcessCommander{
 		client:    client,
 		commander: cmd,
+		cfg:       cfg,
 	}
 }
 
@@ -41,6 +43,7 @@ func (e *InProcessCommander) Restart() error {
 	if err != nil {
 		return err
 	}
+	e.cfg.Bootstrap.Prune = false
 	return e.commander.Start()
 }
 
