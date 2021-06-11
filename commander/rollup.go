@@ -12,6 +12,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+var ErrInvalidStateRoot = errors.New("latest commitment state root doesn't match current one")
+
 func (c *Commander) manageRollupLoop(cancel context.CancelFunc, isProposer bool) context.CancelFunc {
 	if isProposer && !c.rollupLoopRunning {
 		var ctx context.Context
@@ -50,7 +52,7 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 	c.stateMutex.Lock()
 	defer c.stateMutex.Unlock()
 
-	err = c.validateStateRoot()
+	err = validateStateRoot(c.storage)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -123,17 +125,17 @@ func (t *transactionExecutor) buildCreate2TransfersCommitments(domain *bls.Domai
 	return t.createCreate2TransferCommitments(pendingTransfers, domain)
 }
 
-func (c *Commander) validateStateRoot() error {
-	latestCommitment, err := c.storage.GetLatestCommitment()
+func validateStateRoot(storage *st.Storage) error {
+	latestCommitment, err := storage.GetLatestCommitment()
 	if err != nil {
 		return err
 	}
-	stateRoot, err := st.NewStateTree(c.storage).Root()
+	stateRoot, err := st.NewStateTree(storage).Root()
 	if err != nil {
 		return err
 	}
 	if latestCommitment.PostStateRoot != *stateRoot {
-		return errors.New("latest commitment state root doesn't match current one")
+		return ErrInvalidStateRoot
 	}
 	return nil
 }
