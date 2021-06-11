@@ -99,11 +99,9 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedBef
 		s.Equal(accounts[i], userAccounts[0])
 	}
 
-	s.Eventually(func() bool {
-		batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
-		s.NoError(err)
-		return len(batches) == 1
-	}, 1*time.Second, 100*time.Millisecond)
+	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
+	s.NoError(err)
+	s.Len(batches, 1)
 }
 
 func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedWhileRunning() {
@@ -127,11 +125,9 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedWhi
 		s.Equal(accounts[i], userAccounts[0])
 	}
 
-	s.Eventually(func() bool {
-		batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
-		s.NoError(err)
-		return len(batches) == 1
-	}, 1*time.Second, 100*time.Millisecond)
+	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
+	s.NoError(err)
+	s.Len(batches, 1)
 }
 
 func (s *NewBlockLoopTestSuite) startBlockLoop() {
