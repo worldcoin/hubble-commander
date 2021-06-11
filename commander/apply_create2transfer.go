@@ -34,5 +34,7 @@ func (t *transactionExecutor) ApplyCreate2Transfer(
 		ToStateID:       *create2Transfer.ToStateID,
 	}
 
-	return t.ApplyTransfer(&transfer, commitmentTokenIndex)
+	create2TransferError, appError = t.ApplyTransfer(&transfer, commitmentTokenIndex)
+	create2Transfer.Nonce = transfer.Nonce
+	return create2TransferError, appError
 }

@@ -71,7 +71,7 @@ func TestCommanderSync(t *testing.T) {
 	}()
 
 	var networkInfo dto.NetworkInfo
-	err = passiveCommander.Client().CallFor(&networkInfo, "hubble_getNetworkInfo")
+	err = activeCommander.Client().CallFor(&networkInfo, "hubble_getNetworkInfo")
 	require.NoError(t, err)
 
 	latestBatch := networkInfo.LatestBatch
