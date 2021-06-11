@@ -5,5 +5,6 @@ CREATE TABLE batch (
     batch_hash         BYTEA,
     batch_number       NUMERIC(78) NOT NULL,
     finalisation_block BIGINT,
-    account_tree_root  BYTEA
+    account_tree_root  BYTEA,
+    prev_state_root    BYTEA
 );
