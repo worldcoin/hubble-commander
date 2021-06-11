@@ -62,7 +62,7 @@ func (t *transactionExecutor) ApplyCreate2Transfers(
 		}
 
 		returnStruct.addedPubKeyIDs = append(returnStruct.addedPubKeyIDs, *pubKeyID)
-		if uint32(len(returnStruct.appliedTransfers)) == t.cfg.TxsPerCommitment {
+		if uint64(len(returnStruct.appliedTransfers)) == t.cfg.TxsPerCommitment {
 			break
 		}
 	}
@@ -106,7 +106,7 @@ func (t *transactionExecutor) ApplyCreate2TransfersForSync(
 			return nil, err
 		}
 
-		if uint32(len(returnStruct.appliedTransfers)) == t.cfg.TxsPerCommitment {
+		if uint64(len(returnStruct.appliedTransfers)) == t.cfg.TxsPerCommitment {
 			break
 		}
 	}

@@ -7,6 +7,7 @@ import (
 type AppliedTransfers struct {
 	appliedTransfers   []models.Transfer
 	invalidTransfers   []models.Transfer
+	lastTransferNonce  models.Uint256
 	feeReceiverStateID *uint32
 }
 
@@ -31,6 +32,7 @@ func (t *transactionExecutor) ApplyTransfers(
 
 	for i := range transfers {
 		transfer := &transfers[i]
+		returnStruct.lastTransferNonce = transfer.Nonce
 		transferError, appError := t.ApplyTransfer(transfer, commitmentTokenIndex)
 		if appError != nil {
 			return nil, appError
@@ -44,7 +46,7 @@ func (t *transactionExecutor) ApplyTransfers(
 		returnStruct.appliedTransfers = append(returnStruct.appliedTransfers, *transfer)
 		combinedFee = *combinedFee.Add(&transfer.Fee)
 
-		if uint32(len(returnStruct.appliedTransfers)) == t.cfg.TxsPerCommitment {
+		if uint64(len(returnStruct.appliedTransfers)) == t.cfg.TxsPerCommitment {
 			break
 		}
 	}
