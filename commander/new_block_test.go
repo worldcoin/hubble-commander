@@ -90,6 +90,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedBef
 	s.testClient.Commit()
 
 	s.startBlockLoop()
+	s.waitForLatestBlockSync()
 
 	for i := range accounts {
 		userAccounts, err := s.cmd.storage.GetAccounts(&accounts[i].PublicKey)
@@ -107,6 +108,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedBef
 
 func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedWhileRunning() {
 	s.startBlockLoop()
+	s.waitForLatestBlockSync()
 
 	accounts := []models.Account{
 		{PublicKey: models.PublicKey{1, 2, 3}},
@@ -114,7 +116,9 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedWhi
 	}
 	s.registerAccounts(accounts)
 	s.createAndSubmitTransferBatch(&s.transfer)
+
 	s.testClient.Commit()
+	s.waitForLatestBlockSync()
 
 	for i := range accounts {
 		userAccounts, err := s.cmd.storage.GetAccounts(&accounts[i].PublicKey)
@@ -176,6 +180,26 @@ func (s *NewBlockLoopTestSuite) createAndSubmitTransferBatch(tx *models.Transfer
 	s.NoError(err)
 
 	transactionExecutor.Rollback(nil)
+}
+
+func (s *NewBlockLoopTestSuite) waitForLatestBlockSync() {
+	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
+	s.NoError(err)
+
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			syncedBlock, err := s.cmd.storage.GetSyncedBlock(s.testClient.Client.ChainState.ChainID)
+			s.NoError(err)
+			if *syncedBlock >= *latestBlockNumber {
+				return
+			}
+		case <-time.After(time.Second):
+			s.Fail("timeout when waiting for latest block sync")
+		}
+	}
 }
 
 func TestNewBlockLoopTestSuite(t *testing.T) {
