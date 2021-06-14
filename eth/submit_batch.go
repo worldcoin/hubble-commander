@@ -15,9 +15,10 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 )
+
+const gasEstimationFactor = 1.5
 
 type SubmitBatchFunc func(commitments []models.Commitment) (*types.Transaction, error)
 
@@ -32,7 +33,7 @@ func (c *Client) SubmitTransfersBatch(commitments []models.Commitment) (
 	}
 	return c.rollup().
 		WithValue(*c.config.stakeAmount.ToBig()).
-		WithGasLimit(*estimate).
+		WithGasLimit(estimate).
 		SubmitTransfer(stateRoots, signatures, feeReceivers, transactions)
 }
 
@@ -40,9 +41,15 @@ func (c *Client) SubmitCreate2TransfersBatch(commitments []models.Commitment) (
 	*types.Transaction,
 	error,
 ) {
+	stateRoots, signatures, feeReceivers, transactions := encoder.CommitmentToCalldataFields(commitments)
+	estimate, err := c.estimateGasLimit("submitCreate2Transfer", stateRoots, signatures, feeReceivers, transactions)
+	if err != nil {
+		return nil, err
+	}
 	return c.rollup().
 		WithValue(*c.config.stakeAmount.ToBig()).
-		SubmitCreate2Transfer(encoder.CommitmentToCalldataFields(commitments))
+		WithGasLimit(estimate).
+		SubmitCreate2Transfer(stateRoots, signatures, feeReceivers, transactions)
 }
 
 func (c *Client) SubmitTransfersBatchAndMine(commitments []models.Commitment) (
@@ -102,18 +109,17 @@ func (c *Client) estimateGasLimit(
 	stateRoots [][32]byte,
 	signatures [][2]*big.Int,
 	feeReceivers []*big.Int,
-	transactions [][]byte) (*uint64, error) {
+	transactions [][]byte) (uint64, error) {
 	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return 0, errors.WithStack(err)
 	}
-	backend := c.ChainConnection.GetBackend().(*ethclient.Client)
 	input, err := rollupAbi.Pack(method, stateRoots, signatures, feeReceivers, transactions)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 	account := c.ChainConnection.GetAccount()
-	estimatedGas, err := backend.EstimateGas(context.Background(), ethereum.CallMsg{
+	estimatedGas, err := c.ChainConnection.EstimateGas(context.Background(), ethereum.CallMsg{
 		From:     account.From,
 		To:       &c.ChainState.Rollup,
 		GasPrice: account.GasPrice,
@@ -121,7 +127,7 @@ func (c *Client) estimateGasLimit(
 		Data:     input,
 	})
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
-	return &estimatedGas, nil
+	return uint64(float64(estimatedGas) * gasEstimationFactor), nil
 }
