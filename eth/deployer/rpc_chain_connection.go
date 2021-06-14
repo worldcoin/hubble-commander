@@ -84,6 +84,6 @@ func (d *RPCChainConnection) SubscribeNewHead(ch chan<- *types.Header) (ethereum
 	return d.backend.SubscribeNewHead(context.Background(), ch)
 }
 
-func (d *RPCChainConnection) EstimateGas(ctx context.Context, msg ethereum.CallMsg) (uint64, error) {
-	return d.backend.EstimateGas(ctx, msg)
+func (d *RPCChainConnection) EstimateGas(ctx context.Context, msg *ethereum.CallMsg) (uint64, error) {
+	return d.backend.EstimateGas(ctx, *msg)
 }

@@ -146,8 +146,8 @@ func (sim *Simulator) SubscribeNewHead(ch chan<- *types.Header) (ethereum.Subscr
 	return sim.Backend.SubscribeNewHead(context.Background(), ch)
 }
 
-func (sim *Simulator) EstimateGas(ctx context.Context, msg ethereum.CallMsg) (uint64, error) {
-	return sim.Backend.EstimateGas(ctx, msg)
+func (sim *Simulator) EstimateGas(ctx context.Context, msg *ethereum.CallMsg) (uint64, error) {
+	return 0, nil
 }
 
 func fillWithDefaults(config *Config) {

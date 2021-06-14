@@ -119,7 +119,7 @@ func (c *Client) estimateGasLimit(
 		return 0, err
 	}
 	account := c.ChainConnection.GetAccount()
-	estimatedGas, err := c.ChainConnection.EstimateGas(context.Background(), ethereum.CallMsg{
+	estimatedGas, err := c.ChainConnection.EstimateGas(context.Background(), &ethereum.CallMsg{
 		From:     account.From,
 		To:       &c.ChainState.Rollup,
 		GasPrice: account.GasPrice,
