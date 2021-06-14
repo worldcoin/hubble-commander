@@ -123,7 +123,7 @@ func (t *transactionExecutor) buildTransferCommitments(domain *bls.Domain) ([]mo
 }
 
 func (t *transactionExecutor) buildCreate2TransfersCommitments(domain *bls.Domain) ([]models.Commitment, error) {
-	pendingTransfers, err := t.storage.GetPendingCreate2Transfers()
+	pendingTransfers, err := t.storage.GetPendingCreate2Transfers(2*t.cfg.TxsPerCommitment, nil)
 	if err != nil {
 		return nil, err
 	}
