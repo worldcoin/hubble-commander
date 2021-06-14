@@ -14,7 +14,7 @@ var (
 	senderState = models.UserState{
 		PubKeyID:   1,
 		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(420),
+		Balance:    models.MakeUint256(400),
 		Nonce:      models.MakeUint256(0),
 	}
 	receiverState = models.UserState{
@@ -22,6 +22,15 @@ var (
 		TokenIndex: models.MakeUint256(1),
 		Balance:    models.MakeUint256(0),
 		Nonce:      models.MakeUint256(0),
+	}
+	transfer = models.Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(100),
+			Fee:         models.MakeUint256(10),
+			Nonce:       models.MakeUint256(0),
+		},
+		ToStateID: 2,
 	}
 )
 
@@ -66,16 +75,6 @@ func (s *ApplyTransferTestSuite) TearDownTest() {
 }
 
 func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_UpdatesStates() {
-	transfer := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			FromStateID: 1,
-			Amount:      models.MakeUint256(100),
-			Fee:         models.MakeUint256(10),
-			Nonce:       models.MakeUint256(0),
-		},
-		ToStateID: 2,
-	}
-
 	newSenderState, newReceiverState, err := CalculateStateAfterTransfer(
 		&senderState,
 		&receiverState,
@@ -84,7 +83,7 @@ func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_UpdatesStates()
 	s.NoError(err)
 
 	s.Equal(models.MakeUint256(1), newSenderState.Nonce)
-	s.Equal(models.MakeUint256(310), newSenderState.Balance)
+	s.Equal(models.MakeUint256(290), newSenderState.Balance)
 
 	s.Equal(models.MakeUint256(0), newReceiverState.Nonce)
 	s.Equal(models.MakeUint256(100), newReceiverState.Balance)
@@ -94,47 +93,24 @@ func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_UpdatesStates()
 }
 
 func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_Validation_Balance() {
-	transfer := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			FromStateID: 1,
-			Amount:      models.MakeUint256(400),
-			Fee:         models.MakeUint256(50),
-			Nonce:       models.MakeUint256(0),
-		},
-		ToStateID: 2,
-	}
+	transferAboveBalance := transfer
+	transferAboveBalance.Amount = models.MakeUint256(410)
 
-	_, _, err := CalculateStateAfterTransfer(&senderState, &receiverState, &transfer)
-	s.Error(err)
+	_, _, err := CalculateStateAfterTransfer(&senderState, &receiverState, &transferAboveBalance)
+	s.Equal(ErrBalanceTooLow, err)
 }
 
 func (s *ApplyTransferTestSuite) TestApplyTransfer_Validation_Nonce() {
-	transfer := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			FromStateID: 1,
-			Amount:      models.MakeUint256(400),
-			Fee:         models.MakeUint256(50),
-			Nonce:       models.MakeUint256(1),
-		},
-		ToStateID: 2,
-	}
+	transferWithBadNonce := transfer
+	transferWithBadNonce.Nonce = models.MakeUint256(1)
 	s.setUserStatesInTree()
 
-	transferError, appError := s.transactionExecutor.ApplyTransfer(&transfer, models.MakeUint256(1))
+	transferError, appError := s.transactionExecutor.ApplyTransfer(&transferWithBadNonce, models.MakeUint256(1))
 	s.Equal(ErrNonceTooHigh, transferError)
 	s.NoError(appError)
 }
 
 func (s *ApplyTransferTestSuite) TestApplyTransfer_Validation_TokenIndex() {
-	transfer := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			FromStateID: 1,
-			Amount:      models.MakeUint256(400),
-			Fee:         models.MakeUint256(50),
-			Nonce:       models.MakeUint256(0),
-		},
-		ToStateID: 2,
-	}
 	s.setUserStatesInTree()
 
 	transferError, appError := s.transactionExecutor.ApplyTransfer(&transfer, models.MakeUint256(3))
@@ -143,15 +119,6 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_Validation_TokenIndex() {
 }
 
 func (s *ApplyTransferTestSuite) TestApplyTransfer() {
-	transfer := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			FromStateID: 1,
-			Amount:      models.MakeUint256(100),
-			Fee:         models.MakeUint256(50),
-			Nonce:       models.MakeUint256(0),
-		},
-		ToStateID: 2,
-	}
 	s.setUserStatesInTree()
 
 	transferError, appError := s.transactionExecutor.ApplyTransfer(&transfer, models.MakeUint256(1))
@@ -163,7 +130,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer() {
 	receiverLeaf, err := s.storage.GetStateLeaf(2)
 	s.NoError(err)
 
-	s.Equal(uint64(270), senderLeaf.Balance.Uint64())
+	s.Equal(uint64(290), senderLeaf.Balance.Uint64())
 	s.Equal(uint64(100), receiverLeaf.Balance.Uint64())
 }
 
