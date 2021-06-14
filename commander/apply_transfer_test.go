@@ -51,7 +51,12 @@ func (s *ApplyTransferTestSuite) SetupTest() {
 	s.storage, err = storage.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.tree = storage.NewStateTree(s.storage.Storage)
-	s.transactionExecutor = newTestTransactionExecutor(s.storage.Storage, nil, config.GetTestConfig().Rollup, transactionExecutorOpts{})
+	s.transactionExecutor = newTestTransactionExecutor(
+		s.storage.Storage,
+		nil,
+		&config.RollupConfig{FeeReceiverPubKeyID: 0},
+		transactionExecutorOpts{},
+	)
 
 	accounts := []models.Account{
 		{
@@ -92,7 +97,7 @@ func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_UpdatesStates()
 	s.NotEqual(&newReceiverState, &receiverState)
 }
 
-func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_Validation_Balance() {
+func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_ValidatesBalance() {
 	transferAboveBalance := transfer
 	transferAboveBalance.Amount = models.MakeUint256(410)
 
@@ -100,7 +105,7 @@ func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_Validation_Bala
 	s.Equal(ErrBalanceTooLow, err)
 }
 
-func (s *ApplyTransferTestSuite) TestApplyTransfer_Validation_ToStateID() {
+func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesToStateID() {
 	s.setUserStatesInTree()
 
 	c2T := create2Transfer
@@ -109,7 +114,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_Validation_ToStateID() {
 	s.Equal(ErrNilReceiverStateID, appError)
 }
 
-func (s *ApplyTransferTestSuite) TestApplyTransfer_Validation_Nonce() {
+func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesNonce() {
 	transferWithBadNonce := transfer
 	transferWithBadNonce.Nonce = models.MakeUint256(1)
 	s.setUserStatesInTree()
@@ -119,7 +124,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_Validation_Nonce() {
 	s.NoError(appError)
 }
 
-func (s *ApplyTransferTestSuite) TestApplyTransfer_Validation_TokenIndex() {
+func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesTokenIndex() {
 	s.setUserStatesInTree()
 
 	transferError, appError := s.transactionExecutor.ApplyTransfer(&transfer, models.MakeUint256(3))
@@ -141,6 +146,20 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer() {
 
 	s.Equal(uint64(290), senderLeaf.Balance.Uint64())
 	s.Equal(uint64(100), receiverLeaf.Balance.Uint64())
+}
+
+func (s *ApplyTransferTestSuite) TestApplyTransfer_AssumesNonce() {
+	s.setUserStatesInTree()
+	transferWithModifiedNonce := transfer
+	transferWithModifiedNonce.Nonce = models.MakeUint256(1234)
+
+	txExecutor := newTestTransactionExecutor(s.storage.Storage, nil, nil, transactionExecutorOpts{AssumeNonces: true})
+
+	transferError, appError := txExecutor.ApplyTransfer(&transferWithModifiedNonce, models.MakeUint256(1))
+	s.NoError(appError)
+	s.NoError(transferError)
+
+	s.Equal(models.MakeUint256(0), transferWithModifiedNonce.Nonce)
 }
 
 func (s *ApplyTransferTestSuite) setUserStatesInTree() {
