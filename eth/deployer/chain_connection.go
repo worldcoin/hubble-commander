@@ -17,6 +17,8 @@ type ChainBackend interface {
 }
 
 type ChainConnection interface {
+	ethereum.GasEstimator
+
 	GetAccount() *bind.TransactOpts
 
 	GetBackend() ChainBackend

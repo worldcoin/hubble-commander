@@ -83,3 +83,7 @@ func (d *RPCChainConnection) GetLatestBlockNumber() (*uint64, error) {
 func (d *RPCChainConnection) SubscribeNewHead(ch chan<- *types.Header) (ethereum.Subscription, error) {
 	return d.backend.SubscribeNewHead(context.Background(), ch)
 }
+
+func (d *RPCChainConnection) EstimateGas(ctx context.Context, msg ethereum.CallMsg) (uint64, error) {
+	return d.backend.EstimateGas(ctx, msg)
+}
