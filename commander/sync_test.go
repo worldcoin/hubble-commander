@@ -2,7 +2,6 @@ package commander
 
 import (
 	"context"
-	"sync"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -29,7 +28,6 @@ type SyncTestSuite struct {
 	client              *eth.TestClient
 	cfg                 *config.RollupConfig
 	transactionExecutor *transactionExecutor
-	stateMutex          *sync.Mutex
 	transfer            models.Transfer
 }
 
@@ -59,8 +57,6 @@ func (s *SyncTestSuite) SetupTest() {
 		MaxCommitmentsPerBatch: 32,
 		TxsPerCommitment:       1,
 	}
-
-	s.stateMutex = &sync.Mutex{}
 
 	s.setupDB()
 }
@@ -341,7 +337,7 @@ func (s *SyncTestSuite) TestRevertBatch_RevertsState() {
 			FinalisationBlock: ref.Uint32(20),
 		},
 	}
-	err = s.transactionExecutor.revertBatches(s.stateMutex, decodedBatch, pendingBatch)
+	err = s.transactionExecutor.revertBatches(decodedBatch, pendingBatch)
 	s.NoError(err)
 
 	stateRoot, err := s.tree.Root()
@@ -393,7 +389,7 @@ func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {
 			FinalisationBlock: ref.Uint32(20),
 		},
 	}
-	err = s.transactionExecutor.revertBatches(s.stateMutex, decodedBatch, &pendingBatches[0])
+	err = s.transactionExecutor.revertBatches(decodedBatch, &pendingBatches[0])
 	s.NoError(err)
 
 	stateRoot, err := s.tree.Root()
@@ -426,7 +422,7 @@ func (s *SyncTestSuite) TestRevertBatch_SyncsCorrectBatch() {
 	s.NoError(err)
 	s.Len(batches, 1)
 
-	err = s.transactionExecutor.revertBatches(s.stateMutex, &batches[0], localBatch)
+	err = s.transactionExecutor.revertBatches(&batches[0], localBatch)
 	s.NoError(err)
 
 	batches[0].Batch.ID = pendingBatch.ID + 1 // postgres IDs are not reused
@@ -526,7 +522,7 @@ func (s *SyncTestSuite) createAndSubmitC2TBatch(tx *models.Create2Transfer) mode
 func (s *SyncTestSuite) syncAllBlocks() {
 	latestBlockNumber, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
-	err = s.transactionExecutor.SyncBatches(s.stateMutex, 0, *latestBlockNumber)
+	err = s.transactionExecutor.SyncBatches(0, *latestBlockNumber)
 	s.NoError(err)
 }
 
