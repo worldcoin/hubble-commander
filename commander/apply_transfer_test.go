@@ -103,7 +103,8 @@ func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_Validation_Bala
 func (s *ApplyTransferTestSuite) TestApplyTransfer_Validation_ToStateID() {
 	s.setUserStatesInTree()
 
-	transferError, appError := s.transactionExecutor.ApplyTransfer(&create2Transfer, models.MakeUint256(1))
+	c2T := create2Transfer
+	transferError, appError := s.transactionExecutor.ApplyTransfer(&c2T, models.MakeUint256(1))
 	s.NoError(transferError)
 	s.Equal(ErrNilReceiverStateID, appError)
 }

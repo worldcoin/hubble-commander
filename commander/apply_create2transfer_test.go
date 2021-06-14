@@ -93,7 +93,8 @@ func (s *ApplyCreate2TransferTestSuite) TearDownTest() {
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InsertsNewEmptyStateLeaf() {
-	transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&create2Transfer, 2, feeReceiverTokenIndex)
+	c2T := create2Transfer
+	transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&c2T, 2, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -105,13 +106,14 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InsertsNewEmpty
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer() {
-	transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&create2Transfer, 2, feeReceiverTokenIndex)
+	c2T := create2Transfer
+	transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&c2T, 2, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)
 
 	receiverLeaf, err := s.storage.GetStateLeaf(2)
 	s.NoError(err)
-	senderLeaf, err := s.storage.GetStateLeaf(create2Transfer.FromStateID)
+	senderLeaf, err := s.storage.GetStateLeaf(c2T.FromStateID)
 	s.NoError(err)
 
 	s.Equal(uint64(8900), senderLeaf.Balance.Uint64())
@@ -119,16 +121,16 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer()
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_TransferWithStateID() {
-	c2t := create2Transfer
-	c2t.ToStateID = ref.Uint32(5)
-	transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&c2t, 2, feeReceiverTokenIndex)
+	c2T := create2Transfer
+	c2T.ToStateID = ref.Uint32(5)
+	transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&c2T, 2, feeReceiverTokenIndex)
 	s.NoError(appError)
 	s.NoError(transferError)
-	s.Equal(uint32(5), *c2t.ToStateID)
+	s.Equal(uint32(5), *c2T.ToStateID)
 
-	receiverLeaf, err := s.storage.GetStateLeaf(*c2t.ToStateID)
+	receiverLeaf, err := s.storage.GetStateLeaf(*c2T.ToStateID)
 	s.NoError(err)
-	senderLeaf, err := s.storage.GetStateLeaf(create2Transfer.FromStateID)
+	senderLeaf, err := s.storage.GetStateLeaf(c2T.FromStateID)
 	s.NoError(err)
 
 	s.Equal(uint64(8900), senderLeaf.Balance.Uint64())
