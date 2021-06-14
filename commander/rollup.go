@@ -122,6 +122,7 @@ func (t *transactionExecutor) buildCreate2TransfersCommitments(domain *bls.Domai
 	return t.createCreate2TransferCommitments(pendingTransfers, domain)
 }
 
+// TODO refactor to method on transactionExecutor?
 func newPendingBatch(storage *st.Storage, batchType txtype.TransactionType) (*models.Batch, error) {
 	stateTree := st.NewStateTree(storage)
 	prevStateRoot, err := stateTree.Root()

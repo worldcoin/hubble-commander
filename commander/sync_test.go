@@ -42,7 +42,7 @@ func (s *SyncTestSuite) SetupSuite() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   s.mockSignature(),
+			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID: 1,
 	}
@@ -374,7 +374,7 @@ func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {
 			Amount:      models.MakeUint256(200),
 			Fee:         models.MakeUint256(10),
 			Nonce:       models.MakeUint256(1),
-			Signature:   s.mockSignature(),
+			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID: 1,
 	}
