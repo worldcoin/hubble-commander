@@ -163,13 +163,13 @@ func (s *Create2TransferCommitmentsTestSuite) addCreate2Transfers(transfers []mo
 	}
 }
 
-func (s *Create2TransferCommitmentsTestSuite) prepareAndReturnPendingCreate2Transfers(transfersAmount int) []models.Create2Transfer {
+func (s *Create2TransferCommitmentsTestSuite) prepareAndReturnPendingCreate2Transfers(transfersAmount uint64) []models.Create2Transfer {
 	transfers := generateValidCreate2Transfers(transfersAmount, &models.PublicKey{1, 2, 3})
 	s.addCreate2Transfers(transfers)
 
 	pendingTransfers, err := s.storage.GetPendingCreate2Transfers(32, nil)
 	s.NoError(err)
-	s.Len(pendingTransfers, transfersAmount)
+	s.Len(pendingTransfers, int(transfersAmount))
 
 	return pendingTransfers
 }

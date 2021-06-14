@@ -167,6 +167,21 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 	}
 }
 
+func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_ReturnsLastTransactionNonce() {
+	generatedTransfers := generateValidCreate2Transfers(13, &s.publicKey)
+
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers)
+	s.NoError(err)
+
+	s.Len(transfers.appliedTransfers, 6)
+	s.Len(transfers.invalidTransfers, 0)
+	s.Len(transfers.addedPubKeyIDs, 6)
+
+	state, err := s.storage.GetStateLeaf(1)
+	s.NoError(err)
+	s.Equal(*state.Nonce.SubN(1), transfers.lastTransactionNonce)
+}
+
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_SomeValid() {
 	generatedTransfers := generateValidCreate2Transfers(2, &s.publicKey)
 	generatedTransfers = append(generatedTransfers, generateInvalidCreate2Transfers(3, &s.publicKey)...)
@@ -257,9 +272,9 @@ func TestApplyCreate2TransfersTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplyCreate2TransfersTestSuite))
 }
 
-func generateValidCreate2Transfers(transfersAmount int, publicKey *models.PublicKey) []models.Create2Transfer {
+func generateValidCreate2Transfers(transfersAmount uint64, publicKey *models.PublicKey) []models.Create2Transfer {
 	transfers := make([]models.Create2Transfer, 0, transfersAmount)
-	for i := 0; i < transfersAmount; i++ {
+	for i := uint64(0); i < transfersAmount; i++ {
 		transfer := models.Create2Transfer{
 			TransactionBase: models.TransactionBase{
 				Hash:        utils.RandomHash(),
@@ -267,7 +282,7 @@ func generateValidCreate2Transfers(transfersAmount int, publicKey *models.Public
 				FromStateID: 1,
 				Amount:      models.MakeUint256(1),
 				Fee:         models.MakeUint256(1),
-				Nonce:       models.MakeUint256(uint64(i)),
+				Nonce:       models.MakeUint256(i),
 			},
 			ToStateID:   nil,
 			ToPublicKey: *publicKey,
@@ -277,9 +292,9 @@ func generateValidCreate2Transfers(transfersAmount int, publicKey *models.Public
 	return transfers
 }
 
-func generateInvalidCreate2Transfers(transfersAmount int, publicKey *models.PublicKey) []models.Create2Transfer {
+func generateInvalidCreate2Transfers(transfersAmount uint64, publicKey *models.PublicKey) []models.Create2Transfer {
 	transfers := make([]models.Create2Transfer, 0, transfersAmount)
-	for i := 0; i < transfersAmount; i++ {
+	for i := uint64(0); i < transfersAmount; i++ {
 		transfer := models.Create2Transfer{
 			TransactionBase: models.TransactionBase{
 				Hash:        utils.RandomHash(),

@@ -53,7 +53,7 @@ func (t *transactionExecutor) createTransferCommitments(
 				break
 			}
 
-			pendingTransfers, err = t.storage.GetPendingTransfers(t.cfg.TxsPerCommitment, transfers.lastTransferNonce.AddN(1))
+			pendingTransfers, err = t.storage.GetPendingTransfers(t.cfg.TxsPerCommitment, transfers.lastTransactionNonce.AddN(1))
 			if err != nil {
 				return nil, err
 			}
