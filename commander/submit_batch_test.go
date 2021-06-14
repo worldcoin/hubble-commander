@@ -70,7 +70,7 @@ func (s *SubmitTransferBatchTestSuite) SetupTest() {
 	err = s.tree.Set(1, &userState)
 	s.NoError(err)
 
-	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg)
+	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg, transactionExecutorOpts{})
 }
 
 func (s *SubmitTransferBatchTestSuite) TearDownTest() {

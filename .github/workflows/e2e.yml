@@ -61,7 +61,7 @@ jobs:
       - name: Run E2E tests
         run: |
           make setup-geth &
-          make test-e2e
+          HUBBLE_E2E=docker make test-e2e
 
   deploy:
     name: Deploy to AWS

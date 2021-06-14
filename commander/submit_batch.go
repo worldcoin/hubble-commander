@@ -20,7 +20,7 @@ func (t *transactionExecutor) submitBatch(batch *models.Batch, commitments []mod
 	var err error
 
 	select {
-	case <-t.ctx.Done():
+	case <-t.opts.ctx.Done():
 		return ErrNoLongerProposer
 	default:
 	}

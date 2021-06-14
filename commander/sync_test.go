@@ -1,7 +1,6 @@
 package commander
 
 import (
-	"context"
 	"sync"
 	"testing"
 
@@ -71,7 +70,7 @@ func (s *SyncTestSuite) setupDB() {
 	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
 	s.tree = st.NewStateTree(s.storage)
-	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg)
+	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg, transactionExecutorOpts{AssumeNonces: true})
 
 	seedDB(s.T(), s.storage, s.tree)
 }
@@ -127,13 +126,13 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 		}, {
 			TransactionBase: models.TransactionBase{
 				TxType:      txtype.Transfer,
-				FromStateID: 1,
+				FromStateID: 0,
 				Amount:      models.MakeUint256(100),
 				Fee:         models.MakeUint256(0),
-				Nonce:       models.MakeUint256(0),
+				Nonce:       models.MakeUint256(1),
 				Signature:   mockSignature(s.Assertions),
 			},
-			ToStateID: 0,
+			ToStateID: 1,
 		},
 	}
 	for i := range txs {
@@ -203,7 +202,7 @@ func (s *SyncTestSuite) TestSyncBatches_DoesNotSyncExistingBatchTwice() {
 
 	// Begin database transaction
 	var err error
-	s.transactionExecutor, err = newTransactionExecutorWithCtx(context.Background(), s.storage, s.client.Client, s.cfg)
+	s.transactionExecutor, err = newTransactionExecutor(s.storage, s.client.Client, s.cfg, transactionExecutorOpts{})
 	s.NoError(err)
 
 	tx2 := models.Transfer{
@@ -225,7 +224,7 @@ func (s *SyncTestSuite) TestSyncBatches_DoesNotSyncExistingBatchTwice() {
 
 	// Rollback changes to the database
 	s.transactionExecutor.Rollback(nil)
-	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg)
+	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg, transactionExecutorOpts{})
 
 	batches, err = s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)

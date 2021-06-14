@@ -1,7 +1,6 @@
 package commander
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -165,7 +164,7 @@ func (s *NewBlockLoopTestSuite) createAndSubmitTransferBatch(tx *models.Transfer
 	err := s.cmd.storage.AddTransfer(tx)
 	s.NoError(err)
 
-	transactionExecutor, err := newTransactionExecutorWithCtx(context.Background(), s.cmd.storage, s.testClient.Client, s.cfg)
+	transactionExecutor, err := newTransactionExecutor(s.cmd.storage, s.testClient.Client, s.cfg, transactionExecutorOpts{})
 	s.NoError(err)
 
 	commitments, err := transactionExecutor.createTransferCommitments([]models.Transfer{*tx}, testDomain)
