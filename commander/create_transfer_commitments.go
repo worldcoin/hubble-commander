@@ -26,7 +26,10 @@ func (t *transactionExecutor) createTransferCommitments(
 			break
 		}
 
-		commitment, err := t.createTransferCommitment(pendingTransfers, domain)
+		var commitment *models.Commitment
+		var err error
+
+		pendingTransfers, commitment, err = t.createTransferCommitment(pendingTransfers, domain)
 		if err != nil {
 			return nil, err
 		}
@@ -40,14 +43,21 @@ func (t *transactionExecutor) createTransferCommitments(
 	return commitments, nil
 }
 
-func (t *transactionExecutor) createTransferCommitment(pendingTransfers []models.Transfer, domain *bls.Domain) (*models.Commitment, error) {
+func (t *transactionExecutor) createTransferCommitment(
+	pendingTransfers []models.Transfer,
+	domain *bls.Domain,
+) (
+	newPendingTransfers []models.Transfer,
+	commitment *models.Commitment,
+	err error,
+) {
 	stateTree := st.NewStateTree(t.storage)
 
 	startTime := time.Now()
 
 	initialStateRoot, err := stateTree.Root()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var feeReceiverStateID uint32
@@ -55,10 +65,10 @@ func (t *transactionExecutor) createTransferCommitment(pendingTransfers []models
 	invalidTransfers := make([]models.Transfer, 0, 1)
 
 	for {
-		// nolint:govet
-		transfers, err := t.ApplyTransfers(pendingTransfers)
+		var transfers *AppliedTransfers
+		transfers, err = t.ApplyTransfers(pendingTransfers)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		appliedTransfers = append(appliedTransfers, transfers.appliedTransfers...)
@@ -71,38 +81,38 @@ func (t *transactionExecutor) createTransferCommitment(pendingTransfers []models
 
 		pendingTransfers, err = t.storage.GetPendingTransfers(t.cfg.TxsPerCommitment, transfers.lastTransactionNonce.AddN(1))
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		if len(pendingTransfers) == 0 {
 			err = stateTree.RevertTo(*initialStateRoot)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
-			return nil, nil
+			return nil, nil, nil
 		}
 	}
 
-	pendingTransfers = removeTransfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
+	newPendingTransfers = removeTransfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
 
 	serializedTxs, err := encoder.SerializeTransfers(appliedTransfers)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	combinedSignature, err := combineTransferSignatures(appliedTransfers, domain)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	commitment, err := t.createAndStoreCommitment(txtype.Transfer, feeReceiverStateID, serializedTxs, combinedSignature)
+	commitment, err = t.createAndStoreCommitment(txtype.Transfer, feeReceiverStateID, serializedTxs, combinedSignature)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	err = t.markTransfersAsIncluded(appliedTransfers, commitment.ID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	log.Printf(
@@ -112,7 +122,7 @@ func (t *transactionExecutor) createTransferCommitment(pendingTransfers []models
 		time.Since(startTime).Round(time.Millisecond).String(),
 	)
 
-	return commitment, nil
+	return newPendingTransfers, commitment, nil
 }
 
 func removeTransfer(transferList, toRemove []models.Transfer) []models.Transfer {
