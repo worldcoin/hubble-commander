@@ -16,25 +16,27 @@ func (t *transactionExecutor) createCreate2TransferCommitments(
 	pendingTransfers []models.Create2Transfer,
 	domain *bls.Domain,
 ) ([]models.Commitment, error) {
+	stateTree := st.NewStateTree(t.storage)
 	commitments := make([]models.Commitment, 0, 32)
+
+	if len(pendingTransfers) < int(t.cfg.TxsPerCommitment) {
+		return []models.Commitment{}, nil
+	}
 
 	for {
 		if len(commitments) >= int(t.cfg.MaxCommitmentsPerBatch) {
-			break
-		}
-		if len(pendingTransfers) < int(t.cfg.TxsPerCommitment) {
 			break
 		}
 
 		var commitment *models.Commitment
 		var err error
 
-		pendingTransfers, commitment, err = t.createC2TCommitment(pendingTransfers, domain)
+		pendingTransfers, commitment, err = t.createC2TCommitment(stateTree, pendingTransfers, domain)
 		if err != nil {
 			return nil, err
 		}
 		if commitment == nil {
-			return []models.Commitment{}, nil
+			return commitments, nil
 		}
 
 		commitments = append(commitments, *commitment)
@@ -44,6 +46,7 @@ func (t *transactionExecutor) createCreate2TransferCommitments(
 }
 
 func (t *transactionExecutor) createC2TCommitment(
+	stateTree *st.StateTree,
 	pendingTransfers []models.Create2Transfer,
 	domain *bls.Domain,
 ) (
@@ -51,8 +54,6 @@ func (t *transactionExecutor) createC2TCommitment(
 	commitment *models.Commitment,
 	err error,
 ) {
-	stateTree := st.NewStateTree(t.storage)
-
 	startTime := time.Now()
 
 	initialStateRoot, err := stateTree.Root()
@@ -66,6 +67,17 @@ func (t *transactionExecutor) createC2TCommitment(
 	addedPubKeyIDs := make([]uint32, 0, t.cfg.TxsPerCommitment)
 
 	for {
+		if len(pendingTransfers) == 0 {
+			pendingTransfers, err = t.storage.GetPendingCreate2Transfers(2*t.cfg.TxsPerCommitment, nil)
+			if err != nil {
+				return nil, nil, err
+			}
+			if len(pendingTransfers) == 0 {
+				err = stateTree.RevertTo(*initialStateRoot)
+				return nil, nil, err
+			}
+		}
+
 		var transfers *AppliedC2Transfers
 		transfers, err = t.ApplyCreate2Transfers(pendingTransfers)
 		if err != nil {
@@ -88,10 +100,7 @@ func (t *transactionExecutor) createC2TCommitment(
 
 		if len(pendingTransfers) == 0 {
 			err = stateTree.RevertTo(*initialStateRoot)
-			if err != nil {
-				return nil, nil, err
-			}
-			return nil, nil, nil
+			return nil, nil, err
 		}
 	}
 
