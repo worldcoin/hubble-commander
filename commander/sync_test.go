@@ -409,7 +409,7 @@ func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {
 	}
 }
 
-func (s *SyncTestSuite) TestRevertBatch_SyncCorrectBatch() {
+func (s *SyncTestSuite) TestRevertBatch_SyncsCorrectBatch() {
 	startBlock, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
 
@@ -429,7 +429,7 @@ func (s *SyncTestSuite) TestRevertBatch_SyncCorrectBatch() {
 	err = s.transactionExecutor.revertBatches(s.stateMutex, &batches[0], localBatch)
 	s.NoError(err)
 
-	batches[0].Batch.ID = pendingBatch.ID + 1
+	batches[0].Batch.ID = pendingBatch.ID + 1 // postgres IDs are not reused
 	batch, err := s.storage.GetBatchByNumber(pendingBatch.Number)
 	s.NoError(err)
 	s.Equal(batches[0].Batch, *batch)

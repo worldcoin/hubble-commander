@@ -117,8 +117,7 @@ func (s *Storage) GetTransactionHashesByBatchIDs(batchIDs ...int32) ([]common.Ha
 		s.QB.Select("transaction_base.tx_hash").
 			From("transaction_base").
 			Join("commitment on commitment.commitment_id = transaction_base.included_in_commitment").
-			Join("batch on batch.batch_id = commitment.included_in_batch").
-			Where(squirrel.Eq{"batch.batch_id": batchIDs}),
+			Where(squirrel.Eq{"commitment.included_in_batch": batchIDs}),
 	).Into(&res)
 	if err != nil {
 		return nil, err
