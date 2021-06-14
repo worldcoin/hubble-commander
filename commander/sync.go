@@ -47,7 +47,7 @@ func (t *transactionExecutor) SyncBatches(stateMutex *sync.Mutex, startBlock, en
 		}
 
 		if st.IsNotFoundError(err) {
-			err = t.syncBatchWithLock(stateMutex, batch)
+			err = t.syncNewBatch(stateMutex, batch)
 			if err != nil {
 				return err
 			}
@@ -104,7 +104,7 @@ func (t *transactionExecutor) revertBatches(mutex *sync.Mutex, batch *eth.Decode
 	if err != nil {
 		return err
 	}
-	return t.syncBatch(batch)
+	return t.unsafeSyncNewBatch(batch)
 }
 
 func (t *transactionExecutor) revertBatchesInRange(startNumber *models.Uint256) error {
@@ -158,13 +158,13 @@ func getLatestBatchNumber(storage *st.Storage) (*models.Uint256, error) {
 	return &latestBatch.Number, nil
 }
 
-func (t *transactionExecutor) syncBatchWithLock(stateMutex *sync.Mutex, batch *eth.DecodedBatch) error {
+func (t *transactionExecutor) syncNewBatch(stateMutex *sync.Mutex, batch *eth.DecodedBatch) error {
 	stateMutex.Lock()
 	defer stateMutex.Unlock()
-	return t.syncBatch(batch)
+	return t.unsafeSyncNewBatch(batch)
 }
 
-func (t *transactionExecutor) syncBatch(batch *eth.DecodedBatch) error {
+func (t *transactionExecutor) unsafeSyncNewBatch(batch *eth.DecodedBatch) error {
 	batchID, err := t.storage.AddBatch(&batch.Batch)
 	if err != nil {
 		return err
