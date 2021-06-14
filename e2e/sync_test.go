@@ -22,8 +22,7 @@ func TestCommanderSync(t *testing.T) {
 		log.Fatal("sync test cannot be run on simulator")
 	}
 
-	cfg.Rollup.Prune = true
-	cfg.Rollup.SyncBatches = false
+	cfg.Bootstrap.Prune = true
 	cfg.API.Port = "5001"
 	activeCommander := setup.CreateInProcessCommanderWithConfig(cfg)
 
@@ -55,12 +54,11 @@ func TestCommanderSync(t *testing.T) {
 	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstTransferHash)
 	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstCreate2TransferHash)
 
-	cfg.Rollup.Prune = true
-	cfg.Rollup.SyncBatches = true
+	cfg.Bootstrap.Prune = true
 	cfg.API.Port = "5002"
 	cfg.Badger.Path += "_passive"
 	cfg.Postgres.Name += "_passive"
-	cfg.Rollup.BootstrapNodeURL = ref.String("http://localhost:5001")
+	cfg.Bootstrap.BootstrapNodeURL = ref.String("http://localhost:5001")
 	cfg.Ethereum.PrivateKey = "ab6919fd6ac00246bb78657e0696cf72058a4cb395133d074eabaddb83d8b00c"
 	passiveCommander := setup.CreateInProcessCommanderWithConfig(cfg)
 
