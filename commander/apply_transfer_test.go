@@ -93,21 +93,6 @@ func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_UpdatesStates()
 	s.NotEqual(&newReceiverState, &receiverState)
 }
 
-func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_Validation_Nonce() {
-	transfer := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			FromStateID: 1,
-			Amount:      models.MakeUint256(100),
-			Fee:         models.MakeUint256(10),
-			Nonce:       models.MakeUint256(1),
-		},
-		ToStateID: 2,
-	}
-
-	err := validateTransferNonce(&senderState, &transfer)
-	s.Error(err)
-}
-
 func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_Validation_Balance() {
 	transfer := models.Transfer{
 		TransactionBase: models.TransactionBase{
@@ -121,6 +106,30 @@ func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_Validation_Bala
 
 	_, _, err := CalculateStateAfterTransfer(&senderState, &receiverState, &transfer)
 	s.Error(err)
+}
+
+func (s *ApplyTransferTestSuite) TestApplyTransfer_Validation_Nonce() {
+	transfer := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(400),
+			Fee:         models.MakeUint256(50),
+			Nonce:       models.MakeUint256(1),
+		},
+		ToStateID: 2,
+	}
+
+	senderStateID := senderState.PubKeyID
+	receiverStateID := receiverState.PubKeyID
+
+	err := s.tree.Set(senderStateID, &senderState)
+	s.NoError(err)
+	err = s.tree.Set(receiverStateID, &receiverState)
+	s.NoError(err)
+
+	transferError, appError := s.transactionExecutor.ApplyTransfer(&transfer, models.MakeUint256(1))
+	s.Equal(ErrNonceTooHigh, transferError)
+	s.NoError(appError)
 }
 
 func (s *ApplyTransferTestSuite) TestApplyTransfer_Validation_TokenIndex() {
