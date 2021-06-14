@@ -54,7 +54,7 @@ type RollupContracts struct {
 }
 
 func DeployRollup(c deployer.ChainConnection) (*RollupContracts, error) {
-	accountRegistryAddress, _, err := deployer.DeployAccountRegistry(c)
+	accountRegistryAddress, _, _, err := deployer.DeployAccountRegistry(c)
 	if err != nil {
 		return nil, err
 	}

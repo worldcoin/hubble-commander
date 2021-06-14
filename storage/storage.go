@@ -71,7 +71,7 @@ func NewConfiguredStorage(cfg *config.Config) (storage *Storage, err error) {
 		return nil, err
 	}
 
-	if cfg.Rollup.Prune {
+	if cfg.Bootstrap.Prune {
 		err = storage.Prune(migrator)
 		if err != nil {
 			return nil, err

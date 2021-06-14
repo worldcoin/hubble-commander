@@ -32,7 +32,7 @@ func (s *StateTreeTestSuite) SetupSuite() {
 
 func (s *StateTreeTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorageWithBadger()
+	s.storage, err = NewTestStorageWithoutPostgres()
 	s.NoError(err)
 	s.tree = NewStateTree(s.storage.Storage)
 
@@ -45,9 +45,6 @@ func (s *StateTreeTestSuite) SetupTest() {
 	leaf, err := NewStateLeaf(0, &state)
 	s.NoError(err)
 	s.leaf = leaf
-
-	err = s.storage.AddAccountIfNotExists(&account1)
-	s.NoError(err)
 }
 
 func (s *StateTreeTestSuite) TearDownTest() {
@@ -121,10 +118,7 @@ func (s *StateTreeTestSuite) TestSet_CalculatesCorrectRootForLeafOfId1() {
 }
 
 func (s *StateTreeTestSuite) TestSet_CalculatesCorrectRootForTwoLeaves() {
-	err := s.storage.AddAccountIfNotExists(&account2)
-	s.NoError(err)
-
-	err = s.tree.Set(0, &s.leaf.UserState)
+	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
 	state := models.UserState{
@@ -250,9 +244,6 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafAddsStateUpdateRecord() {
 }
 
 func (s *StateTreeTestSuite) TestRevertTo() {
-	err := s.storage.AddAccountIfNotExists(&account2)
-	s.NoError(err)
-
 	states := []models.UserState{
 		{
 			PubKeyID:   1,
@@ -274,7 +265,7 @@ func (s *StateTreeTestSuite) TestRevertTo() {
 		},
 	}
 
-	err = s.tree.Set(0, &states[0])
+	err := s.tree.Set(0, &states[0])
 	s.NoError(err)
 
 	stateRoot, err := s.tree.Root()
@@ -297,9 +288,6 @@ func (s *StateTreeTestSuite) TestRevertTo() {
 	s.Equal(states[0], leaf.UserState)
 }
 func (s *StateTreeTestSuite) TestRevertTo_NotExistentRootHash() {
-	err := s.storage.AddAccountIfNotExists(&account2)
-	s.NoError(err)
-
 	states := []models.UserState{
 		{
 			PubKeyID:   1,
@@ -320,15 +308,12 @@ func (s *StateTreeTestSuite) TestRevertTo_NotExistentRootHash() {
 			Nonce:      models.MakeUint256(0),
 		},
 	}
+	for i := range states {
+		err := s.tree.Set(uint32(i), &states[i])
+		s.NoError(err)
+	}
 
-	err = s.tree.Set(0, &states[0])
-	s.NoError(err)
-	err = s.tree.Set(1, &states[1])
-	s.NoError(err)
-	err = s.tree.Set(0, &states[2])
-	s.NoError(err)
-
-	err = s.tree.RevertTo(common.Hash{1, 2, 3})
+	err := s.tree.RevertTo(common.Hash{1, 2, 3})
 	s.Equal(ErrNotExistentState, err)
 }
 

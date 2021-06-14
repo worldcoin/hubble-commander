@@ -123,7 +123,7 @@ func (t *transactionExecutor) markCreate2TransfersAsIncluded(transfers []models.
 	for i := range transfers {
 		hashes = append(hashes, transfers[i].Hash)
 	}
-	return t.storage.BatchMarkTransactionAsIncluded(hashes, commitmentID)
+	return t.storage.BatchMarkTransactionAsIncluded(hashes, &commitmentID)
 }
 
 func (t *transactionExecutor) setCreate2TransferToStateID(transfers []models.Create2Transfer) error {

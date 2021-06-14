@@ -59,6 +59,7 @@ func (s *TransferCommitmentsTestSuite) SetupTest() {
 		FeeReceiverPubKeyID:    2,
 		MaxCommitmentsPerBatch: 1,
 	}
+
 	err = PopulateGenesisAccounts(s.storage, AssignStateIDs(genesisAccounts))
 	s.NoError(err)
 

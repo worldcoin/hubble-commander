@@ -7,9 +7,26 @@ import (
 
 func (a *API) GetNetworkInfo() (*dto.NetworkInfo, error) {
 	networkInfo := dto.NetworkInfo{
-		ChainState:  a.client.ChainState,
-		BlockNumber: a.storage.GetLatestBlockNumber(),
+		ChainID:         a.client.ChainState.ChainID,
+		AccountRegistry: a.client.ChainState.AccountRegistry,
+		DeploymentBlock: a.client.ChainState.DeploymentBlock,
+		Rollup:          a.client.ChainState.Rollup,
+		BlockNumber:     a.storage.GetLatestBlockNumber(),
 	}
+
+	// TODO replace with a more effective approach when we get to a huge number of txs
+	txCount, err := a.storage.GetTransactionCount()
+	if err != nil {
+		return nil, err
+	}
+	networkInfo.TransactionCount = *txCount
+
+	// TODO this ignores the fact that other nodes can put new accounts in arbitrary state leaves; to be revisited in the future
+	accountCount, err := a.storage.GetNextAvailableStateID()
+	if err != nil {
+		return nil, err
+	}
+	networkInfo.AccountCount = *accountCount
 
 	latestBatch, err := a.storage.GetLatestSubmittedBatch()
 	if err != nil && !storage.IsNotFoundError(err) {
@@ -32,20 +49,6 @@ func (a *API) GetNetworkInfo() (*dto.NetworkInfo, error) {
 		return nil, err
 	}
 	networkInfo.SignatureDomain = *domain
-
-	// TODO replace with a more effective approach when we get to a huge number of txs
-	txCount, err := a.storage.GetTransactionCount()
-	if err != nil {
-		return nil, err
-	}
-	networkInfo.TransactionCount = *txCount
-
-	// TODO this ignores the fact that other nodes can put new accounts in arbitrary state leaves; to be revisited in the future
-	accountCount, err := a.storage.GetNextAvailableStateID()
-	if err != nil {
-		return nil, err
-	}
-	networkInfo.AccountCount = *accountCount
 
 	return &networkInfo, nil
 }

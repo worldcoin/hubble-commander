@@ -29,10 +29,23 @@ type SyncTestSuite struct {
 	cfg                 *config.RollupConfig
 	transactionExecutor *transactionExecutor
 	stateMutex          *sync.Mutex
+	transfer            models.Transfer
 }
 
 func (s *SyncTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
+	s.transfer = models.Transfer{
+		TransactionBase: models.TransactionBase{
+			TxType:      txtype.Transfer,
+			FromStateID: 0,
+			Amount:      models.MakeUint256(400),
+			Fee:         models.MakeUint256(0),
+			Nonce:       models.MakeUint256(0),
+			Signature:   mockSignature(s.Assertions),
+		},
+		ToStateID: 1,
+	}
+	s.setTransferHash(&s.transfer)
 }
 
 func (s *SyncTestSuite) SetupTest() {
@@ -59,37 +72,37 @@ func (s *SyncTestSuite) setupDB() {
 	s.tree = st.NewStateTree(s.storage)
 	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg, transactionExecutorOpts{AssumeNonces: true})
 
-	s.seedDB()
+	seedDB(s.T(), s.storage, s.tree)
 }
 
-func (s *SyncTestSuite) seedDB() {
-	err := s.storage.AddAccountIfNotExists(&models.Account{
+func seedDB(t *testing.T, storage *st.Storage, tree *st.StateTree) {
+	err := storage.AddAccountIfNotExists(&models.Account{
 		PubKeyID:  0,
 		PublicKey: models.PublicKey{1, 2, 3},
 	})
-	s.NoError(err)
+	require.NoError(t, err)
 
-	err = s.storage.AddAccountIfNotExists(&models.Account{
+	err = storage.AddAccountIfNotExists(&models.Account{
 		PubKeyID:  1,
 		PublicKey: models.PublicKey{2, 3, 4},
 	})
-	s.NoError(err)
+	require.NoError(t, err)
 
-	err = s.tree.Set(0, &models.UserState{
+	err = tree.Set(0, &models.UserState{
 		PubKeyID:   0,
 		TokenIndex: models.MakeUint256(0),
 		Balance:    models.MakeUint256(1000),
 		Nonce:      models.MakeUint256(0),
 	})
-	s.NoError(err)
+	require.NoError(t, err)
 
-	err = s.tree.Set(1, &models.UserState{
+	err = tree.Set(1, &models.UserState{
 		PubKeyID:   1,
 		TokenIndex: models.MakeUint256(0),
 		Balance:    models.MakeUint256(0),
 		Nonce:      models.MakeUint256(0),
 	})
-	s.NoError(err)
+	require.NoError(t, err)
 }
 
 func (s *SyncTestSuite) TearDownTest() {
@@ -107,7 +120,7 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 				Amount:      models.MakeUint256(400),
 				Fee:         models.MakeUint256(0),
 				Nonce:       models.MakeUint256(0),
-				Signature:   s.mockSignature(),
+				Signature:   mockSignature(s.Assertions),
 			},
 			ToStateID: 1,
 		}, {
@@ -117,7 +130,7 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 				Amount:      models.MakeUint256(100),
 				Fee:         models.MakeUint256(0),
 				Nonce:       models.MakeUint256(1),
-				Signature:   s.mockSignature(),
+				Signature:   mockSignature(s.Assertions),
 			},
 			ToStateID: 1,
 		},
@@ -136,7 +149,9 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 		s.Len(createdCommitments, 1)
 
 		expectedCommitments[i] = createdCommitments[0]
-		_, err = s.transactionExecutor.submitBatch(txtype.Transfer, createdCommitments)
+		pendingBatch, err := newPendingBatch(s.storage, txtype.Transfer)
+		s.NoError(err)
+		err = s.transactionExecutor.submitBatch(pendingBatch, createdCommitments)
 		s.NoError(err)
 		s.client.Commit()
 
@@ -176,7 +191,7 @@ func (s *SyncTestSuite) TestSyncBatches_DoesNotSyncExistingBatchTwice() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   s.mockSignature(),
+			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID: 1,
 	}
@@ -197,7 +212,7 @@ func (s *SyncTestSuite) TestSyncBatches_DoesNotSyncExistingBatchTwice() {
 			Amount:      models.MakeUint256(100),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   s.mockSignature(),
+			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID: 0,
 	}
@@ -239,7 +254,7 @@ func (s *SyncTestSuite) TestSyncBatches_PendingBatch() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   s.mockSignature(),
+			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID: 1,
 	}
@@ -272,7 +287,7 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   s.mockSignature(),
+			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID:   ref.Uint32(5),
 		ToPublicKey: models.PublicKey{},
@@ -311,18 +326,173 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	s.Equal(tx, *transfer)
 }
 
-func (s *SyncTestSuite) createAndSubmitTransferBatch(tx *models.Transfer) {
+func (s *SyncTestSuite) TestRevertBatch_RevertsState() {
+	initialStateRoot, err := s.tree.Root()
+	s.NoError(err)
+
+	pendingBatch := s.createAndSubmitTransferBatch(&s.transfer)
+	decodedBatch := &eth.DecodedBatch{
+		Batch: models.Batch{
+			Type:              txtype.Transfer,
+			TransactionHash:   utils.RandomHash(),
+			Number:            models.MakeUint256(1),
+			Hash:              utils.NewRandomHash(),
+			FinalisationBlock: ref.Uint32(20),
+		},
+	}
+	err = s.transactionExecutor.revertBatches(s.stateMutex, decodedBatch, pendingBatch)
+	s.NoError(err)
+
+	stateRoot, err := s.tree.Root()
+	s.NoError(err)
+	s.Equal(*initialStateRoot, *stateRoot)
+
+	state0, err := s.storage.GetStateLeaf(s.transfer.FromStateID)
+	s.NoError(err)
+	s.Equal(uint64(1000), state0.Balance.Uint64())
+	state1, err := s.storage.GetStateLeaf(s.transfer.ToStateID)
+	s.NoError(err)
+	s.Equal(uint64(0), state1.Balance.Uint64())
+
+	transfer, err := s.storage.GetTransfer(s.transfer.Hash)
+	s.NoError(err)
+	s.Nil(transfer.IncludedInCommitment)
+}
+
+func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {
+	initialStateRoot, err := s.tree.Root()
+	s.NoError(err)
+
+	transfers := make([]models.Transfer, 2)
+	transfers[0] = s.transfer
+	transfers[1] = models.Transfer{
+		TransactionBase: models.TransactionBase{
+			Hash:        utils.RandomHash(),
+			TxType:      txtype.Transfer,
+			FromStateID: 0,
+			Amount:      models.MakeUint256(200),
+			Fee:         models.MakeUint256(10),
+			Nonce:       models.MakeUint256(1),
+			Signature:   mockSignature(s.Assertions),
+		},
+		ToStateID: 1,
+	}
+
+	pendingBatches := make([]models.Batch, 2)
+	for i := range pendingBatches {
+		pendingBatches[i] = *s.createAndSubmitTransferBatch(&transfers[i])
+	}
+
+	decodedBatch := &eth.DecodedBatch{
+		Batch: models.Batch{
+			Type:              txtype.Transfer,
+			TransactionHash:   utils.RandomHash(),
+			Number:            models.MakeUint256(1),
+			Hash:              utils.NewRandomHash(),
+			FinalisationBlock: ref.Uint32(20),
+		},
+	}
+	err = s.transactionExecutor.revertBatches(s.stateMutex, decodedBatch, &pendingBatches[0])
+	s.NoError(err)
+
+	stateRoot, err := s.tree.Root()
+	s.NoError(err)
+	s.Equal(*initialStateRoot, *stateRoot)
+
+	for i := range pendingBatches {
+		_, err = s.storage.GetBatch(pendingBatches[i].ID)
+		s.Equal(st.NewNotFoundError("batch"), err)
+
+		_, err = s.storage.GetCommitmentsByBatchID(pendingBatches[i].ID)
+		s.Equal(st.NewNotFoundError("commitments"), err)
+	}
+}
+
+func (s *SyncTestSuite) TestRevertBatch_SyncsCorrectBatch() {
+	startBlock, err := s.client.GetLatestBlockNumber()
+	s.NoError(err)
+
+	pendingBatch := s.createAndSubmitTransferBatch(&s.transfer)
+	s.recreateDatabase()
+
+	localTransfer := s.transfer
+	localTransfer.Hash = utils.RandomHash()
+	localTransfer.Amount = models.MakeUint256(200)
+	localTransfer.Fee = models.MakeUint256(10)
+	localBatch := s.createTransferBatch(&localTransfer)
+
+	batches, err := s.client.GetBatches(&bind.FilterOpts{Start: *startBlock})
+	s.NoError(err)
+	s.Len(batches, 1)
+
+	err = s.transactionExecutor.revertBatches(s.stateMutex, &batches[0], localBatch)
+	s.NoError(err)
+
+	batches[0].Batch.ID = pendingBatch.ID + 1 // postgres IDs are not reused
+	batch, err := s.storage.GetBatchByNumber(pendingBatch.Number)
+	s.NoError(err)
+	s.Equal(batches[0].Batch, *batch)
+
+	expectedCommitment := models.Commitment{
+		ID:                2,
+		Type:              txtype.Transfer,
+		Transactions:      batches[0].Commitments[0].Transactions,
+		FeeReceiver:       batches[0].Commitments[0].FeeReceiver,
+		CombinedSignature: batches[0].Commitments[0].CombinedSignature,
+		PostStateRoot:     batches[0].Commitments[0].StateRoot,
+		IncludedInBatch:   &batch.ID,
+	}
+	commitment, err := s.storage.GetCommitment(2)
+	s.NoError(err)
+	s.Equal(expectedCommitment, *commitment)
+
+	expectedTx := s.transfer
+	expectedTx.Signature = models.Signature{}
+	expectedTx.IncludedInCommitment = &commitment.ID
+	transfer, err := s.storage.GetTransfer(s.transfer.Hash)
+	s.NoError(err)
+	s.Equal(expectedTx, *transfer)
+}
+
+func (s *SyncTestSuite) createAndSubmitTransferBatch(tx *models.Transfer) *models.Batch {
 	err := s.storage.AddTransfer(tx)
+	s.NoError(err)
+
+	pendingBatch, err := newPendingBatch(s.storage, txtype.Transfer)
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.createTransferCommitments([]models.Transfer{*tx}, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	_, err = s.transactionExecutor.submitBatch(txtype.Transfer, commitments)
+	err = s.transactionExecutor.submitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.Commit()
+	return pendingBatch
+}
+
+func (s *SyncTestSuite) createTransferBatch(tx *models.Transfer) *models.Batch {
+	err := s.storage.AddTransfer(tx)
+	s.NoError(err)
+
+	pendingBatch, err := newPendingBatch(s.storage, txtype.Transfer)
+	s.NoError(err)
+
+	commitments, err := s.transactionExecutor.createTransferCommitments([]models.Transfer{*tx}, testDomain)
+	s.NoError(err)
+	s.Len(commitments, 1)
+
+	pendingBatch.TransactionHash = utils.RandomHash()
+	batchID, err := s.storage.AddBatch(pendingBatch)
+	s.NoError(err)
+	pendingBatch.ID = *batchID
+
+	err = s.transactionExecutor.markCommitmentsAsIncluded(commitments, *batchID)
+	s.NoError(err)
+
+	s.client.Commit()
+	return pendingBatch
 }
 
 func (s *SyncTestSuite) registerAccountOnChain(publicKey *models.PublicKey, expectedPubKeyID uint32) {
@@ -343,7 +513,9 @@ func (s *SyncTestSuite) createAndSubmitC2TBatch(tx *models.Create2Transfer) mode
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	_, err = s.transactionExecutor.submitBatch(txtype.Create2Transfer, commitments)
+	pendingBatch, err := newPendingBatch(s.storage, txtype.Create2Transfer)
+	s.NoError(err)
+	err = s.transactionExecutor.submitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.Commit()
@@ -357,7 +529,7 @@ func (s *SyncTestSuite) syncAllBlocks() {
 	s.NoError(err)
 }
 
-func (s *SyncTestSuite) mockSignature() models.Signature {
+func mockSignature(s *require.Assertions) models.Signature {
 	wallet, err := bls.NewRandomWallet(*testDomain)
 	s.NoError(err)
 	signature, err := wallet.Sign(utils.RandomBytes(4))
