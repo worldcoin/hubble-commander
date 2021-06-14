@@ -4,18 +4,15 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"strings"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/pkg/errors"
 )
 
 const gasEstimationFactor = 1.5
@@ -110,11 +107,7 @@ func (c *Client) estimateGasLimit(
 	signatures [][2]*big.Int,
 	feeReceivers []*big.Int,
 	transactions [][]byte) (uint64, error) {
-	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
-	if err != nil {
-		return 0, errors.WithStack(err)
-	}
-	input, err := rollupAbi.Pack(method, stateRoots, signatures, feeReceivers, transactions)
+	input, err := c.RollupABI.Pack(method, stateRoots, signatures, feeReceivers, transactions)
 	if err != nil {
 		return 0, err
 	}

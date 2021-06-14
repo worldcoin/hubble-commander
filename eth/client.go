@@ -1,6 +1,7 @@
 package eth
 
 import (
+	"strings"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
@@ -8,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
 type NewClientParams struct {
@@ -27,6 +29,7 @@ type Client struct {
 	ChainState       models.ChainState
 	ChainConnection  deployer.ChainConnection
 	Rollup           *rollup.Rollup
+	RollupABI        *abi.ABI
 	AccountRegistry  *accountregistry.AccountRegistry
 	blocksToFinalise *int64
 }
@@ -34,11 +37,16 @@ type Client struct {
 func NewClient(chainConnection deployer.ChainConnection, params *NewClientParams) (*Client, error) {
 	fillWithDefaults(&params.ClientConfig)
 
+	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
+	if err != nil {
+		return nil, err
+	}
 	return &Client{
 		config:          params.ClientConfig,
 		ChainState:      params.ChainState,
 		ChainConnection: chainConnection,
 		Rollup:          params.Rollup,
+		RollupABI:       &rollupAbi,
 		AccountRegistry: params.AccountRegistry,
 	}, nil
 }
