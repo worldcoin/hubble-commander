@@ -16,7 +16,6 @@ func (t *transactionExecutor) createCreate2TransferCommitments(
 	pendingTransfers []models.Create2Transfer,
 	domain *bls.Domain,
 ) ([]models.Commitment, error) {
-	stateTree := st.NewStateTree(t.storage)
 	commitments := make([]models.Commitment, 0, 32)
 
 	for {
@@ -26,62 +25,100 @@ func (t *transactionExecutor) createCreate2TransferCommitments(
 		if len(pendingTransfers) < int(t.cfg.TxsPerCommitment) {
 			break
 		}
-		startTime := time.Now()
 
-		initialStateRoot, err := stateTree.Root()
+		commitment, err := t.createC2TCommitment(pendingTransfers, domain)
 		if err != nil {
 			return nil, err
 		}
+		if commitment == nil {
+			return []models.Commitment{}, nil
+		}
 
+		commitments = append(commitments, *commitment)
+	}
+
+	return commitments, nil
+}
+
+func (t *transactionExecutor) createC2TCommitment(pendingTransfers []models.Create2Transfer, domain *bls.Domain) (*models.Commitment, error) {
+	stateTree := st.NewStateTree(t.storage)
+
+	startTime := time.Now()
+
+	initialStateRoot, err := stateTree.Root()
+	if err != nil {
+		return nil, err
+	}
+
+	var feeReceiverStateID uint32
+	appliedTransfers := make([]models.Create2Transfer, 0, t.cfg.TxsPerCommitment)
+	invalidTransfers := make([]models.Create2Transfer, 0, 1)
+	addedPubKeyIDs := make([]uint32, 0, t.cfg.TxsPerCommitment)
+
+	for {
+		// nolint:govet
 		transfers, err := t.ApplyCreate2Transfers(pendingTransfers)
 		if err != nil {
 			return nil, err
 		}
 
-		if len(transfers.appliedTransfers) < int(t.cfg.TxsPerCommitment) {
+		appliedTransfers = append(appliedTransfers, transfers.appliedTransfers...)
+		invalidTransfers = append(invalidTransfers, transfers.invalidTransfers...)
+		addedPubKeyIDs = append(addedPubKeyIDs, transfers.addedPubKeyIDs...)
+
+		if len(appliedTransfers) >= int(t.cfg.TxsPerCommitment) {
+			feeReceiverStateID = *transfers.feeReceiverStateID
+			break
+		}
+
+		pendingTransfers, err = t.storage.GetPendingCreate2Transfers(t.cfg.TxsPerCommitment, transfers.lastTransactionNonce.AddN(1))
+		if err != nil {
+			return nil, err
+		}
+
+		if len(pendingTransfers) == 0 {
 			err = stateTree.RevertTo(*initialStateRoot)
 			if err != nil {
 				return nil, err
 			}
-			break
+			return nil, nil
 		}
-
-		pendingTransfers = removeCreate2Transfer(pendingTransfers, append(transfers.appliedTransfers, transfers.invalidTransfers...))
-
-		serializedTxs, err := encoder.SerializeCreate2Transfers(transfers.appliedTransfers, transfers.addedPubKeyIDs)
-		if err != nil {
-			return nil, err
-		}
-
-		combinedSignature, err := combineCreate2TransferSignatures(transfers.appliedTransfers, domain)
-		if err != nil {
-			return nil, err
-		}
-
-		commitment, err := t.createAndStoreCommitment(txtype.Create2Transfer, *transfers.feeReceiverStateID, serializedTxs, combinedSignature)
-		if err != nil {
-			return nil, err
-		}
-
-		err = t.markCreate2TransfersAsIncluded(transfers.appliedTransfers, commitment.ID)
-		if err != nil {
-			return nil, err
-		}
-		err = t.setCreate2TransferToStateID(transfers.appliedTransfers)
-		if err != nil {
-			return nil, err
-		}
-
-		commitments = append(commitments, *commitment)
-		log.Printf(
-			"Created a %s commitment from %d transactions in %s",
-			txtype.Create2Transfer,
-			len(transfers.appliedTransfers),
-			time.Since(startTime).Round(time.Millisecond).String(),
-		)
 	}
 
-	return commitments, nil
+	pendingTransfers = removeCreate2Transfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
+
+	serializedTxs, err := encoder.SerializeCreate2Transfers(appliedTransfers, addedPubKeyIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	combinedSignature, err := combineCreate2TransferSignatures(appliedTransfers, domain)
+	if err != nil {
+		return nil, err
+	}
+
+	commitment, err := t.createAndStoreCommitment(txtype.Create2Transfer, feeReceiverStateID, serializedTxs, combinedSignature)
+	if err != nil {
+		return nil, err
+	}
+
+	err = t.markCreate2TransfersAsIncluded(appliedTransfers, commitment.ID)
+	if err != nil {
+		return nil, err
+	}
+	err = t.setCreate2TransferToStateID(appliedTransfers)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf(
+		"Created a %s commitment from %d transactions in %s",
+		txtype.Create2Transfer,
+		len(appliedTransfers),
+		time.Since(startTime).Round(time.Millisecond).String(),
+	)
+
+	return commitment, nil
 }
 
 func removeCreate2Transfer(transferList, toRemove []models.Create2Transfer) []models.Create2Transfer {
