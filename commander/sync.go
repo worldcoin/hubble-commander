@@ -83,7 +83,8 @@ func (t *transactionExecutor) syncExistingBatch(mutex *sync.Mutex, batch *eth.De
 		if *txSender != t.client.ChainConnection.GetAccount().From {
 			return t.revertBatches(mutex, batch, localBatch)
 		} else {
-			// TODO our previous transaction must have failed this should never happen
+			// TODO remove the above check and this error once we use contracts with batchID verification:
+			//  https://github.com/thehubbleproject/hubble-contracts/pull/601
 			return ErrBatchSubmissionFailed
 		}
 	}
