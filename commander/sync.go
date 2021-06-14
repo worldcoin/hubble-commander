@@ -27,7 +27,7 @@ func (t *transactionExecutor) SyncBatches(stateMutex *sync.Mutex, startBlock, en
 		return err
 	}
 
-	newBatches, err := t.client.GetBatches(&bind.FilterOpts{
+	newRemoteBatches, err := t.client.GetBatches(&bind.FilterOpts{
 		Start: startBlock,
 		End:   &endBlock,
 	})
@@ -35,24 +35,24 @@ func (t *transactionExecutor) SyncBatches(stateMutex *sync.Mutex, startBlock, en
 		return err
 	}
 
-	for i := range newBatches {
-		batch := &newBatches[i]
-		if batch.Number.Cmp(latestBatchNumber) <= 0 {
+	for i := range newRemoteBatches {
+		remoteBatch := &newRemoteBatches[i]
+		if remoteBatch.Number.Cmp(latestBatchNumber) <= 0 {
 			continue
 		}
 
-		localBatch, err := t.storage.GetBatchByNumber(batch.Number)
+		localBatch, err := t.storage.GetBatchByNumber(remoteBatch.Number)
 		if err != nil && !st.IsNotFoundError(err) {
 			return err
 		}
 
 		if st.IsNotFoundError(err) {
-			err = t.syncNewBatch(stateMutex, batch)
+			err = t.syncNewBatch(stateMutex, remoteBatch)
 			if err != nil {
 				return err
 			}
 		} else {
-			err = t.syncExistingBatch(stateMutex, batch, localBatch)
+			err = t.syncExistingBatch(stateMutex, remoteBatch, localBatch)
 			if err != nil {
 				return err
 			}
@@ -62,26 +62,26 @@ func (t *transactionExecutor) SyncBatches(stateMutex *sync.Mutex, startBlock, en
 	return nil
 }
 
-func (t *transactionExecutor) syncExistingBatch(mutex *sync.Mutex, batch *eth.DecodedBatch, localBatch *models.Batch) error {
-	if batch.TransactionHash == localBatch.TransactionHash {
-		batch.ID = localBatch.ID
-		err := t.storage.MarkBatchAsSubmitted(&batch.Batch)
+func (t *transactionExecutor) syncExistingBatch(stateMutex *sync.Mutex, remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
+	if remoteBatch.TransactionHash == localBatch.TransactionHash {
+		remoteBatch.ID = localBatch.ID
+		err := t.storage.MarkBatchAsSubmitted(&remoteBatch.Batch)
 		if err != nil {
 			return err
 		}
 
 		log.Printf(
 			"Synced new existing batch. Batch number: %d. Batch Hash: %v",
-			batch.Number.Uint64(),
-			batch.Hash,
+			remoteBatch.Number.Uint64(),
+			remoteBatch.Hash,
 		)
 	} else {
-		txSender, err := t.getTransactionSender(batch.TransactionHash)
+		txSender, err := t.getTransactionSender(remoteBatch.TransactionHash)
 		if err != nil {
 			return err
 		}
 		if *txSender != t.client.ChainConnection.GetAccount().From {
-			return t.revertBatches(mutex, batch, localBatch)
+			return t.revertBatches(stateMutex, remoteBatch, localBatch)
 		} else {
 			// TODO remove the above check and this error once we use contracts with batchID verification:
 			//  https://github.com/thehubbleproject/hubble-contracts/pull/601
@@ -91,20 +91,20 @@ func (t *transactionExecutor) syncExistingBatch(mutex *sync.Mutex, batch *eth.De
 	return nil
 }
 
-func (t *transactionExecutor) revertBatches(mutex *sync.Mutex, batch *eth.DecodedBatch, localBatch *models.Batch) error {
-	mutex.Lock()
-	defer mutex.Unlock()
+func (t *transactionExecutor) revertBatches(stateMutex *sync.Mutex, remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
+	stateMutex.Lock()
+	defer stateMutex.Unlock()
 
 	stateTree := st.NewStateTree(t.storage)
 	err := stateTree.RevertTo(*localBatch.PrevStateRoot)
 	if err != nil {
 		return err
 	}
-	err = t.revertBatchesInRange(&batch.Number)
+	err = t.revertBatchesInRange(&remoteBatch.Number)
 	if err != nil {
 		return err
 	}
-	return t.unsafeSyncNewBatch(batch)
+	return t.unsafeSyncNewBatch(remoteBatch)
 }
 
 func (t *transactionExecutor) revertBatchesInRange(startNumber *models.Uint256) error {
