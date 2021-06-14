@@ -95,3 +95,21 @@ func (s *Storage) GetCommitmentsByBatchID(batchID int32) ([]models.CommitmentWit
 
 	return commitments, nil
 }
+
+func (s *Storage) DeleteCommitmentsByBatchIDs(batchID ...int32) error {
+	res, err := s.Postgres.Query(
+		s.QB.Delete("commitment").
+			Where(squirrel.Eq{"included_in_batch": batchID}),
+	).Exec()
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrNoRowsAffected
+	}
+	return nil
+}

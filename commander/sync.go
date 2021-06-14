@@ -27,7 +27,7 @@ func (t *transactionExecutor) SyncBatches(stateMutex *sync.Mutex, startBlock, en
 		return err
 	}
 
-	newBatches, err := t.client.GetBatches(&bind.FilterOpts{
+	newRemoteBatches, err := t.client.GetBatches(&bind.FilterOpts{
 		Start: startBlock,
 		End:   &endBlock,
 	})
@@ -35,24 +35,24 @@ func (t *transactionExecutor) SyncBatches(stateMutex *sync.Mutex, startBlock, en
 		return err
 	}
 
-	for i := range newBatches {
-		batch := &newBatches[i]
-		if batch.Number.Cmp(latestBatchNumber) <= 0 {
+	for i := range newRemoteBatches {
+		remoteBatch := &newRemoteBatches[i]
+		if remoteBatch.Number.Cmp(latestBatchNumber) <= 0 {
 			continue
 		}
 
-		localBatch, err := t.storage.GetBatchByNumber(batch.Number)
+		localBatch, err := t.storage.GetBatchByNumber(remoteBatch.Number)
 		if err != nil && !st.IsNotFoundError(err) {
 			return err
 		}
 
 		if st.IsNotFoundError(err) {
-			err = t.syncBatch(stateMutex, batch)
+			err = t.syncNewBatch(stateMutex, remoteBatch)
 			if err != nil {
 				return err
 			}
 		} else {
-			err = t.syncExistingBatch(batch, localBatch)
+			err = t.syncExistingBatch(stateMutex, remoteBatch, localBatch)
 			if err != nil {
 				return err
 			}
@@ -62,32 +62,77 @@ func (t *transactionExecutor) SyncBatches(stateMutex *sync.Mutex, startBlock, en
 	return nil
 }
 
-func (t *transactionExecutor) syncExistingBatch(batch *eth.DecodedBatch, localBatch *models.Batch) error {
-	if batch.TransactionHash == localBatch.TransactionHash {
-		batch.ID = localBatch.ID
-		err := t.storage.MarkBatchAsSubmitted(&batch.Batch)
+func (t *transactionExecutor) syncExistingBatch(stateMutex *sync.Mutex, remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
+	if remoteBatch.TransactionHash == localBatch.TransactionHash {
+		remoteBatch.ID = localBatch.ID
+		err := t.storage.MarkBatchAsSubmitted(&remoteBatch.Batch)
 		if err != nil {
 			return err
 		}
 
 		log.Printf(
 			"Synced new existing batch. Batch number: %d. Batch Hash: %v",
-			batch.Number.Uint64(),
-			batch.Hash,
+			remoteBatch.Number.Uint64(),
+			remoteBatch.Hash,
 		)
 	} else {
-		txSender, err := t.getTransactionSender(batch.TransactionHash)
+		txSender, err := t.getTransactionSender(remoteBatch.TransactionHash)
 		if err != nil {
 			return err
 		}
 		if *txSender != t.client.ChainConnection.GetAccount().From {
-			// TODO someone else's batch has been mined before ours (probably because our proposer slot ended)
+			return t.revertBatches(stateMutex, remoteBatch, localBatch)
 		} else {
-			// TODO our previous transaction must have failed this should never happen
+			// TODO remove the above check and this error once we use contracts with batchID verification:
+			//  https://github.com/thehubbleproject/hubble-contracts/pull/601
 			return ErrBatchSubmissionFailed
 		}
 	}
 	return nil
+}
+
+func (t *transactionExecutor) revertBatches(stateMutex *sync.Mutex, remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
+	stateMutex.Lock()
+	defer stateMutex.Unlock()
+
+	stateTree := st.NewStateTree(t.storage)
+	err := stateTree.RevertTo(*localBatch.PrevStateRoot)
+	if err != nil {
+		return err
+	}
+	err = t.revertBatchesInRange(&remoteBatch.Number)
+	if err != nil {
+		return err
+	}
+	return t.unsafeSyncNewBatch(remoteBatch)
+}
+
+func (t *transactionExecutor) revertBatchesInRange(startNumber *models.Uint256) error {
+	batches, err := t.storage.GetBatchesInRange(startNumber, nil)
+	if err != nil {
+		return err
+	}
+	batchIDs := make([]int32, 0, len(batches))
+	for i := range batches {
+		batchIDs = append(batchIDs, batches[i].ID)
+	}
+	err = t.excludeTransactionsFromCommitment(batchIDs...)
+	if err != nil {
+		return err
+	}
+	err = t.storage.DeleteCommitmentsByBatchIDs(batchIDs...)
+	if err != nil {
+		return err
+	}
+	return t.storage.DeleteBatches(batchIDs...)
+}
+
+func (t *transactionExecutor) excludeTransactionsFromCommitment(batchIDs ...int32) error {
+	hashes, err := t.storage.GetTransactionHashesByBatchIDs(batchIDs...)
+	if err != nil {
+		return err
+	}
+	return t.storage.BatchMarkTransactionAsIncluded(hashes, nil)
 }
 
 func (t *transactionExecutor) getTransactionSender(txHash common.Hash) (*common.Address, error) {
@@ -113,10 +158,13 @@ func getLatestBatchNumber(storage *st.Storage) (*models.Uint256, error) {
 	return &latestBatch.Number, nil
 }
 
-func (t *transactionExecutor) syncBatch(stateMutex *sync.Mutex, batch *eth.DecodedBatch) error {
+func (t *transactionExecutor) syncNewBatch(stateMutex *sync.Mutex, batch *eth.DecodedBatch) error {
 	stateMutex.Lock()
 	defer stateMutex.Unlock()
+	return t.unsafeSyncNewBatch(batch)
+}
 
+func (t *transactionExecutor) unsafeSyncNewBatch(batch *eth.DecodedBatch) error {
 	batchID, err := t.storage.AddBatch(&batch.Batch)
 	if err != nil {
 		return err

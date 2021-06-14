@@ -106,7 +106,7 @@ func (s *TransactionBaseTestSuite) TestBatchMarkTransactionAsIncluded() {
 	commitmentID, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	err = s.storage.BatchMarkTransactionAsIncluded([]common.Hash{txs[0].Hash, txs[1].Hash}, *commitmentID)
+	err = s.storage.BatchMarkTransactionAsIncluded([]common.Hash{txs[0].Hash, txs[1].Hash}, commitmentID)
 	s.NoError(err)
 
 	for i := range txs {
@@ -154,6 +154,56 @@ func (s *TransactionBaseTestSuite) TestGetTransactionCount_NoTransactions() {
 	count, err := s.storage.GetTransactionCount()
 	s.NoError(err)
 	s.Equal(0, *count)
+}
+
+func (s *TransactionBaseTestSuite) TestGetTransactionHashesByBatchIDs() {
+	batchIDs := []int32{1, 2}
+	for i := range batchIDs {
+		transfers := make([]models.Transfer, 2)
+		transfers[0] = transfer
+		transfers[0].Hash = utils.RandomHash()
+		transfers[1] = transfer
+		transfers[1].Hash = utils.RandomHash()
+		s.addTransfersInCommitment(models.NewUint256(uint64(batchIDs[i])), transfers)
+	}
+
+	hashes, err := s.storage.GetTransactionHashesByBatchIDs(batchIDs...)
+	s.NoError(err)
+	s.Len(hashes, 4)
+}
+
+func (s *TransactionBaseTestSuite) TestGetTransactionHashesByBatchIDs_NoTransactions() {
+	transfers := make([]models.Transfer, 2)
+	transfers[0] = transfer
+	transfers[1] = transfer
+	transfers[1].Hash = utils.RandomHash()
+	s.addTransfersInCommitment(models.NewUint256(1), transfers)
+
+	hashes, err := s.storage.GetTransactionHashesByBatchIDs(2)
+	s.Equal(NewNotFoundError("transaction"), err)
+	s.Nil(hashes)
+}
+
+func (s *TransactionBaseTestSuite) addTransfersInCommitment(batchNumber *models.Uint256, transfers []models.Transfer) {
+	batch := &models.Batch{
+		TransactionHash:   utils.RandomHash(),
+		Hash:              utils.NewRandomHash(),
+		Number:            *batchNumber,
+		FinalisationBlock: ref.Uint32(1234),
+	}
+	batchID, err := s.storage.AddBatch(batch)
+	s.NoError(err)
+
+	commitmentInBatch := commitment
+	commitmentInBatch.IncludedInBatch = batchID
+	commitmentID, err := s.storage.AddCommitment(&commitmentInBatch)
+	s.NoError(err)
+
+	for i := range transfers {
+		transfers[i].IncludedInCommitment = commitmentID
+		err = s.storage.AddTransfer(&transfers[i])
+		s.NoError(err)
+	}
 }
 
 func TestTransactionBaseTestSuite(t *testing.T) {

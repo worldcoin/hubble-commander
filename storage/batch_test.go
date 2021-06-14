@@ -40,6 +40,7 @@ func (s *BatchTestSuite) TestAddBatch_AddAndRetrieve() {
 		Number:            models.MakeUint256(1),
 		FinalisationBlock: ref.Uint32(1234),
 		AccountTreeRoot:   utils.NewRandomHash(),
+		PrevStateRoot:     utils.NewRandomHash(),
 	}
 	id, err := s.storage.AddBatch(batch)
 	s.NoError(err)
@@ -334,6 +335,41 @@ func (s *BatchTestSuite) TestGetBatchByHash_AddAndRetrieve() {
 func (s *BatchTestSuite) TestGetBatchByHash_NotExistingBatch() {
 	_, err := s.storage.GetBatchByHash(utils.RandomHash())
 	s.True(IsNotFoundError(err))
+}
+
+func (s *BatchTestSuite) TestDeleteBatches() {
+	batches := []models.Batch{
+		{
+			Type:            txtype.Transfer,
+			TransactionHash: utils.RandomHash(),
+			Hash:            utils.NewRandomHash(),
+			Number:          models.MakeUint256(1),
+		},
+		{
+			Type:            txtype.Create2Transfer,
+			TransactionHash: utils.RandomHash(),
+			Hash:            utils.NewRandomHash(),
+			Number:          models.MakeUint256(2),
+		},
+	}
+	for i := range batches {
+		batchID, err := s.storage.AddBatch(&batches[i])
+		s.NoError(err)
+		batches[i].ID = *batchID
+	}
+
+	err := s.storage.DeleteBatches(batches[0].ID, batches[1].ID)
+	s.NoError(err)
+
+	for i := range batches {
+		_, err = s.storage.GetBatch(batches[i].ID)
+		s.Equal(NewNotFoundError("batch"), err)
+	}
+}
+
+func (s *BatchTestSuite) TestDeleteBatches_NotExistentBatch() {
+	err := s.storage.DeleteBatches(1)
+	s.Equal(ErrNoRowsAffected, err)
 }
 
 func TestBatchTestSuite(t *testing.T) {
