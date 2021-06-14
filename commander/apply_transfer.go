@@ -13,17 +13,23 @@ var (
 	ErrNonceTooHigh          = errors.New("nonce too high")
 	ErrBalanceTooLow         = errors.New("not enough balance")
 	ErrInvalidSliceLength    = errors.New("invalid slices length")
+	ErrNilReceiverStateID    = errors.New("transfer receiver state id cannot be nil")
 )
 
 func (t *transactionExecutor) ApplyTransfer(
-	transfer *models.Transfer,
+	transfer models.GenericTransfer,
 	commitmentTokenIndex models.Uint256,
 ) (transferError, appError error) {
-	senderLeaf, err := t.storage.GetStateLeaf(transfer.FromStateID)
+	receiverStateID, err := getReceiverStateID(transfer)
 	if err != nil {
 		return nil, err
 	}
-	receiverLeaf, err := t.storage.GetStateLeaf(transfer.ToStateID)
+
+	senderLeaf, err := t.storage.GetStateLeaf(transfer.GetFromStateID())
+	if err != nil {
+		return nil, err
+	}
+	receiverLeaf, err := t.storage.GetStateLeaf(*receiverStateID)
 	if err != nil {
 		return nil, err
 	}
@@ -36,9 +42,10 @@ func (t *transactionExecutor) ApplyTransfer(
 	}
 
 	if t.opts.AssumeNonces {
-		transfer.Nonce = senderState.Nonce
+		transfer.SetNonce(senderState.Nonce)
 	} else {
-		err = validateTransferNonce(&senderState, transfer)
+		nonce := transfer.GetNonce()
+		err = validateTransferNonce(&senderState, &nonce)
 		if err != nil {
 			return err, nil
 		}
@@ -54,13 +61,13 @@ func (t *transactionExecutor) ApplyTransfer(
 	}
 
 	if !reflect.DeepEqual(newSenderState, senderState) {
-		err = t.stateTree.Set(transfer.FromStateID, &newSenderState)
+		err = t.stateTree.Set(transfer.GetFromStateID(), &newSenderState)
 		if err != nil {
 			return nil, err
 		}
 	}
 	if !reflect.DeepEqual(newReceiverState, receiverState) {
-		err = t.stateTree.Set(transfer.ToStateID, &newReceiverState)
+		err = t.stateTree.Set(*receiverStateID, &newReceiverState)
 		if err != nil {
 			return nil, err
 		}
@@ -72,13 +79,16 @@ func (t *transactionExecutor) ApplyTransfer(
 func CalculateStateAfterTransfer(
 	senderState,
 	receiverState *models.UserState,
-	transfer *models.Transfer,
+	transfer models.GenericTransfer,
 ) (
 	newSenderState models.UserState,
 	newReceiverState models.UserState,
 	err error,
 ) {
-	totalAmount := transfer.Amount.Add(&transfer.Fee)
+	amount := transfer.GetAmount()
+	fee := transfer.GetFee()
+
+	totalAmount := amount.Add(&fee)
 	if senderState.Balance.Cmp(totalAmount) < 0 {
 		err = ErrBalanceTooLow
 		return
@@ -89,13 +99,21 @@ func CalculateStateAfterTransfer(
 
 	newSenderState.Nonce = *newSenderState.Nonce.AddN(1)
 	newSenderState.Balance = *newSenderState.Balance.Sub(totalAmount)
-	newReceiverState.Balance = *newReceiverState.Balance.Add(&transfer.Amount)
+	newReceiverState.Balance = *newReceiverState.Balance.Add(&amount)
 
 	return newSenderState, newReceiverState, nil
 }
 
-func validateTransferNonce(senderState *models.UserState, transfer *models.Transfer) error {
-	comparison := transfer.Nonce.Cmp(&senderState.Nonce)
+func getReceiverStateID(transfer models.GenericTransfer) (*uint32, error) {
+	stateID := transfer.GetToStateID()
+	if stateID == nil {
+		return nil, ErrNilReceiverStateID
+	}
+	return stateID, nil
+}
+
+func validateTransferNonce(senderState *models.UserState, transferNonce *models.Uint256) error {
+	comparison := transferNonce.Cmp(&senderState.Nonce)
 	if comparison > 0 {
 		return ErrNonceTooHigh
 	} else if comparison < 0 {

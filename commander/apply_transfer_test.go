@@ -100,6 +100,14 @@ func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_Validation_Bala
 	s.Equal(ErrBalanceTooLow, err)
 }
 
+func (s *ApplyTransferTestSuite) TestApplyTransfer_Validation_ToStateID() {
+	s.setUserStatesInTree()
+
+	transferError, appError := s.transactionExecutor.ApplyTransfer(&create2Transfer, models.MakeUint256(1))
+	s.NoError(transferError)
+	s.Equal(ErrNilReceiverStateID, appError)
+}
+
 func (s *ApplyTransferTestSuite) TestApplyTransfer_Validation_Nonce() {
 	transferWithBadNonce := transfer
 	transferWithBadNonce.Nonce = models.MakeUint256(1)

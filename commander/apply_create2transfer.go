@@ -29,12 +29,5 @@ func (t *transactionExecutor) ApplyCreate2Transfer(
 		return nil, err
 	}
 
-	transfer := models.Transfer{
-		TransactionBase: create2Transfer.TransactionBase,
-		ToStateID:       *create2Transfer.ToStateID,
-	}
-
-	create2TransferError, appError = t.ApplyTransfer(&transfer, commitmentTokenIndex)
-	create2Transfer.Nonce = transfer.Nonce
-	return create2TransferError, appError
+	return t.ApplyTransfer(create2Transfer, commitmentTokenIndex)
 }
