@@ -118,14 +118,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_Validation_Nonce() {
 		},
 		ToStateID: 2,
 	}
-
-	senderStateID := senderState.PubKeyID
-	receiverStateID := receiverState.PubKeyID
-
-	err := s.tree.Set(senderStateID, &senderState)
-	s.NoError(err)
-	err = s.tree.Set(receiverStateID, &receiverState)
-	s.NoError(err)
+	s.setUserStatesInTree()
 
 	transferError, appError := s.transactionExecutor.ApplyTransfer(&transfer, models.MakeUint256(1))
 	s.Equal(ErrNonceTooHigh, transferError)
@@ -142,14 +135,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_Validation_TokenIndex() {
 		},
 		ToStateID: 2,
 	}
-
-	senderStateID := senderState.PubKeyID
-	receiverStateID := receiverState.PubKeyID
-
-	err := s.tree.Set(senderStateID, &senderState)
-	s.NoError(err)
-	err = s.tree.Set(receiverStateID, &receiverState)
-	s.NoError(err)
+	s.setUserStatesInTree()
 
 	transferError, appError := s.transactionExecutor.ApplyTransfer(&transfer, models.MakeUint256(3))
 	s.Equal(appError, ErrIncorrectTokenIndices)
@@ -166,7 +152,22 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer() {
 		},
 		ToStateID: 2,
 	}
+	s.setUserStatesInTree()
 
+	transferError, appError := s.transactionExecutor.ApplyTransfer(&transfer, models.MakeUint256(1))
+	s.NoError(appError)
+	s.NoError(transferError)
+
+	senderLeaf, err := s.storage.GetStateLeaf(1)
+	s.NoError(err)
+	receiverLeaf, err := s.storage.GetStateLeaf(2)
+	s.NoError(err)
+
+	s.Equal(uint64(270), senderLeaf.Balance.Uint64())
+	s.Equal(uint64(100), receiverLeaf.Balance.Uint64())
+}
+
+func (s *ApplyTransferTestSuite) setUserStatesInTree() {
 	senderStateID := senderState.PubKeyID
 	receiverStateID := receiverState.PubKeyID
 
@@ -174,18 +175,6 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer() {
 	s.NoError(err)
 	err = s.tree.Set(receiverStateID, &receiverState)
 	s.NoError(err)
-
-	transferError, appError := s.transactionExecutor.ApplyTransfer(&transfer, models.MakeUint256(1))
-	s.NoError(appError)
-	s.NoError(transferError)
-
-	senderLeaf, err := s.storage.GetStateLeaf(senderStateID)
-	s.NoError(err)
-	receiverLeaf, err := s.storage.GetStateLeaf(receiverStateID)
-	s.NoError(err)
-
-	s.Equal(uint64(270), senderLeaf.Balance.Uint64())
-	s.Equal(uint64(100), receiverLeaf.Balance.Uint64())
 }
 
 func (s *ApplyTransferTestSuite) TestApplyFee() {
