@@ -1,10 +1,11 @@
 name: E2E Test on PR
 on:
-  pull_request:
-    types: [ ready_for_review ]
+  push:
+    branches-ignore:
+      - master
 
 jobs:
-  build-image-e2e:
+  e2e:
     name: Run E2E test
     runs-on: ubuntu-20.04
     services:
@@ -27,16 +28,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Build docker image
-        id: docker_build
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: ./Dockerfile
-          tags: ghcr.io/worldcoin/hubble-commander:latest
-      - name: Pull the go-ethereum image
-        run: docker pull ethereum/client-go:latest
       - name: Run E2E tests
         run: |
           make setup-geth &
-          make test-e2e
+          make test-e2e-in-process

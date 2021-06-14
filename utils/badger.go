@@ -7,7 +7,7 @@ import (
 func ValueToInterfaceSlice(slice interface{}, fieldName string) []interface{} {
 	s := reflect.ValueOf(slice)
 	if s.Kind() != reflect.Slice {
-		panic("InterfaceSlice() given a non-slice type")
+		panic("ValueToInterfaceSlice() given a non-slice type")
 	}
 
 	// Keep the distinction between nil and empty slice input
