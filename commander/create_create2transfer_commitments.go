@@ -101,7 +101,8 @@ func (t *transactionExecutor) createC2TCommitment(
 			break
 		}
 
-		pendingTransfers, err = t.storage.GetPendingCreate2Transfers(2*t.cfg.TxsPerCommitment + uint64(len(appliedTransfers)) + uint64(len(invalidTransfers)))
+		numberOfPendingTransfersToFetch := 2*t.cfg.TxsPerCommitment + uint64(len(appliedTransfers)) + uint64(len(invalidTransfers))
+		pendingTransfers, err = t.storage.GetPendingCreate2Transfers(numberOfPendingTransfersToFetch)
 		if err != nil {
 			return nil, nil, err
 		}

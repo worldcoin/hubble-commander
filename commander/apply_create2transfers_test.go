@@ -105,7 +105,7 @@ func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AllValid() {
 	generatedTransfers := generateValidCreate2Transfers(3, &s.publicKey)
 
-	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers)
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 3)
@@ -117,7 +117,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 	generatedTransfers := generateValidCreate2Transfers(2, &s.publicKey)
 	generatedTransfers = append(generatedTransfers, generateInvalidCreate2Transfers(3, &s.publicKey)...)
 
-	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers)
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 2)
@@ -128,7 +128,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_MoreThanSpecifiedInConfigTxsPerCommitment() {
 	generatedTransfers := generateValidCreate2Transfers(13, &s.publicKey)
 
-	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers)
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 6)
@@ -149,7 +149,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 		s.NoError(err)
 	}
 
-	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers)
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 3)
@@ -170,7 +170,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_ReturnsLastTransactionNonce() {
 	generatedTransfers := generateValidCreate2Transfers(13, &s.publicKey)
 
-	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers)
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 6)

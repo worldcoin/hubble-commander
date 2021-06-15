@@ -99,7 +99,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	})
 	s.NoError(err)
 
-	pendingTransfers, err := s.storage.GetPendingCreate2Transfers(2*s.cfg.TxsPerCommitment, nil)
+	pendingTransfers, err := s.storage.GetPendingCreate2Transfers(2 * s.cfg.TxsPerCommitment)
 	s.NoError(err)
 	s.Len(pendingTransfers, 4)
 
@@ -135,7 +135,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	transfers[1].Amount = models.MakeUint256(99999999999)
 	s.addCreate2Transfers(transfers)
 
-	pendingTransfers, err := s.storage.GetPendingCreate2Transfers(32, nil)
+	pendingTransfers, err := s.storage.GetPendingCreate2Transfers(32)
 	s.NoError(err)
 	s.Len(pendingTransfers, 2)
 
@@ -232,7 +232,7 @@ func (s *Create2TransferCommitmentsTestSuite) prepareAndReturnPendingCreate2Tran
 	transfers := generateValidCreate2Transfers(transfersAmount, &models.PublicKey{1, 2, 3})
 	s.addCreate2Transfers(transfers)
 
-	pendingTransfers, err := s.storage.GetPendingCreate2Transfers(32, nil)
+	pendingTransfers, err := s.storage.GetPendingCreate2Transfers(transfersAmount)
 	s.NoError(err)
 	s.Len(pendingTransfers, int(transfersAmount))
 

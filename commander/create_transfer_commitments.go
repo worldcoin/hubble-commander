@@ -99,7 +99,8 @@ func (t *transactionExecutor) createTransferCommitment(
 			break
 		}
 
-		pendingTransfers, err = t.storage.GetPendingTransfers(2*t.cfg.TxsPerCommitment + uint64(len(appliedTransfers)) + uint64(len(invalidTransfers)))
+		numberOfPendingTransfersToFetch := 2*t.cfg.TxsPerCommitment + uint64(len(appliedTransfers)) + uint64(len(invalidTransfers))
+		pendingTransfers, err = t.storage.GetPendingTransfers(numberOfPendingTransfersToFetch)
 		if err != nil {
 			return nil, nil, err
 		}
