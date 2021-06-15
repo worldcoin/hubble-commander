@@ -15,7 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-const gasEstimationFactor = 1.5
+const gasEstimateMultiplier = 1.2
 
 type SubmitBatchFunc func(commitments []models.Commitment) (*types.Transaction, error)
 
@@ -123,5 +123,5 @@ func (c *Client) estimateGasLimit(
 	if err != nil {
 		return 0, err
 	}
-	return uint64(float64(estimatedGas) * gasEstimationFactor), nil
+	return uint64(float64(estimatedGas) * gasEstimateMultiplier), nil
 }
