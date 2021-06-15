@@ -104,11 +104,11 @@ func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionT
 	}
 
 	log.Printf(
-		"Submitted a %s batch with %d commitment(s) on chain in %s. Batch number: %d. Transaction hash: %v",
+		"Submitted a %s batch with %d commitment(s) on chain in %s. Batch ID: %d. Transaction hash: %v",
 		batchType.String(),
 		len(commitments),
 		time.Since(startTime).Round(time.Millisecond).String(),
-		batch.Number.Uint64(),
+		batch.ID.Uint64(),
 		batch.TransactionHash,
 	)
 	return nil
@@ -155,13 +155,13 @@ func newPendingBatch(storage *st.Storage, batchType txtype.TransactionType) (*mo
 	if err != nil {
 		return nil, err
 	}
-	batchNumber, err := storage.GetNextBatchNumber()
+	batchID, err := storage.GetNextBatchID()
 	if err != nil {
 		return nil, err
 	}
 	return &models.Batch{
+		ID:            *batchID,
 		Type:          batchType,
-		Number:        *batchNumber,
 		PrevStateRoot: prevStateRoot,
 	}, nil
 }

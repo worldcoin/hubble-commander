@@ -144,10 +144,10 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_StoresPendingBa
 	err = s.transactionExecutor.submitBatch(pendingBatch, []models.Commitment{*commitment})
 	s.NoError(err)
 
-	batch, err := s.storage.GetBatch(1)
+	batch, err := s.storage.GetBatch(models.MakeUint256(1))
 	s.NoError(err)
 	s.Equal(txtype.Transfer, batch.Type)
-	s.Equal(models.MakeUint256(1), batch.Number)
+	s.Equal(models.MakeUint256(1), batch.ID)
 	s.NotEqual(common.Hash{}, batch.TransactionHash)
 	s.Equal(pendingBatch.PrevStateRoot, batch.PrevStateRoot)
 	s.Nil(batch.Hash)
@@ -165,11 +165,11 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_StoresPe
 	err = s.transactionExecutor.submitBatch(pendingBatch, []models.Commitment{*commitment})
 	s.NoError(err)
 
-	batch, err := s.storage.GetBatch(1)
+	batch, err := s.storage.GetBatch(models.MakeUint256(1))
 	s.NoError(err)
 	s.Equal(pendingBatch.Type, batch.Type)
 	s.NotEqual(common.Hash{}, batch.TransactionHash)
-	s.Equal(models.MakeUint256(1), batch.Number)
+	s.Equal(models.MakeUint256(1), batch.ID)
 	s.Equal(pendingBatch.PrevStateRoot, batch.PrevStateRoot)
 	s.Nil(batch.Hash)
 }
@@ -197,7 +197,7 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_MarksCommitment
 	err = s.transactionExecutor.submitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
-	batch, err := s.storage.GetBatch(1)
+	batch, err := s.storage.GetBatch(models.MakeUint256(1))
 	s.NoError(err)
 
 	for _, id := range ids {
@@ -215,7 +215,7 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_MarksCom
 	err = s.transactionExecutor.submitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
-	batch, err := s.storage.GetBatch(1)
+	batch, err := s.storage.GetBatch(models.MakeUint256(1))
 	s.NoError(err)
 
 	for _, id := range ids {

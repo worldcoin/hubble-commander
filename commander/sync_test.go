@@ -160,8 +160,8 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 2)
-	s.Equal(models.MakeUint256(1), batches[0].Number)
-	s.Equal(models.MakeUint256(2), batches[1].Number)
+	s.Equal(models.MakeUint256(1), batches[0].ID)
+	s.Equal(models.MakeUint256(2), batches[1].ID)
 	s.Equal(accountRoots[0], *batches[0].AccountTreeRoot)
 	s.Equal(accountRoots[1], *batches[1].AccountTreeRoot)
 
@@ -257,7 +257,7 @@ func (s *SyncTestSuite) TestSyncBatches_PendingBatch() {
 	s.setTransferHash(&tx)
 	s.createAndSubmitTransferBatch(&tx)
 
-	pendingBatch, err := s.storage.GetBatch(1)
+	pendingBatch, err := s.storage.GetBatch(models.MakeUint256(1))
 	s.NoError(err)
 	s.Nil(pendingBatch.Hash)
 	s.Nil(pendingBatch.FinalisationBlock)
@@ -329,9 +329,9 @@ func (s *SyncTestSuite) TestRevertBatch_RevertsState() {
 	pendingBatch := s.createAndSubmitTransferBatch(&s.transfer)
 	decodedBatch := &eth.DecodedBatch{
 		Batch: models.Batch{
+			ID:                models.MakeUint256(1),
 			Type:              txtype.Transfer,
 			TransactionHash:   utils.RandomHash(),
-			Number:            models.MakeUint256(1),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(20),
 		},
@@ -381,11 +381,11 @@ func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {
 
 	decodedBatch := &eth.DecodedBatch{
 		Batch: models.Batch{
+			ID:                models.MakeUint256(1),
 			Type:              txtype.Transfer,
 			TransactionHash:   utils.RandomHash(),
-			Number:            models.MakeUint256(1),
 			Hash:              utils.NewRandomHash(),
-			FinalisationBlock: ref.Uint32(20),
+			FinalisationBlock: ref.Uint32(133742069),
 		},
 	}
 	err = s.transactionExecutor.revertBatches(decodedBatch, &pendingBatches[0])
@@ -395,13 +395,14 @@ func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {
 	s.NoError(err)
 	s.Equal(*initialStateRoot, *stateRoot)
 
-	for i := range pendingBatches {
-		_, err = s.storage.GetBatch(pendingBatches[i].ID)
-		s.Equal(st.NewNotFoundError("batch"), err)
+	syncedBatch, err := s.storage.GetBatch(models.MakeUint256(1))
+	s.NoError(err)
+	s.Equal(decodedBatch.TransactionHash, syncedBatch.TransactionHash)
+	s.Equal(decodedBatch.Hash, syncedBatch.Hash)
+	s.Equal(decodedBatch.FinalisationBlock, syncedBatch.FinalisationBlock)
 
-		_, err = s.storage.GetCommitmentsByBatchID(pendingBatches[i].ID)
-		s.Equal(st.NewNotFoundError("commitments"), err)
-	}
+	_, err = s.storage.GetBatch(models.MakeUint256(2))
+	s.Equal(st.NewNotFoundError("batch"), err)
 }
 
 func (s *SyncTestSuite) TestRevertBatch_SyncsCorrectBatch() {
@@ -424,8 +425,7 @@ func (s *SyncTestSuite) TestRevertBatch_SyncsCorrectBatch() {
 	err = s.transactionExecutor.revertBatches(&batches[0], localBatch)
 	s.NoError(err)
 
-	batches[0].Batch.ID = pendingBatch.ID + 1 // postgres IDs are not reused
-	batch, err := s.storage.GetBatchByNumber(pendingBatch.Number)
+	batch, err := s.storage.GetBatch(pendingBatch.ID)
 	s.NoError(err)
 	s.Equal(batches[0].Batch, *batch)
 
@@ -480,11 +480,10 @@ func (s *SyncTestSuite) createTransferBatch(tx *models.Transfer) *models.Batch {
 	s.Len(commitments, 1)
 
 	pendingBatch.TransactionHash = utils.RandomHash()
-	batchID, err := s.storage.AddBatch(pendingBatch)
+	err = s.storage.AddBatch(pendingBatch)
 	s.NoError(err)
-	pendingBatch.ID = *batchID
 
-	err = s.transactionExecutor.markCommitmentsAsIncluded(commitments, *batchID)
+	err = s.transactionExecutor.markCommitmentsAsIncluded(commitments, pendingBatch.ID)
 	s.NoError(err)
 
 	s.client.Commit()

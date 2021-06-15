@@ -21,7 +21,7 @@ var (
 )
 
 func (t *transactionExecutor) SyncBatches(startBlock, endBlock uint64) error {
-	latestBatchNumber, err := getLatestBatchNumber(t.storage)
+	latestBatchID, err := getLatestBatchID(t.storage)
 	if err != nil {
 		return err
 	}
@@ -36,11 +36,11 @@ func (t *transactionExecutor) SyncBatches(startBlock, endBlock uint64) error {
 
 	for i := range newRemoteBatches {
 		remoteBatch := &newRemoteBatches[i]
-		if remoteBatch.Number.Cmp(latestBatchNumber) <= 0 {
+		if remoteBatch.ID.Cmp(latestBatchID) <= 0 {
 			continue
 		}
 
-		localBatch, err := t.storage.GetBatchByNumber(remoteBatch.Number)
+		localBatch, err := t.storage.GetBatch(remoteBatch.ID)
 		if err != nil && !st.IsNotFoundError(err) {
 			return err
 		}
@@ -63,15 +63,14 @@ func (t *transactionExecutor) SyncBatches(startBlock, endBlock uint64) error {
 
 func (t *transactionExecutor) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
 	if remoteBatch.TransactionHash == localBatch.TransactionHash {
-		remoteBatch.ID = localBatch.ID
 		err := t.storage.MarkBatchAsSubmitted(&remoteBatch.Batch)
 		if err != nil {
 			return err
 		}
 
 		log.Printf(
-			"Synced new existing batch. Batch number: %d. Batch Hash: %v",
-			remoteBatch.Number.Uint64(),
+			"Synced new existing batch. Batch ID: %d. Batch Hash: %v",
+			remoteBatch.ID.Uint64(),
 			remoteBatch.Hash,
 		)
 	} else {
@@ -96,19 +95,19 @@ func (t *transactionExecutor) revertBatches(remoteBatch *eth.DecodedBatch, local
 	if err != nil {
 		return err
 	}
-	err = t.revertBatchesInRange(&remoteBatch.Number)
+	err = t.revertBatchesInRange(&remoteBatch.ID)
 	if err != nil {
 		return err
 	}
 	return t.syncNewBatch(remoteBatch)
 }
 
-func (t *transactionExecutor) revertBatchesInRange(startNumber *models.Uint256) error {
-	batches, err := t.storage.GetBatchesInRange(startNumber, nil)
+func (t *transactionExecutor) revertBatchesInRange(startBatchID *models.Uint256) error {
+	batches, err := t.storage.GetBatchesInRange(startBatchID, nil)
 	if err != nil {
 		return err
 	}
-	batchIDs := make([]int32, 0, len(batches))
+	batchIDs := make([]models.Uint256, 0, len(batches))
 	for i := range batches {
 		batchIDs = append(batchIDs, batches[i].ID)
 	}
@@ -123,7 +122,7 @@ func (t *transactionExecutor) revertBatchesInRange(startNumber *models.Uint256) 
 	return t.storage.DeleteBatches(batchIDs...)
 }
 
-func (t *transactionExecutor) excludeTransactionsFromCommitment(batchIDs ...int32) error {
+func (t *transactionExecutor) excludeTransactionsFromCommitment(batchIDs ...models.Uint256) error {
 	hashes, err := t.storage.GetTransactionHashesByBatchIDs(batchIDs...)
 	if err != nil {
 		return err
@@ -144,23 +143,21 @@ func (t *transactionExecutor) getTransactionSender(txHash common.Hash) (*common.
 	return &sender, nil
 }
 
-func getLatestBatchNumber(storage *st.Storage) (*models.Uint256, error) {
+func getLatestBatchID(storage *st.Storage) (*models.Uint256, error) {
 	latestBatch, err := storage.GetLatestSubmittedBatch()
 	if st.IsNotFoundError(err) {
 		return models.NewUint256(0), nil
 	} else if err != nil {
 		return nil, err
 	}
-	return &latestBatch.Number, nil
+	return &latestBatch.ID, nil
 }
 
 func (t *transactionExecutor) syncNewBatch(batch *eth.DecodedBatch) error {
-	batchID, err := t.storage.AddBatch(&batch.Batch)
+	err := t.storage.AddBatch(&batch.Batch)
 	if err != nil {
 		return err
 	}
-
-	batch.Batch.ID = *batchID
 
 	switch batch.Type {
 	case txtype.Transfer:
@@ -177,6 +174,6 @@ func (t *transactionExecutor) syncNewBatch(batch *eth.DecodedBatch) error {
 		return fmt.Errorf("unsupported batch type for sync: %s", batch.Type)
 	}
 
-	log.Printf("Synced new batch #%s from chain: %d commitments included", batch.Number.String(), len(batch.Commitments))
+	log.Printf("Synced new batch #%s from chain: %d commitments included", batch.ID.String(), len(batch.Commitments))
 	return nil
 }

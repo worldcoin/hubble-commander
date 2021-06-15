@@ -36,11 +36,10 @@ func (s *GetBatchesTestSuite) SetupTest() {
 	s.api = &API{storage: s.storage.Storage, client: s.testClient.Client}
 
 	s.batch = models.Batch{
-		ID:                1,
+		ID:                models.MakeUint256(1),
 		Type:              txtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
-		Number:            models.MakeUint256(1),
 		FinalisationBlock: ref.Uint32(42000),
 	}
 }
@@ -52,14 +51,14 @@ func (s *GetBatchesTestSuite) TearDownTest() {
 }
 
 func (s *GetBatchesTestSuite) TestGetBatches() {
-	_, err := s.storage.AddBatch(&s.batch)
+	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
 	result, err := s.api.GetBatches(models.NewUint256(0), models.NewUint256(1))
 	s.NoError(err)
 	s.NotNil(result)
 	s.Len(result, 1)
-	s.Equal(s.batch.Number, result[0].ID)
+	s.Equal(s.batch.ID, result[0].ID)
 	s.Equal(s.batch.Hash, result[0].Hash)
 	s.Equal(s.batch.Type, result[0].Type)
 	s.Equal(s.batch.TransactionHash, result[0].TransactionHash)

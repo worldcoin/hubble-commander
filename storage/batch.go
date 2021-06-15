@@ -3,36 +3,32 @@ package storage
 import (
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (s *Storage) AddBatch(batch *models.Batch) (*int32, error) {
-	res := make([]int32, 0, 1)
-	err := s.Postgres.Query(
+func (s *Storage) AddBatch(batch *models.Batch) error {
+	_, err := s.Postgres.Query(
 		s.QB.Insert("batch").
 			Values(
-				squirrel.Expr("DEFAULT"),
+				batch.ID,
 				batch.Type,
 				batch.TransactionHash,
 				batch.Hash,
-				batch.Number,
 				batch.FinalisationBlock,
 				batch.AccountTreeRoot,
 				batch.PrevStateRoot,
-			).
-			Suffix("RETURNING batch_id"),
-	).Into(&res)
+			),
+	).Exec()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return ref.Int32(res[0]), nil
+	return nil
 }
 
 func (s *Storage) MarkBatchAsSubmitted(batch *models.Batch) error {
 	res, err := s.Postgres.Query(
 		s.QB.Update("batch").
-			Where(squirrel.Eq{"transaction_hash": batch.TransactionHash}).
+			Where(squirrel.Eq{"batch_id": batch.ID}).
 			Set("batch_hash", batch.Hash).
 			Set("finalisation_block", batch.FinalisationBlock). // nolint:misspell
 			Set("account_tree_root", batch.AccountTreeRoot),
@@ -50,7 +46,7 @@ func (s *Storage) MarkBatchAsSubmitted(batch *models.Batch) error {
 	return nil
 }
 
-func (s *Storage) GetBatch(batchID int32) (*models.Batch, error) {
+func (s *Storage) GetBatch(batchID models.Uint256) (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Select("*").
@@ -73,22 +69,6 @@ func (s *Storage) GetBatchByHash(batchHash common.Hash) (*models.Batch, error) {
 			From("batch").
 			Where(squirrel.Eq{"batch_hash": batchHash}).
 			Limit(1),
-	).Into(&res)
-	if err != nil {
-		return nil, err
-	}
-	if len(res) == 0 {
-		return nil, NewNotFoundError("batch")
-	}
-	return &res[0], nil
-}
-
-func (s *Storage) GetBatchByNumber(batchNumber models.Uint256) (*models.Batch, error) {
-	res := make([]models.Batch, 0, 1)
-	err := s.Postgres.Query(
-		s.QB.Select("*").
-			From("batch").
-			Where(squirrel.Eq{"batch_number": batchNumber}),
 	).Into(&res)
 	if err != nil {
 		return nil, err
@@ -134,10 +114,10 @@ func (s *Storage) GetLatestSubmittedBatch() (*models.Batch, error) {
 	return &res[0], nil
 }
 
-func (s *Storage) GetNextBatchNumber() (*models.Uint256, error) {
+func (s *Storage) GetNextBatchID() (*models.Uint256, error) {
 	res := make([]models.Uint256, 0, 1)
 	err := s.Postgres.Query(
-		s.QB.Select("batch_number").
+		s.QB.Select("batch_id").
 			From("batch").
 			OrderBy("batch_id DESC").
 			Limit(1),
@@ -172,14 +152,14 @@ func (s *Storage) GetLatestFinalisedBatch(currentBlockNumber uint32) (*models.Ba
 func (s *Storage) GetBatchesInRange(from, to *models.Uint256) ([]models.Batch, error) {
 	qb := s.QB.Select("*").
 		From("batch").
-		OrderBy("batch_number")
+		OrderBy("batch_id")
 
 	if from != nil {
-		qb = qb.Where(squirrel.GtOrEq{"batch_number": from})
+		qb = qb.Where(squirrel.GtOrEq{"batch_id": from})
 	}
 
 	if to != nil {
-		qb = qb.Where(squirrel.LtOrEq{"batch_number": to})
+		qb = qb.Where(squirrel.LtOrEq{"batch_id": to})
 	}
 
 	res := make([]models.Batch, 0, 32)
@@ -190,7 +170,7 @@ func (s *Storage) GetBatchesInRange(from, to *models.Uint256) ([]models.Batch, e
 	return res, nil
 }
 
-func (s *Storage) DeleteBatches(batchIDs ...int32) error {
+func (s *Storage) DeleteBatches(batchIDs ...models.Uint256) error {
 	res, err := s.Postgres.Query(
 		s.QB.Delete("batch").
 			Where(squirrel.Eq{"batch_id": batchIDs}),

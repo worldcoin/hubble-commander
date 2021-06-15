@@ -65,16 +65,16 @@ func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieve() {
 
 func (s *TransferTestSuite) TestGetTransferWithBatchHash() {
 	batch := &models.Batch{
+		ID:              models.MakeUint256(1),
 		Type:            txtype.Transfer,
 		TransactionHash: utils.RandomHash(),
 		Hash:            utils.NewRandomHash(),
-		Number:          models.MakeUint256(1),
 	}
-	batchID, err := s.storage.AddBatch(batch)
+	err := s.storage.AddBatch(batch)
 	s.NoError(err)
 
 	commitmentInBatch := commitment
-	commitmentInBatch.IncludedInBatch = batchID
+	commitmentInBatch.IncludedInBatch = &batch.ID
 	commitmentID, err := s.storage.AddCommitment(&commitmentInBatch)
 	s.NoError(err)
 
@@ -327,16 +327,16 @@ func (s *TransferTestSuite) TestGetTransfersByCommitmentID_NoTransfers() {
 
 func (s *TransferTestSuite) addBatchAndCommitment() (batchHash common.Hash, commitmentID int32) {
 	batch := &models.Batch{
+		ID:              models.MakeUint256(1),
 		Type:            txtype.Transfer,
 		TransactionHash: utils.RandomHash(),
 		Hash:            utils.NewRandomHash(),
-		Number:          models.MakeUint256(1),
 	}
-	batchID, err := s.storage.AddBatch(batch)
+	err := s.storage.AddBatch(batch)
 	s.NoError(err)
 
 	commitmentInBatch := commitment
-	commitmentInBatch.IncludedInBatch = batchID
+	commitmentInBatch.IncludedInBatch = &batch.ID
 	id, err := s.storage.AddCommitment(&commitmentInBatch)
 	s.NoError(err)
 

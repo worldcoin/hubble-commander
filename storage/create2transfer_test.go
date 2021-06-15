@@ -67,16 +67,16 @@ func (s *Create2TransferTestSuite) TestAddCreate2Transfer_AddAndRetrieve() {
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchHash() {
 	batch := &models.Batch{
+		ID:              models.MakeUint256(1),
 		Type:            txtype.Create2Transfer,
 		TransactionHash: utils.RandomHash(),
 		Hash:            utils.NewRandomHash(),
-		Number:          models.MakeUint256(1),
 	}
-	batchID, err := s.storage.AddBatch(batch)
+	err := s.storage.AddBatch(batch)
 	s.NoError(err)
 
 	commitmentInBatch := commitment
-	commitmentInBatch.IncludedInBatch = batchID
+	commitmentInBatch.IncludedInBatch = &batch.ID
 	commitmentID, err := s.storage.AddCommitment(&commitmentInBatch)
 	s.NoError(err)
 

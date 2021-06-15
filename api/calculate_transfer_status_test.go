@@ -91,11 +91,14 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_TxI
 }
 
 func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_TxInPendingBatch() {
-	batchID, err := s.storage.AddBatch(&models.Batch{})
+	batch := models.Batch{
+		ID: models.MakeUint256(1),
+	}
+	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
 
 	includedCommitment := commitment
-	includedCommitment.IncludedInBatch = batchID
+	includedCommitment.IncludedInBatch = &batch.ID
 	commitmentID, err := s.storage.AddCommitment(&includedCommitment)
 	s.NoError(err)
 
@@ -109,13 +112,14 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_TxI
 
 func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_InBatch() {
 	batch := models.Batch{
+		ID:                models.MakeUint256(1),
 		FinalisationBlock: ref.Uint32(math.MaxUint32),
 	}
-	batchID, err := s.storage.AddBatch(&batch)
+	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
 
 	includedCommitment := commitment
-	includedCommitment.IncludedInBatch = batchID
+	includedCommitment.IncludedInBatch = &batch.ID
 	commitmentID, err := s.storage.AddCommitment(&includedCommitment)
 	s.NoError(err)
 
@@ -132,13 +136,14 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_Fin
 	currentBlockNumber, err := s.sim.GetLatestBlockNumber()
 	s.NoError(err)
 	batch := models.Batch{
+		ID:                models.MakeUint256(1),
 		FinalisationBlock: ref.Uint32(uint32(*currentBlockNumber) + 1),
 	}
-	batchID, err := s.storage.AddBatch(&batch)
+	err = s.storage.AddBatch(&batch)
 	s.NoError(err)
 
 	includedCommitment := commitment
-	includedCommitment.IncludedInBatch = batchID
+	includedCommitment.IncludedInBatch = &batch.ID
 	commitmentID, err := s.storage.AddCommitment(&includedCommitment)
 	s.NoError(err)
 

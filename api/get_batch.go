@@ -24,7 +24,7 @@ func (a *API) GetBatchByHash(hash common.Hash) (*dto.BatchWithRootAndCommitments
 }
 
 func (a *API) GetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommitments, error) {
-	batch, err := a.storage.GetBatchByNumber(id)
+	batch, err := a.storage.GetBatch(id)
 	if err != nil {
 		return nil, err
 	}
