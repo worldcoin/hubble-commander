@@ -26,7 +26,7 @@ func (c *Client) SubmitTransfersBatch(commitments []models.Commitment) (
 	if err != nil {
 		return nil, err
 	}
-	estimate, err := c.estimateGasLimit(input)
+	estimate, err := c.estimateBatchSubmissionGasLimit(input)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (c *Client) SubmitCreate2TransfersBatch(commitments []models.Commitment) (
 	if err != nil {
 		return nil, err
 	}
-	estimate, err := c.estimateGasLimit(input)
+	estimate, err := c.estimateBatchSubmissionGasLimit(input)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (c *Client) handleNewBatchEvent(event *rollup.RollupNewBatch) (*models.Batc
 	return batch, &accountRoot, nil
 }
 
-func (c *Client) estimateGasLimit(input []byte) (uint64, error) {
+func (c *Client) estimateBatchSubmissionGasLimit(input []byte) (uint64, error) {
 	account := c.ChainConnection.GetAccount()
 	msg := &ethereum.CallMsg{
 		From:     account.From,
