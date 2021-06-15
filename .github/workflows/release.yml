@@ -1,0 +1,45 @@
+name: E2E Test
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    name: Build docker image
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build docker image
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ghcr.io/worldcoin/hubble-commander:${GITHUB_REF#refs/tags/}
+
+  deploy:
+    name: Deploy to AWS
+    needs: build
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        host: [ec2-3-238-223-141.compute-1.amazonaws.com, ec2-3-239-149-30.compute-1.amazonaws.com]
+    steps:
+      - name: Deploy to AWS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ matrix.host }}
+          username: ec2-user
+          key: ${{ secrets.AWS_SSH_KEY }}
+          script: |
+            docker-compose pull
+            docker-compose up -d
+            docker images -f "before=ghcr.io/worldcoin/hubble-commander:${GITHUB_REF#refs/tags/}" -f "dangling=true" -q ghcr.io/worldcoin/hubble-commander | xargs docker image rm || true
