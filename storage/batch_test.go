@@ -100,6 +100,45 @@ func (s *BatchTestSuite) TestGetBatch_NonExistentBatch() {
 	s.Nil(res)
 }
 
+func (s *BatchTestSuite) TestGetMindedBatch() {
+	batch := &models.Batch{
+		ID:                models.MakeUint256(1234),
+		Type:              txtype.Transfer,
+		TransactionHash:   utils.RandomHash(),
+		Hash:              utils.NewRandomHash(),
+		FinalisationBlock: ref.Uint32(1234),
+		AccountTreeRoot:   utils.NewRandomHash(),
+	}
+	err := s.storage.AddBatch(batch)
+	s.NoError(err)
+
+	actual, err := s.storage.GetMinedBatch(batch.ID)
+	s.NoError(err)
+
+	s.Equal(batch, actual)
+}
+
+func (s *BatchTestSuite) TestGetMinedBatch_PendingBatch() {
+	batch := &models.Batch{
+		ID:              models.MakeUint256(1234),
+		Type:            txtype.Transfer,
+		TransactionHash: utils.RandomHash(),
+		AccountTreeRoot: utils.NewRandomHash(),
+	}
+	err := s.storage.AddBatch(batch)
+	s.NoError(err)
+
+	res, err := s.storage.GetMinedBatch(models.MakeUint256(42))
+	s.Equal(NewNotFoundError("batch"), err)
+	s.Nil(res)
+}
+
+func (s *BatchTestSuite) TestGetMinedBatch_NonExistentBatch() {
+	res, err := s.storage.GetMinedBatch(models.MakeUint256(42))
+	s.Equal(NewNotFoundError("batch"), err)
+	s.Nil(res)
+}
+
 func (s *BatchTestSuite) TestGetBatchByCommitmentID() {
 	batch := &models.Batch{
 		ID:                models.MakeUint256(1),
