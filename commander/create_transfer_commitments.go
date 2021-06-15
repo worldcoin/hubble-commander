@@ -12,6 +12,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+var (
+	ErrNotEnoughTransfers = NewRollupError("not enough transfers")
+)
+
 func (t *transactionExecutor) createTransferCommitments(
 	pendingTransfers []models.Transfer,
 	domain *bls.Domain,
@@ -24,7 +28,7 @@ func (t *transactionExecutor) createTransferCommitments(
 	}
 
 	for {
-		if len(commitments) >= int(t.cfg.MaxCommitmentsPerBatch) {
+		if len(commitments) == int(t.cfg.MaxCommitmentsPerBatch) {
 			break
 		}
 
@@ -67,7 +71,7 @@ func (t *transactionExecutor) createTransferCommitment(
 
 	for {
 		if len(pendingTransfers) == 0 {
-			pendingTransfers, err = t.storage.GetPendingTransfers(2*t.cfg.TxsPerCommitment, nil)
+			pendingTransfers, err = t.storage.GetPendingTransfers(2 * t.cfg.TxsPerCommitment)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -79,9 +83,12 @@ func (t *transactionExecutor) createTransferCommitment(
 
 		var transfers *AppliedTransfers
 
-		transfers, err = t.ApplyTransfers(pendingTransfers)
+		transfers, err = t.ApplyTransfers(pendingTransfers, t.cfg.TxsPerCommitment-uint64(len(appliedTransfers)))
 		if err != nil {
 			return nil, nil, err
+		}
+		if transfers == nil {
+			return nil, nil, ErrNotEnoughTransfers
 		}
 
 		appliedTransfers = append(appliedTransfers, transfers.appliedTransfers...)
@@ -92,10 +99,12 @@ func (t *transactionExecutor) createTransferCommitment(
 			break
 		}
 
-		pendingTransfers, err = t.storage.GetPendingTransfers(t.cfg.TxsPerCommitment, transfers.lastTransactionNonce.AddN(1))
+		pendingTransfers, err = t.storage.GetPendingTransfers(2*t.cfg.TxsPerCommitment + uint64(len(appliedTransfers)) + uint64(len(invalidTransfers)))
 		if err != nil {
 			return nil, nil, err
 		}
+
+		pendingTransfers = removeTransfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
 
 		if len(pendingTransfers) == 0 {
 			err = stateTree.RevertTo(*initialStateRoot)
