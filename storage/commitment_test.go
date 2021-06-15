@@ -140,28 +140,27 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID_NonExistentCommitments
 func (s *CommitmentTestSuite) TestDeleteCommitmentsByBatchIDs() {
 	batches := []models.Batch{
 		{
+			ID:                models.MakeUint256(111),
 			Type:              txtype.Transfer,
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
-			Number:            models.MakeUint256(111),
 			FinalisationBlock: ref.Uint32(1234),
 		},
 		{
+			ID:                models.MakeUint256(5),
 			Type:              txtype.Create2Transfer,
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
-			Number:            models.MakeUint256(5),
 			FinalisationBlock: ref.Uint32(2345),
 		},
 	}
 	for i := range batches {
-		id, err := s.storage.AddBatch(&batches[i])
+		err := s.storage.AddBatch(&batches[i])
 		s.NoError(err)
-		batches[i].ID = *id
 
 		for j := 0; j < 2; j++ {
 			commitmentInBatch := commitment
-			commitmentInBatch.IncludedInBatch = id
+			commitmentInBatch.IncludedInBatch = &batches[i].ID
 			_, err = s.storage.AddCommitment(&commitmentInBatch)
 			s.NoError(err)
 		}
@@ -180,7 +179,7 @@ func (s *CommitmentTestSuite) TestDeleteCommitmentsByBatchIDs_NoCommitments() {
 	commitmentID, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	err = s.storage.DeleteCommitmentsByBatchIDs(*batchID)
+	err = s.storage.DeleteCommitmentsByBatchIDs(batchID)
 	s.Equal(ErrNoRowsAffected, err)
 
 	_, err = s.storage.GetCommitment(*commitmentID)

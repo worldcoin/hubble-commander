@@ -323,22 +323,21 @@ func (s *BatchTestSuite) TestGetBatchByHash_NotExistingBatch() {
 func (s *BatchTestSuite) TestDeleteBatches() {
 	batches := []models.Batch{
 		{
+			ID:              models.MakeUint256(1),
 			Type:            txtype.Transfer,
 			TransactionHash: utils.RandomHash(),
 			Hash:            utils.NewRandomHash(),
-			Number:          models.MakeUint256(1),
 		},
 		{
+			ID:              models.MakeUint256(2),
 			Type:            txtype.Create2Transfer,
 			TransactionHash: utils.RandomHash(),
 			Hash:            utils.NewRandomHash(),
-			Number:          models.MakeUint256(2),
 		},
 	}
 	for i := range batches {
-		batchID, err := s.storage.AddBatch(&batches[i])
+		err := s.storage.AddBatch(&batches[i])
 		s.NoError(err)
-		batches[i].ID = *batchID
 	}
 
 	err := s.storage.DeleteBatches(batches[0].ID, batches[1].ID)
@@ -351,7 +350,7 @@ func (s *BatchTestSuite) TestDeleteBatches() {
 }
 
 func (s *BatchTestSuite) TestDeleteBatches_NotExistentBatch() {
-	err := s.storage.DeleteBatches(1)
+	err := s.storage.DeleteBatches(models.MakeUint256(1))
 	s.Equal(ErrNoRowsAffected, err)
 }
 

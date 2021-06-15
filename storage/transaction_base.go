@@ -111,7 +111,7 @@ func (s *Storage) GetTransactionCount() (*int, error) {
 	return &res[0], nil
 }
 
-func (s *Storage) GetTransactionHashesByBatchIDs(batchIDs ...int32) ([]common.Hash, error) {
+func (s *Storage) GetTransactionHashesByBatchIDs(batchIDs ...models.Uint256) ([]common.Hash, error) {
 	res := make([]common.Hash, 0, 32*len(batchIDs))
 	err := s.Postgres.Query(
 		s.QB.Select("transaction_base.tx_hash").

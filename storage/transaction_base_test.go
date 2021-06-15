@@ -157,14 +157,14 @@ func (s *TransactionBaseTestSuite) TestGetTransactionCount_NoTransactions() {
 }
 
 func (s *TransactionBaseTestSuite) TestGetTransactionHashesByBatchIDs() {
-	batchIDs := []int32{1, 2}
+	batchIDs := []models.Uint256{models.MakeUint256(1), models.MakeUint256(2)}
 	for i := range batchIDs {
 		transfers := make([]models.Transfer, 2)
 		transfers[0] = transfer
 		transfers[0].Hash = utils.RandomHash()
 		transfers[1] = transfer
 		transfers[1].Hash = utils.RandomHash()
-		s.addTransfersInCommitment(models.NewUint256(uint64(batchIDs[i])), transfers)
+		s.addTransfersInCommitment(&batchIDs[i], transfers)
 	}
 
 	hashes, err := s.storage.GetTransactionHashesByBatchIDs(batchIDs...)
@@ -179,23 +179,23 @@ func (s *TransactionBaseTestSuite) TestGetTransactionHashesByBatchIDs_NoTransact
 	transfers[1].Hash = utils.RandomHash()
 	s.addTransfersInCommitment(models.NewUint256(1), transfers)
 
-	hashes, err := s.storage.GetTransactionHashesByBatchIDs(2)
+	hashes, err := s.storage.GetTransactionHashesByBatchIDs(models.MakeUint256(2))
 	s.Equal(NewNotFoundError("transaction"), err)
 	s.Nil(hashes)
 }
 
-func (s *TransactionBaseTestSuite) addTransfersInCommitment(batchNumber *models.Uint256, transfers []models.Transfer) {
+func (s *TransactionBaseTestSuite) addTransfersInCommitment(batchID *models.Uint256, transfers []models.Transfer) {
 	batch := &models.Batch{
+		ID:                *batchID,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
-		Number:            *batchNumber,
 		FinalisationBlock: ref.Uint32(1234),
 	}
-	batchID, err := s.storage.AddBatch(batch)
+	err := s.storage.AddBatch(batch)
 	s.NoError(err)
 
 	commitmentInBatch := commitment
-	commitmentInBatch.IncludedInBatch = batchID
+	commitmentInBatch.IncludedInBatch = &batch.ID
 	commitmentID, err := s.storage.AddCommitment(&commitmentInBatch)
 	s.NoError(err)
 

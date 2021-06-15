@@ -129,13 +129,13 @@ func newPendingBatch(storage *st.Storage, batchType txtype.TransactionType) (*mo
 	if err != nil {
 		return nil, err
 	}
-	batchNumber, err := storage.GetNextBatchNumber()
+	batchID, err := storage.GetNextBatchID()
 	if err != nil {
 		return nil, err
 	}
 	return &models.Batch{
+		ID:            *batchID,
 		Type:          batchType,
-		Number:        *batchNumber,
 		PrevStateRoot: prevStateRoot,
 	}, nil
 }
