@@ -142,7 +142,8 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 	s.Len(expectedCommitments, 2)
 	accountRoots := make([]common.Hash, 2)
 	for i := range expectedCommitments {
-		pendingBatch, err := newPendingBatch(s.storage, txtype.Transfer)
+		var pendingBatch *models.Batch
+		pendingBatch, err = newPendingBatch(s.storage, txtype.Transfer)
 		s.NoError(err)
 		err = s.transactionExecutor.submitBatch(pendingBatch, []models.Commitment{expectedCommitments[i]})
 		s.NoError(err)
