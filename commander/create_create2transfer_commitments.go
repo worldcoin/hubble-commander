@@ -136,10 +136,6 @@ func (t *transactionExecutor) createC2TCommitment(
 	if err != nil {
 		return nil, nil, err
 	}
-	err = t.setCreate2TransferToStateID(appliedTransfers)
-	if err != nil {
-		return nil, nil, err
-	}
 
 	log.Printf(
 		"Created a %s commitment from %d transactions in %s",
@@ -189,16 +185,11 @@ func (t *transactionExecutor) markCreate2TransfersAsIncluded(transfers []models.
 	hashes := make([]common.Hash, 0, len(transfers))
 	for i := range transfers {
 		hashes = append(hashes, transfers[i].Hash)
-	}
-	return t.storage.BatchMarkTransactionAsIncluded(hashes, &commitmentID)
-}
 
-func (t *transactionExecutor) setCreate2TransferToStateID(transfers []models.Create2Transfer) error {
-	for i := range transfers {
 		err := t.storage.SetCreate2TransferToStateID(transfers[i].Hash, *transfers[i].ToStateID)
 		if err != nil {
 			return err
 		}
 	}
-	return nil
+	return t.storage.BatchMarkTransactionAsIncluded(hashes, &commitmentID)
 }
