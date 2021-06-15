@@ -8,7 +8,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -20,7 +19,6 @@ func (t *transactionExecutor) createCreate2TransferCommitments(
 	pendingTransfers []models.Create2Transfer,
 	domain *bls.Domain,
 ) ([]models.Commitment, error) {
-	stateTree := st.NewStateTree(t.storage)
 	commitments := make([]models.Commitment, 0, 32)
 
 	if len(pendingTransfers) < int(t.cfg.TxsPerCommitment) {
@@ -35,7 +33,7 @@ func (t *transactionExecutor) createCreate2TransferCommitments(
 		var commitment *models.Commitment
 		var err error
 
-		pendingTransfers, commitment, err = t.createC2TCommitment(stateTree, pendingTransfers, domain)
+		pendingTransfers, commitment, err = t.createC2TCommitment(pendingTransfers, domain)
 		if err != nil {
 			return nil, err
 		}
@@ -50,7 +48,6 @@ func (t *transactionExecutor) createCreate2TransferCommitments(
 }
 
 func (t *transactionExecutor) createC2TCommitment(
-	stateTree *st.StateTree,
 	pendingTransfers []models.Create2Transfer,
 	domain *bls.Domain,
 ) (
@@ -60,7 +57,7 @@ func (t *transactionExecutor) createC2TCommitment(
 ) {
 	startTime := time.Now()
 
-	initialStateRoot, err := stateTree.Root()
+	initialStateRoot, err := t.stateTree.Root()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -106,7 +103,7 @@ func (t *transactionExecutor) createC2TCommitment(
 		pendingTransfers = removeCreate2Transfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
 
 		if len(pendingTransfers) == 0 {
-			err = stateTree.RevertTo(*initialStateRoot)
+			err = t.stateTree.RevertTo(*initialStateRoot)
 			return nil, nil, err
 		}
 	}
