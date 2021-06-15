@@ -2,6 +2,7 @@ package eth
 
 import (
 	"github.com/Worldcoin/hubble-commander/eth/rollup"
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 )
 
@@ -24,6 +25,9 @@ func NewTestClient() (*TestClient, error) {
 	}
 
 	client, err := NewClient(sim, &NewClientParams{
+		ChainState: models.ChainState{
+			Rollup: contracts.RollupAddress,
+		},
 		Rollup:          contracts.Rollup,
 		AccountRegistry: contracts.AccountRegistry,
 	})

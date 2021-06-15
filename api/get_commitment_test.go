@@ -113,6 +113,36 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 	s.Len(commitment.Transactions, 1)
 }
 
+func (s *GetCommitmentTestSuite) TestGetCommitment_PendingBatch() {
+	pendingBatch := s.batch
+	pendingBatch.Hash = nil
+	pendingBatch.FinalisationBlock = nil
+	err := s.storage.AddBatch(&pendingBatch)
+	s.NoError(err)
+
+	commitmentID, err := s.storage.AddCommitment(&s.commitment)
+	s.NoError(err)
+
+	transfer := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			Hash:                 utils.RandomHash(),
+			TxType:               txtype.Transfer,
+			FromStateID:          1,
+			Amount:               models.MakeUint256(50),
+			Fee:                  models.MakeUint256(10),
+			Nonce:                models.MakeUint256(0),
+			IncludedInCommitment: commitmentID,
+		},
+		ToStateID: 2,
+	}
+	err = s.storage.AddTransfer(&transfer)
+	s.NoError(err)
+
+	commitment, err := s.api.GetCommitment(*commitmentID)
+	s.Equal(st.NewNotFoundError("commitment"), err)
+	s.Nil(commitment)
+}
+
 func (s *GetCommitmentTestSuite) TestGetCommitment_NotExistingCommitment() {
 	commitment, err := s.api.GetCommitment(123)
 	s.Equal(st.NewNotFoundError("commitment"), err)

@@ -66,6 +66,19 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 	s.Equal(s.batch.FinalisationBlock, result[0].FinalisationBlock)
 }
 
+func (s *GetBatchesTestSuite) TestGetBatches_PendingBatch() {
+	pendingBatch := s.batch
+	pendingBatch.Hash = nil
+	pendingBatch.FinalisationBlock = nil
+	err := s.storage.AddBatch(&pendingBatch)
+	s.NoError(err)
+
+	result, err := s.api.GetBatches(models.NewUint256(0), models.NewUint256(1))
+	s.NoError(err)
+	s.NotNil(result)
+	s.Len(result, 0)
+}
+
 func (s *GetBatchesTestSuite) TestGetBatchesByHash_NoBatches() {
 	result, err := s.api.GetBatches(models.NewUint256(0), models.NewUint256(1))
 	s.NoError(err)
