@@ -46,6 +46,25 @@ func (s *Storage) MarkBatchAsSubmitted(batch *models.Batch) error {
 	return nil
 }
 
+func (s *Storage) GetMinedBatch(batchID models.Uint256) (*models.Batch, error) {
+	res := make([]models.Batch, 0, 1)
+	err := s.Postgres.Query(
+		s.QB.Select("*").
+			From("batch").
+			Where(squirrel.And{
+				squirrel.Eq{"batch_id": batchID},
+				squirrel.NotEq{"batch_hash": nil},
+			}),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, NewNotFoundError("batch")
+	}
+	return &res[0], nil
+}
+
 func (s *Storage) GetBatch(batchID models.Uint256) (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
 	err := s.Postgres.Query(

@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
 func (a *API) GetCommitment(id int32) (*dto.Commitment, error) {
@@ -24,7 +25,10 @@ func (a *API) GetCommitment(id int32) (*dto.Commitment, error) {
 		return nil, err
 	}
 
-	batch, err := a.storage.GetBatch(*commitment.IncludedInBatch)
+	batch, err := a.storage.GetMinedBatch(*commitment.IncludedInBatch)
+	if st.IsNotFoundError(err) {
+		return nil, st.NewNotFoundError("commitment")
+	}
 	if err != nil {
 		return nil, err
 	}
