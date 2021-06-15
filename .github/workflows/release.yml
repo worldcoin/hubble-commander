@@ -4,7 +4,7 @@ on:
     types: [created]
 
 jobs:
-  tag:
+  build:
     name: Build docker image
     runs-on: ubuntu-20.04
     steps:
@@ -27,7 +27,7 @@ jobs:
 
   deploy:
     name: Deploy to AWS
-    needs: tag
+    needs: build
     runs-on: ubuntu-20.04
     strategy:
       matrix:
