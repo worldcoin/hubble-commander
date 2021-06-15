@@ -18,6 +18,9 @@ func (a *API) GetBatches(from, to *models.Uint256) ([]dto.Batch, error) {
 
 	batchesWithSubmission := make([]dto.Batch, 0, len(batches))
 	for i := range batches {
+		if batches[i].Hash == nil {
+			continue
+		}
 		submissionBlock := *batches[i].FinalisationBlock - uint32(*blocksToFinalise)
 		batchesWithSubmission = append(batchesWithSubmission, *dto.MakeBatch(&models.Batch{
 			ID:                batches[i].ID,
