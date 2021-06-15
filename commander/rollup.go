@@ -64,18 +64,17 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 	defer transactionExecutor.Rollback(&err)
 
 	err = transactionExecutor.CreateAndSubmitBatch(*currentBatchType, c.signaturesDomain)
+	if *currentBatchType == txtype.Transfer {
+		*currentBatchType = txtype.Create2Transfer
+	} else {
+		*currentBatchType = txtype.Transfer
+	}
 	if err != nil {
 		var e *RollupError
 		if errors.As(err, &e) {
 			return nil
 		}
 		return err
-	}
-
-	if *currentBatchType == txtype.Transfer {
-		*currentBatchType = txtype.Create2Transfer
-	} else {
-		*currentBatchType = txtype.Transfer
 	}
 
 	return transactionExecutor.Commit()
@@ -115,7 +114,7 @@ func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionT
 }
 
 func (t *transactionExecutor) buildTransferCommitments(domain *bls.Domain) ([]models.Commitment, error) {
-	pendingTransfers, err := t.storage.GetPendingTransfers(2*t.cfg.TxsPerCommitment, nil)
+	pendingTransfers, err := t.storage.GetPendingTransfers(2 * t.cfg.TxsPerCommitment)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +122,7 @@ func (t *transactionExecutor) buildTransferCommitments(domain *bls.Domain) ([]mo
 }
 
 func (t *transactionExecutor) buildCreate2TransfersCommitments(domain *bls.Domain) ([]models.Commitment, error) {
-	pendingTransfers, err := t.storage.GetPendingCreate2Transfers(2*t.cfg.TxsPerCommitment, nil)
+	pendingTransfers, err := t.storage.GetPendingCreate2Transfers(2 * t.cfg.TxsPerCommitment)
 	if err != nil {
 		return nil, err
 	}
