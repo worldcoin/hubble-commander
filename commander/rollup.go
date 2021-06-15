@@ -2,7 +2,6 @@ package commander
 
 import (
 	"context"
-	"errors"
 	"log"
 	"time"
 
@@ -10,7 +9,10 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/pkg/errors"
 )
+
+var ErrInvalidStateRoot = errors.New("latest commitment state root doesn't match current one")
 
 func (c *Commander) manageRollupLoop(cancel context.CancelFunc, isProposer bool) context.CancelFunc {
 	if isProposer && !c.rollupLoopRunning {
@@ -49,6 +51,12 @@ func (c *Commander) rollupLoop(ctx context.Context) (err error) {
 func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *txtype.TransactionType) (err error) {
 	c.stateMutex.Lock()
 	defer c.stateMutex.Unlock()
+
+	err = validateStateRoot(c.storage)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, c.cfg.Rollup, transactionExecutorOpts{ctx: ctx})
 	if err != nil {
 		return err
@@ -120,6 +128,24 @@ func (t *transactionExecutor) buildCreate2TransfersCommitments(domain *bls.Domai
 		return nil, err
 	}
 	return t.createCreate2TransferCommitments(pendingTransfers, domain)
+}
+
+func validateStateRoot(storage *st.Storage) error {
+	latestCommitment, err := storage.GetLatestCommitment()
+	if st.IsNotFoundError(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	stateRoot, err := st.NewStateTree(storage).Root()
+	if err != nil {
+		return err
+	}
+	if latestCommitment.PostStateRoot != *stateRoot {
+		return ErrInvalidStateRoot
+	}
+	return nil
 }
 
 // TODO refactor to method on transactionExecutor?
