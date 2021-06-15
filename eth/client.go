@@ -10,6 +10,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
 type NewClientParams struct {
@@ -31,6 +32,7 @@ type Client struct {
 	Rollup           *rollup.Rollup
 	RollupABI        *abi.ABI
 	AccountRegistry  *accountregistry.AccountRegistry
+	boundContract    *bind.BoundContract
 	blocksToFinalise *int64
 }
 
@@ -41,6 +43,8 @@ func NewClient(chainConnection deployer.ChainConnection, params *NewClientParams
 	if err != nil {
 		return nil, err
 	}
+	backend := chainConnection.GetBackend()
+	boundContract := bind.NewBoundContract(params.ChainState.Rollup, rollupAbi, backend, backend, backend)
 	return &Client{
 		config:          params.ClientConfig,
 		ChainState:      params.ChainState,
@@ -48,6 +52,7 @@ func NewClient(chainConnection deployer.ChainConnection, params *NewClientParams
 		Rollup:          params.Rollup,
 		RollupABI:       &rollupAbi,
 		AccountRegistry: params.AccountRegistry,
+		boundContract:   boundContract,
 	}, nil
 }
 

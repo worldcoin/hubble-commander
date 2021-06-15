@@ -3,7 +3,6 @@ package eth
 import (
 	"context"
 	"fmt"
-	"math/big"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
@@ -23,30 +22,30 @@ func (c *Client) SubmitTransfersBatch(commitments []models.Commitment) (
 	*types.Transaction,
 	error,
 ) {
-	stateRoots, signatures, feeReceivers, transactions := encoder.CommitmentToCalldataFields(commitments)
-	estimate, err := c.estimateGasLimit("submitTransfer", stateRoots, signatures, feeReceivers, transactions)
+	input, err := c.packCommitments("submitTransfer", commitments)
 	if err != nil {
 		return nil, err
 	}
-	return c.rollup().
-		WithValue(*c.config.stakeAmount.ToBig()).
-		WithGasLimit(estimate).
-		SubmitTransfer(stateRoots, signatures, feeReceivers, transactions)
+	estimate, err := c.estimateGasLimit(input)
+	if err != nil {
+		return nil, err
+	}
+	return c.RawTransact(c.config.stakeAmount.ToBig(), estimate, input)
 }
 
 func (c *Client) SubmitCreate2TransfersBatch(commitments []models.Commitment) (
 	*types.Transaction,
 	error,
 ) {
-	stateRoots, signatures, feeReceivers, transactions := encoder.CommitmentToCalldataFields(commitments)
-	estimate, err := c.estimateGasLimit("submitCreate2Transfer", stateRoots, signatures, feeReceivers, transactions)
+	input, err := c.packCommitments("submitCreate2Transfer", commitments)
 	if err != nil {
 		return nil, err
 	}
-	return c.rollup().
-		WithValue(*c.config.stakeAmount.ToBig()).
-		WithGasLimit(estimate).
-		SubmitCreate2Transfer(stateRoots, signatures, feeReceivers, transactions)
+	estimate, err := c.estimateGasLimit(input)
+	if err != nil {
+		return nil, err
+	}
+	return c.RawTransact(c.config.stakeAmount.ToBig(), estimate, input)
 }
 
 func (c *Client) SubmitTransfersBatchAndMine(commitments []models.Commitment) (
@@ -101,16 +100,7 @@ func (c *Client) handleNewBatchEvent(event *rollup.RollupNewBatch) (*models.Batc
 	return batch, &accountRoot, nil
 }
 
-func (c *Client) estimateGasLimit(
-	method string,
-	stateRoots [][32]byte,
-	signatures [][2]*big.Int,
-	feeReceivers []*big.Int,
-	transactions [][]byte) (uint64, error) {
-	input, err := c.RollupABI.Pack(method, stateRoots, signatures, feeReceivers, transactions)
-	if err != nil {
-		return 0, err
-	}
+func (c *Client) estimateGasLimit(input []byte) (uint64, error) {
 	account := c.ChainConnection.GetAccount()
 	msg := &ethereum.CallMsg{
 		From:     account.From,
@@ -124,4 +114,9 @@ func (c *Client) estimateGasLimit(
 		return 0, err
 	}
 	return uint64(float64(estimatedGas) * gasEstimateMultiplier), nil
+}
+
+func (c *Client) packCommitments(method string, commitments []models.Commitment) ([]byte, error) {
+	stateRoots, signatures, feeReceivers, transactions := encoder.CommitmentToCalldataFields(commitments)
+	return c.RollupABI.Pack(method, stateRoots, signatures, feeReceivers, transactions)
 }
