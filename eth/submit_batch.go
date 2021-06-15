@@ -14,7 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-const gasEstimateMultiplier = 1.2
+const gasEstimateMultiplier = 1.4
 
 type SubmitBatchFunc func(commitments []models.Commitment) (*types.Transaction, error)
 
