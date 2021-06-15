@@ -116,7 +116,7 @@ func (c *Commander) syncBatches(startBlock, endBlock uint64) (err error) {
 	c.stateMutex.Lock()
 	defer c.stateMutex.Unlock()
 
-	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, c.cfg.Rollup)
+	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, c.cfg.Rollup, transactionExecutorOpts{AssumeNonces: true})
 	if err != nil {
 		return err
 	}

@@ -1,13 +1,13 @@
 // +build e2e
 
-package e2e
+package setup
 
 import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 )
 
-func createWallets(domain bls.Domain) ([]bls.Wallet, error) {
+func CreateWallets(domain bls.Domain) ([]bls.Wallet, error) {
 	cfg := config.GetConfig().Bootstrap
 	accounts := cfg.GenesisAccounts
 

@@ -1,4 +1,4 @@
-package e2e
+package setup
 
 import (
 	"fmt"
@@ -19,7 +19,10 @@ type InProcessCommander struct {
 func CreateInProcessCommander() *InProcessCommander {
 	cfg := config.GetConfig()
 	cfg.Bootstrap.Prune = true
+	return CreateInProcessCommanderWithConfig(cfg)
+}
 
+func CreateInProcessCommanderWithConfig(cfg *config.Config) *InProcessCommander {
 	cmd := commander.NewCommander(cfg)
 
 	endpoint := fmt.Sprintf("http://localhost:%s", cfg.API.Port)
@@ -66,6 +69,7 @@ func (e *InProcessCommander) Restart() error {
 		return err
 	}
 	e.cfg.Bootstrap.Prune = false
+	e.commander = commander.NewCommander(e.cfg)
 	return e.Start()
 }
 

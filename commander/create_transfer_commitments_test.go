@@ -63,7 +63,7 @@ func (s *TransferCommitmentsTestSuite) SetupTest() {
 	err = PopulateGenesisAccounts(s.storage, AssignStateIDs(genesisAccounts))
 	s.NoError(err)
 
-	s.transactionExecutor = newTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg)
+	s.transactionExecutor = newTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, transactionExecutorOpts{})
 }
 
 func (s *TransferCommitmentsTestSuite) TearDownTest() {

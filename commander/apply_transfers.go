@@ -31,7 +31,7 @@ func (t *transactionExecutor) ApplyTransfers(
 
 	for i := range transfers {
 		transfer := &transfers[i]
-		transferError, appError := ApplyTransfer(t.storage, transfer, commitmentTokenIndex)
+		transferError, appError := t.ApplyTransfer(transfer, commitmentTokenIndex)
 		if appError != nil {
 			return nil, appError
 		}
