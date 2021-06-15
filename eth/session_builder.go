@@ -15,6 +15,11 @@ func (b *rollupSessionBuilder) WithValue(value big.Int) *rollupSessionBuilder {
 	return b
 }
 
+func (b *rollupSessionBuilder) WithGasLimit(gasLimit uint64) *rollupSessionBuilder {
+	b.TransactOpts.GasLimit = gasLimit
+	return b
+}
+
 func (c *Client) rollup() *rollupSessionBuilder {
 	return &rollupSessionBuilder{rollup.RollupSession{
 		Contract:     c.Rollup,
