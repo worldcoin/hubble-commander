@@ -51,8 +51,10 @@ func (s *Storage) GetMinedBatch(batchID models.Uint256) (*models.Batch, error) {
 	err := s.Postgres.Query(
 		s.QB.Select("*").
 			From("batch").
-			Where(squirrel.Eq{"batch_id": batchID}).
-			Where(squirrel.NotEq{"batch_hash": nil}),
+			Where(squirrel.And{
+				squirrel.Eq{"batch_id": batchID},
+				squirrel.NotEq{"batch_hash": nil},
+			}),
 	).Into(&res)
 	if err != nil {
 		return nil, err
