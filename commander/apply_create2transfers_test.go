@@ -92,7 +92,7 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 	s.events, s.unsubscribe, err = s.client.WatchRegistrations(&bind.WatchOpts{})
 	s.NoError(err)
 
-	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg)
+	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg, transactionExecutorOpts{})
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
@@ -201,19 +201,19 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_Invali
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_AccountNotExists() {
-	transfer := create2Transfer
-	transfer.ToPublicKey = models.PublicKey{10, 11, 12}
+	c2T := create2Transfer
+	c2T.ToPublicKey = models.PublicKey{10, 11, 12}
 
-	pubKeyID, err := s.transactionExecutor.getOrRegisterPubKeyID(s.events, &transfer, models.MakeUint256(1))
+	pubKeyID, err := s.transactionExecutor.getOrRegisterPubKeyID(s.events, &c2T, models.MakeUint256(1))
 	s.NoError(err)
 	s.Equal(uint32(0), *pubKeyID)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_AccountForTokenIndexNotExists() {
-	transfer := create2Transfer
-	transfer.ToPublicKey = s.publicKey
+	c2T := create2Transfer
+	c2T.ToPublicKey = s.publicKey
 
-	pubKeyID, err := s.transactionExecutor.getOrRegisterPubKeyID(s.events, &transfer, models.MakeUint256(1))
+	pubKeyID, err := s.transactionExecutor.getOrRegisterPubKeyID(s.events, &c2T, models.MakeUint256(1))
 	s.NoError(err)
 	s.Equal(uint32(4), *pubKeyID)
 }

@@ -45,11 +45,10 @@ func (s *GetUserStatesTestSuite) TestGetUserStates() {
 			PublicKey: models.PublicKey{1, 2, 3},
 		},
 	}
-
-	err := s.api.storage.AddAccountIfNotExists(&accounts[0])
-	s.NoError(err)
-	err = s.api.storage.AddAccountIfNotExists(&accounts[1])
-	s.NoError(err)
+	for i := range accounts {
+		err := s.api.storage.AddAccountIfNotExists(&accounts[i])
+		s.NoError(err)
+	}
 
 	leaves := []models.StateLeaf{
 		{
@@ -83,15 +82,12 @@ func (s *GetUserStatesTestSuite) TestGetUserStates() {
 			},
 		},
 	}
+	for i := range leaves {
+		err := s.api.storage.UpsertStateLeaf(&leaves[i])
+		s.NoError(err)
+	}
 
-	err = s.api.storage.UpsertStateLeaf(&leaves[0])
-	s.NoError(err)
-	err = s.api.storage.UpsertStateLeaf(&leaves[1])
-	s.NoError(err)
-	err = s.api.storage.UpsertStateLeaf(&leaves[2])
-	s.NoError(err)
-
-	err = s.api.storage.UpsertStateNode(&models.StateNode{
+	err := s.api.storage.UpsertStateNode(&models.StateNode{
 		DataHash:   common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		MerklePath: models.MakeMerklePathFromStateID(leaves[0].StateID),
 	})

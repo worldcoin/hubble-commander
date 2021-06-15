@@ -19,6 +19,7 @@ func (s *Storage) AddBatch(batch *models.Batch) (*int32, error) {
 				batch.Number,
 				batch.FinalisationBlock,
 				batch.AccountTreeRoot,
+				batch.PrevStateRoot,
 			).
 			Suffix("RETURNING batch_id"),
 	).Into(&res)
@@ -187,4 +188,22 @@ func (s *Storage) GetBatchesInRange(from, to *models.Uint256) ([]models.Batch, e
 		return nil, err
 	}
 	return res, nil
+}
+
+func (s *Storage) DeleteBatches(batchIDs ...int32) error {
+	res, err := s.Postgres.Query(
+		s.QB.Delete("batch").
+			Where(squirrel.Eq{"batch_id": batchIDs}),
+	).Exec()
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrNoRowsAffected
+	}
+	return nil
 }

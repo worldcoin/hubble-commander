@@ -79,7 +79,7 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo_NoFinalisedBatches() {
 	networkInfo, err := s.api.GetNetworkInfo()
 	s.NoError(err)
 	s.NotNil(networkInfo)
-	s.Equal("2000", *networkInfo.LatestBatch)
+	s.Equal("2000", networkInfo.LatestBatch.String())
 	s.Nil(networkInfo.LatestFinalisedBatch)
 }
 
@@ -129,8 +129,8 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
 	s.Equal(uint32(1), networkInfo.BlockNumber)
 	s.Equal(uint32(0), networkInfo.AccountCount)
 	s.Equal(1, networkInfo.TransactionCount)
-	s.Equal("2000", *networkInfo.LatestBatch)
-	s.Equal("1234", *networkInfo.LatestFinalisedBatch)
+	s.Equal("2000", networkInfo.LatestBatch.String())
+	s.Equal("1234", networkInfo.LatestFinalisedBatch.String())
 	s.Equal(expectedDomain, networkInfo.SignatureDomain.Bytes())
 }
 

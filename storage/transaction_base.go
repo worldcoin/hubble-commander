@@ -54,7 +54,7 @@ func (s *Storage) GetLatestTransactionNonce(accountStateID uint32) (*models.Uint
 	return &res[0], nil
 }
 
-func (s *Storage) BatchMarkTransactionAsIncluded(txHashes []common.Hash, commitmentID int32) error {
+func (s *Storage) BatchMarkTransactionAsIncluded(txHashes []common.Hash, commitmentID *int32) error {
 	res, err := s.Postgres.Query(
 		s.QB.Update("transaction_base").
 			Where(squirrel.Eq{"tx_hash": txHashes}).
@@ -109,4 +109,21 @@ func (s *Storage) GetTransactionCount() (*int, error) {
 		return ref.Int(0), nil
 	}
 	return &res[0], nil
+}
+
+func (s *Storage) GetTransactionHashesByBatchIDs(batchIDs ...int32) ([]common.Hash, error) {
+	res := make([]common.Hash, 0, 32*len(batchIDs))
+	err := s.Postgres.Query(
+		s.QB.Select("transaction_base.tx_hash").
+			From("transaction_base").
+			Join("commitment on commitment.commitment_id = transaction_base.included_in_commitment").
+			Where(squirrel.Eq{"commitment.included_in_batch": batchIDs}),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, NewNotFoundError("transaction")
+	}
+	return res, nil
 }

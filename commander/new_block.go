@@ -16,7 +16,6 @@ func (c *Commander) newBlockLoop() error {
 	}
 
 	blocks := make(chan *types.Header, 5)
-	// TODO: remove mining every 1s from github actions as it will be no longer needed with below line
 	blocks <- &types.Header{Number: new(big.Int).SetUint64(*latestBlockNumber)}
 	subscription, err := c.client.ChainConnection.SubscribeNewHead(blocks)
 	if err != nil {
@@ -36,7 +35,7 @@ func (c *Commander) newBlockLoop() error {
 				continue
 			}
 
-			err = c.syncToLastBlock()
+			err = c.syncToLatestBlock()
 			if err != nil {
 				return err
 			}
@@ -50,7 +49,7 @@ func (c *Commander) newBlockLoop() error {
 	}
 }
 
-func (c *Commander) syncToLastBlock() error {
+func (c *Commander) syncToLatestBlock() error {
 	latestBlockNumber, err := c.client.ChainConnection.GetLatestBlockNumber()
 	if err != nil {
 		return err
@@ -114,13 +113,16 @@ func (c *Commander) syncRange(startBlock, endBlock uint64) error {
 }
 
 func (c *Commander) syncBatches(startBlock, endBlock uint64) (err error) {
-	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, c.cfg.Rollup)
+	c.stateMutex.Lock()
+	defer c.stateMutex.Unlock()
+
+	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, c.cfg.Rollup, transactionExecutorOpts{AssumeNonces: true})
 	if err != nil {
 		return err
 	}
 	defer transactionExecutor.Rollback(&err)
 
-	err = transactionExecutor.SyncBatches(&c.stateMutex, startBlock, endBlock)
+	err = transactionExecutor.SyncBatches(startBlock, endBlock)
 	if err != nil {
 		return err
 	}
