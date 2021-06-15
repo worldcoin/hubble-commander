@@ -72,11 +72,7 @@ func (t *transactionExecutor) createTransferCommitment(
 	for {
 		if len(pendingTransfers) == 0 {
 			pendingTransfers, err = t.storage.GetPendingTransfers(2 * t.cfg.TxsPerCommitment)
-			if err != nil {
-				return nil, nil, err
-			}
-			if len(pendingTransfers) == 0 {
-				err = stateTree.RevertTo(*initialStateRoot)
+			if err != nil || len(pendingTransfers) == 0 {
 				return nil, nil, err
 			}
 		}

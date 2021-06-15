@@ -73,11 +73,7 @@ func (t *transactionExecutor) createC2TCommitment(
 	for {
 		if len(pendingTransfers) == 0 {
 			pendingTransfers, err = t.storage.GetPendingCreate2Transfers(2 * t.cfg.TxsPerCommitment)
-			if err != nil {
-				return nil, nil, err
-			}
-			if len(pendingTransfers) == 0 {
-				err = stateTree.RevertTo(*initialStateRoot)
+			if err != nil || len(pendingTransfers) == 0 {
 				return nil, nil, err
 			}
 		}
