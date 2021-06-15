@@ -17,6 +17,7 @@ type AppliedC2Transfers struct {
 
 func (t *transactionExecutor) ApplyCreate2Transfers(
 	transfers []models.Create2Transfer,
+	maxAppliedTransfers uint64,
 ) (*AppliedC2Transfers, error) {
 	if len(transfers) == 0 {
 		return nil, nil
@@ -64,7 +65,7 @@ func (t *transactionExecutor) ApplyCreate2Transfers(
 		}
 
 		returnStruct.addedPubKeyIDs = append(returnStruct.addedPubKeyIDs, *pubKeyID)
-		if uint64(len(returnStruct.appliedTransfers)) == t.cfg.TxsPerCommitment {
+		if uint64(len(returnStruct.appliedTransfers)) == maxAppliedTransfers {
 			break
 		}
 	}

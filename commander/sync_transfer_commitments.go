@@ -24,7 +24,7 @@ func (t *transactionExecutor) syncTransferCommitment(
 		return err
 	}
 
-	transfers, err := t.ApplyTransfers(deserializedTransfers)
+	transfers, err := t.ApplyTransfers(deserializedTransfers, t.cfg.TxsPerCommitment)
 	if err != nil {
 		return err
 	}
