@@ -1,8 +1,6 @@
 package commander
 
 import (
-	"context"
-	"sync"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
