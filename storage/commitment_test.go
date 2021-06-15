@@ -97,6 +97,23 @@ func (s *CommitmentTestSuite) TestGetCommitment_NonExistentCommitment() {
 	s.Nil(res)
 }
 
+func (s *CommitmentTestSuite) TestGetLatestCommitment() {
+	expected := commitment
+	for i := 0; i < 2; i++ {
+		commitmentID, err := s.storage.AddCommitment(&commitment)
+		s.NoError(err)
+		expected.ID = *commitmentID
+	}
+	latestCommitment, err := s.storage.GetLatestCommitment()
+	s.NoError(err)
+	s.Equal(expected, *latestCommitment)
+}
+
+func (s *CommitmentTestSuite) TestGetLatestCommitment_NoCommitments() {
+	_, err := s.storage.GetLatestCommitment()
+	s.Equal(NewNotFoundError("commitment"), err)
+}
+
 func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
 	_, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)

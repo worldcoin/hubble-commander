@@ -51,6 +51,23 @@ func (s *Storage) GetCommitment(id int32) (*models.Commitment, error) {
 	return &res[0], nil
 }
 
+func (s *Storage) GetLatestCommitment() (*models.Commitment, error) {
+	res := make([]models.Commitment, 0, 1)
+	err := s.Postgres.Query(
+		s.QB.Select("*").
+			From("commitment").
+			OrderBy("commitment_id DESC").
+			Limit(1),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, NewNotFoundError("commitment")
+	}
+	return &res[0], nil
+}
+
 func (s *Storage) MarkCommitmentAsIncluded(commitmentID int32, batchID models.Uint256) error {
 	res, err := s.Postgres.Query(
 		s.QB.Update("commitment").
