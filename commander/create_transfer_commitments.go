@@ -19,7 +19,7 @@ func (t *transactionExecutor) createTransferCommitments(
 	pendingTransfers []models.Transfer,
 	domain *bls.Domain,
 ) ([]models.Commitment, error) {
-	commitments := make([]models.Commitment, 0, 32)
+	commitments := make([]models.Commitment, 0, t.cfg.MaxCommitmentsPerBatch)
 
 	if len(pendingTransfers) < int(t.cfg.TxsPerCommitment) {
 		return []models.Commitment{}, nil
