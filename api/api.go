@@ -19,17 +19,17 @@ type API struct {
 	storage       *st.Storage
 	client        *eth.Client
 	mockSignature models.Signature
-	devMode       *bool
+	devMode       bool
 }
 
-func NewAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client, devMode *bool) (*http.Server, error) {
+func NewAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client, devMode bool) (*http.Server, error) {
 	server, err := getAPIServer(cfg, storage, client)
 	if err != nil {
 		return nil, err
 	}
 
 	mux := http.NewServeMux()
-	if *devMode {
+	if devMode {
 		mux.Handle("/", middleware.Logger(server))
 	} else {
 		mux.HandleFunc("/", server.ServeHTTP)

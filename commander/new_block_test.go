@@ -32,6 +32,7 @@ func (s *NewBlockLoopTestSuite) SetupSuite() {
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
 		TxsPerCommitment:       1,
+		DevMode:                false,
 	}
 
 	s.transfer = models.Transfer{

@@ -57,6 +57,7 @@ func (s *SyncTestSuite) SetupTest() {
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
 		TxsPerCommitment:       1,
+		DevMode:                false,
 	}
 
 	s.wallets = generateWallets(s.T(), s.client.ChainState.Rollup, 2)
