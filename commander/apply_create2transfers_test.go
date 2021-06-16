@@ -177,23 +177,6 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_SomeVa
 	s.Len(transfers.invalidTransfers, 3)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_MoreThanSpecifiedInConfigTxsPerCommitment() {
-	generatedTransfers := generateValidCreate2Transfers(7, &s.publicKey)
-	pubKeyIDs := make([]uint32, 0, len(generatedTransfers))
-	for i := range generatedTransfers {
-		pubKeyIDs = append(pubKeyIDs, uint32(i+1))
-	}
-
-	transfers, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, pubKeyIDs)
-	s.NoError(err)
-	s.Len(transfers.appliedTransfers, 6)
-	s.Len(transfers.invalidTransfers, 0)
-
-	state, err := s.storage.GetStateLeaf(1)
-	s.NoError(err)
-	s.Equal(models.MakeUint256(6), state.Nonce)
-}
-
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidSlicesLength() {
 	generatedTransfers := generateValidCreate2Transfers(3, &s.publicKey)
 	_, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, []uint32{1, 2})
