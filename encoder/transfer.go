@@ -108,25 +108,23 @@ func SerializeTransfers(transfers []models.Transfer) ([]byte, error) {
 	return buf, nil
 }
 
-func DeserializeTransfers(data []byte) ([]models.Transfer, [][]byte, error) {
+func DeserializeTransfers(data []byte) ([]models.Transfer, error) {
 	dataLength := len(data)
 	if dataLength%transferLength != 0 {
-		return nil, nil, ErrInvalidDataLength
+		return nil, ErrInvalidDataLength
 	}
 	transfersCount := dataLength / transferLength
 
 	res := make([]models.Transfer, 0, transfersCount)
-	transferData := make([][]byte, 0, transfersCount)
 	for i := 0; i < transfersCount; i++ {
-		transferData = append(transferData, data[i*transferLength:(i+1)*transferLength])
-		transfer, err := DecodeTransferFromCommitment(transferData[i])
+		transfer, err := DecodeTransferFromCommitment(data[i*transferLength : (i+1)*transferLength])
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		res = append(res, *transfer)
 	}
 
-	return res, transferData, nil
+	return res, nil
 }
 
 func HashTransfer(transfer *models.Transfer) (*common.Hash, error) {
