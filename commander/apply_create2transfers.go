@@ -106,10 +106,6 @@ func (t *transactionExecutor) ApplyCreate2TransfersForSync(
 		if err != nil {
 			return nil, err
 		}
-
-		if uint64(len(returnStruct.appliedTransfers)) == t.cfg.TxsPerCommitment {
-			break
-		}
 	}
 
 	if len(returnStruct.appliedTransfers) > 0 {
