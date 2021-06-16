@@ -1,7 +1,6 @@
 package commander
 
 import (
-	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -73,35 +72,4 @@ func (t *transactionExecutor) syncTransferCommitment(
 	}
 
 	return t.storage.BatchAddTransfer(transfers.appliedTransfers)
-}
-
-func (t *transactionExecutor) verifyTransferSignature(commitment *encoder.DecodedCommitment, transfers []models.Transfer) (bool, error) {
-	domain, err := t.storage.GetDomain(t.client.ChainState.ChainID)
-	if err != nil {
-		return false, err
-	}
-	blsDomain, err := bls.DomainFromBytes(domain[:])
-	if err != nil {
-		return false, err
-	}
-
-	messages := make([][]byte, len(transfers))
-	publicKeys := make([]*models.PublicKey, len(transfers))
-	for i := range transfers {
-		publicKeys[i], err = t.storage.GetPublicKeyByStateID(transfers[i].FromStateID)
-		if err != nil {
-			return false, err
-		}
-		messages[i], err = encoder.EncodeTransferForSigning(&transfers[i])
-		if err != nil {
-			return false, err
-		}
-	}
-
-	sig, err := bls.NewSignatureFromBytes(commitment.CombinedSignature[:], *blsDomain)
-	if err != nil {
-		return false, err
-	}
-	signature := bls.AggregatedSignature{Signature: sig}
-	return signature.Verify(messages, publicKeys)
 }

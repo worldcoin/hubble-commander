@@ -8,7 +8,11 @@ import (
 
 func (t *transactionExecutor) syncCreate2TransferCommitments(batch *eth.DecodedBatch) error {
 	for i := range batch.Commitments {
-		if err := t.syncCreate2TransferCommitment(batch, &batch.Commitments[i]); err != nil {
+		err := t.syncCreate2TransferCommitment(batch, &batch.Commitments[i])
+		if err != nil {
+			if err == ErrInvalidSignature { //nolint: staticcheck
+				//TODO: dispute fraudulent commitment
+			}
 			return err
 		}
 	}
@@ -32,9 +36,16 @@ func (t *transactionExecutor) syncCreate2TransferCommitment(
 	if len(transfers.invalidTransfers) > 0 {
 		return ErrFraudulentTransfer
 	}
-
 	if len(transfers.appliedTransfers) != len(deserializedTransfers) {
 		return ErrTransfersNotApplied
+	}
+
+	isValid, err := t.verifyCreate2TransferSignature(commitment, transfers.appliedTransfers)
+	if err != nil {
+		return err
+	}
+	if !isValid {
+		return ErrInvalidSignature
 	}
 
 	commitmentID, err := t.storage.AddCommitment(&models.Commitment{

@@ -1,0 +1,66 @@
+package commander
+
+import (
+	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/encoder"
+	"github.com/Worldcoin/hubble-commander/models"
+)
+
+func (t *transactionExecutor) verifyTransferSignature(commitment *encoder.DecodedCommitment, transfers []models.Transfer) (bool, error) {
+	domain, err := t.storage.GetDomain(t.client.ChainState.ChainID)
+	if err != nil {
+		return false, err
+	}
+
+	messages := make([][]byte, len(transfers))
+	publicKeys := make([]*models.PublicKey, len(transfers))
+	for i := range transfers {
+		publicKeys[i], err = t.storage.GetPublicKeyByStateID(transfers[i].FromStateID)
+		if err != nil {
+			return false, err
+		}
+		messages[i], err = encoder.EncodeTransferForSigning(&transfers[i])
+		if err != nil {
+			return false, err
+		}
+	}
+	return verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys)
+}
+
+func (t *transactionExecutor) verifyCreate2TransferSignature(
+	commitment *encoder.DecodedCommitment,
+	transfers []models.Create2Transfer,
+) (bool, error) {
+	domain, err := t.storage.GetDomain(t.client.ChainState.ChainID)
+	if err != nil {
+		return false, err
+	}
+
+	messages := make([][]byte, len(transfers))
+	publicKeys := make([]*models.PublicKey, len(transfers))
+	for i := range transfers {
+		publicKeys[i], err = t.storage.GetPublicKeyByStateID(transfers[i].FromStateID)
+		if err != nil {
+			return false, err
+		}
+		messages[i], err = encoder.EncodeCreate2TransferForSigning(&transfers[i])
+		if err != nil {
+			return false, err
+		}
+	}
+	return verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys)
+}
+
+func verifyCommitmentSignature(
+	signature *models.Signature,
+	domain *bls.Domain,
+	messages [][]byte,
+	publicKeys []*models.PublicKey,
+) (bool, error) {
+	sig, err := bls.NewSignatureFromBytes(signature[:], *domain)
+	if err != nil {
+		return false, err
+	}
+	aggregatedSignature := bls.AggregatedSignature{Signature: sig}
+	return aggregatedSignature.Verify(messages, publicKeys)
+}

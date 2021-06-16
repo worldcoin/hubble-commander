@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type SyncTransferCommitmentsTestSuite struct {
+type VerifySignatureTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	transactionExecutor *transactionExecutor
@@ -27,7 +27,7 @@ type SyncTransferCommitmentsTestSuite struct {
 	wallets             []bls.Wallet
 }
 
-func (s *SyncTransferCommitmentsTestSuite) SetupSuite() {
+func (s *VerifySignatureTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 	s.cfg = &config.RollupConfig{
 		MinCommitmentsPerBatch: 1,
@@ -36,7 +36,7 @@ func (s *SyncTransferCommitmentsTestSuite) SetupSuite() {
 	}
 }
 
-func (s *SyncTransferCommitmentsTestSuite) SetupTest() {
+func (s *VerifySignatureTestSuite) SetupTest() {
 	var err error
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
@@ -51,12 +51,12 @@ func (s *SyncTransferCommitmentsTestSuite) SetupTest() {
 	s.addAccounts()
 }
 
-func (s *SyncTransferCommitmentsTestSuite) TearDownTest() {
+func (s *VerifySignatureTestSuite) TearDownTest() {
 	err := s.teardown()
 	s.NoError(err)
 }
 
-func (s *SyncTransferCommitmentsTestSuite) TestVerifySignature_ValidSignature() {
+func (s *VerifySignatureTestSuite) TestVerifySignature_ValidSignature() {
 	transfers := []models.Transfer{
 		{
 			TransactionBase: models.TransactionBase{
@@ -96,7 +96,7 @@ func (s *SyncTransferCommitmentsTestSuite) TestVerifySignature_ValidSignature() 
 	s.True(valid)
 }
 
-func (s *SyncTransferCommitmentsTestSuite) TestVerifySignature_InvalidSignature() {
+func (s *VerifySignatureTestSuite) TestVerifySignature_InvalidSignature() {
 	transfers := []models.Transfer{
 		{
 			TransactionBase: models.TransactionBase{
@@ -138,7 +138,7 @@ func (s *SyncTransferCommitmentsTestSuite) TestVerifySignature_InvalidSignature(
 	s.False(valid)
 }
 
-func (s *SyncTransferCommitmentsTestSuite) addAccounts() {
+func (s *VerifySignatureTestSuite) addAccounts() {
 	domain, err := s.storage.GetDomain(s.client.ChainState.ChainID)
 	s.NoError(err)
 
@@ -180,5 +180,5 @@ func signCreate2Transfer(t *testing.T, wallet *bls.Wallet, transfer *models.Crea
 }
 
 func TestSyncTransferCommitmentsTestSuite(t *testing.T) {
-	suite.Run(t, new(SyncTransferCommitmentsTestSuite))
+	suite.Run(t, new(VerifySignatureTestSuite))
 }
