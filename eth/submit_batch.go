@@ -48,22 +48,22 @@ func (c *Client) SubmitCreate2TransfersBatch(commitments []models.Commitment) (
 	return c.RawTransact(c.config.stakeAmount.ToBig(), estimate, input)
 }
 
-func (c *Client) SubmitTransfersBatchAndMine(commitments []models.Commitment) (
+func (c *Client) SubmitTransfersBatchAndWait(commitments []models.Commitment) (
 	batch *models.Batch,
 	accountTreeRoot *common.Hash,
 	err error,
 ) {
-	return c.submitBatchAndMine(commitments, c.SubmitTransfersBatch)
+	return c.submitBatchAndWait(commitments, c.SubmitTransfersBatch)
 }
-func (c *Client) SubmitCreate2TransfersBatchAndMine(commitments []models.Commitment) (
+func (c *Client) SubmitCreate2TransfersBatchAndWait(commitments []models.Commitment) (
 	batch *models.Batch,
 	accountTreeRoot *common.Hash,
 	err error,
 ) {
-	return c.submitBatchAndMine(commitments, c.SubmitCreate2TransfersBatch)
+	return c.submitBatchAndWait(commitments, c.SubmitCreate2TransfersBatch)
 }
 
-func (c *Client) submitBatchAndMine(
+func (c *Client) submitBatchAndWait(
 	commitments []models.Commitment,
 	submit SubmitBatchFunc,
 ) (batch *models.Batch, accountTreeRoot *common.Hash, err error) {
