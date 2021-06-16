@@ -82,7 +82,7 @@ func (s *SyncTransferCommitmentsTestSuite) TestVerifySignature_ValidSignature() 
 		},
 	}
 	for i := range transfers {
-		s.signTransfer(&s.wallets[i], &transfers[i])
+		signTransfer(s.T(), &s.wallets[i], &transfers[i])
 	}
 
 	combinedSignature, err := combineTransferSignatures(transfers, testDomain)
@@ -124,7 +124,7 @@ func (s *SyncTransferCommitmentsTestSuite) TestVerifySignature_InvalidSignature(
 	for i := range transfers {
 		invalidTransfer := transfers[i]
 		invalidTransfer.Nonce = models.MakeUint256(4)
-		s.signTransfer(&s.wallets[i], &invalidTransfer)
+		signTransfer(s.T(), &s.wallets[i], &invalidTransfer)
 	}
 
 	combinedSignature, err := combineTransferSignatures(transfers, testDomain)
@@ -163,11 +163,11 @@ func (s *SyncTransferCommitmentsTestSuite) addAccounts() {
 	}
 }
 
-func (s *SyncTransferCommitmentsTestSuite) signTransfer(wallet *bls.Wallet, transfer *models.Transfer) {
+func signTransfer(t *testing.T, wallet *bls.Wallet, transfer *models.Transfer) {
 	encodedTransfer, err := encoder.EncodeTransferForSigning(transfer)
-	s.NoError(err)
+	require.NoError(t, err)
 	signature, err := wallet.Sign(encodedTransfer)
-	s.NoError(err)
+	require.NoError(t, err)
 	transfer.Signature = *signature.ModelsSignature()
 }
 

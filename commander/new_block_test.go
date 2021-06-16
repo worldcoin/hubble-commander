@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -22,6 +23,7 @@ type NewBlockLoopTestSuite struct {
 	cfg        *config.RollupConfig
 	transfer   models.Transfer
 	teardown   func() error
+	wallets    []bls.Wallet
 }
 
 func (s *NewBlockLoopTestSuite) SetupSuite() {
@@ -51,13 +53,16 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	s.teardown = testStorage.Teardown
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
+	err = testStorage.SetChainState(&s.testClient.ChainState)
+	s.NoError(err)
 
 	s.cmd = NewCommander(config.GetTestConfig())
 	s.cmd.client = s.testClient.Client
 	s.cmd.storage = testStorage.Storage
 	s.cmd.stopChannel = make(chan bool)
 
-	seedDB(s.T(), testStorage.Storage, st.NewStateTree(testStorage.Storage))
+	s.wallets = generateWallets(s.T(), s.testClient.ChainState.Rollup, 2)
+	seedDB(s.T(), testStorage.Storage, st.NewStateTree(testStorage.Storage), s.wallets)
 }
 
 func (s *NewBlockLoopTestSuite) TearDownTest() {

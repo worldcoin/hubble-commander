@@ -14,6 +14,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -28,6 +29,7 @@ type SyncTestSuite struct {
 	cfg                 *config.RollupConfig
 	transactionExecutor *transactionExecutor
 	transfer            models.Transfer
+	wallets             []bls.Wallet
 }
 
 func (s *SyncTestSuite) SetupSuite() {
@@ -57,6 +59,7 @@ func (s *SyncTestSuite) SetupTest() {
 		TxsPerCommitment:       1,
 	}
 
+	s.wallets = generateWallets(s.T(), s.client.ChainState.Rollup, 2)
 	s.setupDB()
 }
 
@@ -67,20 +70,22 @@ func (s *SyncTestSuite) setupDB() {
 	s.teardown = testStorage.Teardown
 	s.tree = st.NewStateTree(s.storage)
 	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg, transactionExecutorOpts{AssumeNonces: true})
+	err = s.storage.SetChainState(&s.client.ChainState)
+	s.NoError(err)
 
-	seedDB(s.T(), s.storage, s.tree)
+	seedDB(s.T(), s.storage, s.tree, s.wallets)
 }
 
-func seedDB(t *testing.T, storage *st.Storage, tree *st.StateTree) {
+func seedDB(t *testing.T, storage *st.Storage, tree *st.StateTree, wallets []bls.Wallet) {
 	err := storage.AddAccountIfNotExists(&models.Account{
 		PubKeyID:  0,
-		PublicKey: models.PublicKey{1, 2, 3},
+		PublicKey: *wallets[0].PublicKey(),
 	})
 	require.NoError(t, err)
 
 	err = storage.AddAccountIfNotExists(&models.Account{
 		PubKeyID:  1,
-		PublicKey: models.PublicKey{2, 3, 4},
+		PublicKey: *wallets[1].PublicKey(),
 	})
 	require.NoError(t, err)
 
@@ -554,6 +559,19 @@ func (s *SyncTestSuite) setCreate2TransferHash(tx *models.Create2Transfer) {
 	hash, err := encoder.HashCreate2Transfer(tx)
 	s.NoError(err)
 	tx.Hash = *hash
+}
+
+func generateWallets(t *testing.T, rollupAddress common.Address, walletsAmount int) []bls.Wallet {
+	domain, err := bls.DomainFromBytes(crypto.Keccak256(rollupAddress.Bytes()))
+	require.NoError(t, err)
+
+	wallets := make([]bls.Wallet, 0, walletsAmount)
+	for i := 0; i < walletsAmount; i++ {
+		wallet, err := bls.NewRandomWallet(*domain)
+		require.NoError(t, err)
+		wallets = append(wallets, *wallet)
+	}
+	return wallets
 }
 
 func TestSyncTestSuite(t *testing.T) {
