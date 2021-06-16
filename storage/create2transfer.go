@@ -141,16 +141,22 @@ func (s *Storage) GetCreate2TransferWithBatchHash(hash common.Hash) (*models.Cre
 	return &res[0], nil
 }
 
-func (s *Storage) GetPendingCreate2Transfers(limit uint64) ([]models.Create2Transfer, error) {
+func (s *Storage) GetPendingCreate2Transfers(limit uint64, offset *uint64) ([]models.Create2Transfer, error) {
 	res := make([]models.Create2Transfer, 0, limit)
-	err := s.Postgres.Query(
-		s.QB.Select(create2TransferColumns...).
-			From("transaction_base").
-			JoinClause("NATURAL JOIN create2transfer").
-			Where(squirrel.Eq{"included_in_commitment": nil, "error_message": nil}).
-			OrderBy("transaction_base.nonce ASC").
-			Limit(limit),
-	).Into(&res)
+
+	query := s.QB.Select(create2TransferColumns...).
+		From("transaction_base").
+		JoinClause("NATURAL JOIN create2transfer").
+		Where(squirrel.Eq{"included_in_commitment": nil, "error_message": nil}).
+		OrderBy("transaction_base.nonce ASC").
+		OrderBy("transaction_base.tx_hash ASC").
+		Limit(limit)
+
+	if offset != nil {
+		query = query.Offset(*offset)
+	}
+
+	err := s.Postgres.Query(query).Into(&res)
 	if err != nil {
 		return nil, err
 	}
