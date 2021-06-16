@@ -96,55 +96,35 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_QueriesForM
 
 	s.addTransfers(transfers)
 
-	stateTree := storage.NewStateTree(s.storage)
-
-	dummyAccount := models.Account{
-		PubKeyID: 500,
-		PublicKey: models.MakePublicKeyFromInts([4]*big.Int{
-			big.NewInt(9),
-			big.NewInt(10),
-			big.NewInt(3),
-			big.NewInt(2),
-		}),
-	}
-
-	err := s.storage.AddAccountIfNotExists(&dummyAccount)
-	s.NoError(err)
-
-	err = stateTree.Set(24, &models.UserState{
-		PubKeyID:   dummyAccount.PubKeyID,
-		TokenIndex: models.MakeUint256(0),
-		Balance:    models.MakeUint256(1000),
-		Nonce:      models.MakeUint256(10),
-	})
+	err := addNewDummyState(s.storage, s.transactionExecutor.stateTree, 24)
 	s.NoError(err)
 
 	pendingTransfers, err := s.storage.GetPendingTransfers(s.cfg.PendingTxsCountMultiplier*s.cfg.TxsPerCommitment, nil)
 	s.NoError(err)
 	s.Len(pendingTransfers, 4)
 
-	preRoot, err := storage.NewStateTree(s.storage).Root()
+	preRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.createTransferCommitments(pendingTransfers, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	postRoot, err := storage.NewStateTree(s.storage).Root()
+	postRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
 }
 
 func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothingWhenThereAreNotEnoughPendingTransfers() {
-	preRoot, err := storage.NewStateTree(s.storage).Root()
+	preRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.createTransferCommitments([]models.Transfer{}, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 0)
 
-	postRoot, err := storage.NewStateTree(s.storage).Root()
+	postRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
 	s.Equal(preRoot, postRoot)
@@ -159,14 +139,14 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothing
 	s.NoError(err)
 	s.Len(pendingTransfers, 2)
 
-	preRoot, err := storage.NewStateTree(s.storage).Root()
+	preRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.createTransferCommitments(pendingTransfers, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 0)
 
-	postRoot, err := storage.NewStateTree(s.storage).Root()
+	postRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
 	s.Equal(preRoot, postRoot)
@@ -175,7 +155,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothing
 func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_StoresCorrectCommitment() {
 	pendingTransfers := s.prepareAndReturnPendingTransfers(3)
 
-	preRoot, err := storage.NewStateTree(s.storage).Root()
+	preRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.createTransferCommitments(pendingTransfers, testDomain)
@@ -185,7 +165,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_StoresCorre
 	s.Equal(commitments[0].FeeReceiver, uint32(2))
 	s.Nil(commitments[0].IncludedInBatch)
 
-	postRoot, err := storage.NewStateTree(s.storage).Root()
+	postRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
@@ -256,4 +236,33 @@ func (s *TransferCommitmentsTestSuite) prepareAndReturnPendingTransfers(transfer
 	s.Len(pendingTransfers, int(transfersAmount))
 
 	return pendingTransfers
+}
+
+func addNewDummyState(storage *storage.Storage, stateTree *storage.StateTree, stateID uint32) error {
+	dummyAccount := models.Account{
+		PubKeyID: 500,
+		PublicKey: models.MakePublicKeyFromInts([4]*big.Int{
+			big.NewInt(9),
+			big.NewInt(10),
+			big.NewInt(3),
+			big.NewInt(2),
+		}),
+	}
+
+	err := storage.AddAccountIfNotExists(&dummyAccount)
+	if err != nil {
+		return err
+	}
+
+	err = stateTree.Set(stateID, &models.UserState{
+		PubKeyID:   dummyAccount.PubKeyID,
+		TokenIndex: models.MakeUint256(0),
+		Balance:    models.MakeUint256(1000),
+		Nonce:      models.MakeUint256(10),
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
