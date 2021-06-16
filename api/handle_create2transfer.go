@@ -88,7 +88,7 @@ func (a *API) validateCreate2Transfer(create2Transfer *models.Create2Transfer) e
 		return err
 	}
 
-	if a.cfg.DevMode {
+	if *a.devMode {
 		create2Transfer.Signature = a.mockSignature
 		return nil
 	}

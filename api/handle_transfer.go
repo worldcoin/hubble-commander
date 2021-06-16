@@ -91,7 +91,7 @@ func (a *API) validateTransfer(transfer *models.Transfer) error {
 		return err
 	}
 
-	if a.cfg.DevMode {
+	if *a.devMode {
 		transfer.Signature = a.mockSignature
 		return nil
 	}

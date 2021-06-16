@@ -201,7 +201,7 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesSignatur
 }
 
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesSignature_DevMode() {
-	s.api.cfg = &config.APIConfig{DevMode: true}
+	s.api.devMode = ref.Bool(true)
 
 	wallet, err := bls.NewRandomWallet(*s.domain)
 	s.NoError(err)

@@ -40,12 +40,14 @@ func (t *transactionExecutor) syncCreate2TransferCommitment(
 		return ErrTransfersNotApplied
 	}
 
-	isValid, err := t.verifyCreate2TransferSignature(commitment, transfers.appliedTransfers)
-	if err != nil {
-		return err
-	}
-	if !isValid {
-		return ErrInvalidSignature
+	if !t.cfg.DevMode {
+		isValid, err := t.verifyCreate2TransferSignature(commitment, transfers.appliedTransfers)
+		if err != nil {
+			return err
+		}
+		if !isValid {
+			return ErrInvalidSignature
+		}
 	}
 
 	commitmentID, err := t.storage.AddCommitment(&models.Commitment{
