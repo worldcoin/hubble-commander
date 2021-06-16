@@ -9,7 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/Worldcoin/hubble-commander/storage"
+	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -42,7 +42,7 @@ type TransferCommitmentsTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	teardown            func() error
-	storage             *storage.Storage
+	storage             *st.Storage
 	cfg                 *config.RollupConfig
 	transactionExecutor *transactionExecutor
 }
@@ -52,7 +52,7 @@ func (s *TransferCommitmentsTestSuite) SetupSuite() {
 }
 
 func (s *TransferCommitmentsTestSuite) SetupTest() {
-	testStorage, err := storage.NewTestStorageWithBadger()
+	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
@@ -238,7 +238,7 @@ func (s *TransferCommitmentsTestSuite) prepareAndReturnPendingTransfers(transfer
 	return pendingTransfers
 }
 
-func addNewDummyState(storage *storage.Storage, stateTree *storage.StateTree, stateID uint32) error {
+func addNewDummyState(storage *st.Storage, stateTree *st.StateTree, stateID uint32) error {
 	dummyAccount := models.Account{
 		PubKeyID: 500,
 		PublicKey: models.MakePublicKeyFromInts([4]*big.Int{
