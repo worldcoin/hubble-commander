@@ -151,13 +151,42 @@ func (s *TransferTestSuite) TestGetPendingTransfers() {
 		s.NoError(err)
 	}
 
-	res, err := s.storage.GetPendingTransfers(32)
+	res, err := s.storage.GetPendingTransfers(32, nil)
 	s.NoError(err)
 
-	s.Equal([]models.Transfer{transfer, transfer2}, res)
+	s.Len(res, 2)
+	s.Contains(res, transfer)
+	s.Contains(res, transfer2)
 }
 
-func (s *TransferTestSuite) TestGetPendingTransfers_OrdersTransfersByNonceAscending() {
+func (s *TransferTestSuite) TestGetPendingTransfers_OrdersTransfersByNonceAndTxHashAscending() {
+	transfer.Nonce = models.MakeUint256(1)
+	transfer.Hash = utils.RandomHash()
+	transfer2 := transfer
+	transfer2.Nonce = models.MakeUint256(4)
+	transfer2.Hash = utils.RandomHash()
+	transfer3 := transfer
+	transfer3.Nonce = models.MakeUint256(7)
+	transfer3.Hash = utils.RandomHash()
+	transfer4 := transfer
+	transfer4.Nonce = models.MakeUint256(5)
+	transfer4.Hash = common.Hash{66, 66, 66, 66}
+	transfer5 := transfer
+	transfer5.Nonce = models.MakeUint256(5)
+	transfer5.Hash = common.Hash{66, 66, 66, 66}
+
+	for _, transfer := range []*models.Transfer{&transfer, &transfer2, &transfer3, &transfer4, &transfer5} {
+		err := s.storage.AddTransfer(transfer)
+		s.NoError(err)
+	}
+
+	res, err := s.storage.GetPendingTransfers(32, nil)
+	s.NoError(err)
+
+	s.Equal([]models.Transfer{transfer, transfer2, transfer5, transfer4, transfer3}, res)
+}
+
+func (s *TransferTestSuite) TestGetPendingTransfers_ReturnsCorrectNumberOfTransfersWithOffset() {
 	transfer.Nonce = models.MakeUint256(1)
 	transfer.Hash = utils.RandomHash()
 	transfer2 := transfer
@@ -175,34 +204,12 @@ func (s *TransferTestSuite) TestGetPendingTransfers_OrdersTransfersByNonceAscend
 		s.NoError(err)
 	}
 
-	res, err := s.storage.GetPendingTransfers(32)
+	res, err := s.storage.GetPendingTransfers(2, ref.Uint64(1))
 	s.NoError(err)
 
-	s.Equal([]models.Transfer{transfer, transfer2, transfer4, transfer3}, res)
-}
-
-func (s *TransferTestSuite) TestGetPendingTransfers_ReturnsCorrectNumberOfTransfers() {
-	transfer.Nonce = models.MakeUint256(1)
-	transfer.Hash = utils.RandomHash()
-	transfer2 := transfer
-	transfer2.Nonce = models.MakeUint256(4)
-	transfer2.Hash = utils.RandomHash()
-	transfer3 := transfer
-	transfer3.Nonce = models.MakeUint256(7)
-	transfer3.Hash = utils.RandomHash()
-	transfer4 := transfer
-	transfer4.Nonce = models.MakeUint256(5)
-	transfer4.Hash = utils.RandomHash()
-
-	for _, transfer := range []*models.Transfer{&transfer, &transfer2, &transfer3, &transfer4} {
-		err := s.storage.AddTransfer(transfer)
-		s.NoError(err)
-	}
-
-	res, err := s.storage.GetPendingTransfers(2)
-	s.NoError(err)
-
-	s.Equal([]models.Transfer{transfer, transfer2}, res)
+	s.Len(res, 2)
+	s.Contains(res, transfer2)
+	s.Contains(res, transfer4)
 }
 
 func (s *TransferTestSuite) TestGetUserTransfers() {
