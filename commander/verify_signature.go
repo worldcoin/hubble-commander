@@ -6,10 +6,10 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-func (t *transactionExecutor) verifyTransferSignature(commitment *encoder.DecodedCommitment, transfers []models.Transfer) (bool, error) {
+func (t *transactionExecutor) verifyTransferSignature(commitment *encoder.DecodedCommitment, transfers []models.Transfer) error {
 	domain, err := t.storage.GetDomain(t.client.ChainState.ChainID)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	messages := make([][]byte, len(transfers))
@@ -17,11 +17,11 @@ func (t *transactionExecutor) verifyTransferSignature(commitment *encoder.Decode
 	for i := range transfers {
 		publicKeys[i], err = t.storage.GetPublicKeyByStateID(transfers[i].FromStateID)
 		if err != nil {
-			return false, err
+			return err
 		}
 		messages[i], err = encoder.EncodeTransferForSigning(&transfers[i])
 		if err != nil {
-			return false, err
+			return err
 		}
 	}
 	return verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys)
@@ -30,10 +30,10 @@ func (t *transactionExecutor) verifyTransferSignature(commitment *encoder.Decode
 func (t *transactionExecutor) verifyCreate2TransferSignature(
 	commitment *encoder.DecodedCommitment,
 	transfers []models.Create2Transfer,
-) (bool, error) {
+) error {
 	domain, err := t.storage.GetDomain(t.client.ChainState.ChainID)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	messages := make([][]byte, len(transfers))
@@ -41,11 +41,11 @@ func (t *transactionExecutor) verifyCreate2TransferSignature(
 	for i := range transfers {
 		publicKeys[i], err = t.storage.GetPublicKeyByStateID(transfers[i].FromStateID)
 		if err != nil {
-			return false, err
+			return err
 		}
 		messages[i], err = encoder.EncodeCreate2TransferForSigning(&transfers[i])
 		if err != nil {
-			return false, err
+			return err
 		}
 	}
 	return verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys)
@@ -56,11 +56,18 @@ func verifyCommitmentSignature(
 	domain *bls.Domain,
 	messages [][]byte,
 	publicKeys []*models.PublicKey,
-) (bool, error) {
+) error {
 	sig, err := bls.NewSignatureFromBytes(signature[:], *domain)
 	if err != nil {
-		return false, err
+		return err
 	}
 	aggregatedSignature := bls.AggregatedSignature{Signature: sig}
-	return aggregatedSignature.Verify(messages, publicKeys)
+	isValid, err := aggregatedSignature.Verify(messages, publicKeys)
+	if err != nil {
+		return err
+	}
+	if !isValid {
+		return ErrInvalidSignature
+	}
+	return nil
 }

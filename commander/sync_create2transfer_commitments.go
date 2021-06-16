@@ -41,12 +41,9 @@ func (t *transactionExecutor) syncCreate2TransferCommitment(
 	}
 
 	if !t.cfg.DevMode {
-		isValid, err := t.verifyCreate2TransferSignature(commitment, transfers.appliedTransfers)
+		err = t.verifyCreate2TransferSignature(commitment, transfers.appliedTransfers)
 		if err != nil {
 			return err
-		}
-		if !isValid {
-			return ErrInvalidSignature
 		}
 	}
 
