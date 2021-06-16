@@ -96,8 +96,6 @@ func (t *transactionExecutor) createC2TCommitment(
 			return nil, nil, err
 		}
 
-		pendingTransfers = removeCreate2Transfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
-
 		if len(pendingTransfers) == 0 {
 			err = t.stateTree.RevertTo(*initialStateRoot)
 			return nil, nil, err
