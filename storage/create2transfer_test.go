@@ -148,12 +148,15 @@ func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers() {
 	create2Transfer4.Hash = utils.RandomHash()
 	create2Transfer4.ErrorMessage = ref.String("A very boring error message")
 
-	create2Transfers := []*models.Create2Transfer{&create2Transfer, &create2Transfer2, &create2Transfer3, &create2Transfer4}
-
-	for _, create2Transfer := range create2Transfers {
-		err = s.storage.AddCreate2Transfer(create2Transfer)
-		s.NoError(err)
+	create2transfers := []models.Create2Transfer{
+		create2Transfer,
+		create2Transfer2,
+		create2Transfer3,
+		create2Transfer4,
 	}
+
+	err = s.storage.BatchAddCreate2Transfer(create2transfers)
+	s.NoError(err)
 
 	res, err := s.storage.GetPendingCreate2Transfers(32, nil)
 	s.NoError(err)
@@ -179,10 +182,16 @@ func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers_OrdersTransfer
 	create2Transfer5.TransactionBase.Nonce = models.MakeUint256(5)
 	create2Transfer5.Hash = common.Hash{65, 65, 65, 65}
 
-	for _, transfer := range []*models.Create2Transfer{&create2Transfer, &create2Transfer2, &create2Transfer3, &create2Transfer4, &create2Transfer5} {
-		err := s.storage.AddCreate2Transfer(transfer)
-		s.NoError(err)
+	create2transfers := []models.Create2Transfer{
+		create2Transfer,
+		create2Transfer2,
+		create2Transfer3,
+		create2Transfer4,
+		create2Transfer5,
 	}
+
+	err := s.storage.BatchAddCreate2Transfer(create2transfers)
+	s.NoError(err)
 
 	res, err := s.storage.GetPendingCreate2Transfers(32, nil)
 	s.NoError(err)
@@ -203,10 +212,15 @@ func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers_ReturnsCorrect
 	create2Transfer4.TransactionBase.Nonce = models.MakeUint256(5)
 	create2Transfer4.Hash = utils.RandomHash()
 
-	for _, transfer := range []*models.Create2Transfer{&create2Transfer, &create2Transfer2, &create2Transfer3, &create2Transfer4} {
-		err := s.storage.AddCreate2Transfer(transfer)
-		s.NoError(err)
+	create2transfers := []models.Create2Transfer{
+		create2Transfer,
+		create2Transfer2,
+		create2Transfer3,
+		create2Transfer4,
 	}
+
+	err := s.storage.BatchAddCreate2Transfer(create2transfers)
+	s.NoError(err)
 
 	res, err := s.storage.GetPendingCreate2Transfers(2, ref.Uint64(1))
 	s.NoError(err)

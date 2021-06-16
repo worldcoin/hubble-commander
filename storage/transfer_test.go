@@ -146,10 +146,15 @@ func (s *TransferTestSuite) TestGetPendingTransfers() {
 	transfer4.Hash = utils.RandomHash()
 	transfer4.ErrorMessage = ref.String("A very boring error message")
 
-	for _, transfer := range []*models.Transfer{&transfer, &transfer2, &transfer3, &transfer4} {
-		err = s.storage.AddTransfer(transfer)
-		s.NoError(err)
+	transfers := []models.Transfer{
+		transfer,
+		transfer2,
+		transfer3,
+		transfer4,
 	}
+
+	err = s.storage.BatchAddTransfer(transfers)
+	s.NoError(err)
 
 	res, err := s.storage.GetPendingTransfers(32, nil)
 	s.NoError(err)
@@ -173,12 +178,18 @@ func (s *TransferTestSuite) TestGetPendingTransfers_OrdersTransfersByNonceAndTxH
 	transfer4.Hash = common.Hash{66, 66, 66, 66}
 	transfer5 := transfer
 	transfer5.Nonce = models.MakeUint256(5)
-	transfer5.Hash = common.Hash{66, 66, 66, 66}
+	transfer5.Hash = common.Hash{65, 65, 65, 65}
 
-	for _, transfer := range []*models.Transfer{&transfer, &transfer2, &transfer3, &transfer4, &transfer5} {
-		err := s.storage.AddTransfer(transfer)
-		s.NoError(err)
+	transfers := []models.Transfer{
+		transfer,
+		transfer2,
+		transfer3,
+		transfer4,
+		transfer5,
 	}
+
+	err := s.storage.BatchAddTransfer(transfers)
+	s.NoError(err)
 
 	res, err := s.storage.GetPendingTransfers(32, nil)
 	s.NoError(err)
@@ -199,10 +210,15 @@ func (s *TransferTestSuite) TestGetPendingTransfers_ReturnsCorrectNumberOfTransf
 	transfer4.Nonce = models.MakeUint256(5)
 	transfer4.Hash = utils.RandomHash()
 
-	for _, transfer := range []*models.Transfer{&transfer, &transfer2, &transfer3, &transfer4} {
-		err := s.storage.AddTransfer(transfer)
-		s.NoError(err)
+	transfers := []models.Transfer{
+		transfer,
+		transfer2,
+		transfer3,
+		transfer4,
 	}
+
+	err := s.storage.BatchAddTransfer(transfers)
+	s.NoError(err)
 
 	res, err := s.storage.GetPendingTransfers(2, ref.Uint64(1))
 	s.NoError(err)
