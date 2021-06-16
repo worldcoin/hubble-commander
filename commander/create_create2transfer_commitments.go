@@ -19,17 +19,13 @@ func (t *transactionExecutor) createCreate2TransferCommitments(
 	pendingTransfers []models.Create2Transfer,
 	domain *bls.Domain,
 ) ([]models.Commitment, error) {
-	commitments := make([]models.Commitment, 0, t.cfg.MaxCommitmentsPerBatch)
-
 	if len(pendingTransfers) < int(t.cfg.TxsPerCommitment) {
 		return []models.Commitment{}, nil
 	}
 
-	for {
-		if len(commitments) == int(t.cfg.MaxCommitmentsPerBatch) {
-			break
-		}
+	commitments := make([]models.Commitment, 0, t.cfg.MaxCommitmentsPerBatch)
 
+	for len(commitments) != int(t.cfg.MaxCommitmentsPerBatch) {
 		var commitment *models.Commitment
 		var err error
 
@@ -38,7 +34,7 @@ func (t *transactionExecutor) createCreate2TransferCommitments(
 			return nil, err
 		}
 		if commitment == nil {
-			return commitments, nil
+			break
 		}
 
 		commitments = append(commitments, *commitment)
@@ -89,7 +85,7 @@ func (t *transactionExecutor) createC2TCommitment(
 		invalidTransfers = append(invalidTransfers, transfers.invalidTransfers...)
 		addedPubKeyIDs = append(addedPubKeyIDs, transfers.addedPubKeyIDs...)
 
-		if len(appliedTransfers) >= int(t.cfg.TxsPerCommitment) {
+		if len(appliedTransfers) == int(t.cfg.TxsPerCommitment) {
 			feeReceiverStateID = *transfers.feeReceiverStateID
 			break
 		}
