@@ -41,14 +41,14 @@ func (s *SubmitBatchTestSuite) TearDownTest() {
 	s.client.Close()
 }
 
-func (s *SubmitBatchTestSuite) TestSubmitTransfersBatchAndWait_ReturnsAccountTreeRootUsed() {
+func (s *SubmitBatchTestSuite) TestSubmitTransfersBatchAndWait_ReturnsBatchWithCorrectAccountTreeRoot() {
 	expected, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
 
-	_, accountRoot, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitment})
+	batch, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitment})
 	s.NoError(err)
 
-	s.Equal(common.BytesToHash(expected[:]), *accountRoot)
+	s.Equal(common.BytesToHash(expected[:]), *batch.AccountTreeRoot)
 }
 
 func (s *SubmitBatchTestSuite) TestSubmitTransfersBatchAndWait_ReturnsBatchWithCorrectHashAndType() {
@@ -57,7 +57,7 @@ func (s *SubmitBatchTestSuite) TestSubmitTransfersBatchAndWait_ReturnsBatchWithC
 
 	commitment := s.commitment
 
-	batch, _, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{commitment})
+	batch, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{commitment})
 	s.NoError(err)
 
 	commitmentRoot := utils.HashTwo(commitment.LeafHash(accountRoot), storage.GetZeroHash(0))
@@ -65,17 +65,17 @@ func (s *SubmitBatchTestSuite) TestSubmitTransfersBatchAndWait_ReturnsBatchWithC
 	s.Equal(txtype.Transfer, batch.Type)
 }
 
-func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatchAndWait_ReturnsAccountTreeRootUsed() {
+func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatchAndWait_ReturnsBatchWithCorrectAccountTreeRoot() {
 	expected, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
 
 	commitment := s.commitment
 	commitment.Type = txtype.Create2Transfer
 
-	_, accountRoot, err := s.client.SubmitCreate2TransfersBatchAndWait([]models.Commitment{s.commitment})
+	batch, err := s.client.SubmitCreate2TransfersBatchAndWait([]models.Commitment{s.commitment})
 	s.NoError(err)
 
-	s.Equal(common.BytesToHash(expected[:]), *accountRoot)
+	s.Equal(common.BytesToHash(expected[:]), *batch.AccountTreeRoot)
 }
 
 func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatchAndWait_ReturnsBatchWithCorrectHashAndType() {
@@ -85,7 +85,7 @@ func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatchAndWait_ReturnsBat
 	commitment := s.commitment
 	commitment.Type = txtype.Create2Transfer
 
-	batch, _, err := s.client.SubmitCreate2TransfersBatchAndWait([]models.Commitment{commitment})
+	batch, err := s.client.SubmitCreate2TransfersBatchAndWait([]models.Commitment{commitment})
 	s.NoError(err)
 
 	commitmentRoot := utils.HashTwo(commitment.LeafHash(accountRoot), storage.GetZeroHash(0))
