@@ -167,21 +167,6 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 	}
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_ReturnsLastTransactionNonce() {
-	generatedTransfers := generateValidCreate2Transfers(13, &s.publicKey)
-
-	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment)
-	s.NoError(err)
-
-	s.Len(transfers.appliedTransfers, 6)
-	s.Len(transfers.invalidTransfers, 0)
-	s.Len(transfers.addedPubKeyIDs, 6)
-
-	state, err := s.storage.GetStateLeaf(1)
-	s.NoError(err)
-	s.Equal(*state.Nonce.SubN(1), transfers.lastTransactionNonce)
-}
-
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_SomeValid() {
 	generatedTransfers := generateValidCreate2Transfers(2, &s.publicKey)
 	generatedTransfers = append(generatedTransfers, generateInvalidCreate2Transfers(3, &s.publicKey)...)

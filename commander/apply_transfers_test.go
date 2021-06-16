@@ -153,20 +153,6 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersTestSuite_SavesTransferError
 	}
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTransfers_ReturnsLastTransactionNonce() {
-	generatedTransfers := generateValidTransfers(13)
-
-	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment)
-	s.NoError(err)
-
-	s.Len(transfers.appliedTransfers, 6)
-	s.Len(transfers.invalidTransfers, 0)
-
-	state, err := s.storage.GetStateLeaf(1)
-	s.NoError(err)
-	s.Equal(*state.Nonce.SubN(1), transfers.lastTransactionNonce)
-}
-
 func TestApplyTransfersTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplyTransfersTestSuite))
 }
