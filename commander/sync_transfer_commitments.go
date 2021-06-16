@@ -20,11 +20,7 @@ func (t *transactionExecutor) syncTransferCommitment(
 	batch *eth.DecodedBatch,
 	commitment *encoder.DecodedCommitment,
 ) error {
-	deserializedTransfers, transferMessages, err := encoder.DeserializeTransfers(commitment.Transactions)
-	if err != nil {
-		return err
-	}
-	_, err = t.verifySignature(commitment, deserializedTransfers, transferMessages)
+	deserializedTransfers, err := encoder.DeserializeTransfers(commitment.Transactions)
 	if err != nil {
 		return err
 	}
@@ -37,6 +33,11 @@ func (t *transactionExecutor) syncTransferCommitment(
 	if len(transfers.invalidTransfers) > 0 {
 		return ErrFraudulentTransfer
 	}
+
+	//_, err = t.verifySignature(commitment, transfers)
+	//if err != nil {
+	//	return err
+	//}
 
 	if len(transfers.appliedTransfers) != len(deserializedTransfers) {
 		return ErrTransfersNotApplied
@@ -68,7 +69,7 @@ func (t *transactionExecutor) syncTransferCommitment(
 	return t.storage.BatchAddTransfer(transfers.appliedTransfers)
 }
 
-func (t *transactionExecutor) verifySignature(commitment *encoder.DecodedCommitment, transfers []models.Transfer, messages [][]byte) (bool, error) {
+func (t *transactionExecutor) verifySignature(commitment *encoder.DecodedCommitment, transfers []models.Transfer) (bool, error) {
 	domain, err := t.storage.GetDomain(t.client.ChainState.ChainID)
 	if err != nil {
 		return false, err
@@ -78,13 +79,17 @@ func (t *transactionExecutor) verifySignature(commitment *encoder.DecodedCommitm
 		return false, err
 	}
 
-	publicKeys := make([]*models.PublicKey, 0, len(transfers))
+	messages := make([][]byte, len(transfers))
+	publicKeys := make([]*models.PublicKey, len(transfers))
 	for i := range transfers {
-		publicKey, err := t.storage.GetPublicKeyByStateID(transfers[i].FromStateID)
+		publicKeys[i], err = t.storage.GetPublicKeyByStateID(transfers[i].FromStateID)
 		if err != nil {
 			return false, err
 		}
-		publicKeys = append(publicKeys, publicKey)
+		messages[i], err = encoder.EncodeTransferForSigning(&transfers[i])
+		if err != nil {
+			return false, err
+		}
 	}
 
 	sig, err := bls.NewSignatureFromBytes(commitment.CombinedSignature[:], *blsDomain)

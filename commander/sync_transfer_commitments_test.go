@@ -81,12 +81,8 @@ func (s *SyncTransferCommitmentsTestSuite) TestVerifySignature_ValidSignature() 
 			ToStateID: 0,
 		},
 	}
-	txMessages := make([][]byte, 0, len(transfers))
 	for i := range transfers {
 		s.signTransfer(&s.wallets[i], &transfers[i])
-		encodedTx, err := encoder.EncodeTransferForSigning(&transfers[i])
-		s.NoError(err)
-		txMessages = append(txMessages, encodedTx)
 	}
 
 	combinedSignature, err := combineTransferSignatures(transfers, testDomain)
@@ -95,7 +91,7 @@ func (s *SyncTransferCommitmentsTestSuite) TestVerifySignature_ValidSignature() 
 		CombinedSignature: *combinedSignature,
 	}
 
-	valid, err := s.transactionExecutor.verifySignature(commitment, transfers, txMessages)
+	valid, err := s.transactionExecutor.verifySignature(commitment, transfers)
 	s.NoError(err)
 	s.True(valid)
 }
@@ -125,12 +121,10 @@ func (s *SyncTransferCommitmentsTestSuite) TestVerifySignature_InvalidSignature(
 			ToStateID: 0,
 		},
 	}
-	txMessages := make([][]byte, 0, len(transfers))
 	for i := range transfers {
-		s.signTransfer(&s.wallets[i], &transfers[i])
-		encodedTx, err := encoder.EncodeTransfer(&transfers[i])
-		s.NoError(err)
-		txMessages = append(txMessages, encodedTx)
+		invalidTransfer := transfers[i]
+		invalidTransfer.Nonce = models.MakeUint256(4)
+		s.signTransfer(&s.wallets[i], &invalidTransfer)
 	}
 
 	combinedSignature, err := combineTransferSignatures(transfers, testDomain)
@@ -139,7 +133,7 @@ func (s *SyncTransferCommitmentsTestSuite) TestVerifySignature_InvalidSignature(
 		CombinedSignature: *combinedSignature,
 	}
 
-	valid, err := s.transactionExecutor.verifySignature(commitment, transfers, txMessages)
+	valid, err := s.transactionExecutor.verifySignature(commitment, transfers)
 	s.NoError(err)
 	s.False(valid)
 }
@@ -169,7 +163,7 @@ func (s *SyncTransferCommitmentsTestSuite) addAccounts() {
 	}
 }
 
-func (s SyncTransferCommitmentsTestSuite) signTransfer(wallet *bls.Wallet, transfer *models.Transfer) {
+func (s *SyncTransferCommitmentsTestSuite) signTransfer(wallet *bls.Wallet, transfer *models.Transfer) {
 	encodedTransfer, err := encoder.EncodeTransferForSigning(transfer)
 	s.NoError(err)
 	signature, err := wallet.Sign(encodedTransfer)
