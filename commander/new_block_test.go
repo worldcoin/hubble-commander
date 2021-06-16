@@ -41,7 +41,6 @@ func (s *NewBlockLoopTestSuite) SetupSuite() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID: 1,
 	}
@@ -63,6 +62,7 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 
 	s.wallets = generateWallets(s.T(), s.testClient.ChainState.Rollup, 2)
 	seedDB(s.T(), testStorage.Storage, st.NewStateTree(testStorage.Storage), s.wallets)
+	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
 }
 
 func (s *NewBlockLoopTestSuite) TearDownTest() {
@@ -86,8 +86,8 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_StartsRollupLoop() {
 
 func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedBeforeStartup() {
 	accounts := []models.Account{
-		{PublicKey: models.PublicKey{1, 2, 3}},
-		{PublicKey: models.PublicKey{2, 3, 4}},
+		{PublicKey: *s.wallets[0].PublicKey()},
+		{PublicKey: *s.wallets[1].PublicKey()},
 	}
 	s.registerAccounts(accounts)
 	s.createAndSubmitTransferBatch(&s.transfer)
@@ -113,8 +113,8 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedWhi
 	s.waitForLatestBlockSync()
 
 	accounts := []models.Account{
-		{PublicKey: models.PublicKey{1, 2, 3}},
-		{PublicKey: models.PublicKey{2, 3, 4}},
+		{PublicKey: *s.wallets[0].PublicKey()},
+		{PublicKey: *s.wallets[1].PublicKey()},
 	}
 	s.registerAccounts(accounts)
 	s.createAndSubmitTransferBatch(&s.transfer)

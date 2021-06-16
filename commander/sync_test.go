@@ -121,7 +121,6 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 				Amount:      models.MakeUint256(400),
 				Fee:         models.MakeUint256(0),
 				Nonce:       models.MakeUint256(0),
-				Signature:   mockSignature(s.Assertions),
 			},
 			ToStateID: 1,
 		}, {
@@ -131,12 +130,12 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 				Amount:      models.MakeUint256(100),
 				Fee:         models.MakeUint256(0),
 				Nonce:       models.MakeUint256(1),
-				Signature:   mockSignature(s.Assertions),
 			},
 			ToStateID: 1,
 		},
 	}
 	for i := range txs {
+		signTransfer(s.T(), &s.wallets[txs[i].FromStateID], &txs[i])
 		s.setTransferHash(&txs[i])
 		err := s.storage.AddTransfer(&txs[i])
 		s.NoError(err)
@@ -192,10 +191,10 @@ func (s *SyncTestSuite) TestSyncBatches_DoesNotSyncExistingBatchTwice() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID: 1,
 	}
+	signTransfer(s.T(), &s.wallets[tx.FromStateID], &tx)
 	s.createAndSubmitTransferBatch(&tx)
 
 	s.recreateDatabase()
@@ -213,10 +212,10 @@ func (s *SyncTestSuite) TestSyncBatches_DoesNotSyncExistingBatchTwice() {
 			Amount:      models.MakeUint256(100),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID: 0,
 	}
+	signTransfer(s.T(), &s.wallets[tx2.FromStateID], &tx2)
 	s.createAndSubmitTransferBatch(&tx2)
 
 	batches, err := s.transactionExecutor.storage.GetBatchesInRange(nil, nil)
@@ -255,11 +254,11 @@ func (s *SyncTestSuite) TestSyncBatches_PendingBatch() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID: 1,
 	}
 	s.setTransferHash(&tx)
+	signTransfer(s.T(), &s.wallets[tx.FromStateID], &tx)
 	s.createAndSubmitTransferBatch(&tx)
 
 	pendingBatch, err := s.storage.GetBatch(models.MakeUint256(1))
@@ -288,12 +287,12 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID:   ref.Uint32(5),
 		ToPublicKey: models.PublicKey{},
 	}
 	s.setCreate2TransferHash(&tx)
+	signCreate2Transfer(s.T(), &s.wallets[tx.FromStateID], &tx)
 	expectedCommitment := s.createAndSubmitC2TBatch(&tx)
 
 	s.recreateDatabase()
@@ -331,6 +330,7 @@ func (s *SyncTestSuite) TestRevertBatch_RevertsState() {
 	initialStateRoot, err := s.tree.Root()
 	s.NoError(err)
 
+	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
 	pendingBatch := s.createAndSubmitTransferBatch(&s.transfer)
 	decodedBatch := &eth.DecodedBatch{
 		Batch: models.Batch{
@@ -374,13 +374,13 @@ func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {
 			Amount:      models.MakeUint256(200),
 			Fee:         models.MakeUint256(10),
 			Nonce:       models.MakeUint256(1),
-			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID: 1,
 	}
 
 	pendingBatches := make([]models.Batch, 2)
 	for i := range pendingBatches {
+		signTransfer(s.T(), &s.wallets[transfers[i].FromStateID], &transfers[i])
 		pendingBatches[i] = *s.createAndSubmitTransferBatch(&transfers[i])
 	}
 
@@ -414,6 +414,7 @@ func (s *SyncTestSuite) TestRevertBatch_SyncsCorrectBatch() {
 	startBlock, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
 
+	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
 	pendingBatch := s.createAndSubmitTransferBatch(&s.transfer)
 	s.recreateDatabase()
 
@@ -421,6 +422,7 @@ func (s *SyncTestSuite) TestRevertBatch_SyncsCorrectBatch() {
 	localTransfer.Hash = utils.RandomHash()
 	localTransfer.Amount = models.MakeUint256(200)
 	localTransfer.Fee = models.MakeUint256(10)
+	signTransfer(s.T(), &s.wallets[localTransfer.FromStateID], &localTransfer)
 	localBatch := s.createTransferBatch(&localTransfer)
 
 	batches, err := s.client.GetBatches(&bind.FilterOpts{Start: *startBlock})

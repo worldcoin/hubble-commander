@@ -171,6 +171,14 @@ func signTransfer(t *testing.T, wallet *bls.Wallet, transfer *models.Transfer) {
 	transfer.Signature = *signature.ModelsSignature()
 }
 
+func signCreate2Transfer(t *testing.T, wallet *bls.Wallet, transfer *models.Create2Transfer) {
+	encodedTransfer, err := encoder.EncodeCreate2TransferForSigning(transfer)
+	require.NoError(t, err)
+	signature, err := wallet.Sign(encodedTransfer)
+	require.NoError(t, err)
+	transfer.Signature = *signature.ModelsSignature()
+}
+
 func TestSyncTransferCommitmentsTestSuite(t *testing.T) {
 	suite.Run(t, new(SyncTransferCommitmentsTestSuite))
 }
