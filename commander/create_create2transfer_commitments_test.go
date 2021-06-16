@@ -36,9 +36,10 @@ func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
 	s.cfg = &config.RollupConfig{
-		TxsPerCommitment:       2,
-		FeeReceiverPubKeyID:    2,
-		MaxCommitmentsPerBatch: 1,
+		TxsPerCommitment:          2,
+		PendingTxsCountMultiplier: 2,
+		FeeReceiverPubKeyID:       2,
+		MaxCommitmentsPerBatch:    1,
 	}
 
 	err = PopulateGenesisAccounts(s.storage, AssignStateIDs(genesisAccounts))
@@ -99,7 +100,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	})
 	s.NoError(err)
 
-	pendingTransfers, err := s.storage.GetPendingCreate2Transfers(2 * s.cfg.TxsPerCommitment)
+	pendingTransfers, err := s.storage.GetPendingCreate2Transfers(s.cfg.PendingTxsCountMultiplier * s.cfg.TxsPerCommitment)
 	s.NoError(err)
 	s.Len(pendingTransfers, 4)
 

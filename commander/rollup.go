@@ -114,7 +114,7 @@ func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionT
 }
 
 func (t *transactionExecutor) buildTransferCommitments(domain *bls.Domain) ([]models.Commitment, error) {
-	pendingTransfers, err := t.storage.GetPendingTransfers(2 * t.cfg.TxsPerCommitment)
+	pendingTransfers, err := t.storage.GetPendingTransfers(t.cfg.PendingTxsCountMultiplier * t.cfg.TxsPerCommitment)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func (t *transactionExecutor) buildTransferCommitments(domain *bls.Domain) ([]mo
 }
 
 func (t *transactionExecutor) buildCreate2TransfersCommitments(domain *bls.Domain) ([]models.Commitment, error) {
-	pendingTransfers, err := t.storage.GetPendingCreate2Transfers(2 * t.cfg.TxsPerCommitment)
+	pendingTransfers, err := t.storage.GetPendingCreate2Transfers(t.cfg.PendingTxsCountMultiplier * t.cfg.TxsPerCommitment)
 	if err != nil {
 		return nil, err
 	}

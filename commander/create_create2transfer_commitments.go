@@ -69,7 +69,7 @@ func (t *transactionExecutor) createC2TCommitment(
 
 	for {
 		if len(pendingTransfers) == 0 {
-			pendingTransfers, err = t.storage.GetPendingCreate2Transfers(2 * t.cfg.TxsPerCommitment)
+			pendingTransfers, err = t.storage.GetPendingCreate2Transfers(t.cfg.PendingTxsCountMultiplier * t.cfg.TxsPerCommitment)
 			if err != nil || len(pendingTransfers) == 0 {
 				return nil, nil, err
 			}
@@ -94,7 +94,7 @@ func (t *transactionExecutor) createC2TCommitment(
 			break
 		}
 
-		numberOfPendingTransfersToFetch := 2*t.cfg.TxsPerCommitment + uint64(len(appliedTransfers)) + uint64(len(invalidTransfers))
+		numberOfPendingTransfersToFetch := t.cfg.PendingTxsCountMultiplier*t.cfg.TxsPerCommitment + uint64(len(appliedTransfers)) + uint64(len(invalidTransfers))
 		pendingTransfers, err = t.storage.GetPendingCreate2Transfers(numberOfPendingTransfersToFetch)
 		if err != nil {
 			return nil, nil, err
