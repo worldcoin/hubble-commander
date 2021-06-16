@@ -22,13 +22,14 @@ type BootstrapConfig struct {
 }
 
 type RollupConfig struct {
-	SyncSize               uint32
-	FeeReceiverPubKeyID    uint32
-	TxsPerCommitment       uint64
-	MinCommitmentsPerBatch uint32
-	MaxCommitmentsPerBatch uint32
-	CommitmentLoopInterval time.Duration
-	BatchLoopInterval      time.Duration
+	SyncSize                  uint32
+	FeeReceiverPubKeyID       uint32
+	TxsPerCommitment          uint64
+	PendingTxsCountMultiplier uint64
+	MinCommitmentsPerBatch    uint32
+	MaxCommitmentsPerBatch    uint32
+	CommitmentLoopInterval    time.Duration
+	BatchLoopInterval         time.Duration
 }
 
 type APIConfig struct {
