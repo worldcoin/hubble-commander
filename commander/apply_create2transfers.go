@@ -8,11 +8,10 @@ import (
 )
 
 type AppliedC2Transfers struct {
-	appliedTransfers     []models.Create2Transfer
-	invalidTransfers     []models.Create2Transfer
-	lastTransactionNonce models.Uint256
-	addedPubKeyIDs       []uint32
-	feeReceiverStateID   *uint32
+	appliedTransfers   []models.Create2Transfer
+	invalidTransfers   []models.Create2Transfer
+	addedPubKeyIDs     []uint32
+	feeReceiverStateID *uint32
 }
 
 func (t *transactionExecutor) ApplyCreate2Transfers(
@@ -49,7 +48,6 @@ func (t *transactionExecutor) ApplyCreate2Transfers(
 
 	for i := range transfers {
 		transfer := &transfers[i]
-		returnStruct.lastTransactionNonce = transfer.Nonce
 
 		pubKeyID, err = t.getOrRegisterPubKeyID(events, transfer, *commitmentTokenIndex)
 		if err != nil {

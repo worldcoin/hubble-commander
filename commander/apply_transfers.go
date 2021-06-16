@@ -5,10 +5,9 @@ import (
 )
 
 type AppliedTransfers struct {
-	appliedTransfers     []models.Transfer
-	invalidTransfers     []models.Transfer
-	lastTransactionNonce models.Uint256
-	feeReceiverStateID   *uint32
+	appliedTransfers   []models.Transfer
+	invalidTransfers   []models.Transfer
+	feeReceiverStateID *uint32
 }
 
 func (t *transactionExecutor) ApplyTransfers(
@@ -33,7 +32,6 @@ func (t *transactionExecutor) ApplyTransfers(
 
 	for i := range transfers {
 		transfer := &transfers[i]
-		returnStruct.lastTransactionNonce = transfer.Nonce
 		transferError, appError := t.ApplyTransfer(transfer, commitmentTokenIndex)
 		if appError != nil {
 			return nil, appError
