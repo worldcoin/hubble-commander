@@ -88,7 +88,7 @@ func (t *transactionExecutor) createTransferCommitment(
 			break
 		}
 
-		offset := uint64(len(appliedTransfers) + len(invalidTransfers))
+		offset := uint64(len(appliedTransfers))
 		pendingTransfers, err = t.storage.GetPendingTransfers(t.cfg.PendingTxsCountMultiplier*t.cfg.TxsPerCommitment, &offset)
 		if err != nil {
 			return nil, nil, err

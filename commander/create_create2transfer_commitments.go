@@ -90,7 +90,7 @@ func (t *transactionExecutor) createC2TCommitment(
 			break
 		}
 
-		offset := uint64(len(appliedTransfers) + len(invalidTransfers))
+		offset := uint64(len(appliedTransfers))
 		pendingTransfers, err = t.storage.GetPendingCreate2Transfers(t.cfg.PendingTxsCountMultiplier*t.cfg.TxsPerCommitment, &offset)
 		if err != nil {
 			return nil, nil, err
