@@ -9,7 +9,11 @@ import (
 
 func (t *transactionExecutor) syncTransferCommitments(batch *eth.DecodedBatch) error {
 	for i := range batch.Commitments {
-		if err := t.syncTransferCommitment(batch, &batch.Commitments[i]); err != nil {
+		err := t.syncTransferCommitment(batch, &batch.Commitments[i])
+		if err != nil {
+			if err == ErrInvalidSignature { //nolint: staticcheck
+				//TODO: dispute fraudulent commitment
+			}
 			return err
 		}
 	}
@@ -33,14 +37,16 @@ func (t *transactionExecutor) syncTransferCommitment(
 	if len(transfers.invalidTransfers) > 0 {
 		return ErrFraudulentTransfer
 	}
-
-	//_, err = t.verifySignature(commitment, transfers)
-	//if err != nil {
-	//	return err
-	//}
-
 	if len(transfers.appliedTransfers) != len(deserializedTransfers) {
 		return ErrTransfersNotApplied
+	}
+
+	isValid, err := t.verifyTransferSignature(commitment, transfers.appliedTransfers)
+	if err != nil {
+		return err
+	}
+	if !isValid {
+		return ErrInvalidSignature
 	}
 
 	commitmentID, err := t.storage.AddCommitment(&models.Commitment{
@@ -69,7 +75,7 @@ func (t *transactionExecutor) syncTransferCommitment(
 	return t.storage.BatchAddTransfer(transfers.appliedTransfers)
 }
 
-func (t *transactionExecutor) verifySignature(commitment *encoder.DecodedCommitment, transfers []models.Transfer) (bool, error) {
+func (t *transactionExecutor) verifyTransferSignature(commitment *encoder.DecodedCommitment, transfers []models.Transfer) (bool, error) {
 	domain, err := t.storage.GetDomain(t.client.ChainState.ChainID)
 	if err != nil {
 		return false, err

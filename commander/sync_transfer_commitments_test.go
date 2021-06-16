@@ -91,7 +91,7 @@ func (s *SyncTransferCommitmentsTestSuite) TestVerifySignature_ValidSignature() 
 		CombinedSignature: *combinedSignature,
 	}
 
-	valid, err := s.transactionExecutor.verifySignature(commitment, transfers)
+	valid, err := s.transactionExecutor.verifyTransferSignature(commitment, transfers)
 	s.NoError(err)
 	s.True(valid)
 }
@@ -133,7 +133,7 @@ func (s *SyncTransferCommitmentsTestSuite) TestVerifySignature_InvalidSignature(
 		CombinedSignature: *combinedSignature,
 	}
 
-	valid, err := s.transactionExecutor.verifySignature(commitment, transfers)
+	valid, err := s.transactionExecutor.verifyTransferSignature(commitment, transfers)
 	s.NoError(err)
 	s.False(valid)
 }
