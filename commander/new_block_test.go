@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -129,6 +130,58 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedWhi
 	s.Len(batches, 1)
 }
 
+func (s *NewBlockLoopTestSuite) TestUnsafeSyncBatches_DoesNotSyncExistingBatchTwice() {
+	tx := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			Hash:        utils.RandomHash(),
+			TxType:      txtype.Transfer,
+			FromStateID: 0,
+			Amount:      models.MakeUint256(400),
+			Fee:         models.MakeUint256(0),
+			Nonce:       models.MakeUint256(0),
+			Signature:   mockSignature(s.Assertions),
+		},
+		ToStateID: 1,
+	}
+	s.createAndSubmitTransferBatch(&tx)
+	s.testClient.Commit()
+
+	s.syncAllBlocks()
+
+	tx2 := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			Hash:        utils.RandomHash(),
+			TxType:      txtype.Transfer,
+			FromStateID: 1,
+			Amount:      models.MakeUint256(100),
+			Fee:         models.MakeUint256(0),
+			Nonce:       models.MakeUint256(0),
+			Signature:   mockSignature(s.Assertions),
+		},
+		ToStateID: 0,
+	}
+	s.createAndSubmitTransferBatch(&tx2)
+	s.testClient.Commit()
+
+	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
+	s.NoError(err)
+	s.Len(batches, 1)
+
+	s.syncAllBlocks()
+
+	batches, err = s.cmd.storage.GetBatchesInRange(nil, nil)
+	s.NoError(err)
+	s.Len(batches, 2)
+
+	state0, err := s.cmd.storage.GetStateLeaf(0)
+	s.NoError(err)
+	s.Equal(models.MakeUint256(700), state0.Balance)
+
+	state1, err := s.cmd.storage.GetStateLeaf(1)
+	s.NoError(err)
+	s.Equal(models.MakeUint256(300), state1.Balance)
+}
+
 func (s *NewBlockLoopTestSuite) startBlockLoop() {
 	s.cmd.startWorker(func() error {
 		err := s.cmd.newBlockLoop()
@@ -188,6 +241,14 @@ func (s *NewBlockLoopTestSuite) waitForLatestBlockSync() {
 		s.NoError(err)
 		return *syncedBlock >= *latestBlockNumber
 	}, time.Second, 100*time.Millisecond, "timeout when waiting for latest block sync")
+}
+
+func (s *NewBlockLoopTestSuite) syncAllBlocks() {
+	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
+	s.NoError(err)
+
+	err = s.cmd.unsafeSyncBatches(0, *latestBlockNumber)
+	s.NoError(err)
 }
 
 func TestNewBlockLoopTestSuite(t *testing.T) {

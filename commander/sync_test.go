@@ -179,68 +179,6 @@ func (s *SyncTestSuite) TestSyncBatch_TwoTransferBatches() {
 	}
 }
 
-func (s *SyncTestSuite) TestSyncBatch_DoesNotSyncExistingBatchTwice() {
-	tx := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			TxType:      txtype.Transfer,
-			FromStateID: 0,
-			Amount:      models.MakeUint256(400),
-			Fee:         models.MakeUint256(0),
-			Nonce:       models.MakeUint256(0),
-			Signature:   mockSignature(s.Assertions),
-		},
-		ToStateID: 1,
-	}
-	s.createAndSubmitTransferBatch(&tx)
-
-	s.recreateDatabase()
-	s.syncAllBatches()
-
-	// Begin database transaction
-	var err error
-	s.transactionExecutor, err = newTransactionExecutor(s.storage, s.client.Client, s.cfg, transactionExecutorOpts{})
-	s.NoError(err)
-
-	tx2 := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			TxType:      txtype.Transfer,
-			FromStateID: 1,
-			Amount:      models.MakeUint256(100),
-			Fee:         models.MakeUint256(0),
-			Nonce:       models.MakeUint256(0),
-			Signature:   mockSignature(s.Assertions),
-		},
-		ToStateID: 0,
-	}
-	s.createAndSubmitTransferBatch(&tx2)
-
-	batches, err := s.transactionExecutor.storage.GetBatchesInRange(nil, nil)
-	s.NoError(err)
-	s.Len(batches, 2)
-
-	// Rollback changes to the database
-	s.transactionExecutor.Rollback(nil)
-	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg, transactionExecutorOpts{})
-
-	batches, err = s.storage.GetBatchesInRange(nil, nil)
-	s.NoError(err)
-	s.Len(batches, 1)
-
-	s.syncAllBatches()
-
-	state0, err := s.storage.GetStateLeaf(0)
-	s.NoError(err)
-	s.Equal(models.MakeUint256(700), state0.Balance)
-
-	state1, err := s.storage.GetStateLeaf(1)
-	s.NoError(err)
-	s.Equal(models.MakeUint256(300), state1.Balance)
-
-	batches, err = s.storage.GetBatchesInRange(nil, nil)
-	s.NoError(err)
-	s.Len(batches, 2)
-}
-
 func (s *SyncTestSuite) TestSyncBatch_PendingBatch() {
 	accountRoot := s.getAccountTreeRoot()
 	tx := models.Transfer{
@@ -274,7 +212,7 @@ func (s *SyncTestSuite) TestSyncBatch_PendingBatch() {
 	s.Equal(accountRoot, *batches[0].AccountTreeRoot)
 }
 
-func (s *SyncTestSuite) TestSyncBatch_Create2Transfer() {
+func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 	s.registerAccountOnChain(&models.PublicKey{1, 2, 3}, 0)
 	tx := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
