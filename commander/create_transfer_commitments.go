@@ -95,6 +95,7 @@ func (t *transactionExecutor) createTransferCommitment(
 			return nil, nil, err
 		}
 
+		// TODO - instead of doing this use SQL Offset (needs proper mempool)
 		pendingTransfers = removeTransfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
 
 		if len(pendingTransfers) == 0 {

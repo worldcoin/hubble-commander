@@ -97,6 +97,7 @@ func (t *transactionExecutor) createC2TCommitment(
 			return nil, nil, err
 		}
 
+		// TODO - instead of doing this use SQL Offset (needs proper mempool)
 		pendingTransfers = removeCreate2Transfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
 
 		if len(pendingTransfers) == 0 {
