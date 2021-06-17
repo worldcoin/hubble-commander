@@ -14,6 +14,7 @@ import (
 
 var (
 	tUint256Array4, _      = abi.NewType("uint256[4]", "", nil)
+	tBytes32, _            = abi.NewType("bytes32", "", nil)
 	ErrInvalidSlicesLength = errors.New("invalid slices length")
 	ErrInvalidDataLength   = errors.New("invalid data length")
 )
@@ -45,7 +46,7 @@ func EncodeCreate2Transfer(tx *models.Create2Transfer) ([]byte, error) {
 	arguments := abi.Arguments{
 		{Name: "txType", Type: tUint256},
 		{Name: "fromIndex", Type: tUint256},
-		{Name: "toPubkey", Type: tUint256Array4},
+		{Name: "toPubkey", Type: tBytes32},
 		{Name: "amount", Type: tUint256},
 		{Name: "fee", Type: tUint256},
 		{Name: "nonce", Type: tUint256},
@@ -53,7 +54,7 @@ func EncodeCreate2Transfer(tx *models.Create2Transfer) ([]byte, error) {
 	return arguments.Pack(
 		big.NewInt(int64(txtype.Create2Transfer)),
 		big.NewInt(int64(tx.FromStateID)),
-		tx.ToPublicKey.BigInts(),
+		crypto.Keccak256Hash(tx.ToPublicKey.Bytes()),
 		tx.Amount.ToBig(),
 		tx.Fee.ToBig(),
 		tx.Nonce.ToBig(),
@@ -64,7 +65,7 @@ func EncodeCreate2TransferForSigning(tx *models.Create2Transfer) ([]byte, error)
 	arguments := abi.Arguments{
 		{Name: "txType", Type: tUint256},
 		{Name: "fromIndex", Type: tUint256},
-		{Name: "toPubkey", Type: tUint256Array4},
+		{Name: "toPubkey", Type: tBytes32},
 		{Name: "nonce", Type: tUint256},
 		{Name: "amount", Type: tUint256},
 		{Name: "fee", Type: tUint256},
@@ -72,7 +73,7 @@ func EncodeCreate2TransferForSigning(tx *models.Create2Transfer) ([]byte, error)
 	return arguments.Pack(
 		big.NewInt(int64(txtype.Create2Transfer)),
 		big.NewInt(int64(tx.FromStateID)),
-		tx.ToPublicKey.BigInts(),
+		crypto.Keccak256Hash(tx.ToPublicKey.Bytes()),
 		tx.Nonce.ToBig(),
 		tx.Amount.ToBig(),
 		tx.Fee.ToBig(),

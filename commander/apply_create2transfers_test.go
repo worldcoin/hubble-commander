@@ -25,7 +25,7 @@ type ApplyCreate2TransfersTestSuite struct {
 	client              *eth.TestClient
 	publicKey           models.PublicKey
 	transactionExecutor *transactionExecutor
-	events              chan *accountregistry.AccountRegistryPubkeyRegistered
+	events              chan *accountregistry.AccountRegistrySinglePubkeyRegistered
 	unsubscribe         func()
 }
 
