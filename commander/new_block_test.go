@@ -61,7 +61,7 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	s.cmd.storage = testStorage.Storage
 	s.cmd.stopChannel = make(chan bool)
 
-	s.wallets = generateWallets(s.T(), s.testClient.ChainState.Rollup, 2)
+	s.wallets = generateWallets(s.T(), s.testClient.ChainState.Rollup)
 	seedDB(s.T(), testStorage.Storage, st.NewStateTree(testStorage.Storage), s.wallets)
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
 }
