@@ -41,7 +41,6 @@ func (s *SyncTestSuite) SetupSuite() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID: 1,
 	}
@@ -518,14 +517,6 @@ func (s *SyncTestSuite) syncAllBlocks() {
 	s.NoError(err)
 	err = s.transactionExecutor.SyncBatches(0, *latestBlockNumber)
 	s.NoError(err)
-}
-
-func mockSignature(s *require.Assertions) models.Signature {
-	wallet, err := bls.NewRandomWallet(*testDomain)
-	s.NoError(err)
-	signature, err := wallet.Sign(utils.RandomBytes(4))
-	s.NoError(err)
-	return *signature.ModelsSignature()
 }
 
 func (s *SyncTestSuite) recreateDatabase() {
