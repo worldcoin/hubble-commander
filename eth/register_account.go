@@ -13,12 +13,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (c *Client) RegisterAccount(publicKey *models.PublicKey, ev chan *accountregistry.AccountRegistryPubkeyRegistered) (*uint32, error) {
+func (c *Client) RegisterAccount(publicKey *models.PublicKey, ev chan *accountregistry.AccountRegistrySinglePubkeyRegistered) (*uint32, error) {
 	return RegisterAccountAndWait(c.ChainConnection.GetAccount(), c.AccountRegistry, publicKey, ev)
 }
 
 func (c *Client) WatchRegistrations(opts *bind.WatchOpts) (
-	registrations chan *accountregistry.AccountRegistryPubkeyRegistered,
+	registrations chan *accountregistry.AccountRegistrySinglePubkeyRegistered,
 	unsubscribe func(),
 	err error,
 ) {
@@ -26,13 +26,13 @@ func (c *Client) WatchRegistrations(opts *bind.WatchOpts) (
 }
 
 func WatchRegistrations(accountRegistry *accountregistry.AccountRegistry, opts *bind.WatchOpts) (
-	registrations chan *accountregistry.AccountRegistryPubkeyRegistered,
+	registrations chan *accountregistry.AccountRegistrySinglePubkeyRegistered,
 	unsubscribe func(),
 	err error,
 ) {
-	ev := make(chan *accountregistry.AccountRegistryPubkeyRegistered)
+	ev := make(chan *accountregistry.AccountRegistrySinglePubkeyRegistered)
 
-	sub, err := accountRegistry.WatchPubkeyRegistered(opts, ev)
+	sub, err := accountRegistry.WatchSinglePubkeyRegistered(opts, ev)
 	if err != nil {
 		return nil, nil, errors.WithStack(err)
 	}
@@ -43,7 +43,7 @@ func RegisterAccountAndWait(
 	opts *bind.TransactOpts,
 	accountRegistry *accountregistry.AccountRegistry,
 	publicKey *models.PublicKey,
-	ev chan *accountregistry.AccountRegistryPubkeyRegistered,
+	ev chan *accountregistry.AccountRegistrySinglePubkeyRegistered,
 ) (*uint32, error) {
 	tx, err := RegisterAccount(opts, accountRegistry, publicKey)
 	if err != nil {
