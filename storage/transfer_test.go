@@ -156,7 +156,7 @@ func (s *TransferTestSuite) TestGetPendingTransfers() {
 	err = s.storage.BatchAddTransfer(transfers)
 	s.NoError(err)
 
-	res, err := s.storage.GetPendingTransfers(32, nil)
+	res, err := s.storage.GetPendingTransfers(32)
 	s.NoError(err)
 
 	s.Len(res, 2)
@@ -191,41 +191,10 @@ func (s *TransferTestSuite) TestGetPendingTransfers_OrdersTransfersByNonceAndTxH
 	err := s.storage.BatchAddTransfer(transfers)
 	s.NoError(err)
 
-	res, err := s.storage.GetPendingTransfers(32, nil)
+	res, err := s.storage.GetPendingTransfers(32)
 	s.NoError(err)
 
 	s.Equal([]models.Transfer{transfer, transfer2, transfer5, transfer4, transfer3}, res)
-}
-
-func (s *TransferTestSuite) TestGetPendingTransfers_ReturnsCorrectNumberOfTransfersWithOffset() {
-	transfer.Nonce = models.MakeUint256(1)
-	transfer.Hash = utils.RandomHash()
-	transfer2 := transfer
-	transfer2.Nonce = models.MakeUint256(4)
-	transfer2.Hash = utils.RandomHash()
-	transfer3 := transfer
-	transfer3.Nonce = models.MakeUint256(7)
-	transfer3.Hash = utils.RandomHash()
-	transfer4 := transfer
-	transfer4.Nonce = models.MakeUint256(5)
-	transfer4.Hash = utils.RandomHash()
-
-	transfers := []models.Transfer{
-		transfer,
-		transfer2,
-		transfer3,
-		transfer4,
-	}
-
-	err := s.storage.BatchAddTransfer(transfers)
-	s.NoError(err)
-
-	res, err := s.storage.GetPendingTransfers(2, ref.Uint64(1))
-	s.NoError(err)
-
-	s.Len(res, 2)
-	s.Contains(res, transfer2)
-	s.Contains(res, transfer4)
 }
 
 func (s *TransferTestSuite) TestGetUserTransfers() {

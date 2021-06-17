@@ -99,7 +99,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_QueriesForM
 	err := addNewDummyState(s.storage, s.transactionExecutor.stateTree, 24)
 	s.NoError(err)
 
-	pendingTransfers, err := s.storage.GetPendingTransfers(s.cfg.PendingTxsCountMultiplier*s.cfg.TxsPerCommitment, nil)
+	pendingTransfers, err := s.storage.GetPendingTransfers(s.cfg.PendingTxsCountMultiplier * s.cfg.TxsPerCommitment)
 	s.NoError(err)
 	s.Len(pendingTransfers, 4)
 
@@ -135,7 +135,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothing
 	transfers[1].Amount = models.MakeUint256(99999999999)
 	s.addTransfers(transfers)
 
-	pendingTransfers, err := s.storage.GetPendingTransfers(s.cfg.TxsPerCommitment, nil)
+	pendingTransfers, err := s.storage.GetPendingTransfers(s.cfg.TxsPerCommitment)
 	s.NoError(err)
 	s.Len(pendingTransfers, 2)
 
@@ -231,7 +231,7 @@ func (s *TransferCommitmentsTestSuite) prepareAndReturnPendingTransfers(transfer
 	transfers := generateValidTransfers(transfersAmount)
 	s.addTransfers(transfers)
 
-	pendingTransfers, err := s.storage.GetPendingTransfers(transfersAmount, nil)
+	pendingTransfers, err := s.storage.GetPendingTransfers(transfersAmount)
 	s.NoError(err)
 	s.Len(pendingTransfers, int(transfersAmount))
 

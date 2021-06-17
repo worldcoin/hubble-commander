@@ -158,7 +158,7 @@ func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers() {
 	err = s.storage.BatchAddCreate2Transfer(create2transfers)
 	s.NoError(err)
 
-	res, err := s.storage.GetPendingCreate2Transfers(32, nil)
+	res, err := s.storage.GetPendingCreate2Transfers(32)
 	s.NoError(err)
 
 	s.Len(res, 2)
@@ -193,41 +193,10 @@ func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers_OrdersTransfer
 	err := s.storage.BatchAddCreate2Transfer(create2transfers)
 	s.NoError(err)
 
-	res, err := s.storage.GetPendingCreate2Transfers(32, nil)
+	res, err := s.storage.GetPendingCreate2Transfers(32)
 	s.NoError(err)
 
 	s.Equal([]models.Create2Transfer{create2Transfer, create2Transfer2, create2Transfer5, create2Transfer4, create2Transfer3}, res)
-}
-
-func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers_ReturnsCorrectNumberOfTransfersWithOffset() {
-	create2Transfer.TransactionBase.Nonce = models.MakeUint256(1)
-	create2Transfer.Hash = utils.RandomHash()
-	create2Transfer2 := create2Transfer
-	create2Transfer2.TransactionBase.Nonce = models.MakeUint256(4)
-	create2Transfer2.Hash = utils.RandomHash()
-	create2Transfer3 := create2Transfer
-	create2Transfer3.TransactionBase.Nonce = models.MakeUint256(7)
-	create2Transfer3.Hash = utils.RandomHash()
-	create2Transfer4 := create2Transfer
-	create2Transfer4.TransactionBase.Nonce = models.MakeUint256(5)
-	create2Transfer4.Hash = utils.RandomHash()
-
-	create2transfers := []models.Create2Transfer{
-		create2Transfer,
-		create2Transfer2,
-		create2Transfer3,
-		create2Transfer4,
-	}
-
-	err := s.storage.BatchAddCreate2Transfer(create2transfers)
-	s.NoError(err)
-
-	res, err := s.storage.GetPendingCreate2Transfers(2, ref.Uint64(1))
-	s.NoError(err)
-
-	s.Len(res, 2)
-	s.Contains(res, create2Transfer2)
-	s.Contains(res, create2Transfer4)
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey() {
