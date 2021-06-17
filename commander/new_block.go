@@ -4,7 +4,11 @@ import (
 	"context"
 	"math/big"
 
+	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/models"
+	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
@@ -112,21 +116,63 @@ func (c *Commander) syncRange(startBlock, endBlock uint64) error {
 	return nil
 }
 
-func (c *Commander) syncBatches(startBlock, endBlock uint64) (err error) {
+func (c *Commander) syncBatches(startBlock, endBlock uint64) error {
 	c.stateMutex.Lock()
 	defer c.stateMutex.Unlock()
+	return c.unsafeSyncBatches(startBlock, endBlock)
+}
 
-	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, c.cfg.Rollup, transactionExecutorOpts{AssumeNonces: true})
+func (c *Commander) unsafeSyncBatches(startBlock uint64, endBlock uint64) error {
+	latestBatchID, err := c.getLatestBatchID()
 	if err != nil {
 		return err
 	}
-	defer transactionExecutor.Rollback(&err)
 
-	err = transactionExecutor.SyncBatches(startBlock, endBlock)
+	newRemoteBatches, err := c.client.GetBatches(&bind.FilterOpts{
+		Start: startBlock,
+		End:   &endBlock,
+	})
 	if err != nil {
 		return err
 	}
-	return transactionExecutor.Commit()
+
+	for i := range newRemoteBatches {
+		remoteBatch := &newRemoteBatches[i]
+		if remoteBatch.ID.Cmp(latestBatchID) <= 0 {
+			continue
+		}
+
+		err = c.syncRemoteBatch(remoteBatch)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *Commander) syncRemoteBatch(remoteBatch *eth.DecodedBatch) (err error) {
+	txExecutor, err := newTransactionExecutor(c.storage, c.client, c.cfg.Rollup, transactionExecutorOpts{AssumeNonces: true})
+	if err != nil {
+		return err
+	}
+	defer txExecutor.Rollback(&err)
+
+	err = txExecutor.SyncBatch(remoteBatch)
+	if err != nil {
+		return err
+	}
+	return txExecutor.Commit()
+}
+
+func (c *Commander) getLatestBatchID() (*models.Uint256, error) {
+	latestBatch, err := c.storage.GetLatestSubmittedBatch()
+	if st.IsNotFoundError(err) {
+		return models.NewUint256(0), nil
+	} else if err != nil {
+		return nil, err
+	}
+	return &latestBatch.ID, nil
 }
 
 func min(x, y uint64) uint64 {

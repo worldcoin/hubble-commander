@@ -107,7 +107,7 @@ func (s *SyncTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
+func (s *SyncTestSuite) TestSyncBatch_TwoTransferBatches() {
 	txs := []models.Transfer{
 		{
 			TransactionBase: models.TransactionBase{
@@ -155,7 +155,7 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 	}
 
 	s.recreateDatabase()
-	s.syncAllBlocks()
+	s.syncAllBatches()
 
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
@@ -179,7 +179,7 @@ func (s *SyncTestSuite) TestSyncBatches_TwoTransferBatches() {
 	}
 }
 
-func (s *SyncTestSuite) TestSyncBatches_DoesNotSyncExistingBatchTwice() {
+func (s *SyncTestSuite) TestSyncBatch_DoesNotSyncExistingBatchTwice() {
 	tx := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			TxType:      txtype.Transfer,
@@ -194,7 +194,7 @@ func (s *SyncTestSuite) TestSyncBatches_DoesNotSyncExistingBatchTwice() {
 	s.createAndSubmitTransferBatch(&tx)
 
 	s.recreateDatabase()
-	s.syncAllBlocks()
+	s.syncAllBatches()
 
 	// Begin database transaction
 	var err error
@@ -226,7 +226,7 @@ func (s *SyncTestSuite) TestSyncBatches_DoesNotSyncExistingBatchTwice() {
 	s.NoError(err)
 	s.Len(batches, 1)
 
-	s.syncAllBlocks()
+	s.syncAllBatches()
 
 	state0, err := s.storage.GetStateLeaf(0)
 	s.NoError(err)
@@ -241,7 +241,7 @@ func (s *SyncTestSuite) TestSyncBatches_DoesNotSyncExistingBatchTwice() {
 	s.Len(batches, 2)
 }
 
-func (s *SyncTestSuite) TestSyncBatches_PendingBatch() {
+func (s *SyncTestSuite) TestSyncBatch_PendingBatch() {
 	accountRoot := s.getAccountTreeRoot()
 	tx := models.Transfer{
 		TransactionBase: models.TransactionBase{
@@ -263,7 +263,7 @@ func (s *SyncTestSuite) TestSyncBatches_PendingBatch() {
 	s.Nil(pendingBatch.FinalisationBlock)
 	s.Nil(pendingBatch.AccountTreeRoot)
 
-	s.syncAllBlocks()
+	s.syncAllBatches()
 
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
@@ -274,7 +274,7 @@ func (s *SyncTestSuite) TestSyncBatches_PendingBatch() {
 	s.Equal(accountRoot, *batches[0].AccountTreeRoot)
 }
 
-func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
+func (s *SyncTestSuite) TestSyncBatch_Create2Transfer() {
 	s.registerAccountOnChain(&models.PublicKey{1, 2, 3}, 0)
 	tx := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
@@ -292,7 +292,7 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	expectedCommitment := s.createAndSubmitC2TBatch(&tx)
 
 	s.recreateDatabase()
-	s.syncAllBlocks()
+	s.syncAllBatches()
 
 	state0, err := s.storage.GetStateLeaf(0)
 	s.NoError(err)
@@ -517,11 +517,20 @@ func (s *SyncTestSuite) createAndSubmitC2TBatch(tx *models.Create2Transfer) mode
 	return commitments[0]
 }
 
-func (s *SyncTestSuite) syncAllBlocks() {
+func (s *SyncTestSuite) syncAllBatches() {
 	latestBlockNumber, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
-	err = s.transactionExecutor.SyncBatches(0, *latestBlockNumber)
-	s.NoError(err)
+
+	newRemoteBatches, err := s.client.GetBatches(&bind.FilterOpts{
+		Start: 0,
+		End:   latestBlockNumber,
+	})
+
+	for i := range newRemoteBatches {
+		remoteBatch := &newRemoteBatches[i]
+		err = s.transactionExecutor.SyncBatch(remoteBatch)
+		s.NoError(err)
+	}
 }
 
 func mockSignature(s *require.Assertions) models.Signature {
