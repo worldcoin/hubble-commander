@@ -224,7 +224,7 @@ func (s *NewBlockLoopTestSuite) createAndSubmitTransferBatch(tx *models.Transfer
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	batch, err := newPendingBatch(transactionExecutor.storage, txtype.Transfer)
+	batch, err := transactionExecutor.newPendingBatch(txtype.Transfer)
 	s.NoError(err)
 	err = transactionExecutor.submitBatch(batch, commitments)
 	s.NoError(err)

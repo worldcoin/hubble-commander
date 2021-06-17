@@ -145,7 +145,7 @@ func (s *SyncTestSuite) TestSyncBatch_TwoTransferBatches() {
 		s.Len(createdCommitments, 1)
 
 		expectedCommitments[i] = createdCommitments[0]
-		pendingBatch, err := newPendingBatch(s.storage, txtype.Transfer)
+		pendingBatch, err := s.transactionExecutor.newPendingBatch(txtype.Transfer)
 		s.NoError(err)
 		err = s.transactionExecutor.submitBatch(pendingBatch, createdCommitments)
 		s.NoError(err)
@@ -392,7 +392,7 @@ func (s *SyncTestSuite) createAndSubmitTransferBatch(tx *models.Transfer) *model
 	err := s.storage.AddTransfer(tx)
 	s.NoError(err)
 
-	pendingBatch, err := newPendingBatch(s.storage, txtype.Transfer)
+	pendingBatch, err := s.transactionExecutor.newPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.createTransferCommitments([]models.Transfer{*tx}, testDomain)
@@ -410,7 +410,7 @@ func (s *SyncTestSuite) createTransferBatch(tx *models.Transfer) *models.Batch {
 	err := s.storage.AddTransfer(tx)
 	s.NoError(err)
 
-	pendingBatch, err := newPendingBatch(s.storage, txtype.Transfer)
+	pendingBatch, err := s.transactionExecutor.newPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.createTransferCommitments([]models.Transfer{*tx}, testDomain)
@@ -446,7 +446,7 @@ func (s *SyncTestSuite) createAndSubmitC2TBatch(tx *models.Create2Transfer) mode
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	pendingBatch, err := newPendingBatch(s.storage, txtype.Create2Transfer)
+	pendingBatch, err := s.transactionExecutor.newPendingBatch(txtype.Create2Transfer)
 	s.NoError(err)
 	err = s.transactionExecutor.submitBatch(pendingBatch, commitments)
 	s.NoError(err)
