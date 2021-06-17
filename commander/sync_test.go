@@ -280,7 +280,6 @@ func (s *SyncTestSuite) TestSyncBatches_PendingBatch() {
 }
 
 func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
-	s.registerAccountOnChain(&models.PublicKey{1, 2, 3}, 0)
 	tx := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
 			TxType:      txtype.Create2Transfer,
@@ -290,7 +289,7 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 			Nonce:       models.MakeUint256(0),
 		},
 		ToStateID:   ref.Uint32(5),
-		ToPublicKey: models.PublicKey{},
+		ToPublicKey: *s.wallets[0].PublicKey(),
 	}
 	s.setCreate2TransferHash(&tx)
 	signCreate2Transfer(s.T(), &s.wallets[tx.FromStateID], &tx)
@@ -306,7 +305,7 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	state5, err := s.storage.GetStateLeaf(5)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(400), state5.Balance)
-	s.Equal(uint32(1), state5.PubKeyID)
+	s.Equal(uint32(0), state5.PubKeyID)
 
 	treeRoot := s.getAccountTreeRoot()
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
@@ -322,7 +321,6 @@ func (s *SyncTestSuite) TestSyncBatches_Create2Transfer() {
 	transfer, err := s.storage.GetCreate2Transfer(tx.Hash)
 	s.NoError(err)
 	transfer.Signature = tx.Signature
-	transfer.ToPublicKey = models.PublicKey{}
 	tx.IncludedInCommitment = &commitment.ID
 	s.Equal(tx, *transfer)
 }
@@ -496,16 +494,6 @@ func (s *SyncTestSuite) createTransferBatch(tx *models.Transfer) *models.Batch {
 
 	s.client.Commit()
 	return pendingBatch
-}
-
-func (s *SyncTestSuite) registerAccountOnChain(publicKey *models.PublicKey, expectedPubKeyID uint32) {
-	registrations, unsubscribe, err := s.client.WatchRegistrations(&bind.WatchOpts{})
-	s.NoError(err)
-	defer unsubscribe()
-
-	senderPubKeyID, err := s.client.RegisterAccount(publicKey, registrations)
-	s.NoError(err)
-	s.Equal(expectedPubKeyID, *senderPubKeyID)
 }
 
 func (s *SyncTestSuite) createAndSubmitC2TBatch(tx *models.Create2Transfer) models.Commitment {
