@@ -525,6 +525,7 @@ func (s *SyncTestSuite) syncAllBatches() {
 		Start: 0,
 		End:   latestBlockNumber,
 	})
+	s.NoError(err)
 
 	for i := range newRemoteBatches {
 		remoteBatch := &newRemoteBatches[i]

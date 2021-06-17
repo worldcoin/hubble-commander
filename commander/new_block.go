@@ -133,7 +133,7 @@ func (c *Commander) syncBatches(startBlock, endBlock uint64) error {
 	return c.unsafeSyncBatches(startBlock, endBlock)
 }
 
-func (c *Commander) unsafeSyncBatches(startBlock uint64, endBlock uint64) error {
+func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 	latestBatchID, err := c.getLatestBatchID()
 	if err != nil {
 		return err
@@ -195,7 +195,7 @@ func (c *Commander) getLatestBatchID() (*models.Uint256, error) {
 	return &latestBatch.ID, nil
 }
 
-func logSyncedBlocks(startBlock uint64, endBlock uint64) {
+func logSyncedBlocks(startBlock, endBlock uint64) {
 	if startBlock == endBlock {
 		log.Printf("Syncing block %d", startBlock)
 	} else {
