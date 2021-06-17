@@ -1,9 +1,11 @@
 package commander
 
 import (
-	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
+	"bytes"
+	"context"
+	"math/big"
+
 	"github.com/Worldcoin/hubble-commander/models"
-	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
@@ -17,23 +19,31 @@ func (c *Commander) syncAccounts(start, end uint64) error {
 	}
 	defer func() { _ = it.Close() }()
 	for it.Next() {
-		err = ProcessPubkeyRegistered(c.storage, it.Event)
+		tx, _, err := c.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
 		if err != nil {
 			return err
 		}
-	}
-	return nil
-}
 
-func ProcessPubkeyRegistered(storage *st.Storage, event *accountregistry.AccountRegistryPubkeyRegistered) error {
-	account := models.Account{
-		PubKeyID:  uint32(event.PubkeyID.Uint64()),
-		PublicKey: models.MakePublicKeyFromInts(event.Pubkey),
-	}
+		// TODO: Handle registerBatch.
+		if !bytes.Equal(tx.Data()[:4], c.client.AccountRegistryABI.Methods["register"].ID) {
+			continue // TODO handle internal transactions
+		}
 
-	err := storage.AddAccountIfNotExists(&account)
-	if err != nil {
-		return err
+		unpack, err := c.client.AccountRegistryABI.Methods["register"].Inputs.Unpack(tx.Data()[4:])
+		if err != nil {
+			return err
+		}
+
+		pubkey := unpack[0].([4]*big.Int)
+		account := models.Account{
+			PubKeyID:  uint32(it.Event.PubkeyID.Uint64()),
+			PublicKey: models.MakePublicKeyFromInts(pubkey),
+		}
+
+		err = c.storage.AddAccountIfNotExists(&account)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
