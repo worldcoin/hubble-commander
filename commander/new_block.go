@@ -2,11 +2,21 @@ package commander
 
 import (
 	"context"
+	stdErrors "errors"
+	"log"
 	"math/big"
 
+	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/models"
+	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
+)
+
+var (
+	ErrIncompleteBlockRangeSync = stdErrors.New("syncing of a block range was stopped prematurely")
 )
 
 func (c *Commander) newBlockLoop() error {
@@ -36,6 +46,9 @@ func (c *Commander) newBlockLoop() error {
 			}
 
 			err = c.syncToLatestBlock()
+			if errors.Is(err, ErrIncompleteBlockRangeSync) {
+				return nil
+			}
 			if err != nil {
 				return err
 			}
@@ -100,6 +113,8 @@ func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
 }
 
 func (c *Commander) syncRange(startBlock, endBlock uint64) error {
+	logSyncedBlocks(startBlock, endBlock)
+
 	err := c.syncAccounts(startBlock, endBlock)
 	if err != nil {
 		return errors.WithStack(err)
@@ -112,21 +127,87 @@ func (c *Commander) syncRange(startBlock, endBlock uint64) error {
 	return nil
 }
 
-func (c *Commander) syncBatches(startBlock, endBlock uint64) (err error) {
+func (c *Commander) syncBatches(startBlock, endBlock uint64) error {
 	c.stateMutex.Lock()
 	defer c.stateMutex.Unlock()
+	return c.unsafeSyncBatches(startBlock, endBlock)
+}
 
-	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, c.cfg.Rollup, transactionExecutorOpts{AssumeNonces: true})
+func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
+	latestBatchID, err := c.getLatestBatchID()
 	if err != nil {
 		return err
 	}
-	defer transactionExecutor.Rollback(&err)
 
-	err = transactionExecutor.SyncBatches(startBlock, endBlock)
+	newRemoteBatches, err := c.client.GetBatches(&bind.FilterOpts{
+		Start: startBlock,
+		End:   &endBlock,
+	})
 	if err != nil {
 		return err
 	}
-	return transactionExecutor.Commit()
+	logBatchesCount(newRemoteBatches)
+
+	for i := range newRemoteBatches {
+		remoteBatch := &newRemoteBatches[i]
+		if remoteBatch.ID.Cmp(latestBatchID) <= 0 {
+			log.Printf("Batch #%d already synced. Skipping...", remoteBatch.ID.Uint64())
+			continue
+		}
+
+		err = c.syncRemoteBatch(remoteBatch)
+		if err != nil {
+			return err
+		}
+
+		select {
+		case <-c.stopChannel:
+			return ErrIncompleteBlockRangeSync
+		default:
+			continue
+		}
+	}
+
+	return nil
+}
+
+func (c *Commander) syncRemoteBatch(remoteBatch *eth.DecodedBatch) (err error) {
+	txExecutor, err := newTransactionExecutor(c.storage, c.client, c.cfg.Rollup, transactionExecutorOpts{AssumeNonces: true})
+	if err != nil {
+		return err
+	}
+	defer txExecutor.Rollback(&err)
+
+	err = txExecutor.SyncBatch(remoteBatch)
+	if err != nil {
+		return err
+	}
+	return txExecutor.Commit()
+}
+
+func (c *Commander) getLatestBatchID() (*models.Uint256, error) {
+	latestBatch, err := c.storage.GetLatestSubmittedBatch()
+	if st.IsNotFoundError(err) {
+		return models.NewUint256(0), nil
+	} else if err != nil {
+		return nil, err
+	}
+	return &latestBatch.ID, nil
+}
+
+func logSyncedBlocks(startBlock, endBlock uint64) {
+	if startBlock == endBlock {
+		log.Printf("Syncing block %d", startBlock)
+	} else {
+		log.Printf("Syncing blocks from %d to %d", startBlock, endBlock)
+	}
+}
+
+func logBatchesCount(newRemoteBatches []eth.DecodedBatch) {
+	newBatchesCount := len(newRemoteBatches)
+	if newBatchesCount > 0 {
+		log.Printf("Found %d batch(es)", newBatchesCount)
+	}
 }
 
 func min(x, y uint64) uint64 {

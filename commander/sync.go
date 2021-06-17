@@ -8,7 +8,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
@@ -20,45 +19,17 @@ var (
 	ErrBatchSubmissionFailed = errors.New("previous submit batch transaction failed")
 )
 
-func (t *transactionExecutor) SyncBatches(startBlock, endBlock uint64) error {
-	latestBatchID, err := getLatestBatchID(t.storage)
-	if err != nil {
+func (t *transactionExecutor) SyncBatch(remoteBatch *eth.DecodedBatch) error {
+	localBatch, err := t.storage.GetBatch(remoteBatch.ID)
+	if err != nil && !st.IsNotFoundError(err) {
 		return err
 	}
 
-	newRemoteBatches, err := t.client.GetBatches(&bind.FilterOpts{
-		Start: startBlock,
-		End:   &endBlock,
-	})
-	if err != nil {
-		return err
+	if st.IsNotFoundError(err) {
+		return t.syncNewBatch(remoteBatch)
+	} else {
+		return t.syncExistingBatch(remoteBatch, localBatch)
 	}
-
-	for i := range newRemoteBatches {
-		remoteBatch := &newRemoteBatches[i]
-		if remoteBatch.ID.Cmp(latestBatchID) <= 0 {
-			continue
-		}
-
-		localBatch, err := t.storage.GetBatch(remoteBatch.ID)
-		if err != nil && !st.IsNotFoundError(err) {
-			return err
-		}
-
-		if st.IsNotFoundError(err) {
-			err = t.syncNewBatch(remoteBatch)
-			if err != nil {
-				return err
-			}
-		} else {
-			err = t.syncExistingBatch(remoteBatch, localBatch)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
 }
 
 func (t *transactionExecutor) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
@@ -143,16 +114,6 @@ func (t *transactionExecutor) getTransactionSender(txHash common.Hash) (*common.
 	return &sender, nil
 }
 
-func getLatestBatchID(storage *st.Storage) (*models.Uint256, error) {
-	latestBatch, err := storage.GetLatestSubmittedBatch()
-	if st.IsNotFoundError(err) {
-		return models.NewUint256(0), nil
-	} else if err != nil {
-		return nil, err
-	}
-	return &latestBatch.ID, nil
-}
-
 func (t *transactionExecutor) syncNewBatch(batch *eth.DecodedBatch) error {
 	err := t.storage.AddBatch(&batch.Batch)
 	if err != nil {
@@ -174,6 +135,6 @@ func (t *transactionExecutor) syncNewBatch(batch *eth.DecodedBatch) error {
 		return fmt.Errorf("unsupported batch type for sync: %s", batch.Type)
 	}
 
-	log.Printf("Synced new batch #%s from chain: %d commitments included", batch.ID.String(), len(batch.Commitments))
+	log.Printf("Synced new batch #%s from chain with %d commitment(s)", batch.ID.String(), len(batch.Commitments))
 	return nil
 }
