@@ -11,6 +11,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
@@ -77,6 +78,7 @@ func RegisterGenesisAccounts(
 	defer unsubscribe()
 
 	txs := make([]types.Transaction, 0, len(accounts))
+	txHashToPubkey := make(map[common.Hash]models.PublicKey)
 	for i := range accounts {
 		account := &accounts[i]
 		publicKey, err := bls.PrivateToPublicKey(account.PrivateKey)
@@ -89,6 +91,7 @@ func RegisterGenesisAccounts(
 			return nil, errors.WithStack(err)
 		}
 
+		txHashToPubkey[tx.Hash()] = *publicKey
 		txs = append(txs, *tx)
 	}
 
@@ -102,10 +105,9 @@ func RegisterGenesisAccounts(
 			}
 			for i := range txs {
 				if event.Raw.TxHash == txs[i].Hash() {
-					publicKey := models.MakePublicKeyFromInts(event.Pubkey)
 					registeredAccounts[i] = models.RegisteredGenesisAccount{
 						GenesisAccount: accounts[i],
-						PublicKey:      publicKey,
+						PublicKey:      txHashToPubkey[event.Raw.TxHash],
 						PubKeyID:       uint32(event.PubkeyID.Uint64()),
 					}
 					accountsRegistered += 1

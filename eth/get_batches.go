@@ -3,26 +3,17 @@ package eth
 import (
 	"bytes"
 	"context"
-	"strings"
 
-	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/pkg/errors"
 )
 
 func (c *Client) GetBatches(opts *bind.FilterOpts) ([]DecodedBatch, error) {
 	it, err := c.Rollup.FilterNewBatch(opts)
 	if err != nil {
 		return nil, err
-	}
-
-	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
-	if err != nil {
-		return nil, errors.WithStack(err)
 	}
 
 	res := make([]DecodedBatch, 0)
@@ -34,8 +25,8 @@ func (c *Client) GetBatches(opts *bind.FilterOpts) ([]DecodedBatch, error) {
 			return nil, err
 		}
 
-		if !bytes.Equal(tx.Data()[:4], rollupAbi.Methods["submitTransfer"].ID) &&
-			!bytes.Equal(tx.Data()[:4], rollupAbi.Methods["submitCreate2Transfer"].ID) {
+		if !bytes.Equal(tx.Data()[:4], c.RollupABI.Methods["submitTransfer"].ID) &&
+			!bytes.Equal(tx.Data()[:4], c.RollupABI.Methods["submitCreate2Transfer"].ID) {
 			continue // TODO handle internal transactions
 		}
 
