@@ -135,6 +135,6 @@ func (t *transactionExecutor) syncNewBatch(batch *eth.DecodedBatch) error {
 		return fmt.Errorf("unsupported batch type for sync: %s", batch.Type)
 	}
 
-	log.Printf("Synced new batch #%s from chain: %d commitments included", batch.ID.String(), len(batch.Commitments))
+	log.Printf("Synced new batch #%s from chain with %d commitment(s)", batch.ID.String(), len(batch.Commitments))
 	return nil
 }

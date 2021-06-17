@@ -2,6 +2,8 @@ package commander
 
 import (
 	"context"
+	stdErrors "errors"
+	"log"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -11,6 +13,10 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
+)
+
+var (
+	ErrIncompleteBlockRangeSync = stdErrors.New("syncing of a block range was stopped prematurely")
 )
 
 func (c *Commander) newBlockLoop() error {
@@ -40,6 +46,9 @@ func (c *Commander) newBlockLoop() error {
 			}
 
 			err = c.syncToLatestBlock()
+			if errors.Is(err, ErrIncompleteBlockRangeSync) {
+				return nil
+			}
 			if err != nil {
 				return err
 			}
@@ -104,6 +113,8 @@ func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
 }
 
 func (c *Commander) syncRange(startBlock, endBlock uint64) error {
+	logSyncedBlocks(startBlock, endBlock)
+
 	err := c.syncAccounts(startBlock, endBlock)
 	if err != nil {
 		return errors.WithStack(err)
@@ -135,16 +146,25 @@ func (c *Commander) unsafeSyncBatches(startBlock uint64, endBlock uint64) error 
 	if err != nil {
 		return err
 	}
+	logBatchesCount(newRemoteBatches)
 
 	for i := range newRemoteBatches {
 		remoteBatch := &newRemoteBatches[i]
 		if remoteBatch.ID.Cmp(latestBatchID) <= 0 {
+			log.Printf("Batch #%d already synced. Skipping...", remoteBatch.ID.Uint64())
 			continue
 		}
 
 		err = c.syncRemoteBatch(remoteBatch)
 		if err != nil {
 			return err
+		}
+
+		select {
+		case <-c.stopChannel:
+			return ErrIncompleteBlockRangeSync
+		default:
+			continue
 		}
 	}
 
@@ -173,6 +193,21 @@ func (c *Commander) getLatestBatchID() (*models.Uint256, error) {
 		return nil, err
 	}
 	return &latestBatch.ID, nil
+}
+
+func logSyncedBlocks(startBlock uint64, endBlock uint64) {
+	if startBlock == endBlock {
+		log.Printf("Syncing block %d", startBlock)
+	} else {
+		log.Printf("Syncing blocks from %d to %d", startBlock, endBlock)
+	}
+}
+
+func logBatchesCount(newRemoteBatches []eth.DecodedBatch) {
+	newBatchesCount := len(newRemoteBatches)
+	if newBatchesCount > 0 {
+		log.Printf("Found %d batch(es)", newBatchesCount)
+	}
 }
 
 func min(x, y uint64) uint64 {
