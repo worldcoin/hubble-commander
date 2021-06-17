@@ -148,8 +148,7 @@ func (s *Storage) GetPendingCreate2Transfers(limit uint64, offset *uint64) ([]mo
 		From("transaction_base").
 		JoinClause("NATURAL JOIN create2transfer").
 		Where(squirrel.Eq{"included_in_commitment": nil, "error_message": nil}).
-		OrderBy("transaction_base.nonce ASC").
-		OrderBy("transaction_base.tx_hash ASC").
+		OrderBy("transaction_base.nonce ASC", "transaction_base.tx_hash ASC").
 		Limit(limit)
 
 	if offset != nil {

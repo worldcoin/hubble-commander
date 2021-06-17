@@ -155,8 +155,7 @@ func (s *Storage) GetPendingTransfers(limit uint64, offset *uint64) ([]models.Tr
 		From("transaction_base").
 		JoinClause("NATURAL JOIN transfer").
 		Where(squirrel.Eq{"included_in_commitment": nil, "error_message": nil}).
-		OrderBy("transaction_base.nonce ASC").
-		OrderBy("transaction_base.tx_hash ASC").
+		OrderBy("transaction_base.nonce ASC", "transaction_base.tx_hash ASC").
 		Limit(limit)
 
 	if offset != nil {
