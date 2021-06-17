@@ -40,6 +40,10 @@ func (t *transactionExecutor) syncCreate2TransferCommitment(
 		return ErrTransfersNotApplied
 	}
 
+	err = t.setPublicKeys(transfers.appliedTransfers)
+	if err != nil {
+		return err
+	}
 	if !t.cfg.DevMode {
 		err = t.verifyCreate2TransferSignature(commitment, transfers.appliedTransfers)
 		if err != nil {
@@ -71,4 +75,15 @@ func (t *transactionExecutor) syncCreate2TransferCommitment(
 	}
 
 	return t.storage.BatchAddCreate2Transfer(transfers.appliedTransfers)
+}
+
+func (t *transactionExecutor) setPublicKeys(transfers []models.Create2Transfer) error {
+	for i := range transfers {
+		publicKey, err := t.storage.GetPublicKeyByStateID(*transfers[i].ToStateID)
+		if err != nil {
+			return err
+		}
+		transfers[i].ToPublicKey = *publicKey
+	}
+	return nil
 }

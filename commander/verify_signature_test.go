@@ -11,6 +11,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -57,7 +58,7 @@ func (s *VerifySignatureTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *VerifySignatureTestSuite) TestVerifySignature_ValidSignature() {
+func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_ValidSignature() {
 	transfers := []models.Transfer{
 		{
 			TransactionBase: models.TransactionBase{
@@ -96,7 +97,7 @@ func (s *VerifySignatureTestSuite) TestVerifySignature_ValidSignature() {
 	s.NoError(err)
 }
 
-func (s *VerifySignatureTestSuite) TestVerifySignature_InvalidSignature() {
+func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_InvalidSignature() {
 	transfers := []models.Transfer{
 		{
 			TransactionBase: models.TransactionBase{
@@ -135,6 +136,47 @@ func (s *VerifySignatureTestSuite) TestVerifySignature_InvalidSignature() {
 
 	err = s.transactionExecutor.verifyTransferSignature(commitment, transfers)
 	s.Equal(ErrInvalidSignature, err)
+}
+
+func (s *VerifySignatureTestSuite) TestVerifyCreate2TransferSignature_ValidSignature() {
+	transfers := []models.Create2Transfer{
+		{
+			TransactionBase: models.TransactionBase{
+				Hash:        utils.RandomHash(),
+				TxType:      txtype.Transfer,
+				FromStateID: 0,
+				Amount:      models.MakeUint256(200),
+				Fee:         models.MakeUint256(100),
+				Nonce:       models.MakeUint256(0),
+			},
+			ToStateID:   ref.Uint32(1),
+			ToPublicKey: *s.wallets[0].PublicKey(),
+		},
+		{
+			TransactionBase: models.TransactionBase{
+				Hash:        utils.RandomHash(),
+				TxType:      txtype.Transfer,
+				FromStateID: 1,
+				Amount:      models.MakeUint256(150),
+				Fee:         models.MakeUint256(10),
+				Nonce:       models.MakeUint256(0),
+			},
+			ToStateID:   ref.Uint32(0),
+			ToPublicKey: *s.wallets[1].PublicKey(),
+		},
+	}
+	for i := range transfers {
+		signCreate2Transfer(s.T(), &s.wallets[i], &transfers[i])
+	}
+
+	combinedSignature, err := combineCreate2TransferSignatures(transfers, testDomain)
+	s.NoError(err)
+	commitment := &encoder.DecodedCommitment{
+		CombinedSignature: *combinedSignature,
+	}
+
+	err = s.transactionExecutor.verifyCreate2TransferSignature(commitment, transfers)
+	s.NoError(err)
 }
 
 func (s *VerifySignatureTestSuite) addAccounts() {
