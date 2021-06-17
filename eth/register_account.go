@@ -13,7 +13,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (c *Client) RegisterAccount(publicKey *models.PublicKey, ev chan *accountregistry.AccountRegistrySinglePubkeyRegistered) (*uint32, error) {
+func (c *Client) RegisterAccount(
+	publicKey *models.PublicKey,
+	ev chan *accountregistry.AccountRegistrySinglePubkeyRegistered,
+) (*uint32, error) {
 	return RegisterAccountAndWait(c.ChainConnection.GetAccount(), c.AccountRegistry, publicKey, ev)
 }
 

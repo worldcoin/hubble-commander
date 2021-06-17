@@ -13,7 +13,6 @@ import (
 )
 
 var (
-	tUint256Array4, _      = abi.NewType("uint256[4]", "", nil)
 	tBytes32, _            = abi.NewType("bytes32", "", nil)
 	ErrInvalidSlicesLength = errors.New("invalid slices length")
 	ErrInvalidDataLength   = errors.New("invalid data length")
