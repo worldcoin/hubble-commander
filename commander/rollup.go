@@ -12,6 +12,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+var pendingTxsCountMultiplier = uint64(2)
+
 var ErrInvalidStateRoot = errors.New("latest commitment state root doesn't match current one")
 
 func (c *Commander) manageRollupLoop(cancel context.CancelFunc, isProposer bool) context.CancelFunc {
@@ -114,7 +116,7 @@ func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionT
 }
 
 func (t *transactionExecutor) buildTransferCommitments(domain *bls.Domain) ([]models.Commitment, error) {
-	pendingTransfers, err := t.storage.GetPendingTransfers(t.cfg.PendingTxsCountMultiplier * t.cfg.TxsPerCommitment)
+	pendingTransfers, err := t.storage.GetPendingTransfers(pendingTxsCountMultiplier * t.cfg.TxsPerCommitment)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +124,7 @@ func (t *transactionExecutor) buildTransferCommitments(domain *bls.Domain) ([]mo
 }
 
 func (t *transactionExecutor) buildCreate2TransfersCommitments(domain *bls.Domain) ([]models.Commitment, error) {
-	pendingTransfers, err := t.storage.GetPendingCreate2Transfers(t.cfg.PendingTxsCountMultiplier * t.cfg.TxsPerCommitment)
+	pendingTransfers, err := t.storage.GetPendingCreate2Transfers(pendingTxsCountMultiplier * t.cfg.TxsPerCommitment)
 	if err != nil {
 		return nil, err
 	}

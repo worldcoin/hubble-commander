@@ -64,7 +64,7 @@ func (t *transactionExecutor) createTransferCommitment(
 
 	for {
 		if len(pendingTransfers) == 0 {
-			pendingTransfers, err = t.storage.GetPendingTransfers(t.cfg.PendingTxsCountMultiplier * t.cfg.TxsPerCommitment)
+			pendingTransfers, err = t.storage.GetPendingTransfers(pendingTxsCountMultiplier * t.cfg.TxsPerCommitment)
 			if err != nil || len(pendingTransfers) == 0 {
 				return nil, nil, err
 			}
@@ -88,7 +88,7 @@ func (t *transactionExecutor) createTransferCommitment(
 			break
 		}
 
-		limit := t.cfg.PendingTxsCountMultiplier*t.cfg.TxsPerCommitment + uint64(len(appliedTransfers)+len(invalidTransfers))
+		limit := pendingTxsCountMultiplier*t.cfg.TxsPerCommitment + uint64(len(appliedTransfers)+len(invalidTransfers))
 		pendingTransfers, err = t.storage.GetPendingTransfers(limit)
 		if err != nil {
 			return nil, nil, err

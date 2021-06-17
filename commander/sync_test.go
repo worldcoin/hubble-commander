@@ -52,10 +52,9 @@ func (s *SyncTestSuite) SetupTest() {
 	s.NoError(err)
 
 	s.cfg = &config.RollupConfig{
-		MinCommitmentsPerBatch:    1,
-		MaxCommitmentsPerBatch:    32,
-		TxsPerCommitment:          1,
-		PendingTxsCountMultiplier: 1,
+		MinCommitmentsPerBatch: 1,
+		MaxCommitmentsPerBatch: 32,
+		TxsPerCommitment:       1,
 	}
 
 	s.setupDB()

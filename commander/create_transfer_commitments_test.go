@@ -57,10 +57,9 @@ func (s *TransferCommitmentsTestSuite) SetupTest() {
 	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
 	s.cfg = &config.RollupConfig{
-		TxsPerCommitment:          2,
-		PendingTxsCountMultiplier: 2,
-		FeeReceiverPubKeyID:       2,
-		MaxCommitmentsPerBatch:    1,
+		TxsPerCommitment:       2,
+		FeeReceiverPubKeyID:    2,
+		MaxCommitmentsPerBatch: 1,
 	}
 
 	err = PopulateGenesisAccounts(s.storage, AssignStateIDs(genesisAccounts))
@@ -99,7 +98,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_QueriesForM
 	err := addNewDummyState(s.storage, s.transactionExecutor.stateTree, 24)
 	s.NoError(err)
 
-	pendingTransfers, err := s.storage.GetPendingTransfers(s.cfg.PendingTxsCountMultiplier * s.cfg.TxsPerCommitment)
+	pendingTransfers, err := s.storage.GetPendingTransfers(pendingTxsCountMultiplier * s.cfg.TxsPerCommitment)
 	s.NoError(err)
 	s.Len(pendingTransfers, 4)
 
