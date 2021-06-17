@@ -72,7 +72,8 @@ func (t *transactionExecutor) createTransferCommitment(
 
 		var transfers *AppliedTransfers
 
-		transfers, err = t.ApplyTransfers(pendingTransfers, t.cfg.TxsPerCommitment-uint64(len(appliedTransfers)))
+		maxAppliedTransfers := t.cfg.TxsPerCommitment - uint64(len(appliedTransfers))
+		transfers, err = t.ApplyTransfers(pendingTransfers, maxAppliedTransfers)
 		if err != nil {
 			return nil, nil, err
 		}

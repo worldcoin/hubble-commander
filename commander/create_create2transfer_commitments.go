@@ -73,7 +73,8 @@ func (t *transactionExecutor) createC2TCommitment(
 
 		var transfers *AppliedC2Transfers
 
-		transfers, err = t.ApplyCreate2Transfers(pendingTransfers, t.cfg.TxsPerCommitment-uint64(len(appliedTransfers)))
+		maxAppliedTransfers := t.cfg.TxsPerCommitment - uint64(len(appliedTransfers))
+		transfers, err = t.ApplyCreate2Transfers(pendingTransfers, maxAppliedTransfers)
 		if err != nil {
 			return nil, nil, err
 		}
