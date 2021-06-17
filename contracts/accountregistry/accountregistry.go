@@ -27,10 +27,10 @@ var (
 )
 
 // AccountRegistryABI is the input ABI used to generate the binding from.
-const AccountRegistryABI = "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256[4]\",\"name\":\"pubkey\",\"type\":\"uint256[4]\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"pubkeyID\",\"type\":\"uint256\"}],\"name\":\"PubkeyRegistered\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"BATCH_DEPTH\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"BATCH_SIZE\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"DEPTH\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"SET_SIZE\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"WITNESS_LENGTH\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"pubkeyID\",\"type\":\"uint256\"},{\"internalType\":\"uint256[4]\",\"name\":\"pubkey\",\"type\":\"uint256[4]\"},{\"internalType\":\"bytes32[31]\",\"name\":\"witness\",\"type\":\"bytes32[31]\"}],\"name\":\"exists\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"filledSubtreesLeft\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"filledSubtreesRight\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"leafIndexLeft\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"leafIndexRight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[4]\",\"name\":\"pubkey\",\"type\":\"uint256[4]\"}],\"name\":\"register\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[4][16]\",\"name\":\"pubkeys\",\"type\":\"uint256[4][16]\"}],\"name\":\"registerBatch\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"root\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rootLeft\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rootRight\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"zeros\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
+const AccountRegistryABI = "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"startID\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"endID\",\"type\":\"uint256\"}],\"name\":\"BatchPubkeyRegistered\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"pubkeyID\",\"type\":\"uint256\"}],\"name\":\"SinglePubkeyRegistered\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"BATCH_DEPTH\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"BATCH_SIZE\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"DEPTH\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"SET_SIZE\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"WITNESS_LENGTH\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"pubkeyID\",\"type\":\"uint256\"},{\"internalType\":\"uint256[4]\",\"name\":\"pubkey\",\"type\":\"uint256[4]\"},{\"internalType\":\"bytes32[31]\",\"name\":\"witness\",\"type\":\"bytes32[31]\"}],\"name\":\"exists\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"filledSubtreesLeft\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"filledSubtreesRight\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"leafIndexLeft\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"leafIndexRight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[4]\",\"name\":\"pubkey\",\"type\":\"uint256[4]\"}],\"name\":\"register\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[4][16]\",\"name\":\"pubkeys\",\"type\":\"uint256[4][16]\"}],\"name\":\"registerBatch\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"root\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rootLeft\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rootRight\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"zeros\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
 
 // AccountRegistryBin is the compiled bytecode used for deploying new contracts.
-var AccountRegistryBin = "0x60806040526000600355600060045534801561001a57600080fd5b507f290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e5636005819055602481905560015b601f81101561011a57600560018203601f811061006257fe5b0154600560018303601f811061007457fe5b0154604051602001808381526020018281526020019250505060405160208183030381529060405280519060200120600582601f81106100b057fe5b0155601f8110156100da57600581601f81106100c857fe5b0154602482601f81106100d757fe5b01555b806004111580156100eb575080601f115b1561011257600581601f81106100fd57fe5b0154604360048303601b811061010f57fe5b01555b600101610049565b505060235460408051602080820184905281830184905282518083038401815260608301845280519082012060008181556080840186905260a0808501969096528451808503909601865260c084018552855195830195909520600181905560e0840191909152610100808401919091528351808403909101815261012090920190925280519101206002556109c99081906101b690396000f3fe608060405234801561001057600080fd5b50600436106101005760003560e01c806395e4bf0311610097578063d7c53ea711610066578063d7c53ea7146101f6578063d8289463146101fe578063e829558814610206578063ebf0c7171461022357610100565b806395e4bf03146101ca57806398366e3514610161578063cab2da9b146101e6578063d0383d68146101ee57610100565b80635e71468b116100d35780635e71468b14610161578063693c1db714610169578063709a8b2a146101715780638d037962146101ad57610100565b8063034a29ae146101055780631c4a7a94146101345780631c76e77e1461015157806349faa4d414610159575b600080fd5b6101226004803603602081101561011b57600080fd5b503561022b565b60408051918252519081900360200190f35b610122600480360361080081101561014b57600080fd5b5061023f565b610122610336565b61012261033b565b610122610340565b610122610345565b610199600480360361048081101561018857600080fd5b50803590602081019060a00161034b565b604080519115158252519081900360200190f35b610122600480360360208110156101c357600080fd5b50356103c1565b610122600480360360808110156101e057600080fd5b506103ce565b61012261046c565b610122610472565b61012261047a565b610122610480565b6101226004803603602081101561021c57600080fd5b5035610486565b610122610493565b602481601f811061023857fe5b0154905081565b600061024961097e565b60005b6010811015610322577ff0777e5cea47492e18df87dcc844efabdfad315d1a2b4883d87cc2b964eddff084826010811061028257fe5b6080020182601f6001901b60045401016040518083600460200280828437600083820152601f01601f19169091019283525050604051908190036020019150a160008482601081106102d057fe5b608002016040516020018082600460200280828437808301925050509150506040516020818303038152906040528051906020012090508083836010811061031457fe5b60200201525060010161024c565b50600061032e82610499565b949350505050565b600481565b601081565b601f81565b60035481565b600080836040516020018082600460200280828437808301925050509150506040516020818303038152906040528051906020012090506103b6818685601f806020026040519081016040528092919082601f60200280828437600092019190915250610733915050565b9150505b9392505050565b604381601b811061023857fe5b6000808260405160200180826004602002808284378083019250505091505060405160208183030381529060405280519060200120905060006104108261080f565b90507ff0777e5cea47492e18df87dcc844efabdfad315d1a2b4883d87cc2b964eddff084826040518083600460200280828437600083820152601f01601f19169091019283525050604051908190036020019150a19392505050565b60015481565b638000000081565b60045481565b60005481565b600581601f811061023857fe5b60025481565b600454600090637fffffef116104f6576040805162461bcd60e51b815260206004820152601f60248201527f4163636f756e74547265653a207269676874207365742069732066756c6c2000604482015290519081900360640190fd5b6104fe61099d565b60005b600881101561057b57600181901b84816010811061051b57fe5b602002015185826001016010811061052f57fe5b602002015160405160200180838152602001828152602001925050506040516020818303038152906040528051906020012083836008811061056d57fe5b602002015250600101610501565b5060015b600481101561061a5760016000196004839003011b60005b8181101561061057600181901b8481600881106105b057fe5b60200201518582600101600881106105c457fe5b602002015160405160200180838152602001828152602001925050506040516020818303038152906040528051906020012085836008811061060257fe5b602002015250600101610597565b505060010161057f565b508051600454601090046000805b601b8110156106ea57826001166001141561068157604381601b811061064a57fe5b01548460405160200180838152602001828152602001925050506040516020818303038152906040528051906020012093506106de565b8161069b5783604382601b811061069457fe5b0155600191505b83600560048301601f81106106ac57fe5b015460405160200180838152602001828152602001925050506040516020818303038152906040528051906020012093505b600192831c9201610628565b5050506001819055600054604080516020808201939093528082019390935280518084038201815260609093019052815191012060025550506004805460108101909155919050565b6000637fffffff831684825b601f8110156107e857826001166001141561079a578481601f811061076057fe5b60200201518260405160200180838152602001828152602001925050506040516020818303038152906040528051906020012091506107dc565b818582601f81106107a757fe5b602002015160405160200180838152602001828152602001925050506040516020818303038152906040528051906020012091505b600192831c920161073f565b506380000000851015610802576000541491506103ba9050565b6001541491506103ba9050565b600354600090637fffffff1161086c576040805162461bcd60e51b815260206004820152601e60248201527f4163636f756e74547265653a206c656674207365742069732066756c6c200000604482015290519081900360640190fd5b60035482906000805b601f8110156109345782600116600114156108ce57602481601f811061089757fe5b0154846040516020018083815260200182815260200192505050604051602081830303815290604052805190602001209350610928565b816108e85783602482601f81106108e157fe5b0155600191505b83600582601f81106108f657fe5b015460405160200180838152602001828152602001925050506040516020818303038152906040528051906020012093505b600192831c9201610875565b505050600081905560018054604080516020808201959095528082019290925280518083038201815260609092019052805192019190912060025560038054918201905592915050565b6040518061020001604052806010906020820280368337509192915050565b604051806101000160405280600890602082028036833750919291505056fea164736f6c634300060c000a"
+var AccountRegistryBin = "0x60806040526000600355600060045534801561001a57600080fd5b507f290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e5636005819055602481905560015b601f81101561011a57600560018203601f811061006257fe5b0154600560018303601f811061007457fe5b0154604051602001808381526020018281526020019250505060405160208183030381529060405280519060200120600582601f81106100b057fe5b0155601f8110156100da57600581601f81106100c857fe5b0154602482601f81106100d757fe5b01555b806004111580156100eb575080601f115b1561011257600581601f81106100fd57fe5b0154604360048303601b811061010f57fe5b01555b600101610049565b505060235460408051602080820184905281830184905282518083038401815260608301845280519082012060008181556080840186905260a0808501969096528451808503909601865260c084018552855195830195909520600181905560e08401919091526101008084019190915283518084039091018152610120909201909252805191012060025561097d9081906101b690396000f3fe608060405234801561001057600080fd5b50600436106101005760003560e01c806395e4bf0311610097578063d7c53ea711610066578063d7c53ea7146101f6578063d8289463146101fe578063e829558814610206578063ebf0c7171461022357610100565b806395e4bf03146101ca57806398366e3514610161578063cab2da9b146101e6578063d0383d68146101ee57610100565b80635e71468b116100d35780635e71468b14610161578063693c1db714610169578063709a8b2a146101715780638d037962146101ad57610100565b8063034a29ae146101055780631c4a7a94146101345780631c76e77e1461015157806349faa4d414610159575b600080fd5b6101226004803603602081101561011b57600080fd5b503561022b565b60408051918252519081900360200190f35b610122600480360361080081101561014b57600080fd5b5061023f565b610122610308565b61012261030d565b610122610312565b610122610317565b610199600480360361048081101561018857600080fd5b50803590602081019060a00161031d565b604080519115158252519081900360200190f35b610122600480360360208110156101c357600080fd5b5035610393565b610122600480360360808110156101e057600080fd5b506103a0565b610122610420565b610122610426565b61012261042e565b610122610434565b6101226004803603602081101561021c57600080fd5b503561043a565b610122610447565b602481601f811061023857fe5b0154905081565b6000610249610932565b60005b60108110156102b557600084826010811061026357fe5b60800201604051602001808260046020028082843780830192505050915050604051602081830303815290604052805190602001209050808383601081106102a757fe5b60200201525060010161024c565b5060006102c18261044d565b60408051828152600f8301602082015281519293507f3154b80a7d9f6a143c37dde575f47deb78dacc7f280d8efc7e3ae102758a841b929081900390910190a19392505050565b600481565b601081565b601f81565b60035481565b60008083604051602001808260046020028082843780830192505050915050604051602081830303815290604052805190602001209050610388818685601f806020026040519081016040528092919082601f602002808284376000920191909152506106e7915050565b9150505b9392505050565b604381601b811061023857fe5b6000808260405160200180826004602002808284378083019250505091505060405160208183030381529060405280519060200120905060006103e2826107c3565b6040805182815290519192507f59056afed767866d7c194cf26e24ebe16974ef943cccb729452e9adc265a9ac7919081900360200190a19392505050565b60015481565b638000000081565b60045481565b60005481565b600581601f811061023857fe5b60025481565b600454600090637fffffef116104aa576040805162461bcd60e51b815260206004820152601f60248201527f4163636f756e74547265653a207269676874207365742069732066756c6c2000604482015290519081900360640190fd5b6104b2610951565b60005b600881101561052f57600181901b8481601081106104cf57fe5b60200201518582600101601081106104e357fe5b602002015160405160200180838152602001828152602001925050506040516020818303038152906040528051906020012083836008811061052157fe5b6020020152506001016104b5565b5060015b60048110156105ce5760016000196004839003011b60005b818110156105c457600181901b84816008811061056457fe5b602002015185826001016008811061057857fe5b60200201516040516020018083815260200182815260200192505050604051602081830303815290604052805190602001208583600881106105b657fe5b60200201525060010161054b565b5050600101610533565b508051600454601090046000805b601b81101561069e57826001166001141561063557604381601b81106105fe57fe5b0154846040516020018083815260200182815260200192505050604051602081830303815290604052805190602001209350610692565b8161064f5783604382601b811061064857fe5b0155600191505b83600560048301601f811061066057fe5b015460405160200180838152602001828152602001925050506040516020818303038152906040528051906020012093505b600192831c92016105dc565b5050506001819055600054604080516020808201939093528082019390935280518084038201815260609093019052815191012060025550506004805460108101909155919050565b6000637fffffff831684825b601f81101561079c57826001166001141561074e578481601f811061071457fe5b6020020151826040516020018083815260200182815260200192505050604051602081830303815290604052805190602001209150610790565b818582601f811061075b57fe5b602002015160405160200180838152602001828152602001925050506040516020818303038152906040528051906020012091505b600192831c92016106f3565b5063800000008510156107b65760005414915061038c9050565b60015414915061038c9050565b600354600090637fffffff11610820576040805162461bcd60e51b815260206004820152601e60248201527f4163636f756e74547265653a206c656674207365742069732066756c6c200000604482015290519081900360640190fd5b60035482906000805b601f8110156108e857826001166001141561088257602481601f811061084b57fe5b01548460405160200180838152602001828152602001925050506040516020818303038152906040528051906020012093506108dc565b8161089c5783602482601f811061089557fe5b0155600191505b83600582601f81106108aa57fe5b015460405160200180838152602001828152602001925050506040516020818303038152906040528051906020012093505b600192831c9201610829565b505050600081905560018054604080516020808201959095528082019290925280518083038201815260609092019052805192019190912060025560038054918201905592915050565b6040518061020001604052806010906020820280368337509192915050565b604051806101000160405280600890602082028036833750919291505056fea164736f6c634300060c000a"
 
 // DeployAccountRegistry deploys a new Ethereum contract, binding an instance of AccountRegistry to it.
 func DeployAccountRegistry(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *AccountRegistry, error) {
@@ -664,9 +664,9 @@ func (_AccountRegistry *AccountRegistryTransactorSession) RegisterBatch(pubkeys 
 	return _AccountRegistry.Contract.RegisterBatch(&_AccountRegistry.TransactOpts, pubkeys)
 }
 
-// AccountRegistryPubkeyRegisteredIterator is returned from FilterPubkeyRegistered and is used to iterate over the raw logs and unpacked data for PubkeyRegistered events raised by the AccountRegistry contract.
-type AccountRegistryPubkeyRegisteredIterator struct {
-	Event *AccountRegistryPubkeyRegistered // Event containing the contract specifics and raw log
+// AccountRegistryBatchPubkeyRegisteredIterator is returned from FilterBatchPubkeyRegistered and is used to iterate over the raw logs and unpacked data for BatchPubkeyRegistered events raised by the AccountRegistry contract.
+type AccountRegistryBatchPubkeyRegisteredIterator struct {
+	Event *AccountRegistryBatchPubkeyRegistered // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -680,7 +680,7 @@ type AccountRegistryPubkeyRegisteredIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *AccountRegistryPubkeyRegisteredIterator) Next() bool {
+func (it *AccountRegistryBatchPubkeyRegisteredIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -689,7 +689,7 @@ func (it *AccountRegistryPubkeyRegisteredIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(AccountRegistryPubkeyRegistered)
+			it.Event = new(AccountRegistryBatchPubkeyRegistered)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -704,7 +704,7 @@ func (it *AccountRegistryPubkeyRegisteredIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(AccountRegistryPubkeyRegistered)
+		it.Event = new(AccountRegistryBatchPubkeyRegistered)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -720,42 +720,42 @@ func (it *AccountRegistryPubkeyRegisteredIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *AccountRegistryPubkeyRegisteredIterator) Error() error {
+func (it *AccountRegistryBatchPubkeyRegisteredIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *AccountRegistryPubkeyRegisteredIterator) Close() error {
+func (it *AccountRegistryBatchPubkeyRegisteredIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// AccountRegistryPubkeyRegistered represents a PubkeyRegistered event raised by the AccountRegistry contract.
-type AccountRegistryPubkeyRegistered struct {
-	Pubkey   [4]*big.Int
-	PubkeyID *big.Int
-	Raw      types.Log // Blockchain specific contextual infos
+// AccountRegistryBatchPubkeyRegistered represents a BatchPubkeyRegistered event raised by the AccountRegistry contract.
+type AccountRegistryBatchPubkeyRegistered struct {
+	StartID *big.Int
+	EndID   *big.Int
+	Raw     types.Log // Blockchain specific contextual infos
 }
 
-// FilterPubkeyRegistered is a free log retrieval operation binding the contract event 0xf0777e5cea47492e18df87dcc844efabdfad315d1a2b4883d87cc2b964eddff0.
+// FilterBatchPubkeyRegistered is a free log retrieval operation binding the contract event 0x3154b80a7d9f6a143c37dde575f47deb78dacc7f280d8efc7e3ae102758a841b.
 //
-// Solidity: event PubkeyRegistered(uint256[4] pubkey, uint256 pubkeyID)
-func (_AccountRegistry *AccountRegistryFilterer) FilterPubkeyRegistered(opts *bind.FilterOpts) (*AccountRegistryPubkeyRegisteredIterator, error) {
+// Solidity: event BatchPubkeyRegistered(uint256 startID, uint256 endID)
+func (_AccountRegistry *AccountRegistryFilterer) FilterBatchPubkeyRegistered(opts *bind.FilterOpts) (*AccountRegistryBatchPubkeyRegisteredIterator, error) {
 
-	logs, sub, err := _AccountRegistry.contract.FilterLogs(opts, "PubkeyRegistered")
+	logs, sub, err := _AccountRegistry.contract.FilterLogs(opts, "BatchPubkeyRegistered")
 	if err != nil {
 		return nil, err
 	}
-	return &AccountRegistryPubkeyRegisteredIterator{contract: _AccountRegistry.contract, event: "PubkeyRegistered", logs: logs, sub: sub}, nil
+	return &AccountRegistryBatchPubkeyRegisteredIterator{contract: _AccountRegistry.contract, event: "BatchPubkeyRegistered", logs: logs, sub: sub}, nil
 }
 
-// WatchPubkeyRegistered is a free log subscription operation binding the contract event 0xf0777e5cea47492e18df87dcc844efabdfad315d1a2b4883d87cc2b964eddff0.
+// WatchBatchPubkeyRegistered is a free log subscription operation binding the contract event 0x3154b80a7d9f6a143c37dde575f47deb78dacc7f280d8efc7e3ae102758a841b.
 //
-// Solidity: event PubkeyRegistered(uint256[4] pubkey, uint256 pubkeyID)
-func (_AccountRegistry *AccountRegistryFilterer) WatchPubkeyRegistered(opts *bind.WatchOpts, sink chan<- *AccountRegistryPubkeyRegistered) (event.Subscription, error) {
+// Solidity: event BatchPubkeyRegistered(uint256 startID, uint256 endID)
+func (_AccountRegistry *AccountRegistryFilterer) WatchBatchPubkeyRegistered(opts *bind.WatchOpts, sink chan<- *AccountRegistryBatchPubkeyRegistered) (event.Subscription, error) {
 
-	logs, sub, err := _AccountRegistry.contract.WatchLogs(opts, "PubkeyRegistered")
+	logs, sub, err := _AccountRegistry.contract.WatchLogs(opts, "BatchPubkeyRegistered")
 	if err != nil {
 		return nil, err
 	}
@@ -765,8 +765,8 @@ func (_AccountRegistry *AccountRegistryFilterer) WatchPubkeyRegistered(opts *bin
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(AccountRegistryPubkeyRegistered)
-				if err := _AccountRegistry.contract.UnpackLog(event, "PubkeyRegistered", log); err != nil {
+				event := new(AccountRegistryBatchPubkeyRegistered)
+				if err := _AccountRegistry.contract.UnpackLog(event, "BatchPubkeyRegistered", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -787,12 +787,146 @@ func (_AccountRegistry *AccountRegistryFilterer) WatchPubkeyRegistered(opts *bin
 	}), nil
 }
 
-// ParsePubkeyRegistered is a log parse operation binding the contract event 0xf0777e5cea47492e18df87dcc844efabdfad315d1a2b4883d87cc2b964eddff0.
+// ParseBatchPubkeyRegistered is a log parse operation binding the contract event 0x3154b80a7d9f6a143c37dde575f47deb78dacc7f280d8efc7e3ae102758a841b.
 //
-// Solidity: event PubkeyRegistered(uint256[4] pubkey, uint256 pubkeyID)
-func (_AccountRegistry *AccountRegistryFilterer) ParsePubkeyRegistered(log types.Log) (*AccountRegistryPubkeyRegistered, error) {
-	event := new(AccountRegistryPubkeyRegistered)
-	if err := _AccountRegistry.contract.UnpackLog(event, "PubkeyRegistered", log); err != nil {
+// Solidity: event BatchPubkeyRegistered(uint256 startID, uint256 endID)
+func (_AccountRegistry *AccountRegistryFilterer) ParseBatchPubkeyRegistered(log types.Log) (*AccountRegistryBatchPubkeyRegistered, error) {
+	event := new(AccountRegistryBatchPubkeyRegistered)
+	if err := _AccountRegistry.contract.UnpackLog(event, "BatchPubkeyRegistered", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// AccountRegistrySinglePubkeyRegisteredIterator is returned from FilterSinglePubkeyRegistered and is used to iterate over the raw logs and unpacked data for SinglePubkeyRegistered events raised by the AccountRegistry contract.
+type AccountRegistrySinglePubkeyRegisteredIterator struct {
+	Event *AccountRegistrySinglePubkeyRegistered // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *AccountRegistrySinglePubkeyRegisteredIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(AccountRegistrySinglePubkeyRegistered)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(AccountRegistrySinglePubkeyRegistered)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *AccountRegistrySinglePubkeyRegisteredIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *AccountRegistrySinglePubkeyRegisteredIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// AccountRegistrySinglePubkeyRegistered represents a SinglePubkeyRegistered event raised by the AccountRegistry contract.
+type AccountRegistrySinglePubkeyRegistered struct {
+	PubkeyID *big.Int
+	Raw      types.Log // Blockchain specific contextual infos
+}
+
+// FilterSinglePubkeyRegistered is a free log retrieval operation binding the contract event 0x59056afed767866d7c194cf26e24ebe16974ef943cccb729452e9adc265a9ac7.
+//
+// Solidity: event SinglePubkeyRegistered(uint256 pubkeyID)
+func (_AccountRegistry *AccountRegistryFilterer) FilterSinglePubkeyRegistered(opts *bind.FilterOpts) (*AccountRegistrySinglePubkeyRegisteredIterator, error) {
+
+	logs, sub, err := _AccountRegistry.contract.FilterLogs(opts, "SinglePubkeyRegistered")
+	if err != nil {
+		return nil, err
+	}
+	return &AccountRegistrySinglePubkeyRegisteredIterator{contract: _AccountRegistry.contract, event: "SinglePubkeyRegistered", logs: logs, sub: sub}, nil
+}
+
+// WatchSinglePubkeyRegistered is a free log subscription operation binding the contract event 0x59056afed767866d7c194cf26e24ebe16974ef943cccb729452e9adc265a9ac7.
+//
+// Solidity: event SinglePubkeyRegistered(uint256 pubkeyID)
+func (_AccountRegistry *AccountRegistryFilterer) WatchSinglePubkeyRegistered(opts *bind.WatchOpts, sink chan<- *AccountRegistrySinglePubkeyRegistered) (event.Subscription, error) {
+
+	logs, sub, err := _AccountRegistry.contract.WatchLogs(opts, "SinglePubkeyRegistered")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(AccountRegistrySinglePubkeyRegistered)
+				if err := _AccountRegistry.contract.UnpackLog(event, "SinglePubkeyRegistered", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseSinglePubkeyRegistered is a log parse operation binding the contract event 0x59056afed767866d7c194cf26e24ebe16974ef943cccb729452e9adc265a9ac7.
+//
+// Solidity: event SinglePubkeyRegistered(uint256 pubkeyID)
+func (_AccountRegistry *AccountRegistryFilterer) ParseSinglePubkeyRegistered(log types.Log) (*AccountRegistrySinglePubkeyRegistered, error) {
+	event := new(AccountRegistrySinglePubkeyRegistered)
+	if err := _AccountRegistry.contract.UnpackLog(event, "SinglePubkeyRegistered", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
