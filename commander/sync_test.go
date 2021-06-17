@@ -19,7 +19,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-var testPublicKeys = [][]byte{
+var testPrivateKeys = [][]byte{
 	{22, 38, 215, 223, 114, 243, 2, 250, 128, 56, 233, 83, 234, 223, 193, 250, 70, 124, 137, 123, 54, 218, 199, 95, 223,
 		18, 152, 41, 224, 6, 168, 70},
 	{1, 56, 207, 112, 128, 9, 20, 223, 185, 179, 49, 12, 87, 130, 120, 187, 171, 223, 102, 255, 123, 122, 162, 239, 188,
@@ -554,9 +554,9 @@ func generateWallets(t *testing.T, rollupAddress common.Address) []bls.Wallet {
 	domain, err := bls.DomainFromBytes(crypto.Keccak256(rollupAddress.Bytes()))
 	require.NoError(t, err)
 
-	wallets := make([]bls.Wallet, 0, len(testPublicKeys))
-	for i := 0; i < len(testPublicKeys); i++ {
-		wallet, err := bls.NewWallet(testPublicKeys[i], *domain)
+	wallets := make([]bls.Wallet, 0, len(testPrivateKeys))
+	for i := 0; i < len(testPrivateKeys); i++ {
+		wallet, err := bls.NewWallet(testPrivateKeys[i], *domain)
 		require.NoError(t, err)
 		wallets = append(wallets, *wallet)
 	}
