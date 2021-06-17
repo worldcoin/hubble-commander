@@ -88,11 +88,13 @@ func (t *transactionExecutor) createTransferCommitment(
 			break
 		}
 
-		offset := uint64(len(appliedTransfers))
-		pendingTransfers, err = t.storage.GetPendingTransfers(t.cfg.PendingTxsCountMultiplier*t.cfg.TxsPerCommitment, &offset)
+		limit := t.cfg.PendingTxsCountMultiplier*t.cfg.TxsPerCommitment + uint64(len(appliedTransfers)+len(invalidTransfers))
+		pendingTransfers, err = t.storage.GetPendingTransfers(limit, nil)
 		if err != nil {
 			return nil, nil, err
 		}
+
+		pendingTransfers = removeTransfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
 
 		if len(pendingTransfers) == 0 {
 			err = t.stateTree.RevertTo(*initialStateRoot)

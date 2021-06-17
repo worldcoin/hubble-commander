@@ -90,11 +90,13 @@ func (t *transactionExecutor) createC2TCommitment(
 			break
 		}
 
-		offset := uint64(len(appliedTransfers))
-		pendingTransfers, err = t.storage.GetPendingCreate2Transfers(t.cfg.PendingTxsCountMultiplier*t.cfg.TxsPerCommitment, &offset)
+		limit := t.cfg.PendingTxsCountMultiplier*t.cfg.TxsPerCommitment + uint64(len(appliedTransfers)+len(invalidTransfers))
+		pendingTransfers, err = t.storage.GetPendingCreate2Transfers(limit, nil)
 		if err != nil {
 			return nil, nil, err
 		}
+
+		pendingTransfers = removeCreate2Transfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
 
 		if len(pendingTransfers) == 0 {
 			err = t.stateTree.RevertTo(*initialStateRoot)
