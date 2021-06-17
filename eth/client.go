@@ -11,6 +11,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/pkg/errors"
 )
 
 type NewClientParams struct {
@@ -26,14 +27,15 @@ type ClientConfig struct {
 }
 
 type Client struct {
-	config           ClientConfig
-	ChainState       models.ChainState
-	ChainConnection  deployer.ChainConnection
-	Rollup           *rollup.Rollup
-	RollupABI        *abi.ABI
-	AccountRegistry  *accountregistry.AccountRegistry
-	boundContract    *bind.BoundContract
-	blocksToFinalise *int64
+	config             ClientConfig
+	ChainState         models.ChainState
+	ChainConnection    deployer.ChainConnection
+	Rollup             *rollup.Rollup
+	RollupABI          *abi.ABI
+	AccountRegistry    *accountregistry.AccountRegistry
+	AccountRegistryABI *abi.ABI
+	boundContract      *bind.BoundContract
+	blocksToFinalise   *int64
 }
 
 func NewClient(chainConnection deployer.ChainConnection, params *NewClientParams) (*Client, error) {
@@ -41,18 +43,23 @@ func NewClient(chainConnection deployer.ChainConnection, params *NewClientParams
 
 	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
+	}
+	accountRegistryAbi, err := abi.JSON(strings.NewReader(accountregistry.AccountRegistryABI))
+	if err != nil {
+		return nil, errors.WithStack(err)
 	}
 	backend := chainConnection.GetBackend()
 	boundContract := bind.NewBoundContract(params.ChainState.Rollup, rollupAbi, backend, backend, backend)
 	return &Client{
-		config:          params.ClientConfig,
-		ChainState:      params.ChainState,
-		ChainConnection: chainConnection,
-		Rollup:          params.Rollup,
-		RollupABI:       &rollupAbi,
-		AccountRegistry: params.AccountRegistry,
-		boundContract:   boundContract,
+		config:             params.ClientConfig,
+		ChainState:         params.ChainState,
+		ChainConnection:    chainConnection,
+		Rollup:             params.Rollup,
+		RollupABI:          &rollupAbi,
+		AccountRegistry:    params.AccountRegistry,
+		AccountRegistryABI: &accountRegistryAbi,
+		boundContract:      boundContract,
 	}, nil
 }
 
