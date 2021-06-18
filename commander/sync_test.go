@@ -19,13 +19,6 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-var testPrivateKeys = [][]byte{
-	{22, 38, 215, 223, 114, 243, 2, 250, 128, 56, 233, 83, 234, 223, 193, 250, 70, 124, 137, 123, 54, 218, 199, 95, 223,
-		18, 152, 41, 224, 6, 168, 70},
-	{1, 56, 207, 112, 128, 9, 20, 223, 185, 179, 49, 12, 87, 130, 120, 187, 171, 223, 102, 255, 123, 122, 162, 239, 188,
-		164, 201, 104, 72, 43, 164, 28},
-}
-
 type SyncTestSuite struct {
 	*require.Assertions
 	suite.Suite
@@ -66,7 +59,7 @@ func (s *SyncTestSuite) SetupTest() {
 		DevMode:                false,
 	}
 
-	s.wallets = generateWallets(s.T(), s.client.ChainState.Rollup)
+	s.wallets = generateWallets(s.T(), s.client.ChainState.Rollup, 2)
 	s.setupDB()
 }
 
@@ -550,13 +543,13 @@ func (s *SyncTestSuite) setCreate2TransferHash(tx *models.Create2Transfer) {
 	tx.Hash = *hash
 }
 
-func generateWallets(t *testing.T, rollupAddress common.Address) []bls.Wallet {
+func generateWallets(t *testing.T, rollupAddress common.Address, walletsAmount int) []bls.Wallet {
 	domain, err := bls.DomainFromBytes(crypto.Keccak256(rollupAddress.Bytes()))
 	require.NoError(t, err)
 
-	wallets := make([]bls.Wallet, 0, len(testPrivateKeys))
-	for i := 0; i < len(testPrivateKeys); i++ {
-		wallet, err := bls.NewWallet(testPrivateKeys[i], *domain)
+	wallets := make([]bls.Wallet, 0, walletsAmount)
+	for i := 0; i < walletsAmount; i++ {
+		wallet, err := bls.NewRandomWallet(*domain)
 		require.NoError(t, err)
 		wallets = append(wallets, *wallet)
 	}

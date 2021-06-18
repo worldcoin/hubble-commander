@@ -181,11 +181,18 @@ func (s *VerifySignatureTestSuite) TestVerifyCreate2TransferSignature_ValidSigna
 }
 
 func (s *VerifySignatureTestSuite) addAccounts() {
-	s.wallets = generateWallets(s.T(), s.client.ChainState.Rollup)
+	domain, err := s.storage.GetDomain(s.client.ChainState.ChainID)
+	s.NoError(err)
+
+	s.wallets = make([]bls.Wallet, 0, 2)
 	for i := uint32(0); i < 2; i++ {
-		err := s.storage.AddAccountIfNotExists(&models.Account{
+		wallet, err := bls.NewRandomWallet(*domain)
+		s.NoError(err)
+		s.wallets = append(s.wallets, *wallet)
+
+		err = s.storage.AddAccountIfNotExists(&models.Account{
 			PubKeyID:  i,
-			PublicKey: *s.wallets[i].PublicKey(),
+			PublicKey: *wallet.PublicKey(),
 		})
 		s.NoError(err)
 		err = s.tree.Set(i, &models.UserState{
