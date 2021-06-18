@@ -56,6 +56,7 @@ func (s *VerifySignatureTestSuite) SetupTest() {
 func (s *VerifySignatureTestSuite) TearDownTest() {
 	err := s.teardown()
 	s.NoError(err)
+	s.client.Close()
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_ValidSignature() {
