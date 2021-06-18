@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -23,6 +24,7 @@ type NewBlockLoopTestSuite struct {
 	cfg        *config.RollupConfig
 	transfer   models.Transfer
 	teardown   func() error
+	wallets    []bls.Wallet
 }
 
 func (s *NewBlockLoopTestSuite) SetupSuite() {
@@ -31,6 +33,7 @@ func (s *NewBlockLoopTestSuite) SetupSuite() {
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
 		TxsPerCommitment:       1,
+		DevMode:                false,
 	}
 
 	s.transfer = models.Transfer{
@@ -40,7 +43,6 @@ func (s *NewBlockLoopTestSuite) SetupSuite() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID: 1,
 	}
@@ -52,13 +54,17 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	s.teardown = testStorage.Teardown
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
+	err = testStorage.SetChainState(&s.testClient.ChainState)
+	s.NoError(err)
 
 	s.cmd = NewCommander(config.GetTestConfig())
 	s.cmd.client = s.testClient.Client
 	s.cmd.storage = testStorage.Storage
 	s.cmd.stopChannel = make(chan bool)
 
-	seedDB(s.T(), testStorage.Storage, st.NewStateTree(testStorage.Storage))
+	s.wallets = generateWallets(s.T(), s.testClient.ChainState.Rollup, 2)
+	seedDB(s.T(), testStorage.Storage, st.NewStateTree(testStorage.Storage), s.wallets)
+	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
 }
 
 func (s *NewBlockLoopTestSuite) TearDownTest() {
@@ -82,8 +88,8 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_StartsRollupLoop() {
 
 func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedBeforeStartup() {
 	accounts := []models.Account{
-		{PublicKey: models.PublicKey{1, 2, 3}},
-		{PublicKey: models.PublicKey{2, 3, 4}},
+		{PublicKey: *s.wallets[0].PublicKey()},
+		{PublicKey: *s.wallets[1].PublicKey()},
 	}
 	s.registerAccounts(accounts)
 	s.createAndSubmitTransferBatch(&s.transfer)
@@ -109,8 +115,8 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedWhi
 	s.waitForLatestBlockSync()
 
 	accounts := []models.Account{
-		{PublicKey: models.PublicKey{1, 2, 3}},
-		{PublicKey: models.PublicKey{2, 3, 4}},
+		{PublicKey: *s.wallets[0].PublicKey()},
+		{PublicKey: *s.wallets[1].PublicKey()},
 	}
 	s.registerAccounts(accounts)
 	s.createAndSubmitTransferBatch(&s.transfer)
@@ -139,10 +145,10 @@ func (s *NewBlockLoopTestSuite) TestUnsafeSyncBatches_DoesNotSyncExistingBatchTw
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID: 1,
 	}
+	signTransfer(s.T(), &s.wallets[tx.FromStateID], &tx)
 	s.createAndSubmitTransferBatch(&tx)
 	s.testClient.Commit()
 
@@ -156,10 +162,10 @@ func (s *NewBlockLoopTestSuite) TestUnsafeSyncBatches_DoesNotSyncExistingBatchTw
 			Amount:      models.MakeUint256(100),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID: 0,
 	}
+	signTransfer(s.T(), &s.wallets[tx.FromStateID], &tx)
 	s.createAndSubmitTransferBatch(&tx2)
 	s.testClient.Commit()
 

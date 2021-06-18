@@ -8,7 +8,12 @@ import (
 
 func (t *transactionExecutor) syncCreate2TransferCommitments(batch *eth.DecodedBatch) error {
 	for i := range batch.Commitments {
-		if err := t.syncCreate2TransferCommitment(batch, &batch.Commitments[i]); err != nil {
+		err := t.syncCreate2TransferCommitment(batch, &batch.Commitments[i])
+		if err == ErrInvalidSignature {
+			// TODO: dispute fraudulent commitment
+			return err
+		}
+		if err != nil {
 			return err
 		}
 	}
@@ -32,9 +37,19 @@ func (t *transactionExecutor) syncCreate2TransferCommitment(
 	if len(transfers.invalidTransfers) > 0 {
 		return ErrFraudulentTransfer
 	}
-
 	if len(transfers.appliedTransfers) != len(deserializedTransfers) {
 		return ErrTransfersNotApplied
+	}
+
+	err = t.setPublicKeys(transfers.appliedTransfers)
+	if err != nil {
+		return err
+	}
+	if !t.cfg.DevMode {
+		err = t.verifyCreate2TransferSignature(commitment, transfers.appliedTransfers)
+		if err != nil {
+			return err
+		}
 	}
 
 	commitmentID, err := t.storage.AddCommitment(&models.Commitment{
@@ -61,4 +76,15 @@ func (t *transactionExecutor) syncCreate2TransferCommitment(
 	}
 
 	return t.storage.BatchAddCreate2Transfer(transfers.appliedTransfers)
+}
+
+func (t *transactionExecutor) setPublicKeys(transfers []models.Create2Transfer) error {
+	for i := range transfers {
+		publicKey, err := t.storage.GetPublicKeyByStateID(*transfers[i].ToStateID)
+		if err != nil {
+			return err
+		}
+		transfers[i].ToPublicKey = *publicKey
+	}
+	return nil
 }

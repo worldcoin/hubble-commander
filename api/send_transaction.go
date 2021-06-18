@@ -98,7 +98,7 @@ func (a *API) validateSignature(encodedTransaction []byte, transactionSignature 
 	if err != nil {
 		return err
 	}
-	signature, err := bls.NewSignatureFromBytes(transactionSignature[:], *domain)
+	signature, err := bls.NewSignatureFromBytes(transactionSignature.Bytes(), *domain)
 	if err != nil {
 		return err
 	}

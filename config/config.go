@@ -43,11 +43,11 @@ func GetConfig() *Config {
 			MaxCommitmentsPerBatch: getUint32("rollup.max_commitments_per_batch", 32),
 			CommitmentLoopInterval: getDuration("rollup.commitment_loop_interval", 500*time.Millisecond),
 			BatchLoopInterval:      getDuration("rollup.batch_loop_interval", 500*time.Millisecond),
+			DevMode:                false,
 		},
 		API: &APIConfig{
 			Version: "0.0.1",
 			Port:    getString("api.port", "8080"),
-			DevMode: false,
 		},
 		Postgres: &PostgresConfig{
 			Host:           getStringOrNil("postgres.host"),
@@ -81,11 +81,11 @@ func GetTestConfig() *Config {
 			MaxCommitmentsPerBatch: getUint32("rollup.max_commitments_per_batch", 32),
 			CommitmentLoopInterval: getDuration("rollup.commitment_loop_interval", 500*time.Millisecond),
 			BatchLoopInterval:      getDuration("rollup.batch_loop_interval", 500*time.Millisecond),
+			DevMode:                true,
 		},
 		API: &APIConfig{
 			Version: "dev-0.0.1",
 			Port:    getString("api.port", "8080"),
-			DevMode: true,
 		},
 		Postgres: &PostgresConfig{
 			Host:           getStringOrNil("postgres.host"),

@@ -14,6 +14,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -28,6 +29,7 @@ type SyncTestSuite struct {
 	cfg                 *config.RollupConfig
 	transactionExecutor *transactionExecutor
 	transfer            models.Transfer
+	wallets             []bls.Wallet
 }
 
 func (s *SyncTestSuite) SetupSuite() {
@@ -39,7 +41,6 @@ func (s *SyncTestSuite) SetupSuite() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID: 1,
 	}
@@ -55,8 +56,10 @@ func (s *SyncTestSuite) SetupTest() {
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
 		TxsPerCommitment:       1,
+		DevMode:                false,
 	}
 
+	s.wallets = generateWallets(s.T(), s.client.ChainState.Rollup, 2)
 	s.setupDB()
 }
 
@@ -67,20 +70,22 @@ func (s *SyncTestSuite) setupDB() {
 	s.teardown = testStorage.Teardown
 	s.tree = st.NewStateTree(s.storage)
 	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg, transactionExecutorOpts{AssumeNonces: true})
+	err = s.storage.SetChainState(&s.client.ChainState)
+	s.NoError(err)
 
-	seedDB(s.T(), s.storage, s.tree)
+	seedDB(s.T(), s.storage, s.tree, s.wallets)
 }
 
-func seedDB(t *testing.T, storage *st.Storage, tree *st.StateTree) {
+func seedDB(t *testing.T, storage *st.Storage, tree *st.StateTree, wallets []bls.Wallet) {
 	err := storage.AddAccountIfNotExists(&models.Account{
 		PubKeyID:  0,
-		PublicKey: models.PublicKey{1, 2, 3},
+		PublicKey: *wallets[0].PublicKey(),
 	})
 	require.NoError(t, err)
 
 	err = storage.AddAccountIfNotExists(&models.Account{
 		PubKeyID:  1,
-		PublicKey: models.PublicKey{2, 3, 4},
+		PublicKey: *wallets[1].PublicKey(),
 	})
 	require.NoError(t, err)
 
@@ -116,7 +121,6 @@ func (s *SyncTestSuite) TestSyncBatch_TwoTransferBatches() {
 				Amount:      models.MakeUint256(400),
 				Fee:         models.MakeUint256(0),
 				Nonce:       models.MakeUint256(0),
-				Signature:   mockSignature(s.Assertions),
 			},
 			ToStateID: 1,
 		}, {
@@ -126,12 +130,12 @@ func (s *SyncTestSuite) TestSyncBatch_TwoTransferBatches() {
 				Amount:      models.MakeUint256(100),
 				Fee:         models.MakeUint256(0),
 				Nonce:       models.MakeUint256(1),
-				Signature:   mockSignature(s.Assertions),
 			},
 			ToStateID: 1,
 		},
 	}
 	for i := range txs {
+		signTransfer(s.T(), &s.wallets[txs[i].FromStateID], &txs[i])
 		s.setTransferHash(&txs[i])
 		err := s.storage.AddTransfer(&txs[i])
 		s.NoError(err)
@@ -188,11 +192,11 @@ func (s *SyncTestSuite) TestSyncBatch_PendingBatch() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID: 1,
 	}
 	s.setTransferHash(&tx)
+	signTransfer(s.T(), &s.wallets[tx.FromStateID], &tx)
 	s.createAndSubmitTransferBatch(&tx)
 
 	pendingBatch, err := s.storage.GetBatch(models.MakeUint256(1))
@@ -213,7 +217,6 @@ func (s *SyncTestSuite) TestSyncBatch_PendingBatch() {
 }
 
 func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
-	s.registerAccountOnChain(&models.PublicKey{1, 2, 3}, 0)
 	tx := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
 			TxType:      txtype.Create2Transfer,
@@ -221,12 +224,12 @@ func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 			Amount:      models.MakeUint256(400),
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
-			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID:   ref.Uint32(5),
-		ToPublicKey: models.PublicKey{},
+		ToPublicKey: *s.wallets[0].PublicKey(),
 	}
 	s.setCreate2TransferHash(&tx)
+	signCreate2Transfer(s.T(), &s.wallets[tx.FromStateID], &tx)
 	expectedCommitment := s.createAndSubmitC2TBatch(&tx)
 
 	s.recreateDatabase()
@@ -239,7 +242,7 @@ func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 	state5, err := s.storage.GetStateLeaf(5)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(400), state5.Balance)
-	s.Equal(uint32(1), state5.PubKeyID)
+	s.Equal(uint32(0), state5.PubKeyID)
 
 	treeRoot := s.getAccountTreeRoot()
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
@@ -255,7 +258,6 @@ func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 	transfer, err := s.storage.GetCreate2Transfer(tx.Hash)
 	s.NoError(err)
 	transfer.Signature = tx.Signature
-	transfer.ToPublicKey = models.PublicKey{}
 	tx.IncludedInCommitment = &commitment.ID
 	s.Equal(tx, *transfer)
 }
@@ -264,6 +266,7 @@ func (s *SyncTestSuite) TestRevertBatch_RevertsState() {
 	initialStateRoot, err := s.tree.Root()
 	s.NoError(err)
 
+	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
 	pendingBatch := s.createAndSubmitTransferBatch(&s.transfer)
 	decodedBatch := &eth.DecodedBatch{
 		Batch: models.Batch{
@@ -307,13 +310,13 @@ func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {
 			Amount:      models.MakeUint256(200),
 			Fee:         models.MakeUint256(10),
 			Nonce:       models.MakeUint256(1),
-			Signature:   mockSignature(s.Assertions),
 		},
 		ToStateID: 1,
 	}
 
 	pendingBatches := make([]models.Batch, 2)
 	for i := range pendingBatches {
+		signTransfer(s.T(), &s.wallets[transfers[i].FromStateID], &transfers[i])
 		pendingBatches[i] = *s.createAndSubmitTransferBatch(&transfers[i])
 	}
 
@@ -347,6 +350,7 @@ func (s *SyncTestSuite) TestRevertBatch_SyncsCorrectBatch() {
 	startBlock, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
 
+	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
 	pendingBatch := s.createAndSubmitTransferBatch(&s.transfer)
 	s.recreateDatabase()
 
@@ -354,6 +358,7 @@ func (s *SyncTestSuite) TestRevertBatch_SyncsCorrectBatch() {
 	localTransfer.Hash = utils.RandomHash()
 	localTransfer.Amount = models.MakeUint256(200)
 	localTransfer.Fee = models.MakeUint256(10)
+	signTransfer(s.T(), &s.wallets[localTransfer.FromStateID], &localTransfer)
 	localBatch := s.createTransferBatch(&localTransfer)
 
 	batches, err := s.client.GetBatches(&bind.FilterOpts{Start: *startBlock})
@@ -428,16 +433,6 @@ func (s *SyncTestSuite) createTransferBatch(tx *models.Transfer) *models.Batch {
 	return pendingBatch
 }
 
-func (s *SyncTestSuite) registerAccountOnChain(publicKey *models.PublicKey, expectedPubKeyID uint32) {
-	registrations, unsubscribe, err := s.client.WatchRegistrations(&bind.WatchOpts{})
-	s.NoError(err)
-	defer unsubscribe()
-
-	senderPubKeyID, err := s.client.RegisterAccount(publicKey, registrations)
-	s.NoError(err)
-	s.Equal(expectedPubKeyID, *senderPubKeyID)
-}
-
 func (s *SyncTestSuite) createAndSubmitC2TBatch(tx *models.Create2Transfer) models.Commitment {
 	err := s.storage.AddCreate2Transfer(tx)
 	s.NoError(err)
@@ -472,14 +467,6 @@ func (s *SyncTestSuite) syncAllBatches() {
 	}
 }
 
-func mockSignature(s *require.Assertions) models.Signature {
-	wallet, err := bls.NewRandomWallet(*testDomain)
-	s.NoError(err)
-	signature, err := wallet.Sign(utils.RandomBytes(4))
-	s.NoError(err)
-	return *signature.ModelsSignature()
-}
-
 func (s *SyncTestSuite) recreateDatabase() {
 	err := s.teardown()
 	s.NoError(err)
@@ -502,6 +489,19 @@ func (s *SyncTestSuite) setCreate2TransferHash(tx *models.Create2Transfer) {
 	hash, err := encoder.HashCreate2Transfer(tx)
 	s.NoError(err)
 	tx.Hash = *hash
+}
+
+func generateWallets(t *testing.T, rollupAddress common.Address, walletsAmount int) []bls.Wallet {
+	domain, err := bls.DomainFromBytes(crypto.Keccak256(rollupAddress.Bytes()))
+	require.NoError(t, err)
+
+	wallets := make([]bls.Wallet, 0, walletsAmount)
+	for i := 0; i < walletsAmount; i++ {
+		wallet, err := bls.NewRandomWallet(*domain)
+		require.NoError(t, err)
+		wallets = append(wallets, *wallet)
+	}
+	return wallets
 }
 
 func TestSyncTestSuite(t *testing.T) {
