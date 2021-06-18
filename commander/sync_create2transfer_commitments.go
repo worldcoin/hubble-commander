@@ -9,10 +9,11 @@ import (
 func (t *transactionExecutor) syncCreate2TransferCommitments(batch *eth.DecodedBatch) error {
 	for i := range batch.Commitments {
 		err := t.syncCreate2TransferCommitment(batch, &batch.Commitments[i])
+		if err == ErrInvalidSignature {
+			// TODO: dispute fraudulent commitment
+			return err
+		}
 		if err != nil {
-			if err == ErrInvalidSignature { //nolint: staticcheck
-				//TODO: dispute fraudulent commitment
-			}
 			return err
 		}
 	}
