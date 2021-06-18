@@ -57,7 +57,7 @@ func verifyCommitmentSignature(
 	messages [][]byte,
 	publicKeys []*models.PublicKey,
 ) error {
-	sig, err := bls.NewSignatureFromBytes(signature[:], *domain)
+	sig, err := bls.NewSignatureFromBytes(signature.Bytes(), *domain)
 	if err != nil {
 		return err
 	}
