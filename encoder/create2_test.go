@@ -12,6 +12,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -86,7 +87,7 @@ func (s *Create2TestSuite) TestEncodeCreate2Transfer() {
 	expected, err := s.create2Transfer.EncodeWithPub(nil, contractCreate2Transfer.OffchainCreate2TransferWithPub{
 		TxType:    big.NewInt(3),
 		FromIndex: big.NewInt(4),
-		ToPubkey:  publicKey.BigInts(),
+		ToPubkey:  crypto.Keccak256Hash(publicKey.Bytes()),
 		Amount:    big.NewInt(5),
 		Fee:       big.NewInt(6),
 		Nonce:     big.NewInt(7),

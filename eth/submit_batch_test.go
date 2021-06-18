@@ -41,59 +41,52 @@ func (s *SubmitBatchTestSuite) TearDownTest() {
 	s.client.Close()
 }
 
-func (s *SubmitBatchTestSuite) TestSubmitTransfersBatchAndMine_ReturnsAccountTreeRootUsed() {
-	expected, err := s.client.AccountRegistry.Root(nil)
-	s.NoError(err)
-
-	_, accountRoot, err := s.client.SubmitTransfersBatchAndMine([]models.Commitment{s.commitment})
-	s.NoError(err)
-
-	s.Equal(common.BytesToHash(expected[:]), *accountRoot)
-}
-
-func (s *SubmitBatchTestSuite) TestSubmitTransfersBatchAndMine_ReturnsBatchWithCorrectHashAndType() {
-	accountRoot, err := s.client.AccountRegistry.Root(nil)
-	s.NoError(err)
-
+func (s *SubmitBatchTestSuite) TestSubmitTransfersBatchAndWait_ReturnsCorrectBatch() {
 	commitment := s.commitment
 
-	batch, _, err := s.client.SubmitTransfersBatchAndMine([]models.Commitment{commitment})
+	accountRoot, err := s.client.AccountRegistry.Root(nil)
+	s.NoError(err)
+	commitmentRoot := utils.HashTwo(commitment.LeafHash(accountRoot), storage.GetZeroHash(0))
+	minFinalisationBlock := s.getMinFinalisationBlock()
+
+	batch, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{commitment})
 	s.NoError(err)
 
-	commitmentRoot := utils.HashTwo(commitment.LeafHash(accountRoot), storage.GetZeroHash(0))
-	s.Equal(commitmentRoot, *batch.Hash)
+	s.Equal(models.MakeUint256(1), batch.ID)
 	s.Equal(txtype.Transfer, batch.Type)
+	s.Equal(commitmentRoot, *batch.Hash)
+	s.GreaterOrEqual(*batch.FinalisationBlock, minFinalisationBlock)
+	s.Equal(common.BytesToHash(accountRoot[:]), *batch.AccountTreeRoot)
 }
 
-func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatchAndMine_ReturnsAccountTreeRootUsed() {
-	expected, err := s.client.AccountRegistry.Root(nil)
-	s.NoError(err)
-
+func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatchAndWait_ReturnsCorrectBatch() {
 	commitment := s.commitment
 	commitment.Type = txtype.Create2Transfer
 
-	_, accountRoot, err := s.client.SubmitCreate2TransfersBatchAndMine([]models.Commitment{s.commitment})
-	s.NoError(err)
-
-	s.Equal(common.BytesToHash(expected[:]), *accountRoot)
-}
-
-func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatchAndMine_ReturnsBatchWithCorrectHashAndType() {
 	accountRoot, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
+	commitmentRoot := utils.HashTwo(commitment.LeafHash(accountRoot), storage.GetZeroHash(0))
+	minFinalisationBlock := s.getMinFinalisationBlock()
 
-	commitment := s.commitment
-	commitment.Type = txtype.Create2Transfer
-
-	batch, _, err := s.client.SubmitCreate2TransfersBatchAndMine([]models.Commitment{commitment})
+	batch, err := s.client.SubmitCreate2TransfersBatchAndWait([]models.Commitment{commitment})
 	s.NoError(err)
 
-	commitmentRoot := utils.HashTwo(commitment.LeafHash(accountRoot), storage.GetZeroHash(0))
-	s.Equal(commitmentRoot, *batch.Hash)
+	s.Equal(models.MakeUint256(1), batch.ID)
 	s.Equal(txtype.Create2Transfer, batch.Type)
+	s.Equal(commitmentRoot, *batch.Hash)
+	s.GreaterOrEqual(*batch.FinalisationBlock, minFinalisationBlock)
+	s.Equal(common.BytesToHash(accountRoot[:]), *batch.AccountTreeRoot)
 }
 
-func (s *SubmitBatchTestSuite) TestSubmitTransfersBatch_SubmitsBatchWithoutMining() {
+func (s *SubmitBatchTestSuite) getMinFinalisationBlock() uint32 {
+	latestBlockNumber, err := s.client.ChainConnection.GetLatestBlockNumber()
+	s.NoError(err)
+	blocksToFinalise, err := s.client.GetBlocksToFinalise()
+	s.NoError(err)
+	return uint32(*latestBlockNumber) + uint32(*blocksToFinalise)
+}
+
+func (s *SubmitBatchTestSuite) TestSubmitTransfersBatch_SubmitsBatchWithoutWaitingForItToBeMined() {
 	tx, err := s.client.SubmitTransfersBatch([]models.Commitment{s.commitment})
 	s.NoError(err)
 	s.NotNil(tx)
@@ -109,7 +102,7 @@ func (s *SubmitBatchTestSuite) TestSubmitTransfersBatch_SubmitsBatchWithoutMinin
 	s.Len(batches, 1)
 }
 
-func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatch_SubmitsBatchWithoutMining() {
+func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatch_SubmitsBatchWithoutWaitingForItToBeMined() {
 	commitment := s.commitment
 	commitment.Type = txtype.Create2Transfer
 

@@ -10,7 +10,7 @@ import (
 )
 
 func (c *Commander) syncAccounts(start, end uint64) error {
-	it, err := c.client.AccountRegistry.FilterPubkeyRegistered(&bind.FilterOpts{
+	it, err := c.client.AccountRegistry.FilterSinglePubkeyRegistered(&bind.FilterOpts{
 		Start: start,
 		End:   &end,
 	})
