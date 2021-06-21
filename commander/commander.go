@@ -17,8 +17,12 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
+	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/pkg/errors"
 	"github.com/ybbus/jsonrpc/v2"
 )
+
+var ErrInvalidCommitmentRoot = errors.New("invalid commitment root of batch #0")
 
 type Commander struct {
 	cfg               *config.Config
@@ -177,9 +181,35 @@ func getClientOrBootstrapChainState(chain deployer.ChainConnection, storage *st.
 		log.Printf("Continuing from saved state on chainId=%s.\n", chainID.String())
 	}
 
-	return createClientFromChainState(chain, chainState)
+	client, err := createClientFromChainState(chain, chainState)
+	if err != nil {
+		return nil, err
+	}
 
-	// TODO: Verify commitment root of batch #0 (for multi-operator sync).
+	err = verifyCommitmentRoot(storage, client)
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
+func verifyCommitmentRoot(storage *st.Storage, client *eth.Client) error {
+	firstBatch, err := client.GetBatch(models.NewUint256(0))
+	if err != nil {
+		return err
+	}
+	stateRoot, err := st.NewStateTree(storage).Root()
+	if err != nil {
+		return err
+	}
+
+	zeroHash := st.GetZeroHash(0)
+	commitmentRoot := utils.HashTwo(utils.HashTwo(*stateRoot, zeroHash), zeroHash)
+	if *firstBatch.Hash != commitmentRoot {
+		return errors.New("invalid commitment root of batch #0")
+	}
+	return nil
 }
 
 func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {
