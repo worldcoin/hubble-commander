@@ -18,16 +18,15 @@ var (
 func (t *TransactionExecutor) createCreate2TransferCommitments(
 	pendingTransfers []models.Create2Transfer,
 	domain *bls.Domain,
-) ([]models.Commitment, error) {
+) (commitments []models.Commitment, err error) {
 	if len(pendingTransfers) < int(t.cfg.TxsPerCommitment) {
 		return []models.Commitment{}, nil
 	}
 
-	commitments := make([]models.Commitment, 0, t.cfg.MaxCommitmentsPerBatch)
+	commitments = make([]models.Commitment, 0, t.cfg.MaxCommitmentsPerBatch)
 
 	for len(commitments) != int(t.cfg.MaxCommitmentsPerBatch) {
 		var commitment *models.Commitment
-		var err error
 
 		pendingTransfers, commitment, err = t.createC2TCommitment(pendingTransfers, domain)
 		if err != nil {
