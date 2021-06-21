@@ -26,7 +26,7 @@ type NewBlockLoopTestSuite struct {
 	suite.Suite
 	cmd        *Commander
 	testClient *eth.TestClient
-	cfg        *config.RollupConfig
+	cfg        *config.Config
 	transfer   models.Transfer
 	teardown   func() error
 	wallets    []bls.Wallet
@@ -34,12 +34,11 @@ type NewBlockLoopTestSuite struct {
 
 func (s *NewBlockLoopTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
-	s.cfg = &config.RollupConfig{
-		MinCommitmentsPerBatch: 1,
-		MaxCommitmentsPerBatch: 32,
-		TxsPerCommitment:       1,
-		DevMode:                false,
-	}
+	s.cfg = config.GetTestConfig()
+	s.cfg.Rollup.MinCommitmentsPerBatch = 1
+	s.cfg.Rollup.MaxCommitmentsPerBatch = 32
+	s.cfg.Rollup.TxsPerCommitment = 1
+	s.cfg.Rollup.DevMode = false
 
 	s.transfer = models.Transfer{
 		TransactionBase: models.TransactionBase{
@@ -62,7 +61,7 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	err = testStorage.SetChainState(&s.testClient.ChainState)
 	s.NoError(err)
 
-	s.cmd = NewCommander(config.GetTestConfig())
+	s.cmd = NewCommander(s.cfg)
 	s.cmd.client = s.testClient.Client
 	s.cmd.storage = testStorage.Storage
 	s.cmd.stopChannel = make(chan bool)
@@ -97,7 +96,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedBef
 		{PublicKey: *s.wallets[1].PublicKey()},
 	}
 	s.registerAccounts(accounts)
-	createAndSubmitTransferBatch(s.T(), s.cmd, s.cfg, &s.transfer)
+	createAndSubmitTransferBatch(s.T(), s.cmd, &s.transfer)
 	s.testClient.Commit()
 
 	s.startBlockLoop()
@@ -124,7 +123,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedWhi
 		{PublicKey: *s.wallets[1].PublicKey()},
 	}
 	s.registerAccounts(accounts)
-	createAndSubmitTransferBatch(s.T(), s.cmd, s.cfg, &s.transfer)
+	createAndSubmitTransferBatch(s.T(), s.cmd, &s.transfer)
 
 	s.testClient.Commit()
 	s.waitForLatestBlockSync()
@@ -149,14 +148,6 @@ func (s *NewBlockLoopTestSuite) startBlockLoop() {
 	})
 }
 
-func stopCommander(cmd *Commander) {
-	if !cmd.IsRunning() {
-		return
-	}
-	close(cmd.stopChannel)
-	cmd.workers.Wait()
-}
-
 func (s *NewBlockLoopTestSuite) registerAccounts(accounts []models.Account) {
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)
@@ -172,11 +163,11 @@ func (s *NewBlockLoopTestSuite) registerAccounts(accounts []models.Account) {
 	}
 }
 
-func createAndSubmitTransferBatch(t *testing.T, cmd *Commander, cfg *config.RollupConfig, tx *models.Transfer) {
+func createAndSubmitTransferBatch(t *testing.T, cmd *Commander, tx *models.Transfer) {
 	err := cmd.storage.AddTransfer(tx)
 	require.NoError(t, err)
 
-	transactionExecutor, err := executor.NewTransactionExecutor(cmd.storage, cmd.client, cfg, executor.TransactionExecutorOpts{})
+	transactionExecutor, err := executor.NewTransactionExecutor(cmd.storage, cmd.client, cmd.cfg.Rollup, executor.TransactionExecutorOpts{})
 	require.NoError(t, err)
 
 	commitments, err := transactionExecutor.CreateTransferCommitments([]models.Transfer{*tx}, testDomain)
@@ -251,6 +242,14 @@ func seedDB(t *testing.T, storage *st.Storage, tree *st.StateTree, wallets []bls
 		Nonce:      models.MakeUint256(0),
 	})
 	require.NoError(t, err)
+}
+
+func stopCommander(cmd *Commander) {
+	if !cmd.IsRunning() {
+		return
+	}
+	close(cmd.stopChannel)
+	cmd.workers.Wait()
 }
 
 func TestNewBlockLoopTestSuite(t *testing.T) {

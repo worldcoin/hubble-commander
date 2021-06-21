@@ -19,14 +19,18 @@ type BatchesTestSuite struct {
 	suite.Suite
 	cmd        *Commander
 	testClient *eth.TestClient
-	cfg        *config.RollupConfig
-	transfer   models.Transfer
+	cfg        *config.Config
 	teardown   func() error
 	wallets    []bls.Wallet
 }
 
 func (s *BatchesTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
+	s.cfg = config.GetTestConfig()
+	s.cfg.Rollup.MinCommitmentsPerBatch = 1
+	s.cfg.Rollup.MaxCommitmentsPerBatch = 32
+	s.cfg.Rollup.TxsPerCommitment = 1
+	s.cfg.Rollup.DevMode = false
 }
 
 func (s *BatchesTestSuite) SetupTest() {
@@ -38,14 +42,13 @@ func (s *BatchesTestSuite) SetupTest() {
 	err = testStorage.SetChainState(&s.testClient.ChainState)
 	s.NoError(err)
 
-	s.cmd = NewCommander(config.GetTestConfig())
+	s.cmd = NewCommander(s.cfg)
 	s.cmd.client = s.testClient.Client
 	s.cmd.storage = testStorage.Storage
 	s.cmd.stopChannel = make(chan bool)
 
 	s.wallets = generateWallets(s.T(), s.testClient.ChainState.Rollup, 2)
 	seedDB(s.T(), testStorage.Storage, st.NewStateTree(testStorage.Storage), s.wallets)
-	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
 }
 
 func (s *BatchesTestSuite) TearDownTest() {
@@ -67,7 +70,7 @@ func (s *BatchesTestSuite) TestUnsafeSyncBatches_DoesNotSyncExistingBatchTwice()
 		ToStateID: 1,
 	}
 	signTransfer(s.T(), &s.wallets[tx.FromStateID], &tx)
-	createAndSubmitTransferBatch(s.T(), s.cmd, s.cfg, &tx)
+	createAndSubmitTransferBatch(s.T(), s.cmd, &tx)
 	s.testClient.Commit()
 
 	s.syncAllBlocks()
@@ -83,8 +86,8 @@ func (s *BatchesTestSuite) TestUnsafeSyncBatches_DoesNotSyncExistingBatchTwice()
 		},
 		ToStateID: 0,
 	}
-	signTransfer(s.T(), &s.wallets[tx.FromStateID], &tx2)
-	createAndSubmitTransferBatch(s.T(), s.cmd, s.cfg, &tx2)
+	signTransfer(s.T(), &s.wallets[tx2.FromStateID], &tx2)
+	createAndSubmitTransferBatch(s.T(), s.cmd, &tx2)
 	s.testClient.Commit()
 
 	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
