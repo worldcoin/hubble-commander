@@ -53,17 +53,16 @@ func (s *Create2TransferCommitmentsTestSuite) TearDownTest() {
 }
 
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_QueriesForMorePendingTransfersUntilSatisfied() {
+	addAccountWithHighNonce(s.Assertions, s.storage, 123)
+
 	transfers := generateValidCreate2Transfers(6, &models.PublicKey{1, 2, 3})
+	s.invalidateCreate2Transfers(transfers[1:6])
 
-	for i := 1; i < 6; i++ {
-		transfers[i].Amount = models.MakeUint256(99999999999)
-	}
-
-	transfer := models.Create2Transfer{
+	highNonceTransfer := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
 			Hash:        utils.RandomHash(),
 			TxType:      txtype.Create2Transfer,
-			FromStateID: 24,
+			FromStateID: 123,
 			Amount:      models.MakeUint256(1),
 			Fee:         models.MakeUint256(1),
 			Nonce:       models.MakeUint256(10),
@@ -71,11 +70,9 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 		ToStateID:   nil,
 		ToPublicKey: models.PublicKey{5, 4, 3, 2, 1},
 	}
-	transfers = append(transfers, transfer)
+	transfers = append(transfers, highNonceTransfer)
 
 	s.addCreate2Transfers(transfers)
-
-	addNewDummyState(s.Assertions, s.storage, 24)
 
 	pendingTransfers, err := s.storage.GetPendingCreate2Transfers(pendingTxsCountMultiplier * s.cfg.TxsPerCommitment)
 	s.NoError(err)
@@ -92,6 +89,13 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
+}
+
+func (s *Create2TransferCommitmentsTestSuite) invalidateCreate2Transfers(transfers []models.Create2Transfer) {
+	for i := range transfers {
+		tx := &transfers[i]
+		tx.Amount = *genesisBalances[tx.FromStateID].MulN(10)
+	}
 }
 
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_DoesNothingWhenThereAreNotEnoughPendingTransfers() {

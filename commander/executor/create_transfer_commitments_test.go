@@ -83,28 +83,25 @@ func (s *TransferCommitmentsTestSuite) TearDownTest() {
 }
 
 func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_QueriesForMorePendingTransfersUntilSatisfied() {
+	addAccountWithHighNonce(s.Assertions, s.storage, 123)
+
 	transfers := generateValidTransfers(6)
+	s.invalidateTransfers(transfers[1:6])
 
-	for i := 1; i < 6; i++ {
-		transfers[i].Amount = models.MakeUint256(99999999999)
-	}
-
-	transfer := models.Transfer{
+	highNonceTransfer := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			Hash:        utils.RandomHash(),
 			TxType:      txtype.Transfer,
-			FromStateID: 24,
+			FromStateID: 123,
 			Amount:      models.MakeUint256(1),
 			Fee:         models.MakeUint256(1),
 			Nonce:       models.MakeUint256(10),
 		},
 		ToStateID: 1,
 	}
-	transfers = append(transfers, transfer)
+	transfers = append(transfers, highNonceTransfer)
 
 	s.addTransfers(transfers)
-
-	addNewDummyState(s.Assertions, s.storage, 24)
 
 	pendingTransfers, err := s.storage.GetPendingTransfers(pendingTxsCountMultiplier * s.cfg.TxsPerCommitment)
 	s.NoError(err)
@@ -121,6 +118,13 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_QueriesForM
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
+}
+
+func (s *TransferCommitmentsTestSuite) invalidateTransfers(transfers []models.Transfer) {
+	for i := range transfers {
+		tx := &transfers[i]
+		tx.Amount = *genesisBalances[tx.FromStateID].MulN(10)
+	}
 }
 
 func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothingWhenThereAreNotEnoughPendingTransfers() {
@@ -245,7 +249,7 @@ func (s *TransferCommitmentsTestSuite) prepareAndReturnPendingTransfers(transfer
 	return pendingTransfers
 }
 
-func addNewDummyState(s *require.Assertions, storage *st.Storage, stateID uint32) {
+func addAccountWithHighNonce(s *require.Assertions, storage *st.Storage, stateID uint32) {
 	dummyAccount := models.Account{
 		PubKeyID:  500,
 		PublicKey: models.PublicKey{1, 2, 3, 4},
