@@ -12,7 +12,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -74,7 +73,7 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 }
 
 func (s *NewBlockLoopTestSuite) TearDownTest() {
-	s.stopCommander()
+	stopCommander(s.cmd)
 	err := s.teardown()
 	s.NoError(err)
 }
@@ -98,7 +97,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedBef
 		{PublicKey: *s.wallets[1].PublicKey()},
 	}
 	s.registerAccounts(accounts)
-	s.createAndSubmitTransferBatch(&s.transfer)
+	createAndSubmitTransferBatch(s.T(), s.cmd, s.cfg, &s.transfer)
 	s.testClient.Commit()
 
 	s.startBlockLoop()
@@ -125,7 +124,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedWhi
 		{PublicKey: *s.wallets[1].PublicKey()},
 	}
 	s.registerAccounts(accounts)
-	s.createAndSubmitTransferBatch(&s.transfer)
+	createAndSubmitTransferBatch(s.T(), s.cmd, s.cfg, &s.transfer)
 
 	s.testClient.Commit()
 	s.waitForLatestBlockSync()
@@ -142,58 +141,6 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedWhi
 	s.Len(batches, 1)
 }
 
-func (s *NewBlockLoopTestSuite) TestUnsafeSyncBatches_DoesNotSyncExistingBatchTwice() {
-	tx := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash:        utils.RandomHash(),
-			TxType:      txtype.Transfer,
-			FromStateID: 0,
-			Amount:      models.MakeUint256(400),
-			Fee:         models.MakeUint256(0),
-			Nonce:       models.MakeUint256(0),
-		},
-		ToStateID: 1,
-	}
-	signTransfer(s.T(), &s.wallets[tx.FromStateID], &tx)
-	s.createAndSubmitTransferBatch(&tx)
-	s.testClient.Commit()
-
-	s.syncAllBlocks()
-
-	tx2 := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash:        utils.RandomHash(),
-			TxType:      txtype.Transfer,
-			FromStateID: 1,
-			Amount:      models.MakeUint256(100),
-			Fee:         models.MakeUint256(0),
-			Nonce:       models.MakeUint256(0),
-		},
-		ToStateID: 0,
-	}
-	signTransfer(s.T(), &s.wallets[tx.FromStateID], &tx)
-	s.createAndSubmitTransferBatch(&tx2)
-	s.testClient.Commit()
-
-	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
-	s.NoError(err)
-	s.Len(batches, 1)
-
-	s.syncAllBlocks()
-
-	batches, err = s.cmd.storage.GetBatchesInRange(nil, nil)
-	s.NoError(err)
-	s.Len(batches, 2)
-
-	state0, err := s.cmd.storage.GetStateLeaf(0)
-	s.NoError(err)
-	s.Equal(models.MakeUint256(700), state0.Balance)
-
-	state1, err := s.cmd.storage.GetStateLeaf(1)
-	s.NoError(err)
-	s.Equal(models.MakeUint256(300), state1.Balance)
-}
-
 func (s *NewBlockLoopTestSuite) startBlockLoop() {
 	s.cmd.startWorker(func() error {
 		err := s.cmd.newBlockLoop()
@@ -202,12 +149,12 @@ func (s *NewBlockLoopTestSuite) startBlockLoop() {
 	})
 }
 
-func (s *NewBlockLoopTestSuite) stopCommander() {
-	if !s.cmd.IsRunning() {
+func stopCommander(cmd *Commander) {
+	if !cmd.IsRunning() {
 		return
 	}
-	close(s.cmd.stopChannel)
-	s.cmd.workers.Wait()
+	close(cmd.stopChannel)
+	cmd.workers.Wait()
 }
 
 func (s *NewBlockLoopTestSuite) registerAccounts(accounts []models.Account) {
@@ -225,21 +172,21 @@ func (s *NewBlockLoopTestSuite) registerAccounts(accounts []models.Account) {
 	}
 }
 
-func (s *NewBlockLoopTestSuite) createAndSubmitTransferBatch(tx *models.Transfer) {
-	err := s.cmd.storage.AddTransfer(tx)
-	s.NoError(err)
+func createAndSubmitTransferBatch(t *testing.T, cmd *Commander, cfg *config.RollupConfig, tx *models.Transfer) {
+	err := cmd.storage.AddTransfer(tx)
+	require.NoError(t, err)
 
-	transactionExecutor, err := executor.NewTransactionExecutor(s.cmd.storage, s.testClient.Client, s.cfg, executor.TransactionExecutorOpts{})
-	s.NoError(err)
+	transactionExecutor, err := executor.NewTransactionExecutor(cmd.storage, cmd.client, cfg, executor.TransactionExecutorOpts{})
+	require.NoError(t, err)
 
 	commitments, err := transactionExecutor.CreateTransferCommitments([]models.Transfer{*tx}, testDomain)
-	s.NoError(err)
-	s.Len(commitments, 1)
+	require.NoError(t, err)
+	require.Len(t, commitments, 1)
 
 	batch, err := transactionExecutor.NewPendingBatch(txtype.Transfer)
-	s.NoError(err)
+	require.NoError(t, err)
 	err = transactionExecutor.SubmitBatch(batch, commitments)
-	s.NoError(err)
+	require.NoError(t, err)
 
 	transactionExecutor.Rollback(nil)
 }
@@ -255,15 +202,6 @@ func (s *NewBlockLoopTestSuite) waitForLatestBlockSync() {
 	}, time.Second, 100*time.Millisecond, "timeout when waiting for latest block sync")
 }
 
-func (s *NewBlockLoopTestSuite) syncAllBlocks() {
-	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
-	s.NoError(err)
-
-	err = s.cmd.unsafeSyncBatches(0, *latestBlockNumber)
-	s.NoError(err)
-}
-
-//TODO: duplication
 func signTransfer(t *testing.T, wallet *bls.Wallet, transfer *models.Transfer) {
 	encodedTransfer, err := encoder.EncodeTransferForSigning(transfer)
 	require.NoError(t, err)
