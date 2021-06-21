@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"math/big"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -105,8 +104,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_QueriesForM
 
 	s.addTransfers(transfers)
 
-	err := addNewDummyState(s.storage, s.transactionExecutor.stateTree, 24)
-	s.NoError(err)
+	addNewDummyState(s.Assertions, s.storage, 24)
 
 	pendingTransfers, err := s.storage.GetPendingTransfers(pendingTxsCountMultiplier * s.cfg.TxsPerCommitment)
 	s.NoError(err)
@@ -247,31 +245,21 @@ func (s *TransferCommitmentsTestSuite) prepareAndReturnPendingTransfers(transfer
 	return pendingTransfers
 }
 
-func addNewDummyState(storage *st.Storage, stateTree *st.StateTree, stateID uint32) error {
+func addNewDummyState(s *require.Assertions, storage *st.Storage, stateID uint32) {
 	dummyAccount := models.Account{
-		PubKeyID: 500,
-		PublicKey: models.MakePublicKeyFromInts([4]*big.Int{
-			big.NewInt(9),
-			big.NewInt(10),
-			big.NewInt(3),
-			big.NewInt(2),
-		}),
+		PubKeyID:  500,
+		PublicKey: models.PublicKey{1, 2, 3, 4},
 	}
 
 	err := storage.AddAccountIfNotExists(&dummyAccount)
-	if err != nil {
-		return err
-	}
+	s.NoError(err)
 
+	stateTree := st.NewStateTree(storage)
 	err = stateTree.Set(stateID, &models.UserState{
 		PubKeyID:   dummyAccount.PubKeyID,
 		TokenIndex: models.MakeUint256(0),
 		Balance:    models.MakeUint256(1000),
 		Nonce:      models.MakeUint256(10),
 	})
-	if err != nil {
-		return err
-	}
-
-	return nil
+	s.NoError(err)
 }

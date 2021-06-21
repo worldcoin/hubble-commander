@@ -75,8 +75,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 
 	s.addCreate2Transfers(transfers)
 
-	err := addNewDummyState(s.storage, s.transactionExecutor.stateTree, 24)
-	s.NoError(err)
+	addNewDummyState(s.Assertions, s.storage, 24)
 
 	pendingTransfers, err := s.storage.GetPendingCreate2Transfers(pendingTxsCountMultiplier * s.cfg.TxsPerCommitment)
 	s.NoError(err)
