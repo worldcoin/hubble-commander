@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -48,25 +49,17 @@ func (c *Client) SubmitCreate2TransfersBatch(commitments []models.Commitment) (
 	return c.RawTransact(c.config.stakeAmount.ToBig(), estimate, input)
 }
 
-func (c *Client) SubmitTransfersBatchAndMine(commitments []models.Commitment) (
-	batch *models.Batch,
-	accountTreeRoot *common.Hash,
-	err error,
-) {
-	return c.submitBatchAndMine(commitments, c.SubmitTransfersBatch)
+func (c *Client) SubmitTransfersBatchAndWait(commitments []models.Commitment) (batch *models.Batch, err error) {
+	return c.submitBatchAndWait(commitments, c.SubmitTransfersBatch)
 }
-func (c *Client) SubmitCreate2TransfersBatchAndMine(commitments []models.Commitment) (
-	batch *models.Batch,
-	accountTreeRoot *common.Hash,
-	err error,
-) {
-	return c.submitBatchAndMine(commitments, c.SubmitCreate2TransfersBatch)
+func (c *Client) SubmitCreate2TransfersBatchAndWait(commitments []models.Commitment) (batch *models.Batch, err error) {
+	return c.submitBatchAndWait(commitments, c.SubmitCreate2TransfersBatch)
 }
 
-func (c *Client) submitBatchAndMine(
+func (c *Client) submitBatchAndWait(
 	commitments []models.Commitment,
 	submit SubmitBatchFunc,
-) (batch *models.Batch, accountTreeRoot *common.Hash, err error) {
+) (batch *models.Batch, err error) {
 	sink := make(chan *rollup.RollupNewBatch)
 	subscription, err := c.Rollup.WatchNewBatch(&bind.WatchOpts{}, sink)
 	if err != nil {
@@ -86,18 +79,18 @@ func (c *Client) submitBatchAndMine(
 				return c.handleNewBatchEvent(newBatch)
 			}
 		case <-time.After(*c.config.txTimeout):
-			return nil, nil, fmt.Errorf("timeout")
+			return nil, fmt.Errorf("submitBatchAndWait: timeout")
 		}
 	}
 }
 
-func (c *Client) handleNewBatchEvent(event *rollup.RollupNewBatch) (*models.Batch, *common.Hash, error) {
+func (c *Client) handleNewBatchEvent(event *rollup.RollupNewBatch) (*models.Batch, error) {
 	batch, err := c.GetBatch(models.NewUint256FromBig(*event.BatchID))
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	accountRoot := common.BytesToHash(event.AccountRoot[:])
-	return batch, &accountRoot, nil
+	batch.AccountTreeRoot = ref.Hash(common.BytesToHash(event.AccountRoot[:]))
+	return batch, nil
 }
 
 func (c *Client) estimateBatchSubmissionGasLimit(input []byte) (uint64, error) {

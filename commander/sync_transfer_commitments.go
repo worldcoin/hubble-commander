@@ -8,7 +8,12 @@ import (
 
 func (t *transactionExecutor) syncTransferCommitments(batch *eth.DecodedBatch) error {
 	for i := range batch.Commitments {
-		if err := t.syncTransferCommitment(batch, &batch.Commitments[i]); err != nil {
+		err := t.syncTransferCommitment(batch, &batch.Commitments[i])
+		if err == ErrInvalidSignature {
+			// TODO: dispute fraudulent commitment
+			return err
+		}
+		if err != nil {
 			return err
 		}
 	}
@@ -32,9 +37,15 @@ func (t *transactionExecutor) syncTransferCommitment(
 	if len(transfers.invalidTransfers) > 0 {
 		return ErrFraudulentTransfer
 	}
-
 	if len(transfers.appliedTransfers) != len(deserializedTransfers) {
 		return ErrTransfersNotApplied
+	}
+
+	if !t.cfg.DevMode {
+		err = t.verifyTransferSignature(commitment, transfers.appliedTransfers)
+		if err != nil {
+			return err
+		}
 	}
 
 	commitmentID, err := t.storage.AddCommitment(&models.Commitment{

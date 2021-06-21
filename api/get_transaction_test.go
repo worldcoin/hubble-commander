@@ -38,6 +38,7 @@ func (s *GetTransactionTestSuite) SetupTest() {
 		client: &eth.Client{
 			ChainState: chainState,
 		},
+		devMode: false,
 	}
 
 	err = s.storage.SetChainState(&chainState)

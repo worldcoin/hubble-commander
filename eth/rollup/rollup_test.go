@@ -33,7 +33,7 @@ func (s *DeployerTestSuite) TestNewRollup() {
 	rollupContracts, err := DeployRollup(s.sim)
 	s.NoError(err)
 
-	id, err := rollupContracts.Rollup.AppID(&bind.CallOpts{})
+	id, err := rollupContracts.Rollup.DomainSeparator(&bind.CallOpts{})
 	s.NoError(err)
 
 	var emptyBytes [32]byte

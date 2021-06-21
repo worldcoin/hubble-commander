@@ -29,12 +29,12 @@ type RollupConfig struct {
 	MaxCommitmentsPerBatch uint32
 	CommitmentLoopInterval time.Duration
 	BatchLoopInterval      time.Duration
+	DevMode                bool
 }
 
 type APIConfig struct {
 	Version string
 	Port    string
-	DevMode bool
 }
 
 type PostgresConfig struct {

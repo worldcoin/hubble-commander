@@ -127,7 +127,7 @@ func (t *transactionExecutor) getTokenIndex(stateID uint32) (*models.Uint256, er
 }
 
 func (t *transactionExecutor) getOrRegisterPubKeyID(
-	events chan *accountregistry.AccountRegistryPubkeyRegistered,
+	events chan *accountregistry.AccountRegistrySinglePubkeyRegistered,
 	transfer *models.Create2Transfer,
 	tokenIndex models.Uint256,
 ) (*uint32, error) {

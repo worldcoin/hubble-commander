@@ -85,7 +85,7 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionType, domain *bls.Domain) (err error) {
 	startTime := time.Now()
 	var commitments []models.Commitment
-	batch, err := newPendingBatch(t.storage, batchType)
+	batch, err := t.newPendingBatch(batchType)
 	if err != nil {
 		return err
 	}
@@ -149,14 +149,13 @@ func validateStateRoot(storage *st.Storage) error {
 	return nil
 }
 
-// TODO refactor to method on transactionExecutor?
-func newPendingBatch(storage *st.Storage, batchType txtype.TransactionType) (*models.Batch, error) {
-	stateTree := st.NewStateTree(storage)
+func (t *transactionExecutor) newPendingBatch(batchType txtype.TransactionType) (*models.Batch, error) {
+	stateTree := st.NewStateTree(t.storage)
 	prevStateRoot, err := stateTree.Root()
 	if err != nil {
 		return nil, err
 	}
-	batchID, err := storage.GetNextBatchID()
+	batchID, err := t.storage.GetNextBatchID()
 	if err != nil {
 		return nil, err
 	}

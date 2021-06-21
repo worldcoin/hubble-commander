@@ -163,7 +163,7 @@ func create2TransferExists(transferList []models.Create2Transfer, tx *models.Cre
 func combineCreate2TransferSignatures(transfers []models.Create2Transfer, domain *bls.Domain) (*models.Signature, error) {
 	signatures := make([]*bls.Signature, 0, len(transfers))
 	for i := range transfers {
-		sig, err := bls.NewSignatureFromBytes(transfers[i].Signature[:], *domain)
+		sig, err := bls.NewSignatureFromBytes(transfers[i].Signature.Bytes(), *domain)
 		if err != nil {
 			return nil, err
 		}
