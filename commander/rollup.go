@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
@@ -54,7 +55,7 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 		return errors.WithStack(err)
 	}
 
-	transactionExecutor, err := NewTransactionExecutor(c.storage, c.client, c.cfg.Rollup, TransactionExecutorOpts{Ctx: ctx})
+	transactionExecutor, err := executor.NewTransactionExecutor(c.storage, c.client, c.cfg.Rollup, executor.TransactionExecutorOpts{Ctx: ctx})
 	if err != nil {
 		return err
 	}
@@ -68,7 +69,7 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 		*currentBatchType = txtype.Transfer
 	}
 	if err != nil {
-		var e *RollupError
+		var e *executor.RollupError
 		if errors.As(err, &e) {
 			return nil
 		}

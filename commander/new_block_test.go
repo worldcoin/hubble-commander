@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -223,16 +224,16 @@ func (s *NewBlockLoopTestSuite) createAndSubmitTransferBatch(tx *models.Transfer
 	err := s.cmd.storage.AddTransfer(tx)
 	s.NoError(err)
 
-	transactionExecutor, err := NewTransactionExecutor(s.cmd.storage, s.testClient.Client, s.cfg, TransactionExecutorOpts{})
+	transactionExecutor, err := executor.NewTransactionExecutor(s.cmd.storage, s.testClient.Client, s.cfg, executor.TransactionExecutorOpts{})
 	s.NoError(err)
 
-	commitments, err := transactionExecutor.createTransferCommitments([]models.Transfer{*tx}, testDomain)
+	commitments, err := transactionExecutor.CreateTransferCommitments([]models.Transfer{*tx}, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	batch, err := transactionExecutor.newPendingBatch(txtype.Transfer)
+	batch, err := transactionExecutor.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
-	err = transactionExecutor.submitBatch(batch, commitments)
+	err = transactionExecutor.SubmitBatch(batch, commitments)
 	s.NoError(err)
 
 	transactionExecutor.Rollback(nil)

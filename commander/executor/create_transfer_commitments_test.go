@@ -75,7 +75,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothing
 	preRoot, err := storage.NewStateTree(s.storage).Root()
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.createTransferCommitments([]models.Transfer{}, testDomain)
+	commitments, err := s.transactionExecutor.CreateTransferCommitments([]models.Transfer{}, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 0)
 
@@ -97,7 +97,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothing
 	preRoot, err := storage.NewStateTree(s.storage).Root()
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.createTransferCommitments(pendingTransfers, testDomain)
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(pendingTransfers, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 0)
 
@@ -113,7 +113,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_StoresCorre
 	preRoot, err := storage.NewStateTree(s.storage).Root()
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.createTransferCommitments(pendingTransfers, testDomain)
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(pendingTransfers, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, 24)
@@ -129,7 +129,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_StoresCorre
 func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_CreatesMaximallyAsManyCommitmentsAsSpecifiedInConfig() {
 	pendingTransfers := s.prepareAndReturnPendingTransfers(2)
 
-	commitments, err := s.transactionExecutor.createTransferCommitments(pendingTransfers, testDomain)
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(pendingTransfers, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 }
@@ -137,7 +137,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_CreatesMaxi
 func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_MarksTransfersAsIncludedInCommitment() {
 	pendingTransfers := s.prepareAndReturnPendingTransfers(2)
 
-	commitments, err := s.transactionExecutor.createTransferCommitments(pendingTransfers, testDomain)
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(pendingTransfers, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 

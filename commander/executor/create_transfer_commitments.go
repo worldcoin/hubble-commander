@@ -12,7 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (t *TransactionExecutor) createTransferCommitments(
+func (t *TransactionExecutor) CreateTransferCommitments(
 	pendingTransfers []models.Transfer,
 	domain *bls.Domain,
 ) ([]models.Commitment, error) {

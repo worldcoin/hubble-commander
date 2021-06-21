@@ -11,7 +11,7 @@ var (
 	ErrNoLongerProposer     = NewRollupError("commander is no longer an active proposer")
 )
 
-func (t *TransactionExecutor) submitBatch(batch *models.Batch, commitments []models.Commitment) error {
+func (t *TransactionExecutor) SubmitBatch(batch *models.Batch, commitments []models.Commitment) error {
 	if len(commitments) < int(t.cfg.MinCommitmentsPerBatch) {
 		return ErrNotEnoughCommitments
 	}

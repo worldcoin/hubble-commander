@@ -8,15 +8,12 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/pkg/errors"
 )
-
-var ErrInvalidStateRoot = errors.New("latest commitment state root doesn't match current one")
 
 func (t *TransactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionType, domain *bls.Domain) (err error) {
 	startTime := time.Now()
 	var commitments []models.Commitment
-	batch, err := t.newPendingBatch(batchType)
+	batch, err := t.NewPendingBatch(batchType)
 	if err != nil {
 		return err
 	}
@@ -30,7 +27,7 @@ func (t *TransactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionT
 		return err
 	}
 
-	err = t.submitBatch(batch, commitments)
+	err = t.SubmitBatch(batch, commitments)
 	if err != nil {
 		return err
 	}
@@ -51,7 +48,7 @@ func (t *TransactionExecutor) buildTransferCommitments(domain *bls.Domain) ([]mo
 	if err != nil {
 		return nil, err
 	}
-	return t.createTransferCommitments(pendingTransfers, domain)
+	return t.CreateTransferCommitments(pendingTransfers, domain)
 }
 
 func (t *TransactionExecutor) buildCreate2TransfersCommitments(domain *bls.Domain) ([]models.Commitment, error) {
@@ -62,25 +59,7 @@ func (t *TransactionExecutor) buildCreate2TransfersCommitments(domain *bls.Domai
 	return t.createCreate2TransferCommitments(pendingTransfers, domain)
 }
 
-func validateStateRoot(storage *st.Storage) error {
-	latestCommitment, err := storage.GetLatestCommitment()
-	if st.IsNotFoundError(err) {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	stateRoot, err := st.NewStateTree(storage).Root()
-	if err != nil {
-		return err
-	}
-	if latestCommitment.PostStateRoot != *stateRoot {
-		return ErrInvalidStateRoot
-	}
-	return nil
-}
-
-func (t *TransactionExecutor) newPendingBatch(batchType txtype.TransactionType) (*models.Batch, error) {
+func (t *TransactionExecutor) NewPendingBatch(batchType txtype.TransactionType) (*models.Batch, error) {
 	stateTree := st.NewStateTree(t.storage)
 	prevStateRoot, err := stateTree.Root()
 	if err != nil {
