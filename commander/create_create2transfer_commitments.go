@@ -12,7 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (t *transactionExecutor) createCreate2TransferCommitments(
+func (t *TransactionExecutor) createCreate2TransferCommitments(
 	pendingTransfers []models.Create2Transfer,
 	domain *bls.Domain,
 ) ([]models.Commitment, error) {
@@ -118,7 +118,7 @@ func combineCreate2TransferSignatures(transfers []models.Create2Transfer, domain
 	return bls.NewAggregatedSignature(signatures).ModelsSignature(), nil
 }
 
-func (t *transactionExecutor) markCreate2TransfersAsIncluded(transfers []models.Create2Transfer, commitmentID int32) error {
+func (t *TransactionExecutor) markCreate2TransfersAsIncluded(transfers []models.Create2Transfer, commitmentID int32) error {
 	hashes := make([]common.Hash, 0, len(transfers))
 	for i := range transfers {
 		hashes = append(hashes, transfers[i].Hash)
@@ -126,7 +126,7 @@ func (t *transactionExecutor) markCreate2TransfersAsIncluded(transfers []models.
 	return t.storage.BatchMarkTransactionAsIncluded(hashes, &commitmentID)
 }
 
-func (t *transactionExecutor) setCreate2TransferToStateID(transfers []models.Create2Transfer) error {
+func (t *TransactionExecutor) setCreate2TransferToStateID(transfers []models.Create2Transfer) error {
 	for i := range transfers {
 		err := t.storage.SetCreate2TransferToStateID(transfers[i].Hash, *transfers[i].ToStateID)
 		if err != nil {

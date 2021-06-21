@@ -6,7 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-func (t *transactionExecutor) syncCreate2TransferCommitments(batch *eth.DecodedBatch) error {
+func (t *TransactionExecutor) syncCreate2TransferCommitments(batch *eth.DecodedBatch) error {
 	for i := range batch.Commitments {
 		err := t.syncCreate2TransferCommitment(batch, &batch.Commitments[i])
 		if err == ErrInvalidSignature {
@@ -20,7 +20,7 @@ func (t *transactionExecutor) syncCreate2TransferCommitments(batch *eth.DecodedB
 	return nil
 }
 
-func (t *transactionExecutor) syncCreate2TransferCommitment(
+func (t *TransactionExecutor) syncCreate2TransferCommitment(
 	batch *eth.DecodedBatch,
 	commitment *encoder.DecodedCommitment,
 ) error {
@@ -78,7 +78,7 @@ func (t *transactionExecutor) syncCreate2TransferCommitment(
 	return t.storage.BatchAddCreate2Transfer(transfers.appliedTransfers)
 }
 
-func (t *transactionExecutor) setPublicKeys(transfers []models.Create2Transfer) error {
+func (t *TransactionExecutor) setPublicKeys(transfers []models.Create2Transfer) error {
 	for i := range transfers {
 		publicKey, err := t.storage.GetPublicKeyByStateID(*transfers[i].ToStateID)
 		if err != nil {

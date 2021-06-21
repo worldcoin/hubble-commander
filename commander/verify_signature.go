@@ -6,7 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-func (t *transactionExecutor) verifyTransferSignature(commitment *encoder.DecodedCommitment, transfers []models.Transfer) error {
+func (t *TransactionExecutor) verifyTransferSignature(commitment *encoder.DecodedCommitment, transfers []models.Transfer) error {
 	domain, err := t.storage.GetDomain(t.client.ChainState.ChainID)
 	if err != nil {
 		return err
@@ -27,7 +27,7 @@ func (t *transactionExecutor) verifyTransferSignature(commitment *encoder.Decode
 	return verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys)
 }
 
-func (t *transactionExecutor) verifyCreate2TransferSignature(
+func (t *TransactionExecutor) verifyCreate2TransferSignature(
 	commitment *encoder.DecodedCommitment,
 	transfers []models.Create2Transfer,
 ) error {

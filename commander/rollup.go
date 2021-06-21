@@ -57,7 +57,7 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 		return errors.WithStack(err)
 	}
 
-	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, c.cfg.Rollup, transactionExecutorOpts{ctx: ctx})
+	transactionExecutor, err := NewTransactionExecutor(c.storage, c.client, c.cfg.Rollup, TransactionExecutorOpts{Ctx: ctx})
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 	return transactionExecutor.Commit()
 }
 
-func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionType, domain *bls.Domain) (err error) {
+func (t *TransactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionType, domain *bls.Domain) (err error) {
 	startTime := time.Now()
 	var commitments []models.Commitment
 	batch, err := t.newPendingBatch(batchType)
@@ -114,7 +114,7 @@ func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionT
 	return nil
 }
 
-func (t *transactionExecutor) buildTransferCommitments(domain *bls.Domain) ([]models.Commitment, error) {
+func (t *TransactionExecutor) buildTransferCommitments(domain *bls.Domain) ([]models.Commitment, error) {
 	pendingTransfers, err := t.storage.GetPendingTransfers()
 	if err != nil {
 		return nil, err
@@ -122,7 +122,7 @@ func (t *transactionExecutor) buildTransferCommitments(domain *bls.Domain) ([]mo
 	return t.createTransferCommitments(pendingTransfers, domain)
 }
 
-func (t *transactionExecutor) buildCreate2TransfersCommitments(domain *bls.Domain) ([]models.Commitment, error) {
+func (t *TransactionExecutor) buildCreate2TransfersCommitments(domain *bls.Domain) ([]models.Commitment, error) {
 	pendingTransfers, err := t.storage.GetPendingCreate2Transfers()
 	if err != nil {
 		return nil, err
@@ -148,7 +148,7 @@ func validateStateRoot(storage *st.Storage) error {
 	return nil
 }
 
-func (t *transactionExecutor) newPendingBatch(batchType txtype.TransactionType) (*models.Batch, error) {
+func (t *TransactionExecutor) newPendingBatch(batchType txtype.TransactionType) (*models.Batch, error) {
 	stateTree := st.NewStateTree(t.storage)
 	prevStateRoot, err := stateTree.Root()
 	if err != nil {

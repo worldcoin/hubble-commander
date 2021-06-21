@@ -6,7 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-func (t *transactionExecutor) syncTransferCommitments(batch *eth.DecodedBatch) error {
+func (t *TransactionExecutor) syncTransferCommitments(batch *eth.DecodedBatch) error {
 	for i := range batch.Commitments {
 		err := t.syncTransferCommitment(batch, &batch.Commitments[i])
 		if err == ErrInvalidSignature {
@@ -20,7 +20,7 @@ func (t *transactionExecutor) syncTransferCommitments(batch *eth.DecodedBatch) e
 	return nil
 }
 
-func (t *transactionExecutor) syncTransferCommitment(
+func (t *TransactionExecutor) syncTransferCommitment(
 	batch *eth.DecodedBatch,
 	commitment *encoder.DecodedCommitment,
 ) error {

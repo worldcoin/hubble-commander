@@ -19,7 +19,7 @@ type Create2TransferCommitmentsTestSuite struct {
 	storage             *storage.Storage
 	client              *eth.TestClient
 	cfg                 *config.RollupConfig
-	transactionExecutor *transactionExecutor
+	transactionExecutor *TransactionExecutor
 }
 
 func (s *Create2TransferCommitmentsTestSuite) SetupSuite() {
@@ -42,7 +42,7 @@ func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 	err = PopulateGenesisAccounts(s.storage, AssignStateIDs(genesisAccounts))
 	s.NoError(err)
 
-	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg, transactionExecutorOpts{})
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, TransactionExecutorOpts{})
 }
 
 func (s *Create2TransferCommitmentsTestSuite) TearDownTest() {

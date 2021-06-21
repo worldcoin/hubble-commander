@@ -6,7 +6,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func (t *transactionExecutor) createAndStoreCommitment(
+func (t *TransactionExecutor) createAndStoreCommitment(
 	txType txtype.TransactionType,
 	feeReceiverIndex uint32,
 	serializedTxs []byte,

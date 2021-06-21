@@ -39,7 +39,7 @@ type ApplyTransferTestSuite struct {
 	suite.Suite
 	storage             *storage.TestStorage
 	tree                *storage.StateTree
-	transactionExecutor *transactionExecutor
+	transactionExecutor *TransactionExecutor
 }
 
 func (s *ApplyTransferTestSuite) SetupSuite() {
@@ -51,11 +51,11 @@ func (s *ApplyTransferTestSuite) SetupTest() {
 	s.storage, err = storage.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.tree = storage.NewStateTree(s.storage.Storage)
-	s.transactionExecutor = newTestTransactionExecutor(
+	s.transactionExecutor = NewTestTransactionExecutor(
 		s.storage.Storage,
 		nil,
 		&config.RollupConfig{FeeReceiverPubKeyID: 0},
-		transactionExecutorOpts{},
+		TransactionExecutorOpts{},
 	)
 
 	accounts := []models.Account{
@@ -153,7 +153,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_AssumesNonce() {
 	transferWithModifiedNonce := transfer
 	transferWithModifiedNonce.Nonce = models.MakeUint256(1234)
 
-	txExecutor := newTestTransactionExecutor(s.storage.Storage, nil, nil, transactionExecutorOpts{AssumeNonces: true})
+	txExecutor := NewTestTransactionExecutor(s.storage.Storage, nil, nil, TransactionExecutorOpts{AssumeNonces: true})
 
 	transferError, appError := txExecutor.ApplyTransfer(&transferWithModifiedNonce, models.MakeUint256(1))
 	s.NoError(appError)

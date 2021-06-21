@@ -27,7 +27,7 @@ type SyncTestSuite struct {
 	tree                *st.StateTree
 	client              *eth.TestClient
 	cfg                 *config.RollupConfig
-	transactionExecutor *transactionExecutor
+	transactionExecutor *TransactionExecutor
 	transfer            models.Transfer
 	wallets             []bls.Wallet
 }
@@ -69,7 +69,7 @@ func (s *SyncTestSuite) setupDB() {
 	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
 	s.tree = st.NewStateTree(s.storage)
-	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg, transactionExecutorOpts{AssumeNonces: true})
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, TransactionExecutorOpts{AssumeNonces: true})
 	err = s.storage.SetChainState(&s.client.ChainState)
 	s.NoError(err)
 

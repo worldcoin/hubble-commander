@@ -33,7 +33,7 @@ type ApplyCreate2TransferTestSuite struct {
 	storage             *st.Storage
 	teardown            func() error
 	tree                *st.StateTree
-	transactionExecutor *transactionExecutor
+	transactionExecutor *TransactionExecutor
 	client              *eth.TestClient
 }
 
@@ -48,7 +48,7 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 	s.teardown = testStorage.Teardown
 	s.tree = st.NewStateTree(s.storage)
 	s.client, err = eth.NewTestClient()
-	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, nil, transactionExecutorOpts{})
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, nil, TransactionExecutorOpts{})
 	s.NoError(err)
 
 	accounts := []models.Account{

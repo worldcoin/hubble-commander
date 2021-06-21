@@ -16,7 +16,7 @@ var (
 	ErrNilReceiverStateID    = errors.New("transfer receiver state id cannot be nil")
 )
 
-func (t *transactionExecutor) ApplyTransfer(
+func (t *TransactionExecutor) ApplyTransfer(
 	transfer models.GenericTransfer,
 	commitmentTokenIndex models.Uint256,
 ) (transferError, appError error) {

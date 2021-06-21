@@ -12,7 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (t *transactionExecutor) createTransferCommitments(
+func (t *TransactionExecutor) createTransferCommitments(
 	pendingTransfers []models.Transfer,
 	domain *bls.Domain,
 ) ([]models.Commitment, error) {
@@ -115,7 +115,7 @@ func combineTransferSignatures(transfers []models.Transfer, domain *bls.Domain) 
 	return bls.NewAggregatedSignature(signatures).ModelsSignature(), nil
 }
 
-func (t *transactionExecutor) markTransfersAsIncluded(transfers []models.Transfer, commitmentID int32) error {
+func (t *TransactionExecutor) markTransfersAsIncluded(transfers []models.Transfer, commitmentID int32) error {
 	hashes := make([]common.Hash, 0, len(transfers))
 	for i := range transfers {
 		hashes = append(hashes, transfers[i].Hash)

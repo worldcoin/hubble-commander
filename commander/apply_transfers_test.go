@@ -20,7 +20,7 @@ type ApplyTransfersTestSuite struct {
 	storage             *storage.Storage
 	tree                *storage.StateTree
 	cfg                 *config.RollupConfig
-	transactionExecutor *transactionExecutor
+	transactionExecutor *TransactionExecutor
 }
 
 func (s *ApplyTransfersTestSuite) SetupSuite() {
@@ -84,7 +84,7 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 	err = s.tree.Set(3, &feeReceiverState)
 	s.NoError(err)
 
-	s.transactionExecutor = newTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, transactionExecutorOpts{})
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, TransactionExecutorOpts{})
 }
 
 func (s *ApplyTransfersTestSuite) TearDownTest() {

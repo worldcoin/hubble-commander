@@ -18,7 +18,7 @@ func logAndSaveTransactionError(storage *st.Storage, transaction *models.Transac
 	}
 }
 
-func (t *transactionExecutor) ApplyFee(tokenIndex, fee models.Uint256) (*uint32, error) {
+func (t *TransactionExecutor) ApplyFee(tokenIndex, fee models.Uint256) (*uint32, error) {
 	feeReceiver, err := t.storage.GetFeeReceiverStateLeaf(t.cfg.FeeReceiverPubKeyID, tokenIndex)
 	if err != nil {
 		return nil, err

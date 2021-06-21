@@ -33,7 +33,7 @@ type SubmitTransferBatchTestSuite struct {
 	tree                *st.StateTree
 	cfg                 *config.RollupConfig
 	client              *eth.TestClient
-	transactionExecutor *transactionExecutor
+	transactionExecutor *TransactionExecutor
 }
 
 func (s *SubmitTransferBatchTestSuite) SetupSuite() {
@@ -70,7 +70,7 @@ func (s *SubmitTransferBatchTestSuite) SetupTest() {
 	err = s.tree.Set(1, &userState)
 	s.NoError(err)
 
-	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg, transactionExecutorOpts{})
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, TransactionExecutorOpts{})
 }
 
 func (s *SubmitTransferBatchTestSuite) TearDownTest() {

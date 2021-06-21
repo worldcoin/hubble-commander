@@ -10,7 +10,7 @@ type AppliedTransfers struct {
 	feeReceiverStateID *uint32
 }
 
-func (t *transactionExecutor) ApplyTransfers(
+func (t *TransactionExecutor) ApplyTransfers(
 	transfers []models.Transfer,
 ) (*AppliedTransfers, error) {
 	if len(transfers) == 0 {

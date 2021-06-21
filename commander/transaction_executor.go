@@ -9,36 +9,36 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-type transactionExecutorOpts struct {
-	ctx context.Context
+type TransactionExecutorOpts struct {
+	Ctx context.Context
 	// Ignore nonce field on transfers, assign it with the correct value from the state.
 	AssumeNonces bool
 }
 
-// transactionExecutor executes transactions & syncs batches. Manages a database transaction.
-type transactionExecutor struct {
+// TransactionExecutor executes transactions & syncs batches. Manages a database transaction.
+type TransactionExecutor struct {
 	cfg       *config.RollupConfig
 	storage   *st.Storage
 	stateTree *st.StateTree
 	tx        *db.TxController
 	client    *eth.Client
-	opts      transactionExecutorOpts
+	opts      TransactionExecutorOpts
 }
 
-// newTransactionExecutor creates a transactionExecutor and starts a database transaction.
-func newTransactionExecutor(
+// NewTransactionExecutor creates a TransactionExecutor and starts a database transaction.
+func NewTransactionExecutor(
 	storage *st.Storage,
 	client *eth.Client,
 	cfg *config.RollupConfig,
-	opts transactionExecutorOpts,
-) (*transactionExecutor, error) {
+	opts TransactionExecutorOpts,
+) (*TransactionExecutor, error) {
 	tx, txStorage, err := storage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
 	if err != nil {
 		return nil, err
 	}
 
 	defaultOpts(&opts)
-	return &transactionExecutor{
+	return &TransactionExecutor{
 		cfg:       cfg,
 		storage:   txStorage,
 		stateTree: st.NewStateTree(txStorage),
@@ -48,15 +48,15 @@ func newTransactionExecutor(
 	}, nil
 }
 
-// newTestTransactionExecutor creates a transactionExecutor without a database transaction.
-func newTestTransactionExecutor(
+// NewTestTransactionExecutor creates a TransactionExecutor without a database transaction.
+func NewTestTransactionExecutor(
 	storage *st.Storage,
 	client *eth.Client,
 	cfg *config.RollupConfig,
-	opts transactionExecutorOpts,
-) *transactionExecutor {
+	opts TransactionExecutorOpts,
+) *TransactionExecutor {
 	defaultOpts(&opts)
-	return &transactionExecutor{
+	return &TransactionExecutor{
 		cfg:       cfg,
 		storage:   storage,
 		stateTree: st.NewStateTree(storage),
@@ -66,17 +66,17 @@ func newTestTransactionExecutor(
 	}
 }
 
-func (t *transactionExecutor) Commit() error {
+func (t *TransactionExecutor) Commit() error {
 	return t.tx.Commit()
 }
 
 // nolint:gocritic
-func (t *transactionExecutor) Rollback(cause *error) {
+func (t *TransactionExecutor) Rollback(cause *error) {
 	t.tx.Rollback(cause)
 }
 
-func defaultOpts(opts *transactionExecutorOpts) {
-	if opts.ctx == nil {
-		opts.ctx = context.Background()
+func defaultOpts(opts *TransactionExecutorOpts) {
+	if opts.Ctx == nil {
+		opts.Ctx = context.Background()
 	}
 }
