@@ -1,4 +1,4 @@
-package commander
+package executor
 
 import (
 	"log"
@@ -12,11 +12,11 @@ import (
 )
 
 var (
-	ErrNotEnoughC2Transfers = NewRollupError("not enough create2transfers")
+	ErrNotEnoughTransfers = NewRollupError("not enough transfers")
 )
 
-func (t *transactionExecutor) createCreate2TransferCommitments(
-	pendingTransfers []models.Create2Transfer,
+func (t *TransactionExecutor) CreateTransferCommitments(
+	pendingTransfers []models.Transfer,
 	domain *bls.Domain,
 ) ([]models.Commitment, error) {
 	if len(pendingTransfers) < int(t.cfg.TxsPerCommitment) {
@@ -29,7 +29,7 @@ func (t *transactionExecutor) createCreate2TransferCommitments(
 		var commitment *models.Commitment
 		var err error
 
-		pendingTransfers, commitment, err = t.createC2TCommitment(pendingTransfers, domain)
+		pendingTransfers, commitment, err = t.createTransferCommitment(pendingTransfers, domain)
 		if err != nil {
 			return nil, err
 		}
@@ -43,11 +43,11 @@ func (t *transactionExecutor) createCreate2TransferCommitments(
 	return commitments, nil
 }
 
-func (t *transactionExecutor) createC2TCommitment(
-	pendingTransfers []models.Create2Transfer,
+func (t *TransactionExecutor) createTransferCommitment(
+	pendingTransfers []models.Transfer,
 	domain *bls.Domain,
 ) (
-	newPendingTransfers []models.Create2Transfer,
+	newPendingTransfers []models.Transfer,
 	commitment *models.Commitment,
 	err error,
 ) {
@@ -59,32 +59,30 @@ func (t *transactionExecutor) createC2TCommitment(
 	}
 
 	var feeReceiverStateID uint32
-	appliedTransfers := make([]models.Create2Transfer, 0, t.cfg.TxsPerCommitment)
-	invalidTransfers := make([]models.Create2Transfer, 0, 1)
-	addedPubKeyIDs := make([]uint32, 0, t.cfg.TxsPerCommitment)
+	appliedTransfers := make([]models.Transfer, 0, t.cfg.TxsPerCommitment)
+	invalidTransfers := make([]models.Transfer, 0, 1)
 
 	for {
 		if len(pendingTransfers) == 0 {
-			pendingTransfers, err = t.storage.GetPendingCreate2Transfers(pendingTxsCountMultiplier * t.cfg.TxsPerCommitment)
+			pendingTransfers, err = t.storage.GetPendingTransfers(pendingTxsCountMultiplier * t.cfg.TxsPerCommitment)
 			if err != nil || len(pendingTransfers) == 0 {
 				return nil, nil, err
 			}
 		}
 
-		var transfers *AppliedC2Transfers
+		var transfers *AppliedTransfers
 
 		maxAppliedTransfers := t.cfg.TxsPerCommitment - uint64(len(appliedTransfers))
-		transfers, err = t.ApplyCreate2Transfers(pendingTransfers, maxAppliedTransfers)
+		transfers, err = t.ApplyTransfers(pendingTransfers, maxAppliedTransfers)
 		if err != nil {
 			return nil, nil, err
 		}
 		if transfers == nil {
-			return nil, nil, ErrNotEnoughC2Transfers
+			return nil, nil, ErrNotEnoughTransfers
 		}
 
 		appliedTransfers = append(appliedTransfers, transfers.appliedTransfers...)
 		invalidTransfers = append(invalidTransfers, transfers.invalidTransfers...)
-		addedPubKeyIDs = append(addedPubKeyIDs, transfers.addedPubKeyIDs...)
 
 		if len(appliedTransfers) == int(t.cfg.TxsPerCommitment) {
 			feeReceiverStateID = *transfers.feeReceiverStateID
@@ -92,13 +90,13 @@ func (t *transactionExecutor) createC2TCommitment(
 		}
 
 		limit := pendingTxsCountMultiplier*t.cfg.TxsPerCommitment + uint64(len(appliedTransfers)+len(invalidTransfers))
-		pendingTransfers, err = t.storage.GetPendingCreate2Transfers(limit)
+		pendingTransfers, err = t.storage.GetPendingTransfers(limit)
 		if err != nil {
 			return nil, nil, err
 		}
 
 		// TODO - instead of doing this use SQL Offset (needs proper mempool)
-		pendingTransfers = removeCreate2Transfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
+		pendingTransfers = removeTransfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
 
 		if len(pendingTransfers) == 0 {
 			err = t.stateTree.RevertTo(*initialStateRoot)
@@ -106,31 +104,31 @@ func (t *transactionExecutor) createC2TCommitment(
 		}
 	}
 
-	newPendingTransfers = removeCreate2Transfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
+	newPendingTransfers = removeTransfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
 
-	serializedTxs, err := encoder.SerializeCreate2Transfers(appliedTransfers, addedPubKeyIDs)
+	serializedTxs, err := encoder.SerializeTransfers(appliedTransfers)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	combinedSignature, err := combineCreate2TransferSignatures(appliedTransfers, domain)
+	combinedSignature, err := combineTransferSignatures(appliedTransfers, domain)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	commitment, err = t.createAndStoreCommitment(txtype.Create2Transfer, feeReceiverStateID, serializedTxs, combinedSignature)
+	commitment, err = t.createAndStoreCommitment(txtype.Transfer, feeReceiverStateID, serializedTxs, combinedSignature)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	err = t.markCreate2TransfersAsIncluded(appliedTransfers, commitment.ID)
+	err = t.markTransfersAsIncluded(appliedTransfers, commitment.ID)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	log.Printf(
 		"Created a %s commitment from %d transactions in %s",
-		txtype.Create2Transfer,
+		txtype.Transfer,
 		len(appliedTransfers),
 		time.Since(startTime).Round(time.Millisecond).String(),
 	)
@@ -138,11 +136,11 @@ func (t *transactionExecutor) createC2TCommitment(
 	return newPendingTransfers, commitment, nil
 }
 
-func removeCreate2Transfer(transferList, toRemove []models.Create2Transfer) []models.Create2Transfer {
+func removeTransfer(transferList, toRemove []models.Transfer) []models.Transfer {
 	outputIndex := 0
 	for i := range transferList {
 		transfer := &transferList[i]
-		if !create2TransferExists(toRemove, transfer) {
+		if !transferExists(toRemove, transfer) {
 			transferList[outputIndex] = *transfer
 			outputIndex++
 		}
@@ -151,7 +149,7 @@ func removeCreate2Transfer(transferList, toRemove []models.Create2Transfer) []mo
 	return transferList[:outputIndex]
 }
 
-func create2TransferExists(transferList []models.Create2Transfer, tx *models.Create2Transfer) bool {
+func transferExists(transferList []models.Transfer, tx *models.Transfer) bool {
 	for i := range transferList {
 		if transferList[i].Hash == tx.Hash {
 			return true
@@ -160,7 +158,7 @@ func create2TransferExists(transferList []models.Create2Transfer, tx *models.Cre
 	return false
 }
 
-func combineCreate2TransferSignatures(transfers []models.Create2Transfer, domain *bls.Domain) (*models.Signature, error) {
+func combineTransferSignatures(transfers []models.Transfer, domain *bls.Domain) (*models.Signature, error) {
 	signatures := make([]*bls.Signature, 0, len(transfers))
 	for i := range transfers {
 		sig, err := bls.NewSignatureFromBytes(transfers[i].Signature.Bytes(), *domain)
@@ -172,15 +170,10 @@ func combineCreate2TransferSignatures(transfers []models.Create2Transfer, domain
 	return bls.NewAggregatedSignature(signatures).ModelsSignature(), nil
 }
 
-func (t *transactionExecutor) markCreate2TransfersAsIncluded(transfers []models.Create2Transfer, commitmentID int32) error {
+func (t *TransactionExecutor) markTransfersAsIncluded(transfers []models.Transfer, commitmentID int32) error {
 	hashes := make([]common.Hash, 0, len(transfers))
 	for i := range transfers {
 		hashes = append(hashes, transfers[i].Hash)
-
-		err := t.storage.SetCreate2TransferToStateID(transfers[i].Hash, *transfers[i].ToStateID)
-		if err != nil {
-			return err
-		}
 	}
 	return t.storage.BatchMarkTransactionAsIncluded(hashes, &commitmentID)
 }

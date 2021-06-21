@@ -1,4 +1,4 @@
-package commander
+package executor
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/Worldcoin/hubble-commander/storage"
+	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -17,10 +17,10 @@ type Create2TransferCommitmentsTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	teardown            func() error
-	storage             *storage.Storage
+	storage             *st.Storage
 	client              *eth.TestClient
 	cfg                 *config.RollupConfig
-	transactionExecutor *transactionExecutor
+	transactionExecutor *TransactionExecutor
 }
 
 func (s *Create2TransferCommitmentsTestSuite) SetupSuite() {
@@ -28,7 +28,7 @@ func (s *Create2TransferCommitmentsTestSuite) SetupSuite() {
 }
 
 func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
-	testStorage, err := storage.NewTestStorageWithBadger()
+	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
@@ -40,10 +40,10 @@ func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 		MaxCommitmentsPerBatch: 1,
 	}
 
-	err = PopulateGenesisAccounts(s.storage, AssignStateIDs(genesisAccounts))
+	err = populateAccounts(s.storage, genesisBalances)
 	s.NoError(err)
 
-	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg, transactionExecutorOpts{})
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, TransactionExecutorOpts{})
 }
 
 func (s *Create2TransferCommitmentsTestSuite) TearDownTest() {

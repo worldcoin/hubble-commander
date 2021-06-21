@@ -1,4 +1,4 @@
-package commander
+package executor
 
 import (
 	"github.com/Worldcoin/hubble-commander/encoder"
@@ -6,9 +6,9 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-func (t *transactionExecutor) syncCreate2TransferCommitments(batch *eth.DecodedBatch) error {
+func (t *TransactionExecutor) syncTransferCommitments(batch *eth.DecodedBatch) error {
 	for i := range batch.Commitments {
-		err := t.syncCreate2TransferCommitment(batch, &batch.Commitments[i])
+		err := t.syncTransferCommitment(batch, &batch.Commitments[i])
 		if err == ErrInvalidSignature {
 			// TODO: dispute fraudulent commitment
 			return err
@@ -20,16 +20,16 @@ func (t *transactionExecutor) syncCreate2TransferCommitments(batch *eth.DecodedB
 	return nil
 }
 
-func (t *transactionExecutor) syncCreate2TransferCommitment(
+func (t *TransactionExecutor) syncTransferCommitment(
 	batch *eth.DecodedBatch,
 	commitment *encoder.DecodedCommitment,
 ) error {
-	deserializedTransfers, pubKeyIDs, err := encoder.DeserializeCreate2Transfers(commitment.Transactions)
+	deserializedTransfers, err := encoder.DeserializeTransfers(commitment.Transactions)
 	if err != nil {
 		return err
 	}
 
-	transfers, err := t.ApplyCreate2TransfersForSync(deserializedTransfers, pubKeyIDs)
+	transfers, err := t.ApplyTransfers(deserializedTransfers, uint64(len(deserializedTransfers)))
 	if err != nil {
 		return err
 	}
@@ -41,12 +41,8 @@ func (t *transactionExecutor) syncCreate2TransferCommitment(
 		return ErrTransfersNotApplied
 	}
 
-	err = t.setPublicKeys(transfers.appliedTransfers)
-	if err != nil {
-		return err
-	}
 	if !t.cfg.DevMode {
-		err = t.verifyCreate2TransferSignature(commitment, transfers.appliedTransfers)
+		err = t.verifyTransferSignature(commitment, transfers.appliedTransfers)
 		if err != nil {
 			return err
 		}
@@ -68,23 +64,12 @@ func (t *transactionExecutor) syncCreate2TransferCommitment(
 	}
 
 	for i := range transfers.appliedTransfers {
-		hashTransfer, err := encoder.HashCreate2Transfer(&transfers.appliedTransfers[i])
+		hashTransfer, err := encoder.HashTransfer(&transfers.appliedTransfers[i])
 		if err != nil {
 			return err
 		}
 		transfers.appliedTransfers[i].Hash = *hashTransfer
 	}
 
-	return t.storage.BatchAddCreate2Transfer(transfers.appliedTransfers)
-}
-
-func (t *transactionExecutor) setPublicKeys(transfers []models.Create2Transfer) error {
-	for i := range transfers {
-		publicKey, err := t.storage.GetPublicKeyByStateID(*transfers[i].ToStateID)
-		if err != nil {
-			return err
-		}
-		transfers[i].ToPublicKey = *publicKey
-	}
-	return nil
+	return t.storage.BatchAddTransfer(transfers.appliedTransfers)
 }
