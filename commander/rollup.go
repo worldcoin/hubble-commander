@@ -2,11 +2,9 @@ package commander
 
 import (
 	"context"
-	"log"
 	"time"
 
-	"github.com/Worldcoin/hubble-commander/bls"
-	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
@@ -57,7 +55,7 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 		return errors.WithStack(err)
 	}
 
-	transactionExecutor, err := newTransactionExecutor(c.storage, c.client, c.cfg.Rollup, transactionExecutorOpts{ctx: ctx})
+	transactionExecutor, err := executor.NewTransactionExecutor(c.storage, c.client, c.cfg.Rollup, executor.TransactionExecutorOpts{Ctx: ctx})
 	if err != nil {
 		return err
 	}
@@ -71,7 +69,7 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 		*currentBatchType = txtype.Transfer
 	}
 	if err != nil {
-		var e *RollupError
+		var e *executor.RollupError
 		if errors.As(err, &e) {
 			return nil
 		}
@@ -79,55 +77,6 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 	}
 
 	return transactionExecutor.Commit()
-}
-
-func (t *transactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionType, domain *bls.Domain) (err error) {
-	startTime := time.Now()
-	var commitments []models.Commitment
-	batch, err := t.newPendingBatch(batchType)
-	if err != nil {
-		return err
-	}
-
-	if batchType == txtype.Transfer {
-		commitments, err = t.buildTransferCommitments(domain)
-	} else {
-		commitments, err = t.buildCreate2TransfersCommitments(domain)
-	}
-	if err != nil {
-		return err
-	}
-
-	err = t.submitBatch(batch, commitments)
-	if err != nil {
-		return err
-	}
-
-	log.Printf(
-		"Submitted a %s batch with %d commitment(s) on chain in %s. Batch ID: %d. Transaction hash: %v",
-		batchType.String(),
-		len(commitments),
-		time.Since(startTime).Round(time.Millisecond).String(),
-		batch.ID.Uint64(),
-		batch.TransactionHash,
-	)
-	return nil
-}
-
-func (t *transactionExecutor) buildTransferCommitments(domain *bls.Domain) ([]models.Commitment, error) {
-	pendingTransfers, err := t.storage.GetPendingTransfers()
-	if err != nil {
-		return nil, err
-	}
-	return t.createTransferCommitments(pendingTransfers, domain)
-}
-
-func (t *transactionExecutor) buildCreate2TransfersCommitments(domain *bls.Domain) ([]models.Commitment, error) {
-	pendingTransfers, err := t.storage.GetPendingCreate2Transfers()
-	if err != nil {
-		return nil, err
-	}
-	return t.createCreate2TransferCommitments(pendingTransfers, domain)
 }
 
 func validateStateRoot(storage *st.Storage) error {
@@ -146,21 +95,4 @@ func validateStateRoot(storage *st.Storage) error {
 		return ErrInvalidStateRoot
 	}
 	return nil
-}
-
-func (t *transactionExecutor) newPendingBatch(batchType txtype.TransactionType) (*models.Batch, error) {
-	stateTree := st.NewStateTree(t.storage)
-	prevStateRoot, err := stateTree.Root()
-	if err != nil {
-		return nil, err
-	}
-	batchID, err := t.storage.GetNextBatchID()
-	if err != nil {
-		return nil, err
-	}
-	return &models.Batch{
-		ID:            *batchID,
-		Type:          batchType,
-		PrevStateRoot: prevStateRoot,
-	}, nil
 }
