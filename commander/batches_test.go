@@ -53,6 +53,7 @@ func (s *BatchesTestSuite) SetupTest() {
 
 func (s *BatchesTestSuite) TearDownTest() {
 	stopCommander(s.cmd)
+	s.testClient.Close()
 	err := s.teardown()
 	s.NoError(err)
 }

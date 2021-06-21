@@ -73,6 +73,7 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 
 func (s *NewBlockLoopTestSuite) TearDownTest() {
 	stopCommander(s.cmd)
+	s.testClient.Close()
 	err := s.teardown()
 	s.NoError(err)
 }
