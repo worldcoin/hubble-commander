@@ -1,4 +1,4 @@
-package commander
+package executor
 
 import (
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"

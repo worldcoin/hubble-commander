@@ -1,4 +1,4 @@
-package commander
+package executor
 
 import (
 	"testing"
