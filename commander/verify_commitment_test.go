@@ -28,6 +28,7 @@ func (s *VerifyCommitmentTestSuite) SetupTest() {
 	s.storage = storage.Storage
 	s.teardown = storage.Teardown
 	s.client, err = eth.NewTestClient()
+	s.NoError(err)
 }
 
 func (s *VerifyCommitmentTestSuite) TearDownTest() {
