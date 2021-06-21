@@ -15,7 +15,7 @@ var (
 	ErrNotEnoughC2Transfers = NewRollupError("not enough create2transfers")
 )
 
-func (t *TransactionExecutor) createCreate2TransferCommitments(
+func (t *TransactionExecutor) CreateCreate2TransferCommitments(
 	pendingTransfers []models.Create2Transfer,
 	domain *bls.Domain,
 ) (commitments []models.Commitment, err error) {

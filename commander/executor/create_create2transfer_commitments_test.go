@@ -81,7 +81,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	preRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.createCreate2TransferCommitments(pendingTransfers, testDomain)
+	commitments, err := s.transactionExecutor.CreateCreate2TransferCommitments(pendingTransfers, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -102,7 +102,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	preRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.createCreate2TransferCommitments([]models.Create2Transfer{}, testDomain)
+	commitments, err := s.transactionExecutor.CreateCreate2TransferCommitments([]models.Create2Transfer{}, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 0)
 
@@ -124,7 +124,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	preRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.createCreate2TransferCommitments(pendingTransfers, testDomain)
+	commitments, err := s.transactionExecutor.CreateCreate2TransferCommitments(pendingTransfers, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 0)
 
@@ -140,7 +140,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	preRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.createCreate2TransferCommitments(pendingTransfers, testDomain)
+	commitments, err := s.transactionExecutor.CreateCreate2TransferCommitments(pendingTransfers, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, 32)
@@ -156,7 +156,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_CreatesMaximallyAsManyCommitmentsAsSpecifiedInConfig() {
 	pendingTransfers := s.prepareAndReturnPendingCreate2Transfers(2)
 
-	commitments, err := s.transactionExecutor.createCreate2TransferCommitments(pendingTransfers, testDomain)
+	commitments, err := s.transactionExecutor.CreateCreate2TransferCommitments(pendingTransfers, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 }
@@ -164,7 +164,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_UpdateTransfers() {
 	pendingTransfers := s.prepareAndReturnPendingCreate2Transfers(2)
 
-	commitments, err := s.transactionExecutor.createCreate2TransferCommitments(pendingTransfers, testDomain)
+	commitments, err := s.transactionExecutor.CreateCreate2TransferCommitments(pendingTransfers, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 

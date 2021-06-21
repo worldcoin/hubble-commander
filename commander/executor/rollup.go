@@ -58,7 +58,7 @@ func (t *TransactionExecutor) buildCreate2TransfersCommitments(domain *bls.Domai
 	if err != nil {
 		return nil, err
 	}
-	return t.createCreate2TransferCommitments(pendingTransfers, domain)
+	return t.CreateCreate2TransferCommitments(pendingTransfers, domain)
 }
 
 func (t *TransactionExecutor) NewPendingBatch(batchType txtype.TransactionType) (*models.Batch, error) {

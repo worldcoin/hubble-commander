@@ -435,7 +435,7 @@ func (s *SyncTestSuite) createAndSubmitC2TBatch(tx *models.Create2Transfer) mode
 	err := s.storage.AddCreate2Transfer(tx)
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.createCreate2TransferCommitments([]models.Create2Transfer{*tx}, testDomain)
+	commitments, err := s.transactionExecutor.CreateCreate2TransferCommitments([]models.Create2Transfer{*tx}, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
