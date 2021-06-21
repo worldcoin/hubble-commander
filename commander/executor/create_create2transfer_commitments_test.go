@@ -6,7 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/storage"
+	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -16,7 +16,7 @@ type Create2TransferCommitmentsTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	teardown            func() error
-	storage             *storage.Storage
+	storage             *st.Storage
 	client              *eth.TestClient
 	cfg                 *config.RollupConfig
 	transactionExecutor *TransactionExecutor
@@ -27,7 +27,7 @@ func (s *Create2TransferCommitmentsTestSuite) SetupSuite() {
 }
 
 func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
-	testStorage, err := storage.NewTestStorageWithBadger()
+	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
@@ -39,7 +39,7 @@ func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 		MaxCommitmentsPerBatch: 1,
 	}
 
-	err = PopulateGenesisAccounts(s.storage, AssignStateIDs(genesisAccounts))
+	err = populateAccounts(s.storage, genesisBalances)
 	s.NoError(err)
 
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, TransactionExecutorOpts{})
@@ -52,14 +52,14 @@ func (s *Create2TransferCommitmentsTestSuite) TearDownTest() {
 }
 
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_DoesNothingWhenThereAreNotEnoughPendingTransfers() {
-	preRoot, err := storage.NewStateTree(s.storage).Root()
+	preRoot, err := st.NewStateTree(s.storage).Root()
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.createCreate2TransferCommitments([]models.Create2Transfer{}, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 0)
 
-	postRoot, err := storage.NewStateTree(s.storage).Root()
+	postRoot, err := st.NewStateTree(s.storage).Root()
 	s.NoError(err)
 
 	s.Equal(preRoot, postRoot)
@@ -74,14 +74,14 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.NoError(err)
 	s.Len(pendingTransfers, 2)
 
-	preRoot, err := storage.NewStateTree(s.storage).Root()
+	preRoot, err := st.NewStateTree(s.storage).Root()
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.createCreate2TransferCommitments(pendingTransfers, testDomain)
 	s.NoError(err)
 	s.Len(commitments, 0)
 
-	postRoot, err := storage.NewStateTree(s.storage).Root()
+	postRoot, err := st.NewStateTree(s.storage).Root()
 	s.NoError(err)
 
 	s.Equal(preRoot, postRoot)
@@ -90,7 +90,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_StoresCorrectCommitment() {
 	pendingTransfers := s.prepareAndReturnPendingCreate2Transfers(2)
 
-	preRoot, err := storage.NewStateTree(s.storage).Root()
+	preRoot, err := st.NewStateTree(s.storage).Root()
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.createCreate2TransferCommitments(pendingTransfers, testDomain)
@@ -100,7 +100,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.Equal(commitments[0].FeeReceiver, uint32(2))
 	s.Nil(commitments[0].IncludedInBatch)
 
-	postRoot, err := storage.NewStateTree(s.storage).Root()
+	postRoot, err := st.NewStateTree(s.storage).Root()
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
 	s.Equal(commitments[0].PostStateRoot, *postRoot)

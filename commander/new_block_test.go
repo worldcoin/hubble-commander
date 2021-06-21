@@ -7,15 +7,20 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
+
+var testDomain = &bls.Domain{1, 2, 3, 4}
 
 type NewBlockLoopTestSuite struct {
 	*require.Assertions
@@ -256,6 +261,58 @@ func (s *NewBlockLoopTestSuite) syncAllBlocks() {
 
 	err = s.cmd.unsafeSyncBatches(0, *latestBlockNumber)
 	s.NoError(err)
+}
+
+//TODO: duplication
+func signTransfer(t *testing.T, wallet *bls.Wallet, transfer *models.Transfer) {
+	encodedTransfer, err := encoder.EncodeTransferForSigning(transfer)
+	require.NoError(t, err)
+	signature, err := wallet.Sign(encodedTransfer)
+	require.NoError(t, err)
+	transfer.Signature = *signature.ModelsSignature()
+}
+
+func generateWallets(t *testing.T, rollupAddress common.Address, walletsAmount int) []bls.Wallet {
+	domain, err := bls.DomainFromBytes(crypto.Keccak256(rollupAddress.Bytes()))
+	require.NoError(t, err)
+
+	wallets := make([]bls.Wallet, 0, walletsAmount)
+	for i := 0; i < walletsAmount; i++ {
+		wallet, err := bls.NewRandomWallet(*domain)
+		require.NoError(t, err)
+		wallets = append(wallets, *wallet)
+	}
+	return wallets
+}
+
+func seedDB(t *testing.T, storage *st.Storage, tree *st.StateTree, wallets []bls.Wallet) {
+	err := storage.AddAccountIfNotExists(&models.Account{
+		PubKeyID:  0,
+		PublicKey: *wallets[0].PublicKey(),
+	})
+	require.NoError(t, err)
+
+	err = storage.AddAccountIfNotExists(&models.Account{
+		PubKeyID:  1,
+		PublicKey: *wallets[1].PublicKey(),
+	})
+	require.NoError(t, err)
+
+	err = tree.Set(0, &models.UserState{
+		PubKeyID:   0,
+		TokenIndex: models.MakeUint256(0),
+		Balance:    models.MakeUint256(1000),
+		Nonce:      models.MakeUint256(0),
+	})
+	require.NoError(t, err)
+
+	err = tree.Set(1, &models.UserState{
+		PubKeyID:   1,
+		TokenIndex: models.MakeUint256(0),
+		Balance:    models.MakeUint256(0),
+		Nonce:      models.MakeUint256(0),
+	})
+	require.NoError(t, err)
 }
 
 func TestNewBlockLoopTestSuite(t *testing.T) {
