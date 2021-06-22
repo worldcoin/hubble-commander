@@ -110,7 +110,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_QueriesForM
 	preRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.CreateTransferCommitments(pendingTransfers, testDomain)
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -131,7 +131,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothing
 	preRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.CreateTransferCommitments([]models.Transfer{}, testDomain)
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 0)
 
@@ -146,14 +146,10 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothing
 	transfers[1].Amount = models.MakeUint256(99999999999)
 	s.addTransfers(transfers)
 
-	pendingTransfers, err := s.storage.GetPendingTransfers(s.cfg.TxsPerCommitment)
-	s.NoError(err)
-	s.Len(pendingTransfers, 2)
-
 	preRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.CreateTransferCommitments(pendingTransfers, testDomain)
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 0)
 
@@ -164,12 +160,12 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothing
 }
 
 func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_StoresCorrectCommitment() {
-	pendingTransfers := s.prepareAndReturnPendingTransfers(3)
+	s.preparePendingTransfers(3)
 
 	preRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.CreateTransferCommitments(pendingTransfers, testDomain)
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, 24)
@@ -183,17 +179,21 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_StoresCorre
 }
 
 func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_CreatesMaximallyAsManyCommitmentsAsSpecifiedInConfig() {
-	pendingTransfers := s.prepareAndReturnPendingTransfers(2)
+	s.preparePendingTransfers(2)
 
-	commitments, err := s.transactionExecutor.CreateTransferCommitments(pendingTransfers, testDomain)
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 }
 
 func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_MarksTransfersAsIncludedInCommitment() {
-	pendingTransfers := s.prepareAndReturnPendingTransfers(2)
+	s.preparePendingTransfers(2)
 
-	commitments, err := s.transactionExecutor.CreateTransferCommitments(pendingTransfers, testDomain)
+	pendingTransfers, err := s.storage.GetPendingTransfers(2)
+	s.NoError(err)
+	s.Len(pendingTransfers, 2)
+
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -238,15 +238,9 @@ func (s *TransferCommitmentsTestSuite) addTransfers(transfers []models.Transfer)
 	}
 }
 
-func (s *TransferCommitmentsTestSuite) prepareAndReturnPendingTransfers(transfersAmount uint32) []models.Transfer {
+func (s *TransferCommitmentsTestSuite) preparePendingTransfers(transfersAmount uint32) {
 	transfers := generateValidTransfers(transfersAmount)
 	s.addTransfers(transfers)
-
-	pendingTransfers, err := s.storage.GetPendingTransfers(transfersAmount)
-	s.NoError(err)
-	s.Len(pendingTransfers, int(transfersAmount))
-
-	return pendingTransfers
 }
 
 func addAccountWithHighNonce(s *require.Assertions, storage *st.Storage, stateID uint32) {

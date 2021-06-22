@@ -16,9 +16,13 @@ var (
 )
 
 func (t *TransactionExecutor) CreateTransferCommitments(
-	pendingTransfers []models.Transfer,
 	domain *bls.Domain,
 ) (commitments []models.Commitment, err error) {
+	pendingTransfers, err := t.storage.GetPendingTransfers(pendingTxsCountMultiplier * t.cfg.TxsPerCommitment)
+	if err != nil {
+		return nil, err
+	}
+
 	if len(pendingTransfers) < int(t.cfg.TxsPerCommitment) {
 		return []models.Commitment{}, nil
 	}

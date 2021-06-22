@@ -141,7 +141,7 @@ func (s *SyncTestSuite) TestSyncBatch_TwoTransferBatches() {
 		s.NoError(err)
 	}
 
-	expectedCommitments, err := s.transactionExecutor.CreateTransferCommitments([]models.Transfer{txs[0]}, testDomain)
+	expectedCommitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(expectedCommitments, 2)
 	accountRoots := make([]common.Hash, 2)
@@ -398,7 +398,7 @@ func (s *SyncTestSuite) createAndSubmitTransferBatch(tx *models.Transfer) *model
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.CreateTransferCommitments([]models.Transfer{*tx}, testDomain)
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -416,7 +416,7 @@ func (s *SyncTestSuite) createTransferBatch(tx *models.Transfer) *models.Batch {
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.CreateTransferCommitments([]models.Transfer{*tx}, testDomain)
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 

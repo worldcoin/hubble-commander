@@ -21,7 +21,7 @@ func (t *TransactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionT
 	}
 
 	if batchType == txtype.Transfer {
-		commitments, err = t.buildTransferCommitments(domain)
+		commitments, err = t.CreateTransferCommitments(domain)
 	} else {
 		commitments, err = t.buildCreate2TransfersCommitments(domain)
 	}
@@ -43,14 +43,6 @@ func (t *TransactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionT
 		batch.TransactionHash,
 	)
 	return nil
-}
-
-func (t *TransactionExecutor) buildTransferCommitments(domain *bls.Domain) ([]models.Commitment, error) {
-	pendingTransfers, err := t.storage.GetPendingTransfers(pendingTxsCountMultiplier * t.cfg.TxsPerCommitment)
-	if err != nil {
-		return nil, err
-	}
-	return t.CreateTransferCommitments(pendingTransfers, domain)
 }
 
 func (t *TransactionExecutor) buildCreate2TransfersCommitments(domain *bls.Domain) ([]models.Commitment, error) {
