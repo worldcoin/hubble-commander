@@ -71,7 +71,7 @@ func (t *TransactionExecutor) createTransferCommitment(
 
 		var transfers *AppliedTransfers
 
-		maxAppliedTransfers := t.cfg.TxsPerCommitment - uint64(len(appliedTransfers))
+		maxAppliedTransfers := t.cfg.TxsPerCommitment - uint32(len(appliedTransfers))
 		transfers, err = t.ApplyTransfers(pendingTransfers, maxAppliedTransfers)
 		if err != nil {
 			return nil, nil, err
@@ -88,7 +88,7 @@ func (t *TransactionExecutor) createTransferCommitment(
 			break
 		}
 
-		limit := pendingTxsCountMultiplier*t.cfg.TxsPerCommitment + uint64(len(appliedTransfers)+len(invalidTransfers))
+		limit := pendingTxsCountMultiplier*t.cfg.TxsPerCommitment + uint32(len(appliedTransfers)+len(invalidTransfers))
 		pendingTransfers, err = t.storage.GetPendingTransfers(limit)
 		if err != nil {
 			return nil, nil, err

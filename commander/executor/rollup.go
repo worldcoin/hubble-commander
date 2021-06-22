@@ -10,7 +10,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-var pendingTxsCountMultiplier = uint64(2)
+var pendingTxsCountMultiplier = uint32(2)
 
 func (t *TransactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionType, domain *bls.Domain) (err error) {
 	startTime := time.Now()

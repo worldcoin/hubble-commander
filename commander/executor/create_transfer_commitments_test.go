@@ -238,7 +238,7 @@ func (s *TransferCommitmentsTestSuite) addTransfers(transfers []models.Transfer)
 	}
 }
 
-func (s *TransferCommitmentsTestSuite) prepareAndReturnPendingTransfers(transfersAmount uint64) []models.Transfer {
+func (s *TransferCommitmentsTestSuite) prepareAndReturnPendingTransfers(transfersAmount uint32) []models.Transfer {
 	transfers := generateValidTransfers(transfersAmount)
 	s.addTransfers(transfers)
 

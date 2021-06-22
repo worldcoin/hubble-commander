@@ -148,7 +148,7 @@ func (s *Storage) GetUserTransfers(fromStateID models.Uint256) ([]models.Transfe
 	return res, err
 }
 
-func (s *Storage) GetPendingTransfers(limit uint64) ([]models.Transfer, error) {
+func (s *Storage) GetPendingTransfers(limit uint32) ([]models.Transfer, error) {
 	res := make([]models.Transfer, 0, limit)
 	err := s.Postgres.Query(
 		s.QB.Select(transferColumns...).
@@ -156,7 +156,7 @@ func (s *Storage) GetPendingTransfers(limit uint64) ([]models.Transfer, error) {
 			JoinClause("NATURAL JOIN transfer").
 			Where(squirrel.Eq{"included_in_commitment": nil, "error_message": nil}).
 			OrderBy("transaction_base.nonce ASC", "transaction_base.tx_hash ASC").
-			Limit(limit),
+			Limit(uint64(limit)),
 	).Into(&res)
 	if err != nil {
 		return nil, err

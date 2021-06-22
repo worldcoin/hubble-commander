@@ -240,9 +240,9 @@ func TestApplyCreate2TransfersTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplyCreate2TransfersTestSuite))
 }
 
-func generateValidCreate2Transfers(transfersAmount uint64, publicKey *models.PublicKey) []models.Create2Transfer {
+func generateValidCreate2Transfers(transfersAmount uint32, publicKey *models.PublicKey) []models.Create2Transfer {
 	transfers := make([]models.Create2Transfer, 0, transfersAmount)
-	for i := uint64(0); i < transfersAmount; i++ {
+	for i := 0; i < int(transfersAmount); i++ {
 		transfer := models.Create2Transfer{
 			TransactionBase: models.TransactionBase{
 				Hash:        utils.RandomHash(),
@@ -250,7 +250,7 @@ func generateValidCreate2Transfers(transfersAmount uint64, publicKey *models.Pub
 				FromStateID: 1,
 				Amount:      models.MakeUint256(1),
 				Fee:         models.MakeUint256(1),
-				Nonce:       models.MakeUint256(i),
+				Nonce:       models.MakeUint256(uint64(i)),
 			},
 			ToStateID:   nil,
 			ToPublicKey: *publicKey,

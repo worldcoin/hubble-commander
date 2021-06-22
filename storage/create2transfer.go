@@ -141,7 +141,7 @@ func (s *Storage) GetCreate2TransferWithBatchHash(hash common.Hash) (*models.Cre
 	return &res[0], nil
 }
 
-func (s *Storage) GetPendingCreate2Transfers(limit uint64) ([]models.Create2Transfer, error) {
+func (s *Storage) GetPendingCreate2Transfers(limit uint32) ([]models.Create2Transfer, error) {
 	res := make([]models.Create2Transfer, 0, limit)
 	err := s.Postgres.Query(
 		s.QB.Select(create2TransferColumns...).
@@ -149,7 +149,7 @@ func (s *Storage) GetPendingCreate2Transfers(limit uint64) ([]models.Create2Tran
 			JoinClause("NATURAL JOIN create2transfer").
 			Where(squirrel.Eq{"included_in_commitment": nil, "error_message": nil}).
 			OrderBy("transaction_base.nonce ASC", "transaction_base.tx_hash ASC").
-			Limit(limit),
+			Limit(uint64(limit)),
 	).Into(&res)
 	if err != nil {
 		return nil, err
