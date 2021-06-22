@@ -92,6 +92,3 @@ linters:
 run:
   skip-dirs:
     - hubble-contracts
-
-service:
-  golangci-lint-version: 1.37.x
