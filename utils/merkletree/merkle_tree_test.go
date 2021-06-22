@@ -1,4 +1,4 @@
-package merkle_tree
+package merkletree
 
 import (
 	"testing"

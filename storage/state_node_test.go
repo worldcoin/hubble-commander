@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/utils/merkle_tree"
+	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -118,12 +118,12 @@ func (s *StateNodeTestSuite) TestUpsertStateNode_UpdateAndRetrieve() {
 func (s *StateNodeTestSuite) TestGetStateNodeByPath_NonExistentLeaf() {
 	path := models.MerklePath{
 		Path:  0,
-		Depth: merkle_tree.LeafDepth,
+		Depth: merkletree.LeafDepth,
 	}
 
 	expected := &models.StateNode{
 		MerklePath: path,
-		DataHash:   merkle_tree.GetZeroHash(0),
+		DataHash:   merkletree.GetZeroHash(0),
 	}
 
 	res, err := s.storage.GetStateNodeByPath(&path)
@@ -139,7 +139,7 @@ func (s *StateNodeTestSuite) TestGetStateNodeByPath_NonExistentRoot() {
 
 	expected := &models.StateNode{
 		MerklePath: path,
-		DataHash:   merkle_tree.GetZeroHash(merkle_tree.LeafDepth),
+		DataHash:   merkletree.GetZeroHash(merkletree.LeafDepth),
 	}
 
 	res, err := s.storage.GetStateNodeByPath(&path)
