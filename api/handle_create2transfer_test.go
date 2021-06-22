@@ -185,7 +185,7 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesAmountVa
 	transferWithZeroAmount.Amount = models.NewUint256(0)
 
 	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithZeroAmount))
-	s.Equal(ErrNegativeAmount, err)
+	s.Equal(ErrInvalidAmount, err)
 }
 
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesBalance() {
