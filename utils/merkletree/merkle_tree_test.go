@@ -15,6 +15,7 @@ func TestNewMerkleTree_OnlyRoot(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, hash, tree.Root())
+	require.Equal(t, uint8(1), tree.Depth())
 }
 
 func TestNewMerkleTree_TwoNodes(t *testing.T) {
@@ -25,6 +26,7 @@ func TestNewMerkleTree_TwoNodes(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, utils.HashTwo(left, right), tree.Root())
+	require.Equal(t, uint8(2), tree.Depth())
 }
 
 func TestNewMerkleTree_ThreeNodes(t *testing.T) {
@@ -36,6 +38,7 @@ func TestNewMerkleTree_ThreeNodes(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, utils.HashTwo(utils.HashTwo(leaf1, leaf2), utils.HashTwo(leaf3, GetZeroHash(2))), tree.Root())
+	require.Equal(t, uint8(3), tree.Depth())
 }
 
 func TestMerkleTree_GetWitness_OnlyRoot(t *testing.T) {
