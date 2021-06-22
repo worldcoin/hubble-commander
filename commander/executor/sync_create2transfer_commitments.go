@@ -29,6 +29,10 @@ func (t *TransactionExecutor) syncCreate2TransferCommitment(
 		return err
 	}
 
+	if uint32(len(deserializedTransfers)) > t.cfg.TxsPerCommitment {
+		return ErrTooManyTx
+	}
+
 	feeReceiver, err := t.getSyncedCommitmentFeeReceiver(commitment)
 	if err != nil {
 		return err
