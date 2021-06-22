@@ -25,3 +25,23 @@ type TransactionBaseForCommitment struct {
 	Nonce       Uint256
 	Signature   Signature
 }
+
+func (t *TransactionBase) GetFromStateID() uint32 {
+	return t.FromStateID
+}
+
+func (t *TransactionBase) GetAmount() Uint256 {
+	return t.Amount
+}
+
+func (t *TransactionBase) GetFee() Uint256 {
+	return t.Fee
+}
+
+func (t *TransactionBase) GetNonce() Uint256 {
+	return t.Nonce
+}
+
+func (t *TransactionBase) SetNonce(nonce Uint256) {
+	t.Nonce = nonce
+}
