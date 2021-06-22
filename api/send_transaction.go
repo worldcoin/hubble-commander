@@ -38,7 +38,7 @@ func validateAmount(amount *models.Uint256) error {
 	if err != nil {
 		return NewNotDecimalEncodableError("amount")
 	}
-	if amount.CmpN(0) < 0 {
+	if amount.CmpN(0) <= 0 {
 		return ErrNegativeAmount
 	}
 	return nil
