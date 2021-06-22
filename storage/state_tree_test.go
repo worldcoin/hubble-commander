@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -69,7 +70,7 @@ func (s *StateTreeTestSuite) TestSet_StoresLeafStateNodeRecord() {
 	expectedNode := &models.StateNode{
 		MerklePath: models.MerklePath{
 			Path:  0,
-			Depth: leafDepth,
+			Depth: StateTreeDepth,
 		},
 		DataHash: s.leaf.DataHash,
 	}
@@ -152,10 +153,10 @@ func (s *StateTreeTestSuite) TestSet_StoresStateUpdateRecord() {
 	expectedUpdate := &models.StateUpdate{
 		ID:          0,
 		CurrentRoot: common.HexToHash("0xd8cb702fc833817dccdc3889282af96755b2909274ca2f1a3827a60d11d796eb"),
-		PrevRoot:    GetZeroHash(leafDepth),
+		PrevRoot:    merkletree.GetZeroHash(StateTreeDepth),
 		PrevStateLeaf: models.StateLeaf{
 			StateID:  0,
-			DataHash: GetZeroHash(0),
+			DataHash: merkletree.GetZeroHash(0),
 		},
 	}
 
@@ -197,7 +198,7 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectLeafStateNode() {
 
 	leafPath := models.MerklePath{
 		Path:  0,
-		Depth: leafDepth,
+		Depth: StateTreeDepth,
 	}
 
 	expectedLeaf := &models.StateNode{

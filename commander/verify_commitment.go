@@ -5,6 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/pkg/errors"
 )
 
@@ -20,7 +21,7 @@ func verifyCommitmentRoot(storage *st.Storage, client *eth.Client) error {
 		return err
 	}
 
-	zeroHash := st.GetZeroHash(0)
+	zeroHash := merkletree.GetZeroHash(0)
 	commitmentRoot := utils.HashTwo(utils.HashTwo(*stateRoot, zeroHash), zeroHash)
 	if *firstBatch.Hash != commitmentRoot {
 		return ErrInvalidCommitmentRoot

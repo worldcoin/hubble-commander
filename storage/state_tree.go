@@ -10,12 +10,13 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-const leafDepth = 32
+const StateTreeDepth = merkletree.MaxDepth
 
 var (
 	rootPath          = models.MerklePath{Path: 0, Depth: 0}
@@ -41,7 +42,7 @@ func (s *StateTree) Root() (*common.Hash, error) {
 func (s *StateTree) LeafNode(stateID uint32) (*models.StateNode, error) {
 	leafPath := &models.MerklePath{
 		Path:  stateID,
-		Depth: leafDepth,
+		Depth: StateTreeDepth,
 	}
 	return s.storage.GetStateNodeByPath(leafPath)
 }
@@ -51,7 +52,7 @@ func (s *StateTree) Leaf(stateID uint32) (*models.StateLeaf, error) {
 	if IsNotFoundError(err) {
 		return &models.StateLeaf{
 			StateID:  stateID,
-			DataHash: GetZeroHash(0),
+			DataHash: merkletree.GetZeroHash(0),
 		}, nil
 	} else if err != nil {
 		return nil, err
@@ -240,7 +241,7 @@ func (s *StateTree) updateStateNodes(leafPath *models.MerklePath, newLeafHash *c
 func getWitnessHash(nodes map[models.MerklePath]common.Hash, path models.MerklePath) common.Hash {
 	witnessHash, ok := nodes[path]
 	if !ok {
-		return GetZeroHash(leafDepth - uint(path.Depth))
+		return merkletree.GetZeroHash(StateTreeDepth - uint(path.Depth))
 	}
 	return witnessHash
 }
