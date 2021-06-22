@@ -55,17 +55,17 @@ func (t *TransactionExecutor) createTransferCommitment(
 ) {
 	startTime := time.Now()
 
-	appliedTransfers, newPendingTransfers, feeReceiverStateID, err := t.prepareTransfers(pendingTransfers)
+	preparedTransfers, err := t.prepareTransfers(pendingTransfers)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	commitment, err := t.prepareTransferCommitment(appliedTransfers, *feeReceiverStateID, domain)
+	commitment, err := t.prepareTransferCommitment(preparedTransfers, domain)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	err = t.markTransfersAsIncluded(appliedTransfers, commitment.ID)
+	err = t.markTransfersAsIncluded(preparedTransfers.appliedTransfers, commitment.ID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -73,11 +73,11 @@ func (t *TransactionExecutor) createTransferCommitment(
 	log.Printf(
 		"Created a %s commitment from %d transactions in %s",
 		txtype.Transfer,
-		len(appliedTransfers),
+		len(preparedTransfers.appliedTransfers),
 		time.Since(startTime).Round(time.Millisecond).String(),
 	)
 
-	return newPendingTransfers, commitment, nil
+	return preparedTransfers.newPendingTransfers, commitment, nil
 }
 
 func removeTransfer(transferList, toRemove []models.Transfer) []models.Transfer {
