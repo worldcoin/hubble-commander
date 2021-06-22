@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: geth
+  name: geth
+  namespace: staging
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: geth
+  template:
+    metadata:
+      labels:
+        app: geth
+        admission.datadoghq.com/enabled: "true"
+      annotations:
+        ad.datadoghq.com/geth.logs: '[{"source":"go","service":"geth"}]'
+        ad.datadoghq.com/tags: '{"env":"staging"}'
+    spec:
+      containers:
+        - name: geth
+          image: "ethereum/client-go"
+          command: ["/bin/sh"]
+          args: ["-c", "geth --datadir=/root/ethereum --dev --dev.period=5 --http --http.addr=0.0.0.0 --ws --ws.addr=0.0.0.0"]
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8545
+            - containerPort: 8546
+          resources:
+            requests:
+              memory: "124Mi"
+              cpu: "250m"
+            limits:
+              memory: "6144Mi"
+              cpu: "1500m"

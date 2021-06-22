@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: hubble-commander
+  name: hubble-commander
+  namespace: staging
+data:
+  HUBBLE_ETHEREUM_RPC_URL: ws://geth:8546
+  HUBBLE_ETHEREUM_CHAIN_ID: "1337"
+  HUBBLE_ETHEREUM_PRIVATE_KEY: ab6919fd6ac00246bb78657e0696cf72058a4cb395133d074eabaddb83d8b00c
+  HUBBLE_POSTGRES_HOST: new-staging-cluster.cluster-c1amkrvabwaw.us-east-1.rds.amazonaws.com
+  HUBBLE_POSTGRES_PORT: "5432"
+  HUBBLE_POSTGRES_USER: hubble-commander
+  HUBBLE_POSTGRES_PASSWORD: "zd&fa8^1aj8ZxxxZ@"
+  HUBBLE_POSTGRES_NAME: hubble-commander
+  HUBBLE_ROLLUP_TXS_PER_COMMITMENT: "1"
+  HUBBLE_ROLLUP_MIN_COMMITMENTS_PER_BATCH: "1"
+  HUBBLE_BOOTSTRAP_BOOTSTRAP_NODE_URL: http://ec2-3-238-223-141.compute-1.amazonaws.com:5000

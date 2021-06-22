@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: hubble-commander
+  name: hubble-commander
+  namespace: staging
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hubble-commander
+  template:
+    metadata:
+      labels:
+        app: hubble-commander
+        admission.datadoghq.com/enabled: "true"
+      annotations:
+        ad.datadoghq.com/hubble-commander.logs: '[{"source":"go","service":"hubble-commander"}]'
+        ad.datadoghq.com/tags: '{"env":"staging"}'
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: hubble-commander
+          image: "ghcr.io/worldcoin/hubble-commander:stable"
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: hubble-commander
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "curl --fail -X POST http://localhost:8080 -H 'Content-Type: application/json' --data-raw '{\"jsonrpc\": \"2.0\",\"method\": \"hubble_getVersion\",\"params\": [],\"id\": 1}'"
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "124Mi"
+              cpu: "250m"
+            limits:
+              memory: "6144Mi"
+              cpu: "1500m"
