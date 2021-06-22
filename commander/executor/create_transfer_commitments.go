@@ -5,80 +5,82 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
-	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 )
 
+var (
+	ErrNotEnoughTransfers = NewRollupError("not enough transfers")
+)
+
 func (t *TransactionExecutor) CreateTransferCommitments(
-	pendingTransfers []models.Transfer,
 	domain *bls.Domain,
-) ([]models.Commitment, error) {
-	stateTree := st.NewStateTree(t.storage)
-	commitments := make([]models.Commitment, 0, 32)
+) (commitments []models.Commitment, err error) {
+	pendingTransfers, err := t.storage.GetPendingTransfers(pendingTxsCountMultiplier * t.cfg.TxsPerCommitment)
+	if err != nil {
+		return nil, err
+	}
 
-	for {
-		if len(commitments) >= int(t.cfg.MaxCommitmentsPerBatch) {
+	if len(pendingTransfers) < int(t.cfg.TxsPerCommitment) {
+		return []models.Commitment{}, nil
+	}
+
+	commitments = make([]models.Commitment, 0, t.cfg.MaxCommitmentsPerBatch)
+
+	for len(commitments) != int(t.cfg.MaxCommitmentsPerBatch) {
+		var commitment *models.Commitment
+
+		pendingTransfers, commitment, err = t.createTransferCommitment(pendingTransfers, domain)
+		if err != nil {
+			return nil, err
+		}
+		if commitment == nil {
 			break
-		}
-		if len(pendingTransfers) < int(t.cfg.TxsPerCommitment) {
-			break
-		}
-
-		startTime := time.Now()
-
-		initialStateRoot, err := stateTree.Root()
-		if err != nil {
-			return nil, err
-		}
-
-		transfers, err := t.ApplyTransfers(pendingTransfers)
-		if err != nil {
-			return nil, err
-		}
-
-		if len(transfers.appliedTransfers) < int(t.cfg.TxsPerCommitment) {
-			err = stateTree.RevertTo(*initialStateRoot)
-			if err != nil {
-				return nil, err
-			}
-			break
-		}
-
-		pendingTransfers = removeTransfer(pendingTransfers, append(transfers.appliedTransfers, transfers.invalidTransfers...))
-
-		serializedTxs, err := encoder.SerializeTransfers(transfers.appliedTransfers)
-		if err != nil {
-			return nil, err
-		}
-
-		combinedSignature, err := combineTransferSignatures(transfers.appliedTransfers, domain)
-		if err != nil {
-			return nil, err
-		}
-
-		commitment, err := t.createAndStoreCommitment(txtype.Transfer, *transfers.feeReceiverStateID, serializedTxs, combinedSignature)
-		if err != nil {
-			return nil, err
-		}
-
-		err = t.markTransfersAsIncluded(transfers.appliedTransfers, commitment.ID)
-		if err != nil {
-			return nil, err
 		}
 
 		commitments = append(commitments, *commitment)
-		log.Printf(
-			"Created a %s commitment from %d transactions in %s",
-			txtype.Transfer,
-			len(transfers.appliedTransfers),
-			time.Since(startTime).Round(time.Millisecond).String(),
-		)
 	}
 
 	return commitments, nil
+}
+
+func (t *TransactionExecutor) createTransferCommitment(
+	pendingTransfers []models.Transfer,
+	domain *bls.Domain,
+) (
+	[]models.Transfer,
+	*models.Commitment,
+	error,
+) {
+	startTime := time.Now()
+
+	preparedTransfers, err := t.prepareTransfers(pendingTransfers)
+	if err != nil {
+		return nil, nil, err
+	}
+	if preparedTransfers == nil {
+		return nil, nil, nil
+	}
+
+	commitment, err := t.prepareTransferCommitment(preparedTransfers, domain)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = t.markTransfersAsIncluded(preparedTransfers.appliedTransfers, commitment.ID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	log.Printf(
+		"Created a %s commitment from %d transactions in %s",
+		txtype.Transfer,
+		len(preparedTransfers.appliedTransfers),
+		time.Since(startTime).Round(time.Millisecond).String(),
+	)
+
+	return preparedTransfers.newPendingTransfers, commitment, nil
 }
 
 func removeTransfer(transferList, toRemove []models.Transfer) []models.Transfer {

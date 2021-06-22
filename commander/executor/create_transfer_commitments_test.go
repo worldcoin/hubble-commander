@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
@@ -81,15 +82,60 @@ func (s *TransferCommitmentsTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothingWhenThereAreNotEnoughPendingTransfers() {
-	preRoot, err := st.NewStateTree(s.storage).Root()
+func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_QueriesForMorePendingTransfersUntilSatisfied() {
+	addAccountWithHighNonce(s.Assertions, s.storage, 123)
+
+	transfers := generateValidTransfers(6)
+	s.invalidateTransfers(transfers[1:6])
+
+	highNonceTransfer := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			Hash:        utils.RandomHash(),
+			TxType:      txtype.Transfer,
+			FromStateID: 123,
+			Amount:      models.MakeUint256(1),
+			Fee:         models.MakeUint256(1),
+			Nonce:       models.MakeUint256(10),
+		},
+		ToStateID: 1,
+	}
+	transfers = append(transfers, highNonceTransfer)
+
+	s.addTransfers(transfers)
+
+	pendingTransfers, err := s.storage.GetPendingTransfers(pendingTxsCountMultiplier * s.cfg.TxsPerCommitment)
+	s.NoError(err)
+	s.Len(pendingTransfers, 4)
+
+	preRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.CreateTransferCommitments([]models.Transfer{}, testDomain)
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
+	s.NoError(err)
+	s.Len(commitments, 1)
+
+	postRoot, err := s.transactionExecutor.stateTree.Root()
+	s.NoError(err)
+	s.NotEqual(preRoot, postRoot)
+	s.Equal(commitments[0].PostStateRoot, *postRoot)
+}
+
+func (s *TransferCommitmentsTestSuite) invalidateTransfers(transfers []models.Transfer) {
+	for i := range transfers {
+		tx := &transfers[i]
+		tx.Amount = *genesisBalances[tx.FromStateID].MulN(10)
+	}
+}
+
+func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothingWhenThereAreNotEnoughPendingTransfers() {
+	preRoot, err := s.transactionExecutor.stateTree.Root()
+	s.NoError(err)
+
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 0)
 
-	postRoot, err := st.NewStateTree(s.storage).Root()
+	postRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
 	s.Equal(preRoot, postRoot)
@@ -100,54 +146,54 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothing
 	transfers[1].Amount = models.MakeUint256(99999999999)
 	s.addTransfers(transfers)
 
-	pendingTransfers, err := s.storage.GetPendingTransfers()
-	s.NoError(err)
-	s.Len(pendingTransfers, 2)
-
-	preRoot, err := st.NewStateTree(s.storage).Root()
+	preRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.CreateTransferCommitments(pendingTransfers, testDomain)
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 0)
 
-	postRoot, err := st.NewStateTree(s.storage).Root()
+	postRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
 	s.Equal(preRoot, postRoot)
 }
 
 func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_StoresCorrectCommitment() {
-	pendingTransfers := s.prepareAndReturnPendingTransfers(3)
+	s.preparePendingTransfers(3)
 
-	preRoot, err := st.NewStateTree(s.storage).Root()
+	preRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.CreateTransferCommitments(pendingTransfers, testDomain)
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, 24)
 	s.Equal(commitments[0].FeeReceiver, uint32(2))
 	s.Nil(commitments[0].IncludedInBatch)
 
-	postRoot, err := st.NewStateTree(s.storage).Root()
+	postRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
 }
 
 func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_CreatesMaximallyAsManyCommitmentsAsSpecifiedInConfig() {
-	pendingTransfers := s.prepareAndReturnPendingTransfers(2)
+	s.preparePendingTransfers(2)
 
-	commitments, err := s.transactionExecutor.CreateTransferCommitments(pendingTransfers, testDomain)
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 }
 
 func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_MarksTransfersAsIncludedInCommitment() {
-	pendingTransfers := s.prepareAndReturnPendingTransfers(2)
+	s.preparePendingTransfers(2)
 
-	commitments, err := s.transactionExecutor.CreateTransferCommitments(pendingTransfers, testDomain)
+	pendingTransfers, err := s.storage.GetPendingTransfers(2)
+	s.NoError(err)
+	s.Len(pendingTransfers, 2)
+
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -192,13 +238,26 @@ func (s *TransferCommitmentsTestSuite) addTransfers(transfers []models.Transfer)
 	}
 }
 
-func (s *TransferCommitmentsTestSuite) prepareAndReturnPendingTransfers(transfersAmount int) []models.Transfer {
+func (s *TransferCommitmentsTestSuite) preparePendingTransfers(transfersAmount uint32) {
 	transfers := generateValidTransfers(transfersAmount)
 	s.addTransfers(transfers)
+}
 
-	pendingTransfers, err := s.storage.GetPendingTransfers()
+func addAccountWithHighNonce(s *require.Assertions, storage *st.Storage, stateID uint32) {
+	dummyAccount := models.Account{
+		PubKeyID:  500,
+		PublicKey: models.PublicKey{1, 2, 3, 4},
+	}
+
+	err := storage.AddAccountIfNotExists(&dummyAccount)
 	s.NoError(err)
-	s.Len(pendingTransfers, transfersAmount)
 
-	return pendingTransfers
+	stateTree := st.NewStateTree(storage)
+	err = stateTree.Set(stateID, &models.UserState{
+		PubKeyID:   dummyAccount.PubKeyID,
+		TokenIndex: models.MakeUint256(0),
+		Balance:    models.MakeUint256(1000),
+		Nonce:      models.MakeUint256(10),
+	})
+	s.NoError(err)
 }

@@ -105,7 +105,7 @@ func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AllValid() {
 	generatedTransfers := generateValidCreate2Transfers(3, &s.publicKey)
 
-	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers)
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 3)
@@ -117,7 +117,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 	generatedTransfers := generateValidCreate2Transfers(2, &s.publicKey)
 	generatedTransfers = append(generatedTransfers, generateInvalidCreate2Transfers(3, &s.publicKey)...)
 
-	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers)
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 2)
@@ -128,7 +128,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_MoreThanSpecifiedInConfigTxsPerCommitment() {
 	generatedTransfers := generateValidCreate2Transfers(13, &s.publicKey)
 
-	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers)
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 6)
@@ -149,7 +149,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 		s.NoError(err)
 	}
 
-	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers)
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 3)
@@ -175,23 +175,6 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_SomeVa
 	s.NoError(err)
 	s.Len(transfers.appliedTransfers, 2)
 	s.Len(transfers.invalidTransfers, 3)
-}
-
-func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_MoreThanSpecifiedInConfigTxsPerCommitment() {
-	generatedTransfers := generateValidCreate2Transfers(7, &s.publicKey)
-	pubKeyIDs := make([]uint32, 0, len(generatedTransfers))
-	for i := range generatedTransfers {
-		pubKeyIDs = append(pubKeyIDs, uint32(i+1))
-	}
-
-	transfers, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, pubKeyIDs)
-	s.NoError(err)
-	s.Len(transfers.appliedTransfers, 6)
-	s.Len(transfers.invalidTransfers, 0)
-
-	state, err := s.storage.GetStateLeaf(1)
-	s.NoError(err)
-	s.Equal(models.MakeUint256(6), state.Nonce)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidSlicesLength() {
@@ -257,9 +240,9 @@ func TestApplyCreate2TransfersTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplyCreate2TransfersTestSuite))
 }
 
-func generateValidCreate2Transfers(transfersAmount int, publicKey *models.PublicKey) []models.Create2Transfer {
+func generateValidCreate2Transfers(transfersAmount uint32, publicKey *models.PublicKey) []models.Create2Transfer {
 	transfers := make([]models.Create2Transfer, 0, transfersAmount)
-	for i := 0; i < transfersAmount; i++ {
+	for i := 0; i < int(transfersAmount); i++ {
 		transfer := models.Create2Transfer{
 			TransactionBase: models.TransactionBase{
 				Hash:        utils.RandomHash(),
@@ -277,9 +260,9 @@ func generateValidCreate2Transfers(transfersAmount int, publicKey *models.Public
 	return transfers
 }
 
-func generateInvalidCreate2Transfers(transfersAmount int, publicKey *models.PublicKey) []models.Create2Transfer {
+func generateInvalidCreate2Transfers(transfersAmount uint64, publicKey *models.PublicKey) []models.Create2Transfer {
 	transfers := make([]models.Create2Transfer, 0, transfersAmount)
-	for i := 0; i < transfersAmount; i++ {
+	for i := uint64(0); i < transfersAmount; i++ {
 		transfer := models.Create2Transfer{
 			TransactionBase: models.TransactionBase{
 				Hash:        utils.RandomHash(),

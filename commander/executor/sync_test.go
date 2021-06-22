@@ -141,17 +141,15 @@ func (s *SyncTestSuite) TestSyncBatch_TwoTransferBatches() {
 		s.NoError(err)
 	}
 
-	expectedCommitments := make([]models.Commitment, 2)
+	expectedCommitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
+	s.NoError(err)
+	s.Len(expectedCommitments, 2)
 	accountRoots := make([]common.Hash, 2)
 	for i := range expectedCommitments {
-		createdCommitments, err := s.transactionExecutor.CreateTransferCommitments([]models.Transfer{txs[i]}, testDomain)
+		var pendingBatch *models.Batch
+		pendingBatch, err = s.transactionExecutor.NewPendingBatch(txtype.Transfer)
 		s.NoError(err)
-		s.Len(createdCommitments, 1)
-
-		expectedCommitments[i] = createdCommitments[0]
-		pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
-		s.NoError(err)
-		err = s.transactionExecutor.SubmitBatch(pendingBatch, createdCommitments)
+		err = s.transactionExecutor.SubmitBatch(pendingBatch, []models.Commitment{expectedCommitments[i]})
 		s.NoError(err)
 		s.client.Commit()
 
@@ -400,7 +398,7 @@ func (s *SyncTestSuite) createAndSubmitTransferBatch(tx *models.Transfer) *model
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.CreateTransferCommitments([]models.Transfer{*tx}, testDomain)
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -418,7 +416,7 @@ func (s *SyncTestSuite) createTransferBatch(tx *models.Transfer) *models.Batch {
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.CreateTransferCommitments([]models.Transfer{*tx}, testDomain)
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -437,7 +435,7 @@ func (s *SyncTestSuite) createAndSubmitC2TBatch(tx *models.Create2Transfer) mode
 	err := s.storage.AddCreate2Transfer(tx)
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.createCreate2TransferCommitments([]models.Create2Transfer{*tx}, testDomain)
+	commitments, err := s.transactionExecutor.CreateCreate2TransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 

@@ -12,6 +12,7 @@ type AppliedTransfers struct {
 
 func (t *TransactionExecutor) ApplyTransfers(
 	transfers []models.Transfer,
+	maxAppliedTransfers uint32,
 ) (*AppliedTransfers, error) {
 	if len(transfers) == 0 {
 		return nil, nil
@@ -44,7 +45,7 @@ func (t *TransactionExecutor) ApplyTransfers(
 		returnStruct.appliedTransfers = append(returnStruct.appliedTransfers, *transfer)
 		combinedFee = *combinedFee.Add(&transfer.Fee)
 
-		if uint32(len(returnStruct.appliedTransfers)) == t.cfg.TxsPerCommitment {
+		if uint32(len(returnStruct.appliedTransfers)) == maxAppliedTransfers {
 			break
 		}
 	}
