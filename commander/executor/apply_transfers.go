@@ -10,27 +10,27 @@ type AppliedTransfers struct {
 	feeReceiverStateID *uint32
 }
 
-func (t *TransactionExecutor) ApplyTransfers(
-	transfers []models.Transfer,
-	maxAppliedTransfers uint32,
-) (*AppliedTransfers, error) {
+func (t *TransactionExecutor) ApplyTransfers(transfers []models.Transfer, maxAppliedTransfers uint32) (*AppliedTransfers, error) {
 	if len(transfers) == 0 {
-		return nil, nil
+		return &AppliedTransfers{}, nil
 	}
-
-	returnStruct := &AppliedTransfers{}
-
-	returnStruct.appliedTransfers = make([]models.Transfer, 0, t.cfg.TxsPerCommitment)
-	combinedFee := models.MakeUint256(0)
 
 	senderLeaf, err := t.storage.GetStateLeaf(transfers[0].FromStateID)
 	if err != nil {
 		return nil, err
 	}
-
 	commitmentTokenIndex := senderLeaf.TokenIndex
 
+	returnStruct := &AppliedTransfers{}
+	returnStruct.appliedTransfers = make([]models.Transfer, 0, t.cfg.TxsPerCommitment)
+
+	combinedFee := models.MakeUint256(0)
+
 	for i := range transfers {
+		if len(returnStruct.appliedTransfers) == int(maxAppliedTransfers) {
+			break
+		}
+
 		transfer := &transfers[i]
 		transferError, appError := t.ApplyTransfer(transfer, commitmentTokenIndex)
 		if appError != nil {
@@ -44,10 +44,6 @@ func (t *TransactionExecutor) ApplyTransfers(
 
 		returnStruct.appliedTransfers = append(returnStruct.appliedTransfers, *transfer)
 		combinedFee = *combinedFee.Add(&transfer.Fee)
-
-		if uint32(len(returnStruct.appliedTransfers)) == maxAppliedTransfers {
-			break
-		}
 	}
 
 	if len(returnStruct.appliedTransfers) > 0 {
