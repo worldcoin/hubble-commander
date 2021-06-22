@@ -59,6 +59,9 @@ func (t *TransactionExecutor) createTransferCommitment(
 	if err != nil {
 		return nil, nil, err
 	}
+	if preparedTransfers == nil {
+		return nil, nil, nil
+	}
 
 	commitment, err := t.prepareTransferCommitment(preparedTransfers, domain)
 	if err != nil {

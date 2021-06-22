@@ -59,6 +59,9 @@ func (t *TransactionExecutor) createC2TCommitment(
 	if err != nil {
 		return nil, nil, err
 	}
+	if preparedTransfers == nil {
+		return nil, nil, nil
+	}
 
 	commitment, err := t.prepareC2TCommitment(preparedTransfers, domain)
 	if err != nil {
