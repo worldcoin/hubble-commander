@@ -98,13 +98,17 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 	if err != nil {
 		return nil, err
 	}
+	var ok bool
 
 	for i := range transfers {
 		transfer := &transfers[i]
 
-		_, err = t.handleApplyC2T(transfer, pubKeyIDs[i], returnStruct, combinedFee, commitmentTokenIndex)
+		ok, err = t.handleApplyC2T(transfer, pubKeyIDs[i], returnStruct, combinedFee, commitmentTokenIndex)
 		if err != nil {
 			return nil, err
+		}
+		if !ok {
+			return returnStruct, nil
 		}
 	}
 
