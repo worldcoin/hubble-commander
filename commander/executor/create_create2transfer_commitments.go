@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
-	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/common"
@@ -50,83 +49,23 @@ func (t *TransactionExecutor) createC2TCommitment(
 	pendingTransfers []models.Create2Transfer,
 	domain *bls.Domain,
 ) (
-	newPendingTransfers []models.Create2Transfer,
-	commitment *models.Commitment,
-	err error,
+	[]models.Create2Transfer,
+	*models.Commitment,
+	error,
 ) {
 	startTime := time.Now()
 
-	initialStateRoot, err := t.stateTree.Root()
+	preparedTransfers, err := t.prepareCreate2Transfers(pendingTransfers)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	var feeReceiverStateID uint32
-	appliedTransfers := make([]models.Create2Transfer, 0, t.cfg.TxsPerCommitment)
-	invalidTransfers := make([]models.Create2Transfer, 0, 1)
-	addedPubKeyIDs := make([]uint32, 0, t.cfg.TxsPerCommitment)
-
-	for {
-		if len(pendingTransfers) == 0 {
-			pendingTransfers, err = t.storage.GetPendingCreate2Transfers(pendingTxsCountMultiplier * t.cfg.TxsPerCommitment)
-			if err != nil || len(pendingTransfers) == 0 {
-				return nil, nil, err
-			}
-		}
-
-		var transfers *AppliedC2Transfers
-
-		maxAppliedTransfers := t.cfg.TxsPerCommitment - uint32(len(appliedTransfers))
-		transfers, err = t.ApplyCreate2Transfers(pendingTransfers, maxAppliedTransfers)
-		if err != nil {
-			return nil, nil, err
-		}
-		if transfers == nil {
-			return nil, nil, ErrNotEnoughC2Transfers
-		}
-
-		appliedTransfers = append(appliedTransfers, transfers.appliedTransfers...)
-		invalidTransfers = append(invalidTransfers, transfers.invalidTransfers...)
-		addedPubKeyIDs = append(addedPubKeyIDs, transfers.addedPubKeyIDs...)
-
-		if len(appliedTransfers) == int(t.cfg.TxsPerCommitment) {
-			feeReceiverStateID = *transfers.feeReceiverStateID
-			break
-		}
-
-		limit := pendingTxsCountMultiplier*t.cfg.TxsPerCommitment + uint32(len(appliedTransfers)+len(invalidTransfers))
-		pendingTransfers, err = t.storage.GetPendingCreate2Transfers(limit)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		// TODO - instead of doing this use SQL Offset (needs proper mempool)
-		pendingTransfers = removeCreate2Transfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
-
-		if len(pendingTransfers) == 0 {
-			err = t.stateTree.RevertTo(*initialStateRoot)
-			return nil, nil, err
-		}
-	}
-
-	newPendingTransfers = removeCreate2Transfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
-
-	serializedTxs, err := encoder.SerializeCreate2Transfers(appliedTransfers, addedPubKeyIDs)
+	commitment, err := t.prepareC2TCommitment(preparedTransfers, domain)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	combinedSignature, err := combineCreate2TransferSignatures(appliedTransfers, domain)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	commitment, err = t.createAndStoreCommitment(txtype.Create2Transfer, feeReceiverStateID, serializedTxs, combinedSignature)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	err = t.markCreate2TransfersAsIncluded(appliedTransfers, commitment.ID)
+	err = t.markCreate2TransfersAsIncluded(preparedTransfers.appliedTransfers, commitment.ID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -134,11 +73,11 @@ func (t *TransactionExecutor) createC2TCommitment(
 	log.Printf(
 		"Created a %s commitment from %d transactions in %s",
 		txtype.Create2Transfer,
-		len(appliedTransfers),
+		len(preparedTransfers.appliedTransfers),
 		time.Since(startTime).Round(time.Millisecond).String(),
 	)
 
-	return newPendingTransfers, commitment, nil
+	return preparedTransfers.newPendingTransfers, commitment, nil
 }
 
 func removeCreate2Transfer(transferList, toRemove []models.Create2Transfer) []models.Create2Transfer {
