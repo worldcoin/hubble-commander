@@ -151,16 +151,7 @@ func getClientOrBootstrapChainState(chain deployer.ChainConnection, storage *st.
 
 	if st.IsNotFoundError(err) {
 		if cfg.BootstrapNodeURL != nil {
-			log.Printf("Bootstrapping genesis state from node %s", *cfg.BootstrapNodeURL)
-			chainState, err = fetchChainStateFromRemoteNode(*cfg.BootstrapNodeURL)
-			if err != nil {
-				return nil, err
-			}
-
-			err = PopulateGenesisAccounts(storage, chainState.GenesisAccounts)
-			if err != nil {
-				return nil, err
-			}
+			return bootstrapRemoteChainState(chain, storage, cfg)
 		} else {
 			log.Printf("Bootstrapping genesis state with %d accounts on chainId=%s.\n", len(cfg.GenesisAccounts), chainID.String())
 			chainState, err = bootstrapState(storage, chain, cfg.GenesisAccounts)
@@ -175,6 +166,26 @@ func getClientOrBootstrapChainState(chain deployer.ChainConnection, storage *st.
 		}
 	} else {
 		log.Printf("Continuing from saved state on chainId=%s.\n", chainID.String())
+	}
+
+	return createClientFromChainState(chain, chainState)
+}
+
+func bootstrapRemoteChainState(chain deployer.ChainConnection, storage *st.Storage, cfg *config.BootstrapConfig) (*eth.Client, error) {
+	log.Printf("Bootstrapping genesis state from node %s", *cfg.BootstrapNodeURL)
+	chainState, err := fetchChainStateFromRemoteNode(*cfg.BootstrapNodeURL)
+	if err != nil {
+		return nil, err
+	}
+
+	err = PopulateGenesisAccounts(storage, chainState.GenesisAccounts)
+	if err != nil {
+		return nil, err
+	}
+
+	err = storage.SetChainState(chainState)
+	if err != nil {
+		return nil, err
 	}
 
 	client, err := createClientFromChainState(chain, chainState)
