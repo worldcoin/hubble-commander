@@ -5,8 +5,8 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/merkle_tree"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -46,7 +46,7 @@ func (s *SubmitBatchTestSuite) TestSubmitTransfersBatchAndWait_ReturnsCorrectBat
 
 	accountRoot, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
-	commitmentRoot := utils.HashTwo(commitment.LeafHash(accountRoot), storage.GetZeroHash(0))
+	commitmentRoot := utils.HashTwo(commitment.LeafHash(accountRoot), merkle_tree.GetZeroHash(0))
 	minFinalisationBlock := s.getMinFinalisationBlock()
 
 	batch, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{commitment})
@@ -65,7 +65,7 @@ func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatchAndWait_ReturnsCor
 
 	accountRoot, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
-	commitmentRoot := utils.HashTwo(commitment.LeafHash(accountRoot), storage.GetZeroHash(0))
+	commitmentRoot := utils.HashTwo(commitment.LeafHash(accountRoot), merkle_tree.GetZeroHash(0))
 	minFinalisationBlock := s.getMinFinalisationBlock()
 
 	batch, err := s.client.SubmitCreate2TransfersBatchAndWait([]models.Commitment{commitment})

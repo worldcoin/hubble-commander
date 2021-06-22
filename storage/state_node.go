@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils/merkle_tree"
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
@@ -47,7 +48,7 @@ func (s *Storage) GetStateNodeByPath(path *models.MerklePath) (*models.StateNode
 func newZeroStateNode(path *models.MerklePath) *models.StateNode {
 	return &models.StateNode{
 		MerklePath: *path,
-		DataHash:   GetZeroHash(leafDepth - uint(path.Depth)),
+		DataHash:   merkle_tree.GetZeroHash(merkle_tree.LeafDepth - uint(path.Depth)),
 	}
 }
 
