@@ -70,7 +70,7 @@ func (s *StateTreeTestSuite) TestSet_StoresLeafStateNodeRecord() {
 	expectedNode := &models.StateNode{
 		MerklePath: models.MerklePath{
 			Path:  0,
-			Depth: merkletree.LeafDepth,
+			Depth: StateTreeDepth,
 		},
 		DataHash: s.leaf.DataHash,
 	}
@@ -153,7 +153,7 @@ func (s *StateTreeTestSuite) TestSet_StoresStateUpdateRecord() {
 	expectedUpdate := &models.StateUpdate{
 		ID:          0,
 		CurrentRoot: common.HexToHash("0xd8cb702fc833817dccdc3889282af96755b2909274ca2f1a3827a60d11d796eb"),
-		PrevRoot:    merkletree.GetZeroHash(merkletree.LeafDepth),
+		PrevRoot:    merkletree.GetZeroHash(StateTreeDepth),
 		PrevStateLeaf: models.StateLeaf{
 			StateID:  0,
 			DataHash: merkletree.GetZeroHash(0),
@@ -198,7 +198,7 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectLeafStateNode() {
 
 	leafPath := models.MerklePath{
 		Path:  0,
-		Depth: merkletree.LeafDepth,
+		Depth: StateTreeDepth,
 	}
 
 	expectedLeaf := &models.StateNode{

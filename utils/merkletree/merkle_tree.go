@@ -11,23 +11,23 @@ import (
 	"github.com/pkg/errors"
 )
 
-const LeafDepth = 32
+const MaxDepth = 32
 
 var (
-	zeroHashes [LeafDepth + 1]common.Hash
+	zeroHashes [MaxDepth + 1]common.Hash
 )
 
 func init() {
 	// Same as keccak256(abi.encode(0))
 	zeroHashes[0] = common.HexToHash("0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563")
-	for i := 1; i <= LeafDepth; i++ {
+	for i := 1; i <= MaxDepth; i++ {
 		zeroHashes[i] = utils.HashTwo(zeroHashes[i-1], zeroHashes[i-1])
 	}
 }
 
 func GetZeroHash(level uint) common.Hash {
-	if level > LeafDepth {
-		panic(fmt.Sprintf("level > %d", LeafDepth))
+	if level > MaxDepth {
+		panic(fmt.Sprintf("level > %d", MaxDepth))
 	}
 
 	return zeroHashes[level]
@@ -50,7 +50,7 @@ type Witness []common.Hash
 func NewMerkleTree(leaves []common.Hash) (*MerkleTree, error) {
 	depth := getRequiredTreeHeight(int32(len(leaves)))
 
-	if depth > LeafDepth {
+	if depth > MaxDepth {
 		return nil, errors.Errorf("merkle tree too large")
 	}
 

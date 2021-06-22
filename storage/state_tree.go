@@ -16,6 +16,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
+const StateTreeDepth = merkletree.MaxDepth
+
 var (
 	rootPath          = models.MerklePath{Path: 0, Depth: 0}
 	stateUpdatePrefix = []byte("bh_" + reflect.TypeOf(models.StateUpdate{}).Name())
@@ -40,7 +42,7 @@ func (s *StateTree) Root() (*common.Hash, error) {
 func (s *StateTree) LeafNode(stateID uint32) (*models.StateNode, error) {
 	leafPath := &models.MerklePath{
 		Path:  stateID,
-		Depth: merkletree.LeafDepth,
+		Depth: StateTreeDepth,
 	}
 	return s.storage.GetStateNodeByPath(leafPath)
 }
@@ -239,7 +241,7 @@ func (s *StateTree) updateStateNodes(leafPath *models.MerklePath, newLeafHash *c
 func getWitnessHash(nodes map[models.MerklePath]common.Hash, path models.MerklePath) common.Hash {
 	witnessHash, ok := nodes[path]
 	if !ok {
-		return merkletree.GetZeroHash(merkletree.LeafDepth - uint(path.Depth))
+		return merkletree.GetZeroHash(StateTreeDepth - uint(path.Depth))
 	}
 	return witnessHash
 }

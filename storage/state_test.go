@@ -12,7 +12,7 @@ func TestZeroHash_Root(t *testing.T) {
 	require.Equal(
 		t,
 		common.HexToHash("0xcf277fb80a82478460e8988570b718f1e083ceb76f7e271a1a1497e5975f53ae"),
-		merkletree.GetZeroHash(merkletree.LeafDepth),
+		merkletree.GetZeroHash(StateTreeDepth),
 	)
 }
 

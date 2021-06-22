@@ -48,7 +48,7 @@ func (s *Storage) GetStateNodeByPath(path *models.MerklePath) (*models.StateNode
 func newZeroStateNode(path *models.MerklePath) *models.StateNode {
 	return &models.StateNode{
 		MerklePath: *path,
-		DataHash:   merkletree.GetZeroHash(merkletree.LeafDepth - uint(path.Depth)),
+		DataHash:   merkletree.GetZeroHash(StateTreeDepth - uint(path.Depth)),
 	}
 }
 
