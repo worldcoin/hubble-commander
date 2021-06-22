@@ -95,7 +95,7 @@ func (s *ApplyTransfersTestSuite) TearDownTest() {
 func (s *ApplyTransfersTestSuite) TestApplyTransfers_AllValid() {
 	generatedTransfers := generateValidTransfers(3)
 
-	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment)
+	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, false)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 3)
@@ -106,17 +106,28 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_SomeValid() {
 	generatedTransfers := generateValidTransfers(2)
 	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(3)...)
 
-	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment)
+	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, false)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 2)
 	s.Len(transfers.invalidTransfers, 3)
 }
 
+func (s *ApplyTransfersTestSuite) TestApplyTransfers_InvalidInSyncMode() {
+	generatedTransfers := generateValidTransfers(2)
+	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(3)...)
+
+	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers,s.cfg.TxsPerCommitment, true)
+	s.NoError(err)
+
+	s.Len(transfers.appliedTransfers, 2)
+	s.Len(transfers.invalidTransfers, 1)
+}
+
 func (s *ApplyTransfersTestSuite) TestApplyTransfers_MoreThanTxsPerCommitment() {
 	generatedTransfers := generateValidTransfers(13)
 
-	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment)
+	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, false)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 6)
@@ -136,7 +147,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersTestSuite_SavesTransferError
 		s.NoError(err)
 	}
 
-	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment)
+	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, false)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 3)
