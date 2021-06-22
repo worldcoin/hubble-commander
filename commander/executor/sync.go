@@ -1,4 +1,4 @@
-package commander
+package executor
 
 import (
 	"fmt"
@@ -20,7 +20,7 @@ var (
 	ErrInvalidSignature      = errors.New("invalid signature")
 )
 
-func (t *transactionExecutor) SyncBatch(remoteBatch *eth.DecodedBatch) error {
+func (t *TransactionExecutor) SyncBatch(remoteBatch *eth.DecodedBatch) error {
 	localBatch, err := t.storage.GetBatch(remoteBatch.ID)
 	if err != nil && !st.IsNotFoundError(err) {
 		return err
@@ -33,7 +33,7 @@ func (t *transactionExecutor) SyncBatch(remoteBatch *eth.DecodedBatch) error {
 	}
 }
 
-func (t *transactionExecutor) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
+func (t *TransactionExecutor) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
 	if remoteBatch.TransactionHash == localBatch.TransactionHash {
 		err := t.storage.MarkBatchAsSubmitted(&remoteBatch.Batch)
 		if err != nil {
@@ -61,7 +61,7 @@ func (t *transactionExecutor) syncExistingBatch(remoteBatch *eth.DecodedBatch, l
 	return nil
 }
 
-func (t *transactionExecutor) revertBatches(remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
+func (t *TransactionExecutor) revertBatches(remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
 	stateTree := st.NewStateTree(t.storage)
 	err := stateTree.RevertTo(*localBatch.PrevStateRoot)
 	if err != nil {
@@ -74,7 +74,7 @@ func (t *transactionExecutor) revertBatches(remoteBatch *eth.DecodedBatch, local
 	return t.syncNewBatch(remoteBatch)
 }
 
-func (t *transactionExecutor) revertBatchesInRange(startBatchID *models.Uint256) error {
+func (t *TransactionExecutor) revertBatchesInRange(startBatchID *models.Uint256) error {
 	batches, err := t.storage.GetBatchesInRange(startBatchID, nil)
 	if err != nil {
 		return err
@@ -94,7 +94,7 @@ func (t *transactionExecutor) revertBatchesInRange(startBatchID *models.Uint256)
 	return t.storage.DeleteBatches(batchIDs...)
 }
 
-func (t *transactionExecutor) excludeTransactionsFromCommitment(batchIDs ...models.Uint256) error {
+func (t *TransactionExecutor) excludeTransactionsFromCommitment(batchIDs ...models.Uint256) error {
 	hashes, err := t.storage.GetTransactionHashesByBatchIDs(batchIDs...)
 	if err != nil {
 		return err
@@ -102,8 +102,8 @@ func (t *transactionExecutor) excludeTransactionsFromCommitment(batchIDs ...mode
 	return t.storage.BatchMarkTransactionAsIncluded(hashes, nil)
 }
 
-func (t *transactionExecutor) getTransactionSender(txHash common.Hash) (*common.Address, error) {
-	tx, _, err := t.client.ChainConnection.GetBackend().TransactionByHash(t.opts.ctx, txHash)
+func (t *TransactionExecutor) getTransactionSender(txHash common.Hash) (*common.Address, error) {
+	tx, _, err := t.client.ChainConnection.GetBackend().TransactionByHash(t.opts.Ctx, txHash)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func (t *transactionExecutor) getTransactionSender(txHash common.Hash) (*common.
 	return &sender, nil
 }
 
-func (t *transactionExecutor) syncNewBatch(batch *eth.DecodedBatch) error {
+func (t *TransactionExecutor) syncNewBatch(batch *eth.DecodedBatch) error {
 	err := t.storage.AddBatch(&batch.Batch)
 	if err != nil {
 		return err

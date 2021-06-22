@@ -1,4 +1,4 @@
-package commander
+package executor
 
 import (
 	"testing"
@@ -24,7 +24,7 @@ type ApplyCreate2TransfersTestSuite struct {
 	cfg                 *config.RollupConfig
 	client              *eth.TestClient
 	publicKey           models.PublicKey
-	transactionExecutor *transactionExecutor
+	transactionExecutor *TransactionExecutor
 	events              chan *accountregistry.AccountRegistrySinglePubkeyRegistered
 	unsubscribe         func()
 }
@@ -92,7 +92,7 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 	s.events, s.unsubscribe, err = s.client.WatchRegistrations(&bind.WatchOpts{})
 	s.NoError(err)
 
-	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg, transactionExecutorOpts{})
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, TransactionExecutorOpts{})
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
