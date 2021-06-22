@@ -72,7 +72,8 @@ func NewMerkleTree(leaves []common.Hash) (*MerkleTree, error) {
 
 	// Populate the rest of the levels with hashes of their children.
 	for level := int(depth) - 2; level >= 0; level-- {
-		for i := 0; uint32(i) < getNodeCountAtDepth(uint8(level)); i++ {
+		nodeCount := getNodeCountAtDepth(uint8(level))
+		for i := 0; uint32(i) < nodeCount; i++ {
 			path := models.MerklePath{Depth: uint8(level), Path: uint32(i)}
 			leftPath, err := path.Child(false)
 			if err != nil {
