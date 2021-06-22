@@ -11,6 +11,7 @@ var (
 	ErrIncorrectTokenIndices = errors.New("sender's, receiver's and fee receiver's token indices are not the same")
 	ErrNonceTooLow           = errors.New("nonce too low")
 	ErrNonceTooHigh          = errors.New("nonce too high")
+	ErrInvalidTokenAmount    = errors.New("amount cannot be equal to 0")
 	ErrBalanceTooLow         = errors.New("not enough balance")
 	ErrInvalidSliceLength    = errors.New("invalid slices length")
 	ErrNilReceiverStateID    = errors.New("transfer receiver state id cannot be nil")
@@ -87,6 +88,11 @@ func CalculateStateAfterTransfer(
 ) {
 	amount := transfer.GetAmount()
 	fee := transfer.GetFee()
+
+	if amount.CmpN(0) <= 0 {
+		err = ErrInvalidTokenAmount
+		return
+	}
 
 	totalAmount := amount.Add(&fee)
 	if senderState.Balance.Cmp(totalAmount) < 0 {
