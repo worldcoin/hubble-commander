@@ -1,0 +1,14 @@
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    app: hubble-commander
+  name: hubble-commander
+  namespace: staging
+spec:
+  type: ClusterIP
+  selector:
+    app: hubble-commander
+  ports:
+    - port: 80
+      targetPort: 8080
