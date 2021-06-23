@@ -74,10 +74,6 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 
 	s.addCreate2Transfers(transfers)
 
-	pendingTransfers, err := s.storage.GetPendingCreate2Transfers(pendingTxsCountMultiplier * s.cfg.TxsPerCommitment)
-	s.NoError(err)
-	s.Len(pendingTransfers, 4)
-
 	preRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 

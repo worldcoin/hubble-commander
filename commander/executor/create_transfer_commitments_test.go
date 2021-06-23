@@ -103,10 +103,6 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_QueriesForM
 
 	s.addTransfers(transfers)
 
-	pendingTransfers, err := s.storage.GetPendingTransfers(pendingTxsCountMultiplier * s.cfg.TxsPerCommitment)
-	s.NoError(err)
-	s.Len(pendingTransfers, 4)
-
 	preRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
