@@ -127,13 +127,13 @@ func (s *TransferCommitmentsTestSuite) invalidateTransfers(transfers []models.Tr
 	}
 }
 
-func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothingWhenThereAreNotEnoughPendingTransfers() {
+func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_ReturnsErrorWhenThereAreNotEnoughPendingTransfers() {
 	preRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
-	s.NoError(err)
-	s.Len(commitments, 0)
+	s.Nil(commitments)
+	s.Equal(ErrNotEnoughTransfers, err)
 
 	postRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
@@ -141,7 +141,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothing
 	s.Equal(preRoot, postRoot)
 }
 
-func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothingWhenThereAreNotEnoughValidTransfers() {
+func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_ReturnsErrorWhenThereAreNotEnoughValidTransfers() {
 	transfers := generateValidTransfers(2)
 	transfers[1].Amount = models.MakeUint256(99999999999)
 	s.addTransfers(transfers)
@@ -150,8 +150,8 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothing
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
-	s.NoError(err)
-	s.Len(commitments, 0)
+	s.Nil(commitments)
+	s.Equal(ErrNotEnoughTransfers, err)
 
 	postRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)

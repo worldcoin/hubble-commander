@@ -38,6 +38,10 @@ func (t *TransactionExecutor) CreateTransferCommitments(
 		commitments = append(commitments, *commitment)
 	}
 
+	if len(commitments) == 0 {
+		return nil, ErrNotEnoughTransfers
+	}
+
 	return commitments, nil
 }
 
@@ -147,13 +151,13 @@ func (t *TransactionExecutor) queryMorePendingTransfers(appliedTransfers, invali
 	if err != nil {
 		return nil, err
 	}
+	pendingTransfers = removeTransfer(pendingTransfers, alreadySeenTransfers)
 
 	numNeededTransfers := t.cfg.TxsPerCommitment - uint32(len(appliedTransfers))
 	if len(pendingTransfers) < int(numNeededTransfers) {
 		return nil, ErrNotEnoughTransfers
 	}
-
-	return removeTransfer(pendingTransfers, alreadySeenTransfers), nil
+	return pendingTransfers, nil
 }
 
 func removeTransfer(transferList, toRemove []models.Transfer) []models.Transfer {
