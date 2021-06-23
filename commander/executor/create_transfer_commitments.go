@@ -17,13 +17,9 @@ var (
 func (t *TransactionExecutor) CreateTransferCommitments(
 	domain *bls.Domain,
 ) (commitments []models.Commitment, err error) {
-	pendingTransfers, err := t.storage.GetPendingTransfers(pendingTxsCountMultiplier * t.cfg.TxsPerCommitment)
+	pendingTransfers, err := t.queryPendingTransfers()
 	if err != nil {
 		return nil, err
-	}
-
-	if len(pendingTransfers) < int(t.cfg.TxsPerCommitment) {
-		return []models.Commitment{}, nil
 	}
 
 	commitments = make([]models.Commitment, 0, t.cfg.MaxCommitmentsPerBatch)
@@ -32,11 +28,11 @@ func (t *TransactionExecutor) CreateTransferCommitments(
 		var commitment *models.Commitment
 
 		pendingTransfers, commitment, err = t.createTransferCommitment(pendingTransfers, domain)
+		if err == ErrNotEnoughTransfers {
+			break
+		}
 		if err != nil {
 			return nil, err
-		}
-		if commitment == nil {
-			break
 		}
 
 		commitments = append(commitments, *commitment)
@@ -55,65 +51,28 @@ func (t *TransactionExecutor) createTransferCommitment(
 ) {
 	startTime := time.Now()
 
+	pendingTransfers, err = t.refillPendingTransfers(pendingTransfers)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	initialStateRoot, err := t.stateTree.Root()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	appliedTransfers := make([]models.Transfer, 0, t.cfg.TxsPerCommitment)
-	invalidTransfers := make([]models.Transfer, 0, 1)
-	var feeReceiverStateID uint32
-
-	for {
-		if len(pendingTransfers) == 0 {
-			pendingTransfers, err = t.storage.GetPendingTransfers(pendingTxsCountMultiplier * t.cfg.TxsPerCommitment)
-			if err != nil || len(pendingTransfers) == 0 {
-				return nil, nil, err
-			}
+	appliedTransfers, newPendingTransfers, feeReceiverStateID, err := t.applyTransfersForCommitment(pendingTransfers)
+	if err == ErrNotEnoughTransfers {
+		if revertErr := t.stateTree.RevertTo(*initialStateRoot); revertErr != nil {
+			return nil, nil, revertErr
 		}
-
-		var transfers *AppliedTransfers
-
-		maxAppliedTransfers := t.cfg.TxsPerCommitment - uint32(len(appliedTransfers))
-		transfers, err = t.ApplyTransfers(pendingTransfers, maxAppliedTransfers)
-		if err != nil {
-			return nil, nil, err
-		}
-		if transfers == nil {
-			return nil, nil, ErrNotEnoughTransfers
-		}
-
-		appliedTransfers = append(appliedTransfers, transfers.appliedTransfers...)
-		invalidTransfers = append(invalidTransfers, transfers.invalidTransfers...)
-
-		if len(appliedTransfers) == int(t.cfg.TxsPerCommitment) {
-			feeReceiverStateID = *transfers.feeReceiverStateID
-			break
-		}
-
-		limit := pendingTxsCountMultiplier*t.cfg.TxsPerCommitment + uint32(len(appliedTransfers)+len(invalidTransfers))
-		pendingTransfers, err = t.storage.GetPendingTransfers(limit)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		// TODO - instead of doing this use SQL Offset (needs proper mempool)
-		pendingTransfers = removeTransfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
-
-		if len(pendingTransfers) == 0 {
-			err = t.stateTree.RevertTo(*initialStateRoot)
-			return nil, nil, err
-		}
+		return nil, nil, err
 	}
-
-	newPendingTransfers = removeTransfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
-
-	commitment, err = t.prepareTransferCommitment(appliedTransfers, feeReceiverStateID, domain)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	err = t.markTransfersAsIncluded(appliedTransfers, commitment.ID)
+	commitment, err = t.buildTransferCommitment(appliedTransfers, *feeReceiverStateID, domain)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -126,6 +85,75 @@ func (t *TransactionExecutor) createTransferCommitment(
 	)
 
 	return newPendingTransfers, commitment, nil
+}
+
+func (t *TransactionExecutor) applyTransfersForCommitment(pendingTransfers []models.Transfer) (
+	appliedTransfers, newPendingTransfers []models.Transfer,
+	feeReceiverStateID *uint32,
+	err error,
+) {
+	appliedTransfers = make([]models.Transfer, 0, t.cfg.TxsPerCommitment)
+	invalidTransfers := make([]models.Transfer, 0, 1)
+
+	for {
+		var transfers *AppliedTransfers
+
+		numNeededTransfers := t.cfg.TxsPerCommitment - uint32(len(appliedTransfers))
+		transfers, err = t.ApplyTransfers(pendingTransfers, numNeededTransfers)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+
+		appliedTransfers = append(appliedTransfers, transfers.appliedTransfers...)
+		invalidTransfers = append(invalidTransfers, transfers.invalidTransfers...)
+
+		if len(appliedTransfers) == int(t.cfg.TxsPerCommitment) {
+			feeReceiverStateID = transfers.feeReceiverStateID
+			newPendingTransfers = removeTransfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
+			return appliedTransfers, newPendingTransfers, feeReceiverStateID, nil
+		}
+
+		pendingTransfers, err = t.queryMorePendingTransfers(appliedTransfers, invalidTransfers)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+	}
+}
+
+func (t *TransactionExecutor) refillPendingTransfers(pendingTransfers []models.Transfer) ([]models.Transfer, error) {
+	if len(pendingTransfers) < int(t.cfg.TxsPerCommitment) {
+		return t.queryPendingTransfers()
+	}
+	return pendingTransfers, nil
+}
+
+func (t *TransactionExecutor) queryPendingTransfers() ([]models.Transfer, error) {
+	pendingTransfers, err := t.storage.GetPendingTransfers(t.cfg.MaxCommitmentsPerBatch * t.cfg.TxsPerCommitment)
+	if err != nil {
+		return nil, err
+	}
+	if len(pendingTransfers) < int(t.cfg.TxsPerCommitment) {
+		return nil, ErrNotEnoughTransfers
+	}
+	return pendingTransfers, nil
+}
+
+func (t *TransactionExecutor) queryMorePendingTransfers(appliedTransfers, invalidTransfers []models.Transfer) ([]models.Transfer, error) {
+	// TODO use SQL Offset instead
+	alreadySeenTransfers := append(appliedTransfers, invalidTransfers...) // nolint:gocritic
+	pendingTransfers, err := t.storage.GetPendingTransfers(
+		t.cfg.MaxCommitmentsPerBatch*t.cfg.TxsPerCommitment + uint32(len(alreadySeenTransfers)),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	numNeededTransfers := t.cfg.TxsPerCommitment - uint32(len(appliedTransfers))
+	if len(pendingTransfers) < int(numNeededTransfers) {
+		return nil, ErrNotEnoughTransfers
+	}
+
+	return removeTransfer(pendingTransfers, alreadySeenTransfers), nil
 }
 
 func removeTransfer(transferList, toRemove []models.Transfer) []models.Transfer {

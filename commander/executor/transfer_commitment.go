@@ -7,7 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 )
 
-func (t *TransactionExecutor) prepareTransferCommitment(
+func (t *TransactionExecutor) buildTransferCommitment(
 	appliedTransfers []models.Transfer,
 	feeReceiverStateID uint32,
 	domain *bls.Domain,
@@ -28,6 +28,11 @@ func (t *TransactionExecutor) prepareTransferCommitment(
 		serializedTxs,
 		combinedSignature,
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	err = t.markTransfersAsIncluded(appliedTransfers, commitment.ID)
 	if err != nil {
 		return nil, err
 	}
