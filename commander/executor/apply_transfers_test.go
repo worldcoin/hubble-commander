@@ -117,7 +117,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_InvalidInSyncMode() {
 	generatedTransfers := generateValidTransfers(2)
 	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(3)...)
 
-	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers,s.cfg.TxsPerCommitment, true)
+	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, true)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 2)
