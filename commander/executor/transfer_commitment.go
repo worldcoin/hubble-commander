@@ -36,7 +36,7 @@ func (t *TransactionExecutor) prepareTransfers(pendingTransfers []models.Transfe
 		var transfers *AppliedTransfers
 
 		maxAppliedTransfers := t.cfg.TxsPerCommitment - uint32(len(preparedTransfers.appliedTransfers))
-		transfers, err = t.ApplyTransfers(pendingTransfers, maxAppliedTransfers)
+		transfers, err = t.ApplyTransfers(pendingTransfers, maxAppliedTransfers, false)
 		if err != nil {
 			return nil, err
 		}
