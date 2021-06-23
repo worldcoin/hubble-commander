@@ -13,6 +13,7 @@ type AppliedTransfers struct {
 func (t *TransactionExecutor) ApplyTransfers(
 	transfers []models.Transfer,
 	maxAppliedTransfers uint32,
+	isSync bool,
 ) (*AppliedTransfers, error) {
 	if len(transfers) == 0 {
 		return nil, nil
@@ -39,6 +40,9 @@ func (t *TransactionExecutor) ApplyTransfers(
 		if transferError != nil {
 			logAndSaveTransactionError(t.storage, &transfer.TransactionBase, transferError)
 			returnStruct.invalidTransfers = append(returnStruct.invalidTransfers, *transfer)
+			if isSync {
+				return returnStruct, nil
+			}
 			continue
 		}
 
