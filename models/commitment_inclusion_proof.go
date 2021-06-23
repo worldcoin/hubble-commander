@@ -1,25 +1,31 @@
 package models
 
 import (
-	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/common"
 )
 
 type CommitmentInclusionProof struct {
-	StateRoot *common.Hash
-	BodyRoot  *common.Hash
+	StateRoot common.Hash
+	BodyRoot  common.Hash
 	Path      *MerklePath
-	Witness   merkletree.Witness
+	Witness   Witness
 }
 
 type TransferCommitmentInclusionProof struct {
-	StateRoot *common.Hash
-	Transfer  *Transfer
+	StateRoot common.Hash
+	Body      *TransferBody
 	Path      *MerklePath
-	Witness   merkletree.Witness
+	Witness   Witness
+}
+
+type TransferBody struct {
+	AccountRoot  common.Hash
+	Signature    Signature
+	FeeReceiver  uint32
+	Transactions []byte
 }
 
 type StateMerkleProof struct {
 	UserState *UserState
-	Witness   merkletree.Witness
+	Witness   Witness
 }
