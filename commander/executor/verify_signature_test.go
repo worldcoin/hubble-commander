@@ -1,4 +1,4 @@
-package commander
+package executor
 
 import (
 	"testing"
@@ -19,7 +19,7 @@ import (
 type VerifySignatureTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	transactionExecutor *transactionExecutor
+	transactionExecutor *TransactionExecutor
 	storage             *st.Storage
 	tree                *st.StateTree
 	client              *eth.TestClient
@@ -47,7 +47,7 @@ func (s *VerifySignatureTestSuite) SetupTest() {
 	s.storage = testStorage.Storage
 	s.tree = st.NewStateTree(s.storage)
 	s.teardown = testStorage.Teardown
-	s.transactionExecutor = newTestTransactionExecutor(s.storage, s.client.Client, s.cfg, transactionExecutorOpts{AssumeNonces: true})
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, TransactionExecutorOpts{AssumeNonces: true})
 	err = s.storage.SetChainState(&s.client.ChainState)
 	s.NoError(err)
 	s.addAccounts()

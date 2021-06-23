@@ -60,7 +60,7 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.client, err = getClientOrBootstrapChainState(chain, c.storage, c.cfg.Bootstrap)
+	c.client, err = getClient(chain, c.storage, c.cfg.Bootstrap)
 	if err != nil {
 		return err
 	}
@@ -142,7 +142,7 @@ func getChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, e
 	return deployer.NewRPCChainConnection(cfg)
 }
 
-func getClientOrBootstrapChainState(chain deployer.ChainConnection, storage *st.Storage, cfg *config.BootstrapConfig) (*eth.Client, error) {
+func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.BootstrapConfig) (*eth.Client, error) {
 	chainID := chain.GetChainID()
 	chainState, err := storage.GetChainState(chainID)
 	if err != nil && !st.IsNotFoundError(err) {
@@ -152,34 +152,55 @@ func getClientOrBootstrapChainState(chain deployer.ChainConnection, storage *st.
 	if st.IsNotFoundError(err) {
 		if cfg.BootstrapNodeURL != nil {
 			log.Printf("Bootstrapping genesis state from node %s", *cfg.BootstrapNodeURL)
-			chainState, err = fetchChainStateFromRemoteNode(*cfg.BootstrapNodeURL)
-			if err != nil {
-				return nil, err
-			}
-
-			err = PopulateGenesisAccounts(storage, chainState.GenesisAccounts)
-			if err != nil {
-				return nil, err
-			}
+			return bootstrapFromRemoteState(chain, storage, cfg)
 		} else {
-			log.Printf("Bootstrapping genesis state with %d accounts on chainId=%s.\n", len(cfg.GenesisAccounts), chainID.String())
-			chainState, err = bootstrapState(storage, chain, cfg.GenesisAccounts)
-			if err != nil {
-				return nil, err
-			}
+			log.Printf("Bootstrapping genesis state with %d accounts on chainId = %s", len(cfg.GenesisAccounts), chainID.String())
+			return bootstrapContractsAndState(chain, storage, cfg)
 		}
-
-		err = storage.SetChainState(chainState)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		log.Printf("Continuing from saved state on chainId=%s.\n", chainID.String())
 	}
 
+	log.Printf("Continuing from saved state on chainId = %s", chainID.String())
 	return createClientFromChainState(chain, chainState)
+}
 
-	// TODO: Verify commitment root of batch #0 (for multi-operator sync).
+func bootstrapFromRemoteState(chain deployer.ChainConnection, storage *st.Storage, cfg *config.BootstrapConfig) (*eth.Client, error) {
+	chainState, err := fetchChainStateFromRemoteNode(*cfg.BootstrapNodeURL)
+	if err != nil {
+		return nil, err
+	}
+
+	err = PopulateGenesisAccounts(storage, chainState.GenesisAccounts)
+	if err != nil {
+		return nil, err
+	}
+
+	err = storage.SetChainState(chainState)
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := createClientFromChainState(chain, chainState)
+	if err != nil {
+		return nil, err
+	}
+
+	err = verifyCommitmentRoot(storage, client)
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
+}
+
+func bootstrapContractsAndState(chain deployer.ChainConnection, storage *st.Storage, cfg *config.BootstrapConfig) (*eth.Client, error) {
+	chainState, err := deployContractsAndSetupGenesisState(storage, chain, cfg.GenesisAccounts)
+	if err != nil {
+		return nil, err
+	}
+	err = storage.SetChainState(chainState)
+	if err != nil {
+		return nil, err
+	}
+	return createClientFromChainState(chain, chainState)
 }
 
 func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {
@@ -230,7 +251,7 @@ func createClientFromChainState(chain deployer.ChainConnection, chainState *mode
 	return client, nil
 }
 
-func bootstrapState(
+func deployContractsAndSetupGenesisState(
 	storage *st.Storage,
 	chain deployer.ChainConnection,
 	accounts []models.GenesisAccount,

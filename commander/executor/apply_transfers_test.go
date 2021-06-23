@@ -1,4 +1,4 @@
-package commander
+package executor
 
 import (
 	"testing"
@@ -20,7 +20,7 @@ type ApplyTransfersTestSuite struct {
 	storage             *storage.Storage
 	tree                *storage.StateTree
 	cfg                 *config.RollupConfig
-	transactionExecutor *transactionExecutor
+	transactionExecutor *TransactionExecutor
 }
 
 func (s *ApplyTransfersTestSuite) SetupSuite() {
@@ -84,7 +84,7 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 	err = s.tree.Set(3, &feeReceiverState)
 	s.NoError(err)
 
-	s.transactionExecutor = newTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, transactionExecutorOpts{})
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, TransactionExecutorOpts{})
 }
 
 func (s *ApplyTransfersTestSuite) TearDownTest() {
@@ -95,7 +95,7 @@ func (s *ApplyTransfersTestSuite) TearDownTest() {
 func (s *ApplyTransfersTestSuite) TestApplyTransfers_AllValid() {
 	generatedTransfers := generateValidTransfers(3)
 
-	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers)
+	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, false)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 3)
@@ -106,17 +106,28 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_SomeValid() {
 	generatedTransfers := generateValidTransfers(2)
 	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(3)...)
 
-	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers)
+	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, false)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 2)
 	s.Len(transfers.invalidTransfers, 3)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTransfers_MoreThan32() {
+func (s *ApplyTransfersTestSuite) TestApplyTransfers_InvalidInSyncMode() {
+	generatedTransfers := generateValidTransfers(2)
+	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(3)...)
+
+	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, true)
+	s.NoError(err)
+
+	s.Len(transfers.appliedTransfers, 2)
+	s.Len(transfers.invalidTransfers, 1)
+}
+
+func (s *ApplyTransfersTestSuite) TestApplyTransfers_MoreThanTxsPerCommitment() {
 	generatedTransfers := generateValidTransfers(13)
 
-	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers)
+	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, false)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 6)
@@ -136,7 +147,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersTestSuite_SavesTransferError
 		s.NoError(err)
 	}
 
-	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers)
+	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, false)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 3)
@@ -157,9 +168,9 @@ func TestApplyTransfersTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplyTransfersTestSuite))
 }
 
-func generateValidTransfers(transfersAmount int) []models.Transfer {
+func generateValidTransfers(transfersAmount uint32) []models.Transfer {
 	transfers := make([]models.Transfer, 0, transfersAmount)
-	for i := 0; i < transfersAmount; i++ {
+	for i := 0; i < int(transfersAmount); i++ {
 		transfer := models.Transfer{
 			TransactionBase: models.TransactionBase{
 				Hash:        utils.RandomHash(),
@@ -176,9 +187,9 @@ func generateValidTransfers(transfersAmount int) []models.Transfer {
 	return transfers
 }
 
-func generateInvalidTransfers(transfersAmount int) []models.Transfer {
+func generateInvalidTransfers(transfersAmount uint64) []models.Transfer {
 	transfers := make([]models.Transfer, 0, transfersAmount)
-	for i := 0; i < transfersAmount; i++ {
+	for i := uint64(0); i < transfersAmount; i++ {
 		transfer := models.Transfer{
 			TransactionBase: models.TransactionBase{
 				Hash:        utils.RandomHash(),

@@ -148,20 +148,25 @@ func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers() {
 	create2Transfer4.Hash = utils.RandomHash()
 	create2Transfer4.ErrorMessage = ref.String("A very boring error message")
 
-	create2Transfers := []*models.Create2Transfer{&create2Transfer, &create2Transfer2, &create2Transfer3, &create2Transfer4}
-
-	for _, create2Transfer := range create2Transfers {
-		err = s.storage.AddCreate2Transfer(create2Transfer)
-		s.NoError(err)
+	create2transfers := []models.Create2Transfer{
+		create2Transfer,
+		create2Transfer2,
+		create2Transfer3,
+		create2Transfer4,
 	}
 
-	res, err := s.storage.GetPendingCreate2Transfers()
+	err = s.storage.BatchAddCreate2Transfer(create2transfers)
 	s.NoError(err)
 
-	s.Equal([]models.Create2Transfer{create2Transfer, create2Transfer2}, res)
+	res, err := s.storage.GetPendingCreate2Transfers(32)
+	s.NoError(err)
+
+	s.Len(res, 2)
+	s.Contains(res, create2Transfer)
+	s.Contains(res, create2Transfer2)
 }
 
-func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers_OrdersTransfersByNonceAscending() {
+func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers_OrdersTransfersByNonceAndTxHashAscending() {
 	create2Transfer.TransactionBase.Nonce = models.MakeUint256(1)
 	create2Transfer.Hash = utils.RandomHash()
 	create2Transfer2 := create2Transfer
@@ -172,17 +177,26 @@ func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers_OrdersTransfer
 	create2Transfer3.Hash = utils.RandomHash()
 	create2Transfer4 := create2Transfer
 	create2Transfer4.TransactionBase.Nonce = models.MakeUint256(5)
-	create2Transfer4.Hash = utils.RandomHash()
+	create2Transfer4.Hash = common.Hash{66, 66, 66, 66}
+	create2Transfer5 := create2Transfer
+	create2Transfer5.TransactionBase.Nonce = models.MakeUint256(5)
+	create2Transfer5.Hash = common.Hash{65, 65, 65, 65}
 
-	for _, transfer := range []*models.Create2Transfer{&create2Transfer, &create2Transfer2, &create2Transfer3, &create2Transfer4} {
-		err := s.storage.AddCreate2Transfer(transfer)
-		s.NoError(err)
+	create2transfers := []models.Create2Transfer{
+		create2Transfer,
+		create2Transfer2,
+		create2Transfer3,
+		create2Transfer4,
+		create2Transfer5,
 	}
 
-	res, err := s.storage.GetPendingCreate2Transfers()
+	err := s.storage.BatchAddCreate2Transfer(create2transfers)
 	s.NoError(err)
 
-	s.Equal([]models.Create2Transfer{create2Transfer, create2Transfer2, create2Transfer4, create2Transfer3}, res)
+	res, err := s.storage.GetPendingCreate2Transfers(32)
+	s.NoError(err)
+
+	s.Equal([]models.Create2Transfer{create2Transfer, create2Transfer2, create2Transfer5, create2Transfer4, create2Transfer3}, res)
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey() {

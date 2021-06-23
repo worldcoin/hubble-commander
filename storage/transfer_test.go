@@ -146,18 +146,25 @@ func (s *TransferTestSuite) TestGetPendingTransfers() {
 	transfer4.Hash = utils.RandomHash()
 	transfer4.ErrorMessage = ref.String("A very boring error message")
 
-	for _, transfer := range []*models.Transfer{&transfer, &transfer2, &transfer3, &transfer4} {
-		err = s.storage.AddTransfer(transfer)
-		s.NoError(err)
+	transfers := []models.Transfer{
+		transfer,
+		transfer2,
+		transfer3,
+		transfer4,
 	}
 
-	res, err := s.storage.GetPendingTransfers()
+	err = s.storage.BatchAddTransfer(transfers)
 	s.NoError(err)
 
-	s.Equal([]models.Transfer{transfer, transfer2}, res)
+	res, err := s.storage.GetPendingTransfers(32)
+	s.NoError(err)
+
+	s.Len(res, 2)
+	s.Contains(res, transfer)
+	s.Contains(res, transfer2)
 }
 
-func (s *TransferTestSuite) TestGetPendingTransfers_OrdersTransfersByNonceAscending() {
+func (s *TransferTestSuite) TestGetPendingTransfers_OrdersTransfersByNonceAndTxHashAscending() {
 	transfer.Nonce = models.MakeUint256(1)
 	transfer.Hash = utils.RandomHash()
 	transfer2 := transfer
@@ -168,17 +175,26 @@ func (s *TransferTestSuite) TestGetPendingTransfers_OrdersTransfersByNonceAscend
 	transfer3.Hash = utils.RandomHash()
 	transfer4 := transfer
 	transfer4.Nonce = models.MakeUint256(5)
-	transfer4.Hash = utils.RandomHash()
+	transfer4.Hash = common.Hash{66, 66, 66, 66}
+	transfer5 := transfer
+	transfer5.Nonce = models.MakeUint256(5)
+	transfer5.Hash = common.Hash{65, 65, 65, 65}
 
-	for _, transfer := range []*models.Transfer{&transfer, &transfer2, &transfer3, &transfer4} {
-		err := s.storage.AddTransfer(transfer)
-		s.NoError(err)
+	transfers := []models.Transfer{
+		transfer,
+		transfer2,
+		transfer3,
+		transfer4,
+		transfer5,
 	}
 
-	res, err := s.storage.GetPendingTransfers()
+	err := s.storage.BatchAddTransfer(transfers)
 	s.NoError(err)
 
-	s.Equal([]models.Transfer{transfer, transfer2, transfer4, transfer3}, res)
+	res, err := s.storage.GetPendingTransfers(32)
+	s.NoError(err)
+
+	s.Equal([]models.Transfer{transfer, transfer2, transfer5, transfer4, transfer3}, res)
 }
 
 func (s *TransferTestSuite) TestGetUserTransfers() {

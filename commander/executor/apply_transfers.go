@@ -1,4 +1,4 @@
-package commander
+package executor
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
@@ -10,8 +10,10 @@ type AppliedTransfers struct {
 	feeReceiverStateID *uint32
 }
 
-func (t *transactionExecutor) ApplyTransfers(
+func (t *TransactionExecutor) ApplyTransfers(
 	transfers []models.Transfer,
+	maxAppliedTransfers uint32,
+	isSync bool,
 ) (*AppliedTransfers, error) {
 	if len(transfers) == 0 {
 		return nil, nil
@@ -38,13 +40,16 @@ func (t *transactionExecutor) ApplyTransfers(
 		if transferError != nil {
 			logAndSaveTransactionError(t.storage, &transfer.TransactionBase, transferError)
 			returnStruct.invalidTransfers = append(returnStruct.invalidTransfers, *transfer)
+			if isSync {
+				return returnStruct, nil
+			}
 			continue
 		}
 
 		returnStruct.appliedTransfers = append(returnStruct.appliedTransfers, *transfer)
 		combinedFee = *combinedFee.Add(&transfer.Fee)
 
-		if uint32(len(returnStruct.appliedTransfers)) == t.cfg.TxsPerCommitment {
+		if uint32(len(returnStruct.appliedTransfers)) == maxAppliedTransfers {
 			break
 		}
 	}

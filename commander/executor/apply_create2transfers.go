@@ -1,4 +1,4 @@
-package commander
+package executor
 
 import (
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
@@ -14,8 +14,9 @@ type AppliedC2Transfers struct {
 	feeReceiverStateID *uint32
 }
 
-func (t *transactionExecutor) ApplyCreate2Transfers(
+func (t *TransactionExecutor) ApplyCreate2Transfers(
 	transfers []models.Create2Transfer,
+	maxAppliedTransfers uint32,
 ) (*AppliedC2Transfers, error) {
 	if len(transfers) == 0 {
 		return nil, nil
@@ -62,7 +63,7 @@ func (t *transactionExecutor) ApplyCreate2Transfers(
 		}
 
 		returnStruct.addedPubKeyIDs = append(returnStruct.addedPubKeyIDs, *pubKeyID)
-		if uint32(len(returnStruct.appliedTransfers)) == t.cfg.TxsPerCommitment {
+		if uint32(len(returnStruct.appliedTransfers)) == maxAppliedTransfers {
 			break
 		}
 	}
@@ -77,7 +78,7 @@ func (t *transactionExecutor) ApplyCreate2Transfers(
 	return returnStruct, nil
 }
 
-func (t *transactionExecutor) ApplyCreate2TransfersForSync(
+func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 	transfers []models.Create2Transfer,
 	pubKeyIDs []uint32,
 ) (*AppliedC2Transfers, error) {
@@ -97,17 +98,17 @@ func (t *transactionExecutor) ApplyCreate2TransfersForSync(
 	if err != nil {
 		return nil, err
 	}
+	var ok bool
 
 	for i := range transfers {
 		transfer := &transfers[i]
 
-		_, err = t.handleApplyC2T(transfer, pubKeyIDs[i], returnStruct, combinedFee, commitmentTokenIndex)
+		ok, err = t.handleApplyC2T(transfer, pubKeyIDs[i], returnStruct, combinedFee, commitmentTokenIndex)
 		if err != nil {
 			return nil, err
 		}
-
-		if uint32(len(returnStruct.appliedTransfers)) == t.cfg.TxsPerCommitment {
-			break
+		if !ok {
+			return returnStruct, nil
 		}
 	}
 
@@ -121,7 +122,7 @@ func (t *transactionExecutor) ApplyCreate2TransfersForSync(
 	return returnStruct, nil
 }
 
-func (t *transactionExecutor) getTokenIndex(stateID uint32) (*models.Uint256, error) {
+func (t *TransactionExecutor) getTokenIndex(stateID uint32) (*models.Uint256, error) {
 	senderLeaf, err := t.storage.GetStateLeaf(stateID)
 	if err != nil {
 		return nil, err
@@ -129,7 +130,7 @@ func (t *transactionExecutor) getTokenIndex(stateID uint32) (*models.Uint256, er
 	return &senderLeaf.TokenIndex, nil
 }
 
-func (t *transactionExecutor) getOrRegisterPubKeyID(
+func (t *TransactionExecutor) getOrRegisterPubKeyID(
 	events chan *accountregistry.AccountRegistrySinglePubkeyRegistered,
 	transfer *models.Create2Transfer,
 	tokenIndex models.Uint256,
@@ -143,7 +144,7 @@ func (t *transactionExecutor) getOrRegisterPubKeyID(
 	return pubKeyID, nil
 }
 
-func (t *transactionExecutor) handleApplyC2T(
+func (t *TransactionExecutor) handleApplyC2T(
 	transfer *models.Create2Transfer,
 	pubKeyID uint32,
 	appliedTransfers *AppliedC2Transfers,
