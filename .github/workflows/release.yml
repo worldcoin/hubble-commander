@@ -29,6 +29,27 @@ jobs:
           push: true
           tags: ghcr.io/worldcoin/hubble-commander:${{ steps.tag_name.outputs.SOURCE_TAG }},ghcr.io/worldcoin/hubble-commander:stable
 
+  deploy-backend-api-staging:
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+    - name: Configure AWS EKS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.STAGING_BACKEND_API_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.STAGING_BACKEND_API_AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+    - name: Download kubeconfig
+      run: |
+        aws eks --region us-east-1 update-kubeconfig --name new-staging --kubeconfig $GITHUB_WORKSPACE/kubeconfig
+    - name: Install kubectl
+      run: |
+        curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
+        chmod +x ./kubectl
+    - name: Update deployment in the cluster
+      run: |
+        ./kubectl --kubeconfig ./kubeconfig --namespace=staging set image deployments/hubble-commander hubble-commander=ghcr.io/worldcoin/hubble-commander:${{ steps.tag_name.outputs.SOURCE_TAG }}
+
   deploy:
     name: Deploy to AWS
     needs: build
