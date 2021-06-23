@@ -13,20 +13,17 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 )
 
+var placeholderDomain = bls.Domain{0x00, 0x00, 0x00, 0x00}
+
 func main() {}
 
-func parseWallet(privateKey, domain *C.char) (*bls.Wallet, error) {
+func parseWallet(privateKey *C.char, domain *bls.Domain) (*bls.Wallet, error) {
 	privateKeyDecoded, err := hex.DecodeString(C.GoString(privateKey))
 	if err != nil {
 		return nil, err
 	}
 
-	domainBls, err := parseDomain(domain)
-	if err != nil {
-		return nil, err
-	}
-
-	wallet, err := bls.NewWallet(privateKeyDecoded, *domainBls)
+	wallet, err := bls.NewWallet(privateKeyDecoded, *domain)
 	if err != nil {
 		return nil, err
 	}
@@ -48,13 +45,8 @@ func parseDomain(domain *C.char) (*bls.Domain, error) {
 }
 
 //export NewWalletPrivateKey
-func NewWalletPrivateKey(domain *C.char) *C.char {
-	domainBls, err := parseDomain(domain)
-	if err != nil {
-		return nil
-	}
-
-	wallet, err := bls.NewRandomWallet(*domainBls)
+func NewWalletPrivateKey() *C.char {
+	wallet, err := bls.NewRandomWallet(placeholderDomain)
 	if err != nil {
 		return nil
 	}
@@ -64,8 +56,8 @@ func NewWalletPrivateKey(domain *C.char) *C.char {
 }
 
 //export GetWalletPublicKey
-func GetWalletPublicKey(privateKey, domain *C.char) *C.char {
-	wallet, err := parseWallet(privateKey, domain)
+func GetWalletPublicKey(privateKey *C.char) *C.char {
+	wallet, err := parseWallet(privateKey, &placeholderDomain)
 	if err != nil {
 		return nil
 	}
@@ -76,7 +68,12 @@ func GetWalletPublicKey(privateKey, domain *C.char) *C.char {
 
 //export SignTransfer
 func SignTransfer(from, to C.uint, amount, fee, nonce, privateKey, domain *C.char) *C.char {
-	wallet, err := parseWallet(privateKey, domain)
+	domainBls, err := parseDomain(domain)
+	if err != nil {
+		return nil
+	}
+
+	wallet, err := parseWallet(privateKey, domainBls)
 	if err != nil {
 		return nil
 	}
@@ -106,7 +103,12 @@ func SignTransfer(from, to C.uint, amount, fee, nonce, privateKey, domain *C.cha
 
 //export SignCreate2Transfer
 func SignCreate2Transfer(from C.uint, toPubKey, amount, fee, nonce, privateKey, domain *C.char) *C.char {
-	wallet, err := parseWallet(privateKey, domain)
+	domainBls, err := parseDomain(domain)
+	if err != nil {
+		return nil
+	}
+
+	wallet, err := parseWallet(privateKey, domainBls)
 	if err != nil {
 		return nil
 	}
