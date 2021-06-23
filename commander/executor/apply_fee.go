@@ -1,22 +1,9 @@
 package executor
 
 import (
-	"log"
-
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
-
-func logAndSaveTransactionError(storage *st.Storage, transaction *models.TransactionBase, transactionError error) {
-	if transactionError != nil {
-		err := storage.SetTransactionError(transaction.Hash, transactionError.Error())
-		if err != nil {
-			log.Printf("Setting transaction error failed: %s", err)
-		}
-
-		log.Printf("%s failed: %s", transaction.TxType.String(), transactionError)
-	}
-}
 
 func (t *TransactionExecutor) ApplyFee(tokenIndex, fee models.Uint256) (*uint32, error) {
 	feeReceiver, err := t.storage.GetFeeReceiverStateLeaf(t.cfg.FeeReceiverPubKeyID, tokenIndex)

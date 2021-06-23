@@ -210,11 +210,12 @@ func (s *ApplyCreate2TransfersTestSuite) TestHandleApplyC2T_ValidTransfer() {
 		invalidTransfers: make([]models.Create2Transfer, 0),
 	}
 
-	ok, err := s.transactionExecutor.handleApplyC2T(&transfers[0], 1, &appliedStruct, combinedFee, models.NewUint256(1))
-	s.NoError(err)
-	s.True(ok)
+	transferErr, appErr := s.transactionExecutor.handleApplyC2T(&transfers[0], 1, &appliedStruct, combinedFee, models.NewUint256(1))
+	s.NoError(transferErr)
+	s.NoError(appErr)
 	s.Len(appliedStruct.appliedTransfers, 1)
 	s.Len(appliedStruct.invalidTransfers, 0)
+	s.Len(appliedStruct.addedPubKeyIDs, 1)
 	s.Equal(*transfers[0].Amount.AddN(100), *combinedFee)
 }
 
@@ -228,11 +229,12 @@ func (s *ApplyCreate2TransfersTestSuite) TestHandleApplyC2T_InvalidTransfer() {
 		invalidTransfers: make([]models.Create2Transfer, 0),
 	}
 
-	ok, err := s.transactionExecutor.handleApplyC2T(&transfers[0], 1, &appliedStruct, combinedFee, models.NewUint256(1))
-	s.NoError(err)
-	s.False(ok)
+	transferErr, appErr := s.transactionExecutor.handleApplyC2T(&transfers[0], 1, &appliedStruct, combinedFee, models.NewUint256(1))
+	s.Error(transferErr)
+	s.NoError(appErr)
 	s.Len(appliedStruct.appliedTransfers, 0)
 	s.Len(appliedStruct.invalidTransfers, 1)
+	s.Len(appliedStruct.addedPubKeyIDs, 0)
 	s.Equal(uint64(100), combinedFee.Uint64())
 }
 
