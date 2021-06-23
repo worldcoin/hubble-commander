@@ -7,6 +7,8 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
+// TODO rename this file
+
 func logAndSaveTransactionError(storage *st.Storage, transaction *models.TransactionBase, transactionError error) {
 	err := storage.SetTransactionError(transaction.Hash, transactionError.Error())
 	if err != nil {
