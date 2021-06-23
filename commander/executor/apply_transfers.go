@@ -10,7 +10,11 @@ type AppliedTransfers struct {
 	feeReceiverStateID *uint32
 }
 
-func (t *TransactionExecutor) ApplyTransfers(transfers []models.Transfer, maxApplied uint32) (*AppliedTransfers, error) {
+func (t *TransactionExecutor) ApplyTransfers(
+	transfers []models.Transfer,
+	maxApplied uint32,
+	isSyncing bool,
+) (*AppliedTransfers, error) {
 	if len(transfers) == 0 {
 		return &AppliedTransfers{}, nil
 	}
@@ -38,6 +42,9 @@ func (t *TransactionExecutor) ApplyTransfers(transfers []models.Transfer, maxApp
 		if transferError != nil {
 			logAndSaveTransactionError(t.storage, &transfer.TransactionBase, transferError)
 			returnStruct.invalidTransfers = append(returnStruct.invalidTransfers, *transfer)
+			if isSyncing {
+				return returnStruct, nil
+			}
 			continue
 		}
 

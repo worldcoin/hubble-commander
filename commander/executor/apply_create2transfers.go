@@ -54,7 +54,7 @@ func (t *TransactionExecutor) ApplyCreate2Transfers(transfers []models.Create2Tr
 			return nil, err
 		}
 
-		err = t.handleApplyC2T(transfer, *pubKeyID, returnStruct, combinedFee, commitmentTokenIndex)
+		_, err = t.handleApplyC2T(transfer, *pubKeyID, returnStruct, combinedFee, commitmentTokenIndex)
 		if err != nil {
 			return nil, err
 		}
@@ -94,9 +94,12 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 	for i := range transfers {
 		transfer := &transfers[i]
 
-		err = t.handleApplyC2T(transfer, pubKeyIDs[i], returnStruct, combinedFee, commitmentTokenIndex)
-		if err != nil {
+		transferError, appError := t.handleApplyC2T(transfer, pubKeyIDs[i], returnStruct, combinedFee, commitmentTokenIndex)
+		if appError != nil {
 			return nil, err
+		}
+		if transferError != nil {
+			return returnStruct, nil
 		}
 	}
 
@@ -137,19 +140,19 @@ func (t *TransactionExecutor) handleApplyC2T(
 	pubKeyID uint32,
 	appliedTransfers *AppliedC2Transfers,
 	combinedFee, tokenIndex *models.Uint256,
-) error {
+) (create2TransferError, appError error) {
 	transferError, appError := t.ApplyCreate2Transfer(transfer, pubKeyID, *tokenIndex)
 	if appError != nil {
-		return appError
+		return nil, appError
 	}
 	if transferError != nil {
 		logAndSaveTransactionError(t.storage, &transfer.TransactionBase, transferError)
 		appliedTransfers.invalidTransfers = append(appliedTransfers.invalidTransfers, *transfer)
-		return nil
+		return transferError, nil
 	}
 
 	appliedTransfers.appliedTransfers = append(appliedTransfers.appliedTransfers, *transfer)
 	appliedTransfers.addedPubKeyIDs = append(appliedTransfers.addedPubKeyIDs, pubKeyID)
 	*combinedFee = *combinedFee.Add(&transfer.Fee)
-	return nil
+	return nil, nil
 }
