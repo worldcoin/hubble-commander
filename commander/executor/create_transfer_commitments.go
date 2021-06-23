@@ -113,7 +113,7 @@ func (t *TransactionExecutor) applyTransfersForCommitment(pendingTransfers []mod
 
 		if len(appliedTransfers) == int(t.cfg.TxsPerCommitment) {
 			feeReceiverStateID = transfers.feeReceiverStateID
-			newPendingTransfers = removeTransfer(pendingTransfers, append(appliedTransfers, invalidTransfers...))
+			newPendingTransfers = removeTransfers(pendingTransfers, append(appliedTransfers, invalidTransfers...))
 			return appliedTransfers, newPendingTransfers, feeReceiverStateID, nil
 		}
 
@@ -151,7 +151,7 @@ func (t *TransactionExecutor) queryMorePendingTransfers(appliedTransfers, invali
 	if err != nil {
 		return nil, err
 	}
-	pendingTransfers = removeTransfer(pendingTransfers, alreadySeenTransfers)
+	pendingTransfers = removeTransfers(pendingTransfers, alreadySeenTransfers)
 
 	numNeededTransfers := t.cfg.TxsPerCommitment - uint32(len(appliedTransfers))
 	if len(pendingTransfers) < int(numNeededTransfers) {
@@ -160,7 +160,7 @@ func (t *TransactionExecutor) queryMorePendingTransfers(appliedTransfers, invali
 	return pendingTransfers, nil
 }
 
-func removeTransfer(transferList, toRemove []models.Transfer) []models.Transfer {
+func removeTransfers(transferList, toRemove []models.Transfer) []models.Transfer {
 	outputIndex := 0
 	for i := range transferList {
 		transfer := &transferList[i]

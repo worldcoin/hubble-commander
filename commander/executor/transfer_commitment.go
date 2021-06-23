@@ -7,6 +7,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 )
 
+// TODO move this function / rename file
+
 func (t *TransactionExecutor) buildTransferCommitment(
 	appliedTransfers []models.Transfer,
 	feeReceiverStateID uint32,

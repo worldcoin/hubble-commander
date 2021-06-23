@@ -98,13 +98,13 @@ func (s *Create2TransferCommitmentsTestSuite) invalidateCreate2Transfers(transfe
 	}
 }
 
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_DoesNothingWhenThereAreNotEnoughPendingTransfers() {
+func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_ReturnsErrorWhenThereAreNotEnoughPendingTransfers() {
 	preRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.CreateCreate2TransferCommitments(testDomain)
-	s.NoError(err)
-	s.Len(commitments, 0)
+	s.Nil(commitments)
+	s.Equal(ErrNotEnoughC2Transfers, err)
 
 	postRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
@@ -112,7 +112,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.Equal(preRoot, postRoot)
 }
 
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_DoesNothingWhenThereAreNotEnoughValidTransfers() {
+func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_ReturnsErrorWhenThereAreNotEnoughValidTransfers() {
 	transfers := generateValidCreate2Transfers(2, &models.PublicKey{1, 2, 3})
 	transfers[1].Amount = models.MakeUint256(99999999999)
 	s.addCreate2Transfers(transfers)
@@ -125,8 +125,8 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.CreateCreate2TransferCommitments(testDomain)
-	s.NoError(err)
-	s.Len(commitments, 0)
+	s.Nil(commitments)
+	s.Equal(ErrNotEnoughC2Transfers, err)
 
 	postRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
@@ -200,7 +200,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestRemoveCreate2Transfer() {
 	transfers := []models.Create2Transfer{transfer1, transfer2, transfer3}
 	toRemove := []models.Create2Transfer{transfer2}
 
-	s.Equal([]models.Create2Transfer{transfer1, transfer3}, removeCreate2Transfer(transfers, toRemove))
+	s.Equal([]models.Create2Transfer{transfer1, transfer3}, removeC2Ts(transfers, toRemove))
 }
 
 func TestCreate2TransferCommitmentsTestSuite(t *testing.T) {
