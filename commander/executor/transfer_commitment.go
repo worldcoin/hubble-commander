@@ -5,9 +5,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/ethereum/go-ethereum/common"
 )
-
-// TODO move this function / rename file
 
 func (t *TransactionExecutor) buildTransferCommitment(
 	appliedTransfers []models.Transfer,
@@ -40,4 +39,24 @@ func (t *TransactionExecutor) buildTransferCommitment(
 	}
 
 	return commitment, nil
+}
+
+func combineTransferSignatures(transfers []models.Transfer, domain *bls.Domain) (*models.Signature, error) {
+	signatures := make([]*bls.Signature, 0, len(transfers))
+	for i := range transfers {
+		sig, err := bls.NewSignatureFromBytes(transfers[i].Signature.Bytes(), *domain)
+		if err != nil {
+			return nil, err
+		}
+		signatures = append(signatures, sig)
+	}
+	return bls.NewAggregatedSignature(signatures).ModelsSignature(), nil
+}
+
+func (t *TransactionExecutor) markTransfersAsIncluded(transfers []models.Transfer, commitmentID int32) error {
+	hashes := make([]common.Hash, 0, len(transfers))
+	for i := range transfers {
+		hashes = append(hashes, transfers[i].Hash)
+	}
+	return t.storage.BatchMarkTransactionAsIncluded(hashes, &commitmentID)
 }

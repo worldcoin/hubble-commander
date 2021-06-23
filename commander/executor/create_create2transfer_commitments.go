@@ -7,7 +7,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 var (
@@ -183,29 +182,4 @@ func create2TransferExists(transferList []models.Create2Transfer, tx *models.Cre
 		}
 	}
 	return false
-}
-
-func combineCreate2TransferSignatures(transfers []models.Create2Transfer, domain *bls.Domain) (*models.Signature, error) {
-	signatures := make([]*bls.Signature, 0, len(transfers))
-	for i := range transfers {
-		sig, err := bls.NewSignatureFromBytes(transfers[i].Signature.Bytes(), *domain)
-		if err != nil {
-			return nil, err
-		}
-		signatures = append(signatures, sig)
-	}
-	return bls.NewAggregatedSignature(signatures).ModelsSignature(), nil
-}
-
-func (t *TransactionExecutor) markCreate2TransfersAsIncluded(transfers []models.Create2Transfer, commitmentID int32) error {
-	hashes := make([]common.Hash, 0, len(transfers))
-	for i := range transfers {
-		hashes = append(hashes, transfers[i].Hash)
-
-		err := t.storage.SetCreate2TransferToStateID(transfers[i].Hash, *transfers[i].ToStateID)
-		if err != nil {
-			return err
-		}
-	}
-	return t.storage.BatchMarkTransactionAsIncluded(hashes, &commitmentID)
 }
