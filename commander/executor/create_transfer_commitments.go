@@ -117,7 +117,7 @@ func (t *TransactionExecutor) applyTransfersForCommitment(pendingTransfers []mod
 			return appliedTransfers, newPendingTransfers, feeReceiverStateID, nil
 		}
 
-		pendingTransfers, err = t.queryMorePendingTransfers(appliedTransfers, invalidTransfers)
+		pendingTransfers, err = t.queryMorePendingTransfers(appliedTransfers)
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -142,18 +142,18 @@ func (t *TransactionExecutor) queryPendingTransfers() ([]models.Transfer, error)
 	return pendingTransfers, nil
 }
 
-func (t *TransactionExecutor) queryMorePendingTransfers(appliedTransfers, invalidTransfers []models.Transfer) ([]models.Transfer, error) {
+func (t *TransactionExecutor) queryMorePendingTransfers(appliedTransfers []models.Transfer) ([]models.Transfer, error) {
+	numAppliedTransfers := uint32(len(appliedTransfers))
 	// TODO use SQL Offset instead
-	alreadySeenTransfers := append(appliedTransfers, invalidTransfers...) // nolint:gocritic
 	pendingTransfers, err := t.storage.GetPendingTransfers(
-		t.cfg.MaxCommitmentsPerBatch*t.cfg.TxsPerCommitment + uint32(len(alreadySeenTransfers)),
+		t.cfg.MaxCommitmentsPerBatch*t.cfg.TxsPerCommitment + numAppliedTransfers,
 	)
 	if err != nil {
 		return nil, err
 	}
-	pendingTransfers = removeTransfers(pendingTransfers, alreadySeenTransfers)
+	pendingTransfers = removeTransfers(pendingTransfers, appliedTransfers)
 
-	numNeededTransfers := t.cfg.TxsPerCommitment - uint32(len(appliedTransfers))
+	numNeededTransfers := t.cfg.TxsPerCommitment - numAppliedTransfers
 	if len(pendingTransfers) < int(numNeededTransfers) {
 		return nil, ErrNotEnoughTransfers
 	}

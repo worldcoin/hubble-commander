@@ -120,7 +120,7 @@ func (t *TransactionExecutor) applyC2TsForCommitment(pendingTransfers []models.C
 			return appliedTransfers, newPendingTransfers, addedPubKeyIDs, feeReceiverStateID, nil
 		}
 
-		pendingTransfers, err = t.queryMorePendingC2Ts(appliedTransfers, invalidTransfers)
+		pendingTransfers, err = t.queryMorePendingC2Ts(appliedTransfers)
 		if err != nil {
 			return nil, nil, nil, nil, err
 		}
@@ -145,21 +145,18 @@ func (t *TransactionExecutor) queryPendingC2Ts() ([]models.Create2Transfer, erro
 	return pendingTransfers, nil
 }
 
-func (t *TransactionExecutor) queryMorePendingC2Ts(appliedTransfers, invalidTransfers []models.Create2Transfer) (
-	[]models.Create2Transfer,
-	error,
-) {
+func (t *TransactionExecutor) queryMorePendingC2Ts(appliedTransfers []models.Create2Transfer) ([]models.Create2Transfer, error) {
+	numAppliedTransfers := uint32(len(appliedTransfers))
 	// TODO use SQL Offset instead
-	alreadySeenTransfers := append(appliedTransfers, invalidTransfers...) // nolint:gocritic
 	pendingTransfers, err := t.storage.GetPendingCreate2Transfers(
-		t.cfg.MaxCommitmentsPerBatch*t.cfg.TxsPerCommitment + uint32(len(alreadySeenTransfers)),
+		t.cfg.MaxCommitmentsPerBatch*t.cfg.TxsPerCommitment + numAppliedTransfers,
 	)
 	if err != nil {
 		return nil, err
 	}
-	pendingTransfers = removeC2Ts(pendingTransfers, alreadySeenTransfers)
+	pendingTransfers = removeC2Ts(pendingTransfers, appliedTransfers)
 
-	numNeededTransfers := t.cfg.TxsPerCommitment - uint32(len(appliedTransfers))
+	numNeededTransfers := t.cfg.TxsPerCommitment - numAppliedTransfers
 	if len(pendingTransfers) < int(numNeededTransfers) {
 		return nil, ErrNotEnoughC2Transfers
 	}
