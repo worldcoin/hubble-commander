@@ -172,21 +172,19 @@ func (s *ApplyTransferTestSuite) setUserStatesInTree() {
 	s.NoError(err)
 }
 
+// TODO move this test
 func (s *ApplyTransferTestSuite) TestApplyFee() {
-	receiverStateID := receiverState.PubKeyID
-	err := s.tree.Set(receiverStateID, &receiverState)
+	feeReceiverStateID := receiverState.PubKeyID
+	err := s.tree.Set(feeReceiverStateID, &receiverState)
 	s.NoError(err)
 
-	s.transactionExecutor.cfg.FeeReceiverPubKeyID = receiverStateID
-
-	feeReceiverStateID, err := s.transactionExecutor.ApplyFee(models.MakeUint256(1), models.MakeUint256(555))
-	s.NoError(err)
-	s.Equal(receiverStateID, *feeReceiverStateID)
-
-	receiverLeaf, err := s.storage.GetStateLeaf(receiverStateID)
+	err = s.transactionExecutor.ApplyFee(feeReceiverStateID, models.MakeUint256(555))
 	s.NoError(err)
 
-	s.Equal(uint64(555), receiverLeaf.Balance.Uint64())
+	feeReceiverState, err := s.storage.GetStateLeaf(feeReceiverStateID)
+	s.NoError(err)
+
+	s.Equal(uint64(555), feeReceiverState.Balance.Uint64())
 }
 
 func TestApplyTransferTestSuite(t *testing.T) {
