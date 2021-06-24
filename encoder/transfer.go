@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-const transferLength = 12
+const TransferLength = 12
 
 func EncodeTransfer(tx *models.Transfer) ([]byte, error) {
 	arguments := abi.Arguments{
@@ -63,7 +63,7 @@ func EncodeTransferForCommitment(transfer *models.Transfer) ([]byte, error) {
 		return nil, err
 	}
 
-	arr := make([]byte, transferLength)
+	arr := make([]byte, TransferLength)
 
 	binary.BigEndian.PutUint32(arr[0:4], transfer.FromStateID)
 	binary.BigEndian.PutUint32(arr[4:8], transfer.ToStateID)
@@ -100,7 +100,7 @@ func DecodeTransferFromCommitment(data []byte) (*models.Transfer, error) {
 }
 
 func SerializeTransfers(transfers []models.Transfer) ([]byte, error) {
-	buf := make([]byte, 0, len(transfers)*transferLength)
+	buf := make([]byte, 0, len(transfers)*TransferLength)
 
 	for i := range transfers {
 		encoded, err := EncodeTransferForCommitment(&transfers[i])
@@ -114,15 +114,11 @@ func SerializeTransfers(transfers []models.Transfer) ([]byte, error) {
 }
 
 func DeserializeTransfers(data []byte) ([]models.Transfer, error) {
-	dataLength := len(data)
-	if dataLength%transferLength != 0 {
-		return nil, ErrInvalidDataLength
-	}
-	transfersCount := dataLength / transferLength
+	transfersCount := len(data) / TransferLength
 
 	res := make([]models.Transfer, 0, transfersCount)
 	for i := 0; i < transfersCount; i++ {
-		transfer, err := DecodeTransferFromCommitment(data[i*transferLength : (i+1)*transferLength])
+		transfer, err := DecodeTransferFromCommitment(data[i*TransferLength : (i+1)*TransferLength])
 		if err != nil {
 			return nil, err
 		}
