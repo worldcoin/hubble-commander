@@ -12,9 +12,12 @@ var (
 	ErrNonceTooHigh          = errors.New("nonce too high")
 	ErrInvalidSliceLength    = errors.New("invalid slices length")
 	ErrNilReceiverStateID    = errors.New("transfer receiver state id cannot be nil")
-	ErrBalanceTooLow         = NewDisputableTransferError("not enough balance")
-	ErrIncorrectTokenIndices = NewDisputableTransferError("sender's, receiver's and fee receiver's token indices are not the same")
-	ErrInvalidTokenAmount    = NewDisputableTransferError("amount cannot be equal to 0")
+	ErrBalanceTooLow         = NewDisputableTransferError("not enough balance", TransitionError)
+	ErrIncorrectTokenIndices = NewDisputableTransferError(
+		"sender's, receiver's and fee receiver's token indices are not the same",
+		TransitionError,
+	)
+	ErrInvalidTokenAmount = NewDisputableTransferError("amount cannot be equal to 0", TransitionError)
 )
 
 func (t *TransactionExecutor) ApplyTransfer(

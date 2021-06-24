@@ -17,7 +17,7 @@ var (
 	ErrFraudulentTransfer    = errors.New("fraudulent transfer encountered when syncing")
 	ErrTransfersNotApplied   = errors.New("could not apply all transfers from synced batch")
 	ErrBatchSubmissionFailed = errors.New("previous submit batch transaction failed")
-	ErrInvalidSignature      = NewDisputableTransferError("invalid signature")
+	ErrInvalidSignature      = NewDisputableTransferError("invalid signature", SignatureError)
 )
 
 func (t *TransactionExecutor) SyncBatch(remoteBatch *eth.DecodedBatch) error {
