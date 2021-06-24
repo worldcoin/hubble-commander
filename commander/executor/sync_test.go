@@ -233,7 +233,7 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyTransfersInCommitment() {
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.CreateTransferCommitments([]models.Transfer{tx}, testDomain)
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -281,7 +281,7 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyCreate2TransfersInCommitment() {
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Create2Transfer)
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.createCreate2TransferCommitments([]models.Create2Transfer{tx}, testDomain)
+	commitments, err := s.transactionExecutor.CreateCreate2TransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
