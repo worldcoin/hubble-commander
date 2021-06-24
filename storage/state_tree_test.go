@@ -288,6 +288,7 @@ func (s *StateTreeTestSuite) TestRevertTo() {
 	s.NoError(err)
 	s.Equal(states[0], leaf.UserState)
 }
+
 func (s *StateTreeTestSuite) TestRevertTo_NotExistentRootHash() {
 	states := []models.UserState{
 		{
@@ -316,6 +317,101 @@ func (s *StateTreeTestSuite) TestRevertTo_NotExistentRootHash() {
 
 	err := s.tree.RevertTo(common.Hash{1, 2, 3})
 	s.Equal(ErrNotExistentState, err)
+}
+
+func (s *StateTreeTestSuite) TestReverseIterateStateUpdates() {
+	states := []models.UserState{
+		{
+			PubKeyID:   1,
+			TokenIndex: models.MakeUint256(1),
+			Balance:    models.MakeUint256(420),
+			Nonce:      models.MakeUint256(0),
+		},
+		{
+			PubKeyID:   2,
+			TokenIndex: models.MakeUint256(5),
+			Balance:    models.MakeUint256(100),
+			Nonce:      models.MakeUint256(0),
+		},
+		{
+			PubKeyID:   1,
+			TokenIndex: models.MakeUint256(1),
+			Balance:    models.MakeUint256(500),
+			Nonce:      models.MakeUint256(0),
+		},
+	}
+
+	/*
+
+		0 -
+		1 -
+
+		0 states[0]
+		state update - prev leaf = -
+
+		1 states[1]
+		state update - prev leaf = -
+
+		0 states[2]
+		state update - prev leaf = states[0]
+
+		--------
+		states[2]
+		witness
+
+		states[0]
+		witness
+
+		-
+		witness
+
+		-
+		witness
+
+
+	*/
+
+	err := s.tree.Set(0, &states[0])
+	s.NoError(err)
+	witnesses0, err := s.tree.GetWitnesses(models.MakeMerklePathFromStateID(0))
+	s.NoError(err)
+
+	stateRoot, err := s.tree.Root()
+	s.NoError(err)
+
+	err = s.tree.Set(1, &states[1])
+	s.NoError(err)
+	witnesses1, err := s.tree.GetWitnesses(models.MakeMerklePathFromStateID(1))
+	s.NoError(err)
+
+	err = s.tree.Set(0, &states[2])
+	s.NoError(err)
+	witnesses2, err := s.tree.GetWitnesses(models.MakeMerklePathFromStateID(0))
+	s.NoError(err)
+
+	proofs, err := s.tree.ReverseIterateStateUpdates(*stateRoot)
+	s.NoError(err)
+	s.Len(proofs, 3)
+	s.Equal(models.StateMerkleProof{
+		UserState: &states[2],
+		Witness:   witnesses2,
+	}, proofs[0])
+	s.Equal(models.StateMerkleProof{
+		UserState: &states[0],
+		Witness:   witnesses0,
+	}, proofs[1])
+	s.Equal(models.StateMerkleProof{
+		UserState: &states[1],
+		Witness:   witnesses1,
+	}, proofs[2])
+
+	newStateRoot, err := s.tree.Root()
+	s.NoError(err)
+	s.Equal(stateRoot, newStateRoot)
+
+	leaf, err := s.tree.Leaf(0)
+	s.NoError(err)
+	s.Equal(states[0], leaf.UserState)
 }
 
 func TestMerkleTreeTestSuite(t *testing.T) {

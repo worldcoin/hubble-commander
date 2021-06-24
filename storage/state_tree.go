@@ -238,6 +238,112 @@ func (s *StateTree) updateStateNodes(leafPath *models.MerklePath, newLeafHash *c
 	return &currentHash, nil
 }
 
+func (s *StateTree) ReverseIterateStateUpdates(targetRootHash common.Hash) ([]models.StateMerkleProof, error) {
+	txn, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Rollback(&err)
+
+	stateTree := NewStateTree(storage)
+	var currentRootHash *common.Hash
+	proofs := make([]models.StateMerkleProof, 0)
+	err = storage.Badger.View(func(txn *bdg.Txn) error {
+		currentRootHash, err = stateTree.Root()
+		if err != nil {
+			return err
+		}
+
+		opts := bdg.DefaultIteratorOptions
+		opts.Reverse = true
+		it := txn.NewIterator(opts)
+		defer it.Close()
+
+		seekPrefix := make([]byte, 0, len(stateUpdatePrefix)+1)
+		seekPrefix = append(seekPrefix, 0xFF)
+		for it.Seek(seekPrefix); it.ValidForPrefix(stateUpdatePrefix); it.Next() {
+			if *currentRootHash == targetRootHash {
+				return nil
+			}
+			var stateUpdate *models.StateUpdate
+			stateUpdate, err = decodeStateUpdate(it.Item())
+			if err != nil {
+				return err
+			}
+			if stateUpdate.CurrentRoot != *currentRootHash {
+				panic("invalid current root of a previous state update, this should never happen")
+			}
+
+			leafPath := models.MakeMerklePathFromStateID(stateUpdate.PrevStateLeaf.StateID)
+			if len(proofs) == 0 {
+				witnesses, err := s.GetWitnesses(leafPath)
+				if err != nil {
+					return err
+				}
+				leaf, err := s.Leaf(stateUpdate.PrevStateLeaf.StateID)
+				if err != nil {
+					return err
+				}
+				proofs = append(proofs, models.StateMerkleProof{
+					UserState: &leaf.UserState,
+					Witness:   witnesses,
+				})
+			}
+
+			err = storage.UpsertStateLeaf(&stateUpdate.PrevStateLeaf)
+			if err != nil {
+				return err
+			}
+
+			currentRootHash, err = stateTree.updateStateNodes(&leafPath, &stateUpdate.PrevStateLeaf.DataHash)
+			if err != nil {
+				return err
+			}
+			if *currentRootHash != stateUpdate.PrevRoot {
+				return fmt.Errorf("unexpected state root after state update rollback")
+			}
+
+			err = storage.DeleteStateUpdate(stateUpdate.ID)
+			if err != nil {
+				return err
+			}
+
+			witnesses, err := s.GetWitnesses(leafPath)
+			if err != nil {
+				return err
+			}
+			proofs = append(proofs, models.StateMerkleProof{
+				UserState: &stateUpdate.PrevStateLeaf.UserState,
+				Witness:   witnesses,
+			})
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if *currentRootHash != targetRootHash {
+		return nil, ErrNotExistentState
+	}
+	return proofs, txn.Commit()
+}
+
+func (s *StateTree) GetWitnesses(leafPath models.MerklePath) (models.Witness, error) {
+	witnessPaths, err := leafPath.GetWitnessPaths()
+	if err != nil {
+		return nil, err
+	}
+	nodes, err := s.storage.GetStateNodes(witnessPaths)
+	if err != nil {
+		return nil, err
+	}
+	witnesses := make([]common.Hash, 0, len(nodes))
+	for i := range nodes {
+		witnesses = append(witnesses, nodes[i].DataHash)
+	}
+	return witnesses, nil
+}
+
 func getWitnessHash(nodes map[models.MerklePath]common.Hash, path models.MerklePath) common.Hash {
 	witnessHash, ok := nodes[path]
 	if !ok {
