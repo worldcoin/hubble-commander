@@ -8,20 +8,18 @@ import (
 )
 
 type AppliedC2Transfers struct {
-	appliedTransfers   []models.Create2Transfer
-	invalidTransfers   []models.Create2Transfer
-	addedPubKeyIDs     []uint32
-	feeReceiverStateID *uint32
+	appliedTransfers []models.Create2Transfer
+	invalidTransfers []models.Create2Transfer
+	addedPubKeyIDs   []uint32
 }
 
-func (t *TransactionExecutor) ApplyCreate2Transfers(transfers []models.Create2Transfer, maxApplied uint32) (*AppliedC2Transfers, error) {
+func (t *TransactionExecutor) ApplyCreate2Transfers(
+	transfers []models.Create2Transfer,
+	maxApplied uint32,
+	feeReceiver *FeeReceiver,
+) (*AppliedC2Transfers, error) {
 	if len(transfers) == 0 {
 		return &AppliedC2Transfers{}, nil
-	}
-
-	commitmentTokenIndex, err := t.getTokenIndex(transfers[0].FromStateID)
-	if err != nil {
-		return nil, err
 	}
 
 	syncedBlock, err := t.storage.GetSyncedBlock(t.client.ChainState.ChainID)
@@ -49,19 +47,19 @@ func (t *TransactionExecutor) ApplyCreate2Transfers(transfers []models.Create2Tr
 
 		transfer := &transfers[i]
 		var pubKeyID *uint32
-		pubKeyID, err = t.getOrRegisterPubKeyID(events, transfer, *commitmentTokenIndex)
+		pubKeyID, err = t.getOrRegisterPubKeyID(events, transfer, feeReceiver.TokenID)
 		if err != nil {
 			return nil, err
 		}
 
-		_, err = t.handleApplyC2T(transfer, *pubKeyID, returnStruct, combinedFee, commitmentTokenIndex)
+		_, err = t.handleApplyC2T(transfer, *pubKeyID, returnStruct, combinedFee, &feeReceiver.TokenID)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if len(returnStruct.appliedTransfers) > 0 {
-		returnStruct.feeReceiverStateID, err = t.ApplyFee(*commitmentTokenIndex, *combinedFee)
+		err = t.ApplyFee(feeReceiver.StateID, *combinedFee)
 		if err != nil {
 			return nil, err
 		}
@@ -73,6 +71,7 @@ func (t *TransactionExecutor) ApplyCreate2Transfers(transfers []models.Create2Tr
 func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 	transfers []models.Create2Transfer,
 	pubKeyIDs []uint32,
+	feeReceiver *FeeReceiver,
 ) (*AppliedC2Transfers, error) {
 	if len(transfers) == 0 {
 		return nil, nil
@@ -86,17 +85,12 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 	returnStruct.appliedTransfers = make([]models.Create2Transfer, 0, t.cfg.TxsPerCommitment)
 	combinedFee := models.NewUint256(0)
 
-	commitmentTokenIndex, err := t.getTokenIndex(transfers[0].FromStateID)
-	if err != nil {
-		return nil, err
-	}
-
 	for i := range transfers {
 		transfer := &transfers[i]
 
-		transferError, appError := t.handleApplyC2T(transfer, pubKeyIDs[i], returnStruct, combinedFee, commitmentTokenIndex)
+		transferError, appError := t.handleApplyC2T(transfer, pubKeyIDs[i], returnStruct, combinedFee, &feeReceiver.TokenID)
 		if appError != nil {
-			return nil, err
+			return nil, appError
 		}
 		if transferError != nil {
 			return returnStruct, nil
@@ -104,21 +98,13 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 	}
 
 	if len(returnStruct.appliedTransfers) > 0 {
-		_, err = t.ApplyFee(*commitmentTokenIndex, *combinedFee)
+		err := t.ApplyFee(feeReceiver.StateID, *combinedFee)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	return returnStruct, nil
-}
-
-func (t *TransactionExecutor) getTokenIndex(stateID uint32) (*models.Uint256, error) {
-	senderLeaf, err := t.storage.GetStateLeaf(stateID)
-	if err != nil {
-		return nil, err
-	}
-	return &senderLeaf.TokenIndex, nil
 }
 
 func (t *TransactionExecutor) getOrRegisterPubKeyID(
