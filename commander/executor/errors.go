@@ -1,6 +1,9 @@
 package executor
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 type RollupError struct {
 	Reason string
@@ -36,4 +39,12 @@ func (e DisputableTransferError) Error() string {
 	} else {
 		return fmt.Sprintf("failed to validate transfer: %s", e.Reason)
 	}
+}
+
+func IsDisputableTransferError(err error) bool {
+	if err == nil {
+		return false
+	}
+	target := &DisputableTransferError{}
+	return errors.As(err, &target)
 }
