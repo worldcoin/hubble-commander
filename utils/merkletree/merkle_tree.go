@@ -109,17 +109,17 @@ func (m *MerkleTree) Root() common.Hash {
 	return m.nodes[0]
 }
 
-func (m *MerkleTree) GetWitnesses(leafIndex uint32) models.Witnesses {
+func (m *MerkleTree) GetWitness(leafIndex uint32) models.Witness {
 	leafPath := models.MerklePath{Depth: m.depth - 1, Path: leafIndex}
 
-	witnesses := make([]common.Hash, m.depth-1)
+	witness := make([]common.Hash, m.depth-1)
 	for leafPath.Depth > 0 {
 		sibling, err := leafPath.Sibling()
 		if err != nil {
 			log.Fatal(err) // Can not fail
 		}
 
-		witnesses[m.depth-leafPath.Depth-1] = m.GetNode(*sibling)
+		witness[m.depth-leafPath.Depth-1] = m.GetNode(*sibling)
 
 		parent, err := leafPath.Parent()
 		if err != nil {
@@ -128,7 +128,7 @@ func (m *MerkleTree) GetWitnesses(leafIndex uint32) models.Witnesses {
 		leafPath = *parent
 	}
 
-	return witnesses
+	return witness
 }
 
 func getRequiredTreeHeight(leafCount int32) uint8 {
