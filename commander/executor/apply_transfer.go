@@ -8,13 +8,13 @@ import (
 )
 
 var (
-	ErrIncorrectTokenIndices = errors.New("sender's, receiver's and fee receiver's token indices are not the same")
 	ErrNonceTooLow           = errors.New("nonce too low")
 	ErrNonceTooHigh          = errors.New("nonce too high")
-	ErrInvalidTokenAmount    = errors.New("amount cannot be equal to 0")
-	ErrBalanceTooLow         = errors.New("not enough balance")
 	ErrInvalidSliceLength    = errors.New("invalid slices length")
 	ErrNilReceiverStateID    = errors.New("transfer receiver state id cannot be nil")
+	ErrBalanceTooLow         = NewDisputableTransferError("not enough balance")
+	ErrIncorrectTokenIndices = NewDisputableTransferError("sender's, receiver's and fee receiver's token indices are not the same")
+	ErrInvalidTokenAmount    = NewDisputableTransferError("amount cannot be equal to 0")
 )
 
 func (t *TransactionExecutor) ApplyTransfer(

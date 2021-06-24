@@ -1,15 +1,14 @@
 package executor
 
 import (
-	"errors"
-
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
 var (
-	ErrTooManyTx = errors.New("too many transactions in a commitment")
+	ErrTooManyTx         = NewDisputableTransferError("too many transactions in a commitment")
+	ErrInvalidDataLength = NewDisputableTransferError("invalid data length")
 )
 
 func (t *TransactionExecutor) syncTransferCommitments(batch *eth.DecodedBatch) error {
@@ -30,6 +29,10 @@ func (t *TransactionExecutor) syncTransferCommitment(
 	batch *eth.DecodedBatch,
 	commitment *encoder.DecodedCommitment,
 ) error {
+	if len(commitment.Transactions)%encoder.TransferLength != 0 {
+		return ErrInvalidDataLength
+	}
+
 	deserializedTransfers, err := encoder.DeserializeTransfers(commitment.Transactions)
 	if err != nil {
 		return err
