@@ -1,6 +1,8 @@
 package encoder
 
 import (
+	"encoding/binary"
+	"github.com/ethereum/go-ethereum/crypto"
 	"math/big"
 	"strings"
 
@@ -16,6 +18,17 @@ type DecodedCommitment struct {
 	CombinedSignature models.Signature
 	FeeReceiver       uint32
 	Transactions      []byte
+}
+
+func (c *DecodedCommitment) BodyHash(accountRoot common.Hash) common.Hash {
+	arr := make([]byte, 32+64+32+len(c.Transactions))
+
+	copy(arr[0:32], accountRoot.Bytes())
+	copy(arr[32:96], c.CombinedSignature.Bytes())
+	binary.BigEndian.PutUint32(arr[124:128], c.FeeReceiver)
+	copy(arr[128:], c.Transactions)
+
+	return crypto.Keccak256Hash(arr)
 }
 
 // DecodeBatchCalldata
