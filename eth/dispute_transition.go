@@ -61,7 +61,7 @@ func (c *Client) GetRollbackStatus(
 				return rollbackStatus, nil
 			}
 		case <-time.After(*c.config.txTimeout):
-			return nil, errors.New("GetRollbackStatus: timeout")
+			return nil, errors.New("getRollbackStatus: timeout")
 		}
 	}
 }
@@ -73,7 +73,7 @@ func CommitmentProofToCalldata(proof *models.CommitmentInclusionProof) *rollup.T
 			BodyRoot:  proof.BodyRoot,
 		},
 		Path:    new(big.Int).SetUint64(uint64(proof.Path.Path)),
-		Witness: proof.Witness.Bytes(),
+		Witness: proof.Witnesses.Bytes(),
 	}
 }
 
@@ -89,7 +89,7 @@ func TransferProofToCalldata(proof *models.TransferCommitmentInclusionProof) *ro
 			},
 		},
 		Path:    new(big.Int).SetUint64(uint64(proof.Path.Path)),
-		Witness: proof.Witness.Bytes(),
+		Witness: proof.Witnesses.Bytes(),
 	}
 }
 
@@ -109,6 +109,6 @@ func stateMerkleProofToCalldata(proof *models.StateMerkleProof) *rollup.TypesSta
 			Balance:  proof.UserState.Balance.ToBig(),
 			Nonce:    proof.UserState.Nonce.ToBig(),
 		},
-		Witness: proof.Witness.Bytes(),
+		Witness: proof.Witnesses.Bytes(),
 	}
 }

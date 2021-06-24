@@ -2,9 +2,9 @@ package models
 
 import "github.com/ethereum/go-ethereum/common"
 
-type Witness []common.Hash
+type Witnesses []common.Hash
 
-func (w Witness) Bytes() [][32]byte {
+func (w Witnesses) Bytes() [][32]byte {
 	result := make([][32]byte, 0, len(w))
 	for i := range w {
 		result = append(result, w[i])

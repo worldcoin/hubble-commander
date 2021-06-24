@@ -48,7 +48,7 @@ func TestMerkleTree_GetWitness_OnlyRoot(t *testing.T) {
 	tree, err := NewMerkleTree([]common.Hash{hash})
 	require.NoError(t, err)
 
-	witness := tree.GetWitness(0)
+	witness := tree.GetWitnesses(0)
 	require.Len(t, witness, 0)
 }
 
@@ -59,8 +59,8 @@ func TestMerkleTree_GetWitness_TwoNodes(t *testing.T) {
 	tree, err := NewMerkleTree([]common.Hash{left, right})
 	require.NoError(t, err)
 
-	require.Equal(t, models.Witness{right}, tree.GetWitness(0))
-	require.Equal(t, models.Witness{left}, tree.GetWitness(1))
+	require.Equal(t, models.Witnesses{right}, tree.GetWitnesses(0))
+	require.Equal(t, models.Witnesses{left}, tree.GetWitnesses(1))
 }
 
 func TestMerkleTree_GetWitness_ThreeNodes(t *testing.T) {
@@ -74,7 +74,7 @@ func TestMerkleTree_GetWitness_ThreeNodes(t *testing.T) {
 	tree, err := NewMerkleTree([]common.Hash{leaf1, leaf2, leaf3})
 	require.NoError(t, err)
 
-	require.Equal(t, models.Witness{leaf2, h30}, tree.GetWitness(0))
-	require.Equal(t, models.Witness{leaf1, h30}, tree.GetWitness(1))
-	require.Equal(t, models.Witness{GetZeroHash(2), h12}, tree.GetWitness(2))
+	require.Equal(t, models.Witnesses{leaf2, h30}, tree.GetWitnesses(0))
+	require.Equal(t, models.Witnesses{leaf1, h30}, tree.GetWitnesses(1))
+	require.Equal(t, models.Witnesses{GetZeroHash(2), h12}, tree.GetWitnesses(2))
 }

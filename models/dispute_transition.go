@@ -8,14 +8,14 @@ type CommitmentInclusionProof struct {
 	StateRoot common.Hash
 	BodyRoot  common.Hash
 	Path      *MerklePath
-	Witness   Witness
+	Witnesses Witnesses
 }
 
 type TransferCommitmentInclusionProof struct {
 	StateRoot common.Hash
 	Body      *TransferBody
 	Path      *MerklePath
-	Witness   Witness
+	Witnesses Witnesses
 }
 
 type TransferBody struct {
@@ -27,5 +27,5 @@ type TransferBody struct {
 
 type StateMerkleProof struct {
 	UserState *UserState
-	Witness   Witness
+	Witnesses Witnesses
 }
