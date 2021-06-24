@@ -97,6 +97,17 @@ func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_UpdatesStates()
 	s.NotEqual(&newReceiverState, &receiverState)
 }
 
+func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_InvalidTokenAMount() {
+	invalidTransfer := transfer
+	invalidTransfer.Amount = models.MakeUint256(0)
+	_, _, err := CalculateStateAfterTransfer(
+		&senderState,
+		&receiverState,
+		&invalidTransfer,
+	)
+	s.Equal(ErrInvalidTokenAmount, err)
+}
+
 func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_ValidatesBalance() {
 	transferAboveBalance := transfer
 	transferAboveBalance.Amount = models.MakeUint256(410)

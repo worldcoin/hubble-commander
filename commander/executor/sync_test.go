@@ -214,6 +214,101 @@ func (s *SyncTestSuite) TestSyncBatch_PendingBatch() {
 	s.Equal(accountRoot, *batches[0].AccountTreeRoot)
 }
 
+func (s *SyncTestSuite) TestSyncBatch_TooManyTransfersInCommitment() {
+	tx := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			TxType:      txtype.Transfer,
+			FromStateID: 0,
+			Amount:      models.MakeUint256(400),
+			Fee:         models.MakeUint256(0),
+			Nonce:       models.MakeUint256(0),
+		},
+		ToStateID: 1,
+	}
+	s.setTransferHash(&tx)
+	signTransfer(s.T(), &s.wallets[tx.FromStateID], &tx)
+	err := s.storage.AddTransfer(&tx)
+	s.NoError(err)
+
+	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
+	s.NoError(err)
+
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
+	s.NoError(err)
+	s.Len(commitments, 1)
+
+	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)
+
+	err = s.transactionExecutor.SubmitBatch(pendingBatch, commitments)
+	s.NoError(err)
+
+	s.client.Commit()
+
+	s.recreateDatabase()
+
+	latestBlockNumber, err := s.client.GetLatestBlockNumber()
+	s.NoError(err)
+
+	newRemoteBatches, err := s.client.GetBatches(&bind.FilterOpts{
+		Start: 0,
+		End:   latestBlockNumber,
+	})
+	s.NoError(err)
+	s.Len(newRemoteBatches, 1)
+
+	remoteBatch := &newRemoteBatches[0]
+	err = s.transactionExecutor.SyncBatch(remoteBatch)
+	s.Equal(ErrTooManyTx, err)
+}
+
+func (s *SyncTestSuite) TestSyncBatch_TooManyCreate2TransfersInCommitment() {
+	tx := models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			TxType:      txtype.Create2Transfer,
+			FromStateID: 0,
+			Amount:      models.MakeUint256(400),
+			Fee:         models.MakeUint256(0),
+			Nonce:       models.MakeUint256(0),
+		},
+		ToStateID:   ref.Uint32(5),
+		ToPublicKey: *s.wallets[0].PublicKey(),
+	}
+	s.setCreate2TransferHash(&tx)
+	signCreate2Transfer(s.T(), &s.wallets[tx.FromStateID], &tx)
+	err := s.storage.AddCreate2Transfer(&tx)
+	s.NoError(err)
+
+	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Create2Transfer)
+	s.NoError(err)
+
+	commitments, err := s.transactionExecutor.CreateCreate2TransferCommitments(testDomain)
+	s.NoError(err)
+	s.Len(commitments, 1)
+
+	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)
+
+	err = s.transactionExecutor.SubmitBatch(pendingBatch, commitments)
+	s.NoError(err)
+
+	s.client.Commit()
+
+	s.recreateDatabase()
+
+	latestBlockNumber, err := s.client.GetLatestBlockNumber()
+	s.NoError(err)
+
+	newRemoteBatches, err := s.client.GetBatches(&bind.FilterOpts{
+		Start: 0,
+		End:   latestBlockNumber,
+	})
+	s.NoError(err)
+	s.Len(newRemoteBatches, 1)
+
+	remoteBatch := &newRemoteBatches[0]
+	err = s.transactionExecutor.SyncBatch(remoteBatch)
+	s.Equal(ErrTooManyTx, err)
+}
+
 func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 	tx := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
