@@ -42,7 +42,7 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 	)
 }
 
-func (c *Client) getRollbackStatus(
+func (c *Client) GetRollbackStatus(
 	transactionHash common.Hash,
 ) (*rollup.RollupRollbackStatus, error) {
 	sink := make(chan *rollup.RollupRollbackStatus)
@@ -61,7 +61,7 @@ func (c *Client) getRollbackStatus(
 				return rollbackStatus, nil
 			}
 		case <-time.After(*c.config.txTimeout):
-			return nil, errors.New("getRollbackStatus: timeout")
+			return nil, errors.New("GetRollbackStatus: timeout")
 		}
 	}
 }
