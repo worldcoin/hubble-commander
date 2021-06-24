@@ -23,5 +23,5 @@ func NewDisputableTransferError(reason string) *DisputableTransferError {
 }
 
 func (e DisputableTransferError) Error() string {
-	return fmt.Sprintf("failed to sync batch: %s", e.Reason)
+	return fmt.Sprintf("failed to validate transfer: %s", e.Reason)
 }
