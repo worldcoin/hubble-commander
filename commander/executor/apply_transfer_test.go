@@ -81,8 +81,8 @@ func (s *ApplyTransferTestSuite) TearDownTest() {
 
 func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_UpdatesStates() {
 	newSenderState, newReceiverState, err := CalculateStateAfterTransfer(
-		&senderState,
-		&receiverState,
+		senderState,
+		receiverState,
 		&transfer,
 	)
 	s.NoError(err)
@@ -101,8 +101,8 @@ func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_InvalidTokenAmo
 	invalidTransfer := transfer
 	invalidTransfer.Amount = models.MakeUint256(0)
 	_, _, err := CalculateStateAfterTransfer(
-		&senderState,
-		&receiverState,
+		senderState,
+		receiverState,
 		&invalidTransfer,
 	)
 	s.Equal(ErrInvalidTokenAmount, err)
@@ -112,7 +112,7 @@ func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_ValidatesBalanc
 	transferAboveBalance := transfer
 	transferAboveBalance.Amount = models.MakeUint256(410)
 
-	_, _, err := CalculateStateAfterTransfer(&senderState, &receiverState, &transferAboveBalance)
+	_, _, err := CalculateStateAfterTransfer(senderState, receiverState, &transferAboveBalance)
 	s.Equal(ErrBalanceTooLow, err)
 }
 

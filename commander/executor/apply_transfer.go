@@ -13,8 +13,11 @@ var (
 	ErrInvalidSliceLength    = errors.New("invalid slices length")
 	ErrNilReceiverStateID    = errors.New("transfer receiver state id cannot be nil")
 	ErrBalanceTooLow         = NewDisputableTransferError(TransitionError, "not enough balance")
-	ErrIncorrectTokenIndices = NewDisputableTransferError(TransitionError, "sender's, receiver's and fee receiver's token indices are not the same")
-	ErrInvalidTokenAmount    = NewDisputableTransferError(TransitionError, "amount cannot be equal to 0")
+	ErrIncorrectTokenIndices = NewDisputableTransferError(
+		TransitionError,
+		"sender's, receiver's and fee receiver's token indices are not the same",
+	)
+	ErrInvalidTokenAmount = NewDisputableTransferError(TransitionError, "amount cannot be equal to 0")
 )
 
 func (t *TransactionExecutor) ApplyTransfer(
@@ -52,23 +55,19 @@ func (t *TransactionExecutor) ApplyTransfer(
 		}
 	}
 
-	newSenderState, newReceiverState, err := CalculateStateAfterTransfer(
-		&senderState,
-		&receiverState,
-		transfer,
-	)
+	newSenderState, newReceiverState, err := CalculateStateAfterTransfer(senderState, receiverState, transfer)
 	if err != nil {
 		return err, nil
 	}
 
-	if !reflect.DeepEqual(newSenderState, senderState) {
-		err = t.stateTree.Set(transfer.GetFromStateID(), &newSenderState)
+	if !reflect.DeepEqual(*newSenderState, senderState) {
+		err = t.stateTree.Set(transfer.GetFromStateID(), newSenderState)
 		if err != nil {
 			return nil, err
 		}
 	}
-	if !reflect.DeepEqual(newReceiverState, receiverState) {
-		err = t.stateTree.Set(*receiverStateID, &newReceiverState)
+	if !reflect.DeepEqual(*newReceiverState, receiverState) {
+		err = t.stateTree.Set(*receiverStateID, newReceiverState)
 		if err != nil {
 			return nil, err
 		}
@@ -78,30 +77,26 @@ func (t *TransactionExecutor) ApplyTransfer(
 }
 
 func CalculateStateAfterTransfer(
-	senderState,
-	receiverState *models.UserState,
+	senderState, receiverState models.UserState, // nolint:gocritic
 	transfer models.GenericTransfer,
 ) (
-	newSenderState models.UserState,
-	newReceiverState models.UserState,
+	newSenderState, newReceiverState *models.UserState,
 	err error,
 ) {
 	amount := transfer.GetAmount()
 	fee := transfer.GetFee()
 
 	if amount.CmpN(0) <= 0 {
-		err = ErrInvalidTokenAmount
-		return
+		return nil, nil, ErrInvalidTokenAmount
 	}
 
 	totalAmount := amount.Add(&fee)
 	if senderState.Balance.Cmp(totalAmount) < 0 {
-		err = ErrBalanceTooLow
-		return
+		return nil, nil, ErrBalanceTooLow
 	}
 
-	newSenderState = *senderState
-	newReceiverState = *receiverState
+	newSenderState = &senderState
+	newReceiverState = &receiverState
 
 	newSenderState.Nonce = *newSenderState.Nonce.AddN(1)
 	newSenderState.Balance = *newSenderState.Balance.Sub(totalAmount)
