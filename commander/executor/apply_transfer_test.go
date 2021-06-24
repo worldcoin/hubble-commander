@@ -98,12 +98,12 @@ func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_UpdatesStates()
 }
 
 func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_InvalidTokenAMount() {
-	invalidTransfer := &transfer
+	invalidTransfer := transfer
 	invalidTransfer.Amount = models.MakeUint256(0)
 	_, _, err := CalculateStateAfterTransfer(
 		&senderState,
 		&receiverState,
-		invalidTransfer,
+		&invalidTransfer,
 	)
 	s.Equal(ErrInvalidTokenAmount, err)
 }
