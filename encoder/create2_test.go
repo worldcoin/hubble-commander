@@ -145,6 +145,30 @@ func (s *Create2TestSuite) TestEncodeCreate2TransferForCommitment() {
 	s.Equal(expected, encoded)
 }
 
+func (s *Create2TestSuite) TestDecodeCreate2TransferForCommitment() {
+	transfer := &models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			TxType:      txtype.Create2Transfer,
+			FromStateID: 1,
+			Amount:      models.MakeUint256(50),
+			Fee:         models.MakeUint256(10),
+		},
+		ToStateID: ref.Uint32(2),
+	}
+	transferHash, err := HashCreate2Transfer(transfer)
+	s.NoError(err)
+	transfer.Hash = *transferHash
+
+	encoded, err := EncodeCreate2TransferForCommitment(transfer, 6)
+	s.NoError(err)
+
+	decoded, pubKeyID, err := DecodeCreate2TransferFromCommitment(encoded)
+	s.NoError(err)
+	s.EqualValues(6, pubKeyID)
+
+	s.Equal(transfer, decoded)
+}
+
 func (s *Create2TestSuite) TestSerializeCreate2Transfers() {
 	transfer := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
