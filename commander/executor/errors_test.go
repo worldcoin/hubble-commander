@@ -7,8 +7,8 @@ import (
 )
 
 func TestIsDisputableTransferError(t *testing.T) {
-	transitionError := NewDisputableTransferError("validation duck", TransitionError)
-	signatureError := NewDisputableTransferError("signature duck", SignatureError)
+	transitionError := NewDisputableTransferError(TransitionError, "validation duck")
+	signatureError := NewDisputableTransferError(SignatureError, "signature duck")
 
 	require.True(t, IsDisputableTransferError(transitionError))
 	require.True(t, IsDisputableTransferError(signatureError))
