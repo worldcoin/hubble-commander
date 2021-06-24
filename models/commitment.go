@@ -37,6 +37,10 @@ type CommitmentWithTokenID struct {
 	PostStateRoot      common.Hash `db:"post_state_root"`
 }
 
+func (c *CommitmentWithTokenID) BodyHash(accountRoot common.Hash) common.Hash {
+	return calcBodyHash(c.FeeReceiverStateID, c.CombinedSignature, c.Transactions, accountRoot.Bytes())
+}
+
 func (c *CommitmentWithTokenID) CalcLeafHash(accountTreeRoot *common.Hash) common.Hash {
 	bodyHash := calcBodyHash(c.FeeReceiverStateID, c.CombinedSignature, c.Transactions, accountTreeRoot.Bytes())
 	return utils.HashTwo(c.PostStateRoot, bodyHash)
