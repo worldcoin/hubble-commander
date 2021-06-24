@@ -103,10 +103,6 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_QueriesForM
 
 	s.addTransfers(transfers)
 
-	pendingTransfers, err := s.storage.GetPendingTransfers(pendingTxsCountMultiplier * s.cfg.TxsPerCommitment)
-	s.NoError(err)
-	s.Len(pendingTransfers, 4)
-
 	preRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
@@ -127,13 +123,13 @@ func (s *TransferCommitmentsTestSuite) invalidateTransfers(transfers []models.Tr
 	}
 }
 
-func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothingWhenThereAreNotEnoughPendingTransfers() {
+func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_ReturnsErrorWhenThereAreNotEnoughPendingTransfers() {
 	preRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
-	s.NoError(err)
-	s.Len(commitments, 0)
+	s.Nil(commitments)
+	s.Equal(ErrNotEnoughTransfers, err)
 
 	postRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
@@ -141,7 +137,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothing
 	s.Equal(preRoot, postRoot)
 }
 
-func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothingWhenThereAreNotEnoughValidTransfers() {
+func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_ReturnsErrorWhenThereAreNotEnoughValidTransfers() {
 	transfers := generateValidTransfers(2)
 	transfers[1].Amount = models.MakeUint256(99999999999)
 	s.addTransfers(transfers)
@@ -150,8 +146,8 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothing
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
-	s.NoError(err)
-	s.Len(commitments, 0)
+	s.Nil(commitments)
+	s.Equal(ErrNotEnoughTransfers, err)
 
 	postRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
@@ -224,7 +220,7 @@ func (s *TransferCommitmentsTestSuite) TestRemoveTransfer() {
 	transfers := []models.Transfer{transfer1, transfer2, transfer3}
 	toRemove := []models.Transfer{transfer2}
 
-	s.Equal([]models.Transfer{transfer1, transfer3}, removeTransfer(transfers, toRemove))
+	s.Equal([]models.Transfer{transfer1, transfer3}, removeTransfers(transfers, toRemove))
 }
 
 func TestTransferCommitmentsTestSuite(t *testing.T) {
