@@ -69,3 +69,35 @@ func createCommitmentInclusionProof(
 	proof.Witness = tree.GetWitness(commitmentIndex)
 	return &proof, nil
 }
+
+func targetCommitmentInclusionProof(
+	batch *eth.DecodedBatch,
+	commitmentIndex uint32,
+) (*models.TransferCommitmentInclusionProof, error) {
+	bodyHashes := make([]common.Hash, 0, len(batch.Commitments))
+	for i := range batch.Commitments {
+		bodyHashes = append(bodyHashes, batch.Commitments[i].BodyHash(*batch.AccountTreeRoot))
+	}
+	tree, err := merkletree.NewMerkleTree(bodyHashes)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	path := &models.MerklePath{
+		Path:  commitmentIndex,
+		Depth: tree.Depth(),
+	}
+
+	commitment := batch.Commitments[commitmentIndex]
+	return &models.TransferCommitmentInclusionProof{
+		StateRoot: commitment.StateRoot,
+		Body: &models.TransferBody{
+			AccountRoot:  *batch.AccountTreeRoot,
+			Signature:    commitment.CombinedSignature,
+			FeeReceiver:  commitment.FeeReceiver,
+			Transactions: commitment.Transactions,
+		},
+		Path:    path,
+		Witness: tree.GetWitness(commitmentIndex),
+	}, nil
+}
