@@ -126,6 +126,10 @@ func (s *TransferTestSuite) TestDecodeTransferForCommitment() {
 		},
 		ToStateID: 2,
 	}
+	transferHash, err := HashTransfer(txTransfer)
+	s.NoError(err)
+	txTransfer.Hash = *transferHash
+
 	encoded, err := EncodeTransferForCommitment(txTransfer)
 	s.NoError(err)
 
