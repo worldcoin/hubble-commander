@@ -162,6 +162,48 @@ func (s *TransferTestSuite) TestSerializeTransfers() {
 	s.Equal(expected, serialized)
 }
 
+func (s *TransferTestSuite) TestDeserializeTransfers() {
+	transfer := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			TxType:      txtype.Transfer,
+			FromStateID: 1,
+			Amount:      models.MakeUint256(50),
+			Fee:         models.MakeUint256(10),
+		},
+		ToStateID: 2,
+	}
+	transfer2 := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			TxType:      txtype.Transfer,
+			FromStateID: 2,
+			Amount:      models.MakeUint256(200),
+			Fee:         models.MakeUint256(10),
+		},
+		ToStateID: 3,
+	}
+
+	transferHash, err := HashTransfer(&transfer)
+	s.NoError(err)
+	transfer.Hash = *transferHash
+	transferHash, err = HashTransfer(&transfer2)
+	s.NoError(err)
+	transfer2.Hash = *transferHash
+
+	serialized, err := s.testTx.TransferSerialize(
+		nil,
+		[]testtx.TxTransfer{
+			newTxTransfer(&transfer),
+			newTxTransfer(&transfer2),
+		},
+	)
+	s.NoError(err)
+
+	transfers, err := DeserializeTransfers(serialized)
+	s.NoError(err)
+	s.Contains(transfers, transfer)
+	s.Contains(transfers, transfer2)
+}
+
 func TestTransferTestSuite(t *testing.T) {
 	suite.Run(t, new(TransferTestSuite))
 }
