@@ -2,10 +2,14 @@ package eth
 
 import (
 	"math/big"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/pkg/errors"
 )
 
 func (c *Client) DisputeTransitionTransfer(
@@ -21,6 +25,45 @@ func (c *Client) DisputeTransitionTransfer(
 		*TransferProofToCalldata(target),
 		StateMerkleProofsToCalldata(proofs),
 	)
+}
+
+func (c *Client) DisputeTransitionCreate2Transfer(
+	batchID *models.Uint256,
+	previous *models.CommitmentInclusionProof,
+	target *models.TransferCommitmentInclusionProof,
+	proofs []models.StateMerkleProof,
+) (*types.Transaction, error) {
+	return c.Rollup.DisputeTransitionCreate2Transfer(
+		c.transactOpts(c.config.stakeAmount.ToBig(), 0),
+		batchID.ToBig(),
+		*CommitmentProofToCalldata(previous),
+		*TransferProofToCalldata(target),
+		StateMerkleProofsToCalldata(proofs),
+	)
+}
+
+func (c *Client) getRollbackStatus(
+	transactionHash common.Hash,
+) (*rollup.RollupRollbackStatus, error) {
+	sink := make(chan *rollup.RollupRollbackStatus)
+	subscription, err := c.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
+	if err != nil {
+		return nil, err
+	}
+	defer subscription.Unsubscribe()
+
+	for {
+		select {
+		case err = <-subscription.Err():
+			return nil, errors.WithStack(err)
+		case rollbackStatus := <-sink:
+			if rollbackStatus.Raw.TxHash == transactionHash {
+				return rollbackStatus, nil
+			}
+		case <-time.After(*c.config.txTimeout):
+			return nil, errors.New("getRollbackStatus: timeout")
+		}
+	}
 }
 
 func CommitmentProofToCalldata(proof *models.CommitmentInclusionProof) *rollup.TypesCommitmentInclusionProof {
