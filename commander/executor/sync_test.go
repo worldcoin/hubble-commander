@@ -584,6 +584,20 @@ func (s *SyncTestSuite) setCreate2TransferHash(tx *models.Create2Transfer) {
 	tx.Hash = *hash
 }
 
+func (s *SyncTestSuite) setTransferHashAndSign(txs ...*models.Transfer) {
+	for i := range txs {
+		signTransfer(s.T(), &s.wallets[txs[i].FromStateID], txs[i])
+		s.setTransferHash(txs[i])
+	}
+}
+
+func (s *SyncTestSuite) setC2THashAndSign(txs ...*models.Create2Transfer) {
+	for i := range txs {
+		signCreate2Transfer(s.T(), &s.wallets[txs[i].FromStateID], txs[i])
+		s.setCreate2TransferHash(txs[i])
+	}
+}
+
 func generateWallets(t *testing.T, rollupAddress common.Address, walletsAmount int) []bls.Wallet {
 	domain, err := bls.DomainFromBytes(crypto.Keccak256(rollupAddress.Bytes()))
 	require.NoError(t, err)
