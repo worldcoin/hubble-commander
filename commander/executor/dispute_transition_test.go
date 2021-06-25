@@ -164,6 +164,180 @@ func (s *DisputeTransitionTestSuite) TestTargetCommitmentInclusionProof() {
 	s.Equal(expected, *proof)
 }
 
+func (s *DisputeTransitionTestSuite) TestRevertToForDispute() {
+	userStates := []models.UserState{
+		{
+			PubKeyID:   0,
+			TokenIndex: models.MakeUint256(0),
+			Balance:    models.MakeUint256(300),
+			Nonce:      models.MakeUint256(0),
+		},
+		{
+			PubKeyID:   1,
+			TokenIndex: models.MakeUint256(0),
+			Balance:    models.MakeUint256(200),
+			Nonce:      models.MakeUint256(0),
+		},
+		{
+			PubKeyID:   2,
+			TokenIndex: models.MakeUint256(0),
+			Balance:    models.MakeUint256(100),
+			Nonce:      models.MakeUint256(0),
+		},
+	}
+	for i := range userStates {
+		err := s.transactionExecutor.stateTree.Set(uint32(i), &userStates[i])
+		s.NoError(err)
+	}
+
+	txs := []models.Transfer{
+		{
+			TransactionBase: models.TransactionBase{
+				Hash:        utils.RandomHash(),
+				TxType:      txtype.Transfer,
+				FromStateID: 0,
+				Amount:      models.MakeUint256(100),
+				Fee:         models.MakeUint256(10),
+				Nonce:       models.MakeUint256(0),
+			},
+			ToStateID: 2,
+		},
+		{
+			TransactionBase: models.TransactionBase{
+				Hash:        utils.RandomHash(),
+				TxType:      txtype.Transfer,
+				FromStateID: 1,
+				Amount:      models.MakeUint256(100),
+				Fee:         models.MakeUint256(10),
+				Nonce:       models.MakeUint256(0),
+			},
+			ToStateID: 0,
+		},
+		{
+			TransactionBase: models.TransactionBase{
+				Hash:        utils.RandomHash(),
+				TxType:      txtype.Transfer,
+				FromStateID: 2,
+				Amount:      models.MakeUint256(50),
+				Fee:         models.MakeUint256(10),
+				Nonce:       models.MakeUint256(0),
+			},
+			ToStateID: 0,
+		},
+		{
+			TransactionBase: models.TransactionBase{
+				Hash:        utils.RandomHash(),
+				TxType:      txtype.Transfer,
+				FromStateID: 2,
+				Amount:      models.MakeUint256(500),
+				Fee:         models.MakeUint256(10),
+				Nonce:       models.MakeUint256(1),
+			},
+			ToStateID: 0,
+		},
+	}
+
+	expectedProofs := []models.StateMerkleProof{
+		{
+			UserState: &models.UserState{
+				PubKeyID:   0,
+				TokenIndex: models.MakeUint256(0),
+				Balance:    models.MakeUint256(340),
+				Nonce:      models.MakeUint256(1),
+			},
+		},
+		{
+			UserState: &models.UserState{
+				PubKeyID:   2,
+				TokenIndex: models.MakeUint256(0),
+				Balance:    models.MakeUint256(140),
+				Nonce:      models.MakeUint256(1),
+			},
+		},
+		{
+			UserState: &models.UserState{
+				PubKeyID:   0,
+				TokenIndex: models.MakeUint256(0),
+				Balance:    models.MakeUint256(290),
+				Nonce:      models.MakeUint256(1),
+			},
+		},
+		{
+			UserState: &models.UserState{
+				PubKeyID:   2,
+				TokenIndex: models.MakeUint256(0),
+				Balance:    models.MakeUint256(200),
+				Nonce:      models.MakeUint256(0),
+			},
+		},
+		{
+			UserState: &models.UserState{
+				PubKeyID:   0,
+				TokenIndex: models.MakeUint256(0),
+				Balance:    models.MakeUint256(190),
+				Nonce:      models.MakeUint256(1),
+			},
+		},
+		{
+			UserState: &models.UserState{
+				PubKeyID:   1,
+				TokenIndex: models.MakeUint256(0),
+				Balance:    models.MakeUint256(200),
+				Nonce:      models.MakeUint256(0),
+			},
+		},
+		{
+			UserState: &models.UserState{
+				PubKeyID:   2,
+				TokenIndex: models.MakeUint256(0),
+				Balance:    models.MakeUint256(100),
+				Nonce:      models.MakeUint256(0),
+			},
+		},
+		{
+			UserState: &models.UserState{
+				PubKeyID:   0,
+				TokenIndex: models.MakeUint256(0),
+				Balance:    models.MakeUint256(300),
+				Nonce:      models.MakeUint256(0),
+			},
+		},
+	}
+
+	initialRoot, err := s.transactionExecutor.stateTree.Root()
+	s.NoError(err)
+
+	invalidTransfers := make([]models.Transfer, 0, 1)
+	for i := range txs {
+		senderWitness, receiverWitness := s.getTransferWitness(txs[i].FromStateID, txs[i].ToStateID)
+		expectedProofs[len(expectedProofs)-1-i*2].Witness = senderWitness
+		expectedProofs[len(expectedProofs)-2-i*2].Witness = receiverWitness
+
+		transferError, err := s.transactionExecutor.ApplyTransfer(&txs[i], models.MakeUint256(0))
+		s.NoError(err)
+
+		if transferError != nil {
+			invalidTransfers = append(invalidTransfers, txs[i])
+		}
+	}
+	s.Len(invalidTransfers, 1)
+
+	proofs, err := s.transactionExecutor.stateTree.RevertToForDispute(*initialRoot, invalidTransfers[0])
+	s.NoError(err)
+	s.Len(proofs, len(expectedProofs))
+	s.Equal(expectedProofs, proofs)
+}
+
+func (s *DisputeTransitionTestSuite) getTransferWitness(fromStateID, toStateID uint32) (models.Witness, models.Witness) {
+	senderWitness, err := s.transactionExecutor.stateTree.GetWitness(models.MakeMerklePathFromStateID(fromStateID))
+	s.NoError(err)
+
+	receiverWitness, err := s.transactionExecutor.stateTree.GetWitness(models.MakeMerklePathFromStateID(toStateID))
+	s.NoError(err)
+
+	return senderWitness, receiverWitness
+}
+
 func TestTestSuite(t *testing.T) {
 	suite.Run(t, new(DisputeTransitionTestSuite))
 }

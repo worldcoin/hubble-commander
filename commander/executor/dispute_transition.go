@@ -101,39 +101,3 @@ func targetCommitmentInclusionProof(
 		Witness: tree.GetWitness(commitmentIndex),
 	}, nil
 }
-
-func (t *TransactionExecutor) handleDisputableError(
-	err *DisputableTransferError,
-	batch *eth.DecodedBatch,
-	commitmentIndex int,
-	transfer *models.Transfer,
-) {
-	if err.Type == TransitionError {
-
-	} else {
-		// TODO: handle signature error
-	}
-}
-
-func (t *TransactionExecutor) disputeTransitionTransfer(batch *eth.DecodedBatch, commitmentIndex int, transfer *models.Transfer) error {
-	previousBatch, err := t.storage.GetBatch(*batch.ID.SubN(1))
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	commitments, err := t.storage.GetCommitmentsByBatchID(previousBatch.ID)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	initialStateRoot := commitments[len(commitments)-1].PostStateRoot
-	prevStateRoot := batch.Commitments[commitmentIndex-1].StateRoot
-
-	proofs := make([]models.StateMerkleProof, 0) //TODO calc capacity
-	t.stateTree.ReverseIterateStateUpdates(prevStateRoot)
-
-	// iterate
-	t.storage.GetStateUpdate()
-	t.storage.GetStateUpdate()
-	t.stateTree.RevertTo(initialStateRoot)
-
-}
