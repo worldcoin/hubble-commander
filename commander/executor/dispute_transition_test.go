@@ -22,10 +22,37 @@ type DisputeTransitionTestSuite struct {
 	storage             *st.Storage
 	teardown            func() error
 	transactionExecutor *TransactionExecutor
+	decodedCommitments  []encoder.DecodedCommitment
+	decodedBatch        eth.DecodedBatch
 }
 
 func (s *DisputeTransitionTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
+	s.decodedCommitments = []encoder.DecodedCommitment{
+		{
+			StateRoot:         utils.RandomHash(),
+			CombinedSignature: models.MakeRandomSignature(),
+			FeeReceiver:       10,
+			Transactions:      utils.RandomBytes(12),
+		},
+		{
+			StateRoot:         utils.RandomHash(),
+			CombinedSignature: models.MakeRandomSignature(),
+			FeeReceiver:       10,
+			Transactions:      utils.RandomBytes(12),
+		},
+	}
+	s.decodedBatch = eth.DecodedBatch{
+		Batch: models.Batch{
+			ID:                models.MakeUint256(2),
+			Type:              txtype.Transfer,
+			TransactionHash:   utils.RandomHash(),
+			Hash:              utils.NewRandomHash(),
+			FinalisationBlock: ref.Uint32(10),
+			AccountTreeRoot:   utils.NewRandomHash(),
+		},
+		Commitments: s.decodedCommitments,
+	}
 }
 
 func (s *DisputeTransitionTestSuite) SetupTest() {
@@ -43,43 +70,17 @@ func (s *DisputeTransitionTestSuite) TearDownTest() {
 }
 
 func (s *DisputeTransitionTestSuite) TestPreviousCommitmentInclusionProof_CurrentBatch() {
-	commitments := []encoder.DecodedCommitment{
-		{
-			StateRoot:         utils.RandomHash(),
-			CombinedSignature: models.MakeRandomSignature(),
-			FeeReceiver:       10,
-			Transactions:      utils.RandomBytes(12),
-		},
-		{
-			StateRoot:         utils.RandomHash(),
-			CombinedSignature: models.MakeRandomSignature(),
-			FeeReceiver:       10,
-			Transactions:      utils.RandomBytes(12),
-		},
-	}
-	batch := &eth.DecodedBatch{
-		Batch: models.Batch{
-			ID:                models.MakeUint256(1),
-			Type:              txtype.Transfer,
-			TransactionHash:   utils.RandomHash(),
-			Hash:              utils.NewRandomHash(),
-			FinalisationBlock: ref.Uint32(10),
-			AccountTreeRoot:   utils.NewRandomHash(),
-		},
-		Commitments: commitments,
-	}
-
 	expected := models.CommitmentInclusionProof{
-		StateRoot: commitments[0].StateRoot,
-		BodyRoot:  commitments[0].BodyHash(*batch.AccountTreeRoot),
+		StateRoot: s.decodedCommitments[0].StateRoot,
+		BodyRoot:  s.decodedCommitments[0].BodyHash(*s.decodedBatch.AccountTreeRoot),
 		Path: &models.MerklePath{
 			Path:  0,
 			Depth: 2,
 		},
-		Witness: []common.Hash{commitments[1].BodyHash(*batch.AccountTreeRoot)},
+		Witness: []common.Hash{s.decodedCommitments[1].BodyHash(*s.decodedBatch.AccountTreeRoot)},
 	}
 
-	proof, err := s.transactionExecutor.previousCommitmentInclusionProof(batch, 0)
+	proof, err := s.transactionExecutor.previousCommitmentInclusionProof(&s.decodedBatch, 0)
 	s.NoError(err)
 	s.Equal(expected, *proof)
 }
@@ -127,25 +128,6 @@ func (s *DisputeTransitionTestSuite) TestPreviousCommitmentInclusionProof_Previo
 		s.NoError(err)
 	}
 
-	decodedBatch := &eth.DecodedBatch{
-		Batch: models.Batch{
-			ID:                models.MakeUint256(2),
-			Type:              txtype.Transfer,
-			TransactionHash:   utils.RandomHash(),
-			Hash:              utils.NewRandomHash(),
-			FinalisationBlock: ref.Uint32(11),
-			AccountTreeRoot:   utils.NewRandomHash(),
-		},
-		Commitments: []encoder.DecodedCommitment{
-			{
-				StateRoot:         utils.RandomHash(),
-				CombinedSignature: models.MakeRandomSignature(),
-				FeeReceiver:       10,
-				Transactions:      utils.RandomBytes(12),
-			},
-		},
-	}
-
 	expected := models.CommitmentInclusionProof{
 		StateRoot: commitments[1].PostStateRoot,
 		BodyRoot:  commitments[1].BodyHash(*batch.AccountTreeRoot),
@@ -156,7 +138,28 @@ func (s *DisputeTransitionTestSuite) TestPreviousCommitmentInclusionProof_Previo
 		Witness: []common.Hash{commitments[0].BodyHash(*batch.AccountTreeRoot)},
 	}
 
-	proof, err := s.transactionExecutor.previousCommitmentInclusionProof(decodedBatch, -1)
+	proof, err := s.transactionExecutor.previousCommitmentInclusionProof(&s.decodedBatch, -1)
+	s.NoError(err)
+	s.Equal(expected, *proof)
+}
+
+func (s *DisputeTransitionTestSuite) TestTargetCommitmentInclusionProof() {
+	expected := models.TransferCommitmentInclusionProof{
+		StateRoot: s.decodedCommitments[1].StateRoot,
+		Body: &models.TransferBody{
+			AccountRoot:  *s.decodedBatch.AccountTreeRoot,
+			Signature:    s.decodedCommitments[1].CombinedSignature,
+			FeeReceiver:  s.decodedCommitments[1].FeeReceiver,
+			Transactions: s.decodedCommitments[1].Transactions,
+		},
+		Path: &models.MerklePath{
+			Path:  1,
+			Depth: 2,
+		},
+		Witness: []common.Hash{s.decodedCommitments[0].BodyHash(*s.decodedBatch.AccountTreeRoot)},
+	}
+
+	proof, err := targetCommitmentInclusionProof(&s.decodedBatch, 1)
 	s.NoError(err)
 	s.Equal(expected, *proof)
 }

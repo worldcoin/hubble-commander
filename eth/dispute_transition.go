@@ -61,7 +61,7 @@ func (c *Client) GetRollbackStatus(
 				return rollbackStatus, nil
 			}
 		case <-time.After(*c.config.txTimeout):
-			return nil, errors.New("getRollbackStatus: timeout")
+			return nil, errors.New("GetRollbackStatus: timeout")
 		}
 	}
 }
