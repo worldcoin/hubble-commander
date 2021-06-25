@@ -8,12 +8,12 @@ import (
 )
 
 var (
-	ErrIncorrectTokenIndices = errors.New("sender's, receiver's and fee receiver's token indices are not the same")
-	ErrNonceTooLow           = errors.New("nonce too low")
-	ErrNonceTooHigh          = errors.New("nonce too high")
-	ErrBalanceTooLow         = errors.New("not enough balance")
-	ErrInvalidSliceLength    = errors.New("invalid slices length")
-	ErrNilReceiverStateID    = errors.New("transfer receiver state id cannot be nil")
+	ErrIncorrectTokenID   = errors.New("invalid sender or receiver token ID")
+	ErrNonceTooLow        = errors.New("nonce too low")
+	ErrNonceTooHigh       = errors.New("nonce too high")
+	ErrBalanceTooLow      = errors.New("not enough balance")
+	ErrInvalidSliceLength = errors.New("invalid slices length")
+	ErrNilReceiverStateID = errors.New("transfer receiver state id cannot be nil")
 )
 
 func (t *TransactionExecutor) ApplyTransfer(
@@ -38,7 +38,7 @@ func (t *TransactionExecutor) ApplyTransfer(
 	receiverState := receiverLeaf.UserState
 
 	if senderState.TokenID.Cmp(&commitmentTokenID) != 0 && receiverState.TokenID.Cmp(&commitmentTokenID) != 0 {
-		return nil, ErrIncorrectTokenIndices
+		return nil, ErrIncorrectTokenID
 	}
 
 	if t.opts.AssumeNonces {

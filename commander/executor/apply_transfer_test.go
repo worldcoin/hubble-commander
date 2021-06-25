@@ -124,11 +124,11 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesNonce() {
 	s.NoError(appError)
 }
 
-func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesTokenIndex() {
+func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesTokenID() {
 	s.setUserStatesInTree()
 
 	transferError, appError := s.transactionExecutor.ApplyTransfer(&transfer, models.MakeUint256(3))
-	s.Equal(appError, ErrIncorrectTokenIndices)
+	s.Equal(appError, ErrIncorrectTokenID)
 	s.NoError(transferError)
 }
 
