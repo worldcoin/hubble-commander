@@ -5,23 +5,18 @@ import (
 )
 
 type AppliedTransfers struct {
-	appliedTransfers   []models.Transfer
-	invalidTransfers   []models.Transfer
-	feeReceiverStateID *uint32
+	appliedTransfers []models.Transfer
+	invalidTransfers []models.Transfer
 }
 
 func (t *TransactionExecutor) ApplyTransfers(
 	transfers []models.Transfer,
 	maxApplied uint32,
+	feeReceiver *FeeReceiver,
 	isSyncing bool,
 ) (*AppliedTransfers, error) {
 	if len(transfers) == 0 {
 		return &AppliedTransfers{}, nil
-	}
-
-	commitmentTokenIndex, err := t.getTokenIndex(transfers[0].FromStateID)
-	if err != nil {
-		return nil, err
 	}
 
 	returnStruct := &AppliedTransfers{}
@@ -35,7 +30,7 @@ func (t *TransactionExecutor) ApplyTransfers(
 		}
 
 		transfer := &transfers[i]
-		transferError, appError := t.ApplyTransfer(transfer, *commitmentTokenIndex)
+		transferError, appError := t.ApplyTransfer(transfer, feeReceiver.TokenID)
 		if appError != nil {
 			return nil, appError
 		}
@@ -53,7 +48,7 @@ func (t *TransactionExecutor) ApplyTransfers(
 	}
 
 	if len(returnStruct.appliedTransfers) > 0 {
-		returnStruct.feeReceiverStateID, err = t.ApplyFee(*commitmentTokenIndex, combinedFee)
+		err := t.ApplyFee(feeReceiver.StateID, combinedFee)
 		if err != nil {
 			return nil, err
 		}
