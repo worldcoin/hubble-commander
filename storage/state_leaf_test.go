@@ -12,16 +12,16 @@ import (
 
 var (
 	userState1 = &models.UserState{
-		PubKeyID:   1,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(420),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
 	}
 	userState2 = &models.UserState{
-		PubKeyID:   2,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(420),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 2,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
 	}
 )
 
@@ -56,10 +56,10 @@ func (s *StateLeafTestSuite) TestUpsertStateLeaf_AddAndRetrieve() {
 		StateID:  0,
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
-			PubKeyID:   1,
-			TokenIndex: models.MakeUint256(1),
-			Balance:    models.MakeUint256(420),
-			Nonce:      models.MakeUint256(0),
+			PubKeyID: 1,
+			TokenID:  models.MakeUint256(1),
+			Balance:  models.MakeUint256(420),
+			Nonce:    models.MakeUint256(0),
 		},
 	}
 	err = s.storage.UpsertStateLeaf(leaf)
@@ -79,10 +79,10 @@ func (s *StateLeafTestSuite) TestUpsertStateLeaf_UpdateAndRetrieve() {
 		StateID:  0,
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
-			PubKeyID:   1,
-			TokenIndex: models.MakeUint256(1),
-			Balance:    models.MakeUint256(420),
-			Nonce:      models.MakeUint256(0),
+			PubKeyID: 1,
+			TokenID:  models.MakeUint256(1),
+			Balance:  models.MakeUint256(420),
+			Nonce:    models.MakeUint256(0),
 		},
 	}
 	err = s.storage.UpsertStateLeaf(leaf)
@@ -106,10 +106,10 @@ func (s *StateLeafTestSuite) TestGetStateLeaf_ReturnsCorrectStruct() {
 		StateID:  0,
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
-			PubKeyID:   1,
-			TokenIndex: models.MakeUint256(1),
-			Balance:    models.MakeUint256(420),
-			Nonce:      models.MakeUint256(0),
+			PubKeyID: 1,
+			TokenID:  models.MakeUint256(1),
+			Balance:  models.MakeUint256(420),
+			Nonce:    models.MakeUint256(0),
 		},
 	}
 	path, err := models.NewMerklePath(strings.Repeat("0", 32))
@@ -159,28 +159,28 @@ func (s *StateLeafTestSuite) TestGetUserStatesByPublicKey() {
 
 	userStates := []models.UserState{
 		{
-			PubKeyID:   1,
-			TokenIndex: models.MakeUint256(1),
-			Balance:    models.MakeUint256(420),
-			Nonce:      models.MakeUint256(0),
+			PubKeyID: 1,
+			TokenID:  models.MakeUint256(1),
+			Balance:  models.MakeUint256(420),
+			Nonce:    models.MakeUint256(0),
 		},
 		{
-			PubKeyID:   2,
-			TokenIndex: models.MakeUint256(2),
-			Balance:    models.MakeUint256(500),
-			Nonce:      models.MakeUint256(0),
+			PubKeyID: 2,
+			TokenID:  models.MakeUint256(2),
+			Balance:  models.MakeUint256(500),
+			Nonce:    models.MakeUint256(0),
 		},
 		{
-			PubKeyID:   1,
-			TokenIndex: models.MakeUint256(25),
-			Balance:    models.MakeUint256(1),
-			Nonce:      models.MakeUint256(73),
+			PubKeyID: 1,
+			TokenID:  models.MakeUint256(25),
+			Balance:  models.MakeUint256(1),
+			Nonce:    models.MakeUint256(73),
 		},
 		{
-			PubKeyID:   3,
-			TokenIndex: models.MakeUint256(25),
-			Balance:    models.MakeUint256(1),
-			Nonce:      models.MakeUint256(73),
+			PubKeyID: 3,
+			TokenID:  models.MakeUint256(25),
+			Balance:  models.MakeUint256(1),
+			Nonce:    models.MakeUint256(73),
 		},
 	}
 
@@ -219,11 +219,11 @@ func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf() {
 	err = s.tree.Set(1, userState2)
 	s.NoError(err)
 
-	stateLeaf, err := s.storage.GetFeeReceiverStateLeaf(userState1.PubKeyID, userState1.TokenIndex)
+	stateLeaf, err := s.storage.GetFeeReceiverStateLeaf(userState1.PubKeyID, userState1.TokenID)
 	s.NoError(err)
 	s.Equal(*userState1, stateLeaf.UserState)
 	s.Equal(uint32(0), stateLeaf.StateID)
-	s.Equal(uint32(0), s.storage.feeReceiverStateIDs[userState1.TokenIndex.String()])
+	s.Equal(uint32(0), s.storage.feeReceiverStateIDs[userState1.TokenID.String()])
 }
 
 func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf_WorkWithCachedValue() {
@@ -238,11 +238,11 @@ func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf_WorkWithCachedValue() {
 	err = s.tree.Set(1, userState2)
 	s.NoError(err)
 
-	_, err = s.storage.GetFeeReceiverStateLeaf(userState2.PubKeyID, userState2.TokenIndex)
+	_, err = s.storage.GetFeeReceiverStateLeaf(userState2.PubKeyID, userState2.TokenID)
 	s.NoError(err)
-	s.Equal(uint32(1), s.storage.feeReceiverStateIDs[userState2.TokenIndex.String()])
+	s.Equal(uint32(1), s.storage.feeReceiverStateIDs[userState2.TokenID.String()])
 
-	stateLeaf, err := s.storage.GetFeeReceiverStateLeaf(userState2.PubKeyID, userState2.TokenIndex)
+	stateLeaf, err := s.storage.GetFeeReceiverStateLeaf(userState2.PubKeyID, userState2.TokenID)
 	s.NoError(err)
 	s.Equal(*userState2, stateLeaf.UserState)
 	s.Equal(uint32(1), stateLeaf.StateID)

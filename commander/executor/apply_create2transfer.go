@@ -10,10 +10,10 @@ func (t *TransactionExecutor) ApplyCreate2Transfer(
 	commitmentTokenIndex models.Uint256,
 ) (create2TransferError, appError error) {
 	emptyUserState := models.UserState{
-		PubKeyID:   pubKeyID,
-		TokenIndex: commitmentTokenIndex,
-		Balance:    models.MakeUint256(0),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: pubKeyID,
+		TokenID:  commitmentTokenIndex,
+		Balance:  models.MakeUint256(0),
+		Nonce:    models.MakeUint256(0),
 	}
 
 	if create2Transfer.ToStateID == nil {

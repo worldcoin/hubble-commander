@@ -65,10 +65,10 @@ func populateAccounts(storage *st.Storage, balances []models.Uint256) error {
 		}
 
 		err = stateTree.Set(i, &models.UserState{
-			PubKeyID:   i,
-			TokenIndex: models.MakeUint256(0),
-			Balance:    balances[i],
-			Nonce:      models.MakeUint256(0),
+			PubKeyID: i,
+			TokenID:  models.MakeUint256(0),
+			Balance:  balances[i],
+			Nonce:    models.MakeUint256(0),
 		})
 		if err != nil {
 			return err
@@ -250,10 +250,10 @@ func addAccountWithHighNonce(s *require.Assertions, storage *st.Storage, stateID
 
 	stateTree := st.NewStateTree(storage)
 	err = stateTree.Set(stateID, &models.UserState{
-		PubKeyID:   dummyAccount.PubKeyID,
-		TokenIndex: models.MakeUint256(0),
-		Balance:    models.MakeUint256(1000),
-		Nonce:      models.MakeUint256(10),
+		PubKeyID: dummyAccount.PubKeyID,
+		TokenID:  models.MakeUint256(0),
+		Balance:  models.MakeUint256(1000),
+		Nonce:    models.MakeUint256(10),
 	})
 	s.NoError(err)
 }

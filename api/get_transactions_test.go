@@ -67,10 +67,10 @@ func (s *GetTransactionsTestSuite) addAccounts() {
 func (s *GetTransactionsTestSuite) addUserStates() {
 	makeUserState := func(tokenIndex uint64, pubKeyID uint32) models.UserState {
 		return models.UserState{
-			PubKeyID:   pubKeyID,
-			TokenIndex: models.MakeUint256(tokenIndex),
-			Balance:    models.MakeUint256(500),
-			Nonce:      models.MakeUint256(0),
+			PubKeyID: pubKeyID,
+			TokenID:  models.MakeUint256(tokenIndex),
+			Balance:  models.MakeUint256(500),
+			Nonce:    models.MakeUint256(0),
 		}
 	}
 
@@ -197,10 +197,10 @@ func (s *GetTransactionsTestSuite) TestGetTransactions_NoTransactions() {
 	s.NoError(err)
 
 	userState := &models.UserState{
-		PubKeyID:   account.PubKeyID,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(420),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: account.PubKeyID,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
 	}
 	err = s.tree.Set(0, userState)
 	s.NoError(err)

@@ -61,10 +61,10 @@ func (s *SubmitTransferBatchTestSuite) SetupTest() {
 	s.NoError(err)
 
 	userState := models.UserState{
-		PubKeyID:   1,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(1000),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(1000),
+		Nonce:    models.MakeUint256(0),
 	}
 
 	err = s.tree.Set(1, &userState)

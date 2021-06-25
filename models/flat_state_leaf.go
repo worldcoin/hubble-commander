@@ -21,7 +21,7 @@ func MakeFlatStateLeaf(leaf *StateLeaf) FlatStateLeaf {
 		StateID:    leaf.StateID,
 		DataHash:   leaf.DataHash,
 		PubKeyID:   leaf.PubKeyID,
-		TokenIndex: leaf.TokenIndex,
+		TokenIndex: leaf.TokenID,
 		Balance:    leaf.Balance,
 		Nonce:      leaf.Nonce,
 	}
@@ -32,10 +32,10 @@ func (l *FlatStateLeaf) StateLeaf() *StateLeaf {
 		StateID:  l.StateID,
 		DataHash: l.DataHash,
 		UserState: UserState{
-			PubKeyID:   l.PubKeyID,
-			TokenIndex: l.TokenIndex,
-			Balance:    l.Balance,
-			Nonce:      l.Nonce,
+			PubKeyID: l.PubKeyID,
+			TokenID:  l.TokenIndex,
+			Balance:  l.Balance,
+			Nonce:    l.Nonce,
 		},
 	}
 }

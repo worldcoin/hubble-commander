@@ -37,7 +37,7 @@ func (t *TransactionExecutor) ApplyTransfer(
 	senderState := senderLeaf.UserState
 	receiverState := receiverLeaf.UserState
 
-	if senderState.TokenIndex.Cmp(&commitmentTokenIndex) != 0 && receiverState.TokenIndex.Cmp(&commitmentTokenIndex) != 0 {
+	if senderState.TokenID.Cmp(&commitmentTokenIndex) != 0 && receiverState.TokenID.Cmp(&commitmentTokenIndex) != 0 {
 		return nil, ErrIncorrectTokenIndices
 	}
 

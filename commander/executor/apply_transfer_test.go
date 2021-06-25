@@ -12,16 +12,16 @@ import (
 
 var (
 	senderState = models.UserState{
-		PubKeyID:   1,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(400),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(400),
+		Nonce:    models.MakeUint256(0),
 	}
 	receiverState = models.UserState{
-		PubKeyID:   2,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(0),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 2,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(0),
+		Nonce:    models.MakeUint256(0),
 	}
 	transfer = models.Transfer{
 		TransactionBase: models.TransactionBase{

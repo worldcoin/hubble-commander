@@ -48,22 +48,22 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 	}
 
 	senderState := models.UserState{
-		PubKeyID:   1,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(420),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
 	}
 	receiverState := models.UserState{
-		PubKeyID:   2,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(0),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 2,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(0),
+		Nonce:    models.MakeUint256(0),
 	}
 	feeReceiverState := models.UserState{
-		PubKeyID:   3,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(1000),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 3,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(1000),
+		Nonce:    models.MakeUint256(0),
 	}
 	s.publicKey = models.PublicKey{1, 2, 3}
 

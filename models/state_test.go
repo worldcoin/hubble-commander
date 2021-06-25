@@ -16,10 +16,10 @@ func TestStateUpdate_ByteEncoding(t *testing.T) {
 			StateID:  2,
 			DataHash: utils.RandomHash(),
 			UserState: UserState{
-				PubKeyID:   3,
-				TokenIndex: MakeUint256(4),
-				Balance:    MakeUint256(5),
-				Nonce:      MakeUint256(6),
+				PubKeyID: 3,
+				TokenID:  MakeUint256(4),
+				Balance:  MakeUint256(5),
+				Nonce:    MakeUint256(6),
 			},
 		},
 	}

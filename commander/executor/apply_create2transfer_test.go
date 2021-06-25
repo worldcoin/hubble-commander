@@ -71,17 +71,17 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 	}
 
 	err = s.tree.Set(0, &models.UserState{
-		PubKeyID:   0,
-		TokenIndex: feeReceiverTokenIndex,
-		Balance:    models.MakeUint256(10000),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 0,
+		TokenID:  feeReceiverTokenIndex,
+		Balance:  models.MakeUint256(10000),
+		Nonce:    models.MakeUint256(0),
 	})
 	s.NoError(err)
 	err = s.tree.Set(1, &models.UserState{
-		PubKeyID:   1,
-		TokenIndex: feeReceiverTokenIndex,
-		Balance:    models.MakeUint256(0),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 1,
+		TokenID:  feeReceiverTokenIndex,
+		Balance:  models.MakeUint256(0),
+		Nonce:    models.MakeUint256(0),
 	})
 	s.NoError(err)
 }
@@ -102,7 +102,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InsertsNewEmpty
 	s.NoError(err)
 	s.NotNil(leaf)
 	s.Equal(models.MakeUint256(0), leaf.Nonce)
-	s.Equal(feeReceiverTokenIndex, leaf.TokenIndex)
+	s.Equal(feeReceiverTokenIndex, leaf.TokenID)
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer() {
