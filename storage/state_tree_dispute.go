@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (s *StateTree) RevertToForDispute(targetRootHash common.Hash, invalidTransfer models.Transfer) ([]models.StateMerkleProof, error) {
+func (s *StateTree) RevertToForDispute(targetRootHash common.Hash, invalidTransfer *models.Transfer) ([]models.StateMerkleProof, error) {
 	txn, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func (s *StateTree) RevertToForDispute(targetRootHash common.Hash, invalidTransf
 				panic("invalid current root of a previous state update, this should never happen")
 			}
 
-			currentRootHash, err = stateTree.revertState(*stateUpdate)
+			currentRootHash, err = stateTree.revertState(stateUpdate)
 			if err != nil {
 				return err
 			}
@@ -80,7 +80,7 @@ func (s *StateTree) RevertToForDispute(targetRootHash common.Hash, invalidTransf
 	return proofs, txn.Commit()
 }
 
-func (s *StateTree) createUserProof(leaf models.StateLeaf) (*models.StateMerkleProof, error) {
+func (s *StateTree) createUserProof(leaf *models.StateLeaf) (*models.StateMerkleProof, error) {
 	witness, err := s.GetWitness(models.MakeMerklePathFromStateID(leaf.StateID))
 	if err != nil {
 		return nil, err
@@ -114,7 +114,7 @@ func (s *StateTree) createUserProofFromStateIDs(stateIDs ...uint32) ([]models.St
 func (s *StateTree) createUserProofs(leaves ...models.StateLeaf) ([]models.StateMerkleProof, error) {
 	proofs := make([]models.StateMerkleProof, 0, len(leaves))
 	for i := range leaves {
-		proof, err := s.createUserProof(leaves[i])
+		proof, err := s.createUserProof(&leaves[i])
 		if err != nil {
 			return nil, err
 		}

@@ -110,7 +110,7 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 				panic("invalid current root of a previous state update, this should never happen")
 			}
 
-			currentRootHash, err = stateTree.revertState(*stateUpdate)
+			currentRootHash, err = stateTree.revertState(stateUpdate)
 			if err != nil {
 				return err
 			}
@@ -224,7 +224,7 @@ func (s *StateTree) updateStateNodes(leafPath *models.MerklePath, newLeafHash *c
 	return &currentHash, nil
 }
 
-func (s *StateTree) revertState(stateUpdate models.StateUpdate) (*common.Hash, error) {
+func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, error) {
 	err := s.storage.UpsertStateLeaf(&stateUpdate.PrevStateLeaf)
 	if err != nil {
 		return nil, err

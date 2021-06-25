@@ -13,13 +13,10 @@ var (
 
 func (t *TransactionExecutor) syncTransferCommitments(batch *eth.DecodedBatch) error {
 	for i := range batch.Commitments {
-		invalidTransfer, err := t.syncTransferCommitment(batch, &batch.Commitments[i])
+		err := t.syncTransferCommitment(batch, &batch.Commitments[i])
 		if err == ErrInvalidSignature {
 			// TODO: dispute fraudulent commitment
 			return err
-		}
-		if IsDisputableTransferError(err) {
-			t.handleDisputableError(err.(*DisputableTransferError), batch, i, invalidTransfer)
 		}
 		if err != nil {
 			return err
@@ -31,36 +28,36 @@ func (t *TransactionExecutor) syncTransferCommitments(batch *eth.DecodedBatch) e
 func (t *TransactionExecutor) syncTransferCommitment(
 	batch *eth.DecodedBatch,
 	commitment *encoder.DecodedCommitment,
-) (*models.Transfer, error) {
+) error {
 	if len(commitment.Transactions)%encoder.TransferLength != 0 {
-		return nil, ErrInvalidDataLength
+		return ErrInvalidDataLength
 	}
 
 	deserializedTransfers, err := encoder.DeserializeTransfers(commitment.Transactions)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if uint32(len(deserializedTransfers)) > t.cfg.TxsPerCommitment {
-		return nil, ErrTooManyTx
+		return ErrTooManyTx
 	}
 
 	transfers, err := t.ApplyTransfers(deserializedTransfers, uint32(len(deserializedTransfers)), true)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if len(transfers.invalidTransfers) > 0 {
-		return &transfers.invalidTransfers[0], ErrFraudulentTransfer
+		return ErrFraudulentTransfer
 	}
 	if len(transfers.appliedTransfers) != len(deserializedTransfers) {
-		return nil, ErrTransfersNotApplied
+		return ErrTransfersNotApplied
 	}
 
 	if !t.cfg.DevMode {
 		err = t.verifyTransferSignature(commitment, transfers.appliedTransfers)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
@@ -73,7 +70,7 @@ func (t *TransactionExecutor) syncTransferCommitment(
 		IncludedInBatch:   &batch.ID,
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	for i := range transfers.appliedTransfers {
 		transfers.appliedTransfers[i].IncludedInCommitment = commitmentID
@@ -82,10 +79,10 @@ func (t *TransactionExecutor) syncTransferCommitment(
 	for i := range transfers.appliedTransfers {
 		hashTransfer, err := encoder.HashTransfer(&transfers.appliedTransfers[i])
 		if err != nil {
-			return nil, err
+			return err
 		}
 		transfers.appliedTransfers[i].Hash = *hashTransfer
 	}
 
-	return nil, t.storage.BatchAddTransfer(transfers.appliedTransfers)
+	return t.storage.BatchAddTransfer(transfers.appliedTransfers)
 }
