@@ -197,7 +197,7 @@ func (s *AccountTestSuite) TestGetUnusedPubKeyID() {
 	s.Equal(uint32(3), *pubKeyID)
 }
 
-func (s *AccountTestSuite) TestGetUnusedPubKeyID_MultipleTokenIndexes() {
+func (s *AccountTestSuite) TestGetUnusedPubKeyID_MultipleTokenIDs() {
 	accounts := []models.Account{
 		{
 			PubKeyID:  1,

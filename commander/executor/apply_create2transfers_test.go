@@ -197,7 +197,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_AccountNotExi
 	s.Equal(uint32(0), *pubKeyID)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_AccountForTokenIndexNotExists() {
+func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_AccountForTokenIDNotExists() {
 	c2T := create2Transfer
 	c2T.ToPublicKey = s.publicKey
 
