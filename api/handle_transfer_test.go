@@ -73,10 +73,10 @@ func (s *SendTransferTestSuite) SetupTest() {
 	s.NoError(err)
 
 	s.userState = &models.UserState{
-		PubKeyID:   123,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(420),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 123,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
 	}
 
 	err = s.tree.Set(1, s.userState)

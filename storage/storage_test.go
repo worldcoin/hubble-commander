@@ -39,10 +39,10 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 		StateID:  0,
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
-			PubKeyID:   1,
-			TokenIndex: models.MakeUint256(1),
-			Balance:    models.MakeUint256(420),
-			Nonce:      models.MakeUint256(0),
+			PubKeyID: 1,
+			TokenID:  models.MakeUint256(1),
+			Balance:  models.MakeUint256(420),
+			Nonce:    models.MakeUint256(0),
 		},
 	}
 
@@ -78,10 +78,10 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 		StateID:  0,
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
-			PubKeyID:   1,
-			TokenIndex: models.MakeUint256(1),
-			Balance:    models.MakeUint256(420),
-			Nonce:      models.MakeUint256(0),
+			PubKeyID: 1,
+			TokenID:  models.MakeUint256(1),
+			Balance:  models.MakeUint256(420),
+			Nonce:    models.MakeUint256(0),
 		},
 	}
 
@@ -112,20 +112,20 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 		StateID:  0,
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
-			PubKeyID:   1,
-			TokenIndex: models.MakeUint256(1),
-			Balance:    models.MakeUint256(420),
-			Nonce:      models.MakeUint256(0),
+			PubKeyID: 1,
+			TokenID:  models.MakeUint256(1),
+			Balance:  models.MakeUint256(420),
+			Nonce:    models.MakeUint256(0),
 		},
 	}
 	leafTwo := &models.StateLeaf{
 		StateID:  1,
 		DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 		UserState: models.UserState{
-			PubKeyID:   2,
-			TokenIndex: models.MakeUint256(1),
-			Balance:    models.MakeUint256(1000),
-			Nonce:      models.MakeUint256(0),
+			PubKeyID: 2,
+			TokenID:  models.MakeUint256(1),
+			Balance:  models.MakeUint256(1000),
+			Nonce:    models.MakeUint256(0),
 		},
 	}
 

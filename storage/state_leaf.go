@@ -52,10 +52,10 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) (userSta
 		userStates = append(userStates, models.UserStateWithID{
 			StateID: leaf.StateID,
 			UserState: models.UserState{
-				PubKeyID:   leaf.PubKeyID,
-				TokenIndex: leaf.TokenIndex,
-				Balance:    leaf.Balance,
-				Nonce:      leaf.Nonce,
+				PubKeyID: leaf.PubKeyID,
+				TokenID:  leaf.TokenID,
+				Balance:  leaf.Balance,
+				Nonce:    leaf.Nonce,
 			},
 		})
 	}
@@ -63,24 +63,24 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) (userSta
 	return userStates, nil
 }
 
-func (s *Storage) GetFeeReceiverStateLeaf(pubKeyID uint32, tokenIndex models.Uint256) (*models.StateLeaf, error) {
-	stateID, ok := s.feeReceiverStateIDs[tokenIndex.String()]
+func (s *Storage) GetFeeReceiverStateLeaf(pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
+	stateID, ok := s.feeReceiverStateIDs[tokenID.String()]
 	if ok {
 		return s.GetStateLeaf(stateID)
 	}
-	stateLeaf, err := s.GetStateLeafByPubKeyIDAndTokenIndex(pubKeyID, tokenIndex)
+	stateLeaf, err := s.GetStateLeafByPubKeyIDAndTokenID(pubKeyID, tokenID)
 	if err != nil {
 		return nil, err
 	}
-	s.feeReceiverStateIDs[stateLeaf.TokenIndex.String()] = stateLeaf.StateID
+	s.feeReceiverStateIDs[stateLeaf.TokenID.String()] = stateLeaf.StateID
 	return stateLeaf, nil
 }
 
-func (s *Storage) GetStateLeafByPubKeyIDAndTokenIndex(pubKeyID uint32, tokenIndex models.Uint256) (*models.StateLeaf, error) {
+func (s *Storage) GetStateLeafByPubKeyIDAndTokenID(pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
 	leaves := make([]models.FlatStateLeaf, 0, 1)
 	err := s.Badger.Find(
 		&leaves,
-		bh.Where("TokenIndex").Eq(tokenIndex).
+		bh.Where("TokenID").Eq(tokenID).
 			And("PubKeyID").Eq(pubKeyID).Index("PubKeyID"),
 	)
 	if err != nil {
