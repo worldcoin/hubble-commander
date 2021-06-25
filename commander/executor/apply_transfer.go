@@ -18,7 +18,7 @@ var (
 
 func (t *TransactionExecutor) ApplyTransfer(
 	transfer models.GenericTransfer,
-	commitmentTokenIndex models.Uint256,
+	commitmentTokenID models.Uint256,
 ) (transferError, appError error) {
 	receiverStateID, err := getReceiverStateID(transfer)
 	if err != nil {
@@ -37,7 +37,7 @@ func (t *TransactionExecutor) ApplyTransfer(
 	senderState := senderLeaf.UserState
 	receiverState := receiverLeaf.UserState
 
-	if senderState.TokenID.Cmp(&commitmentTokenIndex) != 0 && receiverState.TokenID.Cmp(&commitmentTokenIndex) != 0 {
+	if senderState.TokenID.Cmp(&commitmentTokenID) != 0 && receiverState.TokenID.Cmp(&commitmentTokenID) != 0 {
 		return nil, ErrIncorrectTokenIndices
 	}
 
