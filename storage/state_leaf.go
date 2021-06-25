@@ -68,7 +68,7 @@ func (s *Storage) GetFeeReceiverStateLeaf(pubKeyID uint32, tokenID models.Uint25
 	if ok {
 		return s.GetStateLeaf(stateID)
 	}
-	stateLeaf, err := s.GetStateLeafByPubKeyIDAndTokenIndex(pubKeyID, tokenID)
+	stateLeaf, err := s.GetStateLeafByPubKeyIDAndTokenID(pubKeyID, tokenID)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func (s *Storage) GetFeeReceiverStateLeaf(pubKeyID uint32, tokenID models.Uint25
 	return stateLeaf, nil
 }
 
-func (s *Storage) GetStateLeafByPubKeyIDAndTokenIndex(pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
+func (s *Storage) GetStateLeafByPubKeyIDAndTokenID(pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
 	leaves := make([]models.FlatStateLeaf, 0, 1)
 	err := s.Badger.Find(
 		&leaves,
