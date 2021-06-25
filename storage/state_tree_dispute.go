@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (s *StateTree) RevertToForDispute(targetRootHash common.Hash, invalidTransfer *models.Transfer) ([]models.StateMerkleProof, error) {
+func (s *StateTree) RevertToForDispute(targetRootHash common.Hash, invalidTransfer models.GenericTransfer) ([]models.StateMerkleProof, error) {
 	txn, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return nil, err
@@ -17,7 +17,7 @@ func (s *StateTree) RevertToForDispute(targetRootHash common.Hash, invalidTransf
 	var currentRootHash *common.Hash
 	proofs := make([]models.StateMerkleProof, 0)
 
-	userProofs, err := stateTree.createUserProofFromStateIDs(invalidTransfer.ToStateID, invalidTransfer.FromStateID)
+	userProofs, err := stateTree.createUserProofFromStateIDs(*invalidTransfer.GetToStateID(), invalidTransfer.GetFromStateID())
 	if err != nil {
 		return nil, err
 	}
