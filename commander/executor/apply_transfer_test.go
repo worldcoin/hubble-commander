@@ -139,7 +139,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesTokenID() {
 	s.setUserStatesInTree()
 
 	transferError, appError := s.transactionExecutor.ApplyTransfer(&transfer, models.MakeUint256(3))
-	s.Equal(appError, ErrIncorrectTokenID)
+	s.Equal(appError, ErrInvalidTokenID)
 	s.NoError(transferError)
 }
 

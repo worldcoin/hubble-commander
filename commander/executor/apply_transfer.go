@@ -13,7 +13,7 @@ var (
 	ErrInvalidSliceLength = errors.New("invalid slices length")
 	ErrNilReceiverStateID = errors.New("transfer receiver state id cannot be nil")
 	ErrBalanceTooLow      = NewDisputableTransferError(TransitionError, "not enough balance")
-	ErrIncorrectTokenID   = NewDisputableTransferError(TransitionError, "invalid sender or receiver token ID")
+	ErrInvalidTokenID     = NewDisputableTransferError(TransitionError, "invalid sender or receiver token ID")
 	ErrInvalidTokenAmount = NewDisputableTransferError(TransitionError, "amount cannot be equal to 0")
 )
 
@@ -39,7 +39,7 @@ func (t *TransactionExecutor) ApplyTransfer(
 	receiverState := receiverLeaf.UserState
 
 	if senderState.TokenID.Cmp(&commitmentTokenID) != 0 && receiverState.TokenID.Cmp(&commitmentTokenID) != 0 {
-		return nil, ErrIncorrectTokenID
+		return nil, ErrInvalidTokenID
 	}
 
 	if t.opts.AssumeNonces {
