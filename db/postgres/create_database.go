@@ -84,8 +84,5 @@ func closeDB(dbInstance *sqlx.DB, err *error) {
 
 func createDatabase(dbInstance *sqlx.DB, dbName string) error {
 	_, err := dbInstance.Exec(fmt.Sprintf("CREATE DATABASE %s", dbName))
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
