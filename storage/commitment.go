@@ -107,7 +107,7 @@ func (s *Storage) GetCommitmentsByBatchID(batchID models.Uint256) ([]models.Comm
 		if err != nil {
 			return nil, err
 		}
-		commitments[i].TokenID = stateLeaf.TokenIndex
+		commitments[i].TokenID = stateLeaf.TokenID
 	}
 
 	return commitments, nil

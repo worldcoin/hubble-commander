@@ -12,16 +12,16 @@ import (
 
 var (
 	senderState = models.UserState{
-		PubKeyID:   1,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(400),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(400),
+		Nonce:    models.MakeUint256(0),
 	}
 	receiverState = models.UserState{
-		PubKeyID:   2,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(0),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 2,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(0),
+		Nonce:    models.MakeUint256(0),
 	}
 	transfer = models.Transfer{
 		TransactionBase: models.TransactionBase{
@@ -135,11 +135,11 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesNonce() {
 	s.NoError(appError)
 }
 
-func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesTokenIndex() {
+func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesTokenID() {
 	s.setUserStatesInTree()
 
 	transferError, appError := s.transactionExecutor.ApplyTransfer(&transfer, models.MakeUint256(3))
-	s.Equal(appError, ErrIncorrectTokenIndices)
+	s.Equal(appError, ErrIncorrectTokenID)
 	s.NoError(transferError)
 }
 

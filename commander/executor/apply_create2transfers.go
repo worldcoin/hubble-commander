@@ -110,9 +110,9 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 func (t *TransactionExecutor) getOrRegisterPubKeyID(
 	events chan *accountregistry.AccountRegistrySinglePubkeyRegistered,
 	transfer *models.Create2Transfer,
-	tokenIndex models.Uint256,
+	tokenID models.Uint256,
 ) (*uint32, error) {
-	pubKeyID, err := t.storage.GetUnusedPubKeyID(&transfer.ToPublicKey, &tokenIndex)
+	pubKeyID, err := t.storage.GetUnusedPubKeyID(&transfer.ToPublicKey, &tokenID)
 	if err != nil && !st.IsNotFoundError(err) {
 		return nil, err
 	} else if st.IsNotFoundError(err) {
@@ -125,9 +125,9 @@ func (t *TransactionExecutor) handleApplyC2T(
 	transfer *models.Create2Transfer,
 	pubKeyID uint32,
 	appliedTransfers *AppliedC2Transfers,
-	combinedFee, tokenIndex *models.Uint256,
+	combinedFee, tokenID *models.Uint256,
 ) (create2TransferError, appError error) {
-	transferError, appError := t.ApplyCreate2Transfer(transfer, pubKeyID, *tokenIndex)
+	transferError, appError := t.ApplyCreate2Transfer(transfer, pubKeyID, *tokenID)
 	if appError != nil {
 		return nil, appError
 	}

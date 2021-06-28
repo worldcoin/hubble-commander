@@ -12,10 +12,10 @@ import (
 
 var (
 	updatedUserState = models.UserState{
-		PubKeyID:   1,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(800),
-		Nonce:      models.MakeUint256(1),
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(800),
+		Nonce:    models.MakeUint256(1),
 	}
 )
 
@@ -38,10 +38,10 @@ func (s *StateTreeTestSuite) SetupTest() {
 	s.tree = NewStateTree(s.storage.Storage)
 
 	state := models.UserState{
-		PubKeyID:   1,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(420),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
 	}
 	leaf, err := NewStateLeaf(0, &state)
 	s.NoError(err)
@@ -123,10 +123,10 @@ func (s *StateTreeTestSuite) TestSet_CalculatesCorrectRootForTwoLeaves() {
 	s.NoError(err)
 
 	state := models.UserState{
-		PubKeyID:   2,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(420),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 2,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
 	}
 	err = s.tree.Set(1, &state)
 	s.NoError(err)
@@ -247,22 +247,22 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafAddsStateUpdateRecord() {
 func (s *StateTreeTestSuite) TestRevertTo() {
 	states := []models.UserState{
 		{
-			PubKeyID:   1,
-			TokenIndex: models.MakeUint256(1),
-			Balance:    models.MakeUint256(420),
-			Nonce:      models.MakeUint256(0),
+			PubKeyID: 1,
+			TokenID:  models.MakeUint256(1),
+			Balance:  models.MakeUint256(420),
+			Nonce:    models.MakeUint256(0),
 		},
 		{
-			PubKeyID:   2,
-			TokenIndex: models.MakeUint256(5),
-			Balance:    models.MakeUint256(100),
-			Nonce:      models.MakeUint256(0),
+			PubKeyID: 2,
+			TokenID:  models.MakeUint256(5),
+			Balance:  models.MakeUint256(100),
+			Nonce:    models.MakeUint256(0),
 		},
 		{
-			PubKeyID:   1,
-			TokenIndex: models.MakeUint256(1),
-			Balance:    models.MakeUint256(500),
-			Nonce:      models.MakeUint256(0),
+			PubKeyID: 1,
+			TokenID:  models.MakeUint256(1),
+			Balance:  models.MakeUint256(500),
+			Nonce:    models.MakeUint256(0),
 		},
 	}
 
@@ -291,22 +291,22 @@ func (s *StateTreeTestSuite) TestRevertTo() {
 func (s *StateTreeTestSuite) TestRevertTo_NotExistentRootHash() {
 	states := []models.UserState{
 		{
-			PubKeyID:   1,
-			TokenIndex: models.MakeUint256(1),
-			Balance:    models.MakeUint256(420),
-			Nonce:      models.MakeUint256(0),
+			PubKeyID: 1,
+			TokenID:  models.MakeUint256(1),
+			Balance:  models.MakeUint256(420),
+			Nonce:    models.MakeUint256(0),
 		},
 		{
-			PubKeyID:   2,
-			TokenIndex: models.MakeUint256(5),
-			Balance:    models.MakeUint256(100),
-			Nonce:      models.MakeUint256(0),
+			PubKeyID: 2,
+			TokenID:  models.MakeUint256(5),
+			Balance:  models.MakeUint256(100),
+			Nonce:    models.MakeUint256(0),
 		},
 		{
-			PubKeyID:   1,
-			TokenIndex: models.MakeUint256(1),
-			Balance:    models.MakeUint256(500),
-			Nonce:      models.MakeUint256(0),
+			PubKeyID: 1,
+			TokenID:  models.MakeUint256(1),
+			Balance:  models.MakeUint256(500),
+			Nonce:    models.MakeUint256(0),
 		},
 	}
 	for i := range states {

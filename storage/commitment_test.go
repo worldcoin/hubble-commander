@@ -208,10 +208,10 @@ func (s *CommitmentTestSuite) addLeaf() {
 	s.NoError(err)
 
 	err = s.tree.Set(uint32(0), &models.UserState{
-		PubKeyID:   1,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(420),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
 	})
 	s.NoError(err)
 }

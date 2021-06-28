@@ -175,7 +175,7 @@ func (t *TransactionExecutor) getCommitmentFeeReceiver() (*FeeReceiver, error) {
 	}
 	return &FeeReceiver{
 		StateID: feeReceiverState.StateID,
-		TokenID: feeReceiverState.TokenIndex,
+		TokenID: feeReceiverState.TokenID,
 	}, nil
 }
 

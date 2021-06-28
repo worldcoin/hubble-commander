@@ -196,10 +196,10 @@ func (s *VerifySignatureTestSuite) addAccounts() {
 		})
 		s.NoError(err)
 		err = s.tree.Set(i, &models.UserState{
-			PubKeyID:   i,
-			TokenIndex: models.MakeUint256(0),
-			Balance:    models.MakeUint256(1000),
-			Nonce:      models.MakeUint256(0),
+			PubKeyID: i,
+			TokenID:  models.MakeUint256(0),
+			Balance:  models.MakeUint256(1000),
+			Nonce:    models.MakeUint256(0),
 		})
 		s.NoError(err)
 	}

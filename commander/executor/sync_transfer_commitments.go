@@ -99,6 +99,6 @@ func (t *TransactionExecutor) getSyncedCommitmentFeeReceiver(commitment *encoder
 	}
 	return &FeeReceiver{
 		StateID: commitment.FeeReceiver,
-		TokenID: feeReceiverState.TokenIndex,
+		TokenID: feeReceiverState.TokenID,
 	}, nil
 }
