@@ -58,12 +58,15 @@ func (s *Create2TransferTestSuite) TearDownTest() {
 }
 
 func (s *Create2TransferTestSuite) TestAddCreate2Transfer_AddAndRetrieve() {
-	_, err := s.storage.AddCreate2Transfer(&create2Transfer)
+	receiveTime, err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
+
+	expected := create2Transfer
+	expected.ReceiveTime = receiveTime
 
 	res, err := s.storage.GetCreate2Transfer(create2Transfer.Hash)
 	s.NoError(err)
-	s.Equal(create2Transfer, *res)
+	s.Equal(expected, *res)
 }
 
 func (s *Create2TransferTestSuite) TestAddCreate2Transfer_SetsReceiveTime() {
@@ -95,8 +98,9 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchHash() {
 
 	transferInBatch := create2Transfer
 	transferInBatch.IncludedInCommitment = commitmentID
-	_, err = s.storage.AddCreate2Transfer(&transferInBatch)
+	receiveTime, err := s.storage.AddCreate2Transfer(&transferInBatch)
 	s.NoError(err)
+	transferInBatch.ReceiveTime = receiveTime
 
 	expected := models.Create2TransferWithBatchHash{
 		Create2Transfer: transferInBatch,
@@ -108,10 +112,12 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchHash() {
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchHash_WithoutBatch() {
-	_, err := s.storage.AddCreate2Transfer(&create2Transfer)
+	receiveTime, err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
 
 	expected := models.Create2TransferWithBatchHash{Create2Transfer: create2Transfer}
+	expected.ReceiveTime = receiveTime
+
 	res, err := s.storage.GetCreate2TransferWithBatchHash(create2Transfer.Hash)
 	s.NoError(err)
 	s.Equal(expected, *res)

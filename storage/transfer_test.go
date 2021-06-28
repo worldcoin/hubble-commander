@@ -55,12 +55,15 @@ func (s *TransferTestSuite) TearDownTest() {
 }
 
 func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieve() {
-	_, err := s.storage.AddTransfer(&transfer)
+	receiveTime, err := s.storage.AddTransfer(&transfer)
 	s.NoError(err)
+
+	expected := transfer
+	expected.ReceiveTime = receiveTime
 
 	res, err := s.storage.GetTransfer(transfer.Hash)
 	s.NoError(err)
-	s.Equal(transfer, *res)
+	s.Equal(expected, *res)
 }
 
 func (s *TransferTestSuite) TestAddTransfer_SetsReceiveTime() {
@@ -92,8 +95,9 @@ func (s *TransferTestSuite) TestGetTransferWithBatchHash() {
 
 	transferInBatch := transfer
 	transferInBatch.IncludedInCommitment = commitmentID
-	_, err = s.storage.AddTransfer(&transferInBatch)
+	receiveTime, err := s.storage.AddTransfer(&transferInBatch)
 	s.NoError(err)
+	transferInBatch.ReceiveTime = receiveTime
 
 	expected := models.TransferWithBatchHash{
 		Transfer:  transferInBatch,
@@ -105,10 +109,12 @@ func (s *TransferTestSuite) TestGetTransferWithBatchHash() {
 }
 
 func (s *TransferTestSuite) TestGetTransferWithBatchHash_WithoutBatch() {
-	_, err := s.storage.AddTransfer(&transfer)
+	receiveTime, err := s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 
 	expected := models.TransferWithBatchHash{Transfer: transfer}
+	expected.ReceiveTime = receiveTime
+
 	res, err := s.storage.GetTransferWithBatchHash(transfer.Hash)
 	s.NoError(err)
 	s.Equal(expected, *res)
@@ -220,11 +226,7 @@ func (s *TransferTestSuite) TestGetUserTransfers() {
 	transfer3.Hash = utils.RandomHash()
 	transfer3.FromStateID = 1
 
-	_, err := s.storage.AddTransfer(&transfer1)
-	s.NoError(err)
-	_, err = s.storage.AddTransfer(&transfer2)
-	s.NoError(err)
-	_, err = s.storage.AddTransfer(&transfer3)
+	err := s.storage.BatchAddTransfer([]models.Transfer{transfer1, transfer2, transfer3})
 	s.NoError(err)
 
 	userTransactions, err := s.storage.GetUserTransfers(models.MakeUint256(1))
@@ -309,10 +311,7 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 	transfers[4].FromStateID = 1
 	transfers[4].ToStateID = 2
 
-	for i := range transfers {
-		_, err := s.storage.AddTransfer(&transfers[i].Transfer)
-		s.NoError(err)
-	}
+	s.batchAddTransfers(transfers)
 
 	userTransactions, err := s.storage.GetTransfersByPublicKey(&models.PublicKey{1, 2, 3})
 	s.NoError(err)
@@ -369,6 +368,15 @@ func (s *TransferTestSuite) addBatchAndCommitment() (batchHash common.Hash, comm
 	s.NoError(err)
 
 	return *batch.Hash, *id
+}
+
+func (s *TransferTestSuite) batchAddTransfers(transfers []models.TransferWithBatchHash) {
+	txs := make([]models.Transfer, 5)
+	for i := range transfers {
+		txs[i] = transfers[i].Transfer
+	}
+	err := s.storage.BatchAddTransfer(txs)
+	s.NoError(err)
 }
 
 func TestTransferTestSuite(t *testing.T) {
