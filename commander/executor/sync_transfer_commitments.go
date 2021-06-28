@@ -29,7 +29,12 @@ func (t *TransactionExecutor) syncTransferCommitment(
 		return err
 	}
 
-	transfers, err := t.ApplyTransfers(deserializedTransfers, uint32(len(deserializedTransfers)), true)
+	feeReceiver, err := t.getSyncedCommitmentFeeReceiver(commitment)
+	if err != nil {
+		return err
+	}
+
+	transfers, err := t.ApplyTransfers(deserializedTransfers, uint32(len(deserializedTransfers)), feeReceiver, true)
 	if err != nil {
 		return err
 	}
@@ -72,4 +77,15 @@ func (t *TransactionExecutor) syncTransferCommitment(
 	}
 
 	return t.storage.BatchAddTransfer(transfers.appliedTransfers)
+}
+
+func (t *TransactionExecutor) getSyncedCommitmentFeeReceiver(commitment *encoder.DecodedCommitment) (*FeeReceiver, error) {
+	feeReceiverState, err := t.storage.GetStateLeaf(commitment.FeeReceiver)
+	if err != nil {
+		return nil, err
+	}
+	return &FeeReceiver{
+		StateID: commitment.FeeReceiver,
+		TokenID: feeReceiverState.TokenID,
+	}, nil
 }

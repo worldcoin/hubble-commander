@@ -14,10 +14,10 @@ func (a *API) GetUserState(id uint32) (*dto.UserState, error) {
 	userState := &models.UserStateWithID{
 		StateID: leaf.StateID,
 		UserState: models.UserState{
-			PubKeyID:   leaf.PubKeyID,
-			TokenIndex: leaf.TokenIndex,
-			Balance:    leaf.Balance,
-			Nonce:      leaf.Nonce,
+			PubKeyID: leaf.PubKeyID,
+			TokenID:  leaf.TokenID,
+			Balance:  leaf.Balance,
+			Nonce:    leaf.Nonce,
 		},
 	}
 

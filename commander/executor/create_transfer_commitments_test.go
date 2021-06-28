@@ -65,10 +65,10 @@ func populateAccounts(storage *st.Storage, balances []models.Uint256) error {
 		}
 
 		err = stateTree.Set(i, &models.UserState{
-			PubKeyID:   i,
-			TokenIndex: models.MakeUint256(0),
-			Balance:    balances[i],
-			Nonce:      models.MakeUint256(0),
+			PubKeyID: i,
+			TokenID:  models.MakeUint256(0),
+			Balance:  balances[i],
+			Nonce:    models.MakeUint256(0),
 		})
 		if err != nil {
 			return err
@@ -103,10 +103,6 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_QueriesForM
 
 	s.addTransfers(transfers)
 
-	pendingTransfers, err := s.storage.GetPendingTransfers(pendingTxsCountMultiplier * s.cfg.TxsPerCommitment)
-	s.NoError(err)
-	s.Len(pendingTransfers, 4)
-
 	preRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
@@ -127,13 +123,13 @@ func (s *TransferCommitmentsTestSuite) invalidateTransfers(transfers []models.Tr
 	}
 }
 
-func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothingWhenThereAreNotEnoughPendingTransfers() {
+func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_ReturnsErrorWhenThereAreNotEnoughPendingTransfers() {
 	preRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
-	s.NoError(err)
-	s.Len(commitments, 0)
+	s.Nil(commitments)
+	s.Equal(ErrNotEnoughTransfers, err)
 
 	postRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
@@ -141,7 +137,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothing
 	s.Equal(preRoot, postRoot)
 }
 
-func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothingWhenThereAreNotEnoughValidTransfers() {
+func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_ReturnsErrorWhenThereAreNotEnoughValidTransfers() {
 	transfers := generateValidTransfers(2)
 	transfers[1].Amount = models.MakeUint256(99999999999)
 	s.addTransfers(transfers)
@@ -150,8 +146,8 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_DoesNothing
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
-	s.NoError(err)
-	s.Len(commitments, 0)
+	s.Nil(commitments)
+	s.Equal(ErrNotEnoughTransfers, err)
 
 	postRoot, err := s.transactionExecutor.stateTree.Root()
 	s.NoError(err)
@@ -224,7 +220,7 @@ func (s *TransferCommitmentsTestSuite) TestRemoveTransfer() {
 	transfers := []models.Transfer{transfer1, transfer2, transfer3}
 	toRemove := []models.Transfer{transfer2}
 
-	s.Equal([]models.Transfer{transfer1, transfer3}, removeTransfer(transfers, toRemove))
+	s.Equal([]models.Transfer{transfer1, transfer3}, removeTransfers(transfers, toRemove))
 }
 
 func TestTransferCommitmentsTestSuite(t *testing.T) {
@@ -254,10 +250,10 @@ func addAccountWithHighNonce(s *require.Assertions, storage *st.Storage, stateID
 
 	stateTree := st.NewStateTree(storage)
 	err = stateTree.Set(stateID, &models.UserState{
-		PubKeyID:   dummyAccount.PubKeyID,
-		TokenIndex: models.MakeUint256(0),
-		Balance:    models.MakeUint256(1000),
-		Nonce:      models.MakeUint256(10),
+		PubKeyID: dummyAccount.PubKeyID,
+		TokenID:  models.MakeUint256(0),
+		Balance:  models.MakeUint256(1000),
+		Nonce:    models.MakeUint256(10),
 	})
 	s.NoError(err)
 }

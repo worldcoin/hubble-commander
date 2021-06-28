@@ -229,18 +229,18 @@ func seedDB(t *testing.T, storage *st.Storage, tree *st.StateTree, wallets []bls
 	require.NoError(t, err)
 
 	err = tree.Set(0, &models.UserState{
-		PubKeyID:   0,
-		TokenIndex: models.MakeUint256(0),
-		Balance:    models.MakeUint256(1000),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 0,
+		TokenID:  models.MakeUint256(0),
+		Balance:  models.MakeUint256(1000),
+		Nonce:    models.MakeUint256(0),
 	})
 	require.NoError(t, err)
 
 	err = tree.Set(1, &models.UserState{
-		PubKeyID:   1,
-		TokenIndex: models.MakeUint256(0),
-		Balance:    models.MakeUint256(0),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(0),
+		Balance:  models.MakeUint256(0),
+		Nonce:    models.MakeUint256(0),
 	})
 	require.NoError(t, err)
 }

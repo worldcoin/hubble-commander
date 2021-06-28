@@ -55,10 +55,10 @@ func (s *GetTransactionTestSuite) SetupTest() {
 	s.NoError(err)
 
 	err = st.NewStateTree(s.storage.Storage).Set(1, &models.UserState{
-		PubKeyID:   123,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(420),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 123,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
 	})
 	s.NoError(err)
 

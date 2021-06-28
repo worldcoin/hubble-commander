@@ -45,8 +45,6 @@ type MerkleTree struct {
 	depth uint8
 }
 
-type Witness []common.Hash
-
 func NewMerkleTree(leaves []common.Hash) (*MerkleTree, error) {
 	depth := getRequiredTreeHeight(int32(len(leaves)))
 
@@ -111,7 +109,7 @@ func (m *MerkleTree) Root() common.Hash {
 	return m.nodes[0]
 }
 
-func (m *MerkleTree) GetWitness(leafIndex uint32) Witness {
+func (m *MerkleTree) GetWitness(leafIndex uint32) models.Witness {
 	leafPath := models.MerklePath{Depth: m.depth - 1, Path: leafIndex}
 
 	witness := make([]common.Hash, m.depth-1)

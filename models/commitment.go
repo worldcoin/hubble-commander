@@ -30,11 +30,15 @@ func (c *Commitment) LeafHash(accountRoot common.Hash) common.Hash {
 type CommitmentWithTokenID struct {
 	ID                 int32 `db:"commitment_id"`
 	LeafHash           common.Hash
-	Transactions       []byte      `json:"-"`
-	TokenID            Uint256     `db:"token_index"`
+	Transactions       []byte `json:"-"`
+	TokenID            Uint256
 	FeeReceiverStateID uint32      `db:"fee_receiver"`
 	CombinedSignature  Signature   `db:"combined_signature"`
 	PostStateRoot      common.Hash `db:"post_state_root"`
+}
+
+func (c *CommitmentWithTokenID) BodyHash(accountRoot common.Hash) common.Hash {
+	return calcBodyHash(c.FeeReceiverStateID, c.CombinedSignature, c.Transactions, accountRoot.Bytes())
 }
 
 func (c *CommitmentWithTokenID) CalcLeafHash(accountTreeRoot *common.Hash) common.Hash {

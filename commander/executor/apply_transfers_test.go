@@ -21,6 +21,7 @@ type ApplyTransfersTestSuite struct {
 	tree                *storage.StateTree
 	cfg                 *config.RollupConfig
 	transactionExecutor *TransactionExecutor
+	feeReceiver         *FeeReceiver
 }
 
 func (s *ApplyTransfersTestSuite) SetupSuite() {
@@ -40,22 +41,22 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 	}
 
 	senderState := models.UserState{
-		PubKeyID:   1,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(420),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
 	}
 	receiverState := models.UserState{
-		PubKeyID:   2,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(0),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 2,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(0),
+		Nonce:    models.MakeUint256(0),
 	}
 	feeReceiverState := models.UserState{
-		PubKeyID:   3,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(1000),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 3,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(1000),
+		Nonce:    models.MakeUint256(0),
 	}
 
 	accounts := []models.Account{
@@ -85,6 +86,10 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 	s.NoError(err)
 
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, TransactionExecutorOpts{})
+	s.feeReceiver = &FeeReceiver{
+		StateID: 3,
+		TokenID: models.MakeUint256(1),
+	}
 }
 
 func (s *ApplyTransfersTestSuite) TearDownTest() {
@@ -95,7 +100,7 @@ func (s *ApplyTransfersTestSuite) TearDownTest() {
 func (s *ApplyTransfersTestSuite) TestApplyTransfers_AllValid() {
 	generatedTransfers := generateValidTransfers(3)
 
-	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, false)
+	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver, false)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 3)
@@ -106,7 +111,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_SomeValid() {
 	generatedTransfers := generateValidTransfers(2)
 	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(3)...)
 
-	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, false)
+	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver, false)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 2)
@@ -117,7 +122,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_InvalidInSyncMode() {
 	generatedTransfers := generateValidTransfers(2)
 	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(3)...)
 
-	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, true)
+	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver, true)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 2)
@@ -127,7 +132,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_InvalidInSyncMode() {
 func (s *ApplyTransfersTestSuite) TestApplyTransfers_MoreThanTxsPerCommitment() {
 	generatedTransfers := generateValidTransfers(13)
 
-	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, false)
+	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver, false)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 6)
@@ -147,7 +152,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersTestSuite_SavesTransferError
 		s.NoError(err)
 	}
 
-	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, false)
+	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver, false)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 3)

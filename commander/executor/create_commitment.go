@@ -8,7 +8,7 @@ import (
 
 func (t *TransactionExecutor) createAndStoreCommitment(
 	txType txtype.TransactionType,
-	feeReceiverIndex uint32,
+	feeReceiverStateID uint32,
 	serializedTxs []byte,
 	combinedSignature *models.Signature,
 ) (*models.Commitment, error) {
@@ -20,7 +20,7 @@ func (t *TransactionExecutor) createAndStoreCommitment(
 	commitment := models.Commitment{
 		Type:              txType,
 		Transactions:      serializedTxs,
-		FeeReceiver:       feeReceiverIndex,
+		FeeReceiver:       feeReceiverStateID,
 		CombinedSignature: *combinedSignature,
 		PostStateRoot:     *stateRoot,
 	}

@@ -51,7 +51,7 @@ func (s *Storage) GetPublicKey(pubKeyID uint32) (*models.PublicKey, error) {
 	return &res[0], nil
 }
 
-func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey, tokenIndex *models.Uint256) (*uint32, error) {
+func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey, tokenID *models.Uint256) (*uint32, error) {
 	accounts, err := s.GetAccounts(publicKey)
 	if err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey, tokenIndex *mod
 		leaves := make([]models.FlatStateLeaf, 0, 1)
 		err = s.Badger.Find(
 			&leaves,
-			bh.Where("TokenIndex").Eq(tokenIndex).
+			bh.Where("TokenID").Eq(tokenID).
 				And("PubKeyID").Eq(accounts[i].PubKeyID).Index("PubKeyID"),
 		)
 		if err != nil {

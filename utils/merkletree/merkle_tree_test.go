@@ -3,6 +3,7 @@ package merkletree
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -58,8 +59,8 @@ func TestMerkleTree_GetWitness_TwoNodes(t *testing.T) {
 	tree, err := NewMerkleTree([]common.Hash{left, right})
 	require.NoError(t, err)
 
-	require.Equal(t, Witness{right}, tree.GetWitness(0))
-	require.Equal(t, Witness{left}, tree.GetWitness(1))
+	require.Equal(t, models.Witness{right}, tree.GetWitness(0))
+	require.Equal(t, models.Witness{left}, tree.GetWitness(1))
 }
 
 func TestMerkleTree_GetWitness_ThreeNodes(t *testing.T) {
@@ -73,7 +74,7 @@ func TestMerkleTree_GetWitness_ThreeNodes(t *testing.T) {
 	tree, err := NewMerkleTree([]common.Hash{leaf1, leaf2, leaf3})
 	require.NoError(t, err)
 
-	require.Equal(t, Witness{leaf2, h30}, tree.GetWitness(0))
-	require.Equal(t, Witness{leaf1, h30}, tree.GetWitness(1))
-	require.Equal(t, Witness{GetZeroHash(2), h12}, tree.GetWitness(2))
+	require.Equal(t, models.Witness{leaf2, h30}, tree.GetWitness(0))
+	require.Equal(t, models.Witness{leaf1, h30}, tree.GetWitness(1))
+	require.Equal(t, models.Witness{GetZeroHash(2), h12}, tree.GetWitness(2))
 }
