@@ -104,7 +104,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 		ToStateID:   ref.Uint32(2),
 		ToPublicKey: models.PublicKey{2, 3, 4},
 	}
-	err = s.storage.AddCreate2Transfer(&create2Transfer)
+	_, err = s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
 
 	commitment, err := s.api.GetCommitment(*commitmentID)

@@ -58,7 +58,7 @@ func (s *Create2TransferTestSuite) TearDownTest() {
 }
 
 func (s *Create2TransferTestSuite) TestAddCreate2Transfer_AddAndRetrieve() {
-	err := s.storage.AddCreate2Transfer(&create2Transfer)
+	_, err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
 
 	res, err := s.storage.GetCreate2Transfer(create2Transfer.Hash)
@@ -68,7 +68,7 @@ func (s *Create2TransferTestSuite) TestAddCreate2Transfer_AddAndRetrieve() {
 
 func (s *Create2TransferTestSuite) TestAddCreate2Transfer_SetsReceiveTime() {
 	beforeTime := time.Now().Unix()
-	err := s.storage.AddCreate2Transfer(&create2Transfer)
+	_, err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
 
 	res, err := s.storage.GetCreate2Transfer(create2Transfer.Hash)
@@ -95,7 +95,7 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchHash() {
 
 	transferInBatch := create2Transfer
 	transferInBatch.IncludedInCommitment = commitmentID
-	err = s.storage.AddCreate2Transfer(&transferInBatch)
+	_, err = s.storage.AddCreate2Transfer(&transferInBatch)
 	s.NoError(err)
 
 	expected := models.Create2TransferWithBatchHash{
@@ -108,7 +108,7 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchHash() {
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchHash_WithoutBatch() {
-	err := s.storage.AddCreate2Transfer(&create2Transfer)
+	_, err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
 
 	expected := models.Create2TransferWithBatchHash{Create2Transfer: create2Transfer}
@@ -213,7 +213,7 @@ func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers_OrdersTransfer
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey() {
-	err := s.storage.AddCreate2Transfer(&create2Transfer)
+	_, err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
 
 	err = s.tree.Set(1, &models.UserState{
@@ -241,7 +241,7 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID() {
 	transfer1 := create2Transfer
 	transfer1.IncludedInCommitment = commitmentID
 
-	err = s.storage.AddCreate2Transfer(&transfer1)
+	_, err = s.storage.AddCreate2Transfer(&transfer1)
 	s.NoError(err)
 
 	commitments, err := s.storage.GetCreate2TransfersByCommitmentID(*commitmentID)
@@ -259,7 +259,7 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID_NoCreat
 }
 
 func (s *Create2TransferTestSuite) TestSetCreate2TransferToStateID() {
-	err := s.storage.AddCreate2Transfer(&create2Transfer)
+	_, err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
 
 	toStateID := uint32(10)

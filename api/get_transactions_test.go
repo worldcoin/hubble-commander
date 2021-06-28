@@ -144,7 +144,7 @@ func (s *GetTransactionsTestSuite) addCreate2Transfers() []models.Create2Transfe
 	}
 
 	for i := range transfers {
-		err := s.storage.AddCreate2Transfer(&transfers[i])
+		_, err := s.storage.AddCreate2Transfer(&transfers[i])
 		s.NoError(err)
 	}
 	return transfers

@@ -512,7 +512,7 @@ func (s *SyncTestSuite) createTransferBatch(tx *models.Transfer) *models.Batch {
 }
 
 func (s *SyncTestSuite) createAndSubmitC2TBatch(tx *models.Create2Transfer) models.Commitment {
-	err := s.storage.AddCreate2Transfer(tx)
+	_, err := s.storage.AddCreate2Transfer(tx)
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.CreateCreate2TransferCommitments(testDomain)
@@ -529,7 +529,7 @@ func (s *SyncTestSuite) createAndSubmitC2TBatch(tx *models.Create2Transfer) mode
 }
 
 func (s *SyncTestSuite) createAndSubmitInvalidC2TBatch(tx *models.Create2Transfer) models.Commitment {
-	err := s.storage.AddCreate2Transfer(tx)
+	_, err := s.storage.AddCreate2Transfer(tx)
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.CreateCreate2TransferCommitments(testDomain)

@@ -141,7 +141,7 @@ func (s *TransactionBaseTestSuite) TestGetTransactionCount() {
 	c2t := create2Transfer
 	c2t.Hash = common.Hash{3, 4, 5}
 	c2t.IncludedInCommitment = commitmentID
-	err = s.storage.AddCreate2Transfer(&c2t)
+	_, err = s.storage.AddCreate2Transfer(&c2t)
 	s.NoError(err)
 
 	count, err := s.storage.GetTransactionCount()

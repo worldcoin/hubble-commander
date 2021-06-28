@@ -24,7 +24,7 @@ func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*co
 	}
 	create2Transfer.Hash = *hash
 
-	err = a.storage.AddCreate2Transfer(create2Transfer)
+	_, err = a.storage.AddCreate2Transfer(create2Transfer)
 	if err != nil {
 		return nil, err
 	}
