@@ -28,7 +28,7 @@ func (s *Storage) AddTransfer(t *models.Transfer) error {
 	}
 	defer tx.Rollback(&err)
 
-	err = txStorage.addTransactionBase(&t.TransactionBase, txtype.Transfer)
+	_, err = txStorage.addTransactionBase(&t.TransactionBase, txtype.Transfer)
 	if err != nil {
 		return err
 	}

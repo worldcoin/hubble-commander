@@ -3,6 +3,7 @@ package storage
 import (
 	"math/big"
 	"testing"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -63,6 +64,18 @@ func (s *Create2TransferTestSuite) TestAddCreate2Transfer_AddAndRetrieve() {
 	res, err := s.storage.GetCreate2Transfer(create2Transfer.Hash)
 	s.NoError(err)
 	s.Equal(create2Transfer, *res)
+}
+
+func (s *Create2TransferTestSuite) TestAddCreate2Transfer_SetsReceiveTime() {
+	beforeTime := time.Now().Unix()
+	err := s.storage.AddCreate2Transfer(&create2Transfer)
+	s.NoError(err)
+
+	res, err := s.storage.GetCreate2Transfer(create2Transfer.Hash)
+	s.NoError(err)
+
+	s.GreaterOrEqual(res.ReceiveTime.Unix(), beforeTime)
+	s.LessOrEqual(res.ReceiveTime.Unix(), time.Now().Unix())
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchHash() {

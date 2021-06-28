@@ -15,13 +15,12 @@ import (
 var (
 	transferTransaction = models.Transfer{
 		TransactionBase: models.TransactionBase{
-			Hash:                 common.BigToHash(big.NewInt(1234)),
-			FromStateID:          1,
-			Amount:               models.MakeUint256(1000),
-			Fee:                  models.MakeUint256(100),
-			Nonce:                models.MakeUint256(0),
-			Signature:            models.MakeRandomSignature(),
-			IncludedInCommitment: nil,
+			Hash:        common.BigToHash(big.NewInt(1234)),
+			FromStateID: 1,
+			Amount:      models.MakeUint256(1000),
+			Fee:         models.MakeUint256(100),
+			Nonce:       models.MakeUint256(0),
+			Signature:   models.MakeRandomSignature(),
 		},
 		ToStateID: 2,
 	}

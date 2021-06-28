@@ -30,7 +30,7 @@ func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) (err error) {
 	}
 	defer tx.Rollback(&err)
 
-	err = txStorage.addTransactionBase(&t.TransactionBase, txtype.Create2Transfer)
+	_, err = txStorage.addTransactionBase(&t.TransactionBase, txtype.Create2Transfer)
 	if err != nil {
 		return err
 	}

@@ -2,6 +2,7 @@ package storage
 
 import (
 	"testing"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -15,14 +16,13 @@ import (
 var (
 	transfer = models.Transfer{
 		TransactionBase: models.TransactionBase{
-			Hash:                 utils.RandomHash(),
-			TxType:               txtype.Transfer,
-			FromStateID:          1,
-			Amount:               models.MakeUint256(1000),
-			Fee:                  models.MakeUint256(100),
-			Nonce:                models.MakeUint256(0),
-			Signature:            models.MakeRandomSignature(),
-			IncludedInCommitment: nil,
+			Hash:        utils.RandomHash(),
+			TxType:      txtype.Transfer,
+			FromStateID: 1,
+			Amount:      models.MakeUint256(1000),
+			Fee:         models.MakeUint256(100),
+			Nonce:       models.MakeUint256(0),
+			Signature:   models.MakeRandomSignature(),
 		},
 		ToStateID: 2,
 	}
@@ -61,6 +61,18 @@ func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieve() {
 	res, err := s.storage.GetTransfer(transfer.Hash)
 	s.NoError(err)
 	s.Equal(transfer, *res)
+}
+
+func (s *TransferTestSuite) TestAddTransfer_SetsReceiveTime() {
+	beforeTime := time.Now().Unix()
+	err := s.storage.AddTransfer(&transfer)
+	s.NoError(err)
+
+	res, err := s.storage.GetTransfer(transfer.Hash)
+	s.NoError(err)
+
+	s.GreaterOrEqual(res.ReceiveTime.Unix(), beforeTime)
+	s.LessOrEqual(res.ReceiveTime.Unix(), time.Now().Unix())
 }
 
 func (s *TransferTestSuite) TestGetTransferWithBatchHash() {
