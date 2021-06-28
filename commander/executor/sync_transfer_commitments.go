@@ -6,6 +6,11 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
+var (
+	ErrTooManyTx         = NewDisputableTransferError(TransitionError, "too many transactions in a commitment")
+	ErrInvalidDataLength = NewDisputableTransferError(TransitionError, "invalid data length")
+)
+
 func (t *TransactionExecutor) syncTransferCommitments(batch *eth.DecodedBatch) error {
 	for i := range batch.Commitments {
 		err := t.syncTransferCommitment(batch, &batch.Commitments[i])
@@ -24,9 +29,17 @@ func (t *TransactionExecutor) syncTransferCommitment(
 	batch *eth.DecodedBatch,
 	commitment *encoder.DecodedCommitment,
 ) error {
+	if len(commitment.Transactions)%encoder.TransferLength != 0 {
+		return ErrInvalidDataLength
+	}
+
 	deserializedTransfers, err := encoder.DeserializeTransfers(commitment.Transactions)
 	if err != nil {
 		return err
+	}
+
+	if uint32(len(deserializedTransfers)) > t.cfg.TxsPerCommitment {
+		return ErrTooManyTx
 	}
 
 	feeReceiver, err := t.getSyncedCommitmentFeeReceiver(commitment)

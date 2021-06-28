@@ -24,9 +24,17 @@ func (t *TransactionExecutor) syncCreate2TransferCommitment(
 	batch *eth.DecodedBatch,
 	commitment *encoder.DecodedCommitment,
 ) error {
+	if len(commitment.Transactions)%encoder.Create2TransferLength != 0 {
+		return ErrInvalidDataLength
+	}
+
 	deserializedTransfers, pubKeyIDs, err := encoder.DeserializeCreate2Transfers(commitment.Transactions)
 	if err != nil {
 		return err
+	}
+
+	if uint32(len(deserializedTransfers)) > t.cfg.TxsPerCommitment {
+		return ErrTooManyTx
 	}
 
 	feeReceiver, err := t.getSyncedCommitmentFeeReceiver(commitment)
