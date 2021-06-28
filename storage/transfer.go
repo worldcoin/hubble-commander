@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"time"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -21,16 +23,16 @@ var (
 	}
 )
 
-func (s *Storage) AddTransfer(t *models.Transfer) error {
+func (s *Storage) AddTransfer(t *models.Transfer) (receiveTime *time.Time, err error) {
 	tx, txStorage, err := s.BeginTransaction(TxOptions{Postgres: true})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer tx.Rollback(&err)
 
-	_, err = txStorage.addTransactionBase(&t.TransactionBase, txtype.Transfer)
+	receiveTime, err = txStorage.addTransactionBase(&t.TransactionBase, txtype.Transfer)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	_, err = txStorage.Postgres.Query(
@@ -41,10 +43,15 @@ func (s *Storage) AddTransfer(t *models.Transfer) error {
 			),
 	).Exec()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return tx.Commit()
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return receiveTime, nil
 }
 
 func (s *Storage) BatchAddTransfer(txs []models.Transfer) error {

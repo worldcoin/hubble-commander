@@ -48,7 +48,7 @@ func (s *TransactionBaseTestSuite) TearDownTest() {
 }
 
 func (s *TransactionBaseTestSuite) TestSetTransactionError() {
-	err := s.storage.AddTransfer(&transferTransaction)
+	_, err := s.storage.AddTransfer(&transferTransaction)
 	s.NoError(err)
 
 	errorMessage := ref.String("Quack")
@@ -81,11 +81,11 @@ func (s *TransactionBaseTestSuite) TestGetLatestTransactionNonce() {
 	tx3.Hash = utils.RandomHash()
 	tx3.Nonce = models.MakeUint256(1)
 
-	err = s.storage.AddTransfer(&tx1)
+	_, err = s.storage.AddTransfer(&tx1)
 	s.NoError(err)
-	err = s.storage.AddTransfer(&tx2)
+	_, err = s.storage.AddTransfer(&tx2)
 	s.NoError(err)
-	err = s.storage.AddTransfer(&tx3)
+	_, err = s.storage.AddTransfer(&tx3)
 	s.NoError(err)
 
 	userTransactions, err := s.storage.GetLatestTransactionNonce(account.PubKeyID)
@@ -98,7 +98,7 @@ func (s *TransactionBaseTestSuite) TestBatchMarkTransactionAsIncluded() {
 	for i := 0; i < len(txs); i++ {
 		txs[i] = transferTransaction
 		txs[i].Hash = utils.RandomHash()
-		err := s.storage.AddTransfer(&txs[i])
+		_, err := s.storage.AddTransfer(&txs[i])
 		s.NoError(err)
 	}
 
@@ -133,9 +133,9 @@ func (s *TransactionBaseTestSuite) TestGetTransactionCount() {
 	transferInCommitment := transferTransaction
 	transferInCommitment.Hash = common.Hash{5, 5, 5}
 	transferInCommitment.IncludedInCommitment = commitmentID
-	err = s.storage.AddTransfer(&transferInCommitment)
+	_, err = s.storage.AddTransfer(&transferInCommitment)
 	s.NoError(err)
-	err = s.storage.AddTransfer(&transferTransaction)
+	_, err = s.storage.AddTransfer(&transferTransaction)
 	s.NoError(err)
 
 	c2t := create2Transfer
@@ -200,7 +200,7 @@ func (s *TransactionBaseTestSuite) addTransfersInCommitment(batchID *models.Uint
 
 	for i := range transfers {
 		transfers[i].IncludedInCommitment = commitmentID
-		err = s.storage.AddTransfer(&transfers[i])
+		_, err = s.storage.AddTransfer(&transfers[i])
 		s.NoError(err)
 	}
 }

@@ -55,7 +55,7 @@ func (s *TransferTestSuite) TearDownTest() {
 }
 
 func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieve() {
-	err := s.storage.AddTransfer(&transfer)
+	_, err := s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 
 	res, err := s.storage.GetTransfer(transfer.Hash)
@@ -65,7 +65,7 @@ func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieve() {
 
 func (s *TransferTestSuite) TestAddTransfer_SetsReceiveTime() {
 	beforeTime := time.Now().Unix()
-	err := s.storage.AddTransfer(&transfer)
+	_, err := s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 
 	res, err := s.storage.GetTransfer(transfer.Hash)
@@ -92,7 +92,7 @@ func (s *TransferTestSuite) TestGetTransferWithBatchHash() {
 
 	transferInBatch := transfer
 	transferInBatch.IncludedInCommitment = commitmentID
-	err = s.storage.AddTransfer(&transferInBatch)
+	_, err = s.storage.AddTransfer(&transferInBatch)
 	s.NoError(err)
 
 	expected := models.TransferWithBatchHash{
@@ -105,7 +105,7 @@ func (s *TransferTestSuite) TestGetTransferWithBatchHash() {
 }
 
 func (s *TransferTestSuite) TestGetTransferWithBatchHash_WithoutBatch() {
-	err := s.storage.AddTransfer(&transfer)
+	_, err := s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 
 	expected := models.TransferWithBatchHash{Transfer: transfer}
@@ -220,11 +220,11 @@ func (s *TransferTestSuite) TestGetUserTransfers() {
 	transfer3.Hash = utils.RandomHash()
 	transfer3.FromStateID = 1
 
-	err := s.storage.AddTransfer(&transfer1)
+	_, err := s.storage.AddTransfer(&transfer1)
 	s.NoError(err)
-	err = s.storage.AddTransfer(&transfer2)
+	_, err = s.storage.AddTransfer(&transfer2)
 	s.NoError(err)
-	err = s.storage.AddTransfer(&transfer3)
+	_, err = s.storage.AddTransfer(&transfer3)
 	s.NoError(err)
 
 	userTransactions, err := s.storage.GetUserTransfers(models.MakeUint256(1))
@@ -310,7 +310,7 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 	transfers[4].ToStateID = 2
 
 	for i := range transfers {
-		err := s.storage.AddTransfer(&transfers[i].Transfer)
+		_, err := s.storage.AddTransfer(&transfers[i].Transfer)
 		s.NoError(err)
 	}
 
@@ -336,7 +336,7 @@ func (s *TransferTestSuite) TestGetTransfersByCommitmentID() {
 	transfer1 := transfer
 	transfer1.IncludedInCommitment = commitmentID
 
-	err = s.storage.AddTransfer(&transfer1)
+	_, err = s.storage.AddTransfer(&transfer1)
 	s.NoError(err)
 
 	commitments, err := s.storage.GetTransfersByCommitmentID(*commitmentID)

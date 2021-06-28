@@ -24,7 +24,7 @@ func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 	}
 	transfer.Hash = *hash
 
-	err = a.storage.AddTransfer(transfer)
+	_, err = a.storage.AddTransfer(transfer)
 	if err != nil {
 		return nil, err
 	}

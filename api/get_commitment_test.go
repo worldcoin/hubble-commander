@@ -67,7 +67,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 		},
 		ToStateID: 2,
 	}
-	err = s.storage.AddTransfer(&transfer)
+	_, err = s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 
 	commitment, err := s.api.GetCommitment(*commitmentID)
@@ -135,7 +135,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_PendingBatch() {
 		},
 		ToStateID: 2,
 	}
-	err = s.storage.AddTransfer(&transfer)
+	_, err = s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 
 	commitment, err := s.api.GetCommitment(*commitmentID)

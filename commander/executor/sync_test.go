@@ -136,7 +136,7 @@ func (s *SyncTestSuite) TestSyncBatch_TwoTransferBatches() {
 	}
 	s.setTransferHashAndSign(txs...)
 	for i := range txs {
-		err := s.storage.AddTransfer(txs[i])
+		_, err := s.storage.AddTransfer(txs[i])
 		s.NoError(err)
 	}
 
@@ -452,7 +452,7 @@ func (s *SyncTestSuite) TestRevertBatch_SyncsCorrectBatch() {
 }
 
 func (s *SyncTestSuite) createAndSubmitTransferBatch(tx *models.Transfer) *models.Batch {
-	err := s.storage.AddTransfer(tx)
+	_, err := s.storage.AddTransfer(tx)
 	s.NoError(err)
 
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
@@ -470,7 +470,7 @@ func (s *SyncTestSuite) createAndSubmitTransferBatch(tx *models.Transfer) *model
 }
 
 func (s *SyncTestSuite) createAndSubmitInvalidTransferBatch(tx *models.Transfer) *models.Batch {
-	err := s.storage.AddTransfer(tx)
+	_, err := s.storage.AddTransfer(tx)
 	s.NoError(err)
 
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
@@ -490,7 +490,7 @@ func (s *SyncTestSuite) createAndSubmitInvalidTransferBatch(tx *models.Transfer)
 }
 
 func (s *SyncTestSuite) createTransferBatch(tx *models.Transfer) *models.Batch {
-	err := s.storage.AddTransfer(tx)
+	_, err := s.storage.AddTransfer(tx)
 	s.NoError(err)
 
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)

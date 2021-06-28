@@ -114,7 +114,7 @@ func (s *GetTransactionsTestSuite) addTransfers() []models.Transfer {
 	}
 
 	for i := range transfers {
-		err := s.storage.AddTransfer(&transfers[i])
+		_, err := s.storage.AddTransfer(&transfers[i])
 		s.NoError(err)
 	}
 	return transfers
