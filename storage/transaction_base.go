@@ -3,9 +3,29 @@ package storage
 import (
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 )
+
+func (s *Storage) addTransactionBase(txBase *models.TransactionBase, txType txtype.TransactionType) error {
+	_, err := s.Postgres.Query(
+		s.QB.Insert("transaction_base").
+			Values(
+				txBase.Hash,
+				txType,
+				txBase.FromStateID,
+				txBase.Amount,
+				txBase.Fee,
+				txBase.Nonce,
+				txBase.Signature,
+				txBase.IncludedInCommitment,
+				txBase.ErrorMessage,
+			),
+	).Exec()
+
+	return err
+}
 
 func (s *Storage) BatchAddTransactionBase(txs []models.TransactionBase) error {
 	query := s.QB.Insert("transaction_base")

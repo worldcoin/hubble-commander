@@ -28,20 +28,7 @@ func (s *Storage) AddTransfer(t *models.Transfer) error {
 	}
 	defer tx.Rollback(&err)
 
-	_, err = txStorage.Postgres.Query(
-		txStorage.QB.Insert("transaction_base").
-			Values(
-				t.Hash,
-				txtype.Transfer,
-				t.FromStateID,
-				t.Amount,
-				t.Fee,
-				t.Nonce,
-				t.Signature,
-				t.IncludedInCommitment,
-				t.ErrorMessage,
-			),
-	).Exec()
+	err = txStorage.addTransactionBase(&t.TransactionBase, txtype.Transfer)
 	if err != nil {
 		return err
 	}
