@@ -12,16 +12,16 @@ import (
 
 var (
 	senderState = models.UserState{
-		PubKeyID:   1,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(400),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(400),
+		Nonce:    models.MakeUint256(0),
 	}
 	receiverState = models.UserState{
-		PubKeyID:   2,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(0),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 2,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(0),
+		Nonce:    models.MakeUint256(0),
 	}
 	transfer = models.Transfer{
 		TransactionBase: models.TransactionBase{
@@ -81,8 +81,8 @@ func (s *ApplyTransferTestSuite) TearDownTest() {
 
 func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_UpdatesStates() {
 	newSenderState, newReceiverState, err := CalculateStateAfterTransfer(
-		&senderState,
-		&receiverState,
+		senderState,
+		receiverState,
 		&transfer,
 	)
 	s.NoError(err)
@@ -97,12 +97,12 @@ func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_UpdatesStates()
 	s.NotEqual(&newReceiverState, &receiverState)
 }
 
-func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_InvalidTokenAMount() {
+func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_InvalidTokenAmount() {
 	invalidTransfer := transfer
 	invalidTransfer.Amount = models.MakeUint256(0)
 	_, _, err := CalculateStateAfterTransfer(
-		&senderState,
-		&receiverState,
+		senderState,
+		receiverState,
 		&invalidTransfer,
 	)
 	s.Equal(ErrInvalidTokenAmount, err)
@@ -112,7 +112,7 @@ func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_ValidatesBalanc
 	transferAboveBalance := transfer
 	transferAboveBalance.Amount = models.MakeUint256(410)
 
-	_, _, err := CalculateStateAfterTransfer(&senderState, &receiverState, &transferAboveBalance)
+	_, _, err := CalculateStateAfterTransfer(senderState, receiverState, &transferAboveBalance)
 	s.Equal(ErrBalanceTooLow, err)
 }
 
@@ -135,11 +135,11 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesNonce() {
 	s.NoError(appError)
 }
 
-func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesTokenIndex() {
+func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesTokenID() {
 	s.setUserStatesInTree()
 
 	transferError, appError := s.transactionExecutor.ApplyTransfer(&transfer, models.MakeUint256(3))
-	s.Equal(appError, ErrIncorrectTokenIndices)
+	s.Equal(appError, ErrInvalidTokenID)
 	s.NoError(transferError)
 }
 
@@ -181,23 +181,6 @@ func (s *ApplyTransferTestSuite) setUserStatesInTree() {
 	s.NoError(err)
 	err = s.tree.Set(receiverStateID, &receiverState)
 	s.NoError(err)
-}
-
-func (s *ApplyTransferTestSuite) TestApplyFee() {
-	receiverStateID := receiverState.PubKeyID
-	err := s.tree.Set(receiverStateID, &receiverState)
-	s.NoError(err)
-
-	s.transactionExecutor.cfg.FeeReceiverPubKeyID = receiverStateID
-
-	feeReceiverStateID, err := s.transactionExecutor.ApplyFee(models.MakeUint256(1), models.MakeUint256(555))
-	s.NoError(err)
-	s.Equal(receiverStateID, *feeReceiverStateID)
-
-	receiverLeaf, err := s.storage.GetStateLeaf(receiverStateID)
-	s.NoError(err)
-
-	s.Equal(uint64(555), receiverLeaf.Balance.Uint64())
 }
 
 func TestApplyTransferTestSuite(t *testing.T) {

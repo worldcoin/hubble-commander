@@ -25,6 +25,7 @@ type ApplyCreate2TransfersTestSuite struct {
 	client              *eth.TestClient
 	publicKey           models.PublicKey
 	transactionExecutor *TransactionExecutor
+	feeReceiver         *FeeReceiver
 	events              chan *accountregistry.AccountRegistrySinglePubkeyRegistered
 	unsubscribe         func()
 }
@@ -47,22 +48,22 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 	}
 
 	senderState := models.UserState{
-		PubKeyID:   1,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(420),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
 	}
 	receiverState := models.UserState{
-		PubKeyID:   2,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(0),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 2,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(0),
+		Nonce:    models.MakeUint256(0),
 	}
 	feeReceiverState := models.UserState{
-		PubKeyID:   3,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(1000),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 3,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(1000),
+		Nonce:    models.MakeUint256(0),
 	}
 	s.publicKey = models.PublicKey{1, 2, 3}
 
@@ -93,6 +94,10 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 	s.NoError(err)
 
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, TransactionExecutorOpts{})
+	s.feeReceiver = &FeeReceiver{
+		StateID: 3,
+		TokenID: models.MakeUint256(1),
+	}
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
@@ -105,7 +110,7 @@ func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AllValid() {
 	generatedTransfers := generateValidCreate2Transfers(3, &s.publicKey)
 
-	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment)
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 3)
@@ -117,7 +122,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 	generatedTransfers := generateValidCreate2Transfers(2, &s.publicKey)
 	generatedTransfers = append(generatedTransfers, generateInvalidCreate2Transfers(3, &s.publicKey)...)
 
-	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment)
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 2)
@@ -128,7 +133,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_MoreThanSpecifiedInConfigTxsPerCommitment() {
 	generatedTransfers := generateValidCreate2Transfers(13, &s.publicKey)
 
-	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment)
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 6)
@@ -149,7 +154,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 		s.NoError(err)
 	}
 
-	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment)
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 3)
@@ -171,7 +176,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_SomeVa
 	generatedTransfers := generateValidCreate2Transfers(2, &s.publicKey)
 	generatedTransfers = append(generatedTransfers, generateInvalidCreate2Transfers(3, &s.publicKey)...)
 
-	transfers, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, []uint32{1, 2, 3, 4, 5})
+	transfers, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, []uint32{1, 2, 3, 4, 5}, s.feeReceiver)
 	s.NoError(err)
 	s.Len(transfers.appliedTransfers, 2)
 	s.Len(transfers.invalidTransfers, 1)
@@ -179,7 +184,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_SomeVa
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidSlicesLength() {
 	generatedTransfers := generateValidCreate2Transfers(3, &s.publicKey)
-	_, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, []uint32{1, 2})
+	_, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, []uint32{1, 2}, s.feeReceiver)
 	s.Equal(ErrInvalidSliceLength, err)
 }
 
@@ -192,7 +197,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_AccountNotExi
 	s.Equal(uint32(0), *pubKeyID)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_AccountForTokenIndexNotExists() {
+func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_AccountForTokenIDNotExists() {
 	c2T := create2Transfer
 	c2T.ToPublicKey = s.publicKey
 

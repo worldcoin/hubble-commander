@@ -9,12 +9,12 @@ import (
 
 func TestFlatStateLeaf_ByteEncoding(t *testing.T) {
 	leaf := FlatStateLeaf{
-		StateID:    1,
-		DataHash:   utils.RandomHash(),
-		PubKeyID:   2,
-		TokenIndex: MakeUint256(3),
-		Balance:    MakeUint256(4),
-		Nonce:      MakeUint256(5),
+		StateID:  1,
+		DataHash: utils.RandomHash(),
+		PubKeyID: 2,
+		TokenID:  MakeUint256(3),
+		Balance:  MakeUint256(4),
+		Nonce:    MakeUint256(5),
 	}
 
 	var decodedLeaf FlatStateLeaf

@@ -24,7 +24,7 @@ var (
 		},
 		ToPublicKey: models.PublicKey{3, 4, 5},
 	}
-	feeReceiverTokenIndex = models.MakeUint256(5)
+	feeReceiverTokenID = models.MakeUint256(5)
 )
 
 type ApplyCreate2TransferTestSuite struct {
@@ -71,17 +71,17 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 	}
 
 	err = s.tree.Set(0, &models.UserState{
-		PubKeyID:   0,
-		TokenIndex: feeReceiverTokenIndex,
-		Balance:    models.MakeUint256(10000),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 0,
+		TokenID:  feeReceiverTokenID,
+		Balance:  models.MakeUint256(10000),
+		Nonce:    models.MakeUint256(0),
 	})
 	s.NoError(err)
 	err = s.tree.Set(1, &models.UserState{
-		PubKeyID:   1,
-		TokenIndex: feeReceiverTokenIndex,
-		Balance:    models.MakeUint256(0),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 1,
+		TokenID:  feeReceiverTokenID,
+		Balance:  models.MakeUint256(0),
+		Nonce:    models.MakeUint256(0),
 	})
 	s.NoError(err)
 }
@@ -94,7 +94,7 @@ func (s *ApplyCreate2TransferTestSuite) TearDownTest() {
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InsertsNewEmptyStateLeaf() {
 	c2T := create2Transfer
-	transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&c2T, 2, feeReceiverTokenIndex)
+	transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&c2T, 2, feeReceiverTokenID)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -102,12 +102,12 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InsertsNewEmpty
 	s.NoError(err)
 	s.NotNil(leaf)
 	s.Equal(models.MakeUint256(0), leaf.Nonce)
-	s.Equal(feeReceiverTokenIndex, leaf.TokenIndex)
+	s.Equal(feeReceiverTokenID, leaf.TokenID)
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer() {
 	c2T := create2Transfer
-	transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&c2T, 2, feeReceiverTokenIndex)
+	transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&c2T, 2, feeReceiverTokenID)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -123,7 +123,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer()
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_TransferWithStateID() {
 	c2T := create2Transfer
 	c2T.ToStateID = ref.Uint32(5)
-	transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&c2T, 2, feeReceiverTokenIndex)
+	transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&c2T, 2, feeReceiverTokenID)
 	s.NoError(appError)
 	s.NoError(transferError)
 	s.Equal(uint32(5), *c2T.ToStateID)

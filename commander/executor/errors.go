@@ -29,7 +29,7 @@ type DisputableTransferError struct {
 	Type   DisputableType
 }
 
-func NewDisputableTransferError(reason string, errorType DisputableType) *DisputableTransferError {
+func NewDisputableTransferError(errorType DisputableType, reason string) *DisputableTransferError {
 	return &DisputableTransferError{Reason: reason, Type: errorType}
 }
 

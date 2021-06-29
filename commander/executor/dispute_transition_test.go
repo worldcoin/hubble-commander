@@ -87,10 +87,10 @@ func (s *DisputeTransitionTestSuite) TestPreviousCommitmentInclusionProof_Curren
 
 func (s *DisputeTransitionTestSuite) TestPreviousCommitmentInclusionProof_PreviousBatch() {
 	err := st.NewStateTree(s.storage).Set(11, &models.UserState{
-		PubKeyID:   1,
-		TokenIndex: models.MakeUint256(1),
-		Balance:    models.MakeUint256(100),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(100),
+		Nonce:    models.MakeUint256(0),
 	})
 	s.NoError(err)
 

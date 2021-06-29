@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	ErrTooManyTx         = NewDisputableTransferError("too many transactions in a commitment", TransitionError)
-	ErrInvalidDataLength = NewDisputableTransferError("invalid data length", TransitionError)
+	ErrTooManyTx         = NewDisputableTransferError(TransitionError, "too many transactions in a commitment")
+	ErrInvalidDataLength = NewDisputableTransferError(TransitionError, "invalid data length")
 )
 
 func (t *TransactionExecutor) syncTransferCommitments(batch *eth.DecodedBatch) error {
@@ -42,7 +42,12 @@ func (t *TransactionExecutor) syncTransferCommitment(
 		return ErrTooManyTx
 	}
 
-	transfers, err := t.ApplyTransfers(deserializedTransfers, uint32(len(deserializedTransfers)), true)
+	feeReceiver, err := t.getSyncedCommitmentFeeReceiver(commitment)
+	if err != nil {
+		return err
+	}
+
+	transfers, err := t.ApplyTransfers(deserializedTransfers, uint32(len(deserializedTransfers)), feeReceiver, true)
 	if err != nil {
 		return err
 	}
@@ -85,4 +90,15 @@ func (t *TransactionExecutor) syncTransferCommitment(
 	}
 
 	return t.storage.BatchAddTransfer(transfers.appliedTransfers)
+}
+
+func (t *TransactionExecutor) getSyncedCommitmentFeeReceiver(commitment *encoder.DecodedCommitment) (*FeeReceiver, error) {
+	feeReceiverState, err := t.storage.GetStateLeaf(commitment.FeeReceiver)
+	if err != nil {
+		return nil, err
+	}
+	return &FeeReceiver{
+		StateID: commitment.FeeReceiver,
+		TokenID: feeReceiverState.TokenID,
+	}, nil
 }

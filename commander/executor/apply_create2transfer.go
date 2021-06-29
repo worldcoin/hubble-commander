@@ -7,13 +7,13 @@ import (
 func (t *TransactionExecutor) ApplyCreate2Transfer(
 	create2Transfer *models.Create2Transfer,
 	pubKeyID uint32,
-	commitmentTokenIndex models.Uint256,
+	commitmentTokenID models.Uint256,
 ) (create2TransferError, appError error) {
 	emptyUserState := models.UserState{
-		PubKeyID:   pubKeyID,
-		TokenIndex: commitmentTokenIndex,
-		Balance:    models.MakeUint256(0),
-		Nonce:      models.MakeUint256(0),
+		PubKeyID: pubKeyID,
+		TokenID:  commitmentTokenID,
+		Balance:  models.MakeUint256(0),
+		Nonce:    models.MakeUint256(0),
 	}
 
 	if create2Transfer.ToStateID == nil {
@@ -29,5 +29,5 @@ func (t *TransactionExecutor) ApplyCreate2Transfer(
 		return nil, err
 	}
 
-	return t.ApplyTransfer(create2Transfer, commitmentTokenIndex)
+	return t.ApplyTransfer(create2Transfer, commitmentTokenID)
 }

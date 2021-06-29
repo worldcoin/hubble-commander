@@ -105,7 +105,7 @@ func stateMerkleProofToCalldata(proof *models.StateMerkleProof) *rollup.TypesSta
 	return &rollup.TypesStateMerkleProof{
 		State: rollup.TypesUserState{
 			PubkeyID: new(big.Int).SetUint64(uint64(proof.UserState.PubKeyID)),
-			TokenID:  proof.UserState.TokenIndex.ToBig(),
+			TokenID:  proof.UserState.TokenID.ToBig(),
 			Balance:  proof.UserState.Balance.ToBig(),
 			Nonce:    proof.UserState.Nonce.ToBig(),
 		},
