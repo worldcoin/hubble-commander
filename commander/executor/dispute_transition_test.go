@@ -218,66 +218,66 @@ func (s *DisputeTransitionTestSuite) TestRevertToForDispute() {
 	expectedProofs := []models.StateMerkleProof{
 		{
 			UserState: &models.UserState{
-				PubKeyID:   0,
-				TokenIndex: models.MakeUint256(0),
-				Balance:    models.MakeUint256(340),
-				Nonce:      models.MakeUint256(1),
+				PubKeyID: 0,
+				TokenID:  models.MakeUint256(0),
+				Balance:  models.MakeUint256(340),
+				Nonce:    models.MakeUint256(1),
 			},
 		},
 		{
 			UserState: &models.UserState{
-				PubKeyID:   2,
-				TokenIndex: models.MakeUint256(0),
-				Balance:    models.MakeUint256(140),
-				Nonce:      models.MakeUint256(1),
+				PubKeyID: 2,
+				TokenID:  models.MakeUint256(0),
+				Balance:  models.MakeUint256(140),
+				Nonce:    models.MakeUint256(1),
 			},
 		},
 		{
 			UserState: &models.UserState{
-				PubKeyID:   0,
-				TokenIndex: models.MakeUint256(0),
-				Balance:    models.MakeUint256(290),
-				Nonce:      models.MakeUint256(1),
+				PubKeyID: 0,
+				TokenID:  models.MakeUint256(0),
+				Balance:  models.MakeUint256(290),
+				Nonce:    models.MakeUint256(1),
 			},
 		},
 		{
 			UserState: &models.UserState{
-				PubKeyID:   2,
-				TokenIndex: models.MakeUint256(0),
-				Balance:    models.MakeUint256(200),
-				Nonce:      models.MakeUint256(0),
+				PubKeyID: 2,
+				TokenID:  models.MakeUint256(0),
+				Balance:  models.MakeUint256(200),
+				Nonce:    models.MakeUint256(0),
 			},
 		},
 		{
 			UserState: &models.UserState{
-				PubKeyID:   0,
-				TokenIndex: models.MakeUint256(0),
-				Balance:    models.MakeUint256(190),
-				Nonce:      models.MakeUint256(1),
+				PubKeyID: 0,
+				TokenID:  models.MakeUint256(0),
+				Balance:  models.MakeUint256(190),
+				Nonce:    models.MakeUint256(1),
 			},
 		},
 		{
 			UserState: &models.UserState{
-				PubKeyID:   1,
-				TokenIndex: models.MakeUint256(0),
-				Balance:    models.MakeUint256(200),
-				Nonce:      models.MakeUint256(0),
+				PubKeyID: 1,
+				TokenID:  models.MakeUint256(0),
+				Balance:  models.MakeUint256(200),
+				Nonce:    models.MakeUint256(0),
 			},
 		},
 		{
 			UserState: &models.UserState{
-				PubKeyID:   2,
-				TokenIndex: models.MakeUint256(0),
-				Balance:    models.MakeUint256(100),
-				Nonce:      models.MakeUint256(0),
+				PubKeyID: 2,
+				TokenID:  models.MakeUint256(0),
+				Balance:  models.MakeUint256(100),
+				Nonce:    models.MakeUint256(0),
 			},
 		},
 		{
 			UserState: &models.UserState{
-				PubKeyID:   0,
-				TokenIndex: models.MakeUint256(0),
-				Balance:    models.MakeUint256(300),
-				Nonce:      models.MakeUint256(0),
+				PubKeyID: 0,
+				TokenID:  models.MakeUint256(0),
+				Balance:  models.MakeUint256(300),
+				Nonce:    models.MakeUint256(0),
 			},
 		},
 	}
@@ -310,22 +310,22 @@ func (s *DisputeTransitionTestSuite) TestRevertToForDispute() {
 func (s *DisputeTransitionTestSuite) setGenesisState() {
 	userStates := []models.UserState{
 		{
-			PubKeyID:   0,
-			TokenIndex: models.MakeUint256(0),
-			Balance:    models.MakeUint256(300),
-			Nonce:      models.MakeUint256(0),
+			PubKeyID: 0,
+			TokenID:  models.MakeUint256(0),
+			Balance:  models.MakeUint256(300),
+			Nonce:    models.MakeUint256(0),
 		},
 		{
-			PubKeyID:   1,
-			TokenIndex: models.MakeUint256(0),
-			Balance:    models.MakeUint256(200),
-			Nonce:      models.MakeUint256(0),
+			PubKeyID: 1,
+			TokenID:  models.MakeUint256(0),
+			Balance:  models.MakeUint256(200),
+			Nonce:    models.MakeUint256(0),
 		},
 		{
-			PubKeyID:   2,
-			TokenIndex: models.MakeUint256(0),
-			Balance:    models.MakeUint256(100),
-			Nonce:      models.MakeUint256(0),
+			PubKeyID: 2,
+			TokenID:  models.MakeUint256(0),
+			Balance:  models.MakeUint256(100),
+			Nonce:    models.MakeUint256(0),
 		},
 	}
 	for i := range userStates {
