@@ -221,7 +221,7 @@ func (s *DisputeTransitionTestSuite) setUserStates() {
 	}
 }
 
-func (s *DisputeTransitionTestSuite) createUserState(pubKeyID uint32, balance uint64, nonce uint64) *models.UserState {
+func (s *DisputeTransitionTestSuite) createUserState(pubKeyID uint32, balance, nonce uint64) *models.UserState {
 	return &models.UserState{
 		PubKeyID: pubKeyID,
 		TokenID:  models.MakeUint256(0),
