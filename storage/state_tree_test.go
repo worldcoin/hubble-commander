@@ -288,6 +288,7 @@ func (s *StateTreeTestSuite) TestRevertTo() {
 	s.NoError(err)
 	s.Equal(states[0], leaf.UserState)
 }
+
 func (s *StateTreeTestSuite) TestRevertTo_NotExistentRootHash() {
 	states := []models.UserState{
 		{
