@@ -164,6 +164,98 @@ func (s *DisputeTransitionTestSuite) TestTargetCommitmentInclusionProof() {
 	s.Equal(expected, *proof)
 }
 
+func (s *DisputeTransitionTestSuite) TestRevertToForDispute() {
+	s.setUserStates()
+
+	txs := []models.Transfer{
+		s.createTransfer(0, 2, 0, 100),
+		s.createTransfer(1, 0, 0, 100),
+		s.createTransfer(2, 0, 0, 50),
+		s.createTransfer(2, 0, 1, 500),
+	}
+
+	expectedProofs := []models.StateMerkleProof{
+		{UserState: s.createUserState(0, 340, 1)},
+		{UserState: s.createUserState(2, 140, 1)},
+		{UserState: s.createUserState(0, 290, 1)},
+		{UserState: s.createUserState(2, 200, 0)},
+		{UserState: s.createUserState(0, 190, 1)},
+		{UserState: s.createUserState(1, 200, 0)},
+		{UserState: s.createUserState(2, 100, 0)},
+		{UserState: s.createUserState(0, 300, 0)},
+	}
+
+	initialRoot, err := s.transactionExecutor.stateTree.Root()
+	s.NoError(err)
+
+	invalidTransfers := make([]models.Transfer, 0, 1)
+	for i := range txs {
+		senderWitness, receiverWitness := s.getTransferWitness(txs[i].FromStateID, txs[i].ToStateID)
+		expectedProofs[len(expectedProofs)-1-i*2].Witness = senderWitness
+		expectedProofs[len(expectedProofs)-2-i*2].Witness = receiverWitness
+
+		var transferError error
+		transferError, err = s.transactionExecutor.ApplyTransfer(&txs[i], models.MakeUint256(0))
+		s.NoError(err)
+
+		if transferError != nil {
+			invalidTransfers = append(invalidTransfers, txs[i])
+		}
+	}
+	s.Len(invalidTransfers, 1)
+
+	proofs, err := s.transactionExecutor.stateTree.RevertToForDispute(*initialRoot, &invalidTransfers[0])
+	s.NoError(err)
+	s.Equal(expectedProofs, proofs)
+}
+
+func (s *DisputeTransitionTestSuite) setUserStates() {
+	userStates := []models.UserState{
+		*s.createUserState(0, 300, 0),
+		*s.createUserState(1, 200, 0),
+		*s.createUserState(2, 100, 0),
+	}
+	for i := range userStates {
+		err := s.transactionExecutor.stateTree.Set(uint32(i), &userStates[i])
+		s.NoError(err)
+	}
+}
+
+func (s *DisputeTransitionTestSuite) createUserState(pubKeyID uint32, balance, nonce uint64) *models.UserState {
+	return &models.UserState{
+		PubKeyID: pubKeyID,
+		TokenID:  models.MakeUint256(0),
+		Balance:  models.MakeUint256(balance),
+		Nonce:    models.MakeUint256(nonce),
+	}
+}
+
+func (s *DisputeTransitionTestSuite) createTransfer(from, to uint32, nonce, amount uint64) models.Transfer {
+	return models.Transfer{
+		TransactionBase: models.TransactionBase{
+			Hash:        utils.RandomHash(),
+			TxType:      txtype.Transfer,
+			FromStateID: from,
+			Amount:      models.MakeUint256(amount),
+			Fee:         models.MakeUint256(10),
+			Nonce:       models.MakeUint256(nonce),
+		},
+		ToStateID: to,
+	}
+}
+
+func (s *DisputeTransitionTestSuite) getTransferWitness(fromStateID, toStateID uint32) (senderWitness, receiverWitness models.Witness) {
+	var err error
+
+	senderWitness, err = s.transactionExecutor.stateTree.GetWitness(models.MakeMerklePathFromStateID(fromStateID))
+	s.NoError(err)
+
+	receiverWitness, err = s.transactionExecutor.stateTree.GetWitness(models.MakeMerklePathFromStateID(toStateID))
+	s.NoError(err)
+
+	return senderWitness, receiverWitness
+}
+
 func TestTestSuite(t *testing.T) {
 	suite.Run(t, new(DisputeTransitionTestSuite))
 }

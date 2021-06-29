@@ -110,21 +110,7 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 				panic("invalid current root of a previous state update, this should never happen")
 			}
 
-			err = storage.UpsertStateLeaf(&stateUpdate.PrevStateLeaf)
-			if err != nil {
-				return err
-			}
-
-			leafPath := models.MakeMerklePathFromStateID(stateUpdate.PrevStateLeaf.StateID)
-			currentRootHash, err = stateTree.updateStateNodes(&leafPath, &stateUpdate.PrevStateLeaf.DataHash)
-			if err != nil {
-				return err
-			}
-			if *currentRootHash != stateUpdate.PrevRoot {
-				return fmt.Errorf("unexpected state root after state update rollback")
-			}
-
-			err = storage.DeleteStateUpdate(stateUpdate.ID)
+			currentRootHash, err = stateTree.revertState(stateUpdate)
 			if err != nil {
 				return err
 			}
@@ -236,6 +222,29 @@ func (s *StateTree) updateStateNodes(leafPath *models.MerklePath, newLeafHash *c
 	}
 
 	return &currentHash, nil
+}
+
+func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, error) {
+	err := s.storage.UpsertStateLeaf(&stateUpdate.PrevStateLeaf)
+	if err != nil {
+		return nil, err
+	}
+
+	leafPath := models.MakeMerklePathFromStateID(stateUpdate.PrevStateLeaf.StateID)
+	currentRootHash, err := s.updateStateNodes(&leafPath, &stateUpdate.PrevStateLeaf.DataHash)
+	if err != nil {
+		return nil, err
+	}
+	if *currentRootHash != stateUpdate.PrevRoot {
+		return nil, fmt.Errorf("unexpected state root after state update rollback")
+	}
+
+	err = s.storage.DeleteStateUpdate(stateUpdate.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return currentRootHash, nil
 }
 
 func getWitnessHash(nodes map[models.MerklePath]common.Hash, path models.MerklePath) common.Hash {
