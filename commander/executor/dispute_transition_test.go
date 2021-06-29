@@ -164,122 +164,25 @@ func (s *DisputeTransitionTestSuite) TestTargetCommitmentInclusionProof() {
 	s.Equal(expected, *proof)
 }
 
-// nolint:funlen
 func (s *DisputeTransitionTestSuite) TestRevertToForDispute() {
-	s.setGenesisState()
+	s.setUserStates()
 
 	txs := []models.Transfer{
-		{
-			TransactionBase: models.TransactionBase{
-				Hash:        utils.RandomHash(),
-				TxType:      txtype.Transfer,
-				FromStateID: 0,
-				Amount:      models.MakeUint256(100),
-				Fee:         models.MakeUint256(10),
-				Nonce:       models.MakeUint256(0),
-			},
-			ToStateID: 2,
-		},
-		{
-			TransactionBase: models.TransactionBase{
-				Hash:        utils.RandomHash(),
-				TxType:      txtype.Transfer,
-				FromStateID: 1,
-				Amount:      models.MakeUint256(100),
-				Fee:         models.MakeUint256(10),
-				Nonce:       models.MakeUint256(0),
-			},
-			ToStateID: 0,
-		},
-		{
-			TransactionBase: models.TransactionBase{
-				Hash:        utils.RandomHash(),
-				TxType:      txtype.Transfer,
-				FromStateID: 2,
-				Amount:      models.MakeUint256(50),
-				Fee:         models.MakeUint256(10),
-				Nonce:       models.MakeUint256(0),
-			},
-			ToStateID: 0,
-		},
-		{
-			TransactionBase: models.TransactionBase{
-				Hash:        utils.RandomHash(),
-				TxType:      txtype.Transfer,
-				FromStateID: 2,
-				Amount:      models.MakeUint256(500),
-				Fee:         models.MakeUint256(10),
-				Nonce:       models.MakeUint256(1),
-			},
-			ToStateID: 0,
-		},
+		s.createTransfer(0, 2, 0, 100),
+		s.createTransfer(1, 0, 0, 100),
+		s.createTransfer(2, 0, 0, 50),
+		s.createTransfer(2, 0, 1, 500),
 	}
 
 	expectedProofs := []models.StateMerkleProof{
-		{
-			UserState: &models.UserState{
-				PubKeyID: 0,
-				TokenID:  models.MakeUint256(0),
-				Balance:  models.MakeUint256(340),
-				Nonce:    models.MakeUint256(1),
-			},
-		},
-		{
-			UserState: &models.UserState{
-				PubKeyID: 2,
-				TokenID:  models.MakeUint256(0),
-				Balance:  models.MakeUint256(140),
-				Nonce:    models.MakeUint256(1),
-			},
-		},
-		{
-			UserState: &models.UserState{
-				PubKeyID: 0,
-				TokenID:  models.MakeUint256(0),
-				Balance:  models.MakeUint256(290),
-				Nonce:    models.MakeUint256(1),
-			},
-		},
-		{
-			UserState: &models.UserState{
-				PubKeyID: 2,
-				TokenID:  models.MakeUint256(0),
-				Balance:  models.MakeUint256(200),
-				Nonce:    models.MakeUint256(0),
-			},
-		},
-		{
-			UserState: &models.UserState{
-				PubKeyID: 0,
-				TokenID:  models.MakeUint256(0),
-				Balance:  models.MakeUint256(190),
-				Nonce:    models.MakeUint256(1),
-			},
-		},
-		{
-			UserState: &models.UserState{
-				PubKeyID: 1,
-				TokenID:  models.MakeUint256(0),
-				Balance:  models.MakeUint256(200),
-				Nonce:    models.MakeUint256(0),
-			},
-		},
-		{
-			UserState: &models.UserState{
-				PubKeyID: 2,
-				TokenID:  models.MakeUint256(0),
-				Balance:  models.MakeUint256(100),
-				Nonce:    models.MakeUint256(0),
-			},
-		},
-		{
-			UserState: &models.UserState{
-				PubKeyID: 0,
-				TokenID:  models.MakeUint256(0),
-				Balance:  models.MakeUint256(300),
-				Nonce:    models.MakeUint256(0),
-			},
-		},
+		{UserState: s.createUserState(0, 340, 1)},
+		{UserState: s.createUserState(2, 140, 1)},
+		{UserState: s.createUserState(0, 290, 1)},
+		{UserState: s.createUserState(2, 200, 0)},
+		{UserState: s.createUserState(0, 190, 1)},
+		{UserState: s.createUserState(1, 200, 0)},
+		{UserState: s.createUserState(2, 100, 0)},
+		{UserState: s.createUserState(0, 300, 0)},
 	}
 
 	initialRoot, err := s.transactionExecutor.stateTree.Root()
@@ -303,34 +206,41 @@ func (s *DisputeTransitionTestSuite) TestRevertToForDispute() {
 
 	proofs, err := s.transactionExecutor.stateTree.RevertToForDispute(*initialRoot, &invalidTransfers[0])
 	s.NoError(err)
-	s.Len(proofs, len(expectedProofs))
 	s.Equal(expectedProofs, proofs)
 }
 
-func (s *DisputeTransitionTestSuite) setGenesisState() {
+func (s *DisputeTransitionTestSuite) setUserStates() {
 	userStates := []models.UserState{
-		{
-			PubKeyID: 0,
-			TokenID:  models.MakeUint256(0),
-			Balance:  models.MakeUint256(300),
-			Nonce:    models.MakeUint256(0),
-		},
-		{
-			PubKeyID: 1,
-			TokenID:  models.MakeUint256(0),
-			Balance:  models.MakeUint256(200),
-			Nonce:    models.MakeUint256(0),
-		},
-		{
-			PubKeyID: 2,
-			TokenID:  models.MakeUint256(0),
-			Balance:  models.MakeUint256(100),
-			Nonce:    models.MakeUint256(0),
-		},
+		*s.createUserState(0, 300, 0),
+		*s.createUserState(1, 200, 0),
+		*s.createUserState(2, 100, 0),
 	}
 	for i := range userStates {
 		err := s.transactionExecutor.stateTree.Set(uint32(i), &userStates[i])
 		s.NoError(err)
+	}
+}
+
+func (s *DisputeTransitionTestSuite) createUserState(pubKeyID uint32, balance uint64, nonce uint64) *models.UserState {
+	return &models.UserState{
+		PubKeyID: pubKeyID,
+		TokenID:  models.MakeUint256(0),
+		Balance:  models.MakeUint256(balance),
+		Nonce:    models.MakeUint256(nonce),
+	}
+}
+
+func (s *DisputeTransitionTestSuite) createTransfer(from, to uint32, nonce, amount uint64) models.Transfer {
+	return models.Transfer{
+		TransactionBase: models.TransactionBase{
+			Hash:        utils.RandomHash(),
+			TxType:      txtype.Transfer,
+			FromStateID: from,
+			Amount:      models.MakeUint256(amount),
+			Fee:         models.MakeUint256(10),
+			Nonce:       models.MakeUint256(nonce),
+		},
+		ToStateID: to,
 	}
 }
 
