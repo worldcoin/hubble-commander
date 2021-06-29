@@ -244,6 +244,20 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafAddsStateUpdateRecord() {
 	s.Equal(expectedUpdate, update)
 }
 
+func (s *StateTreeTestSuite) TestSetReturningWitness() {
+	witness, err := s.tree.SetReturningWitness(0, &s.leaf.UserState)
+	s.NoError(err)
+	s.Len(witness, 32)
+
+	node, err := s.storage.GetStateNodeByPath(&models.MerklePath{Depth: 32, Path: 1})
+	s.NoError(err)
+	s.Equal(node.DataHash, witness[0])
+
+	node, err = s.storage.GetStateNodeByPath(&models.MerklePath{Depth: 1, Path: 1})
+	s.NoError(err)
+	s.Equal(node.DataHash, witness[31])
+}
+
 func (s *StateTreeTestSuite) TestRevertTo() {
 	states := []models.UserState{
 		{
