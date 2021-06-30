@@ -54,7 +54,10 @@ func (t *TransactionExecutor) ApplyTransfers(
 	return returnStruct, nil
 }
 
-func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer, feeReceiver *FeeReceiver) (appliedTransfers []models.Transfer, err error) {
+func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer, feeReceiver *FeeReceiver) (
+	appliedTransfers []models.Transfer,
+	err error,
+) {
 	if len(transfers) == 0 {
 		return []models.Transfer{}, nil // TODO-AFS check if there can be commitment without transfers
 	}

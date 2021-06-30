@@ -23,6 +23,7 @@ func (t *Create2Transfer) GetToStateID() *uint32 {
 	return t.ToStateID
 }
 
+// nolint:gocritic
 func (t Create2Transfer) Copy() GenericTransfer {
 	return &t
 }
