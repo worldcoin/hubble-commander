@@ -18,6 +18,10 @@ func (t *TransactionExecutor) syncTransferCommitments(batch *eth.DecodedBatch) e
 			// TODO: dispute fraudulent commitment
 			return err
 		}
+		if IsDisputableTransferError(err) {
+			// TODO: dispute fraudulent commitment
+			return err
+		}
 		if err != nil {
 			return err
 		}
@@ -48,7 +52,6 @@ func (t *TransactionExecutor) syncTransferCommitment(
 	}
 
 	appliedTransfers, err := t.ApplyTransfersForSync(transfers, feeReceiver)
-	// TODO-AFS handle dispute error
 	if err != nil {
 		return err
 	}

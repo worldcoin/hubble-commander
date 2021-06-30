@@ -63,7 +63,7 @@ func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransf
 ) {
 	senderState, receiverState, err := t.getParticipantsStates(transfer)
 	if err != nil {
-		return nil, err, nil
+		return nil, nil, err
 	}
 
 	if tErr := t.validateTokenIDs(senderState, receiverState, commitmentTokenID); tErr != nil {

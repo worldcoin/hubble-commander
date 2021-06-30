@@ -2,7 +2,6 @@ package executor
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/pkg/errors"
 )
 
 type AppliedTransfers struct {
@@ -58,11 +57,14 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 	appliedTransfers []models.Transfer,
 	err error,
 ) {
-	if len(transfers) == 0 {
+	numTransfers := len(transfers)
+	if numTransfers == 0 {
 		return []models.Transfer{}, nil // TODO-AFS check if there can be commitment without transfers
 	}
 
-	appliedTransfers = make([]models.Transfer, 0, t.cfg.TxsPerCommitment)
+	stateChangeWitnesses := make([]models.Witness, 0, 2*numTransfers)
+
+	appliedTransfers = make([]models.Transfer, 0, numTransfers)
 	combinedFee := models.MakeUint256(0)
 
 	for i := range transfers {
@@ -71,8 +73,9 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 		if appError != nil {
 			return nil, appError
 		}
+		stateChangeWitnesses = append(stateChangeWitnesses, synced.senderStateWitness, synced.receiverStateWitness)
 		if transferError != nil {
-			return nil, errors.Errorf("invalid transfer") // TODO-AFS return proper error
+			return nil, NewDisputableTransferError(transferError.Error(), stateChangeWitnesses)
 		}
 
 		appliedTransfers = append(appliedTransfers, *synced.transfer.(*models.Transfer))
