@@ -12,7 +12,7 @@ import (
 type TransactionExecutorOpts struct {
 	Ctx context.Context
 	// Ignore nonce field on transfers, assign it with the correct value from the state.
-	AssumeNonces bool
+	AssumeNonces bool // TODO-AFS remove
 }
 
 // TransactionExecutor executes transactions & syncs batches. Manages a database transaction.

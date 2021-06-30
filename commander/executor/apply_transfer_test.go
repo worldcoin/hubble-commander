@@ -159,15 +159,15 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer() {
 	s.Equal(uint64(100), receiverLeaf.Balance.Uint64())
 }
 
-// TODO move this test to ApplyTransferForSync
-func (s *ApplyTransferTestSuite) TestApplyTransfer_AssumesNonce() {
+// TODO tes ApplyTransferForSync more
+func (s *ApplyTransferTestSuite) TestApplyTransferForSync_AssumesNonce() {
 	s.setUserStatesInTree()
 	transferWithModifiedNonce := transfer
 	transferWithModifiedNonce.Nonce = models.MakeUint256(1234)
 
 	txExecutor := NewTestTransactionExecutor(s.storage.Storage, nil, nil, TransactionExecutorOpts{AssumeNonces: true})
 
-	transferError, appError := txExecutor.ApplyTransfer(&transferWithModifiedNonce, models.MakeUint256(1))
+	transferError, appError := txExecutor.ApplyTransferForSync(&transferWithModifiedNonce, models.MakeUint256(1))
 	s.NoError(appError)
 	s.NoError(transferError)
 

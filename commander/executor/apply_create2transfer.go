@@ -29,5 +29,9 @@ func (t *TransactionExecutor) ApplyCreate2Transfer(
 		return nil, err
 	}
 
-	return t.ApplyTransfer(create2Transfer, commitmentTokenID)
+	if t.opts.AssumeNonces { // TODO-AFS rework this
+		return t.ApplyTransferForSync(create2Transfer, commitmentTokenID)
+	} else {
+		return t.ApplyTransfer(create2Transfer, commitmentTokenID)
+	}
 }

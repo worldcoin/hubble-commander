@@ -22,21 +22,16 @@ func (t *TransactionExecutor) ApplyTransfer(
 ) (transferError, appError error) {
 	senderState, receiverState, err := t.getParticipantsStates(transfer)
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 
 	if senderState.TokenID.Cmp(&commitmentTokenID) != 0 && receiverState.TokenID.Cmp(&commitmentTokenID) != 0 {
 		return nil, ErrInvalidTokenID
 	}
 
-	if t.opts.AssumeNonces {
-		transfer.SetNonce(senderState.Nonce)
-	} else {
-		nonce := transfer.GetNonce()
-		err = validateTransferNonce(&senderState.UserState, &nonce)
-		if err != nil {
-			return err, nil
-		}
+	err = validateTransferNonce(&senderState.UserState, transfer.GetNonce())
+	if err != nil {
+		return err, nil
 	}
 
 	newSenderState, newReceiverState, err := CalculateStateAfterTransfer(senderState.UserState, receiverState.UserState, transfer)
@@ -53,6 +48,37 @@ func (t *TransactionExecutor) ApplyTransfer(
 		return nil, err
 	}
 
+	return nil, nil
+}
+
+func (t *TransactionExecutor) ApplyTransferForSync(
+	transfer models.GenericTransfer,
+	commitmentTokenID models.Uint256,
+) (transferError, appError error) {
+	senderState, receiverState, err := t.getParticipantsStates(transfer)
+	if err != nil {
+		return err, nil
+	}
+
+	if senderState.TokenID.Cmp(&commitmentTokenID) != 0 && receiverState.TokenID.Cmp(&commitmentTokenID) != 0 {
+		return nil, ErrInvalidTokenID
+	}
+
+	newSenderState, newReceiverState, err := CalculateStateAfterTransfer(senderState.UserState, receiverState.UserState, transfer)
+	if err != nil {
+		return err, nil
+	}
+
+	err = t.stateTree.Set(senderState.StateID, newSenderState)
+	if err != nil {
+		return nil, err
+	}
+	err = t.stateTree.Set(receiverState.StateID, newReceiverState)
+	if err != nil {
+		return nil, err
+	}
+
+	transfer.SetNonce(senderState.Nonce)
 	return nil, nil
 }
 
@@ -106,7 +132,7 @@ func CalculateStateAfterTransfer(
 	return newSenderState, newReceiverState, nil
 }
 
-func validateTransferNonce(senderState *models.UserState, transferNonce *models.Uint256) error {
+func validateTransferNonce(senderState *models.UserState, transferNonce models.Uint256) error {
 	comparison := transferNonce.Cmp(&senderState.Nonce)
 	if comparison > 0 {
 		return ErrNonceTooHigh
