@@ -73,7 +73,7 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 		if appError != nil {
 			return nil, appError
 		}
-		stateChangeProofs = append(stateChangeProofs, synced.senderStateWitness, synced.receiverStateWitness)
+		stateChangeProofs = append(stateChangeProofs, synced.senderStateWitness, synced.receiverStateWitness) // TODO-AFS there is a problem here because synced can be nil
 		if transferError != nil {
 			return nil, NewDisputableTransferError(transferError.Error(), stateChangeProofs)
 		}

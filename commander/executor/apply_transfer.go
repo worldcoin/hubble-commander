@@ -54,7 +54,7 @@ func (t *TransactionExecutor) ApplyTransfer(
 
 type SyncedTransfer struct {
 	transfer             models.GenericTransfer
-	senderStateWitness   models.Witness
+	senderStateWitness   models.Witness // TODO-AFS models.StateMerkleProof type should actually be returned here
 	receiverStateWitness models.Witness
 }
 
@@ -67,6 +67,8 @@ func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransf
 		return nil, nil, appError
 	}
 
+	// TODO-AFS we need to split this into two functions: validateSenderTokenID and validateReceiverTokenID
+	//  the second one will need to be called after the SetReturningWitness of senderState.
 	if tErr := t.validateTokenIDs(senderState, receiverState, commitmentTokenID); tErr != nil {
 		return nil, tErr, nil
 	}
@@ -76,10 +78,14 @@ func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransf
 		return nil, tErr, nil
 	}
 
+	// TODO-AFS return the whole models.StateMerkleProof from SetReturningWitness and rename it to SetReturningProof
 	senderWitness, appError := t.stateTree.SetReturningWitness(senderState.StateID, newSenderState)
 	if appError != nil {
 		return nil, nil, appError
 	}
+
+	// TODO-AFS validateReceiverTokenID here, on error we need to return senderStateWitness
+
 	receiverWitness, appError := t.stateTree.SetReturningWitness(receiverState.StateID, newReceiverState)
 	if appError != nil {
 		return nil, nil, appError
