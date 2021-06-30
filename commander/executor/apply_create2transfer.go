@@ -8,7 +8,7 @@ func (t *TransactionExecutor) ApplyCreate2Transfer(
 	create2Transfer *models.Create2Transfer,
 	pubKeyID uint32,
 	commitmentTokenID models.Uint256,
-) (create2TransferError, appError error) {
+) (transferError, appError error) {
 	emptyUserState := models.UserState{
 		PubKeyID: pubKeyID,
 		TokenID:  commitmentTokenID,
@@ -30,7 +30,8 @@ func (t *TransactionExecutor) ApplyCreate2Transfer(
 	}
 
 	if t.opts.AssumeNonces { // TODO-AFS rework this
-		return t.ApplyTransferForSync(create2Transfer, commitmentTokenID)
+		_, transferError, appError = t.ApplyTransferForSync(create2Transfer, commitmentTokenID)
+		return transferError, appError
 	} else {
 		return t.ApplyTransfer(create2Transfer, commitmentTokenID)
 	}

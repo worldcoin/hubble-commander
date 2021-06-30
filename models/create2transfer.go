@@ -22,3 +22,7 @@ type Create2TransferWithBatchHash struct {
 func (t *Create2Transfer) GetToStateID() *uint32 {
 	return t.ToStateID
 }
+
+func (t Create2Transfer) Copy() GenericTransfer {
+	return &t
+}

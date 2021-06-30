@@ -20,3 +20,7 @@ type TransferWithBatchHash struct {
 func (t *Transfer) GetToStateID() *uint32 {
 	return &t.ToStateID
 }
+
+func (t Transfer) Copy() GenericTransfer {
+	return &t
+}

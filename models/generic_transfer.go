@@ -7,4 +7,5 @@ type GenericTransfer interface {
 	GetFee() Uint256
 	GetNonce() Uint256
 	SetNonce(nonce Uint256)
+	Copy() GenericTransfer
 }

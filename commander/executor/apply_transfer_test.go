@@ -161,18 +161,17 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer() {
 }
 
 // TODO test ApplyTransferForSync more
-func (s *ApplyTransferTestSuite) TestApplyTransferForSync_AssumesNonce() {
+func (s *ApplyTransferTestSuite) TestApplyTransferForSync_SetsNonceInReturnedTransfer() {
 	s.setUserStatesInTree()
 	transferWithModifiedNonce := transfer
 	transferWithModifiedNonce.Nonce = models.MakeUint256(1234)
 
-	txExecutor := NewTestTransactionExecutor(s.storage.Storage, nil, nil, TransactionExecutorOpts{AssumeNonces: true})
-
-	transferError, appError := txExecutor.ApplyTransferForSync(&transferWithModifiedNonce, models.MakeUint256(1))
+	synced, transferError, appError := s.transactionExecutor.ApplyTransferForSync(&transferWithModifiedNonce, models.MakeUint256(1))
 	s.NoError(appError)
 	s.NoError(transferError)
 
-	s.Equal(models.MakeUint256(0), transferWithModifiedNonce.Nonce)
+	s.Equal(models.MakeUint256(1234), transferWithModifiedNonce.Nonce)
+	s.Equal(models.MakeUint256(0), synced.transfer.GetNonce())
 }
 
 func (s *ApplyTransferTestSuite) setUserStatesInTree() {

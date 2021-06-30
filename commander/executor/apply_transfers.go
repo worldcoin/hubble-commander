@@ -63,7 +63,7 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 
 	for i := range transfers {
 		transfer := &transfers[i]
-		transferError, appError := t.ApplyTransferForSync(transfer, feeReceiver.TokenID)
+		_, transferError, appError := t.ApplyTransferForSync(transfer, feeReceiver.TokenID)
 		if appError != nil {
 			return appError
 		}

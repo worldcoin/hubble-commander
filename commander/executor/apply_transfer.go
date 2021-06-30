@@ -50,35 +50,47 @@ func (t *TransactionExecutor) ApplyTransfer(
 	return nil, nil
 }
 
-func (t *TransactionExecutor) ApplyTransferForSync(
-	transfer models.GenericTransfer,
-	commitmentTokenID models.Uint256,
-) (transferError, appError error) {
+type SyncedTransfer struct {
+	transfer             models.GenericTransfer
+	senderStateWitness   models.Witness
+	receiverStateWitness models.Witness
+}
+
+func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransfer, commitmentTokenID models.Uint256) (
+	syncedTransfer *SyncedTransfer,
+	transferError, appError error,
+) {
 	senderState, receiverState, err := t.getParticipantsStates(transfer)
 	if err != nil {
-		return err, nil
+		return nil, err, nil
 	}
 
 	if tErr := t.validateTokenIDs(senderState, receiverState, commitmentTokenID); tErr != nil {
-		return tErr, nil
+		return nil, tErr, nil
 	}
 
 	newSenderState, newReceiverState, tErr := calculateStateAfterTransfer(senderState.UserState, receiverState.UserState, transfer)
 	if tErr != nil {
-		return tErr, nil
+		return nil, tErr, nil
 	}
 
-	err = t.stateTree.Set(senderState.StateID, newSenderState)
+	senderWitness, err := t.stateTree.SetReturningWitness(senderState.StateID, newSenderState)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	err = t.stateTree.Set(receiverState.StateID, newReceiverState)
+	receiverWitness, err := t.stateTree.SetReturningWitness(receiverState.StateID, newReceiverState)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	transfer.SetNonce(senderState.Nonce)
-	return nil, nil
+	syncedTransfer = &SyncedTransfer{
+		transfer:             transfer.Copy(),
+		senderStateWitness:   senderWitness,
+		receiverStateWitness: receiverWitness,
+	}
+	syncedTransfer.transfer.SetNonce(senderState.Nonce)
+
+	return syncedTransfer, nil, nil
 }
 
 func (t *TransactionExecutor) getParticipantsStates(transfer models.GenericTransfer) (
