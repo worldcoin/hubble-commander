@@ -25,18 +25,17 @@ func (t *TransactionExecutor) ApplyTransfer(
 		return nil, err
 	}
 
-	if senderState.TokenID.Cmp(&commitmentTokenID) != 0 && receiverState.TokenID.Cmp(&commitmentTokenID) != 0 {
-		return nil, ErrInvalidTokenID
+	if tErr := t.validateTokenIDs(senderState, receiverState, commitmentTokenID); tErr != nil {
+		return tErr, nil
 	}
 
-	err = validateTransferNonce(&senderState.UserState, transfer.GetNonce())
-	if err != nil {
-		return err, nil
+	if tErr := validateTransferNonce(&senderState.UserState, transfer.GetNonce()); tErr != nil {
+		return tErr, nil
 	}
 
-	newSenderState, newReceiverState, err := CalculateStateAfterTransfer(senderState.UserState, receiverState.UserState, transfer)
-	if err != nil {
-		return err, nil
+	newSenderState, newReceiverState, tErr := CalculateStateAfterTransfer(senderState.UserState, receiverState.UserState, transfer)
+	if tErr != nil {
+		return tErr, nil
 	}
 
 	err = t.stateTree.Set(senderState.StateID, newSenderState)
@@ -60,13 +59,13 @@ func (t *TransactionExecutor) ApplyTransferForSync(
 		return err, nil
 	}
 
-	if senderState.TokenID.Cmp(&commitmentTokenID) != 0 && receiverState.TokenID.Cmp(&commitmentTokenID) != 0 {
-		return nil, ErrInvalidTokenID
+	if tErr := t.validateTokenIDs(senderState, receiverState, commitmentTokenID); tErr != nil {
+		return tErr, nil
 	}
 
-	newSenderState, newReceiverState, err := CalculateStateAfterTransfer(senderState.UserState, receiverState.UserState, transfer)
-	if err != nil {
-		return err, nil
+	newSenderState, newReceiverState, tErr := CalculateStateAfterTransfer(senderState.UserState, receiverState.UserState, transfer)
+	if tErr != nil {
+		return tErr, nil
 	}
 
 	err = t.stateTree.Set(senderState.StateID, newSenderState)
@@ -103,6 +102,23 @@ func (t *TransactionExecutor) getParticipantsStates(transfer models.GenericTrans
 	return senderLeaf, receiverLeaf, nil
 }
 
+func (t *TransactionExecutor) validateTokenIDs(senderState, receiverState *models.StateLeaf, commitmentTokenID models.Uint256) error {
+	if senderState.TokenID.Cmp(&commitmentTokenID) != 0 || receiverState.TokenID.Cmp(&commitmentTokenID) != 0 {
+		return ErrInvalidTokenID
+	}
+	return nil
+}
+
+func validateTransferNonce(senderState *models.UserState, transferNonce models.Uint256) error {
+	comparison := transferNonce.Cmp(&senderState.Nonce)
+	if comparison > 0 {
+		return ErrNonceTooHigh
+	} else if comparison < 0 {
+		return ErrNonceTooLow
+	}
+	return nil
+}
+
 func CalculateStateAfterTransfer(
 	senderState, receiverState models.UserState, // nolint:gocritic
 	transfer models.GenericTransfer,
@@ -130,14 +146,4 @@ func CalculateStateAfterTransfer(
 	newReceiverState.Balance = *newReceiverState.Balance.Add(&amount)
 
 	return newSenderState, newReceiverState, nil
-}
-
-func validateTransferNonce(senderState *models.UserState, transferNonce models.Uint256) error {
-	comparison := transferNonce.Cmp(&senderState.Nonce)
-	if comparison > 0 {
-		return ErrNonceTooHigh
-	} else if comparison < 0 {
-		return ErrNonceTooLow
-	}
-	return nil
 }
