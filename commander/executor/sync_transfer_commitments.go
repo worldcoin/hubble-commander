@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	ErrTooManyTx         = NewDisputableTransferError(TransitionError, "too many transactions in a commitment")
-	ErrInvalidDataLength = NewDisputableTransferError(TransitionError, "invalid data length")
+	ErrTooManyTx         = NewDisputableTransferError("too many transactions in a commitment", []models.Witness{})
+	ErrInvalidDataLength = NewDisputableTransferError("invalid data length", []models.Witness{})
 )
 
 func (t *TransactionExecutor) syncTransferCommitments(batch *eth.DecodedBatch) error {
