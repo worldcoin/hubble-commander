@@ -15,7 +15,7 @@ import (
 
 var (
 	ErrFraudulentTransfer    = errors.New("fraudulent transfer encountered when syncing")
-	ErrTransfersNotApplied   = errors.New("could not apply all transfers from synced batch")
+	ErrTransfersNotApplied   = errors.New("could not apply all transfers from synced batch") // TODO-AFS get rid of this error
 	ErrBatchSubmissionFailed = errors.New("previous submit batch transaction failed")
 	ErrInvalidSignature      = NewDisputableTransferError(SignatureError, "invalid signature")
 )

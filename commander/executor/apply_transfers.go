@@ -2,6 +2,7 @@ package executor
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/pkg/errors"
 )
 
 type AppliedTransfers struct {
@@ -9,7 +10,11 @@ type AppliedTransfers struct {
 	invalidTransfers []models.Transfer
 }
 
-func (t *TransactionExecutor) ApplyTransfers(transfers []models.Transfer, maxApplied uint32, feeReceiver *FeeReceiver) (*AppliedTransfers, error) {
+func (t *TransactionExecutor) ApplyTransfers(
+	transfers []models.Transfer,
+	maxApplied uint32,
+	feeReceiver *FeeReceiver,
+) (*AppliedTransfers, error) {
 	if len(transfers) == 0 {
 		return &AppliedTransfers{}, nil
 	}
@@ -49,46 +54,29 @@ func (t *TransactionExecutor) ApplyTransfers(transfers []models.Transfer, maxApp
 	return returnStruct, nil
 }
 
-func (t *TransactionExecutor) ApplyTransfersForSync(
-	transfers []models.Transfer,
-	maxApplied uint32,
-	feeReceiver *FeeReceiver,
-) (*AppliedTransfers, error) {
+func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer, feeReceiver *FeeReceiver) error {
 	if len(transfers) == 0 {
-		return &AppliedTransfers{}, nil
+		return nil
 	}
-
-	returnStruct := &AppliedTransfers{}
-	returnStruct.appliedTransfers = make([]models.Transfer, 0, t.cfg.TxsPerCommitment)
 
 	combinedFee := models.MakeUint256(0)
 
 	for i := range transfers {
-		if len(returnStruct.appliedTransfers) == int(maxApplied) {
-			break
-		}
-
 		transfer := &transfers[i]
 		transferError, appError := t.ApplyTransfer(transfer, feeReceiver.TokenID)
 		if appError != nil {
-			return nil, appError
+			return appError
 		}
 		if transferError != nil {
-			logAndSaveTransactionError(t.storage, &transfer.TransactionBase, transferError)
-			returnStruct.invalidTransfers = append(returnStruct.invalidTransfers, *transfer)
-			return returnStruct, nil
+			return errors.Errorf("invalid transfer") // TODO-AFS return proper error
 		}
 
-		returnStruct.appliedTransfers = append(returnStruct.appliedTransfers, *transfer)
 		combinedFee = *combinedFee.Add(&transfer.Fee)
 	}
 
-	if len(returnStruct.appliedTransfers) > 0 {
-		err := t.ApplyFee(feeReceiver.StateID, combinedFee)
-		if err != nil {
-			return nil, err
-		}
+	if combinedFee.CmpN(0) > 0 {
+		return t.ApplyFee(feeReceiver.StateID, combinedFee)
 	}
 
-	return returnStruct, nil
+	return nil
 }

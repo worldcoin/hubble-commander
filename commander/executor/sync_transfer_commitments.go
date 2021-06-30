@@ -33,12 +33,12 @@ func (t *TransactionExecutor) syncTransferCommitment(
 		return ErrInvalidDataLength
 	}
 
-	deserializedTransfers, err := encoder.DeserializeTransfers(commitment.Transactions)
+	transfers, err := encoder.DeserializeTransfers(commitment.Transactions)
 	if err != nil {
 		return err
 	}
 
-	if uint32(len(deserializedTransfers)) > t.cfg.TxsPerCommitment {
+	if uint32(len(transfers)) > t.cfg.TxsPerCommitment {
 		return ErrTooManyTx
 	}
 
@@ -47,20 +47,14 @@ func (t *TransactionExecutor) syncTransferCommitment(
 		return err
 	}
 
-	transfers, err := t.ApplyTransfersForSync(deserializedTransfers, uint32(len(deserializedTransfers)), feeReceiver)
+	err = t.ApplyTransfersForSync(transfers, feeReceiver)
+	// TODO-AFS handle dispute error
 	if err != nil {
 		return err
 	}
 
-	if len(transfers.invalidTransfers) > 0 {
-		return ErrFraudulentTransfer
-	}
-	if len(transfers.appliedTransfers) != len(deserializedTransfers) {
-		return ErrTransfersNotApplied
-	}
-
 	if !t.cfg.DevMode {
-		err = t.verifyTransferSignature(commitment, transfers.appliedTransfers)
+		err = t.verifyTransferSignature(commitment, transfers)
 		if err != nil {
 			return err
 		}
@@ -77,19 +71,17 @@ func (t *TransactionExecutor) syncTransferCommitment(
 	if err != nil {
 		return err
 	}
-	for i := range transfers.appliedTransfers {
-		transfers.appliedTransfers[i].IncludedInCommitment = commitmentID
-	}
 
-	for i := range transfers.appliedTransfers {
-		hashTransfer, err := encoder.HashTransfer(&transfers.appliedTransfers[i])
+	for i := range transfers {
+		transferHash, err := encoder.HashTransfer(&transfers[i])
 		if err != nil {
 			return err
 		}
-		transfers.appliedTransfers[i].Hash = *hashTransfer
+		transfers[i].Hash = *transferHash
+		transfers[i].IncludedInCommitment = commitmentID
 	}
 
-	return t.storage.BatchAddTransfer(transfers.appliedTransfers)
+	return t.storage.BatchAddTransfer(transfers)
 }
 
 func (t *TransactionExecutor) getSyncedCommitmentFeeReceiver(commitment *encoder.DecodedCommitment) (*FeeReceiver, error) {
