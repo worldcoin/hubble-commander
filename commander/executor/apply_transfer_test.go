@@ -97,7 +97,7 @@ func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_UpdatesStates()
 	s.NotEqual(&newReceiverState, &receiverState)
 }
 
-func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_InvalidTokenAmount() {
+func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_ValidatesTokenAmount() {
 	invalidTransfer := transfer
 	invalidTransfer.Amount = models.MakeUint256(0)
 	_, _, err := calculateStateAfterTransfer(
@@ -117,12 +117,27 @@ func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_ValidatesBalanc
 }
 
 func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesToStateID() {
-	s.setUserStatesInTree()
-
 	c2T := create2Transfer
 	transferError, appError := s.transactionExecutor.ApplyTransfer(&c2T, models.MakeUint256(1))
 	s.NoError(transferError)
 	s.Equal(ErrNilReceiverStateID, appError)
+}
+
+func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesTokenID() {
+	s.setUserStatesInTree()
+
+	transferError, appError := s.transactionExecutor.ApplyTransfer(&transfer, models.MakeUint256(3))
+	s.NoError(transferError)
+	s.Equal(appError, ErrInvalidTokenID)
+
+	receiverWithChangedToken := receiverState
+	receiverWithChangedToken.TokenID = models.MakeUint256(2)
+	err := s.tree.Set(2, &receiverWithChangedToken)
+	s.NoError(err)
+
+	transferError, appError = s.transactionExecutor.ApplyTransfer(&transfer, models.MakeUint256(1))
+	s.NoError(transferError)
+	s.Equal(appError, ErrInvalidTokenID)
 }
 
 func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesNonce() {
@@ -135,16 +150,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesNonce() {
 	s.NoError(appError)
 }
 
-// TODO-AFS test that ErrInvalidTokenID is a transfer error in ApplyTransferForSync
-func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesTokenID() {
-	s.setUserStatesInTree()
-
-	transferError, appError := s.transactionExecutor.ApplyTransfer(&transfer, models.MakeUint256(3))
-	s.Equal(appError, ErrInvalidTokenID)
-	s.NoError(transferError)
-}
-
-func (s *ApplyTransferTestSuite) TestApplyTransfer() {
+func (s *ApplyTransferTestSuite) TestApplyTransfer_UpdatesStatesCorrectly() {
 	s.setUserStatesInTree()
 
 	transferError, appError := s.transactionExecutor.ApplyTransfer(&transfer, models.MakeUint256(1))
@@ -160,8 +166,31 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer() {
 	s.Equal(uint64(100), receiverLeaf.Balance.Uint64())
 }
 
-// TODO test ApplyTransferForSync more
-func (s *ApplyTransferTestSuite) TestApplyTransferForSync_SetsNonceInReturnedTransfer() {
+func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ValidatesToStateID() {
+	c2T := create2Transfer
+	_, transferError, appError := s.transactionExecutor.ApplyTransferForSync(&c2T, models.MakeUint256(1))
+	s.NoError(transferError)
+	s.Equal(ErrNilReceiverStateID, appError)
+}
+
+func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ValidatesTokenID() {
+	s.setUserStatesInTree()
+
+	_, transferError, appError := s.transactionExecutor.ApplyTransferForSync(&transfer, models.MakeUint256(3))
+	s.Equal(transferError, ErrInvalidTokenID)
+	s.NoError(appError)
+
+	receiverWithChangedToken := receiverState
+	receiverWithChangedToken.TokenID = models.MakeUint256(2)
+	err := s.tree.Set(2, &receiverWithChangedToken)
+	s.NoError(err)
+
+	_, transferError, appError = s.transactionExecutor.ApplyTransferForSync(&transfer, models.MakeUint256(1))
+	s.Equal(transferError, ErrInvalidTokenID)
+	s.NoError(appError)
+}
+
+func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ReturnsTransferWithUpdatedNonce() {
 	s.setUserStatesInTree()
 	transferWithModifiedNonce := transfer
 	transferWithModifiedNonce.Nonce = models.MakeUint256(1234)
@@ -172,6 +201,33 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_SetsNonceInReturnedTra
 
 	s.Equal(models.MakeUint256(1234), transferWithModifiedNonce.Nonce)
 	s.Equal(models.MakeUint256(0), synced.transfer.GetNonce())
+}
+
+func (s *ApplyTransferTestSuite) TestApplyTransferForSync_UpdatesStatesCorrectly() {
+	s.setUserStatesInTree()
+
+	_, transferError, appError := s.transactionExecutor.ApplyTransferForSync(&transfer, models.MakeUint256(1))
+	s.NoError(appError)
+	s.NoError(transferError)
+
+	senderLeaf, err := s.storage.GetStateLeaf(1)
+	s.NoError(err)
+	receiverLeaf, err := s.storage.GetStateLeaf(2)
+	s.NoError(err)
+
+	s.Equal(uint64(290), senderLeaf.Balance.Uint64())
+	s.Equal(uint64(100), receiverLeaf.Balance.Uint64())
+}
+
+func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ReturnsWitnesses() {
+	s.setUserStatesInTree()
+
+	sync, transferError, appError := s.transactionExecutor.ApplyTransferForSync(&transfer, models.MakeUint256(1))
+	s.NoError(appError)
+	s.NoError(transferError)
+
+	s.Len(sync.senderStateWitness, storage.StateTreeDepth)
+	s.Len(sync.receiverStateWitness, storage.StateTreeDepth)
 }
 
 func (s *ApplyTransferTestSuite) setUserStatesInTree() {
