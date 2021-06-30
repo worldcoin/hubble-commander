@@ -21,13 +21,14 @@ func (t *TransactionExecutor) ApplyTransfer(
 	transfer models.GenericTransfer,
 	commitmentTokenID models.Uint256,
 ) (transferError, appError error) {
-	senderState, receiverState, err := t.getParticipantsStates(transfer)
-	if err != nil {
-		return nil, err
+	senderState, receiverState, appError := t.getParticipantsStates(transfer)
+	if appError != nil {
+		return nil, appError
 	}
 
-	if appErr := t.validateTokenIDs(senderState, receiverState, commitmentTokenID); appErr != nil {
-		return nil, appErr
+	appError = t.validateTokenIDs(senderState, receiverState, commitmentTokenID)
+	if appError != nil {
+		return nil, appError
 	}
 
 	if tErr := validateTransferNonce(&senderState.UserState, transfer.GetNonce()); tErr != nil {
@@ -39,13 +40,13 @@ func (t *TransactionExecutor) ApplyTransfer(
 		return tErr, nil
 	}
 
-	err = t.stateTree.Set(senderState.StateID, newSenderState)
-	if err != nil {
-		return nil, err
+	appError = t.stateTree.Set(senderState.StateID, newSenderState)
+	if appError != nil {
+		return nil, appError
 	}
-	err = t.stateTree.Set(receiverState.StateID, newReceiverState)
-	if err != nil {
-		return nil, err
+	appError = t.stateTree.Set(receiverState.StateID, newReceiverState)
+	if appError != nil {
+		return nil, appError
 	}
 
 	return nil, nil
@@ -61,9 +62,9 @@ func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransf
 	syncedTransfer *SyncedTransfer,
 	transferError, appError error,
 ) {
-	senderState, receiverState, err := t.getParticipantsStates(transfer)
-	if err != nil {
-		return nil, nil, err
+	senderState, receiverState, appError := t.getParticipantsStates(transfer)
+	if appError != nil {
+		return nil, nil, appError
 	}
 
 	if tErr := t.validateTokenIDs(senderState, receiverState, commitmentTokenID); tErr != nil {
@@ -75,13 +76,13 @@ func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransf
 		return nil, tErr, nil
 	}
 
-	senderWitness, err := t.stateTree.SetReturningWitness(senderState.StateID, newSenderState)
-	if err != nil {
-		return nil, nil, err
+	senderWitness, appError := t.stateTree.SetReturningWitness(senderState.StateID, newSenderState)
+	if appError != nil {
+		return nil, nil, appError
 	}
-	receiverWitness, err := t.stateTree.SetReturningWitness(receiverState.StateID, newReceiverState)
-	if err != nil {
-		return nil, nil, err
+	receiverWitness, appError := t.stateTree.SetReturningWitness(receiverState.StateID, newReceiverState)
+	if appError != nil {
+		return nil, nil, appError
 	}
 
 	syncedTransfer = &SyncedTransfer{

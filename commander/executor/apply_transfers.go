@@ -62,7 +62,7 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 		return []models.Transfer{}, nil // TODO-AFS check if there can be commitment without transfers
 	}
 
-	stateChangeWitnesses := make([]models.Witness, 0, 2*numTransfers)
+	stateChangeProofs := make([]models.Witness, 0, 2*numTransfers)
 
 	appliedTransfers = make([]models.Transfer, 0, numTransfers)
 	combinedFee := models.MakeUint256(0)
@@ -73,9 +73,9 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 		if appError != nil {
 			return nil, appError
 		}
-		stateChangeWitnesses = append(stateChangeWitnesses, synced.senderStateWitness, synced.receiverStateWitness)
+		stateChangeProofs = append(stateChangeProofs, synced.senderStateWitness, synced.receiverStateWitness)
 		if transferError != nil {
-			return nil, NewDisputableTransferError(transferError.Error(), stateChangeWitnesses)
+			return nil, NewDisputableTransferError(transferError.Error(), stateChangeProofs)
 		}
 
 		appliedTransfers = append(appliedTransfers, *synced.transfer.(*models.Transfer))
