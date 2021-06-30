@@ -39,7 +39,7 @@ func (t *TransactionExecutor) syncTransferCommitment(
 	}
 
 	if uint32(len(transfers)) > t.cfg.TxsPerCommitment {
-		return ErrTooManyTx
+		return ErrTooManyTx // TODO-AFS shouldn't we check using != here ??
 	}
 
 	feeReceiver, err := t.getSyncedCommitmentFeeReceiver(commitment)
@@ -47,14 +47,14 @@ func (t *TransactionExecutor) syncTransferCommitment(
 		return err
 	}
 
-	err = t.ApplyTransfersForSync(transfers, feeReceiver)
+	appliedTransfers, err := t.ApplyTransfersForSync(transfers, feeReceiver)
 	// TODO-AFS handle dispute error
 	if err != nil {
 		return err
 	}
 
 	if !t.cfg.DevMode {
-		err = t.verifyTransferSignature(commitment, transfers)
+		err = t.verifyTransferSignature(commitment, appliedTransfers)
 		if err != nil {
 			return err
 		}
@@ -72,16 +72,16 @@ func (t *TransactionExecutor) syncTransferCommitment(
 		return err
 	}
 
-	for i := range transfers {
-		transferHash, err := encoder.HashTransfer(&transfers[i])
+	for i := range appliedTransfers {
+		transferHash, err := encoder.HashTransfer(&appliedTransfers[i])
 		if err != nil {
 			return err
 		}
-		transfers[i].Hash = *transferHash
-		transfers[i].IncludedInCommitment = commitmentID
+		appliedTransfers[i].Hash = *transferHash
+		appliedTransfers[i].IncludedInCommitment = commitmentID
 	}
 
-	return t.storage.BatchAddTransfer(transfers)
+	return t.storage.BatchAddTransfer(appliedTransfers)
 }
 
 func (t *TransactionExecutor) getSyncedCommitmentFeeReceiver(commitment *encoder.DecodedCommitment) (*FeeReceiver, error) {

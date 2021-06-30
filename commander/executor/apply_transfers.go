@@ -54,29 +54,34 @@ func (t *TransactionExecutor) ApplyTransfers(
 	return returnStruct, nil
 }
 
-func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer, feeReceiver *FeeReceiver) error {
+func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer, feeReceiver *FeeReceiver) (appliedTransfers []models.Transfer, err error) {
 	if len(transfers) == 0 {
-		return nil
+		return []models.Transfer{}, nil // TODO-AFS check if there can be commitment without transfers
 	}
 
+	appliedTransfers = make([]models.Transfer, 0, t.cfg.TxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
 	for i := range transfers {
 		transfer := &transfers[i]
-		_, transferError, appError := t.ApplyTransferForSync(transfer, feeReceiver.TokenID)
+		synced, transferError, appError := t.ApplyTransferForSync(transfer, feeReceiver.TokenID)
 		if appError != nil {
-			return appError
+			return nil, appError
 		}
 		if transferError != nil {
-			return errors.Errorf("invalid transfer") // TODO-AFS return proper error
+			return nil, errors.Errorf("invalid transfer") // TODO-AFS return proper error
 		}
 
+		appliedTransfers = append(appliedTransfers, *synced.transfer.(*models.Transfer))
 		combinedFee = *combinedFee.Add(&transfer.Fee)
 	}
 
 	if combinedFee.CmpN(0) > 0 {
-		return t.ApplyFee(feeReceiver.StateID, combinedFee)
+		err = t.ApplyFee(feeReceiver.StateID, combinedFee)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return nil
+	return appliedTransfers, nil
 }
