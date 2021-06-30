@@ -135,6 +135,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesNonce() {
 	s.NoError(appError)
 }
 
+// TODO-AFS test that ErrInvalidTokenID is a transfer error in ApplyTransferForSync
 func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesTokenID() {
 	s.setUserStatesInTree()
 
@@ -159,7 +160,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer() {
 	s.Equal(uint64(100), receiverLeaf.Balance.Uint64())
 }
 
-// TODO tes ApplyTransferForSync more
+// TODO test ApplyTransferForSync more
 func (s *ApplyTransferTestSuite) TestApplyTransferForSync_AssumesNonce() {
 	s.setUserStatesInTree()
 	transferWithModifiedNonce := transfer

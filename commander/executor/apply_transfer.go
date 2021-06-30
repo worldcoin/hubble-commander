@@ -25,8 +25,8 @@ func (t *TransactionExecutor) ApplyTransfer(
 		return nil, err
 	}
 
-	if tErr := t.validateTokenIDs(senderState, receiverState, commitmentTokenID); tErr != nil {
-		return tErr, nil
+	if appErr := t.validateTokenIDs(senderState, receiverState, commitmentTokenID); appErr != nil {
+		return nil, appErr
 	}
 
 	if tErr := validateTransferNonce(&senderState.UserState, transfer.GetNonce()); tErr != nil {
