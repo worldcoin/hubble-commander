@@ -33,7 +33,7 @@ func (t *TransactionExecutor) ApplyTransfer(
 		return tErr, nil
 	}
 
-	newSenderState, newReceiverState, tErr := CalculateStateAfterTransfer(senderState.UserState, receiverState.UserState, transfer)
+	newSenderState, newReceiverState, tErr := calculateStateAfterTransfer(senderState.UserState, receiverState.UserState, transfer)
 	if tErr != nil {
 		return tErr, nil
 	}
@@ -63,7 +63,7 @@ func (t *TransactionExecutor) ApplyTransferForSync(
 		return tErr, nil
 	}
 
-	newSenderState, newReceiverState, tErr := CalculateStateAfterTransfer(senderState.UserState, receiverState.UserState, transfer)
+	newSenderState, newReceiverState, tErr := calculateStateAfterTransfer(senderState.UserState, receiverState.UserState, transfer)
 	if tErr != nil {
 		return tErr, nil
 	}
@@ -119,7 +119,7 @@ func validateTransferNonce(senderState *models.UserState, transferNonce models.U
 	return nil
 }
 
-func CalculateStateAfterTransfer(
+func calculateStateAfterTransfer(
 	senderState, receiverState models.UserState, // nolint:gocritic
 	transfer models.GenericTransfer,
 ) (
