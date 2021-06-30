@@ -2,7 +2,6 @@ package executor
 
 import (
 	"errors"
-	"reflect"
 
 	"github.com/Worldcoin/hubble-commander/models"
 )
@@ -57,17 +56,13 @@ func (t *TransactionExecutor) ApplyTransfer(
 		return err, nil
 	}
 
-	if !reflect.DeepEqual(*newSenderState, senderState) {
-		err = t.stateTree.Set(transfer.GetFromStateID(), newSenderState)
-		if err != nil {
-			return nil, err
-		}
+	err = t.stateTree.Set(transfer.GetFromStateID(), newSenderState)
+	if err != nil {
+		return nil, err
 	}
-	if !reflect.DeepEqual(*newReceiverState, receiverState) {
-		err = t.stateTree.Set(*receiverStateID, newReceiverState)
-		if err != nil {
-			return nil, err
-		}
+	err = t.stateTree.Set(*receiverStateID, newReceiverState)
+	if err != nil {
+		return nil, err
 	}
 
 	return nil, nil
