@@ -159,6 +159,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer() {
 	s.Equal(uint64(100), receiverLeaf.Balance.Uint64())
 }
 
+// TODO move this test to ApplyTransferForSync
 func (s *ApplyTransferTestSuite) TestApplyTransfer_AssumesNonce() {
 	s.setUserStatesInTree()
 	transferWithModifiedNonce := transfer
