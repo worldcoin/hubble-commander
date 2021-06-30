@@ -63,6 +63,35 @@ func (s *StateTreeTestSuite) TestSet_StoresStateLeafRecord() {
 	s.Equal(s.leaf, actualLeaf)
 }
 
+func (s *StateTreeTestSuite) TestSet_RootIsDifferentAfterSet() {
+	state1 := models.UserState{
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
+	}
+	state2 := models.UserState{
+		PubKeyID: 2,
+		TokenID:  models.MakeUint256(5),
+		Balance:  models.MakeUint256(100),
+		Nonce:    models.MakeUint256(0),
+	}
+
+	err := s.tree.Set(0, &state1)
+	s.NoError(err)
+
+	stateRootAfter1, err := s.tree.Root()
+	s.NoError(err)
+
+	err = s.tree.Set(0, &state2)
+	s.NoError(err)
+
+	stateRootAfter2, err := s.tree.Root()
+	s.NoError(err)
+
+	s.NotEqual(stateRootAfter1, stateRootAfter2)
+}
+
 func (s *StateTreeTestSuite) TestSet_StoresLeafStateNodeRecord() {
 	err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
@@ -242,6 +271,20 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafAddsStateUpdateRecord() {
 	update, err := s.storage.GetStateUpdate(expectedUpdate.ID)
 	s.NoError(err)
 	s.Equal(expectedUpdate, update)
+}
+
+func (s *StateTreeTestSuite) TestSetReturningWitness() {
+	witness, err := s.tree.SetReturningWitness(0, &s.leaf.UserState)
+	s.NoError(err)
+	s.Len(witness, 32)
+
+	node, err := s.storage.GetStateNodeByPath(&models.MerklePath{Depth: 32, Path: 1})
+	s.NoError(err)
+	s.Equal(node.DataHash, witness[0])
+
+	node, err = s.storage.GetStateNodeByPath(&models.MerklePath{Depth: 1, Path: 1})
+	s.NoError(err)
+	s.Equal(node.DataHash, witness[31])
 }
 
 func (s *StateTreeTestSuite) TestRevertTo() {
