@@ -33,37 +33,9 @@ func (t *TransactionExecutor) syncTransferCommitment(
 		return ErrInvalidDataLength
 	}
 
-	deserializedTransfers, err := encoder.DeserializeTransfers(commitment.Transactions)
+	transactions, err := t.syncTransferCommitmentsInternal(commitment)
 	if err != nil {
 		return err
-	}
-
-	if uint32(len(deserializedTransfers)) > t.cfg.TxsPerCommitment {
-		return ErrTooManyTx
-	}
-
-	feeReceiver, err := t.getSyncedCommitmentFeeReceiver(commitment)
-	if err != nil {
-		return err
-	}
-
-	transfers, err := t.ApplyTransfers(deserializedTransfers, uint32(len(deserializedTransfers)), feeReceiver, true)
-	if err != nil {
-		return err
-	}
-
-	if len(transfers.invalidTransfers) > 0 {
-		return ErrFraudulentTransfer
-	}
-	if len(transfers.appliedTransfers) != len(deserializedTransfers) {
-		return ErrTransfersNotApplied
-	}
-
-	if !t.cfg.DevMode {
-		err = t.verifyTransferSignature(commitment, transfers.appliedTransfers)
-		if err != nil {
-			return err
-		}
 	}
 
 	commitmentID, err := t.storage.AddCommitment(&models.Commitment{
@@ -77,19 +49,55 @@ func (t *TransactionExecutor) syncTransferCommitment(
 	if err != nil {
 		return err
 	}
-	for i := range transfers.appliedTransfers {
-		transfers.appliedTransfers[i].IncludedInCommitment = commitmentID
+	for i := 0; i < transactions.Len(); i++ {
+		transactions.At(i).GetBase().IncludedInCommitment = commitmentID
 	}
 
-	for i := range transfers.appliedTransfers {
-		hashTransfer, err := encoder.HashTransfer(&transfers.appliedTransfers[i])
+	for i := 0; i < transactions.Len(); i++ {
+		hashTransfer, err := encoder.HashGenericTransaction(transactions.At(i))
 		if err != nil {
 			return err
 		}
-		transfers.appliedTransfers[i].Hash = *hashTransfer
+		transactions.At(i).GetBase().Hash = *hashTransfer
 	}
 
-	return t.storage.BatchAddTransfer(transfers.appliedTransfers)
+	return t.storage.BatchAddGenericTransaction(transactions)
+}
+
+func (t *TransactionExecutor) syncTransferCommitmentsInternal(commitment *encoder.DecodedCommitment) (models.GenericTransactionArray, error) {
+	deserializedTransfers, err := encoder.DeserializeTransfers(commitment.Transactions)
+	if err != nil {
+		return nil, err
+	}
+
+	if uint32(len(deserializedTransfers)) > t.cfg.TxsPerCommitment {
+		return nil, ErrTooManyTx
+	}
+
+	feeReceiver, err := t.getSyncedCommitmentFeeReceiver(commitment)
+	if err != nil {
+		return nil, err
+	}
+
+	transfers, err := t.ApplyTransfers(deserializedTransfers, uint32(len(deserializedTransfers)), feeReceiver, true)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(transfers.invalidTransfers) > 0 {
+		return nil, ErrFraudulentTransfer
+	}
+	if len(transfers.appliedTransfers) != len(deserializedTransfers) {
+		return nil, ErrTransfersNotApplied
+	}
+
+	if !t.cfg.DevMode {
+		err = t.verifyTransferSignature(commitment, transfers.appliedTransfers)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return models.TransferArray(transfers.appliedTransfers), nil
 }
 
 func (t *TransactionExecutor) getSyncedCommitmentFeeReceiver(commitment *encoder.DecodedCommitment) (*FeeReceiver, error) {

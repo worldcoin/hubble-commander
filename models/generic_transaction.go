@@ -13,40 +13,27 @@ type GenericTransaction interface {
 	SetNonce(nonce Uint256)
 }
 
-type GenericTransactionArray []GenericTransaction
-
-func MakeGenericTransferArray(transfers []Transfer) GenericTransactionArray {
-	arr := make([]GenericTransaction, len(transfers))
-	for i := range transfers {
-		arr[i] = &transfers[i]
-	}
-	return arr
+type GenericTransactionArray interface {
+	Len() int
+	At(index int) GenericTransaction
 }
 
-func MakeGenericCreate2TransferArray(transfers []Create2Transfer) GenericTransactionArray {
-	arr := make([]GenericTransaction, len(transfers))
-	for i := range transfers {
-		arr[i] = &transfers[i]
-	}
-	return arr
+type TransferArray []Transfer
+
+func (t TransferArray) Len() int {
+	return len(t)
 }
 
-func (a GenericTransactionArray) Type() txtype.TransactionType {
-	return a[0].Type()
+func (t TransferArray) At(index int) GenericTransaction {
+	return &t[index]
 }
 
-func (a GenericTransactionArray) ToTransferArray() []Transfer {
-	arr := make([]Transfer, len(a))
-	for i := range a {
-		arr[i] = *a[i].(*Transfer)
-	}
-	return arr
+type Create2TransferArray []Create2Transfer
+
+func (t Create2TransferArray) Len() int {
+	return len(t)
 }
 
-func (a GenericTransactionArray) ToCreate2TransferArray() []Create2Transfer {
-	arr := make([]Create2Transfer, len(a))
-	for i := range a {
-		arr[i] = *a[i].(*Create2Transfer)
-	}
-	return arr
+func (t Create2TransferArray) At(index int) GenericTransaction {
+	return &t[index]
 }

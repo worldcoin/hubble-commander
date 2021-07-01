@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -133,7 +132,7 @@ func (t *TransactionExecutor) syncNewBatch(batch *eth.DecodedBatch) error {
 			return err
 		}
 	case txtype.MassMigration:
-		return fmt.Errorf("unsupported batch type for sync: %s", batch.Type)
+		return errors.Errorf("unsupported batch type for sync: %s", batch.Type)
 	}
 
 	log.Printf("Synced new batch #%s from chain with %d commitment(s)", batch.ID.String(), len(batch.Commitments))

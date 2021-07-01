@@ -21,7 +21,7 @@ type TransferWithBatchHash struct {
 }
 
 func (t *Transfer) Type() txtype.TransactionType {
-	return txtype.Create2Transfer
+	return txtype.Transfer
 }
 
 func (t *Transfer) GetBase() *TransactionBase {
