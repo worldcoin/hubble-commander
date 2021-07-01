@@ -26,7 +26,12 @@ func (t *TransactionExecutor) ApplyTransfer(
 		return nil, appError
 	}
 
-	appError = t.validateTokenIDs(senderState, receiverState, commitmentTokenID)
+	appError = t.validateSenderTokenID(senderState, commitmentTokenID)
+	if appError != nil {
+		return nil, appError
+	}
+
+	appError = t.validateReceiverTokenID(receiverState, commitmentTokenID)
 	if appError != nil {
 		return nil, appError
 	}
@@ -69,7 +74,7 @@ func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransf
 
 	// TODO-AFS we need to split this into two functions: validateSenderTokenID and validateReceiverTokenID
 	//  the second one will need to be called after the SetReturningProof of senderState.
-	if tErr := t.validateTokenIDs(senderState, receiverState, commitmentTokenID); tErr != nil {
+	if tErr := t.validateSenderTokenID(senderState, commitmentTokenID); tErr != nil {
 		return nil, tErr, nil
 	}
 
@@ -84,6 +89,9 @@ func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransf
 	}
 
 	// TODO-AFS validateReceiverTokenID here, on error we need to return senderStateProof
+	if tErr = t.validateReceiverTokenID(receiverState, commitmentTokenID); tErr != nil {
+		return nil, tErr, nil
+	}
 
 	receiverProof, appError := t.stateTree.SetReturningProof(receiverState.StateID, newReceiverState)
 	if appError != nil {
@@ -121,8 +129,15 @@ func (t *TransactionExecutor) getParticipantsStates(transfer models.GenericTrans
 	return senderLeaf, receiverLeaf, nil
 }
 
-func (t *TransactionExecutor) validateTokenIDs(senderState, receiverState *models.StateLeaf, commitmentTokenID models.Uint256) error {
-	if senderState.TokenID.Cmp(&commitmentTokenID) != 0 || receiverState.TokenID.Cmp(&commitmentTokenID) != 0 {
+func (t *TransactionExecutor) validateSenderTokenID(senderState *models.StateLeaf, commitmentTokenID models.Uint256) error {
+	if senderState.TokenID.Cmp(&commitmentTokenID) != 0 {
+		return ErrInvalidTokenID
+	}
+	return nil
+}
+
+func (t *TransactionExecutor) validateReceiverTokenID(receiverState *models.StateLeaf, commitmentTokenID models.Uint256) error {
+	if receiverState.TokenID.Cmp(&commitmentTokenID) != 0 {
 		return ErrInvalidTokenID
 	}
 	return nil
