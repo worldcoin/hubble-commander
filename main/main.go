@@ -15,16 +15,7 @@ import (
 func main() {
 	cfg := getConfig()
 
-	// Log as JSON instead of the default ASCII formatter.
-	log.SetFormatter(&log.JSONFormatter{})
-
-	// Output to stdout instead of the default stderr
-	// Can be any io.Writer, see below for File example
-	log.SetOutput(os.Stdout)
-
-	// Only log the warning severity or above.
-	log.SetLevel(log.WarnLevel)
-
+	configureLogger(cfg)
 	cmd := commander.NewCommander(cfg)
 
 	setupCloseHandler(cmd)
@@ -33,6 +24,20 @@ func main() {
 	if err != nil {
 		log.Fatalf("%+v", err)
 	}
+}
+
+func configureLogger(cfg *config.Config) {
+	if cfg.Log.Format == "json" {
+		// Log as JSON instead of the default ASCII formatter.
+		log.SetFormatter(&log.JSONFormatter{})
+	}
+
+	// Output to stdout instead of the default stderr
+	// Can be any io.Writer, see below for File example
+	log.SetOutput(os.Stdout)
+
+	// Only log the warning severity or above.
+	log.SetLevel(cfg.Log.Level)
 }
 
 func getConfig() *config.Config {
