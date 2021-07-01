@@ -1,7 +1,7 @@
 package executor
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"

@@ -3,7 +3,7 @@ package setup
 import (
 	"context"
 	"fmt"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"time"
 

@@ -1,7 +1,7 @@
 package bls
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/kilic/bn254/bls"

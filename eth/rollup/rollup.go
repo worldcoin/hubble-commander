@@ -1,7 +1,7 @@
 package rollup
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/create2transfer"

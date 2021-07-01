@@ -2,7 +2,7 @@ package merkletree
 
 import (
 	"fmt"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"math"
 
 	"github.com/Worldcoin/hubble-commander/models"

@@ -3,7 +3,7 @@ package commander
 import (
 	"context"
 	stdErrors "errors"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/utils/ref"

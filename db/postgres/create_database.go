@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"fmt"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"strings"
 
 	"github.com/Worldcoin/hubble-commander/config"

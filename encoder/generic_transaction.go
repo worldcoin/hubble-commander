@@ -1,7 +1,7 @@
 package encoder
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"

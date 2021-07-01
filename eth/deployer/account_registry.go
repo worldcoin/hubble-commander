@@ -1,7 +1,7 @@
 package deployer
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/ethereum/go-ethereum/common"

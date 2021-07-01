@@ -1,7 +1,7 @@
 package commander
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"sync"
 
