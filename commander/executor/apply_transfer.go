@@ -72,15 +72,13 @@ func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransa
 		return nil, nil, appError
 	}
 
-	// TODO-AFS we need to split this into two functions: validateSenderTokenID and validateReceiverTokenID
-	//  the second one will need to be called after the SetReturningProof of senderState.
-	if tErr := t.validateSenderTokenID(senderState, commitmentTokenID); tErr != nil {
-		return nil, tErr, nil
-	}
-
 	newSenderState, newReceiverState, tErr := calculateStateAfterTransfer(senderState.UserState, receiverState.UserState, transfer)
 	if tErr != nil {
 		return nil, tErr, nil
+	}
+
+	syncedTransfer = &SyncedTransfer{
+		transfer: transfer.Copy(),
 	}
 
 	senderWitness, appError := t.stateTree.Set(senderState.StateID, newSenderState)
@@ -88,9 +86,13 @@ func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransa
 		return nil, nil, appError
 	}
 
-	// TODO-AFS validateReceiverTokenID here, on error we need to return senderStateProof
-	if tErr := t.validateReceiverTokenID(receiverState, commitmentTokenID); tErr != nil {
-		return nil, tErr, nil
+	syncedTransfer.senderStateProof = models.StateMerkleProof{
+		UserState: &senderState.UserState,
+		Witness:   senderWitness,
+	}
+
+	if tErr := t.validateSenderTokenID(senderState, commitmentTokenID); tErr != nil {
+		return syncedTransfer, tErr, nil
 	}
 
 	receiverWitness, appError := t.stateTree.Set(receiverState.StateID, newReceiverState)
@@ -98,17 +100,15 @@ func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransa
 		return nil, nil, appError
 	}
 
-	syncedTransfer = &SyncedTransfer{
-		transfer: transfer.Copy(),
-		senderStateProof: models.StateMerkleProof{
-			UserState: &senderState.UserState,
-			Witness:   senderWitness,
-		},
-		receiverStateProof: models.StateMerkleProof{
-			UserState: &receiverState.UserState,
-			Witness:   receiverWitness,
-		},
+	syncedTransfer.receiverStateProof = models.StateMerkleProof{
+		UserState: &receiverState.UserState,
+		Witness:   receiverWitness,
 	}
+
+	if tErr := t.validateReceiverTokenID(receiverState, commitmentTokenID); tErr != nil {
+		return syncedTransfer, tErr, nil
+	}
+
 	syncedTransfer.transfer.SetNonce(senderState.Nonce)
 
 	return syncedTransfer, nil, nil

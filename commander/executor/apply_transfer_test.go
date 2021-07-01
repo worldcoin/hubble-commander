@@ -226,16 +226,9 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ReturnsProofs() {
 	s.NoError(appError)
 	s.NoError(transferError)
 
-	senderStateAfterTransfer := senderState
-	senderStateAfterTransfer.Nonce = models.MakeUint256(1)
-	senderStateAfterTransfer.Balance = *senderState.Balance.SubN(110)
-
-	receiverStateAfterTransfer := receiverState
-	receiverStateAfterTransfer.Balance = *receiverState.Balance.AddN(100)
-
-	s.Equal(senderStateAfterTransfer, *sync.senderStateProof.UserState)
+	s.Equal(senderState, *sync.senderStateProof.UserState)
 	s.Len(sync.senderStateProof.Witness, storage.StateTreeDepth)
-	s.Equal(receiverStateAfterTransfer, *sync.receiverStateProof.UserState)
+	s.Equal(receiverState, *sync.receiverStateProof.UserState)
 	s.Len(sync.receiverStateProof.Witness, storage.StateTreeDepth)
 }
 
