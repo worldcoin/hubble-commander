@@ -4,6 +4,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -29,11 +31,20 @@ func (t *TransactionExecutor) syncTransferCommitment(
 	batch *eth.DecodedBatch,
 	commitment *encoder.DecodedCommitment,
 ) error {
-	if len(commitment.Transactions)%encoder.TransferLength != 0 {
+	if len(commitment.Transactions)%encoder.GetTransactionLength(batch.Type) != 0 {
 		return ErrInvalidDataLength
 	}
 
-	transactions, err := t.syncTransferCommitmentsInternal(commitment)
+	var transactions models.GenericTransactionArray
+	var err error
+	switch batch.Type {
+	case txtype.Transfer:
+		transactions, err = t.syncTransferCommitmentsInternal(commitment)
+	case txtype.Create2Transfer:
+		transactions, err = t.syncCreate2TransferCommitmentsInternal(commitment)
+	case txtype.MassMigration:
+		return errors.Errorf("unsupported batch type for sync: %s", batch.Type)
+	}
 	if err != nil {
 		return err
 	}
