@@ -132,7 +132,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesTokenID() {
 
 	receiverWithChangedToken := receiverState
 	receiverWithChangedToken.TokenID = models.MakeUint256(2)
-	err := s.tree.Set(2, &receiverWithChangedToken)
+	_, err := s.tree.Set(2, &receiverWithChangedToken)
 	s.NoError(err)
 
 	transferError, appError = s.transactionExecutor.ApplyTransfer(&transfer, models.MakeUint256(1))
@@ -182,7 +182,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ValidatesTokenID() {
 
 	receiverWithChangedToken := receiverState
 	receiverWithChangedToken.TokenID = models.MakeUint256(2)
-	err := s.tree.Set(2, &receiverWithChangedToken)
+	_, err := s.tree.Set(2, &receiverWithChangedToken)
 	s.NoError(err)
 
 	_, transferError, appError = s.transactionExecutor.ApplyTransferForSync(&transfer, models.MakeUint256(1))
@@ -243,9 +243,9 @@ func (s *ApplyTransferTestSuite) setUserStatesInTree() {
 	senderStateID := senderState.PubKeyID
 	receiverStateID := receiverState.PubKeyID
 
-	err := s.tree.Set(senderStateID, &senderState)
+	_, err := s.tree.Set(senderStateID, &senderState)
 	s.NoError(err)
-	err = s.tree.Set(receiverStateID, &receiverState)
+	_, err = s.tree.Set(receiverStateID, &receiverState)
 	s.NoError(err)
 }
 

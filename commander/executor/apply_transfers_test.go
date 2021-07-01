@@ -78,11 +78,11 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 		s.NoError(err)
 	}
 
-	err = s.tree.Set(1, &senderState)
+	_, err = s.tree.Set(1, &senderState)
 	s.NoError(err)
-	err = s.tree.Set(2, &receiverState)
+	_, err = s.tree.Set(2, &receiverState)
 	s.NoError(err)
-	err = s.tree.Set(3, &feeReceiverState)
+	_, err = s.tree.Set(3, &feeReceiverState)
 	s.NoError(err)
 
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, TransactionExecutorOpts{})

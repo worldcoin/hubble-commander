@@ -45,11 +45,11 @@ func (t *TransactionExecutor) ApplyTransfer(
 		return tErr, nil
 	}
 
-	appError = t.stateTree.Set(senderState.StateID, newSenderState)
+	_, appError = t.stateTree.Set(senderState.StateID, newSenderState)
 	if appError != nil {
 		return nil, appError
 	}
-	appError = t.stateTree.Set(receiverState.StateID, newReceiverState)
+	_, appError = t.stateTree.Set(receiverState.StateID, newReceiverState)
 	if appError != nil {
 		return nil, appError
 	}
@@ -83,7 +83,7 @@ func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransa
 		return nil, tErr, nil
 	}
 
-	senderProof, appError := t.stateTree.SetReturningProof(senderState.StateID, newSenderState)
+	senderWitness, appError := t.stateTree.Set(senderState.StateID, newSenderState)
 	if appError != nil {
 		return nil, nil, appError
 	}
@@ -93,15 +93,21 @@ func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransa
 		return nil, tErr, nil
 	}
 
-	receiverProof, appError := t.stateTree.SetReturningProof(receiverState.StateID, newReceiverState)
+	receiverWitness, appError := t.stateTree.Set(receiverState.StateID, newReceiverState)
 	if appError != nil {
 		return nil, nil, appError
 	}
 
 	syncedTransfer = &SyncedTransfer{
-		transfer:           transfer.Copy(),
-		senderStateProof:   *senderProof,
-		receiverStateProof: *receiverProof,
+		transfer: transfer.Copy(),
+		senderStateProof: models.StateMerkleProof{
+			UserState: &senderState.UserState,
+			Witness:   senderWitness,
+		},
+		receiverStateProof: models.StateMerkleProof{
+			UserState: &receiverState.UserState,
+			Witness:   receiverWitness,
+		},
 	}
 	syncedTransfer.transfer.SetNonce(senderState.Nonce)
 

@@ -203,7 +203,7 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey() {
 	err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
 
-	err = s.tree.Set(1, &models.UserState{
+	_, err = s.tree.Set(1, &models.UserState{
 		PubKeyID: 2,
 		TokenID:  models.MakeUint256(1),
 		Balance:  models.MakeUint256(400),

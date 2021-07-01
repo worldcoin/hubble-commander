@@ -55,7 +55,7 @@ func (s *StateTreeTestSuite) TearDownTest() {
 
 func (s *StateTreeTestSuite) TestSet_StoresStateLeafRecord() {
 	s.leaf.StateID = 0
-	err := s.tree.Set(0, &s.leaf.UserState)
+	_, err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
 	actualLeaf, err := s.storage.GetStateLeaf(s.leaf.StateID)
@@ -77,13 +77,13 @@ func (s *StateTreeTestSuite) TestSet_RootIsDifferentAfterSet() {
 		Nonce:    models.MakeUint256(0),
 	}
 
-	err := s.tree.Set(0, &state1)
+	_, err := s.tree.Set(0, &state1)
 	s.NoError(err)
 
 	stateRootAfter1, err := s.tree.Root()
 	s.NoError(err)
 
-	err = s.tree.Set(0, &state2)
+	_, err = s.tree.Set(0, &state2)
 	s.NoError(err)
 
 	stateRootAfter2, err := s.tree.Root()
@@ -93,7 +93,7 @@ func (s *StateTreeTestSuite) TestSet_RootIsDifferentAfterSet() {
 }
 
 func (s *StateTreeTestSuite) TestSet_StoresLeafStateNodeRecord() {
-	err := s.tree.Set(0, &s.leaf.UserState)
+	_, err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
 	expectedNode := &models.StateNode{
@@ -110,7 +110,7 @@ func (s *StateTreeTestSuite) TestSet_StoresLeafStateNodeRecord() {
 }
 
 func (s *StateTreeTestSuite) TestSet_UpdatesRootStateNodeRecord() {
-	err := s.tree.Set(0, &s.leaf.UserState)
+	_, err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
 	rootPath := models.MerklePath{
@@ -129,7 +129,7 @@ func (s *StateTreeTestSuite) TestSet_UpdatesRootStateNodeRecord() {
 }
 
 func (s *StateTreeTestSuite) TestSet_CalculatesCorrectRootForLeafOfId1() {
-	err := s.tree.Set(1, &s.leaf.UserState)
+	_, err := s.tree.Set(1, &s.leaf.UserState)
 	s.NoError(err)
 
 	rootPath := models.MerklePath{
@@ -148,7 +148,7 @@ func (s *StateTreeTestSuite) TestSet_CalculatesCorrectRootForLeafOfId1() {
 }
 
 func (s *StateTreeTestSuite) TestSet_CalculatesCorrectRootForTwoLeaves() {
-	err := s.tree.Set(0, &s.leaf.UserState)
+	_, err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
 	state := models.UserState{
@@ -157,7 +157,7 @@ func (s *StateTreeTestSuite) TestSet_CalculatesCorrectRootForTwoLeaves() {
 		Balance:  models.MakeUint256(420),
 		Nonce:    models.MakeUint256(0),
 	}
-	err = s.tree.Set(1, &state)
+	_, err = s.tree.Set(1, &state)
 	s.NoError(err)
 
 	rootPath := models.MerklePath{
@@ -176,7 +176,7 @@ func (s *StateTreeTestSuite) TestSet_CalculatesCorrectRootForTwoLeaves() {
 }
 
 func (s *StateTreeTestSuite) TestSet_StoresStateUpdateRecord() {
-	err := s.tree.Set(0, &s.leaf.UserState)
+	_, err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
 	expectedUpdate := &models.StateUpdate{
@@ -195,10 +195,10 @@ func (s *StateTreeTestSuite) TestSet_StoresStateUpdateRecord() {
 }
 
 func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectRootStateNode() {
-	err := s.tree.Set(0, &s.leaf.UserState)
+	_, err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
-	err = s.tree.Set(0, &updatedUserState)
+	_, err = s.tree.Set(0, &updatedUserState)
 	s.NoError(err)
 
 	rootPath := models.MerklePath{
@@ -217,12 +217,12 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectRootStateNode() {
 }
 
 func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectLeafStateNode() {
-	err := s.tree.Set(0, &s.leaf.UserState)
+	_, err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
 	leaf, err := NewStateLeaf(0, &updatedUserState)
 	s.NoError(err)
-	err = s.tree.Set(0, &updatedUserState)
+	_, err = s.tree.Set(0, &updatedUserState)
 	s.NoError(err)
 
 	leafPath := models.MerklePath{
@@ -241,12 +241,12 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectLeafStateNode() {
 }
 
 func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafNewStateLeafRecord() {
-	err := s.tree.Set(0, &s.leaf.UserState)
+	_, err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
 	expectedLeaf, err := NewStateLeaf(0, &updatedUserState)
 	s.NoError(err)
-	err = s.tree.Set(0, &updatedUserState)
+	_, err = s.tree.Set(0, &updatedUserState)
 	s.NoError(err)
 
 	leaf, err := s.storage.GetStateLeaf(0)
@@ -255,10 +255,10 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafNewStateLeafRecord() {
 }
 
 func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafAddsStateUpdateRecord() {
-	err := s.tree.Set(0, &s.leaf.UserState)
+	_, err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
-	err = s.tree.Set(0, &updatedUserState)
+	_, err = s.tree.Set(0, &updatedUserState)
 	s.NoError(err)
 
 	expectedUpdate := &models.StateUpdate{
@@ -273,19 +273,18 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafAddsStateUpdateRecord() {
 	s.Equal(expectedUpdate, update)
 }
 
-func (s *StateTreeTestSuite) TestSetReturningProof() {
-	proof, err := s.tree.SetReturningProof(0, &s.leaf.UserState)
+func (s *StateTreeTestSuite) TestSet_ReturnsWitness() {
+	witness, err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
-	s.Equal(s.leaf.UserState, *proof.UserState)
-	s.Len(proof.Witness, 32)
+	s.Len(witness, 32)
 
 	node, err := s.storage.GetStateNodeByPath(&models.MerklePath{Depth: 32, Path: 1})
 	s.NoError(err)
-	s.Equal(node.DataHash, proof.Witness[0])
+	s.Equal(node.DataHash, witness[0])
 
 	node, err = s.storage.GetStateNodeByPath(&models.MerklePath{Depth: 1, Path: 1})
 	s.NoError(err)
-	s.Equal(node.DataHash, proof.Witness[31])
+	s.Equal(node.DataHash, witness[31])
 }
 
 func (s *StateTreeTestSuite) TestRevertTo() {
@@ -310,15 +309,15 @@ func (s *StateTreeTestSuite) TestRevertTo() {
 		},
 	}
 
-	err := s.tree.Set(0, &states[0])
+	_, err := s.tree.Set(0, &states[0])
 	s.NoError(err)
 
 	stateRoot, err := s.tree.Root()
 	s.NoError(err)
 
-	err = s.tree.Set(1, &states[1])
+	_, err = s.tree.Set(1, &states[1])
 	s.NoError(err)
-	err = s.tree.Set(0, &states[2])
+	_, err = s.tree.Set(0, &states[2])
 	s.NoError(err)
 
 	err = s.tree.RevertTo(*stateRoot)
@@ -355,7 +354,7 @@ func (s *StateTreeTestSuite) TestRevertTo_NotExistentRootHash() {
 		},
 	}
 	for i := range states {
-		err := s.tree.Set(uint32(i), &states[i])
+		_, err := s.tree.Set(uint32(i), &states[i])
 		s.NoError(err)
 	}
 

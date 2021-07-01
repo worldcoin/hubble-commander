@@ -24,7 +24,7 @@ func (t *TransactionExecutor) ApplyCreate2Transfer(
 		create2Transfer.ToStateID = nextAvailableStateID
 	}
 
-	err := t.stateTree.Set(*create2Transfer.ToStateID, &emptyUserState)
+	_, err := t.stateTree.Set(*create2Transfer.ToStateID, &emptyUserState)
 	if err != nil {
 		return nil, err
 	}

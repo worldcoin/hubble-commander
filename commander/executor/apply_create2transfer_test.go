@@ -70,14 +70,14 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 		s.NoError(err)
 	}
 
-	err = s.tree.Set(0, &models.UserState{
+	_, err = s.tree.Set(0, &models.UserState{
 		PubKeyID: 0,
 		TokenID:  feeReceiverTokenID,
 		Balance:  models.MakeUint256(10000),
 		Nonce:    models.MakeUint256(0),
 	})
 	s.NoError(err)
-	err = s.tree.Set(1, &models.UserState{
+	_, err = s.tree.Set(1, &models.UserState{
 		PubKeyID: 1,
 		TokenID:  feeReceiverTokenID,
 		Balance:  models.MakeUint256(0),

@@ -259,7 +259,7 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 	}
 
 	for i := range userStates {
-		err := s.tree.Set(uint32(i), &userStates[i])
+		_, err := s.tree.Set(uint32(i), &userStates[i])
 		s.NoError(err)
 	}
 

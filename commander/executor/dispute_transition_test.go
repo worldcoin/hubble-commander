@@ -86,7 +86,7 @@ func (s *DisputeTransitionTestSuite) TestPreviousCommitmentInclusionProof_Curren
 }
 
 func (s *DisputeTransitionTestSuite) TestPreviousCommitmentInclusionProof_PreviousBatch() {
-	err := st.NewStateTree(s.storage).Set(11, &models.UserState{
+	_, err := st.NewStateTree(s.storage).Set(11, &models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(1),
 		Balance:  models.MakeUint256(100),
@@ -216,7 +216,7 @@ func (s *DisputeTransitionTestSuite) setUserStates() {
 		*s.createUserState(2, 100, 0),
 	}
 	for i := range userStates {
-		err := s.transactionExecutor.stateTree.Set(uint32(i), &userStates[i])
+		_, err := s.transactionExecutor.stateTree.Set(uint32(i), &userStates[i])
 		s.NoError(err)
 	}
 }

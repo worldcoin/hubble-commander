@@ -67,7 +67,7 @@ func (s *SubmitTransferBatchTestSuite) SetupTest() {
 		Nonce:    models.MakeUint256(0),
 	}
 
-	err = s.tree.Set(1, &userState)
+	_, err = s.tree.Set(1, &userState)
 	s.NoError(err)
 
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, TransactionExecutorOpts{})

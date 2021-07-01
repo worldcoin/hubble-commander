@@ -62,7 +62,7 @@ func (s *CalculateTransactionStatusTestSuite) SetupTest() {
 	s.NoError(err)
 
 	tree := st.NewStateTree(s.storage)
-	err = tree.Set(1, &userState)
+	_, err = tree.Set(1, &userState)
 	s.NoError(err)
 
 	transfer := &models.Transfer{

@@ -53,7 +53,7 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.PopulatedGen
 			return err
 		}
 
-		err = stateTree.Set(account.StateID, &models.UserState{
+		_, err = stateTree.Set(account.StateID, &models.UserState{
 			PubKeyID: account.PubKeyID,
 			TokenID:  models.MakeUint256(0),
 			Balance:  account.Balance,

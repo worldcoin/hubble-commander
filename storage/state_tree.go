@@ -60,23 +60,8 @@ func (s *StateTree) Leaf(stateID uint32) (*models.StateLeaf, error) {
 	return leaf, nil
 }
 
-func (s *StateTree) Set(id uint32, state *models.UserState) (err error) {
-	tx, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
-	if err != nil {
-		return
-	}
-	defer tx.Rollback(&err)
-
-	_, err = NewStateTree(storage).unsafeSet(id, state)
-	if err != nil {
-		return
-	}
-
-	return tx.Commit()
-}
-
-// SetReturningProof returns a state proof with witness containing 32 elements for the current set operation
-func (s *StateTree) SetReturningProof(id uint32, state *models.UserState) (*models.StateMerkleProof, error) {
+// Set return a witness containing 32 elements for the current set operation
+func (s *StateTree) Set(id uint32, state *models.UserState) (models.Witness, error) {
 	tx, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return nil, err
@@ -162,7 +147,7 @@ func decodeStateUpdate(item *bdg.Item) (*models.StateUpdate, error) {
 	return &stateUpdate, nil
 }
 
-func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (*models.StateMerkleProof, error) {
+func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (models.Witness, error) {
 	prevLeaf, err := s.Leaf(index)
 	if err != nil {
 		return nil, err
@@ -189,11 +174,6 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (*models.St
 		return nil, err
 	}
 
-	proof := &models.StateMerkleProof{
-		UserState: &currentLeaf.UserState,
-		Witness:   witness,
-	}
-
 	err = s.storage.AddStateUpdate(&models.StateUpdate{
 		CurrentRoot:   *currentRoot,
 		PrevRoot:      *prevRoot,
@@ -203,7 +183,7 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (*models.St
 		return nil, err
 	}
 
-	return proof, nil
+	return witness, nil
 }
 
 func (s *StateTree) updateStateNodes(leafPath *models.MerklePath, newLeafHash *common.Hash) (*common.Hash, models.Witness, error) {

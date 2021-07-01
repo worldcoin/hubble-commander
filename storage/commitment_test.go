@@ -207,7 +207,7 @@ func (s *CommitmentTestSuite) addLeaf() {
 	err := s.storage.AddAccountIfNotExists(&account1)
 	s.NoError(err)
 
-	err = s.tree.Set(uint32(0), &models.UserState{
+	_, err = s.tree.Set(uint32(0), &models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(1),
 		Balance:  models.MakeUint256(420),

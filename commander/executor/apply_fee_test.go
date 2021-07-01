@@ -36,7 +36,7 @@ func (s *ApplyFeeTestSuite) TearDownTest() {
 
 func (s *ApplyFeeTestSuite) TestApplyFee() {
 	feeReceiverStateID := receiverState.PubKeyID
-	err := s.tree.Set(feeReceiverStateID, &receiverState)
+	_, err := s.tree.Set(feeReceiverStateID, &receiverState)
 	s.NoError(err)
 
 	err = s.transactionExecutor.ApplyFee(feeReceiverStateID, models.MakeUint256(555))
