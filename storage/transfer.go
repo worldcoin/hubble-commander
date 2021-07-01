@@ -54,6 +54,7 @@ func (s *Storage) AddTransfer(t *models.Transfer) (receiveTime *time.Time, err e
 	return receiveTime, nil
 }
 
+// BatchAddTransfer contrary to the AddTransfer method does not set receive_time column on added transfers
 func (s *Storage) BatchAddTransfer(txs []models.Transfer) error {
 	if len(txs) < 1 {
 		return ErrNoRowsAffected

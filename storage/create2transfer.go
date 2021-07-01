@@ -60,6 +60,7 @@ func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) (receiveTime *ti
 	return receiveTime, nil
 }
 
+// BatchAddCreate2Transfer contrary to the AddCreate2Transfer method does not set receive_time column on added transfers
 func (s *Storage) BatchAddCreate2Transfer(txs []models.Create2Transfer) error {
 	if len(txs) < 1 {
 		return ErrNoRowsAffected
