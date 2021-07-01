@@ -165,7 +165,7 @@ func (s *NewBlockLoopTestSuite) registerAccounts(accounts []models.Account) {
 }
 
 func createAndSubmitTransferBatch(t *testing.T, cmd *Commander, tx *models.Transfer) {
-	err := cmd.storage.AddTransfer(tx)
+	_, err := cmd.storage.AddTransfer(tx)
 	require.NoError(t, err)
 
 	transactionExecutor, err := executor.NewTransactionExecutor(cmd.storage, cmd.client, cmd.cfg.Rollup, executor.TransactionExecutorOpts{})

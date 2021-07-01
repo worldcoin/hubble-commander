@@ -4,6 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -23,7 +24,7 @@ func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*co
 	}
 	create2Transfer.Hash = *hash
 
-	err = a.storage.AddCreate2Transfer(create2Transfer)
+	_, err = a.storage.AddCreate2Transfer(create2Transfer)
 	if err != nil {
 		return nil, err
 	}
@@ -53,6 +54,7 @@ func sanitizeCreate2Transfer(create2Transfer dto.Create2Transfer) (*models.Creat
 
 	return &models.Create2Transfer{
 			TransactionBase: models.TransactionBase{
+				TxType:      txtype.Create2Transfer,
 				FromStateID: *create2Transfer.FromStateID,
 				Amount:      *create2Transfer.Amount,
 				Fee:         *create2Transfer.Fee,

@@ -23,7 +23,7 @@ type API struct {
 }
 
 func NewAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client, devMode bool) (*http.Server, error) {
-	server, err := getAPIServer(cfg, storage, client)
+	server, err := getAPIServer(cfg, storage, client, devMode)
 	if err != nil {
 		return nil, err
 	}
@@ -39,11 +39,12 @@ func NewAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client
 	return &http.Server{Addr: addr, Handler: mux}, nil
 }
 
-func getAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client) (*rpc.Server, error) {
+func getAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client, devMode bool) (*rpc.Server, error) {
 	api := API{
 		cfg:     cfg,
 		storage: storage,
 		client:  client,
+		devMode: devMode,
 	}
 	if err := api.initSignature(); err != nil {
 		return nil, errors.WithMessage(err, "failed to create mock signature")

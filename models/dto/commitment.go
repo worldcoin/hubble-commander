@@ -10,3 +10,13 @@ type Commitment struct {
 	Status       txstatus.TransactionStatus
 	Transactions interface{}
 }
+
+type TransferForCommitment struct {
+	*models.TransferForCommitment
+	ReceiveTime *Timestamp
+}
+
+type Create2TransferForCommitment struct {
+	*models.Create2TransferForCommitment
+	ReceiveTime *Timestamp
+}
