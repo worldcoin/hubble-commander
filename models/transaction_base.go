@@ -27,6 +27,7 @@ type TransactionBaseForCommitment struct {
 	Fee         Uint256
 	Nonce       Uint256
 	Signature   Signature
+	ReceiveTime *time.Time `db:"receive_time"`
 }
 
 func (t *TransactionBase) GetFromStateID() uint32 {

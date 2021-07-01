@@ -250,18 +250,18 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID() {
 	_, err = s.storage.AddCreate2Transfer(&transfer1)
 	s.NoError(err)
 
-	commitments, err := s.storage.GetCreate2TransfersByCommitmentID(*commitmentID)
+	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(*commitmentID)
 	s.NoError(err)
-	s.Len(commitments, 1)
+	s.Len(transfers, 1)
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID_NoCreate2Transfers() {
 	commitmentID, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	commitments, err := s.storage.GetCreate2TransfersByCommitmentID(*commitmentID)
+	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(*commitmentID)
 	s.NoError(err)
-	s.Len(commitments, 0)
+	s.Len(transfers, 0)
 }
 
 func (s *Create2TransferTestSuite) TestSetCreate2TransferToStateID() {

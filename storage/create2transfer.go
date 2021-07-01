@@ -201,6 +201,7 @@ func (s *Storage) GetCreate2TransfersByCommitmentID(id int32) ([]models.Create2T
 			"transaction_base.fee",
 			"transaction_base.nonce",
 			"transaction_base.signature",
+			"transaction_base.receive_time",
 			"create2transfer.to_state_id",
 			"create2transfer.to_public_key").
 			From("transaction_base").

@@ -205,6 +205,7 @@ func (s *Storage) GetTransfersByCommitmentID(id int32) ([]models.TransferForComm
 			"transaction_base.fee",
 			"transaction_base.nonce",
 			"transaction_base.signature",
+			"transaction_base.receive_time",
 			"transfer.to_state_id").
 			From("transaction_base").
 			JoinClause("NATURAL JOIN transfer").

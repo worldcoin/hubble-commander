@@ -338,18 +338,18 @@ func (s *TransferTestSuite) TestGetTransfersByCommitmentID() {
 	_, err = s.storage.AddTransfer(&transfer1)
 	s.NoError(err)
 
-	commitments, err := s.storage.GetTransfersByCommitmentID(*commitmentID)
+	transfers, err := s.storage.GetTransfersByCommitmentID(*commitmentID)
 	s.NoError(err)
-	s.Len(commitments, 1)
+	s.Len(transfers, 1)
 }
 
 func (s *TransferTestSuite) TestGetTransfersByCommitmentID_NoTransfers() {
 	commitmentID, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	commitments, err := s.storage.GetTransfersByCommitmentID(*commitmentID)
+	transfers, err := s.storage.GetTransfersByCommitmentID(*commitmentID)
 	s.NoError(err)
-	s.Len(commitments, 0)
+	s.Len(transfers, 0)
 }
 
 func (s *TransferTestSuite) addBatchAndCommitment() (batchHash common.Hash, commitmentID int32) {
