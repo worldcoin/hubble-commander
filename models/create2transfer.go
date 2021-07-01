@@ -1,6 +1,9 @@
 package models
 
-import "github.com/ethereum/go-ethereum/common"
+import (
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/ethereum/go-ethereum/common"
+)
 
 type Create2Transfer struct {
 	TransactionBase
@@ -17,6 +20,14 @@ type Create2TransferForCommitment struct {
 type Create2TransferWithBatchHash struct {
 	Create2Transfer
 	BatchHash *common.Hash `db:"batch_hash"`
+}
+
+func (t *Create2Transfer) Type() txtype.TransactionType {
+	return txtype.Create2Transfer
+}
+
+func (t *Create2Transfer) GetBase() *TransactionBase {
+	return &t.TransactionBase
 }
 
 func (t *Create2Transfer) GetToStateID() *uint32 {

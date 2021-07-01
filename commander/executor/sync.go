@@ -1,9 +1,9 @@
 package executor
 
 import (
-	"fmt"
 	"log"
 
+	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -18,6 +18,8 @@ var (
 	ErrTransfersNotApplied   = errors.New("could not apply all transfers from synced batch")
 	ErrBatchSubmissionFailed = errors.New("previous submit batch transaction failed")
 	ErrInvalidSignature      = NewDisputableTransferError(SignatureError, "invalid signature")
+	ErrTooManyTx             = NewDisputableTransferError(TransitionError, "too many transactions in a commitment")
+	ErrInvalidDataLength     = NewDisputableTransferError(TransitionError, "invalid data length")
 )
 
 func (t *TransactionExecutor) SyncBatch(remoteBatch *eth.DecodedBatch) error {
@@ -121,21 +123,73 @@ func (t *TransactionExecutor) syncNewBatch(batch *eth.DecodedBatch) error {
 		return err
 	}
 
-	switch batch.Type {
-	case txtype.Transfer:
-		err = t.syncTransferCommitments(batch)
-		if err != nil {
-			return err
-		}
-	case txtype.Create2Transfer:
-		err = t.syncCreate2TransferCommitments(batch)
-		if err != nil {
-			return err
-		}
-	case txtype.MassMigration:
-		return fmt.Errorf("unsupported batch type for sync: %s", batch.Type)
+	err = t.syncCommitments(batch)
+	if err != nil {
+		return err
 	}
 
 	log.Printf("Synced new batch #%s from chain with %d commitment(s)", batch.ID.String(), len(batch.Commitments))
 	return nil
+}
+
+func (t *TransactionExecutor) syncCommitments(batch *eth.DecodedBatch) error {
+	for i := range batch.Commitments {
+		err := t.syncCommitment(batch, &batch.Commitments[i])
+		if err == ErrInvalidSignature {
+			// TODO: dispute fraudulent commitment
+			return err
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (t *TransactionExecutor) syncCommitment(
+	batch *eth.DecodedBatch,
+	commitment *encoder.DecodedCommitment,
+) error {
+	if len(commitment.Transactions)%encoder.GetTransactionLength(batch.Type) != 0 {
+		return ErrInvalidDataLength
+	}
+
+	var transactions models.GenericTransactionArray
+	var err error
+	switch batch.Type {
+	case txtype.Transfer:
+		transactions, err = t.syncTransferCommitments(commitment)
+	case txtype.Create2Transfer:
+		transactions, err = t.syncCreate2TransferCommitments(commitment)
+	case txtype.MassMigration:
+		return errors.Errorf("unsupported batch type for sync: %s", batch.Type)
+	}
+	if err != nil {
+		return err
+	}
+
+	commitmentID, err := t.storage.AddCommitment(&models.Commitment{
+		Type:              batch.Type,
+		Transactions:      commitment.Transactions,
+		FeeReceiver:       commitment.FeeReceiver,
+		CombinedSignature: commitment.CombinedSignature,
+		PostStateRoot:     commitment.StateRoot,
+		IncludedInBatch:   &batch.ID,
+	})
+	if err != nil {
+		return err
+	}
+	for i := 0; i < transactions.Len(); i++ {
+		transactions.At(i).GetBase().IncludedInCommitment = commitmentID
+	}
+
+	for i := 0; i < transactions.Len(); i++ {
+		hashTransfer, err := encoder.HashGenericTransaction(transactions.At(i))
+		if err != nil {
+			return err
+		}
+		transactions.At(i).GetBase().Hash = *hashTransfer
+	}
+
+	return t.storage.BatchAddGenericTransaction(transactions)
 }
