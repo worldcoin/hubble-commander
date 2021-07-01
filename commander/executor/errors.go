@@ -21,10 +21,10 @@ func (e RollupError) Error() string {
 
 type DisputableTransferError struct {
 	Reason string
-	Proofs []models.Witness
+	Proofs []models.StateMerkleProof
 }
 
-func NewDisputableTransferError(reason string, proofs []models.Witness) *DisputableTransferError {
+func NewDisputableTransferError(reason string, proofs []models.StateMerkleProof) *DisputableTransferError {
 	return &DisputableTransferError{Reason: reason, Proofs: proofs}
 }
 

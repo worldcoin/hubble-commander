@@ -273,18 +273,19 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafAddsStateUpdateRecord() {
 	s.Equal(expectedUpdate, update)
 }
 
-func (s *StateTreeTestSuite) TestSetReturningWitness() {
-	witness, err := s.tree.SetReturningWitness(0, &s.leaf.UserState)
+func (s *StateTreeTestSuite) TestSetReturningProof() {
+	proof, err := s.tree.SetReturningProof(0, &s.leaf.UserState)
 	s.NoError(err)
-	s.Len(witness, 32)
+	s.Equal(s.leaf.UserState, *proof.UserState)
+	s.Len(proof.Witness, 32)
 
 	node, err := s.storage.GetStateNodeByPath(&models.MerklePath{Depth: 32, Path: 1})
 	s.NoError(err)
-	s.Equal(node.DataHash, witness[0])
+	s.Equal(node.DataHash, proof.Witness[0])
 
 	node, err = s.storage.GetStateNodeByPath(&models.MerklePath{Depth: 1, Path: 1})
 	s.NoError(err)
-	s.Equal(node.DataHash, witness[31])
+	s.Equal(node.DataHash, proof.Witness[31])
 }
 
 func (s *StateTreeTestSuite) TestRevertTo() {

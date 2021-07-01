@@ -219,15 +219,24 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_UpdatesStatesCorrectly
 	s.Equal(uint64(100), receiverLeaf.Balance.Uint64())
 }
 
-func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ReturnsWitnesses() {
+func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ReturnsProofs() {
 	s.setUserStatesInTree()
 
 	sync, transferError, appError := s.transactionExecutor.ApplyTransferForSync(&transfer, models.MakeUint256(1))
 	s.NoError(appError)
 	s.NoError(transferError)
 
-	s.Len(sync.senderStateWitness, storage.StateTreeDepth)
-	s.Len(sync.receiverStateWitness, storage.StateTreeDepth)
+	senderStateAfterTransfer := senderState
+	senderStateAfterTransfer.Nonce = models.MakeUint256(1)
+	senderStateAfterTransfer.Balance = *senderState.Balance.SubN(110)
+
+	receiverStateAfterTransfer := receiverState
+	receiverStateAfterTransfer.Balance = *receiverState.Balance.AddN(100)
+
+	s.Equal(senderStateAfterTransfer, *sync.senderStateProof.UserState)
+	s.Len(sync.senderStateProof.Witness, storage.StateTreeDepth)
+	s.Equal(receiverStateAfterTransfer, *sync.receiverStateProof.UserState)
+	s.Len(sync.receiverStateProof.Witness, storage.StateTreeDepth)
 }
 
 func (s *ApplyTransferTestSuite) setUserStatesInTree() {

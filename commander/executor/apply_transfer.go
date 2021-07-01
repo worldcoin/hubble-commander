@@ -53,9 +53,9 @@ func (t *TransactionExecutor) ApplyTransfer(
 }
 
 type SyncedTransfer struct {
-	transfer             models.GenericTransfer
-	senderStateWitness   models.Witness // TODO-AFS models.StateMerkleProof type should actually be returned here
-	receiverStateWitness models.Witness
+	transfer           models.GenericTransfer
+	senderStateProof   models.StateMerkleProof
+	receiverStateProof models.StateMerkleProof
 }
 
 func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransfer, commitmentTokenID models.Uint256) (
@@ -68,7 +68,7 @@ func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransf
 	}
 
 	// TODO-AFS we need to split this into two functions: validateSenderTokenID and validateReceiverTokenID
-	//  the second one will need to be called after the SetReturningWitness of senderState.
+	//  the second one will need to be called after the SetReturningProof of senderState.
 	if tErr := t.validateTokenIDs(senderState, receiverState, commitmentTokenID); tErr != nil {
 		return nil, tErr, nil
 	}
@@ -78,23 +78,22 @@ func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransf
 		return nil, tErr, nil
 	}
 
-	// TODO-AFS return the whole models.StateMerkleProof from SetReturningWitness and rename it to SetReturningProof
-	senderWitness, appError := t.stateTree.SetReturningWitness(senderState.StateID, newSenderState)
+	senderProof, appError := t.stateTree.SetReturningProof(senderState.StateID, newSenderState)
 	if appError != nil {
 		return nil, nil, appError
 	}
 
-	// TODO-AFS validateReceiverTokenID here, on error we need to return senderStateWitness
+	// TODO-AFS validateReceiverTokenID here, on error we need to return senderStateProof
 
-	receiverWitness, appError := t.stateTree.SetReturningWitness(receiverState.StateID, newReceiverState)
+	receiverProof, appError := t.stateTree.SetReturningProof(receiverState.StateID, newReceiverState)
 	if appError != nil {
 		return nil, nil, appError
 	}
 
 	syncedTransfer = &SyncedTransfer{
-		transfer:             transfer.Copy(),
-		senderStateWitness:   senderWitness,
-		receiverStateWitness: receiverWitness,
+		transfer:           transfer.Copy(),
+		senderStateProof:   *senderProof,
+		receiverStateProof: *receiverProof,
 	}
 	syncedTransfer.transfer.SetNonce(senderState.Nonce)
 
