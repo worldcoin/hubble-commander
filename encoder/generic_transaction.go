@@ -26,8 +26,8 @@ func GetTransactionLength(txType txtype.TransactionType) int {
 		return TransferLength
 	case txtype.Create2Transfer:
 		return Create2TransferLength
-	default:
+	case txtype.MassMigration:
 		log.Panicf("unsupported tx type: %s", txType)
-		return -1
 	}
+	return -1
 }
