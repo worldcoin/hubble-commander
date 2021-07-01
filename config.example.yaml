@@ -1,5 +1,5 @@
 #bootstrap:
-#  bootstrap_node_url: http://localhost:8080   # remove this line to sync from blockchain
+#  node_url: http://localhost:8080   # remove this line to sync from blockchain
 #
 #rollup:
 #  sync_size: 50
