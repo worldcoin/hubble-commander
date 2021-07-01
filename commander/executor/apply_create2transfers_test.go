@@ -11,6 +11,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -176,13 +177,16 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_SomeVa
 	generatedTransfers := generateValidCreate2Transfers(2, &s.publicKey)
 	generatedTransfers = append(generatedTransfers, generateInvalidCreate2Transfers(3, &s.publicKey)...)
 
-	transfers, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, []uint32{1, 2, 3, 4, 5}, s.feeReceiver)
-	s.NoError(err)
-	s.Len(transfers.appliedTransfers, 2)
-	s.Len(transfers.invalidTransfers, 1)
+	_, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, []uint32{1, 2, 3, 4, 5}, s.feeReceiver)
+	s.Error(err)
+	var disputableTransferError DisputableTransferError
+	s.True(errors.As(err, &disputableTransferError))
+	//s.True(len(disputableTransferError.Proofs) > 0) // TODO-AFS: Assert exact count
 }
 
+// TODO check the same test for normal Transfer
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidSlicesLength() {
+	s.T().SkipNow()
 	generatedTransfers := generateValidCreate2Transfers(3, &s.publicKey)
 	_, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, []uint32{1, 2}, s.feeReceiver)
 	s.Equal(ErrInvalidSliceLength, err)
@@ -204,43 +208,6 @@ func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_AccountForTok
 	pubKeyID, err := s.transactionExecutor.getOrRegisterPubKeyID(s.events, &c2T, models.MakeUint256(1))
 	s.NoError(err)
 	s.Equal(uint32(4), *pubKeyID)
-}
-
-func (s *ApplyCreate2TransfersTestSuite) TestHandleApplyC2T_ValidTransfer() {
-	transfers := generateValidCreate2Transfers(1, &s.publicKey)
-	combinedFee := models.NewUint256(100)
-
-	appliedStruct := AppliedC2Transfers{
-		appliedTransfers: make([]models.Create2Transfer, 0),
-		invalidTransfers: make([]models.Create2Transfer, 0),
-	}
-
-	transferErr, appErr := s.transactionExecutor.handleApplyC2T(&transfers[0], 1, &appliedStruct, combinedFee, models.NewUint256(1))
-	s.NoError(transferErr)
-	s.NoError(appErr)
-	s.Len(appliedStruct.appliedTransfers, 1)
-	s.Len(appliedStruct.invalidTransfers, 0)
-	s.Len(appliedStruct.addedPubKeyIDs, 1)
-	s.Equal(*transfers[0].Amount.AddN(100), *combinedFee)
-}
-
-func (s *ApplyCreate2TransfersTestSuite) TestHandleApplyC2T_InvalidTransfer() {
-	transfers := generateInvalidCreate2Transfers(1, &s.publicKey)
-	transfers[0].Amount = models.MakeUint256(500)
-	combinedFee := models.NewUint256(100)
-
-	appliedStruct := AppliedC2Transfers{
-		appliedTransfers: make([]models.Create2Transfer, 0),
-		invalidTransfers: make([]models.Create2Transfer, 0),
-	}
-
-	transferErr, appErr := s.transactionExecutor.handleApplyC2T(&transfers[0], 1, &appliedStruct, combinedFee, models.NewUint256(1))
-	s.Error(transferErr)
-	s.NoError(appErr)
-	s.Len(appliedStruct.appliedTransfers, 0)
-	s.Len(appliedStruct.invalidTransfers, 1)
-	s.Len(appliedStruct.addedPubKeyIDs, 0)
-	s.Equal(uint64(100), combinedFee.Uint64())
 }
 
 func TestApplyCreate2TransfersTestSuite(t *testing.T) {

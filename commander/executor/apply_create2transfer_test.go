@@ -137,6 +137,15 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_TransferWithSta
 	s.Equal(uint64(1000), receiverLeaf.Balance.Uint64())
 }
 
+func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfer_InvalidTransfer() {
+	transfers := generateInvalidCreate2Transfers(1, &s.publicKey)
+	transfers[0].Amount = models.MakeUint256(500)
+
+	transferErr, appErr := s.transactionExecutor.ApplyCreate2Transfer(&transfers[0], 1, *models.NewUint256(1))
+	s.Error(transferErr)
+	s.NoError(appErr)
+}
+
 func TestApplyCreate2TransferTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplyCreate2TransferTestSuite))
 }
