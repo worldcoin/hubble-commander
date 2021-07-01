@@ -14,21 +14,6 @@ func (s *Storage) UpsertStateNode(node *models.StateNode) error {
 	return s.Badger.Upsert(node.MerklePath, *node)
 }
 
-func (s *Storage) BatchUpsertStateNodes(nodes []models.StateNode) (err error) {
-	tx, storage, err := s.BeginTransaction(TxOptions{Postgres: false, Badger: true})
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(&err)
-	for i := range nodes {
-		err = storage.UpsertStateNode(&nodes[i])
-		if err != nil {
-			return err
-		}
-	}
-	return tx.Commit()
-}
-
 func (s *Storage) AddStateNode(node *models.StateNode) error {
 	return s.Badger.Insert(node.MerklePath, *node)
 }

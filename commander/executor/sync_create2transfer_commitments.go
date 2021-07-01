@@ -2,93 +2,50 @@ package executor
 
 import (
 	"github.com/Worldcoin/hubble-commander/encoder"
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-func (t *TransactionExecutor) syncCreate2TransferCommitments(batch *eth.DecodedBatch) error {
-	for i := range batch.Commitments {
-		err := t.syncCreate2TransferCommitment(batch, &batch.Commitments[i])
-		if err == ErrInvalidSignature {
-			// TODO: dispute fraudulent commitment
-			return err
-		}
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (t *TransactionExecutor) syncCreate2TransferCommitment(
-	batch *eth.DecodedBatch,
+func (t *TransactionExecutor) syncCreate2TransferCommitments(
 	commitment *encoder.DecodedCommitment,
-) error {
-	if len(commitment.Transactions)%encoder.Create2TransferLength != 0 {
-		return ErrInvalidDataLength
-	}
-
+) (models.GenericTransactionArray, error) {
 	deserializedTransfers, pubKeyIDs, err := encoder.DeserializeCreate2Transfers(commitment.Transactions)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if uint32(len(deserializedTransfers)) > t.cfg.TxsPerCommitment {
-		return ErrTooManyTx
+		return nil, ErrTooManyTx
 	}
 
 	feeReceiver, err := t.getSyncedCommitmentFeeReceiver(commitment)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	transfers, err := t.ApplyCreate2TransfersForSync(deserializedTransfers, pubKeyIDs, feeReceiver)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if len(transfers.invalidTransfers) > 0 {
-		return ErrFraudulentTransfer
+		return nil, ErrFraudulentTransfer
 	}
 	if len(transfers.appliedTransfers) != len(deserializedTransfers) {
-		return ErrTransfersNotApplied
+		return nil, ErrTransfersNotApplied
 	}
 
 	err = t.setPublicKeys(transfers.appliedTransfers)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if !t.cfg.DevMode {
 		err = t.verifyCreate2TransferSignature(commitment, transfers.appliedTransfers)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	commitmentID, err := t.storage.AddCommitment(&models.Commitment{
-		Type:              batch.Type,
-		Transactions:      commitment.Transactions,
-		FeeReceiver:       commitment.FeeReceiver,
-		CombinedSignature: commitment.CombinedSignature,
-		PostStateRoot:     commitment.StateRoot,
-		IncludedInBatch:   &batch.ID,
-	})
-	if err != nil {
-		return err
-	}
-	for i := range transfers.appliedTransfers {
-		transfers.appliedTransfers[i].IncludedInCommitment = commitmentID
-	}
-
-	for i := range transfers.appliedTransfers {
-		hashTransfer, err := encoder.HashCreate2Transfer(&transfers.appliedTransfers[i])
-		if err != nil {
-			return err
-		}
-		transfers.appliedTransfers[i].Hash = *hashTransfer
-	}
-
-	return t.storage.BatchAddCreate2Transfer(transfers.appliedTransfers)
+	return models.Create2TransferArray(transfers.appliedTransfers), nil
 }
 
 func (t *TransactionExecutor) setPublicKeys(transfers []models.Create2Transfer) error {

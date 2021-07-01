@@ -1,7 +1,6 @@
 package commander
 
 import (
-	"log"
 	"net/http"
 	"sync"
 
@@ -17,6 +16,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
+	log "github.com/sirupsen/logrus"
 	"github.com/ybbus/jsonrpc/v2"
 )
 

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: hubble-commander
+  name: secondary-hubble-commander
+  namespace: staging
+data:
+  HUBBLE_ETHEREUM_PRIVATE_KEY: ab6919fd6ac00246bb78657e0696cf72058a4cb395133d074eabaddb83d8b00c
+  HUBBLE_POSTGRES_NAME: "secondary-hubble-commander"
+  HUBBLE_BOOTSTRAP_BOOTSTRAP_NODE_URL: http://localhost:8080
+  HUBBLE_API_PORT: "8081"

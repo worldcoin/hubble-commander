@@ -18,7 +18,7 @@ var (
 )
 
 func (t *TransactionExecutor) ApplyTransfer(
-	transfer models.GenericTransfer,
+	transfer models.GenericTransaction,
 	commitmentTokenID models.Uint256,
 ) (transferError, appError error) {
 	receiverStateID, err := getReceiverStateID(transfer)
@@ -75,7 +75,7 @@ func (t *TransactionExecutor) ApplyTransfer(
 
 func CalculateStateAfterTransfer(
 	senderState, receiverState models.UserState, // nolint:gocritic
-	transfer models.GenericTransfer,
+	transfer models.GenericTransaction,
 ) (
 	newSenderState, newReceiverState *models.UserState,
 	err error,
@@ -102,7 +102,7 @@ func CalculateStateAfterTransfer(
 	return newSenderState, newReceiverState, nil
 }
 
-func getReceiverStateID(transfer models.GenericTransfer) (*uint32, error) {
+func getReceiverStateID(transfer models.GenericTransaction) (*uint32, error) {
 	stateID := transfer.GetToStateID()
 	if stateID == nil {
 		return nil, ErrNilReceiverStateID

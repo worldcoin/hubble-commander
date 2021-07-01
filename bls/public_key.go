@@ -1,10 +1,9 @@
 package bls
 
 import (
-	"log"
-
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/kilic/bn254/bls"
+	log "github.com/sirupsen/logrus"
 )
 
 func fromBLSPublicKey(blsPK *bls.PublicKey) *models.PublicKey {

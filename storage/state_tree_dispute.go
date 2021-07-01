@@ -8,7 +8,7 @@ import (
 
 func (s *StateTree) RevertToForDispute(
 	targetRootHash common.Hash,
-	invalidTransfer models.GenericTransfer,
+	invalidTransfer models.GenericTransaction,
 ) ([]models.StateMerkleProof, error) {
 	txn, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
