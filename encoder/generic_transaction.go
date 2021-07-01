@@ -1,12 +1,11 @@
 package encoder
 
 import (
-	"log"
-
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 func HashGenericTransaction(tx models.GenericTransaction) (*common.Hash, error) {

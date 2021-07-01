@@ -2,13 +2,13 @@ package postgres
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 func CreateDatabaseIfNotExist(cfg *config.PostgresConfig) (err error) {
