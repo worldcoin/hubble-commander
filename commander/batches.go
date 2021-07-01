@@ -1,13 +1,12 @@
 package commander
 
 import (
-	"log"
-
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	log "github.com/sirupsen/logrus"
 )
 
 func (c *Commander) syncBatches(startBlock, endBlock uint64) error {

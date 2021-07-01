@@ -2,13 +2,13 @@ package merkletree
 
 import (
 	"fmt"
-	"log"
 	"math"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 const MaxDepth = 32

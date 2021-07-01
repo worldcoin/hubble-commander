@@ -3,7 +3,7 @@
 package e2e
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 	"testing"
 	"time"
 
