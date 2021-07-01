@@ -19,8 +19,13 @@ spec:
   - host: new.api.worldcoin-distributors.com
     http:
       paths:
-        - path: /hubble(/|$)
+        - path: /primary-hubble(/|$)
           pathType: Exact
           backend:
             serviceName: hubble-commander
             servicePort: 80
+        - path: /secondary-hubble(/|$)
+          pathType: Exact
+          backend:
+            serviceName: hubble-commander
+            servicePort: 81
