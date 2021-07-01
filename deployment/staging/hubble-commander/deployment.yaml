@@ -22,7 +22,7 @@ spec:
       imagePullSecrets:
         - name: regcred
       containers:
-        - name: hubble-commander
+        - name: primary-hubble-commander
           image: "ghcr.io/worldcoin/hubble-commander:stable"
           imagePullPolicy: Always
           ports:
@@ -30,13 +30,38 @@ spec:
           envFrom:
             - configMapRef:
                 name: hubble-commander
+            - configMapRef:
+                name: primary-hubble-commander
           livenessProbe:
             exec:
               command:
                 - /bin/sh
                 - -c
                 - "curl --fail -X POST http://localhost:8080 -H 'Content-Type: application/json' --data-raw '{\"jsonrpc\": \"2.0\",\"method\": \"hubble_getVersion\",\"params\": [],\"id\": 1}'"
-            initialDelaySeconds: 15
+            initialDelaySeconds: 250
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "124Mi"
+              cpu: "250m"
+            limits:
+              memory: "6144Mi"
+              cpu: "1500m"
+        - name: secondary-hubble-commander
+          image: "ghcr.io/worldcoin/hubble-commander:stable"
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: hubble-commander
+            - configMapRef:
+                name: secondary-hubble-commander
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "curl --fail -X POST http://localhost:8081 -H 'Content-Type: application/json' --data-raw '{\"jsonrpc\": \"2.0\",\"method\": \"hubble_getVersion\",\"params\": [],\"id\": 1}'"
+            initialDelaySeconds: 350
             periodSeconds: 5
           resources:
             requests:
