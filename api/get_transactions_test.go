@@ -166,7 +166,8 @@ func (s *GetTransactionsTestSuite) TestGetTransactions() {
 			TransferWithBatchHash: models.TransferWithBatchHash{
 				Transfer: transfer,
 			},
-			Status: txstatus.Pending,
+			ReceiveTime: dto.NewTimestamp(transfer.ReceiveTime),
+			Status:      txstatus.Pending,
 		}
 	}
 
@@ -175,7 +176,8 @@ func (s *GetTransactionsTestSuite) TestGetTransactions() {
 			Create2TransferWithBatchHash: models.Create2TransferWithBatchHash{
 				Create2Transfer: transfer,
 			},
-			Status: txstatus.Pending,
+			ReceiveTime: dto.NewTimestamp(transfer.ReceiveTime),
+			Status:      txstatus.Pending,
 		}
 	}
 

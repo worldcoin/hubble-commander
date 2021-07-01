@@ -9,6 +9,13 @@ type Timestamp struct {
 	time.Time
 }
 
+func NewTimestamp(t *time.Time) *Timestamp {
+	if t == nil {
+		return nil
+	}
+	return &Timestamp{Time: *t}
+}
+
 func (t *Timestamp) MarshalJSON() ([]byte, error) {
 	return json.Marshal(t.Unix())
 }
