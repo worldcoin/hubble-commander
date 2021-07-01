@@ -70,14 +70,16 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 	for i := range transfers {
 		transfer := &transfers[i]
 		synced, transferError, appError := t.ApplyTransferForSync(transfer, feeReceiver.TokenID)
+		if synced != nil {
+			stateChangeProofs = append(
+				stateChangeProofs,
+				synced.senderStateProof,
+				synced.receiverStateProof,
+			)
+		}
 		if appError != nil {
 			return nil, appError
 		}
-		stateChangeProofs = append(
-			stateChangeProofs,
-			synced.senderStateProof,
-			synced.receiverStateProof,
-		) // TODO-AFS there is a problem here because synced can be nil
 		if transferError != nil {
 			return nil, NewDisputableTransferError(transferError.Error(), stateChangeProofs)
 		}
