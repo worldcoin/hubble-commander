@@ -1,17 +1,30 @@
 package executor
 
 import (
+	"errors"
+
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-func (t *TransactionExecutor) syncTransferCommitments(commitment *encoder.DecodedCommitment) (models.GenericTransactionArray, error) {
-	deserializedTransfers, err := encoder.DeserializeTransfers(commitment.Transactions)
+var (
+	ErrTooManyTx         = errors.New("too many transactions in a commitment")
+	ErrInvalidDataLength = errors.New("invalid data length")
+)
+
+func (t *TransactionExecutor) syncTransferCommitment(
+	commitment *encoder.DecodedCommitment,
+) (models.GenericTransactionArray, error) {
+	if len(commitment.Transactions)%encoder.TransferLength != 0 {
+		return nil, ErrInvalidDataLength
+	}
+
+	transfers, err := encoder.DeserializeTransfers(commitment.Transactions)
 	if err != nil {
 		return nil, err
 	}
 
-	if uint32(len(deserializedTransfers)) > t.cfg.TxsPerCommitment {
+	if uint32(len(transfers)) > t.cfg.TxsPerCommitment {
 		return nil, ErrTooManyTx
 	}
 
@@ -20,25 +33,19 @@ func (t *TransactionExecutor) syncTransferCommitments(commitment *encoder.Decode
 		return nil, err
 	}
 
-	transfers, err := t.ApplyTransfers(deserializedTransfers, uint32(len(deserializedTransfers)), feeReceiver, true)
+	appliedTransfers, err := t.ApplyTransfersForSync(transfers, feeReceiver)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(transfers.invalidTransfers) > 0 {
-		return nil, ErrFraudulentTransfer
-	}
-	if len(transfers.appliedTransfers) != len(deserializedTransfers) {
-		return nil, ErrTransfersNotApplied
-	}
-
 	if !t.cfg.DevMode {
-		err = t.verifyTransferSignature(commitment, transfers.appliedTransfers)
+		err = t.verifyTransferSignature(commitment, appliedTransfers)
 		if err != nil {
 			return nil, err
 		}
 	}
-	return models.TransferArray(transfers.appliedTransfers), nil
+
+	return models.TransferArray(appliedTransfers), nil
 }
 
 func (t *TransactionExecutor) getSyncedCommitmentFeeReceiver(commitment *encoder.DecodedCommitment) (*FeeReceiver, error) {

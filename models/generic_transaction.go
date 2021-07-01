@@ -11,6 +11,7 @@ type GenericTransaction interface {
 	GetFee() Uint256
 	GetNonce() Uint256
 	SetNonce(nonce Uint256)
+	Copy() GenericTransaction
 }
 
 type GenericTransactionArray interface {

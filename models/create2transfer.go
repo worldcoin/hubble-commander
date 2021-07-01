@@ -35,6 +35,6 @@ func (t *Create2Transfer) GetToStateID() *uint32 {
 }
 
 // nolint:gocritic
-func (t Create2Transfer) Copy() GenericTransfer {
+func (t Create2Transfer) Copy() GenericTransaction {
 	return &t
 }

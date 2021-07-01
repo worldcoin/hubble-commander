@@ -5,7 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-func (t *TransactionExecutor) syncCreate2TransferCommitments(
+func (t *TransactionExecutor) syncCreate2TransferCommitment(
 	commitment *encoder.DecodedCommitment,
 ) (models.GenericTransactionArray, error) {
 	deserializedTransfers, pubKeyIDs, err := encoder.DeserializeCreate2Transfers(commitment.Transactions)

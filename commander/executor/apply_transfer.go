@@ -58,12 +58,12 @@ func (t *TransactionExecutor) ApplyTransfer(
 }
 
 type SyncedTransfer struct {
-	transfer           models.GenericTransfer
+	transfer           models.GenericTransaction
 	senderStateProof   models.StateMerkleProof
 	receiverStateProof models.StateMerkleProof
 }
 
-func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransfer, commitmentTokenID models.Uint256) (
+func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransaction, commitmentTokenID models.Uint256) (
 	syncedTransfer *SyncedTransfer,
 	transferError, appError error,
 ) {
@@ -89,7 +89,7 @@ func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransf
 	}
 
 	// TODO-AFS validateReceiverTokenID here, on error we need to return senderStateProof
-	if tErr = t.validateReceiverTokenID(receiverState, commitmentTokenID); tErr != nil {
+	if tErr := t.validateReceiverTokenID(receiverState, commitmentTokenID); tErr != nil {
 		return nil, tErr, nil
 	}
 
@@ -108,7 +108,7 @@ func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransf
 	return syncedTransfer, nil, nil
 }
 
-func (t *TransactionExecutor) getParticipantsStates(transfer models.GenericTransfer) (
+func (t *TransactionExecutor) getParticipantsStates(transfer models.GenericTransaction) (
 	senderState, receiverState *models.StateLeaf,
 	err error,
 ) {

@@ -137,6 +137,10 @@ func (t *TransactionExecutor) syncCommitments(batch *eth.DecodedBatch) error {
 			// TODO: dispute fraudulent commitment
 			return err
 		}
+		if IsDisputableTransferError(err) {
+			// TODO: dispute fraudulent commitment
+			return err
+		}
 		if err != nil {
 			return err
 		}
@@ -156,9 +160,9 @@ func (t *TransactionExecutor) syncCommitment(
 	var err error
 	switch batch.Type {
 	case txtype.Transfer:
-		transactions, err = t.syncTransferCommitments(commitment)
+		transactions, err = t.syncTransferCommitment(commitment)
 	case txtype.Create2Transfer:
-		transactions, err = t.syncCreate2TransferCommitments(commitment)
+		transactions, err = t.syncCreate2TransferCommitment(commitment)
 	case txtype.MassMigration:
 		return errors.Errorf("unsupported batch type for sync: %s", batch.Type)
 	}
