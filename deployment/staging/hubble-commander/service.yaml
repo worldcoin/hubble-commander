@@ -11,4 +11,8 @@ spec:
     app: hubble-commander
   ports:
     - port: 80
+      name: primary
       targetPort: 8080
+    - port: 81
+      name: secondary
+      targetPort: 8081

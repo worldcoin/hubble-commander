@@ -18,7 +18,7 @@ var (
 )
 
 func (t *TransactionExecutor) ApplyTransfer(
-	transfer models.GenericTransfer,
+	transfer models.GenericTransaction,
 	commitmentTokenID models.Uint256,
 ) (transferError, appError error) {
 	senderState, receiverState, appError := t.getParticipantsStates(transfer)
@@ -155,7 +155,7 @@ func validateTransferNonce(senderState *models.UserState, transferNonce models.U
 
 func calculateStateAfterTransfer(
 	senderState, receiverState models.UserState, // nolint:gocritic
-	transfer models.GenericTransfer,
+	transfer models.GenericTransaction,
 ) (
 	newSenderState, newReceiverState *models.UserState,
 	err error,
