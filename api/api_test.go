@@ -32,7 +32,7 @@ func TestStartApiServer(t *testing.T) {
 	require.NoError(t, err)
 
 	cfg := config.APIConfig{Version: "v0123"}
-	server, err := getAPIServer(&cfg, storage.Storage, &eth.Client{ChainState: chainState})
+	server, err := getAPIServer(&cfg, storage.Storage, &eth.Client{ChainState: chainState}, false)
 	require.NoError(t, err)
 
 	w := httptest.NewRecorder()
