@@ -1,10 +1,9 @@
 package executor
 
 import (
-	log "github.com/sirupsen/logrus"
-
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	log "github.com/sirupsen/logrus"
 )
 
 func logAndSaveTransactionError(storage *st.Storage, transaction *models.TransactionBase, transactionError error) {

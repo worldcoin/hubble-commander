@@ -3,7 +3,6 @@ package setup
 import (
 	"context"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"time"
 
@@ -15,6 +14,7 @@ import (
 	docker "github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/go-connections/nat"
+	log "github.com/sirupsen/logrus"
 	"github.com/ybbus/jsonrpc/v2"
 )
 
