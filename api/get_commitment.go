@@ -39,9 +39,10 @@ func (a *API) getTransactionsForCommitment(commitment *models.Commitment) (inter
 		return a.getTransfersForCommitment(commitment.ID)
 	case txtype.Create2Transfer:
 		return a.getC2TsForCommitment(commitment.ID)
-	default:
+	case txtype.MassMigration:
 		return nil, dto.ErrNotImplemented
 	}
+	return nil, dto.ErrNotImplemented
 }
 
 func (a *API) getTransfersForCommitment(commitmentID int32) ([]dto.TransferForCommitment, error) {
