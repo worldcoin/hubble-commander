@@ -150,7 +150,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 	generatedTransfers = append(generatedTransfers, generateInvalidCreate2Transfers(2, &s.publicKey)...)
 
 	for i := range generatedTransfers {
-		err := s.storage.AddCreate2Transfer(&generatedTransfers[i])
+		_, err := s.storage.AddCreate2Transfer(&generatedTransfers[i])
 		s.NoError(err)
 	}
 

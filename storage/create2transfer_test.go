@@ -3,6 +3,7 @@ package storage
 import (
 	"math/big"
 	"testing"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -57,12 +58,27 @@ func (s *Create2TransferTestSuite) TearDownTest() {
 }
 
 func (s *Create2TransferTestSuite) TestAddCreate2Transfer_AddAndRetrieve() {
-	err := s.storage.AddCreate2Transfer(&create2Transfer)
+	receiveTime, err := s.storage.AddCreate2Transfer(&create2Transfer)
+	s.NoError(err)
+
+	expected := create2Transfer
+	expected.ReceiveTime = receiveTime
+
+	res, err := s.storage.GetCreate2Transfer(create2Transfer.Hash)
+	s.NoError(err)
+	s.Equal(expected, *res)
+}
+
+func (s *Create2TransferTestSuite) TestAddCreate2Transfer_SetsReceiveTime() {
+	beforeTime := time.Now().Unix()
+	_, err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
 
 	res, err := s.storage.GetCreate2Transfer(create2Transfer.Hash)
 	s.NoError(err)
-	s.Equal(create2Transfer, *res)
+
+	s.GreaterOrEqual(res.ReceiveTime.Unix(), beforeTime)
+	s.LessOrEqual(res.ReceiveTime.Unix(), time.Now().Unix())
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchHash() {
@@ -82,8 +98,9 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchHash() {
 
 	transferInBatch := create2Transfer
 	transferInBatch.IncludedInCommitment = commitmentID
-	err = s.storage.AddCreate2Transfer(&transferInBatch)
+	receiveTime, err := s.storage.AddCreate2Transfer(&transferInBatch)
 	s.NoError(err)
+	transferInBatch.ReceiveTime = receiveTime
 
 	expected := models.Create2TransferWithBatchHash{
 		Create2Transfer: transferInBatch,
@@ -95,10 +112,12 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchHash() {
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchHash_WithoutBatch() {
-	err := s.storage.AddCreate2Transfer(&create2Transfer)
+	receiveTime, err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
 
 	expected := models.Create2TransferWithBatchHash{Create2Transfer: create2Transfer}
+	expected.ReceiveTime = receiveTime
+
 	res, err := s.storage.GetCreate2TransferWithBatchHash(create2Transfer.Hash)
 	s.NoError(err)
 	s.Equal(expected, *res)
@@ -200,7 +219,7 @@ func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers_OrdersTransfer
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey() {
-	err := s.storage.AddCreate2Transfer(&create2Transfer)
+	_, err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
 
 	err = s.tree.Set(1, &models.UserState{
@@ -228,25 +247,25 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID() {
 	transfer1 := create2Transfer
 	transfer1.IncludedInCommitment = commitmentID
 
-	err = s.storage.AddCreate2Transfer(&transfer1)
+	_, err = s.storage.AddCreate2Transfer(&transfer1)
 	s.NoError(err)
 
-	commitments, err := s.storage.GetCreate2TransfersByCommitmentID(*commitmentID)
+	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(*commitmentID)
 	s.NoError(err)
-	s.Len(commitments, 1)
+	s.Len(transfers, 1)
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID_NoCreate2Transfers() {
 	commitmentID, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	commitments, err := s.storage.GetCreate2TransfersByCommitmentID(*commitmentID)
+	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(*commitmentID)
 	s.NoError(err)
-	s.Len(commitments, 0)
+	s.Len(transfers, 0)
 }
 
 func (s *Create2TransferTestSuite) TestSetCreate2TransferToStateID() {
-	err := s.storage.AddCreate2Transfer(&create2Transfer)
+	_, err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
 
 	toStateID := uint32(10)

@@ -19,10 +19,8 @@ func (s *Storage) AddBatch(batch *models.Batch) error {
 				batch.PrevStateRoot,
 			),
 	).Exec()
-	if err != nil {
-		return err
-	}
-	return nil
+
+	return err
 }
 
 func (s *Storage) MarkBatchAsSubmitted(batch *models.Batch) error {
