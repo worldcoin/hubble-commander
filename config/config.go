@@ -35,7 +35,7 @@ func GetConfig() *Config {
 		Bootstrap: &BootstrapConfig{
 			Prune:            false, // overridden in main
 			GenesisAccounts:  getGenesisAccounts(),
-			BootstrapNodeURL: getStringOrNil("bootstrap.bootstrap_node_url"),
+			BootstrapNodeURL: getStringOrNil("bootstrap.node_url"),
 		},
 		Rollup: &RollupConfig{
 			SyncSize:               getUint32("rollup.sync_size", 50),
@@ -74,7 +74,7 @@ func GetTestConfig() *Config {
 		Bootstrap: &BootstrapConfig{
 			Prune:            false, // overridden in main
 			GenesisAccounts:  getGenesisAccounts(),
-			BootstrapNodeURL: getStringOrNil("rollup.bootstrap_node_url"),
+			BootstrapNodeURL: getStringOrNil("bootstrap.node_url"),
 		},
 		Rollup: &RollupConfig{
 			SyncSize:               getUint32("rollup.sync_size", 50),
