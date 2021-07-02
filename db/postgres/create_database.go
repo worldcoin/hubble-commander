@@ -19,6 +19,7 @@ func CreateDatabaseIfNotExist(cfg *config.PostgresConfig) (err error) {
 	if *exists {
 		return nil
 	}
+	log.Debug("Postgres database does not exist, attempting to create it")
 
 	datasource := CreateDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, nil)
 	dbInstance, err := sqlx.Connect("postgres", datasource)
