@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"encoding/json"
 	"net/http"
 	"sync"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/ybbus/jsonrpc/v2"
 )
@@ -229,6 +231,10 @@ func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {
 }
 
 func createClientFromChainState(chain deployer.ChainConnection, chainState *models.ChainState) (*eth.Client, error) {
+	err := logChainState(chainState)
+	if err != nil {
+		return nil, err
+	}
 	accountRegistry, err := accountregistry.NewAccountRegistry(chainState.AccountRegistry, chain.GetBackend())
 	if err != nil {
 		return nil, err
@@ -300,4 +306,13 @@ func deployContractsAndSetupGenesisState(
 
 func getInitialSyncedBlock(deploymentBlock uint64) uint64 {
 	return deploymentBlock - 1
+}
+
+func logChainState(chainState *models.ChainState) error {
+	jsonState, err := json.Marshal(*chainState)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	log.Debugf("Creating ethereum client from chain state: %s", string(jsonState))
+	return nil
 }
