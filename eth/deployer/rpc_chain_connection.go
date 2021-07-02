@@ -2,7 +2,6 @@ package deployer
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/config"
@@ -27,17 +26,17 @@ type RPCChainConnection struct {
 func NewRPCChainConnection(cfg *config.EthereumConfig) (*RPCChainConnection, error) {
 	chainID, ok := big.NewInt(0).SetString(cfg.ChainID, 10)
 	if !ok {
-		return nil, fmt.Errorf("invalid chain id")
+		return nil, errors.Errorf("invalid chain id")
 	}
 
 	key, err := crypto.HexToECDSA(cfg.PrivateKey)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	account, err := bind.NewKeyedTransactorWithChainID(key, chainID)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	account.GasLimit = 8_000_000 // TODO estimate gas for txs and use 2x that for gas limit
 

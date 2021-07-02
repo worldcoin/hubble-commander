@@ -5,20 +5,24 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/commander/executor"
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
-var ErrInvalidStateRoot = errors.New("latest commitment state root doesn't match current one")
+var ErrInvalidStateRoot = errors.New("current state tree root doesn't match latest commitment post state root")
 
 func (c *Commander) manageRollupLoop(cancel context.CancelFunc, isProposer bool) context.CancelFunc {
 	if isProposer && !c.rollupLoopRunning {
+		log.Debugf("Commander is an active proposer, starting rollupLoop")
 		var ctx context.Context
 		ctx, cancel = context.WithCancel(context.Background())
 		c.startWorker(func() error { return c.rollupLoop(ctx) })
 		c.rollupLoopRunning = true
 	} else if !isProposer && c.rollupLoopRunning {
+		log.Debugf("Commander is no longer an active proposer, stoppping rollupLoop")
 		cancel()
 		c.rollupLoopRunning = false
 	}
@@ -91,7 +95,16 @@ func validateStateRoot(storage *st.Storage) error {
 		return err
 	}
 	if latestCommitment.PostStateRoot != *stateRoot {
+		logLatestCommitment(latestCommitment)
 		return ErrInvalidStateRoot
 	}
 	return nil
+}
+
+func logLatestCommitment(latestCommitment *models.Commitment) {
+	fields := log.Fields{"latestCommitmentID": latestCommitment.ID}
+	if latestCommitment.IncludedInBatch != nil {
+		fields["latestBatchID"] = latestCommitment.IncludedInBatch.String()
+	}
+	log.WithFields(fields).Debug("rollupLoop: Sanity check on state tree root in failed")
 }
