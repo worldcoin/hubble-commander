@@ -8,6 +8,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -30,10 +31,11 @@ func GetConfig() *Config {
 	setupViper()
 
 	return &Config{
+		Log: getLogConfig(),
 		Bootstrap: &BootstrapConfig{
 			Prune:            false, // overridden in main
 			GenesisAccounts:  getGenesisAccounts(),
-			BootstrapNodeURL: getStringOrNil("bootstrap.bootstrap_node_url"),
+			BootstrapNodeURL: getStringOrNil("bootstrap.node_url"),
 		},
 		Rollup: &RollupConfig{
 			SyncSize:               getUint32("rollup.sync_size", 50),
@@ -68,10 +70,11 @@ func GetTestConfig() *Config {
 	setupViper()
 
 	return &Config{
+		Log: getLogConfig(),
 		Bootstrap: &BootstrapConfig{
 			Prune:            false, // overridden in main
 			GenesisAccounts:  getGenesisAccounts(),
-			BootstrapNodeURL: getStringOrNil("rollup.bootstrap_node_url"),
+			BootstrapNodeURL: getStringOrNil("bootstrap.node_url"),
 		},
 		Rollup: &RollupConfig{
 			SyncSize:               getUint32("rollup.sync_size", 50),
@@ -125,6 +128,24 @@ func getMigrationsPath() string {
 
 func getBadgerPath() string {
 	return path.Join(utils.GetProjectRoot(), "db", "badger", "data")
+}
+
+func getLogConfig() *LogConfig {
+	level, err := logrus.ParseLevel(getString("log.level", "info"))
+	if err != nil {
+		log.Fatalf("invalid log level: %e", err)
+	}
+
+	format := getString("log.format", "text")
+
+	if format != "text" && format != "json" {
+		log.Fatalf("invalid log format: %s", format)
+	}
+
+	return &LogConfig{
+		Level:  level,
+		Format: format,
+	}
 }
 
 func getEthereumConfig() *EthereumConfig {

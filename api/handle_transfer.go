@@ -1,10 +1,14 @@
 package api
 
 import (
+	"encoding/json"
+
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/common"
+	log "github.com/sirupsen/logrus"
 )
 
 func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
@@ -23,10 +27,12 @@ func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 	}
 	transfer.Hash = *hash
 
-	err = a.storage.AddTransfer(transfer)
+	_, err = a.storage.AddTransfer(transfer)
 	if err != nil {
 		return nil, err
 	}
+
+	logReceivedTransfer(transferDTO)
 
 	return &transfer.Hash, nil
 }
@@ -53,6 +59,7 @@ func sanitizeTransfer(transfer dto.Transfer) (*models.Transfer, error) {
 
 	return &models.Transfer{
 		TransactionBase: models.TransactionBase{
+			TxType:      txtype.Transfer,
 			FromStateID: *transfer.FromStateID,
 			Amount:      *transfer.Amount,
 			Fee:         *transfer.Fee,
@@ -103,4 +110,15 @@ func (a *API) validateFromTo(transfer *models.Transfer) error {
 		return ErrTransferToSelf
 	}
 	return nil
+}
+
+func logReceivedTransfer(transfer dto.Transfer) {
+	if log.IsLevelEnabled(log.DebugLevel) {
+		jsonTransfer, err := json.Marshal(transfer)
+		if err != nil {
+			log.Debugf("Marshaling received transaction falied")
+			return
+		}
+		log.Debugf("API: received new transaction: %s", string(jsonTransfer))
+	}
 }

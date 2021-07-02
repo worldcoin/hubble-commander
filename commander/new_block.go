@@ -3,12 +3,12 @@ package commander
 import (
 	"context"
 	stdErrors "errors"
-	"log"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -20,6 +20,7 @@ func (c *Commander) newBlockLoop() error {
 	if err != nil {
 		return err
 	}
+	log.WithFields(log.Fields{"latestBlockNumber": *latestBlockNumber}).Debug("Starting newBlockLoop")
 
 	blocks := make(chan *types.Header, 5)
 	blocks <- &types.Header{Number: new(big.Int).SetUint64(*latestBlockNumber)}

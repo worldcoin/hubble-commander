@@ -114,8 +114,9 @@ func (s *GetTransactionsTestSuite) addTransfers() []models.Transfer {
 	}
 
 	for i := range transfers {
-		err := s.storage.AddTransfer(&transfers[i])
+		receiveTime, err := s.storage.AddTransfer(&transfers[i])
 		s.NoError(err)
+		transfers[i].ReceiveTime = receiveTime
 	}
 	return transfers
 }
@@ -144,8 +145,9 @@ func (s *GetTransactionsTestSuite) addCreate2Transfers() []models.Create2Transfe
 	}
 
 	for i := range transfers {
-		err := s.storage.AddCreate2Transfer(&transfers[i])
+		receiveTime, err := s.storage.AddCreate2Transfer(&transfers[i])
 		s.NoError(err)
+		transfers[i].ReceiveTime = receiveTime
 	}
 	return transfers
 }
@@ -164,7 +166,8 @@ func (s *GetTransactionsTestSuite) TestGetTransactions() {
 			TransferWithBatchHash: models.TransferWithBatchHash{
 				Transfer: transfer,
 			},
-			Status: txstatus.Pending,
+			ReceiveTime: dto.NewTimestamp(transfer.ReceiveTime),
+			Status:      txstatus.Pending,
 		}
 	}
 
@@ -173,7 +176,8 @@ func (s *GetTransactionsTestSuite) TestGetTransactions() {
 			Create2TransferWithBatchHash: models.Create2TransferWithBatchHash{
 				Create2Transfer: transfer,
 			},
-			Status: txstatus.Pending,
+			ReceiveTime: dto.NewTimestamp(transfer.ReceiveTime),
+			Status:      txstatus.Pending,
 		}
 	}
 

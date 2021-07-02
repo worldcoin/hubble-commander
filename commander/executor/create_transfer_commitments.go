@@ -1,12 +1,12 @@
 package executor
 
 import (
-	"log"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	log "github.com/sirupsen/logrus"
 )
 
 var (

@@ -46,9 +46,13 @@ jobs:
       run: |
         curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
         chmod +x ./kubectl
+    - name: Set tag name
+      id: tag_name
+      run: |
+        echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
     - name: Update deployment in the cluster
       run: |
-        ./kubectl --kubeconfig ./kubeconfig --namespace=staging set image deployments/hubble-commander hubble-commander=ghcr.io/worldcoin/hubble-commander:${{ steps.tag_name.outputs.SOURCE_TAG }}
+        ./kubectl --kubeconfig ./kubeconfig --namespace=staging set image deployments/hubble-commander primary-hubble-commander=ghcr.io/worldcoin/hubble-commander:${{ steps.tag_name.outputs.SOURCE_TAG }} secondary-hubble-commander=ghcr.io/worldcoin/hubble-commander:${{ steps.tag_name.outputs.SOURCE_TAG }}
 
   deploy:
     name: Deploy to AWS

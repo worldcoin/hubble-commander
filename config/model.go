@@ -4,9 +4,11 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/sirupsen/logrus"
 )
 
 type Config struct {
+	Log       *LogConfig
 	Bootstrap *BootstrapConfig
 	Rollup    *RollupConfig
 	API       *APIConfig
@@ -15,9 +17,15 @@ type Config struct {
 	Ethereum  *EthereumConfig
 }
 
+type LogConfig struct {
+	Level logrus.Level
+	// "json" or "text" (default)
+	Format string
+}
+
 type BootstrapConfig struct {
 	Prune            bool
-	GenesisAccounts  []models.GenesisAccount
+	GenesisAccounts  []models.GenesisAccount `json:"-"`
 	BootstrapNodeURL *string
 }
 

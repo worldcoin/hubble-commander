@@ -2,13 +2,13 @@ package postgres
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 func CreateDatabaseIfNotExist(cfg *config.PostgresConfig) (err error) {
@@ -19,6 +19,7 @@ func CreateDatabaseIfNotExist(cfg *config.PostgresConfig) (err error) {
 	if *exists {
 		return nil
 	}
+	log.Debug("Postgres database does not exist, attempting to create it")
 
 	datasource := CreateDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, nil)
 	dbInstance, err := sqlx.Connect("postgres", datasource)
@@ -84,8 +85,5 @@ func closeDB(dbInstance *sqlx.DB, err *error) {
 
 func createDatabase(dbInstance *sqlx.DB, dbName string) error {
 	_, err := dbInstance.Exec(fmt.Sprintf("CREATE DATABASE %s", dbName))
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }

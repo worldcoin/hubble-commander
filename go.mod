@@ -15,6 +15,7 @@ require (
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/lib/pq v1.9.0 // indirect
 	github.com/pkg/errors v0.9.1
+	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0
 	github.com/timshannon/badgerhold/v3 v3.0.0-20210415132401-e7c90fb5919f

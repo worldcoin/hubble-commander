@@ -1,10 +1,14 @@
 package api
 
 import (
+	"encoding/json"
+
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/common"
+	log "github.com/sirupsen/logrus"
 )
 
 func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*common.Hash, error) {
@@ -23,10 +27,12 @@ func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*co
 	}
 	create2Transfer.Hash = *hash
 
-	err = a.storage.AddCreate2Transfer(create2Transfer)
+	_, err = a.storage.AddCreate2Transfer(create2Transfer)
 	if err != nil {
 		return nil, err
 	}
+
+	logReceivedCreate2Transfer(create2TransferDTO)
 
 	return &create2Transfer.Hash, nil
 }
@@ -53,6 +59,7 @@ func sanitizeCreate2Transfer(create2Transfer dto.Create2Transfer) (*models.Creat
 
 	return &models.Create2Transfer{
 			TransactionBase: models.TransactionBase{
+				TxType:      txtype.Create2Transfer,
 				FromStateID: *create2Transfer.FromStateID,
 				Amount:      *create2Transfer.Amount,
 				Fee:         *create2Transfer.Fee,
@@ -93,4 +100,15 @@ func (a *API) validateCreate2Transfer(create2Transfer *models.Create2Transfer) e
 		return nil
 	}
 	return a.validateSignature(encodedCreate2Transfer, &create2Transfer.Signature, &senderState.UserState)
+}
+
+func logReceivedCreate2Transfer(transfer dto.Create2Transfer) {
+	if log.IsLevelEnabled(log.DebugLevel) {
+		jsonTransfer, err := json.Marshal(transfer)
+		if err != nil {
+			log.Debugf("Marshaling received transaction falied")
+			return
+		}
+		log.Debugf("API: received new transaction: %s", string(jsonTransfer))
+	}
 }

@@ -1,11 +1,10 @@
 package deployer
 
 import (
-	"log"
-
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 func DeployAccountRegistry(c ChainConnection) (*common.Address, *uint64, *accountregistry.AccountRegistry, error) {

@@ -150,7 +150,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersTestSuite_SavesTransferError
 	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(2)...)
 
 	for i := range generatedTransfers {
-		err := s.storage.AddTransfer(&generatedTransfers[i])
+		_, err := s.storage.AddTransfer(&generatedTransfers[i])
 		s.NoError(err)
 	}
 

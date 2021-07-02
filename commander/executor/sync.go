@@ -1,8 +1,6 @@
 package executor
 
 import (
-	"log"
-
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -11,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -62,6 +61,8 @@ func (t *TransactionExecutor) syncExistingBatch(remoteBatch *eth.DecodedBatch, l
 }
 
 func (t *TransactionExecutor) revertBatches(remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
+	log.WithFields(log.Fields{"batchID": remoteBatch.ID.String()}).
+		Debug("Local batch inconsistent with remote batch, reverting local batch(es)")
 	stateTree := st.NewStateTree(t.storage)
 	err := stateTree.RevertTo(*localBatch.PrevStateRoot)
 	if err != nil {
@@ -79,7 +80,8 @@ func (t *TransactionExecutor) revertBatchesInRange(startBatchID *models.Uint256)
 	if err != nil {
 		return err
 	}
-	batchIDs := make([]models.Uint256, 0, len(batches))
+	numBatches := len(batches)
+	batchIDs := make([]models.Uint256, 0, numBatches)
 	for i := range batches {
 		batchIDs = append(batchIDs, batches[i].ID)
 	}
@@ -91,6 +93,7 @@ func (t *TransactionExecutor) revertBatchesInRange(startBatchID *models.Uint256)
 	if err != nil {
 		return err
 	}
+	log.Debugf("Removing %d local batches", numBatches)
 	return t.storage.DeleteBatches(batchIDs...)
 }
 
@@ -116,6 +119,8 @@ func (t *TransactionExecutor) getTransactionSender(txHash common.Hash) (*common.
 }
 
 func (t *TransactionExecutor) syncNewBatch(batch *eth.DecodedBatch) error {
+	numCommitments := len(batch.Commitments)
+	log.Debugf("Syncing new batch #%s with %d commitment(s) from chain", batch.ID.String(), numCommitments)
 	err := t.storage.AddBatch(&batch.Batch)
 	if err != nil {
 		return err
@@ -126,12 +131,13 @@ func (t *TransactionExecutor) syncNewBatch(batch *eth.DecodedBatch) error {
 		return err
 	}
 
-	log.Printf("Synced new batch #%s from chain with %d commitment(s)", batch.ID.String(), len(batch.Commitments))
+	log.Printf("Synced new batch #%s with %d commitment(s) from chain", batch.ID.String(), numCommitments)
 	return nil
 }
 
 func (t *TransactionExecutor) syncCommitments(batch *eth.DecodedBatch) error {
 	for i := range batch.Commitments {
+		log.WithFields(log.Fields{"batchID": batch.ID.String()}).Debugf("Syncing commitment #%d", i+1)
 		err := t.syncCommitment(batch, &batch.Commitments[i])
 		if err == ErrInvalidSignature {
 			// TODO: dispute fraudulent commitment
