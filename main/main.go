@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"os"
 	"os/signal"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/commander"
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -15,6 +17,7 @@ func main() {
 	cfg := getConfig()
 
 	configureLogger(cfg)
+	logConfig(cfg)
 	cmd := commander.NewCommander(cfg)
 
 	setupCloseHandler(cmd)
@@ -23,6 +26,21 @@ func main() {
 	if err != nil {
 		log.Fatalf("%+v", err)
 	}
+}
+
+func getConfig() *config.Config {
+	prune := flag.Bool("prune", false, "drop database before running app")
+	devMode := flag.Bool("dev", false, "disable signature verification")
+	flag.Parse()
+
+	var cfg *config.Config
+	if *devMode {
+		cfg = config.GetTestConfig()
+	} else {
+		cfg = config.GetConfig()
+	}
+	cfg.Bootstrap.Prune = *prune
+	return cfg
 }
 
 func configureLogger(cfg *config.Config) {
@@ -39,19 +57,12 @@ func configureLogger(cfg *config.Config) {
 	log.SetLevel(cfg.Log.Level)
 }
 
-func getConfig() *config.Config {
-	prune := flag.Bool("prune", false, "drop database before running app")
-	devMode := flag.Bool("dev", false, "disable signature verification")
-	flag.Parse()
-
-	var cfg *config.Config
-	if *devMode {
-		cfg = config.GetTestConfig()
-	} else {
-		cfg = config.GetConfig()
+func logConfig(cfg *config.Config) {
+	jsonCfg, err := json.Marshal(cfg)
+	if err != nil {
+		log.Fatalf("%+v", errors.WithStack(err))
 	}
-	cfg.Bootstrap.Prune = *prune
-	return cfg
+	log.Debugf("Loaded config: %s", string(jsonCfg))
 }
 
 func setupCloseHandler(cmd *commander.Commander) {
