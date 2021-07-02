@@ -11,7 +11,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -171,17 +170,6 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 			s.Equal(*transfer.ErrorMessage, ErrNonceTooLow.Error())
 		}
 	}
-}
-
-func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_SomeValid() {
-	generatedTransfers := generateValidCreate2Transfers(2, &s.publicKey)
-	generatedTransfers = append(generatedTransfers, generateInvalidCreate2Transfers(3, &s.publicKey)...)
-
-	_, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, []uint32{1, 2, 3, 4, 5}, s.feeReceiver)
-	s.Error(err)
-	var disputableTransferError DisputableTransferError
-	s.True(errors.As(err, &disputableTransferError))
-	//s.True(len(disputableTransferError.Proofs) > 0) // TODO-AFS: Assert exact count
 }
 
 // TODO check the same test for normal Transfer

@@ -59,6 +59,7 @@ func (t *TransactionExecutor) ApplyCreate2Transfers(
 		if transferError != nil {
 			logAndSaveTransactionError(t.storage, &transfer.TransactionBase, transferError)
 			returnStruct.invalidTransfers = append(returnStruct.invalidTransfers, *transfer)
+			continue
 		}
 
 		returnStruct.appliedTransfers = append(returnStruct.appliedTransfers, *transfer)
