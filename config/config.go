@@ -136,7 +136,7 @@ func getLogConfig() *LogConfig {
 		log.Fatalf("invalid log level: %e", err)
 	}
 
-	format := getString("log.level", "text")
+	format := getString("log.format", "text")
 
 	if format != "text" && format != "json" {
 		log.Fatalf("invalid log format: %s", format)

@@ -13,7 +13,7 @@ type ChainState struct {
 	AccountRegistry common.Address `db:"account_registry"`
 	DeploymentBlock uint64         `db:"deployment_block"`
 	Rollup          common.Address
-	GenesisAccounts GenesisAccounts `db:"genesis_accounts"`
+	GenesisAccounts GenesisAccounts `db:"genesis_accounts" json:"-"`
 	SyncedBlock     uint64          `db:"synced_block"`
 }
 

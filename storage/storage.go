@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/golang-migrate/migrate/v4"
+	log "github.com/sirupsen/logrus"
 )
 
 type Storage struct {
@@ -76,6 +77,7 @@ func NewConfiguredStorage(cfg *config.Config) (storage *Storage, err error) {
 		if err != nil {
 			return nil, err
 		}
+		log.Debug("Badger and Postgres databases were pruned")
 	}
 
 	err = migrator.Up()

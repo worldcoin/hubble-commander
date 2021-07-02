@@ -1,14 +1,15 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/Worldcoin/hubble-commander/commander"
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -16,6 +17,7 @@ func main() {
 	cfg := getConfig()
 
 	configureLogger(cfg)
+	logConfig(cfg)
 	cmd := commander.NewCommander(cfg)
 
 	setupCloseHandler(cmd)
@@ -24,19 +26,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("%+v", err)
 	}
-}
-
-func configureLogger(cfg *config.Config) {
-	if cfg.Log.Format == "json" {
-		// Log as JSON instead of the default ASCII formatter.
-		log.SetFormatter(&log.JSONFormatter{})
-	}
-
-	// Output to stdout instead of the default stderr
-	log.SetOutput(os.Stdout)
-
-	// Only log the warning severity or above.
-	log.SetLevel(cfg.Log.Level)
 }
 
 func getConfig() *config.Config {
@@ -54,15 +43,36 @@ func getConfig() *config.Config {
 	return cfg
 }
 
+func configureLogger(cfg *config.Config) {
+	if cfg.Log.Format == "json" {
+		// Log as JSON instead of the default ASCII formatter.
+		log.SetFormatter(&log.JSONFormatter{})
+	}
+
+	// Output to stdout instead of the default stderr
+	log.SetOutput(os.Stdout)
+
+	// Only log the warning severity or above.
+	log.SetLevel(cfg.Log.Level)
+}
+
+func logConfig(cfg *config.Config) {
+	jsonCfg, err := json.Marshal(cfg)
+	if err != nil {
+		log.Fatalf("%+v", errors.WithStack(err))
+	}
+	log.Debugf("Loaded config: %s", string(jsonCfg))
+}
+
 func setupCloseHandler(cmd *commander.Commander) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		fmt.Println("\nStopping commander gracefully...")
+		log.Println("\nStopping commander gracefully...")
 		err := cmd.Stop()
 		if err != nil {
-			fmt.Printf("Error while stopping: %+v", err)
+			log.Printf("Error while stopping: %+v", err)
 		}
 	}()
 }

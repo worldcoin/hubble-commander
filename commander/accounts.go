@@ -7,6 +7,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	log "github.com/sirupsen/logrus"
 )
 
 func (c *Commander) syncAccounts(start, end uint64) error {
@@ -18,6 +19,7 @@ func (c *Commander) syncAccounts(start, end uint64) error {
 		return err
 	}
 	defer func() { _ = it.Close() }()
+	newAccountsCount := 0
 	for it.Next() {
 		tx, _, err := c.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
 		if err != nil {
@@ -44,6 +46,14 @@ func (c *Commander) syncAccounts(start, end uint64) error {
 		if err != nil {
 			return err
 		}
+		newAccountsCount++
 	}
+	logAccountsCount(newAccountsCount)
 	return nil
+}
+
+func logAccountsCount(newAccountsCount int) {
+	if newAccountsCount > 0 {
+		log.Printf("Found %d new account(s)", newAccountsCount)
+	}
 }

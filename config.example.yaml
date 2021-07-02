@@ -1,3 +1,7 @@
+#log:
+#  level: info
+#  format: text
+#
 #bootstrap:
 #  node_url: http://localhost:8080   # set this url to bootstrap from remote node
 #
