@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/commander/executor"
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
@@ -94,9 +95,16 @@ func validateStateRoot(storage *st.Storage) error {
 		return err
 	}
 	if latestCommitment.PostStateRoot != *stateRoot {
-		log.WithFields(log.Fields{"latestBatchID": latestCommitment.IncludedInBatch.String()}).
-			Debug("rollupLoop: Sanity check on state tree root in failed")
+		logLatestBatchID(latestCommitment)
 		return ErrInvalidStateRoot
 	}
 	return nil
+}
+
+func logLatestBatchID(latestCommitment *models.Commitment) {
+	fields := log.Fields{"latestCommitmentID": latestCommitment.ID}
+	if latestCommitment.IncludedInBatch != nil {
+		fields["latestBatchID"] = latestCommitment.IncludedInBatch.String()
+	}
+	log.WithFields(fields).Debug("rollupLoop: Sanity check on state tree root in failed")
 }
