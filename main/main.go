@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -60,10 +59,10 @@ func setupCloseHandler(cmd *commander.Commander) {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		fmt.Println("\nStopping commander gracefully...")
+		log.Println("\nStopping commander gracefully...")
 		err := cmd.Stop()
 		if err != nil {
-			fmt.Printf("Error while stopping: %+v", err)
+			log.Printf("Error while stopping: %+v", err)
 		}
 	}()
 }
