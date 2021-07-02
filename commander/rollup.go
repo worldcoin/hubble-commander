@@ -95,13 +95,13 @@ func validateStateRoot(storage *st.Storage) error {
 		return err
 	}
 	if latestCommitment.PostStateRoot != *stateRoot {
-		logLatestBatchID(latestCommitment)
+		logLatestCommitment(latestCommitment)
 		return ErrInvalidStateRoot
 	}
 	return nil
 }
 
-func logLatestBatchID(latestCommitment *models.Commitment) {
+func logLatestCommitment(latestCommitment *models.Commitment) {
 	fields := log.Fields{"latestCommitmentID": latestCommitment.ID}
 	if latestCommitment.IncludedInBatch != nil {
 		fields["latestBatchID"] = latestCommitment.IncludedInBatch.String()
