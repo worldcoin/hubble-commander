@@ -30,6 +30,10 @@ func (t *TransactionExecutor) ApplyCreate2TransferForSync(
 	pubKeyID uint32,
 	commitmentTokenID models.Uint256,
 ) (syncedTransfer *SyncedTransfer, transferError, appError error) {
+	if create2Transfer.ToStateID == nil {
+		return nil, nil, ErrNilReceiverStateID
+	}
+
 	appError = t.insertNewUserState(*create2Transfer.ToStateID, pubKeyID, commitmentTokenID)
 	if appError != nil {
 		return nil, nil, appError

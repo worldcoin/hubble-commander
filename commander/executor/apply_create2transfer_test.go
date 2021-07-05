@@ -92,7 +92,7 @@ func (s *ApplyCreate2TransferTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InsertsNewUserState() {
+func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_GetsNextAvailableStateIDAndInsertsNewUserState() {
 	pubKeyID := uint32(2)
 	_, transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&create2Transfer, pubKeyID, feeReceiverTokenID)
 	s.NoError(appError)
@@ -113,25 +113,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_AppliesTransfer
 
 	senderLeaf, err := s.storage.GetStateLeaf(appliedTransfer.FromStateID)
 	s.NoError(err)
-	receiverLeaf, err := s.storage.GetStateLeaf(2)
-	s.NoError(err)
-
-	s.Equal(uint64(8900), senderLeaf.Balance.Uint64())
-	s.Equal(uint64(1000), receiverLeaf.Balance.Uint64())
-}
-
-// TODO-AFS rework this test and add tests for ApplyCreate2TransferForSync
-func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_TransferWithStateID() {
-	c2T := create2Transfer
-	c2T.ToStateID = ref.Uint32(5)
-	_, transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&c2T, 2, feeReceiverTokenID)
-	s.NoError(appError)
-	s.NoError(transferError)
-	s.Equal(uint32(5), *c2T.ToStateID)
-
-	receiverLeaf, err := s.storage.GetStateLeaf(*c2T.ToStateID)
-	s.NoError(err)
-	senderLeaf, err := s.storage.GetStateLeaf(c2T.FromStateID)
+	receiverLeaf, err := s.storage.GetStateLeaf(*appliedTransfer.ToStateID)
 	s.NoError(err)
 
 	s.Equal(uint64(8900), senderLeaf.Balance.Uint64())
@@ -143,6 +125,57 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfer_InvalidTransfe
 	transfers[0].Amount = models.MakeUint256(500)
 
 	_, transferErr, appErr := s.transactionExecutor.ApplyCreate2Transfer(&transfers[0], 1, *models.NewUint256(1))
+	s.Error(transferErr)
+	s.NoError(appErr)
+}
+
+func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_ReturnsErrorOnNilToStateID() {
+	_, transferError, appError := s.transactionExecutor.ApplyCreate2TransferForSync(&create2Transfer, uint32(2), feeReceiverTokenID)
+	s.NoError(transferError)
+	s.Equal(ErrNilReceiverStateID, appError)
+}
+
+func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_InsertsNewUserStateAtReceiverStateID() {
+	pubKeyID := uint32(2)
+	c2T := create2Transfer
+	c2T.ToStateID = ref.Uint32(5)
+	_, transferError, appError := s.transactionExecutor.ApplyCreate2TransferForSync(&c2T, pubKeyID, feeReceiverTokenID)
+	s.NoError(appError)
+	s.NoError(transferError)
+
+	leaf, err := s.storage.GetStateLeaf(*c2T.ToStateID)
+	s.NoError(err)
+
+	s.NoError(err)
+	s.NotNil(leaf)
+	s.Equal(pubKeyID, leaf.PubKeyID)
+	s.Equal(feeReceiverTokenID, leaf.TokenID)
+	s.Equal(models.MakeUint256(0), leaf.Nonce)
+}
+
+func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_AppliesTransfer() {
+	c2T := create2Transfer
+	c2T.ToStateID = ref.Uint32(5)
+	_, transferError, appError := s.transactionExecutor.ApplyCreate2TransferForSync(&c2T, 2, feeReceiverTokenID)
+	s.NoError(appError)
+	s.NoError(transferError)
+
+	senderLeaf, err := s.storage.GetStateLeaf(c2T.FromStateID)
+	s.NoError(err)
+	receiverLeaf, err := s.storage.GetStateLeaf(*c2T.ToStateID)
+	s.NoError(err)
+
+	s.Equal(uint64(8900), senderLeaf.Balance.Uint64())
+	s.Equal(uint64(1000), receiverLeaf.Balance.Uint64())
+}
+
+func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransferForSync_InvalidTransfer() {
+	transfers := generateValidCreate2Transfers(1, &s.publicKey)
+	invalidC2T := transfers[0]
+	invalidC2T.Amount = models.MakeUint256(1_000_000)
+	invalidC2T.ToStateID = ref.Uint32(5)
+
+	_, transferErr, appErr := s.transactionExecutor.ApplyCreate2TransferForSync(&invalidC2T, 1, *models.NewUint256(1))
 	s.Error(transferErr)
 	s.NoError(appErr)
 }
