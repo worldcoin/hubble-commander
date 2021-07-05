@@ -12,9 +12,10 @@ var (
 	ErrInvalidSliceLength = errors.New("invalid slices length")
 	ErrNilReceiverStateID = errors.New("transfer receiver state id cannot be nil")
 
-	ErrBalanceTooLow      = errors.New("not enough balance")
-	ErrInvalidTokenID     = errors.New("invalid sender or receiver token ID") // TODO-AFS split into two errors
-	ErrInvalidTokenAmount = errors.New("amount cannot be equal to 0")
+	ErrBalanceTooLow          = errors.New("not enough balance")
+	ErrInvalidSenderTokenID   = errors.New("invalid sender token ID")
+	ErrInvalidReceiverTokenID = errors.New("invalid receiver token ID")
+	ErrInvalidTokenAmount     = errors.New("amount cannot be equal to 0")
 )
 
 func (t *TransactionExecutor) ApplyTransfer(
@@ -145,14 +146,14 @@ func (t *TransactionExecutor) getParticipantsStates(transfer models.GenericTrans
 
 func (t *TransactionExecutor) validateSenderTokenID(senderState *models.StateLeaf, commitmentTokenID models.Uint256) error {
 	if senderState.TokenID.Cmp(&commitmentTokenID) != 0 {
-		return ErrInvalidTokenID
+		return ErrInvalidSenderTokenID
 	}
 	return nil
 }
 
 func (t *TransactionExecutor) validateReceiverTokenID(receiverState *models.StateLeaf, commitmentTokenID models.Uint256) error {
 	if receiverState.TokenID.Cmp(&commitmentTokenID) != 0 {
-		return ErrInvalidTokenID
+		return ErrInvalidReceiverTokenID
 	}
 	return nil
 }
