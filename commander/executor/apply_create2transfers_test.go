@@ -130,8 +130,8 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 	s.Len(transfers.addedPubKeyIDs, 2)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_MoreThanSpecifiedInConfigTxsPerCommitment() {
-	generatedTransfers := generateValidCreate2Transfers(13, &s.publicKey)
+func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AppliesNoMoreThanLimit() {
+	generatedTransfers := generateValidCreate2Transfers(7, &s.publicKey)
 
 	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
@@ -139,10 +139,6 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_MoreThanSpeci
 	s.Len(transfers.appliedTransfers, 6)
 	s.Len(transfers.invalidTransfers, 0)
 	s.Len(transfers.addedPubKeyIDs, 6)
-
-	state, err := s.storage.GetStateLeaf(1)
-	s.NoError(err)
-	s.Equal(models.MakeUint256(6), state.Nonce)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransferErrors() {
@@ -172,13 +168,37 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 	}
 }
 
-// TODO check the same test for normal Transfer
+func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AppliesFee() {
+	generatedTransfers := generateValidCreate2Transfers(3, &s.publicKey)
+
+	_, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
+	s.NoError(err)
+
+	feeReceiverState, err := s.transactionExecutor.storage.GetStateLeaf(s.feeReceiver.StateID)
+	s.NoError(err)
+	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
+}
+
+// TODO-AFS test that ApplyCreate2Transfers adds keys + return val
+// TODO-AFS test apply fee
+// TODO-AFS check the same test for normal Transfer
+// TODO-AFS _InvalidTransfer
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidSlicesLength() {
-	s.T().SkipNow()
 	generatedTransfers := generateValidCreate2Transfers(3, &s.publicKey)
 	_, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, []uint32{1, 2}, s.feeReceiver)
 	s.Equal(ErrInvalidSliceLength, err)
 }
+
+// func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_AppliesFee() {
+// 	generatedTransfers := generateValidCreate2Transfers(3, &s.publicKey)
+//
+// 	_, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, s.feeReceiver)
+// 	s.NoError(err)
+//
+// 	feeReceiverState, err := s.transactionExecutor.storage.GetStateLeaf(s.feeReceiver.StateID)
+// 	s.NoError(err)
+// 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
+// }
 
 func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_AccountNotExists() {
 	c2T := create2Transfer
@@ -199,10 +219,6 @@ func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_AccountForTok
 }
 
 // TODO-AFS add missing tests
-
-func TestApplyCreate2TransfersTestSuite(t *testing.T) {
-	suite.Run(t, new(ApplyCreate2TransfersTestSuite))
-}
 
 func generateValidCreate2Transfers(transfersAmount uint32, publicKey *models.PublicKey) []models.Create2Transfer {
 	transfers := make([]models.Create2Transfer, 0, transfersAmount)
@@ -242,4 +258,8 @@ func generateInvalidCreate2Transfers(transfersAmount uint64, publicKey *models.P
 		transfers = append(transfers, transfer)
 	}
 	return transfers
+}
+
+func TestApplyCreate2TransfersTestSuite(t *testing.T) {
+	suite.Run(t, new(ApplyCreate2TransfersTestSuite))
 }
