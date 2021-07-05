@@ -100,6 +100,7 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 		transfer := &transfers[i]
 
 		synced, transferError, appError := t.ApplyCreate2TransferForSync(transfer, pubKeyIDs[i], feeReceiver.TokenID)
+		// TODO-AFS nil check
 		if synced != nil {
 			stateChangeProofs = append(
 				stateChangeProofs,

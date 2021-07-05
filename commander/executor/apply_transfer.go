@@ -13,7 +13,7 @@ var (
 	ErrNilReceiverStateID = errors.New("transfer receiver state id cannot be nil")
 
 	ErrBalanceTooLow      = errors.New("not enough balance")
-	ErrInvalidTokenID     = errors.New("invalid sender or receiver token ID")
+	ErrInvalidTokenID     = errors.New("invalid sender or receiver token ID") // TODO-AFS split into two errors
 	ErrInvalidTokenAmount = errors.New("amount cannot be equal to 0")
 )
 
@@ -74,6 +74,7 @@ func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransa
 
 	newSenderState, newReceiverState, tErr := calculateStateAfterTransfer(senderState.UserState, receiverState.UserState, transfer)
 	if tErr != nil {
+		// TODO-AFS set senderStateProof on syncedTransfer
 		return nil, tErr, nil
 	}
 

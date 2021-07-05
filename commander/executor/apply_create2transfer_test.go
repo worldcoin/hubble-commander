@@ -105,7 +105,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InsertsNewEmpty
 	s.Equal(feeReceiverTokenID, leaf.TokenID)
 }
 
-func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer() {
+func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_AppliesTransfer() {
 	c2T := create2Transfer
 	transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&c2T, 2, feeReceiverTokenID)
 	s.NoError(appError)
@@ -120,6 +120,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ApplyTransfer()
 	s.Equal(uint64(1000), receiverLeaf.Balance.Uint64())
 }
 
+// TODO-AFS rework this test and add tests for ApplyCreate2TransferForSync
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_TransferWithStateID() {
 	c2T := create2Transfer
 	c2T.ToStateID = ref.Uint32(5)

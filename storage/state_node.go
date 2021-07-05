@@ -37,6 +37,7 @@ func newZeroStateNode(path *models.MerklePath) *models.StateNode {
 	}
 }
 
+// TODO-AFS remove after changing implementation of GetWitness
 func (s *Storage) GetStateNodes(paths []models.MerklePath) (nodes []models.StateNode, err error) {
 	tx, storage, err := s.BeginTransaction(TxOptions{Badger: true, ReadOnly: true})
 	if err != nil {

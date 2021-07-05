@@ -12,6 +12,7 @@ var (
 	ErrInvalidDataLength = errors.New("invalid data length")
 )
 
+// TODO-AFS rename file (and C2T as well)
 func (t *TransactionExecutor) syncTransferCommitment(
 	commitment *encoder.DecodedCommitment,
 ) (models.GenericTransactionArray, error) {

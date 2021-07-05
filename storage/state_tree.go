@@ -60,7 +60,8 @@ func (s *StateTree) Leaf(stateID uint32) (*models.StateLeaf, error) {
 	return leaf, nil
 }
 
-// Set return a witness containing 32 elements for the current set operation
+// TODO-AFS if you still have time: bring back SetReturningWitness and remove it in a separate PR
+// Set returns a witness containing 32 elements for the current set operation
 func (s *StateTree) Set(id uint32, state *models.UserState) (models.Witness, error) {
 	tx, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {

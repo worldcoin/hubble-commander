@@ -123,6 +123,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesToStateID() {
 	s.Equal(ErrNilReceiverStateID, appError)
 }
 
+// TODO-AFS split into two tests
 func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesTokenID() {
 	s.setUserStatesInTree()
 
@@ -173,6 +174,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ValidatesToStateID() {
 	s.Equal(ErrNilReceiverStateID, appError)
 }
 
+// TODO-AFS split into two
 func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ValidatesTokenID() {
 	s.setUserStatesInTree()
 
@@ -241,6 +243,8 @@ func (s *ApplyTransferTestSuite) setUserStatesInTree() {
 	_, err = s.tree.Set(receiverStateID, &receiverState)
 	s.NoError(err)
 }
+
+// TODO-AFS check that tests cover ApplyTransferForSync well
 
 func TestApplyTransferTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplyTransferTestSuite))

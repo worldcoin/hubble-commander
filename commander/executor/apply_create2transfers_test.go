@@ -198,6 +198,8 @@ func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_AccountForTok
 	s.Equal(uint32(4), *pubKeyID)
 }
 
+// TODO-AFS add missing tests
+
 func TestApplyCreate2TransfersTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplyCreate2TransfersTestSuite))
 }

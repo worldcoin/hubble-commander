@@ -4,6 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
+// TODO-AFS consider returning newCreate2Transfer with ToStateID set instead of modifying received parameter
 func (t *TransactionExecutor) ApplyCreate2Transfer(
 	create2Transfer *models.Create2Transfer,
 	pubKeyID uint32,
@@ -16,6 +17,7 @@ func (t *TransactionExecutor) ApplyCreate2Transfer(
 		Nonce:    models.MakeUint256(0),
 	}
 
+	// TODO-AFS isn't ToStateID always nil here?
 	if create2Transfer.ToStateID == nil {
 		nextAvailableStateID, err := t.storage.GetNextAvailableStateID()
 		if err != nil {
@@ -44,6 +46,7 @@ func (t *TransactionExecutor) ApplyCreate2TransferForSync(
 		Nonce:    models.MakeUint256(0),
 	}
 
+	// TODO-AFS not necessary
 	if create2Transfer.ToStateID == nil {
 		nextAvailableStateID, err := t.storage.GetNextAvailableStateID()
 		if err != nil {
