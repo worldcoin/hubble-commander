@@ -9,6 +9,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
+// TODO-AFS consider removing
 type TransactionExecutorOpts struct {
 	Ctx context.Context
 }

@@ -1,6 +1,8 @@
 package executor
 
 import (
+	"context"
+	"math/big"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
@@ -170,7 +172,30 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AppliesFee() 
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }
 
-// TODO-AFS test that ApplyCreate2Transfers registers keys and returns correct PubKeyIDs
+func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_RegistersPublicKeys() {
+	generatedTransfers := generateValidCreate2Transfers(3)
+	generatedTransfers[0].ToPublicKey = models.PublicKey{1, 1, 1}
+	generatedTransfers[1].ToPublicKey = models.PublicKey{2, 2, 2}
+	generatedTransfers[2].ToPublicKey = models.PublicKey{3, 3, 3}
+
+	latestBlockNumber, err := s.client.GetLatestBlockNumber()
+	s.NoError(err)
+
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
+	s.NoError(err)
+
+	s.Len(transfers.appliedTransfers, 3)
+	s.Len(transfers.invalidTransfers, 0)
+	s.Len(transfers.addedPubKeyIDs, 3)
+
+	registeredAccounts := s.getRegisteredAccounts(*latestBlockNumber)
+	for i := range generatedTransfers {
+		s.Equal(registeredAccounts[i], models.Account{
+			PubKeyID:  transfers.addedPubKeyIDs[i],
+			PublicKey: generatedTransfers[i].ToPublicKey,
+		})
+	}
+}
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_AllValid() {
 	generatedTransfers, pubKeyIDs := generateValidCreate2TransfersForSync(3, 4)
@@ -226,6 +251,27 @@ func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_ReturnsUnused
 	pubKeyID, err := s.transactionExecutor.getOrRegisterPubKeyID(s.events, &c2T, models.MakeUint256(1))
 	s.NoError(err)
 	s.Equal(uint32(4), *pubKeyID)
+}
+
+func (s *ApplyCreate2TransfersTestSuite) getRegisteredAccounts(startBlockNumber uint64) []models.Account {
+	it, err := s.client.AccountRegistry.FilterSinglePubkeyRegistered(&bind.FilterOpts{Start: startBlockNumber})
+	s.NoError(err)
+
+	registeredAccounts := make([]models.Account, 0)
+	for it.Next() {
+		tx, _, err := s.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
+		s.NoError(err)
+
+		unpack, err := s.client.AccountRegistryABI.Methods["register"].Inputs.Unpack(tx.Data()[4:])
+		s.NoError(err)
+
+		pubkey := unpack[0].([4]*big.Int)
+		registeredAccounts = append(registeredAccounts, models.Account{
+			PubKeyID:  uint32(it.Event.PubkeyID.Uint64()),
+			PublicKey: models.MakePublicKeyFromInts(pubkey),
+		})
+	}
+	return registeredAccounts
 }
 
 func generateValidCreate2Transfers(transfersAmount uint32) []models.Create2Transfer {
