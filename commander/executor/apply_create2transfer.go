@@ -10,25 +10,15 @@ func (t *TransactionExecutor) ApplyCreate2Transfer(
 	pubKeyID uint32,
 	commitmentTokenID models.Uint256,
 ) (transferError, appError error) {
-	emptyUserState := models.UserState{
-		PubKeyID: pubKeyID,
-		TokenID:  commitmentTokenID,
-		Balance:  models.MakeUint256(0),
-		Nonce:    models.MakeUint256(0),
+	nextAvailableStateID, appError := t.storage.GetNextAvailableStateID()
+	if appError != nil {
+		return nil, appError
 	}
+	create2Transfer.ToStateID = nextAvailableStateID
 
-	// TODO-AFS isn't ToStateID always nil here?
-	if create2Transfer.ToStateID == nil {
-		nextAvailableStateID, err := t.storage.GetNextAvailableStateID()
-		if err != nil {
-			return nil, err
-		}
-		create2Transfer.ToStateID = nextAvailableStateID
-	}
-
-	_, err := t.stateTree.Set(*create2Transfer.ToStateID, &emptyUserState)
-	if err != nil {
-		return nil, err
+	appError = t.insertNewUserState(*create2Transfer.ToStateID, pubKeyID, commitmentTokenID)
+	if appError != nil {
+		return nil, appError
 	}
 
 	return t.ApplyTransfer(create2Transfer, commitmentTokenID)
@@ -39,26 +29,22 @@ func (t *TransactionExecutor) ApplyCreate2TransferForSync(
 	pubKeyID uint32,
 	commitmentTokenID models.Uint256,
 ) (syncedTransfer *SyncedTransfer, transferError, appError error) {
+	appError = t.insertNewUserState(*create2Transfer.ToStateID, pubKeyID, commitmentTokenID)
+	if appError != nil {
+		return nil, nil, appError
+	}
+
+	return t.ApplyTransferForSync(create2Transfer, commitmentTokenID)
+}
+
+func (t *TransactionExecutor) insertNewUserState(stateID, pubKeyID uint32, tokenID models.Uint256) error {
 	emptyUserState := models.UserState{
 		PubKeyID: pubKeyID,
-		TokenID:  commitmentTokenID,
+		TokenID:  tokenID,
 		Balance:  models.MakeUint256(0),
 		Nonce:    models.MakeUint256(0),
 	}
 
-	// TODO-AFS not necessary
-	if create2Transfer.ToStateID == nil {
-		nextAvailableStateID, err := t.storage.GetNextAvailableStateID()
-		if err != nil {
-			return nil, nil, err
-		}
-		create2Transfer.ToStateID = nextAvailableStateID
-	}
-
-	_, err := t.stateTree.Set(*create2Transfer.ToStateID, &emptyUserState)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return t.ApplyTransferForSync(create2Transfer, commitmentTokenID)
+	_, err := t.stateTree.Set(stateID, &emptyUserState)
+	return err
 }
