@@ -76,10 +76,10 @@ func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransa
 	synced = &SyncedTransfer{
 		transfer: transfer.Copy(),
 		senderStateProof: models.StateMerkleProof{
-			UserState: &senderState.UserState,
+			UserState: senderState.UserState,
 		},
 		receiverStateProof: models.StateMerkleProof{
-			UserState: &receiverState.UserState,
+			UserState: receiverState.UserState,
 		},
 	}
 

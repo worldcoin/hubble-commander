@@ -211,9 +211,9 @@ func (s *DisputeTransitionTestSuite) TestRevertToForDispute() {
 
 func (s *DisputeTransitionTestSuite) setUserStates() {
 	userStates := []models.UserState{
-		*s.createUserState(0, 300, 0),
-		*s.createUserState(1, 200, 0),
-		*s.createUserState(2, 100, 0),
+		s.createUserState(0, 300, 0),
+		s.createUserState(1, 200, 0),
+		s.createUserState(2, 100, 0),
 	}
 	for i := range userStates {
 		_, err := s.transactionExecutor.stateTree.Set(uint32(i), &userStates[i])
@@ -221,8 +221,8 @@ func (s *DisputeTransitionTestSuite) setUserStates() {
 	}
 }
 
-func (s *DisputeTransitionTestSuite) createUserState(pubKeyID uint32, balance, nonce uint64) *models.UserState {
-	return &models.UserState{
+func (s *DisputeTransitionTestSuite) createUserState(pubKeyID uint32, balance, nonce uint64) models.UserState {
+	return models.UserState{
 		PubKeyID: pubKeyID,
 		TokenID:  models.MakeUint256(0),
 		Balance:  models.MakeUint256(balance),

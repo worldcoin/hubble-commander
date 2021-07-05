@@ -26,6 +26,6 @@ type TransferBody struct {
 }
 
 type StateMerkleProof struct {
-	UserState *UserState // TODO-AFS make this field non-pointer
+	UserState UserState
 	Witness   Witness
 }
