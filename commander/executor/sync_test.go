@@ -284,7 +284,6 @@ func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
 		},
-		ToStateID:   ref.Uint32(5),
 		ToPublicKey: *s.wallets[0].PublicKey(),
 	}
 	s.setC2THashAndSign(&tx)
@@ -297,10 +296,10 @@ func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 	s.NoError(err)
 	s.Equal(models.MakeUint256(600), state0.Balance)
 
-	state5, err := s.storage.GetStateLeaf(5)
+	state2, err := s.storage.GetStateLeaf(2)
 	s.NoError(err)
-	s.Equal(models.MakeUint256(400), state5.Balance)
-	s.Equal(uint32(0), state5.PubKeyID)
+	s.Equal(models.MakeUint256(400), state2.Balance)
+	s.Equal(uint32(0), state2.PubKeyID)
 
 	treeRoot := s.getAccountTreeRoot()
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
@@ -317,6 +316,7 @@ func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 	s.NoError(err)
 	transfer.Signature = tx.Signature
 	tx.IncludedInCommitment = &commitment.ID
+	tx.ToStateID = transfer.ToStateID
 	s.Equal(tx, *transfer)
 }
 
