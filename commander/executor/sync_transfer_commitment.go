@@ -10,7 +10,6 @@ var (
 	ErrTooManyTx         = NewDisputableTransferErrorWithoutProofs("too many transactions in a commitment")
 )
 
-// TODO-AFS rename file (and C2T as well)
 func (t *TransactionExecutor) syncTransferCommitment(
 	commitment *encoder.DecodedCommitment,
 ) (models.GenericTransactionArray, error) {
