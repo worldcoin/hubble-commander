@@ -23,7 +23,6 @@ type ApplyCreate2TransfersTestSuite struct {
 	tree                *storage.StateTree
 	cfg                 *config.RollupConfig
 	client              *eth.TestClient
-	publicKey           models.PublicKey
 	transactionExecutor *TransactionExecutor
 	feeReceiver         *FeeReceiver
 	events              chan *accountregistry.AccountRegistrySinglePubkeyRegistered
@@ -65,12 +64,11 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 		Balance:  models.MakeUint256(1000),
 		Nonce:    models.MakeUint256(0),
 	}
-	s.publicKey = models.PublicKey{1, 2, 3}
 
 	for i := 1; i <= 50; i++ {
 		err = s.storage.AddAccountIfNotExists(&models.Account{
 			PubKeyID:  uint32(i),
-			PublicKey: s.publicKey,
+			PublicKey: models.PublicKey{1, 2, 3},
 		})
 		s.NoError(err)
 	}
@@ -78,7 +76,7 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 	for i := 1; i <= 10; i++ {
 		err = s.storage.AddAccountIfNotExists(&models.Account{
 			PubKeyID:  uint32(100 + i),
-			PublicKey: s.publicKey,
+			PublicKey: models.PublicKey{1, 2, 3},
 		})
 		s.NoError(err)
 	}
@@ -108,7 +106,7 @@ func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AllValid() {
-	generatedTransfers := generateValidCreate2Transfers(3, &s.publicKey)
+	generatedTransfers := generateValidCreate2Transfers(3)
 
 	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
@@ -119,8 +117,8 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AllValid() {
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
-	generatedTransfers := generateValidCreate2Transfers(2, &s.publicKey)
-	generatedTransfers = append(generatedTransfers, generateInvalidCreate2Transfers(3, &s.publicKey)...)
+	generatedTransfers := generateValidCreate2Transfers(2)
+	generatedTransfers = append(generatedTransfers, generateInvalidCreate2Transfers(3)...)
 
 	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
@@ -131,7 +129,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AppliesNoMoreThanLimit() {
-	generatedTransfers := generateValidCreate2Transfers(7, &s.publicKey)
+	generatedTransfers := generateValidCreate2Transfers(7)
 
 	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
@@ -142,8 +140,8 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AppliesNoMore
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransferErrors() {
-	generatedTransfers := generateValidCreate2Transfers(3, &s.publicKey)
-	generatedTransfers = append(generatedTransfers, generateInvalidCreate2Transfers(2, &s.publicKey)...)
+	generatedTransfers := generateValidCreate2Transfers(3)
+	generatedTransfers = append(generatedTransfers, generateInvalidCreate2Transfers(2)...)
 
 	for i := range generatedTransfers {
 		_, err := s.storage.AddCreate2Transfer(&generatedTransfers[i])
@@ -169,7 +167,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AppliesFee() {
-	generatedTransfers := generateValidCreate2Transfers(3, &s.publicKey)
+	generatedTransfers := generateValidCreate2Transfers(3)
 
 	_, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
@@ -184,7 +182,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AppliesFee() 
 // TODO-AFS check the same test for normal Transfer
 // TODO-AFS _InvalidTransfer
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidSlicesLength() {
-	generatedTransfers := generateValidCreate2Transfers(3, &s.publicKey)
+	generatedTransfers := generateValidCreate2Transfers(3)
 	_, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, []uint32{1, 2}, s.feeReceiver)
 	s.Equal(ErrInvalidSliceLength, err)
 }
@@ -211,7 +209,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_AccountNotExi
 
 func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_AccountForTokenIDNotExists() {
 	c2T := create2Transfer
-	c2T.ToPublicKey = s.publicKey
+	c2T.ToPublicKey = models.PublicKey{1, 2, 3}
 
 	pubKeyID, err := s.transactionExecutor.getOrRegisterPubKeyID(s.events, &c2T, models.MakeUint256(1))
 	s.NoError(err)
@@ -220,7 +218,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_AccountForTok
 
 // TODO-AFS add missing tests
 
-func generateValidCreate2Transfers(transfersAmount uint32, publicKey *models.PublicKey) []models.Create2Transfer {
+func generateValidCreate2Transfers(transfersAmount uint32) []models.Create2Transfer {
 	transfers := make([]models.Create2Transfer, 0, transfersAmount)
 	for i := 0; i < int(transfersAmount); i++ {
 		transfer := models.Create2Transfer{
@@ -233,14 +231,14 @@ func generateValidCreate2Transfers(transfersAmount uint32, publicKey *models.Pub
 				Nonce:       models.MakeUint256(uint64(i)),
 			},
 			ToStateID:   nil,
-			ToPublicKey: *publicKey,
+			ToPublicKey: models.PublicKey{1, 2, 3},
 		}
 		transfers = append(transfers, transfer)
 	}
 	return transfers
 }
 
-func generateInvalidCreate2Transfers(transfersAmount uint64, publicKey *models.PublicKey) []models.Create2Transfer {
+func generateInvalidCreate2Transfers(transfersAmount uint64) []models.Create2Transfer {
 	transfers := make([]models.Create2Transfer, 0, transfersAmount)
 	for i := uint64(0); i < transfersAmount; i++ {
 		transfer := models.Create2Transfer{
@@ -253,7 +251,7 @@ func generateInvalidCreate2Transfers(transfersAmount uint64, publicKey *models.P
 				Nonce:       models.MakeUint256(0),
 			},
 			ToStateID:   nil,
-			ToPublicKey: *publicKey,
+			ToPublicKey: models.PublicKey{1, 2, 3},
 		}
 		transfers = append(transfers, transfer)
 	}

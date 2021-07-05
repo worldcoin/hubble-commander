@@ -55,7 +55,7 @@ func (s *Create2TransferCommitmentsTestSuite) TearDownTest() {
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_QueriesForMorePendingTransfersUntilSatisfied() {
 	addAccountWithHighNonce(s.Assertions, s.storage, 123)
 
-	transfers := generateValidCreate2Transfers(6, &models.PublicKey{1, 2, 3})
+	transfers := generateValidCreate2Transfers(6)
 	s.invalidateCreate2Transfers(transfers[1:6])
 
 	highNonceTransfer := models.Create2Transfer{
@@ -109,7 +109,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 }
 
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_ReturnsErrorWhenThereAreNotEnoughValidTransfers() {
-	transfers := generateValidCreate2Transfers(2, &models.PublicKey{1, 2, 3})
+	transfers := generateValidCreate2Transfers(2)
 	transfers[1].Amount = models.MakeUint256(99999999999)
 	s.addCreate2Transfers(transfers)
 
@@ -211,6 +211,6 @@ func (s *Create2TransferCommitmentsTestSuite) addCreate2Transfers(transfers []mo
 }
 
 func (s *Create2TransferCommitmentsTestSuite) preparePendingCreate2Transfers(transfersAmount uint32) {
-	transfers := generateValidCreate2Transfers(transfersAmount, &models.PublicKey{1, 2, 3})
+	transfers := generateValidCreate2Transfers(transfersAmount)
 	s.addCreate2Transfers(transfers)
 }

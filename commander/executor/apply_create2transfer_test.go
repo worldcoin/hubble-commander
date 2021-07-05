@@ -121,7 +121,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_AppliesTransfer
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfer_InvalidTransfer() {
-	transfers := generateInvalidCreate2Transfers(1, &s.publicKey)
+	transfers := generateInvalidCreate2Transfers(1)
 	transfers[0].Amount = models.MakeUint256(500)
 
 	_, transferErr, appErr := s.transactionExecutor.ApplyCreate2Transfer(&transfers[0], 1, *models.NewUint256(1))
@@ -170,7 +170,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_AppliesT
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransferForSync_InvalidTransfer() {
-	transfers := generateValidCreate2Transfers(1, &s.publicKey)
+	transfers := generateValidCreate2Transfers(1)
 	invalidC2T := transfers[0]
 	invalidC2T.Amount = models.MakeUint256(1_000_000)
 	invalidC2T.ToStateID = ref.Uint32(5)
