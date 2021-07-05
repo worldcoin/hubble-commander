@@ -24,8 +24,8 @@ type DisputableTransferError struct {
 	Proofs []models.StateMerkleProof
 }
 
-func NewDisputableTransferError(reason string, proofs []models.StateMerkleProof) *DisputableTransferError {
-	return &DisputableTransferError{Reason: reason, Proofs: proofs}
+func NewDisputableTransferError(reason error, proofs []models.StateMerkleProof) *DisputableTransferError {
+	return &DisputableTransferError{Reason: reason.Error(), Proofs: proofs}
 }
 
 func (e DisputableTransferError) Error() string {

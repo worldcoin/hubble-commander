@@ -118,19 +118,6 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_SomeValid() {
 	s.Len(transfers.invalidTransfers, 3)
 }
 
-// TODO test ApplyTransfersForSync
-func (s *ApplyTransfersTestSuite) TestApplyTransfers_InvalidInSyncMode() {
-	s.T().SkipNow()
-	generatedTransfers := generateValidTransfers(2)
-	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(3)...)
-
-	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
-	s.NoError(err)
-
-	s.Len(transfers.appliedTransfers, 2)
-	s.Len(transfers.invalidTransfers, 1)
-}
-
 func (s *ApplyTransfersTestSuite) TestApplyTransfers_MoreThanTxsPerCommitment() {
 	generatedTransfers := generateValidTransfers(13)
 
@@ -171,8 +158,16 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersTestSuite_SavesTransferError
 	}
 }
 
-func TestApplyTransfersTestSuite(t *testing.T) {
-	suite.Run(t, new(ApplyTransfersTestSuite))
+func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_InvalidTransfer() {
+	transfers := generateValidTransfers(2)
+	transfers = append(transfers, generateInvalidTransfers(2)...)
+
+	appliedTransfers, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver)
+	s.Nil(appliedTransfers)
+
+	var disputableTransferError *DisputableTransferError
+	s.ErrorAs(err, &disputableTransferError)
+	s.Len(disputableTransferError.Proofs, 6)
 }
 
 func generateValidTransfers(transfersAmount uint32) []models.Transfer {
@@ -202,7 +197,7 @@ func generateInvalidTransfers(transfersAmount uint64) []models.Transfer {
 				Hash:        utils.RandomHash(),
 				TxType:      txtype.Transfer,
 				FromStateID: 1,
-				Amount:      models.MakeUint256(1),
+				Amount:      models.MakeUint256(1_000_000),
 				Fee:         models.MakeUint256(1),
 				Nonce:       models.MakeUint256(0),
 			},
@@ -211,4 +206,8 @@ func generateInvalidTransfers(transfersAmount uint64) []models.Transfer {
 		transfers = append(transfers, transfer)
 	}
 	return transfers
+}
+
+func TestApplyTransfersTestSuite(t *testing.T) {
+	suite.Run(t, new(ApplyTransfersTestSuite))
 }

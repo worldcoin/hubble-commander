@@ -112,7 +112,7 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 			return nil, appError
 		}
 		if transferError != nil {
-			return nil, NewDisputableTransferError(transferError.Error(), stateChangeProofs)
+			return nil, NewDisputableTransferError(transferError, stateChangeProofs)
 		}
 
 		returnStruct.appliedTransfers = append(returnStruct.appliedTransfers, *transfer)

@@ -70,19 +70,16 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 	for i := range transfers {
 		transfer := &transfers[i]
 		synced, transferError, appError := t.ApplyTransferForSync(transfer, feeReceiver.TokenID)
-		// TODO-AFS is nil check necessary?
-		if synced != nil {
-			stateChangeProofs = append(
-				stateChangeProofs,
-				synced.senderStateProof,
-				synced.receiverStateProof,
-			)
-		}
 		if appError != nil {
 			return nil, appError
 		}
+		stateChangeProofs = append(
+			stateChangeProofs,
+			synced.senderStateProof,
+			synced.receiverStateProof,
+		)
 		if transferError != nil {
-			return nil, NewDisputableTransferError(transferError.Error(), stateChangeProofs)
+			return nil, NewDisputableTransferError(transferError, stateChangeProofs)
 		}
 
 		appliedTransfers = append(appliedTransfers, *synced.transfer.(*models.Transfer))
