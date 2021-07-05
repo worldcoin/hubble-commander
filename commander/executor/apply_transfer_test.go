@@ -269,7 +269,19 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ReturnsProofs() {
 	s.Len(sync.receiverStateProof.Witness, storage.StateTreeDepth)
 }
 
-// TODO-AFS test sets nonce
+func (s *ApplyTransferTestSuite) TestApplyTransferForSync_SetsNonce() {
+	s.setUserStatesInTree()
+
+	_, transferError, appError := s.transactionExecutor.ApplyTransferForSync(&transfer, models.MakeUint256(1))
+	s.NoError(appError)
+	s.NoError(transferError)
+
+	sync, transferError, appError := s.transactionExecutor.ApplyTransferForSync(&transfer, models.MakeUint256(1))
+	s.NoError(appError)
+	s.NoError(transferError)
+
+	s.Equal(models.MakeUint256(1), sync.transfer.GetNonce())
+}
 
 func (s *ApplyTransferTestSuite) setUserStatesInTree() {
 	senderStateID := senderState.PubKeyID
