@@ -47,7 +47,7 @@ func (s *VerifySignatureTestSuite) SetupTest() {
 	s.storage = testStorage.Storage
 	s.tree = st.NewStateTree(s.storage)
 	s.teardown = testStorage.Teardown
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, TransactionExecutorOpts{AssumeNonces: true})
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, TransactionExecutorOpts{})
 	err = s.storage.SetChainState(&s.client.ChainState)
 	s.NoError(err)
 	s.addAccounts()

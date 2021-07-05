@@ -54,7 +54,7 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 }
 
 func (c *Commander) syncRemoteBatch(remoteBatch *eth.DecodedBatch) (err error) {
-	txExecutor, err := executor.NewTransactionExecutor(c.storage, c.client, c.cfg.Rollup, executor.TransactionExecutorOpts{AssumeNonces: true})
+	txExecutor, err := executor.NewTransactionExecutor(c.storage, c.client, c.cfg.Rollup, executor.TransactionExecutorOpts{})
 	if err != nil {
 		return err
 	}
