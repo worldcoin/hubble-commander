@@ -27,6 +27,7 @@ func (a *API) GetBatches(from, to *models.Uint256) ([]dto.Batch, error) {
 			Type:              batches[i].Type,
 			TransactionHash:   batches[i].TransactionHash,
 			Hash:              batches[i].Hash,
+			BlockTime:         batches[i].BlockTime,
 			FinalisationBlock: batches[i].FinalisationBlock,
 		}, submissionBlock))
 	}

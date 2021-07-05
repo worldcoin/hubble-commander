@@ -30,7 +30,8 @@ func (s *Storage) MarkBatchAsSubmitted(batch *models.Batch) error {
 			Where(squirrel.Eq{"batch_id": batch.ID}).
 			Set("batch_hash", batch.Hash).
 			Set("finalisation_block", batch.FinalisationBlock). // nolint:misspell
-			Set("account_tree_root", batch.AccountTreeRoot),
+			Set("account_tree_root", batch.AccountTreeRoot).
+			Set("block_time", batch.BlockTime),
 	).Exec()
 	if err != nil {
 		return err

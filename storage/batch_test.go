@@ -2,6 +2,7 @@ package storage
 
 import (
 	"testing"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -65,6 +66,7 @@ func (s *BatchTestSuite) TestMarkBatchAsSubmitted() {
 		Type:              pendingBatch.Type,
 		TransactionHash:   pendingBatch.TransactionHash,
 		Hash:              utils.NewRandomHash(),
+		BlockTime:         ref.Time(time.Unix(140, 0).UTC()),
 		FinalisationBlock: ref.Uint32(1234),
 		AccountTreeRoot:   utils.NewRandomHash(),
 	}
@@ -73,6 +75,7 @@ func (s *BatchTestSuite) TestMarkBatchAsSubmitted() {
 
 	actual, err := s.storage.GetBatch(pendingBatch.ID)
 	s.NoError(err)
+	actual.BlockTime = ref.Time(actual.BlockTime.UTC())
 	s.Equal(batch, actual)
 }
 
