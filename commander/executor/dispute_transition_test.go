@@ -247,10 +247,10 @@ func (s *DisputeTransitionTestSuite) createTransfer(from, to uint32, nonce, amou
 func (s *DisputeTransitionTestSuite) getTransferWitness(fromStateID, toStateID uint32) (senderWitness, receiverWitness models.Witness) {
 	var err error
 
-	senderWitness, err = s.transactionExecutor.stateTree.GetWitness(models.MakeMerklePathFromStateID(fromStateID))
+	senderWitness, err = s.transactionExecutor.stateTree.GetWitness(fromStateID)
 	s.NoError(err)
 
-	receiverWitness, err = s.transactionExecutor.stateTree.GetWitness(models.MakeMerklePathFromStateID(toStateID))
+	receiverWitness, err = s.transactionExecutor.stateTree.GetWitness(toStateID)
 	s.NoError(err)
 
 	return senderWitness, receiverWitness
