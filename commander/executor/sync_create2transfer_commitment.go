@@ -22,30 +22,27 @@ func (t *TransactionExecutor) syncCreate2TransferCommitment(
 		return nil, err
 	}
 
-	transfers, err := t.ApplyCreate2TransfersForSync(deserializedTransfers, pubKeyIDs, feeReceiver)
+	appliedTransfers, err := t.ApplyCreate2TransfersForSync(deserializedTransfers, pubKeyIDs, feeReceiver)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(transfers.invalidTransfers) > 0 {
-		return nil, ErrFraudulentTransfer
-	}
-	if len(transfers.appliedTransfers) != len(deserializedTransfers) {
+	if len(appliedTransfers) != len(deserializedTransfers) {
 		return nil, ErrTransfersNotApplied
 	}
 
-	err = t.setPublicKeys(transfers.appliedTransfers)
+	err = t.setPublicKeys(appliedTransfers)
 	if err != nil {
 		return nil, err
 	}
 	if !t.cfg.DevMode {
-		err = t.verifyCreate2TransferSignature(commitment, transfers.appliedTransfers)
+		err = t.verifyCreate2TransferSignature(commitment, appliedTransfers)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return models.Create2TransferArray(transfers.appliedTransfers), nil
+	return models.Create2TransferArray(appliedTransfers), nil
 }
 
 func (t *TransactionExecutor) setPublicKeys(transfers []models.Create2Transfer) error {

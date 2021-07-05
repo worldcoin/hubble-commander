@@ -175,12 +175,10 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AppliesFee() 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_AllValid() {
 	generatedTransfers, pubKeyIDs := generateValidCreate2TransfersForSync(3, 4)
 
-	transfers, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, pubKeyIDs, s.feeReceiver)
+	appliedTransfers, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, pubKeyIDs, s.feeReceiver)
 	s.NoError(err)
 
-	s.Len(transfers.appliedTransfers, 3)
-	s.Len(transfers.invalidTransfers, 0)
-	s.Len(transfers.addedPubKeyIDs, 3)
+	s.Len(appliedTransfers, 3)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidTransfer() {
@@ -190,8 +188,8 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_Invali
 	generatedTransfers = append(generatedTransfers, invalidTxs...)
 	pubKeyIDs = append(pubKeyIDs, invalidPubKeyIDs...)
 
-	transfers, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, pubKeyIDs, s.feeReceiver)
-	s.Nil(transfers)
+	appliedTransfers, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, pubKeyIDs, s.feeReceiver)
+	s.Nil(appliedTransfers)
 
 	var disputableTransferError *DisputableTransferError
 	s.ErrorAs(err, &disputableTransferError)
