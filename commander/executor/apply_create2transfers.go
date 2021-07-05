@@ -77,6 +77,7 @@ func (t *TransactionExecutor) ApplyCreate2Transfers(
 	return returnStruct, nil
 }
 
+// TODO-AFS return two slices (appliedTransfers and addedPubKeyIDs) instead of AppliedC2Transfers struct
 func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 	transfers []models.Create2Transfer,
 	pubKeyIDs []uint32,
