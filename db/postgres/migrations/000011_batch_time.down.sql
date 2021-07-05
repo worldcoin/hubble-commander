@@ -1,0 +1,1 @@
+ALTER TABLE batch DROP COLUMN time;

@@ -17,6 +17,7 @@ func (s *Storage) AddBatch(batch *models.Batch) error {
 				batch.FinalisationBlock,
 				batch.AccountTreeRoot,
 				batch.PrevStateRoot,
+				batch.Time,
 			),
 	).Exec()
 
