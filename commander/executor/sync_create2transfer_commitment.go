@@ -27,10 +27,6 @@ func (t *TransactionExecutor) syncCreate2TransferCommitment(
 		return nil, err
 	}
 
-	if len(appliedTransfers) != len(deserializedTransfers) {
-		return nil, ErrTransfersNotApplied
-	}
-
 	err = t.setPublicKeys(appliedTransfers)
 	if err != nil {
 		return nil, err
