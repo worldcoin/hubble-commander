@@ -118,7 +118,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_SomeValid() {
 	s.Len(transfers.invalidTransfers, 3)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTransfers_MoreThanTxsPerCommitment() {
+func (s *ApplyTransfersTestSuite) TestApplyTransfers_AppliesNoMoreThanLimit() {
 	generatedTransfers := generateValidTransfers(13)
 
 	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
@@ -132,7 +132,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_MoreThanTxsPerCommitment() 
 	s.Equal(models.MakeUint256(6), state.Nonce)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTransfersTestSuite_SavesTransferErrors() {
+func (s *ApplyTransfersTestSuite) TestApplyTransfers_SavesTransferErrors() {
 	generatedTransfers := generateValidTransfers(3)
 	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(2)...)
 
@@ -158,6 +158,25 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersTestSuite_SavesTransferError
 	}
 }
 
+func (s *ApplyTransfersTestSuite) TestApplyTransfers_AppliesFee() {
+	generatedTransfers := generateValidTransfers(3)
+
+	_, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
+	s.NoError(err)
+
+	feeReceiverState, err := s.transactionExecutor.storage.GetStateLeaf(s.feeReceiver.StateID)
+	s.NoError(err)
+	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
+}
+
+func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AllValid() {
+	transfers := generateValidTransfers(3)
+
+	appliedTransfers, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver)
+	s.NoError(err)
+	s.Len(appliedTransfers, 3)
+}
+
 func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_InvalidTransfer() {
 	transfers := generateValidTransfers(2)
 	transfers = append(transfers, generateInvalidTransfers(2)...)
@@ -168,6 +187,17 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_InvalidTransfer() {
 	var disputableTransferError *DisputableTransferError
 	s.ErrorAs(err, &disputableTransferError)
 	s.Len(disputableTransferError.Proofs, 6)
+}
+
+func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AppliesFee() {
+	generatedTransfers := generateValidTransfers(3)
+
+	_, err := s.transactionExecutor.ApplyTransfersForSync(generatedTransfers, s.feeReceiver)
+	s.NoError(err)
+
+	feeReceiverState, err := s.transactionExecutor.storage.GetStateLeaf(s.feeReceiver.StateID)
+	s.NoError(err)
+	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }
 
 func generateValidTransfers(transfersAmount uint32) []models.Transfer {

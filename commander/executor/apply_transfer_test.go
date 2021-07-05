@@ -269,6 +269,8 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ReturnsProofs() {
 	s.Len(sync.receiverStateProof.Witness, storage.StateTreeDepth)
 }
 
+// TODO-AFS test sets nonce
+
 func (s *ApplyTransferTestSuite) setUserStatesInTree() {
 	senderStateID := senderState.PubKeyID
 	receiverStateID := receiverState.PubKeyID
