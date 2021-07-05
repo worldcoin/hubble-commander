@@ -59,7 +59,7 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 ) {
 	numTransfers := len(transfers)
 	if numTransfers == 0 {
-		return []models.Transfer{}, nil // TODO-AFS check if there can be commitment without transfers
+		return []models.Transfer{}, nil
 	}
 
 	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*numTransfers)
