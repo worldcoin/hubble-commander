@@ -88,15 +88,18 @@ func (s *StateTree) GetWitness(id uint32) (models.Witness, error) {
 	if err != nil {
 		return nil, err
 	}
-	nodes, err := s.storage.GetStateNodes(witnessPaths)
-	if err != nil {
-		return nil, err
+
+	witness := make([]common.Hash, 0, len(witnessPaths))
+	for i := range witnessPaths {
+		var node *models.StateNode
+		node, err = s.storage.GetStateNodeByPath(&witnessPaths[i])
+		if err != nil {
+			return nil, err
+		}
+		witness = append(witness, node.DataHash)
 	}
-	witnesses := make([]common.Hash, 0, len(nodes))
-	for i := range nodes {
-		witnesses = append(witnesses, nodes[i].DataHash)
-	}
-	return witnesses, nil
+
+	return witness, nil
 }
 
 func (s *StateTree) RevertTo(targetRootHash common.Hash) error {

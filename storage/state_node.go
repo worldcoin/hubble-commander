@@ -36,27 +36,3 @@ func newZeroStateNode(path *models.MerklePath) *models.StateNode {
 		DataHash:   merkletree.GetZeroHash(StateTreeDepth - uint(path.Depth)),
 	}
 }
-
-// TODO-AFS remove after changing implementation of GetWitness
-func (s *Storage) GetStateNodes(paths []models.MerklePath) (nodes []models.StateNode, err error) {
-	tx, storage, err := s.BeginTransaction(TxOptions{Badger: true, ReadOnly: true})
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback(&err)
-
-	nodes = make([]models.StateNode, 0)
-	for i := range paths {
-		var node *models.StateNode
-		node, err = storage.GetStateNodeByPath(&paths[i])
-		if err != nil {
-			return nil, err
-		}
-		nodes = append(nodes, *node)
-	}
-	err = tx.Commit()
-	if err != nil {
-		return nil, err
-	}
-	return nodes, nil
-}
