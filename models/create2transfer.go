@@ -38,3 +38,8 @@ func (t *Create2Transfer) GetToStateID() *uint32 {
 func (t Create2Transfer) Copy() GenericTransaction {
 	return &t
 }
+
+// nolint:gocritic
+func (t Create2Transfer) Clone() *Create2Transfer {
+	return &t
+}

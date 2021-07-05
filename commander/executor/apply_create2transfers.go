@@ -52,19 +52,19 @@ func (t *TransactionExecutor) ApplyCreate2Transfers(
 			return nil, err
 		}
 
-		transferError, appError := t.ApplyCreate2Transfer(transfer, *pubKeyID, feeReceiver.TokenID)
+		appliedTransfer, transferError, appError := t.ApplyCreate2Transfer(transfer, *pubKeyID, feeReceiver.TokenID)
 		if appError != nil {
 			return nil, appError
 		}
 		if transferError != nil {
-			logAndSaveTransactionError(t.storage, &transfer.TransactionBase, transferError)
-			returnStruct.invalidTransfers = append(returnStruct.invalidTransfers, *transfer)
+			logAndSaveTransactionError(t.storage, &appliedTransfer.TransactionBase, transferError)
+			returnStruct.invalidTransfers = append(returnStruct.invalidTransfers, *appliedTransfer)
 			continue
 		}
 
-		returnStruct.appliedTransfers = append(returnStruct.appliedTransfers, *transfer)
+		returnStruct.appliedTransfers = append(returnStruct.appliedTransfers, *appliedTransfer)
 		returnStruct.addedPubKeyIDs = append(returnStruct.addedPubKeyIDs, *pubKeyID)
-		*combinedFee = *combinedFee.Add(&transfer.Fee)
+		*combinedFee = *combinedFee.Add(&appliedTransfer.Fee)
 	}
 
 	if len(returnStruct.appliedTransfers) > 0 {

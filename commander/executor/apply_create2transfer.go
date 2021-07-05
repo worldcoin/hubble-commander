@@ -4,24 +4,25 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-// TODO-AFS consider returning newCreate2Transfer with ToStateID set instead of modifying received parameter
 func (t *TransactionExecutor) ApplyCreate2Transfer(
 	create2Transfer *models.Create2Transfer,
 	pubKeyID uint32,
 	commitmentTokenID models.Uint256,
-) (transferError, appError error) {
+) (appliedTransfer *models.Create2Transfer, transferError, appError error) {
 	nextAvailableStateID, appError := t.storage.GetNextAvailableStateID()
 	if appError != nil {
-		return nil, appError
+		return appliedTransfer, nil, appError
 	}
-	create2Transfer.ToStateID = nextAvailableStateID
+	appliedTransfer = create2Transfer.Clone()
+	appliedTransfer.ToStateID = nextAvailableStateID
 
-	appError = t.insertNewUserState(*create2Transfer.ToStateID, pubKeyID, commitmentTokenID)
+	appError = t.insertNewUserState(*appliedTransfer.ToStateID, pubKeyID, commitmentTokenID)
 	if appError != nil {
-		return nil, appError
+		return nil, nil, appError
 	}
 
-	return t.ApplyTransfer(create2Transfer, commitmentTokenID)
+	transferError, appError = t.ApplyTransfer(appliedTransfer, commitmentTokenID)
+	return appliedTransfer, transferError, appError
 }
 
 func (t *TransactionExecutor) ApplyCreate2TransferForSync(

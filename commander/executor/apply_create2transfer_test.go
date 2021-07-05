@@ -94,8 +94,7 @@ func (s *ApplyCreate2TransferTestSuite) TearDownTest() {
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InsertsNewUserState() {
 	pubKeyID := uint32(2)
-	c2T := create2Transfer
-	transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&c2T, pubKeyID, feeReceiverTokenID)
+	_, transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&create2Transfer, pubKeyID, feeReceiverTokenID)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -108,12 +107,11 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InsertsNewUserS
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_AppliesTransfer() {
-	c2T := create2Transfer
-	transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&c2T, 2, feeReceiverTokenID)
+	appliedTransfer, transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&create2Transfer, 2, feeReceiverTokenID)
 	s.NoError(appError)
 	s.NoError(transferError)
 
-	senderLeaf, err := s.storage.GetStateLeaf(c2T.FromStateID)
+	senderLeaf, err := s.storage.GetStateLeaf(appliedTransfer.FromStateID)
 	s.NoError(err)
 	receiverLeaf, err := s.storage.GetStateLeaf(2)
 	s.NoError(err)
@@ -126,7 +124,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_AppliesTransfer
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_TransferWithStateID() {
 	c2T := create2Transfer
 	c2T.ToStateID = ref.Uint32(5)
-	transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&c2T, 2, feeReceiverTokenID)
+	_, transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&c2T, 2, feeReceiverTokenID)
 	s.NoError(appError)
 	s.NoError(transferError)
 	s.Equal(uint32(5), *c2T.ToStateID)
@@ -144,7 +142,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfer_InvalidTransfe
 	transfers := generateInvalidCreate2Transfers(1, &s.publicKey)
 	transfers[0].Amount = models.MakeUint256(500)
 
-	transferErr, appErr := s.transactionExecutor.ApplyCreate2Transfer(&transfers[0], 1, *models.NewUint256(1))
+	_, transferErr, appErr := s.transactionExecutor.ApplyCreate2Transfer(&transfers[0], 1, *models.NewUint256(1))
 	s.Error(transferErr)
 	s.NoError(appErr)
 }
