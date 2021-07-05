@@ -28,6 +28,10 @@ func NewDisputableTransferError(reason error, proofs []models.StateMerkleProof) 
 	return &DisputableTransferError{Reason: reason.Error(), Proofs: proofs}
 }
 
+func NewDisputableTransferErrorWithoutProofs(reason string) *DisputableTransferError {
+	return &DisputableTransferError{Reason: reason, Proofs: []models.StateMerkleProof{}}
+}
+
 func (e DisputableTransferError) Error() string {
 	return fmt.Sprintf("failed to validate transfer: %s", e.Reason)
 }

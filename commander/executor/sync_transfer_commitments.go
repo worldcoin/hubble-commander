@@ -1,15 +1,13 @@
 package executor
 
 import (
-	"errors"
-
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
 var (
-	ErrTooManyTx         = errors.New("too many transactions in a commitment")
-	ErrInvalidDataLength = errors.New("invalid data length")
+	ErrInvalidDataLength = NewDisputableTransferErrorWithoutProofs("invalid data length")
+	ErrTooManyTx         = NewDisputableTransferErrorWithoutProofs("too many transactions in a commitment")
 )
 
 // TODO-AFS rename file (and C2T as well)
