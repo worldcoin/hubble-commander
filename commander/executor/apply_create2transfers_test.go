@@ -65,17 +65,9 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 		Nonce:    models.MakeUint256(0),
 	}
 
-	for i := 1; i <= 50; i++ {
+	for i := 1; i <= 4; i++ {
 		err = s.storage.AddAccountIfNotExists(&models.Account{
 			PubKeyID:  uint32(i),
-			PublicKey: models.PublicKey{1, 2, 3},
-		})
-		s.NoError(err)
-	}
-
-	for i := 1; i <= 10; i++ {
-		err = s.storage.AddAccountIfNotExists(&models.Account{
-			PubKeyID:  uint32(100 + i),
 			PublicKey: models.PublicKey{1, 2, 3},
 		})
 		s.NoError(err)
@@ -198,16 +190,13 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_Invali
 // 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 // }
 
-func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_AccountNotExists() {
-	c2T := create2Transfer
-	c2T.ToPublicKey = models.PublicKey{10, 11, 12}
-
-	pubKeyID, err := s.transactionExecutor.getOrRegisterPubKeyID(s.events, &c2T, models.MakeUint256(1))
+func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_RegistersPubKeyIDInCaseThereIsNoUnusedOne() {
+	pubKeyID, err := s.transactionExecutor.getOrRegisterPubKeyID(s.events, &create2Transfer, models.MakeUint256(1))
 	s.NoError(err)
 	s.Equal(uint32(0), *pubKeyID)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_AccountForTokenIDNotExists() {
+func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_ReturnsUnusedPubKeyID() {
 	c2T := create2Transfer
 	c2T.ToPublicKey = models.PublicKey{1, 2, 3}
 
