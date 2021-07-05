@@ -106,6 +106,15 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_GetsNextAvailab
 	s.Equal(models.MakeUint256(0), leaf.Nonce)
 }
 
+func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_SetsCorrectToStateIDInReturnedTransfer() {
+	pubKeyID := uint32(2)
+	appliedTransfer, transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&create2Transfer, pubKeyID, feeReceiverTokenID)
+	s.NoError(appError)
+	s.NoError(transferError)
+
+	s.Equal(ref.Uint32(2), appliedTransfer.ToStateID)
+}
+
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_AppliesTransfer() {
 	appliedTransfer, transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&create2Transfer, 2, feeReceiverTokenID)
 	s.NoError(appError)
