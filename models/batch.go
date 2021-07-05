@@ -15,5 +15,5 @@ type Batch struct {
 	FinalisationBlock *uint32      `db:"finalisation_block"` // nolint:misspell
 	AccountTreeRoot   *common.Hash `db:"account_tree_root"`
 	PrevStateRoot     *common.Hash `db:"prev_state_root"`
-	Time              *time.Time   `db:"time"`
+	BlockTime         *time.Time   `db:"block_time"`
 }
