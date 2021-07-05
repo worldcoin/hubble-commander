@@ -3,6 +3,8 @@ package eth
 import (
 	"bytes"
 	"context"
+	"math/big"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -42,8 +44,15 @@ func (c *Client) GetBatches(opts *bind.FilterOpts) ([]DecodedBatch, error) {
 
 		accountRoot := common.BytesToHash(it.Event.AccountRoot[:])
 
+		header, err := c.ChainConnection.GetBackend().HeaderByNumber(context.Background(), new(big.Int).SetUint64(it.Event.Raw.BlockNumber))
+		if err != nil {
+			return nil, err
+		}
+		mineTime := time.Unix(int64(header.Time), 0)
+
 		batch.TransactionHash = txHash
 		batch.AccountTreeRoot = &accountRoot
+		batch.Time = &mineTime
 
 		res = append(res, DecodedBatch{
 			Batch:       *batch,
