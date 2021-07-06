@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
@@ -26,7 +27,7 @@ func (s *ApplyFeeTestSuite) SetupTest() {
 	s.storage, err = storage.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.tree = storage.NewStateTree(s.storage.Storage)
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, nil, nil, TransactionExecutorOpts{})
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, nil, nil, context.Background())
 }
 
 func (s *ApplyFeeTestSuite) TearDownTest() {
@@ -36,7 +37,7 @@ func (s *ApplyFeeTestSuite) TearDownTest() {
 
 func (s *ApplyFeeTestSuite) TestApplyFee() {
 	feeReceiverStateID := receiverState.PubKeyID
-	err := s.tree.Set(feeReceiverStateID, &receiverState)
+	_, err := s.tree.Set(feeReceiverStateID, &receiverState)
 	s.NoError(err)
 
 	err = s.transactionExecutor.ApplyFee(feeReceiverStateID, models.MakeUint256(555))

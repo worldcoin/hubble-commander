@@ -13,12 +13,8 @@ import (
 )
 
 var (
-	ErrFraudulentTransfer    = errors.New("fraudulent transfer encountered when syncing")
-	ErrTransfersNotApplied   = errors.New("could not apply all transfers from synced batch")
 	ErrBatchSubmissionFailed = errors.New("previous submit batch transaction failed")
-	ErrInvalidSignature      = NewDisputableTransferError(SignatureError, "invalid signature")
-	ErrTooManyTx             = NewDisputableTransferError(TransitionError, "too many transactions in a commitment")
-	ErrInvalidDataLength     = NewDisputableTransferError(TransitionError, "invalid data length")
+	ErrInvalidSignature      = errors.New("invalid commitment signature")
 )
 
 func (t *TransactionExecutor) SyncBatch(remoteBatch *eth.DecodedBatch) error {
@@ -108,7 +104,7 @@ func (t *TransactionExecutor) excludeTransactionsFromCommitment(batchIDs ...mode
 }
 
 func (t *TransactionExecutor) getTransactionSender(txHash common.Hash) (*common.Address, error) {
-	tx, _, err := t.client.ChainConnection.GetBackend().TransactionByHash(t.opts.Ctx, txHash)
+	tx, _, err := t.client.ChainConnection.GetBackend().TransactionByHash(t.ctx, txHash)
 	if err != nil {
 		return nil, err
 	}
@@ -145,6 +141,10 @@ func (t *TransactionExecutor) syncCommitments(batch *eth.DecodedBatch) error {
 			// TODO: dispute fraudulent commitment
 			return err
 		}
+		if IsDisputableTransferError(err) {
+			// TODO: dispute fraudulent commitment
+			return err
+		}
 		if err != nil {
 			return err
 		}
@@ -164,9 +164,9 @@ func (t *TransactionExecutor) syncCommitment(
 	var err error
 	switch batch.Type {
 	case txtype.Transfer:
-		transactions, err = t.syncTransferCommitments(commitment)
+		transactions, err = t.syncTransferCommitment(commitment)
 	case txtype.Create2Transfer:
-		transactions, err = t.syncCreate2TransferCommitments(commitment)
+		transactions, err = t.syncCreate2TransferCommitment(commitment)
 	case txtype.MassMigration:
 		return errors.Errorf("unsupported batch type for sync: %s", batch.Type)
 	}

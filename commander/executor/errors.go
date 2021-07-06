@@ -3,6 +3,8 @@ package executor
 import (
 	"errors"
 	"fmt"
+
+	"github.com/Worldcoin/hubble-commander/models"
 )
 
 type RollupError struct {
@@ -17,28 +19,21 @@ func (e RollupError) Error() string {
 	return fmt.Sprintf("failed to submit batch: %s", e.Reason)
 }
 
-type DisputableType int
-
-const (
-	SignatureError DisputableType = iota
-	TransitionError
-)
-
 type DisputableTransferError struct {
 	Reason string
-	Type   DisputableType
+	Proofs []models.StateMerkleProof
 }
 
-func NewDisputableTransferError(errorType DisputableType, reason string) *DisputableTransferError {
-	return &DisputableTransferError{Reason: reason, Type: errorType}
+func NewDisputableTransferError(reason error, proofs []models.StateMerkleProof) *DisputableTransferError {
+	return &DisputableTransferError{Reason: reason.Error(), Proofs: proofs}
+}
+
+func NewDisputableTransferErrorWithoutProofs(reason string) *DisputableTransferError {
+	return &DisputableTransferError{Reason: reason, Proofs: []models.StateMerkleProof{}}
 }
 
 func (e DisputableTransferError) Error() string {
-	if e.Type == SignatureError {
-		return fmt.Sprintf("failed to validate transfer signature: %s", e.Reason)
-	} else {
-		return fmt.Sprintf("failed to validate transfer: %s", e.Reason)
-	}
+	return fmt.Sprintf("failed to validate transfer: %s", e.Reason)
 }
 
 func IsDisputableTransferError(err error) bool {

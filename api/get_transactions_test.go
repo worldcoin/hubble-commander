@@ -83,7 +83,7 @@ func (s *GetTransactionsTestSuite) addUserStates() {
 	}
 
 	for i := range userStates {
-		err := s.tree.Set(uint32(i), &userStates[i])
+		_, err := s.tree.Set(uint32(i), &userStates[i])
 		s.NoError(err)
 	}
 }
@@ -206,7 +206,7 @@ func (s *GetTransactionsTestSuite) TestGetTransactions_NoTransactions() {
 		Balance:  models.MakeUint256(420),
 		Nonce:    models.MakeUint256(0),
 	}
-	err = s.tree.Set(0, userState)
+	_, err = s.tree.Set(0, userState)
 	s.NoError(err)
 
 	userTransfers, err := s.api.GetTransactions(&account.PublicKey)

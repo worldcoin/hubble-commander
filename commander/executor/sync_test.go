@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -69,7 +70,7 @@ func (s *SyncTestSuite) setupDB() {
 	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
 	s.tree = st.NewStateTree(s.storage)
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, TransactionExecutorOpts{AssumeNonces: true})
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
 	err = s.storage.SetChainState(&s.client.ChainState)
 	s.NoError(err)
 
@@ -89,7 +90,7 @@ func seedDB(t *testing.T, storage *st.Storage, tree *st.StateTree, wallets []bls
 	})
 	require.NoError(t, err)
 
-	err = tree.Set(0, &models.UserState{
+	_, err = tree.Set(0, &models.UserState{
 		PubKeyID: 0,
 		TokenID:  models.MakeUint256(0),
 		Balance:  models.MakeUint256(1000),
@@ -97,7 +98,7 @@ func seedDB(t *testing.T, storage *st.Storage, tree *st.StateTree, wallets []bls
 	})
 	require.NoError(t, err)
 
-	err = tree.Set(1, &models.UserState{
+	_, err = tree.Set(1, &models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(0),
 		Balance:  models.MakeUint256(0),
@@ -284,7 +285,6 @@ func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 			Fee:         models.MakeUint256(0),
 			Nonce:       models.MakeUint256(0),
 		},
-		ToStateID:   ref.Uint32(5),
 		ToPublicKey: *s.wallets[0].PublicKey(),
 	}
 	s.setC2THashAndSign(&tx)
@@ -297,10 +297,10 @@ func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 	s.NoError(err)
 	s.Equal(models.MakeUint256(600), state0.Balance)
 
-	state5, err := s.storage.GetStateLeaf(5)
+	state2, err := s.storage.GetStateLeaf(2)
 	s.NoError(err)
-	s.Equal(models.MakeUint256(400), state5.Balance)
-	s.Equal(uint32(0), state5.PubKeyID)
+	s.Equal(models.MakeUint256(400), state2.Balance)
+	s.Equal(uint32(0), state2.PubKeyID)
 
 	treeRoot := s.getAccountTreeRoot()
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
@@ -317,6 +317,7 @@ func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 	s.NoError(err)
 	transfer.Signature = tx.Signature
 	tx.IncludedInCommitment = &commitment.ID
+	tx.ToStateID = transfer.ToStateID
 	s.Equal(tx, *transfer)
 }
 

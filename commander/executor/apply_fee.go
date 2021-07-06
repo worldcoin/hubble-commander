@@ -14,5 +14,6 @@ func (t *TransactionExecutor) ApplyFee(feeReceiverStateID uint32, fee models.Uin
 	feeReceiver.Balance = *feeReceiver.Balance.Add(&fee)
 
 	stateTree := st.NewStateTree(t.storage)
-	return stateTree.Set(feeReceiver.StateID, &feeReceiver.UserState)
+	_, err = stateTree.Set(feeReceiver.StateID, &feeReceiver.UserState)
+	return err
 }

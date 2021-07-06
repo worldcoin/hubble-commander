@@ -2,7 +2,6 @@ package executor
 
 import (
 	"errors"
-	"reflect"
 
 	"github.com/Worldcoin/hubble-commander/models"
 )
@@ -12,68 +11,161 @@ var (
 	ErrNonceTooHigh       = errors.New("nonce too high")
 	ErrInvalidSliceLength = errors.New("invalid slices length")
 	ErrNilReceiverStateID = errors.New("transfer receiver state id cannot be nil")
-	ErrBalanceTooLow      = NewDisputableTransferError(TransitionError, "not enough balance")
-	ErrInvalidTokenID     = NewDisputableTransferError(TransitionError, "invalid sender or receiver token ID")
-	ErrInvalidTokenAmount = NewDisputableTransferError(TransitionError, "amount cannot be equal to 0")
+
+	ErrBalanceTooLow          = errors.New("not enough balance")
+	ErrInvalidSenderTokenID   = errors.New("invalid sender token ID")
+	ErrInvalidReceiverTokenID = errors.New("invalid receiver token ID")
+	ErrInvalidTokenAmount     = errors.New("amount cannot be equal to 0")
 )
 
 func (t *TransactionExecutor) ApplyTransfer(
 	transfer models.GenericTransaction,
 	commitmentTokenID models.Uint256,
 ) (transferError, appError error) {
-	receiverStateID, err := getReceiverStateID(transfer)
-	if err != nil {
-		return nil, err
+	senderState, receiverState, appError := t.getParticipantsStates(transfer)
+	if appError != nil {
+		return nil, appError
 	}
 
-	senderLeaf, err := t.storage.GetStateLeaf(transfer.GetFromStateID())
-	if err != nil {
-		return nil, err
-	}
-	receiverLeaf, err := t.storage.GetStateLeaf(*receiverStateID)
-	if err != nil {
-		return nil, err
+	appError = t.validateSenderTokenID(senderState, commitmentTokenID)
+	if appError != nil {
+		return nil, appError
 	}
 
-	senderState := senderLeaf.UserState
-	receiverState := receiverLeaf.UserState
-
-	if senderState.TokenID.Cmp(&commitmentTokenID) != 0 && receiverState.TokenID.Cmp(&commitmentTokenID) != 0 {
-		return nil, ErrInvalidTokenID
+	appError = t.validateReceiverTokenID(receiverState, commitmentTokenID)
+	if appError != nil {
+		return nil, appError
 	}
 
-	if t.opts.AssumeNonces {
-		transfer.SetNonce(senderState.Nonce)
-	} else {
-		nonce := transfer.GetNonce()
-		err = validateTransferNonce(&senderState, &nonce)
-		if err != nil {
-			return err, nil
-		}
+	if tErr := validateTransferNonce(&senderState.UserState, transfer.GetNonce()); tErr != nil {
+		return tErr, nil
 	}
 
-	newSenderState, newReceiverState, err := CalculateStateAfterTransfer(senderState, receiverState, transfer)
-	if err != nil {
-		return err, nil
+	newSenderState, newReceiverState, tErr := calculateStateAfterTransfer(senderState.UserState, receiverState.UserState, transfer)
+	if tErr != nil {
+		return tErr, nil
 	}
 
-	if !reflect.DeepEqual(*newSenderState, senderState) {
-		err = t.stateTree.Set(transfer.GetFromStateID(), newSenderState)
-		if err != nil {
-			return nil, err
-		}
+	_, appError = t.stateTree.Set(senderState.StateID, newSenderState)
+	if appError != nil {
+		return nil, appError
 	}
-	if !reflect.DeepEqual(*newReceiverState, receiverState) {
-		err = t.stateTree.Set(*receiverStateID, newReceiverState)
-		if err != nil {
-			return nil, err
-		}
+	_, appError = t.stateTree.Set(receiverState.StateID, newReceiverState)
+	if appError != nil {
+		return nil, appError
 	}
 
 	return nil, nil
 }
 
-func CalculateStateAfterTransfer(
+func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransaction, commitmentTokenID models.Uint256) (
+	synced *SyncedTransfer,
+	transferError, appError error,
+) {
+	genericSynced, transferError, appError := t.applyGenericTransactionForSync(transfer, commitmentTokenID)
+	if appError != nil {
+		return nil, nil, appError
+	}
+	return NewSyncedTransferFromGeneric(genericSynced), transferError, nil
+}
+
+func (t *TransactionExecutor) applyGenericTransactionForSync(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
+	synced *SyncedGenericTransaction,
+	transferError, appError error,
+) {
+	senderState, receiverState, appError := t.getParticipantsStates(tx)
+	if appError != nil {
+		return nil, nil, appError
+	}
+
+	synced = NewPartialSyncedGenericTransaction(tx.Copy(), &senderState.UserState, &receiverState.UserState)
+
+	newSenderState, newReceiverState, tErr := calculateStateAfterTransfer(senderState.UserState, receiverState.UserState, tx)
+	if tErr != nil {
+		return t.fillSenderWitness(synced, tErr)
+	}
+
+	senderWitness, appError := t.stateTree.Set(senderState.StateID, newSenderState)
+	if appError != nil {
+		return nil, nil, appError
+	}
+	synced.SenderStateProof.Witness = senderWitness
+
+	if tErr := t.validateSenderTokenID(senderState, commitmentTokenID); tErr != nil {
+		return synced, tErr, nil
+	}
+
+	receiverWitness, appError := t.stateTree.Set(receiverState.StateID, newReceiverState)
+	if appError != nil {
+		return nil, nil, appError
+	}
+	synced.ReceiverStateProof.Witness = receiverWitness
+
+	if tErr := t.validateReceiverTokenID(receiverState, commitmentTokenID); tErr != nil {
+		return synced, tErr, nil
+	}
+
+	synced.Transaction.SetNonce(senderState.Nonce)
+
+	return synced, nil, nil
+}
+
+func (t *TransactionExecutor) fillSenderWitness(synced *SyncedGenericTransaction, tErr error) (*SyncedGenericTransaction, error, error) {
+	witness, appError := t.stateTree.GetWitness(synced.Transaction.GetFromStateID())
+	if appError != nil {
+		return nil, nil, appError
+	}
+	synced.SenderStateProof.Witness = witness
+
+	return synced, tErr, nil
+}
+
+func (t *TransactionExecutor) getParticipantsStates(transfer models.GenericTransaction) (
+	senderState, receiverState *models.StateLeaf,
+	err error,
+) {
+	receiverStateID := transfer.GetToStateID()
+	if receiverStateID == nil {
+		return nil, nil, ErrNilReceiverStateID
+	}
+
+	senderLeaf, err := t.storage.GetStateLeaf(transfer.GetFromStateID())
+	if err != nil {
+		return nil, nil, err
+	}
+	receiverLeaf, err := t.storage.GetStateLeaf(*receiverStateID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return senderLeaf, receiverLeaf, nil
+}
+
+func (t *TransactionExecutor) validateSenderTokenID(senderState *models.StateLeaf, commitmentTokenID models.Uint256) error {
+	if senderState.TokenID.Cmp(&commitmentTokenID) != 0 {
+		return ErrInvalidSenderTokenID
+	}
+	return nil
+}
+
+func (t *TransactionExecutor) validateReceiverTokenID(receiverState *models.StateLeaf, commitmentTokenID models.Uint256) error {
+	if receiverState.TokenID.Cmp(&commitmentTokenID) != 0 {
+		return ErrInvalidReceiverTokenID
+	}
+	return nil
+}
+
+func validateTransferNonce(senderState *models.UserState, transferNonce models.Uint256) error {
+	comparison := transferNonce.Cmp(&senderState.Nonce)
+	if comparison > 0 {
+		return ErrNonceTooHigh
+	} else if comparison < 0 {
+		return ErrNonceTooLow
+	}
+	return nil
+}
+
+func calculateStateAfterTransfer(
 	senderState, receiverState models.UserState, // nolint:gocritic
 	transfer models.GenericTransaction,
 ) (
@@ -100,22 +192,4 @@ func CalculateStateAfterTransfer(
 	newReceiverState.Balance = *newReceiverState.Balance.Add(&amount)
 
 	return newSenderState, newReceiverState, nil
-}
-
-func getReceiverStateID(transfer models.GenericTransaction) (*uint32, error) {
-	stateID := transfer.GetToStateID()
-	if stateID == nil {
-		return nil, ErrNilReceiverStateID
-	}
-	return stateID, nil
-}
-
-func validateTransferNonce(senderState *models.UserState, transferNonce *models.Uint256) error {
-	comparison := transferNonce.Cmp(&senderState.Nonce)
-	if comparison > 0 {
-		return ErrNonceTooHigh
-	} else if comparison < 0 {
-		return ErrNonceTooLow
-	}
-	return nil
 }

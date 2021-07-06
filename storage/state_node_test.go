@@ -147,22 +147,6 @@ func (s *StateNodeTestSuite) TestGetStateNodeByPath_NonExistentRoot() {
 	s.Equal(expected, res)
 }
 
-func (s *StateNodeTestSuite) TestGetStateNodes() {
-	path, err := models.NewMerklePath("0000111")
-	s.NoError(err)
-
-	node := &models.StateNode{
-		MerklePath: *path,
-		DataHash:   common.BytesToHash([]byte{1, 2, 3, 4, 5}),
-	}
-	err = s.storage.AddStateNode(node)
-	s.NoError(err)
-
-	nodes, err := s.storage.GetStateNodes([]models.MerklePath{*path})
-	s.NoError(err)
-	s.Len(nodes, 1)
-}
-
 func TestStateNodeTestSuite(t *testing.T) {
 	suite.Run(t, new(StateNodeTestSuite))
 }

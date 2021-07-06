@@ -79,7 +79,7 @@ func (s *SendTransferTestSuite) SetupTest() {
 		Nonce:    models.MakeUint256(0),
 	}
 
-	err = s.tree.Set(1, s.userState)
+	_, err = s.tree.Set(1, s.userState)
 	s.NoError(err)
 
 	s.transfer = s.signTransfer(transferWithoutSignature)
@@ -106,7 +106,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesNonceTooLow_NoTransact
 	userStateWithIncreasedNonce := s.userState
 	userStateWithIncreasedNonce.Nonce = models.MakeUint256(1)
 
-	err := s.tree.Set(1, userStateWithIncreasedNonce)
+	_, err := s.tree.Set(1, userStateWithIncreasedNonce)
 	s.NoError(err)
 
 	_, err = s.api.SendTransaction(dto.MakeTransaction(s.transfer))

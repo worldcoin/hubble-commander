@@ -185,7 +185,7 @@ func (s *StateLeafTestSuite) TestGetUserStatesByPublicKey() {
 	}
 
 	for i := range userStates {
-		err := s.tree.Set(uint32(i), &userStates[i])
+		_, err := s.tree.Set(uint32(i), &userStates[i])
 		s.NoError(err)
 	}
 
@@ -213,10 +213,10 @@ func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf() {
 	err = s.storage.AddAccountIfNotExists(&account2)
 	s.NoError(err)
 
-	err = s.tree.Set(0, userState1)
+	_, err = s.tree.Set(0, userState1)
 	s.NoError(err)
 
-	err = s.tree.Set(1, userState2)
+	_, err = s.tree.Set(1, userState2)
 	s.NoError(err)
 
 	stateLeaf, err := s.storage.GetFeeReceiverStateLeaf(userState1.PubKeyID, userState1.TokenID)
@@ -232,10 +232,10 @@ func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf_WorkWithCachedValue() {
 	err = s.storage.AddAccountIfNotExists(&account2)
 	s.NoError(err)
 
-	err = s.tree.Set(0, userState1)
+	_, err = s.tree.Set(0, userState1)
 	s.NoError(err)
 
-	err = s.tree.Set(1, userState2)
+	_, err = s.tree.Set(1, userState2)
 	s.NoError(err)
 
 	_, err = s.storage.GetFeeReceiverStateLeaf(userState2.PubKeyID, userState2.TokenID)
@@ -262,9 +262,9 @@ func (s *StateLeafTestSuite) TestGetNextAvailableStateID_OneBytes() {
 
 	tree := NewStateTree(s.storage.Storage)
 
-	err = tree.Set(0, userState1)
+	_, err = tree.Set(0, userState1)
 	s.NoError(err)
-	err = tree.Set(2, userState2)
+	_, err = tree.Set(2, userState2)
 	s.NoError(err)
 
 	stateID, err := s.storage.GetNextAvailableStateID()
@@ -280,9 +280,9 @@ func (s *StateLeafTestSuite) TestGetNextAvailableStateID_TwoBytes() {
 
 	tree := NewStateTree(s.storage.Storage)
 
-	err = tree.Set(0, userState1)
+	_, err = tree.Set(0, userState1)
 	s.NoError(err)
-	err = tree.Set(13456, userState2)
+	_, err = tree.Set(13456, userState2)
 	s.NoError(err)
 
 	stateID, err := s.storage.GetNextAvailableStateID()
