@@ -27,7 +27,7 @@ func (t *TransactionExecutor) syncCreate2TransferCommitment(
 		return nil, err
 	}
 
-	err = t.setPublicKeys(appliedTransfers)
+	err = t.setPublicKeys(appliedTransfers, pubKeyIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -41,10 +41,9 @@ func (t *TransactionExecutor) syncCreate2TransferCommitment(
 	return models.Create2TransferArray(appliedTransfers), nil
 }
 
-// TODO-AFS consider using existing pubKeyIDs slice
-func (t *TransactionExecutor) setPublicKeys(transfers []models.Create2Transfer) error {
+func (t *TransactionExecutor) setPublicKeys(transfers []models.Create2Transfer, pubKeyIDs []uint32) error {
 	for i := range transfers {
-		publicKey, err := t.storage.GetPublicKeyByStateID(*transfers[i].ToStateID)
+		publicKey, err := t.storage.GetPublicKey(pubKeyIDs[i])
 		if err != nil {
 			return err
 		}
