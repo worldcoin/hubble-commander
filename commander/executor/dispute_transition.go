@@ -16,12 +16,17 @@ func (t *TransactionExecutor) previousCommitmentInclusionProof(
 		return t.previousBatchCommitmentInclusionProof(batch.ID)
 	}
 
-	bodyHashes := make([]common.Hash, 0, len(batch.Commitments))
+	leafHashes := make([]common.Hash, 0, len(batch.Commitments))
 	for i := range batch.Commitments {
-		bodyHashes = append(bodyHashes, batch.Commitments[i].BodyHash(*batch.AccountTreeRoot))
+		leafHashes = append(leafHashes, batch.Commitments[i].LeafHash(*batch.AccountTreeRoot))
 	}
 
-	return createCommitmentInclusionProof(bodyHashes, uint32(previousCommitmentIndex), batch.Commitments[previousCommitmentIndex].StateRoot)
+	return createCommitmentInclusionProof(
+		leafHashes,
+		uint32(previousCommitmentIndex),
+		batch.Commitments[previousCommitmentIndex].StateRoot,
+		batch.Commitments[previousCommitmentIndex].BodyHash(*batch.AccountTreeRoot),
+	)
 }
 
 func (t *TransactionExecutor) previousBatchCommitmentInclusionProof(
@@ -37,26 +42,31 @@ func (t *TransactionExecutor) previousBatchCommitmentInclusionProof(
 		return nil, errors.WithStack(err)
 	}
 
-	bodyHashes := make([]common.Hash, 0, len(commitments))
+	leafHashes := make([]common.Hash, 0, len(commitments))
 	for i := range commitments {
-		bodyHashes = append(bodyHashes, commitments[i].BodyHash(*previousBatch.AccountTreeRoot))
+		leafHashes = append(leafHashes, commitments[i].CalcLeafHash(previousBatch.AccountTreeRoot))
 	}
 
 	previousCommitmentIndex := len(commitments) - 1
-	return createCommitmentInclusionProof(bodyHashes, uint32(previousCommitmentIndex), commitments[previousCommitmentIndex].PostStateRoot)
+	return createCommitmentInclusionProof(
+		leafHashes,
+		uint32(previousCommitmentIndex),
+		commitments[previousCommitmentIndex].PostStateRoot,
+		commitments[previousCommitmentIndex].BodyHash(*previousBatch.AccountTreeRoot),
+	)
 }
 
 func createCommitmentInclusionProof(
-	bodyHashes []common.Hash,
+	leafHashes []common.Hash,
 	commitmentIndex uint32,
-	commitmentStateRoot common.Hash,
+	commitmentStateRoot, commitmentBodyRoot common.Hash,
 ) (*models.CommitmentInclusionProof, error) {
 	proof := models.CommitmentInclusionProof{
 		StateRoot: commitmentStateRoot,
-		BodyRoot:  bodyHashes[commitmentIndex],
+		BodyRoot:  commitmentBodyRoot,
 	}
 
-	tree, err := merkletree.NewMerkleTree(bodyHashes)
+	tree, err := merkletree.NewMerkleTree(leafHashes)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -74,11 +84,11 @@ func targetCommitmentInclusionProof(
 	batch *eth.DecodedBatch,
 	commitmentIndex uint32,
 ) (*models.TransferCommitmentInclusionProof, error) {
-	bodyHashes := make([]common.Hash, 0, len(batch.Commitments))
+	leafHashes := make([]common.Hash, 0, len(batch.Commitments))
 	for i := range batch.Commitments {
-		bodyHashes = append(bodyHashes, batch.Commitments[i].BodyHash(*batch.AccountTreeRoot))
+		leafHashes = append(leafHashes, batch.Commitments[i].LeafHash(*batch.AccountTreeRoot))
 	}
-	tree, err := merkletree.NewMerkleTree(bodyHashes)
+	tree, err := merkletree.NewMerkleTree(leafHashes)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

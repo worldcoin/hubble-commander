@@ -78,7 +78,7 @@ func (s *DisputeTransitionTestSuite) TestPreviousCommitmentInclusionProof_Curren
 			Path:  0,
 			Depth: 2,
 		},
-		Witness: []common.Hash{s.decodedCommitments[1].BodyHash(*s.decodedBatch.AccountTreeRoot)},
+		Witness: []common.Hash{s.decodedCommitments[1].LeafHash(*s.decodedBatch.AccountTreeRoot)},
 	}
 
 	proof, err := s.transactionExecutor.previousCommitmentInclusionProof(&s.decodedBatch, 0)
@@ -136,7 +136,7 @@ func (s *DisputeTransitionTestSuite) TestPreviousCommitmentInclusionProof_Previo
 			Path:  1,
 			Depth: 2,
 		},
-		Witness: []common.Hash{commitments[0].BodyHash(*batch.AccountTreeRoot)},
+		Witness: []common.Hash{commitments[0].LeafHash(*batch.AccountTreeRoot)},
 	}
 
 	proof, err := s.transactionExecutor.previousCommitmentInclusionProof(&s.decodedBatch, -1)
@@ -157,7 +157,7 @@ func (s *DisputeTransitionTestSuite) TestTargetCommitmentInclusionProof() {
 			Path:  1,
 			Depth: 2,
 		},
-		Witness: []common.Hash{s.decodedCommitments[0].BodyHash(*s.decodedBatch.AccountTreeRoot)},
+		Witness: []common.Hash{s.decodedCommitments[0].LeafHash(*s.decodedBatch.AccountTreeRoot)},
 	}
 
 	proof, err := targetCommitmentInclusionProof(&s.decodedBatch, 1)
