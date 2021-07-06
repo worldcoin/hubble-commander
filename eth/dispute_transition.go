@@ -20,7 +20,7 @@ func (c *Client) DisputeTransitionTransfer(
 	proofs []models.StateMerkleProof,
 ) (*types.Transaction, error) {
 	return c.Rollup.DisputeTransitionTransfer(
-		c.transactOpts(c.config.stakeAmount.ToBig(), c.ChainConnection.GetAccount().GasLimit),
+		c.transactOpts(nil, c.ChainConnection.GetAccount().GasLimit),
 		batchID.ToBig(),
 		*CommitmentProofToCalldata(previous),
 		*TransferProofToCalldata(target),
@@ -35,7 +35,7 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 	proofs []models.StateMerkleProof,
 ) (*types.Transaction, error) {
 	return c.Rollup.DisputeTransitionCreate2Transfer(
-		c.transactOpts(c.config.stakeAmount.ToBig(), c.ChainConnection.GetAccount().GasLimit),
+		c.transactOpts(nil, c.ChainConnection.GetAccount().GasLimit),
 		batchID.ToBig(),
 		*CommitmentProofToCalldata(previous),
 		*TransferProofToCalldata(target),
@@ -72,7 +72,7 @@ func (c *Client) WaitForRollbackToFinish(transactionHash common.Hash) error {
 }
 
 func (c *Client) keepRollingBack() (common.Hash, error) {
-	transaction, err := c.Rollup.KeepRollingBack(c.transactOpts(c.config.stakeAmount.ToBig(), c.ChainConnection.GetAccount().GasLimit))
+	transaction, err := c.Rollup.KeepRollingBack(c.transactOpts(nil, c.ChainConnection.GetAccount().GasLimit))
 	if err != nil {
 		return common.Hash{}, err
 	}
