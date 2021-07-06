@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
@@ -61,7 +62,7 @@ func (s *DisputeTransitionTestSuite) SetupTest() {
 	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, &config.RollupConfig{}, TransactionExecutorOpts{})
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, &config.RollupConfig{}, context.Background())
 }
 
 func (s *DisputeTransitionTestSuite) TearDownTest() {
@@ -86,7 +87,7 @@ func (s *DisputeTransitionTestSuite) TestPreviousCommitmentInclusionProof_Curren
 }
 
 func (s *DisputeTransitionTestSuite) TestPreviousCommitmentInclusionProof_PreviousBatch() {
-	err := st.NewStateTree(s.storage).Set(11, &models.UserState{
+	_, err := st.NewStateTree(s.storage).Set(11, &models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(1),
 		Balance:  models.MakeUint256(100),
@@ -216,7 +217,7 @@ func (s *DisputeTransitionTestSuite) setUserStates() {
 		*s.createUserState(2, 100, 0),
 	}
 	for i := range userStates {
-		err := s.transactionExecutor.stateTree.Set(uint32(i), &userStates[i])
+		_, err := s.transactionExecutor.stateTree.Set(uint32(i), &userStates[i])
 		s.NoError(err)
 	}
 }
@@ -247,10 +248,10 @@ func (s *DisputeTransitionTestSuite) createTransfer(from, to uint32, nonce, amou
 func (s *DisputeTransitionTestSuite) getTransferWitness(fromStateID, toStateID uint32) (senderWitness, receiverWitness models.Witness) {
 	var err error
 
-	senderWitness, err = s.transactionExecutor.stateTree.GetWitness(models.MakeMerklePathFromStateID(fromStateID))
+	senderWitness, err = s.transactionExecutor.stateTree.GetWitness(fromStateID)
 	s.NoError(err)
 
-	receiverWitness, err = s.transactionExecutor.stateTree.GetWitness(models.MakeMerklePathFromStateID(toStateID))
+	receiverWitness, err = s.transactionExecutor.stateTree.GetWitness(toStateID)
 	s.NoError(err)
 
 	return senderWitness, receiverWitness

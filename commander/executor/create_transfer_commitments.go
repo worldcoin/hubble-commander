@@ -111,7 +111,7 @@ func (t *TransactionExecutor) applyTransfersForCommitment(pendingTransfers []mod
 		var transfers *AppliedTransfers
 
 		numNeededTransfers := t.cfg.TxsPerCommitment - uint32(len(appliedTransfers))
-		transfers, err = t.ApplyTransfers(pendingTransfers, numNeededTransfers, feeReceiver, false)
+		transfers, err = t.ApplyTransfers(pendingTransfers, numNeededTransfers, feeReceiver)
 		if err != nil {
 			return nil, nil, err
 		}

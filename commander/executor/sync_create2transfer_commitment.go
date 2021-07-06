@@ -5,7 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-func (t *TransactionExecutor) syncCreate2TransferCommitments(
+func (t *TransactionExecutor) syncCreate2TransferCommitment(
 	commitment *encoder.DecodedCommitment,
 ) (models.GenericTransactionArray, error) {
 	deserializedTransfers, pubKeyIDs, err := encoder.DeserializeCreate2Transfers(commitment.Transactions)
@@ -22,35 +22,28 @@ func (t *TransactionExecutor) syncCreate2TransferCommitments(
 		return nil, err
 	}
 
-	transfers, err := t.ApplyCreate2TransfersForSync(deserializedTransfers, pubKeyIDs, feeReceiver)
+	appliedTransfers, err := t.ApplyCreate2TransfersForSync(deserializedTransfers, pubKeyIDs, feeReceiver)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(transfers.invalidTransfers) > 0 {
-		return nil, ErrFraudulentTransfer
-	}
-	if len(transfers.appliedTransfers) != len(deserializedTransfers) {
-		return nil, ErrTransfersNotApplied
-	}
-
-	err = t.setPublicKeys(transfers.appliedTransfers)
+	err = t.setPublicKeys(appliedTransfers, pubKeyIDs)
 	if err != nil {
 		return nil, err
 	}
 	if !t.cfg.DevMode {
-		err = t.verifyCreate2TransferSignature(commitment, transfers.appliedTransfers)
+		err = t.verifyCreate2TransferSignature(commitment, appliedTransfers)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return models.Create2TransferArray(transfers.appliedTransfers), nil
+	return models.Create2TransferArray(appliedTransfers), nil
 }
 
-func (t *TransactionExecutor) setPublicKeys(transfers []models.Create2Transfer) error {
+func (t *TransactionExecutor) setPublicKeys(transfers []models.Create2Transfer, pubKeyIDs []uint32) error {
 	for i := range transfers {
-		publicKey, err := t.storage.GetPublicKeyByStateID(*transfers[i].ToStateID)
+		publicKey, err := t.storage.GetPublicKey(pubKeyIDs[i])
 		if err != nil {
 			return err
 		}

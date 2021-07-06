@@ -60,23 +60,8 @@ func (s *StateTree) Leaf(stateID uint32) (*models.StateLeaf, error) {
 	return leaf, nil
 }
 
-func (s *StateTree) Set(id uint32, state *models.UserState) (err error) {
-	tx, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
-	if err != nil {
-		return
-	}
-	defer tx.Rollback(&err)
-
-	_, err = NewStateTree(storage).unsafeSet(id, state)
-	if err != nil {
-		return
-	}
-
-	return tx.Commit()
-}
-
-// SetReturningWitness returns witness with 32 elements for the current set operation
-func (s *StateTree) SetReturningWitness(id uint32, state *models.UserState) (models.Witness, error) {
+// Set returns a witness containing 32 elements for the current set operation
+func (s *StateTree) Set(id uint32, state *models.UserState) (models.Witness, error) {
 	tx, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return nil, err
@@ -91,6 +76,26 @@ func (s *StateTree) SetReturningWitness(id uint32, state *models.UserState) (mod
 	err = tx.Commit()
 	if err != nil {
 		return nil, err
+	}
+
+	return witness, nil
+}
+
+func (s *StateTree) GetWitness(id uint32) (models.Witness, error) {
+	leafPath := models.MakeMerklePathFromStateID(id)
+	witnessPaths, err := leafPath.GetWitnessPaths()
+	if err != nil {
+		return nil, err
+	}
+
+	witness := make([]common.Hash, 0, len(witnessPaths))
+	for i := range witnessPaths {
+		var node *models.StateNode
+		node, err = s.storage.GetStateNodeByPath(&witnessPaths[i])
+		if err != nil {
+			return nil, err
+		}
+		witness = append(witness, node.DataHash)
 	}
 
 	return witness, nil

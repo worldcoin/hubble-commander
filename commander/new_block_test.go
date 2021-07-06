@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -168,7 +169,7 @@ func createAndSubmitTransferBatch(t *testing.T, cmd *Commander, tx *models.Trans
 	_, err := cmd.storage.AddTransfer(tx)
 	require.NoError(t, err)
 
-	transactionExecutor, err := executor.NewTransactionExecutor(cmd.storage, cmd.client, cmd.cfg.Rollup, executor.TransactionExecutorOpts{})
+	transactionExecutor, err := executor.NewTransactionExecutor(cmd.storage, cmd.client, cmd.cfg.Rollup, context.Background())
 	require.NoError(t, err)
 
 	commitments, err := transactionExecutor.CreateTransferCommitments(testDomain)
@@ -228,7 +229,7 @@ func seedDB(t *testing.T, storage *st.Storage, tree *st.StateTree, wallets []bls
 	})
 	require.NoError(t, err)
 
-	err = tree.Set(0, &models.UserState{
+	_, err = tree.Set(0, &models.UserState{
 		PubKeyID: 0,
 		TokenID:  models.MakeUint256(0),
 		Balance:  models.MakeUint256(1000),
@@ -236,7 +237,7 @@ func seedDB(t *testing.T, storage *st.Storage, tree *st.StateTree, wallets []bls
 	})
 	require.NoError(t, err)
 
-	err = tree.Set(1, &models.UserState{
+	_, err = tree.Set(1, &models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(0),
 		Balance:  models.MakeUint256(0),

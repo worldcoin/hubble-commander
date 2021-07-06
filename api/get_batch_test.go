@@ -132,7 +132,7 @@ func (s *GetBatchTestSuite) addLeaf() {
 	err := s.storage.AddAccountIfNotExists(&models.Account{PubKeyID: 1})
 	s.NoError(err)
 
-	err = s.tree.Set(uint32(1), &models.UserState{
+	_, err = s.tree.Set(uint32(1), &models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(1),
 		Balance:  models.MakeUint256(420),

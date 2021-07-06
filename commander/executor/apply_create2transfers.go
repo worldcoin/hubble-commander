@@ -52,10 +52,19 @@ func (t *TransactionExecutor) ApplyCreate2Transfers(
 			return nil, err
 		}
 
-		_, err = t.handleApplyC2T(transfer, *pubKeyID, returnStruct, combinedFee, &feeReceiver.TokenID)
-		if err != nil {
-			return nil, err
+		appliedTransfer, transferError, appError := t.ApplyCreate2Transfer(transfer, *pubKeyID, feeReceiver.TokenID)
+		if appError != nil {
+			return nil, appError
 		}
+		if transferError != nil {
+			logAndSaveTransactionError(t.storage, &appliedTransfer.TransactionBase, transferError)
+			returnStruct.invalidTransfers = append(returnStruct.invalidTransfers, *appliedTransfer)
+			continue
+		}
+
+		returnStruct.appliedTransfers = append(returnStruct.appliedTransfers, *appliedTransfer)
+		returnStruct.addedPubKeyIDs = append(returnStruct.addedPubKeyIDs, *pubKeyID)
+		*combinedFee = *combinedFee.Add(&appliedTransfer.Fee)
 	}
 
 	if len(returnStruct.appliedTransfers) > 0 {
@@ -72,7 +81,7 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 	transfers []models.Create2Transfer,
 	pubKeyIDs []uint32,
 	feeReceiver *FeeReceiver,
-) (*AppliedC2Transfers, error) {
+) ([]models.Create2Transfer, error) {
 	if len(transfers) == 0 {
 		return nil, nil
 	}
@@ -80,31 +89,38 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 		return nil, ErrInvalidSliceLength
 	}
 
-	returnStruct := &AppliedC2Transfers{}
-
-	returnStruct.appliedTransfers = make([]models.Create2Transfer, 0, t.cfg.TxsPerCommitment)
+	appliedTransfers := make([]models.Create2Transfer, 0, t.cfg.TxsPerCommitment)
+	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*len(transfers))
 	combinedFee := models.NewUint256(0)
 
 	for i := range transfers {
 		transfer := &transfers[i]
 
-		transferError, appError := t.handleApplyC2T(transfer, pubKeyIDs[i], returnStruct, combinedFee, &feeReceiver.TokenID)
+		synced, transferError, appError := t.ApplyCreate2TransferForSync(transfer, pubKeyIDs[i], feeReceiver.TokenID)
 		if appError != nil {
 			return nil, appError
 		}
+		stateChangeProofs = append(
+			stateChangeProofs,
+			synced.SenderStateProof,
+			synced.ReceiverStateProof,
+		)
 		if transferError != nil {
-			return returnStruct, nil
+			return nil, NewDisputableTransferError(transferError, stateChangeProofs)
 		}
+
+		appliedTransfers = append(appliedTransfers, *synced.Transfer)
+		*combinedFee = *combinedFee.Add(&synced.Transfer.Fee)
 	}
 
-	if len(returnStruct.appliedTransfers) > 0 {
+	if len(appliedTransfers) > 0 {
 		err := t.ApplyFee(feeReceiver.StateID, *combinedFee)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return returnStruct, nil
+	return appliedTransfers, nil
 }
 
 func (t *TransactionExecutor) getOrRegisterPubKeyID(
@@ -119,26 +135,4 @@ func (t *TransactionExecutor) getOrRegisterPubKeyID(
 		return t.client.RegisterAccount(&transfer.ToPublicKey, events)
 	}
 	return pubKeyID, nil
-}
-
-func (t *TransactionExecutor) handleApplyC2T(
-	transfer *models.Create2Transfer,
-	pubKeyID uint32,
-	appliedTransfers *AppliedC2Transfers,
-	combinedFee, tokenID *models.Uint256,
-) (create2TransferError, appError error) {
-	transferError, appError := t.ApplyCreate2Transfer(transfer, pubKeyID, *tokenID)
-	if appError != nil {
-		return nil, appError
-	}
-	if transferError != nil {
-		logAndSaveTransactionError(t.storage, &transfer.TransactionBase, transferError)
-		appliedTransfers.invalidTransfers = append(appliedTransfers.invalidTransfers, *transfer)
-		return transferError, nil
-	}
-
-	appliedTransfers.appliedTransfers = append(appliedTransfers.appliedTransfers, *transfer)
-	appliedTransfers.addedPubKeyIDs = append(appliedTransfers.addedPubKeyIDs, pubKeyID)
-	*combinedFee = *combinedFee.Add(&transfer.Fee)
-	return nil, nil
 }

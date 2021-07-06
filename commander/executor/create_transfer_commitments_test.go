@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -50,7 +51,7 @@ func (s *TransferCommitmentsTestSuite) SetupTest() {
 	err = populateAccounts(s.storage, genesisBalances)
 	s.NoError(err)
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, TransactionExecutorOpts{})
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
 }
 
 func populateAccounts(storage *st.Storage, balances []models.Uint256) error {
@@ -64,7 +65,7 @@ func populateAccounts(storage *st.Storage, balances []models.Uint256) error {
 			return err
 		}
 
-		err = stateTree.Set(i, &models.UserState{
+		_, err = stateTree.Set(i, &models.UserState{
 			PubKeyID: i,
 			TokenID:  models.MakeUint256(0),
 			Balance:  balances[i],
@@ -249,7 +250,7 @@ func addAccountWithHighNonce(s *require.Assertions, storage *st.Storage, stateID
 	s.NoError(err)
 
 	stateTree := st.NewStateTree(storage)
-	err = stateTree.Set(stateID, &models.UserState{
+	_, err = stateTree.Set(stateID, &models.UserState{
 		PubKeyID: dummyAccount.PubKeyID,
 		TokenID:  models.MakeUint256(0),
 		Balance:  models.MakeUint256(1000),

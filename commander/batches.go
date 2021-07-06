@@ -1,6 +1,8 @@
 package commander
 
 import (
+	"context"
+
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -54,7 +56,7 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 }
 
 func (c *Commander) syncRemoteBatch(remoteBatch *eth.DecodedBatch) (err error) {
-	txExecutor, err := executor.NewTransactionExecutor(c.storage, c.client, c.cfg.Rollup, executor.TransactionExecutorOpts{AssumeNonces: true})
+	txExecutor, err := executor.NewTransactionExecutor(c.storage, c.client, c.cfg.Rollup, context.Background())
 	if err != nil {
 		return err
 	}

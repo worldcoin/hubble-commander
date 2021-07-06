@@ -84,7 +84,7 @@ func (s *StateTree) RevertToForDispute(
 }
 
 func (s *StateTree) createUserProof(leaf *models.StateLeaf) (*models.StateMerkleProof, error) {
-	witness, err := s.GetWitness(models.MakeMerklePathFromStateID(leaf.StateID))
+	witness, err := s.GetWitness(leaf.StateID)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (s *StateTree) createUserProof(leaf *models.StateLeaf) (*models.StateMerkle
 func (s *StateTree) createUserProofFromStateIDs(stateIDs ...uint32) ([]models.StateMerkleProof, error) {
 	proofs := make([]models.StateMerkleProof, 0, len(stateIDs))
 	for i := range stateIDs {
-		witness, err := s.GetWitness(models.MakeMerklePathFromStateID(stateIDs[i]))
+		witness, err := s.GetWitness(stateIDs[i])
 		if err != nil {
 			return nil, err
 		}
@@ -124,20 +124,4 @@ func (s *StateTree) createUserProofs(leaves ...models.StateLeaf) ([]models.State
 		proofs = append(proofs, *proof)
 	}
 	return proofs, nil
-}
-
-func (s *StateTree) GetWitness(leafPath models.MerklePath) (models.Witness, error) {
-	witnessPaths, err := leafPath.GetWitnessPaths()
-	if err != nil {
-		return nil, err
-	}
-	nodes, err := s.storage.GetStateNodes(witnessPaths)
-	if err != nil {
-		return nil, err
-	}
-	witnesses := make([]common.Hash, 0, len(nodes))
-	for i := range nodes {
-		witnesses = append(witnesses, nodes[i].DataHash)
-	}
-	return witnesses, nil
 }

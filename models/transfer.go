@@ -31,3 +31,8 @@ func (t *Transfer) GetBase() *TransactionBase {
 func (t *Transfer) GetToStateID() *uint32 {
 	return &t.ToStateID
 }
+
+// nolint:gocritic
+func (t Transfer) Copy() GenericTransaction {
+	return &t
+}

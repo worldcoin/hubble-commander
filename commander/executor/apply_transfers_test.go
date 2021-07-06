@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
@@ -78,14 +79,14 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 		s.NoError(err)
 	}
 
-	err = s.tree.Set(1, &senderState)
+	_, err = s.tree.Set(1, &senderState)
 	s.NoError(err)
-	err = s.tree.Set(2, &receiverState)
+	_, err = s.tree.Set(2, &receiverState)
 	s.NoError(err)
-	err = s.tree.Set(3, &feeReceiverState)
+	_, err = s.tree.Set(3, &feeReceiverState)
 	s.NoError(err)
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, TransactionExecutorOpts{})
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
 	s.feeReceiver = &FeeReceiver{
 		StateID: 3,
 		TokenID: models.MakeUint256(1),
@@ -100,7 +101,7 @@ func (s *ApplyTransfersTestSuite) TearDownTest() {
 func (s *ApplyTransfersTestSuite) TestApplyTransfers_AllValid() {
 	generatedTransfers := generateValidTransfers(3)
 
-	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver, false)
+	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 3)
@@ -111,28 +112,17 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_SomeValid() {
 	generatedTransfers := generateValidTransfers(2)
 	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(3)...)
 
-	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver, false)
+	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 2)
 	s.Len(transfers.invalidTransfers, 3)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTransfers_InvalidInSyncMode() {
-	generatedTransfers := generateValidTransfers(2)
-	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(3)...)
-
-	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver, true)
-	s.NoError(err)
-
-	s.Len(transfers.appliedTransfers, 2)
-	s.Len(transfers.invalidTransfers, 1)
-}
-
-func (s *ApplyTransfersTestSuite) TestApplyTransfers_MoreThanTxsPerCommitment() {
+func (s *ApplyTransfersTestSuite) TestApplyTransfers_AppliesNoMoreThanLimit() {
 	generatedTransfers := generateValidTransfers(13)
 
-	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver, false)
+	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 6)
@@ -143,7 +133,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_MoreThanTxsPerCommitment() 
 	s.Equal(models.MakeUint256(6), state.Nonce)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTransfersTestSuite_SavesTransferErrors() {
+func (s *ApplyTransfersTestSuite) TestApplyTransfers_SavesTransferErrors() {
 	generatedTransfers := generateValidTransfers(3)
 	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(2)...)
 
@@ -152,7 +142,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersTestSuite_SavesTransferError
 		s.NoError(err)
 	}
 
-	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver, false)
+	transfers, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 3)
@@ -169,8 +159,46 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersTestSuite_SavesTransferError
 	}
 }
 
-func TestApplyTransfersTestSuite(t *testing.T) {
-	suite.Run(t, new(ApplyTransfersTestSuite))
+func (s *ApplyTransfersTestSuite) TestApplyTransfers_AppliesFee() {
+	generatedTransfers := generateValidTransfers(3)
+
+	_, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
+	s.NoError(err)
+
+	feeReceiverState, err := s.transactionExecutor.storage.GetStateLeaf(s.feeReceiver.StateID)
+	s.NoError(err)
+	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
+}
+
+func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AllValid() {
+	transfers := generateValidTransfers(3)
+
+	appliedTransfers, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver)
+	s.NoError(err)
+	s.Len(appliedTransfers, 3)
+}
+
+func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_InvalidTransfer() {
+	transfers := generateValidTransfers(2)
+	transfers = append(transfers, generateInvalidTransfers(2)...)
+
+	appliedTransfers, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver)
+	s.Nil(appliedTransfers)
+
+	var disputableTransferError *DisputableTransferError
+	s.ErrorAs(err, &disputableTransferError)
+	s.Len(disputableTransferError.Proofs, 6)
+}
+
+func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AppliesFee() {
+	generatedTransfers := generateValidTransfers(3)
+
+	_, err := s.transactionExecutor.ApplyTransfersForSync(generatedTransfers, s.feeReceiver)
+	s.NoError(err)
+
+	feeReceiverState, err := s.transactionExecutor.storage.GetStateLeaf(s.feeReceiver.StateID)
+	s.NoError(err)
+	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }
 
 func generateValidTransfers(transfersAmount uint32) []models.Transfer {
@@ -200,7 +228,7 @@ func generateInvalidTransfers(transfersAmount uint64) []models.Transfer {
 				Hash:        utils.RandomHash(),
 				TxType:      txtype.Transfer,
 				FromStateID: 1,
-				Amount:      models.MakeUint256(1),
+				Amount:      models.MakeUint256(1_000_000),
 				Fee:         models.MakeUint256(1),
 				Nonce:       models.MakeUint256(0),
 			},
@@ -209,4 +237,8 @@ func generateInvalidTransfers(transfersAmount uint64) []models.Transfer {
 		transfers = append(transfers, transfer)
 	}
 	return transfers
+}
+
+func TestApplyTransfersTestSuite(t *testing.T) {
+	suite.Run(t, new(ApplyTransfersTestSuite))
 }
