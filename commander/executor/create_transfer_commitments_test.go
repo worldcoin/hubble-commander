@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -50,7 +51,7 @@ func (s *TransferCommitmentsTestSuite) SetupTest() {
 	err = populateAccounts(s.storage, genesisBalances)
 	s.NoError(err)
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, TransactionExecutorOpts{})
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
 }
 
 func populateAccounts(storage *st.Storage, balances []models.Uint256) error {

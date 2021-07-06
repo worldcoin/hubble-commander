@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
@@ -85,7 +86,7 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 	_, err = s.tree.Set(3, &feeReceiverState)
 	s.NoError(err)
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, TransactionExecutorOpts{})
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
 	s.feeReceiver = &FeeReceiver{
 		StateID: 3,
 		TokenID: models.MakeUint256(1),

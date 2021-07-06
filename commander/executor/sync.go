@@ -104,7 +104,7 @@ func (t *TransactionExecutor) excludeTransactionsFromCommitment(batchIDs ...mode
 }
 
 func (t *TransactionExecutor) getTransactionSender(txHash common.Hash) (*common.Address, error) {
-	tx, _, err := t.client.ChainConnection.GetBackend().TransactionByHash(t.opts.Ctx, txHash)
+	tx, _, err := t.client.ChainConnection.GetBackend().TransactionByHash(t.ctx, txHash)
 	if err != nil {
 		return nil, err
 	}

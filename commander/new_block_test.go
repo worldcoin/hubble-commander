@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -168,7 +169,7 @@ func createAndSubmitTransferBatch(t *testing.T, cmd *Commander, tx *models.Trans
 	_, err := cmd.storage.AddTransfer(tx)
 	require.NoError(t, err)
 
-	transactionExecutor, err := executor.NewTransactionExecutor(cmd.storage, cmd.client, cmd.cfg.Rollup, executor.TransactionExecutorOpts{})
+	transactionExecutor, err := executor.NewTransactionExecutor(cmd.storage, cmd.client, cmd.cfg.Rollup, context.Background())
 	require.NoError(t, err)
 
 	commitments, err := transactionExecutor.CreateTransferCommitments(testDomain)

@@ -86,7 +86,7 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 	s.events, s.unsubscribe, err = s.client.WatchRegistrations(&bind.WatchOpts{})
 	s.NoError(err)
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, TransactionExecutorOpts{})
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
 	s.feeReceiver = &FeeReceiver{
 		StateID: 3,
 		TokenID: models.MakeUint256(1),

@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
@@ -55,7 +56,7 @@ func (s *ApplyTransferTestSuite) SetupTest() {
 		s.storage.Storage,
 		nil,
 		&config.RollupConfig{FeeReceiverPubKeyID: 0},
-		TransactionExecutorOpts{},
+		context.Background(),
 	)
 
 	accounts := []models.Account{

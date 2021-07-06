@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"context"
 	"math/big"
 	"testing"
 
@@ -48,7 +49,7 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 	s.teardown = testStorage.Teardown
 	s.tree = st.NewStateTree(s.storage)
 	s.client, err = eth.NewTestClient()
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, nil, TransactionExecutorOpts{})
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, nil, context.Background())
 	s.NoError(err)
 
 	accounts := []models.Account{
