@@ -429,7 +429,8 @@ func (s *SyncTestSuite) TestRevertBatch_SyncsCorrectBatch() {
 
 	batch, err := s.storage.GetBatch(pendingBatch.ID)
 	s.NoError(err)
-	s.Equal(batches[0].Batch, *batch)
+	batch.BlockTime = ref.Time(batch.BlockTime.UTC())
+	s.EqualValues(batches[0].Batch, *batch)
 
 	expectedCommitment := models.Commitment{
 		ID:                2,

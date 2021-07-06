@@ -12,6 +12,7 @@ type Batch struct {
 	Type              txtype.TransactionType
 	TransactionHash   common.Hash
 	SubmissionBlock   uint32
+	BlockTime         *Timestamp
 	FinalisationBlock *uint32
 }
 
@@ -28,6 +29,7 @@ func MakeBatch(batch *models.Batch, submissionBlock uint32) *Batch {
 		Type:              batch.Type,
 		TransactionHash:   batch.TransactionHash,
 		SubmissionBlock:   submissionBlock,
+		BlockTime:         NewTimestamp(batch.BlockTime),
 		FinalisationBlock: batch.FinalisationBlock,
 	}
 }
