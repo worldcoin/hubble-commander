@@ -29,7 +29,7 @@ func (t *TransactionExecutor) ApplyCreate2TransferForSync(
 	create2Transfer *models.Create2Transfer,
 	pubKeyID uint32,
 	commitmentTokenID models.Uint256,
-) (syncedTransfer *SyncedTransfer, transferError, appError error) {
+) (synced *SyncedCreate2Transfer, transferError, appError error) {
 	if create2Transfer.ToStateID == nil {
 		return nil, nil, ErrNilReceiverStateID
 	}
@@ -39,7 +39,11 @@ func (t *TransactionExecutor) ApplyCreate2TransferForSync(
 		return nil, nil, appError
 	}
 
-	return t.ApplyTransferForSync(create2Transfer, commitmentTokenID)
+	genericSynced, transferError, appError := t.applyGenericTransactionForSync(create2Transfer, commitmentTokenID)
+	if appError != nil {
+		return nil, nil, appError
+	}
+	return NewSyncedCreate2TransferFromGeneric(genericSynced), transferError, nil
 }
 
 func (t *TransactionExecutor) insertNewUserState(stateID, pubKeyID uint32, tokenID models.Uint256) error {

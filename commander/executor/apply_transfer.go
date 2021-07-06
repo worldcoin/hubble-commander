@@ -58,32 +58,29 @@ func (t *TransactionExecutor) ApplyTransfer(
 	return nil, nil
 }
 
-type SyncedTransfer struct {
-	transfer           models.GenericTransaction
-	senderStateProof   models.StateMerkleProof
-	receiverStateProof models.StateMerkleProof
-}
-
 func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransaction, commitmentTokenID models.Uint256) (
 	synced *SyncedTransfer,
 	transferError, appError error,
 ) {
-	senderState, receiverState, appError := t.getParticipantsStates(transfer)
+	genericSynced, transferError, appError := t.applyGenericTransactionForSync(transfer, commitmentTokenID)
+	if appError != nil {
+		return nil, nil, appError
+	}
+	return NewSyncedTransferFromGeneric(genericSynced), transferError, nil
+}
+
+func (t *TransactionExecutor) applyGenericTransactionForSync(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
+	synced *SyncedGenericTransaction,
+	transferError, appError error,
+) {
+	senderState, receiverState, appError := t.getParticipantsStates(tx)
 	if appError != nil {
 		return nil, nil, appError
 	}
 
-	synced = &SyncedTransfer{
-		transfer: transfer.Copy(),
-		senderStateProof: models.StateMerkleProof{
-			UserState: senderState.UserState,
-		},
-		receiverStateProof: models.StateMerkleProof{
-			UserState: receiverState.UserState,
-		},
-	}
+	synced = NewPartialSyncedGenericTransaction(tx.Copy(), &senderState.UserState, &receiverState.UserState)
 
-	newSenderState, newReceiverState, tErr := calculateStateAfterTransfer(senderState.UserState, receiverState.UserState, transfer)
+	newSenderState, newReceiverState, tErr := calculateStateAfterTransfer(senderState.UserState, receiverState.UserState, tx)
 	if tErr != nil {
 		return t.fillSenderWitness(synced, tErr)
 	}
@@ -92,7 +89,7 @@ func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransa
 	if appError != nil {
 		return nil, nil, appError
 	}
-	synced.senderStateProof.Witness = senderWitness
+	synced.SenderStateProof.Witness = senderWitness
 
 	if tErr := t.validateSenderTokenID(senderState, commitmentTokenID); tErr != nil {
 		return synced, tErr, nil
@@ -102,23 +99,23 @@ func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransa
 	if appError != nil {
 		return nil, nil, appError
 	}
-	synced.receiverStateProof.Witness = receiverWitness
+	synced.ReceiverStateProof.Witness = receiverWitness
 
 	if tErr := t.validateReceiverTokenID(receiverState, commitmentTokenID); tErr != nil {
 		return synced, tErr, nil
 	}
 
-	synced.transfer.SetNonce(senderState.Nonce)
+	synced.Transaction.SetNonce(senderState.Nonce)
 
 	return synced, nil, nil
 }
 
-func (t *TransactionExecutor) fillSenderWitness(synced *SyncedTransfer, tErr error) (*SyncedTransfer, error, error) {
-	witness, appError := t.stateTree.GetWitness(synced.transfer.GetFromStateID())
+func (t *TransactionExecutor) fillSenderWitness(synced *SyncedGenericTransaction, tErr error) (*SyncedGenericTransaction, error, error) {
+	witness, appError := t.stateTree.GetWitness(synced.Transaction.GetFromStateID())
 	if appError != nil {
 		return nil, nil, appError
 	}
-	synced.senderStateProof.Witness = witness
+	synced.SenderStateProof.Witness = witness
 
 	return synced, tErr, nil
 }

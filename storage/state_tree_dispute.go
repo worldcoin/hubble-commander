@@ -90,7 +90,7 @@ func (s *StateTree) createUserProof(leaf *models.StateLeaf) (*models.StateMerkle
 	}
 
 	return &models.StateMerkleProof{
-		UserState: leaf.UserState,
+		UserState: &leaf.UserState,
 		Witness:   witness,
 	}, nil
 }
@@ -107,7 +107,7 @@ func (s *StateTree) createUserProofFromStateIDs(stateIDs ...uint32) ([]models.St
 			return nil, err
 		}
 		proofs = append(proofs, models.StateMerkleProof{
-			UserState: leaf.UserState,
+			UserState: &leaf.UserState,
 			Witness:   witness,
 		})
 	}

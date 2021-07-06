@@ -26,6 +26,6 @@ type TransferBody struct {
 }
 
 type StateMerkleProof struct {
-	UserState UserState
+	UserState *UserState
 	Witness   Witness
 }

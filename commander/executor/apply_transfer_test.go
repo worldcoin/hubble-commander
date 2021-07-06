@@ -190,9 +190,9 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ReturnsSenderProofForC
 	s.Equal(ErrBalanceTooLow, transferError)
 	s.NoError(appError)
 
-	s.Equal(&bigTransfer, synced.transfer)
-	s.Equal(senderState, synced.senderStateProof.UserState)
-	s.Len(synced.senderStateProof.Witness, storage.StateTreeDepth)
+	s.Equal(&bigTransfer, synced.Transfer)
+	s.Equal(senderState, synced.SenderStateProof.UserState)
+	s.Len(synced.SenderStateProof.Witness, storage.StateTreeDepth)
 }
 
 func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ValidatesSenderTokenID() {
@@ -203,9 +203,9 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ValidatesSenderTokenID
 	s.Equal(ErrInvalidSenderTokenID, transferError)
 	s.NoError(appError)
 
-	s.Equal(&transfer, synced.transfer)
-	s.Equal(senderState, synced.senderStateProof.UserState)
-	s.Len(synced.senderStateProof.Witness, storage.StateTreeDepth)
+	s.Equal(&transfer, synced.Transfer)
+	s.Equal(senderState, synced.SenderStateProof.UserState)
+	s.Len(synced.SenderStateProof.Witness, storage.StateTreeDepth)
 }
 
 func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ValidatesReceiverTokenID() {
@@ -221,11 +221,11 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ValidatesReceiverToken
 	s.Equal(ErrInvalidReceiverTokenID, transferError)
 	s.NoError(appError)
 
-	s.Equal(&transfer, synced.transfer)
-	s.Equal(senderState, synced.senderStateProof.UserState)
-	s.Len(synced.senderStateProof.Witness, storage.StateTreeDepth)
-	s.Equal(receiverWithChangedToken, synced.receiverStateProof.UserState)
-	s.Len(synced.receiverStateProof.Witness, storage.StateTreeDepth)
+	s.Equal(&transfer, synced.Transfer)
+	s.Equal(senderState, synced.SenderStateProof.UserState)
+	s.Len(synced.SenderStateProof.Witness, storage.StateTreeDepth)
+	s.Equal(receiverWithChangedToken, synced.ReceiverStateProof.UserState)
+	s.Len(synced.ReceiverStateProof.Witness, storage.StateTreeDepth)
 }
 
 func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ReturnsTransferWithUpdatedNonce() {
@@ -238,7 +238,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ReturnsTransferWithUpd
 	s.NoError(transferError)
 
 	s.Equal(models.MakeUint256(1234), transferWithModifiedNonce.Nonce)
-	s.Equal(models.MakeUint256(0), synced.transfer.GetNonce())
+	s.Equal(models.MakeUint256(0), synced.Transfer.GetNonce())
 }
 
 func (s *ApplyTransferTestSuite) TestApplyTransferForSync_UpdatesStatesCorrectly() {
@@ -264,10 +264,10 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ReturnsProofs() {
 	s.NoError(appError)
 	s.NoError(transferError)
 
-	s.Equal(senderState, sync.senderStateProof.UserState)
-	s.Len(sync.senderStateProof.Witness, storage.StateTreeDepth)
-	s.Equal(receiverState, sync.receiverStateProof.UserState)
-	s.Len(sync.receiverStateProof.Witness, storage.StateTreeDepth)
+	s.Equal(senderState, sync.SenderStateProof.UserState)
+	s.Len(sync.SenderStateProof.Witness, storage.StateTreeDepth)
+	s.Equal(receiverState, sync.ReceiverStateProof.UserState)
+	s.Len(sync.ReceiverStateProof.Witness, storage.StateTreeDepth)
 }
 
 func (s *ApplyTransferTestSuite) TestApplyTransferForSync_SetsNonce() {
@@ -281,7 +281,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_SetsNonce() {
 	s.NoError(appError)
 	s.NoError(transferError)
 
-	s.Equal(models.MakeUint256(1), sync.transfer.GetNonce())
+	s.Equal(models.MakeUint256(1), sync.Transfer.GetNonce())
 }
 
 func (s *ApplyTransferTestSuite) setUserStatesInTree() {

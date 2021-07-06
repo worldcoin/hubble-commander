@@ -102,16 +102,15 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 		}
 		stateChangeProofs = append(
 			stateChangeProofs,
-			synced.senderStateProof,
-			synced.receiverStateProof,
+			synced.SenderStateProof,
+			synced.ReceiverStateProof,
 		)
 		if transferError != nil {
 			return nil, NewDisputableTransferError(transferError, stateChangeProofs)
 		}
 
-		syncedTransfer := synced.transfer.(*models.Create2Transfer)
-		appliedTransfers = append(appliedTransfers, *syncedTransfer)
-		*combinedFee = *combinedFee.Add(&syncedTransfer.Fee)
+		appliedTransfers = append(appliedTransfers, *synced.Transfer)
+		*combinedFee = *combinedFee.Add(&synced.Transfer.Fee)
 	}
 
 	if len(appliedTransfers) > 0 {
