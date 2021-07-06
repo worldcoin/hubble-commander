@@ -191,7 +191,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ReturnsSenderProofForC
 	s.NoError(appError)
 
 	s.Equal(&bigTransfer, synced.Transfer)
-	s.Equal(senderState, synced.SenderStateProof.UserState)
+	s.Equal(senderState, *synced.SenderStateProof.UserState)
 	s.Len(synced.SenderStateProof.Witness, storage.StateTreeDepth)
 }
 
@@ -204,7 +204,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ValidatesSenderTokenID
 	s.NoError(appError)
 
 	s.Equal(&transfer, synced.Transfer)
-	s.Equal(senderState, synced.SenderStateProof.UserState)
+	s.Equal(senderState, *synced.SenderStateProof.UserState)
 	s.Len(synced.SenderStateProof.Witness, storage.StateTreeDepth)
 }
 
@@ -222,9 +222,9 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ValidatesReceiverToken
 	s.NoError(appError)
 
 	s.Equal(&transfer, synced.Transfer)
-	s.Equal(senderState, synced.SenderStateProof.UserState)
+	s.Equal(senderState, *synced.SenderStateProof.UserState)
 	s.Len(synced.SenderStateProof.Witness, storage.StateTreeDepth)
-	s.Equal(receiverWithChangedToken, synced.ReceiverStateProof.UserState)
+	s.Equal(receiverWithChangedToken, *synced.ReceiverStateProof.UserState)
 	s.Len(synced.ReceiverStateProof.Witness, storage.StateTreeDepth)
 }
 
@@ -264,9 +264,9 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ReturnsProofs() {
 	s.NoError(appError)
 	s.NoError(transferError)
 
-	s.Equal(senderState, sync.SenderStateProof.UserState)
+	s.Equal(senderState, *sync.SenderStateProof.UserState)
 	s.Len(sync.SenderStateProof.Witness, storage.StateTreeDepth)
-	s.Equal(receiverState, sync.ReceiverStateProof.UserState)
+	s.Equal(receiverState, *sync.ReceiverStateProof.UserState)
 	s.Len(sync.ReceiverStateProof.Witness, storage.StateTreeDepth)
 }
 
