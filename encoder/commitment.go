@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -25,6 +26,10 @@ func (c *DecodedCommitment) BodyHash(accountRoot common.Hash) common.Hash {
 	copy(arr[128:], c.Transactions)
 
 	return crypto.Keccak256Hash(arr)
+}
+
+func (c *DecodedCommitment) LeafHash(accountRoot common.Hash) common.Hash {
+	return utils.HashTwo(c.StateRoot, c.BodyHash(accountRoot))
 }
 
 func CommitmentToCalldataFields(commitments []models.Commitment) (
