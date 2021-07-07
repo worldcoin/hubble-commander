@@ -1,6 +1,7 @@
 package merkletree
 
 import (
+	stdErr "errors"
 	"fmt"
 	"math"
 
@@ -15,6 +16,9 @@ const MaxDepth = 32
 
 var (
 	zeroHashes [MaxDepth + 1]common.Hash
+
+	ErrEmptyLeaves   = stdErr.New("leaves cannot be empty")
+	ErrTooManyLeaves = stdErr.New("merkle tree too large")
 )
 
 func init() {
@@ -46,10 +50,13 @@ type MerkleTree struct {
 }
 
 func NewMerkleTree(leaves []common.Hash) (*MerkleTree, error) {
+	if len(leaves) == 0 {
+		return nil, errors.WithStack(ErrEmptyLeaves)
+	}
 	depth := getRequiredTreeHeight(int32(len(leaves)))
 
 	if depth > MaxDepth {
-		return nil, errors.Errorf("merkle tree too large")
+		return nil, errors.WithStack(ErrTooManyLeaves)
 	}
 
 	arraySize := (1 << depth) - 1

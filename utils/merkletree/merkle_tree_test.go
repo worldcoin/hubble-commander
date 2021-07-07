@@ -9,14 +9,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewMerkleTree_OnlyRoot(t *testing.T) {
+func TestNewMerkleTree_ZeroLeaves(t *testing.T) {
+	tree, err := NewMerkleTree([]common.Hash{})
+	require.Nil(t, tree)
+	require.ErrorIs(t, err, ErrEmptyLeaves)
+}
+
+func TestNewMerkleTree_OneNode(t *testing.T) {
 	hash := utils.RandomHash()
 
 	tree, err := NewMerkleTree([]common.Hash{hash})
 	require.NoError(t, err)
 
-	require.Equal(t, hash, tree.Root())
-	require.Equal(t, uint8(1), tree.Depth())
+	require.Equal(t, utils.HashTwo(hash, GetZeroHash(0)), tree.Root())
+	require.Equal(t, uint8(2), tree.Depth())
 }
 
 func TestNewMerkleTree_TwoNodes(t *testing.T) {
