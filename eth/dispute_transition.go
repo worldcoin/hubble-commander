@@ -19,13 +19,14 @@ func (c *Client) DisputeTransitionTransfer(
 	target *models.TransferCommitmentInclusionProof,
 	proofs []models.StateMerkleProof,
 ) (*types.Transaction, error) {
-	return c.Rollup.DisputeTransitionTransfer(
-		c.transactOpts(nil, 8_000_000),
-		batchID.ToBig(),
-		*CommitmentProofToCalldata(previous),
-		*TransferProofToCalldata(target),
-		StateMerkleProofsToCalldata(proofs),
-	)
+	return c.rollup().
+		WithGasLimit(8_000_000). // TODO use estimated gas
+		DisputeTransitionTransfer(
+			batchID.ToBig(),
+			*CommitmentProofToCalldata(previous),
+			*TransferProofToCalldata(target),
+			StateMerkleProofsToCalldata(proofs),
+		)
 }
 
 func (c *Client) DisputeTransitionCreate2Transfer(
@@ -34,13 +35,14 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 	target *models.TransferCommitmentInclusionProof,
 	proofs []models.StateMerkleProof,
 ) (*types.Transaction, error) {
-	return c.Rollup.DisputeTransitionCreate2Transfer(
-		c.transactOpts(nil, 8_000_000),
-		batchID.ToBig(),
-		*CommitmentProofToCalldata(previous),
-		*TransferProofToCalldata(target),
-		StateMerkleProofsToCalldata(proofs),
-	)
+	return c.rollup().
+		WithGasLimit(8_000_000). // TODO use estimated gas
+		DisputeTransitionCreate2Transfer(
+			batchID.ToBig(),
+			*CommitmentProofToCalldata(previous),
+			*TransferProofToCalldata(target),
+			StateMerkleProofsToCalldata(proofs),
+		)
 }
 
 func (c *Client) WaitForRollbackToFinish(transactionHash common.Hash) error {
