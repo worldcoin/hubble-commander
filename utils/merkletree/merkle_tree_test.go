@@ -38,7 +38,7 @@ func TestNewMerkleTree_ThreeNodes(t *testing.T) {
 	tree, err := NewMerkleTree([]common.Hash{leaf1, leaf2, leaf3})
 	require.NoError(t, err)
 
-	require.Equal(t, utils.HashTwo(utils.HashTwo(leaf1, leaf2), utils.HashTwo(leaf3, GetZeroHash(2))), tree.Root())
+	require.Equal(t, utils.HashTwo(utils.HashTwo(leaf1, leaf2), utils.HashTwo(leaf3, GetZeroHash(0))), tree.Root())
 	require.Equal(t, uint8(3), tree.Depth())
 }
 
@@ -69,12 +69,12 @@ func TestMerkleTree_GetWitness_ThreeNodes(t *testing.T) {
 	leaf3 := utils.RandomHash()
 
 	h12 := utils.HashTwo(leaf1, leaf2)
-	h30 := utils.HashTwo(leaf3, GetZeroHash(2))
+	h30 := utils.HashTwo(leaf3, GetZeroHash(0))
 
 	tree, err := NewMerkleTree([]common.Hash{leaf1, leaf2, leaf3})
 	require.NoError(t, err)
 
 	require.Equal(t, models.Witness{leaf2, h30}, tree.GetWitness(0))
 	require.Equal(t, models.Witness{leaf1, h30}, tree.GetWitness(1))
-	require.Equal(t, models.Witness{GetZeroHash(2), h12}, tree.GetWitness(2))
+	require.Equal(t, models.Witness{GetZeroHash(0), h12}, tree.GetWitness(2))
 }

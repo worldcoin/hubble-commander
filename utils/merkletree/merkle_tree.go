@@ -65,7 +65,7 @@ func NewMerkleTree(leaves []common.Hash) (*MerkleTree, error) {
 
 	// Set the rest of the leaves on the lowest level to "zero hash".
 	for i := len(leaves); uint32(i) < getNodeCountAtDepth(depth-1); i++ {
-		tree.setNode(models.MerklePath{Depth: depth - 1, Path: uint32(i)}, GetZeroHash(uint(depth-1)))
+		tree.setNode(models.MerklePath{Depth: depth - 1, Path: uint32(i)}, GetZeroHash(0))
 	}
 
 	// Populate the rest of the levels with hashes of their children.
