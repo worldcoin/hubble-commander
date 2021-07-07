@@ -288,7 +288,7 @@ func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 		ToPublicKey: *s.wallets[0].PublicKey(),
 	}
 	s.setC2THashAndSign(&tx)
-	expectedCommitment := s.createAndSubmitC2TBatch(&tx)
+	expectedCommitment := createAndSubmitC2TBatch(s.T(), s.client, s.transactionExecutor, &tx)
 
 	s.recreateDatabase()
 	s.syncAllBatches()
@@ -518,20 +518,24 @@ func (s *SyncTestSuite) createTransferBatch(tx *models.Transfer) *models.Batch {
 	return pendingBatch
 }
 
-func (s *SyncTestSuite) createAndSubmitC2TBatch(tx *models.Create2Transfer) models.Commitment {
-	_, err := s.storage.AddCreate2Transfer(tx)
-	s.NoError(err)
+func createAndSubmitC2TBatch(t *testing.T,
+	client *eth.TestClient,
+	txExecutor *TransactionExecutor,
+	tx *models.Create2Transfer,
+) models.Commitment {
+	_, err := txExecutor.storage.AddCreate2Transfer(tx)
+	require.NoError(t, err)
 
-	commitments, err := s.transactionExecutor.CreateCreate2TransferCommitments(testDomain)
-	s.NoError(err)
-	s.Len(commitments, 1)
+	commitments, err := txExecutor.CreateCreate2TransferCommitments(testDomain)
+	require.NoError(t, err)
+	require.Len(t, commitments, 1)
 
-	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Create2Transfer)
-	s.NoError(err)
-	err = s.transactionExecutor.SubmitBatch(pendingBatch, commitments)
-	s.NoError(err)
+	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Create2Transfer)
+	require.NoError(t, err)
+	err = txExecutor.SubmitBatch(pendingBatch, commitments)
+	require.NoError(t, err)
 
-	s.client.Commit()
+	client.Commit()
 	return commitments[0]
 }
 
