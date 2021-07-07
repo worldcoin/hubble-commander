@@ -165,6 +165,7 @@ func (s *DisputeTransitionTestSuite) TestTargetCommitmentInclusionProof() {
 	s.Equal(expected, *proof)
 }
 
+//nolint: unused
 func (s *DisputeTransitionTestSuite) setUserStates() {
 	userStates := []models.UserState{
 		*s.createUserState(0, 300, 0),
@@ -177,6 +178,7 @@ func (s *DisputeTransitionTestSuite) setUserStates() {
 	}
 }
 
+//nolint: unused
 func (s *DisputeTransitionTestSuite) createUserState(pubKeyID uint32, balance, nonce uint64) *models.UserState {
 	return &models.UserState{
 		PubKeyID: pubKeyID,
@@ -186,6 +188,7 @@ func (s *DisputeTransitionTestSuite) createUserState(pubKeyID uint32, balance, n
 	}
 }
 
+//nolint: unused
 func (s *DisputeTransitionTestSuite) createTransfer(from, to uint32, nonce, amount uint64) models.Transfer {
 	return models.Transfer{
 		TransactionBase: models.TransactionBase{
