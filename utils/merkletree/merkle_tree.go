@@ -1,6 +1,7 @@
 package merkletree
 
 import (
+	stdErr "errors"
 	"fmt"
 	"math"
 
@@ -15,6 +16,9 @@ const MaxDepth = 32
 
 var (
 	zeroHashes [MaxDepth + 1]common.Hash
+
+	ErrEmptyLeaves   = stdErr.New("leaves cannot be empty")
+	ErrTooManyLeaves = stdErr.New("merkle tree too large")
 )
 
 func init() {
@@ -46,10 +50,13 @@ type MerkleTree struct {
 }
 
 func NewMerkleTree(leaves []common.Hash) (*MerkleTree, error) {
+	if len(leaves) == 0 {
+		return nil, errors.WithStack(ErrEmptyLeaves)
+	}
 	depth := getRequiredTreeHeight(int32(len(leaves)))
 
 	if depth > MaxDepth {
-		return nil, errors.Errorf("merkle tree too large")
+		return nil, errors.WithStack(ErrTooManyLeaves)
 	}
 
 	arraySize := (1 << depth) - 1
@@ -65,7 +72,7 @@ func NewMerkleTree(leaves []common.Hash) (*MerkleTree, error) {
 
 	// Set the rest of the leaves on the lowest level to "zero hash".
 	for i := len(leaves); uint32(i) < getNodeCountAtDepth(depth-1); i++ {
-		tree.setNode(models.MerklePath{Depth: depth - 1, Path: uint32(i)}, GetZeroHash(uint(depth-1)))
+		tree.setNode(models.MerklePath{Depth: depth - 1, Path: uint32(i)}, GetZeroHash(0))
 	}
 
 	// Populate the rest of the levels with hashes of their children.
@@ -132,6 +139,9 @@ func (m *MerkleTree) GetWitness(leafIndex uint32) models.Witness {
 }
 
 func getRequiredTreeHeight(leafCount int32) uint8 {
+	if leafCount == 1 {
+		return 2
+	}
 	return uint8(math.Ceil(math.Log2(float64(leafCount)))) + 1
 }
 
