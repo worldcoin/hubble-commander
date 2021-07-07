@@ -250,6 +250,42 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_FirstCommitm
 	s.True(st.IsNotFoundError(err))
 }
 
+func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_RemovesInvalidBatch() {
+	s.setUserStates()
+
+	commitmentTxs := [][]models.Create2Transfer{
+		{
+			s.createC2T(0, 2, 0, 100),
+			s.createC2T(1, 0, 0, 100),
+		},
+		{
+			s.createC2T(2, 0, 0, 50),
+			s.createC2T(2, 0, 1, 500),
+		},
+	}
+
+	pubKeyIDs := [][]uint32{{2, 0}, {0, 0}}
+	proofs := s.getC2TStateMerkleProofs(commitmentTxs, pubKeyIDs)
+
+	s.beginExecutorTransaction()
+	s.createAndSubmitInvalidC2TBatch(commitmentTxs, pubKeyIDs, commitmentTxs[1][1].Hash)
+
+	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	err = s.transactionExecutor.disputeTransition(&remoteBatches[0], 1, proofs)
+	s.NoError(err)
+
+	_, err = s.client.GetBatch(&remoteBatches[0].ID)
+	s.Error(err)
+	s.Equal("execution reverted: Batch id greater than total number of batches, invalid batch id", err.Error())
+
+	batch, err := s.storage.GetBatch(remoteBatches[0].ID)
+	s.Nil(batch)
+	s.True(st.IsNotFoundError(err))
+}
+
 func (s *DisputeTransitionTestSuite) beginExecutorTransaction() {
 	var err error
 	s.transactionExecutor, err = NewTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
