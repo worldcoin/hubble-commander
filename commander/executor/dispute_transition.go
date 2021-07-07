@@ -3,8 +3,10 @@ package executor
 import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
 
@@ -110,4 +112,38 @@ func targetCommitmentInclusionProof(
 		Path:    path,
 		Witness: tree.GetWitness(commitmentIndex),
 	}, nil
+}
+
+func (t *TransactionExecutor) disputeTransition(
+	batch *eth.DecodedBatch,
+	commitmentIndex int,
+	merkleProofs []models.StateMerkleProof,
+) error {
+	previousCommitmentProof, err := t.previousCommitmentInclusionProof(batch, commitmentIndex-1)
+	if err != nil {
+		return err
+	}
+	targetCommitmentProof, err := targetCommitmentInclusionProof(batch, uint32(commitmentIndex))
+	if err != nil {
+		return err
+	}
+
+	var transaction *types.Transaction
+	if batch.Type == txtype.Transfer {
+		transaction, err = t.client.DisputeTransitionTransfer(&batch.ID, previousCommitmentProof, targetCommitmentProof, merkleProofs)
+	} else {
+		transaction, err = t.client.DisputeTransitionCreate2Transfer(&batch.ID, previousCommitmentProof, targetCommitmentProof, merkleProofs)
+	}
+	if err != nil {
+		return err
+	}
+
+	err = t.client.WaitForRollbackToFinish(transaction.Hash())
+	if err != nil {
+		return err
+	}
+
+	rollbackCause := errors.New("invalid batch")
+	t.Rollback(&rollbackCause)
+	return nil
 }

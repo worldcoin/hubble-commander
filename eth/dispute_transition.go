@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
+	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -19,7 +20,7 @@ func (c *Client) DisputeTransitionTransfer(
 	proofs []models.StateMerkleProof,
 ) (*types.Transaction, error) {
 	return c.Rollup.DisputeTransitionTransfer(
-		c.transactOpts(c.config.stakeAmount.ToBig(), 0),
+		c.transactOpts(nil, 8_000_000),
 		batchID.ToBig(),
 		*CommitmentProofToCalldata(previous),
 		*TransferProofToCalldata(target),
@@ -34,7 +35,7 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 	proofs []models.StateMerkleProof,
 ) (*types.Transaction, error) {
 	return c.Rollup.DisputeTransitionCreate2Transfer(
-		c.transactOpts(c.config.stakeAmount.ToBig(), 0),
+		c.transactOpts(nil, 8_000_000),
 		batchID.ToBig(),
 		*CommitmentProofToCalldata(previous),
 		*TransferProofToCalldata(target),
@@ -42,28 +43,44 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 	)
 }
 
-func (c *Client) GetRollbackStatus(
-	transactionHash common.Hash,
-) (*rollup.RollupRollbackStatus, error) {
+func (c *Client) WaitForRollbackToFinish(transactionHash common.Hash) error {
 	sink := make(chan *rollup.RollupRollbackStatus)
 	subscription, err := c.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer subscription.Unsubscribe()
 
 	for {
 		select {
 		case err = <-subscription.Err():
-			return nil, errors.WithStack(err)
+			return errors.WithStack(err)
 		case rollbackStatus := <-sink:
 			if rollbackStatus.Raw.TxHash == transactionHash {
-				return rollbackStatus, nil
+				if rollbackStatus.Completed {
+					return nil
+				}
+				transactionHash, err = c.keepRollingBack()
+				if err != nil {
+					return err
+				}
 			}
 		case <-time.After(*c.config.txTimeout):
-			return nil, errors.New("GetRollbackStatus: timeout")
+			return errors.New("waitForRollbackToFinish: timeout")
 		}
 	}
+}
+
+func (c *Client) keepRollingBack() (common.Hash, error) {
+	transaction, err := c.Rollup.KeepRollingBack(c.transactOpts(nil, 8_000_000))
+	if err != nil {
+		return common.Hash{}, err
+	}
+	receipt, err := deployer.WaitToBeMined(c.ChainConnection.GetBackend(), transaction)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	return receipt.TxHash, nil
 }
 
 func CommitmentProofToCalldata(proof *models.CommitmentInclusionProof) *rollup.TypesCommitmentInclusionProof {
