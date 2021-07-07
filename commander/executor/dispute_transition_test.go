@@ -179,7 +179,7 @@ func (s *DisputeTransitionTestSuite) TestTargetCommitmentInclusionProof() {
 	s.Equal(expected, *proof)
 }
 
-func (s *DisputeTransitionTestSuite) TestDisputeTransition() {
+func (s *DisputeTransitionTestSuite) TestDisputeTransition_RemovesInvalidBatch() {
 	s.setUserStates()
 
 	commitmentTxs := [][]models.Transfer{
@@ -195,6 +195,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition() {
 
 	proofs := s.getStateMerkleProofs(commitmentTxs)
 
+	s.beginExecutorTransaction()
 	s.createAndSubmitInvalidTransferBatch(commitmentTxs, commitmentTxs[1][1].Hash)
 
 	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
@@ -203,11 +204,24 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition() {
 
 	err = s.transactionExecutor.disputeTransition(&remoteBatches[0], 1, proofs)
 	s.NoError(err)
+
+	_, err = s.client.GetBatch(&remoteBatches[0].ID)
+	s.Error(err)
+	s.Equal("execution reverted: Batch id greater than total number of batches, invalid batch id", err.Error())
+
+	batch, err := s.storage.GetBatch(remoteBatches[0].ID)
+	s.Nil(batch)
+	s.True(st.IsNotFoundError(err))
+}
+
+func (s *DisputeTransitionTestSuite) beginExecutorTransaction() {
+	var err error
+	s.transactionExecutor, err = NewTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
+	s.NoError(err)
 }
 
 func (s *DisputeTransitionTestSuite) getStateMerkleProofs(txs [][]models.Transfer) []models.StateMerkleProof {
-	txExecutor, err := NewTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
-	s.NoError(err)
+	s.beginExecutorTransaction()
 
 	feeReceiver := &FeeReceiver{
 		StateID: 0,
@@ -216,7 +230,7 @@ func (s *DisputeTransitionTestSuite) getStateMerkleProofs(txs [][]models.Transfe
 
 	var disputableTransferError *DisputableTransferError
 	for i := range txs {
-		_, err = txExecutor.ApplyTransfersForSync(txs[i], feeReceiver)
+		_, err := s.transactionExecutor.ApplyTransfersForSync(txs[i], feeReceiver)
 		if err != nil {
 			s.ErrorAs(err, &disputableTransferError)
 			s.Len(disputableTransferError.Proofs, len(txs[i])*2)
@@ -224,7 +238,7 @@ func (s *DisputeTransitionTestSuite) getStateMerkleProofs(txs [][]models.Transfe
 	}
 	s.NotNil(disputableTransferError)
 
-	txExecutor.Rollback(nil)
+	s.transactionExecutor.Rollback(nil)
 	return disputableTransferError.Proofs
 }
 

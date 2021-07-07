@@ -134,5 +134,12 @@ func (t *TransactionExecutor) disputeTransition(batch *eth.DecodedBatch, commitm
 		return err
 	}
 
-	return t.client.WaitForRollbackToFinish(transaction.Hash())
+	err = t.client.WaitForRollbackToFinish(transaction.Hash())
+	if err != nil {
+		return err
+	}
+
+	rollbackCause := errors.New("invalid batch")
+	t.Rollback(&rollbackCause)
+	return nil
 }
