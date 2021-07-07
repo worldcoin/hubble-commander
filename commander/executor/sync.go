@@ -142,8 +142,7 @@ func (t *TransactionExecutor) syncCommitments(batch *eth.DecodedBatch) error {
 			return err
 		}
 		if IsDisputableTransferError(err) {
-			// TODO: dispute fraudulent commitment
-			return err
+			return t.disputeTransition(batch, i, err.(*DisputableTransferError).Proofs)
 		}
 		if err != nil {
 			return err
