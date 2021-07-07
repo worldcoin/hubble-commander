@@ -299,6 +299,36 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_First
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
 }
 
+func (s *DisputeTransitionTestSuite) TestSyncBatch_DisputesFraudulentCommitment() {
+	s.setUserStates()
+
+	commitmentTxs := [][]models.Transfer{
+		{
+			s.createTransfer(0, 2, 0, 500),
+		},
+	}
+
+	transfer := s.createTransfer(0, 2, 0, 50)
+	createAndSubmitTransferBatch(s.T(), s.client, s.transactionExecutor, &transfer)
+
+	s.beginExecutorTransaction()
+	s.createAndSubmitInvalidTransferBatch(commitmentTxs, commitmentTxs[0][0].Hash)
+	s.transactionExecutor.Rollback(nil)
+
+	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	s.NoError(err)
+	s.Len(remoteBatches, 2)
+
+	err = s.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
+	s.NoError(err)
+
+	s.beginExecutorTransaction()
+	err = s.transactionExecutor.SyncBatch(&remoteBatches[1])
+	s.NoError(err)
+
+	s.checkBatchAfterDispute(remoteBatches[1].ID)
+}
+
 func (s *DisputeTransitionTestSuite) checkBatchAfterDispute(batchID models.Uint256) {
 	_, err := s.client.GetBatch(&batchID)
 	s.Error(err)
