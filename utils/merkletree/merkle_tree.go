@@ -139,6 +139,9 @@ func (m *MerkleTree) GetWitness(leafIndex uint32) models.Witness {
 }
 
 func getRequiredTreeHeight(leafCount int32) uint8 {
+	if leafCount == 1 {
+		return 2
+	}
 	return uint8(math.Ceil(math.Log2(float64(leafCount)))) + 1
 }
 

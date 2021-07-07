@@ -54,8 +54,7 @@ func TestMerkleTree_GetWitness_OneLeaf(t *testing.T) {
 	tree, err := NewMerkleTree([]common.Hash{hash})
 	require.NoError(t, err)
 
-	witness := tree.GetWitness(0)
-	require.Len(t, witness, 0)
+	require.Equal(t, models.Witness{GetZeroHash(0)}, tree.GetWitness(0))
 }
 
 func TestMerkleTree_GetWitness_TwoLeaves(t *testing.T) {
