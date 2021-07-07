@@ -15,7 +15,7 @@ func TestNewMerkleTree_ZeroLeaves(t *testing.T) {
 	require.ErrorIs(t, err, ErrEmptyLeaves)
 }
 
-func TestNewMerkleTree_OneNode(t *testing.T) {
+func TestNewMerkleTree_OneLeaf(t *testing.T) {
 	hash := utils.RandomHash()
 
 	tree, err := NewMerkleTree([]common.Hash{hash})
@@ -25,7 +25,7 @@ func TestNewMerkleTree_OneNode(t *testing.T) {
 	require.Equal(t, uint8(2), tree.Depth())
 }
 
-func TestNewMerkleTree_TwoNodes(t *testing.T) {
+func TestNewMerkleTree_TwoLeaves(t *testing.T) {
 	left := utils.RandomHash()
 	right := utils.RandomHash()
 
@@ -36,7 +36,7 @@ func TestNewMerkleTree_TwoNodes(t *testing.T) {
 	require.Equal(t, uint8(2), tree.Depth())
 }
 
-func TestNewMerkleTree_ThreeNodes(t *testing.T) {
+func TestNewMerkleTree_ThreeLeaves(t *testing.T) {
 	leaf1 := utils.RandomHash()
 	leaf2 := utils.RandomHash()
 	leaf3 := utils.RandomHash()
@@ -48,7 +48,7 @@ func TestNewMerkleTree_ThreeNodes(t *testing.T) {
 	require.Equal(t, uint8(3), tree.Depth())
 }
 
-func TestMerkleTree_GetWitness_OnlyRoot(t *testing.T) {
+func TestMerkleTree_GetWitness_OneLeaf(t *testing.T) {
 	hash := utils.RandomHash()
 
 	tree, err := NewMerkleTree([]common.Hash{hash})
@@ -58,7 +58,7 @@ func TestMerkleTree_GetWitness_OnlyRoot(t *testing.T) {
 	require.Len(t, witness, 0)
 }
 
-func TestMerkleTree_GetWitness_TwoNodes(t *testing.T) {
+func TestMerkleTree_GetWitness_TwoLeaves(t *testing.T) {
 	left := utils.RandomHash()
 	right := utils.RandomHash()
 
@@ -69,7 +69,7 @@ func TestMerkleTree_GetWitness_TwoNodes(t *testing.T) {
 	require.Equal(t, models.Witness{left}, tree.GetWitness(1))
 }
 
-func TestMerkleTree_GetWitness_ThreeNodes(t *testing.T) {
+func TestMerkleTree_GetWitness_ThreeLeaves(t *testing.T) {
 	leaf1 := utils.RandomHash()
 	leaf2 := utils.RandomHash()
 	leaf3 := utils.RandomHash()
