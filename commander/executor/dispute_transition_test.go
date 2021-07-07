@@ -224,6 +224,9 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_FirstCommitment() {
 		},
 	}
 
+	transfer := s.createTransfer(0, 2, 0, 50)
+	createAndSubmitTransferBatch(s.T(), s.client, s.transactionExecutor, &transfer)
+
 	proofs := s.getStateMerkleProofs(commitmentTxs)
 
 	s.beginExecutorTransaction()
@@ -301,7 +304,7 @@ func (s *DisputeTransitionTestSuite) createInvalidTransferCommitments(
 		txs := commitmentTxs[i]
 		combinedFee := models.MakeUint256(0)
 		for j := range txs {
-			senderState, receiverState, err := s.transactionExecutor.getParticipantsStates(&transfer)
+			senderState, receiverState, err := s.transactionExecutor.getParticipantsStates(&txs[i])
 			s.NoError(err)
 
 			if txs[j].Hash != invalidTxHash {

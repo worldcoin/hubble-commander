@@ -204,7 +204,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AppliesFee() {
 func generateValidTransfers(transfersAmount uint32) []models.Transfer {
 	transfers := make([]models.Transfer, 0, transfersAmount)
 	for i := 0; i < int(transfersAmount); i++ {
-		tx := models.Transfer{
+		transfer := models.Transfer{
 			TransactionBase: models.TransactionBase{
 				Hash:        utils.RandomHash(),
 				TxType:      txtype.Transfer,
@@ -215,7 +215,7 @@ func generateValidTransfers(transfersAmount uint32) []models.Transfer {
 			},
 			ToStateID: 2,
 		}
-		transfers = append(transfers, tx)
+		transfers = append(transfers, transfer)
 	}
 	return transfers
 }
@@ -223,7 +223,7 @@ func generateValidTransfers(transfersAmount uint32) []models.Transfer {
 func generateInvalidTransfers(transfersAmount uint64) []models.Transfer {
 	transfers := make([]models.Transfer, 0, transfersAmount)
 	for i := uint64(0); i < transfersAmount; i++ {
-		tx := models.Transfer{
+		transfer := models.Transfer{
 			TransactionBase: models.TransactionBase{
 				Hash:        utils.RandomHash(),
 				TxType:      txtype.Transfer,
@@ -234,7 +234,7 @@ func generateInvalidTransfers(transfersAmount uint64) []models.Transfer {
 			},
 			ToStateID: 2,
 		}
-		transfers = append(transfers, tx)
+		transfers = append(transfers, transfer)
 	}
 	return transfers
 }
