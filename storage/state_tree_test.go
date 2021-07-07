@@ -276,9 +276,9 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafAddsStateUpdateRecord() {
 func (s *StateTreeTestSuite) TestSet_ReturnsWitness() {
 	witness, err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
-	s.Len(witness, 32)
+	s.Len(witness, StateTreeDepth)
 
-	node, err := s.storage.GetStateNodeByPath(&models.MerklePath{Depth: 32, Path: 1})
+	node, err := s.storage.GetStateNodeByPath(&models.MerklePath{Depth: StateTreeDepth, Path: 1})
 	s.NoError(err)
 	s.Equal(node.DataHash, witness[0])
 
