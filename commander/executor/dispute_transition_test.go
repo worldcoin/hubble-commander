@@ -193,7 +193,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_RemovesInval
 		},
 	}
 
-	proofs := s.getStateMerkleProofs(commitmentTxs)
+	proofs := s.getTransferStateMerkleProofs(commitmentTxs)
 
 	s.beginExecutorTransaction()
 	s.createAndSubmitInvalidTransferBatch(commitmentTxs, commitmentTxs[1][1].Hash)
@@ -205,13 +205,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_RemovesInval
 	err = s.transactionExecutor.disputeTransition(&remoteBatches[0], 1, proofs)
 	s.NoError(err)
 
-	_, err = s.client.GetBatch(&remoteBatches[0].ID)
-	s.Error(err)
-	s.Equal("execution reverted: Batch id greater than total number of batches, invalid batch id", err.Error())
-
-	batch, err := s.storage.GetBatch(remoteBatches[0].ID)
-	s.Nil(batch)
-	s.True(st.IsNotFoundError(err))
+	s.checkBatchAfterDispute(remoteBatches[0].ID)
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_FirstCommitment() {
@@ -226,7 +220,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_FirstCommitm
 	transfer := s.createTransfer(0, 2, 0, 50)
 	createAndSubmitTransferBatch(s.T(), s.client, s.transactionExecutor, &transfer)
 
-	proofs := s.getStateMerkleProofs(commitmentTxs)
+	proofs := s.getTransferStateMerkleProofs(commitmentTxs)
 
 	s.beginExecutorTransaction()
 	s.createAndSubmitInvalidTransferBatch(commitmentTxs, commitmentTxs[0][0].Hash)
@@ -241,13 +235,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_FirstCommitm
 	err = s.transactionExecutor.disputeTransition(&remoteBatches[1], 0, proofs)
 	s.NoError(err)
 
-	_, err = s.client.GetBatch(&remoteBatches[1].ID)
-	s.Error(err)
-	s.Equal("execution reverted: Batch id greater than total number of batches, invalid batch id", err.Error())
-
-	batch, err := s.storage.GetBatch(remoteBatches[1].ID)
-	s.Nil(batch)
-	s.True(st.IsNotFoundError(err))
+	s.checkBatchAfterDispute(remoteBatches[0].ID)
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_RemovesInvalidBatch() {
@@ -277,13 +265,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_Remov
 	err = s.transactionExecutor.disputeTransition(&remoteBatches[0], 1, proofs)
 	s.NoError(err)
 
-	_, err = s.client.GetBatch(&remoteBatches[0].ID)
-	s.Error(err)
-	s.Equal("execution reverted: Batch id greater than total number of batches, invalid batch id", err.Error())
-
-	batch, err := s.storage.GetBatch(remoteBatches[0].ID)
-	s.Nil(batch)
-	s.True(st.IsNotFoundError(err))
+	s.checkBatchAfterDispute(remoteBatches[0].ID)
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_FirstCommitment() {
@@ -314,11 +296,15 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_First
 	err = s.transactionExecutor.disputeTransition(&remoteBatches[1], 0, proofs)
 	s.NoError(err)
 
-	_, err = s.client.GetBatch(&remoteBatches[1].ID)
+	s.checkBatchAfterDispute(remoteBatches[0].ID)
+}
+
+func (s *DisputeTransitionTestSuite) checkBatchAfterDispute(batchID models.Uint256) {
+	_, err := s.client.GetBatch(&batchID)
 	s.Error(err)
 	s.Equal("execution reverted: Batch id greater than total number of batches, invalid batch id", err.Error())
 
-	batch, err := s.storage.GetBatch(remoteBatches[1].ID)
+	batch, err := s.storage.GetBatch(batchID)
 	s.Nil(batch)
 	s.True(st.IsNotFoundError(err))
 }
@@ -329,7 +315,7 @@ func (s *DisputeTransitionTestSuite) beginExecutorTransaction() {
 	s.NoError(err)
 }
 
-func (s *DisputeTransitionTestSuite) getStateMerkleProofs(txs [][]models.Transfer) []models.StateMerkleProof {
+func (s *DisputeTransitionTestSuite) getTransferStateMerkleProofs(txs [][]models.Transfer) []models.StateMerkleProof {
 	s.beginExecutorTransaction()
 
 	feeReceiver := &FeeReceiver{
@@ -351,7 +337,10 @@ func (s *DisputeTransitionTestSuite) getStateMerkleProofs(txs [][]models.Transfe
 	return disputableTransferError.Proofs
 }
 
-func (s *DisputeTransitionTestSuite) getC2TStateMerkleProofs(txs [][]models.Create2Transfer, pubKeyIDs [][]uint32) []models.StateMerkleProof {
+func (s *DisputeTransitionTestSuite) getC2TStateMerkleProofs(
+	txs [][]models.Create2Transfer,
+	pubKeyIDs [][]uint32,
+) []models.StateMerkleProof {
 	s.beginExecutorTransaction()
 
 	feeReceiver := &FeeReceiver{
@@ -392,7 +381,11 @@ func (s *DisputeTransitionTestSuite) createAndSubmitInvalidTransferBatch(txs [][
 	return pendingBatch
 }
 
-func (s *DisputeTransitionTestSuite) createAndSubmitInvalidC2TBatch(txs [][]models.Create2Transfer, pubKeyIDs [][]uint32, invalidTxHash common.Hash) *models.Batch {
+func (s *DisputeTransitionTestSuite) createAndSubmitInvalidC2TBatch(
+	txs [][]models.Create2Transfer,
+	pubKeyIDs [][]uint32,
+	invalidTxHash common.Hash,
+) *models.Batch {
 	for i := range txs {
 		err := s.storage.BatchAddCreate2Transfer(txs[i])
 		s.NoError(err)
@@ -458,7 +451,11 @@ func (s *DisputeTransitionTestSuite) createInvalidTransferCommitments(
 	return commitments
 }
 
-func (s *DisputeTransitionTestSuite) applyTransfer(tx models.GenericTransaction, invalidTxHash common.Hash, combinedFee models.Uint256) models.Uint256 {
+func (s *DisputeTransitionTestSuite) applyTransfer(
+	tx models.GenericTransaction,
+	invalidTxHash common.Hash,
+	combinedFee models.Uint256,
+) models.Uint256 {
 	senderState, receiverState, err := s.transactionExecutor.getParticipantsStates(tx)
 	s.NoError(err)
 
