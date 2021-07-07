@@ -61,7 +61,7 @@ func (s *DisputeTransitionTestSuite) SetupSuite() {
 	s.cfg = &config.RollupConfig{
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
-		TxsPerCommitment:       2,
+		TxsPerCommitment:       1,
 		DevMode:                false,
 	}
 }
@@ -219,8 +219,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_FirstCommitment() {
 
 	commitmentTxs := [][]models.Transfer{
 		{
-			s.createTransfer(0, 2, 0, 100),
-			s.createTransfer(1, 0, 0, 100),
+			s.createTransfer(0, 2, 0, 500),
 		},
 	}
 
@@ -230,20 +229,23 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_FirstCommitment() {
 	proofs := s.getStateMerkleProofs(commitmentTxs)
 
 	s.beginExecutorTransaction()
-	s.createAndSubmitInvalidTransferBatch(commitmentTxs, commitmentTxs[1][1].Hash)
+	s.createAndSubmitInvalidTransferBatch(commitmentTxs, commitmentTxs[0][0].Hash)
 
 	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
 	s.NoError(err)
-	s.Len(remoteBatches, 1)
+	s.Len(remoteBatches, 2)
 
-	err = s.transactionExecutor.disputeTransition(&remoteBatches[0], 1, proofs)
+	err = s.transactionExecutor.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
 	s.NoError(err)
 
-	_, err = s.client.GetBatch(&remoteBatches[0].ID)
+	err = s.transactionExecutor.disputeTransition(&remoteBatches[1], 0, proofs)
+	s.NoError(err)
+
+	_, err = s.client.GetBatch(&remoteBatches[1].ID)
 	s.Error(err)
 	s.Equal("execution reverted: Batch id greater than total number of batches, invalid batch id", err.Error())
 
-	batch, err := s.storage.GetBatch(remoteBatches[0].ID)
+	batch, err := s.storage.GetBatch(remoteBatches[1].ID)
 	s.Nil(batch)
 	s.True(st.IsNotFoundError(err))
 }
