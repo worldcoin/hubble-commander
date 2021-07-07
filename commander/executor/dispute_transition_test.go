@@ -264,7 +264,10 @@ func (s *DisputeTransitionTestSuite) createAndSubmitInvalidTransferBatch(txs [][
 	return pendingBatch, commitments
 }
 
-func (s *DisputeTransitionTestSuite) createInvalidTransferCommitments(commitmentTxs [][]models.Transfer, invalidTransferHash common.Hash) []models.Commitment {
+func (s *DisputeTransitionTestSuite) createInvalidTransferCommitments(
+	commitmentTxs [][]models.Transfer,
+	invalidTransferHash common.Hash,
+) []models.Commitment {
 	commitments := make([]models.Commitment, 0, len(commitmentTxs))
 	for i := range commitmentTxs {
 		txs := commitmentTxs[i]
@@ -294,7 +297,10 @@ func (s *DisputeTransitionTestSuite) createInvalidTransferCommitments(commitment
 	return commitments
 }
 
-func (s *DisputeTransitionTestSuite) calculateStateAfterInvalidTransfer(senderState, receiverState *models.StateLeaf, invalidTransfer *models.Transfer) {
+func (s *DisputeTransitionTestSuite) calculateStateAfterInvalidTransfer(
+	senderState, receiverState *models.StateLeaf,
+	invalidTransfer *models.Transfer,
+) {
 	senderState.Nonce = *senderState.Nonce.AddN(1)
 	receiverState.Balance = *receiverState.Balance.Add(&invalidTransfer.Amount)
 	_, err := s.transactionExecutor.stateTree.Set(invalidTransfer.GetFromStateID(), &senderState.UserState)

@@ -114,7 +114,11 @@ func targetCommitmentInclusionProof(
 	}, nil
 }
 
-func (t *TransactionExecutor) disputeTransition(batch *eth.DecodedBatch, commitmentIndex int, merkleProofs []models.StateMerkleProof) error {
+func (t *TransactionExecutor) disputeTransition(
+	batch *eth.DecodedBatch,
+	commitmentIndex int,
+	merkleProofs []models.StateMerkleProof,
+) error {
 	previousCommitmentProof, err := t.previousCommitmentInclusionProof(batch, commitmentIndex-1)
 	if err != nil {
 		return err
