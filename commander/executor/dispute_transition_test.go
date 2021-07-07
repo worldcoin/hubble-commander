@@ -214,6 +214,37 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_RemovesInvalidBatch()
 	s.True(st.IsNotFoundError(err))
 }
 
+func (s *DisputeTransitionTestSuite) TestDisputeTransition_FirstCommitment() {
+	s.setUserStates()
+
+	commitmentTxs := [][]models.Transfer{
+		{
+			s.createTransfer(0, 2, 0, 100),
+			s.createTransfer(1, 0, 0, 100),
+		},
+	}
+
+	proofs := s.getStateMerkleProofs(commitmentTxs)
+
+	s.beginExecutorTransaction()
+	s.createAndSubmitInvalidTransferBatch(commitmentTxs, commitmentTxs[1][1].Hash)
+
+	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	err = s.transactionExecutor.disputeTransition(&remoteBatches[0], 1, proofs)
+	s.NoError(err)
+
+	_, err = s.client.GetBatch(&remoteBatches[0].ID)
+	s.Error(err)
+	s.Equal("execution reverted: Batch id greater than total number of batches, invalid batch id", err.Error())
+
+	batch, err := s.storage.GetBatch(remoteBatches[0].ID)
+	s.Nil(batch)
+	s.True(st.IsNotFoundError(err))
+}
+
 func (s *DisputeTransitionTestSuite) beginExecutorTransaction() {
 	var err error
 	s.transactionExecutor, err = NewTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
@@ -242,10 +273,7 @@ func (s *DisputeTransitionTestSuite) getStateMerkleProofs(txs [][]models.Transfe
 	return disputableTransferError.Proofs
 }
 
-func (s *DisputeTransitionTestSuite) createAndSubmitInvalidTransferBatch(txs [][]models.Transfer, invalidTransferHash common.Hash) (
-	*models.Batch,
-	[]models.Commitment,
-) {
+func (s *DisputeTransitionTestSuite) createAndSubmitInvalidTransferBatch(txs [][]models.Transfer, invalidTxHash common.Hash) *models.Batch {
 	for i := range txs {
 		err := s.storage.BatchAddTransfer(txs[i])
 		s.NoError(err)
@@ -254,19 +282,19 @@ func (s *DisputeTransitionTestSuite) createAndSubmitInvalidTransferBatch(txs [][
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
-	commitments := s.createInvalidTransferCommitments(txs, invalidTransferHash)
+	commitments := s.createInvalidTransferCommitments(txs, invalidTxHash)
 	s.Len(commitments, len(txs))
 
 	err = s.transactionExecutor.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.Commit()
-	return pendingBatch, commitments
+	return pendingBatch
 }
 
 func (s *DisputeTransitionTestSuite) createInvalidTransferCommitments(
 	commitmentTxs [][]models.Transfer,
-	invalidTransferHash common.Hash,
+	invalidTxHash common.Hash,
 ) []models.Commitment {
 	commitments := make([]models.Commitment, 0, len(commitmentTxs))
 	for i := range commitmentTxs {
@@ -276,7 +304,7 @@ func (s *DisputeTransitionTestSuite) createInvalidTransferCommitments(
 			senderState, receiverState, err := s.transactionExecutor.getParticipantsStates(&transfer)
 			s.NoError(err)
 
-			if txs[j].Hash != invalidTransferHash {
+			if txs[j].Hash != invalidTxHash {
 				transferError, appError := s.transactionExecutor.ApplyTransfer(&txs[j], models.MakeUint256(0))
 				s.NoError(transferError)
 				s.NoError(appError)

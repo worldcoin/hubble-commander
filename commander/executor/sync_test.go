@@ -194,7 +194,7 @@ func (s *SyncTestSuite) TestSyncBatch_PendingBatch() {
 		ToStateID: 1,
 	}
 	s.setTransferHashAndSign(&tx)
-	s.createAndSubmitTransferBatch(&tx)
+	createAndSubmitTransferBatch(s.T(), s.client, s.transactionExecutor, &tx)
 
 	pendingBatch, err := s.storage.GetBatch(models.MakeUint256(1))
 	s.NoError(err)
@@ -326,7 +326,7 @@ func (s *SyncTestSuite) TestRevertBatch_RevertsState() {
 	s.NoError(err)
 
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
-	pendingBatch := s.createAndSubmitTransferBatch(&s.transfer)
+	pendingBatch := createAndSubmitTransferBatch(s.T(), s.client, s.transactionExecutor, &s.transfer)
 	decodedBatch := &eth.DecodedBatch{
 		Batch: models.Batch{
 			ID:                models.MakeUint256(1),
@@ -376,7 +376,7 @@ func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {
 	pendingBatches := make([]models.Batch, 2)
 	for i := range pendingBatches {
 		signTransfer(s.T(), &s.wallets[transfers[i].FromStateID], &transfers[i])
-		pendingBatches[i] = *s.createAndSubmitTransferBatch(&transfers[i])
+		pendingBatches[i] = *createAndSubmitTransferBatch(s.T(), s.client, s.transactionExecutor, &transfers[i])
 	}
 
 	decodedBatch := &eth.DecodedBatch{
@@ -410,7 +410,7 @@ func (s *SyncTestSuite) TestRevertBatch_SyncsCorrectBatch() {
 	s.NoError(err)
 
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
-	pendingBatch := s.createAndSubmitTransferBatch(&s.transfer)
+	pendingBatch := createAndSubmitTransferBatch(s.T(), s.client, s.transactionExecutor, &s.transfer)
 	s.recreateDatabase()
 
 	localTransfer := s.transfer
@@ -453,21 +453,26 @@ func (s *SyncTestSuite) TestRevertBatch_SyncsCorrectBatch() {
 	s.Equal(expectedTx, *transfer)
 }
 
-func (s *SyncTestSuite) createAndSubmitTransferBatch(tx *models.Transfer) *models.Batch {
-	_, err := s.storage.AddTransfer(tx)
-	s.NoError(err)
+func createAndSubmitTransferBatch(
+	t *testing.T,
+	client *eth.TestClient,
+	txExecutor *TransactionExecutor,
+	tx *models.Transfer,
+) *models.Batch {
+	_, err := txExecutor.storage.AddTransfer(tx)
+	require.NoError(t, err)
 
-	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
-	s.NoError(err)
+	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Transfer)
+	require.NoError(t, err)
 
-	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
-	s.NoError(err)
-	s.Len(commitments, 1)
+	commitments, err := txExecutor.CreateTransferCommitments(testDomain)
+	require.NoError(t, err)
+	require.Len(t, commitments, 1)
 
-	err = s.transactionExecutor.SubmitBatch(pendingBatch, commitments)
-	s.NoError(err)
+	err = txExecutor.SubmitBatch(pendingBatch, commitments)
+	require.NoError(t, err)
 
-	s.client.Commit()
+	client.Commit()
 	return pendingBatch
 }
 
