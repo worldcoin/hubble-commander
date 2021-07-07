@@ -235,7 +235,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_FirstCommitm
 	err = s.transactionExecutor.disputeTransition(&remoteBatches[1], 0, proofs)
 	s.NoError(err)
 
-	s.checkBatchAfterDispute(remoteBatches[0].ID)
+	s.checkBatchAfterDispute(remoteBatches[1].ID)
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_RemovesInvalidBatch() {
@@ -296,7 +296,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_First
 	err = s.transactionExecutor.disputeTransition(&remoteBatches[1], 0, proofs)
 	s.NoError(err)
 
-	s.checkBatchAfterDispute(remoteBatches[0].ID)
+	s.checkBatchAfterDispute(remoteBatches[1].ID)
 }
 
 func (s *DisputeTransitionTestSuite) checkBatchAfterDispute(batchID models.Uint256) {
