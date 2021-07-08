@@ -25,6 +25,18 @@ type StateLeaf struct {
 	UserState
 }
 
+func (s *StateNode) Path() *MerklePath {
+	return &s.MerklePath
+}
+
+func (s *StateNode) Hash() *common.Hash {
+	return &s.DataHash
+}
+
+func (s *StateLeaf) Index() uint32 {
+	return s.StateID
+}
+
 type StateUpdate struct {
 	ID            uint64 `badgerhold:"key"`
 	CurrentRoot   common.Hash
