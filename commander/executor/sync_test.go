@@ -42,7 +42,11 @@ func (s *SyncTestSuite) SetupSuite() {
 
 func (s *SyncTestSuite) SetupTest() {
 	var err error
-	s.client, err = eth.NewConfiguredTestClient(rollup.DeploymentConfig{MaxTxsPerCommit: models.NewUint256(1)})
+	s.client, err = eth.NewConfiguredTestClient(rollup.DeploymentConfig{
+		Params: rollup.Params{
+			MaxTxsPerCommit: models.NewUint256(1),
+		},
+	})
 	s.NoError(err)
 
 	s.cfg = &config.RollupConfig{

@@ -28,13 +28,21 @@ const (
 )
 
 type DeploymentConfig struct {
+	Params
+	Dependencies
+}
+
+type Params struct {
 	MaxDepositSubtreeDepth *models.Uint256
 	GenesisStateRoot       *common.Hash
 	StakeAmount            *models.Uint256
 	BlocksToFinalise       *models.Uint256
 	MinGasLeft             *models.Uint256
 	MaxTxsPerCommit        *models.Uint256
-	AccountRegistryAddress *common.Address
+}
+
+type Dependencies struct {
+	AccountRegistry *common.Address
 }
 
 type RollupContracts struct {
@@ -53,18 +61,16 @@ type RollupContracts struct {
 }
 
 func DeployRollup(c deployer.ChainConnection) (*RollupContracts, error) {
-	accountRegistryAddress, _, _, err := deployer.DeployAccountRegistry(c)
-	if err != nil {
-		return nil, err
-	}
-	return DeployConfiguredRollup(c, DeploymentConfig{
-		AccountRegistryAddress: accountRegistryAddress,
-	})
+	return DeployConfiguredRollup(c, DeploymentConfig{})
 }
 
 // nolint:funlen,gocyclo
 func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig) (*RollupContracts, error) {
-	fillWithDefaults(&config)
+	fillWithDefaults(&config.Params)
+	err := deployMissing(&config.Dependencies, c)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
 
 	log.Println("Deploying ProofOfBurn")
 	proofOfBurnAddress, tx, proofOfBurn, err := proofofburn.DeployProofOfBurn(c.GetAccount(), c.GetBackend())
@@ -137,7 +143,7 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 		return nil, err
 	}
 
-	accountRegistry, err := accountregistry.NewAccountRegistry(*config.AccountRegistryAddress, c.GetBackend())
+	accountRegistry, err := accountregistry.NewAccountRegistry(*config.AccountRegistry, c.GetBackend())
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -186,7 +192,7 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 		c.GetBackend(),
 		proofOfBurnAddress,
 		depositManagerAddress,
-		*config.AccountRegistryAddress,
+		*config.AccountRegistry,
 		transferAddress,
 		massMigrationAddress,
 		create2TransferAddress,
@@ -222,25 +228,36 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 	}, nil
 }
 
-func fillWithDefaults(config *DeploymentConfig) {
-	if config.MaxDepositSubtreeDepth == nil {
-		config.MaxDepositSubtreeDepth = models.NewUint256(DefaultMaxDepositSubtreeDepth)
+func fillWithDefaults(params *Params) {
+	if params.MaxDepositSubtreeDepth == nil {
+		params.MaxDepositSubtreeDepth = models.NewUint256(DefaultMaxDepositSubtreeDepth)
 	}
-	if config.GenesisStateRoot == nil {
+	if params.GenesisStateRoot == nil {
 		// Result of getDefaultGenesisRoot function from deploy.ts
 		hash := common.HexToHash(DefaultGenesisStateRoot)
-		config.GenesisStateRoot = &hash
+		params.GenesisStateRoot = &hash
 	}
-	if config.StakeAmount == nil {
-		config.StakeAmount = models.NewUint256(DefaultStakeAmount)
+	if params.StakeAmount == nil {
+		params.StakeAmount = models.NewUint256(DefaultStakeAmount)
 	}
-	if config.BlocksToFinalise == nil {
-		config.BlocksToFinalise = models.NewUint256(DefaultBlocksToFinalise)
+	if params.BlocksToFinalise == nil {
+		params.BlocksToFinalise = models.NewUint256(DefaultBlocksToFinalise)
 	}
-	if config.MinGasLeft == nil {
-		config.MinGasLeft = models.NewUint256(DefaultMinGasLeft)
+	if params.MinGasLeft == nil {
+		params.MinGasLeft = models.NewUint256(DefaultMinGasLeft)
 	}
-	if config.MaxTxsPerCommit == nil {
-		config.MaxTxsPerCommit = models.NewUint256(DefaultMaxTxsPerCommit)
+	if params.MaxTxsPerCommit == nil {
+		params.MaxTxsPerCommit = models.NewUint256(DefaultMaxTxsPerCommit)
 	}
+}
+
+func deployMissing(dependencies *Dependencies, c deployer.ChainConnection) error {
+	if dependencies.AccountRegistry == nil {
+		accountRegistryAddress, _, _, err := deployer.DeployAccountRegistry(c)
+		if err != nil {
+			return err
+		}
+		dependencies.AccountRegistry = accountRegistryAddress
+	}
+	return nil
 }
