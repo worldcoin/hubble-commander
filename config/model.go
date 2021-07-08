@@ -32,7 +32,8 @@ type BootstrapConfig struct {
 type RollupConfig struct {
 	SyncSize               uint32
 	FeeReceiverPubKeyID    uint32
-	MaxTxsPerCommitment    uint32 // TODO split into two params: MinTxsPerCommitment and MaxTxsPerCommitment
+	MinTxsPerCommitment    uint32
+	MaxTxsPerCommitment    uint32
 	MinCommitmentsPerBatch uint32
 	MaxCommitmentsPerBatch uint32
 	CommitmentLoopInterval time.Duration
