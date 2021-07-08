@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -50,7 +51,7 @@ func (s *SyncTestSuite) SetupSuite() {
 
 func (s *SyncTestSuite) SetupTest() {
 	var err error
-	s.client, err = eth.NewTestClient()
+	s.client, err = eth.NewConfiguredTestClient(rollup.DeploymentConfig{MaxTxsPerCommit: models.NewUint256(1)})
 	s.NoError(err)
 
 	s.cfg = &config.RollupConfig{
@@ -225,23 +226,44 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyTransfersInCommitment() {
 		ToStateID: 1,
 	}
 	s.setTransferHashAndSign(&tx)
-	s.createAndSubmitInvalidTransferBatch(&tx)
+	createAndSubmitTransferBatch(s.T(), s.client, s.transactionExecutor, &tx)
+
+	tx2 := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			TxType:      txtype.Transfer,
+			FromStateID: 0,
+			Amount:      models.MakeUint256(400),
+			Fee:         models.MakeUint256(0),
+			Nonce:       models.MakeUint256(1),
+		},
+		ToStateID: 1,
+	}
+	s.setTransferHashAndSign(&tx2)
+	s.createAndSubmitInvalidTransferBatch(&tx2)
 
 	s.recreateDatabase()
 
 	latestBlockNumber, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
 
-	newRemoteBatches, err := s.client.GetBatches(&bind.FilterOpts{
+	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{
 		Start: 0,
 		End:   latestBlockNumber,
 	})
 	s.NoError(err)
-	s.Len(newRemoteBatches, 1)
+	s.Len(remoteBatches, 2)
 
-	remoteBatch := &newRemoteBatches[0]
-	err = s.transactionExecutor.SyncBatch(remoteBatch)
-	s.Equal(ErrTooManyTx, err)
+	for i := range remoteBatches {
+		s.beginExecutorTransaction()
+		err = s.transactionExecutor.SyncBatch(&remoteBatches[i])
+		s.NoError(err)
+		err = s.transactionExecutor.Commit()
+		s.NoError(err)
+	}
+	_, err = s.storage.GetBatch(remoteBatches[0].ID)
+	s.NoError(err)
+	_, err = s.storage.GetBatch(remoteBatches[1].ID)
+	s.True(st.IsNotFoundError(err))
 }
 
 func (s *SyncTestSuite) TestSyncBatch_TooManyCreate2TransfersInCommitment() {
@@ -257,23 +279,45 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyCreate2TransfersInCommitment() {
 		ToPublicKey: *s.wallets[0].PublicKey(),
 	}
 	s.setC2THashAndSign(&tx)
-	s.createAndSubmitInvalidC2TBatch(&tx)
+	createAndSubmitC2TBatch(s.T(), s.client, s.transactionExecutor, &tx)
+
+	tx2 := models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			TxType:      txtype.Create2Transfer,
+			FromStateID: 0,
+			Amount:      models.MakeUint256(400),
+			Fee:         models.MakeUint256(0),
+			Nonce:       models.MakeUint256(1),
+		},
+		ToStateID:   ref.Uint32(6),
+		ToPublicKey: *s.wallets[0].PublicKey(),
+	}
+	s.setC2THashAndSign(&tx2)
+	s.createAndSubmitInvalidC2TBatch(&tx2)
 
 	s.recreateDatabase()
 
 	latestBlockNumber, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
 
-	newRemoteBatches, err := s.client.GetBatches(&bind.FilterOpts{
+	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{
 		Start: 0,
 		End:   latestBlockNumber,
 	})
 	s.NoError(err)
-	s.Len(newRemoteBatches, 1)
+	s.Len(remoteBatches, 2)
 
-	remoteBatch := &newRemoteBatches[0]
-	err = s.transactionExecutor.SyncBatch(remoteBatch)
-	s.Equal(ErrTooManyTx, err)
+	for i := range remoteBatches {
+		s.beginExecutorTransaction()
+		err = s.transactionExecutor.SyncBatch(&remoteBatches[i])
+		s.NoError(err)
+		err = s.transactionExecutor.Commit()
+		s.NoError(err)
+	}
+	_, err = s.storage.GetBatch(remoteBatches[0].ID)
+	s.NoError(err)
+	_, err = s.storage.GetBatch(remoteBatches[1].ID)
+	s.True(st.IsNotFoundError(err))
 }
 
 func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
@@ -619,6 +663,12 @@ func (s *SyncTestSuite) revertBatchesInTransaction(remoteBatch *eth.DecodedBatch
 	}()
 
 	err = s.transactionExecutor.revertBatches(remoteBatch, localBatch)
+	s.NoError(err)
+}
+
+func (s *SyncTestSuite) beginExecutorTransaction() {
+	var err error
+	s.transactionExecutor, err = NewTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
 	s.NoError(err)
 }
 
