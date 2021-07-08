@@ -36,16 +36,7 @@ type SyncTestSuite struct {
 
 func (s *SyncTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
-	s.transfer = models.Transfer{
-		TransactionBase: models.TransactionBase{
-			TxType:      txtype.Transfer,
-			FromStateID: 0,
-			Amount:      models.MakeUint256(400),
-			Fee:         models.MakeUint256(0),
-			Nonce:       models.MakeUint256(0),
-		},
-		ToStateID: 1,
-	}
+	s.transfer = createTransfer(0, 1, 0, 400)
 	s.setTransferHash(&s.transfer)
 }
 
@@ -184,16 +175,7 @@ func (s *SyncTestSuite) TestSyncBatch_TwoTransferBatches() {
 
 func (s *SyncTestSuite) TestSyncBatch_PendingBatch() {
 	accountRoot := s.getAccountTreeRoot()
-	tx := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			TxType:      txtype.Transfer,
-			FromStateID: 0,
-			Amount:      models.MakeUint256(400),
-			Fee:         models.MakeUint256(0),
-			Nonce:       models.MakeUint256(0),
-		},
-		ToStateID: 1,
-	}
+	tx := createTransfer(0, 1, 0, 400)
 	s.setTransferHashAndSign(&tx)
 	createAndSubmitTransferBatch(s.T(), s.client, s.transactionExecutor, &tx)
 
@@ -215,29 +197,11 @@ func (s *SyncTestSuite) TestSyncBatch_PendingBatch() {
 }
 
 func (s *SyncTestSuite) TestSyncBatch_TooManyTransfersInCommitment() {
-	tx := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			TxType:      txtype.Transfer,
-			FromStateID: 0,
-			Amount:      models.MakeUint256(400),
-			Fee:         models.MakeUint256(0),
-			Nonce:       models.MakeUint256(0),
-		},
-		ToStateID: 1,
-	}
+	tx := createTransfer(0, 1, 0, 400)
 	s.setTransferHashAndSign(&tx)
 	createAndSubmitTransferBatch(s.T(), s.client, s.transactionExecutor, &tx)
 
-	tx2 := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			TxType:      txtype.Transfer,
-			FromStateID: 0,
-			Amount:      models.MakeUint256(400),
-			Fee:         models.MakeUint256(0),
-			Nonce:       models.MakeUint256(1),
-		},
-		ToStateID: 1,
-	}
+	tx2 := createTransfer(0, 1, 1, 400)
 	s.setTransferHashAndSign(&tx2)
 	s.createAndSubmitInvalidTransferBatch(&tx2)
 
@@ -267,31 +231,11 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyTransfersInCommitment() {
 }
 
 func (s *SyncTestSuite) TestSyncBatch_TooManyCreate2TransfersInCommitment() {
-	tx := models.Create2Transfer{
-		TransactionBase: models.TransactionBase{
-			TxType:      txtype.Create2Transfer,
-			FromStateID: 0,
-			Amount:      models.MakeUint256(400),
-			Fee:         models.MakeUint256(0),
-			Nonce:       models.MakeUint256(0),
-		},
-		ToStateID:   ref.Uint32(5),
-		ToPublicKey: *s.wallets[0].PublicKey(),
-	}
+	tx := createC2T(0, ref.Uint32(5), 0, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx)
 	createAndSubmitC2TBatch(s.T(), s.client, s.transactionExecutor, &tx)
 
-	tx2 := models.Create2Transfer{
-		TransactionBase: models.TransactionBase{
-			TxType:      txtype.Create2Transfer,
-			FromStateID: 0,
-			Amount:      models.MakeUint256(400),
-			Fee:         models.MakeUint256(0),
-			Nonce:       models.MakeUint256(1),
-		},
-		ToStateID:   ref.Uint32(6),
-		ToPublicKey: *s.wallets[0].PublicKey(),
-	}
+	tx2 := createC2T(0, ref.Uint32(6), 1, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx2)
 	s.createAndSubmitInvalidC2TBatch(&tx2)
 
@@ -321,16 +265,7 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyCreate2TransfersInCommitment() {
 }
 
 func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
-	tx := models.Create2Transfer{
-		TransactionBase: models.TransactionBase{
-			TxType:      txtype.Create2Transfer,
-			FromStateID: 0,
-			Amount:      models.MakeUint256(400),
-			Fee:         models.MakeUint256(0),
-			Nonce:       models.MakeUint256(0),
-		},
-		ToPublicKey: *s.wallets[0].PublicKey(),
-	}
+	tx := createC2T(0, nil, 0, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx)
 	expectedCommitment := createAndSubmitC2TBatch(s.T(), s.client, s.transactionExecutor, &tx)
 
@@ -404,17 +339,7 @@ func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {
 
 	transfers := make([]models.Transfer, 2)
 	transfers[0] = s.transfer
-	transfers[1] = models.Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash:        utils.RandomHash(),
-			TxType:      txtype.Transfer,
-			FromStateID: 0,
-			Amount:      models.MakeUint256(200),
-			Fee:         models.MakeUint256(10),
-			Nonce:       models.MakeUint256(1),
-		},
-		ToStateID: 1,
-	}
+	transfers[1] = createTransfer(0, 1, 1, 200)
 
 	pendingBatches := make([]models.Batch, 2)
 	for i := range pendingBatches {
