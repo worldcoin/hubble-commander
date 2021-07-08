@@ -29,7 +29,7 @@ func (s *BatchesTestSuite) SetupSuite() {
 	s.cfg = config.GetTestConfig()
 	s.cfg.Rollup.MinCommitmentsPerBatch = 1
 	s.cfg.Rollup.MaxCommitmentsPerBatch = 32
-	s.cfg.Rollup.TxsPerCommitment = 1
+	s.cfg.Rollup.MaxTxsPerCommitment = 1
 	s.cfg.Rollup.DevMode = false
 }
 

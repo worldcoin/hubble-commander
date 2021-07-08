@@ -13,7 +13,7 @@ func (t *TransactionExecutor) syncCreate2TransferCommitment(
 		return nil, err
 	}
 
-	if uint32(len(deserializedTransfers)) > t.cfg.TxsPerCommitment {
+	if uint32(len(deserializedTransfers)) > t.cfg.MaxTxsPerCommitment {
 		return nil, ErrTooManyTx
 	}
 

@@ -43,7 +43,7 @@ func (s *TransferCommitmentsTestSuite) SetupTest() {
 	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
 	s.cfg = &config.RollupConfig{
-		TxsPerCommitment:       2,
+		MaxTxsPerCommitment:    2,
 		FeeReceiverPubKeyID:    2,
 		MaxCommitmentsPerBatch: 1,
 	}

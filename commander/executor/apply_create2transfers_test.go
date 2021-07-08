@@ -46,7 +46,7 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 	s.NoError(err)
 	s.cfg = &config.RollupConfig{
 		FeeReceiverPubKeyID: 3,
-		TxsPerCommitment:    6,
+		MaxTxsPerCommitment: 6,
 	}
 
 	senderState := models.UserState{
@@ -103,7 +103,7 @@ func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AllValid() {
 	generatedTransfers := generateValidCreate2Transfers(3)
 
-	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 3)
@@ -115,7 +115,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 	generatedTransfers := generateValidCreate2Transfers(2)
 	generatedTransfers = append(generatedTransfers, generateInvalidCreate2Transfers(3)...)
 
-	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 2)
@@ -126,7 +126,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AppliesNoMoreThanLimit() {
 	generatedTransfers := generateValidCreate2Transfers(7)
 
-	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 6)
@@ -143,7 +143,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 		s.NoError(err)
 	}
 
-	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 3)
@@ -164,7 +164,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AppliesFee() {
 	generatedTransfers := generateValidCreate2Transfers(3)
 
-	_, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
+	_, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	feeReceiverState, err := s.transactionExecutor.storage.GetStateLeaf(s.feeReceiver.StateID)
@@ -181,7 +181,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_RegistersPubl
 	latestBlockNumber, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
 
-	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.TxsPerCommitment, s.feeReceiver)
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 3)
