@@ -84,6 +84,7 @@ func (s *TransferTestSuite) TestGetTransferWithBatchHash() {
 		Type:            txtype.Transfer,
 		TransactionHash: utils.RandomHash(),
 		Hash:            utils.NewRandomHash(),
+		SubmissionTime:  ref.Time(time.Unix(140, 0).UTC()),
 	}
 	err := s.storage.AddBatch(batch)
 	s.NoError(err)
@@ -100,11 +101,13 @@ func (s *TransferTestSuite) TestGetTransferWithBatchHash() {
 	transferInBatch.ReceiveTime = receiveTime
 
 	expected := models.TransferWithBatchHash{
-		Transfer:  transferInBatch,
-		BatchHash: batch.Hash,
+		Transfer:       transferInBatch,
+		BatchHash:      batch.Hash,
+		SubmissionTime: batch.SubmissionTime,
 	}
 	res, err := s.storage.GetTransferWithBatchHash(transferInBatch.Hash)
 	s.NoError(err)
+	res.SubmissionTime = ref.Time(res.SubmissionTime.UTC())
 	s.Equal(expected, *res)
 }
 
@@ -277,6 +280,7 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 		s.NoError(err)
 	}
 
+	submissionTime := time.Unix(170, 0).UTC()
 	batchHash, commitmentID := s.addBatchAndCommitment()
 	transfers := make([]models.TransferWithBatchHash, 5)
 
@@ -286,6 +290,7 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 	transfers[0].ToStateID = 1
 	transfers[0].IncludedInCommitment = &commitmentID
 	transfers[0].BatchHash = &batchHash
+	transfers[0].SubmissionTime = &submissionTime
 
 	transfers[1].Transfer = transfer
 	transfers[1].Hash = utils.RandomHash()
@@ -305,6 +310,7 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 	transfers[3].ToStateID = 1
 	transfers[3].IncludedInCommitment = &commitmentID
 	transfers[3].BatchHash = &batchHash
+	transfers[3].SubmissionTime = &submissionTime
 
 	transfers[4].Transfer = transfer
 	transfers[4].Hash = utils.RandomHash()
@@ -316,6 +322,11 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 	userTransactions, err := s.storage.GetTransfersByPublicKey(&models.PublicKey{1, 2, 3})
 	s.NoError(err)
 	s.Len(userTransactions, 4)
+	for i := range userTransactions {
+		if userTransactions[i].SubmissionTime != nil {
+			userTransactions[i].SubmissionTime = ref.Time(userTransactions[i].SubmissionTime.UTC())
+		}
+	}
 	s.Contains(userTransactions, transfers[0])
 	s.Contains(userTransactions, transfers[2])
 	s.Contains(userTransactions, transfers[3])
@@ -358,6 +369,7 @@ func (s *TransferTestSuite) addBatchAndCommitment() (batchHash common.Hash, comm
 		Type:            txtype.Transfer,
 		TransactionHash: utils.RandomHash(),
 		Hash:            utils.NewRandomHash(),
+		SubmissionTime:  ref.Time(time.Unix(170, 0).UTC()),
 	}
 	err := s.storage.AddBatch(batch)
 	s.NoError(err)

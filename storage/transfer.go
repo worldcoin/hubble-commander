@@ -20,6 +20,7 @@ var (
 		"transaction_base.*",
 		"transfer.to_state_id",
 		"batch.batch_hash",
+		"batch.submission_time",
 	}
 )
 
