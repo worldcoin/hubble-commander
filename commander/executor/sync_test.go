@@ -418,7 +418,7 @@ func (s *SyncTestSuite) TestRevertBatch_SyncsCorrectBatch() {
 	localTransfer.Amount = models.MakeUint256(200)
 	localTransfer.Fee = models.MakeUint256(10)
 	signTransfer(s.T(), &s.wallets[localTransfer.FromStateID], &localTransfer)
-	localBatch := s.createTransferBatch(&localTransfer)
+	localBatch := createTransferBatch(s.T(), s.transactionExecutor, &localTransfer)
 
 	batches, err := s.client.GetBatches(&bind.FilterOpts{Start: *startBlock})
 	s.NoError(err)
@@ -496,25 +496,24 @@ func (s *SyncTestSuite) createAndSubmitInvalidTransferBatch(tx *models.Transfer)
 	return pendingBatch
 }
 
-func (s *SyncTestSuite) createTransferBatch(tx *models.Transfer) *models.Batch {
-	_, err := s.storage.AddTransfer(tx)
-	s.NoError(err)
+func createTransferBatch(t *testing.T, txExecutor *TransactionExecutor, tx *models.Transfer) *models.Batch {
+	_, err := txExecutor.storage.AddTransfer(tx)
+	require.NoError(t, err)
 
-	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
-	s.NoError(err)
+	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Transfer)
+	require.NoError(t, err)
 
-	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
-	s.NoError(err)
-	s.Len(commitments, 1)
+	commitments, err := txExecutor.CreateTransferCommitments(testDomain)
+	require.NoError(t, err)
+	require.Len(t, commitments, 1)
 
 	pendingBatch.TransactionHash = utils.RandomHash()
-	err = s.storage.AddBatch(pendingBatch)
-	s.NoError(err)
+	err = txExecutor.storage.AddBatch(pendingBatch)
+	require.NoError(t, err)
 
-	err = s.transactionExecutor.markCommitmentsAsIncluded(commitments, pendingBatch.ID)
-	s.NoError(err)
+	err = txExecutor.markCommitmentsAsIncluded(commitments, pendingBatch.ID)
+	require.NoError(t, err)
 
-	s.client.Commit()
 	return pendingBatch
 }
 
