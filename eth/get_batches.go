@@ -52,7 +52,7 @@ func (c *Client) GetBatches(opts *bind.FilterOpts) ([]DecodedBatch, error) {
 
 		batch.TransactionHash = txHash
 		batch.AccountTreeRoot = &accountRoot
-		batch.BlockTime = ref.Time(time.Unix(int64(header.Time), 0).UTC())
+		batch.SubmissionTime = ref.Time(time.Unix(int64(header.Time), 0).UTC())
 
 		res = append(res, DecodedBatch{
 			Batch:       *batch,
