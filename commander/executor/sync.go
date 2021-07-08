@@ -70,6 +70,14 @@ func (t *TransactionExecutor) revertBatches(remoteBatch *eth.DecodedBatch, local
 	if err != nil {
 		return err
 	}
+
+	if err := t.Commit(); err != nil {
+		return err
+	}
+	if err := t.RestartTransaction(); err != nil {
+		return err
+	}
+
 	return t.syncNewBatch(remoteBatch)
 }
 

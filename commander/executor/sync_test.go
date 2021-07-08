@@ -336,8 +336,7 @@ func (s *SyncTestSuite) TestRevertBatch_RevertsState() {
 			FinalisationBlock: ref.Uint32(20),
 		},
 	}
-	err = s.transactionExecutor.revertBatches(decodedBatch, pendingBatch)
-	s.NoError(err)
+	s.revertBatchesInTransaction(decodedBatch, pendingBatch)
 
 	stateRoot, err := s.tree.Root()
 	s.NoError(err)
@@ -388,8 +387,7 @@ func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {
 			FinalisationBlock: ref.Uint32(133742069),
 		},
 	}
-	err = s.transactionExecutor.revertBatches(decodedBatch, &pendingBatches[0])
-	s.NoError(err)
+	s.revertBatchesInTransaction(decodedBatch, &pendingBatches[0])
 
 	stateRoot, err := s.tree.Root()
 	s.NoError(err)
@@ -424,8 +422,7 @@ func (s *SyncTestSuite) TestRevertBatch_SyncsCorrectBatch() {
 	s.NoError(err)
 	s.Len(batches, 1)
 
-	err = s.transactionExecutor.revertBatches(&batches[0], localBatch)
-	s.NoError(err)
+	s.revertBatchesInTransaction(&batches[0], localBatch)
 
 	batch, err := s.storage.GetBatch(pendingBatch.ID)
 	s.NoError(err)
@@ -610,6 +607,19 @@ func (s *SyncTestSuite) setC2THashAndSign(txs ...*models.Create2Transfer) {
 		signCreate2Transfer(s.T(), &s.wallets[txs[i].FromStateID], txs[i])
 		s.setCreate2TransferHash(txs[i])
 	}
+}
+
+func (s *SyncTestSuite) revertBatchesInTransaction(remoteBatch *eth.DecodedBatch, localBatch *models.Batch) {
+	var err error
+	s.transactionExecutor, err = NewTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
+	s.NoError(err)
+	defer func() {
+		err = s.transactionExecutor.Commit()
+		s.NoError(err)
+	}()
+
+	err = s.transactionExecutor.revertBatches(remoteBatch, localBatch)
+	s.NoError(err)
 }
 
 func generateWallets(t *testing.T, rollupAddress common.Address, walletsAmount int) []bls.Wallet {
