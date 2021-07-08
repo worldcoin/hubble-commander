@@ -11,12 +11,13 @@ import (
 
 // TransactionExecutor executes transactions & syncs batches. Manages a database transaction.
 type TransactionExecutor struct {
-	cfg       *config.RollupConfig
-	storage   *st.Storage
-	stateTree *st.StateTree
-	tx        *db.TxController
-	client    *eth.Client
-	ctx       context.Context
+	cfg         *config.RollupConfig
+	storage     *st.Storage
+	initStorage *st.Storage
+	stateTree   *st.StateTree
+	tx          *db.TxController
+	client      *eth.Client
+	ctx         context.Context
 }
 
 // NewTransactionExecutor creates a TransactionExecutor and starts a database transaction.
@@ -32,12 +33,13 @@ func NewTransactionExecutor(
 	}
 
 	return &TransactionExecutor{
-		cfg:       cfg,
-		storage:   txStorage,
-		stateTree: st.NewStateTree(txStorage),
-		tx:        tx,
-		client:    client,
-		ctx:       ctx,
+		cfg:         cfg,
+		storage:     txStorage,
+		initStorage: storage,
+		stateTree:   st.NewStateTree(txStorage),
+		tx:          tx,
+		client:      client,
+		ctx:         ctx,
 	}, nil
 }
 
@@ -49,12 +51,13 @@ func NewTestTransactionExecutor(
 	ctx context.Context,
 ) *TransactionExecutor {
 	return &TransactionExecutor{
-		cfg:       cfg,
-		storage:   storage,
-		stateTree: st.NewStateTree(storage),
-		tx:        nil,
-		client:    client,
-		ctx:       ctx,
+		cfg:         cfg,
+		storage:     storage,
+		initStorage: storage,
+		stateTree:   st.NewStateTree(storage),
+		tx:          nil,
+		client:      client,
+		ctx:         ctx,
 	}
 }
 
@@ -65,4 +68,15 @@ func (t *TransactionExecutor) Commit() error {
 // nolint:gocritic
 func (t *TransactionExecutor) Rollback(cause *error) {
 	t.tx.Rollback(cause)
+}
+
+func (t *TransactionExecutor) RestartTransaction() error {
+	tx, txStorage, err := t.initStorage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
+	if err != nil {
+		return err
+	}
+	t.storage = txStorage
+	t.tx = tx
+	t.stateTree = st.NewStateTree(txStorage)
+	return nil
 }
