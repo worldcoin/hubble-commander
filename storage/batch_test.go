@@ -34,7 +34,7 @@ func (s *BatchTestSuite) TearDownTest() {
 }
 
 func (s *BatchTestSuite) TestAddBatch_AddAndRetrieve() {
-	submissionTime := models.NewTimestamp(ref.Time(time.Unix(140, 0).UTC()))
+	submissionTime := &models.Timestamp{Time: time.Unix(140, 0).UTC()}
 	batch := &models.Batch{
 		ID:                models.MakeUint256(1),
 		Type:              txtype.Transfer,
@@ -70,7 +70,7 @@ func (s *BatchTestSuite) TestMarkBatchAsSubmitted() {
 		Type:              pendingBatch.Type,
 		TransactionHash:   pendingBatch.TransactionHash,
 		Hash:              utils.NewRandomHash(),
-		SubmissionTime:    models.NewTimestamp(ref.Time(time.Unix(140, 0).UTC())),
+		SubmissionTime:    &models.Timestamp{Time: time.Unix(140, 0).UTC()},
 		FinalisationBlock: ref.Uint32(1234),
 		AccountTreeRoot:   utils.NewRandomHash(),
 	}
