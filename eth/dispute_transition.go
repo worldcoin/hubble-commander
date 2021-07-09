@@ -24,9 +24,10 @@ func (c *Client) DisputeTransitionTransfer(
 	if err != nil {
 		return err
 	}
+	defer subscription.Unsubscribe()
 
 	transaction, err := c.rollup().
-		WithGasLimit(8_000_000). // TODO use estimated gas
+		WithGasLimit(0).
 		DisputeTransitionTransfer(
 			batchID.ToBig(),
 			*CommitmentProofToCalldata(previous),
@@ -50,9 +51,10 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 	if err != nil {
 		return err
 	}
+	defer subscription.Unsubscribe()
 
 	transaction, err := c.rollup().
-		WithGasLimit(8_000_000). // TODO use estimated gas
+		WithGasLimit(0).
 		DisputeTransitionCreate2Transfer(
 			batchID.ToBig(),
 			*CommitmentProofToCalldata(previous),
@@ -70,8 +72,6 @@ func (c *Client) waitForRollbackToFinish(
 	subscription event.Subscription,
 	transactionHash common.Hash,
 ) (err error) {
-	defer subscription.Unsubscribe()
-
 	for {
 		select {
 		case err = <-subscription.Err():
