@@ -203,7 +203,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_RemovesInval
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.transactionExecutor.disputeTransition(&remoteBatches[0], 1, proofs)
+	err = s.transactionExecutor.DisputeTransition(&remoteBatches[0], 1, proofs)
 	s.NoError(err)
 
 	s.checkBatchAfterDispute(remoteBatches[0].ID)
@@ -233,7 +233,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_FirstCommitm
 	err = s.transactionExecutor.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
 	s.NoError(err)
 
-	err = s.transactionExecutor.disputeTransition(&remoteBatches[1], 0, proofs)
+	err = s.transactionExecutor.DisputeTransition(&remoteBatches[1], 0, proofs)
 	s.NoError(err)
 
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
@@ -263,7 +263,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_Remov
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.transactionExecutor.disputeTransition(&remoteBatches[0], 1, proofs)
+	err = s.transactionExecutor.DisputeTransition(&remoteBatches[0], 1, proofs)
 	s.NoError(err)
 
 	s.checkBatchAfterDispute(remoteBatches[0].ID)
@@ -294,7 +294,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_First
 	err = s.transactionExecutor.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
 	s.NoError(err)
 
-	err = s.transactionExecutor.disputeTransition(&remoteBatches[1], 0, proofs)
+	err = s.transactionExecutor.DisputeTransition(&remoteBatches[1], 0, proofs)
 	s.NoError(err)
 
 	s.checkBatchAfterDispute(remoteBatches[1].ID)

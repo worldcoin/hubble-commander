@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/models"
@@ -33,15 +32,16 @@ func NewDisputableTransferErrorWithoutProofs(reason string) *DisputableTransferE
 }
 
 func (e DisputableTransferError) Error() string {
-	return fmt.Sprintf("failed to validate transfer: %s", e.Reason)
+	return fmt.Sprintf("syncing commitment failed: %s", e.Reason)
 }
 
-func IsDisputableTransferError(err error) bool {
-	if err == nil {
-		return false
-	}
-	target := &DisputableTransferError{}
-	return errors.As(err, &target)
+type DisputableCommitmentError struct {
+	DisputableTransferError
+	CommitmentIndex int
+}
+
+func NewDisputableCommitmentError(err DisputableTransferError, commitmentIndex int) *DisputableCommitmentError {
+	return &DisputableCommitmentError{DisputableTransferError: err, CommitmentIndex: commitmentIndex}
 }
 
 type BatchRaceConditionError struct {
@@ -54,12 +54,4 @@ func NewBatchRaceConditionError(localBatch *models.Batch) *BatchRaceConditionErr
 
 func (e BatchRaceConditionError) Error() string {
 	return fmt.Sprintf("local batch #%s inconsistent with remote batch", e.LocalBatch.ID.String())
-}
-
-func IsBatchRaceConditionError(err error) bool {
-	if err == nil {
-		return false
-	}
-	target := &BatchRaceConditionError{}
-	return errors.As(err, &target)
 }

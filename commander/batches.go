@@ -58,10 +58,15 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 
 func (c *Commander) syncRemoteBatch(remoteBatch *eth.DecodedBatch) (err error) {
 	var rcError *executor.BatchRaceConditionError
+	var dcError *executor.DisputableCommitmentError
 
 	err = c.syncBatch(remoteBatch)
+	// TODO check if rollback failure is not ignored by errors.As
 	if errors.As(err, &rcError) {
 		return c.replaceBatch(rcError.LocalBatch, remoteBatch)
+	}
+	if errors.As(err, &dcError) {
+		return c.disputeFraudulentBatch(remoteBatch, dcError.CommitmentIndex, dcError.Proofs)
 	}
 	return err
 }
@@ -88,7 +93,25 @@ func (c *Commander) replaceBatch(localBatch *models.Batch, remoteBatch *eth.Deco
 	if err != nil {
 		return err
 	}
-	return c.syncBatch(remoteBatch)
+	return c.syncRemoteBatch(remoteBatch)
+}
+
+func (c *Commander) disputeFraudulentBatch(
+	remoteBatch *eth.DecodedBatch,
+	commitmentIndex int,
+	proofs []models.StateMerkleProof,
+) error {
+	txExecutor, err := executor.NewTransactionExecutor(c.storage, c.client, c.cfg.Rollup, context.Background())
+	if err != nil {
+		return err
+	}
+	defer txExecutor.Rollback(&err)
+
+	err = txExecutor.DisputeTransition(remoteBatch, commitmentIndex, proofs)
+	if err != nil {
+		return err
+	}
+	return txExecutor.Commit()
 }
 
 func (c *Commander) revertBatches(startBatch *models.Batch) error {

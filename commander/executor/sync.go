@@ -137,7 +137,7 @@ func (t *TransactionExecutor) syncCommitments(batch *eth.DecodedBatch) error {
 
 		var disputableErr *DisputableTransferError
 		if errors.As(err, &disputableErr) {
-			return t.disputeTransition(batch, i, disputableErr.Proofs)
+			return NewDisputableCommitmentError(*disputableErr, i)
 		}
 		if err != nil {
 			return err
