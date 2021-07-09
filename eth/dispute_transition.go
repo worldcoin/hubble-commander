@@ -9,7 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/event"
 	"github.com/pkg/errors"
 )
 
@@ -18,8 +18,14 @@ func (c *Client) DisputeTransitionTransfer(
 	previous *models.CommitmentInclusionProof,
 	target *models.TransferCommitmentInclusionProof,
 	proofs []models.StateMerkleProof,
-) (*types.Transaction, error) {
-	return c.rollup().
+) error {
+	sink := make(chan *rollup.RollupRollbackStatus)
+	subscription, err := c.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
+	if err != nil {
+		return err
+	}
+
+	transaction, err := c.rollup().
 		WithGasLimit(8_000_000). // TODO use estimated gas
 		DisputeTransitionTransfer(
 			batchID.ToBig(),
@@ -27,6 +33,10 @@ func (c *Client) DisputeTransitionTransfer(
 			*TransferProofToCalldata(target),
 			StateMerkleProofsToCalldata(proofs),
 		)
+	if err != nil {
+		return err
+	}
+	return c.waitForRollbackToFinish(sink, subscription, transaction.Hash())
 }
 
 func (c *Client) DisputeTransitionCreate2Transfer(
@@ -34,8 +44,14 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 	previous *models.CommitmentInclusionProof,
 	target *models.TransferCommitmentInclusionProof,
 	proofs []models.StateMerkleProof,
-) (*types.Transaction, error) {
-	return c.rollup().
+) error {
+	sink := make(chan *rollup.RollupRollbackStatus)
+	subscription, err := c.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
+	if err != nil {
+		return err
+	}
+
+	transaction, err := c.rollup().
 		WithGasLimit(8_000_000). // TODO use estimated gas
 		DisputeTransitionCreate2Transfer(
 			batchID.ToBig(),
@@ -43,14 +59,17 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 			*TransferProofToCalldata(target),
 			StateMerkleProofsToCalldata(proofs),
 		)
-}
-
-func (c *Client) WaitForRollbackToFinish(transactionHash common.Hash) error {
-	sink := make(chan *rollup.RollupRollbackStatus)
-	subscription, err := c.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
 	if err != nil {
 		return err
 	}
+	return c.waitForRollbackToFinish(sink, subscription, transaction.Hash())
+}
+
+func (c *Client) waitForRollbackToFinish(
+	sink chan *rollup.RollupRollbackStatus,
+	subscription event.Subscription,
+	transactionHash common.Hash,
+) (err error) {
 	defer subscription.Unsubscribe()
 
 	for {
