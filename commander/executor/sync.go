@@ -61,8 +61,7 @@ func (t *TransactionExecutor) syncExistingBatch(remoteBatch *eth.DecodedBatch, l
 func (t *TransactionExecutor) revertBatches(remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
 	log.WithFields(log.Fields{"batchID": remoteBatch.ID.String()}).
 		Debug("Local batch inconsistent with remote batch, reverting local batch(es)")
-	stateTree := st.NewStateTree(t.storage)
-	err := stateTree.RevertTo(*localBatch.PrevStateRoot)
+	err := t.stateTree.RevertTo(*localBatch.PrevStateRoot)
 	if err != nil {
 		return err
 	}
@@ -70,6 +69,14 @@ func (t *TransactionExecutor) revertBatches(remoteBatch *eth.DecodedBatch, local
 	if err != nil {
 		return err
 	}
+
+	if err := t.Commit(); err != nil {
+		return err
+	}
+	if err := t.RestartTransaction(); err != nil {
+		return err
+	}
+
 	return t.syncNewBatch(remoteBatch)
 }
 
@@ -141,9 +148,10 @@ func (t *TransactionExecutor) syncCommitments(batch *eth.DecodedBatch) error {
 			// TODO: dispute fraudulent commitment
 			return err
 		}
-		if IsDisputableTransferError(err) {
-			// TODO: dispute fraudulent commitment
-			return err
+
+		var disputableErr *DisputableTransferError
+		if errors.As(err, &disputableErr) {
+			return t.disputeTransition(batch, i, disputableErr.Proofs)
 		}
 		if err != nil {
 			return err

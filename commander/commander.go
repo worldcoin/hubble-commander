@@ -285,8 +285,8 @@ func deployContractsAndSetupGenesisState(
 	}
 
 	contracts, err := ethRollup.DeployConfiguredRollup(chain, ethRollup.DeploymentConfig{
-		AccountRegistryAddress: accountRegistryAddress,
-		GenesisStateRoot:       stateRoot,
+		Params:       ethRollup.Params{GenesisStateRoot: stateRoot},
+		Dependencies: ethRollup.Dependencies{AccountRegistry: accountRegistryAddress},
 	})
 	if err != nil {
 		return nil, err
