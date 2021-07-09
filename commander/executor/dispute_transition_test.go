@@ -218,7 +218,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_FirstCommitm
 	}
 
 	transfer := createTransfer(0, 2, 0, 50)
-	createAndSubmitTransferBatch(s.T(), s.client, s.transactionExecutor, &transfer)
+	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &transfer)
 
 	proofs := s.getTransferStateMerkleProofs(commitmentTxs)
 
@@ -279,7 +279,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_First
 	pubKeyIDs := [][]uint32{{2}}
 
 	transfer := createC2T(0, ref.Uint32(2), 0, 50, nil)
-	createAndSubmitC2TBatch(s.T(), s.client, s.transactionExecutor, &transfer)
+	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &transfer)
 
 	proofs := s.getC2TStateMerkleProofs(commitmentTxs, pubKeyIDs)
 
@@ -309,7 +309,7 @@ func (s *DisputeTransitionTestSuite) TestSyncBatch_DisputesFraudulentCommitment(
 	}
 
 	transfer := createTransfer(0, 2, 0, 50)
-	createAndSubmitTransferBatch(s.T(), s.client, s.transactionExecutor, &transfer)
+	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &transfer)
 
 	s.beginExecutorTransaction()
 	s.createAndSubmitInvalidTransferBatch(commitmentTxs, commitmentTxs[0][0].Hash)
@@ -339,7 +339,7 @@ func (s *DisputeTransitionTestSuite) TestSyncBatch_RemovesExistingBatchAndDisput
 	}
 
 	transfer := createTransfer(0, 2, 0, 50)
-	createAndSubmitTransferBatch(s.T(), s.client, s.transactionExecutor, &transfer)
+	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &transfer)
 
 	s.beginExecutorTransaction()
 	s.createAndSubmitInvalidTransferBatch(commitmentTxs, commitmentTxs[0][0].Hash)
@@ -354,7 +354,7 @@ func (s *DisputeTransitionTestSuite) TestSyncBatch_RemovesExistingBatchAndDisput
 
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
 	localTransfer := createTransfer(1, 2, 0, 100)
-	_ = createTransferBatch(s.T(), s.transactionExecutor, &localTransfer)
+	_ = createTransferBatch(s.Assertions, s.transactionExecutor, &localTransfer)
 
 	s.beginExecutorTransaction()
 

@@ -56,7 +56,7 @@ func (s *SyncTestSuite) SetupTest() {
 		DevMode:                false,
 	}
 
-	s.wallets = generateWallets(s.T(), s.client.ChainState.Rollup, 2)
+	s.wallets = generateWallets(s.Assertions, s.client.ChainState.Rollup, 2)
 	s.setupDB()
 }
 
@@ -70,21 +70,21 @@ func (s *SyncTestSuite) setupDB() {
 	err = s.storage.SetChainState(&s.client.ChainState)
 	s.NoError(err)
 
-	seedDB(s.T(), s.storage, s.tree, s.wallets)
+	seedDB(s.Assertions, s.storage, s.tree, s.wallets)
 }
 
-func seedDB(t *testing.T, storage *st.Storage, tree *st.StateTree, wallets []bls.Wallet) {
+func seedDB(s *require.Assertions, storage *st.Storage, tree *st.StateTree, wallets []bls.Wallet) {
 	err := storage.AddAccountIfNotExists(&models.Account{
 		PubKeyID:  0,
 		PublicKey: *wallets[0].PublicKey(),
 	})
-	require.NoError(t, err)
+	s.NoError(err)
 
 	err = storage.AddAccountIfNotExists(&models.Account{
 		PubKeyID:  1,
 		PublicKey: *wallets[1].PublicKey(),
 	})
-	require.NoError(t, err)
+	s.NoError(err)
 
 	_, err = tree.Set(0, &models.UserState{
 		PubKeyID: 0,
@@ -92,7 +92,7 @@ func seedDB(t *testing.T, storage *st.Storage, tree *st.StateTree, wallets []bls
 		Balance:  models.MakeUint256(1000),
 		Nonce:    models.MakeUint256(0),
 	})
-	require.NoError(t, err)
+	s.NoError(err)
 
 	_, err = tree.Set(1, &models.UserState{
 		PubKeyID: 1,
@@ -100,7 +100,7 @@ func seedDB(t *testing.T, storage *st.Storage, tree *st.StateTree, wallets []bls
 		Balance:  models.MakeUint256(0),
 		Nonce:    models.MakeUint256(0),
 	})
-	require.NoError(t, err)
+	s.NoError(err)
 }
 
 func (s *SyncTestSuite) TearDownTest() {
@@ -181,7 +181,7 @@ func (s *SyncTestSuite) TestSyncBatch_PendingBatch() {
 	accountRoot := s.getAccountTreeRoot()
 	tx := createTransfer(0, 1, 0, 400)
 	s.setTransferHashAndSign(&tx)
-	createAndSubmitTransferBatch(s.T(), s.client, s.transactionExecutor, &tx)
+	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &tx)
 
 	pendingBatch, err := s.storage.GetBatch(models.MakeUint256(1))
 	s.NoError(err)
@@ -203,7 +203,7 @@ func (s *SyncTestSuite) TestSyncBatch_PendingBatch() {
 func (s *SyncTestSuite) TestSyncBatch_TooManyTransfersInCommitment() {
 	tx := createTransfer(0, 1, 0, 400)
 	s.setTransferHashAndSign(&tx)
-	createAndSubmitTransferBatch(s.T(), s.client, s.transactionExecutor, &tx)
+	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &tx)
 
 	tx2 := createTransfer(0, 1, 1, 400)
 	s.setTransferHashAndSign(&tx2)
@@ -237,7 +237,7 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyTransfersInCommitment() {
 func (s *SyncTestSuite) TestSyncBatch_TooManyCreate2TransfersInCommitment() {
 	tx := createC2T(0, ref.Uint32(5), 0, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx)
-	createAndSubmitC2TBatch(s.T(), s.client, s.transactionExecutor, &tx)
+	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &tx)
 
 	tx2 := createC2T(0, ref.Uint32(6), 1, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx2)
@@ -271,7 +271,7 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyCreate2TransfersInCommitment() {
 func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 	tx := createC2T(0, nil, 0, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx)
-	expectedCommitment := createAndSubmitC2TBatch(s.T(), s.client, s.transactionExecutor, &tx)
+	expectedCommitment := createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &tx)
 
 	s.recreateDatabase()
 	s.syncAllBatches()
@@ -309,7 +309,7 @@ func (s *SyncTestSuite) TestRevertBatch_RevertsState() {
 	s.NoError(err)
 
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
-	pendingBatch := createAndSubmitTransferBatch(s.T(), s.client, s.transactionExecutor, &s.transfer)
+	pendingBatch := createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &s.transfer)
 	decodedBatch := &eth.DecodedBatch{
 		Batch: models.Batch{
 			ID:                models.MakeUint256(1),
@@ -348,7 +348,7 @@ func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {
 	pendingBatches := make([]models.Batch, 2)
 	for i := range pendingBatches {
 		signTransfer(s.T(), &s.wallets[transfers[i].FromStateID], &transfers[i])
-		pendingBatches[i] = *createAndSubmitTransferBatch(s.T(), s.client, s.transactionExecutor, &transfers[i])
+		pendingBatches[i] = *createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &transfers[i])
 	}
 
 	decodedBatch := &eth.DecodedBatch{
@@ -381,7 +381,7 @@ func (s *SyncTestSuite) TestRevertBatch_SyncsCorrectBatch() {
 	s.NoError(err)
 
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
-	pendingBatch := createAndSubmitTransferBatch(s.T(), s.client, s.transactionExecutor, &s.transfer)
+	pendingBatch := createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &s.transfer)
 	s.recreateDatabase()
 
 	localTransfer := s.transfer
@@ -389,7 +389,7 @@ func (s *SyncTestSuite) TestRevertBatch_SyncsCorrectBatch() {
 	localTransfer.Amount = models.MakeUint256(200)
 	localTransfer.Fee = models.MakeUint256(10)
 	signTransfer(s.T(), &s.wallets[localTransfer.FromStateID], &localTransfer)
-	localBatch := createTransferBatch(s.T(), s.transactionExecutor, &localTransfer)
+	localBatch := createTransferBatch(s.Assertions, s.transactionExecutor, &localTransfer)
 
 	batches, err := s.client.GetBatches(&bind.FilterOpts{Start: *startBlock})
 	s.NoError(err)
@@ -424,23 +424,23 @@ func (s *SyncTestSuite) TestRevertBatch_SyncsCorrectBatch() {
 }
 
 func createAndSubmitTransferBatch(
-	t *testing.T,
+	s *require.Assertions,
 	client *eth.TestClient,
 	txExecutor *TransactionExecutor,
 	tx *models.Transfer,
 ) *models.Batch {
 	_, err := txExecutor.storage.AddTransfer(tx)
-	require.NoError(t, err)
+	s.NoError(err)
 
 	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Transfer)
-	require.NoError(t, err)
+	s.NoError(err)
 
 	commitments, err := txExecutor.CreateTransferCommitments(testDomain)
-	require.NoError(t, err)
-	require.Len(t, commitments, 1)
+	s.NoError(err)
+	s.Len(commitments, 1)
 
 	err = txExecutor.SubmitBatch(pendingBatch, commitments)
-	require.NoError(t, err)
+	s.NoError(err)
 
 	client.Commit()
 	return pendingBatch
@@ -466,43 +466,44 @@ func (s *SyncTestSuite) createAndSubmitInvalidTransferBatch(tx *models.Transfer)
 	return pendingBatch
 }
 
-func createTransferBatch(t *testing.T, txExecutor *TransactionExecutor, tx *models.Transfer) *models.Batch {
+func createTransferBatch(s *require.Assertions, txExecutor *TransactionExecutor, tx *models.Transfer) *models.Batch {
 	_, err := txExecutor.storage.AddTransfer(tx)
-	require.NoError(t, err)
+	s.NoError(err)
 
 	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Transfer)
-	require.NoError(t, err)
+	s.NoError(err)
 
 	commitments, err := txExecutor.CreateTransferCommitments(testDomain)
-	require.NoError(t, err)
-	require.Len(t, commitments, 1)
+	s.NoError(err)
+	s.Len(commitments, 1)
 
 	pendingBatch.TransactionHash = utils.RandomHash()
 	err = txExecutor.storage.AddBatch(pendingBatch)
-	require.NoError(t, err)
+	s.NoError(err)
 
 	err = txExecutor.markCommitmentsAsIncluded(commitments, pendingBatch.ID)
-	require.NoError(t, err)
+	s.NoError(err)
 
 	return pendingBatch
 }
 
-func createAndSubmitC2TBatch(t *testing.T,
+func createAndSubmitC2TBatch(
+	s *require.Assertions,
 	client *eth.TestClient,
 	txExecutor *TransactionExecutor,
 	tx *models.Create2Transfer,
 ) models.Commitment {
 	_, err := txExecutor.storage.AddCreate2Transfer(tx)
-	require.NoError(t, err)
+	s.NoError(err)
 
 	commitments, err := txExecutor.CreateCreate2TransferCommitments(testDomain)
-	require.NoError(t, err)
-	require.Len(t, commitments, 1)
+	s.NoError(err)
+	s.Len(commitments, 1)
 
 	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Create2Transfer)
-	require.NoError(t, err)
+	s.NoError(err)
 	err = txExecutor.SubmitBatch(pendingBatch, commitments)
-	require.NoError(t, err)
+	s.NoError(err)
 
 	client.Commit()
 	return commitments[0]
@@ -601,14 +602,14 @@ func (s *SyncTestSuite) beginExecutorTransaction() {
 	s.NoError(err)
 }
 
-func generateWallets(t *testing.T, rollupAddress common.Address, walletsAmount int) []bls.Wallet {
+func generateWallets(s *require.Assertions, rollupAddress common.Address, walletsAmount int) []bls.Wallet {
 	domain, err := bls.DomainFromBytes(crypto.Keccak256(rollupAddress.Bytes()))
-	require.NoError(t, err)
+	s.NoError(err)
 
 	wallets := make([]bls.Wallet, 0, walletsAmount)
 	for i := 0; i < walletsAmount; i++ {
 		wallet, err := bls.NewRandomWallet(*domain)
-		require.NoError(t, err)
+		s.NoError(err)
 		wallets = append(wallets, *wallet)
 	}
 	return wallets
