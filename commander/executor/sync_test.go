@@ -12,6 +12,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -36,7 +37,7 @@ type SyncTestSuite struct {
 
 func (s *SyncTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
-	s.transfer = createTransfer(0, 1, 0, 400)
+	s.transfer = testutils.MakeTransfer(0, 1, 0, 400)
 	s.setTransferHash(&s.transfer)
 }
 
@@ -179,7 +180,7 @@ func (s *SyncTestSuite) TestSyncBatch_TwoTransferBatches() {
 
 func (s *SyncTestSuite) TestSyncBatch_PendingBatch() {
 	accountRoot := s.getAccountTreeRoot()
-	tx := createTransfer(0, 1, 0, 400)
+	tx := testutils.MakeTransfer(0, 1, 0, 400)
 	s.setTransferHashAndSign(&tx)
 	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &tx)
 
@@ -201,11 +202,11 @@ func (s *SyncTestSuite) TestSyncBatch_PendingBatch() {
 }
 
 func (s *SyncTestSuite) TestSyncBatch_TooManyTransfersInCommitment() {
-	tx := createTransfer(0, 1, 0, 400)
+	tx := testutils.MakeTransfer(0, 1, 0, 400)
 	s.setTransferHashAndSign(&tx)
 	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &tx)
 
-	tx2 := createTransfer(0, 1, 1, 400)
+	tx2 := testutils.MakeTransfer(0, 1, 1, 400)
 	s.setTransferHashAndSign(&tx2)
 	s.createAndSubmitInvalidTransferBatch(&tx2)
 
@@ -235,11 +236,11 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyTransfersInCommitment() {
 }
 
 func (s *SyncTestSuite) TestSyncBatch_TooManyCreate2TransfersInCommitment() {
-	tx := createC2T(0, ref.Uint32(5), 0, 400, s.wallets[0].PublicKey())
+	tx := testutils.MakeCreate2Transfer(0, ref.Uint32(5), 0, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx)
 	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &tx)
 
-	tx2 := createC2T(0, ref.Uint32(6), 1, 400, s.wallets[0].PublicKey())
+	tx2 := testutils.MakeCreate2Transfer(0, ref.Uint32(6), 1, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx2)
 	s.createAndSubmitInvalidC2TBatch(&tx2)
 
@@ -269,7 +270,7 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyCreate2TransfersInCommitment() {
 }
 
 func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
-	tx := createC2T(0, nil, 0, 400, s.wallets[0].PublicKey())
+	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx)
 	expectedCommitment := createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &tx)
 
@@ -342,7 +343,7 @@ func (s *SyncTestSuite) TestRevertBatch_ExcludesTransactionsFromCommitments() {
 func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {
 	transfers := make([]models.Transfer, 2)
 	transfers[0] = s.transfer
-	transfers[1] = createTransfer(0, 1, 1, 200)
+	transfers[1] = testutils.MakeTransfer(0, 1, 1, 200)
 
 	pendingBatches := make([]models.Batch, 2)
 	for i := range pendingBatches {
