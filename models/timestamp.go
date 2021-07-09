@@ -1,7 +1,9 @@
-package dto
+package models
 
 import (
+	"database/sql/driver"
 	"encoding/json"
+	"fmt"
 	"time"
 )
 
@@ -28,4 +30,19 @@ func (t *Timestamp) UnmarshalJSON(data []byte) error {
 	}
 	*t = Timestamp{Time: time.Unix(seconds, 0)}
 	return nil
+}
+
+// Scan implements Scanner for database/sql.
+func (t *Timestamp) Scan(src interface{}) error {
+	value, ok := src.(time.Time)
+	if !ok {
+		return fmt.Errorf("can't scan %T into Timestamp", src)
+	}
+	t.Time = value.UTC()
+	return nil
+}
+
+// Value implements valuer for database/sql.
+func (t Timestamp) Value() (driver.Value, error) {
+	return t.Time, nil
 }
