@@ -93,7 +93,7 @@ func (c *Client) waitForRollbackToFinish(
 }
 
 func (c *Client) keepRollingBack() (common.Hash, error) {
-	transaction, err := c.Rollup.KeepRollingBack(c.transactOpts(nil, 8_000_000))
+	transaction, err := c.rollup().WithGasLimit(0).KeepRollingBack()
 	if err != nil {
 		return common.Hash{}, err
 	}
