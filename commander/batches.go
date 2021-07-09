@@ -57,6 +57,16 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 }
 
 func (c *Commander) syncRemoteBatch(remoteBatch *eth.DecodedBatch) (err error) {
+	var rcError *executor.BatchRaceConditionError
+
+	err = c.syncBatch(remoteBatch)
+	if errors.As(err, &rcError) {
+		return c.replaceBatch(rcError.LocalBatch, remoteBatch)
+	}
+	return err
+}
+
+func (c *Commander) syncBatch(remoteBatch *eth.DecodedBatch) error {
 	txExecutor, err := executor.NewTransactionExecutor(c.storage, c.client, c.cfg.Rollup, context.Background())
 	if err != nil {
 		return err
@@ -64,40 +74,35 @@ func (c *Commander) syncRemoteBatch(remoteBatch *eth.DecodedBatch) (err error) {
 	defer txExecutor.Rollback(&err)
 
 	err = txExecutor.SyncBatch(remoteBatch)
-	if err != nil && !executor.IsBatchRaceConditionError(err) {
+	if err != nil {
 		return err
 	}
-
-	var rcError *executor.BatchRaceConditionError
-	if errors.As(err, &rcError) {
-		err = c.replaceBatch(txExecutor, rcError.LocalBatch, remoteBatch)
-		if err != nil {
-			return err
-		}
-	}
-
 	return txExecutor.Commit()
 }
 
-func (c *Commander) replaceBatch(
-	txExecutor *executor.TransactionExecutor,
-	localBatch *models.Batch,
-	remoteBatch *eth.DecodedBatch,
-) error {
+func (c *Commander) replaceBatch(localBatch *models.Batch, remoteBatch *eth.DecodedBatch) error {
 	log.WithFields(log.Fields{"batchID": localBatch.ID.String()}).
 		Debug("Local batch inconsistent with remote batch, reverting local batch(es)")
 
-	err := txExecutor.RevertBatches(localBatch)
+	err := c.revertBatches(localBatch)
 	if err != nil {
 		return err
 	}
+	return c.syncBatch(remoteBatch)
+}
 
-	err = txExecutor.CommitAndStartNewTransaction()
+func (c *Commander) revertBatches(startBatch *models.Batch) error {
+	txExecutor, err := executor.NewTransactionExecutor(c.storage, c.client, c.cfg.Rollup, context.Background())
 	if err != nil {
 		return err
 	}
+	defer txExecutor.Rollback(&err)
 
-	return txExecutor.SyncBatch(remoteBatch)
+	err = txExecutor.RevertBatches(startBatch)
+	if err != nil {
+		return err
+	}
+	return txExecutor.Commit()
 }
 
 func (c *Commander) getLatestBatchID() (*models.Uint256, error) {
