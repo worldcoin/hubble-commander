@@ -87,6 +87,7 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchHash() {
 		Type:            txtype.Create2Transfer,
 		TransactionHash: utils.RandomHash(),
 		Hash:            utils.NewRandomHash(),
+		SubmissionTime:  &models.Timestamp{Time: time.Unix(170, 0).UTC()},
 	}
 	err := s.storage.AddBatch(batch)
 	s.NoError(err)
@@ -105,6 +106,7 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchHash() {
 	expected := models.Create2TransferWithBatchHash{
 		Create2Transfer: transferInBatch,
 		BatchHash:       batch.Hash,
+		SubmissionTime:  batch.SubmissionTime,
 	}
 	res, err := s.storage.GetCreate2TransferWithBatchHash(transferInBatch.Hash)
 	s.NoError(err)

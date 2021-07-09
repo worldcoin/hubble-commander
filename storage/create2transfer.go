@@ -22,6 +22,7 @@ var (
 		"create2transfer.to_state_id",
 		"create2transfer.to_public_key",
 		"batch.batch_hash",
+		"batch.submission_time",
 	}
 )
 
