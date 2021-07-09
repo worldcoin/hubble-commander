@@ -70,7 +70,12 @@ func (t *TransactionExecutor) Rollback(cause *error) {
 	t.tx.Rollback(cause)
 }
 
-func (t *TransactionExecutor) RestartTransaction() error {
+func (t *TransactionExecutor) CommitAndStartNewTransaction() error {
+	err := t.Commit()
+	if err != nil {
+		return err
+	}
+
 	tx, txStorage, err := t.initStorage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
 	if err != nil {
 		return err

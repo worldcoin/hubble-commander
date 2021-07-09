@@ -43,3 +43,23 @@ func IsDisputableTransferError(err error) bool {
 	target := &DisputableTransferError{}
 	return errors.As(err, &target)
 }
+
+type BatchRaceConditionError struct {
+	LocalBatch *models.Batch
+}
+
+func NewBatchRaceConditionError(localBatch *models.Batch) *BatchRaceConditionError {
+	return &BatchRaceConditionError{LocalBatch: localBatch}
+}
+
+func (e BatchRaceConditionError) Error() string {
+	return fmt.Sprintf("local batch #%s inconsistent with remote batch", e.LocalBatch.ID.String())
+}
+
+func IsBatchRaceConditionError(err error) bool {
+	if err == nil {
+		return false
+	}
+	target := &BatchRaceConditionError{}
+	return errors.As(err, &target)
+}

@@ -48,7 +48,7 @@ func (t *TransactionExecutor) syncExistingBatch(remoteBatch *eth.DecodedBatch, l
 			return err
 		}
 		if *txSender != t.client.ChainConnection.GetAccount().From {
-			return t.revertBatches(remoteBatch, localBatch)
+			return NewBatchRaceConditionError(localBatch)
 		} else {
 			// TODO remove the above check and this error once we use contracts with batchID verification:
 			//  https://github.com/thehubbleproject/hubble-contracts/pull/601
@@ -58,26 +58,12 @@ func (t *TransactionExecutor) syncExistingBatch(remoteBatch *eth.DecodedBatch, l
 	return nil
 }
 
-func (t *TransactionExecutor) revertBatches(remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
-	log.WithFields(log.Fields{"batchID": remoteBatch.ID.String()}).
-		Debug("Local batch inconsistent with remote batch, reverting local batch(es)")
-	err := t.stateTree.RevertTo(*localBatch.PrevStateRoot)
+func (t *TransactionExecutor) RevertBatches(startBatch *models.Batch) error {
+	err := t.stateTree.RevertTo(*startBatch.PrevStateRoot)
 	if err != nil {
 		return err
 	}
-	err = t.revertBatchesInRange(&remoteBatch.ID)
-	if err != nil {
-		return err
-	}
-
-	if err := t.Commit(); err != nil {
-		return err
-	}
-	if err := t.RestartTransaction(); err != nil {
-		return err
-	}
-
-	return t.syncNewBatch(remoteBatch)
+	return t.revertBatchesInRange(&startBatch.ID)
 }
 
 func (t *TransactionExecutor) revertBatchesInRange(startBatchID *models.Uint256) error {

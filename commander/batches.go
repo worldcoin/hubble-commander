@@ -2,6 +2,7 @@ package commander
 
 import (
 	"context"
+	"errors"
 
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -63,10 +64,40 @@ func (c *Commander) syncRemoteBatch(remoteBatch *eth.DecodedBatch) (err error) {
 	defer txExecutor.Rollback(&err)
 
 	err = txExecutor.SyncBatch(remoteBatch)
+	if err != nil && !executor.IsBatchRaceConditionError(err) {
+		return err
+	}
+
+	var rcError *executor.BatchRaceConditionError
+	if errors.As(err, &rcError) {
+		err = c.replaceBatch(txExecutor, rcError.LocalBatch, remoteBatch)
+		if err != nil {
+			return err
+		}
+	}
+
+	return txExecutor.Commit()
+}
+
+func (c *Commander) replaceBatch(
+	txExecutor *executor.TransactionExecutor,
+	localBatch *models.Batch,
+	remoteBatch *eth.DecodedBatch,
+) error {
+	log.WithFields(log.Fields{"batchID": localBatch.ID.String()}).
+		Debug("Local batch inconsistent with remote batch, reverting local batch(es)")
+
+	err := txExecutor.RevertBatches(localBatch)
 	if err != nil {
 		return err
 	}
-	return txExecutor.Commit()
+
+	err = txExecutor.CommitAndStartNewTransaction()
+	if err != nil {
+		return err
+	}
+
+	return txExecutor.SyncBatch(remoteBatch)
 }
 
 func (c *Commander) getLatestBatchID() (*models.Uint256, error) {
