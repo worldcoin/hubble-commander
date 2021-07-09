@@ -44,5 +44,5 @@ func (t *Timestamp) Scan(src interface{}) error {
 
 // Value implements valuer for database/sql.
 func (t Timestamp) Value() (driver.Value, error) {
-	return t.Time, nil
+	return t.Time.UTC(), nil
 }

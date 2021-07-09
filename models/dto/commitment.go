@@ -13,10 +13,10 @@ type Commitment struct {
 
 type TransferForCommitment struct {
 	*models.TransferForCommitment
-	ReceiveTime *Timestamp
+	ReceiveTime *models.Timestamp
 }
 
 type Create2TransferForCommitment struct {
 	*models.Create2TransferForCommitment
-	ReceiveTime *Timestamp
+	ReceiveTime *models.Timestamp
 }

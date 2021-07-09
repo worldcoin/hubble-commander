@@ -55,7 +55,7 @@ func (a *API) getTransfersForCommitment(commitmentID int32) ([]dto.TransferForCo
 		transfer := &transfers[i]
 		dtoTransfers[i] = dto.TransferForCommitment{
 			TransferForCommitment: transfer,
-			ReceiveTime:           dto.NewTimestamp(transfer.ReceiveTime),
+			ReceiveTime:           models.NewTimestamp(transfer.ReceiveTime),
 		}
 	}
 	return dtoTransfers, nil
@@ -71,7 +71,7 @@ func (a *API) getC2TsForCommitment(commitmentID int32) ([]dto.Create2TransferFor
 		transfer := &transfers[i]
 		dtoTransfers[i] = dto.Create2TransferForCommitment{
 			Create2TransferForCommitment: transfer,
-			ReceiveTime:                  dto.NewTimestamp(transfer.ReceiveTime),
+			ReceiveTime:                  models.NewTimestamp(transfer.ReceiveTime),
 		}
 	}
 	return dtoTransfers, nil

@@ -34,7 +34,7 @@ func (s *BatchTestSuite) TearDownTest() {
 }
 
 func (s *BatchTestSuite) TestAddBatch_AddAndRetrieve() {
-	unixTime := time.Unix(140, 0)
+	submissionTime := models.NewTimestamp(ref.Time(time.Unix(140, 0).UTC()))
 	batch := &models.Batch{
 		ID:                models.MakeUint256(1),
 		Type:              txtype.Transfer,
@@ -43,7 +43,7 @@ func (s *BatchTestSuite) TestAddBatch_AddAndRetrieve() {
 		FinalisationBlock: ref.Uint32(1234),
 		AccountTreeRoot:   utils.NewRandomHash(),
 		PrevStateRoot:     utils.NewRandomHash(),
-		SubmissionTime:    ref.Time(unixTime.UTC()),
+		SubmissionTime:    submissionTime,
 	}
 	err := s.storage.AddBatch(batch)
 	s.NoError(err)
@@ -51,7 +51,6 @@ func (s *BatchTestSuite) TestAddBatch_AddAndRetrieve() {
 	actual, err := s.storage.GetBatch(batch.ID)
 	s.NoError(err)
 	actualUnixTime := actual.SubmissionTime.Unix()
-	actual.SubmissionTime = ref.Time(actual.SubmissionTime.UTC())
 
 	s.Equal(batch, actual)
 	s.EqualValues(140, actualUnixTime)
@@ -71,7 +70,7 @@ func (s *BatchTestSuite) TestMarkBatchAsSubmitted() {
 		Type:              pendingBatch.Type,
 		TransactionHash:   pendingBatch.TransactionHash,
 		Hash:              utils.NewRandomHash(),
-		SubmissionTime:    ref.Time(time.Unix(140, 0).UTC()),
+		SubmissionTime:    models.NewTimestamp(ref.Time(time.Unix(140, 0).UTC())),
 		FinalisationBlock: ref.Uint32(1234),
 		AccountTreeRoot:   utils.NewRandomHash(),
 	}
@@ -80,7 +79,6 @@ func (s *BatchTestSuite) TestMarkBatchAsSubmitted() {
 
 	actual, err := s.storage.GetBatch(pendingBatch.ID)
 	s.NoError(err)
-	actual.SubmissionTime = ref.Time(actual.SubmissionTime.UTC())
 	s.Equal(batch, actual)
 }
 

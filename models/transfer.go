@@ -1,8 +1,6 @@
 package models
 
 import (
-	"time"
-
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -20,7 +18,7 @@ type TransferForCommitment struct {
 type TransferWithBatchHash struct {
 	Transfer
 	BatchHash      *common.Hash `db:"batch_hash"`
-	SubmissionTime *time.Time   `db:"submission_time"`
+	SubmissionTime *Timestamp   `db:"submission_time"`
 }
 
 func (t *Transfer) Type() txtype.TransactionType {

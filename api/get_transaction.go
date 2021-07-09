@@ -31,7 +31,7 @@ func (a *API) returnTransferReceipt(transfer *models.TransferWithBatchHash) (*dt
 
 	return &dto.TransferReceipt{
 		TransferWithBatchHash: *transfer,
-		ReceiveTime:           dto.NewTimestamp(transfer.ReceiveTime),
+		ReceiveTime:           models.NewTimestamp(transfer.ReceiveTime),
 		Status:                *status,
 	}, nil
 }
@@ -44,7 +44,7 @@ func (a *API) returnCreate2TransferReceipt(transfer *models.Create2TransferWithB
 
 	return &dto.Create2TransferReceipt{
 		Create2TransferWithBatchHash: *transfer,
-		ReceiveTime:                  dto.NewTimestamp(transfer.ReceiveTime),
+		ReceiveTime:                  models.NewTimestamp(transfer.ReceiveTime),
 		Status:                       *status,
 	}, nil
 }
