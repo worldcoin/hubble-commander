@@ -101,6 +101,7 @@ func (c *Commander) disputeFraudulentBatch(
 	commitmentIndex int,
 	proofs []models.StateMerkleProof,
 ) error {
+	// TODO transaction executor may not be needed here. Revisit this when extracting disputer package.
 	txExecutor, err := executor.NewTransactionExecutor(c.storage, c.client, c.cfg.Rollup, context.Background())
 	if err != nil {
 		return err

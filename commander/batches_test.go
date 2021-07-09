@@ -7,9 +7,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -59,34 +58,14 @@ func (s *BatchesTestSuite) TearDownTest() {
 }
 
 func (s *BatchesTestSuite) TestUnsafeSyncBatches_DoesNotSyncExistingBatchTwice() {
-	tx := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash:        utils.RandomHash(),
-			TxType:      txtype.Transfer,
-			FromStateID: 0,
-			Amount:      models.MakeUint256(400),
-			Fee:         models.MakeUint256(0),
-			Nonce:       models.MakeUint256(0),
-		},
-		ToStateID: 1,
-	}
+	tx := testutils.MakeTransfer(0, 1, 0, 400)
 	signTransfer(s.T(), &s.wallets[tx.FromStateID], &tx)
 	createAndSubmitTransferBatch(s.T(), s.cmd, &tx)
 	s.testClient.Commit()
 
 	s.syncAllBlocks()
 
-	tx2 := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash:        utils.RandomHash(),
-			TxType:      txtype.Transfer,
-			FromStateID: 1,
-			Amount:      models.MakeUint256(100),
-			Fee:         models.MakeUint256(0),
-			Nonce:       models.MakeUint256(0),
-		},
-		ToStateID: 0,
-	}
+	tx2 := testutils.MakeTransfer(1, 0, 0, 100)
 	signTransfer(s.T(), &s.wallets[tx2.FromStateID], &tx2)
 	createAndSubmitTransferBatch(s.T(), s.cmd, &tx2)
 	s.testClient.Commit()
@@ -109,6 +88,11 @@ func (s *BatchesTestSuite) TestUnsafeSyncBatches_DoesNotSyncExistingBatchTwice()
 	s.NoError(err)
 	s.Equal(models.MakeUint256(300), state1.Balance)
 }
+
+// TODO test syncRemoteBatch:
+//  - test that in case of race condition local batch(es) is reverted and remote one is synced
+//  - test that when syncing fraudulent batch dispute is made
+//  - test that both race condition and dispute can be handled
 
 func (s *BatchesTestSuite) syncAllBlocks() {
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
