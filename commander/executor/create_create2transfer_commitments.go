@@ -117,15 +117,20 @@ func (t *TransactionExecutor) applyC2TsForCommitment(pendingTransfers []models.C
 			return appliedTransfers, newPendingTransfers, addedPubKeyIDs, nil
 		}
 
-		pendingTransfers, err = t.queryMorePendingC2Ts(appliedTransfers)
+		morePendingTransfers, err := t.queryMorePendingC2Ts(appliedTransfers)
+		if err == ErrNotEnoughC2Transfers {
+			newPendingTransfers = removeC2Ts(pendingTransfers, append(appliedTransfers, invalidTransfers...))
+			return appliedTransfers, newPendingTransfers, addedPubKeyIDs, nil
+		}
 		if err != nil {
 			return nil, nil, nil, err
 		}
+		pendingTransfers = morePendingTransfers // TODO-MIN: Figure out a better approach for this
 	}
 }
 
 func (t *TransactionExecutor) refillPendingC2Ts(pendingTransfers []models.Create2Transfer) ([]models.Create2Transfer, error) {
-	if len(pendingTransfers) < int(t.cfg.MaxTxsPerCommitment) {
+	if len(pendingTransfers) < int(t.cfg.MinTxsPerCommitment) || len(pendingTransfers) < int(t.cfg.MaxTxsPerCommitment) {
 		return t.queryPendingC2Ts()
 	}
 	return pendingTransfers, nil
@@ -136,7 +141,7 @@ func (t *TransactionExecutor) queryPendingC2Ts() ([]models.Create2Transfer, erro
 	if err != nil {
 		return nil, err
 	}
-	if len(pendingTransfers) < int(t.cfg.MaxTxsPerCommitment) {
+	if len(pendingTransfers) < int(t.cfg.MinTxsPerCommitment) {
 		return nil, ErrNotEnoughC2Transfers
 	}
 	return pendingTransfers, nil
