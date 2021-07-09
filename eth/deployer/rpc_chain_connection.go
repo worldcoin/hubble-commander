@@ -38,7 +38,6 @@ func NewRPCChainConnection(cfg *config.EthereumConfig) (*RPCChainConnection, err
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	account.GasLimit = 8_000_000 // TODO estimate gas for txs and use 2x that for gas limit
 
 	rpcClient, err := rpc.Dial(cfg.RPCURL)
 	if err != nil {
