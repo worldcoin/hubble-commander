@@ -63,10 +63,10 @@ func (t *TransactionExecutor) RevertBatches(startBatch *models.Batch) error {
 	if err != nil {
 		return err
 	}
-	return t.revertBatchesInRange(&startBatch.ID)
+	return t.revertBatchesFrom(&startBatch.ID)
 }
 
-func (t *TransactionExecutor) revertBatchesInRange(startBatchID *models.Uint256) error {
+func (t *TransactionExecutor) revertBatchesFrom(startBatchID *models.Uint256) error {
 	batches, err := t.storage.GetBatchesInRange(startBatchID, nil)
 	if err != nil {
 		return err
