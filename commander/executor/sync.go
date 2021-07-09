@@ -61,8 +61,7 @@ func (t *TransactionExecutor) syncExistingBatch(remoteBatch *eth.DecodedBatch, l
 func (t *TransactionExecutor) revertBatches(remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
 	log.WithFields(log.Fields{"batchID": remoteBatch.ID.String()}).
 		Debug("Local batch inconsistent with remote batch, reverting local batch(es)")
-	stateTree := st.NewStateTree(t.storage)
-	err := stateTree.RevertTo(*localBatch.PrevStateRoot)
+	err := t.stateTree.RevertTo(*localBatch.PrevStateRoot)
 	if err != nil {
 		return err
 	}
