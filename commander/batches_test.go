@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -44,7 +45,11 @@ func (s *BatchesTestSuite) SetupTest() {
 	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.teardown = testStorage.Teardown
-	s.testClient, err = eth.NewTestClient()
+	s.testClient, err = eth.NewConfiguredTestClient(rollup.DeploymentConfig{
+		Params: rollup.Params{
+			MaxTxsPerCommit: models.NewUint256(1),
+		},
+	})
 	s.NoError(err)
 	err = testStorage.SetChainState(&s.testClient.ChainState)
 	s.NoError(err)
@@ -100,7 +105,6 @@ func (s *BatchesTestSuite) TestUnsafeSyncBatches_DoesNotSyncExistingBatchTwice()
 }
 
 // TODO test syncRemoteBatch:
-//  - test that when syncing fraudulent batch dispute is made
 //  - test that both race condition and dispute can be handled
 
 func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() {
@@ -155,6 +159,30 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 	s.Equal(expectedTx, *transfer)
 }
 
+func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentBatch() {
+	transfer := testutils.MakeTransfer(0, 1, 0, 50)
+	s.setTransferHashAndSign(&transfer)
+	s.createAndSubmitTransferBatch(&transfer)
+
+	s.runInTransaction(func() {
+		invalidTransfer := testutils.MakeTransfer(0, 1, 1, 100)
+		s.setTransferHashAndSign(&invalidTransfer)
+		s.createAndSubmitInvalidTransferBatch(&invalidTransfer)
+	})
+
+	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	s.NoError(err)
+	s.Len(remoteBatches, 2)
+
+	err = s.cmd.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
+	s.NoError(err)
+
+	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
+	s.NoError(err)
+
+	s.checkBatchAfterDispute(remoteBatches[1].ID)
+}
+
 func (s *BatchesTestSuite) syncAllBlocks() {
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)
@@ -202,6 +230,26 @@ func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batc
 	return pendingBatch
 }
 
+func (s *BatchesTestSuite) createAndSubmitInvalidTransferBatch(tx *models.Transfer) *models.Batch {
+	_, err := s.cmd.storage.AddTransfer(tx)
+	s.NoError(err)
+
+	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
+	s.NoError(err)
+
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
+	s.NoError(err)
+	s.Len(commitments, 1)
+
+	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)
+
+	err = s.transactionExecutor.SubmitBatch(pendingBatch, commitments)
+	s.NoError(err)
+
+	s.testClient.Commit()
+	return pendingBatch
+}
+
 func (s *BatchesTestSuite) runInTransaction(handler func()) {
 	storage := *s.cmd.storage
 	txController, txStorage, err := s.cmd.storage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
@@ -216,6 +264,25 @@ func (s *BatchesTestSuite) runInTransaction(handler func()) {
 
 	s.transactionExecutor = executor.NewTestTransactionExecutor(s.cmd.storage, s.testClient.Client, s.cfg.Rollup, context.Background())
 	handler()
+}
+
+func (s *BatchesTestSuite) setTransferHashAndSign(txs ...*models.Transfer) {
+	for i := range txs {
+		signTransfer(s.T(), &s.wallets[txs[i].FromStateID], txs[i])
+		hash, err := encoder.HashTransfer(txs[i])
+		s.NoError(err)
+		txs[i].Hash = *hash
+	}
+}
+
+func (s *BatchesTestSuite) checkBatchAfterDispute(batchID models.Uint256) {
+	_, err := s.testClient.GetBatch(&batchID)
+	s.Error(err)
+	s.Equal("execution reverted: Batch id greater than total number of batches, invalid batch id", err.Error())
+
+	batch, err := s.cmd.storage.GetBatch(batchID)
+	s.Nil(batch)
+	s.True(st.IsNotFoundError(err))
 }
 
 func TestBatchesTestSuite(t *testing.T) {
