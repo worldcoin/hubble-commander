@@ -2,6 +2,7 @@ package api
 
 import (
 	"testing"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/rollup"
@@ -41,6 +42,7 @@ func (s *GetBatchesTestSuite) SetupTest() {
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(42000),
+		SubmissionTime:    models.NewTimestamp(time.Unix(140, 0).UTC()),
 	}
 }
 
@@ -64,6 +66,7 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 	s.Equal(s.batch.TransactionHash, result[0].TransactionHash)
 	s.Equal(*s.batch.FinalisationBlock-rollup.DefaultBlocksToFinalise, result[0].SubmissionBlock)
 	s.Equal(s.batch.FinalisationBlock, result[0].FinalisationBlock)
+	s.Equal(s.batch.SubmissionTime, result[0].SubmissionTime)
 }
 
 func (s *GetBatchesTestSuite) TestGetBatches_PendingBatch() {
