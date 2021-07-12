@@ -106,7 +106,7 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchDetails() {
 	expected := models.Create2TransferWithBatchDetails{
 		Create2Transfer: transferInBatch,
 		BatchHash:       batch.Hash,
-		SubmissionTime:  batch.SubmissionTime,
+		BatchTime:       batch.SubmissionTime,
 	}
 	res, err := s.storage.GetCreate2TransferWithBatchDetails(transferInBatch.Hash)
 	s.NoError(err)

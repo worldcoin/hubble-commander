@@ -19,8 +19,8 @@ type Create2TransferForCommitment struct {
 
 type Create2TransferWithBatchDetails struct {
 	Create2Transfer
-	BatchHash      *common.Hash `db:"batch_hash"`
-	SubmissionTime *Timestamp   `db:"submission_time"`
+	BatchHash *common.Hash `db:"batch_hash"`
+	BatchTime *Timestamp   `db:"submission_time"`
 }
 
 func (t *Create2Transfer) Type() txtype.TransactionType {

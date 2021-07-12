@@ -166,8 +166,7 @@ func (s *GetTransactionsTestSuite) TestGetTransactions() {
 			TransferWithBatchDetails: models.TransferWithBatchDetails{
 				Transfer: transfer,
 			},
-			ReceiveTime: transfer.ReceiveTime,
-			Status:      txstatus.Pending,
+			Status: txstatus.Pending,
 		}
 	}
 
@@ -176,8 +175,7 @@ func (s *GetTransactionsTestSuite) TestGetTransactions() {
 			Create2TransferWithBatchDetails: models.Create2TransferWithBatchDetails{
 				Create2Transfer: transfer,
 			},
-			ReceiveTime: transfer.ReceiveTime,
-			Status:      txstatus.Pending,
+			Status: txstatus.Pending,
 		}
 	}
 

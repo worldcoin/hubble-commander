@@ -7,12 +7,10 @@ import (
 
 type TransferReceipt struct {
 	models.TransferWithBatchDetails
-	ReceiveTime *models.Timestamp
-	Status      txstatus.TransactionStatus
+	Status txstatus.TransactionStatus
 }
 
 type Create2TransferReceipt struct {
 	models.Create2TransferWithBatchDetails
-	ReceiveTime *models.Timestamp
-	Status      txstatus.TransactionStatus
+	Status txstatus.TransactionStatus
 }

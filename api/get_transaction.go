@@ -31,7 +31,6 @@ func (a *API) returnTransferReceipt(transfer *models.TransferWithBatchDetails) (
 
 	return &dto.TransferReceipt{
 		TransferWithBatchDetails: *transfer,
-		ReceiveTime:              transfer.ReceiveTime,
 		Status:                   *status,
 	}, nil
 }
@@ -44,7 +43,6 @@ func (a *API) returnCreate2TransferReceipt(transfer *models.Create2TransferWithB
 
 	return &dto.Create2TransferReceipt{
 		Create2TransferWithBatchDetails: *transfer,
-		ReceiveTime:                     transfer.ReceiveTime,
 		Status:                          *status,
 	}, nil
 }
