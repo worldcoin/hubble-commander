@@ -6,7 +6,7 @@ import (
 )
 
 type TransferReceipt struct {
-	models.TransferWithBatchHash
+	models.TransferWithBatchDetails
 	ReceiveTime *models.Timestamp
 	Status      txstatus.TransactionStatus
 }

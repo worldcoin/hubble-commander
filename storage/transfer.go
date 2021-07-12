@@ -114,8 +114,8 @@ func (s *Storage) GetTransfer(hash common.Hash) (*models.Transfer, error) {
 	return &res[0], nil
 }
 
-func (s *Storage) GetTransferWithBatchHash(hash common.Hash) (*models.TransferWithBatchHash, error) {
-	res := make([]models.TransferWithBatchHash, 0, 1)
+func (s *Storage) GetTransferWithBatchDetails(hash common.Hash) (*models.TransferWithBatchDetails, error) {
+	res := make([]models.TransferWithBatchDetails, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Select(transferWithBatchColumns...).
 			From("transaction_base").
@@ -160,7 +160,7 @@ func (s *Storage) GetPendingTransfers(limit uint32) ([]models.Transfer, error) {
 	return res, nil
 }
 
-func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models.TransferWithBatchHash, error) {
+func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models.TransferWithBatchDetails, error) {
 	accounts, err := s.GetAccounts(publicKey)
 	if err != nil {
 		return nil, err
@@ -179,7 +179,7 @@ func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models
 		stateIDs = append(stateIDs, leaves[i].StateID)
 	}
 
-	res := make([]models.TransferWithBatchHash, 0, 1)
+	res := make([]models.TransferWithBatchDetails, 0, 1)
 	err = s.Postgres.Query(
 		s.QB.Select(transferWithBatchColumns...).
 			From("transaction_base").

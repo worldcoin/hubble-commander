@@ -8,7 +8,7 @@ import (
 )
 
 func (a *API) GetTransaction(hash common.Hash) (interface{}, error) {
-	transfer, err := a.storage.GetTransferWithBatchHash(hash)
+	transfer, err := a.storage.GetTransferWithBatchDetails(hash)
 	if err != nil && !st.IsNotFoundError(err) {
 		return nil, err
 	}
@@ -23,16 +23,16 @@ func (a *API) GetTransaction(hash common.Hash) (interface{}, error) {
 	return a.returnCreate2TransferReceipt(transaction)
 }
 
-func (a *API) returnTransferReceipt(transfer *models.TransferWithBatchHash) (*dto.TransferReceipt, error) {
+func (a *API) returnTransferReceipt(transfer *models.TransferWithBatchDetails) (*dto.TransferReceipt, error) {
 	status, err := CalculateTransactionStatus(a.storage, &transfer.TransactionBase, a.storage.GetLatestBlockNumber())
 	if err != nil {
 		return nil, err
 	}
 
 	return &dto.TransferReceipt{
-		TransferWithBatchHash: *transfer,
-		ReceiveTime:           models.NewTimestamp(transfer.ReceiveTime),
-		Status:                *status,
+		TransferWithBatchDetails: *transfer,
+		ReceiveTime:              models.NewTimestamp(transfer.ReceiveTime),
+		Status:                   *status,
 	}, nil
 }
 

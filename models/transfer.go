@@ -15,7 +15,7 @@ type TransferForCommitment struct {
 	ToStateID uint32 `db:"to_state_id"`
 }
 
-type TransferWithBatchHash struct {
+type TransferWithBatchDetails struct {
 	Transfer
 	BatchHash      *common.Hash `db:"batch_hash"`
 	SubmissionTime *Timestamp   `db:"submission_time"`
