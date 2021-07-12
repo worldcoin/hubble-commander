@@ -27,7 +27,6 @@ func (c *Client) DisputeTransitionTransfer(
 	defer subscription.Unsubscribe()
 
 	transaction, err := c.rollup().
-		WithGasLimit(0).
 		DisputeTransitionTransfer(
 			batchID.ToBig(),
 			*CommitmentProofToCalldata(previous),
@@ -54,7 +53,6 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 	defer subscription.Unsubscribe()
 
 	transaction, err := c.rollup().
-		WithGasLimit(0).
 		DisputeTransitionCreate2Transfer(
 			batchID.ToBig(),
 			*CommitmentProofToCalldata(previous),
@@ -93,7 +91,7 @@ func (c *Client) waitForRollbackToFinish(
 }
 
 func (c *Client) keepRollingBack() (common.Hash, error) {
-	transaction, err := c.rollup().WithGasLimit(0).KeepRollingBack()
+	transaction, err := c.rollup().KeepRollingBack()
 	if err != nil {
 		return common.Hash{}, err
 	}
