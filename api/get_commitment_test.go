@@ -40,7 +40,7 @@ func (s *GetCommitmentTestSuite) SetupTest() {
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(113),
-		SubmissionTime:    models.NewTimestamp(ref.Time(time.Now())),
+		SubmissionTime:    models.NewTimestamp(ref.Time(time.Now().UTC())),
 	}
 
 	s.commitment = commitment
@@ -79,6 +79,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 	expectedCommitment := &dto.Commitment{
 		Commitment: s.commitment,
 		Status:     txstatus.InBatch,
+		BatchTime:  s.batch.SubmissionTime,
 		Transactions: []dto.TransferForCommitment{{
 			TransferForCommitment: &models.TransferForCommitment{
 				TransactionBaseForCommitment: models.TransactionBaseForCommitment{
@@ -135,6 +136,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 	expectedCommitment := &dto.Commitment{
 		Commitment: s.commitment,
 		Status:     txstatus.InBatch,
+		BatchTime:  s.batch.SubmissionTime,
 		Transactions: []dto.Create2TransferForCommitment{{
 			Create2TransferForCommitment: &models.Create2TransferForCommitment{
 				TransactionBaseForCommitment: models.TransactionBaseForCommitment{

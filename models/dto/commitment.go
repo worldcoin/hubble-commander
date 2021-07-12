@@ -8,6 +8,7 @@ import (
 type Commitment struct {
 	models.Commitment
 	Status       txstatus.TransactionStatus
+	BatchTime    *models.Timestamp
 	Transactions interface{}
 }
 
