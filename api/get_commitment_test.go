@@ -40,7 +40,7 @@ func (s *GetCommitmentTestSuite) SetupTest() {
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(113),
-		SubmissionTime:    models.NewTimestamp(ref.Time(time.Now().UTC())),
+		SubmissionTime:    models.NewTimestamp(ref.Time(time.Unix(140, 0).UTC())),
 	}
 
 	s.commitment = commitment
