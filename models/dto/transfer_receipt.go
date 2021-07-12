@@ -12,7 +12,7 @@ type TransferReceipt struct {
 }
 
 type Create2TransferReceipt struct {
-	models.Create2TransferWithBatchHash
+	models.Create2TransferWithBatchDetails
 	ReceiveTime *models.Timestamp
 	Status      txstatus.TransactionStatus
 }

@@ -17,7 +17,7 @@ type Create2TransferForCommitment struct {
 	ToPublicKey PublicKey `db:"to_public_key"`
 }
 
-type Create2TransferWithBatchHash struct {
+type Create2TransferWithBatchDetails struct {
 	Create2Transfer
 	BatchHash      *common.Hash `db:"batch_hash"`
 	SubmissionTime *Timestamp   `db:"submission_time"`

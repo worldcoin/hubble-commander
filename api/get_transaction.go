@@ -16,7 +16,7 @@ func (a *API) GetTransaction(hash common.Hash) (interface{}, error) {
 		return a.returnTransferReceipt(transfer)
 	}
 
-	transaction, err := a.storage.GetCreate2TransferWithBatchHash(hash)
+	transaction, err := a.storage.GetCreate2TransferWithBatchDetails(hash)
 	if err != nil {
 		return nil, err
 	}
@@ -36,15 +36,15 @@ func (a *API) returnTransferReceipt(transfer *models.TransferWithBatchDetails) (
 	}, nil
 }
 
-func (a *API) returnCreate2TransferReceipt(transfer *models.Create2TransferWithBatchHash) (*dto.Create2TransferReceipt, error) {
+func (a *API) returnCreate2TransferReceipt(transfer *models.Create2TransferWithBatchDetails) (*dto.Create2TransferReceipt, error) {
 	status, err := CalculateTransactionStatus(a.storage, &transfer.TransactionBase, a.storage.GetLatestBlockNumber())
 	if err != nil {
 		return nil, err
 	}
 
 	return &dto.Create2TransferReceipt{
-		Create2TransferWithBatchHash: *transfer,
-		ReceiveTime:                  models.NewTimestamp(transfer.ReceiveTime),
-		Status:                       *status,
+		Create2TransferWithBatchDetails: *transfer,
+		ReceiveTime:                     models.NewTimestamp(transfer.ReceiveTime),
+		Status:                          *status,
 	}, nil
 }

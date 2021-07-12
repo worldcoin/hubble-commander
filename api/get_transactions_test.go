@@ -173,7 +173,7 @@ func (s *GetTransactionsTestSuite) TestGetTransactions() {
 
 	newCreate2Receipt := func(transfer models.Create2Transfer) *dto.Create2TransferReceipt {
 		return &dto.Create2TransferReceipt{
-			Create2TransferWithBatchHash: models.Create2TransferWithBatchHash{
+			Create2TransferWithBatchDetails: models.Create2TransferWithBatchDetails{
 				Create2Transfer: transfer,
 			},
 			ReceiveTime: models.NewTimestamp(transfer.ReceiveTime),
