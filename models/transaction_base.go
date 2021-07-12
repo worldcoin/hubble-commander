@@ -1,8 +1,6 @@
 package models
 
 import (
-	"time"
-
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -15,7 +13,7 @@ type TransactionBase struct {
 	Fee                  Uint256
 	Nonce                Uint256
 	Signature            Signature
-	ReceiveTime          *time.Time `db:"receive_time"`
+	ReceiveTime          *Timestamp `db:"receive_time"`
 	IncludedInCommitment *int32     `db:"included_in_commitment"`
 	ErrorMessage         *string    `db:"error_message"`
 }
@@ -27,7 +25,7 @@ type TransactionBaseForCommitment struct {
 	Fee         Uint256
 	Nonce       Uint256
 	Signature   Signature
-	ReceiveTime *time.Time `db:"receive_time"`
+	ReceiveTime *Timestamp `db:"receive_time"`
 }
 
 func (t *TransactionBase) GetFromStateID() uint32 {

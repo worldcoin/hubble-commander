@@ -1,8 +1,6 @@
 package models
 
 import (
-	"time"
-
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -15,5 +13,5 @@ type Batch struct {
 	FinalisationBlock *uint32      `db:"finalisation_block"` // nolint:misspell
 	AccountTreeRoot   *common.Hash `db:"account_tree_root"`
 	PrevStateRoot     *common.Hash `db:"prev_state_root"`
-	BlockTime         *time.Time   `db:"block_time"`
+	SubmissionTime    *Timestamp   `db:"submission_time"`
 }

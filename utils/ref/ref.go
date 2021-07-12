@@ -45,7 +45,3 @@ func Duration(d time.Duration) *time.Duration {
 func Hash(h common.Hash) *common.Hash {
 	return &h
 }
-
-func Time(t time.Time) *time.Time {
-	return &t
-}

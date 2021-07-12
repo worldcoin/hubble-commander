@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"time"
-
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -22,10 +20,11 @@ var (
 		"create2transfer.to_state_id",
 		"create2transfer.to_public_key",
 		"batch.batch_hash",
+		"batch.submission_time",
 	}
 )
 
-func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) (receiveTime *time.Time, err error) {
+func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) (receiveTime *models.Timestamp, err error) {
 	tx, txStorage, err := s.BeginTransaction(TxOptions{Postgres: true})
 	if err != nil {
 		return nil, err
@@ -120,8 +119,8 @@ func (s *Storage) GetCreate2Transfer(hash common.Hash) (*models.Create2Transfer,
 	return &res[0], nil
 }
 
-func (s *Storage) GetCreate2TransferWithBatchHash(hash common.Hash) (*models.Create2TransferWithBatchHash, error) {
-	res := make([]models.Create2TransferWithBatchHash, 0, 1)
+func (s *Storage) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.Create2TransferWithBatchDetails, error) {
+	res := make([]models.Create2TransferWithBatchDetails, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Select(create2TransferWithBatchColumns...).
 			From("transaction_base").
@@ -155,7 +154,7 @@ func (s *Storage) GetPendingCreate2Transfers(limit uint32) ([]models.Create2Tran
 	return res, nil
 }
 
-func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([]models.Create2TransferWithBatchHash, error) {
+func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([]models.Create2TransferWithBatchDetails, error) {
 	accounts, err := s.GetAccounts(publicKey)
 	if err != nil {
 		return nil, err
@@ -174,7 +173,7 @@ func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([
 		stateIDs = append(stateIDs, leaves[i].StateID)
 	}
 
-	res := make([]models.Create2TransferWithBatchHash, 0, 1)
+	res := make([]models.Create2TransferWithBatchDetails, 0, 1)
 	err = s.Postgres.Query(
 		s.QB.Select(create2TransferWithBatchColumns...).
 			From("transaction_base").

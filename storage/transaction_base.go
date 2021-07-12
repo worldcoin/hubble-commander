@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"time"
-
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -10,8 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (s *Storage) addTransactionBase(txBase *models.TransactionBase, txType txtype.TransactionType) (*time.Time, error) {
-	res := make([]time.Time, 0, 1)
+func (s *Storage) addTransactionBase(txBase *models.TransactionBase, txType txtype.TransactionType) (*models.Timestamp, error) {
+	res := make([]models.Timestamp, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Insert("transaction_base").
 			Values(
