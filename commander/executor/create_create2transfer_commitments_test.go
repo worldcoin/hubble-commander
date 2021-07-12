@@ -181,10 +181,17 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 }
 
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_ReturnsErrorWhenThereAreNotEnoughValidTransfers() {
-	// TODO-MIN Fix me
-	s.T().Skip()
+	s.cfg = &config.RollupConfig{
+		MinTxsPerCommitment:    32,
+		MaxTxsPerCommitment:    32,
+		FeeReceiverPubKeyID:    2,
+		MaxCommitmentsPerBatch: 1,
+	}
+
+	// TODO-MIN validate the client used here. Check TestCreateCreate2TransferCommitments_ForMultipleCommitmentsInBatch
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
+
 	transfers := generateValidCreate2Transfers(2)
-	transfers[1].Amount = models.MakeUint256(99999999999)
 	s.addCreate2Transfers(transfers)
 
 	pendingTransfers, err := s.storage.GetPendingCreate2Transfers(32)
