@@ -202,7 +202,7 @@ func (s *GetTransactionsTestSuite) addCommitmentAndBatch() *models.Batch {
 		FinalisationBlock: ref.Uint32(1234),
 		AccountTreeRoot:   ref.Hash(utils.RandomHash()),
 		PrevStateRoot:     ref.Hash(utils.RandomHash()),
-		SubmissionTime:    models.NewTimestamp(time.Now().UTC()),
+		SubmissionTime:    models.NewTimestamp(time.Unix(140, 0).UTC()),
 	}
 	err := s.storage.AddBatch(batch)
 	s.NoError(err)
