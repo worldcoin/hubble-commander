@@ -2,8 +2,11 @@ package api
 
 import (
 	"testing"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -37,6 +40,7 @@ func (s *GetCommitmentTestSuite) SetupTest() {
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(113),
+		SubmissionTime:    models.NewTimestamp(ref.Time(time.Now())),
 	}
 
 	s.commitment = commitment
@@ -54,6 +58,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 
 	commitmentID, err := s.storage.AddCommitment(&s.commitment)
 	s.NoError(err)
+	s.commitment.ID = *commitmentID
 
 	transfer := models.Transfer{
 		TransactionBase: models.TransactionBase{
@@ -63,27 +68,47 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 			Amount:               models.MakeUint256(50),
 			Fee:                  models.MakeUint256(10),
 			Nonce:                models.MakeUint256(0),
+			Signature:            models.MakeRandomSignature(),
 			IncludedInCommitment: commitmentID,
 		},
 		ToStateID: 2,
 	}
-	_, err = s.storage.AddTransfer(&transfer)
+	receiveTime, err := s.storage.AddTransfer(&transfer)
 	s.NoError(err)
+
+	expectedCommitment := &dto.Commitment{
+		Commitment: s.commitment,
+		Status:     txstatus.InBatch,
+		Transactions: []dto.TransferForCommitment{{
+			TransferForCommitment: &models.TransferForCommitment{
+				TransactionBaseForCommitment: models.TransactionBaseForCommitment{
+					Hash:        transfer.Hash,
+					FromStateID: transfer.FromStateID,
+					Amount:      transfer.Amount,
+					Fee:         transfer.Fee,
+					Nonce:       transfer.Nonce,
+					Signature:   transfer.Signature,
+					ReceiveTime: receiveTime,
+				},
+				ToStateID: transfer.ToStateID,
+			},
+			ReceiveTime: models.NewTimestamp(receiveTime),
+		}},
+	}
 
 	commitment, err := s.api.GetCommitment(*commitmentID)
 	s.NoError(err)
-	s.NotNil(commitment)
-	s.Len(commitment.Transactions, 1)
+	s.Equal(expectedCommitment, commitment)
 }
 
 func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
-	c2tCommitment := s.commitment
-	c2tCommitment.Type = txtype.Create2Transfer
-	commitmentID, err := s.storage.AddCommitment(&c2tCommitment)
+	s.commitment.Type = txtype.Create2Transfer
+	commitmentID, err := s.storage.AddCommitment(&s.commitment)
 	s.NoError(err)
+	s.commitment.ID = *commitmentID
 
 	err = s.storage.AddAccountIfNotExists(&models.Account{
 		PubKeyID:  2,
@@ -91,7 +116,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 	})
 	s.NoError(err)
 
-	create2Transfer := models.Create2Transfer{
+	transfer := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
 			Hash:                 utils.RandomHash(),
 			TxType:               txtype.Create2Transfer,
@@ -104,13 +129,33 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 		ToStateID:   ref.Uint32(2),
 		ToPublicKey: models.PublicKey{2, 3, 4},
 	}
-	_, err = s.storage.AddCreate2Transfer(&create2Transfer)
+	receiveTime, err := s.storage.AddCreate2Transfer(&transfer)
 	s.NoError(err)
+
+	expectedCommitment := &dto.Commitment{
+		Commitment: s.commitment,
+		Status:     txstatus.InBatch,
+		Transactions: []dto.Create2TransferForCommitment{{
+			Create2TransferForCommitment: &models.Create2TransferForCommitment{
+				TransactionBaseForCommitment: models.TransactionBaseForCommitment{
+					Hash:        transfer.Hash,
+					FromStateID: transfer.FromStateID,
+					Amount:      transfer.Amount,
+					Fee:         transfer.Fee,
+					Nonce:       transfer.Nonce,
+					Signature:   transfer.Signature,
+					ReceiveTime: receiveTime,
+				},
+				ToStateID:   transfer.ToStateID,
+				ToPublicKey: transfer.ToPublicKey,
+			},
+			ReceiveTime: models.NewTimestamp(receiveTime),
+		}},
+	}
 
 	commitment, err := s.api.GetCommitment(*commitmentID)
 	s.NoError(err)
-	s.NotNil(commitment)
-	s.Len(commitment.Transactions, 1)
+	s.Equal(expectedCommitment, commitment)
 }
 
 func (s *GetCommitmentTestSuite) TestGetCommitment_PendingBatch() {
