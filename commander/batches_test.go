@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -109,6 +110,9 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 	}
 	for i := range transfers {
 		signTransfer(s.T(), &s.wallets[transfers[i].FromStateID], &transfers[i])
+		txHash, err := encoder.HashTransfer(&transfers[i])
+		s.NoError(err)
+		transfers[i].Hash = *txHash
 	}
 
 	s.runInTransaction(func() {
@@ -117,18 +121,38 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 
 	s.createTransferBatch(&transfers[1])
 
-	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	batches, err := s.testClient.GetBatches(&bind.FilterOpts{})
 	s.NoError(err)
-	s.Len(remoteBatches, 1)
+	s.Len(batches, 1)
 
 	s.testClient.Account = s.testClient.Accounts[1]
-	err = s.cmd.syncRemoteBatch(&remoteBatches[0])
+	err = s.cmd.syncRemoteBatch(&batches[0])
 	s.NoError(err)
 
-	localBatch, err := s.cmd.storage.GetBatch(remoteBatches[0].ID)
+	batch, err := s.cmd.storage.GetBatch(batches[0].ID)
 	s.NoError(err)
-	localBatch.BlockTime = ref.Time(localBatch.BlockTime.UTC())
-	s.Equal(remoteBatches[0].Batch, *localBatch)
+	batch.BlockTime = ref.Time(batch.BlockTime.UTC())
+	s.Equal(batches[0].Batch, *batch)
+
+	expectedCommitment := models.Commitment{
+		ID:                3,
+		Type:              txtype.Transfer,
+		Transactions:      batches[0].Commitments[0].Transactions,
+		FeeReceiver:       batches[0].Commitments[0].FeeReceiver,
+		CombinedSignature: batches[0].Commitments[0].CombinedSignature,
+		PostStateRoot:     batches[0].Commitments[0].StateRoot,
+		IncludedInBatch:   &batch.ID,
+	}
+	commitment, err := s.cmd.storage.GetCommitment(3)
+	s.NoError(err)
+	s.Equal(expectedCommitment, *commitment)
+
+	expectedTx := transfers[0]
+	expectedTx.Signature = models.Signature{}
+	expectedTx.IncludedInCommitment = &commitment.ID
+	transfer, err := s.cmd.storage.GetTransfer(transfers[0].Hash)
+	s.NoError(err)
+	s.Equal(expectedTx, *transfer)
 }
 
 func (s *BatchesTestSuite) syncAllBlocks() {
