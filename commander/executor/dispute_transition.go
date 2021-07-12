@@ -6,7 +6,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
 
@@ -128,17 +127,11 @@ func (t *TransactionExecutor) disputeTransition(
 		return err
 	}
 
-	var transaction *types.Transaction
 	if batch.Type == txtype.Transfer {
-		transaction, err = t.client.DisputeTransitionTransfer(&batch.ID, previousCommitmentProof, targetCommitmentProof, merkleProofs)
+		err = t.client.DisputeTransitionTransfer(&batch.ID, previousCommitmentProof, targetCommitmentProof, merkleProofs)
 	} else {
-		transaction, err = t.client.DisputeTransitionCreate2Transfer(&batch.ID, previousCommitmentProof, targetCommitmentProof, merkleProofs)
+		err = t.client.DisputeTransitionCreate2Transfer(&batch.ID, previousCommitmentProof, targetCommitmentProof, merkleProofs)
 	}
-	if err != nil {
-		return err
-	}
-
-	err = t.client.WaitForRollbackToFinish(transaction.Hash())
 	if err != nil {
 		return err
 	}
