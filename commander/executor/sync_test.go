@@ -231,8 +231,6 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyTransfersInCommitment() {
 }
 
 func (s *SyncTestSuite) TestSyncBatch_TooManyCreate2TransfersInCommitment() {
-	s.T().SkipNow() // TODO fix this test
-
 	tx := testutils.MakeCreate2Transfer(0, ref.Uint32(5), 0, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx)
 	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &tx)
@@ -243,27 +241,22 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyCreate2TransfersInCommitment() {
 
 	s.recreateDatabase()
 
-	latestBlockNumber, err := s.client.GetLatestBlockNumber()
-	s.NoError(err)
-
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{
-		Start: 0,
-		End:   latestBlockNumber,
-	})
+	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	for i := range remoteBatches {
-		s.beginExecutorTransaction()
-		err = s.transactionExecutor.SyncBatch(&remoteBatches[i])
-		s.NoError(err)
-		err = s.transactionExecutor.Commit()
-		s.NoError(err)
-	}
+	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
+	s.NoError(err)
+
+	var disputableErr *DisputableCommitmentError
+	err = s.transactionExecutor.SyncBatch(&remoteBatches[1])
+	s.ErrorAs(err, &disputableErr)
+	s.Equal(ErrTooManyTx.Reason, disputableErr.Reason)
+
 	_, err = s.storage.GetBatch(remoteBatches[0].ID)
 	s.NoError(err)
 	_, err = s.storage.GetBatch(remoteBatches[1].ID)
-	s.True(st.IsNotFoundError(err))
+	s.NoError(err)
 }
 
 func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
