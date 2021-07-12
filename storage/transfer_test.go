@@ -101,9 +101,9 @@ func (s *TransferTestSuite) TestGetTransferWithBatchDetails() {
 	transferInBatch.ReceiveTime = receiveTime
 
 	expected := models.TransferWithBatchDetails{
-		Transfer:       transferInBatch,
-		BatchHash:      batch.Hash,
-		SubmissionTime: batch.SubmissionTime,
+		Transfer:  transferInBatch,
+		BatchHash: batch.Hash,
+		BatchTime: batch.SubmissionTime,
 	}
 	res, err := s.storage.GetTransferWithBatchDetails(transferInBatch.Hash)
 	s.NoError(err)
@@ -289,7 +289,7 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 	transfers[0].ToStateID = 1
 	transfers[0].IncludedInCommitment = &commitmentID
 	transfers[0].BatchHash = &batchHash
-	transfers[0].SubmissionTime = submissionTime
+	transfers[0].BatchTime = submissionTime
 
 	transfers[1].Transfer = transfer
 	transfers[1].Hash = utils.RandomHash()
@@ -309,7 +309,7 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 	transfers[3].ToStateID = 1
 	transfers[3].IncludedInCommitment = &commitmentID
 	transfers[3].BatchHash = &batchHash
-	transfers[3].SubmissionTime = submissionTime
+	transfers[3].BatchTime = submissionTime
 
 	transfers[4].Transfer = transfer
 	transfers[4].Hash = utils.RandomHash()
