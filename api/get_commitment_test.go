@@ -80,20 +80,17 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 		Commitment: s.commitment,
 		Status:     txstatus.InBatch,
 		BatchTime:  s.batch.SubmissionTime,
-		Transactions: []dto.TransferForCommitment{{
-			TransferForCommitment: &models.TransferForCommitment{
-				TransactionBaseForCommitment: models.TransactionBaseForCommitment{
-					Hash:        transfer.Hash,
-					FromStateID: transfer.FromStateID,
-					Amount:      transfer.Amount,
-					Fee:         transfer.Fee,
-					Nonce:       transfer.Nonce,
-					Signature:   transfer.Signature,
-					ReceiveTime: receiveTime,
-				},
-				ToStateID: transfer.ToStateID,
+		Transactions: []models.TransferForCommitment{{
+			TransactionBaseForCommitment: models.TransactionBaseForCommitment{
+				Hash:        transfer.Hash,
+				FromStateID: transfer.FromStateID,
+				Amount:      transfer.Amount,
+				Fee:         transfer.Fee,
+				Nonce:       transfer.Nonce,
+				Signature:   transfer.Signature,
+				ReceiveTime: receiveTime,
 			},
-			ReceiveTime: receiveTime,
+			ToStateID: transfer.ToStateID,
 		}},
 	}
 
@@ -137,21 +134,18 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 		Commitment: s.commitment,
 		Status:     txstatus.InBatch,
 		BatchTime:  s.batch.SubmissionTime,
-		Transactions: []dto.Create2TransferForCommitment{{
-			Create2TransferForCommitment: &models.Create2TransferForCommitment{
-				TransactionBaseForCommitment: models.TransactionBaseForCommitment{
-					Hash:        transfer.Hash,
-					FromStateID: transfer.FromStateID,
-					Amount:      transfer.Amount,
-					Fee:         transfer.Fee,
-					Nonce:       transfer.Nonce,
-					Signature:   transfer.Signature,
-					ReceiveTime: receiveTime,
-				},
-				ToStateID:   transfer.ToStateID,
-				ToPublicKey: transfer.ToPublicKey,
+		Transactions: []models.Create2TransferForCommitment{{
+			TransactionBaseForCommitment: models.TransactionBaseForCommitment{
+				Hash:        transfer.Hash,
+				FromStateID: transfer.FromStateID,
+				Amount:      transfer.Amount,
+				Fee:         transfer.Fee,
+				Nonce:       transfer.Nonce,
+				Signature:   transfer.Signature,
+				ReceiveTime: receiveTime,
 			},
-			ReceiveTime: receiveTime,
+			ToStateID:   transfer.ToStateID,
+			ToPublicKey: transfer.ToPublicKey,
 		}},
 	}
 

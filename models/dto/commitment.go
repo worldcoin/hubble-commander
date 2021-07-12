@@ -11,14 +11,3 @@ type Commitment struct {
 	BatchTime    *models.Timestamp
 	Transactions interface{}
 }
-
-// TODO get rid of these types
-type TransferForCommitment struct {
-	*models.TransferForCommitment
-	ReceiveTime *models.Timestamp
-}
-
-type Create2TransferForCommitment struct {
-	*models.Create2TransferForCommitment
-	ReceiveTime *models.Timestamp
-}

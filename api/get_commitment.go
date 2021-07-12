@@ -37,43 +37,11 @@ func (a *API) GetCommitment(id int32) (*dto.Commitment, error) {
 func (a *API) getTransactionsForCommitment(commitment *models.Commitment) (interface{}, error) {
 	switch commitment.Type {
 	case txtype.Transfer:
-		return a.getTransfersForCommitment(commitment.ID)
+		return a.storage.GetTransfersByCommitmentID(commitment.ID)
 	case txtype.Create2Transfer:
-		return a.getC2TsForCommitment(commitment.ID)
+		return a.storage.GetCreate2TransfersByCommitmentID(commitment.ID)
 	case txtype.MassMigration:
 		return nil, dto.ErrNotImplemented
 	}
 	return nil, dto.ErrNotImplemented
-}
-
-func (a *API) getTransfersForCommitment(commitmentID int32) ([]dto.TransferForCommitment, error) {
-	transfers, err := a.storage.GetTransfersByCommitmentID(commitmentID)
-	if err != nil {
-		return nil, err
-	}
-	dtoTransfers := make([]dto.TransferForCommitment, len(transfers))
-	for i := range transfers {
-		transfer := &transfers[i]
-		dtoTransfers[i] = dto.TransferForCommitment{
-			TransferForCommitment: transfer,
-			ReceiveTime:           transfer.ReceiveTime,
-		}
-	}
-	return dtoTransfers, nil
-}
-
-func (a *API) getC2TsForCommitment(commitmentID int32) ([]dto.Create2TransferForCommitment, error) {
-	transfers, err := a.storage.GetCreate2TransfersByCommitmentID(commitmentID)
-	if err != nil {
-		return nil, err
-	}
-	dtoTransfers := make([]dto.Create2TransferForCommitment, len(transfers))
-	for i := range transfers {
-		transfer := &transfers[i]
-		dtoTransfers[i] = dto.Create2TransferForCommitment{
-			Create2TransferForCommitment: transfer,
-			ReceiveTime:                  transfer.ReceiveTime,
-		}
-	}
-	return dtoTransfers, nil
 }
