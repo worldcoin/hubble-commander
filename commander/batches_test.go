@@ -97,11 +97,11 @@ func (s *BatchesTestSuite) TestUnsafeSyncBatches_DoesNotSyncExistingBatchTwice()
 
 	state0, err := s.cmd.storage.GetStateLeaf(0)
 	s.NoError(err)
-	s.Equal(models.MakeUint256(700), state0.Balance)
+	s.Equal(models.MakeUint256(710), state0.Balance)
 
 	state1, err := s.cmd.storage.GetStateLeaf(1)
 	s.NoError(err)
-	s.Equal(models.MakeUint256(300), state1.Balance)
+	s.Equal(models.MakeUint256(290), state1.Balance)
 }
 
 func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() {
@@ -110,10 +110,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 		testutils.MakeTransfer(0, 1, 0, 200),
 	}
 	for i := range transfers {
-		signTransfer(s.T(), &s.wallets[transfers[i].FromStateID], &transfers[i])
-		txHash, err := encoder.HashTransfer(&transfers[i])
-		s.NoError(err)
-		transfers[i].Hash = *txHash
+		s.setTransferHashAndSign(&transfers[i])
 	}
 
 	s.runInTransaction(func() {
@@ -158,12 +155,10 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 
 func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentBatch() {
 	transfer := testutils.MakeTransfer(0, 1, 0, 50)
-	s.setTransferHashAndSign(&transfer)
 	s.createAndSubmitTransferBatch(&transfer)
 
 	s.runInTransaction(func() {
 		invalidTransfer := testutils.MakeTransfer(0, 1, 1, 100)
-		s.setTransferHashAndSign(&invalidTransfer)
 		s.createAndSubmitInvalidTransferBatch(&invalidTransfer)
 	})
 

@@ -13,7 +13,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
-	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -397,28 +396,6 @@ func (s *SyncTestSuite) createAndSubmitInvalidTransferBatch(tx *models.Transfer)
 	s.NoError(err)
 
 	s.client.Commit()
-	return pendingBatch
-}
-
-// nolint:unused // TODO handle
-func createTransferBatch(s *require.Assertions, txExecutor *TransactionExecutor, tx *models.Transfer) *models.Batch {
-	_, err := txExecutor.storage.AddTransfer(tx)
-	s.NoError(err)
-
-	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Transfer)
-	s.NoError(err)
-
-	commitments, err := txExecutor.CreateTransferCommitments(testDomain)
-	s.NoError(err)
-	s.Len(commitments, 1)
-
-	pendingBatch.TransactionHash = utils.RandomHash()
-	err = txExecutor.storage.AddBatch(pendingBatch)
-	s.NoError(err)
-
-	err = txExecutor.markCommitmentsAsIncluded(commitments, pendingBatch.ID)
-	s.NoError(err)
-
 	return pendingBatch
 }
 
