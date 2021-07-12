@@ -378,7 +378,6 @@ func createAndSubmitTransferBatch(
 	return pendingBatch
 }
 
-// nolint:unused // TODO handle
 func (s *SyncTestSuite) createAndSubmitInvalidTransferBatch(tx *models.Transfer) *models.Batch {
 	_, err := s.storage.AddTransfer(tx)
 	s.NoError(err)
@@ -421,7 +420,6 @@ func createAndSubmitC2TBatch(
 	return commitments[0]
 }
 
-// nolint:unused // TODO handle
 func (s *SyncTestSuite) createAndSubmitInvalidC2TBatch(tx *models.Create2Transfer) models.Commitment {
 	_, err := s.storage.AddCreate2Transfer(tx)
 	s.NoError(err)

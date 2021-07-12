@@ -15,7 +15,6 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -129,7 +128,6 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 
 	batch, err := s.cmd.storage.GetBatch(batches[0].ID)
 	s.NoError(err)
-	batch.BlockTime = ref.Time(batch.BlockTime.UTC())
 	s.Equal(batches[0].Batch, *batch)
 
 	expectedCommitment := models.Commitment{
