@@ -2,6 +2,7 @@ package api
 
 import (
 	"testing"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
@@ -88,29 +89,29 @@ func (s *GetTransactionsTestSuite) addUserStates() {
 	}
 }
 
-func (s *GetTransactionsTestSuite) addTransfers() []models.Transfer {
-	makeTransfer := func(fromStateID, toStateID uint32) models.Transfer {
-		return models.Transfer{
-			TransactionBase: models.TransactionBase{
-				Hash:        utils.RandomHash(),
-				TxType:      txtype.Transfer,
-				FromStateID: fromStateID,
-				Amount:      models.MakeUint256(10),
-				Fee:         models.MakeUint256(1),
-				Nonce:       models.MakeUint256(0),
-				Signature:   models.MakeRandomSignature(),
-			},
-			ToStateID: toStateID,
-		}
+func (s *GetTransactionsTestSuite) makeTransfer(fromStateID, toStateID uint32) models.Transfer {
+	return models.Transfer{
+		TransactionBase: models.TransactionBase{
+			Hash:        utils.RandomHash(),
+			TxType:      txtype.Transfer,
+			FromStateID: fromStateID,
+			Amount:      models.MakeUint256(10),
+			Fee:         models.MakeUint256(1),
+			Nonce:       models.MakeUint256(0),
+			Signature:   models.MakeRandomSignature(),
+		},
+		ToStateID: toStateID,
 	}
+}
 
+func (s *GetTransactionsTestSuite) addTransfers() []models.Transfer {
 	transfers := []models.Transfer{
-		makeTransfer(0, 2),
-		makeTransfer(1, 2),
-		makeTransfer(2, 4),
-		makeTransfer(2, 0),
-		makeTransfer(3, 4),
-		makeTransfer(4, 3),
+		s.makeTransfer(0, 2),
+		s.makeTransfer(1, 2),
+		s.makeTransfer(2, 4),
+		s.makeTransfer(2, 0),
+		s.makeTransfer(3, 4),
+		s.makeTransfer(4, 3),
 	}
 
 	for i := range transfers {
@@ -121,27 +122,30 @@ func (s *GetTransactionsTestSuite) addTransfers() []models.Transfer {
 	return transfers
 }
 
-func (s *GetTransactionsTestSuite) addCreate2Transfers() []models.Create2Transfer {
-	makeCreate2Transfer := func(fromStateID, toStateID uint32, toPublicKey models.PublicKey) models.Create2Transfer {
-		return models.Create2Transfer{
-			TransactionBase: models.TransactionBase{
-				Hash:        utils.RandomHash(),
-				TxType:      txtype.Create2Transfer,
-				FromStateID: fromStateID,
-				Amount:      models.MakeUint256(10),
-				Fee:         models.MakeUint256(1),
-				Nonce:       models.MakeUint256(1),
-				Signature:   models.MakeRandomSignature(),
-			},
-			ToStateID:   ref.Uint32(toStateID),
-			ToPublicKey: toPublicKey,
-		}
+func (s *GetTransactionsTestSuite) makeCreate2Transfer(
+	fromStateID, toStateID uint32,
+	toPublicKey *models.PublicKey,
+) models.Create2Transfer {
+	return models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			Hash:        utils.RandomHash(),
+			TxType:      txtype.Create2Transfer,
+			FromStateID: fromStateID,
+			Amount:      models.MakeUint256(10),
+			Fee:         models.MakeUint256(1),
+			Nonce:       models.MakeUint256(1),
+			Signature:   models.MakeRandomSignature(),
+		},
+		ToStateID:   ref.Uint32(toStateID),
+		ToPublicKey: *toPublicKey,
 	}
+}
 
+func (s *GetTransactionsTestSuite) addCreate2Transfers() []models.Create2Transfer {
 	transfers := []models.Create2Transfer{
-		makeCreate2Transfer(0, 5, models.PublicKey{3, 4, 5}),
-		makeCreate2Transfer(4, 6, models.PublicKey{3, 4, 5}),
-		makeCreate2Transfer(4, 3, models.PublicKey{3, 4, 5}),
+		s.makeCreate2Transfer(0, 5, &models.PublicKey{3, 4, 5}),
+		s.makeCreate2Transfer(4, 6, &models.PublicKey{3, 4, 5}),
+		s.makeCreate2Transfer(4, 3, &models.PublicKey{3, 4, 5}),
 	}
 
 	for i := range transfers {
@@ -187,6 +191,91 @@ func (s *GetTransactionsTestSuite) TestGetTransactions() {
 	s.Contains(txs, newTransferReceipt(transfers[5]))
 	s.Contains(txs, newCreate2Receipt(create2Transfers[0]))
 	s.Contains(txs, newCreate2Receipt(create2Transfers[2]))
+}
+
+func (s *GetTransactionsTestSuite) addCommitmentAndBatch() *models.Batch {
+	batch := &models.Batch{
+		ID:                models.MakeUint256(1),
+		Type:              txtype.Transfer,
+		TransactionHash:   utils.RandomHash(),
+		Hash:              ref.Hash(utils.RandomHash()),
+		FinalisationBlock: ref.Uint32(1234),
+		AccountTreeRoot:   ref.Hash(utils.RandomHash()),
+		PrevStateRoot:     ref.Hash(utils.RandomHash()),
+		SubmissionTime:    models.NewTimestamp(time.Now().UTC()),
+	}
+	err := s.storage.AddBatch(batch)
+	s.NoError(err)
+
+	commitment := &models.Commitment{
+		ID:                1,
+		Type:              txtype.Transfer,
+		Transactions:      utils.RandomBytes(12),
+		FeeReceiver:       1234,
+		CombinedSignature: models.MakeRandomSignature(),
+		PostStateRoot:     utils.RandomHash(),
+		IncludedInBatch:   &batch.ID,
+	}
+
+	_, err = s.storage.AddCommitment(commitment)
+	s.NoError(err)
+	return batch
+}
+
+func (s *GetTransactionsTestSuite) addIncludedTransfer() models.Transfer {
+	transfer := s.makeTransfer(0, 2)
+	transfer.IncludedInCommitment = ref.Int32(1)
+	receiveTime, err := s.storage.AddTransfer(&transfer)
+	s.NoError(err)
+	transfer.ReceiveTime = receiveTime
+	return transfer
+}
+
+func (s *GetTransactionsTestSuite) addIncludedCreate2Transfer() models.Create2Transfer {
+	create2Transfer := s.makeCreate2Transfer(0, 5, &models.PublicKey{3, 4, 5})
+	create2Transfer.IncludedInCommitment = ref.Int32(1)
+	receiveTime2, err := s.storage.AddCreate2Transfer(&create2Transfer)
+	s.NoError(err)
+	create2Transfer.ReceiveTime = receiveTime2
+	return create2Transfer
+}
+
+func (s *GetTransactionsTestSuite) TestGetTransactions_ReceiptsWithDetails() {
+	s.addAccounts()
+	s.addUserStates()
+	batch := s.addCommitmentAndBatch()
+
+	transfer := s.addIncludedTransfer()
+	create2Transfer := s.addIncludedCreate2Transfer()
+
+	txs, err := s.api.GetTransactions(&models.PublicKey{1, 1, 1})
+	s.NoError(err)
+
+	newIncludedTransferReceipt := func(transfer models.Transfer) *dto.TransferReceipt {
+		return &dto.TransferReceipt{
+			TransferWithBatchDetails: models.TransferWithBatchDetails{
+				Transfer:  transfer,
+				BatchHash: batch.Hash,
+				BatchTime: batch.SubmissionTime,
+			},
+			Status: txstatus.InBatch,
+		}
+	}
+
+	newIncludedCreate2Receipt := func(transfer models.Create2Transfer) *dto.Create2TransferReceipt {
+		return &dto.Create2TransferReceipt{
+			Create2TransferWithBatchDetails: models.Create2TransferWithBatchDetails{
+				Create2Transfer: transfer,
+				BatchHash:       batch.Hash,
+				BatchTime:       batch.SubmissionTime,
+			},
+			Status: txstatus.InBatch,
+		}
+	}
+
+	s.Len(txs, 2)
+	s.Contains(txs, newIncludedTransferReceipt(transfer))
+	s.Contains(txs, newIncludedCreate2Receipt(create2Transfer))
 }
 
 func (s *GetTransactionsTestSuite) TestGetTransactions_NoTransactions() {
