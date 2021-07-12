@@ -12,6 +12,7 @@ type Commitment struct {
 	Transactions interface{}
 }
 
+// TODO get rid of these types
 type TransferForCommitment struct {
 	*models.TransferForCommitment
 	ReceiveTime *models.Timestamp

@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"time"
-
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -26,7 +24,7 @@ var (
 	}
 )
 
-func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) (receiveTime *time.Time, err error) {
+func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) (receiveTime *models.Timestamp, err error) {
 	tx, txStorage, err := s.BeginTransaction(TxOptions{Postgres: true})
 	if err != nil {
 		return nil, err

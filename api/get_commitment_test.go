@@ -40,7 +40,7 @@ func (s *GetCommitmentTestSuite) SetupTest() {
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(113),
-		SubmissionTime:    models.NewTimestamp(ref.Time(time.Unix(140, 0).UTC())),
+		SubmissionTime:    models.NewTimestamp(time.Unix(140, 0).UTC()),
 	}
 
 	s.commitment = commitment
@@ -93,7 +93,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 				},
 				ToStateID: transfer.ToStateID,
 			},
-			ReceiveTime: models.NewTimestamp(receiveTime),
+			ReceiveTime: receiveTime,
 		}},
 	}
 
@@ -151,7 +151,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 				ToStateID:   transfer.ToStateID,
 				ToPublicKey: transfer.ToPublicKey,
 			},
-			ReceiveTime: models.NewTimestamp(receiveTime),
+			ReceiveTime: receiveTime,
 		}},
 	}
 

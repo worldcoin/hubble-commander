@@ -8,7 +8,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -52,7 +51,7 @@ func (c *Client) GetBatches(opts *bind.FilterOpts) ([]DecodedBatch, error) {
 
 		batch.TransactionHash = txHash
 		batch.AccountTreeRoot = &accountRoot
-		batch.SubmissionTime = models.NewTimestamp(ref.Time(time.Unix(int64(header.Time), 0).UTC()))
+		batch.SubmissionTime = models.NewTimestamp(time.Unix(int64(header.Time), 0).UTC())
 
 		res = append(res, DecodedBatch{
 			Batch:       *batch,
