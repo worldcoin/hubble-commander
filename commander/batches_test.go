@@ -104,9 +104,6 @@ func (s *BatchesTestSuite) TestUnsafeSyncBatches_DoesNotSyncExistingBatchTwice()
 	s.Equal(models.MakeUint256(300), state1.Balance)
 }
 
-// TODO test syncRemoteBatch:
-//  - test that both race condition and dispute can be handled
-
 func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() {
 	transfers := []models.Transfer{
 		testutils.MakeTransfer(0, 1, 0, 100),
@@ -181,6 +178,36 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentBatch() {
 	s.NoError(err)
 
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
+}
+
+func (s *BatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDisputesFraudulentOne() {
+	transfers := []models.Transfer{
+		testutils.MakeTransfer(0, 1, 0, 50),
+		testutils.MakeTransfer(0, 1, 1, 250),
+		testutils.MakeTransfer(0, 1, 1, 100),
+	}
+
+	s.createAndSubmitTransferBatch(&transfers[0])
+	s.runInTransaction(func() {
+		s.createAndSubmitInvalidTransferBatch(&transfers[1])
+	})
+
+	localBatch := s.createTransferBatch(&transfers[2])
+
+	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	s.NoError(err)
+	s.Len(remoteBatches, 2)
+
+	err = s.cmd.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
+	s.NoError(err)
+
+	s.testClient.Account = s.testClient.Accounts[1]
+	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
+	s.NoError(err)
+
+	s.checkBatchAfterDispute(remoteBatches[1].ID)
+	_, err = s.cmd.storage.GetBatch(localBatch.ID)
+	s.True(st.IsNotFoundError(err))
 }
 
 func (s *BatchesTestSuite) syncAllBlocks() {
