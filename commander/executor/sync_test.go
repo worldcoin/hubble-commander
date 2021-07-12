@@ -370,55 +370,6 @@ func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {
 	s.Len(batches, 0)
 }
 
-func (s *SyncTestSuite) TestRevertBatch_SyncsCorrectBatch() {
-	s.T().SkipNow() // TODO move and fix this test
-
-	startBlock, err := s.client.GetLatestBlockNumber()
-	s.NoError(err)
-
-	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
-	pendingBatch := createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &s.transfer)
-	s.recreateDatabase()
-
-	localTransfer := s.transfer
-	localTransfer.Hash = utils.RandomHash()
-	localTransfer.Amount = models.MakeUint256(200)
-	localTransfer.Fee = models.MakeUint256(10)
-	signTransfer(s.T(), &s.wallets[localTransfer.FromStateID], &localTransfer)
-	_ = createTransferBatch(s.Assertions, s.transactionExecutor, &localTransfer)
-
-	batches, err := s.client.GetBatches(&bind.FilterOpts{Start: *startBlock})
-	s.NoError(err)
-	s.Len(batches, 1)
-
-	// s.revertBatchesInTransaction(&batches[0], localBatch) // nolint:gocritic // TODO handle
-
-	batch, err := s.storage.GetBatch(pendingBatch.ID)
-	s.NoError(err)
-	batch.BlockTime = ref.Time(batch.BlockTime.UTC())
-	s.EqualValues(batches[0].Batch, *batch)
-
-	expectedCommitment := models.Commitment{
-		ID:                2,
-		Type:              txtype.Transfer,
-		Transactions:      batches[0].Commitments[0].Transactions,
-		FeeReceiver:       batches[0].Commitments[0].FeeReceiver,
-		CombinedSignature: batches[0].Commitments[0].CombinedSignature,
-		PostStateRoot:     batches[0].Commitments[0].StateRoot,
-		IncludedInBatch:   &batch.ID,
-	}
-	commitment, err := s.storage.GetCommitment(2)
-	s.NoError(err)
-	s.Equal(expectedCommitment, *commitment)
-
-	expectedTx := s.transfer
-	expectedTx.Signature = models.Signature{}
-	expectedTx.IncludedInCommitment = &commitment.ID
-	transfer, err := s.storage.GetTransfer(s.transfer.Hash)
-	s.NoError(err)
-	s.Equal(expectedTx, *transfer)
-}
-
 func createAndSubmitTransferBatch(
 	s *require.Assertions,
 	client *eth.TestClient,
