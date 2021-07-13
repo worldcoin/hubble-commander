@@ -67,8 +67,6 @@ func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieve() {
 }
 
 func (s *TransferTestSuite) TestAddTransfer_SetsReceiveTime() {
-	// TODO-MIN Remove skip before submitting this PR
-	s.T().Skip()
 	beforeTime := time.Now().Unix()
 	_, err := s.storage.AddTransfer(&transfer)
 	s.NoError(err)

@@ -311,6 +311,7 @@ func (s *TransferCommitmentsTestSuite) preparePendingTransfers(transfersAmount u
 	s.addTransfers(transfers)
 }
 
+// nolint:unparam
 func addAccountWithHighNonce(s *require.Assertions, storage *st.Storage, stateID uint32) {
 	dummyAccount := models.Account{
 		PubKeyID:  500,
