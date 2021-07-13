@@ -16,8 +16,8 @@ func (t *TransactionExecutor) ApplyCreate2Transfer(
 	appliedTransfer = create2Transfer.Clone()
 	appliedTransfer.ToStateID = nextAvailableStateID
 
-	receiverState := newUserState(*appliedTransfer.ToStateID, pubKeyID, commitmentTokenID)
-	transferError, appError = t.ApplyTransfer(appliedTransfer, receiverState, commitmentTokenID)
+	receiverLeaf := newUserLeaf(*appliedTransfer.ToStateID, pubKeyID, commitmentTokenID)
+	transferError, appError = t.ApplyTransfer(appliedTransfer, receiverLeaf, commitmentTokenID)
 	return appliedTransfer, transferError, appError
 }
 
@@ -30,15 +30,15 @@ func (t *TransactionExecutor) ApplyCreate2TransferForSync(
 		return nil, nil, ErrNilReceiverStateID
 	}
 
-	receiverState := newUserState(*create2Transfer.ToStateID, pubKeyID, commitmentTokenID)
-	genericSynced, transferError, appError := t.applyGenericTransactionForSync(create2Transfer, receiverState, commitmentTokenID)
+	receiverLeaf := newUserLeaf(*create2Transfer.ToStateID, pubKeyID, commitmentTokenID)
+	genericSynced, transferError, appError := t.applyGenericTransactionForSync(create2Transfer, receiverLeaf, commitmentTokenID)
 	if appError != nil {
 		return nil, nil, appError
 	}
 	return NewSyncedCreate2TransferFromGeneric(genericSynced), transferError, nil
 }
 
-func newUserState(stateID, pubKeyID uint32, tokenID models.Uint256) *models.StateLeaf {
+func newUserLeaf(stateID, pubKeyID uint32, tokenID models.Uint256) *models.StateLeaf {
 	return &models.StateLeaf{
 		StateID: stateID,
 		UserState: models.UserState{
