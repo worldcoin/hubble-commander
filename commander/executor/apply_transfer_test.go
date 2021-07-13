@@ -123,13 +123,6 @@ func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_ValidatesBalanc
 	s.Equal(ErrBalanceTooLow, err)
 }
 
-func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesToStateID() {
-	c2T := create2Transfer
-	transferError, appError := s.transactionExecutor.ApplyTransfer(&c2T, &s.receiverLeaf, models.MakeUint256(1))
-	s.NoError(transferError)
-	s.Equal(ErrNilReceiverStateID, appError)
-}
-
 func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesSenderTokenID() {
 	s.setUserStatesInTree()
 
@@ -173,14 +166,6 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_UpdatesStatesCorrectly() {
 
 	s.Equal(uint64(290), senderLeaf.Balance.Uint64())
 	s.Equal(uint64(100), receiverLeaf.Balance.Uint64())
-}
-
-func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ValidatesToStateID() {
-	c2T := create2Transfer
-	synced, transferError, appError := s.transactionExecutor.ApplyTransferForSync(&c2T, models.MakeUint256(1))
-	s.Nil(synced)
-	s.NoError(transferError)
-	s.Equal(ErrNilReceiverStateID, appError)
 }
 
 func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ReturnsSenderProofForCalculateStateAfterTransferValidations() {
