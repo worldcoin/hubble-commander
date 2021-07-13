@@ -30,12 +30,8 @@ func (t *TransactionExecutor) ApplyCreate2TransferForSync(
 		return nil, nil, ErrNilReceiverStateID
 	}
 
-	appError = t.insertNewUserState(*create2Transfer.ToStateID, pubKeyID, commitmentTokenID)
-	if appError != nil {
-		return nil, nil, appError
-	}
-
-	genericSynced, transferError, appError := t.applyGenericTransactionForSync(create2Transfer, commitmentTokenID)
+	receiverState := newUserState(*create2Transfer.ToStateID, pubKeyID, commitmentTokenID)
+	genericSynced, transferError, appError := t.applyGenericTransactionForSync(create2Transfer, receiverState, commitmentTokenID)
 	if appError != nil {
 		return nil, nil, appError
 	}

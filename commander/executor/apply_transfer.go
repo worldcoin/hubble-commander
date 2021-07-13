@@ -63,20 +63,26 @@ func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransa
 	synced *SyncedTransfer,
 	transferError, appError error,
 ) {
-	genericSynced, transferError, appError := t.applyGenericTransactionForSync(transfer, commitmentTokenID)
+	receiverLeaf, err := t.storage.GetStateLeaf(*transfer.GetToStateID())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	genericSynced, transferError, appError := t.applyGenericTransactionForSync(transfer, receiverLeaf, commitmentTokenID)
 	if appError != nil {
 		return nil, nil, appError
 	}
 	return NewSyncedTransferFromGeneric(genericSynced), transferError, nil
 }
 
-func (t *TransactionExecutor) applyGenericTransactionForSync(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
-	synced *SyncedGenericTransaction,
-	transferError, appError error,
-) {
-	senderState, receiverState, appError := t.getParticipantsStates(tx)
-	if appError != nil {
-		return nil, nil, appError
+func (t *TransactionExecutor) applyGenericTransactionForSync(
+	tx models.GenericTransaction,
+	receiverState *models.StateLeaf,
+	commitmentTokenID models.Uint256,
+) (synced *SyncedGenericTransaction, transferError, appError error) {
+	senderState, err := t.storage.GetStateLeaf(tx.GetFromStateID())
+	if err != nil {
+		return nil, nil, err
 	}
 
 	synced = NewPartialSyncedGenericTransaction(tx.Copy(), &senderState.UserState, &receiverState.UserState)
