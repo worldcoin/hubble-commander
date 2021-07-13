@@ -61,6 +61,7 @@ func (s *DisputeTransitionTestSuite) SetupSuite() {
 	s.cfg = &config.RollupConfig{
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
+		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    1,
 		DevMode:                false,
 	}
@@ -431,7 +432,7 @@ func (s *DisputeTransitionTestSuite) getC2TStateMerkleProofs(
 
 func (s *DisputeTransitionTestSuite) createAndSubmitInvalidTransferBatch(txs [][]models.Transfer, invalidTxHash common.Hash) *models.Batch {
 	for i := range txs {
-		err := s.storage.BatchAddTransfer(txs[i])
+		err := s.transactionExecutor.storage.BatchAddTransfer(txs[i])
 		s.NoError(err)
 	}
 
