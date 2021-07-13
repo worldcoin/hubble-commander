@@ -494,13 +494,6 @@ func (s *SyncTestSuite) setC2THashAndSign(txs ...*models.Create2Transfer) {
 	}
 }
 
-// nolint:unused // TODO handle
-func (s *SyncTestSuite) beginExecutorTransaction() {
-	var err error
-	s.transactionExecutor, err = NewTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
-	s.NoError(err)
-}
-
 func generateWallets(s *require.Assertions, rollupAddress common.Address, walletsAmount int) []bls.Wallet {
 	domain, err := bls.DomainFromBytes(crypto.Keccak256(rollupAddress.Bytes()))
 	s.NoError(err)

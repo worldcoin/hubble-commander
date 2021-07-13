@@ -61,7 +61,6 @@ func (c *Commander) syncRemoteBatch(remoteBatch *eth.DecodedBatch) (err error) {
 	var dcError *executor.DisputableCommitmentError
 
 	err = c.syncBatch(remoteBatch)
-	// TODO check if rollback failure is not ignored by errors.As
 	if errors.As(err, &rcError) {
 		return c.replaceBatch(rcError.LocalBatch, remoteBatch)
 	}
