@@ -393,7 +393,7 @@ func (s *DisputeTransitionTestSuite) createAndSubmitInvalidC2TBatch(
 		s.NoError(err)
 	}
 
-	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
+	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Create2Transfer)
 	s.NoError(err)
 
 	commitments := s.createInvalidC2TCommitments(txs, pubKeyIDs, invalidTxHash)
