@@ -33,6 +33,7 @@ type ApplyTransferTestSuite struct {
 	tree                *storage.StateTree
 	transactionExecutor *TransactionExecutor
 	transfer            models.Transfer
+	receiverLeaf        models.StateLeaf
 }
 
 func (s *ApplyTransferTestSuite) SetupSuite() {
@@ -73,6 +74,10 @@ func (s *ApplyTransferTestSuite) SetupTest() {
 	for i := range accounts {
 		err = s.storage.AddAccountIfNotExists(&accounts[i])
 		s.NoError(err)
+	}
+	s.receiverLeaf = models.StateLeaf{
+		StateID:   receiverState.PubKeyID,
+		UserState: receiverState,
 	}
 }
 
@@ -120,7 +125,7 @@ func (s *ApplyTransferTestSuite) TestCalculateStateAfterTransfer_ValidatesBalanc
 
 func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesToStateID() {
 	c2T := create2Transfer
-	transferError, appError := s.transactionExecutor.ApplyTransfer(&c2T, models.MakeUint256(1))
+	transferError, appError := s.transactionExecutor.ApplyTransfer(&c2T, &s.receiverLeaf, models.MakeUint256(1))
 	s.NoError(transferError)
 	s.Equal(ErrNilReceiverStateID, appError)
 }
@@ -128,7 +133,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesToStateID() {
 func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesSenderTokenID() {
 	s.setUserStatesInTree()
 
-	transferError, appError := s.transactionExecutor.ApplyTransfer(&s.transfer, models.MakeUint256(3))
+	transferError, appError := s.transactionExecutor.ApplyTransfer(&s.transfer, &s.receiverLeaf, models.MakeUint256(3))
 	s.NoError(transferError)
 	s.Equal(appError, ErrInvalidSenderTokenID)
 }
@@ -136,12 +141,10 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesSenderTokenID() {
 func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesReceiverTokenID() {
 	s.setUserStatesInTree()
 
-	receiverWithChangedToken := receiverState
+	receiverWithChangedToken := s.receiverLeaf
 	receiverWithChangedToken.TokenID = models.MakeUint256(2)
-	_, err := s.tree.Set(2, &receiverWithChangedToken)
-	s.NoError(err)
 
-	transferError, appError := s.transactionExecutor.ApplyTransfer(&s.transfer, models.MakeUint256(1))
+	transferError, appError := s.transactionExecutor.ApplyTransfer(&s.transfer, &receiverWithChangedToken, models.MakeUint256(1))
 	s.NoError(transferError)
 	s.Equal(appError, ErrInvalidReceiverTokenID)
 }
@@ -151,7 +154,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesNonce() {
 	transferWithBadNonce.Nonce = models.MakeUint256(1)
 	s.setUserStatesInTree()
 
-	transferError, appError := s.transactionExecutor.ApplyTransfer(&transferWithBadNonce, models.MakeUint256(1))
+	transferError, appError := s.transactionExecutor.ApplyTransfer(&transferWithBadNonce, &s.receiverLeaf, models.MakeUint256(1))
 	s.Equal(ErrNonceTooHigh, transferError)
 	s.NoError(appError)
 }
@@ -159,7 +162,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesNonce() {
 func (s *ApplyTransferTestSuite) TestApplyTransfer_UpdatesStatesCorrectly() {
 	s.setUserStatesInTree()
 
-	transferError, appError := s.transactionExecutor.ApplyTransfer(&s.transfer, models.MakeUint256(1))
+	transferError, appError := s.transactionExecutor.ApplyTransfer(&s.transfer, &s.receiverLeaf, models.MakeUint256(1))
 	s.NoError(appError)
 	s.NoError(transferError)
 
