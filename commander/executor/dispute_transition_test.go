@@ -416,7 +416,8 @@ func (s *DisputeTransitionTestSuite) createInvalidC2TCommitments(
 		txs := commitmentTxs[i]
 		combinedFee := models.MakeUint256(0)
 		for j := range txs {
-			combinedFee = s.applyTransfer(&txs[j], invalidTxHash, combinedFee)
+			receiverLeaf := newUserLeaf(*txs[j].ToStateID, pubKeyIDs[i][j], models.MakeUint256(0))
+			combinedFee = s.applyTransfer(&txs[j], invalidTxHash, combinedFee, receiverLeaf)
 		}
 		if combinedFee.CmpN(0) > 0 {
 			err := s.transactionExecutor.ApplyFee(0, combinedFee)
@@ -439,7 +440,9 @@ func (s *DisputeTransitionTestSuite) createInvalidTransferCommitments(
 		txs := commitmentTxs[i]
 		combinedFee := models.MakeUint256(0)
 		for j := range txs {
-			combinedFee = s.applyTransfer(&txs[j], invalidTxHash, combinedFee)
+			receiverLeaf, err := s.transactionExecutor.storage.GetStateLeaf(txs[j].ToStateID)
+			s.NoError(err)
+			combinedFee = s.applyTransfer(&txs[j], invalidTxHash, combinedFee, receiverLeaf)
 		}
 		if combinedFee.CmpN(0) > 0 {
 			err := s.transactionExecutor.ApplyFee(0, combinedFee)
@@ -457,16 +460,16 @@ func (s *DisputeTransitionTestSuite) applyTransfer(
 	tx models.GenericTransaction,
 	invalidTxHash common.Hash,
 	combinedFee models.Uint256,
+	receiverLeaf *models.StateLeaf,
 ) models.Uint256 {
-	senderState, receiverState, err := s.transactionExecutor.getParticipantsStates(tx)
-	s.NoError(err)
-
 	if tx.GetBase().Hash != invalidTxHash {
-		transferError, appError := s.transactionExecutor.ApplyTransfer(tx, models.MakeUint256(0))
+		transferError, appError := s.transactionExecutor.ApplyTransfer(tx, receiverLeaf, models.MakeUint256(0))
 		s.NoError(transferError)
 		s.NoError(appError)
 	} else {
-		s.calculateStateAfterInvalidTransfer(senderState, receiverState, tx)
+		senderLeaf, err := s.transactionExecutor.storage.GetStateLeaf(tx.GetFromStateID())
+		s.NoError(err)
+		s.calculateStateAfterInvalidTransfer(senderLeaf, receiverLeaf, tx)
 	}
 	fee := tx.GetFee()
 	return *combinedFee.Add(&fee)
