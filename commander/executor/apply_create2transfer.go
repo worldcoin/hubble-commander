@@ -16,12 +16,8 @@ func (t *TransactionExecutor) ApplyCreate2Transfer(
 	appliedTransfer = create2Transfer.Clone()
 	appliedTransfer.ToStateID = nextAvailableStateID
 
-	appError = t.insertNewUserState(*appliedTransfer.ToStateID, pubKeyID, commitmentTokenID)
-	if appError != nil {
-		return nil, nil, appError
-	}
-
-	transferError, appError = t.ApplyTransfer(appliedTransfer, commitmentTokenID)
+	receiverState := newUserState(*appliedTransfer.ToStateID, pubKeyID, commitmentTokenID)
+	transferError, appError = t.ApplyTransfer(appliedTransfer, receiverState, commitmentTokenID)
 	return appliedTransfer, transferError, appError
 }
 
@@ -46,14 +42,14 @@ func (t *TransactionExecutor) ApplyCreate2TransferForSync(
 	return NewSyncedCreate2TransferFromGeneric(genericSynced), transferError, nil
 }
 
-func (t *TransactionExecutor) insertNewUserState(stateID, pubKeyID uint32, tokenID models.Uint256) error {
-	emptyUserState := models.UserState{
-		PubKeyID: pubKeyID,
-		TokenID:  tokenID,
-		Balance:  models.MakeUint256(0),
-		Nonce:    models.MakeUint256(0),
+func newUserState(stateID, pubKeyID uint32, tokenID models.Uint256) *models.StateLeaf {
+	return &models.StateLeaf{
+		StateID: stateID,
+		UserState: models.UserState{
+			PubKeyID: pubKeyID,
+			TokenID:  tokenID,
+			Balance:  models.MakeUint256(0),
+			Nonce:    models.MakeUint256(0),
+		},
 	}
-
-	_, err := t.stateTree.Set(stateID, &emptyUserState)
-	return err
 }

@@ -20,11 +20,12 @@ var (
 
 func (t *TransactionExecutor) ApplyTransfer(
 	transfer models.GenericTransaction,
+	receiverState *models.StateLeaf,
 	commitmentTokenID models.Uint256,
 ) (transferError, appError error) {
-	senderState, receiverState, appError := t.getParticipantsStates(transfer)
-	if appError != nil {
-		return nil, appError
+	senderState, err := t.storage.GetStateLeaf(transfer.GetFromStateID())
+	if err != nil {
+		return nil, err
 	}
 
 	appError = t.validateSenderTokenID(senderState, commitmentTokenID)
