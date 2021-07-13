@@ -34,7 +34,7 @@ func (t *TransactionExecutor) ApplyTransfers(
 			return nil, appError
 		}
 		if transferError != nil {
-			logAndSaveTransactionError(t.storage, &transfer.TransactionBase, transferError)
+			logAndSaveTransactionError(t.Storage, &transfer.TransactionBase, transferError)
 			returnStruct.invalidTransfers = append(returnStruct.invalidTransfers, *transfer)
 			continue
 		}

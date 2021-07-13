@@ -129,11 +129,11 @@ func (t *TransactionExecutor) getParticipantsStates(transfer models.GenericTrans
 		return nil, nil, ErrNilReceiverStateID
 	}
 
-	senderLeaf, err := t.storage.GetStateLeaf(transfer.GetFromStateID())
+	senderLeaf, err := t.Storage.GetStateLeaf(transfer.GetFromStateID())
 	if err != nil {
 		return nil, nil, err
 	}
-	receiverLeaf, err := t.storage.GetStateLeaf(*receiverStateID)
+	receiverLeaf, err := t.Storage.GetStateLeaf(*receiverStateID)
 	if err != nil {
 		return nil, nil, err
 	}

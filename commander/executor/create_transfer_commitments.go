@@ -145,7 +145,7 @@ func (t *TransactionExecutor) refillPendingTransfers(pendingTransfers []models.T
 }
 
 func (t *TransactionExecutor) queryPendingTransfers() ([]models.Transfer, error) {
-	pendingTransfers, err := t.storage.GetPendingTransfers(t.cfg.MaxCommitmentsPerBatch * t.cfg.MaxTxsPerCommitment)
+	pendingTransfers, err := t.Storage.GetPendingTransfers(t.cfg.MaxCommitmentsPerBatch * t.cfg.MaxTxsPerCommitment)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +158,7 @@ func (t *TransactionExecutor) queryPendingTransfers() ([]models.Transfer, error)
 func (t *TransactionExecutor) queryMorePendingTransfers(appliedTransfers []models.Transfer) ([]models.Transfer, error) {
 	numAppliedTransfers := uint32(len(appliedTransfers))
 	// TODO use SQL Offset instead
-	pendingTransfers, err := t.storage.GetPendingTransfers(
+	pendingTransfers, err := t.Storage.GetPendingTransfers(
 		t.cfg.MaxCommitmentsPerBatch*t.cfg.MaxTxsPerCommitment + numAppliedTransfers,
 	)
 	if err != nil {
@@ -174,7 +174,7 @@ func (t *TransactionExecutor) queryMorePendingTransfers(appliedTransfers []model
 
 func (t *TransactionExecutor) getCommitmentFeeReceiver() (*FeeReceiver, error) {
 	commitmentTokenID := models.MakeUint256(0) // TODO support multiple tokens
-	feeReceiverState, err := t.storage.GetFeeReceiverStateLeaf(t.cfg.FeeReceiverPubKeyID, commitmentTokenID)
+	feeReceiverState, err := t.Storage.GetFeeReceiverStateLeaf(t.cfg.FeeReceiverPubKeyID, commitmentTokenID)
 	if err != nil {
 		return nil, err
 	}

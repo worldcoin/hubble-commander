@@ -230,7 +230,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_FirstCommitm
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.transactionExecutor.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
+	err = s.transactionExecutor.Storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
 	s.NoError(err)
 
 	err = s.transactionExecutor.disputeTransition(&remoteBatches[1], 0, proofs)
@@ -291,7 +291,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_First
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.transactionExecutor.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
+	err = s.transactionExecutor.Storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
 	s.NoError(err)
 
 	err = s.transactionExecutor.disputeTransition(&remoteBatches[1], 0, proofs)
@@ -432,7 +432,7 @@ func (s *DisputeTransitionTestSuite) getC2TStateMerkleProofs(
 
 func (s *DisputeTransitionTestSuite) createAndSubmitInvalidTransferBatch(txs [][]models.Transfer, invalidTxHash common.Hash) *models.Batch {
 	for i := range txs {
-		err := s.transactionExecutor.storage.BatchAddTransfer(txs[i])
+		err := s.transactionExecutor.Storage.BatchAddTransfer(txs[i])
 		s.NoError(err)
 	}
 

@@ -12,7 +12,7 @@ func (t *TransactionExecutor) createAndStoreCommitment(
 	serializedTxs []byte,
 	combinedSignature *models.Signature,
 ) (*models.Commitment, error) {
-	stateRoot, err := st.NewStateTree(t.storage).Root()
+	stateRoot, err := st.NewStateTree(t.Storage).Root()
 	if err != nil {
 		return nil, err
 	}
@@ -25,7 +25,7 @@ func (t *TransactionExecutor) createAndStoreCommitment(
 		PostStateRoot:     *stateRoot,
 	}
 
-	id, err := t.storage.AddCommitment(&commitment)
+	id, err := t.Storage.AddCommitment(&commitment)
 	if err != nil {
 		return nil, err
 	}

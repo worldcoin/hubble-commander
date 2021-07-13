@@ -22,7 +22,7 @@ func (t *TransactionExecutor) ApplyCreate2Transfers(
 		return &AppliedC2Transfers{}, nil
 	}
 
-	syncedBlock, err := t.storage.GetSyncedBlock(t.client.ChainState.ChainID)
+	syncedBlock, err := t.Storage.GetSyncedBlock(t.client.ChainState.ChainID)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func (t *TransactionExecutor) ApplyCreate2Transfers(
 			return nil, appError
 		}
 		if transferError != nil {
-			logAndSaveTransactionError(t.storage, &appliedTransfer.TransactionBase, transferError)
+			logAndSaveTransactionError(t.Storage, &appliedTransfer.TransactionBase, transferError)
 			returnStruct.invalidTransfers = append(returnStruct.invalidTransfers, *appliedTransfer)
 			continue
 		}
@@ -128,7 +128,7 @@ func (t *TransactionExecutor) getOrRegisterPubKeyID(
 	transfer *models.Create2Transfer,
 	tokenID models.Uint256,
 ) (*uint32, error) {
-	pubKeyID, err := t.storage.GetUnusedPubKeyID(&transfer.ToPublicKey, &tokenID)
+	pubKeyID, err := t.Storage.GetUnusedPubKeyID(&transfer.ToPublicKey, &tokenID)
 	if err != nil && !st.IsNotFoundError(err) {
 		return nil, err
 	} else if st.IsNotFoundError(err) {
