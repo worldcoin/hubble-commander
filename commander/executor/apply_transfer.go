@@ -127,27 +127,6 @@ func (t *TransactionExecutor) fillSenderWitness(synced *SyncedGenericTransaction
 	return synced, tErr, nil
 }
 
-func (t *TransactionExecutor) getParticipantsStates(transfer models.GenericTransaction) (
-	senderState, receiverState *models.StateLeaf,
-	err error,
-) {
-	receiverStateID := transfer.GetToStateID()
-	if receiverStateID == nil {
-		return nil, nil, ErrNilReceiverStateID
-	}
-
-	senderLeaf, err := t.storage.GetStateLeaf(transfer.GetFromStateID())
-	if err != nil {
-		return nil, nil, err
-	}
-	receiverLeaf, err := t.storage.GetStateLeaf(*receiverStateID)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return senderLeaf, receiverLeaf, nil
-}
-
 func (t *TransactionExecutor) validateSenderTokenID(senderState *models.StateLeaf, commitmentTokenID models.Uint256) error {
 	if senderState.TokenID.Cmp(&commitmentTokenID) != 0 {
 		return ErrInvalidSenderTokenID
