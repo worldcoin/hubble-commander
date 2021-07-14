@@ -76,14 +76,18 @@ func (s *BatchesTestSuite) TearDownTest() {
 func (s *BatchesTestSuite) TestUnsafeSyncBatches_DoesNotSyncExistingBatchTwice() {
 	tx := testutils.MakeTransfer(0, 1, 0, 400)
 	signTransfer(s.T(), &s.wallets[tx.FromStateID], &tx)
-	createAndSubmitTransferBatch(s.T(), s.cmd, &tx)
+	s.runInTransaction(func() {
+		createAndSubmitTransferBatch(s.Assertions, s.cmd, s.transactionExecutor, &tx)
+	})
 	s.testClient.Commit()
 
 	s.syncAllBlocks()
 
 	tx2 := testutils.MakeTransfer(1, 0, 0, 100)
 	signTransfer(s.T(), &s.wallets[tx2.FromStateID], &tx2)
-	createAndSubmitTransferBatch(s.T(), s.cmd, &tx2)
+	s.runInTransaction(func() {
+		createAndSubmitTransferBatch(s.Assertions, s.cmd, s.transactionExecutor, &tx2)
+	})
 	s.testClient.Commit()
 
 	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
@@ -213,6 +217,7 @@ func (s *BatchesTestSuite) syncAllBlocks() {
 	s.NoError(err)
 }
 
+// Make sure that the commander and the transaction executor uses the same storage
 func (s *BatchesTestSuite) createAndSubmitTransferBatch(tx *models.Transfer) *models.Batch {
 	_, err := s.cmd.storage.AddTransfer(tx)
 	s.NoError(err)
@@ -231,6 +236,7 @@ func (s *BatchesTestSuite) createAndSubmitTransferBatch(tx *models.Transfer) *mo
 	return pendingBatch
 }
 
+// Make sure that the commander and the transaction executor uses the same storage
 func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batch {
 	_, err := s.cmd.storage.AddTransfer(tx)
 	s.NoError(err)
@@ -252,6 +258,7 @@ func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batc
 	return pendingBatch
 }
 
+// Make sure that the commander and the transaction executor uses the same storage
 func (s *BatchesTestSuite) createAndSubmitInvalidTransferBatch(tx *models.Transfer) *models.Batch {
 	_, err := s.cmd.storage.AddTransfer(tx)
 	s.NoError(err)
