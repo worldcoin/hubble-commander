@@ -109,7 +109,7 @@ func (d *Database) Prune() error {
 }
 
 func (d *Database) Clone(cfg *config.BadgerConfig) (*Database, error) {
-	cdb, err := NewDatabase(cfg)
+	clonedBadger, err := NewDatabase(cfg)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -120,10 +120,10 @@ func (d *Database) Clone(cfg *config.BadgerConfig) (*Database, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	err = cdb.store.Badger().Load(&backup, 16)
+	err = clonedBadger.store.Badger().Load(&backup, 16)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	return cdb, nil
+	return clonedBadger, nil
 }

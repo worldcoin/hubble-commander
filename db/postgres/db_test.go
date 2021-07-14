@@ -6,8 +6,6 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -49,7 +47,7 @@ func (s *DBTestSuite) TestMigrations() {
 
 	s.NoError(migrator.Up())
 
-	s.checkBatch(s.db, 0)
+	checkBatch(s.T(), s.db, 0)
 
 	s.NoError(migrator.Down())
 
@@ -59,6 +57,8 @@ func (s *DBTestSuite) TestMigrations() {
 	).Into(&res)
 	s.Error(err)
 }
+
+/*
 
 func (s *DBTestSuite) TestClone() {
 	migrator, err := GetMigrator(s.config)
@@ -104,6 +104,8 @@ func (s *DBTestSuite) addBatch() {
 	_, err = s.db.Exec(query, args...)
 	s.NoError(err)
 }
+
+*/
 
 func TestDbTestSuite(t *testing.T) {
 	suite.Run(t, new(DBTestSuite))

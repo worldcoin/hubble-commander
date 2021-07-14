@@ -63,3 +63,9 @@ type EthereumConfig struct {
 	PrivateKey string
 	ChainID    string
 }
+
+type CloneConfig struct {
+	BadgerConfig
+	PostgresConfig
+	PostgresSourceDB string
+}

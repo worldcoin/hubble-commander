@@ -2,9 +2,13 @@ package storage
 
 import (
 	"errors"
+	"path"
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -158,6 +162,52 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 	res, err = s.storage.GetStateLeaf(leafTwo.StateID)
 	s.NoError(err)
 	s.Equal(leafTwo, res)
+}
+
+func (s *StorageTestSuite) TestClone() {
+	testConfig := config.GetTestConfig()
+	clonePostgresConfig := *testConfig.Postgres
+	clonePostgresConfig.Name += "_cloned"
+	cloneConfig := &config.CloneConfig{
+		BadgerConfig: config.BadgerConfig{
+			Path: path.Join(testConfig.Badger.Path, "cloned"),
+		},
+		PostgresConfig:   clonePostgresConfig,
+		PostgresSourceDB: testConfig.Postgres.Name,
+	}
+
+	batch := models.Batch{
+		ID:              models.MakeUint256(1),
+		Type:            txtype.Transfer,
+		TransactionHash: utils.RandomHash(),
+	}
+	err := s.storage.AddBatch(&batch)
+	s.NoError(err)
+
+	stateNode := models.StateNode{
+		MerklePath: models.MakeMerklePathFromStateID(1),
+		DataHash:   utils.RandomHash(),
+	}
+	err = s.storage.AddStateNode(&stateNode)
+	s.NoError(err)
+
+	clonedStorage, err := s.storage.Clone(cloneConfig)
+	s.NoError(err)
+
+	x, err := s.storage.GetBatch(batch.ID)
+	s.NoError(err)
+	s.Equal(batch, *x)
+
+	clonedBatch, err := clonedStorage.GetBatch(batch.ID)
+	s.NoError(err)
+	s.Equal(batch, *clonedBatch)
+
+	clonedStateNode, err := clonedStorage.GetStateNodeByPath(&stateNode.MerklePath)
+	s.NoError(err)
+	s.Equal(stateNode, *clonedStateNode)
+
+	err = clonedStorage.Teardown()
+	s.NoError(err)
 }
 
 func TestStorageTestSuite(t *testing.T) {

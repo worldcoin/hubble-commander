@@ -131,6 +131,35 @@ func (s *Storage) Prune(migrator *migrate.Migrate) error {
 	return s.Badger.Prune()
 }
 
+func (s *Storage) Clone(cfg *config.CloneConfig) (*TestStorage, error) {
+	newPostgres, err := s.Postgres.Clone(&cfg.PostgresConfig, cfg.PostgresSourceDB)
+	if err != nil {
+		return nil, err
+	}
+	newBadger, err := s.Badger.Clone(&cfg.BadgerConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	storage := *s
+	storage.Postgres = newPostgres
+	storage.Badger = newBadger
+
+	testStorage := &TestStorage{
+		Storage: &storage,
+		Teardown: func() error {
+			err := newPostgres.Close()
+			if err != nil {
+				return err
+			}
+
+			return newBadger.Close()
+		},
+	}
+
+	return testStorage, nil
+}
+
 func getQueryBuilder() squirrel.StatementBuilderType {
 	return squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 }
