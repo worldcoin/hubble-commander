@@ -113,7 +113,7 @@ func targetCommitmentInclusionProof(
 	}, nil
 }
 
-func (t *TransactionExecutor) disputeTransition(
+func (t *TransactionExecutor) DisputeTransition(
 	batch *eth.DecodedBatch,
 	commitmentIndex int,
 	merkleProofs []models.StateMerkleProof,
