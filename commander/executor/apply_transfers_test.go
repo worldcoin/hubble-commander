@@ -165,7 +165,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_AppliesFee() {
 	_, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
-	feeReceiverState, err := s.transactionExecutor.Storage.GetStateLeaf(s.feeReceiver.StateID)
+	feeReceiverState, err := s.transactionExecutor.storage.GetStateLeaf(s.feeReceiver.StateID)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }
@@ -196,7 +196,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AppliesFee() {
 	_, err := s.transactionExecutor.ApplyTransfersForSync(generatedTransfers, s.feeReceiver)
 	s.NoError(err)
 
-	feeReceiverState, err := s.transactionExecutor.Storage.GetStateLeaf(s.feeReceiver.StateID)
+	feeReceiverState, err := s.transactionExecutor.storage.GetStateLeaf(s.feeReceiver.StateID)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }

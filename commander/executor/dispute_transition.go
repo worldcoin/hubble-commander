@@ -33,12 +33,12 @@ func (t *TransactionExecutor) previousCommitmentInclusionProof(
 func (t *TransactionExecutor) previousBatchCommitmentInclusionProof(
 	currentBatchID models.Uint256,
 ) (*models.CommitmentInclusionProof, error) {
-	previousBatch, err := t.Storage.GetBatch(*currentBatchID.SubN(1))
+	previousBatch, err := t.storage.GetBatch(*currentBatchID.SubN(1))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	commitments, err := t.Storage.GetCommitmentsByBatchID(previousBatch.ID)
+	commitments, err := t.storage.GetCommitmentsByBatchID(previousBatch.ID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

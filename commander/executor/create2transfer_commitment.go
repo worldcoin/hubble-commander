@@ -62,10 +62,10 @@ func (t *TransactionExecutor) markCreate2TransfersAsIncluded(transfers []models.
 	for i := range transfers {
 		hashes = append(hashes, transfers[i].Hash)
 
-		err := t.Storage.SetCreate2TransferToStateID(transfers[i].Hash, *transfers[i].ToStateID)
+		err := t.storage.SetCreate2TransferToStateID(transfers[i].Hash, *transfers[i].ToStateID)
 		if err != nil {
 			return err
 		}
 	}
-	return t.Storage.BatchMarkTransactionAsIncluded(hashes, &commitmentID)
+	return t.storage.BatchMarkTransactionAsIncluded(hashes, &commitmentID)
 }

@@ -6,14 +6,14 @@ import (
 )
 
 func (t *TransactionExecutor) ApplyFee(feeReceiverStateID uint32, fee models.Uint256) error {
-	feeReceiver, err := t.Storage.GetStateLeaf(feeReceiverStateID)
+	feeReceiver, err := t.storage.GetStateLeaf(feeReceiverStateID)
 	if err != nil {
 		return err
 	}
 
 	feeReceiver.Balance = *feeReceiver.Balance.Add(&fee)
 
-	stateTree := st.NewStateTree(t.Storage)
+	stateTree := st.NewStateTree(t.storage)
 	_, err = stateTree.Set(feeReceiver.StateID, &feeReceiver.UserState)
 	return err
 }

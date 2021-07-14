@@ -7,7 +7,7 @@ import (
 )
 
 func (t *TransactionExecutor) verifyTransferSignature(commitment *encoder.DecodedCommitment, transfers []models.Transfer) error {
-	domain, err := t.Storage.GetDomain(t.client.ChainState.ChainID)
+	domain, err := t.storage.GetDomain(t.client.ChainState.ChainID)
 	if err != nil {
 		return err
 	}
@@ -15,7 +15,7 @@ func (t *TransactionExecutor) verifyTransferSignature(commitment *encoder.Decode
 	messages := make([][]byte, len(transfers))
 	publicKeys := make([]*models.PublicKey, len(transfers))
 	for i := range transfers {
-		publicKeys[i], err = t.Storage.GetPublicKeyByStateID(transfers[i].FromStateID)
+		publicKeys[i], err = t.storage.GetPublicKeyByStateID(transfers[i].FromStateID)
 		if err != nil {
 			return err
 		}
@@ -31,7 +31,7 @@ func (t *TransactionExecutor) verifyCreate2TransferSignature(
 	commitment *encoder.DecodedCommitment,
 	transfers []models.Create2Transfer,
 ) error {
-	domain, err := t.Storage.GetDomain(t.client.ChainState.ChainID)
+	domain, err := t.storage.GetDomain(t.client.ChainState.ChainID)
 	if err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func (t *TransactionExecutor) verifyCreate2TransferSignature(
 	messages := make([][]byte, len(transfers))
 	publicKeys := make([]*models.PublicKey, len(transfers))
 	for i := range transfers {
-		publicKeys[i], err = t.Storage.GetPublicKeyByStateID(transfers[i].FromStateID)
+		publicKeys[i], err = t.storage.GetPublicKeyByStateID(transfers[i].FromStateID)
 		if err != nil {
 			return err
 		}

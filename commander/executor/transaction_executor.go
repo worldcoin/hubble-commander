@@ -12,7 +12,7 @@ import (
 // TransactionExecutor executes transactions & syncs batches. Manages a database transaction.
 type TransactionExecutor struct {
 	cfg         *config.RollupConfig
-	Storage     *st.Storage
+	storage     *st.Storage
 	initStorage *st.Storage
 	stateTree   *st.StateTree
 	tx          *db.TxController
@@ -34,7 +34,7 @@ func NewTransactionExecutor(
 
 	return &TransactionExecutor{
 		cfg:         cfg,
-		Storage:     txStorage,
+		storage:     txStorage,
 		initStorage: storage,
 		stateTree:   st.NewStateTree(txStorage),
 		tx:          tx,
@@ -52,7 +52,7 @@ func NewTestTransactionExecutor(
 ) *TransactionExecutor {
 	return &TransactionExecutor{
 		cfg:         cfg,
-		Storage:     storage,
+		storage:     storage,
 		initStorage: storage,
 		stateTree:   st.NewStateTree(storage),
 		tx:          nil,
@@ -75,7 +75,7 @@ func (t *TransactionExecutor) RestartTransaction() error {
 	if err != nil {
 		return err
 	}
-	t.Storage = txStorage
+	t.storage = txStorage
 	t.tx = tx
 	t.stateTree = st.NewStateTree(txStorage)
 	return nil

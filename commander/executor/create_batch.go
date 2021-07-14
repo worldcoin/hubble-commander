@@ -44,12 +44,12 @@ func (t *TransactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionT
 }
 
 func (t *TransactionExecutor) NewPendingBatch(batchType txtype.TransactionType) (*models.Batch, error) {
-	stateTree := st.NewStateTree(t.Storage)
+	stateTree := st.NewStateTree(t.storage)
 	prevStateRoot, err := stateTree.Root()
 	if err != nil {
 		return nil, err
 	}
-	batchID, err := t.Storage.GetNextBatchID()
+	batchID, err := t.storage.GetNextBatchID()
 	if err != nil {
 		return nil, err
 	}

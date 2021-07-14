@@ -49,7 +49,7 @@ func (t *TransactionExecutor) syncTransferCommitment(
 }
 
 func (t *TransactionExecutor) getSyncedCommitmentFeeReceiver(commitment *encoder.DecodedCommitment) (*FeeReceiver, error) {
-	feeReceiverState, err := t.Storage.GetStateLeaf(commitment.FeeReceiver)
+	feeReceiverState, err := t.storage.GetStateLeaf(commitment.FeeReceiver)
 	if err != nil {
 		return nil, err
 	}

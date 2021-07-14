@@ -138,7 +138,7 @@ func (t *TransactionExecutor) refillPendingC2Ts(pendingTransfers []models.Create
 }
 
 func (t *TransactionExecutor) queryPendingC2Ts() ([]models.Create2Transfer, error) {
-	pendingTransfers, err := t.Storage.GetPendingCreate2Transfers(t.cfg.MaxCommitmentsPerBatch * t.cfg.MaxTxsPerCommitment)
+	pendingTransfers, err := t.storage.GetPendingCreate2Transfers(t.cfg.MaxCommitmentsPerBatch * t.cfg.MaxTxsPerCommitment)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func (t *TransactionExecutor) queryPendingC2Ts() ([]models.Create2Transfer, erro
 func (t *TransactionExecutor) queryMorePendingC2Ts(appliedTransfers []models.Create2Transfer) ([]models.Create2Transfer, error) {
 	numAppliedTransfers := uint32(len(appliedTransfers))
 	// TODO use SQL Offset instead
-	pendingTransfers, err := t.Storage.GetPendingCreate2Transfers(
+	pendingTransfers, err := t.storage.GetPendingCreate2Transfers(
 		t.cfg.MaxCommitmentsPerBatch*t.cfg.MaxTxsPerCommitment + numAppliedTransfers,
 	)
 	if err != nil {

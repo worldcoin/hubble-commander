@@ -9,7 +9,7 @@ func (t *TransactionExecutor) ApplyCreate2Transfer(
 	pubKeyID uint32,
 	commitmentTokenID models.Uint256,
 ) (appliedTransfer *models.Create2Transfer, transferError, appError error) {
-	nextAvailableStateID, appError := t.Storage.GetNextAvailableStateID()
+	nextAvailableStateID, appError := t.storage.GetNextAvailableStateID()
 	if appError != nil {
 		return appliedTransfer, nil, appError
 	}
