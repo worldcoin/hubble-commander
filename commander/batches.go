@@ -57,12 +57,12 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 }
 
 func (c *Commander) syncRemoteBatch(remoteBatch *eth.DecodedBatch) (err error) {
-	var rcError *executor.BatchRaceConditionError
+	var icError *executor.InconsistentBatchError
 	var dcError *executor.DisputableCommitmentError
 
 	err = c.syncBatch(remoteBatch)
-	if errors.As(err, &rcError) {
-		return c.replaceBatch(rcError.LocalBatch, remoteBatch)
+	if errors.As(err, &icError) {
+		return c.replaceBatch(icError.LocalBatch, remoteBatch)
 	}
 	if errors.As(err, &dcError) {
 		return c.disputeFraudulentBatch(remoteBatch, dcError.CommitmentIndex, dcError.Proofs)

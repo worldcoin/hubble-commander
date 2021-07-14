@@ -44,14 +44,14 @@ func NewDisputableCommitmentError(err DisputableTransferError, commitmentIndex i
 	return &DisputableCommitmentError{DisputableTransferError: err, CommitmentIndex: commitmentIndex}
 }
 
-type BatchRaceConditionError struct {
+type InconsistentBatchError struct {
 	LocalBatch *models.Batch
 }
 
-func NewBatchRaceConditionError(localBatch *models.Batch) *BatchRaceConditionError {
-	return &BatchRaceConditionError{LocalBatch: localBatch}
+func NewInconsistentBatchError(localBatch *models.Batch) *InconsistentBatchError {
+	return &InconsistentBatchError{LocalBatch: localBatch}
 }
 
-func (e BatchRaceConditionError) Error() string {
+func (e InconsistentBatchError) Error() string {
 	return fmt.Sprintf("local batch #%s inconsistent with remote batch", e.LocalBatch.ID.String())
 }
