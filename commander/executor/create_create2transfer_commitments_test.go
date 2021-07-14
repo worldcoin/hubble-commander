@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -100,7 +101,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	transfers := generateValidCreate2Transfers(6)
 	s.invalidateCreate2Transfers(transfers[3:6])
 
-	highNonceTransfer := createC2T(123, nil, 10, 1, &models.PublicKey{5, 4, 3, 2, 1})
+	highNonceTransfer := testutils.MakeCreate2Transfer(123, nil, 10, 1, &models.PublicKey{5, 4, 3, 2, 1})
 	transfers = append(transfers, highNonceTransfer)
 
 	s.addCreate2Transfers(transfers)
@@ -136,8 +137,8 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.invalidateCreate2Transfers(transfers[7:9])
 
 	highNonceTransfers := []models.Create2Transfer{
-		createC2T(123, nil, 10, 1, &models.PublicKey{5, 4, 3, 2, 1}),
-		createC2T(123, nil, 11, 1, &models.PublicKey{5, 4, 3, 2, 1}),
+		testutils.MakeCreate2Transfer(123, nil, 10, 1, &models.PublicKey{5, 4, 3, 2, 1}),
+		testutils.MakeCreate2Transfer(123, nil, 11, 1, &models.PublicKey{5, 4, 3, 2, 1}),
 	}
 
 	transfers = append(transfers, highNonceTransfers...)

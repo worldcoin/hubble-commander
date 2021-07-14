@@ -47,6 +47,7 @@ func (s *BatchesTestSuite) SetupTest() {
 	s.teardown = testStorage.Teardown
 	s.testClient, err = eth.NewConfiguredTestClient(rollup.DeploymentConfig{
 		Params: rollup.Params{
+			// TODO-MIN add MinTxsPerCommitment to the client
 			MaxTxsPerCommit: models.NewUint256(1),
 		},
 	})

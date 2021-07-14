@@ -10,6 +10,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -130,7 +131,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_QueriesForM
 	transfers := generateValidTransfers(6)
 	s.invalidateTransfers(transfers[3:6])
 
-	highNonceTransfer := createTransfer(123, 1, 10, 1)
+	highNonceTransfer := testutils.MakeTransfer(123, 1, 10, 1)
 	transfers = append(transfers, highNonceTransfer)
 
 	s.addTransfers(transfers)
@@ -165,8 +166,8 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_ForMultiple
 	s.invalidateTransfers(transfers[7:9])
 
 	highNonceTransfers := []models.Transfer{
-		createTransfer(123, 1, 10, 1),
-		createTransfer(123, 1, 11, 1),
+		testutils.MakeTransfer(123, 1, 10, 1),
+		testutils.MakeTransfer(123, 1, 11, 1),
 	}
 
 	transfers = append(transfers, highNonceTransfers...)
