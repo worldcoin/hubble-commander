@@ -81,12 +81,13 @@ func (s *Create2TransferTestSuite) TestAddCreate2Transfer_SetsReceiveTime() {
 	s.LessOrEqual(res.ReceiveTime.Unix(), time.Now().Unix())
 }
 
-func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchHash() {
+func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchDetails() {
 	batch := &models.Batch{
 		ID:              models.MakeUint256(1),
 		Type:            txtype.Create2Transfer,
 		TransactionHash: utils.RandomHash(),
 		Hash:            utils.NewRandomHash(),
+		SubmissionTime:  &models.Timestamp{Time: time.Unix(170, 0).UTC()},
 	}
 	err := s.storage.AddBatch(batch)
 	s.NoError(err)
@@ -102,23 +103,24 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchHash() {
 	s.NoError(err)
 	transferInBatch.ReceiveTime = receiveTime
 
-	expected := models.Create2TransferWithBatchHash{
+	expected := models.Create2TransferWithBatchDetails{
 		Create2Transfer: transferInBatch,
 		BatchHash:       batch.Hash,
+		BatchTime:       batch.SubmissionTime,
 	}
-	res, err := s.storage.GetCreate2TransferWithBatchHash(transferInBatch.Hash)
+	res, err := s.storage.GetCreate2TransferWithBatchDetails(transferInBatch.Hash)
 	s.NoError(err)
 	s.Equal(expected, *res)
 }
 
-func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchHash_WithoutBatch() {
+func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchDetails_WithoutBatch() {
 	receiveTime, err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
 
-	expected := models.Create2TransferWithBatchHash{Create2Transfer: create2Transfer}
+	expected := models.Create2TransferWithBatchDetails{Create2Transfer: create2Transfer}
 	expected.ReceiveTime = receiveTime
 
-	res, err := s.storage.GetCreate2TransferWithBatchHash(create2Transfer.Hash)
+	res, err := s.storage.GetCreate2TransferWithBatchDetails(create2Transfer.Hash)
 	s.NoError(err)
 	s.Equal(expected, *res)
 }

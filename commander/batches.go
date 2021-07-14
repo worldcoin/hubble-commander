@@ -2,6 +2,7 @@ package commander
 
 import (
 	"context"
+	"errors"
 
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -56,6 +57,20 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 }
 
 func (c *Commander) syncRemoteBatch(remoteBatch *eth.DecodedBatch) (err error) {
+	var rcError *executor.BatchRaceConditionError
+	var dcError *executor.DisputableCommitmentError
+
+	err = c.syncBatch(remoteBatch)
+	if errors.As(err, &rcError) {
+		return c.replaceBatch(rcError.LocalBatch, remoteBatch)
+	}
+	if errors.As(err, &dcError) {
+		return c.disputeFraudulentBatch(remoteBatch, dcError.CommitmentIndex, dcError.Proofs)
+	}
+	return err
+}
+
+func (c *Commander) syncBatch(remoteBatch *eth.DecodedBatch) error {
 	txExecutor, err := executor.NewTransactionExecutor(c.storage, c.client, c.cfg.Rollup, context.Background())
 	if err != nil {
 		return err
@@ -63,6 +78,50 @@ func (c *Commander) syncRemoteBatch(remoteBatch *eth.DecodedBatch) (err error) {
 	defer txExecutor.Rollback(&err)
 
 	err = txExecutor.SyncBatch(remoteBatch)
+	if err != nil {
+		return err
+	}
+	return txExecutor.Commit()
+}
+
+func (c *Commander) replaceBatch(localBatch *models.Batch, remoteBatch *eth.DecodedBatch) error {
+	log.WithFields(log.Fields{"batchID": localBatch.ID.String()}).
+		Debug("Local batch inconsistent with remote batch, reverting local batch(es)")
+
+	err := c.revertBatches(localBatch)
+	if err != nil {
+		return err
+	}
+	return c.syncRemoteBatch(remoteBatch)
+}
+
+func (c *Commander) disputeFraudulentBatch(
+	remoteBatch *eth.DecodedBatch,
+	commitmentIndex int,
+	proofs []models.StateMerkleProof,
+) error {
+	// TODO transaction executor may not be needed here. Revisit this when extracting disputer package.
+	txExecutor, err := executor.NewTransactionExecutor(c.storage, c.client, c.cfg.Rollup, context.Background())
+	if err != nil {
+		return err
+	}
+	defer txExecutor.Rollback(&err)
+
+	err = txExecutor.DisputeTransition(remoteBatch, commitmentIndex, proofs)
+	if err != nil {
+		return err
+	}
+	return txExecutor.Commit()
+}
+
+func (c *Commander) revertBatches(startBatch *models.Batch) error {
+	txExecutor, err := executor.NewTransactionExecutor(c.storage, c.client, c.cfg.Rollup, context.Background())
+	if err != nil {
+		return err
+	}
+	defer txExecutor.Rollback(&err)
+
+	err = txExecutor.RevertBatches(startBatch)
 	if err != nil {
 		return err
 	}

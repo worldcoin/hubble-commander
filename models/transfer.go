@@ -15,9 +15,10 @@ type TransferForCommitment struct {
 	ToStateID uint32 `db:"to_state_id"`
 }
 
-type TransferWithBatchHash struct {
+type TransferWithBatchDetails struct {
 	Transfer
 	BatchHash *common.Hash `db:"batch_hash"`
+	BatchTime *Timestamp   `db:"submission_time"`
 }
 
 func (t *Transfer) Type() txtype.TransactionType {
