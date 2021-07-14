@@ -56,14 +56,20 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 	return nil
 }
 
-func (c *Commander) syncRemoteBatch(remoteBatch *eth.DecodedBatch) (err error) {
-	var rcError *executor.BatchRaceConditionError
+func (c *Commander) syncRemoteBatch(remoteBatch *eth.DecodedBatch) error {
+	var icError *executor.InconsistentBatchError
+
+	err := c.syncOrDisputeRemoteBatch(remoteBatch)
+	if errors.As(err, &icError) {
+		return c.replaceBatch(icError.LocalBatch, remoteBatch)
+	}
+	return err
+}
+
+func (c *Commander) syncOrDisputeRemoteBatch(remoteBatch *eth.DecodedBatch) error {
 	var dcError *executor.DisputableCommitmentError
 
-	err = c.syncBatch(remoteBatch)
-	if errors.As(err, &rcError) {
-		return c.replaceBatch(rcError.LocalBatch, remoteBatch)
-	}
+	err := c.syncBatch(remoteBatch)
 	if errors.As(err, &dcError) {
 		return c.disputeFraudulentBatch(remoteBatch, dcError.CommitmentIndex, dcError.Proofs)
 	}
@@ -92,7 +98,7 @@ func (c *Commander) replaceBatch(localBatch *models.Batch, remoteBatch *eth.Deco
 	if err != nil {
 		return err
 	}
-	return c.syncRemoteBatch(remoteBatch)
+	return c.syncOrDisputeRemoteBatch(remoteBatch)
 }
 
 func (c *Commander) disputeFraudulentBatch(
