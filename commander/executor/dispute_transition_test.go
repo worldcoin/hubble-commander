@@ -374,7 +374,7 @@ func (s *DisputeTransitionTestSuite) getC2TStateMerkleProofs(
 
 func (s *DisputeTransitionTestSuite) createAndSubmitInvalidTransferBatch(txs [][]models.Transfer, invalidTxHash common.Hash) *models.Batch {
 	for i := range txs {
-		err := s.storage.BatchAddTransfer(txs[i])
+		err := s.transactionExecutor.storage.BatchAddTransfer(txs[i])
 		s.NoError(err)
 	}
 
@@ -397,7 +397,7 @@ func (s *DisputeTransitionTestSuite) createAndSubmitInvalidC2TBatch(
 	invalidTxHash common.Hash,
 ) *models.Batch {
 	for i := range txs {
-		err := s.storage.BatchAddCreate2Transfer(txs[i])
+		err := s.transactionExecutor.storage.BatchAddCreate2Transfer(txs[i])
 		s.NoError(err)
 	}
 
