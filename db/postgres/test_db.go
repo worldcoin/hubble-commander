@@ -29,10 +29,7 @@ func NewTestDB() (*TestDB, error) {
 	if err != nil {
 		return nil, err
 	}
-	return newConfiguredTestDB(cfg, migrator)
-}
 
-func newConfiguredTestDB(cfg *config.PostgresConfig, migrator *migrate.Migrate) (*TestDB, error) {
 	dbInstance, err := NewDatabase(cfg)
 	if err != nil {
 		return nil, err
