@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
@@ -36,11 +37,7 @@ func TestCommanderDispute(t *testing.T) {
 
 	senderWallet := wallets[1]
 
-	firstTransferHash := testSendTransfer(t, cmd.Client(), senderWallet, models.NewUint256(0))
-	testGetTransaction(t, cmd.Client(), firstTransferHash)
-	send31MoreTransfers(t, cmd.Client(), senderWallet)
-
-	waitForTxToBeIncludedInBatch(t, cmd.Client(), firstTransferHash)
+	testSendBatch(t, cmd.Client(), senderWallet, 0)
 
 	ethClient := newEthClient(t, cmd.Client())
 
@@ -53,6 +50,16 @@ func TestCommanderDispute(t *testing.T) {
 	waitForRollbackToFinish(t, sink, subscription)
 
 	testBatchesAfterDispute(t, cmd.Client())
+
+	testSendBatch(t, cmd.Client(), senderWallet, 32)
+}
+
+func testSendBatch(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, startNonce uint64) {
+	firstTransferHash := testSendTransfer(t, client, senderWallet, models.NewUint256(startNonce))
+	testGetTransaction(t, client, firstTransferHash)
+	send31MoreTransfers(t, client, senderWallet, startNonce+1)
+
+	waitForTxToBeIncludedInBatch(t, client, firstTransferHash)
 }
 
 func waitForRollbackToFinish(
