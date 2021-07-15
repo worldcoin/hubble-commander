@@ -134,6 +134,11 @@ func (d *Database) Clone(cfg *config.PostgresConfig, templateName string) (clone
 		return nil, errors.WithStack(err)
 	}
 
+	err = disconnectUsers(database, cfg.Name)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
 	clonedDB, err = cloneDatabase(database, cfg, templateName)
 	if err != nil {
 		return nil, err

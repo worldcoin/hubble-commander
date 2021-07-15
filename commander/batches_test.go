@@ -74,15 +74,13 @@ func (s *BatchesTestSuite) TearDownTest() {
 func (s *BatchesTestSuite) TestUnsafeSyncBatches_DoesNotSyncExistingBatchTwice() {
 	tx := testutils.MakeTransfer(0, 1, 0, 400)
 	signTransfer(s.T(), &s.wallets[tx.FromStateID], &tx)
-	createAndSubmitTransferBatch(s.T(), s.cmd, &tx)
-	s.testClient.Commit()
+	createAndSubmitTransferBatch(s.Assertions, s.cfg, s.testStorage, s.testClient, &tx)
 
 	s.syncAllBlocks()
 
 	tx2 := testutils.MakeTransfer(1, 0, 0, 100)
 	signTransfer(s.T(), &s.wallets[tx2.FromStateID], &tx2)
-	createAndSubmitTransferBatch(s.T(), s.cmd, &tx2)
-	s.testClient.Commit()
+	createAndSubmitTransferBatch(s.Assertions, s.cfg, s.testStorage, s.testClient, &tx2)
 
 	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
