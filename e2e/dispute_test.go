@@ -2,9 +2,8 @@ package e2e
 
 import (
 	"testing"
+	"time"
 
-	"github.com/Worldcoin/hubble-commander/api"
-	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
@@ -14,8 +13,10 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/event"
 	"github.com/stretchr/testify/require"
 	"github.com/ybbus/jsonrpc/v2"
 )
@@ -41,32 +42,51 @@ func TestCommanderDispute(t *testing.T) {
 
 	waitForTxToBeIncludedInBatch(t, cmd.Client(), firstTransferHash)
 
-	sendInvalidTransfer(t, cmd.Client(), senderWallet, models.NewUint256(32))
+	ethClient := newEthClient(t, cmd.Client())
+
+	sink := make(chan *rollup.RollupRollbackStatus)
+	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
+	require.NoError(t, err)
+	defer subscription.Unsubscribe()
+
+	sendInvalidBatch(t, ethClient)
+	waitForRollbackToFinish(t, sink, subscription)
+
+	testBatchesAfterDispute(t, cmd.Client())
 }
 
-func sendInvalidTransfer(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, nonce *models.Uint256) {
-	transferDTO, err := api.SignTransfer(&senderWallet, dto.Transfer{
-		FromStateID: ref.Uint32(1),
-		ToStateID:   ref.Uint32(2),
-		Amount:      models.NewUint256(2_000_000_000_000_000_000),
-		Fee:         models.NewUint256(10),
-		Nonce:       nonce,
-	})
-	require.NoError(t, err)
+func waitForRollbackToFinish(
+	t *testing.T,
+	sink chan *rollup.RollupRollbackStatus,
+	subscription event.Subscription,
+) {
+	require.Eventually(t, func() bool {
+		for {
+			select {
+			case err := <-subscription.Err():
+				require.NoError(t, err)
+				return false
+			case rollbackStatus := <-sink:
+				if rollbackStatus.Completed {
+					return true
+				}
+			}
+		}
+	}, 30*time.Second, testutils.TryInterval)
+}
 
+func sendInvalidBatch(t *testing.T, ethClient *eth.Client) {
 	transfer := models.Transfer{
 		TransactionBase: models.TransactionBase{
-			FromStateID: *transferDTO.FromStateID,
-			Amount:      *transferDTO.Amount,
-			Fee:         *transferDTO.Fee,
+			FromStateID: 1,
+			Amount:      models.MakeUint256(2_000_000_000_000_000_000),
+			Fee:         models.MakeUint256(10),
 		},
-		ToStateID: *transferDTO.ToStateID,
+		ToStateID: 2,
 	}
 
 	encodedTransfer, err := encoder.EncodeTransferForCommitment(&transfer)
 	require.NoError(t, err)
-
-	ethClient := newEthClient(t, client)
 
 	commitment := models.Commitment{
 		Transactions:      encodedTransfer,
@@ -82,6 +102,14 @@ func sendInvalidTransfer(t *testing.T, client jsonrpc.RPCClient, senderWallet bl
 
 	_, err = ethClient.GetBatch(models.NewUint256(2))
 	require.NoError(t, err)
+}
+
+func testBatchesAfterDispute(t *testing.T, client jsonrpc.RPCClient) {
+	var batches []dto.Batch
+	err := client.CallFor(&batches, "hubble_getBatches", []interface{}{nil, nil})
+
+	require.NoError(t, err)
+	require.Len(t, batches, 1)
 }
 
 func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
