@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/pkg/errors"
 
 	// Needed for migrator
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -115,63 +116,44 @@ func CreateDatasource(host, port, user, password, dbname *string) string {
 	return strings.Join(datasource, " ")
 }
 
-//func (d *Database) Clone(cfg *config.PostgresConfig, templateName string) (*Database, error) {
-//	err := d.Close()
-//	if err != nil {
-//		return nil, errors.WithStack(err)
-//	}
-//
-//	datasource := CreateDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, nil)
-//	database, err := sqlx.Connect("postgres", datasource)
-//	if err != nil {
-//		return nil, errors.WithStack(err)
-//	}
-//	defer func() {
-//		err = database.Close()
-//		if err != nil {
-//			panic(err)
-//		}
-//	}()
-//
-//	err = disconnectUsers(database, templateName)
-//	if err != nil {
-//		return nil, errors.WithStack(err)
-//	}
-//
-//	clonedDB, err := cloneDatabase(database, cfg, templateName)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	oldDatabase, err := NewDatabase(cfg)
-//	if err != nil {
-//		return nil, errors.WithStack(err)
-//	}
-//	*d = *oldDatabase
-//
-//	return clonedDB, nil
-//}
-//
-//func disconnectUsers(database DatabaseLike, dbName string) error {
-//	_, err := database.Exec(fmt.Sprintf(`
-//		SELECT pg_terminate_backend(pg_stat_activity.pid)
-//		FROM pg_stat_activity
-//		WHERE pg_stat_activity.datname = '%s' AND pid <> pg_backend_pid()`,
-//		dbName,
-//	))
-//	return err
-//}
-//
-//func cloneDatabase(database DatabaseLike, cfg *config.PostgresConfig, templateName string) (*Database, error) {
-//	_, err := database.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", cfg.Name))
-//	if err != nil {
-//		return nil, errors.WithStack(err)
-//	}
-//
-//	_, err = database.Exec(fmt.Sprintf("CREATE DATABASE %s WITH TEMPLATE %s OWNER %s", cfg.Name, templateName, *cfg.User))
-//	if err != nil {
-//		return nil, errors.WithStack(err)
-//	}
-//
-//	return NewDatabase(cfg)
-//}
+func (d *Database) Clone(cfg *config.PostgresConfig, templateName string) (clonedDB *Database, err error) {
+	err = d.Close()
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	datasource := CreateDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, nil)
+	database, err := sqlx.Connect("postgres", datasource)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	defer closeDB(database, &err)
+
+	err = disconnectUsers(database, templateName)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	clonedDB, err = cloneDatabase(database, cfg, templateName)
+	if err != nil {
+		return nil, err
+	}
+
+	err = d.replaceDatabase(cfg, templateName)
+	if err != nil {
+		return nil, err
+	}
+
+	return clonedDB, nil
+}
+
+func (d *Database) replaceDatabase(cfg *config.PostgresConfig, templateName string) error {
+	templateCfg := *cfg
+	templateCfg.Name = templateName
+	oldDatabase, err := NewDatabase(&templateCfg)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	*d = *oldDatabase
+	return nil
+}
