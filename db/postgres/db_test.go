@@ -58,54 +58,22 @@ func (s *DBTestSuite) TestMigrations() {
 	s.Error(err)
 }
 
-/*
-
 func (s *DBTestSuite) TestClone() {
 	migrator, err := GetMigrator(s.config)
 	s.NoError(err)
 
 	s.NoError(migrator.Up())
 
-	s.addBatch()
+	addBatch(s.T(), s.db)
 
 	cloneCfg := *s.config
 	cloneCfg.Name += "_clone"
 	clonedDB, err := s.db.Clone(&cloneCfg, s.config.Name)
 	s.NoError(err)
 
-	s.checkBatch(clonedDB, 1)
-	s.checkBatch(s.db, 1)
+	checkBatch(s.T(), clonedDB, 1)
+	checkBatch(s.T(), s.db, 1)
 }
-
-func (s *DBTestSuite) checkBatch(db *Database, expectedLength int) {
-	res := make([]models.Batch, 0, 1)
-	err := db.Query(
-		sq.Select("*").From("batch"),
-	).Into(&res)
-	s.NoError(err)
-	s.Len(res, expectedLength)
-}
-
-func (s *DBTestSuite) addBatch() {
-	qb := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-	batch := models.Batch{
-		ID:              models.MakeUint256(1),
-		Type:            txtype.Transfer,
-		TransactionHash: utils.RandomHash(),
-	}
-	query, args, err := qb.Insert("batch").
-		Values(
-			batch.ID,
-			batch.Type,
-			batch.TransactionHash,
-		).ToSql()
-	s.NoError(err)
-
-	_, err = s.db.Exec(query, args...)
-	s.NoError(err)
-}
-
-*/
 
 func TestDbTestSuite(t *testing.T) {
 	suite.Run(t, new(DBTestSuite))

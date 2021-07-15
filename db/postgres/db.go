@@ -139,7 +139,7 @@ func (d *Database) Clone(cfg *config.PostgresConfig, templateName string) (clone
 		return nil, err
 	}
 
-	err = d.replaceDatabase(cfg, templateName)
+	err = d.replaceDatabaseInstance(cfg, templateName)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +147,7 @@ func (d *Database) Clone(cfg *config.PostgresConfig, templateName string) (clone
 	return clonedDB, nil
 }
 
-func (d *Database) replaceDatabase(cfg *config.PostgresConfig, templateName string) error {
+func (d *Database) replaceDatabaseInstance(cfg *config.PostgresConfig, templateName string) error {
 	templateCfg := *cfg
 	templateCfg.Name = templateName
 	oldDatabase, err := NewDatabase(&templateCfg)
