@@ -45,3 +45,25 @@ func TestPrune(t *testing.T) {
 	err = bdg.DB.Get(testStruct.Name, &res)
 	require.Equal(t, bh.ErrNotFound, err)
 }
+
+func TestTestDB_Clone(t *testing.T) {
+	primary, err := NewTestDB()
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, primary.Teardown())
+	}()
+
+	err = primary.DB.Insert(testStruct.Name, testStruct)
+	require.NoError(t, err)
+
+	cloned, err := primary.Clone()
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, cloned.Teardown())
+	}()
+
+	var value someStruct
+	err = cloned.DB.Get(testStruct.Name, &value)
+	require.NoError(t, err)
+	require.Equal(t, testStruct, value)
+}
