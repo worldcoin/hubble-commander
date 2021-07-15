@@ -163,7 +163,13 @@ func (s *NewBlockLoopTestSuite) registerAccounts(accounts []models.Account) {
 	}
 }
 
-func createAndSubmitTransferBatch(s *require.Assertions, cfg *config.Config, storage *st.TestStorage, client *eth.TestClient, tx *models.Transfer) {
+func createAndSubmitTransferBatch(
+	s *require.Assertions,
+	cfg *config.Config,
+	storage *st.TestStorage,
+	client *eth.TestClient,
+	tx *models.Transfer,
+) {
 	clonedStorage, txExecutor := cloneStorage(s, cfg, storage, client.Client)
 	defer teardown(s, clonedStorage.Teardown)
 

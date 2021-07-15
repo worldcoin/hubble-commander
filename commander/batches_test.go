@@ -211,7 +211,11 @@ func (s *BatchesTestSuite) syncAllBlocks() {
 	s.NoError(err)
 }
 
-func (s *BatchesTestSuite) createAndSubmitTransferBatch(storage *st.Storage, txExecutor *executor.TransactionExecutor, tx *models.Transfer) *models.Batch {
+func (s *BatchesTestSuite) createAndSubmitTransferBatch(
+	storage *st.Storage,
+	txExecutor *executor.TransactionExecutor,
+	tx *models.Transfer,
+) *models.Batch {
 	_, err := storage.AddTransfer(tx)
 	s.NoError(err)
 
@@ -250,7 +254,11 @@ func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batc
 	return pendingBatch
 }
 
-func (s *BatchesTestSuite) createAndSubmitInvalidTransferBatch(storage *st.Storage, txExecutor *executor.TransactionExecutor, tx *models.Transfer) *models.Batch {
+func (s *BatchesTestSuite) createAndSubmitInvalidTransferBatch(
+	storage *st.Storage,
+	txExecutor *executor.TransactionExecutor,
+	tx *models.Transfer,
+) *models.Batch {
 	_, err := storage.AddTransfer(tx)
 	s.NoError(err)
 
@@ -289,7 +297,12 @@ func (s *BatchesTestSuite) checkBatchAfterDispute(batchID models.Uint256) {
 	s.True(st.IsNotFoundError(err))
 }
 
-func cloneStorage(s *require.Assertions, cfg *config.Config, storage *st.TestStorage, client *eth.Client) (*st.TestStorage, *executor.TransactionExecutor) {
+func cloneStorage(
+	s *require.Assertions,
+	cfg *config.Config,
+	storage *st.TestStorage,
+	client *eth.Client,
+) (*st.TestStorage, *executor.TransactionExecutor) {
 	postgresCfg := *cfg.Postgres
 	postgresCfg.Name += "_cloned"
 	cloneConfig := &config.CloneConfig{

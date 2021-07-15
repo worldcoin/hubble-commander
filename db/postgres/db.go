@@ -9,11 +9,11 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
-	"github.com/pkg/errors"
 
 	// Needed for migrator
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 )
 
 type DatabaseLike interface {
