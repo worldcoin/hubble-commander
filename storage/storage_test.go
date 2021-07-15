@@ -193,10 +193,10 @@ func (s *StorageTestSuite) TestClone() {
 
 	clonedStorage, err := s.storage.Clone(cloneConfig)
 	s.NoError(err)
-
-	x, err := s.storage.GetBatch(batch.ID)
-	s.NoError(err)
-	s.Equal(batch, *x)
+	defer func() {
+		err = clonedStorage.Teardown()
+		s.NoError(err)
+	}()
 
 	clonedBatch, err := clonedStorage.GetBatch(batch.ID)
 	s.NoError(err)
@@ -205,9 +205,6 @@ func (s *StorageTestSuite) TestClone() {
 	clonedStateNode, err := clonedStorage.GetStateNodeByPath(&stateNode.MerklePath)
 	s.NoError(err)
 	s.Equal(stateNode, *clonedStateNode)
-
-	err = clonedStorage.Teardown()
-	s.NoError(err)
 }
 
 func TestStorageTestSuite(t *testing.T) {

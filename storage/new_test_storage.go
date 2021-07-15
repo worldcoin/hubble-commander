@@ -114,7 +114,7 @@ func (s *TestStorage) Clone(cfg *config.CloneConfig) (*TestStorage, error) {
 			}
 			return clonedBadger.Teardown()
 		}
-		oldParentTeardown := teardown
+		oldParentTeardown := oldTeardown
 		oldTeardown = func() error {
 			if err := oldParentTeardown(); err != nil {
 				return err
