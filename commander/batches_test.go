@@ -25,9 +25,9 @@ type BatchesTestSuite struct {
 	suite.Suite
 	cmd                 *Commander
 	testClient          *eth.TestClient
+	testStorage         *st.TestStorage
 	transactionExecutor *executor.TransactionExecutor
 	cfg                 *config.Config
-	teardown            func() error
 	wallets             []bls.Wallet
 }
 
@@ -41,33 +41,33 @@ func (s *BatchesTestSuite) SetupSuite() {
 }
 
 func (s *BatchesTestSuite) SetupTest() {
-	testStorage, err := st.NewTestStorageWithBadger()
+	var err error
+	s.testStorage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.teardown = testStorage.Teardown
 	s.testClient, err = eth.NewConfiguredTestClient(rollup.DeploymentConfig{
 		Params: rollup.Params{
 			MaxTxsPerCommit: models.NewUint256(1),
 		},
 	})
 	s.NoError(err)
-	err = testStorage.SetChainState(&s.testClient.ChainState)
+	err = s.testStorage.SetChainState(&s.testClient.ChainState)
 	s.NoError(err)
 
 	s.cmd = NewCommander(s.cfg)
 	s.cmd.client = s.testClient.Client
-	s.cmd.storage = testStorage.Storage
+	s.cmd.storage = s.testStorage.Storage
 	s.cmd.stopChannel = make(chan bool)
 
-	s.transactionExecutor = executor.NewTestTransactionExecutor(testStorage.Storage, s.testClient.Client, s.cfg.Rollup, context.Background())
+	s.transactionExecutor = executor.NewTestTransactionExecutor(s.testStorage.Storage, s.testClient.Client, s.cfg.Rollup, context.Background())
 
 	s.wallets = generateWallets(s.T(), s.testClient.ChainState.Rollup, 2)
-	seedDB(s.T(), testStorage.Storage, st.NewStateTree(testStorage.Storage), s.wallets)
+	seedDB(s.T(), s.testStorage.Storage, st.NewStateTree(s.testStorage.Storage), s.wallets)
 }
 
 func (s *BatchesTestSuite) TearDownTest() {
 	stopCommander(s.cmd)
 	s.testClient.Close()
-	err := s.teardown()
+	err := s.testStorage.Teardown()
 	s.NoError(err)
 }
 
@@ -112,9 +112,8 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 		s.setTransferHashAndSign(&transfers[i])
 	}
 
-	s.runInTransaction(func() {
-		s.createAndSubmitTransferBatch(&transfers[0])
-	})
+	copiedStorage, txExecutor := copyStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
+	s.createAndSubmitTransferBatch(copiedStorage.Storage, txExecutor, &transfers[0])
 
 	s.createTransferBatch(&transfers[1])
 
@@ -131,7 +130,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 	s.Equal(batches[0].Batch, *batch)
 
 	expectedCommitment := models.Commitment{
-		ID:                3,
+		ID:                2,
 		Type:              txtype.Transfer,
 		Transactions:      batches[0].Commitments[0].Transactions,
 		FeeReceiver:       batches[0].Commitments[0].FeeReceiver,
@@ -139,7 +138,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 		PostStateRoot:     batches[0].Commitments[0].StateRoot,
 		IncludedInBatch:   &batch.ID,
 	}
-	commitment, err := s.cmd.storage.GetCommitment(3)
+	commitment, err := s.cmd.storage.GetCommitment(2)
 	s.NoError(err)
 	s.Equal(expectedCommitment, *commitment)
 
@@ -153,7 +152,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 
 func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentBatch() {
 	transfer := testutils.MakeTransfer(0, 1, 0, 50)
-	s.createAndSubmitTransferBatch(&transfer)
+	s.createAndSubmitTransferBatch(s.testStorage.Storage, s.transactionExecutor, &transfer)
 
 	s.runInTransaction(func() {
 		invalidTransfer := testutils.MakeTransfer(0, 1, 1, 100)
@@ -180,7 +179,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDisputesFr
 		testutils.MakeTransfer(0, 1, 1, 100),
 	}
 
-	s.createAndSubmitTransferBatch(&transfers[0])
+	s.createAndSubmitTransferBatch(s.testStorage.Storage, s.transactionExecutor, &transfers[0])
 	s.runInTransaction(func() {
 		s.createAndSubmitInvalidTransferBatch(&transfers[1])
 	})
@@ -211,18 +210,18 @@ func (s *BatchesTestSuite) syncAllBlocks() {
 	s.NoError(err)
 }
 
-func (s *BatchesTestSuite) createAndSubmitTransferBatch(tx *models.Transfer) *models.Batch {
-	_, err := s.cmd.storage.AddTransfer(tx)
+func (s *BatchesTestSuite) createAndSubmitTransferBatch(storage *st.Storage, txExecutor *executor.TransactionExecutor, tx *models.Transfer) *models.Batch {
+	_, err := storage.AddTransfer(tx)
 	s.NoError(err)
 
-	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
+	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
+	commitments, err := txExecutor.CreateTransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	err = s.transactionExecutor.SubmitBatch(pendingBatch, commitments)
+	err = txExecutor.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.testClient.Commit()
@@ -303,6 +302,22 @@ func (s *BatchesTestSuite) checkBatchAfterDispute(batchID models.Uint256) {
 	batch, err := s.cmd.storage.GetBatch(batchID)
 	s.Nil(batch)
 	s.True(st.IsNotFoundError(err))
+}
+
+func copyStorage(s *require.Assertions, cfg *config.Config, storage *st.TestStorage, client *eth.Client) (*st.TestStorage, *executor.TransactionExecutor) {
+	postgresCfg := *cfg.Postgres
+	postgresCfg.Name += "_cloned"
+	cloneConfig := &config.CloneConfig{
+		BadgerConfig:     *cfg.Badger,
+		PostgresConfig:   postgresCfg,
+		PostgresSourceDB: cfg.Postgres.Name,
+	}
+	clonedStorage, err := storage.Clone(cloneConfig)
+	s.NoError(err)
+
+	txExecutor := executor.NewTestTransactionExecutor(clonedStorage.Storage, client, cfg.Rollup, context.Background())
+
+	return clonedStorage, txExecutor
 }
 
 func TestBatchesTestSuite(t *testing.T) {
