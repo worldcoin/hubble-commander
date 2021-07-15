@@ -19,7 +19,7 @@ func TestTestDB_Clone(t *testing.T) {
 
 	cfg := config.GetTestConfig().Postgres
 	cloneCfg := *cfg
-	cloneCfg.Name += "_clone"
+	cloneCfg.Name += clonedDBSuffix
 	clonedDB, err := testDB.Clone(&cloneCfg, cfg.Name)
 	require.NoError(t, err)
 

@@ -45,7 +45,7 @@ func NewTestDB() (*TestDB, error) {
 
 func newTeardown(database *Database, migrator *migrate.Migrate) func() error {
 	return func() error {
-		err := migrator.Down() // nolint:govet
+		err := migrator.Down()
 		if err != nil {
 			return err
 		}
