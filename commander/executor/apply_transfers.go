@@ -29,7 +29,12 @@ func (t *TransactionExecutor) ApplyTransfers(
 		}
 
 		transfer := &transfers[i]
-		transferError, appError := t.ApplyTransfer(transfer, feeReceiver.TokenID)
+		receiverLeaf, err := t.storage.GetStateLeaf(transfer.ToStateID)
+		if err != nil {
+			return nil, err
+		}
+
+		transferError, appError := t.ApplyTransfer(transfer, receiverLeaf, feeReceiver.TokenID)
 		if appError != nil {
 			return nil, appError
 		}

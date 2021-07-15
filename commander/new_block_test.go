@@ -172,12 +172,13 @@ func createAndSubmitTransferBatch(t *testing.T, cmd *Commander, tx *models.Trans
 	transactionExecutor, err := executor.NewTransactionExecutor(cmd.storage, cmd.client, cmd.cfg.Rollup, context.Background())
 	require.NoError(t, err)
 
+	batch, err := transactionExecutor.NewPendingBatch(txtype.Transfer)
+	require.NoError(t, err)
+
 	commitments, err := transactionExecutor.CreateTransferCommitments(testDomain)
 	require.NoError(t, err)
 	require.Len(t, commitments, 1)
 
-	batch, err := transactionExecutor.NewPendingBatch(txtype.Transfer)
-	require.NoError(t, err)
 	err = transactionExecutor.SubmitBatch(batch, commitments)
 	require.NoError(t, err)
 
