@@ -2,6 +2,7 @@ package executor
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type AppliedTransfers struct {
@@ -58,7 +59,7 @@ func (t *TransactionExecutor) ApplyTransfers(
 	return returnStruct, nil
 }
 
-func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer, feeReceiver *FeeReceiver) (
+func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer, feeReceiver *FeeReceiver, commitmentStateRoot common.Hash) (
 	appliedTransfers []models.Transfer,
 	err error,
 ) {
@@ -97,5 +98,21 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 		}
 	}
 
+	err = t.verifyStateRoot(commitmentStateRoot, stateChangeProofs)
+	if err != nil {
+		return nil, err
+	}
+
 	return appliedTransfers, nil
+}
+
+func (t *TransactionExecutor) verifyStateRoot(commitmentPostState common.Hash, proofs []models.StateMerkleProof) error {
+	postStateRoot, err := t.stateTree.Root()
+	if err != nil {
+		return err
+	}
+	if *postStateRoot != commitmentPostState {
+		return NewDisputableTransferError(ErrInvalidCommitmentStateRoot, proofs)
+	}
+	return nil
 }

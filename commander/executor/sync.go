@@ -168,11 +168,6 @@ func (t *TransactionExecutor) syncCommitment(
 		return err
 	}
 
-	err = t.verifyStateRoot(commitment.StateRoot)
-	if err != nil {
-		return err
-	}
-
 	commitmentID, err := t.storage.AddCommitment(&models.Commitment{
 		Type:              batch.Type,
 		Transactions:      commitment.Transactions,
@@ -197,15 +192,4 @@ func (t *TransactionExecutor) syncCommitment(
 	}
 
 	return t.storage.BatchAddGenericTransaction(transactions)
-}
-
-func (t TransactionExecutor) verifyStateRoot(commitmentPostState common.Hash) error {
-	postStateRoot, err := t.stateTree.Root()
-	if err != nil {
-		return err
-	}
-	if *postStateRoot != commitmentPostState {
-		return ErrInvalidPostStateRoot
-	}
-	return nil
 }

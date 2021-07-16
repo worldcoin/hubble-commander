@@ -6,9 +6,8 @@ import (
 )
 
 var (
-	ErrInvalidDataLength    = NewDisputableTransferErrorWithoutProofs("invalid data length")
-	ErrTooManyTx            = NewDisputableTransferErrorWithoutProofs("too many transactions in a commitment")
-	ErrInvalidPostStateRoot = NewDisputableTransferErrorWithoutProofs("invalid post state root")
+	ErrInvalidDataLength = NewDisputableTransferErrorWithoutProofs("invalid data length")
+	ErrTooManyTx         = NewDisputableTransferErrorWithoutProofs("too many transactions in a commitment")
 )
 
 func (t *TransactionExecutor) syncTransferCommitment(
@@ -34,7 +33,7 @@ func (t *TransactionExecutor) syncTransferCommitment(
 		return nil, err
 	}
 
-	appliedTransfers, err := t.ApplyTransfersForSync(transfers, feeReceiver)
+	appliedTransfers, err := t.ApplyTransfersForSync(transfers, feeReceiver, commitment.StateRoot)
 	if err != nil {
 		return nil, err
 	}
