@@ -10,8 +10,6 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-//const clonedDBSuffix = "_clone"
-
 type DBTestSuite struct {
 	*require.Assertions
 	suite.Suite

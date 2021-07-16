@@ -2,7 +2,6 @@ package storage
 
 import (
 	"errors"
-	"path"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
@@ -165,16 +164,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 }
 
 func (s *StorageTestSuite) TestClone() {
-	testConfig := config.GetTestConfig()
-	clonePostgresConfig := *testConfig.Postgres
-	clonePostgresConfig.Name += "_cloned"
-	cloneConfig := &config.CloneConfig{
-		BadgerConfig: config.BadgerConfig{
-			Path: path.Join(testConfig.Badger.Path, "cloned"),
-		},
-		PostgresConfig:   clonePostgresConfig,
-		PostgresSourceDB: testConfig.Postgres.Name,
-	}
+	testConfig := config.GetTestConfig().Postgres
 
 	batch := models.Batch{
 		ID:              models.MakeUint256(1),
@@ -191,7 +181,7 @@ func (s *StorageTestSuite) TestClone() {
 	err = s.storage.AddStateNode(&stateNode)
 	s.NoError(err)
 
-	clonedStorage, err := s.storage.Clone(cloneConfig)
+	clonedStorage, err := s.storage.Clone(testConfig)
 	s.NoError(err)
 	defer func() {
 		err = clonedStorage.Teardown()

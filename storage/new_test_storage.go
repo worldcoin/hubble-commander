@@ -6,7 +6,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/db/postgres"
 )
 
-// TODO-CLONE NewTestStorage() -> Storage, TeardownFunc
 type TestStorage struct {
 	*Storage
 	Teardown func() error
@@ -71,14 +70,14 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 	}, nil
 }
 
-func (s *TestStorage) Clone(cfg *config.CloneConfig) (*TestStorage, error) {
+func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage, error) {
 	storage := *s.Storage
 	teardown := make([]TeardownFunc, 0, 2)
 	initialTeardown := make([]TeardownFunc, 0, 2)
 
 	if s.Postgres != nil {
 		testPostgres := postgres.TestDB{DB: s.Postgres}
-		clonedPostgres, err := testPostgres.Clone(&cfg.PostgresConfig, cfg.PostgresSourceDB)
+		clonedPostgres, err := testPostgres.Clone(currentConfig)
 		if err != nil {
 			return nil, err
 		}

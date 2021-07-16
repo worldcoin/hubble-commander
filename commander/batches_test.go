@@ -303,14 +303,7 @@ func cloneStorage(
 	storage *st.TestStorage,
 	client *eth.Client,
 ) (*st.TestStorage, *executor.TransactionExecutor) {
-	postgresCfg := *cfg.Postgres
-	postgresCfg.Name += "_cloned"
-	cloneConfig := &config.CloneConfig{
-		BadgerConfig:     *cfg.Badger,
-		PostgresConfig:   postgresCfg,
-		PostgresSourceDB: cfg.Postgres.Name,
-	}
-	clonedStorage, err := storage.Clone(cloneConfig)
+	clonedStorage, err := storage.Clone(cfg.Postgres)
 	s.NoError(err)
 
 	txExecutor := executor.NewTestTransactionExecutor(clonedStorage.Storage, client, cfg.Rollup, context.Background())
