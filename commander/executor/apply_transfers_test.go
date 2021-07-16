@@ -222,7 +222,9 @@ func calculateCommitmentStateRoot(
 	for i := range transfers {
 		synced, transferError, appError := txExecutor.ApplyTransferForSync(&transfers[i], feeReceiver.TokenID)
 		s.NoError(appError)
-		s.NoError(transferError)
+		if transferError != nil {
+			return utils.RandomHash()
+		}
 
 		combinedFee = *combinedFee.Add(&synced.Transfer.Fee)
 	}
