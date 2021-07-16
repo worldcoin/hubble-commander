@@ -31,27 +31,30 @@ func TestCommanderDispute(t *testing.T) {
 	}()
 
 	domain := getDomain(t, cmd.Client())
-
 	wallets, err := setup.CreateWallets(domain)
 	require.NoError(t, err)
 
 	senderWallet := wallets[1]
 
-	testSendBatch(t, cmd.Client(), senderWallet, 0)
-
 	ethClient := newEthClient(t, cmd.Client())
+
+	testDisputeTransitionTransfer(t, cmd.Client(), ethClient, senderWallet)
+}
+
+func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, senderWallet bls.Wallet) {
+	testSendBatch(t, client, senderWallet, 0)
 
 	sink := make(chan *rollup.RollupRollbackStatus)
 	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
 	require.NoError(t, err)
 	defer subscription.Unsubscribe()
 
-	sendInvalidBatch(t, ethClient)
-	waitForRollbackToFinish(t, sink, subscription)
+	sendInvalidTransferBatch(t, ethClient)
+	testRollbackCompletion(t, sink, subscription)
 
-	testBatchesAfterDispute(t, cmd.Client())
+	testBatchesAfterDispute(t, client)
 
-	testSendBatch(t, cmd.Client(), senderWallet, 32)
+	testSendBatch(t, client, senderWallet, 32)
 }
 
 func testSendBatch(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, startNonce uint64) {
@@ -62,7 +65,15 @@ func testSendBatch(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wall
 	waitForTxToBeIncludedInBatch(t, client, firstTransferHash)
 }
 
-func waitForRollbackToFinish(
+func testBatchesAfterDispute(t *testing.T, client jsonrpc.RPCClient) {
+	var batches []dto.Batch
+	err := client.CallFor(&batches, "hubble_getBatches", []interface{}{nil, nil})
+
+	require.NoError(t, err)
+	require.Len(t, batches, 1)
+}
+
+func testRollbackCompletion(
 	t *testing.T,
 	sink chan *rollup.RollupRollbackStatus,
 	subscription event.Subscription,
@@ -82,7 +93,7 @@ func waitForRollbackToFinish(
 	}, 30*time.Second, testutils.TryInterval)
 }
 
-func sendInvalidBatch(t *testing.T, ethClient *eth.Client) {
+func sendInvalidTransferBatch(t *testing.T, ethClient *eth.Client) {
 	transfer := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
@@ -109,14 +120,6 @@ func sendInvalidBatch(t *testing.T, ethClient *eth.Client) {
 
 	_, err = ethClient.GetBatch(models.NewUint256(2))
 	require.NoError(t, err)
-}
-
-func testBatchesAfterDispute(t *testing.T, client jsonrpc.RPCClient) {
-	var batches []dto.Batch
-	err := client.CallFor(&batches, "hubble_getBatches", []interface{}{nil, nil})
-
-	require.NoError(t, err)
-	require.Len(t, batches, 1)
 }
 
 func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
