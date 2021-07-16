@@ -45,7 +45,7 @@ func TestCommander(t *testing.T) {
 	testGetPublicKey(t, commander.Client(), &firstUserState, senderWallet)
 	firstTransferHash := testSendTransfer(t, commander.Client(), senderWallet, models.NewUint256(0))
 	testGetTransaction(t, commander.Client(), firstTransferHash)
-	send31MoreTransfers(t, commander.Client(), senderWallet)
+	send31MoreTransfers(t, commander.Client(), senderWallet, 1)
 
 	firstC2TWallet := wallets[len(wallets)-32]
 	firstCreate2TransferHash := testSendCreate2Transfer(t, commander.Client(), senderWallet, *firstC2TWallet.PublicKey())
@@ -134,8 +134,8 @@ func testGetTransaction(t *testing.T, client jsonrpc.RPCClient, txHash common.Ha
 	require.Equal(t, txstatus.Pending, txReceipt.Status)
 }
 
-func send31MoreTransfers(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet) {
-	for nonce := uint64(1); nonce < 32; nonce++ {
+func send31MoreTransfers(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, startNonce uint64) {
+	for nonce := startNonce; nonce < startNonce+31; nonce++ {
 		transfer, err := api.SignTransfer(&senderWallet, dto.Transfer{
 			FromStateID: ref.Uint32(1),
 			ToStateID:   ref.Uint32(2),
