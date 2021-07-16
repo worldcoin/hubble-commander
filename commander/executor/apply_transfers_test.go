@@ -10,6 +10,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -172,8 +173,9 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_AppliesFee() {
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AllValid() {
 	transfers := generateValidTransfers(3)
+	commitmentStateRoot := s.calculateCommitmentPostStateRoot(transfers, s.feeReceiver)
 
-	appliedTransfers, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver)
+	appliedTransfers, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver, commitmentStateRoot)
 	s.NoError(err)
 	s.Len(appliedTransfers, 3)
 }
@@ -182,7 +184,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_InvalidTransfer() {
 	transfers := generateValidTransfers(2)
 	transfers = append(transfers, generateInvalidTransfers(2)...)
 
-	appliedTransfers, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver)
+	appliedTransfers, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver, utils.RandomHash())
 	s.Nil(appliedTransfers)
 
 	var disputableTransferError *DisputableTransferError
@@ -192,8 +194,9 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_InvalidTransfer() {
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AppliesFee() {
 	generatedTransfers := generateValidTransfers(3)
+	commitmentStateRoot := s.calculateCommitmentPostStateRoot(generatedTransfers, s.feeReceiver)
 
-	_, err := s.transactionExecutor.ApplyTransfersForSync(generatedTransfers, s.feeReceiver)
+	_, err := s.transactionExecutor.ApplyTransfersForSync(generatedTransfers, s.feeReceiver, commitmentStateRoot)
 	s.NoError(err)
 
 	feeReceiverState, err := s.transactionExecutor.storage.GetStateLeaf(s.feeReceiver.StateID)

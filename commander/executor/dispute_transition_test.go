@@ -334,7 +334,8 @@ func (s *DisputeTransitionTestSuite) getTransferStateMerkleProofs(txs [][]models
 
 	var disputableTransferError *DisputableTransferError
 	for i := range txs {
-		_, err := s.transactionExecutor.ApplyTransfersForSync(txs[i], feeReceiver)
+		//TODO-COMM: replace with correct post state root
+		_, err := s.transactionExecutor.ApplyTransfersForSync(txs[i], feeReceiver, utils.RandomHash())
 		if err != nil {
 			s.ErrorAs(err, &disputableTransferError)
 			s.Len(disputableTransferError.Proofs, len(txs[i])*2)
