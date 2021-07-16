@@ -17,10 +17,7 @@ func TestTestDB_Clone(t *testing.T) {
 
 	addBatch(t, testDB.DB)
 
-	cfg := config.GetTestConfig().Postgres
-	cloneCfg := *cfg
-	cloneCfg.Name += clonedDBSuffix
-	clonedDB, err := testDB.Clone(&cloneCfg, cfg.Name)
+	clonedDB, err := testDB.Clone(config.GetTestConfig().Postgres)
 	require.NoError(t, err)
 
 	checkBatch(t, clonedDB.DB, 1)

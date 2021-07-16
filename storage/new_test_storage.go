@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/db/postgres"
 )
 
+// TODO-CLONE NewTestStorage() -> Storage, TeardownFunc
 type TestStorage struct {
 	*Storage
 	Teardown func() error

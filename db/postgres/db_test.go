@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-const clonedDBSuffix = "_clone"
+//const clonedDBSuffix = "_clone"
 
 type DBTestSuite struct {
 	*require.Assertions
@@ -68,9 +68,7 @@ func (s *DBTestSuite) TestClone() {
 
 	addBatch(s.T(), s.db)
 
-	cloneCfg := *s.config
-	cloneCfg.Name += clonedDBSuffix
-	clonedDB, err := s.db.Clone(&cloneCfg, s.config.Name)
+	clonedDB, err := s.db.Clone(s.config)
 	s.NoError(err)
 
 	checkBatch(s.T(), clonedDB, 1)

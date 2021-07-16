@@ -60,15 +60,16 @@ func newTeardown(database *Database, migrator *migrate.Migrate) func() error {
 	}
 }
 
-func (d *TestDB) Clone(cfg *config.PostgresConfig, templateName string) (testDB *TestDB, err error) {
-	clonedDB, err := d.DB.Clone(cfg, templateName)
+// TODO-CLONE do we really need this or can we only use Clone on the actual Database object
+func (d *TestDB) Clone(currentConfig *config.PostgresConfig) (testDB *TestDB, err error) {
+	clonedDB, err := d.DB.Clone(currentConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	templateCfg := *cfg
-	templateCfg.Name = templateName
-	migrator, err := GetMigrator(cfg)
+	clonedConfig := *currentConfig
+	clonedConfig.Name = currentConfig.Name + clonedDBSuffix
+	migrator, err := GetMigrator(&clonedConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -92,13 +93,13 @@ func disconnectUsers(database DatabaseLike, dbName string) error {
 	return err
 }
 
-func cloneDatabase(database DatabaseLike, cfg *config.PostgresConfig, templateName string) (*Database, error) {
-	_, err := database.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", cfg.Name))
+func cloneDatabase(database DatabaseLike, cfg *config.PostgresConfig, clonedDBName string) (*Database, error) {
+	_, err := database.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", clonedDBName))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	_, err = database.Exec(fmt.Sprintf("CREATE DATABASE %s WITH TEMPLATE %s OWNER %s", cfg.Name, templateName, *cfg.User))
+	_, err = database.Exec(fmt.Sprintf("CREATE DATABASE %s WITH TEMPLATE %s OWNER %s", clonedDBName, cfg.Name, *cfg.User))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

@@ -16,6 +16,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+const clonedDBSuffix = "_clone"
+
 type DatabaseLike interface {
 	Select(dest interface{}, query string, args ...interface{}) error
 	Exec(query string, args ...interface{}) (sql.Result, error)
@@ -116,35 +118,37 @@ func CreateDatasource(host, port, user, password, dbname *string) string {
 	return strings.Join(datasource, " ")
 }
 
-func (d *Database) Clone(cfg *config.PostgresConfig, templateName string) (clonedDB *Database, err error) {
+func (d *Database) Clone(currentConfig *config.PostgresConfig) (clonedDB *Database, err error) {
 	err = d.Close()
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	datasource := CreateDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, nil)
+	datasource := CreateDatasource(currentConfig.Host, currentConfig.Port, currentConfig.User, currentConfig.Password, nil)
 	database, err := sqlx.Connect("postgres", datasource)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 	defer closeDB(database, &err)
 
-	err = disconnectUsers(database, templateName)
+	clonedDBName := currentConfig.Name + clonedDBSuffix
+
+	err = disconnectUsers(database, clonedDBName)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	err = disconnectUsers(database, cfg.Name)
+	err = disconnectUsers(database, currentConfig.Name)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	clonedDB, err = cloneDatabase(database, cfg, templateName)
+	clonedDB, err = cloneDatabase(database, currentConfig, clonedDBName)
 	if err != nil {
 		return nil, err
 	}
 
-	err = d.replaceDatabaseInstance(cfg, templateName)
+	err = d.replaceDatabaseInstance(currentConfig, clonedDBName)
 	if err != nil {
 		return nil, err
 	}
@@ -152,13 +156,13 @@ func (d *Database) Clone(cfg *config.PostgresConfig, templateName string) (clone
 	return clonedDB, nil
 }
 
-func (d *Database) replaceDatabaseInstance(cfg *config.PostgresConfig, templateName string) error {
-	templateCfg := *cfg
-	templateCfg.Name = templateName
-	oldDatabase, err := NewDatabase(&templateCfg)
+func (d *Database) replaceDatabaseInstance(currentConfig *config.PostgresConfig, clonedDBName string) error {
+	clonedConfig := *currentConfig
+	clonedConfig.Name = clonedDBName
+	initialDatabase, err := NewDatabase(&clonedConfig)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	*d = *oldDatabase
+	*d = *initialDatabase
 	return nil
 }
