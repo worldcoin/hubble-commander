@@ -1,12 +1,9 @@
 package badger
 
 import (
-	"bytes"
-
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/dgraph-io/badger/v3"
-	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
@@ -106,24 +103,4 @@ func (d *Database) BeginTransaction(update bool) (*db.TxController, *Database) {
 
 func (d *Database) Prune() error {
 	return d.store.Badger().DropAll()
-}
-
-func (d *Database) Clone(cfg *config.BadgerConfig) (*Database, error) {
-	clonedBadger, err := NewDatabase(cfg)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	var backup bytes.Buffer
-	_, err = d.store.Badger().Backup(&backup, 0)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	err = clonedBadger.store.Badger().Load(&backup, 16)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	return clonedBadger, nil
 }

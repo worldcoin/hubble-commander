@@ -60,7 +60,6 @@ func newTeardown(database *Database, migrator *migrate.Migrate) func() error {
 	}
 }
 
-// TODO-CLONE do we really need this or can we only use Clone on the actual Database object
 func (d *TestDB) Clone(currentConfig *config.PostgresConfig) (testDB *TestDB, err error) {
 	clonedDB, err := d.DB.Clone(currentConfig)
 	if err != nil {
