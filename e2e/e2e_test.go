@@ -43,7 +43,7 @@ func TestCommander(t *testing.T) {
 	testGetVersion(t, commander.Client())
 	firstUserState := testGetUserStates(t, commander.Client(), senderWallet)
 	testGetPublicKey(t, commander.Client(), &firstUserState, senderWallet)
-	firstTransferHash := testSendTransfer(t, commander.Client(), senderWallet, models.NewUint256(0))
+	firstTransferHash := testSendTransfer(t, commander.Client(), senderWallet, 0)
 	testGetTransaction(t, commander.Client(), firstTransferHash)
 	send31MoreTransfers(t, commander.Client(), senderWallet, 1)
 
@@ -92,13 +92,13 @@ func testGetPublicKey(t *testing.T, client jsonrpc.RPCClient, state *dto.UserSta
 	require.Equal(t, *wallet.PublicKey(), publicKey)
 }
 
-func testSendTransfer(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, nonce *models.Uint256) common.Hash {
+func testSendTransfer(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, nonce uint64) common.Hash {
 	transfer, err := api.SignTransfer(&senderWallet, dto.Transfer{
 		FromStateID: ref.Uint32(1),
 		ToStateID:   ref.Uint32(2),
 		Amount:      models.NewUint256(90),
 		Fee:         models.NewUint256(10),
-		Nonce:       nonce,
+		Nonce:       models.NewUint256(nonce),
 	})
 	require.NoError(t, err)
 
@@ -222,7 +222,7 @@ func testCommanderRestart(t *testing.T, commander setup.Commander, senderWallet 
 	err := commander.Restart()
 	require.NoError(t, err)
 
-	testSendTransfer(t, commander.Client(), senderWallet, models.NewUint256(64))
+	testSendTransfer(t, commander.Client(), senderWallet, 64)
 }
 
 func getDomain(t *testing.T, client jsonrpc.RPCClient) bls.Domain {

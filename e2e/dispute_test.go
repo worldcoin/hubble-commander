@@ -61,7 +61,7 @@ func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethCl
 }
 
 func testSendBatch(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, startNonce uint64) {
-	firstTransferHash := testSendTransfer(t, client, senderWallet, models.NewUint256(startNonce))
+	firstTransferHash := testSendTransfer(t, client, senderWallet, startNonce)
 	testGetTransaction(t, client, firstTransferHash)
 	send31MoreTransfers(t, client, senderWallet, startNonce+1)
 
