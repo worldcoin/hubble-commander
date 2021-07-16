@@ -201,6 +201,29 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AppliesFee() {
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }
 
+func (s *ApplyTransfersTestSuite) calculateCommitmentPostStateRoot(transfers []models.Transfer, feeReceiver *FeeReceiver) common.Hash {
+	txExecutor, err := NewTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
+	s.NoError(err)
+	defer txExecutor.Rollback(nil)
+
+	combinedFee := models.MakeUint256(0)
+	for i := range transfers {
+		synced, transferError, appError := txExecutor.ApplyTransferForSync(&transfers[i], feeReceiver.TokenID)
+		s.NoError(appError)
+		s.NoError(transferError)
+
+		combinedFee = *combinedFee.Add(&synced.Transfer.Fee)
+	}
+	if combinedFee.CmpN(0) > 0 {
+		err := txExecutor.ApplyFee(feeReceiver.StateID, combinedFee)
+		s.NoError(err)
+	}
+
+	stateRoot, err := txExecutor.stateTree.Root()
+	s.NoError(err)
+	return *stateRoot
+}
+
 func generateValidTransfers(transfersAmount uint32) []models.Transfer {
 	transfers := make([]models.Transfer, 0, transfersAmount)
 	for i := 0; i < int(transfersAmount); i++ {
