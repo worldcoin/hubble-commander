@@ -173,7 +173,10 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_AppliesFee() {
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AllValid() {
 	transfers := generateValidTransfers(3)
-	commitmentStateRoot := s.calculateCommitmentPostStateRoot(transfers, s.feeReceiver)
+
+	txExecutor, err := NewTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
+	s.NoError(err)
+	commitmentStateRoot := calculateCommitmentStateRoot(s.Assertions, txExecutor, transfers, s.feeReceiver)
 
 	appliedTransfers, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver, commitmentStateRoot)
 	s.NoError(err)
@@ -193,10 +196,13 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_InvalidTransfer() {
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AppliesFee() {
-	generatedTransfers := generateValidTransfers(3)
-	commitmentStateRoot := s.calculateCommitmentPostStateRoot(generatedTransfers, s.feeReceiver)
+	transfers := generateValidTransfers(3)
 
-	_, err := s.transactionExecutor.ApplyTransfersForSync(generatedTransfers, s.feeReceiver, commitmentStateRoot)
+	txExecutor, err := NewTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
+	s.NoError(err)
+	commitmentStateRoot := calculateCommitmentStateRoot(s.Assertions, txExecutor, transfers, s.feeReceiver)
+
+	_, err = s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver, commitmentStateRoot)
 	s.NoError(err)
 
 	feeReceiverState, err := s.transactionExecutor.storage.GetStateLeaf(s.feeReceiver.StateID)
@@ -204,9 +210,12 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AppliesFee() {
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }
 
-func (s *ApplyTransfersTestSuite) calculateCommitmentPostStateRoot(transfers []models.Transfer, feeReceiver *FeeReceiver) common.Hash {
-	txExecutor, err := NewTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
-	s.NoError(err)
+func calculateCommitmentStateRoot(
+	s *require.Assertions,
+	txExecutor *TransactionExecutor,
+	transfers []models.Transfer,
+	feeReceiver *FeeReceiver,
+) common.Hash {
 	defer txExecutor.Rollback(nil)
 
 	combinedFee := models.MakeUint256(0)
