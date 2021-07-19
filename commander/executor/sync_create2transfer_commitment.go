@@ -27,6 +27,8 @@ func (t *TransactionExecutor) syncCreate2TransferCommitment(
 		return nil, err
 	}
 
+	//TODO-COMM: verify state root here
+
 	err = t.setPublicKeys(appliedTransfers, pubKeyIDs)
 	if err != nil {
 		return nil, err

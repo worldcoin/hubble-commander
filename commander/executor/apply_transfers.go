@@ -106,14 +106,3 @@ func (t *TransactionExecutor) ApplyTransfersForSync(
 
 	return appliedTransfers, nil
 }
-
-func (t *TransactionExecutor) verifyStateRoot(commitmentPostState common.Hash, proofs []models.StateMerkleProof) error {
-	postStateRoot, err := t.stateTree.Root()
-	if err != nil {
-		return err
-	}
-	if *postStateRoot != commitmentPostState {
-		return NewDisputableTransferError(ErrInvalidCommitmentStateRoot, proofs)
-	}
-	return nil
-}
