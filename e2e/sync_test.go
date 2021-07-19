@@ -3,16 +3,15 @@
 package e2e
 
 import (
-	log "github.com/sirupsen/logrus"
 	"testing"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
-	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -42,12 +41,12 @@ func TestCommanderSync(t *testing.T) {
 
 	testGetVersion(t, activeCommander.Client())
 	testGetUserStates(t, activeCommander.Client(), senderWallet)
-	firstTransferHash := testSendTransfer(t, activeCommander.Client(), senderWallet, models.NewUint256(0))
+	firstTransferHash := testSendTransfer(t, activeCommander.Client(), senderWallet, 0)
 	testGetTransaction(t, activeCommander.Client(), firstTransferHash)
-	send31MoreTransfers(t, activeCommander.Client(), senderWallet)
+	send31MoreTransfers(t, activeCommander.Client(), senderWallet, 1)
 
 	firstC2TWallet := wallets[len(wallets)-32]
-	firstCreate2TransferHash := testSendCreate2Transfer(t, activeCommander.Client(), senderWallet, *firstC2TWallet.PublicKey())
+	firstCreate2TransferHash := testSendCreate2Transfer(t, activeCommander.Client(), senderWallet, firstC2TWallet.PublicKey())
 	testGetTransaction(t, activeCommander.Client(), firstCreate2TransferHash)
 	send31MoreCreate2Transfers(t, activeCommander.Client(), senderWallet, wallets)
 

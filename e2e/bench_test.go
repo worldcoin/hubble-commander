@@ -93,8 +93,8 @@ func (s *BenchmarkSuite) TestBenchCommander() {
 	s.waitGroup.Wait()
 }
 
-func (s *BenchmarkSuite) runForWallet(senderWallet bls.Wallet, senderStateId uint32) {
-	fmt.Printf("Starting worker on stateId %d address=%s\n", senderStateId, senderWallet.PublicKey().String())
+func (s *BenchmarkSuite) runForWallet(senderWallet bls.Wallet, senderStateID uint32) {
+	fmt.Printf("Starting worker on stateId %d address=%s\n", senderStateID, senderWallet.PublicKey().String())
 
 	txsToWatch := make([]common.Hash, 0, maxQueuedBatchesCount)
 	nonce := models.MakeUint256(0)
@@ -108,11 +108,11 @@ func (s *BenchmarkSuite) runForWallet(senderWallet bls.Wallet, senderStateId uin
 
 				// Pick random receiver id that's different from sender's.
 				to := s.stateIds[rand.Intn(len(s.stateIds))]
-				for to == senderStateId {
+				for to == senderStateID {
 					to = s.stateIds[rand.Intn(len(s.stateIds))]
 				}
 
-				lastTxHash = s.sendTransfer(senderWallet, senderStateId, to, nonce)
+				lastTxHash = s.sendTransfer(senderWallet, senderStateID, to, nonce)
 				nonce = *nonce.AddN(1)
 			}
 			txsToWatch = append(txsToWatch, lastTxHash)
@@ -143,13 +143,12 @@ func (s *BenchmarkSuite) runForWallet(senderWallet bls.Wallet, senderStateId uin
 
 		// Report phase
 		fmt.Printf("Transfers sent: %d, throughput: %f tx/s, txs in queue: %d\n", s.transfersSent, float64(s.transfersSent)/(time.Since(s.startTime).Seconds()), s.txsQueued)
-
 	}
 
 	s.waitGroup.Done()
 }
 
-func (s *BenchmarkSuite) sendTransfer(wallet bls.Wallet, from uint32, to uint32, nonce models.Uint256) common.Hash {
+func (s *BenchmarkSuite) sendTransfer(wallet bls.Wallet, from, to uint32, nonce models.Uint256) common.Hash {
 	transfer, err := api.SignTransfer(&wallet, dto.Transfer{
 		FromStateID: &from,
 		ToStateID:   &to,
