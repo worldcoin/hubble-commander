@@ -1,5 +1,3 @@
-// +build e2e
-
 package e2e
 
 import (
@@ -18,6 +16,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/event"
 	"github.com/stretchr/testify/require"
@@ -25,9 +24,10 @@ import (
 )
 
 func TestCommanderDispute(t *testing.T) {
-	cmd, err := setup.NewCommanderFromEnv(true)
-	require.NoError(t, err)
-	err = cmd.Start()
+	cmd := setup.CreateInProcessCommander()
+	//cmd, err := setup.NewCommanderFromEnv(true)
+	//require.NoError(t, err)
+	err := cmd.Start()
 	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, cmd.Stop())
@@ -124,6 +124,33 @@ func sendInvalidTransferBatch(t *testing.T, ethClient *eth.Client) {
 	encodedTransfer, err := encoder.EncodeTransferForCommitment(&transfer)
 	require.NoError(t, err)
 
+	sendCommitment(t, ethClient, encodedTransfer, 2)
+}
+
+func sendInvalidCreate2TransferBatch(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey) {
+	transfer := models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(2_000_000_000_000_000_000),
+			Fee:         models.MakeUint256(10),
+		},
+		ToStateID: ref.Uint32(6),
+	}
+
+	registrations, unsubscribe, err := ethClient.WatchRegistrations(&bind.WatchOpts{})
+	require.NoError(t, err)
+	defer unsubscribe()
+
+	pubKeyID, err := ethClient.RegisterAccount(toPublicKey, registrations)
+	require.NoError(t, err)
+
+	encodedTransfer, err := encoder.EncodeCreate2TransferForCommitment(&transfer, *pubKeyID)
+	require.NoError(t, err)
+
+	sendCommitment(t, ethClient, encodedTransfer, 3)
+}
+
+func sendCommitment(t *testing.T, ethClient *eth.Client, encodedTransfer []byte, batchID uint64) {
 	commitment := models.Commitment{
 		Transactions:      encodedTransfer,
 		FeeReceiver:       0,
@@ -136,7 +163,7 @@ func sendInvalidTransferBatch(t *testing.T, ethClient *eth.Client) {
 	_, err = deployer.WaitToBeMined(ethClient.ChainConnection.GetBackend(), transaction)
 	require.NoError(t, err)
 
-	_, err = ethClient.GetBatch(models.NewUint256(2))
+	_, err = ethClient.GetBatch(models.NewUint256(batchID))
 	require.NoError(t, err)
 }
 
