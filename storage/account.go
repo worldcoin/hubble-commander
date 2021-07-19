@@ -9,7 +9,7 @@ func (s *Storage) AddAccountLeafIfNotExists(account *models.AccountLeaf) error {
 	return s.Badger.Upsert(account.PubKeyID, account)
 }
 
-func (s *Storage) GetAccounts(publicKey *models.PublicKey) ([]models.AccountLeaf, error) {
+func (s *Storage) GetAccountLeaves(publicKey *models.PublicKey) ([]models.AccountLeaf, error) {
 	accounts := make([]models.AccountLeaf, 0, 1)
 	err := s.Badger.Find(
 		&accounts,
@@ -19,7 +19,7 @@ func (s *Storage) GetAccounts(publicKey *models.PublicKey) ([]models.AccountLeaf
 		return nil, err
 	}
 	if len(accounts) == 0 {
-		return nil, NewNotFoundError("accounts")
+		return nil, NewNotFoundError("account leaves")
 	}
 	return accounts, nil
 }
@@ -37,7 +37,7 @@ func (s *Storage) GetPublicKey(pubKeyID uint32) (*models.PublicKey, error) {
 }
 
 func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey, tokenID *models.Uint256) (*uint32, error) {
-	accounts, err := s.GetAccounts(publicKey)
+	accounts, err := s.GetAccountLeaves(publicKey)
 	if err != nil {
 		return nil, err
 	}

@@ -26,7 +26,7 @@ func (s *Storage) GetStateLeaf(stateID uint32) (stateLeaf *models.StateLeaf, err
 }
 
 func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) (userStates []models.UserStateWithID, err error) {
-	accounts, err := s.GetAccounts(publicKey)
+	accounts, err := s.GetAccountLeaves(publicKey)
 	if err != nil {
 		return nil, err
 	}

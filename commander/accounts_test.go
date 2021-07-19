@@ -55,7 +55,7 @@ func (s *AccountsTestSuite) TestSyncAccounts() {
 	err = s.cmd.syncAccounts(0, *latestBlockNumber)
 	s.NoError(err)
 
-	accounts, err := s.cmd.storage.GetAccounts(&publicKey)
+	accounts, err := s.cmd.storage.GetAccountLeaves(&publicKey)
 	s.NoError(err)
 	s.Len(accounts, 1)
 	s.Equal(*pubKeyID, accounts[0].PubKeyID)

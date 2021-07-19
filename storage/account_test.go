@@ -45,15 +45,15 @@ func (s *AccountTestSuite) TestAddAccountLeafIfNotExists_AddAndRetrieve() {
 	err := s.storage.AddAccountLeafIfNotExists(&account1)
 	s.NoError(err)
 
-	res, err := s.storage.GetAccounts(&account1.PublicKey)
+	res, err := s.storage.GetAccountLeaves(&account1.PublicKey)
 	s.NoError(err)
 
 	s.Equal([]models.AccountLeaf{account1}, res)
 }
 
-func (s *AccountTestSuite) TestGetAccounts_NoPublicKeys() {
-	_, err := s.storage.GetAccounts(&models.PublicKey{1, 2, 3})
-	s.Equal(NewNotFoundError("accounts"), err)
+func (s *AccountTestSuite) TestGetAccountLeaves_NoPublicKeys() {
+	_, err := s.storage.GetAccountLeaves(&models.PublicKey{1, 2, 3})
+	s.Equal(NewNotFoundError("account leaves"), err)
 }
 
 func (s *AccountTestSuite) TestGetAccounts_ReturnsAllAccounts() {
@@ -71,7 +71,7 @@ func (s *AccountTestSuite) TestGetAccounts_ReturnsAllAccounts() {
 	err = s.storage.AddAccountLeafIfNotExists(&accounts[1])
 	s.NoError(err)
 
-	res, err := s.storage.GetAccounts(&pubKey)
+	res, err := s.storage.GetAccountLeaves(&pubKey)
 	s.NoError(err)
 
 	s.Equal(accounts, res)
@@ -84,7 +84,7 @@ func (s *AccountTestSuite) TestAddAccountLeafIfNotExists_Idempotent() {
 	err = s.storage.AddAccountLeafIfNotExists(&account1)
 	s.NoError(err)
 
-	res, err := s.storage.GetAccounts(&account1.PublicKey)
+	res, err := s.storage.GetAccountLeaves(&account1.PublicKey)
 	s.NoError(err)
 
 	s.Equal([]models.AccountLeaf{account1}, res)
@@ -106,7 +106,7 @@ func (s *AccountTestSuite) TestGetPublicKey_ReturnsPublicKey() {
 
 func (s *AccountTestSuite) TestGetUnusedPubKeyID_NoPublicKeys() {
 	_, err := s.storage.GetUnusedPubKeyID(&account1.PublicKey, models.NewUint256(100))
-	s.Equal(NewNotFoundError("accounts"), err)
+	s.Equal(NewNotFoundError("account leaves"), err)
 }
 
 func (s *AccountTestSuite) TestGetUnusedPubKeyID_NoLeaves() {
