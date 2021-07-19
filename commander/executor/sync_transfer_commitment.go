@@ -34,16 +34,15 @@ func (t *TransactionExecutor) syncTransferCommitment(
 		return nil, err
 	}
 
-	appliedTransfers, _, err := t.ApplyTransfersForSync(transfers, feeReceiver)
+	appliedTransfers, stateProofs, err := t.ApplyTransfersForSync(transfers, feeReceiver)
 	if err != nil {
 		return nil, err
 	}
 
-	//TODO-COMM: verify state root here
-	//	err = t.verifyStateRoot(commitmentStateRoot, stateChangeProofs)
-	//	if err != nil {
-	//		return nil, err
-	//	}
+	err = t.verifyStateRoot(commitment.StateRoot, stateProofs)
+	if err != nil {
+		return nil, err
+	}
 
 	if !t.cfg.DevMode {
 		err = t.verifyTransferSignature(commitment, appliedTransfers)
