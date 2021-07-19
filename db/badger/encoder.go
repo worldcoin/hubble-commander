@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v3"
 )
@@ -15,8 +16,17 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Bytes(), nil
 	case *models.MerklePath:
 		return nil, errors.Errorf("pass by value")
+	case models.AccountNode:
+		return EncodeDataHash(&v.DataHash)
+	case *models.AccountNode:
+		return nil, errors.Errorf("pass by value")
+	// TODO-ACCOUNT - check if this encoding is necessary
+	case models.AccountLeaf:
+		return v.Bytes(), nil
+	case *models.AccountLeaf:
+		return nil, errors.Errorf("pass by value")
 	case models.StateNode:
-		return EncodeDataHash(&v)
+		return EncodeDataHash(&v.DataHash)
 	case *models.StateNode:
 		return nil, errors.Errorf("pass by value")
 	case models.FlatStateLeaf:
@@ -44,8 +54,12 @@ func Decode(data []byte, value interface{}) error {
 	switch v := value.(type) {
 	case *models.MerklePath:
 		return v.SetBytes(data)
+	case *models.AccountNode:
+		return DecodeDataHash(data, &v.DataHash)
+	case *models.AccountLeaf:
+		return v.SetBytes(data)
 	case *models.StateNode:
-		return DecodeDataHash(data, v)
+		return DecodeDataHash(data, &v.DataHash)
 	case *models.FlatStateLeaf:
 		return v.SetBytes(data)
 	case *models.StateUpdate:
@@ -59,8 +73,8 @@ func Decode(data []byte, value interface{}) error {
 	}
 }
 
-func EncodeDataHash(node *models.StateNode) ([]byte, error) {
-	return node.DataHash.Bytes(), nil
+func EncodeDataHash(dataHash *common.Hash) ([]byte, error) {
+	return dataHash.Bytes(), nil
 }
 
 func EncodeUint32(number *uint32) ([]byte, error) {
@@ -69,8 +83,8 @@ func EncodeUint32(number *uint32) ([]byte, error) {
 	return b, nil
 }
 
-func DecodeDataHash(data []byte, node *models.StateNode) error {
-	node.DataHash.SetBytes(data)
+func DecodeDataHash(data []byte, dataHash *common.Hash) error {
+	dataHash.SetBytes(data)
 	return nil
 }
 

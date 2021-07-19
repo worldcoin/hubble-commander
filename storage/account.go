@@ -6,7 +6,7 @@ import (
 )
 
 func (s *Storage) AddAccountLeafIfNotExists(account *models.AccountLeaf) error {
-	return s.Badger.Upsert(account.PubKeyID, account)
+	return s.Badger.Upsert(account.PubKeyID, *account)
 }
 
 func (s *Storage) GetAccountLeaves(publicKey *models.PublicKey) ([]models.AccountLeaf, error) {

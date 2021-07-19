@@ -13,10 +13,10 @@ func TestDataHash_ByteEncoding(t *testing.T) {
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 	}
 
-	var decodedNode models.StateNode
-	encodedDataHash, _ := EncodeDataHash(&node)
-	_ = DecodeDataHash(encodedDataHash, &decodedNode)
-	require.Equal(t, node, decodedNode)
+	var decodedHash common.Hash
+	encodedDataHash, _ := EncodeDataHash(&node.DataHash)
+	_ = DecodeDataHash(encodedDataHash, &decodedHash)
+	require.Equal(t, node.DataHash, decodedHash)
 }
 
 func TestUint32_ByteEncoding(t *testing.T) {
