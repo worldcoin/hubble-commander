@@ -26,9 +26,10 @@ import (
 )
 
 func TestCommanderDispute(t *testing.T) {
-	cmd, err := setup.NewCommanderFromEnv(true)
-	require.NoError(t, err)
-	err = cmd.Start()
+	cmd := setup.CreateInProcessCommander()
+	//cmd, err := setup.NewCommanderFromEnv(true)
+	//require.NoError(t, err)
+	err := cmd.Start()
 	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, cmd.Stop())
@@ -48,7 +49,7 @@ func TestCommanderDispute(t *testing.T) {
 }
 
 func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, senderWallet bls.Wallet) {
-	testSendBatch(t, client, senderWallet, 0)
+	testSendTransferBatch(t, client, senderWallet, 0)
 
 	sink := make(chan *rollup.RollupRollbackStatus)
 	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
@@ -60,7 +61,7 @@ func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethCl
 
 	testBatchesAfterDispute(t, client, 1)
 
-	testSendBatch(t, client, senderWallet, 32)
+	testSendTransferBatch(t, client, senderWallet, 32)
 }
 
 func testDisputeTransitionCreate2Transfer(
@@ -81,13 +82,28 @@ func testDisputeTransitionCreate2Transfer(
 
 	testBatchesAfterDispute(t, client, 2)
 
-	testSendBatch(t, client, senderWallet, 64)
+	testSendC2TBatch(t, client, senderWallet, wallets, firstC2TWallet.PublicKey(), 64)
 }
 
-func testSendBatch(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, startNonce uint64) {
+func testSendTransferBatch(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, startNonce uint64) {
 	firstTransferHash := testSendTransfer(t, client, senderWallet, startNonce)
 	testGetTransaction(t, client, firstTransferHash)
 	send31MoreTransfers(t, client, senderWallet, startNonce+1)
+
+	waitForTxToBeIncludedInBatch(t, client, firstTransferHash)
+}
+
+func testSendC2TBatch(
+	t *testing.T,
+	client jsonrpc.RPCClient,
+	senderWallet bls.Wallet,
+	wallets []bls.Wallet,
+	targetPublicKey *models.PublicKey,
+	startNonce uint64,
+) {
+	firstTransferHash := testSendCreate2Transfer(t, client, senderWallet, targetPublicKey, startNonce)
+	testGetTransaction(t, client, firstTransferHash)
+	send31MoreCreate2Transfers(t, client, senderWallet, wallets, startNonce+1)
 
 	waitForTxToBeIncludedInBatch(t, client, firstTransferHash)
 }
