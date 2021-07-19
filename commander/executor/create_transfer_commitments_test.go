@@ -218,7 +218,6 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_ReturnsErro
 		MaxCommitmentsPerBatch: 1,
 	}
 
-	// TODO-MIN validate the client used here. Check TestCreateCreate2TransferCommitments_ForMultipleCommitmentsInBatch
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
 
 	transfers := generateValidTransfers(2)

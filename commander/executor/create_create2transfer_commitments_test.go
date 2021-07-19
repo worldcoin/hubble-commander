@@ -128,7 +128,6 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 		MaxCommitmentsPerBatch: 3,
 	}
 
-	// TODO-MIN Why the client is different than the one in transfers tests
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
 
 	addAccountWithHighNonce(s.Assertions, s.storage, 124)
@@ -189,8 +188,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 		MaxCommitmentsPerBatch: 1,
 	}
 
-	// TODO-MIN validate the client used here. Check TestCreateCreate2TransferCommitments_ForMultipleCommitmentsInBatch
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
 
 	transfers := generateValidCreate2Transfers(2)
 	s.addCreate2Transfers(transfers)
