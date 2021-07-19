@@ -42,7 +42,7 @@ func (c *Commander) syncAccounts(start, end uint64) error {
 			PublicKey: models.MakePublicKeyFromInts(pubkey),
 		}
 
-		err = c.storage.AddAccountIfNotExists(&account)
+		err = c.storage.AddAccountLeafIfNotExists(&account)
 		if err != nil {
 			return err
 		}

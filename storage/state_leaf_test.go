@@ -49,7 +49,7 @@ func (s *StateLeafTestSuite) TearDownTest() {
 }
 
 func (s *StateLeafTestSuite) TestUpsertStateLeaf_AddAndRetrieve() {
-	err := s.storage.AddAccountIfNotExists(&account1)
+	err := s.storage.AddAccountLeafIfNotExists(&account1)
 	s.NoError(err)
 
 	leaf := &models.StateLeaf{
@@ -72,7 +72,7 @@ func (s *StateLeafTestSuite) TestUpsertStateLeaf_AddAndRetrieve() {
 }
 
 func (s *StateLeafTestSuite) TestUpsertStateLeaf_UpdateAndRetrieve() {
-	err := s.storage.AddAccountIfNotExists(&account1)
+	err := s.storage.AddAccountLeafIfNotExists(&account1)
 	s.NoError(err)
 
 	leaf := &models.StateLeaf{
@@ -99,7 +99,7 @@ func (s *StateLeafTestSuite) TestUpsertStateLeaf_UpdateAndRetrieve() {
 }
 
 func (s *StateLeafTestSuite) TestGetStateLeaf_ReturnsCorrectStruct() {
-	err := s.storage.AddAccountIfNotExists(&account1)
+	err := s.storage.AddAccountLeafIfNotExists(&account1)
 	s.NoError(err)
 
 	leaf := &models.StateLeaf{
@@ -153,7 +153,7 @@ func (s *StateLeafTestSuite) TestGetUserStatesByPublicKey() {
 	}
 
 	for i := range accounts {
-		err := s.storage.AddAccountIfNotExists(&accounts[i])
+		err := s.storage.AddAccountLeafIfNotExists(&accounts[i])
 		s.NoError(err)
 	}
 
@@ -208,9 +208,9 @@ func (s *StateLeafTestSuite) TestGetUserStatesByPublicKey() {
 }
 
 func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf() {
-	err := s.storage.AddAccountIfNotExists(&account1)
+	err := s.storage.AddAccountLeafIfNotExists(&account1)
 	s.NoError(err)
-	err = s.storage.AddAccountIfNotExists(&account2)
+	err = s.storage.AddAccountLeafIfNotExists(&account2)
 	s.NoError(err)
 
 	_, err = s.tree.Set(0, userState1)
@@ -227,9 +227,9 @@ func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf() {
 }
 
 func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf_WorkWithCachedValue() {
-	err := s.storage.AddAccountIfNotExists(&account1)
+	err := s.storage.AddAccountLeafIfNotExists(&account1)
 	s.NoError(err)
-	err = s.storage.AddAccountIfNotExists(&account2)
+	err = s.storage.AddAccountLeafIfNotExists(&account2)
 	s.NoError(err)
 
 	_, err = s.tree.Set(0, userState1)
@@ -255,9 +255,9 @@ func (s *StateLeafTestSuite) TestGetNextAvailableStateID_NoLeavesInStateTree() {
 }
 
 func (s *StateLeafTestSuite) TestGetNextAvailableStateID_OneBytes() {
-	err := s.storage.AddAccountIfNotExists(&account1)
+	err := s.storage.AddAccountLeafIfNotExists(&account1)
 	s.NoError(err)
-	err = s.storage.AddAccountIfNotExists(&account2)
+	err = s.storage.AddAccountLeafIfNotExists(&account2)
 	s.NoError(err)
 
 	tree := NewStateTree(s.storage.Storage)
@@ -273,9 +273,9 @@ func (s *StateLeafTestSuite) TestGetNextAvailableStateID_OneBytes() {
 }
 
 func (s *StateLeafTestSuite) TestGetNextAvailableStateID_TwoBytes() {
-	err := s.storage.AddAccountIfNotExists(&account1)
+	err := s.storage.AddAccountLeafIfNotExists(&account1)
 	s.NoError(err)
-	err = s.storage.AddAccountIfNotExists(&account2)
+	err = s.storage.AddAccountLeafIfNotExists(&account2)
 	s.NoError(err)
 
 	tree := NewStateTree(s.storage.Storage)

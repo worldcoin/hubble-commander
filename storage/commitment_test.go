@@ -204,7 +204,7 @@ func (s *CommitmentTestSuite) TestDeleteCommitmentsByBatchIDs_NoCommitments() {
 }
 
 func (s *CommitmentTestSuite) addLeaf() {
-	err := s.storage.AddAccountIfNotExists(&account1)
+	err := s.storage.AddAccountLeafIfNotExists(&account1)
 	s.NoError(err)
 
 	_, err = s.tree.Set(uint32(0), &models.UserState{

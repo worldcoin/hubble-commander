@@ -5,7 +5,7 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-func (s *Storage) AddAccountIfNotExists(account *models.AccountLeaf) error {
+func (s *Storage) AddAccountLeafIfNotExists(account *models.AccountLeaf) error {
 	return s.Badger.Upsert(account.PubKeyID, account)
 }
 

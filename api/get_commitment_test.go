@@ -108,7 +108,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 	s.NoError(err)
 	s.commitment.ID = *commitmentID
 
-	err = s.storage.AddAccountIfNotExists(&models.AccountLeaf{
+	err = s.storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
 		PubKeyID:  2,
 		PublicKey: models.PublicKey{1, 2, 3},
 	})

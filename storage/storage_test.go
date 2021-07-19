@@ -28,7 +28,7 @@ func (s *StorageTestSuite) SetupTest() {
 	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
 
-	err = s.storage.AddAccountIfNotExists(&account1)
+	err = s.storage.AddAccountLeafIfNotExists(&account1)
 	s.NoError(err)
 }
 
@@ -53,7 +53,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	s.NoError(err)
 	err = storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
-	err = storage.AddAccountIfNotExists(&account2)
+	err = storage.AddAccountLeafIfNotExists(&account2)
 	s.NoError(err)
 
 	res, err := s.storage.GetStateLeaf(leaf.StateID)
@@ -92,7 +92,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 	s.NoError(err)
 	err = storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
-	err = storage.AddAccountIfNotExists(&account2)
+	err = storage.AddAccountLeafIfNotExists(&account2)
 	s.NoError(err)
 
 	tx.Rollback(&err)
@@ -108,7 +108,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 }
 
 func (s *StorageTestSuite) TestBeginTransaction_Lock() {
-	err := s.storage.AddAccountIfNotExists(&account2)
+	err := s.storage.AddAccountLeafIfNotExists(&account2)
 	s.NoError(err)
 
 	leafOne := &models.StateLeaf{

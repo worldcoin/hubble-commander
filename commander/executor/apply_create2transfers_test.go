@@ -69,7 +69,7 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 	}
 
 	for i := 1; i <= 10; i++ {
-		err = s.storage.AddAccountIfNotExists(&models.AccountLeaf{
+		err = s.storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
 			PubKeyID:  uint32(i),
 			PublicKey: models.PublicKey{1, 2, 3},
 		})

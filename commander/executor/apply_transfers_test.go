@@ -75,7 +75,7 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 		},
 	}
 	for i := range accounts {
-		err = s.storage.AddAccountIfNotExists(&accounts[i])
+		err = s.storage.AddAccountLeafIfNotExists(&accounts[i])
 		s.NoError(err)
 	}
 
