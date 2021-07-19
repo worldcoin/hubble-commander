@@ -43,17 +43,10 @@ func TestCommander(t *testing.T) {
 	testGetVersion(t, commander.Client())
 	firstUserState := testGetUserStates(t, commander.Client(), senderWallet)
 	testGetPublicKey(t, commander.Client(), &firstUserState, senderWallet)
-	firstTransferHash := testSendTransfer(t, commander.Client(), senderWallet, 0)
-	testGetTransaction(t, commander.Client(), firstTransferHash)
-	send31MoreTransfers(t, commander.Client(), senderWallet, 1)
+	testSendTransferBatch(t, commander.Client(), senderWallet, 0)
 
 	firstC2TWallet := wallets[len(wallets)-32]
-	firstCreate2TransferHash := testSendCreate2Transfer(t, commander.Client(), senderWallet, firstC2TWallet.PublicKey())
-	testGetTransaction(t, commander.Client(), firstCreate2TransferHash)
-	send31MoreCreate2Transfers(t, commander.Client(), senderWallet, wallets)
-
-	waitForTxToBeIncludedInBatch(t, commander.Client(), firstTransferHash)
-	waitForTxToBeIncludedInBatch(t, commander.Client(), firstCreate2TransferHash)
+	testSendC2TBatch(t, commander.Client(), senderWallet, wallets, firstC2TWallet.PublicKey(), 32)
 
 	testSenderStateAfterTransfers(t, commander.Client(), senderWallet)
 	testFeeReceiverStateAfterTransfers(t, commander.Client(), feeReceiverWallet)
@@ -109,13 +102,19 @@ func testSendTransfer(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.W
 	return txHash
 }
 
-func testSendCreate2Transfer(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, targetPublicKey *models.PublicKey) common.Hash {
+func testSendCreate2Transfer(
+	t *testing.T,
+	client jsonrpc.RPCClient,
+	senderWallet bls.Wallet,
+	targetPublicKey *models.PublicKey,
+	nonce uint64,
+) common.Hash {
 	transfer, err := api.SignCreate2Transfer(&senderWallet, dto.Create2Transfer{
 		FromStateID: ref.Uint32(1),
 		ToPublicKey: targetPublicKey,
 		Amount:      models.NewUint256(90),
 		Fee:         models.NewUint256(10),
-		Nonce:       models.NewUint256(32),
+		Nonce:       models.NewUint256(nonce),
 	})
 	require.NoError(t, err)
 
@@ -152,15 +151,22 @@ func send31MoreTransfers(t *testing.T, client jsonrpc.RPCClient, senderWallet bl
 	}
 }
 
-func send31MoreCreate2Transfers(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, wallets []bls.Wallet) {
-	for nonce := 1; nonce < 32; nonce++ {
-		receiverWallet := wallets[len(wallets)-32+nonce]
+func send31MoreCreate2Transfers(
+	t *testing.T,
+	client jsonrpc.RPCClient,
+	senderWallet bls.Wallet,
+	wallets []bls.Wallet,
+	startNonce uint64,
+) {
+	walletIndex := len(wallets) - 31
+	for nonce := startNonce; nonce < startNonce+31; nonce++ {
+		receiverWallet := wallets[walletIndex]
 		transfer, err := api.SignCreate2Transfer(&senderWallet, dto.Create2Transfer{
 			FromStateID: ref.Uint32(1),
 			ToPublicKey: receiverWallet.PublicKey(),
 			Amount:      models.NewUint256(90),
 			Fee:         models.NewUint256(10),
-			Nonce:       models.NewUint256(uint64(32) + uint64(nonce)),
+			Nonce:       models.NewUint256(nonce),
 		})
 		require.NoError(t, err)
 
@@ -168,6 +174,8 @@ func send31MoreCreate2Transfers(t *testing.T, client jsonrpc.RPCClient, senderWa
 		err = client.CallFor(&txHash, "hubble_sendTransaction", []interface{}{*transfer})
 		require.NoError(t, err)
 		require.NotZero(t, txHash)
+
+		walletIndex++
 	}
 }
 

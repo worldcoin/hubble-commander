@@ -173,16 +173,17 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_AppliesFee() {
 func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AllValid() {
 	transfers := generateValidTransfers(3)
 
-	appliedTransfers, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver)
+	appliedTransfers, stateProofs, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver)
 	s.NoError(err)
 	s.Len(appliedTransfers, 3)
+	s.Len(stateProofs, 6)
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_InvalidTransfer() {
 	transfers := generateValidTransfers(2)
 	transfers = append(transfers, generateInvalidTransfers(2)...)
 
-	appliedTransfers, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver)
+	appliedTransfers, _, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver)
 	s.Nil(appliedTransfers)
 
 	var disputableTransferError *DisputableTransferError
@@ -191,9 +192,9 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_InvalidTransfer() {
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AppliesFee() {
-	generatedTransfers := generateValidTransfers(3)
+	transfers := generateValidTransfers(3)
 
-	_, err := s.transactionExecutor.ApplyTransfersForSync(generatedTransfers, s.feeReceiver)
+	_, _, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver)
 	s.NoError(err)
 
 	feeReceiverState, err := s.transactionExecutor.storage.GetStateLeaf(s.feeReceiver.StateID)

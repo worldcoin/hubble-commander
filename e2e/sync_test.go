@@ -46,9 +46,9 @@ func TestCommanderSync(t *testing.T) {
 	send31MoreTransfers(t, activeCommander.Client(), senderWallet, 1)
 
 	firstC2TWallet := wallets[len(wallets)-32]
-	firstCreate2TransferHash := testSendCreate2Transfer(t, activeCommander.Client(), senderWallet, firstC2TWallet.PublicKey())
+	firstCreate2TransferHash := testSendCreate2Transfer(t, activeCommander.Client(), senderWallet, firstC2TWallet.PublicKey(), 32)
 	testGetTransaction(t, activeCommander.Client(), firstCreate2TransferHash)
-	send31MoreCreate2Transfers(t, activeCommander.Client(), senderWallet, wallets)
+	send31MoreCreate2Transfers(t, activeCommander.Client(), senderWallet, wallets, 33)
 
 	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstTransferHash)
 	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstCreate2TransferHash)

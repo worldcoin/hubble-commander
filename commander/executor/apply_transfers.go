@@ -59,24 +59,25 @@ func (t *TransactionExecutor) ApplyTransfers(
 }
 
 func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer, feeReceiver *FeeReceiver) (
-	appliedTransfers []models.Transfer,
-	err error,
+	[]models.Transfer,
+	[]models.StateMerkleProof,
+	error,
 ) {
 	numTransfers := len(transfers)
 	if numTransfers == 0 {
-		return []models.Transfer{}, nil
+		return []models.Transfer{}, nil, nil
 	}
 
 	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*numTransfers)
 
-	appliedTransfers = make([]models.Transfer, 0, numTransfers)
+	appliedTransfers := make([]models.Transfer, 0, numTransfers)
 	combinedFee := models.MakeUint256(0)
 
 	for i := range transfers {
 		transfer := &transfers[i]
 		synced, transferError, appError := t.ApplyTransferForSync(transfer, feeReceiver.TokenID)
 		if appError != nil {
-			return nil, appError
+			return nil, nil, appError
 		}
 		stateChangeProofs = append(
 			stateChangeProofs,
@@ -84,18 +85,18 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 			synced.ReceiverStateProof,
 		)
 		if transferError != nil {
-			return nil, NewDisputableTransferError(transferError, stateChangeProofs)
+			return nil, nil, NewDisputableTransferError(transferError, stateChangeProofs)
 		}
 		appliedTransfers = append(appliedTransfers, *synced.Transfer)
 		combinedFee = *combinedFee.Add(&synced.Transfer.Fee)
 	}
 
 	if combinedFee.CmpN(0) > 0 {
-		err = t.ApplyFee(feeReceiver.StateID, combinedFee)
+		err := t.ApplyFee(feeReceiver.StateID, combinedFee)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
-	return appliedTransfers, nil
+	return appliedTransfers, stateChangeProofs, nil
 }
