@@ -22,12 +22,15 @@ func (t *TransactionExecutor) syncCreate2TransferCommitment(
 		return nil, err
 	}
 
-	appliedTransfers, _, err := t.ApplyCreate2TransfersForSync(deserializedTransfers, pubKeyIDs, feeReceiver)
+	appliedTransfers, stateProofs, err := t.ApplyCreate2TransfersForSync(deserializedTransfers, pubKeyIDs, feeReceiver)
 	if err != nil {
 		return nil, err
 	}
 
-	//TODO-COMM: verify state root here
+	err = t.verifyStateRoot(commitment.StateRoot, stateProofs)
+	if err != nil {
+		return nil, err
+	}
 
 	err = t.setPublicKeys(appliedTransfers, pubKeyIDs)
 	if err != nil {
