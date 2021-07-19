@@ -125,13 +125,12 @@ func (t *TransactionExecutor) applyC2TsForCommitment(pendingTransfers []models.C
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		pendingTransfers = morePendingTransfers // TODO-MIN: Figure out a better approach for this
+		pendingTransfers = morePendingTransfers
 	}
 }
 
 func (t *TransactionExecutor) refillPendingC2Ts(pendingTransfers []models.Create2Transfer) ([]models.Create2Transfer, error) {
-	// TODO-MIN rethink these conditions, perhaps only the 2nd one is needed. Same for normal transfers
-	if len(pendingTransfers) < int(t.cfg.MinTxsPerCommitment) || len(pendingTransfers) < int(t.cfg.MaxTxsPerCommitment) {
+	if len(pendingTransfers) < int(t.cfg.MaxTxsPerCommitment) {
 		return t.queryPendingC2Ts()
 	}
 	return pendingTransfers, nil

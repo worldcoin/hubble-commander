@@ -132,13 +132,12 @@ func (t *TransactionExecutor) applyTransfersForCommitment(pendingTransfers []mod
 		if err != nil {
 			return nil, nil, err
 		}
-		pendingTransfers = morePendingTransfers // TODO-MIN: Figure out a better approach for this
+		pendingTransfers = morePendingTransfers
 	}
 }
 
 func (t *TransactionExecutor) refillPendingTransfers(pendingTransfers []models.Transfer) ([]models.Transfer, error) {
-	// TODO-MIN check C2T version
-	if len(pendingTransfers) < int(t.cfg.MinTxsPerCommitment) || len(pendingTransfers) < int(t.cfg.MaxTxsPerCommitment) {
+	if len(pendingTransfers) < int(t.cfg.MaxTxsPerCommitment) {
 		return t.queryPendingTransfers()
 	}
 	return pendingTransfers, nil
