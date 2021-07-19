@@ -176,7 +176,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AllValid() {
 
 	txExecutor, err := NewTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
 	s.NoError(err)
-	commitmentStateRoot := calculateCommitmentStateRoot(s.Assertions, txExecutor, transfers, s.feeReceiver)
+	commitmentStateRoot := calcCommitmentStateRoot(s.Assertions, txExecutor, transfers, s.feeReceiver)
 
 	appliedTransfers, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver, commitmentStateRoot)
 	s.NoError(err)
@@ -200,7 +200,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AppliesFee() {
 
 	txExecutor, err := NewTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
 	s.NoError(err)
-	commitmentStateRoot := calculateCommitmentStateRoot(s.Assertions, txExecutor, transfers, s.feeReceiver)
+	commitmentStateRoot := calcCommitmentStateRoot(s.Assertions, txExecutor, transfers, s.feeReceiver)
 
 	_, err = s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver, commitmentStateRoot)
 	s.NoError(err)
@@ -215,10 +215,10 @@ func (s *ApplyTransfersTestSuite) calculateCommitmentStateRoot(transfers []model
 	s.NoError(err)
 	defer txExecutor.Rollback(nil)
 
-	return calculateCommitmentStateRoot(s.Assertions, txExecutor, transfers, s.feeReceiver)
+	return calcCommitmentStateRoot(s.Assertions, txExecutor, transfers, s.feeReceiver)
 }
 
-func calculateCommitmentStateRoot(
+func calcCommitmentStateRoot(
 	s *require.Assertions,
 	txExecutor *TransactionExecutor,
 	transfers []models.Transfer,
