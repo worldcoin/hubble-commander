@@ -42,6 +42,8 @@ func TestCommanderDispute(t *testing.T) {
 	ethClient := newEthClient(t, cmd.Client())
 
 	testDisputeTransitionTransfer(t, cmd.Client(), ethClient, senderWallet)
+
+	testDisputeTransitionCreate2Transfer(t, cmd.Client(), ethClient, senderWallet, wallets)
 }
 
 func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, senderWallet bls.Wallet) {
@@ -55,9 +57,24 @@ func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethCl
 	sendInvalidTransferBatch(t, ethClient)
 	testRollbackCompletion(t, sink, subscription)
 
-	testBatchesAfterDispute(t, client)
+	testBatchesAfterDispute(t, client, 1)
 
 	testSendBatch(t, client, senderWallet, 32)
+}
+
+func testDisputeTransitionCreate2Transfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, senderWallet bls.Wallet, wallets []bls.Wallet) {
+	sink := make(chan *rollup.RollupRollbackStatus)
+	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
+	require.NoError(t, err)
+	defer subscription.Unsubscribe()
+
+	firstC2TWallet := wallets[len(wallets)-32]
+	sendInvalidCreate2TransferBatch(t, ethClient, firstC2TWallet.PublicKey())
+	testRollbackCompletion(t, sink, subscription)
+
+	testBatchesAfterDispute(t, client, 2)
+
+	testSendBatch(t, client, senderWallet, 64)
 }
 
 func testSendBatch(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, startNonce uint64) {
@@ -83,12 +100,12 @@ func testSendC2TBatch(
 	waitForTxToBeIncludedInBatch(t, client, firstTransferHash)
 }
 
-func testBatchesAfterDispute(t *testing.T, client jsonrpc.RPCClient) {
+func testBatchesAfterDispute(t *testing.T, client jsonrpc.RPCClient, expectedLength int) {
 	var batches []dto.Batch
 	err := client.CallFor(&batches, "hubble_getBatches", []interface{}{nil, nil})
 
 	require.NoError(t, err)
-	require.Len(t, batches, 1)
+	require.Len(t, batches, expectedLength)
 }
 
 func testRollbackCompletion(
