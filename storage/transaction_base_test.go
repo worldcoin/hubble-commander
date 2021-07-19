@@ -38,7 +38,7 @@ func (s *TransactionBaseTestSuite) SetupSuite() {
 
 func (s *TransactionBaseTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorage()
+	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
 }
 
