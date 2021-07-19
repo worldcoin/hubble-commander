@@ -5,12 +5,12 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-func (s *Storage) AddAccountIfNotExists(account *models.Account) error {
+func (s *Storage) AddAccountIfNotExists(account *models.AccountLeaf) error {
 	return s.Badger.Upsert(account.PubKeyID, account)
 }
 
-func (s *Storage) GetAccounts(publicKey *models.PublicKey) ([]models.Account, error) {
-	accounts := make([]models.Account, 0, 1)
+func (s *Storage) GetAccounts(publicKey *models.PublicKey) ([]models.AccountLeaf, error) {
+	accounts := make([]models.AccountLeaf, 0, 1)
 	err := s.Badger.Find(
 		&accounts,
 		bh.Where("PublicKey").Eq(publicKey).Index("PublicKey"),
@@ -25,7 +25,7 @@ func (s *Storage) GetAccounts(publicKey *models.PublicKey) ([]models.Account, er
 }
 
 func (s *Storage) GetPublicKey(pubKeyID uint32) (*models.PublicKey, error) {
-	var account models.Account
+	var account models.AccountLeaf
 	err := s.Badger.Get(pubKeyID, &account)
 	if err == bh.ErrNotFound {
 		return nil, NewNotFoundError("account")

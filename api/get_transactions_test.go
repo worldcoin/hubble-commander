@@ -41,7 +41,7 @@ func (s *GetTransactionsTestSuite) TearDownTest() {
 }
 
 func (s *GetTransactionsTestSuite) addAccounts() {
-	accounts := []models.Account{
+	accounts := []models.AccountLeaf{
 		{
 			PubKeyID:  0,
 			PublicKey: models.PublicKey{1, 1, 1},
@@ -279,7 +279,7 @@ func (s *GetTransactionsTestSuite) TestGetTransactions_ReceiptsWithDetails() {
 }
 
 func (s *GetTransactionsTestSuite) TestGetTransactions_NoTransactions() {
-	account := models.Account{
+	account := models.AccountLeaf{
 		PubKeyID:  1,
 		PublicKey: models.PublicKey{1, 2, 3},
 	}

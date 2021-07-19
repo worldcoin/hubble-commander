@@ -137,7 +137,7 @@ func (s *StateLeafTestSuite) TestGetStateLeaf_NonExistentLeaf() {
 }
 
 func (s *StateLeafTestSuite) TestGetUserStatesByPublicKey() {
-	accounts := []models.Account{
+	accounts := []models.AccountLeaf{
 		{
 			PubKeyID:  1,
 			PublicKey: models.PublicKey{1, 2, 3},

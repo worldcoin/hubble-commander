@@ -45,7 +45,7 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.PopulatedGen
 		}
 		seenStateIDs[account.StateID] = true
 
-		err := storage.AddAccountIfNotExists(&models.Account{
+		err := storage.AddAccountIfNotExists(&models.AccountLeaf{
 			PubKeyID:  account.PubKeyID,
 			PublicKey: account.PublicKey,
 		})

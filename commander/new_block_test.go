@@ -94,7 +94,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_StartsRollupLoop() {
 }
 
 func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedBeforeStartup() {
-	accounts := []models.Account{
+	accounts := []models.AccountLeaf{
 		{PublicKey: *s.wallets[0].PublicKey()},
 		{PublicKey: *s.wallets[1].PublicKey()},
 	}
@@ -120,7 +120,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedWhi
 	s.startBlockLoop()
 	s.waitForLatestBlockSync()
 
-	accounts := []models.Account{
+	accounts := []models.AccountLeaf{
 		{PublicKey: *s.wallets[0].PublicKey()},
 		{PublicKey: *s.wallets[1].PublicKey()},
 	}
@@ -149,7 +149,7 @@ func (s *NewBlockLoopTestSuite) startBlockLoop() {
 	})
 }
 
-func (s *NewBlockLoopTestSuite) registerAccounts(accounts []models.Account) {
+func (s *NewBlockLoopTestSuite) registerAccounts(accounts []models.AccountLeaf) {
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)
 
@@ -248,13 +248,13 @@ func generateWallets(t *testing.T, rollupAddress common.Address, walletsAmount i
 }
 
 func seedDB(t *testing.T, storage *st.Storage, tree *st.StateTree, wallets []bls.Wallet) {
-	err := storage.AddAccountIfNotExists(&models.Account{
+	err := storage.AddAccountIfNotExists(&models.AccountLeaf{
 		PubKeyID:  0,
 		PublicKey: *wallets[0].PublicKey(),
 	})
 	require.NoError(t, err)
 
-	err = storage.AddAccountIfNotExists(&models.Account{
+	err = storage.AddAccountIfNotExists(&models.AccountLeaf{
 		PubKeyID:  1,
 		PublicKey: *wallets[1].PublicKey(),
 	})

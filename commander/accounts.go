@@ -37,7 +37,7 @@ func (c *Commander) syncAccounts(start, end uint64) error {
 		}
 
 		pubkey := unpack[0].([4]*big.Int)
-		account := models.Account{
+		account := models.AccountLeaf{
 			PubKeyID:  uint32(it.Event.PubkeyID.Uint64()),
 			PublicKey: models.MakePublicKeyFromInts(pubkey),
 		}

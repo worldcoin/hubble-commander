@@ -48,7 +48,7 @@ func (s *GetTransactionTestSuite) SetupTest() {
 	s.wallet, err = bls.NewRandomWallet(*s.domain)
 	s.NoError(err)
 
-	err = s.storage.AddAccountIfNotExists(&models.Account{
+	err = s.storage.AddAccountIfNotExists(&models.AccountLeaf{
 		PubKeyID:  123,
 		PublicKey: *s.wallet.PublicKey(),
 	})
@@ -92,7 +92,7 @@ func (s *GetTransactionTestSuite) TestGetTransaction_Create2Transfer() {
 	receiverWallet, err := bls.NewRandomWallet(*s.domain)
 	s.NoError(err)
 
-	err = s.storage.AddAccountIfNotExists(&models.Account{
+	err = s.storage.AddAccountIfNotExists(&models.AccountLeaf{
 		PubKeyID:  10,
 		PublicKey: *receiverWallet.PublicKey(),
 	})

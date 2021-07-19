@@ -60,7 +60,7 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 		Nonce:    models.MakeUint256(0),
 	}
 
-	accounts := []models.Account{
+	accounts := []models.AccountLeaf{
 		{
 			PubKeyID:  1,
 			PublicKey: models.PublicKey{1, 2, 3},

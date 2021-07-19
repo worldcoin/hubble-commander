@@ -52,7 +52,7 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, nil, context.Background())
 	s.NoError(err)
 
-	accounts := []models.Account{
+	accounts := []models.AccountLeaf{
 		{
 			PubKeyID:  0,
 			PublicKey: models.PublicKey{1, 2, 3},

@@ -10,11 +10,11 @@ import (
 )
 
 var (
-	account1 = models.Account{
+	account1 = models.AccountLeaf{
 		PubKeyID:  1,
 		PublicKey: models.PublicKey{3, 4, 5},
 	}
-	account2 = models.Account{
+	account2 = models.AccountLeaf{
 		PubKeyID:  2,
 		PublicKey: models.PublicKey{4, 5, 6},
 	}
@@ -48,7 +48,7 @@ func (s *AccountTestSuite) TestAddAccountIfNotExists_AddAndRetrieve() {
 	res, err := s.storage.GetAccounts(&account1.PublicKey)
 	s.NoError(err)
 
-	s.Equal([]models.Account{account1}, res)
+	s.Equal([]models.AccountLeaf{account1}, res)
 }
 
 func (s *AccountTestSuite) TestGetAccounts_NoPublicKeys() {
@@ -58,7 +58,7 @@ func (s *AccountTestSuite) TestGetAccounts_NoPublicKeys() {
 
 func (s *AccountTestSuite) TestGetAccounts_ReturnsAllAccounts() {
 	pubKey := models.PublicKey{1, 2, 3}
-	accounts := []models.Account{{
+	accounts := []models.AccountLeaf{{
 		PubKeyID:  0,
 		PublicKey: pubKey,
 	}, {
@@ -87,11 +87,11 @@ func (s *AccountTestSuite) TestAddAccountIfNotExists_Idempotent() {
 	res, err := s.storage.GetAccounts(&account1.PublicKey)
 	s.NoError(err)
 
-	s.Equal([]models.Account{account1}, res)
+	s.Equal([]models.AccountLeaf{account1}, res)
 }
 
 func (s *AccountTestSuite) TestGetPublicKey_ReturnsPublicKey() {
-	account := models.Account{
+	account := models.AccountLeaf{
 		PubKeyID:  0,
 		PublicKey: models.PublicKey{1, 2, 3},
 	}
@@ -118,7 +118,7 @@ func (s *AccountTestSuite) TestGetUnusedPubKeyID_NoLeaves() {
 }
 
 func (s *AccountTestSuite) TestGetUnusedPubKeyID_NoUnusedPublicIDs() {
-	account := models.Account{
+	account := models.AccountLeaf{
 		PubKeyID:  0,
 		PublicKey: models.PublicKey{1, 2, 3},
 	}
@@ -143,7 +143,7 @@ func (s *AccountTestSuite) TestGetUnusedPubKeyID_NoUnusedPublicIDs() {
 }
 
 func (s *AccountTestSuite) TestGetUnusedPubKeyID() {
-	accounts := []models.Account{
+	accounts := []models.AccountLeaf{
 		{
 			PubKeyID:  0,
 			PublicKey: models.PublicKey{1, 2, 3},
@@ -198,7 +198,7 @@ func (s *AccountTestSuite) TestGetUnusedPubKeyID() {
 }
 
 func (s *AccountTestSuite) TestGetUnusedPubKeyID_MultipleTokenIDs() {
-	accounts := []models.Account{
+	accounts := []models.AccountLeaf{
 		{
 			PubKeyID:  1,
 			PublicKey: models.PublicKey{2, 3, 4},

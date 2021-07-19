@@ -63,7 +63,7 @@ func (s *TransactionBaseTestSuite) TestSetTransactionError() {
 }
 
 func (s *TransactionBaseTestSuite) TestGetLatestTransactionNonce() {
-	account := models.Account{
+	account := models.AccountLeaf{
 		PubKeyID:  1,
 		PublicKey: models.PublicKey{1, 2, 3},
 	}

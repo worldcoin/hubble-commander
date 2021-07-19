@@ -35,7 +35,7 @@ func (s *GetUserStatesTestSuite) TearDownTest() {
 }
 
 func (s *GetUserStatesTestSuite) TestGetUserStates() {
-	accounts := []models.Account{
+	accounts := []models.AccountLeaf{
 		{
 			PubKeyID:  1,
 			PublicKey: models.PublicKey{1, 2, 3},

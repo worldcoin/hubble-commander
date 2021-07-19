@@ -2,7 +2,7 @@ package models
 
 import "github.com/ethereum/go-ethereum/common"
 
-type Account struct {
+type AccountLeaf struct {
 	PubKeyID  uint32
 	PublicKey PublicKey `badgerhold:"index"`
 }
