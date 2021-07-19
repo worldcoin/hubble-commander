@@ -358,7 +358,7 @@ func (s *DisputeTransitionTestSuite) getC2TStateMerkleProofs(
 	s.beginExecutorTransaction()
 	var disputableTransferError *DisputableTransferError
 	for i := range txs {
-		_, err := s.transactionExecutor.ApplyCreate2TransfersForSync(txs[i], pubKeyIDs[i], feeReceiver)
+		_, _, err := s.transactionExecutor.ApplyCreate2TransfersForSync(txs[i], pubKeyIDs[i], feeReceiver)
 		if err != nil {
 			s.ErrorAs(err, &disputableTransferError)
 			s.Len(disputableTransferError.Proofs, len(txs[i])*2)

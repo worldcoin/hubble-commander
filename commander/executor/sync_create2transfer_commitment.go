@@ -22,7 +22,7 @@ func (t *TransactionExecutor) syncCreate2TransferCommitment(
 		return nil, err
 	}
 
-	appliedTransfers, err := t.ApplyCreate2TransfersForSync(deserializedTransfers, pubKeyIDs, feeReceiver)
+	appliedTransfers, _, err := t.ApplyCreate2TransfersForSync(deserializedTransfers, pubKeyIDs, feeReceiver)
 	if err != nil {
 		return nil, err
 	}

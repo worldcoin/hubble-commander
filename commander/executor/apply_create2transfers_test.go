@@ -200,10 +200,10 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_RegistersPubl
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_AllValid() {
 	transfers, pubKeyIDs := generateValidCreate2TransfersForSync(3, 4)
 
-	appliedTransfers, err := s.transactionExecutor.ApplyCreate2TransfersForSync(transfers, pubKeyIDs, s.feeReceiver)
+	appliedTransfers, stateProofs, err := s.transactionExecutor.ApplyCreate2TransfersForSync(transfers, pubKeyIDs, s.feeReceiver)
 	s.NoError(err)
-
 	s.Len(appliedTransfers, 3)
+	s.Len(stateProofs, 6)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidTransfer() {
@@ -213,7 +213,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_Invali
 	transfers = append(transfers, invalidTxs...)
 	pubKeyIDs = append(pubKeyIDs, invalidPubKeyIDs...)
 
-	appliedTransfers, err := s.transactionExecutor.ApplyCreate2TransfersForSync(transfers, pubKeyIDs, s.feeReceiver)
+	appliedTransfers, _, err := s.transactionExecutor.ApplyCreate2TransfersForSync(transfers, pubKeyIDs, s.feeReceiver)
 	s.Nil(appliedTransfers)
 
 	var disputableTransferError *DisputableTransferError
@@ -223,14 +223,14 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_Invali
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidSlicesLength() {
 	generatedTransfers := generateValidCreate2Transfers(3)
-	_, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, []uint32{1, 2}, s.feeReceiver)
+	_, _, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, []uint32{1, 2}, s.feeReceiver)
 	s.Equal(ErrInvalidSliceLength, err)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_AppliesFee() {
 	generatedTransfers, pubKeyIDs := generateValidCreate2TransfersForSync(3, 4)
 
-	_, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, pubKeyIDs, s.feeReceiver)
+	_, _, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, pubKeyIDs, s.feeReceiver)
 	s.NoError(err)
 
 	feeReceiverState, err := s.transactionExecutor.storage.GetStateLeaf(s.feeReceiver.StateID)
