@@ -43,17 +43,10 @@ func TestCommander(t *testing.T) {
 	testGetVersion(t, commander.Client())
 	firstUserState := testGetUserStates(t, commander.Client(), senderWallet)
 	testGetPublicKey(t, commander.Client(), &firstUserState, senderWallet)
-	firstTransferHash := testSendTransfer(t, commander.Client(), senderWallet, 0)
-	testGetTransaction(t, commander.Client(), firstTransferHash)
-	send31MoreTransfers(t, commander.Client(), senderWallet, 1)
+	testSendTransferBatch(t, commander.Client(), senderWallet, 0)
 
 	firstC2TWallet := wallets[len(wallets)-32]
-	firstCreate2TransferHash := testSendCreate2Transfer(t, commander.Client(), senderWallet, firstC2TWallet.PublicKey(), 32)
-	testGetTransaction(t, commander.Client(), firstCreate2TransferHash)
-	send31MoreCreate2Transfers(t, commander.Client(), senderWallet, wallets, 33)
-
-	waitForTxToBeIncludedInBatch(t, commander.Client(), firstTransferHash)
-	waitForTxToBeIncludedInBatch(t, commander.Client(), firstCreate2TransferHash)
+	testSendC2TBatch(t, commander.Client(), senderWallet, wallets, firstC2TWallet.PublicKey(), 32)
 
 	testSenderStateAfterTransfers(t, commander.Client(), senderWallet)
 	testFeeReceiverStateAfterTransfers(t, commander.Client(), feeReceiverWallet)
