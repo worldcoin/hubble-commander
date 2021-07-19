@@ -68,6 +68,21 @@ func testSendBatch(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wall
 	waitForTxToBeIncludedInBatch(t, client, firstTransferHash)
 }
 
+func testSendC2TBatch(
+	t *testing.T,
+	client jsonrpc.RPCClient,
+	senderWallet bls.Wallet,
+	wallets []bls.Wallet,
+	targetPublicKey *models.PublicKey,
+	startNonce uint64,
+) {
+	firstTransferHash := testSendCreate2Transfer(t, client, senderWallet, targetPublicKey, startNonce)
+	testGetTransaction(t, client, firstTransferHash)
+	send31MoreCreate2Transfers(t, client, senderWallet, wallets, startNonce+1)
+
+	waitForTxToBeIncludedInBatch(t, client, firstTransferHash)
+}
+
 func testBatchesAfterDispute(t *testing.T, client jsonrpc.RPCClient) {
 	var batches []dto.Batch
 	err := client.CallFor(&batches, "hubble_getBatches", []interface{}{nil, nil})
