@@ -379,7 +379,7 @@ func createAndSubmitTransferBatch(
 }
 
 func (s *SyncTestSuite) createAndSubmitInvalidTransferBatch(tx *models.Transfer) *models.Batch {
-	_, err := s.storage.AddTransfer(tx)
+	_, err := s.transactionExecutor.storage.AddTransfer(tx)
 	s.NoError(err)
 
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
@@ -422,7 +422,7 @@ func createAndSubmitC2TBatch(
 }
 
 func (s *SyncTestSuite) createAndSubmitInvalidC2TBatch(tx *models.Create2Transfer) models.Commitment {
-	_, err := s.storage.AddCreate2Transfer(tx)
+	_, err := s.transactionExecutor.storage.AddCreate2Transfer(tx)
 	s.NoError(err)
 
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Create2Transfer)

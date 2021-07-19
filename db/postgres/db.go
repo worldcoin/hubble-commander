@@ -13,7 +13,10 @@ import (
 	// Needed for migrator
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 )
+
+const clonedDBSuffix = "_clone"
 
 type DatabaseLike interface {
 	Select(dest interface{}, query string, args ...interface{}) error
@@ -113,4 +116,53 @@ func CreateDatasource(host, port, user, password, dbname *string) string {
 	}
 
 	return strings.Join(datasource, " ")
+}
+
+func (d *Database) Clone(currentConfig *config.PostgresConfig) (clonedDB *Database, err error) {
+	err = d.Close()
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	datasource := CreateDatasource(currentConfig.Host, currentConfig.Port, currentConfig.User, currentConfig.Password, nil)
+	database, err := sqlx.Connect("postgres", datasource)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	defer closeDB(database, &err)
+
+	clonedDBName := currentConfig.Name + clonedDBSuffix
+
+	err = disconnectUsers(database, clonedDBName)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	err = disconnectUsers(database, currentConfig.Name)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	clonedDB, err = cloneDatabase(database, currentConfig, clonedDBName)
+	if err != nil {
+		return nil, err
+	}
+
+	err = d.replaceDatabaseInstance(currentConfig, clonedDBName)
+	if err != nil {
+		return nil, err
+	}
+
+	return clonedDB, nil
+}
+
+func (d *Database) replaceDatabaseInstance(currentConfig *config.PostgresConfig, clonedDBName string) error {
+	clonedConfig := *currentConfig
+	clonedConfig.Name = clonedDBName
+	initialDatabase, err := NewDatabase(&clonedConfig)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	*d = *initialDatabase
+	return nil
 }
