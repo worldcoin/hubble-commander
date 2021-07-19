@@ -40,7 +40,8 @@ func GetConfig() *Config {
 		Rollup: &RollupConfig{
 			SyncSize:               getUint32("rollup.sync_size", 50),
 			FeeReceiverPubKeyID:    getUint32("rollup.fee_receiver_pub_key_id", 0),
-			TxsPerCommitment:       getUint32("rollup.txs_per_commitment", 32),
+			MinTxsPerCommitment:    getUint32("rollup.min_txs_per_commitment", 1),
+			MaxTxsPerCommitment:    getUint32("rollup.max_txs_per_commitment", 32),
 			MinCommitmentsPerBatch: getUint32("rollup.min_commitments_per_batch", 1),
 			MaxCommitmentsPerBatch: getUint32("rollup.max_commitments_per_batch", 32),
 			CommitmentLoopInterval: getDuration("rollup.commitment_loop_interval", 500*time.Millisecond),
@@ -79,7 +80,8 @@ func GetTestConfig() *Config {
 		Rollup: &RollupConfig{
 			SyncSize:               getUint32("rollup.sync_size", 50),
 			FeeReceiverPubKeyID:    getUint32("rollup.fee_receiver_pub_key_id", 0),
-			TxsPerCommitment:       getUint32("rollup.txs_per_commitment", 2),
+			MinTxsPerCommitment:    getUint32("rollup.min_txs_per_commitment", 2),
+			MaxTxsPerCommitment:    getUint32("rollup.max_txs_per_commitment", 2),
 			MinCommitmentsPerBatch: getUint32("rollup.min_commitments_per_batch", 1),
 			MaxCommitmentsPerBatch: getUint32("rollup.max_commitments_per_batch", 32),
 			CommitmentLoopInterval: getDuration("rollup.commitment_loop_interval", 500*time.Millisecond),

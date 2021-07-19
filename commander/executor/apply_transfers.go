@@ -19,7 +19,7 @@ func (t *TransactionExecutor) ApplyTransfers(
 	}
 
 	returnStruct := &AppliedTransfers{}
-	returnStruct.appliedTransfers = make([]models.Transfer, 0, t.cfg.TxsPerCommitment)
+	returnStruct.appliedTransfers = make([]models.Transfer, 0, t.cfg.MaxTxsPerCommitment)
 
 	combinedFee := models.MakeUint256(0)
 

@@ -35,8 +35,8 @@ func (t *TransactionExecutor) ApplyCreate2Transfers(
 	defer unsubscribe()
 
 	returnStruct := &AppliedC2Transfers{}
-	returnStruct.appliedTransfers = make([]models.Create2Transfer, 0, t.cfg.TxsPerCommitment)
-	returnStruct.addedPubKeyIDs = make([]uint32, 0, t.cfg.TxsPerCommitment)
+	returnStruct.appliedTransfers = make([]models.Create2Transfer, 0, t.cfg.MaxTxsPerCommitment)
+	returnStruct.addedPubKeyIDs = make([]uint32, 0, t.cfg.MaxTxsPerCommitment)
 
 	combinedFee := models.NewUint256(0)
 
@@ -89,7 +89,7 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 		return nil, nil, ErrInvalidSliceLength
 	}
 
-	appliedTransfers := make([]models.Create2Transfer, 0, t.cfg.TxsPerCommitment)
+	appliedTransfers := make([]models.Create2Transfer, 0, t.cfg.MaxTxsPerCommitment)
 	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*len(transfers))
 	combinedFee := models.NewUint256(0)
 

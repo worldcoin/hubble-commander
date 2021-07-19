@@ -36,7 +36,8 @@ func (s *BatchesTestSuite) SetupSuite() {
 	s.cfg = config.GetTestConfig()
 	s.cfg.Rollup.MinCommitmentsPerBatch = 1
 	s.cfg.Rollup.MaxCommitmentsPerBatch = 32
-	s.cfg.Rollup.TxsPerCommitment = 1
+	s.cfg.Rollup.MinTxsPerCommitment = 1
+	s.cfg.Rollup.MaxTxsPerCommitment = 1
 	s.cfg.Rollup.DevMode = false
 }
 
@@ -211,6 +212,7 @@ func (s *BatchesTestSuite) syncAllBlocks() {
 	s.NoError(err)
 }
 
+// Make sure that the commander and the transaction executor uses the same storage
 func (s *BatchesTestSuite) createAndSubmitTransferBatch(
 	storage *st.Storage,
 	txExecutor *executor.TransactionExecutor,
@@ -233,6 +235,7 @@ func (s *BatchesTestSuite) createAndSubmitTransferBatch(
 	return pendingBatch
 }
 
+// Make sure that the commander and the transaction executor uses the same storage
 func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batch {
 	_, err := s.cmd.storage.AddTransfer(tx)
 	s.NoError(err)
@@ -254,6 +257,7 @@ func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batc
 	return pendingBatch
 }
 
+// Make sure that the commander and the transaction executor uses the same storage
 func (s *BatchesTestSuite) createAndSubmitInvalidTransferBatch(
 	storage *st.Storage,
 	txExecutor *executor.TransactionExecutor,
