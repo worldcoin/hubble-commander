@@ -59,10 +59,11 @@ func (t *TransactionExecutor) ApplyTransfers(
 	return returnStruct, nil
 }
 
-func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer, feeReceiver *FeeReceiver, commitmentStateRoot common.Hash) (
-	appliedTransfers []models.Transfer,
-	err error,
-) {
+func (t *TransactionExecutor) ApplyTransfersForSync(
+	transfers []models.Transfer,
+	feeReceiver *FeeReceiver,
+	commitmentStateRoot common.Hash,
+) (appliedTransfers []models.Transfer, err error) {
 	numTransfers := len(transfers)
 	if numTransfers == 0 {
 		return []models.Transfer{}, nil

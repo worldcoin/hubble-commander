@@ -199,23 +199,23 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_RegistersPubl
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_AllValid() {
-	generatedTransfers, pubKeyIDs := generateValidCreate2TransfersForSync(3, 4)
-	stateRoot := s.calcC2TCommitmentStateRoot(generatedTransfers, pubKeyIDs)
+	transfers, pubKeyIDs := generateValidCreate2TransfersForSync(3, 4)
+	stateRoot := s.calcCommitmentStateRoot(transfers, pubKeyIDs)
 
-	appliedTransfers, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, pubKeyIDs, s.feeReceiver, stateRoot)
+	appliedTransfers, err := s.transactionExecutor.ApplyCreate2TransfersForSync(transfers, pubKeyIDs, s.feeReceiver, stateRoot)
 	s.NoError(err)
 
 	s.Len(appliedTransfers, 3)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidTransfer() {
-	generatedTransfers, pubKeyIDs := generateValidCreate2TransfersForSync(2, 4)
+	transfers, pubKeyIDs := generateValidCreate2TransfersForSync(2, 4)
 	invalidTxs, invalidPubKeyIDs := generateInvalidCreate2TransfersForSync(3, 6)
 
-	generatedTransfers = append(generatedTransfers, invalidTxs...)
+	transfers = append(transfers, invalidTxs...)
 	pubKeyIDs = append(pubKeyIDs, invalidPubKeyIDs...)
 
-	appliedTransfers, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, pubKeyIDs, s.feeReceiver, utils.RandomHash())
+	appliedTransfers, err := s.transactionExecutor.ApplyCreate2TransfersForSync(transfers, pubKeyIDs, s.feeReceiver, utils.RandomHash())
 	s.Nil(appliedTransfers)
 
 	var disputableTransferError *DisputableTransferError
@@ -231,7 +231,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_Invali
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_AppliesFee() {
 	generatedTransfers, pubKeyIDs := generateValidCreate2TransfersForSync(3, 4)
-	stateRoot := s.calcC2TCommitmentStateRoot(generatedTransfers, pubKeyIDs)
+	stateRoot := s.calcCommitmentStateRoot(generatedTransfers, pubKeyIDs)
 
 	_, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, pubKeyIDs, s.feeReceiver, stateRoot)
 	s.NoError(err)
@@ -277,7 +277,7 @@ func (s *ApplyCreate2TransfersTestSuite) getRegisteredAccounts(startBlockNumber 
 	return registeredAccounts
 }
 
-func (s *ApplyCreate2TransfersTestSuite) calcC2TCommitmentStateRoot(transfers []models.Create2Transfer, pubKeyIDs []uint32) common.Hash {
+func (s *ApplyCreate2TransfersTestSuite) calcCommitmentStateRoot(transfers []models.Create2Transfer, pubKeyIDs []uint32) common.Hash {
 	txExecutor, err := NewTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
 	s.NoError(err)
 	defer txExecutor.Rollback(nil)

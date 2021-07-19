@@ -387,7 +387,11 @@ func (s *DisputeTransitionTestSuite) getC2TStateMerkleProofs(
 	return disputableTransferError.Proofs
 }
 
-func (s *DisputeTransitionTestSuite) calcC2TCommitmentsStateRoots(txs [][]models.Create2Transfer, pubKeyIDs [][]uint32, feeReceiver *FeeReceiver) []common.Hash {
+func (s *DisputeTransitionTestSuite) calcC2TCommitmentsStateRoots(
+	txs [][]models.Create2Transfer,
+	pubKeyIDs [][]uint32,
+	feeReceiver *FeeReceiver,
+) []common.Hash {
 	txExecutor, err := NewTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
 	s.NoError(err)
 	defer txExecutor.Rollback(nil)
