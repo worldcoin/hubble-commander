@@ -325,17 +325,17 @@ func (s *DisputeTransitionTestSuite) beginExecutorTransaction() {
 }
 
 func (s *DisputeTransitionTestSuite) getTransferStateMerkleProofs(txs [][]models.Transfer) []models.StateMerkleProof {
-	s.beginExecutorTransaction()
-
 	feeReceiver := &FeeReceiver{
 		StateID: 0,
 		TokenID: models.MakeUint256(0),
 	}
 
+	stateRoots := s.calcCommitmentsStateRoots(txs, feeReceiver)
+
+	s.beginExecutorTransaction()
 	var disputableTransferError *DisputableTransferError
 	for i := range txs {
-		//TODO-COMM: replace with correct post state root
-		_, err := s.transactionExecutor.ApplyTransfersForSync(txs[i], feeReceiver, utils.RandomHash())
+		_, err := s.transactionExecutor.ApplyTransfersForSync(txs[i], feeReceiver, stateRoots[i])
 		if err != nil {
 			s.ErrorAs(err, &disputableTransferError)
 			s.Len(disputableTransferError.Proofs, len(txs[i])*2)
@@ -346,6 +346,19 @@ func (s *DisputeTransitionTestSuite) getTransferStateMerkleProofs(txs [][]models
 
 	s.transactionExecutor.Rollback(nil)
 	return disputableTransferError.Proofs
+}
+
+func (s *DisputeTransitionTestSuite) calcCommitmentsStateRoots(txs [][]models.Transfer, feeReceiver *FeeReceiver) []common.Hash {
+	txExecutor, err := NewTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
+	s.NoError(err)
+	defer txExecutor.Rollback(nil)
+
+	stateRoots := make([]common.Hash, 0, len(txs))
+	for i := range txs {
+		stateRoot := calculateCommitmentStateRoot(s.Assertions, txExecutor, txs[i], feeReceiver)
+		stateRoots = append(stateRoots, stateRoot)
+	}
+	return stateRoots
 }
 
 func (s *DisputeTransitionTestSuite) getC2TStateMerkleProofs(
@@ -528,6 +541,6 @@ func (s *DisputeTransitionTestSuite) createUserState(pubKeyID uint32, balance, n
 	}
 }
 
-func TestTestSuite(t *testing.T) {
+func TestDisputeTransitionTestSuite(t *testing.T) {
 	suite.Run(t, new(DisputeTransitionTestSuite))
 }

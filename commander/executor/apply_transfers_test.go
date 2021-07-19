@@ -210,14 +210,20 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AppliesFee() {
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }
 
+func (s *ApplyTransfersTestSuite) calculateCommitmentStateRoot(transfers []models.Transfer) common.Hash {
+	txExecutor, err := NewTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
+	s.NoError(err)
+	defer txExecutor.Rollback(nil)
+
+	return calculateCommitmentStateRoot(s.Assertions, txExecutor, transfers, s.feeReceiver)
+}
+
 func calculateCommitmentStateRoot(
 	s *require.Assertions,
 	txExecutor *TransactionExecutor,
 	transfers []models.Transfer,
 	feeReceiver *FeeReceiver,
 ) common.Hash {
-	defer txExecutor.Rollback(nil)
-
 	combinedFee := models.MakeUint256(0)
 	for i := range transfers {
 		synced, transferError, appError := txExecutor.ApplyTransferForSync(&transfers[i], feeReceiver.TokenID)
