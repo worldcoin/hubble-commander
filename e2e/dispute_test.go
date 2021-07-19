@@ -18,6 +18,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/event"
 	"github.com/stretchr/testify/require"
@@ -42,10 +43,12 @@ func TestCommanderDispute(t *testing.T) {
 	ethClient := newEthClient(t, cmd.Client())
 
 	testDisputeTransitionTransfer(t, cmd.Client(), ethClient, senderWallet)
+
+	testDisputeTransitionCreate2Transfer(t, cmd.Client(), ethClient, senderWallet, wallets)
 }
 
 func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, senderWallet bls.Wallet) {
-	testSendBatch(t, client, senderWallet, 0)
+	testSendTransferBatch(t, client, senderWallet, 0)
 
 	sink := make(chan *rollup.RollupRollbackStatus)
 	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
@@ -55,12 +58,33 @@ func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethCl
 	sendInvalidTransferBatch(t, ethClient)
 	testRollbackCompletion(t, sink, subscription)
 
-	testBatchesAfterDispute(t, client)
+	testBatchesAfterDispute(t, client, 1)
 
-	testSendBatch(t, client, senderWallet, 32)
+	testSendTransferBatch(t, client, senderWallet, 32)
 }
 
-func testSendBatch(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, startNonce uint64) {
+func testDisputeTransitionCreate2Transfer(
+	t *testing.T,
+	client jsonrpc.RPCClient,
+	ethClient *eth.Client,
+	senderWallet bls.Wallet,
+	wallets []bls.Wallet,
+) {
+	sink := make(chan *rollup.RollupRollbackStatus)
+	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
+	require.NoError(t, err)
+	defer subscription.Unsubscribe()
+
+	firstC2TWallet := wallets[len(wallets)-32]
+	sendInvalidCreate2TransferBatch(t, ethClient, firstC2TWallet.PublicKey())
+	testRollbackCompletion(t, sink, subscription)
+
+	testBatchesAfterDispute(t, client, 2)
+
+	testSendC2TBatch(t, client, senderWallet, wallets, firstC2TWallet.PublicKey(), 64)
+}
+
+func testSendTransferBatch(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, startNonce uint64) {
 	firstTransferHash := testSendTransfer(t, client, senderWallet, startNonce)
 	testGetTransaction(t, client, firstTransferHash)
 	send31MoreTransfers(t, client, senderWallet, startNonce+1)
@@ -68,12 +92,27 @@ func testSendBatch(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wall
 	waitForTxToBeIncludedInBatch(t, client, firstTransferHash)
 }
 
-func testBatchesAfterDispute(t *testing.T, client jsonrpc.RPCClient) {
+func testSendC2TBatch(
+	t *testing.T,
+	client jsonrpc.RPCClient,
+	senderWallet bls.Wallet,
+	wallets []bls.Wallet,
+	targetPublicKey *models.PublicKey,
+	startNonce uint64,
+) {
+	firstTransferHash := testSendCreate2Transfer(t, client, senderWallet, targetPublicKey, startNonce)
+	testGetTransaction(t, client, firstTransferHash)
+	send31MoreCreate2Transfers(t, client, senderWallet, wallets, startNonce+1)
+
+	waitForTxToBeIncludedInBatch(t, client, firstTransferHash)
+}
+
+func testBatchesAfterDispute(t *testing.T, client jsonrpc.RPCClient, expectedLength int) {
 	var batches []dto.Batch
 	err := client.CallFor(&batches, "hubble_getBatches", []interface{}{nil, nil})
 
 	require.NoError(t, err)
-	require.Len(t, batches, 1)
+	require.Len(t, batches, expectedLength)
 }
 
 func testRollbackCompletion(
@@ -109,6 +148,33 @@ func sendInvalidTransferBatch(t *testing.T, ethClient *eth.Client) {
 	encodedTransfer, err := encoder.EncodeTransferForCommitment(&transfer)
 	require.NoError(t, err)
 
+	sendCommitment(t, ethClient, encodedTransfer, 2)
+}
+
+func sendInvalidCreate2TransferBatch(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey) {
+	transfer := models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(2_000_000_000_000_000_000),
+			Fee:         models.MakeUint256(10),
+		},
+		ToStateID: ref.Uint32(6),
+	}
+
+	registrations, unsubscribe, err := ethClient.WatchRegistrations(&bind.WatchOpts{})
+	require.NoError(t, err)
+	defer unsubscribe()
+
+	pubKeyID, err := ethClient.RegisterAccount(toPublicKey, registrations)
+	require.NoError(t, err)
+
+	encodedTransfer, err := encoder.EncodeCreate2TransferForCommitment(&transfer, *pubKeyID)
+	require.NoError(t, err)
+
+	sendCommitment(t, ethClient, encodedTransfer, 3)
+}
+
+func sendCommitment(t *testing.T, ethClient *eth.Client, encodedTransfer []byte, batchID uint64) {
 	commitment := models.Commitment{
 		Transactions:      encodedTransfer,
 		FeeReceiver:       0,
@@ -121,7 +187,7 @@ func sendInvalidTransferBatch(t *testing.T, ethClient *eth.Client) {
 	_, err = deployer.WaitToBeMined(ethClient.ChainConnection.GetBackend(), transaction)
 	require.NoError(t, err)
 
-	_, err = ethClient.GetBatch(models.NewUint256(2))
+	_, err = ethClient.GetBatch(models.NewUint256(batchID))
 	require.NoError(t, err)
 }
 
