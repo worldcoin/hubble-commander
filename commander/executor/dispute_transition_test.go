@@ -355,7 +355,7 @@ func (s *DisputeTransitionTestSuite) calcTransferCommitmentsStateRoots(txs [][]m
 
 	stateRoots := make([]common.Hash, 0, len(txs))
 	for i := range txs {
-		stateRoot := calcCommitmentStateRoot(s.Assertions, txExecutor, txs[i], feeReceiver)
+		stateRoot := calcTransferCommitmentStateRoot(s.Assertions, txExecutor, txs[i], feeReceiver)
 		stateRoots = append(stateRoots, stateRoot)
 	}
 	return stateRoots

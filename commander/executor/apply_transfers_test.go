@@ -173,12 +173,9 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_AppliesFee() {
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AllValid() {
 	transfers := generateValidTransfers(3)
+	stateRoot := s.calcCommitmentStateRoot(transfers)
 
-	txExecutor, err := NewTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
-	s.NoError(err)
-	commitmentStateRoot := calcCommitmentStateRoot(s.Assertions, txExecutor, transfers, s.feeReceiver)
-
-	appliedTransfers, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver, commitmentStateRoot)
+	appliedTransfers, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver, stateRoot)
 	s.NoError(err)
 	s.Len(appliedTransfers, 3)
 }
@@ -197,12 +194,9 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_InvalidTransfer() {
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AppliesFee() {
 	transfers := generateValidTransfers(3)
+	stateRoot := s.calcCommitmentStateRoot(transfers)
 
-	txExecutor, err := NewTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
-	s.NoError(err)
-	commitmentStateRoot := calcCommitmentStateRoot(s.Assertions, txExecutor, transfers, s.feeReceiver)
-
-	_, err = s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver, commitmentStateRoot)
+	_, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver, stateRoot)
 	s.NoError(err)
 
 	feeReceiverState, err := s.transactionExecutor.storage.GetStateLeaf(s.feeReceiver.StateID)
@@ -210,15 +204,15 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AppliesFee() {
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }
 
-func (s *ApplyTransfersTestSuite) calculateCommitmentStateRoot(transfers []models.Transfer) common.Hash {
+func (s *ApplyTransfersTestSuite) calcCommitmentStateRoot(transfers []models.Transfer) common.Hash {
 	txExecutor, err := NewTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
 	s.NoError(err)
 	defer txExecutor.Rollback(nil)
 
-	return calcCommitmentStateRoot(s.Assertions, txExecutor, transfers, s.feeReceiver)
+	return calcTransferCommitmentStateRoot(s.Assertions, txExecutor, transfers, s.feeReceiver)
 }
 
-func calcCommitmentStateRoot(
+func calcTransferCommitmentStateRoot(
 	s *require.Assertions,
 	txExecutor *TransactionExecutor,
 	transfers []models.Transfer,
