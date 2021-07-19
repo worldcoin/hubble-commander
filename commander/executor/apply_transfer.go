@@ -12,10 +12,11 @@ var (
 	ErrInvalidSliceLength = errors.New("invalid slices length")
 	ErrNilReceiverStateID = errors.New("transfer receiver state id cannot be nil")
 
-	ErrBalanceTooLow          = errors.New("not enough balance")
-	ErrInvalidSenderTokenID   = errors.New("invalid sender token ID")
-	ErrInvalidReceiverTokenID = errors.New("invalid receiver token ID")
-	ErrInvalidTokenAmount     = errors.New("amount cannot be equal to 0")
+	ErrBalanceTooLow              = errors.New("not enough balance")
+	ErrInvalidSenderTokenID       = errors.New("invalid sender token ID")
+	ErrInvalidReceiverTokenID     = errors.New("invalid receiver token ID")
+	ErrInvalidTokenAmount         = errors.New("amount cannot be equal to 0")
+	ErrInvalidCommitmentStateRoot = errors.New("invalid commitment post state root")
 )
 
 func (t *TransactionExecutor) ApplyTransfer(

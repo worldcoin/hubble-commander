@@ -3,6 +3,7 @@ package executor
 import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 var (
@@ -33,7 +34,12 @@ func (t *TransactionExecutor) syncTransferCommitment(
 		return nil, err
 	}
 
-	appliedTransfers, err := t.ApplyTransfersForSync(transfers, feeReceiver)
+	appliedTransfers, stateProofs, err := t.ApplyTransfersForSync(transfers, feeReceiver)
+	if err != nil {
+		return nil, err
+	}
+
+	err = t.verifyStateRoot(commitment.StateRoot, stateProofs)
 	if err != nil {
 		return nil, err
 	}
@@ -57,4 +63,15 @@ func (t *TransactionExecutor) getSyncedCommitmentFeeReceiver(commitment *encoder
 		StateID: commitment.FeeReceiver,
 		TokenID: feeReceiverState.TokenID,
 	}, nil
+}
+
+func (t *TransactionExecutor) verifyStateRoot(commitmentPostState common.Hash, proofs []models.StateMerkleProof) error {
+	postStateRoot, err := t.stateTree.Root()
+	if err != nil {
+		return err
+	}
+	if *postStateRoot != commitmentPostState {
+		return NewDisputableTransferError(ErrInvalidCommitmentStateRoot, proofs)
+	}
+	return nil
 }

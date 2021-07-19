@@ -325,16 +325,15 @@ func (s *DisputeTransitionTestSuite) beginExecutorTransaction() {
 }
 
 func (s *DisputeTransitionTestSuite) getTransferStateMerkleProofs(txs [][]models.Transfer) []models.StateMerkleProof {
-	s.beginExecutorTransaction()
-
 	feeReceiver := &FeeReceiver{
 		StateID: 0,
 		TokenID: models.MakeUint256(0),
 	}
 
+	s.beginExecutorTransaction()
 	var disputableTransferError *DisputableTransferError
 	for i := range txs {
-		_, err := s.transactionExecutor.ApplyTransfersForSync(txs[i], feeReceiver)
+		_, _, err := s.transactionExecutor.ApplyTransfersForSync(txs[i], feeReceiver)
 		if err != nil {
 			s.ErrorAs(err, &disputableTransferError)
 			s.Len(disputableTransferError.Proofs, len(txs[i])*2)
@@ -351,16 +350,15 @@ func (s *DisputeTransitionTestSuite) getC2TStateMerkleProofs(
 	txs [][]models.Create2Transfer,
 	pubKeyIDs [][]uint32,
 ) []models.StateMerkleProof {
-	s.beginExecutorTransaction()
-
 	feeReceiver := &FeeReceiver{
 		StateID: 0,
 		TokenID: models.MakeUint256(0),
 	}
 
+	s.beginExecutorTransaction()
 	var disputableTransferError *DisputableTransferError
 	for i := range txs {
-		_, err := s.transactionExecutor.ApplyCreate2TransfersForSync(txs[i], pubKeyIDs[i], feeReceiver)
+		_, _, err := s.transactionExecutor.ApplyCreate2TransfersForSync(txs[i], pubKeyIDs[i], feeReceiver)
 		if err != nil {
 			s.ErrorAs(err, &disputableTransferError)
 			s.Len(disputableTransferError.Proofs, len(txs[i])*2)
@@ -527,6 +525,6 @@ func (s *DisputeTransitionTestSuite) createUserState(pubKeyID uint32, balance, n
 	}
 }
 
-func TestTestSuite(t *testing.T) {
+func TestDisputeTransitionTestSuite(t *testing.T) {
 	suite.Run(t, new(DisputeTransitionTestSuite))
 }

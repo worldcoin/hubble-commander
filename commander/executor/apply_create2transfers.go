@@ -81,12 +81,12 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 	transfers []models.Create2Transfer,
 	pubKeyIDs []uint32,
 	feeReceiver *FeeReceiver,
-) ([]models.Create2Transfer, error) {
+) ([]models.Create2Transfer, []models.StateMerkleProof, error) {
 	if len(transfers) == 0 {
-		return nil, nil
+		return nil, nil, nil
 	}
 	if len(transfers) != len(pubKeyIDs) {
-		return nil, ErrInvalidSliceLength
+		return nil, nil, ErrInvalidSliceLength
 	}
 
 	appliedTransfers := make([]models.Create2Transfer, 0, t.cfg.TxsPerCommitment)
@@ -98,7 +98,7 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 
 		synced, transferError, appError := t.ApplyCreate2TransferForSync(transfer, pubKeyIDs[i], feeReceiver.TokenID)
 		if appError != nil {
-			return nil, appError
+			return nil, nil, appError
 		}
 		stateChangeProofs = append(
 			stateChangeProofs,
@@ -106,7 +106,7 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 			synced.ReceiverStateProof,
 		)
 		if transferError != nil {
-			return nil, NewDisputableTransferError(transferError, stateChangeProofs)
+			return nil, nil, NewDisputableTransferError(transferError, stateChangeProofs)
 		}
 
 		appliedTransfers = append(appliedTransfers, *synced.Transfer)
@@ -116,11 +116,11 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 	if len(appliedTransfers) > 0 {
 		err := t.ApplyFee(feeReceiver.StateID, *combinedFee)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
-	return appliedTransfers, nil
+	return appliedTransfers, stateChangeProofs, nil
 }
 
 func (t *TransactionExecutor) getOrRegisterPubKeyID(
