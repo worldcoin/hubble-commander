@@ -333,7 +333,7 @@ func (s *DisputeTransitionTestSuite) getTransferStateMerkleProofs(txs [][]models
 	s.beginExecutorTransaction()
 	var disputableTransferError *DisputableTransferError
 	for i := range txs {
-		_, err := s.transactionExecutor.ApplyTransfersForSync(txs[i], feeReceiver)
+		_, _, err := s.transactionExecutor.ApplyTransfersForSync(txs[i], feeReceiver)
 		if err != nil {
 			s.ErrorAs(err, &disputableTransferError)
 			s.Len(disputableTransferError.Proofs, len(txs[i])*2)
@@ -344,19 +344,6 @@ func (s *DisputeTransitionTestSuite) getTransferStateMerkleProofs(txs [][]models
 
 	s.transactionExecutor.Rollback(nil)
 	return disputableTransferError.Proofs
-}
-
-func (s *DisputeTransitionTestSuite) calcTransferCommitmentsStateRoots(txs [][]models.Transfer, feeReceiver *FeeReceiver) []common.Hash {
-	txExecutor, err := NewTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
-	s.NoError(err)
-	defer txExecutor.Rollback(nil)
-
-	stateRoots := make([]common.Hash, 0, len(txs))
-	for i := range txs {
-		stateRoot := calcTransferCommitmentStateRoot(s.Assertions, txExecutor, txs[i], feeReceiver)
-		stateRoots = append(stateRoots, stateRoot)
-	}
-	return stateRoots
 }
 
 func (s *DisputeTransitionTestSuite) getC2TStateMerkleProofs(

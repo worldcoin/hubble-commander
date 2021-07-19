@@ -34,7 +34,7 @@ func (t *TransactionExecutor) syncTransferCommitment(
 		return nil, err
 	}
 
-	appliedTransfers, err := t.ApplyTransfersForSync(transfers, feeReceiver)
+	appliedTransfers, _, err := t.ApplyTransfersForSync(transfers, feeReceiver)
 	if err != nil {
 		return nil, err
 	}

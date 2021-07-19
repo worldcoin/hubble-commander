@@ -10,7 +10,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -174,7 +173,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_AppliesFee() {
 func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AllValid() {
 	transfers := generateValidTransfers(3)
 
-	appliedTransfers, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver)
+	appliedTransfers, _, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver)
 	s.NoError(err)
 	s.Len(appliedTransfers, 3)
 }
@@ -183,7 +182,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_InvalidTransfer() {
 	transfers := generateValidTransfers(2)
 	transfers = append(transfers, generateInvalidTransfers(2)...)
 
-	appliedTransfers, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver)
+	appliedTransfers, _, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver)
 	s.Nil(appliedTransfers)
 
 	var disputableTransferError *DisputableTransferError
@@ -194,46 +193,12 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_InvalidTransfer() {
 func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AppliesFee() {
 	transfers := generateValidTransfers(3)
 
-	_, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver)
+	_, _, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver)
 	s.NoError(err)
 
 	feeReceiverState, err := s.transactionExecutor.storage.GetStateLeaf(s.feeReceiver.StateID)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
-}
-
-func (s *ApplyTransfersTestSuite) calcCommitmentStateRoot(transfers []models.Transfer) common.Hash {
-	txExecutor, err := NewTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
-	s.NoError(err)
-	defer txExecutor.Rollback(nil)
-
-	return calcTransferCommitmentStateRoot(s.Assertions, txExecutor, transfers, s.feeReceiver)
-}
-
-func calcTransferCommitmentStateRoot(
-	s *require.Assertions,
-	txExecutor *TransactionExecutor,
-	transfers []models.Transfer,
-	feeReceiver *FeeReceiver,
-) common.Hash {
-	combinedFee := models.MakeUint256(0)
-	for i := range transfers {
-		synced, transferError, appError := txExecutor.ApplyTransferForSync(&transfers[i], feeReceiver.TokenID)
-		s.NoError(appError)
-		if transferError != nil {
-			return utils.RandomHash()
-		}
-
-		combinedFee = *combinedFee.Add(&synced.Transfer.Fee)
-	}
-	if combinedFee.CmpN(0) > 0 {
-		err := txExecutor.ApplyFee(feeReceiver.StateID, combinedFee)
-		s.NoError(err)
-	}
-
-	stateRoot, err := txExecutor.stateTree.Root()
-	s.NoError(err)
-	return *stateRoot
 }
 
 func generateValidTransfers(transfersAmount uint32) []models.Transfer {
