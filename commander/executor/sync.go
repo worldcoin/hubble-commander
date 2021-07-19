@@ -48,7 +48,7 @@ func (t *TransactionExecutor) syncExistingBatch(remoteBatch *eth.DecodedBatch, l
 			return err
 		}
 		if *txSender != t.client.ChainConnection.GetAccount().From {
-			return NewBatchRaceConditionError(localBatch)
+			return NewInconsistentBatchError(localBatch)
 		} else {
 			// TODO remove the above check and this error once we use contracts with batchID verification:
 			//  https://github.com/thehubbleproject/hubble-contracts/pull/601

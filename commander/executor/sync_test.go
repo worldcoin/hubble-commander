@@ -380,7 +380,7 @@ func createAndSubmitTransferBatch(
 }
 
 func (s *SyncTestSuite) createAndSubmitInvalidTransferBatch(tx *models.Transfer) *models.Batch {
-	_, err := s.storage.AddTransfer(tx)
+	_, err := s.transactionExecutor.storage.AddTransfer(tx)
 	s.NoError(err)
 
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
@@ -408,12 +408,13 @@ func createAndSubmitC2TBatch(
 	_, err := txExecutor.storage.AddCreate2Transfer(tx)
 	s.NoError(err)
 
+	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Create2Transfer)
+	s.NoError(err)
+
 	commitments, err := txExecutor.CreateCreate2TransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Create2Transfer)
-	s.NoError(err)
 	err = txExecutor.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
@@ -422,7 +423,10 @@ func createAndSubmitC2TBatch(
 }
 
 func (s *SyncTestSuite) createAndSubmitInvalidC2TBatch(tx *models.Create2Transfer) models.Commitment {
-	_, err := s.storage.AddCreate2Transfer(tx)
+	_, err := s.transactionExecutor.storage.AddCreate2Transfer(tx)
+	s.NoError(err)
+
+	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Create2Transfer)
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.CreateCreate2TransferCommitments(testDomain)
@@ -431,8 +435,6 @@ func (s *SyncTestSuite) createAndSubmitInvalidC2TBatch(tx *models.Create2Transfe
 
 	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)
 
-	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Create2Transfer)
-	s.NoError(err)
 	err = s.transactionExecutor.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 

@@ -20,37 +20,38 @@ var (
 
 func (t *TransactionExecutor) ApplyTransfer(
 	transfer models.GenericTransaction,
+	receiverLeaf *models.StateLeaf,
 	commitmentTokenID models.Uint256,
 ) (transferError, appError error) {
-	senderState, receiverState, appError := t.getParticipantsStates(transfer)
+	senderLeaf, err := t.storage.GetStateLeaf(transfer.GetFromStateID())
+	if err != nil {
+		return nil, err
+	}
+
+	appError = t.validateSenderTokenID(senderLeaf, commitmentTokenID)
 	if appError != nil {
 		return nil, appError
 	}
 
-	appError = t.validateSenderTokenID(senderState, commitmentTokenID)
+	appError = t.validateReceiverTokenID(receiverLeaf, commitmentTokenID)
 	if appError != nil {
 		return nil, appError
 	}
 
-	appError = t.validateReceiverTokenID(receiverState, commitmentTokenID)
-	if appError != nil {
-		return nil, appError
-	}
-
-	if tErr := validateTransferNonce(&senderState.UserState, transfer.GetNonce()); tErr != nil {
+	if tErr := validateTransferNonce(&senderLeaf.UserState, transfer.GetNonce()); tErr != nil {
 		return tErr, nil
 	}
 
-	newSenderState, newReceiverState, tErr := calculateStateAfterTransfer(senderState.UserState, receiverState.UserState, transfer)
+	newSenderState, newReceiverState, tErr := calculateStateAfterTransfer(senderLeaf.UserState, receiverLeaf.UserState, transfer)
 	if tErr != nil {
 		return tErr, nil
 	}
 
-	_, appError = t.stateTree.Set(senderState.StateID, newSenderState)
+	_, appError = t.stateTree.Set(senderLeaf.StateID, newSenderState)
 	if appError != nil {
 		return nil, appError
 	}
-	_, appError = t.stateTree.Set(receiverState.StateID, newReceiverState)
+	_, appError = t.stateTree.Set(receiverLeaf.StateID, newReceiverState)
 	if appError != nil {
 		return nil, appError
 	}
@@ -62,50 +63,56 @@ func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransa
 	synced *SyncedTransfer,
 	transferError, appError error,
 ) {
-	genericSynced, transferError, appError := t.applyGenericTransactionForSync(transfer, commitmentTokenID)
+	receiverLeaf, err := t.storage.GetStateLeaf(*transfer.GetToStateID())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	genericSynced, transferError, appError := t.applyGenericTransactionForSync(transfer, receiverLeaf, commitmentTokenID)
 	if appError != nil {
 		return nil, nil, appError
 	}
 	return NewSyncedTransferFromGeneric(genericSynced), transferError, nil
 }
 
-func (t *TransactionExecutor) applyGenericTransactionForSync(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
-	synced *SyncedGenericTransaction,
-	transferError, appError error,
-) {
-	senderState, receiverState, appError := t.getParticipantsStates(tx)
-	if appError != nil {
-		return nil, nil, appError
+func (t *TransactionExecutor) applyGenericTransactionForSync(
+	tx models.GenericTransaction,
+	receiverLeaf *models.StateLeaf,
+	commitmentTokenID models.Uint256,
+) (synced *SyncedGenericTransaction, transferError, appError error) {
+	senderLeaf, err := t.storage.GetStateLeaf(tx.GetFromStateID())
+	if err != nil {
+		return nil, nil, err
 	}
 
-	synced = NewPartialSyncedGenericTransaction(tx.Copy(), &senderState.UserState, &receiverState.UserState)
+	synced = NewPartialSyncedGenericTransaction(tx.Copy(), &senderLeaf.UserState, &receiverLeaf.UserState)
 
-	newSenderState, newReceiverState, tErr := calculateStateAfterTransfer(senderState.UserState, receiverState.UserState, tx)
+	newSenderState, newReceiverState, tErr := calculateStateAfterTransfer(senderLeaf.UserState, receiverLeaf.UserState, tx)
 	if tErr != nil {
 		return t.fillSenderWitness(synced, tErr)
 	}
 
-	senderWitness, appError := t.stateTree.Set(senderState.StateID, newSenderState)
+	senderWitness, appError := t.stateTree.Set(senderLeaf.StateID, newSenderState)
 	if appError != nil {
 		return nil, nil, appError
 	}
 	synced.SenderStateProof.Witness = senderWitness
 
-	if tErr := t.validateSenderTokenID(senderState, commitmentTokenID); tErr != nil {
+	if tErr := t.validateSenderTokenID(senderLeaf, commitmentTokenID); tErr != nil {
 		return synced, tErr, nil
 	}
 
-	receiverWitness, appError := t.stateTree.Set(receiverState.StateID, newReceiverState)
+	receiverWitness, appError := t.stateTree.Set(receiverLeaf.StateID, newReceiverState)
 	if appError != nil {
 		return nil, nil, appError
 	}
 	synced.ReceiverStateProof.Witness = receiverWitness
 
-	if tErr := t.validateReceiverTokenID(receiverState, commitmentTokenID); tErr != nil {
+	if tErr := t.validateReceiverTokenID(receiverLeaf, commitmentTokenID); tErr != nil {
 		return synced, tErr, nil
 	}
 
-	synced.Transaction.SetNonce(senderState.Nonce)
+	synced.Transaction.SetNonce(senderLeaf.Nonce)
 
 	return synced, nil, nil
 }
@@ -118,27 +125,6 @@ func (t *TransactionExecutor) fillSenderWitness(synced *SyncedGenericTransaction
 	synced.SenderStateProof.Witness = witness
 
 	return synced, tErr, nil
-}
-
-func (t *TransactionExecutor) getParticipantsStates(transfer models.GenericTransaction) (
-	senderState, receiverState *models.StateLeaf,
-	err error,
-) {
-	receiverStateID := transfer.GetToStateID()
-	if receiverStateID == nil {
-		return nil, nil, ErrNilReceiverStateID
-	}
-
-	senderLeaf, err := t.storage.GetStateLeaf(transfer.GetFromStateID())
-	if err != nil {
-		return nil, nil, err
-	}
-	receiverLeaf, err := t.storage.GetStateLeaf(*receiverStateID)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return senderLeaf, receiverLeaf, nil
 }
 
 func (t *TransactionExecutor) validateSenderTokenID(senderState *models.StateLeaf, commitmentTokenID models.Uint256) error {

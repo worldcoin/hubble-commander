@@ -47,18 +47,30 @@ func (s *DBTestSuite) TestMigrations() {
 
 	s.NoError(migrator.Up())
 
-	res := make([]models.Batch, 0, 1)
-	err = s.db.Query(
-		sq.Select("*").From("batch"),
-	).Into(&res)
-	s.NoError(err)
+	checkBatch(s.T(), s.db, 0)
 
 	s.NoError(migrator.Down())
 
+	res := make([]models.Batch, 0)
 	err = s.db.Query(
 		sq.Select("*").From("batch"),
 	).Into(&res)
 	s.Error(err)
+}
+
+func (s *DBTestSuite) TestClone() {
+	migrator, err := GetMigrator(s.config)
+	s.NoError(err)
+
+	s.NoError(migrator.Up())
+
+	addBatch(s.T(), s.db)
+
+	clonedDB, err := s.db.Clone(s.config)
+	s.NoError(err)
+
+	checkBatch(s.T(), clonedDB, 1)
+	checkBatch(s.T(), s.db, 1)
 }
 
 func TestDbTestSuite(t *testing.T) {

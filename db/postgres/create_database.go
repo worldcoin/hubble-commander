@@ -40,13 +40,7 @@ func RecreateDatabase(cfg *config.PostgresConfig) (err error) {
 	}
 	defer closeDB(dbInstance, &err)
 
-	query := fmt.Sprintf(`
-		SELECT pg_terminate_backend(pg_stat_activity.pid) 
-		FROM pg_stat_activity 
-		WHERE pg_stat_activity.datname = '%s' AND pid <> pg_backend_pid();`,
-		cfg.Name,
-	)
-	_, err = dbInstance.Exec(query)
+	err = disconnectUsers(dbInstance, cfg.Name)
 	if err != nil {
 		return err
 	}

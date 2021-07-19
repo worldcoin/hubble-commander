@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -24,12 +25,12 @@ var testDomain = &bls.Domain{1, 2, 3, 4}
 type NewBlockLoopTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	cmd        *Commander
-	testClient *eth.TestClient
-	cfg        *config.Config
-	transfer   models.Transfer
-	teardown   func() error
-	wallets    []bls.Wallet
+	cmd         *Commander
+	testStorage *st.TestStorage
+	testClient  *eth.TestClient
+	cfg         *config.Config
+	transfer    models.Transfer
+	wallets     []bls.Wallet
 }
 
 func (s *NewBlockLoopTestSuite) SetupSuite() {
@@ -54,28 +55,28 @@ func (s *NewBlockLoopTestSuite) SetupSuite() {
 }
 
 func (s *NewBlockLoopTestSuite) SetupTest() {
-	testStorage, err := st.NewTestStorageWithBadger()
+	var err error
+	s.testStorage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.teardown = testStorage.Teardown
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
-	err = testStorage.SetChainState(&s.testClient.ChainState)
+	err = s.testStorage.SetChainState(&s.testClient.ChainState)
 	s.NoError(err)
 
 	s.cmd = NewCommander(s.cfg)
 	s.cmd.client = s.testClient.Client
-	s.cmd.storage = testStorage.Storage
+	s.cmd.storage = s.testStorage.Storage
 	s.cmd.stopChannel = make(chan bool)
 
 	s.wallets = generateWallets(s.T(), s.testClient.ChainState.Rollup, 2)
-	seedDB(s.T(), testStorage.Storage, st.NewStateTree(testStorage.Storage), s.wallets)
+	seedDB(s.T(), s.testStorage.Storage, st.NewStateTree(s.testStorage.Storage), s.wallets)
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
 }
 
 func (s *NewBlockLoopTestSuite) TearDownTest() {
 	stopCommander(s.cmd)
 	s.testClient.Close()
-	err := s.teardown()
+	err := s.testStorage.Teardown()
 	s.NoError(err)
 }
 
@@ -98,8 +99,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedBef
 		{PublicKey: *s.wallets[1].PublicKey()},
 	}
 	s.registerAccounts(accounts)
-	createAndSubmitTransferBatch(s.T(), s.cmd, &s.transfer)
-	s.testClient.Commit()
+	createAndSubmitTransferBatch(s.Assertions, s.cfg, s.testStorage, s.testClient, &s.transfer)
 
 	s.startBlockLoop()
 	s.waitForLatestBlockSync()
@@ -125,9 +125,8 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedWhi
 		{PublicKey: *s.wallets[1].PublicKey()},
 	}
 	s.registerAccounts(accounts)
-	createAndSubmitTransferBatch(s.T(), s.cmd, &s.transfer)
+	s.createAndSubmitTransferBatchInTransaction(&s.transfer)
 
-	s.testClient.Commit()
 	s.waitForLatestBlockSync()
 
 	for i := range accounts {
@@ -165,18 +164,55 @@ func (s *NewBlockLoopTestSuite) registerAccounts(accounts []models.Account) {
 	}
 }
 
-func createAndSubmitTransferBatch(s *require.Assertions, cmd *Commander, txExecutor *executor.TransactionExecutor, tx *models.Transfer) {
-	_, err := cmd.storage.AddTransfer(tx)
+func createAndSubmitTransferBatch(
+	s *require.Assertions,
+	cfg *config.Config,
+	storage *st.TestStorage,
+	client *eth.TestClient,
+	tx *models.Transfer,
+) {
+	clonedStorage, txExecutor := cloneStorage(s, cfg, storage, client.Client)
+	defer teardown(s, clonedStorage.Teardown)
+
+	_, err := clonedStorage.AddTransfer(tx)
+	s.NoError(err)
+
+	batch, err := txExecutor.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
 	commitments, err := txExecutor.CreateTransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	batch, err := txExecutor.NewPendingBatch(txtype.Transfer)
-	s.NoError(err)
 	err = txExecutor.SubmitBatch(batch, commitments)
 	s.NoError(err)
+	client.Commit()
+}
+
+func (s *NewBlockLoopTestSuite) createAndSubmitTransferBatchInTransaction(tx *models.Transfer) {
+	s.runInTransaction(func(txStorage *st.Storage, txExecutor *executor.TransactionExecutor) {
+		_, err := txStorage.AddTransfer(tx)
+		s.NoError(err)
+
+		commitments, err := txExecutor.CreateTransferCommitments(testDomain)
+		s.NoError(err)
+		s.Len(commitments, 1)
+
+		batch, err := txExecutor.NewPendingBatch(txtype.Transfer)
+		s.NoError(err)
+		err = txExecutor.SubmitBatch(batch, commitments)
+		s.NoError(err)
+		s.testClient.Commit()
+	})
+}
+
+func (s *NewBlockLoopTestSuite) runInTransaction(handler func(*st.Storage, *executor.TransactionExecutor)) {
+	txController, txStorage, err := s.testStorage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
+	s.NoError(err)
+	defer txController.Rollback(nil)
+
+	txExecutor := executor.NewTestTransactionExecutor(txStorage, s.testClient.Client, s.cfg.Rollup, context.Background())
+	handler(txStorage, txExecutor)
 }
 
 func (s *NewBlockLoopTestSuite) waitForLatestBlockSync() {
