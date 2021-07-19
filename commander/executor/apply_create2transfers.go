@@ -5,7 +5,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 type AppliedC2Transfers struct {
@@ -82,7 +81,6 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 	transfers []models.Create2Transfer,
 	pubKeyIDs []uint32,
 	feeReceiver *FeeReceiver,
-	commitmentStateRoot common.Hash,
 ) ([]models.Create2Transfer, error) {
 	if len(transfers) == 0 {
 		return nil, nil
@@ -120,11 +118,6 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	err := t.verifyStateRoot(commitmentStateRoot, stateChangeProofs)
-	if err != nil {
-		return nil, err
 	}
 
 	return appliedTransfers, nil

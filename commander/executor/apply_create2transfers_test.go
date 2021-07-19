@@ -14,7 +14,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -200,9 +199,8 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_RegistersPubl
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_AllValid() {
 	transfers, pubKeyIDs := generateValidCreate2TransfersForSync(3, 4)
-	stateRoot := s.calcCommitmentStateRoot(transfers, pubKeyIDs)
 
-	appliedTransfers, err := s.transactionExecutor.ApplyCreate2TransfersForSync(transfers, pubKeyIDs, s.feeReceiver, stateRoot)
+	appliedTransfers, err := s.transactionExecutor.ApplyCreate2TransfersForSync(transfers, pubKeyIDs, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(appliedTransfers, 3)
@@ -215,7 +213,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_Invali
 	transfers = append(transfers, invalidTxs...)
 	pubKeyIDs = append(pubKeyIDs, invalidPubKeyIDs...)
 
-	appliedTransfers, err := s.transactionExecutor.ApplyCreate2TransfersForSync(transfers, pubKeyIDs, s.feeReceiver, utils.RandomHash())
+	appliedTransfers, err := s.transactionExecutor.ApplyCreate2TransfersForSync(transfers, pubKeyIDs, s.feeReceiver)
 	s.Nil(appliedTransfers)
 
 	var disputableTransferError *DisputableTransferError
@@ -225,15 +223,14 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_Invali
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidSlicesLength() {
 	generatedTransfers := generateValidCreate2Transfers(3)
-	_, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, []uint32{1, 2}, s.feeReceiver, utils.RandomHash())
+	_, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, []uint32{1, 2}, s.feeReceiver)
 	s.Equal(ErrInvalidSliceLength, err)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_AppliesFee() {
 	generatedTransfers, pubKeyIDs := generateValidCreate2TransfersForSync(3, 4)
-	stateRoot := s.calcCommitmentStateRoot(generatedTransfers, pubKeyIDs)
 
-	_, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, pubKeyIDs, s.feeReceiver, stateRoot)
+	_, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, pubKeyIDs, s.feeReceiver)
 	s.NoError(err)
 
 	feeReceiverState, err := s.transactionExecutor.storage.GetStateLeaf(s.feeReceiver.StateID)
@@ -275,41 +272,6 @@ func (s *ApplyCreate2TransfersTestSuite) getRegisteredAccounts(startBlockNumber 
 		})
 	}
 	return registeredAccounts
-}
-
-func (s *ApplyCreate2TransfersTestSuite) calcCommitmentStateRoot(transfers []models.Create2Transfer, pubKeyIDs []uint32) common.Hash {
-	txExecutor, err := NewTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
-	s.NoError(err)
-	defer txExecutor.Rollback(nil)
-
-	return calcC2TCommitmentStateRoot(s.Assertions, txExecutor, transfers, pubKeyIDs, s.feeReceiver)
-}
-
-func calcC2TCommitmentStateRoot(
-	s *require.Assertions,
-	txExecutor *TransactionExecutor,
-	transfers []models.Create2Transfer,
-	pubKeyIDs []uint32,
-	feeReceiver *FeeReceiver,
-) common.Hash {
-	combinedFee := models.MakeUint256(0)
-	for i := range transfers {
-		synced, transferError, appError := txExecutor.ApplyCreate2TransferForSync(&transfers[i], pubKeyIDs[i], feeReceiver.TokenID)
-		s.NoError(appError)
-		if transferError != nil {
-			return utils.RandomHash()
-		}
-
-		combinedFee = *combinedFee.Add(&synced.Transfer.Fee)
-	}
-	if combinedFee.CmpN(0) > 0 {
-		err := txExecutor.ApplyFee(feeReceiver.StateID, combinedFee)
-		s.NoError(err)
-	}
-
-	stateRoot, err := txExecutor.stateTree.Root()
-	s.NoError(err)
-	return *stateRoot
 }
 
 func generateValidCreate2Transfers(transfersAmount uint32) []models.Create2Transfer {
