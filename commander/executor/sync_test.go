@@ -76,13 +76,13 @@ func (s *SyncTestSuite) setupDB() {
 }
 
 func seedDB(s *require.Assertions, storage *st.Storage, tree *st.StateTree, wallets []bls.Wallet) {
-	err := storage.AddAccountIfNotExists(&models.Account{
+	err := storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
 		PubKeyID:  0,
 		PublicKey: *wallets[0].PublicKey(),
 	})
 	s.NoError(err)
 
-	err = storage.AddAccountIfNotExists(&models.Account{
+	err = storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
 		PubKeyID:  1,
 		PublicKey: *wallets[1].PublicKey(),
 	})

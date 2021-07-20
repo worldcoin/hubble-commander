@@ -138,7 +138,7 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
 		}
 	}
 
-	s.addLeaf()
+	s.addStateLeaf()
 
 	commitments, err := s.storage.GetCommitmentsByBatchID(batchID)
 	s.NoError(err)
@@ -203,8 +203,8 @@ func (s *CommitmentTestSuite) TestDeleteCommitmentsByBatchIDs_NoCommitments() {
 	s.NoError(err)
 }
 
-func (s *CommitmentTestSuite) addLeaf() {
-	err := s.storage.AddAccountIfNotExists(&account1)
+func (s *CommitmentTestSuite) addStateLeaf() {
+	err := s.storage.AddAccountLeafIfNotExists(&account1)
 	s.NoError(err)
 
 	_, err = s.tree.Set(uint32(0), &models.UserState{

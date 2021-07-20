@@ -28,7 +28,7 @@ func (s *StorageTestSuite) SetupTest() {
 	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
 
-	err = s.storage.AddAccountIfNotExists(&account1)
+	err = s.storage.AddAccountLeafIfNotExists(&account1)
 	s.NoError(err)
 }
 
@@ -53,15 +53,15 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	s.NoError(err)
 	err = storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
-	err = storage.AddAccountIfNotExists(&account2)
+	err = storage.AddAccountLeafIfNotExists(&account2)
 	s.NoError(err)
 
 	res, err := s.storage.GetStateLeaf(leaf.StateID)
 	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
 
-	accounts, err := s.storage.GetAccounts(&account2.PublicKey)
-	s.Equal(NewNotFoundError("accounts"), err)
+	accounts, err := s.storage.GetAccountLeaves(&account2.PublicKey)
+	s.Equal(NewNotFoundError("account leaves"), err)
 	s.Nil(accounts)
 
 	err = tx.Commit()
@@ -71,7 +71,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	s.NoError(err)
 	s.Equal(leaf, res)
 
-	accounts, err = s.storage.GetAccounts(&account2.PublicKey)
+	accounts, err = s.storage.GetAccountLeaves(&account2.PublicKey)
 	s.NoError(err)
 	s.Len(accounts, 1)
 }
@@ -92,7 +92,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 	s.NoError(err)
 	err = storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
-	err = storage.AddAccountIfNotExists(&account2)
+	err = storage.AddAccountLeafIfNotExists(&account2)
 	s.NoError(err)
 
 	tx.Rollback(&err)
@@ -102,13 +102,13 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
 
-	accounts, err := s.storage.GetAccounts(&account2.PublicKey)
-	s.Equal(NewNotFoundError("accounts"), err)
+	accounts, err := s.storage.GetAccountLeaves(&account2.PublicKey)
+	s.Equal(NewNotFoundError("account leaves"), err)
 	s.Nil(accounts)
 }
 
 func (s *StorageTestSuite) TestBeginTransaction_Lock() {
-	err := s.storage.AddAccountIfNotExists(&account2)
+	err := s.storage.AddAccountLeafIfNotExists(&account2)
 	s.NoError(err)
 
 	leafOne := &models.StateLeaf{
@@ -178,7 +178,7 @@ func (s *StorageTestSuite) TestClone() {
 		MerklePath: models.MakeMerklePathFromStateID(1),
 		DataHash:   utils.RandomHash(),
 	}
-	err = s.storage.AddStateNode(&stateNode)
+	err = s.storage.UpsertStateNode(&stateNode)
 	s.NoError(err)
 
 	clonedStorage, err := s.storage.Clone(testConfig)

@@ -61,7 +61,7 @@ func (s *TransferCommitmentsTestSuite) SetupTest() {
 func populateAccounts(storage *st.Storage, balances []models.Uint256) error {
 	stateTree := st.NewStateTree(storage)
 	for i := uint32(0); i < uint32(len(balances)); i++ {
-		err := storage.AddAccountIfNotExists(&models.Account{
+		err := storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
 			PubKeyID:  i,
 			PublicKey: models.PublicKey{},
 		})
@@ -312,12 +312,12 @@ func (s *TransferCommitmentsTestSuite) preparePendingTransfers(transfersAmount u
 }
 
 func addAccountWithHighNonce(s *require.Assertions, storage *st.Storage, stateID uint32) {
-	dummyAccount := models.Account{
+	dummyAccount := models.AccountLeaf{
 		PubKeyID:  500,
 		PublicKey: models.PublicKey{1, 2, 3, 4},
 	}
 
-	err := storage.AddAccountIfNotExists(&dummyAccount)
+	err := storage.AddAccountLeafIfNotExists(&dummyAccount)
 	s.NoError(err)
 
 	stateTree := st.NewStateTree(storage)

@@ -19,6 +19,7 @@ type InProcessCommander struct {
 func CreateInProcessCommander() *InProcessCommander {
 	cfg := config.GetConfig()
 	cfg.Bootstrap.Prune = true
+	cfg.Rollup.MinTxsPerCommitment = cfg.Rollup.MaxTxsPerCommitment
 	return CreateInProcessCommanderWithConfig(cfg)
 }
 

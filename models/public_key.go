@@ -30,6 +30,15 @@ func (p PublicKey) Bytes() []byte {
 	return p[:]
 }
 
+func (p *PublicKey) SetBytes(b []byte) error {
+	if len(b) != PublicKeyLength {
+		return fmt.Errorf("invalid length")
+	}
+
+	copy(p[0:], b)
+	return nil
+}
+
 func (p *PublicKey) BigInts() [4]*big.Int {
 	return [4]*big.Int{
 		new(big.Int).SetBytes(p[:32]),

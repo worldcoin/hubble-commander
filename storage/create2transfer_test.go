@@ -48,7 +48,7 @@ func (s *Create2TransferTestSuite) SetupTest() {
 	s.NoError(err)
 	s.tree = NewStateTree(s.storage.Storage)
 
-	err = s.storage.AddAccountIfNotExists(&account2)
+	err = s.storage.AddAccountLeafIfNotExists(&account2)
 	s.NoError(err)
 }
 

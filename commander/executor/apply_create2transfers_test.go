@@ -69,7 +69,7 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 	}
 
 	for i := 1; i <= 10; i++ {
-		err = s.storage.AddAccountIfNotExists(&models.Account{
+		err = s.storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
 			PubKeyID:  uint32(i),
 			PublicKey: models.PublicKey{1, 2, 3},
 		})
@@ -190,7 +190,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_RegistersPubl
 
 	registeredAccounts := s.getRegisteredAccounts(*latestBlockNumber)
 	for i := range generatedTransfers {
-		s.Equal(registeredAccounts[i], models.Account{
+		s.Equal(registeredAccounts[i], models.AccountLeaf{
 			PubKeyID:  transfers.addedPubKeyIDs[i],
 			PublicKey: generatedTransfers[i].ToPublicKey,
 		})
@@ -203,7 +203,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_AllVal
 	appliedTransfers, stateProofs, err := s.transactionExecutor.ApplyCreate2TransfersForSync(transfers, pubKeyIDs, s.feeReceiver)
 	s.NoError(err)
 	s.Len(appliedTransfers, 3)
-	s.Len(stateProofs, 6)
+	s.Len(stateProofs, 7)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidTransfer() {
@@ -253,11 +253,11 @@ func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_ReturnsUnused
 	s.Equal(uint32(4), *pubKeyID)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) getRegisteredAccounts(startBlockNumber uint64) []models.Account {
+func (s *ApplyCreate2TransfersTestSuite) getRegisteredAccounts(startBlockNumber uint64) []models.AccountLeaf {
 	it, err := s.client.AccountRegistry.FilterSinglePubkeyRegistered(&bind.FilterOpts{Start: startBlockNumber})
 	s.NoError(err)
 
-	registeredAccounts := make([]models.Account, 0)
+	registeredAccounts := make([]models.AccountLeaf, 0)
 	for it.Next() {
 		tx, _, err := s.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
 		s.NoError(err)
@@ -266,7 +266,7 @@ func (s *ApplyCreate2TransfersTestSuite) getRegisteredAccounts(startBlockNumber 
 		s.NoError(err)
 
 		pubkey := unpack[0].([4]*big.Int)
-		registeredAccounts = append(registeredAccounts, models.Account{
+		registeredAccounts = append(registeredAccounts, models.AccountLeaf{
 			PubKeyID:  uint32(it.Event.PubkeyID.Uint64()),
 			PublicKey: models.MakePublicKeyFromInts(pubkey),
 		})

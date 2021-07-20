@@ -158,7 +158,34 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentBatch() {
 	defer teardown(s.Assertions, clonedStorage.Teardown)
 
 	invalidTransfer := testutils.MakeTransfer(0, 1, 1, 100)
-	s.createAndSubmitInvalidTransferBatch(clonedStorage.Storage, txExecutor, &invalidTransfer)
+	s.createAndSubmitInvalidTransferBatch(clonedStorage.Storage, txExecutor, &invalidTransfer, func(commitment *models.Commitment) {
+		commitment.Transactions = append(commitment.Transactions, commitment.Transactions...)
+	})
+
+	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	s.NoError(err)
+	s.Len(remoteBatches, 2)
+
+	err = s.cmd.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
+	s.NoError(err)
+
+	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
+	s.NoError(err)
+
+	s.checkBatchAfterDispute(remoteBatches[1].ID)
+}
+
+func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidPostStateRoot() {
+	transfer := testutils.MakeTransfer(0, 1, 0, 50)
+	s.createAndSubmitTransferBatch(s.testStorage.Storage, s.transactionExecutor, &transfer)
+
+	clonedStorage, txExecutor := cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
+	defer teardown(s.Assertions, clonedStorage.Teardown)
+
+	invalidTransfer := testutils.MakeTransfer(0, 1, 1, 100)
+	s.createAndSubmitInvalidTransferBatch(clonedStorage.Storage, txExecutor, &invalidTransfer, func(commitment *models.Commitment) {
+		commitment.PostStateRoot = utils.RandomHash()
+	})
 
 	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
 	s.NoError(err)
@@ -184,7 +211,9 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDisputesFr
 
 	clonedStorage, txExecutor := cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
 	defer teardown(s.Assertions, clonedStorage.Teardown)
-	s.createAndSubmitInvalidTransferBatch(clonedStorage.Storage, txExecutor, &transfers[1])
+	s.createAndSubmitInvalidTransferBatch(clonedStorage.Storage, txExecutor, &transfers[1], func(commitment *models.Commitment) {
+		commitment.Transactions = append(commitment.Transactions, commitment.Transactions...)
+	})
 
 	localBatch := s.createTransferBatch(&transfers[2])
 
@@ -262,6 +291,7 @@ func (s *BatchesTestSuite) createAndSubmitInvalidTransferBatch(
 	storage *st.Storage,
 	txExecutor *executor.TransactionExecutor,
 	tx *models.Transfer,
+	modifier func(commitment *models.Commitment),
 ) *models.Batch {
 	_, err := storage.AddTransfer(tx)
 	s.NoError(err)
@@ -273,7 +303,7 @@ func (s *BatchesTestSuite) createAndSubmitInvalidTransferBatch(
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)
+	modifier(&commitments[0])
 
 	err = txExecutor.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)

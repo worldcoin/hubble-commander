@@ -24,7 +24,7 @@ func (s *AccountsTestSuite) SetupSuite() {
 }
 
 func (s *AccountsTestSuite) SetupTest() {
-	testStorage, err := st.NewTestStorageWithBadger()
+	testStorage, err := st.NewTestStorageWithoutPostgres()
 	s.NoError(err)
 	s.teardown = testStorage.Teardown
 	s.testClient, err = eth.NewTestClient()
@@ -55,7 +55,7 @@ func (s *AccountsTestSuite) TestSyncAccounts() {
 	err = s.cmd.syncAccounts(0, *latestBlockNumber)
 	s.NoError(err)
 
-	accounts, err := s.cmd.storage.GetAccounts(&publicKey)
+	accounts, err := s.cmd.storage.GetAccountLeaves(&publicKey)
 	s.NoError(err)
 	s.Len(accounts, 1)
 	s.Equal(*pubKeyID, accounts[0].PubKeyID)

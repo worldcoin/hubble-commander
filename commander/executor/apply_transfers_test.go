@@ -60,7 +60,7 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 		Nonce:    models.MakeUint256(0),
 	}
 
-	accounts := []models.Account{
+	accounts := []models.AccountLeaf{
 		{
 			PubKeyID:  1,
 			PublicKey: models.PublicKey{1, 2, 3},
@@ -75,7 +75,7 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 		},
 	}
 	for i := range accounts {
-		err = s.storage.AddAccountIfNotExists(&accounts[i])
+		err = s.storage.AddAccountLeafIfNotExists(&accounts[i])
 		s.NoError(err)
 	}
 
@@ -176,7 +176,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AllValid() {
 	appliedTransfers, stateProofs, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver)
 	s.NoError(err)
 	s.Len(appliedTransfers, 3)
-	s.Len(stateProofs, 6)
+	s.Len(stateProofs, 7)
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_InvalidTransfer() {
