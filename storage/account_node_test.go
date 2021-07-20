@@ -47,7 +47,7 @@ func (s *AccountNodeTestSuite) TestUpsertAccountNode_AddAndRetrieve() {
 	s.Equal(node, res)
 }
 
-func (s *AccountNodeTestSuite) TestUpsertStateNode_UpdateAndRetrieve() {
+func (s *AccountNodeTestSuite) TestUpsertAccountNode_UpdateAndRetrieve() {
 	path, err := models.NewMerklePath("0000111")
 	s.NoError(err)
 	node := &models.AccountNode{
