@@ -49,9 +49,9 @@ func (s *StoredMerkleTree) SetSingleNode(node *models.StateNode) error {
 }
 
 // SetNode sets node hash and update all nodes leading to root. Returns new root hash and the insertion witness.
-func (s *StoredMerkleTree) SetNode(path *models.MerklePath, hash *common.Hash) (*common.Hash, models.Witness, error) {
+func (s *StoredMerkleTree) SetNode(path *models.MerklePath, hash common.Hash) (*common.Hash, models.Witness, error) {
 	currentPath := path
-	currentHash := *hash
+	currentHash := hash
 	witness := make(models.Witness, 0, path.Depth)
 
 	for currentPath.Depth != 0 {
@@ -60,7 +60,7 @@ func (s *StoredMerkleTree) SetNode(path *models.MerklePath, hash *common.Hash) (
 			return nil, nil, err
 		}
 
-		siblingNode, err := s.storage.GetStateNodeByPath(sibling)
+		siblingNode, err := s.Get(*sibling)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -82,7 +82,7 @@ func (s *StoredMerkleTree) SetNode(path *models.MerklePath, hash *common.Hash) (
 	}
 
 	rootPath := models.MerklePath{Depth: 0, Path: 0}
-	err := s.storage.UpsertStateNode(&models.StateNode{
+	err := s.SetSingleNode(&models.StateNode{
 		MerklePath: rootPath,
 		DataHash:   currentHash,
 	})

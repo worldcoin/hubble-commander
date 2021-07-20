@@ -86,7 +86,7 @@ func (s *StateTree) GetWitness(id uint32) (models.Witness, error) {
 	witness := make([]common.Hash, 0, len(witnessPaths))
 	for i := range witnessPaths {
 		var node *models.StateNode
-		node, err = s.storage.GetStateNodeByPath(&witnessPaths[i])
+		node, err = s.merkleTree.Get(witnessPaths[i])
 		if err != nil {
 			return nil, err
 		}
@@ -184,7 +184,7 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (models.Wit
 	}
 
 	prevLeafPath := models.MakeMerklePathFromStateID(prevLeaf.StateID)
-	currentRoot, witness, err := s.merkleTree.SetNode(&prevLeafPath, &currentLeaf.DataHash)
+	currentRoot, witness, err := s.merkleTree.SetNode(&prevLeafPath, currentLeaf.DataHash)
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +208,7 @@ func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, 
 	}
 
 	leafPath := models.MakeMerklePathFromStateID(stateUpdate.PrevStateLeaf.StateID)
-	currentRootHash, _, err := s.merkleTree.SetNode(&leafPath, &stateUpdate.PrevStateLeaf.DataHash)
+	currentRootHash, _, err := s.merkleTree.SetNode(&leafPath, stateUpdate.PrevStateLeaf.DataHash)
 	if err != nil {
 		return nil, err
 	}
