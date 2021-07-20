@@ -24,12 +24,12 @@ func TestSetBytes(t *testing.T) {
 	require.Equal(t, key, newKey)
 }
 
-func TestSetBytes_TooBigBytesSlice(t *testing.T) {
+func TestSetBytes_InvalidLength(t *testing.T) {
 	bytes := utils.PadLeft([]byte{1, 2, 3}, 130)
 	key := PublicKey{}
 	err := key.SetBytes(bytes)
 	require.NotNil(t, err)
-	require.Equal(t, "bytes slice too big", err.Error())
+	require.Equal(t, "invalid length", err.Error())
 }
 
 func TestValue_ReturnsACopy(t *testing.T) {

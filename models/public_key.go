@@ -31,8 +31,8 @@ func (p PublicKey) Bytes() []byte {
 }
 
 func (p *PublicKey) SetBytes(b []byte) error {
-	if len(b) > PublicKeyLength {
-		return fmt.Errorf("bytes slice too big")
+	if len(b) != PublicKeyLength {
+		return fmt.Errorf("invalid length")
 	}
 
 	copy(p[0:], b)
