@@ -178,7 +178,7 @@ func (s *StorageTestSuite) TestClone() {
 		MerklePath: models.MakeMerklePathFromStateID(1),
 		DataHash:   utils.RandomHash(),
 	}
-	err = s.storage.AddStateNode(&stateNode)
+	err = s.storage.UpsertStateNode(&stateNode)
 	s.NoError(err)
 
 	clonedStorage, err := s.storage.Clone(testConfig)

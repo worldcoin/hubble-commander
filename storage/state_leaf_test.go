@@ -123,7 +123,7 @@ func (s *StateLeafTestSuite) TestGetStateLeaf_ReturnsCorrectStruct() {
 	err = s.storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
 
-	err = s.storage.AddStateNode(node)
+	err = s.storage.UpsertStateNode(node)
 	s.NoError(err)
 
 	actual, err := s.storage.GetStateLeaf(leaf.StateID)
