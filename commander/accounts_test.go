@@ -24,7 +24,7 @@ func (s *AccountsTestSuite) SetupSuite() {
 }
 
 func (s *AccountsTestSuite) SetupTest() {
-	testStorage, err := st.NewTestStorageWithBadger()
+	testStorage, err := st.NewTestStorageWithoutPostgres()
 	s.NoError(err)
 	s.teardown = testStorage.Teardown
 	s.testClient, err = eth.NewTestClient()
