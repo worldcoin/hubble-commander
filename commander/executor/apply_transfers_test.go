@@ -176,7 +176,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AllValid() {
 	appliedTransfers, stateProofs, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver)
 	s.NoError(err)
 	s.Len(appliedTransfers, 3)
-	s.Len(stateProofs, 6)
+	s.Len(stateProofs, 7)
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_InvalidTransfer() {
