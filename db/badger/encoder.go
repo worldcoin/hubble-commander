@@ -15,6 +15,10 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Bytes(), nil
 	case *models.MerklePath:
 		return nil, errors.Errorf("pass by value")
+	case models.NamespacedMerklePath:
+		return v.Bytes(), nil
+	case *models.NamespacedMerklePath:
+		return nil, errors.Errorf("pass by value")
 	case models.StateNode:
 		return EncodeDataHash(&v)
 	case *models.StateNode:
@@ -43,6 +47,8 @@ func Encode(value interface{}) ([]byte, error) {
 func Decode(data []byte, value interface{}) error {
 	switch v := value.(type) {
 	case *models.MerklePath:
+		return v.SetBytes(data)
+	case *models.NamespacedMerklePath:
 		return v.SetBytes(data)
 	case *models.StateNode:
 		return DecodeDataHash(data, v)

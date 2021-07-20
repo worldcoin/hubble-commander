@@ -203,3 +203,18 @@ func TestGetWitnessesOfDepth3(t *testing.T) {
 
 	require.Equal(t, expected, witnesses)
 }
+
+func TestNamespaceBytesSetBytes(t *testing.T) {
+	path, err := NewMerklePath("101")
+	require.NoError(t, err)
+	ns := NamespacedMerklePath{Namespace: "foo", Path: *path}
+
+	bytes := ns.Bytes()
+	require.Len(t, bytes, 8)
+
+	parsed := NamespacedMerklePath{}
+	err = parsed.SetBytes(bytes)
+	require.NoError(t, err)
+
+	require.Equal(t, ns, parsed)
+}
