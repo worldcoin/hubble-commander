@@ -43,10 +43,10 @@ func TestCommanderDispute(t *testing.T) {
 	ethClient := newEthClient(t, cmd.Client())
 
 	testDisputeTransitionTransfer(t, cmd.Client(), ethClient, senderWallet)
-	testDisputeTransitionCreate2Transfer(t, cmd.Client(), ethClient, senderWallet, wallets)
+	testDisputeTransitionC2T(t, cmd.Client(), ethClient, senderWallet, wallets)
 
 	testDisputeTransitionTransferInvalidStateRoot(t, cmd.Client(), ethClient)
-	testDisputeC2TTransferInvalidStateRoot(t, cmd.Client(), ethClient, wallets[len(wallets)-1])
+	testDisputeTransitionC2TInvalidStateRoot(t, cmd.Client(), ethClient, wallets[len(wallets)-1])
 }
 
 func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, senderWallet bls.Wallet) {
@@ -77,7 +77,7 @@ func testDisputeTransitionTransferInvalidStateRoot(t *testing.T, client jsonrpc.
 	testBatchesAfterDispute(t, client, 3)
 }
 
-func testDisputeTransitionCreate2Transfer(
+func testDisputeTransitionC2T(
 	t *testing.T,
 	client jsonrpc.RPCClient,
 	ethClient *eth.Client,
@@ -90,7 +90,7 @@ func testDisputeTransitionCreate2Transfer(
 	defer subscription.Unsubscribe()
 
 	firstC2TWallet := wallets[len(wallets)-32]
-	sendInvalidC2TBatchWithInvalidAmount(t, ethClient, firstC2TWallet.PublicKey())
+	sendC2TBatchWithInvalidAmount(t, ethClient, firstC2TWallet.PublicKey())
 	testRollbackCompletion(t, sink, subscription)
 
 	testBatchesAfterDispute(t, client, 2)
@@ -98,7 +98,7 @@ func testDisputeTransitionCreate2Transfer(
 	testSendC2TBatch(t, client, senderWallet, wallets, firstC2TWallet.PublicKey(), 64)
 }
 
-func testDisputeC2TTransferInvalidStateRoot(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, receiverWallet bls.Wallet) {
+func testDisputeTransitionC2TInvalidStateRoot(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, receiverWallet bls.Wallet) {
 	sink := make(chan *rollup.RollupRollbackStatus)
 	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
 	require.NoError(t, err)
@@ -193,7 +193,7 @@ func sendTransferBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client) 
 	sendCommitment(t, ethClient, encodedTransfer, 2)
 }
 
-func sendInvalidC2TBatchWithInvalidAmount(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey) {
+func sendC2TBatchWithInvalidAmount(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey) {
 	transfer := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
