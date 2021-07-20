@@ -203,7 +203,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_AllVal
 	appliedTransfers, stateProofs, err := s.transactionExecutor.ApplyCreate2TransfersForSync(transfers, pubKeyIDs, s.feeReceiver)
 	s.NoError(err)
 	s.Len(appliedTransfers, 3)
-	s.Len(stateProofs, 6)
+	s.Len(stateProofs, 7)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidTransfer() {
