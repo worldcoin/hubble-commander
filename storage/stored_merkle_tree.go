@@ -8,19 +8,19 @@ import (
 )
 
 type StoredMerkleTree struct {
-	storage *Storage
-	prefix  string
+	storage   *Storage
+	namespace string
 }
 
-func NewStoredMerkleTree(prefix string, storage *Storage) *StoredMerkleTree {
+func NewStoredMerkleTree(namespace string, storage *Storage) *StoredMerkleTree {
 	return &StoredMerkleTree{
-		storage: storage,
-		prefix:  prefix,
+		storage:   storage,
+		namespace: namespace,
 	}
 }
 
-func (s *StoredMerkleTree) keyFor(path models.MerklePath) models.MerklePathWithPrefix {
-	return models.MerklePathWithPrefix{Prefix: s.prefix, Path: path}
+func (s *StoredMerkleTree) keyFor(path models.MerklePath) models.NamespacedMerklePath {
+	return models.NamespacedMerklePath{Namespace: s.namespace, Path: path}
 }
 
 func (s *StoredMerkleTree) Get(path models.MerklePath) (*models.StateNode, error) {

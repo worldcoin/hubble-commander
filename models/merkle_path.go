@@ -163,7 +163,7 @@ func (p *MerklePath) IsRightNode() bool {
 	return !p.IsLeftNode()
 }
 
-type MerklePathWithPrefix struct {
-	Prefix string
-	Path   MerklePath
+type NamespacedMerklePath struct {
+	Namespace string
+	Path      MerklePath
 }
