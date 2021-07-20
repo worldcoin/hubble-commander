@@ -43,10 +43,10 @@ func TestCommanderDispute(t *testing.T) {
 	ethClient := newEthClient(t, cmd.Client())
 
 	testDisputeTransitionTransfer(t, cmd.Client(), ethClient, senderWallet)
-
 	testDisputeTransitionCreate2Transfer(t, cmd.Client(), ethClient, senderWallet, wallets)
 
 	testDisputeTransitionTransferInvalidStateRoot(t, cmd.Client(), ethClient)
+	testDisputeC2TTransferInvalidStateRoot(t, cmd.Client(), ethClient, wallets[len(wallets)-1])
 }
 
 func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, senderWallet bls.Wallet) {
@@ -96,6 +96,18 @@ func testDisputeTransitionCreate2Transfer(
 	testBatchesAfterDispute(t, client, 2)
 
 	testSendC2TBatch(t, client, senderWallet, wallets, firstC2TWallet.PublicKey(), 64)
+}
+
+func testDisputeC2TTransferInvalidStateRoot(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, receiverWallet bls.Wallet) {
+	sink := make(chan *rollup.RollupRollbackStatus)
+	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
+	require.NoError(t, err)
+	defer subscription.Unsubscribe()
+
+	sendC2TBatchWithInvalidStateRoot(t, ethClient, receiverWallet.PublicKey())
+	testRollbackCompletion(t, sink, subscription)
+
+	testBatchesAfterDispute(t, client, 3)
 }
 
 func testSendTransferBatch(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, startNonce uint64) {
@@ -202,6 +214,29 @@ func sendInvalidC2TBatchWithInvalidAmount(t *testing.T, ethClient *eth.Client, t
 	require.NoError(t, err)
 
 	sendCommitment(t, ethClient, encodedTransfer, 3)
+}
+
+func sendC2TBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey) {
+	transfer := models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(90),
+			Fee:         models.MakeUint256(10),
+		},
+		ToStateID: ref.Uint32(38),
+	}
+
+	registrations, unsubscribe, err := ethClient.WatchRegistrations(&bind.WatchOpts{})
+	require.NoError(t, err)
+	defer unsubscribe()
+
+	pubKeyID, err := ethClient.RegisterAccount(toPublicKey, registrations)
+	require.NoError(t, err)
+
+	encodedTransfer, err := encoder.EncodeCreate2TransferForCommitment(&transfer, *pubKeyID)
+	require.NoError(t, err)
+
+	sendCommitment(t, ethClient, encodedTransfer, 4)
 }
 
 func sendCommitment(t *testing.T, ethClient *eth.Client, encodedTransfer []byte, batchID uint64) {
