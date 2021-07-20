@@ -77,23 +77,7 @@ func (s *StateTree) Set(id uint32, state *models.UserState) (models.Witness, err
 }
 
 func (s *StateTree) GetWitness(id uint32) (models.Witness, error) {
-	leafPath := models.MakeMerklePathFromStateID(id)
-	witnessPaths, err := leafPath.GetWitnessPaths()
-	if err != nil {
-		return nil, err
-	}
-
-	witness := make([]common.Hash, 0, len(witnessPaths))
-	for i := range witnessPaths {
-		var node *models.StateNode
-		node, err = s.merkleTree.Get(witnessPaths[i])
-		if err != nil {
-			return nil, err
-		}
-		witness = append(witness, node.DataHash)
-	}
-
-	return witness, nil
+	return s.merkleTree.GetWitness(models.MakeMerklePathFromStateID(id))
 }
 
 func (s *StateTree) RevertTo(targetRootHash common.Hash) error {

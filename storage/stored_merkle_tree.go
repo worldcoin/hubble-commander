@@ -93,6 +93,25 @@ func (s *StoredMerkleTree) SetNode(path *models.MerklePath, hash common.Hash) (*
 	return &currentHash, witness, nil
 }
 
+func (s *StoredMerkleTree) GetWitness(path models.MerklePath) (models.Witness, error) {
+	witnessPaths, err := path.GetWitnessPaths()
+	if err != nil {
+		return nil, err
+	}
+
+	witness := make([]common.Hash, 0, len(witnessPaths))
+	for i := range witnessPaths {
+		var node *models.StateNode
+		node, err = s.Get(witnessPaths[i])
+		if err != nil {
+			return nil, err
+		}
+		witness = append(witness, node.DataHash)
+	}
+
+	return witness, nil
+}
+
 func calculateParentHash(
 	currentHash *common.Hash,
 	currentPath *models.MerklePath,
