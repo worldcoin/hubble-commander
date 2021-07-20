@@ -104,7 +104,7 @@ func (s *StateTreeTestSuite) TestSet_StoresLeafStateNodeRecord() {
 		DataHash: s.leaf.DataHash,
 	}
 
-	node, err := s.storage.GetStateNodeByPath(&expectedNode.MerklePath)
+	node, err := NewStoredMerkleTree("state", s.storage.Storage).Get(expectedNode.MerklePath)
 	s.NoError(err)
 	s.Equal(expectedNode, node)
 }
@@ -113,38 +113,18 @@ func (s *StateTreeTestSuite) TestSet_UpdatesRootStateNodeRecord() {
 	_, err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
-	rootPath := models.MerklePath{
-		Path:  0,
-		Depth: 0,
-	}
-
-	expectedRoot := &models.StateNode{
-		MerklePath: rootPath,
-		DataHash:   common.HexToHash("0xd8cb702fc833817dccdc3889282af96755b2909274ca2f1a3827a60d11d796eb"),
-	}
-
-	root, err := s.storage.GetStateNodeByPath(&rootPath)
+	root, err := s.tree.Root()
 	s.NoError(err)
-	s.Equal(expectedRoot, root)
+	s.Equal(common.HexToHash("0xd8cb702fc833817dccdc3889282af96755b2909274ca2f1a3827a60d11d796eb"), *root)
 }
 
 func (s *StateTreeTestSuite) TestSet_CalculatesCorrectRootForLeafOfId1() {
 	_, err := s.tree.Set(1, &s.leaf.UserState)
 	s.NoError(err)
 
-	rootPath := models.MerklePath{
-		Path:  0,
-		Depth: 0,
-	}
-
-	expectedRoot := &models.StateNode{
-		MerklePath: rootPath,
-		DataHash:   common.HexToHash("0xbec68099063e1499a5144a2d5b41f6a3e005ceac77caef6a171d77573570a000"),
-	}
-
-	root, err := s.storage.GetStateNodeByPath(&rootPath)
+	root, err := s.tree.Root()
 	s.NoError(err)
-	s.Equal(expectedRoot, root)
+	s.Equal(common.HexToHash("0xbec68099063e1499a5144a2d5b41f6a3e005ceac77caef6a171d77573570a000"), *root)
 }
 
 func (s *StateTreeTestSuite) TestSet_CalculatesCorrectRootForTwoLeaves() {
@@ -160,19 +140,9 @@ func (s *StateTreeTestSuite) TestSet_CalculatesCorrectRootForTwoLeaves() {
 	_, err = s.tree.Set(1, &state)
 	s.NoError(err)
 
-	rootPath := models.MerklePath{
-		Path:  0,
-		Depth: 0,
-	}
-
-	expectedRoot := &models.StateNode{
-		MerklePath: rootPath,
-		DataHash:   common.HexToHash("0x7b1b0382bdffda7f4a6b24d974189c60797b87ce76836de6f18039e1dc73c050"),
-	}
-
-	root, err := s.storage.GetStateNodeByPath(&rootPath)
+	root, err := s.tree.Root()
 	s.NoError(err)
-	s.Equal(expectedRoot, root)
+	s.Equal(common.HexToHash("0x7b1b0382bdffda7f4a6b24d974189c60797b87ce76836de6f18039e1dc73c050"), *root)
 }
 
 func (s *StateTreeTestSuite) TestSet_StoresStateUpdateRecord() {
@@ -201,19 +171,9 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectRootStateNode() {
 	_, err = s.tree.Set(0, &updatedUserState)
 	s.NoError(err)
 
-	rootPath := models.MerklePath{
-		Path:  0,
-		Depth: 0,
-	}
-
-	expectedRoot := &models.StateNode{
-		MerklePath: rootPath,
-		DataHash:   common.HexToHash("0x406515786640be8c51eacf1221f017e7f59e04ef59637a27dcb2b2f054b309bf"),
-	}
-
-	root, err := s.storage.GetStateNodeByPath(&rootPath)
+	root, err := s.tree.Root()
 	s.NoError(err)
-	s.Equal(expectedRoot, root)
+	s.Equal(common.HexToHash("0x406515786640be8c51eacf1221f017e7f59e04ef59637a27dcb2b2f054b309bf"), *root)
 }
 
 func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectLeafStateNode() {
@@ -235,7 +195,7 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectLeafStateNode() {
 		DataHash:   leaf.DataHash,
 	}
 
-	leafNode, err := s.storage.GetStateNodeByPath(&leafPath)
+	leafNode, err := s.tree.LeafNode(0)
 	s.NoError(err)
 	s.Equal(expectedLeaf, leafNode)
 }
