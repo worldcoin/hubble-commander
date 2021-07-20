@@ -60,7 +60,7 @@ func (s *GetBatchTestSuite) TearDownTest() {
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByHash() {
-	s.addLeaf()
+	s.addStateLeaf()
 	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
@@ -81,7 +81,7 @@ func (s *GetBatchTestSuite) TestGetBatchByHash() {
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByHash_NoCommitments() {
-	s.addLeaf()
+	s.addStateLeaf()
 	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
@@ -97,7 +97,7 @@ func (s *GetBatchTestSuite) TestGetBatchByHash_NonExistentBatch() {
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByID() {
-	s.addLeaf()
+	s.addStateLeaf()
 	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
@@ -132,8 +132,8 @@ func (s *GetBatchTestSuite) TestGetBatchByID_NonExistentBatch() {
 	s.Nil(result)
 }
 
-func (s *GetBatchTestSuite) addLeaf() {
-	err := s.storage.AddAccountIfNotExists(&models.Account{PubKeyID: 1})
+func (s *GetBatchTestSuite) addStateLeaf() {
+	err := s.storage.AddAccountLeafIfNotExists(&models.AccountLeaf{PubKeyID: 1})
 	s.NoError(err)
 
 	_, err = s.tree.Set(uint32(1), &models.UserState{

@@ -45,7 +45,7 @@ func (s *TransferTestSuite) SetupTest() {
 	s.NoError(err)
 	s.tree = NewStateTree(s.storage.Storage)
 
-	err = s.storage.AddAccountIfNotExists(&account2)
+	err = s.storage.AddAccountLeafIfNotExists(&account2)
 	s.NoError(err)
 }
 
@@ -247,7 +247,7 @@ func (s *TransferTestSuite) TestGetUserTransfers_NoTransfers() {
 }
 
 func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
-	accounts := []models.Account{
+	accounts := []models.AccountLeaf{
 		{
 			PubKeyID:  1,
 			PublicKey: models.PublicKey{1, 2, 3},
@@ -262,7 +262,7 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 		},
 	}
 	for i := range accounts {
-		err := s.storage.AddAccountIfNotExists(&accounts[i])
+		err := s.storage.AddAccountLeafIfNotExists(&accounts[i])
 		s.NoError(err)
 	}
 

@@ -35,7 +35,7 @@ func (s *GetUserStatesTestSuite) TearDownTest() {
 }
 
 func (s *GetUserStatesTestSuite) TestGetUserStates() {
-	accounts := []models.Account{
+	accounts := []models.AccountLeaf{
 		{
 			PubKeyID:  1,
 			PublicKey: models.PublicKey{1, 2, 3},
@@ -46,7 +46,7 @@ func (s *GetUserStatesTestSuite) TestGetUserStates() {
 		},
 	}
 	for i := range accounts {
-		err := s.api.storage.AddAccountIfNotExists(&accounts[i])
+		err := s.api.storage.AddAccountLeafIfNotExists(&accounts[i])
 		s.NoError(err)
 	}
 

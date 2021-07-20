@@ -55,7 +55,7 @@ func (s *CalculateTransactionStatusTestSuite) SetupTest() {
 		Nonce:    models.MakeUint256(0),
 	}
 
-	err = s.storage.AddAccountIfNotExists(&models.Account{
+	err = s.storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
 		PubKeyID:  userState.PubKeyID,
 		PublicKey: models.PublicKey{1, 2, 3},
 	})

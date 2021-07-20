@@ -10,99 +10,99 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type StateNodeTestSuite struct {
+type AccountNodeTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage *TestStorage
 }
 
-func (s *StateNodeTestSuite) SetupSuite() {
+func (s *AccountNodeTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *StateNodeTestSuite) SetupTest() {
+func (s *AccountNodeTestSuite) SetupTest() {
 	var err error
 	s.storage, err = NewTestStorageWithoutPostgres()
 	s.NoError(err)
 }
 
-func (s *StateNodeTestSuite) TearDownTest() {
+func (s *AccountNodeTestSuite) TearDownTest() {
 	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
-func (s *StateNodeTestSuite) TestUpsertStateNode_AddAndRetrieve() {
+func (s *AccountNodeTestSuite) TestUpsertAccountNode_AddAndRetrieve() {
 	path, err := models.NewMerklePath("0000111")
 	s.NoError(err)
-	node := &models.StateNode{
+	node := &models.AccountNode{
 		MerklePath: *path,
 		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 	}
-	err = s.storage.UpsertStateNode(node)
+	err = s.storage.UpsertAccountNode(node)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateNodeByPath(path)
+	res, err := s.storage.GetAccountNodeByPath(path)
 	s.NoError(err)
 
 	s.Equal(node, res)
 }
 
-func (s *StateNodeTestSuite) TestUpsertStateNode_UpdateAndRetrieve() {
+func (s *AccountNodeTestSuite) TestUpsertAccountNode_UpdateAndRetrieve() {
 	path, err := models.NewMerklePath("0000111")
 	s.NoError(err)
-	node := &models.StateNode{
+	node := &models.AccountNode{
 		MerklePath: *path,
 		DataHash:   common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 	}
-	err = s.storage.UpsertStateNode(node)
+	err = s.storage.UpsertAccountNode(node)
 	s.NoError(err)
 
 	s.NoError(err)
-	expectedNode := &models.StateNode{
+	expectedNode := &models.AccountNode{
 		MerklePath: *path,
 		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 	}
-	err = s.storage.UpsertStateNode(expectedNode)
+	err = s.storage.UpsertAccountNode(expectedNode)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateNodeByPath(path)
+	res, err := s.storage.GetAccountNodeByPath(path)
 	s.NoError(err)
 
 	s.Equal(expectedNode, res)
 }
 
-func (s *StateNodeTestSuite) TestGetStateNodeByPath_NonExistentLeaf() {
+func (s *AccountNodeTestSuite) TestGetAccountNodeByPath_NonExistentLeaf() {
 	path := models.MerklePath{
 		Path:  0,
 		Depth: StateTreeDepth,
 	}
 
-	expected := &models.StateNode{
+	expected := &models.AccountNode{
 		MerklePath: path,
 		DataHash:   merkletree.GetZeroHash(0),
 	}
 
-	res, err := s.storage.GetStateNodeByPath(&path)
+	res, err := s.storage.GetAccountNodeByPath(&path)
 	s.NoError(err)
 	s.Equal(expected, res)
 }
 
-func (s *StateNodeTestSuite) TestGetStateNodeByPath_NonExistentRoot() {
+func (s *AccountNodeTestSuite) TestGetAccountNodeByPath_NonExistentRoot() {
 	path := models.MerklePath{
 		Path:  0,
 		Depth: 0,
 	}
 
-	expected := &models.StateNode{
+	expected := &models.AccountNode{
 		MerklePath: path,
 		DataHash:   merkletree.GetZeroHash(StateTreeDepth),
 	}
 
-	res, err := s.storage.GetStateNodeByPath(&path)
+	res, err := s.storage.GetAccountNodeByPath(&path)
 	s.NoError(err)
 	s.Equal(expected, res)
 }
 
-func TestStateNodeTestSuite(t *testing.T) {
-	suite.Run(t, new(StateNodeTestSuite))
+func TestAccountNodeTestSuite(t *testing.T) {
+	suite.Run(t, new(AccountNodeTestSuite))
 }

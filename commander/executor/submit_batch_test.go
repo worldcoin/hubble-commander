@@ -55,7 +55,7 @@ func (s *SubmitTransferBatchTestSuite) SetupTest() {
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
 
-	err = s.storage.AddAccountIfNotExists(&models.Account{
+	err = s.storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
 		PubKeyID:  1,
 		PublicKey: models.PublicKey{1, 2, 3},
 	})

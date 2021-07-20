@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 )
 
@@ -12,6 +13,23 @@ func TestBytes_ReturnsACopy(t *testing.T) {
 	bytes := key.Bytes()
 	bytes[0] = 9
 	require.Equal(t, PublicKey{1, 2, 3}, key)
+}
+
+func TestSetBytes(t *testing.T) {
+	key := PublicKey{1, 2, 3}
+	bytes := key.Bytes()
+	newKey := PublicKey{}
+	err := newKey.SetBytes(bytes)
+	require.NoError(t, err)
+	require.Equal(t, key, newKey)
+}
+
+func TestSetBytes_InvalidLength(t *testing.T) {
+	bytes := utils.PadLeft([]byte{1, 2, 3}, 130)
+	key := PublicKey{}
+	err := key.SetBytes(bytes)
+	require.NotNil(t, err)
+	require.Equal(t, "invalid length", err.Error())
 }
 
 func TestValue_ReturnsACopy(t *testing.T) {

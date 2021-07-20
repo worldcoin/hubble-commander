@@ -191,7 +191,7 @@ func (s *VerifySignatureTestSuite) addAccounts() {
 		s.NoError(err)
 		s.wallets = append(s.wallets, *wallet)
 
-		err = s.storage.AddAccountIfNotExists(&models.Account{
+		err = s.storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
 			PubKeyID:  i,
 			PublicKey: *wallet.PublicKey(),
 		})
