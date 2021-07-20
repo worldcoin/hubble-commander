@@ -427,7 +427,7 @@ func (s *DisputeTransitionTestSuite) createInvalidC2TCommitments(
 			combinedFee = s.applyTransfer(&txs[j], invalidTxHash, combinedFee, receiverLeaf)
 		}
 		if combinedFee.CmpN(0) > 0 {
-			err := s.transactionExecutor.ApplyFee(0, combinedFee)
+			_, err := s.transactionExecutor.ApplyFee(0, combinedFee)
 			s.NoError(err)
 		}
 		commitment, err := s.transactionExecutor.buildC2TCommitment(txs, pubKeyIDs[i], 0, testDomain)
@@ -452,7 +452,7 @@ func (s *DisputeTransitionTestSuite) createInvalidTransferCommitments(
 			combinedFee = s.applyTransfer(&txs[j], invalidTxHash, combinedFee, receiverLeaf)
 		}
 		if combinedFee.CmpN(0) > 0 {
-			err := s.transactionExecutor.ApplyFee(0, combinedFee)
+			_, err := s.transactionExecutor.ApplyFee(0, combinedFee)
 			s.NoError(err)
 		}
 		commitment, err := s.transactionExecutor.buildTransferCommitment(txs, 0, testDomain)

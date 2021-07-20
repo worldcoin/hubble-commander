@@ -40,7 +40,7 @@ func (s *ApplyFeeTestSuite) TestApplyFee() {
 	_, err := s.tree.Set(feeReceiverStateID, &receiverState)
 	s.NoError(err)
 
-	err = s.transactionExecutor.ApplyFee(feeReceiverStateID, models.MakeUint256(555))
+	_, err = s.transactionExecutor.ApplyFee(feeReceiverStateID, models.MakeUint256(555))
 	s.NoError(err)
 
 	feeReceiverState, err := s.storage.GetStateLeaf(feeReceiverStateID)

@@ -49,7 +49,7 @@ func (t *TransactionExecutor) ApplyTransfers(
 	}
 
 	if len(returnStruct.appliedTransfers) > 0 {
-		err := t.ApplyFee(feeReceiver.StateID, combinedFee)
+		_, err := t.ApplyFee(feeReceiver.StateID, combinedFee)
 		if err != nil {
 			return nil, err
 		}
@@ -92,10 +92,11 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 	}
 
 	if combinedFee.CmpN(0) > 0 {
-		err := t.ApplyFee(feeReceiver.StateID, combinedFee)
+		stateProof, err := t.ApplyFee(feeReceiver.StateID, combinedFee)
 		if err != nil {
 			return nil, nil, err
 		}
+		stateChangeProofs = append(stateChangeProofs, *stateProof)
 	}
 
 	return appliedTransfers, stateChangeProofs, nil
