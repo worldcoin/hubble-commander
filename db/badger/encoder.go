@@ -20,7 +20,6 @@ func Encode(value interface{}) ([]byte, error) {
 		return EncodeDataHash(&v.DataHash)
 	case *models.AccountNode:
 		return nil, errors.Errorf("pass by value")
-	// TODO-ACCOUNT - check if this encoding is necessary
 	case models.AccountLeaf:
 		return v.Bytes(), nil
 	case *models.AccountLeaf:
