@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
@@ -112,18 +111,8 @@ func (s *StateLeafTestSuite) TestGetStateLeaf_ReturnsCorrectStruct() {
 			Nonce:    models.MakeUint256(0),
 		},
 	}
-	path, err := models.NewMerklePath(strings.Repeat("0", 32))
-	s.NoError(err)
-
-	node := &models.MerkleTreeNode{
-		MerklePath: *path,
-		DataHash:   leaf.DataHash,
-	}
 
 	err = s.storage.UpsertStateLeaf(leaf)
-	s.NoError(err)
-
-	err = s.storage.UpsertStateNode(node)
 	s.NoError(err)
 
 	actual, err := s.storage.GetStateLeaf(leaf.StateID)
