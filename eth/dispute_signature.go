@@ -48,3 +48,26 @@ func signatureProofToCalldata(proof *models.SignatureProof) *rollup.TypesSignatu
 	}
 	return result
 }
+
+func signatureProofWithReceiverToCalldata(proof *models.SignatureProofWithReceiver) *rollup.TypesSignatureProofWithReceiver {
+	result := &rollup.TypesSignatureProofWithReceiver{
+		States:                  make([]rollup.TypesUserState, 0, len(proof.UserStates)),
+		StateWitnesses:          make([][][32]byte, 0, len(proof.UserStates)),
+		PubkeysSender:           make([][4]*big.Int, 0, len(proof.SenderPublicKeys)),
+		PubkeyWitnessesSender:   make([][][32]byte, 0, len(proof.SenderPublicKeys)),
+		PubkeyHashesReceiver:    make([][32]byte, 0, len(proof.UserStates)),
+		PubkeyWitnessesReceiver: make([][][32]byte, 0, len(proof.SenderPublicKeys)),
+	}
+	for i := range proof.UserStates {
+		stateProof := stateMerkleProofToCalldata(&proof.UserStates[i])
+		result.States = append(result.States, stateProof.State)
+		result.StateWitnesses = append(result.StateWitnesses, stateProof.Witness)
+
+		result.PubkeysSender = append(result.PubkeysSender, proof.SenderPublicKeys[i].PublicKey.BigInts())
+		result.PubkeyWitnessesSender = append(result.PubkeyWitnessesSender, proof.SenderPublicKeys[i].Witness.Bytes())
+
+		result.PubkeyHashesReceiver = append(result.PubkeyHashesReceiver, proof.ReceiverPublicKeys[i].PublicKeyHash)
+		result.PubkeyWitnessesReceiver = append(result.PubkeyWitnessesReceiver, proof.ReceiverPublicKeys[i].Witness.Bytes())
+	}
+	return result
+}
