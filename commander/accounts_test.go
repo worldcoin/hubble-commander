@@ -74,6 +74,11 @@ func (s *AccountsTestSuite) TestSyncBatchAccount() {
 	pubKeyIDs, err := s.testClient.RegisterBatchAccount(publicKeys, registrations)
 	s.NoError(err)
 
+	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
+	s.NoError(err)
+	err = s.cmd.syncBatchAccount(0, *latestBlockNumber)
+	s.NoError(err)
+
 	for i := range pubKeyIDs {
 		leaves, err := s.cmd.storage.GetAccountLeaves(&publicKeys[i])
 		s.NoError(err)
