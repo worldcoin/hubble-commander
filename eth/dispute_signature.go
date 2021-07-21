@@ -33,13 +33,13 @@ func (c *Client) DisputeSignatureTransfer(
 
 func signatureProofToCalldata(proof *models.SignatureProof) *rollup.TypesSignatureProof {
 	result := &rollup.TypesSignatureProof{
-		States:          make([]rollup.TypesUserState, 0, len(proof.States)),
-		StateWitnesses:  make([][][32]byte, 0, len(proof.States)),
+		States:          make([]rollup.TypesUserState, 0, len(proof.UserStates)),
+		StateWitnesses:  make([][][32]byte, 0, len(proof.UserStates)),
 		Pubkeys:         make([][4]*big.Int, 0, len(proof.PublicKeys)),
 		PubkeyWitnesses: make([][][32]byte, 0, len(proof.PublicKeys)),
 	}
-	for i := range proof.States {
-		stateProof := stateMerkleProofToCalldata(&proof.States[i])
+	for i := range proof.UserStates {
+		stateProof := stateMerkleProofToCalldata(&proof.UserStates[i])
 		result.States = append(result.States, stateProof.State)
 		result.StateWitnesses = append(result.StateWitnesses, stateProof.Witness)
 
