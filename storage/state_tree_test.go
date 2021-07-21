@@ -238,11 +238,11 @@ func (s *StateTreeTestSuite) TestSet_ReturnsWitness() {
 	s.NoError(err)
 	s.Len(witness, StateTreeDepth)
 
-	node, err := s.storage.GetStateNodeByPath(&models.MerklePath{Depth: StateTreeDepth, Path: 1})
+	node, err := s.tree.getStateNodeByPath(&models.MerklePath{Depth: StateTreeDepth, Path: 1})
 	s.NoError(err)
 	s.Equal(node.DataHash, witness[0])
 
-	node, err = s.storage.GetStateNodeByPath(&models.MerklePath{Depth: 1, Path: 1})
+	node, err = s.tree.getStateNodeByPath(&models.MerklePath{Depth: 1, Path: 1})
 	s.NoError(err)
 	s.Equal(node.DataHash, witness[31])
 }
