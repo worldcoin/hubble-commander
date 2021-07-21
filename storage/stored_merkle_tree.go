@@ -28,7 +28,7 @@ func (s *StoredMerkleTree) Get(path models.MerklePath) (*models.MerkleTreeNode, 
 	node := models.MerkleTreeNode{MerklePath: path}
 	err := s.storage.Badger.Get(s.keyFor(path), &node)
 	if err == bh.ErrNotFound {
-		return newZeroStateNode(&path), nil
+		return newZeroNode(&path), nil
 	}
 	if err != nil {
 		return nil, err
@@ -125,7 +125,7 @@ func calculateParentHash(
 	}
 }
 
-func newZeroStateNode(path *models.MerklePath) *models.MerkleTreeNode {
+func newZeroNode(path *models.MerklePath) *models.MerkleTreeNode {
 	return &models.MerkleTreeNode{
 		MerklePath: *path,
 		DataHash:   merkletree.GetZeroHash(StateTreeDepth - uint(path.Depth)),

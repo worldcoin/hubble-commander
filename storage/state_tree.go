@@ -213,7 +213,7 @@ func (s *StateTree) getStateNodeByPath(path *models.MerklePath) (*models.MerkleT
 	node := models.MerkleTreeNode{MerklePath: *path}
 	err := s.storage.Badger.Get(*path, &node)
 	if err == bh.ErrNotFound {
-		return newZeroStateNode(path), nil
+		return newZeroNode(path), nil
 	}
 	if err != nil {
 		return nil, err
