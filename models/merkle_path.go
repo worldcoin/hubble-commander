@@ -162,3 +162,25 @@ func (p *MerklePath) IsLeftNode() bool {
 func (p *MerklePath) IsRightNode() bool {
 	return !p.IsLeftNode()
 }
+
+type NamespacedMerklePath struct {
+	Namespace string
+	Path      MerklePath
+}
+
+func (p *NamespacedMerklePath) Bytes() []byte {
+	bytes := make([]byte, len(p.Namespace)+5)
+
+	copy(bytes[0:], p.Namespace)
+	copy(bytes[len(p.Namespace):], p.Path.Bytes())
+
+	return bytes
+}
+
+func (p *NamespacedMerklePath) SetBytes(data []byte) error {
+	if len(data) < 5 {
+		return fmt.Errorf("invalid length")
+	}
+	p.Namespace = string(data[:len(data)-5])
+	return p.Path.SetBytes(data[len(data)-5:])
+}
