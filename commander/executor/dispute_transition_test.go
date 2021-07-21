@@ -3,11 +3,13 @@ package executor
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -74,7 +76,10 @@ func (s *DisputeTransitionTestSuite) SetupTest() {
 	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
 
-	s.client, err = eth.NewTestClient()
+	s.client, err = eth.NewConfiguredTestClient(
+		rollup.DeploymentConfig{},
+		eth.ClientConfig{TxTimeout: ref.Duration(2 * time.Second)},
+	)
 	s.NoError(err)
 
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())

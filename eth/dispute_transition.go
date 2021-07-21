@@ -84,7 +84,7 @@ func (c *Client) waitForRollbackToFinish(
 					return err
 				}
 			}
-		case <-time.After(*c.config.txTimeout):
+		case <-time.After(*c.config.TxTimeout):
 			return errors.New("waitForRollbackToFinish: timeout")
 		}
 	}
