@@ -13,18 +13,25 @@ import (
 	"github.com/pkg/errors"
 )
 
-const batchAccountOffset = 1 << 31
+const (
+	accountBatchSize   = 16
+	accountBatchOffset = 1 << 31
+)
 
 func (c *Client) RegisterBatchAccount(
-	publicKeys [16]models.PublicKey,
+	publicKeys []models.PublicKey,
 	ev chan *accountregistry.AccountRegistryBatchPubkeyRegistered,
 ) ([]uint32, error) {
-	var publicKeyInput [16][4]*big.Int
-	for i := range publicKeys {
-		publicKeyInput[i] = publicKeys[i].BigInts()
+	if len(publicKeys) != accountBatchSize {
+		return nil, errors.New("invalid publicKeys length")
 	}
 
-	tx, err := c.AccountRegistry.RegisterBatch(c.ChainConnection.GetAccount(), publicKeyInput)
+	var pubkeys [accountBatchSize][4]*big.Int
+	for i := range publicKeys {
+		pubkeys[i] = publicKeys[i].BigInts()
+	}
+
+	tx, err := c.AccountRegistry.RegisterBatch(c.ChainConnection.GetAccount(), pubkeys)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -71,7 +78,7 @@ func ExtractPubKeyIDsFromBatchAccountEvent(ev *accountregistry.AccountRegistryBa
 
 	pubKeyIDs := make([]uint32, 0, endID-startID)
 	for i := startID; i <= endID; i++ {
-		pubKeyIDs = append(pubKeyIDs, uint32(batchAccountOffset+i))
+		pubKeyIDs = append(pubKeyIDs, uint32(accountBatchOffset+i))
 	}
 	return pubKeyIDs
 }

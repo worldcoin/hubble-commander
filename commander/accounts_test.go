@@ -66,7 +66,7 @@ func (s *AccountsTestSuite) TestSyncBatchAccount() {
 	s.NoError(err)
 	defer unsubscribe()
 
-	var publicKeys [16]models.PublicKey
+	publicKeys := make([]models.PublicKey, 16)
 	for i := range publicKeys {
 		publicKeys[i] = models.PublicKey{1, 1, byte(i)}
 	}

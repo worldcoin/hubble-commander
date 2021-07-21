@@ -34,21 +34,21 @@ func (s *RegisterBatchAccountTestSuite) TestRegisterBatchAccount() {
 	s.NoError(err)
 	defer unsubscribe()
 
-	var publicKeys [16]models.PublicKey
-	expectedPubKeyIDs := make([]uint32, 16)
+	publicKeys := make([]models.PublicKey, accountBatchSize)
+	expectedPubKeyIDs := make([]uint32, accountBatchSize)
 	for i := range publicKeys {
 		publicKeys[i] = models.PublicKey{1, 1, byte(i)}
-		expectedPubKeyIDs[i] = uint32(batchAccountOffset + i)
+		expectedPubKeyIDs[i] = uint32(accountBatchOffset + i)
 	}
 
 	pubKeyIDs, err := s.client.RegisterBatchAccount(publicKeys, events)
 	s.NoError(err)
-	s.Len(pubKeyIDs, 16)
+	s.Len(pubKeyIDs, accountBatchSize)
 	s.Equal(expectedPubKeyIDs, pubKeyIDs)
 
 	rightIndex, err := s.client.AccountRegistry.LeafIndexRight(&bind.CallOpts{})
 	s.NoError(err)
-	s.EqualValues(16, rightIndex.Uint64())
+	s.EqualValues(accountBatchSize, rightIndex.Uint64())
 }
 
 func TestRegisterBatchAccountTestSuite(t *testing.T) {
