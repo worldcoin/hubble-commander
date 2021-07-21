@@ -5,7 +5,31 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
+
+func (c *Client) DisputeSignatureTransfer(
+	batchID *models.Uint256,
+	target *models.TransferCommitmentInclusionProof,
+	signatureProof *models.SignatureProof,
+) error {
+	sink := make(chan *rollup.RollupRollbackStatus)
+	subscription, err := c.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
+	if err != nil {
+		return err
+	}
+	defer subscription.Unsubscribe()
+
+	transaction, err := c.rollup().DisputeSignatureTransfer(
+		batchID.ToBig(),
+		*TransferProofToCalldata(target),
+		*signatureProofToCalldata(signatureProof),
+	)
+	if err != nil {
+		return err
+	}
+	return c.waitForRollbackToFinish(sink, subscription, transaction.Hash())
+}
 
 func signatureProofToCalldata(proof *models.SignatureProof) *rollup.TypesSignatureProof {
 	result := &rollup.TypesSignatureProof{
