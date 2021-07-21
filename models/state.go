@@ -17,11 +17,6 @@ type UserState struct {
 	Nonce    Uint256
 }
 
-type MerkleTreeNode struct {
-	MerklePath MerklePath
-	DataHash   common.Hash
-}
-
 type StateLeaf struct {
 	StateID  uint32
 	DataHash common.Hash
