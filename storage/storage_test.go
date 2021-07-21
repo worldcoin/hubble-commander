@@ -174,11 +174,11 @@ func (s *StorageTestSuite) TestClone() {
 	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
 
-	stateNode := models.MerkleTreeNode{
-		MerklePath: models.MakeMerklePathFromStateID(1),
-		DataHash:   utils.RandomHash(),
+	stateLeaf := models.StateLeaf{
+		StateID:  1,
+		DataHash: utils.RandomHash(),
 	}
-	err = s.storage.UpsertStateNode(&stateNode)
+	err = s.storage.UpsertStateLeaf(&stateLeaf)
 	s.NoError(err)
 
 	clonedStorage, err := s.storage.Clone(testConfig)
@@ -192,9 +192,9 @@ func (s *StorageTestSuite) TestClone() {
 	s.NoError(err)
 	s.Equal(batch, *clonedBatch)
 
-	clonedStateNode, err := clonedStorage.GetStateNodeByPath(&stateNode.MerklePath)
+	clonedStateLeaf, err := clonedStorage.GetStateLeaf(stateLeaf.StateID)
 	s.NoError(err)
-	s.Equal(stateNode, *clonedStateNode)
+	s.Equal(stateLeaf, *clonedStateLeaf)
 }
 
 func TestStorageTestSuite(t *testing.T) {
