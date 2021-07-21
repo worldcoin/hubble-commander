@@ -86,7 +86,7 @@ func (c *Commander) syncBatchAccount(start, end uint64) error {
 		}
 
 		publicKeys := unpack[0].([16][4]*big.Int)
-		pubKeyIDs := eth.HandleBatchAccountEvent(it.Event)
+		pubKeyIDs := eth.ExtractPubKeyIDsFromBatchAccountEvent(it.Event)
 
 		// TODO: call addBatchAccountLeaf instead when account tree is ready
 		for i := range pubKeyIDs {
