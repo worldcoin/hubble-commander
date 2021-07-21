@@ -52,6 +52,9 @@ func (c *Commander) syncAccounts(start, end uint64) error {
 	return nil
 }
 
+func (c *Commander) syncBatchAccount(start, end uint64) error {
+}
+
 func logAccountsCount(newAccountsCount int) {
 	if newAccountsCount > 0 {
 		log.Printf("Found %d new account(s)", newAccountsCount)
