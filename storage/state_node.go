@@ -5,27 +5,11 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
-	bh "github.com/timshannon/badgerhold/v3"
 )
 
 var flatStateLeafPrefix = []byte("bh_" + reflect.TypeOf(models.FlatStateLeaf{}).Name())
 
-func (s *Storage) UpsertStateNode(node *models.MerkleTreeNode) error {
-	return s.Badger.Upsert(node.MerklePath, *node)
-}
-
-func (s *Storage) GetStateNodeByPath(path *models.MerklePath) (*models.MerkleTreeNode, error) {
-	node := models.MerkleTreeNode{MerklePath: *path}
-	err := s.Badger.Get(*path, &node)
-	if err == bh.ErrNotFound {
-		return newZeroStateNode(path), nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	return &node, nil
-}
-
+// TODO-ST move to stored_merkle_tree.go
 func newZeroStateNode(path *models.MerklePath) *models.MerkleTreeNode {
 	return &models.MerkleTreeNode{
 		MerklePath: *path,
