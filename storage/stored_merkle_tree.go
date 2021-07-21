@@ -3,6 +3,7 @@ package storage
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/common"
 	bh "github.com/timshannon/badgerhold/v3"
 )
@@ -121,5 +122,12 @@ func calculateParentHash(
 		return utils.HashTwo(*currentHash, witnessHash)
 	} else {
 		return utils.HashTwo(witnessHash, *currentHash)
+	}
+}
+
+func newZeroStateNode(path *models.MerklePath) *models.MerkleTreeNode {
+	return &models.MerkleTreeNode{
+		MerklePath: *path,
+		DataHash:   merkletree.GetZeroHash(StateTreeDepth - uint(path.Depth)),
 	}
 }

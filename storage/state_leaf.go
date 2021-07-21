@@ -102,14 +102,14 @@ func (s *Storage) GetNextAvailableStateID() (*uint32, error) {
 		it := txn.NewIterator(opts)
 		defer it.Close()
 
-		seekPrefix := make([]byte, 0, len(flatStateLeafPrefix)+1)
-		seekPrefix = append(seekPrefix, flatStateLeafPrefix...)
+		seekPrefix := make([]byte, 0, len(models.FlatStateLeafPrefix)+1)
+		seekPrefix = append(seekPrefix, models.FlatStateLeafPrefix...)
 		seekPrefix = append(seekPrefix, 0xFF) // Required to loop backwards
 
 		it.Seek(seekPrefix)
-		if it.ValidForPrefix(flatStateLeafPrefix) {
+		if it.ValidForPrefix(models.FlatStateLeafPrefix) {
 			var key uint32
-			err := badger.DecodeKey(it.Item().Key(), &key, flatStateLeafPrefix)
+			err := badger.DecodeKey(it.Item().Key(), &key, models.FlatStateLeafPrefix)
 			if err != nil {
 				return err
 			}
