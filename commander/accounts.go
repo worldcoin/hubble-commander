@@ -12,6 +12,14 @@ import (
 )
 
 func (c *Commander) syncAccounts(start, end uint64) error {
+	err := c.syncSingleAccount(start, end)
+	if err != nil {
+		return err
+	}
+	return c.syncBatchAccount(start, end)
+}
+
+func (c *Commander) syncSingleAccount(start, end uint64) error {
 	it, err := c.client.AccountRegistry.FilterSinglePubkeyRegistered(&bind.FilterOpts{
 		Start: start,
 		End:   &end,
@@ -27,7 +35,6 @@ func (c *Commander) syncAccounts(start, end uint64) error {
 			return err
 		}
 
-		// TODO: Handle registerBatch.
 		if !bytes.Equal(tx.Data()[:4], c.client.AccountRegistryABI.Methods["register"].ID) {
 			continue // TODO handle internal transactions
 		}
@@ -37,10 +44,10 @@ func (c *Commander) syncAccounts(start, end uint64) error {
 			return err
 		}
 
-		pubkey := unpack[0].([4]*big.Int)
+		publicKey := unpack[0].([4]*big.Int)
 		account := models.AccountLeaf{
 			PubKeyID:  uint32(it.Event.PubkeyID.Uint64()),
-			PublicKey: models.MakePublicKeyFromInts(pubkey),
+			PublicKey: models.MakePublicKeyFromInts(publicKey),
 		}
 
 		err = c.storage.AddAccountLeafIfNotExists(&account)
@@ -80,6 +87,8 @@ func (c *Commander) syncBatchAccount(start, end uint64) error {
 
 		publicKeys := unpack[0].([16][4]*big.Int)
 		pubKeyIDs := eth.HandleBatchAccountEvent(it.Event)
+
+		// TODO: call addBatchAccountLeaf instead when account tree is ready
 		for i := range pubKeyIDs {
 			account := &models.AccountLeaf{
 				PubKeyID:  pubKeyIDs[i],
