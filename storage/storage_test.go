@@ -174,7 +174,7 @@ func (s *StorageTestSuite) TestClone() {
 	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
 
-	stateNode := models.StateNode{
+	stateNode := models.MerkleTreeNode{
 		MerklePath: models.MakeMerklePathFromStateID(1),
 		DataHash:   utils.RandomHash(),
 	}

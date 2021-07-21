@@ -34,7 +34,7 @@ func (s *StateNodeTestSuite) TearDownTest() {
 func (s *StateNodeTestSuite) TestUpsertStateNode_AddAndRetrieve() {
 	path, err := models.NewMerklePath("0000111")
 	s.NoError(err)
-	node := &models.StateNode{
+	node := &models.MerkleTreeNode{
 		MerklePath: *path,
 		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 	}
@@ -50,7 +50,7 @@ func (s *StateNodeTestSuite) TestUpsertStateNode_AddAndRetrieve() {
 func (s *StateNodeTestSuite) TestUpsertStateNode_UpdateAndRetrieve() {
 	path, err := models.NewMerklePath("0000111")
 	s.NoError(err)
-	node := &models.StateNode{
+	node := &models.MerkleTreeNode{
 		MerklePath: *path,
 		DataHash:   common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 	}
@@ -58,7 +58,7 @@ func (s *StateNodeTestSuite) TestUpsertStateNode_UpdateAndRetrieve() {
 	s.NoError(err)
 
 	s.NoError(err)
-	expectedNode := &models.StateNode{
+	expectedNode := &models.MerkleTreeNode{
 		MerklePath: *path,
 		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
 	}
@@ -77,7 +77,7 @@ func (s *StateNodeTestSuite) TestGetStateNodeByPath_NonExistentLeaf() {
 		Depth: StateTreeDepth,
 	}
 
-	expected := &models.StateNode{
+	expected := &models.MerkleTreeNode{
 		MerklePath: path,
 		DataHash:   merkletree.GetZeroHash(0),
 	}
@@ -93,7 +93,7 @@ func (s *StateNodeTestSuite) TestGetStateNodeByPath_NonExistentRoot() {
 		Depth: 0,
 	}
 
-	expected := &models.StateNode{
+	expected := &models.MerkleTreeNode{
 		MerklePath: path,
 		DataHash:   merkletree.GetZeroHash(StateTreeDepth),
 	}

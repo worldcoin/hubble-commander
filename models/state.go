@@ -14,7 +14,7 @@ type UserState struct {
 	Nonce    Uint256
 }
 
-type StateNode struct {
+type MerkleTreeNode struct {
 	MerklePath MerklePath
 	DataHash   common.Hash
 }

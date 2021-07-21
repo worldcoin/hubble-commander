@@ -35,7 +35,7 @@ func (s *StateTree) Root() (*common.Hash, error) {
 	return s.merkleTree.Root()
 }
 
-func (s *StateTree) LeafNode(stateID uint32) (*models.StateNode, error) {
+func (s *StateTree) LeafNode(stateID uint32) (*models.MerkleTreeNode, error) {
 	return s.merkleTree.Get(models.MerklePath{
 		Path:  stateID,
 		Depth: StateTreeDepth,

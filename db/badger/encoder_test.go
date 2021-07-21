@@ -9,7 +9,7 @@ import (
 )
 
 func TestDataHash_ByteEncoding(t *testing.T) {
-	node := models.StateNode{
+	node := models.MerkleTreeNode{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 	}
 

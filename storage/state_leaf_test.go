@@ -115,7 +115,7 @@ func (s *StateLeafTestSuite) TestGetStateLeaf_ReturnsCorrectStruct() {
 	path, err := models.NewMerklePath(strings.Repeat("0", 32))
 	s.NoError(err)
 
-	node := &models.StateNode{
+	node := &models.MerkleTreeNode{
 		MerklePath: *path,
 		DataHash:   leaf.DataHash,
 	}
