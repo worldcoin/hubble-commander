@@ -13,6 +13,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+const batchAccountOffset = 1 << 31
+
 func (c *Client) RegisterBatchAccount(
 	publicKeys [16]models.PublicKey,
 	ev chan *accountregistry.AccountRegistryBatchPubkeyRegistered,
@@ -68,8 +70,8 @@ func handleBatchAccountEvent(ev *accountregistry.AccountRegistryBatchPubkeyRegis
 	endID := ev.EndID.Uint64()
 
 	pubKeyIDs := make([]uint32, 0, endID-startID)
-	for i := startID; i < endID; i++ {
-		pubKeyIDs = append(pubKeyIDs, uint32(i))
+	for i := startID; i <= endID; i++ {
+		pubKeyIDs = append(pubKeyIDs, uint32(batchAccountOffset+i))
 	}
 	return pubKeyIDs
 }
