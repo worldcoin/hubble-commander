@@ -57,7 +57,7 @@ func (c *Client) WaitForBatchAccountRegistration(
 				return nil, errors.WithStack(fmt.Errorf("account event watcher is closed"))
 			}
 			if event.Raw.TxHash == tx.Hash() {
-				return handleBatchAccountEvent(event), nil
+				return HandleBatchAccountEvent(event), nil
 			}
 		case <-time.After(deployer.ChainTimeout):
 			return nil, errors.WithStack(fmt.Errorf("timeout"))
@@ -65,7 +65,7 @@ func (c *Client) WaitForBatchAccountRegistration(
 	}
 }
 
-func handleBatchAccountEvent(ev *accountregistry.AccountRegistryBatchPubkeyRegistered) []uint32 {
+func HandleBatchAccountEvent(ev *accountregistry.AccountRegistryBatchPubkeyRegistered) []uint32 {
 	startID := ev.StartID.Uint64()
 	endID := ev.EndID.Uint64()
 
