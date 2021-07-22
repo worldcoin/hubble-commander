@@ -21,7 +21,7 @@ type AccountTree struct {
 func NewAccountTree(storage *Storage) *AccountTree {
 	return &AccountTree{
 		storage:    storage,
-		merkleTree: NewStoredMerkleTree("state", storage),
+		merkleTree: NewStoredMerkleTree("account", storage),
 	}
 }
 
@@ -32,7 +32,7 @@ func (s *AccountTree) Root() (*common.Hash, error) {
 func (s *AccountTree) LeafNode(pubKeyID uint32) (*models.MerkleTreeNode, error) {
 	return s.merkleTree.Get(models.MerklePath{
 		Path:  pubKeyID,
-		Depth: StateTreeDepth,
+		Depth: AccountTreeDepth,
 	})
 }
 
@@ -65,8 +65,8 @@ func (s *AccountTree) Set(leaf *models.AccountLeaf) (models.Witness, error) {
 	return witness, nil
 }
 
-func (s *AccountTree) GetWitness(id uint32) (models.Witness, error) {
-	return s.merkleTree.GetWitness(models.MakeMerklePathFromLeafID(id))
+func (s *AccountTree) GetWitness(pubKeyID uint32) (models.Witness, error) {
+	return s.merkleTree.GetWitness(models.MakeMerklePathFromLeafID(pubKeyID))
 }
 
 func (s *AccountTree) unsafeSet(leaf *models.AccountLeaf) (models.Witness, error) {

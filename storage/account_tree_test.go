@@ -69,16 +69,16 @@ func (s *AccountTreeTestSuite) TestSet_RootIsDifferentAfterSet() {
 	_, err := s.tree.Set(leaf0)
 	s.NoError(err)
 
-	accountRootAfter1, err := s.tree.Root()
+	accountRootAfter0, err := s.tree.Root()
 	s.NoError(err)
 
 	_, err = s.tree.Set(leaf1)
 	s.NoError(err)
 
-	accountRootAfter2, err := s.tree.Root()
+	accountRootAfter1, err := s.tree.Root()
 	s.NoError(err)
 
-	s.NotEqual(accountRootAfter1, accountRootAfter2)
+	s.NotEqual(accountRootAfter0, accountRootAfter1)
 }
 
 func (s *AccountTreeTestSuite) TestSet_StoresLeafMerkleTreeNodeRecord() {
@@ -88,7 +88,7 @@ func (s *AccountTreeTestSuite) TestSet_StoresLeafMerkleTreeNodeRecord() {
 	expectedNode := &models.MerkleTreeNode{
 		MerklePath: models.MerklePath{
 			Path:  0,
-			Depth: StateTreeDepth,
+			Depth: AccountTreeDepth,
 		},
 		DataHash: crypto.Keccak256Hash(s.leaf.PublicKey.Bytes()),
 	}
@@ -150,9 +150,9 @@ func (s *AccountTreeTestSuite) TestSet_ThrowsOnSettingAlreadySetLeaf() {
 func (s *AccountTreeTestSuite) TestSet_ReturnsWitness() {
 	witness, err := s.tree.Set(s.leaf)
 	s.NoError(err)
-	s.Len(witness, StateTreeDepth)
+	s.Len(witness, AccountTreeDepth)
 
-	node, err := s.tree.getMerkleTreeNodeByPath(&models.MerklePath{Depth: StateTreeDepth, Path: 1})
+	node, err := s.tree.getMerkleTreeNodeByPath(&models.MerklePath{Depth: AccountTreeDepth, Path: 1})
 	s.NoError(err)
 	s.Equal(node.DataHash, witness[0])
 

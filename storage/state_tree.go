@@ -76,8 +76,8 @@ func (s *StateTree) Set(id uint32, state *models.UserState) (models.Witness, err
 	return witness, nil
 }
 
-func (s *StateTree) GetWitness(id uint32) (models.Witness, error) {
-	return s.merkleTree.GetWitness(models.MakeMerklePathFromLeafID(id))
+func (s *StateTree) GetWitness(stateID uint32) (models.Witness, error) {
+	return s.merkleTree.GetWitness(models.MakeMerklePathFromLeafID(stateID))
 }
 
 func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
