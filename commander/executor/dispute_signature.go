@@ -32,11 +32,11 @@ func (t *TransactionExecutor) disputeTransferSignature(batch *eth.DecodedBatch, 
 		PublicKeys: make([]models.PublicKeyProof, 0, len(txs)),
 	}
 	for i := range txs {
-		stateProof, err := t.getUserStateProof(txs[i].FromStateID)
+		stateProof, err := t.userStateProof(txs[i].FromStateID)
 		if err != nil {
 			return err
 		}
-		publicKeyProof, err := t.getPublicKeyProof(stateProof.UserState.PubKeyID)
+		publicKeyProof, err := t.publicKeyProof(stateProof.UserState.PubKeyID)
 		if err != nil {
 			return err
 		}
@@ -65,15 +65,15 @@ func (t *TransactionExecutor) disputeCreate2TransferSignature(batch *eth.Decoded
 		ReceiverPublicKeys: make([]models.ReceiverPublicKeyProof, 0, len(txs)),
 	}
 	for i := range txs {
-		stateProof, err := t.getUserStateProof(txs[i].FromStateID)
+		stateProof, err := t.userStateProof(txs[i].FromStateID)
 		if err != nil {
 			return err
 		}
-		publicKeyProof, err := t.getPublicKeyProof(stateProof.UserState.PubKeyID)
+		publicKeyProof, err := t.publicKeyProof(stateProof.UserState.PubKeyID)
 		if err != nil {
 			return err
 		}
-		receiverPublicKeyProof, err := t.getReceiverPublicKeyProof(txs[i].ToStateID)
+		receiverPublicKeyProof, err := t.receiverPublicKeyProof(txs[i].ToStateID)
 		if err != nil {
 			return err
 		}
@@ -91,7 +91,7 @@ func (t *TransactionExecutor) disputeCreate2TransferSignature(batch *eth.Decoded
 	return t.client.DisputeSignatureCreate2Transfer(&batch.ID, targetCommitmentProof, proof)
 }
 
-func (t *TransactionExecutor) getUserStateProof(stateID uint32) (*models.StateMerkleProof, error) {
+func (t *TransactionExecutor) userStateProof(stateID uint32) (*models.StateMerkleProof, error) {
 	leaf, err := t.stateTree.Leaf(stateID)
 	if err != nil {
 		return nil, err
@@ -106,7 +106,7 @@ func (t *TransactionExecutor) getUserStateProof(stateID uint32) (*models.StateMe
 	}, nil
 }
 
-func (t *TransactionExecutor) getPublicKeyProof(pubKeyID uint32) (*models.PublicKeyProof, error) {
+func (t *TransactionExecutor) publicKeyProof(pubKeyID uint32) (*models.PublicKeyProof, error) {
 	publicKey, err := t.storage.GetPublicKey(pubKeyID)
 	if err != nil {
 		return nil, err
@@ -118,7 +118,7 @@ func (t *TransactionExecutor) getPublicKeyProof(pubKeyID uint32) (*models.Public
 	}, nil
 }
 
-func (t *TransactionExecutor) getReceiverPublicKeyProof(pubKeyID uint32) (*models.ReceiverPublicKeyProof, error) {
+func (t *TransactionExecutor) receiverPublicKeyProof(pubKeyID uint32) (*models.ReceiverPublicKeyProof, error) {
 	publicKey, err := t.storage.GetPublicKey(pubKeyID)
 	if err != nil {
 		return nil, err

@@ -52,18 +52,18 @@ func (s *DisputeSignatureTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *DisputeSignatureTestSuite) TestGetUserStateProof() {
+func (s *DisputeSignatureTestSuite) TestUserStateProof() {
 	userState := createUserState(1, 300, 1)
 	witness, err := s.transactionExecutor.stateTree.Set(1, userState)
 	s.NoError(err)
 
-	stateProof, err := s.transactionExecutor.getUserStateProof(1)
+	stateProof, err := s.transactionExecutor.userStateProof(1)
 	s.NoError(err)
 	s.Equal(userState, stateProof.UserState)
 	s.Equal(witness, stateProof.Witness)
 }
 
-func (s *DisputeSignatureTestSuite) TestGetPublicKeyProof() {
+func (s *DisputeSignatureTestSuite) TestPublicKeyProof() {
 	account := &models.AccountLeaf{
 		PubKeyID:  1,
 		PublicKey: models.PublicKey{1, 2, 3},
@@ -71,13 +71,13 @@ func (s *DisputeSignatureTestSuite) TestGetPublicKeyProof() {
 	err := s.storage.AddAccountLeafIfNotExists(account)
 	s.NoError(err)
 
-	publicKeyProof, err := s.transactionExecutor.getPublicKeyProof(account.PubKeyID)
+	publicKeyProof, err := s.transactionExecutor.publicKeyProof(account.PubKeyID)
 	s.NoError(err)
 	s.Equal(account.PublicKey, *publicKeyProof.PublicKey)
 	s.Nil(publicKeyProof.Witness)
 }
 
-func (s *DisputeSignatureTestSuite) TestGetReceiverPublicKeyProof() {
+func (s *DisputeSignatureTestSuite) TestReceiverPublicKeyProof() {
 	account := &models.AccountLeaf{
 		PubKeyID:  1,
 		PublicKey: models.PublicKey{1, 2, 3},
@@ -87,7 +87,7 @@ func (s *DisputeSignatureTestSuite) TestGetReceiverPublicKeyProof() {
 
 	publicKeyHash := crypto.Keccak256Hash(account.PublicKey.Bytes())
 
-	publicKeyProof, err := s.transactionExecutor.getReceiverPublicKeyProof(account.PubKeyID)
+	publicKeyProof, err := s.transactionExecutor.receiverPublicKeyProof(account.PubKeyID)
 	s.NoError(err)
 	s.Equal(publicKeyHash, publicKeyProof.PublicKeyHash)
 	s.Nil(publicKeyProof.Witness)
