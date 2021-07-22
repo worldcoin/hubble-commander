@@ -209,7 +209,7 @@ func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, 
 	return currentRootHash, nil
 }
 
-func (s *StateTree) getStateNodeByPath(path *models.MerklePath) (*models.MerkleTreeNode, error) {
+func (s *StateTree) getMerkleTreeNodeByPath(path *models.MerklePath) (*models.MerkleTreeNode, error) {
 	node := models.MerkleTreeNode{MerklePath: *path}
 	err := s.storage.Badger.Get(*path, &node)
 	if err == bh.ErrNotFound {
