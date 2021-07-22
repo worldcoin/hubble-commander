@@ -185,7 +185,7 @@ func (s *DisputeTransitionTestSuite) TestTargetCommitmentInclusionProof() {
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_RemovesInvalidBatch() {
-	s.setUserStates()
+	setUserStates(s.Assertions, s.transactionExecutor)
 
 	commitmentTxs := [][]models.Transfer{
 		{
@@ -214,7 +214,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_RemovesInval
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_FirstCommitment() {
-	s.setUserStates()
+	setUserStates(s.Assertions, s.transactionExecutor)
 
 	commitmentTxs := [][]models.Transfer{
 		{
@@ -275,7 +275,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_ValidBatch()
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_RemovesInvalidBatch() {
-	wallets := s.setUserStates()
+	wallets := setUserStates(s.Assertions, s.transactionExecutor)
 
 	commitmentTxs := [][]models.Create2Transfer{
 		{
@@ -305,7 +305,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_Remov
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_FirstCommitment() {
-	wallets := s.setUserStates()
+	wallets := setUserStates(s.Assertions, s.transactionExecutor)
 
 	commitmentTxs := [][]models.Create2Transfer{
 		{
@@ -566,23 +566,23 @@ func (s *DisputeTransitionTestSuite) calculateStateAfterInvalidTransfer(
 	s.NoError(err)
 }
 
-func (s *DisputeTransitionTestSuite) setUserStates() []bls.Wallet {
+func setUserStates(s *require.Assertions, txExecutor *TransactionExecutor) []bls.Wallet {
 	userStates := []models.UserState{
 		*createUserState(0, 300, 0),
 		*createUserState(1, 200, 0),
 		*createUserState(2, 100, 0),
 	}
-	registrations, unsubscribe, err := s.client.WatchRegistrations(&bind.WatchOpts{})
+	registrations, unsubscribe, err := txExecutor.client.WatchRegistrations(&bind.WatchOpts{})
 	s.NoError(err)
 	defer unsubscribe()
 
-	wallets := generateWallets(s.Assertions, testDomain, len(userStates))
+	wallets := generateWallets(s, testDomain, len(userStates))
 	for i := range userStates {
-		pubKeyID, err := s.client.RegisterAccount(wallets[i].PublicKey(), registrations)
+		pubKeyID, err := txExecutor.client.RegisterAccount(wallets[i].PublicKey(), registrations)
 		s.NoError(err)
 		s.Equal(userStates[i].PubKeyID, *pubKeyID)
 
-		_, err = s.transactionExecutor.storage.StateTree.Set(uint32(i), &userStates[i])
+		_, err = txExecutor.storage.StateTree.Set(uint32(i), &userStates[i])
 		s.NoError(err)
 	}
 	return wallets
