@@ -125,6 +125,7 @@ func calculateParentHash(
 	}
 }
 
+// TODO add Depth parameter to MerkleTree and use it here instead of StateTreeDepth
 func newZeroNode(path *models.MerklePath) *models.MerkleTreeNode {
 	return &models.MerkleTreeNode{
 		MerklePath: *path,
