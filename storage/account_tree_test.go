@@ -152,11 +152,11 @@ func (s *AccountTreeTestSuite) TestSet_ReturnsWitness() {
 	s.NoError(err)
 	s.Len(witness, StateTreeDepth)
 
-	node, err := s.storage.GetAccountNodeByPath(&models.MerklePath{Depth: StateTreeDepth, Path: 1})
+	node, err := s.tree.getMerkleTreeNodeByPath(&models.MerklePath{Depth: StateTreeDepth, Path: 1})
 	s.NoError(err)
 	s.Equal(node.DataHash, witness[0])
 
-	node, err = s.storage.GetAccountNodeByPath(&models.MerklePath{Depth: 1, Path: 1})
+	node, err = s.tree.getMerkleTreeNodeByPath(&models.MerklePath{Depth: 1, Path: 1})
 	s.NoError(err)
 	s.Equal(node.DataHash, witness[31])
 }

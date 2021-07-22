@@ -13,7 +13,6 @@ import (
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	bh "github.com/timshannon/badgerhold/v3"
 )
 
 const StateTreeDepth = merkletree.MaxDepth
@@ -210,15 +209,11 @@ func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, 
 }
 
 func (s *StateTree) getMerkleTreeNodeByPath(path *models.MerklePath) (*models.MerkleTreeNode, error) {
-	node := models.MerkleTreeNode{MerklePath: *path}
-	err := s.storage.Badger.Get(*path, &node)
-	if err == bh.ErrNotFound {
-		return newZeroNode(path), nil
-	}
+	node, err := s.merkleTree.Get(*path)
 	if err != nil {
 		return nil, err
 	}
-	return &node, nil
+	return node, nil
 }
 
 func NewStateLeaf(stateID uint32, state *models.UserState) (*models.StateLeaf, error) {

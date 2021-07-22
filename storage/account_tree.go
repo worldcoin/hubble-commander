@@ -87,3 +87,11 @@ func (s *AccountTree) unsafeSet(leaf *models.AccountLeaf) (models.Witness, error
 
 	return witness, nil
 }
+
+func (s *AccountTree) getMerkleTreeNodeByPath(path *models.MerklePath) (*models.MerkleTreeNode, error) {
+	node, err := s.merkleTree.Get(*path)
+	if err != nil {
+		return nil, err
+	}
+	return node, nil
+}
