@@ -132,7 +132,7 @@ func saveSyncedAccount(accountTree *storage.AccountTree, account *models.Account
 		if existingAccount.PublicKey != account.PublicKey {
 			return nil, errors.New("inconsistency in account leaves between the database and the contract")
 		}
-		return ref.Bool(true), nil
+		return ref.Bool(false), nil
 	} else {
 		return nil, err
 	}
