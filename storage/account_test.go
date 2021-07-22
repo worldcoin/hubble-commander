@@ -45,10 +45,19 @@ func (s *AccountTestSuite) TestAddAccountLeafIfNotExists_AddAndRetrieve() {
 	err := s.storage.AddAccountLeafIfNotExists(&account1)
 	s.NoError(err)
 
+	leaf, err := s.storage.GetAccountLeaf(account1.PubKeyID)
+	s.NoError(err)
+
 	res, err := s.storage.GetAccountLeaves(&account1.PublicKey)
 	s.NoError(err)
 
+	s.Equal(account1, leaf)
 	s.Equal([]models.AccountLeaf{account1}, res)
+}
+
+func (s *AccountTestSuite) TestGetAccountLeaf_NonExistentLeaf() {
+	_, err := s.storage.GetAccountLeaf(0)
+	s.Equal(NewNotFoundError("account leaf"), err)
 }
 
 func (s *AccountTestSuite) TestGetAccountLeaves_NoPublicKeys() {
