@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -52,7 +53,7 @@ func (s *DisputeSignatureTestSuite) TearDownTest() {
 }
 
 func (s *DisputeSignatureTestSuite) TestGetUserStateProof() {
-	userState := createUserState(1, 300, 0)
+	userState := createUserState(1, 300, 1)
 	witness, err := s.transactionExecutor.stateTree.Set(1, userState)
 	s.NoError(err)
 
@@ -73,6 +74,22 @@ func (s *DisputeSignatureTestSuite) TestGetPublicKeyProof() {
 	publicKeyProof, err := s.transactionExecutor.getPublicKeyProof(account.PubKeyID)
 	s.NoError(err)
 	s.Equal(account.PublicKey, *publicKeyProof.PublicKey)
+	s.Nil(publicKeyProof.Witness)
+}
+
+func (s *DisputeSignatureTestSuite) TestGetReceiverPublicKeyProof() {
+	account := &models.AccountLeaf{
+		PubKeyID:  1,
+		PublicKey: models.PublicKey{1, 2, 3},
+	}
+	err := s.storage.AddAccountLeafIfNotExists(account)
+	s.NoError(err)
+
+	publicKeyHash := crypto.Keccak256Hash(account.PublicKey.Bytes())
+
+	publicKeyProof, err := s.transactionExecutor.getReceiverPublicKeyProof(account.PubKeyID)
+	s.NoError(err)
+	s.Equal(publicKeyHash, publicKeyProof.PublicKeyHash)
 	s.Nil(publicKeyProof.Witness)
 }
 
