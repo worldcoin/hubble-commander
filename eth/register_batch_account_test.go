@@ -51,6 +51,17 @@ func (s *RegisterBatchAccountTestSuite) TestRegisterBatchAccount() {
 	s.EqualValues(accountBatchSize, rightIndex.Uint64())
 }
 
+func (s *RegisterBatchAccountTestSuite) TestRegisterBatchAccount_InvalidPubKeysLength() {
+	events, unsubscribe, err := s.client.WatchBatchAccountRegistrations(&bind.WatchOpts{})
+	s.NoError(err)
+	defer unsubscribe()
+
+	publicKeys := []models.PublicKey{{1, 2, 3}}
+
+	_, err = s.client.RegisterBatchAccount(publicKeys, events)
+	s.ErrorIs(err, ErrInvalidPubKeysLength)
+}
+
 func TestRegisterBatchAccountTestSuite(t *testing.T) {
 	suite.Run(t, new(RegisterBatchAccountTestSuite))
 }

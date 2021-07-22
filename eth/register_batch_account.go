@@ -18,12 +18,14 @@ const (
 	accountBatchOffset = 1 << 31
 )
 
+var ErrInvalidPubKeysLength = errors.New("invalid public keys length")
+
 func (c *Client) RegisterBatchAccount(
 	publicKeys []models.PublicKey,
 	ev chan *accountregistry.AccountRegistryBatchPubkeyRegistered,
 ) ([]uint32, error) {
 	if len(publicKeys) != accountBatchSize {
-		return nil, errors.New("invalid publicKeys length")
+		return nil, ErrInvalidPubKeysLength
 	}
 
 	var pubkeys [accountBatchSize][4]*big.Int
