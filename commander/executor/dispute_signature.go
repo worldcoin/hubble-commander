@@ -44,7 +44,13 @@ func (t *TransactionExecutor) disputeTransferSignature(batch *eth.DecodedBatch, 
 		proof.UserStates = append(proof.UserStates, *stateProof)
 		proof.PublicKeys = append(proof.PublicKeys, *publicKeyProof)
 	}
-	return nil
+
+	targetCommitmentProof, err := targetCommitmentInclusionProof(batch, uint32(commitmentIndex))
+	if err != nil {
+		return err
+	}
+
+	return t.client.DisputeSignatureTransfer(&batch.ID, targetCommitmentProof, proof)
 }
 
 func (t *TransactionExecutor) disputeCreate2TransferSignature(batch *eth.DecodedBatch, commitmentIndex int) error {
@@ -76,7 +82,13 @@ func (t *TransactionExecutor) disputeCreate2TransferSignature(batch *eth.Decoded
 		proof.SenderPublicKeys = append(proof.SenderPublicKeys, *publicKeyProof)
 		proof.ReceiverPublicKeys = append(proof.ReceiverPublicKeys, *receiverPublicKeyProof)
 	}
-	return nil
+
+	targetCommitmentProof, err := targetCommitmentInclusionProof(batch, uint32(commitmentIndex))
+	if err != nil {
+		return err
+	}
+
+	return t.client.DisputeSignatureCreate2Transfer(&batch.ID, targetCommitmentProof, proof)
 }
 
 func (t *TransactionExecutor) getUserStateProof(stateID uint32) (*models.StateMerkleProof, error) {
