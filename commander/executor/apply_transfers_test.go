@@ -202,6 +202,17 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AppliesFee() {
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }
 
+func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_ReturnsCorrectStateProofsForZeroFee() {
+	transfers := generateValidTransfers(2)
+	for i := range transfers {
+		transfers[i].Fee = models.MakeUint256(0)
+	}
+
+	_, stateProofs, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver)
+	s.NoError(err)
+	s.Len(stateProofs, 5)
+}
+
 func generateValidTransfers(transfersAmount uint32) []models.Transfer {
 	transfers := make([]models.Transfer, 0, transfersAmount)
 	for i := 0; i < int(transfersAmount); i++ {

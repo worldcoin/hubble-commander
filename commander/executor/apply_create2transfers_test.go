@@ -238,6 +238,17 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_Applie
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }
 
+func (s *ApplyTransfersTestSuite) TestApplyCreate2TransfersForSync_ReturnsCorrectStateProofsForZeroFee() {
+	transfers, pubKeyIDs := generateValidCreate2TransfersForSync(2, 5)
+	for i := range transfers {
+		transfers[i].Fee = models.MakeUint256(0)
+	}
+
+	_, stateProofs, err := s.transactionExecutor.ApplyCreate2TransfersForSync(transfers, pubKeyIDs, s.feeReceiver)
+	s.NoError(err)
+	s.Len(stateProofs, 5)
+}
+
 func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_RegistersPubKeyIDInCaseThereIsNoUnusedOne() {
 	pubKeyID, err := s.transactionExecutor.getOrRegisterPubKeyID(s.events, &create2Transfer, models.MakeUint256(1))
 	s.NoError(err)

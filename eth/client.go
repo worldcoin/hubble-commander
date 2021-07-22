@@ -22,8 +22,8 @@ type NewClientParams struct {
 }
 
 type ClientConfig struct {
-	txTimeout   *time.Duration  // default 60s
-	stakeAmount *models.Uint256 // default 0.1 ether
+	TxTimeout   *time.Duration  // default 60s
+	StakeAmount *models.Uint256 // default 0.1 ether
 }
 
 type Client struct {
@@ -64,10 +64,10 @@ func NewClient(chainConnection deployer.ChainConnection, params *NewClientParams
 }
 
 func fillWithDefaults(c *ClientConfig) {
-	if c.txTimeout == nil {
-		c.txTimeout = ref.Duration(60 * time.Second)
+	if c.TxTimeout == nil {
+		c.TxTimeout = ref.Duration(60 * time.Second)
 	}
-	if c.stakeAmount == nil {
-		c.stakeAmount = models.NewUint256(1e17)
+	if c.StakeAmount == nil {
+		c.StakeAmount = models.NewUint256(1e17)
 	}
 }

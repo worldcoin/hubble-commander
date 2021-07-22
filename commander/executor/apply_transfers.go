@@ -91,13 +91,11 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 		combinedFee = *combinedFee.Add(&synced.Transfer.Fee)
 	}
 
-	if combinedFee.CmpN(0) > 0 {
-		stateProof, err := t.ApplyFee(feeReceiver.StateID, combinedFee)
-		if err != nil {
-			return nil, nil, err
-		}
-		stateChangeProofs = append(stateChangeProofs, *stateProof)
+	stateProof, err := t.ApplyFee(feeReceiver.StateID, combinedFee)
+	if err != nil {
+		return nil, nil, err
 	}
+	stateChangeProofs = append(stateChangeProofs, *stateProof)
 
 	return appliedTransfers, stateChangeProofs, nil
 }
