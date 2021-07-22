@@ -273,8 +273,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_ValidBatch()
 	}()
 
 	err = s.transactionExecutor.DisputeTransition(&remoteBatches[1], 0, proofs)
-	s.Error(err)
-	s.Equal("waitForRollbackToFinish: timeout", err.Error())
+	s.ErrorIs(err, eth.ErrWaitForRollbackTimeout)
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_RemovesInvalidBatch() {
@@ -375,8 +374,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_Valid
 	}()
 
 	err = s.transactionExecutor.DisputeTransition(&remoteBatches[1], 0, proofs)
-	s.Error(err)
-	s.Equal("waitForRollbackToFinish: timeout", err.Error())
+	s.ErrorIs(err, eth.ErrWaitForRollbackTimeout)
 }
 
 func (s *DisputeTransitionTestSuite) checkBatchAfterDispute(batchID models.Uint256) {

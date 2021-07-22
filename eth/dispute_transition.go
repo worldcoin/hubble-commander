@@ -13,6 +13,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+var ErrWaitForRollbackTimeout = errors.New("waitForRollbackToFinish: timeout")
+
 func (c *Client) DisputeTransitionTransfer(
 	batchID *models.Uint256,
 	previous *models.CommitmentInclusionProof,
@@ -85,7 +87,7 @@ func (c *Client) waitForRollbackToFinish(
 				}
 			}
 		case <-time.After(*c.config.TxTimeout):
-			return errors.New("waitForRollbackToFinish: timeout")
+			return ErrWaitForRollbackTimeout
 		}
 	}
 }
