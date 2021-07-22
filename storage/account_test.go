@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	bh "github.com/timshannon/badgerhold/v3"
 )
 
 var (
@@ -51,7 +52,7 @@ func (s *AccountTestSuite) TestAddAccountLeafIfNotExists_AddAndRetrieve() {
 	res, err := s.storage.GetAccountLeaves(&account1.PublicKey)
 	s.NoError(err)
 
-	s.Equal(account1, leaf)
+	s.Equal(account1, *leaf)
 	s.Equal([]models.AccountLeaf{account1}, res)
 }
 
@@ -86,12 +87,12 @@ func (s *AccountTestSuite) TestGetAccounts_ReturnsAllAccounts() {
 	s.Equal(accounts, res)
 }
 
-func (s *AccountTestSuite) TestAddAccountLeafIfNotExists_Idempotent() {
+func (s *AccountTestSuite) TestAddAccountLeafIfNotExists_ThrowsWhenAddingTheSameLeaf() {
 	err := s.storage.AddAccountLeafIfNotExists(&account1)
 	s.NoError(err)
 
 	err = s.storage.AddAccountLeafIfNotExists(&account1)
-	s.NoError(err)
+	s.ErrorIs(err, bh.ErrKeyExists)
 
 	res, err := s.storage.GetAccountLeaves(&account1.PublicKey)
 	s.NoError(err)
