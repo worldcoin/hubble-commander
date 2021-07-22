@@ -245,6 +245,38 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_FirstCommitm
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
 }
 
+func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_ValidBatch() {
+	s.setUserStates()
+
+	transfers := []models.Transfer{
+		testutils.MakeTransfer(0, 2, 0, 50),
+		testutils.MakeTransfer(0, 2, 1, 100),
+	}
+
+	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &transfers[0])
+
+	proofs := s.getTransferStateMerkleProofs([][]models.Transfer{{transfers[1]}})
+
+	s.beginExecutorTransaction()
+	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &transfers[1])
+
+	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	s.NoError(err)
+	s.Len(remoteBatches, 2)
+
+	err = s.transactionExecutor.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
+	s.NoError(err)
+
+	defer func() {
+		err = s.transactionExecutor.Commit()
+		s.NoError(err)
+	}()
+
+	err = s.transactionExecutor.DisputeTransition(&remoteBatches[1], 0, proofs)
+	s.Error(err)
+	s.Equal("waitForRollbackToFinish: timeout", err.Error())
+}
+
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_RemovesInvalidBatch() {
 	wallets := s.setUserStates()
 
@@ -337,19 +369,21 @@ func (s *DisputeTransitionTestSuite) getTransferStateMerkleProofs(txs [][]models
 	}
 
 	s.beginExecutorTransaction()
-	var disputableTransferError *DisputableTransferError
+	defer s.transactionExecutor.Rollback(nil)
+
+	var stateProofs []models.StateMerkleProof
+	var err error
 	for i := range txs {
-		_, _, err := s.transactionExecutor.ApplyTransfersForSync(txs[i], feeReceiver)
+		_, stateProofs, err = s.transactionExecutor.ApplyTransfersForSync(txs[i], feeReceiver)
 		if err != nil {
+			var disputableTransferError *DisputableTransferError
 			s.ErrorAs(err, &disputableTransferError)
 			s.Len(disputableTransferError.Proofs, len(txs[i])*2)
-			break
+			return disputableTransferError.Proofs
 		}
 	}
-	s.NotNil(disputableTransferError)
 
-	s.transactionExecutor.Rollback(nil)
-	return disputableTransferError.Proofs
+	return stateProofs
 }
 
 func (s *DisputeTransitionTestSuite) getC2TStateMerkleProofs(
