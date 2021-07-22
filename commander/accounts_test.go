@@ -50,12 +50,7 @@ func (s *AccountsTestSuite) TestSyncAccounts() {
 	err = s.cmd.syncAccounts(0, *latestBlockNumber)
 	s.NoError(err)
 
-	for i := range accounts {
-		leaves, err := s.cmd.storage.GetAccountLeaves(&accounts[i].PublicKey)
-		s.NoError(err)
-		s.Len(leaves, 1)
-		s.Equal(accounts[i].PubKeyID, leaves[0].PubKeyID)
-	}
+	s.validateAccountsAfterSync(accounts)
 }
 
 func (s *AccountsTestSuite) TestSyncSingleAccounts() {
@@ -80,12 +75,7 @@ func (s *AccountsTestSuite) TestSyncBatchAccounts() {
 	err = s.cmd.syncBatchAccounts(0, *latestBlockNumber)
 	s.NoError(err)
 
-	for i := range accounts {
-		leaves, err := s.cmd.storage.GetAccountLeaves(&accounts[i].PublicKey)
-		s.NoError(err)
-		s.Len(leaves, 1)
-		s.Equal(accounts[i].PubKeyID, leaves[0].PubKeyID)
-	}
+	s.validateAccountsAfterSync(accounts)
 }
 
 func (s *AccountsTestSuite) registerSingleAccount() models.AccountLeaf {
@@ -123,6 +113,15 @@ func (s *AccountsTestSuite) registerBatchAccount() []models.AccountLeaf {
 		})
 	}
 	return accounts
+}
+
+func (s *AccountsTestSuite) validateAccountsAfterSync(accounts []models.AccountLeaf) {
+	for i := range accounts {
+		leaves, err := s.cmd.storage.GetAccountLeaves(&accounts[i].PublicKey)
+		s.NoError(err)
+		s.Len(leaves, 1)
+		s.Equal(accounts[i].PubKeyID, leaves[0].PubKeyID)
+	}
 }
 
 func TestAccountsTestSuite(t *testing.T) {
