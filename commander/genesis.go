@@ -46,20 +46,16 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.PopulatedGen
 		}
 		seenStateIDs[account.StateID] = true
 
-		_, treeErr := accountTree.Leaf(account.PubKeyID)
-		if st.IsNotFoundError(treeErr) {
-			err := storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
-				PubKeyID:  account.PubKeyID,
-				PublicKey: account.PublicKey,
-			})
-			if err != nil {
-				return err
-			}
-		} else if treeErr != nil {
-			return treeErr
+		leaf := &models.AccountLeaf{
+			PubKeyID:  account.PubKeyID,
+			PublicKey: account.PublicKey,
+		}
+		_, err := saveSyncedAccount(accountTree, leaf)
+		if err != nil {
+			return err
 		}
 
-		_, err := stateTree.Set(account.StateID, &models.UserState{
+		_, err = stateTree.Set(account.StateID, &models.UserState{
 			PubKeyID: account.PubKeyID,
 			TokenID:  models.MakeUint256(0),
 			Balance:  account.Balance,

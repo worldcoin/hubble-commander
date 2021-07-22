@@ -8,7 +8,9 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -50,20 +52,17 @@ func (c *Commander) syncSingleAccounts(start, end uint64) error {
 
 		publicKey := unpack[0].([4]*big.Int)
 		pubKeyID := uint32(it.Event.PubkeyID.Uint64())
-		account := models.AccountLeaf{
+		account := &models.AccountLeaf{
 			PubKeyID:  pubKeyID,
 			PublicKey: models.MakePublicKeyFromInts(publicKey),
 		}
 
-		_, treeErr := accountTree.Leaf(pubKeyID)
-		if storage.IsNotFoundError(treeErr) {
-			err = c.storage.AddAccountLeafIfNotExists(&account)
-			if err != nil {
-				return err
-			}
+		isNewAccount, err := saveSyncedAccount(accountTree, account)
+		if err != nil {
+			return err
+		}
+		if *isNewAccount {
 			newAccountsCount++
-		} else if treeErr != nil {
-			return treeErr
 		}
 	}
 	logAccountsCount(newAccountsCount)
@@ -103,19 +102,16 @@ func (c *Commander) syncBatchAccounts(start, end uint64) error {
 
 		// TODO: call addBatchAccountLeaf instead when account tree is ready
 		for i := range pubKeyIDs {
-			_, treeErr := accountTree.Leaf(pubKeyIDs[i])
-			if storage.IsNotFoundError(treeErr) {
-				account := models.AccountLeaf{
-					PubKeyID:  pubKeyIDs[i],
-					PublicKey: models.MakePublicKeyFromInts(publicKeys[i]),
-				}
-				err = c.storage.AddAccountLeafIfNotExists(&account)
-				if err != nil {
-					return err
-				}
+			account := &models.AccountLeaf{
+				PubKeyID:  pubKeyIDs[i],
+				PublicKey: models.MakePublicKeyFromInts(publicKeys[i]),
+			}
+			isNewAccount, err := saveSyncedAccount(accountTree, account)
+			if err != nil {
+				return err
+			}
+			if *isNewAccount {
 				newAccountsCount++
-			} else if treeErr != nil {
-				return treeErr
 			}
 		}
 
@@ -123,6 +119,24 @@ func (c *Commander) syncBatchAccounts(start, end uint64) error {
 	}
 	logAccountsCount(newAccountsCount)
 	return nil
+}
+
+func saveSyncedAccount(accountTree *storage.AccountTree, account *models.AccountLeaf) (isNewAccount *bool, err error) {
+	_, err = accountTree.Set(account)
+	if err == nil {
+		return ref.Bool(true), nil
+	} else if err == storage.ErrPubKeyIDAlreadyExists {
+		existingAccount, err := accountTree.Leaf(account.PubKeyID)
+		if err != nil {
+			return nil, err
+		}
+		if existingAccount.PublicKey != account.PublicKey {
+			return nil, errors.New("inconsistency in account leaves between the database and the contract")
+		}
+		return ref.Bool(true), nil
+	} else {
+		return nil, err
+	}
 }
 
 func logAccountsCount(newAccountsCount int) {
