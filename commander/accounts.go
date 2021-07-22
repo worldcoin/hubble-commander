@@ -65,7 +65,6 @@ func (c *Commander) syncSingleAccounts(start, end uint64) error {
 		} else if treeErr != nil {
 			return treeErr
 		}
-
 	}
 	logAccountsCount(newAccountsCount)
 	return nil
