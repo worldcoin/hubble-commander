@@ -3,9 +3,12 @@ package models
 import (
 	"database/sql/driver"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"strconv"
 )
+
+var ErrInvalidLength = errors.New("invalid length")
 
 type MerklePath struct {
 	Path  uint32
@@ -71,7 +74,7 @@ func (p *MerklePath) Bytes() []byte {
 
 func (p *MerklePath) SetBytes(data []byte) error {
 	if len(data) != 5 {
-		return fmt.Errorf("invalid length")
+		return ErrInvalidLength
 	}
 	p.Depth = data[0]
 	p.Path = binary.LittleEndian.Uint32(data[1:5])
@@ -179,7 +182,7 @@ func (p *NamespacedMerklePath) Bytes() []byte {
 
 func (p *NamespacedMerklePath) SetBytes(data []byte) error {
 	if len(data) < 5 {
-		return fmt.Errorf("invalid length")
+		return ErrInvalidLength
 	}
 	p.Namespace = string(data[:len(data)-5])
 	return p.Path.SetBytes(data[len(data)-5:])

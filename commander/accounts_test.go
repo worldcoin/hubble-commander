@@ -42,6 +42,43 @@ func (s *AccountsTestSuite) TearDownTest() {
 }
 
 func (s *AccountsTestSuite) TestSyncAccounts() {
+	accounts := s.registerBatchAccount()
+	accounts = append(accounts, s.registerSingleAccount())
+
+	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
+	s.NoError(err)
+	err = s.cmd.syncAccounts(0, *latestBlockNumber)
+	s.NoError(err)
+
+	s.validateAccountsAfterSync(accounts)
+}
+
+func (s *AccountsTestSuite) TestSyncSingleAccounts() {
+	account := s.registerSingleAccount()
+
+	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
+	s.NoError(err)
+	err = s.cmd.syncSingleAccounts(0, *latestBlockNumber)
+	s.NoError(err)
+
+	accounts, err := s.cmd.storage.GetAccountLeaves(&account.PublicKey)
+	s.NoError(err)
+	s.Len(accounts, 1)
+	s.Equal(account.PubKeyID, accounts[0].PubKeyID)
+}
+
+func (s *AccountsTestSuite) TestSyncBatchAccounts() {
+	accounts := s.registerBatchAccount()
+
+	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
+	s.NoError(err)
+	err = s.cmd.syncBatchAccounts(0, *latestBlockNumber)
+	s.NoError(err)
+
+	s.validateAccountsAfterSync(accounts)
+}
+
+func (s *AccountsTestSuite) registerSingleAccount() models.AccountLeaf {
 	registrations, unsubscribe, err := s.testClient.WatchRegistrations(&bind.WatchOpts{Start: nil})
 	s.NoError(err)
 	defer unsubscribe()
@@ -49,16 +86,42 @@ func (s *AccountsTestSuite) TestSyncAccounts() {
 	publicKey := models.PublicKey{2, 3, 4}
 	pubKeyID, err := s.testClient.RegisterAccount(&publicKey, registrations)
 	s.NoError(err)
+	return models.AccountLeaf{
+		PubKeyID:  *pubKeyID,
+		PublicKey: publicKey,
+	}
+}
 
-	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
+func (s *AccountsTestSuite) registerBatchAccount() []models.AccountLeaf {
+	registrations, unsubscribe, err := s.testClient.WatchBatchAccountRegistrations(&bind.WatchOpts{})
 	s.NoError(err)
-	err = s.cmd.syncAccounts(0, *latestBlockNumber)
+	defer unsubscribe()
+
+	publicKeys := make([]models.PublicKey, 16)
+	for i := range publicKeys {
+		publicKeys[i] = models.PublicKey{1, 1, byte(i)}
+	}
+
+	pubKeyIDs, err := s.testClient.RegisterBatchAccount(publicKeys, registrations)
 	s.NoError(err)
 
-	accounts, err := s.cmd.storage.GetAccountLeaves(&publicKey)
-	s.NoError(err)
-	s.Len(accounts, 1)
-	s.Equal(*pubKeyID, accounts[0].PubKeyID)
+	accounts := make([]models.AccountLeaf, 0, 16)
+	for i := range accounts {
+		accounts = append(accounts, models.AccountLeaf{
+			PubKeyID:  pubKeyIDs[i],
+			PublicKey: publicKeys[i],
+		})
+	}
+	return accounts
+}
+
+func (s *AccountsTestSuite) validateAccountsAfterSync(accounts []models.AccountLeaf) {
+	for i := range accounts {
+		leaves, err := s.cmd.storage.GetAccountLeaves(&accounts[i].PublicKey)
+		s.NoError(err)
+		s.Len(leaves, 1)
+		s.Equal(accounts[i].PubKeyID, leaves[0].PubKeyID)
+	}
 }
 
 func TestAccountsTestSuite(t *testing.T) {
