@@ -346,6 +346,39 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_First
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
 }
 
+func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_ValidBatch() {
+	wallets := s.setUserStates()
+
+	transfers := []models.Create2Transfer{
+		testutils.MakeCreate2Transfer(0, ref.Uint32(3), 0, 50, wallets[1].PublicKey()),
+		testutils.MakeCreate2Transfer(0, ref.Uint32(4), 1, 100, wallets[1].PublicKey()),
+	}
+	pubKeyIDs := [][]uint32{{4}}
+
+	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &transfers[0])
+
+	proofs := s.getC2TStateMerkleProofs([][]models.Create2Transfer{{transfers[1]}}, pubKeyIDs)
+
+	s.beginExecutorTransaction()
+	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &transfers[1])
+
+	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	s.NoError(err)
+	s.Len(remoteBatches, 2)
+
+	err = s.transactionExecutor.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
+	s.NoError(err)
+
+	defer func() {
+		err = s.transactionExecutor.Commit()
+		s.NoError(err)
+	}()
+
+	err = s.transactionExecutor.DisputeTransition(&remoteBatches[1], 0, proofs)
+	s.Error(err)
+	s.Equal("waitForRollbackToFinish: timeout", err.Error())
+}
+
 func (s *DisputeTransitionTestSuite) checkBatchAfterDispute(batchID models.Uint256) {
 	_, err := s.client.GetBatch(&batchID)
 	s.Error(err)
@@ -396,18 +429,21 @@ func (s *DisputeTransitionTestSuite) getC2TStateMerkleProofs(
 	}
 
 	s.beginExecutorTransaction()
-	var disputableTransferError *DisputableTransferError
+	defer s.transactionExecutor.Rollback(nil)
+
+	var stateProofs []models.StateMerkleProof
+	var err error
 	for i := range txs {
-		_, _, err := s.transactionExecutor.ApplyCreate2TransfersForSync(txs[i], pubKeyIDs[i], feeReceiver)
+		_, stateProofs, err = s.transactionExecutor.ApplyCreate2TransfersForSync(txs[i], pubKeyIDs[i], feeReceiver)
 		if err != nil {
+			var disputableTransferError *DisputableTransferError
 			s.ErrorAs(err, &disputableTransferError)
 			s.Len(disputableTransferError.Proofs, len(txs[i])*2)
+			return disputableTransferError.Proofs
 		}
 	}
-	s.NotNil(disputableTransferError)
 
-	s.transactionExecutor.Rollback(nil)
-	return disputableTransferError.Proofs
+	return stateProofs
 }
 
 func (s *DisputeTransitionTestSuite) createAndSubmitInvalidTransferBatch(txs [][]models.Transfer, invalidTxHash common.Hash) *models.Batch {
