@@ -32,7 +32,6 @@ func (c *Commander) syncSingleAccounts(start, end uint64) error {
 	}
 	defer func() { _ = it.Close() }()
 
-	accountTree := storage.NewAccountTree(c.storage)
 	newAccountsCount := 0
 
 	for it.Next() {
@@ -57,7 +56,7 @@ func (c *Commander) syncSingleAccounts(start, end uint64) error {
 			PublicKey: models.MakePublicKeyFromInts(publicKey),
 		}
 
-		isNewAccount, err := saveSyncedAccount(accountTree, account)
+		isNewAccount, err := saveSyncedAccount(c.accountTree, account)
 		if err != nil {
 			return err
 		}
@@ -79,7 +78,6 @@ func (c *Commander) syncBatchAccounts(start, end uint64) error {
 	}
 	defer func() { _ = it.Close() }()
 
-	accountTree := storage.NewAccountTree(c.storage)
 	newAccountsCount := 0
 
 	for it.Next() {
@@ -106,7 +104,7 @@ func (c *Commander) syncBatchAccounts(start, end uint64) error {
 				PubKeyID:  pubKeyIDs[i],
 				PublicKey: models.MakePublicKeyFromInts(publicKeys[i]),
 			}
-			isNewAccount, err := saveSyncedAccount(accountTree, account)
+			isNewAccount, err := saveSyncedAccount(c.accountTree, account)
 			if err != nil {
 				return err
 			}
