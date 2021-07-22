@@ -6,6 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -59,6 +60,20 @@ func (s *DisputeSignatureTestSuite) TestGetUserStateProof() {
 	s.NoError(err)
 	s.Equal(userState, stateProof.UserState)
 	s.Equal(witness, stateProof.Witness)
+}
+
+func (s *DisputeSignatureTestSuite) TestGetPublicKeyProof() {
+	account := &models.AccountLeaf{
+		PubKeyID:  1,
+		PublicKey: models.PublicKey{1, 2, 3},
+	}
+	err := s.storage.AddAccountLeafIfNotExists(account)
+	s.NoError(err)
+
+	publicKeyProof, err := s.transactionExecutor.getPublicKeyProof(account.PubKeyID)
+	s.NoError(err)
+	s.Equal(account.PublicKey, *publicKeyProof.PublicKey)
+	s.Nil(publicKeyProof.Witness)
 }
 
 func TestDisputeSignatureTestSuite(t *testing.T) {
