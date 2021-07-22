@@ -96,7 +96,7 @@ func (s *StateTreeTestSuite) TestSet_StoresLeafStateNodeRecord() {
 	_, err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
-	expectedNode := &models.StateNode{
+	expectedNode := &models.MerkleTreeNode{
 		MerklePath: models.MerklePath{
 			Path:  0,
 			Depth: StateTreeDepth,
@@ -190,7 +190,7 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectLeafStateNode() {
 		Depth: StateTreeDepth,
 	}
 
-	expectedLeaf := &models.StateNode{
+	expectedLeaf := &models.MerkleTreeNode{
 		MerklePath: leafPath,
 		DataHash:   leaf.DataHash,
 	}
@@ -238,11 +238,11 @@ func (s *StateTreeTestSuite) TestSet_ReturnsWitness() {
 	s.NoError(err)
 	s.Len(witness, StateTreeDepth)
 
-	node, err := s.storage.GetStateNodeByPath(&models.MerklePath{Depth: StateTreeDepth, Path: 1})
+	node, err := s.tree.getStateNodeByPath(&models.MerklePath{Depth: StateTreeDepth, Path: 1})
 	s.NoError(err)
 	s.Equal(node.DataHash, witness[0])
 
-	node, err = s.storage.GetStateNodeByPath(&models.MerklePath{Depth: 1, Path: 1})
+	node, err = s.tree.getStateNodeByPath(&models.MerklePath{Depth: 1, Path: 1})
 	s.NoError(err)
 	s.Equal(node.DataHash, witness[31])
 }

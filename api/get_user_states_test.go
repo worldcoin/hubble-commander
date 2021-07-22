@@ -87,24 +87,6 @@ func (s *GetUserStatesTestSuite) TestGetUserStates() {
 		s.NoError(err)
 	}
 
-	err := s.api.storage.UpsertStateNode(&models.StateNode{
-		DataHash:   common.BytesToHash([]byte{1, 2, 3, 4, 5}),
-		MerklePath: models.MakeMerklePathFromStateID(leaves[0].StateID),
-	})
-	s.NoError(err)
-
-	err = s.api.storage.UpsertStateNode(&models.StateNode{
-		DataHash:   common.BytesToHash([]byte{2, 3, 4, 5, 6}),
-		MerklePath: models.MakeMerklePathFromStateID(leaves[1].StateID),
-	})
-	s.NoError(err)
-
-	err = s.api.storage.UpsertStateNode(&models.StateNode{
-		DataHash:   common.BytesToHash([]byte{3, 4, 5, 6, 7}),
-		MerklePath: models.MakeMerklePathFromStateID(leaves[2].StateID),
-	})
-	s.NoError(err)
-
 	userStates, err := s.api.GetUserStates(&accounts[0].PublicKey)
 	s.NoError(err)
 

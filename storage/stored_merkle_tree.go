@@ -3,6 +3,7 @@ package storage
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/common"
 	bh "github.com/timshannon/badgerhold/v3"
 )
@@ -23,11 +24,11 @@ func (s *StoredMerkleTree) keyFor(path models.MerklePath) models.NamespacedMerkl
 	return models.NamespacedMerklePath{Namespace: s.namespace, Path: path}
 }
 
-func (s *StoredMerkleTree) Get(path models.MerklePath) (*models.StateNode, error) {
-	node := models.StateNode{MerklePath: path}
+func (s *StoredMerkleTree) Get(path models.MerklePath) (*models.MerkleTreeNode, error) {
+	node := models.MerkleTreeNode{MerklePath: path}
 	err := s.storage.Badger.Get(s.keyFor(path), &node)
 	if err == bh.ErrNotFound {
-		return newZeroStateNode(&path), nil
+		return newZeroNode(&path), nil
 	}
 	if err != nil {
 		return nil, err
@@ -44,7 +45,7 @@ func (s *StoredMerkleTree) Root() (*common.Hash, error) {
 	return &node.DataHash, nil
 }
 
-func (s *StoredMerkleTree) SetSingleNode(node *models.StateNode) error {
+func (s *StoredMerkleTree) SetSingleNode(node *models.MerkleTreeNode) error {
 	return s.storage.Badger.Upsert(s.keyFor(node.MerklePath), *node)
 }
 
@@ -66,7 +67,7 @@ func (s *StoredMerkleTree) SetNode(path *models.MerklePath, hash common.Hash) (*
 		}
 		witness = append(witness, siblingNode.DataHash)
 
-		err = s.SetSingleNode(&models.StateNode{
+		err = s.SetSingleNode(&models.MerkleTreeNode{
 			MerklePath: *currentPath,
 			DataHash:   currentHash,
 		})
@@ -82,7 +83,7 @@ func (s *StoredMerkleTree) SetNode(path *models.MerklePath, hash common.Hash) (*
 	}
 
 	rootPath := models.MerklePath{Depth: 0, Path: 0}
-	err := s.SetSingleNode(&models.StateNode{
+	err := s.SetSingleNode(&models.MerkleTreeNode{
 		MerklePath: rootPath,
 		DataHash:   currentHash,
 	})
@@ -101,7 +102,7 @@ func (s *StoredMerkleTree) GetWitness(path models.MerklePath) (models.Witness, e
 
 	witness := make([]common.Hash, 0, len(witnessPaths))
 	for i := range witnessPaths {
-		var node *models.StateNode
+		var node *models.MerkleTreeNode
 		node, err = s.Get(witnessPaths[i])
 		if err != nil {
 			return nil, err
@@ -121,5 +122,12 @@ func calculateParentHash(
 		return utils.HashTwo(*currentHash, witnessHash)
 	} else {
 		return utils.HashTwo(witnessHash, *currentHash)
+	}
+}
+
+func newZeroNode(path *models.MerklePath) *models.MerkleTreeNode {
+	return &models.MerkleTreeNode{
+		MerklePath: *path,
+		DataHash:   merkletree.GetZeroHash(StateTreeDepth - uint(path.Depth)),
 	}
 }

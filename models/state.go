@@ -2,21 +2,19 @@ package models
 
 import (
 	"encoding/binary"
+	"reflect"
 
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 )
+
+var FlatStateLeafPrefix = []byte("bh_" + reflect.TypeOf(FlatStateLeaf{}).Name())
 
 type UserState struct {
 	PubKeyID uint32
 	TokenID  Uint256
 	Balance  Uint256
 	Nonce    Uint256
-}
-
-type StateNode struct {
-	MerklePath MerklePath
-	DataHash   common.Hash
 }
 
 type StateLeaf struct {
