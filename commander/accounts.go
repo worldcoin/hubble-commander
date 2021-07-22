@@ -124,7 +124,8 @@ func saveSyncedAccount(accountTree *storage.AccountTree, account *models.Account
 	if err == nil {
 		return ref.Bool(true), nil
 	} else if err == storage.ErrPubKeyIDAlreadyExists {
-		existingAccount, err := accountTree.Leaf(account.PubKeyID)
+		var existingAccount *models.AccountLeaf
+		existingAccount, err = accountTree.Leaf(account.PubKeyID)
 		if err != nil {
 			return nil, err
 		}
