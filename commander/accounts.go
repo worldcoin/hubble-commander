@@ -7,6 +7,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	log "github.com/sirupsen/logrus"
 )
@@ -28,7 +29,10 @@ func (c *Commander) syncSingleAccounts(start, end uint64) error {
 		return err
 	}
 	defer func() { _ = it.Close() }()
+
+	accountTree := storage.NewAccountTree(c.storage)
 	newAccountsCount := 0
+
 	for it.Next() {
 		tx, _, err := c.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
 		if err != nil {
@@ -45,16 +49,23 @@ func (c *Commander) syncSingleAccounts(start, end uint64) error {
 		}
 
 		publicKey := unpack[0].([4]*big.Int)
+		pubKeyID := uint32(it.Event.PubkeyID.Uint64())
 		account := models.AccountLeaf{
-			PubKeyID:  uint32(it.Event.PubkeyID.Uint64()),
+			PubKeyID:  pubKeyID,
 			PublicKey: models.MakePublicKeyFromInts(publicKey),
 		}
 
-		err = c.storage.AddAccountLeafIfNotExists(&account)
-		if err != nil {
-			return err
+		_, treeErr := accountTree.Leaf(pubKeyID)
+		if storage.IsNotFoundError(treeErr) {
+			err = c.storage.AddAccountLeafIfNotExists(&account)
+			if err != nil {
+				return err
+			}
+			newAccountsCount++
+		} else if treeErr != nil {
+			return treeErr
 		}
-		newAccountsCount++
+
 	}
 	logAccountsCount(newAccountsCount)
 	return nil
@@ -69,7 +80,10 @@ func (c *Commander) syncBatchAccounts(start, end uint64) error {
 		return err
 	}
 	defer func() { _ = it.Close() }()
+
+	accountTree := storage.NewAccountTree(c.storage)
 	newAccountsCount := 0
+
 	for it.Next() {
 		tx, _, err := c.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
 		if err != nil {
@@ -90,13 +104,19 @@ func (c *Commander) syncBatchAccounts(start, end uint64) error {
 
 		// TODO: call addBatchAccountLeaf instead when account tree is ready
 		for i := range pubKeyIDs {
-			account := &models.AccountLeaf{
-				PubKeyID:  pubKeyIDs[i],
-				PublicKey: models.MakePublicKeyFromInts(publicKeys[i]),
-			}
-			err = c.storage.AddAccountLeafIfNotExists(account)
-			if err != nil {
-				return err
+			_, treeErr := accountTree.Leaf(pubKeyIDs[i])
+			if storage.IsNotFoundError(treeErr) {
+				account := models.AccountLeaf{
+					PubKeyID:  pubKeyIDs[i],
+					PublicKey: models.MakePublicKeyFromInts(publicKeys[i]),
+				}
+				err = c.storage.AddAccountLeafIfNotExists(&account)
+				if err != nil {
+					return err
+				}
+				newAccountsCount++
+			} else if treeErr != nil {
+				return treeErr
 			}
 		}
 

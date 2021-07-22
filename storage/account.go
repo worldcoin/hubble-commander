@@ -2,11 +2,12 @@ package storage
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
 func (s *Storage) AddAccountLeafIfNotExists(account *models.AccountLeaf) error {
-	return s.Badger.Insert(account.PubKeyID, *account)
+	return errors.WithStack(s.Badger.Insert(account.PubKeyID, *account))
 }
 
 func (s *Storage) GetAccountLeaf(pubKeyID uint32) (*models.AccountLeaf, error) {

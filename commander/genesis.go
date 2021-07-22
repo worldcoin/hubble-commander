@@ -35,6 +35,7 @@ func AssignStateIDs(accounts []models.RegisteredGenesisAccount) []models.Populat
 
 func PopulateGenesisAccounts(storage *st.Storage, accounts []models.PopulatedGenesisAccount) error {
 	stateTree := st.NewStateTree(storage)
+	accountTree := st.NewAccountTree(storage)
 
 	seenStateIDs := make(map[uint32]bool)
 	for i := range accounts {
@@ -45,15 +46,20 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.PopulatedGen
 		}
 		seenStateIDs[account.StateID] = true
 
-		err := storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
-			PubKeyID:  account.PubKeyID,
-			PublicKey: account.PublicKey,
-		})
-		if err != nil {
-			return err
+		_, treeErr := accountTree.Leaf(account.PubKeyID)
+		if st.IsNotFoundError(treeErr) {
+			err := storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
+				PubKeyID:  account.PubKeyID,
+				PublicKey: account.PublicKey,
+			})
+			if err != nil {
+				return err
+			}
+		} else if treeErr != nil {
+			return treeErr
 		}
 
-		_, err = stateTree.Set(account.StateID, &models.UserState{
+		_, err := stateTree.Set(account.StateID, &models.UserState{
 			PubKeyID: account.PubKeyID,
 			TokenID:  models.MakeUint256(0),
 			Balance:  account.Balance,
