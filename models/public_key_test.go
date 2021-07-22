@@ -29,7 +29,7 @@ func TestSetBytes_InvalidLength(t *testing.T) {
 	key := PublicKey{}
 	err := key.SetBytes(bytes)
 	require.NotNil(t, err)
-	require.Equal(t, "invalid length", err.Error())
+	require.ErrorIs(t, err, ErrInvalidPublicKeyLength)
 }
 
 func TestValue_ReturnsACopy(t *testing.T) {

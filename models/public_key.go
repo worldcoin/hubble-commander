@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql/driver"
+	"errors"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -11,6 +12,8 @@ import (
 )
 
 const PublicKeyLength = 128
+
+var ErrInvalidPublicKeyLength = errors.New("invalid public key length")
 
 type PublicKey [PublicKeyLength]byte
 
@@ -32,7 +35,7 @@ func (p PublicKey) Bytes() []byte {
 
 func (p *PublicKey) SetBytes(b []byte) error {
 	if len(b) != PublicKeyLength {
-		return fmt.Errorf("invalid length")
+		return ErrInvalidPublicKeyLength
 	}
 
 	copy(p[0:], b)

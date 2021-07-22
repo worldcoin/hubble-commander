@@ -7,10 +7,10 @@ import (
 )
 
 var (
-	ErrNonceTooLow        = errors.New("nonce too low")
-	ErrNonceTooHigh       = errors.New("nonce too high")
-	ErrInvalidSliceLength = errors.New("invalid slices length")
-	ErrNilReceiverStateID = errors.New("transfer receiver state id cannot be nil")
+	ErrNonceTooLow         = errors.New("nonce too low")
+	ErrNonceTooHigh        = errors.New("nonce too high")
+	ErrInvalidSlicesLength = errors.New("invalid slices length")
+	ErrNilReceiverStateID  = errors.New("transfer receiver state id cannot be nil")
 
 	ErrBalanceTooLow              = errors.New("not enough balance")
 	ErrInvalidSenderTokenID       = errors.New("invalid sender token ID")

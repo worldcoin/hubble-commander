@@ -86,7 +86,7 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 		return nil, nil, nil
 	}
 	if len(transfers) != len(pubKeyIDs) {
-		return nil, nil, ErrInvalidSliceLength
+		return nil, nil, ErrInvalidSlicesLength
 	}
 
 	appliedTransfers := make([]models.Create2Transfer, 0, t.cfg.MaxTxsPerCommitment)
