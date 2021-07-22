@@ -568,9 +568,9 @@ func (s *DisputeTransitionTestSuite) calculateStateAfterInvalidTransfer(
 
 func (s *DisputeTransitionTestSuite) setUserStates() []bls.Wallet {
 	userStates := []models.UserState{
-		*s.createUserState(0, 300, 0),
-		*s.createUserState(1, 200, 0),
-		*s.createUserState(2, 100, 0),
+		*createUserState(0, 300, 0),
+		*createUserState(1, 200, 0),
+		*createUserState(2, 100, 0),
 	}
 	registrations, unsubscribe, err := s.client.WatchRegistrations(&bind.WatchOpts{})
 	s.NoError(err)
@@ -588,7 +588,7 @@ func (s *DisputeTransitionTestSuite) setUserStates() []bls.Wallet {
 	return wallets
 }
 
-func (s *DisputeTransitionTestSuite) createUserState(pubKeyID uint32, balance, nonce uint64) *models.UserState {
+func createUserState(pubKeyID uint32, balance, nonce uint64) *models.UserState {
 	return &models.UserState{
 		PubKeyID: pubKeyID,
 		TokenID:  models.MakeUint256(0),
