@@ -49,7 +49,7 @@ func (s *BatchesTestSuite) SetupTest() {
 		Params: rollup.Params{
 			MaxTxsPerCommit: models.NewUint256(1),
 		},
-	})
+	}, eth.ClientConfig{})
 	s.NoError(err)
 	err = s.testStorage.SetChainState(&s.testClient.ChainState)
 	s.NoError(err)

@@ -20,6 +20,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
 	"github.com/stretchr/testify/require"
 	"github.com/ybbus/jsonrpc/v2"
@@ -174,7 +175,7 @@ func sendTransferBatchWithInvalidAmount(t *testing.T, ethClient *eth.Client) {
 	encodedTransfer, err := encoder.EncodeTransferForCommitment(&transfer)
 	require.NoError(t, err)
 
-	sendCommitment(t, ethClient, encodedTransfer, 2)
+	sendTransferCommitment(t, ethClient, encodedTransfer, 2)
 }
 
 func sendTransferBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client) {
@@ -190,7 +191,7 @@ func sendTransferBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client) 
 	encodedTransfer, err := encoder.EncodeTransferForCommitment(&transfer)
 	require.NoError(t, err)
 
-	sendCommitment(t, ethClient, encodedTransfer, 2)
+	sendTransferCommitment(t, ethClient, encodedTransfer, 2)
 }
 
 func sendC2TBatchWithInvalidAmount(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey) {
@@ -213,7 +214,7 @@ func sendC2TBatchWithInvalidAmount(t *testing.T, ethClient *eth.Client, toPublic
 	encodedTransfer, err := encoder.EncodeCreate2TransferForCommitment(&transfer, *pubKeyID)
 	require.NoError(t, err)
 
-	sendCommitment(t, ethClient, encodedTransfer, 3)
+	sendC2TCommitment(t, ethClient, encodedTransfer, 3)
 }
 
 func sendC2TBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey) {
@@ -236,10 +237,10 @@ func sendC2TBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client, toPub
 	encodedTransfer, err := encoder.EncodeCreate2TransferForCommitment(&transfer, *pubKeyID)
 	require.NoError(t, err)
 
-	sendCommitment(t, ethClient, encodedTransfer, 4)
+	sendC2TCommitment(t, ethClient, encodedTransfer, 4)
 }
 
-func sendCommitment(t *testing.T, ethClient *eth.Client, encodedTransfer []byte, batchID uint64) {
+func sendTransferCommitment(t *testing.T, ethClient *eth.Client, encodedTransfer []byte, batchID uint64) {
 	commitment := models.Commitment{
 		Transactions:      encodedTransfer,
 		FeeReceiver:       0,
@@ -249,7 +250,24 @@ func sendCommitment(t *testing.T, ethClient *eth.Client, encodedTransfer []byte,
 	transaction, err := ethClient.SubmitTransfersBatch([]models.Commitment{commitment})
 	require.NoError(t, err)
 
-	_, err = deployer.WaitToBeMined(ethClient.ChainConnection.GetBackend(), transaction)
+	waitForSubmittedBatch(t, ethClient, transaction, batchID)
+}
+
+func sendC2TCommitment(t *testing.T, ethClient *eth.Client, encodedTransfer []byte, batchID uint64) {
+	commitment := models.Commitment{
+		Transactions:      encodedTransfer,
+		FeeReceiver:       0,
+		CombinedSignature: models.Signature{},
+		PostStateRoot:     utils.RandomHash(),
+	}
+	transaction, err := ethClient.SubmitCreate2TransfersBatch([]models.Commitment{commitment})
+	require.NoError(t, err)
+
+	waitForSubmittedBatch(t, ethClient, transaction, batchID)
+}
+
+func waitForSubmittedBatch(t *testing.T, ethClient *eth.Client, transaction *types.Transaction, batchID uint64) {
+	_, err := deployer.WaitToBeMined(ethClient.ChainConnection.GetBackend(), transaction)
 	require.NoError(t, err)
 
 	_, err = ethClient.GetBatch(models.NewUint256(batchID))

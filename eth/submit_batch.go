@@ -31,7 +31,7 @@ func (c *Client) SubmitTransfersBatch(commitments []models.Commitment) (
 	if err != nil {
 		return nil, err
 	}
-	return c.RawTransact(c.config.stakeAmount.ToBig(), estimate, input)
+	return c.RawTransact(c.config.StakeAmount.ToBig(), estimate, input)
 }
 
 func (c *Client) SubmitCreate2TransfersBatch(commitments []models.Commitment) (
@@ -46,7 +46,7 @@ func (c *Client) SubmitCreate2TransfersBatch(commitments []models.Commitment) (
 	if err != nil {
 		return nil, err
 	}
-	return c.RawTransact(c.config.stakeAmount.ToBig(), estimate, input)
+	return c.RawTransact(c.config.StakeAmount.ToBig(), estimate, input)
 }
 
 func (c *Client) SubmitTransfersBatchAndWait(commitments []models.Commitment) (batch *models.Batch, err error) {
@@ -78,7 +78,7 @@ func (c *Client) submitBatchAndWait(
 			if newBatch.Raw.TxHash == tx.Hash() {
 				return c.handleNewBatchEvent(newBatch)
 			}
-		case <-time.After(*c.config.txTimeout):
+		case <-time.After(*c.config.TxTimeout):
 			return nil, fmt.Errorf("submitBatchAndWait: timeout")
 		}
 	}
@@ -99,7 +99,7 @@ func (c *Client) estimateBatchSubmissionGasLimit(input []byte) (uint64, error) {
 		From:     account.From,
 		To:       &c.ChainState.Rollup,
 		GasPrice: account.GasPrice,
-		Value:    c.config.stakeAmount.ToBig(),
+		Value:    c.config.StakeAmount.ToBig(),
 		Data:     input,
 	}
 	estimatedGas, err := c.ChainConnection.EstimateGas(context.Background(), msg)

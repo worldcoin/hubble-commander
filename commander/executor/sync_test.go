@@ -47,7 +47,7 @@ func (s *SyncTestSuite) SetupTest() {
 		Params: rollup.Params{
 			MaxTxsPerCommit: models.NewUint256(1),
 		},
-	})
+	}, eth.ClientConfig{})
 	s.NoError(err)
 
 	s.cfg = &config.RollupConfig{

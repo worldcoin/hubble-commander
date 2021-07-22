@@ -3,11 +3,13 @@ package executor
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -74,7 +76,10 @@ func (s *DisputeTransitionTestSuite) SetupTest() {
 	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
 
-	s.client, err = eth.NewTestClient()
+	s.client, err = eth.NewConfiguredTestClient(
+		rollup.DeploymentConfig{},
+		eth.ClientConfig{TxTimeout: ref.Duration(2 * time.Second)},
+	)
 	s.NoError(err)
 
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
@@ -240,6 +245,37 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_FirstCommitm
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
 }
 
+func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_ValidBatch() {
+	s.setUserStates()
+
+	transfers := []models.Transfer{
+		testutils.MakeTransfer(0, 2, 0, 50),
+		testutils.MakeTransfer(0, 2, 1, 100),
+	}
+
+	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &transfers[0])
+
+	proofs := s.getTransferStateMerkleProofs([][]models.Transfer{{transfers[1]}})
+
+	s.beginExecutorTransaction()
+	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &transfers[1])
+
+	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	s.NoError(err)
+	s.Len(remoteBatches, 2)
+
+	err = s.transactionExecutor.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
+	s.NoError(err)
+
+	defer func() {
+		err = s.transactionExecutor.Commit()
+		s.NoError(err)
+	}()
+
+	err = s.transactionExecutor.DisputeTransition(&remoteBatches[1], 0, proofs)
+	s.ErrorIs(err, eth.ErrWaitForRollbackTimeout)
+}
+
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_RemovesInvalidBatch() {
 	wallets := s.setUserStates()
 
@@ -309,6 +345,38 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_First
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
 }
 
+func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_ValidBatch() {
+	wallets := s.setUserStates()
+
+	transfers := []models.Create2Transfer{
+		testutils.MakeCreate2Transfer(0, ref.Uint32(3), 0, 50, wallets[1].PublicKey()),
+		testutils.MakeCreate2Transfer(0, ref.Uint32(4), 1, 100, wallets[1].PublicKey()),
+	}
+	pubKeyIDs := [][]uint32{{4}}
+
+	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &transfers[0])
+
+	proofs := s.getC2TStateMerkleProofs([][]models.Create2Transfer{{transfers[1]}}, pubKeyIDs)
+
+	s.beginExecutorTransaction()
+	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &transfers[1])
+
+	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	s.NoError(err)
+	s.Len(remoteBatches, 2)
+
+	err = s.transactionExecutor.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
+	s.NoError(err)
+
+	defer func() {
+		err = s.transactionExecutor.Commit()
+		s.NoError(err)
+	}()
+
+	err = s.transactionExecutor.DisputeTransition(&remoteBatches[1], 0, proofs)
+	s.ErrorIs(err, eth.ErrWaitForRollbackTimeout)
+}
+
 func (s *DisputeTransitionTestSuite) checkBatchAfterDispute(batchID models.Uint256) {
 	_, err := s.client.GetBatch(&batchID)
 	s.Error(err)
@@ -332,19 +400,21 @@ func (s *DisputeTransitionTestSuite) getTransferStateMerkleProofs(txs [][]models
 	}
 
 	s.beginExecutorTransaction()
-	var disputableTransferError *DisputableTransferError
+	defer s.transactionExecutor.Rollback(nil)
+
+	var stateProofs []models.StateMerkleProof
+	var err error
 	for i := range txs {
-		_, _, err := s.transactionExecutor.ApplyTransfersForSync(txs[i], feeReceiver)
+		_, stateProofs, err = s.transactionExecutor.ApplyTransfersForSync(txs[i], feeReceiver)
 		if err != nil {
+			var disputableTransferError *DisputableTransferError
 			s.ErrorAs(err, &disputableTransferError)
 			s.Len(disputableTransferError.Proofs, len(txs[i])*2)
-			break
+			return disputableTransferError.Proofs
 		}
 	}
-	s.NotNil(disputableTransferError)
 
-	s.transactionExecutor.Rollback(nil)
-	return disputableTransferError.Proofs
+	return stateProofs
 }
 
 func (s *DisputeTransitionTestSuite) getC2TStateMerkleProofs(
@@ -357,18 +427,21 @@ func (s *DisputeTransitionTestSuite) getC2TStateMerkleProofs(
 	}
 
 	s.beginExecutorTransaction()
-	var disputableTransferError *DisputableTransferError
+	defer s.transactionExecutor.Rollback(nil)
+
+	var stateProofs []models.StateMerkleProof
+	var err error
 	for i := range txs {
-		_, _, err := s.transactionExecutor.ApplyCreate2TransfersForSync(txs[i], pubKeyIDs[i], feeReceiver)
+		_, stateProofs, err = s.transactionExecutor.ApplyCreate2TransfersForSync(txs[i], pubKeyIDs[i], feeReceiver)
 		if err != nil {
+			var disputableTransferError *DisputableTransferError
 			s.ErrorAs(err, &disputableTransferError)
 			s.Len(disputableTransferError.Proofs, len(txs[i])*2)
+			return disputableTransferError.Proofs
 		}
 	}
-	s.NotNil(disputableTransferError)
 
-	s.transactionExecutor.Rollback(nil)
-	return disputableTransferError.Proofs
+	return stateProofs
 }
 
 func (s *DisputeTransitionTestSuite) createAndSubmitInvalidTransferBatch(txs [][]models.Transfer, invalidTxHash common.Hash) *models.Batch {

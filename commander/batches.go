@@ -71,6 +71,7 @@ func (c *Commander) syncOrDisputeRemoteBatch(remoteBatch *eth.DecodedBatch) erro
 
 	err := c.syncBatch(remoteBatch)
 	if errors.As(err, &dcError) {
+		logFraudulentBatch(remoteBatch, dcError)
 		return c.disputeFraudulentBatch(remoteBatch, dcError.CommitmentIndex, dcError.Proofs)
 	}
 	return err
@@ -149,4 +150,9 @@ func logBatchesCount(newRemoteBatches []eth.DecodedBatch) {
 	if newBatchesCount > 0 {
 		log.Printf("Found %d batch(es)", newBatchesCount)
 	}
+}
+
+func logFraudulentBatch(batch *eth.DecodedBatch, err *executor.DisputableCommitmentError) {
+	log.WithFields(log.Fields{"batchID": batch.ID.String()}).
+		Infof("Found fraudulent batch. Reason: %s", err.Reason)
 }
