@@ -4,10 +4,24 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/pkg/errors"
 )
 
-func (t *TransactionExecutor) DisputeTransferSignature(batch *eth.DecodedBatch, commitmentIndex int) error {
+func (t *TransactionExecutor) DisputeSignature(batch *eth.DecodedBatch, commitmentIndex int) error {
+	switch batch.Type {
+	case txtype.Transfer:
+		return t.disputeTransferSignature(batch, commitmentIndex)
+	case txtype.Create2Transfer:
+		return t.disputeCreate2TransferSignature(batch, commitmentIndex)
+	case txtype.MassMigration:
+		return errors.New("unsupported batch type")
+	}
+	return nil
+}
+
+func (t *TransactionExecutor) disputeTransferSignature(batch *eth.DecodedBatch, commitmentIndex int) error {
 	txs, err := encoder.DeserializeTransfers(batch.Commitments[commitmentIndex].Transactions)
 	if err != nil {
 		return err
@@ -33,7 +47,7 @@ func (t *TransactionExecutor) DisputeTransferSignature(batch *eth.DecodedBatch, 
 	return nil
 }
 
-func (t *TransactionExecutor) DisputeCreate2TransferSignature(batch *eth.DecodedBatch, commitmentIndex int) error {
+func (t *TransactionExecutor) disputeCreate2TransferSignature(batch *eth.DecodedBatch, commitmentIndex int) error {
 	txs, err := encoder.DeserializeTransfers(batch.Commitments[commitmentIndex].Transactions)
 	if err != nil {
 		return err
