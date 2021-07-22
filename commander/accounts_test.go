@@ -58,12 +58,12 @@ func (s *AccountsTestSuite) TestSyncAccounts() {
 	}
 }
 
-func (s *AccountsTestSuite) TestSyncSingleAccount() {
+func (s *AccountsTestSuite) TestSyncSingleAccounts() {
 	account := s.registerSingleAccount()
 
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)
-	err = s.cmd.syncSingleAccount(0, *latestBlockNumber)
+	err = s.cmd.syncSingleAccounts(0, *latestBlockNumber)
 	s.NoError(err)
 
 	accounts, err := s.cmd.storage.GetAccountLeaves(&account.PublicKey)
@@ -72,12 +72,12 @@ func (s *AccountsTestSuite) TestSyncSingleAccount() {
 	s.Equal(account.PubKeyID, accounts[0].PubKeyID)
 }
 
-func (s *AccountsTestSuite) TestSyncBatchAccount() {
+func (s *AccountsTestSuite) TestSyncBatchAccounts() {
 	accounts := s.registerBatchAccount()
 
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)
-	err = s.cmd.syncBatchAccount(0, *latestBlockNumber)
+	err = s.cmd.syncBatchAccounts(0, *latestBlockNumber)
 	s.NoError(err)
 
 	for i := range accounts {

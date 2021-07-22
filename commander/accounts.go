@@ -12,14 +12,14 @@ import (
 )
 
 func (c *Commander) syncAccounts(start, end uint64) error {
-	err := c.syncSingleAccount(start, end)
+	err := c.syncSingleAccounts(start, end)
 	if err != nil {
 		return err
 	}
-	return c.syncBatchAccount(start, end)
+	return c.syncBatchAccounts(start, end)
 }
 
-func (c *Commander) syncSingleAccount(start, end uint64) error {
+func (c *Commander) syncSingleAccounts(start, end uint64) error {
 	it, err := c.client.AccountRegistry.FilterSinglePubkeyRegistered(&bind.FilterOpts{
 		Start: start,
 		End:   &end,
@@ -60,7 +60,7 @@ func (c *Commander) syncSingleAccount(start, end uint64) error {
 	return nil
 }
 
-func (c *Commander) syncBatchAccount(start, end uint64) error {
+func (c *Commander) syncBatchAccounts(start, end uint64) error {
 	it, err := c.client.AccountRegistry.FilterBatchPubkeyRegistered(&bind.FilterOpts{
 		Start: start,
 		End:   &end,
