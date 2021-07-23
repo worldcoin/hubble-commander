@@ -249,15 +249,15 @@ func (s *TransferTestSuite) TestGetUserTransfers_NoTransfers() {
 func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 	accounts := []models.AccountLeaf{
 		{
-			PubKeyID:  1,
+			PubKeyID:  3,
 			PublicKey: models.PublicKey{1, 2, 3},
 		},
 		{
-			PubKeyID:  2,
+			PubKeyID:  4,
 			PublicKey: models.PublicKey{2, 3, 4},
 		},
 		{
-			PubKeyID:  3,
+			PubKeyID:  5,
 			PublicKey: models.PublicKey{1, 2, 3},
 		},
 	}
@@ -267,11 +267,11 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 	}
 
 	userStates := []models.UserState{
-		{PubKeyID: 1}, // StateID: 0
-		{PubKeyID: 2}, // StateID: 1
-		{PubKeyID: 1}, // StateID: 2
-		{PubKeyID: 3}, // StateID: 3
-		{PubKeyID: 2}, // StateID: 4
+		{PubKeyID: 3}, // StateID: 0
+		{PubKeyID: 4}, // StateID: 1
+		{PubKeyID: 3}, // StateID: 2
+		{PubKeyID: 5}, // StateID: 3
+		{PubKeyID: 4}, // StateID: 4
 	}
 
 	for i := range userStates {

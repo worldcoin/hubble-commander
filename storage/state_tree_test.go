@@ -92,7 +92,7 @@ func (s *StateTreeTestSuite) TestSet_RootIsDifferentAfterSet() {
 	s.NotEqual(stateRootAfter1, stateRootAfter2)
 }
 
-func (s *StateTreeTestSuite) TestSet_StoresLeafStateNodeRecord() {
+func (s *StateTreeTestSuite) TestSet_StoresLeafMerkleTreeNodeRecord() {
 	_, err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
@@ -104,12 +104,12 @@ func (s *StateTreeTestSuite) TestSet_StoresLeafStateNodeRecord() {
 		DataHash: s.leaf.DataHash,
 	}
 
-	node, err := NewStoredMerkleTree("state", s.storage.Storage).Get(expectedNode.MerklePath)
+	node, err := s.tree.merkleTree.Get(expectedNode.MerklePath)
 	s.NoError(err)
 	s.Equal(expectedNode, node)
 }
 
-func (s *StateTreeTestSuite) TestSet_UpdatesRootStateNodeRecord() {
+func (s *StateTreeTestSuite) TestSet_UpdatesRootMerkleTreeNodeRecord() {
 	_, err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
@@ -164,7 +164,7 @@ func (s *StateTreeTestSuite) TestSet_StoresStateUpdateRecord() {
 	s.Equal(expectedUpdate, update)
 }
 
-func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectRootStateNode() {
+func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectRootMerkleTreeNode() {
 	_, err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
@@ -176,7 +176,7 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectRootStateNode() {
 	s.Equal(common.HexToHash("0x406515786640be8c51eacf1221f017e7f59e04ef59637a27dcb2b2f054b309bf"), *root)
 }
 
-func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectLeafStateNode() {
+func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectLeafMerkleTreeNode() {
 	_, err := s.tree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
@@ -238,11 +238,11 @@ func (s *StateTreeTestSuite) TestSet_ReturnsWitness() {
 	s.NoError(err)
 	s.Len(witness, StateTreeDepth)
 
-	node, err := s.tree.getStateNodeByPath(&models.MerklePath{Depth: StateTreeDepth, Path: 1})
+	node, err := s.tree.getMerkleTreeNodeByPath(&models.MerklePath{Depth: StateTreeDepth, Path: 1})
 	s.NoError(err)
 	s.Equal(node.DataHash, witness[0])
 
-	node, err = s.tree.getStateNodeByPath(&models.MerklePath{Depth: 1, Path: 1})
+	node, err = s.tree.getMerkleTreeNodeByPath(&models.MerklePath{Depth: 1, Path: 1})
 	s.NoError(err)
 	s.Equal(node.DataHash, witness[31])
 }

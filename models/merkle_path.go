@@ -35,9 +35,9 @@ func NewMerklePath(bits string) (*MerklePath, error) {
 	return result, nil
 }
 
-func MakeMerklePathFromStateID(stateID uint32) MerklePath {
+func MakeMerklePathFromLeafID(leafID uint32) MerklePath {
 	return MerklePath{
-		Path:  stateID,
+		Path:  leafID,
 		Depth: 32,
 	}
 }

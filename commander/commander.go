@@ -30,6 +30,7 @@ type Commander struct {
 
 	stopChannel      chan bool
 	storage          *st.Storage
+	accountTree      *st.AccountTree
 	client           *eth.Client
 	apiServer        *http.Server
 	signaturesDomain *bls.Domain
@@ -56,6 +57,8 @@ func (c *Commander) Start() (err error) {
 	if err != nil {
 		return err
 	}
+
+	c.accountTree = st.NewAccountTree(c.storage)
 
 	chain, err := getChainConnection(c.cfg.Ethereum)
 	if err != nil {

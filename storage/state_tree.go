@@ -13,7 +13,6 @@ import (
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	bh "github.com/timshannon/badgerhold/v3"
 )
 
 const StateTreeDepth = merkletree.MaxDepth
@@ -77,8 +76,8 @@ func (s *StateTree) Set(id uint32, state *models.UserState) (models.Witness, err
 	return witness, nil
 }
 
-func (s *StateTree) GetWitness(id uint32) (models.Witness, error) {
-	return s.merkleTree.GetWitness(models.MakeMerklePathFromStateID(id))
+func (s *StateTree) GetWitness(stateID uint32) (models.Witness, error) {
+	return s.merkleTree.GetWitness(models.MakeMerklePathFromLeafID(stateID))
 }
 
 func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
@@ -168,7 +167,7 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (models.Wit
 		return nil, err
 	}
 
-	prevLeafPath := models.MakeMerklePathFromStateID(prevLeaf.StateID)
+	prevLeafPath := models.MakeMerklePathFromLeafID(prevLeaf.StateID)
 	currentRoot, witness, err := s.merkleTree.SetNode(&prevLeafPath, currentLeaf.DataHash)
 	if err != nil {
 		return nil, err
@@ -192,7 +191,7 @@ func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, 
 		return nil, err
 	}
 
-	leafPath := models.MakeMerklePathFromStateID(stateUpdate.PrevStateLeaf.StateID)
+	leafPath := models.MakeMerklePathFromLeafID(stateUpdate.PrevStateLeaf.StateID)
 	currentRootHash, _, err := s.merkleTree.SetNode(&leafPath, stateUpdate.PrevStateLeaf.DataHash)
 	if err != nil {
 		return nil, err
@@ -209,16 +208,12 @@ func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, 
 	return currentRootHash, nil
 }
 
-func (s *StateTree) getStateNodeByPath(path *models.MerklePath) (*models.MerkleTreeNode, error) {
-	node := models.MerkleTreeNode{MerklePath: *path}
-	err := s.storage.Badger.Get(*path, &node)
-	if err == bh.ErrNotFound {
-		return newZeroNode(path), nil
-	}
+func (s *StateTree) getMerkleTreeNodeByPath(path *models.MerklePath) (*models.MerkleTreeNode, error) {
+	node, err := s.merkleTree.Get(*path)
 	if err != nil {
 		return nil, err
 	}
-	return &node, nil
+	return node, nil
 }
 
 func NewStateLeaf(stateID uint32, state *models.UserState) (*models.StateLeaf, error) {
