@@ -62,17 +62,17 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.client, err = getClient(chain, c.storage.Internal, c.cfg.Bootstrap)
+	c.client, err = getClient(chain, c.storage.InternalStorage, c.cfg.Bootstrap)
 	if err != nil {
 		return err
 	}
 
-	c.signaturesDomain, err = c.storage.Internal.GetDomain(c.client.ChainState.ChainID)
+	c.signaturesDomain, err = c.storage.InternalStorage.GetDomain(c.client.ChainState.ChainID)
 	if err != nil {
 		return err
 	}
 
-	c.apiServer, err = api.NewAPIServer(c.cfg.API, c.storage.Internal, c.client, c.cfg.Rollup.DevMode)
+	c.apiServer, err = api.NewAPIServer(c.cfg.API, c.storage.InternalStorage, c.client, c.cfg.Rollup.DevMode)
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ func (c *Commander) Stop() error {
 		return err
 	}
 	c.workers.Wait()
-	err := c.storage.Internal.Close()
+	err := c.storage.InternalStorage.Close()
 	if err != nil {
 		return err
 	}

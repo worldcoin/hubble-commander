@@ -12,7 +12,7 @@ import (
 )
 
 type Storage struct {
-	Internal    *InternalStorage
+	*InternalStorage
 	StateTree   *StateTree
 	AccountTree *AccountTree
 }
@@ -52,9 +52,9 @@ func NewStorage(postgresConfig *config.PostgresConfig, badgerConfig *config.Badg
 	}
 
 	return &Storage{
-		Internal:    internalStorage,
-		StateTree:   NewStateTree(internalStorage),
-		AccountTree: NewAccountTree(internalStorage),
+		InternalStorage: internalStorage,
+		StateTree:       NewStateTree(internalStorage),
+		AccountTree:     NewAccountTree(internalStorage),
 	}, nil
 }
 
@@ -85,7 +85,7 @@ func NewConfiguredStorage(cfg *config.Config) (storage *Storage, err error) {
 	}
 
 	if cfg.Bootstrap.Prune {
-		err = storage.Internal.Prune(migrator)
+		err = storage.Prune(migrator)
 		if err != nil {
 			return nil, err
 		}
