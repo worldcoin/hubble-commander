@@ -162,12 +162,12 @@ func (s *AccountTreeTestSuite) TestSet_ReturnsWitness() {
 }
 
 func (s *AccountTreeTestSuite) TestSetBatch_AddsAccountLeaves() {
-	leaves := make([]models.AccountLeaf, 0, 16)
-	for i := 0; i < 16; i++ {
-		leaves = append(leaves, models.AccountLeaf{
+	leaves := make([]models.AccountLeaf, 16)
+	for i := range leaves {
+		leaves[i] = models.AccountLeaf{
 			PubKeyID:  uint32(i + accountBatchOffset),
 			PublicKey: models.PublicKey{1, 2, byte(i)},
-		})
+		}
 	}
 
 	witnesses, err := s.tree.SetBatch(leaves)
@@ -182,12 +182,12 @@ func (s *AccountTreeTestSuite) TestSetBatch_AddsAccountLeaves() {
 }
 
 func (s *AccountTreeTestSuite) TestSetBatch_ChangesStateRoot() {
-	leaves := make([]models.AccountLeaf, 0, 16)
-	for i := 0; i < 16; i++ {
-		leaves = append(leaves, models.AccountLeaf{
+	leaves := make([]models.AccountLeaf, 16)
+	for i := range leaves {
+		leaves[i] = models.AccountLeaf{
 			PubKeyID:  uint32(i + accountBatchOffset),
 			PublicKey: models.PublicKey{1, 2, byte(i)},
-		})
+		}
 	}
 
 	rootBeforeSet, err := s.tree.Root()
@@ -200,6 +200,38 @@ func (s *AccountTreeTestSuite) TestSetBatch_ChangesStateRoot() {
 	s.NoError(err)
 
 	s.NotEqual(rootBeforeSet, rootAfterSet)
+}
+
+func (s *AccountTreeTestSuite) TestSetBatch_InvalidLeavesLength() {
+	leaves := make([]models.AccountLeaf, 3)
+	for i := range leaves {
+		leaves[i] = models.AccountLeaf{
+			PubKeyID:  uint32(i + accountBatchOffset),
+			PublicKey: models.PublicKey{1, 2, byte(i)},
+		}
+	}
+
+	_, err := s.tree.SetBatch(leaves)
+	s.ErrorIs(err, ErrInvalidAccountsLength)
+}
+
+func (s *AccountTreeTestSuite) TestSetBatch_InvalidPubKeyIDValue() {
+	leaves := make([]models.AccountLeaf, 16)
+	for i := range leaves {
+		leaves[i] = models.AccountLeaf{
+			PubKeyID:  uint32(i + accountBatchOffset),
+			PublicKey: models.PublicKey{1, 2, byte(i)},
+		}
+	}
+
+	leaves[7].PubKeyID = 12
+
+	_, err := s.tree.SetBatch(leaves)
+	s.Error(err)
+	s.Equal("invalid pubKeyID value: 12", err.Error())
+
+	_, err = s.tree.Leaf(leaves[0].PubKeyID)
+	s.Equal(NewNotFoundError("account leaf"), err)
 }
 
 func (s *AccountTreeTestSuite) randomPublicKey() models.PublicKey {

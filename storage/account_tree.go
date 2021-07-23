@@ -15,7 +15,10 @@ const (
 	AccountTreeDepth   = merkletree.MaxDepth
 )
 
-var ErrPubKeyIDAlreadyExists = errors.New("leaf with given pub key ID already exists")
+var (
+	ErrPubKeyIDAlreadyExists = errors.New("leaf with given pub key ID already exists")
+	ErrInvalidAccountsLength = errors.New("invalid accounts length")
+)
 
 type AccountTree struct {
 	storage    *Storage
@@ -70,6 +73,10 @@ func (s *AccountTree) Set(leaf *models.AccountLeaf) (models.Witness, error) {
 }
 
 func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) ([]models.Witness, error) {
+	if len(leaves) != 16 {
+		return nil, ErrInvalidAccountsLength
+	}
+
 	tx, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return nil, err
@@ -79,6 +86,9 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) ([]models.Witness, e
 	accountTree := NewAccountTree(storage)
 
 	for i := range leaves {
+		if leaves[i].PubKeyID < accountBatchOffset {
+			return nil, errors.Errorf("invalid pubKeyID value: %d", leaves[i].PubKeyID)
+		}
 		_, err = accountTree.unsafeSet(&leaves[i])
 		if err != nil {
 			return nil, err
