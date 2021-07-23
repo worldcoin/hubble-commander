@@ -4,10 +4,13 @@ import (
 	"context"
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -91,6 +94,52 @@ func (s *DisputeSignatureTestSuite) TestReceiverPublicKeyProof() {
 	s.NoError(err)
 	s.Equal(publicKeyHash, publicKeyProof.PublicKeyHash)
 	s.Nil(publicKeyProof.Witness)
+}
+
+func (s *DisputeSignatureTestSuite) TestSignatureProof() {
+	s.setUserStatesAndAddAccounts()
+
+	transfers := []models.Transfer{
+		testutils.MakeTransfer(1, 2, 0, 50),
+		testutils.MakeTransfer(0, 2, 0, 50),
+		testutils.MakeTransfer(0, 1, 1, 75),
+	}
+	serializedTxs, err := encoder.SerializeTransfers(transfers)
+	s.NoError(err)
+
+	expectedUserStates := make([]models.UserState, 0, len(transfers))
+	expectedPublicKeys := make([]models.PublicKey, 0, len(transfers))
+	for i := range transfers {
+		leaf, err := s.storage.GetStateLeaf(transfers[i].FromStateID)
+		s.NoError(err)
+		expectedUserStates = append(expectedUserStates, leaf.UserState)
+
+		publicKey, err := s.storage.GetPublicKey(leaf.PubKeyID)
+		s.NoError(err)
+		expectedPublicKeys = append(expectedPublicKeys, *publicKey)
+	}
+
+	signatureProof, err := s.transactionExecutor.signatureProof(&encoder.DecodedCommitment{Transactions: serializedTxs})
+	s.NoError(err)
+	s.Len(signatureProof.UserStates, 3)
+	s.Len(signatureProof.PublicKeys, 3)
+
+	for i := range signatureProof.UserStates {
+		s.Equal(expectedUserStates[i], *signatureProof.UserStates[i].UserState)
+		s.Equal(expectedPublicKeys[i], *signatureProof.PublicKeys[i].PublicKey)
+	}
+}
+
+func (s *DisputeSignatureTestSuite) setUserStatesAndAddAccounts() []bls.Wallet {
+	wallets := setUserStates(s.Assertions, s.transactionExecutor)
+	for i := range wallets {
+		err := s.transactionExecutor.storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
+			PubKeyID:  uint32(i),
+			PublicKey: *wallets[i].PublicKey(),
+		})
+		s.NoError(err)
+	}
+	return wallets
 }
 
 func TestDisputeSignatureTestSuite(t *testing.T) {
