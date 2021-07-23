@@ -12,7 +12,6 @@ import (
 const (
 	AccountTreeDepth = merkletree.MaxDepth
 
-	//TODO: merge with
 	accountBatchOffset   = 1 << 31
 	leftSubtreeMaxValue  = accountBatchOffset - 1
 	rightSubtreeMaxValue = accountBatchOffset*2 - 16
