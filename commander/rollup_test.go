@@ -27,6 +27,7 @@ func (s *RollupTestSuite) SetupTest() {
 	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.storage = testStorage
+	s.stateTree = st.NewStoredMerkleTree("state", s.storage.Badger)
 	s.teardown = testStorage.Teardown
 }
 
