@@ -50,10 +50,10 @@ func (s *SendTransferTestSuite) SetupTest() {
 	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.teardown = testStorage.Teardown
-	s.tree = st.NewStateTree(testStorage.InternalStorage)
+	s.tree = st.NewStateTree(testStorage.StorageBase)
 	s.api = &API{
 		cfg:     &config.APIConfig{},
-		storage: testStorage.InternalStorage,
+		storage: testStorage.StorageBase,
 		client: &eth.Client{
 			ChainState: chainState,
 		},

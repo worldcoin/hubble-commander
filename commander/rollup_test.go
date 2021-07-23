@@ -50,7 +50,7 @@ func (s *RollupTestSuite) TestValidateStateRoot_SameStateRootHash() {
 	_, _, err = s.stateTree.SetNode(&models.MerklePath{Path: 0, Depth: 0}, commitment.PostStateRoot)
 	s.NoError(err)
 
-	err = validateStateRoot(s.storage.InternalStorage)
+	err = validateStateRoot(s.storage.StorageBase)
 	s.NoError(err)
 }
 
@@ -65,7 +65,7 @@ func (s *RollupTestSuite) TestValidateStateRoot_DifferentStateRootHash() {
 	_, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	err = validateStateRoot(s.storage.InternalStorage)
+	err = validateStateRoot(s.storage.StorageBase)
 	s.Equal(ErrInvalidStateRoot, err)
 }
 
@@ -73,7 +73,7 @@ func (s *RollupTestSuite) TestValidateStateRoot_FirstCommitment() {
 	_, _, err := s.stateTree.SetNode(&models.MerklePath{Path: 0, Depth: 0}, common.Hash{1, 2, 3})
 	s.NoError(err)
 
-	err = validateStateRoot(s.storage.InternalStorage)
+	err = validateStateRoot(s.storage.StorageBase)
 	s.NoError(err)
 }
 

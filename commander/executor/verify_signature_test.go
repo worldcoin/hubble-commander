@@ -21,7 +21,7 @@ type VerifySignatureTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	transactionExecutor *TransactionExecutor
-	storage             *st.InternalStorage
+	storage             *st.StorageBase
 	tree                *st.StateTree
 	client              *eth.TestClient
 	teardown            func() error
@@ -45,7 +45,7 @@ func (s *VerifySignatureTestSuite) SetupTest() {
 	s.NoError(err)
 	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.InternalStorage
+	s.storage = testStorage.StorageBase
 	s.tree = st.NewStateTree(s.storage)
 	s.teardown = testStorage.Teardown
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())

@@ -31,8 +31,8 @@ func (s *GetTransactionsTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.api = &API{storage: s.storage.InternalStorage}
-	s.tree = st.NewStateTree(s.storage.InternalStorage)
+	s.api = &API{storage: s.storage.StorageBase}
+	s.tree = st.NewStateTree(s.storage.StorageBase)
 }
 
 func (s *GetTransactionsTestSuite) TearDownTest() {

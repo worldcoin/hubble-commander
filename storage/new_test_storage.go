@@ -40,7 +40,7 @@ func NewTestStorageWithoutPostgres() (*TestStorage, error) {
 }
 
 func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
-	internalStorage := &InternalStorage{feeReceiverStateIDs: make(map[string]uint32)}
+	storageBase := &StorageBase{feeReceiverStateIDs: make(map[string]uint32)}
 	teardown := make([]TeardownFunc, 0, 2)
 
 	if cfg.Postgres {
@@ -48,8 +48,8 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 		if err != nil {
 			return nil, err
 		}
-		internalStorage.Postgres = postgresTestDB.DB
-		internalStorage.QB = getQueryBuilder()
+		storageBase.Postgres = postgresTestDB.DB
+		storageBase.QB = getQueryBuilder()
 		teardown = append(teardown, func() error {
 			return postgresTestDB.Teardown()
 		})
@@ -60,22 +60,22 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 		if err != nil {
 			return nil, err
 		}
-		internalStorage.Badger = badgerTestDB.DB
+		storageBase.Badger = badgerTestDB.DB
 		teardown = append(teardown, badgerTestDB.Teardown)
 	}
 
 	return &TestStorage{
 		Storage: &Storage{
-			InternalStorage: internalStorage,
-			StateTree:       NewStateTree(internalStorage),
-			AccountTree:     NewAccountTree(internalStorage),
+			StorageBase: storageBase,
+			StateTree:   NewStateTree(storageBase),
+			AccountTree: NewAccountTree(storageBase),
 		},
 		Teardown: toTeardownFunc(teardown),
 	}, nil
 }
 
 func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage, error) {
-	internalStorage := *s.Storage.InternalStorage
+	storageBase := *s.Storage.StorageBase
 	teardown := make([]TeardownFunc, 0, 2)
 	initialTeardown := make([]TeardownFunc, 0, 2)
 
@@ -85,7 +85,7 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 		if err != nil {
 			return nil, err
 		}
-		internalStorage.Postgres = clonedPostgres.DB
+		storageBase.Postgres = clonedPostgres.DB
 		teardown = append(teardown, func() error {
 			return clonedPostgres.Teardown()
 		})
@@ -98,7 +98,7 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 		if err != nil {
 			return nil, err
 		}
-		internalStorage.Badger = clonedBadger.DB
+		storageBase.Badger = clonedBadger.DB
 		teardown = append(teardown, func() error {
 			return clonedBadger.Teardown()
 		})
@@ -108,9 +108,9 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 
 	return &TestStorage{
 		Storage: &Storage{
-			InternalStorage: &internalStorage,
-			StateTree:       NewStateTree(&internalStorage),
-			AccountTree:     NewAccountTree(&internalStorage),
+			StorageBase: &storageBase,
+			StateTree:   NewStateTree(&storageBase),
+			AccountTree: NewAccountTree(&storageBase),
 		},
 		Teardown: toTeardownFunc(teardown),
 	}, nil

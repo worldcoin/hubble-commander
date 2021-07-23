@@ -14,14 +14,14 @@ const AccountTreeDepth = merkletree.MaxDepth
 var ErrPubKeyIDAlreadyExists = errors.New("leaf with given pub key ID already exists")
 
 type AccountTree struct {
-	internalStorage *InternalStorage
-	merkleTree      *StoredMerkleTree
+	storageBase *StorageBase
+	merkleTree  *StoredMerkleTree
 }
 
-func NewAccountTree(internalStorage *InternalStorage) *AccountTree {
+func NewAccountTree(storageBase *StorageBase) *AccountTree {
 	return &AccountTree{
-		internalStorage: internalStorage,
-		merkleTree:      NewStoredMerkleTree("account", internalStorage.Badger),
+		storageBase: storageBase,
+		merkleTree:  NewStoredMerkleTree("account", storageBase.Badger),
 	}
 }
 
@@ -37,7 +37,7 @@ func (s *AccountTree) LeafNode(pubKeyID uint32) (*models.MerkleTreeNode, error) 
 }
 
 func (s *AccountTree) Leaf(pubKeyID uint32) (*models.AccountLeaf, error) {
-	leaf, err := s.internalStorage.GetAccountLeaf(pubKeyID)
+	leaf, err := s.storageBase.GetAccountLeaf(pubKeyID)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (s *AccountTree) Leaf(pubKeyID uint32) (*models.AccountLeaf, error) {
 
 // Set returns a witness containing 32 elements for the current set operation
 func (s *AccountTree) Set(leaf *models.AccountLeaf) (models.Witness, error) {
-	tx, storage, err := s.internalStorage.BeginTransaction(TxOptions{Badger: true})
+	tx, storage, err := s.storageBase.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func (s *AccountTree) GetWitness(pubKeyID uint32) (models.Witness, error) {
 }
 
 func (s *AccountTree) unsafeSet(leaf *models.AccountLeaf) (models.Witness, error) {
-	err := s.internalStorage.AddAccountLeafIfNotExists(leaf)
+	err := s.storageBase.AddAccountLeafIfNotExists(leaf)
 	if err == bh.ErrKeyExists {
 		return nil, ErrPubKeyIDAlreadyExists
 	}

@@ -31,7 +31,7 @@ var (
 type ApplyCreate2TransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage             *st.InternalStorage
+	storage             *st.StorageBase
 	teardown            func() error
 	tree                *st.StateTree
 	transactionExecutor *TransactionExecutor
@@ -45,7 +45,7 @@ func (s *ApplyCreate2TransferTestSuite) SetupSuite() {
 func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.InternalStorage
+	s.storage = testStorage.StorageBase
 	s.teardown = testStorage.Teardown
 	s.tree = st.NewStateTree(s.storage)
 	s.client, err = eth.NewTestClient()

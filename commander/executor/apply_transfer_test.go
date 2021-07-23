@@ -53,9 +53,9 @@ func (s *ApplyTransferTestSuite) SetupTest() {
 	var err error
 	s.storage, err = storage.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.tree = storage.NewStateTree(s.storage.InternalStorage)
+	s.tree = storage.NewStateTree(s.storage.StorageBase)
 	s.transactionExecutor = NewTestTransactionExecutor(
-		s.storage.InternalStorage,
+		s.storage.StorageBase,
 		nil,
 		&config.RollupConfig{FeeReceiverPubKeyID: 0},
 		context.Background(),

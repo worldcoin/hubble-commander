@@ -69,7 +69,7 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	s.cmd.stopChannel = make(chan bool)
 
 	s.wallets = generateWallets(s.T(), s.testClient.ChainState.Rollup, 2)
-	seedDB(s.T(), s.testStorage.InternalStorage, st.NewStateTree(s.testStorage.InternalStorage), s.wallets)
+	seedDB(s.T(), s.testStorage.StorageBase, st.NewStateTree(s.testStorage.StorageBase), s.wallets)
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
 }
 
@@ -190,7 +190,7 @@ func createAndSubmitTransferBatch(
 }
 
 func (s *NewBlockLoopTestSuite) createAndSubmitTransferBatchInTransaction(tx *models.Transfer) {
-	s.runInTransaction(func(txStorage *st.InternalStorage, txExecutor *executor.TransactionExecutor) {
+	s.runInTransaction(func(txStorage *st.StorageBase, txExecutor *executor.TransactionExecutor) {
 		_, err := txStorage.AddTransfer(tx)
 		s.NoError(err)
 
@@ -206,7 +206,7 @@ func (s *NewBlockLoopTestSuite) createAndSubmitTransferBatchInTransaction(tx *mo
 	})
 }
 
-func (s *NewBlockLoopTestSuite) runInTransaction(handler func(*st.InternalStorage, *executor.TransactionExecutor)) {
+func (s *NewBlockLoopTestSuite) runInTransaction(handler func(*st.StorageBase, *executor.TransactionExecutor)) {
 	txController, txStorage, err := s.testStorage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
 	defer txController.Rollback(nil)
@@ -247,7 +247,7 @@ func generateWallets(t *testing.T, rollupAddress common.Address, walletsAmount i
 	return wallets
 }
 
-func seedDB(t *testing.T, storage *st.InternalStorage, tree *st.StateTree, wallets []bls.Wallet) {
+func seedDB(t *testing.T, storage *st.StorageBase, tree *st.StateTree, wallets []bls.Wallet) {
 	err := storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
 		PubKeyID:  0,
 		PublicKey: *wallets[0].PublicKey(),

@@ -19,7 +19,7 @@ type Create2TransferCommitmentsTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	teardown               func() error
-	storage                *st.InternalStorage
+	storage                *st.StorageBase
 	client                 *eth.TestClient
 	cfg                    *config.RollupConfig
 	transactionExecutor    *TransactionExecutor
@@ -35,7 +35,7 @@ func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 	s.NoError(err)
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
-	s.storage = testStorage.InternalStorage
+	s.storage = testStorage.StorageBase
 	s.teardown = testStorage.Teardown
 	s.cfg = &config.RollupConfig{
 		MinTxsPerCommitment:    1,

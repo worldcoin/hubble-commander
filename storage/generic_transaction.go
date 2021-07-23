@@ -6,7 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-func (s *InternalStorage) BatchAddGenericTransaction(txs models.GenericTransactionArray) error {
+func (s *StorageBase) BatchAddGenericTransaction(txs models.GenericTransactionArray) error {
 	switch x := txs.(type) {
 	case models.TransferArray:
 		return s.BatchAddTransfer(x)

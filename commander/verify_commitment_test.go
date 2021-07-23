@@ -13,7 +13,7 @@ import (
 type VerifyCommitmentTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage  *st.InternalStorage
+	storage  *st.StorageBase
 	teardown func() error
 	client   *eth.TestClient
 }
@@ -25,7 +25,7 @@ func (s *VerifyCommitmentTestSuite) SetupSuite() {
 func (s *VerifyCommitmentTestSuite) SetupTest() {
 	storage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = storage.InternalStorage
+	s.storage = storage.StorageBase
 	s.teardown = storage.Teardown
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)

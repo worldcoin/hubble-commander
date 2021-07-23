@@ -32,7 +32,7 @@ func (s *GetCommitmentTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.api = &API{storage: s.storage.InternalStorage}
+	s.api = &API{storage: s.storage.StorageBase}
 
 	s.batch = models.Batch{
 		ID:                models.MakeUint256(1),

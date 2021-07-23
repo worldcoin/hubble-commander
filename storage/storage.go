@@ -12,13 +12,12 @@ import (
 )
 
 type Storage struct {
-	*InternalStorage
+	*StorageBase
 	StateTree   *StateTree
 	AccountTree *AccountTree
 }
 
-// TODO-INTERNAL rename to StorageBase
-type InternalStorage struct {
+type StorageBase struct {
 	Postgres            *postgres.Database
 	Badger              *badger.Database
 	QB                  squirrel.StatementBuilderType
@@ -45,7 +44,7 @@ func NewStorage(postgresConfig *config.PostgresConfig, badgerConfig *config.Badg
 		return nil, err
 	}
 
-	internalStorage := &InternalStorage{
+	storageBase := &StorageBase{
 		Postgres:            postgresDB,
 		Badger:              badgerDB,
 		QB:                  getQueryBuilder(),
@@ -53,9 +52,9 @@ func NewStorage(postgresConfig *config.PostgresConfig, badgerConfig *config.Badg
 	}
 
 	return &Storage{
-		InternalStorage: internalStorage,
-		StateTree:       NewStateTree(internalStorage),
-		AccountTree:     NewAccountTree(internalStorage),
+		StorageBase: storageBase,
+		StateTree:   NewStateTree(storageBase),
+		AccountTree: NewAccountTree(storageBase),
 	}, nil
 }
 
@@ -101,7 +100,8 @@ func NewConfiguredStorage(cfg *config.Config) (storage *Storage, err error) {
 	return storage, nil
 }
 
-func (s *InternalStorage) BeginTransaction(opts TxOptions) (*db.TxController, *InternalStorage, error) {
+// TODO-INTERNAL rename the 2nd return value to `storageBase` in all usages
+func (s *StorageBase) BeginTransaction(opts TxOptions) (*db.TxController, *StorageBase, error) {
 	var txController *db.TxController
 	storage := *s
 
@@ -128,7 +128,7 @@ func (s *InternalStorage) BeginTransaction(opts TxOptions) (*db.TxController, *I
 	return txController, &storage, nil
 }
 
-func (s *InternalStorage) Close() error {
+func (s *StorageBase) Close() error {
 	err := s.Postgres.Close()
 	if err != nil {
 		return err
@@ -136,7 +136,7 @@ func (s *InternalStorage) Close() error {
 	return s.Badger.Close()
 }
 
-func (s *InternalStorage) Prune(migrator *migrate.Migrate) error {
+func (s *StorageBase) Prune(migrator *migrate.Migrate) error {
 	err := migrator.Down()
 	if err != nil && err != migrate.ErrNoChange {
 		return err

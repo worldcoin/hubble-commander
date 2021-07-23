@@ -36,8 +36,8 @@ func (s *GetBatchTestSuite) SetupTest() {
 	s.NoError(err)
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
-	s.api = &API{storage: s.storage.InternalStorage, client: s.testClient.Client}
-	s.tree = st.NewStateTree(s.storage.InternalStorage)
+	s.api = &API{storage: s.storage.StorageBase, client: s.testClient.Client}
+	s.tree = st.NewStateTree(s.storage.StorageBase)
 
 	s.commitment = commitment
 	s.commitment.IncludedInBatch = models.NewUint256(1)

@@ -39,7 +39,7 @@ func (s *StateLeafTestSuite) SetupTest() {
 	var err error
 	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
-	s.tree = NewStateTree(s.storage.InternalStorage)
+	s.tree = NewStateTree(s.storage.StorageBase)
 }
 
 func (s *StateLeafTestSuite) TearDownTest() {
@@ -249,7 +249,7 @@ func (s *StateLeafTestSuite) TestGetNextAvailableStateID_OneBytes() {
 	err = s.storage.AddAccountLeafIfNotExists(&account2)
 	s.NoError(err)
 
-	tree := NewStateTree(s.storage.InternalStorage)
+	tree := NewStateTree(s.storage.StorageBase)
 
 	_, err = tree.Set(0, userState1)
 	s.NoError(err)
@@ -267,7 +267,7 @@ func (s *StateLeafTestSuite) TestGetNextAvailableStateID_TwoBytes() {
 	err = s.storage.AddAccountLeafIfNotExists(&account2)
 	s.NoError(err)
 
-	tree := NewStateTree(s.storage.InternalStorage)
+	tree := NewStateTree(s.storage.StorageBase)
 
 	_, err = tree.Set(0, userState1)
 	s.NoError(err)

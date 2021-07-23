@@ -47,7 +47,7 @@ func (c *Commander) IsRunning() bool {
 	return c.stopChannel != nil
 }
 
-// TODO-INTERNAL revisit later and check if we can make methods below use Storage instead of InternalStorage
+// TODO-INTERNAL revisit later and check if we can make methods below use Storage instead of StorageBase
 func (c *Commander) Start() (err error) {
 	if c.IsRunning() {
 		return nil
@@ -63,17 +63,17 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.client, err = getClient(chain, c.storage.InternalStorage, c.cfg.Bootstrap)
+	c.client, err = getClient(chain, c.storage.StorageBase, c.cfg.Bootstrap)
 	if err != nil {
 		return err
 	}
 
-	c.signaturesDomain, err = c.storage.InternalStorage.GetDomain(c.client.ChainState.ChainID)
+	c.signaturesDomain, err = c.storage.StorageBase.GetDomain(c.client.ChainState.ChainID)
 	if err != nil {
 		return err
 	}
 
-	c.apiServer, err = api.NewAPIServer(c.cfg.API, c.storage.InternalStorage, c.client, c.cfg.Rollup.DevMode)
+	c.apiServer, err = api.NewAPIServer(c.cfg.API, c.storage.StorageBase, c.client, c.cfg.Rollup.DevMode)
 	if err != nil {
 		return err
 	}
@@ -122,7 +122,7 @@ func (c *Commander) Stop() error {
 		return err
 	}
 	c.workers.Wait()
-	err := c.storage.InternalStorage.Close()
+	err := c.storage.StorageBase.Close()
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func getChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, e
 	return deployer.NewRPCChainConnection(cfg)
 }
 
-func getClient(chain deployer.ChainConnection, storage *st.InternalStorage, cfg *config.BootstrapConfig) (*eth.Client, error) {
+func getClient(chain deployer.ChainConnection, storage *st.StorageBase, cfg *config.BootstrapConfig) (*eth.Client, error) {
 	chainID := chain.GetChainID()
 	chainState, err := storage.GetChainState(chainID)
 	if err != nil && !st.IsNotFoundError(err) {
@@ -168,7 +168,7 @@ func getClient(chain deployer.ChainConnection, storage *st.InternalStorage, cfg 
 
 func bootstrapFromRemoteState(
 	chain deployer.ChainConnection,
-	storage *st.InternalStorage,
+	storage *st.StorageBase,
 	cfg *config.BootstrapConfig,
 ) (*eth.Client, error) {
 	chainState, err := fetchChainStateFromRemoteNode(*cfg.BootstrapNodeURL)
@@ -200,7 +200,7 @@ func bootstrapFromRemoteState(
 
 func bootstrapContractsAndState(
 	chain deployer.ChainConnection,
-	storage *st.InternalStorage,
+	storage *st.StorageBase,
 	cfg *config.BootstrapConfig,
 ) (*eth.Client, error) {
 	chainState, err := deployContractsAndSetupGenesisState(storage, chain, cfg.GenesisAccounts)
@@ -267,7 +267,7 @@ func createClientFromChainState(chain deployer.ChainConnection, chainState *mode
 }
 
 func deployContractsAndSetupGenesisState(
-	storage *st.InternalStorage,
+	storage *st.StorageBase,
 	chain deployer.ChainConnection,
 	accounts []models.GenesisAccount,
 ) (*models.ChainState, error) {

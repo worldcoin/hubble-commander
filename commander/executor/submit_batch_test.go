@@ -30,7 +30,7 @@ type SubmitTransferBatchTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	teardown            func() error
-	storage             *st.InternalStorage
+	storage             *st.StorageBase
 	tree                *st.StateTree
 	cfg                 *config.RollupConfig
 	client              *eth.TestClient
@@ -44,7 +44,7 @@ func (s *SubmitTransferBatchTestSuite) SetupSuite() {
 func (s *SubmitTransferBatchTestSuite) SetupTest() {
 	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.InternalStorage
+	s.storage = testStorage.StorageBase
 	s.teardown = testStorage.Teardown
 	s.tree = st.NewStateTree(s.storage)
 	s.cfg = &config.RollupConfig{

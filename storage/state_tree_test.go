@@ -35,7 +35,7 @@ func (s *StateTreeTestSuite) SetupTest() {
 	var err error
 	s.storage, err = NewTestStorageWithoutPostgres()
 	s.NoError(err)
-	s.tree = NewStateTree(s.storage.InternalStorage)
+	s.tree = NewStateTree(s.storage.StorageBase)
 
 	state := models.UserState{
 		PubKeyID: 1,

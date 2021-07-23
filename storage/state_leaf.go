@@ -8,12 +8,12 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-func (s *InternalStorage) UpsertStateLeaf(leaf *models.StateLeaf) error {
+func (s *StorageBase) UpsertStateLeaf(leaf *models.StateLeaf) error {
 	flatLeaf := models.MakeFlatStateLeaf(leaf)
 	return s.Badger.Upsert(leaf.StateID, flatLeaf)
 }
 
-func (s *InternalStorage) GetStateLeaf(stateID uint32) (stateLeaf *models.StateLeaf, err error) {
+func (s *StorageBase) GetStateLeaf(stateID uint32) (stateLeaf *models.StateLeaf, err error) {
 	var leaf models.FlatStateLeaf
 	err = s.Badger.Get(stateID, &leaf)
 	if err == bh.ErrNotFound {
@@ -25,7 +25,7 @@ func (s *InternalStorage) GetStateLeaf(stateID uint32) (stateLeaf *models.StateL
 	return leaf.StateLeaf(), nil
 }
 
-func (s *InternalStorage) GetUserStatesByPublicKey(publicKey *models.PublicKey) (userStates []models.UserStateWithID, err error) {
+func (s *StorageBase) GetUserStatesByPublicKey(publicKey *models.PublicKey) (userStates []models.UserStateWithID, err error) {
 	accounts, err := s.GetAccountLeaves(publicKey)
 	if err != nil {
 		return nil, err
@@ -63,7 +63,7 @@ func (s *InternalStorage) GetUserStatesByPublicKey(publicKey *models.PublicKey) 
 	return userStates, nil
 }
 
-func (s *InternalStorage) GetFeeReceiverStateLeaf(pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
+func (s *StorageBase) GetFeeReceiverStateLeaf(pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
 	stateID, ok := s.feeReceiverStateIDs[tokenID.String()]
 	if ok {
 		return s.GetStateLeaf(stateID)
@@ -76,7 +76,7 @@ func (s *InternalStorage) GetFeeReceiverStateLeaf(pubKeyID uint32, tokenID model
 	return stateLeaf, nil
 }
 
-func (s *InternalStorage) GetStateLeafByPubKeyIDAndTokenID(pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
+func (s *StorageBase) GetStateLeafByPubKeyIDAndTokenID(pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
 	leaves := make([]models.FlatStateLeaf, 0, 1)
 	err := s.Badger.Find(
 		&leaves,
@@ -92,7 +92,7 @@ func (s *InternalStorage) GetStateLeafByPubKeyIDAndTokenID(pubKeyID uint32, toke
 	return leaves[0].StateLeaf(), nil
 }
 
-func (s *InternalStorage) GetNextAvailableStateID() (*uint32, error) {
+func (s *StorageBase) GetNextAvailableStateID() (*uint32, error) {
 	nextAvailableStateID := uint32(0)
 
 	err := s.Badger.View(func(txn *bdg.Txn) error {

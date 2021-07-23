@@ -8,7 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (s *InternalStorage) addTransactionBase(txBase *models.TransactionBase, txType txtype.TransactionType) (*models.Timestamp, error) {
+func (s *StorageBase) addTransactionBase(txBase *models.TransactionBase, txType txtype.TransactionType) (*models.Timestamp, error) {
 	res := make([]models.Timestamp, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Insert("transaction_base").
@@ -32,7 +32,7 @@ func (s *InternalStorage) addTransactionBase(txBase *models.TransactionBase, txT
 	return &res[0], nil
 }
 
-func (s *InternalStorage) BatchAddTransactionBase(txs []models.TransactionBase) error {
+func (s *StorageBase) BatchAddTransactionBase(txs []models.TransactionBase) error {
 	query := s.QB.Insert("transaction_base")
 	for i := range txs {
 		query = query.Values(
@@ -61,7 +61,7 @@ func (s *InternalStorage) BatchAddTransactionBase(txs []models.TransactionBase) 
 	return nil
 }
 
-func (s *InternalStorage) GetLatestTransactionNonce(accountStateID uint32) (*models.Uint256, error) {
+func (s *StorageBase) GetLatestTransactionNonce(accountStateID uint32) (*models.Uint256, error) {
 	res := make([]models.Uint256, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Select("transaction_base.nonce").
@@ -79,7 +79,7 @@ func (s *InternalStorage) GetLatestTransactionNonce(accountStateID uint32) (*mod
 	return &res[0], nil
 }
 
-func (s *InternalStorage) BatchMarkTransactionAsIncluded(txHashes []common.Hash, commitmentID *int32) error {
+func (s *StorageBase) BatchMarkTransactionAsIncluded(txHashes []common.Hash, commitmentID *int32) error {
 	res, err := s.Postgres.Query(
 		s.QB.Update("transaction_base").
 			Where(squirrel.Eq{"tx_hash": txHashes}).
@@ -99,7 +99,7 @@ func (s *InternalStorage) BatchMarkTransactionAsIncluded(txHashes []common.Hash,
 	return nil
 }
 
-func (s *InternalStorage) SetTransactionError(txHash common.Hash, errorMessage string) error {
+func (s *StorageBase) SetTransactionError(txHash common.Hash, errorMessage string) error {
 	res, err := s.Postgres.Query(
 		s.QB.Update("transaction_base").
 			Where(squirrel.Eq{"tx_hash": txHash}).
@@ -119,7 +119,7 @@ func (s *InternalStorage) SetTransactionError(txHash common.Hash, errorMessage s
 	return nil
 }
 
-func (s *InternalStorage) GetTransactionCount() (*int, error) {
+func (s *StorageBase) GetTransactionCount() (*int, error) {
 	res := make([]int, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Select("COUNT(1)").
@@ -136,7 +136,7 @@ func (s *InternalStorage) GetTransactionCount() (*int, error) {
 	return &res[0], nil
 }
 
-func (s *InternalStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.Uint256) ([]common.Hash, error) {
+func (s *StorageBase) GetTransactionHashesByBatchIDs(batchIDs ...models.Uint256) ([]common.Hash, error) {
 	res := make([]common.Hash, 0, 32*len(batchIDs))
 	err := s.Postgres.Query(
 		s.QB.Select("transaction_base.tx_hash").

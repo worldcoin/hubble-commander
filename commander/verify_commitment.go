@@ -11,7 +11,7 @@ import (
 
 var ErrInvalidCommitmentRoot = errors.New("invalid commitment root of batch #0")
 
-func verifyCommitmentRoot(storage *st.InternalStorage, client *eth.Client) error {
+func verifyCommitmentRoot(storage *st.StorageBase, client *eth.Client) error {
 	firstBatch, err := client.GetBatch(models.NewUint256(0))
 	if err != nil {
 		return err

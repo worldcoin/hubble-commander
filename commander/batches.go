@@ -78,7 +78,7 @@ func (c *Commander) syncOrDisputeRemoteBatch(remoteBatch *eth.DecodedBatch) erro
 }
 
 func (c *Commander) syncBatch(remoteBatch *eth.DecodedBatch) error {
-	txExecutor, err := executor.NewTransactionExecutor(c.storage.InternalStorage, c.client, c.cfg.Rollup, context.Background())
+	txExecutor, err := executor.NewTransactionExecutor(c.storage.StorageBase, c.client, c.cfg.Rollup, context.Background())
 	if err != nil {
 		return err
 	}
@@ -108,7 +108,7 @@ func (c *Commander) disputeFraudulentBatch(
 	proofs []models.StateMerkleProof,
 ) error {
 	// TODO transaction executor may not be needed here. Revisit this when extracting disputer package.
-	txExecutor, err := executor.NewTransactionExecutor(c.storage.InternalStorage, c.client, c.cfg.Rollup, context.Background())
+	txExecutor, err := executor.NewTransactionExecutor(c.storage.StorageBase, c.client, c.cfg.Rollup, context.Background())
 	if err != nil {
 		return err
 	}
@@ -122,7 +122,7 @@ func (c *Commander) disputeFraudulentBatch(
 }
 
 func (c *Commander) revertBatches(startBatch *models.Batch) error {
-	txExecutor, err := executor.NewTransactionExecutor(c.storage.InternalStorage, c.client, c.cfg.Rollup, context.Background())
+	txExecutor, err := executor.NewTransactionExecutor(c.storage.StorageBase, c.client, c.cfg.Rollup, context.Background())
 	if err != nil {
 		return err
 	}

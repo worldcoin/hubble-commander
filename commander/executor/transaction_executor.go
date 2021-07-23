@@ -12,7 +12,7 @@ import (
 // TransactionExecutor executes transactions & syncs batches. Manages a database transaction.
 type TransactionExecutor struct {
 	cfg       *config.RollupConfig
-	storage   *st.InternalStorage
+	storage   *st.StorageBase
 	stateTree *st.StateTree
 	tx        *db.TxController
 	client    *eth.Client
@@ -22,7 +22,7 @@ type TransactionExecutor struct {
 // TODO-INTERNAL revisit and change storage to st.Storage
 // NewTransactionExecutor creates a TransactionExecutor and starts a database transaction.
 func NewTransactionExecutor(
-	storage *st.InternalStorage,
+	storage *st.StorageBase,
 	client *eth.Client,
 	cfg *config.RollupConfig,
 	ctx context.Context,
@@ -44,7 +44,7 @@ func NewTransactionExecutor(
 
 // NewTestTransactionExecutor creates a TransactionExecutor without a database transaction.
 func NewTestTransactionExecutor(
-	storage *st.InternalStorage,
+	storage *st.StorageBase,
 	client *eth.Client,
 	cfg *config.RollupConfig,
 	ctx context.Context,
