@@ -104,8 +104,6 @@ func (s *DisputeSignatureTestSuite) TestSignatureProof() {
 		testutils.MakeTransfer(0, 2, 0, 50),
 		testutils.MakeTransfer(0, 1, 1, 75),
 	}
-	serializedTxs, err := encoder.SerializeTransfers(transfers)
-	s.NoError(err)
 
 	expectedUserStates := make([]models.UserState, 0, len(transfers))
 	expectedPublicKeys := make([]models.PublicKey, 0, len(transfers))
@@ -118,6 +116,9 @@ func (s *DisputeSignatureTestSuite) TestSignatureProof() {
 		s.NoError(err)
 		expectedPublicKeys = append(expectedPublicKeys, *publicKey)
 	}
+
+	serializedTxs, err := encoder.SerializeTransfers(transfers)
+	s.NoError(err)
 
 	signatureProof, err := s.transactionExecutor.signatureProof(&encoder.DecodedCommitment{Transactions: serializedTxs})
 	s.NoError(err)
