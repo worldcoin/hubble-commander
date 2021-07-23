@@ -78,9 +78,16 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) ([]models.Witness, e
 
 	accountTree := NewAccountTree(storage)
 
+	for i := range leaves {
+		_, err = accountTree.unsafeSet(&leaves[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	witnesses := make([]models.Witness, 0, len(leaves))
 	for i := range leaves {
-		witness, err := accountTree.unsafeSet(&leaves[i])
+		witness, err := accountTree.GetWitness(leaves[i].PubKeyID)
 		if err != nil {
 			return nil, err
 		}
