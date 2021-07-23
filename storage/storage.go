@@ -17,6 +17,7 @@ type Storage struct {
 	AccountTree *AccountTree
 }
 
+// TODO-INTERNAL rename to StorageBase
 type InternalStorage struct {
 	Postgres            *postgres.Database
 	Badger              *badger.Database
