@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"github.com/Worldcoin/hubble-commander/db/badger"
+	bdg "github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
@@ -10,11 +10,11 @@ import (
 )
 
 type StoredMerkleTree struct {
-	badger    *badger.Database
+	badger    *bdg.Database
 	namespace string
 }
 
-func NewStoredMerkleTree(namespace string, badger *badger.Database) *StoredMerkleTree {
+func NewStoredMerkleTree(namespace string, badger *bdg.Database) *StoredMerkleTree {
 	return &StoredMerkleTree{
 		badger:    badger,
 		namespace: namespace,

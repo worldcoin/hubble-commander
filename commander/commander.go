@@ -47,6 +47,7 @@ func (c *Commander) IsRunning() bool {
 	return c.stopChannel != nil
 }
 
+// TODO-INTERNAL revisit later and check if we can make methods below use Storage instead of InternalStorage
 func (c *Commander) Start() (err error) {
 	if c.IsRunning() {
 		return nil
@@ -165,7 +166,11 @@ func getClient(chain deployer.ChainConnection, storage *st.InternalStorage, cfg 
 	return createClientFromChainState(chain, chainState)
 }
 
-func bootstrapFromRemoteState(chain deployer.ChainConnection, storage *st.InternalStorage, cfg *config.BootstrapConfig) (*eth.Client, error) {
+func bootstrapFromRemoteState(
+	chain deployer.ChainConnection,
+	storage *st.InternalStorage,
+	cfg *config.BootstrapConfig,
+) (*eth.Client, error) {
 	chainState, err := fetchChainStateFromRemoteNode(*cfg.BootstrapNodeURL)
 	if err != nil {
 		return nil, err
@@ -193,7 +198,11 @@ func bootstrapFromRemoteState(chain deployer.ChainConnection, storage *st.Intern
 	return client, nil
 }
 
-func bootstrapContractsAndState(chain deployer.ChainConnection, storage *st.InternalStorage, cfg *config.BootstrapConfig) (*eth.Client, error) {
+func bootstrapContractsAndState(
+	chain deployer.ChainConnection,
+	storage *st.InternalStorage,
+	cfg *config.BootstrapConfig,
+) (*eth.Client, error) {
 	chainState, err := deployContractsAndSetupGenesisState(storage, chain, cfg.GenesisAccounts)
 	if err != nil {
 		return nil, err

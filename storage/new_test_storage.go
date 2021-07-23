@@ -105,6 +105,7 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 		initialTeardown = append(initialTeardown, s.Badger.Close)
 	}
 
+	// TODO-INTERNAL probably not needed
 	storage.StateTree = NewStateTree(storage.InternalStorage)
 	storage.AccountTree = NewAccountTree(storage.InternalStorage)
 

@@ -56,10 +56,15 @@ func (s *BatchesTestSuite) SetupTest() {
 
 	s.cmd = NewCommander(s.cfg)
 	s.cmd.client = s.testClient.Client
-	s.cmd.storage = s.testStorage.InternalStorage
+	s.cmd.storage = s.testStorage.Storage
 	s.cmd.stopChannel = make(chan bool)
 
-	s.transactionExecutor = executor.NewTestTransactionExecutor(s.testStorage.InternalStorage, s.testClient.Client, s.cfg.Rollup, context.Background())
+	s.transactionExecutor = executor.NewTestTransactionExecutor(
+		s.testStorage.InternalStorage,
+		s.testClient.Client,
+		s.cfg.Rollup,
+		context.Background(),
+	)
 
 	s.wallets = generateWallets(s.T(), s.testClient.ChainState.Rollup, 2)
 	seedDB(s.T(), s.testStorage.InternalStorage, st.NewStateTree(s.testStorage.InternalStorage), s.wallets)

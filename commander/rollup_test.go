@@ -14,7 +14,7 @@ import (
 type RollupTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage   *st.InternalStorage
+	storage   *st.TestStorage
 	stateTree *st.StoredMerkleTree
 	teardown  func() error
 }
@@ -26,8 +26,7 @@ func (s *RollupTestSuite) SetupSuite() {
 func (s *RollupTestSuite) SetupTest() {
 	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.InternalStorage
-	s.stateTree = st.NewStoredMerkleTree("state", s.storage)
+	s.storage = testStorage
 	s.teardown = testStorage.Teardown
 }
 
@@ -50,7 +49,7 @@ func (s *RollupTestSuite) TestValidateStateRoot_SameStateRootHash() {
 	_, _, err = s.stateTree.SetNode(&models.MerklePath{Path: 0, Depth: 0}, commitment.PostStateRoot)
 	s.NoError(err)
 
-	err = validateStateRoot(s.storage)
+	err = validateStateRoot(s.storage.InternalStorage)
 	s.NoError(err)
 }
 
@@ -65,7 +64,7 @@ func (s *RollupTestSuite) TestValidateStateRoot_DifferentStateRootHash() {
 	_, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	err = validateStateRoot(s.storage)
+	err = validateStateRoot(s.storage.InternalStorage)
 	s.Equal(ErrInvalidStateRoot, err)
 }
 
@@ -73,7 +72,7 @@ func (s *RollupTestSuite) TestValidateStateRoot_FirstCommitment() {
 	_, _, err := s.stateTree.SetNode(&models.MerklePath{Path: 0, Depth: 0}, common.Hash{1, 2, 3})
 	s.NoError(err)
 
-	err = validateStateRoot(s.storage)
+	err = validateStateRoot(s.storage.InternalStorage)
 	s.NoError(err)
 }
 

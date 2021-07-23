@@ -65,8 +65,7 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 
 	s.cmd = NewCommander(s.cfg)
 	s.cmd.client = s.testClient.Client
-	s.cmd.storage = s.testStorage.InternalStorage
-	s.cmd.accountTree = st.NewAccountTree(s.cmd.storage)
+	s.cmd.storage = s.testStorage.Storage
 	s.cmd.stopChannel = make(chan bool)
 
 	s.wallets = generateWallets(s.T(), s.testClient.ChainState.Rollup, 2)
