@@ -47,8 +47,8 @@ func (s *AccountTreeTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *AccountTreeTestSuite) TestSet_StoresAccountLeafRecord() {
-	_, err := s.tree.Set(s.leaf)
+func (s *AccountTreeTestSuite) TestSetSingle_StoresAccountLeafRecord() {
+	_, err := s.tree.SetSingle(s.leaf)
 	s.NoError(err)
 
 	actualLeaf, err := s.storage.GetAccountLeaf(s.leaf.PubKeyID)
@@ -56,7 +56,7 @@ func (s *AccountTreeTestSuite) TestSet_StoresAccountLeafRecord() {
 	s.Equal(s.leaf, actualLeaf)
 }
 
-func (s *AccountTreeTestSuite) TestSet_RootIsDifferentAfterSet() {
+func (s *AccountTreeTestSuite) TestSetSingle_RootIsDifferentAfterSet() {
 	leaf0 := &models.AccountLeaf{
 		PubKeyID:  0,
 		PublicKey: s.randomPublicKey(),
@@ -67,13 +67,13 @@ func (s *AccountTreeTestSuite) TestSet_RootIsDifferentAfterSet() {
 		PublicKey: s.randomPublicKey(),
 	}
 
-	_, err := s.tree.Set(leaf0)
+	_, err := s.tree.SetSingle(leaf0)
 	s.NoError(err)
 
 	accountRootAfter0, err := s.tree.Root()
 	s.NoError(err)
 
-	_, err = s.tree.Set(leaf1)
+	_, err = s.tree.SetSingle(leaf1)
 	s.NoError(err)
 
 	accountRootAfter1, err := s.tree.Root()
@@ -82,8 +82,8 @@ func (s *AccountTreeTestSuite) TestSet_RootIsDifferentAfterSet() {
 	s.NotEqual(accountRootAfter0, accountRootAfter1)
 }
 
-func (s *AccountTreeTestSuite) TestSet_StoresLeafMerkleTreeNodeRecord() {
-	_, err := s.tree.Set(s.leaf)
+func (s *AccountTreeTestSuite) TestSetSingle_StoresLeafMerkleTreeNodeRecord() {
+	_, err := s.tree.SetSingle(s.leaf)
 	s.NoError(err)
 
 	expectedNode := &models.MerkleTreeNode{
@@ -99,8 +99,8 @@ func (s *AccountTreeTestSuite) TestSet_StoresLeafMerkleTreeNodeRecord() {
 	s.Equal(expectedNode, node)
 }
 
-func (s *AccountTreeTestSuite) TestSet_UpdatesRootMerkleTreeNodeRecord() {
-	_, err := s.tree.Set(s.leaf)
+func (s *AccountTreeTestSuite) TestSetSingle_UpdatesRootMerkleTreeNodeRecord() {
+	_, err := s.tree.SetSingle(s.leaf)
 	s.NoError(err)
 
 	root, err := s.tree.Root()
@@ -108,9 +108,9 @@ func (s *AccountTreeTestSuite) TestSet_UpdatesRootMerkleTreeNodeRecord() {
 	s.Equal(common.HexToHash("0x6e082faf2fd8ce5accb1e08a15061f2c443ea5e9cb42d493050275d644bb51b9"), *root)
 }
 
-func (s *AccountTreeTestSuite) TestSet_CalculatesCorrectRootForLeafOfId1() {
+func (s *AccountTreeTestSuite) TestSetSingle_CalculatesCorrectRootForLeafOfId1() {
 	s.leaf.PubKeyID = 1
-	_, err := s.tree.Set(s.leaf)
+	_, err := s.tree.SetSingle(s.leaf)
 	s.NoError(err)
 
 	root, err := s.tree.Root()
@@ -118,8 +118,8 @@ func (s *AccountTreeTestSuite) TestSet_CalculatesCorrectRootForLeafOfId1() {
 	s.Equal(common.HexToHash("0xcd6164584f02a9c4c9f88c2613d7ff2b709e0951369f9bd28528712e3fa96daa"), *root)
 }
 
-func (s *AccountTreeTestSuite) TestSet_CalculatesCorrectRootForTwoLeaves() {
-	_, err := s.tree.Set(s.leaf)
+func (s *AccountTreeTestSuite) TestSetSingle_CalculatesCorrectRootForTwoLeaves() {
+	_, err := s.tree.SetSingle(s.leaf)
 	s.NoError(err)
 
 	leaf1 := &models.AccountLeaf{
@@ -131,7 +131,7 @@ func (s *AccountTreeTestSuite) TestSet_CalculatesCorrectRootForTwoLeaves() {
 			big.NewInt(40048372),
 		}),
 	}
-	_, err = s.tree.Set(leaf1)
+	_, err = s.tree.SetSingle(leaf1)
 	s.NoError(err)
 
 	root, err := s.tree.Root()
@@ -139,17 +139,17 @@ func (s *AccountTreeTestSuite) TestSet_CalculatesCorrectRootForTwoLeaves() {
 	s.Equal(common.HexToHash("0x3a7a7ff21991ccfcbf8a4580862def7c498253ad398e967f270ff421db1d4833"), *root)
 }
 
-func (s *AccountTreeTestSuite) TestSet_ThrowsOnSettingAlreadySetLeaf() {
-	_, err := s.tree.Set(s.leaf)
+func (s *AccountTreeTestSuite) TestSetSingle_ThrowsOnSettingAlreadySetLeaf() {
+	_, err := s.tree.SetSingle(s.leaf)
 	s.NoError(err)
 
 	s.leaf.PublicKey = s.randomPublicKey()
-	_, err = s.tree.Set(s.leaf)
+	_, err = s.tree.SetSingle(s.leaf)
 	s.ErrorIs(err, ErrPubKeyIDAlreadyExists)
 }
 
-func (s *AccountTreeTestSuite) TestSet_ReturnsWitness() {
-	witness, err := s.tree.Set(s.leaf)
+func (s *AccountTreeTestSuite) TestSetSingle_ReturnsWitness() {
+	witness, err := s.tree.SetSingle(s.leaf)
 	s.NoError(err)
 	s.Len(witness, AccountTreeDepth)
 
@@ -162,14 +162,14 @@ func (s *AccountTreeTestSuite) TestSet_ReturnsWitness() {
 	s.Equal(node.DataHash, witness[31])
 }
 
-func (s *AccountTreeTestSuite) TestSet_InvalidPubKeyID() {
+func (s *AccountTreeTestSuite) TestSetSingle_InvalidPubKeyID() {
 	account := &models.AccountLeaf{
 		PubKeyID:  rightSubtreeMaxValue,
 		PublicKey: models.PublicKey{1, 2, 3},
 	}
 
 	errMsg := fmt.Sprintf("invalid pubKeyID value: %d", account.PubKeyID)
-	_, err := s.tree.Set(account)
+	_, err := s.tree.SetSingle(account)
 	s.Error(err)
 	s.Equal(errMsg, err.Error())
 }

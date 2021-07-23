@@ -118,7 +118,7 @@ func (c *Commander) syncBatchAccounts(start, end uint64) error {
 }
 
 func saveSyncedAccount(accountTree *storage.AccountTree, account *models.AccountLeaf) (isNewAccount *bool, err error) {
-	_, err = accountTree.Set(account)
+	_, err = accountTree.SetSingle(account)
 	if err == nil {
 		return ref.Bool(true), nil
 	} else if err == storage.ErrPubKeyIDAlreadyExists {

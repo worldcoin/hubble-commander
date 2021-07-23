@@ -54,8 +54,8 @@ func (s *AccountTree) Leaf(pubKeyID uint32) (*models.AccountLeaf, error) {
 	return leaf, nil
 }
 
-// Set returns a witness containing 32 elements for the current set operation
-func (s *AccountTree) Set(leaf *models.AccountLeaf) (models.Witness, error) {
+// SetSingle returns a witness containing 32 elements for the current set operation
+func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) (models.Witness, error) {
 	if leaf.PubKeyID >= leftSubtreeMaxValue {
 		return nil, errors.Errorf("invalid pubKeyID value: %d", leaf.PubKeyID)
 	}
@@ -79,6 +79,7 @@ func (s *AccountTree) Set(leaf *models.AccountLeaf) (models.Witness, error) {
 	return witness, nil
 }
 
+// SetBatch returns a witnesses for each leaf containing 32 elements after operation
 func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) ([]models.Witness, error) {
 	if len(leaves) != 16 {
 		return nil, ErrInvalidAccountsLength
