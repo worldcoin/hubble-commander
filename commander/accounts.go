@@ -98,16 +98,17 @@ func (c *Commander) syncBatchAccounts(start, end uint64) error {
 		publicKeys := unpack[0].([16][4]*big.Int)
 		pubKeyIDs := eth.ExtractPubKeyIDsFromBatchAccountEvent(it.Event)
 
-		// TODO: call addBatchAccountLeaf instead when account tree is ready
+		accounts := make([]models.AccountLeaf, 0, len(publicKeys))
 		for i := range pubKeyIDs {
-			account := &models.AccountLeaf{
+			accounts = append(accounts, models.AccountLeaf{
 				PubKeyID:  pubKeyIDs[i],
 				PublicKey: models.MakePublicKeyFromInts(publicKeys[i]),
-			}
-			_, err = saveSyncedAccount(c.accountTree, account)
-			if err != nil {
-				return err
-			}
+			})
+		}
+
+		_, err = c.accountTree.SetBatch(accounts)
+		if err != nil {
+			return err
 		}
 
 		newAccountsCount += len(pubKeyIDs)

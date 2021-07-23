@@ -106,12 +106,12 @@ func (s *AccountsTestSuite) registerBatchAccount() []models.AccountLeaf {
 	pubKeyIDs, err := s.testClient.RegisterBatchAccount(publicKeys, registrations)
 	s.NoError(err)
 
-	accounts := make([]models.AccountLeaf, 0, 16)
+	accounts := make([]models.AccountLeaf, 16)
 	for i := range accounts {
-		accounts = append(accounts, models.AccountLeaf{
+		accounts[i] = models.AccountLeaf{
 			PubKeyID:  pubKeyIDs[i],
 			PublicKey: publicKeys[i],
-		})
+		}
 	}
 	return accounts
 }
