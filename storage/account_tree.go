@@ -14,14 +14,14 @@ const AccountTreeDepth = merkletree.MaxDepth
 var ErrPubKeyIDAlreadyExists = errors.New("leaf with given pub key ID already exists")
 
 type AccountTree struct {
-	storage    *Storage
-	merkleTree *StoredMerkleTree
+	internalStorage *InternalStorage
+	merkleTree      *StoredMerkleTree
 }
 
-func NewAccountTree(storage *Storage) *AccountTree {
+func NewAccountTree(internalStorage *InternalStorage) *AccountTree {
 	return &AccountTree{
-		storage:    storage,
-		merkleTree: NewStoredMerkleTree("account", storage),
+		internalStorage: internalStorage,
+		merkleTree:      NewStoredMerkleTree("account", internalStorage.Badger),
 	}
 }
 

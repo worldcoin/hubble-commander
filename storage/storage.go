@@ -12,6 +12,12 @@ import (
 )
 
 type Storage struct {
+	InternalStorage *InternalStorage
+	StateTree       *StateTree
+	AccountTree     *AccountTree
+}
+
+type InternalStorage struct {
 	Postgres            *postgres.Database
 	Badger              *badger.Database
 	QB                  squirrel.StatementBuilderType
@@ -38,11 +44,17 @@ func NewStorage(postgresConfig *config.PostgresConfig, badgerConfig *config.Badg
 		return nil, err
 	}
 
-	return &Storage{
+	internalStorage := &InternalStorage{
 		Postgres:            postgresDB,
 		Badger:              badgerDB,
 		QB:                  getQueryBuilder(),
 		feeReceiverStateIDs: make(map[string]uint32),
+	}
+
+	return &Storage{
+		InternalStorage: internalStorage,
+		StateTree:       NewStateTree(internalStorage),
+		AccountTree:     NewAccountTree(internalStorage),
 	}, nil
 }
 

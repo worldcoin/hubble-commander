@@ -20,14 +20,14 @@ const StateTreeDepth = merkletree.MaxDepth
 var stateUpdatePrefix = []byte("bh_" + reflect.TypeOf(models.StateUpdate{}).Name())
 
 type StateTree struct {
-	storage    *Storage
-	merkleTree *StoredMerkleTree
+	internalStorage *InternalStorage
+	merkleTree      *StoredMerkleTree
 }
 
-func NewStateTree(storage *Storage) *StateTree {
+func NewStateTree(internalStorage *InternalStorage) *StateTree {
 	return &StateTree{
-		storage:    storage,
-		merkleTree: NewStoredMerkleTree("state", storage),
+		internalStorage: internalStorage,
+		merkleTree:      NewStoredMerkleTree("state", internalStorage.Badger),
 	}
 }
 
