@@ -104,12 +104,9 @@ func (c *Commander) syncBatchAccounts(start, end uint64) error {
 				PubKeyID:  pubKeyIDs[i],
 				PublicKey: models.MakePublicKeyFromInts(publicKeys[i]),
 			}
-			isNewAccount, err := saveSyncedAccount(c.accountTree, account)
+			_, err = saveSyncedAccount(c.accountTree, account)
 			if err != nil {
 				return err
-			}
-			if *isNewAccount {
-				newAccountsCount++
 			}
 		}
 
