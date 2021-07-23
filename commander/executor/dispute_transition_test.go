@@ -244,7 +244,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_FirstCommitm
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_ValidBatch() {
-	s.setUserStates()
+	setUserStates(s.Assertions, s.transactionExecutor)
 
 	transfers := []models.Transfer{
 		testutils.MakeTransfer(0, 2, 0, 50),
@@ -344,7 +344,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_First
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_ValidBatch() {
-	wallets := s.setUserStates()
+	wallets := setUserStates(s.Assertions, s.transactionExecutor)
 
 	transfers := []models.Create2Transfer{
 		testutils.MakeCreate2Transfer(0, ref.Uint32(3), 0, 50, wallets[1].PublicKey()),
