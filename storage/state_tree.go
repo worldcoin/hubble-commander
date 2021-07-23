@@ -43,7 +43,7 @@ func (s *StateTree) LeafNode(stateID uint32) (*models.MerkleTreeNode, error) {
 }
 
 func (s *StateTree) Leaf(stateID uint32) (*models.StateLeaf, error) {
-	leaf, err := s.storage.GetStateLeaf(stateID)
+	leaf, err := s.internalStorage.GetStateLeaf(stateID)
 	if IsNotFoundError(err) {
 		return &models.StateLeaf{
 			StateID:  stateID,
@@ -57,7 +57,7 @@ func (s *StateTree) Leaf(stateID uint32) (*models.StateLeaf, error) {
 
 // Set returns a witness containing 32 elements for the current set operation
 func (s *StateTree) Set(id uint32, state *models.UserState) (models.Witness, error) {
-	tx, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
+	tx, storage, err := s.internalStorage.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (s *StateTree) GetWitness(stateID uint32) (models.Witness, error) {
 }
 
 func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
-	txn, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
+	txn, storage, err := s.internalStorage.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return err
 	}
@@ -162,7 +162,7 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (models.Wit
 		return nil, err
 	}
 
-	err = s.storage.UpsertStateLeaf(currentLeaf)
+	err = s.internalStorage.UpsertStateLeaf(currentLeaf)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +173,7 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (models.Wit
 		return nil, err
 	}
 
-	err = s.storage.AddStateUpdate(&models.StateUpdate{
+	err = s.internalStorage.AddStateUpdate(&models.StateUpdate{
 		CurrentRoot:   *currentRoot,
 		PrevRoot:      *prevRoot,
 		PrevStateLeaf: *prevLeaf,
@@ -186,7 +186,7 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (models.Wit
 }
 
 func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, error) {
-	err := s.storage.UpsertStateLeaf(&stateUpdate.PrevStateLeaf)
+	err := s.internalStorage.UpsertStateLeaf(&stateUpdate.PrevStateLeaf)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +200,7 @@ func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, 
 		return nil, fmt.Errorf("unexpected state root after state update rollback")
 	}
 
-	err = s.storage.DeleteStateUpdate(stateUpdate.ID)
+	err = s.internalStorage.DeleteStateUpdate(stateUpdate.ID)
 	if err != nil {
 		return nil, err
 	}

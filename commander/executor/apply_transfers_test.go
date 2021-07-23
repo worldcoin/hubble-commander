@@ -18,7 +18,7 @@ type ApplyTransfersTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	teardown            func() error
-	storage             *storage.Storage
+	storage             *storage.InternalStorage
 	tree                *storage.StateTree
 	cfg                 *config.RollupConfig
 	transactionExecutor *TransactionExecutor
@@ -32,7 +32,7 @@ func (s *ApplyTransfersTestSuite) SetupSuite() {
 func (s *ApplyTransfersTestSuite) SetupTest() {
 	testStorage, err := storage.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.Storage
+	s.storage = testStorage.InternalStorage
 	s.teardown = testStorage.Teardown
 	s.NoError(err)
 	s.tree = storage.NewStateTree(s.storage)

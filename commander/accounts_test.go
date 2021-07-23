@@ -30,8 +30,8 @@ func (s *AccountsTestSuite) SetupTest() {
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
 	s.cmd = &Commander{
-		storage:     testStorage.Storage,
-		accountTree: st.NewAccountTree(testStorage.Storage),
+		storage:     testStorage.InternalStorage,
+		accountTree: st.NewAccountTree(testStorage.InternalStorage),
 		client:      s.testClient.Client,
 	}
 }

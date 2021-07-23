@@ -22,7 +22,7 @@ type ApplyCreate2TransfersTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	teardown            func() error
-	storage             *storage.Storage
+	storage             *storage.InternalStorage
 	tree                *storage.StateTree
 	cfg                 *config.RollupConfig
 	client              *eth.TestClient
@@ -39,7 +39,7 @@ func (s *ApplyCreate2TransfersTestSuite) SetupSuite() {
 func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 	testStorage, err := storage.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.Storage
+	s.storage = testStorage.InternalStorage
 	s.teardown = testStorage.Teardown
 	s.tree = storage.NewStateTree(s.storage)
 	s.client, err = eth.NewTestClient()

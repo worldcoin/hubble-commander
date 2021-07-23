@@ -34,7 +34,7 @@ func (s *GetTransactionTestSuite) SetupTest() {
 	s.NoError(err)
 	s.api = &API{
 		cfg:     &config.APIConfig{},
-		storage: s.storage.Storage,
+		storage: s.storage.InternalStorage,
 		client: &eth.Client{
 			ChainState: chainState,
 		},
@@ -54,7 +54,7 @@ func (s *GetTransactionTestSuite) SetupTest() {
 	})
 	s.NoError(err)
 
-	_, err = st.NewStateTree(s.storage.Storage).Set(1, &models.UserState{
+	_, err = st.NewStateTree(s.storage.InternalStorage).Set(1, &models.UserState{
 		PubKeyID: 123,
 		TokenID:  models.MakeUint256(1),
 		Balance:  models.MakeUint256(420),

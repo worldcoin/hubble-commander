@@ -6,15 +6,15 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 )
 
-func (s *Storage) SetLatestBlockNumber(blockNumber uint32) {
+func (s *InternalStorage) SetLatestBlockNumber(blockNumber uint32) {
 	s.latestBlockNumber = blockNumber
 }
 
-func (s *Storage) GetLatestBlockNumber() uint32 {
+func (s *InternalStorage) GetLatestBlockNumber() uint32 {
 	return s.latestBlockNumber
 }
 
-func (s *Storage) SetSyncedBlock(chainID models.Uint256, blockNumber uint64) error {
+func (s *InternalStorage) SetSyncedBlock(chainID models.Uint256, blockNumber uint64) error {
 	s.syncedBlock = &blockNumber
 	_, err := s.Postgres.Query(s.QB.Update("chain_state").
 		Set("synced_block", blockNumber).
@@ -22,7 +22,7 @@ func (s *Storage) SetSyncedBlock(chainID models.Uint256, blockNumber uint64) err
 	return err
 }
 
-func (s *Storage) GetSyncedBlock(chainID models.Uint256) (*uint64, error) {
+func (s *InternalStorage) GetSyncedBlock(chainID models.Uint256) (*uint64, error) {
 	if s.syncedBlock != nil {
 		return s.syncedBlock, nil
 	}

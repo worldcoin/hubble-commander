@@ -37,7 +37,7 @@ func (s *CommitmentTestSuite) SetupTest() {
 	var err error
 	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
-	s.tree = NewStateTree(s.storage.Storage)
+	s.tree = NewStateTree(s.storage.InternalStorage)
 }
 
 func (s *CommitmentTestSuite) TearDownTest() {

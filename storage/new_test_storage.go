@@ -7,7 +7,7 @@ import (
 )
 
 type TestStorage struct {
-	*Storage
+	*InternalStorage
 	Teardown func() error
 }
 
@@ -40,7 +40,7 @@ func NewTestStorageWithoutPostgres() (*TestStorage, error) {
 }
 
 func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
-	storage := Storage{feeReceiverStateIDs: make(map[string]uint32)}
+	storage := InternalStorage{feeReceiverStateIDs: make(map[string]uint32)}
 	teardown := make([]TeardownFunc, 0, 2)
 
 	if cfg.Postgres {
@@ -65,13 +65,13 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 	}
 
 	return &TestStorage{
-		Storage:  &storage,
-		Teardown: toTeardownFunc(teardown),
+		InternalStorage: &storage,
+		Teardown:        toTeardownFunc(teardown),
 	}, nil
 }
 
 func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage, error) {
-	storage := *s.Storage
+	storage := *s.InternalStorage
 	teardown := make([]TeardownFunc, 0, 2)
 	initialTeardown := make([]TeardownFunc, 0, 2)
 
@@ -104,8 +104,8 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 	s.Teardown = toTeardownFunc(initialTeardown)
 
 	return &TestStorage{
-		Storage:  &storage,
-		Teardown: toTeardownFunc(teardown),
+		InternalStorage: &storage,
+		Teardown:        toTeardownFunc(teardown),
 	}, nil
 }
 

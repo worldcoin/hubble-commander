@@ -14,7 +14,7 @@ import (
 type RollupTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage   *st.Storage
+	storage   *st.InternalStorage
 	stateTree *st.StoredMerkleTree
 	teardown  func() error
 }
@@ -26,7 +26,7 @@ func (s *RollupTestSuite) SetupSuite() {
 func (s *RollupTestSuite) SetupTest() {
 	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.Storage
+	s.storage = testStorage.InternalStorage
 	s.stateTree = st.NewStoredMerkleTree("state", s.storage)
 	s.teardown = testStorage.Teardown
 }

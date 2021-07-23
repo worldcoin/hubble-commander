@@ -82,7 +82,7 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 	return transactionExecutor.Commit()
 }
 
-func validateStateRoot(storage *st.Storage) error {
+func validateStateRoot(storage *st.InternalStorage) error {
 	latestCommitment, err := storage.GetLatestCommitment()
 	if st.IsNotFoundError(err) {
 		return nil

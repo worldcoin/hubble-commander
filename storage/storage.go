@@ -12,9 +12,9 @@ import (
 )
 
 type Storage struct {
-	InternalStorage *InternalStorage
-	StateTree       *StateTree
-	AccountTree     *AccountTree
+	Internal    *InternalStorage
+	StateTree   *StateTree
+	AccountTree *AccountTree
 }
 
 type InternalStorage struct {
@@ -52,9 +52,9 @@ func NewStorage(postgresConfig *config.PostgresConfig, badgerConfig *config.Badg
 	}
 
 	return &Storage{
-		InternalStorage: internalStorage,
-		StateTree:       NewStateTree(internalStorage),
-		AccountTree:     NewAccountTree(internalStorage),
+		Internal:    internalStorage,
+		StateTree:   NewStateTree(internalStorage),
+		AccountTree: NewAccountTree(internalStorage),
 	}, nil
 }
 
@@ -85,7 +85,7 @@ func NewConfiguredStorage(cfg *config.Config) (storage *Storage, err error) {
 	}
 
 	if cfg.Bootstrap.Prune {
-		err = storage.Prune(migrator)
+		err = storage.Internal.Prune(migrator)
 		if err != nil {
 			return nil, err
 		}
@@ -100,7 +100,7 @@ func NewConfiguredStorage(cfg *config.Config) (storage *Storage, err error) {
 	return storage, nil
 }
 
-func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, error) {
+func (s *InternalStorage) BeginTransaction(opts TxOptions) (*db.TxController, *InternalStorage, error) {
 	var txController *db.TxController
 	storage := *s
 
@@ -127,7 +127,7 @@ func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, 
 	return txController, &storage, nil
 }
 
-func (s *Storage) Close() error {
+func (s *InternalStorage) Close() error {
 	err := s.Postgres.Close()
 	if err != nil {
 		return err
@@ -135,7 +135,7 @@ func (s *Storage) Close() error {
 	return s.Badger.Close()
 }
 
-func (s *Storage) Prune(migrator *migrate.Migrate) error {
+func (s *InternalStorage) Prune(migrator *migrate.Migrate) error {
 	err := migrator.Down()
 	if err != nil && err != migrate.ErrNoChange {
 		return err

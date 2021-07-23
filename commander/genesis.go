@@ -33,7 +33,7 @@ func AssignStateIDs(accounts []models.RegisteredGenesisAccount) []models.Populat
 	return populatedAccounts
 }
 
-func PopulateGenesisAccounts(storage *st.Storage, accounts []models.PopulatedGenesisAccount) error {
+func PopulateGenesisAccounts(storage *st.InternalStorage, accounts []models.PopulatedGenesisAccount) error {
 	stateTree := st.NewStateTree(storage)
 	accountTree := st.NewAccountTree(storage)
 

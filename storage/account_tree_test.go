@@ -28,7 +28,7 @@ func (s *AccountTreeTestSuite) SetupTest() {
 	var err error
 	s.storage, err = NewTestStorageWithoutPostgres()
 	s.NoError(err)
-	s.tree = NewAccountTree(s.storage.Storage)
+	s.tree = NewAccountTree(s.storage.InternalStorage)
 
 	s.leaf = &models.AccountLeaf{
 		PubKeyID: 0,

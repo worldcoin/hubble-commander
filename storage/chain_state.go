@@ -8,7 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-func (s *Storage) GetChainState(chainID models.Uint256) (*models.ChainState, error) {
+func (s *InternalStorage) GetChainState(chainID models.Uint256) (*models.ChainState, error) {
 	res := make([]models.ChainState, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Select("*").
@@ -24,7 +24,7 @@ func (s *Storage) GetChainState(chainID models.Uint256) (*models.ChainState, err
 	return &res[0], nil
 }
 
-func (s *Storage) SetChainState(chainState *models.ChainState) error {
+func (s *InternalStorage) SetChainState(chainState *models.ChainState) error {
 	_, err := s.Postgres.Query(
 		s.QB.
 			Insert("chain_state").
@@ -40,7 +40,7 @@ func (s *Storage) SetChainState(chainState *models.ChainState) error {
 	return err
 }
 
-func (s *Storage) GetDomain(chainID models.Uint256) (*bls.Domain, error) {
+func (s *InternalStorage) GetDomain(chainID models.Uint256) (*bls.Domain, error) {
 	if s.domain != nil {
 		return s.domain, nil
 	}

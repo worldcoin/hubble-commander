@@ -16,13 +16,13 @@ import (
 
 type API struct {
 	cfg           *config.APIConfig
-	storage       *st.Storage
+	storage       *st.InternalStorage
 	client        *eth.Client
 	mockSignature models.Signature
 	devMode       bool
 }
 
-func NewAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client, devMode bool) (*http.Server, error) {
+func NewAPIServer(cfg *config.APIConfig, storage *st.InternalStorage, client *eth.Client, devMode bool) (*http.Server, error) {
 	server, err := getAPIServer(cfg, storage, client, devMode)
 	if err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ func NewAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client
 	return &http.Server{Addr: addr, Handler: mux}, nil
 }
 
-func getAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client, devMode bool) (*rpc.Server, error) {
+func getAPIServer(cfg *config.APIConfig, storage *st.InternalStorage, client *eth.Client, devMode bool) (*rpc.Server, error) {
 	api := API{
 		cfg:     cfg,
 		storage: storage,

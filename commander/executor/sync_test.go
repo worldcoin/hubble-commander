@@ -26,7 +26,7 @@ type SyncTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	teardown            func() error
-	storage             *st.Storage
+	storage             *st.InternalStorage
 	tree                *st.StateTree
 	client              *eth.TestClient
 	cfg                 *config.RollupConfig
@@ -65,7 +65,7 @@ func (s *SyncTestSuite) SetupTest() {
 func (s *SyncTestSuite) setupDB() {
 	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.Storage
+	s.storage = testStorage.InternalStorage
 	s.teardown = testStorage.Teardown
 	s.tree = st.NewStateTree(s.storage)
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
@@ -75,7 +75,7 @@ func (s *SyncTestSuite) setupDB() {
 	seedDB(s.Assertions, s.storage, s.tree, s.wallets)
 }
 
-func seedDB(s *require.Assertions, storage *st.Storage, tree *st.StateTree, wallets []bls.Wallet) {
+func seedDB(s *require.Assertions, storage *st.InternalStorage, tree *st.StateTree, wallets []bls.Wallet) {
 	err := storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
 		PubKeyID:  0,
 		PublicKey: *wallets[0].PublicKey(),

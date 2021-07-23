@@ -29,7 +29,7 @@ type TransferCommitmentsTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	teardown               func() error
-	storage                *st.Storage
+	storage                *st.InternalStorage
 	cfg                    *config.RollupConfig
 	transactionExecutor    *TransactionExecutor
 	maxTxBytesInCommitment int
@@ -42,7 +42,7 @@ func (s *TransferCommitmentsTestSuite) SetupSuite() {
 func (s *TransferCommitmentsTestSuite) SetupTest() {
 	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.Storage
+	s.storage = testStorage.InternalStorage
 	s.teardown = testStorage.Teardown
 	s.cfg = &config.RollupConfig{
 		MinTxsPerCommitment:    1,
@@ -58,7 +58,7 @@ func (s *TransferCommitmentsTestSuite) SetupTest() {
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
 }
 
-func populateAccounts(storage *st.Storage, balances []models.Uint256) error {
+func populateAccounts(storage *st.InternalStorage, balances []models.Uint256) error {
 	stateTree := st.NewStateTree(storage)
 	for i := uint32(0); i < uint32(len(balances)); i++ {
 		err := storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
@@ -311,7 +311,7 @@ func (s *TransferCommitmentsTestSuite) preparePendingTransfers(transfersAmount u
 	s.addTransfers(transfers)
 }
 
-func addAccountWithHighNonce(s *require.Assertions, storage *st.Storage, stateID uint32) {
+func addAccountWithHighNonce(s *require.Assertions, storage *st.InternalStorage, stateID uint32) {
 	dummyAccount := models.AccountLeaf{
 		PubKeyID:  500,
 		PublicKey: models.PublicKey{1, 2, 3, 4},

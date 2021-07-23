@@ -37,7 +37,7 @@ func (s *AccountTree) LeafNode(pubKeyID uint32) (*models.MerkleTreeNode, error) 
 }
 
 func (s *AccountTree) Leaf(pubKeyID uint32) (*models.AccountLeaf, error) {
-	leaf, err := s.storage.GetAccountLeaf(pubKeyID)
+	leaf, err := s.internalStorage.GetAccountLeaf(pubKeyID)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (s *AccountTree) Leaf(pubKeyID uint32) (*models.AccountLeaf, error) {
 
 // Set returns a witness containing 32 elements for the current set operation
 func (s *AccountTree) Set(leaf *models.AccountLeaf) (models.Witness, error) {
-	tx, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
+	tx, storage, err := s.internalStorage.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func (s *AccountTree) GetWitness(pubKeyID uint32) (models.Witness, error) {
 }
 
 func (s *AccountTree) unsafeSet(leaf *models.AccountLeaf) (models.Witness, error) {
-	err := s.storage.AddAccountLeafIfNotExists(leaf)
+	err := s.internalStorage.AddAccountLeafIfNotExists(leaf)
 	if err == bh.ErrKeyExists {
 		return nil, ErrPubKeyIDAlreadyExists
 	}
