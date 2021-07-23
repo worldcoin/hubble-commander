@@ -161,6 +161,47 @@ func (s *AccountTreeTestSuite) TestSet_ReturnsWitness() {
 	s.Equal(node.DataHash, witness[31])
 }
 
+func (s *AccountTreeTestSuite) TestSetBatch_AddsAccountLeaves() {
+	leaves := make([]models.AccountLeaf, 0, 16)
+	for i := 0; i < 16; i++ {
+		leaves = append(leaves, models.AccountLeaf{
+			PubKeyID:  uint32(i + accountBatchOffset),
+			PublicKey: models.PublicKey{1, 2, byte(i)},
+		})
+	}
+
+	witnesses, err := s.tree.SetBatch(leaves)
+	s.NoError(err)
+	s.Len(witnesses, len(leaves))
+
+	for i := range leaves {
+		accountLeaf, err := s.tree.Leaf(leaves[i].PubKeyID)
+		s.NoError(err)
+		s.Equal(leaves[i], *accountLeaf)
+	}
+}
+
+func (s *AccountTreeTestSuite) TestSetBatch_ChangesStateRoot() {
+	leaves := make([]models.AccountLeaf, 0, 16)
+	for i := 0; i < 16; i++ {
+		leaves = append(leaves, models.AccountLeaf{
+			PubKeyID:  uint32(i + accountBatchOffset),
+			PublicKey: models.PublicKey{1, 2, byte(i)},
+		})
+	}
+
+	rootBeforeSet, err := s.tree.Root()
+	s.NoError(err)
+
+	_, err = s.tree.SetBatch(leaves)
+	s.NoError(err)
+
+	rootAfterSet, err := s.tree.Root()
+	s.NoError(err)
+
+	s.NotEqual(rootBeforeSet, rootAfterSet)
+}
+
 func (s *AccountTreeTestSuite) randomPublicKey() models.PublicKey {
 	publicKey := models.PublicKey{}
 	randomBytes := make([]byte, models.PublicKeyLength)

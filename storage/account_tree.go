@@ -9,7 +9,11 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-const AccountTreeDepth = merkletree.MaxDepth
+//TODO: merge with
+const (
+	accountBatchOffset = 1 << 31
+	AccountTreeDepth   = merkletree.MaxDepth
+)
 
 var ErrPubKeyIDAlreadyExists = errors.New("leaf with given pub key ID already exists")
 
@@ -63,6 +67,32 @@ func (s *AccountTree) Set(leaf *models.AccountLeaf) (models.Witness, error) {
 	}
 
 	return witness, nil
+}
+
+func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) ([]models.Witness, error) {
+	tx, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(&err)
+
+	accountTree := NewAccountTree(storage)
+
+	witnesses := make([]models.Witness, 0, len(leaves))
+	for i := range leaves {
+		witness, err := accountTree.unsafeSet(&leaves[i])
+		if err != nil {
+			return nil, err
+		}
+		witnesses = append(witnesses, witness)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return witnesses, nil
 }
 
 func (s *AccountTree) GetWitness(pubKeyID uint32) (models.Witness, error) {
