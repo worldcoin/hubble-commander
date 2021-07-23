@@ -2,6 +2,7 @@ package storage
 
 import (
 	"crypto/rand"
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -159,6 +160,18 @@ func (s *AccountTreeTestSuite) TestSet_ReturnsWitness() {
 	node, err = s.tree.getMerkleTreeNodeByPath(&models.MerklePath{Depth: 1, Path: 1})
 	s.NoError(err)
 	s.Equal(node.DataHash, witness[31])
+}
+
+func (s *AccountTreeTestSuite) TestSet_InvalidPubKeyID() {
+	account := &models.AccountLeaf{
+		PubKeyID:  rightSubtreeMaxValue,
+		PublicKey: models.PublicKey{1, 2, 3},
+	}
+
+	errMsg := fmt.Sprintf("invalid pubKeyID value: %d", account.PubKeyID)
+	_, err := s.tree.Set(account)
+	s.Error(err)
+	s.Equal(errMsg, err.Error())
 }
 
 func (s *AccountTreeTestSuite) TestSetBatch_AddsAccountLeaves() {

@@ -9,10 +9,13 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-//TODO: merge with
 const (
-	accountBatchOffset = 1 << 31
-	AccountTreeDepth   = merkletree.MaxDepth
+	AccountTreeDepth = merkletree.MaxDepth
+
+	//TODO: merge with
+	accountBatchOffset   = 1 << 31
+	leftSubtreeMaxValue  = accountBatchOffset - 1
+	rightSubtreeMaxValue = accountBatchOffset*2 - 16
 )
 
 var (
@@ -53,6 +56,10 @@ func (s *AccountTree) Leaf(pubKeyID uint32) (*models.AccountLeaf, error) {
 
 // Set returns a witness containing 32 elements for the current set operation
 func (s *AccountTree) Set(leaf *models.AccountLeaf) (models.Witness, error) {
+	if leaf.PubKeyID >= leftSubtreeMaxValue {
+		return nil, errors.Errorf("invalid pubKeyID value: %d", leaf.PubKeyID)
+	}
+
 	tx, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return nil, err
@@ -86,7 +93,7 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) ([]models.Witness, e
 	accountTree := NewAccountTree(storage)
 
 	for i := range leaves {
-		if leaves[i].PubKeyID < accountBatchOffset {
+		if leaves[i].PubKeyID < accountBatchOffset || leaves[i].PubKeyID >= rightSubtreeMaxValue {
 			return nil, errors.Errorf("invalid pubKeyID value: %d", leaves[i].PubKeyID)
 		}
 		_, err = accountTree.unsafeSet(&leaves[i])
@@ -95,9 +102,10 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) ([]models.Witness, e
 		}
 	}
 
+	var witness models.Witness
 	witnesses := make([]models.Witness, 0, len(leaves))
 	for i := range leaves {
-		witness, err := accountTree.GetWitness(leaves[i].PubKeyID)
+		witness, err = accountTree.GetWitness(leaves[i].PubKeyID)
 		if err != nil {
 			return nil, err
 		}
