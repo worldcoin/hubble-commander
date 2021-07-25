@@ -127,10 +127,14 @@ func (t *TransactionExecutor) publicKeyProof(pubKeyID uint32) (*models.PublicKey
 	if err != nil {
 		return nil, err
 	}
-	// TODO: getPublicKey witnesses
+	witness, err := t.accountTree.GetWitness(pubKeyID)
+	if err != nil {
+		return nil, err
+	}
+
 	return &models.PublicKeyProof{
 		PublicKey: publicKey,
-		Witness:   nil,
+		Witness:   witness,
 	}, nil
 }
 
@@ -139,9 +143,13 @@ func (t *TransactionExecutor) receiverPublicKeyProof(pubKeyID uint32) (*models.R
 	if err != nil {
 		return nil, err
 	}
-	// TODO: getPublicKey witnesses
+	witness, err := t.accountTree.GetWitness(pubKeyID)
+	if err != nil {
+		return nil, err
+	}
+
 	return &models.ReceiverPublicKeyProof{
 		PublicKeyHash: crypto.Keccak256Hash(publicKey.Bytes()),
-		Witness:       nil,
+		Witness:       witness,
 	}, nil
 }

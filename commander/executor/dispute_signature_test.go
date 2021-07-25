@@ -77,7 +77,7 @@ func (s *DisputeSignatureTestSuite) TestPublicKeyProof() {
 	publicKeyProof, err := s.transactionExecutor.publicKeyProof(account.PubKeyID)
 	s.NoError(err)
 	s.Equal(account.PublicKey, *publicKeyProof.PublicKey)
-	s.Nil(publicKeyProof.Witness)
+	s.Len(publicKeyProof.Witness, 32)
 }
 
 func (s *DisputeSignatureTestSuite) TestReceiverPublicKeyProof() {
@@ -93,7 +93,7 @@ func (s *DisputeSignatureTestSuite) TestReceiverPublicKeyProof() {
 	publicKeyProof, err := s.transactionExecutor.receiverPublicKeyProof(account.PubKeyID)
 	s.NoError(err)
 	s.Equal(publicKeyHash, publicKeyProof.PublicKeyHash)
-	s.Nil(publicKeyProof.Witness)
+	s.Len(publicKeyProof.Witness, 32)
 }
 
 func (s *DisputeSignatureTestSuite) TestSignatureProof() {
