@@ -68,6 +68,9 @@ bench-e2e: clean-testcache
 bench-e2e-profile: clean-testcache
 	HUBBLE_E2E=in-process go test -cpuprofile cpu.prof -v -tags e2e -run TestBenchmarkSuite ./e2e
 
+measure-dispute-gas: clean-testcache
+	HUBBLE_E2E=in-process go test -v -tags e2e -run TestMeasureDisputeGasUsage ./e2e
+
 .PHONY: 
 	install
 	clean
@@ -89,3 +92,4 @@ bench-e2e-profile: clean-testcache
 	test-commander-locally
 	bench-e2e
 	bench-e2e-profile
+	measure-gas-usage
