@@ -1,8 +1,7 @@
-// +build e2e
-
 package e2e
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -22,6 +21,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/ybbus/jsonrpc/v2"
 )
@@ -59,7 +59,7 @@ func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethCl
 	defer subscription.Unsubscribe()
 
 	sendTransferBatchWithInvalidAmount(t, ethClient)
-	testRollbackCompletion(t, sink, subscription)
+	testRollbackCompletion(t, ethClient, sink, subscription)
 
 	testBatchesAfterDispute(t, client, 1)
 
@@ -73,7 +73,7 @@ func testDisputeTransitionTransferInvalidStateRoot(t *testing.T, client jsonrpc.
 	defer subscription.Unsubscribe()
 
 	sendTransferBatchWithInvalidStateRoot(t, ethClient)
-	testRollbackCompletion(t, sink, subscription)
+	testRollbackCompletion(t, ethClient, sink, subscription)
 
 	testBatchesAfterDispute(t, client, 3)
 }
@@ -92,7 +92,7 @@ func testDisputeTransitionC2T(
 
 	firstC2TWallet := wallets[len(wallets)-32]
 	sendC2TBatchWithInvalidAmount(t, ethClient, firstC2TWallet.PublicKey())
-	testRollbackCompletion(t, sink, subscription)
+	testRollbackCompletion(t, ethClient, sink, subscription)
 
 	testBatchesAfterDispute(t, client, 2)
 
@@ -106,7 +106,7 @@ func testDisputeTransitionC2TInvalidStateRoot(t *testing.T, client jsonrpc.RPCCl
 	defer subscription.Unsubscribe()
 
 	sendC2TBatchWithInvalidStateRoot(t, ethClient, receiverWallet.PublicKey())
-	testRollbackCompletion(t, sink, subscription)
+	testRollbackCompletion(t, ethClient, sink, subscription)
 
 	testBatchesAfterDispute(t, client, 3)
 }
@@ -144,6 +144,7 @@ func testBatchesAfterDispute(t *testing.T, client jsonrpc.RPCClient, expectedLen
 
 func testRollbackCompletion(
 	t *testing.T,
+	ethClient *eth.Client,
 	sink chan *rollup.RollupRollbackStatus,
 	subscription event.Subscription,
 ) {
@@ -155,6 +156,9 @@ func testRollbackCompletion(
 				return false
 			case rollbackStatus := <-sink:
 				if rollbackStatus.Completed {
+					receipt, err := ethClient.ChainConnection.GetBackend().TransactionReceipt(context.Background(), rollbackStatus.Raw.TxHash)
+					require.NoError(t, err)
+					logrus.Infof("Rollback gas used: %d", receipt.GasUsed)
 					return true
 				}
 			}
