@@ -251,7 +251,11 @@ func sendTransferCommitment(t *testing.T, ethClient *eth.Client, encodedTransfer
 		CombinedSignature: models.Signature{},
 		PostStateRoot:     utils.RandomHash(),
 	}
-	transaction, err := ethClient.SubmitTransfersBatch([]models.Commitment{commitment})
+	submitTransfersBatch(t, ethClient, []models.Commitment{commitment}, batchID)
+}
+
+func submitTransfersBatch(t *testing.T, ethClient *eth.Client, commitments []models.Commitment, batchID uint64) {
+	transaction, err := ethClient.SubmitTransfersBatch(commitments)
 	require.NoError(t, err)
 
 	waitForSubmittedBatch(t, ethClient, transaction, batchID)
@@ -264,7 +268,12 @@ func sendC2TCommitment(t *testing.T, ethClient *eth.Client, encodedTransfer []by
 		CombinedSignature: models.Signature{},
 		PostStateRoot:     utils.RandomHash(),
 	}
-	transaction, err := ethClient.SubmitCreate2TransfersBatch([]models.Commitment{commitment})
+
+	submitC2TBatch(t, ethClient, []models.Commitment{commitment}, batchID)
+}
+
+func submitC2TBatch(t *testing.T, ethClient *eth.Client, commitments []models.Commitment, batchID uint64) {
+	transaction, err := ethClient.SubmitCreate2TransfersBatch(commitments)
 	require.NoError(t, err)
 
 	waitForSubmittedBatch(t, ethClient, transaction, batchID)
