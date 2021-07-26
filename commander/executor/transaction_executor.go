@@ -11,51 +11,55 @@ import (
 
 // TransactionExecutor executes transactions & syncs batches. Manages a database transaction.
 type TransactionExecutor struct {
-	cfg       *config.RollupConfig
-	storage   *st.StorageBase
-	stateTree *st.StateTree
-	tx        *db.TxController
-	client    *eth.Client
-	ctx       context.Context
+	cfg     *config.RollupConfig
+	storage *st.Storage
+	tx      *db.TxController
+	client  *eth.Client
+	ctx     context.Context
 }
 
-// TODO-INTERNAL revisit and change storage to st.Storage
 // NewTransactionExecutor creates a TransactionExecutor and starts a database transaction.
 func NewTransactionExecutor(
-	storage *st.StorageBase,
+	storageBase *st.StorageBase,
 	client *eth.Client,
 	cfg *config.RollupConfig,
 	ctx context.Context,
 ) (*TransactionExecutor, error) {
-	tx, txStorage, err := storage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
+	tx, txStorageBase, err := storageBase.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
 	if err != nil {
 		return nil, err
 	}
 
 	return &TransactionExecutor{
-		cfg:       cfg,
-		storage:   txStorage,
-		stateTree: st.NewStateTree(txStorage),
-		tx:        tx,
-		client:    client,
-		ctx:       ctx,
+		cfg: cfg,
+		storage: &st.Storage{
+			StorageBase: txStorageBase,
+			StateTree:   st.NewStateTree(txStorageBase),
+			AccountTree: st.NewAccountTree(txStorageBase),
+		},
+		tx:     tx,
+		client: client,
+		ctx:    ctx,
 	}, nil
 }
 
 // NewTestTransactionExecutor creates a TransactionExecutor without a database transaction.
 func NewTestTransactionExecutor(
-	storage *st.StorageBase,
+	storageBase *st.StorageBase,
 	client *eth.Client,
 	cfg *config.RollupConfig,
 	ctx context.Context,
 ) *TransactionExecutor {
 	return &TransactionExecutor{
-		cfg:       cfg,
-		storage:   storage,
-		stateTree: st.NewStateTree(storage),
-		tx:        nil,
-		client:    client,
-		ctx:       ctx,
+		cfg: cfg,
+		storage: &st.Storage{
+			StorageBase: storageBase,
+			StateTree:   st.NewStateTree(storageBase),
+			AccountTree: st.NewAccountTree(storageBase),
+		},
+		tx:     nil,
+		client: client,
+		ctx:    ctx,
 	}
 }
 

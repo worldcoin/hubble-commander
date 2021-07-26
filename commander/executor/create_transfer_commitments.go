@@ -69,14 +69,14 @@ func (t *TransactionExecutor) createTransferCommitment(
 		return nil, nil, err
 	}
 
-	initialStateRoot, err := t.stateTree.Root()
+	initialStateRoot, err := t.storage.StateTree.Root()
 	if err != nil {
 		return nil, nil, err
 	}
 
 	appliedTransfers, newPendingTransfers, err := t.applyTransfersForCommitment(pendingTransfers, feeReceiver)
 	if err == ErrNotEnoughTransfers {
-		if revertErr := t.stateTree.RevertTo(*initialStateRoot); revertErr != nil {
+		if revertErr := t.storage.StateTree.RevertTo(*initialStateRoot); revertErr != nil {
 			return nil, nil, revertErr
 		}
 		return nil, nil, err

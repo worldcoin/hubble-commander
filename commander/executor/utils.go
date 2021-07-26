@@ -6,7 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func logAndSaveTransactionError(storage *st.StorageBase, transaction *models.TransactionBase, transactionError error) {
+func logAndSaveTransactionError(storage *st.Storage, transaction *models.TransactionBase, transactionError error) {
 	err := storage.SetTransactionError(transaction.Hash, transactionError.Error())
 	if err != nil {
 		log.Printf("Setting transaction error failed: %s", err)

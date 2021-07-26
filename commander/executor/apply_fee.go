@@ -2,7 +2,6 @@ package executor
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
-	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
 func (t *TransactionExecutor) ApplyFee(feeReceiverStateID uint32, fee models.Uint256) (*models.StateMerkleProof, error) {
@@ -15,8 +14,7 @@ func (t *TransactionExecutor) ApplyFee(feeReceiverStateID uint32, fee models.Uin
 
 	feeReceiver.Balance = *feeReceiver.Balance.Add(&fee)
 
-	stateTree := st.NewStateTree(t.storage)
-	stateProof.Witness, err = stateTree.Set(feeReceiver.StateID, &feeReceiver.UserState)
+	stateProof.Witness, err = t.storage.StateTree.Set(feeReceiver.StateID, &feeReceiver.UserState)
 	if err != nil {
 		return nil, err
 	}

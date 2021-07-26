@@ -562,9 +562,9 @@ func (s *DisputeTransitionTestSuite) calculateStateAfterInvalidTransfer(
 	senderState.Nonce = *senderState.Nonce.AddN(1)
 	amount := invalidTransfer.GetAmount()
 	receiverState.Balance = *receiverState.Balance.Add(&amount)
-	_, err := s.transactionExecutor.stateTree.Set(invalidTransfer.GetFromStateID(), &senderState.UserState)
+	_, err := s.transactionExecutor.storage.StateTree.Set(invalidTransfer.GetFromStateID(), &senderState.UserState)
 	s.NoError(err)
-	_, err = s.transactionExecutor.stateTree.Set(*invalidTransfer.GetToStateID(), &receiverState.UserState)
+	_, err = s.transactionExecutor.storage.StateTree.Set(*invalidTransfer.GetToStateID(), &receiverState.UserState)
 	s.NoError(err)
 }
 
@@ -584,7 +584,7 @@ func (s *DisputeTransitionTestSuite) setUserStates() []bls.Wallet {
 		s.NoError(err)
 		s.Equal(userStates[i].PubKeyID, *pubKeyID)
 
-		_, err = s.transactionExecutor.stateTree.Set(uint32(i), &userStates[i])
+		_, err = s.transactionExecutor.storage.StateTree.Set(uint32(i), &userStates[i])
 		s.NoError(err)
 	}
 	return wallets

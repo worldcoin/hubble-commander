@@ -61,7 +61,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	transfers := generateValidCreate2Transfers(1)
 	s.addCreate2Transfers(transfers)
 
-	preRoot, err := s.transactionExecutor.stateTree.Root()
+	preRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 
 	expectedTxsLength := encoder.Create2TransferLength * len(transfers)
@@ -70,7 +70,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, expectedTxsLength)
 
-	postRoot, err := s.transactionExecutor.stateTree.Root()
+	postRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
@@ -80,7 +80,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	transfers := generateValidCreate2Transfers(3)
 	s.addCreate2Transfers(transfers)
 
-	preRoot, err := s.transactionExecutor.stateTree.Root()
+	preRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 
 	expectedTxsLength := encoder.Create2TransferLength * len(transfers)
@@ -89,7 +89,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, expectedTxsLength)
 
-	postRoot, err := s.transactionExecutor.stateTree.Root()
+	postRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
@@ -106,7 +106,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 
 	s.addCreate2Transfers(transfers)
 
-	preRoot, err := s.transactionExecutor.stateTree.Root()
+	preRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.CreateCreate2TransferCommitments(testDomain)
@@ -114,7 +114,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, s.maxTxBytesInCommitment)
 
-	postRoot, err := s.transactionExecutor.stateTree.Root()
+	postRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
@@ -143,7 +143,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	transfers = append(transfers, highNonceTransfers...)
 	s.addCreate2Transfers(transfers)
 
-	preRoot, err := s.transactionExecutor.stateTree.Root()
+	preRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.CreateCreate2TransferCommitments(testDomain)
@@ -153,7 +153,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.Len(commitments[1].Transactions, s.maxTxBytesInCommitment)
 	s.Len(commitments[2].Transactions, encoder.Create2TransferLength)
 
-	postRoot, err := s.transactionExecutor.stateTree.Root()
+	postRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
 	s.Equal(commitments[2].PostStateRoot, *postRoot)
@@ -167,14 +167,14 @@ func (s *Create2TransferCommitmentsTestSuite) invalidateCreate2Transfers(transfe
 }
 
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_ReturnsErrorWhenThereAreNotEnoughPendingTransfers() {
-	preRoot, err := s.transactionExecutor.stateTree.Root()
+	preRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.CreateCreate2TransferCommitments(testDomain)
 	s.Nil(commitments)
 	s.Equal(ErrNotEnoughC2Transfers, err)
 
-	postRoot, err := s.transactionExecutor.stateTree.Root()
+	postRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 
 	s.Equal(preRoot, postRoot)
@@ -197,14 +197,14 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.NoError(err)
 	s.Len(pendingTransfers, 2)
 
-	preRoot, err := s.transactionExecutor.stateTree.Root()
+	preRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.CreateCreate2TransferCommitments(testDomain)
 	s.Nil(commitments)
 	s.Equal(ErrNotEnoughC2Transfers, err)
 
-	postRoot, err := s.transactionExecutor.stateTree.Root()
+	postRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 
 	s.Equal(preRoot, postRoot)
@@ -214,7 +214,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	transfersCount := uint32(4)
 	s.preparePendingCreate2Transfers(transfersCount)
 
-	preRoot, err := s.transactionExecutor.stateTree.Root()
+	preRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 
 	expectedTxsLength := encoder.Create2TransferLength * int(transfersCount)
@@ -225,7 +225,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.Equal(commitments[0].FeeReceiver, uint32(2))
 	s.Nil(commitments[0].IncludedInBatch)
 
-	postRoot, err := s.transactionExecutor.stateTree.Root()
+	postRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
 	s.Equal(commitments[0].PostStateRoot, *postRoot)

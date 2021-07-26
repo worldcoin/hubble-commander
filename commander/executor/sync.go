@@ -59,7 +59,7 @@ func (t *TransactionExecutor) syncExistingBatch(remoteBatch *eth.DecodedBatch, l
 }
 
 func (t *TransactionExecutor) RevertBatches(startBatch *models.Batch) error {
-	err := t.stateTree.RevertTo(*startBatch.PrevStateRoot)
+	err := t.storage.StateTree.RevertTo(*startBatch.PrevStateRoot)
 	if err != nil {
 		return err
 	}
