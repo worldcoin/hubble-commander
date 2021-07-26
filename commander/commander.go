@@ -47,7 +47,6 @@ func (c *Commander) IsRunning() bool {
 	return c.stopChannel != nil
 }
 
-// TODO-INTERNAL revisit later and check if we can make methods below use Storage instead of StorageBase
 func (c *Commander) Start() (err error) {
 	if c.IsRunning() {
 		return nil
@@ -68,7 +67,7 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.signaturesDomain, err = c.storage.StorageBase.GetDomain(c.client.ChainState.ChainID)
+	c.signaturesDomain, err = c.storage.GetDomain(c.client.ChainState.ChainID)
 	if err != nil {
 		return err
 	}
@@ -122,7 +121,7 @@ func (c *Commander) Stop() error {
 		return err
 	}
 	c.workers.Wait()
-	err := c.storage.StorageBase.Close()
+	err := c.storage.Close()
 	if err != nil {
 		return err
 	}
