@@ -100,7 +100,7 @@ func NewConfiguredStorage(cfg *config.Config) (storage *Storage, err error) {
 	return storage, nil
 }
 
-// TODO-INTERNAL rename the 2nd return value to `storageBase` in all usages
+// TODO after removing all state/account tree methods from StorageBase try to rewrite this method to Storage
 func (s *StorageBase) BeginTransaction(opts TxOptions) (*db.TxController, *StorageBase, error) {
 	var txController *db.TxController
 	storage := *s
