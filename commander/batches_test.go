@@ -67,7 +67,7 @@ func (s *BatchesTestSuite) SetupTest() {
 	)
 
 	s.wallets = generateWallets(s.T(), s.testClient.ChainState.Rollup, 2)
-	seedDB(s.T(), s.testStorage.StorageBase, st.NewStateTree(s.testStorage.StorageBase), s.wallets)
+	seedDB(s.T(), s.testStorage.Storage, s.wallets)
 }
 
 func (s *BatchesTestSuite) TearDownTest() {
@@ -248,11 +248,11 @@ func (s *BatchesTestSuite) syncAllBlocks() {
 
 // Make sure that the commander and the transaction executor uses the same storage
 func (s *BatchesTestSuite) createAndSubmitTransferBatch(
-	storage *st.StorageBase,
+	storageBase *st.StorageBase,
 	txExecutor *executor.TransactionExecutor,
 	tx *models.Transfer,
 ) *models.Batch {
-	_, err := storage.AddTransfer(tx)
+	_, err := storageBase.AddTransfer(tx)
 	s.NoError(err)
 
 	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Transfer)
@@ -293,12 +293,12 @@ func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batc
 
 // Make sure that the commander and the transaction executor uses the same storage
 func (s *BatchesTestSuite) createAndSubmitInvalidTransferBatch(
-	storage *st.StorageBase,
+	storageBase *st.StorageBase,
 	txExecutor *executor.TransactionExecutor,
 	tx *models.Transfer,
 	modifier func(commitment *models.Commitment),
 ) *models.Batch {
-	_, err := storage.AddTransfer(tx)
+	_, err := storageBase.AddTransfer(tx)
 	s.NoError(err)
 
 	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Transfer)

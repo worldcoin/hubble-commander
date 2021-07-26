@@ -29,7 +29,7 @@ type TransferCommitmentsTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	teardown               func() error
-	storage                *st.StorageBase
+	storage                *st.Storage
 	cfg                    *config.RollupConfig
 	transactionExecutor    *TransactionExecutor
 	maxTxBytesInCommitment int
@@ -42,7 +42,7 @@ func (s *TransferCommitmentsTestSuite) SetupSuite() {
 func (s *TransferCommitmentsTestSuite) SetupTest() {
 	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.StorageBase
+	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
 	s.cfg = &config.RollupConfig{
 		MinTxsPerCommitment:    1,
@@ -55,11 +55,10 @@ func (s *TransferCommitmentsTestSuite) SetupTest() {
 	err = populateAccounts(s.storage, genesisBalances)
 	s.NoError(err)
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, &eth.Client{}, s.cfg, context.Background())
 }
 
-func populateAccounts(storage *st.StorageBase, balances []models.Uint256) error {
-	stateTree := st.NewStateTree(storage)
+func populateAccounts(storage *st.Storage, balances []models.Uint256) error {
 	for i := uint32(0); i < uint32(len(balances)); i++ {
 		err := storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
 			PubKeyID:  i,
@@ -69,7 +68,7 @@ func populateAccounts(storage *st.StorageBase, balances []models.Uint256) error 
 			return err
 		}
 
-		_, err = stateTree.Set(i, &models.UserState{
+		_, err = storage.StateTree.Set(i, &models.UserState{
 			PubKeyID: i,
 			TokenID:  models.MakeUint256(0),
 			Balance:  balances[i],
@@ -158,7 +157,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_ForMultiple
 		MaxCommitmentsPerBatch: 3,
 	}
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, &eth.Client{}, s.cfg, context.Background())
 
 	addAccountWithHighNonce(s.Assertions, s.storage, 123)
 
@@ -218,7 +217,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_ReturnsErro
 		MaxCommitmentsPerBatch: 1,
 	}
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, &eth.Client{}, s.cfg, context.Background())
 
 	transfers := generateValidTransfers(2)
 	s.addTransfers(transfers)
@@ -311,7 +310,7 @@ func (s *TransferCommitmentsTestSuite) preparePendingTransfers(transfersAmount u
 	s.addTransfers(transfers)
 }
 
-func addAccountWithHighNonce(s *require.Assertions, storage *st.StorageBase, stateID uint32) {
+func addAccountWithHighNonce(s *require.Assertions, storage *st.Storage, stateID uint32) {
 	dummyAccount := models.AccountLeaf{
 		PubKeyID:  500,
 		PublicKey: models.PublicKey{1, 2, 3, 4},
@@ -320,8 +319,7 @@ func addAccountWithHighNonce(s *require.Assertions, storage *st.StorageBase, sta
 	err := storage.AddAccountLeafIfNotExists(&dummyAccount)
 	s.NoError(err)
 
-	stateTree := st.NewStateTree(storage)
-	_, err = stateTree.Set(stateID, &models.UserState{
+	_, err = storage.StateTree.Set(stateID, &models.UserState{
 		PubKeyID: dummyAccount.PubKeyID,
 		TokenID:  models.MakeUint256(0),
 		Balance:  models.MakeUint256(1000),

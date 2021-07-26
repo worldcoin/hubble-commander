@@ -69,7 +69,7 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	s.cmd.stopChannel = make(chan bool)
 
 	s.wallets = generateWallets(s.T(), s.testClient.ChainState.Rollup, 2)
-	seedDB(s.T(), s.testStorage.StorageBase, st.NewStateTree(s.testStorage.StorageBase), s.wallets)
+	seedDB(s.T(), s.testStorage.Storage, s.wallets)
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
 }
 
@@ -247,7 +247,7 @@ func generateWallets(t *testing.T, rollupAddress common.Address, walletsAmount i
 	return wallets
 }
 
-func seedDB(t *testing.T, storage *st.StorageBase, tree *st.StateTree, wallets []bls.Wallet) {
+func seedDB(t *testing.T, storage *st.Storage, wallets []bls.Wallet) {
 	err := storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
 		PubKeyID:  0,
 		PublicKey: *wallets[0].PublicKey(),
@@ -260,7 +260,7 @@ func seedDB(t *testing.T, storage *st.StorageBase, tree *st.StateTree, wallets [
 	})
 	require.NoError(t, err)
 
-	_, err = tree.Set(0, &models.UserState{
+	_, err = storage.StateTree.Set(0, &models.UserState{
 		PubKeyID: 0,
 		TokenID:  models.MakeUint256(0),
 		Balance:  models.MakeUint256(1000),
@@ -268,7 +268,7 @@ func seedDB(t *testing.T, storage *st.StorageBase, tree *st.StateTree, wallets [
 	})
 	require.NoError(t, err)
 
-	_, err = tree.Set(1, &models.UserState{
+	_, err = storage.StateTree.Set(1, &models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(0),
 		Balance:  models.MakeUint256(0),

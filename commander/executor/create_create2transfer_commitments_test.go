@@ -19,7 +19,7 @@ type Create2TransferCommitmentsTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	teardown               func() error
-	storage                *st.StorageBase
+	storage                *st.Storage
 	client                 *eth.TestClient
 	cfg                    *config.RollupConfig
 	transactionExecutor    *TransactionExecutor
@@ -35,7 +35,7 @@ func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 	s.NoError(err)
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
-	s.storage = testStorage.StorageBase
+	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
 	s.cfg = &config.RollupConfig{
 		MinTxsPerCommitment:    1,
@@ -48,7 +48,7 @@ func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 	err = populateAccounts(s.storage, genesisBalances)
 	s.NoError(err)
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, s.client.Client, s.cfg, context.Background())
 }
 
 func (s *Create2TransferCommitmentsTestSuite) TearDownTest() {
@@ -128,7 +128,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 		MaxCommitmentsPerBatch: 3,
 	}
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, s.client.Client, s.cfg, context.Background())
 
 	addAccountWithHighNonce(s.Assertions, s.storage, 124)
 
@@ -188,7 +188,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 		MaxCommitmentsPerBatch: 1,
 	}
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, s.client.Client, s.cfg, context.Background())
 
 	transfers := generateValidCreate2Transfers(2)
 	s.addCreate2Transfers(transfers)

@@ -26,8 +26,7 @@ type SyncTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	teardown            func() error
-	storage             *st.StorageBase // TODO-INTERNAL rename to storageBase in all tests
-	tree                *st.StateTree
+	storage             *st.Storage
 	client              *eth.TestClient
 	cfg                 *config.RollupConfig
 	transactionExecutor *TransactionExecutor
@@ -65,17 +64,16 @@ func (s *SyncTestSuite) SetupTest() {
 func (s *SyncTestSuite) setupDB() {
 	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.StorageBase
+	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
-	s.tree = st.NewStateTree(s.storage)
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, s.client.Client, s.cfg, context.Background())
 	err = s.storage.SetChainState(&s.client.ChainState)
 	s.NoError(err)
 
-	seedDB(s.Assertions, s.storage, s.tree, s.wallets)
+	seedDB(s.Assertions, s.storage, s.wallets)
 }
 
-func seedDB(s *require.Assertions, storage *st.StorageBase, tree *st.StateTree, wallets []bls.Wallet) {
+func seedDB(s *require.Assertions, storage *st.Storage, wallets []bls.Wallet) {
 	err := storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
 		PubKeyID:  0,
 		PublicKey: *wallets[0].PublicKey(),
@@ -88,7 +86,7 @@ func seedDB(s *require.Assertions, storage *st.StorageBase, tree *st.StateTree, 
 	})
 	s.NoError(err)
 
-	_, err = tree.Set(0, &models.UserState{
+	_, err = storage.StateTree.Set(0, &models.UserState{
 		PubKeyID: 0,
 		TokenID:  models.MakeUint256(0),
 		Balance:  models.MakeUint256(1000),
@@ -96,7 +94,7 @@ func seedDB(s *require.Assertions, storage *st.StorageBase, tree *st.StateTree, 
 	})
 	s.NoError(err)
 
-	_, err = tree.Set(1, &models.UserState{
+	_, err = storage.StateTree.Set(1, &models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(0),
 		Balance:  models.MakeUint256(0),
@@ -367,7 +365,7 @@ func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 }
 
 func (s *SyncTestSuite) TestRevertBatch_RevertsState() {
-	initialStateRoot, err := s.tree.Root()
+	initialStateRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)
 
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
@@ -376,7 +374,7 @@ func (s *SyncTestSuite) TestRevertBatch_RevertsState() {
 	err = s.transactionExecutor.RevertBatches(pendingBatch)
 	s.NoError(err)
 
-	stateRoot, err := s.tree.Root()
+	stateRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)
 	s.Equal(*initialStateRoot, *stateRoot)
 

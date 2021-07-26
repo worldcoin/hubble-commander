@@ -54,7 +54,7 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 	c.stateMutex.Lock()
 	defer c.stateMutex.Unlock()
 
-	err = validateStateRoot(c.storage.StorageBase)
+	err = validateStateRoot(c.storage)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -82,7 +82,7 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 	return transactionExecutor.Commit()
 }
 
-func validateStateRoot(storage *st.StorageBase) error {
+func validateStateRoot(storage *st.Storage) error {
 	latestCommitment, err := storage.GetLatestCommitment()
 	if st.IsNotFoundError(err) {
 		return nil
@@ -90,7 +90,7 @@ func validateStateRoot(storage *st.StorageBase) error {
 	if err != nil {
 		return err
 	}
-	stateRoot, err := st.NewStateTree(storage).Root()
+	stateRoot, err := storage.StateTree.Root()
 	if err != nil {
 		return err
 	}

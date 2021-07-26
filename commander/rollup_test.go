@@ -27,7 +27,7 @@ func (s *RollupTestSuite) SetupTest() {
 	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.storage = testStorage
-	s.stateTree = st.NewStoredMerkleTree("state", s.storage.Badger)
+	s.stateTree = st.NewStoredMerkleTree("state", s.storage.Badger) // Must be the same state tree as in Storage object
 	s.teardown = testStorage.Teardown
 }
 
@@ -50,7 +50,7 @@ func (s *RollupTestSuite) TestValidateStateRoot_SameStateRootHash() {
 	_, _, err = s.stateTree.SetNode(&models.MerklePath{Path: 0, Depth: 0}, commitment.PostStateRoot)
 	s.NoError(err)
 
-	err = validateStateRoot(s.storage.StorageBase)
+	err = validateStateRoot(s.storage.Storage)
 	s.NoError(err)
 }
 
@@ -65,7 +65,7 @@ func (s *RollupTestSuite) TestValidateStateRoot_DifferentStateRootHash() {
 	_, err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	err = validateStateRoot(s.storage.StorageBase)
+	err = validateStateRoot(s.storage.Storage)
 	s.Equal(ErrInvalidStateRoot, err)
 }
 
@@ -73,7 +73,7 @@ func (s *RollupTestSuite) TestValidateStateRoot_FirstCommitment() {
 	_, _, err := s.stateTree.SetNode(&models.MerklePath{Path: 0, Depth: 0}, common.Hash{1, 2, 3})
 	s.NoError(err)
 
-	err = validateStateRoot(s.storage.StorageBase)
+	err = validateStateRoot(s.storage.Storage)
 	s.NoError(err)
 }
 

@@ -25,7 +25,7 @@ import (
 type DisputeTransitionTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage             *st.StorageBase
+	storage             *st.Storage
 	teardown            func() error
 	client              *eth.TestClient
 	cfg                 *config.RollupConfig
@@ -73,7 +73,7 @@ func (s *DisputeTransitionTestSuite) SetupSuite() {
 func (s *DisputeTransitionTestSuite) SetupTest() {
 	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.StorageBase
+	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
 
 	s.client, err = eth.NewConfiguredTestClient(
@@ -82,7 +82,7 @@ func (s *DisputeTransitionTestSuite) SetupTest() {
 	)
 	s.NoError(err)
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, s.client.Client, s.cfg, context.Background())
 }
 
 func (s *DisputeTransitionTestSuite) TearDownTest() {
@@ -108,7 +108,7 @@ func (s *DisputeTransitionTestSuite) TestPreviousCommitmentInclusionProof_Curren
 }
 
 func (s *DisputeTransitionTestSuite) TestPreviousCommitmentInclusionProof_PreviousBatch() {
-	_, err := st.NewStateTree(s.storage).Set(11, &models.UserState{
+	_, err := s.storage.StateTree.Set(11, &models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(1),
 		Balance:  models.MakeUint256(100),
@@ -389,7 +389,7 @@ func (s *DisputeTransitionTestSuite) checkBatchAfterDispute(batchID models.Uint2
 
 func (s *DisputeTransitionTestSuite) beginExecutorTransaction() {
 	var err error
-	s.transactionExecutor, err = NewTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
+	s.transactionExecutor, err = NewTransactionExecutor(s.storage.StorageBase, s.client.Client, s.cfg, context.Background())
 	s.NoError(err)
 }
 
