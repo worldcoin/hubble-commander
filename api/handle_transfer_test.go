@@ -53,7 +53,7 @@ func (s *SendTransferTestSuite) SetupTest() {
 	s.tree = st.NewStateTree(testStorage.StorageBase)
 	s.api = &API{
 		cfg:     &config.APIConfig{},
-		storage: testStorage.StorageBase,
+		storage: testStorage.Storage,
 		client: &eth.Client{
 			ChainState: chainState,
 		},

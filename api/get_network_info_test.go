@@ -37,7 +37,7 @@ func (s *NetworkInfoTestSuite) SetupTest() {
 	err = testStorage.SetChainState(&chainState)
 	s.NoError(err)
 
-	s.api = &API{storage: testStorage.StorageBase, client: s.testClient.Client}
+	s.api = &API{storage: testStorage.Storage, client: s.testClient.Client}
 }
 
 func (s *NetworkInfoTestSuite) TearDownTest() {

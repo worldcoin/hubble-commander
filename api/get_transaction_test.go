@@ -34,7 +34,7 @@ func (s *GetTransactionTestSuite) SetupTest() {
 	s.NoError(err)
 	s.api = &API{
 		cfg:     &config.APIConfig{},
-		storage: s.storage.StorageBase,
+		storage: s.storage.Storage,
 		client: &eth.Client{
 			ChainState: chainState,
 		},
