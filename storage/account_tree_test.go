@@ -238,9 +238,10 @@ func (s *AccountTreeTestSuite) TestSetBatch_InvalidPubKeyIDValue() {
 
 	leaves[7].PubKeyID = 12
 
+	errMsg := fmt.Sprintf("invalid pubKeyID value: %d", leaves[7].PubKeyID)
 	err := s.tree.SetBatch(leaves)
 	s.Error(err)
-	s.Equal("invalid pubKeyID value: 12", err.Error())
+	s.Equal(errMsg, err.Error())
 
 	_, err = s.tree.Leaf(leaves[0].PubKeyID)
 	s.Equal(NewNotFoundError("account leaf"), err)
