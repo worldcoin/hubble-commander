@@ -53,29 +53,23 @@ func (s *AccountTree) Leaf(pubKeyID uint32) (*models.AccountLeaf, error) {
 	return leaf, nil
 }
 
-// SetSingle returns a witness containing 32 elements for the current set operation
-func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) (models.Witness, error) {
+func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
 	if leaf.PubKeyID >= leftSubtreeMaxValue {
-		return nil, errors.Errorf("invalid pubKeyID value: %d", leaf.PubKeyID)
+		return errors.Errorf("invalid pubKeyID value: %d", leaf.PubKeyID)
 	}
 
 	tx, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer tx.Rollback(&err)
 
-	witness, err := NewAccountTree(storage).unsafeSet(leaf)
+	_, err = NewAccountTree(storage).unsafeSet(leaf)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		return nil, err
-	}
-
-	return witness, nil
+	return tx.Commit()
 }
 
 func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
@@ -101,12 +95,7 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
 		}
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return tx.Commit()
 }
 
 func (s *AccountTree) GetWitness(pubKeyID uint32) (models.Witness, error) {
