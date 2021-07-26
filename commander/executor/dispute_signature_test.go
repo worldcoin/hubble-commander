@@ -157,6 +157,34 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Transfer() {
 	s.NoError(err)
 }
 
+func (s *DisputeSignatureTestSuite) TestDisputeSignature_Create2Transfer() {
+	wallets := s.setUserStatesAndAddAccounts()
+
+	receiver := &models.AccountLeaf{
+		PubKeyID:  3,
+		PublicKey: *wallets[2].PublicKey(),
+	}
+
+	transfer := testutils.MakeCreate2Transfer(0, &receiver.PubKeyID, 0, 100, &receiver.PublicKey)
+	signCreate2Transfer(s.T(), &wallets[0], &transfer)
+	pendingBatch, commitments := createC2TBatch(s.Assertions, s.transactionExecutor, &transfer, s.domain)
+
+	err := s.transactionExecutor.SubmitBatch(pendingBatch, commitments)
+	s.NoError(err)
+	s.client.Commit()
+
+	_, err = s.transactionExecutor.accountTree.Set(receiver)
+	s.NoError(err)
+
+	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	//TODO: reverted because BNPairingPrecompileCostEstimator is not deployed
+	err = s.transactionExecutor.DisputeSignature(&remoteBatches[0], 0)
+	s.NoError(err)
+}
+
 func (s *DisputeSignatureTestSuite) setUserStatesAndAddAccounts() []bls.Wallet {
 	wallets := setUserStates(s.Assertions, s.transactionExecutor)
 	for i := range wallets {

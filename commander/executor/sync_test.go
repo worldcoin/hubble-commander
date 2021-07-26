@@ -298,7 +298,7 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidCreate2TransferCommitmentStateRoot(
 	tx2 := testutils.MakeCreate2Transfer(0, ref.Uint32(6), 1, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx2)
 
-	batch, commitments := createC2TBatch(s.Assertions, s.transactionExecutor, &tx2)
+	batch, commitments := createC2TBatch(s.Assertions, s.transactionExecutor, &tx2, testDomain)
 	commitments[0].PostStateRoot = utils.RandomHash()
 
 	err := s.transactionExecutor.SubmitBatch(batch, commitments)
@@ -474,7 +474,7 @@ func createAndSubmitC2TBatch(
 	txExecutor *TransactionExecutor,
 	tx *models.Create2Transfer,
 ) models.Commitment {
-	pendingBatch, commitments := createC2TBatch(s, txExecutor, tx)
+	pendingBatch, commitments := createC2TBatch(s, txExecutor, tx, testDomain)
 
 	err := txExecutor.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
@@ -484,7 +484,7 @@ func createAndSubmitC2TBatch(
 }
 
 func (s *SyncTestSuite) createAndSubmitInvalidC2TBatch(tx *models.Create2Transfer) models.Commitment {
-	pendingBatch, commitments := createC2TBatch(s.Assertions, s.transactionExecutor, tx)
+	pendingBatch, commitments := createC2TBatch(s.Assertions, s.transactionExecutor, tx, testDomain)
 
 	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)
 
@@ -499,6 +499,7 @@ func createC2TBatch(
 	s *require.Assertions,
 	txExecutor *TransactionExecutor,
 	tx *models.Create2Transfer,
+	domain *bls.Domain,
 ) (*models.Batch, []models.Commitment) {
 	_, err := txExecutor.storage.AddCreate2Transfer(tx)
 	s.NoError(err)
@@ -506,7 +507,7 @@ func createC2TBatch(
 	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Create2Transfer)
 	s.NoError(err)
 
-	commitments, err := txExecutor.CreateCreate2TransferCommitments(testDomain)
+	commitments, err := txExecutor.CreateCreate2TransferCommitments(domain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 	return pendingBatch, commitments
