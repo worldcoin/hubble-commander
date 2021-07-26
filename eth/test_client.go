@@ -11,8 +11,6 @@ type TestClient struct {
 	*simulator.Simulator
 }
 
-// TODO-INTERNAL verify if client and test client need any changes regarding the new storage object
-
 // NewTestClient Sets up a TestClient backed by automining simulator.
 // Remember to call Close() at the end of the test
 func NewTestClient() (*TestClient, error) {
