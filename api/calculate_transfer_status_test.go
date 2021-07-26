@@ -29,7 +29,7 @@ type CalculateTransactionStatusTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	teardown func() error
-	storage  *st.StorageBase
+	storage  *st.Storage
 	sim      *simulator.Simulator
 	transfer *models.Transfer
 }
@@ -41,7 +41,7 @@ func (s *CalculateTransactionStatusTestSuite) SetupSuite() {
 func (s *CalculateTransactionStatusTestSuite) SetupTest() {
 	testStorage, err := st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.StorageBase
+	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
 
 	sim, err := simulator.NewSimulator()
@@ -61,8 +61,7 @@ func (s *CalculateTransactionStatusTestSuite) SetupTest() {
 	})
 	s.NoError(err)
 
-	tree := st.NewStateTree(s.storage)
-	_, err = tree.Set(1, &userState)
+	_, err = s.storage.StateTree.Set(1, &userState)
 	s.NoError(err)
 
 	transfer := &models.Transfer{
