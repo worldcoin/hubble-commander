@@ -263,7 +263,7 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidTransferCommitmentStateRoot() {
 	tx2 := testutils.MakeTransfer(0, 1, 1, 400)
 	s.setTransferHashAndSign(&tx2)
 
-	batch, commitments := createTransferBatch(s.Assertions, s.transactionExecutor, &tx2)
+	batch, commitments := createTransferBatch(s.Assertions, s.transactionExecutor, &tx2, testDomain)
 	commitments[0].PostStateRoot = utils.RandomHash()
 
 	err := s.transactionExecutor.SubmitBatch(batch, commitments)
@@ -428,7 +428,7 @@ func createAndSubmitTransferBatch(
 	txExecutor *TransactionExecutor,
 	tx *models.Transfer,
 ) *models.Batch {
-	pendingBatch, commitments := createTransferBatch(s, txExecutor, tx)
+	pendingBatch, commitments := createTransferBatch(s, txExecutor, tx, testDomain)
 
 	err := txExecutor.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
@@ -438,7 +438,7 @@ func createAndSubmitTransferBatch(
 }
 
 func (s *SyncTestSuite) createAndSubmitInvalidTransferBatch(tx *models.Transfer) *models.Batch {
-	pendingBatch, commitments := createTransferBatch(s.Assertions, s.transactionExecutor, tx)
+	pendingBatch, commitments := createTransferBatch(s.Assertions, s.transactionExecutor, tx, testDomain)
 
 	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)
 
@@ -453,6 +453,7 @@ func createTransferBatch(
 	s *require.Assertions,
 	txExecutor *TransactionExecutor,
 	tx *models.Transfer,
+	domain *bls.Domain,
 ) (*models.Batch, []models.Commitment) {
 	_, err := txExecutor.storage.AddTransfer(tx)
 	s.NoError(err)
@@ -460,7 +461,7 @@ func createTransferBatch(
 	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
-	commitments, err := txExecutor.CreateTransferCommitments(testDomain)
+	commitments, err := txExecutor.CreateTransferCommitments(domain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 

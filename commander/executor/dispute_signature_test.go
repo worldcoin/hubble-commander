@@ -11,6 +11,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -24,6 +25,7 @@ type DisputeSignatureTestSuite struct {
 	client              *eth.TestClient
 	cfg                 *config.RollupConfig
 	transactionExecutor *TransactionExecutor
+	domain              *bls.Domain
 }
 
 func (s *DisputeSignatureTestSuite) SetupSuite() {
@@ -47,6 +49,9 @@ func (s *DisputeSignatureTestSuite) SetupTest() {
 	s.NoError(err)
 
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
+
+	s.domain, err = bls.DomainFromBytes(crypto.Keccak256(s.client.ChainState.Rollup.Bytes()))
+	s.NoError(err)
 }
 
 func (s *DisputeSignatureTestSuite) TearDownTest() {
@@ -96,6 +101,7 @@ func (s *DisputeSignatureTestSuite) TestReceiverPublicKeyProof() {
 	s.Len(publicKeyProof.Witness, 32)
 }
 
+//TODO: add similar test for Create2Transfer
 func (s *DisputeSignatureTestSuite) TestSignatureProof() {
 	s.setUserStatesAndAddAccounts()
 
@@ -131,10 +137,30 @@ func (s *DisputeSignatureTestSuite) TestSignatureProof() {
 	}
 }
 
+func (s *DisputeSignatureTestSuite) TestDisputeSignature_Transfer() {
+	wallets := s.setUserStatesAndAddAccounts()
+
+	transfer := testutils.MakeTransfer(1, 2, 0, 50)
+	signTransfer(s.T(), &wallets[1], &transfer)
+	pendingBatch, commitments := createTransferBatch(s.Assertions, s.transactionExecutor, &transfer, s.domain)
+
+	err := s.transactionExecutor.SubmitBatch(pendingBatch, commitments)
+	s.NoError(err)
+	s.client.Commit()
+
+	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	//TODO: reverted because BNPairingPrecompileCostEstimator is not deployed
+	err = s.transactionExecutor.DisputeSignature(&remoteBatches[0], 0)
+	s.NoError(err)
+}
+
 func (s *DisputeSignatureTestSuite) setUserStatesAndAddAccounts() []bls.Wallet {
 	wallets := setUserStates(s.Assertions, s.transactionExecutor)
 	for i := range wallets {
-		err := s.transactionExecutor.storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
+		_, err := s.transactionExecutor.accountTree.Set(&models.AccountLeaf{
 			PubKeyID:  uint32(i),
 			PublicKey: *wallets[i].PublicKey(),
 		})
