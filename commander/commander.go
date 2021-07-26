@@ -63,7 +63,7 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.client, err = getClient(chain, c.storage.StorageBase, c.cfg.Bootstrap)
+	c.client, err = getClient(chain, c.storage, c.cfg.Bootstrap)
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func getChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, e
 	return deployer.NewRPCChainConnection(cfg)
 }
 
-func getClient(chain deployer.ChainConnection, storage *st.StorageBase, cfg *config.BootstrapConfig) (*eth.Client, error) {
+func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.BootstrapConfig) (*eth.Client, error) {
 	chainID := chain.GetChainID()
 	chainState, err := storage.GetChainState(chainID)
 	if err != nil && !st.IsNotFoundError(err) {
@@ -168,7 +168,7 @@ func getClient(chain deployer.ChainConnection, storage *st.StorageBase, cfg *con
 
 func bootstrapFromRemoteState(
 	chain deployer.ChainConnection,
-	storage *st.StorageBase,
+	storage *st.Storage,
 	cfg *config.BootstrapConfig,
 ) (*eth.Client, error) {
 	chainState, err := fetchChainStateFromRemoteNode(*cfg.BootstrapNodeURL)
@@ -200,7 +200,7 @@ func bootstrapFromRemoteState(
 
 func bootstrapContractsAndState(
 	chain deployer.ChainConnection,
-	storage *st.StorageBase,
+	storage *st.Storage,
 	cfg *config.BootstrapConfig,
 ) (*eth.Client, error) {
 	chainState, err := deployContractsAndSetupGenesisState(storage, chain, cfg.GenesisAccounts)
@@ -267,7 +267,7 @@ func createClientFromChainState(chain deployer.ChainConnection, chainState *mode
 }
 
 func deployContractsAndSetupGenesisState(
-	storage *st.StorageBase,
+	storage *st.Storage,
 	chain deployer.ChainConnection,
 	accounts []models.GenesisAccount,
 ) (*models.ChainState, error) {
@@ -288,7 +288,7 @@ func deployContractsAndSetupGenesisState(
 		return nil, err
 	}
 
-	stateRoot, err := st.NewStateTree(storage).Root()
+	stateRoot, err := storage.StateTree.Root()
 	if err != nil {
 		return nil, err
 	}
