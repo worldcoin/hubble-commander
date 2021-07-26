@@ -13,8 +13,8 @@ const (
 	AccountTreeDepth = merkletree.MaxDepth
 
 	accountBatchOffset   = 1 << 31
-	leftSubtreeMaxValue  = accountBatchOffset - 1
-	rightSubtreeMaxValue = accountBatchOffset*2 - 16
+	leftSubtreeMaxValue  = accountBatchOffset - 2
+	rightSubtreeMaxValue = accountBatchOffset*2 - 17
 )
 
 var (
@@ -54,7 +54,7 @@ func (s *AccountTree) Leaf(pubKeyID uint32) (*models.AccountLeaf, error) {
 }
 
 func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
-	if leaf.PubKeyID >= leftSubtreeMaxValue {
+	if leaf.PubKeyID > leftSubtreeMaxValue {
 		return errors.Errorf("invalid pubKeyID value: %d", leaf.PubKeyID)
 	}
 
@@ -86,7 +86,7 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
 	accountTree := NewAccountTree(storage)
 
 	for i := range leaves {
-		if leaves[i].PubKeyID < accountBatchOffset || leaves[i].PubKeyID >= rightSubtreeMaxValue {
+		if leaves[i].PubKeyID < accountBatchOffset || leaves[i].PubKeyID > rightSubtreeMaxValue {
 			return errors.Errorf("invalid pubKeyID value: %d", leaves[i].PubKeyID)
 		}
 		_, err = accountTree.unsafeSet(&leaves[i])
