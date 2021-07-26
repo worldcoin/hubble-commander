@@ -183,9 +183,8 @@ func (s *AccountTreeTestSuite) TestSetBatch_AddsAccountLeaves() {
 		}
 	}
 
-	witnesses, err := s.tree.SetBatch(leaves)
+	err := s.tree.SetBatch(leaves)
 	s.NoError(err)
-	s.Len(witnesses, len(leaves))
 
 	for i := range leaves {
 		accountLeaf, err := s.tree.Leaf(leaves[i].PubKeyID)
@@ -206,7 +205,7 @@ func (s *AccountTreeTestSuite) TestSetBatch_ChangesStateRoot() {
 	rootBeforeSet, err := s.tree.Root()
 	s.NoError(err)
 
-	_, err = s.tree.SetBatch(leaves)
+	err = s.tree.SetBatch(leaves)
 	s.NoError(err)
 
 	rootAfterSet, err := s.tree.Root()
@@ -224,7 +223,7 @@ func (s *AccountTreeTestSuite) TestSetBatch_InvalidLeavesLength() {
 		}
 	}
 
-	_, err := s.tree.SetBatch(leaves)
+	err := s.tree.SetBatch(leaves)
 	s.ErrorIs(err, ErrInvalidAccountsLength)
 }
 
@@ -239,7 +238,7 @@ func (s *AccountTreeTestSuite) TestSetBatch_InvalidPubKeyIDValue() {
 
 	leaves[7].PubKeyID = 12
 
-	_, err := s.tree.SetBatch(leaves)
+	err := s.tree.SetBatch(leaves)
 	s.Error(err)
 	s.Equal("invalid pubKeyID value: 12", err.Error())
 

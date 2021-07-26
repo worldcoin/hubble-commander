@@ -106,7 +106,7 @@ func (c *Commander) syncBatchAccounts(start, end uint64) error {
 			})
 		}
 
-		_, err = c.accountTree.SetBatch(accounts)
+		err = c.accountTree.SetBatch(accounts)
 		if err != nil {
 			return err
 		}

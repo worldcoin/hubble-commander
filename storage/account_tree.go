@@ -78,15 +78,14 @@ func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) (models.Witness, error
 	return witness, nil
 }
 
-// SetBatch returns a witnesses for each leaf containing 32 elements after operation
-func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) ([]models.Witness, error) {
+func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
 	if len(leaves) != 16 {
-		return nil, ErrInvalidAccountsLength
+		return ErrInvalidAccountsLength
 	}
 
 	tx, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer tx.Rollback(&err)
 
@@ -94,30 +93,20 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) ([]models.Witness, e
 
 	for i := range leaves {
 		if leaves[i].PubKeyID < accountBatchOffset || leaves[i].PubKeyID >= rightSubtreeMaxValue {
-			return nil, errors.Errorf("invalid pubKeyID value: %d", leaves[i].PubKeyID)
+			return errors.Errorf("invalid pubKeyID value: %d", leaves[i].PubKeyID)
 		}
 		_, err = accountTree.unsafeSet(&leaves[i])
 		if err != nil {
-			return nil, err
+			return err
 		}
-	}
-
-	var witness models.Witness
-	witnesses := make([]models.Witness, 0, len(leaves))
-	for i := range leaves {
-		witness, err = accountTree.GetWitness(leaves[i].PubKeyID)
-		if err != nil {
-			return nil, err
-		}
-		witnesses = append(witnesses, witness)
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return witnesses, nil
+	return nil
 }
 
 func (s *AccountTree) GetWitness(pubKeyID uint32) (models.Witness, error) {
