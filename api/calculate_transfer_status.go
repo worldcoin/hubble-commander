@@ -7,7 +7,7 @@ import (
 )
 
 func CalculateTransactionStatus(
-	storage *st.StorageBase, // TODO-INTERNAL use Storage here?
+	storage *st.StorageBase,
 	transfer *models.TransactionBase,
 	latestBlockNumber uint32,
 ) (*txstatus.TransactionStatus, error) {
