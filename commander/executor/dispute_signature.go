@@ -36,7 +36,7 @@ func (t *TransactionExecutor) disputeTransferSignature(batch *eth.DecodedBatch, 
 }
 
 func (t *TransactionExecutor) disputeCreate2TransferSignature(batch *eth.DecodedBatch, commitmentIndex int) error {
-	proof, err := t.signaturePoofWithReceiver(&batch.Commitments[commitmentIndex])
+	proof, err := t.signatureProofWithReceiver(&batch.Commitments[commitmentIndex])
 	if err != nil {
 		return err
 	}
@@ -75,8 +75,8 @@ func (t *TransactionExecutor) signatureProof(commitment *encoder.DecodedCommitme
 	return proof, nil
 }
 
-func (t *TransactionExecutor) signaturePoofWithReceiver(commitment *encoder.DecodedCommitment) (*models.SignatureProofWithReceiver, error) {
-	txs, err := encoder.DeserializeTransfers(commitment.Transactions)
+func (t *TransactionExecutor) signatureProofWithReceiver(commitment *encoder.DecodedCommitment) (*models.SignatureProofWithReceiver, error) {
+	txs, pubKeyIDs, err := encoder.DeserializeCreate2Transfers(commitment.Transactions)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (t *TransactionExecutor) signaturePoofWithReceiver(commitment *encoder.Deco
 		if err != nil {
 			return nil, err
 		}
-		receiverPublicKeyProof, err := t.receiverPublicKeyProof(txs[i].ToStateID)
+		receiverPublicKeyProof, err := t.receiverPublicKeyProof(pubKeyIDs[i])
 		if err != nil {
 			return nil, err
 		}
