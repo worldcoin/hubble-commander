@@ -20,8 +20,8 @@ func NewNotFoundError(field string) *NotFoundError {
 	return &NotFoundError{field: field}
 }
 
-func (n *NotFoundError) Error() string {
-	return fmt.Sprintf("%s not found", n.field)
+func (e *NotFoundError) Error() string {
+	return fmt.Sprintf("%s not found", e.field)
 }
 
 func IsNotFoundError(err error) bool {
@@ -53,5 +53,5 @@ func NewAccountAlreadyExistsError(account *models.AccountLeaf) *AccountAlreadyEx
 }
 
 func (e *AccountAlreadyExistsError) Error() string {
-	return fmt.Sprintf("account with %d pubKeyID already exists", e.Account.PubKeyID)
+	return fmt.Sprintf("account with pubKeyID %d already exists", e.Account.PubKeyID)
 }

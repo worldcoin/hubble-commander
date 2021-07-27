@@ -110,32 +110,46 @@ func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int,
 			})
 		}
 
-		err = c.accountTree.SetBatch(accounts)
+		isNewAccount, err := saveSyncedBatchAccounts(c.accountTree, accounts)
 		if err != nil {
 			return nil, err
 		}
-		*newAccountsCount += len(pubKeyIDs)
+		if *isNewAccount {
+			*newAccountsCount += len(pubKeyIDs)
+		}
 	}
 	return newAccountsCount, nil
 }
 
 func saveSyncedAccount(accountTree *storage.AccountTree, account *models.AccountLeaf) (isNewAccount *bool, err error) {
 	err = accountTree.SetSingle(account)
-	if err == storage.ErrPubKeyIDAlreadyExists {
-		var existingAccount *models.AccountLeaf
-		existingAccount, err = accountTree.Leaf(account.PubKeyID)
+	if err != nil {
+		return handleAccountSetError(accountTree, err)
+	}
+	return ref.Bool(true), nil
+}
+
+func saveSyncedBatchAccounts(accountTree *storage.AccountTree, accounts []models.AccountLeaf) (isNewAccount *bool, err error) {
+	err = accountTree.SetBatch(accounts)
+	if err != nil {
+		return handleAccountSetError(accountTree, err)
+	}
+	return ref.Bool(true), nil
+}
+
+func handleAccountSetError(accountTree *storage.AccountTree, err error) (*bool, error) {
+	var accountExistsError *storage.AccountAlreadyExistsError
+	if errors.As(err, accountExistsError) {
+		existingAccount, err := accountTree.Leaf(accountExistsError.Account.PubKeyID)
 		if err != nil {
 			return nil, err
 		}
-		if existingAccount.PublicKey != account.PublicKey {
+		if existingAccount.PublicKey != accountExistsError.Account.PublicKey {
 			return nil, errors.New("inconsistency in account leaves between the database and the contract")
 		}
 		return ref.Bool(false), nil
 	}
-	if err != nil {
-		return nil, err
-	}
-	return ref.Bool(true), nil
+	return nil, err
 }
 
 func logAccountsCount(newAccountsCount int) {

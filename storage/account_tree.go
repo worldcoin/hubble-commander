@@ -18,10 +18,7 @@ const (
 	rightSubtreeMaxValue = accountBatchOffset*2 - 18
 )
 
-var (
-	ErrPubKeyIDAlreadyExists = errors.New("leaf with given pub key ID already exists")
-	ErrInvalidAccountsLength = errors.New("invalid accounts length")
-)
+var ErrInvalidAccountsLength = errors.New("invalid accounts length")
 
 type AccountTree struct {
 	storage    *Storage
@@ -102,7 +99,7 @@ func (s *AccountTree) GetWitness(pubKeyID uint32) (models.Witness, error) {
 func (s *AccountTree) unsafeSet(leaf *models.AccountLeaf) (models.Witness, error) {
 	err := s.storage.AddAccountLeafIfNotExists(leaf)
 	if err == bh.ErrKeyExists {
-		return nil, ErrPubKeyIDAlreadyExists
+		return nil, NewAccountAlreadyExistsError(leaf)
 	}
 	if err != nil {
 		return nil, err

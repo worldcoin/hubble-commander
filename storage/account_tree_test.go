@@ -144,7 +144,10 @@ func (s *AccountTreeTestSuite) TestSetSingle_ReturnsErrorOnSettingAlreadySetLeaf
 
 	s.leaf.PublicKey = s.randomPublicKey()
 	err = s.tree.SetSingle(s.leaf)
-	s.ErrorIs(err, ErrPubKeyIDAlreadyExists)
+
+	var accountAlreadyExistsError *AccountAlreadyExistsError
+	s.ErrorAs(err, &accountAlreadyExistsError)
+	s.Equal(s.leaf, accountAlreadyExistsError.Account)
 }
 
 func (s *AccountTreeTestSuite) TestSetSingle_InvalidPubKeyID() {
@@ -154,7 +157,6 @@ func (s *AccountTreeTestSuite) TestSetSingle_InvalidPubKeyID() {
 	}
 
 	err := s.tree.SetSingle(account)
-	s.Error(err)
 
 	var invalidPubKeyIDError *InvalidPubKeyIDError
 	s.ErrorAs(err, &invalidPubKeyIDError)
@@ -240,7 +242,6 @@ func (s *AccountTreeTestSuite) TestSetBatch_InvalidPubKeyIDValue() {
 	leaves[7].PubKeyID = 12
 
 	err := s.tree.SetBatch(leaves)
-	s.Error(err)
 
 	var invalidPubKeyIDError *InvalidPubKeyIDError
 	s.ErrorAs(err, &invalidPubKeyIDError)
