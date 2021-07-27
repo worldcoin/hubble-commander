@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"fmt"
 	"math/big"
 	"testing"
 
@@ -154,10 +153,12 @@ func (s *AccountTreeTestSuite) TestSetSingle_InvalidPubKeyID() {
 		PublicKey: models.PublicKey{1, 2, 3},
 	}
 
-	errMsg := fmt.Sprintf("invalid pubKeyID value: %d", account.PubKeyID)
 	err := s.tree.SetSingle(account)
 	s.Error(err)
-	s.Equal(errMsg, err.Error())
+
+	var invalidPubKeyIDError *InvalidPubKeyIDError
+	s.ErrorAs(err, &invalidPubKeyIDError)
+	s.Equal(account.PubKeyID, invalidPubKeyIDError.value)
 }
 
 func (s *AccountTreeTestSuite) TestUnsafeSet_ReturnsWitness() {
@@ -238,10 +239,12 @@ func (s *AccountTreeTestSuite) TestSetBatch_InvalidPubKeyIDValue() {
 
 	leaves[7].PubKeyID = 12
 
-	errMsg := fmt.Sprintf("invalid pubKeyID value: %d", leaves[7].PubKeyID)
 	err := s.tree.SetBatch(leaves)
 	s.Error(err)
-	s.Equal(errMsg, err.Error())
+
+	var invalidPubKeyIDError *InvalidPubKeyIDError
+	s.ErrorAs(err, &invalidPubKeyIDError)
+	s.Equal(leaves[7].PubKeyID, invalidPubKeyIDError.value)
 
 	_, err = s.tree.Leaf(leaves[0].PubKeyID)
 	s.Equal(NewNotFoundError("account leaf"), err)

@@ -52,7 +52,7 @@ func (s *AccountTree) Leaf(pubKeyID uint32) (*models.AccountLeaf, error) {
 
 func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
 	if leaf.PubKeyID > leftSubtreeMaxValue {
-		return errors.Errorf("invalid pubKeyID value: %d", leaf.PubKeyID)
+		return NewInvalidPubKeyIDError(leaf.PubKeyID)
 	}
 
 	tx, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
@@ -84,7 +84,7 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
 
 	for i := range leaves {
 		if leaves[i].PubKeyID < accountBatchOffset || leaves[i].PubKeyID > rightSubtreeMaxValue {
-			return errors.Errorf("invalid pubKeyID value: %d", leaves[i].PubKeyID)
+			return NewInvalidPubKeyIDError(leaves[i].PubKeyID)
 		}
 		_, err = accountTree.unsafeSet(&leaves[i])
 		if err != nil {

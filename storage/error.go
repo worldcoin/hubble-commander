@@ -29,3 +29,15 @@ func IsNotFoundError(err error) bool {
 	target := &NotFoundError{}
 	return errors.As(err, &target)
 }
+
+type InvalidPubKeyIDError struct {
+	value uint32
+}
+
+func NewInvalidPubKeyIDError(value uint32) *InvalidPubKeyIDError {
+	return &InvalidPubKeyIDError{value: value}
+}
+
+func (n *InvalidPubKeyIDError) Error() string {
+	return fmt.Sprintf("invalid pubKeyID value: %d", n.value)
+}
