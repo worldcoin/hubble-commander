@@ -3,6 +3,8 @@ package storage
 import (
 	"errors"
 	"fmt"
+
+	"github.com/Worldcoin/hubble-commander/models"
 )
 
 var (
@@ -38,6 +40,18 @@ func NewInvalidPubKeyIDError(value uint32) *InvalidPubKeyIDError {
 	return &InvalidPubKeyIDError{value: value}
 }
 
-func (n *InvalidPubKeyIDError) Error() string {
-	return fmt.Sprintf("invalid pubKeyID value: %d", n.value)
+func (e *InvalidPubKeyIDError) Error() string {
+	return fmt.Sprintf("invalid pubKeyID value: %d", e.value)
+}
+
+type AccountAlreadyExistsError struct {
+	Account *models.AccountLeaf
+}
+
+func NewAccountAlreadyExistsError(account *models.AccountLeaf) *AccountAlreadyExistsError {
+	return &AccountAlreadyExistsError{Account: account}
+}
+
+func (e *AccountAlreadyExistsError) Error() string {
+	return fmt.Sprintf("account with %d pubKeyID already exists", e.Account.PubKeyID)
 }
