@@ -139,7 +139,7 @@ func saveSyncedBatchAccounts(accountTree *storage.AccountTree, accounts []models
 
 func handleAccountSetError(accountTree *storage.AccountTree, err error) (*bool, error) {
 	var accountExistsError *storage.AccountAlreadyExistsError
-	if errors.As(err, accountExistsError) {
+	if errors.As(err, &accountExistsError) {
 		var existingAccount *models.AccountLeaf
 		existingAccount, err = accountTree.Leaf(accountExistsError.Account.PubKeyID)
 		if err != nil {
