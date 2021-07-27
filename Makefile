@@ -89,7 +89,8 @@ measure-dispute-gas: clean-testcache
 	test
 	test-hardhat
 	test-e2e
+	test-e2e-in-process
 	test-commander-locally
 	bench-e2e
 	bench-e2e-profile
-	measure-gas-usage
+	measure-dispute-gas
