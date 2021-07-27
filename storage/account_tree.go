@@ -15,7 +15,7 @@ const (
 	batchSize            = 1 << 4
 	accountBatchOffset   = 1 << 31
 	leftSubtreeMaxValue  = accountBatchOffset - 2
-	rightSubtreeMaxValue = accountBatchOffset*2 - 17
+	rightSubtreeMaxValue = accountBatchOffset*2 - 18
 )
 
 var (
