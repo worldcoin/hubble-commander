@@ -49,10 +49,8 @@ func (s *StateTree) Leaf(stateID uint32) (*models.StateLeaf, error) {
 			StateID:  stateID,
 			DataHash: merkletree.GetZeroHash(0),
 		}, nil
-	} else if err != nil {
-		return nil, err
 	}
-	return leaf, nil
+	return leaf, err
 }
 
 // Set returns a witness containing 32 elements for the current set operation

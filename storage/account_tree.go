@@ -46,11 +46,7 @@ func (s *AccountTree) LeafNode(pubKeyID uint32) (*models.MerkleTreeNode, error) 
 }
 
 func (s *AccountTree) Leaf(pubKeyID uint32) (*models.AccountLeaf, error) {
-	leaf, err := s.storage.GetAccountLeaf(pubKeyID)
-	if err != nil {
-		return nil, err
-	}
-	return leaf, nil
+	return s.storage.GetAccountLeaf(pubKeyID)
 }
 
 func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
