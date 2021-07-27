@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -59,8 +60,9 @@ func (s *AccountsTestSuite) TestSyncSingleAccounts() {
 
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)
-	err = s.cmd.syncSingleAccounts(0, *latestBlockNumber)
+	newAccountsCount, err := s.cmd.syncSingleAccounts(0, *latestBlockNumber)
 	s.NoError(err)
+	s.Equal(ref.Int(1), newAccountsCount)
 
 	accounts, err := s.cmd.storage.GetAccountLeaves(&account.PublicKey)
 	s.NoError(err)
@@ -73,8 +75,9 @@ func (s *AccountsTestSuite) TestSyncBatchAccounts() {
 
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)
-	err = s.cmd.syncBatchAccounts(0, *latestBlockNumber)
+	newAccountsCount, err := s.cmd.syncBatchAccounts(0, *latestBlockNumber)
 	s.NoError(err)
+	s.Equal(ref.Int(16), newAccountsCount)
 
 	s.validateAccountsAfterSync(accounts)
 }

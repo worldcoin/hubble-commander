@@ -15,29 +15,34 @@ import (
 )
 
 func (c *Commander) syncAccounts(start, end uint64) error {
-	err := c.syncSingleAccounts(start, end)
+	newAccountsSingle, err := c.syncSingleAccounts(start, end)
 	if err != nil {
 		return err
 	}
-	return c.syncBatchAccounts(start, end)
+	newAccountsBatch, err := c.syncBatchAccounts(start, end)
+	if err != nil {
+		return err
+	}
+	logAccountsCount(*newAccountsSingle + *newAccountsBatch)
+	return nil
 }
 
-func (c *Commander) syncSingleAccounts(start, end uint64) error {
+func (c *Commander) syncSingleAccounts(start, end uint64) (newAccountsCount *int, err error) {
 	it, err := c.client.AccountRegistry.FilterSinglePubkeyRegistered(&bind.FilterOpts{
 		Start: start,
 		End:   &end,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer func() { _ = it.Close() }()
 
-	newAccountsCount := 0
+	newAccountsCount = ref.Int(0)
 
 	for it.Next() {
 		tx, _, err := c.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if !bytes.Equal(tx.Data()[:4], c.client.AccountRegistryABI.Methods["register"].ID) {
@@ -46,7 +51,7 @@ func (c *Commander) syncSingleAccounts(start, end uint64) error {
 
 		unpack, err := c.client.AccountRegistryABI.Methods["register"].Inputs.Unpack(tx.Data()[4:])
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		publicKey := unpack[0].([4]*big.Int)
@@ -58,32 +63,31 @@ func (c *Commander) syncSingleAccounts(start, end uint64) error {
 
 		isNewAccount, err := saveSyncedAccount(c.accountTree, account)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if *isNewAccount {
-			newAccountsCount++
+			*newAccountsCount++
 		}
 	}
-	logAccountsCount(newAccountsCount)
-	return nil
+	return newAccountsCount, nil
 }
 
-func (c *Commander) syncBatchAccounts(start, end uint64) error {
+func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int, err error) {
 	it, err := c.client.AccountRegistry.FilterBatchPubkeyRegistered(&bind.FilterOpts{
 		Start: start,
 		End:   &end,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer func() { _ = it.Close() }()
 
-	newAccountsCount := 0
+	newAccountsCount = ref.Int(0)
 
 	for it.Next() {
 		tx, _, err := c.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if !bytes.Equal(tx.Data()[:4], c.client.AccountRegistryABI.Methods["registerBatch"].ID) {
@@ -92,7 +96,7 @@ func (c *Commander) syncBatchAccounts(start, end uint64) error {
 
 		unpack, err := c.client.AccountRegistryABI.Methods["registerBatch"].Inputs.Unpack(tx.Data()[4:])
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		publicKeys := unpack[0].([16][4]*big.Int)
@@ -108,13 +112,11 @@ func (c *Commander) syncBatchAccounts(start, end uint64) error {
 
 		err = c.accountTree.SetBatch(accounts)
 		if err != nil {
-			return err
+			return nil, err
 		}
-
-		newAccountsCount += len(pubKeyIDs)
+		*newAccountsCount += len(pubKeyIDs)
 	}
-	logAccountsCount(newAccountsCount)
-	return nil
+	return newAccountsCount, nil
 }
 
 func saveSyncedAccount(accountTree *storage.AccountTree, account *models.AccountLeaf) (isNewAccount *bool, err error) {
