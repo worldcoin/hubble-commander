@@ -38,7 +38,7 @@ func TestMeasureDisputeGasUsage(t *testing.T) {
 	testSendTransferBatch(t, cmd.Client(), senderWallet, 0)
 
 	measureDisputeTransitionTransferInvalidStateRoot(t, cmd.Client(), ethClient)
-	measureTransitionDisputeC2TInvalidStateRoot(t, cmd.Client(), ethClient, wallets)
+	measureDisputeTransitionC2TInvalidStateRoot(t, cmd.Client(), ethClient, wallets)
 }
 
 func measureDisputeTransitionTransferInvalidStateRoot(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
@@ -53,7 +53,7 @@ func measureDisputeTransitionTransferInvalidStateRoot(t *testing.T, client jsonr
 	testBatchesAfterDispute(t, client, 1)
 }
 
-func measureTransitionDisputeC2TInvalidStateRoot(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, wallets []bls.Wallet) {
+func measureDisputeTransitionC2TInvalidStateRoot(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, wallets []bls.Wallet) {
 	sink := make(chan *rollup.RollupRollbackStatus)
 	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
 	require.NoError(t, err)
