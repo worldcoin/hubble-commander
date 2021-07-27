@@ -153,7 +153,7 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 		return nil, errors.WithStack(err)
 	}
 
-	log.Println("Deploying CostExtimator")
+	log.Println("Deploying BNPairingPrecompileCostEstimator")
 	estimatorAddress, tx, _, err := estimator.DeployCostEstimator(c.GetAccount(), c.GetBackend())
 	if err != nil {
 		return nil, errors.WithStack(err)
