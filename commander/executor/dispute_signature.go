@@ -75,7 +75,9 @@ func (t *TransactionExecutor) signatureProof(commitment *encoder.DecodedCommitme
 	return proof, nil
 }
 
-func (t *TransactionExecutor) signatureProofWithReceiver(commitment *encoder.DecodedCommitment) (*models.SignatureProofWithReceiver, error) {
+func (t *TransactionExecutor) signatureProofWithReceiver(
+	commitment *encoder.DecodedCommitment,
+) (*models.SignatureProofWithReceiver, error) {
 	txs, pubKeyIDs, err := encoder.DeserializeCreate2Transfers(commitment.Transactions)
 	if err != nil {
 		return nil, err

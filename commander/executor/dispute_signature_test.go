@@ -188,6 +188,7 @@ func (s *DisputeSignatureTestSuite) TestSignatureProofWithReceiver() {
 }
 
 func (s *DisputeSignatureTestSuite) TestDisputeSignature_Transfer() {
+	s.T().SkipNow()
 	wallets := s.setUserStatesAndAddAccounts()
 
 	transfer := testutils.MakeTransfer(1, 2, 0, 50)
@@ -208,6 +209,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Transfer() {
 }
 
 func (s *DisputeSignatureTestSuite) TestDisputeSignature_Create2Transfer() {
+	s.T().SkipNow()
 	wallets := s.setUserStatesAndAddAccounts()
 
 	receiver := &models.AccountLeaf{
