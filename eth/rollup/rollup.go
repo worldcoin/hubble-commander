@@ -1,9 +1,12 @@
 package rollup
 
 import (
+	"strings"
+
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/create2transfer"
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
+	"github.com/Worldcoin/hubble-commander/contracts/libs/estimator"
 	"github.com/Worldcoin/hubble-commander/contracts/massmigration"
 	"github.com/Worldcoin/hubble-commander/contracts/proofofburn"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
@@ -25,6 +28,8 @@ const (
 	DefaultBlocksToFinalise       = 7 * 24 * 60 * 4
 	DefaultMinGasLeft             = 10_000
 	DefaultMaxTxsPerCommit        = 32
+
+	costEstimatorAddress = "079d8077c465bd0bf0fc502ad2b846757e415661"
 )
 
 type DeploymentConfig struct {
@@ -274,4 +279,11 @@ func deployMissing(dependencies *Dependencies, c deployer.ChainConnection) error
 		dependencies.AccountRegistry = accountRegistryAddress
 	}
 	return nil
+}
+
+func replaceCostEstimatorAddress(target common.Address) {
+	targetString := strings.ToLower(target.String()[2:])
+	transfer.TransferBin = strings.Replace(transfer.TransferBin, costEstimatorAddress, targetString, 1)
+	create2transfer.Create2TransferBin = strings.Replace(create2transfer.Create2TransferBin, costEstimatorAddress, targetString, 1)
+	massmigration.MassMigrationBin = strings.Replace(massmigration.MassMigrationBin, costEstimatorAddress, targetString, 1)
 }
