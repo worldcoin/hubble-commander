@@ -12,6 +12,7 @@ import (
 const (
 	AccountTreeDepth = merkletree.MaxDepth
 
+	batchSize            = 1 << 4
 	accountBatchOffset   = 1 << 31
 	leftSubtreeMaxValue  = accountBatchOffset - 2
 	rightSubtreeMaxValue = accountBatchOffset*2 - 17
@@ -69,7 +70,7 @@ func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
 }
 
 func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
-	if len(leaves) != 16 {
+	if len(leaves) != batchSize {
 		return ErrInvalidAccountsLength
 	}
 
