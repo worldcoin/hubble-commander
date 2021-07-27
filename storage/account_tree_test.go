@@ -139,7 +139,7 @@ func (s *AccountTreeTestSuite) TestSetSingle_CalculatesCorrectRootForTwoLeaves()
 	s.Equal(common.HexToHash("0x3a7a7ff21991ccfcbf8a4580862def7c498253ad398e967f270ff421db1d4833"), *root)
 }
 
-func (s *AccountTreeTestSuite) TestSetSingle_ThrowsOnSettingAlreadySetLeaf() {
+func (s *AccountTreeTestSuite) TestSetSingle_ReturnsErrorOnSettingAlreadySetLeaf() {
 	err := s.tree.SetSingle(s.leaf)
 	s.NoError(err)
 

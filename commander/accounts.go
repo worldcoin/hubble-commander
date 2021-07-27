@@ -119,9 +119,7 @@ func (c *Commander) syncBatchAccounts(start, end uint64) error {
 
 func saveSyncedAccount(accountTree *storage.AccountTree, account *models.AccountLeaf) (isNewAccount *bool, err error) {
 	err = accountTree.SetSingle(account)
-	if err == nil {
-		return ref.Bool(true), nil
-	} else if err == storage.ErrPubKeyIDAlreadyExists {
+	if err == storage.ErrPubKeyIDAlreadyExists {
 		var existingAccount *models.AccountLeaf
 		existingAccount, err = accountTree.Leaf(account.PubKeyID)
 		if err != nil {
@@ -131,9 +129,11 @@ func saveSyncedAccount(accountTree *storage.AccountTree, account *models.Account
 			return nil, errors.New("inconsistency in account leaves between the database and the contract")
 		}
 		return ref.Bool(false), nil
-	} else {
+	}
+	if err != nil {
 		return nil, err
 	}
+	return ref.Bool(true), nil
 }
 
 func logAccountsCount(newAccountsCount int) {
