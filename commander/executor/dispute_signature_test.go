@@ -103,7 +103,6 @@ func (s *DisputeSignatureTestSuite) TestReceiverPublicKeyProof() {
 	s.Len(publicKeyProof.Witness, 32)
 }
 
-//TODO: add similar test for Create2Transfer
 func (s *DisputeSignatureTestSuite) TestSignatureProof() {
 	s.setUserStatesAndAddAccounts()
 
@@ -136,6 +135,55 @@ func (s *DisputeSignatureTestSuite) TestSignatureProof() {
 	for i := range signatureProof.UserStates {
 		s.Equal(expectedUserStates[i], *signatureProof.UserStates[i].UserState)
 		s.Equal(expectedPublicKeys[i], *signatureProof.PublicKeys[i].PublicKey)
+	}
+}
+
+func (s *DisputeSignatureTestSuite) TestSignatureProofWithReceiver() {
+	wallets := s.setUserStatesAndAddAccounts()
+
+	receiverAccounts := []models.AccountLeaf{
+		{PubKeyID: 3, PublicKey: *wallets[2].PublicKey()},
+		{PubKeyID: 4, PublicKey: *wallets[2].PublicKey()},
+		{PubKeyID: 5, PublicKey: *wallets[1].PublicKey()},
+	}
+
+	transfers := []models.Create2Transfer{
+		testutils.MakeCreate2Transfer(1, ref.Uint32(3), 0, 50, &receiverAccounts[0].PublicKey),
+		testutils.MakeCreate2Transfer(0, ref.Uint32(4), 0, 50, &receiverAccounts[1].PublicKey),
+		testutils.MakeCreate2Transfer(0, ref.Uint32(5), 1, 75, &receiverAccounts[2].PublicKey),
+	}
+	pubKeyIDs := []uint32{3, 4, 5}
+
+	expectedUserStates := make([]models.UserState, 0, len(transfers))
+	senderPublicKeys := make([]models.PublicKey, 0, len(transfers))
+	receiverPublicKeys := make([]common.Hash, 0, len(transfers))
+	for i := range transfers {
+		leaf, err := s.storage.GetStateLeaf(transfers[i].FromStateID)
+		s.NoError(err)
+		expectedUserStates = append(expectedUserStates, leaf.UserState)
+
+		publicKey, err := s.storage.GetPublicKey(leaf.PubKeyID)
+		s.NoError(err)
+		senderPublicKeys = append(senderPublicKeys, *publicKey)
+
+		_, err = s.transactionExecutor.accountTree.Set(&receiverAccounts[i])
+		s.NoError(err)
+		receiverPublicKeys = append(receiverPublicKeys, crypto.Keccak256Hash(transfers[i].ToPublicKey.Bytes()))
+	}
+
+	serializedTxs, err := encoder.SerializeCreate2Transfers(transfers, pubKeyIDs)
+	s.NoError(err)
+
+	signatureProof, err := s.transactionExecutor.signatureProofWithReceiver(&encoder.DecodedCommitment{Transactions: serializedTxs})
+	s.NoError(err)
+	s.Len(signatureProof.UserStates, 3)
+	s.Len(signatureProof.SenderPublicKeys, 3)
+	s.Len(signatureProof.ReceiverPublicKeys, 3)
+
+	for i := range signatureProof.UserStates {
+		s.Equal(expectedUserStates[i], *signatureProof.UserStates[i].UserState)
+		s.Equal(senderPublicKeys[i], *signatureProof.SenderPublicKeys[i].PublicKey)
+		s.Equal(receiverPublicKeys[i], signatureProof.ReceiverPublicKeys[i].PublicKeyHash)
 	}
 }
 
