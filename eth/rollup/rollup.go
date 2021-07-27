@@ -148,6 +148,20 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 		return nil, errors.WithStack(err)
 	}
 
+	log.Println("Deploying CostExtimator")
+	estimatorAddress, tx, _, err := estimator.DeployCostEstimator(c.GetAccount(), c.GetBackend())
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	c.Commit()
+	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
+	if err != nil {
+		return nil, err
+	}
+
+	replaceCostEstimatorAddress(estimatorAddress)
+
 	log.Println("Deploying Transfer")
 	transferAddress, tx, transferContract, err := transfer.DeployTransfer(c.GetAccount(), c.GetBackend())
 	if err != nil {
