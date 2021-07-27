@@ -21,9 +21,8 @@ type VerifySignatureTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	transactionExecutor *TransactionExecutor
-	storage             *st.Storage
+	storage             *st.TestStorage
 	client              *eth.TestClient
-	teardown            func() error
 	cfg                 *config.RollupConfig
 	wallets             []bls.Wallet
 }
@@ -42,10 +41,8 @@ func (s *VerifySignatureTestSuite) SetupTest() {
 	var err error
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
-	testStorage, err := st.NewTestStorageWithBadger()
+	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.Storage
-	s.teardown = testStorage.Teardown
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, s.client.Client, s.cfg, context.Background())
 	err = s.storage.SetChainState(&s.client.ChainState)
 	s.NoError(err)
@@ -53,7 +50,7 @@ func (s *VerifySignatureTestSuite) SetupTest() {
 }
 
 func (s *VerifySignatureTestSuite) TearDownTest() {
-	err := s.teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 	s.client.Close()
 }

@@ -29,8 +29,7 @@ var (
 type SubmitTransferBatchTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	teardown            func() error
-	storage             *st.Storage
+	storage             *st.TestStorage
 	cfg                 *config.RollupConfig
 	client              *eth.TestClient
 	transactionExecutor *TransactionExecutor
@@ -41,10 +40,9 @@ func (s *SubmitTransferBatchTestSuite) SetupSuite() {
 }
 
 func (s *SubmitTransferBatchTestSuite) SetupTest() {
-	testStorage, err := st.NewTestStorageWithBadger()
+	var err error
+	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.Storage
-	s.teardown = testStorage.Teardown
 	s.cfg = &config.RollupConfig{
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
@@ -74,7 +72,7 @@ func (s *SubmitTransferBatchTestSuite) SetupTest() {
 
 func (s *SubmitTransferBatchTestSuite) TearDownTest() {
 	s.client.Close()
-	err := s.teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 

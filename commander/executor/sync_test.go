@@ -25,8 +25,7 @@ import (
 type SyncTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	teardown            func() error
-	storage             *st.Storage
+	storage             *st.TestStorage
 	client              *eth.TestClient
 	cfg                 *config.RollupConfig
 	transactionExecutor *TransactionExecutor
@@ -62,15 +61,14 @@ func (s *SyncTestSuite) SetupTest() {
 }
 
 func (s *SyncTestSuite) setupDB() {
-	testStorage, err := st.NewTestStorageWithBadger()
+	var err error
+	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.Storage
-	s.teardown = testStorage.Teardown
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, s.client.Client, s.cfg, context.Background())
 	err = s.storage.SetChainState(&s.client.ChainState)
 	s.NoError(err)
 
-	seedDB(s.Assertions, s.storage, s.wallets)
+	seedDB(s.Assertions, s.storage.Storage, s.wallets)
 }
 
 func seedDB(s *require.Assertions, storage *st.Storage, wallets []bls.Wallet) {
@@ -105,7 +103,7 @@ func seedDB(s *require.Assertions, storage *st.Storage, wallets []bls.Wallet) {
 
 func (s *SyncTestSuite) TearDownTest() {
 	s.client.Close()
-	err := s.teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
@@ -532,7 +530,7 @@ func (s *SyncTestSuite) syncAllBatches() {
 }
 
 func (s *SyncTestSuite) recreateDatabase() {
-	err := s.teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 	s.setupDB()
 }

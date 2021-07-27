@@ -25,8 +25,7 @@ import (
 type DisputeTransitionTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage             *st.Storage
-	teardown            func() error
+	storage             *st.TestStorage
 	client              *eth.TestClient
 	cfg                 *config.RollupConfig
 	transactionExecutor *TransactionExecutor
@@ -71,10 +70,9 @@ func (s *DisputeTransitionTestSuite) SetupSuite() {
 }
 
 func (s *DisputeTransitionTestSuite) SetupTest() {
-	testStorage, err := st.NewTestStorageWithBadger()
+	var err error
+	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.Storage
-	s.teardown = testStorage.Teardown
 
 	s.client, err = eth.NewConfiguredTestClient(
 		rollup.DeploymentConfig{},
@@ -87,7 +85,7 @@ func (s *DisputeTransitionTestSuite) SetupTest() {
 
 func (s *DisputeTransitionTestSuite) TearDownTest() {
 	s.client.Close()
-	err := s.teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 

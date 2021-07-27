@@ -31,8 +31,7 @@ var (
 type ApplyCreate2TransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage             *st.Storage
-	teardown            func() error
+	storage             *st.TestStorage
 	transactionExecutor *TransactionExecutor
 	client              *eth.TestClient
 }
@@ -42,10 +41,9 @@ func (s *ApplyCreate2TransferTestSuite) SetupSuite() {
 }
 
 func (s *ApplyCreate2TransferTestSuite) SetupTest() {
-	testStorage, err := st.NewTestStorageWithBadger()
+	var err error
+	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.Storage
-	s.teardown = testStorage.Teardown
 	s.client, err = eth.NewTestClient()
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, s.client.Client, nil, context.Background())
 	s.NoError(err)
@@ -87,7 +85,7 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 
 func (s *ApplyCreate2TransferTestSuite) TearDownTest() {
 	s.client.Close()
-	err := s.teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 

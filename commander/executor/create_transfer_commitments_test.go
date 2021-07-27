@@ -28,8 +28,7 @@ var (
 type TransferCommitmentsTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	teardown               func() error
-	storage                *st.Storage
+	storage                *st.TestStorage
 	cfg                    *config.RollupConfig
 	transactionExecutor    *TransactionExecutor
 	maxTxBytesInCommitment int
@@ -40,10 +39,9 @@ func (s *TransferCommitmentsTestSuite) SetupSuite() {
 }
 
 func (s *TransferCommitmentsTestSuite) SetupTest() {
-	testStorage, err := st.NewTestStorageWithBadger()
+	var err error
+	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.Storage
-	s.teardown = testStorage.Teardown
 	s.cfg = &config.RollupConfig{
 		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    4,
@@ -52,7 +50,7 @@ func (s *TransferCommitmentsTestSuite) SetupTest() {
 	}
 	s.maxTxBytesInCommitment = encoder.TransferLength * int(s.cfg.MaxTxsPerCommitment)
 
-	err = populateAccounts(s.storage, genesisBalances)
+	err = populateAccounts(s.storage.Storage, genesisBalances)
 	s.NoError(err)
 
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, &eth.Client{}, s.cfg, context.Background())
@@ -82,7 +80,7 @@ func populateAccounts(storage *st.Storage, balances []models.Uint256) error {
 }
 
 func (s *TransferCommitmentsTestSuite) TearDownTest() {
-	err := s.teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
@@ -125,7 +123,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_WithMoreTha
 }
 
 func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_QueriesForMorePendingTransfersUntilSatisfied() {
-	addAccountWithHighNonce(s.Assertions, s.storage, 123)
+	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 123)
 
 	transfers := generateValidTransfers(6)
 	s.invalidateTransfers(transfers[3:6])
@@ -159,7 +157,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_ForMultiple
 
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, &eth.Client{}, s.cfg, context.Background())
 
-	addAccountWithHighNonce(s.Assertions, s.storage, 123)
+	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 123)
 
 	transfers := generateValidTransfers(9)
 	s.invalidateTransfers(transfers[7:9])

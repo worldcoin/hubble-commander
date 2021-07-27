@@ -18,6 +18,7 @@ type TransactionExecutor struct {
 	ctx     context.Context
 }
 
+// TODO-INTERNAL use normal Storage object here
 // NewTransactionExecutor creates a TransactionExecutor and starts a database transaction.
 func NewTransactionExecutor(
 	storageBase *st.StorageBase,

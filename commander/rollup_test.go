@@ -16,7 +16,6 @@ type RollupTestSuite struct {
 	suite.Suite
 	storage   *st.TestStorage
 	stateTree *st.StoredMerkleTree
-	teardown  func() error
 }
 
 func (s *RollupTestSuite) SetupSuite() {
@@ -24,15 +23,14 @@ func (s *RollupTestSuite) SetupSuite() {
 }
 
 func (s *RollupTestSuite) SetupTest() {
-	testStorage, err := st.NewTestStorageWithBadger()
+	var err error
+	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage
 	s.stateTree = st.NewStoredMerkleTree("state", s.storage.Badger) // Must be the same state tree as in Storage object
-	s.teardown = testStorage.Teardown
 }
 
 func (s *RollupTestSuite) TearDownTest() {
-	err := s.teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 

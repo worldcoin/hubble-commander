@@ -18,8 +18,7 @@ import (
 type Create2TransferCommitmentsTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	teardown               func() error
-	storage                *st.Storage
+	storage                *st.TestStorage
 	client                 *eth.TestClient
 	cfg                    *config.RollupConfig
 	transactionExecutor    *TransactionExecutor
@@ -31,12 +30,11 @@ func (s *Create2TransferCommitmentsTestSuite) SetupSuite() {
 }
 
 func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
-	testStorage, err := st.NewTestStorageWithBadger()
+	var err error
+	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
-	s.storage = testStorage.Storage
-	s.teardown = testStorage.Teardown
 	s.cfg = &config.RollupConfig{
 		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    4,
@@ -45,7 +43,7 @@ func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 	}
 	s.maxTxBytesInCommitment = encoder.Create2TransferLength * int(s.cfg.MaxTxsPerCommitment)
 
-	err = populateAccounts(s.storage, genesisBalances)
+	err = populateAccounts(s.storage.Storage, genesisBalances)
 	s.NoError(err)
 
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, s.client.Client, s.cfg, context.Background())
@@ -53,7 +51,7 @@ func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 
 func (s *Create2TransferCommitmentsTestSuite) TearDownTest() {
 	s.client.Close()
-	err := s.teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
@@ -96,7 +94,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 }
 
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_QueriesForMorePendingTransfersUntilSatisfied() {
-	addAccountWithHighNonce(s.Assertions, s.storage, 124)
+	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 124)
 
 	transfers := generateValidCreate2Transfers(6)
 	s.invalidateCreate2Transfers(transfers[3:6])
@@ -130,7 +128,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, s.client.Client, s.cfg, context.Background())
 
-	addAccountWithHighNonce(s.Assertions, s.storage, 124)
+	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 124)
 
 	transfers := generateValidCreate2Transfers(9)
 	s.invalidateCreate2Transfers(transfers[7:9])

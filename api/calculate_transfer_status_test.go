@@ -28,8 +28,7 @@ var (
 type CalculateTransactionStatusTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	teardown func() error
-	storage  *st.Storage
+	storage  *st.TestStorage
 	sim      *simulator.Simulator
 	transfer *models.Transfer
 }
@@ -39,10 +38,9 @@ func (s *CalculateTransactionStatusTestSuite) SetupSuite() {
 }
 
 func (s *CalculateTransactionStatusTestSuite) SetupTest() {
-	testStorage, err := st.NewTestStorageWithBadger()
+	var err error
+	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.Storage
-	s.teardown = testStorage.Teardown
 
 	sim, err := simulator.NewSimulator()
 	s.NoError(err)
@@ -78,12 +76,12 @@ func (s *CalculateTransactionStatusTestSuite) SetupTest() {
 }
 
 func (s *CalculateTransactionStatusTestSuite) TearDownTest() {
-	err := s.teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
 func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_TxInMempool() {
-	status, err := CalculateTransactionStatus(s.storage, &s.transfer.TransactionBase, 0)
+	status, err := CalculateTransactionStatus(s.storage.Storage, &s.transfer.TransactionBase, 0)
 	s.NoError(err)
 
 	s.Equal(txstatus.Pending, *status)
@@ -103,7 +101,7 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_TxI
 
 	s.transfer.IncludedInCommitment = commitmentID
 
-	status, err := CalculateTransactionStatus(s.storage, &s.transfer.TransactionBase, 0)
+	status, err := CalculateTransactionStatus(s.storage.Storage, &s.transfer.TransactionBase, 0)
 	s.NoError(err)
 
 	s.Equal(txstatus.Pending, *status)
@@ -124,7 +122,7 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_InB
 
 	s.transfer.IncludedInCommitment = commitmentID
 
-	status, err := CalculateTransactionStatus(s.storage, &s.transfer.TransactionBase, 0)
+	status, err := CalculateTransactionStatus(s.storage.Storage, &s.transfer.TransactionBase, 0)
 	s.NoError(err)
 
 	s.Equal(txstatus.InBatch, *status)
@@ -152,7 +150,7 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_Fin
 	latestBlockNumber, err := s.sim.GetLatestBlockNumber()
 	s.NoError(err)
 
-	status, err := CalculateTransactionStatus(s.storage, &s.transfer.TransactionBase, uint32(*latestBlockNumber))
+	status, err := CalculateTransactionStatus(s.storage.Storage, &s.transfer.TransactionBase, uint32(*latestBlockNumber))
 	s.NoError(err)
 
 	s.Equal(txstatus.Finalised, *status)
@@ -160,7 +158,7 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_Fin
 
 func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_Error() {
 	s.transfer.ErrorMessage = ref.String("Gold Duck Error")
-	status, err := CalculateTransactionStatus(s.storage, &s.transfer.TransactionBase, 0)
+	status, err := CalculateTransactionStatus(s.storage.Storage, &s.transfer.TransactionBase, 0)
 	s.NoError(err)
 
 	s.Equal(txstatus.Error, *status)
