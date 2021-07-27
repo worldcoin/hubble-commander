@@ -1,12 +1,12 @@
 package storage
 
 import (
-	"crypto/rand"
 	"fmt"
 	"math/big"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
@@ -249,12 +249,8 @@ func (s *AccountTreeTestSuite) TestSetBatch_InvalidPubKeyIDValue() {
 
 func (s *AccountTreeTestSuite) randomPublicKey() models.PublicKey {
 	publicKey := models.PublicKey{}
-	randomBytes := make([]byte, models.PublicKeyLength)
-	_, err := rand.Read(randomBytes)
+	err := publicKey.SetBytes(utils.RandomBytes(models.PublicKeyLength))
 	s.NoError(err)
-	err = publicKey.SetBytes(randomBytes)
-	s.NoError(err)
-
 	return publicKey
 }
 
