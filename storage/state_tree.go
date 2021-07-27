@@ -207,11 +207,7 @@ func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, 
 }
 
 func (s *StateTree) getMerkleTreeNodeByPath(path *models.MerklePath) (*models.MerkleTreeNode, error) {
-	node, err := s.merkleTree.Get(*path)
-	if err != nil {
-		return nil, err
-	}
-	return node, nil
+	return s.merkleTree.Get(*path)
 }
 
 func NewStateLeaf(stateID uint32, state *models.UserState) (*models.StateLeaf, error) {
