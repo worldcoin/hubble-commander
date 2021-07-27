@@ -78,7 +78,7 @@ func ExtractPubKeyIDsFromBatchAccountEvent(ev *accountregistry.AccountRegistryBa
 	startID := ev.StartID.Uint64()
 	endID := ev.EndID.Uint64()
 
-	pubKeyIDs := make([]uint32, 0, endID-startID)
+	pubKeyIDs := make([]uint32, 0, endID-startID+1)
 	for i := startID; i <= endID; i++ {
 		pubKeyIDs = append(pubKeyIDs, uint32(accountBatchOffset+i))
 	}
