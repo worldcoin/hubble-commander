@@ -34,8 +34,7 @@ type SendTransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	api       *API
-	teardown  func() error
-	tree      *st.StateTree
+	storage   *st.TestStorage
 	userState *models.UserState
 	transfer  dto.Transfer
 	wallet    *bls.Wallet
@@ -47,26 +46,25 @@ func (s *SendTransferTestSuite) SetupSuite() {
 }
 
 func (s *SendTransferTestSuite) SetupTest() {
-	testStorage, err := st.NewTestStorageWithBadger()
+	var err error
+	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.teardown = testStorage.Teardown
-	s.tree = st.NewStateTree(testStorage.StorageBase)
 	s.api = &API{
 		cfg:     &config.APIConfig{},
-		storage: testStorage.Storage,
+		storage: s.storage.Storage,
 		client: &eth.Client{
 			ChainState: chainState,
 		},
 	}
 
-	err = testStorage.SetChainState(&chainState)
+	err = s.storage.SetChainState(&chainState)
 	s.NoError(err)
-	s.domain, err = testStorage.GetDomain(chainState.ChainID)
+	s.domain, err = s.storage.GetDomain(chainState.ChainID)
 	s.NoError(err)
 	s.wallet, err = bls.NewRandomWallet(*s.domain)
 	s.NoError(err)
 
-	err = testStorage.AddAccountLeafIfNotExists(&models.AccountLeaf{
+	err = s.storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
 		PubKeyID:  123,
 		PublicKey: *s.wallet.PublicKey(),
 	})
@@ -79,7 +77,7 @@ func (s *SendTransferTestSuite) SetupTest() {
 		Nonce:    models.MakeUint256(0),
 	}
 
-	_, err = s.tree.Set(1, s.userState)
+	_, err = s.storage.StateTree.Set(1, s.userState)
 	s.NoError(err)
 
 	s.transfer = s.signTransfer(transferWithoutSignature)
@@ -92,7 +90,7 @@ func (s *SendTransferTestSuite) signTransfer(transfer dto.Transfer) dto.Transfer
 }
 
 func (s *SendTransferTestSuite) TearDownTest() {
-	err := s.teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
@@ -106,7 +104,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesNonceTooLow_NoTransact
 	userStateWithIncreasedNonce := s.userState
 	userStateWithIncreasedNonce.Nonce = models.MakeUint256(1)
 
-	_, err := s.tree.Set(1, userStateWithIncreasedNonce)
+	_, err := s.storage.StateTree.Set(1, userStateWithIncreasedNonce)
 	s.NoError(err)
 
 	_, err = s.api.SendTransaction(dto.MakeTransaction(s.transfer))

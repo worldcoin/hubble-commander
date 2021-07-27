@@ -20,7 +20,6 @@ type GetTransactionsTestSuite struct {
 	suite.Suite
 	api     *API
 	storage *st.TestStorage
-	tree    *st.StateTree
 }
 
 func (s *GetTransactionsTestSuite) SetupSuite() {
@@ -32,7 +31,6 @@ func (s *GetTransactionsTestSuite) SetupTest() {
 	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.api = &API{storage: s.storage.Storage}
-	s.tree = st.NewStateTree(s.storage.StorageBase)
 }
 
 func (s *GetTransactionsTestSuite) TearDownTest() {
@@ -84,7 +82,7 @@ func (s *GetTransactionsTestSuite) addUserStates() {
 	}
 
 	for i := range userStates {
-		_, err := s.tree.Set(uint32(i), &userStates[i])
+		_, err := s.storage.StateTree.Set(uint32(i), &userStates[i])
 		s.NoError(err)
 	}
 }
@@ -293,7 +291,7 @@ func (s *GetTransactionsTestSuite) TestGetTransactions_NoTransactions() {
 		Balance:  models.MakeUint256(420),
 		Nonce:    models.MakeUint256(0),
 	}
-	_, err = s.tree.Set(0, userState)
+	_, err = s.storage.StateTree.Set(0, userState)
 	s.NoError(err)
 
 	userTransfers, err := s.api.GetTransactions(&account.PublicKey)

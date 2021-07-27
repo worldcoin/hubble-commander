@@ -32,7 +32,6 @@ type TransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage *TestStorage
-	tree    *StateTree
 }
 
 func (s *TransferTestSuite) SetupSuite() {
@@ -43,7 +42,6 @@ func (s *TransferTestSuite) SetupTest() {
 	var err error
 	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
-	s.tree = NewStateTree(s.storage.StorageBase)
 
 	err = s.storage.AddAccountLeafIfNotExists(&account2)
 	s.NoError(err)
@@ -275,7 +273,7 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 	}
 
 	for i := range userStates {
-		_, err := s.tree.Set(uint32(i), &userStates[i])
+		_, err := s.storage.StateTree.Set(uint32(i), &userStates[i])
 		s.NoError(err)
 	}
 

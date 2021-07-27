@@ -54,7 +54,7 @@ func (s *GetTransactionTestSuite) SetupTest() {
 	})
 	s.NoError(err)
 
-	_, err = st.NewStateTree(s.storage.StorageBase).Set(1, &models.UserState{
+	_, err = s.storage.StateTree.Set(1, &models.UserState{
 		PubKeyID: 123,
 		TokenID:  models.MakeUint256(1),
 		Balance:  models.MakeUint256(420),

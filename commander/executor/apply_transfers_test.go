@@ -17,9 +17,7 @@ import (
 type ApplyTransfersTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	teardown            func() error
-	storage             *storage.StorageBase
-	tree                *storage.StateTree
+	storage             *storage.TestStorage
 	cfg                 *config.RollupConfig
 	transactionExecutor *TransactionExecutor
 	feeReceiver         *FeeReceiver
@@ -30,12 +28,9 @@ func (s *ApplyTransfersTestSuite) SetupSuite() {
 }
 
 func (s *ApplyTransfersTestSuite) SetupTest() {
-	testStorage, err := storage.NewTestStorageWithBadger()
+	var err error
+	s.storage, err = storage.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.StorageBase
-	s.teardown = testStorage.Teardown
-	s.NoError(err)
-	s.tree = storage.NewStateTree(s.storage)
 	s.cfg = &config.RollupConfig{
 		FeeReceiverPubKeyID: 3,
 		MaxTxsPerCommitment: 6,
@@ -79,14 +74,14 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 		s.NoError(err)
 	}
 
-	_, err = s.tree.Set(1, &senderState)
+	_, err = s.storage.StateTree.Set(1, &senderState)
 	s.NoError(err)
-	_, err = s.tree.Set(2, &receiverState)
+	_, err = s.storage.StateTree.Set(2, &receiverState)
 	s.NoError(err)
-	_, err = s.tree.Set(3, &feeReceiverState)
+	_, err = s.storage.StateTree.Set(3, &feeReceiverState)
 	s.NoError(err)
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, &eth.Client{}, s.cfg, context.Background())
 	s.feeReceiver = &FeeReceiver{
 		StateID: 3,
 		TokenID: models.MakeUint256(1),
@@ -94,7 +89,7 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 }
 
 func (s *ApplyTransfersTestSuite) TearDownTest() {
-	err := s.teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 

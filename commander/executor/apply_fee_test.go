@@ -14,7 +14,6 @@ type ApplyFeeTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage             *storage.TestStorage
-	tree                *storage.StateTree
 	transactionExecutor *TransactionExecutor
 }
 
@@ -26,7 +25,6 @@ func (s *ApplyFeeTestSuite) SetupTest() {
 	var err error
 	s.storage, err = storage.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.tree = storage.NewStateTree(s.storage.StorageBase)
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, nil, nil, context.Background())
 }
 
@@ -37,7 +35,7 @@ func (s *ApplyFeeTestSuite) TearDownTest() {
 
 func (s *ApplyFeeTestSuite) TestApplyFee() {
 	feeReceiverStateID := receiverState.PubKeyID
-	_, err := s.tree.Set(feeReceiverStateID, &receiverState)
+	_, err := s.storage.StateTree.Set(feeReceiverStateID, &receiverState)
 	s.NoError(err)
 
 	stateProof, err := s.transactionExecutor.ApplyFee(feeReceiverStateID, models.MakeUint256(555))

@@ -28,7 +28,6 @@ type StateLeafTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage *TestStorage
-	tree    *StateTree
 }
 
 func (s *StateLeafTestSuite) SetupSuite() {
@@ -39,7 +38,6 @@ func (s *StateLeafTestSuite) SetupTest() {
 	var err error
 	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
-	s.tree = NewStateTree(s.storage.StorageBase)
 }
 
 func (s *StateLeafTestSuite) TearDownTest() {
@@ -174,7 +172,7 @@ func (s *StateLeafTestSuite) TestGetUserStatesByPublicKey() {
 	}
 
 	for i := range userStates {
-		_, err := s.tree.Set(uint32(i), &userStates[i])
+		_, err := s.storage.StateTree.Set(uint32(i), &userStates[i])
 		s.NoError(err)
 	}
 
@@ -202,10 +200,10 @@ func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf() {
 	err = s.storage.AddAccountLeafIfNotExists(&account2)
 	s.NoError(err)
 
-	_, err = s.tree.Set(0, userState1)
+	_, err = s.storage.StateTree.Set(0, userState1)
 	s.NoError(err)
 
-	_, err = s.tree.Set(1, userState2)
+	_, err = s.storage.StateTree.Set(1, userState2)
 	s.NoError(err)
 
 	stateLeaf, err := s.storage.GetFeeReceiverStateLeaf(userState1.PubKeyID, userState1.TokenID)
@@ -221,10 +219,10 @@ func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf_WorkWithCachedValue() {
 	err = s.storage.AddAccountLeafIfNotExists(&account2)
 	s.NoError(err)
 
-	_, err = s.tree.Set(0, userState1)
+	_, err = s.storage.StateTree.Set(0, userState1)
 	s.NoError(err)
 
-	_, err = s.tree.Set(1, userState2)
+	_, err = s.storage.StateTree.Set(1, userState2)
 	s.NoError(err)
 
 	_, err = s.storage.GetFeeReceiverStateLeaf(userState2.PubKeyID, userState2.TokenID)
@@ -249,11 +247,9 @@ func (s *StateLeafTestSuite) TestGetNextAvailableStateID_OneBytes() {
 	err = s.storage.AddAccountLeafIfNotExists(&account2)
 	s.NoError(err)
 
-	tree := NewStateTree(s.storage.StorageBase)
-
-	_, err = tree.Set(0, userState1)
+	_, err = s.storage.StateTree.Set(0, userState1)
 	s.NoError(err)
-	_, err = tree.Set(2, userState2)
+	_, err = s.storage.StateTree.Set(2, userState2)
 	s.NoError(err)
 
 	stateID, err := s.storage.GetNextAvailableStateID()
@@ -267,11 +263,9 @@ func (s *StateLeafTestSuite) TestGetNextAvailableStateID_TwoBytes() {
 	err = s.storage.AddAccountLeafIfNotExists(&account2)
 	s.NoError(err)
 
-	tree := NewStateTree(s.storage.StorageBase)
-
-	_, err = tree.Set(0, userState1)
+	_, err = s.storage.StateTree.Set(0, userState1)
 	s.NoError(err)
-	_, err = tree.Set(13456, userState2)
+	_, err = s.storage.StateTree.Set(13456, userState2)
 	s.NoError(err)
 
 	stateID, err := s.storage.GetNextAvailableStateID()
