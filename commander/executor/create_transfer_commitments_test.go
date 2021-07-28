@@ -58,15 +58,7 @@ func (s *TransferCommitmentsTestSuite) SetupTest() {
 
 func populateAccounts(storage *st.Storage, balances []models.Uint256) error {
 	for i := uint32(0); i < uint32(len(balances)); i++ {
-		err := storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
-			PubKeyID:  i,
-			PublicKey: models.PublicKey{},
-		})
-		if err != nil {
-			return err
-		}
-
-		_, err = storage.StateTree.Set(i, &models.UserState{
+		_, err := storage.StateTree.Set(i, &models.UserState{
 			PubKeyID: i,
 			TokenID:  models.MakeUint256(0),
 			Balance:  balances[i],
@@ -309,16 +301,8 @@ func (s *TransferCommitmentsTestSuite) preparePendingTransfers(transfersAmount u
 }
 
 func addAccountWithHighNonce(s *require.Assertions, storage *st.Storage, stateID uint32) {
-	dummyAccount := models.AccountLeaf{
-		PubKeyID:  500,
-		PublicKey: models.PublicKey{1, 2, 3, 4},
-	}
-
-	err := storage.AddAccountLeafIfNotExists(&dummyAccount)
-	s.NoError(err)
-
-	_, err = storage.StateTree.Set(stateID, &models.UserState{
-		PubKeyID: dummyAccount.PubKeyID,
+	_, err := storage.StateTree.Set(stateID, &models.UserState{
+		PubKeyID: 500,
 		TokenID:  models.MakeUint256(0),
 		Balance:  models.MakeUint256(1000),
 		Nonce:    models.MakeUint256(10),
