@@ -64,7 +64,7 @@ func (s *SendTransferTestSuite) SetupTest() {
 	s.wallet, err = bls.NewRandomWallet(*s.domain)
 	s.NoError(err)
 
-	err = s.storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
+	err = s.storage.AccountTree.SetSingle(&models.AccountLeaf{
 		PubKeyID:  123,
 		PublicKey: *s.wallet.PublicKey(),
 	})

@@ -64,14 +64,6 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 		Nonce:    models.MakeUint256(0),
 	}
 
-	for i := 1; i <= 10; i++ {
-		err = s.storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
-			PubKeyID:  uint32(i),
-			PublicKey: models.PublicKey{1, 2, 3},
-		})
-		s.NoError(err)
-	}
-
 	_, err = s.storage.StateTree.Set(1, &senderState)
 	s.NoError(err)
 	_, err = s.storage.StateTree.Set(2, &receiverState)
@@ -252,6 +244,14 @@ func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_RegistersPubK
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_ReturnsUnusedPubKeyID() {
+	for i := 1; i <= 10; i++ {
+		err := s.storage.AccountTree.SetSingle(&models.AccountLeaf{
+			PubKeyID:  uint32(i),
+			PublicKey: models.PublicKey{1, 2, 3},
+		})
+		s.NoError(err)
+	}
+
 	c2T := create2Transfer
 	c2T.ToPublicKey = models.PublicKey{1, 2, 3}
 
