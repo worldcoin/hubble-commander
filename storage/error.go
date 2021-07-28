@@ -55,3 +55,15 @@ func NewAccountAlreadyExistsError(account *models.AccountLeaf) *AccountAlreadyEx
 func (e *AccountAlreadyExistsError) Error() string {
 	return fmt.Sprintf("account with pubKeyID %d already exists", e.Account.PubKeyID)
 }
+
+type BatchAccountsAlreadyExistError struct {
+	Accounts []models.AccountLeaf
+}
+
+func NewBatchAccountAlreadyExistsError(accounts []models.AccountLeaf) *BatchAccountsAlreadyExistError {
+	return &BatchAccountsAlreadyExistError{Accounts: accounts}
+}
+
+func (e *BatchAccountsAlreadyExistError) Error() string {
+	return fmt.Sprintf("accounts with pubKeyIDs %v already exists", e.Accounts)
+}
