@@ -131,8 +131,7 @@ func (t *TransactionExecutor) syncCommitments(batch *eth.DecodedBatch) error {
 		log.WithFields(log.Fields{"batchID": batch.ID.String()}).Debugf("Syncing commitment #%d", i+1)
 		err := t.syncCommitment(batch, &batch.Commitments[i])
 		if err == ErrInvalidSignature {
-			// TODO: dispute fraudulent commitment
-			return err
+			return NewDisputableSignatureError(err, i)
 		}
 
 		var disputableErr *DisputableTransferError

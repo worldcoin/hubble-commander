@@ -44,6 +44,19 @@ func NewDisputableCommitmentError(err DisputableTransferError, commitmentIndex i
 	return &DisputableCommitmentError{DisputableTransferError: err, CommitmentIndex: commitmentIndex}
 }
 
+type DisputableSignatureError struct {
+	Reason          string
+	CommitmentIndex int
+}
+
+func NewDisputableSignatureError(reason error, commitmentIndex int) *DisputableSignatureError {
+	return &DisputableSignatureError{Reason: reason.Error(), CommitmentIndex: commitmentIndex}
+}
+
+func (e DisputableSignatureError) Error() string {
+	return fmt.Sprintf("syncing commitment failed: %s", e.Reason)
+}
+
 type InconsistentBatchError struct {
 	LocalBatch *models.Batch
 }
