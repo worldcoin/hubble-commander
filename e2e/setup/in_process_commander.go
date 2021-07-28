@@ -19,11 +19,11 @@ type InProcessCommander struct {
 func CreateInProcessCommander() *InProcessCommander {
 	cfg := config.GetConfig()
 	cfg.Bootstrap.Prune = true
-	cfg.Rollup.MinTxsPerCommitment = cfg.Rollup.MaxTxsPerCommitment
 	return CreateInProcessCommanderWithConfig(cfg)
 }
 
 func CreateInProcessCommanderWithConfig(cfg *config.Config) *InProcessCommander {
+	cfg.Rollup.MinTxsPerCommitment = cfg.Rollup.MaxTxsPerCommitment
 	cmd := commander.NewCommander(cfg)
 
 	endpoint := fmt.Sprintf("http://localhost:%s", cfg.API.Port)
