@@ -188,7 +188,6 @@ func (s *DisputeSignatureTestSuite) TestSignatureProofWithReceiver() {
 }
 
 func (s *DisputeSignatureTestSuite) TestDisputeSignature_Transfer() {
-	s.T().SkipNow()
 	wallets := s.setUserStatesAndAddAccounts()
 
 	transfer := testutils.MakeTransfer(1, 2, 0, 50)
@@ -203,13 +202,11 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Transfer() {
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	//TODO: reverted because BNPairingPrecompileCostEstimator is not deployed
 	err = s.transactionExecutor.DisputeSignature(&remoteBatches[0], 0)
 	s.NoError(err)
 }
 
 func (s *DisputeSignatureTestSuite) TestDisputeSignature_Create2Transfer() {
-	s.T().SkipNow()
 	wallets := s.setUserStatesAndAddAccounts()
 
 	receiver := &models.AccountLeaf{
@@ -232,7 +229,6 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Create2Transfer() {
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	//TODO: reverted because BNPairingPrecompileCostEstimator is not deployed
 	err = s.transactionExecutor.DisputeSignature(&remoteBatches[0], 0)
 	s.NoError(err)
 }
