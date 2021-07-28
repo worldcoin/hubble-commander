@@ -330,11 +330,26 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidTransferSignature() {
 	signTransfer(s.T(), &s.wallets[1], &tx)
 	s.setTransferHash(&tx)
 
-	batch, commitments := createTransferBatch(s.Assertions, s.transactionExecutor, &tx, testDomain)
+	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &tx)
 
-	err := s.transactionExecutor.SubmitBatch(batch, commitments)
+	s.recreateDatabase()
+
+	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
 	s.NoError(err)
-	s.client.Commit()
+	s.Len(remoteBatches, 1)
+
+	var disputableErr *DisputableSignatureError
+	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
+	s.ErrorAs(err, &disputableErr)
+	s.Equal(ErrInvalidSignature.Error(), disputableErr.Reason)
+}
+
+func (s *SyncTestSuite) TestSyncBatch_InvalidCreate2TransferSignature() {
+	tx := testutils.MakeCreate2Transfer(0, ref.Uint32(5), 0, 400, s.wallets[0].PublicKey())
+	signCreate2Transfer(s.T(), &s.wallets[1], &tx)
+	s.setCreate2TransferHash(&tx)
+
+	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &tx)
 
 	s.recreateDatabase()
 
