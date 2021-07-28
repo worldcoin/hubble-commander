@@ -6,7 +6,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -58,15 +57,12 @@ func (s *ChainStateTestSuite) TestGetChainState_NotFound() {
 }
 
 func (s *ChainStateTestSuite) TestGetDomain() {
-	err := s.storage.SetChainState(&chainState)
-	s.NoError(err)
-
-	expected, err := bls.DomainFromBytes(crypto.Keccak256(chainState.Rollup.Bytes()))
-	s.NoError(err)
+	expectedDomain := bls.Domain{1, 2, 3}
+	s.storage.SetDomain(expectedDomain)
 
 	domain, err := s.storage.GetDomain()
 	s.NoError(err)
-	s.Equal(expected, domain)
+	s.Equal(expectedDomain, *domain)
 	s.Equal(s.storage.domain, domain)
 }
 
