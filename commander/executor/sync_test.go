@@ -215,7 +215,7 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyTransfersInCommitment() {
 	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
 	s.NoError(err)
 
-	var disputableErr *DisputableCommitmentError
+	var disputableErr *DisputableTransitionError
 	err = s.transactionExecutor.SyncBatch(&remoteBatches[1])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(ErrTooManyTx.Reason, disputableErr.Reason)
@@ -244,7 +244,7 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyCreate2TransfersInCommitment() {
 	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
 	s.NoError(err)
 
-	var disputableErr *DisputableCommitmentError
+	var disputableErr *DisputableTransitionError
 	err = s.transactionExecutor.SyncBatch(&remoteBatches[1])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(ErrTooManyTx.Reason, disputableErr.Reason)
@@ -279,7 +279,7 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidTransferCommitmentStateRoot() {
 	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
 	s.NoError(err)
 
-	var disputableErr *DisputableCommitmentError
+	var disputableErr *DisputableTransitionError
 	err = s.transactionExecutor.SyncBatch(&remoteBatches[1])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(ErrInvalidCommitmentStateRoot.Error(), disputableErr.Reason)
@@ -314,7 +314,7 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidCreate2TransferCommitmentStateRoot(
 	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
 	s.NoError(err)
 
-	var disputableErr *DisputableCommitmentError
+	var disputableErr *DisputableTransitionError
 	err = s.transactionExecutor.SyncBatch(&remoteBatches[1])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(ErrInvalidCommitmentStateRoot.Error(), disputableErr.Reason)

@@ -35,13 +35,13 @@ func (e DisputableTransferError) Error() string {
 	return fmt.Sprintf("syncing commitment failed: %s", e.Reason)
 }
 
-type DisputableCommitmentError struct {
+type DisputableTransitionError struct {
 	DisputableTransferError
 	CommitmentIndex int
 }
 
-func NewDisputableCommitmentError(err DisputableTransferError, commitmentIndex int) *DisputableCommitmentError {
-	return &DisputableCommitmentError{DisputableTransferError: err, CommitmentIndex: commitmentIndex}
+func NewDisputableTransitionError(err DisputableTransferError, commitmentIndex int) *DisputableTransitionError {
+	return &DisputableTransitionError{DisputableTransferError: err, CommitmentIndex: commitmentIndex}
 }
 
 type DisputableSignatureError struct {

@@ -152,7 +152,7 @@ func logBatchesCount(newRemoteBatches []eth.DecodedBatch) {
 	}
 }
 
-func logFraudulentBatch(batch *eth.DecodedBatch, err *executor.DisputableCommitmentError) {
+func logFraudulentBatch(batch *eth.DecodedBatch, err *executor.DisputableTransitionError) {
 	log.WithFields(log.Fields{"batchID": batch.ID.String()}).
 		Infof("Found fraudulent batch. Reason: %s", err.Reason)
 }
