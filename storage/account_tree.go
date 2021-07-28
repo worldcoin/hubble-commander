@@ -59,6 +59,9 @@ func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
 	defer tx.Rollback(&err)
 
 	_, err = NewAccountTree(storage).unsafeSet(leaf)
+	if err == bh.ErrKeyExists {
+		return NewAccountAlreadyExistsError(leaf)
+	}
 	if err != nil {
 		return err
 	}
@@ -84,6 +87,9 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
 			return NewInvalidPubKeyIDError(leaves[i].PubKeyID)
 		}
 		_, err = accountTree.unsafeSet(&leaves[i])
+		if err == bh.ErrKeyExists {
+			return NewBatchAccountAlreadyExistsError(leaves)
+		}
 		if err != nil {
 			return err
 		}
@@ -98,9 +104,6 @@ func (s *AccountTree) GetWitness(pubKeyID uint32) (models.Witness, error) {
 
 func (s *AccountTree) unsafeSet(leaf *models.AccountLeaf) (models.Witness, error) {
 	err := s.storage.AddAccountLeafIfNotExists(leaf)
-	if err == bh.ErrKeyExists {
-		return nil, NewAccountAlreadyExistsError(leaf)
-	}
 	if err != nil {
 		return nil, err
 	}
