@@ -123,34 +123,39 @@ func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int,
 
 func saveSyncedSingleAccount(accountTree *storage.AccountTree, account *models.AccountLeaf) (isNewAccount *bool, err error) {
 	err = accountTree.SetSingle(account)
+	var accountExistsErr *storage.AccountAlreadyExistsError
+	if errors.As(err, &accountExistsErr) {
+		return ref.Bool(false), validateExistingAccounts(accountTree, *accountExistsErr.Account)
+	}
 	if err != nil {
-		return handleAccountSetError(accountTree, err)
+		return nil, err
 	}
 	return ref.Bool(true), nil
 }
 
 func saveSyncedBatchAccounts(accountTree *storage.AccountTree, accounts []models.AccountLeaf) (isNewAccount *bool, err error) {
 	err = accountTree.SetBatch(accounts)
+	var accountBatchExistsErr *storage.AccountBatchAlreadyExistsError
+	if errors.As(err, &accountBatchExistsErr) {
+		return ref.Bool(false), validateExistingAccounts(accountTree, accountBatchExistsErr.Accounts...)
+	}
 	if err != nil {
-		return handleAccountSetError(accountTree, err)
+		return nil, err
 	}
 	return ref.Bool(true), nil
 }
 
-func handleAccountSetError(accountTree *storage.AccountTree, err error) (*bool, error) {
-	var accountExistsError *storage.AccountAlreadyExistsError
-	if errors.As(err, &accountExistsError) {
-		var existingAccount *models.AccountLeaf
-		existingAccount, err = accountTree.Leaf(accountExistsError.Account.PubKeyID)
+func validateExistingAccounts(accountTree *storage.AccountTree, accounts ...models.AccountLeaf) error {
+	for i := range accounts {
+		existingAccount, err := accountTree.Leaf(accounts[i].PubKeyID)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		if existingAccount.PublicKey != accountExistsError.Account.PublicKey {
-			return nil, errors.New("inconsistency in account leaves between the database and the contract")
+		if existingAccount.PublicKey != accounts[i].PublicKey {
+			return errors.New("inconsistency in account leaves between the database and the contract")
 		}
-		return ref.Bool(false), nil
 	}
-	return nil, err
+	return nil
 }
 
 func logAccountsCount(newAccountsCount int) {

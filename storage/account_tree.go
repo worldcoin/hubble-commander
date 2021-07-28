@@ -88,7 +88,7 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
 		}
 		_, err = accountTree.unsafeSet(&leaves[i])
 		if err == bh.ErrKeyExists {
-			return NewBatchAccountAlreadyExistsError(leaves)
+			return NewAccountBatchAlreadyExistsError(leaves)
 		}
 		if err != nil {
 			return err
