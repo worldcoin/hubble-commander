@@ -64,14 +64,14 @@ func (s *ChainStateTestSuite) TestGetDomain() {
 	expected, err := bls.DomainFromBytes(crypto.Keccak256(chainState.Rollup.Bytes()))
 	s.NoError(err)
 
-	domain, err := s.storage.GetDomain(chainState.ChainID)
+	domain, err := s.storage.GetDomain()
 	s.NoError(err)
 	s.Equal(expected, domain)
 	s.Equal(s.storage.domain, domain)
 }
 
 func (s *ChainStateTestSuite) TestGetDomain_NotFound() {
-	domain, err := s.storage.GetDomain(chainState.ChainID)
+	domain, err := s.storage.GetDomain()
 	s.Equal(NewNotFoundError("domain"), err)
 	s.Nil(domain)
 }

@@ -67,7 +67,7 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.signaturesDomain, err = c.storage.GetDomain(c.client.ChainState.ChainID)
+	c.signaturesDomain, err = c.storage.GetDomain()
 	if err != nil {
 		return err
 	}

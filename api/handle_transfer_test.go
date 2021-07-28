@@ -59,7 +59,7 @@ func (s *SendTransferTestSuite) SetupTest() {
 
 	err = s.storage.SetChainState(&chainState)
 	s.NoError(err)
-	s.domain, err = s.storage.GetDomain(chainState.ChainID)
+	s.domain, err = s.storage.GetDomain()
 	s.NoError(err)
 	s.wallet, err = bls.NewRandomWallet(*s.domain)
 	s.NoError(err)

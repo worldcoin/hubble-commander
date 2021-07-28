@@ -177,7 +177,7 @@ func (s *VerifySignatureTestSuite) TestVerifyCreate2TransferSignature_ValidSigna
 }
 
 func (s *VerifySignatureTestSuite) addAccounts() {
-	domain, err := s.storage.GetDomain(s.client.ChainState.ChainID)
+	domain, err := s.storage.GetDomain()
 	s.NoError(err)
 
 	s.wallets = make([]bls.Wallet, 0, 2)
