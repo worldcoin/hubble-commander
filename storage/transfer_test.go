@@ -42,9 +42,6 @@ func (s *TransferTestSuite) SetupTest() {
 	var err error
 	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
-
-	err = s.storage.AddAccountLeafIfNotExists(&account2)
-	s.NoError(err)
 }
 
 func (s *TransferTestSuite) TearDownTest() {
@@ -260,7 +257,7 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 		},
 	}
 	for i := range accounts {
-		err := s.storage.AddAccountLeafIfNotExists(&accounts[i])
+		err := s.storage.AccountTree.SetSingle(&accounts[i])
 		s.NoError(err)
 	}
 
@@ -326,6 +323,8 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 }
 
 func (s *TransferTestSuite) TestGetUserTransfersByPublicKey_NoTransfers() {
+	err := s.storage.AccountTree.SetSingle(&account2)
+	s.NoError(err)
 	userTransfers, err := s.storage.GetTransfersByPublicKey(&account2.PublicKey)
 	s.NoError(err)
 	s.Len(userTransfers, 0)

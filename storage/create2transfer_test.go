@@ -46,7 +46,7 @@ func (s *Create2TransferTestSuite) SetupTest() {
 	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
 
-	err = s.storage.AddAccountLeafIfNotExists(&account2)
+	err = s.storage.AccountTree.SetSingle(&account2)
 	s.NoError(err)
 }
 
