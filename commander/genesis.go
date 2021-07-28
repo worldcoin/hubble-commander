@@ -50,7 +50,7 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.PopulatedGen
 			PubKeyID:  account.PubKeyID,
 			PublicKey: account.PublicKey,
 		}
-		_, err := saveSyncedAccount(accountTree, leaf)
+		_, err := saveSyncedSingleAccount(accountTree, leaf)
 		if err != nil {
 			return err
 		}

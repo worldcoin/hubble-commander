@@ -9,9 +9,16 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-const AccountTreeDepth = merkletree.MaxDepth
+const (
+	AccountTreeDepth = merkletree.MaxDepth
 
-var ErrPubKeyIDAlreadyExists = errors.New("leaf with given pub key ID already exists")
+	batchSize            = 1 << 4
+	accountBatchOffset   = 1 << 31
+	leftSubtreeMaxValue  = accountBatchOffset - 2
+	rightSubtreeMaxValue = accountBatchOffset*2 - 18
+)
+
+var ErrInvalidAccountsLength = errors.New("invalid accounts length")
 
 type AccountTree struct {
 	storage    *Storage
@@ -37,32 +44,58 @@ func (s *AccountTree) LeafNode(pubKeyID uint32) (*models.MerkleTreeNode, error) 
 }
 
 func (s *AccountTree) Leaf(pubKeyID uint32) (*models.AccountLeaf, error) {
-	leaf, err := s.storage.GetAccountLeaf(pubKeyID)
-	if err != nil {
-		return nil, err
-	}
-	return leaf, nil
+	return s.storage.GetAccountLeaf(pubKeyID)
 }
 
-// Set returns a witness containing 32 elements for the current set operation
-func (s *AccountTree) Set(leaf *models.AccountLeaf) (models.Witness, error) {
+func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
+	if leaf.PubKeyID > leftSubtreeMaxValue {
+		return NewInvalidPubKeyIDError(leaf.PubKeyID)
+	}
+
 	tx, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer tx.Rollback(&err)
 
-	witness, err := NewAccountTree(storage).unsafeSet(leaf)
+	_, err = NewAccountTree(storage).unsafeSet(leaf)
+	if err == bh.ErrKeyExists {
+		return NewAccountAlreadyExistsError(leaf)
+	}
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		return nil, err
+	return tx.Commit()
+}
+
+func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
+	if len(leaves) != batchSize {
+		return ErrInvalidAccountsLength
 	}
 
-	return witness, nil
+	tx, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(&err)
+
+	accountTree := NewAccountTree(storage)
+
+	for i := range leaves {
+		if leaves[i].PubKeyID < accountBatchOffset || leaves[i].PubKeyID > rightSubtreeMaxValue {
+			return NewInvalidPubKeyIDError(leaves[i].PubKeyID)
+		}
+		_, err = accountTree.unsafeSet(&leaves[i])
+		if err == bh.ErrKeyExists {
+			return NewAccountBatchAlreadyExistsError(leaves)
+		}
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
 }
 
 func (s *AccountTree) GetWitness(pubKeyID uint32) (models.Witness, error) {
@@ -71,9 +104,6 @@ func (s *AccountTree) GetWitness(pubKeyID uint32) (models.Witness, error) {
 
 func (s *AccountTree) unsafeSet(leaf *models.AccountLeaf) (models.Witness, error) {
 	err := s.storage.AddAccountLeafIfNotExists(leaf)
-	if err == bh.ErrKeyExists {
-		return nil, ErrPubKeyIDAlreadyExists
-	}
 	if err != nil {
 		return nil, err
 	}
@@ -89,9 +119,5 @@ func (s *AccountTree) unsafeSet(leaf *models.AccountLeaf) (models.Witness, error
 }
 
 func (s *AccountTree) getMerkleTreeNodeByPath(path *models.MerklePath) (*models.MerkleTreeNode, error) {
-	node, err := s.merkleTree.Get(*path)
-	if err != nil {
-		return nil, err
-	}
-	return node, nil
+	return s.merkleTree.Get(*path)
 }
