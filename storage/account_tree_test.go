@@ -230,6 +230,24 @@ func (s *AccountTreeTestSuite) TestSetBatch_InvalidLeavesLength() {
 	s.ErrorIs(err, ErrInvalidAccountsLength)
 }
 
+func (s *AccountTreeTestSuite) TestSetBatch_ReturnsErrorOnSettingAlreadySetLeaf() {
+	leaves := make([]models.AccountLeaf, batchSize)
+	for i := range leaves {
+		leaves[i] = models.AccountLeaf{
+			PubKeyID:  uint32(i + accountBatchOffset),
+			PublicKey: models.PublicKey{1, 2, byte(i)},
+		}
+	}
+	err := s.tree.SetBatch(leaves)
+	s.NoError(err)
+
+	err = s.tree.SetBatch(leaves)
+
+	var accountBatchExistsError *AccountBatchAlreadyExistsError
+	s.ErrorAs(err, &accountBatchExistsError)
+	s.Equal(leaves, accountBatchExistsError.Accounts)
+}
+
 func (s *AccountTreeTestSuite) TestSetBatch_InvalidPubKeyIDValue() {
 	leaves := make([]models.AccountLeaf, batchSize)
 	for i := range leaves {
