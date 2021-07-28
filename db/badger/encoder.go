@@ -13,10 +13,6 @@ import (
 // Encode Remember to provide cases for both value and pointer types when adding new encoders
 func Encode(value interface{}) ([]byte, error) {
 	switch v := value.(type) {
-	case models.MerklePath:
-		return v.Bytes(), nil
-	case *models.MerklePath:
-		return nil, errors.Errorf("pass by value")
 	case models.AccountNode:
 		return EncodeDataHash(&v.DataHash)
 	case *models.AccountNode:
@@ -56,8 +52,6 @@ func Encode(value interface{}) ([]byte, error) {
 
 func Decode(data []byte, value interface{}) error {
 	switch v := value.(type) {
-	case *models.MerklePath:
-		return v.SetBytes(data)
 	case *models.NamespacedMerklePath:
 		return v.SetBytes(data)
 	case *models.AccountNode:
