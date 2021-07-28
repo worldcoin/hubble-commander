@@ -29,6 +29,10 @@ type StartOptions struct {
 	Prune bool
 }
 
+func getEnvVarMapping(key string) string {
+	return key + "=" + os.Getenv(key)
+}
+
 func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 	cli, err := docker.NewClientWithOpts(docker.FromEnv)
 	if err != nil {
@@ -47,14 +51,16 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 		&container.Config{
 			Image: opts.Image,
 			Env: []string{
-				"HUBBLE_ETHEREUM_RPC_URL=" + os.Getenv("HUBBLE_ETHEREUM_RPC_URL"),
-				"HUBBLE_ETHEREUM_CHAIN_ID=" + os.Getenv("HUBBLE_ETHEREUM_CHAIN_ID"),
-				"HUBBLE_ETHEREUM_PRIVATE_KEY=" + os.Getenv("HUBBLE_ETHEREUM_PRIVATE_KEY"),
-				"HUBBLE_POSTGRES_HOST=" + os.Getenv("HUBBLE_POSTGRES_HOST"),
-				"HUBBLE_POSTGRES_PORT=" + os.Getenv("HUBBLE_POSTGRES_PORT"),
-				"HUBBLE_POSTGRES_NAME=" + os.Getenv("HUBBLE_POSTGRES_NAME"),
-				"HUBBLE_POSTGRES_USER=" + os.Getenv("HUBBLE_POSTGRES_USER"),
-				"HUBBLE_POSTGRES_PASSWORD=" + os.Getenv("HUBBLE_POSTGRES_PASSWORD"),
+				getEnvVarMapping("HUBBLE_ETHEREUM_RPC_URL"),
+				getEnvVarMapping("HUBBLE_ETHEREUM_CHAIN_ID"),
+				getEnvVarMapping("HUBBLE_ETHEREUM_PRIVATE_KEY"),
+				getEnvVarMapping("HUBBLE_POSTGRES_HOST"),
+				getEnvVarMapping("HUBBLE_POSTGRES_PORT"),
+				getEnvVarMapping("HUBBLE_POSTGRES_NAME"),
+				getEnvVarMapping("HUBBLE_POSTGRES_USER"),
+				getEnvVarMapping("HUBBLE_POSTGRES_PASSWORD"),
+				getEnvVarMapping("HUBBLE_ROLLUP_MIN_TXS_PER_COMMITMENT"),
+				getEnvVarMapping("HUBBLE_ROLLUP_MAX_TXS_PER_COMMITMENT"),
 				"HUBBLE_API_PORT=8080",
 			},
 			ExposedPorts: map[nat.Port]struct{}{
