@@ -211,7 +211,12 @@ func (s *NewBlockLoopTestSuite) runInTransaction(handler func(*st.StorageBase, *
 	s.NoError(err)
 	defer txController.Rollback(nil)
 
-	txExecutor := executor.NewTestTransactionExecutor(txStorage, s.testClient.Client, s.cfg.Rollup, context.Background())
+	storage := &st.Storage{
+		StorageBase: txStorage,
+		StateTree:   st.NewStateTree(txStorage),
+		AccountTree: st.NewAccountTree(txStorage),
+	}
+	txExecutor := executor.NewTestTransactionExecutor(storage, s.testClient.Client, s.cfg.Rollup, context.Background())
 	handler(txStorage, txExecutor)
 }
 

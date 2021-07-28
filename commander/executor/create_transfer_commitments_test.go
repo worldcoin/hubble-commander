@@ -53,7 +53,7 @@ func (s *TransferCommitmentsTestSuite) SetupTest() {
 	err = populateAccounts(s.storage.Storage, genesisBalances)
 	s.NoError(err)
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, &eth.Client{}, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, &eth.Client{}, s.cfg, context.Background())
 }
 
 func populateAccounts(storage *st.Storage, balances []models.Uint256) error {
@@ -155,7 +155,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_ForMultiple
 		MaxCommitmentsPerBatch: 3,
 	}
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, &eth.Client{}, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, &eth.Client{}, s.cfg, context.Background())
 
 	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 123)
 
@@ -215,7 +215,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_ReturnsErro
 		MaxCommitmentsPerBatch: 1,
 	}
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, &eth.Client{}, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, &eth.Client{}, s.cfg, context.Background())
 
 	transfers := generateValidTransfers(2)
 	s.addTransfers(transfers)

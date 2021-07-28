@@ -25,7 +25,7 @@ func (s *ApplyFeeTestSuite) SetupTest() {
 	var err error
 	s.storage, err = storage.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, nil, nil, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, nil, nil, context.Background())
 }
 
 func (s *ApplyFeeTestSuite) TearDownTest() {

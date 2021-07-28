@@ -60,7 +60,7 @@ func (s *BatchesTestSuite) SetupTest() {
 	s.cmd.stopChannel = make(chan bool)
 
 	s.transactionExecutor = executor.NewTestTransactionExecutor(
-		s.testStorage.StorageBase,
+		s.testStorage.Storage,
 		s.testClient.Client,
 		s.cfg.Rollup,
 		context.Background(),
@@ -345,7 +345,7 @@ func cloneStorage(
 	clonedStorage, err := storage.Clone(cfg.Postgres)
 	s.NoError(err)
 
-	txExecutor := executor.NewTestTransactionExecutor(clonedStorage.StorageBase, client, cfg.Rollup, context.Background())
+	txExecutor := executor.NewTestTransactionExecutor(clonedStorage.Storage, client, cfg.Rollup, context.Background())
 
 	return clonedStorage, txExecutor
 }

@@ -64,7 +64,7 @@ func (s *SyncTestSuite) setupDB() {
 	var err error
 	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, s.client.Client, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, s.cfg, context.Background())
 	err = s.storage.SetChainState(&s.client.ChainState)
 	s.NoError(err)
 

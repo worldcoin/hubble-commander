@@ -81,7 +81,7 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 	_, err = s.storage.StateTree.Set(3, &feeReceiverState)
 	s.NoError(err)
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, &eth.Client{}, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, &eth.Client{}, s.cfg, context.Background())
 	s.feeReceiver = &FeeReceiver{
 		StateID: 3,
 		TokenID: models.MakeUint256(1),

@@ -20,12 +20,12 @@ type TransactionExecutor struct {
 
 // NewTransactionExecutor creates a TransactionExecutor and starts a database transaction.
 func NewTransactionExecutor(
-	storageBase *st.StorageBase,
+	storage *st.Storage,
 	client *eth.Client,
 	cfg *config.RollupConfig,
 	ctx context.Context,
 ) (*TransactionExecutor, error) {
-	tx, txStorageBase, err := storageBase.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
+	tx, txStorageBase, err := storage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
 	if err != nil {
 		return nil, err
 	}
@@ -45,21 +45,17 @@ func NewTransactionExecutor(
 
 // NewTestTransactionExecutor creates a TransactionExecutor without a database transaction.
 func NewTestTransactionExecutor(
-	storageBase *st.StorageBase,
+	storage *st.Storage,
 	client *eth.Client,
 	cfg *config.RollupConfig,
 	ctx context.Context,
 ) *TransactionExecutor {
 	return &TransactionExecutor{
-		cfg: cfg,
-		storage: &st.Storage{
-			StorageBase: storageBase,
-			StateTree:   st.NewStateTree(storageBase),
-			AccountTree: st.NewAccountTree(storageBase),
-		},
-		tx:     nil,
-		client: client,
-		ctx:    ctx,
+		cfg:     cfg,
+		storage: storage,
+		tx:      nil,
+		client:  client,
+		ctx:     ctx,
 	}
 }
 

@@ -46,7 +46,7 @@ func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 	err = populateAccounts(s.storage.Storage, genesisBalances)
 	s.NoError(err)
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, s.client.Client, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, s.cfg, context.Background())
 }
 
 func (s *Create2TransferCommitmentsTestSuite) TearDownTest() {
@@ -126,7 +126,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 		MaxCommitmentsPerBatch: 3,
 	}
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, s.client.Client, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, s.cfg, context.Background())
 
 	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 124)
 
@@ -186,7 +186,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 		MaxCommitmentsPerBatch: 1,
 	}
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, s.client.Client, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, s.cfg, context.Background())
 
 	transfers := generateValidCreate2Transfers(2)
 	s.addCreate2Transfers(transfers)

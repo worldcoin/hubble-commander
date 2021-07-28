@@ -45,7 +45,7 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.client, err = eth.NewTestClient()
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, s.client.Client, nil, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, nil, context.Background())
 	s.NoError(err)
 
 	accounts := []models.AccountLeaf{

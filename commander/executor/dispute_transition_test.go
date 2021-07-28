@@ -80,7 +80,7 @@ func (s *DisputeTransitionTestSuite) SetupTest() {
 	)
 	s.NoError(err)
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage.StorageBase, s.client.Client, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, s.cfg, context.Background())
 }
 
 func (s *DisputeTransitionTestSuite) TearDownTest() {
@@ -387,7 +387,7 @@ func (s *DisputeTransitionTestSuite) checkBatchAfterDispute(batchID models.Uint2
 
 func (s *DisputeTransitionTestSuite) beginExecutorTransaction() {
 	var err error
-	s.transactionExecutor, err = NewTransactionExecutor(s.storage.StorageBase, s.client.Client, s.cfg, context.Background())
+	s.transactionExecutor, err = NewTransactionExecutor(s.storage.Storage, s.client.Client, s.cfg, context.Background())
 	s.NoError(err)
 }
 
