@@ -48,11 +48,11 @@ func (t *TransactionExecutor) ApplyTransfer(
 		return tErr, nil
 	}
 
-	_, appError = t.stateTree.Set(senderLeaf.StateID, newSenderState)
+	_, appError = t.storage.StateTree.Set(senderLeaf.StateID, newSenderState)
 	if appError != nil {
 		return nil, appError
 	}
-	_, appError = t.stateTree.Set(receiverLeaf.StateID, newReceiverState)
+	_, appError = t.storage.StateTree.Set(receiverLeaf.StateID, newReceiverState)
 	if appError != nil {
 		return nil, appError
 	}
@@ -93,7 +93,7 @@ func (t *TransactionExecutor) applyGenericTransactionForSync(
 		return t.fillSenderWitness(synced, tErr)
 	}
 
-	senderWitness, appError := t.stateTree.Set(senderLeaf.StateID, newSenderState)
+	senderWitness, appError := t.storage.StateTree.Set(senderLeaf.StateID, newSenderState)
 	if appError != nil {
 		return nil, nil, appError
 	}
@@ -103,7 +103,7 @@ func (t *TransactionExecutor) applyGenericTransactionForSync(
 		return synced, tErr, nil
 	}
 
-	receiverWitness, appError := t.stateTree.Set(receiverLeaf.StateID, newReceiverState)
+	receiverWitness, appError := t.storage.StateTree.Set(receiverLeaf.StateID, newReceiverState)
 	if appError != nil {
 		return nil, nil, appError
 	}
@@ -119,7 +119,7 @@ func (t *TransactionExecutor) applyGenericTransactionForSync(
 }
 
 func (t *TransactionExecutor) fillSenderWitness(synced *SyncedGenericTransaction, tErr error) (*SyncedGenericTransaction, error, error) {
-	witness, appError := t.stateTree.GetWitness(synced.Transaction.GetFromStateID())
+	witness, appError := t.storage.StateTree.GetWitness(synced.Transaction.GetFromStateID())
 	if appError != nil {
 		return nil, nil, appError
 	}

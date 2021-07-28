@@ -21,10 +21,8 @@ type VerifySignatureTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	transactionExecutor *TransactionExecutor
-	storage             *st.Storage
-	tree                *st.StateTree
+	storage             *st.TestStorage
 	client              *eth.TestClient
-	teardown            func() error
 	cfg                 *config.RollupConfig
 	wallets             []bls.Wallet
 }
@@ -43,19 +41,16 @@ func (s *VerifySignatureTestSuite) SetupTest() {
 	var err error
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
-	testStorage, err := st.NewTestStorageWithBadger()
+	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.Storage
-	s.tree = st.NewStateTree(s.storage)
-	s.teardown = testStorage.Teardown
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, s.cfg, context.Background())
 	err = s.storage.SetChainState(&s.client.ChainState)
 	s.NoError(err)
 	s.addAccounts()
 }
 
 func (s *VerifySignatureTestSuite) TearDownTest() {
-	err := s.teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 	s.client.Close()
 }
@@ -196,7 +191,7 @@ func (s *VerifySignatureTestSuite) addAccounts() {
 			PublicKey: *wallet.PublicKey(),
 		})
 		s.NoError(err)
-		_, err = s.tree.Set(i, &models.UserState{
+		_, err = s.storage.StateTree.Set(i, &models.UserState{
 			PubKeyID: i,
 			TokenID:  models.MakeUint256(0),
 			Balance:  models.MakeUint256(1000),

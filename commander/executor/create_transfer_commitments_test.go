@@ -28,8 +28,7 @@ var (
 type TransferCommitmentsTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	teardown               func() error
-	storage                *st.Storage
+	storage                *st.TestStorage
 	cfg                    *config.RollupConfig
 	transactionExecutor    *TransactionExecutor
 	maxTxBytesInCommitment int
@@ -40,10 +39,9 @@ func (s *TransferCommitmentsTestSuite) SetupSuite() {
 }
 
 func (s *TransferCommitmentsTestSuite) SetupTest() {
-	testStorage, err := st.NewTestStorageWithBadger()
+	var err error
+	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.Storage
-	s.teardown = testStorage.Teardown
 	s.cfg = &config.RollupConfig{
 		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    4,
@@ -52,14 +50,13 @@ func (s *TransferCommitmentsTestSuite) SetupTest() {
 	}
 	s.maxTxBytesInCommitment = encoder.TransferLength * int(s.cfg.MaxTxsPerCommitment)
 
-	err = populateAccounts(s.storage, genesisBalances)
+	err = populateAccounts(s.storage.Storage, genesisBalances)
 	s.NoError(err)
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, &eth.Client{}, s.cfg, context.Background())
 }
 
 func populateAccounts(storage *st.Storage, balances []models.Uint256) error {
-	stateTree := st.NewStateTree(storage)
 	for i := uint32(0); i < uint32(len(balances)); i++ {
 		err := storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
 			PubKeyID:  i,
@@ -69,7 +66,7 @@ func populateAccounts(storage *st.Storage, balances []models.Uint256) error {
 			return err
 		}
 
-		_, err = stateTree.Set(i, &models.UserState{
+		_, err = storage.StateTree.Set(i, &models.UserState{
 			PubKeyID: i,
 			TokenID:  models.MakeUint256(0),
 			Balance:  balances[i],
@@ -83,7 +80,7 @@ func populateAccounts(storage *st.Storage, balances []models.Uint256) error {
 }
 
 func (s *TransferCommitmentsTestSuite) TearDownTest() {
-	err := s.teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
@@ -91,7 +88,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_WithMinTxsP
 	transfers := generateValidTransfers(1)
 	s.addTransfers(transfers)
 
-	preRoot, err := s.transactionExecutor.stateTree.Root()
+	preRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 
 	expectedTxsLength := encoder.TransferLength * len(transfers)
@@ -100,7 +97,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_WithMinTxsP
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, expectedTxsLength)
 
-	postRoot, err := s.transactionExecutor.stateTree.Root()
+	postRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
@@ -110,7 +107,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_WithMoreTha
 	transfers := generateValidTransfers(3)
 	s.addTransfers(transfers)
 
-	preRoot, err := s.transactionExecutor.stateTree.Root()
+	preRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 
 	expectedTxsLength := encoder.TransferLength * len(transfers)
@@ -119,14 +116,14 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_WithMoreTha
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, expectedTxsLength)
 
-	postRoot, err := s.transactionExecutor.stateTree.Root()
+	postRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
 }
 
 func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_QueriesForMorePendingTransfersUntilSatisfied() {
-	addAccountWithHighNonce(s.Assertions, s.storage, 123)
+	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 123)
 
 	transfers := generateValidTransfers(6)
 	s.invalidateTransfers(transfers[3:6])
@@ -136,7 +133,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_QueriesForM
 
 	s.addTransfers(transfers)
 
-	preRoot, err := s.transactionExecutor.stateTree.Root()
+	preRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
@@ -144,7 +141,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_QueriesForM
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, s.maxTxBytesInCommitment)
 
-	postRoot, err := s.transactionExecutor.stateTree.Root()
+	postRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
@@ -158,9 +155,9 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_ForMultiple
 		MaxCommitmentsPerBatch: 3,
 	}
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, &eth.Client{}, s.cfg, context.Background())
 
-	addAccountWithHighNonce(s.Assertions, s.storage, 123)
+	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 123)
 
 	transfers := generateValidTransfers(9)
 	s.invalidateTransfers(transfers[7:9])
@@ -173,7 +170,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_ForMultiple
 	transfers = append(transfers, highNonceTransfers...)
 	s.addTransfers(transfers)
 
-	preRoot, err := s.transactionExecutor.stateTree.Root()
+	preRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
@@ -183,7 +180,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_ForMultiple
 	s.Len(commitments[1].Transactions, s.maxTxBytesInCommitment)
 	s.Len(commitments[2].Transactions, encoder.TransferLength)
 
-	postRoot, err := s.transactionExecutor.stateTree.Root()
+	postRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
 	s.Equal(commitments[2].PostStateRoot, *postRoot)
@@ -197,14 +194,14 @@ func (s *TransferCommitmentsTestSuite) invalidateTransfers(transfers []models.Tr
 }
 
 func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_ReturnsErrorWhenThereAreNotEnoughPendingTransfers() {
-	preRoot, err := s.transactionExecutor.stateTree.Root()
+	preRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
 	s.Nil(commitments)
 	s.Equal(ErrNotEnoughTransfers, err)
 
-	postRoot, err := s.transactionExecutor.stateTree.Root()
+	postRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 
 	s.Equal(preRoot, postRoot)
@@ -218,19 +215,19 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_ReturnsErro
 		MaxCommitmentsPerBatch: 1,
 	}
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, &eth.Client{}, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, &eth.Client{}, s.cfg, context.Background())
 
 	transfers := generateValidTransfers(2)
 	s.addTransfers(transfers)
 
-	preRoot, err := s.transactionExecutor.stateTree.Root()
+	preRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 
 	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
 	s.Nil(commitments)
 	s.Equal(ErrNotEnoughTransfers, err)
 
-	postRoot, err := s.transactionExecutor.stateTree.Root()
+	postRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 
 	s.Equal(preRoot, postRoot)
@@ -240,7 +237,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_StoresCorre
 	transfersCount := uint32(4)
 	s.preparePendingTransfers(transfersCount)
 
-	preRoot, err := s.transactionExecutor.stateTree.Root()
+	preRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 
 	expectedTxsLength := encoder.TransferLength * int(transfersCount)
@@ -251,7 +248,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_StoresCorre
 	s.Equal(commitments[0].FeeReceiver, uint32(2))
 	s.Nil(commitments[0].IncludedInBatch)
 
-	postRoot, err := s.transactionExecutor.stateTree.Root()
+	postRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
@@ -320,8 +317,7 @@ func addAccountWithHighNonce(s *require.Assertions, storage *st.Storage, stateID
 	err := storage.AddAccountLeafIfNotExists(&dummyAccount)
 	s.NoError(err)
 
-	stateTree := st.NewStateTree(storage)
-	_, err = stateTree.Set(stateID, &models.UserState{
+	_, err = storage.StateTree.Set(stateID, &models.UserState{
 		PubKeyID: dummyAccount.PubKeyID,
 		TokenID:  models.MakeUint256(0),
 		Balance:  models.MakeUint256(1000),

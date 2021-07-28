@@ -21,7 +21,6 @@ type GetBatchTestSuite struct {
 	api        *API
 	storage    *st.TestStorage
 	testClient *eth.TestClient
-	tree       *st.StateTree
 	commitment models.Commitment
 	batch      models.Batch
 }
@@ -37,7 +36,6 @@ func (s *GetBatchTestSuite) SetupTest() {
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
 	s.api = &API{storage: s.storage.Storage, client: s.testClient.Client}
-	s.tree = st.NewStateTree(s.storage.Storage)
 
 	s.commitment = commitment
 	s.commitment.IncludedInBatch = models.NewUint256(1)
@@ -136,7 +134,7 @@ func (s *GetBatchTestSuite) addStateLeaf() {
 	err := s.storage.AddAccountLeafIfNotExists(&models.AccountLeaf{PubKeyID: 1})
 	s.NoError(err)
 
-	_, err = s.tree.Set(uint32(1), &models.UserState{
+	_, err = s.storage.StateTree.Set(uint32(1), &models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(1),
 		Balance:  models.MakeUint256(420),

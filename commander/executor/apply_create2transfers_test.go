@@ -21,9 +21,7 @@ import (
 type ApplyCreate2TransfersTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	teardown            func() error
-	storage             *storage.Storage
-	tree                *storage.StateTree
+	storage             *storage.TestStorage
 	cfg                 *config.RollupConfig
 	client              *eth.TestClient
 	transactionExecutor *TransactionExecutor
@@ -37,11 +35,9 @@ func (s *ApplyCreate2TransfersTestSuite) SetupSuite() {
 }
 
 func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
-	testStorage, err := storage.NewTestStorageWithBadger()
+	var err error
+	s.storage, err = storage.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.Storage
-	s.teardown = testStorage.Teardown
-	s.tree = storage.NewStateTree(s.storage)
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
 	s.cfg = &config.RollupConfig{
@@ -76,17 +72,17 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 		s.NoError(err)
 	}
 
-	_, err = s.tree.Set(1, &senderState)
+	_, err = s.storage.StateTree.Set(1, &senderState)
 	s.NoError(err)
-	_, err = s.tree.Set(2, &receiverState)
+	_, err = s.storage.StateTree.Set(2, &receiverState)
 	s.NoError(err)
-	_, err = s.tree.Set(3, &feeReceiverState)
+	_, err = s.storage.StateTree.Set(3, &feeReceiverState)
 	s.NoError(err)
 
 	s.events, s.unsubscribe, err = s.client.WatchRegistrations(&bind.WatchOpts{})
 	s.NoError(err)
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, s.cfg, context.Background())
 	s.feeReceiver = &FeeReceiver{
 		StateID: 3,
 		TokenID: models.MakeUint256(1),
@@ -96,7 +92,7 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
 	s.unsubscribe()
 	s.client.Close()
-	err := s.teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 

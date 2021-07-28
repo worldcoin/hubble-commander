@@ -59,14 +59,14 @@ func (t *TransactionExecutor) createC2TCommitment(pendingTransfers []models.Crea
 		return nil, nil, err
 	}
 
-	initialStateRoot, err := t.stateTree.Root()
+	initialStateRoot, err := t.storage.StateTree.Root()
 	if err != nil {
 		return nil, nil, err
 	}
 
 	appliedTransfers, newPendingTransfers, addedPubKeyIDs, err := t.applyC2TsForCommitment(pendingTransfers, feeReceiver)
 	if err == ErrNotEnoughC2Transfers {
-		if revertErr := t.stateTree.RevertTo(*initialStateRoot); revertErr != nil {
+		if revertErr := t.storage.StateTree.RevertTo(*initialStateRoot); revertErr != nil {
 			return nil, nil, revertErr
 		}
 		return nil, nil, err

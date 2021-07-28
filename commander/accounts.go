@@ -61,7 +61,7 @@ func (c *Commander) syncSingleAccounts(start, end uint64) (newAccountsCount *int
 			PublicKey: models.MakePublicKeyFromInts(publicKey),
 		}
 
-		isNewAccount, err := saveSyncedSingleAccount(c.accountTree, account)
+		isNewAccount, err := saveSyncedSingleAccount(c.storage.AccountTree, account)
 		if err != nil {
 			return nil, err
 		}
@@ -110,7 +110,7 @@ func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int,
 			})
 		}
 
-		isNewAccount, err := saveSyncedBatchAccounts(c.accountTree, accounts)
+		isNewAccount, err := saveSyncedBatchAccounts(c.storage.AccountTree, accounts)
 		if err != nil {
 			return nil, err
 		}

@@ -6,7 +6,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	st "github.com/Worldcoin/hubble-commander/storage"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -44,8 +43,7 @@ func (t *TransactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionT
 }
 
 func (t *TransactionExecutor) NewPendingBatch(batchType txtype.TransactionType) (*models.Batch, error) {
-	stateTree := st.NewStateTree(t.storage)
-	prevStateRoot, err := stateTree.Root()
+	prevStateRoot, err := t.storage.StateTree.Root()
 	if err != nil {
 		return nil, err
 	}

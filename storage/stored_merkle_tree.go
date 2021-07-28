@@ -1,6 +1,7 @@
 package storage
 
 import (
+	bdg "github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
@@ -9,13 +10,13 @@ import (
 )
 
 type StoredMerkleTree struct {
-	storage   *Storage
+	badger    *bdg.Database
 	namespace string
 }
 
-func NewStoredMerkleTree(namespace string, storage *Storage) *StoredMerkleTree {
+func NewStoredMerkleTree(namespace string, badger *bdg.Database) *StoredMerkleTree {
 	return &StoredMerkleTree{
-		storage:   storage,
+		badger:    badger,
 		namespace: namespace,
 	}
 }
@@ -26,7 +27,7 @@ func (s *StoredMerkleTree) keyFor(path models.MerklePath) models.NamespacedMerkl
 
 func (s *StoredMerkleTree) Get(path models.MerklePath) (*models.MerkleTreeNode, error) {
 	node := models.MerkleTreeNode{MerklePath: path}
-	err := s.storage.Badger.Get(s.keyFor(path), &node)
+	err := s.badger.Get(s.keyFor(path), &node)
 	if err == bh.ErrNotFound {
 		return newZeroNode(&path), nil
 	}
@@ -46,7 +47,7 @@ func (s *StoredMerkleTree) Root() (*common.Hash, error) {
 }
 
 func (s *StoredMerkleTree) SetSingleNode(node *models.MerkleTreeNode) error {
-	return s.storage.Badger.Upsert(s.keyFor(node.MerklePath), *node)
+	return s.badger.Upsert(s.keyFor(node.MerklePath), *node)
 }
 
 // SetNode sets node hash and update all nodes leading to root. Returns new root hash and the insertion witness.

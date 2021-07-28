@@ -30,7 +30,6 @@ type ApplyTransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage             *storage.TestStorage
-	tree                *storage.StateTree
 	transactionExecutor *TransactionExecutor
 	transfer            models.Transfer
 	receiverLeaf        models.StateLeaf
@@ -53,7 +52,6 @@ func (s *ApplyTransferTestSuite) SetupTest() {
 	var err error
 	s.storage, err = storage.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.tree = storage.NewStateTree(s.storage.Storage)
 	s.transactionExecutor = NewTestTransactionExecutor(
 		s.storage.Storage,
 		nil,
@@ -202,7 +200,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ValidatesReceiverToken
 
 	receiverWithChangedToken := receiverState
 	receiverWithChangedToken.TokenID = models.MakeUint256(2)
-	_, err := s.tree.Set(2, &receiverWithChangedToken)
+	_, err := s.storage.StateTree.Set(2, &receiverWithChangedToken)
 	s.NoError(err)
 
 	synced, transferError, appError := s.transactionExecutor.ApplyTransferForSync(&s.transfer, models.MakeUint256(1))
@@ -277,9 +275,9 @@ func (s *ApplyTransferTestSuite) setUserStatesInTree() {
 	senderStateID := senderState.PubKeyID
 	receiverStateID := receiverState.PubKeyID
 
-	_, err := s.tree.Set(senderStateID, &senderState)
+	_, err := s.storage.StateTree.Set(senderStateID, &senderState)
 	s.NoError(err)
-	_, err = s.tree.Set(receiverStateID, &receiverState)
+	_, err = s.storage.StateTree.Set(receiverStateID, &receiverState)
 	s.NoError(err)
 }
 

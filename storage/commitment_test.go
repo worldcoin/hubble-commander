@@ -26,7 +26,6 @@ type CommitmentTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage *TestStorage
-	tree    *StateTree
 }
 
 func (s *CommitmentTestSuite) SetupSuite() {
@@ -37,7 +36,6 @@ func (s *CommitmentTestSuite) SetupTest() {
 	var err error
 	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
-	s.tree = NewStateTree(s.storage.Storage)
 }
 
 func (s *CommitmentTestSuite) TearDownTest() {
@@ -207,7 +205,7 @@ func (s *CommitmentTestSuite) addStateLeaf() {
 	err := s.storage.AddAccountLeafIfNotExists(&account1)
 	s.NoError(err)
 
-	_, err = s.tree.Set(uint32(0), &models.UserState{
+	_, err = s.storage.StateTree.Set(uint32(0), &models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(1),
 		Balance:  models.MakeUint256(420),

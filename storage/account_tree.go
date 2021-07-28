@@ -21,14 +21,14 @@ const (
 var ErrInvalidAccountsLength = errors.New("invalid accounts length")
 
 type AccountTree struct {
-	storage    *Storage
-	merkleTree *StoredMerkleTree
+	storageBase *StorageBase
+	merkleTree  *StoredMerkleTree
 }
 
-func NewAccountTree(storage *Storage) *AccountTree {
+func NewAccountTree(storageBase *StorageBase) *AccountTree {
 	return &AccountTree{
-		storage:    storage,
-		merkleTree: NewStoredMerkleTree("account", storage),
+		storageBase: storageBase,
+		merkleTree:  NewStoredMerkleTree("account", storageBase.Badger),
 	}
 }
 
@@ -44,7 +44,7 @@ func (s *AccountTree) LeafNode(pubKeyID uint32) (*models.MerkleTreeNode, error) 
 }
 
 func (s *AccountTree) Leaf(pubKeyID uint32) (*models.AccountLeaf, error) {
-	return s.storage.GetAccountLeaf(pubKeyID)
+	return s.storageBase.GetAccountLeaf(pubKeyID)
 }
 
 func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
@@ -52,7 +52,7 @@ func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
 		return NewInvalidPubKeyIDError(leaf.PubKeyID)
 	}
 
-	tx, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
+	tx, storage, err := s.storageBase.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
 		return ErrInvalidAccountsLength
 	}
 
-	tx, storage, err := s.storage.BeginTransaction(TxOptions{Badger: true})
+	tx, storage, err := s.storageBase.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (s *AccountTree) GetWitness(pubKeyID uint32) (models.Witness, error) {
 }
 
 func (s *AccountTree) unsafeSet(leaf *models.AccountLeaf) (models.Witness, error) {
-	err := s.storage.AddAccountLeafIfNotExists(leaf)
+	err := s.storageBase.AddAccountLeafIfNotExists(leaf)
 	if err != nil {
 		return nil, err
 	}

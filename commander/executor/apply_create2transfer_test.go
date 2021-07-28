@@ -31,9 +31,7 @@ var (
 type ApplyCreate2TransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage             *st.Storage
-	teardown            func() error
-	tree                *st.StateTree
+	storage             *st.TestStorage
 	transactionExecutor *TransactionExecutor
 	client              *eth.TestClient
 }
@@ -43,13 +41,11 @@ func (s *ApplyCreate2TransferTestSuite) SetupSuite() {
 }
 
 func (s *ApplyCreate2TransferTestSuite) SetupTest() {
-	testStorage, err := st.NewTestStorageWithBadger()
+	var err error
+	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.Storage
-	s.teardown = testStorage.Teardown
-	s.tree = st.NewStateTree(s.storage)
 	s.client, err = eth.NewTestClient()
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, nil, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, nil, context.Background())
 	s.NoError(err)
 
 	accounts := []models.AccountLeaf{
@@ -71,14 +67,14 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 		s.NoError(err)
 	}
 
-	_, err = s.tree.Set(0, &models.UserState{
+	_, err = s.storage.StateTree.Set(0, &models.UserState{
 		PubKeyID: 0,
 		TokenID:  feeReceiverTokenID,
 		Balance:  models.MakeUint256(10000),
 		Nonce:    models.MakeUint256(0),
 	})
 	s.NoError(err)
-	_, err = s.tree.Set(1, &models.UserState{
+	_, err = s.storage.StateTree.Set(1, &models.UserState{
 		PubKeyID: 1,
 		TokenID:  feeReceiverTokenID,
 		Balance:  models.MakeUint256(0),
@@ -89,7 +85,7 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 
 func (s *ApplyCreate2TransferTestSuite) TearDownTest() {
 	s.client.Close()
-	err := s.teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 

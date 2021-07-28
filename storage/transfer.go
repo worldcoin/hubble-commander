@@ -22,7 +22,7 @@ var (
 	}
 )
 
-func (s *Storage) AddTransfer(t *models.Transfer) (receiveTime *models.Timestamp, err error) {
+func (s *StorageBase) AddTransfer(t *models.Transfer) (receiveTime *models.Timestamp, err error) {
 	tx, txStorage, err := s.BeginTransaction(TxOptions{Postgres: true})
 	if err != nil {
 		return nil, err
@@ -54,7 +54,7 @@ func (s *Storage) AddTransfer(t *models.Transfer) (receiveTime *models.Timestamp
 }
 
 // BatchAddTransfer contrary to the AddTransfer method does not set receive_time column on added transfers
-func (s *Storage) BatchAddTransfer(txs []models.Transfer) error {
+func (s *StorageBase) BatchAddTransfer(txs []models.Transfer) error {
 	if len(txs) < 1 {
 		return ErrNoRowsAffected
 	}
@@ -95,7 +95,7 @@ func (s *Storage) BatchAddTransfer(txs []models.Transfer) error {
 	return tx.Commit()
 }
 
-func (s *Storage) GetTransfer(hash common.Hash) (*models.Transfer, error) {
+func (s *StorageBase) GetTransfer(hash common.Hash) (*models.Transfer, error) {
 	res := make([]models.Transfer, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Select(transferColumns...).
@@ -112,7 +112,7 @@ func (s *Storage) GetTransfer(hash common.Hash) (*models.Transfer, error) {
 	return &res[0], nil
 }
 
-func (s *Storage) GetTransferWithBatchDetails(hash common.Hash) (*models.TransferWithBatchDetails, error) {
+func (s *StorageBase) GetTransferWithBatchDetails(hash common.Hash) (*models.TransferWithBatchDetails, error) {
 	res := make([]models.TransferWithBatchDetails, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Select(transferWithBatchColumns...).
@@ -131,7 +131,7 @@ func (s *Storage) GetTransferWithBatchDetails(hash common.Hash) (*models.Transfe
 	return &res[0], nil
 }
 
-func (s *Storage) GetUserTransfers(fromStateID models.Uint256) ([]models.Transfer, error) {
+func (s *StorageBase) GetUserTransfers(fromStateID models.Uint256) ([]models.Transfer, error) {
 	res := make([]models.Transfer, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Select(transferColumns...).
@@ -142,7 +142,7 @@ func (s *Storage) GetUserTransfers(fromStateID models.Uint256) ([]models.Transfe
 	return res, err
 }
 
-func (s *Storage) GetPendingTransfers(limit uint32) ([]models.Transfer, error) {
+func (s *StorageBase) GetPendingTransfers(limit uint32) ([]models.Transfer, error) {
 	res := make([]models.Transfer, 0, limit)
 	err := s.Postgres.Query(
 		s.QB.Select(transferColumns...).
@@ -158,7 +158,7 @@ func (s *Storage) GetPendingTransfers(limit uint32) ([]models.Transfer, error) {
 	return res, nil
 }
 
-func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models.TransferWithBatchDetails, error) {
+func (s *StorageBase) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models.TransferWithBatchDetails, error) {
 	accounts, err := s.GetAccountLeaves(publicKey)
 	if err != nil {
 		return nil, err
@@ -195,7 +195,7 @@ func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models
 	return res, nil
 }
 
-func (s *Storage) GetTransfersByCommitmentID(id int32) ([]models.TransferForCommitment, error) {
+func (s *StorageBase) GetTransfersByCommitmentID(id int32) ([]models.TransferForCommitment, error) {
 	res := make([]models.TransferForCommitment, 0, 32)
 	err := s.Postgres.Query(
 		s.QB.Select("transaction_base.tx_hash",

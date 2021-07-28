@@ -16,7 +16,7 @@ func verifyCommitmentRoot(storage *st.Storage, client *eth.Client) error {
 	if err != nil {
 		return err
 	}
-	stateRoot, err := st.NewStateTree(storage).Root()
+	stateRoot, err := storage.StateTree.Root()
 	if err != nil {
 		return err
 	}
