@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -28,6 +29,7 @@ func TestStartApiServer(t *testing.T) {
 
 	storage, err := st.NewTestStorage()
 	require.NoError(t, err)
+	storage.SetDomain(bls.Domain{1, 2, 3})
 	err = storage.SetChainState(&chainState)
 	require.NoError(t, err)
 

@@ -51,9 +51,9 @@ func (s *SendCreate2TransferTestSuite) SetupTest() {
 		},
 	}
 
+	s.domain = &bls.Domain{1, 2, 3}
+	s.storage.SetDomain(*s.domain)
 	err = s.storage.SetChainState(&chainState)
-	s.NoError(err)
-	s.domain, err = s.storage.GetDomain()
 	s.NoError(err)
 
 	s.wallet, err = bls.NewRandomWallet(*s.domain)
