@@ -325,6 +325,29 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidCreate2TransferCommitmentStateRoot(
 	s.NoError(err)
 }
 
+func (s *SyncTestSuite) TestSyncBatch_InvalidTransferSignature() {
+	tx := testutils.MakeTransfer(0, 1, 0, 400)
+	signTransfer(s.T(), &s.wallets[1], &tx)
+	s.setTransferHash(&tx)
+
+	batch, commitments := createTransferBatch(s.Assertions, s.transactionExecutor, &tx, testDomain)
+
+	err := s.transactionExecutor.SubmitBatch(batch, commitments)
+	s.NoError(err)
+	s.client.Commit()
+
+	s.recreateDatabase()
+
+	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	var disputableErr *DisputableSignatureError
+	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
+	s.ErrorAs(err, &disputableErr)
+	s.Equal(ErrInvalidSignature.Error(), disputableErr.Reason)
+}
+
 func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx)
