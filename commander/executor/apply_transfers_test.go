@@ -55,25 +55,6 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 		Nonce:    models.MakeUint256(0),
 	}
 
-	accounts := []models.AccountLeaf{
-		{
-			PubKeyID:  1,
-			PublicKey: models.PublicKey{1, 2, 3},
-		},
-		{
-			PubKeyID:  2,
-			PublicKey: models.PublicKey{1, 2, 3},
-		},
-		{
-			PubKeyID:  3,
-			PublicKey: models.PublicKey{1, 2, 3},
-		},
-	}
-	for i := range accounts {
-		err = s.storage.AddAccountLeafIfNotExists(&accounts[i])
-		s.NoError(err)
-	}
-
 	_, err = s.storage.StateTree.Set(1, &senderState)
 	s.NoError(err)
 	_, err = s.storage.StateTree.Set(2, &receiverState)

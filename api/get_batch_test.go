@@ -131,10 +131,7 @@ func (s *GetBatchTestSuite) TestGetBatchByID_NonExistentBatch() {
 }
 
 func (s *GetBatchTestSuite) addStateLeaf() {
-	err := s.storage.AddAccountLeafIfNotExists(&models.AccountLeaf{PubKeyID: 1})
-	s.NoError(err)
-
-	_, err = s.storage.StateTree.Set(uint32(1), &models.UserState{
+	_, err := s.storage.StateTree.Set(uint32(1), &models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(1),
 		Balance:  models.MakeUint256(420),

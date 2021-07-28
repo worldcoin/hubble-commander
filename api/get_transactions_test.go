@@ -58,7 +58,7 @@ func (s *GetTransactionsTestSuite) addAccounts() {
 		},
 	}
 	for i := range accounts {
-		err := s.storage.AddAccountLeafIfNotExists(&accounts[i])
+		err := s.storage.AccountTree.SetSingle(&accounts[i])
 		s.NoError(err)
 	}
 }
@@ -282,7 +282,7 @@ func (s *GetTransactionsTestSuite) TestGetTransactions_NoTransactions() {
 		PublicKey: models.PublicKey{1, 2, 3},
 	}
 
-	err := s.storage.AddAccountLeafIfNotExists(&account)
+	err := s.storage.AccountTree.SetSingle(&account)
 	s.NoError(err)
 
 	userState := &models.UserState{

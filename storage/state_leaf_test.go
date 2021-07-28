@@ -46,9 +46,6 @@ func (s *StateLeafTestSuite) TearDownTest() {
 }
 
 func (s *StateLeafTestSuite) TestUpsertStateLeaf_AddAndRetrieve() {
-	err := s.storage.AddAccountLeafIfNotExists(&account1)
-	s.NoError(err)
-
 	leaf := &models.StateLeaf{
 		StateID:  0,
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
@@ -59,7 +56,7 @@ func (s *StateLeafTestSuite) TestUpsertStateLeaf_AddAndRetrieve() {
 			Nonce:    models.MakeUint256(0),
 		},
 	}
-	err = s.storage.UpsertStateLeaf(leaf)
+	err := s.storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
 
 	res, err := s.storage.GetStateLeaf(leaf.StateID)
@@ -69,9 +66,6 @@ func (s *StateLeafTestSuite) TestUpsertStateLeaf_AddAndRetrieve() {
 }
 
 func (s *StateLeafTestSuite) TestUpsertStateLeaf_UpdateAndRetrieve() {
-	err := s.storage.AddAccountLeafIfNotExists(&account1)
-	s.NoError(err)
-
 	leaf := &models.StateLeaf{
 		StateID:  0,
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
@@ -82,7 +76,7 @@ func (s *StateLeafTestSuite) TestUpsertStateLeaf_UpdateAndRetrieve() {
 			Nonce:    models.MakeUint256(0),
 		},
 	}
-	err = s.storage.UpsertStateLeaf(leaf)
+	err := s.storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
 
 	leaf.UserState.Balance = models.MakeUint256(320)
@@ -96,9 +90,6 @@ func (s *StateLeafTestSuite) TestUpsertStateLeaf_UpdateAndRetrieve() {
 }
 
 func (s *StateLeafTestSuite) TestGetStateLeaf_ReturnsCorrectStruct() {
-	err := s.storage.AddAccountLeafIfNotExists(&account1)
-	s.NoError(err)
-
 	leaf := &models.StateLeaf{
 		StateID:  0,
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
@@ -110,7 +101,7 @@ func (s *StateLeafTestSuite) TestGetStateLeaf_ReturnsCorrectStruct() {
 		},
 	}
 
-	err = s.storage.UpsertStateLeaf(leaf)
+	err := s.storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
 
 	actual, err := s.storage.GetStateLeaf(leaf.StateID)
@@ -140,7 +131,7 @@ func (s *StateLeafTestSuite) TestGetUserStatesByPublicKey() {
 	}
 
 	for i := range accounts {
-		err := s.storage.AddAccountLeafIfNotExists(&accounts[i])
+		err := s.storage.AccountTree.SetSingle(&accounts[i])
 		s.NoError(err)
 	}
 
@@ -195,12 +186,7 @@ func (s *StateLeafTestSuite) TestGetUserStatesByPublicKey() {
 }
 
 func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf() {
-	err := s.storage.AddAccountLeafIfNotExists(&account1)
-	s.NoError(err)
-	err = s.storage.AddAccountLeafIfNotExists(&account2)
-	s.NoError(err)
-
-	_, err = s.storage.StateTree.Set(0, userState1)
+	_, err := s.storage.StateTree.Set(0, userState1)
 	s.NoError(err)
 
 	_, err = s.storage.StateTree.Set(1, userState2)
@@ -214,12 +200,7 @@ func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf() {
 }
 
 func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf_WorkWithCachedValue() {
-	err := s.storage.AddAccountLeafIfNotExists(&account1)
-	s.NoError(err)
-	err = s.storage.AddAccountLeafIfNotExists(&account2)
-	s.NoError(err)
-
-	_, err = s.storage.StateTree.Set(0, userState1)
+	_, err := s.storage.StateTree.Set(0, userState1)
 	s.NoError(err)
 
 	_, err = s.storage.StateTree.Set(1, userState2)
@@ -242,12 +223,7 @@ func (s *StateLeafTestSuite) TestGetNextAvailableStateID_NoLeavesInStateTree() {
 }
 
 func (s *StateLeafTestSuite) TestGetNextAvailableStateID_OneBytes() {
-	err := s.storage.AddAccountLeafIfNotExists(&account1)
-	s.NoError(err)
-	err = s.storage.AddAccountLeafIfNotExists(&account2)
-	s.NoError(err)
-
-	_, err = s.storage.StateTree.Set(0, userState1)
+	_, err := s.storage.StateTree.Set(0, userState1)
 	s.NoError(err)
 	_, err = s.storage.StateTree.Set(2, userState2)
 	s.NoError(err)
@@ -258,12 +234,7 @@ func (s *StateLeafTestSuite) TestGetNextAvailableStateID_OneBytes() {
 }
 
 func (s *StateLeafTestSuite) TestGetNextAvailableStateID_TwoBytes() {
-	err := s.storage.AddAccountLeafIfNotExists(&account1)
-	s.NoError(err)
-	err = s.storage.AddAccountLeafIfNotExists(&account2)
-	s.NoError(err)
-
-	_, err = s.storage.StateTree.Set(0, userState1)
+	_, err := s.storage.StateTree.Set(0, userState1)
 	s.NoError(err)
 	_, err = s.storage.StateTree.Set(13456, userState2)
 	s.NoError(err)

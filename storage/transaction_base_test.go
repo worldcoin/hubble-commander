@@ -68,7 +68,7 @@ func (s *TransactionBaseTestSuite) TestGetLatestTransactionNonce() {
 		PublicKey: models.PublicKey{1, 2, 3},
 	}
 
-	err := s.storage.AddAccountLeafIfNotExists(&account)
+	err := s.storage.AccountTree.SetSingle(&account)
 	s.NoError(err)
 
 	tx1 := transferTransaction

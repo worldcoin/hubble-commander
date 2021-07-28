@@ -253,13 +253,13 @@ func generateWallets(t *testing.T, rollupAddress common.Address, walletsAmount i
 }
 
 func seedDB(t *testing.T, storage *st.Storage, wallets []bls.Wallet) {
-	err := storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
+	err := storage.AccountTree.SetSingle(&models.AccountLeaf{
 		PubKeyID:  0,
 		PublicKey: *wallets[0].PublicKey(),
 	})
 	require.NoError(t, err)
 
-	err = storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
+	err = storage.AccountTree.SetSingle(&models.AccountLeaf{
 		PubKeyID:  1,
 		PublicKey: *wallets[1].PublicKey(),
 	})

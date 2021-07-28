@@ -46,7 +46,7 @@ func (s *GetUserStatesTestSuite) TestGetUserStates() {
 		},
 	}
 	for i := range accounts {
-		err := s.api.storage.AddAccountLeafIfNotExists(&accounts[i])
+		err := s.api.storage.AccountTree.SetSingle(&accounts[i])
 		s.NoError(err)
 	}
 

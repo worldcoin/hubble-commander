@@ -48,25 +48,6 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, nil, context.Background())
 	s.NoError(err)
 
-	accounts := []models.AccountLeaf{
-		{
-			PubKeyID:  0,
-			PublicKey: models.PublicKey{1, 2, 3},
-		},
-		{
-			PubKeyID:  1,
-			PublicKey: models.PublicKey{2, 3, 4},
-		},
-		{
-			PubKeyID:  2,
-			PublicKey: models.PublicKey{3, 4, 5},
-		},
-	}
-	for i := range accounts {
-		err = s.storage.AddAccountLeafIfNotExists(&accounts[i])
-		s.NoError(err)
-	}
-
 	_, err = s.storage.StateTree.Set(0, &models.UserState{
 		PubKeyID: 0,
 		TokenID:  feeReceiverTokenID,

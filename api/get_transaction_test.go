@@ -48,7 +48,7 @@ func (s *GetTransactionTestSuite) SetupTest() {
 	s.wallet, err = bls.NewRandomWallet(*s.domain)
 	s.NoError(err)
 
-	err = s.storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
+	err = s.storage.AccountTree.SetSingle(&models.AccountLeaf{
 		PubKeyID:  123,
 		PublicKey: *s.wallet.PublicKey(),
 	})
@@ -90,12 +90,6 @@ func (s *GetTransactionTestSuite) TestGetTransaction_Transfer() {
 
 func (s *GetTransactionTestSuite) TestGetTransaction_Create2Transfer() {
 	receiverWallet, err := bls.NewRandomWallet(*s.domain)
-	s.NoError(err)
-
-	err = s.storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
-		PubKeyID:  10,
-		PublicKey: *receiverWallet.PublicKey(),
-	})
 	s.NoError(err)
 
 	c2t := create2TransferWithoutSignature

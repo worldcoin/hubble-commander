@@ -51,12 +51,6 @@ func (s *SubmitTransferBatchTestSuite) SetupTest() {
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
 
-	err = s.storage.AddAccountLeafIfNotExists(&models.AccountLeaf{
-		PubKeyID:  1,
-		PublicKey: models.PublicKey{1, 2, 3},
-	})
-	s.NoError(err)
-
 	userState := models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(1),

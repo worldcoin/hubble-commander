@@ -59,20 +59,6 @@ func (s *ApplyTransferTestSuite) SetupTest() {
 		context.Background(),
 	)
 
-	accounts := []models.AccountLeaf{
-		{
-			PubKeyID:  1,
-			PublicKey: models.PublicKey{1, 2, 3},
-		},
-		{
-			PubKeyID:  2,
-			PublicKey: models.PublicKey{2, 3, 4},
-		},
-	}
-	for i := range accounts {
-		err = s.storage.AddAccountLeafIfNotExists(&accounts[i])
-		s.NoError(err)
-	}
 	s.receiverLeaf = models.StateLeaf{
 		StateID:   receiverState.PubKeyID,
 		UserState: receiverState,

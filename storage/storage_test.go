@@ -27,9 +27,6 @@ func (s *StorageTestSuite) SetupTest() {
 	var err error
 	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
-
-	err = s.storage.AddAccountLeafIfNotExists(&account1)
-	s.NoError(err)
 }
 
 func (s *StorageTestSuite) TearDownTest() {
@@ -53,7 +50,8 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	s.NoError(err)
 	err = storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
-	err = storage.AddAccountLeafIfNotExists(&account2)
+	accountTree := NewAccountTree(storage)
+	err = accountTree.SetSingle(&account2)
 	s.NoError(err)
 
 	res, err := s.storage.GetStateLeaf(leaf.StateID)
@@ -92,7 +90,8 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 	s.NoError(err)
 	err = storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
-	err = storage.AddAccountLeafIfNotExists(&account2)
+	accountTree := NewAccountTree(storage)
+	err = accountTree.SetSingle(&account2)
 	s.NoError(err)
 
 	tx.Rollback(&err)
@@ -108,9 +107,6 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 }
 
 func (s *StorageTestSuite) TestBeginTransaction_Lock() {
-	err := s.storage.AddAccountLeafIfNotExists(&account2)
-	s.NoError(err)
-
 	leafOne := &models.StateLeaf{
 		StateID:  0,
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
