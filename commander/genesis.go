@@ -34,9 +34,6 @@ func AssignStateIDs(accounts []models.RegisteredGenesisAccount) []models.Populat
 }
 
 func PopulateGenesisAccounts(storage *st.Storage, accounts []models.PopulatedGenesisAccount) error {
-	stateTree := st.NewStateTree(storage)
-	accountTree := st.NewAccountTree(storage)
-
 	seenStateIDs := make(map[uint32]bool)
 	for i := range accounts {
 		account := &accounts[i]
@@ -50,12 +47,12 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.PopulatedGen
 			PubKeyID:  account.PubKeyID,
 			PublicKey: account.PublicKey,
 		}
-		_, err := saveSyncedAccount(accountTree, leaf)
+		_, err := saveSyncedSingleAccount(storage.AccountTree, leaf)
 		if err != nil {
 			return err
 		}
 
-		_, err = stateTree.Set(account.StateID, &models.UserState{
+		_, err = storage.StateTree.Set(account.StateID, &models.UserState{
 			PubKeyID: account.PubKeyID,
 			TokenID:  models.MakeUint256(0),
 			Balance:  account.Balance,
@@ -80,7 +77,7 @@ func RegisterGenesisAccounts(
 	defer unsubscribe()
 
 	txs := make([]types.Transaction, 0, len(accounts))
-	txHashToPubkey := make(map[common.Hash]models.PublicKey)
+	txHashToPubKey := make(map[common.Hash]models.PublicKey)
 	for i := range accounts {
 		account := &accounts[i]
 		publicKey, err := bls.PrivateToPublicKey(account.PrivateKey)
@@ -93,7 +90,7 @@ func RegisterGenesisAccounts(
 			return nil, errors.WithStack(err)
 		}
 
-		txHashToPubkey[tx.Hash()] = *publicKey
+		txHashToPubKey[tx.Hash()] = *publicKey
 		txs = append(txs, *tx)
 	}
 
@@ -109,7 +106,7 @@ func RegisterGenesisAccounts(
 				if event.Raw.TxHash == txs[i].Hash() {
 					registeredAccounts[i] = models.RegisteredGenesisAccount{
 						GenesisAccount: accounts[i],
-						PublicKey:      txHashToPubkey[event.Raw.TxHash],
+						PublicKey:      txHashToPubKey[event.Raw.TxHash],
 						PubKeyID:       uint32(event.PubkeyID.Uint64()),
 					}
 					accountsRegistered += 1

@@ -30,7 +30,6 @@ type Commander struct {
 
 	stopChannel      chan bool
 	storage          *st.Storage
-	accountTree      *st.AccountTree
 	client           *eth.Client
 	apiServer        *http.Server
 	signaturesDomain *bls.Domain
@@ -57,8 +56,6 @@ func (c *Commander) Start() (err error) {
 	if err != nil {
 		return err
 	}
-
-	c.accountTree = st.NewAccountTree(c.storage)
 
 	chain, err := getChainConnection(c.cfg.Ethereum)
 	if err != nil {
@@ -168,7 +165,11 @@ func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.
 	return createClientFromChainState(chain, chainState)
 }
 
-func bootstrapFromRemoteState(chain deployer.ChainConnection, storage *st.Storage, cfg *config.BootstrapConfig) (*eth.Client, error) {
+func bootstrapFromRemoteState(
+	chain deployer.ChainConnection,
+	storage *st.Storage,
+	cfg *config.BootstrapConfig,
+) (*eth.Client, error) {
 	chainState, err := fetchChainStateFromRemoteNode(*cfg.BootstrapNodeURL)
 	if err != nil {
 		return nil, err
@@ -196,7 +197,11 @@ func bootstrapFromRemoteState(chain deployer.ChainConnection, storage *st.Storag
 	return client, nil
 }
 
-func bootstrapContractsAndState(chain deployer.ChainConnection, storage *st.Storage, cfg *config.BootstrapConfig) (*eth.Client, error) {
+func bootstrapContractsAndState(
+	chain deployer.ChainConnection,
+	storage *st.Storage,
+	cfg *config.BootstrapConfig,
+) (*eth.Client, error) {
 	chainState, err := deployContractsAndSetupGenesisState(storage, chain, cfg.GenesisAccounts)
 	if err != nil {
 		return nil, err
@@ -282,7 +287,7 @@ func deployContractsAndSetupGenesisState(
 		return nil, err
 	}
 
-	stateRoot, err := st.NewStateTree(storage).Root()
+	stateRoot, err := storage.StateTree.Root()
 	if err != nil {
 		return nil, err
 	}

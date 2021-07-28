@@ -15,29 +15,34 @@ import (
 )
 
 func (c *Commander) syncAccounts(start, end uint64) error {
-	err := c.syncSingleAccounts(start, end)
+	newAccountsSingle, err := c.syncSingleAccounts(start, end)
 	if err != nil {
 		return err
 	}
-	return c.syncBatchAccounts(start, end)
+	newAccountsBatch, err := c.syncBatchAccounts(start, end)
+	if err != nil {
+		return err
+	}
+	logAccountsCount(*newAccountsSingle + *newAccountsBatch)
+	return nil
 }
 
-func (c *Commander) syncSingleAccounts(start, end uint64) error {
+func (c *Commander) syncSingleAccounts(start, end uint64) (newAccountsCount *int, err error) {
 	it, err := c.client.AccountRegistry.FilterSinglePubkeyRegistered(&bind.FilterOpts{
 		Start: start,
 		End:   &end,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer func() { _ = it.Close() }()
 
-	newAccountsCount := 0
+	newAccountsCount = ref.Int(0)
 
 	for it.Next() {
 		tx, _, err := c.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if !bytes.Equal(tx.Data()[:4], c.client.AccountRegistryABI.Methods["register"].ID) {
@@ -46,7 +51,7 @@ func (c *Commander) syncSingleAccounts(start, end uint64) error {
 
 		unpack, err := c.client.AccountRegistryABI.Methods["register"].Inputs.Unpack(tx.Data()[4:])
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		publicKey := unpack[0].([4]*big.Int)
@@ -56,34 +61,33 @@ func (c *Commander) syncSingleAccounts(start, end uint64) error {
 			PublicKey: models.MakePublicKeyFromInts(publicKey),
 		}
 
-		isNewAccount, err := saveSyncedAccount(c.accountTree, account)
+		isNewAccount, err := saveSyncedSingleAccount(c.storage.AccountTree, account)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if *isNewAccount {
-			newAccountsCount++
+			*newAccountsCount++
 		}
 	}
-	logAccountsCount(newAccountsCount)
-	return nil
+	return newAccountsCount, nil
 }
 
-func (c *Commander) syncBatchAccounts(start, end uint64) error {
+func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int, err error) {
 	it, err := c.client.AccountRegistry.FilterBatchPubkeyRegistered(&bind.FilterOpts{
 		Start: start,
 		End:   &end,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer func() { _ = it.Close() }()
 
-	newAccountsCount := 0
+	newAccountsCount = ref.Int(0)
 
 	for it.Next() {
 		tx, _, err := c.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if !bytes.Equal(tx.Data()[:4], c.client.AccountRegistryABI.Methods["registerBatch"].ID) {
@@ -92,47 +96,66 @@ func (c *Commander) syncBatchAccounts(start, end uint64) error {
 
 		unpack, err := c.client.AccountRegistryABI.Methods["registerBatch"].Inputs.Unpack(tx.Data()[4:])
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		publicKeys := unpack[0].([16][4]*big.Int)
 		pubKeyIDs := eth.ExtractPubKeyIDsFromBatchAccountEvent(it.Event)
 
-		// TODO: call addBatchAccountLeaf instead when account tree is ready
+		accounts := make([]models.AccountLeaf, 0, len(publicKeys))
 		for i := range pubKeyIDs {
-			account := &models.AccountLeaf{
+			accounts = append(accounts, models.AccountLeaf{
 				PubKeyID:  pubKeyIDs[i],
 				PublicKey: models.MakePublicKeyFromInts(publicKeys[i]),
-			}
-			_, err = saveSyncedAccount(c.accountTree, account)
-			if err != nil {
-				return err
-			}
+			})
 		}
 
-		newAccountsCount += len(pubKeyIDs)
-	}
-	logAccountsCount(newAccountsCount)
-	return nil
-}
-
-func saveSyncedAccount(accountTree *storage.AccountTree, account *models.AccountLeaf) (isNewAccount *bool, err error) {
-	_, err = accountTree.Set(account)
-	if err == nil {
-		return ref.Bool(true), nil
-	} else if err == storage.ErrPubKeyIDAlreadyExists {
-		var existingAccount *models.AccountLeaf
-		existingAccount, err = accountTree.Leaf(account.PubKeyID)
+		isNewAccount, err := saveSyncedBatchAccounts(c.storage.AccountTree, accounts)
 		if err != nil {
 			return nil, err
 		}
-		if existingAccount.PublicKey != account.PublicKey {
-			return nil, errors.New("inconsistency in account leaves between the database and the contract")
+		if *isNewAccount {
+			*newAccountsCount += len(pubKeyIDs)
 		}
-		return ref.Bool(false), nil
-	} else {
+	}
+	return newAccountsCount, nil
+}
+
+func saveSyncedSingleAccount(accountTree *storage.AccountTree, account *models.AccountLeaf) (isNewAccount *bool, err error) {
+	err = accountTree.SetSingle(account)
+	var accountExistsErr *storage.AccountAlreadyExistsError
+	if errors.As(err, &accountExistsErr) {
+		return ref.Bool(false), validateExistingAccounts(accountTree, *accountExistsErr.Account)
+	}
+	if err != nil {
 		return nil, err
 	}
+	return ref.Bool(true), nil
+}
+
+func saveSyncedBatchAccounts(accountTree *storage.AccountTree, accounts []models.AccountLeaf) (isNewAccount *bool, err error) {
+	err = accountTree.SetBatch(accounts)
+	var accountBatchExistsErr *storage.AccountBatchAlreadyExistsError
+	if errors.As(err, &accountBatchExistsErr) {
+		return ref.Bool(false), validateExistingAccounts(accountTree, accountBatchExistsErr.Accounts...)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return ref.Bool(true), nil
+}
+
+func validateExistingAccounts(accountTree *storage.AccountTree, accounts ...models.AccountLeaf) error {
+	for i := range accounts {
+		existingAccount, err := accountTree.Leaf(accounts[i].PubKeyID)
+		if err != nil {
+			return err
+		}
+		if existingAccount.PublicKey != accounts[i].PublicKey {
+			return errors.New("inconsistency in account leaves between the database and the contract")
+		}
+	}
+	return nil
 }
 
 func logAccountsCount(newAccountsCount int) {

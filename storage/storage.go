@@ -12,6 +12,12 @@ import (
 )
 
 type Storage struct {
+	*StorageBase
+	StateTree   *StateTree
+	AccountTree *AccountTree
+}
+
+type StorageBase struct {
 	Postgres            *postgres.Database
 	Badger              *badger.Database
 	QB                  squirrel.StatementBuilderType
@@ -38,11 +44,17 @@ func NewStorage(postgresConfig *config.PostgresConfig, badgerConfig *config.Badg
 		return nil, err
 	}
 
-	return &Storage{
+	storageBase := &StorageBase{
 		Postgres:            postgresDB,
 		Badger:              badgerDB,
 		QB:                  getQueryBuilder(),
 		feeReceiverStateIDs: make(map[string]uint32),
+	}
+
+	return &Storage{
+		StorageBase: storageBase,
+		StateTree:   NewStateTree(storageBase),
+		AccountTree: NewAccountTree(storageBase),
 	}, nil
 }
 
@@ -88,7 +100,8 @@ func NewConfiguredStorage(cfg *config.Config) (storage *Storage, err error) {
 	return storage, nil
 }
 
-func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, error) {
+// TODO after removing all state/account tree methods from StorageBase try to rewrite this method to Storage
+func (s *StorageBase) BeginTransaction(opts TxOptions) (*db.TxController, *StorageBase, error) {
 	var txController *db.TxController
 	storage := *s
 
@@ -115,7 +128,7 @@ func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, 
 	return txController, &storage, nil
 }
 
-func (s *Storage) Close() error {
+func (s *StorageBase) Close() error {
 	err := s.Postgres.Close()
 	if err != nil {
 		return err
@@ -123,7 +136,7 @@ func (s *Storage) Close() error {
 	return s.Badger.Close()
 }
 
-func (s *Storage) Prune(migrator *migrate.Migrate) error {
+func (s *StorageBase) Prune(migrator *migrate.Migrate) error {
 	err := migrator.Down()
 	if err != nil && err != migrate.ErrNoChange {
 		return err

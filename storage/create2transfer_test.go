@@ -35,7 +35,6 @@ type Create2TransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage *TestStorage
-	tree    *StateTree
 }
 
 func (s *Create2TransferTestSuite) SetupSuite() {
@@ -46,7 +45,6 @@ func (s *Create2TransferTestSuite) SetupTest() {
 	var err error
 	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
-	s.tree = NewStateTree(s.storage.Storage)
 
 	err = s.storage.AddAccountLeafIfNotExists(&account2)
 	s.NoError(err)
@@ -224,7 +222,7 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey() {
 	_, err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
 
-	_, err = s.tree.Set(1, &models.UserState{
+	_, err = s.storage.StateTree.Set(1, &models.UserState{
 		PubKeyID: 2,
 		TokenID:  models.MakeUint256(1),
 		Balance:  models.MakeUint256(400),

@@ -11,12 +11,11 @@ import (
 
 // TransactionExecutor executes transactions & syncs batches. Manages a database transaction.
 type TransactionExecutor struct {
-	cfg       *config.RollupConfig
-	storage   *st.Storage
-	stateTree *st.StateTree
-	tx        *db.TxController
-	client    *eth.Client
-	ctx       context.Context
+	cfg     *config.RollupConfig
+	storage *st.Storage
+	tx      *db.TxController
+	client  *eth.Client
+	ctx     context.Context
 }
 
 // NewTransactionExecutor creates a TransactionExecutor and starts a database transaction.
@@ -26,18 +25,21 @@ func NewTransactionExecutor(
 	cfg *config.RollupConfig,
 	ctx context.Context,
 ) (*TransactionExecutor, error) {
-	tx, txStorage, err := storage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
+	tx, txStorageBase, err := storage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
 	if err != nil {
 		return nil, err
 	}
 
 	return &TransactionExecutor{
-		cfg:       cfg,
-		storage:   txStorage,
-		stateTree: st.NewStateTree(txStorage),
-		tx:        tx,
-		client:    client,
-		ctx:       ctx,
+		cfg: cfg,
+		storage: &st.Storage{
+			StorageBase: txStorageBase,
+			StateTree:   st.NewStateTree(txStorageBase),
+			AccountTree: st.NewAccountTree(txStorageBase),
+		},
+		tx:     tx,
+		client: client,
+		ctx:    ctx,
 	}, nil
 }
 
@@ -49,12 +51,11 @@ func NewTestTransactionExecutor(
 	ctx context.Context,
 ) *TransactionExecutor {
 	return &TransactionExecutor{
-		cfg:       cfg,
-		storage:   storage,
-		stateTree: st.NewStateTree(storage),
-		tx:        nil,
-		client:    client,
-		ctx:       ctx,
+		cfg:     cfg,
+		storage: storage,
+		tx:      nil,
+		client:  client,
+		ctx:     ctx,
 	}
 }
 

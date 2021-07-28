@@ -66,7 +66,7 @@ func (t *TransactionExecutor) getSyncedCommitmentFeeReceiver(commitment *encoder
 }
 
 func (t *TransactionExecutor) verifyStateRoot(commitmentPostState common.Hash, proofs []models.StateMerkleProof) error {
-	postStateRoot, err := t.stateTree.Root()
+	postStateRoot, err := t.storage.StateTree.Root()
 	if err != nil {
 		return err
 	}

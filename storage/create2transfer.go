@@ -24,7 +24,7 @@ var (
 	}
 )
 
-func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) (receiveTime *models.Timestamp, err error) {
+func (s *StorageBase) AddCreate2Transfer(t *models.Create2Transfer) (receiveTime *models.Timestamp, err error) {
 	tx, txStorage, err := s.BeginTransaction(TxOptions{Postgres: true})
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func (s *Storage) AddCreate2Transfer(t *models.Create2Transfer) (receiveTime *mo
 }
 
 // BatchAddCreate2Transfer contrary to the AddCreate2Transfer method does not set receive_time column on added transfers
-func (s *Storage) BatchAddCreate2Transfer(txs []models.Create2Transfer) error {
+func (s *StorageBase) BatchAddCreate2Transfer(txs []models.Create2Transfer) error {
 	if len(txs) < 1 {
 		return ErrNoRowsAffected
 	}
@@ -102,7 +102,7 @@ func (s *Storage) BatchAddCreate2Transfer(txs []models.Create2Transfer) error {
 	return tx.Commit()
 }
 
-func (s *Storage) GetCreate2Transfer(hash common.Hash) (*models.Create2Transfer, error) {
+func (s *StorageBase) GetCreate2Transfer(hash common.Hash) (*models.Create2Transfer, error) {
 	res := make([]models.Create2Transfer, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Select(create2TransferColumns...).
@@ -119,7 +119,7 @@ func (s *Storage) GetCreate2Transfer(hash common.Hash) (*models.Create2Transfer,
 	return &res[0], nil
 }
 
-func (s *Storage) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.Create2TransferWithBatchDetails, error) {
+func (s *StorageBase) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.Create2TransferWithBatchDetails, error) {
 	res := make([]models.Create2TransferWithBatchDetails, 0, 1)
 	err := s.Postgres.Query(
 		s.QB.Select(create2TransferWithBatchColumns...).
@@ -138,7 +138,7 @@ func (s *Storage) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.
 	return &res[0], nil
 }
 
-func (s *Storage) GetPendingCreate2Transfers(limit uint32) ([]models.Create2Transfer, error) {
+func (s *StorageBase) GetPendingCreate2Transfers(limit uint32) ([]models.Create2Transfer, error) {
 	res := make([]models.Create2Transfer, 0, limit)
 	err := s.Postgres.Query(
 		s.QB.Select(create2TransferColumns...).
@@ -154,7 +154,7 @@ func (s *Storage) GetPendingCreate2Transfers(limit uint32) ([]models.Create2Tran
 	return res, nil
 }
 
-func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([]models.Create2TransferWithBatchDetails, error) {
+func (s *StorageBase) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([]models.Create2TransferWithBatchDetails, error) {
 	accounts, err := s.GetAccountLeaves(publicKey)
 	if err != nil {
 		return nil, err
@@ -191,7 +191,7 @@ func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([
 	return res, nil
 }
 
-func (s *Storage) GetCreate2TransfersByCommitmentID(id int32) ([]models.Create2TransferForCommitment, error) {
+func (s *StorageBase) GetCreate2TransfersByCommitmentID(id int32) ([]models.Create2TransferForCommitment, error) {
 	res := make([]models.Create2TransferForCommitment, 0, 32)
 	err := s.Postgres.Query(
 		s.QB.Select("transaction_base.tx_hash",
@@ -210,7 +210,7 @@ func (s *Storage) GetCreate2TransfersByCommitmentID(id int32) ([]models.Create2T
 	return res, err
 }
 
-func (s *Storage) SetCreate2TransferToStateID(txHash common.Hash, toStateID uint32) error {
+func (s *StorageBase) SetCreate2TransferToStateID(txHash common.Hash, toStateID uint32) error {
 	res, err := s.Postgres.Query(
 		s.QB.Update("create2transfer").
 			Where(squirrel.Eq{"tx_hash": txHash}).
