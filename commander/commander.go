@@ -17,6 +17,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/ybbus/jsonrpc/v2"
@@ -170,7 +171,7 @@ func bootstrapFromRemoteState(
 	storage *st.Storage,
 	cfg *config.BootstrapConfig,
 ) (*eth.Client, error) {
-	chainState, err := fetchChainStateFromRemoteNode(*cfg.BootstrapNodeURL)
+	chainState, domain, err := fetchChainStateFromRemoteNode(*cfg.BootstrapNodeURL)
 	if err != nil {
 		return nil, err
 	}
@@ -184,6 +185,8 @@ func bootstrapFromRemoteState(
 	if err != nil {
 		return nil, err
 	}
+
+	storage.SetDomain(*domain)
 
 	client, err := createClientFromChainState(chain, chainState)
 	if err != nil {
@@ -213,19 +216,19 @@ func bootstrapContractsAndState(
 	return createClientFromChainState(chain, chainState)
 }
 
-func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {
+func fetchChainStateFromRemoteNode(url string) (*models.ChainState, *bls.Domain, error) {
 	client := jsonrpc.NewClient(url)
 
 	var info dto.NetworkInfo
 	err := client.CallFor(&info, "hubble_getNetworkInfo")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var genesisAccounts models.GenesisAccounts
 	err = client.CallFor(&genesisAccounts, "hubble_getGenesisAccounts")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	return &models.ChainState{
@@ -235,7 +238,7 @@ func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {
 		Rollup:          info.Rollup,
 		GenesisAccounts: genesisAccounts,
 		SyncedBlock:     getInitialSyncedBlock(info.DeploymentBlock),
-	}, nil
+	}, &info.SignatureDomain, nil
 }
 
 func createClientFromChainState(chain deployer.ChainConnection, chainState *models.ChainState) (*eth.Client, error) {
@@ -299,6 +302,12 @@ func deployContractsAndSetupGenesisState(
 	if err != nil {
 		return nil, err
 	}
+
+	domain, err := contracts.Rollup.DomainSeparator(&bind.CallOpts{})
+	if err != nil {
+		return nil, err
+	}
+	storage.SetDomain(domain)
 
 	chainState := &models.ChainState{
 		ChainID:         chain.GetChainID(),
