@@ -72,11 +72,11 @@ func (c *Commander) syncOrDisputeRemoteBatch(remoteBatch *eth.DecodedBatch) erro
 
 	err := c.syncBatch(remoteBatch)
 	if errors.As(err, &dcError) {
-		logFraudulentBatch(remoteBatch, dcError)
+		logFraudulentBatch(remoteBatch, dcError.Reason)
 		return c.disputeFraudulentBatchTransition(remoteBatch, dcError.CommitmentIndex, dcError.Proofs)
 	}
 	if errors.As(err, &dsError) {
-		//logFraudulentBatch(remoteBatch, dsError)
+		logFraudulentBatch(remoteBatch, dsError.Reason)
 		return c.disputeFraudulentBatchSignature(remoteBatch, dsError.CommitmentIndex)
 	}
 	return err
@@ -172,7 +172,7 @@ func logBatchesCount(newRemoteBatches []eth.DecodedBatch) {
 	}
 }
 
-func logFraudulentBatch(batch *eth.DecodedBatch, err *executor.DisputableTransitionError) {
+func logFraudulentBatch(batch *eth.DecodedBatch, reason string) {
 	log.WithFields(log.Fields{"batchID": batch.ID.String()}).
-		Infof("Found fraudulent batch. Reason: %s", err.Reason)
+		Infof("Found fraudulent batch. Reason: %s", reason)
 }
