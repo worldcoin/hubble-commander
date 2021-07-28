@@ -49,10 +49,8 @@ func (s *StateTree) Leaf(stateID uint32) (*models.StateLeaf, error) {
 			StateID:  stateID,
 			DataHash: merkletree.GetZeroHash(0),
 		}, nil
-	} else if err != nil {
-		return nil, err
 	}
-	return leaf, nil
+	return leaf, err
 }
 
 // Set returns a witness containing 32 elements for the current set operation
@@ -209,11 +207,7 @@ func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, 
 }
 
 func (s *StateTree) getMerkleTreeNodeByPath(path *models.MerklePath) (*models.MerkleTreeNode, error) {
-	node, err := s.merkleTree.Get(*path)
-	if err != nil {
-		return nil, err
-	}
-	return node, nil
+	return s.merkleTree.Get(*path)
 }
 
 func NewStateLeaf(stateID uint32, state *models.UserState) (*models.StateLeaf, error) {

@@ -1,11 +1,11 @@
 package storage
 
 import (
-	"crypto/rand"
 	"math/big"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
@@ -44,8 +44,8 @@ func (s *AccountTreeTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *AccountTreeTestSuite) TestSet_StoresAccountLeafRecord() {
-	_, err := s.storage.AccountTree.Set(s.leaf)
+func (s *AccountTreeTestSuite) TestSetSingle_StoresAccountLeafRecord() {
+	err := s.storage.AccountTree.SetSingle(s.leaf)
 	s.NoError(err)
 
 	actualLeaf, err := s.storage.GetAccountLeaf(s.leaf.PubKeyID)
@@ -53,7 +53,7 @@ func (s *AccountTreeTestSuite) TestSet_StoresAccountLeafRecord() {
 	s.Equal(s.leaf, actualLeaf)
 }
 
-func (s *AccountTreeTestSuite) TestSet_RootIsDifferentAfterSet() {
+func (s *AccountTreeTestSuite) TestSetSingle_RootIsDifferentAfterSet() {
 	leaf0 := &models.AccountLeaf{
 		PubKeyID:  0,
 		PublicKey: s.randomPublicKey(),
@@ -64,13 +64,13 @@ func (s *AccountTreeTestSuite) TestSet_RootIsDifferentAfterSet() {
 		PublicKey: s.randomPublicKey(),
 	}
 
-	_, err := s.storage.AccountTree.Set(leaf0)
+	err := s.storage.AccountTree.SetSingle(leaf0)
 	s.NoError(err)
 
 	accountRootAfter0, err := s.storage.AccountTree.Root()
 	s.NoError(err)
 
-	_, err = s.storage.AccountTree.Set(leaf1)
+	err = s.storage.AccountTree.SetSingle(leaf1)
 	s.NoError(err)
 
 	accountRootAfter1, err := s.storage.AccountTree.Root()
@@ -79,8 +79,8 @@ func (s *AccountTreeTestSuite) TestSet_RootIsDifferentAfterSet() {
 	s.NotEqual(accountRootAfter0, accountRootAfter1)
 }
 
-func (s *AccountTreeTestSuite) TestSet_StoresLeafMerkleTreeNodeRecord() {
-	_, err := s.storage.AccountTree.Set(s.leaf)
+func (s *AccountTreeTestSuite) TestSetSingle_StoresLeafMerkleTreeNodeRecord() {
+	err := s.storage.AccountTree.SetSingle(s.leaf)
 	s.NoError(err)
 
 	expectedNode := &models.MerkleTreeNode{
@@ -96,8 +96,8 @@ func (s *AccountTreeTestSuite) TestSet_StoresLeafMerkleTreeNodeRecord() {
 	s.Equal(expectedNode, node)
 }
 
-func (s *AccountTreeTestSuite) TestSet_UpdatesRootMerkleTreeNodeRecord() {
-	_, err := s.storage.AccountTree.Set(s.leaf)
+func (s *AccountTreeTestSuite) TestSetSingle_UpdatesRootMerkleTreeNodeRecord() {
+	err := s.storage.AccountTree.SetSingle(s.leaf)
 	s.NoError(err)
 
 	root, err := s.storage.AccountTree.Root()
@@ -105,9 +105,9 @@ func (s *AccountTreeTestSuite) TestSet_UpdatesRootMerkleTreeNodeRecord() {
 	s.Equal(common.HexToHash("0x6e082faf2fd8ce5accb1e08a15061f2c443ea5e9cb42d493050275d644bb51b9"), *root)
 }
 
-func (s *AccountTreeTestSuite) TestSet_CalculatesCorrectRootForLeafOfId1() {
+func (s *AccountTreeTestSuite) TestSetSingle_CalculatesCorrectRootForLeafOfId1() {
 	s.leaf.PubKeyID = 1
-	_, err := s.storage.AccountTree.Set(s.leaf)
+	err := s.storage.AccountTree.SetSingle(s.leaf)
 	s.NoError(err)
 
 	root, err := s.storage.AccountTree.Root()
@@ -115,8 +115,8 @@ func (s *AccountTreeTestSuite) TestSet_CalculatesCorrectRootForLeafOfId1() {
 	s.Equal(common.HexToHash("0xcd6164584f02a9c4c9f88c2613d7ff2b709e0951369f9bd28528712e3fa96daa"), *root)
 }
 
-func (s *AccountTreeTestSuite) TestSet_CalculatesCorrectRootForTwoLeaves() {
-	_, err := s.storage.AccountTree.Set(s.leaf)
+func (s *AccountTreeTestSuite) TestSetSingle_CalculatesCorrectRootForTwoLeaves() {
+	err := s.storage.AccountTree.SetSingle(s.leaf)
 	s.NoError(err)
 
 	leaf1 := &models.AccountLeaf{
@@ -128,7 +128,7 @@ func (s *AccountTreeTestSuite) TestSet_CalculatesCorrectRootForTwoLeaves() {
 			big.NewInt(40048372),
 		}),
 	}
-	_, err = s.storage.AccountTree.Set(leaf1)
+	err = s.storage.AccountTree.SetSingle(leaf1)
 	s.NoError(err)
 
 	root, err := s.storage.AccountTree.Root()
@@ -136,17 +136,33 @@ func (s *AccountTreeTestSuite) TestSet_CalculatesCorrectRootForTwoLeaves() {
 	s.Equal(common.HexToHash("0x3a7a7ff21991ccfcbf8a4580862def7c498253ad398e967f270ff421db1d4833"), *root)
 }
 
-func (s *AccountTreeTestSuite) TestSet_ThrowsOnSettingAlreadySetLeaf() {
-	_, err := s.storage.AccountTree.Set(s.leaf)
+func (s *AccountTreeTestSuite) TestSetSingle_ReturnsErrorOnSettingAlreadySetLeaf() {
+	err := s.storage.AccountTree.SetSingle(s.leaf)
 	s.NoError(err)
 
 	s.leaf.PublicKey = s.randomPublicKey()
-	_, err = s.storage.AccountTree.Set(s.leaf)
-	s.ErrorIs(err, ErrPubKeyIDAlreadyExists)
+	err = s.storage.AccountTree.SetSingle(s.leaf)
+
+	var accountAlreadyExistsError *AccountAlreadyExistsError
+	s.ErrorAs(err, &accountAlreadyExistsError)
+	s.Equal(s.leaf, accountAlreadyExistsError.Account)
 }
 
-func (s *AccountTreeTestSuite) TestSet_ReturnsWitness() {
-	witness, err := s.storage.AccountTree.Set(s.leaf)
+func (s *AccountTreeTestSuite) TestSetSingle_InvalidPubKeyID() {
+	account := &models.AccountLeaf{
+		PubKeyID:  rightSubtreeMaxValue,
+		PublicKey: models.PublicKey{1, 2, 3},
+	}
+
+	err := s.storage.AccountTree.SetSingle(account)
+
+	var invalidPubKeyIDError *InvalidPubKeyIDError
+	s.ErrorAs(err, &invalidPubKeyIDError)
+	s.Equal(account.PubKeyID, invalidPubKeyIDError.value)
+}
+
+func (s *AccountTreeTestSuite) TestUnsafeSet_ReturnsWitness() {
+	witness, err := s.storage.AccountTree.unsafeSet(s.leaf)
 	s.NoError(err)
 	s.Len(witness, AccountTreeDepth)
 
@@ -159,14 +175,102 @@ func (s *AccountTreeTestSuite) TestSet_ReturnsWitness() {
 	s.Equal(node.DataHash, witness[31])
 }
 
-func (s *AccountTreeTestSuite) randomPublicKey() models.PublicKey {
-	publicKey := models.PublicKey{}
-	randomBytes := make([]byte, models.PublicKeyLength)
-	_, err := rand.Read(randomBytes)
-	s.NoError(err)
-	err = publicKey.SetBytes(randomBytes)
+func (s *AccountTreeTestSuite) TestSetBatch_AddsAccountLeaves() {
+	leaves := make([]models.AccountLeaf, batchSize)
+	for i := range leaves {
+		leaves[i] = models.AccountLeaf{
+			PubKeyID:  uint32(i + accountBatchOffset),
+			PublicKey: models.PublicKey{1, 2, byte(i)},
+		}
+	}
+
+	err := s.storage.AccountTree.SetBatch(leaves)
 	s.NoError(err)
 
+	for i := range leaves {
+		accountLeaf, err := s.storage.AccountTree.Leaf(leaves[i].PubKeyID)
+		s.NoError(err)
+		s.Equal(leaves[i], *accountLeaf)
+	}
+}
+
+func (s *AccountTreeTestSuite) TestSetBatch_ChangesStateRoot() {
+	leaves := make([]models.AccountLeaf, batchSize)
+	for i := range leaves {
+		leaves[i] = models.AccountLeaf{
+			PubKeyID:  uint32(i + accountBatchOffset),
+			PublicKey: models.PublicKey{1, 2, byte(i)},
+		}
+	}
+
+	rootBeforeSet, err := s.storage.AccountTree.Root()
+	s.NoError(err)
+
+	err = s.storage.AccountTree.SetBatch(leaves)
+	s.NoError(err)
+
+	rootAfterSet, err := s.storage.AccountTree.Root()
+	s.NoError(err)
+
+	s.NotEqual(rootBeforeSet, rootAfterSet)
+}
+
+func (s *AccountTreeTestSuite) TestSetBatch_InvalidLeavesLength() {
+	leaves := make([]models.AccountLeaf, 3)
+	for i := range leaves {
+		leaves[i] = models.AccountLeaf{
+			PubKeyID:  uint32(i + accountBatchOffset),
+			PublicKey: models.PublicKey{1, 2, byte(i)},
+		}
+	}
+
+	err := s.storage.AccountTree.SetBatch(leaves)
+	s.ErrorIs(err, ErrInvalidAccountsLength)
+}
+
+func (s *AccountTreeTestSuite) TestSetBatch_ReturnsErrorOnSettingAlreadySetLeaf() {
+	leaves := make([]models.AccountLeaf, batchSize)
+	for i := range leaves {
+		leaves[i] = models.AccountLeaf{
+			PubKeyID:  uint32(i + accountBatchOffset),
+			PublicKey: models.PublicKey{1, 2, byte(i)},
+		}
+	}
+	err := s.storage.AccountTree.SetBatch(leaves)
+	s.NoError(err)
+
+	err = s.storage.AccountTree.SetBatch(leaves)
+
+	var accountBatchExistsError *AccountBatchAlreadyExistsError
+	s.ErrorAs(err, &accountBatchExistsError)
+	s.Equal(leaves, accountBatchExistsError.Accounts)
+}
+
+func (s *AccountTreeTestSuite) TestSetBatch_InvalidPubKeyIDValue() {
+	leaves := make([]models.AccountLeaf, batchSize)
+	for i := range leaves {
+		leaves[i] = models.AccountLeaf{
+			PubKeyID:  uint32(i + accountBatchOffset),
+			PublicKey: models.PublicKey{1, 2, byte(i)},
+		}
+	}
+
+	leaves[7].PubKeyID = 12
+
+	err := s.storage.AccountTree.SetBatch(leaves)
+
+	var invalidPubKeyIDError *InvalidPubKeyIDError
+	s.ErrorAs(err, &invalidPubKeyIDError)
+	s.Equal(leaves[7].PubKeyID, invalidPubKeyIDError.value)
+
+	_, err = s.storage.AccountTree.Leaf(leaves[0].PubKeyID)
+	s.Equal(NewNotFoundError("account leaf"), err)
+}
+
+func (s *AccountTreeTestSuite) randomPublicKey() models.PublicKey {
+	publicKey := models.PublicKey{}
+	err := publicKey.SetBytes(utils.RandomBytes(models.PublicKeyLength))
+	s.NoError(err)
 	return publicKey
 }
 

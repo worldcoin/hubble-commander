@@ -1,9 +1,12 @@
 package rollup
 
 import (
+	"strings"
+
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/create2transfer"
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
+	"github.com/Worldcoin/hubble-commander/contracts/libs/estimator"
 	"github.com/Worldcoin/hubble-commander/contracts/massmigration"
 	"github.com/Worldcoin/hubble-commander/contracts/proofofburn"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
@@ -25,6 +28,8 @@ const (
 	DefaultBlocksToFinalise       = 7 * 24 * 60 * 4
 	DefaultMinGasLeft             = 10_000
 	DefaultMaxTxsPerCommit        = 32
+
+	costEstimatorAddress = "079d8077c465bd0bf0fc502ad2b846757e415661"
 )
 
 type DeploymentConfig struct {
@@ -58,6 +63,15 @@ type RollupContracts struct {
 	Create2Transfer *create2transfer.Create2Transfer
 	Rollup          *rollup.Rollup
 	RollupAddress   common.Address
+}
+
+type txHelperContracts struct {
+	TransferAddress        common.Address
+	MassMigrationAddress   common.Address
+	Create2TransferAddress common.Address
+	Transfer               *transfer.Transfer
+	MassMigration          *massmigration.MassMigration
+	Create2Transfer        *create2transfer.Create2Transfer
 }
 
 func DeployRollup(c deployer.ChainConnection) (*RollupContracts, error) {
@@ -148,6 +162,71 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 		return nil, errors.WithStack(err)
 	}
 
+	log.Println("Deploying BNPairingPrecompileCostEstimator")
+	estimatorAddress, tx, _, err := estimator.DeployCostEstimator(c.GetAccount(), c.GetBackend())
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	c.Commit()
+	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
+	if err != nil {
+		return nil, err
+	}
+
+	var txHelpers *txHelperContracts
+	withReplacedCostEstimatorAddress(estimatorAddress, func() {
+		txHelpers, err = deployTransactionHelperContracts(c)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	log.Println("Deploying Rollup")
+	stateRoot := [32]byte{}
+	copy(stateRoot[:], config.GenesisStateRoot.Bytes())
+	rollupAddress, tx, rollupContract, err := rollup.DeployRollup(
+		c.GetAccount(),
+		c.GetBackend(),
+		proofOfBurnAddress,
+		depositManagerAddress,
+		*config.AccountRegistry,
+		txHelpers.TransferAddress,
+		txHelpers.MassMigrationAddress,
+		txHelpers.Create2TransferAddress,
+		stateRoot,
+		config.StakeAmount.ToBig(),
+		config.BlocksToFinalise.ToBig(),
+		config.MinGasLeft.ToBig(),
+		config.MaxTxsPerCommit.ToBig(),
+	)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	c.Commit()
+	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &RollupContracts{
+		Config:          config,
+		Chooser:         proofOfBurn,
+		AccountRegistry: accountRegistry,
+		TokenRegistry:   tokenRegistry,
+		SpokeRegistry:   spokeRegistry,
+		Vault:           vaultContract,
+		DepositManager:  depositManager,
+		Transfer:        txHelpers.Transfer,
+		MassMigration:   txHelpers.MassMigration,
+		Create2Transfer: txHelpers.Create2Transfer,
+		Rollup:          rollupContract,
+		RollupAddress:   rollupAddress,
+	}, nil
+}
+
+func deployTransactionHelperContracts(c deployer.ChainConnection) (*txHelperContracts, error) {
 	log.Println("Deploying Transfer")
 	transferAddress, tx, transferContract, err := transfer.DeployTransfer(c.GetAccount(), c.GetBackend())
 	if err != nil {
@@ -184,47 +263,13 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 		return nil, err
 	}
 
-	log.Println("Deploying Rollup")
-	stateRoot := [32]byte{}
-	copy(stateRoot[:], config.GenesisStateRoot.Bytes())
-	rollupAddress, tx, rollupContract, err := rollup.DeployRollup(
-		c.GetAccount(),
-		c.GetBackend(),
-		proofOfBurnAddress,
-		depositManagerAddress,
-		*config.AccountRegistry,
-		transferAddress,
-		massMigrationAddress,
-		create2TransferAddress,
-		stateRoot,
-		config.StakeAmount.ToBig(),
-		config.BlocksToFinalise.ToBig(),
-		config.MinGasLeft.ToBig(),
-		config.MaxTxsPerCommit.ToBig(),
-	)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	c.Commit()
-	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
-	if err != nil {
-		return nil, err
-	}
-
-	return &RollupContracts{
-		Config:          config,
-		Chooser:         proofOfBurn,
-		AccountRegistry: accountRegistry,
-		TokenRegistry:   tokenRegistry,
-		SpokeRegistry:   spokeRegistry,
-		Vault:           vaultContract,
-		DepositManager:  depositManager,
-		Transfer:        transferContract,
-		MassMigration:   massMigration,
-		Create2Transfer: create2Transfer,
-		Rollup:          rollupContract,
-		RollupAddress:   rollupAddress,
+	return &txHelperContracts{
+		TransferAddress:        transferAddress,
+		MassMigrationAddress:   massMigrationAddress,
+		Create2TransferAddress: create2TransferAddress,
+		Transfer:               transferContract,
+		MassMigration:          massMigration,
+		Create2Transfer:        create2Transfer,
 	}, nil
 }
 
@@ -260,4 +305,23 @@ func deployMissing(dependencies *Dependencies, c deployer.ChainConnection) error
 		dependencies.AccountRegistry = accountRegistryAddress
 	}
 	return nil
+}
+
+func withReplacedCostEstimatorAddress(newCostEstimator common.Address, fn func()) {
+	targetString := strings.ToLower(newCostEstimator.String()[2:])
+	originalTransferBin := transfer.TransferBin
+	originalCreate2TransferBin := create2transfer.Create2TransferBin
+	originalMassMigrationBin := massmigration.MassMigrationBin
+
+	transfer.TransferBin = strings.Replace(originalTransferBin, costEstimatorAddress, targetString, 1)
+	create2transfer.Create2TransferBin = strings.Replace(originalCreate2TransferBin, costEstimatorAddress, targetString, 1)
+	massmigration.MassMigrationBin = strings.Replace(originalMassMigrationBin, costEstimatorAddress, targetString, 1)
+
+	defer func() {
+		transfer.TransferBin = originalTransferBin
+		create2transfer.Create2TransferBin = originalCreate2TransferBin
+		massmigration.MassMigrationBin = originalMassMigrationBin
+	}()
+
+	fn()
 }
