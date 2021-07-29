@@ -51,8 +51,7 @@ func (s *BatchesTestSuite) SetupTest() {
 		},
 	}, eth.ClientConfig{})
 	s.NoError(err)
-	err = s.testStorage.SetChainState(&s.testClient.ChainState)
-	s.NoError(err)
+	s.testStorage.SetDomain(*testDomain)
 
 	s.cmd = NewCommander(s.cfg)
 	s.cmd.client = s.testClient.Client
@@ -66,7 +65,7 @@ func (s *BatchesTestSuite) SetupTest() {
 		context.Background(),
 	)
 
-	s.wallets = generateWallets(s.T(), s.testClient.ChainState.Rollup, 2)
+	s.wallets = generateWallets(s.T(), *testDomain, 2)
 	seedDB(s.T(), s.testStorage.Storage, s.wallets)
 }
 

@@ -14,8 +14,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -60,15 +58,14 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	s.NoError(err)
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
-	err = s.testStorage.SetChainState(&s.testClient.ChainState)
-	s.NoError(err)
+	s.testStorage.SetDomain(*testDomain)
 
 	s.cmd = NewCommander(s.cfg)
 	s.cmd.client = s.testClient.Client
 	s.cmd.storage = s.testStorage.Storage
 	s.cmd.stopChannel = make(chan bool)
 
-	s.wallets = generateWallets(s.T(), s.testClient.ChainState.Rollup, 2)
+	s.wallets = generateWallets(s.T(), *testDomain, 2)
 	seedDB(s.T(), s.testStorage.Storage, s.wallets)
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
 }
@@ -239,13 +236,10 @@ func signTransfer(t *testing.T, wallet *bls.Wallet, transfer *models.Transfer) {
 	transfer.Signature = *signature.ModelsSignature()
 }
 
-func generateWallets(t *testing.T, rollupAddress common.Address, walletsAmount int) []bls.Wallet {
-	domain, err := bls.DomainFromBytes(crypto.Keccak256(rollupAddress.Bytes()))
-	require.NoError(t, err)
-
+func generateWallets(t *testing.T, domain bls.Domain, walletsAmount int) []bls.Wallet {
 	wallets := make([]bls.Wallet, 0, walletsAmount)
 	for i := 0; i < walletsAmount; i++ {
-		wallet, err := bls.NewRandomWallet(*domain)
+		wallet, err := bls.NewRandomWallet(domain)
 		require.NoError(t, err)
 		wallets = append(wallets, *wallet)
 	}
