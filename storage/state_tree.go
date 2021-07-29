@@ -13,6 +13,7 @@ import (
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	bh "github.com/timshannon/badgerhold/v3"
 )
 
 const StateTreeDepth = merkletree.MaxDepth
@@ -41,6 +42,18 @@ func (s *StateTree) LeafNode(stateID uint32) (*models.MerkleTreeNode, error) {
 		Path:  stateID,
 		Depth: StateTreeDepth,
 	})
+}
+
+func (s *StateTree) Leaf(stateID uint32) (stateLeaf *models.StateLeaf, err error) {
+	var leaf models.FlatStateLeaf
+	err = s.storageBase.Badger.Get(stateID, &leaf)
+	if err == bh.ErrNotFound {
+		return nil, NewNotFoundError("state leaf")
+	}
+	if err != nil {
+		return nil, err
+	}
+	return leaf.StateLeaf(), nil
 }
 
 // Set returns a witness containing 32 elements for the current set operation
@@ -174,7 +187,7 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (models.Wit
 }
 
 func (s *StateTree) getLeafOrEmpty(stateID uint32) (*models.StateLeaf, error) {
-	leaf, err := s.storageBase.GetStateLeaf(stateID)
+	leaf, err := s.Leaf(stateID)
 	if IsNotFoundError(err) {
 		return &models.StateLeaf{
 			StateID:  stateID,

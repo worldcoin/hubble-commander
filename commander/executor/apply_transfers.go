@@ -29,7 +29,7 @@ func (t *TransactionExecutor) ApplyTransfers(
 		}
 
 		transfer := &transfers[i]
-		receiverLeaf, err := t.storage.GetStateLeaf(transfer.ToStateID)
+		receiverLeaf, err := t.storage.StateTree.Leaf(transfer.ToStateID)
 		if err != nil {
 			return nil, err
 		}

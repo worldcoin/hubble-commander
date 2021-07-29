@@ -54,7 +54,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	err = accountTree.SetSingle(&account2)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateLeaf(leaf.StateID)
+	res, err := s.storage.StateTree.Leaf(leaf.StateID)
 	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
 
@@ -65,7 +65,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	err = tx.Commit()
 	s.NoError(err)
 
-	res, err = s.storage.GetStateLeaf(leaf.StateID)
+	res, err = s.storage.StateTree.Leaf(leaf.StateID)
 	s.NoError(err)
 	s.Equal(leaf, res)
 
@@ -97,7 +97,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 	tx.Rollback(&err)
 	s.Nil(errors.Unwrap(err))
 
-	res, err := s.storage.GetStateLeaf(leaf.StateID)
+	res, err := s.storage.StateTree.Leaf(leaf.StateID)
 	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
 
@@ -143,18 +143,18 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 	nestedTx.Rollback(&err)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateLeaf(leafOne.StateID)
+	res, err := s.storage.StateTree.Leaf(leafOne.StateID)
 	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
 
 	err = tx.Commit()
 	s.NoError(err)
 
-	res, err = s.storage.GetStateLeaf(leafOne.StateID)
+	res, err = s.storage.StateTree.Leaf(leafOne.StateID)
 	s.NoError(err)
 	s.Equal(leafOne, res)
 
-	res, err = s.storage.GetStateLeaf(leafTwo.StateID)
+	res, err = s.storage.StateTree.Leaf(leafTwo.StateID)
 	s.NoError(err)
 	s.Equal(leafTwo, res)
 }
@@ -188,7 +188,7 @@ func (s *StorageTestSuite) TestClone() {
 	s.NoError(err)
 	s.Equal(batch, *clonedBatch)
 
-	clonedStateLeaf, err := clonedStorage.GetStateLeaf(stateLeaf.StateID)
+	clonedStateLeaf, err := clonedStorage.StateTree.Leaf(stateLeaf.StateID)
 	s.NoError(err)
 	s.Equal(stateLeaf, *clonedStateLeaf)
 }

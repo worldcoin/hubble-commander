@@ -13,18 +13,6 @@ func (s *StorageBase) UpsertStateLeaf(leaf *models.StateLeaf) error {
 	return s.Badger.Upsert(leaf.StateID, flatLeaf)
 }
 
-func (s *StorageBase) GetStateLeaf(stateID uint32) (stateLeaf *models.StateLeaf, err error) {
-	var leaf models.FlatStateLeaf
-	err = s.Badger.Get(stateID, &leaf)
-	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("state leaf")
-	}
-	if err != nil {
-		return nil, err
-	}
-	return leaf.StateLeaf(), nil
-}
-
 func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) (userStates []models.UserStateWithID, err error) {
 	accounts, err := s.AccountTree.Leaves(publicKey)
 	if err != nil {
@@ -63,10 +51,10 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) (userSta
 	return userStates, nil
 }
 
-func (s *StorageBase) GetFeeReceiverStateLeaf(pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
+func (s *Storage) GetFeeReceiverStateLeaf(pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
 	stateID, ok := s.feeReceiverStateIDs[tokenID.String()]
 	if ok {
-		return s.GetStateLeaf(stateID)
+		return s.StateTree.Leaf(stateID)
 	}
 	stateLeaf, err := s.GetStateLeafByPubKeyIDAndTokenID(pubKeyID, tokenID)
 	if err != nil {

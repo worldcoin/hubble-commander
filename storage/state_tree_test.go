@@ -56,7 +56,7 @@ func (s *StateTreeTestSuite) TestSet_StoresStateLeafRecord() {
 	_, err := s.storage.StateTree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
-	actualLeaf, err := s.storage.GetStateLeaf(s.leaf.StateID)
+	actualLeaf, err := s.storage.StateTree.Leaf(s.leaf.StateID)
 	s.NoError(err)
 	s.Equal(s.leaf, actualLeaf)
 }
@@ -207,7 +207,7 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafNewStateLeafRecord() {
 	_, err = s.storage.StateTree.Set(0, &updatedUserState)
 	s.NoError(err)
 
-	leaf, err := s.storage.GetStateLeaf(0)
+	leaf, err := s.storage.StateTree.Leaf(0)
 	s.NoError(err)
 	s.Equal(expectedLeaf, leaf)
 }
@@ -285,7 +285,7 @@ func (s *StateTreeTestSuite) TestRevertTo() {
 	s.NoError(err)
 	s.Equal(stateRoot, newStateRoot)
 
-	leaf, err := s.storage.GetStateLeaf(0)
+	leaf, err := s.storage.StateTree.Leaf(0)
 	s.NoError(err)
 	s.Equal(states[0], leaf.UserState)
 }

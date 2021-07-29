@@ -333,11 +333,11 @@ func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 	s.recreateDatabase()
 	s.syncAllBatches()
 
-	state0, err := s.storage.GetStateLeaf(0)
+	state0, err := s.storage.StateTree.Leaf(0)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(600), state0.Balance)
 
-	state2, err := s.storage.GetStateLeaf(2)
+	state2, err := s.storage.StateTree.Leaf(2)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(400), state2.Balance)
 	s.Equal(uint32(0), state2.PubKeyID)
@@ -375,11 +375,11 @@ func (s *SyncTestSuite) TestRevertBatch_RevertsState() {
 	s.NoError(err)
 	s.Equal(*initialStateRoot, *stateRoot)
 
-	state0, err := s.storage.GetStateLeaf(s.transfer.FromStateID)
+	state0, err := s.storage.StateTree.Leaf(s.transfer.FromStateID)
 	s.NoError(err)
 	s.Equal(uint64(1000), state0.Balance.Uint64())
 
-	state1, err := s.storage.GetStateLeaf(s.transfer.ToStateID)
+	state1, err := s.storage.StateTree.Leaf(s.transfer.ToStateID)
 	s.NoError(err)
 	s.Equal(uint64(0), state1.Balance.Uint64())
 }

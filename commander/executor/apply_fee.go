@@ -5,7 +5,7 @@ import (
 )
 
 func (t *TransactionExecutor) ApplyFee(feeReceiverStateID uint32, fee models.Uint256) (*models.StateMerkleProof, error) {
-	feeReceiver, err := t.storage.GetStateLeaf(feeReceiverStateID)
+	feeReceiver, err := t.storage.StateTree.Leaf(feeReceiverStateID)
 	if err != nil {
 		return nil, err
 	}

@@ -59,7 +59,7 @@ func (s *StateLeafTestSuite) TestUpsertStateLeaf_AddAndRetrieve() {
 	err := s.storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateLeaf(leaf.StateID)
+	res, err := s.storage.StateTree.Leaf(leaf.StateID)
 	s.NoError(err)
 
 	s.Equal(leaf, res)
@@ -83,7 +83,7 @@ func (s *StateLeafTestSuite) TestUpsertStateLeaf_UpdateAndRetrieve() {
 	err = s.storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateLeaf(leaf.StateID)
+	res, err := s.storage.StateTree.Leaf(leaf.StateID)
 	s.NoError(err)
 
 	s.Equal(leaf, res)
@@ -104,13 +104,13 @@ func (s *StateLeafTestSuite) TestGetStateLeaf_ReturnsCorrectStruct() {
 	err := s.storage.UpsertStateLeaf(leaf)
 	s.NoError(err)
 
-	actual, err := s.storage.GetStateLeaf(leaf.StateID)
+	actual, err := s.storage.StateTree.Leaf(leaf.StateID)
 	s.NoError(err)
 	s.Equal(leaf, actual)
 }
 
 func (s *StateLeafTestSuite) TestGetStateLeaf_NonExistentLeaf() {
-	_, err := s.storage.GetStateLeaf(0)
+	_, err := s.storage.StateTree.Leaf(0)
 	s.Equal(NewNotFoundError("state leaf"), err)
 }
 

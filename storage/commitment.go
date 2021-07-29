@@ -88,7 +88,7 @@ func (s *StorageBase) MarkCommitmentAsIncluded(commitmentID int32, batchID model
 	return nil
 }
 
-func (s *StorageBase) GetCommitmentsByBatchID(batchID models.Uint256) ([]models.CommitmentWithTokenID, error) {
+func (s *Storage) GetCommitmentsByBatchID(batchID models.Uint256) ([]models.CommitmentWithTokenID, error) {
 	commitments := make([]models.CommitmentWithTokenID, 0, 32)
 	err := s.Postgres.Query(
 		s.QB.Select(selectedCommitmentCols...).
@@ -103,7 +103,7 @@ func (s *StorageBase) GetCommitmentsByBatchID(batchID models.Uint256) ([]models.
 	}
 
 	for i := range commitments {
-		stateLeaf, err := s.GetStateLeaf(commitments[i].FeeReceiverStateID)
+		stateLeaf, err := s.StateTree.Leaf(commitments[i].FeeReceiverStateID)
 		if err != nil {
 			return nil, err
 		}
