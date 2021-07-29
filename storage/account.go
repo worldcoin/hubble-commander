@@ -5,13 +5,13 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-func (s *StorageBase) AddAccountLeafIfNotExists(account *models.AccountLeaf) error {
-	return s.Badger.Insert(account.PubKeyID, *account)
+func (s *AccountTree) AddAccountLeafIfNotExists(account *models.AccountLeaf) error {
+	return s.storageBase.Badger.Insert(account.PubKeyID, *account)
 }
 
-func (s *StorageBase) GetAccountLeaf(pubKeyID uint32) (*models.AccountLeaf, error) {
+func (s *AccountTree) GetAccountLeaf(pubKeyID uint32) (*models.AccountLeaf, error) {
 	var leaf models.AccountLeaf
-	err := s.Badger.Get(pubKeyID, &leaf)
+	err := s.storageBase.Badger.Get(pubKeyID, &leaf)
 	if err == bh.ErrNotFound {
 		return nil, NewNotFoundError("account leaf")
 	}
@@ -21,9 +21,9 @@ func (s *StorageBase) GetAccountLeaf(pubKeyID uint32) (*models.AccountLeaf, erro
 	return &leaf, nil
 }
 
-func (s *StorageBase) GetAccountLeaves(publicKey *models.PublicKey) ([]models.AccountLeaf, error) {
+func (s *AccountTree) GetAccountLeaves(publicKey *models.PublicKey) ([]models.AccountLeaf, error) {
 	accounts := make([]models.AccountLeaf, 0, 1)
-	err := s.Badger.Find(
+	err := s.storageBase.Badger.Find(
 		&accounts,
 		bh.Where("PublicKey").Eq(publicKey).Index("PublicKey"),
 	)
@@ -36,9 +36,9 @@ func (s *StorageBase) GetAccountLeaves(publicKey *models.PublicKey) ([]models.Ac
 	return accounts, nil
 }
 
-func (s *StorageBase) GetPublicKey(pubKeyID uint32) (*models.PublicKey, error) {
+func (s *AccountTree) GetPublicKey(pubKeyID uint32) (*models.PublicKey, error) {
 	var account models.AccountLeaf
-	err := s.Badger.Get(pubKeyID, &account)
+	err := s.storageBase.Badger.Get(pubKeyID, &account)
 	if err == bh.ErrNotFound {
 		return nil, NewNotFoundError("account")
 	}
@@ -48,8 +48,8 @@ func (s *StorageBase) GetPublicKey(pubKeyID uint32) (*models.PublicKey, error) {
 	return &account.PublicKey, nil
 }
 
-func (s *StorageBase) GetUnusedPubKeyID(publicKey *models.PublicKey, tokenID *models.Uint256) (*uint32, error) {
-	accounts, err := s.GetAccountLeaves(publicKey)
+func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey, tokenID *models.Uint256) (*uint32, error) {
+	accounts, err := s.AccountTree.Leaves(publicKey)
 	if err != nil {
 		return nil, err
 	}
@@ -72,13 +72,13 @@ func (s *StorageBase) GetUnusedPubKeyID(publicKey *models.PublicKey, tokenID *mo
 	return nil, NewNotFoundError("pub key id")
 }
 
-func (s *StorageBase) GetPublicKeyByStateID(stateID uint32) (*models.PublicKey, error) {
-	stateLeaf, err := s.GetStateLeaf(stateID)
+func (s *Storage) GetPublicKeyByStateID(stateID uint32) (*models.PublicKey, error) {
+	stateLeaf, err := s.StateTree.Leaf(stateID)
 	if IsNotFoundError(err) {
 		return nil, NewNotFoundError("account")
 	}
 	if err != nil {
 		return nil, err
 	}
-	return s.GetPublicKey(stateLeaf.PubKeyID)
+	return s.AccountTree.GetPublicKey(stateLeaf.PubKeyID)
 }

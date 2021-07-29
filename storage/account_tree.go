@@ -44,7 +44,11 @@ func (s *AccountTree) LeafNode(pubKeyID uint32) (*models.MerkleTreeNode, error) 
 }
 
 func (s *AccountTree) Leaf(pubKeyID uint32) (*models.AccountLeaf, error) {
-	return s.storageBase.GetAccountLeaf(pubKeyID)
+	return s.GetAccountLeaf(pubKeyID)
+}
+
+func (s *AccountTree) Leaves(publicKey *models.PublicKey) ([]models.AccountLeaf, error) {
+	return s.GetAccountLeaves(publicKey)
 }
 
 func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
@@ -103,7 +107,7 @@ func (s *AccountTree) GetWitness(pubKeyID uint32) (models.Witness, error) {
 }
 
 func (s *AccountTree) unsafeSet(leaf *models.AccountLeaf) (models.Witness, error) {
-	err := s.storageBase.AddAccountLeafIfNotExists(leaf)
+	err := s.AddAccountLeafIfNotExists(leaf)
 	if err != nil {
 		return nil, err
 	}
