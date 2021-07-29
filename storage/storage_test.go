@@ -48,7 +48,8 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 
 	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
-	err = storage.UpsertStateLeaf(leaf)
+	stateTree := NewStateTree(storage)
+	_, err = stateTree.Set(leaf.StateID, &leaf.UserState)
 	s.NoError(err)
 	accountTree := NewAccountTree(storage)
 	err = accountTree.SetSingle(&account2)
@@ -88,7 +89,8 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 
 	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
-	err = storage.UpsertStateLeaf(leaf)
+	stateTree := NewStateTree(storage)
+	_, err = stateTree.Set(leaf.StateID, &leaf.UserState)
 	s.NoError(err)
 	accountTree := NewAccountTree(storage)
 	err = accountTree.SetSingle(&account2)
@@ -131,13 +133,15 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
 
-	err = storage.UpsertStateLeaf(leafOne)
+	stateTree := NewStateTree(storage)
+	_, err = stateTree.Set(leafOne.StateID, &leafOne.UserState)
 	s.NoError(err)
 
 	nestedTx, nestedStorage, err := storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
 
-	err = nestedStorage.UpsertStateLeaf(leafTwo)
+	nestedStateTree := NewStateTree(nestedStorage)
+	_, err = nestedStateTree.Set(leafTwo.StateID, &leafTwo.UserState)
 	s.NoError(err)
 
 	nestedTx.Rollback(&err)
@@ -174,7 +178,7 @@ func (s *StorageTestSuite) TestClone() {
 		StateID:  1,
 		DataHash: utils.RandomHash(),
 	}
-	err = s.storage.UpsertStateLeaf(&stateLeaf)
+	_, err = s.storage.StateTree.Set(stateLeaf.StateID, &stateLeaf.UserState)
 	s.NoError(err)
 
 	clonedStorage, err := s.storage.Clone(testConfig)

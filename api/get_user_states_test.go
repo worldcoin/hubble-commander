@@ -83,7 +83,7 @@ func (s *GetUserStatesTestSuite) TestGetUserStates() {
 		},
 	}
 	for i := range leaves {
-		err := s.api.storage.UpsertStateLeaf(&leaves[i])
+		_, err := s.api.storage.StateTree.Set(leaves[i].StateID, &leaves[i].UserState)
 		s.NoError(err)
 	}
 

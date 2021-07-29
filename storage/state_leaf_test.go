@@ -56,7 +56,7 @@ func (s *StateLeafTestSuite) TestUpsertStateLeaf_AddAndRetrieve() {
 			Nonce:    models.MakeUint256(0),
 		},
 	}
-	err := s.storage.UpsertStateLeaf(leaf)
+	_, err := s.storage.StateTree.Set(leaf.StateID, &leaf.UserState)
 	s.NoError(err)
 
 	res, err := s.storage.StateTree.Leaf(leaf.StateID)
@@ -76,11 +76,11 @@ func (s *StateLeafTestSuite) TestUpsertStateLeaf_UpdateAndRetrieve() {
 			Nonce:    models.MakeUint256(0),
 		},
 	}
-	err := s.storage.UpsertStateLeaf(leaf)
+	_, err := s.storage.StateTree.Set(leaf.StateID, &leaf.UserState)
 	s.NoError(err)
 
 	leaf.UserState.Balance = models.MakeUint256(320)
-	err = s.storage.UpsertStateLeaf(leaf)
+	_, err = s.storage.StateTree.Set(leaf.StateID, &leaf.UserState)
 	s.NoError(err)
 
 	res, err := s.storage.StateTree.Leaf(leaf.StateID)
@@ -101,7 +101,7 @@ func (s *StateLeafTestSuite) TestGetStateLeaf_ReturnsCorrectStruct() {
 		},
 	}
 
-	err := s.storage.UpsertStateLeaf(leaf)
+	_, err := s.storage.StateTree.Set(leaf.StateID, &leaf.UserState)
 	s.NoError(err)
 
 	actual, err := s.storage.StateTree.Leaf(leaf.StateID)

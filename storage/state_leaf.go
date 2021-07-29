@@ -6,9 +6,9 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-func (s *StorageBase) UpsertStateLeaf(leaf *models.StateLeaf) error {
+func (s *StateTree) UpsertStateLeaf(leaf *models.StateLeaf) error {
 	flatLeaf := models.MakeFlatStateLeaf(leaf)
-	return s.Badger.Upsert(leaf.StateID, flatLeaf)
+	return s.storageBase.Badger.Upsert(leaf.StateID, flatLeaf)
 }
 
 func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) (userStates []models.UserStateWithID, err error) {
