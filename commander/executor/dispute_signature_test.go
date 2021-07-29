@@ -52,7 +52,7 @@ func (s *DisputeSignatureTestSuite) SetupTest() {
 
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
 
-	s.domain, err = bls.DomainFromBytes(crypto.Keccak256(s.client.ChainState.Rollup.Bytes()))
+	s.domain, err = s.client.GetDomain()
 	s.NoError(err)
 }
 
@@ -234,7 +234,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Create2Transfer() {
 }
 
 func (s *DisputeSignatureTestSuite) setUserStatesAndAddAccounts() []bls.Wallet {
-	wallets := setUserStates(s.Assertions, s.transactionExecutor)
+	wallets := setUserStates(s.Assertions, s.transactionExecutor, s.domain)
 	for i := range wallets {
 		err := s.transactionExecutor.storage.AccountTree.SetSingle(&models.AccountLeaf{
 			PubKeyID:  uint32(i),

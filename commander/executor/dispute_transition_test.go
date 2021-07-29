@@ -185,7 +185,7 @@ func (s *DisputeTransitionTestSuite) TestTargetCommitmentInclusionProof() {
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_RemovesInvalidBatch() {
-	setUserStates(s.Assertions, s.transactionExecutor)
+	setUserStates(s.Assertions, s.transactionExecutor, testDomain)
 
 	commitmentTxs := [][]models.Transfer{
 		{
@@ -214,7 +214,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_RemovesInval
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_FirstCommitment() {
-	setUserStates(s.Assertions, s.transactionExecutor)
+	setUserStates(s.Assertions, s.transactionExecutor, testDomain)
 
 	commitmentTxs := [][]models.Transfer{
 		{
@@ -244,7 +244,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_FirstCommitm
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_ValidBatch() {
-	setUserStates(s.Assertions, s.transactionExecutor)
+	setUserStates(s.Assertions, s.transactionExecutor, testDomain)
 
 	transfers := []models.Transfer{
 		testutils.MakeTransfer(0, 2, 0, 50),
@@ -275,7 +275,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_ValidBatch()
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_RemovesInvalidBatch() {
-	wallets := setUserStates(s.Assertions, s.transactionExecutor)
+	wallets := setUserStates(s.Assertions, s.transactionExecutor, testDomain)
 
 	commitmentTxs := [][]models.Create2Transfer{
 		{
@@ -305,7 +305,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_Remov
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_FirstCommitment() {
-	wallets := setUserStates(s.Assertions, s.transactionExecutor)
+	wallets := setUserStates(s.Assertions, s.transactionExecutor, testDomain)
 
 	commitmentTxs := [][]models.Create2Transfer{
 		{
@@ -344,7 +344,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_First
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_ValidBatch() {
-	wallets := setUserStates(s.Assertions, s.transactionExecutor)
+	wallets := setUserStates(s.Assertions, s.transactionExecutor, testDomain)
 
 	transfers := []models.Create2Transfer{
 		testutils.MakeCreate2Transfer(0, ref.Uint32(3), 0, 50, wallets[1].PublicKey()),
@@ -566,7 +566,7 @@ func (s *DisputeTransitionTestSuite) calculateStateAfterInvalidTransfer(
 	s.NoError(err)
 }
 
-func setUserStates(s *require.Assertions, txExecutor *TransactionExecutor) []bls.Wallet {
+func setUserStates(s *require.Assertions, txExecutor *TransactionExecutor, domain *bls.Domain) []bls.Wallet {
 	userStates := []models.UserState{
 		*createUserState(0, 300, 0),
 		*createUserState(1, 200, 0),
@@ -576,7 +576,7 @@ func setUserStates(s *require.Assertions, txExecutor *TransactionExecutor) []bls
 	s.NoError(err)
 	defer unsubscribe()
 
-	wallets := generateWallets(s, testDomain, len(userStates))
+	wallets := generateWallets(s, domain, len(userStates))
 	for i := range userStates {
 		pubKeyID, err := txExecutor.client.RegisterAccount(wallets[i].PublicKey(), registrations)
 		s.NoError(err)
