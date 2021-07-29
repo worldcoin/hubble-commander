@@ -79,7 +79,7 @@ func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey, tokenID *models
 
 // TODO-acc move this method
 func (s *Storage) GetPublicKeyByStateID(stateID uint32) (*models.PublicKey, error) {
-	stateLeaf, err := s.StateTree.Leaf(stateID)
+	stateLeaf, err := s.GetStateLeaf(stateID)
 	if IsNotFoundError(err) {
 		return nil, NewNotFoundError("account")
 	}
