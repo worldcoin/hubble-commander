@@ -35,7 +35,6 @@ func (s *StateTree) Root() (*common.Hash, error) {
 	return s.merkleTree.Root()
 }
 
-// TODO-acc private
 func (s *StateTree) LeafNode(stateID uint32) (*models.MerkleTreeNode, error) {
 	return s.merkleTree.Get(models.MerklePath{
 		Path:  stateID,
@@ -43,7 +42,6 @@ func (s *StateTree) LeafNode(stateID uint32) (*models.MerkleTreeNode, error) {
 	})
 }
 
-// TODO-acc rename and make private
 func (s *StateTree) Leaf(stateID uint32) (*models.StateLeaf, error) {
 	leaf, err := s.storageBase.GetStateLeaf(stateID)
 	if IsNotFoundError(err) {
@@ -208,7 +206,6 @@ func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, 
 	return currentRootHash, nil
 }
 
-// TODO-acc deduplicate with LeafNode
 func (s *StateTree) getMerkleTreeNodeByPath(path *models.MerklePath) (*models.MerkleTreeNode, error) {
 	return s.merkleTree.Get(*path)
 }

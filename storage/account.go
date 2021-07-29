@@ -5,7 +5,6 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-// TODO-acc move this method
 func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey, tokenID *models.Uint256) (*uint32, error) {
 	accounts, err := s.AccountTree.Leaves(publicKey)
 	if err != nil {
@@ -30,7 +29,6 @@ func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey, tokenID *models
 	return nil, NewNotFoundError("pub key id")
 }
 
-// TODO-acc move this method
 func (s *Storage) GetPublicKeyByStateID(stateID uint32) (*models.PublicKey, error) {
 	stateLeaf, err := s.GetStateLeaf(stateID)
 	if IsNotFoundError(err) {
