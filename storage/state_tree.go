@@ -36,14 +36,6 @@ func (s *StateTree) Root() (*common.Hash, error) {
 	return s.merkleTree.Root()
 }
 
-// TODO-ST private
-func (s *StateTree) LeafNode(stateID uint32) (*models.MerkleTreeNode, error) {
-	return s.merkleTree.Get(models.MerklePath{
-		Path:  stateID,
-		Depth: StateTreeDepth,
-	})
-}
-
 func (s *StateTree) Leaf(stateID uint32) (stateLeaf *models.StateLeaf, err error) {
 	var leaf models.FlatStateLeaf
 	err = s.storageBase.Badger.Get(stateID, &leaf)
@@ -218,11 +210,6 @@ func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, 
 	}
 
 	return currentRootHash, nil
-}
-
-// TODO-ST deduplicate with LeafNode
-func (s *StateTree) getMerkleTreeNodeByPath(path *models.MerklePath) (*models.MerkleTreeNode, error) {
-	return s.merkleTree.Get(*path)
 }
 
 func NewStateLeaf(stateID uint32, state *models.UserState) (*models.StateLeaf, error) {
