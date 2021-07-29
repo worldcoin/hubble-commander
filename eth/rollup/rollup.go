@@ -162,25 +162,13 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 		return nil, errors.WithStack(err)
 	}
 
-	log.Println("Deploying BNPairingPrecompileCostEstimator")
-	estimatorAddress, tx, costEstimator, err := estimator.DeployCostEstimator(c.GetAccount(), c.GetBackend())
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	c.Commit()
-	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = costEstimator.Run(c.GetAccount())
+	estimatorAddress, err := deployCostEstimator(c)
 	if err != nil {
 		return nil, err
 	}
 
 	var txHelpers *txHelperContracts
-	withReplacedCostEstimatorAddress(estimatorAddress, func() {
+	withReplacedCostEstimatorAddress(*estimatorAddress, func() {
 		txHelpers, err = deployTransactionHelperContracts(c)
 	})
 	if err != nil {
@@ -229,6 +217,27 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 		Rollup:          rollupContract,
 		RollupAddress:   rollupAddress,
 	}, nil
+}
+
+func deployCostEstimator(c deployer.ChainConnection) (*common.Address, error) {
+	log.Println("Deploying BNPairingPrecompileCostEstimator")
+	estimatorAddress, tx, costEstimator, err := estimator.DeployCostEstimator(c.GetAccount(), c.GetBackend())
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	c.Commit()
+	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = costEstimator.Run(c.GetAccount())
+	if err != nil {
+		return nil, err
+	}
+
+	return &estimatorAddress, nil
 }
 
 func deployTransactionHelperContracts(c deployer.ChainConnection) (*txHelperContracts, error) {
