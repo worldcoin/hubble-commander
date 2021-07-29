@@ -44,7 +44,15 @@ func (s *AccountTree) LeafNode(pubKeyID uint32) (*models.MerkleTreeNode, error) 
 }
 
 func (s *AccountTree) Leaf(pubKeyID uint32) (*models.AccountLeaf, error) {
-	return s.getAccountLeaf(pubKeyID)
+	var leaf models.AccountLeaf
+	err := s.storageBase.Badger.Get(pubKeyID, &leaf)
+	if err == bh.ErrNotFound {
+		return nil, NewNotFoundError("account leaf")
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &leaf, nil
 }
 
 func (s *AccountTree) Leaves(publicKey *models.PublicKey) ([]models.AccountLeaf, error) {

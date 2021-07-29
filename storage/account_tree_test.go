@@ -44,6 +44,11 @@ func (s *AccountTreeTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
+func (s *AccountTreeTestSuite) TestLeaf_NonExistentLeaf() {
+	_, err := s.storage.AccountTree.Leaf(0)
+	s.Equal(NewNotFoundError("account leaf"), err)
+}
+
 func (s *AccountTreeTestSuite) TestSetSingle_StoresAccountLeafRecord() {
 	err := s.storage.AccountTree.SetSingle(s.leaf)
 	s.NoError(err)

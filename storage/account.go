@@ -5,19 +5,6 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-// TODO-acc merge with Leaf
-func (s *AccountTree) getAccountLeaf(pubKeyID uint32) (*models.AccountLeaf, error) {
-	var leaf models.AccountLeaf
-	err := s.storageBase.Badger.Get(pubKeyID, &leaf)
-	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("account leaf")
-	}
-	if err != nil {
-		return nil, err
-	}
-	return &leaf, nil
-}
-
 // TODO-acc merge with Leaves
 func (s *AccountTree) getAccountLeaves(publicKey *models.PublicKey) ([]models.AccountLeaf, error) {
 	accounts := make([]models.AccountLeaf, 0, 1)

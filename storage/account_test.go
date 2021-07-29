@@ -41,11 +41,6 @@ func (s *AccountTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *AccountTestSuite) TestGetAccountLeaf_NonExistentLeaf() {
-	_, err := s.storage.AccountTree.getAccountLeaf(0)
-	s.Equal(NewNotFoundError("account leaf"), err)
-}
-
 func (s *AccountTestSuite) TestGetAccountLeaves_NoPublicKeys() {
 	_, err := s.storage.AccountTree.getAccountLeaves(&models.PublicKey{1, 2, 3})
 	s.Equal(NewNotFoundError("account leaves"), err)
