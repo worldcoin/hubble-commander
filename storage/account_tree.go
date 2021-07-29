@@ -140,7 +140,3 @@ func (s *AccountTree) unsafeSet(leaf *models.AccountLeaf) (models.Witness, error
 
 	return witness, nil
 }
-
-func (s *AccountTree) getMerkleTreeNodeByPath(path *models.MerklePath) (*models.MerkleTreeNode, error) {
-	return s.merkleTree.Get(*path)
-}
