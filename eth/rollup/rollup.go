@@ -313,9 +313,9 @@ func withReplacedCostEstimatorAddress(newCostEstimator common.Address, fn func()
 	originalCreate2TransferBin := create2transfer.Create2TransferBin
 	originalMassMigrationBin := massmigration.MassMigrationBin
 
-	transfer.TransferBin = strings.Replace(originalTransferBin, costEstimatorAddress, targetString, 1)
-	create2transfer.Create2TransferBin = strings.Replace(originalCreate2TransferBin, costEstimatorAddress, targetString, 1)
-	massmigration.MassMigrationBin = strings.Replace(originalMassMigrationBin, costEstimatorAddress, targetString, 1)
+	transfer.TransferBin = strings.Replace(originalTransferBin, costEstimatorAddress, targetString, -1)
+	create2transfer.Create2TransferBin = strings.Replace(originalCreate2TransferBin, costEstimatorAddress, targetString, -1)
+	massmigration.MassMigrationBin = strings.Replace(originalMassMigrationBin, costEstimatorAddress, targetString, -1)
 
 	defer func() {
 		transfer.TransferBin = originalTransferBin
