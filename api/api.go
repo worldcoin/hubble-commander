@@ -58,7 +58,7 @@ func getAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client
 }
 
 func (a *API) initSignature() error {
-	domain, err := a.storage.GetDomain(a.client.ChainState.ChainID)
+	domain, err := a.client.GetDomain()
 	if err != nil {
 		return err
 	}

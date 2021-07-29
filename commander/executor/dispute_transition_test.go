@@ -576,7 +576,7 @@ func (s *DisputeTransitionTestSuite) setUserStates() []bls.Wallet {
 	s.NoError(err)
 	defer unsubscribe()
 
-	wallets := generateWallets(s.Assertions, s.client.ChainState.Rollup, len(userStates))
+	wallets := generateWallets(s.Assertions, testDomain, len(userStates))
 	for i := range userStates {
 		pubKeyID, err := s.client.RegisterAccount(wallets[i].PublicKey(), registrations)
 		s.NoError(err)

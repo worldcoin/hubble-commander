@@ -35,6 +35,7 @@ type SendTransferTestSuite struct {
 	suite.Suite
 	api       *API
 	storage   *st.TestStorage
+	client    *eth.TestClient
 	userState *models.UserState
 	transfer  dto.Transfer
 	wallet    *bls.Wallet
@@ -49,17 +50,15 @@ func (s *SendTransferTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
+	s.client, err = eth.NewTestClient()
+	s.NoError(err)
 	s.api = &API{
 		cfg:     &config.APIConfig{},
 		storage: s.storage.Storage,
-		client: &eth.Client{
-			ChainState: chainState,
-		},
+		client:  s.client.Client,
 	}
 
-	err = s.storage.SetChainState(&chainState)
-	s.NoError(err)
-	s.domain, err = s.storage.GetDomain(chainState.ChainID)
+	s.domain, err = s.client.GetDomain()
 	s.NoError(err)
 	s.wallet, err = bls.NewRandomWallet(*s.domain)
 	s.NoError(err)
@@ -90,6 +89,7 @@ func (s *SendTransferTestSuite) signTransfer(transfer dto.Transfer) dto.Transfer
 }
 
 func (s *SendTransferTestSuite) TearDownTest() {
+	s.client.Close()
 	err := s.storage.Teardown()
 	s.NoError(err)
 }
