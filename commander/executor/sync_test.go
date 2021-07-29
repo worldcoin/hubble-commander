@@ -55,7 +55,9 @@ func (s *SyncTestSuite) SetupTest() {
 		DevMode:                false,
 	}
 
-	s.wallets = generateWallets(s.Assertions, testDomain, 2)
+	domain, err := s.client.GetDomain()
+	s.NoError(err)
+	s.wallets = generateWallets(s.Assertions, domain, 2)
 	s.setupDB()
 }
 
@@ -64,7 +66,6 @@ func (s *SyncTestSuite) setupDB() {
 	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, s.cfg, context.Background())
-	s.storage.SetDomain(*testDomain)
 
 	seedDB(s.Assertions, s.storage.Storage, s.wallets)
 }

@@ -2,7 +2,6 @@ package storage
 
 import (
 	"github.com/Masterminds/squirrel"
-	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
@@ -36,15 +35,4 @@ func (s *StorageBase) SetChainState(chainState *models.ChainState) error {
 			),
 	).Exec()
 	return err
-}
-
-func (s *StorageBase) SetDomain(domain bls.Domain) {
-	s.domain = &domain
-}
-
-func (s *StorageBase) GetDomain() (*bls.Domain, error) {
-	if s.domain != nil {
-		return s.domain, nil
-	}
-	return nil, NewNotFoundError("domain")
 }

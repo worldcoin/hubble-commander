@@ -68,11 +68,10 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.signaturesDomain, err = getDomain(c.client)
+	c.signaturesDomain, err = c.client.GetDomain()
 	if err != nil {
 		return err
 	}
-	c.storage.SetDomain(*c.signaturesDomain)
 
 	c.apiServer, err = api.NewAPIServer(c.cfg.API, c.storage, c.client, c.cfg.Rollup.DevMode)
 	if err != nil {

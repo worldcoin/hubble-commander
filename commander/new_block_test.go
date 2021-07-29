@@ -18,8 +18,6 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-var testDomain = &bls.Domain{1, 2, 3, 4}
-
 type NewBlockLoopTestSuite struct {
 	*require.Assertions
 	suite.Suite
@@ -58,14 +56,15 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	s.NoError(err)
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
-	s.testStorage.SetDomain(*testDomain)
 
 	s.cmd = NewCommander(s.cfg)
 	s.cmd.client = s.testClient.Client
 	s.cmd.storage = s.testStorage.Storage
 	s.cmd.stopChannel = make(chan bool)
 
-	s.wallets = generateWallets(s.T(), *testDomain, 2)
+	domain, err := s.testClient.GetDomain()
+	s.NoError(err)
+	s.wallets = generateWallets(s.T(), *domain, 2)
 	seedDB(s.T(), s.testStorage.Storage, s.wallets)
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
 }
@@ -177,7 +176,9 @@ func createAndSubmitTransferBatch(
 	batch, err := txExecutor.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
-	commitments, err := txExecutor.CreateTransferCommitments(testDomain)
+	domain, err := client.GetDomain()
+	s.NoError(err)
+	commitments, err := txExecutor.CreateTransferCommitments(domain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -191,7 +192,9 @@ func (s *NewBlockLoopTestSuite) createAndSubmitTransferBatchInTransaction(tx *mo
 		_, err := txStorage.AddTransfer(tx)
 		s.NoError(err)
 
-		commitments, err := txExecutor.CreateTransferCommitments(testDomain)
+		domain, err := s.testClient.GetDomain()
+		s.NoError(err)
+		commitments, err := txExecutor.CreateTransferCommitments(domain)
 		s.NoError(err)
 		s.Len(commitments, 1)
 

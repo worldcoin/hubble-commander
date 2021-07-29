@@ -44,7 +44,6 @@ func (s *VerifySignatureTestSuite) SetupTest() {
 	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, s.cfg, context.Background())
-	s.storage.SetDomain(*testDomain)
 	s.addAccounts()
 }
 
