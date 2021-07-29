@@ -125,7 +125,7 @@ func (t *TransactionExecutor) userStateProof(stateID uint32) (*models.StateMerkl
 }
 
 func (t *TransactionExecutor) publicKeyProof(pubKeyID uint32) (*models.PublicKeyProof, error) {
-	publicKey, err := t.storage.GetPublicKey(pubKeyID)
+	account, err := t.storage.AccountTree.Leaf(pubKeyID)
 	if err != nil {
 		return nil, err
 	}
@@ -135,13 +135,13 @@ func (t *TransactionExecutor) publicKeyProof(pubKeyID uint32) (*models.PublicKey
 	}
 
 	return &models.PublicKeyProof{
-		PublicKey: publicKey,
+		PublicKey: &account.PublicKey,
 		Witness:   witness,
 	}, nil
 }
 
 func (t *TransactionExecutor) receiverPublicKeyProof(pubKeyID uint32) (*models.ReceiverPublicKeyProof, error) {
-	publicKey, err := t.storage.GetPublicKey(pubKeyID)
+	account, err := t.storage.AccountTree.Leaf(pubKeyID)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func (t *TransactionExecutor) receiverPublicKeyProof(pubKeyID uint32) (*models.R
 	}
 
 	return &models.ReceiverPublicKeyProof{
-		PublicKeyHash: crypto.Keccak256Hash(publicKey.Bytes()),
+		PublicKeyHash: crypto.Keccak256Hash(account.PublicKey.Bytes()),
 		Witness:       witness,
 	}, nil
 }

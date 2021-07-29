@@ -81,7 +81,7 @@ func (s *DisputeSignatureTestSuite) TestPublicKeyProof() {
 		PubKeyID:  1,
 		PublicKey: models.PublicKey{1, 2, 3},
 	}
-	err := s.storage.AddAccountLeafIfNotExists(account)
+	err := s.storage.AccountTree.SetSingle(account)
 	s.NoError(err)
 
 	publicKeyProof, err := s.transactionExecutor.publicKeyProof(account.PubKeyID)
@@ -95,7 +95,7 @@ func (s *DisputeSignatureTestSuite) TestReceiverPublicKeyProof() {
 		PubKeyID:  1,
 		PublicKey: models.PublicKey{1, 2, 3},
 	}
-	err := s.storage.AddAccountLeafIfNotExists(account)
+	err := s.storage.AccountTree.SetSingle(account)
 	s.NoError(err)
 
 	publicKeyHash := crypto.Keccak256Hash(account.PublicKey.Bytes())
@@ -118,13 +118,13 @@ func (s *DisputeSignatureTestSuite) TestSignatureProof() {
 	expectedUserStates := make([]models.UserState, 0, len(transfers))
 	expectedPublicKeys := make([]models.PublicKey, 0, len(transfers))
 	for i := range transfers {
-		leaf, err := s.storage.GetStateLeaf(transfers[i].FromStateID)
+		leaf, err := s.storage.StateTree.Leaf(transfers[i].FromStateID)
 		s.NoError(err)
 		expectedUserStates = append(expectedUserStates, leaf.UserState)
 
-		publicKey, err := s.storage.GetPublicKey(leaf.PubKeyID)
+		account, err := s.storage.AccountTree.Leaf(leaf.PubKeyID)
 		s.NoError(err)
-		expectedPublicKeys = append(expectedPublicKeys, *publicKey)
+		expectedPublicKeys = append(expectedPublicKeys, account.PublicKey)
 	}
 
 	serializedTxs, err := encoder.SerializeTransfers(transfers)
@@ -161,13 +161,13 @@ func (s *DisputeSignatureTestSuite) TestSignatureProofWithReceiver() {
 	senderPublicKeys := make([]models.PublicKey, 0, len(transfers))
 	receiverPublicKeys := make([]common.Hash, 0, len(transfers))
 	for i := range transfers {
-		leaf, err := s.storage.GetStateLeaf(transfers[i].FromStateID)
+		leaf, err := s.storage.StateTree.Leaf(transfers[i].FromStateID)
 		s.NoError(err)
 		expectedUserStates = append(expectedUserStates, leaf.UserState)
 
-		publicKey, err := s.storage.GetPublicKey(leaf.PubKeyID)
+		account, err := s.storage.AccountTree.Leaf(leaf.PubKeyID)
 		s.NoError(err)
-		senderPublicKeys = append(senderPublicKeys, *publicKey)
+		senderPublicKeys = append(senderPublicKeys, account.PublicKey)
 
 		err = s.transactionExecutor.storage.AccountTree.SetSingle(&receiverAccounts[i])
 		s.NoError(err)
