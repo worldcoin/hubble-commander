@@ -5,10 +5,12 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
+// TODO-acc move to account_tree.go
 func (s *AccountTree) addAccountLeafIfNotExists(account *models.AccountLeaf) error {
 	return s.storageBase.Badger.Insert(account.PubKeyID, *account)
 }
 
+// TODO-acc merge with Leaf
 func (s *AccountTree) getAccountLeaf(pubKeyID uint32) (*models.AccountLeaf, error) {
 	var leaf models.AccountLeaf
 	err := s.storageBase.Badger.Get(pubKeyID, &leaf)
@@ -21,6 +23,7 @@ func (s *AccountTree) getAccountLeaf(pubKeyID uint32) (*models.AccountLeaf, erro
 	return &leaf, nil
 }
 
+// TODO-acc merge with Leaves
 func (s *AccountTree) getAccountLeaves(publicKey *models.PublicKey) ([]models.AccountLeaf, error) {
 	accounts := make([]models.AccountLeaf, 0, 1)
 	err := s.storageBase.Badger.Find(
@@ -36,6 +39,7 @@ func (s *AccountTree) getAccountLeaves(publicKey *models.PublicKey) ([]models.Ac
 	return accounts, nil
 }
 
+// TODO-acc remove and use AccountTree.Leaf instead
 func (s *AccountTree) GetPublicKey(pubKeyID uint32) (*models.PublicKey, error) {
 	var account models.AccountLeaf
 	err := s.storageBase.Badger.Get(pubKeyID, &account)
@@ -48,6 +52,7 @@ func (s *AccountTree) GetPublicKey(pubKeyID uint32) (*models.PublicKey, error) {
 	return &account.PublicKey, nil
 }
 
+// TODO-acc move this method
 func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey, tokenID *models.Uint256) (*uint32, error) {
 	accounts, err := s.AccountTree.Leaves(publicKey)
 	if err != nil {
@@ -72,6 +77,7 @@ func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey, tokenID *models
 	return nil, NewNotFoundError("pub key id")
 }
 
+// TODO-acc move this method
 func (s *Storage) GetPublicKeyByStateID(stateID uint32) (*models.PublicKey, error) {
 	stateLeaf, err := s.StateTree.Leaf(stateID)
 	if IsNotFoundError(err) {
