@@ -49,12 +49,12 @@ func (s *AccountTreeTestSuite) TestLeaf_NonExistentLeaf() {
 	s.Equal(NewNotFoundError("account leaf"), err)
 }
 
-func (s *AccountTreeTestSuite) TestLeaves_NoPublicKeys() {
+func (s *AccountTreeTestSuite) TestLeaves_NonExistentLeaves() {
 	_, err := s.storage.AccountTree.Leaves(&models.PublicKey{1, 2, 3})
 	s.Equal(NewNotFoundError("account leaves"), err)
 }
 
-func (s *AccountTreeTestSuite) TestLeaves_ReturnsAllAccounts() {
+func (s *AccountTreeTestSuite) TestLeaves_ReturnsAllLeaves() {
 	pubKey := models.PublicKey{1, 2, 3}
 	accounts := []models.AccountLeaf{{
 		PubKeyID:  0,

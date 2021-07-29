@@ -228,7 +228,7 @@ func (s *AccountTestSuite) TestGetPublicKeyByStateID_NonExistentStateLeaf() {
 	s.Equal(NewNotFoundError("state leaf"), err)
 }
 
-func (s *AccountTestSuite) TestGetPublicKeyByStateID_NonExistentPublicKey() {
+func (s *AccountTestSuite) TestGetPublicKeyByStateID_NonExistentAccountLeaf() {
 	userState := &models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(1),
