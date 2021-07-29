@@ -107,7 +107,7 @@ func (s *AccountTree) GetWitness(pubKeyID uint32) (models.Witness, error) {
 }
 
 func (s *AccountTree) unsafeSet(leaf *models.AccountLeaf) (models.Witness, error) {
-	err := s.addAccountLeafIfNotExists(leaf)
+	err := s.storageBase.Badger.Insert(leaf.PubKeyID, *leaf)
 	if err != nil {
 		return nil, err
 	}

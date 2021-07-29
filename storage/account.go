@@ -5,11 +5,6 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-// TODO-acc move to account_tree.go
-func (s *AccountTree) addAccountLeafIfNotExists(account *models.AccountLeaf) error {
-	return s.storageBase.Badger.Insert(account.PubKeyID, *account)
-}
-
 // TODO-acc merge with Leaf
 func (s *AccountTree) getAccountLeaf(pubKeyID uint32) (*models.AccountLeaf, error) {
 	var leaf models.AccountLeaf

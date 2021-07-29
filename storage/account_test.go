@@ -7,7 +7,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	bh "github.com/timshannon/badgerhold/v3"
 )
 
 var (
@@ -42,20 +41,6 @@ func (s *AccountTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *AccountTestSuite) TestAddAccountLeafIfNotExists_AddAndRetrieve() {
-	err := s.storage.AccountTree.addAccountLeafIfNotExists(&account1)
-	s.NoError(err)
-
-	leaf, err := s.storage.AccountTree.getAccountLeaf(account1.PubKeyID)
-	s.NoError(err)
-
-	res, err := s.storage.AccountTree.getAccountLeaves(&account1.PublicKey)
-	s.NoError(err)
-
-	s.Equal(account1, *leaf)
-	s.Equal([]models.AccountLeaf{account1}, res)
-}
-
 func (s *AccountTestSuite) TestGetAccountLeaf_NonExistentLeaf() {
 	_, err := s.storage.AccountTree.getAccountLeaf(0)
 	s.Equal(NewNotFoundError("account leaf"), err)
@@ -76,9 +61,9 @@ func (s *AccountTestSuite) TestGetAccounts_ReturnsAllAccounts() {
 		PublicKey: pubKey,
 	}}
 
-	err := s.storage.AccountTree.addAccountLeafIfNotExists(&accounts[0])
+	err := s.storage.AccountTree.SetSingle(&accounts[0])
 	s.NoError(err)
-	err = s.storage.AccountTree.addAccountLeafIfNotExists(&accounts[1])
+	err = s.storage.AccountTree.SetSingle(&accounts[1])
 	s.NoError(err)
 
 	res, err := s.storage.AccountTree.getAccountLeaves(&pubKey)
@@ -87,26 +72,13 @@ func (s *AccountTestSuite) TestGetAccounts_ReturnsAllAccounts() {
 	s.Equal(accounts, res)
 }
 
-func (s *AccountTestSuite) TestAddAccountLeafIfNotExists_ThrowsWhenAddingTheSameLeaf() {
-	err := s.storage.AccountTree.addAccountLeafIfNotExists(&account1)
-	s.NoError(err)
-
-	err = s.storage.AccountTree.addAccountLeafIfNotExists(&account1)
-	s.ErrorIs(err, bh.ErrKeyExists)
-
-	res, err := s.storage.AccountTree.getAccountLeaves(&account1.PublicKey)
-	s.NoError(err)
-
-	s.Equal([]models.AccountLeaf{account1}, res)
-}
-
 func (s *AccountTestSuite) TestGetPublicKey_ReturnsPublicKey() {
 	account := models.AccountLeaf{
 		PubKeyID:  0,
 		PublicKey: models.PublicKey{1, 2, 3},
 	}
 
-	err := s.storage.AccountTree.addAccountLeafIfNotExists(&account)
+	err := s.storage.AccountTree.SetSingle(&account)
 	s.NoError(err)
 
 	key, err := s.storage.AccountTree.GetPublicKey(0)
@@ -120,7 +92,7 @@ func (s *AccountTestSuite) TestGetUnusedPubKeyID_NoPublicKeys() {
 }
 
 func (s *AccountTestSuite) TestGetUnusedPubKeyID_NoLeaves() {
-	err := s.storage.AccountTree.addAccountLeafIfNotExists(&account1)
+	err := s.storage.AccountTree.SetSingle(&account1)
 	s.NoError(err)
 	pubKeyID, err := s.storage.GetUnusedPubKeyID(&account1.PublicKey, models.NewUint256(100))
 	s.NoError(err)
@@ -133,7 +105,7 @@ func (s *AccountTestSuite) TestGetUnusedPubKeyID_NoUnusedPublicIDs() {
 		PublicKey: models.PublicKey{1, 2, 3},
 	}
 
-	err := s.storage.AccountTree.addAccountLeafIfNotExists(&account)
+	err := s.storage.AccountTree.SetSingle(&account)
 	s.NoError(err)
 
 	leaf := &models.StateLeaf{
@@ -173,7 +145,7 @@ func (s *AccountTestSuite) TestGetUnusedPubKeyID() {
 	}
 
 	for i := range accounts {
-		err := s.storage.AccountTree.addAccountLeafIfNotExists(&accounts[i])
+		err := s.storage.AccountTree.SetSingle(&accounts[i])
 		s.NoError(err)
 	}
 
@@ -224,7 +196,7 @@ func (s *AccountTestSuite) TestGetUnusedPubKeyID_MultipleTokenIDs() {
 	}
 
 	for i := range accounts {
-		err := s.storage.AccountTree.addAccountLeafIfNotExists(&accounts[i])
+		err := s.storage.AccountTree.SetSingle(&accounts[i])
 		s.NoError(err)
 	}
 
@@ -259,9 +231,9 @@ func (s *AccountTestSuite) TestGetUnusedPubKeyID_MultipleTokenIDs() {
 }
 
 func (s *AccountTestSuite) TestGetPublicKeyByStateID() {
-	err := s.storage.AccountTree.addAccountLeafIfNotExists(&account1)
+	err := s.storage.AccountTree.SetSingle(&account1)
 	s.NoError(err)
-	err = s.storage.AccountTree.addAccountLeafIfNotExists(&account2)
+	err = s.storage.AccountTree.SetSingle(&account2)
 	s.NoError(err)
 
 	leaves := []models.StateLeaf{
