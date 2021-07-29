@@ -51,12 +51,62 @@ func (s *StateTreeTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
+func (s *StateTreeTestSuite) TestLeaf_ReturnsCorrectStruct() {
+	leaf, err := NewStateLeaf(0, &models.UserState{
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
+	})
+	s.NoError(err)
+
+	_, err = s.storage.StateTree.Set(leaf.StateID, &leaf.UserState)
+	s.NoError(err)
+
+	actual, err := s.storage.StateTree.Leaf(leaf.StateID)
+	s.NoError(err)
+	s.Equal(leaf, actual)
+}
+
+func (s *StateTreeTestSuite) TestLeaf_NonExistentLeaf() {
+	_, err := s.storage.StateTree.Leaf(0)
+	s.Equal(NewNotFoundError("state leaf"), err)
+}
+
+func (s *StateTreeTestSuite) TestNextAvailableStateID_NoLeavesInStateTree() {
+	stateID, err := s.storage.StateTree.NextAvailableStateID()
+	s.NoError(err)
+	s.Equal(uint32(0), *stateID)
+}
+
+func (s *StateTreeTestSuite) TestNextAvailableStateID_OneBytes() {
+	_, err := s.storage.StateTree.Set(0, userState1)
+	s.NoError(err)
+	_, err = s.storage.StateTree.Set(2, userState2)
+	s.NoError(err)
+
+	stateID, err := s.storage.StateTree.NextAvailableStateID()
+	s.NoError(err)
+	s.Equal(uint32(3), *stateID)
+}
+
+func (s *StateTreeTestSuite) TestNextAvailableStateID_TwoBytes() {
+	_, err := s.storage.StateTree.Set(0, userState1)
+	s.NoError(err)
+	_, err = s.storage.StateTree.Set(13456, userState2)
+	s.NoError(err)
+
+	stateID, err := s.storage.StateTree.NextAvailableStateID()
+	s.NoError(err)
+	s.Equal(uint32(13457), *stateID)
+}
+
 func (s *StateTreeTestSuite) TestSet_StoresStateLeafRecord() {
 	s.leaf.StateID = 0
 	_, err := s.storage.StateTree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
 
-	actualLeaf, err := s.storage.GetStateLeaf(s.leaf.StateID)
+	actualLeaf, err := s.storage.StateTree.Leaf(s.leaf.StateID)
 	s.NoError(err)
 	s.Equal(s.leaf, actualLeaf)
 }
@@ -157,7 +207,7 @@ func (s *StateTreeTestSuite) TestSet_StoresStateUpdateRecord() {
 		},
 	}
 
-	update, err := s.storage.GetStateUpdate(expectedUpdate.ID)
+	update, err := s.storage.StateTree.getStateUpdate(expectedUpdate.ID)
 	s.NoError(err)
 	s.Equal(expectedUpdate, update)
 }
@@ -193,7 +243,7 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectLeafMerkleTreeNode
 		DataHash:   leaf.DataHash,
 	}
 
-	leafNode, err := s.storage.StateTree.LeafNode(0)
+	leafNode, err := s.storage.StateTree.merkleTree.Get(models.MerklePath{Path: 0, Depth: StateTreeDepth})
 	s.NoError(err)
 	s.Equal(expectedLeaf, leafNode)
 }
@@ -207,7 +257,7 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafNewStateLeafRecord() {
 	_, err = s.storage.StateTree.Set(0, &updatedUserState)
 	s.NoError(err)
 
-	leaf, err := s.storage.GetStateLeaf(0)
+	leaf, err := s.storage.StateTree.Leaf(0)
 	s.NoError(err)
 	s.Equal(expectedLeaf, leaf)
 }
@@ -226,7 +276,7 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafAddsStateUpdateRecord() {
 		PrevStateLeaf: *s.leaf,
 	}
 
-	update, err := s.storage.GetStateUpdate(expectedUpdate.ID)
+	update, err := s.storage.StateTree.getStateUpdate(expectedUpdate.ID)
 	s.NoError(err)
 	s.Equal(expectedUpdate, update)
 }
@@ -236,11 +286,11 @@ func (s *StateTreeTestSuite) TestSet_ReturnsWitness() {
 	s.NoError(err)
 	s.Len(witness, StateTreeDepth)
 
-	node, err := s.storage.StateTree.getMerkleTreeNodeByPath(&models.MerklePath{Depth: StateTreeDepth, Path: 1})
+	node, err := s.storage.StateTree.merkleTree.Get(models.MerklePath{Depth: StateTreeDepth, Path: 1})
 	s.NoError(err)
 	s.Equal(node.DataHash, witness[0])
 
-	node, err = s.storage.StateTree.getMerkleTreeNodeByPath(&models.MerklePath{Depth: 1, Path: 1})
+	node, err = s.storage.StateTree.merkleTree.Get(models.MerklePath{Depth: 1, Path: 1})
 	s.NoError(err)
 	s.Equal(node.DataHash, witness[31])
 }
@@ -285,7 +335,7 @@ func (s *StateTreeTestSuite) TestRevertTo() {
 	s.NoError(err)
 	s.Equal(stateRoot, newStateRoot)
 
-	leaf, err := s.storage.GetStateLeaf(0)
+	leaf, err := s.storage.StateTree.Leaf(0)
 	s.NoError(err)
 	s.Equal(states[0], leaf.UserState)
 }

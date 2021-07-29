@@ -30,7 +30,7 @@ func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey, tokenID *models
 }
 
 func (s *Storage) GetPublicKeyByStateID(stateID uint32) (*models.PublicKey, error) {
-	stateLeaf, err := s.GetStateLeaf(stateID)
+	stateLeaf, err := s.StateTree.Leaf(stateID)
 	if err != nil {
 		return nil, err
 	}

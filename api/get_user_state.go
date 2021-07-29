@@ -6,7 +6,7 @@ import (
 )
 
 func (a *API) GetUserState(id uint32) (*dto.UserState, error) {
-	leaf, err := a.storage.GetStateLeaf(id)
+	leaf, err := a.storage.StateTree.Leaf(id)
 	if err != nil {
 		return nil, err
 	}

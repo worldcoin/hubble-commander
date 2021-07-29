@@ -46,16 +46,16 @@ func (s *StateUpdateTestSuite) TestAddStateUpdate_AddAndRetrieve() {
 			},
 		},
 	}
-	err := s.storage.AddStateUpdate(update)
+	err := s.storage.StateTree.addStateUpdate(update)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateUpdate(update.ID)
+	res, err := s.storage.StateTree.getStateUpdate(update.ID)
 	s.NoError(err)
 	s.Equal(update, res)
 }
 
 func (s *StateUpdateTestSuite) TestGetStateUpdateByRootHash_NonExistentUpdate() {
-	res, err := s.storage.GetStateUpdate(10)
+	res, err := s.storage.StateTree.getStateUpdate(10)
 	s.Equal(NewNotFoundError("state update"), err)
 	s.Nil(res)
 }
@@ -93,18 +93,18 @@ func (s *StateUpdateTestSuite) TestDeleteStateUpdate() {
 			},
 		},
 	}
-	err := s.storage.AddStateUpdate(&updates[0])
+	err := s.storage.StateTree.addStateUpdate(&updates[0])
 	s.NoError(err)
-	err = s.storage.AddStateUpdate(&updates[1])
-	s.NoError(err)
-
-	err = s.storage.DeleteStateUpdate(1)
+	err = s.storage.StateTree.addStateUpdate(&updates[1])
 	s.NoError(err)
 
-	_, err = s.storage.GetStateUpdate(updates[1].ID)
+	err = s.storage.StateTree.deleteStateUpdate(1)
+	s.NoError(err)
+
+	_, err = s.storage.StateTree.getStateUpdate(updates[1].ID)
 	s.Equal(NewNotFoundError("state update"), err)
 
-	res, err := s.storage.GetStateUpdate(updates[0].ID)
+	res, err := s.storage.StateTree.getStateUpdate(updates[0].ID)
 	s.NoError(err)
 	s.Equal(&updates[0], res)
 }

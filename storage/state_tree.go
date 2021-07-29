@@ -13,6 +13,7 @@ import (
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	bh "github.com/timshannon/badgerhold/v3"
 )
 
 const StateTreeDepth = merkletree.MaxDepth
@@ -35,22 +36,49 @@ func (s *StateTree) Root() (*common.Hash, error) {
 	return s.merkleTree.Root()
 }
 
-func (s *StateTree) LeafNode(stateID uint32) (*models.MerkleTreeNode, error) {
-	return s.merkleTree.Get(models.MerklePath{
-		Path:  stateID,
-		Depth: StateTreeDepth,
-	})
+func (s *StateTree) Leaf(stateID uint32) (stateLeaf *models.StateLeaf, err error) {
+	var leaf models.FlatStateLeaf
+	err = s.storageBase.Badger.Get(stateID, &leaf)
+	if err == bh.ErrNotFound {
+		return nil, NewNotFoundError("state leaf")
+	}
+	if err != nil {
+		return nil, err
+	}
+	return leaf.StateLeaf(), nil
 }
 
-func (s *StateTree) Leaf(stateID uint32) (*models.StateLeaf, error) {
-	leaf, err := s.storageBase.GetStateLeaf(stateID)
-	if IsNotFoundError(err) {
-		return &models.StateLeaf{
-			StateID:  stateID,
-			DataHash: merkletree.GetZeroHash(0),
-		}, nil
+func (s *StateTree) NextAvailableStateID() (*uint32, error) {
+	nextAvailableStateID := uint32(0)
+
+	err := s.storageBase.Badger.View(func(txn *bdg.Txn) error {
+		opts := bdg.DefaultIteratorOptions
+		opts.PrefetchValues = false
+		opts.Reverse = true
+		it := txn.NewIterator(opts)
+		defer it.Close()
+
+		seekPrefix := make([]byte, 0, len(models.FlatStateLeafPrefix)+1)
+		seekPrefix = append(seekPrefix, models.FlatStateLeafPrefix...)
+		seekPrefix = append(seekPrefix, 0xFF) // Required to loop backwards
+
+		it.Seek(seekPrefix)
+		if it.ValidForPrefix(models.FlatStateLeafPrefix) {
+			var key uint32
+			err := badger.DecodeKey(it.Item().Key(), &key, models.FlatStateLeafPrefix)
+			if err != nil {
+				return err
+			}
+			nextAvailableStateID = key + 1
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
-	return leaf, err
+
+	return &nextAvailableStateID, nil
 }
 
 // Set returns a witness containing 32 elements for the current set operation
@@ -145,7 +173,7 @@ func decodeStateUpdate(item *bdg.Item) (*models.StateUpdate, error) {
 }
 
 func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (models.Witness, error) {
-	prevLeaf, err := s.Leaf(index)
+	prevLeaf, err := s.getLeafOrEmpty(index)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +188,7 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (models.Wit
 		return nil, err
 	}
 
-	err = s.storageBase.UpsertStateLeaf(currentLeaf)
+	err = s.upsertStateLeaf(currentLeaf)
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +199,7 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (models.Wit
 		return nil, err
 	}
 
-	err = s.storageBase.AddStateUpdate(&models.StateUpdate{
+	err = s.addStateUpdate(&models.StateUpdate{
 		CurrentRoot:   *currentRoot,
 		PrevRoot:      *prevRoot,
 		PrevStateLeaf: *prevLeaf,
@@ -183,8 +211,35 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (models.Wit
 	return witness, nil
 }
 
+func (s *StateTree) getLeafOrEmpty(stateID uint32) (*models.StateLeaf, error) {
+	leaf, err := s.Leaf(stateID)
+	if IsNotFoundError(err) {
+		return &models.StateLeaf{
+			StateID:  stateID,
+			DataHash: merkletree.GetZeroHash(0),
+		}, nil
+	}
+	return leaf, err
+}
+
+func (s *StateTree) getLeafByPubKeyIDAndTokenID(pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
+	leaves := make([]models.FlatStateLeaf, 0, 1)
+	err := s.storageBase.Badger.Find(
+		&leaves,
+		bh.Where("TokenID").Eq(tokenID).
+			And("PubKeyID").Eq(pubKeyID).Index("PubKeyID"),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if len(leaves) == 0 {
+		return nil, NewNotFoundError("state leaf")
+	}
+	return leaves[0].StateLeaf(), nil
+}
+
 func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, error) {
-	err := s.storageBase.UpsertStateLeaf(&stateUpdate.PrevStateLeaf)
+	err := s.upsertStateLeaf(&stateUpdate.PrevStateLeaf)
 	if err != nil {
 		return nil, err
 	}
@@ -198,16 +253,12 @@ func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, 
 		return nil, fmt.Errorf("unexpected state root after state update rollback")
 	}
 
-	err = s.storageBase.DeleteStateUpdate(stateUpdate.ID)
+	err = s.deleteStateUpdate(stateUpdate.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	return currentRootHash, nil
-}
-
-func (s *StateTree) getMerkleTreeNodeByPath(path *models.MerklePath) (*models.MerkleTreeNode, error) {
-	return s.merkleTree.Get(*path)
 }
 
 func NewStateLeaf(stateID uint32, state *models.UserState) (*models.StateLeaf, error) {

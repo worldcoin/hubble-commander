@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -41,20 +40,20 @@ func (s *AccountTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *AccountTestSuite) TestGetUnusedPubKeyID_NoPublicKeys() {
+func (s *AccountTestSuite) TestGetUnusedPubKeyID_NoAccounts() {
 	_, err := s.storage.GetUnusedPubKeyID(&account1.PublicKey, models.NewUint256(100))
 	s.Equal(NewNotFoundError("account leaves"), err)
 }
 
-func (s *AccountTestSuite) TestGetUnusedPubKeyID_NoLeaves() {
+func (s *AccountTestSuite) TestGetUnusedPubKeyID_ExistingAccountAndNoUserState() {
 	err := s.storage.AccountTree.SetSingle(&account1)
 	s.NoError(err)
 	pubKeyID, err := s.storage.GetUnusedPubKeyID(&account1.PublicKey, models.NewUint256(100))
 	s.NoError(err)
-	s.NotNil(pubKeyID)
+	s.EqualValues(1, *pubKeyID)
 }
 
-func (s *AccountTestSuite) TestGetUnusedPubKeyID_NoUnusedPublicIDs() {
+func (s *AccountTestSuite) TestGetUnusedPubKeyID_NoUnusedPubKeyIDs() {
 	account := models.AccountLeaf{
 		PubKeyID:  0,
 		PublicKey: models.PublicKey{1, 2, 3},
@@ -64,90 +63,25 @@ func (s *AccountTestSuite) TestGetUnusedPubKeyID_NoUnusedPublicIDs() {
 	s.NoError(err)
 
 	leaf := &models.StateLeaf{
-		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
 			PubKeyID: 0,
 			TokenID:  models.MakeUint256(1),
-			Balance:  models.MakeUint256(420),
-			Nonce:    models.MakeUint256(0),
 		},
 	}
-	err = s.storage.UpsertStateLeaf(leaf)
+	_, err = s.storage.StateTree.Set(leaf.StateID, &leaf.UserState)
 	s.NoError(err)
 
 	_, err = s.storage.GetUnusedPubKeyID(&models.PublicKey{1, 2, 3}, &leaf.TokenID)
 	s.Equal(NewNotFoundError("pub key id"), err)
 }
 
-func (s *AccountTestSuite) TestGetUnusedPubKeyID() {
+func (s *AccountTestSuite) TestGetUnusedPubKeyID_ReturnsFirstUnusedPubKeyID() {
 	accounts := []models.AccountLeaf{
-		{
-			PubKeyID:  0,
-			PublicKey: models.PublicKey{1, 2, 3},
-		},
-		{
-			PubKeyID:  1,
-			PublicKey: models.PublicKey{2, 3, 4},
-		},
-		{
-			PubKeyID:  2,
-			PublicKey: models.PublicKey{2, 3, 4},
-		},
-		{
-			PubKeyID:  3,
-			PublicKey: models.PublicKey{2, 3, 4},
-		},
-	}
-
-	for i := range accounts {
-		err := s.storage.AccountTree.SetSingle(&accounts[i])
-		s.NoError(err)
-	}
-
-	leaf := &models.StateLeaf{
-		StateID:  0,
-		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
-		UserState: models.UserState{
-			PubKeyID: 1,
-			TokenID:  models.MakeUint256(1),
-			Balance:  models.MakeUint256(420),
-			Nonce:    models.MakeUint256(0),
-		},
-	}
-	leaf2 := &models.StateLeaf{
-		StateID:  1,
-		DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
-		UserState: models.UserState{
-			PubKeyID: 2,
-			TokenID:  models.MakeUint256(1),
-			Balance:  models.MakeUint256(420),
-			Nonce:    models.MakeUint256(0),
-		},
-	}
-	err := s.storage.UpsertStateLeaf(leaf)
-	s.NoError(err)
-	err = s.storage.UpsertStateLeaf(leaf2)
-	s.NoError(err)
-
-	pubKeyID, err := s.storage.GetUnusedPubKeyID(&accounts[1].PublicKey, models.NewUint256(1))
-	s.NoError(err)
-	s.Equal(uint32(3), *pubKeyID)
-}
-
-func (s *AccountTestSuite) TestGetUnusedPubKeyID_MultipleTokenIDs() {
-	accounts := []models.AccountLeaf{
-		{
-			PubKeyID:  1,
-			PublicKey: models.PublicKey{2, 3, 4},
-		},
-		{
-			PubKeyID:  2,
-			PublicKey: models.PublicKey{2, 3, 4},
-		},
-		{
-			PubKeyID:  3,
-			PublicKey: models.PublicKey{2, 3, 4},
-		},
+		{PubKeyID: 0, PublicKey: models.PublicKey{1, 2, 3}},
+		{PubKeyID: 1, PublicKey: models.PublicKey{2, 3, 4}},
+		{PubKeyID: 2, PublicKey: models.PublicKey{2, 3, 4}},
+		{PubKeyID: 3, PublicKey: models.PublicKey{2, 3, 4}},
+		{PubKeyID: 4, PublicKey: models.PublicKey{2, 3, 4}},
 	}
 
 	for i := range accounts {
@@ -157,32 +91,66 @@ func (s *AccountTestSuite) TestGetUnusedPubKeyID_MultipleTokenIDs() {
 
 	leaves := []models.StateLeaf{
 		{
-			DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
+			StateID: 0,
 			UserState: models.UserState{
 				PubKeyID: 1,
 				TokenID:  models.MakeUint256(1),
-				Balance:  models.MakeUint256(420),
-				Nonce:    models.MakeUint256(0),
 			},
 		},
 		{
-			DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
+			StateID: 1,
+			UserState: models.UserState{
+				PubKeyID: 2,
+				TokenID:  models.MakeUint256(1),
+			},
+		},
+	}
+
+	for i := range leaves {
+		_, err := s.storage.StateTree.Set(leaves[i].StateID, &leaves[i].UserState)
+		s.NoError(err)
+	}
+
+	pubKeyID, err := s.storage.GetUnusedPubKeyID(&models.PublicKey{2, 3, 4}, models.NewUint256(1))
+	s.NoError(err)
+	s.Equal(uint32(3), *pubKeyID)
+}
+
+func (s *AccountTestSuite) TestGetUnusedPubKeyID_MultipleTokenIDs() {
+	accounts := []models.AccountLeaf{
+		{PubKeyID: 1, PublicKey: models.PublicKey{2, 3, 4}},
+		{PubKeyID: 2, PublicKey: models.PublicKey{2, 3, 4}},
+	}
+
+	for i := range accounts {
+		err := s.storage.AccountTree.SetSingle(&accounts[i])
+		s.NoError(err)
+	}
+
+	leaves := []models.StateLeaf{
+		{
+			StateID: 0,
+			UserState: models.UserState{
+				PubKeyID: 1,
+				TokenID:  models.MakeUint256(1),
+			},
+		},
+		{
+			StateID: 1,
 			UserState: models.UserState{
 				PubKeyID: 2,
 				TokenID:  models.MakeUint256(2),
-				Balance:  models.MakeUint256(420),
-				Nonce:    models.MakeUint256(0),
 			},
 		},
 	}
 	for i := range leaves {
-		err := s.storage.UpsertStateLeaf(&leaves[i])
+		_, err := s.storage.StateTree.Set(leaves[i].StateID, &leaves[i].UserState)
 		s.NoError(err)
 	}
 
-	pubKeyID, err := s.storage.GetUnusedPubKeyID(&accounts[1].PublicKey, &leaves[1].TokenID)
+	pubKeyID, err := s.storage.GetUnusedPubKeyID(&accounts[1].PublicKey, models.NewUint256(1))
 	s.NoError(err)
-	s.Contains([]uint32{1, 3}, *pubKeyID)
+	s.EqualValues(2, *pubKeyID)
 }
 
 func (s *AccountTestSuite) TestGetPublicKeyByStateID() {
@@ -193,32 +161,26 @@ func (s *AccountTestSuite) TestGetPublicKeyByStateID() {
 
 	leaves := []models.StateLeaf{
 		{
-			StateID:  1,
-			DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
+			StateID: 1,
 			UserState: models.UserState{
 				PubKeyID: 1,
 				TokenID:  models.MakeUint256(1),
-				Balance:  models.MakeUint256(420),
-				Nonce:    models.MakeUint256(0),
 			},
 		},
 		{
-			StateID:  2,
-			DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
+			StateID: 2,
 			UserState: models.UserState{
 				PubKeyID: 2,
 				TokenID:  models.MakeUint256(2),
-				Balance:  models.MakeUint256(420),
-				Nonce:    models.MakeUint256(0),
 			},
 		},
 	}
 	for i := range leaves {
-		err = s.storage.UpsertStateLeaf(&leaves[i])
-		s.NoError(err)
+		_, setErr := s.storage.StateTree.Set(leaves[i].StateID, &leaves[i].UserState)
+		s.NoError(setErr)
 	}
 
-	publicKey, err := s.storage.GetPublicKeyByStateID(leaves[1].StateID)
+	publicKey, err := s.storage.GetPublicKeyByStateID(2)
 	s.NoError(err)
 	s.Equal(account2.PublicKey, *publicKey)
 }
@@ -228,12 +190,10 @@ func (s *AccountTestSuite) TestGetPublicKeyByStateID_NonExistentStateLeaf() {
 	s.Equal(NewNotFoundError("state leaf"), err)
 }
 
-func (s *AccountTestSuite) TestGetPublicKeyByStateID_NonExistentPublicKey() {
+func (s *AccountTestSuite) TestGetPublicKeyByStateID_NonExistentAccountLeaf() {
 	userState := &models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(1),
-		Balance:  models.MakeUint256(420),
-		Nonce:    models.MakeUint256(0),
 	}
 
 	_, err := s.storage.StateTree.Set(1, userState)

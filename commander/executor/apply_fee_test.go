@@ -42,7 +42,7 @@ func (s *ApplyFeeTestSuite) TestApplyFee() {
 	s.NoError(err)
 	s.Equal(receiverState, *stateProof.UserState)
 
-	feeReceiverState, err := s.storage.GetStateLeaf(feeReceiverStateID)
+	feeReceiverState, err := s.storage.StateTree.Leaf(feeReceiverStateID)
 	s.NoError(err)
 
 	s.Equal(uint64(555), feeReceiverState.Balance.Uint64())
