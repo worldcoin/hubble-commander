@@ -2,7 +2,6 @@ package storage
 
 import (
 	"github.com/Masterminds/squirrel"
-	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/db/badger"
@@ -21,7 +20,6 @@ type StorageBase struct {
 	Postgres            *postgres.Database
 	Badger              *badger.Database
 	QB                  squirrel.StatementBuilderType
-	domain              *bls.Domain
 	feeReceiverStateIDs map[string]uint32 // token ID => state id
 	latestBlockNumber   uint32
 	syncedBlock         *uint64

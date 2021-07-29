@@ -17,7 +17,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/ybbus/jsonrpc/v2"
@@ -315,16 +314,6 @@ func deployContractsAndSetupGenesisState(
 
 func getInitialSyncedBlock(deploymentBlock uint64) uint64 {
 	return deploymentBlock - 1
-}
-
-func getDomain(client *eth.Client) (*bls.Domain, error) {
-	domainSeparator, err := client.Rollup.DomainSeparator(&bind.CallOpts{})
-	if err != nil {
-		return nil, err
-	}
-
-	domain := bls.Domain(domainSeparator)
-	return &domain, nil
 }
 
 func logChainState(chainState *models.ChainState) error {
