@@ -4,6 +4,7 @@ package e2e
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"sync"
 	"sync/atomic"
@@ -12,10 +13,13 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
+	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -69,6 +73,66 @@ func (s *BenchmarkSuite) TearDownSuite() {
 }
 
 func (s *BenchmarkSuite) TestBenchCommander() {
+	s.sendTransactions()
+}
+
+func (s *BenchmarkSuite) TestBenchSyncCommander() {
+	s.sendTransactions()
+	s.benchSyncing()
+}
+
+func (s *BenchmarkSuite) benchSyncing() {
+	cfg := config.GetConfig()
+
+	cfg.Bootstrap.Prune = true
+	cfg.API.Port = "5002"
+	cfg.Badger.Path += "_passive"
+	cfg.Postgres.Name += "_passive"
+	cfg.Bootstrap.BootstrapNodeURL = ref.String("http://localhost:8080")
+	cfg.Ethereum.PrivateKey = "ab6919fd6ac00246bb78657e0696cf72058a4cb395133d074eabaddb83d8b00c"
+	passiveCommander := setup.CreateInProcessCommanderWithConfig(cfg)
+	err := passiveCommander.Start()
+	s.NoError(err)
+	defer func() {
+		s.NoError(passiveCommander.Stop())
+	}()
+
+	// Observe commander syncing
+	var networkInfo dto.NetworkInfo
+	err = s.commander.Client().CallFor(&networkInfo, "hubble_getNetworkInfo")
+	s.NoError(err)
+
+	latestBatch := networkInfo.LatestBatch.Uint64()
+	startTime := time.Now()
+	totalTransactions := uint64(0)
+	lastSyncedBatch := uint64(0)
+	for lastSyncedBatch < latestBatch {
+		var networkInfo dto.NetworkInfo
+		err = passiveCommander.Client().CallFor(&networkInfo, "hubble_getNetworkInfo")
+		s.NoError(err)
+		newBatch := uint64(0)
+		if networkInfo.LatestBatch != nil {
+			newBatch = networkInfo.LatestBatch.Uint64()
+		}
+
+		for i := lastSyncedBatch + 1; i <= newBatch; i++ {
+			var batch dto.BatchWithRootAndCommitments
+			err = passiveCommander.Client().CallFor(&batch, "hubble_getBatchByID", []interface{}{i})
+
+			log.Println("com len", len(batch.Commitments))
+
+			for _, commitment := range batch.Commitments {
+				log.Println("tx len", len(commitment.Transactions))
+				totalTransactions += uint64(len(commitment.Transactions) / encoder.GetTransactionLength(batch.Type))
+			}
+		}
+		lastSyncedBatch = newBatch
+
+		fmt.Printf("Transfers sent: %d, throughput: %f tx/s, batches synced: %d/%d\n", totalTransactions, float64(totalTransactions)/(time.Since(startTime).Seconds()), lastSyncedBatch, latestBatch)
+	}
+}
+
+func (s *BenchmarkSuite) sendTransactions() {
 	s.startTime = time.Now()
 
 	for _, wallet := range s.wallets {
