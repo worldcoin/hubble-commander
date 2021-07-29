@@ -5,11 +5,11 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-func (s *AccountTree) AddAccountLeafIfNotExists(account *models.AccountLeaf) error {
+func (s *AccountTree) addAccountLeafIfNotExists(account *models.AccountLeaf) error {
 	return s.storageBase.Badger.Insert(account.PubKeyID, *account)
 }
 
-func (s *AccountTree) GetAccountLeaf(pubKeyID uint32) (*models.AccountLeaf, error) {
+func (s *AccountTree) getAccountLeaf(pubKeyID uint32) (*models.AccountLeaf, error) {
 	var leaf models.AccountLeaf
 	err := s.storageBase.Badger.Get(pubKeyID, &leaf)
 	if err == bh.ErrNotFound {
@@ -21,7 +21,7 @@ func (s *AccountTree) GetAccountLeaf(pubKeyID uint32) (*models.AccountLeaf, erro
 	return &leaf, nil
 }
 
-func (s *AccountTree) GetAccountLeaves(publicKey *models.PublicKey) ([]models.AccountLeaf, error) {
+func (s *AccountTree) getAccountLeaves(publicKey *models.PublicKey) ([]models.AccountLeaf, error) {
 	accounts := make([]models.AccountLeaf, 0, 1)
 	err := s.storageBase.Badger.Find(
 		&accounts,
