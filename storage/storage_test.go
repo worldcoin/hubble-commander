@@ -58,7 +58,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
 
-	accounts, err := s.storage.GetAccountLeaves(&account2.PublicKey)
+	accounts, err := s.storage.AccountTree.Leaves(&account2.PublicKey)
 	s.Equal(NewNotFoundError("account leaves"), err)
 	s.Nil(accounts)
 
@@ -69,7 +69,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	s.NoError(err)
 	s.Equal(leaf, res)
 
-	accounts, err = s.storage.GetAccountLeaves(&account2.PublicKey)
+	accounts, err = s.storage.AccountTree.Leaves(&account2.PublicKey)
 	s.NoError(err)
 	s.Len(accounts, 1)
 }
@@ -101,7 +101,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
 
-	accounts, err := s.storage.GetAccountLeaves(&account2.PublicKey)
+	accounts, err := s.storage.AccountTree.Leaves(&account2.PublicKey)
 	s.Equal(NewNotFoundError("account leaves"), err)
 	s.Nil(accounts)
 }

@@ -105,7 +105,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedBef
 	s.waitForLatestBlockSync()
 
 	for i := range accounts {
-		userAccounts, err := s.cmd.storage.GetAccountLeaves(&accounts[i].PublicKey)
+		userAccounts, err := s.cmd.storage.AccountTree.Leaves(&accounts[i].PublicKey)
 		s.NoError(err)
 		s.Len(userAccounts, 1)
 		s.Equal(accounts[i], userAccounts[0])
@@ -130,7 +130,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedWhi
 	s.waitForLatestBlockSync()
 
 	for i := range accounts {
-		userAccounts, err := s.cmd.storage.GetAccountLeaves(&accounts[i].PublicKey)
+		userAccounts, err := s.cmd.storage.AccountTree.Leaves(&accounts[i].PublicKey)
 		s.NoError(err)
 		s.Len(userAccounts, 1)
 		s.Equal(accounts[i], userAccounts[0])

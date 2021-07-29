@@ -48,7 +48,7 @@ func (t *TransactionExecutor) syncCreate2TransferCommitment(
 
 func (t *TransactionExecutor) setPublicKeys(transfers []models.Create2Transfer, pubKeyIDs []uint32) error {
 	for i := range transfers {
-		publicKey, err := t.storage.GetPublicKey(pubKeyIDs[i])
+		publicKey, err := t.storage.AccountTree.GetPublicKey(pubKeyIDs[i])
 		if err != nil {
 			return err
 		}

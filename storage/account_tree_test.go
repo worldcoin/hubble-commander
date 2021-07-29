@@ -48,7 +48,7 @@ func (s *AccountTreeTestSuite) TestSetSingle_StoresAccountLeafRecord() {
 	err := s.storage.AccountTree.SetSingle(s.leaf)
 	s.NoError(err)
 
-	actualLeaf, err := s.storage.GetAccountLeaf(s.leaf.PubKeyID)
+	actualLeaf, err := s.storage.AccountTree.Leaf(s.leaf.PubKeyID)
 	s.NoError(err)
 	s.Equal(s.leaf, actualLeaf)
 }

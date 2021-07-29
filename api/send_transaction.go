@@ -89,7 +89,7 @@ func validateBalance(transactionAmount, transactionFee *models.Uint256, senderSt
 }
 
 func (a *API) validateSignature(encodedTransaction []byte, transactionSignature *models.Signature, senderState *models.UserState) error {
-	publicKey, err := a.storage.GetPublicKey(senderState.PubKeyID)
+	publicKey, err := a.storage.AccountTree.GetPublicKey(senderState.PubKeyID)
 	if err != nil {
 		return err
 	}
