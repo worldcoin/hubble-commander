@@ -35,16 +35,13 @@ func (s *StorageTestSuite) TearDownTest() {
 }
 
 func (s *StorageTestSuite) TestBeginTransaction_Commit() {
-	leaf := &models.StateLeaf{
-		StateID:  0,
-		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
-		UserState: models.UserState{
-			PubKeyID: 1,
-			TokenID:  models.MakeUint256(1),
-			Balance:  models.MakeUint256(420),
-			Nonce:    models.MakeUint256(0),
-		},
-	}
+	leaf, err := NewStateLeaf(0, &models.UserState{
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
+	})
+	s.NoError(err)
 
 	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
@@ -109,26 +106,19 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 }
 
 func (s *StorageTestSuite) TestBeginTransaction_Lock() {
-	leafOne := &models.StateLeaf{
-		StateID:  0,
-		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
-		UserState: models.UserState{
-			PubKeyID: 1,
-			TokenID:  models.MakeUint256(1),
-			Balance:  models.MakeUint256(420),
-			Nonce:    models.MakeUint256(0),
-		},
-	}
-	leafTwo := &models.StateLeaf{
-		StateID:  1,
-		DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
-		UserState: models.UserState{
-			PubKeyID: 2,
-			TokenID:  models.MakeUint256(1),
-			Balance:  models.MakeUint256(1000),
-			Nonce:    models.MakeUint256(0),
-		},
-	}
+	leafOne, err := NewStateLeaf(0, &models.UserState{
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
+	})
+
+	leafTwo, err := NewStateLeaf(1, &models.UserState{
+		PubKeyID: 2,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(1000),
+		Nonce:    models.MakeUint256(0),
+	})
 
 	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
@@ -174,10 +164,9 @@ func (s *StorageTestSuite) TestClone() {
 	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
 
-	stateLeaf := models.StateLeaf{
-		StateID:  1,
-		DataHash: utils.RandomHash(),
-	}
+	stateLeaf, err := NewStateLeaf(1, &models.UserState{})
+	s.NoError(err)
+
 	_, err = s.storage.StateTree.Set(stateLeaf.StateID, &stateLeaf.UserState)
 	s.NoError(err)
 
@@ -194,7 +183,7 @@ func (s *StorageTestSuite) TestClone() {
 
 	clonedStateLeaf, err := clonedStorage.StateTree.Leaf(stateLeaf.StateID)
 	s.NoError(err)
-	s.Equal(stateLeaf, *clonedStateLeaf)
+	s.Equal(stateLeaf, clonedStateLeaf)
 }
 
 func TestStorageTestSuite(t *testing.T) {
