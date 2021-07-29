@@ -56,28 +56,12 @@ func (s *Storage) GetFeeReceiverStateLeaf(pubKeyID uint32, tokenID models.Uint25
 	if ok {
 		return s.StateTree.Leaf(stateID)
 	}
-	stateLeaf, err := s.GetStateLeafByPubKeyIDAndTokenID(pubKeyID, tokenID)
+	stateLeaf, err := s.StateTree.LeafByPubKeyIDAndTokenID(pubKeyID, tokenID)
 	if err != nil {
 		return nil, err
 	}
 	s.feeReceiverStateIDs[stateLeaf.TokenID.String()] = stateLeaf.StateID
 	return stateLeaf, nil
-}
-
-func (s *StorageBase) GetStateLeafByPubKeyIDAndTokenID(pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
-	leaves := make([]models.FlatStateLeaf, 0, 1)
-	err := s.Badger.Find(
-		&leaves,
-		bh.Where("TokenID").Eq(tokenID).
-			And("PubKeyID").Eq(pubKeyID).Index("PubKeyID"),
-	)
-	if err != nil {
-		return nil, err
-	}
-	if len(leaves) == 0 {
-		return nil, NewNotFoundError("state leaf")
-	}
-	return leaves[0].StateLeaf(), nil
 }
 
 func (s *StorageBase) GetNextAvailableStateID() (*uint32, error) {

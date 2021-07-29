@@ -48,6 +48,22 @@ func (s *StateTree) Leaf(stateID uint32) (stateLeaf *models.StateLeaf, err error
 	return leaf.StateLeaf(), nil
 }
 
+func (s *StateTree) LeafByPubKeyIDAndTokenID(pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
+	leaves := make([]models.FlatStateLeaf, 0, 1)
+	err := s.storageBase.Badger.Find(
+		&leaves,
+		bh.Where("TokenID").Eq(tokenID).
+			And("PubKeyID").Eq(pubKeyID).Index("PubKeyID"),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if len(leaves) == 0 {
+		return nil, NewNotFoundError("state leaf")
+	}
+	return leaves[0].StateLeaf(), nil
+}
+
 // Set returns a witness containing 32 elements for the current set operation
 func (s *StateTree) Set(id uint32, state *models.UserState) (models.Witness, error) {
 	tx, storage, err := s.storageBase.BeginTransaction(TxOptions{Badger: true})
