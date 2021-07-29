@@ -376,13 +376,17 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_Valid
 }
 
 func (s *DisputeTransitionTestSuite) checkBatchAfterDispute(batchID models.Uint256) {
-	_, err := s.client.GetBatch(&batchID)
-	s.Error(err)
-	s.Equal("execution reverted: Batch id greater than total number of batches, invalid batch id", err.Error())
+	checkRemoteBatchAfterDispute(s.Assertions, s.client, &batchID)
 
 	batch, err := s.storage.GetBatch(batchID)
 	s.Nil(batch)
 	s.True(st.IsNotFoundError(err))
+}
+
+func checkRemoteBatchAfterDispute(s *require.Assertions, client *eth.TestClient, batchID *models.Uint256) {
+	_, err := client.GetBatch(batchID)
+	s.Error(err)
+	s.Equal("execution reverted: Batch id greater than total number of batches, invalid batch id", err.Error())
 }
 
 func (s *DisputeTransitionTestSuite) beginExecutorTransaction() {

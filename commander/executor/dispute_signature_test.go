@@ -204,6 +204,8 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_DisputesTransferBatchWi
 
 	err = s.transactionExecutor.DisputeSignature(&remoteBatches[0], 0)
 	s.NoError(err)
+
+	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[0].ID)
 }
 
 func (s *DisputeSignatureTestSuite) TestDisputeSignature_DisputesC2TBatchWithInvalidSignature() {
@@ -228,6 +230,8 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_DisputesC2TBatchWithInv
 
 	err = s.transactionExecutor.DisputeSignature(&remoteBatches[0], 0)
 	s.NoError(err)
+
+	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[0].ID)
 }
 
 func (s *DisputeSignatureTestSuite) TestDisputeSignature_Transfer_ValidBatch() {
