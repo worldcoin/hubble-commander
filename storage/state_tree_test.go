@@ -51,6 +51,34 @@ func (s *StateTreeTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
+func (s *StateTreeTestSuite) TestNextAvailableStateID_NoLeavesInStateTree() {
+	stateID, err := s.storage.StateTree.NextAvailableStateID()
+	s.NoError(err)
+	s.Equal(uint32(0), *stateID)
+}
+
+func (s *StateTreeTestSuite) TestNextAvailableStateID_OneBytes() {
+	_, err := s.storage.StateTree.Set(0, userState1)
+	s.NoError(err)
+	_, err = s.storage.StateTree.Set(2, userState2)
+	s.NoError(err)
+
+	stateID, err := s.storage.StateTree.NextAvailableStateID()
+	s.NoError(err)
+	s.Equal(uint32(3), *stateID)
+}
+
+func (s *StateTreeTestSuite) TestNextAvailableStateID_TwoBytes() {
+	_, err := s.storage.StateTree.Set(0, userState1)
+	s.NoError(err)
+	_, err = s.storage.StateTree.Set(13456, userState2)
+	s.NoError(err)
+
+	stateID, err := s.storage.StateTree.NextAvailableStateID()
+	s.NoError(err)
+	s.Equal(uint32(13457), *stateID)
+}
+
 func (s *StateTreeTestSuite) TestSet_StoresStateLeafRecord() {
 	s.leaf.StateID = 0
 	_, err := s.storage.StateTree.Set(0, &s.leaf.UserState)

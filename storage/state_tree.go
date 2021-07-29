@@ -64,6 +64,39 @@ func (s *StateTree) LeafByPubKeyIDAndTokenID(pubKeyID uint32, tokenID models.Uin
 	return leaves[0].StateLeaf(), nil
 }
 
+func (s *StateTree) NextAvailableStateID() (*uint32, error) {
+	nextAvailableStateID := uint32(0)
+
+	err := s.storageBase.Badger.View(func(txn *bdg.Txn) error {
+		opts := bdg.DefaultIteratorOptions
+		opts.PrefetchValues = false
+		opts.Reverse = true
+		it := txn.NewIterator(opts)
+		defer it.Close()
+
+		seekPrefix := make([]byte, 0, len(models.FlatStateLeafPrefix)+1)
+		seekPrefix = append(seekPrefix, models.FlatStateLeafPrefix...)
+		seekPrefix = append(seekPrefix, 0xFF) // Required to loop backwards
+
+		it.Seek(seekPrefix)
+		if it.ValidForPrefix(models.FlatStateLeafPrefix) {
+			var key uint32
+			err := badger.DecodeKey(it.Item().Key(), &key, models.FlatStateLeafPrefix)
+			if err != nil {
+				return err
+			}
+			nextAvailableStateID = key + 1
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &nextAvailableStateID, nil
+}
+
 // Set returns a witness containing 32 elements for the current set operation
 func (s *StateTree) Set(id uint32, state *models.UserState) (models.Witness, error) {
 	tx, storage, err := s.storageBase.BeginTransaction(TxOptions{Badger: true})

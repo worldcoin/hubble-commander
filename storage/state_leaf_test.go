@@ -216,34 +216,6 @@ func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf_WorkWithCachedValue() {
 	s.Equal(uint32(1), stateLeaf.StateID)
 }
 
-func (s *StateLeafTestSuite) TestGetNextAvailableStateID_NoLeavesInStateTree() {
-	stateID, err := s.storage.GetNextAvailableStateID()
-	s.NoError(err)
-	s.Equal(uint32(0), *stateID)
-}
-
-func (s *StateLeafTestSuite) TestGetNextAvailableStateID_OneBytes() {
-	_, err := s.storage.StateTree.Set(0, userState1)
-	s.NoError(err)
-	_, err = s.storage.StateTree.Set(2, userState2)
-	s.NoError(err)
-
-	stateID, err := s.storage.GetNextAvailableStateID()
-	s.NoError(err)
-	s.Equal(uint32(3), *stateID)
-}
-
-func (s *StateLeafTestSuite) TestGetNextAvailableStateID_TwoBytes() {
-	_, err := s.storage.StateTree.Set(0, userState1)
-	s.NoError(err)
-	_, err = s.storage.StateTree.Set(13456, userState2)
-	s.NoError(err)
-
-	stateID, err := s.storage.GetNextAvailableStateID()
-	s.NoError(err)
-	s.Equal(uint32(13457), *stateID)
-}
-
 func TestStateLeafTestSuite(t *testing.T) {
 	suite.Run(t, new(StateLeafTestSuite))
 }
