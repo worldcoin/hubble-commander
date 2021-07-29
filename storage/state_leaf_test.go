@@ -44,7 +44,7 @@ func (s *StateLeafTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *StateLeafTestSuite) TestSet_AddAndRetrieve() {
+func (s *StateLeafTestSuite) TestUpsertStateLeaf_AddAndRetrieve() {
 	leaf, err := NewStateLeaf(0, &models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(1),
@@ -53,7 +53,7 @@ func (s *StateLeafTestSuite) TestSet_AddAndRetrieve() {
 	})
 	s.NoError(err)
 
-	_, err = s.storage.StateTree.Set(leaf.StateID, &leaf.UserState)
+	err = s.storage.StateTree.upsertStateLeaf(leaf)
 	s.NoError(err)
 
 	res, err := s.storage.StateTree.Leaf(leaf.StateID)
@@ -62,7 +62,7 @@ func (s *StateLeafTestSuite) TestSet_AddAndRetrieve() {
 	s.Equal(leaf, res)
 }
 
-func (s *StateLeafTestSuite) TestSet_UpdateAndRetrieve() {
+func (s *StateLeafTestSuite) TestUpsertStateLeaf_UpdateAndRetrieve() {
 	leaf, err := NewStateLeaf(0, &models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(1),
@@ -71,7 +71,7 @@ func (s *StateLeafTestSuite) TestSet_UpdateAndRetrieve() {
 	})
 	s.NoError(err)
 
-	_, err = s.storage.StateTree.Set(leaf.StateID, &leaf.UserState)
+	err = s.storage.StateTree.upsertStateLeaf(leaf)
 	s.NoError(err)
 
 	updatedLeaf, err := NewStateLeaf(0, &models.UserState{
