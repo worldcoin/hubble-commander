@@ -41,32 +41,6 @@ func (s *AccountTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *AccountTestSuite) TestGetAccountLeaves_NoPublicKeys() {
-	_, err := s.storage.AccountTree.getAccountLeaves(&models.PublicKey{1, 2, 3})
-	s.Equal(NewNotFoundError("account leaves"), err)
-}
-
-func (s *AccountTestSuite) TestGetAccounts_ReturnsAllAccounts() {
-	pubKey := models.PublicKey{1, 2, 3}
-	accounts := []models.AccountLeaf{{
-		PubKeyID:  0,
-		PublicKey: pubKey,
-	}, {
-		PubKeyID:  1,
-		PublicKey: pubKey,
-	}}
-
-	err := s.storage.AccountTree.SetSingle(&accounts[0])
-	s.NoError(err)
-	err = s.storage.AccountTree.SetSingle(&accounts[1])
-	s.NoError(err)
-
-	res, err := s.storage.AccountTree.getAccountLeaves(&pubKey)
-	s.NoError(err)
-
-	s.Equal(accounts, res)
-}
-
 func (s *AccountTestSuite) TestGetPublicKey_ReturnsPublicKey() {
 	account := models.AccountLeaf{
 		PubKeyID:  0,

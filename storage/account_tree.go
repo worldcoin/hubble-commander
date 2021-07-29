@@ -56,7 +56,18 @@ func (s *AccountTree) Leaf(pubKeyID uint32) (*models.AccountLeaf, error) {
 }
 
 func (s *AccountTree) Leaves(publicKey *models.PublicKey) ([]models.AccountLeaf, error) {
-	return s.getAccountLeaves(publicKey)
+	accounts := make([]models.AccountLeaf, 0, 1)
+	err := s.storageBase.Badger.Find(
+		&accounts,
+		bh.Where("PublicKey").Eq(publicKey).Index("PublicKey"),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if len(accounts) == 0 {
+		return nil, NewNotFoundError("account leaves")
+	}
+	return accounts, nil
 }
 
 func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
