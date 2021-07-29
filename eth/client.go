@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
@@ -36,6 +37,7 @@ type Client struct {
 	AccountRegistryABI *abi.ABI
 	boundContract      *bind.BoundContract
 	blocksToFinalise   *int64
+	domain             *bls.Domain
 }
 
 func NewClient(chainConnection deployer.ChainConnection, params *NewClientParams) (*Client, error) {

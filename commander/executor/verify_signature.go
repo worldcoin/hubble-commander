@@ -7,7 +7,7 @@ import (
 )
 
 func (t *TransactionExecutor) verifyTransferSignature(commitment *encoder.DecodedCommitment, transfers []models.Transfer) error {
-	domain, err := t.storage.GetDomain(t.client.ChainState.ChainID)
+	domain, err := t.client.GetDomain()
 	if err != nil {
 		return err
 	}
@@ -31,7 +31,7 @@ func (t *TransactionExecutor) verifyCreate2TransferSignature(
 	commitment *encoder.DecodedCommitment,
 	transfers []models.Create2Transfer,
 ) error {
-	domain, err := t.storage.GetDomain(t.client.ChainState.ChainID)
+	domain, err := t.client.GetDomain()
 	if err != nil {
 		return err
 	}

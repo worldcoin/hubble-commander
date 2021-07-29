@@ -3,10 +3,8 @@ package storage
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -55,25 +53,6 @@ func (s *ChainStateTestSuite) TestGetChainState_NotFound() {
 	_, err := s.storage.GetChainState(chainState.ChainID)
 	s.Equal(NewNotFoundError("chain state"), err)
 	s.True(IsNotFoundError(err))
-}
-
-func (s *ChainStateTestSuite) TestGetDomain() {
-	err := s.storage.SetChainState(&chainState)
-	s.NoError(err)
-
-	expected, err := bls.DomainFromBytes(crypto.Keccak256(chainState.Rollup.Bytes()))
-	s.NoError(err)
-
-	domain, err := s.storage.GetDomain(chainState.ChainID)
-	s.NoError(err)
-	s.Equal(expected, domain)
-	s.Equal(s.storage.domain, domain)
-}
-
-func (s *ChainStateTestSuite) TestGetDomain_NotFound() {
-	domain, err := s.storage.GetDomain(chainState.ChainID)
-	s.Equal(NewNotFoundError("domain"), err)
-	s.Nil(domain)
 }
 
 func TestChainStateTestSuite(t *testing.T) {

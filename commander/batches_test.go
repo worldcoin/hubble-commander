@@ -51,8 +51,6 @@ func (s *BatchesTestSuite) SetupTest() {
 		},
 	}, eth.ClientConfig{})
 	s.NoError(err)
-	err = s.testStorage.SetChainState(&s.testClient.ChainState)
-	s.NoError(err)
 
 	s.cmd = NewCommander(s.cfg)
 	s.cmd.client = s.testClient.Client
@@ -66,7 +64,9 @@ func (s *BatchesTestSuite) SetupTest() {
 		context.Background(),
 	)
 
-	s.wallets = generateWallets(s.T(), s.testClient.ChainState.Rollup, 2)
+	domain, err := s.testClient.GetDomain()
+	s.NoError(err)
+	s.wallets = generateWallets(s.T(), *domain, 2)
 	seedDB(s.T(), s.testStorage.Storage, s.wallets)
 }
 
@@ -258,7 +258,9 @@ func (s *BatchesTestSuite) createAndSubmitTransferBatch(
 	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
-	commitments, err := txExecutor.CreateTransferCommitments(testDomain)
+	domain, err := s.testClient.GetDomain()
+	s.NoError(err)
+	commitments, err := txExecutor.CreateTransferCommitments(domain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -277,7 +279,9 @@ func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batc
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
+	domain, err := s.testClient.GetDomain()
+	s.NoError(err)
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(domain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -304,7 +308,9 @@ func (s *BatchesTestSuite) createAndSubmitInvalidTransferBatch(
 	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
-	commitments, err := txExecutor.CreateTransferCommitments(testDomain)
+	domain, err := s.testClient.GetDomain()
+	s.NoError(err)
+	commitments, err := txExecutor.CreateTransferCommitments(domain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
