@@ -112,6 +112,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 		Balance:  models.MakeUint256(420),
 		Nonce:    models.MakeUint256(0),
 	})
+	s.NoError(err)
 
 	leafTwo, err := NewStateLeaf(1, &models.UserState{
 		PubKeyID: 2,
@@ -119,6 +120,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 		Balance:  models.MakeUint256(1000),
 		Nonce:    models.MakeUint256(0),
 	})
+	s.NoError(err)
 
 	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
