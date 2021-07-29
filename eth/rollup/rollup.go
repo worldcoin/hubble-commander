@@ -163,13 +163,18 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 	}
 
 	log.Println("Deploying BNPairingPrecompileCostEstimator")
-	estimatorAddress, tx, _, err := estimator.DeployCostEstimator(c.GetAccount(), c.GetBackend())
+	estimatorAddress, tx, costEstimator, err := estimator.DeployCostEstimator(c.GetAccount(), c.GetBackend())
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
 	c.Commit()
 	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = costEstimator.Run(c.GetAccount())
 	if err != nil {
 		return nil, err
 	}
