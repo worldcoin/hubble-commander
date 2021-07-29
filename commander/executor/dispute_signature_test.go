@@ -64,7 +64,7 @@ func (s *DisputeSignatureTestSuite) TearDownTest() {
 
 func (s *DisputeSignatureTestSuite) TestUserStateProof() {
 	userState := createUserState(1, 300, 1)
-	witness, err := s.transactionExecutor.stateTree.Set(1, userState)
+	witness, err := s.transactionExecutor.storage.StateTree.Set(1, userState)
 	s.NoError(err)
 
 	stateProof, err := s.transactionExecutor.userStateProof(1)
@@ -166,7 +166,7 @@ func (s *DisputeSignatureTestSuite) TestSignatureProofWithReceiver() {
 		s.NoError(err)
 		senderPublicKeys = append(senderPublicKeys, *publicKey)
 
-		_, err = s.transactionExecutor.accountTree.Set(&receiverAccounts[i])
+		err = s.transactionExecutor.storage.AccountTree.SetSingle(&receiverAccounts[i])
 		s.NoError(err)
 		receiverPublicKeys = append(receiverPublicKeys, crypto.Keccak256Hash(transfers[i].ToPublicKey.Bytes()))
 	}
@@ -222,7 +222,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Create2Transfer() {
 	s.NoError(err)
 	s.client.Commit()
 
-	_, err = s.transactionExecutor.accountTree.Set(receiver)
+	err = s.transactionExecutor.storage.AccountTree.SetSingle(receiver)
 	s.NoError(err)
 
 	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
@@ -236,7 +236,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Create2Transfer() {
 func (s *DisputeSignatureTestSuite) setUserStatesAndAddAccounts() []bls.Wallet {
 	wallets := setUserStates(s.Assertions, s.transactionExecutor)
 	for i := range wallets {
-		_, err := s.transactionExecutor.accountTree.Set(&models.AccountLeaf{
+		err := s.transactionExecutor.storage.AccountTree.SetSingle(&models.AccountLeaf{
 			PubKeyID:  uint32(i),
 			PublicKey: *wallets[i].PublicKey(),
 		})

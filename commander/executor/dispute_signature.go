@@ -110,11 +110,11 @@ func (t *TransactionExecutor) signatureProofWithReceiver(
 }
 
 func (t *TransactionExecutor) userStateProof(stateID uint32) (*models.StateMerkleProof, error) {
-	leaf, err := t.stateTree.Leaf(stateID)
+	leaf, err := t.storage.StateTree.Leaf(stateID)
 	if err != nil {
 		return nil, err
 	}
-	witness, err := t.stateTree.GetWitness(leaf.StateID)
+	witness, err := t.storage.StateTree.GetWitness(leaf.StateID)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (t *TransactionExecutor) publicKeyProof(pubKeyID uint32) (*models.PublicKey
 	if err != nil {
 		return nil, err
 	}
-	witness, err := t.accountTree.GetWitness(pubKeyID)
+	witness, err := t.storage.AccountTree.GetWitness(pubKeyID)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +145,7 @@ func (t *TransactionExecutor) receiverPublicKeyProof(pubKeyID uint32) (*models.R
 	if err != nil {
 		return nil, err
 	}
-	witness, err := t.accountTree.GetWitness(pubKeyID)
+	witness, err := t.storage.AccountTree.GetWitness(pubKeyID)
 	if err != nil {
 		return nil, err
 	}
