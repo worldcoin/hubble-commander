@@ -24,8 +24,7 @@ import (
 type DisputeSignatureTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage             *st.Storage
-	teardown            func() error
+	storage             *st.TestStorage
 	client              *eth.TestClient
 	cfg                 *config.RollupConfig
 	transactionExecutor *TransactionExecutor
@@ -44,10 +43,9 @@ func (s *DisputeSignatureTestSuite) SetupSuite() {
 }
 
 func (s *DisputeSignatureTestSuite) SetupTest() {
-	testStorage, err := st.NewTestStorageWithBadger()
+	var err error
+	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.storage = testStorage.Storage
-	s.teardown = testStorage.Teardown
 
 	s.client, err = eth.NewConfiguredTestClient(
 		rollup.DeploymentConfig{},
@@ -55,7 +53,7 @@ func (s *DisputeSignatureTestSuite) SetupTest() {
 	)
 	s.NoError(err)
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
+	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, s.cfg, context.Background())
 
 	s.domain, err = s.client.GetDomain()
 	s.NoError(err)
@@ -63,7 +61,7 @@ func (s *DisputeSignatureTestSuite) SetupTest() {
 
 func (s *DisputeSignatureTestSuite) TearDownTest() {
 	s.client.Close()
-	err := s.teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
@@ -197,11 +195,8 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_DisputesTransferBatchWi
 
 	transfer := testutils.MakeTransfer(1, 2, 0, 50)
 	signTransfer(s.T(), &wallets[0], &transfer)
-	pendingBatch, commitments := createTransferBatch(s.Assertions, s.transactionExecutor, &transfer, s.domain)
 
-	err := s.transactionExecutor.SubmitBatch(pendingBatch, commitments)
-	s.NoError(err)
-	s.client.Commit()
+	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &transfer)
 
 	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
 	s.NoError(err)
@@ -221,13 +216,10 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_DisputesC2TBatchWithInv
 
 	transfer := testutils.MakeCreate2Transfer(0, &receiver.PubKeyID, 0, 100, &receiver.PublicKey)
 	signCreate2Transfer(s.T(), &wallets[1], &transfer)
-	pendingBatch, commitments := createC2TBatch(s.Assertions, s.transactionExecutor, &transfer, s.domain)
 
-	err := s.transactionExecutor.SubmitBatch(pendingBatch, commitments)
-	s.NoError(err)
-	s.client.Commit()
+	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &transfer)
 
-	err = s.transactionExecutor.storage.AccountTree.SetSingle(receiver)
+	err := s.transactionExecutor.storage.AccountTree.SetSingle(receiver)
 	s.NoError(err)
 
 	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
@@ -243,11 +235,8 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Transfer_ValidBatch() {
 
 	transfer := testutils.MakeTransfer(1, 2, 0, 50)
 	signTransfer(s.T(), &wallets[1], &transfer)
-	pendingBatch, commitments := createTransferBatch(s.Assertions, s.transactionExecutor, &transfer, s.domain)
 
-	err := s.transactionExecutor.SubmitBatch(pendingBatch, commitments)
-	s.NoError(err)
-	s.client.Commit()
+	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &transfer)
 
 	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
 	s.NoError(err)
@@ -267,13 +256,10 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Create2Transfer_ValidBa
 
 	transfer := testutils.MakeCreate2Transfer(0, &receiver.PubKeyID, 0, 100, &receiver.PublicKey)
 	signCreate2Transfer(s.T(), &wallets[0], &transfer)
-	pendingBatch, commitments := createC2TBatch(s.Assertions, s.transactionExecutor, &transfer, s.domain)
 
-	err := s.transactionExecutor.SubmitBatch(pendingBatch, commitments)
-	s.NoError(err)
-	s.client.Commit()
+	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &transfer)
 
-	err = s.transactionExecutor.storage.AccountTree.SetSingle(receiver)
+	err := s.transactionExecutor.storage.AccountTree.SetSingle(receiver)
 	s.NoError(err)
 
 	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
