@@ -204,7 +204,7 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (models.Wit
 		return nil, err
 	}
 
-	err = s.UpsertStateLeaf(currentLeaf)
+	err = s.upsertStateLeaf(currentLeaf)
 	if err != nil {
 		return nil, err
 	}
@@ -239,7 +239,7 @@ func (s *StateTree) getLeafOrEmpty(stateID uint32) (*models.StateLeaf, error) {
 }
 
 func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, error) {
-	err := s.UpsertStateLeaf(&stateUpdate.PrevStateLeaf)
+	err := s.upsertStateLeaf(&stateUpdate.PrevStateLeaf)
 	if err != nil {
 		return nil, err
 	}

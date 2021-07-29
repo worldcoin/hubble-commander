@@ -6,7 +6,7 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-func (s *StateTree) UpsertStateLeaf(leaf *models.StateLeaf) error {
+func (s *StateTree) upsertStateLeaf(leaf *models.StateLeaf) error {
 	flatLeaf := models.MakeFlatStateLeaf(leaf)
 	return s.storageBase.Badger.Upsert(leaf.StateID, flatLeaf)
 }
