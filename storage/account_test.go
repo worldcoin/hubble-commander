@@ -225,25 +225,22 @@ func (s *AccountTestSuite) TestGetPublicKeyByStateID() {
 
 func (s *AccountTestSuite) TestGetPublicKeyByStateID_NonExistentStateLeaf() {
 	_, err := s.storage.GetPublicKeyByStateID(1)
-	s.Equal(NewNotFoundError("account"), err)
+	s.Equal(NewNotFoundError("state leaf"), err)
 }
 
 func (s *AccountTestSuite) TestGetPublicKeyByStateID_NonExistentPublicKey() {
-	leaf := models.StateLeaf{
-		StateID:  1,
-		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
-		UserState: models.UserState{
-			PubKeyID: 1,
-			TokenID:  models.MakeUint256(1),
-			Balance:  models.MakeUint256(420),
-			Nonce:    models.MakeUint256(0),
-		},
+	userState := &models.UserState{
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
 	}
-	err := s.storage.UpsertStateLeaf(&leaf)
+
+	_, err := s.storage.StateTree.Set(1, userState)
 	s.NoError(err)
 
 	_, err = s.storage.GetPublicKeyByStateID(1)
-	s.Equal(NewNotFoundError("account"), err)
+	s.Equal(NewNotFoundError("account leaf"), err)
 }
 
 func TestAccountTestSuite(t *testing.T) {

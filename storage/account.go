@@ -31,9 +31,6 @@ func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey, tokenID *models
 
 func (s *Storage) GetPublicKeyByStateID(stateID uint32) (*models.PublicKey, error) {
 	stateLeaf, err := s.GetStateLeaf(stateID)
-	if IsNotFoundError(err) {
-		return nil, NewNotFoundError("account")
-	}
 	if err != nil {
 		return nil, err
 	}
