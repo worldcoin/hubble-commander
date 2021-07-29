@@ -5,13 +5,13 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-func (s *StorageBase) AddStateUpdate(update *models.StateUpdate) error {
-	return s.Badger.Insert(bh.NextSequence(), *update)
+func (s *StateTree) addStateUpdate(update *models.StateUpdate) error {
+	return s.storageBase.Badger.Insert(bh.NextSequence(), *update)
 }
 
-func (s *StorageBase) GetStateUpdate(id uint64) (*models.StateUpdate, error) {
+func (s *StateTree) getStateUpdate(id uint64) (*models.StateUpdate, error) {
 	var stateUpdate models.StateUpdate
-	err := s.Badger.Get(id, &stateUpdate)
+	err := s.storageBase.Badger.Get(id, &stateUpdate)
 	if err == bh.ErrNotFound {
 		return nil, NewNotFoundError("state update")
 	}
@@ -21,6 +21,6 @@ func (s *StorageBase) GetStateUpdate(id uint64) (*models.StateUpdate, error) {
 	return &stateUpdate, nil
 }
 
-func (s *StorageBase) DeleteStateUpdate(id uint64) error {
-	return s.Badger.Delete(id, models.StateUpdate{})
+func (s *StateTree) deleteStateUpdate(id uint64) error {
+	return s.storageBase.Badger.Delete(id, models.StateUpdate{})
 }

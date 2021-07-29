@@ -522,7 +522,7 @@ func (s *DisputeTransitionTestSuite) createInvalidTransferCommitments(
 		txs := commitmentTxs[i]
 		combinedFee := models.MakeUint256(0)
 		for j := range txs {
-			receiverLeaf, err := s.transactionExecutor.storage.GetStateLeaf(txs[j].ToStateID)
+			receiverLeaf, err := s.transactionExecutor.storage.StateTree.Leaf(txs[j].ToStateID)
 			s.NoError(err)
 			combinedFee = s.applyTransfer(&txs[j], invalidTxHash, combinedFee, receiverLeaf)
 		}
@@ -549,7 +549,7 @@ func (s *DisputeTransitionTestSuite) applyTransfer(
 		s.NoError(transferError)
 		s.NoError(appError)
 	} else {
-		senderLeaf, err := s.transactionExecutor.storage.GetStateLeaf(tx.GetFromStateID())
+		senderLeaf, err := s.transactionExecutor.storage.StateTree.Leaf(tx.GetFromStateID())
 		s.NoError(err)
 		s.calculateStateAfterInvalidTransfer(senderLeaf, receiverLeaf, tx)
 	}

@@ -31,7 +31,7 @@ func (s *StoredMerkleTreeTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *StoredMerkleTreeTestSuite) TestInitialRoot() {
+func (s *StoredMerkleTreeTestSuite) TestRoot_InitialRoot() {
 	tree := NewStoredMerkleTree("state", s.storage.StorageBase.Badger)
 
 	root, err := tree.Root()
@@ -39,7 +39,7 @@ func (s *StoredMerkleTreeTestSuite) TestInitialRoot() {
 	s.Equal(merkletree.GetZeroHash(StateTreeDepth), *root)
 }
 
-func (s *StoredMerkleTreeTestSuite) TestRootAfterSet() {
+func (s *StoredMerkleTreeTestSuite) TestRoot_ChangesAfterSet() {
 	tree := NewStoredMerkleTree("state", s.storage.StorageBase.Badger)
 
 	newRoot, _, err := tree.SetNode(&models.MerklePath{

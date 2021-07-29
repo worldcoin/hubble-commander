@@ -79,7 +79,7 @@ func (a *API) validateCreate2Transfer(create2Transfer *models.Create2Transfer) e
 		return vErr
 	}
 
-	senderState, err := a.storage.GetStateLeaf(create2Transfer.FromStateID)
+	senderState, err := a.storage.StateTree.Leaf(create2Transfer.FromStateID)
 	if err != nil {
 		return err
 	}

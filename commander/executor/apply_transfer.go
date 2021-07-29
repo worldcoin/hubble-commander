@@ -24,7 +24,7 @@ func (t *TransactionExecutor) ApplyTransfer(
 	receiverLeaf *models.StateLeaf,
 	commitmentTokenID models.Uint256,
 ) (transferError, appError error) {
-	senderLeaf, err := t.storage.GetStateLeaf(transfer.GetFromStateID())
+	senderLeaf, err := t.storage.StateTree.Leaf(transfer.GetFromStateID())
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransa
 	synced *SyncedTransfer,
 	transferError, appError error,
 ) {
-	receiverLeaf, err := t.storage.GetStateLeaf(*transfer.GetToStateID())
+	receiverLeaf, err := t.storage.StateTree.Leaf(*transfer.GetToStateID())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -81,7 +81,7 @@ func (t *TransactionExecutor) applyGenericTransactionForSync(
 	receiverLeaf *models.StateLeaf,
 	commitmentTokenID models.Uint256,
 ) (synced *SyncedGenericTransaction, transferError, appError error) {
-	senderLeaf, err := t.storage.GetStateLeaf(tx.GetFromStateID())
+	senderLeaf, err := t.storage.StateTree.Leaf(tx.GetFromStateID())
 	if err != nil {
 		return nil, nil, err
 	}

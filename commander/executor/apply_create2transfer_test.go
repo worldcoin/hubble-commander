@@ -76,7 +76,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_GetsNextAvailab
 	s.NoError(appError)
 	s.NoError(transferError)
 
-	leaf, err := s.storage.GetStateLeaf(2)
+	leaf, err := s.storage.StateTree.Leaf(2)
 	s.NoError(err)
 	s.NotNil(leaf)
 	s.Equal(pubKeyID, leaf.PubKeyID)
@@ -98,9 +98,9 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_AppliesTransfer
 	s.NoError(appError)
 	s.NoError(transferError)
 
-	senderLeaf, err := s.storage.GetStateLeaf(appliedTransfer.FromStateID)
+	senderLeaf, err := s.storage.StateTree.Leaf(appliedTransfer.FromStateID)
 	s.NoError(err)
-	receiverLeaf, err := s.storage.GetStateLeaf(*appliedTransfer.ToStateID)
+	receiverLeaf, err := s.storage.StateTree.Leaf(*appliedTransfer.ToStateID)
 	s.NoError(err)
 
 	s.Equal(uint64(8900), senderLeaf.Balance.Uint64())
@@ -130,7 +130,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_InsertsN
 	s.NoError(appError)
 	s.NoError(transferError)
 
-	leaf, err := s.storage.GetStateLeaf(*c2T.ToStateID)
+	leaf, err := s.storage.StateTree.Leaf(*c2T.ToStateID)
 	s.NoError(err)
 
 	s.NoError(err)
@@ -147,9 +147,9 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_AppliesT
 	s.NoError(appError)
 	s.NoError(transferError)
 
-	senderLeaf, err := s.storage.GetStateLeaf(c2T.FromStateID)
+	senderLeaf, err := s.storage.StateTree.Leaf(c2T.FromStateID)
 	s.NoError(err)
-	receiverLeaf, err := s.storage.GetStateLeaf(*c2T.ToStateID)
+	receiverLeaf, err := s.storage.StateTree.Leaf(*c2T.ToStateID)
 	s.NoError(err)
 
 	s.Equal(uint64(8900), senderLeaf.Balance.Uint64())

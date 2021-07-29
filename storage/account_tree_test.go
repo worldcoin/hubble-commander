@@ -44,11 +44,42 @@ func (s *AccountTreeTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
+func (s *AccountTreeTestSuite) TestLeaf_NonExistentLeaf() {
+	_, err := s.storage.AccountTree.Leaf(0)
+	s.Equal(NewNotFoundError("account leaf"), err)
+}
+
+func (s *AccountTreeTestSuite) TestLeaves_NonExistentLeaves() {
+	_, err := s.storage.AccountTree.Leaves(&models.PublicKey{1, 2, 3})
+	s.Equal(NewNotFoundError("account leaves"), err)
+}
+
+func (s *AccountTreeTestSuite) TestLeaves_ReturnsAllLeaves() {
+	pubKey := models.PublicKey{1, 2, 3}
+	accounts := []models.AccountLeaf{{
+		PubKeyID:  0,
+		PublicKey: pubKey,
+	}, {
+		PubKeyID:  1,
+		PublicKey: pubKey,
+	}}
+
+	err := s.storage.AccountTree.SetSingle(&accounts[0])
+	s.NoError(err)
+	err = s.storage.AccountTree.SetSingle(&accounts[1])
+	s.NoError(err)
+
+	res, err := s.storage.AccountTree.Leaves(&pubKey)
+	s.NoError(err)
+
+	s.Equal(accounts, res)
+}
+
 func (s *AccountTreeTestSuite) TestSetSingle_StoresAccountLeafRecord() {
 	err := s.storage.AccountTree.SetSingle(s.leaf)
 	s.NoError(err)
 
-	actualLeaf, err := s.storage.GetAccountLeaf(s.leaf.PubKeyID)
+	actualLeaf, err := s.storage.AccountTree.Leaf(s.leaf.PubKeyID)
 	s.NoError(err)
 	s.Equal(s.leaf, actualLeaf)
 }
@@ -166,11 +197,11 @@ func (s *AccountTreeTestSuite) TestUnsafeSet_ReturnsWitness() {
 	s.NoError(err)
 	s.Len(witness, AccountTreeDepth)
 
-	node, err := s.storage.AccountTree.getMerkleTreeNodeByPath(&models.MerklePath{Depth: AccountTreeDepth, Path: 1})
+	node, err := s.storage.AccountTree.merkleTree.Get(models.MerklePath{Depth: AccountTreeDepth, Path: 1})
 	s.NoError(err)
 	s.Equal(node.DataHash, witness[0])
 
-	node, err = s.storage.AccountTree.getMerkleTreeNodeByPath(&models.MerklePath{Depth: 1, Path: 1})
+	node, err = s.storage.AccountTree.merkleTree.Get(models.MerklePath{Depth: 1, Path: 1})
 	s.NoError(err)
 	s.Equal(node.DataHash, witness[31])
 }

@@ -63,7 +63,7 @@ func (s *AccountsTestSuite) TestSyncSingleAccounts() {
 	s.NoError(err)
 	s.Equal(ref.Int(1), newAccountsCount)
 
-	accounts, err := s.cmd.storage.GetAccountLeaves(&account.PublicKey)
+	accounts, err := s.cmd.storage.AccountTree.Leaves(&account.PublicKey)
 	s.NoError(err)
 	s.Len(accounts, 1)
 	s.Equal(account.PubKeyID, accounts[0].PubKeyID)
@@ -120,7 +120,7 @@ func (s *AccountsTestSuite) registerBatchAccount() []models.AccountLeaf {
 
 func (s *AccountsTestSuite) validateAccountsAfterSync(accounts []models.AccountLeaf) {
 	for i := range accounts {
-		leaves, err := s.cmd.storage.GetAccountLeaves(&accounts[i].PublicKey)
+		leaves, err := s.cmd.storage.AccountTree.Leaves(&accounts[i].PublicKey)
 		s.NoError(err)
 		s.Len(leaves, 1)
 		s.Equal(accounts[i].PubKeyID, leaves[0].PubKeyID)

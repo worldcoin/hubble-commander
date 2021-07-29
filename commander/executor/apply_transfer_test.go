@@ -143,9 +143,9 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_UpdatesStatesCorrectly() {
 	s.NoError(appError)
 	s.NoError(transferError)
 
-	senderLeaf, err := s.storage.GetStateLeaf(1)
+	senderLeaf, err := s.storage.StateTree.Leaf(1)
 	s.NoError(err)
-	receiverLeaf, err := s.storage.GetStateLeaf(2)
+	receiverLeaf, err := s.storage.StateTree.Leaf(2)
 	s.NoError(err)
 
 	s.Equal(uint64(290), senderLeaf.Balance.Uint64())
@@ -221,9 +221,9 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_UpdatesStatesCorrectly
 	s.NoError(appError)
 	s.NoError(transferError)
 
-	senderLeaf, err := s.storage.GetStateLeaf(1)
+	senderLeaf, err := s.storage.StateTree.Leaf(1)
 	s.NoError(err)
-	receiverLeaf, err := s.storage.GetStateLeaf(2)
+	receiverLeaf, err := s.storage.StateTree.Leaf(2)
 	s.NoError(err)
 
 	s.Equal(uint64(290), senderLeaf.Balance.Uint64())

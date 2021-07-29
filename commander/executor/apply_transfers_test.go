@@ -104,7 +104,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_AppliesNoMoreThanLimit() {
 	s.Len(transfers.appliedTransfers, 6)
 	s.Len(transfers.invalidTransfers, 0)
 
-	state, err := s.storage.GetStateLeaf(1)
+	state, err := s.storage.StateTree.Leaf(1)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(6), state.Nonce)
 }
@@ -141,7 +141,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_AppliesFee() {
 	_, err := s.transactionExecutor.ApplyTransfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
-	feeReceiverState, err := s.transactionExecutor.storage.GetStateLeaf(s.feeReceiver.StateID)
+	feeReceiverState, err := s.transactionExecutor.storage.StateTree.Leaf(s.feeReceiver.StateID)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }
@@ -173,7 +173,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AppliesFee() {
 	_, _, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver)
 	s.NoError(err)
 
-	feeReceiverState, err := s.transactionExecutor.storage.GetStateLeaf(s.feeReceiver.StateID)
+	feeReceiverState, err := s.transactionExecutor.storage.StateTree.Leaf(s.feeReceiver.StateID)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }

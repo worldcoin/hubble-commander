@@ -98,11 +98,11 @@ func (s *BatchesTestSuite) TestUnsafeSyncBatches_DoesNotSyncExistingBatchTwice()
 	s.NoError(err)
 	s.Len(batches, 2)
 
-	state0, err := s.cmd.storage.GetStateLeaf(0)
+	state0, err := s.cmd.storage.StateTree.Leaf(0)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(710), state0.Balance)
 
-	state1, err := s.cmd.storage.GetStateLeaf(1)
+	state1, err := s.cmd.storage.StateTree.Leaf(1)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(290), state1.Balance)
 }
