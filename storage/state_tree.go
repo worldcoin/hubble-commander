@@ -43,18 +43,6 @@ func (s *StateTree) LeafNode(stateID uint32) (*models.MerkleTreeNode, error) {
 	})
 }
 
-// TODO-ST rename and make private
-func (s *StateTree) Leaf(stateID uint32) (*models.StateLeaf, error) {
-	leaf, err := s.storageBase.GetStateLeaf(stateID)
-	if IsNotFoundError(err) {
-		return &models.StateLeaf{
-			StateID:  stateID,
-			DataHash: merkletree.GetZeroHash(0),
-		}, nil
-	}
-	return leaf, err
-}
-
 // Set returns a witness containing 32 elements for the current set operation
 func (s *StateTree) Set(id uint32, state *models.UserState) (models.Witness, error) {
 	tx, storage, err := s.storageBase.BeginTransaction(TxOptions{Badger: true})
@@ -147,7 +135,7 @@ func decodeStateUpdate(item *bdg.Item) (*models.StateUpdate, error) {
 }
 
 func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (models.Witness, error) {
-	prevLeaf, err := s.Leaf(index)
+	prevLeaf, err := s.getLeafOrEmpty(index)
 	if err != nil {
 		return nil, err
 	}
@@ -183,6 +171,17 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (models.Wit
 	}
 
 	return witness, nil
+}
+
+func (s *StateTree) getLeafOrEmpty(stateID uint32) (*models.StateLeaf, error) {
+	leaf, err := s.storageBase.GetStateLeaf(stateID)
+	if IsNotFoundError(err) {
+		return &models.StateLeaf{
+			StateID:  stateID,
+			DataHash: merkletree.GetZeroHash(0),
+		}, nil
+	}
+	return leaf, err
 }
 
 func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, error) {
