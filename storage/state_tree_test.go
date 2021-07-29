@@ -207,7 +207,7 @@ func (s *StateTreeTestSuite) TestSet_StoresStateUpdateRecord() {
 		},
 	}
 
-	update, err := s.storage.GetStateUpdate(expectedUpdate.ID)
+	update, err := s.storage.StateTree.getStateUpdate(expectedUpdate.ID)
 	s.NoError(err)
 	s.Equal(expectedUpdate, update)
 }
@@ -276,7 +276,7 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafAddsStateUpdateRecord() {
 		PrevStateLeaf: *s.leaf,
 	}
 
-	update, err := s.storage.GetStateUpdate(expectedUpdate.ID)
+	update, err := s.storage.StateTree.getStateUpdate(expectedUpdate.ID)
 	s.NoError(err)
 	s.Equal(expectedUpdate, update)
 }

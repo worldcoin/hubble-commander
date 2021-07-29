@@ -199,7 +199,7 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (models.Wit
 		return nil, err
 	}
 
-	err = s.storageBase.AddStateUpdate(&models.StateUpdate{
+	err = s.addStateUpdate(&models.StateUpdate{
 		CurrentRoot:   *currentRoot,
 		PrevRoot:      *prevRoot,
 		PrevStateLeaf: *prevLeaf,
@@ -253,7 +253,7 @@ func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, 
 		return nil, fmt.Errorf("unexpected state root after state update rollback")
 	}
 
-	err = s.storageBase.DeleteStateUpdate(stateUpdate.ID)
+	err = s.deleteStateUpdate(stateUpdate.ID)
 	if err != nil {
 		return nil, err
 	}
