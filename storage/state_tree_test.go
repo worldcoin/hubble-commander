@@ -51,6 +51,28 @@ func (s *StateTreeTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
+func (s *StateTreeTestSuite) TestLeaf_ReturnsCorrectStruct() {
+	leaf, err := NewStateLeaf(0, &models.UserState{
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
+	})
+	s.NoError(err)
+
+	_, err = s.storage.StateTree.Set(leaf.StateID, &leaf.UserState)
+	s.NoError(err)
+
+	actual, err := s.storage.StateTree.Leaf(leaf.StateID)
+	s.NoError(err)
+	s.Equal(leaf, actual)
+}
+
+func (s *StateTreeTestSuite) TestLeaf_NonExistentLeaf() {
+	_, err := s.storage.StateTree.Leaf(0)
+	s.Equal(NewNotFoundError("state leaf"), err)
+}
+
 func (s *StateTreeTestSuite) TestNextAvailableStateID_NoLeavesInStateTree() {
 	stateID, err := s.storage.StateTree.NextAvailableStateID()
 	s.NoError(err)
