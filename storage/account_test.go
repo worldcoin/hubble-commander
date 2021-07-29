@@ -41,20 +41,6 @@ func (s *AccountTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *AccountTestSuite) TestGetPublicKey_ReturnsPublicKey() {
-	account := models.AccountLeaf{
-		PubKeyID:  0,
-		PublicKey: models.PublicKey{1, 2, 3},
-	}
-
-	err := s.storage.AccountTree.SetSingle(&account)
-	s.NoError(err)
-
-	key, err := s.storage.AccountTree.GetPublicKey(0)
-	s.NoError(err)
-	s.Equal(account.PublicKey, *key)
-}
-
 func (s *AccountTestSuite) TestGetUnusedPubKeyID_NoPublicKeys() {
 	_, err := s.storage.GetUnusedPubKeyID(&account1.PublicKey, models.NewUint256(100))
 	s.Equal(NewNotFoundError("account leaves"), err)

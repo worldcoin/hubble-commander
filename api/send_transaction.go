@@ -89,7 +89,7 @@ func validateBalance(transactionAmount, transactionFee *models.Uint256, senderSt
 }
 
 func (a *API) validateSignature(encodedTransaction []byte, transactionSignature *models.Signature, senderState *models.UserState) error {
-	publicKey, err := a.storage.AccountTree.GetPublicKey(senderState.PubKeyID)
+	leaf, err := a.storage.AccountTree.Leaf(senderState.PubKeyID)
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (a *API) validateSignature(encodedTransaction []byte, transactionSignature 
 		return err
 	}
 
-	isValid, err := signature.Verify(encodedTransaction, publicKey)
+	isValid, err := signature.Verify(encodedTransaction, &leaf.PublicKey)
 	if err != nil {
 		return err
 	}
