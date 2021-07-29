@@ -158,8 +158,8 @@ func (s *StorageBase) GetPendingTransfers(limit uint32) ([]models.Transfer, erro
 	return res, nil
 }
 
-func (s *StorageBase) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models.TransferWithBatchDetails, error) {
-	accounts, err := s.GetAccountLeaves(publicKey)
+func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models.TransferWithBatchDetails, error) {
+	accounts, err := s.AccountTree.Leaves(publicKey)
 	if err != nil {
 		return nil, err
 	}

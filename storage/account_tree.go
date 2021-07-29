@@ -44,7 +44,30 @@ func (s *AccountTree) LeafNode(pubKeyID uint32) (*models.MerkleTreeNode, error) 
 }
 
 func (s *AccountTree) Leaf(pubKeyID uint32) (*models.AccountLeaf, error) {
-	return s.storageBase.GetAccountLeaf(pubKeyID)
+	var leaf models.AccountLeaf
+	err := s.storageBase.Badger.Get(pubKeyID, &leaf)
+	if err == bh.ErrNotFound {
+		return nil, NewNotFoundError("account leaf")
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &leaf, nil
+}
+
+func (s *AccountTree) Leaves(publicKey *models.PublicKey) ([]models.AccountLeaf, error) {
+	accounts := make([]models.AccountLeaf, 0, 1)
+	err := s.storageBase.Badger.Find(
+		&accounts,
+		bh.Where("PublicKey").Eq(publicKey).Index("PublicKey"),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if len(accounts) == 0 {
+		return nil, NewNotFoundError("account leaves")
+	}
+	return accounts, nil
 }
 
 func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
@@ -103,7 +126,7 @@ func (s *AccountTree) GetWitness(pubKeyID uint32) (models.Witness, error) {
 }
 
 func (s *AccountTree) unsafeSet(leaf *models.AccountLeaf) (models.Witness, error) {
-	err := s.storageBase.AddAccountLeafIfNotExists(leaf)
+	err := s.storageBase.Badger.Insert(leaf.PubKeyID, *leaf)
 	if err != nil {
 		return nil, err
 	}

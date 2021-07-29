@@ -285,7 +285,7 @@ func (s *StateTreeTestSuite) TestRevertTo() {
 	s.NoError(err)
 	s.Equal(stateRoot, newStateRoot)
 
-	leaf, err := s.storage.StateTree.Leaf(0)
+	leaf, err := s.storage.GetStateLeaf(0)
 	s.NoError(err)
 	s.Equal(states[0], leaf.UserState)
 }

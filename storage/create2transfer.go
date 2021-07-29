@@ -154,8 +154,8 @@ func (s *StorageBase) GetPendingCreate2Transfers(limit uint32) ([]models.Create2
 	return res, nil
 }
 
-func (s *StorageBase) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([]models.Create2TransferWithBatchDetails, error) {
-	accounts, err := s.GetAccountLeaves(publicKey)
+func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([]models.Create2TransferWithBatchDetails, error) {
+	accounts, err := s.AccountTree.Leaves(publicKey)
 	if err != nil {
 		return nil, err
 	}
