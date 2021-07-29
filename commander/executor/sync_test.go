@@ -428,9 +428,11 @@ func createAndSubmitTransferBatch(
 	txExecutor *TransactionExecutor,
 	tx *models.Transfer,
 ) *models.Batch {
-	pendingBatch, commitments := createTransferBatch(s, txExecutor, tx, testDomain)
+	domain, err := client.GetDomain()
+	s.NoError(err)
+	pendingBatch, commitments := createTransferBatch(s, txExecutor, tx, domain)
 
-	err := txExecutor.SubmitBatch(pendingBatch, commitments)
+	err = txExecutor.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	client.Commit()
@@ -474,9 +476,11 @@ func createAndSubmitC2TBatch(
 	txExecutor *TransactionExecutor,
 	tx *models.Create2Transfer,
 ) models.Commitment {
-	pendingBatch, commitments := createC2TBatch(s, txExecutor, tx, testDomain)
+	domain, err := client.GetDomain()
+	s.NoError(err)
+	pendingBatch, commitments := createC2TBatch(s, txExecutor, tx, domain)
 
-	err := txExecutor.SubmitBatch(pendingBatch, commitments)
+	err = txExecutor.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	client.Commit()

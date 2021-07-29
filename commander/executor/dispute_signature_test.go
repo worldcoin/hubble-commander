@@ -3,11 +3,13 @@ package executor
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -47,7 +49,10 @@ func (s *DisputeSignatureTestSuite) SetupTest() {
 	s.storage = testStorage.Storage
 	s.teardown = testStorage.Teardown
 
-	s.client, err = eth.NewTestClient()
+	s.client, err = eth.NewConfiguredTestClient(
+		rollup.DeploymentConfig{},
+		eth.ClientConfig{TxTimeout: ref.Duration(2 * time.Second)},
+	)
 	s.NoError(err)
 
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage, s.client.Client, s.cfg, context.Background())
@@ -187,7 +192,53 @@ func (s *DisputeSignatureTestSuite) TestSignatureProofWithReceiver() {
 	}
 }
 
-func (s *DisputeSignatureTestSuite) TestDisputeSignature_Transfer() {
+func (s *DisputeSignatureTestSuite) TestDisputeSignature_DisputesTransferBatchWithInvalidSignature() {
+	wallets := s.setUserStatesAndAddAccounts()
+
+	transfer := testutils.MakeTransfer(1, 2, 0, 50)
+	signTransfer(s.T(), &wallets[0], &transfer)
+	pendingBatch, commitments := createTransferBatch(s.Assertions, s.transactionExecutor, &transfer, s.domain)
+
+	err := s.transactionExecutor.SubmitBatch(pendingBatch, commitments)
+	s.NoError(err)
+	s.client.Commit()
+
+	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	err = s.transactionExecutor.DisputeSignature(&remoteBatches[0], 0)
+	s.NoError(err)
+}
+
+func (s *DisputeSignatureTestSuite) TestDisputeSignature_DisputesC2TBatchWithInvalidSignature() {
+	wallets := s.setUserStatesAndAddAccounts()
+
+	receiver := &models.AccountLeaf{
+		PubKeyID:  3,
+		PublicKey: *wallets[2].PublicKey(),
+	}
+
+	transfer := testutils.MakeCreate2Transfer(0, &receiver.PubKeyID, 0, 100, &receiver.PublicKey)
+	signCreate2Transfer(s.T(), &wallets[1], &transfer)
+	pendingBatch, commitments := createC2TBatch(s.Assertions, s.transactionExecutor, &transfer, s.domain)
+
+	err := s.transactionExecutor.SubmitBatch(pendingBatch, commitments)
+	s.NoError(err)
+	s.client.Commit()
+
+	err = s.transactionExecutor.storage.AccountTree.SetSingle(receiver)
+	s.NoError(err)
+
+	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	err = s.transactionExecutor.DisputeSignature(&remoteBatches[0], 0)
+	s.NoError(err)
+}
+
+func (s *DisputeSignatureTestSuite) TestDisputeSignature_Transfer_ValidBatch() {
 	wallets := s.setUserStatesAndAddAccounts()
 
 	transfer := testutils.MakeTransfer(1, 2, 0, 50)
@@ -203,10 +254,10 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Transfer() {
 	s.Len(remoteBatches, 1)
 
 	err = s.transactionExecutor.DisputeSignature(&remoteBatches[0], 0)
-	s.NoError(err)
+	s.ErrorIs(err, eth.ErrWaitForRollbackTimeout)
 }
 
-func (s *DisputeSignatureTestSuite) TestDisputeSignature_Create2Transfer() {
+func (s *DisputeSignatureTestSuite) TestDisputeSignature_Create2Transfer_ValidBatch() {
 	wallets := s.setUserStatesAndAddAccounts()
 
 	receiver := &models.AccountLeaf{
@@ -230,7 +281,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Create2Transfer() {
 	s.Len(remoteBatches, 1)
 
 	err = s.transactionExecutor.DisputeSignature(&remoteBatches[0], 0)
-	s.NoError(err)
+	s.ErrorIs(err, eth.ErrWaitForRollbackTimeout)
 }
 
 func (s *DisputeSignatureTestSuite) setUserStatesAndAddAccounts() []bls.Wallet {
