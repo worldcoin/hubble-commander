@@ -3,7 +3,6 @@ package api
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -34,7 +33,6 @@ func (s *NetworkInfoTestSuite) SetupTest() {
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
 
-	testStorage.SetDomain(bls.Domain{1, 2, 3})
 	err = testStorage.SetChainState(&chainState)
 	s.NoError(err)
 
@@ -131,7 +129,7 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
 	s.Equal(1, networkInfo.TransactionCount)
 	s.Equal("2000", networkInfo.LatestBatch.String())
 	s.Equal("1234", networkInfo.LatestFinalisedBatch.String())
-	s.Equal(bls.Domain{1, 2, 3}, networkInfo.SignatureDomain)
+	s.NotNil(networkInfo.SignatureDomain)
 }
 
 func TestNetworkInfoTestSuite(t *testing.T) {

@@ -94,7 +94,7 @@ func (a *API) validateSignature(encodedTransaction []byte, transactionSignature 
 		return err
 	}
 
-	domain, err := a.storage.GetDomain()
+	domain, err := a.client.GetDomain()
 	if err != nil {
 		return err
 	}

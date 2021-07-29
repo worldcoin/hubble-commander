@@ -44,7 +44,7 @@ func (a *API) GetNetworkInfo() (*dto.NetworkInfo, error) {
 		networkInfo.LatestFinalisedBatch = &latestFinalisedBatch.ID
 	}
 
-	domain, err := a.storage.GetDomain()
+	domain, err := a.client.GetDomain()
 	if err != nil {
 		return nil, err
 	}
