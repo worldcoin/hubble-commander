@@ -48,22 +48,6 @@ func (s *StateTree) Leaf(stateID uint32) (stateLeaf *models.StateLeaf, err error
 	return leaf.StateLeaf(), nil
 }
 
-func (s *StateTree) LeafByPubKeyIDAndTokenID(pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
-	leaves := make([]models.FlatStateLeaf, 0, 1)
-	err := s.storageBase.Badger.Find(
-		&leaves,
-		bh.Where("TokenID").Eq(tokenID).
-			And("PubKeyID").Eq(pubKeyID).Index("PubKeyID"),
-	)
-	if err != nil {
-		return nil, err
-	}
-	if len(leaves) == 0 {
-		return nil, NewNotFoundError("state leaf")
-	}
-	return leaves[0].StateLeaf(), nil
-}
-
 func (s *StateTree) NextAvailableStateID() (*uint32, error) {
 	nextAvailableStateID := uint32(0)
 
@@ -236,6 +220,22 @@ func (s *StateTree) getLeafOrEmpty(stateID uint32) (*models.StateLeaf, error) {
 		}, nil
 	}
 	return leaf, err
+}
+
+func (s *StateTree) getLeafByPubKeyIDAndTokenID(pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
+	leaves := make([]models.FlatStateLeaf, 0, 1)
+	err := s.storageBase.Badger.Find(
+		&leaves,
+		bh.Where("TokenID").Eq(tokenID).
+			And("PubKeyID").Eq(pubKeyID).Index("PubKeyID"),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if len(leaves) == 0 {
+		return nil, NewNotFoundError("state leaf")
+	}
+	return leaves[0].StateLeaf(), nil
 }
 
 func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, error) {

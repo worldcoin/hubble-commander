@@ -54,7 +54,7 @@ func (s *Storage) GetFeeReceiverStateLeaf(pubKeyID uint32, tokenID models.Uint25
 	if ok {
 		return s.StateTree.Leaf(stateID)
 	}
-	stateLeaf, err := s.StateTree.LeafByPubKeyIDAndTokenID(pubKeyID, tokenID)
+	stateLeaf, err := s.StateTree.getLeafByPubKeyIDAndTokenID(pubKeyID, tokenID)
 	if err != nil {
 		return nil, err
 	}
