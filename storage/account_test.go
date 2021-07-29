@@ -64,7 +64,6 @@ func (s *AccountTestSuite) TestGetUnusedPubKeyID_NoUnusedPublicIDs() {
 	s.NoError(err)
 
 	leaf := &models.StateLeaf{
-		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 		UserState: models.UserState{
 			PubKeyID: 0,
 			TokenID:  models.MakeUint256(1),
