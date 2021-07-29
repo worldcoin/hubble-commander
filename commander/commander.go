@@ -68,10 +68,11 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.signaturesDomain, err = c.storage.GetDomain()
+	c.signaturesDomain, err = getDomain(c.client)
 	if err != nil {
 		return err
 	}
+	c.storage.SetDomain(*c.signaturesDomain)
 
 	c.apiServer, err = api.NewAPIServer(c.cfg.API, c.storage, c.client, c.cfg.Rollup.DevMode)
 	if err != nil {
@@ -171,7 +172,7 @@ func bootstrapFromRemoteState(
 	storage *st.Storage,
 	cfg *config.BootstrapConfig,
 ) (*eth.Client, error) {
-	chainState, domain, err := fetchChainStateFromRemoteNode(*cfg.BootstrapNodeURL)
+	chainState, err := fetchChainStateFromRemoteNode(*cfg.BootstrapNodeURL)
 	if err != nil {
 		return nil, err
 	}
@@ -185,8 +186,6 @@ func bootstrapFromRemoteState(
 	if err != nil {
 		return nil, err
 	}
-
-	storage.SetDomain(*domain)
 
 	client, err := createClientFromChainState(chain, chainState)
 	if err != nil {
@@ -216,19 +215,19 @@ func bootstrapContractsAndState(
 	return createClientFromChainState(chain, chainState)
 }
 
-func fetchChainStateFromRemoteNode(url string) (*models.ChainState, *bls.Domain, error) {
+func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {
 	client := jsonrpc.NewClient(url)
 
 	var info dto.NetworkInfo
 	err := client.CallFor(&info, "hubble_getNetworkInfo")
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	var genesisAccounts models.GenesisAccounts
 	err = client.CallFor(&genesisAccounts, "hubble_getGenesisAccounts")
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	return &models.ChainState{
@@ -238,7 +237,7 @@ func fetchChainStateFromRemoteNode(url string) (*models.ChainState, *bls.Domain,
 		Rollup:          info.Rollup,
 		GenesisAccounts: genesisAccounts,
 		SyncedBlock:     getInitialSyncedBlock(info.DeploymentBlock),
-	}, &info.SignatureDomain, nil
+	}, nil
 }
 
 func createClientFromChainState(chain deployer.ChainConnection, chainState *models.ChainState) (*eth.Client, error) {
@@ -303,12 +302,6 @@ func deployContractsAndSetupGenesisState(
 		return nil, err
 	}
 
-	domain, err := contracts.Rollup.DomainSeparator(&bind.CallOpts{})
-	if err != nil {
-		return nil, err
-	}
-	storage.SetDomain(domain)
-
 	chainState := &models.ChainState{
 		ChainID:         chain.GetChainID(),
 		AccountRegistry: *accountRegistryAddress,
@@ -323,6 +316,16 @@ func deployContractsAndSetupGenesisState(
 
 func getInitialSyncedBlock(deploymentBlock uint64) uint64 {
 	return deploymentBlock - 1
+}
+
+func getDomain(client *eth.Client) (*bls.Domain, error) {
+	domainSeparator, err := client.Rollup.DomainSeparator(&bind.CallOpts{})
+	if err != nil {
+		return nil, err
+	}
+
+	domain := bls.Domain(domainSeparator)
+	return &domain, nil
 }
 
 func logChainState(chainState *models.ChainState) error {
