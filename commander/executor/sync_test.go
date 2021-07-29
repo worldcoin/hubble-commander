@@ -17,7 +17,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -56,7 +55,7 @@ func (s *SyncTestSuite) SetupTest() {
 		DevMode:                false,
 	}
 
-	s.wallets = generateWallets(s.Assertions, s.client.ChainState.Rollup, 2)
+	s.wallets = generateWallets(s.Assertions, testDomain, 2)
 	s.setupDB()
 }
 
@@ -65,8 +64,7 @@ func (s *SyncTestSuite) setupDB() {
 	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, s.cfg, context.Background())
-	err = s.storage.SetChainState(&s.client.ChainState)
-	s.NoError(err)
+	s.storage.SetDomain(*testDomain)
 
 	seedDB(s.Assertions, s.storage.Storage, s.wallets)
 }
@@ -567,10 +565,7 @@ func (s *SyncTestSuite) setC2THashAndSign(txs ...*models.Create2Transfer) {
 	}
 }
 
-func generateWallets(s *require.Assertions, rollupAddress common.Address, walletsAmount int) []bls.Wallet {
-	domain, err := bls.DomainFromBytes(crypto.Keccak256(rollupAddress.Bytes()))
-	s.NoError(err)
-
+func generateWallets(s *require.Assertions, domain *bls.Domain, walletsAmount int) []bls.Wallet {
 	wallets := make([]bls.Wallet, 0, walletsAmount)
 	for i := 0; i < walletsAmount; i++ {
 		wallet, err := bls.NewRandomWallet(*domain)
