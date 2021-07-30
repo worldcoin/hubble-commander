@@ -133,7 +133,7 @@ func (t *TransactionExecutor) syncCommitments(batch *eth.DecodedBatch) error {
 
 		var dsError *DisputableSignatureError
 		if errors.As(err, &dsError) {
-			return dsError.WithCommitmentIndex(i)
+			return t.fillSignatureDisputeError(dsError, batch, i)
 		}
 
 		var disputableErr *DisputableTransferError
