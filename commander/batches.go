@@ -67,17 +67,12 @@ func (c *Commander) syncRemoteBatch(remoteBatch *eth.DecodedBatch) error {
 }
 
 func (c *Commander) syncOrDisputeRemoteBatch(remoteBatch *eth.DecodedBatch) error {
-	var dcError *executor.DisputableTransitionError
-	var dsError *executor.DisputableSignatureError
+	var disputableErr *executor.DisputableError
 
 	err := c.syncBatch(remoteBatch)
-	if errors.As(err, &dcError) {
-		logFraudulentBatch(remoteBatch, dcError.Reason)
-		return c.disputeFraudulentBatchTransition(remoteBatch, dcError.CommitmentIndex, dcError.Proofs)
-	}
-	if errors.As(err, &dsError) {
-		logFraudulentBatch(remoteBatch, dsError.Reason)
-		return c.disputeFraudulentBatchSignature(remoteBatch, dsError.CommitmentIndex, dsError.Proofs)
+	if errors.As(err, &disputableErr) {
+		logFraudulentBatch(remoteBatch, disputableErr.Reason)
+		return c.disputeFraudulentBatch(remoteBatch, disputableErr)
 	}
 	return err
 }
@@ -107,10 +102,9 @@ func (c *Commander) replaceBatch(localBatch *models.Batch, remoteBatch *eth.Deco
 	return c.syncOrDisputeRemoteBatch(remoteBatch)
 }
 
-func (c *Commander) disputeFraudulentBatchTransition(
+func (c *Commander) disputeFraudulentBatch(
 	remoteBatch *eth.DecodedBatch,
-	commitmentIndex int,
-	proofs []models.StateMerkleProof,
+	disputableErr *executor.DisputableError,
 ) error {
 	// TODO transaction executor may not be needed here. Revisit this when extracting disputer package.
 	txExecutor, err := executor.NewTransactionExecutor(c.storage, c.client, c.cfg.Rollup, context.Background())
@@ -119,7 +113,12 @@ func (c *Commander) disputeFraudulentBatchTransition(
 	}
 	defer txExecutor.Rollback(&err)
 
-	err = txExecutor.DisputeTransition(remoteBatch, commitmentIndex, proofs)
+	switch disputableErr.Type {
+	case executor.Transition:
+		err = txExecutor.DisputeTransition(remoteBatch, disputableErr.CommitmentIndex, disputableErr.Proofs)
+	case executor.Signature:
+		err = txExecutor.DisputeSignature(remoteBatch, disputableErr.CommitmentIndex, disputableErr.Proofs)
+	}
 	if err != nil {
 		return err
 	}

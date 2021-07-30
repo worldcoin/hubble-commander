@@ -82,5 +82,5 @@ func (t *TransactionExecutor) createDisputableSignatureError(reason string, tran
 	if proofErr != nil {
 		return proofErr
 	}
-	return NewDisputableSignatureErrorWithProofs(reason, proofs)
+	return NewDisputableErrorWithProofs(Signature, reason, proofs)
 }

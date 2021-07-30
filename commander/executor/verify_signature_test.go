@@ -131,9 +131,9 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_InvalidSignature(
 
 	err = s.transactionExecutor.verifyTransferSignature(commitment, transfers)
 
-	var disputableError *DisputableSignatureError
-	s.ErrorAs(err, &disputableError)
-	s.Equal(InvalidSignature, disputableError.Reason)
+	var disputableErr *DisputableError
+	s.ErrorAs(err, &disputableErr)
+	s.Equal(InvalidSignature, disputableErr.Reason)
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyCreate2TransferSignature_ValidSignature() {

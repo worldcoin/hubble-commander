@@ -132,14 +132,9 @@ func (t *TransactionExecutor) syncCommitments(batch *eth.DecodedBatch) error {
 		log.WithFields(log.Fields{"batchID": batch.ID.String()}).Debugf("Syncing commitment #%d", i+1)
 		err := t.syncCommitment(batch, &batch.Commitments[i])
 
-		var dsError *DisputableSignatureError
-		if errors.As(err, &dsError) {
-			return dsError.WithCommitmentIndex(i)
-		}
-
-		var disputableErr *DisputableTransferError
+		var disputableErr *DisputableError
 		if errors.As(err, &disputableErr) {
-			return NewDisputableTransitionError(*disputableErr, i)
+			return disputableErr.WithCommitmentIndex(i)
 		}
 		if err != nil {
 			return err
