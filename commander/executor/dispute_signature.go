@@ -183,6 +183,20 @@ func (t *TransactionExecutor) stateMerkleProofs(batch *eth.DecodedBatch, commitm
 	return proofs, nil
 }
 
+func (t *TransactionExecutor) genericStateMerkleProofs(
+	transfers models.GenericTransactionArray,
+) ([]models.StateMerkleProof, error) {
+	proofs := make([]models.StateMerkleProof, 0, transfers.Len())
+	for i := 0; i < transfers.Len(); i++ {
+		stateProof, err := t.userStateProof(transfers.At(i).GetFromStateID())
+		if err != nil {
+			return nil, err
+		}
+		proofs = append(proofs, *stateProof)
+	}
+	return proofs, nil
+}
+
 func deserializeTransactions(transactionType txtype.TransactionType, transactions []byte) (models.GenericTransactionArray, error) {
 	switch transactionType {
 	case txtype.Transfer:

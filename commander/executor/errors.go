@@ -54,6 +54,10 @@ func NewDisputableSignatureError(reason string) *DisputableSignatureError {
 	return &DisputableSignatureError{Reason: reason}
 }
 
+func NewDisputableSignatureErrorWithProofs(reason string, proofs []models.StateMerkleProof) *DisputableSignatureError {
+	return &DisputableSignatureError{Reason: reason, Proofs: proofs}
+}
+
 func (e *DisputableSignatureError) WithCommitmentIndex(index int) *DisputableSignatureError {
 	e.CommitmentIndex = index
 	return e

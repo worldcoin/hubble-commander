@@ -12,6 +12,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const InvalidSignature = "invalid commitment signature"
+
 var (
 	ErrBatchSubmissionFailed = errors.New("previous submit batch transaction failed")
 	ErrInvalidSignature      = NewDisputableSignatureError("invalid commitment signature")

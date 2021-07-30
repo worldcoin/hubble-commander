@@ -24,7 +24,9 @@ func (t *TransactionExecutor) verifyTransferSignature(commitment *encoder.Decode
 			return err
 		}
 	}
-	return verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys)
+
+	genericTxs := models.TransferArray(transfers)
+	return t.verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys, genericTxs)
 }
 
 func (t *TransactionExecutor) verifyCreate2TransferSignature(
@@ -48,18 +50,21 @@ func (t *TransactionExecutor) verifyCreate2TransferSignature(
 			return err
 		}
 	}
-	return verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys)
+
+	genericTxs := models.Create2TransferArray(transfers)
+	return t.verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys, genericTxs)
 }
 
-func verifyCommitmentSignature(
+func (t *TransactionExecutor) verifyCommitmentSignature(
 	signature *models.Signature,
 	domain *bls.Domain,
 	messages [][]byte,
 	publicKeys []*models.PublicKey,
+	transfers models.GenericTransactionArray,
 ) error {
 	sig, err := bls.NewSignatureFromBytes(signature.Bytes(), *domain)
 	if err != nil {
-		return NewDisputableSignatureError(err.Error())
+		return t.createDisputableSignatureError(err.Error(), transfers)
 	}
 	aggregatedSignature := bls.AggregatedSignature{Signature: sig}
 	isValid, err := aggregatedSignature.Verify(messages, publicKeys)
@@ -67,7 +72,15 @@ func verifyCommitmentSignature(
 		return err
 	}
 	if !isValid {
-		return ErrInvalidSignature
+		return t.createDisputableSignatureError(InvalidSignature, transfers)
 	}
 	return nil
+}
+
+func (t *TransactionExecutor) createDisputableSignatureError(reason string, transfers models.GenericTransactionArray) error {
+	proofs, proofErr := t.genericStateMerkleProofs(transfers)
+	if proofErr != nil {
+		return proofErr
+	}
+	return NewDisputableSignatureErrorWithProofs(reason, proofs)
 }
