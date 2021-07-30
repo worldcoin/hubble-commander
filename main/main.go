@@ -67,7 +67,7 @@ func setupCloseHandler(cmd *commander.Commander) {
 		log.Warning("Stopping commander gracefully...")
 		err := cmd.Stop()
 		if err != nil {
-			log.Printf("Error while stopping: %+v", err)
+			log.Errorf("Error while stopping: %+v", err)
 		}
 	}()
 }
