@@ -1,5 +1,3 @@
-// +build e2e
-
 package e2e
 
 import (
@@ -21,6 +19,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
 	"github.com/sirupsen/logrus"
@@ -29,9 +28,10 @@ import (
 )
 
 func TestCommanderDispute(t *testing.T) {
-	cmd, err := setup.NewCommanderFromEnv(true)
-	require.NoError(t, err)
-	err = cmd.Start()
+	//cmd, err := setup.NewCommanderFromEnv(true)
+	//require.NoError(t, err)
+	cmd := setup.CreateInProcessCommander()
+	err := cmd.Start()
 	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, cmd.Stop())
@@ -45,11 +45,24 @@ func TestCommanderDispute(t *testing.T) {
 
 	ethClient := newEthClient(t, cmd.Client())
 
+	testDisputeSignatureTransfer(t, cmd.Client(), ethClient)
+
 	testDisputeTransitionTransfer(t, cmd.Client(), ethClient, senderWallet)
 	testDisputeTransitionC2T(t, cmd.Client(), ethClient, senderWallet, wallets)
 
 	testDisputeTransitionTransferInvalidStateRoot(t, cmd.Client(), ethClient)
 	testDisputeTransitionC2TInvalidStateRoot(t, cmd.Client(), ethClient, wallets[len(wallets)-1])
+}
+
+func testDisputeSignatureTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
+	sink := make(chan *rollup.RollupRollbackStatus)
+	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
+	require.NoError(t, err)
+	defer subscription.Unsubscribe()
+
+	sendTransferBatchWithInvalidSignature(t, ethClient)
+
+	testBatchesAfterDispute(t, client, 0)
 }
 
 func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, senderWallet bls.Wallet) {
@@ -166,6 +179,29 @@ func testRollbackCompletion(
 			}
 		}
 	}, 30*time.Second, testutils.TryInterval)
+}
+
+func sendTransferBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client) {
+	transfer := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(100),
+			Fee:         models.MakeUint256(10),
+		},
+		ToStateID: 2,
+	}
+
+	encodedTransfer, err := encoder.EncodeTransferForCommitment(&transfer)
+	require.NoError(t, err)
+	postStateRoot := common.Hash{223, 216, 112, 56, 113, 248, 202, 217, 207, 95, 115, 189, 153, 14, 156, 202, 27, 160, 133, 14, 118, 218, 161, 109, 17, 61, 77, 118, 7, 252, 42, 18}
+
+	commitment := models.Commitment{
+		Transactions:      encodedTransfer,
+		FeeReceiver:       0,
+		CombinedSignature: models.Signature{},
+		PostStateRoot:     postStateRoot,
+	}
+	submitTransfersBatch(t, ethClient, []models.Commitment{commitment}, 1)
 }
 
 func sendTransferBatchWithInvalidAmount(t *testing.T, ethClient *eth.Client) {
