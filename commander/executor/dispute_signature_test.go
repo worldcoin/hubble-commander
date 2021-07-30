@@ -201,7 +201,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_DisputesTransferBatchWi
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.disputeSignature(&remoteBatches[0], 0, models.TransferArray{transfer})
+	err = s.disputeSignature(&remoteBatches[0], models.TransferArray{transfer})
 	s.NoError(err)
 
 	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[0].ID)
@@ -227,7 +227,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_DisputesC2TBatchWithInv
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.disputeSignature(&remoteBatches[0], 0, models.Create2TransferArray{transfer})
+	err = s.disputeSignature(&remoteBatches[0], models.Create2TransferArray{transfer})
 	s.NoError(err)
 
 	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[0].ID)
@@ -245,7 +245,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Transfer_ValidBatch() {
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.disputeSignature(&remoteBatches[0], 0, models.TransferArray{transfer})
+	err = s.disputeSignature(&remoteBatches[0], models.TransferArray{transfer})
 	s.ErrorIs(err, eth.ErrWaitForRollbackTimeout)
 }
 
@@ -269,7 +269,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Create2Transfer_ValidBa
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.disputeSignature(&remoteBatches[0], 0, models.Create2TransferArray{transfer})
+	err = s.disputeSignature(&remoteBatches[0], models.Create2TransferArray{transfer})
 	s.ErrorIs(err, eth.ErrWaitForRollbackTimeout)
 }
 
@@ -287,13 +287,12 @@ func (s *DisputeSignatureTestSuite) setUserStatesAndAddAccounts() []bls.Wallet {
 
 func (s *DisputeSignatureTestSuite) disputeSignature(
 	batch *eth.DecodedBatch,
-	commitmentIndex int,
 	transfers models.GenericTransactionArray,
 ) error {
 	proofs, err := s.transactionExecutor.stateMerkleProofs(transfers)
 	s.NoError(err)
 
-	return s.transactionExecutor.DisputeSignature(batch, commitmentIndex, proofs)
+	return s.transactionExecutor.DisputeSignature(batch, 0, proofs)
 }
 
 func TestDisputeSignatureTestSuite(t *testing.T) {

@@ -125,25 +125,6 @@ func (c *Commander) disputeFraudulentBatch(
 	return txExecutor.Commit()
 }
 
-func (c *Commander) disputeFraudulentBatchSignature(
-	remoteBatch *eth.DecodedBatch,
-	commitmentIndex int,
-	proofs []models.StateMerkleProof,
-) error {
-	// TODO transaction executor may not be needed here. Revisit this when extracting disputer package.
-	txExecutor, err := executor.NewTransactionExecutor(c.storage, c.client, c.cfg.Rollup, context.Background())
-	if err != nil {
-		return err
-	}
-	defer txExecutor.Rollback(&err)
-
-	err = txExecutor.DisputeSignature(remoteBatch, commitmentIndex, proofs)
-	if err != nil {
-		return err
-	}
-	return txExecutor.Commit()
-}
-
 func (c *Commander) revertBatches(startBatch *models.Batch) error {
 	txExecutor, err := executor.NewTransactionExecutor(c.storage, c.client, c.cfg.Rollup, context.Background())
 	if err != nil {

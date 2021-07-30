@@ -409,10 +409,10 @@ func (s *DisputeTransitionTestSuite) getTransferStateMerkleProofs(txs [][]models
 	for i := range txs {
 		_, stateProofs, err = s.transactionExecutor.ApplyTransfersForSync(txs[i], feeReceiver)
 		if err != nil {
-			var disputableError *DisputableError
-			s.ErrorAs(err, &disputableError)
-			s.Len(disputableError.Proofs, len(txs[i])*2)
-			return disputableError.Proofs
+			var disputableErr *DisputableError
+			s.ErrorAs(err, &disputableErr)
+			s.Len(disputableErr.Proofs, len(txs[i])*2)
+			return disputableErr.Proofs
 		}
 	}
 
