@@ -25,7 +25,7 @@ func NewTransactionExecutor(
 	cfg *config.RollupConfig,
 	ctx context.Context,
 ) (*TransactionExecutor, error) {
-	tx, txStorageBase, err := storage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
+	tx, txStorage, err := storage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
 	if err != nil {
 		return nil, err
 	}
@@ -33,9 +33,9 @@ func NewTransactionExecutor(
 	return &TransactionExecutor{
 		cfg: cfg,
 		storage: &st.Storage{
-			StorageBase: txStorageBase,
-			StateTree:   st.NewStateTree(txStorageBase),
-			AccountTree: st.NewAccountTree(txStorageBase),
+			StorageBase: txStorage.StorageBase,
+			StateTree:   st.NewStateTree(txStorage.StorageBase),
+			AccountTree: st.NewAccountTree(txStorage.StorageBase),
 		},
 		tx:     tx,
 		client: client,
