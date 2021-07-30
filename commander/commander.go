@@ -126,7 +126,7 @@ func (c *Commander) Stop() error {
 		return err
 	}
 
-	log.Println("Commander stopped.")
+	log.Warningln("Commander stopped.")
 
 	return nil
 }

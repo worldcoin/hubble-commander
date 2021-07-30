@@ -116,7 +116,7 @@ func logReceivedTransfer(transfer dto.Transfer) {
 	if log.IsLevelEnabled(log.DebugLevel) {
 		jsonTransfer, err := json.Marshal(transfer)
 		if err != nil {
-			log.Debugf("Marshaling received transaction falied")
+			log.Errorln("Marshaling received transaction failed")
 			return
 		}
 		log.Debugf("API: received new transaction: %s", string(jsonTransfer))
