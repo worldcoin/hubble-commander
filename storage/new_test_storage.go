@@ -48,8 +48,8 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 		if err != nil {
 			return nil, err
 		}
-		storageBase.Postgres = postgresTestDB.DB
-		storageBase.QB = getQueryBuilder()
+		storageBase.Database.Postgres = postgresTestDB.DB
+		storageBase.Database.QB = getQueryBuilder()
 		teardown = append(teardown, func() error {
 			return postgresTestDB.Teardown()
 		})
@@ -60,7 +60,7 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 		if err != nil {
 			return nil, err
 		}
-		storageBase.Badger = badgerTestDB.DB
+		storageBase.Database.Badger = badgerTestDB.DB
 		teardown = append(teardown, badgerTestDB.Teardown)
 	}
 
@@ -79,30 +79,30 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 	teardown := make([]TeardownFunc, 0, 2)
 	initialTeardown := make([]TeardownFunc, 0, 2)
 
-	if s.Postgres != nil {
-		testPostgres := postgres.TestDB{DB: s.Postgres}
+	if s.Database.Postgres != nil {
+		testPostgres := postgres.TestDB{DB: s.Database.Postgres}
 		clonedPostgres, err := testPostgres.Clone(currentConfig)
 		if err != nil {
 			return nil, err
 		}
-		storageBase.Postgres = clonedPostgres.DB
+		storageBase.Database.Postgres = clonedPostgres.DB
 		teardown = append(teardown, func() error {
 			return clonedPostgres.Teardown()
 		})
 		initialTeardown = append(initialTeardown, testPostgres.Teardown)
 	}
 
-	if s.Badger != nil {
-		testBadger := badger.TestDB{DB: s.Badger}
+	if s.Database.Badger != nil {
+		testBadger := badger.TestDB{DB: s.Database.Badger}
 		clonedBadger, err := testBadger.Clone()
 		if err != nil {
 			return nil, err
 		}
-		storageBase.Badger = clonedBadger.DB
+		storageBase.Database.Badger = clonedBadger.DB
 		teardown = append(teardown, func() error {
 			return clonedBadger.Teardown()
 		})
-		initialTeardown = append(initialTeardown, s.Badger.Close)
+		initialTeardown = append(initialTeardown, s.Database.Badger.Close)
 	}
 	s.Teardown = toTeardownFunc(initialTeardown)
 

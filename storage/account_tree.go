@@ -28,7 +28,7 @@ type AccountTree struct {
 func NewAccountTree(storageBase *StorageBase) *AccountTree {
 	return &AccountTree{
 		storageBase: storageBase,
-		merkleTree:  NewStoredMerkleTree("account", storageBase.Badger),
+		merkleTree:  NewStoredMerkleTree("account", storageBase.Database.Badger),
 	}
 }
 
@@ -45,7 +45,7 @@ func (s *AccountTree) LeafNode(pubKeyID uint32) (*models.MerkleTreeNode, error) 
 
 func (s *AccountTree) Leaf(pubKeyID uint32) (*models.AccountLeaf, error) {
 	var leaf models.AccountLeaf
-	err := s.storageBase.Badger.Get(pubKeyID, &leaf)
+	err := s.storageBase.Database.Badger.Get(pubKeyID, &leaf)
 	if err == bh.ErrNotFound {
 		return nil, NewNotFoundError("account leaf")
 	}
@@ -57,7 +57,7 @@ func (s *AccountTree) Leaf(pubKeyID uint32) (*models.AccountLeaf, error) {
 
 func (s *AccountTree) Leaves(publicKey *models.PublicKey) ([]models.AccountLeaf, error) {
 	accounts := make([]models.AccountLeaf, 0, 1)
-	err := s.storageBase.Badger.Find(
+	err := s.storageBase.Database.Badger.Find(
 		&accounts,
 		bh.Where("PublicKey").Eq(publicKey).Index("PublicKey"),
 	)
@@ -126,7 +126,7 @@ func (s *AccountTree) GetWitness(pubKeyID uint32) (models.Witness, error) {
 }
 
 func (s *AccountTree) unsafeSet(leaf *models.AccountLeaf) (models.Witness, error) {
-	err := s.storageBase.Badger.Insert(leaf.PubKeyID, *leaf)
+	err := s.storageBase.Database.Badger.Insert(leaf.PubKeyID, *leaf)
 	if err != nil {
 		return nil, err
 	}

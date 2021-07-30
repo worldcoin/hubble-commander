@@ -28,7 +28,7 @@ type StateTree struct {
 func NewStateTree(storageBase *StorageBase) *StateTree {
 	return &StateTree{
 		storageBase: storageBase,
-		merkleTree:  NewStoredMerkleTree("state", storageBase.Badger),
+		merkleTree:  NewStoredMerkleTree("state", storageBase.Database.Badger),
 	}
 }
 
@@ -38,7 +38,7 @@ func (s *StateTree) Root() (*common.Hash, error) {
 
 func (s *StateTree) Leaf(stateID uint32) (stateLeaf *models.StateLeaf, err error) {
 	var leaf models.FlatStateLeaf
-	err = s.storageBase.Badger.Get(stateID, &leaf)
+	err = s.storageBase.Database.Badger.Get(stateID, &leaf)
 	if err == bh.ErrNotFound {
 		return nil, NewNotFoundError("state leaf")
 	}
@@ -51,7 +51,7 @@ func (s *StateTree) Leaf(stateID uint32) (stateLeaf *models.StateLeaf, err error
 func (s *StateTree) NextAvailableStateID() (*uint32, error) {
 	nextAvailableStateID := uint32(0)
 
-	err := s.storageBase.Badger.View(func(txn *bdg.Txn) error {
+	err := s.storageBase.Database.Badger.View(func(txn *bdg.Txn) error {
 		opts := bdg.DefaultIteratorOptions
 		opts.PrefetchValues = false
 		opts.Reverse = true
@@ -115,7 +115,7 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 
 	stateTree := NewStateTree(storage)
 	var currentRootHash *common.Hash
-	err = storage.Badger.View(func(txn *bdg.Txn) error {
+	err = storage.Database.Badger.View(func(txn *bdg.Txn) error {
 		currentRootHash, err = stateTree.Root()
 		if err != nil {
 			return err
@@ -224,7 +224,7 @@ func (s *StateTree) getLeafOrEmpty(stateID uint32) (*models.StateLeaf, error) {
 
 func (s *StateTree) getLeafByPubKeyIDAndTokenID(pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
 	leaves := make([]models.FlatStateLeaf, 0, 1)
-	err := s.storageBase.Badger.Find(
+	err := s.storageBase.Database.Badger.Find(
 		&leaves,
 		bh.Where("TokenID").Eq(tokenID).
 			And("PubKeyID").Eq(pubKeyID).Index("PubKeyID"),
