@@ -69,7 +69,7 @@ func setupCloseHandler(cmd *commander.Commander) {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		log.Println("\nStopping commander gracefully...")
+		log.Warning("Stopping commander gracefully...")
 		err := cmd.Stop()
 		if err != nil {
 			log.Printf("Error while stopping: %+v", err)
