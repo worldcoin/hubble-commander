@@ -49,8 +49,13 @@ type DisputableSignatureError struct {
 	CommitmentIndex int
 }
 
-func NewDisputableSignatureError(reason error, commitmentIndex int) *DisputableSignatureError {
-	return &DisputableSignatureError{Reason: reason.Error(), CommitmentIndex: commitmentIndex}
+func NewDisputableSignatureError(reason string) *DisputableSignatureError {
+	return &DisputableSignatureError{Reason: reason}
+}
+
+func (e *DisputableSignatureError) WithCommitmentIndex(index int) *DisputableSignatureError {
+	e.CommitmentIndex = index
+	return e
 }
 
 func (e DisputableSignatureError) Error() string {

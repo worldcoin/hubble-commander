@@ -59,7 +59,7 @@ func verifyCommitmentSignature(
 ) error {
 	sig, err := bls.NewSignatureFromBytes(signature.Bytes(), *domain)
 	if err != nil {
-		return err
+		return NewDisputableSignatureError(err.Error())
 	}
 	aggregatedSignature := bls.AggregatedSignature{Signature: sig}
 	isValid, err := aggregatedSignature.Verify(messages, publicKeys)

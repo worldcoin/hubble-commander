@@ -30,6 +30,7 @@ type SyncTestSuite struct {
 	transactionExecutor *TransactionExecutor
 	transfer            models.Transfer
 	wallets             []bls.Wallet
+	domain              *bls.Domain
 }
 
 func (s *SyncTestSuite) SetupSuite() {
@@ -55,9 +56,9 @@ func (s *SyncTestSuite) SetupTest() {
 		DevMode:                false,
 	}
 
-	domain, err := s.client.GetDomain()
+	s.domain, err = s.client.GetDomain()
 	s.NoError(err)
-	s.wallets = generateWallets(s.Assertions, domain, 2)
+	s.wallets = generateWallets(s.Assertions, s.domain, 2)
 	s.setupDB()
 }
 
@@ -341,7 +342,8 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidTransferSignature() {
 	var disputableErr *DisputableSignatureError
 	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
 	s.ErrorAs(err, &disputableErr)
-	s.Equal(ErrInvalidSignature.Error(), disputableErr.Reason)
+	s.Equal(ErrInvalidSignature.Reason, disputableErr.Reason)
+	s.Equal(0, disputableErr.CommitmentIndex)
 }
 
 func (s *SyncTestSuite) TestSyncBatch_InvalidCreate2TransferSignature() {
@@ -360,7 +362,31 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidCreate2TransferSignature() {
 	var disputableErr *DisputableSignatureError
 	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
 	s.ErrorAs(err, &disputableErr)
-	s.Equal(ErrInvalidSignature.Error(), disputableErr.Reason)
+	s.Equal(ErrInvalidSignature.Reason, disputableErr.Reason)
+	s.Equal(0, disputableErr.CommitmentIndex)
+}
+
+func (s *SyncTestSuite) TestSyncBatch_NotValidBLSSignature() {
+	tx := testutils.MakeTransfer(0, 1, 0, 400)
+	s.setTransferHash(&tx)
+
+	pendingBatch, commitments := createTransferBatch(s.Assertions, s.transactionExecutor, &tx, s.domain)
+	commitments[0].CombinedSignature = models.Signature{1, 2, 3}
+
+	err := s.transactionExecutor.SubmitBatch(pendingBatch, commitments)
+	s.NoError(err)
+	s.client.Commit()
+
+	s.recreateDatabase()
+
+	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	var disputableErr *DisputableSignatureError
+	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
+	s.ErrorAs(err, &disputableErr)
+	s.Equal(0, disputableErr.CommitmentIndex)
 }
 
 func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
