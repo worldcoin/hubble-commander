@@ -8,7 +8,7 @@ import (
 
 func (s *StateTree) upsertStateLeaf(leaf *models.StateLeaf) error {
 	flatLeaf := models.MakeFlatStateLeaf(leaf)
-	return s.storageBase.Database.Badger.Upsert(leaf.StateID, flatLeaf)
+	return s.database.Badger.Upsert(leaf.StateID, flatLeaf)
 }
 
 func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) (userStates []models.UserStateWithID, err error) {
