@@ -155,3 +155,27 @@ func (t *TransactionExecutor) receiverPublicKeyProof(pubKeyID uint32) (*models.R
 		Witness:       witness,
 	}, nil
 }
+
+func (t *TransactionExecutor) fillSignatureDisputeError(
+	dsErr *DisputableSignatureError,
+	batch *eth.DecodedBatch,
+	commitmentIndex int,
+) error {
+	txs, _, err := encoder.DeserializeCreate2Transfers(batch.Commitments[commitmentIndex].Transactions)
+	if err != nil {
+		return err
+	}
+	proofs := make([]models.StateMerkleProof, 0, len(txs))
+
+	for i := range txs {
+		stateProof, err := t.userStateProof(txs[i].FromStateID)
+		if err != nil {
+			return err
+		}
+		proofs = append(proofs, *stateProof)
+	}
+
+	dsErr.Proofs = proofs
+	dsErr.CommitmentIndex = commitmentIndex
+	return dsErr
+}

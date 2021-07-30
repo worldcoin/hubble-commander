@@ -47,6 +47,7 @@ func NewDisputableTransitionError(err DisputableTransferError, commitmentIndex i
 type DisputableSignatureError struct {
 	Reason          string
 	CommitmentIndex int
+	Proofs          []models.StateMerkleProof
 }
 
 func NewDisputableSignatureError(reason string) *DisputableSignatureError {
