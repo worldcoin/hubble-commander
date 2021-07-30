@@ -35,7 +35,7 @@ func NewTransactionExecutor(
 		storage: &st.Storage{
 			StorageBase: txStorage.StorageBase,
 			StateTree:   st.NewStateTree(txStorage.Database),
-			AccountTree: st.NewAccountTree(txStorage.StorageBase),
+			AccountTree: st.NewAccountTree(txStorage.Database),
 		},
 		tx:     tx,
 		client: client,
