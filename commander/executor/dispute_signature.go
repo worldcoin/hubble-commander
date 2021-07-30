@@ -9,20 +9,28 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (t *TransactionExecutor) DisputeSignature(batch *eth.DecodedBatch, commitmentIndex int) error {
+func (t *TransactionExecutor) DisputeSignature(
+	batch *eth.DecodedBatch,
+	commitmentIndex int,
+	stateProofs []models.StateMerkleProof,
+) error {
 	switch batch.Type {
 	case txtype.Transfer:
-		return t.disputeTransferSignature(batch, commitmentIndex)
+		return t.disputeTransferSignature(batch, commitmentIndex, stateProofs)
 	case txtype.Create2Transfer:
-		return t.disputeCreate2TransferSignature(batch, commitmentIndex)
+		return t.disputeCreate2TransferSignature(batch, commitmentIndex, stateProofs)
 	case txtype.MassMigration:
 		return errors.New("unsupported batch type")
 	}
 	return nil
 }
 
-func (t *TransactionExecutor) disputeTransferSignature(batch *eth.DecodedBatch, commitmentIndex int) error {
-	proof, err := t.signatureProof(&batch.Commitments[commitmentIndex])
+func (t *TransactionExecutor) disputeTransferSignature(
+	batch *eth.DecodedBatch,
+	commitmentIndex int,
+	proofs []models.StateMerkleProof,
+) error {
+	proof, err := t.signatureProof(proofs)
 	if err != nil {
 		return err
 	}
@@ -35,7 +43,11 @@ func (t *TransactionExecutor) disputeTransferSignature(batch *eth.DecodedBatch, 
 	return t.client.DisputeSignatureTransfer(&batch.ID, targetCommitmentProof, proof)
 }
 
-func (t *TransactionExecutor) disputeCreate2TransferSignature(batch *eth.DecodedBatch, commitmentIndex int) error {
+func (t *TransactionExecutor) disputeCreate2TransferSignature(
+	batch *eth.DecodedBatch,
+	commitmentIndex int,
+	proofs []models.StateMerkleProof,
+) error {
 	proof, err := t.signatureProofWithReceiver(&batch.Commitments[commitmentIndex])
 	if err != nil {
 		return err
@@ -49,27 +61,17 @@ func (t *TransactionExecutor) disputeCreate2TransferSignature(batch *eth.Decoded
 	return t.client.DisputeSignatureCreate2Transfer(&batch.ID, targetCommitmentProof, proof)
 }
 
-func (t *TransactionExecutor) signatureProof(commitment *encoder.DecodedCommitment) (*models.SignatureProof, error) {
-	txs, err := encoder.DeserializeTransfers(commitment.Transactions)
-	if err != nil {
-		return nil, err
-	}
-
+func (t *TransactionExecutor) signatureProof(stateProofs []models.StateMerkleProof) (*models.SignatureProof, error) {
 	proof := &models.SignatureProof{
-		UserStates: make([]models.StateMerkleProof, 0, len(txs)),
-		PublicKeys: make([]models.PublicKeyProof, 0, len(txs)),
+		UserStates: stateProofs,
+		PublicKeys: make([]models.PublicKeyProof, 0, len(stateProofs)),
 	}
-	for i := range txs {
-		stateProof, err := t.userStateProof(txs[i].FromStateID)
-		if err != nil {
-			return nil, err
-		}
-		publicKeyProof, err := t.publicKeyProof(stateProof.UserState.PubKeyID)
-		if err != nil {
-			return nil, err
-		}
 
-		proof.UserStates = append(proof.UserStates, *stateProof)
+	for i := range stateProofs {
+		publicKeyProof, err := t.publicKeyProof(stateProofs[i].UserState.PubKeyID)
+		if err != nil {
+			return nil, err
+		}
 		proof.PublicKeys = append(proof.PublicKeys, *publicKeyProof)
 	}
 	return proof, nil
@@ -161,21 +163,42 @@ func (t *TransactionExecutor) fillSignatureDisputeError(
 	batch *eth.DecodedBatch,
 	commitmentIndex int,
 ) error {
-	txs, _, err := encoder.DeserializeCreate2Transfers(batch.Commitments[commitmentIndex].Transactions)
+	proofs, err := t.stateMerkleProofs(batch, commitmentIndex)
 	if err != nil {
 		return err
-	}
-	proofs := make([]models.StateMerkleProof, 0, len(txs))
-
-	for i := range txs {
-		stateProof, err := t.userStateProof(txs[i].FromStateID)
-		if err != nil {
-			return err
-		}
-		proofs = append(proofs, *stateProof)
 	}
 
 	dsErr.Proofs = proofs
 	dsErr.CommitmentIndex = commitmentIndex
 	return dsErr
+}
+
+func (t *TransactionExecutor) stateMerkleProofs(batch *eth.DecodedBatch, commitmentIndex int) ([]models.StateMerkleProof, error) {
+	txs, err := deserializeTransactions(batch.Type, batch.Commitments[commitmentIndex].Transactions)
+	if err != nil {
+		return nil, err
+	}
+
+	proofs := make([]models.StateMerkleProof, 0, txs.Len())
+	for i := 0; i < txs.Len(); i++ {
+		stateProof, err := t.userStateProof(txs.At(i).GetFromStateID())
+		if err != nil {
+			return nil, err
+		}
+		proofs = append(proofs, *stateProof)
+	}
+	return proofs, nil
+}
+
+func deserializeTransactions(transactionType txtype.TransactionType, transactions []byte) (models.GenericTransactionArray, error) {
+	switch transactionType {
+	case txtype.Transfer:
+		transfers, err := encoder.DeserializeTransfers(transactions)
+		return models.TransferArray(transfers), err
+	case txtype.Create2Transfer:
+		transfers, _, err := encoder.DeserializeCreate2Transfers(transactions)
+		return models.Create2TransferArray(transfers), err
+	default:
+		return nil, errors.New("unsupported batch type")
+	}
 }

@@ -115,28 +115,25 @@ func (s *DisputeSignatureTestSuite) TestSignatureProof() {
 		testutils.MakeTransfer(0, 1, 1, 75),
 	}
 
-	expectedUserStates := make([]models.UserState, 0, len(transfers))
+	stateProofs := make([]models.StateMerkleProof, 0, len(transfers))
 	expectedPublicKeys := make([]models.PublicKey, 0, len(transfers))
 	for i := range transfers {
-		leaf, err := s.storage.StateTree.Leaf(transfers[i].FromStateID)
+		stateProof, err := s.transactionExecutor.userStateProof(transfers[i].FromStateID)
 		s.NoError(err)
-		expectedUserStates = append(expectedUserStates, leaf.UserState)
+		stateProofs = append(stateProofs, *stateProof)
 
-		account, err := s.storage.AccountTree.Leaf(leaf.PubKeyID)
+		account, err := s.storage.AccountTree.Leaf(stateProof.UserState.PubKeyID)
 		s.NoError(err)
 		expectedPublicKeys = append(expectedPublicKeys, account.PublicKey)
 	}
 
-	serializedTxs, err := encoder.SerializeTransfers(transfers)
-	s.NoError(err)
-
-	signatureProof, err := s.transactionExecutor.signatureProof(&encoder.DecodedCommitment{Transactions: serializedTxs})
+	signatureProof, err := s.transactionExecutor.signatureProof(stateProofs)
 	s.NoError(err)
 	s.Len(signatureProof.UserStates, 3)
 	s.Len(signatureProof.PublicKeys, 3)
 
 	for i := range signatureProof.UserStates {
-		s.Equal(expectedUserStates[i], *signatureProof.UserStates[i].UserState)
+		s.Equal(stateProofs[i].UserState, signatureProof.UserStates[i].UserState)
 		s.Equal(expectedPublicKeys[i], *signatureProof.PublicKeys[i].PublicKey)
 	}
 }
@@ -202,7 +199,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_DisputesTransferBatchWi
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.transactionExecutor.DisputeSignature(&remoteBatches[0], 0)
+	err = s.disputeSignature(&remoteBatches[0], 0)
 	s.NoError(err)
 
 	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[0].ID)
@@ -228,7 +225,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_DisputesC2TBatchWithInv
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.transactionExecutor.DisputeSignature(&remoteBatches[0], 0)
+	err = s.disputeSignature(&remoteBatches[0], 0)
 	s.NoError(err)
 
 	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[0].ID)
@@ -246,7 +243,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Transfer_ValidBatch() {
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.transactionExecutor.DisputeSignature(&remoteBatches[0], 0)
+	err = s.disputeSignature(&remoteBatches[0], 0)
 	s.ErrorIs(err, eth.ErrWaitForRollbackTimeout)
 }
 
@@ -270,7 +267,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Create2Transfer_ValidBa
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.transactionExecutor.DisputeSignature(&remoteBatches[0], 0)
+	err = s.disputeSignature(&remoteBatches[0], 0)
 	s.ErrorIs(err, eth.ErrWaitForRollbackTimeout)
 }
 
@@ -284,6 +281,13 @@ func (s *DisputeSignatureTestSuite) setUserStatesAndAddAccounts() []bls.Wallet {
 		s.NoError(err)
 	}
 	return wallets
+}
+
+func (s *DisputeSignatureTestSuite) disputeSignature(batch *eth.DecodedBatch, commitmentIndex int) error {
+	proofs, err := s.transactionExecutor.stateMerkleProofs(batch, commitmentIndex)
+	s.NoError(err)
+
+	return s.transactionExecutor.DisputeSignature(batch, commitmentIndex, proofs)
 }
 
 func TestDisputeSignatureTestSuite(t *testing.T) {
