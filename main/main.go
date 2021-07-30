@@ -45,14 +45,9 @@ func getConfig() *config.Config {
 
 func configureLogger(cfg *config.Config) {
 	if cfg.Log.Format == "json" {
-		// Log as JSON instead of the default ASCII formatter.
 		log.SetFormatter(&log.JSONFormatter{})
 	}
-
-	// Output to stdout instead of the default stderr
 	log.SetOutput(os.Stdout)
-
-	// Only log the warning severity or above.
 	log.SetLevel(cfg.Log.Level)
 }
 
