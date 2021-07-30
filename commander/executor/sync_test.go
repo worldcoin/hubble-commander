@@ -219,6 +219,7 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyTransfersInCommitment() {
 	var disputableErr *DisputableError
 	err = s.transactionExecutor.SyncBatch(&remoteBatches[1])
 	s.ErrorAs(err, &disputableErr)
+	s.Equal(Transition, disputableErr.Type)
 	s.Equal(ErrTooManyTx.Reason, disputableErr.Reason)
 
 	_, err = s.storage.GetBatch(remoteBatches[0].ID)
@@ -248,6 +249,7 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyCreate2TransfersInCommitment() {
 	var disputableErr *DisputableError
 	err = s.transactionExecutor.SyncBatch(&remoteBatches[1])
 	s.ErrorAs(err, &disputableErr)
+	s.Equal(Transition, disputableErr.Type)
 	s.Equal(ErrTooManyTx.Reason, disputableErr.Reason)
 
 	_, err = s.storage.GetBatch(remoteBatches[0].ID)
@@ -283,6 +285,7 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidTransferCommitmentStateRoot() {
 	var disputableErr *DisputableError
 	err = s.transactionExecutor.SyncBatch(&remoteBatches[1])
 	s.ErrorAs(err, &disputableErr)
+	s.Equal(Transition, disputableErr.Type)
 	s.Equal(ErrInvalidCommitmentStateRoot.Error(), disputableErr.Reason)
 
 	_, err = s.storage.GetBatch(remoteBatches[0].ID)
@@ -318,6 +321,7 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidCreate2TransferCommitmentStateRoot(
 	var disputableErr *DisputableError
 	err = s.transactionExecutor.SyncBatch(&remoteBatches[1])
 	s.ErrorAs(err, &disputableErr)
+	s.Equal(Transition, disputableErr.Type)
 	s.Equal(ErrInvalidCommitmentStateRoot.Error(), disputableErr.Reason)
 
 	_, err = s.storage.GetBatch(remoteBatches[0].ID)
@@ -342,6 +346,7 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidTransferSignature() {
 	var disputableErr *DisputableError
 	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
 	s.ErrorAs(err, &disputableErr)
+	s.Equal(Signature, disputableErr.Type)
 	s.Equal(InvalidSignature, disputableErr.Reason)
 	s.Equal(0, disputableErr.CommitmentIndex)
 }
@@ -362,6 +367,7 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidCreate2TransferSignature() {
 	var disputableErr *DisputableError
 	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
 	s.ErrorAs(err, &disputableErr)
+	s.Equal(Signature, disputableErr.Type)
 	s.Equal(InvalidSignature, disputableErr.Reason)
 	s.Equal(0, disputableErr.CommitmentIndex)
 }
@@ -386,6 +392,7 @@ func (s *SyncTestSuite) TestSyncBatch_NotValidBLSSignature() {
 	var disputableErr *DisputableError
 	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
 	s.ErrorAs(err, &disputableErr)
+	s.Equal(Signature, disputableErr.Type)
 	s.Equal(0, disputableErr.CommitmentIndex)
 }
 

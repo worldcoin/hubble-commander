@@ -133,6 +133,7 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_InvalidSignature(
 
 	var disputableErr *DisputableError
 	s.ErrorAs(err, &disputableErr)
+	s.Equal(Signature, disputableErr.Type)
 	s.Equal(InvalidSignature, disputableErr.Reason)
 }
 

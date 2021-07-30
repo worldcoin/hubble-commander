@@ -206,6 +206,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_Invali
 
 	var disputableErr *DisputableError
 	s.ErrorAs(err, &disputableErr)
+	s.Equal(Transition, disputableErr.Type)
 	s.Len(disputableErr.Proofs, 6)
 }
 

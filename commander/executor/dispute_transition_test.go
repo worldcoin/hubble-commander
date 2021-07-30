@@ -411,6 +411,7 @@ func (s *DisputeTransitionTestSuite) getTransferStateMerkleProofs(txs [][]models
 		if err != nil {
 			var disputableErr *DisputableError
 			s.ErrorAs(err, &disputableErr)
+			s.Equal(Transition, disputableErr.Type)
 			s.Len(disputableErr.Proofs, len(txs[i])*2)
 			return disputableErr.Proofs
 		}
@@ -438,6 +439,7 @@ func (s *DisputeTransitionTestSuite) getC2TStateMerkleProofs(
 		if err != nil {
 			var disputableErr *DisputableError
 			s.ErrorAs(err, &disputableErr)
+			s.Equal(Transition, disputableErr.Type)
 			s.Len(disputableErr.Proofs, len(txs[i])*2)
 			return disputableErr.Proofs
 		}
