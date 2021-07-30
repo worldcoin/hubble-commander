@@ -213,7 +213,7 @@ func (s *NewBlockLoopTestSuite) runInTransaction(handler func(*st.StorageBase, *
 
 	storage := &st.Storage{
 		StorageBase: txStorage,
-		StateTree:   st.NewStateTree(txStorage),
+		StateTree:   st.NewStateTree(txStorage.Database),
 		AccountTree: st.NewAccountTree(txStorage),
 	}
 	txExecutor := executor.NewTestTransactionExecutor(storage, s.testClient.Client, s.cfg.Rollup, context.Background())

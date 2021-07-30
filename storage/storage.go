@@ -37,7 +37,7 @@ func NewConfiguredStorage(cfg *config.Config) (storage *Storage, err error) {
 
 	return &Storage{
 		StorageBase: storageBase,
-		StateTree:   NewStateTree(storageBase),
+		StateTree:   NewStateTree(database),
 		AccountTree: NewAccountTree(storageBase),
 	}, nil
 }
@@ -53,7 +53,7 @@ func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, 
 
 	txStorage := &Storage{
 		StorageBase: &txStorageBase,
-		StateTree:   NewStateTree(&txStorageBase),
+		StateTree:   NewStateTree(txDatabase),
 		AccountTree: NewAccountTree(&txStorageBase),
 	}
 

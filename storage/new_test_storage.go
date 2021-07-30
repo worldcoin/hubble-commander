@@ -67,7 +67,7 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 	return &TestStorage{
 		Storage: &Storage{
 			StorageBase: storageBase,
-			StateTree:   NewStateTree(storageBase),
+			StateTree:   NewStateTree(storageBase.Database),
 			AccountTree: NewAccountTree(storageBase),
 		},
 		Teardown: toTeardownFunc(teardown),
@@ -109,7 +109,7 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 	return &TestStorage{
 		Storage: &Storage{
 			StorageBase: &storageBase,
-			StateTree:   NewStateTree(&storageBase),
+			StateTree:   NewStateTree(storageBase.Database),
 			AccountTree: NewAccountTree(&storageBase),
 		},
 		Teardown: toTeardownFunc(teardown),
