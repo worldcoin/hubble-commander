@@ -60,6 +60,21 @@ func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, 
 	return txController, txStorage, nil
 }
 
+// TODO-DB move to different file
+// TODO-DB figure out how to make this solution more sustainable. Right now because of this
+// 		   there are two BeginTransaction methods available on Storage
+func (s *StorageBase) BeginTransaction(opts TxOptions) (*db.TxController, *StorageBase, error) {
+	txController, txDatabase, err := s.Database.beginTransaction(opts)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	txStorageBase := *s
+	txStorageBase.Database = txDatabase
+
+	return txController, &txStorageBase, nil
+}
+
 func (s *Storage) Close() error {
 	return s.Database.Close()
 }
