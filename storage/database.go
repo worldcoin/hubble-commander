@@ -54,7 +54,7 @@ func NewDatabase(cfg *config.Config) (*Database, error) {
 	}
 
 	if cfg.Bootstrap.Prune {
-		err = database.Prune(migrator)
+		err = database.prune(migrator)
 		if err != nil {
 			return nil, err
 		}
@@ -69,7 +69,7 @@ func NewDatabase(cfg *config.Config) (*Database, error) {
 	return database, nil
 }
 
-func (s *Database) BeginTransaction(opts TxOptions) (*db.TxController, *Database, error) {
+func (s *Database) beginTransaction(opts TxOptions) (*db.TxController, *Database, error) {
 	var txController *db.TxController
 	storage := *s
 
@@ -104,7 +104,7 @@ func (s *Database) Close() error {
 	return s.Badger.Close()
 }
 
-func (s *Database) Prune(migrator *migrate.Migrate) error {
+func (s *Database) prune(migrator *migrate.Migrate) error {
 	err := migrator.Down()
 	if err != nil && err != migrate.ErrNoChange {
 		return err
