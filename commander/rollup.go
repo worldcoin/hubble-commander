@@ -106,5 +106,5 @@ func logLatestCommitment(latestCommitment *models.Commitment) {
 	if latestCommitment.IncludedInBatch != nil {
 		fields["latestBatchID"] = latestCommitment.IncludedInBatch.String()
 	}
-	log.WithFields(fields).Debug("rollupLoop: Sanity check on state tree root in failed")
+	log.WithFields(fields).Error("rollupLoop: Sanity check on state tree root failed")
 }
