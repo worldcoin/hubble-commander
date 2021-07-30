@@ -24,10 +24,11 @@ import (
 )
 
 type Commander struct {
-	cfg            *config.Config
-	workersContext context.Context
-	stopWorkers    context.CancelFunc
-	workers        sync.WaitGroup
+	cfg                 *config.Config
+	workersContext      context.Context
+	stopWorkers         context.CancelFunc
+	workers             sync.WaitGroup
+	releaseStartAndWait context.CancelFunc
 
 	rollupLoopRunning bool
 	stateMutex        sync.Mutex
@@ -39,7 +40,10 @@ type Commander struct {
 }
 
 func NewCommander(cfg *config.Config) *Commander {
-	return &Commander{cfg: cfg}
+	return &Commander{
+		cfg:                 cfg,
+		releaseStartAndWait: func() {}, // noop
+	}
 }
 
 func (c *Commander) IsRunning() bool {
@@ -106,7 +110,10 @@ func (c *Commander) StartAndWait() error {
 	if err := c.Start(); err != nil {
 		return err
 	}
-	c.workers.Wait()
+	var stopContext context.Context
+	stopContext, c.releaseStartAndWait = context.WithCancel(context.Background())
+
+	<-stopContext.Done()
 	return nil
 }
 
@@ -126,6 +133,7 @@ func (c *Commander) Stop() error {
 
 	log.Warningln("Commander stopped.")
 
+	c.releaseStartAndWait()
 	c.resetCommander()
 	return nil
 }
