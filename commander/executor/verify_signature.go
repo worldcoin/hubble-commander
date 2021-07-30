@@ -78,7 +78,7 @@ func (t *TransactionExecutor) verifyCommitmentSignature(
 }
 
 func (t *TransactionExecutor) createDisputableSignatureError(reason string, transfers models.GenericTransactionArray) error {
-	proofs, proofErr := t.genericStateMerkleProofs(transfers)
+	proofs, proofErr := t.stateMerkleProofs(transfers)
 	if proofErr != nil {
 		return proofErr
 	}

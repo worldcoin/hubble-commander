@@ -16,7 +16,6 @@ const InvalidSignature = "invalid commitment signature"
 
 var (
 	ErrBatchSubmissionFailed = errors.New("previous submit batch transaction failed")
-	ErrInvalidSignature      = NewDisputableSignatureError("invalid commitment signature")
 )
 
 func (t *TransactionExecutor) SyncBatch(remoteBatch *eth.DecodedBatch) error {
@@ -135,7 +134,7 @@ func (t *TransactionExecutor) syncCommitments(batch *eth.DecodedBatch) error {
 
 		var dsError *DisputableSignatureError
 		if errors.As(err, &dsError) {
-			return t.fillSignatureDisputeError(dsError, batch, i)
+			return dsError.WithCommitmentIndex(i)
 		}
 
 		var disputableErr *DisputableTransferError

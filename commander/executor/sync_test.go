@@ -342,7 +342,7 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidTransferSignature() {
 	var disputableErr *DisputableSignatureError
 	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
 	s.ErrorAs(err, &disputableErr)
-	s.Equal(ErrInvalidSignature.Reason, disputableErr.Reason)
+	s.Equal(InvalidSignature, disputableErr.Reason)
 	s.Equal(0, disputableErr.CommitmentIndex)
 }
 
@@ -362,7 +362,7 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidCreate2TransferSignature() {
 	var disputableErr *DisputableSignatureError
 	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
 	s.ErrorAs(err, &disputableErr)
-	s.Equal(ErrInvalidSignature.Reason, disputableErr.Reason)
+	s.Equal(InvalidSignature, disputableErr.Reason)
 	s.Equal(0, disputableErr.CommitmentIndex)
 }
 

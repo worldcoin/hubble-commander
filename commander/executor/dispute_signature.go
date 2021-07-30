@@ -151,41 +151,7 @@ func (t *TransactionExecutor) receiverPublicKeyProof(pubKeyID uint32) (*models.R
 	}, nil
 }
 
-func (t *TransactionExecutor) fillSignatureDisputeError(
-	dsErr *DisputableSignatureError,
-	batch *eth.DecodedBatch,
-	commitmentIndex int,
-) error {
-	proofs, err := t.stateMerkleProofs(batch, commitmentIndex)
-	if err != nil {
-		return err
-	}
-
-	dsErr.Proofs = proofs
-	dsErr.CommitmentIndex = commitmentIndex
-	return dsErr
-}
-
-func (t *TransactionExecutor) stateMerkleProofs(batch *eth.DecodedBatch, commitmentIndex int) ([]models.StateMerkleProof, error) {
-	txs, err := deserializeTransactions(batch.Type, batch.Commitments[commitmentIndex].Transactions)
-	if err != nil {
-		return nil, err
-	}
-
-	proofs := make([]models.StateMerkleProof, 0, txs.Len())
-	for i := 0; i < txs.Len(); i++ {
-		stateProof, err := t.userStateProof(txs.At(i).GetFromStateID())
-		if err != nil {
-			return nil, err
-		}
-		proofs = append(proofs, *stateProof)
-	}
-	return proofs, nil
-}
-
-func (t *TransactionExecutor) genericStateMerkleProofs(
-	transfers models.GenericTransactionArray,
-) ([]models.StateMerkleProof, error) {
+func (t *TransactionExecutor) stateMerkleProofs(transfers models.GenericTransactionArray) ([]models.StateMerkleProof, error) {
 	proofs := make([]models.StateMerkleProof, 0, transfers.Len())
 	for i := 0; i < transfers.Len(); i++ {
 		stateProof, err := t.userStateProof(transfers.At(i).GetFromStateID())
@@ -195,17 +161,4 @@ func (t *TransactionExecutor) genericStateMerkleProofs(
 		proofs = append(proofs, *stateProof)
 	}
 	return proofs, nil
-}
-
-func deserializeTransactions(transactionType txtype.TransactionType, transactions []byte) (models.GenericTransactionArray, error) {
-	switch transactionType {
-	case txtype.Transfer:
-		transfers, err := encoder.DeserializeTransfers(transactions)
-		return models.TransferArray(transfers), err
-	case txtype.Create2Transfer:
-		transfers, _, err := encoder.DeserializeCreate2Transfers(transactions)
-		return models.Create2TransferArray(transfers), err
-	default:
-		return nil, errors.New("unsupported batch type")
-	}
 }
