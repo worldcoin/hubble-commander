@@ -28,9 +28,9 @@ func (t *TransactionExecutor) DisputeSignature(
 func (t *TransactionExecutor) disputeTransferSignature(
 	batch *eth.DecodedBatch,
 	commitmentIndex int,
-	proofs []models.StateMerkleProof,
+	stateProofs []models.StateMerkleProof,
 ) error {
-	proof, err := t.signatureProof(proofs)
+	proof, err := t.signatureProof(stateProofs)
 	if err != nil {
 		return err
 	}
@@ -46,9 +46,9 @@ func (t *TransactionExecutor) disputeTransferSignature(
 func (t *TransactionExecutor) disputeCreate2TransferSignature(
 	batch *eth.DecodedBatch,
 	commitmentIndex int,
-	proofs []models.StateMerkleProof,
+	stateProofs []models.StateMerkleProof,
 ) error {
-	proof, err := t.signatureProofWithReceiver(&batch.Commitments[commitmentIndex])
+	proof, err := t.signatureProofWithReceiver(&batch.Commitments[commitmentIndex], stateProofs)
 	if err != nil {
 		return err
 	}
@@ -79,23 +79,17 @@ func (t *TransactionExecutor) signatureProof(stateProofs []models.StateMerklePro
 
 func (t *TransactionExecutor) signatureProofWithReceiver(
 	commitment *encoder.DecodedCommitment,
+	stateProofs []models.StateMerkleProof,
 ) (*models.SignatureProofWithReceiver, error) {
-	txs, pubKeyIDs, err := encoder.DeserializeCreate2Transfers(commitment.Transactions)
-	if err != nil {
-		return nil, err
-	}
+	pubKeyIDs := encoder.DeserializeCreate2TransferPubKeyIDs(commitment.Transactions)
 
 	proof := &models.SignatureProofWithReceiver{
-		UserStates:         make([]models.StateMerkleProof, 0, len(txs)),
-		SenderPublicKeys:   make([]models.PublicKeyProof, 0, len(txs)),
-		ReceiverPublicKeys: make([]models.ReceiverPublicKeyProof, 0, len(txs)),
+		UserStates:         stateProofs,
+		SenderPublicKeys:   make([]models.PublicKeyProof, 0, len(stateProofs)),
+		ReceiverPublicKeys: make([]models.ReceiverPublicKeyProof, 0, len(stateProofs)),
 	}
-	for i := range txs {
-		stateProof, err := t.userStateProof(txs[i].FromStateID)
-		if err != nil {
-			return nil, err
-		}
-		publicKeyProof, err := t.publicKeyProof(stateProof.UserState.PubKeyID)
+	for i := range stateProofs {
+		publicKeyProof, err := t.publicKeyProof(stateProofs[i].UserState.PubKeyID)
 		if err != nil {
 			return nil, err
 		}
@@ -104,7 +98,6 @@ func (t *TransactionExecutor) signatureProofWithReceiver(
 			return nil, err
 		}
 
-		proof.UserStates = append(proof.UserStates, *stateProof)
 		proof.SenderPublicKeys = append(proof.SenderPublicKeys, *publicKeyProof)
 		proof.ReceiverPublicKeys = append(proof.ReceiverPublicKeys, *receiverPublicKeyProof)
 	}

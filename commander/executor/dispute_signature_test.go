@@ -154,15 +154,15 @@ func (s *DisputeSignatureTestSuite) TestSignatureProofWithReceiver() {
 	}
 	pubKeyIDs := []uint32{3, 4, 5}
 
-	expectedUserStates := make([]models.UserState, 0, len(transfers))
+	stateProofs := make([]models.StateMerkleProof, 0, len(transfers))
 	senderPublicKeys := make([]models.PublicKey, 0, len(transfers))
 	receiverPublicKeys := make([]common.Hash, 0, len(transfers))
 	for i := range transfers {
-		leaf, err := s.storage.StateTree.Leaf(transfers[i].FromStateID)
+		stateProof, err := s.transactionExecutor.userStateProof(transfers[i].FromStateID)
 		s.NoError(err)
-		expectedUserStates = append(expectedUserStates, leaf.UserState)
+		stateProofs = append(stateProofs, *stateProof)
 
-		account, err := s.storage.AccountTree.Leaf(leaf.PubKeyID)
+		account, err := s.storage.AccountTree.Leaf(stateProof.UserState.PubKeyID)
 		s.NoError(err)
 		senderPublicKeys = append(senderPublicKeys, account.PublicKey)
 
@@ -174,14 +174,16 @@ func (s *DisputeSignatureTestSuite) TestSignatureProofWithReceiver() {
 	serializedTxs, err := encoder.SerializeCreate2Transfers(transfers, pubKeyIDs)
 	s.NoError(err)
 
-	signatureProof, err := s.transactionExecutor.signatureProofWithReceiver(&encoder.DecodedCommitment{Transactions: serializedTxs})
+	commitment := &encoder.DecodedCommitment{Transactions: serializedTxs}
+
+	signatureProof, err := s.transactionExecutor.signatureProofWithReceiver(commitment, stateProofs)
 	s.NoError(err)
 	s.Len(signatureProof.UserStates, 3)
 	s.Len(signatureProof.SenderPublicKeys, 3)
 	s.Len(signatureProof.ReceiverPublicKeys, 3)
 
 	for i := range signatureProof.UserStates {
-		s.Equal(expectedUserStates[i], *signatureProof.UserStates[i].UserState)
+		s.Equal(stateProofs[i].UserState, signatureProof.UserStates[i].UserState)
 		s.Equal(senderPublicKeys[i], *signatureProof.SenderPublicKeys[i].PublicKey)
 		s.Equal(receiverPublicKeys[i], signatureProof.ReceiverPublicKeys[i].PublicKeyHash)
 	}
