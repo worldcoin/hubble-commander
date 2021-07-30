@@ -2,6 +2,7 @@ package storage
 
 import (
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/db"
 )
 
 type Storage struct {
@@ -39,6 +40,24 @@ func NewConfiguredStorage(cfg *config.Config) (storage *Storage, err error) {
 		StateTree:   NewStateTree(storageBase),
 		AccountTree: NewAccountTree(storageBase),
 	}, nil
+}
+
+func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, error) {
+	txController, txDatabase, err := s.Database.beginTransaction(opts)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	txStorageBase := *s.StorageBase
+	txStorageBase.Database = txDatabase
+
+	txStorage := &Storage{
+		StorageBase: &txStorageBase,
+		StateTree:   NewStateTree(&txStorageBase),
+		AccountTree: NewAccountTree(&txStorageBase),
+	}
+
+	return txController, txStorage, nil
 }
 
 func (s *Storage) Close() error {
