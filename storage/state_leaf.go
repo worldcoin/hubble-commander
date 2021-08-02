@@ -20,7 +20,7 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) (userSta
 	pubKeyIDs := utils.ValueToInterfaceSlice(accounts, "PubKeyID")
 
 	leaves := make([]models.FlatStateLeaf, 0, 1)
-	err = s.Database.Badger.Find(
+	err = s.database.Badger.Find(
 		&leaves,
 		bh.Where("PubKeyID").In(pubKeyIDs...).Index("PubKeyID"),
 	)

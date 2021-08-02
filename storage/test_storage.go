@@ -62,7 +62,7 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 	}
 
 	storageBase := &StorageBase{
-		Database:            database,
+		database:            database,
 		feeReceiverStateIDs: make(map[string]uint32),
 	}
 
@@ -78,11 +78,11 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 
 // TODO make this a method on Database
 func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage, error) {
-	database := *s.Database
+	database := *s.database
 	teardown := make([]TeardownFunc, 0, 2)
 
-	if s.Database.Postgres != nil {
-		testPostgres := postgres.TestDB{DB: s.Database.Postgres}
+	if s.database.Postgres != nil {
+		testPostgres := postgres.TestDB{DB: s.database.Postgres}
 		clonedPostgres, err := testPostgres.Clone(currentConfig)
 		if err != nil {
 			return nil, err
@@ -91,8 +91,8 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 		teardown = append(teardown, clonedPostgres.Teardown)
 	}
 
-	if s.Database.Badger != nil {
-		testBadger := badger.TestDB{DB: s.Database.Badger}
+	if s.database.Badger != nil {
+		testBadger := badger.TestDB{DB: s.database.Badger}
 		clonedBadger, err := testBadger.Clone()
 		if err != nil {
 			return nil, err
@@ -102,7 +102,7 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 	}
 
 	storageBase := *s.StorageBase
-	storageBase.Database = &database
+	storageBase.database = &database
 
 	return &TestStorage{
 		Storage: &Storage{

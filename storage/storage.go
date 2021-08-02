@@ -12,7 +12,7 @@ type Storage struct {
 }
 
 type StorageBase struct {
-	Database            *Database         // TODO make this field private (a single test makes this harder)
+	database            *Database
 	feeReceiverStateIDs map[string]uint32 // token ID => state id
 	latestBlockNumber   uint32
 	syncedBlock         *uint64
@@ -31,7 +31,7 @@ func NewConfiguredStorage(cfg *config.Config) (*Storage, error) {
 	}
 
 	storageBase := &StorageBase{
-		Database:            database,
+		database:            database,
 		feeReceiverStateIDs: make(map[string]uint32),
 	}
 
@@ -43,13 +43,13 @@ func NewConfiguredStorage(cfg *config.Config) (*Storage, error) {
 }
 
 func (s *StorageBase) beginStorageBaseTransaction(opts TxOptions) (*db.TxController, *StorageBase, error) {
-	txController, txDatabase, err := s.Database.BeginTransaction(opts)
+	txController, txDatabase, err := s.database.BeginTransaction(opts)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	txStorageBase := *s
-	txStorageBase.Database = txDatabase
+	txStorageBase.database = txDatabase
 
 	return txController, &txStorageBase, nil
 }
@@ -62,13 +62,13 @@ func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, 
 
 	txStorage := &Storage{
 		StorageBase: txStorageBase,
-		StateTree:   NewStateTree(txStorageBase.Database),
-		AccountTree: NewAccountTree(txStorageBase.Database),
+		StateTree:   NewStateTree(txStorageBase.database),
+		AccountTree: NewAccountTree(txStorageBase.database),
 	}
 
 	return txController, txStorage, nil
 }
 
 func (s *Storage) Close() error {
-	return s.Database.Close()
+	return s.database.Close()
 }
