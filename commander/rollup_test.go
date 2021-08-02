@@ -26,7 +26,7 @@ func (s *RollupTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.stateTree = st.NewStoredMerkleTree("state", s.storage.Badger) // Must be the same state tree as in Storage object
+	s.stateTree = st.NewStoredMerkleTree("state", s.storage.Badger, st.StateTreeDepth) // Must be the same state tree as in Storage object
 }
 
 func (s *RollupTestSuite) TearDownTest() {

@@ -13,11 +13,13 @@ import (
 type StoredMerkleTreeTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage *TestStorage
+	storage   *TestStorage
+	treeDepth uint8
 }
 
 func (s *StoredMerkleTreeTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
+	s.treeDepth = 32
 }
 
 func (s *StoredMerkleTreeTestSuite) SetupTest() {
@@ -32,35 +34,35 @@ func (s *StoredMerkleTreeTestSuite) TearDownTest() {
 }
 
 func (s *StoredMerkleTreeTestSuite) TestRoot_InitialRoot() {
-	tree := NewStoredMerkleTree("state", s.storage.StorageBase.Badger, 32)
+	tree := NewStoredMerkleTree("state", s.storage.StorageBase.Badger, s.treeDepth)
 
 	root, err := tree.Root()
 	s.NoError(err)
-	s.Equal(merkletree.GetZeroHash(StateTreeDepth), *root)
+	s.Equal(merkletree.GetZeroHash(s.treeDepth), *root)
 }
 
 func (s *StoredMerkleTreeTestSuite) TestRoot_ChangesAfterSet() {
-	tree := NewStoredMerkleTree("state", s.storage.StorageBase.Badger, 32)
+	tree := NewStoredMerkleTree("state", s.storage.StorageBase.Badger, s.treeDepth)
 
 	newRoot, _, err := tree.SetNode(&models.MerklePath{
 		Path:  0,
-		Depth: StateTreeDepth,
+		Depth: s.treeDepth,
 	}, utils.RandomHash())
 	s.NoError(err)
 
 	root, err := tree.Root()
 	s.NoError(err)
-	s.NotEqual(merkletree.GetZeroHash(StateTreeDepth), *root)
+	s.NotEqual(merkletree.GetZeroHash(s.treeDepth), *root)
 	s.Equal(newRoot, root)
 }
 
 func (s *StoredMerkleTreeTestSuite) TestSetSingleNode_VerifiesDepth() {
-	tree := NewStoredMerkleTree("state", s.storage.StorageBase.Badger, 32)
+	tree := NewStoredMerkleTree("state", s.storage.StorageBase.Badger, s.treeDepth)
 
 	err := tree.SetSingleNode(&models.MerkleTreeNode{
 		MerklePath: models.MerklePath{
 			Path:  0,
-			Depth: 32,
+			Depth: s.treeDepth,
 		},
 		DataHash: utils.RandomHash(),
 	})
@@ -77,11 +79,11 @@ func (s *StoredMerkleTreeTestSuite) TestSetSingleNode_VerifiesDepth() {
 }
 
 func (s *StoredMerkleTreeTestSuite) TestSetNode_VerifiesDepth() {
-	tree := NewStoredMerkleTree("state", s.storage.StorageBase.Badger, 32)
+	tree := NewStoredMerkleTree("state", s.storage.StorageBase.Badger, s.treeDepth)
 
 	_, _, err := tree.SetNode(&models.MerklePath{
 		Path:  0,
-		Depth: 32,
+		Depth: s.treeDepth,
 	}, utils.RandomHash())
 	s.NoError(err)
 
@@ -93,33 +95,33 @@ func (s *StoredMerkleTreeTestSuite) TestSetNode_VerifiesDepth() {
 }
 
 func (s *StoredMerkleTreeTestSuite) TestTwoTreesWithDifferentNamespaces() {
-	stateTree := NewStoredMerkleTree("state", s.storage.StorageBase.Badger, 32)
-	accountTree := NewStoredMerkleTree("account", s.storage.StorageBase.Badger, 32)
+	stateTree := NewStoredMerkleTree("state", s.storage.StorageBase.Badger, s.treeDepth)
+	accountTree := NewStoredMerkleTree("account", s.storage.StorageBase.Badger, s.treeDepth)
 
 	hash1 := utils.RandomHash()
 	_, _, err := stateTree.SetNode(&models.MerklePath{
 		Path:  0,
-		Depth: StateTreeDepth,
+		Depth: s.treeDepth,
 	}, hash1)
 	s.NoError(err)
 
 	hash2 := utils.RandomHash()
 	_, _, err = accountTree.SetNode(&models.MerklePath{
 		Path:  0,
-		Depth: StateTreeDepth,
+		Depth: s.treeDepth,
 	}, hash2)
 	s.NoError(err)
 
 	node1, err := stateTree.Get(models.MerklePath{
 		Path:  0,
-		Depth: StateTreeDepth,
+		Depth: s.treeDepth,
 	})
 	s.NoError(err)
 	s.Equal(hash1, node1.DataHash)
 
 	node2, err := accountTree.Get(models.MerklePath{
 		Path:  0,
-		Depth: StateTreeDepth,
+		Depth: s.treeDepth,
 	})
 	s.NoError(err)
 	s.Equal(hash2, node2.DataHash)

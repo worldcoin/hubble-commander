@@ -129,7 +129,7 @@ func (s *StoredMerkleTree) GetWitness(path models.MerklePath) (models.Witness, e
 func (s *StoredMerkleTree) newZeroNode(path *models.MerklePath) *models.MerkleTreeNode {
 	return &models.MerkleTreeNode{
 		MerklePath: *path,
-		DataHash:   merkletree.GetZeroHash(uint(s.depth - path.Depth)),
+		DataHash:   merkletree.GetZeroHash(s.depth - path.Depth),
 	}
 }
 
