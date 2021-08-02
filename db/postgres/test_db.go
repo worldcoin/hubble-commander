@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/golang-migrate/migrate/v4"
 	"github.com/pkg/errors"
 )
 
@@ -20,12 +19,7 @@ func NewTestDB() (*TestDB, error) {
 		return nil, err
 	}
 
-	migrator, err := GetMigrator(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	err = migrator.Up()
+	err = migrateUp(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -37,27 +31,58 @@ func NewTestDB() (*TestDB, error) {
 
 	testDB := &TestDB{
 		DB:       dbInstance,
-		Teardown: newTeardown(dbInstance, migrator),
+		Teardown: newTeardown(dbInstance, cfg),
 	}
 
 	return testDB, err
 }
 
-func newTeardown(database *Database, migrator *migrate.Migrate) func() error {
+func newTeardown(database *Database, cfg *config.PostgresConfig) func() error {
 	return func() error {
-		err := migrator.Down()
+		err := migrateDown(cfg)
 		if err != nil {
 			return err
 		}
-		srcErr, dbErr := migrator.Close()
-		if srcErr != nil {
-			return srcErr
-		}
-		if dbErr != nil {
-			return dbErr
-		}
 		return database.Close()
 	}
+}
+
+func migrateUp(cfg *config.PostgresConfig) error {
+	migrator, err := GetMigrator(cfg)
+	if err != nil {
+		return err
+	}
+	err = migrator.Up()
+	if err != nil {
+		return err
+	}
+	srcErr, dbErr := migrator.Close()
+	if srcErr != nil {
+		return srcErr
+	}
+	if dbErr != nil {
+		return dbErr
+	}
+	return nil
+}
+
+func migrateDown(cfg *config.PostgresConfig) error {
+	migrator, err := GetMigrator(cfg)
+	if err != nil {
+		return err
+	}
+	err = migrator.Down()
+	if err != nil {
+		return err
+	}
+	srcErr, dbErr := migrator.Close()
+	if srcErr != nil {
+		return srcErr
+	}
+	if dbErr != nil {
+		return dbErr
+	}
+	return nil
 }
 
 func (d *TestDB) Clone(currentConfig *config.PostgresConfig) (testDB *TestDB, err error) {
@@ -68,17 +93,10 @@ func (d *TestDB) Clone(currentConfig *config.PostgresConfig) (testDB *TestDB, er
 
 	clonedConfig := *currentConfig
 	clonedConfig.Name = currentConfig.Name + clonedDBSuffix
-	migrator, err := GetMigrator(&clonedConfig)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	d.Teardown = newTeardown(d.DB, migrator)
 
 	return &TestDB{
-		DB: clonedDB,
-		Teardown: func() error {
-			return clonedDB.Close()
-		},
+		DB:       clonedDB,
+		Teardown: newTeardown(clonedDB, &clonedConfig),
 	}, nil
 }
 
@@ -103,5 +121,7 @@ func cloneDatabase(database DatabaseLike, cfg *config.PostgresConfig, clonedDBNa
 		return nil, errors.WithStack(err)
 	}
 
-	return NewDatabase(cfg)
+	clonedCfg := *cfg
+	clonedCfg.Name = clonedDBName
+	return NewDatabase(&clonedCfg)
 }
