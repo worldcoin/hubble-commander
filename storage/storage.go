@@ -42,7 +42,7 @@ func NewConfiguredStorage(cfg *config.Config) (*Storage, error) {
 	}, nil
 }
 
-func (s *StorageBase) BeginStorageBaseTransaction(opts TxOptions) (*db.TxController, *StorageBase, error) {
+func (s *StorageBase) beginStorageBaseTransaction(opts TxOptions) (*db.TxController, *StorageBase, error) {
 	txController, txDatabase, err := s.Database.BeginTransaction(opts)
 	if err != nil {
 		return nil, nil, err
@@ -55,7 +55,7 @@ func (s *StorageBase) BeginStorageBaseTransaction(opts TxOptions) (*db.TxControl
 }
 
 func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, error) {
-	txController, txStorageBase, err := s.BeginStorageBaseTransaction(opts)
+	txController, txStorageBase, err := s.StorageBase.beginStorageBaseTransaction(opts)
 	if err != nil {
 		return nil, nil, err
 	}
