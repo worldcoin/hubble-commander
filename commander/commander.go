@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"sync"
@@ -23,28 +24,30 @@ import (
 )
 
 type Commander struct {
-	cfg               *config.Config
-	workers           sync.WaitGroup
+	cfg                 *config.Config
+	workersContext      context.Context
+	stopWorkers         context.CancelFunc
+	workers             sync.WaitGroup
+	releaseStartAndWait context.CancelFunc
+
 	rollupLoopRunning bool
 	stateMutex        sync.Mutex
 
-	stopChannel chan bool
-	storage     *st.Storage
-	client      *eth.Client
-	apiServer   *http.Server
-	domain      *bls.Domain
+	storage   *st.Storage
+	client    *eth.Client
+	apiServer *http.Server
+	domain    *bls.Domain
 }
 
 func NewCommander(cfg *config.Config) *Commander {
 	return &Commander{
-		cfg:        cfg,
-		workers:    sync.WaitGroup{},
-		stateMutex: sync.Mutex{},
+		cfg:                 cfg,
+		releaseStartAndWait: func() {}, // noop
 	}
 }
 
 func (c *Commander) IsRunning() bool {
-	return c.stopChannel != nil
+	return c.workersContext != nil
 }
 
 func (c *Commander) Start() (err error) {
@@ -77,7 +80,8 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	stopChannel := make(chan bool)
+	c.workersContext, c.stopWorkers = context.WithCancel(context.Background())
+
 	c.startWorker(func() error {
 		err = c.apiServer.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
@@ -86,7 +90,6 @@ func (c *Commander) Start() (err error) {
 		return nil
 	})
 	c.startWorker(func() error { return c.newBlockLoop() })
-	c.stopChannel = stopChannel
 
 	log.Printf("Commander started and listening on port %s.\n", c.cfg.API.Port)
 
@@ -107,7 +110,10 @@ func (c *Commander) StartAndWait() error {
 	if err := c.Start(); err != nil {
 		return err
 	}
-	c.workers.Wait()
+	var stopContext context.Context
+	stopContext, c.releaseStartAndWait = context.WithCancel(context.Background())
+
+	<-stopContext.Done()
 	return nil
 }
 
@@ -115,26 +121,25 @@ func (c *Commander) Stop() error {
 	if !c.IsRunning() {
 		return nil
 	}
-	defer c.clearState()
-	close(c.stopChannel)
+
 	if err := c.apiServer.Close(); err != nil {
 		return err
 	}
+	c.stopWorkers()
 	c.workers.Wait()
-	err := c.storage.Close()
-	if err != nil {
+	if err := c.storage.Close(); err != nil {
 		return err
 	}
 
 	log.Warningln("Commander stopped.")
 
+	c.releaseStartAndWait()
+	c.resetCommander()
 	return nil
 }
 
-func (c *Commander) clearState() {
-	c.stopChannel = nil
-	c.storage = nil
-	c.apiServer = nil
+func (c *Commander) resetCommander() {
+	*c = *NewCommander(c.cfg)
 }
 
 func getChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, error) {
