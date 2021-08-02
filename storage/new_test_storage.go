@@ -40,7 +40,10 @@ func NewTestStorageWithoutPostgres() (*TestStorage, error) {
 }
 
 func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
-	storageBase := &StorageBase{Database: &Database{QB: getQueryBuilder()}, feeReceiverStateIDs: make(map[string]uint32)}
+	storageBase := &StorageBase{
+		Database:            &Database{QB: getQueryBuilder()},
+		feeReceiverStateIDs: make(map[string]uint32),
+	}
 	teardown := make([]TeardownFunc, 0, 2)
 
 	if cfg.Postgres {
@@ -76,12 +79,11 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 
 func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage, error) {
 	storageBase := *s.Storage.StorageBase
+	database := *s.Storage.Database
+	storageBase.Database = &database
+
 	teardown := make([]TeardownFunc, 0, 2)
 	initialTeardown := make([]TeardownFunc, 0, 2)
-
-	database := *s.Storage.Database
-
-	storageBase.Database = &database
 
 	if s.Database.Postgres != nil {
 		testPostgres := postgres.TestDB{DB: s.Database.Postgres}
