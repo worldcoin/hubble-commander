@@ -8,7 +8,7 @@ import (
 
 func (s *StateTree) upsertStateLeaf(leaf *models.StateLeaf) error {
 	flatLeaf := models.MakeFlatStateLeaf(leaf)
-	return s.storageBase.Badger.Upsert(leaf.StateID, flatLeaf)
+	return s.database.Badger.Upsert(leaf.StateID, flatLeaf)
 }
 
 func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) (userStates []models.UserStateWithID, err error) {
@@ -20,7 +20,7 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) (userSta
 	pubKeyIDs := utils.ValueToInterfaceSlice(accounts, "PubKeyID")
 
 	leaves := make([]models.FlatStateLeaf, 0, 1)
-	err = s.Badger.Find(
+	err = s.database.Badger.Find(
 		&leaves,
 		bh.Where("PubKeyID").In(pubKeyIDs...).Index("PubKeyID"),
 	)

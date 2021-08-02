@@ -25,6 +25,9 @@ func TestTestDB_Clone(t *testing.T) {
 
 	err = testDB.Teardown()
 	require.NoError(t, err)
+
+	err = clonedDB.Teardown()
+	require.NoError(t, err)
 }
 
 func checkBatch(t *testing.T, db *Database, expectedLength int) {

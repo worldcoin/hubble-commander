@@ -6,12 +6,12 @@ import (
 )
 
 func (s *StateTree) addStateUpdate(update *models.StateUpdate) error {
-	return s.storageBase.Badger.Insert(bh.NextSequence(), *update)
+	return s.database.Badger.Insert(bh.NextSequence(), *update)
 }
 
 func (s *StateTree) getStateUpdate(id uint64) (*models.StateUpdate, error) {
 	var stateUpdate models.StateUpdate
-	err := s.storageBase.Badger.Get(id, &stateUpdate)
+	err := s.database.Badger.Get(id, &stateUpdate)
 	if err == bh.ErrNotFound {
 		return nil, NewNotFoundError("state update")
 	}
@@ -22,5 +22,5 @@ func (s *StateTree) getStateUpdate(id uint64) (*models.StateUpdate, error) {
 }
 
 func (s *StateTree) deleteStateUpdate(id uint64) error {
-	return s.storageBase.Badger.Delete(id, models.StateUpdate{})
+	return s.database.Badger.Delete(id, models.StateUpdate{})
 }

@@ -16,8 +16,8 @@ var selectedCommitmentCols = []string{
 
 func (s *StorageBase) AddCommitment(commitment *models.Commitment) (*int32, error) {
 	res := make([]int32, 0, 1)
-	err := s.Postgres.Query(
-		s.QB.Insert("commitment").
+	err := s.database.Postgres.Query(
+		s.database.QB.Insert("commitment").
 			Values(
 				squirrel.Expr("DEFAULT"),
 				commitment.Type,
@@ -37,8 +37,8 @@ func (s *StorageBase) AddCommitment(commitment *models.Commitment) (*int32, erro
 
 func (s *StorageBase) GetCommitment(id int32) (*models.Commitment, error) {
 	res := make([]models.Commitment, 0, 1)
-	err := s.Postgres.Query(
-		s.QB.Select("*").
+	err := s.database.Postgres.Query(
+		s.database.QB.Select("*").
 			From("commitment").
 			Where(squirrel.Eq{"commitment_id": id}),
 	).Into(&res)
@@ -53,8 +53,8 @@ func (s *StorageBase) GetCommitment(id int32) (*models.Commitment, error) {
 
 func (s *StorageBase) GetLatestCommitment() (*models.Commitment, error) {
 	res := make([]models.Commitment, 0, 1)
-	err := s.Postgres.Query(
-		s.QB.Select("*").
+	err := s.database.Postgres.Query(
+		s.database.QB.Select("*").
 			From("commitment").
 			OrderBy("commitment_id DESC").
 			Limit(1),
@@ -69,8 +69,8 @@ func (s *StorageBase) GetLatestCommitment() (*models.Commitment, error) {
 }
 
 func (s *StorageBase) MarkCommitmentAsIncluded(commitmentID int32, batchID models.Uint256) error {
-	res, err := s.Postgres.Query(
-		s.QB.Update("commitment").
+	res, err := s.database.Postgres.Query(
+		s.database.QB.Update("commitment").
 			Where(squirrel.Eq{"commitment_id": commitmentID}).
 			Set("included_in_batch", batchID),
 	).Exec()
@@ -90,8 +90,8 @@ func (s *StorageBase) MarkCommitmentAsIncluded(commitmentID int32, batchID model
 
 func (s *Storage) GetCommitmentsByBatchID(batchID models.Uint256) ([]models.CommitmentWithTokenID, error) {
 	commitments := make([]models.CommitmentWithTokenID, 0, 32)
-	err := s.Postgres.Query(
-		s.QB.Select(selectedCommitmentCols...).
+	err := s.database.Postgres.Query(
+		s.database.QB.Select(selectedCommitmentCols...).
 			From("commitment").
 			Where(squirrel.Eq{"included_in_batch": batchID}),
 	).Into(&commitments)
@@ -114,8 +114,8 @@ func (s *Storage) GetCommitmentsByBatchID(batchID models.Uint256) ([]models.Comm
 }
 
 func (s *StorageBase) DeleteCommitmentsByBatchIDs(batchID ...models.Uint256) error {
-	res, err := s.Postgres.Query(
-		s.QB.Delete("commitment").
+	res, err := s.database.Postgres.Query(
+		s.database.QB.Delete("commitment").
 			Where(squirrel.Eq{"included_in_batch": batchID}),
 	).Exec()
 	if err != nil {
