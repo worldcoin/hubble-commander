@@ -46,7 +46,7 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 		}
 
 		select {
-		case <-c.stopChannel:
+		case <-c.workersContext.Done():
 			return ErrIncompleteBlockRangeSync
 		default:
 			continue

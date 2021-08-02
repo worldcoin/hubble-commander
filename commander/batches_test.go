@@ -55,7 +55,7 @@ func (s *BatchesTestSuite) SetupTest() {
 	s.cmd = NewCommander(s.cfg)
 	s.cmd.client = s.testClient.Client
 	s.cmd.storage = s.testStorage.Storage
-	s.cmd.stopChannel = make(chan bool)
+	s.cmd.workersContext, s.cmd.stopWorkers = context.WithCancel(context.Background())
 
 	s.transactionExecutor = executor.NewTestTransactionExecutor(
 		s.testStorage.Storage,

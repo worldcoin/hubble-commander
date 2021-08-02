@@ -60,7 +60,7 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	s.cmd = NewCommander(s.cfg)
 	s.cmd.client = s.testClient.Client
 	s.cmd.storage = s.testStorage.Storage
-	s.cmd.stopChannel = make(chan bool)
+	s.cmd.workersContext, s.cmd.stopWorkers = context.WithCancel(context.Background())
 
 	domain, err := s.testClient.GetDomain()
 	s.NoError(err)
@@ -283,7 +283,7 @@ func stopCommander(cmd *Commander) {
 	if !cmd.IsRunning() {
 		return
 	}
-	close(cmd.stopChannel)
+	cmd.stopWorkers()
 	cmd.workers.Wait()
 }
 

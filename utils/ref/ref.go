@@ -38,6 +38,10 @@ func String(s string) *string {
 	return &s
 }
 
+func Time(t time.Time) *time.Time {
+	return &t
+}
+
 func Duration(d time.Duration) *time.Duration {
 	return &d
 }
