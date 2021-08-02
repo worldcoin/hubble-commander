@@ -100,12 +100,12 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 		teardown = append(teardown, clonedBadger.Teardown)
 	}
 
-	storageBase := s.StorageBase
+	storageBase := *s.StorageBase
 	storageBase.Database = &database
 
 	return &TestStorage{
 		Storage: &Storage{
-			StorageBase: storageBase,
+			StorageBase: &storageBase,
 			StateTree:   NewStateTree(&database),
 			AccountTree: NewAccountTree(&database),
 		},
