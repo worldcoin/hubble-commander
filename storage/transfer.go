@@ -23,7 +23,7 @@ var (
 )
 
 func (s *StorageBase) AddTransfer(t *models.Transfer) (receiveTime *models.Timestamp, err error) {
-	tx, txStorage, err := s.BeginTransaction(TxOptions{Postgres: true})
+	tx, txStorage, err := s.BeginStorageBaseTransaction(TxOptions{Postgres: true})
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func (s *StorageBase) BatchAddTransfer(txs []models.Transfer) error {
 		return ErrNoRowsAffected
 	}
 
-	tx, txStorage, err := s.BeginTransaction(TxOptions{Postgres: true})
+	tx, txStorage, err := s.BeginStorageBaseTransaction(TxOptions{Postgres: true})
 	if err != nil {
 		return err
 	}

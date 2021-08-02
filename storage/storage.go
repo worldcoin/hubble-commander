@@ -24,7 +24,7 @@ type TxOptions struct {
 	ReadOnly bool
 }
 
-func NewConfiguredStorage(cfg *config.Config) (storage *Storage, err error) {
+func NewConfiguredStorage(cfg *config.Config) (*Storage, error) {
 	database, err := NewDatabase(cfg)
 	if err != nil {
 		return nil, err
@@ -42,28 +42,7 @@ func NewConfiguredStorage(cfg *config.Config) (storage *Storage, err error) {
 	}, nil
 }
 
-func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, error) {
-	txController, txDatabase, err := s.Database.beginTransaction(opts)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	txStorageBase := *s.StorageBase
-	txStorageBase.Database = txDatabase
-
-	txStorage := &Storage{
-		StorageBase: &txStorageBase,
-		StateTree:   NewStateTree(txDatabase),
-		AccountTree: NewAccountTree(txDatabase),
-	}
-
-	return txController, txStorage, nil
-}
-
-// TODO-DB move to different file
-// TODO-DB figure out how to make this solution more sustainable. Right now because of this
-// 		   there are two BeginTransaction methods available on Storage
-func (s *StorageBase) BeginTransaction(opts TxOptions) (*db.TxController, *StorageBase, error) {
+func (s *StorageBase) BeginStorageBaseTransaction(opts TxOptions) (*db.TxController, *StorageBase, error) {
 	txController, txDatabase, err := s.Database.beginTransaction(opts)
 	if err != nil {
 		return nil, nil, err
@@ -73,6 +52,21 @@ func (s *StorageBase) BeginTransaction(opts TxOptions) (*db.TxController, *Stora
 	txStorageBase.Database = txDatabase
 
 	return txController, &txStorageBase, nil
+}
+
+func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, error) {
+	txController, txStorageBase, err := s.BeginStorageBaseTransaction(opts)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	txStorage := &Storage{
+		StorageBase: txStorageBase,
+		StateTree:   NewStateTree(txStorageBase.Database),
+		AccountTree: NewAccountTree(txStorageBase.Database),
+	}
+
+	return txController, txStorage, nil
 }
 
 func (s *Storage) Close() error {
