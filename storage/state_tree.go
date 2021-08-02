@@ -28,7 +28,7 @@ type StateTree struct {
 func NewStateTree(storageBase *StorageBase) *StateTree {
 	return &StateTree{
 		storageBase: storageBase,
-		merkleTree:  NewStoredMerkleTree("state", storageBase.Badger, 32),
+		merkleTree:  NewStoredMerkleTree("state", storageBase.Badger, StateTreeDepth),
 	}
 }
 
