@@ -10,8 +10,8 @@ import (
 
 func (s *StorageBase) addTransactionBase(txBase *models.TransactionBase, txType txtype.TransactionType) (*models.Timestamp, error) {
 	res := make([]models.Timestamp, 0, 1)
-	err := s.Postgres.Query(
-		s.QB.Insert("transaction_base").
+	err := s.database.Postgres.Query(
+		s.database.QB.Insert("transaction_base").
 			Values(
 				txBase.Hash,
 				txType,
@@ -33,7 +33,7 @@ func (s *StorageBase) addTransactionBase(txBase *models.TransactionBase, txType 
 }
 
 func (s *StorageBase) BatchAddTransactionBase(txs []models.TransactionBase) error {
-	query := s.QB.Insert("transaction_base")
+	query := s.database.QB.Insert("transaction_base")
 	for i := range txs {
 		query = query.Values(
 			txs[i].Hash,
@@ -47,7 +47,7 @@ func (s *StorageBase) BatchAddTransactionBase(txs []models.TransactionBase) erro
 			txs[i].ErrorMessage,
 		)
 	}
-	res, err := s.Postgres.Query(query).Exec()
+	res, err := s.database.Postgres.Query(query).Exec()
 	if err != nil {
 		return err
 	}
@@ -63,8 +63,8 @@ func (s *StorageBase) BatchAddTransactionBase(txs []models.TransactionBase) erro
 
 func (s *StorageBase) GetLatestTransactionNonce(accountStateID uint32) (*models.Uint256, error) {
 	res := make([]models.Uint256, 0, 1)
-	err := s.Postgres.Query(
-		s.QB.Select("transaction_base.nonce").
+	err := s.database.Postgres.Query(
+		s.database.QB.Select("transaction_base.nonce").
 			From("transaction_base").
 			Where(squirrel.Eq{"from_state_id": accountStateID}).
 			OrderBy("nonce DESC").
@@ -80,8 +80,8 @@ func (s *StorageBase) GetLatestTransactionNonce(accountStateID uint32) (*models.
 }
 
 func (s *StorageBase) BatchMarkTransactionAsIncluded(txHashes []common.Hash, commitmentID *int32) error {
-	res, err := s.Postgres.Query(
-		s.QB.Update("transaction_base").
+	res, err := s.database.Postgres.Query(
+		s.database.QB.Update("transaction_base").
 			Where(squirrel.Eq{"tx_hash": txHashes}).
 			Set("included_in_commitment", commitmentID),
 	).Exec()
@@ -100,8 +100,8 @@ func (s *StorageBase) BatchMarkTransactionAsIncluded(txHashes []common.Hash, com
 }
 
 func (s *StorageBase) SetTransactionError(txHash common.Hash, errorMessage string) error {
-	res, err := s.Postgres.Query(
-		s.QB.Update("transaction_base").
+	res, err := s.database.Postgres.Query(
+		s.database.QB.Update("transaction_base").
 			Where(squirrel.Eq{"tx_hash": txHash}).
 			Set("error_message", errorMessage),
 	).Exec()
@@ -121,8 +121,8 @@ func (s *StorageBase) SetTransactionError(txHash common.Hash, errorMessage strin
 
 func (s *StorageBase) GetTransactionCount() (*int, error) {
 	res := make([]int, 0, 1)
-	err := s.Postgres.Query(
-		s.QB.Select("COUNT(1)").
+	err := s.database.Postgres.Query(
+		s.database.QB.Select("COUNT(1)").
 			From("transaction_base").
 			Join("commitment on commitment.commitment_id = transaction_base.included_in_commitment").
 			Where(squirrel.NotEq{"included_in_batch": nil}),
@@ -138,8 +138,8 @@ func (s *StorageBase) GetTransactionCount() (*int, error) {
 
 func (s *StorageBase) GetTransactionHashesByBatchIDs(batchIDs ...models.Uint256) ([]common.Hash, error) {
 	res := make([]common.Hash, 0, 32*len(batchIDs))
-	err := s.Postgres.Query(
-		s.QB.Select("transaction_base.tx_hash").
+	err := s.database.Postgres.Query(
+		s.database.QB.Select("transaction_base.tx_hash").
 			From("transaction_base").
 			Join("commitment on commitment.commitment_id = transaction_base.included_in_commitment").
 			Where(squirrel.Eq{"commitment.included_in_batch": batchIDs}),

@@ -73,6 +73,23 @@ func (s *DBTestSuite) TestClone() {
 	checkBatch(s.T(), s.db, 1)
 }
 
+func (s *DBTestSuite) TestClone_DoesNotChangeReceiverDB() {
+	initialName := s.getDBName(s.db)
+
+	clonedDB, err := s.db.Clone(s.config)
+	s.NoError(err)
+
+	s.Equal(initialName, s.getDBName(s.db))
+	s.NotEqual(initialName, s.getDBName(clonedDB))
+}
+
+func (s *DBTestSuite) getDBName(db *Database) string {
+	dbName := make([]string, 0, 1)
+	err := db.Select(&dbName, "SELECT current_database()")
+	s.NoError(err)
+	return dbName[0]
+}
+
 func TestDbTestSuite(t *testing.T) {
 	suite.Run(t, new(DBTestSuite))
 }

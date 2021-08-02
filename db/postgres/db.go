@@ -28,8 +28,7 @@ type Database struct {
 }
 
 func NewDatabase(cfg *config.PostgresConfig) (*Database, error) {
-	datasource := CreateDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, &cfg.Name)
-	database, err := sqlx.Connect("postgres", datasource)
+	database, err := connect(cfg.Host, cfg.Port, cfg.User, cfg.Password, &cfg.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +75,7 @@ func (d *Database) BeginTransaction() (*db.TxController, *Database, error) {
 }
 
 func GetMigrator(cfg *config.PostgresConfig) (*migrate.Migrate, error) {
-	datasource := CreateDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, &cfg.Name)
+	datasource := createDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, &cfg.Name)
 
 	database, err := sql.Open("postgres", datasource)
 	if err != nil {
@@ -95,7 +94,7 @@ func GetMigrator(cfg *config.PostgresConfig) (*migrate.Migrate, error) {
 	)
 }
 
-func CreateDatasource(host, port, user, password, dbname *string) string {
+func createDatasource(host, port, user, password, dbname *string) string {
 	datasource := make([]string, 0, 6)
 	datasource = append(datasource, "sslmode=disable")
 
@@ -118,27 +117,30 @@ func CreateDatasource(host, port, user, password, dbname *string) string {
 	return strings.Join(datasource, " ")
 }
 
+func connect(host, port, user, password, dbname *string) (*sqlx.DB, error) {
+	datasource := createDatasource(host, port, user, password, dbname)
+	return sqlx.Connect("postgres", datasource)
+}
+
 func (d *Database) Clone(currentConfig *config.PostgresConfig) (clonedDB *Database, err error) {
 	err = d.Close()
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	datasource := CreateDatasource(currentConfig.Host, currentConfig.Port, currentConfig.User, currentConfig.Password, nil)
-	database, err := sqlx.Connect("postgres", datasource)
+	database, err := connect(currentConfig.Host, currentConfig.Port, currentConfig.User, currentConfig.Password, nil)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 	defer closeDB(database, &err)
 
-	clonedDBName := currentConfig.Name + clonedDBSuffix
-
-	err = disconnectUsers(database, clonedDBName)
+	err = disconnectUsers(database, currentConfig.Name)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	err = disconnectUsers(database, currentConfig.Name)
+	clonedDBName := currentConfig.Name + clonedDBSuffix
+	err = disconnectUsers(database, clonedDBName)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -148,7 +150,7 @@ func (d *Database) Clone(currentConfig *config.PostgresConfig) (clonedDB *Databa
 		return nil, err
 	}
 
-	err = d.replaceDatabaseInstance(currentConfig, clonedDBName)
+	err = d.recreateInitialDatabase(currentConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -156,13 +158,11 @@ func (d *Database) Clone(currentConfig *config.PostgresConfig) (clonedDB *Databa
 	return clonedDB, nil
 }
 
-func (d *Database) replaceDatabaseInstance(currentConfig *config.PostgresConfig, clonedDBName string) error {
-	clonedConfig := *currentConfig
-	clonedConfig.Name = clonedDBName
-	initialDatabase, err := NewDatabase(&clonedConfig)
+func (d *Database) recreateInitialDatabase(currentConfig *config.PostgresConfig) error {
+	database, err := NewDatabase(currentConfig)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	*d = *initialDatabase
+	*d = *database
 	return nil
 }
