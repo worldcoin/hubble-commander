@@ -103,5 +103,7 @@ func cloneDatabase(database DatabaseLike, cfg *config.PostgresConfig, clonedDBNa
 		return nil, errors.WithStack(err)
 	}
 
-	return NewDatabase(cfg)
+	clonedCfg := *cfg
+	clonedCfg.Name = clonedDBName
+	return NewDatabase(&clonedCfg)
 }

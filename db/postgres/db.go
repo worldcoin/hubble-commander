@@ -134,14 +134,13 @@ func (d *Database) Clone(currentConfig *config.PostgresConfig) (clonedDB *Databa
 	}
 	defer closeDB(database, &err)
 
-	clonedDBName := currentConfig.Name + clonedDBSuffix
-
-	err = disconnectUsers(database, clonedDBName)
+	err = disconnectUsers(database, currentConfig.Name)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	err = disconnectUsers(database, currentConfig.Name)
+	clonedDBName := currentConfig.Name + clonedDBSuffix
+	err = disconnectUsers(database, clonedDBName)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -151,7 +150,7 @@ func (d *Database) Clone(currentConfig *config.PostgresConfig) (clonedDB *Databa
 		return nil, err
 	}
 
-	err = d.replaceDatabaseInstance(currentConfig, clonedDBName)
+	err = d.recreateInitialDatabase(currentConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -159,13 +158,11 @@ func (d *Database) Clone(currentConfig *config.PostgresConfig) (clonedDB *Databa
 	return clonedDB, nil
 }
 
-func (d *Database) replaceDatabaseInstance(currentConfig *config.PostgresConfig, clonedDBName string) error {
-	clonedConfig := *currentConfig
-	clonedConfig.Name = clonedDBName
-	initialDatabase, err := NewDatabase(&clonedConfig)
+func (d *Database) recreateInitialDatabase(currentConfig *config.PostgresConfig) error {
+	database, err := NewDatabase(currentConfig)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	*d = *initialDatabase
+	*d = *database
 	return nil
 }
