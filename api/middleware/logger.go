@@ -19,7 +19,7 @@ func Logger(next http.Handler) http.Handler {
 		start := time.Now()
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			log.Printf("API: failed to read request body: %s", err)
+			log.Errorf("API: failed to read request body: %s", err)
 		}
 		r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 
@@ -32,7 +32,7 @@ func logRequest(body []byte, start time.Time) {
 	var decoded payload
 	err := json.Unmarshal(body, &decoded)
 	if err != nil {
-		log.Printf("API: failed to unmarshal request body: %s", err)
+		log.Errorf("API: failed to unmarshal request body: %s", err)
 		return
 	}
 	log.Printf("API: method: %v, duration: %v", decoded.Method, time.Since(start).Round(time.Millisecond).String())
