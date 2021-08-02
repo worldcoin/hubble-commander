@@ -69,7 +69,7 @@ func NewDatabase(cfg *config.Config) (*Database, error) {
 	return database, nil
 }
 
-func (s *Database) beginTransaction(opts TxOptions) (*db.TxController, *Database, error) {
+func (s *Database) BeginTransaction(opts TxOptions) (*db.TxController, *Database, error) {
 	var txController *db.TxController
 	storage := *s
 
