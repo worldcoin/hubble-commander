@@ -188,7 +188,7 @@ func createAndSubmitTransferBatch(
 }
 
 func (s *NewBlockLoopTestSuite) createAndSubmitTransferBatchInTransaction(tx *models.Transfer) {
-	s.runInTransaction(func(txStorage *st.StorageBase, txExecutor *executor.TransactionExecutor) {
+	s.runInTransaction(func(txStorage *st.Storage, txExecutor *executor.TransactionExecutor) {
 		_, err := txStorage.AddTransfer(tx)
 		s.NoError(err)
 
@@ -206,13 +206,13 @@ func (s *NewBlockLoopTestSuite) createAndSubmitTransferBatchInTransaction(tx *mo
 	})
 }
 
-func (s *NewBlockLoopTestSuite) runInTransaction(handler func(*st.StorageBase, *executor.TransactionExecutor)) {
+func (s *NewBlockLoopTestSuite) runInTransaction(handler func(*st.Storage, *executor.TransactionExecutor)) {
 	txController, txStorage, err := s.testStorage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
 	defer txController.Rollback(nil)
 
 	storage := &st.Storage{
-		StorageBase: txStorage,
+		StorageBase: txStorage.StorageBase,
 		StateTree:   st.NewStateTree(txStorage.Database),
 		AccountTree: st.NewAccountTree(txStorage.Database),
 	}
