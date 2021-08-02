@@ -31,15 +31,11 @@ func NewTransactionExecutor(
 	}
 
 	return &TransactionExecutor{
-		cfg: cfg,
-		storage: &st.Storage{
-			StorageBase: txStorage.StorageBase,
-			StateTree:   st.NewStateTree(txStorage.Database),
-			AccountTree: st.NewAccountTree(txStorage.Database),
-		},
-		tx:     tx,
-		client: client,
-		ctx:    ctx,
+		cfg:     cfg,
+		storage: txStorage,
+		tx:      tx,
+		client:  client,
+		ctx:     ctx,
 	}, nil
 }
 
