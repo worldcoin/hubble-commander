@@ -10,7 +10,7 @@ import (
 
 func (c *Client) DisputeSignatureTransfer(
 	batchID *models.Uint256,
-	target *models.TransferCommitmentInclusionProof,
+	targetProof *models.TransferCommitmentInclusionProof,
 	signatureProof *models.SignatureProof,
 ) error {
 	sink := make(chan *rollup.RollupRollbackStatus)
@@ -22,7 +22,7 @@ func (c *Client) DisputeSignatureTransfer(
 
 	transaction, err := c.rollup().DisputeSignatureTransfer(
 		batchID.ToBig(),
-		*TransferProofToCalldata(target),
+		*TransferProofToCalldata(targetProof),
 		*signatureProofToCalldata(signatureProof),
 	)
 	if err != nil {
@@ -33,7 +33,7 @@ func (c *Client) DisputeSignatureTransfer(
 
 func (c *Client) DisputeSignatureCreate2Transfer(
 	batchID *models.Uint256,
-	target *models.TransferCommitmentInclusionProof,
+	targetProof *models.TransferCommitmentInclusionProof,
 	signatureProof *models.SignatureProofWithReceiver,
 ) error {
 	sink := make(chan *rollup.RollupRollbackStatus)
@@ -45,7 +45,7 @@ func (c *Client) DisputeSignatureCreate2Transfer(
 
 	transaction, err := c.rollup().DisputeSignatureCreate2Transfer(
 		batchID.ToBig(),
-		*TransferProofToCalldata(target),
+		*TransferProofToCalldata(targetProof),
 		*signatureProofWithReceiverToCalldata(signatureProof),
 	)
 	if err != nil {

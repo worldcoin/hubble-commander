@@ -409,10 +409,11 @@ func (s *DisputeTransitionTestSuite) getTransferStateMerkleProofs(txs [][]models
 	for i := range txs {
 		_, stateProofs, err = s.transactionExecutor.ApplyTransfersForSync(txs[i], feeReceiver)
 		if err != nil {
-			var disputableTransferError *DisputableTransferError
-			s.ErrorAs(err, &disputableTransferError)
-			s.Len(disputableTransferError.Proofs, len(txs[i])*2)
-			return disputableTransferError.Proofs
+			var disputableErr *DisputableError
+			s.ErrorAs(err, &disputableErr)
+			s.Equal(Transition, disputableErr.Type)
+			s.Len(disputableErr.Proofs, len(txs[i])*2)
+			return disputableErr.Proofs
 		}
 	}
 
@@ -436,10 +437,11 @@ func (s *DisputeTransitionTestSuite) getC2TStateMerkleProofs(
 	for i := range txs {
 		_, stateProofs, err = s.transactionExecutor.ApplyCreate2TransfersForSync(txs[i], pubKeyIDs[i], feeReceiver)
 		if err != nil {
-			var disputableTransferError *DisputableTransferError
-			s.ErrorAs(err, &disputableTransferError)
-			s.Len(disputableTransferError.Proofs, len(txs[i])*2)
-			return disputableTransferError.Proofs
+			var disputableErr *DisputableError
+			s.ErrorAs(err, &disputableErr)
+			s.Equal(Transition, disputableErr.Type)
+			s.Len(disputableErr.Proofs, len(txs[i])*2)
+			return disputableErr.Proofs
 		}
 	}
 

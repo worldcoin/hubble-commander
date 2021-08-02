@@ -9,20 +9,28 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (t *TransactionExecutor) DisputeSignature(batch *eth.DecodedBatch, commitmentIndex int) error {
+func (t *TransactionExecutor) DisputeSignature(
+	batch *eth.DecodedBatch,
+	commitmentIndex int,
+	stateProofs []models.StateMerkleProof,
+) error {
 	switch batch.Type {
 	case txtype.Transfer:
-		return t.disputeTransferSignature(batch, commitmentIndex)
+		return t.disputeTransferSignature(batch, commitmentIndex, stateProofs)
 	case txtype.Create2Transfer:
-		return t.disputeCreate2TransferSignature(batch, commitmentIndex)
+		return t.disputeCreate2TransferSignature(batch, commitmentIndex, stateProofs)
 	case txtype.MassMigration:
 		return errors.New("unsupported batch type")
 	}
 	return nil
 }
 
-func (t *TransactionExecutor) disputeTransferSignature(batch *eth.DecodedBatch, commitmentIndex int) error {
-	proof, err := t.signatureProof(&batch.Commitments[commitmentIndex])
+func (t *TransactionExecutor) disputeTransferSignature(
+	batch *eth.DecodedBatch,
+	commitmentIndex int,
+	stateProofs []models.StateMerkleProof,
+) error {
+	signatureProof, err := t.signatureProof(stateProofs)
 	if err != nil {
 		return err
 	}
@@ -32,11 +40,15 @@ func (t *TransactionExecutor) disputeTransferSignature(batch *eth.DecodedBatch, 
 		return err
 	}
 
-	return t.client.DisputeSignatureTransfer(&batch.ID, targetCommitmentProof, proof)
+	return t.client.DisputeSignatureTransfer(&batch.ID, targetCommitmentProof, signatureProof)
 }
 
-func (t *TransactionExecutor) disputeCreate2TransferSignature(batch *eth.DecodedBatch, commitmentIndex int) error {
-	proof, err := t.signatureProofWithReceiver(&batch.Commitments[commitmentIndex])
+func (t *TransactionExecutor) disputeCreate2TransferSignature(
+	batch *eth.DecodedBatch,
+	commitmentIndex int,
+	stateProofs []models.StateMerkleProof,
+) error {
+	signatureProof, err := t.signatureProofWithReceiver(&batch.Commitments[commitmentIndex], stateProofs)
 	if err != nil {
 		return err
 	}
@@ -46,30 +58,20 @@ func (t *TransactionExecutor) disputeCreate2TransferSignature(batch *eth.Decoded
 		return err
 	}
 
-	return t.client.DisputeSignatureCreate2Transfer(&batch.ID, targetCommitmentProof, proof)
+	return t.client.DisputeSignatureCreate2Transfer(&batch.ID, targetCommitmentProof, signatureProof)
 }
 
-func (t *TransactionExecutor) signatureProof(commitment *encoder.DecodedCommitment) (*models.SignatureProof, error) {
-	txs, err := encoder.DeserializeTransfers(commitment.Transactions)
-	if err != nil {
-		return nil, err
-	}
-
+func (t *TransactionExecutor) signatureProof(stateProofs []models.StateMerkleProof) (*models.SignatureProof, error) {
 	proof := &models.SignatureProof{
-		UserStates: make([]models.StateMerkleProof, 0, len(txs)),
-		PublicKeys: make([]models.PublicKeyProof, 0, len(txs)),
+		UserStates: stateProofs,
+		PublicKeys: make([]models.PublicKeyProof, 0, len(stateProofs)),
 	}
-	for i := range txs {
-		stateProof, err := t.userStateProof(txs[i].FromStateID)
-		if err != nil {
-			return nil, err
-		}
-		publicKeyProof, err := t.publicKeyProof(stateProof.UserState.PubKeyID)
-		if err != nil {
-			return nil, err
-		}
 
-		proof.UserStates = append(proof.UserStates, *stateProof)
+	for i := range stateProofs {
+		publicKeyProof, err := t.publicKeyProof(stateProofs[i].UserState.PubKeyID)
+		if err != nil {
+			return nil, err
+		}
 		proof.PublicKeys = append(proof.PublicKeys, *publicKeyProof)
 	}
 	return proof, nil
@@ -77,23 +79,17 @@ func (t *TransactionExecutor) signatureProof(commitment *encoder.DecodedCommitme
 
 func (t *TransactionExecutor) signatureProofWithReceiver(
 	commitment *encoder.DecodedCommitment,
+	stateProofs []models.StateMerkleProof,
 ) (*models.SignatureProofWithReceiver, error) {
-	txs, pubKeyIDs, err := encoder.DeserializeCreate2Transfers(commitment.Transactions)
-	if err != nil {
-		return nil, err
-	}
+	pubKeyIDs := encoder.DeserializeCreate2TransferPubKeyIDs(commitment.Transactions)
 
 	proof := &models.SignatureProofWithReceiver{
-		UserStates:         make([]models.StateMerkleProof, 0, len(txs)),
-		SenderPublicKeys:   make([]models.PublicKeyProof, 0, len(txs)),
-		ReceiverPublicKeys: make([]models.ReceiverPublicKeyProof, 0, len(txs)),
+		UserStates:         stateProofs,
+		SenderPublicKeys:   make([]models.PublicKeyProof, 0, len(stateProofs)),
+		ReceiverPublicKeys: make([]models.ReceiverPublicKeyProof, 0, len(stateProofs)),
 	}
-	for i := range txs {
-		stateProof, err := t.userStateProof(txs[i].FromStateID)
-		if err != nil {
-			return nil, err
-		}
-		publicKeyProof, err := t.publicKeyProof(stateProof.UserState.PubKeyID)
+	for i := range stateProofs {
+		publicKeyProof, err := t.publicKeyProof(stateProofs[i].UserState.PubKeyID)
 		if err != nil {
 			return nil, err
 		}
@@ -102,7 +98,6 @@ func (t *TransactionExecutor) signatureProofWithReceiver(
 			return nil, err
 		}
 
-		proof.UserStates = append(proof.UserStates, *stateProof)
 		proof.SenderPublicKeys = append(proof.SenderPublicKeys, *publicKeyProof)
 		proof.ReceiverPublicKeys = append(proof.ReceiverPublicKeys, *receiverPublicKeyProof)
 	}
@@ -154,4 +149,16 @@ func (t *TransactionExecutor) receiverPublicKeyProof(pubKeyID uint32) (*models.R
 		PublicKeyHash: crypto.Keccak256Hash(account.PublicKey.Bytes()),
 		Witness:       witness,
 	}, nil
+}
+
+func (t *TransactionExecutor) stateMerkleProofs(transfers models.GenericTransactionArray) ([]models.StateMerkleProof, error) {
+	proofs := make([]models.StateMerkleProof, 0, transfers.Len())
+	for i := 0; i < transfers.Len(); i++ {
+		stateProof, err := t.userStateProof(transfers.At(i).GetFromStateID())
+		if err != nil {
+			return nil, err
+		}
+		proofs = append(proofs, *stateProof)
+	}
+	return proofs, nil
 }

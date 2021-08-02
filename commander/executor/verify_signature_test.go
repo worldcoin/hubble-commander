@@ -130,7 +130,11 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_InvalidSignature(
 	}
 
 	err = s.transactionExecutor.verifyTransferSignature(commitment, transfers)
-	s.Equal(ErrInvalidSignature, err)
+
+	var disputableErr *DisputableError
+	s.ErrorAs(err, &disputableErr)
+	s.Equal(Signature, disputableErr.Type)
+	s.Equal(InvalidSignature, disputableErr.Reason)
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyCreate2TransferSignature_ValidSignature() {
