@@ -34,7 +34,7 @@ func (s *StoredMerkleTree) Get(path models.MerklePath) (*models.MerkleTreeNode, 
 	node := models.MerkleTreeNode{MerklePath: path}
 	err := s.badger.Get(s.keyFor(path), &node)
 	if err == bh.ErrNotFound {
-		return newZeroNode(&path), nil
+		return s.newZeroNode(&path), nil
 	}
 	if err != nil {
 		return nil, err
@@ -126,6 +126,13 @@ func (s *StoredMerkleTree) GetWitness(path models.MerklePath) (models.Witness, e
 	return witness, nil
 }
 
+func (s *StoredMerkleTree) newZeroNode(path *models.MerklePath) *models.MerkleTreeNode {
+	return &models.MerkleTreeNode{
+		MerklePath: *path,
+		DataHash:   merkletree.GetZeroHash(uint(s.depth - path.Depth)),
+	}
+}
+
 func calculateParentHash(
 	currentHash *common.Hash,
 	currentPath *models.MerklePath,
@@ -135,13 +142,5 @@ func calculateParentHash(
 		return utils.HashTwo(*currentHash, witnessHash)
 	} else {
 		return utils.HashTwo(witnessHash, *currentHash)
-	}
-}
-
-// TODO add Depth parameter to MerkleTree and use it here instead of StateTreeDepth
-func newZeroNode(path *models.MerklePath) *models.MerkleTreeNode {
-	return &models.MerkleTreeNode{
-		MerklePath: *path,
-		DataHash:   merkletree.GetZeroHash(StateTreeDepth - uint(path.Depth)),
 	}
 }
