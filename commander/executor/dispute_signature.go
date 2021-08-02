@@ -30,7 +30,7 @@ func (t *TransactionExecutor) disputeTransferSignature(
 	commitmentIndex int,
 	stateProofs []models.StateMerkleProof,
 ) error {
-	proof, err := t.signatureProof(stateProofs)
+	signatureProof, err := t.signatureProof(stateProofs)
 	if err != nil {
 		return err
 	}
@@ -40,7 +40,7 @@ func (t *TransactionExecutor) disputeTransferSignature(
 		return err
 	}
 
-	return t.client.DisputeSignatureTransfer(&batch.ID, targetCommitmentProof, proof)
+	return t.client.DisputeSignatureTransfer(&batch.ID, targetCommitmentProof, signatureProof)
 }
 
 func (t *TransactionExecutor) disputeCreate2TransferSignature(
@@ -48,7 +48,7 @@ func (t *TransactionExecutor) disputeCreate2TransferSignature(
 	commitmentIndex int,
 	stateProofs []models.StateMerkleProof,
 ) error {
-	proof, err := t.signatureProofWithReceiver(&batch.Commitments[commitmentIndex], stateProofs)
+	signatureProof, err := t.signatureProofWithReceiver(&batch.Commitments[commitmentIndex], stateProofs)
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func (t *TransactionExecutor) disputeCreate2TransferSignature(
 		return err
 	}
 
-	return t.client.DisputeSignatureCreate2Transfer(&batch.ID, targetCommitmentProof, proof)
+	return t.client.DisputeSignatureCreate2Transfer(&batch.ID, targetCommitmentProof, signatureProof)
 }
 
 func (t *TransactionExecutor) signatureProof(stateProofs []models.StateMerkleProof) (*models.SignatureProof, error) {
