@@ -28,7 +28,7 @@ type Database struct {
 }
 
 func NewDatabase(cfg *config.PostgresConfig) (*Database, error) {
-	datasource := CreateDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, &cfg.Name)
+	datasource := createDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, &cfg.Name)
 	database, err := sqlx.Connect("postgres", datasource)
 	if err != nil {
 		return nil, err
@@ -76,7 +76,7 @@ func (d *Database) BeginTransaction() (*db.TxController, *Database, error) {
 }
 
 func GetMigrator(cfg *config.PostgresConfig) (*migrate.Migrate, error) {
-	datasource := CreateDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, &cfg.Name)
+	datasource := createDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, &cfg.Name)
 
 	database, err := sql.Open("postgres", datasource)
 	if err != nil {
@@ -95,7 +95,7 @@ func GetMigrator(cfg *config.PostgresConfig) (*migrate.Migrate, error) {
 	)
 }
 
-func CreateDatasource(host, port, user, password, dbname *string) string {
+func createDatasource(host, port, user, password, dbname *string) string {
 	datasource := make([]string, 0, 6)
 	datasource = append(datasource, "sslmode=disable")
 
@@ -124,7 +124,7 @@ func (d *Database) Clone(currentConfig *config.PostgresConfig) (clonedDB *Databa
 		return nil, errors.WithStack(err)
 	}
 
-	datasource := CreateDatasource(currentConfig.Host, currentConfig.Port, currentConfig.User, currentConfig.Password, nil)
+	datasource := createDatasource(currentConfig.Host, currentConfig.Port, currentConfig.User, currentConfig.Password, nil)
 	database, err := sqlx.Connect("postgres", datasource)
 	if err != nil {
 		return nil, errors.WithStack(err)

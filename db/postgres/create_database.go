@@ -21,7 +21,7 @@ func CreateDatabaseIfNotExist(cfg *config.PostgresConfig) (err error) {
 	}
 	log.Debug("Postgres database does not exist, attempting to create it")
 
-	datasource := CreateDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, nil)
+	datasource := createDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, nil)
 	dbInstance, err := sqlx.Connect("postgres", datasource)
 	if err != nil {
 		return errors.Errorf("database %s does not exist and could not create it", cfg.Name)
@@ -33,7 +33,7 @@ func CreateDatabaseIfNotExist(cfg *config.PostgresConfig) (err error) {
 }
 
 func RecreateDatabase(cfg *config.PostgresConfig) (err error) {
-	datasource := CreateDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, nil)
+	datasource := createDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, nil)
 	dbInstance, err := sqlx.Connect("postgres", datasource)
 	if err != nil {
 		return err
@@ -54,7 +54,7 @@ func RecreateDatabase(cfg *config.PostgresConfig) (err error) {
 }
 
 func databaseExists(cfg *config.PostgresConfig) (*bool, error) {
-	datasource := CreateDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, &cfg.Name)
+	datasource := createDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, &cfg.Name)
 	dbInstance, err := sqlx.Connect("postgres", datasource)
 	if err == nil {
 		return ref.Bool(true), dbInstance.Close()
