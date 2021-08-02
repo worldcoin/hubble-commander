@@ -77,12 +77,8 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 }
 
 func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage, error) {
-	storageBase := *s.Storage.StorageBase
-	database := *s.Storage.Database
-	storageBase.Database = &database
-
+	database := *s.Database
 	teardown := make([]TeardownFunc, 0, 2)
-	initialTeardown := make([]TeardownFunc, 0, 2)
 
 	if s.Database.Postgres != nil {
 		testPostgres := postgres.TestDB{DB: s.Database.Postgres}
@@ -90,11 +86,8 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 		if err != nil {
 			return nil, err
 		}
-		storageBase.Database.Postgres = clonedPostgres.DB
-		teardown = append(teardown, func() error {
-			return clonedPostgres.Teardown()
-		})
-		initialTeardown = append(initialTeardown, testPostgres.Teardown)
+		database.Postgres = clonedPostgres.DB
+		teardown = append(teardown, clonedPostgres.Teardown)
 	}
 
 	if s.Database.Badger != nil {
@@ -103,19 +96,18 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 		if err != nil {
 			return nil, err
 		}
-		storageBase.Database.Badger = clonedBadger.DB
-		teardown = append(teardown, func() error {
-			return clonedBadger.Teardown()
-		})
-		initialTeardown = append(initialTeardown, s.Database.Badger.Close)
+		database.Badger = clonedBadger.DB
+		teardown = append(teardown, clonedBadger.Teardown)
 	}
-	s.Teardown = toTeardownFunc(initialTeardown)
+
+	storageBase := s.StorageBase
+	storageBase.Database = &database
 
 	return &TestStorage{
 		Storage: &Storage{
-			StorageBase: &storageBase,
-			StateTree:   NewStateTree(storageBase.Database),
-			AccountTree: NewAccountTree(storageBase.Database),
+			StorageBase: storageBase,
+			StateTree:   NewStateTree(&database),
+			AccountTree: NewAccountTree(&database),
 		},
 		Teardown: toTeardownFunc(teardown),
 	}, nil
