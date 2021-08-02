@@ -40,10 +40,7 @@ func NewTestStorageWithoutPostgres() (*TestStorage, error) {
 }
 
 func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
-	storageBase := &StorageBase{
-		Database:            &Database{QB: getQueryBuilder()},
-		feeReceiverStateIDs: make(map[string]uint32),
-	}
+	database := &Database{QB: getQueryBuilder()}
 	teardown := make([]TeardownFunc, 0, 2)
 
 	if cfg.Postgres {
@@ -51,11 +48,8 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 		if err != nil {
 			return nil, err
 		}
-		storageBase.Database.Postgres = postgresTestDB.DB
-		storageBase.Database.QB = getQueryBuilder()
-		teardown = append(teardown, func() error {
-			return postgresTestDB.Teardown()
-		})
+		database.Postgres = postgresTestDB.DB
+		teardown = append(teardown, postgresTestDB.Teardown)
 	}
 
 	if cfg.Badger {
@@ -63,15 +57,20 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 		if err != nil {
 			return nil, err
 		}
-		storageBase.Database.Badger = badgerTestDB.DB
+		database.Badger = badgerTestDB.DB
 		teardown = append(teardown, badgerTestDB.Teardown)
+	}
+
+	storageBase := &StorageBase{
+		Database:            database,
+		feeReceiverStateIDs: make(map[string]uint32),
 	}
 
 	return &TestStorage{
 		Storage: &Storage{
 			StorageBase: storageBase,
-			StateTree:   NewStateTree(storageBase.Database),
-			AccountTree: NewAccountTree(storageBase.Database),
+			StateTree:   NewStateTree(database),
+			AccountTree: NewAccountTree(database),
 		},
 		Teardown: toTeardownFunc(teardown),
 	}, nil
