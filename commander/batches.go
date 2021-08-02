@@ -149,6 +149,22 @@ func (c *Commander) getLatestBatchID() (*models.Uint256, error) {
 	return &latestBatch.ID, nil
 }
 
+func (c *Commander) addGenesisBatch() error {
+	root, err := c.storage.StateTree.Root()
+	if err != nil {
+		return err
+	}
+
+	batch, err := c.client.GetBatch(models.NewUint256(0))
+	if err != nil {
+		return err
+	}
+
+	batch.PrevStateRoot = root
+
+	return c.storage.AddBatch(batch)
+}
+
 func logBatchesCount(newRemoteBatches []eth.DecodedBatch) {
 	newBatchesCount := len(newRemoteBatches)
 	if newBatchesCount > 0 {
