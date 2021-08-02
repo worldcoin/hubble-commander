@@ -93,13 +93,13 @@ func (s *BatchesTestSuite) TestUnsafeSyncBatches_DoesNotSyncExistingBatchTwice()
 
 	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
-	s.Len(batches, 1)
+	s.Len(batches, 2)
 
 	s.syncAllBlocks()
 
 	batches, err = s.cmd.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
-	s.Len(batches, 2)
+	s.Len(batches, 3)
 
 	state0, err := s.cmd.storage.StateTree.Leaf(0)
 	s.NoError(err)
