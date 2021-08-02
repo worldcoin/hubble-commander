@@ -259,6 +259,26 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDisputesFr
 	s.True(st.IsNotFoundError(err))
 }
 
+//TODO: rename test
+func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesFirstCommitmentAfterGenesisOne() {
+	clonedStorage, txExecutor := cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
+	defer teardown(s.Assertions, clonedStorage.Teardown)
+
+	invalidTransfer := testutils.MakeTransfer(0, 1, 0, 100)
+	s.createAndSubmitInvalidTransferBatch(clonedStorage.StorageBase, txExecutor, &invalidTransfer, func(commitment *models.Commitment) {
+		commitment.Transactions = append(commitment.Transactions, commitment.Transactions...)
+	})
+
+	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	err = s.cmd.syncRemoteBatch(&remoteBatches[0])
+	s.NoError(err)
+
+	s.checkBatchAfterDispute(remoteBatches[0].ID)
+}
+
 func (s *BatchesTestSuite) syncAllBlocks() {
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)
