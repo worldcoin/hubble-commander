@@ -28,8 +28,7 @@ type Database struct {
 }
 
 func NewDatabase(cfg *config.PostgresConfig) (*Database, error) {
-	datasource := createDatasource(cfg.Host, cfg.Port, cfg.User, cfg.Password, &cfg.Name)
-	database, err := sqlx.Connect("postgres", datasource)
+	database, err := connect(cfg.Host, cfg.Port, cfg.User, cfg.Password, &cfg.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -118,14 +117,18 @@ func createDatasource(host, port, user, password, dbname *string) string {
 	return strings.Join(datasource, " ")
 }
 
+func connect(host, port, user, password, dbname *string) (*sqlx.DB, error) {
+	datasource := createDatasource(host, port, user, password, dbname)
+	return sqlx.Connect("postgres", datasource)
+}
+
 func (d *Database) Clone(currentConfig *config.PostgresConfig) (clonedDB *Database, err error) {
 	err = d.Close()
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	datasource := createDatasource(currentConfig.Host, currentConfig.Port, currentConfig.User, currentConfig.Password, nil)
-	database, err := sqlx.Connect("postgres", datasource)
+	database, err := connect(currentConfig.Host, currentConfig.Port, currentConfig.User, currentConfig.Password, nil)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
