@@ -69,47 +69,47 @@ func NewDatabase(cfg *config.Config) (*Database, error) {
 	return database, nil
 }
 
-func (s *Database) BeginTransaction(opts TxOptions) (*db.TxController, *Database, error) {
+func (d *Database) BeginTransaction(opts TxOptions) (*db.TxController, *Database, error) {
 	var txController *db.TxController
-	storage := *s
+	database := *d
 
 	if opts.Postgres && !opts.ReadOnly {
-		postgresTx, postgresDB, err := s.Postgres.BeginTransaction()
+		postgresTx, postgresDB, err := d.Postgres.BeginTransaction()
 		if err != nil {
 			return nil, nil, err
 		}
 		txController = postgresTx
-		storage.Postgres = postgresDB
+		database.Postgres = postgresDB
 	}
 
 	if opts.Badger {
-		badgerTx, badgerDB := s.Badger.BeginTransaction(!opts.ReadOnly)
+		badgerTx, badgerDB := d.Badger.BeginTransaction(!opts.ReadOnly)
 		if txController != nil {
 			combinedController := NewCombinedController(txController, badgerTx)
 			txController = db.NewTxController(combinedController, txController.IsLocked())
 		} else {
 			txController = badgerTx
 		}
-		storage.Badger = badgerDB
+		database.Badger = badgerDB
 	}
 
-	return txController, &storage, nil
+	return txController, &database, nil
 }
 
-func (s *Database) Close() error {
-	err := s.Postgres.Close()
+func (d *Database) Close() error {
+	err := d.Postgres.Close()
 	if err != nil {
 		return err
 	}
-	return s.Badger.Close()
+	return d.Badger.Close()
 }
 
-func (s *Database) prune(migrator *migrate.Migrate) error {
+func (d *Database) prune(migrator *migrate.Migrate) error {
 	err := migrator.Down()
 	if err != nil && err != migrate.ErrNoChange {
 		return err
 	}
-	return s.Badger.Prune()
+	return d.Badger.Prune()
 }
 
 func getQueryBuilder() squirrel.StatementBuilderType {
