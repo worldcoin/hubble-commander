@@ -33,6 +33,11 @@ func (t *TransactionExecutor) previousCommitmentInclusionProof(
 func (t *TransactionExecutor) previousBatchCommitmentInclusionProof(
 	currentBatchID models.Uint256,
 ) (*models.CommitmentInclusionProof, error) {
+	previousBatchID := currentBatchID.SubN(1)
+	if previousBatchID.IsZero() {
+		return t.genesisBatchCommitmentInclusionProof()
+	}
+
 	previousBatch, err := t.storage.GetBatch(*currentBatchID.SubN(1))
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -54,6 +59,20 @@ func (t *TransactionExecutor) previousBatchCommitmentInclusionProof(
 		uint32(previousCommitmentIndex),
 		commitments[previousCommitmentIndex].PostStateRoot,
 		commitments[previousCommitmentIndex].BodyHash(*previousBatch.AccountTreeRoot),
+	)
+}
+
+func (t *TransactionExecutor) genesisBatchCommitmentInclusionProof() (*models.CommitmentInclusionProof, error) {
+	previousBatch, err := t.storage.GetBatch(models.MakeUint256(0))
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return createCommitmentInclusionProof(
+		[]common.Hash{*previousBatch.PrevStateRoot},
+		0,
+		*previousBatch.PrevStateRoot,
+		merkletree.GetZeroHash(0),
 	)
 }
 

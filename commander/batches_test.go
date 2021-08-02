@@ -64,6 +64,9 @@ func (s *BatchesTestSuite) SetupTest() {
 		context.Background(),
 	)
 
+	err = s.cmd.addGenesisBatch()
+	s.NoError(err)
+
 	domain, err := s.testClient.GetDomain()
 	s.NoError(err)
 	s.wallets = generateWallets(s.T(), *domain, 2)
