@@ -12,7 +12,7 @@ type Storage struct {
 }
 
 type StorageBase struct {
-	Database            *Database
+	Database            *Database         // TODO make this field private (a single test makes this harder)
 	feeReceiverStateIDs map[string]uint32 // token ID => state id
 	latestBlockNumber   uint32
 	syncedBlock         *uint64

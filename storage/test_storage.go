@@ -76,6 +76,7 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 	}, nil
 }
 
+// TODO make this a method on Database
 func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage, error) {
 	database := *s.Database
 	teardown := make([]TeardownFunc, 0, 2)
