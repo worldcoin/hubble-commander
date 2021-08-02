@@ -36,6 +36,7 @@ func TestMeasureDisputeGasUsage(t *testing.T) {
 	ethClient := newEthClient(t, cmd.Client())
 
 	measureDisputeSignatureTransfer(t, cmd.Client(), ethClient)
+	measureDisputeSignatureC2T(t, cmd.Client(), ethClient, wallets)
 
 	testSendTransferBatch(t, cmd.Client(), senderWallet, 0)
 
@@ -50,6 +51,18 @@ func measureDisputeSignatureTransfer(t *testing.T, client jsonrpc.RPCClient, eth
 	defer subscription.Unsubscribe()
 
 	send32TransfersBatchWithInvalidSignature(t, ethClient)
+	testRollbackCompletion(t, ethClient, sink, subscription)
+
+	testBatchesAfterDispute(t, client, 0)
+}
+
+func measureDisputeSignatureC2T(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, wallets []bls.Wallet) {
+	sink := make(chan *rollup.RollupRollbackStatus)
+	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
+	require.NoError(t, err)
+	defer subscription.Unsubscribe()
+
+	send32C2TBatchWithInvalidSignature(t, ethClient, wallets)
 	testRollbackCompletion(t, ethClient, sink, subscription)
 
 	testBatchesAfterDispute(t, client, 0)
@@ -105,31 +118,8 @@ func send32C2TBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client, wal
 		ToStateID: ref.Uint32(38),
 	}
 
-	registrations, unsubscribe, err := ethClient.WatchBatchAccountRegistrations(&bind.WatchOpts{})
-	require.NoError(t, err)
-	defer unsubscribe()
-
-	publicKeyBatch := make([]models.PublicKey, 16)
-	registeredPubKeyIDs := make([]uint32, 0, 32)
-	walletIndex := len(wallets) - 32
-	for i := 0; i < 2; i++ {
-		for j := range publicKeyBatch {
-			publicKeyBatch[j] = *wallets[walletIndex].PublicKey()
-			walletIndex++
-		}
-		pubKeyIDs, err := ethClient.RegisterBatchAccount(publicKeyBatch, registrations)
-		require.NoError(t, err)
-		registeredPubKeyIDs = append(registeredPubKeyIDs, pubKeyIDs...)
-	}
-
-	encodedTransfers := make([]byte, 0, encoder.Create2TransferLength*32)
-	for i := range registeredPubKeyIDs {
-		transfer.ToStateID = ref.Uint32(uint32(38 + i))
-		encodedTx, err := encoder.EncodeCreate2TransferForCommitment(&transfer, registeredPubKeyIDs[i])
-		require.NoError(t, err)
-
-		encodedTransfers = append(encodedTransfers, encodedTx...)
-	}
+	registeredPubKeyIDs := register32Accounts(t, ethClient, wallets)
+	encodedTransfers := encodeCreate2Transfers(t, &transfer, registeredPubKeyIDs, 38)
 
 	sendC2TCommitment(t, ethClient, encodedTransfers, 2)
 }
@@ -155,4 +145,60 @@ func send32TransfersBatchWithInvalidSignature(t *testing.T, ethClient *eth.Clien
 		PostStateRoot:     postStateRoot,
 	}
 	submitTransfersBatch(t, ethClient, []models.Commitment{commitment}, 1)
+}
+
+func send32C2TBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, wallets []bls.Wallet) {
+	transfer := models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(100),
+			Fee:         models.MakeUint256(10),
+		},
+		ToStateID: ref.Uint32(6),
+	}
+
+	registeredPubKeyIDs := register32Accounts(t, ethClient, wallets)
+	encodedTransfers := encodeCreate2Transfers(t, &transfer, registeredPubKeyIDs, 6)
+
+	postStateRoot := common.Hash{9, 165, 135, 45, 162, 158, 64, 129, 26, 232, 17, 209, 169, 198, 175, 189, 42, 40, 119, 15, 11, 78, 238, 158, 35, 163, 205, 164, 23, 120, 249, 253}
+
+	commitment := models.Commitment{
+		Transactions:      encodedTransfers,
+		FeeReceiver:       0,
+		CombinedSignature: models.Signature{},
+		PostStateRoot:     postStateRoot,
+	}
+	submitC2TBatch(t, ethClient, []models.Commitment{commitment}, 1)
+}
+
+func encodeCreate2Transfers(t *testing.T, transfer *models.Create2Transfer, registeredPubKeyIDs []uint32, startStateID uint32) []byte {
+	encodedTransfers := make([]byte, 0, encoder.Create2TransferLength*len(registeredPubKeyIDs))
+	for i := range registeredPubKeyIDs {
+		transfer.ToStateID = ref.Uint32(startStateID + uint32(i))
+		encodedTx, err := encoder.EncodeCreate2TransferForCommitment(transfer, registeredPubKeyIDs[i])
+		require.NoError(t, err)
+
+		encodedTransfers = append(encodedTransfers, encodedTx...)
+	}
+	return encodedTransfers
+}
+
+func register32Accounts(t *testing.T, ethClient *eth.Client, wallets []bls.Wallet) []uint32 {
+	registrations, unsubscribe, err := ethClient.WatchBatchAccountRegistrations(&bind.WatchOpts{})
+	require.NoError(t, err)
+	defer unsubscribe()
+
+	publicKeyBatch := make([]models.PublicKey, 16)
+	registeredPubKeyIDs := make([]uint32, 0, 32)
+	walletIndex := len(wallets) - 32
+	for i := 0; i < 2; i++ {
+		for j := range publicKeyBatch {
+			publicKeyBatch[j] = *wallets[walletIndex].PublicKey()
+			walletIndex++
+		}
+		pubKeyIDs, err := ethClient.RegisterBatchAccount(publicKeyBatch, registrations)
+		require.NoError(t, err)
+		registeredPubKeyIDs = append(registeredPubKeyIDs, pubKeyIDs...)
+	}
+	return registeredPubKeyIDs
 }
