@@ -42,16 +42,18 @@ func TestCommanderDispute(t *testing.T) {
 	require.NoError(t, err)
 
 	senderWallet := wallets[1]
+	receiverWallet := wallets[len(wallets)-1]
 
 	ethClient := newEthClient(t, cmd.Client())
 
 	testDisputeSignatureTransfer(t, cmd.Client(), ethClient)
+	testDisputeSignatureC2T(t, cmd.Client(), ethClient, receiverWallet)
 
 	testDisputeTransitionTransfer(t, cmd.Client(), ethClient, senderWallet)
 	testDisputeTransitionC2T(t, cmd.Client(), ethClient, senderWallet, wallets)
 
 	testDisputeTransitionTransferInvalidStateRoot(t, cmd.Client(), ethClient)
-	testDisputeTransitionC2TInvalidStateRoot(t, cmd.Client(), ethClient, wallets[len(wallets)-1])
+	testDisputeTransitionC2TInvalidStateRoot(t, cmd.Client(), ethClient, receiverWallet)
 }
 
 func testDisputeSignatureTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
@@ -61,6 +63,19 @@ func testDisputeSignatureTransfer(t *testing.T, client jsonrpc.RPCClient, ethCli
 	defer subscription.Unsubscribe()
 
 	sendTransferBatchWithInvalidSignature(t, ethClient)
+	testRollbackCompletion(t, ethClient, sink, subscription)
+
+	testBatchesAfterDispute(t, client, 0)
+}
+
+func testDisputeSignatureC2T(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, receiverWallet bls.Wallet) {
+	sink := make(chan *rollup.RollupRollbackStatus)
+	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
+	require.NoError(t, err)
+	defer subscription.Unsubscribe()
+
+	sendC2TBatchWithInvalidSignature(t, ethClient, receiverWallet.PublicKey())
+	testRollbackCompletion(t, ethClient, sink, subscription)
 
 	testBatchesAfterDispute(t, client, 0)
 }
@@ -280,6 +295,36 @@ func sendC2TBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client, toPub
 	require.NoError(t, err)
 
 	sendC2TCommitment(t, ethClient, encodedTransfer, 4)
+}
+
+func sendC2TBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey) {
+	transfer := models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(100),
+			Fee:         models.MakeUint256(10),
+		},
+		ToStateID: ref.Uint32(6),
+	}
+
+	registrations, unsubscribe, err := ethClient.WatchRegistrations(&bind.WatchOpts{})
+	require.NoError(t, err)
+	defer unsubscribe()
+
+	pubKeyID, err := ethClient.RegisterAccount(toPublicKey, registrations)
+	require.NoError(t, err)
+
+	encodedTransfer, err := encoder.EncodeCreate2TransferForCommitment(&transfer, *pubKeyID)
+	require.NoError(t, err)
+	postStateRoot := common.Hash{5, 64, 118, 3, 181, 231, 59, 98, 230, 215, 146, 132, 59, 141, 73, 132, 133, 23, 149, 118, 59, 118, 88, 153, 150, 65, 112, 215, 128, 132, 47, 58}
+
+	commitment := models.Commitment{
+		Transactions:      encodedTransfer,
+		FeeReceiver:       0,
+		CombinedSignature: models.Signature{},
+		PostStateRoot:     postStateRoot,
+	}
+	submitC2TBatch(t, ethClient, []models.Commitment{commitment}, 1)
 }
 
 func sendTransferCommitment(t *testing.T, ethClient *eth.Client, encodedTransfer []byte, batchID uint64) {
