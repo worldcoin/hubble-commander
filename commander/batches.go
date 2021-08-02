@@ -150,6 +150,14 @@ func (c *Commander) getLatestBatchID() (*models.Uint256, error) {
 }
 
 func (c *Commander) addGenesisBatch() error {
+	nextBatchID, err := c.storage.GetNextBatchID()
+	if err != nil {
+		return err
+	}
+	if nextBatchID.CmpN(1) != 0 {
+		return nil
+	}
+
 	root, err := c.storage.StateTree.Root()
 	if err != nil {
 		return err

@@ -262,8 +262,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDisputesFr
 	s.True(st.IsNotFoundError(err))
 }
 
-//TODO: rename test
-func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesFirstCommitmentAfterGenesisOne() {
+func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentCommitmentAfterGenesisOne() {
 	clonedStorage, txExecutor := cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
 	defer teardown(s.Assertions, clonedStorage.Teardown)
 
