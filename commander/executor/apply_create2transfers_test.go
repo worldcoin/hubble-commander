@@ -204,9 +204,10 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_Invali
 	appliedTransfers, _, err := s.transactionExecutor.ApplyCreate2TransfersForSync(transfers, pubKeyIDs, s.feeReceiver)
 	s.Nil(appliedTransfers)
 
-	var disputableTransferError *DisputableTransferError
-	s.ErrorAs(err, &disputableTransferError)
-	s.Len(disputableTransferError.Proofs, 6)
+	var disputableErr *DisputableError
+	s.ErrorAs(err, &disputableErr)
+	s.Equal(Transition, disputableErr.Type)
+	s.Len(disputableErr.Proofs, 6)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidSlicesLength() {

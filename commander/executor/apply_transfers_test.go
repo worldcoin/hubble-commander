@@ -162,9 +162,10 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_InvalidTransfer() {
 	appliedTransfers, _, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver)
 	s.Nil(appliedTransfers)
 
-	var disputableTransferError *DisputableTransferError
-	s.ErrorAs(err, &disputableTransferError)
-	s.Len(disputableTransferError.Proofs, 6)
+	var disputableErr *DisputableError
+	s.ErrorAs(err, &disputableErr)
+	s.Equal(Transition, disputableErr.Type)
+	s.Len(disputableErr.Proofs, 6)
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AppliesFee() {
