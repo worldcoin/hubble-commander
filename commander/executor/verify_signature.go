@@ -6,6 +6,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
+const InvalidSignature = "invalid commitment signature"
+
 func (t *TransactionExecutor) verifyTransferSignature(commitment *encoder.DecodedCommitment, transfers []models.Transfer) error {
 	domain, err := t.client.GetDomain()
 	if err != nil {
@@ -24,7 +26,9 @@ func (t *TransactionExecutor) verifyTransferSignature(commitment *encoder.Decode
 			return err
 		}
 	}
-	return verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys)
+
+	genericTxs := models.TransferArray(transfers)
+	return t.verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys, genericTxs)
 }
 
 func (t *TransactionExecutor) verifyCreate2TransferSignature(
@@ -48,18 +52,21 @@ func (t *TransactionExecutor) verifyCreate2TransferSignature(
 			return err
 		}
 	}
-	return verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys)
+
+	genericTxs := models.Create2TransferArray(transfers)
+	return t.verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys, genericTxs)
 }
 
-func verifyCommitmentSignature(
+func (t *TransactionExecutor) verifyCommitmentSignature(
 	signature *models.Signature,
 	domain *bls.Domain,
 	messages [][]byte,
 	publicKeys []*models.PublicKey,
+	transfers models.GenericTransactionArray,
 ) error {
 	sig, err := bls.NewSignatureFromBytes(signature.Bytes(), *domain)
 	if err != nil {
-		return err
+		return t.createDisputableSignatureError(err.Error(), transfers)
 	}
 	aggregatedSignature := bls.AggregatedSignature{Signature: sig}
 	isValid, err := aggregatedSignature.Verify(messages, publicKeys)
@@ -67,7 +74,15 @@ func verifyCommitmentSignature(
 		return err
 	}
 	if !isValid {
-		return ErrInvalidSignature
+		return t.createDisputableSignatureError(InvalidSignature, transfers)
 	}
 	return nil
+}
+
+func (t *TransactionExecutor) createDisputableSignatureError(reason string, transfers models.GenericTransactionArray) error {
+	proofs, proofErr := t.stateMerkleProofs(transfers)
+	if proofErr != nil {
+		return proofErr
+	}
+	return NewDisputableErrorWithProofs(Signature, reason, proofs)
 }

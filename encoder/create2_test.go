@@ -221,47 +221,56 @@ func (s *Create2TestSuite) TestSerializeCreate2Transfers_InvalidLength() {
 }
 
 func (s *Create2TestSuite) TestDeserializeCreate2Transfers() {
-	transfer := models.Create2Transfer{
-		TransactionBase: models.TransactionBase{
-			TxType:      txtype.Create2Transfer,
-			FromStateID: 1,
-			Amount:      models.MakeUint256(50),
-			Fee:         models.MakeUint256(10),
-		},
-		ToStateID: ref.Uint32(2),
-	}
-	transfer2 := models.Create2Transfer{
-		TransactionBase: models.TransactionBase{
-			TxType:      txtype.Create2Transfer,
-			FromStateID: 2,
-			Amount:      models.MakeUint256(200),
-			Fee:         models.MakeUint256(10),
-		},
-		ToStateID: ref.Uint32(3),
+	txs := []models.Create2Transfer{
+		testutils.MakeCreate2Transfer(1, ref.Uint32(2), 0, 50, nil),
+		testutils.MakeCreate2Transfer(2, ref.Uint32(3), 0, 200, nil),
 	}
 
-	transferHash, err := HashCreate2Transfer(&transfer)
-	s.NoError(err)
-	transfer.Hash = *transferHash
-	transferHash, err = HashCreate2Transfer(&transfer2)
-	s.NoError(err)
-	transfer2.Hash = *transferHash
+	for i := range txs {
+		transferHash, err := HashCreate2Transfer(&txs[i])
+		s.NoError(err)
+		txs[i].Hash = *transferHash
+	}
 
 	serialized, err := s.testTx.Create2transferSerialize(
 		nil,
 		[]testtx.TxCreate2Transfer{
-			newTxCreate2Transfer(&transfer, 6),
-			newTxCreate2Transfer(&transfer2, 5),
+			newTxCreate2Transfer(&txs[0], 6),
+			newTxCreate2Transfer(&txs[1], 5),
 		},
 	)
 	s.NoError(err)
 
 	transfers, toPubKeyIDs, err := DeserializeCreate2Transfers(serialized)
 	s.NoError(err)
-	s.Contains(transfers, transfer)
-	s.Contains(transfers, transfer2)
-	s.Contains(toPubKeyIDs, uint32(6))
-	s.Contains(toPubKeyIDs, uint32(5))
+	s.Equal(txs, transfers)
+	s.Equal([]uint32{6, 5}, toPubKeyIDs)
+}
+
+func (s *Create2TestSuite) TestDeserializeCreate2TransferPubKeyIDs() {
+	txs := []models.Create2Transfer{
+		testutils.MakeCreate2Transfer(1, ref.Uint32(2), 0, 50, nil),
+		testutils.MakeCreate2Transfer(2, ref.Uint32(3), 0, 200, nil),
+	}
+
+	for i := range txs {
+		transferHash, err := HashCreate2Transfer(&txs[i])
+		s.NoError(err)
+		txs[i].Hash = *transferHash
+	}
+
+	serialized, err := s.testTx.Create2transferSerialize(
+		nil,
+		[]testtx.TxCreate2Transfer{
+			newTxCreate2Transfer(&txs[0], 6),
+			newTxCreate2Transfer(&txs[1], 5),
+		},
+	)
+	s.NoError(err)
+
+	toPubKeyIDs := DeserializeCreate2TransferPubKeyIDs(serialized)
+	s.NoError(err)
+	s.Equal([]uint32{6, 5}, toPubKeyIDs)
 }
 
 func TestCreate2TestSuite(t *testing.T) {

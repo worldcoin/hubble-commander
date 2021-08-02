@@ -106,7 +106,7 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 			synced.ReceiverStateProof,
 		)
 		if transferError != nil {
-			return nil, nil, NewDisputableTransferError(transferError, stateChangeProofs)
+			return nil, nil, NewDisputableErrorWithProofs(Transition, transferError.Error(), stateChangeProofs)
 		}
 
 		appliedTransfers = append(appliedTransfers, *synced.Transfer)

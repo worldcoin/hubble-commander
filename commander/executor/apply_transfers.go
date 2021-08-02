@@ -85,7 +85,7 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 			synced.ReceiverStateProof,
 		)
 		if transferError != nil {
-			return nil, nil, NewDisputableTransferError(transferError, stateChangeProofs)
+			return nil, nil, NewDisputableErrorWithProofs(Transition, transferError.Error(), stateChangeProofs)
 		}
 		appliedTransfers = append(appliedTransfers, *synced.Transfer)
 		combinedFee = *combinedFee.Add(&synced.Transfer.Fee)

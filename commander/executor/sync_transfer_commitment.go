@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	ErrInvalidDataLength = NewDisputableTransferErrorWithoutProofs("invalid data length")
-	ErrTooManyTx         = NewDisputableTransferErrorWithoutProofs("too many transactions in a commitment")
+	ErrInvalidDataLength = NewDisputableError(Transition, "invalid data length")
+	ErrTooManyTx         = NewDisputableError(Transition, "too many transactions in a commitment")
 )
 
 func (t *TransactionExecutor) syncTransferCommitment(
@@ -71,7 +71,7 @@ func (t *TransactionExecutor) verifyStateRoot(commitmentPostState common.Hash, p
 		return err
 	}
 	if *postStateRoot != commitmentPostState {
-		return NewDisputableTransferError(ErrInvalidCommitmentStateRoot, proofs)
+		return NewDisputableErrorWithProofs(Transition, ErrInvalidCommitmentStateRoot.Error(), proofs)
 	}
 	return nil
 }
