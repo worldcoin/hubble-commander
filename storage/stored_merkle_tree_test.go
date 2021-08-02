@@ -32,7 +32,7 @@ func (s *StoredMerkleTreeTestSuite) TearDownTest() {
 }
 
 func (s *StoredMerkleTreeTestSuite) TestRoot_InitialRoot() {
-	tree := NewStoredMerkleTree("state", s.storage.StorageBase.Badger)
+	tree := NewStoredMerkleTree("state", s.storage.StorageBase.Badger, 32)
 
 	root, err := tree.Root()
 	s.NoError(err)
@@ -40,7 +40,7 @@ func (s *StoredMerkleTreeTestSuite) TestRoot_InitialRoot() {
 }
 
 func (s *StoredMerkleTreeTestSuite) TestRoot_ChangesAfterSet() {
-	tree := NewStoredMerkleTree("state", s.storage.StorageBase.Badger)
+	tree := NewStoredMerkleTree("state", s.storage.StorageBase.Badger, 32)
 
 	newRoot, _, err := tree.SetNode(&models.MerklePath{
 		Path:  0,
@@ -54,9 +54,47 @@ func (s *StoredMerkleTreeTestSuite) TestRoot_ChangesAfterSet() {
 	s.Equal(newRoot, root)
 }
 
+func (s *StoredMerkleTreeTestSuite) TestSetSingleNode_VerifiesDepth() {
+	tree := NewStoredMerkleTree("state", s.storage.StorageBase.Badger, 32)
+
+	err := tree.SetSingleNode(&models.MerkleTreeNode{
+		MerklePath: models.MerklePath{
+			Path:  0,
+			Depth: 32,
+		},
+		DataHash: utils.RandomHash(),
+	})
+	s.NoError(err)
+
+	err = tree.SetSingleNode(&models.MerkleTreeNode{
+		MerklePath: models.MerklePath{
+			Path:  0,
+			Depth: 33,
+		},
+		DataHash: utils.RandomHash(),
+	})
+	s.ErrorIs(err, ErrExceededTreeDepth)
+}
+
+func (s *StoredMerkleTreeTestSuite) TestSetNode_VerifiesDepth() {
+	tree := NewStoredMerkleTree("state", s.storage.StorageBase.Badger, 32)
+
+	_, _, err := tree.SetNode(&models.MerklePath{
+		Path:  0,
+		Depth: 32,
+	}, utils.RandomHash())
+	s.NoError(err)
+
+	_, _, err = tree.SetNode(&models.MerklePath{
+		Path:  0,
+		Depth: 33,
+	}, utils.RandomHash())
+	s.ErrorIs(err, ErrExceededTreeDepth)
+}
+
 func (s *StoredMerkleTreeTestSuite) TestTwoTreesWithDifferentNamespaces() {
-	stateTree := NewStoredMerkleTree("state", s.storage.StorageBase.Badger)
-	accountTree := NewStoredMerkleTree("account", s.storage.StorageBase.Badger)
+	stateTree := NewStoredMerkleTree("state", s.storage.StorageBase.Badger, 32)
+	accountTree := NewStoredMerkleTree("account", s.storage.StorageBase.Badger, 32)
 
 	hash1 := utils.RandomHash()
 	_, _, err := stateTree.SetNode(&models.MerklePath{

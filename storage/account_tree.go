@@ -28,7 +28,7 @@ type AccountTree struct {
 func NewAccountTree(storageBase *StorageBase) *AccountTree {
 	return &AccountTree{
 		storageBase: storageBase,
-		merkleTree:  NewStoredMerkleTree("account", storageBase.Badger),
+		merkleTree:  NewStoredMerkleTree("account", storageBase.Badger, 32),
 	}
 }
 

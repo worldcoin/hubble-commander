@@ -6,18 +6,23 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v3"
 )
+
+var ErrExceededTreeDepth = errors.New("node depth exceeds the tree depth")
 
 type StoredMerkleTree struct {
 	badger    *bdg.Database
 	namespace string
+	depth     uint8
 }
 
-func NewStoredMerkleTree(namespace string, badger *bdg.Database) *StoredMerkleTree {
+func NewStoredMerkleTree(namespace string, badger *bdg.Database, depth uint8) *StoredMerkleTree {
 	return &StoredMerkleTree{
 		badger:    badger,
 		namespace: namespace,
+		depth:     depth,
 	}
 }
 
@@ -47,11 +52,18 @@ func (s *StoredMerkleTree) Root() (*common.Hash, error) {
 }
 
 func (s *StoredMerkleTree) SetSingleNode(node *models.MerkleTreeNode) error {
+	if node.MerklePath.Depth > s.depth {
+		return ErrExceededTreeDepth
+	}
 	return s.badger.Upsert(s.keyFor(node.MerklePath), *node)
 }
 
 // SetNode sets node hash and update all nodes leading to root. Returns new root hash and the insertion witness.
 func (s *StoredMerkleTree) SetNode(path *models.MerklePath, hash common.Hash) (*common.Hash, models.Witness, error) {
+	if path.Depth > s.depth {
+		return nil, nil, ErrExceededTreeDepth
+	}
+
 	currentPath := path
 	currentHash := hash
 	witness := make(models.Witness, 0, path.Depth)
