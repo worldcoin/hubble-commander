@@ -55,7 +55,7 @@ func (c *Commander) Start() (err error) {
 		return nil
 	}
 
-	c.storage, err = st.NewConfiguredStorage(c.cfg)
+	c.storage, err = st.NewStorage(c.cfg)
 	if err != nil {
 		return err
 	}

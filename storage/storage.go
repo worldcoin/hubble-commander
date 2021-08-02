@@ -24,7 +24,7 @@ type TxOptions struct {
 	ReadOnly bool
 }
 
-func NewConfiguredStorage(cfg *config.Config) (*Storage, error) {
+func NewStorage(cfg *config.Config) (*Storage, error) {
 	database, err := NewDatabase(cfg)
 	if err != nil {
 		return nil, err
