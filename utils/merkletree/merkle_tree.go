@@ -29,7 +29,7 @@ func init() {
 	}
 }
 
-func GetZeroHash(level uint) common.Hash {
+func GetZeroHash(level uint8) common.Hash {
 	if level > MaxDepth {
 		panic(fmt.Sprintf("level > %d", MaxDepth))
 	}
