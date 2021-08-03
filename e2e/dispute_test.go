@@ -30,10 +30,9 @@ import (
 )
 
 func TestCommanderDispute(t *testing.T) {
-	//cmd, err := setup.NewCommanderFromEnv(true)
-	//require.NoError(t, err)
-	cmd := setup.CreateInProcessCommander()
-	err := cmd.Start()
+	cmd, err := setup.NewCommanderFromEnv(true)
+	require.NoError(t, err)
+	err = cmd.Start()
 	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, cmd.Stop())
