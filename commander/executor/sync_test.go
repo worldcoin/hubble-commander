@@ -432,25 +432,11 @@ func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 	s.Equal(tx, *transfer)
 }
 
-func (s *SyncTestSuite) TestSyncBatch_CommitmentWithZeroTransactions() {
-	stateRoot, err := s.storage.StateTree.Root()
+func (s *SyncTestSuite) TestSyncBatch_CommitmentWithoutTransfers() {
+	commitment := s.createCommitmentWithEmptyTransactions(txtype.Transfer)
+
+	_, err := s.transactionExecutor.client.SubmitTransfersBatchAndWait([]models.Commitment{commitment})
 	s.NoError(err)
-
-	commitments := []models.Commitment{
-		{
-			Type:              txtype.Transfer,
-			Transactions:      []byte{},
-			FeeReceiver:       0,
-			CombinedSignature: models.Signature{},
-			PostStateRoot:     *stateRoot,
-		},
-	}
-
-	_, err = s.transactionExecutor.client.SubmitTransfersBatchAndWait(commitments)
-	s.NoError(err)
-
-	s.client.Commit()
-	s.recreateDatabase()
 
 	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
 	s.NoError(err)
@@ -548,6 +534,22 @@ func (s *SyncTestSuite) createAndSubmitInvalidTransferBatch(tx *models.Transfer)
 
 	s.client.Commit()
 	return pendingBatch
+}
+
+func (s *SyncTestSuite) createCommitmentWithEmptyTransactions(commitmentType txtype.TransactionType) models.Commitment {
+	stateRoot, err := s.storage.StateTree.Root()
+	s.NoError(err)
+
+	feeReceiver, err := s.transactionExecutor.getCommitmentFeeReceiver()
+	s.NoError(err)
+
+	return models.Commitment{
+		Type:              commitmentType,
+		Transactions:      []byte{},
+		FeeReceiver:       feeReceiver.StateID,
+		CombinedSignature: models.Signature{},
+		PostStateRoot:     *stateRoot,
+	}
 }
 
 func createTransferBatch(
