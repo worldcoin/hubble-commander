@@ -4,7 +4,6 @@ package e2e
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"sync"
 	"sync/atomic"
@@ -15,7 +14,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
-	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
@@ -104,7 +102,6 @@ func (s *BenchmarkSuite) benchSyncing() {
 
 	latestBatch := networkInfo.LatestBatch.Uint64()
 	startTime := time.Now()
-	totalTransactions := uint64(0)
 	lastSyncedBatch := uint64(0)
 	for lastSyncedBatch < latestBatch {
 		var networkInfo dto.NetworkInfo
@@ -115,20 +112,15 @@ func (s *BenchmarkSuite) benchSyncing() {
 			newBatch = networkInfo.LatestBatch.Uint64()
 		}
 
-		for i := lastSyncedBatch + 1; i <= newBatch; i++ {
-			var batch dto.BatchWithRootAndCommitments
-			err = passiveCommander.Client().CallFor(&batch, "hubble_getBatchByID", []interface{}{i})
-
-			log.Println("com len", len(batch.Commitments))
-
-			for _, commitment := range batch.Commitments {
-				log.Println("tx len", len(commitment.Transactions))
-				totalTransactions += uint64(len(commitment.Transactions) / encoder.GetTransactionLength(batch.Type))
-			}
+		if newBatch == lastSyncedBatch {
+			continue
 		}
 		lastSyncedBatch = newBatch
 
-		fmt.Printf("Transfers sent: %d, throughput: %f tx/s, batches synced: %d/%d\n", totalTransactions, float64(totalTransactions)/(time.Since(startTime).Seconds()), lastSyncedBatch, latestBatch)
+		txCount, err := passiveCommander.Commander.Storage.GetTransactionCount()
+		s.NoError(err)
+
+		fmt.Printf("Transfers synced: %d, throughput: %f tx/s, batches synced: %d/%d\n", *txCount, float64(*txCount)/(time.Since(startTime).Seconds()), lastSyncedBatch, latestBatch)
 	}
 }
 

@@ -12,7 +12,7 @@ import (
 
 type InProcessCommander struct {
 	client    jsonrpc.RPCClient
-	commander *commander.Commander
+	Commander *commander.Commander
 	cfg       *config.Config
 }
 
@@ -31,13 +31,13 @@ func CreateInProcessCommanderWithConfig(cfg *config.Config) *InProcessCommander 
 
 	return &InProcessCommander{
 		client:    client,
-		commander: cmd,
+		Commander: cmd,
 		cfg:       cfg,
 	}
 }
 
 func (e *InProcessCommander) Start() error {
-	err := e.commander.Start()
+	err := e.Commander.Start()
 	if err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func (e *InProcessCommander) Start() error {
 }
 
 func (e *InProcessCommander) Stop() error {
-	return e.commander.Stop()
+	return e.Commander.Stop()
 }
 
 func (e *InProcessCommander) Restart() error {
@@ -70,7 +70,7 @@ func (e *InProcessCommander) Restart() error {
 		return err
 	}
 	e.cfg.Bootstrap.Prune = false
-	e.commander = commander.NewCommander(e.cfg)
+	e.Commander = commander.NewCommander(e.cfg)
 	return e.Start()
 }
 

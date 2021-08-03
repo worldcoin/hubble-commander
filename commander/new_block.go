@@ -38,7 +38,7 @@ func (c *Commander) newBlockLoop() error {
 		case err = <-subscription.Err():
 			return err
 		case currentBlock := <-blocks:
-			if currentBlock.Number.Uint64() <= uint64(c.storage.GetLatestBlockNumber()) {
+			if currentBlock.Number.Uint64() <= uint64(c.Storage.GetLatestBlockNumber()) {
 				continue
 			}
 
@@ -64,7 +64,7 @@ func (c *Commander) syncToLatestBlock() error {
 	if err != nil {
 		return err
 	}
-	c.storage.SetLatestBlockNumber(uint32(*latestBlockNumber))
+	c.Storage.SetLatestBlockNumber(uint32(*latestBlockNumber))
 
 	syncedBlock := ref.Uint64(uint64(0))
 	for *syncedBlock != *latestBlockNumber {
@@ -77,7 +77,7 @@ func (c *Commander) syncToLatestBlock() error {
 		if err != nil {
 			return err
 		}
-		c.storage.SetLatestBlockNumber(uint32(*latestBlockNumber))
+		c.Storage.SetLatestBlockNumber(uint32(*latestBlockNumber))
 
 		select {
 		case <-c.stopChannel:
@@ -90,7 +90,7 @@ func (c *Commander) syncToLatestBlock() error {
 }
 
 func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
-	syncedBlock, err := c.storage.GetSyncedBlock(c.client.ChainState.ChainID)
+	syncedBlock, err := c.Storage.GetSyncedBlock(c.client.ChainState.ChainID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -102,7 +102,7 @@ func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
 		return nil, err
 	}
 
-	err = c.storage.SetSyncedBlock(c.client.ChainState.ChainID, endBlock)
+	err = c.Storage.SetSyncedBlock(c.client.ChainState.ChainID, endBlock)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

@@ -29,7 +29,7 @@ type Commander struct {
 	stateMutex        sync.Mutex
 
 	stopChannel      chan bool
-	storage          *st.Storage
+	Storage          *st.Storage
 	client           *eth.Client
 	apiServer        *http.Server
 	signaturesDomain *bls.Domain
@@ -52,7 +52,7 @@ func (c *Commander) Start() (err error) {
 		return nil
 	}
 
-	c.storage, err = st.NewConfiguredStorage(c.cfg)
+	c.Storage, err = st.NewConfiguredStorage(c.cfg)
 	if err != nil {
 		return err
 	}
@@ -62,17 +62,17 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.client, err = getClient(chain, c.storage, c.cfg.Bootstrap)
+	c.client, err = getClient(chain, c.Storage, c.cfg.Bootstrap)
 	if err != nil {
 		return err
 	}
 
-	c.signaturesDomain, err = c.storage.GetDomain(c.client.ChainState.ChainID)
+	c.signaturesDomain, err = c.Storage.GetDomain(c.client.ChainState.ChainID)
 	if err != nil {
 		return err
 	}
 
-	c.apiServer, err = api.NewAPIServer(c.cfg.API, c.storage, c.client, c.cfg.Rollup.DevMode)
+	c.apiServer, err = api.NewAPIServer(c.cfg.API, c.Storage, c.client, c.cfg.Rollup.DevMode)
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ func (c *Commander) Stop() error {
 		return err
 	}
 	c.workers.Wait()
-	err := c.storage.Close()
+	err := c.Storage.Close()
 	if err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func (c *Commander) Stop() error {
 
 func (c *Commander) clearState() {
 	c.stopChannel = nil
-	c.storage = nil
+	c.Storage = nil
 	c.apiServer = nil
 }
 
