@@ -9,12 +9,14 @@ import (
 type TransactionType uint8
 
 const (
+	Genesis         TransactionType = 0
 	Transfer        TransactionType = 1
 	Create2Transfer TransactionType = 3
 	MassMigration   TransactionType = 5
 )
 
 var TransactionTypes = map[TransactionType]string{
+	Genesis:         "GENESIS",
 	Transfer:        "TRANSFER",
 	Create2Transfer: "CREATE2TRANSFER",
 	MassMigration:   "MASS_MIGRATION",

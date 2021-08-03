@@ -36,7 +36,7 @@ func TestMarshalJSON_SupportedType(t *testing.T) {
 }
 
 func TestMarshalJSON_UnsupportedType(t *testing.T) {
-	input := TransactionType(0)
+	input := TransactionType(10)
 	bytes, err := json.Marshal(input)
 	require.Error(t, err)
 	require.Nil(t, bytes)

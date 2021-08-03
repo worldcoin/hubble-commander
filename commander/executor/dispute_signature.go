@@ -19,7 +19,7 @@ func (t *TransactionExecutor) DisputeSignature(
 		return t.disputeTransferSignature(batch, commitmentIndex, stateProofs)
 	case txtype.Create2Transfer:
 		return t.disputeCreate2TransferSignature(batch, commitmentIndex, stateProofs)
-	case txtype.MassMigration:
+	case txtype.Genesis, txtype.MassMigration:
 		return errors.New("unsupported batch type")
 	}
 	return nil

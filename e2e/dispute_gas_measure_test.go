@@ -54,7 +54,7 @@ func measureDisputeSignatureTransfer(t *testing.T, client jsonrpc.RPCClient, eth
 	send32TransfersBatchWithInvalidSignature(t, ethClient)
 	testRollbackCompletion(t, ethClient, sink, subscription)
 
-	testBatchesAfterDispute(t, client, 0)
+	testBatchesAfterDispute(t, client, 1)
 }
 
 func measureDisputeSignatureC2T(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, wallets []bls.Wallet) {
@@ -66,7 +66,7 @@ func measureDisputeSignatureC2T(t *testing.T, client jsonrpc.RPCClient, ethClien
 	send32C2TBatchWithInvalidSignature(t, ethClient, wallets)
 	testRollbackCompletion(t, ethClient, sink, subscription)
 
-	testBatchesAfterDispute(t, client, 0)
+	testBatchesAfterDispute(t, client, 1)
 }
 
 func measureDisputeTransitionTransferInvalidStateRoot(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
@@ -78,7 +78,7 @@ func measureDisputeTransitionTransferInvalidStateRoot(t *testing.T, client jsonr
 	send32TransfersBatchWithInvalidStateRoot(t, ethClient)
 	testRollbackCompletion(t, ethClient, sink, subscription)
 
-	testBatchesAfterDispute(t, client, 1)
+	testBatchesAfterDispute(t, client, 2)
 }
 
 func measureDisputeTransitionC2TInvalidStateRoot(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, wallets []bls.Wallet) {
@@ -90,7 +90,7 @@ func measureDisputeTransitionC2TInvalidStateRoot(t *testing.T, client jsonrpc.RP
 	send32C2TBatchWithInvalidStateRoot(t, ethClient, wallets)
 	testRollbackCompletion(t, ethClient, sink, subscription)
 
-	testBatchesAfterDispute(t, client, 1)
+	testBatchesAfterDispute(t, client, 2)
 }
 
 func send32TransfersBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client) {
