@@ -15,12 +15,14 @@ import (
 type AccountTreeTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage *TestStorage
-	leaf    *models.AccountLeaf
+	storage   *TestStorage
+	leaf      *models.AccountLeaf
+	treeDepth uint8
 }
 
 func (s *AccountTreeTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
+	s.treeDepth = 32
 }
 
 func (s *AccountTreeTestSuite) SetupTest() {
@@ -117,7 +119,7 @@ func (s *AccountTreeTestSuite) TestSetSingle_StoresLeafMerkleTreeNodeRecord() {
 	expectedNode := &models.MerkleTreeNode{
 		MerklePath: models.MerklePath{
 			Path:  0,
-			Depth: AccountTreeDepth,
+			Depth: s.treeDepth,
 		},
 		DataHash: crypto.Keccak256Hash(s.leaf.PublicKey.Bytes()),
 	}
@@ -195,9 +197,9 @@ func (s *AccountTreeTestSuite) TestSetSingle_InvalidPubKeyID() {
 func (s *AccountTreeTestSuite) TestUnsafeSet_ReturnsWitness() {
 	witness, err := s.storage.AccountTree.unsafeSet(s.leaf)
 	s.NoError(err)
-	s.Len(witness, AccountTreeDepth)
+	s.Len(witness, int(s.treeDepth))
 
-	node, err := s.storage.AccountTree.merkleTree.Get(models.MerklePath{Depth: AccountTreeDepth, Path: 1})
+	node, err := s.storage.AccountTree.merkleTree.Get(models.MerklePath{Depth: s.treeDepth, Path: 1})
 	s.NoError(err)
 	s.Equal(node.DataHash, witness[0])
 

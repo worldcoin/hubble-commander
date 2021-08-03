@@ -5,18 +5,23 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v3"
 )
+
+var ErrExceededTreeDepth = errors.New("node depth exceeds the tree depth")
 
 type StoredMerkleTree struct {
 	database  *Database
 	namespace string
+	depth     uint8
 }
 
-func NewStoredMerkleTree(namespace string, database *Database) *StoredMerkleTree {
+func NewStoredMerkleTree(namespace string, database *Database, depth uint8) *StoredMerkleTree {
 	return &StoredMerkleTree{
 		database:  database,
 		namespace: namespace,
+		depth:     depth,
 	}
 }
 
@@ -28,7 +33,7 @@ func (s *StoredMerkleTree) Get(path models.MerklePath) (*models.MerkleTreeNode, 
 	node := models.MerkleTreeNode{MerklePath: path}
 	err := s.database.Badger.Get(s.keyFor(path), &node)
 	if err == bh.ErrNotFound {
-		return newZeroNode(&path), nil
+		return s.newZeroNode(&path), nil
 	}
 	if err != nil {
 		return nil, err
@@ -46,11 +51,18 @@ func (s *StoredMerkleTree) Root() (*common.Hash, error) {
 }
 
 func (s *StoredMerkleTree) SetSingleNode(node *models.MerkleTreeNode) error {
+	if node.MerklePath.Depth > s.depth {
+		return ErrExceededTreeDepth
+	}
 	return s.database.Badger.Upsert(s.keyFor(node.MerklePath), *node)
 }
 
 // SetNode sets node hash and update all nodes leading to root. Returns new root hash and the insertion witness.
 func (s *StoredMerkleTree) SetNode(path *models.MerklePath, hash common.Hash) (*common.Hash, models.Witness, error) {
+	if path.Depth > s.depth {
+		return nil, nil, ErrExceededTreeDepth
+	}
+
 	currentPath := path
 	currentHash := hash
 	witness := make(models.Witness, 0, path.Depth)
@@ -113,6 +125,13 @@ func (s *StoredMerkleTree) GetWitness(path models.MerklePath) (models.Witness, e
 	return witness, nil
 }
 
+func (s *StoredMerkleTree) newZeroNode(path *models.MerklePath) *models.MerkleTreeNode {
+	return &models.MerkleTreeNode{
+		MerklePath: *path,
+		DataHash:   merkletree.GetZeroHash(s.depth - path.Depth),
+	}
+}
+
 func calculateParentHash(
 	currentHash *common.Hash,
 	currentPath *models.MerklePath,
@@ -122,13 +141,5 @@ func calculateParentHash(
 		return utils.HashTwo(*currentHash, witnessHash)
 	} else {
 		return utils.HashTwo(witnessHash, *currentHash)
-	}
-}
-
-// TODO add Depth parameter to MerkleTree and use it here instead of StateTreeDepth
-func newZeroNode(path *models.MerklePath) *models.MerkleTreeNode {
-	return &models.MerkleTreeNode{
-		MerklePath: *path,
-		DataHash:   merkletree.GetZeroHash(StateTreeDepth - uint(path.Depth)),
 	}
 }

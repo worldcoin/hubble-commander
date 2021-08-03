@@ -22,12 +22,14 @@ var (
 type StateTreeTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage *TestStorage
-	leaf    *models.StateLeaf
+	storage   *TestStorage
+	leaf      *models.StateLeaf
+	treeDepth uint8
 }
 
 func (s *StateTreeTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
+	s.treeDepth = 32
 }
 
 func (s *StateTreeTestSuite) SetupTest() {
@@ -147,7 +149,7 @@ func (s *StateTreeTestSuite) TestSet_StoresLeafMerkleTreeNodeRecord() {
 	expectedNode := &models.MerkleTreeNode{
 		MerklePath: models.MerklePath{
 			Path:  0,
-			Depth: StateTreeDepth,
+			Depth: s.treeDepth,
 		},
 		DataHash: s.leaf.DataHash,
 	}
@@ -200,7 +202,7 @@ func (s *StateTreeTestSuite) TestSet_StoresStateUpdateRecord() {
 	expectedUpdate := &models.StateUpdate{
 		ID:          0,
 		CurrentRoot: common.HexToHash("0xd8cb702fc833817dccdc3889282af96755b2909274ca2f1a3827a60d11d796eb"),
-		PrevRoot:    merkletree.GetZeroHash(StateTreeDepth),
+		PrevRoot:    merkletree.GetZeroHash(s.treeDepth),
 		PrevStateLeaf: models.StateLeaf{
 			StateID:  0,
 			DataHash: merkletree.GetZeroHash(0),
@@ -235,7 +237,7 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectLeafMerkleTreeNode
 
 	leafPath := models.MerklePath{
 		Path:  0,
-		Depth: StateTreeDepth,
+		Depth: s.treeDepth,
 	}
 
 	expectedLeaf := &models.MerkleTreeNode{
@@ -243,7 +245,7 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafCorrectLeafMerkleTreeNode
 		DataHash:   leaf.DataHash,
 	}
 
-	leafNode, err := s.storage.StateTree.merkleTree.Get(models.MerklePath{Path: 0, Depth: StateTreeDepth})
+	leafNode, err := s.storage.StateTree.merkleTree.Get(models.MerklePath{Path: 0, Depth: s.treeDepth})
 	s.NoError(err)
 	s.Equal(expectedLeaf, leafNode)
 }
@@ -284,9 +286,9 @@ func (s *StateTreeTestSuite) TestSet_UpdateExistingLeafAddsStateUpdateRecord() {
 func (s *StateTreeTestSuite) TestSet_ReturnsWitness() {
 	witness, err := s.storage.StateTree.Set(0, &s.leaf.UserState)
 	s.NoError(err)
-	s.Len(witness, StateTreeDepth)
+	s.Len(witness, int(s.treeDepth))
 
-	node, err := s.storage.StateTree.merkleTree.Get(models.MerklePath{Depth: StateTreeDepth, Path: 1})
+	node, err := s.storage.StateTree.merkleTree.Get(models.MerklePath{Depth: s.treeDepth, Path: 1})
 	s.NoError(err)
 	s.Equal(node.DataHash, witness[0])
 
