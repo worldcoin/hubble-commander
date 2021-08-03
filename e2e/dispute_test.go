@@ -30,9 +30,10 @@ import (
 )
 
 func TestCommanderDispute(t *testing.T) {
-	cmd, err := setup.NewCommanderFromEnv(true)
-	require.NoError(t, err)
-	err = cmd.Start()
+	//cmd, err := setup.NewCommanderFromEnv(true)
+	//require.NoError(t, err)
+	cmd := setup.CreateInProcessCommander()
+	err := cmd.Start()
 	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, cmd.Stop())
@@ -66,7 +67,7 @@ func testDisputeSignatureTransfer(t *testing.T, client jsonrpc.RPCClient, ethCli
 	sendTransferBatchWithInvalidSignature(t, ethClient)
 	testRollbackCompletion(t, ethClient, sink, subscription)
 
-	testBatchesAfterDispute(t, client, 0)
+	testBatchesAfterDispute(t, client, 1)
 }
 
 func testDisputeSignatureC2T(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, receiverWallet bls.Wallet) {
@@ -78,7 +79,7 @@ func testDisputeSignatureC2T(t *testing.T, client jsonrpc.RPCClient, ethClient *
 	sendC2TBatchWithInvalidSignature(t, ethClient, receiverWallet.PublicKey())
 	testRollbackCompletion(t, ethClient, sink, subscription)
 
-	testBatchesAfterDispute(t, client, 0)
+	testBatchesAfterDispute(t, client, 1)
 }
 
 func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, senderWallet bls.Wallet) {
