@@ -7,6 +7,8 @@ import (
 
 type Storage struct {
 	*StorageBase
+	*BatchStorage
+	database    *Database
 	StateTree   *StateTree
 	AccountTree *AccountTree
 }
@@ -35,10 +37,15 @@ func NewStorage(cfg *config.Config) (*Storage, error) {
 		feeReceiverStateIDs: make(map[string]uint32),
 	}
 
+	batchStorage := &BatchStorage{
+		database: database,
+	}
+
 	return &Storage{
-		StorageBase: storageBase,
-		StateTree:   NewStateTree(database),
-		AccountTree: NewAccountTree(database),
+		StorageBase:  storageBase,
+		BatchStorage: batchStorage,
+		StateTree:    NewStateTree(database),
+		AccountTree:  NewAccountTree(database),
 	}, nil
 }
 
