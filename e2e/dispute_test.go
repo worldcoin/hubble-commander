@@ -92,7 +92,7 @@ func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethCl
 	sendTransferBatchWithInvalidAmount(t, ethClient)
 	testRollbackCompletion(t, ethClient, sink, subscription)
 
-	testBatchesAfterDispute(t, client, 1)
+	testBatchesAfterDispute(t, client, 2)
 
 	testSendTransferBatch(t, client, senderWallet, 32)
 }
@@ -106,7 +106,7 @@ func testDisputeTransitionTransferInvalidStateRoot(t *testing.T, client jsonrpc.
 	sendTransferBatchWithInvalidStateRoot(t, ethClient)
 	testRollbackCompletion(t, ethClient, sink, subscription)
 
-	testBatchesAfterDispute(t, client, 3)
+	testBatchesAfterDispute(t, client, 4)
 }
 
 func testDisputeTransitionC2T(
@@ -125,7 +125,7 @@ func testDisputeTransitionC2T(
 	sendC2TBatchWithInvalidAmount(t, ethClient, firstC2TWallet.PublicKey())
 	testRollbackCompletion(t, ethClient, sink, subscription)
 
-	testBatchesAfterDispute(t, client, 2)
+	testBatchesAfterDispute(t, client, 3)
 
 	testSendC2TBatch(t, client, senderWallet, wallets, firstC2TWallet.PublicKey(), 64)
 }
@@ -139,7 +139,7 @@ func testDisputeTransitionC2TInvalidStateRoot(t *testing.T, client jsonrpc.RPCCl
 	sendC2TBatchWithInvalidStateRoot(t, ethClient, receiverWallet.PublicKey())
 	testRollbackCompletion(t, ethClient, sink, subscription)
 
-	testBatchesAfterDispute(t, client, 3)
+	testBatchesAfterDispute(t, client, 4)
 }
 
 func testSendTransferBatch(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, startNonce uint64) {
