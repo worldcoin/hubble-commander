@@ -29,6 +29,7 @@ type StateTreeTestSuite struct {
 
 func (s *StateTreeTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
+	s.treeDepth = 32
 }
 
 func (s *StateTreeTestSuite) SetupTest() {
@@ -53,7 +54,6 @@ func (s *StateTreeTestSuite) TearDownTest() {
 }
 
 func (s *StateTreeTestSuite) TestLeaf_ReturnsCorrectStruct() {
-	s.treeDepth = 32
 	leaf, err := NewStateLeaf(0, &models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(1),
