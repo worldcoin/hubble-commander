@@ -44,8 +44,6 @@ func (s *VerifySignatureTestSuite) SetupTest() {
 	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, s.cfg, context.Background())
-	err = s.storage.SetChainState(&s.client.ChainState)
-	s.NoError(err)
 	s.addAccounts()
 }
 
@@ -132,7 +130,11 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_InvalidSignature(
 	}
 
 	err = s.transactionExecutor.verifyTransferSignature(commitment, transfers)
-	s.Equal(ErrInvalidSignature, err)
+
+	var disputableErr *DisputableError
+	s.ErrorAs(err, &disputableErr)
+	s.Equal(Signature, disputableErr.Type)
+	s.Equal(InvalidSignature, disputableErr.Reason)
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyCreate2TransferSignature_ValidSignature() {
@@ -177,7 +179,7 @@ func (s *VerifySignatureTestSuite) TestVerifyCreate2TransferSignature_ValidSigna
 }
 
 func (s *VerifySignatureTestSuite) addAccounts() {
-	domain, err := s.storage.GetDomain(s.client.ChainState.ChainID)
+	domain, err := s.client.GetDomain()
 	s.NoError(err)
 
 	s.wallets = make([]bls.Wallet, 0, 2)

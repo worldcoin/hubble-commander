@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	ErrInvalidDataLength = NewDisputableTransferErrorWithoutProofs("invalid data length")
-	ErrTooManyTx         = NewDisputableTransferErrorWithoutProofs("too many transactions in a commitment")
+	ErrInvalidDataLength = NewDisputableError(Transition, "invalid data length")
+	ErrTooManyTx         = NewDisputableError(Transition, "too many transactions in a commitment")
 )
 
 func (t *TransactionExecutor) syncTransferCommitment(
@@ -55,7 +55,7 @@ func (t *TransactionExecutor) syncTransferCommitment(
 }
 
 func (t *TransactionExecutor) getSyncedCommitmentFeeReceiver(commitment *encoder.DecodedCommitment) (*FeeReceiver, error) {
-	feeReceiverState, err := t.storage.GetStateLeaf(commitment.FeeReceiver)
+	feeReceiverState, err := t.storage.StateTree.Leaf(commitment.FeeReceiver)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (t *TransactionExecutor) verifyStateRoot(commitmentPostState common.Hash, p
 		return err
 	}
 	if *postStateRoot != commitmentPostState {
-		return NewDisputableTransferError(ErrInvalidCommitmentStateRoot, proofs)
+		return NewDisputableErrorWithProofs(Transition, ErrInvalidCommitmentStateRoot.Error(), proofs)
 	}
 	return nil
 }

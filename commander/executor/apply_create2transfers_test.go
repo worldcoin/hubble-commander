@@ -155,7 +155,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AppliesFee() 
 	_, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
-	feeReceiverState, err := s.transactionExecutor.storage.GetStateLeaf(s.feeReceiver.StateID)
+	feeReceiverState, err := s.transactionExecutor.storage.StateTree.Leaf(s.feeReceiver.StateID)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }
@@ -204,9 +204,10 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_Invali
 	appliedTransfers, _, err := s.transactionExecutor.ApplyCreate2TransfersForSync(transfers, pubKeyIDs, s.feeReceiver)
 	s.Nil(appliedTransfers)
 
-	var disputableTransferError *DisputableTransferError
-	s.ErrorAs(err, &disputableTransferError)
-	s.Len(disputableTransferError.Proofs, 6)
+	var disputableErr *DisputableError
+	s.ErrorAs(err, &disputableErr)
+	s.Equal(Transition, disputableErr.Type)
+	s.Len(disputableErr.Proofs, 6)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidSlicesLength() {
@@ -221,7 +222,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_Applie
 	_, _, err := s.transactionExecutor.ApplyCreate2TransfersForSync(generatedTransfers, pubKeyIDs, s.feeReceiver)
 	s.NoError(err)
 
-	feeReceiverState, err := s.transactionExecutor.storage.GetStateLeaf(s.feeReceiver.StateID)
+	feeReceiverState, err := s.transactionExecutor.storage.StateTree.Leaf(s.feeReceiver.StateID)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }

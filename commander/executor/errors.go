@@ -18,30 +18,35 @@ func (e RollupError) Error() string {
 	return fmt.Sprintf("failed to submit batch: %s", e.Reason)
 }
 
-type DisputableTransferError struct {
-	Reason string
-	Proofs []models.StateMerkleProof
-}
+type DisputeType uint8
 
-func NewDisputableTransferError(reason error, proofs []models.StateMerkleProof) *DisputableTransferError {
-	return &DisputableTransferError{Reason: reason.Error(), Proofs: proofs}
-}
+const (
+	Transition DisputeType = iota
+	Signature
+)
 
-func NewDisputableTransferErrorWithoutProofs(reason string) *DisputableTransferError {
-	return &DisputableTransferError{Reason: reason, Proofs: []models.StateMerkleProof{}}
-}
-
-func (e DisputableTransferError) Error() string {
-	return fmt.Sprintf("syncing commitment failed: %s", e.Reason)
-}
-
-type DisputableCommitmentError struct {
-	DisputableTransferError
+type DisputableError struct {
+	Type            DisputeType
+	Reason          string
 	CommitmentIndex int
+	Proofs          []models.StateMerkleProof
 }
 
-func NewDisputableCommitmentError(err DisputableTransferError, commitmentIndex int) *DisputableCommitmentError {
-	return &DisputableCommitmentError{DisputableTransferError: err, CommitmentIndex: commitmentIndex}
+func NewDisputableError(disputeType DisputeType, reason string) *DisputableError {
+	return &DisputableError{Type: disputeType, Reason: reason, Proofs: []models.StateMerkleProof{}}
+}
+
+func NewDisputableErrorWithProofs(disputeType DisputeType, reason string, proofs []models.StateMerkleProof) *DisputableError {
+	return &DisputableError{Type: disputeType, Reason: reason, Proofs: proofs}
+}
+
+func (e *DisputableError) WithCommitmentIndex(index int) *DisputableError {
+	e.CommitmentIndex = index
+	return e
+}
+
+func (e DisputableError) Error() string {
+	return fmt.Sprintf("syncing commitment failed: %s", e.Reason)
 }
 
 type InconsistentBatchError struct {

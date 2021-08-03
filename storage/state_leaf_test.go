@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -46,72 +45,50 @@ func (s *StateLeafTestSuite) TearDownTest() {
 }
 
 func (s *StateLeafTestSuite) TestUpsertStateLeaf_AddAndRetrieve() {
-	leaf := &models.StateLeaf{
-		StateID:  0,
-		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
-		UserState: models.UserState{
-			PubKeyID: 1,
-			TokenID:  models.MakeUint256(1),
-			Balance:  models.MakeUint256(420),
-			Nonce:    models.MakeUint256(0),
-		},
-	}
-	err := s.storage.UpsertStateLeaf(leaf)
+	leaf, err := NewStateLeaf(0, &models.UserState{
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
+	})
 	s.NoError(err)
 
-	res, err := s.storage.GetStateLeaf(leaf.StateID)
+	err = s.storage.StateTree.upsertStateLeaf(leaf)
+	s.NoError(err)
+
+	res, err := s.storage.StateTree.Leaf(leaf.StateID)
 	s.NoError(err)
 
 	s.Equal(leaf, res)
 }
 
 func (s *StateLeafTestSuite) TestUpsertStateLeaf_UpdateAndRetrieve() {
-	leaf := &models.StateLeaf{
-		StateID:  0,
-		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
-		UserState: models.UserState{
-			PubKeyID: 1,
-			TokenID:  models.MakeUint256(1),
-			Balance:  models.MakeUint256(420),
-			Nonce:    models.MakeUint256(0),
-		},
-	}
-	err := s.storage.UpsertStateLeaf(leaf)
+	leaf, err := NewStateLeaf(0, &models.UserState{
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
+	})
 	s.NoError(err)
 
-	leaf.UserState.Balance = models.MakeUint256(320)
-	err = s.storage.UpsertStateLeaf(leaf)
+	err = s.storage.StateTree.upsertStateLeaf(leaf)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateLeaf(leaf.StateID)
+	updatedLeaf, err := NewStateLeaf(0, &models.UserState{
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(320),
+		Nonce:    models.MakeUint256(0),
+	})
 	s.NoError(err)
 
-	s.Equal(leaf, res)
-}
-
-func (s *StateLeafTestSuite) TestGetStateLeaf_ReturnsCorrectStruct() {
-	leaf := &models.StateLeaf{
-		StateID:  0,
-		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
-		UserState: models.UserState{
-			PubKeyID: 1,
-			TokenID:  models.MakeUint256(1),
-			Balance:  models.MakeUint256(420),
-			Nonce:    models.MakeUint256(0),
-		},
-	}
-
-	err := s.storage.UpsertStateLeaf(leaf)
+	_, err = s.storage.StateTree.Set(leaf.StateID, &updatedLeaf.UserState)
 	s.NoError(err)
 
-	actual, err := s.storage.GetStateLeaf(leaf.StateID)
+	res, err := s.storage.StateTree.Leaf(leaf.StateID)
 	s.NoError(err)
-	s.Equal(leaf, actual)
-}
 
-func (s *StateLeafTestSuite) TestGetStateLeaf_NonExistentLeaf() {
-	_, err := s.storage.GetStateLeaf(0)
-	s.Equal(NewNotFoundError("state leaf"), err)
+	s.Equal(updatedLeaf, res)
 }
 
 func (s *StateLeafTestSuite) TestGetUserStatesByPublicKey() {
@@ -214,34 +191,6 @@ func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf_WorkWithCachedValue() {
 	s.NoError(err)
 	s.Equal(*userState2, stateLeaf.UserState)
 	s.Equal(uint32(1), stateLeaf.StateID)
-}
-
-func (s *StateLeafTestSuite) TestGetNextAvailableStateID_NoLeavesInStateTree() {
-	stateID, err := s.storage.GetNextAvailableStateID()
-	s.NoError(err)
-	s.Equal(uint32(0), *stateID)
-}
-
-func (s *StateLeafTestSuite) TestGetNextAvailableStateID_OneBytes() {
-	_, err := s.storage.StateTree.Set(0, userState1)
-	s.NoError(err)
-	_, err = s.storage.StateTree.Set(2, userState2)
-	s.NoError(err)
-
-	stateID, err := s.storage.GetNextAvailableStateID()
-	s.NoError(err)
-	s.Equal(uint32(3), *stateID)
-}
-
-func (s *StateLeafTestSuite) TestGetNextAvailableStateID_TwoBytes() {
-	_, err := s.storage.StateTree.Set(0, userState1)
-	s.NoError(err)
-	_, err = s.storage.StateTree.Set(13456, userState2)
-	s.NoError(err)
-
-	stateID, err := s.storage.GetNextAvailableStateID()
-	s.NoError(err)
-	s.Equal(uint32(13457), *stateID)
 }
 
 func TestStateLeafTestSuite(t *testing.T) {

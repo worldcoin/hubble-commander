@@ -28,11 +28,12 @@ func TestStartApiServer(t *testing.T) {
 
 	storage, err := st.NewTestStorage()
 	require.NoError(t, err)
-	err = storage.SetChainState(&chainState)
+	client, err := eth.NewTestClient()
 	require.NoError(t, err)
+	defer client.Close()
 
 	cfg := config.APIConfig{Version: "v0123"}
-	server, err := getAPIServer(&cfg, storage.Storage, &eth.Client{ChainState: chainState}, false)
+	server, err := getAPIServer(&cfg, storage.Storage, client.Client, false)
 	require.NoError(t, err)
 
 	w := httptest.NewRecorder()

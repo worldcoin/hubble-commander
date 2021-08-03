@@ -79,7 +79,7 @@ func (a *API) validateCreate2Transfer(create2Transfer *models.Create2Transfer) e
 		return vErr
 	}
 
-	senderState, err := a.storage.GetStateLeaf(create2Transfer.FromStateID)
+	senderState, err := a.storage.StateTree.Leaf(create2Transfer.FromStateID)
 	if err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func logReceivedCreate2Transfer(transfer dto.Create2Transfer) {
 	if log.IsLevelEnabled(log.DebugLevel) {
 		jsonTransfer, err := json.Marshal(transfer)
 		if err != nil {
-			log.Debugf("Marshaling received transaction falied")
+			log.Errorln("Marshaling received transaction failed")
 			return
 		}
 		log.Debugf("API: received new transaction: %s", string(jsonTransfer))

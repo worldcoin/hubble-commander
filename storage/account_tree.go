@@ -21,14 +21,14 @@ const (
 var ErrInvalidAccountsLength = errors.New("invalid accounts length")
 
 type AccountTree struct {
-	storageBase *StorageBase
-	merkleTree  *StoredMerkleTree
+	database   *Database
+	merkleTree *StoredMerkleTree
 }
 
-func NewAccountTree(storageBase *StorageBase) *AccountTree {
+func NewAccountTree(database *Database) *AccountTree {
 	return &AccountTree{
-		storageBase: storageBase,
-		merkleTree:  NewStoredMerkleTree("account", storageBase.Badger),
+		database:   database,
+		merkleTree: NewStoredMerkleTree("account", database),
 	}
 }
 
@@ -44,7 +44,30 @@ func (s *AccountTree) LeafNode(pubKeyID uint32) (*models.MerkleTreeNode, error) 
 }
 
 func (s *AccountTree) Leaf(pubKeyID uint32) (*models.AccountLeaf, error) {
-	return s.storageBase.GetAccountLeaf(pubKeyID)
+	var leaf models.AccountLeaf
+	err := s.database.Badger.Get(pubKeyID, &leaf)
+	if err == bh.ErrNotFound {
+		return nil, NewNotFoundError("account leaf")
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &leaf, nil
+}
+
+func (s *AccountTree) Leaves(publicKey *models.PublicKey) ([]models.AccountLeaf, error) {
+	accounts := make([]models.AccountLeaf, 0, 1)
+	err := s.database.Badger.Find(
+		&accounts,
+		bh.Where("PublicKey").Eq(publicKey).Index("PublicKey"),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if len(accounts) == 0 {
+		return nil, NewNotFoundError("account leaves")
+	}
+	return accounts, nil
 }
 
 func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
@@ -52,13 +75,13 @@ func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
 		return NewInvalidPubKeyIDError(leaf.PubKeyID)
 	}
 
-	tx, storage, err := s.storageBase.BeginTransaction(TxOptions{Badger: true})
+	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback(&err)
 
-	_, err = NewAccountTree(storage).unsafeSet(leaf)
+	_, err = NewAccountTree(txDatabase).unsafeSet(leaf)
 	if err == bh.ErrKeyExists {
 		return NewAccountAlreadyExistsError(leaf)
 	}
@@ -74,13 +97,13 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
 		return ErrInvalidAccountsLength
 	}
 
-	tx, storage, err := s.storageBase.BeginTransaction(TxOptions{Badger: true})
+	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback(&err)
 
-	accountTree := NewAccountTree(storage)
+	accountTree := NewAccountTree(txDatabase)
 
 	for i := range leaves {
 		if leaves[i].PubKeyID < accountBatchOffset || leaves[i].PubKeyID > rightSubtreeMaxValue {
@@ -103,7 +126,7 @@ func (s *AccountTree) GetWitness(pubKeyID uint32) (models.Witness, error) {
 }
 
 func (s *AccountTree) unsafeSet(leaf *models.AccountLeaf) (models.Witness, error) {
-	err := s.storageBase.AddAccountLeafIfNotExists(leaf)
+	err := s.database.Badger.Insert(leaf.PubKeyID, *leaf)
 	if err != nil {
 		return nil, err
 	}
@@ -116,8 +139,4 @@ func (s *AccountTree) unsafeSet(leaf *models.AccountLeaf) (models.Witness, error
 	}
 
 	return witness, nil
-}
-
-func (s *AccountTree) getMerkleTreeNodeByPath(path *models.MerklePath) (*models.MerkleTreeNode, error) {
-	return s.merkleTree.Get(*path)
 }

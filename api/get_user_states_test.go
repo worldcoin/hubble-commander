@@ -6,7 +6,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -52,8 +51,7 @@ func (s *GetUserStatesTestSuite) TestGetUserStates() {
 
 	leaves := []models.StateLeaf{
 		{
-			StateID:  0,
-			DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
+			StateID: 0,
 			UserState: models.UserState{
 				PubKeyID: accounts[0].PubKeyID,
 				TokenID:  models.MakeUint256(1),
@@ -62,8 +60,7 @@ func (s *GetUserStatesTestSuite) TestGetUserStates() {
 			},
 		},
 		{
-			StateID:  1,
-			DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
+			StateID: 1,
 			UserState: models.UserState{
 				PubKeyID: accounts[1].PubKeyID,
 				TokenID:  models.MakeUint256(2),
@@ -72,8 +69,7 @@ func (s *GetUserStatesTestSuite) TestGetUserStates() {
 			},
 		},
 		{
-			StateID:  2,
-			DataHash: common.BytesToHash([]byte{3, 4, 5, 6, 7}),
+			StateID: 2,
 			UserState: models.UserState{
 				PubKeyID: accounts[0].PubKeyID,
 				TokenID:  models.MakeUint256(25),
@@ -83,7 +79,7 @@ func (s *GetUserStatesTestSuite) TestGetUserStates() {
 		},
 	}
 	for i := range leaves {
-		err := s.api.storage.UpsertStateLeaf(&leaves[i])
+		_, err := s.api.storage.StateTree.Set(leaves[i].StateID, &leaves[i].UserState)
 		s.NoError(err)
 	}
 

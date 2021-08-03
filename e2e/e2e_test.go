@@ -18,7 +18,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"github.com/ybbus/jsonrpc/v2"
 )
@@ -238,9 +237,7 @@ func getDomain(t *testing.T, client jsonrpc.RPCClient) bls.Domain {
 	err := client.CallFor(&info, "hubble_getNetworkInfo")
 	require.NoError(t, err)
 
-	domain, err := bls.DomainFromBytes(crypto.Keccak256(info.Rollup.Bytes()))
-	require.NoError(t, err)
-	return *domain
+	return info.SignatureDomain
 }
 
 func getUserState(userStates []dto.UserState, stateID uint32) (*dto.UserState, error) {

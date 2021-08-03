@@ -46,7 +46,7 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 		}
 
 		select {
-		case <-c.stopChannel:
+		case <-c.workersContext.Done():
 			return ErrIncompleteBlockRangeSync
 		default:
 			continue
@@ -67,12 +67,12 @@ func (c *Commander) syncRemoteBatch(remoteBatch *eth.DecodedBatch) error {
 }
 
 func (c *Commander) syncOrDisputeRemoteBatch(remoteBatch *eth.DecodedBatch) error {
-	var dcError *executor.DisputableCommitmentError
+	var disputableErr *executor.DisputableError
 
 	err := c.syncBatch(remoteBatch)
-	if errors.As(err, &dcError) {
-		logFraudulentBatch(remoteBatch, dcError)
-		return c.disputeFraudulentBatch(remoteBatch, dcError.CommitmentIndex, dcError.Proofs)
+	if errors.As(err, &disputableErr) {
+		logFraudulentBatch(remoteBatch, disputableErr.Reason)
+		return c.disputeFraudulentBatch(remoteBatch, disputableErr)
 	}
 	return err
 }
@@ -104,8 +104,7 @@ func (c *Commander) replaceBatch(localBatch *models.Batch, remoteBatch *eth.Deco
 
 func (c *Commander) disputeFraudulentBatch(
 	remoteBatch *eth.DecodedBatch,
-	commitmentIndex int,
-	proofs []models.StateMerkleProof,
+	disputableErr *executor.DisputableError,
 ) error {
 	// TODO transaction executor may not be needed here. Revisit this when extracting disputer package.
 	txExecutor, err := executor.NewTransactionExecutor(c.Storage, c.client, c.cfg.Rollup, context.Background())
@@ -114,7 +113,12 @@ func (c *Commander) disputeFraudulentBatch(
 	}
 	defer txExecutor.Rollback(&err)
 
-	err = txExecutor.DisputeTransition(remoteBatch, commitmentIndex, proofs)
+	switch disputableErr.Type {
+	case executor.Transition:
+		err = txExecutor.DisputeTransition(remoteBatch, disputableErr.CommitmentIndex, disputableErr.Proofs)
+	case executor.Signature:
+		err = txExecutor.DisputeSignature(remoteBatch, disputableErr.CommitmentIndex, disputableErr.Proofs)
+	}
 	if err != nil {
 		return err
 	}
@@ -152,7 +156,7 @@ func logBatchesCount(newRemoteBatches []eth.DecodedBatch) {
 	}
 }
 
-func logFraudulentBatch(batch *eth.DecodedBatch, err *executor.DisputableCommitmentError) {
+func logFraudulentBatch(batch *eth.DecodedBatch, reason string) {
 	log.WithFields(log.Fields{"batchID": batch.ID.String()}).
-		Infof("Found fraudulent batch. Reason: %s", err.Reason)
+		Infof("Found fraudulent batch. Reason: %s", reason)
 }

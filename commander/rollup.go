@@ -18,7 +18,7 @@ func (c *Commander) manageRollupLoop(cancel context.CancelFunc, isProposer bool)
 	if isProposer && !c.rollupLoopRunning {
 		log.Debugf("Commander is an active proposer, starting rollupLoop")
 		var ctx context.Context
-		ctx, cancel = context.WithCancel(context.Background())
+		ctx, cancel = context.WithCancel(c.workersContext)
 		c.startWorker(func() error { return c.rollupLoop(ctx) })
 		c.rollupLoopRunning = true
 	} else if !isProposer && c.rollupLoopRunning {
@@ -38,8 +38,6 @@ func (c *Commander) rollupLoop(ctx context.Context) (err error) {
 	for {
 		select {
 		case <-ctx.Done():
-			return nil
-		case <-c.stopChannel:
 			return nil
 		case <-ticker.C:
 			err := c.rollupLoopIteration(ctx, &currentBatchType)
@@ -65,7 +63,7 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 	}
 	defer transactionExecutor.Rollback(&err)
 
-	err = transactionExecutor.CreateAndSubmitBatch(*currentBatchType, c.signaturesDomain)
+	err = transactionExecutor.CreateAndSubmitBatch(*currentBatchType, c.domain)
 	if *currentBatchType == txtype.Transfer {
 		*currentBatchType = txtype.Create2Transfer
 	} else {
@@ -106,5 +104,5 @@ func logLatestCommitment(latestCommitment *models.Commitment) {
 	if latestCommitment.IncludedInBatch != nil {
 		fields["latestBatchID"] = latestCommitment.IncludedInBatch.String()
 	}
-	log.WithFields(fields).Debug("rollupLoop: Sanity check on state tree root in failed")
+	log.WithFields(fields).Error("rollupLoop: Sanity check on state tree root failed")
 }

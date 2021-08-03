@@ -25,7 +25,7 @@ var (
 )
 
 func (s *StorageBase) AddCreate2Transfer(t *models.Create2Transfer) (receiveTime *models.Timestamp, err error) {
-	tx, txStorage, err := s.BeginTransaction(TxOptions{Postgres: true})
+	tx, txStorage, err := s.beginStorageBaseTransaction(TxOptions{Postgres: true})
 	if err != nil {
 		return nil, err
 	}
@@ -39,8 +39,8 @@ func (s *StorageBase) AddCreate2Transfer(t *models.Create2Transfer) (receiveTime
 		return nil, err
 	}
 
-	_, err = txStorage.Postgres.Query(
-		txStorage.QB.Insert("create2transfer").
+	_, err = txStorage.database.Postgres.Query(
+		txStorage.database.QB.Insert("create2transfer").
 			Values(
 				t.Hash,
 				t.ToStateID,
@@ -65,7 +65,7 @@ func (s *StorageBase) BatchAddCreate2Transfer(txs []models.Create2Transfer) erro
 		return ErrNoRowsAffected
 	}
 
-	tx, txStorage, err := s.BeginTransaction(TxOptions{Postgres: true})
+	tx, txStorage, err := s.beginStorageBaseTransaction(TxOptions{Postgres: true})
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func (s *StorageBase) BatchAddCreate2Transfer(txs []models.Create2Transfer) erro
 		return err
 	}
 
-	query := s.QB.Insert("create2transfer")
+	query := s.database.QB.Insert("create2transfer")
 	for i := range txs {
 		query = query.Values(
 			txs[i].Hash,
@@ -88,7 +88,7 @@ func (s *StorageBase) BatchAddCreate2Transfer(txs []models.Create2Transfer) erro
 			txs[i].ToPublicKey,
 		)
 	}
-	res, err := txStorage.Postgres.Query(query).Exec()
+	res, err := txStorage.database.Postgres.Query(query).Exec()
 	if err != nil {
 		return err
 	}
@@ -104,8 +104,8 @@ func (s *StorageBase) BatchAddCreate2Transfer(txs []models.Create2Transfer) erro
 
 func (s *StorageBase) GetCreate2Transfer(hash common.Hash) (*models.Create2Transfer, error) {
 	res := make([]models.Create2Transfer, 0, 1)
-	err := s.Postgres.Query(
-		s.QB.Select(create2TransferColumns...).
+	err := s.database.Postgres.Query(
+		s.database.QB.Select(create2TransferColumns...).
 			From("transaction_base").
 			JoinClause("NATURAL JOIN create2transfer").
 			Where(squirrel.Eq{"tx_hash": hash}),
@@ -121,8 +121,8 @@ func (s *StorageBase) GetCreate2Transfer(hash common.Hash) (*models.Create2Trans
 
 func (s *StorageBase) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.Create2TransferWithBatchDetails, error) {
 	res := make([]models.Create2TransferWithBatchDetails, 0, 1)
-	err := s.Postgres.Query(
-		s.QB.Select(create2TransferWithBatchColumns...).
+	err := s.database.Postgres.Query(
+		s.database.QB.Select(create2TransferWithBatchColumns...).
 			From("transaction_base").
 			JoinClause("NATURAL JOIN create2transfer").
 			LeftJoin("commitment on commitment.commitment_id = transaction_base.included_in_commitment").
@@ -140,8 +140,8 @@ func (s *StorageBase) GetCreate2TransferWithBatchDetails(hash common.Hash) (*mod
 
 func (s *StorageBase) GetPendingCreate2Transfers(limit uint32) ([]models.Create2Transfer, error) {
 	res := make([]models.Create2Transfer, 0, limit)
-	err := s.Postgres.Query(
-		s.QB.Select(create2TransferColumns...).
+	err := s.database.Postgres.Query(
+		s.database.QB.Select(create2TransferColumns...).
 			From("transaction_base").
 			JoinClause("NATURAL JOIN create2transfer").
 			Where(squirrel.Eq{"included_in_commitment": nil, "error_message": nil}).
@@ -154,8 +154,8 @@ func (s *StorageBase) GetPendingCreate2Transfers(limit uint32) ([]models.Create2
 	return res, nil
 }
 
-func (s *StorageBase) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([]models.Create2TransferWithBatchDetails, error) {
-	accounts, err := s.GetAccountLeaves(publicKey)
+func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([]models.Create2TransferWithBatchDetails, error) {
+	accounts, err := s.AccountTree.Leaves(publicKey)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +163,7 @@ func (s *StorageBase) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey
 	pubKeyIDs := utils.ValueToInterfaceSlice(accounts, "PubKeyID")
 
 	leaves := make([]models.FlatStateLeaf, 0, 1)
-	err = s.Badger.Find(&leaves, bh.Where("PubKeyID").In(pubKeyIDs...).Index("PubKeyID"))
+	err = s.database.Badger.Find(&leaves, bh.Where("PubKeyID").In(pubKeyIDs...).Index("PubKeyID"))
 	if err != nil {
 		return nil, err
 	}
@@ -174,8 +174,8 @@ func (s *StorageBase) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey
 	}
 
 	res := make([]models.Create2TransferWithBatchDetails, 0, 1)
-	err = s.Postgres.Query(
-		s.QB.Select(create2TransferWithBatchColumns...).
+	err = s.database.Postgres.Query(
+		s.database.QB.Select(create2TransferWithBatchColumns...).
 			From("transaction_base").
 			JoinClause("NATURAL JOIN create2transfer").
 			LeftJoin("commitment on commitment.commitment_id = transaction_base.included_in_commitment").
@@ -193,8 +193,8 @@ func (s *StorageBase) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey
 
 func (s *StorageBase) GetCreate2TransfersByCommitmentID(id int32) ([]models.Create2TransferForCommitment, error) {
 	res := make([]models.Create2TransferForCommitment, 0, 32)
-	err := s.Postgres.Query(
-		s.QB.Select("transaction_base.tx_hash",
+	err := s.database.Postgres.Query(
+		s.database.QB.Select("transaction_base.tx_hash",
 			"transaction_base.from_state_id",
 			"transaction_base.amount",
 			"transaction_base.fee",
@@ -211,8 +211,8 @@ func (s *StorageBase) GetCreate2TransfersByCommitmentID(id int32) ([]models.Crea
 }
 
 func (s *StorageBase) SetCreate2TransferToStateID(txHash common.Hash, toStateID uint32) error {
-	res, err := s.Postgres.Query(
-		s.QB.Update("create2transfer").
+	res, err := s.database.Postgres.Query(
+		s.database.QB.Update("create2transfer").
 			Where(squirrel.Eq{"tx_hash": txHash}).
 			Set("to_state_id", toStateID),
 	).Exec()

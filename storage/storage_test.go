@@ -3,11 +3,13 @@ package storage
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -17,6 +19,7 @@ type StorageTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage *TestStorage
+	batch   *models.Batch
 }
 
 func (s *StorageTestSuite) SetupSuite() {
@@ -27,6 +30,16 @@ func (s *StorageTestSuite) SetupTest() {
 	var err error
 	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
+	s.batch = &models.Batch{
+		ID:                models.MakeUint256(1),
+		Type:              txtype.Transfer,
+		TransactionHash:   utils.RandomHash(),
+		Hash:              utils.NewRandomHash(),
+		FinalisationBlock: ref.Uint32(1234),
+		AccountTreeRoot:   utils.NewRandomHash(),
+		PrevStateRoot:     utils.NewRandomHash(),
+		SubmissionTime:    models.NewTimestamp(time.Unix(140, 0).UTC()),
+	}
 }
 
 func (s *StorageTestSuite) TearDownTest() {
@@ -35,43 +48,39 @@ func (s *StorageTestSuite) TearDownTest() {
 }
 
 func (s *StorageTestSuite) TestBeginTransaction_Commit() {
-	leaf := &models.StateLeaf{
-		StateID:  0,
-		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
-		UserState: models.UserState{
-			PubKeyID: 1,
-			TokenID:  models.MakeUint256(1),
-			Balance:  models.MakeUint256(420),
-			Nonce:    models.MakeUint256(0),
-		},
-	}
-
-	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
-	s.NoError(err)
-	err = storage.UpsertStateLeaf(leaf)
-	s.NoError(err)
-	accountTree := NewAccountTree(storage)
-	err = accountTree.SetSingle(&account2)
+	leaf, err := NewStateLeaf(0, &models.UserState{
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
+	})
 	s.NoError(err)
 
-	res, err := s.storage.GetStateLeaf(leaf.StateID)
+	tx, txStorage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
+	s.NoError(err)
+	_, err = txStorage.StateTree.Set(leaf.StateID, &leaf.UserState)
+	s.NoError(err)
+	err = txStorage.AddBatch(s.batch)
+	s.NoError(err)
+
+	res, err := s.storage.StateTree.Leaf(leaf.StateID)
 	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
 
-	accounts, err := s.storage.GetAccountLeaves(&account2.PublicKey)
-	s.Equal(NewNotFoundError("account leaves"), err)
-	s.Nil(accounts)
+	batch, err := s.storage.GetBatch(s.batch.ID)
+	s.Equal(NewNotFoundError("batch"), err)
+	s.Nil(batch)
 
 	err = tx.Commit()
 	s.NoError(err)
 
-	res, err = s.storage.GetStateLeaf(leaf.StateID)
+	res, err = s.storage.StateTree.Leaf(leaf.StateID)
 	s.NoError(err)
 	s.Equal(leaf, res)
 
-	accounts, err = s.storage.GetAccountLeaves(&account2.PublicKey)
+	batch, err = s.storage.GetBatch(s.batch.ID)
 	s.NoError(err)
-	s.Len(accounts, 1)
+	s.Equal(s.batch, batch)
 }
 
 func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
@@ -86,75 +95,69 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 		},
 	}
 
-	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
+	tx, txStorage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
-	err = storage.UpsertStateLeaf(leaf)
+	_, err = txStorage.StateTree.Set(leaf.StateID, &leaf.UserState)
 	s.NoError(err)
-	accountTree := NewAccountTree(storage)
-	err = accountTree.SetSingle(&account2)
+	err = txStorage.AddBatch(s.batch)
 	s.NoError(err)
 
 	tx.Rollback(&err)
 	s.Nil(errors.Unwrap(err))
 
-	res, err := s.storage.GetStateLeaf(leaf.StateID)
+	res, err := s.storage.StateTree.Leaf(leaf.StateID)
 	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
 
-	accounts, err := s.storage.GetAccountLeaves(&account2.PublicKey)
-	s.Equal(NewNotFoundError("account leaves"), err)
-	s.Nil(accounts)
+	batch, err := s.storage.GetBatch(s.batch.ID)
+	s.Equal(NewNotFoundError("batch"), err)
+	s.Nil(batch)
 }
 
 func (s *StorageTestSuite) TestBeginTransaction_Lock() {
-	leafOne := &models.StateLeaf{
-		StateID:  0,
-		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
-		UserState: models.UserState{
-			PubKeyID: 1,
-			TokenID:  models.MakeUint256(1),
-			Balance:  models.MakeUint256(420),
-			Nonce:    models.MakeUint256(0),
-		},
-	}
-	leafTwo := &models.StateLeaf{
-		StateID:  1,
-		DataHash: common.BytesToHash([]byte{2, 3, 4, 5, 6}),
-		UserState: models.UserState{
-			PubKeyID: 2,
-			TokenID:  models.MakeUint256(1),
-			Balance:  models.MakeUint256(1000),
-			Nonce:    models.MakeUint256(0),
-		},
-	}
-
-	tx, storage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
+	leafOne, err := NewStateLeaf(0, &models.UserState{
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
+	})
 	s.NoError(err)
 
-	err = storage.UpsertStateLeaf(leafOne)
+	leafTwo, err := NewStateLeaf(1, &models.UserState{
+		PubKeyID: 2,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(1000),
+		Nonce:    models.MakeUint256(0),
+	})
 	s.NoError(err)
 
-	nestedTx, nestedStorage, err := storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
+	tx, txStorage, err := s.storage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
 
-	err = nestedStorage.UpsertStateLeaf(leafTwo)
+	_, err = txStorage.StateTree.Set(leafOne.StateID, &leafOne.UserState)
+	s.NoError(err)
+
+	nestedTx, nestedStorage, err := txStorage.BeginTransaction(TxOptions{Postgres: true, Badger: true})
+	s.NoError(err)
+
+	_, err = nestedStorage.StateTree.Set(leafTwo.StateID, &leafTwo.UserState)
 	s.NoError(err)
 
 	nestedTx.Rollback(&err)
 	s.NoError(err)
 
-	res, err := s.storage.GetStateLeaf(leafOne.StateID)
+	res, err := s.storage.StateTree.Leaf(leafOne.StateID)
 	s.Equal(NewNotFoundError("state leaf"), err)
 	s.Nil(res)
 
 	err = tx.Commit()
 	s.NoError(err)
 
-	res, err = s.storage.GetStateLeaf(leafOne.StateID)
+	res, err = s.storage.StateTree.Leaf(leafOne.StateID)
 	s.NoError(err)
 	s.Equal(leafOne, res)
 
-	res, err = s.storage.GetStateLeaf(leafTwo.StateID)
+	res, err = s.storage.StateTree.Leaf(leafTwo.StateID)
 	s.NoError(err)
 	s.Equal(leafTwo, res)
 }
@@ -170,11 +173,10 @@ func (s *StorageTestSuite) TestClone() {
 	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
 
-	stateLeaf := models.StateLeaf{
-		StateID:  1,
-		DataHash: utils.RandomHash(),
-	}
-	err = s.storage.UpsertStateLeaf(&stateLeaf)
+	stateLeaf, err := NewStateLeaf(1, &models.UserState{})
+	s.NoError(err)
+
+	_, err = s.storage.StateTree.Set(stateLeaf.StateID, &stateLeaf.UserState)
 	s.NoError(err)
 
 	clonedStorage, err := s.storage.Clone(testConfig)
@@ -188,9 +190,9 @@ func (s *StorageTestSuite) TestClone() {
 	s.NoError(err)
 	s.Equal(batch, *clonedBatch)
 
-	clonedStateLeaf, err := clonedStorage.GetStateLeaf(stateLeaf.StateID)
+	clonedStateLeaf, err := clonedStorage.StateTree.Leaf(stateLeaf.StateID)
 	s.NoError(err)
-	s.Equal(stateLeaf, *clonedStateLeaf)
+	s.Equal(stateLeaf, clonedStateLeaf)
 }
 
 func TestStorageTestSuite(t *testing.T) {

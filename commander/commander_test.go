@@ -6,6 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db/postgres"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -43,22 +44,26 @@ func (s *CommanderTestSuite) TestStartStop() {
 }
 
 func (s *CommanderTestSuite) TestStartAndWait() {
-	stopped := false
+	var startAndWaitReturnTime *time.Time
 
 	go func() {
 		err := s.cmd.StartAndWait()
 		s.NoError(err)
-		stopped = true
+		startAndWaitReturnTime = ref.Time(time.Now())
 	}()
 	s.Eventually(func() bool {
 		return s.cmd.IsRunning()
-	}, 15*time.Second, 100*time.Millisecond)
+	}, 15*time.Second, 100*time.Millisecond, "Commander hasn't started on time")
 
 	err := s.cmd.Stop()
 	s.NoError(err)
+	stopReturnTime := time.Now()
+
 	s.Eventually(func() bool {
-		return stopped
-	}, 1*time.Second, 100*time.Millisecond)
+		return startAndWaitReturnTime != nil
+	}, 1*time.Second, 100*time.Millisecond, "StartAndWait hasn't returned on time")
+
+	s.Greater(startAndWaitReturnTime.UnixNano(), stopReturnTime.UnixNano(), "Stop should return before StartAndWait")
 }
 
 func (s *CommanderTestSuite) TestStart_SetsCorrectSyncedBlock() {

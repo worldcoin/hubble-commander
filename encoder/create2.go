@@ -162,6 +162,17 @@ func DeserializeCreate2Transfers(data []byte) ([]models.Create2Transfer, []uint3
 	return transfers, pubKeyIDs, nil
 }
 
+func DeserializeCreate2TransferPubKeyIDs(data []byte) []uint32 {
+	transfersCount := len(data) / Create2TransferLength
+
+	pubKeyIDs := make([]uint32, 0, transfersCount)
+	for i := 0; i < transfersCount; i++ {
+		pubKeyID := binary.BigEndian.Uint32(data[i*Create2TransferLength+8 : i*Create2TransferLength+12])
+		pubKeyIDs = append(pubKeyIDs, pubKeyID)
+	}
+	return pubKeyIDs
+}
+
 func HashCreate2Transfer(transfer *models.Create2Transfer) (*common.Hash, error) {
 	encodedTransfer, err := EncodeCreate2Transfer(transfer)
 	if err != nil {

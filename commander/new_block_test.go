@@ -14,13 +14,9 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
-
-var testDomain = &bls.Domain{1, 2, 3, 4}
 
 type NewBlockLoopTestSuite struct {
 	*require.Assertions
@@ -60,15 +56,15 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	s.NoError(err)
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
-	err = s.testStorage.SetChainState(&s.testClient.ChainState)
-	s.NoError(err)
 
 	s.cmd = NewCommander(s.cfg)
 	s.cmd.client = s.testClient.Client
 	s.cmd.Storage = s.testStorage.Storage
-	s.cmd.stopChannel = make(chan bool)
+	s.cmd.workersContext, s.cmd.stopWorkers = context.WithCancel(context.Background())
 
-	s.wallets = generateWallets(s.T(), s.testClient.ChainState.Rollup, 2)
+	domain, err := s.testClient.GetDomain()
+	s.NoError(err)
+	s.wallets = generateWallets(s.T(), *domain, 2)
 	seedDB(s.T(), s.testStorage.Storage, s.wallets)
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
 }
@@ -105,7 +101,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedBef
 	s.waitForLatestBlockSync()
 
 	for i := range accounts {
-		userAccounts, err := s.cmd.Storage.GetAccountLeaves(&accounts[i].PublicKey)
+		userAccounts, err := s.cmd.Storage.AccountTree.Leaves(&accounts[i].PublicKey)
 		s.NoError(err)
 		s.Len(userAccounts, 1)
 		s.Equal(accounts[i], userAccounts[0])
@@ -130,7 +126,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedWhi
 	s.waitForLatestBlockSync()
 
 	for i := range accounts {
-		userAccounts, err := s.cmd.Storage.GetAccountLeaves(&accounts[i].PublicKey)
+		userAccounts, err := s.cmd.Storage.AccountTree.Leaves(&accounts[i].PublicKey)
 		s.NoError(err)
 		s.Len(userAccounts, 1)
 		s.Equal(accounts[i], userAccounts[0])
@@ -180,7 +176,9 @@ func createAndSubmitTransferBatch(
 	batch, err := txExecutor.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
-	commitments, err := txExecutor.CreateTransferCommitments(testDomain)
+	domain, err := client.GetDomain()
+	s.NoError(err)
+	commitments, err := txExecutor.CreateTransferCommitments(domain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -190,11 +188,13 @@ func createAndSubmitTransferBatch(
 }
 
 func (s *NewBlockLoopTestSuite) createAndSubmitTransferBatchInTransaction(tx *models.Transfer) {
-	s.runInTransaction(func(txStorage *st.StorageBase, txExecutor *executor.TransactionExecutor) {
+	s.runInTransaction(func(txStorage *st.Storage, txExecutor *executor.TransactionExecutor) {
 		_, err := txStorage.AddTransfer(tx)
 		s.NoError(err)
 
-		commitments, err := txExecutor.CreateTransferCommitments(testDomain)
+		domain, err := s.testClient.GetDomain()
+		s.NoError(err)
+		commitments, err := txExecutor.CreateTransferCommitments(domain)
 		s.NoError(err)
 		s.Len(commitments, 1)
 
@@ -206,17 +206,12 @@ func (s *NewBlockLoopTestSuite) createAndSubmitTransferBatchInTransaction(tx *mo
 	})
 }
 
-func (s *NewBlockLoopTestSuite) runInTransaction(handler func(*st.StorageBase, *executor.TransactionExecutor)) {
+func (s *NewBlockLoopTestSuite) runInTransaction(handler func(*st.Storage, *executor.TransactionExecutor)) {
 	txController, txStorage, err := s.testStorage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
 	s.NoError(err)
 	defer txController.Rollback(nil)
 
-	storage := &st.Storage{
-		StorageBase: txStorage,
-		StateTree:   st.NewStateTree(txStorage),
-		AccountTree: st.NewAccountTree(txStorage),
-	}
-	txExecutor := executor.NewTestTransactionExecutor(storage, s.testClient.Client, s.cfg.Rollup, context.Background())
+	txExecutor := executor.NewTestTransactionExecutor(txStorage, s.testClient.Client, s.cfg.Rollup, context.Background())
 	handler(txStorage, txExecutor)
 }
 
@@ -239,13 +234,10 @@ func signTransfer(t *testing.T, wallet *bls.Wallet, transfer *models.Transfer) {
 	transfer.Signature = *signature.ModelsSignature()
 }
 
-func generateWallets(t *testing.T, rollupAddress common.Address, walletsAmount int) []bls.Wallet {
-	domain, err := bls.DomainFromBytes(crypto.Keccak256(rollupAddress.Bytes()))
-	require.NoError(t, err)
-
+func generateWallets(t *testing.T, domain bls.Domain, walletsAmount int) []bls.Wallet {
 	wallets := make([]bls.Wallet, 0, walletsAmount)
 	for i := 0; i < walletsAmount; i++ {
-		wallet, err := bls.NewRandomWallet(*domain)
+		wallet, err := bls.NewRandomWallet(domain)
 		require.NoError(t, err)
 		wallets = append(wallets, *wallet)
 	}
@@ -286,7 +278,7 @@ func stopCommander(cmd *Commander) {
 	if !cmd.IsRunning() {
 		return
 	}
-	close(cmd.stopChannel)
+	cmd.stopWorkers()
 	cmd.workers.Wait()
 }
 

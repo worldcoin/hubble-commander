@@ -33,7 +33,7 @@ func (c *Commander) newBlockLoop() error {
 	var rollupCancel context.CancelFunc
 	for {
 		select {
-		case <-c.stopChannel:
+		case <-c.workersContext.Done():
 			return nil
 		case err = <-subscription.Err():
 			return err
@@ -80,7 +80,7 @@ func (c *Commander) syncToLatestBlock() error {
 		c.Storage.SetLatestBlockNumber(uint32(*latestBlockNumber))
 
 		select {
-		case <-c.stopChannel:
+		case <-c.workersContext.Done():
 			return nil
 		default:
 			continue

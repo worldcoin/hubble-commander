@@ -31,16 +31,16 @@ func (s *StoredMerkleTreeTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *StoredMerkleTreeTestSuite) TestInitialRoot() {
-	tree := NewStoredMerkleTree("state", s.storage.StorageBase.Badger)
+func (s *StoredMerkleTreeTestSuite) TestRoot_InitialRoot() {
+	tree := NewStoredMerkleTree("state", s.storage.database)
 
 	root, err := tree.Root()
 	s.NoError(err)
 	s.Equal(merkletree.GetZeroHash(StateTreeDepth), *root)
 }
 
-func (s *StoredMerkleTreeTestSuite) TestRootAfterSet() {
-	tree := NewStoredMerkleTree("state", s.storage.StorageBase.Badger)
+func (s *StoredMerkleTreeTestSuite) TestRoot_ChangesAfterSet() {
+	tree := NewStoredMerkleTree("state", s.storage.database)
 
 	newRoot, _, err := tree.SetNode(&models.MerklePath{
 		Path:  0,
@@ -55,8 +55,8 @@ func (s *StoredMerkleTreeTestSuite) TestRootAfterSet() {
 }
 
 func (s *StoredMerkleTreeTestSuite) TestTwoTreesWithDifferentNamespaces() {
-	stateTree := NewStoredMerkleTree("state", s.storage.StorageBase.Badger)
-	accountTree := NewStoredMerkleTree("account", s.storage.StorageBase.Badger)
+	stateTree := NewStoredMerkleTree("state", s.storage.database)
+	accountTree := NewStoredMerkleTree("account", s.storage.database)
 
 	hash1 := utils.RandomHash()
 	_, _, err := stateTree.SetNode(&models.MerklePath{

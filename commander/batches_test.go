@@ -51,13 +51,11 @@ func (s *BatchesTestSuite) SetupTest() {
 		},
 	}, eth.ClientConfig{})
 	s.NoError(err)
-	err = s.testStorage.SetChainState(&s.testClient.ChainState)
-	s.NoError(err)
 
 	s.cmd = NewCommander(s.cfg)
 	s.cmd.client = s.testClient.Client
 	s.cmd.Storage = s.testStorage.Storage
-	s.cmd.stopChannel = make(chan bool)
+	s.cmd.workersContext, s.cmd.stopWorkers = context.WithCancel(context.Background())
 
 	s.transactionExecutor = executor.NewTestTransactionExecutor(
 		s.testStorage.Storage,
@@ -66,7 +64,9 @@ func (s *BatchesTestSuite) SetupTest() {
 		context.Background(),
 	)
 
-	s.wallets = generateWallets(s.T(), s.testClient.ChainState.Rollup, 2)
+	domain, err := s.testClient.GetDomain()
+	s.NoError(err)
+	s.wallets = generateWallets(s.T(), *domain, 2)
 	seedDB(s.T(), s.testStorage.Storage, s.wallets)
 }
 
@@ -98,11 +98,11 @@ func (s *BatchesTestSuite) TestUnsafeSyncBatches_DoesNotSyncExistingBatchTwice()
 	s.NoError(err)
 	s.Len(batches, 2)
 
-	state0, err := s.cmd.Storage.GetStateLeaf(0)
+	state0, err := s.cmd.Storage.StateTree.Leaf(0)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(710), state0.Balance)
 
-	state1, err := s.cmd.Storage.GetStateLeaf(1)
+	state1, err := s.cmd.Storage.StateTree.Leaf(1)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(290), state1.Balance)
 }
@@ -205,6 +205,27 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidPostState
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
 }
 
+func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidSignature() {
+	s.registerAccounts([]uint32{0, 1})
+
+	clonedStorage, txExecutor := cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
+	defer teardown(s.Assertions, clonedStorage.Teardown)
+
+	invalidTransfer := testutils.MakeTransfer(0, 1, 0, 100)
+	s.createAndSubmitInvalidTransferBatch(clonedStorage.StorageBase, txExecutor, &invalidTransfer, func(commitment *models.Commitment) {
+		commitment.CombinedSignature = models.MakeRandomSignature()
+	})
+
+	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	err = s.cmd.syncRemoteBatch(&remoteBatches[0])
+	s.NoError(err)
+
+	s.checkBatchAfterDispute(remoteBatches[0].ID)
+}
+
 func (s *BatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDisputesFraudulentOne() {
 	transfers := []models.Transfer{
 		testutils.MakeTransfer(0, 1, 0, 50),
@@ -258,7 +279,9 @@ func (s *BatchesTestSuite) createAndSubmitTransferBatch(
 	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
-	commitments, err := txExecutor.CreateTransferCommitments(testDomain)
+	domain, err := s.testClient.GetDomain()
+	s.NoError(err)
+	commitments, err := txExecutor.CreateTransferCommitments(domain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -277,7 +300,9 @@ func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batc
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
-	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
+	domain, err := s.testClient.GetDomain()
+	s.NoError(err)
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(domain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -304,7 +329,9 @@ func (s *BatchesTestSuite) createAndSubmitInvalidTransferBatch(
 	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
-	commitments, err := txExecutor.CreateTransferCommitments(testDomain)
+	domain, err := s.testClient.GetDomain()
+	s.NoError(err)
+	commitments, err := txExecutor.CreateTransferCommitments(domain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -334,6 +361,21 @@ func (s *BatchesTestSuite) checkBatchAfterDispute(batchID models.Uint256) {
 	batch, err := s.cmd.Storage.GetBatch(batchID)
 	s.Nil(batch)
 	s.True(st.IsNotFoundError(err))
+}
+
+func (s *BatchesTestSuite) registerAccounts(pubKeyIDs []uint32) {
+	registrations, unsubscribe, err := s.testClient.WatchRegistrations(&bind.WatchOpts{})
+	s.NoError(err)
+	defer unsubscribe()
+
+	for i := range pubKeyIDs {
+		leaf, err := s.testStorage.AccountTree.Leaf(pubKeyIDs[i])
+		s.NoError(err)
+
+		pubKeyID, err := s.testClient.RegisterAccount(&leaf.PublicKey, registrations)
+		s.NoError(err)
+		s.Equal(pubKeyIDs[i], *pubKeyID)
+	}
 }
 
 func cloneStorage(
