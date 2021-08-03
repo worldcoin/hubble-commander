@@ -79,7 +79,7 @@ func (s *StoredMerkleTreeTestSuite) TestSetSingleNode_VerifiesDepth() {
 }
 
 func (s *StoredMerkleTreeTestSuite) TestSetNode_VerifiesDepth() {
-	tree := NewStoredMerkleTree("state", s.storage.StorageBase.Badger, s.treeDepth)
+	tree := NewStoredMerkleTree("state", s.storage.database, s.treeDepth)
 
 	_, _, err := tree.SetNode(&models.MerklePath{
 		Path:  0,
