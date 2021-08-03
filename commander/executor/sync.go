@@ -156,7 +156,7 @@ func (t *TransactionExecutor) syncCommitment(
 		transactions, err = t.syncTransferCommitment(commitment)
 	case txtype.Create2Transfer:
 		transactions, err = t.syncCreate2TransferCommitment(commitment)
-	case txtype.MassMigration:
+	case txtype.Genesis, txtype.MassMigration:
 		return errors.Errorf("unsupported batch type for sync: %s", batch.Type)
 	}
 	if err != nil {
