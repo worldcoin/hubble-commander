@@ -44,6 +44,7 @@ func NewStorage(cfg *config.Config) (*Storage, error) {
 	return &Storage{
 		StorageBase:  storageBase,
 		BatchStorage: batchStorage,
+		database:     database,
 		StateTree:    NewStateTree(database),
 		AccountTree:  NewAccountTree(database),
 	}, nil

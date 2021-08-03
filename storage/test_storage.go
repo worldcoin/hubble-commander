@@ -74,6 +74,7 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 		Storage: &Storage{
 			StorageBase:  storageBase,
 			BatchStorage: batchStorage,
+			database:     database,
 			StateTree:    NewStateTree(database),
 			AccountTree:  NewAccountTree(database),
 		},
@@ -115,6 +116,7 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 		Storage: &Storage{
 			StorageBase:  &storageBase,
 			BatchStorage: &batchStorage,
+			database:     &database,
 			StateTree:    NewStateTree(&database),
 			AccountTree:  NewAccountTree(&database),
 		},
