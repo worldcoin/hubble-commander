@@ -15,6 +15,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -159,6 +160,27 @@ func (s *DisputeTransitionTestSuite) TestPreviousCommitmentInclusionProof_Previo
 	}
 
 	proof, err := s.transactionExecutor.previousCommitmentInclusionProof(&s.decodedBatch, -1)
+	s.NoError(err)
+	s.Equal(expected, *proof)
+}
+
+func (s *DisputeTransitionTestSuite) TestGenesisBatchCommitmentInclusionProof() {
+	genesisBatch := s.addGenesisBatch()
+	zeroHash := merkletree.GetZeroHash(0)
+
+	expected := models.CommitmentInclusionProof{
+		StateRoot: *genesisBatch.PrevStateRoot,
+		BodyRoot:  zeroHash,
+		Path: &models.MerklePath{
+			Path:  0,
+			Depth: 2,
+		},
+		Witness: []common.Hash{zeroHash},
+	}
+
+	firstBatch := s.decodedBatch
+	firstBatch.ID = models.MakeUint256(1)
+	proof, err := s.transactionExecutor.previousCommitmentInclusionProof(&firstBatch, -1)
 	s.NoError(err)
 	s.Equal(expected, *proof)
 }
@@ -570,6 +592,20 @@ func (s *DisputeTransitionTestSuite) calculateStateAfterInvalidTransfer(
 	s.NoError(err)
 	_, err = s.transactionExecutor.storage.StateTree.Set(*invalidTransfer.GetToStateID(), &receiverState.UserState)
 	s.NoError(err)
+}
+
+func (s *DisputeTransitionTestSuite) addGenesisBatch() *models.Batch {
+	root, err := s.storage.StateTree.Root()
+	s.NoError(err)
+
+	batch, err := s.client.GetBatch(models.NewUint256(0))
+	s.NoError(err)
+	batch.PrevStateRoot = root
+
+	err = s.storage.AddBatch(batch)
+	s.NoError(err)
+
+	return batch
 }
 
 func setUserStates(s *require.Assertions, txExecutor *TransactionExecutor, domain *bls.Domain) []bls.Wallet {
