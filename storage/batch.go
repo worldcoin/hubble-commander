@@ -102,23 +102,6 @@ func (s *BatchStorage) GetBatchByHash(batchHash common.Hash) (*models.Batch, err
 	return &res[0], nil
 }
 
-func (s *BatchStorage) GetBatchByCommitmentID(commitmentID int32) (*models.Batch, error) {
-	res := make([]models.Batch, 0, 1)
-	err := s.database.Postgres.Query(
-		s.database.QB.Select("batch.*").
-			From("batch").
-			Join("commitment ON commitment.included_in_batch = batch.batch_id").
-			Where(squirrel.Eq{"commitment_id": commitmentID}),
-	).Into(&res)
-	if err != nil {
-		return nil, err
-	}
-	if len(res) == 0 {
-		return nil, NewNotFoundError("batch")
-	}
-	return &res[0], nil
-}
-
 func (s *BatchStorage) GetLatestSubmittedBatch() (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
 	err := s.database.Postgres.Query(
@@ -209,4 +192,21 @@ func (s *BatchStorage) DeleteBatches(batchIDs ...models.Uint256) error {
 		return ErrNoRowsAffected
 	}
 	return nil
+}
+
+func (s *Storage) GetBatchByCommitmentID(commitmentID int32) (*models.Batch, error) {
+	res := make([]models.Batch, 0, 1)
+	err := s.database.Postgres.Query(
+		s.database.QB.Select("batch.*").
+			From("batch").
+			Join("commitment ON commitment.included_in_batch = batch.batch_id").
+			Where(squirrel.Eq{"commitment_id": commitmentID}),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, NewNotFoundError("batch")
+	}
+	return &res[0], nil
 }
