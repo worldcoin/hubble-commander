@@ -1,7 +1,6 @@
 package storage
 
 import (
-	bdg "github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
@@ -13,14 +12,14 @@ import (
 var ErrExceededTreeDepth = errors.New("node depth exceeds the tree depth")
 
 type StoredMerkleTree struct {
-	badger    *bdg.Database
+	database  *Database
 	namespace string
 	depth     uint8
 }
 
-func NewStoredMerkleTree(namespace string, badger *bdg.Database, depth uint8) *StoredMerkleTree {
+func NewStoredMerkleTree(namespace string, database *Database, depth uint8) *StoredMerkleTree {
 	return &StoredMerkleTree{
-		badger:    badger,
+		database:  database,
 		namespace: namespace,
 		depth:     depth,
 	}
@@ -32,7 +31,7 @@ func (s *StoredMerkleTree) keyFor(path models.MerklePath) models.NamespacedMerkl
 
 func (s *StoredMerkleTree) Get(path models.MerklePath) (*models.MerkleTreeNode, error) {
 	node := models.MerkleTreeNode{MerklePath: path}
-	err := s.badger.Get(s.keyFor(path), &node)
+	err := s.database.Badger.Get(s.keyFor(path), &node)
 	if err == bh.ErrNotFound {
 		return s.newZeroNode(&path), nil
 	}
@@ -55,7 +54,7 @@ func (s *StoredMerkleTree) SetSingleNode(node *models.MerkleTreeNode) error {
 	if node.MerklePath.Depth > s.depth {
 		return ErrExceededTreeDepth
 	}
-	return s.badger.Upsert(s.keyFor(node.MerklePath), *node)
+	return s.database.Badger.Upsert(s.keyFor(node.MerklePath), *node)
 }
 
 // SetNode sets node hash and update all nodes leading to root. Returns new root hash and the insertion witness.

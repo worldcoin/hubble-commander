@@ -14,8 +14,7 @@ import (
 type RollupTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage   *st.TestStorage
-	stateTree *st.StoredMerkleTree
+	storage *st.TestStorage
 }
 
 func (s *RollupTestSuite) SetupSuite() {
@@ -26,7 +25,6 @@ func (s *RollupTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.stateTree = st.NewStoredMerkleTree("state", s.storage.Badger, st.StateTreeDepth) // Must be the same state tree as in Storage object
 }
 
 func (s *RollupTestSuite) TearDownTest() {
@@ -35,17 +33,17 @@ func (s *RollupTestSuite) TearDownTest() {
 }
 
 func (s *RollupTestSuite) TestValidateStateRoot_SameStateRootHash() {
+	root, err := s.storage.StateTree.Root()
+	s.NoError(err)
+
 	commitment := models.Commitment{
 		Type:              txtype.Transfer,
 		Transactions:      []byte{1, 2, 3},
 		FeeReceiver:       0,
 		CombinedSignature: models.Signature{},
-		PostStateRoot:     common.Hash{1, 2, 3},
+		PostStateRoot:     *root,
 	}
-	_, err := s.storage.AddCommitment(&commitment)
-	s.NoError(err)
-
-	_, _, err = s.stateTree.SetNode(&models.MerklePath{Path: 0, Depth: 0}, commitment.PostStateRoot)
+	_, err = s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
 	err = validateStateRoot(s.storage.Storage)
@@ -68,10 +66,7 @@ func (s *RollupTestSuite) TestValidateStateRoot_DifferentStateRootHash() {
 }
 
 func (s *RollupTestSuite) TestValidateStateRoot_FirstCommitment() {
-	_, _, err := s.stateTree.SetNode(&models.MerklePath{Path: 0, Depth: 0}, common.Hash{1, 2, 3})
-	s.NoError(err)
-
-	err = validateStateRoot(s.storage.Storage)
+	err := validateStateRoot(s.storage.Storage)
 	s.NoError(err)
 }
 

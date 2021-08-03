@@ -21,14 +21,14 @@ const StateTreeDepth = merkletree.MaxDepth
 var stateUpdatePrefix = []byte("bh_" + reflect.TypeOf(models.StateUpdate{}).Name())
 
 type StateTree struct {
-	storageBase *StorageBase
-	merkleTree  *StoredMerkleTree
+	database   *Database
+	merkleTree *StoredMerkleTree
 }
 
-func NewStateTree(storageBase *StorageBase) *StateTree {
+func NewStateTree(database *Database) *StateTree {
 	return &StateTree{
-		storageBase: storageBase,
-		merkleTree:  NewStoredMerkleTree("state", storageBase.Badger, StateTreeDepth),
+		database:   database,
+		merkleTree: NewStoredMerkleTree("state", database),
 	}
 }
 
@@ -38,7 +38,7 @@ func (s *StateTree) Root() (*common.Hash, error) {
 
 func (s *StateTree) Leaf(stateID uint32) (stateLeaf *models.StateLeaf, err error) {
 	var leaf models.FlatStateLeaf
-	err = s.storageBase.Badger.Get(stateID, &leaf)
+	err = s.database.Badger.Get(stateID, &leaf)
 	if err == bh.ErrNotFound {
 		return nil, NewNotFoundError("state leaf")
 	}
@@ -51,7 +51,7 @@ func (s *StateTree) Leaf(stateID uint32) (stateLeaf *models.StateLeaf, err error
 func (s *StateTree) NextAvailableStateID() (*uint32, error) {
 	nextAvailableStateID := uint32(0)
 
-	err := s.storageBase.Badger.View(func(txn *bdg.Txn) error {
+	err := s.database.Badger.View(func(txn *bdg.Txn) error {
 		opts := bdg.DefaultIteratorOptions
 		opts.PrefetchValues = false
 		opts.Reverse = true
@@ -83,13 +83,13 @@ func (s *StateTree) NextAvailableStateID() (*uint32, error) {
 
 // Set returns a witness containing 32 elements for the current set operation
 func (s *StateTree) Set(id uint32, state *models.UserState) (models.Witness, error) {
-	tx, storage, err := s.storageBase.BeginTransaction(TxOptions{Badger: true})
+	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return nil, err
 	}
 	defer tx.Rollback(&err)
 
-	witness, err := NewStateTree(storage).unsafeSet(id, state)
+	witness, err := NewStateTree(txDatabase).unsafeSet(id, state)
 	if err != nil {
 		return nil, err
 	}
@@ -107,15 +107,15 @@ func (s *StateTree) GetWitness(stateID uint32) (models.Witness, error) {
 }
 
 func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
-	txn, storage, err := s.storageBase.BeginTransaction(TxOptions{Badger: true})
+	txn, txDatabase, err := s.database.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return err
 	}
 	defer txn.Rollback(&err)
 
-	stateTree := NewStateTree(storage)
+	stateTree := NewStateTree(txDatabase)
 	var currentRootHash *common.Hash
-	err = storage.Badger.View(func(txn *bdg.Txn) error {
+	err = txDatabase.Badger.View(func(txn *bdg.Txn) error {
 		currentRootHash, err = stateTree.Root()
 		if err != nil {
 			return err
@@ -224,7 +224,7 @@ func (s *StateTree) getLeafOrEmpty(stateID uint32) (*models.StateLeaf, error) {
 
 func (s *StateTree) getLeafByPubKeyIDAndTokenID(pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
 	leaves := make([]models.FlatStateLeaf, 0, 1)
-	err := s.storageBase.Badger.Find(
+	err := s.database.Badger.Find(
 		&leaves,
 		bh.Where("TokenID").Eq(tokenID).
 			And("PubKeyID").Eq(pubKeyID).Index("PubKeyID"),
