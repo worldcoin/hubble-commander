@@ -446,6 +446,20 @@ func (s *SyncTestSuite) TestSyncBatch_CommitmentWithoutTransfers() {
 	s.NoError(err)
 }
 
+func (s *SyncTestSuite) TestSyncBatch_CommitmentWithoutCreate2Transfers() {
+	commitment := s.createCommitmentWithEmptyTransactions(txtype.Create2Transfer)
+
+	_, err := s.transactionExecutor.client.SubmitCreate2TransfersBatchAndWait([]models.Commitment{commitment})
+	s.NoError(err)
+
+	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
+	s.NoError(err)
+}
+
 func (s *SyncTestSuite) TestRevertBatch_RevertsState() {
 	initialStateRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)
