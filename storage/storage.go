@@ -62,16 +62,25 @@ func (s *StorageBase) beginStorageBaseTransaction(opts TxOptions) (*db.TxControl
 	return txController, &txStorageBase, nil
 }
 
+// TODO-STORAGE do we need to copy the StorageBase and BatchStorage objects?
 func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, error) {
-	txController, txStorageBase, err := s.StorageBase.beginStorageBaseTransaction(opts)
+	txController, txDatabase, err := s.database.BeginTransaction(opts)
 	if err != nil {
 		return nil, nil, err
 	}
 
+	txStorageBase := *s.StorageBase
+	txStorageBase.database = txDatabase
+
+	txBatchStorage := *s.BatchStorage
+	txBatchStorage.database = txDatabase
+
 	txStorage := &Storage{
-		StorageBase: txStorageBase,
-		StateTree:   NewStateTree(txStorageBase.database),
-		AccountTree: NewAccountTree(txStorageBase.database),
+		StorageBase:  &txStorageBase,
+		BatchStorage: &txBatchStorage,
+		database:     txDatabase,
+		StateTree:    NewStateTree(txStorageBase.database),
+		AccountTree:  NewAccountTree(txStorageBase.database),
 	}
 
 	return txController, txStorage, nil
