@@ -38,7 +38,7 @@ func (t *TransactionExecutor) previousBatchCommitmentInclusionProof(
 		return t.genesisBatchCommitmentInclusionProof()
 	}
 
-	previousBatch, err := t.storage.GetBatch(*currentBatchID.SubN(1))
+	previousBatch, err := t.storage.GetBatch(*previousBatchID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
