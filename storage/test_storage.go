@@ -66,11 +66,16 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 		feeReceiverStateIDs: make(map[string]uint32),
 	}
 
+	batchStorage := &BatchStorage{
+		database: database,
+	}
+
 	return &TestStorage{
 		Storage: &Storage{
-			StorageBase: storageBase,
-			StateTree:   NewStateTree(database),
-			AccountTree: NewAccountTree(database),
+			StorageBase:  storageBase,
+			BatchStorage: batchStorage,
+			StateTree:    NewStateTree(database),
+			AccountTree:  NewAccountTree(database),
 		},
 		Teardown: toTeardownFunc(teardown),
 	}, nil
@@ -103,11 +108,15 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 	storageBase := *s.StorageBase
 	storageBase.database = &database
 
+	batchStorage := *s.BatchStorage
+	batchStorage.database = &database
+
 	return &TestStorage{
 		Storage: &Storage{
-			StorageBase: &storageBase,
-			StateTree:   NewStateTree(&database),
-			AccountTree: NewAccountTree(&database),
+			StorageBase:  &storageBase,
+			BatchStorage: &batchStorage,
+			StateTree:    NewStateTree(&database),
+			AccountTree:  NewAccountTree(&database),
 		},
 		Teardown: toTeardownFunc(teardown),
 	}, nil
