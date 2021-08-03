@@ -432,6 +432,34 @@ func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 	s.Equal(tx, *transfer)
 }
 
+func (s *SyncTestSuite) TestSyncBatch_CommitmentWithZeroTransactions() {
+	stateRoot, err := s.storage.StateTree.Root()
+	s.NoError(err)
+
+	commitments := []models.Commitment{
+		{
+			Type:              txtype.Transfer,
+			Transactions:      []byte{},
+			FeeReceiver:       0,
+			CombinedSignature: models.Signature{},
+			PostStateRoot:     *stateRoot,
+		},
+	}
+
+	_, err = s.transactionExecutor.client.SubmitTransfersBatchAndWait(commitments)
+	s.NoError(err)
+
+	s.client.Commit()
+	s.recreateDatabase()
+
+	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
+	s.NoError(err)
+}
+
 func (s *SyncTestSuite) TestRevertBatch_RevertsState() {
 	initialStateRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)
