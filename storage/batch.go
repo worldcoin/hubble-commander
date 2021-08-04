@@ -2,25 +2,12 @@ package storage
 
 import (
 	"github.com/Masterminds/squirrel"
-	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 )
 
 type BatchStorage struct {
 	database *Database
-}
-
-func (s *BatchStorage) BeginTransaction(opts TxOptions) (*db.TxController, *BatchStorage, error) {
-	txController, txDatabase, err := s.database.BeginTransaction(opts)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	txBatchStorage := *s
-	txBatchStorage.database = txDatabase
-
-	return txController, &txBatchStorage, nil
 }
 
 func (s *BatchStorage) AddBatch(batch *models.Batch) error {

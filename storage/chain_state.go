@@ -2,7 +2,6 @@ package storage
 
 import (
 	"github.com/Masterminds/squirrel"
-	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
@@ -10,19 +9,6 @@ type ChainStateStorage struct {
 	database          *Database
 	latestBlockNumber uint32
 	syncedBlock       *uint64
-}
-
-// TODO-STORAGE do all those new structs need tbese?
-func (s *ChainStateStorage) BeginTransaction(opts TxOptions) (*db.TxController, *ChainStateStorage, error) {
-	txController, txDatabase, err := s.database.BeginTransaction(opts)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	txChainStateStorage := *s
-	txChainStateStorage.database = txDatabase
-
-	return txController, &txChainStateStorage, nil
 }
 
 func (s *ChainStateStorage) GetChainState(chainID models.Uint256) (*models.ChainState, error) {

@@ -2,7 +2,6 @@ package storage
 
 import (
 	"github.com/Masterminds/squirrel"
-	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 )
@@ -17,18 +16,6 @@ var selectedCommitmentCols = []string{
 
 type CommitmentStorage struct {
 	database *Database
-}
-
-func (s *CommitmentStorage) BeginTransaction(opts TxOptions) (*db.TxController, *CommitmentStorage, error) {
-	txController, txDatabase, err := s.database.BeginTransaction(opts)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	txCommitmentStorage := *s
-	txCommitmentStorage.database = txDatabase
-
-	return txController, &txCommitmentStorage, nil
 }
 
 func (s *CommitmentStorage) AddCommitment(commitment *models.Commitment) (*int32, error) {

@@ -57,7 +57,6 @@ func NewStorage(cfg *config.Config) (*Storage, error) {
 	}, nil
 }
 
-// TODO-STORAGE do we need to copy the StorageBase and BatchStorage objects?
 func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, error) {
 	txController, txDatabase, err := s.database.BeginTransaction(opts)
 	if err != nil {
