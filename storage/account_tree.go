@@ -36,13 +36,6 @@ func (s *AccountTree) Root() (*common.Hash, error) {
 	return s.merkleTree.Root()
 }
 
-func (s *AccountTree) LeafNode(pubKeyID uint32) (*models.MerkleTreeNode, error) {
-	return s.merkleTree.Get(models.MerklePath{
-		Path:  pubKeyID,
-		Depth: AccountTreeDepth,
-	})
-}
-
 func (s *AccountTree) Leaf(pubKeyID uint32) (*models.AccountLeaf, error) {
 	var leaf models.AccountLeaf
 	err := s.database.Badger.Get(pubKeyID, &leaf)
