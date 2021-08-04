@@ -112,17 +112,6 @@ func (s *TransactionStorage) GetTransfer(hash common.Hash) (*models.Transfer, er
 	return &res[0], nil
 }
 
-func (s *TransactionStorage) GetUserTransfers(fromStateID models.Uint256) ([]models.Transfer, error) {
-	res := make([]models.Transfer, 0, 1)
-	err := s.database.Postgres.Query(
-		s.database.QB.Select(transferColumns...).
-			From("transaction_base").
-			JoinClause("NATURAL JOIN transfer").
-			Where(squirrel.Eq{"from_state_id": fromStateID}),
-	).Into(&res)
-	return res, err
-}
-
 func (s *TransactionStorage) GetPendingTransfers(limit uint32) ([]models.Transfer, error) {
 	res := make([]models.Transfer, 0, limit)
 	err := s.database.Postgres.Query(
