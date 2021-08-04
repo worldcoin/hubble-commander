@@ -63,8 +63,7 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 	}
 
 	storageBase := &StorageBase{
-		database:            database,
-		feeReceiverStateIDs: make(map[string]uint32),
+		database: database,
 	}
 
 	batchStorage := &BatchStorage{
@@ -85,14 +84,15 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 
 	return &TestStorage{
 		Storage: &Storage{
-			StorageBase:        storageBase,
-			BatchStorage:       batchStorage,
-			CommitmentStorage:  commitmentStorage,
-			TransactionStorage: transactionStorage,
-			ChainStateStorage:  chainStateStorage,
-			database:           database,
-			StateTree:          NewStateTree(database),
-			AccountTree:        NewAccountTree(database),
+			StorageBase:         storageBase,
+			BatchStorage:        batchStorage,
+			CommitmentStorage:   commitmentStorage,
+			TransactionStorage:  transactionStorage,
+			ChainStateStorage:   chainStateStorage,
+			StateTree:           NewStateTree(database),
+			AccountTree:         NewAccountTree(database),
+			database:            database,
+			feeReceiverStateIDs: make(map[string]uint32),
 		},
 		Teardown: toTeardownFunc(teardown),
 	}, nil
@@ -124,7 +124,6 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 
 	storageBase := *s.StorageBase
 	storageBase.database = &database
-	storageBase.feeReceiverStateIDs = utils.CopyStringUint32Map(s.feeReceiverStateIDs)
 
 	batchStorage := *s.BatchStorage
 	batchStorage.database = &database
@@ -140,14 +139,15 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 
 	return &TestStorage{
 		Storage: &Storage{
-			StorageBase:        &storageBase,
-			BatchStorage:       &batchStorage,
-			CommitmentStorage:  &commitmentStorage,
-			TransactionStorage: &transactionStorage,
-			ChainStateStorage:  &chainStateStorage,
-			database:           &database,
-			StateTree:          NewStateTree(&database),
-			AccountTree:        NewAccountTree(&database),
+			StorageBase:         &storageBase,
+			BatchStorage:        &batchStorage,
+			CommitmentStorage:   &commitmentStorage,
+			TransactionStorage:  &transactionStorage,
+			ChainStateStorage:   &chainStateStorage,
+			StateTree:           NewStateTree(&database),
+			AccountTree:         NewAccountTree(&database),
+			database:            &database,
+			feeReceiverStateIDs: utils.CopyStringUint32Map(s.feeReceiverStateIDs),
 		},
 		Teardown: toTeardownFunc(teardown),
 	}, nil

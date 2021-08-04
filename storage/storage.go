@@ -3,6 +3,7 @@ package storage
 import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
+	"github.com/Worldcoin/hubble-commander/utils"
 )
 
 type Storage struct {
@@ -11,14 +12,14 @@ type Storage struct {
 	*CommitmentStorage
 	*ChainStateStorage
 	*TransactionStorage
-	database    *Database
-	StateTree   *StateTree
-	AccountTree *AccountTree
+	StateTree           *StateTree
+	AccountTree         *AccountTree
+	database            *Database
+	feeReceiverStateIDs map[string]uint32 // token ID => state id
 }
 
 type StorageBase struct {
-	database            *Database
-	feeReceiverStateIDs map[string]uint32 // token ID => state id
+	database *Database
 }
 
 type TxOptions struct {
@@ -34,8 +35,7 @@ func NewStorage(cfg *config.Config) (*Storage, error) {
 	}
 
 	storageBase := &StorageBase{
-		database:            database,
-		feeReceiverStateIDs: make(map[string]uint32),
+		database: database,
 	}
 
 	batchStorage := &BatchStorage{
@@ -55,14 +55,15 @@ func NewStorage(cfg *config.Config) (*Storage, error) {
 	}
 
 	return &Storage{
-		StorageBase:        storageBase,
-		BatchStorage:       batchStorage,
-		CommitmentStorage:  commitmentStorage,
-		TransactionStorage: transactionStorage,
-		ChainStateStorage:  chainStateStorage,
-		database:           database,
-		StateTree:          NewStateTree(database),
-		AccountTree:        NewAccountTree(database),
+		StorageBase:         storageBase,
+		BatchStorage:        batchStorage,
+		CommitmentStorage:   commitmentStorage,
+		TransactionStorage:  transactionStorage,
+		ChainStateStorage:   chainStateStorage,
+		StateTree:           NewStateTree(database),
+		AccountTree:         NewAccountTree(database),
+		database:            database,
+		feeReceiverStateIDs: make(map[string]uint32),
 	}, nil
 }
 
@@ -101,14 +102,15 @@ func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, 
 	txChainStateStorage.database = txDatabase
 
 	txStorage := &Storage{
-		StorageBase:        &txStorageBase,
-		BatchStorage:       &txBatchStorage,
-		CommitmentStorage:  &txCommitmentStorage,
-		TransactionStorage: &txTransactionStorage,
-		ChainStateStorage:  &txChainStateStorage,
-		database:           txDatabase,
-		StateTree:          NewStateTree(txStorageBase.database),
-		AccountTree:        NewAccountTree(txStorageBase.database),
+		StorageBase:         &txStorageBase,
+		BatchStorage:        &txBatchStorage,
+		CommitmentStorage:   &txCommitmentStorage,
+		TransactionStorage:  &txTransactionStorage,
+		ChainStateStorage:   &txChainStateStorage,
+		StateTree:           NewStateTree(txStorageBase.database),
+		AccountTree:         NewAccountTree(txStorageBase.database),
+		database:            txDatabase,
+		feeReceiverStateIDs: utils.CopyStringUint32Map(s.feeReceiverStateIDs),
 	}
 
 	return txController, txStorage, nil
