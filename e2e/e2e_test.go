@@ -218,9 +218,9 @@ func testGetBatches(t *testing.T, client jsonrpc.RPCClient) {
 	err := client.CallFor(&batches, "hubble_getBatches", []interface{}{nil, nil})
 
 	require.NoError(t, err)
-	require.Len(t, batches, 2)
-	require.Equal(t, models.MakeUint256(1), batches[0].ID)
-	batchTypes := []txtype.TransactionType{batches[0].Type, batches[1].Type}
+	require.Len(t, batches, 3)
+	require.Equal(t, models.MakeUint256(1), batches[1].ID)
+	batchTypes := []txtype.TransactionType{batches[1].Type, batches[2].Type}
 	require.Contains(t, batchTypes, txtype.Transfer)
 	require.Contains(t, batchTypes, txtype.Create2Transfer)
 }

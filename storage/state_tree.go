@@ -28,7 +28,7 @@ type StateTree struct {
 func NewStateTree(database *Database) *StateTree {
 	return &StateTree{
 		database:   database,
-		merkleTree: NewStoredMerkleTree("state", database),
+		merkleTree: NewStoredMerkleTree("state", database, StateTreeDepth),
 	}
 }
 
