@@ -10,6 +10,7 @@ type Storage struct {
 	*BatchStorage
 	*CommitmentStorage
 	*ChainStateStorage
+	*TransactionStorage
 	database    *Database
 	StateTree   *StateTree
 	AccountTree *AccountTree
@@ -45,18 +46,23 @@ func NewStorage(cfg *config.Config) (*Storage, error) {
 		database: database,
 	}
 
+	transactionStorage := &TransactionStorage{
+		database: database,
+	}
+
 	chainStateStorage := &ChainStateStorage{
 		database: database,
 	}
 
 	return &Storage{
-		StorageBase:       storageBase,
-		BatchStorage:      batchStorage,
-		CommitmentStorage: commitmentStorage,
-		ChainStateStorage: chainStateStorage,
-		database:          database,
-		StateTree:         NewStateTree(database),
-		AccountTree:       NewAccountTree(database),
+		StorageBase:        storageBase,
+		BatchStorage:       batchStorage,
+		CommitmentStorage:  commitmentStorage,
+		TransactionStorage: transactionStorage,
+		ChainStateStorage:  chainStateStorage,
+		database:           database,
+		StateTree:          NewStateTree(database),
+		AccountTree:        NewAccountTree(database),
 	}, nil
 }
 
@@ -88,17 +94,21 @@ func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, 
 	txCommitmentStorage := *s.CommitmentStorage
 	txCommitmentStorage.database = txDatabase
 
+	txTransactionStorage := *s.TransactionStorage
+	txTransactionStorage.database = txDatabase
+
 	txChainStateStorage := *s.ChainStateStorage
 	txChainStateStorage.database = txDatabase
 
 	txStorage := &Storage{
-		StorageBase:       &txStorageBase,
-		BatchStorage:      &txBatchStorage,
-		CommitmentStorage: &txCommitmentStorage,
-		ChainStateStorage: &txChainStateStorage,
-		database:          txDatabase,
-		StateTree:         NewStateTree(txStorageBase.database),
-		AccountTree:       NewAccountTree(txStorageBase.database),
+		StorageBase:        &txStorageBase,
+		BatchStorage:       &txBatchStorage,
+		CommitmentStorage:  &txCommitmentStorage,
+		TransactionStorage: &txTransactionStorage,
+		ChainStateStorage:  &txChainStateStorage,
+		database:           txDatabase,
+		StateTree:          NewStateTree(txStorageBase.database),
+		AccountTree:        NewAccountTree(txStorageBase.database),
 	}
 
 	return txController, txStorage, nil

@@ -74,19 +74,24 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 		database: database,
 	}
 
+	transactionStorage := &TransactionStorage{
+		database: database,
+	}
+
 	chainStateStorage := &ChainStateStorage{
 		database: database,
 	}
 
 	return &TestStorage{
 		Storage: &Storage{
-			StorageBase:       storageBase,
-			BatchStorage:      batchStorage,
-			CommitmentStorage: commitmentStorage,
-			ChainStateStorage: chainStateStorage,
-			database:          database,
-			StateTree:         NewStateTree(database),
-			AccountTree:       NewAccountTree(database),
+			StorageBase:        storageBase,
+			BatchStorage:       batchStorage,
+			CommitmentStorage:  commitmentStorage,
+			TransactionStorage: transactionStorage,
+			ChainStateStorage:  chainStateStorage,
+			database:           database,
+			StateTree:          NewStateTree(database),
+			AccountTree:        NewAccountTree(database),
 		},
 		Teardown: toTeardownFunc(teardown),
 	}, nil
@@ -125,18 +130,22 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 	commitmentStorage := *s.CommitmentStorage
 	commitmentStorage.database = &database
 
+	transactionStorage := *s.TransactionStorage
+	transactionStorage.database = &database
+
 	chainStateStorage := *s.ChainStateStorage
 	chainStateStorage.database = &database
 
 	return &TestStorage{
 		Storage: &Storage{
-			StorageBase:       &storageBase,
-			BatchStorage:      &batchStorage,
-			CommitmentStorage: &commitmentStorage,
-			ChainStateStorage: &chainStateStorage,
-			database:          &database,
-			StateTree:         NewStateTree(&database),
-			AccountTree:       NewAccountTree(&database),
+			StorageBase:        &storageBase,
+			BatchStorage:       &batchStorage,
+			CommitmentStorage:  &commitmentStorage,
+			TransactionStorage: &transactionStorage,
+			ChainStateStorage:  &chainStateStorage,
+			database:           &database,
+			StateTree:          NewStateTree(&database),
+			AccountTree:        NewAccountTree(&database),
 		},
 		Teardown: toTeardownFunc(teardown),
 	}, nil
