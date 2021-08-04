@@ -42,11 +42,10 @@ func (c *Commander) newBlockLoop() error {
 				continue
 			}
 
-			invalidBatchID, err := c.client.GetInvalidBatchID()
+			isRollingBack, err := c.handleBatchRollback(rollupCancel)
 			if err != nil {
 				return err
 			}
-			c.invalidBatchID.Set(invalidBatchID)
 
 			err = c.syncToLatestBlock()
 			if errors.Is(err, ErrIncompleteBlockRangeSync) {
@@ -54,6 +53,10 @@ func (c *Commander) newBlockLoop() error {
 			}
 			if err != nil {
 				return err
+			}
+
+			if isRollingBack {
+				continue
 			}
 
 			isProposer, err := c.client.IsActiveProposer()

@@ -1,9 +1,11 @@
 package commander
 
 import (
+	"context"
 	"sync"
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
+	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
 )
@@ -54,6 +56,7 @@ func (i *InvalidBatchID) Get() uint64 {
 	}
 */
 
+// TODO-dis probably we don't need that for resetting invalidBatchID
 func (c *Commander) watchDisputes() error {
 	sink := make(chan *rollup.RollupRollbackStatus)
 	subscription, err := c.client.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
@@ -72,11 +75,38 @@ func (c *Commander) watchDisputes() error {
 			if rollbackStatus.Completed {
 				c.invalidBatchID.Reset()
 			}
-			//TODO-dis: call keep rolling back in case it's not completed
-			//transactionHash, err = c.client.Rollup.keepRollingBack()
-			//if err != nil {
+			// TODO-dis: call keep rolling back in case it's not completed
+			// transactionHash, err = c.client.Rollup.keepRollingBack()
+			// if err != nil {
 			//	return err
-			//}
+			// }
 		}
 	}
+}
+
+func (c *Commander) handleBatchRollback(rollupCancel context.CancelFunc) (bool, error) {
+	invalidBatchID, err := c.client.GetInvalidBatchID()
+	if err != nil {
+		return false, err
+	}
+	if invalidBatchID == 0 {
+		c.invalidBatchID.Reset()
+		return false, nil
+	}
+
+	c.invalidBatchID.Set(invalidBatchID)
+	c.stopRollupLoop(rollupCancel)
+
+	latestBatch, err := c.storage.GetLatestSubmittedBatch()
+	if st.IsNotFoundError(err) {
+		return true, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if latestBatch.ID.CmpN(invalidBatchID) < 0 {
+		return true, nil
+	}
+
+	return true, c.revertBatches(latestBatch)
 }
