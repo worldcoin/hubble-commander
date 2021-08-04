@@ -69,14 +69,18 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 	batchStorage := &BatchStorage{
 		database: database,
 	}
+	commitmentStorage := &CommitmentStorage{
+		database: database,
+	}
 
 	return &TestStorage{
 		Storage: &Storage{
-			StorageBase:  storageBase,
-			BatchStorage: batchStorage,
-			database:     database,
-			StateTree:    NewStateTree(database),
-			AccountTree:  NewAccountTree(database),
+			StorageBase:       storageBase,
+			BatchStorage:      batchStorage,
+			CommitmentStorage: commitmentStorage,
+			database:          database,
+			StateTree:         NewStateTree(database),
+			AccountTree:       NewAccountTree(database),
 		},
 		Teardown: toTeardownFunc(teardown),
 	}, nil
@@ -112,13 +116,17 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 	batchStorage := *s.BatchStorage
 	batchStorage.database = &database
 
+	commitmentStorage := *s.CommitmentStorage
+	commitmentStorage.database = &database
+
 	return &TestStorage{
 		Storage: &Storage{
-			StorageBase:  &storageBase,
-			BatchStorage: &batchStorage,
-			database:     &database,
-			StateTree:    NewStateTree(&database),
-			AccountTree:  NewAccountTree(&database),
+			StorageBase:       &storageBase,
+			BatchStorage:      &batchStorage,
+			CommitmentStorage: &commitmentStorage,
+			database:          &database,
+			StateTree:         NewStateTree(&database),
+			AccountTree:       NewAccountTree(&database),
 		},
 		Teardown: toTeardownFunc(teardown),
 	}, nil

@@ -8,6 +8,7 @@ import (
 type Storage struct {
 	*StorageBase
 	*BatchStorage
+	*CommitmentStorage
 	database    *Database
 	StateTree   *StateTree
 	AccountTree *AccountTree
@@ -41,12 +42,17 @@ func NewStorage(cfg *config.Config) (*Storage, error) {
 		database: database,
 	}
 
+	commitmentStorage := &CommitmentStorage{
+		database: database,
+	}
+
 	return &Storage{
-		StorageBase:  storageBase,
-		BatchStorage: batchStorage,
-		database:     database,
-		StateTree:    NewStateTree(database),
-		AccountTree:  NewAccountTree(database),
+		StorageBase:       storageBase,
+		BatchStorage:      batchStorage,
+		CommitmentStorage: commitmentStorage,
+		database:          database,
+		StateTree:         NewStateTree(database),
+		AccountTree:       NewAccountTree(database),
 	}, nil
 }
 
@@ -75,12 +81,16 @@ func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, 
 	txBatchStorage := *s.BatchStorage
 	txBatchStorage.database = txDatabase
 
+	txCommitmentStorage := *s.CommitmentStorage
+	txCommitmentStorage.database = txDatabase
+
 	txStorage := &Storage{
-		StorageBase:  &txStorageBase,
-		BatchStorage: &txBatchStorage,
-		database:     txDatabase,
-		StateTree:    NewStateTree(txStorageBase.database),
-		AccountTree:  NewAccountTree(txStorageBase.database),
+		StorageBase:       &txStorageBase,
+		BatchStorage:      &txBatchStorage,
+		CommitmentStorage: &txCommitmentStorage,
+		database:          txDatabase,
+		StateTree:         NewStateTree(txStorageBase.database),
+		AccountTree:       NewAccountTree(txStorageBase.database),
 	}
 
 	return txController, txStorage, nil

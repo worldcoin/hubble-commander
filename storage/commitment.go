@@ -2,6 +2,7 @@ package storage
 
 import (
 	"github.com/Masterminds/squirrel"
+	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 )
@@ -14,7 +15,23 @@ var selectedCommitmentCols = []string{
 	"commitment.post_state_root",
 }
 
-func (s *StorageBase) AddCommitment(commitment *models.Commitment) (*int32, error) {
+type CommitmentStorage struct {
+	database *Database
+}
+
+func (s *CommitmentStorage) BeginTransaction(opts TxOptions) (*db.TxController, *CommitmentStorage, error) {
+	txController, txDatabase, err := s.database.BeginTransaction(opts)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	txCommitmentStorage := *s
+	txCommitmentStorage.database = txDatabase
+
+	return txController, &txCommitmentStorage, nil
+}
+
+func (s *CommitmentStorage) AddCommitment(commitment *models.Commitment) (*int32, error) {
 	res := make([]int32, 0, 1)
 	err := s.database.Postgres.Query(
 		s.database.QB.Insert("commitment").
@@ -35,7 +52,7 @@ func (s *StorageBase) AddCommitment(commitment *models.Commitment) (*int32, erro
 	return ref.Int32(res[0]), nil
 }
 
-func (s *StorageBase) GetCommitment(id int32) (*models.Commitment, error) {
+func (s *CommitmentStorage) GetCommitment(id int32) (*models.Commitment, error) {
 	res := make([]models.Commitment, 0, 1)
 	err := s.database.Postgres.Query(
 		s.database.QB.Select("*").
@@ -51,7 +68,7 @@ func (s *StorageBase) GetCommitment(id int32) (*models.Commitment, error) {
 	return &res[0], nil
 }
 
-func (s *StorageBase) GetLatestCommitment() (*models.Commitment, error) {
+func (s *CommitmentStorage) GetLatestCommitment() (*models.Commitment, error) {
 	res := make([]models.Commitment, 0, 1)
 	err := s.database.Postgres.Query(
 		s.database.QB.Select("*").
@@ -68,7 +85,7 @@ func (s *StorageBase) GetLatestCommitment() (*models.Commitment, error) {
 	return &res[0], nil
 }
 
-func (s *StorageBase) MarkCommitmentAsIncluded(commitmentID int32, batchID models.Uint256) error {
+func (s *CommitmentStorage) MarkCommitmentAsIncluded(commitmentID int32, batchID models.Uint256) error {
 	res, err := s.database.Postgres.Query(
 		s.database.QB.Update("commitment").
 			Where(squirrel.Eq{"commitment_id": commitmentID}).
@@ -83,6 +100,24 @@ func (s *StorageBase) MarkCommitmentAsIncluded(commitmentID int32, batchID model
 		return err
 	}
 	if numUpdatedRows == 0 {
+		return ErrNoRowsAffected
+	}
+	return nil
+}
+
+func (s *CommitmentStorage) DeleteCommitmentsByBatchIDs(batchID ...models.Uint256) error {
+	res, err := s.database.Postgres.Query(
+		s.database.QB.Delete("commitment").
+			Where(squirrel.Eq{"included_in_batch": batchID}),
+	).Exec()
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
 		return ErrNoRowsAffected
 	}
 	return nil
@@ -111,22 +146,4 @@ func (s *Storage) GetCommitmentsByBatchID(batchID models.Uint256) ([]models.Comm
 	}
 
 	return commitments, nil
-}
-
-func (s *StorageBase) DeleteCommitmentsByBatchIDs(batchID ...models.Uint256) error {
-	res, err := s.database.Postgres.Query(
-		s.database.QB.Delete("commitment").
-			Where(squirrel.Eq{"included_in_batch": batchID}),
-	).Exec()
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected == 0 {
-		return ErrNoRowsAffected
-	}
-	return nil
 }
