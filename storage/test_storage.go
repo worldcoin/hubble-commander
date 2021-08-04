@@ -4,6 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/db/postgres"
+	"github.com/Worldcoin/hubble-commander/utils"
 )
 
 type TestStorage struct {
@@ -123,6 +124,7 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 
 	storageBase := *s.StorageBase
 	storageBase.database = &database
+	storageBase.feeReceiverStateIDs = utils.CopyStringUint32Map(s.feeReceiverStateIDs)
 
 	batchStorage := *s.BatchStorage
 	batchStorage.database = &database

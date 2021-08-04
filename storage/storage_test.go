@@ -215,7 +215,7 @@ func (s *StorageTestSuite) TestClone_ClonesFeeReceiverStateIDsByValue() {
 
 	defID, ok := s.storage.feeReceiverStateIDs["def"]
 	s.False(ok)
-	s.Nil(defID)
+	s.EqualValues(0, defID) // empty value
 }
 
 func TestStorageTestSuite(t *testing.T) {
