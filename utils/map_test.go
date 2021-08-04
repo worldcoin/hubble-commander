@@ -6,24 +6,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCopyMap(t *testing.T) {
-	m1 := map[string]interface{}{
-		"a": "bbb",
-		"b": map[string]interface{}{
-			"c": 123,
-		},
+func TestCopyStringUint32Map(t *testing.T) {
+	m1 := map[string]uint32{
+		"a": 123,
+		"b": 456,
 	}
 
-	m2 := CopyMap(m1)
+	m2 := CopyStringUint32Map(m1)
 
-	m1["a"] = "zzz"
+	m1["a"] = 999
 	delete(m1, "b")
 
-	require.Equal(t, map[string]interface{}{"a": "zzz"}, m1)
-	require.Equal(t, map[string]interface{}{
-		"a": "bbb",
-		"b": map[string]interface{}{
-			"c": 123,
-		},
+	require.Equal(t, map[string]uint32{"a": 999}, m1)
+	require.Equal(t, map[string]uint32{
+		"a": 123,
+		"b": 456,
 	}, m2)
 }

@@ -1,14 +1,9 @@
 package utils
 
-func CopyMap(m map[string]interface{}) map[string]interface{} {
-	cp := make(map[string]interface{})
+func CopyStringUint32Map(m map[string]uint32) map[string]uint32 {
+	cp := make(map[string]uint32)
 	for k, v := range m {
-		vm, ok := v.(map[string]interface{})
-		if ok {
-			cp[k] = CopyMap(vm)
-		} else {
-			cp[k] = v
-		}
+		cp[k] = v
 	}
 
 	return cp
