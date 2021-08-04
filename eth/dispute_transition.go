@@ -48,7 +48,7 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 	proofs []models.StateMerkleProof,
 ) error {
 	sink := make(chan *rollup.RollupRollbackStatus)
-	subscription, err := c.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
+	subscription, err := c.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink) // TODO-dis query receipts instead of subscribing events
 	if err != nil {
 		return err
 	}
@@ -61,6 +61,8 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 			*TransferProofToCalldata(target),
 			StateMerkleProofsToCalldata(proofs),
 		)
+	// TODO-dis handle "Already successfully disputed. Roll back in process" error
+	// TODO-dis handle error caused by reverted transaction (someone else already disputed, check against nextBatchID)
 	if err != nil {
 		return err
 	}
@@ -94,6 +96,8 @@ func (c *Client) waitForRollbackToFinish(
 
 func (c *Client) KeepRollingBack() (common.Hash, error) {
 	transaction, err := c.rollup().KeepRollingBack()
+	// TODO-dis handle "BatchManager: Is not rolling back" error
+	// TODO-dis handle error caused by reverted transaction (already rolled back, check against nextBatchID)
 	if err != nil {
 		return common.Hash{}, err
 	}

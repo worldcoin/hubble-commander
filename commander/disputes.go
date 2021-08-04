@@ -5,11 +5,13 @@ import (
 	"sync"
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
+	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
 )
 
+// TODO-dis: replace with uint64 as it's not shared between workers
 type InvalidBatchID struct {
 	id    uint64
 	mutex sync.RWMutex
@@ -55,6 +57,7 @@ func (i *InvalidBatchID) Get() uint64 {
 	}
 */
 
+//TODO: remove
 func (c *Commander) watchDisputes() error {
 	sink := make(chan *rollup.RollupRollbackStatus)
 	subscription, err := c.client.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
@@ -74,7 +77,6 @@ func (c *Commander) watchDisputes() error {
 				continue
 			}
 
-			// TODO-dis: what if multiple nodes will call this function
 			_, err = c.client.KeepRollingBack()
 			if err != nil {
 				return errors.WithStack(err)
@@ -93,19 +95,21 @@ func (c *Commander) handleBatchRollback(rollupCancel context.CancelFunc) (bool, 
 		return false, nil
 	}
 
-	c.invalidBatchID.Set(invalidBatchID)
-	c.stopRollupLoop(rollupCancel)
+	return true, c.manageRemoteBatchRollback(invalidBatchID, rollupCancel)
+}
 
-	latestBatch, err := c.storage.GetLatestSubmittedBatch()
+func (c *Commander) manageRemoteBatchRollback(batchID uint64, rollupCancel context.CancelFunc) error {
+	c.invalidBatchID.Set(batchID)
+	c.stopRollupLoop(rollupCancel)
+	// TODO-dis trigger keep rolling back and handle errors (2)
+
+	invalidBatch, err := c.storage.GetBatch(models.MakeUint256(batchID))
 	if st.IsNotFoundError(err) {
-		return true, nil
+		return nil
 	}
 	if err != nil {
-		return false, err
-	}
-	if latestBatch.ID.CmpN(invalidBatchID) < 0 {
-		return true, nil
+		return err
 	}
 
-	return true, c.revertBatches(latestBatch)
+	return c.revertBatches(invalidBatch)
 }
