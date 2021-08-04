@@ -81,7 +81,7 @@ func (c *Client) waitForRollbackToFinish(
 				if rollbackStatus.Completed {
 					return nil
 				}
-				transactionHash, err = c.keepRollingBack()
+				transactionHash, err = c.KeepRollingBack()
 				if err != nil {
 					return err
 				}
@@ -92,7 +92,7 @@ func (c *Client) waitForRollbackToFinish(
 	}
 }
 
-func (c *Client) keepRollingBack() (common.Hash, error) {
+func (c *Client) KeepRollingBack() (common.Hash, error) {
 	transaction, err := c.rollup().KeepRollingBack()
 	if err != nil {
 		return common.Hash{}, err
