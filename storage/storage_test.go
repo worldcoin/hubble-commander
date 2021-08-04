@@ -195,6 +195,29 @@ func (s *StorageTestSuite) TestClone() {
 	s.Equal(stateLeaf, clonedStateLeaf)
 }
 
+func (s *StorageTestSuite) TestClone_ClonesFeeReceiverStateIDsByValue() {
+	testConfig := config.GetTestConfig().Postgres
+
+	s.storage.feeReceiverStateIDs["abc"] = 123
+
+	clonedStorage, err := s.storage.Clone(testConfig)
+	s.NoError(err)
+	defer func() {
+		err = clonedStorage.Teardown()
+		s.NoError(err)
+	}()
+
+	abcID, ok := clonedStorage.feeReceiverStateIDs["abc"]
+	s.True(ok)
+	s.EqualValues(123, abcID)
+
+	clonedStorage.feeReceiverStateIDs["def"] = 456
+
+	defID, ok := s.storage.feeReceiverStateIDs["def"]
+	s.False(ok)
+	s.Nil(defID)
+}
+
 func TestStorageTestSuite(t *testing.T) {
 	suite.Run(t, new(StorageTestSuite))
 }
