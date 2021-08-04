@@ -26,8 +26,7 @@ func (i *InvalidBatchID) Set(id uint64) {
 }
 
 func (i *InvalidBatchID) Reset() {
-	//TODO-dis: should be read lock here
-	if i.id == 0 {
+	if i.Get() == 0 {
 		return
 	}
 	i.mutex.Lock()
@@ -56,12 +55,11 @@ func (i *InvalidBatchID) Get() uint64 {
 	}
 */
 
-// TODO-dis probably we don't need that for resetting invalidBatchID
 func (c *Commander) watchDisputes() error {
 	sink := make(chan *rollup.RollupRollbackStatus)
 	subscription, err := c.client.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	defer subscription.Unsubscribe()
 
@@ -73,13 +71,14 @@ func (c *Commander) watchDisputes() error {
 			return errors.WithStack(err)
 		case rollbackStatus := <-sink:
 			if rollbackStatus.Completed {
-				c.invalidBatchID.Reset()
+				continue
 			}
-			// TODO-dis: call keep rolling back in case it's not completed
-			// transactionHash, err = c.client.Rollup.keepRollingBack()
-			// if err != nil {
-			//	return err
-			// }
+
+			// TODO-dis: what if multiple nodes will call this function
+			_, err = c.client.KeepRollingBack()
+			if err != nil {
+				return errors.WithStack(err)
+			}
 		}
 	}
 }
