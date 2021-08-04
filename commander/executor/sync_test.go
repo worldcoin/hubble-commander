@@ -220,7 +220,7 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyTransfersInCommitment() {
 	err = s.transactionExecutor.SyncBatch(&remoteBatches[1])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Transition, disputableErr.Type)
-	s.Equal(ErrTooManyTx.Reason, disputableErr.Reason)
+	s.Equal(ErrTooManyTxs.Reason, disputableErr.Reason)
 
 	_, err = s.storage.GetBatch(remoteBatches[0].ID)
 	s.NoError(err)
@@ -250,7 +250,7 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyCreate2TransfersInCommitment() {
 	err = s.transactionExecutor.SyncBatch(&remoteBatches[1])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Transition, disputableErr.Type)
-	s.Equal(ErrTooManyTx.Reason, disputableErr.Reason)
+	s.Equal(ErrTooManyTxs.Reason, disputableErr.Reason)
 
 	_, err = s.storage.GetBatch(remoteBatches[0].ID)
 	s.NoError(err)
