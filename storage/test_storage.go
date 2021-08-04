@@ -69,7 +69,12 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 	batchStorage := &BatchStorage{
 		database: database,
 	}
+
 	commitmentStorage := &CommitmentStorage{
+		database: database,
+	}
+
+	chainStateStorage := &ChainStateStorage{
 		database: database,
 	}
 
@@ -78,6 +83,7 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 			StorageBase:       storageBase,
 			BatchStorage:      batchStorage,
 			CommitmentStorage: commitmentStorage,
+			ChainStateStorage: chainStateStorage,
 			database:          database,
 			StateTree:         NewStateTree(database),
 			AccountTree:       NewAccountTree(database),
@@ -119,11 +125,15 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 	commitmentStorage := *s.CommitmentStorage
 	commitmentStorage.database = &database
 
+	chainStateStorage := *s.ChainStateStorage
+	chainStateStorage.database = &database
+
 	return &TestStorage{
 		Storage: &Storage{
 			StorageBase:       &storageBase,
 			BatchStorage:      &batchStorage,
 			CommitmentStorage: &commitmentStorage,
+			ChainStateStorage: &chainStateStorage,
 			database:          &database,
 			StateTree:         NewStateTree(&database),
 			AccountTree:       NewAccountTree(&database),

@@ -9,6 +9,7 @@ type Storage struct {
 	*StorageBase
 	*BatchStorage
 	*CommitmentStorage
+	*ChainStateStorage
 	database    *Database
 	StateTree   *StateTree
 	AccountTree *AccountTree
@@ -17,8 +18,6 @@ type Storage struct {
 type StorageBase struct {
 	database            *Database
 	feeReceiverStateIDs map[string]uint32 // token ID => state id
-	latestBlockNumber   uint32
-	syncedBlock         *uint64
 }
 
 type TxOptions struct {
@@ -46,10 +45,15 @@ func NewStorage(cfg *config.Config) (*Storage, error) {
 		database: database,
 	}
 
+	chainStateStorage := &ChainStateStorage{
+		database: database,
+	}
+
 	return &Storage{
 		StorageBase:       storageBase,
 		BatchStorage:      batchStorage,
 		CommitmentStorage: commitmentStorage,
+		ChainStateStorage: chainStateStorage,
 		database:          database,
 		StateTree:         NewStateTree(database),
 		AccountTree:       NewAccountTree(database),
@@ -84,10 +88,14 @@ func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, 
 	txCommitmentStorage := *s.CommitmentStorage
 	txCommitmentStorage.database = txDatabase
 
+	txChainStateStorage := *s.ChainStateStorage
+	txChainStateStorage.database = txDatabase
+
 	txStorage := &Storage{
 		StorageBase:       &txStorageBase,
 		BatchStorage:      &txBatchStorage,
 		CommitmentStorage: &txCommitmentStorage,
+		ChainStateStorage: &txChainStateStorage,
 		database:          txDatabase,
 		StateTree:         NewStateTree(txStorageBase.database),
 		AccountTree:       NewAccountTree(txStorageBase.database),
