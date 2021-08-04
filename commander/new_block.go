@@ -42,6 +42,12 @@ func (c *Commander) newBlockLoop() error {
 				continue
 			}
 
+			invalidBatchID, err := c.client.GetInvalidBatchID()
+			if err != nil {
+				return err
+			}
+			c.invalidBatchID.Set(invalidBatchID)
+
 			err = c.syncToLatestBlock()
 			if errors.Is(err, ErrIncompleteBlockRangeSync) {
 				return nil
