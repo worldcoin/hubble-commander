@@ -97,6 +97,9 @@ func (c *Commander) Start() (err error) {
 		return nil
 	})
 	c.startWorker(func() error { return c.newBlockLoop() })
+	c.startWorker(func() error {
+		return c.watchDisputes()
+	})
 
 	log.Printf("Commander started and listening on port %s.\n", c.cfg.API.Port)
 

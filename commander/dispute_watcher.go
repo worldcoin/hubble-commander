@@ -64,6 +64,8 @@ func (c *Commander) watchDisputes() error {
 
 	for {
 		select {
+		case <-c.workersContext.Done():
+			return nil
 		case err = <-subscription.Err():
 			return errors.WithStack(err)
 		case rollbackStatus := <-sink:
