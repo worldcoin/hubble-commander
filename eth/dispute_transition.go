@@ -150,3 +150,11 @@ func stateMerkleProofToCalldata(proof *models.StateMerkleProof) *rollup.TypesSta
 		Witness: proof.Witness.Bytes(),
 	}
 }
+
+func (c *Client) GetInvalidBatchID() (uint64, error) {
+	batchMarker, err := c.Rollup.InvalidBatchMarker(nil)
+	if err != nil {
+		return 0, err
+	}
+	return batchMarker.Uint64(), err
+}
