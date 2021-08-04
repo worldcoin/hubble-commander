@@ -27,8 +27,6 @@ func (t *TransactionExecutor) syncTransferCommitment(
 		return nil, ErrTooManyTxs
 	}
 
-	// TODO check if commitments can have 0 transfers (signature disputes)
-
 	feeReceiver, err := t.getSyncedCommitmentFeeReceiver(commitment)
 	if err != nil {
 		return nil, err
