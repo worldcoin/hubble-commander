@@ -65,7 +65,7 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 ) {
 	numTransfers := len(transfers)
 	if numTransfers == 0 {
-		return []models.Transfer{}, nil, nil
+		return []models.Transfer{}, nil, nil // TODO remove this fast return to enable fee receiver tokenID verification
 	}
 
 	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*numTransfers)
@@ -91,6 +91,7 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 		combinedFee = *combinedFee.Add(&synced.Transfer.Fee)
 	}
 
+	// TODO check that fee receiver tokenID equals commitment tokenID and return DisputableError otherwise
 	stateProof, err := t.ApplyFee(feeReceiver.StateID, combinedFee)
 	if err != nil {
 		return nil, nil, err

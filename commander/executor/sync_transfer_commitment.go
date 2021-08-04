@@ -52,8 +52,10 @@ func (t *TransactionExecutor) syncTransferCommitment(
 	return models.TransferArray(appliedTransfers), nil
 }
 
+// TODO get tokenID from the sender of the first transfer. Use fee receiver to establish tokenID only in case there are no transfers.
 func (t *TransactionExecutor) getSyncedCommitmentFeeReceiver(commitment *encoder.DecodedCommitment) (*FeeReceiver, error) {
 	feeReceiverState, err := t.storage.StateTree.Leaf(commitment.FeeReceiver)
+	// TODO we need to check for NotFoundError and trigger dispute in case of invalid fee receiver. Maybe query it in ApplyTransfersForSync or some new ApplyFeeForSync method?
 	if err != nil {
 		return nil, err
 	}
