@@ -281,6 +281,31 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentCommitmentAfter
 	s.checkBatchAfterDispute(remoteBatches[0].ID)
 }
 
+func (s *BatchesTestSuite) TestUnsafeSyncBatches_SyncsBatchesBeforeInvalidOne() {
+	transfers := []models.Transfer{
+		testutils.MakeTransfer(0, 1, 0, 50),
+		testutils.MakeTransfer(0, 1, 1, 250),
+		testutils.MakeTransfer(0, 1, 2, 100),
+	}
+
+	s.createAndSubmitTransferBatch(s.testStorage.StorageBase, s.transactionExecutor, &transfers[0])
+
+	clonedStorage, txExecutor := cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
+	defer teardown(s.Assertions, clonedStorage.Teardown)
+
+	invalidBatch := s.createAndSubmitTransferBatch(clonedStorage.StorageBase, txExecutor, &transfers[1])
+	s.createAndSubmitTransferBatch(clonedStorage.StorageBase, txExecutor, &transfers[2])
+
+	s.cmd.invalidBatchID.Set(invalidBatch.ID.Uint64())
+
+	s.syncAllBlocks()
+
+	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
+	s.NoError(err)
+	s.Len(batches, 1)
+	s.EqualValues(1, batches[0].ID.Uint64())
+}
+
 func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidFeeReceiverTokenID() {
 	_, err := s.testStorage.StateTree.Set(2, &models.UserState{
 		PubKeyID: 2,
@@ -341,6 +366,31 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithoutTransfer
 	s.NoError(err)
 
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
+}
+
+func (s *BatchesTestSuite) TestUnsafeSyncBatches_SyncsBatchesBeforeInvalidOne() {
+	transfers := []models.Transfer{
+		testutils.MakeTransfer(0, 1, 0, 50),
+		testutils.MakeTransfer(0, 1, 1, 250),
+		testutils.MakeTransfer(0, 1, 2, 100),
+	}
+
+	s.createAndSubmitTransferBatch(s.testStorage.StorageBase, s.transactionExecutor, &transfers[0])
+
+	clonedStorage, txExecutor := cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
+	defer teardown(s.Assertions, clonedStorage.Teardown)
+
+	invalidBatch := s.createAndSubmitTransferBatch(clonedStorage.StorageBase, txExecutor, &transfers[1])
+	s.createAndSubmitTransferBatch(clonedStorage.StorageBase, txExecutor, &transfers[2])
+
+	s.cmd.invalidBatchID.Set(invalidBatch.ID.Uint64())
+
+	s.syncAllBlocks()
+
+	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
+	s.NoError(err)
+	s.Len(batches, 1)
+	s.EqualValues(1, batches[0].ID.Uint64())
 }
 
 func (s *BatchesTestSuite) syncAllBlocks() {

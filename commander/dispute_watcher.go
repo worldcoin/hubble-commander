@@ -35,7 +35,7 @@ func (i *InvalidBatchID) Reset() {
 
 func (i *InvalidBatchID) Get() uint64 {
 	i.mutex.RLock()
-	defer i.mutex.Unlock()
+	defer i.mutex.RUnlock()
 	return i.id
 }
 
