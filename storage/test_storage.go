@@ -62,10 +62,6 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 		teardown = append(teardown, badgerTestDB.Teardown)
 	}
 
-	storageBase := &StorageBase{
-		database: database,
-	}
-
 	batchStorage := &BatchStorage{
 		database: database,
 	}
@@ -84,7 +80,6 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 
 	return &TestStorage{
 		Storage: &Storage{
-			StorageBase:         storageBase,
 			BatchStorage:        batchStorage,
 			CommitmentStorage:   commitmentStorage,
 			TransactionStorage:  transactionStorage,
@@ -122,9 +117,6 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 		teardown = append(teardown, clonedBadger.Teardown)
 	}
 
-	storageBase := *s.StorageBase
-	storageBase.database = &database
-
 	batchStorage := *s.BatchStorage
 	batchStorage.database = &database
 
@@ -139,7 +131,6 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 
 	return &TestStorage{
 		Storage: &Storage{
-			StorageBase:         &storageBase,
 			BatchStorage:        &batchStorage,
 			CommitmentStorage:   &commitmentStorage,
 			TransactionStorage:  &transactionStorage,

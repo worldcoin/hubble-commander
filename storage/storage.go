@@ -7,7 +7,6 @@ import (
 )
 
 type Storage struct {
-	*StorageBase
 	*BatchStorage
 	*CommitmentStorage
 	*ChainStateStorage
@@ -16,10 +15,6 @@ type Storage struct {
 	AccountTree         *AccountTree
 	database            *Database
 	feeReceiverStateIDs map[string]uint32 // token ID => state id
-}
-
-type StorageBase struct {
-	database *Database
 }
 
 type TxOptions struct {
@@ -32,10 +27,6 @@ func NewStorage(cfg *config.Config) (*Storage, error) {
 	database, err := NewDatabase(cfg)
 	if err != nil {
 		return nil, err
-	}
-
-	storageBase := &StorageBase{
-		database: database,
 	}
 
 	batchStorage := &BatchStorage{
@@ -55,7 +46,6 @@ func NewStorage(cfg *config.Config) (*Storage, error) {
 	}
 
 	return &Storage{
-		StorageBase:         storageBase,
 		BatchStorage:        batchStorage,
 		CommitmentStorage:   commitmentStorage,
 		TransactionStorage:  transactionStorage,
@@ -67,27 +57,12 @@ func NewStorage(cfg *config.Config) (*Storage, error) {
 	}, nil
 }
 
-func (s *StorageBase) beginStorageBaseTransaction(opts TxOptions) (*db.TxController, *StorageBase, error) {
-	txController, txDatabase, err := s.database.BeginTransaction(opts)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	txStorageBase := *s
-	txStorageBase.database = txDatabase
-
-	return txController, &txStorageBase, nil
-}
-
 // TODO-STORAGE do we need to copy the StorageBase and BatchStorage objects?
 func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, error) {
 	txController, txDatabase, err := s.database.BeginTransaction(opts)
 	if err != nil {
 		return nil, nil, err
 	}
-
-	txStorageBase := *s.StorageBase
-	txStorageBase.database = txDatabase
 
 	txBatchStorage := *s.BatchStorage
 	txBatchStorage.database = txDatabase
@@ -102,13 +77,12 @@ func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, 
 	txChainStateStorage.database = txDatabase
 
 	txStorage := &Storage{
-		StorageBase:         &txStorageBase,
 		BatchStorage:        &txBatchStorage,
 		CommitmentStorage:   &txCommitmentStorage,
 		TransactionStorage:  &txTransactionStorage,
 		ChainStateStorage:   &txChainStateStorage,
-		StateTree:           NewStateTree(txStorageBase.database),
-		AccountTree:         NewAccountTree(txStorageBase.database),
+		StateTree:           NewStateTree(txDatabase),
+		AccountTree:         NewAccountTree(txDatabase),
 		database:            txDatabase,
 		feeReceiverStateIDs: utils.CopyStringUint32Map(s.feeReceiverStateIDs),
 	}
