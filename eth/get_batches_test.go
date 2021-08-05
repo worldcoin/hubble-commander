@@ -130,6 +130,18 @@ func (s *GetBatchesTestSuite) TestGetBatchIfExists_DifferentBatchHash() {
 	s.ErrorIs(err, errBatchAlreadyRolledBack)
 }
 
+func (s *GetBatchesTestSuite) TestGetBatchesInRange() {
+	_, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[0]})
+	s.NoError(err)
+	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[1]})
+	s.NoError(err)
+
+	batches, err := s.client.GetBatchesInRange(&bind.FilterOpts{}, models.NewUint256(0), &batch2.ID)
+	s.NoError(err)
+	s.Len(batches, 1)
+	s.EqualValues(1, batches[0].ID.Uint64())
+}
+
 func (s *GetBatchesTestSuite) getAccountRoot() common.Hash {
 	rawAccountRoot, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)

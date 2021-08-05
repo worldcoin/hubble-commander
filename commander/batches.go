@@ -29,7 +29,7 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 		invalidBatchID = nil
 	}
 
-	newRemoteBatches, err := c.client.GetBatchesWithLimits(&bind.FilterOpts{
+	newRemoteBatches, err := c.client.GetBatchesInRange(&bind.FilterOpts{
 		Start: startBlock,
 		End:   &endBlock,
 	}, latestBatchID, invalidBatchID)
