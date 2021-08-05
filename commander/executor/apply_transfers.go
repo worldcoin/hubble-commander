@@ -65,6 +65,7 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 ) {
 	numTransfers := len(transfers)
 	if numTransfers == 0 {
+		// TODO state proofs should probably always contain at least fee receiver's proof for ErrInvalidCommitmentStateRoot disputes to work
 		return []models.Transfer{}, nil, nil
 	}
 
@@ -91,6 +92,7 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 		combinedFee = *combinedFee.Add(&synced.Transfer.Fee)
 	}
 
+	// TODO check that fee receiver tokenID equals commitment tokenID and return DisputableError otherwise
 	stateProof, err := t.ApplyFee(feeReceiver.StateID, combinedFee)
 	if err != nil {
 		return nil, nil, err

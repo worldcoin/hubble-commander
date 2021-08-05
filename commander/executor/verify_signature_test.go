@@ -137,6 +137,16 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_InvalidSignature(
 	s.Equal(InvalidSignature, disputableErr.Reason)
 }
 
+func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_EmptyTransactions() {
+	var transfers []models.Transfer
+	commitment := &encoder.DecodedCommitment{
+		CombinedSignature: models.Signature{1, 2, 3},
+	}
+
+	err := s.transactionExecutor.verifyTransferSignature(commitment, transfers)
+	s.NoError(err)
+}
+
 func (s *VerifySignatureTestSuite) TestVerifyCreate2TransferSignature_ValidSignature() {
 	transfers := []models.Create2Transfer{
 		{
@@ -175,6 +185,16 @@ func (s *VerifySignatureTestSuite) TestVerifyCreate2TransferSignature_ValidSigna
 	}
 
 	err = s.transactionExecutor.verifyCreate2TransferSignature(commitment, transfers)
+	s.NoError(err)
+}
+
+func (s *VerifySignatureTestSuite) TestVerifyCreate2TransfersSignature_EmptyTransactions() {
+	var transfers []models.Create2Transfer
+	commitment := &encoder.DecodedCommitment{
+		CombinedSignature: models.Signature{1, 2, 3},
+	}
+
+	err := s.transactionExecutor.verifyCreate2TransferSignature(commitment, transfers)
 	s.NoError(err)
 }
 
