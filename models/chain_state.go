@@ -19,6 +19,13 @@ type ChainState struct {
 	GenesisAccounts GenesisAccounts `json:"-"`
 }
 
+type ChainSpec struct {
+	ChainID         Uint256
+	AccountRegistry common.Address
+	Rollup          common.Address
+	GenesisAccounts GenesisAccounts `yaml:",flow"`
+}
+
 type GenesisAccounts []PopulatedGenesisAccount
 
 func (s *ChainState) Bytes() []byte {
