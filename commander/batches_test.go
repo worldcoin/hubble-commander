@@ -220,7 +220,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidSignature
 
 	invalidTransfer := testutils.MakeTransfer(0, 1, 0, 100)
 	s.createAndSubmitInvalidTransferBatch(clonedStorage.Storage, txExecutor, &invalidTransfer, func(commitment *models.Commitment) {
-		commitment.CombinedSignature = models.MakeRandomSignature()
+		commitment.CombinedSignature = models.Signature{1, 2, 3}
 	})
 
 	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
@@ -306,8 +306,8 @@ func (s *BatchesTestSuite) TestUnsafeSyncBatches_SyncsBatchesBeforeInvalidOne() 
 
 	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
-	s.Len(batches, 1)
-	s.EqualValues(1, batches[0].ID.Uint64())
+	s.Len(batches, 2)
+	s.EqualValues(1, batches[1].ID.Uint64())
 }
 
 func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidFeeReceiverTokenID() {
