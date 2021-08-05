@@ -95,5 +95,6 @@ measure-dispute-gas: clean-testcache
 	test-e2e-in-process
 	test-commander-locally
 	bench-e2e
-	bench-e2e-profile
+	bench-creation-profile
+	bench-sync-profile
 	measure-dispute-gas
