@@ -72,10 +72,11 @@ func (s *DisputesTestSuite) TestManageRemoteBatchRollback_StopsRollupLoop() {
 		return s.cmd.rollupLoop(rollupCtx)
 	})
 
-	err := s.cmd.manageRemoteBatchRollback(2, cancel)
+	invalidBatchID := models.NewUint256(2)
+	err := s.cmd.manageRemoteBatchRollback(invalidBatchID, cancel)
 	s.NoError(err)
 	s.False(s.cmd.rollupLoopRunning)
-	s.EqualValues(2, s.cmd.invalidBatchID.Get())
+	s.Equal(*invalidBatchID, s.cmd.invalidBatchID)
 }
 
 func (s *DisputesTestSuite) TestManageRemoteBatchRollback_RevertsBatches() {
@@ -97,7 +98,7 @@ func (s *DisputesTestSuite) TestManageRemoteBatchRollback_RevertsBatches() {
 	s.NoError(err)
 	s.Len(batches, 2)
 
-	err = s.cmd.manageRemoteBatchRollback(1, cancel)
+	err = s.cmd.manageRemoteBatchRollback(models.NewUint256(1), cancel)
 	s.NoError(err)
 
 	batches, err = s.storage.GetBatchesInRange(nil, nil)

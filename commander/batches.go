@@ -23,7 +23,6 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 	if err != nil {
 		return err
 	}
-	invalidBatchID := c.invalidBatchID.Get()
 
 	newRemoteBatches, err := c.client.GetBatches(&bind.FilterOpts{
 		Start: startBlock,
@@ -41,7 +40,7 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 			log.Printf("Batch #%d already synced. Skipping...", remoteBatch.ID.Uint64())
 			continue
 		}
-		if invalidBatchID != 0 && remoteBatch.ID.CmpN(invalidBatchID) >= 0 {
+		if !c.invalidBatchID.IsZero() && remoteBatch.ID.Cmp(&c.invalidBatchID) >= 0 {
 			log.Printf("Batch #%d after dispute. Skipping...", remoteBatch.ID.Uint64())
 			continue
 		}
