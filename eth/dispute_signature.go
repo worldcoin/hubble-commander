@@ -5,7 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	log "github.com/sirupsen/logrus"
 )
 
 func (c *Client) DisputeSignatureTransfer(
@@ -13,13 +13,6 @@ func (c *Client) DisputeSignatureTransfer(
 	targetProof *models.TransferCommitmentInclusionProof,
 	signatureProof *models.SignatureProof,
 ) error {
-	sink := make(chan *rollup.RollupRollbackStatus)
-	subscription, err := c.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
-	if err != nil {
-		return err
-	}
-	defer subscription.Unsubscribe()
-
 	transaction, err := c.rollup().DisputeSignatureTransfer(
 		batchID.ToBig(),
 		*TransferProofToCalldata(targetProof),
@@ -28,7 +21,13 @@ func (c *Client) DisputeSignatureTransfer(
 	if err != nil {
 		return err
 	}
-	return c.waitForRollbackToFinish(sink, subscription, transaction.Hash())
+
+	err = c.checkDisputeSuccess(batchID, transaction)
+	if err == ErrBatchAlreadyDisputed || err == ErrRollbackInProcess {
+		log.Info(err)
+		return nil
+	}
+	return err
 }
 
 func (c *Client) DisputeSignatureCreate2Transfer(
@@ -36,13 +35,6 @@ func (c *Client) DisputeSignatureCreate2Transfer(
 	targetProof *models.TransferCommitmentInclusionProof,
 	signatureProof *models.SignatureProofWithReceiver,
 ) error {
-	sink := make(chan *rollup.RollupRollbackStatus)
-	subscription, err := c.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
-	if err != nil {
-		return err
-	}
-	defer subscription.Unsubscribe()
-
 	transaction, err := c.rollup().DisputeSignatureCreate2Transfer(
 		batchID.ToBig(),
 		*TransferProofToCalldata(targetProof),
@@ -51,7 +43,13 @@ func (c *Client) DisputeSignatureCreate2Transfer(
 	if err != nil {
 		return err
 	}
-	return c.waitForRollbackToFinish(sink, subscription, transaction.Hash())
+
+	err = c.checkDisputeSuccess(batchID, transaction)
+	if err == ErrBatchAlreadyDisputed || err == ErrRollbackInProcess {
+		log.Info(err)
+		return nil
+	}
+	return err
 }
 
 func signatureProofToCalldata(proof *models.SignatureProof) *rollup.TypesSignatureProof {
