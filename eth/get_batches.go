@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 const MsgInvalidBatchID = "execution reverted: Batch id greater than total number of batches, invalid batch id"
@@ -21,6 +22,10 @@ const MsgInvalidBatchID = "execution reverted: Batch id greater than total numbe
 var errBatchAlreadyRolledBack = errors.New("batch already rolled back")
 
 func (c *Client) GetBatches(opts *bind.FilterOpts) ([]DecodedBatch, error) {
+	return c.GetBatchesWithLimits(opts, nil, nil)
+}
+
+func (c *Client) GetBatchesWithLimits(opts *bind.FilterOpts, startID, endID *models.Uint256) ([]DecodedBatch, error) {
 	it, err := c.Rollup.FilterNewBatch(opts)
 	if err != nil {
 		return nil, err
@@ -28,6 +33,16 @@ func (c *Client) GetBatches(opts *bind.FilterOpts) ([]DecodedBatch, error) {
 
 	res := make([]DecodedBatch, 0)
 	for it.Next() {
+		batchID := models.NewUint256FromBig(*it.Event.BatchID)
+		if startID != nil && batchID.Cmp(startID) <= 0 {
+			log.Printf("Batch #%d already synced. Skipping...", batchID.Uint64())
+			continue
+		}
+		if endID != nil && batchID.Cmp(endID) >= 0 {
+			log.Printf("Batch #%d after dispute. Skipping...", batchID.Uint64())
+			continue
+		}
+
 		txHash := it.Event.Raw.TxHash
 
 		tx, _, err := c.ChainConnection.GetBackend().TransactionByHash(context.Background(), txHash)

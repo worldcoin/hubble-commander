@@ -24,28 +24,22 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 		return err
 	}
 
-	newRemoteBatches, err := c.client.GetBatches(&bind.FilterOpts{
+	invalidBatchID := &c.invalidBatchID
+	if invalidBatchID.IsZero() {
+		invalidBatchID = nil
+	}
+
+	newRemoteBatches, err := c.client.GetBatchesWithLimits(&bind.FilterOpts{
 		Start: startBlock,
 		End:   &endBlock,
-	})
+	}, latestBatchID, invalidBatchID)
 	if err != nil {
 		return err
 	}
 	logBatchesCount(newRemoteBatches)
 
 	for i := range newRemoteBatches {
-		remoteBatch := &newRemoteBatches[i]
-		//TODO-dis: maybe move to c.client.GetBatches to omit unnecessary batch decoding
-		if remoteBatch.ID.Cmp(latestBatchID) <= 0 {
-			log.Printf("Batch #%d already synced. Skipping...", remoteBatch.ID.Uint64())
-			continue
-		}
-		if !c.invalidBatchID.IsZero() && remoteBatch.ID.Cmp(&c.invalidBatchID) >= 0 {
-			log.Printf("Batch #%d after dispute. Skipping...", remoteBatch.ID.Uint64())
-			continue
-		}
-
-		err = c.syncRemoteBatch(remoteBatch)
+		err = c.syncRemoteBatch(&newRemoteBatches[i])
 		if err != nil {
 			return err
 		}
