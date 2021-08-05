@@ -64,6 +64,9 @@ func (s *BatchesTestSuite) SetupTest() {
 		context.Background(),
 	)
 
+	err = s.cmd.addGenesisBatch()
+	s.NoError(err)
+
 	domain, err := s.testClient.GetDomain()
 	s.NoError(err)
 	s.wallets = generateWallets(s.T(), *domain, 2)
@@ -90,13 +93,13 @@ func (s *BatchesTestSuite) TestUnsafeSyncBatches_DoesNotSyncExistingBatchTwice()
 
 	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
-	s.Len(batches, 1)
+	s.Len(batches, 2)
 
 	s.syncAllBlocks()
 
 	batches, err = s.cmd.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
-	s.Len(batches, 2)
+	s.Len(batches, 3)
 
 	state0, err := s.cmd.storage.StateTree.Leaf(0)
 	s.NoError(err)
@@ -155,15 +158,15 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 	s.Equal(expectedTx, *transfer)
 }
 
-func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentBatch() {
+func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithTooManyTxs() {
 	transfer := testutils.MakeTransfer(0, 1, 0, 50)
 	s.createAndSubmitTransferBatch(s.testStorage.StorageBase, s.transactionExecutor, &transfer)
 
 	clonedStorage, txExecutor := cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
 	defer teardown(s.Assertions, clonedStorage.Teardown)
 
-	invalidTransfer := testutils.MakeTransfer(0, 1, 1, 100)
-	s.createAndSubmitInvalidTransferBatch(clonedStorage.StorageBase, txExecutor, &invalidTransfer, func(commitment *models.Commitment) {
+	transfer = testutils.MakeTransfer(0, 1, 1, 100)
+	s.createAndSubmitInvalidTransferBatch(clonedStorage.StorageBase, txExecutor, &transfer, func(commitment *models.Commitment) {
 		commitment.Transactions = append(commitment.Transactions, commitment.Transactions...)
 	})
 
@@ -257,6 +260,25 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDisputesFr
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
 	_, err = s.cmd.storage.GetBatch(localBatch.ID)
 	s.True(st.IsNotFoundError(err))
+}
+
+func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentCommitmentAfterGenesisOne() {
+	clonedStorage, txExecutor := cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
+	defer teardown(s.Assertions, clonedStorage.Teardown)
+
+	invalidTransfer := testutils.MakeTransfer(0, 1, 0, 100)
+	s.createAndSubmitInvalidTransferBatch(clonedStorage.StorageBase, txExecutor, &invalidTransfer, func(commitment *models.Commitment) {
+		commitment.Transactions = append(commitment.Transactions, commitment.Transactions...)
+	})
+
+	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	err = s.cmd.syncRemoteBatch(&remoteBatches[0])
+	s.NoError(err)
+
+	s.checkBatchAfterDispute(remoteBatches[0].ID)
 }
 
 func (s *BatchesTestSuite) syncAllBlocks() {

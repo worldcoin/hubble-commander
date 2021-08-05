@@ -8,7 +8,7 @@ import (
 
 var (
 	ErrInvalidDataLength = NewDisputableError(Transition, "invalid data length")
-	ErrTooManyTx         = NewDisputableError(Transition, "too many transactions in a commitment")
+	ErrTooManyTxs        = NewDisputableError(Transition, "too many transactions in a commitment")
 )
 
 func (t *TransactionExecutor) syncTransferCommitment(
@@ -24,10 +24,8 @@ func (t *TransactionExecutor) syncTransferCommitment(
 	}
 
 	if uint32(len(transfers)) > t.cfg.MaxTxsPerCommitment {
-		return nil, ErrTooManyTx
+		return nil, ErrTooManyTxs
 	}
-
-	// TODO check if commitments can have 0 transfers (signature disputes)
 
 	feeReceiver, err := t.getSyncedCommitmentFeeReceiver(commitment)
 	if err != nil {
@@ -54,8 +52,11 @@ func (t *TransactionExecutor) syncTransferCommitment(
 	return models.TransferArray(appliedTransfers), nil
 }
 
+// TODO get tokenID from the sender of the first transfer. Use fee receiver to establish tokenID only in case there are no transfers.
 func (t *TransactionExecutor) getSyncedCommitmentFeeReceiver(commitment *encoder.DecodedCommitment) (*FeeReceiver, error) {
 	feeReceiverState, err := t.storage.StateTree.Leaf(commitment.FeeReceiver)
+	// TODO we need to check for NotFoundError and trigger dispute in case of invalid fee receiver.
+	//  Maybe query it in ApplyTransfersForSync or some new ApplyFeeForSync method?
 	if err != nil {
 		return nil, err
 	}

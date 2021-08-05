@@ -121,3 +121,27 @@ func RegisterGenesisAccounts(
 		}
 	}
 }
+
+func (c *Commander) addGenesisBatch() error {
+	batchID := models.MakeUint256(0)
+	batch, err := c.storage.GetBatch(batchID)
+	if batch != nil {
+		return nil
+	}
+	if err != nil && !st.IsNotFoundError(err) {
+		return err
+	}
+
+	root, err := c.storage.StateTree.Root()
+	if err != nil {
+		return err
+	}
+
+	batch, err = c.client.GetBatch(&batchID)
+	if err != nil {
+		return err
+	}
+	batch.PrevStateRoot = root
+
+	return c.storage.AddBatch(batch)
+}

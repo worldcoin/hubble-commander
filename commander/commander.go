@@ -70,6 +70,11 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
+	err = c.addGenesisBatch()
+	if err != nil {
+		return err
+	}
+
 	c.domain, err = c.client.GetDomain()
 	if err != nil {
 		return err
