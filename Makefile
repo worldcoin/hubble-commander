@@ -65,8 +65,11 @@ test-commander-locally: clean-testcache
 bench-e2e: clean-testcache
 	HUBBLE_E2E=local go test -v -tags e2e -run TestBenchmarkSuite ./e2e
 
-bench-e2e-profile: clean-testcache
-	HUBBLE_E2E=in-process go test -cpuprofile cpu.prof -v -tags e2e -run TestBenchmarkSuite ./e2e
+bench-creation-profile: clean-testcache
+	HUBBLE_E2E=in-process go test -cpuprofile creation.prof -v -tags e2e -run TestBenchmarkSuite/TestBenchCommander ./e2e
+
+bench-sync-profile: clean-testcache
+	HUBBLE_E2E=in-process go test -cpuprofile sync.prof -v -tags e2e -run TestBenchmarkSuite/TestBenchSyncCommander ./e2e
 
 measure-dispute-gas: clean-testcache
 	HUBBLE_E2E=in-process go test -v -tags e2e -run TestMeasureDisputeGasUsage ./e2e
@@ -92,5 +95,6 @@ measure-dispute-gas: clean-testcache
 	test-e2e-in-process
 	test-commander-locally
 	bench-e2e
-	bench-e2e-profile
+	bench-creation-profile
+	bench-sync-profile
 	measure-dispute-gas
