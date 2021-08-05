@@ -293,7 +293,9 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_ValidBatch()
 	}()
 
 	err = s.transactionExecutor.DisputeTransition(&remoteBatches[1], 0, proofs)
-	s.ErrorIs(err, eth.ErrWaitForRollbackTimeout)
+	s.NoError(err)
+	_, err = s.client.GetBatch(&remoteBatches[1].ID)
+	s.NoError(err)
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_RemovesInvalidBatch() {
@@ -394,7 +396,9 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_Valid
 	}()
 
 	err = s.transactionExecutor.DisputeTransition(&remoteBatches[1], 0, proofs)
-	s.ErrorIs(err, eth.ErrWaitForRollbackTimeout)
+	s.NoError(err)
+	_, err = s.client.GetBatch(&remoteBatches[1].ID)
+	s.NoError(err)
 }
 
 func (s *DisputeTransitionTestSuite) checkBatchAfterDispute(batchID models.Uint256) {

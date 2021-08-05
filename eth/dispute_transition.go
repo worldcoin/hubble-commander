@@ -13,9 +13,8 @@ import (
 )
 
 var (
-	ErrBatchAlreadyDisputed   = errors.New("batch already disputed")
-	ErrRollbackInProcess      = errors.New("rollback in process")
-	ErrWaitForRollbackTimeout = errors.New("waitForRollbackToFinish: timeout")
+	ErrBatchAlreadyDisputed = errors.New("batch already disputed")
+	ErrRollbackInProcess    = errors.New("rollback in process")
 )
 
 func (c *Client) DisputeTransitionTransfer(

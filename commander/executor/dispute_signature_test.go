@@ -246,7 +246,9 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Transfer_ValidBatch() {
 	s.Len(remoteBatches, 1)
 
 	err = s.disputeSignature(&remoteBatches[0], models.TransferArray{transfer})
-	s.ErrorIs(err, eth.ErrWaitForRollbackTimeout)
+	s.NoError(err)
+	_, err = s.client.GetBatch(&remoteBatches[0].ID)
+	s.NoError(err)
 }
 
 func (s *DisputeSignatureTestSuite) TestDisputeSignature_Create2Transfer_ValidBatch() {
@@ -270,7 +272,9 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Create2Transfer_ValidBa
 	s.Len(remoteBatches, 1)
 
 	err = s.disputeSignature(&remoteBatches[0], models.Create2TransferArray{transfer})
-	s.ErrorIs(err, eth.ErrWaitForRollbackTimeout)
+	s.NoError(err)
+	_, err = s.client.GetBatch(&remoteBatches[0].ID)
+	s.NoError(err)
 }
 
 func (s *DisputeSignatureTestSuite) setUserStatesAndAddAccounts() []bls.Wallet {
