@@ -95,7 +95,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedBef
 		{PublicKey: *s.wallets[1].PublicKey()},
 	}
 	s.registerAccounts(accounts)
-	createAndSubmitTransferBatch(s.Assertions, s.cfg, s.testStorage, s.testClient, &s.transfer)
+	s.createAndSubmitTransferBatchInTransaction(&s.transfer)
 
 	s.startBlockLoop()
 	s.waitForLatestBlockSync()
@@ -158,33 +158,6 @@ func (s *NewBlockLoopTestSuite) registerAccounts(accounts []models.AccountLeaf) 
 		s.NoError(err)
 		accounts[i].PubKeyID = *pubKeyID
 	}
-}
-
-func createAndSubmitTransferBatch(
-	s *require.Assertions,
-	cfg *config.Config,
-	storage *st.TestStorage,
-	client *eth.TestClient,
-	tx *models.Transfer,
-) {
-	clonedStorage, txExecutor := cloneStorage(s, cfg, storage, client.Client)
-	defer teardown(s, clonedStorage.Teardown)
-
-	_, err := clonedStorage.AddTransfer(tx)
-	s.NoError(err)
-
-	batch, err := txExecutor.NewPendingBatch(txtype.Transfer)
-	s.NoError(err)
-
-	domain, err := client.GetDomain()
-	s.NoError(err)
-	commitments, err := txExecutor.CreateTransferCommitments(domain)
-	s.NoError(err)
-	s.Len(commitments, 1)
-
-	err = txExecutor.SubmitBatch(batch, commitments)
-	s.NoError(err)
-	client.Commit()
 }
 
 func (s *NewBlockLoopTestSuite) createAndSubmitTransferBatchInTransaction(tx *models.Transfer) {
