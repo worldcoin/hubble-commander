@@ -11,6 +11,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	msgBatchAlreadyDisputed   = "Already successfully disputed. Roll back in process"
+	msgTransitionMissingBatch = "Target commitment is absent in the batch"
+	msgSignatureMissingBatch  = "Commitment not present in batch"
+)
+
 var (
 	ErrBatchAlreadyDisputed = errors.New("batch already disputed")
 	ErrRollbackInProcess    = errors.New("rollback in process")
@@ -30,7 +36,7 @@ func (c *Client) DisputeTransitionTransfer(
 			StateMerkleProofsToCalldata(proofs),
 		)
 	if err != nil {
-		return err
+		return handleDisputeTransitionError(err)
 	}
 
 	err = c.waitForDispute(batchID, transaction)
@@ -55,7 +61,7 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 			StateMerkleProofsToCalldata(proofs),
 		)
 	if err != nil {
-		return err
+		return handleDisputeTransitionError(err)
 	}
 
 	err = c.waitForDispute(batchID, transaction)
@@ -64,14 +70,6 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 		return nil
 	}
 	return err
-}
-
-func (c *Client) KeepRollingBack() error {
-	transaction, err := c.rollup().KeepRollingBack()
-	if err != nil {
-		return err
-	}
-	return c.waitForKeepRollingBack(transaction)
 }
 
 func (c *Client) waitForDispute(batchID *models.Uint256, tx *types.Transaction) error {
@@ -117,24 +115,13 @@ func (c *Client) isBatchDuringDispute(batchID *models.Uint256) error {
 	return nil
 }
 
-func (c *Client) waitForKeepRollingBack(tx *types.Transaction) error {
-	receipt, err := deployer.WaitToBeMined(c.ChainConnection.GetBackend(), tx)
-	if err != nil {
-		return err
-	}
-	if receipt.Status == types.ReceiptStatusSuccessful {
+func handleDisputeTransitionError(err error) error {
+	errMsg := getGasEstimateErrorMessage(err)
+	if errMsg == msgTransitionMissingBatch || errMsg == msgBatchAlreadyDisputed {
+		log.Info(err.Error())
 		return nil
 	}
-
-	invalidBatchID, err := c.GetInvalidBatchID()
-	if err != nil {
-		return err
-	}
-	if invalidBatchID.IsZero() {
-		return nil
-	}
-
-	return errors.New("keep rolling back failed")
+	return err
 }
 
 func CommitmentProofToCalldata(proof *models.CommitmentInclusionProof) *rollup.TypesCommitmentInclusionProof {

@@ -41,12 +41,21 @@ func (c *Client) DisputeSignatureCreate2Transfer(
 		*signatureProofWithReceiverToCalldata(signatureProof),
 	)
 	if err != nil {
-		return err
+		return handleDisputeSignatureError(err)
 	}
 
 	err = c.waitForDispute(batchID, transaction)
 	if err == ErrBatchAlreadyDisputed || err == ErrRollbackInProcess {
 		log.Info(err)
+		return nil
+	}
+	return err
+}
+
+func handleDisputeSignatureError(err error) error {
+	errMsg := getGasEstimateErrorMessage(err)
+	if errMsg == msgSignatureMissingBatch || errMsg == msgBatchAlreadyDisputed {
+		log.Info(err.Error())
 		return nil
 	}
 	return err
