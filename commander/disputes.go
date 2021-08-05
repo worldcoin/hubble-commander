@@ -4,11 +4,8 @@ import (
 	"context"
 	"sync"
 
-	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/pkg/errors"
 )
 
 // TODO-dis: replace with uint64 as it's not shared between workers
@@ -40,49 +37,6 @@ func (i *InvalidBatchID) Get() uint64 {
 	i.mutex.RLock()
 	defer i.mutex.RUnlock()
 	return i.id
-}
-
-/*
-	invalidBatchID := getInvalidBatchMarker
-	if invalidBatchID != 0 {
-		stop rollup loop if running
-
-		lastBatchID := local last batch id
-		if lastBatchID >= invalidBatchID {
-			revertBatchesInRange
-		}
-		sync accounts normally
-		sync batches only to invalidBatchID - 1
-
-	}
-*/
-
-//TODO: remove
-func (c *Commander) watchDisputes() error {
-	sink := make(chan *rollup.RollupRollbackStatus)
-	subscription, err := c.client.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	defer subscription.Unsubscribe()
-
-	for {
-		select {
-		case <-c.workersContext.Done():
-			return nil
-		case err = <-subscription.Err():
-			return errors.WithStack(err)
-		case rollbackStatus := <-sink:
-			if rollbackStatus.Completed {
-				continue
-			}
-
-			_, err = c.client.KeepRollingBack()
-			if err != nil {
-				return errors.WithStack(err)
-			}
-		}
-	}
 }
 
 func (c *Commander) handleBatchRollback(rollupCancel context.CancelFunc) (bool, error) {
