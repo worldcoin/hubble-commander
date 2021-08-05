@@ -33,7 +33,7 @@ type Commander struct {
 	rollupLoopRunning bool
 	stateMutex        sync.Mutex
 
-	Storage   *st.Storage
+	storage   *st.Storage
 	client    *eth.Client
 	apiServer *http.Server
 	domain    *bls.Domain
@@ -55,7 +55,7 @@ func (c *Commander) Start() (err error) {
 		return nil
 	}
 
-	c.Storage, err = st.NewStorage(c.cfg)
+	c.storage, err = st.NewStorage(c.cfg)
 	if err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.client, err = getClient(chain, c.Storage, c.cfg.Bootstrap)
+	c.client, err = getClient(chain, c.storage, c.cfg.Bootstrap)
 	if err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.apiServer, err = api.NewAPIServer(c.cfg.API, c.Storage, c.client, c.cfg.Rollup.DevMode)
+	c.apiServer, err = api.NewAPIServer(c.cfg.API, c.storage, c.client, c.cfg.Rollup.DevMode)
 	if err != nil {
 		return err
 	}
@@ -127,7 +127,7 @@ func (c *Commander) Stop() error {
 	}
 	c.stopWorkers()
 	c.workers.Wait()
-	if err := c.Storage.Close(); err != nil {
+	if err := c.storage.Close(); err != nil {
 		return err
 	}
 

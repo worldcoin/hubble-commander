@@ -59,7 +59,7 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 
 	s.cmd = NewCommander(s.cfg)
 	s.cmd.client = s.testClient.Client
-	s.cmd.Storage = s.testStorage.Storage
+	s.cmd.storage = s.testStorage.Storage
 	s.cmd.workersContext, s.cmd.stopWorkers = context.WithCancel(context.Background())
 
 	domain, err := s.testClient.GetDomain()
@@ -85,7 +85,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_StartsRollupLoop() {
 
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)
-	blockNumber := s.cmd.Storage.GetLatestBlockNumber()
+	blockNumber := s.cmd.storage.GetLatestBlockNumber()
 	s.Equal(*latestBlockNumber, uint64(blockNumber))
 }
 
@@ -101,13 +101,13 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedBef
 	s.waitForLatestBlockSync()
 
 	for i := range accounts {
-		userAccounts, err := s.cmd.Storage.AccountTree.Leaves(&accounts[i].PublicKey)
+		userAccounts, err := s.cmd.storage.AccountTree.Leaves(&accounts[i].PublicKey)
 		s.NoError(err)
 		s.Len(userAccounts, 1)
 		s.Equal(accounts[i], userAccounts[0])
 	}
 
-	batches, err := s.cmd.Storage.GetBatchesInRange(nil, nil)
+	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 1)
 }
@@ -126,13 +126,13 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedWhi
 	s.waitForLatestBlockSync()
 
 	for i := range accounts {
-		userAccounts, err := s.cmd.Storage.AccountTree.Leaves(&accounts[i].PublicKey)
+		userAccounts, err := s.cmd.storage.AccountTree.Leaves(&accounts[i].PublicKey)
 		s.NoError(err)
 		s.Len(userAccounts, 1)
 		s.Equal(accounts[i], userAccounts[0])
 	}
 
-	batches, err := s.cmd.Storage.GetBatchesInRange(nil, nil)
+	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 1)
 }
@@ -220,7 +220,7 @@ func (s *NewBlockLoopTestSuite) waitForLatestBlockSync() {
 	s.NoError(err)
 
 	s.Eventually(func() bool {
-		syncedBlock, err := s.cmd.Storage.GetSyncedBlock(s.testClient.Client.ChainState.ChainID)
+		syncedBlock, err := s.cmd.storage.GetSyncedBlock(s.testClient.Client.ChainState.ChainID)
 		s.NoError(err)
 		return *syncedBlock >= *latestBlockNumber
 	}, time.Second, 100*time.Millisecond, "timeout when waiting for latest block sync")

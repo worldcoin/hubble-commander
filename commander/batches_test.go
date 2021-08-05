@@ -54,7 +54,7 @@ func (s *BatchesTestSuite) SetupTest() {
 
 	s.cmd = NewCommander(s.cfg)
 	s.cmd.client = s.testClient.Client
-	s.cmd.Storage = s.testStorage.Storage
+	s.cmd.storage = s.testStorage.Storage
 	s.cmd.workersContext, s.cmd.stopWorkers = context.WithCancel(context.Background())
 
 	s.transactionExecutor = executor.NewTestTransactionExecutor(
@@ -88,21 +88,21 @@ func (s *BatchesTestSuite) TestUnsafeSyncBatches_DoesNotSyncExistingBatchTwice()
 	signTransfer(s.T(), &s.wallets[tx2.FromStateID], &tx2)
 	createAndSubmitTransferBatch(s.Assertions, s.cfg, s.testStorage, s.testClient, &tx2)
 
-	batches, err := s.cmd.Storage.GetBatchesInRange(nil, nil)
+	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 1)
 
 	s.syncAllBlocks()
 
-	batches, err = s.cmd.Storage.GetBatchesInRange(nil, nil)
+	batches, err = s.cmd.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 2)
 
-	state0, err := s.cmd.Storage.StateTree.Leaf(0)
+	state0, err := s.cmd.storage.StateTree.Leaf(0)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(710), state0.Balance)
 
-	state1, err := s.cmd.Storage.StateTree.Leaf(1)
+	state1, err := s.cmd.storage.StateTree.Leaf(1)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(290), state1.Balance)
 }
@@ -130,7 +130,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 	err = s.cmd.syncRemoteBatch(&batches[0])
 	s.NoError(err)
 
-	batch, err := s.cmd.Storage.GetBatch(batches[0].ID)
+	batch, err := s.cmd.storage.GetBatch(batches[0].ID)
 	s.NoError(err)
 	s.Equal(batches[0].Batch, *batch)
 
@@ -143,14 +143,14 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 		PostStateRoot:     batches[0].Commitments[0].StateRoot,
 		IncludedInBatch:   &batch.ID,
 	}
-	commitment, err := s.cmd.Storage.GetCommitment(2)
+	commitment, err := s.cmd.storage.GetCommitment(2)
 	s.NoError(err)
 	s.Equal(expectedCommitment, *commitment)
 
 	expectedTx := transfers[0]
 	expectedTx.Signature = models.Signature{}
 	expectedTx.IncludedInCommitment = &commitment.ID
-	transfer, err := s.cmd.Storage.GetTransfer(transfers[0].Hash)
+	transfer, err := s.cmd.storage.GetTransfer(transfers[0].Hash)
 	s.NoError(err)
 	s.Equal(expectedTx, *transfer)
 }
@@ -171,7 +171,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentBatch() {
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.cmd.Storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
+	err = s.cmd.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
 	s.NoError(err)
 
 	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
@@ -196,7 +196,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidPostState
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.cmd.Storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
+	err = s.cmd.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
 	s.NoError(err)
 
 	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
@@ -247,7 +247,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDisputesFr
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.cmd.Storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
+	err = s.cmd.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
 	s.NoError(err)
 
 	s.testClient.Account = s.testClient.Accounts[1]
@@ -255,7 +255,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDisputesFr
 	s.NoError(err)
 
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
-	_, err = s.cmd.Storage.GetBatch(localBatch.ID)
+	_, err = s.cmd.storage.GetBatch(localBatch.ID)
 	s.True(st.IsNotFoundError(err))
 }
 
@@ -294,7 +294,7 @@ func (s *BatchesTestSuite) createAndSubmitTransferBatch(
 
 // Make sure that the commander and the transaction executor uses the same storage
 func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batch {
-	_, err := s.cmd.Storage.AddTransfer(tx)
+	_, err := s.cmd.storage.AddTransfer(tx)
 	s.NoError(err)
 
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
@@ -307,10 +307,10 @@ func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batc
 	s.Len(commitments, 1)
 
 	pendingBatch.TransactionHash = utils.RandomHash()
-	err = s.cmd.Storage.AddBatch(pendingBatch)
+	err = s.cmd.storage.AddBatch(pendingBatch)
 	s.NoError(err)
 
-	err = s.cmd.Storage.MarkCommitmentAsIncluded(commitments[0].ID, pendingBatch.ID)
+	err = s.cmd.storage.MarkCommitmentAsIncluded(commitments[0].ID, pendingBatch.ID)
 	s.NoError(err)
 
 	return pendingBatch
@@ -358,7 +358,7 @@ func (s *BatchesTestSuite) checkBatchAfterDispute(batchID models.Uint256) {
 	s.Error(err)
 	s.Equal("execution reverted: Batch id greater than total number of batches, invalid batch id", err.Error())
 
-	batch, err := s.cmd.Storage.GetBatch(batchID)
+	batch, err := s.cmd.storage.GetBatch(batchID)
 	s.Nil(batch)
 	s.True(st.IsNotFoundError(err))
 }

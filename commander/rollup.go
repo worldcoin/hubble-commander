@@ -52,12 +52,12 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 	c.stateMutex.Lock()
 	defer c.stateMutex.Unlock()
 
-	err = validateStateRoot(c.Storage)
+	err = validateStateRoot(c.storage)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	transactionExecutor, err := executor.NewTransactionExecutor(c.Storage, c.client, c.cfg.Rollup, ctx)
+	transactionExecutor, err := executor.NewTransactionExecutor(c.storage, c.client, c.cfg.Rollup, ctx)
 	if err != nil {
 		return err
 	}

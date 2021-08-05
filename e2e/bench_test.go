@@ -117,10 +117,9 @@ func (s *BenchmarkSuite) benchSyncing() {
 		}
 		lastSyncedBatch = newBatch
 
-		txCount, err := passiveCommander.Commander.Storage.GetTransactionCount()
-		s.NoError(err)
+		txCount := networkInfo.TransactionCount
 
-		fmt.Printf("Transfers synced: %d, throughput: %f tx/s, batches synced: %d/%d\n", *txCount, float64(*txCount)/(time.Since(startTime).Seconds()), lastSyncedBatch, latestBatch)
+		fmt.Printf("Transfers synced: %d, throughput: %f tx/s, batches synced: %d/%d\n", txCount, float64(txCount)/(time.Since(startTime).Seconds()), lastSyncedBatch, latestBatch)
 	}
 }
 
