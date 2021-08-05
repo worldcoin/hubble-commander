@@ -23,7 +23,10 @@ func (c *Commander) handleBatchRollback(rollupCancel context.CancelFunc) (bool, 
 func (c *Commander) manageRemoteBatchRollback(batchID *models.Uint256, rollupCancel context.CancelFunc) error {
 	c.invalidBatchID = *batchID
 	c.stopRollupLoop(rollupCancel)
-	// TODO-dis trigger keep rolling back and handle errors (2)
+	err := c.client.KeepRollingBack()
+	if err != nil {
+		return err
+	}
 
 	invalidBatch, err := c.storage.GetBatch(*batchID)
 	if st.IsNotFoundError(err) {

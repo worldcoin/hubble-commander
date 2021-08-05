@@ -22,7 +22,7 @@ func (c *Client) DisputeSignatureTransfer(
 		return err
 	}
 
-	err = c.checkDisputeSuccess(batchID, transaction)
+	err = c.waitForDispute(batchID, transaction)
 	if err == ErrBatchAlreadyDisputed || err == ErrRollbackInProcess {
 		log.Info(err)
 		return nil
@@ -44,7 +44,7 @@ func (c *Client) DisputeSignatureCreate2Transfer(
 		return err
 	}
 
-	err = c.checkDisputeSuccess(batchID, transaction)
+	err = c.waitForDispute(batchID, transaction)
 	if err == ErrBatchAlreadyDisputed || err == ErrRollbackInProcess {
 		log.Info(err)
 		return nil

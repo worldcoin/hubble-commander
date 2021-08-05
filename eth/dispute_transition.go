@@ -6,7 +6,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -34,7 +33,7 @@ func (c *Client) DisputeTransitionTransfer(
 		return err
 	}
 
-	err = c.checkDisputeSuccess(batchID, transaction)
+	err = c.waitForDispute(batchID, transaction)
 	if err == ErrBatchAlreadyDisputed || err == ErrRollbackInProcess {
 		log.Info(err)
 		return nil
@@ -59,7 +58,7 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 		return err
 	}
 
-	err = c.checkDisputeSuccess(batchID, transaction)
+	err = c.waitForDispute(batchID, transaction)
 	if err == ErrBatchAlreadyDisputed || err == ErrRollbackInProcess {
 		log.Info(err)
 		return nil
@@ -67,21 +66,15 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 	return err
 }
 
-func (c *Client) KeepRollingBack() (common.Hash, error) {
+func (c *Client) KeepRollingBack() error {
 	transaction, err := c.rollup().KeepRollingBack()
-	// TODO-dis handle "BatchManager: Is not rolling back" error
-	// TODO-dis handle error caused by reverted transaction (already rolled back, check against nextBatchID)
 	if err != nil {
-		return common.Hash{}, err
+		return err
 	}
-	receipt, err := deployer.WaitToBeMined(c.ChainConnection.GetBackend(), transaction)
-	if err != nil {
-		return common.Hash{}, err
-	}
-	return receipt.TxHash, nil
+	return c.waitForKeepRollingBack(transaction)
 }
 
-func (c *Client) checkDisputeSuccess(batchID *models.Uint256, tx *types.Transaction) error {
+func (c *Client) waitForDispute(batchID *models.Uint256, tx *types.Transaction) error {
 	receipt, err := deployer.WaitToBeMined(c.ChainConnection.GetBackend(), tx)
 	if err != nil {
 		return err
@@ -122,6 +115,26 @@ func (c *Client) isBatchDuringDispute(batchID *models.Uint256) error {
 		return ErrRollbackInProcess
 	}
 	return nil
+}
+
+func (c *Client) waitForKeepRollingBack(tx *types.Transaction) error {
+	receipt, err := deployer.WaitToBeMined(c.ChainConnection.GetBackend(), tx)
+	if err != nil {
+		return err
+	}
+	if receipt.Status == types.ReceiptStatusSuccessful {
+		return nil
+	}
+
+	invalidBatchID, err := c.GetInvalidBatchID()
+	if err != nil {
+		return err
+	}
+	if invalidBatchID.IsZero() {
+		return nil
+	}
+
+	return errors.New("keep rolling back failed")
 }
 
 func CommitmentProofToCalldata(proof *models.CommitmentInclusionProof) *rollup.TypesCommitmentInclusionProof {
