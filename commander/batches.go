@@ -12,6 +12,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var ErrSyncedFraudulentBatch = errors.New("commander synced fraudulent batch")
+
 func (c *Commander) syncBatches(startBlock, endBlock uint64) error {
 	c.stateMutex.Lock()
 	defer c.stateMutex.Unlock()
@@ -24,7 +26,9 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 		return err
 	}
 
-	// TODO return app error if latestBatchID >= invalidBatchID
+	if c.invalidBatchID != nil && latestBatchID.Cmp(c.invalidBatchID) >= 0 {
+		return ErrSyncedFraudulentBatch
+	}
 
 	newRemoteBatches, err := c.client.GetBatchesInRange(&bind.FilterOpts{
 		Start: startBlock,
