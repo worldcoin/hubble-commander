@@ -31,6 +31,8 @@ func (c *Client) GetBatchesInRange(opts *bind.FilterOpts, startID, endID *models
 		return nil, err
 	}
 
+	// TODO Convert iterator to slice and print "Found X batches" log here
+
 	res := make([]DecodedBatch, 0)
 	for it.Next() {
 		batchID := models.NewUint256FromBig(*it.Event.BatchID)

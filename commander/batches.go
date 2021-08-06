@@ -24,6 +24,8 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 		return err
 	}
 
+	// TODO return app error if latestBatchID >= invalidBatchID
+
 	invalidBatchID := &c.invalidBatchID
 	if invalidBatchID.IsZero() {
 		invalidBatchID = nil

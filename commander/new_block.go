@@ -13,6 +13,7 @@ import (
 
 var (
 	ErrIncompleteBlockRangeSync = stdErrors.New("syncing of a block range was stopped prematurely")
+	ErrRollbackInProgress       = stdErrors.New("rollback is in progress")
 )
 
 func (c *Commander) newBlockLoop() error {
@@ -42,26 +43,17 @@ func (c *Commander) newBlockLoop() error {
 				continue
 			}
 
-			isRollingBack, err := c.handleBatchRollback(rollupCancel)
-			if err != nil {
-				return err
-			}
-
 			err = c.syncToLatestBlock()
 			if errors.Is(err, ErrIncompleteBlockRangeSync) {
 				return nil
 			}
+			if errors.Is(err, ErrRollbackInProgress) {
+				continue
+			}
 			if err != nil {
 				return err
 			}
-
-			if isRollingBack {
-				err = c.client.KeepRollingBack()
-				if err != nil {
-					return err
-				}
-				continue
-			}
+			// TODO handle ErrRollbackInProgressHere and `continue` the loop in this case
 
 			isProposer, err := c.client.IsActiveProposer()
 			if err != nil {
@@ -78,6 +70,7 @@ func (c *Commander) syncToLatestBlock() error {
 		return err
 	}
 	c.storage.SetLatestBlockNumber(uint32(*latestBlockNumber))
+	// TODO move invalidBatchID setting here
 
 	syncedBlock := ref.Uint64(uint64(0))
 	for *syncedBlock != *latestBlockNumber {
@@ -85,12 +78,14 @@ func (c *Commander) syncToLatestBlock() error {
 		if err != nil {
 			return err
 		}
+		// TODO if err == ErrRollbackInProgress break the loop
 
 		latestBlockNumber, err = c.client.ChainConnection.GetLatestBlockNumber()
 		if err != nil {
 			return err
 		}
 		c.storage.SetLatestBlockNumber(uint32(*latestBlockNumber))
+		// TODO update invalidBatchID here
 
 		select {
 		case <-c.workersContext.Done():
@@ -99,6 +94,9 @@ func (c *Commander) syncToLatestBlock() error {
 			continue
 		}
 	}
+
+	// TODO update invalidBatchID here
+	// TODO if invalidBatchID != nil call keepRollingBack and return ErrRollbackInProgress
 	return nil
 }
 
