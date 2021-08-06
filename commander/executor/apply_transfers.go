@@ -70,13 +70,17 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 	}
 
 	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*numTransfers)
-
 	appliedTransfers := make([]models.Transfer, 0, numTransfers)
 	combinedFee := models.MakeUint256(0)
 
+	tokenID, err := t.getCommitmentTokenID(transfers, &feeReceiver.TokenID)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	for i := range transfers {
 		transfer := &transfers[i]
-		synced, transferError, appError := t.ApplyTransferForSync(transfer, feeReceiver.TokenID)
+		synced, transferError, appError := t.ApplyTransferForSync(transfer, *tokenID)
 		if appError != nil {
 			return nil, nil, appError
 		}
@@ -92,12 +96,25 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 		combinedFee = *combinedFee.Add(&synced.Transfer.Fee)
 	}
 
-	// TODO check that fee receiver tokenID equals commitment tokenID and return DisputableError otherwise
-	stateProof, err := t.ApplyFee(feeReceiver.StateID, combinedFee)
-	if err != nil {
-		return nil, nil, err
+	stateProof, transferError, appError := t.ApplyFeeForSync(feeReceiver, tokenID, &combinedFee)
+	if appError != nil {
+		return nil, nil, appError
 	}
 	stateChangeProofs = append(stateChangeProofs, *stateProof)
+	if transferError != nil {
+		return nil, nil, NewDisputableErrorWithProofs(Transition, transferError.Error(), stateChangeProofs)
+	}
 
 	return appliedTransfers, stateChangeProofs, nil
+}
+
+func (t *TransactionExecutor) getCommitmentTokenID(transfers []models.Transfer, feeReceiverTokenID *models.Uint256) (*models.Uint256, error) {
+	if len(transfers) == 1 {
+		return feeReceiverTokenID, nil
+	}
+	leaf, err := t.storage.StateTree.Leaf(transfers[0].FromStateID)
+	if err != nil {
+		return nil, err
+	}
+	return &leaf.TokenID, nil
 }
