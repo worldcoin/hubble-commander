@@ -6,6 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 func TestPublicKeyBytes_ReturnsACopy(t *testing.T) {
@@ -49,6 +50,18 @@ func TestPublicKeyPublicKey_JSONMarshaling(t *testing.T) {
 
 	var unmarshalled PublicKey
 	err = json.Unmarshal(data, &unmarshalled)
+	require.NoError(t, err)
+
+	require.Equal(t, key, unmarshalled)
+}
+
+func TestPublicKey_YAMLMarshaling(t *testing.T) {
+	key := PublicKey{1, 2, 3}
+	data, err := yaml.Marshal(key)
+	require.NoError(t, err)
+
+	var unmarshalled PublicKey
+	err = yaml.Unmarshal(data, &unmarshalled)
 	require.NoError(t, err)
 
 	require.Equal(t, key, unmarshalled)
