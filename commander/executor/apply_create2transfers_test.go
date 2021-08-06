@@ -238,6 +238,31 @@ func (s *ApplyTransfersTestSuite) TestApplyCreate2TransfersForSync_ReturnsCorrec
 	s.Len(stateProofs, 5)
 }
 
+func (s *ApplyTransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidFeeReceiverTokenID() {
+	feeReceiver := &FeeReceiver{
+		StateID: 4,
+		TokenID: models.MakeUint256(4),
+	}
+	_, err := s.storage.StateTree.Set(feeReceiver.StateID, &models.UserState{
+		PubKeyID: 4,
+		TokenID:  feeReceiver.TokenID,
+		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
+	})
+	s.NoError(err)
+
+	transfers, pubKeyIDs := generateValidCreate2TransfersForSync(2, 5)
+
+	appliedTransfers, _, err := s.transactionExecutor.ApplyCreate2TransfersForSync(transfers, pubKeyIDs, feeReceiver)
+	s.Nil(appliedTransfers)
+
+	var disputableErr *DisputableError
+	s.ErrorAs(err, &disputableErr)
+	s.Equal(Transition, disputableErr.Type)
+	s.Equal(ErrInvalidFeeReceiverTokenID.Error(), disputableErr.Reason)
+	s.Len(disputableErr.Proofs, 5)
+}
+
 func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_RegistersPubKeyIDInCaseThereIsNoUnusedOne() {
 	pubKeyID, err := s.transactionExecutor.getOrRegisterPubKeyID(s.events, &create2Transfer, models.MakeUint256(1))
 	s.NoError(err)

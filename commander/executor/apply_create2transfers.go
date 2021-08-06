@@ -82,21 +82,24 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 	pubKeyIDs []uint32,
 	feeReceiver *FeeReceiver,
 ) ([]models.Create2Transfer, []models.StateMerkleProof, error) {
-	if len(transfers) == 0 {
-		return nil, nil, nil
-	}
-	if len(transfers) != len(pubKeyIDs) {
+	transfersLen := len(transfers)
+	if transfersLen != len(pubKeyIDs) {
 		return nil, nil, ErrInvalidSlicesLength
 	}
 
-	appliedTransfers := make([]models.Create2Transfer, 0, t.cfg.MaxTxsPerCommitment)
-	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*len(transfers))
+	appliedTransfers := make([]models.Create2Transfer, 0, transfersLen)
+	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*transfersLen+1)
 	combinedFee := models.NewUint256(0)
+
+	tokenID, err := t.getCommitmentTokenID(models.Create2TransferArray(transfers), &feeReceiver.TokenID)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	for i := range transfers {
 		transfer := &transfers[i]
 
-		synced, transferError, appError := t.ApplyCreate2TransferForSync(transfer, pubKeyIDs[i], feeReceiver.TokenID)
+		synced, transferError, appError := t.ApplyCreate2TransferForSync(transfer, pubKeyIDs[i], *tokenID)
 		if appError != nil {
 			return nil, nil, appError
 		}
@@ -108,16 +111,18 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 		if transferError != nil {
 			return nil, nil, NewDisputableErrorWithProofs(Transition, transferError.Error(), stateChangeProofs)
 		}
-
 		appliedTransfers = append(appliedTransfers, *synced.Transfer)
 		*combinedFee = *combinedFee.Add(&synced.Transfer.Fee)
 	}
 
-	stateProof, err := t.ApplyFee(feeReceiver.StateID, *combinedFee)
-	if err != nil {
-		return nil, nil, err
+	stateProof, transferError, appError := t.ApplyFeeForSync(feeReceiver, tokenID, combinedFee)
+	if appError != nil {
+		return nil, nil, appError
 	}
 	stateChangeProofs = append(stateChangeProofs, *stateProof)
+	if transferError != nil {
+		return nil, nil, NewDisputableErrorWithProofs(Transition, transferError.Error(), stateChangeProofs)
+	}
 
 	return appliedTransfers, stateChangeProofs, nil
 }
