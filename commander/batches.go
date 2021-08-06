@@ -121,7 +121,12 @@ func (c *Commander) disputeFraudulentBatch(
 	if err != nil {
 		return err
 	}
-	return txExecutor.Commit()
+
+	err = txExecutor.Commit()
+	if err != nil {
+		return err
+	}
+	return ErrRollbackInProgress
 }
 
 func (c *Commander) revertBatches(startBatch *models.Batch) error {
