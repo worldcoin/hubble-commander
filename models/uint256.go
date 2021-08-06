@@ -7,7 +7,6 @@ import (
 
 	"github.com/holiman/uint256"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 )
 
 var ErrUnmarshalUint256 = errors.New("error unmarshalling Uint256")
@@ -144,13 +143,23 @@ func (u *Uint256) UnmarshalJSON(b []byte) error {
 }
 
 func (u Uint256) MarshalYAML() (interface{}, error) {
-	return "0x" + u.Int.ToBig().Text(16), nil
+	return u.Int.ToBig().Text(10), nil
 }
 
-func (u *Uint256) UnmarshalYAML(b []byte) error {
-	var number string
-	err := yaml.Unmarshal(b, &number)
+func (u *Uint256) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var str string
+	err := unmarshal(&str)
 	if err != nil {
+		return err
+	}
+
+	bigValue, ok := new(big.Int).SetString(str, 10)
+	if !ok {
+		return ErrUnmarshalUint256
+	}
+
+	overflow := u.Int.SetFromBig(bigValue)
+	if overflow {
 		return ErrUnmarshalUint256
 	}
 

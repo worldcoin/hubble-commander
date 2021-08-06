@@ -78,22 +78,16 @@ func TestUint256_YAMLPtrMarshaling(t *testing.T) {
 
 func TestUint256_YAMLUnmarshalString(t *testing.T) {
 	var unmarshalled Uint256
-	err := yaml.Unmarshal([]byte("\"0x319\""), &unmarshalled)
+	err := yaml.Unmarshal([]byte("\"793\""), &unmarshalled)
 	require.NoError(t, err)
 
 	require.Equal(t, MakeUint256(793), unmarshalled)
 
 	var unmarshalledPtr *Uint256
-	err = yaml.Unmarshal([]byte("\"0x319\""), &unmarshalledPtr)
+	err = yaml.Unmarshal([]byte("\"793\""), &unmarshalledPtr)
 	require.NoError(t, err)
 
 	require.Equal(t, MakeUint256(793), *unmarshalledPtr)
-}
-
-func TestUint256_YAMLUnmarshalNumber(t *testing.T) {
-	var unmarshalled Uint256
-	err := yaml.Unmarshal([]byte("5123123"), &unmarshalled)
-	require.Error(t, err)
 }
 
 func TestUint256_Add(t *testing.T) {
