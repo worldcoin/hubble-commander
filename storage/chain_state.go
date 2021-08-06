@@ -11,6 +11,12 @@ type ChainStateStorage struct {
 	syncedBlock       *uint64
 }
 
+func NewChainStateStorage(database *Database) *ChainStateStorage {
+	return &ChainStateStorage{
+		database: database,
+	}
+}
+
 func (s *ChainStateStorage) GetChainState(chainID models.Uint256) (*models.ChainState, error) {
 	res := make([]models.ChainState, 0, 1)
 	err := s.database.Postgres.Query(

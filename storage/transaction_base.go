@@ -13,6 +13,12 @@ type TransactionStorage struct {
 	database *Database
 }
 
+func NewTransactionStorage(database *Database) *TransactionStorage {
+	return &TransactionStorage{
+		database: database,
+	}
+}
+
 func (s *TransactionStorage) BeginTransaction(opts TxOptions) (*db.TxController, *TransactionStorage, error) {
 	txController, txDatabase, err := s.database.BeginTransaction(opts)
 	if err != nil {

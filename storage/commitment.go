@@ -18,6 +18,12 @@ type CommitmentStorage struct {
 	database *Database
 }
 
+func NewCommitmentStorage(database *Database) *CommitmentStorage {
+	return &CommitmentStorage{
+		database: database,
+	}
+}
+
 func (s *CommitmentStorage) AddCommitment(commitment *models.Commitment) (*int32, error) {
 	res := make([]int32, 0, 1)
 	err := s.database.Postgres.Query(

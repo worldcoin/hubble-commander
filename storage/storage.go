@@ -29,21 +29,13 @@ func NewStorage(cfg *config.Config) (*Storage, error) {
 		return nil, err
 	}
 
-	batchStorage := &BatchStorage{
-		database: database,
-	}
+	batchStorage := NewBatchStorage(database)
 
-	commitmentStorage := &CommitmentStorage{
-		database: database,
-	}
+	commitmentStorage := NewCommitmentStorage(database)
 
-	transactionStorage := &TransactionStorage{
-		database: database,
-	}
+	transactionStorage := NewTransactionStorage(database)
 
-	chainStateStorage := &ChainStateStorage{
-		database: database,
-	}
+	chainStateStorage := NewChainStateStorage(database)
 
 	return &Storage{
 		BatchStorage:        batchStorage,

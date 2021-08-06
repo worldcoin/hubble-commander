@@ -10,6 +10,12 @@ type BatchStorage struct {
 	database *Database
 }
 
+func NewBatchStorage(database *Database) *BatchStorage {
+	return &BatchStorage{
+		database: database,
+	}
+}
+
 func (s *BatchStorage) AddBatch(batch *models.Batch) error {
 	_, err := s.database.Postgres.Query(
 		s.database.QB.Insert("batch").

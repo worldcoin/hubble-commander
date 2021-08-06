@@ -62,21 +62,13 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 		teardown = append(teardown, badgerTestDB.Teardown)
 	}
 
-	batchStorage := &BatchStorage{
-		database: database,
-	}
+	batchStorage := NewBatchStorage(database)
 
-	commitmentStorage := &CommitmentStorage{
-		database: database,
-	}
+	commitmentStorage := NewCommitmentStorage(database)
 
-	transactionStorage := &TransactionStorage{
-		database: database,
-	}
+	transactionStorage := NewTransactionStorage(database)
 
-	chainStateStorage := &ChainStateStorage{
-		database: database,
-	}
+	chainStateStorage := NewChainStateStorage(database)
 
 	return &TestStorage{
 		Storage: &Storage{
