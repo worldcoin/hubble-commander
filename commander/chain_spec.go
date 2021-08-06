@@ -7,8 +7,11 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
+
+var ErrCannotGenerateChainSpec = errors.New("cannot generate chain spec file without populated database")
 
 func GenerateChainSpec(config *cfg.Config) (*string, error) {
 	storage, err := st.NewStorage(config)
@@ -30,7 +33,9 @@ func GenerateChainSpec(config *cfg.Config) (*string, error) {
 	chainID := models.MakeUint256(parsedChainID)
 
 	chainState, err := storage.GetChainState(chainID)
-	if err != nil {
+	if st.IsNotFoundError(err) {
+		return nil, ErrCannotGenerateChainSpec
+	} else if err != nil {
 		return nil, err
 	}
 

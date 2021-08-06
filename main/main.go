@@ -21,7 +21,7 @@ func main() {
 	if len(args) > 1 && args[1] == "deploy" {
 		chainSpec, err := commander.GenerateChainSpec(cfg)
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 		fmt.Printf(*chainSpec)
 		return
