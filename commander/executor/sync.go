@@ -186,5 +186,8 @@ func (t *TransactionExecutor) syncCommitment(
 		transactions.At(i).GetBase().Hash = *hashTransfer
 	}
 
+	if transactions.Len() == 0 {
+		return nil
+	}
 	return t.storage.BatchAddGenericTransaction(transactions)
 }

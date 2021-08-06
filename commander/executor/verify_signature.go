@@ -64,6 +64,9 @@ func (t *TransactionExecutor) verifyCommitmentSignature(
 	publicKeys []*models.PublicKey,
 	transfers models.GenericTransactionArray,
 ) error {
+	if len(messages) == 0 {
+		return nil
+	}
 	sig, err := bls.NewSignatureFromBytes(signature.Bytes(), *domain)
 	if err != nil {
 		return t.createDisputableSignatureError(err.Error(), transfers)

@@ -8,7 +8,7 @@ import (
 
 var (
 	ErrInvalidDataLength = NewDisputableError(Transition, "invalid data length")
-	ErrTooManyTx         = NewDisputableError(Transition, "too many transactions in a commitment")
+	ErrTooManyTxs        = NewDisputableError(Transition, "too many transactions in a commitment")
 )
 
 func (t *TransactionExecutor) syncTransferCommitment(
@@ -24,10 +24,8 @@ func (t *TransactionExecutor) syncTransferCommitment(
 	}
 
 	if uint32(len(transfers)) > t.cfg.MaxTxsPerCommitment {
-		return nil, ErrTooManyTx
+		return nil, ErrTooManyTxs
 	}
-
-	// TODO check if commitments can have 0 transfers (signature disputes)
 
 	feeReceiver, err := t.getSyncedCommitmentFeeReceiver(commitment)
 	if err != nil {
