@@ -17,6 +17,13 @@ func NewChainStateStorage(database *Database) *ChainStateStorage {
 	}
 }
 
+func (s *ChainStateStorage) copyWithNewDatabase(database *Database) *ChainStateStorage {
+	newChainStateStorage := *s
+	newChainStateStorage.database = database
+
+	return &newChainStateStorage
+}
+
 func (s *ChainStateStorage) GetChainState(chainID models.Uint256) (*models.ChainState, error) {
 	res := make([]models.ChainState, 0, 1)
 	err := s.database.Postgres.Query(

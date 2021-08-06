@@ -109,24 +109,20 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 		teardown = append(teardown, clonedBadger.Teardown)
 	}
 
-	batchStorage := *s.BatchStorage
-	batchStorage.database = &database
+	batchStorage := s.BatchStorage.copyWithNewDatabase(&database)
 
-	commitmentStorage := *s.CommitmentStorage
-	commitmentStorage.database = &database
+	commitmentStorage := s.CommitmentStorage.copyWithNewDatabase(&database)
 
-	transactionStorage := *s.TransactionStorage
-	transactionStorage.database = &database
+	transactionStorage := s.TransactionStorage.copyWithNewDatabase(&database)
 
-	chainStateStorage := *s.ChainStateStorage
-	chainStateStorage.database = &database
+	chainStateStorage := s.ChainStateStorage.copyWithNewDatabase(&database)
 
 	return &TestStorage{
 		Storage: &Storage{
-			BatchStorage:        &batchStorage,
-			CommitmentStorage:   &commitmentStorage,
-			TransactionStorage:  &transactionStorage,
-			ChainStateStorage:   &chainStateStorage,
+			BatchStorage:        batchStorage,
+			CommitmentStorage:   commitmentStorage,
+			TransactionStorage:  transactionStorage,
+			ChainStateStorage:   chainStateStorage,
 			StateTree:           NewStateTree(&database),
 			AccountTree:         NewAccountTree(&database),
 			database:            &database,

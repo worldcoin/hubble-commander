@@ -16,6 +16,13 @@ func NewBatchStorage(database *Database) *BatchStorage {
 	}
 }
 
+func (s *BatchStorage) copyWithNewDatabase(database *Database) *BatchStorage {
+	newBatchStorage := *s
+	newBatchStorage.database = database
+
+	return &newBatchStorage
+}
+
 func (s *BatchStorage) AddBatch(batch *models.Batch) error {
 	_, err := s.database.Postgres.Query(
 		s.database.QB.Insert("batch").

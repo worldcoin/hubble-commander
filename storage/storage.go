@@ -55,23 +55,19 @@ func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, 
 		return nil, nil, err
 	}
 
-	txBatchStorage := *s.BatchStorage
-	txBatchStorage.database = txDatabase
+	txBatchStorage := s.BatchStorage.copyWithNewDatabase(txDatabase)
 
-	txCommitmentStorage := *s.CommitmentStorage
-	txCommitmentStorage.database = txDatabase
+	txCommitmentStorage := s.CommitmentStorage.copyWithNewDatabase(txDatabase)
 
-	txTransactionStorage := *s.TransactionStorage
-	txTransactionStorage.database = txDatabase
+	txTransactionStorage := s.TransactionStorage.copyWithNewDatabase(txDatabase)
 
-	txChainStateStorage := *s.ChainStateStorage
-	txChainStateStorage.database = txDatabase
+	txChainStateStorage := s.ChainStateStorage.copyWithNewDatabase(txDatabase)
 
 	txStorage := &Storage{
-		BatchStorage:        &txBatchStorage,
-		CommitmentStorage:   &txCommitmentStorage,
-		TransactionStorage:  &txTransactionStorage,
-		ChainStateStorage:   &txChainStateStorage,
+		BatchStorage:        txBatchStorage,
+		CommitmentStorage:   txCommitmentStorage,
+		TransactionStorage:  txTransactionStorage,
+		ChainStateStorage:   txChainStateStorage,
 		StateTree:           NewStateTree(txDatabase),
 		AccountTree:         NewAccountTree(txDatabase),
 		database:            txDatabase,

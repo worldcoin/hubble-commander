@@ -19,6 +19,13 @@ func NewTransactionStorage(database *Database) *TransactionStorage {
 	}
 }
 
+func (s *TransactionStorage) copyWithNewDatabase(database *Database) *TransactionStorage {
+	newTransactionStorage := *s
+	newTransactionStorage.database = database
+
+	return &newTransactionStorage
+}
+
 func (s *TransactionStorage) BeginTransaction(opts TxOptions) (*db.TxController, *TransactionStorage, error) {
 	txController, txDatabase, err := s.database.BeginTransaction(opts)
 	if err != nil {

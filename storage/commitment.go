@@ -24,6 +24,13 @@ func NewCommitmentStorage(database *Database) *CommitmentStorage {
 	}
 }
 
+func (s *CommitmentStorage) copyWithNewDatabase(database *Database) *CommitmentStorage {
+	newCommitmentStorage := *s
+	newCommitmentStorage.database = database
+
+	return &newCommitmentStorage
+}
+
 func (s *CommitmentStorage) AddCommitment(commitment *models.Commitment) (*int32, error) {
 	res := make([]int32, 0, 1)
 	err := s.database.Postgres.Query(
