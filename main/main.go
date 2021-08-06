@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,7 +16,21 @@ import (
 
 func main() {
 	cfg := getConfig()
+	args := os.Args
 
+	if len(args) > 1 && args[1] == "deploy" {
+		chainSpec, err := commander.GenerateChainSpec(cfg)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf(*chainSpec)
+		return
+	}
+
+	startCommander(cfg)
+}
+
+func startCommander(cfg *config.Config) {
 	configureLogger(cfg)
 	logConfig(cfg)
 	cmd := commander.NewCommander(cfg)
