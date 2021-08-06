@@ -182,7 +182,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithTooManyTxs() {
 	s.NoError(err)
 
 	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
-	s.NoError(err)
+	s.ErrorIs(err, ErrRollbackInProgress)
 
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
 }
@@ -207,7 +207,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidPostState
 	s.NoError(err)
 
 	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
-	s.NoError(err)
+	s.ErrorIs(err, ErrRollbackInProgress)
 
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
 }
@@ -228,7 +228,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidSignature
 	s.Len(remoteBatches, 1)
 
 	err = s.cmd.syncRemoteBatch(&remoteBatches[0])
-	s.NoError(err)
+	s.ErrorIs(err, ErrRollbackInProgress)
 
 	s.checkBatchAfterDispute(remoteBatches[0].ID)
 }
@@ -259,7 +259,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDisputesFr
 
 	s.testClient.Account = s.testClient.Accounts[1]
 	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
-	s.NoError(err)
+	s.ErrorIs(err, ErrRollbackInProgress)
 
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
 	_, err = s.cmd.storage.GetBatch(localBatch.ID)
@@ -280,7 +280,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentCommitmentAfter
 	s.Len(remoteBatches, 1)
 
 	err = s.cmd.syncRemoteBatch(&remoteBatches[0])
-	s.NoError(err)
+	s.ErrorIs(err, ErrRollbackInProgress)
 
 	s.checkBatchAfterDispute(remoteBatches[0].ID)
 }
