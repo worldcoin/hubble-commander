@@ -25,7 +25,7 @@ func (c *Client) GetBatches(opts *bind.FilterOpts) ([]DecodedBatch, error) {
 	return c.GetBatchesInRange(opts, nil, nil)
 }
 
-func (c *Client) GetBatchesInRange(opts *bind.FilterOpts, startID, endID *models.Uint256) ([]DecodedBatch, error) {
+func (c *Client) GetBatchesInRange(opts *bind.FilterOpts, startBatchID, endBatchID *models.Uint256) ([]DecodedBatch, error) {
 	it, err := c.Rollup.FilterNewBatch(opts)
 	if err != nil {
 		return nil, err
@@ -40,11 +40,11 @@ func (c *Client) GetBatchesInRange(opts *bind.FilterOpts, startID, endID *models
 	res := make([]DecodedBatch, 0, len(events))
 	for i := range events {
 		batchID := models.NewUint256FromBig(*events[i].BatchID)
-		if startID != nil && batchID.Cmp(startID) <= 0 {
+		if startBatchID != nil && batchID.Cmp(startBatchID) <= 0 {
 			log.Printf("Batch #%d already synced. Skipping...", batchID.Uint64())
 			continue
 		}
-		if endID != nil && batchID.Cmp(endID) >= 0 {
+		if endBatchID != nil && batchID.Cmp(endBatchID) >= 0 {
 			log.Printf("Batch #%d after dispute. Skipping...", batchID.Uint64())
 			continue
 		}
