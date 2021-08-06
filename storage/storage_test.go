@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -160,62 +159,6 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 	res, err = s.storage.StateTree.Leaf(leafTwo.StateID)
 	s.NoError(err)
 	s.Equal(leafTwo, res)
-}
-
-func (s *StorageTestSuite) TestClone() {
-	testConfig := config.GetTestConfig().Postgres
-
-	batch := models.Batch{
-		ID:              models.MakeUint256(1),
-		Type:            txtype.Transfer,
-		TransactionHash: utils.RandomHash(),
-	}
-	err := s.storage.AddBatch(&batch)
-	s.NoError(err)
-
-	stateLeaf, err := NewStateLeaf(1, &models.UserState{})
-	s.NoError(err)
-
-	_, err = s.storage.StateTree.Set(stateLeaf.StateID, &stateLeaf.UserState)
-	s.NoError(err)
-
-	clonedStorage, err := s.storage.Clone(testConfig)
-	s.NoError(err)
-	defer func() {
-		err = clonedStorage.Teardown()
-		s.NoError(err)
-	}()
-
-	clonedBatch, err := clonedStorage.GetBatch(batch.ID)
-	s.NoError(err)
-	s.Equal(batch, *clonedBatch)
-
-	clonedStateLeaf, err := clonedStorage.StateTree.Leaf(stateLeaf.StateID)
-	s.NoError(err)
-	s.Equal(stateLeaf, clonedStateLeaf)
-}
-
-func (s *StorageTestSuite) TestClone_ClonesFeeReceiverStateIDsByValue() {
-	testConfig := config.GetTestConfig().Postgres
-
-	s.storage.feeReceiverStateIDs["abc"] = 123
-
-	clonedStorage, err := s.storage.Clone(testConfig)
-	s.NoError(err)
-	defer func() {
-		err = clonedStorage.Teardown()
-		s.NoError(err)
-	}()
-
-	abcID, ok := clonedStorage.feeReceiverStateIDs["abc"]
-	s.True(ok)
-	s.EqualValues(123, abcID)
-
-	clonedStorage.feeReceiverStateIDs["def"] = 456
-
-	defID, ok := s.storage.feeReceiverStateIDs["def"]
-	s.False(ok)
-	s.EqualValues(0, defID) // empty value
 }
 
 func TestStorageTestSuite(t *testing.T) {
