@@ -281,6 +281,41 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentCommitmentAfter
 	s.checkBatchAfterDispute(remoteBatches[0].ID)
 }
 
+func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidFeeReceiverTokenID() {
+	_, err := s.testStorage.StateTree.Set(2, &models.UserState{
+		PubKeyID: 2,
+		TokenID:  models.MakeUint256(2),
+		Balance:  models.MakeUint256(0),
+		Nonce:    models.MakeUint256(0),
+	})
+	s.NoError(err)
+
+	transfers := []models.Transfer{
+		testutils.MakeTransfer(0, 1, 0, 50),
+		testutils.MakeTransfer(0, 1, 1, 100),
+	}
+
+	s.createAndSubmitTransferBatch(s.testStorage.StorageBase, s.transactionExecutor, &transfers[0])
+
+	clonedStorage, txExecutor := cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
+	defer teardown(s.Assertions, clonedStorage.Teardown)
+	s.createAndSubmitInvalidTransferBatch(clonedStorage.StorageBase, txExecutor, &transfers[1], func(commitment *models.Commitment) {
+		commitment.FeeReceiver = 2
+	})
+
+	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	s.NoError(err)
+	s.Len(remoteBatches, 2)
+
+	err = s.cmd.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
+	s.NoError(err)
+
+	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
+	s.NoError(err)
+
+	s.checkBatchAfterDispute(remoteBatches[1].ID)
+}
+
 func (s *BatchesTestSuite) syncAllBlocks() {
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)

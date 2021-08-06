@@ -108,7 +108,10 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 	return appliedTransfers, stateChangeProofs, nil
 }
 
-func (t *TransactionExecutor) getCommitmentTokenID(transfers models.GenericTransactionArray, feeReceiverTokenID *models.Uint256) (*models.Uint256, error) {
+func (t *TransactionExecutor) getCommitmentTokenID(
+	transfers models.GenericTransactionArray,
+	feeReceiverTokenID *models.Uint256,
+) (*models.Uint256, error) {
 	if transfers.Len() == 0 {
 		return feeReceiverTokenID, nil
 	}

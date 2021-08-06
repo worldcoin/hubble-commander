@@ -24,7 +24,10 @@ func (t *TransactionExecutor) ApplyFee(feeReceiverStateID uint32, fee models.Uin
 	return stateProof, err
 }
 
-func (t *TransactionExecutor) ApplyFeeForSync(feeReceiver *FeeReceiver, tokenID, fee *models.Uint256) (*models.StateMerkleProof, error, error) {
+func (t *TransactionExecutor) ApplyFeeForSync(
+	feeReceiver *FeeReceiver,
+	tokenID, fee *models.Uint256,
+) (*models.StateMerkleProof, error, error) {
 	stateProof, err := t.ApplyFee(feeReceiver.StateID, *fee)
 	if err != nil {
 		return nil, nil, err
