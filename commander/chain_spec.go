@@ -15,6 +15,12 @@ func GenerateChainSpec(config *cfg.Config) (*string, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		err = storage.Close()
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	parsedChainID, err := strconv.ParseUint(config.Ethereum.ChainID, 10, 64)
 	if err != nil {
