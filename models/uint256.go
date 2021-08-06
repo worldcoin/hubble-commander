@@ -84,6 +84,10 @@ func (u *Uint256) CmpN(other uint64) int {
 	return u.Cmp(NewUint256(other))
 }
 
+func (u *Uint256) String() string {
+	return u.Int.ToBig().Text(10)
+}
+
 // Scan implements Scanner for database/sql.
 func (u *Uint256) Scan(src interface{}) error {
 	errorMessage := "can't scan %T into Uint256"
@@ -107,15 +111,11 @@ func (u *Uint256) Scan(src interface{}) error {
 
 // Value implements valuer for database/sql.
 func (u Uint256) Value() (driver.Value, error) {
-	return u.Int.ToBig().Text(10), nil
-}
-
-func (u *Uint256) String() string {
-	return u.Int.ToBig().Text(10)
+	return u.String(), nil
 }
 
 func (u Uint256) MarshalJSON() ([]byte, error) {
-	jsonText, err := json.Marshal(u.Int.ToBig().Text(10))
+	jsonText, err := json.Marshal(u.String())
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +143,7 @@ func (u *Uint256) UnmarshalJSON(b []byte) error {
 }
 
 func (u Uint256) MarshalYAML() (interface{}, error) {
-	return u.Int.ToBig().Text(10), nil
+	return u.String(), nil
 }
 
 func (u *Uint256) UnmarshalYAML(unmarshal func(interface{}) error) error {
