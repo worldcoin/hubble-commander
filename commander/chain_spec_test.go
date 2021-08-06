@@ -29,7 +29,6 @@ func (s *ChainSpecTestSuite) SetupTest() {
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 	s.config = cfg.GetTestConfig()
-	s.config.Ethereum.ChainID = "1337"
 	chainState := &models.ChainState{
 		ChainID:         models.MakeUint256(1337),
 		AccountRegistry: utils.RandomAddress(),
@@ -60,6 +59,7 @@ func (s *ChainSpecTestSuite) SetupTest() {
 	err = s.storage.SetChainState(chainState)
 	s.NoError(err)
 	s.chainSpec = newChainSpec(chainState)
+	s.prepareConfig()
 }
 
 func (s *ChainSpecTestSuite) TearDownTest() {
@@ -74,6 +74,14 @@ func (s *ChainSpecTestSuite) TestGenerateChainSpec() {
 	err = yaml.Unmarshal([]byte(*yamlChainSpec), &chainSpec)
 	s.NoError(err)
 	s.EqualValues(s.chainSpec, chainSpec)
+}
+
+func (s *ChainSpecTestSuite) prepareConfig() {
+	config := *cfg.GetTestConfig()
+	newEthConfig := *config.Ethereum
+	newEthConfig.ChainID = "1337"
+	config.Ethereum = &newEthConfig
+	s.config = &config
 }
 
 func TestChainSpecTestSuite(t *testing.T) {
