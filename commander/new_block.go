@@ -56,6 +56,10 @@ func (c *Commander) newBlockLoop() error {
 			}
 
 			if isRollingBack {
+				err = c.client.KeepRollingBack()
+				if err != nil {
+					return err
+				}
 				continue
 			}
 
