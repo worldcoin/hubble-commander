@@ -20,7 +20,7 @@ type ChainState struct {
 }
 
 type ChainSpec struct {
-	ChainID         uint64         `yaml:"chain_id"`
+	ChainID         Uint256        `yaml:"chain_id"`
 	AccountRegistry common.Address `yaml:"account_registry"`
 	Rollup          common.Address
 	GenesisAccounts GenesisAccounts `yaml:"genesis_accounts,flow"`
