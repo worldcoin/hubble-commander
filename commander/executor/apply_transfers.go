@@ -70,7 +70,7 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 	}
 
 	appliedTransfers := make([]models.Transfer, 0, numTransfers)
-	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*numTransfers)
+	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*numTransfers+1)
 	combinedFee := models.NewUint256(0)
 
 	tokenID, err := t.getCommitmentTokenID(models.TransferArray(transfers), &feeReceiver.TokenID)

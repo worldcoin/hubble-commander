@@ -89,8 +89,8 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 		return nil, nil, ErrInvalidSlicesLength
 	}
 
-	appliedTransfers := make([]models.Create2Transfer, 0, t.cfg.MaxTxsPerCommitment)
-	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*len(transfers))
+	appliedTransfers := make([]models.Create2Transfer, 0, len(transfers))
+	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*len(transfers)+1)
 	combinedFee := models.NewUint256(0)
 
 	tokenID, err := t.getCommitmentTokenID(models.Create2TransferArray(transfers), &feeReceiver.TokenID)
@@ -113,7 +113,6 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 		if transferError != nil {
 			return nil, nil, NewDisputableErrorWithProofs(Transition, transferError.Error(), stateChangeProofs)
 		}
-
 		appliedTransfers = append(appliedTransfers, *synced.Transfer)
 		*combinedFee = *combinedFee.Add(&synced.Transfer.Fee)
 	}
