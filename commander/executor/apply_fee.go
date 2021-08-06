@@ -32,7 +32,7 @@ func (t *TransactionExecutor) ApplyFeeForSync(
 	if err != nil {
 		return nil, nil, err
 	}
-	if &feeReceiver.TokenID != tokenID {
+	if feeReceiver.TokenID != *tokenID {
 		return stateProof, ErrInvalidFeeReceiverTokenID, nil
 	}
 	return stateProof, nil, nil

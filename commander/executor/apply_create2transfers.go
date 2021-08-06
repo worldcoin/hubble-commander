@@ -82,15 +82,13 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 	pubKeyIDs []uint32,
 	feeReceiver *FeeReceiver,
 ) ([]models.Create2Transfer, []models.StateMerkleProof, error) {
-	if len(transfers) == 0 {
-		return nil, nil, nil
-	}
-	if len(transfers) != len(pubKeyIDs) {
+	transfersLen := len(transfers)
+	if transfersLen != len(pubKeyIDs) {
 		return nil, nil, ErrInvalidSlicesLength
 	}
 
-	appliedTransfers := make([]models.Create2Transfer, 0, len(transfers))
-	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*len(transfers)+1)
+	appliedTransfers := make([]models.Create2Transfer, 0, transfersLen)
+	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*transfersLen+1)
 	combinedFee := models.NewUint256(0)
 
 	tokenID, err := t.getCommitmentTokenID(models.Create2TransferArray(transfers), &feeReceiver.TokenID)

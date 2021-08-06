@@ -63,14 +63,9 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 	[]models.StateMerkleProof,
 	error,
 ) {
-	numTransfers := len(transfers)
-	if numTransfers == 0 {
-		// TODO state proofs should probably always contain at least fee receiver's proof for ErrInvalidCommitmentStateRoot disputes to work
-		return []models.Transfer{}, nil, nil
-	}
-
-	appliedTransfers := make([]models.Transfer, 0, numTransfers)
-	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*numTransfers+1)
+	transfersLen := len(transfers)
+	appliedTransfers := make([]models.Transfer, 0, transfersLen)
+	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*transfersLen+1)
 	combinedFee := models.NewUint256(0)
 
 	tokenID, err := t.getCommitmentTokenID(models.TransferArray(transfers), &feeReceiver.TokenID)
