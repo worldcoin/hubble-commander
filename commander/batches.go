@@ -26,15 +26,10 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 
 	// TODO return app error if latestBatchID >= invalidBatchID
 
-	invalidBatchID := &c.invalidBatchID
-	if invalidBatchID.IsZero() {
-		invalidBatchID = nil
-	}
-
 	newRemoteBatches, err := c.client.GetBatchesInRange(&bind.FilterOpts{
 		Start: startBlock,
 		End:   &endBlock,
-	}, latestBatchID, invalidBatchID)
+	}, latestBatchID, c.invalidBatchID)
 	if err != nil {
 		return err
 	}

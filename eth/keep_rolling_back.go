@@ -35,7 +35,7 @@ func (c *Client) waitForKeepRollingBack(tx *types.Transaction) error {
 	if err != nil {
 		return err
 	}
-	if invalidBatchID.IsZero() {
+	if invalidBatchID == nil {
 		return nil
 	}
 

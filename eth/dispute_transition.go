@@ -109,7 +109,7 @@ func (c *Client) isBatchDuringDispute(batchID *models.Uint256) error {
 	if err != nil {
 		return err
 	}
-	if !invalidBatchID.IsZero() && batchID.Cmp(invalidBatchID) >= 0 {
+	if invalidBatchID != nil && batchID.Cmp(invalidBatchID) >= 0 {
 		return ErrRollbackInProcess
 	}
 	return nil
@@ -176,5 +176,9 @@ func (c *Client) GetInvalidBatchID() (*models.Uint256, error) {
 	if err != nil {
 		return nil, err
 	}
-	return models.NewUint256FromBig(*batchMarker), err
+	invalidBatchID := models.NewUint256FromBig(*batchMarker)
+	if invalidBatchID.IsZero() {
+		return nil, nil
+	}
+	return invalidBatchID, nil
 }

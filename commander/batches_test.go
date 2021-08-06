@@ -300,7 +300,7 @@ func (s *BatchesTestSuite) TestUnsafeSyncBatches_SyncsBatchesBeforeInvalidOne() 
 	invalidBatch := s.createAndSubmitTransferBatch(clonedStorage.StorageBase, txExecutor, &transfers[1])
 	s.createAndSubmitTransferBatch(clonedStorage.StorageBase, txExecutor, &transfers[2])
 
-	s.cmd.invalidBatchID = invalidBatch.ID
+	s.cmd.invalidBatchID = &invalidBatch.ID
 
 	s.syncAllBlocks()
 

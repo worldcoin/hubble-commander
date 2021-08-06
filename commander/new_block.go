@@ -71,6 +71,10 @@ func (c *Commander) syncToLatestBlock() error {
 	}
 	c.storage.SetLatestBlockNumber(uint32(*latestBlockNumber))
 	// TODO move invalidBatchID setting here
+	c.invalidBatchID, err = c.client.GetInvalidBatchID()
+	if err != nil {
+		return err
+	}
 
 	syncedBlock := ref.Uint64(uint64(0))
 	for *syncedBlock != *latestBlockNumber {
@@ -86,6 +90,10 @@ func (c *Commander) syncToLatestBlock() error {
 		}
 		c.storage.SetLatestBlockNumber(uint32(*latestBlockNumber))
 		// TODO update invalidBatchID here
+		c.invalidBatchID, err = c.client.GetInvalidBatchID()
+		if err != nil {
+			return err
+		}
 
 		select {
 		case <-c.workersContext.Done():
@@ -96,6 +104,10 @@ func (c *Commander) syncToLatestBlock() error {
 	}
 
 	// TODO update invalidBatchID here
+	c.invalidBatchID, err = c.client.GetInvalidBatchID()
+	if err != nil {
+		return err
+	}
 	// TODO if invalidBatchID != nil call keepRollingBack and return ErrRollbackInProgress
 	return nil
 }
