@@ -63,13 +63,17 @@ func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, 
 
 	txChainStateStorage := s.ChainStateStorage.copyWithNewDatabase(txDatabase)
 
+	txStateTree := s.StateTree.copyWithNewDatabase(txDatabase)
+
+	txAccountTree := s.AccountTree.copyWithNewDatabase(txDatabase)
+
 	txStorage := &Storage{
 		BatchStorage:        txBatchStorage,
 		CommitmentStorage:   txCommitmentStorage,
 		TransactionStorage:  txTransactionStorage,
 		ChainStateStorage:   txChainStateStorage,
-		StateTree:           NewStateTree(txDatabase),
-		AccountTree:         NewAccountTree(txDatabase),
+		StateTree:           txStateTree,
+		AccountTree:         txAccountTree,
 		database:            txDatabase,
 		feeReceiverStateIDs: utils.CopyStringUint32Map(s.feeReceiverStateIDs),
 	}

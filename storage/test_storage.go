@@ -117,14 +117,18 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 
 	chainStateStorage := s.ChainStateStorage.copyWithNewDatabase(&database)
 
+	stateTree := s.StateTree.copyWithNewDatabase(&database)
+
+	accountTree := s.AccountTree.copyWithNewDatabase(&database)
+
 	return &TestStorage{
 		Storage: &Storage{
 			BatchStorage:        batchStorage,
 			CommitmentStorage:   commitmentStorage,
 			TransactionStorage:  transactionStorage,
 			ChainStateStorage:   chainStateStorage,
-			StateTree:           NewStateTree(&database),
-			AccountTree:         NewAccountTree(&database),
+			StateTree:           stateTree,
+			AccountTree:         accountTree,
 			database:            &database,
 			feeReceiverStateIDs: utils.CopyStringUint32Map(s.feeReceiverStateIDs),
 		},

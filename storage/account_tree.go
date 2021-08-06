@@ -32,6 +32,10 @@ func NewAccountTree(database *Database) *AccountTree {
 	}
 }
 
+func (s *AccountTree) copyWithNewDatabase(database *Database) *AccountTree {
+	return NewAccountTree(database)
+}
+
 func (s *AccountTree) Root() (*common.Hash, error) {
 	return s.merkleTree.Root()
 }
