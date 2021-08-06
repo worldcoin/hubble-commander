@@ -191,10 +191,13 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_ReturnsCorrectStateP
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_InvalidFeeReceiverTokenID() {
-	senderStateID := uint32(4)
-	_, err := s.storage.StateTree.Set(senderStateID, &models.UserState{
+	feeReceiver := &FeeReceiver{
+		StateID: 4,
+		TokenID: models.MakeUint256(4),
+	}
+	_, err := s.storage.StateTree.Set(feeReceiver.StateID, &models.UserState{
 		PubKeyID: 4,
-		TokenID:  models.MakeUint256(4),
+		TokenID:  feeReceiver.TokenID,
 		Balance:  models.MakeUint256(420),
 		Nonce:    models.MakeUint256(0),
 	})
@@ -202,7 +205,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_InvalidFeeReceiverTo
 
 	transfers := generateValidTransfers(2)
 
-	appliedTransfers, _, err := s.transactionExecutor.ApplyTransfersForSync(transfers, s.feeReceiver)
+	appliedTransfers, _, err := s.transactionExecutor.ApplyTransfersForSync(transfers, feeReceiver)
 	s.Nil(appliedTransfers)
 
 	var disputableErr *DisputableError
