@@ -28,7 +28,7 @@ func (s *ChainSpecTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	s.config = cfg.GetConfig()
+	s.config = cfg.GetTestConfig()
 	s.config.Ethereum.ChainID = "1337"
 	chainState := &models.ChainState{
 		ChainID:         models.MakeUint256(1337),
