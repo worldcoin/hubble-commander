@@ -61,7 +61,7 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 		teardown = append(teardown, badgerTestDB.Teardown)
 	}
 
-	storage := NewStorageFromDatabase(database)
+	storage := newStorageFromDatabase(database)
 
 	return &TestStorage{
 		Storage:  storage,

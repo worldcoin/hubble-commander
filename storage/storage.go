@@ -29,12 +29,12 @@ func NewStorage(cfg *config.Config) (*Storage, error) {
 		return nil, err
 	}
 
-	storage := NewStorageFromDatabase(database)
+	storage := newStorageFromDatabase(database)
 
 	return storage, nil
 }
 
-func NewStorageFromDatabase(database *Database) *Storage {
+func newStorageFromDatabase(database *Database) *Storage {
 	batchStorage := NewBatchStorage(database)
 
 	commitmentStorage := NewCommitmentStorage(database)
