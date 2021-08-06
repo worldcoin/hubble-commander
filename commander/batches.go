@@ -33,7 +33,6 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 	if err != nil {
 		return err
 	}
-	logBatchesCount(newRemoteBatches)
 
 	for i := range newRemoteBatches {
 		err = c.syncRemoteBatch(&newRemoteBatches[i])
@@ -143,13 +142,6 @@ func (c *Commander) getLatestBatchID() (*models.Uint256, error) {
 		return nil, err
 	}
 	return &latestBatch.ID, nil
-}
-
-func logBatchesCount(newRemoteBatches []eth.DecodedBatch) {
-	newBatchesCount := len(newRemoteBatches)
-	if newBatchesCount > 0 {
-		log.Printf("Found %d batch(es)", newBatchesCount)
-	}
 }
 
 func logFraudulentBatch(batch *eth.DecodedBatch, reason string) {

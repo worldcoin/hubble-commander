@@ -31,11 +31,15 @@ func (c *Client) GetBatchesInRange(opts *bind.FilterOpts, startID, endID *models
 		return nil, err
 	}
 
-	// TODO Convert iterator to slice and print "Found X batches" log here
-
-	res := make([]DecodedBatch, 0)
+	events := make([]*rollup.RollupNewBatch, 0)
 	for it.Next() {
-		batchID := models.NewUint256FromBig(*it.Event.BatchID)
+		events = append(events, it.Event)
+	}
+	logBatchesCount(len(events))
+
+	res := make([]DecodedBatch, 0, len(events))
+	for i := range events {
+		batchID := models.NewUint256FromBig(*events[i].BatchID)
 		if startID != nil && batchID.Cmp(startID) <= 0 {
 			log.Printf("Batch #%d already synced. Skipping...", batchID.Uint64())
 			continue
@@ -45,7 +49,7 @@ func (c *Client) GetBatchesInRange(opts *bind.FilterOpts, startID, endID *models
 			continue
 		}
 
-		txHash := it.Event.Raw.TxHash
+		txHash := events[i].Raw.TxHash
 
 		tx, _, err := c.ChainConnection.GetBackend().TransactionByHash(context.Background(), txHash)
 		if err != nil {
@@ -121,6 +125,12 @@ func verifyBatchHash(batch *models.Batch, commitments []encoder.DecodedCommitmen
 		return errBatchAlreadyRolledBack
 	}
 	return nil
+}
+
+func logBatchesCount(count int) {
+	if count > 0 {
+		log.Printf("Found %d batch(es)", count)
+	}
 }
 
 type DecodedBatch struct {
