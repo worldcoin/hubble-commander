@@ -23,7 +23,7 @@ type ChainSpec struct {
 	ChainID         Uint256        `yaml:"chain_id"`
 	AccountRegistry common.Address `yaml:"account_registry"`
 	Rollup          common.Address
-	GenesisAccounts GenesisAccounts `yaml:"genesis_accounts,flow"`
+	GenesisAccounts GenesisAccounts `yaml:"genesis_accounts"`
 }
 
 type GenesisAccounts []PopulatedGenesisAccount
