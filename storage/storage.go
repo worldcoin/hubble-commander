@@ -29,6 +29,12 @@ func NewStorage(cfg *config.Config) (*Storage, error) {
 		return nil, err
 	}
 
+	storage := NewStorageFromDatabase(database)
+
+	return storage, nil
+}
+
+func NewStorageFromDatabase(database *Database) *Storage {
 	batchStorage := NewBatchStorage(database)
 
 	commitmentStorage := NewCommitmentStorage(database)
@@ -46,7 +52,32 @@ func NewStorage(cfg *config.Config) (*Storage, error) {
 		AccountTree:         NewAccountTree(database),
 		database:            database,
 		feeReceiverStateIDs: make(map[string]uint32),
-	}, nil
+	}
+}
+
+func (s *Storage) copyWithNewDatabase(database *Database) *Storage {
+	batchStorage := s.BatchStorage.copyWithNewDatabase(database)
+
+	commitmentStorage := s.CommitmentStorage.copyWithNewDatabase(database)
+
+	transactionStorage := s.TransactionStorage.copyWithNewDatabase(database)
+
+	chainStateStorage := s.ChainStateStorage.copyWithNewDatabase(database)
+
+	stateTree := s.StateTree.copyWithNewDatabase(database)
+
+	accountTree := s.AccountTree.copyWithNewDatabase(database)
+
+	return &Storage{
+		BatchStorage:        batchStorage,
+		CommitmentStorage:   commitmentStorage,
+		TransactionStorage:  transactionStorage,
+		ChainStateStorage:   chainStateStorage,
+		StateTree:           stateTree,
+		AccountTree:         accountTree,
+		database:            database,
+		feeReceiverStateIDs: utils.CopyStringUint32Map(s.feeReceiverStateIDs),
+	}
 }
 
 func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, error) {
@@ -55,28 +86,7 @@ func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, 
 		return nil, nil, err
 	}
 
-	txBatchStorage := s.BatchStorage.copyWithNewDatabase(txDatabase)
-
-	txCommitmentStorage := s.CommitmentStorage.copyWithNewDatabase(txDatabase)
-
-	txTransactionStorage := s.TransactionStorage.copyWithNewDatabase(txDatabase)
-
-	txChainStateStorage := s.ChainStateStorage.copyWithNewDatabase(txDatabase)
-
-	txStateTree := s.StateTree.copyWithNewDatabase(txDatabase)
-
-	txAccountTree := s.AccountTree.copyWithNewDatabase(txDatabase)
-
-	txStorage := &Storage{
-		BatchStorage:        txBatchStorage,
-		CommitmentStorage:   txCommitmentStorage,
-		TransactionStorage:  txTransactionStorage,
-		ChainStateStorage:   txChainStateStorage,
-		StateTree:           txStateTree,
-		AccountTree:         txAccountTree,
-		database:            txDatabase,
-		feeReceiverStateIDs: utils.CopyStringUint32Map(s.feeReceiverStateIDs),
-	}
+	txStorage := s.copyWithNewDatabase(txDatabase)
 
 	return txController, txStorage, nil
 }

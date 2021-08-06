@@ -4,7 +4,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/db/postgres"
-	"github.com/Worldcoin/hubble-commander/utils"
 )
 
 type TestStorage struct {
@@ -62,25 +61,10 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 		teardown = append(teardown, badgerTestDB.Teardown)
 	}
 
-	batchStorage := NewBatchStorage(database)
-
-	commitmentStorage := NewCommitmentStorage(database)
-
-	transactionStorage := NewTransactionStorage(database)
-
-	chainStateStorage := NewChainStateStorage(database)
+	storage := NewStorageFromDatabase(database)
 
 	return &TestStorage{
-		Storage: &Storage{
-			BatchStorage:        batchStorage,
-			CommitmentStorage:   commitmentStorage,
-			TransactionStorage:  transactionStorage,
-			ChainStateStorage:   chainStateStorage,
-			StateTree:           NewStateTree(database),
-			AccountTree:         NewAccountTree(database),
-			database:            database,
-			feeReceiverStateIDs: make(map[string]uint32),
-		},
+		Storage:  storage,
 		Teardown: toTeardownFunc(teardown),
 	}, nil
 }
@@ -109,29 +93,10 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 		teardown = append(teardown, clonedBadger.Teardown)
 	}
 
-	batchStorage := s.BatchStorage.copyWithNewDatabase(&database)
-
-	commitmentStorage := s.CommitmentStorage.copyWithNewDatabase(&database)
-
-	transactionStorage := s.TransactionStorage.copyWithNewDatabase(&database)
-
-	chainStateStorage := s.ChainStateStorage.copyWithNewDatabase(&database)
-
-	stateTree := s.StateTree.copyWithNewDatabase(&database)
-
-	accountTree := s.AccountTree.copyWithNewDatabase(&database)
+	storage := s.copyWithNewDatabase(&database)
 
 	return &TestStorage{
-		Storage: &Storage{
-			BatchStorage:        batchStorage,
-			CommitmentStorage:   commitmentStorage,
-			TransactionStorage:  transactionStorage,
-			ChainStateStorage:   chainStateStorage,
-			StateTree:           stateTree,
-			AccountTree:         accountTree,
-			database:            &database,
-			feeReceiverStateIDs: utils.CopyStringUint32Map(s.feeReceiverStateIDs),
-		},
+		Storage:  storage,
 		Teardown: toTeardownFunc(teardown),
 	}, nil
 }
