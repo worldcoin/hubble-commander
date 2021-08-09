@@ -108,7 +108,7 @@ func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchNotExists() {
 
 	batch, err := s.client.getBatchIfExists(event, transaction)
 	s.Nil(batch)
-	s.ErrorIs(err, errBatchNotExists)
+	s.ErrorIs(err, errBatchAlreadyRolledBack)
 }
 
 func (s *GetBatchesTestSuite) TestGetBatchIfExists_DifferentBatchHash() {
@@ -127,7 +127,7 @@ func (s *GetBatchesTestSuite) TestGetBatchIfExists_DifferentBatchHash() {
 
 	batch, err := s.client.getBatchIfExists(event, transaction)
 	s.Nil(batch)
-	s.ErrorIs(err, errBatchNotExists)
+	s.ErrorIs(err, errBatchAlreadyRolledBack)
 }
 
 func (s *GetBatchesTestSuite) getAccountRoot() common.Hash {

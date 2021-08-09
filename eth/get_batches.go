@@ -18,7 +18,7 @@ import (
 
 const MsgInvalidBatchID = "execution reverted: Batch id greater than total number of batches, invalid batch id"
 
-var errBatchNotExists = errors.New("batch not exists")
+var errBatchAlreadyRolledBack = errors.New("batch already rolled back")
 
 func (c *Client) GetBatches(opts *bind.FilterOpts) ([]DecodedBatch, error) {
 	it, err := c.Rollup.FilterNewBatch(opts)
@@ -41,7 +41,7 @@ func (c *Client) GetBatches(opts *bind.FilterOpts) ([]DecodedBatch, error) {
 		}
 
 		batch, err := c.getBatchIfExists(it.Event, tx)
-		if errors.Is(err, errBatchNotExists) {
+		if errors.Is(err, errBatchAlreadyRolledBack) {
 			continue
 		}
 		if err != nil {
@@ -66,7 +66,7 @@ func (c *Client) getBatchIfExists(event *rollup.RollupNewBatch, tx *types.Transa
 	batch, err := c.GetBatch(models.NewUint256FromBig(*event.BatchID))
 	if err != nil {
 		if err.Error() == MsgInvalidBatchID {
-			return nil, errBatchNotExists
+			return nil, errBatchAlreadyRolledBack
 		}
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func verifyBatchHash(batch *models.Batch, commitments []encoder.DecodedCommitmen
 	}
 
 	if tree.Root() != *batch.Hash {
-		return errBatchNotExists
+		return errBatchAlreadyRolledBack
 	}
 	return nil
 }
