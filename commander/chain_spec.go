@@ -39,9 +39,12 @@ func LoadChainSpec(config *cfg.Config, chainSpec *models.ChainSpec) error {
 		}
 	}()
 
-	err = storage.SetChainState(&chainState)
+	_, err = storage.GetChainState(chainState.ChainID)
 	if err != nil {
-		return err
+		err = storage.SetChainState(&chainState)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
