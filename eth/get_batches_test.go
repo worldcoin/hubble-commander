@@ -1,9 +1,12 @@
 package eth
 
 import (
+	"context"
+	"math/big"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -16,11 +19,28 @@ import (
 type GetBatchesTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	client *TestClient
+	client      *TestClient
+	commitments []models.Commitment
 }
 
 func (s *GetBatchesTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
+	s.commitments = []models.Commitment{
+		{
+			ID:                1,
+			Type:              txtype.Transfer,
+			Transactions:      []uint8{0, 0, 0, 0, 0, 0, 0, 1, 32, 4, 0, 0},
+			FeeReceiver:       0,
+			CombinedSignature: *s.mockSignature(),
+		},
+		{
+			ID:                2,
+			Type:              txtype.Transfer,
+			Transactions:      []uint8{0, 0, 1, 0, 0, 0, 0, 0, 32, 1, 0, 0},
+			FeeReceiver:       0,
+			CombinedSignature: *s.mockSignature(),
+		},
+	}
 }
 
 func (s *GetBatchesTestSuite) SetupTest() {
@@ -34,28 +54,12 @@ func (s *GetBatchesTestSuite) TearDownTest() {
 }
 
 func (s *GetBatchesTestSuite) TestGetBatches() {
-	commitment1 := models.Commitment{
-		ID:                1,
-		Type:              txtype.Transfer,
-		Transactions:      []uint8{0, 0, 0, 0, 0, 0, 0, 1, 32, 4, 0, 0},
-		FeeReceiver:       0,
-		CombinedSignature: *s.mockSignature(),
-	}
-
-	commitment2 := models.Commitment{
-		ID:                2,
-		Type:              txtype.Transfer,
-		Transactions:      []uint8{0, 0, 1, 0, 0, 0, 0, 0, 32, 1, 0, 0},
-		FeeReceiver:       0,
-		CombinedSignature: *s.mockSignature(),
-	}
-
 	finalisationBlocks, err := s.client.GetBlocksToFinalise()
 	s.NoError(err)
 
-	batch1, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{commitment1})
+	batch1, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[0]})
 	s.NoError(err)
-	_, err = s.client.SubmitTransfersBatchAndWait([]models.Commitment{commitment2})
+	_, err = s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[1]})
 	s.NoError(err)
 
 	rawAccountRoot, err := s.client.AccountRegistry.Root(nil)
@@ -69,6 +73,71 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 	s.Len(batches, 1)
 	s.NotEqual(common.Hash{}, batches[0].TransactionHash)
 	s.Equal(accountRoot, *batches[0].AccountTreeRoot)
+}
+
+func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchExists() {
+	tx, err := s.client.SubmitTransfersBatch(s.commitments)
+	s.NoError(err)
+	s.client.Commit()
+
+	transaction, _, err := s.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), tx.Hash())
+	s.NoError(err)
+
+	event := &rollup.RollupNewBatch{
+		BatchID:     big.NewInt(1),
+		AccountRoot: s.getAccountRoot(),
+		BatchType:   2,
+	}
+
+	batch, err := s.client.getBatchIfExists(event, transaction)
+	s.NoError(err)
+	s.Equal(models.MakeUint256(1), batch.ID)
+	s.Len(batch.Commitments, len(s.commitments))
+	s.EqualValues(event.AccountRoot, *batch.AccountTreeRoot)
+}
+
+func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchNotExists() {
+	tx, err := s.client.SubmitTransfersBatch(s.commitments)
+	s.NoError(err)
+	s.client.Commit()
+
+	transaction, _, err := s.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), tx.Hash())
+	s.NoError(err)
+
+	event := &rollup.RollupNewBatch{
+		BatchID:     big.NewInt(5),
+		AccountRoot: s.getAccountRoot(),
+		BatchType:   2,
+	}
+
+	batch, err := s.client.getBatchIfExists(event, transaction)
+	s.Nil(batch)
+	s.ErrorIs(err, errBatchNotExists)
+}
+
+func (s *GetBatchesTestSuite) TestGetBatchIfExists_DifferentBatchHash() {
+	tx, err := s.client.SubmitTransfersBatch(s.commitments)
+	s.NoError(err)
+	s.client.Commit()
+
+	transaction, _, err := s.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), tx.Hash())
+	s.NoError(err)
+
+	event := &rollup.RollupNewBatch{
+		BatchID:     big.NewInt(1),
+		AccountRoot: [32]byte{1, 2, 3},
+		BatchType:   2,
+	}
+
+	batch, err := s.client.getBatchIfExists(event, transaction)
+	s.Nil(batch)
+	s.ErrorIs(err, errBatchNotExists)
+}
+
+func (s *GetBatchesTestSuite) getAccountRoot() common.Hash {
+	rawAccountRoot, err := s.client.AccountRegistry.Root(nil)
+	s.NoError(err)
+	return common.BytesToHash(rawAccountRoot[:])
 }
 
 func (s *GetBatchesTestSuite) mockSignature() *models.Signature {
