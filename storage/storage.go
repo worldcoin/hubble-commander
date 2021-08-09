@@ -3,19 +3,18 @@ package storage
 import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
+	"github.com/Worldcoin/hubble-commander/utils"
 )
 
 type Storage struct {
-	*StorageBase
-	StateTree   *StateTree
-	AccountTree *AccountTree
-}
-
-type StorageBase struct {
+	*BatchStorage
+	*CommitmentStorage
+	*ChainStateStorage
+	*TransactionStorage
+	StateTree           *StateTree
+	AccountTree         *AccountTree
 	database            *Database
 	feeReceiverStateIDs map[string]uint32 // token ID => state id
-	latestBlockNumber   uint32
-	syncedBlock         *uint64
 }
 
 type TxOptions struct {
@@ -30,41 +29,64 @@ func NewStorage(cfg *config.Config) (*Storage, error) {
 		return nil, err
 	}
 
-	storageBase := &StorageBase{
+	storage := newStorageFromDatabase(database)
+
+	return storage, nil
+}
+
+func newStorageFromDatabase(database *Database) *Storage {
+	batchStorage := NewBatchStorage(database)
+
+	commitmentStorage := NewCommitmentStorage(database)
+
+	transactionStorage := NewTransactionStorage(database)
+
+	chainStateStorage := NewChainStateStorage(database)
+
+	return &Storage{
+		BatchStorage:        batchStorage,
+		CommitmentStorage:   commitmentStorage,
+		TransactionStorage:  transactionStorage,
+		ChainStateStorage:   chainStateStorage,
+		StateTree:           NewStateTree(database),
+		AccountTree:         NewAccountTree(database),
 		database:            database,
 		feeReceiverStateIDs: make(map[string]uint32),
 	}
-
-	return &Storage{
-		StorageBase: storageBase,
-		StateTree:   NewStateTree(database),
-		AccountTree: NewAccountTree(database),
-	}, nil
 }
 
-func (s *StorageBase) beginStorageBaseTransaction(opts TxOptions) (*db.TxController, *StorageBase, error) {
+func (s *Storage) copyWithNewDatabase(database *Database) *Storage {
+	batchStorage := s.BatchStorage.copyWithNewDatabase(database)
+
+	commitmentStorage := s.CommitmentStorage.copyWithNewDatabase(database)
+
+	transactionStorage := s.TransactionStorage.copyWithNewDatabase(database)
+
+	chainStateStorage := s.ChainStateStorage.copyWithNewDatabase(database)
+
+	stateTree := s.StateTree.copyWithNewDatabase(database)
+
+	accountTree := s.AccountTree.copyWithNewDatabase(database)
+
+	return &Storage{
+		BatchStorage:        batchStorage,
+		CommitmentStorage:   commitmentStorage,
+		TransactionStorage:  transactionStorage,
+		ChainStateStorage:   chainStateStorage,
+		StateTree:           stateTree,
+		AccountTree:         accountTree,
+		database:            database,
+		feeReceiverStateIDs: utils.CopyStringUint32Map(s.feeReceiverStateIDs),
+	}
+}
+
+func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, error) {
 	txController, txDatabase, err := s.database.BeginTransaction(opts)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	txStorageBase := *s
-	txStorageBase.database = txDatabase
-
-	return txController, &txStorageBase, nil
-}
-
-func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, error) {
-	txController, txStorageBase, err := s.StorageBase.beginStorageBaseTransaction(opts)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	txStorage := &Storage{
-		StorageBase: txStorageBase,
-		StateTree:   NewStateTree(txStorageBase.database),
-		AccountTree: NewAccountTree(txStorageBase.database),
-	}
+	txStorage := s.copyWithNewDatabase(txDatabase)
 
 	return txController, txStorage, nil
 }

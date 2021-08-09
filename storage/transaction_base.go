@@ -2,13 +2,43 @@ package storage
 
 import (
 	"github.com/Masterminds/squirrel"
+	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (s *StorageBase) addTransactionBase(txBase *models.TransactionBase, txType txtype.TransactionType) (*models.Timestamp, error) {
+type TransactionStorage struct {
+	database *Database
+}
+
+func NewTransactionStorage(database *Database) *TransactionStorage {
+	return &TransactionStorage{
+		database: database,
+	}
+}
+
+func (s *TransactionStorage) copyWithNewDatabase(database *Database) *TransactionStorage {
+	newTransactionStorage := *s
+	newTransactionStorage.database = database
+
+	return &newTransactionStorage
+}
+
+func (s *TransactionStorage) BeginTransaction(opts TxOptions) (*db.TxController, *TransactionStorage, error) {
+	txController, txDatabase, err := s.database.BeginTransaction(opts)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	txTransactionStorage := *s
+	txTransactionStorage.database = txDatabase
+
+	return txController, &txTransactionStorage, nil
+}
+
+func (s *TransactionStorage) addTransactionBase(txBase *models.TransactionBase, txType txtype.TransactionType) (*models.Timestamp, error) {
 	res := make([]models.Timestamp, 0, 1)
 	err := s.database.Postgres.Query(
 		s.database.QB.Insert("transaction_base").
@@ -32,7 +62,7 @@ func (s *StorageBase) addTransactionBase(txBase *models.TransactionBase, txType 
 	return &res[0], nil
 }
 
-func (s *StorageBase) BatchAddTransactionBase(txs []models.TransactionBase) error {
+func (s *TransactionStorage) BatchAddTransactionBase(txs []models.TransactionBase) error {
 	query := s.database.QB.Insert("transaction_base")
 	for i := range txs {
 		query = query.Values(
@@ -61,7 +91,7 @@ func (s *StorageBase) BatchAddTransactionBase(txs []models.TransactionBase) erro
 	return nil
 }
 
-func (s *StorageBase) GetLatestTransactionNonce(accountStateID uint32) (*models.Uint256, error) {
+func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*models.Uint256, error) {
 	res := make([]models.Uint256, 0, 1)
 	err := s.database.Postgres.Query(
 		s.database.QB.Select("transaction_base.nonce").
@@ -79,7 +109,7 @@ func (s *StorageBase) GetLatestTransactionNonce(accountStateID uint32) (*models.
 	return &res[0], nil
 }
 
-func (s *StorageBase) BatchMarkTransactionAsIncluded(txHashes []common.Hash, commitmentID *int32) error {
+func (s *TransactionStorage) BatchMarkTransactionAsIncluded(txHashes []common.Hash, commitmentID *int32) error {
 	res, err := s.database.Postgres.Query(
 		s.database.QB.Update("transaction_base").
 			Where(squirrel.Eq{"tx_hash": txHashes}).
@@ -99,7 +129,7 @@ func (s *StorageBase) BatchMarkTransactionAsIncluded(txHashes []common.Hash, com
 	return nil
 }
 
-func (s *StorageBase) SetTransactionError(txHash common.Hash, errorMessage string) error {
+func (s *TransactionStorage) SetTransactionError(txHash common.Hash, errorMessage string) error {
 	res, err := s.database.Postgres.Query(
 		s.database.QB.Update("transaction_base").
 			Where(squirrel.Eq{"tx_hash": txHash}).
@@ -119,7 +149,7 @@ func (s *StorageBase) SetTransactionError(txHash common.Hash, errorMessage strin
 	return nil
 }
 
-func (s *StorageBase) GetTransactionCount() (*int, error) {
+func (s *Storage) GetTransactionCount() (*int, error) {
 	res := make([]int, 0, 1)
 	err := s.database.Postgres.Query(
 		s.database.QB.Select("COUNT(1)").
@@ -136,7 +166,7 @@ func (s *StorageBase) GetTransactionCount() (*int, error) {
 	return &res[0], nil
 }
 
-func (s *StorageBase) GetTransactionHashesByBatchIDs(batchIDs ...models.Uint256) ([]common.Hash, error) {
+func (s *Storage) GetTransactionHashesByBatchIDs(batchIDs ...models.Uint256) ([]common.Hash, error) {
 	res := make([]common.Hash, 0, 32*len(batchIDs))
 	err := s.database.Postgres.Query(
 		s.database.QB.Select("transaction_base.tx_hash").

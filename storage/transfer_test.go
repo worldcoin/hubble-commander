@@ -212,35 +212,6 @@ func (s *TransferTestSuite) TestGetPendingTransfers_OrdersTransfersByNonceAndTxH
 	s.Equal([]models.Transfer{transfer, transfer2, transfer5, transfer4, transfer3}, res)
 }
 
-func (s *TransferTestSuite) TestGetUserTransfers() {
-	transfer1 := transfer
-	transfer1.Hash = utils.RandomHash()
-	transfer1.FromStateID = 1
-	transfer2 := transfer
-	transfer2.Hash = utils.RandomHash()
-	transfer2.FromStateID = 2
-	transfer3 := transfer
-	transfer3.Hash = utils.RandomHash()
-	transfer3.FromStateID = 1
-
-	err := s.storage.BatchAddTransfer([]models.Transfer{transfer1, transfer2, transfer3})
-	s.NoError(err)
-
-	userTransactions, err := s.storage.GetUserTransfers(models.MakeUint256(1))
-	s.NoError(err)
-
-	s.Len(userTransactions, 2)
-	s.Contains(userTransactions, transfer1)
-	s.Contains(userTransactions, transfer3)
-}
-
-func (s *TransferTestSuite) TestGetUserTransfers_NoTransfers() {
-	userTransactions, err := s.storage.GetUserTransfers(models.MakeUint256(1))
-
-	s.NoError(err)
-	s.Len(userTransactions, 0)
-}
-
 func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 	accounts := []models.AccountLeaf{
 		{

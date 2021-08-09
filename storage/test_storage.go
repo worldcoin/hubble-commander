@@ -61,17 +61,10 @@ func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
 		teardown = append(teardown, badgerTestDB.Teardown)
 	}
 
-	storageBase := &StorageBase{
-		database:            database,
-		feeReceiverStateIDs: make(map[string]uint32),
-	}
+	storage := newStorageFromDatabase(database)
 
 	return &TestStorage{
-		Storage: &Storage{
-			StorageBase: storageBase,
-			StateTree:   NewStateTree(database),
-			AccountTree: NewAccountTree(database),
-		},
+		Storage:  storage,
 		Teardown: toTeardownFunc(teardown),
 	}, nil
 }
@@ -100,15 +93,10 @@ func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage,
 		teardown = append(teardown, clonedBadger.Teardown)
 	}
 
-	storageBase := *s.StorageBase
-	storageBase.database = &database
+	storage := s.copyWithNewDatabase(&database)
 
 	return &TestStorage{
-		Storage: &Storage{
-			StorageBase: &storageBase,
-			StateTree:   NewStateTree(&database),
-			AccountTree: NewAccountTree(&database),
-		},
+		Storage:  storage,
 		Teardown: toTeardownFunc(teardown),
 	}, nil
 }
