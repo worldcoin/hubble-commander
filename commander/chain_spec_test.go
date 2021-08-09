@@ -90,7 +90,7 @@ func (s *ChainSpecTestSuite) TestLoadChainSpec() {
 	chainState4000, err := s.storage.GetChainState(s.chainSpec.ChainID)
 	s.NoError(err)
 
-	s.NotEqualValues(chainState1337, chainState4000)
+	s.NotEqual(chainState1337, chainState4000)
 
 	chainSpec := newChainSpec(chainState4000)
 	s.EqualValues(s.chainSpec, chainSpec)
