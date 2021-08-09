@@ -243,6 +243,22 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ReturnsProofs() {
 	s.Len(sync.ReceiverStateProof.Witness, storage.StateTreeDepth)
 }
 
+func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ValidatesSenderStateID() {
+	s.setUserStatesInTree()
+
+	senderLeaf, err := s.storage.StateTree.LeafOrEmpty(10)
+	s.NoError(err)
+
+	transfer := s.transfer
+	transfer.FromStateID = senderLeaf.StateID
+
+	sync, transferError, appError := s.transactionExecutor.ApplyTransferForSync(&transfer, models.MakeUint256(1))
+	s.NoError(appError)
+	s.ErrorIs(transferError, ErrBalanceTooLow)
+	s.Equal(senderLeaf.UserState, *sync.Proofs.SenderStateProof.UserState)
+	s.Len(sync.SenderStateProof.Witness, storage.StateTreeDepth)
+}
+
 func (s *ApplyTransferTestSuite) TestApplyTransferForSync_SetsNonce() {
 	s.setUserStatesInTree()
 

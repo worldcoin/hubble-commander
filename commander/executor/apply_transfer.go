@@ -81,7 +81,7 @@ func (t *TransactionExecutor) applyGenericTransactionForSync(
 	receiverLeaf *models.StateLeaf,
 	commitmentTokenID models.Uint256,
 ) (synced *SyncedGenericTransaction, transferError, appError error) {
-	senderLeaf, err := t.storage.StateTree.Leaf(tx.GetFromStateID())
+	senderLeaf, err := t.storage.StateTree.LeafOrEmpty(tx.GetFromStateID())
 	if err != nil {
 		return nil, nil, err
 	}
