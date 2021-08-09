@@ -17,12 +17,7 @@ func (t *TransactionExecutor) syncCreate2TransferCommitment(
 		return nil, ErrTooManyTxs
 	}
 
-	feeReceiver, err := t.getSyncedCommitmentFeeReceiver(commitment)
-	if err != nil {
-		return nil, err
-	}
-
-	appliedTransfers, stateProofs, err := t.ApplyCreate2TransfersForSync(deserializedTransfers, pubKeyIDs, feeReceiver)
+	appliedTransfers, stateProofs, err := t.ApplyCreate2TransfersForSync(deserializedTransfers, pubKeyIDs, commitment.FeeReceiver)
 	if err != nil {
 		return nil, err
 	}
