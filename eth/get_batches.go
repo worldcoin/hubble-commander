@@ -14,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 const msgInvalidBatchID = "execution reverted: Batch id greater than total number of batches, invalid batch id"
@@ -41,17 +40,13 @@ func (c *Client) GetBatches(opts *bind.FilterOpts) ([]DecodedBatch, error) {
 			continue // TODO handle internal transactions
 		}
 
-		commitments, err := encoder.DecodeBatchCalldata(tx.Data())
+		batch, err := c.getBatchIfExists(it.Event, tx)
+		if errors.Is(err, errBatchNotExists) {
+			continue
+		}
 		if err != nil {
 			return nil, err
 		}
-
-		batch, err := c.GetBatch(models.NewUint256FromBig(*it.Event.BatchID))
-		if err != nil {
-			return nil, err
-		}
-
-		accountRoot := common.BytesToHash(it.Event.AccountRoot[:])
 
 		header, err := c.ChainConnection.GetBackend().HeaderByNumber(context.Background(), new(big.Int).SetUint64(it.Event.Raw.BlockNumber))
 		if err != nil {
@@ -59,13 +54,9 @@ func (c *Client) GetBatches(opts *bind.FilterOpts) ([]DecodedBatch, error) {
 		}
 
 		batch.TransactionHash = txHash
-		batch.AccountTreeRoot = &accountRoot
 		batch.SubmissionTime = models.NewTimestamp(time.Unix(int64(header.Time), 0).UTC())
 
-		res = append(res, DecodedBatch{
-			Batch:       *batch,
-			Commitments: commitments,
-		})
+		res = append(res, *batch)
 	}
 
 	return res, nil
@@ -73,10 +64,10 @@ func (c *Client) GetBatches(opts *bind.FilterOpts) ([]DecodedBatch, error) {
 
 func (c *Client) getBatchIfExists(event *rollup.RollupNewBatch, tx *types.Transaction) (*DecodedBatch, error) {
 	batch, err := c.GetBatch(models.NewUint256FromBig(*event.BatchID))
-	if err != nil && err.Error() == msgInvalidBatchID {
-		return nil, errBatchNotExists
-	}
 	if err != nil {
+		if err.Error() == msgInvalidBatchID {
+			return nil, errBatchNotExists
+		}
 		return nil, err
 	}
 
