@@ -6,7 +6,24 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (s *StorageBase) AddBatch(batch *models.Batch) error {
+type BatchStorage struct {
+	database *Database
+}
+
+func NewBatchStorage(database *Database) *BatchStorage {
+	return &BatchStorage{
+		database: database,
+	}
+}
+
+func (s *BatchStorage) copyWithNewDatabase(database *Database) *BatchStorage {
+	newBatchStorage := *s
+	newBatchStorage.database = database
+
+	return &newBatchStorage
+}
+
+func (s *BatchStorage) AddBatch(batch *models.Batch) error {
 	_, err := s.database.Postgres.Query(
 		s.database.QB.Insert("batch").
 			Values(
@@ -24,7 +41,7 @@ func (s *StorageBase) AddBatch(batch *models.Batch) error {
 	return err
 }
 
-func (s *StorageBase) MarkBatchAsSubmitted(batch *models.Batch) error {
+func (s *BatchStorage) MarkBatchAsSubmitted(batch *models.Batch) error {
 	res, err := s.database.Postgres.Query(
 		s.database.QB.Update("batch").
 			Where(squirrel.Eq{"batch_id": batch.ID}).
@@ -46,7 +63,7 @@ func (s *StorageBase) MarkBatchAsSubmitted(batch *models.Batch) error {
 	return nil
 }
 
-func (s *StorageBase) GetMinedBatch(batchID models.Uint256) (*models.Batch, error) {
+func (s *BatchStorage) GetMinedBatch(batchID models.Uint256) (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
 	err := s.database.Postgres.Query(
 		s.database.QB.Select("*").
@@ -65,7 +82,7 @@ func (s *StorageBase) GetMinedBatch(batchID models.Uint256) (*models.Batch, erro
 	return &res[0], nil
 }
 
-func (s *StorageBase) GetBatch(batchID models.Uint256) (*models.Batch, error) {
+func (s *BatchStorage) GetBatch(batchID models.Uint256) (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
 	err := s.database.Postgres.Query(
 		s.database.QB.Select("*").
@@ -81,7 +98,7 @@ func (s *StorageBase) GetBatch(batchID models.Uint256) (*models.Batch, error) {
 	return &res[0], nil
 }
 
-func (s *StorageBase) GetBatchByHash(batchHash common.Hash) (*models.Batch, error) {
+func (s *BatchStorage) GetBatchByHash(batchHash common.Hash) (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
 	err := s.database.Postgres.Query(
 		s.database.QB.Select("*").
@@ -98,24 +115,7 @@ func (s *StorageBase) GetBatchByHash(batchHash common.Hash) (*models.Batch, erro
 	return &res[0], nil
 }
 
-func (s *StorageBase) GetBatchByCommitmentID(commitmentID int32) (*models.Batch, error) {
-	res := make([]models.Batch, 0, 1)
-	err := s.database.Postgres.Query(
-		s.database.QB.Select("batch.*").
-			From("batch").
-			Join("commitment ON commitment.included_in_batch = batch.batch_id").
-			Where(squirrel.Eq{"commitment_id": commitmentID}),
-	).Into(&res)
-	if err != nil {
-		return nil, err
-	}
-	if len(res) == 0 {
-		return nil, NewNotFoundError("batch")
-	}
-	return &res[0], nil
-}
-
-func (s *StorageBase) GetLatestSubmittedBatch() (*models.Batch, error) {
+func (s *BatchStorage) GetLatestSubmittedBatch() (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
 	err := s.database.Postgres.Query(
 		s.database.QB.Select("*").
@@ -133,7 +133,7 @@ func (s *StorageBase) GetLatestSubmittedBatch() (*models.Batch, error) {
 	return &res[0], nil
 }
 
-func (s *StorageBase) GetNextBatchID() (*models.Uint256, error) {
+func (s *BatchStorage) GetNextBatchID() (*models.Uint256, error) {
 	res := make([]models.Uint256, 0, 1)
 	err := s.database.Postgres.Query(
 		s.database.QB.Select("batch_id").
@@ -150,7 +150,7 @@ func (s *StorageBase) GetNextBatchID() (*models.Uint256, error) {
 	return res[0].AddN(1), nil
 }
 
-func (s *StorageBase) GetLatestFinalisedBatch(currentBlockNumber uint32) (*models.Batch, error) {
+func (s *BatchStorage) GetLatestFinalisedBatch(currentBlockNumber uint32) (*models.Batch, error) {
 	res := make([]models.Batch, 0, 1)
 	err := s.database.Postgres.Query(
 		s.database.QB.Select("*").
@@ -168,7 +168,7 @@ func (s *StorageBase) GetLatestFinalisedBatch(currentBlockNumber uint32) (*model
 	return &res[0], nil
 }
 
-func (s *StorageBase) GetBatchesInRange(from, to *models.Uint256) ([]models.Batch, error) {
+func (s *BatchStorage) GetBatchesInRange(from, to *models.Uint256) ([]models.Batch, error) {
 	qb := s.database.QB.Select("*").
 		From("batch").
 		OrderBy("batch_id")
@@ -189,7 +189,7 @@ func (s *StorageBase) GetBatchesInRange(from, to *models.Uint256) ([]models.Batc
 	return res, nil
 }
 
-func (s *StorageBase) DeleteBatches(batchIDs ...models.Uint256) error {
+func (s *BatchStorage) DeleteBatches(batchIDs ...models.Uint256) error {
 	res, err := s.database.Postgres.Query(
 		s.database.QB.Delete("batch").
 			Where(squirrel.Eq{"batch_id": batchIDs}),
@@ -205,4 +205,21 @@ func (s *StorageBase) DeleteBatches(batchIDs ...models.Uint256) error {
 		return ErrNoRowsAffected
 	}
 	return nil
+}
+
+func (s *Storage) GetBatchByCommitmentID(commitmentID int32) (*models.Batch, error) {
+	res := make([]models.Batch, 0, 1)
+	err := s.database.Postgres.Query(
+		s.database.QB.Select("batch.*").
+			From("batch").
+			Join("commitment ON commitment.included_in_batch = batch.batch_id").
+			Where(squirrel.Eq{"commitment_id": commitmentID}),
+	).Into(&res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, NewNotFoundError("batch")
+	}
+	return &res[0], nil
 }
