@@ -440,7 +440,7 @@ func (s *BatchesTestSuite) setTransferHashAndSign(txs ...*models.Transfer) {
 func (s *BatchesTestSuite) checkBatchAfterDispute(batchID models.Uint256) {
 	_, err := s.testClient.GetBatch(&batchID)
 	s.Error(err)
-	s.Equal("execution reverted: Batch id greater than total number of batches, invalid batch id", err.Error())
+	s.Equal(eth.MsgInvalidBatchID, err.Error())
 
 	batch, err := s.cmd.storage.GetBatch(batchID)
 	s.Nil(batch)
