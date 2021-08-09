@@ -408,7 +408,7 @@ func (s *DisputeTransitionTestSuite) checkBatchAfterDispute(batchID models.Uint2
 func checkRemoteBatchAfterDispute(s *require.Assertions, client *eth.TestClient, batchID *models.Uint256) {
 	_, err := client.GetBatch(batchID)
 	s.Error(err)
-	s.Equal("execution reverted: Batch id greater than total number of batches, invalid batch id", err.Error())
+	s.Equal(eth.MsgInvalidBatchID, err.Error())
 }
 
 func (s *DisputeTransitionTestSuite) beginExecutorTransaction() {

@@ -16,7 +16,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const msgInvalidBatchID = "execution reverted: Batch id greater than total number of batches, invalid batch id"
+const MsgInvalidBatchID = "execution reverted: Batch id greater than total number of batches, invalid batch id"
 
 var errBatchNotExists = errors.New("batch not exists")
 
@@ -65,7 +65,7 @@ func (c *Client) GetBatches(opts *bind.FilterOpts) ([]DecodedBatch, error) {
 func (c *Client) getBatchIfExists(event *rollup.RollupNewBatch, tx *types.Transaction) (*DecodedBatch, error) {
 	batch, err := c.GetBatch(models.NewUint256FromBig(*event.BatchID))
 	if err != nil {
-		if err.Error() == msgInvalidBatchID {
+		if err.Error() == MsgInvalidBatchID {
 			return nil, errBatchNotExists
 		}
 		return nil, err
