@@ -26,7 +26,7 @@ type LogConfig struct {
 type BootstrapConfig struct {
 	Prune            bool
 	GenesisAccounts  []models.GenesisAccount `json:"-"`
-	BootstrapNodeURL *string                 // TODO-CHAIN - remove
+	BootstrapNodeURL *string
 	ChainSpecPath    *string
 }
 
