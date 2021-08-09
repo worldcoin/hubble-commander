@@ -21,6 +21,7 @@ func newChainSpec(chainState *models.ChainState) models.ChainSpec {
 	return models.ChainSpec{
 		ChainID:         chainState.ChainID,
 		AccountRegistry: chainState.AccountRegistry,
+		DeploymentBlock: chainState.DeploymentBlock,
 		Rollup:          chainState.Rollup,
 		GenesisAccounts: chainState.GenesisAccounts,
 	}
