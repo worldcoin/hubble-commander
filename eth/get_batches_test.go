@@ -62,17 +62,13 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 	_, err = s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[1]})
 	s.NoError(err)
 
-	rawAccountRoot, err := s.client.AccountRegistry.Root(nil)
-	s.NoError(err)
-	accountRoot := common.BytesToHash(rawAccountRoot[:])
-
 	batches, err := s.client.GetBatches(&bind.FilterOpts{
 		Start: uint64(*batch1.FinalisationBlock - uint32(*finalisationBlocks) + 1),
 	})
 	s.NoError(err)
 	s.Len(batches, 1)
 	s.NotEqual(common.Hash{}, batches[0].TransactionHash)
-	s.Equal(accountRoot, *batches[0].AccountTreeRoot)
+	s.Equal(s.getAccountRoot(), *batches[0].AccountTreeRoot)
 }
 
 func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchExists() {
@@ -86,7 +82,7 @@ func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchExists() {
 	event := &rollup.RollupNewBatch{
 		BatchID:     big.NewInt(1),
 		AccountRoot: s.getAccountRoot(),
-		BatchType:   2,
+		BatchType:   1,
 	}
 
 	batch, err := s.client.getBatchIfExists(event, transaction)
@@ -107,7 +103,7 @@ func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchNotExists() {
 	event := &rollup.RollupNewBatch{
 		BatchID:     big.NewInt(5),
 		AccountRoot: s.getAccountRoot(),
-		BatchType:   2,
+		BatchType:   1,
 	}
 
 	batch, err := s.client.getBatchIfExists(event, transaction)
@@ -126,7 +122,7 @@ func (s *GetBatchesTestSuite) TestGetBatchIfExists_DifferentBatchHash() {
 	event := &rollup.RollupNewBatch{
 		BatchID:     big.NewInt(1),
 		AccountRoot: [32]byte{1, 2, 3},
-		BatchType:   2,
+		BatchType:   1,
 	}
 
 	batch, err := s.client.getBatchIfExists(event, transaction)
