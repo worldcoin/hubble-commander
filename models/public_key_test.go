@@ -8,14 +8,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestBytes_ReturnsACopy(t *testing.T) {
+func TestPublicKeyBytes_ReturnsACopy(t *testing.T) {
 	key := PublicKey{1, 2, 3}
 	bytes := key.Bytes()
 	bytes[0] = 9
 	require.Equal(t, PublicKey{1, 2, 3}, key)
 }
 
-func TestSetBytes(t *testing.T) {
+func TestPublicKeySetBytes(t *testing.T) {
 	key := PublicKey{1, 2, 3}
 	bytes := key.Bytes()
 	newKey := PublicKey{}
@@ -24,7 +24,7 @@ func TestSetBytes(t *testing.T) {
 	require.Equal(t, key, newKey)
 }
 
-func TestSetBytes_InvalidLength(t *testing.T) {
+func TestPublicKeySetBytes_InvalidLength(t *testing.T) {
 	bytes := utils.PadLeft([]byte{1, 2, 3}, 130)
 	key := PublicKey{}
 	err := key.SetBytes(bytes)
@@ -32,7 +32,7 @@ func TestSetBytes_InvalidLength(t *testing.T) {
 	require.ErrorIs(t, err, ErrInvalidPublicKeyLength)
 }
 
-func TestValue_ReturnsACopy(t *testing.T) {
+func TestPublicKeyValue_ReturnsACopy(t *testing.T) {
 	key := PublicKey{1, 2, 3}
 	value, err := key.Value()
 	require.NoError(t, err)
@@ -42,7 +42,7 @@ func TestValue_ReturnsACopy(t *testing.T) {
 	require.Equal(t, PublicKey{1, 2, 3}, key)
 }
 
-func TestPublicKey_JSONMarshaling(t *testing.T) {
+func TestPublicKeyPublicKey_JSONMarshaling(t *testing.T) {
 	key := PublicKey{1, 2, 3}
 	data, err := json.Marshal(key)
 	require.NoError(t, err)
