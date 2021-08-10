@@ -80,7 +80,7 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.apiServer, err = api.NewAPIServer(c.cfg.API, c.storage, c.client, c.cfg.Rollup.DevMode)
+	c.apiServer, err = api.NewAPIServer(c.cfg.API, c.storage, c.client, c.cfg.Rollup.DisableSignatures)
 	if err != nil {
 		return err
 	}

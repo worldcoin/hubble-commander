@@ -30,12 +30,12 @@ func main() {
 
 func getConfig() *config.Config {
 	prune := flag.Bool("prune", false, "drop database before running app")
-	devMode := flag.Bool("dev", false, "disable signature verification")
+	disableSignatures := flag.Bool("disable-signatures", false, "disable signature verification")
 	flag.Parse()
 
 	cfg := config.GetConfig()
 	cfg.Bootstrap.Prune = *prune
-	cfg.Rollup.DevMode = *devMode
+	cfg.Rollup.DisableSignatures = *disableSignatures
 	return cfg
 }
 

@@ -33,7 +33,7 @@ func (s *VerifySignatureTestSuite) SetupSuite() {
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
 		MaxTxsPerCommitment:    1,
-		DevMode:                false,
+		DisableSignatures:      false,
 	}
 }
 

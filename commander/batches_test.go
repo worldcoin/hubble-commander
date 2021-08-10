@@ -38,7 +38,7 @@ func (s *BatchesTestSuite) SetupSuite() {
 	s.cfg.Rollup.MaxCommitmentsPerBatch = 32
 	s.cfg.Rollup.MinTxsPerCommitment = 1
 	s.cfg.Rollup.MaxTxsPerCommitment = 1
-	s.cfg.Rollup.DevMode = false
+	s.cfg.Rollup.DisableSignatures = false
 }
 
 func (s *BatchesTestSuite) SetupTest() {

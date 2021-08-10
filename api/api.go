@@ -15,21 +15,21 @@ import (
 )
 
 type API struct {
-	cfg           *config.APIConfig
-	storage       *st.Storage
-	client        *eth.Client
-	mockSignature models.Signature
-	devMode       bool
+	cfg               *config.APIConfig
+	storage           *st.Storage
+	client            *eth.Client
+	mockSignature     models.Signature
+	disableSignatures bool
 }
 
-func NewAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client, devMode bool) (*http.Server, error) {
-	server, err := getAPIServer(cfg, storage, client, devMode)
+func NewAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client, disableSignatures bool) (*http.Server, error) {
+	server, err := getAPIServer(cfg, storage, client, disableSignatures)
 	if err != nil {
 		return nil, err
 	}
 
 	mux := http.NewServeMux()
-	if devMode {
+	if disableSignatures {
 		mux.Handle("/", middleware.Logger(server))
 	} else {
 		mux.HandleFunc("/", server.ServeHTTP)
@@ -39,12 +39,12 @@ func NewAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client
 	return &http.Server{Addr: addr, Handler: mux}, nil
 }
 
-func getAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client, devMode bool) (*rpc.Server, error) {
+func getAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client, disableSignatures bool) (*rpc.Server, error) {
 	api := API{
-		cfg:     cfg,
-		storage: storage,
-		client:  client,
-		devMode: devMode,
+		cfg:               cfg,
+		storage:           storage,
+		client:            client,
+		disableSignatures: disableSignatures,
 	}
 	if err := api.initSignature(); err != nil {
 		return nil, errors.WithMessage(err, "failed to create mock signature")
