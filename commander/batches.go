@@ -8,7 +8,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -30,10 +29,23 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 		return ErrSyncedFraudulentBatch
 	}
 
-	newRemoteBatches, err := c.client.GetBatchesInRange(&bind.FilterOpts{
-		Start: startBlock,
-		End:   &endBlock,
-	}, latestBatchID, c.invalidBatchID)
+	filter := func(batchID *models.Uint256) bool {
+		if batchID.Cmp(latestBatchID) <= 0 {
+			log.Printf("Batch #%d already synced. Skipping...", batchID.Uint64())
+			return false
+		}
+		if batchID.Cmp(c.invalidBatchID) >= 0 {
+			log.Printf("Batch #%d after dispute. Skipping...", batchID.Uint64())
+			return false
+		}
+		return true
+	}
+
+	newRemoteBatches, err := c.client.GetBatches(&eth.BatchesFilters{
+		StartBlockInclusive: startBlock,
+		EndBlockInclusive:   &endBlock,
+		FilterByBatchID:     filter,
+	})
 	if err != nil {
 		return err
 	}

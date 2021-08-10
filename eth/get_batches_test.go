@@ -10,7 +10,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -66,7 +65,7 @@ func (s *GetBatchesTestSuite) TestGetAllBatches() {
 	s.Equal(batch2.ID, batches[1].ID)
 }
 
-func (s *GetBatchesTestSuite) TestGetBatchesInRange_FiltersByBlockNumber() {
+func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBlockNumber() {
 	finalisationBlocks, err := s.client.GetBlocksToFinalise()
 	s.NoError(err)
 
@@ -75,9 +74,9 @@ func (s *GetBatchesTestSuite) TestGetBatchesInRange_FiltersByBlockNumber() {
 	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[1]})
 	s.NoError(err)
 
-	batches, err := s.client.GetBatchesInRange(&bind.FilterOpts{
-		Start: uint64(*batch1.FinalisationBlock - uint32(*finalisationBlocks) + 1),
-	}, nil, nil)
+	batches, err := s.client.GetBatches(&BatchesFilters{
+		StartBlockInclusive: uint64(*batch1.FinalisationBlock - uint32(*finalisationBlocks) + 1),
+	})
 	s.NoError(err)
 	s.Len(batches, 1)
 	s.Equal(batch2.ID, batches[0].ID)
@@ -85,16 +84,20 @@ func (s *GetBatchesTestSuite) TestGetBatchesInRange_FiltersByBlockNumber() {
 	s.Equal(s.getAccountRoot(), *batches[0].AccountTreeRoot)
 }
 
-func (s *GetBatchesTestSuite) TestGetBatchesInRange_FiltersByBatchID() {
-	_, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[0]})
+func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBatchID() {
+	batch1, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[0]})
 	s.NoError(err)
 	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[1]})
 	s.NoError(err)
 
-	batches, err := s.client.GetBatchesInRange(nil, models.NewUint256(0), &batch2.ID)
+	batches, err := s.client.GetBatches(&BatchesFilters{
+		FilterByBatchID: func(batchID *models.Uint256) bool {
+			return batchID.CmpN(0) > 0 && batchID.Cmp(&batch2.ID) < 0
+		},
+	})
 	s.NoError(err)
 	s.Len(batches, 1)
-	s.EqualValues(1, batches[0].ID.Uint64())
+	s.EqualValues(batch1.ID, batches[0].ID)
 }
 
 func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchExists() {

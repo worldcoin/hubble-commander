@@ -21,12 +21,21 @@ const MsgInvalidBatchID = "execution reverted: Batch id greater than total numbe
 
 var errBatchAlreadyRolledBack = errors.New("batch already rolled back")
 
-func (c *TestClient) GetAllBatches() ([]DecodedBatch, error) {
-	return c.GetBatchesInRange(nil, nil, nil)
+type BatchesFilters struct {
+	StartBlockInclusive uint64
+	EndBlockInclusive   *uint64
+	FilterByBatchID     func(batchID *models.Uint256) bool
 }
 
-func (c *Client) GetBatchesInRange(opts *bind.FilterOpts, startBatchID, endBatchID *models.Uint256) ([]DecodedBatch, error) {
-	it, err := c.Rollup.FilterNewBatch(opts)
+func (c *TestClient) GetAllBatches() ([]DecodedBatch, error) {
+	return c.GetBatches(&BatchesFilters{})
+}
+
+func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
+	it, err := c.Rollup.FilterNewBatch(&bind.FilterOpts{
+		Start: filters.StartBlockInclusive,
+		End:   filters.EndBlockInclusive,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -39,18 +48,11 @@ func (c *Client) GetBatchesInRange(opts *bind.FilterOpts, startBatchID, endBatch
 
 	res := make([]DecodedBatch, 0, len(events))
 	for i := range events {
-		batchID := models.NewUint256FromBig(*events[i].BatchID)
-		if startBatchID != nil && batchID.Cmp(startBatchID) <= 0 {
-			log.Printf("Batch #%d already synced. Skipping...", batchID.Uint64())
-			continue
-		}
-		if endBatchID != nil && batchID.Cmp(endBatchID) >= 0 {
-			log.Printf("Batch #%d after dispute. Skipping...", batchID.Uint64())
+		if !filters.FilterByBatchID(models.NewUint256FromBig(*events[i].BatchID)) {
 			continue
 		}
 
 		txHash := events[i].Raw.TxHash
-
 		tx, _, err := c.ChainConnection.GetBackend().TransactionByHash(context.Background(), txHash)
 		if err != nil {
 			return nil, err
