@@ -33,13 +33,9 @@ func getConfig() *config.Config {
 	devMode := flag.Bool("dev", false, "disable signature verification")
 	flag.Parse()
 
-	var cfg *config.Config
-	if *devMode {
-		cfg = config.GetTestConfig()
-	} else {
-		cfg = config.GetConfig()
-	}
+	cfg := config.GetConfig()
 	cfg.Bootstrap.Prune = *prune
+	cfg.Rollup.DevMode = *devMode
 	return cfg
 }
 
