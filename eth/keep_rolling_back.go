@@ -14,6 +14,8 @@ const (
 	errorSeparator          = ":"
 )
 
+var errKeepRollingBackFailed = errors.New("keep rolling back failed")
+
 func (c *Client) KeepRollingBack() error {
 	transaction, err := c.rollup().KeepRollingBack()
 	if err != nil {
@@ -39,7 +41,7 @@ func (c *Client) waitForKeepRollingBack(tx *types.Transaction) error {
 		return nil
 	}
 
-	return errors.New("keep rolling back failed")
+	return errKeepRollingBackFailed
 }
 
 func handleKeepRollingBackError(err error) error {

@@ -23,16 +23,10 @@ func (c *Commander) manageRollupLoop(cancel context.CancelFunc, isProposer bool)
 		c.rollupLoopRunning = true
 	} else if !isProposer && c.rollupLoopRunning {
 		log.Debugf("Commander is no longer an active proposer, stoppping rollupLoop")
-		c.stopRollupLoop(cancel)
-	}
-	return cancel
-}
-
-func (c *Commander) stopRollupLoop(cancel context.CancelFunc) {
-	if c.rollupLoopRunning {
 		cancel()
 		c.rollupLoopRunning = false
 	}
+	return cancel
 }
 
 func (c *Commander) rollupLoop(ctx context.Context) (err error) {
