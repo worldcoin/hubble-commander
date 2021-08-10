@@ -259,6 +259,28 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ValidatesNotExistingSe
 	s.Len(sync.SenderStateProof.Witness, st.StateTreeDepth)
 }
 
+func (s *ApplyTransferTestSuite) TestApplyTransferForSync_AllowsNotExistingReceiverState() {
+	_, err := s.storage.StateTree.Set(s.transfer.FromStateID, &models.UserState{
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(0),
+		Balance:  models.MakeUint256(400),
+		Nonce:    models.MakeUint256(0),
+	})
+	s.NoError(err)
+
+	_, transferError, appError := s.transactionExecutor.ApplyTransferForSync(&s.transfer, models.MakeUint256(0))
+	s.NoError(appError)
+	s.NoError(transferError)
+
+	senderLeaf, err := s.storage.StateTree.Leaf(s.transfer.FromStateID)
+	s.NoError(err)
+	receiverLeaf, err := s.storage.StateTree.Leaf(s.transfer.ToStateID)
+	s.NoError(err)
+
+	s.Equal(uint64(290), senderLeaf.Balance.Uint64())
+	s.Equal(uint64(100), receiverLeaf.Balance.Uint64())
+}
+
 func (s *ApplyTransferTestSuite) TestApplyTransferForSync_SetsNonce() {
 	s.setUserStatesInTree()
 

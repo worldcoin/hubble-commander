@@ -64,7 +64,7 @@ func (t *TransactionExecutor) ApplyTransferForSync(transfer models.GenericTransa
 	synced *SyncedTransfer,
 	transferError, appError error,
 ) {
-	receiverLeaf, err := t.storage.StateTree.Leaf(*transfer.GetToStateID())
+	receiverLeaf, err := t.storage.StateTree.LeafOrEmpty(*transfer.GetToStateID())
 	if err != nil {
 		return nil, nil, err
 	}
