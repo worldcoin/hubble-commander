@@ -14,7 +14,6 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
@@ -197,7 +196,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_DisputesTransferBatchWi
 
 	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &transfer)
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
@@ -223,7 +222,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_DisputesC2TBatchWithInv
 	err := s.transactionExecutor.storage.AccountTree.SetSingle(receiver)
 	s.NoError(err)
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
@@ -241,7 +240,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Transfer_ValidBatch() {
 
 	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &transfer)
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
@@ -267,7 +266,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Create2Transfer_ValidBa
 	err := s.transactionExecutor.storage.AccountTree.SetSingle(receiver)
 	s.NoError(err)
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 

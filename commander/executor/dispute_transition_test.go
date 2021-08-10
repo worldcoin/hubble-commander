@@ -226,7 +226,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_RemovesInval
 	defer s.commitTransaction()
 	s.createAndSubmitInvalidTransferBatch(commitmentTxs, commitmentTxs[1][1].Hash)
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
@@ -254,7 +254,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_FirstCommitm
 	defer s.commitTransaction()
 	s.createAndSubmitInvalidTransferBatch(commitmentTxs, commitmentTxs[0][0].Hash)
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
@@ -283,7 +283,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_ValidBatch()
 	defer s.commitTransaction()
 	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &transfers[1])
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
@@ -317,7 +317,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_Remov
 	defer s.commitTransaction()
 	s.createAndSubmitInvalidC2TBatch(commitmentTxs, pubKeyIDs, commitmentTxs[1][1].Hash)
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
@@ -354,7 +354,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_First
 	defer s.commitTransaction()
 	s.createAndSubmitInvalidC2TBatch(commitmentTxs, pubKeyIDs, commitmentTxs[0][0].Hash)
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
@@ -384,7 +384,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_Valid
 	defer s.commitTransaction()
 	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &transfers[1])
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 

@@ -53,22 +53,48 @@ func (s *GetBatchesTestSuite) TearDownTest() {
 	s.client.Close()
 }
 
-func (s *GetBatchesTestSuite) TestGetBatches() {
+func (s *GetBatchesTestSuite) TestGetAllBatches() {
+	batch1, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[0]})
+	s.NoError(err)
+	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[1]})
+	s.NoError(err)
+
+	batches, err := s.client.GetAllBatches()
+	s.NoError(err)
+	s.Len(batches, 2)
+	s.Equal(batch1.ID, batches[0].ID)
+	s.Equal(batch2.ID, batches[1].ID)
+}
+
+func (s *GetBatchesTestSuite) TestGetBatchesInRange_FiltersByBlockNumber() {
 	finalisationBlocks, err := s.client.GetBlocksToFinalise()
 	s.NoError(err)
 
 	batch1, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[0]})
 	s.NoError(err)
-	_, err = s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[1]})
+	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[1]})
 	s.NoError(err)
 
-	batches, err := s.client.GetBatches(&bind.FilterOpts{
+	batches, err := s.client.GetBatchesInRange(&bind.FilterOpts{
 		Start: uint64(*batch1.FinalisationBlock - uint32(*finalisationBlocks) + 1),
-	})
+	}, nil, nil)
 	s.NoError(err)
 	s.Len(batches, 1)
+	s.Equal(batch2.ID, batches[0].ID)
 	s.NotEqual(common.Hash{}, batches[0].TransactionHash)
 	s.Equal(s.getAccountRoot(), *batches[0].AccountTreeRoot)
+}
+
+func (s *GetBatchesTestSuite) TestGetBatchesInRange_FiltersByBatchID() {
+	_, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[0]})
+	s.NoError(err)
+	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[1]})
+	s.NoError(err)
+
+	batches, err := s.client.GetBatchesInRange(nil, models.NewUint256(0), &batch2.ID)
+	s.NoError(err)
+	s.Len(batches, 1)
+	s.EqualValues(1, batches[0].ID.Uint64())
 }
 
 func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchExists() {
@@ -128,18 +154,6 @@ func (s *GetBatchesTestSuite) TestGetBatchIfExists_DifferentBatchHash() {
 	batch, err := s.client.getBatchIfExists(event, transaction)
 	s.Nil(batch)
 	s.ErrorIs(err, errBatchAlreadyRolledBack)
-}
-
-func (s *GetBatchesTestSuite) TestGetBatchesInRange() {
-	_, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[0]})
-	s.NoError(err)
-	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[1]})
-	s.NoError(err)
-
-	batches, err := s.client.GetBatchesInRange(&bind.FilterOpts{}, models.NewUint256(0), &batch2.ID)
-	s.NoError(err)
-	s.Len(batches, 1)
-	s.EqualValues(1, batches[0].ID.Uint64())
 }
 
 func (s *GetBatchesTestSuite) getAccountRoot() common.Hash {

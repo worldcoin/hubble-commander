@@ -129,7 +129,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 
 	s.createTransferBatch(&transfers[1])
 
-	batches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	batches, err := s.testClient.GetAllBatches()
 	s.NoError(err)
 	s.Len(batches, 1)
 
@@ -174,7 +174,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithTooManyTxs() {
 		commitment.Transactions = append(commitment.Transactions, commitment.Transactions...)
 	})
 
-	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.testClient.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
@@ -199,7 +199,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidPostState
 		commitment.PostStateRoot = utils.RandomHash()
 	})
 
-	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.testClient.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
@@ -223,7 +223,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidSignature
 		commitment.CombinedSignature = models.Signature{1, 2, 3}
 	})
 
-	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.testClient.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
@@ -250,7 +250,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDisputesFr
 
 	localBatch := s.createTransferBatch(&transfers[2])
 
-	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.testClient.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
@@ -275,7 +275,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentCommitmentAfter
 		commitment.Transactions = append(commitment.Transactions, commitment.Transactions...)
 	})
 
-	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.testClient.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
@@ -307,7 +307,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidFeeR
 		commitment.FeeReceiver = 2
 	})
 
-	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.testClient.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
@@ -334,7 +334,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithoutTransfer
 		commitment.Transactions = []byte{}
 	})
 
-	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.testClient.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 

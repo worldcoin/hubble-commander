@@ -21,8 +21,8 @@ const MsgInvalidBatchID = "execution reverted: Batch id greater than total numbe
 
 var errBatchAlreadyRolledBack = errors.New("batch already rolled back")
 
-func (c *Client) GetBatches(opts *bind.FilterOpts) ([]DecodedBatch, error) {
-	return c.GetBatchesInRange(opts, nil, nil)
+func (c *TestClient) GetAllBatches() ([]DecodedBatch, error) {
+	return c.GetBatchesInRange(nil, nil, nil)
 }
 
 func (c *Client) GetBatchesInRange(opts *bind.FilterOpts, startBatchID, endBatchID *models.Uint256) ([]DecodedBatch, error) {
