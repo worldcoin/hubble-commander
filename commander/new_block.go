@@ -69,10 +69,10 @@ func (c *Commander) syncAndManageRollbacks() error {
 		return err
 	}
 
-	return c.keepRollingBack()
+	return c.keepRollingBackIfNecessary()
 }
 
-func (c *Commander) keepRollingBack() (err error) {
+func (c *Commander) keepRollingBackIfNecessary() (err error) {
 	c.invalidBatchID, err = c.client.GetInvalidBatchID()
 	if err != nil {
 		return err
