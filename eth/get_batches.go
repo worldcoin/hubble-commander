@@ -61,7 +61,7 @@ func (c *Client) GetBatchesInRange(opts *bind.FilterOpts, startBatchID, endBatch
 			continue // TODO handle internal transactions
 		}
 
-		batch, err := c.getBatchIfExists(it.Event, tx)
+		batch, err := c.getBatchIfExists(events[i], tx)
 		if errors.Is(err, errBatchAlreadyRolledBack) {
 			continue
 		}
@@ -69,7 +69,7 @@ func (c *Client) GetBatchesInRange(opts *bind.FilterOpts, startBatchID, endBatch
 			return nil, err
 		}
 
-		header, err := c.ChainConnection.GetBackend().HeaderByNumber(context.Background(), new(big.Int).SetUint64(it.Event.Raw.BlockNumber))
+		header, err := c.ChainConnection.GetBackend().HeaderByNumber(context.Background(), new(big.Int).SetUint64(events[i].Raw.BlockNumber))
 		if err != nil {
 			return nil, err
 		}
