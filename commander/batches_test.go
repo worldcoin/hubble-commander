@@ -349,11 +349,11 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithNotExisting
 		testutils.MakeTransfer(0, 1, 1, 100),
 	}
 
-	s.createAndSubmitTransferBatch(s.testStorage.StorageBase, s.transactionExecutor, &transfers[0])
+	s.createAndSubmitTransferBatch(s.testStorage.Storage, s.transactionExecutor, &transfers[0])
 
 	clonedStorage, txExecutor := cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
 	defer teardown(s.Assertions, clonedStorage.Teardown)
-	s.createAndSubmitInvalidTransferBatch(clonedStorage.StorageBase, txExecutor, &transfers[1], func(commitment *models.Commitment) {
+	s.createAndSubmitInvalidTransferBatch(clonedStorage.Storage, txExecutor, &transfers[1], func(commitment *models.Commitment) {
 		transfers[1].FromStateID = 10
 		encodedTx, err := encoder.EncodeTransferForCommitment(&transfers[1])
 		s.NoError(err)
