@@ -24,7 +24,11 @@ func (s *WalletHardhatTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 
 	cfg := config.GetTestConfig()
-	s.NotNil(cfg.Ethereum, "This test must be run against hardhat node instance with gas estimator contract deployed")
+	cfg.Ethereum = &config.EthereumConfig{
+		RPCURL:     "http://localhost:8545",
+		PrivateKey: "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80", //hardhat node 1st account private key
+		ChainID:    "123",
+	}
 
 	dep, err := deployer.NewRPCChainConnection(cfg.Ethereum)
 	s.NoError(err)
