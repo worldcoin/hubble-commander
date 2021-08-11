@@ -38,7 +38,7 @@ func (s *BatchesTestSuite) SetupSuite() {
 	s.cfg.Rollup.MaxCommitmentsPerBatch = 32
 	s.cfg.Rollup.MinTxsPerCommitment = 1
 	s.cfg.Rollup.MaxTxsPerCommitment = 1
-	s.cfg.Rollup.DevMode = false
+	s.cfg.Rollup.DisableSignatures = false
 }
 
 func (s *BatchesTestSuite) SetupTest() {
@@ -335,6 +335,36 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithoutTransfer
 	})
 
 	remoteBatches, err := s.testClient.GetAllBatches()
+	s.NoError(err)
+	s.Len(remoteBatches, 2)
+
+	err = s.cmd.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
+	s.NoError(err)
+
+	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
+	s.NoError(err)
+
+	s.checkBatchAfterDispute(remoteBatches[1].ID)
+}
+
+func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithNotExistingSender() {
+	transfers := []models.Transfer{
+		testutils.MakeTransfer(0, 1, 0, 50),
+		testutils.MakeTransfer(0, 1, 1, 100),
+	}
+
+	s.createAndSubmitTransferBatch(s.testStorage.Storage, s.transactionExecutor, &transfers[0])
+
+	clonedStorage, txExecutor := cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
+	defer teardown(s.Assertions, clonedStorage.Teardown)
+	s.createAndSubmitInvalidTransferBatch(clonedStorage.Storage, txExecutor, &transfers[1], func(commitment *models.Commitment) {
+		transfers[1].FromStateID = 10
+		encodedTx, err := encoder.EncodeTransferForCommitment(&transfers[1])
+		s.NoError(err)
+		commitment.Transactions = encodedTx
+	})
+
+	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 

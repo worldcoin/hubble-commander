@@ -36,7 +36,7 @@ func (t *TransactionExecutor) syncCreate2TransferCommitment(
 	if err != nil {
 		return nil, err
 	}
-	if !t.cfg.DevMode {
+	if !t.cfg.DisableSignatures {
 		err = t.verifyCreate2TransferSignature(commitment, appliedTransfers)
 		if err != nil {
 			return nil, err

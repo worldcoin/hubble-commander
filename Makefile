@@ -40,7 +40,7 @@ run-prune:
 	go run ./main/main.go -prune
 
 run-dev:
-	go run ./main/main.go -prune -dev
+	go run ./main/main.go -prune -disable-signatures
 
 lint:
 	golangci-lint run ./...

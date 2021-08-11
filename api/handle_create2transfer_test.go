@@ -201,8 +201,8 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesSignatur
 	s.Equal(ErrInvalidSignature, err)
 }
 
-func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesSignature_DevMode() {
-	s.api.devMode = true
+func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesSignature_DisabledSignatures() {
+	s.api.disableSignatures = true
 
 	wallet, err := bls.NewRandomWallet(*s.domain)
 	s.NoError(err)
