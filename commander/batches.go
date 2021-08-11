@@ -8,9 +8,10 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	log "github.com/sirupsen/logrus"
 )
+
+var ErrSyncedFraudulentBatch = errors.New("commander synced fraudulent batch")
 
 func (c *Commander) syncBatches(startBlock, endBlock uint64) error {
 	c.stateMutex.Lock()
@@ -24,23 +25,33 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 		return err
 	}
 
-	newRemoteBatches, err := c.client.GetBatches(&bind.FilterOpts{
-		Start: startBlock,
-		End:   &endBlock,
+	if c.invalidBatchID != nil && latestBatchID.Cmp(c.invalidBatchID) >= 0 {
+		return ErrSyncedFraudulentBatch
+	}
+
+	filter := func(batchID *models.Uint256) bool {
+		if batchID.Cmp(latestBatchID) <= 0 {
+			log.Printf("Batch #%d already synced. Skipping...", batchID.Uint64())
+			return false
+		}
+		if c.invalidBatchID != nil && batchID.Cmp(c.invalidBatchID) >= 0 {
+			log.Printf("Batch #%d after dispute. Skipping...", batchID.Uint64())
+			return false
+		}
+		return true
+	}
+
+	newRemoteBatches, err := c.client.GetBatches(&eth.BatchesFilters{
+		StartBlockInclusive: startBlock,
+		EndBlockInclusive:   &endBlock,
+		FilterByBatchID:     filter,
 	})
 	if err != nil {
 		return err
 	}
-	logBatchesCount(newRemoteBatches)
 
 	for i := range newRemoteBatches {
-		remoteBatch := &newRemoteBatches[i]
-		if remoteBatch.ID.Cmp(latestBatchID) <= 0 {
-			log.Printf("Batch #%d already synced. Skipping...", remoteBatch.ID.Uint64())
-			continue
-		}
-
-		err = c.syncRemoteBatch(remoteBatch)
+		err = c.syncRemoteBatch(&newRemoteBatches[i])
 		if err != nil {
 			return err
 		}
@@ -122,7 +133,12 @@ func (c *Commander) disputeFraudulentBatch(
 	if err != nil {
 		return err
 	}
-	return txExecutor.Commit()
+
+	err = txExecutor.Commit()
+	if err != nil {
+		return err
+	}
+	return ErrRollbackInProgress
 }
 
 func (c *Commander) revertBatches(startBatch *models.Batch) error {
@@ -147,13 +163,6 @@ func (c *Commander) getLatestBatchID() (*models.Uint256, error) {
 		return nil, err
 	}
 	return &latestBatch.ID, nil
-}
-
-func logBatchesCount(newRemoteBatches []eth.DecodedBatch) {
-	newBatchesCount := len(newRemoteBatches)
-	if newBatchesCount > 0 {
-		log.Printf("Found %d batch(es)", newBatchesCount)
-	}
 }
 
 func logFraudulentBatch(batch *eth.DecodedBatch, reason string) {

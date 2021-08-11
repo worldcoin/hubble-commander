@@ -83,13 +83,17 @@ func (s *BatchesTestSuite) TearDownTest() {
 func (s *BatchesTestSuite) TestUnsafeSyncBatches_DoesNotSyncExistingBatchTwice() {
 	tx := testutils.MakeTransfer(0, 1, 0, 400)
 	signTransfer(s.T(), &s.wallets[tx.FromStateID], &tx)
-	createAndSubmitTransferBatch(s.Assertions, s.cfg, s.testStorage, s.testClient, &tx)
+	clonedStorage, txExecutor := cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
+	s.createAndSubmitTransferBatch(clonedStorage.Storage, txExecutor, &tx)
+	teardown(s.Assertions, clonedStorage.Teardown)
 
 	s.syncAllBlocks()
 
 	tx2 := testutils.MakeTransfer(1, 0, 0, 100)
 	signTransfer(s.T(), &s.wallets[tx2.FromStateID], &tx2)
-	createAndSubmitTransferBatch(s.Assertions, s.cfg, s.testStorage, s.testClient, &tx2)
+	clonedStorage, txExecutor = cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
+	defer teardown(s.Assertions, clonedStorage.Teardown)
+	s.createAndSubmitTransferBatch(clonedStorage.Storage, txExecutor, &tx2)
 
 	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
@@ -125,7 +129,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 
 	s.createTransferBatch(&transfers[1])
 
-	batches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	batches, err := s.testClient.GetAllBatches()
 	s.NoError(err)
 	s.Len(batches, 1)
 
@@ -170,7 +174,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithTooManyTxs() {
 		commitment.Transactions = append(commitment.Transactions, commitment.Transactions...)
 	})
 
-	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.testClient.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
@@ -178,7 +182,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithTooManyTxs() {
 	s.NoError(err)
 
 	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
-	s.NoError(err)
+	s.ErrorIs(err, ErrRollbackInProgress)
 
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
 }
@@ -195,7 +199,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidPostState
 		commitment.PostStateRoot = utils.RandomHash()
 	})
 
-	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.testClient.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
@@ -203,7 +207,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidPostState
 	s.NoError(err)
 
 	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
-	s.NoError(err)
+	s.ErrorIs(err, ErrRollbackInProgress)
 
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
 }
@@ -216,15 +220,15 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidSignature
 
 	invalidTransfer := testutils.MakeTransfer(0, 1, 0, 100)
 	s.createAndSubmitInvalidTransferBatch(clonedStorage.Storage, txExecutor, &invalidTransfer, func(commitment *models.Commitment) {
-		commitment.CombinedSignature = models.MakeRandomSignature()
+		commitment.CombinedSignature = models.Signature{1, 2, 3}
 	})
 
-	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.testClient.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
 	err = s.cmd.syncRemoteBatch(&remoteBatches[0])
-	s.NoError(err)
+	s.ErrorIs(err, ErrRollbackInProgress)
 
 	s.checkBatchAfterDispute(remoteBatches[0].ID)
 }
@@ -246,7 +250,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDisputesFr
 
 	localBatch := s.createTransferBatch(&transfers[2])
 
-	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.testClient.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
@@ -255,7 +259,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDisputesFr
 
 	s.testClient.Account = s.testClient.Accounts[1]
 	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
-	s.NoError(err)
+	s.ErrorIs(err, ErrRollbackInProgress)
 
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
 	_, err = s.cmd.storage.GetBatch(localBatch.ID)
@@ -271,12 +275,12 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentCommitmentAfter
 		commitment.Transactions = append(commitment.Transactions, commitment.Transactions...)
 	})
 
-	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.testClient.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
 	err = s.cmd.syncRemoteBatch(&remoteBatches[0])
-	s.NoError(err)
+	s.ErrorIs(err, ErrRollbackInProgress)
 
 	s.checkBatchAfterDispute(remoteBatches[0].ID)
 }
@@ -303,7 +307,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidFeeR
 		commitment.FeeReceiver = 2
 	})
 
-	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.testClient.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
@@ -311,7 +315,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidFeeR
 	s.NoError(err)
 
 	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
-	s.NoError(err)
+	s.ErrorIs(err, ErrRollbackInProgress)
 
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
 }
@@ -330,7 +334,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithoutTransfer
 		commitment.Transactions = []byte{}
 	})
 
-	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.testClient.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
@@ -338,7 +342,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithoutTransfer
 	s.NoError(err)
 
 	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
-	s.NoError(err)
+	s.ErrorIs(err, ErrRollbackInProgress)
 
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
 }
@@ -360,7 +364,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithNotExisting
 		commitment.Transactions = encodedTx
 	})
 
-	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.testClient.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
@@ -368,9 +372,34 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithNotExisting
 	s.NoError(err)
 
 	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
-	s.NoError(err)
+	s.ErrorIs(err, ErrRollbackInProgress)
 
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
+}
+
+func (s *BatchesTestSuite) TestUnsafeSyncBatches_SyncsBatchesBeforeInvalidOne() {
+	transfers := []models.Transfer{
+		testutils.MakeTransfer(0, 1, 0, 50),
+		testutils.MakeTransfer(0, 1, 1, 250),
+		testutils.MakeTransfer(0, 1, 2, 100),
+	}
+
+	s.createAndSubmitTransferBatch(s.testStorage.Storage, s.transactionExecutor, &transfers[0])
+
+	clonedStorage, txExecutor := cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
+	defer teardown(s.Assertions, clonedStorage.Teardown)
+
+	invalidBatch := s.createAndSubmitTransferBatch(clonedStorage.Storage, txExecutor, &transfers[1])
+	s.createAndSubmitTransferBatch(clonedStorage.Storage, txExecutor, &transfers[2])
+
+	s.cmd.invalidBatchID = &invalidBatch.ID
+
+	s.syncAllBlocks()
+
+	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
+	s.NoError(err)
+	s.Len(batches, 2)
+	s.EqualValues(1, batches[1].ID.Uint64())
 }
 
 func (s *BatchesTestSuite) syncAllBlocks() {

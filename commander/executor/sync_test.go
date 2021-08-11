@@ -15,7 +15,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -209,7 +208,7 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyTransfersInCommitment() {
 
 	s.recreateDatabase()
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
@@ -239,7 +238,7 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyCreate2TransfersInCommitment() {
 
 	s.recreateDatabase()
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
@@ -275,7 +274,7 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidTransferCommitmentStateRoot() {
 
 	s.recreateDatabase()
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
@@ -311,7 +310,7 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidCreate2TransferCommitmentStateRoot(
 
 	s.recreateDatabase()
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
@@ -339,7 +338,7 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidTransferSignature() {
 
 	s.recreateDatabase()
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
@@ -360,7 +359,7 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidCreate2TransferSignature() {
 
 	s.recreateDatabase()
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
@@ -385,7 +384,7 @@ func (s *SyncTestSuite) TestSyncBatch_NotValidBLSSignature() {
 
 	s.recreateDatabase()
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
@@ -438,7 +437,7 @@ func (s *SyncTestSuite) TestSyncBatch_CommitmentWithoutTransfers() {
 	_, err := s.transactionExecutor.client.SubmitTransfersBatchAndWait([]models.Commitment{commitment})
 	s.NoError(err)
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
@@ -452,7 +451,7 @@ func (s *SyncTestSuite) TestSyncBatch_CommitmentWithoutCreate2Transfers() {
 	_, err := s.transactionExecutor.client.SubmitCreate2TransfersBatchAndWait([]models.Commitment{commitment})
 	s.NoError(err)
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
@@ -633,13 +632,7 @@ func createC2TBatch(
 }
 
 func (s *SyncTestSuite) syncAllBatches() {
-	latestBlockNumber, err := s.client.GetLatestBlockNumber()
-	s.NoError(err)
-
-	newRemoteBatches, err := s.client.GetBatches(&bind.FilterOpts{
-		Start: 0,
-		End:   latestBlockNumber,
-	})
+	newRemoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 
 	for i := range newRemoteBatches {

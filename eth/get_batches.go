@@ -14,22 +14,45 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 const MsgInvalidBatchID = "execution reverted: Batch id greater than total number of batches, invalid batch id"
 
 var errBatchAlreadyRolledBack = errors.New("batch already rolled back")
 
-func (c *Client) GetBatches(opts *bind.FilterOpts) ([]DecodedBatch, error) {
-	it, err := c.Rollup.FilterNewBatch(opts)
+type BatchesFilters struct {
+	StartBlockInclusive uint64
+	EndBlockInclusive   *uint64
+	FilterByBatchID     func(batchID *models.Uint256) bool
+}
+
+func (c *TestClient) GetAllBatches() ([]DecodedBatch, error) {
+	return c.GetBatches(&BatchesFilters{})
+}
+
+func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
+	it, err := c.Rollup.FilterNewBatch(&bind.FilterOpts{
+		Start: filters.StartBlockInclusive,
+		End:   filters.EndBlockInclusive,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	res := make([]DecodedBatch, 0)
+	events := make([]*rollup.RollupNewBatch, 0)
 	for it.Next() {
-		txHash := it.Event.Raw.TxHash
+		events = append(events, it.Event)
+	}
+	logBatchesCount(len(events))
 
+	res := make([]DecodedBatch, 0, len(events))
+	for i := range events {
+		if filters.FilterByBatchID != nil && !filters.FilterByBatchID(models.NewUint256FromBig(*events[i].BatchID)) {
+			continue
+		}
+
+		txHash := events[i].Raw.TxHash
 		tx, _, err := c.ChainConnection.GetBackend().TransactionByHash(context.Background(), txHash)
 		if err != nil {
 			return nil, err
@@ -40,7 +63,7 @@ func (c *Client) GetBatches(opts *bind.FilterOpts) ([]DecodedBatch, error) {
 			continue // TODO handle internal transactions
 		}
 
-		batch, err := c.getBatchIfExists(it.Event, tx)
+		batch, err := c.getBatchIfExists(events[i], tx)
 		if errors.Is(err, errBatchAlreadyRolledBack) {
 			continue
 		}
@@ -48,7 +71,7 @@ func (c *Client) GetBatches(opts *bind.FilterOpts) ([]DecodedBatch, error) {
 			return nil, err
 		}
 
-		header, err := c.ChainConnection.GetBackend().HeaderByNumber(context.Background(), new(big.Int).SetUint64(it.Event.Raw.BlockNumber))
+		header, err := c.ChainConnection.GetBackend().HeaderByNumber(context.Background(), new(big.Int).SetUint64(events[i].Raw.BlockNumber))
 		if err != nil {
 			return nil, err
 		}
@@ -104,6 +127,12 @@ func verifyBatchHash(batch *models.Batch, commitments []encoder.DecodedCommitmen
 		return errBatchAlreadyRolledBack
 	}
 	return nil
+}
+
+func logBatchesCount(count int) {
+	if count > 0 {
+		log.Printf("Found %d batch(es)", count)
+	}
 }
 
 type DecodedBatch struct {

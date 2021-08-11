@@ -10,7 +10,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -53,22 +52,52 @@ func (s *GetBatchesTestSuite) TearDownTest() {
 	s.client.Close()
 }
 
-func (s *GetBatchesTestSuite) TestGetBatches() {
+func (s *GetBatchesTestSuite) TestGetAllBatches() {
+	batch1, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[0]})
+	s.NoError(err)
+	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[1]})
+	s.NoError(err)
+
+	batches, err := s.client.GetAllBatches()
+	s.NoError(err)
+	s.Len(batches, 2)
+	s.Equal(batch1.ID, batches[0].ID)
+	s.Equal(batch2.ID, batches[1].ID)
+}
+
+func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBlockNumber() {
 	finalisationBlocks, err := s.client.GetBlocksToFinalise()
 	s.NoError(err)
 
 	batch1, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[0]})
 	s.NoError(err)
-	_, err = s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[1]})
+	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[1]})
 	s.NoError(err)
 
-	batches, err := s.client.GetBatches(&bind.FilterOpts{
-		Start: uint64(*batch1.FinalisationBlock - uint32(*finalisationBlocks) + 1),
+	batches, err := s.client.GetBatches(&BatchesFilters{
+		StartBlockInclusive: uint64(*batch1.FinalisationBlock - uint32(*finalisationBlocks) + 1),
 	})
 	s.NoError(err)
 	s.Len(batches, 1)
+	s.Equal(batch2.ID, batches[0].ID)
 	s.NotEqual(common.Hash{}, batches[0].TransactionHash)
 	s.Equal(s.getAccountRoot(), *batches[0].AccountTreeRoot)
+}
+
+func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBatchID() {
+	batch1, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[0]})
+	s.NoError(err)
+	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{s.commitments[1]})
+	s.NoError(err)
+
+	batches, err := s.client.GetBatches(&BatchesFilters{
+		FilterByBatchID: func(batchID *models.Uint256) bool {
+			return batchID.CmpN(0) > 0 && batchID.Cmp(&batch2.ID) < 0
+		},
+	})
+	s.NoError(err)
+	s.Len(batches, 1)
+	s.EqualValues(batch1.ID, batches[0].ID)
 }
 
 func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchExists() {

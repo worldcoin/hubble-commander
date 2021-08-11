@@ -13,6 +13,7 @@ import (
 
 var (
 	ErrIncompleteBlockRangeSync = stdErrors.New("syncing of a block range was stopped prematurely")
+	ErrRollbackInProgress       = stdErrors.New("rollback is in progress")
 )
 
 func (c *Commander) newBlockLoop() error {
@@ -42,9 +43,12 @@ func (c *Commander) newBlockLoop() error {
 				continue
 			}
 
-			err = c.syncToLatestBlock()
+			err = c.syncAndManageRollbacks()
 			if errors.Is(err, ErrIncompleteBlockRangeSync) {
 				return nil
+			}
+			if errors.Is(err, ErrRollbackInProgress) {
+				continue
 			}
 			if err != nil {
 				return err
@@ -59,7 +63,31 @@ func (c *Commander) newBlockLoop() error {
 	}
 }
 
-func (c *Commander) syncToLatestBlock() error {
+func (c *Commander) syncAndManageRollbacks() error {
+	err := c.syncToLatestBlock()
+	if err != nil && !errors.Is(err, ErrRollbackInProgress) {
+		return err
+	}
+
+	return c.keepRollingBackIfNecessary()
+}
+
+func (c *Commander) keepRollingBackIfNecessary() (err error) {
+	c.invalidBatchID, err = c.client.GetInvalidBatchID()
+	if err != nil {
+		return err
+	}
+	if c.invalidBatchID != nil {
+		err = c.client.KeepRollingBack()
+		if err != nil {
+			return err
+		}
+		return ErrRollbackInProgress
+	}
+	return nil
+}
+
+func (c *Commander) syncToLatestBlock() (err error) {
 	latestBlockNumber, err := c.client.ChainConnection.GetLatestBlockNumber()
 	if err != nil {
 		return err
@@ -68,6 +96,11 @@ func (c *Commander) syncToLatestBlock() error {
 
 	syncedBlock := ref.Uint64(uint64(0))
 	for *syncedBlock != *latestBlockNumber {
+		c.invalidBatchID, err = c.client.GetInvalidBatchID()
+		if err != nil {
+			return err
+		}
+
 		syncedBlock, err = c.syncForward(*latestBlockNumber)
 		if err != nil {
 			return err

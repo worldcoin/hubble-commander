@@ -2,18 +2,25 @@ package eth
 
 import (
 	"math/big"
-	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/event"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
-var ErrWaitForRollbackTimeout = errors.New("waitForRollbackToFinish: timeout")
+const (
+	msgBatchAlreadyDisputed   = "Already successfully disputed. Roll back in process"
+	msgTransitionMissingBatch = "Target commitment is absent in the batch"
+	msgSignatureMissingBatch  = "Commitment not present in batch"
+)
+
+var (
+	ErrBatchAlreadyDisputed = errors.New("batch already disputed")
+	ErrRollbackInProcess    = errors.New("rollback in process")
+)
 
 func (c *Client) DisputeTransitionTransfer(
 	batchID *models.Uint256,
@@ -21,13 +28,6 @@ func (c *Client) DisputeTransitionTransfer(
 	target *models.TransferCommitmentInclusionProof,
 	proofs []models.StateMerkleProof,
 ) error {
-	sink := make(chan *rollup.RollupRollbackStatus)
-	subscription, err := c.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
-	if err != nil {
-		return err
-	}
-	defer subscription.Unsubscribe()
-
 	transaction, err := c.rollup().
 		DisputeTransitionTransfer(
 			batchID.ToBig(),
@@ -36,9 +36,15 @@ func (c *Client) DisputeTransitionTransfer(
 			StateMerkleProofsToCalldata(proofs),
 		)
 	if err != nil {
-		return err
+		return handleDisputeTransitionError(err)
 	}
-	return c.waitForRollbackToFinish(sink, subscription, transaction.Hash())
+
+	err = c.waitForDispute(batchID, transaction)
+	if err == ErrBatchAlreadyDisputed || err == ErrRollbackInProcess {
+		log.Info(err)
+		return nil
+	}
+	return err
 }
 
 func (c *Client) DisputeTransitionCreate2Transfer(
@@ -47,13 +53,6 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 	target *models.TransferCommitmentInclusionProof,
 	proofs []models.StateMerkleProof,
 ) error {
-	sink := make(chan *rollup.RollupRollbackStatus)
-	subscription, err := c.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
-	if err != nil {
-		return err
-	}
-	defer subscription.Unsubscribe()
-
 	transaction, err := c.rollup().
 		DisputeTransitionCreate2Transfer(
 			batchID.ToBig(),
@@ -62,46 +61,67 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 			StateMerkleProofsToCalldata(proofs),
 		)
 	if err != nil {
+		return handleDisputeTransitionError(err)
+	}
+
+	err = c.waitForDispute(batchID, transaction)
+	if err == ErrBatchAlreadyDisputed || err == ErrRollbackInProcess {
+		log.Info(err)
+		return nil
+	}
+	return err
+}
+
+func (c *Client) waitForDispute(batchID *models.Uint256, tx *types.Transaction) error {
+	receipt, err := deployer.WaitToBeMined(c.ChainConnection.GetBackend(), tx)
+	if err != nil {
 		return err
 	}
-	return c.waitForRollbackToFinish(sink, subscription, transaction.Hash())
+	if receipt.Status == types.ReceiptStatusSuccessful {
+		return nil
+	}
+
+	err = c.isBatchDuringDispute(batchID)
+	if err != nil {
+		return err
+	}
+	err = c.isBatchAlreadyDisputed(batchID)
+	if err != nil {
+		return err
+	}
+	return errors.Errorf("dispute of batch #%d failed", batchID.Uint64())
 }
 
-func (c *Client) waitForRollbackToFinish(
-	sink chan *rollup.RollupRollbackStatus,
-	subscription event.Subscription,
-	transactionHash common.Hash,
-) (err error) {
-	for {
-		select {
-		case err = <-subscription.Err():
-			return errors.WithStack(err)
-		case rollbackStatus := <-sink:
-			if rollbackStatus.Raw.TxHash == transactionHash {
-				if rollbackStatus.Completed {
-					return nil
-				}
-				transactionHash, err = c.keepRollingBack()
-				if err != nil {
-					return err
-				}
-			}
-		case <-time.After(*c.config.TxTimeout):
-			return ErrWaitForRollbackTimeout
-		}
+func (c *Client) isBatchAlreadyDisputed(batchID *models.Uint256) error {
+	nextBatchID, err := c.Rollup.NextBatchID(nil)
+	if err != nil {
+		return err
 	}
+
+	if batchID.CmpN(nextBatchID.Uint64()) < 0 {
+		return ErrBatchAlreadyDisputed
+	}
+	return nil
 }
 
-func (c *Client) keepRollingBack() (common.Hash, error) {
-	transaction, err := c.rollup().KeepRollingBack()
+func (c *Client) isBatchDuringDispute(batchID *models.Uint256) error {
+	invalidBatchID, err := c.GetInvalidBatchID()
 	if err != nil {
-		return common.Hash{}, err
+		return err
 	}
-	receipt, err := deployer.WaitToBeMined(c.ChainConnection.GetBackend(), transaction)
-	if err != nil {
-		return common.Hash{}, err
+	if invalidBatchID != nil && batchID.Cmp(invalidBatchID) >= 0 {
+		return ErrRollbackInProcess
 	}
-	return receipt.TxHash, nil
+	return nil
+}
+
+func handleDisputeTransitionError(err error) error {
+	errMsg := getGasEstimateErrorMessage(err)
+	if errMsg == msgTransitionMissingBatch || errMsg == msgBatchAlreadyDisputed {
+		log.Info(err.Error())
+		return nil
+	}
+	return err
 }
 
 func CommitmentProofToCalldata(proof *models.CommitmentInclusionProof) *rollup.TypesCommitmentInclusionProof {
@@ -149,4 +169,16 @@ func stateMerkleProofToCalldata(proof *models.StateMerkleProof) *rollup.TypesSta
 		},
 		Witness: proof.Witness.Bytes(),
 	}
+}
+
+func (c *Client) GetInvalidBatchID() (*models.Uint256, error) {
+	batchMarker, err := c.Rollup.InvalidBatchMarker(nil)
+	if err != nil {
+		return nil, err
+	}
+	invalidBatchID := models.NewUint256FromBig(*batchMarker)
+	if invalidBatchID.IsZero() {
+		return nil, nil
+	}
+	return invalidBatchID, nil
 }
