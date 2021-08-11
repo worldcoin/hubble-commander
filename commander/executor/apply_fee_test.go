@@ -49,11 +49,8 @@ func (s *ApplyFeeTestSuite) TestApplyFee() {
 }
 
 func (s *ApplyFeeTestSuite) TestApplyFeeForSync_InvalidTokenID() {
-	feeReceiver := &FeeReceiver{
-		StateID: receiverState.PubKeyID,
-		TokenID: receiverState.TokenID,
-	}
-	_, err := s.storage.StateTree.Set(feeReceiver.StateID, &receiverState)
+	feeReceiver := receiverState.PubKeyID
+	_, err := s.storage.StateTree.Set(feeReceiver, &receiverState)
 	s.NoError(err)
 
 	stateProof, transferError, appError := s.transactionExecutor.ApplyFeeForSync(feeReceiver, models.NewUint256(2), models.NewUint256(555))
@@ -61,7 +58,7 @@ func (s *ApplyFeeTestSuite) TestApplyFeeForSync_InvalidTokenID() {
 	s.ErrorIs(transferError, ErrInvalidFeeReceiverTokenID)
 	s.Equal(receiverState, *stateProof.UserState)
 
-	feeReceiverState, err := s.storage.StateTree.Leaf(feeReceiver.StateID)
+	feeReceiverState, err := s.storage.StateTree.Leaf(feeReceiver)
 	s.NoError(err)
 
 	s.Equal(uint64(555), feeReceiverState.Balance.Uint64())

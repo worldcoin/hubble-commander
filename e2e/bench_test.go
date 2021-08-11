@@ -127,7 +127,7 @@ func (s *BenchmarkSuite) sendTransactions() {
 	s.startTime = time.Now()
 
 	for _, wallet := range s.wallets {
-		var userStates []dto.UserState
+		var userStates []dto.UserStateWithID
 		err := s.commander.Client().CallFor(&userStates, "hubble_getUserStates", []interface{}{wallet.PublicKey()})
 		if err != nil {
 			continue

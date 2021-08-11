@@ -12,28 +12,43 @@ func (t *TransactionExecutor) ApplyFee(feeReceiverStateID uint32, fee models.Uin
 	if err != nil {
 		return nil, err
 	}
-	userState := feeReceiver.UserState
-	stateProof := &models.StateMerkleProof{UserState: &userState}
+	return t.applyFee(feeReceiver, fee)
+}
+
+func (t *TransactionExecutor) applyFee(feeReceiver *models.StateLeaf, fee models.Uint256) (*models.StateMerkleProof, error) {
+	initialState := feeReceiver.UserState.Copy()
 
 	feeReceiver.Balance = *feeReceiver.Balance.Add(&fee)
 
-	stateProof.Witness, err = t.storage.StateTree.Set(feeReceiver.StateID, &feeReceiver.UserState)
+	stateChangeWitness, err := t.storage.StateTree.Set(feeReceiver.StateID, &feeReceiver.UserState)
 	if err != nil {
 		return nil, err
 	}
-	return stateProof, err
+
+	stateProof := &models.StateMerkleProof{
+		UserState: initialState,
+		Witness:   stateChangeWitness,
+	}
+	return stateProof, nil
 }
 
-func (t *TransactionExecutor) ApplyFeeForSync(
-	feeReceiver *FeeReceiver,
-	tokenID, fee *models.Uint256,
-) (*models.StateMerkleProof, error, error) {
-	stateProof, err := t.ApplyFee(feeReceiver.StateID, *fee)
-	if err != nil {
-		return nil, nil, err
+func (t *TransactionExecutor) ApplyFeeForSync(feeReceiverStateID uint32, commitmentTokenID, fee *models.Uint256) (
+	stateProof *models.StateMerkleProof,
+	commitmentError error,
+	appError error,
+) {
+	feeReceiver, appError := t.storage.StateTree.LeafOrEmpty(feeReceiverStateID)
+	if appError != nil {
+		return nil, nil, appError
 	}
-	if feeReceiver.TokenID != *tokenID {
+	stateProof, appError = t.applyFee(feeReceiver, *fee)
+	if appError != nil {
+		return nil, nil, appError
+	}
+
+	if stateProof.UserState.TokenID != *commitmentTokenID {
 		return stateProof, ErrInvalidFeeReceiverTokenID, nil
 	}
+
 	return stateProof, nil, nil
 }

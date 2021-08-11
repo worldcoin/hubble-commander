@@ -61,8 +61,8 @@ func testGetVersion(t *testing.T, client jsonrpc.RPCClient) {
 	require.Equal(t, config.GetConfig().API.Version, version)
 }
 
-func testGetUserStates(t *testing.T, client jsonrpc.RPCClient, wallet bls.Wallet) dto.UserState {
-	var userStates []dto.UserState
+func testGetUserStates(t *testing.T, client jsonrpc.RPCClient, wallet bls.Wallet) dto.UserStateWithID {
+	var userStates []dto.UserStateWithID
 	err := client.CallFor(&userStates, "hubble_getUserStates", []interface{}{wallet.PublicKey()})
 	require.NoError(t, err)
 	require.Len(t, userStates, 2)
@@ -73,7 +73,7 @@ func testGetUserStates(t *testing.T, client jsonrpc.RPCClient, wallet bls.Wallet
 	return userStates[0]
 }
 
-func testGetPublicKey(t *testing.T, client jsonrpc.RPCClient, state *dto.UserState, wallet bls.Wallet) {
+func testGetPublicKey(t *testing.T, client jsonrpc.RPCClient, state *dto.UserStateWithID, wallet bls.Wallet) {
 	var publicKey models.PublicKey
 	err := client.CallFor(&publicKey, "hubble_getPublicKeyByID", []interface{}{state.PubKeyID})
 	require.NoError(t, err)
@@ -188,7 +188,7 @@ func waitForTxToBeIncludedInBatch(t *testing.T, client jsonrpc.RPCClient, txHash
 }
 
 func testSenderStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet) {
-	var userStates []dto.UserState
+	var userStates []dto.UserStateWithID
 	err := client.CallFor(&userStates, "hubble_getUserStates", []interface{}{senderWallet.PublicKey()})
 	require.NoError(t, err)
 
@@ -201,7 +201,7 @@ func testSenderStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, sende
 }
 
 func testFeeReceiverStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, feeReceiverWallet bls.Wallet) {
-	var userStates []dto.UserState
+	var userStates []dto.UserStateWithID
 	err := client.CallFor(&userStates, "hubble_getUserStates", []interface{}{feeReceiverWallet.PublicKey()})
 	require.NoError(t, err)
 
@@ -240,7 +240,7 @@ func getDomain(t *testing.T, client jsonrpc.RPCClient) bls.Domain {
 	return info.SignatureDomain
 }
 
-func getUserState(userStates []dto.UserState, stateID uint32) (*dto.UserState, error) {
+func getUserState(userStates []dto.UserStateWithID, stateID uint32) (*dto.UserStateWithID, error) {
 	for i := range userStates {
 		if userStates[i].StateID == stateID {
 			return &userStates[i], nil

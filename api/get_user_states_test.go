@@ -87,15 +87,15 @@ func (s *GetUserStatesTestSuite) TestGetUserStates() {
 	s.NoError(err)
 
 	s.Len(userStates, 3)
-	s.Contains(userStates, dto.UserState{
+	s.Contains(userStates, dto.UserStateWithID{
 		StateID:   0,
 		UserState: leaves[0].UserState,
 	})
-	s.Contains(userStates, dto.UserState{
+	s.Contains(userStates, dto.UserStateWithID{
 		StateID:   1,
 		UserState: leaves[1].UserState,
 	})
-	s.Contains(userStates, dto.UserState{
+	s.Contains(userStates, dto.UserStateWithID{
 		StateID:   2,
 		UserState: leaves[2].UserState,
 	})

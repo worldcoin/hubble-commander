@@ -91,7 +91,7 @@ func (s *StateLeafTestSuite) TestUpsertStateLeaf_UpdateAndRetrieve() {
 	s.Equal(updatedLeaf, res)
 }
 
-func (s *StateLeafTestSuite) TestGetUserStatesByPublicKey() {
+func (s *StateLeafTestSuite) TestGetStateLeavesByPublicKey() {
 	accounts := []models.AccountLeaf{
 		{
 			PubKeyID:  1,
@@ -139,27 +139,24 @@ func (s *StateLeafTestSuite) TestGetUserStatesByPublicKey() {
 		},
 	}
 
+	stateLeaves := make([]models.StateLeaf, 0, len(userStates))
+
 	for i := range userStates {
-		_, err := s.storage.StateTree.Set(uint32(i), &userStates[i])
+		stateLeaf, err := NewStateLeaf(uint32(i), &userStates[i])
+		s.NoError(err)
+		stateLeaves = append(stateLeaves, *stateLeaf)
+
+		_, err = s.storage.StateTree.Set(uint32(i), &userStates[i])
 		s.NoError(err)
 	}
 
-	returnUserStates, err := s.storage.GetUserStatesByPublicKey(&accounts[0].PublicKey)
+	returnUserStates, err := s.storage.GetStateLeavesByPublicKey(&accounts[0].PublicKey)
 	s.NoError(err)
 
 	s.Len(returnUserStates, 3)
-	s.Contains(returnUserStates, models.UserStateWithID{
-		StateID:   0,
-		UserState: userStates[0],
-	})
-	s.Contains(returnUserStates, models.UserStateWithID{
-		StateID:   2,
-		UserState: userStates[2],
-	})
-	s.Contains(returnUserStates, models.UserStateWithID{
-		StateID:   3,
-		UserState: userStates[3],
-	})
+	s.Contains(returnUserStates, stateLeaves[0])
+	s.Contains(returnUserStates, stateLeaves[2])
+	s.Contains(returnUserStates, stateLeaves[3])
 }
 
 func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf() {
