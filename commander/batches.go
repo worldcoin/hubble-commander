@@ -34,7 +34,7 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 			log.Printf("Batch #%d already synced. Skipping...", batchID.Uint64())
 			return false
 		}
-		if batchID.Cmp(c.invalidBatchID) >= 0 {
+		if c.invalidBatchID != nil && batchID.Cmp(c.invalidBatchID) >= 0 {
 			log.Printf("Batch #%d after dispute. Skipping...", batchID.Uint64())
 			return false
 		}
