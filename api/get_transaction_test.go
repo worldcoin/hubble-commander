@@ -37,10 +37,10 @@ func (s *GetTransactionTestSuite) SetupTest() {
 	s.NoError(err)
 
 	s.api = &API{
-		cfg:     &config.APIConfig{},
-		storage: s.storage.Storage,
-		client:  s.client.Client,
-		devMode: false,
+		cfg:               &config.APIConfig{},
+		storage:           s.storage.Storage,
+		client:            s.client.Client,
+		disableSignatures: false,
 	}
 
 	s.domain, err = s.client.GetDomain()

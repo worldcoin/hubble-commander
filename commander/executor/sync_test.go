@@ -53,7 +53,7 @@ func (s *SyncTestSuite) SetupTest() {
 		MaxCommitmentsPerBatch: 32,
 		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    1,
-		DevMode:                false,
+		DisableSignatures:      false,
 	}
 
 	s.domain, err = s.client.GetDomain()

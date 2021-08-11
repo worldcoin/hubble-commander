@@ -38,7 +38,7 @@ type RollupConfig struct {
 	MaxCommitmentsPerBatch uint32
 	CommitmentLoopInterval time.Duration
 	BatchLoopInterval      time.Duration
-	DevMode                bool
+	DisableSignatures      bool
 }
 
 type APIConfig struct {
