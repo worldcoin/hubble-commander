@@ -1,14 +1,14 @@
 package config
 
 import (
-	"log"
 	"path"
 	"strings"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/sirupsen/logrus"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -68,42 +68,43 @@ func GetConfig() *Config {
 }
 
 func GetTestConfig() *Config {
-	setupViper()
-
 	return &Config{
-		Log: getLogConfig(),
+		Log: &LogConfig{
+			Level:  log.InfoLevel,
+			Format: "text",
+		},
 		Bootstrap: &BootstrapConfig{
-			Prune:            false, // overridden in main
-			GenesisAccounts:  getGenesisAccounts(),
-			BootstrapNodeURL: getStringOrNil("bootstrap.node_url"),
+			Prune:            false,
+			GenesisAccounts:  readGenesisAccounts(getGenesisPath()),
+			BootstrapNodeURL: nil,
 		},
 		Rollup: &RollupConfig{
-			SyncSize:               getUint32("rollup.sync_size", 50),
-			FeeReceiverPubKeyID:    getUint32("rollup.fee_receiver_pub_key_id", 0),
-			MinTxsPerCommitment:    getUint32("rollup.min_txs_per_commitment", 2),
-			MaxTxsPerCommitment:    getUint32("rollup.max_txs_per_commitment", 2),
-			MinCommitmentsPerBatch: getUint32("rollup.min_commitments_per_batch", 1),
-			MaxCommitmentsPerBatch: getUint32("rollup.max_commitments_per_batch", 32),
-			CommitmentLoopInterval: getDuration("rollup.commitment_loop_interval", 500*time.Millisecond),
-			BatchLoopInterval:      getDuration("rollup.batch_loop_interval", 500*time.Millisecond),
+			SyncSize:               50,
+			FeeReceiverPubKeyID:    0,
+			MinTxsPerCommitment:    2,
+			MaxTxsPerCommitment:    2,
+			MinCommitmentsPerBatch: 1,
+			MaxCommitmentsPerBatch: 32,
+			CommitmentLoopInterval: 500 * time.Millisecond,
+			BatchLoopInterval:      500 * time.Millisecond,
 			DisableSignatures:      true,
 		},
 		API: &APIConfig{
 			Version: "dev-0.0.1",
-			Port:    getString("api.port", "8080"),
+			Port:    "8080",
 		},
 		Postgres: &PostgresConfig{
-			Host:           getStringOrNil("postgres.host"),
-			Port:           getStringOrNil("postgres.port"),
-			Name:           getString("postgres.name", "hubble_test"),
-			User:           getStringOrNil("postgres.user"),
-			Password:       getStringOrNil("postgres.password"),
+			Host:           nil,
+			Port:           nil,
+			Name:           "hubble_test",
+			User:           ref.String("hubble"),
+			Password:       ref.String("root"),
 			MigrationsPath: getMigrationsPath(),
 		},
 		Badger: &BadgerConfig{
-			Path: getString("badger.path", getBadgerPath()),
+			Path: getBadgerPath(),
 		},
-		Ethereum: getEthereumConfig(),
+		Ethereum: nil,
 	}
 }
 
@@ -113,6 +114,10 @@ func getConfigPath() string {
 
 func getGenesisAccounts() []models.GenesisAccount {
 	filename := getString("rollup.genesis_path", getGenesisPath())
+	return readGenesisAccounts(filename)
+}
+
+func readGenesisAccounts(filename string) []models.GenesisAccount {
 	genesisAccounts, err := readGenesisFile(filename)
 	if err != nil {
 		log.Fatalf("error reading genesis file: %s", err.Error())
@@ -133,7 +138,7 @@ func getBadgerPath() string {
 }
 
 func getLogConfig() *LogConfig {
-	level, err := logrus.ParseLevel(getString("log.level", "info"))
+	level, err := log.ParseLevel(getString("log.level", "info"))
 	if err != nil {
 		log.Fatalf("invalid log level: %e", err)
 	}
