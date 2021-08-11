@@ -22,7 +22,7 @@ func (t *TransactionExecutor) ApplyCreate2Transfers(
 		return &AppliedC2Transfers{}, nil
 	}
 
-	syncedBlock, err := t.storage.GetSyncedBlock(t.client.ChainState.ChainID)
+	syncedBlock, err := t.storage.GetSyncedBlock()
 	if err != nil {
 		return nil, err
 	}

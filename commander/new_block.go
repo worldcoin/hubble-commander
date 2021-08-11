@@ -90,7 +90,7 @@ func (c *Commander) syncToLatestBlock() error {
 }
 
 func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
-	syncedBlock, err := c.storage.GetSyncedBlock(c.client.ChainState.ChainID)
+	syncedBlock, err := c.storage.GetSyncedBlock()
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -102,7 +102,7 @@ func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
 		return nil, err
 	}
 
-	err = c.storage.SetSyncedBlock(c.client.ChainState.ChainID, endBlock)
+	err = c.storage.SetSyncedBlock(endBlock)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

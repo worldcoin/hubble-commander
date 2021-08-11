@@ -31,7 +31,7 @@ func (s *ChainStateTestSuite) SetupSuite() {
 
 func (s *ChainStateTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorageWithBadger()
+	s.storage, err = NewTestStorageWithoutPostgres()
 	s.NoError(err)
 }
 

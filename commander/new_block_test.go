@@ -220,7 +220,7 @@ func (s *NewBlockLoopTestSuite) waitForLatestBlockSync() {
 	s.NoError(err)
 
 	s.Eventually(func() bool {
-		syncedBlock, err := s.cmd.storage.GetSyncedBlock(s.testClient.Client.ChainState.ChainID)
+		syncedBlock, err := s.cmd.storage.GetSyncedBlock()
 		s.NoError(err)
 		return *syncedBlock >= *latestBlockNumber
 	}, time.Second, 100*time.Millisecond, "timeout when waiting for latest block sync")

@@ -1,10 +1,6 @@
 package storage
 
-import (
-	"github.com/Masterminds/squirrel"
-	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
-)
+import "github.com/Worldcoin/hubble-commander/utils/ref"
 
 func (s *ChainStateStorage) SetLatestBlockNumber(blockNumber uint32) {
 	s.latestBlockNumber = blockNumber
@@ -14,29 +10,26 @@ func (s *ChainStateStorage) GetLatestBlockNumber() uint32 {
 	return s.latestBlockNumber
 }
 
-func (s *ChainStateStorage) SetSyncedBlock(chainID models.Uint256, blockNumber uint64) error {
+func (s *ChainStateStorage) SetSyncedBlock(blockNumber uint64) error {
 	s.syncedBlock = &blockNumber
-	_, err := s.database.Postgres.Query(s.database.QB.Update("chain_state").
-		Set("synced_block", blockNumber).
-		Where(squirrel.Eq{"chain_id": chainID})).Exec()
-	return err
+	chainState, err := s.GetChainState()
+	if err != nil {
+		return err
+	}
+	chainState.SyncedBlock = blockNumber
+	return s.SetChainState(chainState)
 }
 
-func (s *ChainStateStorage) GetSyncedBlock(chainID models.Uint256) (*uint64, error) {
+func (s *ChainStateStorage) GetSyncedBlock() (*uint64, error) {
 	if s.syncedBlock != nil {
 		return s.syncedBlock, nil
 	}
-
-	res := make([]uint64, 0, 1)
-	err := s.database.Postgres.Query(s.database.QB.Select("synced_block").
-		From("chain_state").
-		Where(squirrel.Eq{"chain_id": chainID}),
-	).Into(&res)
+	chainState, err := s.GetChainState()
+	if IsNotFoundError(err) {
+		return ref.Uint64(0), nil
+	}
 	if err != nil {
 		return nil, err
 	}
-	if len(res) == 0 {
-		return ref.Uint64(0), nil
-	}
-	return &res[0], nil
+	return &chainState.SyncedBlock, nil
 }
