@@ -364,7 +364,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithNotExisting
 		commitment.Transactions = encodedTx
 	})
 
-	remoteBatches, err := s.testClient.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.testClient.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
