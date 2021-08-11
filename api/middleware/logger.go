@@ -35,5 +35,5 @@ func logRequest(body []byte, start time.Time) {
 		log.Errorf("API: failed to unmarshal request body: %s", err)
 		return
 	}
-	log.Printf("API: method: %v, duration: %v", decoded.Method, time.Since(start).Round(time.Millisecond).String())
+	log.Debugf("API: method: %v, duration: %v", decoded.Method, time.Since(start).Round(time.Millisecond).String())
 }

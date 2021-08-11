@@ -12,6 +12,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 type API struct {
@@ -29,7 +30,7 @@ func NewAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client
 	}
 
 	mux := http.NewServeMux()
-	if disableSignatures {
+	if log.IsLevelEnabled(log.DebugLevel) {
 		mux.Handle("/", middleware.Logger(server))
 	} else {
 		mux.HandleFunc("/", server.ServeHTTP)
