@@ -29,9 +29,9 @@ func (s *ChainState) Bytes() []byte {
 	copy(b[60:80], s.Rollup.Bytes())
 	binary.BigEndian.PutUint64(b[80:88], s.SyncedBlock)
 
-	for i, account := range s.GenesisAccounts {
+	for i := range s.GenesisAccounts {
 		gap := populatedGenesisAccountByteSize * i
-		copy(b[88+gap:256+gap], account.Bytes())
+		copy(b[88+gap:256+gap], s.GenesisAccounts[i].Bytes())
 	}
 
 	return b
