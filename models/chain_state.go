@@ -11,12 +11,12 @@ import (
 )
 
 type ChainState struct {
-	ChainID         Uint256        `db:"chain_id"`
-	AccountRegistry common.Address `db:"account_registry"`
-	DeploymentBlock uint64         `db:"deployment_block"`
+	ChainID         Uint256
+	AccountRegistry common.Address
+	DeploymentBlock uint64
 	Rollup          common.Address
-	SyncedBlock     uint64          `db:"synced_block"`
-	GenesisAccounts GenesisAccounts `db:"genesis_accounts" json:"-"`
+	SyncedBlock     uint64
+	GenesisAccounts GenesisAccounts `json:"-"`
 }
 
 type GenesisAccounts []PopulatedGenesisAccount
