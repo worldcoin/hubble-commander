@@ -31,7 +31,7 @@ func (s *ChainStateTestSuite) SetupSuite() {
 
 func (s *ChainStateTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorage()
+	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
 }
 

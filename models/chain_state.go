@@ -49,7 +49,10 @@ func (s *ChainState) SetBytes(data []byte) error {
 	s.SyncedBlock = binary.BigEndian.Uint64(data[80:88])
 
 	genesisAccountsCount := (len(data) - 88) / populatedGenesisAccountByteSize
-	s.GenesisAccounts = make(GenesisAccounts, 0, genesisAccountsCount)
+
+	if genesisAccountsCount > 0 {
+		s.GenesisAccounts = make(GenesisAccounts, 0, genesisAccountsCount)
+	}
 
 	for i := 0; i < genesisAccountsCount; i++ {
 		gap := populatedGenesisAccountByteSize * i
