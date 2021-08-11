@@ -28,11 +28,7 @@ type BatchesFilters struct {
 }
 
 func (c *TestClient) GetAllBatches() ([]DecodedBatch, error) {
-	return c.GetBatches(&BatchesFilters{
-		FilterByBatchID: func(_ *models.Uint256) bool {
-			return true
-		},
-	})
+	return c.GetBatches(&BatchesFilters{})
 }
 
 func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
@@ -52,7 +48,7 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 
 	res := make([]DecodedBatch, 0, len(events))
 	for i := range events {
-		if !filters.FilterByBatchID(models.NewUint256FromBig(*events[i].BatchID)) {
+		if filters.FilterByBatchID != nil && !filters.FilterByBatchID(models.NewUint256FromBig(*events[i].BatchID)) {
 			continue
 		}
 
