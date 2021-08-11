@@ -23,8 +23,8 @@ type API struct {
 	disableSignatures bool
 }
 
-func NewAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client, disableSignatures bool) (*http.Server, error) {
-	server, err := getAPIServer(cfg, storage, client, disableSignatures)
+func NewAPIServer(cfg *config.Config, storage *st.Storage, client *eth.Client) (*http.Server, error) {
+	server, err := getAPIServer(cfg.API, storage, client, cfg.Rollup.DisableSignatures)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +36,7 @@ func NewAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client
 		mux.HandleFunc("/", server.ServeHTTP)
 	}
 
-	addr := fmt.Sprintf(":%s", cfg.Port)
+	addr := fmt.Sprintf(":%s", cfg.API.Port)
 	return &http.Server{Addr: addr, Handler: mux}, nil
 }
 
