@@ -30,6 +30,7 @@ type Commander struct {
 	workers             sync.WaitGroup
 	releaseStartAndWait context.CancelFunc
 
+	invalidBatchID    *models.Uint256
 	rollupLoopRunning bool
 	stateMutex        sync.Mutex
 

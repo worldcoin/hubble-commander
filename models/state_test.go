@@ -7,6 +7,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestUserState_Copy(t *testing.T) {
+	userState := UserState{
+		PubKeyID: 1,
+		TokenID:  MakeUint256(2),
+		Balance:  MakeUint256(3),
+		Nonce:    MakeUint256(4),
+	}
+	userStateCopy := userState.Copy()
+	userStateCopy.Balance = *userStateCopy.Balance.AddN(100)
+	require.Equal(t, MakeUint256(3), userState.Balance)
+}
+
 func TestStateUpdate_ByteEncoding(t *testing.T) {
 	stateUpdate := StateUpdate{
 		ID:          1,

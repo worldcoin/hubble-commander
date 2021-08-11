@@ -80,7 +80,7 @@ func (t *TransactionExecutor) ApplyCreate2Transfers(
 func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 	transfers []models.Create2Transfer,
 	pubKeyIDs []uint32,
-	feeReceiver *FeeReceiver,
+	feeReceiverStateID uint32,
 ) ([]models.Create2Transfer, []models.StateMerkleProof, error) {
 	transfersLen := len(transfers)
 	if transfersLen != len(pubKeyIDs) {
@@ -91,7 +91,7 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*transfersLen+1)
 	combinedFee := models.NewUint256(0)
 
-	tokenID, err := t.getCommitmentTokenID(models.Create2TransferArray(transfers), &feeReceiver.TokenID)
+	tokenID, err := t.getCommitmentTokenID(models.Create2TransferArray(transfers), feeReceiverStateID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -115,13 +115,13 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 		*combinedFee = *combinedFee.Add(&synced.Transfer.Fee)
 	}
 
-	stateProof, transferError, appError := t.ApplyFeeForSync(feeReceiver, tokenID, combinedFee)
+	stateProof, commitmentError, appError := t.ApplyFeeForSync(feeReceiverStateID, tokenID, combinedFee)
 	if appError != nil {
 		return nil, nil, appError
 	}
 	stateChangeProofs = append(stateChangeProofs, *stateProof)
-	if transferError != nil {
-		return nil, nil, NewDisputableErrorWithProofs(Transition, transferError.Error(), stateChangeProofs)
+	if commitmentError != nil {
+		return nil, nil, NewDisputableErrorWithProofs(Transition, commitmentError.Error(), stateChangeProofs)
 	}
 
 	return appliedTransfers, stateChangeProofs, nil

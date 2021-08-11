@@ -30,6 +30,11 @@ type StateUpdate struct {
 	PrevStateLeaf StateLeaf
 }
 
+// nolint:gocritic
+func (s UserState) Copy() *UserState {
+	return &s
+}
+
 func (u *StateUpdate) Bytes() []byte {
 	b := make([]byte, 208)
 	binary.BigEndian.PutUint64(b[0:8], u.ID)

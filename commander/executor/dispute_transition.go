@@ -151,11 +151,5 @@ func (t *TransactionExecutor) DisputeTransition(
 	} else {
 		err = t.client.DisputeTransitionCreate2Transfer(&batch.ID, previousCommitmentProof, targetCommitmentProof, merkleProofs)
 	}
-	if err != nil {
-		return err
-	}
-
-	rollbackCause := errors.New("invalid batch")
-	t.Rollback(&rollbackCause)
-	return nil
+	return err
 }

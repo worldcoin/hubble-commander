@@ -11,7 +11,7 @@ func (s *StateTree) upsertStateLeaf(leaf *models.StateLeaf) error {
 	return s.database.Badger.Upsert(leaf.StateID, flatLeaf)
 }
 
-func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) (userStates []models.UserStateWithID, err error) {
+func (s *Storage) GetStateLeavesByPublicKey(publicKey *models.PublicKey) (stateLeaves []models.StateLeaf, err error) {
 	accounts, err := s.AccountTree.Leaves(publicKey)
 	if err != nil {
 		return nil, err
@@ -19,34 +19,25 @@ func (s *Storage) GetUserStatesByPublicKey(publicKey *models.PublicKey) (userSta
 
 	pubKeyIDs := utils.ValueToInterfaceSlice(accounts, "PubKeyID")
 
-	leaves := make([]models.FlatStateLeaf, 0, 1)
+	flatStateLeaves := make([]models.FlatStateLeaf, 0, 1)
 	err = s.database.Badger.Find(
-		&leaves,
+		&flatStateLeaves,
 		bh.Where("PubKeyID").In(pubKeyIDs...).Index("PubKeyID"),
 	)
 	if err != nil {
 		return nil, err
 	}
-	numLeaves := len(leaves)
+	numLeaves := len(flatStateLeaves)
 	if numLeaves == 0 {
 		return nil, NewNotFoundError("user states")
 	}
 
-	userStates = make([]models.UserStateWithID, 0, numLeaves)
-	for i := range leaves {
-		leaf := &leaves[i]
-		userStates = append(userStates, models.UserStateWithID{
-			StateID: leaf.StateID,
-			UserState: models.UserState{
-				PubKeyID: leaf.PubKeyID,
-				TokenID:  leaf.TokenID,
-				Balance:  leaf.Balance,
-				Nonce:    leaf.Nonce,
-			},
-		})
+	stateLeaves = make([]models.StateLeaf, 0, numLeaves)
+	for i := range flatStateLeaves {
+		stateLeaves = append(stateLeaves, *flatStateLeaves[i].StateLeaf())
 	}
 
-	return userStates, nil
+	return stateLeaves, nil
 }
 
 func (s *Storage) GetFeeReceiverStateLeaf(pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {

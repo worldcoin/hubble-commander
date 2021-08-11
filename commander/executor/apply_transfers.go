@@ -58,7 +58,7 @@ func (t *TransactionExecutor) ApplyTransfers(
 	return returnStruct, nil
 }
 
-func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer, feeReceiver *FeeReceiver) (
+func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer, feeReceiverStateID uint32) (
 	[]models.Transfer,
 	[]models.StateMerkleProof,
 	error,
@@ -68,7 +68,7 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*transfersLen+1)
 	combinedFee := models.NewUint256(0)
 
-	tokenID, err := t.getCommitmentTokenID(models.TransferArray(transfers), &feeReceiver.TokenID)
+	tokenID, err := t.getCommitmentTokenID(models.TransferArray(transfers), feeReceiverStateID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -91,28 +91,32 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 		*combinedFee = *combinedFee.Add(&synced.Transfer.Fee)
 	}
 
-	stateProof, transferError, appError := t.ApplyFeeForSync(feeReceiver, tokenID, combinedFee)
+	stateProof, commitmentError, appError := t.ApplyFeeForSync(feeReceiverStateID, tokenID, combinedFee)
 	if appError != nil {
 		return nil, nil, appError
 	}
 	stateChangeProofs = append(stateChangeProofs, *stateProof)
-	if transferError != nil {
-		return nil, nil, NewDisputableErrorWithProofs(Transition, transferError.Error(), stateChangeProofs)
+	if commitmentError != nil {
+		return nil, nil, NewDisputableErrorWithProofs(Transition, commitmentError.Error(), stateChangeProofs)
 	}
 
 	return appliedTransfers, stateChangeProofs, nil
 }
 
-func (t *TransactionExecutor) getCommitmentTokenID(
-	transfers models.GenericTransactionArray,
-	feeReceiverTokenID *models.Uint256,
-) (*models.Uint256, error) {
-	if transfers.Len() == 0 {
-		return feeReceiverTokenID, nil
+func (t *TransactionExecutor) getCommitmentTokenID(transfers models.GenericTransactionArray, feeReceiverStateID uint32) (
+	tokenID *models.Uint256,
+	err error,
+) {
+	var leaf *models.StateLeaf
+
+	if transfers.Len() > 0 {
+		leaf, err = t.storage.StateTree.LeafOrEmpty(transfers.At(0).GetFromStateID())
+	} else {
+		leaf, err = t.storage.StateTree.LeafOrEmpty(feeReceiverStateID)
 	}
-	leaf, err := t.storage.StateTree.LeafOrEmpty(transfers.At(0).GetFromStateID())
 	if err != nil {
 		return nil, err
 	}
+
 	return &leaf.TokenID, nil
 }

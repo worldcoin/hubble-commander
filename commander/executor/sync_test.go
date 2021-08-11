@@ -15,7 +15,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -209,7 +208,7 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyTransfersInCommitment() {
 
 	s.recreateDatabase()
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
@@ -239,7 +238,7 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyCreate2TransfersInCommitment() {
 
 	s.recreateDatabase()
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
@@ -275,7 +274,7 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidTransferCommitmentStateRoot() {
 
 	s.recreateDatabase()
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
@@ -311,7 +310,7 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidCreate2TransferCommitmentStateRoot(
 
 	s.recreateDatabase()
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
@@ -339,7 +338,7 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidTransferSignature() {
 
 	s.recreateDatabase()
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
@@ -360,7 +359,7 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidCreate2TransferSignature() {
 
 	s.recreateDatabase()
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
@@ -385,7 +384,7 @@ func (s *SyncTestSuite) TestSyncBatch_NotValidBLSSignature() {
 
 	s.recreateDatabase()
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
@@ -438,7 +437,7 @@ func (s *SyncTestSuite) TestSyncBatch_CommitmentWithoutTransfers() {
 	_, err := s.transactionExecutor.client.SubmitTransfersBatchAndWait([]models.Commitment{commitment})
 	s.NoError(err)
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
@@ -452,12 +451,50 @@ func (s *SyncTestSuite) TestSyncBatch_CommitmentWithoutCreate2Transfers() {
 	_, err := s.transactionExecutor.client.SubmitCreate2TransfersBatchAndWait([]models.Commitment{commitment})
 	s.NoError(err)
 
-	remoteBatches, err := s.client.GetBatches(&bind.FilterOpts{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
 	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
 	s.NoError(err)
+}
+
+func (s *SyncTestSuite) TestSyncBatch_CommitmentWithNonexistentFeeReceiver() {
+	feeReceiverStateID := uint32(1234)
+	tx := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			TxType:      txtype.Transfer,
+			FromStateID: 0,
+			Amount:      models.MakeUint256(400),
+			Fee:         models.MakeUint256(100),
+			Nonce:       models.MakeUint256(0),
+		},
+		ToStateID: 1,
+	}
+	s.setTransferHashAndSign(&tx)
+	s.createAndSubmitTransferBatchWithNonexistentFeeReceiver(&tx, feeReceiverStateID)
+
+	s.recreateDatabase()
+	s.syncAllBatches()
+
+	expectedNewlyCreatedFeeReceiver, err := st.NewStateLeaf(feeReceiverStateID, &models.UserState{
+		PubKeyID: 0,
+		TokenID:  models.MakeUint256(0),
+		Balance:  models.MakeUint256(100),
+		Nonce:    models.MakeUint256(0),
+	})
+	s.NoError(err)
+
+	feeReceiver, err := s.transactionExecutor.storage.StateTree.Leaf(feeReceiverStateID)
+	s.NoError(err)
+	sender, err := s.transactionExecutor.storage.StateTree.Leaf(0)
+	s.NoError(err)
+	receiver, err := s.transactionExecutor.storage.StateTree.Leaf(1)
+	s.NoError(err)
+
+	s.Equal(expectedNewlyCreatedFeeReceiver, feeReceiver)
+	s.Equal(models.MakeUint256(1000-400-100), sender.Balance)
+	s.Equal(models.MakeUint256(400), receiver.Balance)
 }
 
 func (s *SyncTestSuite) TestRevertBatch_RevertsState() {
@@ -550,6 +587,40 @@ func (s *SyncTestSuite) createAndSubmitInvalidTransferBatch(tx *models.Transfer)
 	return pendingBatch
 }
 
+func (s *SyncTestSuite) createAndSubmitTransferBatchWithNonexistentFeeReceiver(tx *models.Transfer, feeReceiverStateID uint32) {
+	commitmentTokenID := models.MakeUint256(0)
+
+	receiverLeaf, err := s.transactionExecutor.storage.StateTree.Leaf(tx.ToStateID)
+	s.NoError(err)
+	txErr, appErr := s.transactionExecutor.ApplyTransfer(tx, receiverLeaf, commitmentTokenID)
+	s.NoError(txErr)
+	s.NoError(appErr)
+
+	_, commitmentErr, appErr := s.transactionExecutor.ApplyFeeForSync(feeReceiverStateID, &commitmentTokenID, &tx.Fee)
+	s.NoError(commitmentErr)
+	s.NoError(appErr)
+
+	serializedTxs, err := encoder.SerializeTransfers([]models.Transfer{*tx})
+	s.NoError(err)
+
+	combinedSignature, err := combineTransferSignatures([]models.Transfer{*tx}, s.domain)
+	s.NoError(err)
+
+	postStateRoot, err := s.transactionExecutor.storage.StateTree.Root()
+	s.NoError(err)
+
+	commitment := models.Commitment{
+		ID:                0,
+		Type:              txtype.Transfer,
+		Transactions:      serializedTxs,
+		FeeReceiver:       feeReceiverStateID,
+		CombinedSignature: *combinedSignature,
+		PostStateRoot:     *postStateRoot,
+	}
+	_, err = s.client.SubmitTransfersBatchAndWait([]models.Commitment{commitment})
+	s.NoError(err)
+}
+
 func (s *SyncTestSuite) createCommitmentWithEmptyTransactions(commitmentType txtype.TransactionType) models.Commitment {
 	stateRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)
@@ -633,13 +704,7 @@ func createC2TBatch(
 }
 
 func (s *SyncTestSuite) syncAllBatches() {
-	latestBlockNumber, err := s.client.GetLatestBlockNumber()
-	s.NoError(err)
-
-	newRemoteBatches, err := s.client.GetBatches(&bind.FilterOpts{
-		Start: 0,
-		End:   latestBlockNumber,
-	})
+	newRemoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 
 	for i := range newRemoteBatches {

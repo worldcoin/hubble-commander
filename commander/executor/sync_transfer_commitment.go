@@ -27,12 +27,7 @@ func (t *TransactionExecutor) syncTransferCommitment(
 		return nil, ErrTooManyTxs
 	}
 
-	feeReceiver, err := t.getSyncedCommitmentFeeReceiver(commitment)
-	if err != nil {
-		return nil, err
-	}
-
-	appliedTransfers, stateProofs, err := t.ApplyTransfersForSync(transfers, feeReceiver)
+	appliedTransfers, stateProofs, err := t.ApplyTransfersForSync(transfers, commitment.FeeReceiver)
 	if err != nil {
 		return nil, err
 	}
@@ -50,17 +45,6 @@ func (t *TransactionExecutor) syncTransferCommitment(
 	}
 
 	return models.TransferArray(appliedTransfers), nil
-}
-
-func (t *TransactionExecutor) getSyncedCommitmentFeeReceiver(commitment *encoder.DecodedCommitment) (*FeeReceiver, error) {
-	feeReceiverState, err := t.storage.StateTree.Leaf(commitment.FeeReceiver)
-	if err != nil {
-		return nil, err
-	}
-	return &FeeReceiver{
-		StateID: commitment.FeeReceiver,
-		TokenID: feeReceiverState.TokenID,
-	}, nil
 }
 
 func (t *TransactionExecutor) verifyStateRoot(commitmentPostState common.Hash, proofs []models.StateMerkleProof) error {
