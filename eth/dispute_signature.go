@@ -19,7 +19,7 @@ func (c *Client) DisputeSignatureTransfer(
 		*signatureProofToCalldata(signatureProof),
 	)
 	if err != nil {
-		return err
+		return handleDisputeSignatureError(err)
 	}
 
 	err = c.waitForDispute(batchID, transaction)
