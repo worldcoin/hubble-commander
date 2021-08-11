@@ -30,6 +30,7 @@ func (t *TransactionExecutor) ApplyCreate2TransferForSync(
 		return nil, nil, ErrNilReceiverStateID
 	}
 
+	//TODO: forbid C2Ts to an already existing user state
 	receiverLeaf := newUserLeaf(*create2Transfer.ToStateID, pubKeyID, commitmentTokenID)
 	genericSynced, transferError, appError := t.applyGenericTransactionForSync(create2Transfer, receiverLeaf, commitmentTokenID)
 	if appError != nil {

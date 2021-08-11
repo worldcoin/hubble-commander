@@ -156,6 +156,21 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_AppliesT
 	s.Equal(uint64(1000), receiverLeaf.Balance.Uint64())
 }
 
+func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_ValidatesNotExistingSenderState() {
+	senderLeaf, err := s.storage.StateTree.LeafOrEmpty(10)
+	s.NoError(err)
+
+	transfer := create2Transfer
+	transfer.ToStateID = ref.Uint32(5)
+	transfer.FromStateID = senderLeaf.StateID
+
+	sync, transferError, appError := s.transactionExecutor.ApplyCreate2TransferForSync(&transfer, 2, feeReceiverTokenID)
+	s.NoError(appError)
+	s.ErrorIs(transferError, ErrBalanceTooLow)
+	s.Equal(senderLeaf.UserState, *sync.Proofs.SenderStateProof.UserState)
+	s.Len(sync.SenderStateProof.Witness, st.StateTreeDepth)
+}
+
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransferForSync_InvalidTransfer() {
 	transfers := generateValidCreate2Transfers(1)
 	invalidC2T := transfers[0]
