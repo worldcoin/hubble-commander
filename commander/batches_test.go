@@ -342,7 +342,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithoutTransfer
 	s.NoError(err)
 
 	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
-	s.NoError(err)
+	s.ErrorIs(err, ErrRollbackInProgress)
 
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
 }
