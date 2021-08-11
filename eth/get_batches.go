@@ -28,7 +28,11 @@ type BatchesFilters struct {
 }
 
 func (c *TestClient) GetAllBatches() ([]DecodedBatch, error) {
-	return c.GetBatches(&BatchesFilters{})
+	return c.GetBatches(&BatchesFilters{
+		FilterByBatchID: func(_ *models.Uint256) bool {
+			return true
+		},
+	})
 }
 
 func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
