@@ -76,9 +76,6 @@ func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBlockNumber() {
 
 	batches, err := s.client.GetBatches(&BatchesFilters{
 		StartBlockInclusive: uint64(*batch1.FinalisationBlock - uint32(*finalisationBlocks) + 1),
-		FilterByBatchID: func(_ *models.Uint256) bool {
-			return true
-		},
 	})
 	s.NoError(err)
 	s.Len(batches, 1)
