@@ -113,7 +113,7 @@ func getConfigPath() string {
 }
 
 func getGenesisAccounts() []models.GenesisAccount {
-	filename := getString("rollup.genesis_path", getGenesisPath())
+	filename := getString("bootstrap.genesis_path", getGenesisPath())
 	return readGenesisAccounts(filename)
 }
 
