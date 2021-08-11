@@ -245,7 +245,13 @@ func generateWallets(t *testing.T, domain bls.Domain, walletsAmount int) []bls.W
 }
 
 func seedDB(t *testing.T, storage *st.Storage, wallets []bls.Wallet) {
-	err := storage.AccountTree.SetSingle(&models.AccountLeaf{
+	err := storage.SetChainState(&models.ChainState{
+		ChainID:     models.MakeUint256(1337),
+		SyncedBlock: 0,
+	})
+	require.NoError(t, err)
+
+	err = storage.AccountTree.SetSingle(&models.AccountLeaf{
 		PubKeyID:  0,
 		PublicKey: *wallets[0].PublicKey(),
 	})
