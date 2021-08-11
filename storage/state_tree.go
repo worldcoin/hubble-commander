@@ -52,6 +52,17 @@ func (s *StateTree) Leaf(stateID uint32) (stateLeaf *models.StateLeaf, err error
 	return leaf.StateLeaf(), nil
 }
 
+func (s *StateTree) LeafOrEmpty(stateID uint32) (*models.StateLeaf, error) {
+	leaf, err := s.Leaf(stateID)
+	if IsNotFoundError(err) {
+		return &models.StateLeaf{
+			StateID:  stateID,
+			DataHash: merkletree.GetZeroHash(0),
+		}, nil
+	}
+	return leaf, err
+}
+
 func (s *StateTree) NextAvailableStateID() (*uint32, error) {
 	nextAvailableStateID := uint32(0)
 
@@ -177,7 +188,7 @@ func decodeStateUpdate(item *bdg.Item) (*models.StateUpdate, error) {
 }
 
 func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (models.Witness, error) {
-	prevLeaf, err := s.getLeafOrEmpty(index)
+	prevLeaf, err := s.LeafOrEmpty(index)
 	if err != nil {
 		return nil, err
 	}
@@ -213,17 +224,6 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (models.Wit
 	}
 
 	return witness, nil
-}
-
-func (s *StateTree) getLeafOrEmpty(stateID uint32) (*models.StateLeaf, error) {
-	leaf, err := s.Leaf(stateID)
-	if IsNotFoundError(err) {
-		return &models.StateLeaf{
-			StateID:  stateID,
-			DataHash: merkletree.GetZeroHash(0),
-		}, nil
-	}
-	return leaf, err
 }
 
 func (s *StateTree) getLeafByPubKeyIDAndTokenID(pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
