@@ -268,6 +268,11 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_AllowsNotExistingRecei
 	})
 	s.NoError(err)
 
+	expectedReceiverLeaf, err := st.NewStateLeaf(2, &models.UserState{
+		Balance: models.MakeUint256(100),
+	})
+	s.NoError(err)
+
 	_, transferError, appError := s.transactionExecutor.ApplyTransferForSync(&s.transfer, models.MakeUint256(0))
 	s.NoError(appError)
 	s.NoError(transferError)
@@ -278,7 +283,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_AllowsNotExistingRecei
 	s.NoError(err)
 
 	s.Equal(uint64(290), senderLeaf.Balance.Uint64())
-	s.Equal(uint64(100), receiverLeaf.Balance.Uint64())
+	s.Equal(expectedReceiverLeaf, receiverLeaf)
 }
 
 func (s *ApplyTransferTestSuite) TestApplyTransferForSync_SetsNonce() {
