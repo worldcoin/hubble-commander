@@ -104,3 +104,17 @@ func (d *Database) BeginTransaction(update bool) (*db.TxController, *Database) {
 func (d *Database) Prune() error {
 	return d.store.Badger().DropAll()
 }
+
+func PruneDatabase(cfg *config.BadgerConfig) error {
+	database, err := NewDatabase(cfg)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		err = database.Close()
+		if err != nil {
+			panic(err)
+		}
+	}()
+	return database.Prune()
+}

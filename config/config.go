@@ -102,7 +102,7 @@ func GetTestConfig() *Config {
 			MigrationsPath: getMigrationsPath(),
 		},
 		Badger: &BadgerConfig{
-			Path: getBadgerPath(),
+			Path: getTestBadgerPath(),
 		},
 		Ethereum: nil,
 	}
@@ -135,6 +135,10 @@ func getMigrationsPath() string {
 
 func getBadgerPath() string {
 	return path.Join(utils.GetProjectRoot(), "db", "badger", "data")
+}
+
+func getTestBadgerPath() string {
+	return path.Join(utils.GetProjectRoot(), "db", "badger", "data_test")
 }
 
 func getLogConfig() *LogConfig {
