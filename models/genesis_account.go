@@ -6,6 +6,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils"
 )
 
+const populatedGenesisAccountByteSize = 168
+
 type RawGenesisAccount struct {
 	PrivateKey string `yaml:"privateKey"`
 	Balance    uint64 `yaml:"balance"`
@@ -30,7 +32,7 @@ type PopulatedGenesisAccount struct {
 }
 
 func (a *PopulatedGenesisAccount) Bytes() []byte {
-	b := make([]byte, 168)
+	b := make([]byte, populatedGenesisAccountByteSize)
 
 	copy(b[:128], a.PublicKey.Bytes())
 	binary.BigEndian.PutUint32(b[128:132], a.PubKeyID)
