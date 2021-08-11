@@ -138,7 +138,7 @@ func getBadgerPath() string {
 }
 
 func getTestBadgerPath() string {
-	return path.Join(utils.GetProjectRoot(), "db", "badger", "data_test")
+	return path.Join(utils.GetProjectRoot(), "db", "badger", "data", "data_test")
 }
 
 func getLogConfig() *LogConfig {
