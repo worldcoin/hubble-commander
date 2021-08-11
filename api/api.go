@@ -12,39 +12,40 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 type API struct {
-	cfg           *config.APIConfig
-	storage       *st.Storage
-	client        *eth.Client
-	mockSignature models.Signature
-	devMode       bool
+	cfg               *config.APIConfig
+	storage           *st.Storage
+	client            *eth.Client
+	mockSignature     models.Signature
+	disableSignatures bool
 }
 
-func NewAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client, devMode bool) (*http.Server, error) {
-	server, err := getAPIServer(cfg, storage, client, devMode)
+func NewAPIServer(cfg *config.Config, storage *st.Storage, client *eth.Client) (*http.Server, error) {
+	server, err := getAPIServer(cfg.API, storage, client, cfg.Rollup.DisableSignatures)
 	if err != nil {
 		return nil, err
 	}
 
 	mux := http.NewServeMux()
-	if devMode {
+	if log.IsLevelEnabled(log.DebugLevel) {
 		mux.Handle("/", middleware.Logger(server))
 	} else {
 		mux.HandleFunc("/", server.ServeHTTP)
 	}
 
-	addr := fmt.Sprintf(":%s", cfg.Port)
+	addr := fmt.Sprintf(":%s", cfg.API.Port)
 	return &http.Server{Addr: addr, Handler: mux}, nil
 }
 
-func getAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client, devMode bool) (*rpc.Server, error) {
+func getAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client, disableSignatures bool) (*rpc.Server, error) {
 	api := API{
-		cfg:     cfg,
-		storage: storage,
-		client:  client,
-		devMode: devMode,
+		cfg:               cfg,
+		storage:           storage,
+		client:            client,
+		disableSignatures: disableSignatures,
 	}
 	if err := api.initSignature(); err != nil {
 		return nil, errors.WithMessage(err, "failed to create mock signature")

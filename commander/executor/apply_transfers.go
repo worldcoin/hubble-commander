@@ -110,7 +110,7 @@ func (t *TransactionExecutor) getCommitmentTokenID(
 	if transfers.Len() == 0 {
 		return feeReceiverTokenID, nil
 	}
-	leaf, err := t.storage.StateTree.Leaf(transfers.At(0).GetFromStateID())
+	leaf, err := t.storage.StateTree.LeafOrEmpty(transfers.At(0).GetFromStateID())
 	if err != nil {
 		return nil, err
 	}
