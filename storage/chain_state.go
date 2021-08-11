@@ -24,21 +24,19 @@ func (s *ChainStateStorage) copyWithNewDatabase(database *Database) *ChainStateS
 	return &newChainStateStorage
 }
 
-func (s *ChainStateStorage) GetChainState(chainID models.Uint256) (*models.ChainState, error) {
-	chainState := make([]models.ChainState, 0, 1)
-	err := s.database.Badger.Find(
-		&chainState,
-		bh.Where("ChainID").Eq(chainID),
-	)
+func (s *ChainStateStorage) GetChainState() (*models.ChainState, error) {
+	var chainState models.ChainState
+	err := s.database.Badger.Get("ChainState", &chainState)
+	if err == bh.ErrNotFound {
+		return nil, NewNotFoundError("chain state")
+	}
 	if err != nil {
 		return nil, err
 	}
-	if len(chainState) == 0 {
-		return nil, NewNotFoundError("chain state")
-	}
-	return &chainState[0], nil
+
+	return &chainState, nil
 }
 
 func (s *ChainStateStorage) SetChainState(chainState *models.ChainState) error {
-	return s.database.Badger.Upsert(chainState.ChainID, *chainState)
+	return s.database.Badger.Upsert("ChainState", *chainState)
 }
