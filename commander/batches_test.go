@@ -16,6 +16,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -377,6 +378,44 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithNotExisting
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
 }
 
+func (s *BatchesTestSuite) TestSyncRemoteBatch_AllowsNonexistentReceiver() {
+	transfer := testutils.MakeTransfer(0, 2, 0, 100)
+	s.setTransferHashAndSign(&transfer)
+
+	encodedTx, err := encoder.EncodeTransferForCommitment(&transfer)
+	s.NoError(err)
+
+	stateRoot := common.HexToHash("0x09de852e52fff821a7384b6bce2d5c51e9f0d32484e14c2fa29fb140d54ae8e8")
+
+	batch := &eth.DecodedBatch{
+		Batch: models.Batch{
+			ID:              models.MakeUint256(1),
+			Type:            txtype.Transfer,
+			TransactionHash: common.Hash{1, 2, 3},
+		},
+		Commitments: []encoder.DecodedCommitment{{
+			StateRoot:         stateRoot,
+			CombinedSignature: *s.getTransferCombinedSignature(&transfer),
+			FeeReceiver:       0,
+			Transactions:      encodedTx,
+		}},
+	}
+
+	err = s.cmd.syncRemoteBatch(batch)
+	s.NoError(err)
+
+	expectedReceiverState := models.UserState{
+		PubKeyID: 0,
+		TokenID:  models.MakeUint256(0),
+		Balance:  transfer.Amount,
+		Nonce:    models.MakeUint256(0),
+	}
+
+	leaf, err := s.testStorage.StateTree.Leaf(transfer.ToStateID)
+	s.NoError(err)
+	s.Equal(expectedReceiverState, leaf.UserState)
+}
+
 func (s *BatchesTestSuite) TestUnsafeSyncBatches_SyncsBatchesBeforeInvalidOne() {
 	transfers := []models.Transfer{
 		testutils.MakeTransfer(0, 1, 0, 50),
@@ -519,6 +558,14 @@ func (s *BatchesTestSuite) registerAccounts(pubKeyIDs []uint32) {
 		s.NoError(err)
 		s.Equal(pubKeyIDs[i], *pubKeyID)
 	}
+}
+
+func (s *BatchesTestSuite) getTransferCombinedSignature(transfer *models.Transfer) *models.Signature {
+	domain, err := s.testClient.GetDomain()
+	s.NoError(err)
+	signature, err := bls.NewSignatureFromBytes(transfer.Signature.Bytes(), *domain)
+	s.NoError(err)
+	return bls.NewAggregatedSignature([]*bls.Signature{signature}).ModelsSignature()
 }
 
 func cloneStorage(
