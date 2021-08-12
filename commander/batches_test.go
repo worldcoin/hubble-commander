@@ -563,7 +563,7 @@ func (s *BatchesTestSuite) registerAccounts(pubKeyIDs []uint32) {
 func (s *BatchesTestSuite) getTransferCombinedSignature(transfer *models.Transfer) *models.Signature {
 	domain, err := s.testClient.GetDomain()
 	s.NoError(err)
-	sig, err := executor.CombineTransferSignatures([]models.Transfer{*transfer}, domain)
+	sig, err := executor.CombineSignatures(models.MakeTransferArray(*transfer), domain)
 	s.NoError(err)
 	return sig
 }
