@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
+	"io/ioutil"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,32 +15,57 @@ import (
 )
 
 func main() {
-	cfg := getConfig()
 	args := os.Args
 
-	if len(args) > 1 && args[1] == "deploy" {
-		chainSpec, err := commander.GenerateChainSpec(cfg)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Printf(*chainSpec)
-		return
+	// TODO-CHAIN handle flags with Go's FlagSets
+	if len(args) == 1 {
+		log.Fatal("please provide an arg")
 	}
 
-	startCommander(cfg)
+	if args[1] == "deploy" {
+		if len(args) == 3 {
+			deployCommanderContracts(args[2])
+		} else {
+			log.Fatal("please provide a filename")
+		}
+	}
+
+	if args[1] == "start" {
+		startCommander()
+	}
 }
 
-func startCommander(cfg *config.Config) {
+func setupCommander() *commander.Commander {
+	cfg := getConfig()
+
 	configureLogger(cfg)
 	logConfig(cfg)
 	cmd := commander.NewCommander(cfg)
 
 	setupCloseHandler(cmd)
 
+	return cmd
+}
+
+func startCommander() {
+	cmd := setupCommander()
 	err := cmd.StartAndWait()
 	if err != nil {
 		log.Fatalf("%+v", err)
 	}
+}
+
+func deployCommanderContracts(filename string) {
+	cmd := setupCommander()
+	chainSpec, err := cmd.Deploy()
+	if err != nil {
+		log.Fatalf("%+v", err)
+	}
+	err = ioutil.WriteFile(filename, []byte(*chainSpec), 0644)
+	if err != nil {
+		log.Fatalf("%+v", err)
+	}
+	log.Printf(*chainSpec)
 }
 
 func getConfig() *config.Config {
