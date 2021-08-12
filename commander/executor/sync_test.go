@@ -603,7 +603,7 @@ func (s *SyncTestSuite) createAndSubmitTransferBatchWithNonexistentFeeReceiver(t
 	serializedTxs, err := encoder.SerializeTransfers([]models.Transfer{*tx})
 	s.NoError(err)
 
-	combinedSignature, err := combineTransferSignatures([]models.Transfer{*tx}, s.domain)
+	combinedSignature, err := CombineTransferSignatures([]models.Transfer{*tx}, s.domain)
 	s.NoError(err)
 
 	postStateRoot, err := s.transactionExecutor.storage.StateTree.Root()

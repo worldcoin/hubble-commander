@@ -18,7 +18,7 @@ func (t *TransactionExecutor) buildTransferCommitment(
 		return nil, err
 	}
 
-	combinedSignature, err := combineTransferSignatures(appliedTransfers, domain)
+	combinedSignature, err := CombineTransferSignatures(appliedTransfers, domain)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (t *TransactionExecutor) buildTransferCommitment(
 	return commitment, nil
 }
 
-func combineTransferSignatures(transfers []models.Transfer, domain *bls.Domain) (*models.Signature, error) {
+func CombineTransferSignatures(transfers []models.Transfer, domain *bls.Domain) (*models.Signature, error) {
 	signatures := make([]*bls.Signature, 0, len(transfers))
 	for i := range transfers {
 		sig, err := bls.NewSignatureFromBytes(transfers[i].Signature.Bytes(), *domain)

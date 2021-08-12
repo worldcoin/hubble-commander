@@ -563,9 +563,9 @@ func (s *BatchesTestSuite) registerAccounts(pubKeyIDs []uint32) {
 func (s *BatchesTestSuite) getTransferCombinedSignature(transfer *models.Transfer) *models.Signature {
 	domain, err := s.testClient.GetDomain()
 	s.NoError(err)
-	signature, err := bls.NewSignatureFromBytes(transfer.Signature.Bytes(), *domain)
+	sig, err := executor.CombineTransferSignatures([]models.Transfer{*transfer}, domain)
 	s.NoError(err)
-	return bls.NewAggregatedSignature([]*bls.Signature{signature}).ModelsSignature()
+	return sig
 }
 
 func cloneStorage(

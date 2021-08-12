@@ -82,7 +82,7 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_ValidSignature() 
 		signTransfer(s.T(), &s.wallets[i], &transfers[i])
 	}
 
-	combinedSignature, err := combineTransferSignatures(transfers, testDomain)
+	combinedSignature, err := CombineTransferSignatures(transfers, testDomain)
 	s.NoError(err)
 	commitment := &encoder.DecodedCommitment{
 		CombinedSignature: *combinedSignature,
@@ -123,7 +123,7 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_InvalidSignature(
 		signTransfer(s.T(), &s.wallets[i], &invalidTransfer)
 	}
 
-	combinedSignature, err := combineTransferSignatures(transfers, testDomain)
+	combinedSignature, err := CombineTransferSignatures(transfers, testDomain)
 	s.NoError(err)
 	commitment := &encoder.DecodedCommitment{
 		CombinedSignature: *combinedSignature,
@@ -178,7 +178,7 @@ func (s *VerifySignatureTestSuite) TestVerifyCreate2TransferSignature_ValidSigna
 		signCreate2Transfer(s.T(), &s.wallets[i], &transfers[i])
 	}
 
-	combinedSignature, err := combineCreate2TransferSignatures(transfers, testDomain)
+	combinedSignature, err := CombineCreate2TransferSignatures(transfers, testDomain)
 	s.NoError(err)
 	commitment := &encoder.DecodedCommitment{
 		CombinedSignature: *combinedSignature,
