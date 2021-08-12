@@ -102,6 +102,39 @@ func (c *Commander) Start() (err error) {
 	return nil
 }
 
+func (c *Commander) Deploy() (chainSpec *string, err error) {
+	if c.IsRunning() {
+		return nil, nil
+	}
+
+	c.storage, err = st.NewStorage(c.cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	chain, err := getChainConnection(c.cfg.Ethereum)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf(
+		"Bootstrapping genesis state with %d accounts on chainId = %s",
+		len(c.cfg.Bootstrap.GenesisAccounts),
+		c.cfg.Ethereum.ChainID,
+	)
+	chainState, err := deployContractsAndSetupGenesisState(c.storage, chain, c.cfg.Bootstrap.GenesisAccounts)
+	if err != nil {
+		return nil, err
+	}
+
+	chainSpec, err = GenerateChainSpec(chainState)
+	if err != nil {
+		return nil, err
+	}
+
+	return chainSpec, nil
+}
+
 func (c *Commander) startWorker(fn func() error) {
 	c.workers.Add(1)
 	go func() {
