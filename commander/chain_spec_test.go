@@ -3,35 +3,13 @@ package commander
 import (
 	"testing"
 
-	cfg "github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
-	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 	"gopkg.in/yaml.v2"
 )
 
-type ChainSpecTestSuite struct {
-	*require.Assertions
-	suite.Suite
-	storage   *st.TestStorage
-	config    *cfg.Config
-	chainSpec models.ChainSpec
-}
-
-func (s *ChainSpecTestSuite) SetupSuite() {
-	s.Assertions = require.New(s.T())
-}
-
-func (s *ChainSpecTestSuite) SetupTest() {
-	var err error
-	s.storage, err = st.NewTestStorage()
-	s.NoError(err)
-	s.config = cfg.GetTestConfig()
-	s.config.Ethereum = &cfg.EthereumConfig{
-		ChainID: "1337",
-	}
+func TestChainSpecTestSuite(t *testing.T) {
 	chainState := &models.ChainState{
 		ChainID:         models.MakeUint256(1337),
 		AccountRegistry: utils.RandomAddress(),
@@ -59,25 +37,12 @@ func (s *ChainSpecTestSuite) SetupTest() {
 		},
 		SyncedBlock: 7738,
 	}
-	err = s.storage.SetChainState(chainState)
-	s.NoError(err)
-	s.chainSpec = newChainSpec(chainState)
-}
+	expectedChainSpec := newChainSpec(chainState)
 
-func (s *ChainSpecTestSuite) TearDownTest() {
-	err := s.storage.Teardown()
-	s.NoError(err)
-}
-
-func (s *ChainSpecTestSuite) TestGenerateChainSpec() {
-	yamlChainSpec, err := GenerateChainSpec(s.config)
-	s.NoError(err)
+	yamlChainSpec, err := GenerateChainSpec(chainState)
+	require.NoError(t, err)
 	var chainSpec models.ChainSpec
 	err = yaml.Unmarshal([]byte(*yamlChainSpec), &chainSpec)
-	s.NoError(err)
-	s.EqualValues(s.chainSpec, chainSpec)
-}
-
-func TestChainSpecTestSuite(t *testing.T) {
-	suite.Run(t, new(ChainSpecTestSuite))
+	require.NoError(t, err)
+	require.EqualValues(t, expectedChainSpec, chainSpec)
 }

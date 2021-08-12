@@ -1,44 +1,12 @@
 package commander
 
 import (
-	"strconv"
-
-	cfg "github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
-	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
-var ErrCannotGenerateChainSpec = errors.New("cannot generate chain spec file without populated database")
-
-func GenerateChainSpec(config *cfg.Config) (*string, error) {
-	storage, err := st.NewStorage(config)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		err = storage.Close()
-		if err != nil {
-			panic(err)
-		}
-	}()
-
-	parsedChainID, err := strconv.ParseUint(config.Ethereum.ChainID, 10, 64)
-	if err != nil {
-		return nil, err
-	}
-
-	chainID := models.MakeUint256(parsedChainID)
-
-	chainState, err := storage.GetChainState(chainID)
-	if st.IsNotFoundError(err) {
-		return nil, ErrCannotGenerateChainSpec
-	} else if err != nil {
-		return nil, err
-	}
-
+func GenerateChainSpec(chainState *models.ChainState) (*string, error) {
 	chainSpec := newChainSpec(chainState)
 
 	yamlChainSpec, err := yaml.Marshal(chainSpec)
