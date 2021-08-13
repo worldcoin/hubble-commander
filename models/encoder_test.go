@@ -1,7 +1,6 @@
 package models
 
 import (
-	"encoding/binary"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -34,14 +33,17 @@ func Test_EncodeHashPointer(t *testing.T) {
 	bytes := encodeHashPointer(hash)
 	require.EqualValues(t, 1, bytes[0])
 
-	decodedHash := common.BytesToHash(bytes[1:])
-	require.Equal(t, *hash, decodedHash)
+	decodedValue := decodeHashPointer(bytes)
+	require.Equal(t, *hash, *decodedValue)
 }
 
 func Test_EncodeHashPointer_NilValue(t *testing.T) {
 	var hash *common.Hash
 	bytes := encodeHashPointer(hash)
 	require.EqualValues(t, 0, bytes[0])
+
+	decodedValue := decodeHashPointer(bytes)
+	require.Nil(t, decodedValue)
 }
 
 func Test_EncodeUint32Pointer(t *testing.T) {
@@ -49,12 +51,15 @@ func Test_EncodeUint32Pointer(t *testing.T) {
 	bytes := encodeUint32Pointer(&value)
 	require.EqualValues(t, 1, bytes[0])
 
-	decodedValue := binary.BigEndian.Uint32(bytes[1:])
-	require.Equal(t, value, decodedValue)
+	decodedValue := decodeUint32Pointer(bytes)
+	require.Equal(t, value, *decodedValue)
 }
 
 func Test_EncodeUint32Pointer_NilValue(t *testing.T) {
 	var value *uint32
 	bytes := encodeUint32Pointer(value)
 	require.EqualValues(t, 0, bytes[0])
+
+	decodedValue := decodeUint32Pointer(bytes)
+	require.Nil(t, decodedValue)
 }
