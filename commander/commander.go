@@ -214,7 +214,7 @@ func bootstrapFromChainState(
 		return nil, err
 	}
 	fileChainState := makeChainStateFromChainSpec(chainSpec)
-	dbChainState, err := storage.GetChainState(fileChainState.ChainID)
+	dbChainState, err := storage.GetChainState()
 	if st.IsNotFoundError(err) {
 		err := storage.SetChainState(fileChainState)
 		if err != nil {
