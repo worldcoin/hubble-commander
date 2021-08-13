@@ -22,7 +22,7 @@ func (t *TransactionExecutor) buildC2TCommitment(
 		return nil, err
 	}
 
-	combinedSignature, err := combineCreate2TransferSignatures(appliedTransfers, domain)
+	combinedSignature, err := CombineSignatures(models.Create2TransferArray(appliedTransfers), domain)
 	if err != nil {
 		return nil, err
 	}
@@ -43,18 +43,6 @@ func (t *TransactionExecutor) buildC2TCommitment(
 	}
 
 	return commitment, nil
-}
-
-func combineCreate2TransferSignatures(transfers []models.Create2Transfer, domain *bls.Domain) (*models.Signature, error) {
-	signatures := make([]*bls.Signature, 0, len(transfers))
-	for i := range transfers {
-		sig, err := bls.NewSignatureFromBytes(transfers[i].Signature.Bytes(), *domain)
-		if err != nil {
-			return nil, err
-		}
-		signatures = append(signatures, sig)
-	}
-	return bls.NewAggregatedSignature(signatures).ModelsSignature(), nil
 }
 
 func (t *TransactionExecutor) markCreate2TransfersAsIncluded(transfers []models.Create2Transfer, commitmentID int32) error {
