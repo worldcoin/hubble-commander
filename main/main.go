@@ -75,7 +75,7 @@ func deployCommanderContracts(filename string) {
 	if err != nil {
 		log.Fatalf("%+v", err)
 	}
-	err = ioutil.WriteFile(filename, []byte(*chainSpec), 0644)
+	err = ioutil.WriteFile(filename, []byte(*chainSpec), 0600)
 	if err != nil {
 		log.Fatalf("%+v", err)
 	}
