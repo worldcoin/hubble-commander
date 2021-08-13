@@ -100,11 +100,10 @@ func (t *TransactionExecutor) getTransactionSender(txHash common.Hash) (*common.
 	if err != nil {
 		return nil, err
 	}
-	message, err := tx.AsMessage(types.NewEIP155Signer(tx.ChainId()))
+	sender, err := types.LatestSignerForChainID(tx.ChainId()).Sender(tx)
 	if err != nil {
 		return nil, err
 	}
-	sender := message.From()
 	return &sender, nil
 }
 
