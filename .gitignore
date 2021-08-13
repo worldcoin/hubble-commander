@@ -4,7 +4,6 @@ build
 .env
 .env.docker
 db/badger/data
-db/badger/data_passive
 e2e-data
 config.yaml
 e2e/geth-data/geth

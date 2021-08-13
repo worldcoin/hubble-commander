@@ -19,7 +19,7 @@ func (s *BlockNumberTestSuite) SetupSuite() {
 
 func (s *BlockNumberTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorage()
+	s.storage, err = NewTestStorageWithoutPostgres()
 	s.NoError(err)
 }
 
@@ -43,14 +43,14 @@ func (s *BlockNumberTestSuite) TestGetSyncedBlock() {
 	err := s.storage.SetChainState(&chainState)
 	s.NoError(err)
 
-	syncedBlock, err := s.storage.GetSyncedBlock(chainState.ChainID)
+	syncedBlock, err := s.storage.GetSyncedBlock()
 	s.NoError(err)
 
 	s.Equal(chainState.SyncedBlock, *syncedBlock)
 }
 
 func (s *BlockNumberTestSuite) TestGetSyncedBlock_NoExistentChainState() {
-	syncedBlock, err := s.storage.GetSyncedBlock(chainState.ChainID)
+	syncedBlock, err := s.storage.GetSyncedBlock()
 	s.NoError(err)
 
 	s.Equal(uint64(0), *syncedBlock)
@@ -61,10 +61,10 @@ func (s *BlockNumberTestSuite) TestSetSyncedBlock() {
 	s.NoError(err)
 
 	blockNumber := uint64(450)
-	err = s.storage.SetSyncedBlock(chainState.ChainID, blockNumber)
+	err = s.storage.SetSyncedBlock(blockNumber)
 	s.NoError(err)
 
-	syncedBlock, err := s.storage.GetSyncedBlock(chainState.ChainID)
+	syncedBlock, err := s.storage.GetSyncedBlock()
 	s.NoError(err)
 
 	s.Equal(blockNumber, *syncedBlock)

@@ -193,7 +193,7 @@ func (s *NewBlockLoopTestSuite) waitForLatestBlockSync() {
 	s.NoError(err)
 
 	s.Eventually(func() bool {
-		syncedBlock, err := s.cmd.storage.GetSyncedBlock(s.testClient.Client.ChainState.ChainID)
+		syncedBlock, err := s.cmd.storage.GetSyncedBlock()
 		s.NoError(err)
 		return *syncedBlock >= *latestBlockNumber
 	}, time.Second, 100*time.Millisecond, "timeout when waiting for latest block sync")
@@ -218,7 +218,13 @@ func generateWallets(t *testing.T, domain bls.Domain, walletsAmount int) []bls.W
 }
 
 func seedDB(t *testing.T, storage *st.Storage, wallets []bls.Wallet) {
-	err := storage.AccountTree.SetSingle(&models.AccountLeaf{
+	err := storage.SetChainState(&models.ChainState{
+		ChainID:     models.MakeUint256(1337),
+		SyncedBlock: 0,
+	})
+	require.NoError(t, err)
+
+	err = storage.AccountTree.SetSingle(&models.AccountLeaf{
 		PubKeyID:  0,
 		PublicKey: *wallets[0].PublicKey(),
 	})

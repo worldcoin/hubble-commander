@@ -97,7 +97,7 @@ func (c *Commander) Start() (err error) {
 	})
 	c.startWorker(func() error { return c.newBlockLoop() })
 
-	log.Printf("Commander started and listening on port %s.\n", c.cfg.API.Port)
+	log.Printf("Commander started and listening on port %s.", c.cfg.API.Port)
 
 	return nil
 }
@@ -156,8 +156,7 @@ func getChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, e
 }
 
 func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.BootstrapConfig) (*eth.Client, error) {
-	chainID := chain.GetChainID()
-	chainState, err := storage.GetChainState(chainID)
+	chainState, err := storage.GetChainState()
 	if err != nil && !st.IsNotFoundError(err) {
 		return nil, err
 	}
@@ -167,12 +166,12 @@ func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.
 			log.Printf("Bootstrapping genesis state from node %s", *cfg.BootstrapNodeURL)
 			return bootstrapFromRemoteState(chain, storage, cfg)
 		} else {
-			log.Printf("Bootstrapping genesis state with %d accounts on chainId = %s", len(cfg.GenesisAccounts), chainID.String())
+			log.Printf("Bootstrapping genesis state with %d accounts on chain", len(cfg.GenesisAccounts))
 			return bootstrapContractsAndState(chain, storage, cfg)
 		}
 	}
 
-	log.Printf("Continuing from saved state on chainId = %s", chainID.String())
+	log.Printf("Continuing from saved state on chainID = %s", chainState.ChainID.String())
 	return createClientFromChainState(chain, chainState)
 }
 

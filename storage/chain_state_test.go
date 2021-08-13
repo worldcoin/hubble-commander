@@ -31,7 +31,7 @@ func (s *ChainStateTestSuite) SetupSuite() {
 
 func (s *ChainStateTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorage()
+	s.storage, err = NewTestStorageWithoutPostgres()
 	s.NoError(err)
 }
 
@@ -44,13 +44,13 @@ func (s *ChainStateTestSuite) TestSetChainState_SetAndRetrieve() {
 	err := s.storage.SetChainState(&chainState)
 	s.NoError(err)
 
-	actual, err := s.storage.GetChainState(chainState.ChainID)
+	actual, err := s.storage.GetChainState()
 	s.NoError(err)
 	s.Equal(chainState, *actual)
 }
 
 func (s *ChainStateTestSuite) TestGetChainState_NotFound() {
-	_, err := s.storage.GetChainState(chainState.ChainID)
+	_, err := s.storage.GetChainState()
 	s.Equal(NewNotFoundError("chain state"), err)
 	s.True(IsNotFoundError(err))
 }
