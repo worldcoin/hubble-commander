@@ -79,18 +79,6 @@ func (s *ChainSpecTestSuite) TestGenerateChainSpec() {
 	s.EqualValues(s.chainSpec, chainSpec)
 }
 
-func (s *ChainSpecTestSuite) TestLoadChainSpec() {
-	err := LoadChainSpec(s.config, &s.chainSpec)
-	s.NoError(err)
-	chainState, err := s.storage.GetChainState(s.chainSpec.ChainID)
-	s.NoError(err)
-
-	s.NotEqual(*s.chainState, chainState)
-
-	chainSpec := newChainSpec(chainState)
-	s.EqualValues(s.chainSpec, chainSpec)
-}
-
 func (s *ChainSpecTestSuite) TestReadChainSpecFile() {
 	yamlChainSpec, err := GenerateChainSpec(s.chainState)
 	s.NoError(err)

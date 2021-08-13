@@ -3,9 +3,7 @@ package commander
 import (
 	"io/ioutil"
 
-	cfg "github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
-	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"gopkg.in/yaml.v2"
 )
@@ -23,31 +21,6 @@ func ReadChainSpecFile(path string) (*models.ChainSpec, error) {
 	}
 
 	return &chainSpec, nil
-}
-
-func LoadChainSpec(config *cfg.Config, chainSpec *models.ChainSpec) error {
-	chainState := newChainState(chainSpec)
-
-	storage, err := st.NewStorage(config)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		err = storage.Close()
-		if err != nil {
-			panic(err)
-		}
-	}()
-
-	_, err = storage.GetChainState(chainState.ChainID)
-	if err != nil {
-		err = storage.SetChainState(&chainState)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func GenerateChainSpec(chainState *models.ChainState) (*string, error) {
@@ -71,8 +44,8 @@ func newChainSpec(chainState *models.ChainState) models.ChainSpec {
 	}
 }
 
-func newChainState(chainSpec *models.ChainSpec) models.ChainState {
-	return models.ChainState{
+func makeChainStateFromChainSpec(chainSpec *models.ChainSpec) *models.ChainState {
+	return &models.ChainState{
 		ChainID:         chainSpec.ChainID,
 		AccountRegistry: chainSpec.AccountRegistry,
 		DeploymentBlock: chainSpec.DeploymentBlock,
