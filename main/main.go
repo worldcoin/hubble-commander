@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"syscall"
@@ -75,7 +74,7 @@ func deployCommanderContracts(filename string) {
 	if err != nil {
 		log.Fatalf("%+v", err)
 	}
-	err = ioutil.WriteFile(filename, []byte(*chainSpec), 0600)
+	err = os.WriteFile(filename, []byte(*chainSpec), 0600)
 	if err != nil {
 		log.Fatalf("%+v", err)
 	}
