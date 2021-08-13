@@ -15,24 +15,38 @@ import (
 )
 
 func main() {
-	args := os.Args
-
-	// TODO-CHAIN handle flags with Go's FlagSets
-	if len(args) == 1 {
-		log.Fatal("please provide an arg")
+	if len(os.Args) < 2 {
+		log.Fatal("start or deploy subcommand is required")
 	}
 
-	if args[1] == "deploy" {
-		if len(args) == 3 {
-			deployCommanderContracts(args[2])
-		} else {
-			log.Fatal("please provide a filename")
-		}
+	switch os.Args[1] {
+	case "start":
+		handleStartCommand(os.Args[2:])
+	case "deploy":
+		handleDeployCommand(os.Args[2:])
+	default:
+		flag.PrintDefaults()
+		os.Exit(1)
 	}
+}
 
-	if args[1] == "start" {
-		startCommander()
+func handleStartCommand(args []string) {
+	startCommand := flag.NewFlagSet("start", flag.ExitOnError)
+	err := startCommand.Parse(args)
+	if err != nil {
+		log.Fatal(err)
 	}
+	startCommander()
+}
+
+func handleDeployCommand(args []string) {
+	deployCommand := flag.NewFlagSet("deploy", flag.ExitOnError)
+	chainSpecFile := deployCommand.String("file", "chain-spec.yaml", "TODO")
+	err := deployCommand.Parse(args)
+	if err != nil {
+		log.Fatal(err)
+	}
+	deployCommanderContracts(*chainSpecFile)
 }
 
 func setupCommander() *commander.Commander {
@@ -69,14 +83,7 @@ func deployCommanderContracts(filename string) {
 }
 
 func getConfig() *config.Config {
-	prune := flag.Bool("prune", false, "drop database before running app")
-	disableSignatures := flag.Bool("disable-signatures", false, "disable signature verification")
-	flag.Parse()
-
-	cfg := config.GetConfig()
-	cfg.Bootstrap.Prune = *prune
-	cfg.Rollup.DisableSignatures = *disableSignatures
-	return cfg
+	return config.GetConfig()
 }
 
 func configureLogger(cfg *config.Config) {
