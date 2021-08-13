@@ -21,6 +21,10 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Bytes(), nil
 	case *models.AccountLeaf:
 		return nil, errors.Errorf("pass by value")
+	case models.Batch:
+		return v.Bytes(), nil
+	case *models.Batch:
+		return nil, errors.Errorf("pass by value")
 	case models.ChainState:
 		return v.Bytes(), nil
 	case *models.ChainState:
@@ -40,6 +44,10 @@ func Encode(value interface{}) ([]byte, error) {
 	case models.StateUpdate:
 		return v.Bytes(), nil
 	case *models.StateUpdate:
+		return nil, errors.Errorf("pass by value")
+	case models.Uint256:
+		return v.Bytes(), nil
+	case *models.Uint256:
 		return nil, errors.Errorf("pass by value")
 	case uint32:
 		return EncodeUint32(&v)
@@ -64,12 +72,17 @@ func Decode(data []byte, value interface{}) error {
 		return v.SetBytes(data)
 	case *models.NamespacedMerklePath:
 		return v.SetBytes(data)
+	case *models.Batch:
+		return v.SetBytes(data)
 	case *models.MerkleTreeNode:
 		return DecodeDataHash(data, &v.DataHash)
 	case *models.FlatStateLeaf:
 		return v.SetBytes(data)
 	case *models.StateUpdate:
 		return v.SetBytes(data)
+	case *models.Uint256:
+		v.SetBytes(data)
+		return nil
 	case *uint32:
 		return DecodeUint32(data, v)
 	case *uint64:

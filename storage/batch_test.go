@@ -24,7 +24,7 @@ func (s *BatchTestSuite) SetupSuite() {
 
 func (s *BatchTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorage()
+	s.storage, err = NewTestStorageWithBadger()
 	s.NoError(err)
 }
 
@@ -396,7 +396,7 @@ func (s *BatchTestSuite) TestDeleteBatches() {
 
 func (s *BatchTestSuite) TestDeleteBatches_NotExistentBatch() {
 	err := s.storage.DeleteBatches(models.MakeUint256(1))
-	s.Equal(ErrNoRowsAffected, err)
+	s.Equal(NewNotFoundError("batch"), err)
 }
 
 func TestBatchTestSuite(t *testing.T) {
