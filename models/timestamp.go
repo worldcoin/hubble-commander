@@ -43,3 +43,13 @@ func (t *Timestamp) Scan(src interface{}) error {
 func (t Timestamp) Value() (driver.Value, error) {
 	return t.Time.UTC(), nil
 }
+
+func (t *Timestamp) Bytes() []byte {
+	utcTimestamp := t.Time.UTC()
+	bytes, _ := utcTimestamp.MarshalBinary()
+	return bytes
+}
+
+func (t *Timestamp) SetBytes(data []byte) error {
+	return t.UnmarshalBinary(data)
+}
