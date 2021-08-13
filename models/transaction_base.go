@@ -47,3 +47,7 @@ func (t *TransactionBase) GetNonce() Uint256 {
 func (t *TransactionBase) SetNonce(nonce Uint256) {
 	t.Nonce = nonce
 }
+
+func (t *TransactionBase) GetSignature() Signature {
+	return t.Signature
+}

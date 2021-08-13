@@ -11,6 +11,7 @@ type GenericTransaction interface {
 	GetFee() Uint256
 	GetNonce() Uint256
 	SetNonce(nonce Uint256)
+	GetSignature() Signature
 	Copy() GenericTransaction
 }
 
@@ -21,6 +22,10 @@ type GenericTransactionArray interface {
 
 type TransferArray []Transfer
 
+func MakeTransferArray(transfers ...Transfer) TransferArray {
+	return transfers
+}
+
 func (t TransferArray) Len() int {
 	return len(t)
 }
@@ -30,6 +35,10 @@ func (t TransferArray) At(index int) GenericTransaction {
 }
 
 type Create2TransferArray []Create2Transfer
+
+func MakeCreate2TransferArray(create2Transfers ...Create2Transfer) Create2TransferArray {
+	return create2Transfers
+}
 
 func (t Create2TransferArray) Len() int {
 	return len(t)
