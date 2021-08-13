@@ -23,7 +23,11 @@ import (
 	"github.com/ybbus/jsonrpc/v2"
 )
 
-var ErrInvalidChainStates = errors.New("database chain state and file chain state are not the same")
+var (
+	ErrInvalidChainStates = errors.New("database chain state and file chain state are not the same")
+	ErrCannotBootstrap    = errors.New("no chain spec file or bootstrap url specified")
+	ErrChainIDConflict    = errors.New("cannot bootstrap from chain spec - there's a conflict between config Chain ID and chain spec Chain ID")
+)
 
 type Commander struct {
 	cfg                 *config.Config
@@ -191,7 +195,6 @@ func getChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, e
 }
 
 func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.BootstrapConfig) (*eth.Client, error) {
-	//chainID := chain.GetChainID() // TODO validate chain id later
 	if cfg.ChainSpecPath != nil {
 		return bootstrapFromChainState(chain, storage, cfg)
 
@@ -201,7 +204,7 @@ func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.
 		return bootstrapFromRemoteState(chain, storage, cfg)
 	}
 
-	return nil, errors.New("some fatal error") // TODO handle
+	return nil, ErrCannotBootstrap
 }
 
 func bootstrapFromChainState(
@@ -216,12 +219,7 @@ func bootstrapFromChainState(
 	fileChainState := makeChainStateFromChainSpec(chainSpec)
 	dbChainState, err := storage.GetChainState()
 	if st.IsNotFoundError(err) {
-		err := storage.SetChainState(fileChainState)
-		if err != nil {
-			return nil, err
-		}
-		log.Printf("Bootstrapping genesis state from chain spec file")
-		return createClientFromChainState(chain, fileChainState)
+		return bootstrapChainStateAndCommander(chain, storage, fileChainState)
 	}
 	if err != nil {
 		return nil, err
@@ -236,6 +234,23 @@ func bootstrapFromChainState(
 
 	log.Printf("Continuing from saved state on chainID = %s", fileChainState.ChainID.String())
 	return createClientFromChainState(chain, fileChainState)
+}
+
+func bootstrapChainStateAndCommander(
+	chain deployer.ChainConnection,
+	storage *st.Storage,
+	chainState *models.ChainState,
+) (*eth.Client, error) {
+	chainID := chain.GetChainID()
+	if chainID != chainState.ChainID {
+		return nil, ErrChainIDConflict
+	}
+	err := storage.SetChainState(chainState)
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("Bootstrapping genesis state from chain spec file")
+	return createClientFromChainState(chain, chainState)
 }
 
 func compareChainStates(chainStateA, chainStateB *models.ChainState) error {
