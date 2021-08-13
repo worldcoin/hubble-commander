@@ -5,9 +5,12 @@ import (
 	"os"
 	"testing"
 
+	cfg "github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
+	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"gopkg.in/yaml.v2"
 )
 
@@ -16,7 +19,7 @@ type ChainSpecTestSuite struct {
 	suite.Suite
 	storage    *st.TestStorage
 	config     *cfg.Config
-	chainState models.ChainState
+	chainState *models.ChainState
 	chainSpec  models.ChainSpec
 }
 
@@ -32,7 +35,7 @@ func (s *ChainSpecTestSuite) SetupTest() {
 	s.config.Ethereum = &cfg.EthereumConfig{
 		ChainID: "1337",
 	}
-	s.chainState = models.ChainState{
+	s.chainState = &models.ChainState{
 		ChainID:         models.MakeUint256(1337),
 		AccountRegistry: utils.RandomAddress(),
 		DeploymentBlock: 8837,
@@ -59,9 +62,7 @@ func (s *ChainSpecTestSuite) SetupTest() {
 		},
 		SyncedBlock: 7738,
 	}
-	err = s.storage.SetChainState(chainState)
-	s.NoError(err)
-	s.chainSpec = newChainSpec(chainState)
+	s.chainSpec = newChainSpec(s.chainState)
 }
 
 func (s *ChainSpecTestSuite) TearDownTest() {
@@ -70,7 +71,7 @@ func (s *ChainSpecTestSuite) TearDownTest() {
 }
 
 func (s *ChainSpecTestSuite) TestGenerateChainSpec() {
-	yamlChainSpec, err := GenerateChainSpec(&s.chainState)
+	yamlChainSpec, err := GenerateChainSpec(s.chainState)
 	s.NoError(err)
 	var chainSpec models.ChainSpec
 	err = yaml.Unmarshal([]byte(*yamlChainSpec), &chainSpec)
@@ -79,25 +80,19 @@ func (s *ChainSpecTestSuite) TestGenerateChainSpec() {
 }
 
 func (s *ChainSpecTestSuite) TestLoadChainSpec() {
-	chainState1337, err := s.storage.GetChainState(s.chainSpec.ChainID)
+	err := LoadChainSpec(s.config, &s.chainSpec)
+	s.NoError(err)
+	chainState, err := s.storage.GetChainState(s.chainSpec.ChainID)
 	s.NoError(err)
 
-	s.chainSpec.DeploymentBlock = 483924
-	s.chainSpec.ChainID = models.MakeUint256(4000)
+	s.NotEqual(*s.chainState, chainState)
 
-	err = LoadChainSpec(s.config, &s.chainSpec)
-	s.NoError(err)
-	chainState4000, err := s.storage.GetChainState(s.chainSpec.ChainID)
-	s.NoError(err)
-
-	s.NotEqual(chainState1337, chainState4000)
-
-	chainSpec := newChainSpec(chainState4000)
+	chainSpec := newChainSpec(chainState)
 	s.EqualValues(s.chainSpec, chainSpec)
 }
 
 func (s *ChainSpecTestSuite) TestReadChainSpecFile() {
-	yamlChainSpec, err := GenerateChainSpec(s.config)
+	yamlChainSpec, err := GenerateChainSpec(s.chainState)
 	s.NoError(err)
 
 	file, err := ioutil.TempFile("", "chain_state_test")
