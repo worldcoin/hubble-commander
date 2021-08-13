@@ -40,22 +40,22 @@ func NewUint256FromBig(value big.Int) *Uint256 {
 }
 
 func (u *Uint256) Add(other *Uint256) *Uint256 {
-	sum := uint256.NewInt().Add(&u.Int, &other.Int)
+	sum := uint256.NewInt(0).Add(&u.Int, &other.Int)
 	return &Uint256{*sum}
 }
 
 func (u *Uint256) Sub(other *Uint256) *Uint256 {
-	diff := uint256.NewInt().Sub(&u.Int, &other.Int)
+	diff := uint256.NewInt(0).Sub(&u.Int, &other.Int)
 	return &Uint256{*diff}
 }
 
 func (u *Uint256) Mul(other *Uint256) *Uint256 {
-	product := uint256.NewInt().Mul(&u.Int, &other.Int)
+	product := uint256.NewInt(0).Mul(&u.Int, &other.Int)
 	return &Uint256{*product}
 }
 
 func (u *Uint256) Div(other *Uint256) *Uint256 {
-	quotient := uint256.NewInt().Div(&u.Int, &other.Int)
+	quotient := uint256.NewInt(0).Div(&u.Int, &other.Int)
 	return &Uint256{*quotient}
 }
 
