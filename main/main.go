@@ -50,7 +50,7 @@ func handleDeployCommand(args []string) {
 }
 
 func setupCommander() *commander.Commander {
-	cfg := getConfig()
+	cfg := config.GetConfig()
 
 	configureLogger(cfg)
 	logConfig(cfg)
@@ -80,10 +80,6 @@ func deployCommanderContracts(filename string) {
 		log.Fatalf("%+v", err)
 	}
 	log.Printf(*chainSpec)
-}
-
-func getConfig() *config.Config {
-	return config.GetConfig()
 }
 
 func configureLogger(cfg *config.Config) {
