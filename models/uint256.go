@@ -129,17 +129,7 @@ func (u *Uint256) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	bigValue, ok := new(big.Int).SetString(str, 10)
-	if !ok {
-		return ErrUnmarshalUint256
-	}
-
-	overflow := u.Int.SetFromBig(bigValue)
-	if overflow {
-		return ErrUnmarshalUint256
-	}
-
-	return nil
+	return u.safeSetUint256FromString(str)
 }
 
 func (u Uint256) MarshalYAML() (interface{}, error) {
@@ -153,6 +143,14 @@ func (u *Uint256) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
+	return u.safeSetUint256FromString(str)
+}
+
+func (u *Uint256) SetBytes(data []byte) {
+	u.Int.SetBytes(data)
+}
+
+func (u *Uint256) safeSetUint256FromString(str string) error {
 	bigValue, ok := new(big.Int).SetString(str, 10)
 	if !ok {
 		return ErrUnmarshalUint256
@@ -164,8 +162,4 @@ func (u *Uint256) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	return nil
-}
-
-func (u *Uint256) SetBytes(data []byte) {
-	u.Int.SetBytes(data)
 }
