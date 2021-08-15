@@ -13,7 +13,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var CLIHelpMessage = "start or deploy subcommand is required"
+var CLIHelpMessage = "Available subcommands:\n" +
+	"  start - starts the commander\n" +
+	"  deploy - deploys contracts and saves chain spec to file. Flags:\n" +
+	"    -file=chain-spec.yaml - target file to save the chain spec to"
 
 func main() {
 	if len(os.Args) < 2 {
@@ -32,7 +35,7 @@ func main() {
 
 func handleDeployCommand(args []string) {
 	deployCommand := flag.NewFlagSet("deploy", flag.ExitOnError)
-	chainSpecFile := deployCommand.String("file", "chain-spec.yaml", "TODO")
+	chainSpecFile := deployCommand.String("file", "chain-spec.yaml", "")
 	err := deployCommand.Parse(args)
 	if err != nil {
 		log.Fatal(err)
