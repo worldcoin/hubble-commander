@@ -13,9 +13,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var CLIHelpMessage = "start or deploy subcommand is required"
+
 func main() {
 	if len(os.Args) < 2 {
-		log.Fatal("start or deploy subcommand is required")
+		log.Fatal(CLIHelpMessage)
 	}
 
 	switch os.Args[1] {
@@ -24,8 +26,7 @@ func main() {
 	case "deploy":
 		handleDeployCommand(os.Args[2:])
 	default:
-		flag.PrintDefaults()
-		os.Exit(1)
+		log.Fatal(CLIHelpMessage)
 	}
 }
 
