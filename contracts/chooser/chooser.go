@@ -4,6 +4,7 @@
 package chooser
 
 import (
+	"errors"
 	"math/big"
 	"strings"
 
@@ -17,6 +18,7 @@ import (
 
 // Reference imports to suppress errors if they are not otherwise used.
 var (
+	_ = errors.New
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
@@ -26,8 +28,14 @@ var (
 	_ = event.NewSubscription
 )
 
+// ChooserMetaData contains all meta data concerning the Chooser contract.
+var ChooserMetaData = &bind.MetaData{
+	ABI: "[{\"inputs\":[],\"name\":\"getProposer\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"proposer\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
+}
+
 // ChooserABI is the input ABI used to generate the binding from.
-const ChooserABI = "[{\"inputs\":[],\"name\":\"getProposer\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"proposer\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
+// Deprecated: Use ChooserMetaData.ABI instead.
+var ChooserABI = ChooserMetaData.ABI
 
 // Chooser is an auto generated Go binding around an Ethereum contract.
 type Chooser struct {

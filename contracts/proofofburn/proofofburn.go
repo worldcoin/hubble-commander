@@ -4,6 +4,7 @@
 package proofofburn
 
 import (
+	"errors"
 	"math/big"
 	"strings"
 
@@ -17,6 +18,7 @@ import (
 
 // Reference imports to suppress errors if they are not otherwise used.
 var (
+	_ = errors.New
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
@@ -26,20 +28,31 @@ var (
 	_ = event.NewSubscription
 )
 
+// ProofOfBurnMetaData contains all meta data concerning the ProofOfBurn contract.
+var ProofOfBurnMetaData = &bind.MetaData{
+	ABI: "[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"coordinator\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getProposer\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
+	Bin: "0x608060405234801561001057600080fd5b50600080546001600160a01b03191633179055608a806100316000396000f3fe6080604052348015600f57600080fd5b506004361060325760003560e01c80630a009097146037578063e9790d02146059575b600080fd5b603d605f565b604080516001600160a01b039092168252519081900360200190f35b603d606e565b6000546001600160a01b031681565b6000546001600160a01b03169056fea164736f6c634300060c000a",
+}
+
 // ProofOfBurnABI is the input ABI used to generate the binding from.
-const ProofOfBurnABI = "[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"coordinator\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getProposer\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
+// Deprecated: Use ProofOfBurnMetaData.ABI instead.
+var ProofOfBurnABI = ProofOfBurnMetaData.ABI
 
 // ProofOfBurnBin is the compiled bytecode used for deploying new contracts.
-var ProofOfBurnBin = "0x608060405234801561001057600080fd5b50600080546001600160a01b03191633179055608a806100316000396000f3fe6080604052348015600f57600080fd5b506004361060325760003560e01c80630a009097146037578063e9790d02146059575b600080fd5b603d605f565b604080516001600160a01b039092168252519081900360200190f35b603d606e565b6000546001600160a01b031681565b6000546001600160a01b03169056fea164736f6c634300060c000a"
+// Deprecated: Use ProofOfBurnMetaData.Bin instead.
+var ProofOfBurnBin = ProofOfBurnMetaData.Bin
 
 // DeployProofOfBurn deploys a new Ethereum contract, binding an instance of ProofOfBurn to it.
 func DeployProofOfBurn(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *ProofOfBurn, error) {
-	parsed, err := abi.JSON(strings.NewReader(ProofOfBurnABI))
+	parsed, err := ProofOfBurnMetaData.GetAbi()
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
+	if parsed == nil {
+		return common.Address{}, nil, nil, errors.New("GetABI returned nil")
+	}
 
-	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(ProofOfBurnBin), backend)
+	address, tx, contract, err := bind.DeployContract(auth, *parsed, common.FromHex(ProofOfBurnBin), backend)
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}

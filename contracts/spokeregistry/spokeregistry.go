@@ -4,6 +4,7 @@
 package spokeregistry
 
 import (
+	"errors"
 	"math/big"
 	"strings"
 
@@ -17,6 +18,7 @@ import (
 
 // Reference imports to suppress errors if they are not otherwise used.
 var (
+	_ = errors.New
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
@@ -26,20 +28,31 @@ var (
 	_ = event.NewSubscription
 )
 
+// SpokeRegistryMetaData contains all meta data concerning the SpokeRegistry contract.
+var SpokeRegistryMetaData = &bind.MetaData{
+	ABI: "[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"spokeID\",\"type\":\"uint256\"}],\"name\":\"getSpokeAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"numSpokes\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spokeContract\",\"type\":\"address\"}],\"name\":\"registerSpoke\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"registeredSpokes\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
+	Bin: "0x608060405234801561001057600080fd5b5061016a806100206000396000f3fe608060405234801561001057600080fd5b506004361061004c5760003560e01c806350177aef146100515780639307139714610079578063d9bc6c2414610093578063da2fd3df146100cc575b600080fd5b6100776004803603602081101561006757600080fd5b50356001600160a01b03166100e9565b005b610081610121565b60408051918252519081900360200190f35b6100b0600480360360208110156100a957600080fd5b5035610127565b604080516001600160a01b039092168252519081900360200190f35b6100b0600480360360208110156100e257600080fd5b5035610142565b60018054810190819055600090815260208190526040902080546001600160a01b0319166001600160a01b0392909216919091179055565b60015481565b6000602081905290815260409020546001600160a01b031681565b6000908152602081905260409020546001600160a01b03169056fea164736f6c634300060c000a",
+}
+
 // SpokeRegistryABI is the input ABI used to generate the binding from.
-const SpokeRegistryABI = "[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"spokeID\",\"type\":\"uint256\"}],\"name\":\"getSpokeAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"numSpokes\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spokeContract\",\"type\":\"address\"}],\"name\":\"registerSpoke\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"registeredSpokes\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
+// Deprecated: Use SpokeRegistryMetaData.ABI instead.
+var SpokeRegistryABI = SpokeRegistryMetaData.ABI
 
 // SpokeRegistryBin is the compiled bytecode used for deploying new contracts.
-var SpokeRegistryBin = "0x608060405234801561001057600080fd5b5061016a806100206000396000f3fe608060405234801561001057600080fd5b506004361061004c5760003560e01c806350177aef146100515780639307139714610079578063d9bc6c2414610093578063da2fd3df146100cc575b600080fd5b6100776004803603602081101561006757600080fd5b50356001600160a01b03166100e9565b005b610081610121565b60408051918252519081900360200190f35b6100b0600480360360208110156100a957600080fd5b5035610127565b604080516001600160a01b039092168252519081900360200190f35b6100b0600480360360208110156100e257600080fd5b5035610142565b60018054810190819055600090815260208190526040902080546001600160a01b0319166001600160a01b0392909216919091179055565b60015481565b6000602081905290815260409020546001600160a01b031681565b6000908152602081905260409020546001600160a01b03169056fea164736f6c634300060c000a"
+// Deprecated: Use SpokeRegistryMetaData.Bin instead.
+var SpokeRegistryBin = SpokeRegistryMetaData.Bin
 
 // DeploySpokeRegistry deploys a new Ethereum contract, binding an instance of SpokeRegistry to it.
 func DeploySpokeRegistry(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *SpokeRegistry, error) {
-	parsed, err := abi.JSON(strings.NewReader(SpokeRegistryABI))
+	parsed, err := SpokeRegistryMetaData.GetAbi()
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
+	if parsed == nil {
+		return common.Address{}, nil, nil, errors.New("GetABI returned nil")
+	}
 
-	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(SpokeRegistryBin), backend)
+	address, tx, contract, err := bind.DeployContract(auth, *parsed, common.FromHex(SpokeRegistryBin), backend)
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
