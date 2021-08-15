@@ -22,21 +22,12 @@ func main() {
 
 	switch os.Args[1] {
 	case "start":
-		handleStartCommand(os.Args[2:])
+		startCommander()
 	case "deploy":
 		handleDeployCommand(os.Args[2:])
 	default:
 		log.Fatal(CLIHelpMessage)
 	}
-}
-
-func handleStartCommand(args []string) {
-	startCommand := flag.NewFlagSet("start", flag.ExitOnError)
-	err := startCommand.Parse(args)
-	if err != nil {
-		log.Fatal(err)
-	}
-	startCommander()
 }
 
 func handleDeployCommand(args []string) {
