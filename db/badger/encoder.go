@@ -9,7 +9,7 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-// nolint:gocyclo
+// nolint:gocyclo, funlen
 // Encode Remember to provide cases for both value and pointer types when adding new encoders
 func Encode(value interface{}) ([]byte, error) {
 	switch v := value.(type) {

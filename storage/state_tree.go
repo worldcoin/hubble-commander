@@ -227,19 +227,19 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (models.Wit
 }
 
 func (s *StateTree) getLeafByPubKeyIDAndTokenID(pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
-	leaves := make([]models.FlatStateLeaf, 0, 1)
-	err := s.database.Badger.Find(
-		&leaves,
+	var leaf models.FlatStateLeaf
+	err := s.database.Badger.FindOne(
+		&leaf,
 		bh.Where("TokenID").Eq(tokenID).
 			And("PubKeyID").Eq(pubKeyID).Index("PubKeyID"),
 	)
 	if err != nil {
 		return nil, err
 	}
-	if len(leaves) == 0 {
+	if err == bh.ErrNotFound {
 		return nil, NewNotFoundError("state leaf")
 	}
-	return leaves[0].StateLeaf(), nil
+	return leaf.StateLeaf(), nil
 }
 
 func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, error) {

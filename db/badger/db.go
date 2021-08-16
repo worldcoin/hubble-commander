@@ -68,6 +68,13 @@ func (d *Database) Find(result interface{}, query *bh.Query) error {
 	return d.store.Find(result, query)
 }
 
+func (d *Database) FindOne(result interface{}, query *bh.Query) error {
+	if d.duringTransaction() {
+		return d.store.TxFindOne(d.txn, result, query)
+	}
+	return d.store.FindOne(result, query)
+}
+
 func (d *Database) Get(key, result interface{}) error {
 	if d.duringTransaction() {
 		return d.store.TxGet(d.txn, key, result)

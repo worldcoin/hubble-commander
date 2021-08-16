@@ -59,19 +59,19 @@ func (s *BatchStorage) GetMinedBatch(batchID models.Uint256) (*models.Batch, err
 }
 
 func (s *BatchStorage) GetBatchByHash(batchHash common.Hash) (*models.Batch, error) {
-	batches := make([]models.Batch, 0, 1)
-	err := s.database.Badger.Find(
-		&batches,
+	var batch models.Batch
+	err := s.database.Badger.FindOne(
+		&batch,
 		bh.Where("Hash").Eq(batchHash).Index("Hash"),
 	)
+	if err == bh.ErrNotFound {
+		return nil, NewNotFoundError("batch")
+	}
 	if err != nil {
 		return nil, err
 	}
-	if len(batches) == 0 {
-		return nil, NewNotFoundError("batch")
-	}
 
-	return &batches[0], nil
+	return &batch, nil
 }
 
 func (s *BatchStorage) GetLatestSubmittedBatch() (*models.Batch, error) {
