@@ -67,7 +67,6 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 			ExposedPorts: map[nat.Port]struct{}{
 				"8080/tcp": {},
 			},
-			Cmd: []string{"build/hubble start"},
 		},
 		&container.HostConfig{
 			NetworkMode: networkMode,
