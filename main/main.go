@@ -38,7 +38,7 @@ func handleDeployCommand(args []string) {
 	chainSpecFile := deployCommand.String("file", "chain-spec.yaml", "")
 	err := deployCommand.Parse(args)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("%+v", err)
 	}
 	deployCommanderContracts(*chainSpecFile)
 }
