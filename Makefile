@@ -37,10 +37,10 @@ run:
 	go run ./main/main.go
 
 run-prune:
-	go run ./main/main.go -prune
+	HUBBLE_BOOTSTRAP_PRUNE=true go run ./main/main.go start
 
 run-dev:
-	go run ./main/main.go -prune -disable-signatures
+	HUBBLE_BOOTSTRAP_PRUNE=true HUBBLE_ROLLUP_DISABLE_SIGNATURES=true go run ./main/main.go start
 
 lint:
 	golangci-lint run ./...
