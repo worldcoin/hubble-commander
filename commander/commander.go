@@ -24,9 +24,11 @@ import (
 )
 
 var (
-	ErrInvalidChainStates = errors.New("database chain state and file chain state are not the same")
-	ErrCannotBootstrap    = errors.New("cannot bootstrap - no chain spec file or bootstrap url specified")
-	ErrChainIDConflict    = errors.New("cannot bootstrap from chain spec - there's a conflict between config Chain ID and chain spec Chain ID")
+	ErrInvalidChainStates        = errors.New("database chain state and file chain state are not the same")
+	ErrCannotBootstrap           = errors.New("cannot bootstrap - no chain spec file or bootstrap url specified")
+	ErrChainSpecChainIDConflict  = errors.New("cannot bootstrap from chain spec - there's a conflict between config Chain ID and chain spec Chain ID")
+	ErrDatabaseChainIDConflict   = errors.New("cannot bootstrap from chain spec - there's a conflict between config Chain ID and Chain ID saved in the database")
+	ErrRemoteNodeChainIDConflict = errors.New("cannot bootstrap from remote node - there's a conflict between config Chain ID and Chain ID saved in the database")
 )
 
 type Commander struct {
@@ -72,7 +74,7 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.client, err = getClient(chain, c.storage, c.cfg.Bootstrap)
+	c.client, err = getClient(chain, c.storage, c.cfg)
 	if err != nil {
 		return err
 	}
@@ -194,13 +196,13 @@ func getChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, e
 	return deployer.NewRPCChainConnection(cfg)
 }
 
-func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.BootstrapConfig) (*eth.Client, error) {
-	if cfg.ChainSpecPath != nil {
+func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.Config) (*eth.Client, error) {
+	if cfg.Bootstrap.ChainSpecPath != nil {
 		return bootstrapFromChainState(chain, storage, cfg)
 
 	}
-	if cfg.BootstrapNodeURL != nil {
-		log.Printf("Bootstrapping genesis state from node %s", *cfg.BootstrapNodeURL)
+	if cfg.Bootstrap.BootstrapNodeURL != nil {
+		log.Printf("Bootstrapping genesis state from node %s", *cfg.Bootstrap.BootstrapNodeURL)
 		return bootstrapFromRemoteState(chain, storage, cfg)
 	}
 
@@ -210,28 +212,32 @@ func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.
 func bootstrapFromChainState(
 	chain deployer.ChainConnection,
 	storage *st.Storage,
-	cfg *config.BootstrapConfig,
+	cfg *config.Config,
 ) (*eth.Client, error) {
-	chainSpec, err := ReadChainSpecFile(*cfg.ChainSpecPath)
+	chainSpec, err := ReadChainSpecFile(*cfg.Bootstrap.ChainSpecPath)
 	if err != nil {
 		return nil, err
 	}
-	fileChainState := makeChainStateFromChainSpec(chainSpec)
+	importedChainState := makeChainStateFromChainSpec(chainSpec)
 	dbChainState, err := storage.GetChainState()
 	if st.IsNotFoundError(err) {
-		return bootstrapChainStateAndCommander(chain, storage, fileChainState)
+		return bootstrapChainStateAndCommander(chain, storage, importedChainState)
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	err = compareChainStates(fileChainState, dbChainState)
+	if dbChainState.ChainID.String() != cfg.Ethereum.ChainID {
+		return nil, ErrDatabaseChainIDConflict
+	}
+
+	err = compareChainStates(importedChainState, dbChainState)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Printf("Continuing from saved state on chainID = %s", fileChainState.ChainID.String())
-	return createClientFromChainState(chain, fileChainState)
+	log.Printf("Continuing from saved state on ChainID = %s", importedChainState.ChainID.String())
+	return createClientFromChainState(chain, importedChainState)
 }
 
 func bootstrapChainStateAndCommander(
@@ -241,7 +247,7 @@ func bootstrapChainStateAndCommander(
 ) (*eth.Client, error) {
 	chainID := chain.GetChainID()
 	if chainID != chainState.ChainID {
-		return nil, ErrChainIDConflict
+		return nil, ErrChainSpecChainIDConflict
 	}
 	err := storage.SetChainState(chainState)
 	if err != nil {
@@ -274,11 +280,15 @@ func compareChainStates(chainStateA, chainStateB *models.ChainState) error {
 func bootstrapFromRemoteState(
 	chain deployer.ChainConnection,
 	storage *st.Storage,
-	cfg *config.BootstrapConfig,
+	cfg *config.Config,
 ) (*eth.Client, error) {
-	chainState, err := fetchChainStateFromRemoteNode(*cfg.BootstrapNodeURL)
+	chainState, err := fetchChainStateFromRemoteNode(*cfg.Bootstrap.BootstrapNodeURL)
 	if err != nil {
 		return nil, err
+	}
+
+	if chainState.ChainID.String() != cfg.Ethereum.ChainID {
+		return nil, ErrRemoteNodeChainIDConflict
 	}
 
 	err = PopulateGenesisAccounts(storage, chainState.GenesisAccounts)
