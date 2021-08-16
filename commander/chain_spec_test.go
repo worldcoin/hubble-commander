@@ -5,9 +5,7 @@ import (
 	"os"
 	"testing"
 
-	cfg "github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
-	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -17,8 +15,6 @@ import (
 type ChainSpecTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage    *st.TestStorage
-	config     *cfg.Config
 	chainState *models.ChainState
 	chainSpec  models.ChainSpec
 }
@@ -28,13 +24,6 @@ func (s *ChainSpecTestSuite) SetupSuite() {
 }
 
 func (s *ChainSpecTestSuite) SetupTest() {
-	var err error
-	s.storage, err = st.NewTestStorage()
-	s.NoError(err)
-	s.config = cfg.GetTestConfig()
-	s.config.Ethereum = &cfg.EthereumConfig{
-		ChainID: "1337",
-	}
 	s.chainState = &models.ChainState{
 		ChainID:         models.MakeUint256(1337),
 		AccountRegistry: utils.RandomAddress(),
@@ -63,11 +52,6 @@ func (s *ChainSpecTestSuite) SetupTest() {
 		SyncedBlock: 7738,
 	}
 	s.chainSpec = newChainSpec(s.chainState)
-}
-
-func (s *ChainSpecTestSuite) TearDownTest() {
-	err := s.storage.Teardown()
-	s.NoError(err)
 }
 
 func (s *ChainSpecTestSuite) TestGenerateChainSpec() {
