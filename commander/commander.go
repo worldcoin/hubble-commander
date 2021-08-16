@@ -225,11 +225,9 @@ func bootstrapFromChainState(
 		return nil, err
 	}
 
-	if dbChainState != nil {
-		err = compareChainStates(fileChainState, dbChainState)
-		if err != nil {
-			return nil, err
-		}
+	err = compareChainStates(fileChainState, dbChainState)
+	if err != nil {
+		return nil, err
 	}
 
 	log.Printf("Continuing from saved state on chainID = %s", fileChainState.ChainID.String())
