@@ -19,7 +19,7 @@ generate:
 build: clean compile
 
 setup-db:
-	rm -rf db/badger/data
+	rm -rf db/badger/data/hubble
 	docker-compose up -d postgres
 
 start-geth-locally:
