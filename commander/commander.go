@@ -25,7 +25,7 @@ import (
 
 var (
 	ErrInvalidChainStates = errors.New("database chain state and file chain state are not the same")
-	ErrCannotBootstrap    = errors.New("no chain spec file or bootstrap url specified")
+	ErrCannotBootstrap    = errors.New("cannot bootstrap - no chain spec file or bootstrap url specified")
 	ErrChainIDConflict    = errors.New("cannot bootstrap from chain spec - there's a conflict between config Chain ID and chain spec Chain ID")
 )
 
