@@ -33,6 +33,11 @@ func getUint32(key string, fallback uint32) uint32 {
 	return viper.GetUint32(key)
 }
 
+func getBool(key string, fallback bool) bool {
+	viper.SetDefault(key, fallback)
+	return viper.GetBool(key)
+}
+
 func getDuration(key string, fallback time.Duration) time.Duration {
 	viper.SetDefault(key, fallback)
 	return viper.GetDuration(key)

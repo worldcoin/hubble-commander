@@ -3,12 +3,13 @@ package models
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"fmt"
 	"math/big"
 
 	"github.com/holiman/uint256"
 	"github.com/pkg/errors"
 )
+
+var ErrUnmarshalUint256 = errors.New("error unmarshalling Uint256")
 
 type Uint256 struct {
 	uint256.Int
@@ -83,6 +84,10 @@ func (u *Uint256) CmpN(other uint64) int {
 	return u.Cmp(NewUint256(other))
 }
 
+func (u *Uint256) String() string {
+	return u.Int.ToBig().Text(10)
+}
+
 // Scan implements Scanner for database/sql.
 func (u *Uint256) Scan(src interface{}) error {
 	errorMessage := "can't scan %T into Uint256"
@@ -106,15 +111,11 @@ func (u *Uint256) Scan(src interface{}) error {
 
 // Value implements valuer for database/sql.
 func (u Uint256) Value() (driver.Value, error) {
-	return u.Int.ToBig().Text(10), nil
-}
-
-func (u *Uint256) String() string {
-	return u.Int.ToBig().Text(10)
+	return u.String(), nil
 }
 
 func (u Uint256) MarshalJSON() ([]byte, error) {
-	jsonText, err := json.Marshal(u.Int.ToBig().Text(10))
+	jsonText, err := json.Marshal(u.String())
 	if err != nil {
 		return nil, err
 	}
@@ -128,21 +129,37 @@ func (u *Uint256) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	errorMessage := "error unmarshalling Uint256"
+	return u.safeSetUint256FromString(str)
+}
 
-	bigValue, ok := new(big.Int).SetString(str, 10)
-	if !ok {
-		return fmt.Errorf(errorMessage)
+func (u Uint256) MarshalYAML() (interface{}, error) {
+	return u.String(), nil
+}
+
+func (u *Uint256) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var str string
+	err := unmarshal(&str)
+	if err != nil {
+		return err
 	}
 
-	overflow := u.Int.SetFromBig(bigValue)
-	if overflow {
-		return errors.Errorf(errorMessage)
-	}
-
-	return nil
+	return u.safeSetUint256FromString(str)
 }
 
 func (u *Uint256) SetBytes(data []byte) {
 	u.Int.SetBytes(data)
+}
+
+func (u *Uint256) safeSetUint256FromString(str string) error {
+	bigValue, ok := new(big.Int).SetString(str, 10)
+	if !ok {
+		return ErrUnmarshalUint256
+	}
+
+	overflow := u.Int.SetFromBig(bigValue)
+	if overflow {
+		return ErrUnmarshalUint256
+	}
+
+	return nil
 }

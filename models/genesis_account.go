@@ -25,9 +25,9 @@ type RegisteredGenesisAccount struct {
 }
 
 type PopulatedGenesisAccount struct {
-	PublicKey PublicKey
-	PubKeyID  uint32
-	StateID   uint32
+	PublicKey PublicKey `yaml:"public_key"`
+	PubKeyID  uint32    `yaml:"pub_key_id"`
+	StateID   uint32    `yaml:"state_id"`
 	Balance   Uint256
 }
 

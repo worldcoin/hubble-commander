@@ -33,7 +33,7 @@ func GetConfig() *Config {
 	return &Config{
 		Log: getLogConfig(),
 		Bootstrap: &BootstrapConfig{
-			Prune:            false, // overridden in main
+			Prune:            getBool("bootstrap.prune", false),
 			GenesisAccounts:  getGenesisAccounts(),
 			BootstrapNodeURL: getStringOrNil("bootstrap.node_url"),
 		},
@@ -46,7 +46,7 @@ func GetConfig() *Config {
 			MaxCommitmentsPerBatch: getUint32("rollup.max_commitments_per_batch", 32),
 			CommitmentLoopInterval: getDuration("rollup.commitment_loop_interval", 500*time.Millisecond),
 			BatchLoopInterval:      getDuration("rollup.batch_loop_interval", 500*time.Millisecond),
-			DisableSignatures:      false, // overridden in main
+			DisableSignatures:      getBool("rollup.disable_signatures", false),
 		},
 		API: &APIConfig{
 			Version: "0.0.1",

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,8 +14,44 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var (
+	deployCommand = flag.NewFlagSet("deploy", flag.ExitOnError)
+	chainSpecFile = deployCommand.String("file", "chain-spec.yaml", "target file to save the chain spec to")
+)
+
+func exitWithHelpMessage() {
+	fmt.Printf("Subcommand required:\n" +
+		"start - starts the commander\n" +
+		"deploy - deploys contracts and saves chain spec. Usage:\n")
+	deployCommand.PrintDefaults()
+	os.Exit(1)
+}
+
 func main() {
-	cfg := getConfig()
+	if len(os.Args) < 2 {
+		exitWithHelpMessage()
+	}
+
+	switch os.Args[1] {
+	case "start":
+		startCommander()
+	case "deploy":
+		handleDeployCommand(os.Args[2:])
+	default:
+		exitWithHelpMessage()
+	}
+}
+
+func handleDeployCommand(args []string) {
+	err := deployCommand.Parse(args)
+	if err != nil {
+		log.Fatalf("%+v", err)
+	}
+	deployCommanderContracts(*chainSpecFile)
+}
+
+func setupCommander() *commander.Commander {
+	cfg := config.GetConfig()
 
 	configureLogger(cfg)
 	logConfig(cfg)
@@ -22,21 +59,28 @@ func main() {
 
 	setupCloseHandler(cmd)
 
+	return cmd
+}
+
+func startCommander() {
+	cmd := setupCommander()
 	err := cmd.StartAndWait()
 	if err != nil {
 		log.Fatalf("%+v", err)
 	}
 }
 
-func getConfig() *config.Config {
-	prune := flag.Bool("prune", false, "drop database before running app")
-	disableSignatures := flag.Bool("disable-signatures", false, "disable signature verification")
-	flag.Parse()
-
-	cfg := config.GetConfig()
-	cfg.Bootstrap.Prune = *prune
-	cfg.Rollup.DisableSignatures = *disableSignatures
-	return cfg
+func deployCommanderContracts(filename string) {
+	cmd := setupCommander()
+	chainSpec, err := cmd.Deploy()
+	if err != nil {
+		log.Fatalf("%+v", err)
+	}
+	err = os.WriteFile(filename, []byte(*chainSpec), 0600)
+	if err != nil {
+		log.Fatalf("%+v", err)
+	}
+	log.Printf(*chainSpec)
 }
 
 func configureLogger(cfg *config.Config) {

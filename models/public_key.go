@@ -76,6 +76,23 @@ func (p *PublicKey) UnmarshalJSON(input []byte) error {
 	return hexutil.UnmarshalFixedJSON(publicKeyT, input, p[:])
 }
 
+func (p *PublicKey) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var publicKey string
+	err := unmarshal(&publicKey)
+	if err != nil {
+		return err
+	}
+	decodedHex, err := hexutil.Decode(publicKey)
+	if err != nil {
+		return err
+	}
+	if len(decodedHex) != PublicKeyLength {
+		return ErrInvalidPublicKeyLength
+	}
+	copy(p[:], decodedHex)
+	return err
+}
+
 // nolint:gocritic
 func (p PublicKey) MarshalText() ([]byte, error) {
 	return hexutil.Bytes(p[:]).MarshalText()
