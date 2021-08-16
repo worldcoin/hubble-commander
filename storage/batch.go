@@ -2,7 +2,9 @@ package storage
 
 import (
 	"github.com/Masterminds/squirrel"
+	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/models"
+	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	bh "github.com/timshannon/badgerhold/v3"
 )
@@ -73,56 +75,36 @@ func (s *BatchStorage) GetBatchByHash(batchHash common.Hash) (*models.Batch, err
 }
 
 func (s *BatchStorage) GetLatestSubmittedBatch() (*models.Batch, error) {
-	res := make([]models.Batch, 0, 1)
-	err := s.database.Postgres.Query(
-		s.database.QB.Select("*").
-			From("batch").
-			Where(squirrel.NotEq{"batch_hash": nil}).
-			OrderBy("batch_id DESC").
-			Limit(1),
-	).Into(&res)
+	batch, err := s.reverseIterateBatches(func(batch *models.Batch) bool {
+		return batch.Hash != nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	if len(res) == 0 {
-		return nil, NewNotFoundError("batch")
-	}
-	return &res[0], nil
+	return batch, nil
 }
 
 func (s *BatchStorage) GetNextBatchID() (*models.Uint256, error) {
-	res := make([]models.Uint256, 0, 1)
-	err := s.database.Postgres.Query(
-		s.database.QB.Select("batch_id").
-			From("batch").
-			OrderBy("batch_id DESC").
-			Limit(1),
-	).Into(&res)
+	batch, err := s.reverseIterateBatches(func(batch *models.Batch) bool {
+		return true
+	})
+	if IsNotFoundError(err) {
+		return models.NewUint256(0), nil
+	}
 	if err != nil {
 		return nil, err
 	}
-	if len(res) == 0 {
-		return models.NewUint256(1), nil
-	}
-	return res[0].AddN(1), nil
+	return batch.ID.AddN(1), nil
 }
 
 func (s *BatchStorage) GetLatestFinalisedBatch(currentBlockNumber uint32) (*models.Batch, error) {
-	res := make([]models.Batch, 0, 1)
-	err := s.database.Postgres.Query(
-		s.database.QB.Select("*").
-			From("batch").
-			Where(squirrel.LtOrEq{"finalisation_block": currentBlockNumber}). // nolint:misspell
-			OrderBy("finalisation_block DESC").                               // nolint:misspell
-			Limit(1),
-	).Into(&res)
+	batch, err := s.reverseIterateBatches(func(batch *models.Batch) bool {
+		return batch.FinalisationBlock != nil && *batch.FinalisationBlock <= currentBlockNumber
+	})
 	if err != nil {
 		return nil, err
 	}
-	if len(res) == 0 {
-		return nil, NewNotFoundError("batch")
-	}
-	return &res[0], nil
+	return batch, nil
 }
 
 func (s *BatchStorage) GetBatchesInRange(from, to *models.Uint256) ([]models.Batch, error) {
@@ -182,4 +164,38 @@ func (s *Storage) GetBatchByCommitmentID(commitmentID int32) (*models.Batch, err
 		return nil, NewNotFoundError("batch")
 	}
 	return &res[0], nil
+}
+
+func (s *BatchStorage) reverseIterateBatches(filter func(batch *models.Batch) bool) (*models.Batch, error) {
+	var batch models.Batch
+	err := s.database.Badger.View(func(txn *bdg.Txn) error {
+		opts := bdg.DefaultIteratorOptions
+		opts.PrefetchValues = false
+		opts.Reverse = true
+		it := txn.NewIterator(opts)
+		defer it.Close()
+
+		seekPrefix := make([]byte, 0, len(models.BatchPrefix)+1)
+		seekPrefix = append(seekPrefix, models.BatchPrefix...)
+		seekPrefix = append(seekPrefix, 0xFF) // Required to loop backwards
+
+		for it.Seek(seekPrefix); it.ValidForPrefix(models.BatchPrefix); it.Next() {
+			err := it.Item().Value(func(v []byte) error {
+				return badger.Decode(v, &batch)
+			})
+			if err != nil {
+				return err
+			}
+
+			if filter(&batch) {
+				return nil
+			}
+		}
+		return NewNotFoundError("batch")
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &batch, nil
 }

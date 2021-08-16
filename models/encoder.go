@@ -27,7 +27,7 @@ func encodePointer(length int, value ByteEncoder) []byte {
 	return b
 }
 
-func encodeHashPointer(value *common.Hash) []byte {
+func EncodeHashPointer(value *common.Hash) []byte {
 	b := make([]byte, 33)
 	if value == nil {
 		return b
@@ -37,7 +37,7 @@ func encodeHashPointer(value *common.Hash) []byte {
 	return b
 }
 
-func decodeHashPointer(data []byte) *common.Hash {
+func DecodeHashPointer(data []byte) *common.Hash {
 	if data[0] == 0 {
 		return nil
 	}

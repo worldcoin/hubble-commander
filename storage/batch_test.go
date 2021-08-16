@@ -146,6 +146,7 @@ func (s *BatchTestSuite) TestGetMinedBatch_NonExistentBatch() {
 }
 
 func (s *BatchTestSuite) TestGetBatchByCommitmentID() {
+	s.T().SkipNow()
 	batch := &models.Batch{
 		ID:                models.MakeUint256(1),
 		Type:              txtype.Transfer,
@@ -176,6 +177,7 @@ func (s *BatchTestSuite) TestGetBatchByCommitmentID() {
 }
 
 func (s *BatchTestSuite) TestGetBatchByCommitmentID_NotExistentBatch() {
+	s.T().SkipNow()
 	commitment := &models.Commitment{
 		Type:              txtype.Transfer,
 		Transactions:      []byte{1, 2, 3},

@@ -30,19 +30,19 @@ func Test_EncodePointer_NilValue(t *testing.T) {
 
 func Test_EncodeHashPointer(t *testing.T) {
 	hash := &common.Hash{1, 2, 3, 4}
-	bytes := encodeHashPointer(hash)
+	bytes := EncodeHashPointer(hash)
 	require.EqualValues(t, 1, bytes[0])
 
-	decodedValue := decodeHashPointer(bytes)
+	decodedValue := DecodeHashPointer(bytes)
 	require.Equal(t, *hash, *decodedValue)
 }
 
 func Test_EncodeHashPointer_NilValue(t *testing.T) {
 	var hash *common.Hash
-	bytes := encodeHashPointer(hash)
+	bytes := EncodeHashPointer(hash)
 	require.EqualValues(t, 0, bytes[0])
 
-	decodedValue := decodeHashPointer(bytes)
+	decodedValue := DecodeHashPointer(bytes)
 	require.Nil(t, decodedValue)
 }
 

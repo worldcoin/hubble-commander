@@ -49,6 +49,10 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Bytes(), nil
 	case *models.Uint256:
 		return nil, errors.Errorf("pass by value")
+	case common.Hash:
+		return v.Bytes(), nil
+	case *common.Hash:
+		return models.EncodeHashPointer(v), nil
 	case uint32:
 		return EncodeUint32(&v)
 	case *uint32:
@@ -83,6 +87,8 @@ func Decode(data []byte, value interface{}) error {
 	case *models.Uint256:
 		v.SetBytes(data)
 		return nil
+	case *common.Hash:
+		return decodeHashPointer(data, &value, v)
 	case *uint32:
 		return DecodeUint32(data, v)
 	case *uint64:
@@ -90,6 +96,17 @@ func Decode(data []byte, value interface{}) error {
 	default:
 		return bh.DefaultDecode(data, value)
 	}
+}
+
+func decodeHashPointer(data []byte, value *interface{}, dst *common.Hash) error {
+	if len(data) == 32 {
+		return DecodeDataHash(data, dst)
+	}
+	if data[0] == 0 {
+		*value = nil
+		return nil
+	}
+	return DecodeDataHash(data[1:], dst)
 }
 
 func EncodeDataHash(dataHash *common.Hash) ([]byte, error) {
