@@ -1,4 +1,4 @@
-FROM golang:1.15
+FROM golang:1.16
 
 LABEL org.opencontainers.image.source="https://github.com/Worldcoin/hubble-commander"
 
@@ -15,8 +15,9 @@ RUN make build
 
 ENV HUBBLE_MIGRATIONS_PATH="/go/src/app/db/postgres/migrations"
 
-RUN mkdir -p /db/badger/data
+RUN mkdir -p /db/badger/data/hubble
 
 HEALTHCHECK --interval=3s --timeout=3s  CMD curl --fail -L -X POST 'localhost:8080' -H 'Content-Type: application/json' --data-raw '{"jsonrpc": "2.0","method": "hubble_getVersion","params": [],"id": 1}'
 
-CMD ["build/hubble"]
+ENTRYPOINT ["build/hubble"]
+CMD ["start"]

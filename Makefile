@@ -19,7 +19,7 @@ generate:
 build: clean compile
 
 setup-db:
-	rm -rf db/badger/data
+	rm -rf db/badger/data/hubble
 	docker-compose up -d postgres
 
 start-geth-locally:
@@ -37,10 +37,10 @@ run:
 	go run ./main/main.go
 
 run-prune:
-	go run ./main/main.go -prune
+	HUBBLE_BOOTSTRAP_PRUNE=true go run ./main/main.go start
 
 run-dev:
-	go run ./main/main.go -prune -disable-signatures
+	HUBBLE_BOOTSTRAP_PRUNE=true HUBBLE_ROLLUP_DISABLE_SIGNATURES=true go run ./main/main.go start
 
 lint:
 	golangci-lint run ./...

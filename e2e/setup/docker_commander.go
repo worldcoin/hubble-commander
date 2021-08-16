@@ -62,11 +62,11 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 				getEnvVarMapping("HUBBLE_ROLLUP_MIN_TXS_PER_COMMITMENT"),
 				getEnvVarMapping("HUBBLE_ROLLUP_MAX_TXS_PER_COMMITMENT"),
 				"HUBBLE_API_PORT=8080",
+				fmt.Sprintf("HUBBLE_BOOTSTRAP_PRUNE=%t", opts.Prune),
 			},
 			ExposedPorts: map[nat.Port]struct{}{
 				"8080/tcp": {},
 			},
-			Cmd: []string{"build/hubble", fmt.Sprintf("--prune=%t", opts.Prune)},
 		},
 		&container.HostConfig{
 			NetworkMode: networkMode,
@@ -79,7 +79,7 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 				{
 					Type:   mount.TypeBind,
 					Source: utils.GetProjectRoot() + "/e2e-data",
-					Target: "/go/src/app/db/badger/data",
+					Target: "/go/src/app/db/badger/data/hubble",
 				},
 			},
 		},
