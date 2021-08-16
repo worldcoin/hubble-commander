@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,14 +14,22 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var CLIHelpMessage = "Available subcommands:\n" +
-	"  start - starts the commander\n" +
-	"  deploy - deploys contracts and saves chain spec to file. Flags:\n" +
-	"    -file=chain-spec.yaml - target file to save the chain spec to"
+var (
+	deployCommand = flag.NewFlagSet("deploy", flag.ExitOnError)
+	chainSpecFile = deployCommand.String("file", "chain-spec.yaml", "target file to save the chain spec to")
+)
+
+func exitWithHelpMessage() {
+	fmt.Printf("Subcommand required:\n" +
+		"start - starts the commander\n" +
+		"deploy - deploys contracts and saves chain spec. Usage:\n")
+	deployCommand.PrintDefaults()
+	os.Exit(1)
+}
 
 func main() {
 	if len(os.Args) < 2 {
-		log.Fatal(CLIHelpMessage)
+		exitWithHelpMessage()
 	}
 
 	switch os.Args[1] {
@@ -29,13 +38,11 @@ func main() {
 	case "deploy":
 		handleDeployCommand(os.Args[2:])
 	default:
-		log.Fatal(CLIHelpMessage)
+		exitWithHelpMessage()
 	}
 }
 
 func handleDeployCommand(args []string) {
-	deployCommand := flag.NewFlagSet("deploy", flag.ExitOnError)
-	chainSpecFile := deployCommand.String("file", "chain-spec.yaml", "")
 	err := deployCommand.Parse(args)
 	if err != nil {
 		log.Fatalf("%+v", err)
