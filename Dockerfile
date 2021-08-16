@@ -1,4 +1,4 @@
-FROM golang:1.15
+FROM golang:1.16
 
 LABEL org.opencontainers.image.source="https://github.com/Worldcoin/hubble-commander"
 
