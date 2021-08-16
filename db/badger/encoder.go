@@ -98,15 +98,16 @@ func Decode(data []byte, value interface{}) error {
 	}
 }
 
+// nolint: gocritic
 func decodeHashPointer(data []byte, value *interface{}, dst *common.Hash) error {
 	if len(data) == 32 {
 		return DecodeDataHash(data, dst)
 	}
-	if data[0] == 0 {
-		*value = nil
-		return nil
+	if data[0] == 1 {
+		return DecodeDataHash(data[1:], dst)
 	}
-	return DecodeDataHash(data[1:], dst)
+	*value = nil
+	return nil
 }
 
 func EncodeDataHash(dataHash *common.Hash) ([]byte, error) {

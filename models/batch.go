@@ -13,14 +13,14 @@ const batchDataLength = 185
 var BatchPrefix = []byte("bh_" + reflect.TypeOf(Batch{}).Name())
 
 type Batch struct {
-	ID                Uint256 `db:"batch_id"`
+	ID                Uint256
 	Type              txtype.TransactionType
-	TransactionHash   common.Hash  `db:"transaction_hash"`
-	Hash              *common.Hash `db:"batch_hash" badgerhold:"index"` // root of tree containing all commitments included in this batch
-	FinalisationBlock *uint32      `db:"finalisation_block"`            // nolint:misspell
-	AccountTreeRoot   *common.Hash `db:"account_tree_root"`
-	PrevStateRoot     *common.Hash `db:"prev_state_root"`
-	SubmissionTime    *Timestamp   `db:"submission_time"`
+	TransactionHash   common.Hash
+	Hash              *common.Hash `badgerhold:"index"` // root of tree containing all commitments included in this batch
+	FinalisationBlock *uint32
+	AccountTreeRoot   *common.Hash
+	PrevStateRoot     *common.Hash
+	SubmissionTime    *Timestamp
 }
 
 func (b *Batch) Bytes() []byte {

@@ -24,7 +24,7 @@ func (s *BatchTestSuite) SetupSuite() {
 
 func (s *BatchTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorageWithBadger()
+	s.storage, err = NewTestStorageWithoutPostgres()
 	s.NoError(err)
 }
 
