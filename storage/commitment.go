@@ -3,7 +3,6 @@ package storage
 import (
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 )
 
 var selectedCommitmentCols = []string{
@@ -31,41 +30,24 @@ func (s *CommitmentStorage) copyWithNewDatabase(database *Database) *CommitmentS
 	return &newCommitmentStorage
 }
 
-func (s *CommitmentStorage) AddCommitment(commitment *models.Commitment) (*int32, error) {
-	res := make([]int32, 0, 1)
-	err := s.database.Postgres.Query(
-		s.database.QB.Insert("commitment").
-			Values(
-				squirrel.Expr("DEFAULT"),
-				commitment.Type,
-				commitment.Transactions,
-				commitment.FeeReceiver,
-				commitment.CombinedSignature,
-				commitment.PostStateRoot,
-				commitment.IncludedInBatch,
-			).
-			Suffix("RETURNING commitment_id"),
-	).Into(&res)
-	if err != nil {
-		return nil, err
-	}
-	return ref.Int32(res[0]), nil
+func (s *CommitmentStorage) AddCommitment(commitment *models.Commitment) error {
+	err := s.database.Badger.Insert(models.CommitmentKey{
+		BatchID:      commitment.BatchID,
+		IndexInBatch: commitment.IndexInBatch,
+	}, *commitment)
+	return err
 }
 
-func (s *CommitmentStorage) GetCommitment(id int32) (*models.Commitment, error) {
-	res := make([]models.Commitment, 0, 1)
-	err := s.database.Postgres.Query(
-		s.database.QB.Select("*").
-			From("commitment").
-			Where(squirrel.Eq{"commitment_id": id}),
-	).Into(&res)
+func (s *CommitmentStorage) GetCommitment(batchID models.Uint256, commitmentIndex uint32) (*models.Commitment, error) {
+	var commitment models.Commitment
+	err := s.database.Badger.Get(models.CommitmentKey{
+		BatchID:      batchID,
+		IndexInBatch: commitmentIndex,
+	}, &commitment)
 	if err != nil {
 		return nil, err
 	}
-	if len(res) == 0 {
-		return nil, NewNotFoundError("commitment")
-	}
-	return &res[0], nil
+	return &commitment, nil
 }
 
 func (s *CommitmentStorage) GetLatestCommitment() (*models.Commitment, error) {

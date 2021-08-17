@@ -24,12 +24,12 @@ func (t *TransactionExecutor) createAndStoreCommitment(
 		PostStateRoot:     *stateRoot,
 	}
 
-	id, err := t.storage.AddCommitment(&commitment)
+	err = t.storage.AddCommitment(&commitment)
 	if err != nil {
 		return nil, err
 	}
 
-	commitment.IndexInBatch = *id
+	//commitment.IndexInBatch = *id
 
 	return &commitment, nil
 }

@@ -56,20 +56,20 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
-	commitmentID, err := s.storage.AddCommitment(&s.commitment)
+	err = s.storage.AddCommitment(&s.commitment)
 	s.NoError(err)
-	s.commitment.IndexInBatch = *commitmentID
+	//s.commitment.IndexInBatch = *commitmentID
 
 	transfer := models.Transfer{
 		TransactionBase: models.TransactionBase{
-			Hash:                 utils.RandomHash(),
-			TxType:               txtype.Transfer,
-			FromStateID:          1,
-			Amount:               models.MakeUint256(50),
-			Fee:                  models.MakeUint256(10),
-			Nonce:                models.MakeUint256(0),
-			Signature:            models.MakeRandomSignature(),
-			IncludedInCommitment: commitmentID,
+			Hash:        utils.RandomHash(),
+			TxType:      txtype.Transfer,
+			FromStateID: 1,
+			Amount:      models.MakeUint256(50),
+			Fee:         models.MakeUint256(10),
+			Nonce:       models.MakeUint256(0),
+			Signature:   models.MakeRandomSignature(),
+			//IncludedInCommitment: commitmentID,
 		},
 		ToStateID: 2,
 	}
@@ -94,7 +94,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 		}},
 	}
 
-	commitment, err := s.api.GetCommitment(*commitmentID)
+	commitment, err := s.api.GetCommitment(0)
 	s.NoError(err)
 	s.Equal(expectedCommitment, commitment)
 }
@@ -104,19 +104,19 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 	s.NoError(err)
 
 	s.commitment.Type = txtype.Create2Transfer
-	commitmentID, err := s.storage.AddCommitment(&s.commitment)
+	err = s.storage.AddCommitment(&s.commitment)
 	s.NoError(err)
-	s.commitment.IndexInBatch = *commitmentID
+	//s.commitment.IndexInBatch = *commitmentID
 
 	transfer := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
-			Hash:                 utils.RandomHash(),
-			TxType:               txtype.Create2Transfer,
-			FromStateID:          1,
-			Amount:               models.MakeUint256(50),
-			Fee:                  models.MakeUint256(10),
-			Nonce:                models.MakeUint256(0),
-			IncludedInCommitment: commitmentID,
+			Hash:        utils.RandomHash(),
+			TxType:      txtype.Create2Transfer,
+			FromStateID: 1,
+			Amount:      models.MakeUint256(50),
+			Fee:         models.MakeUint256(10),
+			Nonce:       models.MakeUint256(0),
+			//IncludedInCommitment: commitmentID,
 		},
 		ToStateID:   ref.Uint32(2),
 		ToPublicKey: models.PublicKey{2, 3, 4},
@@ -143,7 +143,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 		}},
 	}
 
-	commitment, err := s.api.GetCommitment(*commitmentID)
+	commitment, err := s.api.GetCommitment(0)
 	s.NoError(err)
 	s.Equal(expectedCommitment, commitment)
 }
@@ -155,25 +155,25 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_PendingBatch() {
 	err := s.storage.AddBatch(&pendingBatch)
 	s.NoError(err)
 
-	commitmentID, err := s.storage.AddCommitment(&s.commitment)
+	err = s.storage.AddCommitment(&s.commitment)
 	s.NoError(err)
 
 	transfer := models.Transfer{
 		TransactionBase: models.TransactionBase{
-			Hash:                 utils.RandomHash(),
-			TxType:               txtype.Transfer,
-			FromStateID:          1,
-			Amount:               models.MakeUint256(50),
-			Fee:                  models.MakeUint256(10),
-			Nonce:                models.MakeUint256(0),
-			IncludedInCommitment: commitmentID,
+			Hash:        utils.RandomHash(),
+			TxType:      txtype.Transfer,
+			FromStateID: 1,
+			Amount:      models.MakeUint256(50),
+			Fee:         models.MakeUint256(10),
+			Nonce:       models.MakeUint256(0),
+			//IncludedInCommitment: commitmentID,
 		},
 		ToStateID: 2,
 	}
 	_, err = s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 
-	commitment, err := s.api.GetCommitment(*commitmentID)
+	commitment, err := s.api.GetCommitment(0)
 	s.Equal(st.NewNotFoundError("commitment"), err)
 	s.Nil(commitment)
 }

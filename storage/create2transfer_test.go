@@ -92,11 +92,11 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchDetails() {
 
 	commitmentInBatch := commitment
 	commitmentInBatch.IncludedInBatch = &batch.ID
-	commitmentID, err := s.storage.AddCommitment(&commitmentInBatch)
+	err = s.storage.AddCommitment(&commitmentInBatch)
 	s.NoError(err)
 
 	transferInBatch := create2Transfer
-	transferInBatch.IncludedInCommitment = commitmentID
+	//transferInBatch.IncludedInCommitment = commitmentID
 	receiveTime, err := s.storage.AddCreate2Transfer(&transferInBatch)
 	s.NoError(err)
 	transferInBatch.ReceiveTime = receiveTime
@@ -155,14 +155,14 @@ func (s *Create2TransferTestSuite) TestGetCreate2Transfer_NonExistentTransaction
 
 func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers() {
 	commitment := &models.Commitment{}
-	id, err := s.storage.AddCommitment(commitment)
+	err := s.storage.AddCommitment(commitment)
 	s.NoError(err)
 
 	create2Transfer2 := create2Transfer
 	create2Transfer2.Hash = utils.RandomHash()
 	create2Transfer3 := create2Transfer
 	create2Transfer3.Hash = utils.RandomHash()
-	create2Transfer3.IncludedInCommitment = id
+	//create2Transfer3.IncludedInCommitment = id
 	create2Transfer4 := create2Transfer
 	create2Transfer4.Hash = utils.RandomHash()
 	create2Transfer4.ErrorMessage = ref.String("A very boring error message")
@@ -241,25 +241,25 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey_NoCreate2T
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID() {
-	commitmentID, err := s.storage.AddCommitment(&commitment)
+	err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
 	transfer1 := create2Transfer
-	transfer1.IncludedInCommitment = commitmentID
+	//transfer1.IncludedInCommitment = commitmentID
 
 	_, err = s.storage.AddCreate2Transfer(&transfer1)
 	s.NoError(err)
 
-	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(*commitmentID)
+	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(0)
 	s.NoError(err)
 	s.Len(transfers, 1)
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID_NoCreate2Transfers() {
-	commitmentID, err := s.storage.AddCommitment(&commitment)
+	err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(*commitmentID)
+	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(0)
 	s.NoError(err)
 	s.Len(transfers, 0)
 }

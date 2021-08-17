@@ -90,10 +90,14 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_TxI
 
 	includedCommitment := commitment
 	includedCommitment.IncludedInBatch = &batch.ID
-	commitmentID, err := s.storage.AddCommitment(&includedCommitment)
+	err = s.storage.AddCommitment(&includedCommitment)
 	s.NoError(err)
 
-	s.transfer.IncludedInCommitment = commitmentID
+	//TODO-bat: fix
+	s.transfer.CommitmentID = &models.CommitmentKey{
+		BatchID:      batch.ID,
+		IndexInBatch: 0,
+	}
 
 	status, err := CalculateTransactionStatus(s.storage.Storage, &s.transfer.TransactionBase, 0)
 	s.NoError(err)
@@ -111,10 +115,10 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_InB
 
 	includedCommitment := commitment
 	includedCommitment.IncludedInBatch = &batch.ID
-	commitmentID, err := s.storage.AddCommitment(&includedCommitment)
+	err = s.storage.AddCommitment(&includedCommitment)
 	s.NoError(err)
 
-	s.transfer.IncludedInCommitment = commitmentID
+	//s.transfer.IncludedInCommitment = commitmentID
 
 	status, err := CalculateTransactionStatus(s.storage.Storage, &s.transfer.TransactionBase, 0)
 	s.NoError(err)
@@ -135,10 +139,10 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_Fin
 
 	includedCommitment := commitment
 	includedCommitment.IncludedInBatch = &batch.ID
-	commitmentID, err := s.storage.AddCommitment(&includedCommitment)
+	err = s.storage.AddCommitment(&includedCommitment)
 	s.NoError(err)
 
-	s.transfer.IncludedInCommitment = commitmentID
+	//s.transfer.IncludedInCommitment = commitmentID
 
 	s.sim.Commit()
 	latestBlockNumber, err := s.sim.GetLatestBlockNumber()

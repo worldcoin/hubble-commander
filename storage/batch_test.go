@@ -168,10 +168,10 @@ func (s *BatchTestSuite) TestGetBatchByCommitmentID() {
 		IncludedInBatch:   &batch.ID,
 	}
 
-	commitmentID, err := s.storage.AddCommitment(commitment)
+	err = s.storage.AddCommitment(commitment)
 	s.NoError(err)
 
-	actual, err := s.storage.GetBatchByCommitmentID(*commitmentID)
+	actual, err := s.storage.GetBatchByCommitmentID(0)
 	s.NoError(err)
 	s.Equal(batch, actual)
 }
@@ -187,10 +187,10 @@ func (s *BatchTestSuite) TestGetBatchByCommitmentID_NotExistentBatch() {
 		IncludedInBatch:   nil,
 	}
 
-	commitmentID, err := s.storage.AddCommitment(commitment)
+	err := s.storage.AddCommitment(commitment)
 	s.NoError(err)
 
-	batch, err := s.storage.GetBatchByCommitmentID(*commitmentID)
+	batch, err := s.storage.GetBatchByCommitmentID(0)
 	s.Equal(NewNotFoundError("batch"), err)
 	s.Nil(batch)
 }

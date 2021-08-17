@@ -16,6 +16,7 @@ type TransactionBase struct {
 	ReceiveTime          *Timestamp `db:"receive_time"`
 	IncludedInCommitment *int32     `db:"included_in_commitment"`
 	ErrorMessage         *string    `db:"error_message"`
+	CommitmentID         *CommitmentKey
 }
 
 type TransactionBaseForCommitment struct {

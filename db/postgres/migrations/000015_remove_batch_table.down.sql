@@ -4,5 +4,7 @@ CREATE TABLE batch (
     transaction_hash   BYTEA UNIQUE NOT NULL,
     batch_hash         BYTEA,
     finalisation_block BIGINT,
-    account_tree_root  BYTEA
+    account_tree_root  BYTEA,
+    prev_state_root    BYTEA,
+    submission_time    TIMESTAMP
 );

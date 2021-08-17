@@ -86,11 +86,11 @@ func (s *TransferTestSuite) TestGetTransferWithBatchDetails() {
 
 	commitmentInBatch := commitment
 	commitmentInBatch.IncludedInBatch = &batch.ID
-	commitmentID, err := s.storage.AddCommitment(&commitmentInBatch)
+	err = s.storage.AddCommitment(&commitmentInBatch)
 	s.NoError(err)
 
 	transferInBatch := transfer
-	transferInBatch.IncludedInCommitment = commitmentID
+	//transferInBatch.IncludedInCommitment = commitmentID
 	receiveTime, err := s.storage.AddTransfer(&transferInBatch)
 	s.NoError(err)
 	transferInBatch.ReceiveTime = receiveTime
@@ -149,14 +149,14 @@ func (s *TransferTestSuite) TestGetTransfer_NonExistentTransfer() {
 
 func (s *TransferTestSuite) TestGetPendingTransfers() {
 	commitment := &models.Commitment{}
-	id, err := s.storage.AddCommitment(commitment)
+	err := s.storage.AddCommitment(commitment)
 	s.NoError(err)
 
 	transfer2 := transfer
 	transfer2.Hash = utils.RandomHash()
 	transfer3 := transfer
 	transfer3.Hash = utils.RandomHash()
-	transfer3.IncludedInCommitment = id
+	//transfer3.IncludedInCommitment = id
 	transfer4 := transfer
 	transfer4.Hash = utils.RandomHash()
 	transfer4.ErrorMessage = ref.String("A very boring error message")
@@ -302,25 +302,25 @@ func (s *TransferTestSuite) TestGetUserTransfersByPublicKey_NoTransfers() {
 }
 
 func (s *TransferTestSuite) TestGetTransfersByCommitmentID() {
-	commitmentID, err := s.storage.AddCommitment(&commitment)
+	err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
 	transfer1 := transfer
-	transfer1.IncludedInCommitment = commitmentID
+	//transfer1.IncludedInCommitment = commitmentID
 
 	_, err = s.storage.AddTransfer(&transfer1)
 	s.NoError(err)
 
-	transfers, err := s.storage.GetTransfersByCommitmentID(*commitmentID)
+	transfers, err := s.storage.GetTransfersByCommitmentID(0)
 	s.NoError(err)
 	s.Len(transfers, 1)
 }
 
 func (s *TransferTestSuite) TestGetTransfersByCommitmentID_NoTransfers() {
-	commitmentID, err := s.storage.AddCommitment(&commitment)
+	err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	transfers, err := s.storage.GetTransfersByCommitmentID(*commitmentID)
+	transfers, err := s.storage.GetTransfersByCommitmentID(0)
 	s.NoError(err)
 	s.Len(transfers, 0)
 }
@@ -338,10 +338,10 @@ func (s *TransferTestSuite) addBatchAndCommitment() (batchHash common.Hash, comm
 
 	commitmentInBatch := commitment
 	commitmentInBatch.IncludedInBatch = &batch.ID
-	id, err := s.storage.AddCommitment(&commitmentInBatch)
+	err = s.storage.AddCommitment(&commitmentInBatch)
 	s.NoError(err)
 
-	return *batch.Hash, *id
+	return *batch.Hash, 0
 }
 
 func (s *TransferTestSuite) batchAddTransfers(transfers []models.TransferWithBatchDetails) {

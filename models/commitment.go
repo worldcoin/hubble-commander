@@ -16,7 +16,7 @@ const (
 
 type Commitment struct {
 	BatchID           Uint256
-	IndexInBatch      int32
+	IndexInBatch      uint32
 	Type              txtype.TransactionType
 	FeeReceiver       uint32
 	CombinedSignature Signature
@@ -54,7 +54,7 @@ func (c *Commitment) SetBytes(data []byte) error {
 	}
 
 	c.BatchID.SetBytes(data[0:32])
-	c.IndexInBatch = int32(binary.BigEndian.Uint32(data[32:36]))
+	c.IndexInBatch = binary.BigEndian.Uint32(data[32:36])
 	c.Type = txtype.TransactionType(data[36])
 	c.FeeReceiver = binary.BigEndian.Uint32(data[37:41])
 

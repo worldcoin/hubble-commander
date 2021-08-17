@@ -162,7 +162,7 @@ func (t *TransactionExecutor) syncCommitment(
 		return err
 	}
 
-	commitmentID, err := t.storage.AddCommitment(&models.Commitment{
+	err = t.storage.AddCommitment(&models.Commitment{
 		Type:              batch.Type,
 		Transactions:      commitment.Transactions,
 		FeeReceiver:       commitment.FeeReceiver,
@@ -174,7 +174,7 @@ func (t *TransactionExecutor) syncCommitment(
 		return err
 	}
 	for i := 0; i < transactions.Len(); i++ {
-		transactions.At(i).GetBase().IncludedInCommitment = commitmentID
+		//transactions.At(i).GetBase().IncludedInCommitment = commitmentID
 	}
 
 	for i := 0; i < transactions.Len(); i++ {

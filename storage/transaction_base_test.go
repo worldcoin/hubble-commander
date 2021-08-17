@@ -102,16 +102,16 @@ func (s *TransactionBaseTestSuite) TestBatchMarkTransactionAsIncluded() {
 		s.NoError(err)
 	}
 
-	commitmentID, err := s.storage.AddCommitment(&commitment)
+	err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	err = s.storage.BatchMarkTransactionAsIncluded([]common.Hash{txs[0].Hash, txs[1].Hash}, commitmentID)
+	err = s.storage.BatchMarkTransactionAsIncluded([]common.Hash{txs[0].Hash, txs[1].Hash}, ref.Int32(0))
 	s.NoError(err)
 
 	for i := range txs {
 		tx, err := s.storage.GetTransfer(txs[i].Hash)
 		s.NoError(err)
-		s.Equal(commitmentID, tx.IncludedInCommitment)
+		s.Equal(0, tx.IncludedInCommitment)
 	}
 }
 
@@ -127,12 +127,12 @@ func (s *TransactionBaseTestSuite) TestGetTransactionCount() {
 
 	commitmentInBatch := commitment
 	commitmentInBatch.IncludedInBatch = &batch.ID
-	commitmentID, err := s.storage.AddCommitment(&commitmentInBatch)
+	err = s.storage.AddCommitment(&commitmentInBatch)
 	s.NoError(err)
 
 	transferInCommitment := transferTransaction
 	transferInCommitment.Hash = common.Hash{5, 5, 5}
-	transferInCommitment.IncludedInCommitment = commitmentID
+	//transferInCommitment.IncludedInCommitment = commitmentID
 	_, err = s.storage.AddTransfer(&transferInCommitment)
 	s.NoError(err)
 	_, err = s.storage.AddTransfer(&transferTransaction)
@@ -140,7 +140,7 @@ func (s *TransactionBaseTestSuite) TestGetTransactionCount() {
 
 	c2t := create2Transfer
 	c2t.Hash = common.Hash{3, 4, 5}
-	c2t.IncludedInCommitment = commitmentID
+	//c2t.IncludedInCommitment = commitmentID
 	_, err = s.storage.AddCreate2Transfer(&c2t)
 	s.NoError(err)
 
@@ -195,11 +195,11 @@ func (s *TransactionBaseTestSuite) addTransfersInCommitment(batchID *models.Uint
 
 	commitmentInBatch := commitment
 	commitmentInBatch.IncludedInBatch = &batch.ID
-	commitmentID, err := s.storage.AddCommitment(&commitmentInBatch)
+	err = s.storage.AddCommitment(&commitmentInBatch)
 	s.NoError(err)
 
 	for i := range transfers {
-		transfers[i].IncludedInCommitment = commitmentID
+		//transfers[i].IncludedInCommitment = commitmentID
 		_, err = s.storage.AddTransfer(&transfers[i])
 		s.NoError(err)
 	}
