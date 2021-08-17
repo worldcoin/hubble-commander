@@ -37,9 +37,9 @@ func (a *API) GetCommitment(id int32) (*dto.Commitment, error) {
 func (a *API) getTransactionsForCommitment(commitment *models.Commitment) (interface{}, error) {
 	switch commitment.Type {
 	case txtype.Transfer:
-		return a.storage.GetTransfersByCommitmentID(commitment.ID)
+		return a.storage.GetTransfersByCommitmentID(commitment.IndexInBatch)
 	case txtype.Create2Transfer:
-		return a.storage.GetCreate2TransfersByCommitmentID(commitment.ID)
+		return a.storage.GetCreate2TransfersByCommitmentID(commitment.IndexInBatch)
 	case txtype.Genesis, txtype.MassMigration:
 		return nil, dto.ErrNotImplemented
 	}

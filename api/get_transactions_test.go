@@ -206,7 +206,7 @@ func (s *GetTransactionsTestSuite) addCommitmentAndBatch() *models.Batch {
 	s.NoError(err)
 
 	commitment := &models.Commitment{
-		ID:                1,
+		IndexInBatch:      1,
 		Type:              txtype.Transfer,
 		Transactions:      utils.RandomBytes(12),
 		FeeReceiver:       1234,

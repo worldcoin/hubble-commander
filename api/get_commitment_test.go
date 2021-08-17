@@ -58,7 +58,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 
 	commitmentID, err := s.storage.AddCommitment(&s.commitment)
 	s.NoError(err)
-	s.commitment.ID = *commitmentID
+	s.commitment.IndexInBatch = *commitmentID
 
 	transfer := models.Transfer{
 		TransactionBase: models.TransactionBase{
@@ -106,7 +106,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 	s.commitment.Type = txtype.Create2Transfer
 	commitmentID, err := s.storage.AddCommitment(&s.commitment)
 	s.NoError(err)
-	s.commitment.ID = *commitmentID
+	s.commitment.IndexInBatch = *commitmentID
 
 	transfer := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{

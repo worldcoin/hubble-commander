@@ -100,7 +100,7 @@ func validateStateRoot(storage *st.Storage) error {
 }
 
 func logLatestCommitment(latestCommitment *models.Commitment) {
-	fields := log.Fields{"latestCommitmentID": latestCommitment.ID}
+	fields := log.Fields{"latestCommitmentID": latestCommitment.IndexInBatch}
 	if latestCommitment.IncludedInBatch != nil {
 		fields["latestBatchID"] = latestCommitment.IncludedInBatch.String()
 	}

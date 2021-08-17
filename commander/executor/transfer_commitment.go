@@ -33,7 +33,7 @@ func (t *TransactionExecutor) buildTransferCommitment(
 		return nil, err
 	}
 
-	err = t.markTransfersAsIncluded(appliedTransfers, commitment.ID)
+	err = t.markTransfersAsIncluded(appliedTransfers, commitment.IndexInBatch)
 	if err != nil {
 		return nil, err
 	}

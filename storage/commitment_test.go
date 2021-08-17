@@ -45,7 +45,7 @@ func (s *CommitmentTestSuite) TearDownTest() {
 
 func (s *CommitmentTestSuite) getCommitment(id int32) *models.Commitment {
 	clone := commitment
-	clone.ID = id
+	clone.IndexInBatch = id
 	return &clone
 }
 
@@ -100,7 +100,7 @@ func (s *CommitmentTestSuite) TestGetLatestCommitment() {
 	for i := 0; i < 2; i++ {
 		commitmentID, err := s.storage.AddCommitment(&commitment)
 		s.NoError(err)
-		expected.ID = *commitmentID
+		expected.IndexInBatch = *commitmentID
 	}
 	latestCommitment, err := s.storage.GetLatestCommitment()
 	s.NoError(err)

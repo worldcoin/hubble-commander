@@ -161,14 +161,14 @@ func (s *SyncTestSuite) TestSyncBatch_TwoTransferBatches() {
 	s.Equal(accountRoots[1], *batches[1].AccountTreeRoot)
 
 	for i := range expectedCommitments {
-		commitment, err := s.storage.GetCommitment(expectedCommitments[i].ID)
+		commitment, err := s.storage.GetCommitment(expectedCommitments[i].IndexInBatch)
 		s.NoError(err)
 		expectedCommitments[i].IncludedInBatch = &batches[i].ID
 		s.Equal(expectedCommitments[i], *commitment)
 
 		actualTx, err := s.storage.GetTransfer(txs[i].Hash)
 		s.NoError(err)
-		txs[i].IncludedInCommitment = &expectedCommitments[i].ID
+		txs[i].IncludedInCommitment = &expectedCommitments[i].IndexInBatch
 		txs[i].Signature = models.Signature{}
 		s.Equal(txs[i], actualTx)
 	}
@@ -418,7 +418,7 @@ func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 	s.Len(batches, 1)
 	s.Equal(treeRoot, *batches[0].AccountTreeRoot)
 
-	commitment, err := s.storage.GetCommitment(expectedCommitment.ID)
+	commitment, err := s.storage.GetCommitment(expectedCommitment.IndexInBatch)
 	s.NoError(err)
 	expectedCommitment.IncludedInBatch = &batches[0].ID
 	s.Equal(expectedCommitment, *commitment)
@@ -426,7 +426,7 @@ func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 	transfer, err := s.storage.GetCreate2Transfer(tx.Hash)
 	s.NoError(err)
 	transfer.Signature = tx.Signature
-	tx.IncludedInCommitment = &commitment.ID
+	tx.IncludedInCommitment = &commitment.IndexInBatch
 	tx.ToStateID = transfer.ToStateID
 	s.Equal(tx, *transfer)
 }
@@ -545,7 +545,7 @@ func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {
 
 	latestCommitment, err := s.transactionExecutor.storage.GetLatestCommitment()
 	s.NoError(err)
-	s.EqualValues(2, latestCommitment.ID)
+	s.EqualValues(2, latestCommitment.IndexInBatch)
 
 	err = s.transactionExecutor.RevertBatches(&pendingBatches[0])
 	s.NoError(err)
@@ -610,7 +610,7 @@ func (s *SyncTestSuite) createAndSubmitTransferBatchWithNonexistentFeeReceiver(t
 	s.NoError(err)
 
 	commitment := models.Commitment{
-		ID:                0,
+		IndexInBatch:      0,
 		Type:              txtype.Transfer,
 		Transactions:      serializedTxs,
 		FeeReceiver:       feeReceiverStateID,

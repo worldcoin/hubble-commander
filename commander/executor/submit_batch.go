@@ -45,7 +45,7 @@ func (t *TransactionExecutor) SubmitBatch(batch *models.Batch, commitments []mod
 
 func (t *TransactionExecutor) markCommitmentsAsIncluded(commitments []models.Commitment, batchID models.Uint256) error {
 	for i := range commitments {
-		err := t.storage.MarkCommitmentAsIncluded(commitments[i].ID, batchID)
+		err := t.storage.MarkCommitmentAsIncluded(commitments[i].IndexInBatch, batchID)
 		if err != nil {
 			return err
 		}

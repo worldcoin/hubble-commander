@@ -29,7 +29,7 @@ func (t *TransactionExecutor) createAndStoreCommitment(
 		return nil, err
 	}
 
-	commitment.ID = *id
+	commitment.IndexInBatch = *id
 
 	return &commitment, nil
 }
