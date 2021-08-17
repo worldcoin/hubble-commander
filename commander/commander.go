@@ -24,11 +24,19 @@ import (
 )
 
 var (
-	ErrInvalidChainStates        = errors.New("database chain state and file chain state are not the same")
-	ErrCannotBootstrap           = errors.New("cannot bootstrap - no chain spec file or bootstrap url specified")
-	ErrChainSpecChainIDConflict  = errors.New("cannot bootstrap from chain spec - there's a conflict between config Chain ID and chain spec Chain ID")
-	ErrDatabaseChainIDConflict   = errors.New("cannot bootstrap from chain spec - there's a conflict between config Chain ID and Chain ID saved in the database")
-	ErrRemoteNodeChainIDConflict = errors.New("cannot bootstrap from remote node - there's a conflict between config Chain ID and Chain ID saved in the database")
+	ErrInvalidChainStates = errors.New("database chain state and file chain state are not the same")
+	ErrCannotBootstrap    = errors.New(
+		"cannot bootstrap - no chain spec file or bootstrap url specified",
+	)
+	ErrChainSpecChainIDConflict = errors.New(
+		"cannot bootstrap from chain spec - there's a conflict between config Chain ID and chain spec Chain ID",
+	)
+	ErrDatabaseChainIDConflict = errors.New(
+		"cannot bootstrap from chain spec - there's a conflict between config Chain ID and Chain ID saved in the database",
+	)
+	ErrRemoteNodeChainIDConflict = errors.New(
+		"cannot bootstrap from remote node - there's a conflict between config Chain ID and Chain ID saved in the database",
+	)
 )
 
 type Commander struct {
@@ -199,7 +207,6 @@ func getChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, e
 func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.Config) (*eth.Client, error) {
 	if cfg.Bootstrap.ChainSpecPath != nil {
 		return bootstrapFromChainState(chain, storage, cfg)
-
 	}
 	if cfg.Bootstrap.BootstrapNodeURL != nil {
 		log.Printf("Bootstrapping genesis state from node %s", *cfg.Bootstrap.BootstrapNodeURL)
