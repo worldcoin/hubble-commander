@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	bdg "github.com/dgraph-io/badger/v3"
+	bh "github.com/timshannon/badgerhold/v3"
 )
 
 type CommitmentStorage struct {
@@ -34,11 +35,17 @@ func (s *CommitmentStorage) AddCommitment(commitment *models.Commitment) error {
 }
 
 func (s *CommitmentStorage) GetCommitment(batchID models.Uint256, commitmentIndex uint32) (*models.Commitment, error) {
-	var commitment models.Commitment
+	commitment := models.Commitment{
+		BatchID:      batchID,
+		IndexInBatch: commitmentIndex,
+	}
 	err := s.database.Badger.Get(models.CommitmentKey{
 		BatchID:      batchID,
 		IndexInBatch: commitmentIndex,
 	}, &commitment)
+	if err == bh.ErrNotFound {
+		return nil, NewNotFoundError("commitment")
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +53,7 @@ func (s *CommitmentStorage) GetCommitment(batchID models.Uint256, commitmentInde
 }
 
 func (s *CommitmentStorage) GetLatestCommitment() (*models.Commitment, error) {
-	var commitment models.Commitment
+	var commitment *models.Commitment
 	err := s.database.Badger.View(func(txn *bdg.Txn) error {
 		opts := bdg.DefaultIteratorOptions
 		opts.PrefetchValues = false
@@ -60,9 +67,9 @@ func (s *CommitmentStorage) GetLatestCommitment() (*models.Commitment, error) {
 
 		it.Seek(seekPrefix)
 		if it.ValidForPrefix(models.CommitmentPrefix) {
-			return it.Item().Value(func(v []byte) error {
-				return badger.Decode(v, &commitment)
-			})
+			var err error
+			commitment, err = decodeCommitment(it.Item())
+			return err
 		}
 		return NewNotFoundError("commitment")
 	})
@@ -70,7 +77,7 @@ func (s *CommitmentStorage) GetLatestCommitment() (*models.Commitment, error) {
 		return nil, err
 	}
 
-	return &commitment, nil
+	return commitment, nil
 }
 
 func (s *CommitmentStorage) MarkCommitmentAsIncluded(commitmentID int32, batchID models.Uint256) error {
@@ -202,10 +209,13 @@ func decodeCommitment(item *bdg.Item) (*models.Commitment, error) {
 	if err != nil {
 		return nil, err
 	}
-	// TODO-dis: use it to decode key
-	//err = badger.DecodeKey(item.Key(), &commitment, stateUpdatePrefix)
-	//if err != nil {
-	//	return nil, err
-	//}
+
+	var key models.CommitmentKey
+	err = badger.DecodeKey(item.Key(), &key, models.CommitmentPrefix)
+	if err != nil {
+		return nil, err
+	}
+	commitment.BatchID = key.BatchID
+	commitment.IndexInBatch = key.IndexInBatch
 	return &commitment, nil
 }

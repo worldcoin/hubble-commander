@@ -22,7 +22,10 @@ func TestCommitment_Bytes(t *testing.T) {
 
 	bytes := commitment.Bytes()
 
-	decodedCommitment := Commitment{}
+	decodedCommitment := Commitment{
+		BatchID:      commitment.BatchID,
+		IndexInBatch: commitment.IndexInBatch,
+	}
 	err := decodedCommitment.SetBytes(bytes)
 	require.NoError(t, err)
 	require.Equal(t, commitment, decodedCommitment)

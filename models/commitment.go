@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	commitmentDataLength    = 137
+	commitmentDataLength    = 101
 	commitmentKeyDataLength = 36
 )
 
@@ -38,15 +38,11 @@ func (c *Commitment) LeafHash(accountRoot common.Hash) common.Hash {
 
 func (c *Commitment) Bytes() []byte {
 	encoded := make([]byte, commitmentDataLength+len(c.Transactions))
-	//TODO: don't serialize BatchID and IndexInBatch, that can be decoded from key
-	copy(encoded[0:32], utils.PadLeft(c.BatchID.Bytes(), 32))
-	//TODO: replace to uint32 in struct
-	binary.BigEndian.PutUint32(encoded[32:36], c.IndexInBatch)
-	encoded[36] = byte(c.Type)
-	binary.BigEndian.PutUint32(encoded[37:41], c.FeeReceiver)
-	copy(encoded[41:105], c.CombinedSignature.Bytes())
-	copy(encoded[105:137], c.PostStateRoot.Bytes())
-	copy(encoded[137:], c.Transactions)
+	encoded[0] = byte(c.Type)
+	binary.BigEndian.PutUint32(encoded[1:5], c.FeeReceiver)
+	copy(encoded[5:69], c.CombinedSignature.Bytes())
+	copy(encoded[69:101], c.PostStateRoot.Bytes())
+	copy(encoded[101:], c.Transactions)
 
 	return encoded
 }
@@ -56,18 +52,16 @@ func (c *Commitment) SetBytes(data []byte) error {
 		return ErrInvalidLength
 	}
 
-	c.BatchID.SetBytes(data[0:32])
-	c.IndexInBatch = binary.BigEndian.Uint32(data[32:36])
-	c.Type = txtype.TransactionType(data[36])
-	c.FeeReceiver = binary.BigEndian.Uint32(data[37:41])
+	c.Type = txtype.TransactionType(data[0])
+	c.FeeReceiver = binary.BigEndian.Uint32(data[1:5])
 
-	err := c.CombinedSignature.SetBytes(data[41:105])
+	err := c.CombinedSignature.SetBytes(data[5:69])
 	if err != nil {
 		return err
 	}
 
-	c.PostStateRoot.SetBytes(data[105:137])
-	c.Transactions = data[137:]
+	c.PostStateRoot.SetBytes(data[69:101])
+	c.Transactions = data[101:]
 	return nil
 }
 
