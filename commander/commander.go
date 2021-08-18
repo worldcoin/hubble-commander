@@ -52,13 +52,15 @@ type Commander struct {
 
 	storage   *st.Storage
 	client    *eth.Client
+	chain     *deployer.ChainConnection
 	apiServer *http.Server
 	domain    *bls.Domain
 }
 
-func NewCommander(cfg *config.Config) *Commander {
+func NewCommander(cfg *config.Config, chain *deployer.ChainConnection) *Commander {
 	return &Commander{
 		cfg:                 cfg,
+		chain:               chain,
 		releaseStartAndWait: func() {}, // noop
 	}
 }
@@ -77,12 +79,7 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	chain, err := getChainConnection(c.cfg.Ethereum)
-	if err != nil {
-		return err
-	}
-
-	c.client, err = getClient(chain, c.storage, c.cfg)
+	c.client, err = getClient(*c.chain, c.storage, c.cfg)
 	if err != nil {
 		return err
 	}
@@ -194,7 +191,7 @@ func (c *Commander) Stop() error {
 }
 
 func (c *Commander) resetCommander() {
-	*c = *NewCommander(c.cfg)
+	*c = *NewCommander(c.cfg, c.chain)
 }
 
 func getChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, error) {
@@ -284,6 +281,7 @@ func compareChainStates(chainStateA, chainStateB *models.ChainState) error {
 	return nil
 }
 
+// TODO - verify db <=> remote chainID here
 func bootstrapFromRemoteState(
 	chain deployer.ChainConnection,
 	storage *st.Storage,
