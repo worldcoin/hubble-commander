@@ -125,7 +125,7 @@ func (c *Commander) Deploy() (chainSpec *string, err error) {
 		return nil, err
 	}
 
-	chain, err := getChainConnection(c.cfg.Ethereum)
+	chain, err := GetChainConnection(c.cfg.Ethereum)
 	if err != nil {
 		return nil, err
 	}
@@ -194,7 +194,7 @@ func (c *Commander) resetCommander() {
 	*c = *NewCommander(c.cfg, c.chain)
 }
 
-func getChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, error) {
+func GetChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, error) {
 	if cfg == nil {
 		return simulator.NewAutominingSimulator()
 	}

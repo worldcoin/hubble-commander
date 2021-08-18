@@ -33,7 +33,7 @@ func (s *CommanderTestSuite) SetupTest() {
 	s.NoError(err)
 	err = badger.PruneDatabase(cfg.Badger)
 	s.NoError(err)
-	chain, err := getChainConnection(nil)
+	chain, err := GetChainConnection(nil)
 	s.NoError(err)
 	s.cmd = NewCommander(cfg, chain)
 	s.cmd.cfg.Ethereum = &config.EthereumConfig{

@@ -24,7 +24,7 @@ func NewCommanderFromEnv(prune bool) (Commander, error) {
 	case "local":
 		return ConnectToLocalCommander(), nil
 	case "in-process":
-		return CreateInProcessCommander(), nil
+		return CreateInProcessCommander()
 	default:
 		return nil, fmt.Errorf("invalid HUBBLE_E2E env var")
 	}
