@@ -52,12 +52,12 @@ type Commander struct {
 
 	storage   *st.Storage
 	client    *eth.Client
-	chain     *deployer.ChainConnection
+	chain     deployer.ChainConnection
 	apiServer *http.Server
 	domain    *bls.Domain
 }
 
-func NewCommander(cfg *config.Config, chain *deployer.ChainConnection) *Commander {
+func NewCommander(cfg *config.Config, chain deployer.ChainConnection) *Commander {
 	return &Commander{
 		cfg:                 cfg,
 		chain:               chain,
@@ -79,7 +79,7 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.client, err = getClient(*c.chain, c.storage, c.cfg)
+	c.client, err = getClient(c.chain, c.storage, c.cfg)
 	if err != nil {
 		return err
 	}
@@ -202,6 +202,9 @@ func getChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, e
 }
 
 func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.Config) (*eth.Client, error) {
+	if cfg.Ethereum == nil {
+		log.Fatal("no Ethereum config")
+	}
 	if cfg.Bootstrap.ChainSpecPath != nil {
 		return bootstrapFromChainState(chain, storage, cfg)
 	}
