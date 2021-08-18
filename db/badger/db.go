@@ -6,8 +6,11 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/dgraph-io/badger/v3"
+	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v3"
 )
+
+var ErrNotInTransaction = errors.New("badger database is not in transaction")
 
 type Database struct {
 	store             *bh.Store
@@ -121,6 +124,13 @@ func (d *Database) BeginTransaction(update bool) (*db.TxController, *Database) {
 		updateTransaction: update,
 	}
 	return db.NewTxController(&ControllerAdapter{txn}, false), dbDuringTx
+}
+
+func (d *Database) Txn() (*badger.Txn, error) {
+	if d.txn == nil {
+		return nil, ErrNotInTransaction
+	}
+	return d.txn, nil
 }
 
 func (d *Database) Prune() error {

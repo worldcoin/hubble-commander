@@ -2,16 +2,11 @@ package storage
 
 import (
 	"github.com/Masterminds/squirrel"
+	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils"
+	bdg "github.com/dgraph-io/badger/v3"
 )
-
-var selectedCommitmentCols = []string{
-	"commitment.commitment_id",
-	"commitment.transactions",
-	"commitment.fee_receiver",
-	"commitment.combined_signature",
-	"commitment.post_state_root",
-}
 
 type CommitmentStorage struct {
 	database *Database
@@ -51,23 +46,35 @@ func (s *CommitmentStorage) GetCommitment(batchID models.Uint256, commitmentInde
 }
 
 func (s *CommitmentStorage) GetLatestCommitment() (*models.Commitment, error) {
-	res := make([]models.Commitment, 0, 1)
-	err := s.database.Postgres.Query(
-		s.database.QB.Select("*").
-			From("commitment").
-			OrderBy("commitment_id DESC").
-			Limit(1),
-	).Into(&res)
+	var commitment models.Commitment
+	err := s.database.Badger.View(func(txn *bdg.Txn) error {
+		opts := bdg.DefaultIteratorOptions
+		opts.PrefetchValues = false
+		opts.Reverse = true
+		it := txn.NewIterator(opts)
+		defer it.Close()
+
+		seekPrefix := make([]byte, 0, len(models.CommitmentPrefix)+1)
+		seekPrefix = append(seekPrefix, models.CommitmentPrefix...)
+		seekPrefix = append(seekPrefix, 0xFF) // Required to loop backwards
+
+		it.Seek(seekPrefix)
+		if it.ValidForPrefix(models.CommitmentPrefix) {
+			return it.Item().Value(func(v []byte) error {
+				return badger.Decode(v, &commitment)
+			})
+		}
+		return NewNotFoundError("commitment")
+	})
 	if err != nil {
 		return nil, err
 	}
-	if len(res) == 0 {
-		return nil, NewNotFoundError("commitment")
-	}
-	return &res[0], nil
+
+	return &commitment, nil
 }
 
 func (s *CommitmentStorage) MarkCommitmentAsIncluded(commitmentID int32, batchID models.Uint256) error {
+	//TODO-dis: remove
 	res, err := s.database.Postgres.Query(
 		s.database.QB.Update("commitment").
 			Where(squirrel.Eq{"commitment_id": commitmentID}).
@@ -87,31 +94,80 @@ func (s *CommitmentStorage) MarkCommitmentAsIncluded(commitmentID int32, batchID
 	return nil
 }
 
-func (s *CommitmentStorage) DeleteCommitmentsByBatchIDs(batchID ...models.Uint256) error {
-	res, err := s.database.Postgres.Query(
-		s.database.QB.Delete("commitment").
-			Where(squirrel.Eq{"included_in_batch": batchID}),
-	).Exec()
+func (s *CommitmentStorage) DeleteCommitmentsByBatchIDs(batchIDs ...models.Uint256) error {
+	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return err
 	}
-	rowsAffected, err := res.RowsAffected()
+	defer tx.Rollback(&err)
+
+	txn, err := txDatabase.Badger.Txn()
 	if err != nil {
 		return err
 	}
-	if rowsAffected == 0 {
-		return ErrNoRowsAffected
+
+	keys := make([]models.CommitmentKey, 0, len(batchIDs))
+	opts := bdg.DefaultIteratorOptions
+	opts.PrefetchValues = true
+	for i := range batchIDs {
+		commitmentKeys, err := getCommitmentKeysByBatchID(txn, opts, batchIDs[i])
+		if err != nil {
+			return err
+		}
+		keys = append(keys, commitmentKeys...)
 	}
-	return nil
+
+	var commitment models.Commitment
+	for i := range keys {
+		err = txDatabase.Badger.Delete(keys[i], commitment)
+		if err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
+func getCommitmentKeysByBatchID(txn *bdg.Txn, opts bdg.IteratorOptions, batchID models.Uint256) ([]models.CommitmentKey, error) {
+	keys := make([]models.CommitmentKey, 0, 32)
+	it := txn.NewIterator(opts)
+	defer it.Close()
+
+	seekPrefix := make([]byte, 0, len(models.CommitmentPrefix)+32)
+	seekPrefix = append(seekPrefix, models.CommitmentPrefix...)
+	seekPrefix = append(seekPrefix, utils.PadLeft(batchID.Bytes(), 32)...)
+
+	for it.Seek(seekPrefix); it.ValidForPrefix(seekPrefix); it.Next() {
+		var key models.CommitmentKey
+		err := key.SetBytes(it.Item().Key()[len(models.CommitmentPrefix):])
+		if err != nil {
+			return nil, err
+		}
+		keys = append(keys, key)
+	}
+	return keys, nil
 }
 
 func (s *Storage) GetCommitmentsByBatchID(batchID models.Uint256) ([]models.CommitmentWithTokenID, error) {
-	commitments := make([]models.CommitmentWithTokenID, 0, 32)
-	err := s.database.Postgres.Query(
-		s.database.QB.Select(selectedCommitmentCols...).
-			From("commitment").
-			Where(squirrel.Eq{"included_in_batch": batchID}),
-	).Into(&commitments)
+	commitments := make([]models.Commitment, 0, 32)
+	err := s.database.Badger.View(func(txn *bdg.Txn) error {
+		opts := bdg.DefaultIteratorOptions
+		opts.PrefetchValues = true
+		it := txn.NewIterator(opts)
+		defer it.Close()
+
+		seekPrefix := make([]byte, 0, len(models.CommitmentPrefix)+33)
+		seekPrefix = append(seekPrefix, models.CommitmentPrefix...)
+		seekPrefix = append(seekPrefix, utils.PadLeft(batchID.Bytes(), 32)...)
+
+		for it.Seek(seekPrefix); it.ValidForPrefix(seekPrefix); it.Next() {
+			commitment, err := decodeCommitment(it.Item())
+			if err != nil {
+				return err
+			}
+			commitments = append(commitments, *commitment)
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -119,13 +175,37 @@ func (s *Storage) GetCommitmentsByBatchID(batchID models.Uint256) ([]models.Comm
 		return nil, NewNotFoundError("commitments")
 	}
 
+	commitmentsWithToken := make([]models.CommitmentWithTokenID, 0, len(commitments))
 	for i := range commitments {
-		stateLeaf, err := s.StateTree.Leaf(commitments[i].FeeReceiverStateID)
+		stateLeaf, err := s.StateTree.Leaf(commitments[i].FeeReceiver)
 		if err != nil {
 			return nil, err
 		}
-		commitments[i].TokenID = stateLeaf.TokenID
+		commitmentsWithToken = append(commitmentsWithToken, models.CommitmentWithTokenID{
+			ID:                 0,
+			Transactions:       commitments[i].Transactions,
+			TokenID:            stateLeaf.TokenID,
+			FeeReceiverStateID: commitments[i].FeeReceiver,
+			CombinedSignature:  commitments[i].CombinedSignature,
+			PostStateRoot:      commitments[i].PostStateRoot,
+		})
 	}
 
-	return commitments, nil
+	return commitmentsWithToken, nil
+}
+
+func decodeCommitment(item *bdg.Item) (*models.Commitment, error) {
+	var commitment models.Commitment
+	err := item.Value(func(v []byte) error {
+		return badger.Decode(v, &commitment)
+	})
+	if err != nil {
+		return nil, err
+	}
+	// TODO-dis: use it to decode key
+	//err = badger.DecodeKey(item.Key(), &commitment, stateUpdatePrefix)
+	//if err != nil {
+	//	return nil, err
+	//}
+	return &commitment, nil
 }

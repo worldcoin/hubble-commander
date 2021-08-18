@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/binary"
+	"reflect"
 
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -13,6 +14,8 @@ const (
 	commitmentDataLength    = 137
 	commitmentKeyDataLength = 36
 )
+
+var CommitmentPrefix = []byte("bh_" + reflect.TypeOf(Commitment{}).Name())
 
 type Commitment struct {
 	BatchID           Uint256
@@ -38,7 +41,7 @@ func (c *Commitment) Bytes() []byte {
 	//TODO: don't serialize BatchID and IndexInBatch, that can be decoded from key
 	copy(encoded[0:32], utils.PadLeft(c.BatchID.Bytes(), 32))
 	//TODO: replace to uint32 in struct
-	binary.BigEndian.PutUint32(encoded[32:36], uint32(c.IndexInBatch))
+	binary.BigEndian.PutUint32(encoded[32:36], c.IndexInBatch)
 	encoded[36] = byte(c.Type)
 	binary.BigEndian.PutUint32(encoded[37:41], c.FeeReceiver)
 	copy(encoded[41:105], c.CombinedSignature.Bytes())
