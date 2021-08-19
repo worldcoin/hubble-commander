@@ -34,6 +34,7 @@ func GenerateChainSpec(chainState *models.ChainState) (*string, error) {
 	return ref.String(string(yamlChainSpec)), nil
 }
 
+// TODO-LOAD change name here
 func newChainSpec(chainState *models.ChainState) models.ChainSpec {
 	return models.ChainSpec{
 		ChainID:         chainState.ChainID,
@@ -44,6 +45,7 @@ func newChainSpec(chainState *models.ChainState) models.ChainSpec {
 	}
 }
 
+// TODO-LOAD change name here
 func makeChainStateFromChainSpec(chainSpec *models.ChainSpec) *models.ChainState {
 	return &models.ChainState{
 		ChainID:         chainSpec.ChainID,

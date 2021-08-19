@@ -23,6 +23,7 @@ import (
 	"github.com/ybbus/jsonrpc/v2"
 )
 
+// TODO-LOAD make this errors better with a constructor or something
 var (
 	ErrInvalidChainStates = errors.New("database chain state and file chain state are not the same")
 	ErrCannotBootstrap    = errors.New(
@@ -128,7 +129,7 @@ func (c *Commander) Deploy() (chainSpec *string, err error) {
 	defer func() {
 		sErr := c.storage.Close()
 		if sErr != nil {
-			panic(sErr)
+			panic(sErr) // TODO-LOAD panic or log.Fatal?
 		}
 	}()
 
@@ -208,9 +209,10 @@ func GetChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, e
 	return deployer.NewRPCChainConnection(cfg)
 }
 
+// TODO-LOAD extract checking the chain ID of db here somewhere - think it through really
 func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.Config) (*eth.Client, error) {
 	if cfg.Ethereum == nil {
-		log.Fatal("no Ethereum config")
+		log.Fatal("no Ethereum config") // TODO-LOAD leave it like this?
 	}
 	if cfg.Bootstrap.ChainSpecPath != nil {
 		return bootstrapFromChainState(chain, storage, cfg)
@@ -322,10 +324,11 @@ func bootstrapFromRemoteState(
 		return nil, ErrRemoteNodeChainIDConflict
 	}
 
+	// TODO-LOAD make this look better?
 	dbChainState, err := storage.GetChainState()
 	if !st.IsNotFoundError(err) {
 		if dbChainState.ChainID.String() != chainState.ChainID.String() {
-			return nil, ErrDatabaseChainIDConflict // TODO - make better error
+			return nil, ErrDatabaseChainIDConflict // TODO-LOAD - make better error
 		}
 	} else if err != nil && !st.IsNotFoundError(err) {
 		return nil, err
@@ -350,6 +353,7 @@ func bootstrapFromRemoteState(
 	if err != nil {
 		return nil, err
 	}
+
 	return client, nil
 }
 
