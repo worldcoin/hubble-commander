@@ -11,6 +11,7 @@ import (
 func (t *TransactionExecutor) buildC2TCommitment(
 	appliedTransfers []models.Create2Transfer,
 	addedPubKeyIDs []uint32,
+	commitmentKey *models.CommitmentKey,
 	feeReceiverStateID uint32,
 	domain *bls.Domain,
 ) (
@@ -27,7 +28,8 @@ func (t *TransactionExecutor) buildC2TCommitment(
 		return nil, err
 	}
 
-	commitment, err := t.createAndStoreCommitment(
+	commitment, err := t.createCommitment(
+		commitmentKey,
 		txtype.Create2Transfer,
 		feeReceiverStateID,
 		serializedTxs,
@@ -37,7 +39,8 @@ func (t *TransactionExecutor) buildC2TCommitment(
 		return nil, err
 	}
 
-	err = t.markCreate2TransfersAsIncluded(appliedTransfers, commitment.IndexInBatch)
+	//TODO-dis: change it to match commitment key
+	err = t.markCreate2TransfersAsIncluded(appliedTransfers, int32(commitmentKey.IndexInBatch))
 	if err != nil {
 		return nil, err
 	}

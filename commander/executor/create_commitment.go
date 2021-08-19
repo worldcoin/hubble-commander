@@ -5,7 +5,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 )
 
-func (t *TransactionExecutor) createAndStoreCommitment(
+func (t *TransactionExecutor) createCommitment(
+	commitmentKey *models.CommitmentKey,
 	txType txtype.TransactionType,
 	feeReceiverStateID uint32,
 	serializedTxs []byte,
@@ -16,20 +17,21 @@ func (t *TransactionExecutor) createAndStoreCommitment(
 		return nil, err
 	}
 
-	commitment := models.Commitment{
+	return &models.Commitment{
+		ID:                *commitmentKey,
 		Type:              txType,
-		Transactions:      serializedTxs,
 		FeeReceiver:       feeReceiverStateID,
 		CombinedSignature: *combinedSignature,
 		PostStateRoot:     *stateRoot,
-	}
+		IncludedInBatch:   nil,
+		Transactions:      serializedTxs,
+	}, nil
+}
 
-	err = t.storage.AddCommitment(&commitment)
+func (t *TransactionExecutor) createCommitmentKey() (*models.CommitmentKey, error) {
+	nextBatchID, err := t.storage.GetNextBatchID()
 	if err != nil {
 		return nil, err
 	}
-
-	//commitment.IndexInBatch = *id
-
-	return &commitment, nil
+	return &models.CommitmentKey{BatchID: *nextBatchID}, nil
 }

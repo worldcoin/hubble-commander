@@ -81,12 +81,15 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_SubmitsCommitme
 	err := s.storage.AddCommitment(&baseCommitment)
 	s.NoError(err)
 
-	commitment, err := s.storage.GetCommitment(0)
-	s.NoError(err)
-
 	nextBatchID, err := s.client.Rollup.NextBatchID(nil)
 	s.NoError(err)
 	s.Equal(big.NewInt(1), nextBatchID)
+
+	commitment, err := s.storage.GetCommitment(&models.CommitmentKey{
+		BatchID:      models.MakeUint256FromBig(*nextBatchID),
+		IndexInBatch: 0,
+	})
+	s.NoError(err)
 
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
@@ -104,12 +107,15 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_SubmitsC
 	err := s.storage.AddCommitment(&baseCommitment)
 	s.NoError(err)
 
-	commitment, err := s.storage.GetCommitment(0)
-	s.NoError(err)
-
 	nextBatchID, err := s.client.Rollup.NextBatchID(nil)
 	s.NoError(err)
 	s.Equal(big.NewInt(1), nextBatchID)
+
+	commitment, err := s.storage.GetCommitment(&models.CommitmentKey{
+		BatchID:      models.MakeUint256FromBig(*nextBatchID),
+		IndexInBatch: 0,
+	})
+	s.NoError(err)
 
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Create2Transfer)
 	s.NoError(err)
@@ -127,11 +133,14 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_StoresPendingBa
 	err := s.storage.AddCommitment(&baseCommitment)
 	s.NoError(err)
 
-	commitment, err := s.storage.GetCommitment(0)
-	s.NoError(err)
-
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
+	commitment, err := s.storage.GetCommitment(&models.CommitmentKey{
+		BatchID:      pendingBatch.ID,
+		IndexInBatch: 0,
+	})
+	s.NoError(err)
+
 	err = s.transactionExecutor.SubmitBatch(pendingBatch, []models.Commitment{*commitment})
 	s.NoError(err)
 
@@ -148,11 +157,14 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_StoresPe
 	err := s.storage.AddCommitment(&baseCommitment)
 	s.NoError(err)
 
-	commitment, err := s.storage.GetCommitment(0)
-	s.NoError(err)
-
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Create2Transfer)
 	s.NoError(err)
+	commitment, err := s.storage.GetCommitment(&models.CommitmentKey{
+		BatchID:      pendingBatch.ID,
+		IndexInBatch: 0,
+	})
+	s.NoError(err)
+
 	err = s.transactionExecutor.SubmitBatch(pendingBatch, []models.Commitment{*commitment})
 	s.NoError(err)
 
@@ -165,15 +177,18 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_StoresPe
 	s.Nil(batch.Hash)
 }
 
-func (s *SubmitTransferBatchTestSuite) addCommitments(count int) ([]int32, []models.Commitment) {
-	ids := make([]int32, 0, count)
+func (s *SubmitTransferBatchTestSuite) addCommitments(count int, batchID models.Uint256) ([]models.CommitmentKey, []models.Commitment) {
+	ids := make([]models.CommitmentKey, 0, count)
 	commitments := make([]models.Commitment, 0, count)
 	for i := 0; i < count; i++ {
 		err := s.storage.AddCommitment(&baseCommitment)
 		s.NoError(err)
-		ids = append(ids, 0)
+		ids = append(ids, models.CommitmentKey{
+			BatchID:      batchID,
+			IndexInBatch: uint32(i),
+		})
 
-		commitment, err := s.storage.GetCommitment(0)
+		commitment, err := s.storage.GetCommitment(&ids[i])
 		s.NoError(err)
 		commitments = append(commitments, *commitment)
 	}
@@ -181,36 +196,36 @@ func (s *SubmitTransferBatchTestSuite) addCommitments(count int) ([]int32, []mod
 }
 
 func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_MarksCommitmentsAsIncluded() {
-	ids, commitments := s.addCommitments(2)
-
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
+	ids, commitments := s.addCommitments(2, pendingBatch.ID)
+
 	err = s.transactionExecutor.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	batch, err := s.storage.GetBatch(models.MakeUint256(1))
 	s.NoError(err)
 
-	for _, id := range ids {
-		commit, err := s.storage.GetCommitment(id)
+	for i := range ids {
+		commit, err := s.storage.GetCommitment(&ids[i])
 		s.NoError(err)
 		s.Equal(batch.ID, *commit.IncludedInBatch)
 	}
 }
 
 func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_MarksCommitmentsAsIncluded() {
-	ids, commitments := s.addCommitments(2)
-
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Create2Transfer)
 	s.NoError(err)
+	ids, commitments := s.addCommitments(2, pendingBatch.ID)
+
 	err = s.transactionExecutor.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	batch, err := s.storage.GetBatch(models.MakeUint256(1))
 	s.NoError(err)
 
-	for _, id := range ids {
-		commit, err := s.storage.GetCommitment(id)
+	for i := range ids {
+		commit, err := s.storage.GetCommitment(&ids[i])
 		s.NoError(err)
 		s.Equal(batch.ID, *commit.IncludedInBatch)
 	}

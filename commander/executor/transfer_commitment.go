@@ -10,6 +10,7 @@ import (
 
 func (t *TransactionExecutor) buildTransferCommitment(
 	appliedTransfers []models.Transfer,
+	commitmentKey *models.CommitmentKey,
 	feeReceiverStateID uint32,
 	domain *bls.Domain,
 ) (*models.Commitment, error) {
@@ -23,7 +24,8 @@ func (t *TransactionExecutor) buildTransferCommitment(
 		return nil, err
 	}
 
-	commitment, err := t.createAndStoreCommitment(
+	commitment, err := t.createCommitment(
+		commitmentKey,
 		txtype.Transfer,
 		feeReceiverStateID,
 		serializedTxs,
@@ -33,7 +35,8 @@ func (t *TransactionExecutor) buildTransferCommitment(
 		return nil, err
 	}
 
-	err = t.markTransfersAsIncluded(appliedTransfers, commitment.IndexInBatch)
+	//TODO-dis: change it to match commitment key
+	err = t.markTransfersAsIncluded(appliedTransfers, int32(commitmentKey.IndexInBatch))
 	if err != nil {
 		return nil, err
 	}

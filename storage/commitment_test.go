@@ -13,8 +13,10 @@ import (
 
 var (
 	commitment = models.Commitment{
-		BatchID:           models.MakeUint256(1),
-		IndexInBatch:      0,
+		ID: models.CommitmentKey{
+			BatchID:      models.MakeUint256(1),
+			IndexInBatch: 0,
+		},
 		Type:              txtype.Transfer,
 		FeeReceiver:       uint32(1),
 		CombinedSignature: models.MakeRandomSignature(),
@@ -46,9 +48,9 @@ func (s *CommitmentTestSuite) TearDownTest() {
 }
 
 //TODO-dis: remove
-func (s *CommitmentTestSuite) getCommitment(id uint32) *models.Commitment {
+func (s *CommitmentTestSuite) getCommitment(batchID uint32) *models.Commitment {
 	clone := commitment
-	clone.IndexInBatch = id
+	clone.ID.IndexInBatch = batchID
 	return &clone
 }
 
@@ -56,7 +58,7 @@ func (s *CommitmentTestSuite) TestAddCommitment_AddAndRetrieve() {
 	err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	actual, err := s.storage.GetCommitment(commitment.BatchID, commitment.IndexInBatch)
+	actual, err := s.storage.GetCommitment(&commitment.ID)
 	s.NoError(err)
 	s.Equal(commitment, *actual)
 }
@@ -74,27 +76,8 @@ func (s *CommitmentTestSuite) addRandomBatch() models.Uint256 {
 	return batch.ID
 }
 
-func (s *CommitmentTestSuite) TestMarkCommitmentAsIncluded_UpdatesRecord() {
-	s.T().SkipNow()
-	batchID := s.addRandomBatch()
-
-	err := s.storage.AddCommitment(&commitment)
-	s.NoError(err)
-
-	err = s.storage.MarkCommitmentAsIncluded(0, batchID)
-	s.NoError(err)
-
-	expected := s.getCommitment(0)
-	expected.IncludedInBatch = &batchID
-
-	actual, err := s.storage.GetCommitment(commitment.BatchID, commitment.IndexInBatch)
-	s.NoError(err)
-
-	s.Equal(expected, actual)
-}
-
 func (s *CommitmentTestSuite) TestGetCommitment_NonExistentCommitment() {
-	res, err := s.storage.GetCommitment(commitment.BatchID, commitment.IndexInBatch)
+	res, err := s.storage.GetCommitment(&commitment.ID)
 	s.Equal(NewNotFoundError("commitment"), err)
 	s.Nil(res)
 }
@@ -102,14 +85,14 @@ func (s *CommitmentTestSuite) TestGetCommitment_NonExistentCommitment() {
 func (s *CommitmentTestSuite) TestGetLatestCommitment() {
 	expected := commitment
 	for i := 0; i < 2; i++ {
-		expected.IndexInBatch = uint32(i)
+		expected.ID.IndexInBatch = uint32(i)
 		err := s.storage.AddCommitment(&expected)
 		s.NoError(err)
 	}
 
-	expected.BatchID = models.MakeUint256(5)
+	expected.ID.BatchID = models.MakeUint256(5)
 	for i := 0; i < 2; i++ {
-		expected.IndexInBatch = uint32(i)
+		expected.ID.IndexInBatch = uint32(i)
 		err := s.storage.AddCommitment(&expected)
 		s.NoError(err)
 	}
@@ -130,12 +113,12 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
 
 	batchID := s.addRandomBatch()
 	includedCommitment := commitment
-	includedCommitment.BatchID = batchID
+	includedCommitment.ID.BatchID = batchID
 	includedCommitment.FeeReceiver = 0
 
 	expectedCommitments := make([]models.CommitmentWithTokenID, 2)
 	for i := 0; i < 2; i++ {
-		includedCommitment.IndexInBatch = uint32(i)
+		includedCommitment.ID.IndexInBatch = uint32(i)
 		err = s.storage.AddCommitment(&includedCommitment)
 		s.NoError(err)
 
@@ -188,8 +171,8 @@ func (s *CommitmentTestSuite) TestDeleteCommitmentsByBatchIDs() {
 
 		for j := 0; j < 2; j++ {
 			commitmentInBatch := commitment
-			commitmentInBatch.BatchID = batches[i].ID
-			commitmentInBatch.IndexInBatch = uint32(j)
+			commitmentInBatch.ID.BatchID = batches[i].ID
+			commitmentInBatch.ID.IndexInBatch = uint32(j)
 			err = s.storage.AddCommitment(&commitmentInBatch)
 			s.NoError(err)
 		}
@@ -213,7 +196,7 @@ func (s *CommitmentTestSuite) TestDeleteCommitmentsByBatchIDs_NoCommitments() {
 	err = s.storage.DeleteCommitmentsByBatchIDs(batchID)
 	s.Equal(ErrNoRowsAffected, err)
 
-	_, err = s.storage.GetCommitment(commitment.BatchID, commitment.IndexInBatch)
+	_, err = s.storage.GetCommitment(&commitment.ID)
 	s.NoError(err)
 }
 

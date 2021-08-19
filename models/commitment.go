@@ -18,8 +18,7 @@ const (
 var CommitmentPrefix = []byte("bh_" + reflect.TypeOf(Commitment{}).Name())
 
 type Commitment struct {
-	BatchID           Uint256
-	IndexInBatch      uint32
+	ID                CommitmentKey
 	Type              txtype.TransactionType
 	FeeReceiver       uint32
 	CombinedSignature Signature

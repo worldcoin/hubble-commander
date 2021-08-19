@@ -528,7 +528,10 @@ func (s *DisputeTransitionTestSuite) createInvalidC2TCommitments(
 			_, err := s.transactionExecutor.ApplyFee(0, combinedFee)
 			s.NoError(err)
 		}
-		commitment, err := s.transactionExecutor.buildC2TCommitment(txs, pubKeyIDs[i], 0, testDomain)
+		commitmentKey, err := s.transactionExecutor.createCommitmentKey()
+		s.NoError(err)
+
+		commitment, err := s.transactionExecutor.buildC2TCommitment(txs, pubKeyIDs[i], commitmentKey, 0, testDomain)
 		s.NoError(err)
 		commitments = append(commitments, *commitment)
 	}
@@ -553,7 +556,10 @@ func (s *DisputeTransitionTestSuite) createInvalidTransferCommitments(
 			_, err := s.transactionExecutor.ApplyFee(0, combinedFee)
 			s.NoError(err)
 		}
-		commitment, err := s.transactionExecutor.buildTransferCommitment(txs, 0, testDomain)
+		commitmentKey, err := s.transactionExecutor.createCommitmentKey()
+		s.NoError(err)
+
+		commitment, err := s.transactionExecutor.buildTransferCommitment(txs, commitmentKey, 0, testDomain)
 		s.NoError(err)
 		commitments = append(commitments, *commitment)
 	}

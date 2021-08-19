@@ -15,6 +15,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -143,7 +144,10 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 	s.Equal(batches[0].Batch, *batch)
 
 	expectedCommitment := models.Commitment{
-		IndexInBatch:      2,
+		ID: models.CommitmentKey{
+			BatchID:      batch.ID,
+			IndexInBatch: 2,
+		},
 		Type:              txtype.Transfer,
 		Transactions:      batches[0].Commitments[0].Transactions,
 		FeeReceiver:       batches[0].Commitments[0].FeeReceiver,
@@ -151,13 +155,13 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 		PostStateRoot:     batches[0].Commitments[0].StateRoot,
 		IncludedInBatch:   &batch.ID,
 	}
-	commitment, err := s.cmd.storage.GetCommitment(2)
+	commitment, err := s.cmd.storage.GetCommitment(&expectedCommitment.ID)
 	s.NoError(err)
 	s.Equal(expectedCommitment, *commitment)
 
 	expectedTx := transfers[0]
 	expectedTx.Signature = models.Signature{}
-	expectedTx.IncludedInCommitment = &commitment.IndexInBatch
+	expectedTx.IncludedInCommitment = ref.Int32(int32(commitment.ID.IndexInBatch))
 	transfer, err := s.cmd.storage.GetTransfer(transfers[0].Hash)
 	s.NoError(err)
 	s.Equal(expectedTx, *transfer)
@@ -490,9 +494,6 @@ func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batc
 
 	pendingBatch.TransactionHash = utils.RandomHash()
 	err = s.cmd.storage.AddBatch(pendingBatch)
-	s.NoError(err)
-
-	err = s.cmd.storage.MarkCommitmentAsIncluded(commitments[0].IndexInBatch, pendingBatch.ID)
 	s.NoError(err)
 
 	return pendingBatch

@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -27,22 +26,15 @@ func (s *CommitmentStorage) copyWithNewDatabase(database *Database) *CommitmentS
 }
 
 func (s *CommitmentStorage) AddCommitment(commitment *models.Commitment) error {
-	err := s.database.Badger.Insert(models.CommitmentKey{
-		BatchID:      commitment.BatchID,
-		IndexInBatch: commitment.IndexInBatch,
-	}, *commitment)
+	err := s.database.Badger.Insert(commitment.ID, *commitment)
 	return err
 }
 
-func (s *CommitmentStorage) GetCommitment(batchID models.Uint256, commitmentIndex uint32) (*models.Commitment, error) {
+func (s *CommitmentStorage) GetCommitment(key *models.CommitmentKey) (*models.Commitment, error) {
 	commitment := models.Commitment{
-		BatchID:      batchID,
-		IndexInBatch: commitmentIndex,
+		ID: *key,
 	}
-	err := s.database.Badger.Get(models.CommitmentKey{
-		BatchID:      batchID,
-		IndexInBatch: commitmentIndex,
-	}, &commitment)
+	err := s.database.Badger.Get(*key, &commitment)
 	if err == bh.ErrNotFound {
 		return nil, NewNotFoundError("commitment")
 	}
@@ -78,27 +70,6 @@ func (s *CommitmentStorage) GetLatestCommitment() (*models.Commitment, error) {
 	}
 
 	return commitment, nil
-}
-
-func (s *CommitmentStorage) MarkCommitmentAsIncluded(commitmentID int32, batchID models.Uint256) error {
-	//TODO-dis: remove
-	res, err := s.database.Postgres.Query(
-		s.database.QB.Update("commitment").
-			Where(squirrel.Eq{"commitment_id": commitmentID}).
-			Set("included_in_batch", batchID),
-	).Exec()
-	if err != nil {
-		return err
-	}
-
-	numUpdatedRows, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if numUpdatedRows == 0 {
-		return ErrNoRowsAffected
-	}
-	return nil
 }
 
 func (s *CommitmentStorage) DeleteCommitmentsByBatchIDs(batchIDs ...models.Uint256) error {
@@ -210,12 +181,9 @@ func decodeCommitment(item *bdg.Item) (*models.Commitment, error) {
 		return nil, err
 	}
 
-	var key models.CommitmentKey
-	err = badger.DecodeKey(item.Key(), &key, models.CommitmentPrefix)
+	err = badger.DecodeKey(item.Key(), &commitment.ID, models.CommitmentPrefix)
 	if err != nil {
 		return nil, err
 	}
-	commitment.BatchID = key.BatchID
-	commitment.IndexInBatch = key.IndexInBatch
 	return &commitment, nil
 }
