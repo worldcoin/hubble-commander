@@ -3,6 +3,7 @@
 package e2e
 
 import (
+	"os"
 	"testing"
 	"time"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/testutils"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
@@ -23,12 +23,14 @@ func TestCommanderSync(t *testing.T) {
 
 	cfg.Bootstrap.Prune = true
 	cfg.API.Port = "5001"
-	activeCommander := setup.CreateInProcessCommanderWithConfig(cfg)
+	activeCommander, err := setup.CreateInProcessCommanderWithConfig(cfg, true)
+	require.NoError(t, err)
 
-	err := activeCommander.Start()
+	err = activeCommander.Start()
 	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, activeCommander.Stop())
+		require.NoError(t, os.Remove(*cfg.Bootstrap.ChainSpecPath))
 	}()
 
 	domain := getDomain(t, activeCommander.Client())
@@ -57,9 +59,9 @@ func TestCommanderSync(t *testing.T) {
 	cfg.API.Port = "5002"
 	cfg.Badger.Path += "_passive"
 	cfg.Postgres.Name += "_passive"
-	cfg.Bootstrap.BootstrapNodeURL = ref.String("http://localhost:5001")
 	cfg.Ethereum.PrivateKey = "ab6919fd6ac00246bb78657e0696cf72058a4cb395133d074eabaddb83d8b00c"
-	passiveCommander := setup.CreateInProcessCommanderWithConfig(cfg)
+	passiveCommander, err := setup.CreateInProcessCommanderWithConfig(cfg, false)
+	require.NoError(t, err)
 
 	err = passiveCommander.Start()
 	require.NoError(t, err)

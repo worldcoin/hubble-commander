@@ -2,6 +2,7 @@ package setup
 
 import (
 	"fmt"
+	"io/ioutil"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/commander"
@@ -21,18 +22,39 @@ type InProcessCommander struct {
 func CreateInProcessCommander() (*InProcessCommander, error) {
 	cfg := config.GetConfig()
 	cfg.Bootstrap.Prune = true
-	return CreateInProcessCommanderWithConfig(cfg)
+	return CreateInProcessCommanderWithConfig(cfg, true)
 }
 
-func CreateInProcessCommanderWithConfig(cfg *config.Config) (*InProcessCommander, error) {
+func CreateInProcessCommanderWithConfig(cfg *config.Config, deployContracts bool) (*InProcessCommander, error) {
 	cfg.Rollup.MinTxsPerCommitment = cfg.Rollup.MaxTxsPerCommitment
 	chain, err := commander.GetChainConnection(cfg.Ethereum)
 	if err != nil {
 		return nil, err
 	}
+
 	cmd := commander.NewCommander(cfg, chain)
 	endpoint := fmt.Sprintf("http://localhost:%s", cfg.API.Port)
 	client := jsonrpc.NewClient(endpoint)
+
+	if deployContracts {
+		file, err := ioutil.TempFile("", "in_process_commander")
+		if err != nil {
+			return nil, err
+		}
+
+		chainSpecPath := file.Name()
+		cfg.Bootstrap.ChainSpecPath = &chainSpecPath
+
+		chainSpec, err := cmd.Deploy()
+		if err != nil {
+			return nil, err
+		}
+
+		err = ioutil.WriteFile(*cfg.Bootstrap.ChainSpecPath, []byte(*chainSpec), 0600)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	return &InProcessCommander{
 		client:    client,
