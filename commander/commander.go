@@ -263,12 +263,29 @@ func bootstrapChainStateAndCommander(
 	if chainID != chainState.ChainID {
 		return nil, ErrChainSpecChainIDConflict
 	}
-	err := storage.SetChainState(chainState)
+
+	err := PopulateGenesisAccounts(storage, chainState.GenesisAccounts)
 	if err != nil {
 		return nil, err
 	}
+
+	err = storage.SetChainState(chainState)
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := createClientFromChainState(chain, chainState)
+	if err != nil {
+		return nil, err
+	}
+
+	err = verifyCommitmentRoot(storage, client)
+	if err != nil {
+		return nil, err
+	}
+
 	log.Printf("Bootstrapping genesis state from chain spec file")
-	return createClientFromChainState(chain, chainState)
+	return client, nil
 }
 
 func compareChainStates(chainStateA, chainStateB *models.ChainState) error {
