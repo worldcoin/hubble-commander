@@ -323,12 +323,12 @@ func bootstrapFromRemoteState(
 	}
 
 	dbChainState, err := storage.GetChainState()
-	if err != nil && !st.IsNotFoundError(err) {
+	if !st.IsNotFoundError(err) {
+		if dbChainState.ChainID.String() != chainState.ChainID.String() {
+			return nil, ErrDatabaseChainIDConflict // TODO - make better error
+		}
+	} else if err != nil && !st.IsNotFoundError(err) {
 		return nil, err
-	}
-
-	if dbChainState.ChainID.String() != chainState.ChainID.String() {
-		return nil, ErrDatabaseChainIDConflict // TODO - make better error
 	}
 
 	err = PopulateGenesisAccounts(storage, chainState.GenesisAccounts)
