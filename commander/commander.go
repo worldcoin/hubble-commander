@@ -125,6 +125,13 @@ func (c *Commander) Deploy() (chainSpec *string, err error) {
 		return nil, err
 	}
 
+	defer func() {
+		sErr := c.storage.Close()
+		if sErr != nil {
+			panic(sErr)
+		}
+	}()
+
 	chain, err := GetChainConnection(c.cfg.Ethereum)
 	if err != nil {
 		return nil, err
