@@ -234,7 +234,7 @@ func bootstrapFromChainState(
 	if err != nil {
 		return nil, err
 	}
-	importedChainState := makeChainStateFromChainSpec(chainSpec)
+	importedChainState := newChainStateFromChainSpec(chainSpec)
 	dbChainState, err := storage.GetChainState()
 	if st.IsNotFoundError(err) {
 		return bootstrapChainStateAndCommander(chain, storage, importedChainState)

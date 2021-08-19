@@ -44,8 +44,7 @@ func makeChainSpec(chainState *models.ChainState) models.ChainSpec {
 	}
 }
 
-// TODO-LOAD change name here
-func makeChainStateFromChainSpec(chainSpec *models.ChainSpec) *models.ChainState {
+func newChainStateFromChainSpec(chainSpec *models.ChainSpec) *models.ChainState {
 	return &models.ChainState{
 		ChainID:         chainSpec.ChainID,
 		AccountRegistry: chainSpec.AccountRegistry,
