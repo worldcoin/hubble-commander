@@ -51,7 +51,7 @@ func (s *ChainSpecTestSuite) SetupTest() {
 		},
 		SyncedBlock: 7738,
 	}
-	s.chainSpec = newChainSpec(s.chainState)
+	s.chainSpec = makeChainSpec(s.chainState)
 }
 
 func (s *ChainSpecTestSuite) TestGenerateChainSpec() {

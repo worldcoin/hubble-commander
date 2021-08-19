@@ -24,7 +24,7 @@ func ReadChainSpecFile(path string) (*models.ChainSpec, error) {
 }
 
 func GenerateChainSpec(chainState *models.ChainState) (*string, error) {
-	chainSpec := newChainSpec(chainState)
+	chainSpec := makeChainSpec(chainState)
 
 	yamlChainSpec, err := yaml.Marshal(chainSpec)
 	if err != nil {
@@ -34,8 +34,7 @@ func GenerateChainSpec(chainState *models.ChainState) (*string, error) {
 	return ref.String(string(yamlChainSpec)), nil
 }
 
-// TODO-LOAD change name here
-func newChainSpec(chainState *models.ChainState) models.ChainSpec {
+func makeChainSpec(chainState *models.ChainState) models.ChainSpec {
 	return models.ChainSpec{
 		ChainID:         chainState.ChainID,
 		AccountRegistry: chainState.AccountRegistry,
