@@ -308,7 +308,6 @@ func compareChainStates(chainStateA, chainStateB *models.ChainState) error {
 	return nil
 }
 
-// TODO - verify db <=> remote chainID here
 func bootstrapFromRemoteState(
 	chain deployer.ChainConnection,
 	storage *st.Storage,
@@ -321,6 +320,15 @@ func bootstrapFromRemoteState(
 
 	if chainState.ChainID.String() != cfg.Ethereum.ChainID {
 		return nil, ErrRemoteNodeChainIDConflict
+	}
+
+	dbChainState, err := storage.GetChainState()
+	if err != nil && !st.IsNotFoundError(err) {
+		return nil, err
+	}
+
+	if dbChainState.ChainID.String() != chainState.ChainID.String() {
+		return nil, ErrDatabaseChainIDConflict // TODO - make better error
 	}
 
 	err = PopulateGenesisAccounts(storage, chainState.GenesisAccounts)
