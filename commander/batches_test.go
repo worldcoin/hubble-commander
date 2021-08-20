@@ -145,7 +145,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 	expectedCommitment := models.Commitment{
 		ID: models.CommitmentKey{
 			BatchID:      batch.ID,
-			IndexInBatch: 2,
+			IndexInBatch: 0,
 		},
 		Type:              txtype.Transfer,
 		Transactions:      batches[0].Commitments[0].Transactions,
@@ -490,6 +490,8 @@ func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batc
 	commitments, err := s.transactionExecutor.CreateTransferCommitments(domain)
 	s.NoError(err)
 	s.Len(commitments, 1)
+	err = s.cmd.storage.AddCommitment(&commitments[0])
+	s.NoError(err)
 
 	pendingBatch.TransactionHash = utils.RandomHash()
 	err = s.cmd.storage.AddBatch(pendingBatch)
