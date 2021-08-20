@@ -47,13 +47,6 @@ func (s *CommitmentTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-//TODO-dis: remove
-func (s *CommitmentTestSuite) getCommitment(batchID uint32) *models.Commitment {
-	clone := commitment
-	clone.ID.IndexInBatch = batchID
-	return &clone
-}
-
 func (s *CommitmentTestSuite) TestAddCommitment_AddAndRetrieve() {
 	err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)

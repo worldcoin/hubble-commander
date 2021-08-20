@@ -16,7 +16,7 @@ import (
 //   uint256[2][] signatures,
 //   uint256[] feeReceivers,
 //   bytes[] txss
-func DecodeBatchCalldata(calldata []byte) ([]DecodedCommitment, error) {
+func DecodeBatchCalldata(calldata []byte, batchID *models.Uint256) ([]DecodedCommitment, error) {
 	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -37,6 +37,10 @@ func DecodeBatchCalldata(calldata []byte) ([]DecodedCommitment, error) {
 	commitments := make([]DecodedCommitment, size)
 	for i := 0; i < size; i++ {
 		commitments[i] = DecodedCommitment{
+			ID: models.CommitmentKey{
+				BatchID:      *batchID,
+				IndexInBatch: uint32(i),
+			},
 			StateRoot:         common.BytesToHash(stateRoots[i][:]),
 			CombinedSignature: models.MakeSignatureFromBigInts(signatures[i]),
 			FeeReceiver:       uint32(feeReceivers[i].Uint64()),

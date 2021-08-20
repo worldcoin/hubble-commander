@@ -6,18 +6,17 @@ import (
 )
 
 type TransactionBase struct {
-	Hash                 common.Hash            `db:"tx_hash"`
-	TxType               txtype.TransactionType `db:"tx_type"`
-	FromStateID          uint32                 `db:"from_state_id"`
-	Amount               Uint256
-	Fee                  Uint256
-	Nonce                Uint256
-	Signature            Signature
-	ReceiveTime          *Timestamp `db:"receive_time"`
-	IncludedInCommitment *int32     `db:"included_in_commitment"`
-	ErrorMessage         *string    `db:"error_message"`
-	BatchID              *Uint256   `db:"batch_id"`
-	IndexInBatch         *uint32    `db:"index_in_batch"`
+	Hash         common.Hash            `db:"tx_hash"`
+	TxType       txtype.TransactionType `db:"tx_type"`
+	FromStateID  uint32                 `db:"from_state_id"`
+	Amount       Uint256
+	Fee          Uint256
+	Nonce        Uint256
+	Signature    Signature
+	ReceiveTime  *Timestamp `db:"receive_time"`
+	ErrorMessage *string    `db:"error_message"`
+	BatchID      *Uint256   `db:"batch_id"`
+	IndexInBatch *uint32    `db:"index_in_batch"`
 }
 
 type TransactionBaseForCommitment struct {

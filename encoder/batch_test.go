@@ -16,6 +16,7 @@ func TestDecodeBatchCalldata(t *testing.T) {
 	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
 	require.NoError(t, err)
 
+	batchID := models.NewUint256(1)
 	commitment := models.Commitment{
 		Type:              txtype.Transfer,
 		Transactions:      utils.RandomBytes(12),
@@ -27,7 +28,7 @@ func TestDecodeBatchCalldata(t *testing.T) {
 	calldata, err := rollupAbi.Pack("submitTransfer", arg1, arg2, arg3, arg4)
 	require.NoError(t, err)
 
-	decodedCommitments, err := DecodeBatchCalldata(calldata)
+	decodedCommitments, err := DecodeBatchCalldata(calldata, batchID)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(decodedCommitments))
 
@@ -36,4 +37,6 @@ func TestDecodeBatchCalldata(t *testing.T) {
 	require.Equal(t, commitment.CombinedSignature, decoded.CombinedSignature)
 	require.Equal(t, commitment.FeeReceiver, decoded.FeeReceiver)
 	require.Equal(t, commitment.Transactions, decoded.Transactions)
+	require.Equal(t, *batchID, decoded.ID.BatchID)
+	require.EqualValues(t, 0, decoded.ID.IndexInBatch)
 }

@@ -89,7 +89,7 @@ func (s *BatchStorage) GetNextBatchID() (*models.Uint256, error) {
 		return true
 	})
 	if IsNotFoundError(err) {
-		return models.NewUint256(0), nil
+		return models.NewUint256(1), nil
 	}
 	if err != nil {
 		return nil, err
@@ -166,20 +166,6 @@ func (s *Storage) GetBatchByCommitmentID(commitmentID int32) (*models.Batch, err
 	return &res[0], nil
 }
 
-//TODO-dis: test this
-func (s *BatchStorage) getBatches(batchIDs []models.Uint256) ([]models.Batch, error) {
-	ids := batchIDsToInterfaceSlice(batchIDs)
-	results := make([]models.Batch, 0, len(batchIDs))
-	err := s.database.Badger.Find(
-		&results,
-		bh.Where(bh.Key).In(ids...),
-	)
-	if err != nil {
-		return nil, err
-	}
-	return results, nil
-}
-
 func (s *BatchStorage) reverseIterateBatches(filter func(batch *models.Batch) bool) (*models.Batch, error) {
 	var batch models.Batch
 	err := s.database.Badger.View(func(txn *bdg.Txn) error {
@@ -212,12 +198,4 @@ func (s *BatchStorage) reverseIterateBatches(filter func(batch *models.Batch) bo
 	}
 
 	return &batch, nil
-}
-
-func batchIDsToInterfaceSlice(batchIDs []models.Uint256) []interface{} {
-	result := make([]interface{}, len(batchIDs))
-	for i := range batchIDs {
-		result[i] = batchIDs
-	}
-	return result
 }

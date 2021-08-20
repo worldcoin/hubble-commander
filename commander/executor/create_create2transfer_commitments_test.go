@@ -251,7 +251,8 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	for i := range pendingTransfers {
 		tx, err := s.storage.GetCreate2Transfer(pendingTransfers[i].Hash)
 		s.NoError(err)
-		s.Equal(int32(1), *tx.IncludedInCommitment)
+		s.Equal(commitments[0].ID.BatchID, *tx.BatchID)
+		s.Equal(commitments[0].ID.IndexInBatch, *tx.IndexInBatch)
 		s.Equal(uint32(i+3), *tx.ToStateID)
 	}
 }

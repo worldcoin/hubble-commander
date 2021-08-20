@@ -47,11 +47,11 @@ func (t *TransactionExecutor) CreateCreate2TransferCommitments(domain *bls.Domai
 	return commitments, nil
 }
 
-func (t *TransactionExecutor) createC2TCommitment(pendingTransfers []models.Create2Transfer, commitmentKey *models.CommitmentKey, domain *bls.Domain) (
-	newPendingTransfers []models.Create2Transfer,
-	commitment *models.Commitment,
-	err error,
-) {
+func (t *TransactionExecutor) createC2TCommitment(
+	pendingTransfers []models.Create2Transfer,
+	commitmentKey *models.CommitmentKey,
+	domain *bls.Domain,
+) (newPendingTransfers []models.Create2Transfer, commitment *models.Commitment, err error) {
 	startTime := time.Now()
 
 	pendingTransfers, err = t.refillPendingC2Ts(pendingTransfers)

@@ -15,7 +15,6 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -161,7 +160,8 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 
 	expectedTx := transfers[0]
 	expectedTx.Signature = models.Signature{}
-	expectedTx.IncludedInCommitment = ref.Int32(int32(commitment.ID.IndexInBatch))
+	expectedTx.BatchID = &commitment.ID.BatchID
+	expectedTx.IndexInBatch = &commitment.ID.IndexInBatch
 	transfer, err := s.cmd.storage.GetTransfer(transfers[0].Hash)
 	s.NoError(err)
 	s.Equal(expectedTx, *transfer)

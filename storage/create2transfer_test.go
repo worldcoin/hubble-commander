@@ -17,14 +17,13 @@ import (
 var (
 	create2Transfer = models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
-			Hash:                 common.BigToHash(big.NewInt(1234)),
-			TxType:               txtype.Create2Transfer,
-			FromStateID:          1,
-			Amount:               models.MakeUint256(1000),
-			Fee:                  models.MakeUint256(100),
-			Nonce:                models.MakeUint256(0),
-			Signature:            models.MakeRandomSignature(),
-			IncludedInCommitment: nil,
+			Hash:        common.BigToHash(big.NewInt(1234)),
+			TxType:      txtype.Create2Transfer,
+			FromStateID: 1,
+			Amount:      models.MakeUint256(1000),
+			Fee:         models.MakeUint256(100),
+			Nonce:       models.MakeUint256(0),
+			Signature:   models.MakeRandomSignature(),
 		},
 		ToStateID:   ref.Uint32(2),
 		ToPublicKey: account2.PublicKey,

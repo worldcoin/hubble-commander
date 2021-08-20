@@ -142,6 +142,8 @@ func (s *SyncTestSuite) TestSyncBatch_TwoTransferBatches() {
 		var pendingBatch *models.Batch
 		pendingBatch, err = s.transactionExecutor.NewPendingBatch(txtype.Transfer)
 		s.NoError(err)
+		expectedCommitments[i].ID.BatchID = pendingBatch.ID
+		expectedCommitments[i].ID.IndexInBatch = 0
 		err = s.transactionExecutor.SubmitBatch(pendingBatch, []models.Commitment{expectedCommitments[i]})
 		s.NoError(err)
 		s.client.Commit()
@@ -163,13 +165,12 @@ func (s *SyncTestSuite) TestSyncBatch_TwoTransferBatches() {
 	for i := range expectedCommitments {
 		commitment, err := s.storage.GetCommitment(&expectedCommitments[i].ID)
 		s.NoError(err)
-		expectedCommitments[i].IncludedInBatch = &batches[i].ID
 		s.Equal(expectedCommitments[i], *commitment)
 
 		actualTx, err := s.storage.GetTransfer(txs[i].Hash)
 		s.NoError(err)
-		//TODO-dis: fix
-		txs[i].IncludedInCommitment = ref.Int32(int32(expectedCommitments[i].ID.IndexInBatch))
+		txs[i].BatchID = &commitment.ID.BatchID
+		txs[i].IndexInBatch = &commitment.ID.IndexInBatch
 		txs[i].Signature = models.Signature{}
 		s.Equal(txs[i], actualTx)
 	}
@@ -421,13 +422,13 @@ func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 
 	commitment, err := s.storage.GetCommitment(&expectedCommitment.ID)
 	s.NoError(err)
-	expectedCommitment.IncludedInBatch = &batches[0].ID
 	s.Equal(expectedCommitment, *commitment)
 
 	transfer, err := s.storage.GetCreate2Transfer(tx.Hash)
 	s.NoError(err)
 	transfer.Signature = tx.Signature
-	tx.IncludedInCommitment = ref.Int32(int32(commitment.ID.IndexInBatch))
+	tx.BatchID = &commitment.ID.BatchID
+	tx.IndexInBatch = &commitment.ID.IndexInBatch
 	tx.ToStateID = transfer.ToStateID
 	s.Equal(tx, *transfer)
 }
@@ -530,7 +531,8 @@ func (s *SyncTestSuite) TestRevertBatch_ExcludesTransactionsFromCommitments() {
 
 	transfer, err := s.storage.GetTransfer(s.transfer.Hash)
 	s.NoError(err)
-	s.Nil(transfer.IncludedInCommitment)
+	s.Nil(transfer.BatchID)
+	s.Nil(transfer.IndexInBatch)
 }
 
 func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {
