@@ -21,7 +21,6 @@ var (
 		FeeReceiver:       uint32(1),
 		CombinedSignature: models.MakeRandomSignature(),
 		PostStateRoot:     utils.RandomHash(),
-		IncludedInBatch:   nil,
 		Transactions:      []byte{1, 2, 3},
 	}
 )

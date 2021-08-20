@@ -215,7 +215,6 @@ func (s *GetTransactionsTestSuite) addCommitmentAndBatch() *models.Batch {
 		FeeReceiver:       1234,
 		CombinedSignature: models.MakeRandomSignature(),
 		PostStateRoot:     utils.RandomHash(),
-		IncludedInBatch:   &batch.ID,
 	}
 
 	err = s.storage.AddCommitment(commitment)

@@ -23,7 +23,6 @@ type Commitment struct {
 	FeeReceiver       uint32
 	CombinedSignature Signature
 	PostStateRoot     common.Hash
-	IncludedInBatch   *Uint256
 	Transactions      []byte
 }
 

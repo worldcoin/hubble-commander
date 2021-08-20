@@ -23,7 +23,6 @@ func (t *TransactionExecutor) createCommitment(
 		FeeReceiver:       feeReceiverStateID,
 		CombinedSignature: *combinedSignature,
 		PostStateRoot:     *stateRoot,
-		IncludedInBatch:   nil,
 		Transactions:      serializedTxs,
 	}, nil
 }

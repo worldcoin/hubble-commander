@@ -169,7 +169,6 @@ func (t *TransactionExecutor) syncCommitment(
 		FeeReceiver:       commitment.FeeReceiver,
 		CombinedSignature: commitment.CombinedSignature,
 		PostStateRoot:     commitment.StateRoot,
-		IncludedInBatch:   &batch.ID,
 	})
 	if err != nil {
 		return err

@@ -18,7 +18,7 @@ func (a *API) GetCommitment(id models.CommitmentKey) (*dto.Commitment, error) {
 		return nil, err
 	}
 
-	batch, err := a.storage.GetMinedBatch(*commitment.IncludedInBatch)
+	batch, err := a.storage.GetMinedBatch(commitment.ID.BatchID)
 	if st.IsNotFoundError(err) {
 		return nil, st.NewNotFoundError("commitment")
 	}

@@ -238,7 +238,6 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_StoresCorre
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, expectedTxsLength)
 	s.Equal(commitments[0].FeeReceiver, uint32(2))
-	s.Nil(commitments[0].IncludedInBatch)
 
 	postRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)

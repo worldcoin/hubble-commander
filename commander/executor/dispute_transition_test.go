@@ -128,20 +128,26 @@ func (s *DisputeTransitionTestSuite) TestPreviousCommitmentInclusionProof_Previo
 
 	commitments := []models.Commitment{
 		{
+			ID: models.CommitmentKey{
+				BatchID:      batch.ID,
+				IndexInBatch: 0,
+			},
 			Type:              txtype.Transfer,
 			Transactions:      utils.RandomBytes(12),
 			FeeReceiver:       11,
 			CombinedSignature: models.MakeRandomSignature(),
 			PostStateRoot:     utils.RandomHash(),
-			IncludedInBatch:   &batch.ID,
 		},
 		{
+			ID: models.CommitmentKey{
+				BatchID:      batch.ID,
+				IndexInBatch: 1,
+			},
 			Type:              txtype.Transfer,
 			Transactions:      utils.RandomBytes(12),
 			FeeReceiver:       11,
 			CombinedSignature: models.MakeRandomSignature(),
 			PostStateRoot:     utils.RandomHash(),
-			IncludedInBatch:   &batch.ID,
 		},
 	}
 	for i := range commitments {

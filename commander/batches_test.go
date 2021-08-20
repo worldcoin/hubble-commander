@@ -152,7 +152,6 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 		FeeReceiver:       batches[0].Commitments[0].FeeReceiver,
 		CombinedSignature: batches[0].Commitments[0].CombinedSignature,
 		PostStateRoot:     batches[0].Commitments[0].StateRoot,
-		IncludedInBatch:   &batch.ID,
 	}
 	commitment, err := s.cmd.storage.GetCommitment(&expectedCommitment.ID)
 	s.NoError(err)

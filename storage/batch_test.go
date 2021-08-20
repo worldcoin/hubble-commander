@@ -160,12 +160,15 @@ func (s *BatchTestSuite) TestGetBatchByCommitmentID() {
 	s.NoError(err)
 
 	commitment := &models.Commitment{
+		ID: models.CommitmentKey{
+			BatchID:      models.MakeUint256(1),
+			IndexInBatch: 0,
+		},
 		Type:              txtype.Transfer,
 		Transactions:      []byte{1, 2, 3},
 		FeeReceiver:       uint32(1),
 		CombinedSignature: models.MakeRandomSignature(),
 		PostStateRoot:     utils.RandomHash(),
-		IncludedInBatch:   &batch.ID,
 	}
 
 	err = s.storage.AddCommitment(commitment)
@@ -184,7 +187,6 @@ func (s *BatchTestSuite) TestGetBatchByCommitmentID_NotExistentBatch() {
 		FeeReceiver:       uint32(1),
 		CombinedSignature: models.MakeRandomSignature(),
 		PostStateRoot:     utils.RandomHash(),
-		IncludedInBatch:   nil,
 	}
 
 	err := s.storage.AddCommitment(commitment)

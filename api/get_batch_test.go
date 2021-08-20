@@ -37,9 +37,6 @@ func (s *GetBatchTestSuite) SetupTest() {
 	s.NoError(err)
 	s.api = &API{storage: s.storage.Storage, client: s.testClient.Client}
 
-	s.commitment = commitment
-	s.commitment.IncludedInBatch = models.NewUint256(1)
-
 	s.batch = models.Batch{
 		ID:                models.MakeUint256(1),
 		Type:              txtype.Transfer,
@@ -49,6 +46,9 @@ func (s *GetBatchTestSuite) SetupTest() {
 		AccountTreeRoot:   utils.NewRandomHash(),
 		SubmissionTime:    models.NewTimestamp(time.Unix(140, 0).UTC()),
 	}
+
+	s.commitment = commitment
+	s.commitment.ID.BatchID = s.batch.ID
 }
 
 func (s *GetBatchTestSuite) TearDownTest() {
