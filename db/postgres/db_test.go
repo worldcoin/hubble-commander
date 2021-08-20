@@ -47,13 +47,13 @@ func (s *DBTestSuite) TestMigrations() {
 
 	s.NoError(migrator.Up())
 
-	checkBatch(s.T(), s.db, 0)
+	checkTransfer(s.T(), s.db, 0)
 
 	s.NoError(migrator.Down())
 
 	res := make([]models.Batch, 0)
 	err = s.db.Query(
-		sq.Select("*").From("batch"),
+		sq.Select("*").From("transfers"),
 	).Into(&res)
 	s.Error(err)
 }
@@ -64,13 +64,13 @@ func (s *DBTestSuite) TestClone() {
 
 	s.NoError(migrator.Up())
 
-	addBatch(s.T(), s.db)
+	addTransfer(s.T(), s.db)
 
 	clonedDB, err := s.db.Clone(s.config)
 	s.NoError(err)
 
-	checkBatch(s.T(), clonedDB, 1)
-	checkBatch(s.T(), s.db, 1)
+	checkTransfer(s.T(), clonedDB, 1)
+	checkTransfer(s.T(), s.db, 1)
 }
 
 func (s *DBTestSuite) TestClone_DoesNotChangeReceiverDB() {
