@@ -6,7 +6,7 @@ import (
 )
 
 func (t *TransactionExecutor) createCommitment(
-	commitmentKey *models.CommitmentKey,
+	commitmentID *models.CommitmentID,
 	txType txtype.TransactionType,
 	feeReceiverStateID uint32,
 	serializedTxs []byte,
@@ -18,7 +18,7 @@ func (t *TransactionExecutor) createCommitment(
 	}
 
 	return &models.Commitment{
-		ID:                *commitmentKey,
+		ID:                *commitmentID,
 		Type:              txType,
 		FeeReceiver:       feeReceiverStateID,
 		CombinedSignature: *combinedSignature,
@@ -27,10 +27,10 @@ func (t *TransactionExecutor) createCommitment(
 	}, nil
 }
 
-func (t *TransactionExecutor) createCommitmentKey() (*models.CommitmentKey, error) {
+func (t *TransactionExecutor) createCommitmentID() (*models.CommitmentID, error) {
 	nextBatchID, err := t.storage.GetNextBatchID()
 	if err != nil {
 		return nil, err
 	}
-	return &models.CommitmentKey{BatchID: *nextBatchID}, nil
+	return &models.CommitmentID{BatchID: *nextBatchID}, nil
 }

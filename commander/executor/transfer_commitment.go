@@ -10,7 +10,7 @@ import (
 
 func (t *TransactionExecutor) buildTransferCommitment(
 	appliedTransfers []models.Transfer,
-	commitmentKey *models.CommitmentKey,
+	commitmentID *models.CommitmentID,
 	feeReceiverStateID uint32,
 	domain *bls.Domain,
 ) (*models.Commitment, error) {
@@ -25,7 +25,7 @@ func (t *TransactionExecutor) buildTransferCommitment(
 	}
 
 	commitment, err := t.createCommitment(
-		commitmentKey,
+		commitmentID,
 		txtype.Transfer,
 		feeReceiverStateID,
 		serializedTxs,
@@ -35,7 +35,7 @@ func (t *TransactionExecutor) buildTransferCommitment(
 		return nil, err
 	}
 
-	err = t.markTransfersAsIncluded(appliedTransfers, commitmentKey)
+	err = t.markTransfersAsIncluded(appliedTransfers, commitmentID)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func CombineSignatures(txs models.GenericTransactionArray, domain *bls.Domain) (
 	return bls.NewAggregatedSignature(signatures).ModelsSignature(), nil
 }
 
-func (t *TransactionExecutor) markTransfersAsIncluded(transfers []models.Transfer, commitmentID *models.CommitmentKey) error {
+func (t *TransactionExecutor) markTransfersAsIncluded(transfers []models.Transfer, commitmentID *models.CommitmentID) error {
 	hashes := make([]common.Hash, 0, len(transfers))
 	for i := range transfers {
 		hashes = append(hashes, transfers[i].Hash)

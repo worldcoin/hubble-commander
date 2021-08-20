@@ -143,7 +143,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 	s.Equal(batches[0].Batch, *batch)
 
 	expectedCommitment := models.Commitment{
-		ID: models.CommitmentKey{
+		ID: models.CommitmentID{
 			BatchID:      batch.ID,
 			IndexInBatch: 0,
 		},

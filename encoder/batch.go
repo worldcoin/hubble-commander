@@ -37,7 +37,7 @@ func DecodeBatchCalldata(calldata []byte, batchID *models.Uint256) ([]DecodedCom
 	commitments := make([]DecodedCommitment, size)
 	for i := 0; i < size; i++ {
 		commitments[i] = DecodedCommitment{
-			ID: models.CommitmentKey{
+			ID: models.CommitmentID{
 				BatchID:      *batchID,
 				IndexInBatch: uint32(i),
 			},

@@ -7,7 +7,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func (a *API) GetCommitment(id models.CommitmentKey) (*dto.Commitment, error) {
+func (a *API) GetCommitment(id models.CommitmentID) (*dto.Commitment, error) {
 	commitment, err := a.storage.GetCommitment(&id)
 	if err != nil {
 		return nil, err

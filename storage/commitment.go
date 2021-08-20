@@ -30,7 +30,7 @@ func (s *CommitmentStorage) AddCommitment(commitment *models.Commitment) error {
 	return err
 }
 
-func (s *CommitmentStorage) GetCommitment(key *models.CommitmentKey) (*models.Commitment, error) {
+func (s *CommitmentStorage) GetCommitment(key *models.CommitmentID) (*models.Commitment, error) {
 	commitment := models.Commitment{
 		ID: *key,
 	}
@@ -84,13 +84,14 @@ func (s *CommitmentStorage) DeleteCommitmentsByBatchIDs(batchIDs ...models.Uint2
 		return err
 	}
 
-	keys := make([]models.CommitmentKey, 0, len(batchIDs))
+	var commitmentIDs []models.CommitmentID
+	keys := make([]models.CommitmentID, 0, len(batchIDs))
 	for i := range batchIDs {
-		commitmentKeys, err := getCommitmentKeysByBatchID(txn, bdg.DefaultIteratorOptions, batchIDs[i])
+		commitmentIDs, err = getCommitmentIDsByBatchID(txn, bdg.DefaultIteratorOptions, batchIDs[i])
 		if err != nil {
 			return err
 		}
-		keys = append(keys, commitmentKeys...)
+		keys = append(keys, commitmentIDs...)
 	}
 
 	if len(keys) == 0 {
@@ -107,8 +108,8 @@ func (s *CommitmentStorage) DeleteCommitmentsByBatchIDs(batchIDs ...models.Uint2
 	return tx.Commit()
 }
 
-func getCommitmentKeysByBatchID(txn *bdg.Txn, opts bdg.IteratorOptions, batchID models.Uint256) ([]models.CommitmentKey, error) {
-	keys := make([]models.CommitmentKey, 0, 32)
+func getCommitmentIDsByBatchID(txn *bdg.Txn, opts bdg.IteratorOptions, batchID models.Uint256) ([]models.CommitmentID, error) {
+	keys := make([]models.CommitmentID, 0, 32)
 	it := txn.NewIterator(opts)
 	defer it.Close()
 
@@ -117,7 +118,7 @@ func getCommitmentKeysByBatchID(txn *bdg.Txn, opts bdg.IteratorOptions, batchID 
 	seekPrefix = append(seekPrefix, utils.PadLeft(batchID.Bytes(), 32)...)
 
 	for it.Seek(seekPrefix); it.ValidForPrefix(seekPrefix); it.Next() {
-		var key models.CommitmentKey
+		var key models.CommitmentID
 		err := key.SetBytes(it.Item().Key()[len(models.CommitmentPrefix):])
 		if err != nil {
 			return nil, err

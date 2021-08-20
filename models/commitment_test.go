@@ -10,7 +10,7 @@ import (
 
 func TestCommitment_Bytes(t *testing.T) {
 	commitment := Commitment{
-		ID: CommitmentKey{
+		ID: CommitmentID{
 			BatchID:      MakeUint256(123),
 			IndexInBatch: 4,
 		},
@@ -24,7 +24,7 @@ func TestCommitment_Bytes(t *testing.T) {
 	bytes := commitment.Bytes()
 
 	decodedCommitment := Commitment{
-		ID: CommitmentKey{
+		ID: CommitmentID{
 			BatchID:      MakeUint256(123),
 			IndexInBatch: 4,
 		},
@@ -34,16 +34,16 @@ func TestCommitment_Bytes(t *testing.T) {
 	require.Equal(t, commitment, decodedCommitment)
 }
 
-func TestCommitmentKey_Bytes(t *testing.T) {
-	commitmentKey := CommitmentKey{
+func TestCommitmentID_Bytes(t *testing.T) {
+	commitmentID := CommitmentID{
 		BatchID:      MakeUint256(24),
 		IndexInBatch: 4,
 	}
 
-	bytes := commitmentKey.Bytes()
+	bytes := commitmentID.Bytes()
 
-	var decodedCommitmentKey CommitmentKey
-	err := decodedCommitmentKey.SetBytes(bytes)
+	var decodedCommitmentID CommitmentID
+	err := decodedCommitmentID.SetBytes(bytes)
 	require.NoError(t, err)
-	require.Equal(t, commitmentKey, decodedCommitmentKey)
+	require.Equal(t, commitmentID, decodedCommitmentID)
 }

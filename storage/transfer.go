@@ -9,12 +9,10 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-var (
-	transferColumns = []string{
-		"transaction_base.*",
-		"transfer.to_state_id",
-	}
-)
+var transferColumns = []string{
+	"transaction_base.*",
+	"transfer.to_state_id",
+}
 
 func (s *TransactionStorage) AddTransfer(t *models.Transfer) (receiveTime *models.Timestamp, err error) {
 	tx, txStorage, err := s.BeginTransaction(TxOptions{Postgres: true})
@@ -122,7 +120,7 @@ func (s *TransactionStorage) GetPendingTransfers(limit uint32) ([]models.Transfe
 	return res, nil
 }
 
-func (s *TransactionStorage) GetTransfersByCommitmentID(id *models.CommitmentKey) ([]models.TransferForCommitment, error) {
+func (s *TransactionStorage) GetTransfersByCommitmentID(id *models.CommitmentID) ([]models.TransferForCommitment, error) {
 	res := make([]models.TransferForCommitment, 0, 32)
 	err := s.database.Postgres.Query(
 		s.database.QB.Select("transaction_base.tx_hash",

@@ -128,7 +128,7 @@ func (s *DisputeTransitionTestSuite) TestPreviousCommitmentInclusionProof_Previo
 
 	commitments := []models.Commitment{
 		{
-			ID: models.CommitmentKey{
+			ID: models.CommitmentID{
 				BatchID:      batch.ID,
 				IndexInBatch: 0,
 			},
@@ -139,7 +139,7 @@ func (s *DisputeTransitionTestSuite) TestPreviousCommitmentInclusionProof_Previo
 			PostStateRoot:     utils.RandomHash(),
 		},
 		{
-			ID: models.CommitmentKey{
+			ID: models.CommitmentID{
 				BatchID:      batch.ID,
 				IndexInBatch: 1,
 			},
@@ -522,7 +522,7 @@ func (s *DisputeTransitionTestSuite) createInvalidC2TCommitments(
 	pubKeyIDs [][]uint32,
 	invalidTxHash common.Hash,
 ) []models.Commitment {
-	commitmentID, err := s.transactionExecutor.createCommitmentKey()
+	commitmentID, err := s.transactionExecutor.createCommitmentID()
 	s.NoError(err)
 
 	commitments := make([]models.Commitment, 0, len(commitmentTxs))
@@ -551,7 +551,7 @@ func (s *DisputeTransitionTestSuite) createInvalidTransferCommitments(
 	commitmentTxs [][]models.Transfer,
 	invalidTxHash common.Hash,
 ) []models.Commitment {
-	commitmentID, err := s.transactionExecutor.createCommitmentKey()
+	commitmentID, err := s.transactionExecutor.createCommitmentID()
 	s.NoError(err)
 
 	commitments := make([]models.Commitment, 0, len(commitmentTxs))

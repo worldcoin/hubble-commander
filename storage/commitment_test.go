@@ -13,7 +13,7 @@ import (
 
 var (
 	commitment = models.Commitment{
-		ID: models.CommitmentKey{
+		ID: models.CommitmentID{
 			BatchID:      models.MakeUint256(1),
 			IndexInBatch: 0,
 		},

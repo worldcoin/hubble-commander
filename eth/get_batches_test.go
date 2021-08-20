@@ -26,7 +26,7 @@ func (s *GetBatchesTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 	s.commitments = []models.Commitment{
 		{
-			ID: models.CommitmentKey{
+			ID: models.CommitmentID{
 				BatchID:      models.MakeUint256(1),
 				IndexInBatch: 0,
 			},
@@ -36,7 +36,7 @@ func (s *GetBatchesTestSuite) SetupSuite() {
 			CombinedSignature: *s.mockSignature(),
 		},
 		{
-			ID: models.CommitmentKey{
+			ID: models.CommitmentID{
 				BatchID:      models.MakeUint256(2),
 				IndexInBatch: 0,
 			},

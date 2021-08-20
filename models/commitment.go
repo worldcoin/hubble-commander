@@ -11,14 +11,14 @@ import (
 )
 
 const (
-	commitmentDataLength    = 101
-	commitmentKeyDataLength = 36
+	commitmentDataLength   = 101
+	commitmentIDDataLength = 36
 )
 
 var CommitmentPrefix = []byte("bh_" + reflect.TypeOf(Commitment{}).Name())
 
 type Commitment struct {
-	ID                CommitmentKey
+	ID                CommitmentID
 	Type              txtype.TransactionType
 	FeeReceiver       uint32
 	CombinedSignature Signature
@@ -63,21 +63,21 @@ func (c *Commitment) SetBytes(data []byte) error {
 	return nil
 }
 
-type CommitmentKey struct {
+type CommitmentID struct {
 	BatchID      Uint256 `db:"batch_id"`
 	IndexInBatch uint32  `db:"index_in_batch"`
 }
 
-func (c *CommitmentKey) Bytes() []byte {
-	encoded := make([]byte, commitmentKeyDataLength)
+func (c *CommitmentID) Bytes() []byte {
+	encoded := make([]byte, commitmentIDDataLength)
 	copy(encoded[0:32], utils.PadLeft(c.BatchID.Bytes(), 32))
 	binary.BigEndian.PutUint32(encoded[32:36], c.IndexInBatch)
 
 	return encoded
 }
 
-func (c *CommitmentKey) SetBytes(data []byte) error {
-	if len(data) != commitmentKeyDataLength {
+func (c *CommitmentID) SetBytes(data []byte) error {
+	if len(data) != commitmentIDDataLength {
 		return ErrInvalidLength
 	}
 

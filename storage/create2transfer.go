@@ -9,20 +9,11 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-var (
-	create2TransferColumns = []string{
-		"transaction_base.*",
-		"create2transfer.to_state_id",
-		"create2transfer.to_public_key",
-	}
-	create2TransferWithBatchColumns = []string{
-		"transaction_base.*",
-		"create2transfer.to_state_id",
-		"create2transfer.to_public_key",
-		"batch.batch_hash",
-		"batch.submission_time",
-	}
-)
+var create2TransferColumns = []string{
+	"transaction_base.*",
+	"create2transfer.to_state_id",
+	"create2transfer.to_public_key",
+}
 
 func (s *TransactionStorage) AddCreate2Transfer(t *models.Create2Transfer) (receiveTime *models.Timestamp, err error) {
 	tx, txStorage, err := s.BeginTransaction(TxOptions{Postgres: true})
@@ -135,7 +126,7 @@ func (s *TransactionStorage) GetPendingCreate2Transfers(limit uint32) ([]models.
 	return res, nil
 }
 
-func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id *models.CommitmentKey) ([]models.Create2TransferForCommitment, error) {
+func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id *models.CommitmentID) ([]models.Create2TransferForCommitment, error) {
 	res := make([]models.Create2TransferForCommitment, 0, 32)
 	err := s.database.Postgres.Query(
 		s.database.QB.Select("transaction_base.tx_hash",
@@ -239,7 +230,10 @@ func (s *Storage) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.
 	return transfer, nil
 }
 
-func (s *Storage) create2TransferToTransfersWithBatchDetails(transfers []models.Create2Transfer) (result []models.Create2TransferWithBatchDetails, err error) {
+func (s *Storage) create2TransferToTransfersWithBatchDetails(transfers []models.Create2Transfer) (
+	result []models.Create2TransferWithBatchDetails,
+	err error,
+) {
 	result = make([]models.Create2TransferWithBatchDetails, 0, len(transfers))
 	batchIDs := make(map[models.Uint256]*models.Batch)
 	for i := range transfers {

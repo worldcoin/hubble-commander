@@ -616,7 +616,7 @@ func (s *SyncTestSuite) createAndSubmitTransferBatchWithNonexistentFeeReceiver(t
 	s.NoError(err)
 
 	commitment := models.Commitment{
-		ID: models.CommitmentKey{
+		ID: models.CommitmentID{
 			BatchID:      *nextBatchID,
 			IndexInBatch: 0,
 		},

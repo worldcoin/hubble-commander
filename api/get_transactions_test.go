@@ -206,7 +206,7 @@ func (s *GetTransactionsTestSuite) addCommitmentAndBatch() *models.Batch {
 	s.NoError(err)
 
 	commitment := &models.Commitment{
-		ID: models.CommitmentKey{
+		ID: models.CommitmentID{
 			BatchID:      batch.ID,
 			IndexInBatch: 0,
 		},

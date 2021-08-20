@@ -33,9 +33,9 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Bytes(), nil
 	case *models.Commitment:
 		return nil, errors.Errorf("pass by value")
-	case models.CommitmentKey:
+	case models.CommitmentID:
 		return v.Bytes(), nil
-	case *models.CommitmentKey:
+	case *models.CommitmentID:
 		return nil, errors.Errorf("pass by value")
 	case models.NamespacedMerklePath:
 		return v.Bytes(), nil
@@ -84,7 +84,7 @@ func Decode(data []byte, value interface{}) error {
 		return v.SetBytes(data)
 	case *models.Commitment:
 		return v.SetBytes(data)
-	case *models.CommitmentKey:
+	case *models.CommitmentID:
 		return v.SetBytes(data)
 	case *models.NamespacedMerklePath:
 		return v.SetBytes(data)
