@@ -1,6 +1,7 @@
 package eth
 
 import (
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
@@ -18,7 +19,7 @@ func NewTestClient() (*TestClient, error) {
 }
 
 func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig) (*TestClient, error) {
-	sim, err := simulator.NewAutominingSimulator()
+	sim, err := simulator.NewAutominingSimulator(&config.EthereumConfig{})
 	if err != nil {
 		return nil, err
 	}

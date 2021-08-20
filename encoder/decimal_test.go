@@ -3,6 +3,7 @@ package encoder
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/config"
 	testtx "github.com/Worldcoin/hubble-commander/contracts/test/tx"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -23,7 +24,7 @@ func (s *DecimalTestSuite) SetupSuite() {
 }
 
 func (s *DecimalTestSuite) SetupTest() {
-	sim, err := simulator.NewSimulator()
+	sim, err := simulator.NewSimulator(&config.EthereumConfig{})
 	s.NoError(err)
 	s.sim = sim
 

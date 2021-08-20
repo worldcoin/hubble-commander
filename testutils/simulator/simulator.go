@@ -2,9 +2,11 @@ package simulator
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"math/big"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -15,7 +17,10 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/pkg/errors"
 )
+
+var ErrChainIDConflict = errors.New("chain ID in the config must be equal to 1337 in order to use the simulator")
 
 type Config struct {
 	NumAccounts      *uint64        // default 10
@@ -33,26 +38,36 @@ type Simulator struct {
 	stopAutomine func()
 }
 
-func NewSimulator() (*Simulator, error) {
-	return NewConfiguredSimulator(Config{})
+func NewSimulator(cfg *config.EthereumConfig) (*Simulator, error) {
+	return NewConfiguredSimulator(cfg, Config{})
 }
 
-func NewAutominingSimulator() (*Simulator, error) {
-	return NewConfiguredSimulator(Config{
+func NewAutominingSimulator(cfg *config.EthereumConfig) (*Simulator, error) {
+	return NewConfiguredSimulator(cfg, Config{
 		AutomineEnabled: ref.Bool(true),
 	})
 }
 
-func NewConfiguredSimulator(config Config) (*Simulator, error) {
-	fillWithDefaults(&config)
+func NewConfiguredSimulator(cfg *config.EthereumConfig, simulatorConfig Config) (sim *Simulator, err error) {
+	fillWithDefaults(&simulatorConfig)
 
 	genesisAccounts := make(core.GenesisAlloc)
-	accounts := make([]*bind.TransactOpts, 0, int(*config.NumAccounts))
+	accounts := make([]*bind.TransactOpts, 0, int(*simulatorConfig.NumAccounts))
 
-	for i := uint64(0); i < *config.NumAccounts; i++ {
-		key, err := crypto.GenerateKey()
+	for i := uint64(0); i < *simulatorConfig.NumAccounts; i++ {
+		var key *ecdsa.PrivateKey
+
+		if i == 0 && cfg.PrivateKey != "" {
+			key, err = crypto.HexToECDSA(cfg.PrivateKey)
+		} else {
+			key, err = crypto.GenerateKey()
+		}
 		if err != nil {
 			return nil, err
+		}
+
+		if cfg.ChainID != "1337" {
+			return nil, ErrChainIDConflict
 		}
 
 		auth, err := bind.NewKeyedTransactorWithChainID(key, big.NewInt(1337))
@@ -67,14 +82,14 @@ func NewConfiguredSimulator(config Config) (*Simulator, error) {
 		}
 	}
 
-	sim := &Simulator{
-		Backend:  backends.NewSimulatedBackend(genesisAccounts, *config.BlockGasLimit),
-		Config:   &config,
+	sim = &Simulator{
+		Backend:  backends.NewSimulatedBackend(genesisAccounts, *simulatorConfig.BlockGasLimit),
+		Config:   &simulatorConfig,
 		Account:  accounts[0],
 		Accounts: accounts,
 	}
 
-	if *config.AutomineEnabled {
+	if *simulatorConfig.AutomineEnabled {
 		sim.StartAutomine()
 	}
 
@@ -150,17 +165,17 @@ func (sim *Simulator) EstimateGas(ctx context.Context, msg *ethereum.CallMsg) (u
 	return sim.Backend.EstimateGas(ctx, *msg)
 }
 
-func fillWithDefaults(config *Config) {
-	if config.NumAccounts == nil {
-		config.NumAccounts = ref.Uint64(10)
+func fillWithDefaults(cfg *Config) {
+	if cfg.NumAccounts == nil {
+		cfg.NumAccounts = ref.Uint64(10)
 	}
-	if config.BlockGasLimit == nil {
-		config.BlockGasLimit = ref.Uint64(12_500_000)
+	if cfg.BlockGasLimit == nil {
+		cfg.BlockGasLimit = ref.Uint64(12_500_000)
 	}
-	if config.AutomineEnabled == nil {
-		config.AutomineEnabled = ref.Bool(false)
+	if cfg.AutomineEnabled == nil {
+		cfg.AutomineEnabled = ref.Bool(false)
 	}
-	if config.AutomineInterval == nil {
-		config.AutomineInterval = ref.Duration(100 * time.Millisecond)
+	if cfg.AutomineInterval == nil {
+		cfg.AutomineInterval = ref.Duration(100 * time.Millisecond)
 	}
 }

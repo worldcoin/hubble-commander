@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
@@ -22,7 +23,7 @@ func (s *SimulatorTestSuite) SetupSuite() {
 }
 
 func (s *SimulatorTestSuite) SetupTest() {
-	sim, err := NewSimulator()
+	sim, err := NewSimulator(&config.EthereumConfig{})
 	s.NoError(err)
 	s.sim = sim
 }
@@ -49,7 +50,7 @@ func (s *SimulatorTestSuite) TestNewSimulator() {
 }
 
 func (s *SimulatorTestSuite) TestNewAutominingSimulator() {
-	sim, err := NewAutominingSimulator()
+	sim, err := NewAutominingSimulator(&config.EthereumConfig{})
 	s.NoError(err)
 
 	s.True(sim.IsAutomineEnabled())
@@ -110,6 +111,29 @@ func (s *SimulatorTestSuite) TestSubscribeNewHead() {
 	case <-timeout:
 		s.Fail("timeout on SubscribeNewHead")
 	}
+}
+
+func (s *SimulatorTestSuite) TestEthereumConfig() {
+	sim, err := NewSimulator(&config.EthereumConfig{
+		ChainID: "2000",
+	})
+	s.ErrorIs(err, ErrChainIDConflict)
+	sim.Close()
+
+	sim, err = NewSimulator(&config.EthereumConfig{
+		ChainID: "",
+	})
+	s.ErrorIs(err, ErrChainIDConflict)
+	sim.Close()
+
+	sim, err = NewSimulator(&config.EthereumConfig{
+		ChainID:    "1337",
+		PrivateKey: "4adc00a581cf6f45689d7c93f2b709fb78b67b7f7539a3fff09dd4a64d367133",
+	})
+	s.NoError(err)
+	accountAddress := sim.Account.From.String()
+	s.Equal("0x25eCd6dD41339fb0Dc998E7c31c296fc68535fA4", accountAddress)
+	sim.Close()
 }
 
 func TestSimulatorTestSuite(t *testing.T) {
