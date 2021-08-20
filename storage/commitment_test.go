@@ -37,7 +37,7 @@ func (s *CommitmentTestSuite) SetupSuite() {
 
 func (s *CommitmentTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorageWithBadger()
+	s.storage, err = NewTestStorageWithoutPostgres()
 	s.NoError(err)
 }
 

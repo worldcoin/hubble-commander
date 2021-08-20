@@ -35,7 +35,7 @@ func (s *StateLeafTestSuite) SetupSuite() {
 
 func (s *StateLeafTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorageWithBadger()
+	s.storage, err = NewTestStorageWithoutPostgres()
 	s.NoError(err)
 }
 
