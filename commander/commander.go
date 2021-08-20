@@ -196,9 +196,7 @@ func (c *Commander) resetCommander() {
 
 func GetChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, error) {
 	if cfg == nil {
-		return simulator.NewAutominingSimulator(&config.EthereumConfig{
-			ChainID: "1337",
-		})
+		return simulator.NewAutominingSimulator(&config.EthereumConfig{})
 	}
 	return deployer.NewRPCChainConnection(cfg)
 }

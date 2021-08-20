@@ -36,9 +36,6 @@ func (s *CommanderTestSuite) SetupTest() {
 	chain, err := GetChainConnection(nil)
 	s.NoError(err)
 	s.prepareContracts(cfg, chain)
-	cfg.Ethereum = &config.EthereumConfig{
-		ChainID: "1337", // TODO make ChainID required in EthereumConfig
-	}
 	s.cmd = NewCommander(cfg, chain)
 }
 
