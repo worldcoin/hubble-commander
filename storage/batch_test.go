@@ -145,58 +145,6 @@ func (s *BatchTestSuite) TestGetMinedBatch_NonExistentBatch() {
 	s.Nil(res)
 }
 
-func (s *BatchTestSuite) TestGetBatchByCommitmentID() {
-	s.T().SkipNow()
-	batch := &models.Batch{
-		ID:                models.MakeUint256(1),
-		Type:              txtype.Transfer,
-		TransactionHash:   utils.RandomHash(),
-		Hash:              utils.NewRandomHash(),
-		FinalisationBlock: ref.Uint32(1234),
-		AccountTreeRoot:   utils.NewRandomHash(),
-	}
-
-	err := s.storage.AddBatch(batch)
-	s.NoError(err)
-
-	commitment := &models.Commitment{
-		ID: models.CommitmentKey{
-			BatchID:      models.MakeUint256(1),
-			IndexInBatch: 0,
-		},
-		Type:              txtype.Transfer,
-		Transactions:      []byte{1, 2, 3},
-		FeeReceiver:       uint32(1),
-		CombinedSignature: models.MakeRandomSignature(),
-		PostStateRoot:     utils.RandomHash(),
-	}
-
-	err = s.storage.AddCommitment(commitment)
-	s.NoError(err)
-
-	actual, err := s.storage.GetBatchByCommitmentID(0)
-	s.NoError(err)
-	s.Equal(batch, actual)
-}
-
-func (s *BatchTestSuite) TestGetBatchByCommitmentID_NotExistentBatch() {
-	s.T().SkipNow()
-	commitment := &models.Commitment{
-		Type:              txtype.Transfer,
-		Transactions:      []byte{1, 2, 3},
-		FeeReceiver:       uint32(1),
-		CombinedSignature: models.MakeRandomSignature(),
-		PostStateRoot:     utils.RandomHash(),
-	}
-
-	err := s.storage.AddCommitment(commitment)
-	s.NoError(err)
-
-	batch, err := s.storage.GetBatchByCommitmentID(0)
-	s.Equal(NewNotFoundError("batch"), err)
-	s.Nil(batch)
-}
-
 func (s *BatchTestSuite) TestGetLatestSubmittedBatch() {
 	batches := []models.Batch{
 		{

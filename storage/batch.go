@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/models"
 	bdg "github.com/dgraph-io/badger/v3"
@@ -147,23 +146,6 @@ func (s *BatchStorage) DeleteBatches(batchIDs ...models.Uint256) error {
 		}
 	}
 	return tx.Commit()
-}
-
-func (s *Storage) GetBatchByCommitmentID(commitmentID int32) (*models.Batch, error) {
-	res := make([]models.Batch, 0, 1)
-	err := s.database.Postgres.Query(
-		s.database.QB.Select("batch.*").
-			From("batch").
-			Join("commitment ON commitment.included_in_batch = batch.batch_id").
-			Where(squirrel.Eq{"commitment_id": commitmentID}),
-	).Into(&res)
-	if err != nil {
-		return nil, err
-	}
-	if len(res) == 0 {
-		return nil, NewNotFoundError("batch")
-	}
-	return &res[0], nil
 }
 
 func (s *BatchStorage) reverseIterateBatches(filter func(batch *models.Batch) bool) (*models.Batch, error) {
