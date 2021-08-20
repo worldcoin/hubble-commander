@@ -25,7 +25,7 @@ import (
 )
 
 func NewCannotBootstrapError(reason string) error {
-	return errors.New(fmt.Sprintf("cannot bootstrap - %s", reason))
+	return errors.New(fmt.Sprintf("cannot bootstrap: %s", reason))
 }
 
 type Commander struct {

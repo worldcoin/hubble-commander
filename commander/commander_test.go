@@ -35,11 +35,12 @@ func (s *CommanderTestSuite) SetupTest() {
 	s.NoError(err)
 	chain, err := GetChainConnection(nil)
 	s.NoError(err)
-	s.cmd = NewCommander(cfg, chain)
-	s.cmd.cfg.Ethereum = &config.EthereumConfig{
+	s.prepareContracts(chain)
+	cfg.Ethereum = &config.EthereumConfig{
 		ChainID: "1337",
 	}
-	s.prepareContracts(chain)
+	cfg.Bootstrap.ChainSpecPath = &s.chainSpecFile
+	s.cmd = NewCommander(cfg, chain)
 }
 
 func (s *CommanderTestSuite) TearDownTest() {
@@ -114,7 +115,6 @@ func (s *CommanderTestSuite) prepareContracts(chain deployer.ChainConnection) {
 	s.NoError(err)
 
 	s.chainSpecFile = file.Name()
-	s.cmd.cfg.Bootstrap.ChainSpecPath = &s.chainSpecFile
 }
 
 func TestCommanderTestSuite(t *testing.T) {
