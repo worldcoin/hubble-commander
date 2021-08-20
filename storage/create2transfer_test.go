@@ -91,12 +91,14 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchDetails() {
 	s.NoError(err)
 
 	commitmentInBatch := commitment
-	commitmentInBatch.IncludedInBatch = &batch.ID
+	commitmentInBatch.ID.BatchID = batch.ID
+	commitmentInBatch.ID.IndexInBatch = 0
 	err = s.storage.AddCommitment(&commitmentInBatch)
 	s.NoError(err)
 
 	transferInBatch := create2Transfer
-	//transferInBatch.IncludedInCommitment = commitmentID
+	transferInBatch.BatchID = &batch.ID
+	transferInBatch.IndexInBatch = &commitment.ID.IndexInBatch
 	receiveTime, err := s.storage.AddCreate2Transfer(&transferInBatch)
 	s.NoError(err)
 	transferInBatch.ReceiveTime = receiveTime
@@ -162,7 +164,7 @@ func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers() {
 	create2Transfer2.Hash = utils.RandomHash()
 	create2Transfer3 := create2Transfer
 	create2Transfer3.Hash = utils.RandomHash()
-	//create2Transfer3.IncludedInCommitment = id
+	create2Transfer3.BatchID = &commitment.ID.BatchID
 	create2Transfer4 := create2Transfer
 	create2Transfer4.Hash = utils.RandomHash()
 	create2Transfer4.ErrorMessage = ref.String("A very boring error message")
@@ -245,12 +247,13 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID() {
 	s.NoError(err)
 
 	transfer1 := create2Transfer
-	//transfer1.IncludedInCommitment = commitmentID
+	transfer1.BatchID = &commitment.ID.BatchID
+	transfer1.IndexInBatch = &commitment.ID.IndexInBatch
 
 	_, err = s.storage.AddCreate2Transfer(&transfer1)
 	s.NoError(err)
 
-	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(0)
+	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(&commitment.ID)
 	s.NoError(err)
 	s.Len(transfers, 1)
 }
@@ -259,7 +262,7 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID_NoCreat
 	err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(0)
+	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(&commitment.ID)
 	s.NoError(err)
 	s.Len(transfers, 0)
 }

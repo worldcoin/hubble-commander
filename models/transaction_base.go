@@ -16,7 +16,8 @@ type TransactionBase struct {
 	ReceiveTime          *Timestamp `db:"receive_time"`
 	IncludedInCommitment *int32     `db:"included_in_commitment"`
 	ErrorMessage         *string    `db:"error_message"`
-	CommitmentID         *CommitmentKey
+	BatchID              *Uint256   `db:"batch_id"`
+	IndexInBatch         *uint32    `db:"index_in_batch"`
 }
 
 type TransactionBaseForCommitment struct {

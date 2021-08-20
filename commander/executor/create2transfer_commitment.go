@@ -39,8 +39,7 @@ func (t *TransactionExecutor) buildC2TCommitment(
 		return nil, err
 	}
 
-	//TODO-dis: change it to match commitment key
-	err = t.markCreate2TransfersAsIncluded(appliedTransfers, int32(commitmentKey.IndexInBatch))
+	err = t.markCreate2TransfersAsIncluded(appliedTransfers, commitmentKey)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +47,7 @@ func (t *TransactionExecutor) buildC2TCommitment(
 	return commitment, nil
 }
 
-func (t *TransactionExecutor) markCreate2TransfersAsIncluded(transfers []models.Create2Transfer, commitmentID int32) error {
+func (t *TransactionExecutor) markCreate2TransfersAsIncluded(transfers []models.Create2Transfer, commitmentID *models.CommitmentKey) error {
 	hashes := make([]common.Hash, 0, len(transfers))
 	for i := range transfers {
 		hashes = append(hashes, transfers[i].Hash)
@@ -58,5 +57,5 @@ func (t *TransactionExecutor) markCreate2TransfersAsIncluded(transfers []models.
 			return err
 		}
 	}
-	return t.storage.BatchMarkTransactionAsIncluded(hashes, &commitmentID)
+	return t.storage.BatchMarkTransactionAsIncluded(hashes, &commitmentID.BatchID, &commitmentID.IndexInBatch)
 }

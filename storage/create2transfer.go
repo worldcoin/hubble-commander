@@ -125,7 +125,7 @@ func (s *TransactionStorage) GetPendingCreate2Transfers(limit uint32) ([]models.
 		s.database.QB.Select(create2TransferColumns...).
 			From("transaction_base").
 			JoinClause("NATURAL JOIN create2transfer").
-			Where(squirrel.Eq{"included_in_commitment": nil, "error_message": nil}).
+			Where(squirrel.Eq{"batch_id": nil, "error_message": nil}).
 			OrderBy("transaction_base.nonce ASC", "transaction_base.tx_hash ASC").
 			Limit(uint64(limit)),
 	).Into(&res)
@@ -135,7 +135,7 @@ func (s *TransactionStorage) GetPendingCreate2Transfers(limit uint32) ([]models.
 	return res, nil
 }
 
-func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id int32) ([]models.Create2TransferForCommitment, error) {
+func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id *models.CommitmentKey) ([]models.Create2TransferForCommitment, error) {
 	res := make([]models.Create2TransferForCommitment, 0, 32)
 	err := s.database.Postgres.Query(
 		s.database.QB.Select("transaction_base.tx_hash",
@@ -149,7 +149,7 @@ func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id int32) ([]mode
 			"create2transfer.to_public_key").
 			From("transaction_base").
 			JoinClause("NATURAL JOIN create2transfer").
-			Where(squirrel.Eq{"included_in_commitment": id}),
+			Where(squirrel.Eq{"batch_id": id.BatchID, "index_in_batch": id.IndexInBatch}),
 	).Into(&res)
 	return res, err
 }
@@ -193,32 +193,29 @@ func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([
 		stateIDs = append(stateIDs, leaves[i].StateID)
 	}
 
-	res := make([]models.Create2TransferWithBatchDetails, 0, 1)
+	transfers := make([]models.Create2Transfer, 0, 1)
 	err = s.database.Postgres.Query(
-		s.database.QB.Select(create2TransferWithBatchColumns...).
+		s.database.QB.Select(create2TransferColumns...).
 			From("transaction_base").
 			JoinClause("NATURAL JOIN create2transfer").
-			LeftJoin("commitment on commitment.commitment_id = transaction_base.included_in_commitment").
-			LeftJoin("batch on batch.batch_id = commitment.included_in_batch").
 			Where(squirrel.Or{
 				squirrel.Eq{"transaction_base.from_state_id": stateIDs},
 				squirrel.Eq{"create2transfer.to_state_id": stateIDs},
 			}),
-	).Into(&res)
+	).Into(&transfers)
 	if err != nil {
 		return nil, err
 	}
-	return res, nil
+
+	return s.create2TransferToTransfersWithBatchDetails(transfers)
 }
 
 func (s *Storage) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.Create2TransferWithBatchDetails, error) {
-	res := make([]models.Create2TransferWithBatchDetails, 0, 1)
+	res := make([]models.Create2Transfer, 0, 1)
 	err := s.database.Postgres.Query(
-		s.database.QB.Select(create2TransferWithBatchColumns...).
+		s.database.QB.Select(create2TransferColumns...).
 			From("transaction_base").
 			JoinClause("NATURAL JOIN create2transfer").
-			LeftJoin("commitment on commitment.commitment_id = transaction_base.included_in_commitment").
-			LeftJoin("batch on batch.batch_id = commitment.included_in_batch").
 			Where(squirrel.Eq{"tx_hash": hash}),
 	).Into(&res)
 	if err != nil {
@@ -227,5 +224,43 @@ func (s *Storage) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.
 	if len(res) == 0 {
 		return nil, NewNotFoundError("transaction")
 	}
-	return &res[0], nil
+	transfer := &models.Create2TransferWithBatchDetails{Create2Transfer: res[0]}
+	if transfer.BatchID == nil {
+		return transfer, nil
+	}
+
+	batch, err := s.GetBatch(*transfer.BatchID)
+	if err != nil {
+		return nil, err
+	}
+	transfer.BatchHash = batch.Hash
+	transfer.BatchTime = batch.SubmissionTime
+
+	return transfer, nil
+}
+
+func (s *Storage) create2TransferToTransfersWithBatchDetails(transfers []models.Create2Transfer) (result []models.Create2TransferWithBatchDetails, err error) {
+	result = make([]models.Create2TransferWithBatchDetails, 0, len(transfers))
+	batchIDs := make(map[models.Uint256]*models.Batch)
+	for i := range transfers {
+		if transfers[i].BatchID == nil {
+			result = append(result, models.Create2TransferWithBatchDetails{Create2Transfer: transfers[i]})
+			continue
+		}
+		batch, ok := batchIDs[*transfers[i].BatchID]
+		if !ok {
+			batch, err = s.GetBatch(*transfers[i].BatchID)
+			if err != nil {
+				return nil, err
+			}
+			batchIDs[*transfers[i].BatchID] = batch
+		}
+
+		result = append(result, models.Create2TransferWithBatchDetails{
+			Create2Transfer: transfers[i],
+			BatchHash:       batch.Hash,
+			BatchTime:       batch.SubmissionTime,
+		})
+	}
+	return result, nil
 }

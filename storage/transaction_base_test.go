@@ -102,16 +102,15 @@ func (s *TransactionBaseTestSuite) TestBatchMarkTransactionAsIncluded() {
 		s.NoError(err)
 	}
 
-	err := s.storage.AddCommitment(&commitment)
-	s.NoError(err)
-
-	err = s.storage.BatchMarkTransactionAsIncluded([]common.Hash{txs[0].Hash, txs[1].Hash}, ref.Int32(0))
+	batchID := models.MakeUint256(1)
+	err := s.storage.BatchMarkTransactionAsIncluded([]common.Hash{txs[0].Hash, txs[1].Hash}, &batchID, ref.Uint32(0))
 	s.NoError(err)
 
 	for i := range txs {
 		tx, err := s.storage.GetTransfer(txs[i].Hash)
 		s.NoError(err)
-		s.Equal(0, tx.IncludedInCommitment)
+		s.Equal(batchID, *tx.BatchID)
+		s.EqualValues(0, *tx.IndexInBatch)
 	}
 }
 
@@ -126,13 +125,14 @@ func (s *TransactionBaseTestSuite) TestGetTransactionCount() {
 	s.NoError(err)
 
 	commitmentInBatch := commitment
-	commitmentInBatch.IncludedInBatch = &batch.ID
+	commitmentInBatch.ID.BatchID = batch.ID
 	err = s.storage.AddCommitment(&commitmentInBatch)
 	s.NoError(err)
 
 	transferInCommitment := transferTransaction
 	transferInCommitment.Hash = common.Hash{5, 5, 5}
-	//transferInCommitment.IncludedInCommitment = commitmentID
+	transferInCommitment.BatchID = &batch.ID
+	transferInCommitment.IndexInBatch = &commitmentInBatch.ID.IndexInBatch
 	_, err = s.storage.AddTransfer(&transferInCommitment)
 	s.NoError(err)
 	_, err = s.storage.AddTransfer(&transferTransaction)
@@ -140,7 +140,8 @@ func (s *TransactionBaseTestSuite) TestGetTransactionCount() {
 
 	c2t := create2Transfer
 	c2t.Hash = common.Hash{3, 4, 5}
-	//c2t.IncludedInCommitment = commitmentID
+	c2t.BatchID = &batch.ID
+	c2t.IndexInBatch = &commitmentInBatch.ID.IndexInBatch
 	_, err = s.storage.AddCreate2Transfer(&c2t)
 	s.NoError(err)
 
@@ -184,23 +185,9 @@ func (s *TransactionBaseTestSuite) TestGetTransactionHashesByBatchIDs_NoTransact
 }
 
 func (s *TransactionBaseTestSuite) addTransfersInCommitment(batchID *models.Uint256, transfers []models.Transfer) {
-	batch := &models.Batch{
-		ID:                *batchID,
-		TransactionHash:   utils.RandomHash(),
-		Hash:              utils.NewRandomHash(),
-		FinalisationBlock: ref.Uint32(1234),
-	}
-	err := s.storage.AddBatch(batch)
-	s.NoError(err)
-
-	commitmentInBatch := commitment
-	commitmentInBatch.IncludedInBatch = &batch.ID
-	err = s.storage.AddCommitment(&commitmentInBatch)
-	s.NoError(err)
-
 	for i := range transfers {
-		//transfers[i].IncludedInCommitment = commitmentID
-		_, err = s.storage.AddTransfer(&transfers[i])
+		transfers[i].BatchID = batchID
+		_, err := s.storage.AddTransfer(&transfers[i])
 		s.NoError(err)
 	}
 }

@@ -35,8 +35,7 @@ func (t *TransactionExecutor) buildTransferCommitment(
 		return nil, err
 	}
 
-	//TODO-dis: change it to match commitment key
-	err = t.markTransfersAsIncluded(appliedTransfers, int32(commitmentKey.IndexInBatch))
+	err = t.markTransfersAsIncluded(appliedTransfers, commitmentKey)
 	if err != nil {
 		return nil, err
 	}
@@ -56,10 +55,10 @@ func CombineSignatures(txs models.GenericTransactionArray, domain *bls.Domain) (
 	return bls.NewAggregatedSignature(signatures).ModelsSignature(), nil
 }
 
-func (t *TransactionExecutor) markTransfersAsIncluded(transfers []models.Transfer, commitmentID int32) error {
+func (t *TransactionExecutor) markTransfersAsIncluded(transfers []models.Transfer, commitmentID *models.CommitmentKey) error {
 	hashes := make([]common.Hash, 0, len(transfers))
 	for i := range transfers {
 		hashes = append(hashes, transfers[i].Hash)
 	}
-	return t.storage.BatchMarkTransactionAsIncluded(hashes, &commitmentID)
+	return t.storage.BatchMarkTransactionAsIncluded(hashes, &commitmentID.BatchID, &commitmentID.IndexInBatch)
 }

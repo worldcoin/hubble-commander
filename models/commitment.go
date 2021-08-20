@@ -65,8 +65,8 @@ func (c *Commitment) SetBytes(data []byte) error {
 }
 
 type CommitmentKey struct {
-	BatchID      Uint256
-	IndexInBatch uint32
+	BatchID      Uint256 `db:"batch_id"`
+	IndexInBatch uint32  `db:"index_in_batch"`
 }
 
 func (c *CommitmentKey) Bytes() []byte {
