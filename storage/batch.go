@@ -42,7 +42,6 @@ func (s *BatchStorage) GetBatch(batchID models.Uint256) (*models.Batch, error) {
 }
 
 func (s *BatchStorage) MarkBatchAsSubmitted(batch *models.Batch) error {
-	//TODO-bat: check if it's safe to upsert here
 	return s.database.Badger.Upsert(batch.ID, *batch)
 }
 

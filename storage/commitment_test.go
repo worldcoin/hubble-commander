@@ -179,8 +179,6 @@ func (s *CommitmentTestSuite) TestDeleteCommitmentsByBatchIDs() {
 }
 
 func (s *CommitmentTestSuite) TestDeleteCommitmentsByBatchIDs_NoCommitments() {
-	// TODO-dis: decide if it should return such a error
-	s.T().SkipNow()
 	batchID := s.addRandomBatch()
 	err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)

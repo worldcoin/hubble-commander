@@ -85,14 +85,16 @@ func (s *CommitmentStorage) DeleteCommitmentsByBatchIDs(batchIDs ...models.Uint2
 	}
 
 	keys := make([]models.CommitmentKey, 0, len(batchIDs))
-	opts := bdg.DefaultIteratorOptions
-	opts.PrefetchValues = true
 	for i := range batchIDs {
-		commitmentKeys, err := getCommitmentKeysByBatchID(txn, opts, batchIDs[i])
+		commitmentKeys, err := getCommitmentKeysByBatchID(txn, bdg.DefaultIteratorOptions, batchIDs[i])
 		if err != nil {
 			return err
 		}
 		keys = append(keys, commitmentKeys...)
+	}
+
+	if len(keys) == 0 {
+		return ErrNoRowsAffected
 	}
 
 	var commitment models.Commitment
