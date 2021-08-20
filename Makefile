@@ -34,7 +34,7 @@ update-contracts:
 	git submodule update --remote
 
 run:
-	go run ./main/main.go
+	go run ./main/main.go start
 
 run-prune:
 	HUBBLE_BOOTSTRAP_PRUNE=true go run ./main/main.go start
