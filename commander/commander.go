@@ -129,7 +129,7 @@ func (c *Commander) Deploy() (chainSpec *string, err error) {
 	defer func() {
 		sErr := c.storage.Close()
 		if sErr != nil {
-			panic(sErr) // TODO-LOAD panic or log.Fatal?
+			panic(sErr)
 		}
 	}()
 
@@ -209,13 +209,24 @@ func GetChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, e
 	return deployer.NewRPCChainConnection(cfg)
 }
 
-// TODO-LOAD extract checking the chain ID of db here somewhere - think it through really
 func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.Config) (*eth.Client, error) {
 	if cfg.Ethereum == nil {
-		log.Fatal("no Ethereum config") // TODO-LOAD leave it like this?
+		log.Fatal("no Ethereum config")
 	}
+
+	dbChainState, err := storage.GetChainState()
+	if err != nil && !st.IsNotFoundError(err) {
+		return nil, err
+	}
+
+	if dbChainState != nil {
+		if dbChainState.ChainID.String() != cfg.Ethereum.ChainID {
+			return nil, ErrDatabaseChainIDConflict
+		}
+	}
+
 	if cfg.Bootstrap.ChainSpecPath != nil {
-		return bootstrapFromChainState(chain, storage, cfg)
+		return bootstrapFromChainState(chain, dbChainState, storage, cfg)
 	}
 	if cfg.Bootstrap.BootstrapNodeURL != nil {
 		log.Printf("Bootstrapping genesis state from node %s", *cfg.Bootstrap.BootstrapNodeURL)
@@ -227,6 +238,7 @@ func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.
 
 func bootstrapFromChainState(
 	chain deployer.ChainConnection,
+	dbChainState *models.ChainState,
 	storage *st.Storage,
 	cfg *config.Config,
 ) (*eth.Client, error) {
@@ -235,16 +247,9 @@ func bootstrapFromChainState(
 		return nil, err
 	}
 	importedChainState := newChainStateFromChainSpec(chainSpec)
-	dbChainState, err := storage.GetChainState()
-	if st.IsNotFoundError(err) {
-		return bootstrapChainStateAndCommander(chain, storage, importedChainState)
-	}
-	if err != nil {
-		return nil, err
-	}
 
-	if dbChainState.ChainID.String() != cfg.Ethereum.ChainID {
-		return nil, ErrDatabaseChainIDConflict
+	if dbChainState == nil {
+		return bootstrapChainStateAndCommander(chain, storage, importedChainState)
 	}
 
 	err = compareChainStates(importedChainState, dbChainState)
@@ -254,40 +259,6 @@ func bootstrapFromChainState(
 
 	log.Printf("Continuing from saved state on ChainID = %s", importedChainState.ChainID.String())
 	return createClientFromChainState(chain, importedChainState)
-}
-
-func bootstrapChainStateAndCommander(
-	chain deployer.ChainConnection,
-	storage *st.Storage,
-	chainState *models.ChainState,
-) (*eth.Client, error) {
-	chainID := chain.GetChainID()
-	if chainID != chainState.ChainID {
-		return nil, ErrChainSpecChainIDConflict
-	}
-
-	err := PopulateGenesisAccounts(storage, chainState.GenesisAccounts)
-	if err != nil {
-		return nil, err
-	}
-
-	err = storage.SetChainState(chainState)
-	if err != nil {
-		return nil, err
-	}
-
-	client, err := createClientFromChainState(chain, chainState)
-	if err != nil {
-		return nil, err
-	}
-
-	err = verifyCommitmentRoot(storage, client)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("Bootstrapping genesis state from chain spec file")
-	return client, nil
 }
 
 func compareChainStates(chainStateA, chainStateB *models.ChainState) error {
@@ -310,31 +281,39 @@ func compareChainStates(chainStateA, chainStateB *models.ChainState) error {
 	return nil
 }
 
+func bootstrapChainStateAndCommander(
+	chain deployer.ChainConnection,
+	storage *st.Storage,
+	importedChainState *models.ChainState,
+) (*eth.Client, error) {
+	chainID := chain.GetChainID()
+	if chainID != importedChainState.ChainID {
+		return nil, ErrChainSpecChainIDConflict
+	}
+
+	log.Printf("Bootstrapping genesis state from chain spec file")
+	return setGenesisStateAndCreateClient(chain, storage, importedChainState)
+}
+
 func bootstrapFromRemoteState(
 	chain deployer.ChainConnection,
 	storage *st.Storage,
 	cfg *config.Config,
 ) (*eth.Client, error) {
-	chainState, err := fetchChainStateFromRemoteNode(*cfg.Bootstrap.BootstrapNodeURL)
+	fetchedChainState, err := fetchChainStateFromRemoteNode(*cfg.Bootstrap.BootstrapNodeURL)
 	if err != nil {
 		return nil, err
 	}
 
-	if chainState.ChainID.String() != cfg.Ethereum.ChainID {
+	if fetchedChainState.ChainID.String() != cfg.Ethereum.ChainID {
 		return nil, ErrRemoteNodeChainIDConflict
 	}
 
-	// TODO-LOAD make this look better?
-	dbChainState, err := storage.GetChainState()
-	if !st.IsNotFoundError(err) {
-		if dbChainState.ChainID.String() != chainState.ChainID.String() {
-			return nil, ErrDatabaseChainIDConflict // TODO-LOAD - make better error
-		}
-	} else if err != nil && !st.IsNotFoundError(err) {
-		return nil, err
-	}
+	return setGenesisStateAndCreateClient(chain, storage, fetchedChainState)
+}
 
-	err = PopulateGenesisAccounts(storage, chainState.GenesisAccounts)
+func setGenesisStateAndCreateClient(chain deployer.ChainConnection, storage *st.Storage, chainState *models.ChainState) (*eth.Client, error) {
+	err := PopulateGenesisAccounts(storage, chainState.GenesisAccounts)
 	if err != nil {
 		return nil, err
 	}
@@ -354,7 +333,7 @@ func bootstrapFromRemoteState(
 		return nil, err
 	}
 
-	return client, nil
+	return client, err
 }
 
 func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {
