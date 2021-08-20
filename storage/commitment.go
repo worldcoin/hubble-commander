@@ -138,9 +138,8 @@ func (s *Storage) GetCommitmentsByBatchID(batchID models.Uint256) ([]models.Comm
 		if err != nil {
 			return nil, err
 		}
-		//TODO-bat: change commitment structure
 		commitmentsWithToken = append(commitmentsWithToken, models.CommitmentWithTokenID{
-			ID:                 0,
+			ID:                 commitments[i].ID,
 			Transactions:       commitments[i].Transactions,
 			TokenID:            stateLeaf.TokenID,
 			FeeReceiverStateID: commitments[i].FeeReceiver,

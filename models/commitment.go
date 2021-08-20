@@ -87,13 +87,13 @@ func (c *CommitmentID) SetBytes(data []byte) error {
 }
 
 type CommitmentWithTokenID struct {
-	ID                 int32 `db:"commitment_id"`
+	ID                 CommitmentID
 	LeafHash           common.Hash
 	Transactions       []byte `json:"-"`
 	TokenID            Uint256
-	FeeReceiverStateID uint32      `db:"fee_receiver"`
-	CombinedSignature  Signature   `db:"combined_signature"`
-	PostStateRoot      common.Hash `db:"post_state_root"`
+	FeeReceiverStateID uint32
+	CombinedSignature  Signature
+	PostStateRoot      common.Hash
 }
 
 func (c *CommitmentWithTokenID) BodyHash(accountRoot common.Hash) common.Hash {

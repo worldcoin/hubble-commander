@@ -115,7 +115,7 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
 		s.NoError(err)
 
 		expectedCommitments[i] = models.CommitmentWithTokenID{
-			ID:                 0,
+			ID:                 includedCommitment.ID,
 			Transactions:       includedCommitment.Transactions,
 			TokenID:            models.MakeUint256(1),
 			FeeReceiverStateID: includedCommitment.FeeReceiver,
