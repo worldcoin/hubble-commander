@@ -3,9 +3,7 @@ package badger
 import (
 	"bytes"
 
-	"github.com/dgraph-io/badger/v3"
 	"github.com/pkg/errors"
-	bh "github.com/timshannon/badgerhold/v3"
 )
 
 type TestDB struct {
@@ -14,18 +12,11 @@ type TestDB struct {
 }
 
 func NewTestDB() (*TestDB, error) {
-	options := bh.DefaultOptions
-	options.Encoder = Encode
-	options.Decoder = Decode
-	options.Options = badger.DefaultOptions("").
-		WithInMemory(true).
-		WithLoggingLevel(badger.WARNING)
-
-	store, err := bh.Open(options)
+	db, err := NewInMemoryDatabase()
 	if err != nil {
 		return nil, err
 	}
-	db := &Database{store: store}
+
 	teardown := func() error {
 		return db.Close()
 	}

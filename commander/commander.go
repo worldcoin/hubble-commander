@@ -113,15 +113,15 @@ func (c *Commander) Deploy() (chainSpec *string, err error) {
 		return nil, nil
 	}
 
-	c.storage, err = st.NewStorage(c.cfg)
+	tempStorage, err := st.NewTemporaryStorage()
 	if err != nil {
 		return nil, err
 	}
 
 	defer func() {
-		closeErr := c.storage.Close()
+		closeErr := tempStorage.Close()
 		if closeErr != nil {
-			err = fmt.Errorf("close caused by: %w, failed with: %v", err, closeErr)
+			err = fmt.Errorf("temporary storage closed by: %w, failed with: %v", err, closeErr)
 		}
 	}()
 
@@ -135,7 +135,7 @@ func (c *Commander) Deploy() (chainSpec *string, err error) {
 		len(c.cfg.Bootstrap.GenesisAccounts),
 		c.cfg.Ethereum.ChainID,
 	)
-	chainState, err := deployContractsAndSetupGenesisState(c.storage, chain, c.cfg.Bootstrap.GenesisAccounts)
+	chainState, err := deployContractsAndSetupGenesisState(tempStorage.Storage, chain, c.cfg.Bootstrap.GenesisAccounts)
 	if err != nil {
 		return nil, err
 	}

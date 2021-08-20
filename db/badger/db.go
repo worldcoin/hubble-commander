@@ -29,6 +29,22 @@ func NewDatabase(cfg *config.BadgerConfig) (*Database, error) {
 	return &Database{store: store}, nil
 }
 
+func NewInMemoryDatabase() (*Database, error) {
+	options := bh.DefaultOptions
+	options.Encoder = Encode
+	options.Decoder = Decode
+	options.Options = badger.DefaultOptions("").
+		WithInMemory(true).
+		WithLoggingLevel(badger.WARNING)
+
+	store, err := bh.Open(options)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Database{store: store}, nil
+}
+
 func (d *Database) Close() error {
 	return d.store.Close()
 }
