@@ -53,7 +53,7 @@ func (s *BatchesTestSuite) SetupTest() {
 	}, eth.ClientConfig{})
 	s.NoError(err)
 
-	s.cmd = NewCommander(s.cfg)
+	s.cmd = NewCommander(s.cfg, nil)
 	s.cmd.client = s.testClient.Client
 	s.cmd.storage = s.testStorage.Storage
 	s.cmd.workersContext, s.cmd.stopWorkers = context.WithCancel(context.Background())

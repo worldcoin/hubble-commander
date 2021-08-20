@@ -2,10 +2,12 @@ package setup
 
 import (
 	"fmt"
+	"io/ioutil"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/commander"
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/pkg/errors"
 	"github.com/ybbus/jsonrpc/v2"
 )
@@ -14,26 +16,52 @@ type InProcessCommander struct {
 	client    jsonrpc.RPCClient
 	commander *commander.Commander
 	cfg       *config.Config
+	chain     deployer.ChainConnection
 }
 
-func CreateInProcessCommander() *InProcessCommander {
+func CreateInProcessCommander() (*InProcessCommander, error) {
 	cfg := config.GetConfig()
 	cfg.Bootstrap.Prune = true
-	return CreateInProcessCommanderWithConfig(cfg)
+	return CreateInProcessCommanderWithConfig(cfg, true)
 }
 
-func CreateInProcessCommanderWithConfig(cfg *config.Config) *InProcessCommander {
+func CreateInProcessCommanderWithConfig(cfg *config.Config, deployContracts bool) (*InProcessCommander, error) {
 	cfg.Rollup.MinTxsPerCommitment = cfg.Rollup.MaxTxsPerCommitment
-	cmd := commander.NewCommander(cfg)
+	chain, err := commander.GetChainConnection(cfg.Ethereum)
+	if err != nil {
+		return nil, err
+	}
 
+	cmd := commander.NewCommander(cfg, chain)
 	endpoint := fmt.Sprintf("http://localhost:%s", cfg.API.Port)
 	client := jsonrpc.NewClient(endpoint)
+
+	if deployContracts {
+		file, err := ioutil.TempFile("", "in_process_commander")
+		if err != nil {
+			return nil, err
+		}
+
+		chainSpecPath := file.Name()
+		cfg.Bootstrap.ChainSpecPath = &chainSpecPath
+
+		chainSpec, err := cmd.Deploy()
+		if err != nil {
+			return nil, err
+		}
+
+		err = ioutil.WriteFile(*cfg.Bootstrap.ChainSpecPath, []byte(*chainSpec), 0600)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	return &InProcessCommander{
 		client:    client,
 		commander: cmd,
 		cfg:       cfg,
-	}
+		chain:     chain,
+	}, nil
 }
 
 func (e *InProcessCommander) Start() error {
@@ -70,7 +98,7 @@ func (e *InProcessCommander) Restart() error {
 		return err
 	}
 	e.cfg.Bootstrap.Prune = false
-	e.commander = commander.NewCommander(e.cfg)
+	e.commander = commander.NewCommander(e.cfg, e.chain)
 	return e.Start()
 }
 

@@ -1,6 +1,8 @@
 package badger
 
 import (
+	"fmt"
+
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/dgraph-io/badger/v3"
@@ -111,9 +113,9 @@ func PruneDatabase(cfg *config.BadgerConfig) error {
 		return err
 	}
 	defer func() {
-		err = database.Close()
-		if err != nil {
-			panic(err)
+		closeErr := database.Close()
+		if closeErr != nil {
+			err = fmt.Errorf("close caused by: %w, failed with: %v", err, closeErr)
 		}
 	}()
 	return database.Prune()

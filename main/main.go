@@ -55,7 +55,12 @@ func setupCommander() *commander.Commander {
 
 	configureLogger(cfg)
 	logConfig(cfg)
-	cmd := commander.NewCommander(cfg)
+
+	chain, err := commander.GetChainConnection(cfg.Ethereum)
+	if err != nil {
+		log.Fatal(err)
+	}
+	cmd := commander.NewCommander(cfg, chain)
 
 	setupCloseHandler(cmd)
 

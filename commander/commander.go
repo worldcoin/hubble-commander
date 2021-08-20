@@ -3,6 +3,7 @@ package commander
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -23,6 +24,14 @@ import (
 	"github.com/ybbus/jsonrpc/v2"
 )
 
+var (
+	inconsistentChainStateErr    = NewCannotBootstrapError("database chain state and file chain state are not the same")
+	missingBootstrapSourceErr    = NewCannotBootstrapError("no chain spec file or bootstrap url specified")
+	inconsistentDBChainIDErr     = NewInconsistentChainIDError("database")
+	inconsistentFileChainIDErr   = NewInconsistentChainIDError("chain spec file")
+	inconsistentRemoteChainIDErr = NewInconsistentChainIDError("fetched chain state")
+)
+
 type Commander struct {
 	cfg                 *config.Config
 	workersContext      context.Context
@@ -36,13 +45,15 @@ type Commander struct {
 
 	storage   *st.Storage
 	client    *eth.Client
+	chain     deployer.ChainConnection
 	apiServer *http.Server
 	domain    *bls.Domain
 }
 
-func NewCommander(cfg *config.Config) *Commander {
+func NewCommander(cfg *config.Config, chain deployer.ChainConnection) *Commander {
 	return &Commander{
 		cfg:                 cfg,
+		chain:               chain,
 		releaseStartAndWait: func() {}, // noop
 	}
 }
@@ -61,12 +72,7 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	chain, err := getChainConnection(c.cfg.Ethereum)
-	if err != nil {
-		return err
-	}
-
-	c.client, err = getClient(chain, c.storage, c.cfg.Bootstrap)
+	c.client, err = getClient(c.chain, c.storage, c.cfg)
 	if err != nil {
 		return err
 	}
@@ -112,7 +118,14 @@ func (c *Commander) Deploy() (chainSpec *string, err error) {
 		return nil, err
 	}
 
-	chain, err := getChainConnection(c.cfg.Ethereum)
+	defer func() {
+		closeErr := c.storage.Close()
+		if closeErr != nil {
+			err = fmt.Errorf("close caused by: %w, failed with: %v", err, closeErr)
+		}
+	}()
+
+	chain, err := GetChainConnection(c.cfg.Ethereum)
 	if err != nil {
 		return nil, err
 	}
@@ -178,47 +191,127 @@ func (c *Commander) Stop() error {
 }
 
 func (c *Commander) resetCommander() {
-	*c = *NewCommander(c.cfg)
+	*c = *NewCommander(c.cfg, c.chain)
 }
 
-func getChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, error) {
+func GetChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, error) {
 	if cfg == nil {
 		return simulator.NewAutominingSimulator()
 	}
 	return deployer.NewRPCChainConnection(cfg)
 }
 
-func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.BootstrapConfig) (*eth.Client, error) {
-	chainState, err := storage.GetChainState()
+func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.Config) (*eth.Client, error) {
+	if cfg.Ethereum == nil {
+		log.Fatal("no Ethereum config")
+	}
+
+	dbChainState, err := storage.GetChainState()
 	if err != nil && !st.IsNotFoundError(err) {
 		return nil, err
 	}
 
-	if st.IsNotFoundError(err) {
-		if cfg.BootstrapNodeURL != nil {
-			log.Printf("Bootstrapping genesis state from node %s", *cfg.BootstrapNodeURL)
-			return bootstrapFromRemoteState(chain, storage, cfg)
-		} else {
-			log.Printf("Bootstrapping genesis state with %d accounts on chain", len(cfg.GenesisAccounts))
-			return bootstrapContractsAndState(chain, storage, cfg)
+	if dbChainState != nil {
+		if dbChainState.ChainID.String() != cfg.Ethereum.ChainID {
+			return nil, inconsistentDBChainIDErr
 		}
 	}
 
-	log.Printf("Continuing from saved state on chainID = %s", chainState.ChainID.String())
-	return createClientFromChainState(chain, chainState)
+	if cfg.Bootstrap.ChainSpecPath != nil {
+		return bootstrapFromChainState(chain, dbChainState, storage, cfg)
+	}
+	if cfg.Bootstrap.BootstrapNodeURL != nil {
+		log.Printf("Bootstrapping genesis state from node %s", *cfg.Bootstrap.BootstrapNodeURL)
+		return bootstrapFromRemoteState(chain, storage, cfg)
+	}
+
+	return nil, missingBootstrapSourceErr
+}
+
+func bootstrapFromChainState(
+	chain deployer.ChainConnection,
+	dbChainState *models.ChainState,
+	storage *st.Storage,
+	cfg *config.Config,
+) (*eth.Client, error) {
+	chainSpec, err := ReadChainSpecFile(*cfg.Bootstrap.ChainSpecPath)
+	if err != nil {
+		return nil, err
+	}
+	importedChainState := newChainStateFromChainSpec(chainSpec)
+
+	if dbChainState == nil {
+		return bootstrapChainStateAndCommander(chain, storage, importedChainState)
+	}
+
+	err = compareChainStates(importedChainState, dbChainState)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("Continuing from saved state on ChainID = %s", importedChainState.ChainID.String())
+	return createClientFromChainState(chain, importedChainState)
+}
+
+func compareChainStates(chainStateA, chainStateB *models.ChainState) error {
+	compareError := inconsistentChainStateErr
+
+	if chainStateA.ChainID != chainStateB.ChainID ||
+		chainStateA.DeploymentBlock != chainStateB.DeploymentBlock ||
+		chainStateA.Rollup != chainStateB.Rollup ||
+		chainStateA.AccountRegistry != chainStateB.AccountRegistry {
+		return compareError
+	}
+
+	if len(chainStateA.GenesisAccounts) != len(chainStateB.GenesisAccounts) {
+		return compareError
+	}
+	for i := range chainStateA.GenesisAccounts {
+		if chainStateA.GenesisAccounts[i] != chainStateB.GenesisAccounts[i] {
+			return compareError
+		}
+	}
+
+	return nil
+}
+
+func bootstrapChainStateAndCommander(
+	chain deployer.ChainConnection,
+	storage *st.Storage,
+	importedChainState *models.ChainState,
+) (*eth.Client, error) {
+	chainID := chain.GetChainID()
+	if chainID != importedChainState.ChainID {
+		return nil, inconsistentFileChainIDErr
+	}
+
+	log.Printf("Bootstrapping genesis state from chain spec file")
+	return setGenesisStateAndCreateClient(chain, storage, importedChainState)
 }
 
 func bootstrapFromRemoteState(
 	chain deployer.ChainConnection,
 	storage *st.Storage,
-	cfg *config.BootstrapConfig,
+	cfg *config.Config,
 ) (*eth.Client, error) {
-	chainState, err := fetchChainStateFromRemoteNode(*cfg.BootstrapNodeURL)
+	fetchedChainState, err := fetchChainStateFromRemoteNode(*cfg.Bootstrap.BootstrapNodeURL)
 	if err != nil {
 		return nil, err
 	}
 
-	err = PopulateGenesisAccounts(storage, chainState.GenesisAccounts)
+	if fetchedChainState.ChainID.String() != cfg.Ethereum.ChainID {
+		return nil, inconsistentRemoteChainIDErr
+	}
+
+	return setGenesisStateAndCreateClient(chain, storage, fetchedChainState)
+}
+
+func setGenesisStateAndCreateClient(
+	chain deployer.ChainConnection,
+	storage *st.Storage,
+	chainState *models.ChainState,
+) (*eth.Client, error) {
+	err := PopulateGenesisAccounts(storage, chainState.GenesisAccounts)
 	if err != nil {
 		return nil, err
 	}
@@ -237,23 +330,8 @@ func bootstrapFromRemoteState(
 	if err != nil {
 		return nil, err
 	}
-	return client, nil
-}
 
-func bootstrapContractsAndState(
-	chain deployer.ChainConnection,
-	storage *st.Storage,
-	cfg *config.BootstrapConfig,
-) (*eth.Client, error) {
-	chainState, err := deployContractsAndSetupGenesisState(storage, chain, cfg.GenesisAccounts)
-	if err != nil {
-		return nil, err
-	}
-	err = storage.SetChainState(chainState)
-	if err != nil {
-		return nil, err
-	}
-	return createClientFromChainState(chain, chainState)
+	return client, err
 }
 
 func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {

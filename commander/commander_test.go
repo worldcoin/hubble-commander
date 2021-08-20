@@ -1,12 +1,16 @@
 package commander
 
 import (
+	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/db/postgres"
+	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -15,7 +19,8 @@ import (
 type CommanderTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	cmd *Commander
+	cmd           *Commander
+	chainSpecFile string
 }
 
 func (s *CommanderTestSuite) SetupSuite() {
@@ -28,8 +33,18 @@ func (s *CommanderTestSuite) SetupTest() {
 	s.NoError(err)
 	err = badger.PruneDatabase(cfg.Badger)
 	s.NoError(err)
-	s.cmd = NewCommander(cfg)
-	s.cmd.cfg.Ethereum = nil
+	chain, err := GetChainConnection(nil)
+	s.NoError(err)
+	s.prepareContracts(cfg, chain)
+	cfg.Ethereum = &config.EthereumConfig{
+		ChainID: "1337", // TODO make ChainID required in EthereumConfig
+	}
+	s.cmd = NewCommander(cfg, chain)
+}
+
+func (s *CommanderTestSuite) TearDownTest() {
+	err := os.Remove(s.chainSpecFile)
+	s.NoError(err)
 }
 
 func (s *CommanderTestSuite) TestStartStop() {
@@ -77,6 +92,29 @@ func (s *CommanderTestSuite) TestStart_SetsCorrectSyncedBlock() {
 
 	err = s.cmd.Stop()
 	s.NoError(err)
+}
+
+func (s *CommanderTestSuite) prepareContracts(cfg *config.Config, chain deployer.ChainConnection) {
+	testStorage, err := storage.NewTestStorageWithBadger()
+	s.NoError(err)
+
+	chainState, err := deployContractsAndSetupGenesisState(testStorage.Storage, chain, cfg.Bootstrap.GenesisAccounts)
+	s.NoError(err)
+
+	err = testStorage.Teardown()
+	s.NoError(err)
+
+	yamlChainSpec, err := GenerateChainSpec(chainState)
+	s.NoError(err)
+
+	file, err := ioutil.TempFile("", "chain_spec_commander_test")
+	s.NoError(err)
+
+	_, err = file.Write([]byte(*yamlChainSpec))
+	s.NoError(err)
+
+	s.chainSpecFile = file.Name()
+	cfg.Bootstrap.ChainSpecPath = &s.chainSpecFile
 }
 
 func TestCommanderTestSuite(t *testing.T) {

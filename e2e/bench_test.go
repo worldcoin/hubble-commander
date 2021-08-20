@@ -88,8 +88,9 @@ func (s *BenchmarkSuite) benchSyncing() {
 	cfg.Postgres.Name += "_passive"
 	cfg.Bootstrap.BootstrapNodeURL = ref.String("http://localhost:8080")
 	cfg.Ethereum.PrivateKey = "ab6919fd6ac00246bb78657e0696cf72058a4cb395133d074eabaddb83d8b00c"
-	passiveCommander := setup.CreateInProcessCommanderWithConfig(cfg)
-	err := passiveCommander.Start()
+	passiveCommander, err := setup.CreateInProcessCommanderWithConfig(cfg, false)
+	s.NoError(err)
+	err = passiveCommander.Start()
 	s.NoError(err)
 	defer func() {
 		s.NoError(passiveCommander.Stop())

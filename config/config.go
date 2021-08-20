@@ -36,6 +36,7 @@ func GetConfig() *Config {
 			Prune:            getBool("bootstrap.prune", false),
 			GenesisAccounts:  getGenesisAccounts(),
 			BootstrapNodeURL: getStringOrNil("bootstrap.node_url"),
+			ChainSpecPath:    getStringOrNil("bootstrap.chain_spec_path"),
 		},
 		Rollup: &RollupConfig{
 			SyncSize:               getUint32("rollup.sync_size", 50),
@@ -77,6 +78,7 @@ func GetTestConfig() *Config {
 			Prune:            false,
 			GenesisAccounts:  readGenesisAccounts(getGenesisPath()),
 			BootstrapNodeURL: nil,
+			ChainSpecPath:    nil,
 		},
 		Rollup: &RollupConfig{
 			SyncSize:               50,

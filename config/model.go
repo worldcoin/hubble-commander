@@ -27,6 +27,7 @@ type BootstrapConfig struct {
 	Prune            bool
 	GenesisAccounts  []models.GenesisAccount `json:"-"`
 	BootstrapNodeURL *string
+	ChainSpecPath    *string
 }
 
 type RollupConfig struct {

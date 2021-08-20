@@ -1,16 +1,30 @@
 package commander
 
 import (
+	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"gopkg.in/yaml.v2"
 )
 
-func TestChainSpecTestSuite(t *testing.T) {
-	chainState := &models.ChainState{
+type ChainSpecTestSuite struct {
+	*require.Assertions
+	suite.Suite
+	chainState *models.ChainState
+	chainSpec  models.ChainSpec
+}
+
+func (s *ChainSpecTestSuite) SetupSuite() {
+	s.Assertions = require.New(s.T())
+}
+
+func (s *ChainSpecTestSuite) SetupTest() {
+	s.chainState = &models.ChainState{
 		ChainID:         models.MakeUint256(1337),
 		AccountRegistry: utils.RandomAddress(),
 		DeploymentBlock: 8837,
@@ -37,12 +51,38 @@ func TestChainSpecTestSuite(t *testing.T) {
 		},
 		SyncedBlock: 7738,
 	}
-	expectedChainSpec := newChainSpec(chainState)
+	s.chainSpec = makeChainSpec(s.chainState)
+}
 
-	yamlChainSpec, err := GenerateChainSpec(chainState)
-	require.NoError(t, err)
+func (s *ChainSpecTestSuite) TestGenerateChainSpec() {
+	yamlChainSpec, err := GenerateChainSpec(s.chainState)
+	s.NoError(err)
 	var chainSpec models.ChainSpec
 	err = yaml.Unmarshal([]byte(*yamlChainSpec), &chainSpec)
-	require.NoError(t, err)
-	require.EqualValues(t, expectedChainSpec, chainSpec)
+	s.NoError(err)
+	s.EqualValues(s.chainSpec, chainSpec)
+}
+
+func (s *ChainSpecTestSuite) TestReadChainSpecFile() {
+	yamlChainSpec, err := GenerateChainSpec(s.chainState)
+	s.NoError(err)
+
+	file, err := ioutil.TempFile("", "chain_spec_test")
+	s.NoError(err)
+	defer func() {
+		err = os.Remove(file.Name())
+		s.NoError(err)
+	}()
+
+	_, err = file.Write([]byte(*yamlChainSpec))
+	s.NoError(err)
+
+	chainSpec, err := ReadChainSpecFile(file.Name())
+	s.NoError(err)
+
+	s.EqualValues(s.chainSpec, *chainSpec)
+}
+
+func TestChainSpecTestSuite(t *testing.T) {
+	suite.Run(t, new(ChainSpecTestSuite))
 }
