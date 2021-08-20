@@ -548,7 +548,7 @@ func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {
 
 	latestCommitment, err := s.transactionExecutor.storage.GetLatestCommitment()
 	s.NoError(err)
-	s.EqualValues(2, latestCommitment.ID.BatchID)
+	s.Equal(models.MakeUint256(2), latestCommitment.ID.BatchID)
 
 	err = s.transactionExecutor.RevertBatches(&pendingBatches[0])
 	s.NoError(err)

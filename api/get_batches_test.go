@@ -30,7 +30,7 @@ func (s *GetBatchesTestSuite) SetupSuite() {
 
 func (s *GetBatchesTestSuite) SetupTest() {
 	var err error
-	s.storage, err = st.NewTestStorage()
+	s.storage, err = st.NewTestStorageWithoutPostgres()
 	s.NoError(err)
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)

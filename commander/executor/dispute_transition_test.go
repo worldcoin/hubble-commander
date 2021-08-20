@@ -522,8 +522,12 @@ func (s *DisputeTransitionTestSuite) createInvalidC2TCommitments(
 	pubKeyIDs [][]uint32,
 	invalidTxHash common.Hash,
 ) []models.Commitment {
+	commitmentID, err := s.transactionExecutor.createCommitmentKey()
+	s.NoError(err)
+
 	commitments := make([]models.Commitment, 0, len(commitmentTxs))
 	for i := range commitmentTxs {
+		commitmentID.IndexInBatch = uint32(i)
 		txs := commitmentTxs[i]
 		combinedFee := models.MakeUint256(0)
 		for j := range txs {
@@ -534,10 +538,8 @@ func (s *DisputeTransitionTestSuite) createInvalidC2TCommitments(
 			_, err := s.transactionExecutor.ApplyFee(0, combinedFee)
 			s.NoError(err)
 		}
-		commitmentKey, err := s.transactionExecutor.createCommitmentKey()
-		s.NoError(err)
 
-		commitment, err := s.transactionExecutor.buildC2TCommitment(txs, pubKeyIDs[i], commitmentKey, 0, testDomain)
+		commitment, err := s.transactionExecutor.buildC2TCommitment(txs, pubKeyIDs[i], commitmentID, 0, testDomain)
 		s.NoError(err)
 		commitments = append(commitments, *commitment)
 	}
@@ -549,8 +551,12 @@ func (s *DisputeTransitionTestSuite) createInvalidTransferCommitments(
 	commitmentTxs [][]models.Transfer,
 	invalidTxHash common.Hash,
 ) []models.Commitment {
+	commitmentID, err := s.transactionExecutor.createCommitmentKey()
+	s.NoError(err)
+
 	commitments := make([]models.Commitment, 0, len(commitmentTxs))
 	for i := range commitmentTxs {
+		commitmentID.IndexInBatch = uint32(i)
 		txs := commitmentTxs[i]
 		combinedFee := models.MakeUint256(0)
 		for j := range txs {
@@ -562,10 +568,8 @@ func (s *DisputeTransitionTestSuite) createInvalidTransferCommitments(
 			_, err := s.transactionExecutor.ApplyFee(0, combinedFee)
 			s.NoError(err)
 		}
-		commitmentKey, err := s.transactionExecutor.createCommitmentKey()
-		s.NoError(err)
 
-		commitment, err := s.transactionExecutor.buildTransferCommitment(txs, commitmentKey, 0, testDomain)
+		commitment, err := s.transactionExecutor.buildTransferCommitment(txs, commitmentID, 0, testDomain)
 		s.NoError(err)
 		commitments = append(commitments, *commitment)
 	}
