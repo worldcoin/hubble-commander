@@ -3,6 +3,7 @@ package commander
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -23,22 +24,9 @@ import (
 	"github.com/ybbus/jsonrpc/v2"
 )
 
-// TODO-LOAD make this errors better with a constructor or something
-var (
-	ErrInvalidChainStates = errors.New("database chain state and file chain state are not the same")
-	ErrCannotBootstrap    = errors.New(
-		"cannot bootstrap - no chain spec file or bootstrap url specified",
-	)
-	ErrChainSpecChainIDConflict = errors.New(
-		"cannot bootstrap from chain spec - there's a conflict between config Chain ID and chain spec Chain ID",
-	)
-	ErrDatabaseChainIDConflict = errors.New(
-		"cannot bootstrap from chain spec - there's a conflict between config Chain ID and Chain ID saved in the database",
-	)
-	ErrRemoteNodeChainIDConflict = errors.New(
-		"cannot bootstrap from remote node - there's a conflict between config Chain ID and Chain ID saved in the database",
-	)
-)
+func NewCannotBootstrapError(reason string) error {
+	return errors.New(fmt.Sprintf("cannot bootstrap - %s", reason))
+}
 
 type Commander struct {
 	cfg                 *config.Config
@@ -221,7 +209,7 @@ func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.
 
 	if dbChainState != nil {
 		if dbChainState.ChainID.String() != cfg.Ethereum.ChainID {
-			return nil, ErrDatabaseChainIDConflict
+			return nil, NewCannotBootstrapError("conflict between config Chain ID and Chain ID saved in the database")
 		}
 	}
 
@@ -233,7 +221,7 @@ func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.
 		return bootstrapFromRemoteState(chain, storage, cfg)
 	}
 
-	return nil, ErrCannotBootstrap
+	return nil, NewCannotBootstrapError("no chain spec file or bootstrap url specified")
 }
 
 func bootstrapFromChainState(
@@ -262,19 +250,21 @@ func bootstrapFromChainState(
 }
 
 func compareChainStates(chainStateA, chainStateB *models.ChainState) error {
+	compareError := NewCannotBootstrapError("database chain state and file chain state are not the same")
+
 	if chainStateA.ChainID != chainStateB.ChainID ||
 		chainStateA.DeploymentBlock != chainStateB.DeploymentBlock ||
 		chainStateA.Rollup != chainStateB.Rollup ||
 		chainStateA.AccountRegistry != chainStateB.AccountRegistry {
-		return ErrInvalidChainStates
+		return compareError
 	}
 
 	if len(chainStateA.GenesisAccounts) != len(chainStateB.GenesisAccounts) {
-		return ErrInvalidChainStates
+		return compareError
 	}
 	for i := range chainStateA.GenesisAccounts {
 		if chainStateA.GenesisAccounts[i] != chainStateB.GenesisAccounts[i] {
-			return ErrInvalidChainStates
+			return compareError
 		}
 	}
 
@@ -288,7 +278,7 @@ func bootstrapChainStateAndCommander(
 ) (*eth.Client, error) {
 	chainID := chain.GetChainID()
 	if chainID != importedChainState.ChainID {
-		return nil, ErrChainSpecChainIDConflict
+		return nil, NewCannotBootstrapError("conflict between config Chain ID and chain spec Chain ID")
 	}
 
 	log.Printf("Bootstrapping genesis state from chain spec file")
@@ -306,7 +296,7 @@ func bootstrapFromRemoteState(
 	}
 
 	if fetchedChainState.ChainID.String() != cfg.Ethereum.ChainID {
-		return nil, ErrRemoteNodeChainIDConflict
+		return nil, NewCannotBootstrapError("conflict between config Chain ID and fetched chain state ChainID")
 	}
 
 	return setGenesisStateAndCreateClient(chain, storage, fetchedChainState)
