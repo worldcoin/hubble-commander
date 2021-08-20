@@ -7,6 +7,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -113,20 +114,25 @@ func (s *SimulatorTestSuite) TestSubscribeNewHead() {
 	}
 }
 
-func (s *SimulatorTestSuite) TestEthereumConfig() {
-	sim, err := NewSimulator(&config.EthereumConfig{
+func (s *SimulatorTestSuite) TestEthereumConfig_ThrowsOnInvalidChainID() {
+	_, err := NewSimulator(&config.EthereumConfig{
 		ChainID: "2000",
 	})
 	s.ErrorIs(err, ErrChainIDConflict)
-	sim.Close()
+}
 
-	sim, err = NewSimulator(&config.EthereumConfig{
+func (s *SimulatorTestSuite) TestEthereumConfig_SetsDefaultChainID() {
+	sim, err := NewSimulator(&config.EthereumConfig{
 		ChainID: "",
 	})
-	s.ErrorIs(err, ErrChainIDConflict)
+	s.NoError(err)
+	chainID := sim.GetChainID()
+	s.Equal(models.MakeUint256(1337), chainID)
 	sim.Close()
+}
 
-	sim, err = NewSimulator(&config.EthereumConfig{
+func (s *SimulatorTestSuite) TestEthereumConfig_CreatesAccountFromPrivateKey() {
+	sim, err := NewSimulator(&config.EthereumConfig{
 		ChainID:    "1337",
 		PrivateKey: "4adc00a581cf6f45689d7c93f2b709fb78b67b7f7539a3fff09dd4a64d367133",
 	})

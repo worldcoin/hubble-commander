@@ -66,7 +66,7 @@ func NewConfiguredSimulator(cfg *config.EthereumConfig, simulatorConfig Config) 
 			return nil, err
 		}
 
-		if cfg.ChainID != "1337" {
+		if cfg.ChainID != "" && cfg.ChainID != "1337" {
 			return nil, ErrChainIDConflict
 		}
 
