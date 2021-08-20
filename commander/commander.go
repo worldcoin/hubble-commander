@@ -302,7 +302,11 @@ func bootstrapFromRemoteState(
 	return setGenesisStateAndCreateClient(chain, storage, fetchedChainState)
 }
 
-func setGenesisStateAndCreateClient(chain deployer.ChainConnection, storage *st.Storage, chainState *models.ChainState) (*eth.Client, error) {
+func setGenesisStateAndCreateClient(
+	chain deployer.ChainConnection,
+	storage *st.Storage,
+	chainState *models.ChainState,
+) (*eth.Client, error) {
 	err := PopulateGenesisAccounts(storage, chainState.GenesisAccounts)
 	if err != nil {
 		return nil, err
