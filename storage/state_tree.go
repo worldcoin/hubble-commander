@@ -66,30 +66,16 @@ func (s *StateTree) LeafOrEmpty(stateID uint32) (*models.StateLeaf, error) {
 func (s *StateTree) NextAvailableStateID() (*uint32, error) {
 	nextAvailableStateID := uint32(0)
 
-	err := s.database.Badger.View(func(txn *bdg.Txn) error {
-		opts := bdg.DefaultIteratorOptions
-		opts.PrefetchValues = false
-		opts.Reverse = true
-		it := txn.NewIterator(opts)
-		defer it.Close()
-
-		seekPrefix := make([]byte, 0, len(models.FlatStateLeafPrefix)+1)
-		seekPrefix = append(seekPrefix, models.FlatStateLeafPrefix...)
-		seekPrefix = append(seekPrefix, 0xFF) // Required to loop backwards
-
-		it.Seek(seekPrefix)
-		if it.ValidForPrefix(models.FlatStateLeafPrefix) {
-			var key uint32
-			err := badger.DecodeKey(it.Item().Key(), &key, models.FlatStateLeafPrefix)
-			if err != nil {
-				return err
-			}
-			nextAvailableStateID = key + 1
+	err := s.database.Badger.ReverseIterator(models.FlatStateLeafPrefix, func(item *bdg.Item) (bool, error) {
+		var key uint32
+		err := badger.DecodeKey(item.Key(), &key, models.FlatStateLeafPrefix)
+		if err != nil {
+			return false, err
 		}
-
-		return nil
+		nextAvailableStateID = key + 1
+		return true, nil
 	})
-	if err != nil {
+	if err != nil && err != badger.ErrIteratorFinished {
 		return nil, err
 	}
 
@@ -130,40 +116,33 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 
 	stateTree := NewStateTree(txDatabase)
 	var currentRootHash *common.Hash
-	err = txDatabase.Badger.View(func(txn *bdg.Txn) error {
+	opts := bdg.DefaultIteratorOptions
+	opts.Reverse = true
+	err = txDatabase.Badger.Iterator(stateUpdatePrefix, opts, func(item *bdg.Item) (bool, error) {
 		currentRootHash, err = stateTree.Root()
 		if err != nil {
-			return err
+			return false, err
+		}
+		if *currentRootHash == targetRootHash {
+			return true, nil
 		}
 
-		opts := bdg.DefaultIteratorOptions
-		opts.Reverse = true
-		it := txn.NewIterator(opts)
-		defer it.Close()
-
-		seekPrefix := make([]byte, 0, len(stateUpdatePrefix)+1)
-		seekPrefix = append(seekPrefix, 0xFF)
-		for it.Seek(seekPrefix); it.ValidForPrefix(stateUpdatePrefix); it.Next() {
-			if *currentRootHash == targetRootHash {
-				return nil
-			}
-			var stateUpdate *models.StateUpdate
-			stateUpdate, err = decodeStateUpdate(it.Item())
-			if err != nil {
-				return err
-			}
-			if stateUpdate.CurrentRoot != *currentRootHash {
-				panic("invalid current root of a previous state update, this should never happen")
-			}
-
-			currentRootHash, err = stateTree.revertState(stateUpdate)
-			if err != nil {
-				return err
-			}
+		var stateUpdate *models.StateUpdate
+		stateUpdate, err = decodeStateUpdate(item)
+		if err != nil {
+			return false, err
 		}
-		return nil
+		if stateUpdate.CurrentRoot != *currentRootHash {
+			panic("invalid current root of a previous state update, this should never happen")
+		}
+
+		currentRootHash, err = stateTree.revertState(stateUpdate)
+		if err != nil {
+			return false, err
+		}
+		return false, nil
 	})
-	if err != nil {
+	if err != nil && err != badger.ErrIteratorFinished {
 		return err
 	}
 	if *currentRootHash != targetRootHash {

@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"bytes"
+
 	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -46,25 +48,14 @@ func (s *CommitmentStorage) GetCommitment(key *models.CommitmentID) (*models.Com
 
 func (s *CommitmentStorage) GetLatestCommitment() (*models.Commitment, error) {
 	var commitment *models.Commitment
-	err := s.database.Badger.View(func(txn *bdg.Txn) error {
-		opts := bdg.DefaultIteratorOptions
-		opts.PrefetchValues = false
-		opts.Reverse = true
-		it := txn.NewIterator(opts)
-		defer it.Close()
-
-		seekPrefix := make([]byte, 0, len(models.CommitmentPrefix)+1)
-		seekPrefix = append(seekPrefix, models.CommitmentPrefix...)
-		seekPrefix = append(seekPrefix, 0xFF) // Required to loop backwards
-
-		it.Seek(seekPrefix)
-		if it.ValidForPrefix(models.CommitmentPrefix) {
-			var err error
-			commitment, err = decodeCommitment(it.Item())
-			return err
-		}
-		return NewNotFoundError("commitment")
+	var err error
+	err = s.database.Badger.ReverseIterator(models.CommitmentPrefix, func(item *bdg.Item) (bool, error) {
+		commitment, err = decodeCommitment(item)
+		return true, err
 	})
+	if err == badger.ErrIteratorFinished {
+		return nil, NewNotFoundError("commitment")
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -79,28 +70,25 @@ func (s *CommitmentStorage) DeleteCommitmentsByBatchIDs(batchIDs ...models.Uint2
 	}
 	defer tx.Rollback(&err)
 
-	txn, err := txDatabase.Badger.Txn()
-	if err != nil {
-		return err
-	}
-
 	var commitmentIDs []models.CommitmentID
-	keys := make([]models.CommitmentID, 0, len(batchIDs))
+	opts := bdg.DefaultIteratorOptions
+	opts.PrefetchValues = false
+	ids := make([]models.CommitmentID, 0, len(batchIDs))
 	for i := range batchIDs {
-		commitmentIDs, err = getCommitmentIDsByBatchID(txn, bdg.DefaultIteratorOptions, batchIDs[i])
+		commitmentIDs, err = getCommitmentIDsByBatchID(txDatabase, opts, batchIDs[i])
 		if err != nil {
 			return err
 		}
-		keys = append(keys, commitmentIDs...)
+		ids = append(ids, commitmentIDs...)
 	}
 
-	if len(keys) == 0 {
+	if len(ids) == 0 {
 		return ErrNoRowsAffected
 	}
 
 	var commitment models.Commitment
-	for i := range keys {
-		err = txDatabase.Badger.Delete(keys[i], commitment)
+	for i := range ids {
+		err = txDatabase.Badger.Delete(ids[i], commitment)
 		if err != nil {
 			return err
 		}
@@ -108,48 +96,36 @@ func (s *CommitmentStorage) DeleteCommitmentsByBatchIDs(batchIDs ...models.Uint2
 	return tx.Commit()
 }
 
-func getCommitmentIDsByBatchID(txn *bdg.Txn, opts bdg.IteratorOptions, batchID models.Uint256) ([]models.CommitmentID, error) {
-	keys := make([]models.CommitmentID, 0, 32)
-	it := txn.NewIterator(opts)
-	defer it.Close()
-
-	seekPrefix := make([]byte, 0, len(models.CommitmentPrefix)+32)
-	seekPrefix = append(seekPrefix, models.CommitmentPrefix...)
-	seekPrefix = append(seekPrefix, utils.PadLeft(batchID.Bytes(), 32)...)
-
-	for it.Seek(seekPrefix); it.ValidForPrefix(seekPrefix); it.Next() {
-		var key models.CommitmentID
-		err := key.SetBytes(it.Item().Key()[len(models.CommitmentPrefix):])
+func getCommitmentIDsByBatchID(txn *Database, opts bdg.IteratorOptions, batchID models.Uint256) ([]models.CommitmentID, error) {
+	ids := make([]models.CommitmentID, 0, 32)
+	prefix := bytes.Join([][]byte{models.CommitmentPrefix, utils.PadLeft(batchID.Bytes(), 32)}, []byte{})
+	err := txn.Badger.Iterator(prefix, opts, func(item *bdg.Item) (bool, error) {
+		var id models.CommitmentID
+		err := id.SetBytes(item.Key()[len(models.CommitmentPrefix):])
 		if err != nil {
-			return nil, err
+			return false, err
 		}
-		keys = append(keys, key)
+		ids = append(ids, id)
+		return false, nil
+	})
+	if err != nil && err != badger.ErrIteratorFinished {
+		return nil, err
 	}
-	return keys, nil
+	return ids, nil
 }
 
 func (s *Storage) GetCommitmentsByBatchID(batchID models.Uint256) ([]models.CommitmentWithTokenID, error) {
 	commitments := make([]models.Commitment, 0, 32)
-	err := s.database.Badger.View(func(txn *bdg.Txn) error {
-		opts := bdg.DefaultIteratorOptions
-		opts.PrefetchValues = true
-		it := txn.NewIterator(opts)
-		defer it.Close()
-
-		seekPrefix := make([]byte, 0, len(models.CommitmentPrefix)+33)
-		seekPrefix = append(seekPrefix, models.CommitmentPrefix...)
-		seekPrefix = append(seekPrefix, utils.PadLeft(batchID.Bytes(), 32)...)
-
-		for it.Seek(seekPrefix); it.ValidForPrefix(seekPrefix); it.Next() {
-			commitment, err := decodeCommitment(it.Item())
-			if err != nil {
-				return err
-			}
-			commitments = append(commitments, *commitment)
+	prefix := bytes.Join([][]byte{models.CommitmentPrefix, utils.PadLeft(batchID.Bytes(), 32)}, []byte{})
+	err := s.database.Badger.Iterator(prefix, bdg.DefaultIteratorOptions, func(item *bdg.Item) (bool, error) {
+		commitment, err := decodeCommitment(item)
+		if err != nil {
+			return false, err
 		}
-		return nil
+		commitments = append(commitments, *commitment)
+		return false, nil
 	})
-	if err != nil {
+	if err != nil && err != badger.ErrIteratorFinished {
 		return nil, err
 	}
 	if len(commitments) == 0 {
@@ -162,6 +138,7 @@ func (s *Storage) GetCommitmentsByBatchID(batchID models.Uint256) ([]models.Comm
 		if err != nil {
 			return nil, err
 		}
+		//TODO-bat: change commitment structure
 		commitmentsWithToken = append(commitmentsWithToken, models.CommitmentWithTokenID{
 			ID:                 0,
 			Transactions:       commitments[i].Transactions,

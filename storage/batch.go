@@ -149,34 +149,24 @@ func (s *BatchStorage) DeleteBatches(batchIDs ...models.Uint256) error {
 
 func (s *BatchStorage) reverseIterateBatches(filter func(batch *models.Batch) bool) (*models.Batch, error) {
 	var batch models.Batch
-	err := s.database.Badger.View(func(txn *bdg.Txn) error {
-		opts := bdg.DefaultIteratorOptions
-		opts.PrefetchValues = false
-		opts.Reverse = true
-		it := txn.NewIterator(opts)
-		defer it.Close()
-
-		seekPrefix := make([]byte, 0, len(models.BatchPrefix)+1)
-		seekPrefix = append(seekPrefix, models.BatchPrefix...)
-		seekPrefix = append(seekPrefix, 0xFF) // Required to loop backwards
-
-		for it.Seek(seekPrefix); it.ValidForPrefix(models.BatchPrefix); it.Next() {
-			err := it.Item().Value(func(v []byte) error {
-				return badger.Decode(v, &batch)
-			})
-			if err != nil {
-				return err
-			}
-
-			if filter(&batch) {
-				return nil
-			}
+	err := s.database.Badger.ReverseIterator(models.BatchPrefix, func(item *bdg.Item) (bool, error) {
+		err := item.Value(func(v []byte) error {
+			return badger.Decode(v, &batch)
+		})
+		if err != nil {
+			return false, err
 		}
-		return NewNotFoundError("batch")
+
+		if filter(&batch) {
+			return true, nil
+		}
+		return false, nil
 	})
+	if err == badger.ErrIteratorFinished {
+		return nil, NewNotFoundError("batch")
+	}
 	if err != nil {
 		return nil, err
 	}
-
 	return &batch, nil
 }
