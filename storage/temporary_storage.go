@@ -24,5 +24,5 @@ func NewTemporaryStorage() (*TemporaryStorage, error) {
 }
 
 func (s *TemporaryStorage) Close() error {
-	return s.database.Close()
+	return s.database.Badger.Close()
 }
