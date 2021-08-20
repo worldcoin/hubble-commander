@@ -35,11 +35,10 @@ func (s *CommanderTestSuite) SetupTest() {
 	s.NoError(err)
 	chain, err := GetChainConnection(nil)
 	s.NoError(err)
-	s.prepareContracts(chain)
+	s.prepareContracts(cfg, chain)
 	cfg.Ethereum = &config.EthereumConfig{
-		ChainID: "1337",
+		ChainID: "1337", // TODO make ChainID required in EthereumConfig
 	}
-	cfg.Bootstrap.ChainSpecPath = &s.chainSpecFile
 	s.cmd = NewCommander(cfg, chain)
 }
 
@@ -95,11 +94,11 @@ func (s *CommanderTestSuite) TestStart_SetsCorrectSyncedBlock() {
 	s.NoError(err)
 }
 
-func (s *CommanderTestSuite) prepareContracts(chain deployer.ChainConnection) {
+func (s *CommanderTestSuite) prepareContracts(cfg *config.Config, chain deployer.ChainConnection) {
 	testStorage, err := storage.NewTestStorageWithBadger()
 	s.NoError(err)
 
-	chainState, err := deployContractsAndSetupGenesisState(testStorage.Storage, chain, s.cmd.cfg.Bootstrap.GenesisAccounts)
+	chainState, err := deployContractsAndSetupGenesisState(testStorage.Storage, chain, cfg.Bootstrap.GenesisAccounts)
 	s.NoError(err)
 
 	err = testStorage.Teardown()
@@ -115,6 +114,7 @@ func (s *CommanderTestSuite) prepareContracts(chain deployer.ChainConnection) {
 	s.NoError(err)
 
 	s.chainSpecFile = file.Name()
+	cfg.Bootstrap.ChainSpecPath = &s.chainSpecFile
 }
 
 func TestCommanderTestSuite(t *testing.T) {
