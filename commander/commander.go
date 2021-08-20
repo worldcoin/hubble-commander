@@ -3,6 +3,7 @@ package commander
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -118,9 +119,9 @@ func (c *Commander) Deploy() (chainSpec *string, err error) {
 	}
 
 	defer func() {
-		sErr := c.storage.Close()
-		if sErr != nil {
-			panic(sErr)
+		closeErr := c.storage.Close()
+		if closeErr != nil {
+			err = fmt.Errorf("close caused by: %w, failed with: %v", err, closeErr)
 		}
 	}()
 
