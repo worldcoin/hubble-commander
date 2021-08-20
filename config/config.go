@@ -106,7 +106,9 @@ func GetTestConfig() *Config {
 		Badger: &BadgerConfig{
 			Path: getTestBadgerPath(),
 		},
-		Ethereum: nil,
+		Ethereum: &EthereumConfig{
+			ChainID: "1337",
+		},
 	}
 }
 
