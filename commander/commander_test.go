@@ -32,7 +32,7 @@ func (s *CommanderTestSuite) SetupTest() {
 	s.NoError(err)
 	err = badger.PruneDatabase(cfg.Badger)
 	s.NoError(err)
-	chain, err := GetChainConnection(nil)
+	chain, err := GetChainConnection(cfg.Ethereum)
 	s.NoError(err)
 	s.prepareContracts(cfg, chain)
 	s.cmd = NewCommander(cfg, chain)
@@ -91,7 +91,7 @@ func (s *CommanderTestSuite) TestStart_SetsCorrectSyncedBlock() {
 }
 
 func (s *CommanderTestSuite) prepareContracts(cfg *config.Config, chain deployer.ChainConnection) {
-	yamlChainSpec, err := Deploy(cfg, chain) // TODO fix
+	yamlChainSpec, err := Deploy(cfg, chain)
 	s.NoError(err)
 
 	file, err := ioutil.TempFile("", "chain_spec_commander_test")
