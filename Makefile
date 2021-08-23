@@ -77,7 +77,7 @@ bench-sync-profile: clean-testcache
 measure-dispute-gas: clean-testcache
 	HUBBLE_E2E=in-process go test -v -tags e2e -run TestMeasureDisputeGasUsage ./e2e
 
-.PHONY: 
+.PHONY:
 	install
 	clean
 	clean-testcache
@@ -88,6 +88,7 @@ measure-dispute-gas: clean-testcache
 	start-geth-locally
 	setup-geth
 	update-contracts
+	deploy
 	run
 	run-prune
 	run-dev
