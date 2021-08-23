@@ -19,6 +19,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/ybbus/jsonrpc/v2"
@@ -121,7 +122,7 @@ func (c *Commander) Deploy() (chainSpec *string, err error) {
 	defer func() {
 		closeErr := tempStorage.Close()
 		if closeErr != nil {
-			err = fmt.Errorf("temporary storage closed by: %w, failed with: %v", err, closeErr)
+			err = fmt.Errorf("temporary storage close caused by: %w, failed with: %v", err, closeErr)
 		}
 	}()
 
@@ -195,8 +196,11 @@ func (c *Commander) resetCommander() {
 }
 
 func GetChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, error) {
-	if cfg == nil {
-		return simulator.NewAutominingSimulator(&config.EthereumConfig{})
+	if cfg.RPCURL == "simulator" {
+		return simulator.NewConfiguredSimulator(simulator.Config{
+			FirstAccountPrivateKey: ref.String(cfg.PrivateKey),
+			AutomineEnabled:        ref.Bool(true),
+		})
 	}
 	return deployer.NewRPCChainConnection(cfg)
 }

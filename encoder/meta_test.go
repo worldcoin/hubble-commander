@@ -4,7 +4,6 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/test/types"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -27,7 +26,7 @@ func (s *MetaTestSuite) SetupSuite() {
 }
 
 func (s *MetaTestSuite) SetupTest() {
-	sim, err := simulator.NewSimulator(&config.EthereumConfig{})
+	sim, err := simulator.NewSimulator()
 	s.NoError(err)
 	s.sim = sim
 

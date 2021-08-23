@@ -20,6 +20,8 @@ var (
 	chainSpecFile = deployCommand.String("file", "chain-spec.yaml", "target file to save the chain spec to")
 )
 
+// TODO divide between files
+
 func exitWithHelpMessage() {
 	fmt.Printf("Subcommand required:\n" +
 		"start - starts the commander\n" +

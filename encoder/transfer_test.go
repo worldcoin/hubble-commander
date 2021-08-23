@@ -4,7 +4,6 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/config"
 	contractTransfer "github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
 	testtx "github.com/Worldcoin/hubble-commander/contracts/test/tx"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
@@ -29,7 +28,7 @@ func (s *TransferTestSuite) SetupSuite() {
 }
 
 func (s *TransferTestSuite) SetupTest() {
-	sim, err := simulator.NewSimulator(&config.EthereumConfig{})
+	sim, err := simulator.NewSimulator()
 	s.NoError(err)
 	s.sim = sim
 

@@ -3,7 +3,6 @@ package rollup
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
@@ -21,7 +20,7 @@ func (s *DeployerTestSuite) SetupSuite() {
 }
 
 func (s *DeployerTestSuite) SetupTest() {
-	sim, err := simulator.NewSimulator(&config.EthereumConfig{})
+	sim, err := simulator.NewSimulator()
 	s.NoError(err)
 	s.sim = sim
 }

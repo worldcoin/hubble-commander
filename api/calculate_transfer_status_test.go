@@ -4,7 +4,6 @@ import (
 	"math"
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -43,7 +42,7 @@ func (s *CalculateTransactionStatusTestSuite) SetupTest() {
 	s.storage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
 
-	sim, err := simulator.NewSimulator(&config.EthereumConfig{})
+	sim, err := simulator.NewSimulator()
 	s.NoError(err)
 	s.sim = sim
 
