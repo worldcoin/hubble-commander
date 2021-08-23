@@ -16,28 +16,27 @@ type Database struct {
 }
 
 func NewDatabase(cfg *config.BadgerConfig) (*Database, error) {
-	options := bh.DefaultOptions
-	options.Encoder = Encode
-	options.Decoder = Decode
-	options.Options = badger.
-		DefaultOptions(cfg.Path).
-		WithLoggingLevel(badger.WARNING)
-	store, err := bh.Open(options)
-	if err != nil {
-		return nil, err
-	}
-	return &Database{store: store}, nil
+	return newConfiguredDatabase(
+		badger.DefaultOptions(cfg.Path).
+			WithLoggingLevel(badger.WARNING),
+	)
 }
 
 func NewInMemoryDatabase() (*Database, error) {
-	options := bh.DefaultOptions
-	options.Encoder = Encode
-	options.Decoder = Decode
-	options.Options = badger.DefaultOptions("").
-		WithInMemory(true).
-		WithLoggingLevel(badger.WARNING)
+	return newConfiguredDatabase(
+		badger.DefaultOptions("").
+			WithInMemory(true).
+			WithLoggingLevel(badger.WARNING),
+	)
+}
 
-	store, err := bh.Open(options)
+func newConfiguredDatabase(opts badger.Options) (*Database, error) {
+	bhOptions := bh.DefaultOptions
+	bhOptions.Encoder = Encode
+	bhOptions.Decoder = Decode
+	bhOptions.Options = opts
+
+	store, err := bh.Open(bhOptions)
 	if err != nil {
 		return nil, err
 	}
