@@ -113,7 +113,7 @@ func (s *SimulatorTestSuite) TestSubscribeNewHead() {
 	}
 }
 
-func (s *SimulatorTestSuite) TestEthereumConfig_CreatesAccountFromPrivateKey() {
+func (s *SimulatorTestSuite) TestNewConfiguredSimulator_FirstAccountPrivateKey() {
 	sim, err := NewConfiguredSimulator(Config{
 		FirstAccountPrivateKey: ref.String("4adc00a581cf6f45689d7c93f2b709fb78b67b7f7539a3fff09dd4a64d367133"),
 	})
