@@ -242,7 +242,7 @@
                 "header": [],
                 "body": {
                     "mode": "raw",
-                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getCommitment\",\n    \"params\": [1],\n    \"id\": 1\n}",
+                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getCommitment\",\n    \"params\": [\n        {\n            \"BatchID\": \"1\",\n            \"IndexInBatch\": 0\n        }\n    ],\n    \"id\": 1\n}",
                     "options": {
                         "raw": {
                             "language": "json"
