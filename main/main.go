@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
 	"github.com/Worldcoin/hubble-commander/commander"
@@ -78,6 +79,11 @@ func startCommander() {
 func deployCommanderContracts(filename string) {
 	cmd := setupCommander()
 	chainSpec, err := cmd.Deploy()
+	if err != nil {
+		log.Fatalf("%+v", err)
+	}
+	dirName := filepath.Dir(filename)
+	err = os.MkdirAll(dirName, os.ModePerm)
 	if err != nil {
 		log.Fatalf("%+v", err)
 	}
