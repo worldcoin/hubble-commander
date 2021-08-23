@@ -10,7 +10,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
-	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -33,12 +32,9 @@ func (s *CommanderTestSuite) SetupTest() {
 	s.NoError(err)
 	err = badger.PruneDatabase(cfg.Badger)
 	s.NoError(err)
-	chain, err := GetChainConnection(nil)
+	chain, err := GetChainConnection(cfg.Ethereum)
 	s.NoError(err)
 	s.prepareContracts(cfg, chain)
-	cfg.Ethereum = &config.EthereumConfig{
-		ChainID: "1337", // TODO make ChainID required in EthereumConfig
-	}
 	s.cmd = NewCommander(cfg, chain)
 }
 
@@ -95,16 +91,7 @@ func (s *CommanderTestSuite) TestStart_SetsCorrectSyncedBlock() {
 }
 
 func (s *CommanderTestSuite) prepareContracts(cfg *config.Config, chain deployer.ChainConnection) {
-	testStorage, err := storage.NewTestStorageWithBadger()
-	s.NoError(err)
-
-	chainState, err := deployContractsAndSetupGenesisState(testStorage.Storage, chain, cfg.Bootstrap.GenesisAccounts)
-	s.NoError(err)
-
-	err = testStorage.Teardown()
-	s.NoError(err)
-
-	yamlChainSpec, err := GenerateChainSpec(chainState)
+	yamlChainSpec, err := Deploy(cfg, chain)
 	s.NoError(err)
 
 	file, err := ioutil.TempFile("", "chain_spec_commander_test")

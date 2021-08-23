@@ -33,8 +33,11 @@ setup-geth:
 update-contracts:
 	git submodule update --remote
 
+deploy:
+	go run ./main/main.go deploy
+
 run:
-	go run ./main/main.go
+	go run ./main/main.go start
 
 run-prune:
 	HUBBLE_BOOTSTRAP_PRUNE=true go run ./main/main.go start
@@ -59,8 +62,8 @@ test-e2e: clean-testcache
 test-e2e-in-process: clean-testcache
 	HUBBLE_E2E=in-process go test -v -tags e2e ./e2e
 
-test-commander-locally: clean-testcache
-	HUBBLE_E2E=local go test -v -tags e2e -run TestCommander ./e2e
+test-e2e-locally: clean-testcache
+	HUBBLE_E2E=local go test -v -tags e2e ./e2e
 
 bench-e2e: clean-testcache
 	HUBBLE_E2E=local go test -v -tags e2e -run TestBenchmarkSuite ./e2e
@@ -74,7 +77,7 @@ bench-sync-profile: clean-testcache
 measure-dispute-gas: clean-testcache
 	HUBBLE_E2E=in-process go test -v -tags e2e -run TestMeasureDisputeGasUsage ./e2e
 
-.PHONY: 
+.PHONY:
 	install
 	clean
 	clean-testcache
@@ -85,6 +88,7 @@ measure-dispute-gas: clean-testcache
 	start-geth-locally
 	setup-geth
 	update-contracts
+	deploy
 	run
 	run-prune
 	run-dev
@@ -93,7 +97,7 @@ measure-dispute-gas: clean-testcache
 	test-hardhat
 	test-e2e
 	test-e2e-in-process
-	test-commander-locally
+	test-e2e-locally
 	bench-e2e
 	bench-creation-profile
 	bench-sync-profile

@@ -2,6 +2,7 @@ package config
 
 import (
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -11,6 +12,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
+
+const SimulatorChainID = 1337
 
 func setupViper() {
 	viper.SetConfigFile(getConfigPath())
@@ -106,7 +109,11 @@ func GetTestConfig() *Config {
 		Badger: &BadgerConfig{
 			Path: getTestBadgerPath(),
 		},
-		Ethereum: nil,
+		Ethereum: &EthereumConfig{
+			RPCURL:     "simulator",
+			ChainID:    strconv.Itoa(SimulatorChainID),
+			PrivateKey: "ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82",
+		},
 	}
 }
 
@@ -164,7 +171,11 @@ func getLogConfig() *LogConfig {
 func getEthereumConfig() *EthereumConfig {
 	rpcURL := getStringOrNil("ethereum.rpc_url")
 	if rpcURL == nil {
-		return nil
+		return &EthereumConfig{
+			RPCURL:     "simulator",
+			ChainID:    strconv.Itoa(SimulatorChainID),
+			PrivateKey: getString("ethereum.private_key", "ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82"),
+		}
 	}
 	return &EthereumConfig{
 		RPCURL:     *rpcURL,

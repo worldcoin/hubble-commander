@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -110,6 +111,16 @@ func (s *SimulatorTestSuite) TestSubscribeNewHead() {
 	case <-timeout:
 		s.Fail("timeout on SubscribeNewHead")
 	}
+}
+
+func (s *SimulatorTestSuite) TestNewConfiguredSimulator_FirstAccountPrivateKey() {
+	sim, err := NewConfiguredSimulator(Config{
+		FirstAccountPrivateKey: ref.String("4adc00a581cf6f45689d7c93f2b709fb78b67b7f7539a3fff09dd4a64d367133"),
+	})
+	s.NoError(err)
+	accountAddress := sim.Account.From.String()
+	s.Equal("0x25eCd6dD41339fb0Dc998E7c31c296fc68535fA4", accountAddress)
+	sim.Close()
 }
 
 func TestSimulatorTestSuite(t *testing.T) {

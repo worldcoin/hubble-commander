@@ -45,7 +45,7 @@ func CreateInProcessCommanderWithConfig(cfg *config.Config, deployContracts bool
 		chainSpecPath := file.Name()
 		cfg.Bootstrap.ChainSpecPath = &chainSpecPath
 
-		chainSpec, err := cmd.Deploy()
+		chainSpec, err := commander.Deploy(cfg, chain)
 		if err != nil {
 			return nil, err
 		}
