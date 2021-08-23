@@ -25,7 +25,7 @@ func TestBatch_Bytes(t *testing.T) {
 
 	bytes := batch.Bytes()
 
-	decodedBatch := Batch{ID: batch.ID}
+	decodedBatch := Batch{}
 	err := decodedBatch.SetBytes(bytes)
 	require.NoError(t, err)
 	require.EqualValues(t, *batch, decodedBatch)
