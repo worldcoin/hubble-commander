@@ -34,7 +34,7 @@ make setup-db
 
 The commander can be started by running the binary with a `start` subcommand, e.g. `commander start`,
 and it requires deployed smart contracts to work. It can connect to said smart contracts by fetching
-their addresses either from a chain spec file or from an already running commander. The path to a chain spec file 
+their addresses either from a chain spec file or from an already running commander. The path to a chain spec file
 and the url of a remote commander node can be set in the config file (see `config.example.yaml` file for reference)
 or with env variables:
 ```shell
@@ -58,7 +58,7 @@ There is a number of scripts defined in the Makefile:
 * `make generate` - generate bindings for smart contracts
 * `make build` - clean and build artifacts
 * `make setup-db` - create and run a Docker container with postgres
-* `make start-geth-locally:` - start a new instance of Go-Ethereum node
+* `make start-geth-locally` - start a new instance of Go-Ethereum node
 * `make setup-geth` - create and run a Docker container with Go-Ethereum node
 * `make update-contracts` - update the `hubble-contracts` git submodule
 * `make deploy` - deploys the smart contracts and generates `chain-spec.yaml` file required for running the commander
@@ -75,20 +75,6 @@ There is a number of scripts defined in the Makefile:
 * `make bench-creation-profile` - start commander and run E2E batch creation benchmark in the same process with CPU profiling
 * `make bench-sync-profile` - start commander and run E2E butch sync benchmark in the same process with CPU profiling
 * `make measure-dispute-gas` - start commander and run E2E dispute gas measurement test in the same process
-
-## Running with Ganache
-
-Start Ganache CLI in a separate terminal:
-```shell
-npx ganache-cli --account 0xee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82,0x56BC75E2D63100000
-```
-
-Use the following config to make commander connect to the local node:
-```shell
-HUBBLE_ETHEREUM_RPC_URL=ws://127.0.0.1:8545
-HUBBLE_ETHEREUM_CHAIN_ID=1616067554748
-HUBBLE_ETHEREUM_PRIVATE_KEY=ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
-```
 
 ## Running with Go-Ethereum (Geth)
 
