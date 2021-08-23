@@ -19,8 +19,6 @@ type Result struct {
 	Result  string `json:"result"`
 }
 
-// TODO update Postman collection
-
 func TestStartApiServer(t *testing.T) {
 	var jsonStr = []byte(`{"jsonrpc": "2.0", "method": "hubble_getVersion", "id": "1"}`)
 	req, err := http.NewRequest("POST", "", bytes.NewBuffer(jsonStr))
