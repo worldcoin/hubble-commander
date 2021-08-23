@@ -160,7 +160,7 @@ func (s *SubmitTransferBatchTestSuite) getCommitments(count int, batchID models.
 	for i := 0; i < count; i++ {
 		commitment := baseCommitment
 		commitment.ID.BatchID = batchID
-		commitment.ID.IndexInBatch = uint32(i)
+		commitment.ID.IndexInBatch = uint8(i)
 
 		commitments = append(commitments, commitment)
 	}

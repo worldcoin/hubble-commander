@@ -527,7 +527,7 @@ func (s *DisputeTransitionTestSuite) createInvalidC2TCommitments(
 
 	commitments := make([]models.Commitment, 0, len(commitmentTxs))
 	for i := range commitmentTxs {
-		commitmentID.IndexInBatch = uint32(i)
+		commitmentID.IndexInBatch = uint8(i)
 		txs := commitmentTxs[i]
 		combinedFee := models.MakeUint256(0)
 		for j := range txs {
@@ -556,7 +556,7 @@ func (s *DisputeTransitionTestSuite) createInvalidTransferCommitments(
 
 	commitments := make([]models.Commitment, 0, len(commitmentTxs))
 	for i := range commitmentTxs {
-		commitmentID.IndexInBatch = uint32(i)
+		commitmentID.IndexInBatch = uint8(i)
 		txs := commitmentTxs[i]
 		combinedFee := models.MakeUint256(0)
 		for j := range txs {

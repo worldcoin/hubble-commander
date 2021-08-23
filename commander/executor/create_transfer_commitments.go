@@ -33,7 +33,7 @@ func (t *TransactionExecutor) CreateTransferCommitments(
 
 	commitments = make([]models.Commitment, 0, t.cfg.MaxCommitmentsPerBatch)
 
-	for i := uint32(0); len(commitments) != int(t.cfg.MaxCommitmentsPerBatch); i++ {
+	for i := uint8(0); len(commitments) != int(t.cfg.MaxCommitmentsPerBatch); i++ {
 		var commitment *models.Commitment
 		commitmentID.IndexInBatch = i
 

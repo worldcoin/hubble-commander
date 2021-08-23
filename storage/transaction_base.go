@@ -112,7 +112,7 @@ func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*
 	return &res[0], nil
 }
 
-func (s *TransactionStorage) BatchMarkTransactionAsIncluded(txHashes []common.Hash, batchID *models.Uint256, indexInBatch *uint32) error {
+func (s *TransactionStorage) BatchMarkTransactionAsIncluded(txHashes []common.Hash, batchID *models.Uint256, indexInBatch *uint8) error {
 	res, err := s.database.Postgres.Query(
 		s.database.QB.Update("transaction_base").
 			Where(squirrel.Eq{"tx_hash": txHashes}).

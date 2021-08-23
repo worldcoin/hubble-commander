@@ -39,7 +39,7 @@ func DecodeBatchCalldata(calldata []byte, batchID *models.Uint256) ([]DecodedCom
 		commitments[i] = DecodedCommitment{
 			ID: models.CommitmentID{
 				BatchID:      *batchID,
-				IndexInBatch: uint32(i),
+				IndexInBatch: uint8(i),
 			},
 			StateRoot:         common.BytesToHash(stateRoots[i][:]),
 			CombinedSignature: models.MakeSignatureFromBigInts(signatures[i]),

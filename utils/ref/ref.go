@@ -14,6 +14,10 @@ func Int(i int) *int {
 	return &i
 }
 
+func Uint8(u uint8) *uint8 {
+	return &u
+}
+
 func Uint(u uint) *uint {
 	return &u
 }

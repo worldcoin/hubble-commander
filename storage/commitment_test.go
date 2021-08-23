@@ -77,14 +77,14 @@ func (s *CommitmentTestSuite) TestGetCommitment_NonExistentCommitment() {
 func (s *CommitmentTestSuite) TestGetLatestCommitment() {
 	expected := commitment
 	for i := 0; i < 2; i++ {
-		expected.ID.IndexInBatch = uint32(i)
+		expected.ID.IndexInBatch = uint8(i)
 		err := s.storage.AddCommitment(&expected)
 		s.NoError(err)
 	}
 
 	expected.ID.BatchID = models.MakeUint256(5)
 	for i := 0; i < 2; i++ {
-		expected.ID.IndexInBatch = uint32(i)
+		expected.ID.IndexInBatch = uint8(i)
 		err := s.storage.AddCommitment(&expected)
 		s.NoError(err)
 	}
@@ -110,7 +110,7 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
 
 	expectedCommitments := make([]models.CommitmentWithTokenID, 2)
 	for i := 0; i < 2; i++ {
-		includedCommitment.ID.IndexInBatch = uint32(i)
+		includedCommitment.ID.IndexInBatch = uint8(i)
 		err = s.storage.AddCommitment(&includedCommitment)
 		s.NoError(err)
 
@@ -164,7 +164,7 @@ func (s *CommitmentTestSuite) TestDeleteCommitmentsByBatchIDs() {
 		for j := 0; j < 2; j++ {
 			commitmentInBatch := commitment
 			commitmentInBatch.ID.BatchID = batches[i].ID
-			commitmentInBatch.ID.IndexInBatch = uint32(j)
+			commitmentInBatch.ID.IndexInBatch = uint8(j)
 			err = s.storage.AddCommitment(&commitmentInBatch)
 			s.NoError(err)
 		}

@@ -103,7 +103,7 @@ func (s *TransactionBaseTestSuite) TestBatchMarkTransactionAsIncluded() {
 	}
 
 	batchID := models.MakeUint256(1)
-	err := s.storage.BatchMarkTransactionAsIncluded([]common.Hash{txs[0].Hash, txs[1].Hash}, &batchID, ref.Uint32(0))
+	err := s.storage.BatchMarkTransactionAsIncluded([]common.Hash{txs[0].Hash, txs[1].Hash}, &batchID, ref.Uint8(0))
 	s.NoError(err)
 
 	for i := range txs {

@@ -89,7 +89,7 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_TxI
 	s.NoError(err)
 
 	s.transfer.BatchID = &batch.ID
-	s.transfer.IndexInBatch = ref.Uint32(0)
+	s.transfer.IndexInBatch = ref.Uint8(0)
 
 	status, err := CalculateTransactionStatus(s.storage.Storage, &s.transfer.TransactionBase, 0)
 	s.NoError(err)
