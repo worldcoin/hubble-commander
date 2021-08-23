@@ -27,7 +27,7 @@ func (b *Batch) Bytes() []byte {
 	encoded := make([]byte, batchDataLength)
 	copy(encoded[0:32], utils.PadLeft(b.ID.Bytes(), 32))
 	encoded[32] = byte(b.Type)
-	copy(encoded[33:65], b.TransactionHash[:])
+	copy(encoded[33:65], b.TransactionHash.Bytes())
 	copy(encoded[65:98], EncodeHashPointer(b.Hash))
 	copy(encoded[98:103], encodeUint32Pointer(b.FinalisationBlock))
 	copy(encoded[103:136], EncodeHashPointer(b.AccountTreeRoot))
