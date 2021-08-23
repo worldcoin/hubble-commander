@@ -67,9 +67,10 @@ There is a number of scripts defined in the Makefile:
 * `make run-dev` - run-prune without transaction signature validation
 * `make lint` - run linter
 * `make test` - run all tests unit tests
-* `make test-hardhat` - run all tests with Hardhat dependency
-* `make test-e2e` - run E2E tests on a pre-built docker image
-* `make test-commander-locally` - run E2E tests against a local commander instance
+* `make test-hardhat` - run all tests that depend on Hardhat node
+* `make test-e2e` - run all E2E tests on a pre-built docker image
+* `make test-e2e-in-process` - start commander and run all E2E tests in the same process 
+* `make test-e2e-locally` - run all E2E tests on a local commander instance
 * `make bench-e2e` - run E2E benchmark test
 * `make bench-e2e-profile` - run E2E benchmark test with CPU profiling
 
@@ -159,5 +160,5 @@ make run-prune
 
 Run the E2E tests:
 ```shell
-make test-commander-locally
+make test-e2e-locally
 ```
