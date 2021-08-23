@@ -11,6 +11,7 @@ import (
 
 // nolint:gocyclo, funlen
 // Encode Remember to provide cases for both value and pointer types when adding new encoders
+// TODO shorten this function by using ByteEncoder interface
 func Encode(value interface{}) ([]byte, error) {
 	switch v := value.(type) {
 	case models.AccountNode:

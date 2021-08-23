@@ -82,7 +82,7 @@ func (s *CommitmentStorage) DeleteCommitmentsByBatchIDs(batchIDs ...models.Uint2
 	}
 
 	if len(ids) == 0 {
-		return ErrNoRowsAffected
+		return ErrNoRowsAffected // TODO return not found error instead
 	}
 
 	var commitment models.Commitment
@@ -97,10 +97,11 @@ func (s *CommitmentStorage) DeleteCommitmentsByBatchIDs(batchIDs ...models.Uint2
 
 func getCommitmentIDsByBatchID(txn *Database, opts bdg.IteratorOptions, batchID models.Uint256) ([]models.CommitmentID, error) {
 	ids := make([]models.CommitmentID, 0, 32)
+	// TODO extract getCommitmentPrefixWithBatchID
 	prefix := bytes.Join([][]byte{models.CommitmentPrefix, utils.PadLeft(batchID.Bytes(), 32)}, []byte{})
 	err := txn.Badger.Iterator(prefix, opts, func(item *bdg.Item) (bool, error) {
 		var id models.CommitmentID
-		err := id.SetBytes(item.Key()[len(models.CommitmentPrefix):])
+		err := id.SetBytes(item.Key()[len(models.CommitmentPrefix):]) // TODO reuse DecodeKey or extract
 		if err != nil {
 			return false, err
 		}

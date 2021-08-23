@@ -15,7 +15,7 @@ const (
 	commitmentIDDataLength = 36
 )
 
-var CommitmentPrefix = []byte("bh_" + reflect.TypeOf(Commitment{}).Name())
+var CommitmentPrefix = []byte("bh_" + reflect.TypeOf(Commitment{}).Name()) // TODO extract to getBadgerHoldPrefix
 
 type Commitment struct {
 	ID                CommitmentID
@@ -65,7 +65,7 @@ func (c *Commitment) SetBytes(data []byte) error {
 
 type CommitmentID struct {
 	BatchID      Uint256
-	IndexInBatch uint32
+	IndexInBatch uint32 // TODO change to uint8
 }
 
 func (c *CommitmentID) Bytes() []byte {
