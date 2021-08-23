@@ -33,6 +33,9 @@ setup-geth:
 update-contracts:
 	git submodule update --remote
 
+deploy:
+	go run ./main/main.go deploy
+
 run:
 	go run ./main/main.go start
 
