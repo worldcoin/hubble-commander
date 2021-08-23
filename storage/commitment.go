@@ -28,8 +28,7 @@ func (s *CommitmentStorage) copyWithNewDatabase(database *Database) *CommitmentS
 }
 
 func (s *CommitmentStorage) AddCommitment(commitment *models.Commitment) error {
-	err := s.database.Badger.Insert(commitment.ID, *commitment)
-	return err
+	return s.database.Badger.Insert(commitment.ID, *commitment)
 }
 
 func (s *CommitmentStorage) GetCommitment(key *models.CommitmentID) (*models.Commitment, error) {

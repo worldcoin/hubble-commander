@@ -137,10 +137,7 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 		}
 
 		currentRootHash, err = stateTree.revertState(stateUpdate)
-		if err != nil {
-			return false, err
-		}
-		return false, nil
+		return false, err
 	})
 	if err != nil && err != badger.ErrIteratorFinished {
 		return err

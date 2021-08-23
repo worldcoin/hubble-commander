@@ -15,7 +15,7 @@ type TransactionBase struct {
 	Signature    Signature
 	ReceiveTime  *Timestamp `db:"receive_time"`
 	ErrorMessage *string    `db:"error_message"`
-	BatchID      *Uint256   `db:"batch_id"`
+	BatchID      *Uint256   `db:"batch_id"` //TODO: use CommitmentID struct with badger
 	IndexInBatch *uint32    `db:"index_in_batch"`
 }
 
