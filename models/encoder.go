@@ -13,21 +13,6 @@ type ByteEncoder interface {
 	SetBytes(data []byte) error
 }
 
-// encoderPointer encodes given value
-// if value is nil it sets first byte to 0
-// if value isn't nil it sets first byte to 1
-// and encodes value with Bytes() function
-// TODO use Timestamp directly
-func encodePointer(length int, value ByteEncoder) []byte {
-	b := make([]byte, length+1)
-	if value == nil || reflect.ValueOf(value).IsNil() {
-		return b
-	}
-	b[0] = 1
-	copy(b[1:], value.Bytes())
-	return b
-}
-
 func getBadgerHoldPrefix(dataType interface{}) []byte {
 	return []byte("bh_" + reflect.TypeOf(dataType).Name())
 }
@@ -64,6 +49,16 @@ func decodeUint32Pointer(data []byte) *uint32 {
 		return nil
 	}
 	return ref.Uint32(binary.BigEndian.Uint32(data[1:]))
+}
+
+func encodeTimestampPointer(timestamp *Timestamp) []byte {
+	b := make([]byte, 16)
+	if timestamp == nil {
+		return b
+	}
+	b[0] = 1
+	copy(b[1:], timestamp.Bytes())
+	return b
 }
 
 func decodeTimestampPointer(data []byte) (*Timestamp, error) {

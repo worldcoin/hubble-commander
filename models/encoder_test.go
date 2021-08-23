@@ -2,31 +2,11 @@ package models
 
 import (
 	"testing"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 )
-
-func Test_EncodePointer(t *testing.T) {
-	leaf := &FlatStateLeaf{
-		StateID:  5,
-		DataHash: common.Hash{1, 2, 3},
-		PubKeyID: 3,
-		TokenID:  MakeUint256(1),
-		Balance:  MakeUint256(9999888),
-		Nonce:    MakeUint256(0),
-	}
-
-	bytes := encodePointer(136, leaf)
-	require.EqualValues(t, 1, bytes[0])
-	require.Equal(t, leaf.Bytes(), bytes[1:])
-}
-
-func Test_EncodePointer_NilValue(t *testing.T) {
-	var leaf *FlatStateLeaf
-	bytes := encodePointer(136, leaf)
-	require.EqualValues(t, bytes[0], 0)
-}
 
 func Test_EncodeHashPointer(t *testing.T) {
 	hash := &common.Hash{1, 2, 3, 4}
@@ -62,4 +42,24 @@ func Test_EncodeUint32Pointer_NilValue(t *testing.T) {
 
 	decodedValue := decodeUint32Pointer(bytes)
 	require.Nil(t, decodedValue)
+}
+
+func Test_EncodeTimestampPointer(t *testing.T) {
+	timestamp := NewTimestamp(time.Unix(10, 0).UTC())
+	bytes := encodeTimestampPointer(timestamp)
+	require.EqualValues(t, 1, bytes[0])
+
+	decodedTimestamp, err := decodeTimestampPointer(bytes)
+	require.NoError(t, err)
+	require.Equal(t, *timestamp, *decodedTimestamp)
+}
+
+func Test_EncodeTimestampPointer_NilValue(t *testing.T) {
+	var timestamp *Timestamp
+	bytes := encodeTimestampPointer(timestamp)
+	require.EqualValues(t, 0, bytes[0])
+
+	decodedTimestamp, err := decodeTimestampPointer(bytes)
+	require.NoError(t, err)
+	require.Nil(t, decodedTimestamp)
 }

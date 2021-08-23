@@ -30,7 +30,7 @@ func (b *Batch) Bytes() []byte {
 	copy(encoded[98:103], encodeUint32Pointer(b.FinalisationBlock))
 	copy(encoded[103:136], EncodeHashPointer(b.AccountTreeRoot))
 	copy(encoded[136:169], EncodeHashPointer(b.PrevStateRoot))
-	copy(encoded[169:185], encodePointer(15, b.SubmissionTime))
+	copy(encoded[169:185], encodeTimestampPointer(b.SubmissionTime))
 
 	return encoded
 }
