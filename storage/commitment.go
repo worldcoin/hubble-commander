@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"bytes"
-
 	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -82,7 +80,7 @@ func (s *CommitmentStorage) DeleteCommitmentsByBatchIDs(batchIDs ...models.Uint2
 	}
 
 	if len(ids) == 0 {
-		return ErrNoRowsAffected // TODO return not found error instead
+		return NewNotFoundError("commitments")
 	}
 
 	var commitment models.Commitment
@@ -97,11 +95,10 @@ func (s *CommitmentStorage) DeleteCommitmentsByBatchIDs(batchIDs ...models.Uint2
 
 func getCommitmentIDsByBatchID(txn *Database, opts bdg.IteratorOptions, batchID models.Uint256) ([]models.CommitmentID, error) {
 	ids := make([]models.CommitmentID, 0, 32)
-	// TODO extract getCommitmentPrefixWithBatchID
-	prefix := bytes.Join([][]byte{models.CommitmentPrefix, utils.PadLeft(batchID.Bytes(), 32)}, []byte{})
+	prefix := getCommitmentPrefixWithBatchID(&batchID)
 	err := txn.Badger.Iterator(prefix, opts, func(item *bdg.Item) (bool, error) {
 		var id models.CommitmentID
-		err := id.SetBytes(item.Key()[len(models.CommitmentPrefix):]) // TODO reuse DecodeKey or extract
+		err := badger.DecodeKey(item.Key(), &id, models.CommitmentPrefix)
 		if err != nil {
 			return false, err
 		}
@@ -116,7 +113,7 @@ func getCommitmentIDsByBatchID(txn *Database, opts bdg.IteratorOptions, batchID 
 
 func (s *Storage) GetCommitmentsByBatchID(batchID models.Uint256) ([]models.CommitmentWithTokenID, error) {
 	commitments := make([]models.Commitment, 0, 32)
-	prefix := bytes.Join([][]byte{models.CommitmentPrefix, utils.PadLeft(batchID.Bytes(), 32)}, []byte{})
+	prefix := getCommitmentPrefixWithBatchID(&batchID)
 	err := s.database.Badger.Iterator(prefix, bdg.DefaultIteratorOptions, func(item *bdg.Item) (bool, error) {
 		commitment, err := decodeCommitment(item)
 		if err != nil {
@@ -165,4 +162,12 @@ func decodeCommitment(item *bdg.Item) (*models.Commitment, error) {
 		return nil, err
 	}
 	return &commitment, nil
+}
+
+func getCommitmentPrefixWithBatchID(batchID *models.Uint256) []byte {
+	commitmentPrefixLen := len(models.CommitmentPrefix)
+	prefix := make([]byte, commitmentPrefixLen+32)
+	copy(prefix[:commitmentPrefixLen], models.CommitmentPrefix)
+	copy(prefix[commitmentPrefixLen:], utils.PadLeft(batchID.Bytes(), 32))
+	return prefix
 }

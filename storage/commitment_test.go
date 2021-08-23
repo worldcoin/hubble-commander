@@ -184,7 +184,7 @@ func (s *CommitmentTestSuite) TestDeleteCommitmentsByBatchIDs_NoCommitments() {
 	s.NoError(err)
 
 	err = s.storage.DeleteCommitmentsByBatchIDs(batchID)
-	s.Equal(ErrNoRowsAffected, err)
+	s.Equal(NewNotFoundError("commitments"), err)
 
 	_, err = s.storage.GetCommitment(&commitment.ID)
 	s.NoError(err)
