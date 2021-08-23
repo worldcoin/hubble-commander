@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/binary"
-	"reflect"
 
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -15,7 +14,7 @@ const (
 	commitmentIDDataLength = 36
 )
 
-var CommitmentPrefix = []byte("bh_" + reflect.TypeOf(Commitment{}).Name()) // TODO extract to getBadgerHoldPrefix
+var CommitmentPrefix = getBadgerHoldPrefix(Commitment{})
 
 type Commitment struct {
 	ID                CommitmentID

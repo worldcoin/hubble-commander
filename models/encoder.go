@@ -28,6 +28,10 @@ func encodePointer(length int, value ByteEncoder) []byte {
 	return b
 }
 
+func getBadgerHoldPrefix(dataType interface{}) []byte {
+	return []byte("bh_" + reflect.TypeOf(dataType).Name())
+}
+
 func EncodeHashPointer(value *common.Hash) []byte {
 	b := make([]byte, 33)
 	if value == nil {

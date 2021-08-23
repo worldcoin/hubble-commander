@@ -1,8 +1,6 @@
 package models
 
 import (
-	"reflect"
-
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
@@ -10,7 +8,7 @@ import (
 
 const batchDataLength = 185
 
-var BatchPrefix = []byte("bh_" + reflect.TypeOf(Batch{}).Name())
+var BatchPrefix = getBadgerHoldPrefix(Batch{})
 
 type Batch struct {
 	ID                Uint256

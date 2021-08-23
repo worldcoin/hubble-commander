@@ -3,7 +3,6 @@ package storage
 import (
 	"fmt"
 	"math/big"
-	"reflect"
 
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
 	"github.com/Worldcoin/hubble-commander/db/badger"
@@ -17,8 +16,6 @@ import (
 )
 
 const StateTreeDepth = merkletree.MaxDepth
-
-var stateUpdatePrefix = []byte("bh_" + reflect.TypeOf(models.StateUpdate{}).Name())
 
 type StateTree struct {
 	database   *Database
@@ -118,7 +115,7 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 	var currentRootHash *common.Hash
 	opts := bdg.DefaultIteratorOptions
 	opts.Reverse = true
-	err = txDatabase.Badger.Iterator(stateUpdatePrefix, opts, func(item *bdg.Item) (bool, error) {
+	err = txDatabase.Badger.Iterator(models.StateUpdatePrefix, opts, func(item *bdg.Item) (bool, error) {
 		currentRootHash, err = stateTree.Root()
 		if err != nil {
 			return false, err
@@ -156,7 +153,7 @@ func decodeStateUpdate(item *bdg.Item) (*models.StateUpdate, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = badger.DecodeKey(item.Key(), &stateUpdate.ID, stateUpdatePrefix)
+	err = badger.DecodeKey(item.Key(), &stateUpdate.ID, models.StateUpdatePrefix)
 	if err != nil {
 		return nil, err
 	}
