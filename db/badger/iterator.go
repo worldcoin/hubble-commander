@@ -5,14 +5,20 @@ import (
 	"github.com/pkg/errors"
 )
 
-var ErrIteratorFinished = errors.New("iterator finished")
+var (
+	ErrIteratorFinished = errors.New("iterator finished")
 
-func (d *Database) ReverseIterator(prefix []byte, filter func(item *badger.Item) (bool, error)) error {
-	opts := badger.DefaultIteratorOptions
-	opts.PrefetchValues = false
-	opts.Reverse = true
-	return d.Iterator(prefix, opts, filter)
-}
+	ReverseKeyIteratorOpts = badger.IteratorOptions{
+		PrefetchValues: false,
+		Reverse:        true,
+	}
+	ReversePrefetchIteratorOpts = badger.IteratorOptions{
+		Reverse:        true,
+		PrefetchSize:   100,
+		PrefetchValues: true,
+		AllVersions:    false,
+	}
+)
 
 func (d *Database) Iterator(prefix []byte, opts badger.IteratorOptions, filter func(item *badger.Item) (bool, error)) error {
 	return d.View(func(txn *badger.Txn) error {

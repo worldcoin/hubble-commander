@@ -46,7 +46,7 @@ func (s *CommitmentStorage) GetCommitment(key *models.CommitmentID) (*models.Com
 func (s *CommitmentStorage) GetLatestCommitment() (*models.Commitment, error) {
 	var commitment *models.Commitment
 	var err error
-	err = s.database.Badger.ReverseIterator(models.CommitmentPrefix, func(item *bdg.Item) (bool, error) {
+	err = s.database.Badger.Iterator(models.CommitmentPrefix, badger.ReversePrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
 		commitment, err = decodeCommitment(item)
 		return true, err
 	})
@@ -68,11 +68,9 @@ func (s *CommitmentStorage) DeleteCommitmentsByBatchIDs(batchIDs ...models.Uint2
 	defer tx.Rollback(&err)
 
 	var commitmentIDs []models.CommitmentID
-	opts := bdg.DefaultIteratorOptions
-	opts.PrefetchValues = false
 	ids := make([]models.CommitmentID, 0, len(batchIDs))
 	for i := range batchIDs {
-		commitmentIDs, err = getCommitmentIDsByBatchID(txDatabase, opts, batchIDs[i])
+		commitmentIDs, err = getCommitmentIDsByBatchID(txDatabase, badger.ReverseKeyIteratorOpts, batchIDs[i])
 		if err != nil {
 			return err
 		}

@@ -63,7 +63,7 @@ func (s *StateTree) LeafOrEmpty(stateID uint32) (*models.StateLeaf, error) {
 func (s *StateTree) NextAvailableStateID() (*uint32, error) {
 	nextAvailableStateID := uint32(0)
 
-	err := s.database.Badger.ReverseIterator(models.FlatStateLeafPrefix, func(item *bdg.Item) (bool, error) {
+	err := s.database.Badger.Iterator(models.FlatStateLeafPrefix, badger.ReverseKeyIteratorOpts, func(item *bdg.Item) (bool, error) {
 		var key uint32
 		err := badger.DecodeKey(item.Key(), &key, models.FlatStateLeafPrefix)
 		if err != nil {
@@ -113,9 +113,7 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 
 	stateTree := NewStateTree(txDatabase)
 	var currentRootHash *common.Hash
-	opts := bdg.DefaultIteratorOptions
-	opts.Reverse = true
-	err = txDatabase.Badger.Iterator(models.StateUpdatePrefix, opts, func(item *bdg.Item) (bool, error) {
+	err = txDatabase.Badger.Iterator(models.StateUpdatePrefix, badger.ReversePrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
 		currentRootHash, err = stateTree.Root()
 		if err != nil {
 			return false, err

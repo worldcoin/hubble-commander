@@ -149,8 +149,8 @@ func (s *BatchStorage) DeleteBatches(batchIDs ...models.Uint256) error {
 
 func (s *BatchStorage) reverseIterateBatches(filter func(batch *models.Batch) bool) (*models.Batch, error) {
 	var batch models.Batch
-	err := s.database.Badger.ReverseIterator(models.BatchPrefix, func(item *bdg.Item) (bool, error) {
-		err := item.Value(func(v []byte) error { // TODO prefetch values instead
+	err := s.database.Badger.Iterator(models.BatchPrefix, badger.ReversePrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
+		err := item.Value(func(v []byte) error {
 			return badger.Decode(v, &batch)
 		})
 		if err != nil {
