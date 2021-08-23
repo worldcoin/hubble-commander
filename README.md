@@ -71,8 +71,10 @@ There is a number of scripts defined in the Makefile:
 * `make test-e2e` - run all E2E tests on a pre-built docker image
 * `make test-e2e-in-process` - start commander and run all E2E tests in the same process 
 * `make test-e2e-locally` - run all E2E tests on a local commander instance
-* `make bench-e2e` - run E2E benchmark test
-* `make bench-e2e-profile` - run E2E benchmark test with CPU profiling
+* `make bench-e2e` - run E2E benchmark test on a local commander instance
+* `make bench-creation-profile` - start commander and run E2E batch creation benchmark in the same process with CPU profiling
+* `make bench-sync-profile` - start commander and run E2E butch sync benchmark in the same process with CPU profiling
+* `make measure-dispute-gas` - start commander and run E2E dispute gas measurement test in the same process
 
 ## Running with Ganache
 
