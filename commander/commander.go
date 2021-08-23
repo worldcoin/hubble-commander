@@ -3,7 +3,6 @@ package commander
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"sync"
 
@@ -14,7 +13,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
-	ethRollup "github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -107,46 +105,6 @@ func (c *Commander) Start() (err error) {
 	log.Printf("Commander started and listening on port %s.", c.cfg.API.Port)
 
 	return nil
-}
-
-func (c *Commander) Deploy() (chainSpec *string, err error) {
-	if c.IsRunning() {
-		return nil, nil
-	}
-
-	tempStorage, err := st.NewTemporaryStorage()
-	if err != nil {
-		return nil, err
-	}
-
-	defer func() {
-		closeErr := tempStorage.Close()
-		if closeErr != nil {
-			err = fmt.Errorf("temporary storage close caused by: %w, failed with: %v", err, closeErr)
-		}
-	}()
-
-	chain, err := GetChainConnection(c.cfg.Ethereum)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf(
-		"Bootstrapping genesis state with %d accounts on chainId = %s",
-		len(c.cfg.Bootstrap.GenesisAccounts),
-		c.cfg.Ethereum.ChainID,
-	)
-	chainState, err := deployContractsAndSetupGenesisState(tempStorage.Storage, chain, c.cfg.Bootstrap.GenesisAccounts)
-	if err != nil {
-		return nil, err
-	}
-
-	chainSpec, err = GenerateChainSpec(chainState)
-	if err != nil {
-		return nil, err
-	}
-
-	return chainSpec, nil
 }
 
 func (c *Commander) startWorker(fn func() error) {
@@ -388,53 +346,6 @@ func createClientFromChainState(chain deployer.ChainConnection, chainState *mode
 	}
 
 	return client, nil
-}
-
-func deployContractsAndSetupGenesisState(
-	storage *st.Storage,
-	chain deployer.ChainConnection,
-	accounts []models.GenesisAccount,
-) (*models.ChainState, error) {
-	accountRegistryAddress, accountRegistryDeploymentBlock, accountRegistry, err := deployer.DeployAccountRegistry(chain)
-	if err != nil {
-		return nil, err
-	}
-
-	registeredAccounts, err := RegisterGenesisAccounts(chain.GetAccount(), accountRegistry, accounts)
-	if err != nil {
-		return nil, err
-	}
-
-	populatedAccounts := AssignStateIDs(registeredAccounts)
-
-	err = PopulateGenesisAccounts(storage, populatedAccounts)
-	if err != nil {
-		return nil, err
-	}
-
-	stateRoot, err := storage.StateTree.Root()
-	if err != nil {
-		return nil, err
-	}
-
-	contracts, err := ethRollup.DeployConfiguredRollup(chain, ethRollup.DeploymentConfig{
-		Params:       ethRollup.Params{GenesisStateRoot: stateRoot},
-		Dependencies: ethRollup.Dependencies{AccountRegistry: accountRegistryAddress},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	chainState := &models.ChainState{
-		ChainID:         chain.GetChainID(),
-		AccountRegistry: *accountRegistryAddress,
-		DeploymentBlock: *accountRegistryDeploymentBlock,
-		Rollup:          contracts.RollupAddress,
-		GenesisAccounts: populatedAccounts,
-		SyncedBlock:     getInitialSyncedBlock(*accountRegistryDeploymentBlock),
-	}
-
-	return chainState, nil
 }
 
 func getInitialSyncedBlock(deploymentBlock uint64) uint64 {

@@ -10,7 +10,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/db/postgres"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
-	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -92,16 +91,7 @@ func (s *CommanderTestSuite) TestStart_SetsCorrectSyncedBlock() {
 }
 
 func (s *CommanderTestSuite) prepareContracts(cfg *config.Config, chain deployer.ChainConnection) {
-	testStorage, err := storage.NewTestStorageWithBadger()
-	s.NoError(err)
-
-	chainState, err := deployContractsAndSetupGenesisState(testStorage.Storage, chain, cfg.Bootstrap.GenesisAccounts)
-	s.NoError(err)
-
-	err = testStorage.Teardown()
-	s.NoError(err)
-
-	yamlChainSpec, err := GenerateChainSpec(chainState)
+	yamlChainSpec, err := Deploy(cfg, chain) // TODO fix
 	s.NoError(err)
 
 	file, err := ioutil.TempFile("", "chain_spec_commander_test")

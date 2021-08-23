@@ -54,7 +54,7 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	var err error
 	s.testStorage, err = st.NewTestStorageWithBadger()
 	s.NoError(err)
-	s.testClient, err = eth.NewTestClient()
+	s.testClient, err = eth.NewTestClient() // TODO check whether Deploy() could be used here
 	s.NoError(err)
 
 	s.cmd = NewCommander(s.cfg, nil)
