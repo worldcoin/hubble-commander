@@ -68,6 +68,10 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Bytes(), nil
 	case *common.Hash:
 		return models.EncodeHashPointer(v), nil
+	case string:
+		return EncodeString(&v)
+	case *string:
+		return nil, errors.Errorf("pass by value")
 	case uint32:
 		return EncodeUint32(&v)
 	case *uint32:
@@ -113,6 +117,8 @@ func Decode(data []byte, value interface{}) error {
 		return nil
 	case *common.Hash:
 		return decodeHashPointer(data, &value, v)
+	case *string:
+		return DecodeString(data, v)
 	case *uint32:
 		return DecodeUint32(data, v)
 	case *uint64:
@@ -170,8 +176,13 @@ func DecodeUint64(data []byte, value *uint64) error {
 	return nil
 }
 
-func DecodeKey(data []byte, key interface{}, prefix []byte) error {
-	return Decode(data[len(prefix):], key)
+func EncodeString(string *string) ([]byte, error) {
+	return []byte(*string), nil
+}
+
+func DecodeString(data []byte, value *string) error {
+	*value = string(data)
+	return nil
 }
 
 func EncodeKeyList(value *bh.KeyList) ([]byte, error) {
@@ -182,14 +193,13 @@ func EncodeKeyList(value *bh.KeyList) ([]byte, error) {
 	itemLen := len((*value)[0])
 
 	b := make([]byte, 2+listLen*itemLen)
-	//TODO: is it enough?
 	b[0] = uint8(listLen)
 	b[1] = uint8(itemLen)
 
 	bp := 2
 	for i := range *value {
 		if len((*value)[i]) != itemLen {
-			return nil, errors.New("invalid KeyList key length")
+			return nil, errors.New("inconsistent KeyList key length")
 		}
 		bp += copy(b[bp:], (*value)[i])
 	}
@@ -209,4 +219,8 @@ func DecodeKeyList(data []byte, value *bh.KeyList) error {
 		index += copy((*value)[i], data[index:index+itemLen])
 	}
 	return nil
+}
+
+func DecodeKey(data []byte, key interface{}, prefix []byte) error {
+	return Decode(data[len(prefix):], key)
 }
