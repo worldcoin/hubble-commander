@@ -8,7 +8,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -74,6 +73,8 @@ func GetConfig() *Config {
 }
 
 func GetTestConfig() *Config {
+	setupViper()
+
 	return &Config{
 		Log: &LogConfig{
 			Level:  log.InfoLevel,
@@ -106,8 +107,8 @@ func GetTestConfig() *Config {
 			Host:           nil,
 			Port:           nil,
 			Name:           "hubble_test",
-			User:           ref.String("daniel"),
-			Password:       ref.String("test123"),
+			User:           getStringOrNil("postgres.user"),
+			Password:       getStringOrNil("postgres.password"),
 			MigrationsPath: getMigrationsPath(),
 		},
 		Badger: &BadgerConfig{
