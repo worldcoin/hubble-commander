@@ -51,7 +51,7 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 	}
 
 	if opts.DeployContracts {
-		err = deployContracts()
+		err = deployContractsAndStoreChainSpec()
 		if err != nil {
 			return nil, err
 		}
@@ -137,7 +137,7 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 	return cmd, nil
 }
 
-func deployContracts() error {
+func deployContractsAndStoreChainSpec() error {
 	cfg := config.GetConfig()
 
 	chain, err := commander.GetChainConnection(cfg.Ethereum)
@@ -151,12 +151,7 @@ func deployContracts() error {
 	}
 
 	chainSpecPath := path.Join(utils.GetProjectRoot(), "e2e-chain-spec", "chain-spec.yaml")
-	err = utils.StoreChainSpec(chainSpecPath, *chainSpec)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return utils.StoreChainSpec(chainSpecPath, *chainSpec)
 }
 
 func (c *DockerCommander) Client() jsonrpc.RPCClient {
@@ -244,6 +239,7 @@ func (c *DockerCommander) Restart() error {
 	if err != nil {
 		return err
 	}
+
 	c.containerID = cmd.containerID
 	return cmd.Start()
 }
