@@ -176,8 +176,8 @@ func DecodeUint64(data []byte, value *uint64) error {
 	return nil
 }
 
-func EncodeString(string *string) ([]byte, error) {
-	return []byte(*string), nil
+func EncodeString(value *string) ([]byte, error) {
+	return []byte(*value), nil
 }
 
 func DecodeString(data []byte, value *string) error {

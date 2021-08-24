@@ -3,7 +3,6 @@ package models
 import (
 	"encoding/binary"
 
-	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -45,9 +44,9 @@ func (l *FlatStateLeaf) Bytes() []byte {
 	binary.BigEndian.PutUint32(b[0:4], l.StateID)
 	copy(b[4:36], l.DataHash[:])
 	binary.BigEndian.PutUint32(b[36:40], l.PubKeyID)
-	copy(b[40:72], utils.PadLeft(l.TokenID.Bytes(), 32))
-	copy(b[72:104], utils.PadLeft(l.Balance.Bytes(), 32))
-	copy(b[104:136], utils.PadLeft(l.Nonce.Bytes(), 32))
+	copy(b[40:72], l.TokenID.Bytes())
+	copy(b[72:104], l.Balance.Bytes())
+	copy(b[104:136], l.Nonce.Bytes())
 	return b
 }
 
