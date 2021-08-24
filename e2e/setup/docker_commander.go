@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/commander"
@@ -89,12 +90,12 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 			Mounts: []mount.Mount{
 				{
 					Type:   mount.TypeBind,
-					Source: utils.GetProjectRoot() + "/e2e-data",
+					Source: path.Join(utils.GetProjectRoot(), "e2e-data"),
 					Target: "/go/src/app/db/badger/data/hubble",
 				},
 				{
 					Type:   mount.TypeBind,
-					Source: utils.GetProjectRoot() + "/e2e-chain-spec",
+					Source: path.Join(utils.GetProjectRoot(), "e2e-chain-spec"),
 					Target: "/go/src/app/chain-spec",
 				},
 			},
@@ -149,7 +150,8 @@ func deployContracts() error {
 		return err
 	}
 
-	err = utils.StoreChainSpec(utils.GetProjectRoot()+"/e2e-chain-spec/chain-spec.yaml", *chainSpec)
+	chainSpecPath := path.Join(utils.GetProjectRoot(), "e2e-chain-spec", "chain-spec.yaml")
+	err = utils.StoreChainSpec(chainSpecPath, *chainSpec)
 	if err != nil {
 		return err
 	}
