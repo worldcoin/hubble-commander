@@ -200,14 +200,13 @@ func DecodeKeyList(data []byte, value *bh.KeyList) error {
 	if data[0] == 0 {
 		return nil
 	}
-	body := make([][]byte, data[0])
+	*value = append(*value, make([][]byte, data[0])...)
 	itemLen := int(data[1])
 
 	index := 2
-	for i := range body {
-		body[i] = data[index : index+itemLen]
-		index += itemLen
+	for i := range *value {
+		(*value)[i] = make([]byte, itemLen)
+		index += copy((*value)[i], data[index:index+itemLen])
 	}
-	*value = append(*value, body...)
 	return nil
 }
