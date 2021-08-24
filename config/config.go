@@ -104,9 +104,9 @@ func GetTestConfig() *Config {
 			Port:    "8080",
 		},
 		Postgres: &PostgresConfig{
-			Host:           nil,
-			Port:           nil,
-			Name:           "hubble_test",
+			Host:           getStringOrNil("postgres.host"),
+			Port:           getStringOrNil("postgres.port"),
+			Name:           getString("postgres.name", "hubble_test"),
 			User:           getStringOrNil("postgres.user"),
 			Password:       getStringOrNil("postgres.password"),
 			MigrationsPath: getMigrationsPath(),
