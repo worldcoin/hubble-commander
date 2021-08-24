@@ -147,9 +147,9 @@ func (t *TransactionExecutor) DisputeTransition(
 	}
 
 	if batch.Type == txtype.Transfer {
-		err = t.client.DisputeTransitionTransfer(&batch.ID, previousCommitmentProof, targetCommitmentProof, merkleProofs)
+		err = t.client.DisputeTransitionTransfer(&batch.ID, previousCommitmentProof, targetCommitmentProof, merkleProofs, 5_000_000)
 	} else {
-		err = t.client.DisputeTransitionCreate2Transfer(&batch.ID, previousCommitmentProof, targetCommitmentProof, merkleProofs)
+		err = t.client.DisputeTransitionCreate2Transfer(&batch.ID, previousCommitmentProof, targetCommitmentProof, merkleProofs, 5_000_000)
 	}
 	return err
 }
