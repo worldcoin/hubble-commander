@@ -2,12 +2,10 @@ package badger
 
 import (
 	"encoding/binary"
-	"reflect"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
@@ -83,7 +81,6 @@ func Encode(value interface{}) ([]byte, error) {
 	case bh.KeyList:
 		return EncodeKeyList(&v)
 	default:
-		log.Warnf("used GOB encoder for %s", reflect.TypeOf(value).Name())
 		return bh.DefaultEncode(value)
 	}
 }
@@ -126,7 +123,6 @@ func Decode(data []byte, value interface{}) error {
 	case *bh.KeyList:
 		return DecodeKeyList(data, v)
 	default:
-		log.Warnf("used GOB decoder for %s", reflect.TypeOf(value).Name())
 		return bh.DefaultDecode(data, value)
 	}
 }
