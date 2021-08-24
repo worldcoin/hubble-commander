@@ -12,8 +12,9 @@ func (c *Client) DisputeSignatureTransfer(
 	batchID *models.Uint256,
 	targetProof *models.TransferCommitmentInclusionProof,
 	signatureProof *models.SignatureProof,
+	gasLimit uint64,
 ) error {
-	transaction, err := c.rollup().DisputeSignatureTransfer(
+	transaction, err := c.rollup().WithGasLimit(gasLimit).DisputeSignatureTransfer(
 		batchID.ToBig(),
 		*TransferProofToCalldata(targetProof),
 		*signatureProofToCalldata(signatureProof),
@@ -34,8 +35,9 @@ func (c *Client) DisputeSignatureCreate2Transfer(
 	batchID *models.Uint256,
 	targetProof *models.TransferCommitmentInclusionProof,
 	signatureProof *models.SignatureProofWithReceiver,
+	gasLimit uint64,
 ) error {
-	transaction, err := c.rollup().DisputeSignatureCreate2Transfer(
+	transaction, err := c.rollup().WithGasLimit(gasLimit).DisputeSignatureCreate2Transfer(
 		batchID.ToBig(),
 		*TransferProofToCalldata(targetProof),
 		*signatureProofWithReceiverToCalldata(signatureProof),
