@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/commander"
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -25,8 +27,9 @@ type DockerCommander struct {
 }
 
 type StartOptions struct {
-	Image string
-	Prune bool
+	Image           string
+	Prune           bool
+	DeployContracts bool
 }
 
 func getEnvVarMapping(key string) string {
@@ -46,6 +49,13 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 		networkMode = "bridge"
 	}
 
+	if opts.DeployContracts {
+		err = deployContracts()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	created, err := cli.ContainerCreate(
 		context.Background(),
 		&container.Config{
@@ -62,6 +72,7 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 				getEnvVarMapping("HUBBLE_ROLLUP_MIN_TXS_PER_COMMITMENT"),
 				getEnvVarMapping("HUBBLE_ROLLUP_MAX_TXS_PER_COMMITMENT"),
 				"HUBBLE_API_PORT=8080",
+				"HUBBLE_BOOTSTRAP_CHAIN_SPEC_PATH=chain-spec/chain-spec.yaml",
 				fmt.Sprintf("HUBBLE_BOOTSTRAP_PRUNE=%t", opts.Prune),
 			},
 			ExposedPorts: map[nat.Port]struct{}{
@@ -81,6 +92,11 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 					Source: utils.GetProjectRoot() + "/e2e-data",
 					Target: "/go/src/app/db/badger/data/hubble",
 				},
+				{
+					Type:   mount.TypeBind,
+					Source: utils.GetProjectRoot() + "/e2e-chain-spec",
+					Target: "/go/src/app/chain-spec",
+				},
 			},
 		},
 		&network.NetworkingConfig{},
@@ -94,7 +110,7 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 
 	client := jsonrpc.NewClient("http://localhost:8080")
 
-	commander := &DockerCommander{
+	cmd := &DockerCommander{
 		cli:         cli,
 		containerID: containerID,
 		client:      client,
@@ -117,7 +133,28 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 		}
 	}()
 
-	return commander, nil
+	return cmd, nil
+}
+
+func deployContracts() error {
+	cfg := config.GetConfig()
+
+	chain, err := commander.GetChainConnection(cfg.Ethereum)
+	if err != nil {
+		return err
+	}
+
+	chainSpec, err := commander.Deploy(cfg, chain)
+	if err != nil {
+		return err
+	}
+
+	err = utils.StoreChainSpec(utils.GetProjectRoot()+"/e2e-chain-spec/chain-spec.yaml", *chainSpec)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *DockerCommander) Client() jsonrpc.RPCClient {
@@ -197,13 +234,14 @@ func (c *DockerCommander) Restart() error {
 		return err
 	}
 
-	commander, err := StartDockerCommander(StartOptions{
-		Image: "ghcr.io/worldcoin/hubble-commander:latest",
-		Prune: false,
+	cmd, err := StartDockerCommander(StartOptions{
+		Image:           "ghcr.io/worldcoin/hubble-commander:latest",
+		Prune:           false,
+		DeployContracts: false,
 	})
 	if err != nil {
 		return err
 	}
-	c.containerID = commander.containerID
-	return commander.Start()
+	c.containerID = cmd.containerID
+	return cmd.Start()
 }
