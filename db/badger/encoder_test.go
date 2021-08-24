@@ -1,11 +1,13 @@
 package badger
 
 import (
+	"encoding/binary"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
+	bh "github.com/timshannon/badgerhold/v3"
 )
 
 func TestDataHash_ByteEncoding(t *testing.T) {
@@ -51,4 +53,24 @@ func TestDecodeKey(t *testing.T) {
 	err = DecodeKey(append(prefix, encoded...), &decoded, prefix)
 	require.NoError(t, err)
 	require.Equal(t, value, decoded)
+}
+
+func TestEncodeKeyList(t *testing.T) {
+	prefix := []byte("bh_prefix")
+	keyList := make(bh.KeyList, 5)
+	for i := range keyList {
+		keyList[i] = make([]byte, len(prefix)+4)
+		copy(keyList[i][:len(prefix)], prefix)
+		binary.BigEndian.PutUint32(keyList[i][len(prefix):], uint32(i))
+	}
+
+	encoded, err := EncodeKeyList(&keyList)
+	require.NoError(t, err)
+	require.EqualValues(t, len(keyList), encoded[0])
+	require.EqualValues(t, len(keyList[0]), encoded[1])
+
+	var decoded bh.KeyList
+	err = DecodeKeyList(encoded, &decoded)
+	require.NoError(t, err)
+	require.Equal(t, keyList, decoded)
 }

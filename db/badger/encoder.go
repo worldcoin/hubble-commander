@@ -2,10 +2,12 @@ package badger
 
 import (
 	"encoding/binary"
+	"reflect"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
@@ -70,7 +72,10 @@ func Encode(value interface{}) ([]byte, error) {
 		return EncodeUint64(&v)
 	case *uint64:
 		return nil, errors.Errorf("pass by value")
+	case bh.KeyList:
+		return EncodeKeyList(&v)
 	default:
+		log.Warnf("used GOB encoder for %s", reflect.TypeOf(value).Name())
 		return bh.DefaultEncode(value)
 	}
 }
@@ -106,7 +111,10 @@ func Decode(data []byte, value interface{}) error {
 		return DecodeUint32(data, v)
 	case *uint64:
 		return DecodeUint64(data, v)
+	case *bh.KeyList:
+		return DecodeKeyList(data, v)
 	default:
+		log.Warnf("used GOB decoder for %s", reflect.TypeOf(value).Name())
 		return bh.DefaultDecode(data, value)
 	}
 }
@@ -158,4 +166,42 @@ func DecodeUint64(data []byte, value *uint64) error {
 
 func DecodeKey(data []byte, key interface{}, prefix []byte) error {
 	return Decode(data[len(prefix):], key)
+}
+
+func EncodeKeyList(value *bh.KeyList) ([]byte, error) {
+	listLen := len(*value)
+	if listLen == 0 {
+		return make([]byte, 2), nil
+	}
+	itemLen := len((*value)[0])
+
+	b := make([]byte, 2+listLen*itemLen)
+	//TODO: is it enough?
+	b[0] = uint8(listLen)
+	b[1] = uint8(itemLen)
+
+	bp := 2
+	for i := range *value {
+		if len((*value)[i]) != itemLen {
+			return nil, errors.New("invalid KeyList key length")
+		}
+		bp += copy(b[bp:], (*value)[i])
+	}
+	return b, nil
+}
+
+func DecodeKeyList(data []byte, value *bh.KeyList) error {
+	if data[0] == 0 {
+		return nil
+	}
+	body := make([][]byte, data[0])
+	itemLen := int(data[1])
+
+	index := 2
+	for i := range body {
+		body[i] = data[index : index+itemLen]
+		index += itemLen
+	}
+	*value = append(*value, body...)
+	return nil
 }
