@@ -48,6 +48,10 @@ func Encode(value interface{}) ([]byte, error) {
 		return EncodeDataHash(&v.DataHash)
 	case *models.MerkleTreeNode:
 		return nil, errors.Errorf("pass by value")
+	case models.PublicKey:
+		return v.Bytes(), nil
+	case *models.PublicKey:
+		return nil, errors.Errorf("pass by value")
 	case models.FlatStateLeaf:
 		return v.Bytes(), nil
 	case *models.FlatStateLeaf:
@@ -98,6 +102,8 @@ func Decode(data []byte, value interface{}) error {
 		return v.SetBytes(data)
 	case *models.MerkleTreeNode:
 		return DecodeDataHash(data, &v.DataHash)
+	case *models.PublicKey:
+		return v.SetBytes(data)
 	case *models.FlatStateLeaf:
 		return v.SetBytes(data)
 	case *models.StateUpdate:
