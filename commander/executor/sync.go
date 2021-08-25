@@ -92,7 +92,7 @@ func (t *TransactionExecutor) excludeTransactionsFromCommitment(batchIDs ...mode
 	if err != nil {
 		return err
 	}
-	return t.storage.BatchMarkTransactionAsIncluded(hashes, nil)
+	return t.storage.BatchMarkTransactionAsIncluded(hashes, nil, nil)
 }
 
 func (t *TransactionExecutor) getTransactionSender(txHash common.Hash) (*common.Address, error) {
@@ -162,19 +162,20 @@ func (t *TransactionExecutor) syncCommitment(
 		return err
 	}
 
-	commitmentID, err := t.storage.AddCommitment(&models.Commitment{
+	err = t.storage.AddCommitment(&models.Commitment{
+		ID:                commitment.ID,
 		Type:              batch.Type,
 		Transactions:      commitment.Transactions,
 		FeeReceiver:       commitment.FeeReceiver,
 		CombinedSignature: commitment.CombinedSignature,
 		PostStateRoot:     commitment.StateRoot,
-		IncludedInBatch:   &batch.ID,
 	})
 	if err != nil {
 		return err
 	}
 	for i := 0; i < transactions.Len(); i++ {
-		transactions.At(i).GetBase().IncludedInCommitment = commitmentID
+		transactions.At(i).GetBase().BatchID = &commitment.ID.BatchID
+		transactions.At(i).GetBase().IndexInBatch = &commitment.ID.IndexInBatch
 	}
 
 	for i := 0; i < transactions.Len(); i++ {

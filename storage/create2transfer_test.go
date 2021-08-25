@@ -17,14 +17,13 @@ import (
 var (
 	create2Transfer = models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
-			Hash:                 common.BigToHash(big.NewInt(1234)),
-			TxType:               txtype.Create2Transfer,
-			FromStateID:          1,
-			Amount:               models.MakeUint256(1000),
-			Fee:                  models.MakeUint256(100),
-			Nonce:                models.MakeUint256(0),
-			Signature:            models.MakeRandomSignature(),
-			IncludedInCommitment: nil,
+			Hash:        common.BigToHash(big.NewInt(1234)),
+			TxType:      txtype.Create2Transfer,
+			FromStateID: 1,
+			Amount:      models.MakeUint256(1000),
+			Fee:         models.MakeUint256(100),
+			Nonce:       models.MakeUint256(0),
+			Signature:   models.MakeRandomSignature(),
 		},
 		ToStateID:   ref.Uint32(2),
 		ToPublicKey: account2.PublicKey,
@@ -91,12 +90,14 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchDetails() {
 	s.NoError(err)
 
 	commitmentInBatch := commitment
-	commitmentInBatch.IncludedInBatch = &batch.ID
-	commitmentID, err := s.storage.AddCommitment(&commitmentInBatch)
+	commitmentInBatch.ID.BatchID = batch.ID
+	commitmentInBatch.ID.IndexInBatch = 0
+	err = s.storage.AddCommitment(&commitmentInBatch)
 	s.NoError(err)
 
 	transferInBatch := create2Transfer
-	transferInBatch.IncludedInCommitment = commitmentID
+	transferInBatch.BatchID = &batch.ID
+	transferInBatch.IndexInBatch = &commitment.ID.IndexInBatch
 	receiveTime, err := s.storage.AddCreate2Transfer(&transferInBatch)
 	s.NoError(err)
 	transferInBatch.ReceiveTime = receiveTime
@@ -155,14 +156,14 @@ func (s *Create2TransferTestSuite) TestGetCreate2Transfer_NonExistentTransaction
 
 func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers() {
 	commitment := &models.Commitment{}
-	id, err := s.storage.AddCommitment(commitment)
+	err := s.storage.AddCommitment(commitment)
 	s.NoError(err)
 
 	create2Transfer2 := create2Transfer
 	create2Transfer2.Hash = utils.RandomHash()
 	create2Transfer3 := create2Transfer
 	create2Transfer3.Hash = utils.RandomHash()
-	create2Transfer3.IncludedInCommitment = id
+	create2Transfer3.BatchID = &commitment.ID.BatchID
 	create2Transfer4 := create2Transfer
 	create2Transfer4.Hash = utils.RandomHash()
 	create2Transfer4.ErrorMessage = ref.String("A very boring error message")
@@ -241,25 +242,26 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey_NoCreate2T
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID() {
-	commitmentID, err := s.storage.AddCommitment(&commitment)
+	err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
 	transfer1 := create2Transfer
-	transfer1.IncludedInCommitment = commitmentID
+	transfer1.BatchID = &commitment.ID.BatchID
+	transfer1.IndexInBatch = &commitment.ID.IndexInBatch
 
 	_, err = s.storage.AddCreate2Transfer(&transfer1)
 	s.NoError(err)
 
-	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(*commitmentID)
+	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(&commitment.ID)
 	s.NoError(err)
 	s.Len(transfers, 1)
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID_NoCreate2Transfers() {
-	commitmentID, err := s.storage.AddCommitment(&commitment)
+	err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
-	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(*commitmentID)
+	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(&commitment.ID)
 	s.NoError(err)
 	s.Len(transfers, 0)
 }

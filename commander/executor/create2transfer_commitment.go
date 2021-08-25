@@ -11,6 +11,7 @@ import (
 func (t *TransactionExecutor) buildC2TCommitment(
 	appliedTransfers []models.Create2Transfer,
 	addedPubKeyIDs []uint32,
+	commitmentID *models.CommitmentID,
 	feeReceiverStateID uint32,
 	domain *bls.Domain,
 ) (
@@ -27,7 +28,8 @@ func (t *TransactionExecutor) buildC2TCommitment(
 		return nil, err
 	}
 
-	commitment, err := t.createAndStoreCommitment(
+	commitment, err := t.createCommitment(
+		commitmentID,
 		txtype.Create2Transfer,
 		feeReceiverStateID,
 		serializedTxs,
@@ -37,7 +39,7 @@ func (t *TransactionExecutor) buildC2TCommitment(
 		return nil, err
 	}
 
-	err = t.markCreate2TransfersAsIncluded(appliedTransfers, commitment.ID)
+	err = t.markCreate2TransfersAsIncluded(appliedTransfers, commitmentID)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +47,7 @@ func (t *TransactionExecutor) buildC2TCommitment(
 	return commitment, nil
 }
 
-func (t *TransactionExecutor) markCreate2TransfersAsIncluded(transfers []models.Create2Transfer, commitmentID int32) error {
+func (t *TransactionExecutor) markCreate2TransfersAsIncluded(transfers []models.Create2Transfer, commitmentID *models.CommitmentID) error {
 	hashes := make([]common.Hash, 0, len(transfers))
 	for i := range transfers {
 		hashes = append(hashes, transfers[i].Hash)
@@ -55,5 +57,5 @@ func (t *TransactionExecutor) markCreate2TransfersAsIncluded(transfers []models.
 			return err
 		}
 	}
-	return t.storage.BatchMarkTransactionAsIncluded(hashes, &commitmentID)
+	return t.storage.BatchMarkTransactionAsIncluded(hashes, &commitmentID.BatchID, &commitmentID.IndexInBatch)
 }

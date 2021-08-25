@@ -221,7 +221,6 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, expectedTxsLength)
 	s.Equal(commitments[0].FeeReceiver, uint32(2))
-	s.Nil(commitments[0].IncludedInBatch)
 
 	postRoot, err := s.transactionExecutor.storage.StateTree.Root()
 	s.NoError(err)
@@ -251,7 +250,8 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	for i := range pendingTransfers {
 		tx, err := s.storage.GetCreate2Transfer(pendingTransfers[i].Hash)
 		s.NoError(err)
-		s.Equal(int32(1), *tx.IncludedInCommitment)
+		s.Equal(commitments[0].ID.BatchID, *tx.BatchID)
+		s.Equal(commitments[0].ID.IndexInBatch, *tx.IndexInBatch)
 		s.Equal(uint32(i+3), *tx.ToStateID)
 	}
 }

@@ -7,8 +7,8 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func (a *API) GetCommitment(id int32) (*dto.Commitment, error) {
-	commitment, err := a.storage.GetCommitment(id)
+func (a *API) GetCommitment(id models.CommitmentID) (*dto.Commitment, error) {
+	commitment, err := a.storage.GetCommitment(&id)
 	if err != nil {
 		return nil, err
 	}
@@ -18,7 +18,7 @@ func (a *API) GetCommitment(id int32) (*dto.Commitment, error) {
 		return nil, err
 	}
 
-	batch, err := a.storage.GetMinedBatch(*commitment.IncludedInBatch)
+	batch, err := a.storage.GetMinedBatch(commitment.ID.BatchID)
 	if st.IsNotFoundError(err) {
 		return nil, st.NewNotFoundError("commitment")
 	}
@@ -37,9 +37,9 @@ func (a *API) GetCommitment(id int32) (*dto.Commitment, error) {
 func (a *API) getTransactionsForCommitment(commitment *models.Commitment) (interface{}, error) {
 	switch commitment.Type {
 	case txtype.Transfer:
-		return a.storage.GetTransfersByCommitmentID(commitment.ID)
+		return a.storage.GetTransfersByCommitmentID(&commitment.ID)
 	case txtype.Create2Transfer:
-		return a.storage.GetCreate2TransfersByCommitmentID(commitment.ID)
+		return a.storage.GetCreate2TransfersByCommitmentID(&commitment.ID)
 	case txtype.Genesis, txtype.MassMigration:
 		return nil, dto.ErrNotImplemented
 	}

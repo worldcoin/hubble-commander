@@ -19,12 +19,17 @@ func (t *TransactionExecutor) CreateCreate2TransferCommitments(domain *bls.Domai
 		return nil, err
 	}
 
+	commitmentID, err := t.createCommitmentID()
+	if err != nil {
+		return nil, err
+	}
 	commitments = make([]models.Commitment, 0, t.cfg.MaxCommitmentsPerBatch)
 
-	for len(commitments) != int(t.cfg.MaxCommitmentsPerBatch) {
+	for i := uint8(0); len(commitments) != int(t.cfg.MaxCommitmentsPerBatch); i++ {
 		var commitment *models.Commitment
+		commitmentID.IndexInBatch = i
 
-		pendingTransfers, commitment, err = t.createC2TCommitment(pendingTransfers, domain)
+		pendingTransfers, commitment, err = t.createC2TCommitment(pendingTransfers, commitmentID, domain)
 		if err == ErrNotEnoughC2Transfers {
 			break
 		}
@@ -42,11 +47,11 @@ func (t *TransactionExecutor) CreateCreate2TransferCommitments(domain *bls.Domai
 	return commitments, nil
 }
 
-func (t *TransactionExecutor) createC2TCommitment(pendingTransfers []models.Create2Transfer, domain *bls.Domain) (
-	newPendingTransfers []models.Create2Transfer,
-	commitment *models.Commitment,
-	err error,
-) {
+func (t *TransactionExecutor) createC2TCommitment(
+	pendingTransfers []models.Create2Transfer,
+	commitmentID *models.CommitmentID,
+	domain *bls.Domain,
+) (newPendingTransfers []models.Create2Transfer, commitment *models.Commitment, err error) {
 	startTime := time.Now()
 
 	pendingTransfers, err = t.refillPendingC2Ts(pendingTransfers)
@@ -75,7 +80,7 @@ func (t *TransactionExecutor) createC2TCommitment(pendingTransfers []models.Crea
 		return nil, nil, err
 	}
 
-	commitment, err = t.buildC2TCommitment(appliedTransfers, addedPubKeyIDs, feeReceiver.StateID, domain)
+	commitment, err = t.buildC2TCommitment(appliedTransfers, addedPubKeyIDs, commitmentID, feeReceiver.StateID, domain)
 	if err != nil {
 		return nil, nil, err
 	}

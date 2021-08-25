@@ -26,12 +26,18 @@ func (t *TransactionExecutor) CreateTransferCommitments(
 		return nil, err
 	}
 
+	commitmentID, err := t.createCommitmentID()
+	if err != nil {
+		return nil, err
+	}
+
 	commitments = make([]models.Commitment, 0, t.cfg.MaxCommitmentsPerBatch)
 
-	for len(commitments) != int(t.cfg.MaxCommitmentsPerBatch) {
+	for i := uint8(0); len(commitments) != int(t.cfg.MaxCommitmentsPerBatch); i++ {
 		var commitment *models.Commitment
+		commitmentID.IndexInBatch = i
 
-		pendingTransfers, commitment, err = t.createTransferCommitment(pendingTransfers, domain)
+		pendingTransfers, commitment, err = t.createTransferCommitment(pendingTransfers, commitmentID, domain)
 		if err == ErrNotEnoughTransfers {
 			break
 		}
@@ -51,6 +57,7 @@ func (t *TransactionExecutor) CreateTransferCommitments(
 
 func (t *TransactionExecutor) createTransferCommitment(
 	pendingTransfers []models.Transfer,
+	commitmentID *models.CommitmentID,
 	domain *bls.Domain,
 ) (
 	newPendingTransfers []models.Transfer,
@@ -85,7 +92,7 @@ func (t *TransactionExecutor) createTransferCommitment(
 		return nil, nil, err
 	}
 
-	commitment, err = t.buildTransferCommitment(appliedTransfers, feeReceiver.StateID, domain)
+	commitment, err = t.buildTransferCommitment(appliedTransfers, commitmentID, feeReceiver.StateID, domain)
 	if err != nil {
 		return nil, nil, err
 	}

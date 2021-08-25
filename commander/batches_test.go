@@ -143,21 +143,24 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 	s.Equal(batches[0].Batch, *batch)
 
 	expectedCommitment := models.Commitment{
-		ID:                2,
+		ID: models.CommitmentID{
+			BatchID:      batch.ID,
+			IndexInBatch: 0,
+		},
 		Type:              txtype.Transfer,
 		Transactions:      batches[0].Commitments[0].Transactions,
 		FeeReceiver:       batches[0].Commitments[0].FeeReceiver,
 		CombinedSignature: batches[0].Commitments[0].CombinedSignature,
 		PostStateRoot:     batches[0].Commitments[0].StateRoot,
-		IncludedInBatch:   &batch.ID,
 	}
-	commitment, err := s.cmd.storage.GetCommitment(2)
+	commitment, err := s.cmd.storage.GetCommitment(&expectedCommitment.ID)
 	s.NoError(err)
 	s.Equal(expectedCommitment, *commitment)
 
 	expectedTx := transfers[0]
 	expectedTx.Signature = models.Signature{}
-	expectedTx.IncludedInCommitment = &commitment.ID
+	expectedTx.BatchID = &commitment.ID.BatchID
+	expectedTx.IndexInBatch = &commitment.ID.IndexInBatch
 	transfer, err := s.cmd.storage.GetTransfer(transfers[0].Hash)
 	s.NoError(err)
 	s.Equal(expectedTx, *transfer)
@@ -487,12 +490,11 @@ func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batc
 	commitments, err := s.transactionExecutor.CreateTransferCommitments(domain)
 	s.NoError(err)
 	s.Len(commitments, 1)
+	err = s.cmd.storage.AddCommitment(&commitments[0])
+	s.NoError(err)
 
 	pendingBatch.TransactionHash = utils.RandomHash()
 	err = s.cmd.storage.AddBatch(pendingBatch)
-	s.NoError(err)
-
-	err = s.cmd.storage.MarkCommitmentAsIncluded(commitments[0].ID, pendingBatch.ID)
 	s.NoError(err)
 
 	return pendingBatch

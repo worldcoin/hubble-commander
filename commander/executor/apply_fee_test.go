@@ -23,7 +23,7 @@ func (s *ApplyFeeTestSuite) SetupSuite() {
 
 func (s *ApplyFeeTestSuite) SetupTest() {
 	var err error
-	s.storage, err = storage.NewTestStorageWithBadger()
+	s.storage, err = storage.NewTestStorageWithoutPostgres()
 	s.NoError(err)
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, nil, nil, context.Background())
 }

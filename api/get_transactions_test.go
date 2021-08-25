@@ -206,23 +206,26 @@ func (s *GetTransactionsTestSuite) addCommitmentAndBatch() *models.Batch {
 	s.NoError(err)
 
 	commitment := &models.Commitment{
-		ID:                1,
+		ID: models.CommitmentID{
+			BatchID:      batch.ID,
+			IndexInBatch: 0,
+		},
 		Type:              txtype.Transfer,
 		Transactions:      utils.RandomBytes(12),
 		FeeReceiver:       1234,
 		CombinedSignature: models.MakeRandomSignature(),
 		PostStateRoot:     utils.RandomHash(),
-		IncludedInBatch:   &batch.ID,
 	}
 
-	_, err = s.storage.AddCommitment(commitment)
+	err = s.storage.AddCommitment(commitment)
 	s.NoError(err)
 	return batch
 }
 
 func (s *GetTransactionsTestSuite) addIncludedTransfer() models.Transfer {
 	transfer := s.makeTransfer(0, 2)
-	transfer.IncludedInCommitment = ref.Int32(1)
+	transfer.BatchID = models.NewUint256(1)
+	transfer.IndexInBatch = ref.Uint8(0)
 	receiveTime, err := s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 	transfer.ReceiveTime = receiveTime
@@ -231,10 +234,11 @@ func (s *GetTransactionsTestSuite) addIncludedTransfer() models.Transfer {
 
 func (s *GetTransactionsTestSuite) addIncludedCreate2Transfer() models.Create2Transfer {
 	create2Transfer := s.makeCreate2Transfer(0, 5, &models.PublicKey{3, 4, 5})
-	create2Transfer.IncludedInCommitment = ref.Int32(1)
-	receiveTime2, err := s.storage.AddCreate2Transfer(&create2Transfer)
+	create2Transfer.BatchID = models.NewUint256(1)
+	create2Transfer.IndexInBatch = ref.Uint8(0)
+	receiveTime, err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
-	create2Transfer.ReceiveTime = receiveTime2
+	create2Transfer.ReceiveTime = receiveTime
 	return create2Transfer
 }
 

@@ -11,6 +11,7 @@ import (
 )
 
 type DecodedCommitment struct {
+	ID                models.CommitmentID
 	StateRoot         common.Hash
 	CombinedSignature models.Signature
 	FeeReceiver       uint32

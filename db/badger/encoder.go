@@ -9,8 +9,9 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-// nolint:gocyclo
+// nolint:gocyclo, funlen
 // Encode Remember to provide cases for both value and pointer types when adding new encoders
+// TODO shorten this function by using ByteEncoder interface
 func Encode(value interface{}) ([]byte, error) {
 	switch v := value.(type) {
 	case models.AccountNode:
@@ -21,9 +22,21 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Bytes(), nil
 	case *models.AccountLeaf:
 		return nil, errors.Errorf("pass by value")
+	case models.Batch:
+		return v.Bytes(), nil
+	case *models.Batch:
+		return nil, errors.Errorf("pass by value")
 	case models.ChainState:
 		return v.Bytes(), nil
 	case *models.ChainState:
+		return nil, errors.Errorf("pass by value")
+	case models.Commitment:
+		return v.Bytes(), nil
+	case *models.Commitment:
+		return nil, errors.Errorf("pass by value")
+	case models.CommitmentID:
+		return v.Bytes(), nil
+	case *models.CommitmentID:
 		return nil, errors.Errorf("pass by value")
 	case models.NamespacedMerklePath:
 		return v.Bytes(), nil
@@ -41,6 +54,14 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Bytes(), nil
 	case *models.StateUpdate:
 		return nil, errors.Errorf("pass by value")
+	case models.Uint256:
+		return v.Bytes(), nil
+	case *models.Uint256:
+		return nil, errors.Errorf("pass by value")
+	case common.Hash:
+		return v.Bytes(), nil
+	case *common.Hash:
+		return models.EncodeHashPointer(v), nil
 	case uint32:
 		return EncodeUint32(&v)
 	case *uint32:
@@ -62,7 +83,13 @@ func Decode(data []byte, value interface{}) error {
 		return v.SetBytes(data)
 	case *models.ChainState:
 		return v.SetBytes(data)
+	case *models.Commitment:
+		return v.SetBytes(data)
+	case *models.CommitmentID:
+		return v.SetBytes(data)
 	case *models.NamespacedMerklePath:
+		return v.SetBytes(data)
+	case *models.Batch:
 		return v.SetBytes(data)
 	case *models.MerkleTreeNode:
 		return DecodeDataHash(data, &v.DataHash)
@@ -70,6 +97,11 @@ func Decode(data []byte, value interface{}) error {
 		return v.SetBytes(data)
 	case *models.StateUpdate:
 		return v.SetBytes(data)
+	case *models.Uint256:
+		v.SetBytes(data)
+		return nil
+	case *common.Hash:
+		return decodeHashPointer(data, &value, v)
 	case *uint32:
 		return DecodeUint32(data, v)
 	case *uint64:
@@ -77,6 +109,18 @@ func Decode(data []byte, value interface{}) error {
 	default:
 		return bh.DefaultDecode(data, value)
 	}
+}
+
+// nolint: gocritic
+func decodeHashPointer(data []byte, value *interface{}, dst *common.Hash) error {
+	if len(data) == 32 {
+		return DecodeDataHash(data, dst)
+	}
+	if data[0] == 1 {
+		return DecodeDataHash(data[1:], dst)
+	}
+	*value = nil
+	return nil
 }
 
 func EncodeDataHash(dataHash *common.Hash) ([]byte, error) {

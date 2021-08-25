@@ -1,9 +1,11 @@
 package storage
 
 import (
-	"github.com/Masterminds/squirrel"
+	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/models"
+	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
+	bh "github.com/timshannon/badgerhold/v3"
 )
 
 type BatchStorage struct {
@@ -24,165 +26,101 @@ func (s *BatchStorage) copyWithNewDatabase(database *Database) *BatchStorage {
 }
 
 func (s *BatchStorage) AddBatch(batch *models.Batch) error {
-	_, err := s.database.Postgres.Query(
-		s.database.QB.Insert("batch").
-			Values(
-				batch.ID,
-				batch.Type,
-				batch.TransactionHash,
-				batch.Hash,
-				batch.FinalisationBlock,
-				batch.AccountTreeRoot,
-				batch.PrevStateRoot,
-				batch.SubmissionTime,
-			),
-	).Exec()
-
-	return err
-}
-
-func (s *BatchStorage) MarkBatchAsSubmitted(batch *models.Batch) error {
-	res, err := s.database.Postgres.Query(
-		s.database.QB.Update("batch").
-			Where(squirrel.Eq{"batch_id": batch.ID}).
-			Set("batch_hash", batch.Hash).
-			Set("finalisation_block", batch.FinalisationBlock). // nolint:misspell
-			Set("account_tree_root", batch.AccountTreeRoot).
-			Set("submission_time", batch.SubmissionTime),
-	).Exec()
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected == 0 {
-		return ErrNoRowsAffected
-	}
-	return nil
-}
-
-func (s *BatchStorage) GetMinedBatch(batchID models.Uint256) (*models.Batch, error) {
-	res := make([]models.Batch, 0, 1)
-	err := s.database.Postgres.Query(
-		s.database.QB.Select("*").
-			From("batch").
-			Where(squirrel.And{
-				squirrel.Eq{"batch_id": batchID},
-				squirrel.NotEq{"batch_hash": nil},
-			}),
-	).Into(&res)
-	if err != nil {
-		return nil, err
-	}
-	if len(res) == 0 {
-		return nil, NewNotFoundError("batch")
-	}
-	return &res[0], nil
+	return s.database.Badger.Insert(batch.ID, *batch)
 }
 
 func (s *BatchStorage) GetBatch(batchID models.Uint256) (*models.Batch, error) {
-	res := make([]models.Batch, 0, 1)
-	err := s.database.Postgres.Query(
-		s.database.QB.Select("*").
-			From("batch").
-			Where(squirrel.Eq{"batch_id": batchID}),
-	).Into(&res)
+	var batch models.Batch
+	err := s.database.Badger.Get(batchID, &batch)
+	if err == bh.ErrNotFound {
+		return nil, NewNotFoundError("batch")
+	}
 	if err != nil {
 		return nil, err
 	}
-	if len(res) == 0 {
+	return &batch, nil
+}
+
+func (s *BatchStorage) MarkBatchAsSubmitted(batch *models.Batch) error {
+	return s.database.Badger.Upsert(batch.ID, *batch)
+}
+
+func (s *BatchStorage) GetMinedBatch(batchID models.Uint256) (*models.Batch, error) {
+	batch, err := s.GetBatch(batchID)
+	if err != nil {
+		return nil, err
+	}
+	if batch.Hash == nil {
 		return nil, NewNotFoundError("batch")
 	}
-	return &res[0], nil
+	return batch, nil
 }
 
 func (s *BatchStorage) GetBatchByHash(batchHash common.Hash) (*models.Batch, error) {
-	res := make([]models.Batch, 0, 1)
-	err := s.database.Postgres.Query(
-		s.database.QB.Select("*").
-			From("batch").
-			Where(squirrel.Eq{"batch_hash": batchHash}).
-			Limit(1),
-	).Into(&res)
+	var batch models.Batch
+	err := s.database.Badger.FindOne(
+		&batch,
+		bh.Where("Hash").Eq(batchHash).Index("Hash"),
+	)
+	if err == bh.ErrNotFound {
+		return nil, NewNotFoundError("batch")
+	}
 	if err != nil {
 		return nil, err
 	}
-	if len(res) == 0 {
-		return nil, NewNotFoundError("batch")
-	}
-	return &res[0], nil
+
+	return &batch, nil
 }
 
 func (s *BatchStorage) GetLatestSubmittedBatch() (*models.Batch, error) {
-	res := make([]models.Batch, 0, 1)
-	err := s.database.Postgres.Query(
-		s.database.QB.Select("*").
-			From("batch").
-			Where(squirrel.NotEq{"batch_hash": nil}).
-			OrderBy("batch_id DESC").
-			Limit(1),
-	).Into(&res)
+	batch, err := s.reverseIterateBatches(func(batch *models.Batch) bool {
+		return batch.Hash != nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	if len(res) == 0 {
-		return nil, NewNotFoundError("batch")
-	}
-	return &res[0], nil
+	return batch, nil
 }
 
 func (s *BatchStorage) GetNextBatchID() (*models.Uint256, error) {
-	res := make([]models.Uint256, 0, 1)
-	err := s.database.Postgres.Query(
-		s.database.QB.Select("batch_id").
-			From("batch").
-			OrderBy("batch_id DESC").
-			Limit(1),
-	).Into(&res)
+	batch, err := s.reverseIterateBatches(func(batch *models.Batch) bool {
+		return true
+	})
+	if IsNotFoundError(err) {
+		return models.NewUint256(1), nil
+	}
 	if err != nil {
 		return nil, err
 	}
-	if len(res) == 0 {
-		return models.NewUint256(1), nil
-	}
-	return res[0].AddN(1), nil
+	return batch.ID.AddN(1), nil
 }
 
 func (s *BatchStorage) GetLatestFinalisedBatch(currentBlockNumber uint32) (*models.Batch, error) {
-	res := make([]models.Batch, 0, 1)
-	err := s.database.Postgres.Query(
-		s.database.QB.Select("*").
-			From("batch").
-			Where(squirrel.LtOrEq{"finalisation_block": currentBlockNumber}). // nolint:misspell
-			OrderBy("finalisation_block DESC").                               // nolint:misspell
-			Limit(1),
-	).Into(&res)
+	batch, err := s.reverseIterateBatches(func(batch *models.Batch) bool {
+		return batch.FinalisationBlock != nil && *batch.FinalisationBlock <= currentBlockNumber
+	})
 	if err != nil {
 		return nil, err
 	}
-	if len(res) == 0 {
-		return nil, NewNotFoundError("batch")
-	}
-	return &res[0], nil
+	return batch, nil
 }
 
 func (s *BatchStorage) GetBatchesInRange(from, to *models.Uint256) ([]models.Batch, error) {
-	qb := s.database.QB.Select("*").
-		From("batch").
-		OrderBy("batch_id")
-
-	if from != nil {
-		qb = qb.Where(squirrel.GtOrEq{"batch_id": from})
+	criteria := bh.Where(bh.Key)
+	var query *bh.Query
+	if from == nil && to == nil {
+		query = criteria.Ge(models.MakeUint256(0))
 	}
-
-	if to != nil {
-		qb = qb.Where(squirrel.LtOrEq{"batch_id": to})
+	if from != nil && to != nil {
+		query = criteria.Ge(*from).And(bh.Key).Le(*to)
+	} else if from != nil {
+		query = criteria.Ge(*from)
+	} else if to != nil {
+		query = criteria.Le(*to)
 	}
 
 	res := make([]models.Batch, 0, 32)
-	err := s.database.Postgres.Query(qb).Into(&res)
+	err := s.database.Badger.Find(&res, query)
 	if err != nil {
 		return nil, err
 	}
@@ -190,36 +128,41 @@ func (s *BatchStorage) GetBatchesInRange(from, to *models.Uint256) ([]models.Bat
 }
 
 func (s *BatchStorage) DeleteBatches(batchIDs ...models.Uint256) error {
-	res, err := s.database.Postgres.Query(
-		s.database.QB.Delete("batch").
-			Where(squirrel.Eq{"batch_id": batchIDs}),
-	).Exec()
+	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return err
 	}
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return err
+	defer tx.Rollback(&err)
+
+	batch := models.Batch{}
+	for i := range batchIDs {
+		err = txDatabase.Badger.Delete(batchIDs[i], batch)
+		if err == bh.ErrNotFound {
+			return NewNotFoundError("batch")
+		}
+		if err != nil {
+			return err
+		}
 	}
-	if rowsAffected == 0 {
-		return ErrNoRowsAffected
-	}
-	return nil
+	return tx.Commit()
 }
 
-func (s *Storage) GetBatchByCommitmentID(commitmentID int32) (*models.Batch, error) {
-	res := make([]models.Batch, 0, 1)
-	err := s.database.Postgres.Query(
-		s.database.QB.Select("batch.*").
-			From("batch").
-			Join("commitment ON commitment.included_in_batch = batch.batch_id").
-			Where(squirrel.Eq{"commitment_id": commitmentID}),
-	).Into(&res)
+func (s *BatchStorage) reverseIterateBatches(filter func(batch *models.Batch) bool) (*models.Batch, error) {
+	var batch models.Batch
+	err := s.database.Badger.Iterator(models.BatchPrefix, badger.ReversePrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
+		err := item.Value(func(v []byte) error {
+			return badger.Decode(v, &batch)
+		})
+		if err != nil {
+			return false, err
+		}
+		return filter(&batch), nil
+	})
+	if err == badger.ErrIteratorFinished {
+		return nil, NewNotFoundError("batch")
+	}
 	if err != nil {
 		return nil, err
 	}
-	if len(res) == 0 {
-		return nil, NewNotFoundError("batch")
-	}
-	return &res[0], nil
+	return &batch, nil
 }

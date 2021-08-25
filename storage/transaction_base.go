@@ -50,9 +50,10 @@ func (s *TransactionStorage) addTransactionBase(txBase *models.TransactionBase, 
 				txBase.Fee,
 				txBase.Nonce,
 				txBase.Signature,
-				txBase.IncludedInCommitment,
 				txBase.ErrorMessage,
 				"NOW()",
+				txBase.BatchID,
+				txBase.IndexInBatch,
 			).
 			Suffix("RETURNING receive_time"),
 	).Into(&res)
@@ -73,8 +74,10 @@ func (s *TransactionStorage) BatchAddTransactionBase(txs []models.TransactionBas
 			txs[i].Fee,
 			txs[i].Nonce,
 			txs[i].Signature,
-			txs[i].IncludedInCommitment,
 			txs[i].ErrorMessage,
+			nil,
+			txs[i].BatchID,
+			txs[i].IndexInBatch,
 		)
 	}
 	res, err := s.database.Postgres.Query(query).Exec()
@@ -109,11 +112,12 @@ func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*
 	return &res[0], nil
 }
 
-func (s *TransactionStorage) BatchMarkTransactionAsIncluded(txHashes []common.Hash, commitmentID *int32) error {
+func (s *TransactionStorage) BatchMarkTransactionAsIncluded(txHashes []common.Hash, batchID *models.Uint256, indexInBatch *uint8) error {
 	res, err := s.database.Postgres.Query(
 		s.database.QB.Update("transaction_base").
 			Where(squirrel.Eq{"tx_hash": txHashes}).
-			Set("included_in_commitment", commitmentID),
+			Set("batch_id", batchID).
+			Set("index_in_batch", indexInBatch),
 	).Exec()
 	if err != nil {
 		return err
@@ -150,12 +154,19 @@ func (s *TransactionStorage) SetTransactionError(txHash common.Hash, errorMessag
 }
 
 func (s *Storage) GetTransactionCount() (*int, error) {
+	latestCommitment, err := s.GetLatestCommitment()
+	if IsNotFoundError(err) {
+		return ref.Int(0), nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
 	res := make([]int, 0, 1)
-	err := s.database.Postgres.Query(
+	err = s.database.Postgres.Query(
 		s.database.QB.Select("COUNT(1)").
 			From("transaction_base").
-			Join("commitment on commitment.commitment_id = transaction_base.included_in_commitment").
-			Where(squirrel.NotEq{"included_in_batch": nil}),
+			Where(squirrel.LtOrEq{"batch_id": latestCommitment.ID.BatchID}),
 	).Into(&res)
 	if err != nil {
 		return nil, err
@@ -166,13 +177,12 @@ func (s *Storage) GetTransactionCount() (*int, error) {
 	return &res[0], nil
 }
 
-func (s *Storage) GetTransactionHashesByBatchIDs(batchIDs ...models.Uint256) ([]common.Hash, error) {
+func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.Uint256) ([]common.Hash, error) {
 	res := make([]common.Hash, 0, 32*len(batchIDs))
 	err := s.database.Postgres.Query(
 		s.database.QB.Select("transaction_base.tx_hash").
 			From("transaction_base").
-			Join("commitment on commitment.commitment_id = transaction_base.included_in_commitment").
-			Where(squirrel.Eq{"commitment.included_in_batch": batchIDs}),
+			Where(squirrel.Eq{"batch_id": batchIDs}),
 	).Into(&res)
 	if err != nil {
 		return nil, err

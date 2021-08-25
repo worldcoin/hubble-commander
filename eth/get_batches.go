@@ -97,7 +97,7 @@ func (c *Client) getBatchIfExists(event *rollup.RollupNewBatch, tx *types.Transa
 	accountRoot := common.BytesToHash(event.AccountRoot[:])
 	batch.AccountTreeRoot = &accountRoot
 
-	commitments, err := encoder.DecodeBatchCalldata(tx.Data())
+	commitments, err := encoder.DecodeBatchCalldata(tx.Data(), &batch.ID)
 	if err != nil {
 		return nil, err
 	}

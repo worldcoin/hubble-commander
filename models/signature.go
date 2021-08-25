@@ -40,6 +40,15 @@ func (s Signature) Bytes() []byte {
 	return s[:]
 }
 
+func (s *Signature) SetBytes(data []byte) error {
+	if len(data) != SignatureLength {
+		return ErrInvalidLength
+	}
+
+	copy(s[:], data)
+	return nil
+}
+
 func (s *Signature) BigInts() [2]*big.Int {
 	return [2]*big.Int{
 		new(big.Int).SetBytes(s[:32]),

@@ -100,9 +100,9 @@ func validateStateRoot(storage *st.Storage) error {
 }
 
 func logLatestCommitment(latestCommitment *models.Commitment) {
-	fields := log.Fields{"latestCommitmentID": latestCommitment.ID}
-	if latestCommitment.IncludedInBatch != nil {
-		fields["latestBatchID"] = latestCommitment.IncludedInBatch.String()
+	fields := log.Fields{
+		"latestBatchID":      latestCommitment.ID.BatchID.String(),
+		"latestCommitmentID": latestCommitment.ID.IndexInBatch,
 	}
 	log.WithFields(fields).Error("rollupLoop: Sanity check on state tree root failed")
 }

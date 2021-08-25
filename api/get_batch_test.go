@@ -31,14 +31,11 @@ func (s *GetBatchTestSuite) SetupSuite() {
 
 func (s *GetBatchTestSuite) SetupTest() {
 	var err error
-	s.storage, err = st.NewTestStorageWithBadger()
+	s.storage, err = st.NewTestStorageWithoutPostgres()
 	s.NoError(err)
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
 	s.api = &API{storage: s.storage.Storage, client: s.testClient.Client}
-
-	s.commitment = commitment
-	s.commitment.IncludedInBatch = models.NewUint256(1)
 
 	s.batch = models.Batch{
 		ID:                models.MakeUint256(1),
@@ -49,6 +46,9 @@ func (s *GetBatchTestSuite) SetupTest() {
 		AccountTreeRoot:   utils.NewRandomHash(),
 		SubmissionTime:    models.NewTimestamp(time.Unix(140, 0).UTC()),
 	}
+
+	s.commitment = commitment
+	s.commitment.ID.BatchID = s.batch.ID
 }
 
 func (s *GetBatchTestSuite) TearDownTest() {
@@ -62,7 +62,7 @@ func (s *GetBatchTestSuite) TestGetBatchByHash() {
 	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
-	_, err = s.storage.AddCommitment(&s.commitment)
+	err = s.storage.AddCommitment(&s.commitment)
 	s.NoError(err)
 
 	result, err := s.api.GetBatchByHash(*s.batch.Hash)
@@ -99,7 +99,7 @@ func (s *GetBatchTestSuite) TestGetBatchByID() {
 	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
-	_, err = s.storage.AddCommitment(&s.commitment)
+	err = s.storage.AddCommitment(&s.commitment)
 	s.NoError(err)
 
 	result, err := s.api.GetBatchByID(s.batch.ID)

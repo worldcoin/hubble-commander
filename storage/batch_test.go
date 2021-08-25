@@ -24,7 +24,7 @@ func (s *BatchTestSuite) SetupSuite() {
 
 func (s *BatchTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorage()
+	s.storage, err = NewTestStorageWithoutPostgres()
 	s.NoError(err)
 }
 
@@ -143,54 +143,6 @@ func (s *BatchTestSuite) TestGetMinedBatch_NonExistentBatch() {
 	res, err := s.storage.GetMinedBatch(models.MakeUint256(42))
 	s.Equal(NewNotFoundError("batch"), err)
 	s.Nil(res)
-}
-
-func (s *BatchTestSuite) TestGetBatchByCommitmentID() {
-	batch := &models.Batch{
-		ID:                models.MakeUint256(1),
-		Type:              txtype.Transfer,
-		TransactionHash:   utils.RandomHash(),
-		Hash:              utils.NewRandomHash(),
-		FinalisationBlock: ref.Uint32(1234),
-		AccountTreeRoot:   utils.NewRandomHash(),
-	}
-
-	err := s.storage.AddBatch(batch)
-	s.NoError(err)
-
-	commitment := &models.Commitment{
-		Type:              txtype.Transfer,
-		Transactions:      []byte{1, 2, 3},
-		FeeReceiver:       uint32(1),
-		CombinedSignature: models.MakeRandomSignature(),
-		PostStateRoot:     utils.RandomHash(),
-		IncludedInBatch:   &batch.ID,
-	}
-
-	commitmentID, err := s.storage.AddCommitment(commitment)
-	s.NoError(err)
-
-	actual, err := s.storage.GetBatchByCommitmentID(*commitmentID)
-	s.NoError(err)
-	s.Equal(batch, actual)
-}
-
-func (s *BatchTestSuite) TestGetBatchByCommitmentID_NotExistentBatch() {
-	commitment := &models.Commitment{
-		Type:              txtype.Transfer,
-		Transactions:      []byte{1, 2, 3},
-		FeeReceiver:       uint32(1),
-		CombinedSignature: models.MakeRandomSignature(),
-		PostStateRoot:     utils.RandomHash(),
-		IncludedInBatch:   nil,
-	}
-
-	commitmentID, err := s.storage.AddCommitment(commitment)
-	s.NoError(err)
-
-	batch, err := s.storage.GetBatchByCommitmentID(*commitmentID)
-	s.Equal(NewNotFoundError("batch"), err)
-	s.Nil(batch)
 }
 
 func (s *BatchTestSuite) TestGetLatestSubmittedBatch() {
@@ -396,7 +348,7 @@ func (s *BatchTestSuite) TestDeleteBatches() {
 
 func (s *BatchTestSuite) TestDeleteBatches_NotExistentBatch() {
 	err := s.storage.DeleteBatches(models.MakeUint256(1))
-	s.Equal(ErrNoRowsAffected, err)
+	s.Equal(NewNotFoundError("batch"), err)
 }
 
 func TestBatchTestSuite(t *testing.T) {

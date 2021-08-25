@@ -39,7 +39,7 @@ func (s *CalculateTransactionStatusTestSuite) SetupSuite() {
 
 func (s *CalculateTransactionStatusTestSuite) SetupTest() {
 	var err error
-	s.storage, err = st.NewTestStorageWithBadger()
+	s.storage, err = st.NewTestStorageWithoutPostgres()
 	s.NoError(err)
 
 	sim, err := simulator.NewSimulator()
@@ -88,12 +88,8 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_TxI
 	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
 
-	includedCommitment := commitment
-	includedCommitment.IncludedInBatch = &batch.ID
-	commitmentID, err := s.storage.AddCommitment(&includedCommitment)
-	s.NoError(err)
-
-	s.transfer.IncludedInCommitment = commitmentID
+	s.transfer.BatchID = &batch.ID
+	s.transfer.IndexInBatch = ref.Uint8(0)
 
 	status, err := CalculateTransactionStatus(s.storage.Storage, &s.transfer.TransactionBase, 0)
 	s.NoError(err)
@@ -109,12 +105,7 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_InB
 	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
 
-	includedCommitment := commitment
-	includedCommitment.IncludedInBatch = &batch.ID
-	commitmentID, err := s.storage.AddCommitment(&includedCommitment)
-	s.NoError(err)
-
-	s.transfer.IncludedInCommitment = commitmentID
+	s.transfer.BatchID = &batch.ID
 
 	status, err := CalculateTransactionStatus(s.storage.Storage, &s.transfer.TransactionBase, 0)
 	s.NoError(err)
@@ -133,12 +124,7 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_Fin
 	err = s.storage.AddBatch(&batch)
 	s.NoError(err)
 
-	includedCommitment := commitment
-	includedCommitment.IncludedInBatch = &batch.ID
-	commitmentID, err := s.storage.AddCommitment(&includedCommitment)
-	s.NoError(err)
-
-	s.transfer.IncludedInCommitment = commitmentID
+	s.transfer.BatchID = &batch.ID
 
 	s.sim.Commit()
 	latestBlockNumber, err := s.sim.GetLatestBlockNumber()

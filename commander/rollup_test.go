@@ -23,7 +23,7 @@ func (s *RollupTestSuite) SetupSuite() {
 
 func (s *RollupTestSuite) SetupTest() {
 	var err error
-	s.storage, err = st.NewTestStorageWithBadger()
+	s.storage, err = st.NewTestStorageWithoutPostgres()
 	s.NoError(err)
 }
 
@@ -43,7 +43,7 @@ func (s *RollupTestSuite) TestValidateStateRoot_SameStateRootHash() {
 		CombinedSignature: models.Signature{},
 		PostStateRoot:     *root,
 	}
-	_, err = s.storage.AddCommitment(&commitment)
+	err = s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
 	err = validateStateRoot(s.storage.Storage)
@@ -58,7 +58,7 @@ func (s *RollupTestSuite) TestValidateStateRoot_DifferentStateRootHash() {
 		CombinedSignature: models.Signature{},
 		PostStateRoot:     common.Hash{1, 2, 3},
 	}
-	_, err := s.storage.AddCommitment(&commitment)
+	err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
 	err = validateStateRoot(s.storage.Storage)
