@@ -12,6 +12,7 @@ type Storage struct {
 	*ChainStateStorage
 	*TransactionStorage
 	*DepositStorage
+	*RegisteredTokenStorage
 	StateTree           *StateTree
 	AccountTree         *AccountTree
 	database            *Database
@@ -46,16 +47,19 @@ func newStorageFromDatabase(database *Database) *Storage {
 
 	chainStateStorage := NewChainStateStorage(database)
 
+	registeredTokenStorage := NewRegisteredTokenStorage(database)
+
 	return &Storage{
-		BatchStorage:        batchStorage,
-		CommitmentStorage:   commitmentStorage,
-		TransactionStorage:  transactionStorage,
-		DepositStorage:      depositStorage,
-		ChainStateStorage:   chainStateStorage,
-		StateTree:           NewStateTree(database),
-		AccountTree:         NewAccountTree(database),
-		database:            database,
-		feeReceiverStateIDs: make(map[string]uint32),
+		BatchStorage:           batchStorage,
+		CommitmentStorage:      commitmentStorage,
+		TransactionStorage:     transactionStorage,
+		DepositStorage:         depositStorage,
+		ChainStateStorage:      chainStateStorage,
+		RegisteredTokenStorage: registeredTokenStorage,
+		StateTree:              NewStateTree(database),
+		AccountTree:            NewAccountTree(database),
+		database:               database,
+		feeReceiverStateIDs:    make(map[string]uint32),
 	}
 }
 
@@ -70,20 +74,23 @@ func (s *Storage) copyWithNewDatabase(database *Database) *Storage {
 
 	chainStateStorage := s.ChainStateStorage.copyWithNewDatabase(database)
 
+	registeredTokenStorage := s.RegisteredTokenStorage.copyWithNewDatabase(database)
+
 	stateTree := s.StateTree.copyWithNewDatabase(database)
 
 	accountTree := s.AccountTree.copyWithNewDatabase(database)
 
 	return &Storage{
-		BatchStorage:        batchStorage,
-		CommitmentStorage:   commitmentStorage,
-		TransactionStorage:  transactionStorage,
-		DepositStorage:      depositStorage,
-		ChainStateStorage:   chainStateStorage,
-		StateTree:           stateTree,
-		AccountTree:         accountTree,
-		database:            database,
-		feeReceiverStateIDs: utils.CopyStringUint32Map(s.feeReceiverStateIDs),
+		BatchStorage:           batchStorage,
+		CommitmentStorage:      commitmentStorage,
+		TransactionStorage:     transactionStorage,
+		DepositStorage:         depositStorage,
+		ChainStateStorage:      chainStateStorage,
+		RegisteredTokenStorage: registeredTokenStorage,
+		StateTree:              stateTree,
+		AccountTree:            accountTree,
+		database:               database,
+		feeReceiverStateIDs:    utils.CopyStringUint32Map(s.feeReceiverStateIDs),
 	}
 }
 

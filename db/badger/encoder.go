@@ -78,6 +78,10 @@ func Encode(value interface{}) ([]byte, error) {
 		return EncodeUint64(&v)
 	case *uint64:
 		return nil, errors.Errorf("pass by value")
+	case models.RegisteredToken:
+		return v.Contract.Bytes(), nil
+	case *models.RegisteredToken:
+		return nil, errors.Errorf("pass by value")
 	default:
 		return bh.DefaultEncode(value)
 	}
@@ -119,6 +123,9 @@ func Decode(data []byte, value interface{}) error {
 		return DecodeUint32(data, v)
 	case *uint64:
 		return DecodeUint64(data, v)
+	case *models.RegisteredToken:
+		v.Contract.SetBytes(data)
+		return nil
 	default:
 		return bh.DefaultDecode(data, value)
 	}
