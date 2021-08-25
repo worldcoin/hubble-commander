@@ -14,7 +14,7 @@ func (c *Client) DisputeSignatureTransfer(
 	signatureProof *models.SignatureProof,
 ) error {
 	transaction, err := c.rollup().
-		WithGasLimit(c.config.SignatureDisputeGasLimit).
+		WithGasLimit(*c.config.SignatureDisputeGasLimit).
 		DisputeSignatureTransfer(
 			batchID.ToBig(),
 			*TransferProofToCalldata(targetProof),
@@ -38,7 +38,7 @@ func (c *Client) DisputeSignatureCreate2Transfer(
 	signatureProof *models.SignatureProofWithReceiver,
 ) error {
 	transaction, err := c.rollup().
-		WithGasLimit(c.config.SignatureDisputeGasLimit).
+		WithGasLimit(*c.config.SignatureDisputeGasLimit).
 		DisputeSignatureCreate2Transfer(
 			batchID.ToBig(),
 			*TransferProofToCalldata(targetProof),

@@ -347,8 +347,8 @@ func createClientFromChainState(
 		Rollup:          rollupContract,
 		AccountRegistry: accountRegistry,
 		ClientConfig: eth.ClientConfig{
-			TransitionDisputeGasLimit: cfg.TransitionDisputeGasLimit,
-			SignatureDisputeGasLimit:  cfg.SignatureDisputeGasLimit,
+			TransitionDisputeGasLimit: ref.Uint64(cfg.TransitionDisputeGasLimit),
+			SignatureDisputeGasLimit:  ref.Uint64(cfg.SignatureDisputeGasLimit),
 		},
 	})
 	if err != nil {

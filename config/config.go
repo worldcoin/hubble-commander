@@ -14,8 +14,8 @@ import (
 
 const (
 	SimulatorChainID                 = 1337
-	DefaultTransitionDisputeGasLimit = 5_000_000
-	DefaultSignatureDisputeGasLimit  = 7_500_000
+	DefaultTransitionDisputeGasLimit = uint64(5_000_000)
+	DefaultSignatureDisputeGasLimit  = uint64(7_500_000)
 )
 
 func setupViper() {

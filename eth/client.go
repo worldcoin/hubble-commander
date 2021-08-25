@@ -26,8 +26,8 @@ type NewClientParams struct {
 type ClientConfig struct {
 	TxTimeout                 *time.Duration  // default 60s
 	StakeAmount               *models.Uint256 // default 0.1 ether
-	TransitionDisputeGasLimit uint64          // default 7_500_000 gas
-	SignatureDisputeGasLimit  uint64          // default 5_000_000 gas
+	TransitionDisputeGasLimit *uint64         // default 7_500_000 gas
+	SignatureDisputeGasLimit  *uint64         // default 5_000_000 gas
 }
 
 type Client struct {
@@ -75,10 +75,10 @@ func fillWithDefaults(c *ClientConfig) {
 	if c.StakeAmount == nil {
 		c.StakeAmount = models.NewUint256(1e17)
 	}
-	if c.TransitionDisputeGasLimit == 0 {
-		c.TransitionDisputeGasLimit = config.DefaultTransitionDisputeGasLimit
+	if c.TransitionDisputeGasLimit == nil {
+		c.TransitionDisputeGasLimit = ref.Uint64(config.DefaultTransitionDisputeGasLimit)
 	}
-	if c.SignatureDisputeGasLimit == 0 {
-		c.SignatureDisputeGasLimit = config.DefaultSignatureDisputeGasLimit
+	if c.SignatureDisputeGasLimit == nil {
+		c.SignatureDisputeGasLimit = ref.Uint64(config.DefaultSignatureDisputeGasLimit)
 	}
 }
