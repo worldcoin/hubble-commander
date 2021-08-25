@@ -14,10 +14,13 @@ var (
 			BlockNumber: 16,
 			LogIndex:    32,
 		},
-		ToPubKeyID:           4,
-		TokenID:              models.MakeUint256(4),
-		L2Amount:             models.MakeUint256(1024),
-		IncludedInCommitment: nil,
+		ToPubKeyID: 4,
+		TokenID:    models.MakeUint256(4),
+		L2Amount:   models.MakeUint256(1024),
+		IncludedInCommitment: &models.CommitmentID{
+			BatchID:      models.MakeUint256(9),
+			IndexInBatch: 17,
+		},
 	}
 )
 

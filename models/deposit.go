@@ -10,5 +10,5 @@ type Deposit struct {
 	ToPubKeyID           uint32
 	TokenID              Uint256
 	L2Amount             Uint256
-	IncludedInCommitment *int32
+	IncludedInCommitment *CommitmentID
 }
