@@ -44,6 +44,24 @@ func Test_EncodeUint32Pointer_NilValue(t *testing.T) {
 	require.Nil(t, decodedValue)
 }
 
+func Test_encodeStringPointer(t *testing.T) {
+	value := "some string"
+	bytes := encodeStringPointer(&value)
+	require.EqualValues(t, 1, bytes[0])
+
+	decodedValue := decodeStringPointer(bytes)
+	require.Equal(t, value, *decodedValue)
+}
+
+func Test_EncodeStringPointer_NilValue(t *testing.T) {
+	var value *string
+	bytes := encodeStringPointer(value)
+	require.EqualValues(t, 0, bytes[0])
+
+	decodedValue := decodeStringPointer(bytes)
+	require.Nil(t, decodedValue)
+}
+
 func Test_EncodeTimestampPointer(t *testing.T) {
 	timestamp := NewTimestamp(time.Unix(10, 0).UTC())
 	bytes := encodeTimestampPointer(timestamp)
