@@ -18,8 +18,9 @@ func NewCommanderFromEnv(prune bool) (Commander, error) {
 	switch os.Getenv("HUBBLE_E2E") {
 	case "", "docker":
 		return StartDockerCommander(StartOptions{
-			Image: "ghcr.io/worldcoin/hubble-commander:latest",
-			Prune: prune,
+			Image:           "ghcr.io/worldcoin/hubble-commander:latest",
+			Prune:           prune,
+			DeployContracts: true,
 		})
 	case "local":
 		return ConnectToLocalCommander(), nil

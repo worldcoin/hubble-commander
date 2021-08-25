@@ -34,16 +34,16 @@ update-contracts:
 	git submodule update --remote
 
 deploy:
-	go run ./main/main.go deploy
+	go run ./main deploy
 
 run:
-	go run ./main/main.go start
+	go run ./main start
 
 run-prune:
-	HUBBLE_BOOTSTRAP_PRUNE=true go run ./main/main.go start
+	HUBBLE_BOOTSTRAP_PRUNE=true go run ./main start
 
 run-dev:
-	HUBBLE_BOOTSTRAP_PRUNE=true HUBBLE_ROLLUP_DISABLE_SIGNATURES=true go run ./main/main.go start
+	HUBBLE_BOOTSTRAP_PRUNE=true HUBBLE_ROLLUP_DISABLE_SIGNATURES=true go run ./main start
 
 lint:
 	golangci-lint run ./...
