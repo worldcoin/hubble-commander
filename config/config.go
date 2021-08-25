@@ -8,12 +8,15 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
-const SimulatorChainID = 1337
+const (
+	SimulatorChainID                 = 1337
+	DefaultTransitionDisputeGasLimit = uint64(5_000_000)
+	DefaultSignatureDisputeGasLimit  = uint64(7_500_000)
+)
 
 func setupViper() {
 	viper.SetConfigFile(getConfigPath())
@@ -42,15 +45,17 @@ func GetConfig() *Config {
 			ChainSpecPath:    getStringOrNil("bootstrap.chain_spec_path"),
 		},
 		Rollup: &RollupConfig{
-			SyncSize:               getUint32("rollup.sync_size", 50),
-			FeeReceiverPubKeyID:    getUint32("rollup.fee_receiver_pub_key_id", 0),
-			MinTxsPerCommitment:    getUint32("rollup.min_txs_per_commitment", 1),
-			MaxTxsPerCommitment:    getUint32("rollup.max_txs_per_commitment", 32),
-			MinCommitmentsPerBatch: getUint32("rollup.min_commitments_per_batch", 1),
-			MaxCommitmentsPerBatch: getUint32("rollup.max_commitments_per_batch", 32),
-			CommitmentLoopInterval: getDuration("rollup.commitment_loop_interval", 500*time.Millisecond),
-			BatchLoopInterval:      getDuration("rollup.batch_loop_interval", 500*time.Millisecond),
-			DisableSignatures:      getBool("rollup.disable_signatures", false),
+			SyncSize:                  getUint32("rollup.sync_size", 50),
+			FeeReceiverPubKeyID:       getUint32("rollup.fee_receiver_pub_key_id", 0),
+			MinTxsPerCommitment:       getUint32("rollup.min_txs_per_commitment", 1),
+			MaxTxsPerCommitment:       getUint32("rollup.max_txs_per_commitment", 32),
+			MinCommitmentsPerBatch:    getUint32("rollup.min_commitments_per_batch", 1),
+			MaxCommitmentsPerBatch:    getUint32("rollup.max_commitments_per_batch", 32),
+			TransitionDisputeGasLimit: getUint64("rollup.transition_dispute_gas_limit", DefaultTransitionDisputeGasLimit),
+			SignatureDisputeGasLimit:  getUint64("rollup.signature_dispute_gas_limit", DefaultSignatureDisputeGasLimit),
+			CommitmentLoopInterval:    getDuration("rollup.commitment_loop_interval", 500*time.Millisecond),
+			BatchLoopInterval:         getDuration("rollup.batch_loop_interval", 500*time.Millisecond),
+			DisableSignatures:         getBool("rollup.disable_signatures", false),
 		},
 		API: &APIConfig{
 			Version: "0.0.1",
@@ -72,6 +77,8 @@ func GetConfig() *Config {
 }
 
 func GetTestConfig() *Config {
+	setupViper()
+
 	return &Config{
 		Log: &LogConfig{
 			Level:  log.InfoLevel,
@@ -84,26 +91,28 @@ func GetTestConfig() *Config {
 			ChainSpecPath:    nil,
 		},
 		Rollup: &RollupConfig{
-			SyncSize:               50,
-			FeeReceiverPubKeyID:    0,
-			MinTxsPerCommitment:    2,
-			MaxTxsPerCommitment:    2,
-			MinCommitmentsPerBatch: 1,
-			MaxCommitmentsPerBatch: 32,
-			CommitmentLoopInterval: 500 * time.Millisecond,
-			BatchLoopInterval:      500 * time.Millisecond,
-			DisableSignatures:      true,
+			SyncSize:                  50,
+			FeeReceiverPubKeyID:       0,
+			MinTxsPerCommitment:       2,
+			MaxTxsPerCommitment:       2,
+			MinCommitmentsPerBatch:    1,
+			MaxCommitmentsPerBatch:    32,
+			TransitionDisputeGasLimit: DefaultTransitionDisputeGasLimit,
+			SignatureDisputeGasLimit:  DefaultSignatureDisputeGasLimit,
+			CommitmentLoopInterval:    500 * time.Millisecond,
+			BatchLoopInterval:         500 * time.Millisecond,
+			DisableSignatures:         true,
 		},
 		API: &APIConfig{
 			Version: "dev-0.0.1",
 			Port:    "8080",
 		},
 		Postgres: &PostgresConfig{
-			Host:           nil,
-			Port:           nil,
-			Name:           "hubble_test",
-			User:           ref.String("hubble"),
-			Password:       ref.String("root"),
+			Host:           getStringOrNil("postgres.host"),
+			Port:           getStringOrNil("postgres.port"),
+			Name:           getString("postgres.name", "hubble_test"),
+			User:           getStringOrNil("postgres.user"),
+			Password:       getStringOrNil("postgres.password"),
 			MigrationsPath: getMigrationsPath(),
 		},
 		Badger: &BadgerConfig{

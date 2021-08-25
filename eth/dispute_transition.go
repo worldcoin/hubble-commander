@@ -29,6 +29,7 @@ func (c *Client) DisputeTransitionTransfer(
 	proofs []models.StateMerkleProof,
 ) error {
 	transaction, err := c.rollup().
+		WithGasLimit(*c.config.TransitionDisputeGasLimit).
 		DisputeTransitionTransfer(
 			batchID.ToBig(),
 			*CommitmentProofToCalldata(previous),
@@ -54,6 +55,7 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 	proofs []models.StateMerkleProof,
 ) error {
 	transaction, err := c.rollup().
+		WithGasLimit(*c.config.TransitionDisputeGasLimit).
 		DisputeTransitionCreate2Transfer(
 			batchID.ToBig(),
 			*CommitmentProofToCalldata(previous),

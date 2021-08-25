@@ -203,7 +203,7 @@ func bootstrapFromChainState(
 	importedChainState := newChainStateFromChainSpec(chainSpec)
 
 	if dbChainState == nil {
-		return bootstrapChainStateAndCommander(chain, storage, importedChainState)
+		return bootstrapChainStateAndCommander(chain, storage, importedChainState, cfg.Rollup)
 	}
 
 	err = compareChainStates(importedChainState, dbChainState)
@@ -212,7 +212,7 @@ func bootstrapFromChainState(
 	}
 
 	log.Printf("Continuing from saved state on ChainID = %s", importedChainState.ChainID.String())
-	return createClientFromChainState(chain, importedChainState)
+	return createClientFromChainState(chain, importedChainState, cfg.Rollup)
 }
 
 func compareChainStates(chainStateA, chainStateB *models.ChainState) error {
@@ -241,6 +241,7 @@ func bootstrapChainStateAndCommander(
 	chain deployer.ChainConnection,
 	storage *st.Storage,
 	importedChainState *models.ChainState,
+	cfg *config.RollupConfig,
 ) (*eth.Client, error) {
 	chainID := chain.GetChainID()
 	if chainID != importedChainState.ChainID {
@@ -248,7 +249,7 @@ func bootstrapChainStateAndCommander(
 	}
 
 	log.Printf("Bootstrapping genesis state from chain spec file")
-	return setGenesisStateAndCreateClient(chain, storage, importedChainState)
+	return setGenesisStateAndCreateClient(chain, storage, importedChainState, cfg)
 }
 
 func bootstrapFromRemoteState(
@@ -265,13 +266,14 @@ func bootstrapFromRemoteState(
 		return nil, inconsistentRemoteChainIDErr
 	}
 
-	return setGenesisStateAndCreateClient(chain, storage, fetchedChainState)
+	return setGenesisStateAndCreateClient(chain, storage, fetchedChainState, cfg.Rollup)
 }
 
 func setGenesisStateAndCreateClient(
 	chain deployer.ChainConnection,
 	storage *st.Storage,
 	chainState *models.ChainState,
+	cfg *config.RollupConfig,
 ) (*eth.Client, error) {
 	err := PopulateGenesisAccounts(storage, chainState.GenesisAccounts)
 	if err != nil {
@@ -283,7 +285,7 @@ func setGenesisStateAndCreateClient(
 		return nil, err
 	}
 
-	client, err := createClientFromChainState(chain, chainState)
+	client, err := createClientFromChainState(chain, chainState, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -321,7 +323,11 @@ func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {
 	}, nil
 }
 
-func createClientFromChainState(chain deployer.ChainConnection, chainState *models.ChainState) (*eth.Client, error) {
+func createClientFromChainState(
+	chain deployer.ChainConnection,
+	chainState *models.ChainState,
+	cfg *config.RollupConfig,
+) (*eth.Client, error) {
 	err := logChainState(chainState)
 	if err != nil {
 		return nil, err
@@ -340,6 +346,10 @@ func createClientFromChainState(chain deployer.ChainConnection, chainState *mode
 		ChainState:      *chainState,
 		Rollup:          rollupContract,
 		AccountRegistry: accountRegistry,
+		ClientConfig: eth.ClientConfig{
+			TransitionDisputeGasLimit: ref.Uint64(cfg.TransitionDisputeGasLimit),
+			SignatureDisputeGasLimit:  ref.Uint64(cfg.SignatureDisputeGasLimit),
+		},
 	})
 	if err != nil {
 		return nil, err

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
@@ -23,8 +24,10 @@ type NewClientParams struct {
 }
 
 type ClientConfig struct {
-	TxTimeout   *time.Duration  // default 60s
-	StakeAmount *models.Uint256 // default 0.1 ether
+	TxTimeout                 *time.Duration  // default 60s
+	StakeAmount               *models.Uint256 // default 0.1 ether
+	TransitionDisputeGasLimit *uint64         // default 5_000_000 gas
+	SignatureDisputeGasLimit  *uint64         // default 7_500_000 gas
 }
 
 type Client struct {
@@ -71,5 +74,11 @@ func fillWithDefaults(c *ClientConfig) {
 	}
 	if c.StakeAmount == nil {
 		c.StakeAmount = models.NewUint256(1e17)
+	}
+	if c.TransitionDisputeGasLimit == nil {
+		c.TransitionDisputeGasLimit = ref.Uint64(config.DefaultTransitionDisputeGasLimit)
+	}
+	if c.SignatureDisputeGasLimit == nil {
+		c.SignatureDisputeGasLimit = ref.Uint64(config.DefaultSignatureDisputeGasLimit)
 	}
 }
