@@ -97,13 +97,14 @@ HUBBLE_ETHEREUM_PRIVATE_KEY=ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d8024
 ## Running docker image on Docker for Mac
 Create `.env.docker` file and set necessary env variables:
 ```
-HUBBLE_BOOTSTRAP_CHAIN_SPEC_PATH=chain-spec/chain-spec.yaml
 HUBBLE_ETHEREUM_RPC_URL=ws://docker.for.mac.localhost:8546
 HUBBLE_ETHEREUM_CHAIN_ID=1337
 HUBBLE_ETHEREUM_PRIVATE_KEY=ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
 HUBBLE_POSTGRES_HOST=docker.for.mac.localhost
 HUBBLE_POSTGRES_USER=hubble
 HUBBLE_POSTGRES_PASSWORD=root
+HUBBLE_ROLLUP_MIN_TXS_PER_COMMITMENT=32
+HUBBLE_ROLLUP_MAX_TXS_PER_COMMITMENT=32
 ```
 
 Create `chain-spec` directory with:

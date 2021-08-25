@@ -13,11 +13,13 @@ func (c *Client) DisputeSignatureTransfer(
 	targetProof *models.TransferCommitmentInclusionProof,
 	signatureProof *models.SignatureProof,
 ) error {
-	transaction, err := c.rollup().DisputeSignatureTransfer(
-		batchID.ToBig(),
-		*TransferProofToCalldata(targetProof),
-		*signatureProofToCalldata(signatureProof),
-	)
+	transaction, err := c.rollup().
+		WithGasLimit(*c.config.SignatureDisputeGasLimit).
+		DisputeSignatureTransfer(
+			batchID.ToBig(),
+			*TransferProofToCalldata(targetProof),
+			*signatureProofToCalldata(signatureProof),
+		)
 	if err != nil {
 		return handleDisputeSignatureError(err)
 	}
@@ -35,11 +37,13 @@ func (c *Client) DisputeSignatureCreate2Transfer(
 	targetProof *models.TransferCommitmentInclusionProof,
 	signatureProof *models.SignatureProofWithReceiver,
 ) error {
-	transaction, err := c.rollup().DisputeSignatureCreate2Transfer(
-		batchID.ToBig(),
-		*TransferProofToCalldata(targetProof),
-		*signatureProofWithReceiverToCalldata(signatureProof),
-	)
+	transaction, err := c.rollup().
+		WithGasLimit(*c.config.SignatureDisputeGasLimit).
+		DisputeSignatureCreate2Transfer(
+			batchID.ToBig(),
+			*TransferProofToCalldata(targetProof),
+			*signatureProofWithReceiverToCalldata(signatureProof),
+		)
 	if err != nil {
 		return handleDisputeSignatureError(err)
 	}

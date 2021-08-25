@@ -1,10 +1,8 @@
 package main
 
 import (
-	"os"
-	"path/filepath"
-
 	"github.com/Worldcoin/hubble-commander/commander"
+	"github.com/Worldcoin/hubble-commander/utils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -21,14 +19,5 @@ func deployCommanderContracts(filePath string) error {
 	}
 	log.Printf(*chainSpec)
 
-	return storeChainSpec(filePath, *chainSpec)
-}
-
-func storeChainSpec(filePath, chainSpec string) error {
-	dirPath := filepath.Dir(filePath)
-	err := os.MkdirAll(dirPath, os.ModePerm)
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(filePath, []byte(chainSpec), 0600)
+	return utils.StoreChainSpec(filePath, *chainSpec)
 }

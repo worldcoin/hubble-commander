@@ -30,7 +30,7 @@ jobs:
           tags: ghcr.io/worldcoin/hubble-commander:${{ steps.tag_name.outputs.SOURCE_TAG }},ghcr.io/worldcoin/hubble-commander:stable
 
   deploy-backend-api-staging:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [build]
     steps:
     - name: Configure AWS EKS credentials

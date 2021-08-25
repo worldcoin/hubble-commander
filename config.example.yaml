@@ -3,8 +3,8 @@
 #  format: text
 #
 #bootstrap:
-#  node_url: http://localhost:8080   # set this url to bootstrap from a remote node
 #  chain_spec_path: chain-spec.yaml  # set this path to bootstrap from a chain spec file
+#  node_url: http://localhost:8080   # set this url to bootstrap from a remote node
 #
 #rollup:
 #  sync_size: 50
@@ -13,6 +13,8 @@
 #  max_txs_per_commitment: 32
 #  min_commitments_per_batch: 1
 #  max_commitments_per_batch: 32
+#  transition_dispute_gas_limit: 5000000
+#  signature_dispute_gas_limit: 7500000
 #  commitment_loop_interval: 500ms
 #  batch_loop_interval: 500ms
 #
