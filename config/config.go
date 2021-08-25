@@ -12,7 +12,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-const SimulatorChainID = 1337
+const (
+	SimulatorChainID                 = 1337
+	DefaultTransitionDisputeGasLimit = 5_000_000
+	DefaultSignatureDisputeGasLimit  = 7_500_000
+)
 
 func setupViper() {
 	viper.SetConfigFile(getConfigPath())
@@ -47,8 +51,8 @@ func GetConfig() *Config {
 			MaxTxsPerCommitment:       getUint32("rollup.max_txs_per_commitment", 32),
 			MinCommitmentsPerBatch:    getUint32("rollup.min_commitments_per_batch", 1),
 			MaxCommitmentsPerBatch:    getUint32("rollup.max_commitments_per_batch", 32),
-			TransitionDisputeGasLimit: getUint64("rollup.transition_dispute_gas_limit", 5_000_000),
-			SignatureDisputeGasLimit:  getUint64("rollup.signature_dispute_gas_limit", 7_500_000),
+			TransitionDisputeGasLimit: getUint64("rollup.transition_dispute_gas_limit", DefaultTransitionDisputeGasLimit),
+			SignatureDisputeGasLimit:  getUint64("rollup.signature_dispute_gas_limit", DefaultSignatureDisputeGasLimit),
 			CommitmentLoopInterval:    getDuration("rollup.commitment_loop_interval", 500*time.Millisecond),
 			BatchLoopInterval:         getDuration("rollup.batch_loop_interval", 500*time.Millisecond),
 			DisableSignatures:         getBool("rollup.disable_signatures", false),
@@ -93,8 +97,8 @@ func GetTestConfig() *Config {
 			MaxTxsPerCommitment:       2,
 			MinCommitmentsPerBatch:    1,
 			MaxCommitmentsPerBatch:    32,
-			TransitionDisputeGasLimit: 5_000_000,
-			SignatureDisputeGasLimit:  7_500_000,
+			TransitionDisputeGasLimit: DefaultTransitionDisputeGasLimit,
+			SignatureDisputeGasLimit:  DefaultSignatureDisputeGasLimit,
 			CommitmentLoopInterval:    500 * time.Millisecond,
 			BatchLoopInterval:         500 * time.Millisecond,
 			DisableSignatures:         true,

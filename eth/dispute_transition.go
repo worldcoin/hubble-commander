@@ -27,10 +27,9 @@ func (c *Client) DisputeTransitionTransfer(
 	previous *models.CommitmentInclusionProof,
 	target *models.TransferCommitmentInclusionProof,
 	proofs []models.StateMerkleProof,
-	gasLimit uint64,
 ) error {
 	transaction, err := c.rollup().
-		WithGasLimit(gasLimit).
+		WithGasLimit(c.config.TransitionDisputeGasLimit).
 		DisputeTransitionTransfer(
 			batchID.ToBig(),
 			*CommitmentProofToCalldata(previous),
@@ -54,10 +53,9 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 	previous *models.CommitmentInclusionProof,
 	target *models.TransferCommitmentInclusionProof,
 	proofs []models.StateMerkleProof,
-	gasLimit uint64,
 ) error {
 	transaction, err := c.rollup().
-		WithGasLimit(gasLimit).
+		WithGasLimit(c.config.TransitionDisputeGasLimit).
 		DisputeTransitionCreate2Transfer(
 			batchID.ToBig(),
 			*CommitmentProofToCalldata(previous),

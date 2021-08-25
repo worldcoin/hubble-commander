@@ -152,7 +152,6 @@ func (t *TransactionExecutor) DisputeTransition(
 			previousCommitmentProof,
 			targetCommitmentProof,
 			merkleProofs,
-			t.cfg.TransitionDisputeGasLimit,
 		)
 	} else {
 		err = t.client.DisputeTransitionCreate2Transfer(
@@ -160,7 +159,6 @@ func (t *TransactionExecutor) DisputeTransition(
 			previousCommitmentProof,
 			targetCommitmentProof,
 			merkleProofs,
-			t.cfg.TransitionDisputeGasLimit,
 		)
 	}
 	return err
