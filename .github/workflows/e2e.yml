@@ -7,7 +7,7 @@ on:
 jobs:
   build-image:
     name: Build Docker image
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -50,6 +50,10 @@ jobs:
       HUBBLE_ROLLUP_MAX_TXS_PER_COMMITMENT: 32
 
     steps:
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Login to GitHub Container Registry
