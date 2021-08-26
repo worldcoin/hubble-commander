@@ -38,6 +38,14 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Bytes(), nil
 	case *models.CommitmentID:
 		return nil, errors.Errorf("pass by value")
+	case models.Deposit:
+		return v.Bytes(), nil
+	case *models.Deposit:
+		return nil, errors.Errorf("pass by value")
+	case models.DepositID:
+		return v.Bytes(), nil
+	case *models.DepositID:
+		return nil, errors.Errorf("pass by value")
 	case models.NamespacedMerklePath:
 		return v.Bytes(), nil
 	case *models.NamespacedMerklePath:
@@ -79,6 +87,7 @@ func Encode(value interface{}) ([]byte, error) {
 	}
 }
 
+// nolint:gocyclo
 func Decode(data []byte, value interface{}) error {
 	switch v := value.(type) {
 	case *models.AccountNode:
@@ -90,6 +99,10 @@ func Decode(data []byte, value interface{}) error {
 	case *models.Commitment:
 		return v.SetBytes(data)
 	case *models.CommitmentID:
+		return v.SetBytes(data)
+	case *models.Deposit:
+		return v.SetBytes(data)
+	case *models.DepositID:
 		return v.SetBytes(data)
 	case *models.NamespacedMerklePath:
 		return v.SetBytes(data)
