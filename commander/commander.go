@@ -11,6 +11,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
+	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -221,7 +222,8 @@ func compareChainStates(chainStateA, chainStateB *models.ChainState) error {
 	if chainStateA.ChainID != chainStateB.ChainID ||
 		chainStateA.DeploymentBlock != chainStateB.DeploymentBlock ||
 		chainStateA.Rollup != chainStateB.Rollup ||
-		chainStateA.AccountRegistry != chainStateB.AccountRegistry {
+		chainStateA.AccountRegistry != chainStateB.AccountRegistry ||
+		chainStateA.TokenRegistry != chainStateB.TokenRegistry {
 		return compareError
 	}
 
@@ -316,6 +318,7 @@ func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {
 	return &models.ChainState{
 		ChainID:         info.ChainID,
 		AccountRegistry: info.AccountRegistry,
+		TokenRegistry:   info.TokenRegistry,
 		DeploymentBlock: info.DeploymentBlock,
 		Rollup:          info.Rollup,
 		GenesisAccounts: genesisAccounts,
@@ -342,10 +345,16 @@ func createClientFromChainState(
 		return nil, err
 	}
 
+	tokenRegistry, err := tokenregistry.NewTokenRegistry(chainState.TokenRegistry, chain.GetBackend())
+	if err != nil {
+		return nil, err
+	}
+
 	client, err := eth.NewClient(chain, &eth.NewClientParams{
 		ChainState:      *chainState,
 		Rollup:          rollupContract,
 		AccountRegistry: accountRegistry,
+		TokenRegistry:   tokenRegistry,
 		ClientConfig: eth.ClientConfig{
 			TransitionDisputeGasLimit: ref.Uint64(cfg.TransitionDisputeGasLimit),
 			SignatureDisputeGasLimit:  ref.Uint64(cfg.SignatureDisputeGasLimit),

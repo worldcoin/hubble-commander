@@ -20,18 +20,20 @@ import (
 )
 
 type Config struct {
-	FirstAccountPrivateKey *string        // default "ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82"
-	NumAccounts            *uint64        // default 10
-	BlockGasLimit          *uint64        // default 12_500_000
-	AutomineEnabled        *bool          // default false
-	AutomineInterval       *time.Duration // default 100ms
+	FirstAccountPrivateKey    *string        // default "ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82"
+	NumAccounts               *uint64        // default 10
+	FirstTokenContractAddress *string        // default "0x06012c8cf97bead5deae237070f9587f8e7a266d"
+	BlockGasLimit             *uint64        // default 12_500_000
+	AutomineEnabled           *bool          // default false
+	AutomineInterval          *time.Duration // default 100ms
 }
 
 type Simulator struct {
-	Backend  *backends.SimulatedBackend
-	Config   *Config
-	Account  *bind.TransactOpts
-	Accounts []*bind.TransactOpts
+	Backend         *backends.SimulatedBackend
+	Config          *Config
+	Account         *bind.TransactOpts
+	Accounts        []*bind.TransactOpts
+	RegisteredToken *bind.TransactOpts
 
 	stopAutomine func()
 }
