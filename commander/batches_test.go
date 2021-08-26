@@ -457,7 +457,7 @@ func (s *BatchesTestSuite) createAndSubmitTransferBatch(
 	txExecutor *executor.TransactionExecutor,
 	tx *models.Transfer,
 ) *models.Batch {
-	_, err := storage.AddTransfer(tx)
+	err := storage.AddTransfer(tx)
 	s.NoError(err)
 
 	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Transfer)
@@ -478,7 +478,7 @@ func (s *BatchesTestSuite) createAndSubmitTransferBatch(
 
 // Make sure that the commander and the transaction executor uses the same storage
 func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batch {
-	_, err := s.cmd.storage.AddTransfer(tx)
+	err := s.cmd.storage.AddTransfer(tx)
 	s.NoError(err)
 
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
@@ -506,7 +506,7 @@ func (s *BatchesTestSuite) createAndSubmitInvalidTransferBatch(
 	tx *models.Transfer,
 	modifier func(commitment *models.Commitment),
 ) *models.Batch {
-	_, err := storage.AddTransfer(tx)
+	err := storage.AddTransfer(tx)
 	s.NoError(err)
 
 	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Transfer)

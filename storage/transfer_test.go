@@ -50,11 +50,10 @@ func (s *TransferTestSuite) TearDownTest() {
 }
 
 func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieve() {
-	receiveTime, err := s.storage.AddTransfer(&transfer)
+	err := s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 
 	expected := transfer
-	expected.ReceiveTime = receiveTime
 
 	res, err := s.storage.GetTransfer(transfer.Hash)
 	s.NoError(err)
@@ -63,7 +62,7 @@ func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieve() {
 
 func (s *TransferTestSuite) TestAddTransfer_SetsReceiveTime() {
 	beforeTime := time.Now().Unix()
-	_, err := s.storage.AddTransfer(&transfer)
+	err := s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 
 	res, err := s.storage.GetTransfer(transfer.Hash)
@@ -88,9 +87,8 @@ func (s *TransferTestSuite) TestGetTransferWithBatchDetails() {
 	transferInBatch.CommitmentID = &models.CommitmentID{
 		BatchID: batch.ID,
 	}
-	receiveTime, err := s.storage.AddTransfer(&transferInBatch)
+	err = s.storage.AddTransfer(&transferInBatch)
 	s.NoError(err)
-	transferInBatch.ReceiveTime = receiveTime
 
 	expected := models.TransferWithBatchDetails{
 		Transfer:  transferInBatch,
@@ -103,11 +101,10 @@ func (s *TransferTestSuite) TestGetTransferWithBatchDetails() {
 }
 
 func (s *TransferTestSuite) TestGetTransferWithBatchDetails_WithoutBatch() {
-	receiveTime, err := s.storage.AddTransfer(&transfer)
+	err := s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 
 	expected := models.TransferWithBatchDetails{Transfer: transfer}
-	expected.ReceiveTime = receiveTime
 
 	res, err := s.storage.GetTransferWithBatchDetails(transfer.Hash)
 	s.NoError(err)
@@ -294,7 +291,7 @@ func (s *TransferTestSuite) TestGetTransfersByCommitmentID() {
 	transfer1 := transfer
 	transfer1.CommitmentID = &commitment.ID
 
-	_, err = s.storage.AddTransfer(&transfer1)
+	err = s.storage.AddTransfer(&transfer1)
 	s.NoError(err)
 
 	transfers, err := s.storage.GetTransfersByCommitmentID(&commitment.ID)

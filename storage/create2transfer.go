@@ -3,7 +3,6 @@ package storage
 import (
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	bh "github.com/timshannon/badgerhold/v3"
@@ -15,42 +14,12 @@ var create2TransferColumns = []string{
 	"create2transfer.to_public_key",
 }
 
-func (s *TransactionStorage) AddCreate2Transfer(t *models.Create2Transfer) (receiveTime *models.Timestamp, err error) {
-	tx, txStorage, err := s.BeginTransaction(TxOptions{Postgres: true})
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback(&err)
-
-	receiveTime, err = txStorage.addTransactionBase(&t.TransactionBase, txtype.Create2Transfer)
-	if err != nil {
-		return nil, err
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = txStorage.database.Postgres.Query(
-		txStorage.database.QB.Insert("create2transfer").
-			Values(
-				t.Hash,
-				t.ToStateID,
-				t.ToPublicKey,
-			),
-	).Exec()
-	if err != nil {
-		return nil, err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return nil, err
-	}
-
-	return receiveTime, nil
+func (s *TransactionStorage) AddCreate2Transfer(t *models.Create2Transfer) error {
+	t.SetReceiveTime()
+	return s.database.Badger.Insert(t.Hash, models.MakeStoredTransactionFromCreate2Transfer(t))
 }
 
-// BatchAddCreate2Transfer contrary to the AddCreate2Transfer method does not set receive_time column on added transfers
+// BatchAddCreate2Transfer contrary to the AddCreate2Transfer method does not set ReceiveTime field on added transfers
 func (s *TransactionStorage) BatchAddCreate2Transfer(txs []models.Create2Transfer) error {
 	if len(txs) < 1 {
 		return ErrNoRowsAffected

@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"time"
-
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -15,16 +13,12 @@ var transferColumns = []string{
 	"transfer.to_state_id",
 }
 
-func (s *TransactionStorage) AddTransfer(t *models.Transfer) (receiveTime *models.Timestamp, err error) {
-	t.ReceiveTime = models.NewTimestamp(time.Now().UTC()) //TODO-tx: extract to transaction base
-	err = s.database.Badger.Insert(t.Hash, models.MakeStoredTransactionFromTransfer(t))
-	if err != nil {
-		return nil, err
-	}
-	return t.ReceiveTime, nil //TODO-tx: return only error
+func (s *TransactionStorage) AddTransfer(t *models.Transfer) error {
+	t.SetReceiveTime()
+	return s.database.Badger.Insert(t.Hash, models.MakeStoredTransactionFromTransfer(t))
 }
 
-// BatchAddTransfer contrary to the AddTransfer method does not set receive_time column on added transfers
+// BatchAddTransfer contrary to the AddTransfer method does not set ReceiveTime field on added transfers
 func (s *TransactionStorage) BatchAddTransfer(txs []models.Transfer) error {
 	if len(txs) < 1 {
 		return ErrNoRowsAffected

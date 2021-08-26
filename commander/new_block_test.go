@@ -162,7 +162,7 @@ func (s *NewBlockLoopTestSuite) registerAccounts(accounts []models.AccountLeaf) 
 
 func (s *NewBlockLoopTestSuite) createAndSubmitTransferBatchInTransaction(tx *models.Transfer) {
 	s.runInTransaction(func(txStorage *st.Storage, txExecutor *executor.TransactionExecutor) {
-		_, err := txStorage.AddTransfer(tx)
+		err := txStorage.AddTransfer(tx)
 		s.NoError(err)
 
 		domain, err := s.testClient.GetDomain()

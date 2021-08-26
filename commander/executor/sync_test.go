@@ -130,7 +130,7 @@ func (s *SyncTestSuite) TestSyncBatch_TwoTransferBatches() {
 	}
 	s.setTransferHashAndSign(txs...)
 	for i := range txs {
-		_, err := s.storage.AddTransfer(txs[i])
+		err := s.storage.AddTransfer(txs[i])
 		s.NoError(err)
 	}
 
@@ -649,7 +649,7 @@ func createTransferBatch(
 	tx *models.Transfer,
 	domain *bls.Domain,
 ) (*models.Batch, []models.Commitment) {
-	_, err := txExecutor.storage.AddTransfer(tx)
+	err := txExecutor.storage.AddTransfer(tx)
 	s.NoError(err)
 
 	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Transfer)
@@ -697,7 +697,7 @@ func createC2TBatch(
 	tx *models.Create2Transfer,
 	domain *bls.Domain,
 ) (*models.Batch, []models.Commitment) {
-	_, err := txExecutor.storage.AddCreate2Transfer(tx)
+	err := txExecutor.storage.AddCreate2Transfer(tx)
 	s.NoError(err)
 
 	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Create2Transfer)

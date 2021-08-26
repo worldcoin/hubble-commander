@@ -48,7 +48,7 @@ func (s *TransactionBaseTestSuite) TearDownTest() {
 }
 
 func (s *TransactionBaseTestSuite) TestSetTransactionError() {
-	_, err := s.storage.AddTransfer(&transferTransaction)
+	err := s.storage.AddTransfer(&transferTransaction)
 	s.NoError(err)
 
 	errorMessage := ref.String("Quack")
@@ -81,11 +81,11 @@ func (s *TransactionBaseTestSuite) TestGetLatestTransactionNonce() {
 	tx3.Hash = utils.RandomHash()
 	tx3.Nonce = models.MakeUint256(1)
 
-	_, err = s.storage.AddTransfer(&tx1)
+	err = s.storage.AddTransfer(&tx1)
 	s.NoError(err)
-	_, err = s.storage.AddTransfer(&tx2)
+	err = s.storage.AddTransfer(&tx2)
 	s.NoError(err)
-	_, err = s.storage.AddTransfer(&tx3)
+	err = s.storage.AddTransfer(&tx3)
 	s.NoError(err)
 
 	userTransactions, err := s.storage.GetLatestTransactionNonce(account.PubKeyID)
@@ -98,7 +98,7 @@ func (s *TransactionBaseTestSuite) TestBatchMarkTransactionAsIncluded() {
 	for i := 0; i < len(txs); i++ {
 		txs[i] = transferTransaction
 		txs[i].Hash = utils.RandomHash()
-		_, err := s.storage.AddTransfer(&txs[i])
+		err := s.storage.AddTransfer(&txs[i])
 		s.NoError(err)
 	}
 
@@ -132,15 +132,15 @@ func (s *TransactionBaseTestSuite) TestGetTransactionCount() {
 	transferInCommitment := transferTransaction
 	transferInCommitment.Hash = common.Hash{5, 5, 5}
 	transferInCommitment.CommitmentID = &commitmentInBatch.ID
-	_, err = s.storage.AddTransfer(&transferInCommitment)
+	err = s.storage.AddTransfer(&transferInCommitment)
 	s.NoError(err)
-	_, err = s.storage.AddTransfer(&transferTransaction)
+	err = s.storage.AddTransfer(&transferTransaction)
 	s.NoError(err)
 
 	c2t := create2Transfer
 	c2t.Hash = common.Hash{3, 4, 5}
 	c2t.CommitmentID = &commitmentInBatch.ID
-	_, err = s.storage.AddCreate2Transfer(&c2t)
+	err = s.storage.AddCreate2Transfer(&c2t)
 	s.NoError(err)
 
 	count, err := s.storage.GetTransactionCount()
@@ -188,7 +188,7 @@ func (s *TransactionBaseTestSuite) addTransfersInCommitment(batchID *models.Uint
 			BatchID:      *batchID,
 			IndexInBatch: 0,
 		}
-		_, err := s.storage.AddTransfer(&transfers[i])
+		err := s.storage.AddTransfer(&transfers[i])
 		s.NoError(err)
 	}
 }

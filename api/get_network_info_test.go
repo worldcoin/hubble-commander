@@ -108,7 +108,7 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
 	commitmentInBatch.ID.BatchID = batches[0].ID
 	err = s.api.storage.AddCommitment(&commitmentInBatch)
 	s.NoError(err)
-	_, err = s.api.storage.AddTransfer(&models.Transfer{
+	err = s.api.storage.AddTransfer(&models.Transfer{
 		TransactionBase: models.TransactionBase{
 			Hash:         common.Hash{1, 2, 3},
 			TxType:       txtype.Transfer,

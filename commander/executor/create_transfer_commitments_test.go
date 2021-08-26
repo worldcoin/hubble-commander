@@ -289,7 +289,7 @@ func TestTransferCommitmentsTestSuite(t *testing.T) {
 
 func (s *TransferCommitmentsTestSuite) addTransfers(transfers []models.Transfer) {
 	for i := range transfers {
-		_, err := s.storage.AddTransfer(&transfers[i])
+		err := s.storage.AddTransfer(&transfers[i])
 		s.NoError(err)
 	}
 }

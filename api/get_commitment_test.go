@@ -73,7 +73,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 		},
 		ToStateID: 2,
 	}
-	receiveTime, err := s.storage.AddTransfer(&transfer)
+	err = s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 
 	expectedCommitment := &dto.Commitment{
@@ -88,7 +88,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 				Fee:         transfer.Fee,
 				Nonce:       transfer.Nonce,
 				Signature:   transfer.Signature,
-				ReceiveTime: receiveTime,
+				ReceiveTime: transfer.ReceiveTime,
 			},
 			ToStateID: transfer.ToStateID,
 		}},
@@ -120,7 +120,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 		ToStateID:   ref.Uint32(2),
 		ToPublicKey: models.PublicKey{2, 3, 4},
 	}
-	receiveTime, err := s.storage.AddCreate2Transfer(&transfer)
+	err = s.storage.AddCreate2Transfer(&transfer)
 	s.NoError(err)
 
 	expectedCommitment := &dto.Commitment{
@@ -135,7 +135,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 				Fee:         transfer.Fee,
 				Nonce:       transfer.Nonce,
 				Signature:   transfer.Signature,
-				ReceiveTime: receiveTime,
+				ReceiveTime: transfer.ReceiveTime,
 			},
 			ToStateID:   transfer.ToStateID,
 			ToPublicKey: transfer.ToPublicKey,
@@ -169,7 +169,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_PendingBatch() {
 		},
 		ToStateID: 2,
 	}
-	_, err = s.storage.AddTransfer(&transfer)
+	err = s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 
 	commitment, err := s.api.GetCommitment(commitment.ID)

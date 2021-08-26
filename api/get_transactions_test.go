@@ -113,9 +113,8 @@ func (s *GetTransactionsTestSuite) addTransfers() []models.Transfer {
 	}
 
 	for i := range transfers {
-		receiveTime, err := s.storage.AddTransfer(&transfers[i])
+		err := s.storage.AddTransfer(&transfers[i])
 		s.NoError(err)
-		transfers[i].ReceiveTime = receiveTime
 	}
 	return transfers
 }
@@ -147,9 +146,8 @@ func (s *GetTransactionsTestSuite) addCreate2Transfers() []models.Create2Transfe
 	}
 
 	for i := range transfers {
-		receiveTime, err := s.storage.AddCreate2Transfer(&transfers[i])
+		err := s.storage.AddCreate2Transfer(&transfers[i])
 		s.NoError(err)
-		transfers[i].ReceiveTime = receiveTime
 	}
 	return transfers
 }
@@ -228,9 +226,8 @@ func (s *GetTransactionsTestSuite) addIncludedTransfer() models.Transfer {
 		BatchID:      models.MakeUint256(1),
 		IndexInBatch: 0,
 	}
-	receiveTime, err := s.storage.AddTransfer(&transfer)
+	err := s.storage.AddTransfer(&transfer)
 	s.NoError(err)
-	transfer.ReceiveTime = receiveTime
 	return transfer
 }
 
@@ -240,9 +237,8 @@ func (s *GetTransactionsTestSuite) addIncludedCreate2Transfer() models.Create2Tr
 		BatchID:      models.MakeUint256(1),
 		IndexInBatch: 0,
 	}
-	receiveTime, err := s.storage.AddCreate2Transfer(&create2Transfer)
+	err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
-	create2Transfer.ReceiveTime = receiveTime
 	return create2Transfer
 }
 

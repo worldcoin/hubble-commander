@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -50,4 +52,8 @@ func (t *TransactionBase) SetNonce(nonce Uint256) {
 
 func (t *TransactionBase) GetSignature() Signature {
 	return t.Signature
+}
+
+func (t *TransactionBase) SetReceiveTime() {
+	t.ReceiveTime = NewTimestamp(time.Now().UTC())
 }
