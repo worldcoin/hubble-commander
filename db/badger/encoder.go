@@ -11,6 +11,7 @@ import (
 
 var (
 	errInconsistentItemsLength = errors.New("inconsistent KeyList items length")
+	errPassedByPointer         = errors.Errorf("pointer was passed to Encode, pass by value instead")
 )
 
 // nolint:gocyclo, funlen
@@ -21,51 +22,51 @@ func Encode(value interface{}) ([]byte, error) {
 	case models.AccountNode:
 		return EncodeDataHash(&v.DataHash)
 	case *models.AccountNode:
-		return nil, errors.Errorf("pass by value")
+		return nil, errPassedByPointer
 	case models.AccountLeaf:
 		return v.Bytes(), nil
 	case *models.AccountLeaf:
-		return nil, errors.Errorf("pass by value")
+		return nil, errPassedByPointer
 	case models.Batch:
 		return v.Bytes(), nil
 	case *models.Batch:
-		return nil, errors.Errorf("pass by value")
+		return nil, errPassedByPointer
 	case models.ChainState:
 		return v.Bytes(), nil
 	case *models.ChainState:
-		return nil, errors.Errorf("pass by value")
+		return nil, errPassedByPointer
 	case models.Commitment:
 		return v.Bytes(), nil
 	case *models.Commitment:
-		return nil, errors.Errorf("pass by value")
+		return nil, errPassedByPointer
 	case models.CommitmentID:
 		return v.Bytes(), nil
 	case *models.CommitmentID:
-		return nil, errors.Errorf("pass by value")
+		return nil, errPassedByPointer
 	case models.NamespacedMerklePath:
 		return v.Bytes(), nil
 	case *models.NamespacedMerklePath:
-		return nil, errors.Errorf("pass by value")
+		return nil, errPassedByPointer
 	case models.MerkleTreeNode:
 		return EncodeDataHash(&v.DataHash)
 	case *models.MerkleTreeNode:
-		return nil, errors.Errorf("pass by value")
+		return nil, errPassedByPointer
 	case models.PublicKey:
 		return v.Bytes(), nil
 	case *models.PublicKey:
-		return nil, errors.Errorf("pass by value")
+		return nil, errPassedByPointer
 	case models.FlatStateLeaf:
 		return v.Bytes(), nil
 	case *models.FlatStateLeaf:
-		return nil, errors.Errorf("pass by value")
+		return nil, errPassedByPointer
 	case models.StateUpdate:
 		return v.Bytes(), nil
 	case *models.StateUpdate:
-		return nil, errors.Errorf("pass by value")
+		return nil, errPassedByPointer
 	case models.Uint256:
 		return v.Bytes(), nil
 	case *models.Uint256:
-		return nil, errors.Errorf("pass by value")
+		return nil, errPassedByPointer
 	case common.Hash:
 		return v.Bytes(), nil
 	case *common.Hash:
@@ -73,15 +74,15 @@ func Encode(value interface{}) ([]byte, error) {
 	case string:
 		return EncodeString(&v)
 	case *string:
-		return nil, errors.Errorf("pass by value")
+		return nil, errPassedByPointer
 	case uint32:
 		return EncodeUint32(&v)
 	case *uint32:
-		return nil, errors.Errorf("pass by value")
+		return nil, errPassedByPointer
 	case uint64:
 		return EncodeUint64(&v)
 	case *uint64:
-		return nil, errors.Errorf("pass by value")
+		return nil, errPassedByPointer
 	case bh.KeyList:
 		return EncodeKeyList(&v)
 	default:
