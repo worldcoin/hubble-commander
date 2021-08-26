@@ -40,7 +40,7 @@ func Encode(value interface{}) ([]byte, error) {
 	case models.CommitmentID:
 		return v.Bytes(), nil
 	case *models.CommitmentID:
-		return nil, errors.WithStack(errPassedByPointer)
+		return v.PointerBytes(), nil
 	case models.Deposit:
 		return v.Bytes(), nil
 	case *models.Deposit:
@@ -73,6 +73,10 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Bytes(), nil
 	case *models.StateUpdate:
 		return nil, errors.WithStack(errPassedByPointer)
+	case models.StoredTransaction:
+		return v.Bytes(), nil
+	case *models.StoredTransaction:
+		return nil, errors.Errorf("pass by value")
 	case models.Uint256:
 		return v.Bytes(), nil
 	case *models.Uint256:
@@ -116,7 +120,7 @@ func Decode(data []byte, value interface{}) error {
 	case *models.Commitment:
 		return v.SetBytes(data)
 	case *models.CommitmentID:
-		return v.SetBytes(data)
+		return decodeCommitmentIDPointer(data, &value, v)
 	case *models.Deposit:
 		return v.SetBytes(data)
 	case *models.DepositID:
@@ -134,6 +138,8 @@ func Decode(data []byte, value interface{}) error {
 	case *models.FlatStateLeaf:
 		return v.SetBytes(data)
 	case *models.StateUpdate:
+		return v.SetBytes(data)
+	case *models.StoredTransaction:
 		return v.SetBytes(data)
 	case *models.Uint256:
 		v.SetBytes(data)
@@ -163,6 +169,18 @@ func decodeHashPointer(data []byte, value *interface{}, dst *common.Hash) error 
 	}
 	if data[0] == 1 {
 		return DecodeDataHash(data[1:], dst)
+	}
+	*value = nil
+	return nil
+}
+
+// nolint: gocritic
+func decodeCommitmentIDPointer(data []byte, value *interface{}, dst *models.CommitmentID) error {
+	if len(data) == 33 {
+		return dst.SetBytes(data)
+	}
+	if data[0] == 1 {
+		return dst.SetBytes(data[1:])
 	}
 	*value = nil
 	return nil

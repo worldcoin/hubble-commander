@@ -1,9 +1,10 @@
 package storage
 
 import (
+	"time"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	bh "github.com/timshannon/badgerhold/v3"
@@ -15,34 +16,12 @@ var transferColumns = []string{
 }
 
 func (s *TransactionStorage) AddTransfer(t *models.Transfer) (receiveTime *models.Timestamp, err error) {
-	tx, txStorage, err := s.BeginTransaction(TxOptions{Postgres: true})
+	t.ReceiveTime = models.NewTimestamp(time.Now().UTC()) //TODO-tx: extract to transaction base
+	err = s.database.Badger.Insert(t.Hash, models.MakeStoredTransactionFromTransfer(t))
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback(&err)
-
-	receiveTime, err = txStorage.addTransactionBase(&t.TransactionBase, txtype.Transfer)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = txStorage.database.Postgres.Query(
-		txStorage.database.QB.Insert("transfer").
-			Values(
-				t.Hash,
-				t.ToStateID,
-			),
-	).Exec()
-	if err != nil {
-		return nil, err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return nil, err
-	}
-
-	return receiveTime, nil
+	return t.ReceiveTime, nil //TODO-tx: return only error
 }
 
 // BatchAddTransfer contrary to the AddTransfer method does not set receive_time column on added transfers
@@ -51,57 +30,31 @@ func (s *TransactionStorage) BatchAddTransfer(txs []models.Transfer) error {
 		return ErrNoRowsAffected
 	}
 
-	tx, txStorage, err := s.BeginTransaction(TxOptions{Postgres: true})
+	tx, txStorage, err := s.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback(&err)
 
-	txBases := make([]models.TransactionBase, 0, len(txs))
 	for i := range txs {
-		txBases = append(txBases, txs[i].TransactionBase)
-	}
-	err = txStorage.BatchAddTransactionBase(txBases)
-	if err != nil {
-		return err
-	}
-
-	query := s.database.QB.Insert("transfer")
-	for i := range txs {
-		query = query.Values(
-			txs[i].Hash,
-			txs[i].ToStateID,
-		)
-	}
-	res, err := txStorage.database.Postgres.Query(query).Exec()
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected == 0 {
-		return ErrNoRowsAffected
+		err = txStorage.database.Badger.Insert(txs[i].Hash, models.MakeStoredTransactionFromTransfer(&txs[i]))
+		if err != nil {
+			return err
+		}
 	}
 	return tx.Commit()
 }
 
 func (s *TransactionStorage) GetTransfer(hash common.Hash) (*models.Transfer, error) {
-	res := make([]models.Transfer, 0, 1)
-	err := s.database.Postgres.Query(
-		s.database.QB.Select(transferColumns...).
-			From("transaction_base").
-			JoinClause("NATURAL JOIN transfer").
-			Where(squirrel.Eq{"tx_hash": hash}),
-	).Into(&res)
+	var tx models.StoredTransaction
+	err := s.database.Badger.Get(hash, &tx)
+	if err == bh.ErrNotFound {
+		return nil, NewNotFoundError("transaction")
+	}
 	if err != nil {
 		return nil, err
 	}
-	if len(res) == 0 {
-		return nil, NewNotFoundError("transaction")
-	}
-	return &res[0], nil
+	return tx.ToTransfer(), nil
 }
 
 func (s *TransactionStorage) GetPendingTransfers(limit uint32) ([]models.Transfer, error) {
@@ -121,50 +74,40 @@ func (s *TransactionStorage) GetPendingTransfers(limit uint32) ([]models.Transfe
 }
 
 func (s *TransactionStorage) GetTransfersByCommitmentID(id *models.CommitmentID) ([]models.TransferForCommitment, error) {
-	res := make([]models.TransferForCommitment, 0, 32)
-	err := s.database.Postgres.Query(
-		s.database.QB.Select("transaction_base.tx_hash",
-			"transaction_base.from_state_id",
-			"transaction_base.amount",
-			"transaction_base.fee",
-			"transaction_base.nonce",
-			"transaction_base.signature",
-			"transaction_base.receive_time",
-			"transfer.to_state_id").
-			From("transaction_base").
-			JoinClause("NATURAL JOIN transfer").
-			Where(squirrel.Eq{"batch_id": id.BatchID, "index_in_batch": id.IndexInBatch}),
-	).Into(&res)
-	return res, err
+	res := make([]models.StoredTransaction, 0, 32)
+	err := s.database.Badger.Find(
+		&res,
+		bh.Where("CommitmentID").Eq(*id).Index("CommitmentID"),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	txs := make([]models.TransferForCommitment, 0, len(res))
+	for i := range res {
+		txs = append(txs, *res[i].ToTransferForCommitment())
+	}
+	return txs, nil
 }
 
 func (s *Storage) GetTransferWithBatchDetails(hash common.Hash) (*models.TransferWithBatchDetails, error) {
-	res := make([]models.Transfer, 0, 1)
-	err := s.database.Postgres.Query(
-		s.database.QB.Select(transferColumns...).
-			From("transaction_base").
-			JoinClause("NATURAL JOIN transfer").
-			Where(squirrel.Eq{"tx_hash": hash}),
-	).Into(&res)
+	transfer, err := s.GetTransfer(hash)
 	if err != nil {
 		return nil, err
 	}
-	if len(res) == 0 {
-		return nil, NewNotFoundError("transaction")
-	}
-	transfer := &models.TransferWithBatchDetails{Transfer: res[0]}
-	if transfer.CommitmentID == nil {
-		return transfer, nil
+	res := &models.TransferWithBatchDetails{Transfer: *transfer}
+	if res.CommitmentID == nil {
+		return res, nil
 	}
 
-	batch, err := s.GetBatch(transfer.CommitmentID.BatchID)
+	batch, err := s.GetBatch(res.CommitmentID.BatchID)
 	if err != nil {
 		return nil, err
 	}
-	transfer.BatchHash = batch.Hash
-	transfer.BatchTime = batch.SubmissionTime
+	res.BatchHash = batch.Hash
+	res.BatchTime = batch.SubmissionTime
 
-	return transfer, nil
+	return res, nil
 }
 
 func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models.TransferWithBatchDetails, error) {

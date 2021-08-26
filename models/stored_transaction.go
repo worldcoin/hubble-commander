@@ -24,14 +24,14 @@ type StoredTransaction struct {
 	Nonce        Uint256
 	Signature    Signature
 	ReceiveTime  *Timestamp
-	CommitmentID *CommitmentID
+	CommitmentID *CommitmentID `badgerhold:"index"`
 	ErrorMessage *string
 
 	Body TransactionBody
 }
 
-func NewStoredTransactionFromTransfer(t *Transfer) *StoredTransaction {
-	return &StoredTransaction{
+func MakeStoredTransactionFromTransfer(t *Transfer) StoredTransaction {
+	return StoredTransaction{
 		Hash:         t.Hash,
 		TxType:       t.TxType,
 		FromStateID:  t.FromStateID,
@@ -48,8 +48,8 @@ func NewStoredTransactionFromTransfer(t *Transfer) *StoredTransaction {
 	}
 }
 
-func NewStoredTransactionFromCreate2Transfer(t *Create2Transfer) *StoredTransaction {
-	return &StoredTransaction{
+func MakeStoredTransactionFromCreate2Transfer(t *Create2Transfer) StoredTransaction {
+	return StoredTransaction{
 		Hash:         t.Hash,
 		TxType:       t.TxType,
 		FromStateID:  t.FromStateID,
@@ -80,6 +80,22 @@ func (t *StoredTransaction) ToTransfer() *Transfer {
 			ReceiveTime:  t.ReceiveTime,
 			CommitmentID: t.CommitmentID,
 			ErrorMessage: t.ErrorMessage,
+		},
+		ToStateID: t.Body.(*StoredTransferBody).ToStateID,
+	}
+}
+
+// TODO-tx: move to dto
+func (t *StoredTransaction) ToTransferForCommitment() *TransferForCommitment {
+	return &TransferForCommitment{
+		TransactionBaseForCommitment: TransactionBaseForCommitment{
+			Hash:        t.Hash,
+			FromStateID: t.FromStateID,
+			Amount:      t.Amount,
+			Fee:         t.Fee,
+			Nonce:       t.Nonce,
+			Signature:   t.Signature,
+			ReceiveTime: t.ReceiveTime,
 		},
 		ToStateID: t.Body.(*StoredTransferBody).ToStateID,
 	}

@@ -30,13 +30,13 @@ func TestStoredTransaction_Bytes_Transfer(t *testing.T) {
 		ToStateID: 5,
 	}
 
-	storedTransaction := NewStoredTransactionFromTransfer(transfer)
+	storedTransaction := MakeStoredTransactionFromTransfer(transfer)
 	bytes := storedTransaction.Bytes()
 
 	decodedStoredTransaction := StoredTransaction{}
 	err := decodedStoredTransaction.SetBytes(bytes)
 	require.NoError(t, err)
-	require.EqualValues(t, *storedTransaction, decodedStoredTransaction)
+	require.EqualValues(t, storedTransaction, decodedStoredTransaction)
 
 	decodedTransfer := decodedStoredTransaction.ToTransfer()
 	require.Equal(t, *transfer, *decodedTransfer)
@@ -63,13 +63,13 @@ func TestStoredTransaction_Bytes_Create2Transfer(t *testing.T) {
 		ToPublicKey: PublicKey{1, 2, 3, 4},
 	}
 
-	storedTransaction := NewStoredTransactionFromCreate2Transfer(transfer)
+	storedTransaction := MakeStoredTransactionFromCreate2Transfer(transfer)
 	bytes := storedTransaction.Bytes()
 
 	decodedStoredTransaction := StoredTransaction{}
 	err := decodedStoredTransaction.SetBytes(bytes)
 	require.NoError(t, err)
-	require.EqualValues(t, *storedTransaction, decodedStoredTransaction)
+	require.EqualValues(t, storedTransaction, decodedStoredTransaction)
 
 	decodedTransfer := decodedStoredTransaction.ToCreate2Transfer()
 	require.Equal(t, *transfer, *decodedTransfer)
