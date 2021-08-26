@@ -11,6 +11,7 @@ type Storage struct {
 	*CommitmentStorage
 	*ChainStateStorage
 	*TransactionStorage
+	*DepositStorage
 	StateTree           *StateTree
 	AccountTree         *AccountTree
 	database            *Database
@@ -41,12 +42,15 @@ func newStorageFromDatabase(database *Database) *Storage {
 
 	transactionStorage := NewTransactionStorage(database)
 
+	depositStorage := NewDepositStorage(database)
+
 	chainStateStorage := NewChainStateStorage(database)
 
 	return &Storage{
 		BatchStorage:        batchStorage,
 		CommitmentStorage:   commitmentStorage,
 		TransactionStorage:  transactionStorage,
+		DepositStorage:      depositStorage,
 		ChainStateStorage:   chainStateStorage,
 		StateTree:           NewStateTree(database),
 		AccountTree:         NewAccountTree(database),
@@ -62,6 +66,8 @@ func (s *Storage) copyWithNewDatabase(database *Database) *Storage {
 
 	transactionStorage := s.TransactionStorage.copyWithNewDatabase(database)
 
+	depositStorage := s.DepositStorage.copyWithNewDatabase(database)
+
 	chainStateStorage := s.ChainStateStorage.copyWithNewDatabase(database)
 
 	stateTree := s.StateTree.copyWithNewDatabase(database)
@@ -72,6 +78,7 @@ func (s *Storage) copyWithNewDatabase(database *Database) *Storage {
 		BatchStorage:        batchStorage,
 		CommitmentStorage:   commitmentStorage,
 		TransactionStorage:  transactionStorage,
+		DepositStorage:      depositStorage,
 		ChainStateStorage:   chainStateStorage,
 		StateTree:           stateTree,
 		AccountTree:         accountTree,
