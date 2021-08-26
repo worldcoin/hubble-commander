@@ -6,6 +6,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestDeposit_InvalidBytesLength(t *testing.T) {
+	deposit := Deposit{}
+	err := deposit.SetBytes([]byte{1, 2, 3})
+	require.ErrorIs(t, err, ErrInvalidLength)
+}
+
 func TestDeposit_Bytes(t *testing.T) {
 	deposit := Deposit{
 		ID: DepositID{
@@ -51,6 +57,12 @@ func TestDepositInCommitment_Bytes(t *testing.T) {
 	err := decodedDeposit.SetBytes(bytes)
 	require.NoError(t, err)
 	require.Equal(t, deposit, decodedDeposit)
+}
+
+func TestDepositID_InvalidBytesLength(t *testing.T) {
+	depositID := DepositID{}
+	err := depositID.SetBytes([]byte{1, 2, 3})
+	require.ErrorIs(t, err, ErrInvalidLength)
 }
 
 func TestDepositID_Bytes(t *testing.T) {
