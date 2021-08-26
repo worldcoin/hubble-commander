@@ -2,6 +2,7 @@ package badger
 
 import (
 	"encoding/binary"
+	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
@@ -10,8 +11,8 @@ import (
 )
 
 var (
-	errInconsistentItemsLength = errors.New("inconsistent KeyList items length")
-	errPassedByPointer         = errors.Errorf("pointer was passed to Encode, pass by value instead")
+	errInconsistentItemsLength = fmt.Errorf("inconsistent KeyList items length")
+	errPassedByPointer         = fmt.Errorf("pointer was passed to Encode, pass by value instead")
 )
 
 // nolint:gocyclo, funlen
@@ -22,51 +23,51 @@ func Encode(value interface{}) ([]byte, error) {
 	case models.AccountNode:
 		return EncodeDataHash(&v.DataHash)
 	case *models.AccountNode:
-		return nil, errPassedByPointer
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.AccountLeaf:
 		return v.Bytes(), nil
 	case *models.AccountLeaf:
-		return nil, errPassedByPointer
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.Batch:
 		return v.Bytes(), nil
 	case *models.Batch:
-		return nil, errPassedByPointer
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.ChainState:
 		return v.Bytes(), nil
 	case *models.ChainState:
-		return nil, errPassedByPointer
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.Commitment:
 		return v.Bytes(), nil
 	case *models.Commitment:
-		return nil, errPassedByPointer
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.CommitmentID:
 		return v.Bytes(), nil
 	case *models.CommitmentID:
-		return nil, errPassedByPointer
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.NamespacedMerklePath:
 		return v.Bytes(), nil
 	case *models.NamespacedMerklePath:
-		return nil, errPassedByPointer
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.MerkleTreeNode:
 		return EncodeDataHash(&v.DataHash)
 	case *models.MerkleTreeNode:
-		return nil, errPassedByPointer
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.PublicKey:
 		return v.Bytes(), nil
 	case *models.PublicKey:
-		return nil, errPassedByPointer
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.FlatStateLeaf:
 		return v.Bytes(), nil
 	case *models.FlatStateLeaf:
-		return nil, errPassedByPointer
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.StateUpdate:
 		return v.Bytes(), nil
 	case *models.StateUpdate:
-		return nil, errPassedByPointer
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.Uint256:
 		return v.Bytes(), nil
 	case *models.Uint256:
-		return nil, errPassedByPointer
+		return nil, errors.WithStack(errPassedByPointer)
 	case common.Hash:
 		return v.Bytes(), nil
 	case *common.Hash:
@@ -74,15 +75,15 @@ func Encode(value interface{}) ([]byte, error) {
 	case string:
 		return EncodeString(&v)
 	case *string:
-		return nil, errPassedByPointer
+		return nil, errors.WithStack(errPassedByPointer)
 	case uint32:
 		return EncodeUint32(&v)
 	case *uint32:
-		return nil, errPassedByPointer
+		return nil, errors.WithStack(errPassedByPointer)
 	case uint64:
 		return EncodeUint64(&v)
 	case *uint64:
-		return nil, errPassedByPointer
+		return nil, errors.WithStack(errPassedByPointer)
 	case bh.KeyList:
 		return EncodeKeyList(&v)
 	default:
@@ -201,7 +202,7 @@ func EncodeKeyList(value *bh.KeyList) ([]byte, error) {
 	bp := 2
 	for i := range *value {
 		if len((*value)[i]) != itemLen {
-			return nil, errInconsistentItemsLength
+			return nil, errors.WithStack(errInconsistentItemsLength)
 		}
 		bp += copy(b[bp:], (*value)[i])
 	}
