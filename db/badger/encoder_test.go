@@ -75,6 +75,20 @@ func TestEncodeKeyList(t *testing.T) {
 	require.Equal(t, keyList, decoded)
 }
 
+func TestEncodeKeyList_ReturnsErrorWhenItemsHaveInconsistentLengths(t *testing.T) {
+	keyList := make(bh.KeyList, 5)
+	for i := 0; i < len(keyList)-1; i++ {
+		keyList[i] = make([]byte, 4)
+		binary.BigEndian.PutUint32(keyList[i], uint32(i))
+	}
+	keyList[4] = make([]byte, 8)
+	binary.BigEndian.PutUint64(keyList[4], uint64(4))
+
+	encoded, err := EncodeKeyList(&keyList)
+	require.Nil(t, encoded)
+	require.ErrorIs(t, err, errInconsistentItemsLength)
+}
+
 func TestEncodeString(t *testing.T) {
 	value := "some string"
 

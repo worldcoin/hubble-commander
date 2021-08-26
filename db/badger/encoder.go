@@ -9,6 +9,10 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
+var (
+	errInconsistentItemsLength = errors.New("inconsistent KeyList items length")
+)
+
 // nolint:gocyclo, funlen
 // Encode Remember to provide cases for both value and pointer types when adding new encoders
 // TODO shorten this function by using ByteEncoder interface
@@ -196,7 +200,7 @@ func EncodeKeyList(value *bh.KeyList) ([]byte, error) {
 	bp := 2
 	for i := range *value {
 		if len((*value)[i]) != itemLen {
-			return nil, errors.New("inconsistent KeyList key length")
+			return nil, errInconsistentItemsLength
 		}
 		bp += copy(b[bp:], (*value)[i])
 	}
