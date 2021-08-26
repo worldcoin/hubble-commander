@@ -66,8 +66,8 @@ func TestEncodeKeyList(t *testing.T) {
 
 	encoded, err := EncodeKeyList(&keyList)
 	require.NoError(t, err)
-	require.EqualValues(t, len(keyList), encoded[0])
-	require.EqualValues(t, len(keyList[0]), encoded[1])
+	require.EqualValues(t, len(keyList), binary.BigEndian.Uint32(encoded[0:4]))
+	require.EqualValues(t, len(keyList[0]), binary.BigEndian.Uint32(encoded[4:8]))
 
 	var decoded bh.KeyList
 	err = DecodeKeyList(encoded, &decoded)

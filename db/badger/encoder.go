@@ -10,10 +10,13 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
+const keyListMetadataLength = 8
+
 var (
-	errInconsistentItemsLength = fmt.Errorf("inconsistent KeyList items length")
-	errPassedByPointer         = fmt.Errorf("pointer was passed to Encode, pass by value instead")
-	errInvalidKeyListLength    = fmt.Errorf("invalid KeyList data length")
+	errInconsistentItemsLength      = fmt.Errorf("inconsistent KeyList items length")
+	errPassedByPointer              = fmt.Errorf("pointer was passed to Encode, pass by value instead")
+	errInvalidKeyListLength         = fmt.Errorf("invalid KeyList data length")
+	errInvalidKeyListMetadataLength = fmt.Errorf("invalid KeyListMetadata data length")
 )
 
 // nolint:gocyclo, funlen
@@ -191,19 +194,18 @@ func DecodeString(data []byte, value *string) error {
 
 // EncodeKeyList Format: [numKeys][keyLength][1st key ...][2nd key ...]...
 func EncodeKeyList(value *bh.KeyList) ([]byte, error) {
-	listLen := len(*value)
-	if listLen == 0 {
-		return make([]byte, 2), nil
+	metadata := KeyListMetadata{ListLen: uint32(len(*value))}
+	if metadata.ListLen == 0 {
+		return metadata.Bytes(), nil
 	}
-	itemLen := len((*value)[0])
 
-	b := make([]byte, 2+listLen*itemLen)
-	b[0] = uint8(listLen)
-	b[1] = uint8(itemLen)
+	metadata.ItemLen = uint32(len((*value)[0]))
+	b := make([]byte, metadata.GetKeyListByteLength())
+	copy(b[0:keyListMetadataLength], metadata.Bytes())
 
-	bp := 2
+	bp := keyListMetadataLength
 	for i := range *value {
-		if len((*value)[i]) != itemLen {
+		if uint32(len((*value)[i])) != metadata.ItemLen {
 			return nil, errors.WithStack(errInconsistentItemsLength)
 		}
 		bp += copy(b[bp:], (*value)[i])
@@ -212,22 +214,51 @@ func EncodeKeyList(value *bh.KeyList) ([]byte, error) {
 }
 
 func DecodeKeyList(data []byte, value *bh.KeyList) error {
-	if data[0] == 0 {
+	var metadata KeyListMetadata
+	err := metadata.SetBytes(data)
+	if err != nil {
+		return err
+	}
+	if metadata.ListLen == 0 {
 		return nil
 	}
-	itemLen := int(data[1])
 
-	if int(data[0]*data[1]) != len(data)-2 {
+	if metadata.GetKeyListByteLength() != len(data) {
 		return errInvalidKeyListLength
 	}
 
-	*value = make([][]byte, data[0])
-	index := 2
+	*value = make([][]byte, metadata.ListLen)
+	index := keyListMetadataLength
 	for i := range *value {
-		(*value)[i] = make([]byte, itemLen)
-		index += copy((*value)[i], data[index:index+itemLen])
+		(*value)[i] = make([]byte, metadata.ItemLen)
+		index += copy((*value)[i], data[index:index+int(metadata.ItemLen)])
 	}
 	return nil
+}
+
+type KeyListMetadata struct {
+	ListLen uint32
+	ItemLen uint32
+}
+
+func (k *KeyListMetadata) Bytes() []byte {
+	b := make([]byte, keyListMetadataLength)
+	binary.BigEndian.PutUint32(b[0:4], k.ListLen)
+	binary.BigEndian.PutUint32(b[4:8], k.ItemLen)
+	return b
+}
+
+func (k *KeyListMetadata) SetBytes(data []byte) error {
+	if len(data) < keyListMetadataLength {
+		return errInvalidKeyListMetadataLength
+	}
+	k.ListLen = binary.BigEndian.Uint32(data[0:4])
+	k.ItemLen = binary.BigEndian.Uint32(data[4:8])
+	return nil
+}
+
+func (k *KeyListMetadata) GetKeyListByteLength() int {
+	return int(keyListMetadataLength + k.ListLen*k.ItemLen)
 }
 
 func DecodeKey(data []byte, key interface{}, prefix []byte) error {
