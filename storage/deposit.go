@@ -28,13 +28,15 @@ func (s *DepositStorage) AddDeposit(deposit *models.Deposit) error {
 
 func (s *DepositStorage) GetDeposit(depositID *models.DepositID) (*models.Deposit, error) {
 	var deposit models.Deposit
-	err := s.database.Badger.Get(depositID, &deposit)
+	err := s.database.Badger.Get(*depositID, &deposit)
 	if err == bh.ErrNotFound {
 		return nil, NewNotFoundError("deposit")
 	}
 	if err != nil {
 		return nil, err
 	}
+
+	deposit.ID = *depositID
 
 	return &deposit, nil
 }
