@@ -89,6 +89,16 @@ func TestEncodeKeyList_ReturnsErrorWhenItemsHaveInconsistentLengths(t *testing.T
 	require.ErrorIs(t, err, errInconsistentItemsLength)
 }
 
+func TestDecodeKeyList_ReturnsErrorWhenKeyListHasInvalidDataLength(t *testing.T) {
+	data := make([]byte, 13)
+	data[0] = 2
+	data[1] = 5
+
+	var decoded bh.KeyList
+	err := DecodeKeyList(data, &decoded)
+	require.ErrorIs(t, err, errInvalidKeyListLength)
+}
+
 func TestEncodeString(t *testing.T) {
 	value := "some string"
 

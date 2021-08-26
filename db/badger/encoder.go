@@ -13,6 +13,7 @@ import (
 var (
 	errInconsistentItemsLength = fmt.Errorf("inconsistent KeyList items length")
 	errPassedByPointer         = fmt.Errorf("pointer was passed to Encode, pass by value instead")
+	errInvalidKeyListLength    = fmt.Errorf("invalid KeyList data length")
 )
 
 // nolint:gocyclo, funlen
@@ -214,9 +215,13 @@ func DecodeKeyList(data []byte, value *bh.KeyList) error {
 	if data[0] == 0 {
 		return nil
 	}
-	*value = append(*value, make([][]byte, data[0])...)
 	itemLen := int(data[1])
 
+	if int(data[0]*data[1]) != len(data)-2 {
+		return errInvalidKeyListLength
+	}
+
+	*value = make([][]byte, data[0])
 	index := 2
 	for i := range *value {
 		(*value)[i] = make([]byte, itemLen)
