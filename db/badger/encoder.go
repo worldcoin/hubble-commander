@@ -188,6 +188,7 @@ func DecodeString(data []byte, value *string) error {
 	return nil
 }
 
+// EncodeKeyList Format: [numKeys][keyLength][1st key ...][2nd key ...]...
 func EncodeKeyList(value *bh.KeyList) ([]byte, error) {
 	listLen := len(*value)
 	if listLen == 0 {
