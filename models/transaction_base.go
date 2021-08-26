@@ -14,8 +14,6 @@ type TransactionBase struct {
 	Nonce        Uint256
 	Signature    Signature
 	ReceiveTime  *Timestamp
-	BatchID      *Uint256 //TODO: use CommitmentID struct with badger
-	IndexInBatch *uint8
 	CommitmentID *CommitmentID
 	ErrorMessage *string
 }

@@ -52,8 +52,8 @@ func (s *TransactionStorage) addTransactionBase(txBase *models.TransactionBase, 
 				txBase.Signature,
 				txBase.ErrorMessage,
 				"NOW()",
-				txBase.BatchID,
-				txBase.IndexInBatch,
+				txBase.CommitmentID.BatchID,
+				txBase.CommitmentID.IndexInBatch,
 			).
 			Suffix("RETURNING receive_time"),
 	).Into(&res)
@@ -76,8 +76,8 @@ func (s *TransactionStorage) BatchAddTransactionBase(txs []models.TransactionBas
 			txs[i].Signature,
 			txs[i].ErrorMessage,
 			nil,
-			txs[i].BatchID,
-			txs[i].IndexInBatch,
+			txs[i].CommitmentID.BatchID,
+			txs[i].CommitmentID.IndexInBatch,
 		)
 	}
 	res, err := s.database.Postgres.Query(query).Exec()

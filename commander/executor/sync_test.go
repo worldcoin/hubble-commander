@@ -169,8 +169,7 @@ func (s *SyncTestSuite) TestSyncBatch_TwoTransferBatches() {
 
 		actualTx, err := s.storage.GetTransfer(txs[i].Hash)
 		s.NoError(err)
-		txs[i].BatchID = &commitment.ID.BatchID
-		txs[i].IndexInBatch = &commitment.ID.IndexInBatch
+		txs[i].CommitmentID = &commitment.ID
 		txs[i].Signature = models.Signature{}
 		s.Equal(txs[i], actualTx)
 	}
@@ -427,8 +426,7 @@ func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 	transfer, err := s.storage.GetCreate2Transfer(tx.Hash)
 	s.NoError(err)
 	transfer.Signature = tx.Signature
-	tx.BatchID = &commitment.ID.BatchID
-	tx.IndexInBatch = &commitment.ID.IndexInBatch
+	tx.CommitmentID = &commitment.ID
 	tx.ToStateID = transfer.ToStateID
 	s.Equal(tx, *transfer)
 }
@@ -531,8 +529,7 @@ func (s *SyncTestSuite) TestRevertBatch_ExcludesTransactionsFromCommitments() {
 
 	transfer, err := s.storage.GetTransfer(s.transfer.Hash)
 	s.NoError(err)
-	s.Nil(transfer.BatchID)
-	s.Nil(transfer.IndexInBatch)
+	s.Nil(transfer.CommitmentID)
 }
 
 func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {

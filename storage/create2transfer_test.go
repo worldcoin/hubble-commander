@@ -96,8 +96,7 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchDetails() {
 	s.NoError(err)
 
 	transferInBatch := create2Transfer
-	transferInBatch.BatchID = &batch.ID
-	transferInBatch.IndexInBatch = &commitment.ID.IndexInBatch
+	transferInBatch.CommitmentID = &commitment.ID
 	receiveTime, err := s.storage.AddCreate2Transfer(&transferInBatch)
 	s.NoError(err)
 	transferInBatch.ReceiveTime = receiveTime
@@ -163,7 +162,7 @@ func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers() {
 	create2Transfer2.Hash = utils.RandomHash()
 	create2Transfer3 := create2Transfer
 	create2Transfer3.Hash = utils.RandomHash()
-	create2Transfer3.BatchID = &commitment.ID.BatchID
+	create2Transfer3.CommitmentID = &commitment.ID
 	create2Transfer4 := create2Transfer
 	create2Transfer4.Hash = utils.RandomHash()
 	create2Transfer4.ErrorMessage = ref.String("A very boring error message")
@@ -246,8 +245,7 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID() {
 	s.NoError(err)
 
 	transfer1 := create2Transfer
-	transfer1.BatchID = &commitment.ID.BatchID
-	transfer1.IndexInBatch = &commitment.ID.IndexInBatch
+	transfer1.CommitmentID = &commitment.ID
 
 	_, err = s.storage.AddCreate2Transfer(&transfer1)
 	s.NoError(err)

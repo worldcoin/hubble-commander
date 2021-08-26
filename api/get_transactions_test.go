@@ -224,8 +224,10 @@ func (s *GetTransactionsTestSuite) addCommitmentAndBatch() *models.Batch {
 
 func (s *GetTransactionsTestSuite) addIncludedTransfer() models.Transfer {
 	transfer := s.makeTransfer(0, 2)
-	transfer.BatchID = models.NewUint256(1)
-	transfer.IndexInBatch = ref.Uint8(0)
+	transfer.CommitmentID = &models.CommitmentID{
+		BatchID:      models.MakeUint256(1),
+		IndexInBatch: 0,
+	}
 	receiveTime, err := s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 	transfer.ReceiveTime = receiveTime
@@ -234,8 +236,10 @@ func (s *GetTransactionsTestSuite) addIncludedTransfer() models.Transfer {
 
 func (s *GetTransactionsTestSuite) addIncludedCreate2Transfer() models.Create2Transfer {
 	create2Transfer := s.makeCreate2Transfer(0, 5, &models.PublicKey{3, 4, 5})
-	create2Transfer.BatchID = models.NewUint256(1)
-	create2Transfer.IndexInBatch = ref.Uint8(0)
+	create2Transfer.CommitmentID = &models.CommitmentID{
+		BatchID:      models.MakeUint256(1),
+		IndexInBatch: 0,
+	}
 	receiveTime, err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
 	create2Transfer.ReceiveTime = receiveTime

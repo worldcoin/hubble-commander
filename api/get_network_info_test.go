@@ -113,8 +113,7 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
 			Hash:         common.Hash{1, 2, 3},
 			TxType:       txtype.Transfer,
 			FromStateID:  0,
-			BatchID:      &commitmentInBatch.ID.BatchID,
-			IndexInBatch: &commitmentInBatch.ID.IndexInBatch,
+			CommitmentID: &commitmentInBatch.ID,
 		},
 		ToStateID: 1,
 	})

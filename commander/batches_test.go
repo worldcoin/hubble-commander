@@ -159,8 +159,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 
 	expectedTx := transfers[0]
 	expectedTx.Signature = models.Signature{}
-	expectedTx.BatchID = &commitment.ID.BatchID
-	expectedTx.IndexInBatch = &commitment.ID.IndexInBatch
+	expectedTx.CommitmentID = &commitment.ID
 	transfer, err := s.cmd.storage.GetTransfer(transfers[0].Hash)
 	s.NoError(err)
 	s.Equal(expectedTx, *transfer)

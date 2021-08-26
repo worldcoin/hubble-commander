@@ -216,11 +216,11 @@ func (s *Storage) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.
 		return nil, NewNotFoundError("transaction")
 	}
 	transfer := &models.Create2TransferWithBatchDetails{Create2Transfer: res[0]}
-	if transfer.BatchID == nil {
+	if transfer.CommitmentID == nil {
 		return transfer, nil
 	}
 
-	batch, err := s.GetBatch(*transfer.BatchID)
+	batch, err := s.GetBatch(transfer.CommitmentID.BatchID)
 	if err != nil {
 		return nil, err
 	}
@@ -237,17 +237,17 @@ func (s *Storage) create2TransferToTransfersWithBatchDetails(transfers []models.
 	result = make([]models.Create2TransferWithBatchDetails, 0, len(transfers))
 	batchIDs := make(map[models.Uint256]*models.Batch)
 	for i := range transfers {
-		if transfers[i].BatchID == nil {
+		if transfers[i].CommitmentID == nil {
 			result = append(result, models.Create2TransferWithBatchDetails{Create2Transfer: transfers[i]})
 			continue
 		}
-		batch, ok := batchIDs[*transfers[i].BatchID]
+		batch, ok := batchIDs[transfers[i].CommitmentID.BatchID]
 		if !ok {
-			batch, err = s.GetBatch(*transfers[i].BatchID)
+			batch, err = s.GetBatch(transfers[i].CommitmentID.BatchID)
 			if err != nil {
 				return nil, err
 			}
-			batchIDs[*transfers[i].BatchID] = batch
+			batchIDs[transfers[i].CommitmentID.BatchID] = batch
 		}
 
 		result = append(result, models.Create2TransferWithBatchDetails{

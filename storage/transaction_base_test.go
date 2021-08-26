@@ -109,8 +109,8 @@ func (s *TransactionBaseTestSuite) TestBatchMarkTransactionAsIncluded() {
 	for i := range txs {
 		tx, err := s.storage.GetTransfer(txs[i].Hash)
 		s.NoError(err)
-		s.Equal(batchID, *tx.BatchID)
-		s.EqualValues(0, *tx.IndexInBatch)
+		s.Equal(batchID, tx.CommitmentID.BatchID)
+		s.EqualValues(0, tx.CommitmentID.IndexInBatch)
 	}
 }
 
@@ -131,8 +131,7 @@ func (s *TransactionBaseTestSuite) TestGetTransactionCount() {
 
 	transferInCommitment := transferTransaction
 	transferInCommitment.Hash = common.Hash{5, 5, 5}
-	transferInCommitment.BatchID = &batch.ID
-	transferInCommitment.IndexInBatch = &commitmentInBatch.ID.IndexInBatch
+	transferInCommitment.CommitmentID = &commitmentInBatch.ID
 	_, err = s.storage.AddTransfer(&transferInCommitment)
 	s.NoError(err)
 	_, err = s.storage.AddTransfer(&transferTransaction)
@@ -140,8 +139,7 @@ func (s *TransactionBaseTestSuite) TestGetTransactionCount() {
 
 	c2t := create2Transfer
 	c2t.Hash = common.Hash{3, 4, 5}
-	c2t.BatchID = &batch.ID
-	c2t.IndexInBatch = &commitmentInBatch.ID.IndexInBatch
+	c2t.CommitmentID = &commitmentInBatch.ID
 	_, err = s.storage.AddCreate2Transfer(&c2t)
 	s.NoError(err)
 
@@ -186,7 +184,10 @@ func (s *TransactionBaseTestSuite) TestGetTransactionHashesByBatchIDs_NoTransact
 
 func (s *TransactionBaseTestSuite) addTransfersInCommitment(batchID *models.Uint256, transfers []models.Transfer) {
 	for i := range transfers {
-		transfers[i].BatchID = batchID
+		transfers[i].CommitmentID = &models.CommitmentID{
+			BatchID:      *batchID,
+			IndexInBatch: 0,
+		}
 		_, err := s.storage.AddTransfer(&transfers[i])
 		s.NoError(err)
 	}

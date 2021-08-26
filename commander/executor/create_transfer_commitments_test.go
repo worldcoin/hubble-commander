@@ -268,8 +268,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_MarksTransf
 	for i := range pendingTransfers {
 		tx, err := s.storage.GetTransfer(pendingTransfers[i].Hash)
 		s.NoError(err)
-		s.Equal(commitments[0].ID.BatchID, *tx.BatchID)
-		s.Equal(commitments[0].ID.IndexInBatch, *tx.IndexInBatch)
+		s.Equal(commitments[0].ID, *tx.CommitmentID)
 	}
 }
 
