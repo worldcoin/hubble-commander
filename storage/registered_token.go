@@ -35,6 +35,7 @@ func (s *RegisteredTokenStorage) GetRegisteredToken(tokenID models.Uint256) (*mo
 	if err != nil {
 		return nil, err
 	}
+	registeredToken.ID = tokenID
 	return &registeredToken, nil
 }
 
