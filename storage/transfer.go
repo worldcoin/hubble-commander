@@ -40,11 +40,7 @@ func (s *TransactionStorage) BatchAddTransfer(txs []models.Transfer) error {
 }
 
 func (s *TransactionStorage) GetTransfer(hash common.Hash) (*models.Transfer, error) {
-	var tx models.StoredTransaction
-	err := s.database.Badger.Get(hash, &tx)
-	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("transaction")
-	}
+	tx, err := s.getStoredTransaction(hash)
 	if err != nil {
 		return nil, err
 	}
@@ -94,10 +90,7 @@ func (s *TransactionStorage) BatchMarkTransfersAsIncluded(txs []models.Transfer,
 	for i := range txs {
 		storedTx := models.MakeStoredTransactionFromTransfer(&txs[i])
 		storedTx.CommitmentID = commitmentID
-		err = txStorage.database.Badger.Update(storedTx.Hash, storedTx)
-		if err == bh.ErrNotFound {
-			return NewNotFoundError("transaction")
-		}
+		err = txStorage.updateStoredTransaction(&storedTx)
 		if err != nil {
 			return err
 		}

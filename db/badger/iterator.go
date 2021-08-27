@@ -18,6 +18,10 @@ var (
 		PrefetchValues: true,
 		AllVersions:    false,
 	}
+	PrefetchIteratorOpts = badger.IteratorOptions{
+		PrefetchSize:   100,
+		PrefetchValues: true,
+	}
 )
 
 // Iterator calls filter function for every element matching the prefix.

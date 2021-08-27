@@ -160,6 +160,7 @@ func (s *TransactionBaseTestSuite) TestGetTransactionCount_NoTransactions() {
 
 func (s *TransactionBaseTestSuite) TestGetTransactionHashesByBatchIDs() {
 	batchIDs := []models.Uint256{models.MakeUint256(1), models.MakeUint256(2)}
+	expectedHashes := make([]common.Hash, 0, 4)
 	for i := range batchIDs {
 		transfers := make([]models.Transfer, 2)
 		transfers[0] = transfer
@@ -167,11 +168,15 @@ func (s *TransactionBaseTestSuite) TestGetTransactionHashesByBatchIDs() {
 		transfers[1] = transfer
 		transfers[1].Hash = utils.RandomHash()
 		s.addTransfersInCommitment(&batchIDs[i], transfers)
+		expectedHashes = append(expectedHashes, transfers[0].Hash, transfers[1].Hash)
 	}
 
 	hashes, err := s.storage.GetTransactionHashesByBatchIDs(batchIDs...)
 	s.NoError(err)
 	s.Len(hashes, 4)
+	for i := range expectedHashes {
+		s.Contains(hashes, expectedHashes[i])
+	}
 }
 
 func (s *TransactionBaseTestSuite) TestGetTransactionHashesByBatchIDs_NoTransactions() {

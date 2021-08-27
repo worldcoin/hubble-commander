@@ -1,7 +1,8 @@
 package storage
 
 import (
-	"github.com/Masterminds/squirrel"
+	"bytes"
+
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -40,6 +41,26 @@ func (s *TransactionStorage) BeginTransaction(opts TxOptions) (*db.TxController,
 	return txController, &txTransactionStorage, nil
 }
 
+func (s *TransactionStorage) getStoredTransaction(hash common.Hash) (*models.StoredTransaction, error) {
+	var storedTx models.StoredTransaction
+	err := s.database.Badger.Get(hash, &storedTx)
+	if err == bh.ErrNotFound {
+		return nil, NewNotFoundError("transaction")
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &storedTx, nil
+}
+
+func (s *TransactionStorage) updateStoredTransaction(tx *models.StoredTransaction) error {
+	err := s.database.Badger.Update(tx.Hash, *tx)
+	if err == bh.ErrNotFound {
+		return NewNotFoundError("transaction")
+	}
+	return err
+}
+
 func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*models.Uint256, error) {
 	var tx models.StoredTransaction
 	err := s.database.Badger.Iterator(models.StoredTransactionPrefix, badger.ReversePrefetchIteratorOpts,
@@ -68,20 +89,13 @@ func (s *TransactionStorage) BatchMarkTransactionAsIncluded(txHashes []common.Ha
 	defer tx.Rollback(&err)
 
 	for i := range txHashes {
-		var storedTx models.StoredTransaction
-		err = txStorage.database.Badger.Get(txHashes[i], &storedTx)
-		if err == bh.ErrNotFound {
-			return NewNotFoundError("transaction")
-		}
+		storedTx, err := txStorage.getStoredTransaction(txHashes[i])
 		if err != nil {
 			return err
 		}
 
 		storedTx.CommitmentID = commitmentID
-		err = txStorage.database.Badger.Update(storedTx.Hash, storedTx)
-		if err == bh.ErrNotFound {
-			return NewNotFoundError("transaction")
-		}
+		err = txStorage.updateStoredTransaction(storedTx)
 		if err != nil {
 			return err
 		}
@@ -90,23 +104,13 @@ func (s *TransactionStorage) BatchMarkTransactionAsIncluded(txHashes []common.Ha
 }
 
 func (s *TransactionStorage) SetTransactionError(txHash common.Hash, errorMessage string) error {
-	res, err := s.database.Postgres.Query(
-		s.database.QB.Update("transaction_base").
-			Where(squirrel.Eq{"tx_hash": txHash}).
-			Set("error_message", errorMessage),
-	).Exec()
+	storedTx, err := s.getStoredTransaction(txHash)
 	if err != nil {
 		return err
 	}
 
-	numUpdatedRows, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if numUpdatedRows == 0 {
-		return ErrNoRowsAffected
-	}
-	return nil
+	storedTx.ErrorMessage = &errorMessage
+	return s.updateStoredTransaction(storedTx)
 }
 
 func (s *Storage) GetTransactionCount() (*int, error) {
@@ -117,34 +121,87 @@ func (s *Storage) GetTransactionCount() (*int, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	res := make([]int, 0, 1)
-	err = s.database.Postgres.Query(
-		s.database.QB.Select("COUNT(1)").
-			From("transaction_base").
-			Where(squirrel.LtOrEq{"batch_id": latestCommitment.ID.BatchID}),
-	).Into(&res)
-	if err != nil {
+	count := 0
+	var tx models.StoredTransaction
+	err = s.database.Badger.Iterator(models.StoredTransactionPrefix, badger.PrefetchIteratorOpts,
+		func(item *bdg.Item) (bool, error) {
+			err = item.Value(tx.SetBytes)
+			if err != nil {
+				return false, err
+			}
+			if tx.CommitmentID != nil && tx.CommitmentID.BatchID.Cmp(&latestCommitment.ID.BatchID) <= 0 {
+				count++
+			}
+			return false, nil
+		})
+	if err != nil && err != badger.ErrIteratorFinished {
 		return nil, err
 	}
-	if len(res) < 1 {
-		return ref.Int(0), nil
-	}
-	return &res[0], nil
+	return &count, nil
 }
 
 func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.Uint256) ([]common.Hash, error) {
-	res := make([]common.Hash, 0, 32*len(batchIDs))
-	err := s.database.Postgres.Query(
-		s.database.QB.Select("transaction_base.tx_hash").
-			From("transaction_base").
-			Where(squirrel.Eq{"batch_id": batchIDs}),
-	).Into(&res)
-	if err != nil {
+	batchPrefixes := batchIdsToBatchPrefixes(batchIDs)
+	hashes := make([]common.Hash, 0, len(batchIDs)*32)
+
+	var keyList bh.KeyList
+	seekPrefix := badger.IndexKeyPrefix(models.StoredTransactionPrefix[3:], "CommitmentID")
+	err := s.database.Badger.Iterator(seekPrefix, badger.ReversePrefetchIteratorOpts,
+		func(item *bdg.Item) (bool, error) {
+			if validForPrefixes(keyValue(seekPrefix, item.Key()), batchPrefixes) {
+				err := item.Value(func(val []byte) error {
+					return badger.DecodeKeyList(val, &keyList)
+				})
+				if err != nil {
+					return false, err
+				}
+				txHashes, err := decodeKeyListHashes(models.StoredTransactionPrefix, keyList)
+				if err != nil {
+					return false, err
+				}
+				hashes = append(hashes, txHashes...)
+			}
+			return false, nil
+		})
+	if err != nil && err != badger.ErrIteratorFinished {
 		return nil, err
 	}
-	if len(res) == 0 {
+	if len(hashes) == 0 {
 		return nil, NewNotFoundError("transaction")
 	}
-	return res, nil
+	return hashes, nil
+}
+
+func decodeKeyListHashes(prefix []byte, keyList bh.KeyList) ([]common.Hash, error) {
+	var hash common.Hash
+	hashes := make([]common.Hash, 0, len(keyList))
+	for i := range keyList {
+		err := badger.DecodeDataHash(keyList[i][len(prefix):], &hash)
+		if err != nil {
+			return nil, err
+		}
+		hashes = append(hashes, hash)
+	}
+	return hashes, nil
+}
+
+func batchIdsToBatchPrefixes(batchIDs []models.Uint256) [][]byte {
+	batchPrefixes := make([][]byte, 0, len(batchIDs))
+	for i := range batchIDs {
+		batchPrefixes = append(batchPrefixes, []byte{1}, batchIDs[i].Bytes())
+	}
+	return batchPrefixes
+}
+
+func keyValue(prefix, key []byte) []byte {
+	return key[len(prefix):]
+}
+
+func validForPrefixes(s []byte, prefixes [][]byte) bool {
+	for i := range prefixes {
+		if bytes.HasPrefix(s, prefixes[i]) {
+			return true
+		}
+	}
+	return false
 }

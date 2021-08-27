@@ -8,7 +8,10 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-const keyListMetadataLength = 8
+const (
+	keyListMetadataLength = 8
+	bhIndexPrefix         = "_bhIndex"
+)
 
 var (
 	errInconsistentItemsLength      = fmt.Errorf("inconsistent KeyList items length")
@@ -83,4 +86,8 @@ func (m *KeyListMetadata) SetBytes(data []byte) error {
 
 func (m *KeyListMetadata) GetKeyListByteLength() int {
 	return int(keyListMetadataLength + m.ListLen*m.ItemLen)
+}
+
+func IndexKeyPrefix(typeName []byte, indexName string) []byte {
+	return []byte(bhIndexPrefix + ":" + string(typeName) + ":" + indexName)
 }

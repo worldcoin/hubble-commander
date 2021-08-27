@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/stretchr/testify/require"
 	bh "github.com/timshannon/badgerhold/v3"
 )
@@ -64,4 +65,9 @@ func TestKeyListMetadata_Bytes(t *testing.T) {
 	err := decoded.SetBytes(bytes)
 	require.NoError(t, err)
 	require.Equal(t, *metadata, decoded)
+}
+
+func TestIndexKeyPrefix(t *testing.T) {
+	prefix := IndexKeyPrefix(models.StoredTransactionPrefix[3:], "CommitmentID")
+	require.Equal(t, []byte("_bhIndex:StoredTransaction:CommitmentID"), prefix)
 }

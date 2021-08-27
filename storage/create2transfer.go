@@ -42,11 +42,7 @@ func (s *TransactionStorage) BatchAddCreate2Transfer(txs []models.Create2Transfe
 }
 
 func (s *TransactionStorage) GetCreate2Transfer(hash common.Hash) (*models.Create2Transfer, error) {
-	var tx models.StoredTransaction
-	err := s.database.Badger.Get(hash, &tx)
-	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("transaction")
-	}
+	tx, err := s.getStoredTransaction(hash)
 	if err != nil {
 		return nil, err
 	}
@@ -86,6 +82,7 @@ func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id *models.Commit
 	return txs, nil
 }
 
+// SetCreate2TransferToStateID TODO-tx: remove
 func (s *TransactionStorage) SetCreate2TransferToStateID(txHash common.Hash, toStateID uint32) error {
 	transfer, err := s.GetCreate2Transfer(txHash)
 	if err != nil {
@@ -145,10 +142,7 @@ func (s *TransactionStorage) BatchMarkCreate2TransfersAsIncluded(txs []models.Cr
 	for i := range txs {
 		storedTx := models.MakeStoredTransactionFromCreate2Transfer(&txs[i])
 		storedTx.CommitmentID = commitmentID
-		err = txStorage.database.Badger.Update(storedTx.Hash, storedTx)
-		if err == bh.ErrNotFound {
-			return NewNotFoundError("transaction")
-		}
+		err = txStorage.updateStoredTransaction(&storedTx)
 		if err != nil {
 			return err
 		}
