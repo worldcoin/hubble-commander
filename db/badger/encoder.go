@@ -10,8 +10,6 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-const keyListMetadataLength = 8
-
 var errPassedByPointer = fmt.Errorf("pointer was passed to Encode, pass by value instead")
 
 // nolint:gocyclo, funlen

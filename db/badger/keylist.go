@@ -8,6 +8,8 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
+const keyListMetadataLength = 8
+
 var (
 	errInconsistentItemsLength      = fmt.Errorf("inconsistent KeyList items length")
 	errInvalidKeyListLength         = fmt.Errorf("invalid KeyList data length")
