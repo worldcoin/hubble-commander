@@ -46,11 +46,11 @@ func Encode(value interface{}) ([]byte, error) {
 	case models.Deposit:
 		return v.Bytes(), nil
 	case *models.Deposit:
-		return nil, errors.Errorf("pass by value")
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.DepositID:
 		return v.Bytes(), nil
 	case *models.DepositID:
-		return nil, errors.Errorf("pass by value")
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.NamespacedMerklePath:
 		return v.Bytes(), nil
 	case *models.NamespacedMerklePath:
@@ -90,6 +90,10 @@ func Encode(value interface{}) ([]byte, error) {
 	case uint64:
 		return EncodeUint64(&v)
 	case *uint64:
+		return nil, errors.WithStack(errPassedByPointer)
+	case models.RegisteredToken:
+		return v.Contract.Bytes(), nil
+	case *models.RegisteredToken:
 		return nil, errors.WithStack(errPassedByPointer)
 	case bh.KeyList:
 		return EncodeKeyList(&v)
@@ -138,6 +142,9 @@ func Decode(data []byte, value interface{}) error {
 		return DecodeUint32(data, v)
 	case *uint64:
 		return DecodeUint64(data, v)
+	case *models.RegisteredToken:
+		v.Contract.SetBytes(data)
+		return nil
 	case *bh.KeyList:
 		return DecodeKeyList(data, v)
 	default:
