@@ -13,6 +13,28 @@ func TestPendingDepositSubTree_SetBytes_InvalidBytesLength(t *testing.T) {
 	require.ErrorIs(t, err, ErrInvalidLength)
 }
 
+func TestPendingDepositSubTree_SetBytes_UpdatesDepositIDs(t *testing.T) {
+	t.SkipNow() // TODO fix and unskip
+	initialSubTree := PendingDepositSubTree{
+		ID:   MakeUint256(1),
+		Root: utils.RandomHash(),
+		Deposits: []DepositID{{
+			BlockNumber: 1,
+			LogIndex:    2,
+		}},
+	}
+
+	newSubTree := PendingDepositSubTree{
+		ID:   MakeUint256(1),
+		Root: utils.RandomHash(),
+	}
+
+	initialCopy := initialSubTree
+	err := initialCopy.SetBytes(newSubTree.Bytes())
+	require.NoError(t, err)
+	require.Equal(t, newSubTree, initialCopy)
+}
+
 func TestPendingDepositSubTree_Bytes(t *testing.T) {
 	subTree := PendingDepositSubTree{
 		Root: utils.RandomHash(),
