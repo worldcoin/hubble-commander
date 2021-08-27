@@ -1,0 +1,109 @@
+package storage
+
+import (
+	"testing"
+
+	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+)
+
+var (
+	depositSubTree = models.PendingDepositSubTree{
+		ID:   models.MakeUint256(932),
+		Root: utils.RandomHash(),
+		Deposits: []models.DepositID{
+			{
+				BlockNumber: 1,
+				LogIndex:    2,
+			},
+			{
+				BlockNumber: 3,
+				LogIndex:    4,
+			},
+		},
+	}
+)
+
+type DepositSubTreeTestSuite struct {
+	*require.Assertions
+	suite.Suite
+	storage *TestStorage
+}
+
+func (s *DepositSubTreeTestSuite) SetupSuite() {
+	s.Assertions = require.New(s.T())
+}
+
+func (s *DepositSubTreeTestSuite) SetupTest() {
+	var err error
+	s.storage, err = NewTestStorageWithoutPostgres()
+	s.NoError(err)
+}
+
+func (s *DepositSubTreeTestSuite) TearDownTest() {
+	err := s.storage.Teardown()
+	s.NoError(err)
+}
+
+func (s *DepositSubTreeTestSuite) TestAddPendingDepositSubTree_AddAndRetrieve() {
+	err := s.storage.AddPendingDepositSubTree(&depositSubTree)
+	s.NoError(err)
+
+	actual, err := s.storage.GetPendingDepositSubTree(depositSubTree.ID)
+	s.NoError(err)
+	s.Equal(depositSubTree, *actual)
+}
+
+func (s *DepositSubTreeTestSuite) TestGetPendingDepositSubTree_NonExistentTree() {
+	_, err := s.storage.GetPendingDepositSubTree(depositSubTree.ID)
+	s.Equal(NewNotFoundError("deposit sub tree"), err)
+	s.True(IsNotFoundError(err))
+}
+
+func (s *DepositSubTreeTestSuite) TestDeletePendingDepositSubTrees() {
+	subTrees := []models.PendingDepositSubTree{
+		{
+			ID:   models.MakeUint256(1),
+			Root: utils.RandomHash(),
+			Deposits: []models.DepositID{
+				{
+					BlockNumber: 2,
+					LogIndex:    3,
+				},
+			},
+		},
+		{
+			ID:   models.MakeUint256(4),
+			Root: utils.RandomHash(),
+			Deposits: []models.DepositID{
+				{
+					BlockNumber: 5,
+					LogIndex:    6,
+				},
+			},
+		},
+	}
+	for i := range subTrees {
+		err := s.storage.AddPendingDepositSubTree(&subTrees[i])
+		s.NoError(err)
+	}
+
+	err := s.storage.DeletePendingDepositSubTrees(subTrees[0].ID, subTrees[1].ID)
+	s.NoError(err)
+
+	for i := range subTrees {
+		_, err = s.storage.GetPendingDepositSubTree(subTrees[i].ID)
+		s.Equal(NewNotFoundError("deposit sub tree"), err)
+	}
+}
+
+func (s *DepositSubTreeTestSuite) TestDeletePendingDepositSubTrees_NonExistentTree() {
+	err := s.storage.DeletePendingDepositSubTrees(models.MakeUint256(1))
+	s.Equal(NewNotFoundError("deposit sub tree"), err)
+}
+
+func TestDepositSubTreeTestSuite(t *testing.T) {
+	suite.Run(t, new(DepositSubTreeTestSuite))
+}
