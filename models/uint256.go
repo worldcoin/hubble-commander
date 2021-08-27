@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"math/big"
 
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/holiman/uint256"
 	"github.com/pkg/errors"
 )
@@ -144,6 +145,10 @@ func (u *Uint256) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	return u.safeSetUint256FromString(str)
+}
+
+func (u *Uint256) Bytes() []byte {
+	return utils.PadLeft(u.Int.Bytes(), 32)
 }
 
 func (u *Uint256) SetBytes(data []byte) {

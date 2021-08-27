@@ -52,3 +52,15 @@ func TestDecodeKey(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, value, decoded)
 }
+
+func TestEncodeString(t *testing.T) {
+	value := "some string"
+
+	encoded, err := EncodeString(&value)
+	require.NoError(t, err)
+
+	var decoded string
+	err = DecodeString(encoded, &decoded)
+	require.NoError(t, err)
+	require.Equal(t, value, decoded)
+}

@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 
-	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 )
@@ -31,7 +30,7 @@ type GenesisAccounts []PopulatedGenesisAccount
 
 func (s *ChainState) Bytes() []byte {
 	b := make([]byte, 88+len(s.GenesisAccounts)*populatedGenesisAccountByteSize)
-	copy(b[:32], utils.PadLeft(s.ChainID.Bytes(), 32))
+	copy(b[:32], s.ChainID.Bytes())
 	copy(b[32:52], s.AccountRegistry.Bytes())
 	binary.BigEndian.PutUint64(b[52:60], s.DeploymentBlock)
 	copy(b[60:80], s.Rollup.Bytes())

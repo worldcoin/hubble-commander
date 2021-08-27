@@ -2,8 +2,6 @@ package models
 
 import (
 	"encoding/binary"
-
-	"github.com/Worldcoin/hubble-commander/utils"
 )
 
 const populatedGenesisAccountByteSize = 168
@@ -37,7 +35,7 @@ func (a *PopulatedGenesisAccount) Bytes() []byte {
 	copy(b[:128], a.PublicKey.Bytes())
 	binary.BigEndian.PutUint32(b[128:132], a.PubKeyID)
 	binary.BigEndian.PutUint32(b[132:136], a.StateID)
-	copy(b[136:168], utils.PadLeft(a.Balance.Bytes(), 32))
+	copy(b[136:168], a.Balance.Bytes())
 
 	return b
 }
