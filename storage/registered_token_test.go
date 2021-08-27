@@ -31,7 +31,7 @@ func (s *RegisteredTokenTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *RegisteredTokenTestSuite) TestAddRegisteredTokenAndRetrieve() {
+func (s *RegisteredTokenTestSuite) TestAddRegisteredToken_AddAndRetrieve() {
 	registeredToken := &models.RegisteredToken{
 		ID:       models.MakeUint256(1),
 		Contract: common.BytesToAddress(utils.NewRandomHash().Bytes()),

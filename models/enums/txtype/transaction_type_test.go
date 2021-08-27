@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestUnmarshalJSON_SupportedType(t *testing.T) {
+func TestTransactionType_UnmarshalJSON_SupportedType(t *testing.T) {
 	input := `"TRANSFER"`
 	var res TransactionType
 	err := json.Unmarshal([]byte(input), &res)
@@ -18,7 +18,7 @@ func TestUnmarshalJSON_SupportedType(t *testing.T) {
 	require.Equal(t, Transfer, res)
 }
 
-func TestUnmarshalJSON_UnsupportedType(t *testing.T) {
+func TestTransactionType_UnmarshalJSON_UnsupportedType(t *testing.T) {
 	input := `"NOT_SUPPORTED"`
 	var res TransactionType
 	err := json.Unmarshal([]byte(input), &res)
@@ -27,7 +27,7 @@ func TestUnmarshalJSON_UnsupportedType(t *testing.T) {
 	require.True(t, enumerr.IsUnsupportedError(err))
 }
 
-func TestMarshalJSON_SupportedType(t *testing.T) {
+func TestTransactionType_MarshalJSON_SupportedType(t *testing.T) {
 	input := Create2Transfer
 	expected := fmt.Sprintf(`"%s"`, TransactionTypes[input])
 	bytes, err := json.Marshal(input)
@@ -35,7 +35,7 @@ func TestMarshalJSON_SupportedType(t *testing.T) {
 	require.Equal(t, expected, string(bytes))
 }
 
-func TestMarshalJSON_UnsupportedType(t *testing.T) {
+func TestTransactionType_MarshalJSON_UnsupportedType(t *testing.T) {
 	input := TransactionType(10)
 	bytes, err := json.Marshal(input)
 	require.Error(t, err)

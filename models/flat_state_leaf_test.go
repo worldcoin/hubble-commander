@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestFlatStateLeaf_ByteEncoding(t *testing.T) {
+func TestFlatStateLeaf_Bytes(t *testing.T) {
 	leaf := FlatStateLeaf{
 		StateID:  1,
 		DataHash: utils.RandomHash(),

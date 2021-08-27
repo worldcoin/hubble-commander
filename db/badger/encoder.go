@@ -2,12 +2,15 @@ package badger
 
 import (
 	"encoding/binary"
+	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v3"
 )
+
+var errPassedByPointer = fmt.Errorf("pointer was passed to Encode, pass by value instead")
 
 // nolint:gocyclo, funlen
 // Encode Remember to provide cases for both value and pointer types when adding new encoders
@@ -17,71 +20,85 @@ func Encode(value interface{}) ([]byte, error) {
 	case models.AccountNode:
 		return EncodeDataHash(&v.DataHash)
 	case *models.AccountNode:
-		return nil, errors.Errorf("pass by value")
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.AccountLeaf:
 		return v.Bytes(), nil
 	case *models.AccountLeaf:
-		return nil, errors.Errorf("pass by value")
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.Batch:
 		return v.Bytes(), nil
 	case *models.Batch:
-		return nil, errors.Errorf("pass by value")
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.ChainState:
 		return v.Bytes(), nil
 	case *models.ChainState:
-		return nil, errors.Errorf("pass by value")
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.Commitment:
 		return v.Bytes(), nil
 	case *models.Commitment:
-		return nil, errors.Errorf("pass by value")
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.CommitmentID:
 		return v.Bytes(), nil
 	case *models.CommitmentID:
-		return nil, errors.Errorf("pass by value")
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.Deposit:
 		return v.Bytes(), nil
 	case *models.Deposit:
-		return nil, errors.Errorf("pass by value")
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.DepositID:
 		return v.Bytes(), nil
 	case *models.DepositID:
-		return nil, errors.Errorf("pass by value")
+		return nil, errors.WithStack(errPassedByPointer)
+	case models.PendingDepositSubTree:
+		return v.Bytes(), nil
+	case *models.PendingDepositSubTree:
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.NamespacedMerklePath:
 		return v.Bytes(), nil
 	case *models.NamespacedMerklePath:
-		return nil, errors.Errorf("pass by value")
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.MerkleTreeNode:
 		return EncodeDataHash(&v.DataHash)
 	case *models.MerkleTreeNode:
-		return nil, errors.Errorf("pass by value")
+		return nil, errors.WithStack(errPassedByPointer)
+	case models.PublicKey:
+		return v.Bytes(), nil
+	case *models.PublicKey:
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.FlatStateLeaf:
 		return v.Bytes(), nil
 	case *models.FlatStateLeaf:
-		return nil, errors.Errorf("pass by value")
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.StateUpdate:
 		return v.Bytes(), nil
 	case *models.StateUpdate:
-		return nil, errors.Errorf("pass by value")
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.Uint256:
 		return v.Bytes(), nil
 	case *models.Uint256:
-		return nil, errors.Errorf("pass by value")
+		return nil, errors.WithStack(errPassedByPointer)
 	case common.Hash:
 		return v.Bytes(), nil
 	case *common.Hash:
 		return models.EncodeHashPointer(v), nil
+	case string:
+		return EncodeString(&v)
+	case *string:
+		return nil, errors.WithStack(errPassedByPointer)
 	case uint32:
 		return EncodeUint32(&v)
 	case *uint32:
-		return nil, errors.Errorf("pass by value")
+		return nil, errors.WithStack(errPassedByPointer)
 	case uint64:
 		return EncodeUint64(&v)
 	case *uint64:
-		return nil, errors.Errorf("pass by value")
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.RegisteredToken:
 		return v.Contract.Bytes(), nil
 	case *models.RegisteredToken:
-		return nil, errors.Errorf("pass by value")
+		return nil, errors.WithStack(errPassedByPointer)
+	case bh.KeyList:
+		return EncodeKeyList(&v)
 	default:
 		return bh.DefaultEncode(value)
 	}
@@ -104,12 +121,16 @@ func Decode(data []byte, value interface{}) error {
 		return v.SetBytes(data)
 	case *models.DepositID:
 		return v.SetBytes(data)
+	case *models.PendingDepositSubTree:
+		return v.SetBytes(data)
 	case *models.NamespacedMerklePath:
 		return v.SetBytes(data)
 	case *models.Batch:
 		return v.SetBytes(data)
 	case *models.MerkleTreeNode:
 		return DecodeDataHash(data, &v.DataHash)
+	case *models.PublicKey:
+		return v.SetBytes(data)
 	case *models.FlatStateLeaf:
 		return v.SetBytes(data)
 	case *models.StateUpdate:
@@ -119,6 +140,8 @@ func Decode(data []byte, value interface{}) error {
 		return nil
 	case *common.Hash:
 		return decodeHashPointer(data, &value, v)
+	case *string:
+		return DecodeString(data, v)
 	case *uint32:
 		return DecodeUint32(data, v)
 	case *uint64:
@@ -126,6 +149,8 @@ func Decode(data []byte, value interface{}) error {
 	case *models.RegisteredToken:
 		v.Contract.SetBytes(data)
 		return nil
+	case *bh.KeyList:
+		return DecodeKeyList(data, v)
 	default:
 		return bh.DefaultDecode(data, value)
 	}
@@ -173,6 +198,15 @@ func EncodeUint64(value *uint64) ([]byte, error) {
 func DecodeUint64(data []byte, value *uint64) error {
 	newUint64 := binary.BigEndian.Uint64(data)
 	*value = newUint64
+	return nil
+}
+
+func EncodeString(value *string) ([]byte, error) {
+	return []byte(*value), nil
+}
+
+func DecodeString(data []byte, value *string) error {
+	*value = string(data)
 	return nil
 }
 

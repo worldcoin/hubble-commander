@@ -19,7 +19,7 @@ func TestUserState_Copy(t *testing.T) {
 	require.Equal(t, MakeUint256(3), userState.Balance)
 }
 
-func TestStateUpdate_ByteEncoding(t *testing.T) {
+func TestStateUpdate_Bytes(t *testing.T) {
 	stateUpdate := StateUpdate{
 		ID:          1,
 		CurrentRoot: utils.RandomHash(),
