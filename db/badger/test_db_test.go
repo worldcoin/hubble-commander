@@ -31,7 +31,7 @@ func TestNewTestDB(t *testing.T) {
 	require.Equal(t, testStruct, res)
 }
 
-func TestPrune(t *testing.T) {
+func TestTestDB_Prune(t *testing.T) {
 	bdg, err := NewTestDB()
 	require.NoError(t, err)
 
