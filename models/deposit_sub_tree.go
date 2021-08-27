@@ -37,6 +37,8 @@ func (d *PendingDepositSubTree) SetBytes(data []byte) error {
 
 	if leafCount > 0 {
 		d.Deposits = make([]DepositID, 0, leafCount)
+	} else {
+		d.Deposits = nil
 	}
 
 	for i := 0; i < leafCount; i++ {
