@@ -11,7 +11,7 @@ type testType struct {
 	Second string
 }
 
-func Test_ValueToInterfaceSlice(t *testing.T) {
+func TestValueToInterfaceSlice(t *testing.T) {
 	input := make([]testType, 5)
 	expected := make([]interface{}, 5)
 	for i := range input {
@@ -25,7 +25,7 @@ func Test_ValueToInterfaceSlice(t *testing.T) {
 	require.Equal(t, expected, output)
 }
 
-func Test_ValueToInterfaceSlice_InvalidType(t *testing.T) {
+func TestValueToInterfaceSlice_InvalidType(t *testing.T) {
 	input := testType{
 		First: 1,
 	}

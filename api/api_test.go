@@ -19,7 +19,7 @@ type Result struct {
 	Result  string `json:"result"`
 }
 
-func Test_StartApiServer(t *testing.T) {
+func TestStartApiServer(t *testing.T) {
 	var jsonStr = []byte(`{"jsonrpc": "2.0", "method": "hubble_getVersion", "id": "1"}`)
 	req, err := http.NewRequest("POST", "", bytes.NewBuffer(jsonStr))
 	require.NoError(t, err)

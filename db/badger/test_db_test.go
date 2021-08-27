@@ -17,7 +17,7 @@ var testStruct = someStruct{
 	Age:  4,
 }
 
-func Test_NewTestDB(t *testing.T) {
+func TestNewTestDB(t *testing.T) {
 	bdg, err := NewTestDB()
 	require.NoError(t, err)
 

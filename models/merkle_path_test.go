@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_NewMerklePath_InvalidLength(t *testing.T) {
+func TestNewMerklePath_InvalidLength(t *testing.T) {
 	_, err := NewMerklePath(strings.Repeat("0", 33))
 	require.Error(t, err)
 }
