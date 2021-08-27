@@ -13,10 +13,10 @@ type PendingDepositSubTree struct {
 func (d *PendingDepositSubTree) Bytes() []byte {
 	b := make([]byte, common.HashLength+depositIDDataLength*len(d.Deposits))
 
-	copy(b[0:32], d.Root.Bytes())
+	copy(b[0:common.HashLength], d.Root.Bytes())
 
 	for i := range d.Deposits {
-		start := 32 + i*depositIDDataLength
+		start := common.HashLength + i*depositIDDataLength
 		end := start + depositIDDataLength
 		copy(b[start:end], d.Deposits[i].Bytes())
 	}
@@ -25,13 +25,15 @@ func (d *PendingDepositSubTree) Bytes() []byte {
 }
 
 func (d *PendingDepositSubTree) SetBytes(data []byte) error {
-	if len(data) < common.HashLength || (len(data)-common.HashLength)%depositIDDataLength != 0 {
+	dataLength := len(data)
+
+	if dataLength < common.HashLength || (dataLength-common.HashLength)%depositIDDataLength != 0 {
 		return ErrInvalidLength
 	}
 
-	d.Root.SetBytes(data[0:32])
+	d.Root.SetBytes(data[0:common.HashLength])
 
-	leafCount := (len(data) - common.HashLength) / depositIDDataLength
+	leafCount := (dataLength - common.HashLength) / depositIDDataLength
 
 	if leafCount > 0 {
 		d.Deposits = make([]DepositID, 0, leafCount)
