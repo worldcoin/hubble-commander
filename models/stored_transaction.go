@@ -15,6 +15,8 @@ const (
 	create2TransferBodyLength = 133
 )
 
+var StoredTransactionPrefix = getBadgerHoldPrefix(StoredTransaction{})
+
 type StoredTransaction struct {
 	Hash         common.Hash
 	TxType       txtype.TransactionType

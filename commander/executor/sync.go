@@ -92,7 +92,7 @@ func (t *TransactionExecutor) excludeTransactionsFromCommitment(batchIDs ...mode
 	if err != nil {
 		return err
 	}
-	return t.storage.BatchMarkTransactionAsIncluded(hashes, nil, nil)
+	return t.storage.BatchMarkTransactionAsIncluded(hashes, nil)
 }
 
 func (t *TransactionExecutor) getTransactionSender(txHash common.Hash) (*common.Address, error) {

@@ -84,6 +84,27 @@ func (s *TransactionStorage) GetTransfersByCommitmentID(id *models.CommitmentID)
 	return txs, nil
 }
 
+func (s *TransactionStorage) BatchMarkTransfersAsIncluded(txs []models.Transfer, commitmentID *models.CommitmentID) error {
+	tx, txStorage, err := s.BeginTransaction(TxOptions{Badger: true})
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(&err)
+
+	for i := range txs {
+		storedTx := models.MakeStoredTransactionFromTransfer(&txs[i])
+		storedTx.CommitmentID = commitmentID
+		err = txStorage.database.Badger.Update(storedTx.Hash, storedTx)
+		if err == bh.ErrNotFound {
+			return NewNotFoundError("transaction")
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
 func (s *Storage) GetTransferWithBatchDetails(hash common.Hash) (*models.TransferWithBatchDetails, error) {
 	transfer, err := s.GetTransfer(hash)
 	if err != nil {

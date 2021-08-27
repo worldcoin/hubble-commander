@@ -135,6 +135,27 @@ func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([
 	return s.create2TransferToTransfersWithBatchDetails(transfers)
 }
 
+func (s *TransactionStorage) BatchMarkCreate2TransfersAsIncluded(txs []models.Create2Transfer, commitmentID *models.CommitmentID) error {
+	tx, txStorage, err := s.BeginTransaction(TxOptions{Badger: true})
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(&err)
+
+	for i := range txs {
+		storedTx := models.MakeStoredTransactionFromCreate2Transfer(&txs[i])
+		storedTx.CommitmentID = commitmentID
+		err = txStorage.database.Badger.Update(storedTx.Hash, storedTx)
+		if err == bh.ErrNotFound {
+			return NewNotFoundError("transaction")
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
 func (s *Storage) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.Create2TransferWithBatchDetails, error) {
 	res, err := s.GetCreate2Transfer(hash)
 	if err != nil {

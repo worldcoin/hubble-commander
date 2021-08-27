@@ -57,5 +57,5 @@ func (t *TransactionExecutor) markCreate2TransfersAsIncluded(transfers []models.
 			return err
 		}
 	}
-	return t.storage.BatchMarkTransactionAsIncluded(hashes, &commitmentID.BatchID, &commitmentID.IndexInBatch)
+	return t.storage.BatchMarkTransactionAsIncluded(hashes, commitmentID)
 }

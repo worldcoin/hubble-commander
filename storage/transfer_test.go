@@ -72,6 +72,29 @@ func (s *TransferTestSuite) TestAddTransfer_SetsReceiveTime() {
 	s.LessOrEqual(res.ReceiveTime.Unix(), time.Now().Unix())
 }
 
+func (s *TransactionBaseTestSuite) TestBatchMarkTransfersAsIncluded() {
+	txs := make([]models.Transfer, 2)
+	for i := 0; i < len(txs); i++ {
+		txs[i] = transferTransaction
+		txs[i].Hash = utils.RandomHash()
+		err := s.storage.AddTransfer(&txs[i])
+		s.NoError(err)
+	}
+
+	commitmentID := models.CommitmentID{
+		BatchID:      models.MakeUint256(1),
+		IndexInBatch: 1,
+	}
+	err := s.storage.BatchMarkTransfersAsIncluded(txs, &commitmentID)
+	s.NoError(err)
+
+	for i := range txs {
+		tx, err := s.storage.GetTransfer(txs[i].Hash)
+		s.NoError(err)
+		s.Equal(commitmentID, *tx.CommitmentID)
+	}
+}
+
 func (s *TransferTestSuite) TestGetTransferWithBatchDetails() {
 	batch := &models.Batch{
 		ID:              models.MakeUint256(1),

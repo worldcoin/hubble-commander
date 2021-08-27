@@ -3,10 +3,12 @@ package storage
 import (
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/db"
+	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
+	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
+	bh "github.com/timshannon/badgerhold/v3"
 )
 
 type TransactionStorage struct {
@@ -38,99 +40,53 @@ func (s *TransactionStorage) BeginTransaction(opts TxOptions) (*db.TxController,
 	return txController, &txTransactionStorage, nil
 }
 
-func (s *TransactionStorage) addTransactionBase(txBase *models.TransactionBase, txType txtype.TransactionType) (*models.Timestamp, error) {
-	res := make([]models.Timestamp, 0, 1)
-	err := s.database.Postgres.Query(
-		s.database.QB.Insert("transaction_base").
-			Values(
-				txBase.Hash,
-				txType,
-				txBase.FromStateID,
-				txBase.Amount,
-				txBase.Fee,
-				txBase.Nonce,
-				txBase.Signature,
-				txBase.ErrorMessage,
-				"NOW()",
-				txBase.CommitmentID.BatchID,
-				txBase.CommitmentID.IndexInBatch,
-			).
-			Suffix("RETURNING receive_time"),
-	).Into(&res)
-	if err != nil {
-		return nil, err
-	}
-	return &res[0], nil
-}
-
-func (s *TransactionStorage) BatchAddTransactionBase(txs []models.TransactionBase) error {
-	query := s.database.QB.Insert("transaction_base")
-	for i := range txs {
-		query = query.Values(
-			txs[i].Hash,
-			txs[i].TxType,
-			txs[i].FromStateID,
-			txs[i].Amount,
-			txs[i].Fee,
-			txs[i].Nonce,
-			txs[i].Signature,
-			txs[i].ErrorMessage,
-			nil,
-			txs[i].CommitmentID.BatchID,
-			txs[i].CommitmentID.IndexInBatch,
-		)
-	}
-	res, err := s.database.Postgres.Query(query).Exec()
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected == 0 {
-		return ErrNoRowsAffected
-	}
-	return nil
-}
-
 func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*models.Uint256, error) {
-	res := make([]models.Uint256, 0, 1)
-	err := s.database.Postgres.Query(
-		s.database.QB.Select("transaction_base.nonce").
-			From("transaction_base").
-			Where(squirrel.Eq{"from_state_id": accountStateID}).
-			OrderBy("nonce DESC").
-			Limit(1),
-	).Into(&res)
-	if err != nil {
-		return nil, err
-	}
-	if len(res) == 0 {
+	var tx models.StoredTransaction
+	err := s.database.Badger.Iterator(models.StoredTransactionPrefix, badger.ReversePrefetchIteratorOpts,
+		func(item *bdg.Item) (bool, error) {
+			err := item.Value(tx.SetBytes)
+			if err != nil {
+				return false, err
+			}
+			return tx.FromStateID == accountStateID, nil
+		})
+	if err == badger.ErrIteratorFinished {
 		return nil, NewNotFoundError("transaction")
 	}
-	return &res[0], nil
+	if err != nil {
+		return nil, err
+	}
+	return &tx.Nonce, nil
 }
 
-func (s *TransactionStorage) BatchMarkTransactionAsIncluded(txHashes []common.Hash, batchID *models.Uint256, indexInBatch *uint8) error {
-	res, err := s.database.Postgres.Query(
-		s.database.QB.Update("transaction_base").
-			Where(squirrel.Eq{"tx_hash": txHashes}).
-			Set("batch_id", batchID).
-			Set("index_in_batch", indexInBatch),
-	).Exec()
+// BatchMarkTransactionAsIncluded TODO-tx: replace usage with custom functions
+func (s *TransactionStorage) BatchMarkTransactionAsIncluded(txHashes []common.Hash, commitmentID *models.CommitmentID) error {
+	tx, txStorage, err := s.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return err
 	}
+	defer tx.Rollback(&err)
 
-	numUpdatedRows, err := res.RowsAffected()
-	if err != nil {
-		return err
+	for i := range txHashes {
+		var storedTx models.StoredTransaction
+		err = txStorage.database.Badger.Get(txHashes[i], &storedTx)
+		if err == bh.ErrNotFound {
+			return NewNotFoundError("transaction")
+		}
+		if err != nil {
+			return err
+		}
+
+		storedTx.CommitmentID = commitmentID
+		err = txStorage.database.Badger.Update(storedTx.Hash, storedTx)
+		if err == bh.ErrNotFound {
+			return NewNotFoundError("transaction")
+		}
+		if err != nil {
+			return err
+		}
 	}
-	if numUpdatedRows == 0 {
-		return ErrNoRowsAffected
-	}
-	return nil
+	return tx.Commit()
 }
 
 func (s *TransactionStorage) SetTransactionError(txHash common.Hash, errorMessage string) error {
