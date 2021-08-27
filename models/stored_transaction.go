@@ -120,6 +120,23 @@ func (t *StoredTransaction) ToCreate2Transfer() *Create2Transfer {
 	}
 }
 
+// TODO-tx: move to dto
+func (t *StoredTransaction) ToCreate2TransferForCommitment() *Create2TransferForCommitment {
+	return &Create2TransferForCommitment{
+		TransactionBaseForCommitment: TransactionBaseForCommitment{
+			Hash:        t.Hash,
+			FromStateID: t.FromStateID,
+			Amount:      t.Amount,
+			Fee:         t.Fee,
+			Nonce:       t.Nonce,
+			Signature:   t.Signature,
+			ReceiveTime: t.ReceiveTime,
+		},
+		ToStateID:   t.Body.(*StoredCreate2TransferBody).ToStateID,
+		ToPublicKey: t.Body.(*StoredCreate2TransferBody).ToPublicKey,
+	}
+}
+
 func (t *StoredTransaction) Bytes() []byte {
 	b := make([]byte, t.BytesLen())
 	copy(b[0:32], t.Hash.Bytes())

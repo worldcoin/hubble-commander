@@ -276,7 +276,7 @@ func (s *Create2TransferTestSuite) TestSetCreate2TransferToStateID() {
 
 func (s *Create2TransferTestSuite) TestSetCreate2TransferToStateID_NoCreate2Transfer() {
 	err := s.storage.SetCreate2TransferToStateID(create2Transfer.Hash, 10)
-	s.Equal(err, ErrNoRowsAffected)
+	s.Equal(NewNotFoundError("transaction"), err)
 }
 
 func TestCreate2TransferTestSuite(t *testing.T) {
