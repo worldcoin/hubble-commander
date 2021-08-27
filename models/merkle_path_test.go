@@ -7,12 +7,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewMerklePathLength(t *testing.T) {
+func Test_NewMerklePath_InvalidLength(t *testing.T) {
 	_, err := NewMerklePath(strings.Repeat("0", 33))
 	require.Error(t, err)
 }
 
-func TestValue(t *testing.T) {
+func TestMerklePath_Value(t *testing.T) {
 	a, err := NewMerklePath("000111")
 	require.NoError(t, err)
 
@@ -21,7 +21,7 @@ func TestValue(t *testing.T) {
 	require.Equal(t, "0000111", b)
 }
 
-func TestAddOne(t *testing.T) {
+func TestMerklePath_Add_One(t *testing.T) {
 	a, err := NewMerklePath("0000")
 	require.NoError(t, err)
 
@@ -34,7 +34,7 @@ func TestAddOne(t *testing.T) {
 	require.Equal(t, expected, b)
 }
 
-func TestAddIndexOverflow(t *testing.T) {
+func TestMerklePath_Add_IndexOverflow(t *testing.T) {
 	a, err := NewMerklePath("1111")
 	require.NoError(t, err)
 
@@ -42,7 +42,7 @@ func TestAddIndexOverflow(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestAddUint32Overflow(t *testing.T) {
+func TestMerklePath_Add_Uint32Overflow(t *testing.T) {
 	a, err := NewMerklePath(strings.Repeat("1", 32))
 	require.NoError(t, err)
 
@@ -50,7 +50,7 @@ func TestAddUint32Overflow(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestAddToRoot(t *testing.T) {
+func TestMerklePath_Add_ToRoot(t *testing.T) {
 	root, err := NewMerklePath("")
 	require.NoError(t, err)
 
@@ -58,7 +58,7 @@ func TestAddToRoot(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestAddCreatesNewStruct(t *testing.T) {
+func TestMerklePath_Add_CreatesNewStruct(t *testing.T) {
 	a, err := NewMerklePath("0000")
 	require.NoError(t, err)
 
@@ -68,7 +68,7 @@ func TestAddCreatesNewStruct(t *testing.T) {
 	require.NotEqual(t, a, b)
 }
 
-func TestSubOne(t *testing.T) {
+func TestMerklePath_Sub_One(t *testing.T) {
 	a, err := NewMerklePath("0010")
 	require.NoError(t, err)
 
@@ -81,7 +81,7 @@ func TestSubOne(t *testing.T) {
 	require.Equal(t, expected, b)
 }
 
-func TestSubUnderflow(t *testing.T) {
+func TestMerklePath_Sub_Underflow(t *testing.T) {
 	a, err := NewMerklePath("0000")
 	require.NoError(t, err)
 
@@ -89,7 +89,7 @@ func TestSubUnderflow(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestSubFromRoot(t *testing.T) {
+func TestMerklePath_Sub_FromRoot(t *testing.T) {
 	root, err := NewMerklePath("")
 	require.NoError(t, err)
 
@@ -97,7 +97,7 @@ func TestSubFromRoot(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestSubCreatesNewStruct(t *testing.T) {
+func TestMerklePath_Sub_CreatesNewStruct(t *testing.T) {
 	a, err := NewMerklePath("0010")
 	require.NoError(t, err)
 
@@ -107,7 +107,7 @@ func TestSubCreatesNewStruct(t *testing.T) {
 	require.NotEqual(t, a, b)
 }
 
-func TestSiblingOfLeft(t *testing.T) {
+func TestMerklePath_Sibling_OfLeft(t *testing.T) {
 	a, err := NewMerklePath("0000")
 	require.NoError(t, err)
 
@@ -120,7 +120,7 @@ func TestSiblingOfLeft(t *testing.T) {
 	require.Equal(t, expected, b)
 }
 
-func TestSiblingOfRight(t *testing.T) {
+func TestMerklePath_Sibling_OfRight(t *testing.T) {
 	a, err := NewMerklePath("0001")
 	require.NoError(t, err)
 
@@ -133,7 +133,7 @@ func TestSiblingOfRight(t *testing.T) {
 	require.Equal(t, expected, b)
 }
 
-func TestSiblingUint32(t *testing.T) {
+func TestMerklePath_Sibling_Uint32(t *testing.T) {
 	a, err := NewMerklePath("11111111111111111111111111111111")
 	require.NoError(t, err)
 
@@ -146,7 +146,7 @@ func TestSiblingUint32(t *testing.T) {
 	require.Equal(t, expected, b)
 }
 
-func TestSiblingOfRoot(t *testing.T) {
+func TestMerklePath_Sibling_OfRoot(t *testing.T) {
 	root, err := NewMerklePath("")
 	require.NoError(t, err)
 
@@ -154,7 +154,7 @@ func TestSiblingOfRoot(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestSiblingCreatesNewStruct(t *testing.T) {
+func TestMerklePath_Sibling_CreatesNewStruct(t *testing.T) {
 	a, err := NewMerklePath("0010")
 	require.NoError(t, err)
 
@@ -164,7 +164,7 @@ func TestSiblingCreatesNewStruct(t *testing.T) {
 	require.NotEqual(t, a, b)
 }
 
-func TestGetWitnessesOfRoot(t *testing.T) {
+func TestMerklePath_GetWitnesses_OfRoot(t *testing.T) {
 	path, err := NewMerklePath("")
 	require.NoError(t, err)
 
@@ -172,7 +172,7 @@ func TestGetWitnessesOfRoot(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestGetWitnessesOfDepth1(t *testing.T) {
+func TestMerklePath_GetWitnesses_OfDepth1(t *testing.T) {
 	path, err := NewMerklePath("1")
 	require.NoError(t, err)
 
@@ -186,7 +186,7 @@ func TestGetWitnessesOfDepth1(t *testing.T) {
 	require.Equal(t, expected, witnesses)
 }
 
-func TestGetWitnessesOfDepth3(t *testing.T) {
+func TestMerklePath_GetWitnesses_OfDepth3(t *testing.T) {
 	path, err := NewMerklePath("101")
 	require.NoError(t, err)
 
@@ -204,7 +204,7 @@ func TestGetWitnessesOfDepth3(t *testing.T) {
 	require.Equal(t, expected, witnesses)
 }
 
-func TestNamespaceBytesSetBytes(t *testing.T) {
+func TestNamespacedMerklePath_Bytes(t *testing.T) {
 	path, err := NewMerklePath("101")
 	require.NoError(t, err)
 	ns := NamespacedMerklePath{Namespace: "foo", Path: *path}

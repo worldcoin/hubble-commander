@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCopyStringUint32Map(t *testing.T) {
+func Test_CopyStringUint32Map(t *testing.T) {
 	m1 := map[string]uint32{
 		"a": 123,
 		"b": 456,

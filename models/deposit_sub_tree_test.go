@@ -7,9 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TODO - figure out how to name these tests
-
-func TestPendingDepositSubTree_InvalidBytesLength(t *testing.T) {
+func TestPendingDepositSubTree_SetBytes_InvalidBytesLength(t *testing.T) {
 	subTree := PendingDepositSubTree{}
 	err := subTree.SetBytes([]byte{1, 2, 3})
 	require.ErrorIs(t, err, ErrInvalidLength)

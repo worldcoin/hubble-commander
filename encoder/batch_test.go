@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDecodeBatchCalldata(t *testing.T) {
+func Test_DecodeBatchCalldata(t *testing.T) {
 	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
 	require.NoError(t, err)
 

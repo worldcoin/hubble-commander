@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewWallet(t *testing.T) {
+func Test_NewWallet(t *testing.T) {
 	data := []byte{1, 2, 3}
 
 	wallet, err := NewRandomWallet(testDomain)

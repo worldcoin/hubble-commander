@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestReadGenesisFile(t *testing.T) {
+func Test_ReadGenesisFile(t *testing.T) {
 	genesisAccounts, err := readGenesisFile(getGenesisPath())
 	require.NoError(t, err)
 	require.Greater(t, len(genesisAccounts), 0)
@@ -16,7 +16,7 @@ func TestReadGenesisFile(t *testing.T) {
 	require.Equal(t, genesisAccounts[len(genesisAccounts)-1].Balance.CmpN(0), 0)
 }
 
-func TestDecodeRawGenesisAccounts(t *testing.T) {
+func Test_DecodeRawGenesisAccounts(t *testing.T) {
 	rawGenesisAccounts := []models.RawGenesisAccount{
 		{
 			PrivateKey: "2f7a559b2d2d4ec1e3babc0122e7ef0c6a45cdb4ccd167f456caca521123fe9e",

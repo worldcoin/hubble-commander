@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetZeroHash_Root(t *testing.T) {
+func Test_GetZeroHash_Root(t *testing.T) {
 	require.Equal(
 		t,
 		common.HexToHash("0xcf277fb80a82478460e8988570b718f1e083ceb76f7e271a1a1497e5975f53ae"),
@@ -17,7 +17,7 @@ func TestGetZeroHash_Root(t *testing.T) {
 	)
 }
 
-func TestGetZeroHash_RootChild(t *testing.T) {
+func Test_GetZeroHash_RootChild(t *testing.T) {
 	require.Equal(
 		t,
 		common.HexToHash("0x78ccaaab73373552f207a63599de54d7d8d0c1805f86ce7da15818d09f4cff62"),
@@ -25,17 +25,17 @@ func TestGetZeroHash_RootChild(t *testing.T) {
 	)
 }
 
-func TestGetZeroHash_Panic(t *testing.T) {
+func Test_GetZeroHash_Panic(t *testing.T) {
 	require.Panics(t, func() { GetZeroHash(MaxDepth + 1) })
 }
 
-func TestNewMerkleTree_ZeroLeaves(t *testing.T) {
+func Test_NewMerkleTree_ZeroLeaves(t *testing.T) {
 	tree, err := NewMerkleTree([]common.Hash{})
 	require.Nil(t, tree)
 	require.ErrorIs(t, err, ErrEmptyLeaves)
 }
 
-func TestNewMerkleTree_OneLeaf(t *testing.T) {
+func Test_NewMerkleTree_OneLeaf(t *testing.T) {
 	hash := utils.RandomHash()
 
 	tree, err := NewMerkleTree([]common.Hash{hash})
@@ -45,7 +45,7 @@ func TestNewMerkleTree_OneLeaf(t *testing.T) {
 	require.Equal(t, uint8(2), tree.Depth())
 }
 
-func TestNewMerkleTree_TwoLeaves(t *testing.T) {
+func Test_NewMerkleTree_TwoLeaves(t *testing.T) {
 	left := utils.RandomHash()
 	right := utils.RandomHash()
 
@@ -56,7 +56,7 @@ func TestNewMerkleTree_TwoLeaves(t *testing.T) {
 	require.Equal(t, uint8(2), tree.Depth())
 }
 
-func TestNewMerkleTree_ThreeLeaves(t *testing.T) {
+func Test_NewMerkleTree_ThreeLeaves(t *testing.T) {
 	leaf1 := utils.RandomHash()
 	leaf2 := utils.RandomHash()
 	leaf3 := utils.RandomHash()

@@ -17,7 +17,7 @@ var testStruct = someStruct{
 	Age:  4,
 }
 
-func TestNewTestDB(t *testing.T) {
+func Test_NewTestDB(t *testing.T) {
 	bdg, err := NewTestDB()
 	require.NoError(t, err)
 
@@ -31,7 +31,7 @@ func TestNewTestDB(t *testing.T) {
 	require.Equal(t, testStruct, res)
 }
 
-func TestPrune(t *testing.T) {
+func TestTestDB_Prune(t *testing.T) {
 	bdg, err := NewTestDB()
 	require.NoError(t, err)
 

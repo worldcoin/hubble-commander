@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPopulatedGenesisAccountBytes_ReturnsACopy(t *testing.T) {
+func TestPopulatedGenesisAccount_Bytes_ReturnsACopy(t *testing.T) {
 	account := PopulatedGenesisAccount{
 		PublicKey: PublicKey{1, 2, 0, 5, 4},
 	}
@@ -15,7 +15,7 @@ func TestPopulatedGenesisAccountBytes_ReturnsACopy(t *testing.T) {
 	require.Equal(t, PublicKey{1, 2, 0, 5, 4}, account.PublicKey)
 }
 
-func TestPopulatedGenesisAccountSetBytes(t *testing.T) {
+func TestPopulatedGenesisAccount_SetBytes(t *testing.T) {
 	account := PopulatedGenesisAccount{
 		PublicKey: PublicKey{1, 2, 0, 5, 4},
 		PubKeyID:  7,

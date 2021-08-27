@@ -40,7 +40,7 @@ func TestUint64_ByteEncoding(t *testing.T) {
 	require.Equal(t, value, decoded)
 }
 
-func TestDecodeKey(t *testing.T) {
+func Test_DecodeKey(t *testing.T) {
 	prefix := []byte("bh_prefix")
 	value := uint64(123456789)
 

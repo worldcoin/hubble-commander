@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestChainStateBytes_ReturnsACopy(t *testing.T) {
+func TestChainState_Bytes_ReturnsACopy(t *testing.T) {
 	chainState := ChainState{
 		ChainID: MakeUint256(1337),
 	}
@@ -16,7 +16,7 @@ func TestChainStateBytes_ReturnsACopy(t *testing.T) {
 	require.Equal(t, MakeUint256(1337), chainState.ChainID)
 }
 
-func TestChainStateSetBytes(t *testing.T) {
+func TestChainState_SetBytes(t *testing.T) {
 	chainState := ChainState{
 		ChainID:         MakeUint256(1337),
 		AccountRegistry: utils.RandomAddress(),
@@ -45,7 +45,7 @@ func TestChainStateSetBytes(t *testing.T) {
 	require.Equal(t, chainState, newChainState)
 }
 
-func TestChainStateSetBytes_InvalidLength(t *testing.T) {
+func TestChainState_SetBytes_InvalidLength(t *testing.T) {
 	chainState := ChainState{}
 
 	data40 := make([]byte, 40)

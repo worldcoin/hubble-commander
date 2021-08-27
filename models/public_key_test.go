@@ -9,14 +9,14 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func TestPublicKeyBytes_ReturnsACopy(t *testing.T) {
+func TestPublicKey_Bytes_ReturnsACopy(t *testing.T) {
 	key := PublicKey{1, 2, 3}
 	bytes := key.Bytes()
 	bytes[0] = 9
 	require.Equal(t, PublicKey{1, 2, 3}, key)
 }
 
-func TestPublicKeySetBytes(t *testing.T) {
+func TestPublicKey_SetBytes(t *testing.T) {
 	key := PublicKey{1, 2, 3}
 	bytes := key.Bytes()
 	newKey := PublicKey{}
@@ -25,7 +25,7 @@ func TestPublicKeySetBytes(t *testing.T) {
 	require.Equal(t, key, newKey)
 }
 
-func TestPublicKeySetBytes_InvalidLength(t *testing.T) {
+func TestPublicKey_SetBytes_InvalidLength(t *testing.T) {
 	bytes := utils.PadLeft([]byte{1, 2, 3}, 130)
 	key := PublicKey{}
 	err := key.SetBytes(bytes)
@@ -33,7 +33,7 @@ func TestPublicKeySetBytes_InvalidLength(t *testing.T) {
 	require.ErrorIs(t, err, ErrInvalidPublicKeyLength)
 }
 
-func TestPublicKeyValue_ReturnsACopy(t *testing.T) {
+func TestPublicKey_Value_ReturnsACopy(t *testing.T) {
 	key := PublicKey{1, 2, 3}
 	value, err := key.Value()
 	require.NoError(t, err)

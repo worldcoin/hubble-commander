@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestUnmarshalJSON_SupportedStatus(t *testing.T) {
+func TestTransactionStatus_UnmarshalJSON_SupportedStatus(t *testing.T) {
 	input := `"PENDING"`
 	var res TransactionStatus
 	err := json.Unmarshal([]byte(input), &res)
@@ -18,7 +18,7 @@ func TestUnmarshalJSON_SupportedStatus(t *testing.T) {
 	require.Equal(t, Pending, res)
 }
 
-func TestUnmarshalJSON_UnsupportedStatus(t *testing.T) {
+func TestTransactionStatus_UnmarshalJSON_UnsupportedStatus(t *testing.T) {
 	input := `"NOT_SUPPORTED"`
 	var res TransactionStatus
 	err := json.Unmarshal([]byte(input), &res)
@@ -27,7 +27,7 @@ func TestUnmarshalJSON_UnsupportedStatus(t *testing.T) {
 	require.True(t, enumerr.IsUnsupportedError(err))
 }
 
-func TestMarshalJSON_SupportedStatus(t *testing.T) {
+func TestTransactionStatus_MarshalJSON_SupportedStatus(t *testing.T) {
 	input := InBatch
 	expected := fmt.Sprintf(`"%s"`, TransactionStatuses[input])
 	bytes, err := json.Marshal(input)
@@ -35,7 +35,7 @@ func TestMarshalJSON_SupportedStatus(t *testing.T) {
 	require.Equal(t, expected, string(bytes))
 }
 
-func TestMarshalJSON_UnsupportedStatus(t *testing.T) {
+func TestTransactionStatus_MarshalJSON_UnsupportedStatus(t *testing.T) {
 	input := TransactionStatus(0)
 	bytes, err := json.Marshal(input)
 	require.Error(t, err)
