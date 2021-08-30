@@ -9,6 +9,7 @@ import (
 type NetworkInfo struct {
 	ChainID              models.Uint256  `json:"chainId"`
 	AccountRegistry      common.Address  `json:"accountRegistry"`
+	TokenRegistry        common.Address  `json:"tokenRegistry"`
 	DeploymentBlock      uint64          `json:"deploymentBlock"`
 	Rollup               common.Address  `json:"rollup"`
 	BlockNumber          uint32          `json:"blockNumber"`

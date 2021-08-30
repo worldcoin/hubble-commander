@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
+	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -20,6 +21,7 @@ type NewClientParams struct {
 	ChainState      models.ChainState
 	Rollup          *rollup.Rollup
 	AccountRegistry *accountregistry.AccountRegistry
+	TokenRegistry   *tokenregistry.TokenRegistry
 	ClientConfig
 }
 
@@ -38,6 +40,7 @@ type Client struct {
 	RollupABI          *abi.ABI
 	AccountRegistry    *accountregistry.AccountRegistry
 	AccountRegistryABI *abi.ABI
+	TokenRegistry      *tokenregistry.TokenRegistry
 	boundContract      *bind.BoundContract
 	blocksToFinalise   *int64
 	domain             *bls.Domain
@@ -64,6 +67,7 @@ func NewClient(chainConnection deployer.ChainConnection, params *NewClientParams
 		RollupABI:          &rollupAbi,
 		AccountRegistry:    params.AccountRegistry,
 		AccountRegistryABI: &accountRegistryAbi,
+		TokenRegistry:      params.TokenRegistry,
 		boundContract:      boundContract,
 	}, nil
 }
