@@ -5,7 +5,6 @@ import (
 	stdErrors "errors"
 	"math/big"
 
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -92,8 +91,11 @@ func (c *Commander) syncToLatestBlock() (err error) {
 	if err != nil {
 		return err
 	}
+	syncedBlock, err := c.storage.GetSyncedBlock()
+	if err != nil {
+		return err
+	}
 
-	syncedBlock := ref.Uint64(uint64(0))
 	for *syncedBlock != *latestBlockNumber {
 		c.invalidBatchID, err = c.client.GetInvalidBatchID()
 		if err != nil {
