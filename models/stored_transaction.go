@@ -4,9 +4,9 @@ import (
 	"encoding/binary"
 
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+	bh "github.com/timshannon/badgerhold/v3"
 )
 
 const (
@@ -20,13 +20,13 @@ var StoredTransactionPrefix = getBadgerHoldPrefix(StoredTransaction{})
 type StoredTransaction struct {
 	Hash         common.Hash
 	TxType       txtype.TransactionType
-	FromStateID  uint32 `badgerhold:"index"`
+	FromStateID  uint32
 	Amount       Uint256
 	Fee          Uint256
 	Nonce        Uint256
 	Signature    Signature
 	ReceiveTime  *Timestamp
-	CommitmentID *CommitmentID `badgerhold:"index"`
+	CommitmentID *CommitmentID
 	ErrorMessage *string
 
 	Body TransactionBody
@@ -144,10 +144,9 @@ func (t *StoredTransaction) Bytes() []byte {
 	copy(b[0:32], t.Hash.Bytes())
 	b[32] = byte(t.TxType)
 	binary.BigEndian.PutUint32(b[33:37], t.FromStateID)
-	//TODO-tx: replace with only .Bytes() after merge
-	copy(b[37:69], utils.PadLeft(t.Amount.Bytes(), 32))
-	copy(b[69:101], utils.PadLeft(t.Fee.Bytes(), 32))
-	copy(b[101:133], utils.PadLeft(t.Nonce.Bytes(), 32))
+	copy(b[37:69], t.Amount.Bytes())
+	copy(b[69:101], t.Fee.Bytes())
+	copy(b[101:133], t.Nonce.Bytes())
 	copy(b[133:197], t.Signature.Bytes())
 	copy(b[197:213], encodeTimestampPointer(t.ReceiveTime))
 	copy(b[213:247], EncodeCommitmentIDPointer(t.CommitmentID))
@@ -172,7 +171,6 @@ func (t *StoredTransaction) SetBytes(data []byte) error {
 	if err != nil {
 		return err
 	}
-	//TODO-tx: do the same in batch after merge
 	t.ReceiveTime, err = decodeTimestampPointer(data[197:213])
 	if err != nil {
 		return err
@@ -197,6 +195,47 @@ func (t *StoredTransaction) BytesLen() int {
 	return length
 }
 
+// nolint:gocritic
+// Type implements badgerhold.Storer
+func (t StoredTransaction) Type() string {
+	return string(StoredTransactionPrefix[3:])
+}
+
+// nolint:gocritic
+// Indexes implements badgerhold.Storer
+func (t StoredTransaction) Indexes() map[string]bh.Index {
+	return map[string]bh.Index{
+		"FromStateID": {
+			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
+				v, ok := value.(StoredTransaction)
+				if !ok {
+					//TODO-tx: extract to error
+					return nil, errors.New("invalid type")
+				}
+				return EncodeUint32(&v.FromStateID)
+			},
+		},
+		"CommitmentID": {
+			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
+				v, ok := value.(StoredTransaction)
+				if !ok {
+					return nil, errors.New("invalid type")
+				}
+				return EncodeCommitmentIDPointer(v.CommitmentID), nil
+			},
+		},
+		"ToStateID": {
+			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
+				v, ok := value.(StoredTransaction)
+				if !ok {
+					return nil, errors.New("invalid type")
+				}
+				return EncodeUint32Pointer(v.Body.GetToStateID()), nil
+			},
+		},
+	}
+}
+
 func transactionBody(data []byte, transactionType txtype.TransactionType) (TransactionBody, error) {
 	switch transactionType {
 	case txtype.Transfer:
@@ -216,6 +255,7 @@ func transactionBody(data []byte, transactionType txtype.TransactionType) (Trans
 type TransactionBody interface {
 	ByteEncoder
 	BytesLen() int
+	GetToStateID() *uint32
 }
 
 type StoredTransferBody struct {
@@ -237,6 +277,10 @@ func (t *StoredTransferBody) BytesLen() int {
 	return transferBodyLength
 }
 
+func (t *StoredTransferBody) GetToStateID() *uint32 {
+	return &t.ToStateID
+}
+
 type StoredCreate2TransferBody struct {
 	ToStateID   *uint32
 	ToPublicKey PublicKey
@@ -245,7 +289,7 @@ type StoredCreate2TransferBody struct {
 func (t *StoredCreate2TransferBody) Bytes() []byte {
 	b := make([]byte, create2TransferBodyLength)
 	copy(b[:128], t.ToPublicKey.Bytes())
-	copy(b[128:133], encodeUint32Pointer(t.ToStateID))
+	copy(b[128:133], EncodeUint32Pointer(t.ToStateID))
 	return b
 }
 
@@ -260,4 +304,8 @@ func (t *StoredCreate2TransferBody) SetBytes(data []byte) error {
 
 func (t *StoredCreate2TransferBody) BytesLen() int {
 	return create2TransferBodyLength
+}
+
+func (t *StoredCreate2TransferBody) GetToStateID() *uint32 {
+	return t.ToStateID
 }
