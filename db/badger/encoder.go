@@ -92,7 +92,7 @@ func Encode(value interface{}) ([]byte, error) {
 	case uint32:
 		return EncodeUint32(&v)
 	case *uint32:
-		return nil, errors.WithStack(errPassedByPointer)
+		return models.EncodeUint32Pointer(v), nil
 	case uint64:
 		return EncodeUint64(&v)
 	case *uint64:
@@ -149,7 +149,7 @@ func Decode(data []byte, value interface{}) error {
 	case *string:
 		return DecodeString(data, v)
 	case *uint32:
-		return DecodeUint32(data, v)
+		return decodeUint32Pointer(data, &value, v)
 	case *uint64:
 		return DecodeUint64(data, v)
 	case *models.RegisteredToken:
@@ -181,6 +181,18 @@ func decodeCommitmentIDPointer(data []byte, value *interface{}, dst *models.Comm
 	}
 	if data[0] == 1 {
 		return dst.SetBytes(data[1:])
+	}
+	*value = nil
+	return nil
+}
+
+// nolint: gocritic
+func decodeUint32Pointer(data []byte, value *interface{}, dst *uint32) error {
+	if len(data) == 4 {
+		return DecodeUint32(data, dst)
+	}
+	if data[0] == 1 {
+		return DecodeUint32(data[1:], dst)
 	}
 	*value = nil
 	return nil

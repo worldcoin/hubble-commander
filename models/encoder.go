@@ -34,7 +34,7 @@ func DecodeHashPointer(data []byte) *common.Hash {
 	return ref.Hash(common.BytesToHash(data[1:]))
 }
 
-func encodeUint32Pointer(value *uint32) []byte {
+func EncodeUint32Pointer(value *uint32) []byte {
 	b := make([]byte, 5)
 	if value == nil {
 		return b
@@ -112,4 +112,10 @@ func decodeCommitmentIDPointer(data []byte) (*CommitmentID, error) {
 		return nil, err
 	}
 	return &commitmentID, nil
+}
+
+func EncodeUint32(number *uint32) ([]byte, error) {
+	b := make([]byte, 4)
+	binary.BigEndian.PutUint32(b[0:4], *number)
+	return b, nil
 }

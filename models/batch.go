@@ -27,7 +27,7 @@ func (b *Batch) Bytes() []byte {
 	encoded[32] = byte(b.Type)
 	copy(encoded[33:65], b.TransactionHash.Bytes())
 	copy(encoded[65:98], EncodeHashPointer(b.Hash))
-	copy(encoded[98:103], encodeUint32Pointer(b.FinalisationBlock))
+	copy(encoded[98:103], EncodeUint32Pointer(b.FinalisationBlock))
 	copy(encoded[103:136], EncodeHashPointer(b.AccountTreeRoot))
 	copy(encoded[136:169], EncodeHashPointer(b.PrevStateRoot))
 	copy(encoded[169:185], encodeTimestampPointer(b.SubmissionTime))
@@ -35,7 +35,7 @@ func (b *Batch) Bytes() []byte {
 	return encoded
 }
 
-func (b *Batch) SetBytes(data []byte) error {
+func (b *Batch) SetBytes(data []byte) (err error) {
 	if len(data) != batchDataLength {
 		return ErrInvalidLength
 	}
@@ -48,10 +48,6 @@ func (b *Batch) SetBytes(data []byte) error {
 	b.AccountTreeRoot = DecodeHashPointer(data[103:136])
 	b.PrevStateRoot = DecodeHashPointer(data[136:169])
 
-	timestamp, err := decodeTimestampPointer(data[169:185])
-	if err != nil {
-		return err
-	}
-	b.SubmissionTime = timestamp
-	return nil
+	b.SubmissionTime, err = decodeTimestampPointer(data[169:185])
+	return err
 }

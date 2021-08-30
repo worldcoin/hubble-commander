@@ -28,7 +28,7 @@ func Test_EncodeHashPointer_NilValue(t *testing.T) {
 
 func Test_EncodeUint32Pointer(t *testing.T) {
 	value := uint32(32)
-	bytes := encodeUint32Pointer(&value)
+	bytes := EncodeUint32Pointer(&value)
 	require.EqualValues(t, 1, bytes[0])
 
 	decodedValue := decodeUint32Pointer(bytes)
@@ -37,7 +37,7 @@ func Test_EncodeUint32Pointer(t *testing.T) {
 
 func Test_EncodeUint32Pointer_NilValue(t *testing.T) {
 	var value *uint32
-	bytes := encodeUint32Pointer(value)
+	bytes := EncodeUint32Pointer(value)
 	require.EqualValues(t, 0, bytes[0])
 
 	decodedValue := decodeUint32Pointer(bytes)
