@@ -2,12 +2,13 @@ package main
 
 import (
 	"github.com/Worldcoin/hubble-commander/commander"
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/utils"
 	log "github.com/sirupsen/logrus"
 )
 
 func deployCommanderContracts(filePath string) error {
-	cfg := getConfigAndSetupLogger()
+	cfg := config.GetConfigAndSetupLogger()
 	chain, err := commander.GetChainConnection(cfg.Ethereum)
 	if err != nil {
 		return err
