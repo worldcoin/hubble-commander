@@ -45,6 +45,9 @@ func (s *TransactionStorage) GetTransfer(hash common.Hash) (*models.Transfer, er
 
 func (s *TransactionStorage) GetPendingTransfers(limit uint32) ([]models.Transfer, error) {
 	txHashes, err := s.getPendingTransactionHashes()
+	if IsNotFoundError(err) {
+		return []models.Transfer{}, nil
+	}
 	if err != nil {
 		return nil, err
 	}

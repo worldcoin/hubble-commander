@@ -100,21 +100,21 @@ func (s *TransactionBaseTestSuite) TestBatchMarkTransactionAsIncluded() {
 	for i := 0; i < len(txs); i++ {
 		txs[i] = transferTransaction
 		txs[i].Hash = utils.RandomHash()
+		txs[i].CommitmentID = &models.CommitmentID{
+			BatchID:      models.MakeUint256(5),
+			IndexInBatch: 3,
+		}
 		err := s.storage.AddTransfer(&txs[i])
 		s.NoError(err)
 	}
 
-	commitmentID := models.CommitmentID{
-		BatchID:      models.MakeUint256(1),
-		IndexInBatch: 1,
-	}
-	err := s.storage.BatchMarkTransactionAsIncluded([]common.Hash{txs[0].Hash, txs[1].Hash}, &commitmentID)
+	err := s.storage.MarkTransactionsAsPending([]common.Hash{txs[0].Hash, txs[1].Hash})
 	s.NoError(err)
 
 	for i := range txs {
 		tx, err := s.storage.GetTransfer(txs[i].Hash)
 		s.NoError(err)
-		s.Equal(commitmentID, *tx.CommitmentID)
+		s.Nil(tx.CommitmentID)
 	}
 }
 

@@ -288,24 +288,6 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID_NoCreat
 	s.Len(transfers, 0)
 }
 
-func (s *Create2TransferTestSuite) TestSetCreate2TransferToStateID() {
-	err := s.storage.AddCreate2Transfer(&create2Transfer)
-	s.NoError(err)
-
-	toStateID := uint32(10)
-	err = s.storage.SetCreate2TransferToStateID(create2Transfer.Hash, toStateID)
-	s.NoError(err)
-
-	c2t, err := s.storage.GetCreate2Transfer(create2Transfer.Hash)
-	s.NoError(err)
-	s.Equal(toStateID, *c2t.ToStateID)
-}
-
-func (s *Create2TransferTestSuite) TestSetCreate2TransferToStateID_NoCreate2Transfer() {
-	err := s.storage.SetCreate2TransferToStateID(create2Transfer.Hash, 10)
-	s.Equal(NewNotFoundError("transaction"), err)
-}
-
 func TestCreate2TransferTestSuite(t *testing.T) {
 	suite.Run(t, new(Create2TransferTestSuite))
 }

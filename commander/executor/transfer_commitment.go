@@ -5,7 +5,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 func (t *TransactionExecutor) buildTransferCommitment(
@@ -35,7 +34,7 @@ func (t *TransactionExecutor) buildTransferCommitment(
 		return nil, err
 	}
 
-	err = t.markTransfersAsIncluded(appliedTransfers, commitmentID)
+	err = t.storage.BatchMarkTransfersAsIncluded(appliedTransfers, commitmentID)
 	if err != nil {
 		return nil, err
 	}
@@ -53,12 +52,4 @@ func CombineSignatures(txs models.GenericTransactionArray, domain *bls.Domain) (
 		signatures = append(signatures, sig)
 	}
 	return bls.NewAggregatedSignature(signatures).ModelsSignature(), nil
-}
-
-func (t *TransactionExecutor) markTransfersAsIncluded(transfers []models.Transfer, commitmentID *models.CommitmentID) error {
-	hashes := make([]common.Hash, 0, len(transfers))
-	for i := range transfers {
-		hashes = append(hashes, transfers[i].Hash)
-	}
-	return t.storage.BatchMarkTransactionAsIncluded(hashes, commitmentID)
 }

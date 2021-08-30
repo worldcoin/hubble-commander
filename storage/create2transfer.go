@@ -5,7 +5,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	bh "github.com/timshannon/badgerhold/v3"
 )
@@ -46,6 +45,9 @@ func (s *TransactionStorage) GetCreate2Transfer(hash common.Hash) (*models.Creat
 
 func (s *TransactionStorage) GetPendingCreate2Transfers(limit uint32) ([]models.Create2Transfer, error) {
 	txHashes, err := s.getPendingTransactionHashes()
+	if IsNotFoundError(err) {
+		return []models.Create2Transfer{}, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -87,20 +89,6 @@ func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id *models.Commit
 		txs = append(txs, *res[i].ToCreate2TransferForCommitment())
 	}
 	return txs, nil
-}
-
-// SetCreate2TransferToStateID TODO-tx: remove
-func (s *TransactionStorage) SetCreate2TransferToStateID(txHash common.Hash, toStateID uint32) error {
-	transfer, err := s.GetCreate2Transfer(txHash)
-	if err != nil {
-		return err
-	}
-	transfer.ToStateID = ref.Uint32(toStateID)
-	err = s.database.Badger.Update(txHash, models.MakeStoredTransactionFromCreate2Transfer(transfer))
-	if err == bh.ErrNotFound {
-		return NewNotFoundError("transaction")
-	}
-	return err
 }
 
 func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([]models.Create2TransferWithBatchDetails, error) {

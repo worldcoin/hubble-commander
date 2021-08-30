@@ -149,8 +149,7 @@ func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*
 	return &tx.Nonce, nil
 }
 
-// BatchMarkTransactionAsIncluded TODO-tx: replace usage with custom functions
-func (s *TransactionStorage) BatchMarkTransactionAsIncluded(txHashes []common.Hash, commitmentID *models.CommitmentID) error {
+func (s *TransactionStorage) MarkTransactionsAsPending(txHashes []common.Hash) error {
 	tx, txStorage, err := s.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return err
@@ -163,7 +162,7 @@ func (s *TransactionStorage) BatchMarkTransactionAsIncluded(txHashes []common.Ha
 			return err
 		}
 
-		storedTx.CommitmentID = commitmentID
+		storedTx.CommitmentID = nil
 		err = txStorage.updateStoredTransaction(storedTx)
 		if err != nil {
 			return err
