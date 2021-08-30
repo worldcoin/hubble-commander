@@ -20,7 +20,7 @@ var StoredTransactionPrefix = getBadgerHoldPrefix(StoredTransaction{})
 type StoredTransaction struct {
 	Hash         common.Hash
 	TxType       txtype.TransactionType
-	FromStateID  uint32
+	FromStateID  uint32 `badgerhold:"index"`
 	Amount       Uint256
 	Fee          Uint256
 	Nonce        Uint256
@@ -150,7 +150,7 @@ func (t *StoredTransaction) Bytes() []byte {
 	copy(b[101:133], utils.PadLeft(t.Nonce.Bytes(), 32))
 	copy(b[133:197], t.Signature.Bytes())
 	copy(b[197:213], encodeTimestampPointer(t.ReceiveTime))
-	copy(b[213:247], t.CommitmentID.PointerBytes())
+	copy(b[213:247], EncodeCommitmentIDPointer(t.CommitmentID))
 	copy(b[247:], t.Body.Bytes())
 	copy(b[247+t.Body.BytesLen():], encodeStringPointer(t.ErrorMessage))
 

@@ -85,16 +85,6 @@ func (c *CommitmentID) SetBytes(data []byte) error {
 	return nil
 }
 
-func (c *CommitmentID) PointerBytes() []byte {
-	encoded := make([]byte, commitmentIDDataLength+1)
-	if c == nil {
-		return encoded
-	}
-	encoded[0] = 1
-	copy(encoded[1:], c.Bytes())
-	return encoded
-}
-
 type CommitmentWithTokenID struct {
 	ID                 CommitmentID
 	LeafHash           common.Hash

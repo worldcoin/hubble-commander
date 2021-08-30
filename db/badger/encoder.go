@@ -40,7 +40,7 @@ func Encode(value interface{}) ([]byte, error) {
 	case models.CommitmentID:
 		return v.Bytes(), nil
 	case *models.CommitmentID:
-		return v.PointerBytes(), nil
+		return models.EncodeCommitmentIDPointer(v), nil
 	case models.Deposit:
 		return v.Bytes(), nil
 	case *models.Deposit:

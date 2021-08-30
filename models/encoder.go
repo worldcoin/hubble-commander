@@ -91,6 +91,16 @@ func decodeTimestampPointer(data []byte) (*Timestamp, error) {
 	return &timestamp, nil
 }
 
+func EncodeCommitmentIDPointer(id *CommitmentID) []byte {
+	b := make([]byte, commitmentIDDataLength+1)
+	if id == nil {
+		return b
+	}
+	b[0] = 1
+	copy(b[1:], id.Bytes())
+	return b
+}
+
 func decodeCommitmentIDPointer(data []byte) (*CommitmentID, error) {
 	if data[0] == 0 {
 		return nil, nil

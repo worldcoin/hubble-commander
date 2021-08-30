@@ -1,8 +1,11 @@
 package storage
 
 import (
+	"sort"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
@@ -50,19 +53,31 @@ func (s *TransactionStorage) GetCreate2Transfer(hash common.Hash) (*models.Creat
 }
 
 func (s *TransactionStorage) GetPendingCreate2Transfers(limit uint32) ([]models.Create2Transfer, error) {
-	res := make([]models.Create2Transfer, 0, limit)
-	err := s.database.Postgres.Query(
-		s.database.QB.Select(create2TransferColumns...).
-			From("transaction_base").
-			JoinClause("NATURAL JOIN create2transfer").
-			Where(squirrel.Eq{"batch_id": nil, "error_message": nil}).
-			OrderBy("transaction_base.nonce ASC", "transaction_base.tx_hash ASC").
-			Limit(uint64(limit)),
-	).Into(&res)
+	txHashes, err := s.getPendingTransactionHashes()
 	if err != nil {
 		return nil, err
 	}
-	return res, nil
+
+	var tx models.StoredTransaction
+	txs := make([]models.Create2Transfer, 0, len(txHashes))
+	for i := range txHashes {
+		err = s.database.Badger.Get(txHashes[i], &tx)
+		if err == bh.ErrNotFound {
+			return nil, NewNotFoundError("transaction")
+		}
+		if err != nil {
+			return nil, err
+		}
+		if tx.TxType == txtype.Create2Transfer && tx.ErrorMessage == nil {
+			txs = append(txs, *tx.ToCreate2Transfer())
+		}
+	}
+
+	sort.SliceStable(txs, func(i, j int) bool {
+		return txs[i].Nonce.Cmp(&txs[j].Nonce) < 0
+	})
+
+	return txs, nil
 }
 
 func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id *models.CommitmentID) ([]models.Create2TransferForCommitment, error) {

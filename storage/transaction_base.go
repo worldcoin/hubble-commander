@@ -53,6 +53,37 @@ func (s *TransactionStorage) getStoredTransaction(hash common.Hash) (*models.Sto
 	return &storedTx, nil
 }
 
+func (s *TransactionStorage) getPendingTransactionHashes() ([]common.Hash, error) {
+	indexPrefix := badger.IndexKeyPrefix(models.StoredTransactionPrefix[3:], "CommitmentID")
+	indexPrefix = append(indexPrefix, models.EncodeCommitmentIDPointer(nil)...)
+	keyList, err := s.getKeyList(indexPrefix)
+	if err != nil {
+		return nil, err
+	}
+
+	return decodeKeyListHashes(models.StoredTransactionPrefix, *keyList)
+}
+
+func (s *TransactionStorage) getKeyList(indexPrefix []byte) (*bh.KeyList, error) {
+	var keyList bh.KeyList
+	err := s.database.Badger.View(func(txn *bdg.Txn) error {
+		item, err := txn.Get(indexPrefix)
+		if err == bdg.ErrKeyNotFound {
+			return NewNotFoundError("transaction")
+		}
+		if err != nil {
+			return err
+		}
+		return item.Value(func(val []byte) error {
+			return badger.DecodeKeyList(val, &keyList)
+		})
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &keyList, nil
+}
+
 func (s *TransactionStorage) updateStoredTransaction(tx *models.StoredTransaction) error {
 	err := s.database.Badger.Update(tx.Hash, *tx)
 	if err == bh.ErrNotFound {
