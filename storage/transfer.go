@@ -3,18 +3,11 @@ package storage
 import (
 	"sort"
 
-	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	bh "github.com/timshannon/badgerhold/v3"
 )
-
-var transferColumns = []string{
-	"transaction_base.*",
-	"transfer.to_state_id",
-}
 
 func (s *TransactionStorage) AddTransfer(t *models.Transfer) error {
 	t.SetReceiveTime()
@@ -114,80 +107,49 @@ func (s *TransactionStorage) BatchMarkTransfersAsIncluded(txs []models.Transfer,
 }
 
 func (s *Storage) GetTransferWithBatchDetails(hash common.Hash) (*models.TransferWithBatchDetails, error) {
-	transfer, err := s.GetTransfer(hash)
+	tx, err := s.getStoredTransaction(hash)
 	if err != nil {
 		return nil, err
 	}
-	res := &models.TransferWithBatchDetails{Transfer: *transfer}
-	if res.CommitmentID == nil {
-		return res, nil
-	}
 
-	batch, err := s.GetBatch(res.CommitmentID.BatchID)
+	transfers, err := s.transfersToTransfersWithBatchDetails(*tx)
 	if err != nil {
 		return nil, err
 	}
-	res.BatchHash = batch.Hash
-	res.BatchTime = batch.SubmissionTime
-
-	return res, nil
+	return &transfers[0], nil
 }
 
 func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models.TransferWithBatchDetails, error) {
-	accounts, err := s.AccountTree.Leaves(publicKey)
+	txs, err := s.getTransactionsByPublicKey(publicKey, txtype.Transfer)
 	if err != nil {
 		return nil, err
 	}
-
-	pubKeyIDs := utils.ValueToInterfaceSlice(accounts, "PubKeyID")
-
-	leaves := make([]models.FlatStateLeaf, 0, 1)
-	err = s.database.Badger.Find(&leaves, bh.Where("PubKeyID").In(pubKeyIDs...).Index("PubKeyID"))
-	if err != nil {
-		return nil, err
-	}
-
-	stateIDs := make([]uint32, 0, 1)
-	for i := range leaves {
-		stateIDs = append(stateIDs, leaves[i].StateID)
-	}
-
-	transfers := make([]models.Transfer, 0, 1)
-	err = s.database.Postgres.Query(
-		s.database.QB.Select(transferColumns...).
-			From("transaction_base").
-			JoinClause("NATURAL JOIN transfer").
-			Where(squirrel.Or{
-				squirrel.Eq{"transaction_base.from_state_id": stateIDs},
-				squirrel.Eq{"transfer.to_state_id": stateIDs},
-			}),
-	).Into(&transfers)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.transfersToTransfersWithBatchDetails(transfers)
+	return s.transfersToTransfersWithBatchDetails(txs...)
 }
 
-func (s *Storage) transfersToTransfersWithBatchDetails(transfers []models.Transfer) (result []models.TransferWithBatchDetails, err error) {
-	result = make([]models.TransferWithBatchDetails, 0, len(transfers))
+func (s *Storage) transfersToTransfersWithBatchDetails(txs ...models.StoredTransaction) (
+	result []models.TransferWithBatchDetails,
+	err error,
+) {
+	result = make([]models.TransferWithBatchDetails, 0, len(txs))
 	batchIDs := make(map[models.Uint256]*models.Batch)
-	for i := range transfers {
-		if transfers[i].CommitmentID == nil {
-			result = append(result, models.TransferWithBatchDetails{Transfer: transfers[i]})
+	for i := range txs {
+		transfer := txs[i].ToTransfer()
+		if transfer.CommitmentID == nil {
+			result = append(result, models.TransferWithBatchDetails{Transfer: *transfer})
 			continue
 		}
-		batch, ok := batchIDs[transfers[i].CommitmentID.BatchID]
+		batch, ok := batchIDs[transfer.CommitmentID.BatchID]
 		if !ok {
-			batch, err = s.GetBatch(transfers[i].CommitmentID.BatchID)
+			batch, err = s.GetBatch(transfer.CommitmentID.BatchID)
 			if err != nil {
 				return nil, err
 			}
-			batchIDs[transfers[i].CommitmentID.BatchID] = batch
+			batchIDs[transfer.CommitmentID.BatchID] = batch
 		}
 
 		result = append(result, models.TransferWithBatchDetails{
-			Transfer:  transfers[i],
+			Transfer:  *transfer,
 			BatchHash: batch.Hash,
 			BatchTime: batch.SubmissionTime,
 		})

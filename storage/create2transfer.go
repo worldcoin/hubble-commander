@@ -3,20 +3,12 @@ package storage
 import (
 	"sort"
 
-	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	bh "github.com/timshannon/badgerhold/v3"
 )
-
-var create2TransferColumns = []string{
-	"transaction_base.*",
-	"create2transfer.to_state_id",
-	"create2transfer.to_public_key",
-}
 
 func (s *TransactionStorage) AddCreate2Transfer(t *models.Create2Transfer) error {
 	t.SetReceiveTime()
@@ -112,39 +104,11 @@ func (s *TransactionStorage) SetCreate2TransferToStateID(txHash common.Hash, toS
 }
 
 func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([]models.Create2TransferWithBatchDetails, error) {
-	accounts, err := s.AccountTree.Leaves(publicKey)
+	txs, err := s.getTransactionsByPublicKey(publicKey, txtype.Create2Transfer)
 	if err != nil {
 		return nil, err
 	}
-
-	pubKeyIDs := utils.ValueToInterfaceSlice(accounts, "PubKeyID")
-
-	leaves := make([]models.FlatStateLeaf, 0, 1)
-	err = s.database.Badger.Find(&leaves, bh.Where("PubKeyID").In(pubKeyIDs...).Index("PubKeyID"))
-	if err != nil {
-		return nil, err
-	}
-
-	stateIDs := make([]uint32, 0, 1)
-	for i := range leaves {
-		stateIDs = append(stateIDs, leaves[i].StateID)
-	}
-
-	transfers := make([]models.Create2Transfer, 0, 1)
-	err = s.database.Postgres.Query(
-		s.database.QB.Select(create2TransferColumns...).
-			From("transaction_base").
-			JoinClause("NATURAL JOIN create2transfer").
-			Where(squirrel.Or{
-				squirrel.Eq{"transaction_base.from_state_id": stateIDs},
-				squirrel.Eq{"create2transfer.to_state_id": stateIDs},
-			}),
-	).Into(&transfers)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.create2TransferToTransfersWithBatchDetails(transfers)
+	return s.create2TransferToTransfersWithBatchDetails(txs...)
 }
 
 func (s *TransactionStorage) BatchMarkCreate2TransfersAsIncluded(txs []models.Create2Transfer, commitmentID *models.CommitmentID) error {
@@ -166,47 +130,41 @@ func (s *TransactionStorage) BatchMarkCreate2TransfersAsIncluded(txs []models.Cr
 }
 
 func (s *Storage) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.Create2TransferWithBatchDetails, error) {
-	res, err := s.GetCreate2Transfer(hash)
+	tx, err := s.getStoredTransaction(hash)
 	if err != nil {
 		return nil, err
 	}
-	transfer := &models.Create2TransferWithBatchDetails{Create2Transfer: *res}
-	if transfer.CommitmentID == nil {
-		return transfer, nil
-	}
 
-	batch, err := s.GetBatch(transfer.CommitmentID.BatchID)
+	transfers, err := s.create2TransferToTransfersWithBatchDetails(*tx)
 	if err != nil {
 		return nil, err
 	}
-	transfer.BatchHash = batch.Hash
-	transfer.BatchTime = batch.SubmissionTime
-
-	return transfer, nil
+	return &transfers[0], nil
 }
 
-func (s *Storage) create2TransferToTransfersWithBatchDetails(transfers []models.Create2Transfer) (
+func (s *Storage) create2TransferToTransfersWithBatchDetails(txs ...models.StoredTransaction) (
 	result []models.Create2TransferWithBatchDetails,
 	err error,
 ) {
-	result = make([]models.Create2TransferWithBatchDetails, 0, len(transfers))
+	result = make([]models.Create2TransferWithBatchDetails, 0, len(txs))
 	batchIDs := make(map[models.Uint256]*models.Batch)
-	for i := range transfers {
-		if transfers[i].CommitmentID == nil {
-			result = append(result, models.Create2TransferWithBatchDetails{Create2Transfer: transfers[i]})
+	for i := range txs {
+		transfer := txs[i].ToCreate2Transfer()
+		if transfer.CommitmentID == nil {
+			result = append(result, models.Create2TransferWithBatchDetails{Create2Transfer: *transfer})
 			continue
 		}
-		batch, ok := batchIDs[transfers[i].CommitmentID.BatchID]
+		batch, ok := batchIDs[transfer.CommitmentID.BatchID]
 		if !ok {
-			batch, err = s.GetBatch(transfers[i].CommitmentID.BatchID)
+			batch, err = s.GetBatch(transfer.CommitmentID.BatchID)
 			if err != nil {
 				return nil, err
 			}
-			batchIDs[transfers[i].CommitmentID.BatchID] = batch
+			batchIDs[transfer.CommitmentID.BatchID] = batch
 		}
 
 		result = append(result, models.Create2TransferWithBatchDetails{
-			Create2Transfer: transfers[i],
+			Create2Transfer: *transfer,
 			BatchHash:       batch.Hash,
 			BatchTime:       batch.SubmissionTime,
 		})

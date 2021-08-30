@@ -6,6 +6,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
@@ -90,6 +92,42 @@ func (s *TransactionStorage) updateStoredTransaction(tx *models.StoredTransactio
 		return NewNotFoundError("transaction")
 	}
 	return err
+}
+
+func (s *Storage) getTransactionsByPublicKey(publicKey *models.PublicKey, txType txtype.TransactionType) (
+	[]models.StoredTransaction, error,
+) {
+	accounts, err := s.AccountTree.Leaves(publicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	pubKeyIDs := utils.ValueToInterfaceSlice(accounts, "PubKeyID")
+
+	leaves := make([]models.FlatStateLeaf, 0, 1)
+	err = s.database.Badger.Find(&leaves, bh.Where("PubKeyID").In(pubKeyIDs...).Index("PubKeyID"))
+	if err != nil {
+		return nil, err
+	}
+
+	stateIDs := make([]interface{}, 0, len(leaves))
+	for i := range leaves {
+		stateIDs = append(stateIDs, &leaves[i].StateID)
+	}
+
+	res := make([]models.StoredTransaction, 0, 1)
+	err = s.database.Badger.Find(
+		&res,
+		bh.Where("ToStateID").In(stateIDs...).Index("ToStateID").
+			And("TxType").Eq(txType).
+			Or(bh.Where("FromStateID").In(stateIDs...).Index("FromStateID").
+				And("TxType").Eq(txType),
+			),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }
 
 func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*models.Uint256, error) {
