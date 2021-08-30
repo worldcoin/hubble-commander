@@ -15,7 +15,10 @@ const (
 	create2TransferBodyLength = 133
 )
 
-var StoredTransactionPrefix = getBadgerHoldPrefix(StoredTransaction{})
+var (
+	StoredTransactionPrefix = getBadgerHoldPrefix(StoredTransaction{})
+	errInvalidStoredTxType  = errors.New("invalid StoredTransaction index type")
+)
 
 type StoredTransaction struct {
 	Hash         common.Hash
@@ -209,8 +212,7 @@ func (t StoredTransaction) Indexes() map[string]bh.Index {
 			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
 				v, ok := value.(StoredTransaction)
 				if !ok {
-					//TODO-tx: extract to error
-					return nil, errors.New("invalid type")
+					return nil, errInvalidStoredTxType
 				}
 				return EncodeUint32(&v.FromStateID)
 			},
@@ -219,7 +221,7 @@ func (t StoredTransaction) Indexes() map[string]bh.Index {
 			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
 				v, ok := value.(StoredTransaction)
 				if !ok {
-					return nil, errors.New("invalid type")
+					return nil, errInvalidStoredTxType
 				}
 				return EncodeCommitmentIDPointer(v.CommitmentID), nil
 			},
@@ -228,7 +230,7 @@ func (t StoredTransaction) Indexes() map[string]bh.Index {
 			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
 				v, ok := value.(StoredTransaction)
 				if !ok {
-					return nil, errors.New("invalid type")
+					return nil, errInvalidStoredTxType
 				}
 				return EncodeUint32Pointer(v.Body.GetToStateID()), nil
 			},

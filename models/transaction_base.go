@@ -21,13 +21,13 @@ type TransactionBase struct {
 }
 
 type TransactionBaseForCommitment struct {
-	Hash        common.Hash `db:"tx_hash"`
-	FromStateID uint32      `db:"from_state_id"`
+	Hash        common.Hash
+	FromStateID uint32
 	Amount      Uint256
 	Fee         Uint256
 	Nonce       Uint256
 	Signature   Signature
-	ReceiveTime *Timestamp `db:"receive_time"`
+	ReceiveTime *Timestamp
 }
 
 func (t *TransactionBase) GetFromStateID() uint32 {
