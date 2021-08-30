@@ -14,6 +14,7 @@ var (
 		ChainID:         models.MakeUint256(1),
 		AccountRegistry: utils.RandomAddress(),
 		TokenRegistry:   utils.RandomAddress(),
+		DepositManager:  utils.RandomAddress(),
 		Rollup:          utils.RandomAddress(),
 		DeploymentBlock: 234,
 		SyncedBlock:     10,

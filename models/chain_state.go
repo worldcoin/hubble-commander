@@ -27,6 +27,7 @@ type ChainSpec struct {
 	AccountRegistry common.Address `yaml:"account_registry"`
 	DeploymentBlock uint64         `yaml:"deployment_block"`
 	TokenRegistry   common.Address `yaml:"token_registry"`
+	DepositManager  common.Address `yaml:"deposit_manager"`
 	Rollup          common.Address
 	GenesisAccounts GenesisAccounts `yaml:"genesis_accounts"`
 }
