@@ -41,7 +41,6 @@ type Client struct {
 	AccountRegistry    *accountregistry.AccountRegistry
 	AccountRegistryABI *abi.ABI
 	TokenRegistry      *tokenregistry.TokenRegistry
-	TokenRegistryABI   *abi.ABI
 	boundContract      *bind.BoundContract
 	blocksToFinalise   *int64
 	domain             *bls.Domain
@@ -58,10 +57,6 @@ func NewClient(chainConnection deployer.ChainConnection, params *NewClientParams
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	tokenRegistryAbi, err := abi.JSON(strings.NewReader(tokenregistry.TokenRegistryABI))
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
 	backend := chainConnection.GetBackend()
 	boundContract := bind.NewBoundContract(params.ChainState.Rollup, rollupAbi, backend, backend, backend)
 	return &Client{
@@ -73,7 +68,6 @@ func NewClient(chainConnection deployer.ChainConnection, params *NewClientParams
 		AccountRegistry:    params.AccountRegistry,
 		AccountRegistryABI: &accountRegistryAbi,
 		TokenRegistry:      params.TokenRegistry,
-		TokenRegistryABI:   &tokenRegistryAbi,
 		boundContract:      boundContract,
 	}, nil
 }
