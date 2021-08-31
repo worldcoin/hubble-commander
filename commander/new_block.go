@@ -123,7 +123,7 @@ func (c *Commander) syncToLatestBlock() (err error) {
 }
 
 func (c *Commander) updateLatestBlockNumber() (*uint64, error) {
-	latestBlockNumber, err := c.client.ChainConnection.GetLatestBlockNumber() // 281
+	latestBlockNumber, err := c.client.ChainConnection.GetLatestBlockNumber()
 	if err != nil {
 		return nil, err
 	}
