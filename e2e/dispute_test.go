@@ -379,6 +379,7 @@ func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
 	chainState := models.ChainState{
 		ChainID:         info.ChainID,
 		AccountRegistry: info.AccountRegistry,
+		TokenRegistry:   info.TokenRegistry,
 		DeploymentBlock: info.DeploymentBlock,
 		Rollup:          info.Rollup,
 	}

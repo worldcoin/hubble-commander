@@ -20,6 +20,7 @@ func TestChainState_SetBytes(t *testing.T) {
 	chainState := ChainState{
 		ChainID:         MakeUint256(1337),
 		AccountRegistry: utils.RandomAddress(),
+		TokenRegistry:   utils.RandomAddress(),
 		DeploymentBlock: 7392,
 		Rollup:          utils.RandomAddress(),
 		SyncedBlock:     8001,

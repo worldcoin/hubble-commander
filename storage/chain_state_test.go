@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -12,8 +12,9 @@ import (
 var (
 	chainState = models.ChainState{
 		ChainID:         models.MakeUint256(1),
-		AccountRegistry: common.HexToAddress("0x9f758331b439c1B664e86f2050F2360370F06849"),
-		Rollup:          common.HexToAddress("0x1480c1b6bF90678820B259FCaFFbb751D3e3960B"),
+		AccountRegistry: utils.RandomAddress(),
+		TokenRegistry:   utils.RandomAddress(),
+		Rollup:          utils.RandomAddress(),
 		DeploymentBlock: 234,
 		SyncedBlock:     10,
 	}
