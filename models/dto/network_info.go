@@ -7,16 +7,16 @@ import (
 )
 
 type NetworkInfo struct {
-	ChainID              models.Uint256  `json:"chainId"`
-	AccountRegistry      common.Address  `json:"accountRegistry"`
-	TokenRegistry        common.Address  `json:"tokenRegistry"`
-	DeploymentBlock      uint64          `json:"deploymentBlock"`
-	DepositManager       common.Address  `json:"depositManager"`
-	Rollup               common.Address  `json:"rollup"`
-	BlockNumber          uint32          `json:"blockNumber"`
-	TransactionCount     int             `json:"transactionCount"`
-	AccountCount         uint32          `json:"accountCount"`
-	LatestBatch          *models.Uint256 `json:"latestBatch"`
-	LatestFinalisedBatch *models.Uint256 `json:"latestFinalisedBatch"`
-	SignatureDomain      bls.Domain      `json:"signatureDomain"`
+	ChainID              models.Uint256
+	AccountRegistry      common.Address
+	DeploymentBlock      uint64
+	TokenRegistry        common.Address
+	DepositManager       common.Address
+	Rollup               common.Address
+	BlockNumber          uint32
+	TransactionCount     int
+	AccountCount         uint32
+	LatestBatch          *models.Uint256
+	LatestFinalisedBatch *models.Uint256
+	SignatureDomain      bls.Domain
 }
