@@ -320,12 +320,12 @@ func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {
 	return &models.ChainState{
 		ChainID:                        info.ChainID,
 		AccountRegistry:                info.AccountRegistry,
-		AccountRegistryDeploymentBlock: info.DeploymentBlock,
+		AccountRegistryDeploymentBlock: info.AccountRegistryDeploymentBlock,
 		TokenRegistry:                  info.TokenRegistry,
 		DepositManager:                 info.DepositManager,
 		Rollup:                         info.Rollup,
 		GenesisAccounts:                genesisAccounts,
-		SyncedBlock:                    getInitialSyncedBlock(info.DeploymentBlock),
+		SyncedBlock:                    getInitialSyncedBlock(info.AccountRegistryDeploymentBlock),
 	}, nil
 }
 

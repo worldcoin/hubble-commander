@@ -127,7 +127,7 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
 	s.NotNil(networkInfo)
 	s.Equal(models.MakeUint256(1337), networkInfo.ChainID)
 	s.Equal(s.testClient.ChainState.AccountRegistry, networkInfo.AccountRegistry)
-	s.EqualValues(0, networkInfo.DeploymentBlock)
+	s.EqualValues(0, networkInfo.AccountRegistryDeploymentBlock)
 	s.Equal(s.testClient.ChainState.TokenRegistry, networkInfo.TokenRegistry)
 	s.Equal(s.testClient.ChainState.DepositManager, networkInfo.DepositManager)
 	s.Equal(s.testClient.ChainState.Rollup, networkInfo.Rollup)

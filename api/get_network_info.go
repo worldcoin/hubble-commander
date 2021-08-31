@@ -7,13 +7,13 @@ import (
 
 func (a *API) GetNetworkInfo() (*dto.NetworkInfo, error) {
 	networkInfo := dto.NetworkInfo{
-		ChainID:         a.client.ChainState.ChainID,
-		AccountRegistry: a.client.ChainState.AccountRegistry,
-		DeploymentBlock: a.client.ChainState.AccountRegistryDeploymentBlock,
-		TokenRegistry:   a.client.ChainState.TokenRegistry,
-		DepositManager:  a.client.ChainState.DepositManager,
-		Rollup:          a.client.ChainState.Rollup,
-		BlockNumber:     a.storage.GetLatestBlockNumber(),
+		ChainID:                        a.client.ChainState.ChainID,
+		AccountRegistry:                a.client.ChainState.AccountRegistry,
+		AccountRegistryDeploymentBlock: a.client.ChainState.AccountRegistryDeploymentBlock,
+		TokenRegistry:                  a.client.ChainState.TokenRegistry,
+		DepositManager:                 a.client.ChainState.DepositManager,
+		Rollup:                         a.client.ChainState.Rollup,
+		BlockNumber:                    a.storage.GetLatestBlockNumber(),
 	}
 
 	// TODO replace with a more effective approach when we get to a huge number of txs
