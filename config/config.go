@@ -82,7 +82,7 @@ func GetTestConfig() *Config {
 	return &Config{
 		Log: &LogConfig{
 			Level:  log.InfoLevel,
-			Format: "text",
+			Format: LogFormatText,
 		},
 		Bootstrap: &BootstrapConfig{
 			Prune:            false,
@@ -165,9 +165,9 @@ func getLogConfig() *LogConfig {
 		log.Fatalf("invalid log level: %e", err)
 	}
 
-	format := getString("log.format", "text")
+	format := getString("log.format", LogFormatText)
 
-	if format != "text" && format != "json" {
+	if format != LogFormatText && format != LogFormatJSON {
 		log.Fatalf("invalid log format: %s", format)
 	}
 

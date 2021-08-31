@@ -5,7 +5,6 @@ import (
 	stdErrors "errors"
 	"math/big"
 
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -88,13 +87,15 @@ func (c *Commander) keepRollingBackIfNecessary() (err error) {
 }
 
 func (c *Commander) syncToLatestBlock() (err error) {
-	latestBlockNumber, err := c.client.ChainConnection.GetLatestBlockNumber()
+	latestBlockNumber, err := c.updateLatestBlockNumber()
 	if err != nil {
 		return err
 	}
-	c.storage.SetLatestBlockNumber(uint32(*latestBlockNumber))
+	syncedBlock, err := c.storage.GetSyncedBlock()
+	if err != nil {
+		return err
+	}
 
-	syncedBlock := ref.Uint64(uint64(0))
 	for *syncedBlock != *latestBlockNumber {
 		c.invalidBatchID, err = c.client.GetInvalidBatchID()
 		if err != nil {
@@ -106,11 +107,10 @@ func (c *Commander) syncToLatestBlock() (err error) {
 			return err
 		}
 
-		latestBlockNumber, err = c.client.ChainConnection.GetLatestBlockNumber()
+		latestBlockNumber, err = c.updateLatestBlockNumber()
 		if err != nil {
 			return err
 		}
-		c.storage.SetLatestBlockNumber(uint32(*latestBlockNumber))
 
 		select {
 		case <-c.workersContext.Done():
@@ -120,6 +120,15 @@ func (c *Commander) syncToLatestBlock() (err error) {
 		}
 	}
 	return nil
+}
+
+func (c *Commander) updateLatestBlockNumber() (*uint64, error) {
+	latestBlockNumber, err := c.client.ChainConnection.GetLatestBlockNumber()
+	if err != nil {
+		return nil, err
+	}
+	c.storage.SetLatestBlockNumber(uint32(*latestBlockNumber))
+	return latestBlockNumber, nil
 }
 
 func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {

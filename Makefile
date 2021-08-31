@@ -63,7 +63,7 @@ test-e2e-in-process: clean-testcache
 	HUBBLE_E2E=in-process go test -v -tags e2e ./e2e
 
 test-e2e-locally: clean-testcache
-	HUBBLE_E2E=local go test -v -tags e2e ./e2e
+	HUBBLE_E2E=local go test -v -tags e2e -run=^$(TEST)$$ ./e2e
 
 bench-e2e: clean-testcache
 	HUBBLE_E2E=local go test -v -tags e2e -run TestBenchmarkSuite ./e2e
