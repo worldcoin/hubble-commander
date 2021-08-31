@@ -1,13 +1,10 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
 
-	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -55,27 +52,4 @@ func handleDeployCommand(args []string) {
 	if err != nil {
 		log.Fatalf("%+v", err)
 	}
-}
-
-func getConfigAndSetupLogger() *config.Config {
-	cfg := config.GetConfig()
-	configureLogger(cfg)
-	logConfig(cfg)
-	return cfg
-}
-
-func configureLogger(cfg *config.Config) {
-	if cfg.Log.Format == "json" {
-		log.SetFormatter(&log.JSONFormatter{})
-	}
-	log.SetOutput(os.Stdout)
-	log.SetLevel(cfg.Log.Level)
-}
-
-func logConfig(cfg *config.Config) {
-	jsonCfg, err := json.Marshal(cfg)
-	if err != nil {
-		log.Fatalf("%+v", errors.WithStack(err))
-	}
-	log.Debugf("Loaded config: %s", string(jsonCfg))
 }
