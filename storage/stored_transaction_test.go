@@ -75,13 +75,14 @@ func (s *TransactionBaseTestSuite) TestGetLatestTransactionNonce() {
 
 	tx1 := transferTransaction
 	tx1.Hash = utils.RandomHash()
-	tx1.Nonce = models.MakeUint256(3)
+	tx1.Nonce = models.MakeUint256(1)
 	tx2 := transferTransaction
 	tx2.Hash = utils.RandomHash()
-	tx2.Nonce = models.MakeUint256(5)
+	tx2.FromStateID = 10
+	tx2.Nonce = models.MakeUint256(7)
 	tx3 := transferTransaction
 	tx3.Hash = utils.RandomHash()
-	tx3.Nonce = models.MakeUint256(1)
+	tx3.Nonce = models.MakeUint256(5)
 
 	err = s.storage.AddTransfer(&tx1)
 	s.NoError(err)

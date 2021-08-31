@@ -56,8 +56,8 @@ func (s *TransactionStorage) getStoredTransaction(hash common.Hash) (*models.Sto
 }
 
 func (s *TransactionStorage) getPendingTransactionHashes() ([]common.Hash, error) {
-	indexPrefix := badger.IndexKeyPrefix(models.StoredTransactionPrefix[3:], "CommitmentID")
-	indexPrefix = append(indexPrefix, models.EncodeCommitmentIDPointer(nil)...)
+	nilCommitment := models.EncodeCommitmentIDPointer(nil)
+	indexPrefix := badger.IndexKey(models.StoredTransactionPrefix[3:], "CommitmentID", nilCommitment)
 	keyList, err := s.getKeyList(indexPrefix)
 	if err != nil {
 		return nil, err
@@ -66,10 +66,10 @@ func (s *TransactionStorage) getPendingTransactionHashes() ([]common.Hash, error
 	return decodeKeyListHashes(models.StoredTransactionPrefix, *keyList)
 }
 
-func (s *TransactionStorage) getKeyList(indexPrefix []byte) (*bh.KeyList, error) {
+func (s *TransactionStorage) getKeyList(indexKey []byte) (*bh.KeyList, error) {
 	var keyList bh.KeyList
 	err := s.database.Badger.View(func(txn *bdg.Txn) error {
-		item, err := txn.Get(indexPrefix)
+		item, err := txn.Get(indexKey)
 		if err == bdg.ErrKeyNotFound {
 			return NewNotFoundError("transaction")
 		}
@@ -131,22 +131,35 @@ func (s *Storage) getTransactionsByPublicKey(publicKey *models.PublicKey, txType
 }
 
 func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*models.Uint256, error) {
-	var tx models.StoredTransaction
-	err := s.database.Badger.Iterator(models.StoredTransactionPrefix, badger.ReversePrefetchIteratorOpts,
-		func(item *bdg.Item) (bool, error) {
-			err := item.Value(tx.SetBytes)
-			if err != nil {
-				return false, err
-			}
-			return tx.FromStateID == accountStateID, nil
-		})
-	if err == badger.ErrIteratorFinished {
-		return nil, NewNotFoundError("transaction")
-	}
+	encodedStateID, err := models.EncodeUint32(&accountStateID)
 	if err != nil {
 		return nil, err
 	}
-	return &tx.Nonce, nil
+
+	indexKey := badger.IndexKey(models.StoredTransactionPrefix[3:], "FromStateID", encodedStateID)
+	keyList, err := s.getKeyList(indexKey)
+	if err != nil {
+		return nil, err
+	}
+	txHashes, err := decodeKeyListHashes(models.StoredTransactionPrefix, *keyList)
+	if err != nil {
+		return nil, err
+	}
+	if len(txHashes) == 0 {
+		return nil, NewNotFoundError("transaction")
+	}
+
+	latestNonce := models.MakeUint256(0)
+	for i := range txHashes {
+		tx, err := s.getStoredTransaction(txHashes[i])
+		if err != nil {
+			return nil, err
+		}
+		if tx.Nonce.Cmp(&latestNonce) > 0 {
+			latestNonce = tx.Nonce
+		}
+	}
+	return &latestNonce, nil
 }
 
 func (s *TransactionStorage) MarkTransactionsAsPending(txHashes []common.Hash) error {
@@ -256,7 +269,7 @@ func decodeKeyListHashes(prefix []byte, keyList bh.KeyList) ([]common.Hash, erro
 func batchIdsToBatchPrefixes(batchIDs []models.Uint256) [][]byte {
 	batchPrefixes := make([][]byte, 0, len(batchIDs))
 	for i := range batchIDs {
-		batchPrefixes = append(batchPrefixes, []byte{1}, batchIDs[i].Bytes())
+		batchPrefixes = append(batchPrefixes, append([]byte{1}, batchIDs[i].Bytes()...))
 	}
 	return batchPrefixes
 }

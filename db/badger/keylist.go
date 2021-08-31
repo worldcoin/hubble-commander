@@ -91,3 +91,7 @@ func (m *KeyListMetadata) GetKeyListByteLength() int {
 func IndexKeyPrefix(typeName []byte, indexName string) []byte {
 	return []byte(bhIndexPrefix + ":" + string(typeName) + ":" + indexName)
 }
+
+func IndexKey(typeName []byte, indexName string, value []byte) []byte {
+	return append(IndexKeyPrefix(typeName, indexName), value...)
+}
