@@ -16,7 +16,7 @@ func GetConfigAndSetupLogger() *Config {
 }
 
 func setupLogger(cfg *Config) {
-	if cfg.Log.Format == "json" {
+	if cfg.Log.Format == LogFormatJSON {
 		log.SetFormatter(&log.JSONFormatter{})
 	}
 	log.SetOutput(os.Stdout)
