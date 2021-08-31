@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"math"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
@@ -9,13 +10,17 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
 const StateTreeDepth = merkletree.MaxDepth
+
+var StateTreeSize = int64(math.Pow(2, float64(StateTreeDepth)))
 
 type StateTree struct {
 	database   *Database
@@ -60,23 +65,66 @@ func (s *StateTree) LeafOrEmpty(stateID uint32) (*models.StateLeaf, error) {
 	return leaf, err
 }
 
-func (s *StateTree) NextAvailableStateID() (*uint32, error) {
-	nextAvailableStateID := uint32(0)
+// NextAvailableStateID returns the starting index of a vacant subtree of at least `subtreeDepth`.
+// `subtreeDepth` can be set to 1 to only search for a single vacant node.
+func (s *StateTree) NextAvailableStateID(subtreeDepth uint32) (*uint32, error) {
+	subtreeWidth := int64(1) << (subtreeDepth - 1) // Number of leaves in the subtree.
 
-	err := s.database.Badger.Iterator(models.FlatStateLeafPrefix, badger.ReverseKeyIteratorOpts, func(item *bdg.Item) (bool, error) {
+	prevTakenNodeIndex := int64(-1)
+	result := uint32(0)
+
+	// The iterator will scan over the state tree left-to-right detecting any gaps along the way.
+	// If a gap is detected its checked if its suitable for the given subtree regarding both alignment and size.
+	// An iterator will return the index of the first such gap it detects.
+	err := s.database.Badger.Iterator(models.FlatStateLeafPrefix, bdg.DefaultIteratorOptions, func(item *bdg.Item) (bool, error) {
 		var key uint32
 		err := badger.DecodeKey(item.Key(), &key, models.FlatStateLeafPrefix)
 		if err != nil {
 			return false, err
 		}
-		nextAvailableStateID = key + 1
-		return true, nil
+		currentNodeIndex := int64(key)
+
+		if currentNodeIndex != prevTakenNodeIndex+1 { // We detected a gap
+			roundedNodeIndex := roundAndValidateStateTreeSlot(prevTakenNodeIndex+1, currentNodeIndex, subtreeWidth)
+			if roundedNodeIndex != nil {
+				result = uint32(*roundedNodeIndex)
+				return true, nil
+			}
+		}
+
+		prevTakenNodeIndex = currentNodeIndex
+		return false, nil
 	})
-	if err != nil && err != badger.ErrIteratorFinished {
-		return nil, err
+	if err != nil {
+		if err == badger.ErrIteratorFinished { // We finished without finding any gaps, try to append the subtree at the end.
+			roundedNodeIndex := roundAndValidateStateTreeSlot(prevTakenNodeIndex+1, StateTreeSize, subtreeWidth)
+			if roundedNodeIndex == nil {
+				return nil, errors.Errorf("no vacant slot found in the state-tree for a subtree of depth %d", subtreeDepth)
+			}
+			return ref.Uint32(uint32(*roundedNodeIndex)), nil
+		}
+
+		return nil, errors.WithStack(err)
 	}
 
-	return &nextAvailableStateID, nil
+	return &result, nil
+}
+
+func roundAndValidateStateTreeSlot(rangeStart, rangeEnd, subtreeWidth int64) *int64 {
+	// Check if we are aligned
+	roundedNodeIndex := rangeStart
+	if roundedNodeIndex%subtreeWidth != 0 {
+		// If its not aligned to subtree size, round it to the next slot
+		roundedNodeIndex += subtreeWidth - roundedNodeIndex%subtreeWidth
+	}
+
+	// Check if we fit in the current gap
+	if roundedNodeIndex+subtreeWidth > rangeEnd {
+		// Can't fit in the current gap, keep searching
+		return nil
+	}
+
+	return ref.Int64(roundedNodeIndex)
 }
 
 // Set returns a witness containing 32 elements for the current set operation

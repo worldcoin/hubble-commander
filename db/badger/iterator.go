@@ -20,6 +20,8 @@ var (
 	}
 )
 
+// Iterator calls filter function for every element matching the prefix.
+// First return value of the filter function is the finish flag.
 func (d *Database) Iterator(prefix []byte, opts badger.IteratorOptions, filter func(item *badger.Item) (bool, error)) error {
 	return d.View(func(txn *badger.Txn) error {
 		it := txn.NewIterator(opts)

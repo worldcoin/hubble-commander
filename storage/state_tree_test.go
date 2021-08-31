@@ -76,7 +76,7 @@ func (s *StateTreeTestSuite) TestLeaf_NonExistentLeaf() {
 }
 
 func (s *StateTreeTestSuite) TestNextAvailableStateID_NoLeavesInStateTree() {
-	stateID, err := s.storage.StateTree.NextAvailableStateID()
+	stateID, err := s.storage.StateTree.NextAvailableStateID(1)
 	s.NoError(err)
 	s.Equal(uint32(0), *stateID)
 }
@@ -87,9 +87,9 @@ func (s *StateTreeTestSuite) TestNextAvailableStateID_OneBytes() {
 	_, err = s.storage.StateTree.Set(2, userState2)
 	s.NoError(err)
 
-	stateID, err := s.storage.StateTree.NextAvailableStateID()
+	stateID, err := s.storage.StateTree.NextAvailableStateID(1)
 	s.NoError(err)
-	s.Equal(uint32(3), *stateID)
+	s.Equal(uint32(1), *stateID)
 }
 
 func (s *StateTreeTestSuite) TestNextAvailableStateID_TwoBytes() {
@@ -98,9 +98,20 @@ func (s *StateTreeTestSuite) TestNextAvailableStateID_TwoBytes() {
 	_, err = s.storage.StateTree.Set(13456, userState2)
 	s.NoError(err)
 
-	stateID, err := s.storage.StateTree.NextAvailableStateID()
+	stateID, err := s.storage.StateTree.NextAvailableStateID(1)
 	s.NoError(err)
-	s.Equal(uint32(13457), *stateID)
+	s.Equal(uint32(1), *stateID)
+}
+
+func (s *StateTreeTestSuite) TestNextAvailableStateID_SubtreeOfSize4() {
+	_, err := s.storage.StateTree.Set(0, userState1)
+	s.NoError(err)
+	_, err = s.storage.StateTree.Set(9, userState2)
+	s.NoError(err)
+
+	stateID, err := s.storage.StateTree.NextAvailableStateID(4)
+	s.NoError(err)
+	s.Equal(uint32(10), *stateID)
 }
 
 func (s *StateTreeTestSuite) TestSet_StoresStateLeafRecord() {
@@ -372,6 +383,6 @@ func (s *StateTreeTestSuite) TestRevertTo_NotExistentRootHash() {
 	s.Equal(ErrNotExistentState, err)
 }
 
-func TestMerkleTreeTestSuite(t *testing.T) {
+func TestStateTreeTestSuite(t *testing.T) {
 	suite.Run(t, new(StateTreeTestSuite))
 }
