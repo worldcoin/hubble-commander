@@ -12,14 +12,14 @@ import (
 const chainStateWithoutGenesisAccountsDataLength = 128 // TODO-SYNC fix naming conflict - DataLength vs ByteSize
 
 type ChainState struct {
-	ChainID         Uint256
-	AccountRegistry common.Address
-	DeploymentBlock uint64
-	TokenRegistry   common.Address
-	DepositManager  common.Address
-	Rollup          common.Address
-	SyncedBlock     uint64
-	GenesisAccounts GenesisAccounts `json:"-"`
+	ChainID                        Uint256
+	AccountRegistry                common.Address
+	AccountRegistryDeploymentBlock uint64
+	TokenRegistry                  common.Address
+	DepositManager                 common.Address
+	Rollup                         common.Address
+	SyncedBlock                    uint64
+	GenesisAccounts                GenesisAccounts `json:"-"`
 }
 
 type ChainSpec struct {
@@ -40,7 +40,7 @@ func (s *ChainState) Bytes() []byte {
 
 	copy(b[:32], s.ChainID.Bytes())
 	copy(b[32:52], s.AccountRegistry.Bytes())
-	binary.BigEndian.PutUint64(b[52:60], s.DeploymentBlock)
+	binary.BigEndian.PutUint64(b[52:60], s.AccountRegistryDeploymentBlock)
 	copy(b[60:80], s.TokenRegistry.Bytes())
 	copy(b[80:100], s.DepositManager.Bytes())
 	copy(b[100:120], s.Rollup.Bytes())
@@ -65,7 +65,7 @@ func (s *ChainState) SetBytes(data []byte) error {
 
 	s.ChainID.SetBytes(data[:32])
 	s.AccountRegistry.SetBytes(data[32:52])
-	s.DeploymentBlock = binary.BigEndian.Uint64(data[52:60])
+	s.AccountRegistryDeploymentBlock = binary.BigEndian.Uint64(data[52:60])
 	s.TokenRegistry.SetBytes(data[60:80])
 	s.DepositManager.SetBytes(data[80:100])
 	s.Rollup.SetBytes(data[100:120])

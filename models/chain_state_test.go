@@ -18,13 +18,13 @@ func TestChainState_Bytes_ReturnsACopy(t *testing.T) {
 
 func TestChainState_SetBytes(t *testing.T) {
 	chainState := ChainState{
-		ChainID:         MakeUint256(1337),
-		AccountRegistry: utils.RandomAddress(),
-		DeploymentBlock: 7392,
-		TokenRegistry:   utils.RandomAddress(),
-		DepositManager:  utils.RandomAddress(),
-		Rollup:          utils.RandomAddress(),
-		SyncedBlock:     8001,
+		ChainID:                        MakeUint256(1337),
+		AccountRegistry:                utils.RandomAddress(),
+		AccountRegistryDeploymentBlock: 7392,
+		TokenRegistry:                  utils.RandomAddress(),
+		DepositManager:                 utils.RandomAddress(),
+		Rollup:                         utils.RandomAddress(),
+		SyncedBlock:                    8001,
 		GenesisAccounts: GenesisAccounts{
 			{
 				PublicKey: PublicKey{1, 2, 0, 5, 4},

@@ -24,13 +24,13 @@ var (
 		Nonce:       models.NewUint256(0),
 	}
 	chainState = models.ChainState{
-		ChainID:         models.MakeUint256(1337),
-		AccountRegistry: utils.RandomAddress(),
-		DeploymentBlock: 9483,
-		TokenRegistry:   utils.RandomAddress(),
-		DepositManager:  utils.RandomAddress(),
-		Rollup:          utils.RandomAddress(),
-		SyncedBlock:     11293,
+		ChainID:                        models.MakeUint256(1337),
+		AccountRegistry:                utils.RandomAddress(),
+		AccountRegistryDeploymentBlock: 9483,
+		TokenRegistry:                  utils.RandomAddress(),
+		DepositManager:                 utils.RandomAddress(),
+		Rollup:                         utils.RandomAddress(),
+		SyncedBlock:                    11293,
 		GenesisAccounts: []models.PopulatedGenesisAccount{
 			{
 				PublicKey: models.PublicKey{4, 4, 1, 9},

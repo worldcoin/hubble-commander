@@ -221,7 +221,7 @@ func compareChainStates(chainStateA, chainStateB *models.ChainState) error {
 	compareError := inconsistentChainStateErr
 
 	if chainStateA.ChainID != chainStateB.ChainID ||
-		chainStateA.DeploymentBlock != chainStateB.DeploymentBlock ||
+		chainStateA.AccountRegistryDeploymentBlock != chainStateB.AccountRegistryDeploymentBlock ||
 		chainStateA.Rollup != chainStateB.Rollup ||
 		chainStateA.AccountRegistry != chainStateB.AccountRegistry ||
 		chainStateA.TokenRegistry != chainStateB.TokenRegistry ||
@@ -318,14 +318,14 @@ func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {
 	}
 
 	return &models.ChainState{
-		ChainID:         info.ChainID,
-		AccountRegistry: info.AccountRegistry,
-		DeploymentBlock: info.DeploymentBlock,
-		TokenRegistry:   info.TokenRegistry,
-		DepositManager:  info.DepositManager,
-		Rollup:          info.Rollup,
-		GenesisAccounts: genesisAccounts,
-		SyncedBlock:     getInitialSyncedBlock(info.DeploymentBlock),
+		ChainID:                        info.ChainID,
+		AccountRegistry:                info.AccountRegistry,
+		AccountRegistryDeploymentBlock: info.DeploymentBlock,
+		TokenRegistry:                  info.TokenRegistry,
+		DepositManager:                 info.DepositManager,
+		Rollup:                         info.Rollup,
+		GenesisAccounts:                genesisAccounts,
+		SyncedBlock:                    getInitialSyncedBlock(info.DeploymentBlock),
 	}, nil
 }
 

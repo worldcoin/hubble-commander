@@ -40,14 +40,14 @@ func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig
 
 	client, err := NewClient(sim, &NewClientParams{
 		ChainState: models.ChainState{
-			ChainID:         sim.GetChainID(),
-			AccountRegistry: *cfg.AccountRegistry,
-			DeploymentBlock: 0,
-			TokenRegistry:   contracts.TokenRegistryAddress,
-			DepositManager:  contracts.DepositManagerAddress,
-			Rollup:          contracts.RollupAddress,
-			SyncedBlock:     0,
-			GenesisAccounts: nil,
+			ChainID:                        sim.GetChainID(),
+			AccountRegistry:                *cfg.AccountRegistry,
+			AccountRegistryDeploymentBlock: 0,
+			TokenRegistry:                  contracts.TokenRegistryAddress,
+			DepositManager:                 contracts.DepositManagerAddress,
+			Rollup:                         contracts.RollupAddress,
+			SyncedBlock:                    0,
+			GenesisAccounts:                nil,
 		},
 		Rollup:          contracts.Rollup,
 		AccountRegistry: contracts.AccountRegistry,
