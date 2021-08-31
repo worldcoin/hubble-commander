@@ -1,6 +1,7 @@
 package eth
 
 import (
+	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
@@ -23,6 +24,15 @@ func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig
 		return nil, err
 	}
 
+	if cfg.Dependencies.AccountRegistry == nil {
+		accountRegistryAddress, _, _, err := accountregistry.DeployAccountRegistry(sim.GetAccount(), sim.GetBackend())
+		if err != nil {
+			return nil, err
+		}
+
+		cfg.Dependencies.AccountRegistry = &accountRegistryAddress
+	}
+
 	contracts, err := rollup.DeployConfiguredRollup(sim, cfg)
 	if err != nil {
 		return nil, err
@@ -30,7 +40,14 @@ func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig
 
 	client, err := NewClient(sim, &NewClientParams{
 		ChainState: models.ChainState{
-			Rollup: contracts.RollupAddress,
+			ChainID:         sim.GetChainID(),
+			AccountRegistry: *cfg.AccountRegistry,
+			DeploymentBlock: 0,
+			TokenRegistry:   contracts.TokenRegistryAddress,
+			DepositManager:  contracts.DepositManagerAddress,
+			Rollup:          contracts.RollupAddress,
+			SyncedBlock:     0,
+			GenesisAccounts: nil,
 		},
 		Rollup:          contracts.Rollup,
 		AccountRegistry: contracts.AccountRegistry,

@@ -9,8 +9,9 @@ func (a *API) GetNetworkInfo() (*dto.NetworkInfo, error) {
 	networkInfo := dto.NetworkInfo{
 		ChainID:         a.client.ChainState.ChainID,
 		AccountRegistry: a.client.ChainState.AccountRegistry,
-		TokenRegistry:   a.client.ChainState.TokenRegistry,
 		DeploymentBlock: a.client.ChainState.DeploymentBlock,
+		TokenRegistry:   a.client.ChainState.TokenRegistry,
+		DepositManager:  a.client.ChainState.DepositManager,
 		Rollup:          a.client.ChainState.Rollup,
 		BlockNumber:     a.storage.GetLatestBlockNumber(),
 	}
