@@ -13,7 +13,7 @@ var (
 	chainState = models.ChainState{
 		ChainID:                        models.MakeUint256(1),
 		AccountRegistry:                utils.RandomAddress(),
-		AccountRegistryDeploymentBlock: 234, // TODO-SYNC leave it here or move close to SyncedBlock?
+		AccountRegistryDeploymentBlock: 234,
 		TokenRegistry:                  utils.RandomAddress(),
 		DepositManager:                 utils.RandomAddress(),
 		Rollup:                         utils.RandomAddress(),
