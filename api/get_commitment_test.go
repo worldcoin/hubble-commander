@@ -80,17 +80,15 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 		Commitment: s.commitment,
 		Status:     txstatus.InBatch,
 		BatchTime:  s.batch.SubmissionTime,
-		Transactions: []models.TransferForCommitment{{
-			TransactionBaseForCommitment: models.TransactionBaseForCommitment{
-				Hash:        transfer.Hash,
-				FromStateID: transfer.FromStateID,
-				Amount:      transfer.Amount,
-				Fee:         transfer.Fee,
-				Nonce:       transfer.Nonce,
-				Signature:   transfer.Signature,
-				ReceiveTime: transfer.ReceiveTime,
-			},
-			ToStateID: transfer.ToStateID,
+		Transactions: []*dto.TransferForCommitment{{
+			Hash:        transfer.Hash,
+			FromStateID: transfer.FromStateID,
+			Amount:      transfer.Amount,
+			Fee:         transfer.Fee,
+			Nonce:       transfer.Nonce,
+			Signature:   transfer.Signature,
+			ReceiveTime: transfer.ReceiveTime,
+			ToStateID:   transfer.ToStateID,
 		}},
 	}
 
@@ -127,16 +125,14 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 		Commitment: s.commitment,
 		Status:     txstatus.InBatch,
 		BatchTime:  s.batch.SubmissionTime,
-		Transactions: []models.Create2TransferForCommitment{{
-			TransactionBaseForCommitment: models.TransactionBaseForCommitment{
-				Hash:        transfer.Hash,
-				FromStateID: transfer.FromStateID,
-				Amount:      transfer.Amount,
-				Fee:         transfer.Fee,
-				Nonce:       transfer.Nonce,
-				Signature:   transfer.Signature,
-				ReceiveTime: transfer.ReceiveTime,
-			},
+		Transactions: []*dto.Create2TransferForCommitment{{
+			Hash:        transfer.Hash,
+			FromStateID: transfer.FromStateID,
+			Amount:      transfer.Amount,
+			Fee:         transfer.Fee,
+			Nonce:       transfer.Nonce,
+			Signature:   transfer.Signature,
+			ReceiveTime: transfer.ReceiveTime,
 			ToStateID:   transfer.ToStateID,
 			ToPublicKey: transfer.ToPublicKey,
 		}},

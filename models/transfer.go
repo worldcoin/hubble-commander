@@ -10,11 +10,6 @@ type Transfer struct {
 	ToStateID uint32
 }
 
-type TransferForCommitment struct {
-	TransactionBaseForCommitment
-	ToStateID uint32
-}
-
 type TransferWithBatchDetails struct {
 	Transfer
 	BatchHash *common.Hash

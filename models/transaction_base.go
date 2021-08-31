@@ -20,16 +20,6 @@ type TransactionBase struct {
 	ErrorMessage *string
 }
 
-type TransactionBaseForCommitment struct {
-	Hash        common.Hash
-	FromStateID uint32
-	Amount      Uint256
-	Fee         Uint256
-	Nonce       Uint256
-	Signature   Signature
-	ReceiveTime *Timestamp
-}
-
 func (t *TransactionBase) GetFromStateID() uint32 {
 	return t.FromStateID
 }

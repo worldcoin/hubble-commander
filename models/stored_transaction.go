@@ -95,22 +95,6 @@ func (t *StoredTransaction) ToTransfer() *Transfer {
 	}
 }
 
-// TODO-tx: move to dto
-func (t *StoredTransaction) ToTransferForCommitment() *TransferForCommitment {
-	return &TransferForCommitment{
-		TransactionBaseForCommitment: TransactionBaseForCommitment{
-			Hash:        t.Hash,
-			FromStateID: t.FromStateID,
-			Amount:      t.Amount,
-			Fee:         t.Fee,
-			Nonce:       t.Nonce,
-			Signature:   t.Signature,
-			ReceiveTime: t.ReceiveTime,
-		},
-		ToStateID: t.Body.(*StoredTransferBody).ToStateID,
-	}
-}
-
 func (t *StoredTransaction) ToCreate2Transfer() *Create2Transfer {
 	c2tBody, ok := t.Body.(*StoredCreate2TransferBody)
 	if !ok {
@@ -132,23 +116,6 @@ func (t *StoredTransaction) ToCreate2Transfer() *Create2Transfer {
 		},
 		ToStateID:   c2tBody.ToStateID,
 		ToPublicKey: c2tBody.ToPublicKey,
-	}
-}
-
-// TODO-tx: move to dto
-func (t *StoredTransaction) ToCreate2TransferForCommitment() *Create2TransferForCommitment {
-	return &Create2TransferForCommitment{
-		TransactionBaseForCommitment: TransactionBaseForCommitment{
-			Hash:        t.Hash,
-			FromStateID: t.FromStateID,
-			Amount:      t.Amount,
-			Fee:         t.Fee,
-			Nonce:       t.Nonce,
-			Signature:   t.Signature,
-			ReceiveTime: t.ReceiveTime,
-		},
-		ToStateID:   t.Body.(*StoredCreate2TransferBody).ToStateID,
-		ToPublicKey: t.Body.(*StoredCreate2TransferBody).ToPublicKey,
 	}
 }
 

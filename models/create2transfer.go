@@ -11,12 +11,6 @@ type Create2Transfer struct {
 	ToPublicKey PublicKey
 }
 
-type Create2TransferForCommitment struct {
-	TransactionBaseForCommitment
-	ToStateID   *uint32
-	ToPublicKey PublicKey
-}
-
 type Create2TransferWithBatchDetails struct {
 	Create2Transfer
 	BatchHash *common.Hash

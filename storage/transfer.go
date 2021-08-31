@@ -77,19 +77,20 @@ func (s *TransactionStorage) GetPendingTransfers(limit uint32) ([]models.Transfe
 	return txs, nil
 }
 
-func (s *TransactionStorage) GetTransfersByCommitmentID(id *models.CommitmentID) ([]models.TransferForCommitment, error) {
+func (s *TransactionStorage) GetTransfersByCommitmentID(id *models.CommitmentID) ([]models.Transfer, error) {
 	res := make([]models.StoredTransaction, 0, 32)
 	err := s.database.Badger.Find(
 		&res,
-		bh.Where("CommitmentID").Eq(*id).Index("CommitmentID"),
+		bh.Where("CommitmentID").Eq(*id).Index("CommitmentID").
+			And("TxType").Eq(txtype.Transfer),
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	txs := make([]models.TransferForCommitment, 0, len(res))
+	txs := make([]models.Transfer, 0, len(res))
 	for i := range res {
-		txs = append(txs, *res[i].ToTransferForCommitment())
+		txs = append(txs, *res[i].ToTransfer())
 	}
 	return txs, nil
 }
