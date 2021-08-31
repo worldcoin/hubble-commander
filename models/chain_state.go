@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const chainStateWithoutGenesisAccountsDataLength = 128 // TODO-SYNC fix naming conflict - DataLength vs ByteSize
+const baseChainStateDataLength = 128
 
 type ChainState struct {
 	ChainID                        Uint256
@@ -23,19 +23,19 @@ type ChainState struct {
 }
 
 type ChainSpec struct {
-	ChainID         Uint256        `yaml:"chain_id"`
-	AccountRegistry common.Address `yaml:"account_registry"`
-	DeploymentBlock uint64         `yaml:"deployment_block"`
-	TokenRegistry   common.Address `yaml:"token_registry"`
-	DepositManager  common.Address `yaml:"deposit_manager"`
-	Rollup          common.Address
-	GenesisAccounts GenesisAccounts `yaml:"genesis_accounts"`
+	ChainID                        Uint256        `yaml:"chain_id"`
+	AccountRegistry                common.Address `yaml:"account_registry"`
+	AccountRegistryDeploymentBlock uint64         `yaml:"account_registry_deployment_block"`
+	TokenRegistry                  common.Address `yaml:"token_registry"`
+	DepositManager                 common.Address `yaml:"deposit_manager"`
+	Rollup                         common.Address
+	GenesisAccounts                GenesisAccounts `yaml:"genesis_accounts"`
 }
 
 type GenesisAccounts []PopulatedGenesisAccount
 
 func (s *ChainState) Bytes() []byte {
-	size := chainStateWithoutGenesisAccountsDataLength + len(s.GenesisAccounts)*populatedGenesisAccountByteSize
+	size := baseChainStateDataLength + len(s.GenesisAccounts)*populatedGenesisAccountByteSize
 	b := make([]byte, size)
 
 	copy(b[:32], s.ChainID.Bytes())
@@ -47,7 +47,7 @@ func (s *ChainState) Bytes() []byte {
 	binary.BigEndian.PutUint64(b[120:128], s.SyncedBlock)
 
 	for i := range s.GenesisAccounts {
-		start := chainStateWithoutGenesisAccountsDataLength + i*populatedGenesisAccountByteSize
+		start := baseChainStateDataLength + i*populatedGenesisAccountByteSize
 		end := start + populatedGenesisAccountByteSize
 		copy(b[start:end], s.GenesisAccounts[i].Bytes())
 	}
@@ -58,8 +58,8 @@ func (s *ChainState) Bytes() []byte {
 func (s *ChainState) SetBytes(data []byte) error {
 	dataLength := len(data)
 
-	if dataLength < chainStateWithoutGenesisAccountsDataLength ||
-		(dataLength-chainStateWithoutGenesisAccountsDataLength)%populatedGenesisAccountByteSize != 0 {
+	if dataLength < baseChainStateDataLength ||
+		(dataLength-baseChainStateDataLength)%populatedGenesisAccountByteSize != 0 {
 		return ErrInvalidLength
 	}
 
@@ -71,14 +71,14 @@ func (s *ChainState) SetBytes(data []byte) error {
 	s.Rollup.SetBytes(data[100:120])
 	s.SyncedBlock = binary.BigEndian.Uint64(data[120:128])
 
-	genesisAccountsCount := (dataLength - chainStateWithoutGenesisAccountsDataLength) / populatedGenesisAccountByteSize
+	genesisAccountsCount := (dataLength - baseChainStateDataLength) / populatedGenesisAccountByteSize
 
 	if genesisAccountsCount > 0 {
 		s.GenesisAccounts = make(GenesisAccounts, 0, genesisAccountsCount)
 	}
 
 	for i := 0; i < genesisAccountsCount; i++ {
-		start := chainStateWithoutGenesisAccountsDataLength + i*populatedGenesisAccountByteSize
+		start := baseChainStateDataLength + i*populatedGenesisAccountByteSize
 		end := start + populatedGenesisAccountByteSize
 		account := PopulatedGenesisAccount{}
 		err := account.SetBytes(data[start:end])
