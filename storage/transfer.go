@@ -20,19 +20,13 @@ func (s *TransactionStorage) BatchAddTransfer(txs []models.Transfer) error {
 		return ErrNoRowsAffected
 	}
 
-	tx, txStorage, err := s.BeginTransaction(TxOptions{Badger: true})
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(&err)
-
 	for i := range txs {
-		err = txStorage.database.Badger.Insert(txs[i].Hash, models.MakeStoredTransactionFromTransfer(&txs[i]))
+		err := s.database.Badger.Insert(txs[i].Hash, models.MakeStoredTransactionFromTransfer(&txs[i]))
 		if err != nil {
 			return err
 		}
 	}
-	return tx.Commit()
+	return nil
 }
 
 func (s *TransactionStorage) GetTransfer(hash common.Hash) (*models.Transfer, error) {
@@ -74,7 +68,10 @@ func (s *TransactionStorage) GetPendingTransfers(limit uint32) ([]models.Transfe
 		return txs[i].Nonce.Cmp(&txs[j].Nonce) < 0
 	})
 
-	return txs, nil
+	if len(txs) <= int(limit) {
+		return txs, nil
+	}
+	return txs[:limit], nil
 }
 
 func (s *TransactionStorage) GetTransfersByCommitmentID(id *models.CommitmentID) ([]models.Transfer, error) {
@@ -96,21 +93,15 @@ func (s *TransactionStorage) GetTransfersByCommitmentID(id *models.CommitmentID)
 }
 
 func (s *TransactionStorage) MarkTransfersAsIncluded(txs []models.Transfer, commitmentID *models.CommitmentID) error {
-	tx, txStorage, err := s.BeginTransaction(TxOptions{Badger: true})
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(&err)
-
 	for i := range txs {
 		storedTx := models.MakeStoredTransactionFromTransfer(&txs[i])
 		storedTx.CommitmentID = commitmentID
-		err = txStorage.updateStoredTransaction(&storedTx)
+		err := s.updateStoredTransaction(&storedTx)
 		if err != nil {
 			return err
 		}
 	}
-	return tx.Commit()
+	return nil
 }
 
 func (s *Storage) GetTransferWithBatchDetails(hash common.Hash) (*models.TransferWithBatchDetails, error) {

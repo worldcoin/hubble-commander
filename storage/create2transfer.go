@@ -20,19 +20,13 @@ func (s *TransactionStorage) BatchAddCreate2Transfer(txs []models.Create2Transfe
 		return ErrNoRowsAffected
 	}
 
-	tx, txStorage, err := s.BeginTransaction(TxOptions{Badger: true})
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(&err)
-
 	for i := range txs {
-		err = txStorage.database.Badger.Insert(txs[i].Hash, models.MakeStoredTransactionFromCreate2Transfer(&txs[i]))
+		err := s.database.Badger.Insert(txs[i].Hash, models.MakeStoredTransactionFromCreate2Transfer(&txs[i]))
 		if err != nil {
 			return err
 		}
 	}
-	return tx.Commit()
+	return nil
 }
 
 func (s *TransactionStorage) GetCreate2Transfer(hash common.Hash) (*models.Create2Transfer, error) {
@@ -74,7 +68,10 @@ func (s *TransactionStorage) GetPendingCreate2Transfers(limit uint32) ([]models.
 		return txs[i].Nonce.Cmp(&txs[j].Nonce) < 0
 	})
 
-	return txs, nil
+	if len(txs) <= int(limit) {
+		return txs, nil
+	}
+	return txs[:limit], nil
 }
 
 func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id *models.CommitmentID) ([]models.Create2Transfer, error) {
@@ -104,21 +101,15 @@ func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([
 }
 
 func (s *TransactionStorage) MarkCreate2TransfersAsIncluded(txs []models.Create2Transfer, commitmentID *models.CommitmentID) error {
-	tx, txStorage, err := s.BeginTransaction(TxOptions{Badger: true})
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(&err)
-
 	for i := range txs {
 		storedTx := models.MakeStoredTransactionFromCreate2Transfer(&txs[i])
 		storedTx.CommitmentID = commitmentID
-		err = txStorage.updateStoredTransaction(&storedTx)
+		err := s.updateStoredTransaction(&storedTx)
 		if err != nil {
 			return err
 		}
 	}
-	return tx.Commit()
+	return nil
 }
 
 func (s *Storage) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.Create2TransferWithBatchDetails, error) {

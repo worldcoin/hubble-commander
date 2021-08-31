@@ -163,25 +163,19 @@ func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*
 }
 
 func (s *TransactionStorage) MarkTransactionsAsPending(txHashes []common.Hash) error {
-	tx, txStorage, err := s.BeginTransaction(TxOptions{Badger: true})
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(&err)
-
 	for i := range txHashes {
-		storedTx, err := txStorage.getStoredTransaction(txHashes[i])
+		storedTx, err := s.getStoredTransaction(txHashes[i])
 		if err != nil {
 			return err
 		}
 
 		storedTx.CommitmentID = nil
-		err = txStorage.updateStoredTransaction(storedTx)
+		err = s.updateStoredTransaction(storedTx)
 		if err != nil {
 			return err
 		}
 	}
-	return tx.Commit()
+	return nil
 }
 
 func (s *TransactionStorage) SetTransactionError(txHash common.Hash, errorMessage string) error {
