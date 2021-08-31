@@ -33,7 +33,7 @@ func (s *NetworkInfoTestSuite) SetupTest() {
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
 
-	err = testStorage.SetChainState(&chainState) // TODO-SYNC verify everything in this test
+	err = testStorage.SetChainState(&chainState)
 	s.NoError(err)
 
 	s.api = &API{storage: testStorage.Storage, client: s.testClient.Client}

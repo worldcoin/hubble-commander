@@ -25,9 +25,9 @@ func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig
 	}
 
 	if cfg.Dependencies.AccountRegistry == nil {
-		accountRegistryAddress, _, _, err := accountregistry.DeployAccountRegistry(sim.GetAccount(), sim.GetBackend())
-		if err != nil {
-			return nil, err
+		accountRegistryAddress, _, _, deployErr := accountregistry.DeployAccountRegistry(sim.GetAccount(), sim.GetBackend())
+		if deployErr != nil {
+			return nil, deployErr
 		}
 
 		cfg.Dependencies.AccountRegistry = &accountRegistryAddress

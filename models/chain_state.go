@@ -37,6 +37,7 @@ type GenesisAccounts []PopulatedGenesisAccount
 func (s *ChainState) Bytes() []byte {
 	size := chainStateWithoutGenesisAccountsDataLength + len(s.GenesisAccounts)*populatedGenesisAccountByteSize
 	b := make([]byte, size)
+
 	copy(b[:32], s.ChainID.Bytes())
 	copy(b[32:52], s.AccountRegistry.Bytes())
 	binary.BigEndian.PutUint64(b[52:60], s.DeploymentBlock)
@@ -57,7 +58,8 @@ func (s *ChainState) Bytes() []byte {
 func (s *ChainState) SetBytes(data []byte) error {
 	dataLength := len(data)
 
-	if dataLength < chainStateWithoutGenesisAccountsDataLength || (dataLength-chainStateWithoutGenesisAccountsDataLength)%populatedGenesisAccountByteSize != 0 {
+	if dataLength < chainStateWithoutGenesisAccountsDataLength ||
+		(dataLength-chainStateWithoutGenesisAccountsDataLength)%populatedGenesisAccountByteSize != 0 {
 		return ErrInvalidLength
 	}
 
