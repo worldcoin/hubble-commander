@@ -22,6 +22,7 @@ func TestChainState_SetBytes(t *testing.T) {
 		AccountRegistry: utils.RandomAddress(),
 		TokenRegistry:   utils.RandomAddress(),
 		DeploymentBlock: 7392,
+		DepositManager:  utils.RandomAddress(),
 		Rollup:          utils.RandomAddress(),
 		SyncedBlock:     8001,
 		GenesisAccounts: GenesisAccounts{
