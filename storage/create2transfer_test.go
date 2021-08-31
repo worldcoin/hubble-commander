@@ -42,7 +42,7 @@ func (s *Create2TransferTestSuite) SetupSuite() {
 
 func (s *Create2TransferTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorageWithBadger()
+	s.storage, err = NewTestStorageWithoutPostgres()
 	s.NoError(err)
 
 	err = s.storage.AccountTree.SetSingle(&account2)
@@ -77,7 +77,15 @@ func (s *Create2TransferTestSuite) TestAddCreate2Transfer_SetsReceiveTime() {
 	s.LessOrEqual(res.ReceiveTime.Unix(), time.Now().Unix())
 }
 
-func (s *TransactionBaseTestSuite) TestBatchMarkCreate2TransfersAsIncluded() {
+func (s *Create2TransferTestSuite) TestGetCreate2Transfer_DifferentTxType() {
+	err := s.storage.AddTransfer(&transfer)
+	s.NoError(err)
+
+	_, err = s.storage.GetCreate2Transfer(transfer.Hash)
+	s.Equal(NewNotFoundError("transaction"), err)
+}
+
+func (s *TransactionBaseTestSuite) TestMarkCreate2TransfersAsIncluded() {
 	commitmentID := &models.CommitmentID{
 		BatchID:      models.MakeUint256(1),
 		IndexInBatch: 1,
@@ -94,7 +102,7 @@ func (s *TransactionBaseTestSuite) TestBatchMarkCreate2TransfersAsIncluded() {
 		txs[i].CommitmentID = commitmentID
 	}
 
-	err := s.storage.BatchMarkCreate2TransfersAsIncluded(txs, commitmentID)
+	err := s.storage.MarkCreate2TransfersAsIncluded(txs, commitmentID)
 	s.NoError(err)
 
 	for i := range txs {

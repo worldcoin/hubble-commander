@@ -34,7 +34,7 @@ func (t *TransactionExecutor) buildTransferCommitment(
 		return nil, err
 	}
 
-	err = t.storage.BatchMarkTransfersAsIncluded(appliedTransfers, commitmentID)
+	err = t.storage.MarkTransfersAsIncluded(appliedTransfers, commitmentID)
 	if err != nil {
 		return nil, err
 	}

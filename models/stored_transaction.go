@@ -16,8 +16,8 @@ const (
 )
 
 var (
-	StoredTransactionPrefix = getBadgerHoldPrefix(StoredTransaction{})
-	errInvalidStoredTxType  = errors.New("invalid StoredTransaction index type")
+	StoredTransactionPrefix     = getBadgerHoldPrefix(StoredTransaction{})
+	errInvalidStoredTxIndexType = errors.New("invalid StoredTransaction index type")
 )
 
 type StoredTransaction struct {
@@ -73,6 +73,11 @@ func MakeStoredTransactionFromCreate2Transfer(t *Create2Transfer) StoredTransact
 }
 
 func (t *StoredTransaction) ToTransfer() *Transfer {
+	transferBody, ok := t.Body.(*StoredTransferBody)
+	if !ok {
+		panic("invalid transfer body type")
+	}
+
 	return &Transfer{
 		TransactionBase: TransactionBase{
 			Hash:         t.Hash,
@@ -86,7 +91,7 @@ func (t *StoredTransaction) ToTransfer() *Transfer {
 			CommitmentID: t.CommitmentID,
 			ErrorMessage: t.ErrorMessage,
 		},
-		ToStateID: t.Body.(*StoredTransferBody).ToStateID,
+		ToStateID: transferBody.ToStateID,
 	}
 }
 
@@ -107,6 +112,11 @@ func (t *StoredTransaction) ToTransferForCommitment() *TransferForCommitment {
 }
 
 func (t *StoredTransaction) ToCreate2Transfer() *Create2Transfer {
+	c2tBody, ok := t.Body.(*StoredCreate2TransferBody)
+	if !ok {
+		panic("invalid create2Transfer body type")
+	}
+
 	return &Create2Transfer{
 		TransactionBase: TransactionBase{
 			Hash:         t.Hash,
@@ -120,8 +130,8 @@ func (t *StoredTransaction) ToCreate2Transfer() *Create2Transfer {
 			CommitmentID: t.CommitmentID,
 			ErrorMessage: t.ErrorMessage,
 		},
-		ToStateID:   t.Body.(*StoredCreate2TransferBody).ToStateID,
-		ToPublicKey: t.Body.(*StoredCreate2TransferBody).ToPublicKey,
+		ToStateID:   c2tBody.ToStateID,
+		ToPublicKey: c2tBody.ToPublicKey,
 	}
 }
 
@@ -212,7 +222,7 @@ func (t StoredTransaction) Indexes() map[string]bh.Index {
 			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
 				v, ok := value.(StoredTransaction)
 				if !ok {
-					return nil, errInvalidStoredTxType
+					return nil, errInvalidStoredTxIndexType
 				}
 				return EncodeUint32(&v.FromStateID)
 			},
@@ -221,7 +231,7 @@ func (t StoredTransaction) Indexes() map[string]bh.Index {
 			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
 				v, ok := value.(StoredTransaction)
 				if !ok {
-					return nil, errInvalidStoredTxType
+					return nil, errInvalidStoredTxIndexType
 				}
 				return EncodeCommitmentIDPointer(v.CommitmentID), nil
 			},
@@ -230,7 +240,7 @@ func (t StoredTransaction) Indexes() map[string]bh.Index {
 			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
 				v, ok := value.(StoredTransaction)
 				if !ok {
-					return nil, errInvalidStoredTxType
+					return nil, errInvalidStoredTxIndexType
 				}
 				return EncodeUint32Pointer(v.Body.GetToStateID()), nil
 			},

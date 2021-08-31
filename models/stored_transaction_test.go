@@ -42,6 +42,14 @@ func TestStoredTransaction_Bytes_Transfer(t *testing.T) {
 	require.Equal(t, *transfer, *decodedTransfer)
 }
 
+func TestStoredTransaction_ToTransfer_InvalidType(t *testing.T) {
+	tx := MakeStoredTransactionFromCreate2Transfer(&Create2Transfer{})
+
+	require.Panics(t, func() {
+		tx.ToTransfer()
+	})
+}
+
 func TestStoredTransaction_Bytes_Create2Transfer(t *testing.T) {
 	transfer := &Create2Transfer{
 		TransactionBase: TransactionBase{
@@ -73,4 +81,12 @@ func TestStoredTransaction_Bytes_Create2Transfer(t *testing.T) {
 
 	decodedTransfer := decodedStoredTransaction.ToCreate2Transfer()
 	require.Equal(t, *transfer, *decodedTransfer)
+}
+
+func TestStoredTransaction_ToCreate2Transfer_InvalidType(t *testing.T) {
+	tx := MakeStoredTransactionFromTransfer(&Transfer{})
+
+	require.Panics(t, func() {
+		tx.ToCreate2Transfer()
+	})
 }

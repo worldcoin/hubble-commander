@@ -38,7 +38,7 @@ func (t *TransactionExecutor) buildC2TCommitment(
 		return nil, err
 	}
 
-	err = t.storage.BatchMarkCreate2TransfersAsIncluded(appliedTransfers, commitmentID)
+	err = t.storage.MarkCreate2TransfersAsIncluded(appliedTransfers, commitmentID)
 	if err != nil {
 		return nil, err
 	}

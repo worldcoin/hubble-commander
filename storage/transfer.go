@@ -40,6 +40,9 @@ func (s *TransactionStorage) GetTransfer(hash common.Hash) (*models.Transfer, er
 	if err != nil {
 		return nil, err
 	}
+	if tx.TxType != txtype.Transfer {
+		return nil, NewNotFoundError("transaction")
+	}
 	return tx.ToTransfer(), nil
 }
 
@@ -91,7 +94,7 @@ func (s *TransactionStorage) GetTransfersByCommitmentID(id *models.CommitmentID)
 	return txs, nil
 }
 
-func (s *TransactionStorage) BatchMarkTransfersAsIncluded(txs []models.Transfer, commitmentID *models.CommitmentID) error {
+func (s *TransactionStorage) MarkTransfersAsIncluded(txs []models.Transfer, commitmentID *models.CommitmentID) error {
 	tx, txStorage, err := s.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return err
@@ -113,6 +116,9 @@ func (s *Storage) GetTransferWithBatchDetails(hash common.Hash) (*models.Transfe
 	tx, err := s.getStoredTransaction(hash)
 	if err != nil {
 		return nil, err
+	}
+	if tx.TxType != txtype.Transfer {
+		return nil, NewNotFoundError("transaction")
 	}
 
 	transfers, err := s.transfersToTransfersWithBatchDetails(*tx)

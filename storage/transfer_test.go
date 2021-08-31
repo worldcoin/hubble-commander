@@ -40,7 +40,7 @@ func (s *TransferTestSuite) SetupSuite() {
 
 func (s *TransferTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorageWithBadger()
+	s.storage, err = NewTestStorageWithoutPostgres()
 	s.NoError(err)
 }
 
@@ -72,7 +72,15 @@ func (s *TransferTestSuite) TestAddTransfer_SetsReceiveTime() {
 	s.LessOrEqual(res.ReceiveTime.Unix(), time.Now().Unix())
 }
 
-func (s *TransactionBaseTestSuite) TestBatchMarkTransfersAsIncluded() {
+func (s *TransferTestSuite) TestGetTransfer_DifferentTxType() {
+	err := s.storage.AddCreate2Transfer(&create2Transfer)
+	s.NoError(err)
+
+	_, err = s.storage.GetTransfer(create2Transfer.Hash)
+	s.Equal(NewNotFoundError("transaction"), err)
+}
+
+func (s *TransactionBaseTestSuite) TestMarkTransfersAsIncluded() {
 	txs := make([]models.Transfer, 2)
 	for i := 0; i < len(txs); i++ {
 		txs[i] = transferTransaction
@@ -85,7 +93,7 @@ func (s *TransactionBaseTestSuite) TestBatchMarkTransfersAsIncluded() {
 		BatchID:      models.MakeUint256(1),
 		IndexInBatch: 1,
 	}
-	err := s.storage.BatchMarkTransfersAsIncluded(txs, &commitmentID)
+	err := s.storage.MarkTransfersAsIncluded(txs, &commitmentID)
 	s.NoError(err)
 
 	for i := range txs {

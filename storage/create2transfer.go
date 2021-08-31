@@ -40,6 +40,9 @@ func (s *TransactionStorage) GetCreate2Transfer(hash common.Hash) (*models.Creat
 	if err != nil {
 		return nil, err
 	}
+	if tx.TxType != txtype.Create2Transfer {
+		return nil, NewNotFoundError("transaction")
+	}
 	return tx.ToCreate2Transfer(), nil
 }
 
@@ -99,7 +102,7 @@ func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([
 	return s.create2TransferToTransfersWithBatchDetails(txs...)
 }
 
-func (s *TransactionStorage) BatchMarkCreate2TransfersAsIncluded(txs []models.Create2Transfer, commitmentID *models.CommitmentID) error {
+func (s *TransactionStorage) MarkCreate2TransfersAsIncluded(txs []models.Create2Transfer, commitmentID *models.CommitmentID) error {
 	tx, txStorage, err := s.BeginTransaction(TxOptions{Badger: true})
 	if err != nil {
 		return err
@@ -121,6 +124,9 @@ func (s *Storage) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.
 	tx, err := s.getStoredTransaction(hash)
 	if err != nil {
 		return nil, err
+	}
+	if tx.TxType != txtype.Create2Transfer {
+		return nil, NewNotFoundError("transaction")
 	}
 
 	transfers, err := s.create2TransferToTransfersWithBatchDetails(*tx)
