@@ -27,8 +27,8 @@ func (s *ChainSpecTestSuite) SetupTest() {
 	s.chainState = &models.ChainState{
 		ChainID:         models.MakeUint256(1337),
 		AccountRegistry: utils.RandomAddress(),
-		TokenRegistry:   utils.RandomAddress(),
 		DeploymentBlock: 8837,
+		TokenRegistry:   utils.RandomAddress(),
 		DepositManager:  utils.RandomAddress(),
 		Rollup:          utils.RandomAddress(),
 		GenesisAccounts: models.GenesisAccounts{

@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const chainStateWithoutGenesisAccountsDataLength = 128
+const chainStateWithoutGenesisAccountsDataLength = 128 // TODO-SYNC fix naming conflict - DataLength vs ByteSize
 
 type ChainState struct {
 	ChainID         Uint256

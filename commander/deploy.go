@@ -80,8 +80,8 @@ func deployContractsAndSetupGenesisState(
 	chainState := &models.ChainState{
 		ChainID:         chain.GetChainID(),
 		AccountRegistry: *accountRegistryAddress,
-		TokenRegistry:   contracts.TokenRegistryAddress,
 		DeploymentBlock: *accountRegistryDeploymentBlock,
+		TokenRegistry:   contracts.TokenRegistryAddress,
 		DepositManager:  contracts.DepositManagerAddress,
 		Rollup:          contracts.RollupAddress,
 		GenesisAccounts: populatedAccounts,
