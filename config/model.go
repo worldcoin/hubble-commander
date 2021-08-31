@@ -7,6 +7,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	LogFormatText = "text"
+	LogFormatJSON = "json"
+)
+
 type Config struct {
 	Log       *LogConfig
 	Bootstrap *BootstrapConfig

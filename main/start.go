@@ -6,11 +6,12 @@ import (
 	"syscall"
 
 	"github.com/Worldcoin/hubble-commander/commander"
+	"github.com/Worldcoin/hubble-commander/config"
 	log "github.com/sirupsen/logrus"
 )
 
 func startCommander() error {
-	cfg := getConfigAndSetupLogger()
+	cfg := config.GetConfigAndSetupLogger()
 	chain, err := commander.GetChainConnection(cfg.Ethereum)
 	if err != nil {
 		return err
