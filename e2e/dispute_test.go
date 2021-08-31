@@ -10,7 +10,9 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
+	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
+	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -381,6 +383,7 @@ func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
 		AccountRegistry: info.AccountRegistry,
 		TokenRegistry:   info.TokenRegistry,
 		DeploymentBlock: info.DeploymentBlock,
+		DepositManager:  info.DepositManager,
 		Rollup:          info.Rollup,
 	}
 
@@ -391,13 +394,21 @@ func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
 	accountRegistry, err := accountregistry.NewAccountRegistry(chainState.AccountRegistry, chain.GetBackend())
 	require.NoError(t, err)
 
+	tokenRegistry, err := tokenregistry.NewTokenRegistry(chainState.TokenRegistry, chain.GetBackend())
+	require.NoError(t, err)
+
+	depositManager, err := depositmanager.NewDepositManager(chainState.DepositManager, chain.GetBackend())
+	require.NoError(t, err)
+
 	rollupContract, err := rollup.NewRollup(chainState.Rollup, chain.GetBackend())
 	require.NoError(t, err)
 
 	ethClient, err := eth.NewClient(chain, &eth.NewClientParams{
 		ChainState:      chainState,
-		Rollup:          rollupContract,
 		AccountRegistry: accountRegistry,
+		TokenRegistry:   tokenRegistry,
+		DepositManager:  depositManager,
+		Rollup:          rollupContract,
 	})
 	require.NoError(t, err)
 	return ethClient

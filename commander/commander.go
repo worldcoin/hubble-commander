@@ -10,6 +10,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
+	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -223,7 +224,8 @@ func compareChainStates(chainStateA, chainStateB *models.ChainState) error {
 		chainStateA.DeploymentBlock != chainStateB.DeploymentBlock ||
 		chainStateA.Rollup != chainStateB.Rollup ||
 		chainStateA.AccountRegistry != chainStateB.AccountRegistry ||
-		chainStateA.TokenRegistry != chainStateB.TokenRegistry {
+		chainStateA.TokenRegistry != chainStateB.TokenRegistry ||
+		chainStateA.DepositManager != chainStateB.DepositManager {
 		return compareError
 	}
 
@@ -318,8 +320,9 @@ func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {
 	return &models.ChainState{
 		ChainID:         info.ChainID,
 		AccountRegistry: info.AccountRegistry,
-		TokenRegistry:   info.TokenRegistry,
 		DeploymentBlock: info.DeploymentBlock,
+		TokenRegistry:   info.TokenRegistry,
+		DepositManager:  info.DepositManager,
 		Rollup:          info.Rollup,
 		GenesisAccounts: genesisAccounts,
 		SyncedBlock:     getInitialSyncedBlock(info.DeploymentBlock),
@@ -335,12 +338,8 @@ func createClientFromChainState(
 	if err != nil {
 		return nil, err
 	}
-	accountRegistry, err := accountregistry.NewAccountRegistry(chainState.AccountRegistry, chain.GetBackend())
-	if err != nil {
-		return nil, err
-	}
 
-	rollupContract, err := rollup.NewRollup(chainState.Rollup, chain.GetBackend())
+	accountRegistry, err := accountregistry.NewAccountRegistry(chainState.AccountRegistry, chain.GetBackend())
 	if err != nil {
 		return nil, err
 	}
@@ -350,11 +349,22 @@ func createClientFromChainState(
 		return nil, err
 	}
 
+	depositManager, err := depositmanager.NewDepositManager(chainState.DepositManager, chain.GetBackend())
+	if err != nil {
+		return nil, err
+	}
+
+	rollupContract, err := rollup.NewRollup(chainState.Rollup, chain.GetBackend())
+	if err != nil {
+		return nil, err
+	}
+
 	client, err := eth.NewClient(chain, &eth.NewClientParams{
 		ChainState:      *chainState,
 		Rollup:          rollupContract,
 		AccountRegistry: accountRegistry,
 		TokenRegistry:   tokenRegistry,
+		DepositManager:  depositManager,
 		ClientConfig: eth.ClientConfig{
 			TransitionDisputeGasLimit: ref.Uint64(cfg.TransitionDisputeGasLimit),
 			SignatureDisputeGasLimit:  ref.Uint64(cfg.SignatureDisputeGasLimit),

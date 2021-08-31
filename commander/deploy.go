@@ -82,6 +82,7 @@ func deployContractsAndSetupGenesisState(
 		AccountRegistry: *accountRegistryAddress,
 		TokenRegistry:   contracts.TokenRegistryAddress,
 		DeploymentBlock: *accountRegistryDeploymentBlock,
+		DepositManager:  contracts.DepositManagerAddress,
 		Rollup:          contracts.RollupAddress,
 		GenesisAccounts: populatedAccounts,
 		SyncedBlock:     getInitialSyncedBlock(*accountRegistryDeploymentBlock),

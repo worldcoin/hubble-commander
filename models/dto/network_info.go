@@ -11,6 +11,7 @@ type NetworkInfo struct {
 	AccountRegistry      common.Address  `json:"accountRegistry"`
 	TokenRegistry        common.Address  `json:"tokenRegistry"`
 	DeploymentBlock      uint64          `json:"deploymentBlock"`
+	DepositManager       common.Address  `json:"depositManager"`
 	Rollup               common.Address  `json:"rollup"`
 	BlockNumber          uint32          `json:"blockNumber"`
 	TransactionCount     int             `json:"transactionCount"`

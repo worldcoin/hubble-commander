@@ -35,6 +35,7 @@ func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig
 		Rollup:          contracts.Rollup,
 		AccountRegistry: contracts.AccountRegistry,
 		TokenRegistry:   contracts.TokenRegistry,
+		DepositManager:  contracts.DepositManager,
 		ClientConfig:    clientCfg,
 	})
 	if err != nil {
