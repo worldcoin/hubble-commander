@@ -187,27 +187,27 @@ func (t StoredTransaction) Indexes() map[string]bh.Index {
 	return map[string]bh.Index{
 		"FromStateID": {
 			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
-				v, ok := value.(StoredTransaction)
-				if !ok {
-					return nil, errInvalidStoredTxIndexType
+				v, err := interfaceToStoredTransaction(value)
+				if err != nil {
+					return nil, err
 				}
 				return EncodeUint32(&v.FromStateID)
 			},
 		},
 		"CommitmentID": {
 			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
-				v, ok := value.(StoredTransaction)
-				if !ok {
-					return nil, errInvalidStoredTxIndexType
+				v, err := interfaceToStoredTransaction(value)
+				if err != nil {
+					return nil, err
 				}
 				return EncodeCommitmentIDPointer(v.CommitmentID), nil
 			},
 		},
 		"ToStateID": {
 			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
-				v, ok := value.(StoredTransaction)
-				if !ok {
-					return nil, errInvalidStoredTxIndexType
+				v, err := interfaceToStoredTransaction(value)
+				if err != nil {
+					return nil, err
 				}
 				return EncodeUint32Pointer(v.Body.GetToStateID()), nil
 			},
@@ -229,6 +229,18 @@ func transactionBody(data []byte, transactionType txtype.TransactionType) (Trans
 		return nil, errors.Errorf("unsupported tx type: %s", transactionType)
 	}
 	return nil, nil
+}
+
+func interfaceToStoredTransaction(value interface{}) (*StoredTransaction, error) {
+	p, ok := value.(*StoredTransaction)
+	if ok {
+		return p, nil
+	}
+	v, ok := value.(StoredTransaction)
+	if ok {
+		return &v, nil
+	}
+	return nil, errInvalidStoredTxIndexType
 }
 
 type TransactionBody interface {

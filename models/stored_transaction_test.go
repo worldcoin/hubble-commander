@@ -90,3 +90,27 @@ func TestStoredTransaction_ToCreate2Transfer_InvalidType(t *testing.T) {
 		tx.ToCreate2Transfer()
 	})
 }
+
+func TestInterfaceToStoredTransaction_StoredTransactionPointer(t *testing.T) {
+	value := &StoredTransaction{
+		FromStateID: 10,
+	}
+	tx, err := interfaceToStoredTransaction(value)
+	require.NoError(t, err)
+	require.Equal(t, value, tx)
+}
+
+func TestInterfaceToStoredTransaction_StoredTrasnactionValue(t *testing.T) {
+	value := StoredTransaction{
+		FromStateID: 10,
+	}
+	tx, err := interfaceToStoredTransaction(value)
+	require.NoError(t, err)
+	require.Equal(t, value, *tx)
+}
+
+func TestInterfaceToStoredTransaction_InvalidType(t *testing.T) {
+	value := StoredTransferBody{}
+	_, err := interfaceToStoredTransaction(value)
+	require.ErrorIs(t, err, errInvalidStoredTxIndexType)
+}

@@ -76,7 +76,7 @@ func Encode(value interface{}) ([]byte, error) {
 	case models.StoredTransaction:
 		return v.Bytes(), nil
 	case *models.StoredTransaction:
-		return nil, errors.Errorf("pass by value")
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.Uint256:
 		return v.Bytes(), nil
 	case *models.Uint256:
