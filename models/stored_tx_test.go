@@ -43,15 +43,6 @@ func TestStoredTx_Bytes_Transfer(t *testing.T) {
 	require.Equal(t, *transfer, *decodedTransfer)
 }
 
-func TestStoredTx_ToTransfer_InvalidType(t *testing.T) {
-	tx := MakeStoredTxFromCreate2Transfer(&Create2Transfer{})
-	txReceipt := MakeStoredTxReceiptFromCreate2Transfer(&Create2Transfer{})
-
-	require.Panics(t, func() {
-		tx.ToTransfer(&txReceipt)
-	})
-}
-
 func TestStoredTx_Bytes_Create2Transfer(t *testing.T) {
 	transfer := &Create2Transfer{
 		TransactionBase: TransactionBase{
@@ -86,6 +77,15 @@ func TestStoredTx_Bytes_Create2Transfer(t *testing.T) {
 	require.Equal(t, *transfer, *decodedTransfer)
 }
 
+func TestStoredTx_ToTransfer_InvalidType(t *testing.T) {
+	tx := MakeStoredTxFromCreate2Transfer(&Create2Transfer{})
+	txReceipt := MakeStoredTxReceiptFromCreate2Transfer(&Create2Transfer{})
+
+	require.Panics(t, func() {
+		tx.ToTransfer(&txReceipt)
+	})
+}
+
 func TestStoredTx_ToCreate2Transfer_InvalidType(t *testing.T) {
 	tx := MakeStoredTxFromTransfer(&Transfer{})
 	txReceipt := MakeStoredTxReceiptFromTransfer(&Transfer{})
@@ -93,4 +93,25 @@ func TestStoredTx_ToCreate2Transfer_InvalidType(t *testing.T) {
 	require.Panics(t, func() {
 		tx.ToCreate2Transfer(&txReceipt)
 	})
+}
+
+func TestStoredTxReceipt_Bytes(t *testing.T) {
+	txReceipt := StoredTxReceipt{
+		Hash: utils.RandomHash(),
+		CommitmentID: &CommitmentID{
+			BatchID:      MakeUint256(10),
+			IndexInBatch: 2,
+		},
+		ToStateID:    ref.Uint32(12),
+		ErrorMessage: ref.String("some error message"),
+	}
+
+	bytes := txReceipt.Bytes()
+
+	decodedStoredTxReceipt := StoredTxReceipt{
+		Hash: txReceipt.Hash,
+	}
+	err := decodedStoredTxReceipt.SetBytes(bytes)
+	require.NoError(t, err)
+	require.EqualValues(t, txReceipt, decodedStoredTxReceipt)
 }

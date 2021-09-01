@@ -173,10 +173,10 @@ func txBody(data []byte, transactionType txtype.TransactionType) (TxBody, error)
 
 type StoredTxReceipt struct {
 	Hash common.Hash
-	//TxType       txtype.TransactionType //1
-	CommitmentID *CommitmentID //34
-	ToStateID    *uint32       // only for C2T
-	ErrorMessage *string       //x
+	//TxType       txtype.TransactionType
+	CommitmentID *CommitmentID
+	ToStateID    *uint32 // only for C2T
+	ErrorMessage *string
 }
 
 func MakeStoredTxReceiptFromTransfer(t *Transfer) StoredTxReceipt {
@@ -201,7 +201,7 @@ func (t *StoredTxReceipt) Bytes() []byte {
 	copy(b[0:34], EncodeCommitmentIDPointer(t.CommitmentID))
 	copy(b[34:39], EncodeUint32Pointer(t.ToStateID))
 	copy(b[39:], encodeStringPointer(t.ErrorMessage))
-	return nil
+	return b
 }
 
 func (t *StoredTxReceipt) SetBytes(data []byte) (err error) {
@@ -220,9 +220,9 @@ func (t *StoredTxReceipt) SetBytes(data []byte) (err error) {
 
 func (t *StoredTxReceipt) BytesLen() int {
 	if t.ErrorMessage != nil {
-		return storedTransactionLength + len(*t.ErrorMessage)
+		return storedTxReceiptBytesLength + len(*t.ErrorMessage)
 	}
-	return storedTransactionLength
+	return storedTxReceiptBytesLength
 }
 
 type TxBody interface {

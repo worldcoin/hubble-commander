@@ -77,6 +77,14 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Bytes(), nil
 	case *models.StoredTransaction:
 		return nil, errors.WithStack(errPassedByPointer)
+	case models.StoredTx:
+		return v.Bytes(), nil
+	case *models.StoredTx:
+		return nil, errors.WithStack(errPassedByPointer)
+	case models.StoredTxReceipt:
+		return v.Bytes(), nil
+	case *models.StoredTxReceipt:
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.Uint256:
 		return v.Bytes(), nil
 	case *models.Uint256:
@@ -140,6 +148,10 @@ func Decode(data []byte, value interface{}) error {
 	case *models.StateUpdate:
 		return v.SetBytes(data)
 	case *models.StoredTransaction:
+		return v.SetBytes(data)
+	case *models.StoredTx:
+		return v.SetBytes(data)
+	case *models.StoredTxReceipt:
 		return v.SetBytes(data)
 	case *models.Uint256:
 		v.SetBytes(data)
