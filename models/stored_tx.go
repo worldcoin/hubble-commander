@@ -5,23 +5,57 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 )
 
 const (
-	immutableStoredTxBytesLength = 213
+	storedTxBytesLength        = 213
+	storedTxReceiptBytesLength = 40
 )
 
 type StoredTx struct {
 	Hash        common.Hash
 	TxType      txtype.TransactionType
-	FromStateID uint32
+	FromStateID uint32 `badgerhold:"index"`
 	Amount      Uint256
 	Fee         Uint256
 	Nonce       Uint256
 	Signature   Signature
 	ReceiveTime *Timestamp
 
-	Body TxBody // ToStateID for transfer, ToPublicKey for C2T
+	Body TxBody
+}
+
+func MakeStoredTxFromTransfer(t *Transfer) StoredTx {
+	return StoredTx{
+		Hash:        t.Hash,
+		TxType:      t.TxType,
+		FromStateID: t.FromStateID,
+		Amount:      t.Amount,
+		Fee:         t.Fee,
+		Nonce:       t.Nonce,
+		Signature:   t.Signature,
+		ReceiveTime: t.ReceiveTime,
+		Body: &StoredTxTransferBody{
+			ToStateID: t.ToStateID,
+		},
+	}
+}
+
+func MakeStoredTxFromCreate2Transfer(t *Create2Transfer) StoredTx {
+	return StoredTx{
+		Hash:        t.Hash,
+		TxType:      t.TxType,
+		FromStateID: t.FromStateID,
+		Amount:      t.Amount,
+		Fee:         t.Fee,
+		Nonce:       t.Nonce,
+		Signature:   t.Signature,
+		ReceiveTime: t.ReceiveTime,
+		Body: &StoredTxCreate2TransferBody{
+			ToPublicKey: t.ToPublicKey,
+		},
+	}
 }
 
 func (t *StoredTx) Bytes() []byte {
@@ -40,7 +74,7 @@ func (t *StoredTx) Bytes() []byte {
 }
 
 func (t *StoredTx) SetBytes(data []byte) error {
-	if len(data) < immutableStoredTxBytesLength {
+	if len(data) < storedTxBytesLength {
 		return ErrInvalidLength
 	}
 
@@ -58,20 +92,137 @@ func (t *StoredTx) SetBytes(data []byte) error {
 	if err != nil {
 		return err
 	}
-	t.Body, err = transactionBody(data[213:], t.TxType)
+	t.Body, err = txBody(data[213:], t.TxType)
 	return err
 }
 
 func (t *StoredTx) BytesLen() int {
-	return storedTransactionLength + t.Body.BytesLen()
+	return storedTxBytesLength + t.Body.BytesLen()
+}
+
+func (t *StoredTx) ToTransfer(txReceipt *StoredTxReceipt) *Transfer {
+	transferBody, ok := t.Body.(*StoredTxTransferBody)
+	if !ok {
+		panic("invalid transfer body type")
+	}
+
+	transfer := &Transfer{
+		TransactionBase: TransactionBase{
+			Hash:        t.Hash,
+			TxType:      t.TxType,
+			FromStateID: t.FromStateID,
+			Amount:      t.Amount,
+			Fee:         t.Fee,
+			Nonce:       t.Nonce,
+			Signature:   t.Signature,
+			ReceiveTime: t.ReceiveTime,
+		},
+		ToStateID: transferBody.ToStateID,
+	}
+
+	if txReceipt != nil {
+		transfer.CommitmentID = txReceipt.CommitmentID
+		transfer.ErrorMessage = txReceipt.ErrorMessage
+	}
+	return transfer
+}
+
+func (t *StoredTx) ToCreate2Transfer(txReceipt *StoredTxReceipt) *Create2Transfer {
+	c2tBody, ok := t.Body.(*StoredTxCreate2TransferBody)
+	if !ok {
+		panic("invalid create2Transfer body type")
+	}
+
+	transfer := &Create2Transfer{
+		TransactionBase: TransactionBase{
+			Hash:        t.Hash,
+			TxType:      t.TxType,
+			FromStateID: t.FromStateID,
+			Amount:      t.Amount,
+			Fee:         t.Fee,
+			Nonce:       t.Nonce,
+			Signature:   t.Signature,
+			ReceiveTime: t.ReceiveTime,
+		},
+		ToPublicKey: c2tBody.ToPublicKey,
+	}
+
+	if txReceipt != nil {
+		transfer.CommitmentID = txReceipt.CommitmentID
+		transfer.ErrorMessage = txReceipt.ErrorMessage
+		transfer.ToStateID = txReceipt.ToStateID
+	}
+	return transfer
+}
+
+func txBody(data []byte, transactionType txtype.TransactionType) (TxBody, error) {
+	switch transactionType {
+	case txtype.Transfer:
+		body := new(StoredTxTransferBody)
+		err := body.SetBytes(data)
+		return body, err
+	case txtype.Create2Transfer:
+		body := new(StoredTxCreate2TransferBody)
+		err := body.SetBytes(data)
+		return body, err
+	case txtype.Genesis, txtype.MassMigration:
+		return nil, errors.Errorf("unsupported tx type: %s", transactionType)
+	}
+	return nil, nil
 }
 
 type StoredTxReceipt struct {
-	Hash         common.Hash
-	TxType       txtype.TransactionType
-	CommitmentID *CommitmentID
-	ErrorMessage *string
-	ToStateID    *uint32 // only for C2T
+	Hash common.Hash
+	//TxType       txtype.TransactionType //1
+	CommitmentID *CommitmentID //34
+	ToStateID    *uint32       // only for C2T
+	ErrorMessage *string       //x
+}
+
+func MakeStoredTxReceiptFromTransfer(t *Transfer) StoredTxReceipt {
+	return StoredTxReceipt{
+		Hash:         t.Hash,
+		CommitmentID: t.CommitmentID,
+		ErrorMessage: t.ErrorMessage,
+	}
+}
+
+func MakeStoredTxReceiptFromCreate2Transfer(t *Create2Transfer) StoredTxReceipt {
+	return StoredTxReceipt{
+		Hash:         t.Hash,
+		CommitmentID: t.CommitmentID,
+		ToStateID:    t.ToStateID,
+		ErrorMessage: t.ErrorMessage,
+	}
+}
+
+func (t *StoredTxReceipt) Bytes() []byte {
+	b := make([]byte, t.BytesLen())
+	copy(b[0:34], EncodeCommitmentIDPointer(t.CommitmentID))
+	copy(b[34:39], EncodeUint32Pointer(t.ToStateID))
+	copy(b[39:], encodeStringPointer(t.ErrorMessage))
+	return nil
+}
+
+func (t *StoredTxReceipt) SetBytes(data []byte) (err error) {
+	if len(data) < storedTxReceiptBytesLength {
+		return ErrInvalidLength
+	}
+
+	t.CommitmentID, err = decodeCommitmentIDPointer(data[0:34])
+	if err != nil {
+		return err
+	}
+	t.ToStateID = decodeUint32Pointer(data[34:39])
+	t.ErrorMessage = decodeStringPointer(data[39:])
+	return nil
+}
+
+func (t *StoredTxReceipt) BytesLen() int {
+	if t.ErrorMessage != nil {
+		return storedTransactionLength + len(*t.ErrorMessage)
+	}
+	return storedTransactionLength
 }
 
 type TxBody interface {
@@ -79,14 +230,37 @@ type TxBody interface {
 	BytesLen() int
 }
 
-type ImmutableTransferBody struct {
+type StoredTxTransferBody struct {
 	ToStateID uint32
 }
 
-type ImmutableC2TBody struct {
+func (t *StoredTxTransferBody) Bytes() []byte {
+	b := make([]byte, transferBodyLength)
+	binary.BigEndian.PutUint32(b, t.ToStateID)
+	return b
+}
+
+func (t *StoredTxTransferBody) SetBytes(data []byte) error {
+	t.ToStateID = binary.BigEndian.Uint32(data)
+	return nil
+}
+
+func (t *StoredTxTransferBody) BytesLen() int {
+	return transferBodyLength
+}
+
+type StoredTxCreate2TransferBody struct {
 	ToPublicKey PublicKey
 }
 
-type MutableC2TBody struct {
-	ToStateID uint32
+func (t *StoredTxCreate2TransferBody) Bytes() []byte {
+	return t.ToPublicKey.Bytes()
+}
+
+func (t *StoredTxCreate2TransferBody) SetBytes(data []byte) error {
+	return t.ToPublicKey.SetBytes(data)
+}
+
+func (t *StoredTxCreate2TransferBody) BytesLen() int {
+	return PublicKeyLength
 }

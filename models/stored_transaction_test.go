@@ -100,7 +100,7 @@ func TestInterfaceToStoredTransaction_StoredTransactionPointer(t *testing.T) {
 	require.Equal(t, value, tx)
 }
 
-func TestInterfaceToStoredTransaction_StoredTrasnactionValue(t *testing.T) {
+func TestInterfaceToStoredTransaction_StoredTransactionValue(t *testing.T) {
 	value := StoredTransaction{
 		FromStateID: 10,
 	}
