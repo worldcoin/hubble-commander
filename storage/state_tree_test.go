@@ -111,7 +111,7 @@ func (s *StateTreeTestSuite) TestNextAvailableStateID_SubtreeOfSize4() {
 
 	stateID, err := s.storage.StateTree.NextAvailableStateID(4)
 	s.NoError(err)
-	s.Equal(uint32(10), *stateID)
+	s.Equal(uint32(16), *stateID) // because of alignment the index is 16
 }
 
 func (s *StateTreeTestSuite) TestSet_StoresStateLeafRecord() {
