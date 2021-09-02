@@ -94,22 +94,3 @@ func TestStoredTx_ToCreate2Transfer_InvalidType(t *testing.T) {
 		tx.ToCreate2Transfer(&txReceipt)
 	})
 }
-
-func TestStoredTxReceipt_Bytes(t *testing.T) {
-	txReceipt := StoredTxReceipt{
-		Hash: utils.RandomHash(),
-		CommitmentID: &CommitmentID{
-			BatchID:      MakeUint256(10),
-			IndexInBatch: 2,
-		},
-		ToStateID:    ref.Uint32(12),
-		ErrorMessage: ref.String("some error message"),
-	}
-
-	bytes := txReceipt.Bytes()
-
-	decodedStoredTxReceipt := StoredTxReceipt{}
-	err := decodedStoredTxReceipt.SetBytes(bytes)
-	require.NoError(t, err)
-	require.EqualValues(t, txReceipt, decodedStoredTxReceipt)
-}

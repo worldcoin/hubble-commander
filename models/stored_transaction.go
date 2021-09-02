@@ -17,7 +17,7 @@ const (
 
 var (
 	StoredTransactionPrefix     = getBadgerHoldPrefix(StoredTransaction{})
-	errInvalidStoredTxIndexType = errors.New("invalid StoredTransaction index type")
+	errInvalidStoredTxIndexType = errors.New("invalid StoredTx index type")
 )
 
 type StoredTransaction struct {
