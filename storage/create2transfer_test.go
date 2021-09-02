@@ -25,7 +25,6 @@ var (
 			Nonce:       models.MakeUint256(0),
 			Signature:   models.MakeRandomSignature(),
 		},
-		ToStateID:   ref.Uint32(2),
 		ToPublicKey: account2.PublicKey,
 	}
 )
