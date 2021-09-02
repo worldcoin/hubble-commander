@@ -29,11 +29,10 @@ type Config struct {
 }
 
 type Simulator struct {
-	Backend         *backends.SimulatedBackend
-	Config          *Config
-	Account         *bind.TransactOpts
-	Accounts        []*bind.TransactOpts
-	RegisteredToken *bind.TransactOpts
+	Backend  *backends.SimulatedBackend
+	Config   *Config
+	Account  *bind.TransactOpts
+	Accounts []*bind.TransactOpts
 
 	stopAutomine func()
 }

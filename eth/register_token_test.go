@@ -1,11 +1,8 @@
 package eth
 
 import (
-	"log"
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -31,20 +28,13 @@ func (s *RegisterTokenTestSuite) TearDownTest() {
 }
 
 func (s *RegisterTokenTestSuite) TestRegisterTokenAndWait_ReturnsCorrectToken() {
-	requestEvents, requestUnsubscribe, err := s.client.WatchTokenRegistrationRequests(&bind.WatchOpts{Start: nil})
-	s.NoError(err)
-	defer requestUnsubscribe()
-	events, unsubscribe, err := s.client.WatchTokenRegistrations(&bind.WatchOpts{Start: nil})
-	s.NoError(err)
-	defer unsubscribe()
+	err := s.client.RequestRegisterToken(s.client.CustomTokenAddress)
+	if err != nil {
+	}
 
-	tokenContract := utils.RandomAddress()
-	log.Printf("Token contract %v\n", tokenContract)
-
-	s.client.RequestRegisterToken(tokenContract, requestEvents)
-	tokenID, err := s.client.FinalizeRegisterToken(tokenContract, events)
+	tokenID, err := s.client.FinalizeRegisterToken(s.client.CustomTokenAddress)
 	s.NoError(err)
-	s.Equal(uint32(2), *tokenID)
+	s.Equal(uint32(0), *tokenID)
 }
 
 func TestRegisterTokenTestSuite(t *testing.T) {

@@ -14,14 +14,16 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 )
 
 type NewClientParams struct {
-	ChainState      models.ChainState
-	Rollup          *rollup.Rollup
-	AccountRegistry *accountregistry.AccountRegistry
-	TokenRegistry   *tokenregistry.TokenRegistry
+	ChainState         models.ChainState
+	Rollup             *rollup.Rollup
+	AccountRegistry    *accountregistry.AccountRegistry
+	TokenRegistry      *tokenregistry.TokenRegistry
+	CustomTokenAddress common.Address
 	ClientConfig
 }
 
@@ -41,6 +43,7 @@ type Client struct {
 	AccountRegistry    *accountregistry.AccountRegistry
 	AccountRegistryABI *abi.ABI
 	TokenRegistry      *tokenregistry.TokenRegistry
+	CustomTokenAddress common.Address
 	boundContract      *bind.BoundContract
 	blocksToFinalise   *int64
 	domain             *bls.Domain
@@ -68,6 +71,7 @@ func NewClient(chainConnection deployer.ChainConnection, params *NewClientParams
 		AccountRegistry:    params.AccountRegistry,
 		AccountRegistryABI: &accountRegistryAbi,
 		TokenRegistry:      params.TokenRegistry,
+		CustomTokenAddress: params.CustomTokenAddress,
 		boundContract:      boundContract,
 	}, nil
 }

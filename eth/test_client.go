@@ -32,10 +32,11 @@ func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig
 		ChainState: models.ChainState{
 			Rollup: contracts.RollupAddress,
 		},
-		Rollup:          contracts.Rollup,
-		AccountRegistry: contracts.AccountRegistry,
-		TokenRegistry:   contracts.TokenRegistry,
-		ClientConfig:    clientCfg,
+		Rollup:             contracts.Rollup,
+		AccountRegistry:    contracts.AccountRegistry,
+		TokenRegistry:      contracts.TokenRegistry,
+		CustomTokenAddress: contracts.CustomTokenAddress,
+		ClientConfig:       clientCfg,
 	})
 	if err != nil {
 		return nil, err

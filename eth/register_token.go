@@ -1,10 +1,6 @@
 package eth
 
 import (
-	"fmt"
-	"math/big"
-	"time"
-
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -12,21 +8,27 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 func (c *Client) RequestRegisterToken(
 	tokenContract common.Address,
-	ev chan *tokenregistry.TokenRegistryRegistrationRequest,
-) (*uint32, error) {
-	return RequestRegisterTokenAndWait(c.transactOpts(big.NewInt(1000), uint64(7_500_000)), c.TokenRegistry, tokenContract, ev)
+) error {
+	return RequestRegisterTokenAndWait(
+		c.ChainConnection.GetAccount(),
+		c.TokenRegistry,
+		tokenContract,
+		c.ChainConnection.GetBackend(),
+	)
 }
 
 func (c *Client) FinalizeRegisterToken(
 	tokenContract common.Address,
-	ev chan *tokenregistry.TokenRegistryRegisteredToken,
 ) (*uint32, error) {
-	return FinalizeRegisterTokenAndWait(c.ChainConnection.GetAccount(), c.TokenRegistry, tokenContract, ev)
+	return FinalizeRegisterTokenAndWait(c.ChainConnection.GetAccount(),
+		c.TokenRegistry,
+		tokenContract,
+		c.ChainConnection.GetBackend(),
+	)
 }
 
 func (c *Client) WatchTokenRegistrationRequests(opts *bind.WatchOpts) (registrations chan *tokenregistry.TokenRegistryRegistrationRequest, unsubscribe func(), err error) {
@@ -66,55 +68,36 @@ func RequestRegisterTokenAndWait(
 	opts *bind.TransactOpts,
 	tokenRegistry *tokenregistry.TokenRegistry,
 	tokenContract common.Address,
-	ev chan *tokenregistry.TokenRegistryRegistrationRequest,
-) (*uint32, error) {
+	chainBackend deployer.ChainBackend,
+) error {
 	tx, err := RequestRegisterToken(opts, tokenRegistry, tokenContract)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	log.Printf("Waiting")
-
-	for {
-		select {
-		case event, ok := <-ev:
-			if !ok {
-				return nil, errors.WithStack(fmt.Errorf("token registry event watcher is closed"))
-			}
-			log.Printf("Event raw txhash %v, tx hash %v\n", event.Raw.TxHash, tx.Hash())
-			if event.Raw.TxHash == tx.Hash() {
-				// TODO
-				return ref.Uint32(0), nil
-			}
-		case <-time.After(deployer.ChainTimeout):
-			return nil, errors.WithStack(fmt.Errorf("timeout"))
-		}
+	_, err = deployer.WaitToBeMined(chainBackend, tx)
+	if err != nil {
+		return err
 	}
+	return nil
 }
 
 func FinalizeRegisterTokenAndWait(
 	opts *bind.TransactOpts,
 	tokenRegistry *tokenregistry.TokenRegistry,
 	tokenContract common.Address,
-	ev chan *tokenregistry.TokenRegistryRegisteredToken,
+	chainBackend deployer.ChainBackend,
 ) (*uint32, error) {
 	tx, err := FinalizeRegisterToken(opts, tokenRegistry, tokenContract)
 	if err != nil {
 		return nil, err
 	}
-
-	for {
-		select {
-		case event, ok := <-ev:
-			if !ok {
-				return nil, errors.WithStack(fmt.Errorf("token registry event watcher is closed"))
-			}
-			if event.Raw.TxHash == tx.Hash() {
-				return ref.Uint32(uint32(event.TokenID.Uint64())), nil
-			}
-		case <-time.After(deployer.ChainTimeout):
-			return nil, errors.WithStack(fmt.Errorf("timeout"))
-		}
+	_, err = deployer.WaitToBeMined(chainBackend, tx)
+	if err != nil {
+		return nil, err
 	}
+	// TODO get token ID
+	return ref.Uint32(0), nil
+
 }
 
 func RequestRegisterToken(

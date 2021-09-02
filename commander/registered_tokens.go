@@ -1,9 +1,6 @@
 package commander
 
 import (
-	"bytes"
-	"context"
-
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -30,15 +27,6 @@ func (c *Commander) unsafeSyncTokens(startBlock, endBlock uint64) error {
 	newTokensCount := 0
 
 	for it.Next() {
-		tx, _, err := c.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
-		if err != nil {
-			return err
-		}
-
-		if !bytes.Equal(tx.Data()[:4], c.client.TokenRegistryABI.Methods["finaliseRegistration"].ID) {
-			continue
-		}
-
 		tokenID := models.MakeUint256FromBig(*it.Event.TokenID)
 		contract := it.Event.TokenContract
 		registeredToken := &models.RegisteredToken{
