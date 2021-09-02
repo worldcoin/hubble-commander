@@ -93,11 +93,11 @@ func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id *models.Commit
 }
 
 func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([]models.Create2TransferWithBatchDetails, error) {
-	txs, err := s.getTransactionsByPublicKey(publicKey, txtype.Create2Transfer)
+	txs, txReceipts, err := s.getTransactionsByPublicKey(publicKey, txtype.Create2Transfer)
 	if err != nil {
 		return nil, err
 	}
-	return s.create2TransferToTransfersWithBatchDetails(txs...)
+	return s.create2TransferToTransfersWithBatchDetails(txs, txReceipts)
 }
 
 func (s *TransactionStorage) MarkCreate2TransfersAsIncluded(txs []models.Create2Transfer, commitmentID *models.CommitmentID) error {
@@ -113,7 +113,7 @@ func (s *TransactionStorage) MarkCreate2TransfersAsIncluded(txs []models.Create2
 }
 
 func (s *Storage) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.Create2TransferWithBatchDetails, error) {
-	tx, err := s.getStoredTransaction(hash)
+	tx, txReceipt, err := s.getStoredTx(hash)
 	if err != nil {
 		return nil, err
 	}
@@ -121,21 +121,21 @@ func (s *Storage) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.
 		return nil, NewNotFoundError("transaction")
 	}
 
-	transfers, err := s.create2TransferToTransfersWithBatchDetails(*tx)
+	transfers, err := s.create2TransferToTransfersWithBatchDetails([]*models.StoredTx{tx}, []*models.StoredTxReceipt{txReceipt})
 	if err != nil {
 		return nil, err
 	}
 	return &transfers[0], nil
 }
 
-func (s *Storage) create2TransferToTransfersWithBatchDetails(txs ...models.StoredTransaction) (
+func (s *Storage) create2TransferToTransfersWithBatchDetails(txs []*models.StoredTx, txReceipts []*models.StoredTxReceipt) (
 	result []models.Create2TransferWithBatchDetails,
 	err error,
 ) {
 	result = make([]models.Create2TransferWithBatchDetails, 0, len(txs))
 	batchIDs := make(map[models.Uint256]*models.Batch)
 	for i := range txs {
-		transfer := txs[i].ToCreate2Transfer()
+		transfer := txs[i].ToCreate2Transfer(txReceipts[i])
 		if transfer.CommitmentID == nil {
 			result = append(result, models.Create2TransferWithBatchDetails{Create2Transfer: *transfer})
 			continue

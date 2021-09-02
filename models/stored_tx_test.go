@@ -108,9 +108,7 @@ func TestStoredTxReceipt_Bytes(t *testing.T) {
 
 	bytes := txReceipt.Bytes()
 
-	decodedStoredTxReceipt := StoredTxReceipt{
-		Hash: txReceipt.Hash,
-	}
+	decodedStoredTxReceipt := StoredTxReceipt{}
 	err := decodedStoredTxReceipt.SetBytes(bytes)
 	require.NoError(t, err)
 	require.EqualValues(t, txReceipt, decodedStoredTxReceipt)

@@ -60,6 +60,20 @@ func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieve() {
 	s.Equal(expected, *res)
 }
 
+func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieveIncludedTransfer() {
+	includedTransfer := transfer
+	includedTransfer.CommitmentID = &models.CommitmentID{
+		BatchID:      models.MakeUint256(3),
+		IndexInBatch: 1,
+	}
+	err := s.storage.AddTransfer(&includedTransfer)
+	s.NoError(err)
+
+	res, err := s.storage.GetTransfer(transfer.Hash)
+	s.NoError(err)
+	s.Equal(includedTransfer, *res)
+}
+
 func (s *TransferTestSuite) TestAddTransfer_SetsReceiveTime() {
 	beforeTime := time.Now().Unix()
 	err := s.storage.AddTransfer(&transfer)

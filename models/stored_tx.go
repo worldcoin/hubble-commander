@@ -6,17 +6,23 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+	bh "github.com/timshannon/badgerhold/v3"
 )
 
 const (
 	storedTxBytesLength        = 213
-	storedTxReceiptBytesLength = 40
+	storedTxReceiptBytesLength = 72
+)
+
+var (
+	StoredTxPrefix        = getBadgerHoldPrefix(StoredTx{})
+	StoredTxReceiptPrefix = getBadgerHoldPrefix(StoredTxReceipt{})
 )
 
 type StoredTx struct {
 	Hash        common.Hash
 	TxType      txtype.TransactionType
-	FromStateID uint32 `badgerhold:"index"`
+	FromStateID uint32
 	Amount      Uint256
 	Fee         Uint256
 	Nonce       Uint256
@@ -171,11 +177,59 @@ func txBody(data []byte, transactionType txtype.TransactionType) (TxBody, error)
 	return nil, nil
 }
 
+// nolint:gocritic
+// Type implements badgerhold.Storer
+func (t StoredTx) Type() string {
+	return string(StoredTxPrefix[3:])
+}
+
+// nolint:gocritic
+// Indexes implements badgerhold.Storer
+func (t StoredTx) Indexes() map[string]bh.Index {
+	return map[string]bh.Index{
+		"FromStateID": {
+			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
+				v, err := interfaceToStoredTx(value)
+				if err != nil {
+					return nil, err
+				}
+				return EncodeUint32(&v.FromStateID)
+			},
+		},
+		"ToStateID": {
+			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
+				v, err := interfaceToStoredTx(value)
+				if err != nil {
+					return nil, err
+				}
+
+				transferBody, ok := v.Body.(*StoredTxTransferBody)
+				if !ok {
+					return nil, nil
+				}
+				return EncodeUint32(&transferBody.ToStateID)
+			},
+		},
+	}
+}
+
+func interfaceToStoredTx(value interface{}) (*StoredTx, error) {
+	p, ok := value.(*StoredTx)
+	if ok {
+		return p, nil
+	}
+	v, ok := value.(StoredTx)
+	if ok {
+		return &v, nil
+	}
+	return nil, errInvalidStoredTxIndexType
+}
+
 type StoredTxReceipt struct {
 	Hash common.Hash
 	//TxType       txtype.TransactionType
-	CommitmentID *CommitmentID
-	ToStateID    *uint32 // only for C2T
+	CommitmentID *CommitmentID `badgerhold:"index"`
+	ToStateID    *uint32       `badgerhold:"index"` // only for C2T
 	ErrorMessage *string
 }
 
@@ -198,9 +252,10 @@ func MakeStoredTxReceiptFromCreate2Transfer(t *Create2Transfer) StoredTxReceipt 
 
 func (t *StoredTxReceipt) Bytes() []byte {
 	b := make([]byte, t.BytesLen())
-	copy(b[0:34], EncodeCommitmentIDPointer(t.CommitmentID))
-	copy(b[34:39], EncodeUint32Pointer(t.ToStateID))
-	copy(b[39:], encodeStringPointer(t.ErrorMessage))
+	copy(b[0:32], t.Hash.Bytes())
+	copy(b[32:66], EncodeCommitmentIDPointer(t.CommitmentID))
+	copy(b[66:71], EncodeUint32Pointer(t.ToStateID))
+	copy(b[71:], encodeStringPointer(t.ErrorMessage))
 	return b
 }
 
@@ -209,12 +264,13 @@ func (t *StoredTxReceipt) SetBytes(data []byte) (err error) {
 		return ErrInvalidLength
 	}
 
-	t.CommitmentID, err = decodeCommitmentIDPointer(data[0:34])
+	t.Hash.SetBytes(data[0:32])
+	t.CommitmentID, err = decodeCommitmentIDPointer(data[32:66])
 	if err != nil {
 		return err
 	}
-	t.ToStateID = decodeUint32Pointer(data[34:39])
-	t.ErrorMessage = decodeStringPointer(data[39:])
+	t.ToStateID = decodeUint32Pointer(data[66:71])
+	t.ErrorMessage = decodeStringPointer(data[71:])
 	return nil
 }
 

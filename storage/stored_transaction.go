@@ -43,6 +43,10 @@ func (s *TransactionStorage) BeginTransaction(opts TxOptions) (*db.TxController,
 	return txController, &txTransactionStorage, nil
 }
 
+func (s *TransactionStorage) addStoredTxReceipt(txReceipt *models.StoredTxReceipt) error {
+	return s.database.Badger.Insert(txReceipt.Hash, *txReceipt)
+}
+
 func (s *TransactionStorage) getStoredTransaction(hash common.Hash) (*models.StoredTransaction, error) {
 	var storedTx models.StoredTransaction
 	err := s.database.Badger.Get(hash, &storedTx)
@@ -53,6 +57,39 @@ func (s *TransactionStorage) getStoredTransaction(hash common.Hash) (*models.Sto
 		return nil, err
 	}
 	return &storedTx, nil
+}
+
+func (s *TransactionStorage) getStoredTx(hash common.Hash) (*models.StoredTx, *models.StoredTxReceipt, error) {
+	var storedTx models.StoredTx
+	err := s.database.Badger.Get(hash, &storedTx)
+	if err == bh.ErrNotFound {
+		return nil, nil, NewNotFoundError("transaction")
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var storedTxReceipt models.StoredTxReceipt
+	err = s.database.Badger.Get(hash, &storedTxReceipt)
+	if err == bh.ErrNotFound {
+		return &storedTx, nil, nil
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+	return &storedTx, &storedTxReceipt, nil
+}
+
+func (s *TransactionStorage) getStoredTxReceipt(hash common.Hash) (*models.StoredTxReceipt, error) {
+	var storedTxReceipt models.StoredTxReceipt
+	err := s.database.Badger.Get(hash, &storedTxReceipt)
+	if err == bh.ErrNotFound {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &storedTxReceipt, nil
 }
 
 func (s *TransactionStorage) getPendingTransactionHashes() ([]common.Hash, error) {
