@@ -1,8 +1,12 @@
 package eth
 
 import (
+	"math/big"
 	"testing"
+	"time"
 
+	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -28,13 +32,34 @@ func (s *RegisterTokenTestSuite) TearDownTest() {
 }
 
 func (s *RegisterTokenTestSuite) TestRegisterTokenAndWait_ReturnsCorrectToken() {
-	err := s.client.RequestRegisterToken(s.client.CustomTokenAddress)
-	if err != nil {
-	}
-
-	tokenID, err := s.client.FinalizeRegisterToken(s.client.CustomTokenAddress)
+	events, unsubscribe, err := s.client.WatchTokenRegistrations(&bind.WatchOpts{})
 	s.NoError(err)
-	s.Equal(uint32(0), *tokenID)
+	defer unsubscribe()
+
+	err = s.client.RequestRegisterToken(s.client.CustomTokenAddress)
+	s.NoError(err)
+
+	err = s.client.FinalizeRegisterToken(s.client.CustomTokenAddress)
+	s.NoError(err)
+
+	var tokenID *big.Int
+Outer:
+	for {
+
+		select {
+		case event, ok := <-events:
+			if !ok {
+				s.Fail("Token registry event watcher is closed")
+			}
+			if event.TokenContract == s.client.CustomTokenAddress {
+				tokenID = event.TokenID
+				break Outer
+			}
+		case <-time.After(deployer.ChainTimeout):
+			s.Fail("Token registry event watcher timed out")
+		}
+	}
+	s.Equal(uint64(0), tokenID.Uint64())
 }
 
 func TestRegisterTokenTestSuite(t *testing.T) {
