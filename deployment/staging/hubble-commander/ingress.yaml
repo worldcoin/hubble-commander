@@ -13,10 +13,10 @@ metadata:
 spec:
   tls:
   - hosts:
-    - new.api.worldcoin-distributors.com
+    - staging.api.worldcoin-distributors.com
     secretName: hubble-commander-secret
   rules:
-  - host: new.api.worldcoin-distributors.com
+  - host: staging.api.worldcoin-distributors.com
     http:
       paths:
         - path: /hubble/primary(/|$)
