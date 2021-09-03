@@ -13,7 +13,7 @@ const (
 	bhIndexPrefix         = "_bhIndex"
 )
 
-var (
+var ( // TODO-API here
 	errInconsistentItemsLength      = fmt.Errorf("inconsistent KeyList items length")
 	errInvalidKeyListLength         = fmt.Errorf("invalid KeyList data length")
 	errInvalidKeyListMetadataLength = fmt.Errorf("invalid KeyListMetadata data length")

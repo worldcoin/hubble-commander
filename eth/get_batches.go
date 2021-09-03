@@ -17,6 +17,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// TODO-API here ????????
 const MsgInvalidBatchID = "execution reverted: Batch id greater than total number of batches, invalid batch id"
 
 var errBatchAlreadyRolledBack = errors.New("batch already rolled back")

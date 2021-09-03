@@ -57,13 +57,13 @@ func RegisterAccountAndWait(
 		select {
 		case event, ok := <-ev:
 			if !ok {
-				return nil, errors.WithStack(fmt.Errorf("account event watcher is closed"))
+				return nil, errors.WithStack(fmt.Errorf("account event watcher is closed")) // TODO-API extract ??
 			}
 			if event.Raw.TxHash == tx.Hash() {
 				return ref.Uint32(uint32(event.PubkeyID.Uint64())), nil
 			}
 		case <-time.After(deployer.ChainTimeout):
-			return nil, errors.WithStack(fmt.Errorf("timeout"))
+			return nil, errors.WithStack(fmt.Errorf("timeout")) // TODO-API extract ??
 		}
 	}
 }

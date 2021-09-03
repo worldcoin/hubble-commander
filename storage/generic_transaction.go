@@ -13,6 +13,6 @@ func (s *TransactionStorage) BatchAddGenericTransaction(txs models.GenericTransa
 	case models.Create2TransferArray:
 		return s.BatchAddCreate2Transfer(x)
 	default:
-		return fmt.Errorf("tx type: %t", x)
+		return fmt.Errorf("tx type: %t", x) // TODO-API extract the fuck?
 	}
 }

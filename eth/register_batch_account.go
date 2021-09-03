@@ -18,7 +18,7 @@ const (
 	accountBatchOffset = 1 << 31
 )
 
-var ErrInvalidPubKeysLength = errors.New("invalid public keys length")
+var ErrInvalidPubKeysLength = errors.New("invalid public keys length") // TODO-API here
 
 func (c *Client) RegisterBatchAccount(
 	publicKeys []models.PublicKey,
@@ -64,7 +64,7 @@ func (c *Client) WaitForBatchAccountRegistration(
 		case event, ok := <-ev:
 			if !ok {
 				return nil, errors.WithStack(fmt.Errorf("account event watcher is closed"))
-			}
+			} // TODO-API extract?
 			if event.Raw.TxHash == tx.Hash() {
 				return ExtractPubKeyIDsFromBatchAccountEvent(event), nil
 			}

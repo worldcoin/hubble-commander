@@ -79,7 +79,7 @@ func (c *Client) submitBatchAndWait(
 				return c.handleNewBatchEvent(newBatch)
 			}
 		case <-time.After(*c.config.TxTimeout):
-			return nil, fmt.Errorf("submitBatchAndWait: timeout")
+			return nil, fmt.Errorf("submitBatchAndWait: timeout") // TODO-API extract ?
 		}
 	}
 }

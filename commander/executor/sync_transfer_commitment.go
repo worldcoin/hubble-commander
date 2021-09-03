@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-var (
+var ( // TODO-API here
 	ErrInvalidDataLength = NewDisputableError(Transition, "invalid data length")
 	ErrTooManyTxs        = NewDisputableError(Transition, "too many transactions in a commitment")
 )

@@ -20,7 +20,7 @@ func Deploy(cfg *config.Config, chain deployer.ChainConnection) (chainSpec *stri
 	defer func() {
 		closeErr := tempStorage.Close()
 		if closeErr != nil {
-			err = fmt.Errorf("temporary storage close caused by: %w, failed with: %v", err, closeErr)
+			err = fmt.Errorf("temporary storage close caused by: %w, failed with: %v", err, closeErr) // TODO-API here extratct?
 		}
 	}()
 

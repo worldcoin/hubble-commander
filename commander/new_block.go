@@ -10,7 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var (
+var ( // TODO-API here
 	ErrIncompleteBlockRangeSync = stdErrors.New("syncing of a block range was stopped prematurely")
 	ErrRollbackInProgress       = stdErrors.New("rollback is in progress")
 )

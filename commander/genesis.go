@@ -40,7 +40,7 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.PopulatedGen
 
 		if seenStateIDs[account.StateID] {
 			return errors.Errorf("accounts must have unique state IDs")
-		}
+		} // TODO-API here
 		seenStateIDs[account.StateID] = true
 
 		leaf := &models.AccountLeaf{
@@ -101,7 +101,7 @@ func RegisterGenesisAccounts(
 		case event, ok := <-registrations:
 			if !ok {
 				return nil, errors.WithStack(fmt.Errorf("account event watcher is closed"))
-			}
+			} // TODO-API extract
 			for i := range txs {
 				if event.Raw.TxHash == txs[i].Hash() {
 					registeredAccounts[i] = models.RegisteredGenesisAccount{
@@ -117,7 +117,7 @@ func RegisterGenesisAccounts(
 			}
 
 		case <-time.After(deployer.ChainTimeout):
-			return nil, errors.WithStack(fmt.Errorf("timeout"))
+			return nil, errors.WithStack(fmt.Errorf("timeout")) // TODO-API extract
 		}
 	}
 }

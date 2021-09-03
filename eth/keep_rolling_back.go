@@ -14,7 +14,7 @@ const (
 	errorSeparator          = ":"
 )
 
-var errKeepRollingBackFailed = errors.New("keep rolling back failed")
+var errKeepRollingBackFailed = errors.New("keep rolling back failed") // TODO-API here ???
 
 func (c *Client) KeepRollingBack() error {
 	transaction, err := c.rollup().KeepRollingBack()

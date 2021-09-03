@@ -25,7 +25,7 @@ func EncodeDecimal(value models.Uint256) (uint16, error) {
 	}
 
 	if mantissa.Cmp(big.NewInt(0xfff)) > 0 {
-		return 0, fmt.Errorf("value is not encodable as multi-precission decimal")
+		return 0, fmt.Errorf("value is not encodable as multi-precission decimal") // TODO-API here maybe?
 	}
 
 	return uint16(exponent.Uint64())<<12 + uint16(mantissa.Uint64()), nil

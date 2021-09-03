@@ -7,7 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-var (
+var ( // TODO-API here
 	ErrNoRowsAffected   = errors.New("no rows were affected by the update")
 	ErrNotExistentState = errors.New("cannot revert to not existent state")
 )

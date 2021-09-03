@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var ErrInvalidCommitmentRoot = errors.New("invalid commitment root of batch #0")
+var ErrInvalidCommitmentRoot = errors.New("invalid commitment root of batch #0") // TODO-API heere
 
 func verifyCommitmentRoot(storage *st.Storage, client *eth.Client) error {
 	firstBatch, err := client.GetBatch(models.NewUint256(0))

@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	ErrNotEnoughC2Transfers = NewRollupError("not enough create2transfers")
+	ErrNotEnoughC2Transfers = NewRollupError("not enough create2transfers") // TODO-API here
 )
 
 func (t *TransactionExecutor) CreateCreate2TransferCommitments(domain *bls.Domain) (commitments []models.Commitment, err error) {

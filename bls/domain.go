@@ -15,7 +15,7 @@ var (
 	testDomain = Domain{0x00, 0x00, 0x00, 0x00}
 	domainT    = reflect.TypeOf(Domain{})
 
-	ErrInvalidDomainLength = errors.New("invalid domain length")
+	ErrInvalidDomainLength = errors.New("invalid domain length") // TODO-API here
 )
 
 func (d *Domain) Bytes() []byte {

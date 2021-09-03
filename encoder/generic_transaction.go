@@ -15,7 +15,7 @@ func HashGenericTransaction(tx models.GenericTransaction) (*common.Hash, error) 
 	case *models.Create2Transfer:
 		return HashCreate2Transfer(x)
 	default:
-		return nil, errors.Errorf("unsupported tx type: %s", tx.Type())
+		return nil, errors.Errorf("unsupported tx type: %s", tx.Type()) // TODO-API here probably not
 	}
 }
 
@@ -26,7 +26,7 @@ func GetTransactionLength(txType txtype.TransactionType) int {
 	case txtype.Create2Transfer:
 		return Create2TransferLength
 	case txtype.Genesis, txtype.MassMigration:
-		log.Panicf("unsupported tx type: %s", txType)
+		log.Panicf("unsupported tx type: %s", txType) // TODO-API here same here probably not
 	}
 	return -1
 }

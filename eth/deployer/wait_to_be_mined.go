@@ -12,7 +12,7 @@ import (
 var (
 	PollInterval             = 500 * time.Millisecond
 	ChainTimeout             = 5 * time.Minute
-	ErrWaitToBeMinedTimedOut = errors.New("timeout on waiting for transaction to be mined")
+	ErrWaitToBeMinedTimedOut = errors.New("timeout on waiting for transaction to be mined") // TODO-API here
 )
 
 func WaitToBeMined(r ReceiptProvider, tx *types.Transaction) (*types.Receipt, error) {

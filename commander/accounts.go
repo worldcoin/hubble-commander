@@ -152,7 +152,7 @@ func validateExistingAccounts(accountTree *storage.AccountTree, accounts ...mode
 			return err
 		}
 		if existingAccount.PublicKey != accounts[i].PublicKey {
-			return errors.New("inconsistency in account leaves between the database and the contract")
+			return errors.New("inconsistency in account leaves between the database and the contract") // TODO-API extract
 		}
 	}
 	return nil

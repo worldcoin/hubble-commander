@@ -276,7 +276,7 @@ func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, 
 		return nil, err
 	}
 	if *currentRootHash != stateUpdate.PrevRoot {
-		return nil, fmt.Errorf("unexpected state root after state update rollback")
+		return nil, fmt.Errorf("unexpected state root after state update rollback") // TODO-API extract
 	}
 
 	err = s.deleteStateUpdate(stateUpdate.ID)

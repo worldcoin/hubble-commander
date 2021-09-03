@@ -25,7 +25,7 @@ import (
 	"github.com/ybbus/jsonrpc/v2"
 )
 
-var (
+var ( // TODO-API here
 	inconsistentChainStateErr    = NewCannotBootstrapError("database chain state and file chain state are not the same")
 	missingBootstrapSourceErr    = NewCannotBootstrapError("no chain spec file or bootstrap url specified")
 	inconsistentDBChainIDErr     = NewInconsistentChainIDError("database")
