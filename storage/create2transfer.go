@@ -3,9 +3,11 @@ package storage
 import (
 	"sort"
 
+	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
+	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	bh "github.com/timshannon/badgerhold/v3"
 )
@@ -52,27 +54,50 @@ func (s *TransactionStorage) GetCreate2Transfer(hash common.Hash) (*models.Creat
 }
 
 func (s *TransactionStorage) GetPendingCreate2Transfers(limit uint32) ([]models.Create2Transfer, error) {
-	txHashes, err := s.getPendingTransactionHashes()
-	if IsNotFoundError(err) {
-		return []models.Create2Transfer{}, nil
+	txController, txStorage, err := s.BeginTransaction(TxOptions{Badger: true})
+	if err != nil {
+		return nil, err
 	}
+	defer txController.Rollback(&err)
+
+	txs, err := txStorage.unsafeGetPendingCreate2Transfers(limit)
 	if err != nil {
 		return nil, err
 	}
 
-	var tx models.StoredTransaction
-	txs := make([]models.Create2Transfer, 0, len(txHashes))
-	for i := range txHashes {
-		err = s.database.Badger.Get(txHashes[i], &tx)
-		if err == bh.ErrNotFound {
-			return nil, NewNotFoundError("transaction")
-		}
-		if err != nil {
-			return nil, err
-		}
-		if tx.TxType == txtype.Create2Transfer && tx.ErrorMessage == nil {
-			txs = append(txs, *tx.ToCreate2Transfer())
-		}
+	err = txController.Commit()
+	if err != nil {
+		return nil, err
+	}
+	return txs, nil
+}
+
+func (s *TransactionStorage) unsafeGetPendingCreate2Transfers(limit uint32) ([]models.Create2Transfer, error) {
+	txs := make([]models.Create2Transfer, 0, 32)
+	var storedTx models.StoredTx
+	err := s.database.Badger.Iterator(models.StoredTxPrefix, badger.KeyIteratorOpts,
+		func(item *bdg.Item) (bool, error) {
+			var hash common.Hash
+			err := badger.DecodeKey(item.Key(), &hash, models.StoredTxPrefix)
+			if err != nil {
+				return false, err
+			}
+			txReceipt, err := s.getStoredTxReceipt(hash)
+			if err != nil || txReceipt != nil {
+				return false, err
+			}
+
+			err = item.Value(storedTx.SetBytes)
+			if err != nil {
+				return false, err
+			}
+			if storedTx.TxType == txtype.Create2Transfer {
+				txs = append(txs, *storedTx.ToCreate2Transfer(nil))
+			}
+			return false, nil
+		})
+	if err != nil && err != badger.ErrIteratorFinished {
+		return nil, err
 	}
 
 	sort.SliceStable(txs, func(i, j int) bool {

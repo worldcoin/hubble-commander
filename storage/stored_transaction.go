@@ -86,30 +86,6 @@ func (s *TransactionStorage) getStoredTxReceipt(hash common.Hash) (*models.Store
 	return &storedTxReceipt, nil
 }
 
-func (s *TransactionStorage) getPendingTransactionHashes() ([]common.Hash, error) {
-	err := s.database.Badger.Iterator(models.StoredTxPrefix, badger.KeyIteratorOpts,
-		func(item *bdg.Item) (bool, error) {
-			var hash common.Hash
-			err := badger.DecodeKey(item.Key(), &hash, models.StoredTxPrefix)
-			if err != nil {
-				return false, err
-			}
-			return false, nil
-		})
-	if err != nil && err != badger.ErrIteratorFinished {
-		return nil, err
-	}
-
-	nilCommitment := models.EncodeCommitmentIDPointer(nil)
-	indexPrefix := badger.IndexKey(models.StoredTransactionPrefix[3:], "CommitmentID", nilCommitment)
-	keyList, err := s.getKeyList(indexPrefix)
-	if err != nil {
-		return nil, err
-	}
-
-	return decodeKeyListHashes(models.StoredTransactionPrefix, *keyList)
-}
-
 func (s *TransactionStorage) getKeyList(indexKey []byte) (*bh.KeyList, error) {
 	var keyList bh.KeyList
 	err := s.database.Badger.View(func(txn *bdg.Txn) error {
