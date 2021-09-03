@@ -23,7 +23,7 @@ func TestUint32_ByteEncoding(t *testing.T) {
 	number := uint32(173)
 
 	var decodedNumber uint32
-	encodedDataHash, _ := EncodeUint32(&number)
+	encodedDataHash, _ := models.EncodeUint32(&number)
 	_ = DecodeUint32(encodedDataHash, &decodedNumber)
 	require.Equal(t, number, decodedNumber)
 }

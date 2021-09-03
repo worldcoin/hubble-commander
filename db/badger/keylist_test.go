@@ -74,7 +74,7 @@ func TestIndexKeyPrefix(t *testing.T) {
 }
 
 func TestIndexKey(t *testing.T) {
-	value, err := EncodeUint32(ref.Uint32(1))
+	value, err := models.EncodeUint32(ref.Uint32(1))
 	require.NoError(t, err)
 
 	prefix := IndexKey(models.StoredTxPrefix[3:], "CommitmentID", value)

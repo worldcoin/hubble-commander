@@ -94,7 +94,7 @@ func Encode(value interface{}) ([]byte, error) {
 	case *string:
 		return nil, errors.WithStack(errPassedByPointer)
 	case uint32:
-		return EncodeUint32(&v)
+		return models.EncodeUint32(&v)
 	case *uint32:
 		return models.EncodeUint32Pointer(v), nil
 	case uint64:
@@ -206,12 +206,6 @@ func decodeUint32Pointer(data []byte, value *interface{}, dst *uint32) error {
 
 func EncodeDataHash(dataHash *common.Hash) ([]byte, error) {
 	return dataHash.Bytes(), nil
-}
-
-func EncodeUint32(number *uint32) ([]byte, error) {
-	b := make([]byte, 4)
-	binary.BigEndian.PutUint32(b[0:4], *number)
-	return b, nil
 }
 
 func DecodeDataHash(data []byte, dataHash *common.Hash) error {
