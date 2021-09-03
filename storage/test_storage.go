@@ -1,9 +1,7 @@
 package storage
 
 import (
-	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db/badger"
-	"github.com/Worldcoin/hubble-commander/db/postgres"
 )
 
 type TestStorage struct {
@@ -19,81 +17,33 @@ type TestStorageConfig struct {
 type TeardownFunc func() error
 
 func NewTestStorage() (*TestStorage, error) {
-	return NewConfiguredTestStorage(TestStorageConfig{
-		Postgres: false,
-		Badger:   true,
-	})
-}
-
-func NewConfiguredTestStorage(cfg TestStorageConfig) (*TestStorage, error) {
-	database := &Database{QB: getQueryBuilder()}
-	teardown := make([]TeardownFunc, 0, 2)
-
-	if cfg.Postgres {
-		postgresTestDB, err := postgres.NewTestDB()
-		if err != nil {
-			return nil, err
-		}
-		database.Postgres = postgresTestDB.DB
-		teardown = append(teardown, postgresTestDB.Teardown)
+	badgerTestDB, err := badger.NewTestDB()
+	if err != nil {
+		return nil, err
 	}
 
-	if cfg.Badger {
-		badgerTestDB, err := badger.NewTestDB()
-		if err != nil {
-			return nil, err
-		}
-		database.Badger = badgerTestDB.DB
-		teardown = append(teardown, badgerTestDB.Teardown)
+	database := &Database{
+		Badger: badgerTestDB.DB,
 	}
-
-	storage := newStorageFromDatabase(database)
 
 	return &TestStorage{
-		Storage:  storage,
-		Teardown: toTeardownFunc(teardown),
+		Storage:  newStorageFromDatabase(database),
+		Teardown: badgerTestDB.Teardown,
 	}, nil
 }
 
-func (s *TestStorage) Clone(currentConfig *config.PostgresConfig) (*TestStorage, error) {
+func (s *TestStorage) Clone() (*TestStorage, error) {
 	database := *s.database
-	teardown := make([]TeardownFunc, 0, 2)
 
-	if s.database.Postgres != nil {
-		testPostgres := postgres.TestDB{DB: s.database.Postgres}
-		clonedPostgres, err := testPostgres.Clone(currentConfig)
-		if err != nil {
-			return nil, err
-		}
-		database.Postgres = clonedPostgres.DB
-		teardown = append(teardown, clonedPostgres.Teardown)
+	testBadger := badger.TestDB{DB: s.database.Badger}
+	clonedBadger, err := testBadger.Clone()
+	if err != nil {
+		return nil, err
 	}
-
-	if s.database.Badger != nil {
-		testBadger := badger.TestDB{DB: s.database.Badger}
-		clonedBadger, err := testBadger.Clone()
-		if err != nil {
-			return nil, err
-		}
-		database.Badger = clonedBadger.DB
-		teardown = append(teardown, clonedBadger.Teardown)
-	}
-
-	storage := s.copyWithNewDatabase(&database)
+	database.Badger = clonedBadger.DB
 
 	return &TestStorage{
-		Storage:  storage,
-		Teardown: toTeardownFunc(teardown),
+		Storage:  s.copyWithNewDatabase(&database),
+		Teardown: clonedBadger.Teardown,
 	}, nil
-}
-
-func toTeardownFunc(teardown []TeardownFunc) TeardownFunc {
-	return func() error {
-		for i := range teardown {
-			if err := teardown[i](); err != nil {
-				return err
-			}
-		}
-		return nil
-	}
 }

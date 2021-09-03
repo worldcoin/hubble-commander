@@ -575,7 +575,7 @@ func cloneStorage(
 	storage *st.TestStorage,
 	client *eth.Client,
 ) (*st.TestStorage, *executor.TransactionExecutor) {
-	clonedStorage, err := storage.Clone(cfg.Postgres)
+	clonedStorage, err := storage.Clone()
 	s.NoError(err)
 
 	txExecutor := executor.NewTestTransactionExecutor(clonedStorage.Storage, client, cfg.Rollup, context.Background())
