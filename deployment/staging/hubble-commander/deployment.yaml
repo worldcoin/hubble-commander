@@ -39,6 +39,10 @@ spec:
                 name: hubble-commander
             - configMapRef:
                 name: primary-hubble-commander
+            - secretRef:
+                name: hubble-commander
+            - secretRef:
+                name: primary-hubble-commander
           livenessProbe:
             exec:
               command:
@@ -64,6 +68,10 @@ spec:
             - configMapRef:
                 name: hubble-commander
             - configMapRef:
+                name: secondary-hubble-commander
+            - secretRef:
+                name: hubble-commander
+            - secretRef:
                 name: secondary-hubble-commander
           livenessProbe:
             exec:

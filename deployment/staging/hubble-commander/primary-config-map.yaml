@@ -6,5 +6,4 @@ metadata:
   name: primary-hubble-commander
   namespace: staging
 data:
-  HUBBLE_ETHEREUM_PRIVATE_KEY: ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
   HUBBLE_POSTGRES_NAME: "primary-hubble-commander"
