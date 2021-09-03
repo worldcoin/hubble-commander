@@ -165,7 +165,7 @@ func (s *Storage) getCreate2TransfersByPublicKey(publicKey *models.PublicKey) (
 	receipts := make([]models.StoredReceipt, 0, 1)
 	err = s.database.Badger.Find(
 		&receipts,
-		bh.Where("ToStateID").In(stateIDs).Index("ToStateID"),
+		bh.Where("ToStateID").In(stateIDs...).Index("ToStateID"),
 	)
 	if err != nil {
 		return nil, nil, err

@@ -10,12 +10,13 @@ import (
 )
 
 const (
-	storedTxBytesLength      = 213
-	storedReceiptBytesLength = 72
+	storedTxBytesLength        = 213
+	storedTxTransferBodyLength = 4
 )
 
 var (
-	StoredTxPrefix = getBadgerHoldPrefix(StoredTx{})
+	StoredTxPrefix              = getBadgerHoldPrefix(StoredTx{})
+	errInvalidStoredTxIndexType = errors.New("invalid StoredTx index type")
 )
 
 type StoredTx struct {
@@ -234,7 +235,7 @@ type StoredTxTransferBody struct {
 }
 
 func (t *StoredTxTransferBody) Bytes() []byte {
-	b := make([]byte, transferBodyLength)
+	b := make([]byte, storedTxTransferBodyLength)
 	binary.BigEndian.PutUint32(b, t.ToStateID)
 	return b
 }
@@ -245,7 +246,7 @@ func (t *StoredTxTransferBody) SetBytes(data []byte) error {
 }
 
 func (t *StoredTxTransferBody) BytesLen() int {
-	return transferBodyLength
+	return storedTxTransferBodyLength
 }
 
 type StoredTxCreate2TransferBody struct {

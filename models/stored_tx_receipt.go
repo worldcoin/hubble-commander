@@ -6,6 +6,8 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
+const storedReceiptBytesLength = 72
+
 var (
 	StoredReceiptPrefix              = getBadgerHoldPrefix(StoredReceipt{})
 	errInvalidStoredReceiptIndexType = errors.New("invalid StoredReceipt index type")
@@ -66,13 +68,11 @@ func (t *StoredReceipt) BytesLen() int {
 	return storedReceiptBytesLength
 }
 
-// nolint:gocritic
 // Type implements badgerhold.Storer
 func (t StoredReceipt) Type() string {
 	return string(StoredReceiptPrefix[3:])
 }
 
-// nolint:gocritic
 // Indexes implements badgerhold.Storer
 func (t StoredReceipt) Indexes() map[string]bh.Index {
 	return map[string]bh.Index{
