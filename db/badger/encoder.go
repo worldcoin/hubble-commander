@@ -112,7 +112,7 @@ func Encode(value interface{}) ([]byte, error) {
 	}
 }
 
-// nolint:gocyclo
+// nolint:gocyclo, funlen
 func Decode(data []byte, value interface{}) error {
 	switch v := value.(type) {
 	case *models.AccountNode:

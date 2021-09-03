@@ -173,7 +173,9 @@ func (s *Storage) getCreate2TransfersByPublicKey(publicKey *models.PublicKey) (
 	return s.getMissingStoredTxsData(txs, receipts)
 }
 
-func (s *Storage) getMissingStoredTxsData(txs []models.StoredTx, receipts []models.StoredReceipt) ([]*models.StoredTx, []*models.StoredReceipt, error) {
+func (s *Storage) getMissingStoredTxsData(txs []models.StoredTx, receipts []models.StoredReceipt) (
+	[]*models.StoredTx, []*models.StoredReceipt, error,
+) {
 	hashes := make(map[common.Hash]struct{}, len(txs))
 
 	for i := range txs {
