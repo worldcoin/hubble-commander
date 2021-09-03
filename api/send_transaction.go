@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/encoder"
@@ -13,13 +12,14 @@ import (
 )
 
 var (
-	ErrFeeTooLow        = errors.New("fee must be greater than 0")
-	ErrNonceTooLow      = errors.New("nonce too low")
-	ErrNonceTooHigh     = errors.New("nonce too high")
-	ErrNotEnoughBalance = errors.New("not enough balance")
-	ErrInvalidSignature = errors.New("invalid signature")
-	ErrTransferToSelf   = errors.New("transfer to the same state id")
-	ErrInvalidAmount    = errors.New("amount must be positive")
+	ErrFeeTooLow         = errors.New("fee must be greater than 0")
+	ErrNonceTooLow       = errors.New("nonce too low")
+	ErrNonceTooHigh      = errors.New("nonce too high")
+	ErrNotEnoughBalance  = errors.New("not enough balance")
+	ErrInvalidSignature  = errors.New("invalid signature")
+	ErrTransferToSelf    = errors.New("transfer to the same state id")
+	ErrInvalidAmount     = errors.New("amount must be positive")
+	ErrUnsupportedTxType = errors.New("unsupported transaction type")
 )
 
 func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
@@ -29,7 +29,7 @@ func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
 	case dto.Create2Transfer:
 		return a.handleCreate2Transfer(t)
 	default:
-		return nil, fmt.Errorf("not supported transaction type")
+		return nil, ErrUnsupportedTxType
 	}
 }
 
