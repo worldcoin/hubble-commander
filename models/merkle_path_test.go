@@ -12,15 +12,6 @@ func TestNewMerklePath_InvalidLength(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestMerklePath_Value(t *testing.T) {
-	a, err := NewMerklePath("000111")
-	require.NoError(t, err)
-
-	b, err := a.Value()
-	require.NoError(t, err)
-	require.Equal(t, "0000111", b)
-}
-
 func TestMerklePath_Add_One(t *testing.T) {
 	a, err := NewMerklePath("0000")
 	require.NoError(t, err)
