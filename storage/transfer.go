@@ -48,7 +48,7 @@ func (s *TransactionStorage) GetTransfer(hash common.Hash) (*models.Transfer, er
 }
 
 func (s *TransactionStorage) GetPendingTransfers(limit uint32) ([]models.Transfer, error) {
-	txController, txStorage, err := s.BeginTransaction(TxOptions{Badger: true})
+	txController, txStorage, err := s.BeginTransaction(TxOptions{})
 	if err != nil {
 		return nil, err
 	}

@@ -1,18 +1,14 @@
 package storage
 
 import (
-	"github.com/Masterminds/squirrel"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/db/badger"
-	"github.com/Worldcoin/hubble-commander/db/postgres"
 	log "github.com/sirupsen/logrus"
 )
 
 type Database struct {
-	Postgres *postgres.Database
-	Badger   *badger.Database
-	QB       squirrel.StatementBuilderType
+	Badger *badger.Database
 }
 
 func NewDatabase(cfg *config.Config) (*Database, error) {

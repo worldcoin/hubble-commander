@@ -25,7 +25,7 @@ func NewTransactionExecutor(
 	cfg *config.RollupConfig,
 	ctx context.Context,
 ) (*TransactionExecutor, error) {
-	tx, txStorage, err := storage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
+	tx, txStorage, err := storage.BeginTransaction(st.TxOptions{})
 	if err != nil {
 		return nil, err
 	}

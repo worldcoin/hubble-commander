@@ -9,11 +9,6 @@ type TestStorage struct {
 	Teardown func() error
 }
 
-type TestStorageConfig struct {
-	Postgres bool
-	Badger   bool
-}
-
 type TeardownFunc func() error
 
 func NewTestStorage() (*TestStorage, error) {

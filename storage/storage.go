@@ -20,8 +20,6 @@ type Storage struct {
 }
 
 type TxOptions struct {
-	Postgres bool
-	Badger   bool
 	ReadOnly bool
 }
 

@@ -132,7 +132,7 @@ func roundAndValidateStateTreeSlot(rangeStart, rangeEnd, subtreeWidth int64) *in
 
 // Set returns a witness containing 32 elements for the current set operation
 func (s *StateTree) Set(id uint32, state *models.UserState) (models.Witness, error) {
-	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{Badger: true})
+	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +156,7 @@ func (s *StateTree) GetWitness(stateID uint32) (models.Witness, error) {
 }
 
 func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
-	txn, txDatabase, err := s.database.BeginTransaction(TxOptions{Badger: true})
+	txn, txDatabase, err := s.database.BeginTransaction(TxOptions{})
 	if err != nil {
 		return err
 	}
