@@ -44,7 +44,7 @@ func (s *BatchesTestSuite) SetupSuite() {
 
 func (s *BatchesTestSuite) SetupTest() {
 	var err error
-	s.testStorage, err = st.NewTestStorageWithBadger()
+	s.testStorage, err = st.NewTestStorage()
 	s.NoError(err)
 	s.testClient, err = eth.NewConfiguredTestClient(rollup.DeploymentConfig{
 		Params: rollup.Params{

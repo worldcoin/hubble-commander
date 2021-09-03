@@ -42,7 +42,7 @@ func (s *ApplyCreate2TransferTestSuite) SetupSuite() {
 
 func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 	var err error
-	s.storage, err = st.NewTestStorageWithBadger()
+	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 	s.client, err = eth.NewTestClient()
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, nil, context.Background())

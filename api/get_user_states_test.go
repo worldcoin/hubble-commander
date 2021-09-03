@@ -22,7 +22,7 @@ func (s *GetUserStatesTestSuite) SetupSuite() {
 }
 
 func (s *GetUserStatesTestSuite) SetupTest() {
-	testStorage, err := st.NewTestStorageWithoutPostgres()
+	testStorage, err := st.NewTestStorage()
 	s.NoError(err)
 	s.teardown = testStorage.Teardown
 	s.api = &API{storage: testStorage.Storage}

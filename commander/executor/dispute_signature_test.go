@@ -43,7 +43,7 @@ func (s *DisputeSignatureTestSuite) SetupSuite() {
 
 func (s *DisputeSignatureTestSuite) SetupTest() {
 	var err error
-	s.storage, err = st.NewTestStorageWithBadger()
+	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 
 	s.client, err = eth.NewConfiguredTestClient(

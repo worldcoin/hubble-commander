@@ -36,7 +36,7 @@ func (s *ApplyCreate2TransfersTestSuite) SetupSuite() {
 
 func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 	var err error
-	s.storage, err = storage.NewTestStorageWithBadger()
+	s.storage, err = storage.NewTestStorage()
 	s.NoError(err)
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)

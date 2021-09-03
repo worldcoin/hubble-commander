@@ -52,7 +52,7 @@ func (s *NewBlockLoopTestSuite) SetupSuite() {
 
 func (s *NewBlockLoopTestSuite) SetupTest() {
 	var err error
-	s.testStorage, err = st.NewTestStorageWithBadger()
+	s.testStorage, err = st.NewTestStorage()
 	s.NoError(err)
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)

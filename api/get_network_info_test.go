@@ -27,7 +27,7 @@ func (s *NetworkInfoTestSuite) SetupSuite() {
 }
 
 func (s *NetworkInfoTestSuite) SetupTest() {
-	testStorage, err := st.NewTestStorageWithBadger()
+	testStorage, err := st.NewTestStorage()
 	s.NoError(err)
 	s.teardown = testStorage.Teardown
 	s.testClient, err = eth.NewTestClient()

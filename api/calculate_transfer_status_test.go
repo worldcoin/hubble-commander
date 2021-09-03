@@ -39,7 +39,7 @@ func (s *CalculateTransactionStatusTestSuite) SetupSuite() {
 
 func (s *CalculateTransactionStatusTestSuite) SetupTest() {
 	var err error
-	s.storage, err = st.NewTestStorageWithoutPostgres()
+	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 
 	sim, err := simulator.NewSimulator()

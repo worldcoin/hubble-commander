@@ -41,7 +41,7 @@ func (s *VerifySignatureTestSuite) SetupTest() {
 	var err error
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
-	s.storage, err = st.NewTestStorageWithoutPostgres()
+	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, s.cfg, context.Background())
 	s.addAccounts()

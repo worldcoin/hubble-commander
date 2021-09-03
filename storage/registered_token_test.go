@@ -22,7 +22,7 @@ func (s *RegisteredTokenTestSuite) SetupSuite() {
 
 func (s *RegisteredTokenTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorageWithoutPostgres()
+	s.storage, err = NewTestStorage()
 	s.NoError(err)
 }
 

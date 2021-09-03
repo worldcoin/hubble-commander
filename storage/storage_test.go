@@ -27,7 +27,7 @@ func (s *StorageTestSuite) SetupSuite() {
 
 func (s *StorageTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorageWithBadger()
+	s.storage, err = NewTestStorage()
 	s.NoError(err)
 	s.batch = &models.Batch{
 		ID:                models.MakeUint256(1),

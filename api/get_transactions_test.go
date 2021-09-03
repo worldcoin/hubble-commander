@@ -28,7 +28,7 @@ func (s *GetTransactionsTestSuite) SetupSuite() {
 
 func (s *GetTransactionsTestSuite) SetupTest() {
 	var err error
-	s.storage, err = st.NewTestStorageWithBadger()
+	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 	s.api = &API{storage: s.storage.Storage}
 }

@@ -18,14 +18,7 @@ type TestStorageConfig struct {
 
 type TeardownFunc func() error
 
-func NewTestStorageWithBadger() (*TestStorage, error) {
-	return NewConfiguredTestStorage(TestStorageConfig{
-		Postgres: true,
-		Badger:   true,
-	})
-}
-
-func NewTestStorageWithoutPostgres() (*TestStorage, error) {
+func NewTestStorage() (*TestStorage, error) {
 	return NewConfiguredTestStorage(TestStorageConfig{
 		Postgres: false,
 		Badger:   true,
