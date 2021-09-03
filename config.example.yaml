@@ -21,13 +21,6 @@
 #api:
 #  port: 8080
 #
-#postgres:
-#  host: localhost
-#  port: 5432
-#  name: hubble
-#  user: hubble
-#  password: root
-#
 #badger:
 #  path: db/badger/data/hubble
 #

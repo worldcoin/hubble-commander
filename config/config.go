@@ -61,14 +61,6 @@ func GetConfig() *Config {
 			Version: "0.0.1",
 			Port:    getString("api.port", "8080"),
 		},
-		Postgres: &PostgresConfig{
-			Host:           getStringOrNil("postgres.host"),
-			Port:           getStringOrNil("postgres.port"),
-			Name:           getString("postgres.name", "hubble"),
-			User:           getStringOrNil("postgres.user"),
-			Password:       getStringOrNil("postgres.password"),
-			MigrationsPath: getMigrationsPath(),
-		},
 		Badger: &BadgerConfig{
 			Path: getString("badger.path", getBadgerPath()),
 		},
@@ -106,14 +98,6 @@ func GetTestConfig() *Config {
 		API: &APIConfig{
 			Version: "dev-0.0.1",
 			Port:    "8080",
-		},
-		Postgres: &PostgresConfig{
-			Host:           getStringOrNil("postgres.host"),
-			Port:           getStringOrNil("postgres.port"),
-			Name:           getString("postgres.name", "hubble_test"),
-			User:           getStringOrNil("postgres.user"),
-			Password:       getStringOrNil("postgres.password"),
-			MigrationsPath: getMigrationsPath(),
 		},
 		Badger: &BadgerConfig{
 			Path: getTestBadgerPath(),
