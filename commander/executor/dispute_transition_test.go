@@ -343,7 +343,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_First
 	}
 	pubKeyIDs := [][]uint32{{4}}
 
-	transfer := testutils.MakeCreate2Transfer(0, ref.Uint32(3), 0, 50, wallets[1].PublicKey())
+	transfer := testutils.MakeCreate2Transfer(0, nil, 0, 50, wallets[1].PublicKey())
 	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &transfer)
 
 	registrations, unsubscribe, err := s.client.WatchRegistrations(&bind.WatchOpts{})
@@ -377,7 +377,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_Valid
 	wallets := setUserStates(s.Assertions, s.transactionExecutor, testDomain)
 
 	transfers := []models.Create2Transfer{
-		testutils.MakeCreate2Transfer(0, ref.Uint32(3), 0, 50, wallets[1].PublicKey()),
+		testutils.MakeCreate2Transfer(0, nil, 0, 50, wallets[1].PublicKey()),
 		testutils.MakeCreate2Transfer(0, ref.Uint32(4), 1, 100, wallets[1].PublicKey()),
 	}
 	pubKeyIDs := [][]uint32{{4}}
@@ -388,6 +388,8 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_Valid
 
 	s.beginExecutorTransaction()
 	defer s.commitTransaction()
+
+	transfers[1].ToStateID = nil
 	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &transfers[1])
 
 	remoteBatches, err := s.client.GetAllBatches()
@@ -500,8 +502,10 @@ func (s *DisputeTransitionTestSuite) createAndSubmitInvalidC2TBatch(
 	invalidTxHash common.Hash,
 ) *models.Batch {
 	for i := range txs {
+		stateIDs := s.resetCreate2TransfersToStateID(txs[i])
 		err := s.transactionExecutor.storage.BatchAddCreate2Transfer(txs[i])
 		s.NoError(err)
+		s.setCreate2TransfersToStateID(txs[i], stateIDs)
 	}
 
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Create2Transfer)
@@ -515,6 +519,21 @@ func (s *DisputeTransitionTestSuite) createAndSubmitInvalidC2TBatch(
 
 	s.client.Commit()
 	return pendingBatch
+}
+
+func (s *DisputeTransitionTestSuite) resetCreate2TransfersToStateID(txs []models.Create2Transfer) []*uint32 {
+	stateIDs := make([]*uint32, 0, len(txs))
+	for i := range txs {
+		stateIDs = append(stateIDs, txs[i].ToStateID)
+		txs[i].ToStateID = nil
+	}
+	return stateIDs
+}
+
+func (s *DisputeTransitionTestSuite) setCreate2TransfersToStateID(txs []models.Create2Transfer, toStateIDs []*uint32) {
+	for i := range txs {
+		txs[i].ToStateID = toStateIDs[i]
+	}
 }
 
 func (s *DisputeTransitionTestSuite) createInvalidC2TCommitments(

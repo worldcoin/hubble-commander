@@ -14,7 +14,6 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -230,11 +229,11 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyTransfersInCommitment() {
 }
 
 func (s *SyncTestSuite) TestSyncBatch_TooManyCreate2TransfersInCommitment() {
-	tx := testutils.MakeCreate2Transfer(0, ref.Uint32(5), 0, 400, s.wallets[0].PublicKey())
+	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx)
 	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &tx)
 
-	tx2 := testutils.MakeCreate2Transfer(0, ref.Uint32(6), 1, 400, s.wallets[0].PublicKey())
+	tx2 := testutils.MakeCreate2Transfer(0, nil, 1, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx2)
 	s.createAndSubmitInvalidC2TBatch(&tx2)
 
@@ -296,11 +295,11 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidTransferCommitmentStateRoot() {
 }
 
 func (s *SyncTestSuite) TestSyncBatch_InvalidCreate2TransferCommitmentStateRoot() {
-	tx := testutils.MakeCreate2Transfer(0, ref.Uint32(5), 0, 400, s.wallets[0].PublicKey())
+	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx)
 	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &tx)
 
-	tx2 := testutils.MakeCreate2Transfer(0, ref.Uint32(6), 1, 400, s.wallets[0].PublicKey())
+	tx2 := testutils.MakeCreate2Transfer(0, nil, 1, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx2)
 
 	batch, commitments := createC2TBatch(s.Assertions, s.transactionExecutor, &tx2, testDomain)
@@ -353,7 +352,7 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidTransferSignature() {
 }
 
 func (s *SyncTestSuite) TestSyncBatch_InvalidCreate2TransferSignature() {
-	tx := testutils.MakeCreate2Transfer(0, ref.Uint32(5), 0, 400, s.wallets[0].PublicKey())
+	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, s.wallets[0].PublicKey())
 	signCreate2Transfer(s.T(), &s.wallets[1], &tx)
 	s.setCreate2TransferHash(&tx)
 
