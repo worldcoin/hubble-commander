@@ -44,7 +44,7 @@ func (s *TransactionStorage) BatchAddTransfer(txs []models.Transfer) error {
 }
 
 func (s *TransactionStorage) GetTransfer(hash common.Hash) (*models.Transfer, error) {
-	tx, txReceipt, err := s.getStoredTx(hash)
+	tx, txReceipt, err := s.getStoredTxWithReceipt(hash)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +149,7 @@ func (s *TransactionStorage) MarkTransfersAsIncluded(txs []models.Transfer, comm
 }
 
 func (s *Storage) GetTransferWithBatchDetails(hash common.Hash) (*models.TransferWithBatchDetails, error) {
-	tx, txReceipt, err := s.getStoredTx(hash)
+	tx, txReceipt, err := s.getStoredTxWithReceipt(hash)
 	if err != nil {
 		return nil, err
 	}

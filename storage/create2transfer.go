@@ -43,7 +43,7 @@ func (s *TransactionStorage) BatchAddCreate2Transfer(txs []models.Create2Transfe
 }
 
 func (s *TransactionStorage) GetCreate2Transfer(hash common.Hash) (*models.Create2Transfer, error) {
-	tx, txReceipt, err := s.getStoredTx(hash)
+	tx, txReceipt, err := s.getStoredTxWithReceipt(hash)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +187,7 @@ func (s *Storage) getCreate2TransfersByPublicKey(publicKey *models.PublicKey) (
 	txs := make([]*models.StoredTx, 0, len(mm))
 	txReceipts := make([]*models.StoredReceipt, 0, len(mm))
 	for hash := range mm {
-		tx, txReceipt, err := s.getStoredTx(hash)
+		tx, txReceipt, err := s.getStoredTxWithReceipt(hash)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -211,7 +211,7 @@ func (s *TransactionStorage) MarkCreate2TransfersAsIncluded(txs []models.Create2
 }
 
 func (s *Storage) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.Create2TransferWithBatchDetails, error) {
-	tx, txReceipt, err := s.getStoredTx(hash)
+	tx, txReceipt, err := s.getStoredTxWithReceipt(hash)
 	if err != nil {
 		return nil, err
 	}

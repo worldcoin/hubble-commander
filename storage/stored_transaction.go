@@ -45,7 +45,20 @@ func (s *TransactionStorage) addStoredReceipt(txReceipt *models.StoredReceipt) e
 	return s.database.Badger.Insert(txReceipt.Hash, *txReceipt)
 }
 
-func (s *TransactionStorage) getOnlyStoredTx(hash common.Hash) (*models.StoredTx, error) {
+func (s *TransactionStorage) getStoredTxWithReceipt(hash common.Hash) (*models.StoredTx, *models.StoredReceipt, error) {
+	storedTx, err := s.getStoredTx(hash)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	txReceipt, err := s.getStoredTxReceipt(hash)
+	if err != nil {
+		return nil, nil, err
+	}
+	return storedTx, txReceipt, nil
+}
+
+func (s *TransactionStorage) getStoredTx(hash common.Hash) (*models.StoredTx, error) {
 	var storedTx models.StoredTx
 	err := s.database.Badger.Get(hash, &storedTx)
 	if err == bh.ErrNotFound {
@@ -55,23 +68,6 @@ func (s *TransactionStorage) getOnlyStoredTx(hash common.Hash) (*models.StoredTx
 		return nil, err
 	}
 	return &storedTx, nil
-}
-
-func (s *TransactionStorage) getStoredTx(hash common.Hash) (*models.StoredTx, *models.StoredReceipt, error) {
-	var storedTx models.StoredTx
-	err := s.database.Badger.Get(hash, &storedTx)
-	if err == bh.ErrNotFound {
-		return nil, nil, NewNotFoundError("transaction")
-	}
-	if err != nil {
-		return nil, nil, err
-	}
-
-	txReceipt, err := s.getStoredTxReceipt(hash)
-	if err != nil {
-		return nil, nil, err
-	}
-	return &storedTx, txReceipt, nil
 }
 
 func (s *TransactionStorage) getStoredTxReceipt(hash common.Hash) (*models.StoredReceipt, error) {
@@ -127,7 +123,7 @@ func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*
 
 	latestNonce := models.MakeUint256(0)
 	for i := range txHashes {
-		tx, err := s.getOnlyStoredTx(txHashes[i])
+		tx, err := s.getStoredTx(txHashes[i])
 		if err != nil {
 			return nil, err
 		}
