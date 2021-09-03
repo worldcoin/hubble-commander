@@ -131,10 +131,6 @@ func getGenesisPath() string {
 	return path.Join(utils.GetProjectRoot(), "genesis.yaml")
 }
 
-func getMigrationsPath() string {
-	return path.Join(utils.GetProjectRoot(), "db", "postgres", "migrations")
-}
-
 func getBadgerPath() string {
 	return path.Join(utils.GetProjectRoot(), "db", "badger", "data", "hubble")
 }
