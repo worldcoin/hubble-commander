@@ -80,7 +80,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 		Commitment: s.commitment,
 		Status:     txstatus.InBatch,
 		BatchTime:  s.batch.SubmissionTime,
-		Transactions: []*dto.TransferForCommitment{{
+		Transactions: []dto.TransferForCommitment{{
 			Hash:        transfer.Hash,
 			FromStateID: transfer.FromStateID,
 			Amount:      transfer.Amount,
@@ -125,7 +125,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 		Commitment: s.commitment,
 		Status:     txstatus.InBatch,
 		BatchTime:  s.batch.SubmissionTime,
-		Transactions: []*dto.Create2TransferForCommitment{{
+		Transactions: []dto.Create2TransferForCommitment{{
 			Hash:        transfer.Hash,
 			FromStateID: transfer.FromStateID,
 			Amount:      transfer.Amount,

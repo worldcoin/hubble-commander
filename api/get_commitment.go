@@ -52,9 +52,9 @@ func (a *API) getTransfersForCommitment(id *models.CommitmentID) (interface{}, e
 		return nil, err
 	}
 
-	txs := make([]*dto.TransferForCommitment, 0, len(transfers))
+	txs := make([]dto.TransferForCommitment, 0, len(transfers))
 	for i := range transfers {
-		txs = append(txs, dto.NewTransferForCommitment(&transfers[i]))
+		txs = append(txs, dto.MakeTransferForCommitment(&transfers[i]))
 	}
 	return txs, nil
 }
@@ -65,9 +65,9 @@ func (a *API) getCreate2TransfersForCommitment(id *models.CommitmentID) (interfa
 		return nil, err
 	}
 
-	txs := make([]*dto.Create2TransferForCommitment, 0, len(transfers))
+	txs := make([]dto.Create2TransferForCommitment, 0, len(transfers))
 	for i := range transfers {
-		txs = append(txs, dto.NewCreate2TransferForCommitment(&transfers[i]))
+		txs = append(txs, dto.MakeCreate2TransferForCommitment(&transfers[i]))
 	}
 	return txs, nil
 }

@@ -124,7 +124,6 @@ func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id *models.Commit
 	var tx models.StoredTx
 	for i := range txReceipts {
 		err = s.database.Badger.Get(txReceipts[i].Hash, &tx)
-		// TODO-tx: handle not found err
 		if err != nil {
 			return nil, err
 		}
@@ -152,9 +151,9 @@ func (s *Storage) getCreate2TransfersByPublicKey(publicKey *models.PublicKey) (
 	}
 	stateIDs := utils.ValueToInterfaceSlice(leaves, "StateID")
 
-	res := make([]models.StoredTx, 0, 1)
+	txs := make([]models.StoredTx, 0, 1)
 	err = s.database.Badger.Find(
-		&res,
+		&txs,
 		bh.Where("FromStateID").In(stateIDs...).Index("FromStateID").
 			And("TxType").Eq(txtype.Create2Transfer),
 	)
@@ -171,31 +170,35 @@ func (s *Storage) getCreate2TransfersByPublicKey(publicKey *models.PublicKey) (
 		return nil, nil, err
 	}
 
-	mm := make(map[common.Hash]struct{}, len(res))
+	return s.getMissingStoredTxsData(txs, receipts)
+}
 
-	for i := range res {
-		mm[res[i].Hash] = struct{}{}
+func (s *Storage) getMissingStoredTxsData(txs []models.StoredTx, receipts []models.StoredReceipt) ([]*models.StoredTx, []*models.StoredReceipt, error) {
+	hashes := make(map[common.Hash]struct{}, len(txs))
+
+	for i := range txs {
+		hashes[txs[i].Hash] = struct{}{}
 	}
 
 	for i := range receipts {
-		_, ok := mm[receipts[i].Hash]
+		_, ok := hashes[receipts[i].Hash]
 		if !ok {
-			mm[receipts[i].Hash] = struct{}{}
+			hashes[receipts[i].Hash] = struct{}{}
 		}
 	}
 
-	txs := make([]*models.StoredTx, 0, len(mm))
-	txReceipts := make([]*models.StoredReceipt, 0, len(mm))
-	for hash := range mm {
+	resultTxs := make([]*models.StoredTx, 0, len(hashes))
+	resultReceipts := make([]*models.StoredReceipt, 0, len(hashes))
+	for hash := range hashes {
 		tx, txReceipt, err := s.getStoredTxWithReceipt(hash)
 		if err != nil {
 			return nil, nil, err
 		}
-		txs = append(txs, tx)
-		txReceipts = append(txReceipts, txReceipt)
+		resultTxs = append(resultTxs, tx)
+		resultReceipts = append(resultReceipts, txReceipt)
 	}
 
-	return txs, txReceipts, nil
+	return resultTxs, resultReceipts, nil
 }
 
 func (s *TransactionStorage) MarkCreate2TransfersAsIncluded(txs []models.Create2Transfer, commitmentID *models.CommitmentID) error {

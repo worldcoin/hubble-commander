@@ -70,8 +70,8 @@ type Create2TransferForCommitment struct {
 	ToPublicKey models.PublicKey
 }
 
-func NewCreate2TransferForCommitment(transfer *models.Create2Transfer) *Create2TransferForCommitment {
-	return &Create2TransferForCommitment{
+func MakeCreate2TransferForCommitment(transfer *models.Create2Transfer) Create2TransferForCommitment {
+	return Create2TransferForCommitment{
 		Hash:        transfer.Hash,
 		FromStateID: transfer.FromStateID,
 		Amount:      transfer.Amount,

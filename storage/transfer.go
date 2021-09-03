@@ -125,7 +125,6 @@ func (s *TransactionStorage) GetTransfersByCommitmentID(id *models.CommitmentID)
 	var tx models.StoredTx
 	for i := range txReceipts {
 		err = s.database.Badger.Get(txReceipts[i].Hash, &tx)
-		// TODO-tx: handle not found err
 		if err != nil {
 			return nil, err
 		}

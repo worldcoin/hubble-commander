@@ -69,8 +69,8 @@ type TransferForCommitment struct {
 	ToStateID   uint32
 }
 
-func NewTransferForCommitment(transfer *models.Transfer) *TransferForCommitment {
-	return &TransferForCommitment{
+func MakeTransferForCommitment(transfer *models.Transfer) TransferForCommitment {
+	return TransferForCommitment{
 		Hash:        transfer.Hash,
 		FromStateID: transfer.FromStateID,
 		Amount:      transfer.Amount,
