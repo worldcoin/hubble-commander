@@ -17,7 +17,7 @@ func (s *TransactionStorage) AddCreate2Transfer(t *models.Create2Transfer) error
 
 func (s *TransactionStorage) addCreate2Transfer(t *models.Create2Transfer) error {
 	if t.CommitmentID != nil || t.ErrorMessage != nil || t.ToStateID != nil {
-		err := s.database.Badger.Insert(t.Hash, models.MakeStoredTxReceiptFromCreate2Transfer(t))
+		err := s.database.Badger.Insert(t.Hash, models.MakeStoredReceiptFromCreate2Transfer(t))
 		if err != nil {
 			return err
 		}
@@ -86,7 +86,7 @@ func (s *TransactionStorage) GetPendingCreate2Transfers(limit uint32) ([]models.
 }
 
 func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id *models.CommitmentID) ([]models.Create2Transfer, error) {
-	txReceipts := make([]models.StoredTxReceipt, 0, 32)
+	txReceipts := make([]models.StoredReceipt, 0, 32)
 	err := s.database.Badger.Find(
 		&txReceipts,
 		bh.Where("CommitmentID").Eq(*id).Index("CommitmentID"),
@@ -119,7 +119,7 @@ func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([
 }
 
 func (s *Storage) getCreate2TransfersByPublicKey(publicKey *models.PublicKey) (
-	[]*models.StoredTx, []*models.StoredTxReceipt, error,
+	[]*models.StoredTx, []*models.StoredReceipt, error,
 ) {
 	leaves, err := s.GetStateLeavesByPublicKey(publicKey)
 	if err != nil && !IsNotFoundError(err) {
@@ -137,7 +137,7 @@ func (s *Storage) getCreate2TransfersByPublicKey(publicKey *models.PublicKey) (
 		return nil, nil, err
 	}
 
-	receipts := make([]models.StoredTxReceipt, 0, 1)
+	receipts := make([]models.StoredReceipt, 0, 1)
 	err = s.database.Badger.Find(
 		&receipts,
 		bh.Where("ToStateID").In(stateIDs).Index("ToStateID"),
@@ -160,7 +160,7 @@ func (s *Storage) getCreate2TransfersByPublicKey(publicKey *models.PublicKey) (
 	}
 
 	txs := make([]*models.StoredTx, 0, len(mm))
-	txReceipts := make([]*models.StoredTxReceipt, 0, len(mm))
+	txReceipts := make([]*models.StoredReceipt, 0, len(mm))
 	for hash := range mm {
 		tx, txReceipt, err := s.getStoredTx(hash)
 		if err != nil {
@@ -175,9 +175,9 @@ func (s *Storage) getCreate2TransfersByPublicKey(publicKey *models.PublicKey) (
 
 func (s *TransactionStorage) MarkCreate2TransfersAsIncluded(txs []models.Create2Transfer, commitmentID *models.CommitmentID) error {
 	for i := range txs {
-		txReceipt := models.MakeStoredTxReceiptFromCreate2Transfer(&txs[i])
+		txReceipt := models.MakeStoredReceiptFromCreate2Transfer(&txs[i])
 		txReceipt.CommitmentID = commitmentID
-		err := s.addStoredTxReceipt(&txReceipt)
+		err := s.addStoredReceipt(&txReceipt)
 		if err != nil {
 			return err
 		}
@@ -194,14 +194,14 @@ func (s *Storage) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.
 		return nil, NewNotFoundError("transaction")
 	}
 
-	transfers, err := s.create2TransferToTransfersWithBatchDetails([]*models.StoredTx{tx}, []*models.StoredTxReceipt{txReceipt})
+	transfers, err := s.create2TransferToTransfersWithBatchDetails([]*models.StoredTx{tx}, []*models.StoredReceipt{txReceipt})
 	if err != nil {
 		return nil, err
 	}
 	return &transfers[0], nil
 }
 
-func (s *Storage) create2TransferToTransfersWithBatchDetails(txs []*models.StoredTx, txReceipts []*models.StoredTxReceipt) (
+func (s *Storage) create2TransferToTransfersWithBatchDetails(txs []*models.StoredTx, txReceipts []*models.StoredReceipt) (
 	result []models.Create2TransferWithBatchDetails,
 	err error,
 ) {

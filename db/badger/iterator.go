@@ -22,6 +22,10 @@ var (
 		PrefetchSize:   100,
 		PrefetchValues: true,
 	}
+	KeyIteratorOpts = badger.IteratorOptions{
+		PrefetchValues: false,
+		Reverse:        false,
+	}
 )
 
 // Iterator calls filter function for every element matching the prefix.
