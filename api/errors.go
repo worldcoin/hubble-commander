@@ -25,3 +25,19 @@ func NewNotDecimalEncodableError(field string) *NotDecimalEncodableError {
 func (e NotDecimalEncodableError) Error() string {
 	return fmt.Sprintf("%s is not encodable as multi-precission decimal", e.field)
 }
+
+type ErrorAPI struct {
+	Code    int
+	Message string
+}
+
+func (e *ErrorAPI) Error() string {
+	if e.Message == "" {
+		return fmt.Sprintf("error code: %d", e.Code)
+	}
+	return e.Message
+}
+
+func (e *ErrorAPI) ErrorCode() int {
+	return e.Code
+}
