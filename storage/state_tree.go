@@ -95,15 +95,14 @@ func (s *StateTree) NextAvailableStateID(subtreeDepth uint32) (*uint32, error) {
 		prevTakenNodeIndex = currentNodeIndex
 		return false, nil
 	})
-	if err != nil {
-		if err == badger.ErrIteratorFinished { // We finished without finding any gaps, try to append the subtree at the end.
-			roundedNodeIndex := roundAndValidateStateTreeSlot(prevTakenNodeIndex+1, StateTreeSize, subtreeWidth)
-			if roundedNodeIndex == nil {
-				return nil, errors.Errorf("no vacant slot found in the state-tree for a subtree of depth %d", subtreeDepth)
-			}
-			return ref.Uint32(uint32(*roundedNodeIndex)), nil
+	if err == badger.ErrIteratorFinished { // We finished without finding any gaps, try to append the subtree at the end.
+		roundedNodeIndex := roundAndValidateStateTreeSlot(prevTakenNodeIndex+1, StateTreeSize, subtreeWidth)
+		if roundedNodeIndex == nil {
+			return nil, errors.WithStack(NewNoVacantSubtreeError(subtreeDepth))
 		}
-
+		return ref.Uint32(uint32(*roundedNodeIndex)), nil
+	}
+	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
@@ -120,7 +119,7 @@ func roundAndValidateStateTreeSlot(rangeStart, rangeEnd, subtreeWidth int64) *in
 
 	// Check if we fit in the current gap
 	if roundedNodeIndex+subtreeWidth > rangeEnd {
-		// Can't fit in the current gap, keep searching
+		// Can't fit in the current gap
 		return nil
 	}
 
