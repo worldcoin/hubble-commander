@@ -2,7 +2,6 @@ package storage
 
 import (
 	"fmt"
-	"math"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
@@ -18,9 +17,10 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-const StateTreeDepth = merkletree.MaxDepth
-
-var StateTreeSize = int64(math.Pow(2, float64(StateTreeDepth)))
+const (
+	StateTreeDepth = merkletree.MaxDepth
+	StateTreeSize  = int64(1) << StateTreeDepth
+)
 
 type StateTree struct {
 	database   *Database
