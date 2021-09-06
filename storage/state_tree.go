@@ -5,7 +5,7 @@ import (
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
-	"github.com/Worldcoin/hubble-commander/db/badger"
+	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
@@ -82,7 +82,7 @@ func (s *StateTree) NextVacantSubtree(subtreeDepth uint32) (*uint32, error) {
 	// An iterator will return the index of the first such gap it detects.
 	err := s.database.Badger.Iterator(models.FlatStateLeafPrefix, bdg.DefaultIteratorOptions, func(item *bdg.Item) (bool, error) {
 		var key uint32
-		err := badger.DecodeKey(item.Key(), &key, models.FlatStateLeafPrefix)
+		err := db.DecodeKey(item.Key(), &key, models.FlatStateLeafPrefix)
 		if err != nil {
 			return false, err
 		}
@@ -99,7 +99,7 @@ func (s *StateTree) NextVacantSubtree(subtreeDepth uint32) (*uint32, error) {
 		prevTakenNodeIndex = currentNodeIndex
 		return false, nil
 	})
-	if err == badger.ErrIteratorFinished { // We finished without finding any gaps, try to append the subtree at the end.
+	if err == db.ErrIteratorFinished { // We finished without finding any gaps, try to append the subtree at the end.
 		roundedNodeIndex := roundAndValidateStateTreeSlot(prevTakenNodeIndex+1, StateTreeSize, subtreeWidth)
 		if roundedNodeIndex == nil {
 			return nil, errors.WithStack(NewNoVacantSubtreeError(subtreeDepth))
@@ -164,7 +164,7 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 
 	stateTree := NewStateTree(txDatabase)
 	var currentRootHash *common.Hash
-	err = txDatabase.Badger.Iterator(models.StateUpdatePrefix, badger.ReversePrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
+	err = txDatabase.Badger.Iterator(models.StateUpdatePrefix, db.ReversePrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
 		currentRootHash, err = stateTree.Root()
 		if err != nil {
 			return false, err
@@ -185,7 +185,7 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 		currentRootHash, err = stateTree.revertState(stateUpdate)
 		return false, err
 	})
-	if err != nil && err != badger.ErrIteratorFinished {
+	if err != nil && err != db.ErrIteratorFinished {
 		return err
 	}
 	if *currentRootHash != targetRootHash {
@@ -197,12 +197,12 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 func decodeStateUpdate(item *bdg.Item) (*models.StateUpdate, error) {
 	var stateUpdate models.StateUpdate
 	err := item.Value(func(v []byte) error {
-		return badger.Decode(v, &stateUpdate)
+		return db.Decode(v, &stateUpdate)
 	})
 	if err != nil {
 		return nil, err
 	}
-	err = badger.DecodeKey(item.Key(), &stateUpdate.ID, models.StateUpdatePrefix)
+	err = db.DecodeKey(item.Key(), &stateUpdate.ID, models.StateUpdatePrefix)
 	if err != nil {
 		return nil, err
 	}

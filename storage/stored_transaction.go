@@ -4,7 +4,6 @@ import (
 	"bytes"
 
 	"github.com/Worldcoin/hubble-commander/db"
-	"github.com/Worldcoin/hubble-commander/db/badger"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	bdg "github.com/dgraph-io/badger/v3"
@@ -93,7 +92,7 @@ func (s *TransactionStorage) getKeyList(indexKey []byte) (*bh.KeyList, error) {
 			return err
 		}
 		return item.Value(func(val []byte) error {
-			return badger.DecodeKeyList(val, &keyList)
+			return db.DecodeKeyList(val, &keyList)
 		})
 	})
 	if err != nil {
@@ -108,7 +107,7 @@ func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*
 		return nil, err
 	}
 
-	indexKey := badger.IndexKey(models.StoredTxName, "FromStateID", encodedStateID)
+	indexKey := db.IndexKey(models.StoredTxName, "FromStateID", encodedStateID)
 	keyList, err := s.getKeyList(indexKey)
 	if err != nil {
 		return nil, err
@@ -168,7 +167,7 @@ func (s *Storage) GetTransactionCount() (*int, error) {
 	}
 	count := 0
 	seekPrefix := badger.IndexKeyPrefix(models.StoredReceiptName, "CommitmentID")
-	err = txStorage.database.Badger.Iterator(seekPrefix, badger.PrefetchIteratorOpts,
+	err = txStorage.database.Badger.Iterator(seekPrefix, db.PrefetchIteratorOpts,
 		func(item *bdg.Item) (bool, error) {
 			var commitmentID *models.CommitmentID
 			commitmentID, err = models.DecodeCommitmentIDPointer(keyValue(seekPrefix, item.Key()))
@@ -189,7 +188,7 @@ func (s *Storage) GetTransactionCount() (*int, error) {
 			count += len(keyList)
 			return false, nil
 		})
-	if err != nil && err != badger.ErrIteratorFinished {
+	if err != nil && err != db.ErrIteratorFinished {
 		return nil, err
 	}
 
@@ -205,12 +204,12 @@ func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.U
 	hashes := make([]common.Hash, 0, len(batchIDs)*32)
 
 	var keyList bh.KeyList
-	seekPrefix := badger.IndexKeyPrefix(models.StoredReceiptName, "CommitmentID")
-	err := s.database.Badger.Iterator(seekPrefix, badger.ReversePrefetchIteratorOpts,
+	seekPrefix := db.IndexKeyPrefix(models.StoredReceiptName, "CommitmentID")
+	err := s.database.Badger.Iterator(seekPrefix, db.ReversePrefetchIteratorOpts,
 		func(item *bdg.Item) (bool, error) {
 			if validForPrefixes(keyValue(seekPrefix, item.Key()), batchPrefixes) {
 				err := item.Value(func(val []byte) error {
-					return badger.DecodeKeyList(val, &keyList)
+					return db.DecodeKeyList(val, &keyList)
 				})
 				if err != nil {
 					return false, err
@@ -223,7 +222,7 @@ func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.U
 			}
 			return false, nil
 		})
-	if err != nil && err != badger.ErrIteratorFinished {
+	if err != nil && err != db.ErrIteratorFinished {
 		return nil, err
 	}
 	if len(hashes) == 0 {
@@ -270,7 +269,7 @@ func decodeKeyListHashes(keyPrefix []byte, keyList bh.KeyList) ([]common.Hash, e
 	var hash common.Hash
 	hashes := make([]common.Hash, 0, len(keyList))
 	for i := range keyList {
-		err := models.DecodeDataHash(keyList[i][len(keyPrefix):], &hash)
+		err := db.DecodeDataHash(keyList[i][len(keyPrefix):], &hash)
 		if err != nil {
 			return nil, err
 		}

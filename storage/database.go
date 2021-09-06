@@ -3,16 +3,15 @@ package storage
 import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
-	"github.com/Worldcoin/hubble-commander/db/badger"
 	log "github.com/sirupsen/logrus"
 )
 
 type Database struct {
-	Badger *badger.Database
+	Badger *db.Database
 }
 
 func NewDatabase(cfg *config.Config) (*Database, error) {
-	badgerDB, err := badger.NewDatabase(cfg.Badger)
+	badgerDB, err := db.NewDatabase(cfg.Badger)
 	if err != nil {
 		return nil, err
 	}

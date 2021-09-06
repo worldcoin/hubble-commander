@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"github.com/Worldcoin/hubble-commander/db/badger"
+	"github.com/Worldcoin/hubble-commander/db"
 )
 
 type TestStorage struct {
@@ -12,7 +12,7 @@ type TestStorage struct {
 type TeardownFunc func() error
 
 func NewTestStorage() (*TestStorage, error) {
-	badgerTestDB, err := badger.NewTestDB()
+	badgerTestDB, err := db.NewTestDB()
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func NewTestStorage() (*TestStorage, error) {
 func (s *TestStorage) Clone() (*TestStorage, error) {
 	database := *s.database
 
-	testBadger := badger.TestDB{DB: s.database.Badger}
+	testBadger := db.TestDB{DB: s.database.Badger}
 	clonedBadger, err := testBadger.Clone()
 	if err != nil {
 		return nil, err

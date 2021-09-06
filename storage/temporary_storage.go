@@ -1,13 +1,15 @@
 package storage
 
-import "github.com/Worldcoin/hubble-commander/db/badger"
+import (
+	"github.com/Worldcoin/hubble-commander/db"
+)
 
 type TemporaryStorage struct {
 	*Storage
 }
 
 func NewTemporaryStorage() (*TemporaryStorage, error) {
-	badgerDB, err := badger.NewInMemoryDatabase()
+	badgerDB, err := db.NewInMemoryDatabase()
 	if err != nil {
 		return nil, err
 	}

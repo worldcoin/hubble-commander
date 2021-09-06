@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"github.com/Worldcoin/hubble-commander/db/badger"
+	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
@@ -149,16 +149,16 @@ func (s *BatchStorage) DeleteBatches(batchIDs ...models.Uint256) error {
 
 func (s *BatchStorage) reverseIterateBatches(filter func(batch *models.Batch) bool) (*models.Batch, error) {
 	var batch models.Batch
-	err := s.database.Badger.Iterator(models.BatchPrefix, badger.ReversePrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
+	err := s.database.Badger.Iterator(models.BatchPrefix, db.ReversePrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
 		err := item.Value(func(v []byte) error {
-			return badger.Decode(v, &batch)
+			return db.Decode(v, &batch)
 		})
 		if err != nil {
 			return false, err
 		}
 		return filter(&batch), nil
 	})
-	if err == badger.ErrIteratorFinished {
+	if err == db.ErrIteratorFinished {
 		return nil, NewNotFoundError("batch")
 	}
 	if err != nil {
