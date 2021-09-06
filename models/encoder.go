@@ -113,9 +113,3 @@ func decodeCommitmentIDPointer(data []byte) (*CommitmentID, error) {
 	}
 	return &commitmentID, nil
 }
-
-func EncodeUint32(number *uint32) ([]byte, error) {
-	b := make([]byte, 4)
-	binary.BigEndian.PutUint32(b[0:4], *number)
-	return b, nil
-}
