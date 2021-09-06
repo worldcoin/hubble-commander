@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	storedTxBytesLength        = 213
-	storedTxTransferBodyLength = 4
+	storedTxBytesLength               = 213
+	storedTxTransferBodyLength        = 4
+	storedTxCreate2TransferBodyLength = PublicKeyLength
 )
 
 var (
@@ -262,5 +263,5 @@ func (t *StoredTxCreate2TransferBody) SetBytes(data []byte) error {
 }
 
 func (t *StoredTxCreate2TransferBody) BytesLen() int {
-	return PublicKeyLength
+	return storedTxCreate2TransferBodyLength
 }
