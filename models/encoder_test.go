@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_EncodeHashPointer(t *testing.T) {
+func TestEncodeHashPointer(t *testing.T) {
 	hash := &common.Hash{1, 2, 3, 4}
 	bytes := EncodeHashPointer(hash)
 	require.EqualValues(t, 1, bytes[0])
@@ -17,7 +17,7 @@ func Test_EncodeHashPointer(t *testing.T) {
 	require.Equal(t, *hash, *decodedValue)
 }
 
-func Test_EncodeHashPointer_NilValue(t *testing.T) {
+func TestEncodeHashPointer_NilValue(t *testing.T) {
 	var hash *common.Hash
 	bytes := EncodeHashPointer(hash)
 	require.EqualValues(t, 0, bytes[0])
@@ -26,7 +26,7 @@ func Test_EncodeHashPointer_NilValue(t *testing.T) {
 	require.Nil(t, decodedValue)
 }
 
-func Test_EncodeUint32Pointer(t *testing.T) {
+func TestEncodeUint32Pointer(t *testing.T) {
 	value := uint32(32)
 	bytes := EncodeUint32Pointer(&value)
 	require.EqualValues(t, 1, bytes[0])
@@ -35,7 +35,7 @@ func Test_EncodeUint32Pointer(t *testing.T) {
 	require.Equal(t, value, *decodedValue)
 }
 
-func Test_EncodeUint32Pointer_NilValue(t *testing.T) {
+func TestEncodeUint32Pointer_NilValue(t *testing.T) {
 	var value *uint32
 	bytes := EncodeUint32Pointer(value)
 	require.EqualValues(t, 0, bytes[0])
@@ -44,7 +44,7 @@ func Test_EncodeUint32Pointer_NilValue(t *testing.T) {
 	require.Nil(t, decodedValue)
 }
 
-func Test_encodeStringPointer(t *testing.T) {
+func TestEncodeStringPointer(t *testing.T) {
 	value := "some string"
 	bytes := encodeStringPointer(&value)
 	require.EqualValues(t, 1, bytes[0])
@@ -53,7 +53,7 @@ func Test_encodeStringPointer(t *testing.T) {
 	require.Equal(t, value, *decodedValue)
 }
 
-func Test_EncodeStringPointer_NilValue(t *testing.T) {
+func TestEncodeStringPointer_NilValue(t *testing.T) {
 	var value *string
 	bytes := encodeStringPointer(value)
 	require.EqualValues(t, 0, bytes[0])
@@ -62,7 +62,7 @@ func Test_EncodeStringPointer_NilValue(t *testing.T) {
 	require.Nil(t, decodedValue)
 }
 
-func Test_EncodeTimestampPointer(t *testing.T) {
+func TestEncodeTimestampPointer(t *testing.T) {
 	timestamp := NewTimestamp(time.Unix(10, 0).UTC())
 	bytes := encodeTimestampPointer(timestamp)
 	require.EqualValues(t, 1, bytes[0])
@@ -72,7 +72,7 @@ func Test_EncodeTimestampPointer(t *testing.T) {
 	require.Equal(t, *timestamp, *decodedTimestamp)
 }
 
-func Test_EncodeTimestampPointer_NilValue(t *testing.T) {
+func TestEncodeTimestampPointer_NilValue(t *testing.T) {
 	var timestamp *Timestamp
 	bytes := encodeTimestampPointer(timestamp)
 	require.EqualValues(t, 0, bytes[0])
