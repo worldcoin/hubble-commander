@@ -91,7 +91,7 @@ func (t *StoredTx) SetBytes(data []byte) error {
 	t.Amount.SetBytes(data[37:69])
 	t.Fee.SetBytes(data[69:101])
 	t.Nonce.SetBytes(data[101:133])
-	err := t.Signature.SetBytes(data[133:197])
+	err := t.Signature.SetBytes(data[133:197]) // TODO look at all SetBytes and refactor to avoid side effects
 	if err != nil {
 		return err
 	}

@@ -28,6 +28,7 @@ var (
 	}
 )
 
+// TODO rename test suite
 type TransactionBaseTestSuite struct {
 	*require.Assertions
 	suite.Suite

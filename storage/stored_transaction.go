@@ -108,7 +108,7 @@ func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*
 		return nil, err
 	}
 
-	indexKey := badger.IndexKey(models.StoredTxPrefix[3:], "FromStateID", encodedStateID)
+	indexKey := badger.IndexKey(models.StoredTxPrefix[3:], "FromStateID", encodedStateID) // TODO extract all models...[3:] to global vars
 	keyList, err := s.getKeyList(indexKey)
 	if err != nil {
 		return nil, err
@@ -153,7 +153,7 @@ func (s *TransactionStorage) SetTransactionError(txHash common.Hash, errorMessag
 }
 
 func (s *Storage) GetTransactionCount() (*int, error) {
-	latestCommitment, err := s.GetLatestCommitment()
+	latestCommitment, err := s.GetLatestCommitment() // TODO fix this function to return the number of "mined" transactions, write down ideas
 	if IsNotFoundError(err) {
 		return ref.Int(0), nil
 	}

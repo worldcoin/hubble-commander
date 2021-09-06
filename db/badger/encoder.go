@@ -240,6 +240,8 @@ func DecodeString(data []byte, value *string) error {
 	return nil
 }
 
+// TODO move basic types encoders to models package
+
 func DecodeKey(data []byte, key interface{}, prefix []byte) error {
 	return Decode(data[len(prefix):], key)
 }

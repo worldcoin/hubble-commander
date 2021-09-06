@@ -13,7 +13,7 @@ import (
 )
 
 func (s *TransactionStorage) AddCreate2Transfer(t *models.Create2Transfer) error {
-	t.SetReceiveTime()
+	t.SetReceiveTime() // TODO do it in API method
 	return s.addCreate2Transfer(t)
 }
 
@@ -91,6 +91,7 @@ func (s *TransactionStorage) unsafeGetPendingCreate2Transfers(limit uint32) ([]m
 			if err != nil {
 				return false, err
 			}
+			// TODO consider extracting the above lines of this anonymous fn
 			if storedTx.TxType == txtype.Create2Transfer {
 				txs = append(txs, *storedTx.ToCreate2Transfer(nil))
 			}

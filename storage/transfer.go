@@ -12,9 +12,11 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
+// TODO wrap all methods that modify/query more than one Badger value in transactions
+
 func (s *TransactionStorage) AddTransfer(t *models.Transfer) error {
 	t.SetReceiveTime()
-	//TODO-tx: wrap with txn if needed
+	//TODO-tx: wrap with txn if needed - YES
 	return s.addTransfer(t)
 }
 
@@ -113,6 +115,8 @@ func (s *TransactionStorage) unsafeGetPendingTransfers(limit uint32) ([]models.T
 
 func (s *TransactionStorage) GetTransfersByCommitmentID(id *models.CommitmentID) ([]models.Transfer, error) {
 	txReceipts := make([]models.StoredReceipt, 0, 32)
+	// TODO rework to query the index table manually and get only the valid StoredReceipts, leave a comment explaining
+	//  why Find is not used here
 	err := s.database.Badger.Find(
 		&txReceipts,
 		bh.Where("CommitmentID").Eq(*id).Index("CommitmentID"),

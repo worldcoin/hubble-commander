@@ -48,6 +48,6 @@ func (b *Batch) SetBytes(data []byte) (err error) {
 	b.AccountTreeRoot = DecodeHashPointer(data[103:136])
 	b.PrevStateRoot = DecodeHashPointer(data[136:169])
 
-	b.SubmissionTime, err = decodeTimestampPointer(data[169:185])
+	b.SubmissionTime, err = decodeTimestampPointer(data[169:185]) // TODO do in first order to avoid side effects
 	return err
 }
