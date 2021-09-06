@@ -86,7 +86,7 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 				{
 					Type:   mount.TypeBind,
 					Source: path.Join(utils.GetProjectRoot(), "e2e-data"),
-					Target: "/go/src/app/db/badger/data/hubble",
+					Target: "/go/src/app/db/data/hubble",
 				},
 				{
 					Type:   mount.TypeBind,

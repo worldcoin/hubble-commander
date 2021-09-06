@@ -22,7 +22,7 @@
 #  port: 8080
 #
 #badger:
-#  path: db/badger/data/hubble
+#  path: db/data/hubble
 #
 #ethereum:
 #  rpc_url: ws://localhost:8546

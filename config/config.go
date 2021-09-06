@@ -132,11 +132,11 @@ func getGenesisPath() string {
 }
 
 func getBadgerPath() string {
-	return path.Join(utils.GetProjectRoot(), "db", "badger", "data", "hubble")
+	return path.Join(utils.GetProjectRoot(), "db", "data", "hubble")
 }
 
 func getTestBadgerPath() string {
-	return path.Join(utils.GetProjectRoot(), "db", "badger", "data", "hubble_test")
+	return path.Join(utils.GetProjectRoot(), "db", "data", "hubble_test")
 }
 
 func getLogConfig() *LogConfig {
