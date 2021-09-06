@@ -75,12 +75,6 @@ func (s *StateTreeTestSuite) TestLeaf_NonExistentLeaf() {
 	s.Equal(NewNotFoundError("state leaf"), err)
 }
 
-func (s *StateTreeTestSuite) TestNextAvailableStateID_EmptyStateTree() {
-	stateID, err := s.storage.StateTree.NextAvailableStateID(1)
-	s.NoError(err)
-	s.Equal(uint32(0), *stateID)
-}
-
 func (s *StateTreeTestSuite) setStateLeaves(stateIDs ...uint32) {
 	for _, stateID := range stateIDs {
 		_, err := s.storage.StateTree.Set(stateID, userState1)
@@ -88,9 +82,15 @@ func (s *StateTreeTestSuite) setStateLeaves(stateIDs ...uint32) {
 	}
 }
 
+func (s *StateTreeTestSuite) TestNextAvailableStateID_EmptyStateTree() {
+	stateID, err := s.storage.StateTree.NextAvailableStateID()
+	s.NoError(err)
+	s.Equal(uint32(0), *stateID)
+}
+
 func (s *StateTreeTestSuite) TestNextAvailableStateID_AllLeavesInOrder() {
 	s.setStateLeaves(0, 1, 2)
-	stateID, err := s.storage.StateTree.NextAvailableStateID(1)
+	stateID, err := s.storage.StateTree.NextAvailableStateID()
 	s.NoError(err)
 	s.Equal(uint32(3), *stateID)
 }
@@ -98,7 +98,7 @@ func (s *StateTreeTestSuite) TestNextAvailableStateID_AllLeavesInOrder() {
 func (s *StateTreeTestSuite) TestNextAvailableStateID_BigGap() {
 	s.setStateLeaves(0, 12345)
 
-	stateID, err := s.storage.StateTree.NextAvailableStateID(1)
+	stateID, err := s.storage.StateTree.NextAvailableStateID()
 	s.NoError(err)
 	s.Equal(uint32(1), *stateID)
 }
@@ -106,47 +106,55 @@ func (s *StateTreeTestSuite) TestNextAvailableStateID_BigGap() {
 func (s *StateTreeTestSuite) TestNextAvailableStateID_ReturnsTheFirstEmptyLeaf() {
 	s.setStateLeaves(0, 2, 4)
 
-	stateID, err := s.storage.StateTree.NextAvailableStateID(1)
+	stateID, err := s.storage.StateTree.NextAvailableStateID()
 	s.NoError(err)
 	s.Equal(uint32(1), *stateID)
 }
 
-func (s *StateTreeTestSuite) TestNextAvailableStateID_ForSubtreeOfSize2_AllLeavesInOrder() {
+func (s *StateTreeTestSuite) TestNextVacantSubtree_ForSubtreeOfDepth1_AllLeavesInOrder() {
 	s.setStateLeaves(0, 1)
 
-	stateID, err := s.storage.StateTree.NextAvailableStateID(2)
+	stateID, err := s.storage.StateTree.NextVacantSubtree(1)
 	s.NoError(err)
 	s.Equal(uint32(2), *stateID)
 }
 
-func (s *StateTreeTestSuite) TestNextAvailableStateID_ForSubtreeOfSize2_ReturnsTheFirstEmptyLeaf() {
+func (s *StateTreeTestSuite) TestNextVacantSubtree_ForSubtreeOfDepth1_ReturnsTheFirstEmptyLeaf() {
 	s.setStateLeaves(0, 2, 3, 6)
 
-	stateID, err := s.storage.StateTree.NextAvailableStateID(2)
+	stateID, err := s.storage.StateTree.NextVacantSubtree(1)
 	s.NoError(err)
 	s.Equal(uint32(4), *stateID)
 }
 
-func (s *StateTreeTestSuite) TestNextAvailableStateID_ForSubtreeOfSize2_AlignsTheSlotCorrectly() {
+func (s *StateTreeTestSuite) TestNextVacantSubtree_ForSubtreeOfDepth1_AlignsTheSlotCorrectly() {
 	s.setStateLeaves(0, 2, 6)
 
-	stateID, err := s.storage.StateTree.NextAvailableStateID(2)
+	stateID, err := s.storage.StateTree.NextVacantSubtree(1)
 	s.NoError(err)
 	s.Equal(uint32(4), *stateID)
 }
 
-func (s *StateTreeTestSuite) TestNextAvailableStateID_ForSubtreeOfSize2_IgnoresMisalignedGaps() {
+func (s *StateTreeTestSuite) TestNextVacantSubtree_ForSubtreeOfDepth1_IgnoresMisalignedGaps() {
 	s.setStateLeaves(0, 2, 5, 8)
 
-	stateID, err := s.storage.StateTree.NextAvailableStateID(2)
+	stateID, err := s.storage.StateTree.NextVacantSubtree(1)
 	s.NoError(err)
 	s.Equal(uint32(6), *stateID)
 }
 
-func (s *StateTreeTestSuite) TestNextAvailableStateID_ForSubtreeOfSize4_IgnoresMisalignedGapsAndAlignsTheSlotCorrectly() {
+func (s *StateTreeTestSuite) TestNextVacantSubtree_ForSubtreeOfDepth2_IgnoresMisalignedGapsAndAlignsTheSlotCorrectly() {
+	s.setStateLeaves(0, 5)
+
+	stateID, err := s.storage.StateTree.NextVacantSubtree(2)
+	s.NoError(err)
+	s.Equal(uint32(8), *stateID)
+}
+
+func (s *StateTreeTestSuite) TestNextVacantSubtree_ForSubtreeOfDepth3_IgnoresMisalignedGapsAndAlignsTheSlotCorrectly() {
 	s.setStateLeaves(0, 9)
 
-	stateID, err := s.storage.StateTree.NextAvailableStateID(4)
+	stateID, err := s.storage.StateTree.NextVacantSubtree(3)
 	s.NoError(err)
 	s.Equal(uint32(16), *stateID)
 }

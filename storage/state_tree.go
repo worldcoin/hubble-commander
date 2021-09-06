@@ -65,10 +65,14 @@ func (s *StateTree) LeafOrEmpty(stateID uint32) (*models.StateLeaf, error) {
 	return leaf, err
 }
 
-// NextAvailableStateID returns the starting index of a vacant subtree of at least `subtreeDepth`.
-// `subtreeDepth` can be set to 1 to only search for a single vacant node.
-func (s *StateTree) NextAvailableStateID(subtreeDepth uint32) (*uint32, error) {
-	subtreeWidth := int64(1) << (subtreeDepth - 1) // Number of leaves in the subtree.
+func (s *StateTree) NextAvailableStateID() (*uint32, error) {
+	return s.NextVacantSubtree(0)
+}
+
+// NextVacantSubtree returns the starting index of a vacant subtree of at least `subtreeDepth`.
+// `subtreeDepth` can be set to 0 to only search for a single vacant node.
+func (s *StateTree) NextVacantSubtree(subtreeDepth uint32) (*uint32, error) {
+	subtreeWidth := int64(1) << subtreeDepth // Number of leaves in the subtree.
 
 	prevTakenNodeIndex := int64(-1)
 	result := uint32(0)

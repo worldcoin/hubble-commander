@@ -24,7 +24,7 @@ func (a *API) GetNetworkInfo() (*dto.NetworkInfo, error) {
 	networkInfo.TransactionCount = *txCount
 
 	// TODO this ignores the fact that other nodes can put new accounts in arbitrary state leaves; to be revisited in the future
-	accountCount, err := a.storage.StateTree.NextAvailableStateID(1)
+	accountCount, err := a.storage.StateTree.NextAvailableStateID()
 	if err != nil {
 		return nil, err
 	}
