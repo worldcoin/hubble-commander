@@ -159,6 +159,18 @@ func (s *StateTreeTestSuite) TestNextVacantSubtree_ForSubtreeOfDepth3_IgnoresMis
 	s.Equal(uint32(16), *stateID)
 }
 
+func (s *StateTreeTestSuite) TestNextVacantSubtree_ReturnsErrorWhenThereIsNoVacantSubtreeOfGivenDepth() {
+	s.setStateLeaves(0)
+	stateID, err := s.storage.StateTree.NextVacantSubtree(32)
+	s.Nil(stateID)
+	s.ErrorIs(err, NewNoVacantSubtreeError(32))
+
+	s.setStateLeaves(uint32(1) << 31)
+	stateID, err = s.storage.StateTree.NextVacantSubtree(31)
+	s.Nil(stateID)
+	s.ErrorIs(err, NewNoVacantSubtreeError(31))
+}
+
 func (s *StateTreeTestSuite) TestSet_StoresStateLeafRecord() {
 	s.leaf.StateID = 0
 	_, err := s.storage.StateTree.Set(0, &s.leaf.UserState)

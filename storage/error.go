@@ -79,3 +79,11 @@ func NewNoVacantSubtreeError(subtreeDepth uint32) *NoVacantSubtreeError {
 func (e *NoVacantSubtreeError) Error() string {
 	return fmt.Sprintf("no vacant slot found in the State Tree for a subtree of depth %d", e.subtreeDepth)
 }
+
+func (e *NoVacantSubtreeError) Is(other error) bool {
+	otherError, ok := other.(*NoVacantSubtreeError)
+	if !ok {
+		return false
+	}
+	return e.subtreeDepth == otherError.subtreeDepth
+}
