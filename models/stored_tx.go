@@ -84,6 +84,18 @@ func (t *StoredTx) SetBytes(data []byte) error {
 	if len(data) < storedTxBytesLength {
 		return ErrInvalidLength
 	}
+	err := t.Signature.SetBytes(data[133:197])
+	if err != nil {
+		return err
+	}
+	receiveTime, err := decodeTimestampPointer(data[197:213])
+	if err != nil {
+		return err
+	}
+	body, err := txBody(data[213:], t.TxType)
+	if err != nil {
+		return err
+	}
 
 	t.Hash.SetBytes(data[0:32])
 	t.TxType = txtype.TransactionType(data[32])
@@ -91,16 +103,9 @@ func (t *StoredTx) SetBytes(data []byte) error {
 	t.Amount.SetBytes(data[37:69])
 	t.Fee.SetBytes(data[69:101])
 	t.Nonce.SetBytes(data[101:133])
-	err := t.Signature.SetBytes(data[133:197]) // TODO look at all SetBytes and refactor to avoid side effects
-	if err != nil {
-		return err
-	}
-	t.ReceiveTime, err = decodeTimestampPointer(data[197:213])
-	if err != nil {
-		return err
-	}
-	t.Body, err = txBody(data[213:], t.TxType)
-	return err
+	t.ReceiveTime = receiveTime
+	t.Body = body
+	return nil
 }
 
 func (t *StoredTx) BytesLen() int {

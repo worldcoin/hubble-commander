@@ -48,15 +48,13 @@ func (c *Commitment) SetBytes(data []byte) error {
 	if len(data) < commitmentDataLength {
 		return ErrInvalidLength
 	}
-
-	c.Type = txtype.TransactionType(data[0])
-	c.FeeReceiver = binary.BigEndian.Uint32(data[1:5])
-
 	err := c.CombinedSignature.SetBytes(data[5:69])
 	if err != nil {
 		return err
 	}
 
+	c.Type = txtype.TransactionType(data[0])
+	c.FeeReceiver = binary.BigEndian.Uint32(data[1:5])
 	c.PostStateRoot.SetBytes(data[69:101])
 	c.Transactions = data[101:]
 	return nil

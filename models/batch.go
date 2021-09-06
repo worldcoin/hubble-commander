@@ -35,9 +35,13 @@ func (b *Batch) Bytes() []byte {
 	return encoded
 }
 
-func (b *Batch) SetBytes(data []byte) (err error) {
+func (b *Batch) SetBytes(data []byte) error {
 	if len(data) != batchDataLength {
 		return ErrInvalidLength
+	}
+	timestamp, err := decodeTimestampPointer(data[169:185])
+	if err != nil {
+		return err
 	}
 
 	b.ID.SetBytes(data[0:32])
@@ -47,7 +51,6 @@ func (b *Batch) SetBytes(data []byte) (err error) {
 	b.FinalisationBlock = decodeUint32Pointer(data[98:103])
 	b.AccountTreeRoot = DecodeHashPointer(data[103:136])
 	b.PrevStateRoot = DecodeHashPointer(data[136:169])
-
-	b.SubmissionTime, err = decodeTimestampPointer(data[169:185]) // TODO do in first order to avoid side effects
-	return err
+	b.SubmissionTime = timestamp
+	return nil
 }

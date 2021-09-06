@@ -46,16 +46,17 @@ func (t *StoredReceipt) Bytes() []byte {
 	return b
 }
 
-func (t *StoredReceipt) SetBytes(data []byte) (err error) {
+func (t *StoredReceipt) SetBytes(data []byte) error {
 	if len(data) < storedReceiptBytesLength {
 		return ErrInvalidLength
 	}
-
-	t.Hash.SetBytes(data[0:32])
-	t.CommitmentID, err = decodeCommitmentIDPointer(data[32:66])
+	commitmentID, err := decodeCommitmentIDPointer(data[32:66])
 	if err != nil {
 		return err
 	}
+
+	t.Hash.SetBytes(data[0:32])
+	t.CommitmentID = commitmentID
 	t.ToStateID = decodeUint32Pointer(data[66:71])
 	t.ErrorMessage = decodeStringPointer(data[71:])
 	return nil
