@@ -16,7 +16,6 @@ var (
 		Reverse:        true,
 		PrefetchSize:   100,
 		PrefetchValues: true,
-		AllVersions:    false,
 	}
 	PrefetchIteratorOpts = badger.IteratorOptions{
 		PrefetchSize:   100,

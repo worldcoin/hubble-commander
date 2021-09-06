@@ -54,7 +54,7 @@ func (s *TransactionStorage) GetCreate2Transfer(hash common.Hash) (*models.Creat
 }
 
 func (s *TransactionStorage) GetPendingCreate2Transfers(limit uint32) ([]models.Create2Transfer, error) {
-	txController, txStorage, err := s.BeginTransaction(TxOptions{Badger: true})
+	txController, txStorage, err := s.BeginTransaction(TxOptions{Badger: true, ReadOnly: true})
 	if err != nil {
 		return nil, err
 	}
@@ -183,10 +183,7 @@ func (s *Storage) getMissingStoredTxsData(txs []models.StoredTx, receipts []mode
 	}
 
 	for i := range receipts {
-		_, ok := hashes[receipts[i].Hash]
-		if !ok {
-			hashes[receipts[i].Hash] = struct{}{}
-		}
+		hashes[receipts[i].Hash] = struct{}{}
 	}
 
 	resultTxs := make([]*models.StoredTx, 0, len(hashes))

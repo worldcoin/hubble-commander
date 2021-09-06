@@ -211,11 +211,11 @@ func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.U
 	return hashes, nil
 }
 
-func decodeKeyListHashes(prefix []byte, keyList bh.KeyList) ([]common.Hash, error) {
+func decodeKeyListHashes(keyPrefix []byte, keyList bh.KeyList) ([]common.Hash, error) {
 	var hash common.Hash
 	hashes := make([]common.Hash, 0, len(keyList))
 	for i := range keyList {
-		err := badger.DecodeDataHash(keyList[i][len(prefix):], &hash)
+		err := badger.DecodeDataHash(keyList[i][len(keyPrefix):], &hash)
 		if err != nil {
 			return nil, err
 		}

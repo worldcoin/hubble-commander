@@ -181,13 +181,13 @@ func (s *Storage) getTransfersByPublicKey(publicKey *models.PublicKey) (
 	stateIDs := utils.ValueToInterfaceSlice(leaves, "StateID")
 
 	txs := make([]models.StoredTx, 0, 1)
+	toStateIDCondition := bh.Where("ToStateID").In(stateIDs...).Index("ToStateID").
+		And("TxType").Eq(txtype.Transfer)
+	fromStateIDCondition := bh.Where("FromStateID").In(stateIDs...).Index("FromStateID").
+		And("TxType").Eq(txtype.Transfer)
 	err = s.database.Badger.Find(
 		&txs,
-		bh.Where("ToStateID").In(stateIDs...).Index("ToStateID").
-			And("TxType").Eq(txtype.Transfer).
-			Or(bh.Where("FromStateID").In(stateIDs...).Index("FromStateID").
-				And("TxType").Eq(txtype.Transfer),
-			),
+		toStateIDCondition.Or(fromStateIDCondition),
 	)
 	if err != nil {
 		return nil, nil, err

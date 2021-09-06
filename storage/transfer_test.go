@@ -321,7 +321,7 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 	s.Contains(userTransactions, transfers[4])
 }
 
-func (s *TransferTestSuite) TestGetUserTransfersByPublicKey_NoTransfers() {
+func (s *TransferTestSuite) TestGetTransfersByPublicKey_NoTransfers() {
 	err := s.storage.AccountTree.SetSingle(&account2)
 	s.NoError(err)
 	userTransfers, err := s.storage.GetTransfersByPublicKey(&account2.PublicKey)
