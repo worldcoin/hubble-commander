@@ -11,12 +11,13 @@ import (
 
 var (
 	chainState = models.ChainState{
-		ChainID:         models.MakeUint256(1),
-		AccountRegistry: utils.RandomAddress(),
-		TokenRegistry:   utils.RandomAddress(),
-		Rollup:          utils.RandomAddress(),
-		DeploymentBlock: 234,
-		SyncedBlock:     10,
+		ChainID:                        models.MakeUint256(1),
+		AccountRegistry:                utils.RandomAddress(),
+		AccountRegistryDeploymentBlock: 234,
+		TokenRegistry:                  utils.RandomAddress(),
+		DepositManager:                 utils.RandomAddress(),
+		Rollup:                         utils.RandomAddress(),
+		SyncedBlock:                    10,
 	}
 )
 
