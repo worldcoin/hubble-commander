@@ -99,27 +99,39 @@ func (s *TransactionStorage) unsafeGetPendingTransfers(limit uint32) ([]models.T
 }
 
 func (s *TransactionStorage) GetTransfersByCommitmentID(id *models.CommitmentID) ([]models.Transfer, error) {
-	txReceipts := make([]models.StoredReceipt, 0, 32)
-	// TODO rework to query the index table manually and get only the valid StoredReceipts, leave a comment explaining
-	//  why Find is not used here
-	err := s.database.Badger.Find(
-		&txReceipts,
-		bh.Where("CommitmentID").Eq(*id).Index("CommitmentID"),
-	)
+	txController, txStorage, err := s.BeginTransaction(TxOptions{Badger: true, ReadOnly: true})
 	if err != nil {
 		return nil, err
 	}
+	defer txController.Rollback(&err)
 
-	transfers := make([]models.Transfer, 0, len(txReceipts))
-	var tx models.StoredTx
-	for i := range txReceipts {
-		err = s.database.Badger.Get(txReceipts[i].Hash, &tx)
-		if err != nil {
-			return nil, err
+	encodeCommitmentID := models.EncodeCommitmentIDPointer(id)
+	indexKey := badger.IndexKey(models.StoredReceiptName, "CommitmentID", encodeCommitmentID)
+
+	var transfers []models.Transfer
+	// queried Badger directly due to nil index decoding problem
+	err = txStorage.database.Badger.View(func(txn *bdg.Txn) error {
+		var hashes []common.Hash
+		hashes, err = getTxHashesByIndexKey(txn, indexKey, models.StoredReceiptPrefix)
+
+		transfers = make([]models.Transfer, 0, len(hashes))
+		for i := range hashes {
+			var storedTx *models.StoredTx
+			var storedReceipt *models.StoredReceipt
+			storedTx, storedReceipt, err = txStorage.getStoredTxWithReceipt(hashes[i])
+			if err != nil {
+				return err
+			}
+			if storedTx.TxType == txtype.Transfer {
+				transfers = append(transfers, *storedTx.ToTransfer(storedReceipt))
+			}
 		}
-		if tx.TxType == txtype.Transfer {
-			transfers = append(transfers, *tx.ToTransfer(&txReceipts[i]))
-		}
+		return nil
+	})
+
+	err = txController.Commit()
+	if err != nil {
+		return nil, err
 	}
 	return transfers, nil
 }
