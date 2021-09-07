@@ -71,21 +71,10 @@ func (s *TransactionStorage) unsafeGetPendingCreate2Transfers(limit uint32) ([]m
 	var storedTx models.StoredTx
 	err := s.database.Badger.Iterator(models.StoredTxPrefix, badger.KeyIteratorOpts,
 		func(item *bdg.Item) (bool, error) {
-			var hash common.Hash
-			err := badger.DecodeKey(item.Key(), &hash, models.StoredTxPrefix)
-			if err != nil {
+			skip, err := s.getStoredTxFromItem(item, &storedTx)
+			if err != nil || skip {
 				return false, err
 			}
-			txReceipt, err := s.getStoredTxReceipt(hash)
-			if err != nil || txReceipt != nil {
-				return false, err
-			}
-
-			err = item.Value(storedTx.SetBytes)
-			if err != nil {
-				return false, err
-			}
-			// TODO consider extracting the above lines of this anonymous fn
 			if storedTx.TxType == txtype.Create2Transfer {
 				txs = append(txs, *storedTx.ToCreate2Transfer(nil))
 			}

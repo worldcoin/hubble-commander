@@ -211,6 +211,23 @@ func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.U
 	return hashes, nil
 }
 
+func (s *TransactionStorage) getStoredTxFromItem(item *bdg.Item, storedTx *models.StoredTx) (bool, error) {
+	var hash common.Hash
+	err := badger.DecodeKey(item.Key(), &hash, models.StoredTxPrefix)
+	if err != nil {
+		return false, err
+	}
+	txReceipt, err := s.getStoredTxReceipt(hash)
+	if err != nil {
+		return false, err
+	}
+	if txReceipt != nil {
+		return true, nil
+	}
+
+	return false, item.Value(storedTx.SetBytes)
+}
+
 func decodeKeyListHashes(keyPrefix []byte, keyList bh.KeyList) ([]common.Hash, error) {
 	var hash common.Hash
 	hashes := make([]common.Hash, 0, len(keyList))
