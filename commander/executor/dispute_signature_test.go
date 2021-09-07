@@ -214,7 +214,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_DisputesC2TBatchWithInv
 		PublicKey: *wallets[2].PublicKey(),
 	}
 
-	transfer := testutils.MakeCreate2Transfer(0, &receiver.PubKeyID, 0, 100, &receiver.PublicKey)
+	transfer := testutils.MakeCreate2Transfer(0, nil, 0, 100, &receiver.PublicKey)
 	signCreate2Transfer(s.T(), &wallets[1], &transfer)
 
 	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &transfer)
@@ -258,7 +258,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Create2Transfer_ValidBa
 		PublicKey: *wallets[2].PublicKey(),
 	}
 
-	transfer := testutils.MakeCreate2Transfer(0, &receiver.PubKeyID, 0, 100, &receiver.PublicKey)
+	transfer := testutils.MakeCreate2Transfer(0, nil, 0, 100, &receiver.PublicKey)
 	signCreate2Transfer(s.T(), &wallets[0], &transfer)
 
 	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &transfer)

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
@@ -16,6 +17,7 @@ var (
 	transferTransaction = models.Transfer{
 		TransactionBase: models.TransactionBase{
 			Hash:        common.BigToHash(big.NewInt(1234)),
+			TxType:      txtype.Transfer,
 			FromStateID: 1,
 			Amount:      models.MakeUint256(1000),
 			Fee:         models.MakeUint256(100),
@@ -26,29 +28,29 @@ var (
 	}
 )
 
-type TransactionBaseTestSuite struct {
+type StoredTransactionTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage *TestStorage
 }
 
-func (s *TransactionBaseTestSuite) SetupSuite() {
+func (s *StoredTransactionTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *TransactionBaseTestSuite) SetupTest() {
+func (s *StoredTransactionTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorageWithBadger()
+	s.storage, err = NewTestStorageWithoutPostgres()
 	s.NoError(err)
 }
 
-func (s *TransactionBaseTestSuite) TearDownTest() {
+func (s *StoredTransactionTestSuite) TearDownTest() {
 	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
-func (s *TransactionBaseTestSuite) TestSetTransactionError() {
-	_, err := s.storage.AddTransfer(&transferTransaction)
+func (s *StoredTransactionTestSuite) TestSetTransactionError() {
+	err := s.storage.AddTransfer(&transferTransaction)
 	s.NoError(err)
 
 	errorMessage := ref.String("Quack")
@@ -62,7 +64,7 @@ func (s *TransactionBaseTestSuite) TestSetTransactionError() {
 	s.Equal(errorMessage, res.ErrorMessage)
 }
 
-func (s *TransactionBaseTestSuite) TestGetLatestTransactionNonce() {
+func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce() {
 	account := models.AccountLeaf{
 		PubKeyID:  1,
 		PublicKey: models.PublicKey{1, 2, 3},
@@ -73,19 +75,20 @@ func (s *TransactionBaseTestSuite) TestGetLatestTransactionNonce() {
 
 	tx1 := transferTransaction
 	tx1.Hash = utils.RandomHash()
-	tx1.Nonce = models.MakeUint256(3)
+	tx1.Nonce = models.MakeUint256(1)
 	tx2 := transferTransaction
 	tx2.Hash = utils.RandomHash()
-	tx2.Nonce = models.MakeUint256(5)
+	tx2.FromStateID = 10
+	tx2.Nonce = models.MakeUint256(7)
 	tx3 := transferTransaction
 	tx3.Hash = utils.RandomHash()
-	tx3.Nonce = models.MakeUint256(1)
+	tx3.Nonce = models.MakeUint256(5)
 
-	_, err = s.storage.AddTransfer(&tx1)
+	err = s.storage.AddTransfer(&tx1)
 	s.NoError(err)
-	_, err = s.storage.AddTransfer(&tx2)
+	err = s.storage.AddTransfer(&tx2)
 	s.NoError(err)
-	_, err = s.storage.AddTransfer(&tx3)
+	err = s.storage.AddTransfer(&tx3)
 	s.NoError(err)
 
 	userTransactions, err := s.storage.GetLatestTransactionNonce(account.PubKeyID)
@@ -93,28 +96,30 @@ func (s *TransactionBaseTestSuite) TestGetLatestTransactionNonce() {
 	s.Equal(models.NewUint256(5), userTransactions)
 }
 
-func (s *TransactionBaseTestSuite) TestBatchMarkTransactionAsIncluded() {
+func (s *StoredTransactionTestSuite) TestMarkTransactionsAsPending() {
 	txs := make([]models.Transfer, 2)
 	for i := 0; i < len(txs); i++ {
 		txs[i] = transferTransaction
 		txs[i].Hash = utils.RandomHash()
-		_, err := s.storage.AddTransfer(&txs[i])
+		txs[i].CommitmentID = &models.CommitmentID{
+			BatchID:      models.MakeUint256(5),
+			IndexInBatch: 3,
+		}
+		err := s.storage.AddTransfer(&txs[i])
 		s.NoError(err)
 	}
 
-	batchID := models.MakeUint256(1)
-	err := s.storage.BatchMarkTransactionAsIncluded([]common.Hash{txs[0].Hash, txs[1].Hash}, &batchID, ref.Uint8(0))
+	err := s.storage.MarkTransactionsAsPending([]common.Hash{txs[0].Hash, txs[1].Hash})
 	s.NoError(err)
 
 	for i := range txs {
 		tx, err := s.storage.GetTransfer(txs[i].Hash)
 		s.NoError(err)
-		s.Equal(batchID, *tx.BatchID)
-		s.EqualValues(0, *tx.IndexInBatch)
+		s.Nil(tx.CommitmentID)
 	}
 }
 
-func (s *TransactionBaseTestSuite) TestGetTransactionCount() {
+func (s *StoredTransactionTestSuite) TestGetTransactionCount() {
 	batch := &models.Batch{
 		ID:                models.MakeUint256(1),
 		TransactionHash:   utils.RandomHash(),
@@ -131,18 +136,16 @@ func (s *TransactionBaseTestSuite) TestGetTransactionCount() {
 
 	transferInCommitment := transferTransaction
 	transferInCommitment.Hash = common.Hash{5, 5, 5}
-	transferInCommitment.BatchID = &batch.ID
-	transferInCommitment.IndexInBatch = &commitmentInBatch.ID.IndexInBatch
-	_, err = s.storage.AddTransfer(&transferInCommitment)
+	transferInCommitment.CommitmentID = &commitmentInBatch.ID
+	err = s.storage.AddTransfer(&transferInCommitment)
 	s.NoError(err)
-	_, err = s.storage.AddTransfer(&transferTransaction)
+	err = s.storage.AddTransfer(&transferTransaction)
 	s.NoError(err)
 
 	c2t := create2Transfer
 	c2t.Hash = common.Hash{3, 4, 5}
-	c2t.BatchID = &batch.ID
-	c2t.IndexInBatch = &commitmentInBatch.ID.IndexInBatch
-	_, err = s.storage.AddCreate2Transfer(&c2t)
+	c2t.CommitmentID = &commitmentInBatch.ID
+	err = s.storage.AddCreate2Transfer(&c2t)
 	s.NoError(err)
 
 	count, err := s.storage.GetTransactionCount()
@@ -150,14 +153,15 @@ func (s *TransactionBaseTestSuite) TestGetTransactionCount() {
 	s.Equal(2, *count)
 }
 
-func (s *TransactionBaseTestSuite) TestGetTransactionCount_NoTransactions() {
+func (s *StoredTransactionTestSuite) TestGetTransactionCount_NoTransactions() {
 	count, err := s.storage.GetTransactionCount()
 	s.NoError(err)
 	s.Equal(0, *count)
 }
 
-func (s *TransactionBaseTestSuite) TestGetTransactionHashesByBatchIDs() {
+func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs() {
 	batchIDs := []models.Uint256{models.MakeUint256(1), models.MakeUint256(2)}
+	expectedHashes := make([]common.Hash, 0, 4)
 	for i := range batchIDs {
 		transfers := make([]models.Transfer, 2)
 		transfers[0] = transfer
@@ -165,14 +169,18 @@ func (s *TransactionBaseTestSuite) TestGetTransactionHashesByBatchIDs() {
 		transfers[1] = transfer
 		transfers[1].Hash = utils.RandomHash()
 		s.addTransfersInCommitment(&batchIDs[i], transfers)
+		expectedHashes = append(expectedHashes, transfers[0].Hash, transfers[1].Hash)
 	}
 
 	hashes, err := s.storage.GetTransactionHashesByBatchIDs(batchIDs...)
 	s.NoError(err)
 	s.Len(hashes, 4)
+	for i := range expectedHashes {
+		s.Contains(hashes, expectedHashes[i])
+	}
 }
 
-func (s *TransactionBaseTestSuite) TestGetTransactionHashesByBatchIDs_NoTransactions() {
+func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs_NoTransactions() {
 	transfers := make([]models.Transfer, 2)
 	transfers[0] = transfer
 	transfers[1] = transfer
@@ -184,14 +192,17 @@ func (s *TransactionBaseTestSuite) TestGetTransactionHashesByBatchIDs_NoTransact
 	s.Nil(hashes)
 }
 
-func (s *TransactionBaseTestSuite) addTransfersInCommitment(batchID *models.Uint256, transfers []models.Transfer) {
+func (s *StoredTransactionTestSuite) addTransfersInCommitment(batchID *models.Uint256, transfers []models.Transfer) {
 	for i := range transfers {
-		transfers[i].BatchID = batchID
-		_, err := s.storage.AddTransfer(&transfers[i])
+		transfers[i].CommitmentID = &models.CommitmentID{
+			BatchID:      *batchID,
+			IndexInBatch: 0,
+		}
+		err := s.storage.AddTransfer(&transfers[i])
 		s.NoError(err)
 	}
 }
 
-func TestTransactionBaseTestSuite(t *testing.T) {
-	suite.Run(t, new(TransactionBaseTestSuite))
+func TestStoredTransactionTestSuite(t *testing.T) {
+	suite.Run(t, new(StoredTransactionTestSuite))
 }

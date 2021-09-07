@@ -69,29 +69,26 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 			Fee:          models.MakeUint256(10),
 			Nonce:        models.MakeUint256(0),
 			Signature:    models.MakeRandomSignature(),
-			BatchID:      &s.commitment.ID.BatchID,
-			IndexInBatch: &s.commitment.ID.IndexInBatch,
+			CommitmentID: &s.commitment.ID,
 		},
 		ToStateID: 2,
 	}
-	receiveTime, err := s.storage.AddTransfer(&transfer)
+	err = s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 
 	expectedCommitment := &dto.Commitment{
 		Commitment: s.commitment,
 		Status:     txstatus.InBatch,
 		BatchTime:  s.batch.SubmissionTime,
-		Transactions: []models.TransferForCommitment{{
-			TransactionBaseForCommitment: models.TransactionBaseForCommitment{
-				Hash:        transfer.Hash,
-				FromStateID: transfer.FromStateID,
-				Amount:      transfer.Amount,
-				Fee:         transfer.Fee,
-				Nonce:       transfer.Nonce,
-				Signature:   transfer.Signature,
-				ReceiveTime: receiveTime,
-			},
-			ToStateID: transfer.ToStateID,
+		Transactions: []dto.TransferForCommitment{{
+			Hash:        transfer.Hash,
+			FromStateID: transfer.FromStateID,
+			Amount:      transfer.Amount,
+			Fee:         transfer.Fee,
+			Nonce:       transfer.Nonce,
+			Signature:   transfer.Signature,
+			ReceiveTime: transfer.ReceiveTime,
+			ToStateID:   transfer.ToStateID,
 		}},
 	}
 
@@ -116,29 +113,26 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 			Amount:       models.MakeUint256(50),
 			Fee:          models.MakeUint256(10),
 			Nonce:        models.MakeUint256(0),
-			BatchID:      &s.commitment.ID.BatchID,
-			IndexInBatch: &s.commitment.ID.IndexInBatch,
+			CommitmentID: &s.commitment.ID,
 		},
 		ToStateID:   ref.Uint32(2),
 		ToPublicKey: models.PublicKey{2, 3, 4},
 	}
-	receiveTime, err := s.storage.AddCreate2Transfer(&transfer)
+	err = s.storage.AddCreate2Transfer(&transfer)
 	s.NoError(err)
 
 	expectedCommitment := &dto.Commitment{
 		Commitment: s.commitment,
 		Status:     txstatus.InBatch,
 		BatchTime:  s.batch.SubmissionTime,
-		Transactions: []models.Create2TransferForCommitment{{
-			TransactionBaseForCommitment: models.TransactionBaseForCommitment{
-				Hash:        transfer.Hash,
-				FromStateID: transfer.FromStateID,
-				Amount:      transfer.Amount,
-				Fee:         transfer.Fee,
-				Nonce:       transfer.Nonce,
-				Signature:   transfer.Signature,
-				ReceiveTime: receiveTime,
-			},
+		Transactions: []dto.Create2TransferForCommitment{{
+			Hash:        transfer.Hash,
+			FromStateID: transfer.FromStateID,
+			Amount:      transfer.Amount,
+			Fee:         transfer.Fee,
+			Nonce:       transfer.Nonce,
+			Signature:   transfer.Signature,
+			ReceiveTime: transfer.ReceiveTime,
 			ToStateID:   transfer.ToStateID,
 			ToPublicKey: transfer.ToPublicKey,
 		}},
@@ -167,12 +161,11 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_PendingBatch() {
 			Amount:       models.MakeUint256(50),
 			Fee:          models.MakeUint256(10),
 			Nonce:        models.MakeUint256(0),
-			BatchID:      &s.commitment.ID.BatchID,
-			IndexInBatch: &s.commitment.ID.IndexInBatch,
+			CommitmentID: &s.commitment.ID,
 		},
 		ToStateID: 2,
 	}
-	_, err = s.storage.AddTransfer(&transfer)
+	err = s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 
 	commitment, err := s.api.GetCommitment(commitment.ID)

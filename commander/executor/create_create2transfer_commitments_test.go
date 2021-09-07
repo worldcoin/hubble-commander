@@ -250,8 +250,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	for i := range pendingTransfers {
 		tx, err := s.storage.GetCreate2Transfer(pendingTransfers[i].Hash)
 		s.NoError(err)
-		s.Equal(commitments[0].ID.BatchID, *tx.BatchID)
-		s.Equal(commitments[0].ID.IndexInBatch, *tx.IndexInBatch)
+		s.Equal(commitments[0].ID, *tx.CommitmentID)
 		s.Equal(uint32(i+3), *tx.ToStateID)
 	}
 }
@@ -285,7 +284,7 @@ func TestCreate2TransferCommitmentsTestSuite(t *testing.T) {
 
 func (s *Create2TransferCommitmentsTestSuite) addCreate2Transfers(transfers []models.Create2Transfer) {
 	for i := range transfers {
-		_, err := s.storage.AddCreate2Transfer(&transfers[i])
+		err := s.storage.AddCreate2Transfer(&transfers[i])
 		s.NoError(err)
 	}
 }

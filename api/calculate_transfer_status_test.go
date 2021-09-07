@@ -88,8 +88,10 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_TxI
 	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
 
-	s.transfer.BatchID = &batch.ID
-	s.transfer.IndexInBatch = ref.Uint8(0)
+	s.transfer.CommitmentID = &models.CommitmentID{
+		BatchID:      batch.ID,
+		IndexInBatch: 0,
+	}
 
 	status, err := CalculateTransactionStatus(s.storage.Storage, &s.transfer.TransactionBase, 0)
 	s.NoError(err)
@@ -105,7 +107,9 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_InB
 	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
 
-	s.transfer.BatchID = &batch.ID
+	s.transfer.CommitmentID = &models.CommitmentID{
+		BatchID: batch.ID,
+	}
 
 	status, err := CalculateTransactionStatus(s.storage.Storage, &s.transfer.TransactionBase, 0)
 	s.NoError(err)
@@ -124,7 +128,9 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_Fin
 	err = s.storage.AddBatch(&batch)
 	s.NoError(err)
 
-	s.transfer.BatchID = &batch.ID
+	s.transfer.CommitmentID = &models.CommitmentID{
+		BatchID: batch.ID,
+	}
 
 	s.sim.Commit()
 	latestBlockNumber, err := s.sim.GetLatestBlockNumber()

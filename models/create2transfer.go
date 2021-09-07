@@ -7,20 +7,14 @@ import (
 
 type Create2Transfer struct {
 	TransactionBase
-	ToStateID   *uint32   `db:"to_state_id"`
-	ToPublicKey PublicKey `db:"to_public_key"`
-}
-
-type Create2TransferForCommitment struct {
-	TransactionBaseForCommitment
-	ToStateID   *uint32   `db:"to_state_id"`
-	ToPublicKey PublicKey `db:"to_public_key"`
+	ToStateID   *uint32
+	ToPublicKey PublicKey
 }
 
 type Create2TransferWithBatchDetails struct {
 	Create2Transfer
-	BatchHash *common.Hash `db:"batch_hash"`
-	BatchTime *Timestamp   `db:"submission_time"`
+	BatchHash *common.Hash
+	BatchTime *Timestamp
 }
 
 func (t *Create2Transfer) Type() txtype.TransactionType {

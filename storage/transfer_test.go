@@ -40,7 +40,7 @@ func (s *TransferTestSuite) SetupSuite() {
 
 func (s *TransferTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorageWithBadger()
+	s.storage, err = NewTestStorageWithoutPostgres()
 	s.NoError(err)
 }
 
@@ -50,27 +50,59 @@ func (s *TransferTestSuite) TearDownTest() {
 }
 
 func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieve() {
-	receiveTime, err := s.storage.AddTransfer(&transfer)
+	err := s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 
 	expected := transfer
-	expected.ReceiveTime = receiveTime
 
 	res, err := s.storage.GetTransfer(transfer.Hash)
 	s.NoError(err)
 	s.Equal(expected, *res)
 }
 
-func (s *TransferTestSuite) TestAddTransfer_SetsReceiveTime() {
-	beforeTime := time.Now().Unix()
-	_, err := s.storage.AddTransfer(&transfer)
+func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieveIncludedTransfer() {
+	includedTransfer := transfer
+	includedTransfer.CommitmentID = &models.CommitmentID{
+		BatchID:      models.MakeUint256(3),
+		IndexInBatch: 1,
+	}
+	err := s.storage.AddTransfer(&includedTransfer)
 	s.NoError(err)
 
 	res, err := s.storage.GetTransfer(transfer.Hash)
 	s.NoError(err)
+	s.Equal(includedTransfer, *res)
+}
 
-	s.GreaterOrEqual(res.ReceiveTime.Unix(), beforeTime)
-	s.LessOrEqual(res.ReceiveTime.Unix(), time.Now().Unix())
+func (s *TransferTestSuite) TestGetTransfer_DifferentTxType() {
+	err := s.storage.AddCreate2Transfer(&create2Transfer)
+	s.NoError(err)
+
+	_, err = s.storage.GetTransfer(create2Transfer.Hash)
+	s.Equal(NewNotFoundError("transaction"), err)
+}
+
+func (s *TransferTestSuite) TestMarkTransfersAsIncluded() {
+	txs := make([]models.Transfer, 2)
+	for i := 0; i < len(txs); i++ {
+		txs[i] = transferTransaction
+		txs[i].Hash = utils.RandomHash()
+		err := s.storage.AddTransfer(&txs[i])
+		s.NoError(err)
+	}
+
+	commitmentID := models.CommitmentID{
+		BatchID:      models.MakeUint256(1),
+		IndexInBatch: 1,
+	}
+	err := s.storage.MarkTransfersAsIncluded(txs, &commitmentID)
+	s.NoError(err)
+
+	for i := range txs {
+		tx, err := s.storage.GetTransfer(txs[i].Hash)
+		s.NoError(err)
+		s.Equal(commitmentID, *tx.CommitmentID)
+	}
 }
 
 func (s *TransferTestSuite) TestGetTransferWithBatchDetails() {
@@ -85,10 +117,11 @@ func (s *TransferTestSuite) TestGetTransferWithBatchDetails() {
 	s.NoError(err)
 
 	transferInBatch := transfer
-	transferInBatch.BatchID = &batch.ID
-	receiveTime, err := s.storage.AddTransfer(&transferInBatch)
+	transferInBatch.CommitmentID = &models.CommitmentID{
+		BatchID: batch.ID,
+	}
+	err = s.storage.AddTransfer(&transferInBatch)
 	s.NoError(err)
-	transferInBatch.ReceiveTime = receiveTime
 
 	expected := models.TransferWithBatchDetails{
 		Transfer:  transferInBatch,
@@ -101,11 +134,10 @@ func (s *TransferTestSuite) TestGetTransferWithBatchDetails() {
 }
 
 func (s *TransferTestSuite) TestGetTransferWithBatchDetails_WithoutBatch() {
-	receiveTime, err := s.storage.AddTransfer(&transfer)
+	err := s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 
 	expected := models.TransferWithBatchDetails{Transfer: transfer}
-	expected.ReceiveTime = receiveTime
 
 	res, err := s.storage.GetTransferWithBatchDetails(transfer.Hash)
 	s.NoError(err)
@@ -148,7 +180,7 @@ func (s *TransferTestSuite) TestGetPendingTransfers() {
 		transfers[i] = transfer
 		transfers[i].Hash = utils.RandomHash()
 	}
-	transfers[2].BatchID = models.NewUint256(3)
+	transfers[2].CommitmentID = &models.CommitmentID{BatchID: models.MakeUint256(3)}
 	transfers[3].ErrorMessage = ref.String("A very boring error message")
 
 	err := s.storage.BatchAddTransfer(transfers)
@@ -230,13 +262,14 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 
 	submissionTime := &models.Timestamp{Time: time.Unix(170, 0).UTC()}
 	batch := s.addBatchAndCommitment()
+	commitmentID := &models.CommitmentID{BatchID: batch.ID}
 	transfers := make([]models.TransferWithBatchDetails, 5)
 
 	transfers[0].Transfer = transfer
 	transfers[0].Hash = utils.RandomHash()
 	transfers[0].FromStateID = 0
 	transfers[0].ToStateID = 1
-	transfers[0].BatchID = &batch.ID
+	transfers[0].CommitmentID = commitmentID
 	transfers[0].BatchHash = batch.Hash
 	transfers[0].BatchTime = submissionTime
 
@@ -244,7 +277,7 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 	transfers[1].Hash = utils.RandomHash()
 	transfers[1].FromStateID = 1
 	transfers[1].ToStateID = 4
-	transfers[1].BatchID = &batch.ID
+	transfers[1].CommitmentID = commitmentID
 	transfers[1].BatchHash = batch.Hash
 
 	transfers[2].Transfer = transfer
@@ -256,7 +289,7 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 	transfers[3].Hash = utils.RandomHash()
 	transfers[3].FromStateID = 3
 	transfers[3].ToStateID = 1
-	transfers[3].BatchID = &batch.ID
+	transfers[3].CommitmentID = commitmentID
 	transfers[3].BatchHash = batch.Hash
 	transfers[3].BatchTime = submissionTime
 
@@ -276,7 +309,7 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 	s.Contains(userTransactions, transfers[4])
 }
 
-func (s *TransferTestSuite) TestGetUserTransfersByPublicKey_NoTransfers() {
+func (s *TransferTestSuite) TestGetTransfersByPublicKey_NoTransfers() {
 	err := s.storage.AccountTree.SetSingle(&account2)
 	s.NoError(err)
 	userTransfers, err := s.storage.GetTransfersByPublicKey(&account2.PublicKey)
@@ -289,10 +322,9 @@ func (s *TransferTestSuite) TestGetTransfersByCommitmentID() {
 	s.NoError(err)
 
 	transfer1 := transfer
-	transfer1.BatchID = &commitment.ID.BatchID
-	transfer1.IndexInBatch = &commitment.ID.IndexInBatch
+	transfer1.CommitmentID = &commitment.ID
 
-	_, err = s.storage.AddTransfer(&transfer1)
+	err = s.storage.AddTransfer(&transfer1)
 	s.NoError(err)
 
 	transfers, err := s.storage.GetTransfersByCommitmentID(&commitment.ID)
