@@ -1,10 +1,9 @@
-package badger
+package db
 
 import (
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/dgraph-io/badger/v3"
 	bh "github.com/timshannon/badgerhold/v3"
 )
@@ -17,7 +16,8 @@ type Database struct {
 
 func NewDatabase(cfg *config.BadgerConfig) (*Database, error) {
 	options := badger.DefaultOptions(cfg.Path).
-		WithLoggingLevel(badger.WARNING)
+		WithLoggingLevel(badger.WARNING).
+		WithMemTableSize(64 << 23) // TODO split large transactions and go back to default MemTableSize
 	return newConfiguredDatabase(&options)
 }
 
@@ -110,9 +110,9 @@ func (d *Database) Delete(key, dataType interface{}) error {
 	return d.store.Delete(key, dataType)
 }
 
-func (d *Database) BeginTransaction(update bool) (*db.TxController, *Database) {
+func (d *Database) BeginTransaction(update bool) (*TxController, *Database) {
 	if d.duringTransaction() {
-		return db.NewTxController(&ControllerAdapter{d.txn}, true), d
+		return NewTxController(&ControllerAdapter{d.txn}, true), d
 	}
 	txn := d.store.Badger().NewTransaction(update)
 	dbDuringTx := &Database{
@@ -120,7 +120,7 @@ func (d *Database) BeginTransaction(update bool) (*db.TxController, *Database) {
 		txn:               txn,
 		updateTransaction: update,
 	}
-	return db.NewTxController(&ControllerAdapter{txn}, false), dbDuringTx
+	return NewTxController(&ControllerAdapter{txn}, false), dbDuringTx
 }
 
 func (d *Database) Prune() error {

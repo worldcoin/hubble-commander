@@ -5,6 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type Create2Transfer struct {
@@ -55,4 +56,30 @@ func (t *Create2Transfer) UnmarshalJSON(bytes []byte) error {
 		Signature:   transfer.Signature,
 	}
 	return nil
+}
+
+type Create2TransferForCommitment struct {
+	Hash        common.Hash
+	FromStateID uint32
+	Amount      models.Uint256
+	Fee         models.Uint256
+	Nonce       models.Uint256
+	Signature   models.Signature
+	ReceiveTime *models.Timestamp
+	ToStateID   *uint32
+	ToPublicKey models.PublicKey
+}
+
+func MakeCreate2TransferForCommitment(transfer *models.Create2Transfer) Create2TransferForCommitment {
+	return Create2TransferForCommitment{
+		Hash:        transfer.Hash,
+		FromStateID: transfer.FromStateID,
+		Amount:      transfer.Amount,
+		Fee:         transfer.Fee,
+		Nonce:       transfer.Nonce,
+		Signature:   transfer.Signature,
+		ReceiveTime: transfer.ReceiveTime,
+		ToStateID:   transfer.ToStateID,
+		ToPublicKey: transfer.ToPublicKey,
+	}
 }

@@ -19,7 +19,7 @@ func (s *BlockNumberTestSuite) SetupSuite() {
 
 func (s *BlockNumberTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorageWithoutPostgres()
+	s.storage, err = NewTestStorage()
 	s.NoError(err)
 }
 

@@ -1,15 +1,15 @@
-package badger
+package models
 
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 )
 
-func TestDataHash_ByteEncoding(t *testing.T) {
-	node := models.MerkleTreeNode{
+func TestEncodeDataHash(t *testing.T) {
+	node := MerkleTreeNode{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 	}
 
@@ -19,7 +19,7 @@ func TestDataHash_ByteEncoding(t *testing.T) {
 	require.Equal(t, node.DataHash, decodedHash)
 }
 
-func TestUint32_ByteEncoding(t *testing.T) {
+func TestEncodeUint32(t *testing.T) {
 	number := uint32(173)
 
 	var decodedNumber uint32
@@ -28,7 +28,7 @@ func TestUint32_ByteEncoding(t *testing.T) {
 	require.Equal(t, number, decodedNumber)
 }
 
-func TestUint64_ByteEncoding(t *testing.T) {
+func TestEncodeUint64(t *testing.T) {
 	value := uint64(123456789)
 
 	encoded, err := EncodeUint64(&value)
@@ -40,27 +40,12 @@ func TestUint64_ByteEncoding(t *testing.T) {
 	require.Equal(t, value, decoded)
 }
 
-func TestDecodeKey(t *testing.T) {
-	prefix := []byte("bh_prefix")
-	value := uint64(123456789)
-
-	encoded, err := EncodeUint64(&value)
-	require.NoError(t, err)
-
-	var decoded uint64
-	err = DecodeKey(append(prefix, encoded...), &decoded, prefix)
-	require.NoError(t, err)
-	require.Equal(t, value, decoded)
-}
-
 func TestEncodeString(t *testing.T) {
-	value := "some string"
-
-	encoded, err := EncodeString(&value)
+	encoded, err := EncodeString(ref.String(testMessage))
 	require.NoError(t, err)
 
 	var decoded string
 	err = DecodeString(encoded, &decoded)
 	require.NoError(t, err)
-	require.Equal(t, value, decoded)
+	require.Equal(t, testMessage, decoded)
 }

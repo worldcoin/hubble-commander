@@ -44,7 +44,7 @@ func (s *BatchesTestSuite) SetupSuite() {
 
 func (s *BatchesTestSuite) SetupTest() {
 	var err error
-	s.testStorage, err = st.NewTestStorageWithBadger()
+	s.testStorage, err = st.NewTestStorage()
 	s.NoError(err)
 	s.testClient, err = eth.NewConfiguredTestClient(rollup.DeploymentConfig{
 		Params: rollup.Params{
@@ -159,8 +159,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 
 	expectedTx := transfers[0]
 	expectedTx.Signature = models.Signature{}
-	expectedTx.BatchID = &commitment.ID.BatchID
-	expectedTx.IndexInBatch = &commitment.ID.IndexInBatch
+	expectedTx.CommitmentID = &commitment.ID
 	transfer, err := s.cmd.storage.GetTransfer(transfers[0].Hash)
 	s.NoError(err)
 	s.Equal(expectedTx, *transfer)
@@ -458,7 +457,7 @@ func (s *BatchesTestSuite) createAndSubmitTransferBatch(
 	txExecutor *executor.TransactionExecutor,
 	tx *models.Transfer,
 ) *models.Batch {
-	_, err := storage.AddTransfer(tx)
+	err := storage.AddTransfer(tx)
 	s.NoError(err)
 
 	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Transfer)
@@ -479,7 +478,7 @@ func (s *BatchesTestSuite) createAndSubmitTransferBatch(
 
 // Make sure that the commander and the transaction executor uses the same storage
 func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batch {
-	_, err := s.cmd.storage.AddTransfer(tx)
+	err := s.cmd.storage.AddTransfer(tx)
 	s.NoError(err)
 
 	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
@@ -507,7 +506,7 @@ func (s *BatchesTestSuite) createAndSubmitInvalidTransferBatch(
 	tx *models.Transfer,
 	modifier func(commitment *models.Commitment),
 ) *models.Batch {
-	_, err := storage.AddTransfer(tx)
+	err := storage.AddTransfer(tx)
 	s.NoError(err)
 
 	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Transfer)
@@ -576,7 +575,7 @@ func cloneStorage(
 	storage *st.TestStorage,
 	client *eth.Client,
 ) (*st.TestStorage, *executor.TransactionExecutor) {
-	clonedStorage, err := storage.Clone(cfg.Postgres)
+	clonedStorage, err := storage.Clone()
 	s.NoError(err)
 
 	txExecutor := executor.NewTestTransactionExecutor(clonedStorage.Storage, client, cfg.Rollup, context.Background())

@@ -50,7 +50,7 @@ func (s *ApplyTransferTestSuite) SetupSuite() {
 
 func (s *ApplyTransferTestSuite) SetupTest() {
 	var err error
-	s.storage, err = st.NewTestStorageWithBadger()
+	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 	s.transactionExecutor = NewTestTransactionExecutor(
 		s.storage.Storage,

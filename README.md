@@ -23,13 +23,6 @@ brew upgrade golangci-lint
 ```
 For other environments refer to: https://golangci-lint.run/usage/install/#local-installation
 
-### PostgreSQL
-
-You can either install the PostgreSQL locally or use Docker for that:
-```shell
-make setup-db
-```
-
 ## Running the commander
 
 The commander can be started by running the binary with a `start` subcommand, e.g. `commander start`,
@@ -57,7 +50,6 @@ There is a number of scripts defined in the Makefile:
 * `make compile` - build artifacts
 * `make generate` - generate bindings for smart contracts
 * `make build` - clean and build artifacts
-* `make setup-db` - create and run a Docker container with postgres
 * `make start-geth-locally` - start a new instance of Go-Ethereum node
 * `make setup-geth` - create and run a Docker container with Go-Ethereum node
 * `make update-contracts` - update the `hubble-contracts` git submodule
@@ -100,9 +92,6 @@ Create `.env.docker` file and set necessary env variables:
 HUBBLE_ETHEREUM_RPC_URL=ws://docker.for.mac.localhost:8546
 HUBBLE_ETHEREUM_CHAIN_ID=1337
 HUBBLE_ETHEREUM_PRIVATE_KEY=ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
-HUBBLE_POSTGRES_HOST=docker.for.mac.localhost
-HUBBLE_POSTGRES_USER=hubble
-HUBBLE_POSTGRES_PASSWORD=root
 HUBBLE_ROLLUP_MIN_TXS_PER_COMMITMENT=32
 HUBBLE_ROLLUP_MAX_TXS_PER_COMMITMENT=32
 ```

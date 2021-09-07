@@ -1,4 +1,4 @@
-package badger
+package db
 
 import (
 	"github.com/dgraph-io/badger/v3"
@@ -16,7 +16,14 @@ var (
 		Reverse:        true,
 		PrefetchSize:   100,
 		PrefetchValues: true,
-		AllVersions:    false,
+	}
+	PrefetchIteratorOpts = badger.IteratorOptions{
+		PrefetchSize:   100,
+		PrefetchValues: true,
+	}
+	KeyIteratorOpts = badger.IteratorOptions{
+		PrefetchValues: false,
+		Reverse:        false,
 	}
 )
 

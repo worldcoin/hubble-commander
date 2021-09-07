@@ -14,7 +14,6 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -63,7 +62,7 @@ func (s *SyncTestSuite) SetupTest() {
 
 func (s *SyncTestSuite) setupDB() {
 	var err error
-	s.storage, err = st.NewTestStorageWithBadger()
+	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, s.cfg, context.Background())
 
@@ -130,7 +129,7 @@ func (s *SyncTestSuite) TestSyncBatch_TwoTransferBatches() {
 	}
 	s.setTransferHashAndSign(txs...)
 	for i := range txs {
-		_, err := s.storage.AddTransfer(txs[i])
+		err := s.storage.AddTransfer(txs[i])
 		s.NoError(err)
 	}
 
@@ -169,8 +168,7 @@ func (s *SyncTestSuite) TestSyncBatch_TwoTransferBatches() {
 
 		actualTx, err := s.storage.GetTransfer(txs[i].Hash)
 		s.NoError(err)
-		txs[i].BatchID = &commitment.ID.BatchID
-		txs[i].IndexInBatch = &commitment.ID.IndexInBatch
+		txs[i].CommitmentID = &commitment.ID
 		txs[i].Signature = models.Signature{}
 		s.Equal(txs[i], actualTx)
 	}
@@ -230,11 +228,11 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyTransfersInCommitment() {
 }
 
 func (s *SyncTestSuite) TestSyncBatch_TooManyCreate2TransfersInCommitment() {
-	tx := testutils.MakeCreate2Transfer(0, ref.Uint32(5), 0, 400, s.wallets[0].PublicKey())
+	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx)
 	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &tx)
 
-	tx2 := testutils.MakeCreate2Transfer(0, ref.Uint32(6), 1, 400, s.wallets[0].PublicKey())
+	tx2 := testutils.MakeCreate2Transfer(0, nil, 1, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx2)
 	s.createAndSubmitInvalidC2TBatch(&tx2)
 
@@ -296,11 +294,11 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidTransferCommitmentStateRoot() {
 }
 
 func (s *SyncTestSuite) TestSyncBatch_InvalidCreate2TransferCommitmentStateRoot() {
-	tx := testutils.MakeCreate2Transfer(0, ref.Uint32(5), 0, 400, s.wallets[0].PublicKey())
+	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx)
 	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &tx)
 
-	tx2 := testutils.MakeCreate2Transfer(0, ref.Uint32(6), 1, 400, s.wallets[0].PublicKey())
+	tx2 := testutils.MakeCreate2Transfer(0, nil, 1, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx2)
 
 	batch, commitments := createC2TBatch(s.Assertions, s.transactionExecutor, &tx2, testDomain)
@@ -353,7 +351,7 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidTransferSignature() {
 }
 
 func (s *SyncTestSuite) TestSyncBatch_InvalidCreate2TransferSignature() {
-	tx := testutils.MakeCreate2Transfer(0, ref.Uint32(5), 0, 400, s.wallets[0].PublicKey())
+	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, s.wallets[0].PublicKey())
 	signCreate2Transfer(s.T(), &s.wallets[1], &tx)
 	s.setCreate2TransferHash(&tx)
 
@@ -427,8 +425,7 @@ func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 	transfer, err := s.storage.GetCreate2Transfer(tx.Hash)
 	s.NoError(err)
 	transfer.Signature = tx.Signature
-	tx.BatchID = &commitment.ID.BatchID
-	tx.IndexInBatch = &commitment.ID.IndexInBatch
+	tx.CommitmentID = &commitment.ID
 	tx.ToStateID = transfer.ToStateID
 	s.Equal(tx, *transfer)
 }
@@ -531,8 +528,7 @@ func (s *SyncTestSuite) TestRevertBatch_ExcludesTransactionsFromCommitments() {
 
 	transfer, err := s.storage.GetTransfer(s.transfer.Hash)
 	s.NoError(err)
-	s.Nil(transfer.BatchID)
-	s.Nil(transfer.IndexInBatch)
+	s.Nil(transfer.CommitmentID)
 }
 
 func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {
@@ -652,7 +648,7 @@ func createTransferBatch(
 	tx *models.Transfer,
 	domain *bls.Domain,
 ) (*models.Batch, []models.Commitment) {
-	_, err := txExecutor.storage.AddTransfer(tx)
+	err := txExecutor.storage.AddTransfer(tx)
 	s.NoError(err)
 
 	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Transfer)
@@ -700,7 +696,7 @@ func createC2TBatch(
 	tx *models.Create2Transfer,
 	domain *bls.Domain,
 ) (*models.Batch, []models.Commitment) {
-	_, err := txExecutor.storage.AddCreate2Transfer(tx)
+	err := txExecutor.storage.AddCreate2Transfer(tx)
 	s.NoError(err)
 
 	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Create2Transfer)

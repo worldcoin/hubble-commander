@@ -29,7 +29,7 @@ func (s *ApplyTransfersTestSuite) SetupSuite() {
 
 func (s *ApplyTransfersTestSuite) SetupTest() {
 	var err error
-	s.storage, err = storage.NewTestStorageWithBadger()
+	s.storage, err = storage.NewTestStorage()
 	s.NoError(err)
 	s.cfg = &config.RollupConfig{
 		FeeReceiverPubKeyID: 3,
@@ -114,7 +114,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_SavesTransferErrors() {
 	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(2)...)
 
 	for i := range generatedTransfers {
-		_, err := s.storage.AddTransfer(&generatedTransfers[i])
+		err := s.storage.AddTransfer(&generatedTransfers[i])
 		s.NoError(err)
 	}
 

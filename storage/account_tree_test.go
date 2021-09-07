@@ -27,7 +27,7 @@ func (s *AccountTreeTestSuite) SetupSuite() {
 
 func (s *AccountTreeTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorageWithoutPostgres()
+	s.storage, err = NewTestStorage()
 	s.NoError(err)
 
 	s.leaf = &models.AccountLeaf{

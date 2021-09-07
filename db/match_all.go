@@ -1,4 +1,4 @@
-package badger
+package db
 
 import bh "github.com/timshannon/badgerhold/v3"
 

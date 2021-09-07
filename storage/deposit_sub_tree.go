@@ -25,7 +25,7 @@ func (s *DepositStorage) GetPendingDepositSubTree(subTreeID models.Uint256) (*mo
 }
 
 func (s *DepositStorage) DeletePendingDepositSubTrees(subTreeIDs ...models.Uint256) error {
-	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{Badger: true})
+	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{})
 	if err != nil {
 		return err
 	}

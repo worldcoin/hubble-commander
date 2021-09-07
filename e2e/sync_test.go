@@ -58,7 +58,6 @@ func TestCommanderSync(t *testing.T) {
 	cfg.Bootstrap.Prune = true
 	cfg.API.Port = "5002"
 	cfg.Badger.Path += "_passive"
-	cfg.Postgres.Name += "_passive"
 	cfg.Ethereum.PrivateKey = "ab6919fd6ac00246bb78657e0696cf72058a4cb395133d074eabaddb83d8b00c"
 	passiveCommander, err := setup.CreateInProcessCommanderWithConfig(cfg, false)
 	require.NoError(t, err)

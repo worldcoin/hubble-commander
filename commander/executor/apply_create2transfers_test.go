@@ -36,7 +36,7 @@ func (s *ApplyCreate2TransfersTestSuite) SetupSuite() {
 
 func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 	var err error
-	s.storage, err = storage.NewTestStorageWithBadger()
+	s.storage, err = storage.NewTestStorage()
 	s.NoError(err)
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
@@ -127,7 +127,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 	generatedTransfers = append(generatedTransfers, generateInvalidCreate2Transfers(2)...)
 
 	for i := range generatedTransfers {
-		_, err := s.storage.AddCreate2Transfer(&generatedTransfers[i])
+		err := s.storage.AddCreate2Transfer(&generatedTransfers[i])
 		s.NoError(err)
 	}
 

@@ -40,7 +40,7 @@ func (s *TransferCommitmentsTestSuite) SetupSuite() {
 
 func (s *TransferCommitmentsTestSuite) SetupTest() {
 	var err error
-	s.storage, err = st.NewTestStorageWithBadger()
+	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 	s.cfg = &config.RollupConfig{
 		MinTxsPerCommitment:    1,
@@ -268,8 +268,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_MarksTransf
 	for i := range pendingTransfers {
 		tx, err := s.storage.GetTransfer(pendingTransfers[i].Hash)
 		s.NoError(err)
-		s.Equal(commitments[0].ID.BatchID, *tx.BatchID)
-		s.Equal(commitments[0].ID.IndexInBatch, *tx.IndexInBatch)
+		s.Equal(commitments[0].ID, *tx.CommitmentID)
 	}
 }
 
@@ -290,7 +289,7 @@ func TestTransferCommitmentsTestSuite(t *testing.T) {
 
 func (s *TransferCommitmentsTestSuite) addTransfers(transfers []models.Transfer) {
 	for i := range transfers {
-		_, err := s.storage.AddTransfer(&transfers[i])
+		err := s.storage.AddTransfer(&transfers[i])
 		s.NoError(err)
 	}
 }

@@ -1,8 +1,6 @@
 package models
 
 import (
-	"database/sql/driver"
-	"fmt"
 	"math/big"
 	"reflect"
 
@@ -58,22 +56,6 @@ func (s *Signature) BigInts() [2]*big.Int {
 
 func (s *Signature) String() string {
 	return hexutil.Encode(s[:])
-}
-
-func (s *Signature) Scan(src interface{}) error {
-	srcBytes, ok := src.([]byte)
-	if !ok {
-		return fmt.Errorf("can't scan %T into Signature", src)
-	}
-	if len(srcBytes) != SignatureLength {
-		return fmt.Errorf("can't scan []byte of len %d into Signature, want %d", len(srcBytes), SignatureLength)
-	}
-	copy(s[:], srcBytes)
-	return nil
-}
-
-func (s Signature) Value() (driver.Value, error) {
-	return s[:], nil
 }
 
 func (s *Signature) UnmarshalJSON(input []byte) error {

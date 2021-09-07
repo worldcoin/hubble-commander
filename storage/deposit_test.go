@@ -36,7 +36,7 @@ func (s *DepositTestSuite) SetupSuite() {
 
 func (s *DepositTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorageWithoutPostgres()
+	s.storage, err = NewTestStorage()
 	s.NoError(err)
 }
 

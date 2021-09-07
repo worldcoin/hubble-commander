@@ -92,7 +92,7 @@ func (t *TransactionExecutor) excludeTransactionsFromCommitment(batchIDs ...mode
 	if err != nil {
 		return err
 	}
-	return t.storage.BatchMarkTransactionAsIncluded(hashes, nil, nil)
+	return t.storage.MarkTransactionsAsPending(hashes)
 }
 
 func (t *TransactionExecutor) getTransactionSender(txHash common.Hash) (*common.Address, error) {
@@ -174,8 +174,7 @@ func (t *TransactionExecutor) syncCommitment(
 		return err
 	}
 	for i := 0; i < transactions.Len(); i++ {
-		transactions.At(i).GetBase().BatchID = &commitment.ID.BatchID
-		transactions.At(i).GetBase().IndexInBatch = &commitment.ID.IndexInBatch
+		transactions.At(i).GetBase().CommitmentID = &commitment.ID
 	}
 
 	for i := 0; i < transactions.Len(); i++ {

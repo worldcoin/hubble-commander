@@ -1,9 +1,7 @@
 package models
 
 import (
-	"database/sql/driver"
 	"errors"
-	"fmt"
 	"math/big"
 	"reflect"
 
@@ -53,23 +51,6 @@ func (p *PublicKey) BigInts() [4]*big.Int {
 
 func (p *PublicKey) String() string {
 	return hexutil.Encode(p[:])
-}
-
-func (p *PublicKey) Scan(src interface{}) error {
-	srcBytes, ok := src.([]byte)
-	if !ok {
-		return fmt.Errorf("can't scan %T into PublicKey", src)
-	}
-	if len(srcBytes) != PublicKeyLength {
-		return fmt.Errorf("can't scan []byte of len %d into PublicKey, want %d", len(srcBytes), PublicKeyLength)
-	}
-	copy(p[:], srcBytes)
-	return nil
-}
-
-// nolint:gocritic
-func (p PublicKey) Value() (driver.Value, error) {
-	return p[:], nil
 }
 
 func (p *PublicKey) UnmarshalJSON(input []byte) error {
