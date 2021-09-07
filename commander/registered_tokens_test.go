@@ -44,7 +44,7 @@ func (s *RegisteredTokensTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *RegisteredTokensTestSuite) TestSyncAccounts() {
+func (s *RegisteredTokensTestSuite) TestSyncSingleToken() {
 	registeredToken := s.registerSingleToken()
 
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()

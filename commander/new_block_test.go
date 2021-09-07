@@ -89,13 +89,17 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_StartsRollupLoop() {
 	s.Equal(*latestBlockNumber, uint64(blockNumber))
 }
 
-func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedBeforeStartup() {
+func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAndTokensAddedBeforeStartup() {
 	accounts := []models.AccountLeaf{
 		{PublicKey: *s.wallets[0].PublicKey()},
 		{PublicKey: *s.wallets[1].PublicKey()},
 	}
+	registeredToken := models.RegisteredToken{
+		Contract: s.testClient.CustomTokenAddress,
+	}
 	s.registerAccounts(accounts)
 	s.createAndSubmitTransferBatchInTransaction(&s.transfer)
+	s.registerToken(registeredToken)
 
 	s.startBlockLoop()
 	s.waitForLatestBlockSync()
@@ -110,9 +114,14 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedBef
 	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 1)
+
+	syncedToken, err := s.cmd.storage.GetRegisteredToken(models.MakeUint256(0))
+	s.NoError(err)
+	s.Equal(registeredToken.Contract, syncedToken.Contract)
+	s.Equal(registeredToken.ID, syncedToken.ID)
 }
 
-func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedWhileRunning() {
+func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAndTokensAddedWhileRunning() {
 	s.startBlockLoop()
 	s.waitForLatestBlockSync()
 
@@ -120,8 +129,12 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedWhi
 		{PublicKey: *s.wallets[0].PublicKey()},
 		{PublicKey: *s.wallets[1].PublicKey()},
 	}
+	registeredToken := models.RegisteredToken{
+		Contract: s.testClient.CustomTokenAddress,
+	}
 	s.registerAccounts(accounts)
 	s.createAndSubmitTransferBatchInTransaction(&s.transfer)
+	s.registerToken(registeredToken)
 
 	s.waitForLatestBlockSync()
 
@@ -135,6 +148,11 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedWhi
 	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 1)
+
+	syncedToken, err := s.cmd.storage.GetRegisteredToken(models.MakeUint256(0))
+	s.NoError(err)
+	s.Equal(registeredToken.Contract, syncedToken.Contract)
+	s.Equal(registeredToken.ID, syncedToken.ID)
 }
 
 func (s *NewBlockLoopTestSuite) startBlockLoop() {
@@ -157,6 +175,36 @@ func (s *NewBlockLoopTestSuite) registerAccounts(accounts []models.AccountLeaf) 
 		pubKeyID, err := s.testClient.RegisterAccount(&accounts[i].PublicKey, registrations)
 		s.NoError(err)
 		accounts[i].PubKeyID = *pubKeyID
+	}
+}
+
+func (s *NewBlockLoopTestSuite) registerToken(token models.RegisteredToken) {
+	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
+	s.NoError(err)
+
+	registrations, unsubscribe, err := s.testClient.WatchTokenRegistrations(&bind.WatchOpts{Start: latestBlockNumber})
+	s.NoError(err)
+	defer unsubscribe()
+
+	err = s.testClient.RequestRegisterToken(token.Contract)
+	s.NoError(err)
+
+	err = s.testClient.FinalizeRegisterToken(token.Contract)
+	s.NoError(err)
+	for {
+
+		select {
+		case event, ok := <-registrations:
+			if !ok {
+				s.Fail("Token registry event watcher is closed")
+			}
+			if event.TokenContract == s.testClient.CustomTokenAddress {
+				token.ID = models.MakeUint256FromBig(*event.TokenID)
+				return
+			}
+		case <-time.After(100 * time.Millisecond):
+			s.Fail("Token registry event watcher timed out")
+		}
 	}
 }
 
