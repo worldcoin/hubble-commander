@@ -2,7 +2,6 @@ package commander
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/storage"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -47,7 +46,7 @@ func (c *Commander) unsafeSyncTokens(startBlock, endBlock uint64) error {
 	return nil
 }
 
-func saveSyncedToken(registeredTokenStorage *storage.RegisteredTokenStorage, registeredToken *models.RegisteredToken) (isNewToken *bool, err error) {
+func saveSyncedToken(registeredTokenStorage *st.RegisteredTokenStorage, registeredToken *models.RegisteredToken) (isNewToken *bool, err error) {
 	_, err = registeredTokenStorage.GetRegisteredToken(registeredToken.ID)
 	if err != nil && !st.IsNotFoundError(err) {
 		return nil, err

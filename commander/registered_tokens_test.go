@@ -1,7 +1,12 @@
 package commander
 
 import (
+	"math/big"
+	"testing"
+	"time"
+
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -40,43 +45,53 @@ func (s *RegisteredTokensTestSuite) TearDownTest() {
 }
 
 func (s *RegisteredTokensTestSuite) TestSyncAccounts() {
-	accounts := s.registerSingleToken()
+	registeredToken := s.registerSingleToken()
+
+	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
+	s.NoError(err)
+	err = s.cmd.syncTokens(0, *latestBlockNumber)
+	s.NoError(err)
+
+	syncedToken, err := s.cmd.storage.RegisteredTokenStorage.GetRegisteredToken(models.MakeUint256(0))
+	s.NoError(err)
+	s.Equal(registeredToken.Contract, syncedToken.Contract)
+	s.Equal(registeredToken.ID, syncedToken.ID)
 }
 
 func (s *RegisteredTokensTestSuite) registerSingleToken() models.RegisteredToken {
-	s.testClient.Wa
-	registrations, unsubscribe, err := s.testClient.WatchRegistrations(&bind.WatchOpts{Start: nil})
+	registrations, unsubscribe, err := s.testClient.WatchTokenRegistrations(&bind.WatchOpts{})
 	s.NoError(err)
 	defer unsubscribe()
 
-	publicKey := models.PublicKey{2, 3, 4}
-	pubKeyID, err := s.testClient.RegisterAccount(&publicKey, registrations)
+	tokenContract := s.testClient.CustomTokenAddress
+	err = s.testClient.RequestRegisterToken(tokenContract)
 	s.NoError(err)
-	return models.AccountLeaf{
-		PubKeyID:  *pubKeyID,
-		PublicKey: publicKey,
+
+	err = s.testClient.FinalizeRegisterToken(tokenContract)
+	s.NoError(err)
+	var tokenID *big.Int
+Outer:
+	for {
+
+		select {
+		case event, ok := <-registrations:
+			if !ok {
+				s.Fail("Token registry event watcher is closed")
+			}
+			if event.TokenContract == s.testClient.CustomTokenAddress {
+				tokenID = event.TokenID
+				break Outer
+			}
+		case <-time.After(deployer.ChainTimeout):
+			s.Fail("Token registry event watcher timed out")
+		}
+	}
+	return models.RegisteredToken{
+		ID:       models.MakeUint256FromBig(*tokenID),
+		Contract: tokenContract,
 	}
 }
 
-func (s *RegisteredTokensTestSuite) registerBatchTokens() []models.RegisteredToken {
-	registrations, unsubscribe, err := s.testClient.WatchBatchAccountRegistrations(&bind.WatchOpts{})
-	s.NoError(err)
-	defer unsubscribe()
-
-	publicKeys := make([]models.PublicKey, 16)
-	for i := range publicKeys {
-		publicKeys[i] = models.PublicKey{1, 1, byte(i)}
-	}
-
-	pubKeyIDs, err := s.testClient.RegisterBatchAccount(publicKeys, registrations)
-	s.NoError(err)
-
-	accounts := make([]models.AccountLeaf, 16)
-	for i := range accounts {
-		accounts[i] = models.AccountLeaf{
-			PubKeyID:  pubKeyIDs[i],
-			PublicKey: publicKeys[i],
-		}
-	}
-	return accounts
+func TestRegisteredTokensTestSuite(t *testing.T) {
+	suite.Run(t, new(RegisteredTokensTestSuite))
 }
