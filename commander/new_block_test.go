@@ -52,7 +52,7 @@ func (s *NewBlockLoopTestSuite) SetupSuite() {
 
 func (s *NewBlockLoopTestSuite) SetupTest() {
 	var err error
-	s.testStorage, err = st.NewTestStorageWithBadger()
+	s.testStorage, err = st.NewTestStorage()
 	s.NoError(err)
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
@@ -180,7 +180,7 @@ func (s *NewBlockLoopTestSuite) createAndSubmitTransferBatchInTransaction(tx *mo
 }
 
 func (s *NewBlockLoopTestSuite) runInTransaction(handler func(*st.Storage, *executor.TransactionExecutor)) {
-	txController, txStorage, err := s.testStorage.BeginTransaction(st.TxOptions{Postgres: true, Badger: true})
+	txController, txStorage, err := s.testStorage.BeginTransaction(st.TxOptions{})
 	s.NoError(err)
 	defer txController.Rollback(nil)
 

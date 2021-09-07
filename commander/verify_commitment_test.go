@@ -23,7 +23,7 @@ func (s *VerifyCommitmentTestSuite) SetupSuite() {
 }
 
 func (s *VerifyCommitmentTestSuite) SetupTest() {
-	storage, err := st.NewTestStorageWithoutPostgres()
+	storage, err := st.NewTestStorage()
 	s.NoError(err)
 	s.storage = storage.Storage
 	s.teardown = storage.Teardown

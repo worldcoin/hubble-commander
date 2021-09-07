@@ -41,7 +41,7 @@ func (s *SubmitTransferBatchTestSuite) SetupSuite() {
 
 func (s *SubmitTransferBatchTestSuite) SetupTest() {
 	var err error
-	s.storage, err = st.NewTestStorageWithBadger()
+	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 	s.cfg = &config.RollupConfig{
 		MinCommitmentsPerBatch: 1,

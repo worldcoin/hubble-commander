@@ -1,7 +1,6 @@
 package models
 
 import (
-	"database/sql/driver"
 	"encoding/json"
 	"math/big"
 
@@ -87,32 +86,6 @@ func (u *Uint256) CmpN(other uint64) int {
 
 func (u *Uint256) String() string {
 	return u.Int.ToBig().Text(10)
-}
-
-// Scan implements Scanner for database/sql.
-func (u *Uint256) Scan(src interface{}) error {
-	errorMessage := "can't scan %T into Uint256"
-
-	value, ok := src.([]uint8)
-	if !ok {
-		return errors.Errorf(errorMessage, src)
-	}
-	bigValue, ok := new(big.Int).SetString(string(value), 10)
-	if !ok {
-		return errors.Errorf(errorMessage, src)
-	}
-
-	overflow := u.Int.SetFromBig(bigValue)
-	if overflow {
-		return errors.Errorf(errorMessage, src)
-	}
-
-	return nil
-}
-
-// Value implements valuer for database/sql.
-func (u Uint256) Value() (driver.Value, error) {
-	return u.String(), nil
 }
 
 func (u Uint256) MarshalJSON() ([]byte, error) {

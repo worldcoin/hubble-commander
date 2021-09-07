@@ -3,7 +3,7 @@ package storage
 import (
 	"sort"
 
-	"github.com/Worldcoin/hubble-commander/db/badger"
+	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -48,7 +48,7 @@ func (s *TransactionStorage) GetCreate2Transfer(hash common.Hash) (*models.Creat
 }
 
 func (s *TransactionStorage) GetPendingCreate2Transfers(limit uint32) ([]models.Create2Transfer, error) {
-	txController, txStorage, err := s.BeginTransaction(TxOptions{Badger: true, ReadOnly: true})
+	txController, txStorage, err := s.BeginTransaction(TxOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (s *TransactionStorage) GetPendingCreate2Transfers(limit uint32) ([]models.
 func (s *TransactionStorage) unsafeGetPendingCreate2Transfers(limit uint32) ([]models.Create2Transfer, error) {
 	txs := make([]models.Create2Transfer, 0, 32)
 	var storedTx models.StoredTx
-	err := s.database.Badger.Iterator(models.StoredTxPrefix, badger.KeyIteratorOpts,
+	err := s.database.Badger.Iterator(models.StoredTxPrefix, db.KeyIteratorOpts,
 		func(item *bdg.Item) (bool, error) {
 			skip, err := s.getStoredTxFromItem(item, &storedTx)
 			if err != nil || skip {
@@ -80,7 +80,7 @@ func (s *TransactionStorage) unsafeGetPendingCreate2Transfers(limit uint32) ([]m
 			}
 			return false, nil
 		})
-	if err != nil && err != badger.ErrIteratorFinished {
+	if err != nil && err != db.ErrIteratorFinished {
 		return nil, err
 	}
 
@@ -95,14 +95,14 @@ func (s *TransactionStorage) unsafeGetPendingCreate2Transfers(limit uint32) ([]m
 }
 
 func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id *models.CommitmentID) ([]models.Create2Transfer, error) {
-	txController, txStorage, err := s.BeginTransaction(TxOptions{Badger: true, ReadOnly: true})
+	txController, txStorage, err := s.BeginTransaction(TxOptions{ReadOnly: true})
 	if err != nil {
 		return nil, err
 	}
 	defer txController.Rollback(&err)
 
 	encodeCommitmentID := models.EncodeCommitmentIDPointer(id)
-	indexKey := badger.IndexKey(models.StoredReceiptName, "CommitmentID", encodeCommitmentID)
+	indexKey := db.IndexKey(models.StoredReceiptName, "CommitmentID", encodeCommitmentID)
 
 	// queried Badger directly due to nil index decoding problem
 	var transfers []models.Create2Transfer

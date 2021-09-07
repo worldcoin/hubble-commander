@@ -40,7 +40,7 @@ func (s *TransferCommitmentsTestSuite) SetupSuite() {
 
 func (s *TransferCommitmentsTestSuite) SetupTest() {
 	var err error
-	s.storage, err = st.NewTestStorageWithBadger()
+	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 	s.cfg = &config.RollupConfig{
 		MinTxsPerCommitment:    1,

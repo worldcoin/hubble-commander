@@ -3,7 +3,7 @@ build
 .DS_Store
 .env
 .env.docker
-db/badger/data
+db/data
 e2e-data
 config.yaml
 e2e/geth-data/geth

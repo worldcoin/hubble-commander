@@ -41,7 +41,7 @@ func (s *Create2TransferTestSuite) SetupSuite() {
 
 func (s *Create2TransferTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorageWithoutPostgres()
+	s.storage, err = NewTestStorage()
 	s.NoError(err)
 
 	err = s.storage.AccountTree.SetSingle(&account2)

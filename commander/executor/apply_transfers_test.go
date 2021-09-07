@@ -29,7 +29,7 @@ func (s *ApplyTransfersTestSuite) SetupSuite() {
 
 func (s *ApplyTransfersTestSuite) SetupTest() {
 	var err error
-	s.storage, err = storage.NewTestStorageWithBadger()
+	s.storage, err = storage.NewTestStorage()
 	s.NoError(err)
 	s.cfg = &config.RollupConfig{
 		FeeReceiverPubKeyID: 3,

@@ -62,7 +62,7 @@ func (s *SyncTestSuite) SetupTest() {
 
 func (s *SyncTestSuite) setupDB() {
 	var err error
-	s.storage, err = st.NewTestStorageWithBadger()
+	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, s.cfg, context.Background())
 

@@ -40,7 +40,7 @@ func (s *StoredTransactionTestSuite) SetupSuite() {
 
 func (s *StoredTransactionTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorageWithoutPostgres()
+	s.storage, err = NewTestStorage()
 	s.NoError(err)
 }
 

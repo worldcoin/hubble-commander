@@ -61,14 +61,6 @@ func GetConfig() *Config {
 			Version: "0.0.1",
 			Port:    getString("api.port", "8080"),
 		},
-		Postgres: &PostgresConfig{
-			Host:           getStringOrNil("postgres.host"),
-			Port:           getStringOrNil("postgres.port"),
-			Name:           getString("postgres.name", "hubble"),
-			User:           getStringOrNil("postgres.user"),
-			Password:       getStringOrNil("postgres.password"),
-			MigrationsPath: getMigrationsPath(),
-		},
 		Badger: &BadgerConfig{
 			Path: getString("badger.path", getBadgerPath()),
 		},
@@ -107,14 +99,6 @@ func GetTestConfig() *Config {
 			Version: "dev-0.0.1",
 			Port:    "8080",
 		},
-		Postgres: &PostgresConfig{
-			Host:           getStringOrNil("postgres.host"),
-			Port:           getStringOrNil("postgres.port"),
-			Name:           getString("postgres.name", "hubble_test"),
-			User:           getStringOrNil("postgres.user"),
-			Password:       getStringOrNil("postgres.password"),
-			MigrationsPath: getMigrationsPath(),
-		},
 		Badger: &BadgerConfig{
 			Path: getTestBadgerPath(),
 		},
@@ -147,16 +131,12 @@ func getGenesisPath() string {
 	return path.Join(utils.GetProjectRoot(), "genesis.yaml")
 }
 
-func getMigrationsPath() string {
-	return path.Join(utils.GetProjectRoot(), "db", "postgres", "migrations")
-}
-
 func getBadgerPath() string {
-	return path.Join(utils.GetProjectRoot(), "db", "badger", "data", "hubble")
+	return path.Join(utils.GetProjectRoot(), "db", "data", "hubble")
 }
 
 func getTestBadgerPath() string {
-	return path.Join(utils.GetProjectRoot(), "db", "badger", "data", "hubble_test")
+	return path.Join(utils.GetProjectRoot(), "db", "data", "hubble_test")
 }
 
 func getLogConfig() *LogConfig {

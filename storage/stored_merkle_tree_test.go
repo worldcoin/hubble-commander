@@ -24,7 +24,7 @@ func (s *StoredMerkleTreeTestSuite) SetupSuite() {
 
 func (s *StoredMerkleTreeTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorageWithoutPostgres()
+	s.storage, err = NewTestStorage()
 	s.NoError(err)
 }
 

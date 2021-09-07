@@ -1,10 +1,9 @@
-package badger
+package db
 
 import (
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/dgraph-io/badger/v3"
 	bh "github.com/timshannon/badgerhold/v3"
 )
@@ -111,9 +110,9 @@ func (d *Database) Delete(key, dataType interface{}) error {
 	return d.store.Delete(key, dataType)
 }
 
-func (d *Database) BeginTransaction(update bool) (*db.TxController, *Database) {
+func (d *Database) BeginTransaction(update bool) (*TxController, *Database) {
 	if d.duringTransaction() {
-		return db.NewTxController(&ControllerAdapter{d.txn}, true), d
+		return NewTxController(&ControllerAdapter{d.txn}, true), d
 	}
 	txn := d.store.Badger().NewTransaction(update)
 	dbDuringTx := &Database{
@@ -121,7 +120,7 @@ func (d *Database) BeginTransaction(update bool) (*db.TxController, *Database) {
 		txn:               txn,
 		updateTransaction: update,
 	}
-	return db.NewTxController(&ControllerAdapter{txn}, false), dbDuringTx
+	return NewTxController(&ControllerAdapter{txn}, false), dbDuringTx
 }
 
 func (d *Database) Prune() error {

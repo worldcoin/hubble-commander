@@ -17,7 +17,6 @@ type Config struct {
 	Bootstrap *BootstrapConfig
 	Rollup    *RollupConfig
 	API       *APIConfig
-	Postgres  *PostgresConfig
 	Badger    *BadgerConfig
 	Ethereum  *EthereumConfig
 }
@@ -52,15 +51,6 @@ type RollupConfig struct {
 type APIConfig struct {
 	Version string
 	Port    string
-}
-
-type PostgresConfig struct {
-	Host           *string
-	Port           *string
-	Name           string
-	User           *string
-	Password       *string
-	MigrationsPath string
 }
 
 type BadgerConfig struct {

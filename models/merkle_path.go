@@ -1,7 +1,6 @@
 package models
 
 import (
-	"database/sql/driver"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -40,27 +39,6 @@ func MakeMerklePathFromLeafID(leafID uint32) MerklePath {
 		Path:  leafID,
 		Depth: 32,
 	}
-}
-
-// Scan implements Scanner for database/sql.
-func (p *MerklePath) Scan(src interface{}) error {
-	value, ok := src.([]byte)
-	if !ok {
-		return fmt.Errorf("can't scan %T into MerklePath", src)
-	}
-	path, err := NewMerklePath(string(value[1:]))
-	if err != nil {
-		return err
-	}
-	p.Path = path.Path
-	p.Depth = path.Depth
-	return nil
-}
-
-// Value implements valuer for database/sql.
-func (p MerklePath) Value() (driver.Value, error) {
-	path := strconv.FormatInt(int64(p.Path), 2)
-	return fmt.Sprintf("%0*s", p.Depth+1, path), nil
 }
 
 func (p *MerklePath) Bytes() []byte {

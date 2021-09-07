@@ -34,7 +34,7 @@ func (s *StateTreeTestSuite) SetupSuite() {
 
 func (s *StateTreeTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorageWithoutPostgres()
+	s.storage, err = NewTestStorage()
 	s.NoError(err)
 
 	state := models.UserState{

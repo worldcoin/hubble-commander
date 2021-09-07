@@ -33,16 +33,6 @@ func TestPublicKey_SetBytes_InvalidLength(t *testing.T) {
 	require.ErrorIs(t, err, ErrInvalidPublicKeyLength)
 }
 
-func TestPublicKey_Value_ReturnsACopy(t *testing.T) {
-	key := PublicKey{1, 2, 3}
-	value, err := key.Value()
-	require.NoError(t, err)
-	bytes, ok := value.([]byte)
-	require.True(t, ok)
-	bytes[0] = 9
-	require.Equal(t, PublicKey{1, 2, 3}, key)
-}
-
 func TestPublicKeyPublicKey_JSONMarshaling(t *testing.T) {
 	key := PublicKey{1, 2, 3}
 	data, err := json.Marshal(key)

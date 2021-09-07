@@ -23,7 +23,7 @@ func (s *RollupTestSuite) SetupSuite() {
 
 func (s *RollupTestSuite) SetupTest() {
 	var err error
-	s.storage, err = st.NewTestStorageWithoutPostgres()
+	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 }
 

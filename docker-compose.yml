@@ -1,15 +1,6 @@
 version: '3'
 
 services:
-  postgres:
-    image: postgres
-    container_name: hubble-postgres
-    restart: unless-stopped
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: hubble
-      POSTGRES_PASSWORD: root
   geth:
     image: ethereum/client-go
     container_name: hubble-geth
