@@ -46,7 +46,10 @@ func (c *Commander) unsafeSyncTokens(startBlock, endBlock uint64) error {
 	return nil
 }
 
-func saveSyncedToken(registeredTokenStorage *st.RegisteredTokenStorage, registeredToken *models.RegisteredToken) (isNewToken *bool, err error) {
+func saveSyncedToken(
+	registeredTokenStorage *st.RegisteredTokenStorage,
+	registeredToken *models.RegisteredToken,
+) (isNewToken *bool, err error) {
 	_, err = registeredTokenStorage.GetRegisteredToken(registeredToken.ID)
 	if err != nil && !st.IsNotFoundError(err) {
 		return nil, err

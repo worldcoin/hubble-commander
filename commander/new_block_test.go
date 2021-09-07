@@ -95,7 +95,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAndToken
 		{PublicKey: *s.wallets[1].PublicKey()},
 	}
 	registeredToken := models.RegisteredToken{
-		Contract: s.testClient.CustomTokenAddress,
+		Contract: s.testClient.ExampleTokenAddress,
 	}
 	s.registerAccounts(accounts)
 	s.createAndSubmitTransferBatchInTransaction(&s.transfer)
@@ -130,7 +130,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAndToken
 		{PublicKey: *s.wallets[1].PublicKey()},
 	}
 	registeredToken := models.RegisteredToken{
-		Contract: s.testClient.CustomTokenAddress,
+		Contract: s.testClient.ExampleTokenAddress,
 	}
 	s.registerAccounts(accounts)
 	s.createAndSubmitTransferBatchInTransaction(&s.transfer)
@@ -192,13 +192,12 @@ func (s *NewBlockLoopTestSuite) registerToken(token models.RegisteredToken) {
 	err = s.testClient.FinalizeRegisterToken(token.Contract)
 	s.NoError(err)
 	for {
-
 		select {
 		case event, ok := <-registrations:
 			if !ok {
 				s.Fail("Token registry event watcher is closed")
 			}
-			if event.TokenContract == s.testClient.CustomTokenAddress {
+			if event.TokenContract == s.testClient.ExampleTokenAddress {
 				token.ID = models.MakeUint256FromBig(*event.TokenID)
 				return
 			}

@@ -27,7 +27,7 @@ func (s *RegisteredTokensTestSuite) SetupSuite() {
 }
 
 func (s *RegisteredTokensTestSuite) SetupTest() {
-	testStorage, err := st.NewTestStorageWithoutPostgres()
+	testStorage, err := st.NewTestStorage()
 	s.NoError(err)
 	s.teardown = testStorage.Teardown
 	s.testClient, err = eth.NewTestClient()
@@ -63,7 +63,7 @@ func (s *RegisteredTokensTestSuite) registerSingleToken() models.RegisteredToken
 	s.NoError(err)
 	defer unsubscribe()
 
-	tokenContract := s.testClient.CustomTokenAddress
+	tokenContract := s.testClient.ExampleTokenAddress
 	err = s.testClient.RequestRegisterToken(tokenContract)
 	s.NoError(err)
 
@@ -72,13 +72,12 @@ func (s *RegisteredTokensTestSuite) registerSingleToken() models.RegisteredToken
 	var tokenID *big.Int
 Outer:
 	for {
-
 		select {
 		case event, ok := <-registrations:
 			if !ok {
 				s.Fail("Token registry event watcher is closed")
 			}
-			if event.TokenContract == s.testClient.CustomTokenAddress {
+			if event.TokenContract == s.testClient.ExampleTokenAddress {
 				tokenID = event.TokenID
 				break Outer
 			}

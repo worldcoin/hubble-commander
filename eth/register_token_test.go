@@ -36,22 +36,21 @@ func (s *RegisterTokenTestSuite) TestRegisterTokenAndWait_ReturnsCorrectToken() 
 	s.NoError(err)
 	defer unsubscribe()
 
-	err = s.client.RequestRegisterToken(s.client.CustomTokenAddress)
+	err = s.client.RequestRegisterToken(s.client.ExampleTokenAddress)
 	s.NoError(err)
 
-	err = s.client.FinalizeRegisterToken(s.client.CustomTokenAddress)
+	err = s.client.FinalizeRegisterToken(s.client.ExampleTokenAddress)
 	s.NoError(err)
 
 	var tokenID *big.Int
 Outer:
 	for {
-
 		select {
 		case event, ok := <-events:
 			if !ok {
 				s.Fail("Token registry event watcher is closed")
 			}
-			if event.TokenContract == s.client.CustomTokenAddress {
+			if event.TokenContract == s.client.ExampleTokenAddress {
 				tokenID = event.TokenID
 				break Outer
 			}

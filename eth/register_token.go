@@ -30,11 +30,19 @@ func (c *Client) FinalizeRegisterToken(
 	)
 }
 
-func (c *Client) WatchTokenRegistrationRequests(opts *bind.WatchOpts) (registrations chan *tokenregistry.TokenRegistryRegistrationRequest, unsubscribe func(), err error) {
+func (c *Client) WatchTokenRegistrationRequests(opts *bind.WatchOpts) (
+	registrations chan *tokenregistry.TokenRegistryRegistrationRequest,
+	unsubscribe func(),
+	err error,
+) {
 	return WatchTokenRegistrationRequests(c.TokenRegistry, opts)
 }
 
-func (c *Client) WatchTokenRegistrations(opts *bind.WatchOpts) (registrations chan *tokenregistry.TokenRegistryRegisteredToken, unsubscribe func(), err error) {
+func (c *Client) WatchTokenRegistrations(opts *bind.WatchOpts) (
+	registrations chan *tokenregistry.TokenRegistryRegisteredToken,
+	unsubscribe func(),
+	err error,
+) {
 	return WatchTokenRegistrations(c.TokenRegistry, opts)
 }
 
@@ -52,7 +60,13 @@ func WatchTokenRegistrationRequests(tokenRegistry *tokenregistry.TokenRegistry, 
 	return ev, sub.Unsubscribe, nil
 }
 
-func WatchTokenRegistrations(tokenRegistry *tokenregistry.TokenRegistry, opts *bind.WatchOpts) (registrations chan *tokenregistry.TokenRegistryRegisteredToken, unsubscribe func(), err error,
+func WatchTokenRegistrations(
+	tokenRegistry *tokenregistry.TokenRegistry,
+	opts *bind.WatchOpts,
+) (
+	registrations chan *tokenregistry.TokenRegistryRegisteredToken,
+	unsubscribe func(),
+	err error,
 ) {
 	ev := make(chan *tokenregistry.TokenRegistryRegisteredToken)
 

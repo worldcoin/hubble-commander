@@ -49,12 +49,12 @@ func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig
 			SyncedBlock:                    0,
 			GenesisAccounts:                nil,
 		},
-		Rollup:             contracts.Rollup,
-		AccountRegistry:    contracts.AccountRegistry,
-		TokenRegistry:      contracts.TokenRegistry,
-		DepositManager:     contracts.DepositManager,
-		CustomTokenAddress: contracts.CustomTokenAddress,
-		ClientConfig:       clientCfg,
+		Rollup:              contracts.Rollup,
+		AccountRegistry:     contracts.AccountRegistry,
+		TokenRegistry:       contracts.TokenRegistry,
+		DepositManager:      contracts.DepositManager,
+		ExampleTokenAddress: contracts.ExampleTokenAddress,
+		ClientConfig:        clientCfg,
 	})
 	if err != nil {
 		return nil, err

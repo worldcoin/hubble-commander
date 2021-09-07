@@ -20,12 +20,12 @@ import (
 )
 
 type NewClientParams struct {
-	ChainState         models.ChainState
-	Rollup             *rollup.Rollup
-	AccountRegistry    *accountregistry.AccountRegistry
-	TokenRegistry      *tokenregistry.TokenRegistry
-	DepositManager     *depositmanager.DepositManager
-	CustomTokenAddress common.Address
+	ChainState          models.ChainState
+	Rollup              *rollup.Rollup
+	AccountRegistry     *accountregistry.AccountRegistry
+	TokenRegistry       *tokenregistry.TokenRegistry
+	DepositManager      *depositmanager.DepositManager
+	ExampleTokenAddress common.Address
 	ClientConfig
 }
 
@@ -37,19 +37,19 @@ type ClientConfig struct {
 }
 
 type Client struct {
-	config             ClientConfig
-	ChainState         models.ChainState
-	ChainConnection    deployer.ChainConnection
-	Rollup             *rollup.Rollup
-	RollupABI          *abi.ABI
-	AccountRegistry    *accountregistry.AccountRegistry
-	AccountRegistryABI *abi.ABI
-	TokenRegistry      *tokenregistry.TokenRegistry
-	CustomTokenAddress common.Address
-	DepositManager     *depositmanager.DepositManager
-	boundContract      *bind.BoundContract
-	blocksToFinalise   *int64
-	domain             *bls.Domain
+	config              ClientConfig
+	ChainState          models.ChainState
+	ChainConnection     deployer.ChainConnection
+	Rollup              *rollup.Rollup
+	RollupABI           *abi.ABI
+	AccountRegistry     *accountregistry.AccountRegistry
+	AccountRegistryABI  *abi.ABI
+	TokenRegistry       *tokenregistry.TokenRegistry
+	ExampleTokenAddress common.Address
+	DepositManager      *depositmanager.DepositManager
+	boundContract       *bind.BoundContract
+	blocksToFinalise    *int64
+	domain              *bls.Domain
 }
 
 func NewClient(chainConnection deployer.ChainConnection, params *NewClientParams) (*Client, error) {
@@ -66,17 +66,17 @@ func NewClient(chainConnection deployer.ChainConnection, params *NewClientParams
 	backend := chainConnection.GetBackend()
 	boundContract := bind.NewBoundContract(params.ChainState.Rollup, rollupAbi, backend, backend, backend)
 	return &Client{
-		config:             params.ClientConfig,
-		ChainState:         params.ChainState,
-		ChainConnection:    chainConnection,
-		Rollup:             params.Rollup,
-		RollupABI:          &rollupAbi,
-		AccountRegistry:    params.AccountRegistry,
-		AccountRegistryABI: &accountRegistryAbi,
-		TokenRegistry:      params.TokenRegistry,
-		CustomTokenAddress: params.CustomTokenAddress,
-		DepositManager:     params.DepositManager,
-		boundContract:      boundContract,
+		config:              params.ClientConfig,
+		ChainState:          params.ChainState,
+		ChainConnection:     chainConnection,
+		Rollup:              params.Rollup,
+		RollupABI:           &rollupAbi,
+		AccountRegistry:     params.AccountRegistry,
+		AccountRegistryABI:  &accountRegistryAbi,
+		TokenRegistry:       params.TokenRegistry,
+		ExampleTokenAddress: params.ExampleTokenAddress,
+		DepositManager:      params.DepositManager,
+		boundContract:       boundContract,
 	}, nil
 }
 
