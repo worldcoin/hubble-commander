@@ -95,14 +95,14 @@ func (s *TransactionStorage) unsafeGetPendingCreate2Transfers(limit uint32) ([]m
 }
 
 func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id *models.CommitmentID) ([]models.Create2Transfer, error) {
-	txController, txStorage, err := s.BeginTransaction(TxOptions{Badger: true, ReadOnly: true})
+	txController, txStorage, err := s.BeginTransaction(TxOptions{ReadOnly: true})
 	if err != nil {
 		return nil, err
 	}
 	defer txController.Rollback(&err)
 
 	encodeCommitmentID := models.EncodeCommitmentIDPointer(id)
-	indexKey := badger.IndexKey(models.StoredReceiptName, "CommitmentID", encodeCommitmentID)
+	indexKey := db.IndexKey(models.StoredReceiptName, "CommitmentID", encodeCommitmentID)
 
 	// queried Badger directly due to nil index decoding problem
 	var transfers []models.Create2Transfer

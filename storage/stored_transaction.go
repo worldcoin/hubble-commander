@@ -152,7 +152,7 @@ func (s *TransactionStorage) SetTransactionError(txHash common.Hash, errorMessag
 }
 
 func (s *Storage) GetTransactionCount() (*int, error) {
-	txController, txStorage, err := s.BeginTransaction(TxOptions{Badger: true, ReadOnly: true})
+	txController, txStorage, err := s.BeginTransaction(TxOptions{ReadOnly: true})
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +166,7 @@ func (s *Storage) GetTransactionCount() (*int, error) {
 		return nil, err
 	}
 	count := 0
-	seekPrefix := badger.IndexKeyPrefix(models.StoredReceiptName, "CommitmentID")
+	seekPrefix := db.IndexKeyPrefix(models.StoredReceiptName, "CommitmentID")
 	err = txStorage.database.Badger.Iterator(seekPrefix, db.PrefetchIteratorOpts,
 		func(item *bdg.Item) (bool, error) {
 			var commitmentID *models.CommitmentID
@@ -180,7 +180,7 @@ func (s *Storage) GetTransactionCount() (*int, error) {
 
 			var keyList bh.KeyList
 			err = item.Value(func(val []byte) error {
-				return badger.DecodeKeyList(val, &keyList)
+				return db.DecodeKeyList(val, &keyList)
 			})
 			if err != nil {
 				return false, err
@@ -233,7 +233,7 @@ func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.U
 
 func (s *TransactionStorage) getStoredTxFromItem(item *bdg.Item, storedTx *models.StoredTx) (bool, error) {
 	var hash common.Hash
-	err := badger.DecodeKey(item.Key(), &hash, models.StoredTxPrefix)
+	err := db.DecodeKey(item.Key(), &hash, models.StoredTxPrefix)
 	if err != nil {
 		return false, err
 	}
@@ -256,7 +256,7 @@ func getTxHashesByIndexKey(txn *bdg.Txn, indexKey, typePrefix []byte) ([]common.
 
 	var keyList bh.KeyList
 	err = item.Value(func(val []byte) error {
-		return badger.DecodeKeyList(val, &keyList)
+		return db.DecodeKeyList(val, &keyList)
 	})
 	if err != nil {
 		return nil, err
@@ -269,7 +269,7 @@ func decodeKeyListHashes(keyPrefix []byte, keyList bh.KeyList) ([]common.Hash, e
 	var hash common.Hash
 	hashes := make([]common.Hash, 0, len(keyList))
 	for i := range keyList {
-		err := db.DecodeDataHash(keyList[i][len(keyPrefix):], &hash)
+		err := models.DecodeDataHash(keyList[i][len(keyPrefix):], &hash)
 		if err != nil {
 			return nil, err
 		}
