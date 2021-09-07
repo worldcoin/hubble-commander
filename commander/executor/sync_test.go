@@ -170,7 +170,6 @@ func (s *SyncTestSuite) TestSyncBatch_TwoTransferBatches() {
 		s.NoError(err)
 		txs[i].CommitmentID = &commitment.ID
 		txs[i].Signature = models.Signature{}
-		txs[i].ReceiveTime = actualTx.ReceiveTime
 		s.Equal(txs[i], actualTx)
 	}
 }
@@ -428,7 +427,6 @@ func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 	transfer.Signature = tx.Signature
 	tx.CommitmentID = &commitment.ID
 	tx.ToStateID = transfer.ToStateID
-	tx.ReceiveTime = transfer.ReceiveTime
 	s.Equal(tx, *transfer)
 }
 

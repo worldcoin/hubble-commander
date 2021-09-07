@@ -13,11 +13,6 @@ import (
 )
 
 func (s *TransactionStorage) AddCreate2Transfer(t *models.Create2Transfer) error {
-	t.SetReceiveTime() // TODO do it in API method
-	return s.addCreate2Transfer(t)
-}
-
-func (s *TransactionStorage) addCreate2Transfer(t *models.Create2Transfer) error {
 	if t.CommitmentID != nil || t.ErrorMessage != nil || t.ToStateID != nil {
 		err := s.database.Badger.Insert(t.Hash, models.MakeStoredReceiptFromCreate2Transfer(t))
 		if err != nil {
@@ -27,14 +22,13 @@ func (s *TransactionStorage) addCreate2Transfer(t *models.Create2Transfer) error
 	return s.database.Badger.Insert(t.Hash, models.MakeStoredTxFromCreate2Transfer(t))
 }
 
-// BatchAddCreate2Transfer contrary to the AddCreate2Transfer method does not set ReceiveTime field on added transfers
 func (s *TransactionStorage) BatchAddCreate2Transfer(txs []models.Create2Transfer) error {
 	if len(txs) < 1 {
 		return ErrNoRowsAffected
 	}
 
 	for i := range txs {
-		err := s.addCreate2Transfer(&txs[i])
+		err := s.AddCreate2Transfer(&txs[i])
 		if err != nil {
 			return err
 		}

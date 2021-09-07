@@ -15,12 +15,6 @@ import (
 // TODO wrap all methods that modify/query more than one Badger value in transactions
 
 func (s *TransactionStorage) AddTransfer(t *models.Transfer) error {
-	t.SetReceiveTime()
-	//TODO-tx: wrap with txn if needed - YES
-	return s.addTransfer(t)
-}
-
-func (s *TransactionStorage) addTransfer(t *models.Transfer) error {
 	if t.CommitmentID != nil || t.ErrorMessage != nil {
 		err := s.database.Badger.Insert(t.Hash, models.MakeStoredReceiptFromTransfer(t))
 		if err != nil {
@@ -30,14 +24,13 @@ func (s *TransactionStorage) addTransfer(t *models.Transfer) error {
 	return s.database.Badger.Insert(t.Hash, models.MakeStoredTxFromTransfer(t))
 }
 
-// BatchAddTransfer contrary to the AddTransfer method does not set ReceiveTime field on added transfers
 func (s *TransactionStorage) BatchAddTransfer(txs []models.Transfer) error {
 	if len(txs) < 1 {
 		return ErrNoRowsAffected
 	}
 
 	for i := range txs {
-		err := s.addTransfer(&txs[i])
+		err := s.AddTransfer(&txs[i])
 		if err != nil {
 			return err
 		}

@@ -92,13 +92,15 @@ func (t *StoredTx) SetBytes(data []byte) error {
 	if err != nil {
 		return err
 	}
-	body, err := txBody(data[213:], t.TxType)
+
+	txType := txtype.TransactionType(data[32])
+	body, err := txBody(data[213:], txType)
 	if err != nil {
 		return err
 	}
 
 	t.Hash.SetBytes(data[0:32])
-	t.TxType = txtype.TransactionType(data[32])
+	t.TxType = txType
 	t.FromStateID = binary.BigEndian.Uint32(data[33:37])
 	t.Amount.SetBytes(data[37:69])
 	t.Fee.SetBytes(data[69:101])

@@ -215,7 +215,7 @@ func decodeKeyListHashes(keyPrefix []byte, keyList bh.KeyList) ([]common.Hash, e
 	var hash common.Hash
 	hashes := make([]common.Hash, 0, len(keyList))
 	for i := range keyList {
-		err := badger.DecodeDataHash(keyList[i][len(keyPrefix):], &hash)
+		err := models.DecodeDataHash(keyList[i][len(keyPrefix):], &hash)
 		if err != nil {
 			return nil, err
 		}

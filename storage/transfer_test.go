@@ -74,18 +74,6 @@ func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieveIncludedTransfer() {
 	s.Equal(includedTransfer, *res)
 }
 
-func (s *TransferTestSuite) TestAddTransfer_SetsReceiveTime() {
-	beforeTime := time.Now().Unix()
-	err := s.storage.AddTransfer(&transfer)
-	s.NoError(err)
-
-	res, err := s.storage.GetTransfer(transfer.Hash)
-	s.NoError(err)
-
-	s.GreaterOrEqual(res.ReceiveTime.Unix(), beforeTime)
-	s.LessOrEqual(res.ReceiveTime.Unix(), time.Now().Unix())
-}
-
 func (s *TransferTestSuite) TestGetTransfer_DifferentTxType() {
 	err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)

@@ -4,9 +4,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 )
+
+const testMessage = "some message"
 
 func TestEncodeHashPointer(t *testing.T) {
 	hash := &common.Hash{1, 2, 3, 4}
@@ -45,12 +48,11 @@ func TestEncodeUint32Pointer_NilValue(t *testing.T) {
 }
 
 func TestEncodeStringPointer(t *testing.T) {
-	value := "some string"
-	bytes := encodeStringPointer(&value)
+	bytes := encodeStringPointer(ref.String(testMessage))
 	require.EqualValues(t, 1, bytes[0])
 
 	decodedValue := decodeStringPointer(bytes)
-	require.Equal(t, value, *decodedValue)
+	require.Equal(t, testMessage, *decodedValue)
 }
 
 func TestEncodeStringPointer_NilValue(t *testing.T) {

@@ -162,7 +162,6 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 	expectedTx.CommitmentID = &commitment.ID
 	transfer, err := s.cmd.storage.GetTransfer(transfers[0].Hash)
 	s.NoError(err)
-	transfer.ReceiveTime = expectedTx.ReceiveTime
 	s.Equal(expectedTx, *transfer)
 }
 
