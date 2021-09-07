@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
+	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
@@ -23,6 +24,7 @@ type NewClientParams struct {
 	Rollup             *rollup.Rollup
 	AccountRegistry    *accountregistry.AccountRegistry
 	TokenRegistry      *tokenregistry.TokenRegistry
+	DepositManager     *depositmanager.DepositManager
 	CustomTokenAddress common.Address
 	ClientConfig
 }
@@ -44,6 +46,7 @@ type Client struct {
 	AccountRegistryABI *abi.ABI
 	TokenRegistry      *tokenregistry.TokenRegistry
 	CustomTokenAddress common.Address
+	DepositManager     *depositmanager.DepositManager
 	boundContract      *bind.BoundContract
 	blocksToFinalise   *int64
 	domain             *bls.Domain
@@ -72,6 +75,7 @@ func NewClient(chainConnection deployer.ChainConnection, params *NewClientParams
 		AccountRegistryABI: &accountRegistryAbi,
 		TokenRegistry:      params.TokenRegistry,
 		CustomTokenAddress: params.CustomTokenAddress,
+		DepositManager:     params.DepositManager,
 		boundContract:      boundContract,
 	}, nil
 }

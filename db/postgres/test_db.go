@@ -111,6 +111,10 @@ func disconnectUsers(database DatabaseLike, dbName string) error {
 }
 
 func cloneDatabase(database DatabaseLike, cfg *config.PostgresConfig, clonedDBName string) (*Database, error) {
+	if cfg.User == nil {
+		return nil, errors.Errorf("database username is required")
+	}
+
 	_, err := database.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", clonedDBName))
 	if err != nil {
 		return nil, errors.WithStack(err)

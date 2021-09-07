@@ -11,7 +11,6 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -25,8 +24,27 @@ var (
 		Nonce:       models.NewUint256(0),
 	}
 	chainState = models.ChainState{
-		ChainID: models.MakeUint256(0),
-		Rollup:  common.Address{1, 2, 3, 4},
+		ChainID:                        models.MakeUint256(1337),
+		AccountRegistry:                utils.RandomAddress(),
+		AccountRegistryDeploymentBlock: 9483,
+		TokenRegistry:                  utils.RandomAddress(),
+		DepositManager:                 utils.RandomAddress(),
+		Rollup:                         utils.RandomAddress(),
+		SyncedBlock:                    11293,
+		GenesisAccounts: []models.PopulatedGenesisAccount{
+			{
+				PublicKey: models.PublicKey{4, 4, 1, 9},
+				PubKeyID:  77,
+				StateID:   32,
+				Balance:   models.MakeUint256(29384),
+			},
+			{
+				PublicKey: models.PublicKey{7, 3, 1, 1},
+				PubKeyID:  443,
+				StateID:   293,
+				Balance:   models.MakeUint256(3004),
+			},
+		},
 	}
 )
 
