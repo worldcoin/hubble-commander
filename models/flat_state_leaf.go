@@ -9,8 +9,8 @@ import (
 type FlatStateLeaf struct {
 	StateID  uint32
 	DataHash common.Hash
-	PubKeyID uint32  `badgerhold:"index"`
-	TokenID  Uint256 // TODO: Consider adding a tuple index of (PubKeyID; TokenID)
+	PubKeyID uint32 `badgerhold:"index"`
+	TokenID  Uint256
 	Balance  Uint256
 	Nonce    Uint256
 }
