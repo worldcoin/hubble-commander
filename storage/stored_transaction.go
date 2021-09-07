@@ -193,7 +193,13 @@ func (s *TransactionStorage) SetTransactionError(txHash common.Hash, errorMessag
 }
 
 func (s *Storage) GetTransactionCount() (*int, error) {
-	latestCommitment, err := s.GetLatestCommitment() // TODO fix this function to return the number of "mined" transactions, write down ideas
+	txController, txStorage, err := s.BeginTransaction(TxOptions{Badger: true, ReadOnly: true})
+	if err != nil {
+		return nil, err
+	}
+	defer txController.Rollback(&err)
+
+	latestBatch, err := txStorage.GetLatestSubmittedBatch()
 	if IsNotFoundError(err) {
 		return ref.Int(0), nil
 	}
@@ -201,19 +207,34 @@ func (s *Storage) GetTransactionCount() (*int, error) {
 		return nil, err
 	}
 	count := 0
-	var tx models.StoredReceipt
-	err = s.database.Badger.Iterator(models.StoredReceiptPrefix, badger.PrefetchIteratorOpts,
+	seekPrefix := badger.IndexKeyPrefix(models.StoredReceiptName, "CommitmentID")
+	err = txStorage.database.Badger.Iterator(seekPrefix, badger.PrefetchIteratorOpts,
 		func(item *bdg.Item) (bool, error) {
-			err = item.Value(tx.SetBytes)
+			var commitmentID *models.CommitmentID
+			commitmentID, err = models.DecodeCommitmentIDPointer(keyValue(seekPrefix, item.Key()))
 			if err != nil {
 				return false, err
 			}
-			if tx.CommitmentID != nil && tx.CommitmentID.BatchID.Cmp(&latestCommitment.ID.BatchID) <= 0 {
-				count++
+			if commitmentID == nil || commitmentID.BatchID.Cmp(&latestBatch.ID) > 0 {
+				return false, nil
 			}
+
+			var keyList bh.KeyList
+			err = item.Value(func(val []byte) error {
+				return badger.DecodeKeyList(val, &keyList)
+			})
+			if err != nil {
+				return false, err
+			}
+			count += len(keyList)
 			return false, nil
 		})
 	if err != nil && err != badger.ErrIteratorFinished {
+		return nil, err
+	}
+
+	err = txController.Commit()
+	if err != nil {
 		return nil, err
 	}
 	return &count, nil

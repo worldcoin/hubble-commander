@@ -51,7 +51,7 @@ func (t *StoredReceipt) SetBytes(data []byte) error {
 	if len(data) < storedReceiptBytesLength {
 		return ErrInvalidLength
 	}
-	commitmentID, err := decodeCommitmentIDPointer(data[32:66])
+	commitmentID, err := DecodeCommitmentIDPointer(data[32:66])
 	if err != nil {
 		return err
 	}

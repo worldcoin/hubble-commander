@@ -92,7 +92,7 @@ func TestEncodeCommitmentIDPointer(t *testing.T) {
 	bytes := EncodeCommitmentIDPointer(id)
 	require.EqualValues(t, 1, bytes[0])
 
-	decodedID, err := decodeCommitmentIDPointer(bytes)
+	decodedID, err := DecodeCommitmentIDPointer(bytes)
 	require.NoError(t, err)
 	require.Equal(t, *id, *decodedID)
 }
@@ -102,7 +102,7 @@ func TestEncodeCommitmentIDPointer_NilValue(t *testing.T) {
 	bytes := EncodeCommitmentIDPointer(id)
 	require.EqualValues(t, 0, bytes[0])
 
-	decodedID, err := decodeCommitmentIDPointer(bytes)
+	decodedID, err := DecodeCommitmentIDPointer(bytes)
 	require.NoError(t, err)
 	require.Nil(t, decodedID)
 }

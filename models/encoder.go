@@ -105,7 +105,7 @@ func EncodeCommitmentIDPointer(id *CommitmentID) []byte {
 	return b
 }
 
-func decodeCommitmentIDPointer(data []byte) (*CommitmentID, error) {
+func DecodeCommitmentIDPointer(data []byte) (*CommitmentID, error) {
 	if data[0] == 0 {
 		return nil, nil
 	}
