@@ -9,6 +9,7 @@ import (
 const storedReceiptBytesLength = 72
 
 var (
+	StoredReceiptName                = getTypeName(StoredReceipt{})
 	StoredReceiptPrefix              = getBadgerHoldPrefix(StoredReceipt{})
 	errInvalidStoredReceiptIndexType = errors.New("invalid StoredReceipt index type")
 )
@@ -71,7 +72,7 @@ func (t *StoredReceipt) BytesLen() int {
 
 // Type implements badgerhold.Storer
 func (t StoredReceipt) Type() string {
-	return string(StoredReceiptPrefix[3:])
+	return string(StoredReceiptName)
 }
 
 // Indexes implements badgerhold.Storer

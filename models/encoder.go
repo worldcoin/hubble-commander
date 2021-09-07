@@ -17,6 +17,10 @@ func getBadgerHoldPrefix(dataType interface{}) []byte {
 	return []byte("bh_" + reflect.TypeOf(dataType).Name())
 }
 
+func getTypeName(dataType interface{}) []byte {
+	return []byte(reflect.TypeOf(dataType).Name())
+}
+
 func EncodeHashPointer(value *common.Hash) []byte {
 	b := make([]byte, 33)
 	if value == nil {

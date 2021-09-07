@@ -16,6 +16,7 @@ const (
 )
 
 var (
+	StoredTxName                = getTypeName(StoredTx{})
 	StoredTxPrefix              = getBadgerHoldPrefix(StoredTx{})
 	errInvalidStoredTxIndexType = errors.New("invalid StoredTx index type")
 )
@@ -188,7 +189,7 @@ func txBody(data []byte, transactionType txtype.TransactionType) (TxBody, error)
 // nolint:gocritic
 // Type implements badgerhold.Storer
 func (t StoredTx) Type() string {
-	return string(StoredTxPrefix[3:])
+	return string(StoredTxName)
 }
 
 // nolint:gocritic

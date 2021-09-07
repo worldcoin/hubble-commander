@@ -108,7 +108,7 @@ func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*
 		return nil, err
 	}
 
-	indexKey := badger.IndexKey(models.StoredTxPrefix[3:], "FromStateID", encodedStateID) // TODO extract all models...[3:] to global vars
+	indexKey := badger.IndexKey(models.StoredTxName, "FromStateID", encodedStateID)
 	keyList, err := s.getKeyList(indexKey)
 	if err != nil {
 		return nil, err
@@ -184,7 +184,7 @@ func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.U
 	hashes := make([]common.Hash, 0, len(batchIDs)*32)
 
 	var keyList bh.KeyList
-	seekPrefix := badger.IndexKeyPrefix(models.StoredReceiptPrefix[3:], "CommitmentID")
+	seekPrefix := badger.IndexKeyPrefix(models.StoredReceiptName, "CommitmentID")
 	err := s.database.Badger.Iterator(seekPrefix, badger.ReversePrefetchIteratorOpts,
 		func(item *bdg.Item) (bool, error) {
 			if validForPrefixes(keyValue(seekPrefix, item.Key()), batchPrefixes) {
