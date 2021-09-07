@@ -72,7 +72,7 @@ func (s *Create2TransferTestSuite) TestGetCreate2Transfer_DifferentTxType() {
 	s.Equal(NewNotFoundError("transaction"), err)
 }
 
-func (s *TransactionBaseTestSuite) TestMarkCreate2TransfersAsIncluded() {
+func (s *Create2TransferTestSuite) TestMarkCreate2TransfersAsIncluded() {
 	commitmentID := &models.CommitmentID{
 		BatchID:      models.MakeUint256(1),
 		IndexInBatch: 1,

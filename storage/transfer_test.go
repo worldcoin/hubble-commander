@@ -82,7 +82,7 @@ func (s *TransferTestSuite) TestGetTransfer_DifferentTxType() {
 	s.Equal(NewNotFoundError("transaction"), err)
 }
 
-func (s *TransactionBaseTestSuite) TestMarkTransfersAsIncluded() {
+func (s *TransferTestSuite) TestMarkTransfersAsIncluded() {
 	txs := make([]models.Transfer, 2)
 	for i := 0; i < len(txs); i++ {
 		txs[i] = transferTransaction

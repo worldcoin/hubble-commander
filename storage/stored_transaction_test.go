@@ -28,29 +28,28 @@ var (
 	}
 )
 
-// TODO rename test suite
-type TransactionBaseTestSuite struct {
+type StoredTransactionTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage *TestStorage
 }
 
-func (s *TransactionBaseTestSuite) SetupSuite() {
+func (s *StoredTransactionTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *TransactionBaseTestSuite) SetupTest() {
+func (s *StoredTransactionTestSuite) SetupTest() {
 	var err error
 	s.storage, err = NewTestStorageWithoutPostgres()
 	s.NoError(err)
 }
 
-func (s *TransactionBaseTestSuite) TearDownTest() {
+func (s *StoredTransactionTestSuite) TearDownTest() {
 	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
-func (s *TransactionBaseTestSuite) TestSetTransactionError() {
+func (s *StoredTransactionTestSuite) TestSetTransactionError() {
 	err := s.storage.AddTransfer(&transferTransaction)
 	s.NoError(err)
 
@@ -65,7 +64,7 @@ func (s *TransactionBaseTestSuite) TestSetTransactionError() {
 	s.Equal(errorMessage, res.ErrorMessage)
 }
 
-func (s *TransactionBaseTestSuite) TestGetLatestTransactionNonce() {
+func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce() {
 	account := models.AccountLeaf{
 		PubKeyID:  1,
 		PublicKey: models.PublicKey{1, 2, 3},
@@ -97,7 +96,7 @@ func (s *TransactionBaseTestSuite) TestGetLatestTransactionNonce() {
 	s.Equal(models.NewUint256(5), userTransactions)
 }
 
-func (s *TransactionBaseTestSuite) TestMarkTransactionsAsPending() {
+func (s *StoredTransactionTestSuite) TestMarkTransactionsAsPending() {
 	txs := make([]models.Transfer, 2)
 	for i := 0; i < len(txs); i++ {
 		txs[i] = transferTransaction
@@ -120,7 +119,7 @@ func (s *TransactionBaseTestSuite) TestMarkTransactionsAsPending() {
 	}
 }
 
-func (s *TransactionBaseTestSuite) TestGetTransactionCount() {
+func (s *StoredTransactionTestSuite) TestGetTransactionCount() {
 	batch := &models.Batch{
 		ID:                models.MakeUint256(1),
 		TransactionHash:   utils.RandomHash(),
@@ -154,13 +153,13 @@ func (s *TransactionBaseTestSuite) TestGetTransactionCount() {
 	s.Equal(2, *count)
 }
 
-func (s *TransactionBaseTestSuite) TestGetTransactionCount_NoTransactions() {
+func (s *StoredTransactionTestSuite) TestGetTransactionCount_NoTransactions() {
 	count, err := s.storage.GetTransactionCount()
 	s.NoError(err)
 	s.Equal(0, *count)
 }
 
-func (s *TransactionBaseTestSuite) TestGetTransactionHashesByBatchIDs() {
+func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs() {
 	batchIDs := []models.Uint256{models.MakeUint256(1), models.MakeUint256(2)}
 	expectedHashes := make([]common.Hash, 0, 4)
 	for i := range batchIDs {
@@ -181,7 +180,7 @@ func (s *TransactionBaseTestSuite) TestGetTransactionHashesByBatchIDs() {
 	}
 }
 
-func (s *TransactionBaseTestSuite) TestGetTransactionHashesByBatchIDs_NoTransactions() {
+func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs_NoTransactions() {
 	transfers := make([]models.Transfer, 2)
 	transfers[0] = transfer
 	transfers[1] = transfer
@@ -193,7 +192,7 @@ func (s *TransactionBaseTestSuite) TestGetTransactionHashesByBatchIDs_NoTransact
 	s.Nil(hashes)
 }
 
-func (s *TransactionBaseTestSuite) addTransfersInCommitment(batchID *models.Uint256, transfers []models.Transfer) {
+func (s *StoredTransactionTestSuite) addTransfersInCommitment(batchID *models.Uint256, transfers []models.Transfer) {
 	for i := range transfers {
 		transfers[i].CommitmentID = &models.CommitmentID{
 			BatchID:      *batchID,
@@ -204,6 +203,6 @@ func (s *TransactionBaseTestSuite) addTransfersInCommitment(batchID *models.Uint
 	}
 }
 
-func TestTransactionBaseTestSuite(t *testing.T) {
-	suite.Run(t, new(TransactionBaseTestSuite))
+func TestStoredTransactionTestSuite(t *testing.T) {
+	suite.Run(t, new(StoredTransactionTestSuite))
 }
