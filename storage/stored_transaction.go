@@ -41,43 +41,17 @@ func (s *TransactionStorage) BeginTransaction(opts TxOptions) (*db.TxController,
 	return txController, &txTransactionStorage, nil
 }
 
-func (s *TransactionStorage) wrapWithTransaction(opts TxOptions, fn func(txStorage *TransactionStorage) error) error {
-	txController, txStorage, err := s.BeginTransaction(opts)
-	if err != nil {
-		return err
-	}
-	defer txController.Rollback(&err)
-
-	err = fn(txStorage)
-	if err != nil {
-		return err
-	}
-
-	return txController.Commit()
-}
-
 func (s *TransactionStorage) addStoredReceipt(txReceipt *models.StoredReceipt) error {
 	return s.database.Badger.Insert(txReceipt.Hash, *txReceipt)
 }
 
 func (s *TransactionStorage) getStoredTxWithReceipt(hash common.Hash) (*models.StoredTx, *models.StoredReceipt, error) {
-	txController, txStorage, err := s.BeginTransaction(TxOptions{Badger: true, ReadOnly: true})
-	if err != nil {
-		return nil, nil, err
-	}
-	defer txController.Rollback(&err)
-
-	storedTx, err := txStorage.getStoredTx(hash)
+	storedTx, err := s.getStoredTx(hash)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	txReceipt, err := txStorage.getStoredTxReceipt(hash)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	err = txController.Commit()
+	txReceipt, err := s.getStoredTxReceipt(hash)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -134,14 +108,8 @@ func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*
 		return nil, err
 	}
 
-	txController, txStorage, err := s.BeginTransaction(TxOptions{Badger: true, ReadOnly: true})
-	if err != nil {
-		return nil, err
-	}
-	defer txController.Rollback(&err)
-
 	indexKey := badger.IndexKey(models.StoredTxName, "FromStateID", encodedStateID)
-	keyList, err := txStorage.getKeyList(indexKey)
+	keyList, err := s.getKeyList(indexKey)
 	if err != nil {
 		return nil, err
 	}
@@ -155,8 +123,7 @@ func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*
 
 	latestNonce := models.MakeUint256(0)
 	for i := range txHashes {
-		var tx *models.StoredTx
-		tx, err = txStorage.getStoredTx(txHashes[i])
+		tx, err := s.getStoredTx(txHashes[i])
 		if err != nil {
 			return nil, err
 		}
@@ -164,25 +131,18 @@ func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*
 			latestNonce = tx.Nonce
 		}
 	}
-
-	err = txController.Commit()
-	if err != nil {
-		return nil, err
-	}
 	return &latestNonce, nil
 }
 
 func (s *TransactionStorage) MarkTransactionsAsPending(txHashes []common.Hash) error {
-	return s.wrapWithTransaction(TxOptions{Badger: true}, func(txStorage *TransactionStorage) error {
-		dataType := models.StoredReceipt{}
-		for i := range txHashes {
-			err := s.database.Badger.Delete(txHashes[i], dataType)
-			if err != nil {
-				return err
-			}
+	dataType := models.StoredReceipt{}
+	for i := range txHashes {
+		err := s.database.Badger.Delete(txHashes[i], dataType)
+		if err != nil {
+			return err
 		}
-		return nil
-	})
+	}
+	return nil
 }
 
 func (s *TransactionStorage) SetTransactionError(txHash common.Hash, errorMessage string) error {
