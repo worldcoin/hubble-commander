@@ -27,8 +27,12 @@ spec:
           sizeLimit: 1Gi
       containers:
         - name: primary-hubble-commander
-          image: "ghcr.io/worldcoin/hubble-commander:stable"
+          image: "ghcr.io/worldcoin/hubble-commander@sha256:f65594ef5814288b2a3f188ca821edd113e3743bb0224c8f5386d25a4ecb1f72"
           imagePullPolicy: Always
+          command:
+            - /bin/sh
+            - -c
+            - "/go/src/app/build/hubble deploy -file /chain-spec/chain-spec.yaml; /go/src/app/build/hubble start"
           volumeMounts:
           - name: chain-spec-volume
             mountPath: /chain-spec
@@ -59,7 +63,7 @@ spec:
               memory: "6144Mi"
               cpu: "1500m"
         - name: secondary-hubble-commander
-          image: "ghcr.io/worldcoin/hubble-commander:stable"
+          image: "ghcr.io/worldcoin/hubble-commander@sha256:f65594ef5814288b2a3f188ca821edd113e3743bb0224c8f5386d25a4ecb1f72"
           imagePullPolicy: Always
           volumeMounts:
           - name: chain-spec-volume
