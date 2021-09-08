@@ -119,7 +119,7 @@ func (t *TransactionExecutor) applyGenericTransactionForSync(
 }
 
 func (t *TransactionExecutor) fillSenderWitness(synced *SyncedGenericTransaction, tErr error) (*SyncedGenericTransaction, error, error) {
-	witness, appError := t.storage.StateTree.GetUserStateWitness(synced.Transaction.GetFromStateID())
+	witness, appError := t.storage.StateTree.GetLeafWitness(synced.Transaction.GetFromStateID())
 	if appError != nil {
 		return nil, nil, appError
 	}
