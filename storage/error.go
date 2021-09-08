@@ -69,10 +69,10 @@ func (e *AccountBatchAlreadyExistsError) Error() string {
 }
 
 type NoVacantSubtreeError struct {
-	subtreeDepth uint32
+	subtreeDepth uint8
 }
 
-func NewNoVacantSubtreeError(subtreeDepth uint32) *NoVacantSubtreeError {
+func NewNoVacantSubtreeError(subtreeDepth uint8) *NoVacantSubtreeError {
 	return &NoVacantSubtreeError{subtreeDepth: subtreeDepth}
 }
 
