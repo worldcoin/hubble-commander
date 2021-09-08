@@ -71,7 +71,7 @@ func (s *StateTree) NextAvailableStateID() (*uint32, error) {
 
 // NextVacantSubtree returns the starting index of a vacant subtree of at least `subtreeDepth`.
 // `subtreeDepth` can be set to 0 to only search for a single vacant node.
-func (s *StateTree) NextVacantSubtree(subtreeDepth uint32) (*uint32, error) {
+func (s *StateTree) NextVacantSubtree(subtreeDepth uint8) (*uint32, error) {
 	subtreeWidth := int64(1) << subtreeDepth // Number of leaves in the subtree.
 
 	prevTakenNodeIndex := int64(-1)
