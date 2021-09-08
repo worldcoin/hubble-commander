@@ -8,6 +8,12 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 )
 
+var usedErrorCodes []int
+
+func init() {
+	usedErrorCodes = make([]int, 0)
+}
+
 type MissingFieldError struct {
 	field string
 }
@@ -48,8 +54,15 @@ func (e *ErrorAPI) ErrorCode() int {
 	return e.Code
 }
 
-// TODO - verify that there are no duplicates here
 func NewAPIError(code int, message string) *ErrorAPI {
+	for _, usedCode := range usedErrorCodes {
+		if code == usedCode {
+			panic(fmt.Sprintf("%d API error code is already used", usedCode))
+		}
+	}
+
+	usedErrorCodes = append(usedErrorCodes, code)
+
 	return &ErrorAPI{
 		Code:    code,
 		Message: message,
