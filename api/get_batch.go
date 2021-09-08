@@ -46,17 +46,17 @@ func (a *API) GetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommitments,
 	return batch, nil
 }
 
-func unsafeGetBatchByID(api *API, id models.Uint256) (*dto.BatchWithRootAndCommitments, error) {
-	batch, err := api.storage.GetMinedBatch(id)
+func (a *API) unsafeGetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommitments, error) {
+	batch, err := a.storage.GetMinedBatch(id)
 	if err != nil {
 		return nil, err
 	}
-	submissionBlock, err := api.getSubmissionBlock(*batch.FinalisationBlock)
+	submissionBlock, err := a.getSubmissionBlock(*batch.FinalisationBlock)
 	if err != nil {
 		return nil, err
 	}
 
-	commitments, err := api.storage.GetCommitmentsByBatchID(batch.ID)
+	commitments, err := a.storage.GetCommitmentsByBatchID(batch.ID)
 	if err != nil {
 		return nil, err
 	}

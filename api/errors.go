@@ -74,9 +74,8 @@ func NewUnknownError(err error) *ErrorAPI {
 }
 
 type CommanderErrorsToErrorAPI struct {
-	apiError *ErrorAPI
-	//commanderErrors []error
-	commanderErrors []interface{} // temp
+	apiError        *ErrorAPI
+	commanderErrors []interface{}
 }
 
 func NewCommanderErrorsToErrorAPI(code int, message string, commanderErrors []interface{}) *CommanderErrorsToErrorAPI {
@@ -85,16 +84,6 @@ func NewCommanderErrorsToErrorAPI(code int, message string, commanderErrors []in
 		commanderErrors: commanderErrors,
 	}
 }
-
-/*
-	ERROR CODES:
-      999 - Unknown Error
-	10XXX - Transactions
-	20XXX - Commitments
-	30XXX - Batches
-	40XXX - Badger
-	99XXX - Uncategorized errors like NetworkInfo, BLS, UserStates
-*/
 
 var commonErrors = []*CommanderErrorsToErrorAPI{
 	// Badger
