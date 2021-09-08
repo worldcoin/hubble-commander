@@ -80,7 +80,7 @@ func (s *StateTree) NextVacantSubtree(subtreeDepth uint8) (*uint32, error) {
 	// The iterator will scan over the state tree left-to-right detecting any gaps along the way.
 	// If a gap is detected its checked if its suitable for the given subtree regarding both alignment and size.
 	// An iterator will return the index of the first such gap it detects.
-	err := s.database.Badger.Iterator(models.FlatStateLeafPrefix, bdg.DefaultIteratorOptions, func(item *bdg.Item) (bool, error) {
+	err := s.database.Badger.Iterator(models.FlatStateLeafPrefix, db.KeyIteratorOpts, func(item *bdg.Item) (bool, error) {
 		var key uint32
 		err := db.DecodeKey(item.Key(), &key, models.FlatStateLeafPrefix)
 		if err != nil {
