@@ -1,7 +1,6 @@
 package commander
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -14,6 +13,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
+)
+
+var (
+	ErrRegisterGenesisAccountTimeout = errors.New("timeout")
+	ErrGenesisAccountsUniqueStateID  = errors.New("accounts must have unique state IDs")
 )
 
 func AssignStateIDs(accounts []models.RegisteredGenesisAccount) []models.PopulatedGenesisAccount {
@@ -39,8 +43,8 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.PopulatedGen
 		account := &accounts[i]
 
 		if seenStateIDs[account.StateID] {
-			return errors.Errorf("accounts must have unique state IDs")
-		} // TODO-API here
+			return ErrGenesisAccountsUniqueStateID
+		}
 		seenStateIDs[account.StateID] = true
 
 		leaf := &models.AccountLeaf{
@@ -100,8 +104,8 @@ func RegisterGenesisAccounts(
 		select {
 		case event, ok := <-registrations:
 			if !ok {
-				return nil, errors.WithStack(fmt.Errorf("account event watcher is closed"))
-			} // TODO-API extract
+				return nil, eth.ErrAccountWatcherIsClosed
+			}
 			for i := range txs {
 				if event.Raw.TxHash == txs[i].Hash() {
 					registeredAccounts[i] = models.RegisteredGenesisAccount{
@@ -117,7 +121,7 @@ func RegisterGenesisAccounts(
 			}
 
 		case <-time.After(deployer.ChainTimeout):
-			return nil, errors.WithStack(fmt.Errorf("timeout")) // TODO-API extract
+			return nil, ErrRegisterGenesisAccountTimeout
 		}
 	}
 }

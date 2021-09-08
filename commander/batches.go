@@ -11,7 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var ErrSyncedFraudulentBatch = errors.New("commander synced fraudulent batch") // TODO-API here
+var ErrSyncedFraudulentBatch = errors.New("commander synced fraudulent batch")
 
 func (c *Commander) syncBatches(startBlock, endBlock uint64) error {
 	c.stateMutex.Lock()

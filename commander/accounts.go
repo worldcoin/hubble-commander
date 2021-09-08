@@ -14,6 +14,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var ErrAccountLeavesInconsistency = errors.New("inconsistency in account leaves between the database and the contract")
+
 func (c *Commander) syncAccounts(start, end uint64) error {
 	newAccountsSingle, err := c.syncSingleAccounts(start, end)
 	if err != nil {
@@ -152,7 +154,7 @@ func validateExistingAccounts(accountTree *storage.AccountTree, accounts ...mode
 			return err
 		}
 		if existingAccount.PublicKey != accounts[i].PublicKey {
-			return errors.New("inconsistency in account leaves between the database and the contract") // TODO-API extract
+			return ErrAccountLeavesInconsistency
 		}
 	}
 	return nil

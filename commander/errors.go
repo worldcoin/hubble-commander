@@ -19,7 +19,7 @@ type InconsistentChainIDError struct {
 }
 
 func NewInconsistentChainIDError(chainIDSource string) *InconsistentChainIDError {
-	reason := fmt.Sprintf("chain ID conflict between config and %s", chainIDSource) // TODO-API here>...>>>>>>>>???????????????//
+	reason := fmt.Sprintf("chain ID conflict between config and %s", chainIDSource)
 	return &InconsistentChainIDError{
 		CannotBootstrapError: *NewCannotBootstrapError(reason),
 	}

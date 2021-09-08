@@ -13,10 +13,10 @@ const (
 	bhIndexPrefix         = "_bhIndex"
 )
 
-var ( // TODO-API here
-	errInconsistentItemsLength      = fmt.Errorf("inconsistent KeyList items length")
-	errInvalidKeyListLength         = fmt.Errorf("invalid KeyList data length")
-	errInvalidKeyListMetadataLength = fmt.Errorf("invalid KeyListMetadata data length")
+var (
+	ErrInconsistentItemsLength      = fmt.Errorf("inconsistent KeyList items length")
+	ErrInvalidKeyListLength         = fmt.Errorf("invalid KeyList data length")
+	ErrInvalidKeyListMetadataLength = fmt.Errorf("invalid KeyListMetadata data length")
 )
 
 // EncodeKeyList Format: [numKeys][keyLength][1st key ...][2nd key ...]...
@@ -33,7 +33,7 @@ func EncodeKeyList(value *bh.KeyList) ([]byte, error) {
 	bp := keyListMetadataLength
 	for i := range *value {
 		if uint32(len((*value)[i])) != metadata.ItemLen {
-			return nil, errors.WithStack(errInconsistentItemsLength)
+			return nil, errors.WithStack(ErrInconsistentItemsLength)
 		}
 		bp += copy(b[bp:], (*value)[i])
 	}
@@ -51,7 +51,7 @@ func DecodeKeyList(data []byte, value *bh.KeyList) error {
 	}
 
 	if metadata.GetKeyListByteLength() != len(data) {
-		return errInvalidKeyListLength
+		return ErrInvalidKeyListLength
 	}
 
 	*value = make([][]byte, metadata.ListLen)
@@ -77,7 +77,7 @@ func (m *KeyListMetadata) Bytes() []byte {
 
 func (m *KeyListMetadata) SetBytes(data []byte) error {
 	if len(data) < keyListMetadataLength {
-		return errInvalidKeyListMetadataLength
+		return ErrInvalidKeyListMetadataLength
 	}
 	m.ListLen = binary.BigEndian.Uint32(data[0:4])
 	m.ItemLen = binary.BigEndian.Uint32(data[4:8])

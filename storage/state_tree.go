@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"fmt"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
@@ -21,6 +20,8 @@ const (
 	StateTreeDepth = merkletree.MaxDepth
 	StateTreeSize  = int64(1) << StateTreeDepth
 )
+
+var ErrUnexpectedRootAfterRollback = errors.New("unexpected state root after state update rollback")
 
 type StateTree struct {
 	database   *Database
@@ -276,7 +277,7 @@ func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, 
 		return nil, err
 	}
 	if *currentRootHash != stateUpdate.PrevRoot {
-		return nil, fmt.Errorf("unexpected state root after state update rollback") // TODO-API extract
+		return nil, ErrUnexpectedRootAfterRollback
 	}
 
 	err = s.deleteStateUpdate(stateUpdate.ID)

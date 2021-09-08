@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-var ( // TODO-API here
+var (
 	ErrNotEnoughCommitments = NewRollupError("not enough commitments")
 	ErrNoLongerProposer     = NewRollupError("commander is no longer an active proposer")
 )

@@ -1,7 +1,6 @@
 package eth
 
 import (
-	"fmt"
 	"math/big"
 	"time"
 
@@ -18,7 +17,11 @@ const (
 	accountBatchOffset = 1 << 31
 )
 
-var ErrInvalidPubKeysLength = errors.New("invalid public keys length") // TODO-API here
+var (
+	ErrInvalidPubKeysLength        = errors.New("invalid public keys length")
+	ErrAccountWatcherIsClosed      = errors.New("account event watcher is closed")
+	ErrRegisterBatchAccountTimeout = errors.New("timeout")
+)
 
 func (c *Client) RegisterBatchAccount(
 	publicKeys []models.PublicKey,
@@ -63,13 +66,13 @@ func (c *Client) WaitForBatchAccountRegistration(
 		select {
 		case event, ok := <-ev:
 			if !ok {
-				return nil, errors.WithStack(fmt.Errorf("account event watcher is closed"))
-			} // TODO-API extract?
+				return nil, ErrAccountWatcherIsClosed
+			}
 			if event.Raw.TxHash == tx.Hash() {
 				return ExtractPubKeyIDsFromBatchAccountEvent(event), nil
 			}
 		case <-time.After(deployer.ChainTimeout):
-			return nil, errors.WithStack(fmt.Errorf("timeout"))
+			return nil, ErrRegisterBatchAccountTimeout
 		}
 	}
 }

@@ -2,7 +2,6 @@ package eth
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
@@ -13,9 +12,12 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/pkg/errors"
 )
 
 const gasEstimateMultiplier = 1.3
+
+var ErrSubmitBatchAndWait = errors.New("submitBatchAndWait: timeout")
 
 type SubmitBatchFunc func(commitments []models.Commitment) (*types.Transaction, error)
 
@@ -79,7 +81,7 @@ func (c *Client) submitBatchAndWait(
 				return c.handleNewBatchEvent(newBatch)
 			}
 		case <-time.After(*c.config.TxTimeout):
-			return nil, fmt.Errorf("submitBatchAndWait: timeout") // TODO-API extract ?
+			return nil, ErrSubmitBatchAndWait
 		}
 	}
 }

@@ -1,7 +1,6 @@
 package eth
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
@@ -12,6 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
+
+var ErrSingleAccountTimeout = errors.New("timeout")
 
 func (c *Client) RegisterAccount(
 	publicKey *models.PublicKey,
@@ -57,13 +58,13 @@ func RegisterAccountAndWait(
 		select {
 		case event, ok := <-ev:
 			if !ok {
-				return nil, errors.WithStack(fmt.Errorf("account event watcher is closed")) // TODO-API extract ??
+				return nil, ErrAccountWatcherIsClosed
 			}
 			if event.Raw.TxHash == tx.Hash() {
 				return ref.Uint32(uint32(event.PubkeyID.Uint64())), nil
 			}
 		case <-time.After(deployer.ChainTimeout):
-			return nil, errors.WithStack(fmt.Errorf("timeout")) // TODO-API extract ??
+			return nil, ErrSingleAccountTimeout
 		}
 	}
 }

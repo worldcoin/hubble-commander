@@ -1,11 +1,13 @@
 package encoder
 
 import (
-	"fmt"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/pkg/errors"
 )
+
+var ErrNotEncodableDecimal = errors.New("value is not encodable as multi-precission decimal")
 
 // EncodeDecimal
 // Encodes a 256-bit integer as a number with mantissa and a decimal exponent.
@@ -25,7 +27,7 @@ func EncodeDecimal(value models.Uint256) (uint16, error) {
 	}
 
 	if mantissa.Cmp(big.NewInt(0xfff)) > 0 {
-		return 0, fmt.Errorf("value is not encodable as multi-precission decimal") // TODO-API here maybe?
+		return 0, ErrNotEncodableDecimal
 	}
 
 	return uint16(exponent.Uint64())<<12 + uint16(mantissa.Uint64()), nil

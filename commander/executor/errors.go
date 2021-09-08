@@ -10,7 +10,7 @@ type RollupError struct {
 	Reason string
 }
 
-func NewRollupError(reason string) *RollupError { // TODO-API here ???
+func NewRollupError(reason string) *RollupError {
 	return &RollupError{Reason: reason}
 }
 

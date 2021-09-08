@@ -5,7 +5,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var ErrInvalidFeeReceiverTokenID = errors.New("invalid fee receiver token ID") // TODO-API here
+var ErrInvalidFeeReceiverTokenID = errors.New("invalid fee receiver token ID")
 
 func (t *TransactionExecutor) ApplyFee(feeReceiverStateID uint32, fee models.Uint256) (*models.StateMerkleProof, error) {
 	feeReceiver, err := t.storage.StateTree.Leaf(feeReceiverStateID)

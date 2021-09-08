@@ -6,7 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-var ( // TODO-API here
+var (
 	ErrNonceTooLow         = errors.New("nonce too low")
 	ErrNonceTooHigh        = errors.New("nonce too high")
 	ErrInvalidSlicesLength = errors.New("invalid slices length")

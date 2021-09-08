@@ -17,7 +17,7 @@ const (
 	msgSignatureMissingBatch  = "Commitment not present in batch"
 )
 
-var ( // TODO-API here
+var (
 	ErrBatchAlreadyDisputed = errors.New("batch already disputed")
 	ErrRollbackInProcess    = errors.New("rollback in process")
 )

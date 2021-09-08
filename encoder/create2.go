@@ -14,7 +14,7 @@ import (
 
 var (
 	tBytes32, _            = abi.NewType("bytes32", "", nil)
-	ErrInvalidSlicesLength = errors.New("invalid slices length") // TODO-API here
+	ErrInvalidSlicesLength = errors.New("invalid slices length")
 )
 
 const Create2TransferLength = 16

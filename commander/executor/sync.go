@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	ErrBatchSubmissionFailed = errors.New("previous submit batch transaction failed") // TODO-API here
+	ErrBatchSubmissionFailed = errors.New("previous submit batch transaction failed")
 )
 
 func (t *TransactionExecutor) SyncBatch(remoteBatch *eth.DecodedBatch) error {
@@ -156,7 +156,7 @@ func (t *TransactionExecutor) syncCommitment(
 	case txtype.Create2Transfer:
 		transactions, err = t.syncCreate2TransferCommitment(commitment)
 	case txtype.Genesis, txtype.MassMigration:
-		return errors.Errorf("unsupported batch type for sync: %s", batch.Type) // TODO-API extract
+		return errors.Errorf("unsupported batch type for sync: %s", batch.Type)
 	}
 	if err != nil {
 		return err

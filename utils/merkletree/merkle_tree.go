@@ -17,7 +17,7 @@ const MaxDepth = 32
 var (
 	zeroHashes [MaxDepth + 1]common.Hash
 
-	ErrEmptyLeaves   = stdErr.New("leaves cannot be empty") // TODO-API here
+	ErrEmptyLeaves   = stdErr.New("leaves cannot be empty")
 	ErrTooManyLeaves = stdErr.New("merkle tree too large")
 )
 

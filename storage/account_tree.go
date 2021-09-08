@@ -18,7 +18,7 @@ const (
 	rightSubtreeMaxValue = accountBatchOffset*2 - 18
 )
 
-var ErrInvalidAccountsLength = errors.New("invalid accounts length") // TODO-API here
+var ErrInvalidAccountsLength = errors.New("invalid accounts length")
 
 type AccountTree struct {
 	database   *Database
@@ -81,7 +81,7 @@ func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
 	_, err = NewAccountTree(txDatabase).unsafeSet(leaf)
 	if err == bh.ErrKeyExists {
 		return NewAccountAlreadyExistsError(leaf)
-	} // TODO-API here ????
+	}
 	if err != nil {
 		return err
 	}
@@ -108,7 +108,7 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
 		}
 		_, err = accountTree.unsafeSet(&leaves[i])
 		if err == bh.ErrKeyExists {
-			return NewAccountBatchAlreadyExistsError(leaves) // TODO-API here ????
+			return NewAccountBatchAlreadyExistsError(leaves)
 		}
 		if err != nil {
 			return err

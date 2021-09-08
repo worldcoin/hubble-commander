@@ -9,7 +9,7 @@ import (
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
-var ErrExceededTreeDepth = errors.New("node depth exceeds the tree depth") // TODO-API here
+var ErrExceededTreeDepth = errors.New("node depth exceeds the tree depth")
 
 type StoredMerkleTree struct {
 	database  *Database
