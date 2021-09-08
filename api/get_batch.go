@@ -38,7 +38,7 @@ func (a *API) unsafeGetBatchByHash(hash common.Hash) (*dto.BatchWithRootAndCommi
 }
 
 func (a *API) GetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommitments, error) {
-	batch, err := unsafeGetBatchByID(a, id)
+	batch, err := a.unsafeGetBatchByID(id)
 	if err != nil {
 		return nil, sanitizeError(err, getBatchAPIErrors)
 	}
