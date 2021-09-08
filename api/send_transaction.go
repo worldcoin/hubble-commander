@@ -22,7 +22,58 @@ var (
 	ErrUnsupportedTxType = errors.New("unsupported transaction type")
 )
 
+var sendTransactionAPIErrors = map[error]ErrorAPI{
+	// TODO-API use api error constructor to count exact count
+	// TODO-API make those messages more verbose
+	&MissingFieldError{}: {
+		Code:    10000,
+		Message: "missing field",
+	},
+	ErrInvalidAmount: {
+		Code:    10000,
+		Message: "",
+	},
+	ErrTransferToSelf: {
+		Code:    10000,
+		Message: "",
+	},
+	// TODO-API I think there should be another "account leaf" not found error here
+	&storage.NotFoundError{}: {
+		Code:    10000,
+		Message: "",
+	},
+	ErrNonceTooLow: {
+		Code:    10000,
+		Message: "",
+	},
+	ErrNonceTooHigh: {
+		Code:    10000,
+		Message: "",
+	},
+	ErrNotEnoughBalance: {
+		Code:    10000,
+		Message: "",
+	},
+	ErrInvalidAmount: {
+		Code:    10000,
+		Message: "",
+	},
+	ErrInvalidSignature: {
+		Code:    10000,
+		Message: "",
+	},
+} // TODO-API add those errors later
+
 func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
+	transactionHash, err := a.unsafeSendTransaction(tx)
+	if err != nil {
+		return nil, sanitizeError(err, sendTransactionAPIErrors)
+	}
+
+	return transactionHash, nil
+}
+
+func (a *API) unsafeSendTransaction(tx dto.Transaction) (*common.Hash, error) {
 	switch t := tx.Parsed.(type) {
 	case dto.Transfer:
 		return a.handleTransfer(t)

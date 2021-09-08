@@ -2,9 +2,26 @@ package api
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/storage"
 )
 
+var getTransactionsAPIErrors = map[error]ErrorAPI{
+	&storage.NotFoundError{}: {
+		Code:    10000,
+		Message: "??????????", // TODO-API figure out what to put here - this error is important
+	},
+}
+
 func (a *API) GetTransactions(publicKey *models.PublicKey) ([]interface{}, error) {
+	batch, err := a.unsafeGetTransactions(publicKey)
+	if err != nil {
+		return nil, sanitizeError(err, getTransactionsAPIErrors)
+	}
+
+	return batch, nil
+}
+
+func (a *API) unsafeGetTransactions(publicKey *models.PublicKey) ([]interface{}, error) {
 	transfers, err := a.storage.GetTransfersByPublicKey(publicKey)
 	if err != nil {
 		return nil, err

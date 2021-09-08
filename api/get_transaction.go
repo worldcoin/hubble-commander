@@ -3,13 +3,29 @@ package api
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
-	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 )
 
+var getTransactionAPIErrors = map[error]ErrorAPI{
+	&storage.NotFoundError{}: {
+		Code:    10000,
+		Message: "transaction not found",
+	},
+}
+
 func (a *API) GetTransaction(hash common.Hash) (interface{}, error) {
+	transaction, err := a.unsafeGetTransaction(hash)
+	if err != nil {
+		return nil, sanitizeError(err, getTransactionAPIErrors)
+	}
+
+	return transaction, nil
+}
+
+func (a *API) unsafeGetTransaction(hash common.Hash) (interface{}, error) {
 	transfer, err := a.storage.GetTransferWithBatchDetails(hash)
-	if err != nil && !st.IsNotFoundError(err) {
+	if err != nil && !storage.IsNotFoundError(err) {
 		return nil, err
 	}
 	if transfer != nil {

@@ -1,6 +1,13 @@
 package api
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+
+	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/db/badger"
+	"github.com/Worldcoin/hubble-commander/encoder"
+)
 
 type MissingFieldError struct {
 	field string
@@ -91,20 +98,11 @@ var commonErrors = []*CommanderErrorsToErrorAPI{
 	),
 
 	// Send transactions
-	NewCommanderErrorsToErrorAPI(0, "", []interface{}{encoder.ErrNotEncodableDecimal}),
+	NewCommanderErrorsToErrorAPI(0, "", []interface{}{encoder.ErrNotEncodableDecimal}), // TODO-API move this to send_transaction.go?
 
 	// handle transfer
-	NewCommanderErrorsToErrorAPI(0, "", []interface{}{MissingFieldError{}}),
-	NewCommanderErrorsToErrorAPI(0, "", []interface{}{ErrInvalidAmount}),
-	NewCommanderErrorsToErrorAPI(0, "", []interface{}{ErrFeeTooLow}),
-	NewCommanderErrorsToErrorAPI(0, "", []interface{}{ErrTransferToSelf}),
-	NewCommanderErrorsToErrorAPI(0, "", []interface{}{storage.NotFoundError{}}),
-	NewCommanderErrorsToErrorAPI(0, "", []interface{}{ErrNonceTooLow}),
-	NewCommanderErrorsToErrorAPI(0, "", []interface{}{ErrNonceTooHigh}),
-	NewCommanderErrorsToErrorAPI(0, "", []interface{}{ErrNotEnoughBalance}),
-	NewCommanderErrorsToErrorAPI(0, "", []interface{}{storage.NotFoundError{"account leaf"}}), // TODO-API decide how to handle these errors
-	NewCommanderErrorsToErrorAPI(0, "signing error", []interface{}{bls.ErrInvalidDomainLength, ErrInvalidSignature}),
-	// how do I handle bls signing errors?
+	NewCommanderErrorsToErrorAPI(0, "signing error", []interface{}{bls.ErrInvalidDomainLength}),
+	// how do I handle bls signing errors? - there are more of them
 	// add pack errors
 }
 
@@ -118,12 +116,14 @@ func sanitizeError(err error, x map[error]ErrorAPI) *ErrorAPI {
 	return sanitizeCommonError(err, commonErrors)
 }
 
-func sanitizeCommonError(err error, x map[error]ErrorAPI) *ErrorAPI {
-	for k, v := range x {
-		if errors.As(err, &k) {
-			return &v
-		}
-	}
+func sanitizeCommonError(err error, x []*CommanderErrorsToErrorAPI) *ErrorAPI {
+	//for k, v := range x {
+	//	if errors.As(err, &k) {
+	//		return &v
+	//	}
+	//}
+
+	// TODO-API add logic here
 
 	return &unknownError
 }

@@ -5,7 +5,18 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 )
 
+var getBatchesAPIErrors = map[error]ErrorAPI{}
+
 func (a *API) GetBatches(from, to *models.Uint256) ([]dto.Batch, error) {
+	batches, err := a.unsafeGetBatches(from, to)
+	if err != nil {
+		return nil, sanitizeError(err, getBatchesAPIErrors)
+	}
+
+	return batches, nil
+}
+
+func (a *API) unsafeGetBatches(from, to *models.Uint256) ([]dto.Batch, error) {
 	batches, err := a.storage.GetBatchesInRange(from, to)
 	if err != nil {
 		return []dto.Batch{}, err

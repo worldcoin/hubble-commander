@@ -3,10 +3,27 @@ package api
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 )
 
+var getBatchAPIErrors = map[error]ErrorAPI{
+	&storage.NotFoundError{}: {
+		Code:    10000,
+		Message: "batch not found",
+	},
+}
+
 func (a *API) GetBatchByHash(hash common.Hash) (*dto.BatchWithRootAndCommitments, error) {
+	batch, err := a.unsafeGetBatchByHash(hash)
+	if err != nil {
+		return nil, sanitizeError(err, getBatchAPIErrors)
+	}
+
+	return batch, nil
+}
+
+func (a *API) unsafeGetBatchByHash(hash common.Hash) (*dto.BatchWithRootAndCommitments, error) {
 	batch, err := a.storage.GetBatchByHash(hash)
 	if err != nil {
 		return nil, err
@@ -24,16 +41,25 @@ func (a *API) GetBatchByHash(hash common.Hash) (*dto.BatchWithRootAndCommitments
 }
 
 func (a *API) GetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommitments, error) {
-	batch, err := a.storage.GetMinedBatch(id)
+	batch, err := unsafeGetBatchByID(a, id)
+	if err != nil {
+		return nil, sanitizeError(err, getBatchAPIErrors)
+	}
+
+	return batch, nil
+}
+
+func unsafeGetBatchByID(api *API, id models.Uint256) (*dto.BatchWithRootAndCommitments, error) {
+	batch, err := api.storage.GetMinedBatch(id)
 	if err != nil {
 		return nil, err
 	}
-	submissionBlock, err := a.getSubmissionBlock(*batch.FinalisationBlock)
+	submissionBlock, err := api.getSubmissionBlock(*batch.FinalisationBlock)
 	if err != nil {
 		return nil, err
 	}
 
-	commitments, err := a.storage.GetCommitmentsByBatchID(batch.ID)
+	commitments, err := api.storage.GetCommitmentsByBatchID(batch.ID)
 	if err != nil {
 		return nil, err
 	}
