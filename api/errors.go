@@ -5,8 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/bls"
-	"github.com/Worldcoin/hubble-commander/db/badger"
-	"github.com/Worldcoin/hubble-commander/encoder"
+	"github.com/Worldcoin/hubble-commander/db"
 )
 
 type MissingFieldError struct {
@@ -57,6 +56,10 @@ func NewAPIError(code int, message string) *ErrorAPI {
 	}
 }
 
+func NewUnknownError(err error) *ErrorAPI {
+	return NewAPIError(999, fmt.Sprintf("unknown error: %s", err.Error()))
+}
+
 type CommanderErrorsToErrorAPI struct {
 	apiError *ErrorAPI
 	//commanderErrors []error
@@ -70,19 +73,14 @@ func NewCommanderErrorsToErrorAPI(code int, message string, commanderErrors []in
 	}
 }
 
-var unknownError = ErrorAPI{
-	Code:    999,
-	Message: "unknown error",
-}
-
 /*
 	ERROR CODES:
+      999 - Unknown Error
 	10XXX - Transactions
 	20XXX - Commitments
 	30XXX - Batches
-	40XXX - Badger?
-
-
+	40XXX - Badger
+	99XXX - Uncategorized errors like NetworkInfo, BLS, UserStates
 */
 
 var commonErrors = []*CommanderErrorsToErrorAPI{
@@ -91,39 +89,36 @@ var commonErrors = []*CommanderErrorsToErrorAPI{
 		40000,
 		"an error occurred while saving data to the Badger database",
 		[]interface{}{
-			badger.ErrInconsistentItemsLength,
-			badger.ErrInvalidKeyListLength,
-			badger.ErrInvalidKeyListMetadataLength,
+			db.ErrInconsistentItemsLength,
+			db.ErrInvalidKeyListLength,
+			db.ErrInvalidKeyListMetadataLength,
 		},
 	),
-
-	// Send transactions
-	NewCommanderErrorsToErrorAPI(0, "", []interface{}{encoder.ErrNotEncodableDecimal}), // TODO-API move this to send_transaction.go?
-
-	// handle transfer
-	NewCommanderErrorsToErrorAPI(0, "signing error", []interface{}{bls.ErrInvalidDomainLength}),
-	// how do I handle bls signing errors? - there are more of them
-	// add pack errors
+	NewCommanderErrorsToErrorAPI(40001, "an error occurred while iterating over badger database", []interface{}{db.ErrIteratorFinished}),
+	// BLS
+	NewCommanderErrorsToErrorAPI(99004, "an error occureed while fetching the domain for signing", []interface{}{bls.ErrInvalidDomainLength}),
 }
 
-func sanitizeError(err error, x map[error]ErrorAPI) *ErrorAPI {
-	for k, v := range x {
-		if errors.As(err, &k) {
-			return &v
+func sanitizeError(err error, errMap map[error]*ErrorAPI) *ErrorAPI {
+	for k, v := range errMap {
+		if errors.Is(err, k) {
+			return v
 		}
 	}
 
 	return sanitizeCommonError(err, commonErrors)
 }
 
-func sanitizeCommonError(err error, x []*CommanderErrorsToErrorAPI) *ErrorAPI {
-	//for k, v := range x {
-	//	if errors.As(err, &k) {
-	//		return &v
-	//	}
-	//}
+func sanitizeCommonError(err error, errMap []*CommanderErrorsToErrorAPI) *ErrorAPI {
+	for i := range errMap {
+		selectedErrMap := errMap[i]
+		for j := range selectedErrMap.commanderErrors {
+			commanderErr := selectedErrMap.commanderErrors[j]
+			if errors.Is(err, commanderErr.(error)) {
+				return errMap[i].apiError
+			}
+		}
+	}
 
-	// TODO-API add logic here
-
-	return &unknownError
+	return NewUnknownError(err)
 }

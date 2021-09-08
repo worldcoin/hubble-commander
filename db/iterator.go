@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	ErrIteratorFinished = errors.New("iterator finished") // TODO-API common/primary api error here
+	ErrIteratorFinished = errors.New("iterator finished")
 
 	ReverseKeyIteratorOpts = badger.IteratorOptions{
 		PrefetchValues: false,

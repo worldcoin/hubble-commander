@@ -7,11 +7,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-var getTransactionAPIErrors = map[error]ErrorAPI{
-	&storage.NotFoundError{}: {
-		Code:    10000,
-		Message: "transaction not found",
-	},
+var getTransactionAPIErrors = map[error]*ErrorAPI{
+	&storage.NotFoundError{}: NewAPIError(10000, "transaction not found"),
 }
 
 func (a *API) GetTransaction(hash common.Hash) (interface{}, error) {

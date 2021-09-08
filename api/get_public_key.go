@@ -5,17 +5,17 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 )
 
-var getPublicKeyAPIErrors = map[error]ErrorAPI{
-	&storage.NotFoundError{}: {
-		Code:    10000,                  // TODO-API what here?
-		Message: "public key not found", // TODO-API make this more verbose
-	},
+var getPublicKeyAPIErrors = map[error]*ErrorAPI{
+	&storage.NotFoundError{}: NewAPIError(
+		99001,
+		"public key not found",
+	),
 }
 
 func (a *API) GetPublicKeyByID(id uint32) (*models.PublicKey, error) {
 	publicKey, err := a.unsafeGetPublicKeyByID(id)
 	if err != nil {
-		return nil, sanitizeError(err, getBatchAPIErrors)
+		return nil, sanitizeError(err, getPublicKeyAPIErrors)
 	}
 
 	return publicKey, nil
@@ -32,7 +32,7 @@ func (a *API) unsafeGetPublicKeyByID(id uint32) (*models.PublicKey, error) {
 func (a *API) GetPublicKeyByStateID(id uint32) (*models.PublicKey, error) {
 	publicKey, err := a.storage.GetPublicKeyByStateID(id)
 	if err != nil {
-		return nil, sanitizeError(err, getBatchAPIErrors)
+		return nil, sanitizeError(err, getPublicKeyAPIErrors)
 	}
 
 	return publicKey, nil

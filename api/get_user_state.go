@@ -5,11 +5,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 )
 
-var getUserStateAPIErrors = map[error]ErrorAPI{
-	&storage.NotFoundError{}: {
-		Code:    10000,
-		Message: "user state not found",
-	},
+var getUserStateAPIErrors = map[error]*ErrorAPI{
+	&storage.NotFoundError{}: NewAPIError(99002, "user state not found"),
 }
 
 func (a *API) GetUserState(id uint32) (*dto.UserStateWithID, error) {

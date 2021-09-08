@@ -76,7 +76,6 @@ func NewNoVacantSubtreeError(subtreeDepth uint8) *NoVacantSubtreeError {
 	return &NoVacantSubtreeError{subtreeDepth: subtreeDepth}
 }
 
-// TODO-API verify if this error is api related
 func (e *NoVacantSubtreeError) Error() string {
 	return fmt.Sprintf("no vacant slot found in the State Tree for a subtree of depth %d", e.subtreeDepth)
 }

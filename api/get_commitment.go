@@ -7,11 +7,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 )
 
-var getCommitmentAPIErrors = map[error]ErrorAPI{
-	&storage.NotFoundError{}: {
-		Code:    20000,
-		Message: "commitment not found",
-	},
+var getCommitmentAPIErrors = map[error]*ErrorAPI{
+	&storage.NotFoundError{}: NewAPIError(20000, "commitment not found"),
 }
 
 func (a *API) GetCommitment(id models.CommitmentID) (*dto.Commitment, error) {
@@ -23,7 +20,6 @@ func (a *API) GetCommitment(id models.CommitmentID) (*dto.Commitment, error) {
 	return commitment, nil
 }
 
-// TODO-API read through this code after rebase and correct the errors
 func (a *API) unsafeGetCommitment(id models.CommitmentID) (*dto.Commitment, error) {
 	commitment, err := a.storage.GetCommitment(&id)
 	if err != nil {

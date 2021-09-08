@@ -22,47 +22,45 @@ var (
 	ErrUnsupportedTxType = errors.New("unsupported transaction type")
 )
 
-var sendTransactionAPIErrors = map[error]ErrorAPI{
-	// TODO-API use api error constructor to count exact count
-	// TODO-API make those messages more verbose
-	&MissingFieldError{}: {
-		Code:    10000,
-		Message: "missing field",
-	},
-	ErrInvalidAmount: {
-		Code:    10000,
-		Message: "",
-	},
-	ErrTransferToSelf: {
-		Code:    10000,
-		Message: "",
-	},
-	// TODO-API I think there should be another "account leaf" not found error here
-	&storage.NotFoundError{}: {
-		Code:    10000,
-		Message: "",
-	},
-	ErrNonceTooLow: {
-		Code:    10000,
-		Message: "",
-	},
-	ErrNonceTooHigh: {
-		Code:    10000,
-		Message: "",
-	},
-	ErrNotEnoughBalance: {
-		Code:    10000,
-		Message: "",
-	},
-	ErrInvalidAmount: {
-		Code:    10000,
-		Message: "",
-	},
-	ErrInvalidSignature: {
-		Code:    10000,
-		Message: "",
-	},
-} // TODO-API add those errors later
+var sendTransactionAPIErrors = map[error]*ErrorAPI{
+	&MissingFieldError{}: NewAPIError(
+		10003,
+		"some field is missing, verify the transfer/create2transfer object",
+	),
+	ErrTransferToSelf: NewAPIError(
+		10004,
+		"invalid recipient, cannot send funds to yourself",
+	),
+	ErrNonceTooLow: NewAPIError(
+		10005,
+		"nonce too low",
+	),
+	ErrNonceTooHigh: NewAPIError(
+		10006,
+		"nonce too high",
+	),
+	ErrNotEnoughBalance: NewAPIError(
+		10007,
+		"not enough balance",
+	),
+	ErrInvalidAmount: NewAPIError(
+		10008,
+		"amount must be greater than 0",
+	),
+	ErrInvalidSignature: NewAPIError(
+		10009,
+		"invalid signature",
+	),
+	encoder.ErrNotEncodableDecimal: NewAPIError(
+		10010,
+		"some value in the object not encodable as multi-precission decimal",
+	),
+	// TODO-API pretty sure it should return contents or something - verify with Michal
+	&storage.NotFoundError{}: NewAPIError(
+		10011,
+		"not found error",
+	),
+}
 
 func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
 	transactionHash, err := a.unsafeSendTransaction(tx)

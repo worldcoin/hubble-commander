@@ -7,11 +7,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-var getBatchAPIErrors = map[error]ErrorAPI{
-	&storage.NotFoundError{}: {
-		Code:    10000,
-		Message: "batch not found",
-	},
+var getBatchAPIErrors = map[error]*ErrorAPI{
+	&storage.NotFoundError{}: NewAPIError(10000, "batch not found"),
 }
 
 func (a *API) GetBatchByHash(hash common.Hash) (*dto.BatchWithRootAndCommitments, error) {

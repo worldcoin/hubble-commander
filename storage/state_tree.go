@@ -103,7 +103,7 @@ func (s *StateTree) NextVacantSubtree(subtreeDepth uint8) (*uint32, error) {
 	if err == db.ErrIteratorFinished { // We finished without finding any gaps, try to append the subtree at the end.
 		roundedNodeIndex := roundAndValidateStateTreeSlot(prevTakenNodeIndex+1, StateTreeSize, subtreeWidth)
 		if roundedNodeIndex == nil {
-			return nil, errors.WithStack(NewNoVacantSubtreeError(subtreeDepth))
+			return nil, NewNoVacantSubtreeError(subtreeDepth)
 		}
 		return ref.Uint32(uint32(*roundedNodeIndex)), nil
 	}
