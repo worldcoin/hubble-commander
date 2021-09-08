@@ -71,7 +71,7 @@ func (s *StateTree) NextAvailableStateID() (*uint32, error) {
 
 // NextVacantSubtree returns the starting index of a vacant subtree of at least `subtreeDepth`.
 // `subtreeDepth` can be set to 0 to only search for a single vacant node.
-func (s *StateTree) NextVacantSubtree(subtreeDepth uint32) (*uint32, error) {
+func (s *StateTree) NextVacantSubtree(subtreeDepth uint8) (*uint32, error) {
 	subtreeWidth := int64(1) << subtreeDepth // Number of leaves in the subtree.
 
 	prevTakenNodeIndex := int64(-1)
@@ -80,7 +80,7 @@ func (s *StateTree) NextVacantSubtree(subtreeDepth uint32) (*uint32, error) {
 	// The iterator will scan over the state tree left-to-right detecting any gaps along the way.
 	// If a gap is detected its checked if its suitable for the given subtree regarding both alignment and size.
 	// An iterator will return the index of the first such gap it detects.
-	err := s.database.Badger.Iterator(models.FlatStateLeafPrefix, bdg.DefaultIteratorOptions, func(item *bdg.Item) (bool, error) {
+	err := s.database.Badger.Iterator(models.FlatStateLeafPrefix, db.KeyIteratorOpts, func(item *bdg.Item) (bool, error) {
 		var key uint32
 		err := db.DecodeKey(item.Key(), &key, models.FlatStateLeafPrefix)
 		if err != nil {
