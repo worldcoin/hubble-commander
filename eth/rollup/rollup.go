@@ -11,6 +11,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/proofofburn"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/contracts/spokeregistry"
+	"github.com/Worldcoin/hubble-commander/contracts/test/exampletoken"
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/transfer"
 	"github.com/Worldcoin/hubble-commander/contracts/vault"
@@ -65,6 +66,7 @@ type RollupContracts struct {
 	Create2Transfer       *create2transfer.Create2Transfer
 	Rollup                *rollup.Rollup
 	RollupAddress         common.Address
+	ExampleTokenAddress   common.Address
 }
 
 type txHelperContracts struct {
@@ -159,6 +161,20 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 		return nil, err
 	}
 
+	exampleTokenAddress, tx, _, err := exampletoken.DeployTestExampleToken(
+		c.GetAccount(),
+		c.GetBackend(),
+	)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	c.Commit()
+	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
+	if err != nil {
+		return nil, err
+	}
+
 	accountRegistry, err := accountregistry.NewAccountRegistry(*config.AccountRegistry, c.GetBackend())
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -220,6 +236,7 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 		Create2Transfer:       txHelpers.Create2Transfer,
 		Rollup:                rollupContract,
 		RollupAddress:         rollupAddress,
+		ExampleTokenAddress:   exampleTokenAddress,
 	}, nil
 }
 
