@@ -99,6 +99,9 @@ func (s *TransactionStorage) GetTransfersByCommitmentID(id *models.CommitmentID)
 		// queried Badger directly due to nil index decoding problem
 		return txStorage.database.Badger.View(func(txn *bdg.Txn) error {
 			hashes, err := getTxHashesByIndexKey(txn, indexKey, models.StoredReceiptPrefix)
+			if err == bdg.ErrKeyNotFound {
+				return nil
+			}
 			if err != nil {
 				return err
 			}
