@@ -117,7 +117,7 @@ func (c *Commander) disputeFraudulentBatch(
 	remoteBatch *eth.DecodedBatch,
 	disputableErr *executor.DisputableError,
 ) error {
-	// TODO transaction executor may not be needed here. Revisit this when extracting disputer package.
+	// TODO execution context may not be needed here. Revisit this when extracting disputer package.
 	executionCtx, err := executor.NewExecutionContext(c.storage, c.client, c.cfg.Rollup, context.Background())
 	if err != nil {
 		return err

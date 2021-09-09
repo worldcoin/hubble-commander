@@ -451,7 +451,7 @@ func (s *BatchesTestSuite) syncAllBlocks() {
 	s.NoError(err)
 }
 
-// Make sure that the commander and the transaction executor uses the same storage
+// Make sure that the commander and the execution context uses the same storage
 func (s *BatchesTestSuite) createAndSubmitTransferBatch(
 	storage *st.Storage,
 	executionCtx *executor.ExecutionContext,
@@ -476,7 +476,7 @@ func (s *BatchesTestSuite) createAndSubmitTransferBatch(
 	return pendingBatch
 }
 
-// Make sure that the commander and the transaction executor uses the same storage
+// Make sure that the commander and the execution context uses the same storage
 func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batch {
 	err := s.cmd.storage.AddTransfer(tx)
 	s.NoError(err)
@@ -499,7 +499,7 @@ func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batc
 	return pendingBatch
 }
 
-// Make sure that the commander and the transaction executor uses the same storage
+// Make sure that the commander and the execution context uses the same storage
 func (s *BatchesTestSuite) createAndSubmitInvalidTransferBatch(
 	storage *st.Storage,
 	executionCtx *executor.ExecutionContext,
