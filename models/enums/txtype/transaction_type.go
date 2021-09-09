@@ -12,7 +12,7 @@ const (
 	Genesis         TransactionType = 0
 	Transfer        TransactionType = 1
 	Create2Transfer TransactionType = 3
-	MassMigration   TransactionType = 5
+	Deposit         TransactionType = 4
 )
 
 var TransactionTypes = map[TransactionType]string{
@@ -20,6 +20,7 @@ var TransactionTypes = map[TransactionType]string{
 	Transfer:        "TRANSFER",
 	Create2Transfer: "CREATE2TRANSFER",
 	MassMigration:   "MASS_MIGRATION",
+	Deposit:         "DEPOSIT",
 }
 
 func (s TransactionType) Ref() *TransactionType {
