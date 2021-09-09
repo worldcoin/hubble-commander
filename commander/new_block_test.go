@@ -209,6 +209,7 @@ func (s *NewBlockLoopTestSuite) runInTransaction(handler func(*st.Storage, *exec
 	defer txController.Rollback(nil)
 
 	executionCtx := executor.NewTestExecutionContext(txStorage, s.testClient.Client, s.cfg.Rollup, context.Background())
+	executionCtx.Executor = executor.CreateTransactionExecutor(txtype.Transfer)
 	handler(txStorage, executionCtx)
 }
 

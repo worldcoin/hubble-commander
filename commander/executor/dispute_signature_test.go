@@ -11,6 +11,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -53,6 +54,7 @@ func (s *DisputeSignatureTestSuite) SetupTest() {
 	s.NoError(err)
 
 	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg, context.Background())
+	s.executionCtx.Executor = CreateTransactionExecutor(txtype.Transfer)
 
 	s.domain, err = s.client.GetDomain()
 	s.NoError(err)
