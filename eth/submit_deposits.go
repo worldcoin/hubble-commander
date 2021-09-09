@@ -15,7 +15,7 @@ func (c *Client) SubmitDeposits(previous *models.CommitmentInclusionProof, proof
 	transaction, err := c.rollup().
 		WithValue(*c.config.StakeAmount.ToBig()).
 		SubmitDeposits(
-			*CommitmentProofToCalldata(previous),
+			*commitmentProofToCalldata(previous),
 			*subtreeVacancyProofToCalldata(proof),
 		)
 	if err != nil {
