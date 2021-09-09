@@ -9,10 +9,6 @@ import (
 )
 
 func (c *Commander) syncTokens(startBlock, endBlock uint64) error {
-	return c.unsafeSyncTokens(startBlock, endBlock)
-}
-
-func (c *Commander) unsafeSyncTokens(startBlock, endBlock uint64) error {
 	it, err := c.client.TokenRegistry.FilterRegisteredToken(&bind.FilterOpts{
 		Start: startBlock,
 		End:   &endBlock,
