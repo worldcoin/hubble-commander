@@ -2,8 +2,6 @@ package executor
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/ethereum/go-ethereum/core/types"
 )
 
 var (
@@ -16,20 +14,13 @@ func (t *ExecutionContext) SubmitBatch(batch *models.Batch, commitments []models
 		return ErrNotEnoughCommitments
 	}
 
-	var tx *types.Transaction
-	var err error
-
 	select {
 	case <-t.ctx.Done():
 		return ErrNoLongerProposer
 	default:
 	}
 
-	if batch.Type == txtype.Transfer {
-		tx, err = t.client.SubmitTransfersBatch(commitments)
-	} else {
-		tx, err = t.client.SubmitCreate2TransfersBatch(commitments)
-	}
+	tx, err := t.Executor.SubmitBatch(t.client, commitments)
 	if err != nil {
 		return err
 	}

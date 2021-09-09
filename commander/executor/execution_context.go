@@ -11,11 +11,12 @@ import (
 
 // ExecutionContext executes transactions & syncs batches. Manages a database transaction.
 type ExecutionContext struct {
-	cfg     *config.RollupConfig
-	storage *st.Storage
-	tx      *db.TxController
-	client  *eth.Client
-	ctx     context.Context
+	cfg      *config.RollupConfig
+	storage  *st.Storage
+	tx       *db.TxController
+	client   *eth.Client
+	ctx      context.Context
+	Executor TransactionExecutor
 }
 
 // NewExecutionContext creates a ExecutionContext and starts a database transaction.
