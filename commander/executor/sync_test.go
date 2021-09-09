@@ -560,14 +560,14 @@ func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {
 func createAndSubmitTransferBatch(
 	s *require.Assertions,
 	client *eth.TestClient,
-	txExecutor *ExecutionContext,
+	executionCtx *ExecutionContext,
 	tx *models.Transfer,
 ) *models.Batch {
 	domain, err := client.GetDomain()
 	s.NoError(err)
-	pendingBatch, commitments := createTransferBatch(s, txExecutor, tx, domain)
+	pendingBatch, commitments := createTransferBatch(s, executionCtx, tx, domain)
 
-	err = txExecutor.SubmitBatch(pendingBatch, commitments)
+	err = executionCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	client.Commit()
@@ -644,17 +644,17 @@ func (s *SyncTestSuite) createCommitmentWithEmptyTransactions(commitmentType txt
 
 func createTransferBatch(
 	s *require.Assertions,
-	txExecutor *ExecutionContext,
+	executionCtx *ExecutionContext,
 	tx *models.Transfer,
 	domain *bls.Domain,
 ) (*models.Batch, []models.Commitment) {
-	err := txExecutor.storage.AddTransfer(tx)
+	err := executionCtx.storage.AddTransfer(tx)
 	s.NoError(err)
 
-	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Transfer)
+	pendingBatch, err := executionCtx.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
-	commitments, err := txExecutor.CreateTransferCommitments(domain)
+	commitments, err := executionCtx.CreateTransferCommitments(domain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -664,14 +664,14 @@ func createTransferBatch(
 func createAndSubmitC2TBatch(
 	s *require.Assertions,
 	client *eth.TestClient,
-	txExecutor *ExecutionContext,
+	executionCtx *ExecutionContext,
 	tx *models.Create2Transfer,
 ) models.Commitment {
 	domain, err := client.GetDomain()
 	s.NoError(err)
-	pendingBatch, commitments := createC2TBatch(s, txExecutor, tx, domain)
+	pendingBatch, commitments := createC2TBatch(s, executionCtx, tx, domain)
 
-	err = txExecutor.SubmitBatch(pendingBatch, commitments)
+	err = executionCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	client.Commit()
@@ -692,17 +692,17 @@ func (s *SyncTestSuite) createAndSubmitInvalidC2TBatch(tx *models.Create2Transfe
 
 func createC2TBatch(
 	s *require.Assertions,
-	txExecutor *ExecutionContext,
+	executionCtx *ExecutionContext,
 	tx *models.Create2Transfer,
 	domain *bls.Domain,
 ) (*models.Batch, []models.Commitment) {
-	err := txExecutor.storage.AddCreate2Transfer(tx)
+	err := executionCtx.storage.AddCreate2Transfer(tx)
 	s.NoError(err)
 
-	pendingBatch, err := txExecutor.NewPendingBatch(txtype.Create2Transfer)
+	pendingBatch, err := executionCtx.NewPendingBatch(txtype.Create2Transfer)
 	s.NoError(err)
 
-	commitments, err := txExecutor.CreateCreate2TransferCommitments(domain)
+	commitments, err := executionCtx.CreateCreate2TransferCommitments(domain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 	return pendingBatch, commitments

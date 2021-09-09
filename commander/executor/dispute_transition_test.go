@@ -647,23 +647,23 @@ func (s *DisputeTransitionTestSuite) commitTransaction() {
 	s.NoError(err)
 }
 
-func setUserStates(s *require.Assertions, txExecutor *ExecutionContext, domain *bls.Domain) []bls.Wallet {
+func setUserStates(s *require.Assertions, executionCtx *ExecutionContext, domain *bls.Domain) []bls.Wallet {
 	userStates := []models.UserState{
 		*createUserState(0, 300, 0),
 		*createUserState(1, 200, 0),
 		*createUserState(2, 100, 0),
 	}
-	registrations, unsubscribe, err := txExecutor.client.WatchRegistrations(&bind.WatchOpts{})
+	registrations, unsubscribe, err := executionCtx.client.WatchRegistrations(&bind.WatchOpts{})
 	s.NoError(err)
 	defer unsubscribe()
 
 	wallets := generateWallets(s, domain, len(userStates))
 	for i := range userStates {
-		pubKeyID, err := txExecutor.client.RegisterAccount(wallets[i].PublicKey(), registrations)
+		pubKeyID, err := executionCtx.client.RegisterAccount(wallets[i].PublicKey(), registrations)
 		s.NoError(err)
 		s.Equal(userStates[i].PubKeyID, *pubKeyID)
 
-		_, err = txExecutor.storage.StateTree.Set(uint32(i), &userStates[i])
+		_, err = executionCtx.storage.StateTree.Set(uint32(i), &userStates[i])
 		s.NoError(err)
 	}
 	return wallets
