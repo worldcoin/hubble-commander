@@ -98,7 +98,7 @@ var commonErrors = []*CommanderErrorsToErrorAPI{
 	),
 	NewCommanderErrorsToErrorAPI(40001, "an error occurred while iterating over badger database", []interface{}{db.ErrIteratorFinished}),
 	// BLS
-	NewCommanderErrorsToErrorAPI(99004, "an error occureed while fetching the domain for signing", []interface{}{bls.ErrInvalidDomainLength}),
+	NewCommanderErrorsToErrorAPI(99004, "an error occurred while fetching the domain for signing", []interface{}{bls.ErrInvalidDomainLength}),
 }
 
 func sanitizeError(err error, errMap map[error]*ErrorAPI) *ErrorAPI {
