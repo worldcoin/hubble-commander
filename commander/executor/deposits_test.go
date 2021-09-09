@@ -16,8 +16,8 @@ import (
 type DepositsTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage             *st.TestStorage
-	transactionExecutor *ExecutionContext
+	storage      *st.TestStorage
+	executionCtx *ExecutionContext
 }
 
 func (s *DepositsTestSuite) SetupSuite() {
@@ -29,7 +29,7 @@ func (s *DepositsTestSuite) SetupTest() {
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, &eth.Client{}, nil, context.Background())
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, &eth.Client{}, nil, context.Background())
 }
 
 func (s *DepositsTestSuite) TearDownTest() {
@@ -38,38 +38,38 @@ func (s *DepositsTestSuite) TearDownTest() {
 }
 
 func (s *DepositsTestSuite) TestGetVacancyProof_EmptyTree() {
-	stateID, err := s.transactionExecutor.storage.StateTree.NextVacantSubtree(2)
+	stateID, err := s.executionCtx.storage.StateTree.NextVacantSubtree(2)
 	s.NoError(err)
 
-	vacancyProof, err := s.transactionExecutor.GetVacancyProof(*stateID, 2)
+	vacancyProof, err := s.executionCtx.GetVacancyProof(*stateID, 2)
 	s.NoError(err)
 	s.EqualValues(vacancyProof.PathAtDepth, 0)
 	s.Len(vacancyProof.Witness, 30)
 }
 
 func (s *DepositsTestSuite) TestGetVacancyProof_SingleLeafSet() {
-	_, err := s.transactionExecutor.storage.StateTree.Set(0, &models.UserState{})
+	_, err := s.executionCtx.storage.StateTree.Set(0, &models.UserState{})
 	s.NoError(err)
 
-	stateID, err := s.transactionExecutor.storage.StateTree.NextVacantSubtree(2)
+	stateID, err := s.executionCtx.storage.StateTree.NextVacantSubtree(2)
 	s.NoError(err)
 
-	vacancyProof, err := s.transactionExecutor.GetVacancyProof(*stateID, 2)
+	vacancyProof, err := s.executionCtx.GetVacancyProof(*stateID, 2)
 	s.NoError(err)
 	s.EqualValues(vacancyProof.PathAtDepth, 1)
 	s.Len(vacancyProof.Witness, 30)
 }
 
 func (s *DepositsTestSuite) TestGetVacancyProof_TwoLeavesSet() {
-	_, err := s.transactionExecutor.storage.StateTree.Set(0, &models.UserState{})
+	_, err := s.executionCtx.storage.StateTree.Set(0, &models.UserState{})
 	s.NoError(err)
-	_, err = s.transactionExecutor.storage.StateTree.Set(4, &models.UserState{})
-	s.NoError(err)
-
-	stateID, err := s.transactionExecutor.storage.StateTree.NextVacantSubtree(2)
+	_, err = s.executionCtx.storage.StateTree.Set(4, &models.UserState{})
 	s.NoError(err)
 
-	vacancyProof, err := s.transactionExecutor.GetVacancyProof(*stateID, 2)
+	stateID, err := s.executionCtx.storage.StateTree.NextVacantSubtree(2)
+	s.NoError(err)
+
+	vacancyProof, err := s.executionCtx.GetVacancyProof(*stateID, 2)
 	s.NoError(err)
 	s.EqualValues(vacancyProof.PathAtDepth, 2)
 	s.Len(vacancyProof.Witness, 30)
@@ -77,7 +77,7 @@ func (s *DepositsTestSuite) TestGetVacancyProof_TwoLeavesSet() {
 
 func (s *DepositsTestSuite) TestGetVacancyProof_ProducesCorrectWitness() {
 	userState := &models.UserState{}
-	leafWitness, err := s.transactionExecutor.storage.StateTree.Set(0, userState)
+	leafWitness, err := s.executionCtx.storage.StateTree.Set(0, userState)
 	s.NoError(err)
 
 	leaf, err := st.NewStateLeaf(0, userState)
@@ -90,10 +90,10 @@ func (s *DepositsTestSuite) TestGetVacancyProof_ProducesCorrectWitness() {
 	firstWitness := currentHash
 	secondWitness := merkletree.GetZeroHash(31)
 
-	stateID, err := s.transactionExecutor.storage.StateTree.NextVacantSubtree(30)
+	stateID, err := s.executionCtx.storage.StateTree.NextVacantSubtree(30)
 	s.NoError(err)
 
-	vacancyProof, err := s.transactionExecutor.GetVacancyProof(*stateID, 30)
+	vacancyProof, err := s.executionCtx.GetVacancyProof(*stateID, 30)
 	s.NoError(err)
 
 	s.Len(vacancyProof.Witness, 2)

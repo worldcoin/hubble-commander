@@ -31,9 +31,9 @@ var (
 type ApplyCreate2TransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage             *st.TestStorage
-	transactionExecutor *ExecutionContext
-	client              *eth.TestClient
+	storage      *st.TestStorage
+	executionCtx *ExecutionContext
+	client       *eth.TestClient
 }
 
 func (s *ApplyCreate2TransferTestSuite) SetupSuite() {
@@ -45,7 +45,7 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 	s.client, err = eth.NewTestClient()
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, nil, context.Background())
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, nil, context.Background())
 	s.NoError(err)
 
 	_, err = s.storage.StateTree.Set(0, &models.UserState{
@@ -72,7 +72,7 @@ func (s *ApplyCreate2TransferTestSuite) TearDownTest() {
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_GetsNextAvailableStateIDAndInsertsNewUserState() {
 	pubKeyID := uint32(2)
-	_, transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&create2Transfer, pubKeyID, feeReceiverTokenID)
+	_, transferError, appError := s.executionCtx.ApplyCreate2Transfer(&create2Transfer, pubKeyID, feeReceiverTokenID)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -86,7 +86,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_GetsNextAvailab
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_SetsCorrectToStateIDInReturnedTransfer() {
 	pubKeyID := uint32(2)
-	appliedTransfer, transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&create2Transfer, pubKeyID, feeReceiverTokenID)
+	appliedTransfer, transferError, appError := s.executionCtx.ApplyCreate2Transfer(&create2Transfer, pubKeyID, feeReceiverTokenID)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -94,7 +94,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_SetsCorrectToSt
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_AppliesTransfer() {
-	appliedTransfer, transferError, appError := s.transactionExecutor.ApplyCreate2Transfer(&create2Transfer, 2, feeReceiverTokenID)
+	appliedTransfer, transferError, appError := s.executionCtx.ApplyCreate2Transfer(&create2Transfer, 2, feeReceiverTokenID)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -111,13 +111,13 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfer_InvalidTransfe
 	transfers := generateInvalidCreate2Transfers(1)
 	transfers[0].Amount = models.MakeUint256(500)
 
-	_, transferErr, appErr := s.transactionExecutor.ApplyCreate2Transfer(&transfers[0], 1, *models.NewUint256(1))
+	_, transferErr, appErr := s.executionCtx.ApplyCreate2Transfer(&transfers[0], 1, *models.NewUint256(1))
 	s.Error(transferErr)
 	s.NoError(appErr)
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_ReturnsErrorOnNilToStateID() {
-	_, transferError, appError := s.transactionExecutor.ApplyCreate2TransferForSync(&create2Transfer, uint32(2), feeReceiverTokenID)
+	_, transferError, appError := s.executionCtx.ApplyCreate2TransferForSync(&create2Transfer, uint32(2), feeReceiverTokenID)
 	s.NoError(transferError)
 	s.Equal(ErrNilReceiverStateID, appError)
 }
@@ -126,7 +126,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_InsertsN
 	pubKeyID := uint32(2)
 	c2T := create2Transfer
 	c2T.ToStateID = ref.Uint32(5)
-	_, transferError, appError := s.transactionExecutor.ApplyCreate2TransferForSync(&c2T, pubKeyID, feeReceiverTokenID)
+	_, transferError, appError := s.executionCtx.ApplyCreate2TransferForSync(&c2T, pubKeyID, feeReceiverTokenID)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -143,7 +143,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_InsertsN
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_AppliesTransfer() {
 	c2T := create2Transfer
 	c2T.ToStateID = ref.Uint32(5)
-	_, transferError, appError := s.transactionExecutor.ApplyCreate2TransferForSync(&c2T, 2, feeReceiverTokenID)
+	_, transferError, appError := s.executionCtx.ApplyCreate2TransferForSync(&c2T, 2, feeReceiverTokenID)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -164,7 +164,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_Validate
 	transfer.ToStateID = ref.Uint32(5)
 	transfer.FromStateID = senderLeaf.StateID
 
-	sync, transferError, appError := s.transactionExecutor.ApplyCreate2TransferForSync(&transfer, 2, feeReceiverTokenID)
+	sync, transferError, appError := s.executionCtx.ApplyCreate2TransferForSync(&transfer, 2, feeReceiverTokenID)
 	s.NoError(appError)
 	s.ErrorIs(transferError, ErrBalanceTooLow)
 	s.Equal(senderLeaf.UserState, *sync.Proofs.SenderStateProof.UserState)
@@ -177,7 +177,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransferForSync_Invalid
 	invalidC2T.Amount = models.MakeUint256(1_000_000)
 	invalidC2T.ToStateID = ref.Uint32(5)
 
-	_, transferErr, appErr := s.transactionExecutor.ApplyCreate2TransferForSync(&invalidC2T, 1, *models.NewUint256(1))
+	_, transferErr, appErr := s.executionCtx.ApplyCreate2TransferForSync(&invalidC2T, 1, *models.NewUint256(1))
 	s.Error(transferErr)
 	s.NoError(appErr)
 }

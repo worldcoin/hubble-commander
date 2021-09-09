@@ -39,8 +39,8 @@ func NewExecutionContext(
 	}, nil
 }
 
-// NewTestTransactionExecutor creates a ExecutionContext without a database transaction.
-func NewTestTransactionExecutor(
+// NewTestExecutionContext creates a ExecutionContext without a database transaction.
+func NewTestExecutionContext(
 	storage *st.Storage,
 	client *eth.Client,
 	cfg *config.RollupConfig,

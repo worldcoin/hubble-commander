@@ -208,8 +208,8 @@ func (s *NewBlockLoopTestSuite) runInTransaction(handler func(*st.Storage, *exec
 	s.NoError(err)
 	defer txController.Rollback(nil)
 
-	txExecutor := executor.NewTestTransactionExecutor(txStorage, s.testClient.Client, s.cfg.Rollup, context.Background())
-	handler(txStorage, txExecutor)
+	executionCtx := executor.NewTestExecutionContext(txStorage, s.testClient.Client, s.cfg.Rollup, context.Background())
+	handler(txStorage, executionCtx)
 }
 
 func (s *NewBlockLoopTestSuite) waitForLatestBlockSync() {

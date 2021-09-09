@@ -22,13 +22,13 @@ import (
 type SyncTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage             *st.TestStorage
-	client              *eth.TestClient
-	cfg                 *config.RollupConfig
-	transactionExecutor *ExecutionContext
-	transfer            models.Transfer
-	wallets             []bls.Wallet
-	domain              *bls.Domain
+	storage      *st.TestStorage
+	client       *eth.TestClient
+	cfg          *config.RollupConfig
+	executionCtx *ExecutionContext
+	transfer     models.Transfer
+	wallets      []bls.Wallet
+	domain       *bls.Domain
 }
 
 func (s *SyncTestSuite) SetupSuite() {
@@ -64,7 +64,7 @@ func (s *SyncTestSuite) setupDB() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, s.cfg, context.Background())
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg, context.Background())
 
 	seedDB(s.Assertions, s.storage.Storage, s.wallets)
 }
@@ -133,17 +133,17 @@ func (s *SyncTestSuite) TestSyncBatch_TwoTransferBatches() {
 		s.NoError(err)
 	}
 
-	expectedCommitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
+	expectedCommitments, err := s.executionCtx.CreateTransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(expectedCommitments, 2)
 	accountRoots := make([]common.Hash, 2)
 	for i := range expectedCommitments {
 		var pendingBatch *models.Batch
-		pendingBatch, err = s.transactionExecutor.NewPendingBatch(txtype.Transfer)
+		pendingBatch, err = s.executionCtx.NewPendingBatch(txtype.Transfer)
 		s.NoError(err)
 		expectedCommitments[i].ID.BatchID = pendingBatch.ID
 		expectedCommitments[i].ID.IndexInBatch = 0
-		err = s.transactionExecutor.SubmitBatch(pendingBatch, []models.Commitment{expectedCommitments[i]})
+		err = s.executionCtx.SubmitBatch(pendingBatch, []models.Commitment{expectedCommitments[i]})
 		s.NoError(err)
 		s.client.Commit()
 
@@ -178,7 +178,7 @@ func (s *SyncTestSuite) TestSyncBatch_PendingBatch() {
 	accountRoot := s.getAccountTreeRoot()
 	tx := testutils.MakeTransfer(0, 1, 0, 400)
 	s.setTransferHashAndSign(&tx)
-	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &tx)
+	createAndSubmitTransferBatch(s.Assertions, s.client, s.executionCtx, &tx)
 
 	pendingBatch, err := s.storage.GetBatch(models.MakeUint256(1))
 	s.NoError(err)
@@ -200,7 +200,7 @@ func (s *SyncTestSuite) TestSyncBatch_PendingBatch() {
 func (s *SyncTestSuite) TestSyncBatch_TooManyTransfersInCommitment() {
 	tx := testutils.MakeTransfer(0, 1, 0, 400)
 	s.setTransferHashAndSign(&tx)
-	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &tx)
+	createAndSubmitTransferBatch(s.Assertions, s.client, s.executionCtx, &tx)
 
 	tx2 := testutils.MakeTransfer(0, 1, 1, 400)
 	s.setTransferHashAndSign(&tx2)
@@ -212,11 +212,11 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyTransfersInCommitment() {
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
+	err = s.executionCtx.SyncBatch(&remoteBatches[0])
 	s.NoError(err)
 
 	var disputableErr *DisputableError
-	err = s.transactionExecutor.SyncBatch(&remoteBatches[1])
+	err = s.executionCtx.SyncBatch(&remoteBatches[1])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Transition, disputableErr.Type)
 	s.Equal(ErrTooManyTxs.Reason, disputableErr.Reason)
@@ -230,7 +230,7 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyTransfersInCommitment() {
 func (s *SyncTestSuite) TestSyncBatch_TooManyCreate2TransfersInCommitment() {
 	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx)
-	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &tx)
+	createAndSubmitC2TBatch(s.Assertions, s.client, s.executionCtx, &tx)
 
 	tx2 := testutils.MakeCreate2Transfer(0, nil, 1, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx2)
@@ -242,11 +242,11 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyCreate2TransfersInCommitment() {
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
+	err = s.executionCtx.SyncBatch(&remoteBatches[0])
 	s.NoError(err)
 
 	var disputableErr *DisputableError
-	err = s.transactionExecutor.SyncBatch(&remoteBatches[1])
+	err = s.executionCtx.SyncBatch(&remoteBatches[1])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Transition, disputableErr.Type)
 	s.Equal(ErrTooManyTxs.Reason, disputableErr.Reason)
@@ -260,15 +260,15 @@ func (s *SyncTestSuite) TestSyncBatch_TooManyCreate2TransfersInCommitment() {
 func (s *SyncTestSuite) TestSyncBatch_InvalidTransferCommitmentStateRoot() {
 	tx := testutils.MakeTransfer(0, 1, 0, 400)
 	s.setTransferHashAndSign(&tx)
-	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &tx)
+	createAndSubmitTransferBatch(s.Assertions, s.client, s.executionCtx, &tx)
 
 	tx2 := testutils.MakeTransfer(0, 1, 1, 400)
 	s.setTransferHashAndSign(&tx2)
 
-	batch, commitments := createTransferBatch(s.Assertions, s.transactionExecutor, &tx2, testDomain)
+	batch, commitments := createTransferBatch(s.Assertions, s.executionCtx, &tx2, testDomain)
 	commitments[0].PostStateRoot = utils.RandomHash()
 
-	err := s.transactionExecutor.SubmitBatch(batch, commitments)
+	err := s.executionCtx.SubmitBatch(batch, commitments)
 	s.NoError(err)
 	s.client.Commit()
 
@@ -278,11 +278,11 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidTransferCommitmentStateRoot() {
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
+	err = s.executionCtx.SyncBatch(&remoteBatches[0])
 	s.NoError(err)
 
 	var disputableErr *DisputableError
-	err = s.transactionExecutor.SyncBatch(&remoteBatches[1])
+	err = s.executionCtx.SyncBatch(&remoteBatches[1])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Transition, disputableErr.Type)
 	s.Equal(ErrInvalidCommitmentStateRoot.Error(), disputableErr.Reason)
@@ -296,15 +296,15 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidTransferCommitmentStateRoot() {
 func (s *SyncTestSuite) TestSyncBatch_InvalidCreate2TransferCommitmentStateRoot() {
 	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx)
-	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &tx)
+	createAndSubmitC2TBatch(s.Assertions, s.client, s.executionCtx, &tx)
 
 	tx2 := testutils.MakeCreate2Transfer(0, nil, 1, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx2)
 
-	batch, commitments := createC2TBatch(s.Assertions, s.transactionExecutor, &tx2, testDomain)
+	batch, commitments := createC2TBatch(s.Assertions, s.executionCtx, &tx2, testDomain)
 	commitments[0].PostStateRoot = utils.RandomHash()
 
-	err := s.transactionExecutor.SubmitBatch(batch, commitments)
+	err := s.executionCtx.SubmitBatch(batch, commitments)
 	s.NoError(err)
 	s.client.Commit()
 
@@ -314,11 +314,11 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidCreate2TransferCommitmentStateRoot(
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
+	err = s.executionCtx.SyncBatch(&remoteBatches[0])
 	s.NoError(err)
 
 	var disputableErr *DisputableError
-	err = s.transactionExecutor.SyncBatch(&remoteBatches[1])
+	err = s.executionCtx.SyncBatch(&remoteBatches[1])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Transition, disputableErr.Type)
 	s.Equal(ErrInvalidCommitmentStateRoot.Error(), disputableErr.Reason)
@@ -334,7 +334,7 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidTransferSignature() {
 	signTransfer(s.T(), &s.wallets[1], &tx)
 	s.setTransferHash(&tx)
 
-	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &tx)
+	createAndSubmitTransferBatch(s.Assertions, s.client, s.executionCtx, &tx)
 
 	s.recreateDatabase()
 
@@ -343,7 +343,7 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidTransferSignature() {
 	s.Len(remoteBatches, 1)
 
 	var disputableErr *DisputableError
-	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
+	err = s.executionCtx.SyncBatch(&remoteBatches[0])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Signature, disputableErr.Type)
 	s.Equal(InvalidSignature, disputableErr.Reason)
@@ -355,7 +355,7 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidCreate2TransferSignature() {
 	signCreate2Transfer(s.T(), &s.wallets[1], &tx)
 	s.setCreate2TransferHash(&tx)
 
-	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &tx)
+	createAndSubmitC2TBatch(s.Assertions, s.client, s.executionCtx, &tx)
 
 	s.recreateDatabase()
 
@@ -364,7 +364,7 @@ func (s *SyncTestSuite) TestSyncBatch_InvalidCreate2TransferSignature() {
 	s.Len(remoteBatches, 1)
 
 	var disputableErr *DisputableError
-	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
+	err = s.executionCtx.SyncBatch(&remoteBatches[0])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Signature, disputableErr.Type)
 	s.Equal(InvalidSignature, disputableErr.Reason)
@@ -375,10 +375,10 @@ func (s *SyncTestSuite) TestSyncBatch_NotValidBLSSignature() {
 	tx := testutils.MakeTransfer(0, 1, 0, 400)
 	s.setTransferHash(&tx)
 
-	pendingBatch, commitments := createTransferBatch(s.Assertions, s.transactionExecutor, &tx, s.domain)
+	pendingBatch, commitments := createTransferBatch(s.Assertions, s.executionCtx, &tx, s.domain)
 	commitments[0].CombinedSignature = models.Signature{1, 2, 3}
 
-	err := s.transactionExecutor.SubmitBatch(pendingBatch, commitments)
+	err := s.executionCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 	s.client.Commit()
 
@@ -389,7 +389,7 @@ func (s *SyncTestSuite) TestSyncBatch_NotValidBLSSignature() {
 	s.Len(remoteBatches, 1)
 
 	var disputableErr *DisputableError
-	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
+	err = s.executionCtx.SyncBatch(&remoteBatches[0])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Signature, disputableErr.Type)
 	s.Equal(0, disputableErr.CommitmentIndex)
@@ -398,7 +398,7 @@ func (s *SyncTestSuite) TestSyncBatch_NotValidBLSSignature() {
 func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, s.wallets[0].PublicKey())
 	s.setC2THashAndSign(&tx)
-	expectedCommitment := createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &tx)
+	expectedCommitment := createAndSubmitC2TBatch(s.Assertions, s.client, s.executionCtx, &tx)
 
 	s.recreateDatabase()
 	s.syncAllBatches()
@@ -433,28 +433,28 @@ func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 func (s *SyncTestSuite) TestSyncBatch_CommitmentWithoutTransfers() {
 	commitment := s.createCommitmentWithEmptyTransactions(txtype.Transfer)
 
-	_, err := s.transactionExecutor.client.SubmitTransfersBatchAndWait([]models.Commitment{commitment})
+	_, err := s.executionCtx.client.SubmitTransfersBatchAndWait([]models.Commitment{commitment})
 	s.NoError(err)
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
+	err = s.executionCtx.SyncBatch(&remoteBatches[0])
 	s.NoError(err)
 }
 
 func (s *SyncTestSuite) TestSyncBatch_CommitmentWithoutCreate2Transfers() {
 	commitment := s.createCommitmentWithEmptyTransactions(txtype.Create2Transfer)
 
-	_, err := s.transactionExecutor.client.SubmitCreate2TransfersBatchAndWait([]models.Commitment{commitment})
+	_, err := s.executionCtx.client.SubmitCreate2TransfersBatchAndWait([]models.Commitment{commitment})
 	s.NoError(err)
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.transactionExecutor.SyncBatch(&remoteBatches[0])
+	err = s.executionCtx.SyncBatch(&remoteBatches[0])
 	s.NoError(err)
 }
 
@@ -484,11 +484,11 @@ func (s *SyncTestSuite) TestSyncBatch_CommitmentWithNonexistentFeeReceiver() {
 	})
 	s.NoError(err)
 
-	feeReceiver, err := s.transactionExecutor.storage.StateTree.Leaf(feeReceiverStateID)
+	feeReceiver, err := s.executionCtx.storage.StateTree.Leaf(feeReceiverStateID)
 	s.NoError(err)
-	sender, err := s.transactionExecutor.storage.StateTree.Leaf(0)
+	sender, err := s.executionCtx.storage.StateTree.Leaf(0)
 	s.NoError(err)
-	receiver, err := s.transactionExecutor.storage.StateTree.Leaf(1)
+	receiver, err := s.executionCtx.storage.StateTree.Leaf(1)
 	s.NoError(err)
 
 	s.Equal(expectedNewlyCreatedFeeReceiver, feeReceiver)
@@ -501,9 +501,9 @@ func (s *SyncTestSuite) TestRevertBatch_RevertsState() {
 	s.NoError(err)
 
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
-	pendingBatch := createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &s.transfer)
+	pendingBatch := createAndSubmitTransferBatch(s.Assertions, s.client, s.executionCtx, &s.transfer)
 
-	err = s.transactionExecutor.RevertBatches(pendingBatch)
+	err = s.executionCtx.RevertBatches(pendingBatch)
 	s.NoError(err)
 
 	stateRoot, err := s.storage.StateTree.Root()
@@ -521,9 +521,9 @@ func (s *SyncTestSuite) TestRevertBatch_RevertsState() {
 
 func (s *SyncTestSuite) TestRevertBatch_ExcludesTransactionsFromCommitments() {
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
-	pendingBatch := createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &s.transfer)
+	pendingBatch := createAndSubmitTransferBatch(s.Assertions, s.client, s.executionCtx, &s.transfer)
 
-	err := s.transactionExecutor.RevertBatches(pendingBatch)
+	err := s.executionCtx.RevertBatches(pendingBatch)
 	s.NoError(err)
 
 	transfer, err := s.storage.GetTransfer(s.transfer.Hash)
@@ -539,17 +539,17 @@ func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {
 	pendingBatches := make([]models.Batch, 2)
 	for i := range pendingBatches {
 		signTransfer(s.T(), &s.wallets[transfers[i].FromStateID], &transfers[i])
-		pendingBatches[i] = *createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &transfers[i])
+		pendingBatches[i] = *createAndSubmitTransferBatch(s.Assertions, s.client, s.executionCtx, &transfers[i])
 	}
 
-	latestCommitment, err := s.transactionExecutor.storage.GetLatestCommitment()
+	latestCommitment, err := s.executionCtx.storage.GetLatestCommitment()
 	s.NoError(err)
 	s.Equal(models.MakeUint256(2), latestCommitment.ID.BatchID)
 
-	err = s.transactionExecutor.RevertBatches(&pendingBatches[0])
+	err = s.executionCtx.RevertBatches(&pendingBatches[0])
 	s.NoError(err)
 
-	_, err = s.transactionExecutor.storage.GetLatestCommitment()
+	_, err = s.executionCtx.storage.GetLatestCommitment()
 	s.Equal(st.NewNotFoundError("commitment"), err)
 
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
@@ -575,11 +575,11 @@ func createAndSubmitTransferBatch(
 }
 
 func (s *SyncTestSuite) createAndSubmitInvalidTransferBatch(tx *models.Transfer) *models.Batch {
-	pendingBatch, commitments := createTransferBatch(s.Assertions, s.transactionExecutor, tx, testDomain)
+	pendingBatch, commitments := createTransferBatch(s.Assertions, s.executionCtx, tx, testDomain)
 
 	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)
 
-	err := s.transactionExecutor.SubmitBatch(pendingBatch, commitments)
+	err := s.executionCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.Commit()
@@ -589,13 +589,13 @@ func (s *SyncTestSuite) createAndSubmitInvalidTransferBatch(tx *models.Transfer)
 func (s *SyncTestSuite) createAndSubmitTransferBatchWithNonexistentFeeReceiver(tx *models.Transfer, feeReceiverStateID uint32) {
 	commitmentTokenID := models.MakeUint256(0)
 
-	receiverLeaf, err := s.transactionExecutor.storage.StateTree.Leaf(tx.ToStateID)
+	receiverLeaf, err := s.executionCtx.storage.StateTree.Leaf(tx.ToStateID)
 	s.NoError(err)
-	txErr, appErr := s.transactionExecutor.ApplyTransfer(tx, receiverLeaf, commitmentTokenID)
+	txErr, appErr := s.executionCtx.ApplyTransfer(tx, receiverLeaf, commitmentTokenID)
 	s.NoError(txErr)
 	s.NoError(appErr)
 
-	_, commitmentErr, appErr := s.transactionExecutor.ApplyFeeForSync(feeReceiverStateID, &commitmentTokenID, &tx.Fee)
+	_, commitmentErr, appErr := s.executionCtx.ApplyFeeForSync(feeReceiverStateID, &commitmentTokenID, &tx.Fee)
 	s.NoError(commitmentErr)
 	s.NoError(appErr)
 
@@ -605,10 +605,10 @@ func (s *SyncTestSuite) createAndSubmitTransferBatchWithNonexistentFeeReceiver(t
 	combinedSignature, err := CombineSignatures(models.MakeTransferArray(*tx), s.domain)
 	s.NoError(err)
 
-	postStateRoot, err := s.transactionExecutor.storage.StateTree.Root()
+	postStateRoot, err := s.executionCtx.storage.StateTree.Root()
 	s.NoError(err)
 
-	nextBatchID, err := s.transactionExecutor.storage.GetNextBatchID()
+	nextBatchID, err := s.executionCtx.storage.GetNextBatchID()
 	s.NoError(err)
 
 	commitment := models.Commitment{
@@ -630,7 +630,7 @@ func (s *SyncTestSuite) createCommitmentWithEmptyTransactions(commitmentType txt
 	stateRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)
 
-	feeReceiver, err := s.transactionExecutor.getCommitmentFeeReceiver()
+	feeReceiver, err := s.executionCtx.getCommitmentFeeReceiver()
 	s.NoError(err)
 
 	return models.Commitment{
@@ -679,11 +679,11 @@ func createAndSubmitC2TBatch(
 }
 
 func (s *SyncTestSuite) createAndSubmitInvalidC2TBatch(tx *models.Create2Transfer) models.Commitment {
-	pendingBatch, commitments := createC2TBatch(s.Assertions, s.transactionExecutor, tx, testDomain)
+	pendingBatch, commitments := createC2TBatch(s.Assertions, s.executionCtx, tx, testDomain)
 
 	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)
 
-	err := s.transactionExecutor.SubmitBatch(pendingBatch, commitments)
+	err := s.executionCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.Commit()
@@ -714,7 +714,7 @@ func (s *SyncTestSuite) syncAllBatches() {
 
 	for i := range newRemoteBatches {
 		remoteBatch := &newRemoteBatches[i]
-		err = s.transactionExecutor.SyncBatch(remoteBatch)
+		err = s.executionCtx.SyncBatch(remoteBatch)
 		s.NoError(err)
 	}
 }

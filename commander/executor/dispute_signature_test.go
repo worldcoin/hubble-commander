@@ -23,11 +23,11 @@ import (
 type DisputeSignatureTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage             *st.TestStorage
-	client              *eth.TestClient
-	cfg                 *config.RollupConfig
-	transactionExecutor *ExecutionContext
-	domain              *bls.Domain
+	storage      *st.TestStorage
+	client       *eth.TestClient
+	cfg          *config.RollupConfig
+	executionCtx *ExecutionContext
+	domain       *bls.Domain
 }
 
 func (s *DisputeSignatureTestSuite) SetupSuite() {
@@ -52,7 +52,7 @@ func (s *DisputeSignatureTestSuite) SetupTest() {
 	)
 	s.NoError(err)
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, s.cfg, context.Background())
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg, context.Background())
 
 	s.domain, err = s.client.GetDomain()
 	s.NoError(err)
@@ -66,10 +66,10 @@ func (s *DisputeSignatureTestSuite) TearDownTest() {
 
 func (s *DisputeSignatureTestSuite) TestUserStateProof() {
 	userState := createUserState(1, 300, 1)
-	witness, err := s.transactionExecutor.storage.StateTree.Set(1, userState)
+	witness, err := s.executionCtx.storage.StateTree.Set(1, userState)
 	s.NoError(err)
 
-	stateProof, err := s.transactionExecutor.userStateProof(1)
+	stateProof, err := s.executionCtx.userStateProof(1)
 	s.NoError(err)
 	s.Equal(userState, stateProof.UserState)
 	s.Equal(witness, stateProof.Witness)
@@ -83,7 +83,7 @@ func (s *DisputeSignatureTestSuite) TestPublicKeyProof() {
 	err := s.storage.AccountTree.SetSingle(account)
 	s.NoError(err)
 
-	publicKeyProof, err := s.transactionExecutor.publicKeyProof(account.PubKeyID)
+	publicKeyProof, err := s.executionCtx.publicKeyProof(account.PubKeyID)
 	s.NoError(err)
 	s.Equal(account.PublicKey, *publicKeyProof.PublicKey)
 	s.Len(publicKeyProof.Witness, 32)
@@ -99,7 +99,7 @@ func (s *DisputeSignatureTestSuite) TestReceiverPublicKeyProof() {
 
 	publicKeyHash := crypto.Keccak256Hash(account.PublicKey.Bytes())
 
-	publicKeyProof, err := s.transactionExecutor.receiverPublicKeyProof(account.PubKeyID)
+	publicKeyProof, err := s.executionCtx.receiverPublicKeyProof(account.PubKeyID)
 	s.NoError(err)
 	s.Equal(publicKeyHash, publicKeyProof.PublicKeyHash)
 	s.Len(publicKeyProof.Witness, 32)
@@ -117,7 +117,7 @@ func (s *DisputeSignatureTestSuite) TestSignatureProof() {
 	stateProofs := make([]models.StateMerkleProof, 0, len(transfers))
 	expectedPublicKeys := make([]models.PublicKey, 0, len(transfers))
 	for i := range transfers {
-		stateProof, err := s.transactionExecutor.userStateProof(transfers[i].FromStateID)
+		stateProof, err := s.executionCtx.userStateProof(transfers[i].FromStateID)
 		s.NoError(err)
 		stateProofs = append(stateProofs, *stateProof)
 
@@ -126,7 +126,7 @@ func (s *DisputeSignatureTestSuite) TestSignatureProof() {
 		expectedPublicKeys = append(expectedPublicKeys, account.PublicKey)
 	}
 
-	signatureProof, err := s.transactionExecutor.signatureProof(stateProofs)
+	signatureProof, err := s.executionCtx.signatureProof(stateProofs)
 	s.NoError(err)
 	s.Len(signatureProof.UserStates, 3)
 	s.Len(signatureProof.PublicKeys, 3)
@@ -157,7 +157,7 @@ func (s *DisputeSignatureTestSuite) TestSignatureProofWithReceiver() {
 	senderPublicKeys := make([]models.PublicKey, 0, len(transfers))
 	receiverPublicKeys := make([]common.Hash, 0, len(transfers))
 	for i := range transfers {
-		stateProof, err := s.transactionExecutor.userStateProof(transfers[i].FromStateID)
+		stateProof, err := s.executionCtx.userStateProof(transfers[i].FromStateID)
 		s.NoError(err)
 		stateProofs = append(stateProofs, *stateProof)
 
@@ -165,7 +165,7 @@ func (s *DisputeSignatureTestSuite) TestSignatureProofWithReceiver() {
 		s.NoError(err)
 		senderPublicKeys = append(senderPublicKeys, account.PublicKey)
 
-		err = s.transactionExecutor.storage.AccountTree.SetSingle(&receiverAccounts[i])
+		err = s.executionCtx.storage.AccountTree.SetSingle(&receiverAccounts[i])
 		s.NoError(err)
 		receiverPublicKeys = append(receiverPublicKeys, crypto.Keccak256Hash(transfers[i].ToPublicKey.Bytes()))
 	}
@@ -175,7 +175,7 @@ func (s *DisputeSignatureTestSuite) TestSignatureProofWithReceiver() {
 
 	commitment := &encoder.DecodedCommitment{Transactions: serializedTxs}
 
-	signatureProof, err := s.transactionExecutor.signatureProofWithReceiver(commitment, stateProofs)
+	signatureProof, err := s.executionCtx.signatureProofWithReceiver(commitment, stateProofs)
 	s.NoError(err)
 	s.Len(signatureProof.UserStates, 3)
 	s.Len(signatureProof.SenderPublicKeys, 3)
@@ -194,7 +194,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_DisputesTransferBatchWi
 	transfer := testutils.MakeTransfer(1, 2, 0, 50)
 	signTransfer(s.T(), &wallets[0], &transfer)
 
-	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &transfer)
+	createAndSubmitTransferBatch(s.Assertions, s.client, s.executionCtx, &transfer)
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
@@ -217,9 +217,9 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_DisputesC2TBatchWithInv
 	transfer := testutils.MakeCreate2Transfer(0, nil, 0, 100, &receiver.PublicKey)
 	signCreate2Transfer(s.T(), &wallets[1], &transfer)
 
-	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &transfer)
+	createAndSubmitC2TBatch(s.Assertions, s.client, s.executionCtx, &transfer)
 
-	err := s.transactionExecutor.storage.AccountTree.SetSingle(receiver)
+	err := s.executionCtx.storage.AccountTree.SetSingle(receiver)
 	s.NoError(err)
 
 	remoteBatches, err := s.client.GetAllBatches()
@@ -238,7 +238,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Transfer_ValidBatch() {
 	transfer := testutils.MakeTransfer(1, 2, 0, 50)
 	signTransfer(s.T(), &wallets[1], &transfer)
 
-	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &transfer)
+	createAndSubmitTransferBatch(s.Assertions, s.client, s.executionCtx, &transfer)
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
@@ -261,9 +261,9 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Create2Transfer_ValidBa
 	transfer := testutils.MakeCreate2Transfer(0, nil, 0, 100, &receiver.PublicKey)
 	signCreate2Transfer(s.T(), &wallets[0], &transfer)
 
-	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &transfer)
+	createAndSubmitC2TBatch(s.Assertions, s.client, s.executionCtx, &transfer)
 
-	err := s.transactionExecutor.storage.AccountTree.SetSingle(receiver)
+	err := s.executionCtx.storage.AccountTree.SetSingle(receiver)
 	s.NoError(err)
 
 	remoteBatches, err := s.client.GetAllBatches()
@@ -277,9 +277,9 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Create2Transfer_ValidBa
 }
 
 func (s *DisputeSignatureTestSuite) setUserStatesAndAddAccounts() []bls.Wallet {
-	wallets := setUserStates(s.Assertions, s.transactionExecutor, s.domain)
+	wallets := setUserStates(s.Assertions, s.executionCtx, s.domain)
 	for i := range wallets {
-		err := s.transactionExecutor.storage.AccountTree.SetSingle(&models.AccountLeaf{
+		err := s.executionCtx.storage.AccountTree.SetSingle(&models.AccountLeaf{
 			PubKeyID:  uint32(i),
 			PublicKey: *wallets[i].PublicKey(),
 		})
@@ -292,10 +292,10 @@ func (s *DisputeSignatureTestSuite) disputeSignature(
 	batch *eth.DecodedBatch,
 	transfers models.GenericTransactionArray,
 ) error {
-	proofs, err := s.transactionExecutor.stateMerkleProofs(transfers)
+	proofs, err := s.executionCtx.stateMerkleProofs(transfers)
 	s.NoError(err)
 
-	return s.transactionExecutor.DisputeSignature(batch, 0, proofs)
+	return s.executionCtx.DisputeSignature(batch, 0, proofs)
 }
 
 func TestDisputeSignatureTestSuite(t *testing.T) {
