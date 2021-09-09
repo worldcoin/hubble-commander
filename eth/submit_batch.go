@@ -17,7 +17,7 @@ import (
 
 const gasEstimateMultiplier = 1.3
 
-type SubmitBatchFunc func(commitments []models.Commitment) (*types.Transaction, error)
+type SubmitBatchFunc func() (*types.Transaction, error)
 
 func (c *Client) SubmitTransfersBatch(commitments []models.Commitment) (
 	*types.Transaction,
@@ -50,16 +50,17 @@ func (c *Client) SubmitCreate2TransfersBatch(commitments []models.Commitment) (
 }
 
 func (c *Client) SubmitTransfersBatchAndWait(commitments []models.Commitment) (batch *models.Batch, err error) {
-	return c.submitBatchAndWait(commitments, c.SubmitTransfersBatch)
+	return c.submitBatchAndWait(func() (*types.Transaction, error) {
+		return c.SubmitTransfersBatch(commitments)
+	})
 }
 func (c *Client) SubmitCreate2TransfersBatchAndWait(commitments []models.Commitment) (batch *models.Batch, err error) {
-	return c.submitBatchAndWait(commitments, c.SubmitCreate2TransfersBatch)
+	return c.submitBatchAndWait(func() (*types.Transaction, error) {
+		return c.SubmitCreate2TransfersBatch(commitments)
+	})
 }
 
-func (c *Client) submitBatchAndWait(
-	commitments []models.Commitment,
-	submit SubmitBatchFunc,
-) (batch *models.Batch, err error) {
+func (c *Client) submitBatchAndWait(submit SubmitBatchFunc) (batch *models.Batch, err error) {
 	sink := make(chan *rollup.RollupNewBatch)
 	subscription, err := c.Rollup.WatchNewBatch(&bind.WatchOpts{}, sink)
 	if err != nil {
@@ -67,7 +68,7 @@ func (c *Client) submitBatchAndWait(
 	}
 	defer subscription.Unsubscribe()
 
-	tx, err := submit(commitments)
+	tx, err := submit()
 	if err != nil {
 		return
 	}
