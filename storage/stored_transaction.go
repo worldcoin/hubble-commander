@@ -5,7 +5,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	bh "github.com/timshannon/badgerhold/v3"
@@ -34,23 +33,52 @@ func (s *TransactionStorage) BeginTransaction(opts TxOptions) (*db.TxController,
 		return nil, nil, err
 	}
 
-	txTransactionStorage := *s
-	txTransactionStorage.database = txDatabase
+	txTransactionStorage := NewTransactionStorage(txDatabase)
+	return txController, txTransactionStorage, nil
+}
 
-	return txController, &txTransactionStorage, nil
+func (s *TransactionStorage) executeInTransaction(opts TxOptions, fn func(txStorage *TransactionStorage) error) error {
+	err := s.unsafeExecuteInTransaction(opts, fn)
+	if err == bdg.ErrConflict {
+		return s.executeInTransaction(opts, fn)
+	}
+	return err
+}
+
+func (s *TransactionStorage) unsafeExecuteInTransaction(opts TxOptions, fn func(txStorage *TransactionStorage) error) error {
+	txController, txStorage, err := s.BeginTransaction(opts)
+	if err != nil {
+		return err
+	}
+	defer txController.Rollback(&err)
+
+	err = fn(txStorage)
+	if err != nil {
+		return err
+	}
+
+	return txController.Commit()
 }
 
 func (s *TransactionStorage) addStoredReceipt(txReceipt *models.StoredReceipt) error {
 	return s.database.Badger.Insert(txReceipt.Hash, *txReceipt)
 }
 
-func (s *TransactionStorage) getStoredTxWithReceipt(hash common.Hash) (*models.StoredTx, *models.StoredReceipt, error) {
-	storedTx, err := s.getStoredTx(hash)
-	if err != nil {
-		return nil, nil, err
-	}
+func (s *TransactionStorage) getStoredTxWithReceipt(hash common.Hash) (
+	storedTx *models.StoredTx, txReceipt *models.StoredReceipt, err error,
+) {
+	err = s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
+		storedTx, err = txStorage.getStoredTx(hash)
+		if err != nil {
+			return err
+		}
 
-	txReceipt, err := s.getStoredTxReceipt(hash)
+		txReceipt, err = txStorage.getStoredTxReceipt(hash)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -102,46 +130,55 @@ func (s *TransactionStorage) getKeyList(indexKey []byte) (*bh.KeyList, error) {
 }
 
 func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*models.Uint256, error) {
-	encodedStateID, err := models.EncodeUint32(&accountStateID)
-	if err != nil {
-		return nil, err
-	}
-
-	indexKey := db.IndexKey(models.StoredTxName, "FromStateID", encodedStateID)
-	keyList, err := s.getKeyList(indexKey)
-	if err != nil {
-		return nil, err
-	}
-	txHashes, err := decodeKeyListHashes(models.StoredTxPrefix, *keyList)
-	if err != nil {
-		return nil, err
-	}
-	if len(txHashes) == 0 {
-		return nil, NewNotFoundError("transaction")
-	}
-
 	latestNonce := models.MakeUint256(0)
-	for i := range txHashes {
-		tx, err := s.getStoredTx(txHashes[i])
+
+	err := s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
+		encodedStateID, err := models.EncodeUint32(&accountStateID)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		if tx.Nonce.Cmp(&latestNonce) > 0 {
-			latestNonce = tx.Nonce
+
+		indexKey := db.IndexKey(models.StoredTxName, "FromStateID", encodedStateID)
+		keyList, err := txStorage.getKeyList(indexKey)
+		if err != nil {
+			return err
 		}
+		txHashes, err := decodeKeyListHashes(models.StoredTxPrefix, *keyList)
+		if err != nil {
+			return err
+		}
+		if len(txHashes) == 0 {
+			return NewNotFoundError("transaction")
+		}
+
+		for i := range txHashes {
+			tx, err := txStorage.getStoredTx(txHashes[i])
+			if err != nil {
+				return err
+			}
+			if tx.Nonce.Cmp(&latestNonce) > 0 {
+				latestNonce = tx.Nonce
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 	return &latestNonce, nil
 }
 
 func (s *TransactionStorage) MarkTransactionsAsPending(txHashes []common.Hash) error {
 	dataType := models.StoredReceipt{}
-	for i := range txHashes {
-		err := s.database.Badger.Delete(txHashes[i], dataType)
-		if err != nil {
-			return err
+	return s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
+		for i := range txHashes {
+			err := txStorage.database.Badger.Delete(txHashes[i], dataType)
+			if err != nil {
+				return err
+			}
 		}
-	}
-	return nil
+		return nil
+	})
 }
 
 func (s *TransactionStorage) SetTransactionError(txHash common.Hash, errorMessage string) error {
@@ -152,51 +189,46 @@ func (s *TransactionStorage) SetTransactionError(txHash common.Hash, errorMessag
 }
 
 func (s *Storage) GetTransactionCount() (*int, error) {
-	txController, txStorage, err := s.BeginTransaction(TxOptions{ReadOnly: true})
-	if err != nil {
-		return nil, err
-	}
-	defer txController.Rollback(&err)
+	count := new(int)
+	err := s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
+		latestBatch, err := txStorage.GetLatestSubmittedBatch()
+		if IsNotFoundError(err) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		seekPrefix := db.IndexKeyPrefix(models.StoredReceiptName, "CommitmentID")
+		err = txStorage.database.Badger.Iterator(seekPrefix, db.PrefetchIteratorOpts,
+			func(item *bdg.Item) (bool, error) {
+				var commitmentID *models.CommitmentID
+				commitmentID, err = models.DecodeCommitmentIDPointer(keyValue(seekPrefix, item.Key()))
+				if err != nil {
+					return false, err
+				}
+				if commitmentID == nil || commitmentID.BatchID.Cmp(&latestBatch.ID) > 0 {
+					return false, nil
+				}
 
-	latestBatch, err := txStorage.GetLatestSubmittedBatch()
-	if IsNotFoundError(err) {
-		return ref.Int(0), nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	count := 0
-	seekPrefix := db.IndexKeyPrefix(models.StoredReceiptName, "CommitmentID")
-	err = txStorage.database.Badger.Iterator(seekPrefix, db.PrefetchIteratorOpts,
-		func(item *bdg.Item) (bool, error) {
-			var commitmentID *models.CommitmentID
-			commitmentID, err = models.DecodeCommitmentIDPointer(keyValue(seekPrefix, item.Key()))
-			if err != nil {
-				return false, err
-			}
-			if commitmentID == nil || commitmentID.BatchID.Cmp(&latestBatch.ID) > 0 {
+				var keyList bh.KeyList
+				err = item.Value(func(val []byte) error {
+					return db.DecodeKeyList(val, &keyList)
+				})
+				if err != nil {
+					return false, err
+				}
+				*count += len(keyList)
 				return false, nil
-			}
-
-			var keyList bh.KeyList
-			err = item.Value(func(val []byte) error {
-				return db.DecodeKeyList(val, &keyList)
 			})
-			if err != nil {
-				return false, err
-			}
-			count += len(keyList)
-			return false, nil
-		})
-	if err != nil && err != db.ErrIteratorFinished {
-		return nil, err
-	}
-
-	err = txController.Commit()
+		if err != nil && err != db.ErrIteratorFinished {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	return &count, nil
+	return count, nil
 }
 
 func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.Uint256) ([]common.Hash, error) {
