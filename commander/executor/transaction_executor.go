@@ -18,8 +18,8 @@ type ExecutionContext struct {
 	ctx     context.Context
 }
 
-// NewTransactionExecutor creates a ExecutionContext and starts a database transaction.
-func NewTransactionExecutor(
+// NewExecutionContext creates a ExecutionContext and starts a database transaction.
+func NewExecutionContext(
 	storage *st.Storage,
 	client *eth.Client,
 	cfg *config.RollupConfig,
