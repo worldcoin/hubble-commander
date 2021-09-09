@@ -89,17 +89,17 @@ func (c *Commander) syncOrDisputeRemoteBatch(remoteBatch *eth.DecodedBatch) erro
 }
 
 func (c *Commander) syncBatch(remoteBatch *eth.DecodedBatch) error {
-	txExecutor, err := executor.NewTransactionExecutor(c.storage, c.client, c.cfg.Rollup, context.Background())
+	executionCtx, err := executor.NewExecutionContext(c.storage, c.client, c.cfg.Rollup, context.Background())
 	if err != nil {
 		return err
 	}
-	defer txExecutor.Rollback(&err)
+	defer executionCtx.Rollback(&err)
 
-	err = txExecutor.SyncBatch(remoteBatch)
+	err = executionCtx.SyncBatch(remoteBatch)
 	if err != nil {
 		return err
 	}
-	return txExecutor.Commit()
+	return executionCtx.Commit()
 }
 
 func (c *Commander) replaceBatch(localBatch *models.Batch, remoteBatch *eth.DecodedBatch) error {
@@ -117,24 +117,24 @@ func (c *Commander) disputeFraudulentBatch(
 	remoteBatch *eth.DecodedBatch,
 	disputableErr *executor.DisputableError,
 ) error {
-	// TODO transaction executor may not be needed here. Revisit this when extracting disputer package.
-	txExecutor, err := executor.NewTransactionExecutor(c.storage, c.client, c.cfg.Rollup, context.Background())
+	// TODO execution context may not be needed here. Revisit this when extracting disputer package.
+	executionCtx, err := executor.NewExecutionContext(c.storage, c.client, c.cfg.Rollup, context.Background())
 	if err != nil {
 		return err
 	}
-	defer txExecutor.Rollback(&err)
+	defer executionCtx.Rollback(&err)
 
 	switch disputableErr.Type {
 	case executor.Transition:
-		err = txExecutor.DisputeTransition(remoteBatch, disputableErr.CommitmentIndex, disputableErr.Proofs)
+		err = executionCtx.DisputeTransition(remoteBatch, disputableErr.CommitmentIndex, disputableErr.Proofs)
 	case executor.Signature:
-		err = txExecutor.DisputeSignature(remoteBatch, disputableErr.CommitmentIndex, disputableErr.Proofs)
+		err = executionCtx.DisputeSignature(remoteBatch, disputableErr.CommitmentIndex, disputableErr.Proofs)
 	}
 	if err != nil {
 		return err
 	}
 
-	err = txExecutor.Commit()
+	err = executionCtx.Commit()
 	if err != nil {
 		return err
 	}
@@ -142,17 +142,17 @@ func (c *Commander) disputeFraudulentBatch(
 }
 
 func (c *Commander) revertBatches(startBatch *models.Batch) error {
-	txExecutor, err := executor.NewTransactionExecutor(c.storage, c.client, c.cfg.Rollup, context.Background())
+	executionCtx, err := executor.NewExecutionContext(c.storage, c.client, c.cfg.Rollup, context.Background())
 	if err != nil {
 		return err
 	}
-	defer txExecutor.Rollback(&err)
+	defer executionCtx.Rollback(&err)
 
-	err = txExecutor.RevertBatches(startBatch)
+	err = executionCtx.RevertBatches(startBatch)
 	if err != nil {
 		return err
 	}
-	return txExecutor.Commit()
+	return executionCtx.Commit()
 }
 
 func (c *Commander) getLatestBatchID() (*models.Uint256, error) {

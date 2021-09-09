@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (t *TransactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionType, domain *bls.Domain) (err error) {
+func (t *ExecutionContext) CreateAndSubmitBatch(batchType txtype.TransactionType, domain *bls.Domain) (err error) {
 	startTime := time.Now()
 	var commitments []models.Commitment
 	batch, err := t.NewPendingBatch(batchType)
@@ -42,7 +42,7 @@ func (t *TransactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionT
 	return nil
 }
 
-func (t *TransactionExecutor) NewPendingBatch(batchType txtype.TransactionType) (*models.Batch, error) {
+func (t *ExecutionContext) NewPendingBatch(batchType txtype.TransactionType) (*models.Batch, error) {
 	prevStateRoot, err := t.storage.StateTree.Root()
 	if err != nil {
 		return nil, err

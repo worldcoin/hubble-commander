@@ -7,7 +7,7 @@ import (
 
 var ErrInvalidFeeReceiverTokenID = errors.New("invalid fee receiver token ID")
 
-func (t *TransactionExecutor) ApplyFee(feeReceiverStateID uint32, fee models.Uint256) (*models.StateMerkleProof, error) {
+func (t *ExecutionContext) ApplyFee(feeReceiverStateID uint32, fee models.Uint256) (*models.StateMerkleProof, error) {
 	feeReceiver, err := t.storage.StateTree.Leaf(feeReceiverStateID)
 	if err != nil {
 		return nil, err
@@ -15,7 +15,7 @@ func (t *TransactionExecutor) ApplyFee(feeReceiverStateID uint32, fee models.Uin
 	return t.applyFee(feeReceiver, fee)
 }
 
-func (t *TransactionExecutor) applyFee(feeReceiver *models.StateLeaf, fee models.Uint256) (*models.StateMerkleProof, error) {
+func (t *ExecutionContext) applyFee(feeReceiver *models.StateLeaf, fee models.Uint256) (*models.StateMerkleProof, error) {
 	initialState := feeReceiver.UserState.Copy()
 
 	feeReceiver.Balance = *feeReceiver.Balance.Add(&fee)
@@ -32,7 +32,7 @@ func (t *TransactionExecutor) applyFee(feeReceiver *models.StateLeaf, fee models
 	return stateProof, nil
 }
 
-func (t *TransactionExecutor) ApplyFeeForSync(feeReceiverStateID uint32, commitmentTokenID, fee *models.Uint256) (
+func (t *ExecutionContext) ApplyFeeForSync(feeReceiverStateID uint32, commitmentTokenID, fee *models.Uint256) (
 	stateProof *models.StateMerkleProof,
 	commitmentError error,
 	appError error,

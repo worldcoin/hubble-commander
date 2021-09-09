@@ -7,7 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 )
 
-func (t *TransactionExecutor) buildTransferCommitment(
+func (t *ExecutionContext) buildTransferCommitment(
 	appliedTransfers []models.Transfer,
 	commitmentID *models.CommitmentID,
 	feeReceiverStateID uint32,

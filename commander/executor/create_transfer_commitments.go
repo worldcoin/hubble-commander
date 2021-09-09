@@ -18,7 +18,7 @@ type FeeReceiver struct {
 	TokenID models.Uint256
 }
 
-func (t *TransactionExecutor) CreateTransferCommitments(
+func (t *ExecutionContext) CreateTransferCommitments(
 	domain *bls.Domain,
 ) (commitments []models.Commitment, err error) {
 	pendingTransfers, err := t.queryPendingTransfers()
@@ -55,7 +55,7 @@ func (t *TransactionExecutor) CreateTransferCommitments(
 	return commitments, nil
 }
 
-func (t *TransactionExecutor) createTransferCommitment(
+func (t *ExecutionContext) createTransferCommitment(
 	pendingTransfers []models.Transfer,
 	commitmentID *models.CommitmentID,
 	domain *bls.Domain,
@@ -107,7 +107,7 @@ func (t *TransactionExecutor) createTransferCommitment(
 	return newPendingTransfers, commitment, nil
 }
 
-func (t *TransactionExecutor) applyTransfersForCommitment(pendingTransfers []models.Transfer, feeReceiver *FeeReceiver) (
+func (t *ExecutionContext) applyTransfersForCommitment(pendingTransfers []models.Transfer, feeReceiver *FeeReceiver) (
 	appliedTransfers, newPendingTransfers []models.Transfer,
 	err error,
 ) {
@@ -143,14 +143,14 @@ func (t *TransactionExecutor) applyTransfersForCommitment(pendingTransfers []mod
 	}
 }
 
-func (t *TransactionExecutor) refillPendingTransfers(pendingTransfers []models.Transfer) ([]models.Transfer, error) {
+func (t *ExecutionContext) refillPendingTransfers(pendingTransfers []models.Transfer) ([]models.Transfer, error) {
 	if len(pendingTransfers) < int(t.cfg.MaxTxsPerCommitment) {
 		return t.queryPendingTransfers()
 	}
 	return pendingTransfers, nil
 }
 
-func (t *TransactionExecutor) queryPendingTransfers() ([]models.Transfer, error) {
+func (t *ExecutionContext) queryPendingTransfers() ([]models.Transfer, error) {
 	pendingTransfers, err := t.storage.GetPendingTransfers(t.cfg.MaxCommitmentsPerBatch * t.cfg.MaxTxsPerCommitment)
 	if err != nil {
 		return nil, err
@@ -161,7 +161,7 @@ func (t *TransactionExecutor) queryPendingTransfers() ([]models.Transfer, error)
 	return pendingTransfers, nil
 }
 
-func (t *TransactionExecutor) queryMorePendingTransfers(appliedTransfers []models.Transfer) ([]models.Transfer, error) {
+func (t *ExecutionContext) queryMorePendingTransfers(appliedTransfers []models.Transfer) ([]models.Transfer, error) {
 	numAppliedTransfers := uint32(len(appliedTransfers))
 	// TODO use SQL Offset instead
 	pendingTransfers, err := t.storage.GetPendingTransfers(
@@ -178,7 +178,7 @@ func (t *TransactionExecutor) queryMorePendingTransfers(appliedTransfers []model
 	return pendingTransfers, nil
 }
 
-func (t *TransactionExecutor) getCommitmentFeeReceiver() (*FeeReceiver, error) {
+func (t *ExecutionContext) getCommitmentFeeReceiver() (*FeeReceiver, error) {
 	commitmentTokenID := models.MakeUint256(0) // TODO support multiple tokens
 	feeReceiverState, err := t.storage.GetFeeReceiverStateLeaf(t.cfg.FeeReceiverPubKeyID, commitmentTokenID)
 	if err != nil {

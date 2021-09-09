@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (t *TransactionExecutor) DisputeSignature(
+func (t *ExecutionContext) DisputeSignature(
 	batch *eth.DecodedBatch,
 	commitmentIndex int,
 	stateProofs []models.StateMerkleProof,
@@ -25,7 +25,7 @@ func (t *TransactionExecutor) DisputeSignature(
 	return nil
 }
 
-func (t *TransactionExecutor) disputeTransferSignature(
+func (t *ExecutionContext) disputeTransferSignature(
 	batch *eth.DecodedBatch,
 	commitmentIndex int,
 	stateProofs []models.StateMerkleProof,
@@ -43,7 +43,7 @@ func (t *TransactionExecutor) disputeTransferSignature(
 	return t.client.DisputeSignatureTransfer(&batch.ID, targetCommitmentProof, signatureProof)
 }
 
-func (t *TransactionExecutor) disputeCreate2TransferSignature(
+func (t *ExecutionContext) disputeCreate2TransferSignature(
 	batch *eth.DecodedBatch,
 	commitmentIndex int,
 	stateProofs []models.StateMerkleProof,
@@ -61,7 +61,7 @@ func (t *TransactionExecutor) disputeCreate2TransferSignature(
 	return t.client.DisputeSignatureCreate2Transfer(&batch.ID, targetCommitmentProof, signatureProof)
 }
 
-func (t *TransactionExecutor) signatureProof(stateProofs []models.StateMerkleProof) (*models.SignatureProof, error) {
+func (t *ExecutionContext) signatureProof(stateProofs []models.StateMerkleProof) (*models.SignatureProof, error) {
 	proof := &models.SignatureProof{
 		UserStates: stateProofs,
 		PublicKeys: make([]models.PublicKeyProof, 0, len(stateProofs)),
@@ -77,7 +77,7 @@ func (t *TransactionExecutor) signatureProof(stateProofs []models.StateMerklePro
 	return proof, nil
 }
 
-func (t *TransactionExecutor) signatureProofWithReceiver(
+func (t *ExecutionContext) signatureProofWithReceiver(
 	commitment *encoder.DecodedCommitment,
 	stateProofs []models.StateMerkleProof,
 ) (*models.SignatureProofWithReceiver, error) {
@@ -104,7 +104,7 @@ func (t *TransactionExecutor) signatureProofWithReceiver(
 	return proof, nil
 }
 
-func (t *TransactionExecutor) userStateProof(stateID uint32) (*models.StateMerkleProof, error) {
+func (t *ExecutionContext) userStateProof(stateID uint32) (*models.StateMerkleProof, error) {
 	leaf, err := t.storage.StateTree.Leaf(stateID)
 	if err != nil {
 		return nil, err
@@ -119,7 +119,7 @@ func (t *TransactionExecutor) userStateProof(stateID uint32) (*models.StateMerkl
 	}, nil
 }
 
-func (t *TransactionExecutor) publicKeyProof(pubKeyID uint32) (*models.PublicKeyProof, error) {
+func (t *ExecutionContext) publicKeyProof(pubKeyID uint32) (*models.PublicKeyProof, error) {
 	account, err := t.storage.AccountTree.Leaf(pubKeyID)
 	if err != nil {
 		return nil, err
@@ -135,7 +135,7 @@ func (t *TransactionExecutor) publicKeyProof(pubKeyID uint32) (*models.PublicKey
 	}, nil
 }
 
-func (t *TransactionExecutor) receiverPublicKeyProof(pubKeyID uint32) (*models.ReceiverPublicKeyProof, error) {
+func (t *ExecutionContext) receiverPublicKeyProof(pubKeyID uint32) (*models.ReceiverPublicKeyProof, error) {
 	account, err := t.storage.AccountTree.Leaf(pubKeyID)
 	if err != nil {
 		return nil, err
@@ -151,7 +151,7 @@ func (t *TransactionExecutor) receiverPublicKeyProof(pubKeyID uint32) (*models.R
 	}, nil
 }
 
-func (t *TransactionExecutor) stateMerkleProofs(transfers models.GenericTransactionArray) ([]models.StateMerkleProof, error) {
+func (t *ExecutionContext) stateMerkleProofs(transfers models.GenericTransactionArray) ([]models.StateMerkleProof, error) {
 	proofs := make([]models.StateMerkleProof, 0, transfers.Len())
 	for i := 0; i < transfers.Len(); i++ {
 		stateProof, err := t.userStateProof(transfers.At(i).GetFromStateID())

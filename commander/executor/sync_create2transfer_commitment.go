@@ -5,7 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-func (t *TransactionExecutor) syncCreate2TransferCommitment(
+func (t *ExecutionContext) syncCreate2TransferCommitment(
 	commitment *encoder.DecodedCommitment,
 ) (models.GenericTransactionArray, error) {
 	deserializedTransfers, pubKeyIDs, err := encoder.DeserializeCreate2Transfers(commitment.Transactions)
@@ -41,7 +41,7 @@ func (t *TransactionExecutor) syncCreate2TransferCommitment(
 	return models.Create2TransferArray(appliedTransfers), nil
 }
 
-func (t *TransactionExecutor) setPublicKeys(transfers []models.Create2Transfer, pubKeyIDs []uint32) error {
+func (t *ExecutionContext) setPublicKeys(transfers []models.Create2Transfer, pubKeyIDs []uint32) error {
 	for i := range transfers {
 		leaf, err := t.storage.AccountTree.Leaf(pubKeyIDs[i])
 		if err != nil {
