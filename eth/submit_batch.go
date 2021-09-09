@@ -49,12 +49,12 @@ func (c *Client) SubmitCreate2TransfersBatch(commitments []models.Commitment) (
 	return c.RawTransact(c.config.StakeAmount.ToBig(), estimate, input)
 }
 
-func (c *Client) SubmitTransfersBatchAndWait(commitments []models.Commitment) (batch *models.Batch, err error) {
+func (c *Client) SubmitTransfersBatchAndWait(commitments []models.Commitment) (*models.Batch, error) {
 	return c.submitBatchAndWait(func() (*types.Transaction, error) {
 		return c.SubmitTransfersBatch(commitments)
 	})
 }
-func (c *Client) SubmitCreate2TransfersBatchAndWait(commitments []models.Commitment) (batch *models.Batch, err error) {
+func (c *Client) SubmitCreate2TransfersBatchAndWait(commitments []models.Commitment) (*models.Batch, error) {
 	return c.submitBatchAndWait(func() (*types.Transaction, error) {
 		return c.SubmitCreate2TransfersBatch(commitments)
 	})

@@ -24,6 +24,14 @@ func (c *Client) SubmitDeposits(previous *models.CommitmentInclusionProof, proof
 	return transaction, nil
 }
 
+func (c *Client) SubmitDepositsAndWait(previous *models.CommitmentInclusionProof, proof *models.SubtreeVacancyProof) (
+	*models.Batch, error,
+) {
+	return c.submitBatchAndWait(func() (*types.Transaction, error) {
+		return c.SubmitDeposits(previous, proof)
+	})
+}
+
 func subtreeVacancyProofToCalldata(proof *models.SubtreeVacancyProof) *rollup.TypesSubtreeVacancyProof {
 	return &rollup.TypesSubtreeVacancyProof{
 		PathAtDepth: new(big.Int).SetUint64(uint64(proof.PathAtDepth)),
