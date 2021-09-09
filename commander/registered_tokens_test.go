@@ -1,14 +1,13 @@
 package commander
 
 import (
-	"math/big"
 	"testing"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -59,36 +58,38 @@ func (s *RegisteredTokensTestSuite) TestSyncSingleToken() {
 }
 
 func (s *RegisteredTokensTestSuite) registerSingleToken() models.RegisteredToken {
-	registrations, unsubscribe, err := s.testClient.WatchTokenRegistrations(&bind.WatchOpts{})
+	token := models.RegisteredToken{
+		Contract: s.testClient.ExampleTokenAddress,
+	}
+	RegisterSingleToken(s.Assertions, s.testClient, &token, ref.Uint64(0))
+	return token
+}
+
+func RegisterSingleToken(s *require.Assertions, testClient *eth.TestClient, token *models.RegisteredToken, latestBlockNumber *uint64) {
+	registrations, unsubscribe, err := testClient.WatchTokenRegistrations(&bind.WatchOpts{Start: latestBlockNumber})
 	s.NoError(err)
 	defer unsubscribe()
 
-	tokenContract := s.testClient.ExampleTokenAddress
-	err = s.testClient.RequestRegisterToken(tokenContract)
+	err = testClient.RequestRegisterToken(token.Contract)
 	s.NoError(err)
 
-	err = s.testClient.FinalizeRegisterToken(tokenContract)
+	err = testClient.FinalizeRegisterToken(token.Contract)
 	s.NoError(err)
-	var tokenID *big.Int
-Outer:
 	for {
 		select {
 		case event, ok := <-registrations:
 			if !ok {
 				s.Fail("Token registry event watcher is closed")
 			}
-			if event.TokenContract == s.testClient.ExampleTokenAddress {
-				tokenID = event.TokenID
-				break Outer
+			if event.TokenContract == testClient.ExampleTokenAddress {
+				token.ID = models.MakeUint256FromBig(*event.TokenID)
+				return
 			}
-		case <-time.After(deployer.ChainTimeout):
+		case <-time.After(100 * time.Millisecond):
 			s.Fail("Token registry event watcher timed out")
 		}
 	}
-	return models.RegisteredToken{
-		ID:       models.MakeUint256FromBig(*tokenID),
-		Contract: tokenContract,
-	}
+
 }
 
 func TestRegisteredTokensTestSuite(t *testing.T) {

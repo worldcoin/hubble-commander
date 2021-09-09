@@ -5,11 +5,13 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type TestClient struct {
 	*Client
 	*simulator.Simulator
+	ExampleTokenAddress common.Address
 }
 
 // NewTestClient Sets up a TestClient backed by automining simulator.
@@ -49,19 +51,19 @@ func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig
 			SyncedBlock:                    0,
 			GenesisAccounts:                nil,
 		},
-		Rollup:              contracts.Rollup,
-		AccountRegistry:     contracts.AccountRegistry,
-		TokenRegistry:       contracts.TokenRegistry,
-		DepositManager:      contracts.DepositManager,
-		ExampleTokenAddress: contracts.ExampleTokenAddress,
-		ClientConfig:        clientCfg,
+		Rollup:          contracts.Rollup,
+		AccountRegistry: contracts.AccountRegistry,
+		TokenRegistry:   contracts.TokenRegistry,
+		DepositManager:  contracts.DepositManager,
+		ClientConfig:    clientCfg,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	return &TestClient{
-		Client:    client,
-		Simulator: sim,
+		Client:              client,
+		Simulator:           sim,
+		ExampleTokenAddress: contracts.ExampleTokenAddress,
 	}, nil
 }

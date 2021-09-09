@@ -181,30 +181,7 @@ func (s *NewBlockLoopTestSuite) registerAccounts(accounts []models.AccountLeaf) 
 func (s *NewBlockLoopTestSuite) registerToken(token models.RegisteredToken) {
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)
-
-	registrations, unsubscribe, err := s.testClient.WatchTokenRegistrations(&bind.WatchOpts{Start: latestBlockNumber})
-	s.NoError(err)
-	defer unsubscribe()
-
-	err = s.testClient.RequestRegisterToken(token.Contract)
-	s.NoError(err)
-
-	err = s.testClient.FinalizeRegisterToken(token.Contract)
-	s.NoError(err)
-	for {
-		select {
-		case event, ok := <-registrations:
-			if !ok {
-				s.Fail("Token registry event watcher is closed")
-			}
-			if event.TokenContract == s.testClient.ExampleTokenAddress {
-				token.ID = models.MakeUint256FromBig(*event.TokenID)
-				return
-			}
-		case <-time.After(100 * time.Millisecond):
-			s.Fail("Token registry event watcher timed out")
-		}
-	}
+	RegisterSingleToken(s.Assertions, s.testClient, &token, latestBlockNumber)
 }
 
 func (s *NewBlockLoopTestSuite) createAndSubmitTransferBatchInTransaction(tx *models.Transfer) {

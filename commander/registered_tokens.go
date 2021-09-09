@@ -9,8 +9,6 @@ import (
 )
 
 func (c *Commander) syncTokens(startBlock, endBlock uint64) error {
-	c.stateMutex.Lock()
-	defer c.stateMutex.Unlock()
 	return c.unsafeSyncTokens(startBlock, endBlock)
 }
 
@@ -62,8 +60,6 @@ func saveSyncedToken(
 		}
 		return ref.Bool(true), nil
 	} else {
-		// TODO anything else to do if we find a token already registered?
-		// The logic to ensure this doesn't happen is within the contract
 		return ref.Bool(false), nil
 	}
 }
