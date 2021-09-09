@@ -11,6 +11,7 @@ type TransactionType uint8
 const (
 	Genesis         TransactionType = 0
 	Transfer        TransactionType = 1
+	MassMigration   TransactionType = 2
 	Create2Transfer TransactionType = 3
 	Deposit         TransactionType = 4
 )
