@@ -123,11 +123,19 @@ func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id *models.Commit
 }
 
 func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([]models.Create2TransferWithBatchDetails, error) {
-	txs, txReceipts, err := s.getCreate2TransfersByPublicKey(publicKey)
+	var transfers []models.Create2TransferWithBatchDetails
+	err := s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
+		txs, txReceipts, err := txStorage.getCreate2TransfersByPublicKey(publicKey)
+		if err != nil {
+			return err
+		}
+		transfers, err = txStorage.create2TransferToTransfersWithBatchDetails(txs, txReceipts)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
-	return s.create2TransferToTransfersWithBatchDetails(txs, txReceipts)
+	return transfers, nil
 }
 
 func (s *Storage) getCreate2TransfersByPublicKey(publicKey *models.PublicKey) (
@@ -203,15 +211,19 @@ func (s *TransactionStorage) MarkCreate2TransfersAsIncluded(txs []models.Create2
 }
 
 func (s *Storage) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.Create2TransferWithBatchDetails, error) {
-	tx, txReceipt, err := s.getStoredTxWithReceipt(hash)
-	if err != nil {
-		return nil, err
-	}
-	if tx.TxType != txtype.Create2Transfer {
-		return nil, NewNotFoundError("transaction")
-	}
+	var transfers []models.Create2TransferWithBatchDetails
+	err := s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
+		tx, txReceipt, err := txStorage.getStoredTxWithReceipt(hash)
+		if err != nil {
+			return err
+		}
+		if tx.TxType != txtype.Create2Transfer {
+			return NewNotFoundError("transaction")
+		}
 
-	transfers, err := s.create2TransferToTransfersWithBatchDetails([]*models.StoredTx{tx}, []*models.StoredReceipt{txReceipt})
+		transfers, err = txStorage.create2TransferToTransfersWithBatchDetails([]*models.StoredTx{tx}, []*models.StoredReceipt{txReceipt})
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
