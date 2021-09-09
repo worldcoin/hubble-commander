@@ -89,7 +89,6 @@ func RegisterSingleToken(s *require.Assertions, testClient *eth.TestClient, toke
 			s.Fail("Token registry event watcher timed out")
 		}
 	}
-
 }
 
 func TestRegisteredTokensTestSuite(t *testing.T) {
