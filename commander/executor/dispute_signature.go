@@ -109,7 +109,7 @@ func (t *TransactionExecutor) userStateProof(stateID uint32) (*models.StateMerkl
 	if err != nil {
 		return nil, err
 	}
-	witness, err := t.storage.StateTree.GetWitness(leaf.StateID)
+	witness, err := t.storage.StateTree.GetLeafWitness(leaf.StateID)
 	if err != nil {
 		return nil, err
 	}
