@@ -7,6 +7,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -71,6 +73,32 @@ func (s *DepositsTestSuite) TestGetVacancyProof_TwoLeavesSet() {
 	s.NoError(err)
 	s.EqualValues(vacancyProof.PathAtDepth, 2)
 	s.Len(vacancyProof.Witness, 30)
+}
+
+func (s *DepositsTestSuite) TestGetVacancyProof_ProducesCorrectWitness() {
+	userState := &models.UserState{}
+	leafWitness, err := s.transactionExecutor.storage.StateTree.Set(0, userState)
+	s.NoError(err)
+
+	leaf, err := st.NewStateLeaf(0, userState)
+	s.NoError(err)
+
+	currentHash := leaf.DataHash
+	for i := range leafWitness[:len(leafWitness)-2] {
+		currentHash = utils.HashTwo(currentHash, leafWitness[i])
+	}
+	firstWitness := currentHash
+	secondWitness := merkletree.GetZeroHash(31)
+
+	stateID, err := s.transactionExecutor.storage.StateTree.NextVacantSubtree(30)
+	s.NoError(err)
+
+	vacancyProof, err := s.transactionExecutor.GetVacancyProof(*stateID, 30)
+	s.NoError(err)
+
+	s.Len(vacancyProof.Witness, 2)
+	s.Equal(vacancyProof.Witness[0], firstWitness)
+	s.Equal(vacancyProof.Witness[1], secondWitness)
 }
 
 func TestDepositsTestSuite(t *testing.T) {
