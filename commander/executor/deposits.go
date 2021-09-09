@@ -7,7 +7,7 @@ import (
 
 func (t *TransactionExecutor) GetVacancyProof(startStateID uint32, subtreeDepth uint8) (*models.SubtreeVacancyProof, error) {
 	path := models.MerklePath{
-		Path:  startStateID << subtreeDepth,
+		Path:  startStateID >> subtreeDepth,
 		Depth: storage.StateTreeDepth - subtreeDepth,
 	}
 	witness, err := t.storage.StateTree.GetNodeWitness(path)
