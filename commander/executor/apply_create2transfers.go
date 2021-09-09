@@ -13,7 +13,7 @@ type AppliedC2Transfers struct {
 	addedPubKeyIDs   []uint32
 }
 
-func (t *TransactionExecutor) ApplyCreate2Transfers(
+func (t *ExecutionContext) ApplyCreate2Transfers(
 	transfers []models.Create2Transfer,
 	maxApplied uint32,
 	feeReceiver *FeeReceiver,
@@ -77,7 +77,7 @@ func (t *TransactionExecutor) ApplyCreate2Transfers(
 	return returnStruct, nil
 }
 
-func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
+func (t *ExecutionContext) ApplyCreate2TransfersForSync(
 	transfers []models.Create2Transfer,
 	pubKeyIDs []uint32,
 	feeReceiverStateID uint32,
@@ -127,7 +127,7 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 	return appliedTransfers, stateChangeProofs, nil
 }
 
-func (t *TransactionExecutor) getOrRegisterPubKeyID(
+func (t *ExecutionContext) getOrRegisterPubKeyID(
 	events chan *accountregistry.AccountRegistrySinglePubkeyRegistered,
 	transfer *models.Create2Transfer,
 	tokenID models.Uint256,

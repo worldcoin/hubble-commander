@@ -19,7 +19,7 @@ type ApplyTransfersTestSuite struct {
 	suite.Suite
 	storage             *storage.TestStorage
 	cfg                 *config.RollupConfig
-	transactionExecutor *TransactionExecutor
+	transactionExecutor *ExecutionContext
 	feeReceiver         *FeeReceiver
 }
 

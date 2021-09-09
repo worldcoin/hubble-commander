@@ -5,7 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 )
 
-func (t *TransactionExecutor) GetVacancyProof(startStateID uint32, subtreeDepth uint8) (*models.SubtreeVacancyProof, error) {
+func (t *ExecutionContext) GetVacancyProof(startStateID uint32, subtreeDepth uint8) (*models.SubtreeVacancyProof, error) {
 	path := models.MerklePath{
 		Path:  startStateID >> subtreeDepth,
 		Depth: storage.StateTreeDepth - subtreeDepth,

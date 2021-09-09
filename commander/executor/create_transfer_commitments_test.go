@@ -30,7 +30,7 @@ type TransferCommitmentsTestSuite struct {
 	suite.Suite
 	storage                *st.TestStorage
 	cfg                    *config.RollupConfig
-	transactionExecutor    *TransactionExecutor
+	transactionExecutor    *ExecutionContext
 	maxTxBytesInCommitment int
 }
 

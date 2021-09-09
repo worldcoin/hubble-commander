@@ -32,7 +32,7 @@ type ApplyCreate2TransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage             *st.TestStorage
-	transactionExecutor *TransactionExecutor
+	transactionExecutor *ExecutionContext
 	client              *eth.TestClient
 }
 

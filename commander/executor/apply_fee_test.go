@@ -14,7 +14,7 @@ type ApplyFeeTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage             *storage.TestStorage
-	transactionExecutor *TransactionExecutor
+	transactionExecutor *ExecutionContext
 }
 
 func (s *ApplyFeeTestSuite) SetupSuite() {

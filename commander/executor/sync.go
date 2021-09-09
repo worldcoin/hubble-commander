@@ -16,7 +16,7 @@ var (
 	ErrBatchSubmissionFailed = errors.New("previous submit batch transaction failed")
 )
 
-func (t *TransactionExecutor) SyncBatch(remoteBatch *eth.DecodedBatch) error {
+func (t *ExecutionContext) SyncBatch(remoteBatch *eth.DecodedBatch) error {
 	localBatch, err := t.storage.GetBatch(remoteBatch.ID)
 	if err != nil && !st.IsNotFoundError(err) {
 		return err
@@ -29,7 +29,7 @@ func (t *TransactionExecutor) SyncBatch(remoteBatch *eth.DecodedBatch) error {
 	}
 }
 
-func (t *TransactionExecutor) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
+func (t *ExecutionContext) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
 	if remoteBatch.TransactionHash == localBatch.TransactionHash {
 		err := t.storage.MarkBatchAsSubmitted(&remoteBatch.Batch)
 		if err != nil {
@@ -57,7 +57,7 @@ func (t *TransactionExecutor) syncExistingBatch(remoteBatch *eth.DecodedBatch, l
 	return nil
 }
 
-func (t *TransactionExecutor) RevertBatches(startBatch *models.Batch) error {
+func (t *ExecutionContext) RevertBatches(startBatch *models.Batch) error {
 	err := t.storage.StateTree.RevertTo(*startBatch.PrevStateRoot)
 	if err != nil {
 		return err
@@ -65,7 +65,7 @@ func (t *TransactionExecutor) RevertBatches(startBatch *models.Batch) error {
 	return t.revertBatchesFrom(&startBatch.ID)
 }
 
-func (t *TransactionExecutor) revertBatchesFrom(startBatchID *models.Uint256) error {
+func (t *ExecutionContext) revertBatchesFrom(startBatchID *models.Uint256) error {
 	batches, err := t.storage.GetBatchesInRange(startBatchID, nil)
 	if err != nil {
 		return err
@@ -87,7 +87,7 @@ func (t *TransactionExecutor) revertBatchesFrom(startBatchID *models.Uint256) er
 	return t.storage.DeleteBatches(batchIDs...)
 }
 
-func (t *TransactionExecutor) excludeTransactionsFromCommitment(batchIDs ...models.Uint256) error {
+func (t *ExecutionContext) excludeTransactionsFromCommitment(batchIDs ...models.Uint256) error {
 	hashes, err := t.storage.GetTransactionHashesByBatchIDs(batchIDs...)
 	if err != nil {
 		return err
@@ -95,7 +95,7 @@ func (t *TransactionExecutor) excludeTransactionsFromCommitment(batchIDs ...mode
 	return t.storage.MarkTransactionsAsPending(hashes)
 }
 
-func (t *TransactionExecutor) getTransactionSender(txHash common.Hash) (*common.Address, error) {
+func (t *ExecutionContext) getTransactionSender(txHash common.Hash) (*common.Address, error) {
 	tx, _, err := t.client.ChainConnection.GetBackend().TransactionByHash(t.ctx, txHash)
 	if err != nil {
 		return nil, err
@@ -107,7 +107,7 @@ func (t *TransactionExecutor) getTransactionSender(txHash common.Hash) (*common.
 	return &sender, nil
 }
 
-func (t *TransactionExecutor) syncNewBatch(batch *eth.DecodedBatch) error {
+func (t *ExecutionContext) syncNewBatch(batch *eth.DecodedBatch) error {
 	numCommitments := len(batch.Commitments)
 	log.Debugf("Syncing new batch #%s with %d commitment(s) from chain", batch.ID.String(), numCommitments)
 	err := t.storage.AddBatch(&batch.Batch)
@@ -124,7 +124,7 @@ func (t *TransactionExecutor) syncNewBatch(batch *eth.DecodedBatch) error {
 	return nil
 }
 
-func (t *TransactionExecutor) syncCommitments(batch *eth.DecodedBatch) error {
+func (t *ExecutionContext) syncCommitments(batch *eth.DecodedBatch) error {
 	for i := range batch.Commitments {
 		log.WithFields(log.Fields{"batchID": batch.ID.String()}).Debugf("Syncing commitment #%d", i+1)
 		err := t.syncCommitment(batch, &batch.Commitments[i])
@@ -140,7 +140,7 @@ func (t *TransactionExecutor) syncCommitments(batch *eth.DecodedBatch) error {
 	return nil
 }
 
-func (t *TransactionExecutor) syncCommitment(
+func (t *ExecutionContext) syncCommitment(
 	batch *eth.DecodedBatch,
 	commitment *encoder.DecodedCommitment,
 ) error {

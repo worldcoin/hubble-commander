@@ -30,7 +30,7 @@ type ApplyTransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage             *st.TestStorage
-	transactionExecutor *TransactionExecutor
+	transactionExecutor *ExecutionContext
 	transfer            models.Transfer
 	receiverLeaf        models.StateLeaf
 }

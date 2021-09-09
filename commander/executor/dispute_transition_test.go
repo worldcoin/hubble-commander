@@ -29,7 +29,7 @@ type DisputeTransitionTestSuite struct {
 	storage             *st.TestStorage
 	client              *eth.TestClient
 	cfg                 *config.RollupConfig
-	transactionExecutor *TransactionExecutor
+	transactionExecutor *ExecutionContext
 	decodedCommitments  []encoder.DecodedCommitment
 	decodedBatch        eth.DecodedBatch
 }
@@ -647,7 +647,7 @@ func (s *DisputeTransitionTestSuite) commitTransaction() {
 	s.NoError(err)
 }
 
-func setUserStates(s *require.Assertions, txExecutor *TransactionExecutor, domain *bls.Domain) []bls.Wallet {
+func setUserStates(s *require.Assertions, txExecutor *ExecutionContext, domain *bls.Domain) []bls.Wallet {
 	userStates := []models.UserState{
 		*createUserState(0, 300, 0),
 		*createUserState(1, 200, 0),

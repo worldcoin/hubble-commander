@@ -4,7 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-func (t *TransactionExecutor) ApplyCreate2Transfer(
+func (t *ExecutionContext) ApplyCreate2Transfer(
 	create2Transfer *models.Create2Transfer,
 	pubKeyID uint32,
 	commitmentTokenID models.Uint256,
@@ -21,7 +21,7 @@ func (t *TransactionExecutor) ApplyCreate2Transfer(
 	return appliedTransfer, transferError, appError
 }
 
-func (t *TransactionExecutor) ApplyCreate2TransferForSync(
+func (t *ExecutionContext) ApplyCreate2TransferForSync(
 	create2Transfer *models.Create2Transfer,
 	pubKeyID uint32,
 	commitmentTokenID models.Uint256,

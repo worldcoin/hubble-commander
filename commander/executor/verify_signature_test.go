@@ -20,7 +20,7 @@ import (
 type VerifySignatureTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	transactionExecutor *TransactionExecutor
+	transactionExecutor *ExecutionContext
 	storage             *st.TestStorage
 	client              *eth.TestClient
 	cfg                 *config.RollupConfig

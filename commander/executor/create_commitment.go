@@ -5,7 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 )
 
-func (t *TransactionExecutor) createCommitment(
+func (t *ExecutionContext) createCommitment(
 	commitmentID *models.CommitmentID,
 	txType txtype.TransactionType,
 	feeReceiverStateID uint32,
@@ -27,7 +27,7 @@ func (t *TransactionExecutor) createCommitment(
 	}, nil
 }
 
-func (t *TransactionExecutor) createCommitmentID() (*models.CommitmentID, error) {
+func (t *ExecutionContext) createCommitmentID() (*models.CommitmentID, error) {
 	nextBatchID, err := t.storage.GetNextBatchID()
 	if err != nil {
 		return nil, err

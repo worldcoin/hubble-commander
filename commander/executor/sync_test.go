@@ -25,7 +25,7 @@ type SyncTestSuite struct {
 	storage             *st.TestStorage
 	client              *eth.TestClient
 	cfg                 *config.RollupConfig
-	transactionExecutor *TransactionExecutor
+	transactionExecutor *ExecutionContext
 	transfer            models.Transfer
 	wallets             []bls.Wallet
 	domain              *bls.Domain
@@ -560,7 +560,7 @@ func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {
 func createAndSubmitTransferBatch(
 	s *require.Assertions,
 	client *eth.TestClient,
-	txExecutor *TransactionExecutor,
+	txExecutor *ExecutionContext,
 	tx *models.Transfer,
 ) *models.Batch {
 	domain, err := client.GetDomain()
@@ -644,7 +644,7 @@ func (s *SyncTestSuite) createCommitmentWithEmptyTransactions(commitmentType txt
 
 func createTransferBatch(
 	s *require.Assertions,
-	txExecutor *TransactionExecutor,
+	txExecutor *ExecutionContext,
 	tx *models.Transfer,
 	domain *bls.Domain,
 ) (*models.Batch, []models.Commitment) {
@@ -664,7 +664,7 @@ func createTransferBatch(
 func createAndSubmitC2TBatch(
 	s *require.Assertions,
 	client *eth.TestClient,
-	txExecutor *TransactionExecutor,
+	txExecutor *ExecutionContext,
 	tx *models.Create2Transfer,
 ) models.Commitment {
 	domain, err := client.GetDomain()
@@ -692,7 +692,7 @@ func (s *SyncTestSuite) createAndSubmitInvalidC2TBatch(tx *models.Create2Transfe
 
 func createC2TBatch(
 	s *require.Assertions,
-	txExecutor *TransactionExecutor,
+	txExecutor *ExecutionContext,
 	tx *models.Create2Transfer,
 	domain *bls.Domain,
 ) (*models.Batch, []models.Commitment) {

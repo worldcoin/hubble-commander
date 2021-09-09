@@ -24,7 +24,7 @@ type ApplyCreate2TransfersTestSuite struct {
 	storage             *storage.TestStorage
 	cfg                 *config.RollupConfig
 	client              *eth.TestClient
-	transactionExecutor *TransactionExecutor
+	transactionExecutor *ExecutionContext
 	feeReceiver         *FeeReceiver
 	events              chan *accountregistry.AccountRegistrySinglePubkeyRegistered
 	unsubscribe         func()

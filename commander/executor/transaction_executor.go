@@ -9,8 +9,8 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-// TransactionExecutor executes transactions & syncs batches. Manages a database transaction.
-type TransactionExecutor struct {
+// ExecutionContext executes transactions & syncs batches. Manages a database transaction.
+type ExecutionContext struct {
 	cfg     *config.RollupConfig
 	storage *st.Storage
 	tx      *db.TxController
@@ -18,19 +18,19 @@ type TransactionExecutor struct {
 	ctx     context.Context
 }
 
-// NewTransactionExecutor creates a TransactionExecutor and starts a database transaction.
+// NewTransactionExecutor creates a ExecutionContext and starts a database transaction.
 func NewTransactionExecutor(
 	storage *st.Storage,
 	client *eth.Client,
 	cfg *config.RollupConfig,
 	ctx context.Context,
-) (*TransactionExecutor, error) {
+) (*ExecutionContext, error) {
 	tx, txStorage, err := storage.BeginTransaction(st.TxOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	return &TransactionExecutor{
+	return &ExecutionContext{
 		cfg:     cfg,
 		storage: txStorage,
 		tx:      tx,
@@ -39,14 +39,14 @@ func NewTransactionExecutor(
 	}, nil
 }
 
-// NewTestTransactionExecutor creates a TransactionExecutor without a database transaction.
+// NewTestTransactionExecutor creates a ExecutionContext without a database transaction.
 func NewTestTransactionExecutor(
 	storage *st.Storage,
 	client *eth.Client,
 	cfg *config.RollupConfig,
 	ctx context.Context,
-) *TransactionExecutor {
-	return &TransactionExecutor{
+) *ExecutionContext {
+	return &ExecutionContext{
 		cfg:     cfg,
 		storage: storage,
 		tx:      nil,
@@ -55,11 +55,11 @@ func NewTestTransactionExecutor(
 	}
 }
 
-func (t *TransactionExecutor) Commit() error {
+func (t *ExecutionContext) Commit() error {
 	return t.tx.Commit()
 }
 
 // nolint:gocritic
-func (t *TransactionExecutor) Rollback(cause *error) {
+func (t *ExecutionContext) Rollback(cause *error) {
 	t.tx.Rollback(cause)
 }

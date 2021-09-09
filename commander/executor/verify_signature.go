@@ -8,7 +8,7 @@ import (
 
 const InvalidSignature = "invalid commitment signature"
 
-func (t *TransactionExecutor) verifyTransferSignature(commitment *encoder.DecodedCommitment, transfers []models.Transfer) error {
+func (t *ExecutionContext) verifyTransferSignature(commitment *encoder.DecodedCommitment, transfers []models.Transfer) error {
 	domain, err := t.client.GetDomain()
 	if err != nil {
 		return err
@@ -31,7 +31,7 @@ func (t *TransactionExecutor) verifyTransferSignature(commitment *encoder.Decode
 	return t.verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys, genericTxs)
 }
 
-func (t *TransactionExecutor) verifyCreate2TransferSignature(
+func (t *ExecutionContext) verifyCreate2TransferSignature(
 	commitment *encoder.DecodedCommitment,
 	transfers []models.Create2Transfer,
 ) error {
@@ -57,7 +57,7 @@ func (t *TransactionExecutor) verifyCreate2TransferSignature(
 	return t.verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys, genericTxs)
 }
 
-func (t *TransactionExecutor) verifyCommitmentSignature(
+func (t *ExecutionContext) verifyCommitmentSignature(
 	signature *models.Signature,
 	domain *bls.Domain,
 	messages [][]byte,
@@ -82,7 +82,7 @@ func (t *TransactionExecutor) verifyCommitmentSignature(
 	return nil
 }
 
-func (t *TransactionExecutor) createDisputableSignatureError(reason string, transfers models.GenericTransactionArray) error {
+func (t *ExecutionContext) createDisputableSignatureError(reason string, transfers models.GenericTransactionArray) error {
 	proofs, proofErr := t.stateMerkleProofs(transfers)
 	if proofErr != nil {
 		return proofErr

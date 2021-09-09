@@ -185,7 +185,7 @@ func (s *NewBlockLoopTestSuite) registerToken(token models.RegisteredToken) {
 }
 
 func (s *NewBlockLoopTestSuite) createAndSubmitTransferBatchInTransaction(tx *models.Transfer) {
-	s.runInTransaction(func(txStorage *st.Storage, txExecutor *executor.TransactionExecutor) {
+	s.runInTransaction(func(txStorage *st.Storage, txExecutor *executor.ExecutionContext) {
 		err := txStorage.AddTransfer(tx)
 		s.NoError(err)
 
@@ -203,7 +203,7 @@ func (s *NewBlockLoopTestSuite) createAndSubmitTransferBatchInTransaction(tx *mo
 	})
 }
 
-func (s *NewBlockLoopTestSuite) runInTransaction(handler func(*st.Storage, *executor.TransactionExecutor)) {
+func (s *NewBlockLoopTestSuite) runInTransaction(handler func(*st.Storage, *executor.ExecutionContext)) {
 	txController, txStorage, err := s.testStorage.BeginTransaction(st.TxOptions{})
 	s.NoError(err)
 	defer txController.Rollback(nil)

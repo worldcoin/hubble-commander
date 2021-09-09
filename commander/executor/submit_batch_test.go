@@ -32,7 +32,7 @@ type SubmitTransferBatchTestSuite struct {
 	storage             *st.TestStorage
 	cfg                 *config.RollupConfig
 	client              *eth.TestClient
-	transactionExecutor *TransactionExecutor
+	transactionExecutor *ExecutionContext
 }
 
 func (s *SubmitTransferBatchTestSuite) SetupSuite() {

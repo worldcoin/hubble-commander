@@ -17,7 +17,7 @@ type DepositsTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage             *st.TestStorage
-	transactionExecutor *TransactionExecutor
+	transactionExecutor *ExecutionContext
 }
 
 func (s *DepositsTestSuite) SetupSuite() {

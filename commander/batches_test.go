@@ -27,7 +27,7 @@ type BatchesTestSuite struct {
 	cmd                 *Commander
 	testClient          *eth.TestClient
 	testStorage         *st.TestStorage
-	transactionExecutor *executor.TransactionExecutor
+	transactionExecutor *executor.ExecutionContext
 	cfg                 *config.Config
 	wallets             []bls.Wallet
 }
@@ -454,7 +454,7 @@ func (s *BatchesTestSuite) syncAllBlocks() {
 // Make sure that the commander and the transaction executor uses the same storage
 func (s *BatchesTestSuite) createAndSubmitTransferBatch(
 	storage *st.Storage,
-	txExecutor *executor.TransactionExecutor,
+	txExecutor *executor.ExecutionContext,
 	tx *models.Transfer,
 ) *models.Batch {
 	err := storage.AddTransfer(tx)
@@ -502,7 +502,7 @@ func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batc
 // Make sure that the commander and the transaction executor uses the same storage
 func (s *BatchesTestSuite) createAndSubmitInvalidTransferBatch(
 	storage *st.Storage,
-	txExecutor *executor.TransactionExecutor,
+	txExecutor *executor.ExecutionContext,
 	tx *models.Transfer,
 	modifier func(commitment *models.Commitment),
 ) *models.Batch {
@@ -574,7 +574,7 @@ func cloneStorage(
 	cfg *config.Config,
 	storage *st.TestStorage,
 	client *eth.Client,
-) (*st.TestStorage, *executor.TransactionExecutor) {
+) (*st.TestStorage, *executor.ExecutionContext) {
 	clonedStorage, err := storage.Clone()
 	s.NoError(err)
 

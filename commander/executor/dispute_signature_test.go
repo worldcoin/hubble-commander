@@ -26,7 +26,7 @@ type DisputeSignatureTestSuite struct {
 	storage             *st.TestStorage
 	client              *eth.TestClient
 	cfg                 *config.RollupConfig
-	transactionExecutor *TransactionExecutor
+	transactionExecutor *ExecutionContext
 	domain              *bls.Domain
 }
 

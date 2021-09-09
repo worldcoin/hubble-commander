@@ -21,7 +21,7 @@ type Create2TransferCommitmentsTestSuite struct {
 	storage                *st.TestStorage
 	client                 *eth.TestClient
 	cfg                    *config.RollupConfig
-	transactionExecutor    *TransactionExecutor
+	transactionExecutor    *ExecutionContext
 	maxTxBytesInCommitment int
 }
 
