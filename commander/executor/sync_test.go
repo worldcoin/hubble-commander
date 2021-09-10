@@ -19,19 +19,14 @@ import (
 )
 
 type SyncTestSuite struct {
-	*require.Assertions
-	suite.Suite
-	storage      *st.TestStorage
-	client       *eth.TestClient
-	cfg          *config.RollupConfig
-	executionCtx *ExecutionContext
-	transfer     models.Transfer
-	wallets      []bls.Wallet
-	domain       *bls.Domain
+	TestSuiteWithExecutionContext
+	transfer models.Transfer
+	wallets  []bls.Wallet
+	domain   *bls.Domain
 }
 
 func (s *SyncTestSuite) SetupSuite() {
-	s.Assertions = require.New(s.T())
+	s.TestSuiteWithExecutionContext.SetupSuite()
 	s.transfer = testutils.MakeTransfer(0, 1, 0, 400)
 	s.setTransferHash(&s.transfer)
 }
@@ -95,12 +90,6 @@ func seedDB(s *require.Assertions, storage *st.Storage, wallets []bls.Wallet) {
 		Balance:  models.MakeUint256(0),
 		Nonce:    models.MakeUint256(0),
 	})
-	s.NoError(err)
-}
-
-func (s *SyncTestSuite) TearDownTest() {
-	s.client.Close()
-	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
