@@ -11,6 +11,14 @@ import (
 
 type RevertBatchesTestSuite struct {
 	SyncTestSuite
+	transfer models.Transfer
+}
+
+func (s *RevertBatchesTestSuite) SetupTest() {
+	s.SyncTestSuite.SetupTest()
+
+	s.transfer = testutils.MakeTransfer(0, 1, 0, 400)
+	s.setTransferHash(&s.transfer)
 }
 
 func (s *RevertBatchesTestSuite) TestRevertBatches_RevertsState() {

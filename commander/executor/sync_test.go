@@ -4,57 +4,33 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
-	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 )
 
 type SyncTestSuite struct {
 	TestSuiteWithExecutionContext
-	transfer models.Transfer
-	wallets  []bls.Wallet
-	domain   *bls.Domain
-}
-
-func (s *SyncTestSuite) SetupSuite() {
-	s.TestSuiteWithExecutionContext.SetupSuite()
-	s.transfer = testutils.MakeTransfer(0, 1, 0, 400)
-	s.setTransferHash(&s.transfer)
+	domain  *bls.Domain
+	wallets []bls.Wallet
 }
 
 func (s *SyncTestSuite) SetupTest() {
-	var err error
-	s.client, err = eth.NewConfiguredTestClient(rollup.DeploymentConfig{
-		Params: rollup.Params{
-			MaxTxsPerCommit: models.NewUint256(1),
-		},
-	}, eth.ClientConfig{})
-	s.NoError(err)
-
-	s.cfg = &config.RollupConfig{
+	s.TestSuiteWithExecutionContext.SetupTestWithConfig(config.RollupConfig{
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
 		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    1,
 		DisableSignatures:      false,
-	}
+	})
 
+	var err error
 	s.domain, err = s.client.GetDomain()
 	s.NoError(err)
-	s.wallets = generateWallets(s.Assertions, s.domain, 2)
-	s.setupDB()
-}
 
-func (s *SyncTestSuite) setupDB() {
-	var err error
-	s.storage, err = st.NewTestStorage()
-	s.NoError(err)
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
+	s.wallets = generateWallets(s.Assertions, s.domain, 2)
 
 	seedDB(s.Assertions, s.storage.Storage, s.wallets)
 }
@@ -119,7 +95,12 @@ func (s *SyncTestSuite) syncAllBatches() {
 func (s *SyncTestSuite) recreateDatabase() {
 	err := s.storage.Teardown()
 	s.NoError(err)
-	s.setupDB()
+
+	s.storage, err = st.NewTestStorage()
+	s.NoError(err)
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
+
+	seedDB(s.Assertions, s.storage.Storage, s.wallets)
 }
 
 func (s *SyncTestSuite) getAccountTreeRoot() common.Hash {
