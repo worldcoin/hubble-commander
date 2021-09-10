@@ -3,13 +3,11 @@ package executor
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -24,18 +22,14 @@ import (
 )
 
 type DisputeTransitionTestSuite struct {
-	*require.Assertions
-	suite.Suite
-	storage            *st.TestStorage
-	client             *eth.TestClient
-	cfg                *config.RollupConfig
-	executionCtx       *ExecutionContext
+	TestSuiteWithExecutionContext
 	decodedCommitments []encoder.DecodedCommitment
 	decodedBatch       eth.DecodedBatch
 }
 
 func (s *DisputeTransitionTestSuite) SetupSuite() {
-	s.Assertions = require.New(s.T())
+	s.TestSuiteWithExecutionContext.SetupSuite()
+
 	s.decodedCommitments = []encoder.DecodedCommitment{
 		{
 			StateRoot:         utils.RandomHash(),
@@ -61,33 +55,16 @@ func (s *DisputeTransitionTestSuite) SetupSuite() {
 		},
 		Commitments: s.decodedCommitments,
 	}
-	s.cfg = &config.RollupConfig{
+}
+
+func (s *DisputeTransitionTestSuite) SetupTest() {
+	s.SetupTestWithConfig(config.RollupConfig{
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
 		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    1,
 		DisableSignatures:      false,
-	}
-}
-
-func (s *DisputeTransitionTestSuite) SetupTest() {
-	var err error
-	s.storage, err = st.NewTestStorage()
-	s.NoError(err)
-
-	s.client, err = eth.NewConfiguredTestClient(
-		rollup.DeploymentConfig{},
-		eth.ClientConfig{TxTimeout: ref.Duration(2 * time.Second)},
-	)
-	s.NoError(err)
-
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
-}
-
-func (s *DisputeTransitionTestSuite) TearDownTest() {
-	s.client.Close()
-	err := s.storage.Teardown()
-	s.NoError(err)
+	})
 }
 
 func (s *DisputeTransitionTestSuite) TestPreviousCommitmentInclusionProof_CurrentBatch() {
