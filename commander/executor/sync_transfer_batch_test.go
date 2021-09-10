@@ -328,7 +328,9 @@ func (s *SyncTransferBatchTestSuite) submitTransferBatchWithNonexistentFeeReceiv
 }
 
 func (s *SyncTransferBatchTestSuite) setTxHash(tx *models.Transfer) {
-	s.setTransferHash(tx)
+	hash, err := encoder.HashTransfer(tx)
+	s.NoError(err)
+	tx.Hash = *hash
 }
 
 func (s *SyncTransferBatchTestSuite) setTxHashAndSign(txs ...*models.Transfer) {

@@ -3,6 +3,9 @@ package executor
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -10,15 +13,28 @@ import (
 )
 
 type RevertBatchesTestSuite struct {
-	SyncTestSuite
+	TestSuiteWithExecutionContext
 	transfer models.Transfer
+	wallets  []bls.Wallet
 }
 
 func (s *RevertBatchesTestSuite) SetupTest() {
-	s.SyncTestSuite.SetupTest()
+	s.TestSuiteWithExecutionContext.SetupTestWithConfig(config.RollupConfig{
+		MinCommitmentsPerBatch: 1,
+		MaxCommitmentsPerBatch: 32,
+		MinTxsPerCommitment:    1,
+		MaxTxsPerCommitment:    1,
+	})
 
 	s.transfer = testutils.MakeTransfer(0, 1, 0, 400)
-	s.setTransferHash(&s.transfer)
+	s.setTransferHash(&s.transfer) // TODO
+
+	domain, err := s.client.GetDomain()
+	s.NoError(err)
+
+	s.wallets = generateWallets(s.Assertions, domain, 2)
+
+	seedDB(s.Assertions, s.storage.Storage, s.wallets)
 }
 
 func (s *RevertBatchesTestSuite) TestRevertBatches_RevertsState() {
@@ -80,6 +96,12 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_DeletesCommitmentsAndBatches(
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 0)
+}
+
+func (s *RevertBatchesTestSuite) setTransferHash(tx *models.Transfer) {
+	hash, err := encoder.HashTransfer(tx)
+	s.NoError(err)
+	tx.Hash = *hash
 }
 
 func TestRevertBatchesTestSuite(t *testing.T) {

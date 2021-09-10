@@ -3,7 +3,6 @@ package executor
 import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -107,12 +106,6 @@ func (s *SyncTestSuite) getAccountTreeRoot() common.Hash {
 	rawAccountRoot, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
 	return common.BytesToHash(rawAccountRoot[:])
-}
-
-func (s *SyncTestSuite) setTransferHash(tx *models.Transfer) {
-	hash, err := encoder.HashTransfer(tx)
-	s.NoError(err)
-	tx.Hash = *hash
 }
 
 func generateWallets(s *require.Assertions, domain *bls.Domain, walletsAmount int) []bls.Wallet {
