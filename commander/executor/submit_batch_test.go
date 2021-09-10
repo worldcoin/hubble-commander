@@ -25,7 +25,7 @@ var (
 	}
 )
 
-type SubmitTransferBatchTestSuite struct {
+type SubmitBatchTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage      *st.TestStorage
@@ -34,11 +34,11 @@ type SubmitTransferBatchTestSuite struct {
 	executionCtx *ExecutionContext
 }
 
-func (s *SubmitTransferBatchTestSuite) SetupSuite() {
+func (s *SubmitBatchTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *SubmitTransferBatchTestSuite) SetupTest() {
+func (s *SubmitBatchTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
@@ -63,20 +63,20 @@ func (s *SubmitTransferBatchTestSuite) SetupTest() {
 	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
 }
 
-func (s *SubmitTransferBatchTestSuite) TearDownTest() {
+func (s *SubmitBatchTestSuite) TearDownTest() {
 	s.client.Close()
 	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
-func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_ErrorsIfNotEnoughCommitments() {
+func (s *SubmitBatchTestSuite) TestSubmitBatch_Transfers_ErrorsIfNotEnoughCommitments() {
 	pendingBatch, err := s.executionCtx.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 	err = s.executionCtx.SubmitBatch(pendingBatch, []models.Commitment{})
 	s.Equal(ErrNotEnoughCommitments, err)
 }
 
-func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_SubmitsCommitmentsOnChain() {
+func (s *SubmitBatchTestSuite) TestSubmitBatch_Transfers_SubmitsCommitmentsOnChain() {
 	nextBatchID, err := s.client.Rollup.NextBatchID(nil)
 	s.NoError(err)
 	s.Equal(big.NewInt(1), nextBatchID)
@@ -96,7 +96,7 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_SubmitsCommitme
 	s.Equal(big.NewInt(2), nextBatchID)
 }
 
-func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_SubmitsCommitmentsOnChain() {
+func (s *SubmitBatchTestSuite) TestSubmitBatch_Create2Transfers_SubmitsCommitmentsOnChain() {
 	nextBatchID, err := s.client.Rollup.NextBatchID(nil)
 	s.NoError(err)
 	s.Equal(big.NewInt(1), nextBatchID)
@@ -116,7 +116,7 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_SubmitsC
 	s.Equal(big.NewInt(2), nextBatchID)
 }
 
-func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_StoresPendingBatchRecord() {
+func (s *SubmitBatchTestSuite) TestSubmitBatch_Transfers_StoresPendingBatchRecord() {
 	pendingBatch, err := s.executionCtx.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
@@ -135,7 +135,7 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_StoresPendingBa
 	s.Nil(batch.Hash)
 }
 
-func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_StoresPendingBatchRecord() {
+func (s *SubmitBatchTestSuite) TestSubmitBatch_Create2Transfers_StoresPendingBatchRecord() {
 	pendingBatch, err := s.executionCtx.NewPendingBatch(txtype.Create2Transfer)
 	s.NoError(err)
 
@@ -154,7 +154,7 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_StoresPe
 	s.Nil(batch.Hash)
 }
 
-func (s *SubmitTransferBatchTestSuite) getCommitments(count int, batchID models.Uint256) []models.Commitment {
+func (s *SubmitBatchTestSuite) getCommitments(count int, batchID models.Uint256) []models.Commitment {
 	commitments := make([]models.Commitment, 0, count)
 	for i := 0; i < count; i++ {
 		commitment := baseCommitment
@@ -166,7 +166,7 @@ func (s *SubmitTransferBatchTestSuite) getCommitments(count int, batchID models.
 	return commitments
 }
 
-func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_AddsCommitments() {
+func (s *SubmitBatchTestSuite) TestSubmitBatch_Transfers_AddsCommitments() {
 	pendingBatch, err := s.executionCtx.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 	commitments := s.getCommitments(2, pendingBatch.ID)
@@ -185,7 +185,7 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Transfers_AddsCommitments
 	}
 }
 
-func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_AddsCommitments() {
+func (s *SubmitBatchTestSuite) TestSubmitBatch_Create2Transfers_AddsCommitments() {
 	pendingBatch, err := s.executionCtx.NewPendingBatch(txtype.Create2Transfer)
 	s.NoError(err)
 	commitments := s.getCommitments(2, pendingBatch.ID)
@@ -204,6 +204,6 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_Create2Transfers_AddsComm
 	}
 }
 
-func TestSubmitBatch_TransfersTestSuite(t *testing.T) {
-	suite.Run(t, new(SubmitTransferBatchTestSuite))
+func TestSubmitBatchTestSuite(t *testing.T) {
+	suite.Run(t, new(SubmitBatchTestSuite))
 }
