@@ -18,7 +18,7 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_RevertsState() {
 	s.NoError(err)
 
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
-	pendingBatch := createAndSubmitTransferBatch(s.Assertions, s.client, s.executionCtx, &s.transfer)
+	pendingBatch := submitTransferBatch(s.Assertions, s.client, s.executionCtx, &s.transfer)
 
 	err = s.executionCtx.RevertBatches(pendingBatch)
 	s.NoError(err)
@@ -38,7 +38,7 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_RevertsState() {
 
 func (s *RevertBatchesTestSuite) TestRevertBatches_ExcludesTransactionsFromCommitments() {
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
-	pendingBatch := createAndSubmitTransferBatch(s.Assertions, s.client, s.executionCtx, &s.transfer)
+	pendingBatch := submitTransferBatch(s.Assertions, s.client, s.executionCtx, &s.transfer)
 
 	err := s.executionCtx.RevertBatches(pendingBatch)
 	s.NoError(err)
@@ -56,7 +56,7 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_DeletesCommitmentsAndBatches(
 	pendingBatches := make([]models.Batch, 2)
 	for i := range pendingBatches {
 		signTransfer(s.T(), &s.wallets[transfers[i].FromStateID], &transfers[i])
-		pendingBatches[i] = *createAndSubmitTransferBatch(s.Assertions, s.client, s.executionCtx, &transfers[i])
+		pendingBatches[i] = *submitTransferBatch(s.Assertions, s.client, s.executionCtx, &transfers[i])
 	}
 
 	latestCommitment, err := s.executionCtx.storage.GetLatestCommitment()

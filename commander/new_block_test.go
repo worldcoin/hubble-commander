@@ -98,7 +98,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAndToken
 		Contract: s.testClient.ExampleTokenAddress,
 	}
 	s.registerAccounts(accounts)
-	s.createAndSubmitTransferBatchInTransaction(&s.transfer)
+	s.submitTransferBatchInTransaction(&s.transfer)
 	s.registerToken(registeredToken)
 
 	s.startBlockLoop()
@@ -133,7 +133,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAndToken
 		Contract: s.testClient.ExampleTokenAddress,
 	}
 	s.registerAccounts(accounts)
-	s.createAndSubmitTransferBatchInTransaction(&s.transfer)
+	s.submitTransferBatchInTransaction(&s.transfer)
 	s.registerToken(registeredToken)
 
 	s.waitForLatestBlockSync()
@@ -184,7 +184,7 @@ func (s *NewBlockLoopTestSuite) registerToken(token models.RegisteredToken) {
 	RegisterSingleToken(s.Assertions, s.testClient, &token, latestBlockNumber)
 }
 
-func (s *NewBlockLoopTestSuite) createAndSubmitTransferBatchInTransaction(tx *models.Transfer) {
+func (s *NewBlockLoopTestSuite) submitTransferBatchInTransaction(tx *models.Transfer) {
 	s.runInTransaction(func(txStorage *st.Storage, executionCtx *executor.ExecutionContext) {
 		err := txStorage.AddTransfer(tx)
 		s.NoError(err)

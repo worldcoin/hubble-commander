@@ -21,11 +21,11 @@ type SyncC2TBatchTestSuite struct {
 func (s *SyncC2TBatchTestSuite) TestSyncBatch_TooManyTxsInCommitment() {
 	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, s.wallets[0].PublicKey())
 	s.setTxHashAndSign(&tx)
-	createAndSubmitC2TBatch(s.Assertions, s.client, s.executionCtx, &tx)
+	submitC2TBatch(s.Assertions, s.client, s.executionCtx, &tx)
 
 	tx2 := testutils.MakeCreate2Transfer(0, nil, 1, 400, s.wallets[0].PublicKey())
 	s.setTxHashAndSign(&tx2)
-	s.createAndSubmitInvalidBatch(&tx2)
+	s.submitInvalidBatch(&tx2)
 
 	s.recreateDatabase()
 
@@ -51,7 +51,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_TooManyTxsInCommitment() {
 func (s *SyncC2TBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() {
 	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, s.wallets[0].PublicKey())
 	s.setTxHashAndSign(&tx)
-	createAndSubmitC2TBatch(s.Assertions, s.client, s.executionCtx, &tx)
+	submitC2TBatch(s.Assertions, s.client, s.executionCtx, &tx)
 
 	tx2 := testutils.MakeCreate2Transfer(0, nil, 1, 400, s.wallets[0].PublicKey())
 	s.setTxHashAndSign(&tx2)
@@ -89,7 +89,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_InvalidTxSignature() {
 	signCreate2Transfer(s.T(), &s.wallets[1], &tx)
 	s.setTxHash(&tx)
 
-	createAndSubmitC2TBatch(s.Assertions, s.client, s.executionCtx, &tx)
+	submitC2TBatch(s.Assertions, s.client, s.executionCtx, &tx)
 
 	s.recreateDatabase()
 
@@ -108,7 +108,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_InvalidTxSignature() {
 func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, s.wallets[0].PublicKey())
 	s.setTxHashAndSign(&tx)
-	expectedCommitment := createAndSubmitC2TBatch(s.Assertions, s.client, s.executionCtx, &tx)
+	expectedCommitment := submitC2TBatch(s.Assertions, s.client, s.executionCtx, &tx)
 
 	s.recreateDatabase()
 	s.syncAllBatches()
@@ -154,7 +154,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_CommitmentWithoutTxs() {
 	s.NoError(err)
 }
 
-func (s *SyncC2TBatchTestSuite) createAndSubmitInvalidBatch(tx *models.Create2Transfer) models.Commitment {
+func (s *SyncC2TBatchTestSuite) submitInvalidBatch(tx *models.Create2Transfer) models.Commitment {
 	pendingBatch, commitments := createC2TBatch(s.Assertions, s.executionCtx, tx, testDomain)
 
 	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)
@@ -179,7 +179,7 @@ func (s *SyncC2TBatchTestSuite) setTxHashAndSign(txs ...*models.Create2Transfer)
 	}
 }
 
-func createAndSubmitC2TBatch(
+func submitC2TBatch(
 	s *require.Assertions,
 	client *eth.TestClient,
 	executionCtx *ExecutionContext,

@@ -93,7 +93,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_PendingBatch() {
 	accountRoot := s.getAccountTreeRoot()
 	tx := testutils.MakeTransfer(0, 1, 0, 400)
 	s.setTxHashAndSign(&tx)
-	createAndSubmitTransferBatch(s.Assertions, s.client, s.executionCtx, &tx)
+	submitTransferBatch(s.Assertions, s.client, s.executionCtx, &tx)
 
 	pendingBatch, err := s.storage.GetBatch(models.MakeUint256(1))
 	s.NoError(err)
@@ -115,11 +115,11 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_PendingBatch() {
 func (s *SyncTransferBatchTestSuite) TestSyncBatch_TooManyTxsInCommitment() {
 	tx := testutils.MakeTransfer(0, 1, 0, 400)
 	s.setTxHashAndSign(&tx)
-	createAndSubmitTransferBatch(s.Assertions, s.client, s.executionCtx, &tx)
+	submitTransferBatch(s.Assertions, s.client, s.executionCtx, &tx)
 
 	tx2 := testutils.MakeTransfer(0, 1, 1, 400)
 	s.setTxHashAndSign(&tx2)
-	s.createAndSubmitInvalidBatch(&tx2)
+	s.submitInvalidBatch(&tx2)
 
 	s.recreateDatabase()
 
@@ -145,7 +145,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TooManyTxsInCommitment() {
 func (s *SyncTransferBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() {
 	tx := testutils.MakeTransfer(0, 1, 0, 400)
 	s.setTxHashAndSign(&tx)
-	createAndSubmitTransferBatch(s.Assertions, s.client, s.executionCtx, &tx)
+	submitTransferBatch(s.Assertions, s.client, s.executionCtx, &tx)
 
 	tx2 := testutils.MakeTransfer(0, 1, 1, 400)
 	s.setTxHashAndSign(&tx2)
@@ -183,7 +183,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_InvalidTxSignature() {
 	signTransfer(s.T(), &s.wallets[1], &tx)
 	s.setTxHash(&tx)
 
-	createAndSubmitTransferBatch(s.Assertions, s.client, s.executionCtx, &tx)
+	submitTransferBatch(s.Assertions, s.client, s.executionCtx, &tx)
 
 	s.recreateDatabase()
 
@@ -250,7 +250,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_CommitmentWithNonexistentFeeR
 		ToStateID: 1,
 	}
 	s.setTxHashAndSign(&tx)
-	s.createAndSubmitTransferBatchWithNonexistentFeeReceiver(&tx, feeReceiverStateID)
+	s.submitTransferBatchWithNonexistentFeeReceiver(&tx, feeReceiverStateID)
 
 	s.recreateDatabase()
 	s.syncAllBatches()
@@ -275,7 +275,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_CommitmentWithNonexistentFeeR
 	s.Equal(models.MakeUint256(400), receiver.Balance)
 }
 
-func (s *SyncTransferBatchTestSuite) createAndSubmitInvalidBatch(tx *models.Transfer) *models.Batch {
+func (s *SyncTransferBatchTestSuite) submitInvalidBatch(tx *models.Transfer) *models.Batch {
 	pendingBatch, commitments := createTransferBatch(s.Assertions, s.executionCtx, tx, testDomain)
 
 	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)
@@ -287,7 +287,7 @@ func (s *SyncTransferBatchTestSuite) createAndSubmitInvalidBatch(tx *models.Tran
 	return pendingBatch
 }
 
-func (s *SyncTransferBatchTestSuite) createAndSubmitTransferBatchWithNonexistentFeeReceiver(tx *models.Transfer, feeReceiverStateID uint32) {
+func (s *SyncTransferBatchTestSuite) submitTransferBatchWithNonexistentFeeReceiver(tx *models.Transfer, feeReceiverStateID uint32) {
 	commitmentTokenID := models.MakeUint256(0)
 
 	receiverLeaf, err := s.executionCtx.storage.StateTree.Leaf(tx.ToStateID)
@@ -338,7 +338,7 @@ func (s *SyncTransferBatchTestSuite) setTxHashAndSign(txs ...*models.Transfer) {
 	}
 }
 
-func createAndSubmitTransferBatch(
+func submitTransferBatch(
 	s *require.Assertions,
 	client *eth.TestClient,
 	executionCtx *ExecutionContext,

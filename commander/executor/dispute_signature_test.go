@@ -193,7 +193,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_DisputesTransferBatchWi
 	transfer := testutils.MakeTransfer(1, 2, 0, 50)
 	signTransfer(s.T(), &wallets[0], &transfer)
 
-	createAndSubmitTransferBatch(s.Assertions, s.client, s.executionCtx, &transfer)
+	submitTransferBatch(s.Assertions, s.client, s.executionCtx, &transfer)
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
@@ -216,7 +216,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_DisputesC2TBatchWithInv
 	transfer := testutils.MakeCreate2Transfer(0, nil, 0, 100, &receiver.PublicKey)
 	signCreate2Transfer(s.T(), &wallets[1], &transfer)
 
-	createAndSubmitC2TBatch(s.Assertions, s.client, s.executionCtx, &transfer)
+	submitC2TBatch(s.Assertions, s.client, s.executionCtx, &transfer)
 
 	err := s.executionCtx.storage.AccountTree.SetSingle(receiver)
 	s.NoError(err)
@@ -237,7 +237,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Transfer_ValidBatch() {
 	transfer := testutils.MakeTransfer(1, 2, 0, 50)
 	signTransfer(s.T(), &wallets[1], &transfer)
 
-	createAndSubmitTransferBatch(s.Assertions, s.client, s.executionCtx, &transfer)
+	submitTransferBatch(s.Assertions, s.client, s.executionCtx, &transfer)
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
@@ -260,7 +260,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Create2Transfer_ValidBa
 	transfer := testutils.MakeCreate2Transfer(0, nil, 0, 100, &receiver.PublicKey)
 	signCreate2Transfer(s.T(), &wallets[0], &transfer)
 
-	createAndSubmitC2TBatch(s.Assertions, s.client, s.executionCtx, &transfer)
+	submitC2TBatch(s.Assertions, s.client, s.executionCtx, &transfer)
 
 	err := s.executionCtx.storage.AccountTree.SetSingle(receiver)
 	s.NoError(err)
