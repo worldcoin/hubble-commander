@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"context"
 	"math/big"
 	"testing"
 
@@ -61,7 +60,7 @@ func (s *SubmitTransferBatchTestSuite) SetupTest() {
 	_, err = s.storage.StateTree.Set(1, &userState)
 	s.NoError(err)
 
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg, context.Background())
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
 }
 
 func (s *SubmitTransferBatchTestSuite) TearDownTest() {

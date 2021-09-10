@@ -40,18 +40,13 @@ func NewExecutionContext(
 }
 
 // NewTestExecutionContext creates a ExecutionContext without a database transaction.
-func NewTestExecutionContext(
-	storage *st.Storage,
-	client *eth.Client,
-	cfg *config.RollupConfig,
-	ctx context.Context,
-) *ExecutionContext {
+func NewTestExecutionContext(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) *ExecutionContext {
 	return &ExecutionContext{
 		cfg:     cfg,
 		storage: storage,
 		tx:      nil,
 		client:  client,
-		ctx:     ctx,
+		ctx:     context.Background(),
 	}
 }
 

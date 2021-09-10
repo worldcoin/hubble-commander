@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -53,7 +52,7 @@ func (s *TransferCommitmentsTestSuite) SetupTest() {
 	err = populateAccounts(s.storage.Storage, genesisBalances)
 	s.NoError(err)
 
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, &eth.Client{}, s.cfg, context.Background())
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, &eth.Client{}, s.cfg)
 }
 
 func populateAccounts(storage *st.Storage, balances []models.Uint256) error {
@@ -147,7 +146,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_ForMultiple
 		MaxCommitmentsPerBatch: 3,
 	}
 
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, &eth.Client{}, s.cfg, context.Background())
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, &eth.Client{}, s.cfg)
 
 	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 123)
 
@@ -207,7 +206,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_ReturnsErro
 		MaxCommitmentsPerBatch: 1,
 	}
 
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, &eth.Client{}, s.cfg, context.Background())
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, &eth.Client{}, s.cfg)
 
 	transfers := generateValidTransfers(2)
 	s.addTransfers(transfers)

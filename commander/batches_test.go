@@ -58,12 +58,7 @@ func (s *BatchesTestSuite) SetupTest() {
 	s.cmd.storage = s.testStorage.Storage
 	s.cmd.workersContext, s.cmd.stopWorkers = context.WithCancel(context.Background())
 
-	s.executionCtx = executor.NewTestExecutionContext(
-		s.testStorage.Storage,
-		s.testClient.Client,
-		s.cfg.Rollup,
-		context.Background(),
-	)
+	s.executionCtx = executor.NewTestExecutionContext(s.testStorage.Storage, s.testClient.Client, s.cfg.Rollup)
 
 	err = s.cmd.addGenesisBatch()
 	s.NoError(err)
@@ -578,7 +573,7 @@ func cloneStorage(
 	clonedStorage, err := storage.Clone()
 	s.NoError(err)
 
-	executionCtx := executor.NewTestExecutionContext(clonedStorage.Storage, client, cfg.Rollup, context.Background())
+	executionCtx := executor.NewTestExecutionContext(clonedStorage.Storage, client, cfg.Rollup)
 
 	return clonedStorage, executionCtx
 }

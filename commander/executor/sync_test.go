@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -64,7 +63,7 @@ func (s *SyncTestSuite) setupDB() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg, context.Background())
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
 
 	seedDB(s.Assertions, s.storage.Storage, s.wallets)
 }

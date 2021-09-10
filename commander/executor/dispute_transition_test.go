@@ -81,7 +81,7 @@ func (s *DisputeTransitionTestSuite) SetupTest() {
 	)
 	s.NoError(err)
 
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg, context.Background())
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
 }
 
 func (s *DisputeTransitionTestSuite) TearDownTest() {

@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
@@ -52,12 +51,7 @@ func (s *ApplyTransferTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	s.executionCtx = NewTestExecutionContext(
-		s.storage.Storage,
-		nil,
-		&config.RollupConfig{FeeReceiverPubKeyID: 0},
-		context.Background(),
-	)
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, nil, &config.RollupConfig{FeeReceiverPubKeyID: 0})
 
 	s.receiverLeaf = models.StateLeaf{
 		StateID:   receiverState.PubKeyID,
