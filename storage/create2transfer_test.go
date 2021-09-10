@@ -25,7 +25,6 @@ var (
 			Nonce:       models.MakeUint256(0),
 			Signature:   models.MakeRandomSignature(),
 		},
-		ToStateID:   ref.Uint32(2),
 		ToPublicKey: account2.PublicKey,
 	}
 )
@@ -42,7 +41,7 @@ func (s *Create2TransferTestSuite) SetupSuite() {
 
 func (s *Create2TransferTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorageWithBadger()
+	s.storage, err = NewTestStorage()
 	s.NoError(err)
 
 	err = s.storage.AccountTree.SetSingle(&account2)
@@ -55,27 +54,49 @@ func (s *Create2TransferTestSuite) TearDownTest() {
 }
 
 func (s *Create2TransferTestSuite) TestAddCreate2Transfer_AddAndRetrieve() {
-	receiveTime, err := s.storage.AddCreate2Transfer(&create2Transfer)
+	err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
 
 	expected := create2Transfer
-	expected.ReceiveTime = receiveTime
 
 	res, err := s.storage.GetCreate2Transfer(create2Transfer.Hash)
 	s.NoError(err)
 	s.Equal(expected, *res)
 }
 
-func (s *Create2TransferTestSuite) TestAddCreate2Transfer_SetsReceiveTime() {
-	beforeTime := time.Now().Unix()
-	_, err := s.storage.AddCreate2Transfer(&create2Transfer)
+func (s *Create2TransferTestSuite) TestGetCreate2Transfer_DifferentTxType() {
+	err := s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 
-	res, err := s.storage.GetCreate2Transfer(create2Transfer.Hash)
+	_, err = s.storage.GetCreate2Transfer(transfer.Hash)
+	s.Equal(NewNotFoundError("transaction"), err)
+}
+
+func (s *Create2TransferTestSuite) TestMarkCreate2TransfersAsIncluded() {
+	commitmentID := &models.CommitmentID{
+		BatchID:      models.MakeUint256(1),
+		IndexInBatch: 1,
+	}
+
+	txs := make([]models.Create2Transfer, 2)
+	for i := 0; i < len(txs); i++ {
+		txs[i] = create2Transfer
+		txs[i].Hash = utils.RandomHash()
+		err := s.storage.AddCreate2Transfer(&txs[i])
+		s.NoError(err)
+
+		txs[i].ToStateID = ref.Uint32(uint32(i))
+		txs[i].CommitmentID = commitmentID
+	}
+
+	err := s.storage.MarkCreate2TransfersAsIncluded(txs, commitmentID)
 	s.NoError(err)
 
-	s.GreaterOrEqual(res.ReceiveTime.Unix(), beforeTime)
-	s.LessOrEqual(res.ReceiveTime.Unix(), time.Now().Unix())
+	for i := range txs {
+		tx, err := s.storage.GetCreate2Transfer(txs[i].Hash)
+		s.NoError(err)
+		s.Equal(txs[i], *tx)
+	}
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchDetails() {
@@ -96,11 +117,9 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchDetails() {
 	s.NoError(err)
 
 	transferInBatch := create2Transfer
-	transferInBatch.BatchID = &batch.ID
-	transferInBatch.IndexInBatch = &commitment.ID.IndexInBatch
-	receiveTime, err := s.storage.AddCreate2Transfer(&transferInBatch)
+	transferInBatch.CommitmentID = &commitment.ID
+	err = s.storage.AddCreate2Transfer(&transferInBatch)
 	s.NoError(err)
-	transferInBatch.ReceiveTime = receiveTime
 
 	expected := models.Create2TransferWithBatchDetails{
 		Create2Transfer: transferInBatch,
@@ -113,11 +132,10 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchDetails() {
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchDetails_WithoutBatch() {
-	receiveTime, err := s.storage.AddCreate2Transfer(&create2Transfer)
+	err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
 
 	expected := models.Create2TransferWithBatchDetails{Create2Transfer: create2Transfer}
-	expected.ReceiveTime = receiveTime
 
 	res, err := s.storage.GetCreate2TransferWithBatchDetails(create2Transfer.Hash)
 	s.NoError(err)
@@ -163,7 +181,7 @@ func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers() {
 	create2Transfer2.Hash = utils.RandomHash()
 	create2Transfer3 := create2Transfer
 	create2Transfer3.Hash = utils.RandomHash()
-	create2Transfer3.BatchID = &commitment.ID.BatchID
+	create2Transfer3.CommitmentID = &commitment.ID
 	create2Transfer4 := create2Transfer
 	create2Transfer4.Hash = utils.RandomHash()
 	create2Transfer4.ErrorMessage = ref.String("A very boring error message")
@@ -220,7 +238,7 @@ func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers_OrdersTransfer
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey() {
-	_, err := s.storage.AddCreate2Transfer(&create2Transfer)
+	err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
 
 	_, err = s.storage.StateTree.Set(1, &models.UserState{
@@ -242,46 +260,29 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey_NoCreate2T
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID() {
-	err := s.storage.AddCommitment(&commitment)
+	transfer1 := create2Transfer
+	transfer1.CommitmentID = &commitment.ID
+	err := s.storage.AddCreate2Transfer(&transfer1)
 	s.NoError(err)
 
-	transfer1 := create2Transfer
-	transfer1.BatchID = &commitment.ID.BatchID
-	transfer1.IndexInBatch = &commitment.ID.IndexInBatch
-
-	_, err = s.storage.AddCreate2Transfer(&transfer1)
+	otherCommitmentID := commitment.ID
+	otherCommitmentID.IndexInBatch += 1
+	transfer2 := create2Transfer
+	transfer2.Hash = utils.RandomHash()
+	transfer2.CommitmentID = &otherCommitmentID
+	err = s.storage.AddCreate2Transfer(&transfer2)
 	s.NoError(err)
 
 	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(&commitment.ID)
 	s.NoError(err)
 	s.Len(transfers, 1)
+	s.Equal(transfer1, transfers[0])
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID_NoCreate2Transfers() {
-	err := s.storage.AddCommitment(&commitment)
-	s.NoError(err)
-
 	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(&commitment.ID)
 	s.NoError(err)
 	s.Len(transfers, 0)
-}
-
-func (s *Create2TransferTestSuite) TestSetCreate2TransferToStateID() {
-	_, err := s.storage.AddCreate2Transfer(&create2Transfer)
-	s.NoError(err)
-
-	toStateID := uint32(10)
-	err = s.storage.SetCreate2TransferToStateID(create2Transfer.Hash, toStateID)
-	s.NoError(err)
-
-	c2t, err := s.storage.GetCreate2Transfer(create2Transfer.Hash)
-	s.NoError(err)
-	s.Equal(toStateID, *c2t.ToStateID)
-}
-
-func (s *Create2TransferTestSuite) TestSetCreate2TransferToStateID_NoCreate2Transfer() {
-	err := s.storage.SetCreate2TransferToStateID(create2Transfer.Hash, 10)
-	s.Equal(err, ErrNoRowsAffected)
 }
 
 func TestCreate2TransferTestSuite(t *testing.T) {

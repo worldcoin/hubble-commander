@@ -28,7 +28,7 @@ func (s *GetTransactionsTestSuite) SetupSuite() {
 
 func (s *GetTransactionsTestSuite) SetupTest() {
 	var err error
-	s.storage, err = st.NewTestStorageWithBadger()
+	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 	s.api = &API{storage: s.storage.Storage}
 }
@@ -113,9 +113,8 @@ func (s *GetTransactionsTestSuite) addTransfers() []models.Transfer {
 	}
 
 	for i := range transfers {
-		receiveTime, err := s.storage.AddTransfer(&transfers[i])
+		err := s.storage.AddTransfer(&transfers[i])
 		s.NoError(err)
-		transfers[i].ReceiveTime = receiveTime
 	}
 	return transfers
 }
@@ -147,9 +146,8 @@ func (s *GetTransactionsTestSuite) addCreate2Transfers() []models.Create2Transfe
 	}
 
 	for i := range transfers {
-		receiveTime, err := s.storage.AddCreate2Transfer(&transfers[i])
+		err := s.storage.AddCreate2Transfer(&transfers[i])
 		s.NoError(err)
-		transfers[i].ReceiveTime = receiveTime
 	}
 	return transfers
 }
@@ -224,21 +222,23 @@ func (s *GetTransactionsTestSuite) addCommitmentAndBatch() *models.Batch {
 
 func (s *GetTransactionsTestSuite) addIncludedTransfer() models.Transfer {
 	transfer := s.makeTransfer(0, 2)
-	transfer.BatchID = models.NewUint256(1)
-	transfer.IndexInBatch = ref.Uint8(0)
-	receiveTime, err := s.storage.AddTransfer(&transfer)
+	transfer.CommitmentID = &models.CommitmentID{
+		BatchID:      models.MakeUint256(1),
+		IndexInBatch: 0,
+	}
+	err := s.storage.AddTransfer(&transfer)
 	s.NoError(err)
-	transfer.ReceiveTime = receiveTime
 	return transfer
 }
 
 func (s *GetTransactionsTestSuite) addIncludedCreate2Transfer() models.Create2Transfer {
 	create2Transfer := s.makeCreate2Transfer(0, 5, &models.PublicKey{3, 4, 5})
-	create2Transfer.BatchID = models.NewUint256(1)
-	create2Transfer.IndexInBatch = ref.Uint8(0)
-	receiveTime, err := s.storage.AddCreate2Transfer(&create2Transfer)
+	create2Transfer.CommitmentID = &models.CommitmentID{
+		BatchID:      models.MakeUint256(1),
+		IndexInBatch: 0,
+	}
+	err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
-	create2Transfer.ReceiveTime = receiveTime
 	return create2Transfer
 }
 

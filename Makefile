@@ -18,10 +18,6 @@ generate:
 
 build: clean compile
 
-setup-db:
-	rm -rf db/badger/data/hubble
-	docker-compose up -d postgres
-
 start-geth-locally:
 	rm -rf e2e/geth-data/geth
 	geth --datadir e2e/geth-data --dev --dev.period 1 --http --ws
@@ -84,7 +80,6 @@ measure-dispute-gas: clean-testcache
 	compile
 	generate
 	build
-	setup-db
 	start-geth-locally
 	setup-geth
 	update-contracts

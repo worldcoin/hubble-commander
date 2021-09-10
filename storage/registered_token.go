@@ -40,7 +40,7 @@ func (s *RegisteredTokenStorage) GetRegisteredToken(tokenID models.Uint256) (*mo
 }
 
 func (s *RegisteredTokenStorage) DeleteRegisteredTokens(tokenIds ...models.Uint256) error {
-	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{Badger: true})
+	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{})
 	if err != nil {
 		return err
 	}

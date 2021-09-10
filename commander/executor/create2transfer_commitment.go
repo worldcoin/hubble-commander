@@ -5,10 +5,9 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/ethereum/go-ethereum/common"
 )
 
-func (t *TransactionExecutor) buildC2TCommitment(
+func (t *ExecutionContext) buildC2TCommitment(
 	appliedTransfers []models.Create2Transfer,
 	addedPubKeyIDs []uint32,
 	commitmentID *models.CommitmentID,
@@ -39,23 +38,10 @@ func (t *TransactionExecutor) buildC2TCommitment(
 		return nil, err
 	}
 
-	err = t.markCreate2TransfersAsIncluded(appliedTransfers, commitmentID)
+	err = t.storage.MarkCreate2TransfersAsIncluded(appliedTransfers, commitmentID)
 	if err != nil {
 		return nil, err
 	}
 
 	return commitment, nil
-}
-
-func (t *TransactionExecutor) markCreate2TransfersAsIncluded(transfers []models.Create2Transfer, commitmentID *models.CommitmentID) error {
-	hashes := make([]common.Hash, 0, len(transfers))
-	for i := range transfers {
-		hashes = append(hashes, transfers[i].Hash)
-
-		err := t.storage.SetCreate2TransferToStateID(transfers[i].Hash, *transfers[i].ToStateID)
-		if err != nil {
-			return err
-		}
-	}
-	return t.storage.BatchMarkTransactionAsIncluded(hashes, &commitmentID.BatchID, &commitmentID.IndexInBatch)
 }

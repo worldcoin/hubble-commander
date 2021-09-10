@@ -4,6 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/utils"
+	bdg "github.com/dgraph-io/badger/v3"
 )
 
 type Storage struct {
@@ -20,8 +21,6 @@ type Storage struct {
 }
 
 type TxOptions struct {
-	Postgres bool
-	Badger   bool
 	ReadOnly bool
 }
 
@@ -107,4 +106,27 @@ func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, 
 
 func (s *Storage) Close() error {
 	return s.database.Close()
+}
+
+func (s *Storage) executeInTransaction(opts TxOptions, fn func(txStorage *Storage) error) error {
+	err := s.unsafeExecuteInTransaction(opts, fn)
+	if err == bdg.ErrConflict {
+		return s.executeInTransaction(opts, fn)
+	}
+	return err
+}
+
+func (s *Storage) unsafeExecuteInTransaction(opts TxOptions, fn func(txStorage *Storage) error) error {
+	txController, txStorage, err := s.BeginTransaction(opts)
+	if err != nil {
+		return err
+	}
+	defer txController.Rollback(&err)
+
+	err = fn(txStorage)
+	if err != nil {
+		return err
+	}
+
+	return txController.Commit()
 }

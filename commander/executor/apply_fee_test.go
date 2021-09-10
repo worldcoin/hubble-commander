@@ -13,8 +13,8 @@ import (
 type ApplyFeeTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage             *storage.TestStorage
-	transactionExecutor *TransactionExecutor
+	storage      *storage.TestStorage
+	executionCtx *ExecutionContext
 }
 
 func (s *ApplyFeeTestSuite) SetupSuite() {
@@ -23,9 +23,9 @@ func (s *ApplyFeeTestSuite) SetupSuite() {
 
 func (s *ApplyFeeTestSuite) SetupTest() {
 	var err error
-	s.storage, err = storage.NewTestStorageWithoutPostgres()
+	s.storage, err = storage.NewTestStorage()
 	s.NoError(err)
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, nil, nil, context.Background())
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, nil, nil, context.Background())
 }
 
 func (s *ApplyFeeTestSuite) TearDownTest() {
@@ -38,7 +38,7 @@ func (s *ApplyFeeTestSuite) TestApplyFee() {
 	_, err := s.storage.StateTree.Set(feeReceiverStateID, &receiverState)
 	s.NoError(err)
 
-	stateProof, err := s.transactionExecutor.ApplyFee(feeReceiverStateID, models.MakeUint256(555))
+	stateProof, err := s.executionCtx.ApplyFee(feeReceiverStateID, models.MakeUint256(555))
 	s.NoError(err)
 	s.Equal(receiverState, *stateProof.UserState)
 
@@ -53,7 +53,7 @@ func (s *ApplyFeeTestSuite) TestApplyFeeForSync_InvalidTokenID() {
 	_, err := s.storage.StateTree.Set(feeReceiver, &receiverState)
 	s.NoError(err)
 
-	stateProof, transferError, appError := s.transactionExecutor.ApplyFeeForSync(feeReceiver, models.NewUint256(2), models.NewUint256(555))
+	stateProof, transferError, appError := s.executionCtx.ApplyFeeForSync(feeReceiver, models.NewUint256(2), models.NewUint256(555))
 	s.NoError(appError)
 	s.ErrorIs(transferError, ErrInvalidFeeReceiverTokenID)
 	s.Equal(receiverState, *stateProof.UserState)

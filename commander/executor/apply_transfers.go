@@ -9,7 +9,7 @@ type AppliedTransfers struct {
 	invalidTransfers []models.Transfer
 }
 
-func (t *TransactionExecutor) ApplyTransfers(
+func (t *ExecutionContext) ApplyTransfers(
 	transfers []models.Transfer,
 	maxApplied uint32,
 	feeReceiver *FeeReceiver,
@@ -58,7 +58,7 @@ func (t *TransactionExecutor) ApplyTransfers(
 	return returnStruct, nil
 }
 
-func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer, feeReceiverStateID uint32) (
+func (t *ExecutionContext) ApplyTransfersForSync(transfers []models.Transfer, feeReceiverStateID uint32) (
 	[]models.Transfer,
 	[]models.StateMerkleProof,
 	error,
@@ -103,7 +103,7 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 	return appliedTransfers, stateChangeProofs, nil
 }
 
-func (t *TransactionExecutor) getCommitmentTokenID(transfers models.GenericTransactionArray, feeReceiverStateID uint32) (
+func (t *ExecutionContext) getCommitmentTokenID(transfers models.GenericTransactionArray, feeReceiverStateID uint32) (
 	tokenID *models.Uint256,
 	err error,
 ) {

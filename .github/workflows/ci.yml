@@ -17,19 +17,6 @@ jobs:
   build-test:
     name: Build and test
     runs-on: ubuntu-20.04
-    services:
-      postgres:
-        image: postgres:13.1
-        env:
-          POSTGRES_USER: hubble
-          POSTGRES_PASSWORD: root
-        ports:
-          - 5432:5432
-        # Needed because the postgres container does not provide a health check
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-    env:
-      HUBBLE_POSTGRES_USER: hubble
-      HUBBLE_POSTGRES_PASSWORD: root
     steps:
       - name: Setup Go
         uses: actions/setup-go@v2

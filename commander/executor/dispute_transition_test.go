@@ -26,12 +26,12 @@ import (
 type DisputeTransitionTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage             *st.TestStorage
-	client              *eth.TestClient
-	cfg                 *config.RollupConfig
-	transactionExecutor *TransactionExecutor
-	decodedCommitments  []encoder.DecodedCommitment
-	decodedBatch        eth.DecodedBatch
+	storage            *st.TestStorage
+	client             *eth.TestClient
+	cfg                *config.RollupConfig
+	executionCtx       *ExecutionContext
+	decodedCommitments []encoder.DecodedCommitment
+	decodedBatch       eth.DecodedBatch
 }
 
 func (s *DisputeTransitionTestSuite) SetupSuite() {
@@ -72,7 +72,7 @@ func (s *DisputeTransitionTestSuite) SetupSuite() {
 
 func (s *DisputeTransitionTestSuite) SetupTest() {
 	var err error
-	s.storage, err = st.NewTestStorageWithBadger()
+	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 
 	s.client, err = eth.NewConfiguredTestClient(
@@ -81,7 +81,7 @@ func (s *DisputeTransitionTestSuite) SetupTest() {
 	)
 	s.NoError(err)
 
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, s.cfg, context.Background())
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg, context.Background())
 }
 
 func (s *DisputeTransitionTestSuite) TearDownTest() {
@@ -101,7 +101,7 @@ func (s *DisputeTransitionTestSuite) TestPreviousCommitmentInclusionProof_Curren
 		Witness: []common.Hash{s.decodedCommitments[1].LeafHash(*s.decodedBatch.AccountTreeRoot)},
 	}
 
-	proof, err := s.transactionExecutor.previousCommitmentInclusionProof(&s.decodedBatch, 0)
+	proof, err := s.executionCtx.previousCommitmentInclusionProof(&s.decodedBatch, 0)
 	s.NoError(err)
 	s.Equal(expected, *proof)
 }
@@ -165,7 +165,7 @@ func (s *DisputeTransitionTestSuite) TestPreviousCommitmentInclusionProof_Previo
 		Witness: []common.Hash{commitments[0].LeafHash(*batch.AccountTreeRoot)},
 	}
 
-	proof, err := s.transactionExecutor.previousCommitmentInclusionProof(&s.decodedBatch, -1)
+	proof, err := s.executionCtx.previousCommitmentInclusionProof(&s.decodedBatch, -1)
 	s.NoError(err)
 	s.Equal(expected, *proof)
 }
@@ -186,7 +186,7 @@ func (s *DisputeTransitionTestSuite) TestGenesisBatchCommitmentInclusionProof() 
 
 	firstBatch := s.decodedBatch
 	firstBatch.ID = models.MakeUint256(1)
-	proof, err := s.transactionExecutor.previousCommitmentInclusionProof(&firstBatch, -1)
+	proof, err := s.executionCtx.previousCommitmentInclusionProof(&firstBatch, -1)
 	s.NoError(err)
 	s.Equal(expected, *proof)
 }
@@ -213,7 +213,7 @@ func (s *DisputeTransitionTestSuite) TestTargetCommitmentInclusionProof() {
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_RemovesInvalidBatch() {
-	setUserStates(s.Assertions, s.transactionExecutor, testDomain)
+	setUserStates(s.Assertions, s.executionCtx, testDomain)
 
 	commitmentTxs := [][]models.Transfer{
 		{
@@ -236,14 +236,14 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_RemovesInval
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.transactionExecutor.DisputeTransition(&remoteBatches[0], 1, proofs)
+	err = s.executionCtx.DisputeTransition(&remoteBatches[0], 1, proofs)
 	s.NoError(err)
 
 	s.checkBatchAfterDispute(remoteBatches[0].ID)
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_FirstCommitment() {
-	setUserStates(s.Assertions, s.transactionExecutor, testDomain)
+	setUserStates(s.Assertions, s.executionCtx, testDomain)
 
 	commitmentTxs := [][]models.Transfer{
 		{
@@ -252,7 +252,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_FirstCommitm
 	}
 
 	transfer := testutils.MakeTransfer(0, 2, 0, 50)
-	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &transfer)
+	createAndSubmitTransferBatch(s.Assertions, s.client, s.executionCtx, &transfer)
 
 	proofs := s.getTransferStateMerkleProofs(commitmentTxs)
 
@@ -264,46 +264,46 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_FirstCommitm
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.transactionExecutor.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
+	err = s.executionCtx.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
 	s.NoError(err)
 
-	err = s.transactionExecutor.DisputeTransition(&remoteBatches[1], 0, proofs)
+	err = s.executionCtx.DisputeTransition(&remoteBatches[1], 0, proofs)
 	s.NoError(err)
 
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_ValidBatch() {
-	setUserStates(s.Assertions, s.transactionExecutor, testDomain)
+	setUserStates(s.Assertions, s.executionCtx, testDomain)
 
 	transfers := []models.Transfer{
 		testutils.MakeTransfer(0, 2, 0, 50),
 		testutils.MakeTransfer(0, 2, 1, 100),
 	}
 
-	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &transfers[0])
+	createAndSubmitTransferBatch(s.Assertions, s.client, s.executionCtx, &transfers[0])
 
 	proofs := s.getTransferStateMerkleProofs([][]models.Transfer{{transfers[1]}})
 
 	s.beginExecutorTransaction()
 	defer s.commitTransaction()
-	createAndSubmitTransferBatch(s.Assertions, s.client, s.transactionExecutor, &transfers[1])
+	createAndSubmitTransferBatch(s.Assertions, s.client, s.executionCtx, &transfers[1])
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.transactionExecutor.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
+	err = s.executionCtx.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
 	s.NoError(err)
 
-	err = s.transactionExecutor.DisputeTransition(&remoteBatches[1], 0, proofs)
+	err = s.executionCtx.DisputeTransition(&remoteBatches[1], 0, proofs)
 	s.NoError(err)
 	_, err = s.client.GetBatch(&remoteBatches[1].ID)
 	s.NoError(err)
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_RemovesInvalidBatch() {
-	wallets := setUserStates(s.Assertions, s.transactionExecutor, testDomain)
+	wallets := setUserStates(s.Assertions, s.executionCtx, testDomain)
 
 	commitmentTxs := [][]models.Create2Transfer{
 		{
@@ -327,14 +327,14 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_Remov
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.transactionExecutor.DisputeTransition(&remoteBatches[0], 1, proofs)
+	err = s.executionCtx.DisputeTransition(&remoteBatches[0], 1, proofs)
 	s.NoError(err)
 
 	s.checkBatchAfterDispute(remoteBatches[0].ID)
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_FirstCommitment() {
-	wallets := setUserStates(s.Assertions, s.transactionExecutor, testDomain)
+	wallets := setUserStates(s.Assertions, s.executionCtx, testDomain)
 
 	commitmentTxs := [][]models.Create2Transfer{
 		{
@@ -343,8 +343,8 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_First
 	}
 	pubKeyIDs := [][]uint32{{4}}
 
-	transfer := testutils.MakeCreate2Transfer(0, ref.Uint32(3), 0, 50, wallets[1].PublicKey())
-	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &transfer)
+	transfer := testutils.MakeCreate2Transfer(0, nil, 0, 50, wallets[1].PublicKey())
+	createAndSubmitC2TBatch(s.Assertions, s.client, s.executionCtx, &transfer)
 
 	registrations, unsubscribe, err := s.client.WatchRegistrations(&bind.WatchOpts{})
 	s.NoError(err)
@@ -364,40 +364,42 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_First
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.transactionExecutor.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
+	err = s.executionCtx.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
 	s.NoError(err)
 
-	err = s.transactionExecutor.DisputeTransition(&remoteBatches[1], 0, proofs)
+	err = s.executionCtx.DisputeTransition(&remoteBatches[1], 0, proofs)
 	s.NoError(err)
 
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_ValidBatch() {
-	wallets := setUserStates(s.Assertions, s.transactionExecutor, testDomain)
+	wallets := setUserStates(s.Assertions, s.executionCtx, testDomain)
 
 	transfers := []models.Create2Transfer{
-		testutils.MakeCreate2Transfer(0, ref.Uint32(3), 0, 50, wallets[1].PublicKey()),
+		testutils.MakeCreate2Transfer(0, nil, 0, 50, wallets[1].PublicKey()),
 		testutils.MakeCreate2Transfer(0, ref.Uint32(4), 1, 100, wallets[1].PublicKey()),
 	}
 	pubKeyIDs := [][]uint32{{4}}
 
-	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &transfers[0])
+	createAndSubmitC2TBatch(s.Assertions, s.client, s.executionCtx, &transfers[0])
 
 	proofs := s.getC2TStateMerkleProofs([][]models.Create2Transfer{{transfers[1]}}, pubKeyIDs)
 
 	s.beginExecutorTransaction()
 	defer s.commitTransaction()
-	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &transfers[1])
+
+	transfers[1].ToStateID = nil
+	createAndSubmitC2TBatch(s.Assertions, s.client, s.executionCtx, &transfers[1])
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.transactionExecutor.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
+	err = s.executionCtx.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
 	s.NoError(err)
 
-	err = s.transactionExecutor.DisputeTransition(&remoteBatches[1], 0, proofs)
+	err = s.executionCtx.DisputeTransition(&remoteBatches[1], 0, proofs)
 	s.NoError(err)
 	_, err = s.client.GetBatch(&remoteBatches[1].ID)
 	s.NoError(err)
@@ -424,7 +426,7 @@ func checkRemoteBatchAfterDispute(s *require.Assertions, client *eth.TestClient,
 
 func (s *DisputeTransitionTestSuite) beginExecutorTransaction() {
 	var err error
-	s.transactionExecutor, err = NewTransactionExecutor(s.storage.Storage, s.client.Client, s.cfg, context.Background())
+	s.executionCtx, err = NewExecutionContext(s.storage.Storage, s.client.Client, s.cfg, context.Background())
 	s.NoError(err)
 }
 
@@ -432,12 +434,12 @@ func (s *DisputeTransitionTestSuite) getTransferStateMerkleProofs(txs [][]models
 	feeReceiverStateID := uint32(0)
 
 	s.beginExecutorTransaction()
-	defer s.transactionExecutor.Rollback(nil)
+	defer s.executionCtx.Rollback(nil)
 
 	var stateProofs []models.StateMerkleProof
 	var err error
 	for i := range txs {
-		_, stateProofs, err = s.transactionExecutor.ApplyTransfersForSync(txs[i], feeReceiverStateID)
+		_, stateProofs, err = s.executionCtx.ApplyTransfersForSync(txs[i], feeReceiverStateID)
 		if err != nil {
 			var disputableErr *DisputableError
 			s.ErrorAs(err, &disputableErr)
@@ -457,12 +459,12 @@ func (s *DisputeTransitionTestSuite) getC2TStateMerkleProofs(
 	feeReceiverStateID := uint32(0)
 
 	s.beginExecutorTransaction()
-	defer s.transactionExecutor.Rollback(nil)
+	defer s.executionCtx.Rollback(nil)
 
 	var stateProofs []models.StateMerkleProof
 	var err error
 	for i := range txs {
-		_, stateProofs, err = s.transactionExecutor.ApplyCreate2TransfersForSync(txs[i], pubKeyIDs[i], feeReceiverStateID)
+		_, stateProofs, err = s.executionCtx.ApplyCreate2TransfersForSync(txs[i], pubKeyIDs[i], feeReceiverStateID)
 		if err != nil {
 			var disputableErr *DisputableError
 			s.ErrorAs(err, &disputableErr)
@@ -477,17 +479,17 @@ func (s *DisputeTransitionTestSuite) getC2TStateMerkleProofs(
 
 func (s *DisputeTransitionTestSuite) createAndSubmitInvalidTransferBatch(txs [][]models.Transfer, invalidTxHash common.Hash) *models.Batch {
 	for i := range txs {
-		err := s.transactionExecutor.storage.BatchAddTransfer(txs[i])
+		err := s.executionCtx.storage.BatchAddTransfer(txs[i])
 		s.NoError(err)
 	}
 
-	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Transfer)
+	pendingBatch, err := s.executionCtx.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
 	commitments := s.createInvalidTransferCommitments(txs, invalidTxHash)
 	s.Len(commitments, len(txs))
 
-	err = s.transactionExecutor.SubmitBatch(pendingBatch, commitments)
+	err = s.executionCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.Commit()
@@ -500,21 +502,38 @@ func (s *DisputeTransitionTestSuite) createAndSubmitInvalidC2TBatch(
 	invalidTxHash common.Hash,
 ) *models.Batch {
 	for i := range txs {
-		err := s.transactionExecutor.storage.BatchAddCreate2Transfer(txs[i])
+		stateIDs := s.resetCreate2TransfersToStateID(txs[i])
+		err := s.executionCtx.storage.BatchAddCreate2Transfer(txs[i])
 		s.NoError(err)
+		s.setCreate2TransfersToStateID(txs[i], stateIDs)
 	}
 
-	pendingBatch, err := s.transactionExecutor.NewPendingBatch(txtype.Create2Transfer)
+	pendingBatch, err := s.executionCtx.NewPendingBatch(txtype.Create2Transfer)
 	s.NoError(err)
 
 	commitments := s.createInvalidC2TCommitments(txs, pubKeyIDs, invalidTxHash)
 	s.Len(commitments, len(txs))
 
-	err = s.transactionExecutor.SubmitBatch(pendingBatch, commitments)
+	err = s.executionCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.Commit()
 	return pendingBatch
+}
+
+func (s *DisputeTransitionTestSuite) resetCreate2TransfersToStateID(txs []models.Create2Transfer) []*uint32 {
+	stateIDs := make([]*uint32, 0, len(txs))
+	for i := range txs {
+		stateIDs = append(stateIDs, txs[i].ToStateID)
+		txs[i].ToStateID = nil
+	}
+	return stateIDs
+}
+
+func (s *DisputeTransitionTestSuite) setCreate2TransfersToStateID(txs []models.Create2Transfer, toStateIDs []*uint32) {
+	for i := range txs {
+		txs[i].ToStateID = toStateIDs[i]
+	}
 }
 
 func (s *DisputeTransitionTestSuite) createInvalidC2TCommitments(
@@ -522,7 +541,7 @@ func (s *DisputeTransitionTestSuite) createInvalidC2TCommitments(
 	pubKeyIDs [][]uint32,
 	invalidTxHash common.Hash,
 ) []models.Commitment {
-	commitmentID, err := s.transactionExecutor.createCommitmentID()
+	commitmentID, err := s.executionCtx.createCommitmentID()
 	s.NoError(err)
 
 	commitments := make([]models.Commitment, 0, len(commitmentTxs))
@@ -535,11 +554,11 @@ func (s *DisputeTransitionTestSuite) createInvalidC2TCommitments(
 			combinedFee = s.applyTransfer(&txs[j], invalidTxHash, combinedFee, receiverLeaf)
 		}
 		if combinedFee.CmpN(0) > 0 {
-			_, err := s.transactionExecutor.ApplyFee(0, combinedFee)
+			_, err := s.executionCtx.ApplyFee(0, combinedFee)
 			s.NoError(err)
 		}
 
-		commitment, err := s.transactionExecutor.buildC2TCommitment(txs, pubKeyIDs[i], commitmentID, 0, testDomain)
+		commitment, err := s.executionCtx.buildC2TCommitment(txs, pubKeyIDs[i], commitmentID, 0, testDomain)
 		s.NoError(err)
 		commitments = append(commitments, *commitment)
 	}
@@ -551,7 +570,7 @@ func (s *DisputeTransitionTestSuite) createInvalidTransferCommitments(
 	commitmentTxs [][]models.Transfer,
 	invalidTxHash common.Hash,
 ) []models.Commitment {
-	commitmentID, err := s.transactionExecutor.createCommitmentID()
+	commitmentID, err := s.executionCtx.createCommitmentID()
 	s.NoError(err)
 
 	commitments := make([]models.Commitment, 0, len(commitmentTxs))
@@ -560,16 +579,16 @@ func (s *DisputeTransitionTestSuite) createInvalidTransferCommitments(
 		txs := commitmentTxs[i]
 		combinedFee := models.MakeUint256(0)
 		for j := range txs {
-			receiverLeaf, err := s.transactionExecutor.storage.StateTree.Leaf(txs[j].ToStateID)
+			receiverLeaf, err := s.executionCtx.storage.StateTree.Leaf(txs[j].ToStateID)
 			s.NoError(err)
 			combinedFee = s.applyTransfer(&txs[j], invalidTxHash, combinedFee, receiverLeaf)
 		}
 		if combinedFee.CmpN(0) > 0 {
-			_, err := s.transactionExecutor.ApplyFee(0, combinedFee)
+			_, err := s.executionCtx.ApplyFee(0, combinedFee)
 			s.NoError(err)
 		}
 
-		commitment, err := s.transactionExecutor.buildTransferCommitment(txs, commitmentID, 0, testDomain)
+		commitment, err := s.executionCtx.buildTransferCommitment(txs, commitmentID, 0, testDomain)
 		s.NoError(err)
 		commitments = append(commitments, *commitment)
 	}
@@ -584,11 +603,11 @@ func (s *DisputeTransitionTestSuite) applyTransfer(
 	receiverLeaf *models.StateLeaf,
 ) models.Uint256 {
 	if tx.GetBase().Hash != invalidTxHash {
-		transferError, appError := s.transactionExecutor.ApplyTransfer(tx, receiverLeaf, models.MakeUint256(0))
+		transferError, appError := s.executionCtx.ApplyTransfer(tx, receiverLeaf, models.MakeUint256(0))
 		s.NoError(transferError)
 		s.NoError(appError)
 	} else {
-		senderLeaf, err := s.transactionExecutor.storage.StateTree.Leaf(tx.GetFromStateID())
+		senderLeaf, err := s.executionCtx.storage.StateTree.Leaf(tx.GetFromStateID())
 		s.NoError(err)
 		s.calculateStateAfterInvalidTransfer(senderLeaf, receiverLeaf, tx)
 	}
@@ -603,9 +622,9 @@ func (s *DisputeTransitionTestSuite) calculateStateAfterInvalidTransfer(
 	senderState.Nonce = *senderState.Nonce.AddN(1)
 	amount := invalidTransfer.GetAmount()
 	receiverState.Balance = *receiverState.Balance.Add(&amount)
-	_, err := s.transactionExecutor.storage.StateTree.Set(invalidTransfer.GetFromStateID(), &senderState.UserState)
+	_, err := s.executionCtx.storage.StateTree.Set(invalidTransfer.GetFromStateID(), &senderState.UserState)
 	s.NoError(err)
-	_, err = s.transactionExecutor.storage.StateTree.Set(*invalidTransfer.GetToStateID(), &receiverState.UserState)
+	_, err = s.executionCtx.storage.StateTree.Set(*invalidTransfer.GetToStateID(), &receiverState.UserState)
 	s.NoError(err)
 }
 
@@ -624,27 +643,27 @@ func (s *DisputeTransitionTestSuite) addGenesisBatch() *models.Batch {
 }
 
 func (s *DisputeTransitionTestSuite) commitTransaction() {
-	err := s.transactionExecutor.Commit()
+	err := s.executionCtx.Commit()
 	s.NoError(err)
 }
 
-func setUserStates(s *require.Assertions, txExecutor *TransactionExecutor, domain *bls.Domain) []bls.Wallet {
+func setUserStates(s *require.Assertions, executionCtx *ExecutionContext, domain *bls.Domain) []bls.Wallet {
 	userStates := []models.UserState{
 		*createUserState(0, 300, 0),
 		*createUserState(1, 200, 0),
 		*createUserState(2, 100, 0),
 	}
-	registrations, unsubscribe, err := txExecutor.client.WatchRegistrations(&bind.WatchOpts{})
+	registrations, unsubscribe, err := executionCtx.client.WatchRegistrations(&bind.WatchOpts{})
 	s.NoError(err)
 	defer unsubscribe()
 
 	wallets := generateWallets(s, domain, len(userStates))
 	for i := range userStates {
-		pubKeyID, err := txExecutor.client.RegisterAccount(wallets[i].PublicKey(), registrations)
+		pubKeyID, err := executionCtx.client.RegisterAccount(wallets[i].PublicKey(), registrations)
 		s.NoError(err)
 		s.Equal(userStates[i].PubKeyID, *pubKeyID)
 
-		_, err = txExecutor.storage.StateTree.Set(uint32(i), &userStates[i])
+		_, err = executionCtx.storage.StateTree.Set(uint32(i), &userStates[i])
 		s.NoError(err)
 	}
 	return wallets

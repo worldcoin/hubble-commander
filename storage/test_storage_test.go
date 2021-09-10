@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -26,7 +25,7 @@ func (s *NewTestStorageTestSuite) SetupSuite() {
 
 func (s *NewTestStorageTestSuite) SetupTest() {
 	var err error
-	s.storage, err = NewTestStorageWithoutPostgres()
+	s.storage, err = NewTestStorage()
 	s.NoError(err)
 	s.batch = &models.Batch{
 		ID:                models.MakeUint256(1),
@@ -46,8 +45,6 @@ func (s *NewTestStorageTestSuite) TearDownTest() {
 }
 
 func (s *NewTestStorageTestSuite) TestClone() {
-	testConfig := config.GetTestConfig().Postgres
-
 	err := s.storage.AddBatch(s.batch)
 	s.NoError(err)
 
@@ -57,7 +54,7 @@ func (s *NewTestStorageTestSuite) TestClone() {
 	_, err = s.storage.StateTree.Set(stateLeaf.StateID, &stateLeaf.UserState)
 	s.NoError(err)
 
-	clonedStorage, err := s.storage.Clone(testConfig)
+	clonedStorage, err := s.storage.Clone()
 	s.NoError(err)
 	defer func() {
 		err = clonedStorage.Teardown()
@@ -74,11 +71,9 @@ func (s *NewTestStorageTestSuite) TestClone() {
 }
 
 func (s *NewTestStorageTestSuite) TestClone_ClonesFeeReceiverStateIDsByValue() {
-	testConfig := config.GetTestConfig().Postgres
-
 	s.storage.feeReceiverStateIDs["abc"] = 123
 
-	clonedStorage, err := s.storage.Clone(testConfig)
+	clonedStorage, err := s.storage.Clone()
 	s.NoError(err)
 	defer func() {
 		err = clonedStorage.Teardown()

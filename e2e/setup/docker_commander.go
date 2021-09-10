@@ -65,11 +65,6 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 				getEnvVarMapping("HUBBLE_ETHEREUM_RPC_URL"),
 				getEnvVarMapping("HUBBLE_ETHEREUM_CHAIN_ID"),
 				getEnvVarMapping("HUBBLE_ETHEREUM_PRIVATE_KEY"),
-				getEnvVarMapping("HUBBLE_POSTGRES_HOST"),
-				getEnvVarMapping("HUBBLE_POSTGRES_PORT"),
-				getEnvVarMapping("HUBBLE_POSTGRES_NAME"),
-				getEnvVarMapping("HUBBLE_POSTGRES_USER"),
-				getEnvVarMapping("HUBBLE_POSTGRES_PASSWORD"),
 				getEnvVarMapping("HUBBLE_ROLLUP_MIN_TXS_PER_COMMITMENT"),
 				getEnvVarMapping("HUBBLE_ROLLUP_MAX_TXS_PER_COMMITMENT"),
 				"HUBBLE_API_PORT=8080",
@@ -91,7 +86,7 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 				{
 					Type:   mount.TypeBind,
 					Source: path.Join(utils.GetProjectRoot(), "e2e-data"),
-					Target: "/go/src/app/db/badger/data/hubble",
+					Target: "/go/src/app/db/data/hubble",
 				},
 				{
 					Type:   mount.TypeBind,

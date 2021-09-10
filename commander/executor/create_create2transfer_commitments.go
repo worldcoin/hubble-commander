@@ -13,7 +13,7 @@ var (
 	ErrNotEnoughC2Transfers = NewRollupError("not enough create2transfers")
 )
 
-func (t *TransactionExecutor) CreateCreate2TransferCommitments(domain *bls.Domain) (commitments []models.Commitment, err error) {
+func (t *ExecutionContext) CreateCreate2TransferCommitments(domain *bls.Domain) (commitments []models.Commitment, err error) {
 	pendingTransfers, err := t.queryPendingC2Ts()
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func (t *TransactionExecutor) CreateCreate2TransferCommitments(domain *bls.Domai
 	return commitments, nil
 }
 
-func (t *TransactionExecutor) createC2TCommitment(
+func (t *ExecutionContext) createC2TCommitment(
 	pendingTransfers []models.Create2Transfer,
 	commitmentID *models.CommitmentID,
 	domain *bls.Domain,
@@ -95,7 +95,7 @@ func (t *TransactionExecutor) createC2TCommitment(
 	return newPendingTransfers, commitment, nil
 }
 
-func (t *TransactionExecutor) applyC2TsForCommitment(pendingTransfers []models.Create2Transfer, feeReceiver *FeeReceiver) (
+func (t *ExecutionContext) applyC2TsForCommitment(pendingTransfers []models.Create2Transfer, feeReceiver *FeeReceiver) (
 	appliedTransfers, newPendingTransfers []models.Create2Transfer,
 	addedPubKeyIDs []uint32,
 	err error,
@@ -134,14 +134,14 @@ func (t *TransactionExecutor) applyC2TsForCommitment(pendingTransfers []models.C
 	}
 }
 
-func (t *TransactionExecutor) refillPendingC2Ts(pendingTransfers []models.Create2Transfer) ([]models.Create2Transfer, error) {
+func (t *ExecutionContext) refillPendingC2Ts(pendingTransfers []models.Create2Transfer) ([]models.Create2Transfer, error) {
 	if len(pendingTransfers) < int(t.cfg.MaxTxsPerCommitment) {
 		return t.queryPendingC2Ts()
 	}
 	return pendingTransfers, nil
 }
 
-func (t *TransactionExecutor) queryPendingC2Ts() ([]models.Create2Transfer, error) {
+func (t *ExecutionContext) queryPendingC2Ts() ([]models.Create2Transfer, error) {
 	pendingTransfers, err := t.storage.GetPendingCreate2Transfers(t.cfg.MaxCommitmentsPerBatch * t.cfg.MaxTxsPerCommitment)
 	if err != nil {
 		return nil, err
@@ -152,7 +152,7 @@ func (t *TransactionExecutor) queryPendingC2Ts() ([]models.Create2Transfer, erro
 	return pendingTransfers, nil
 }
 
-func (t *TransactionExecutor) queryMorePendingC2Ts(appliedTransfers []models.Create2Transfer) ([]models.Create2Transfer, error) {
+func (t *ExecutionContext) queryMorePendingC2Ts(appliedTransfers []models.Create2Transfer) ([]models.Create2Transfer, error) {
 	numAppliedTransfers := uint32(len(appliedTransfers))
 	// TODO use SQL Offset instead
 	pendingTransfers, err := t.storage.GetPendingCreate2Transfers(

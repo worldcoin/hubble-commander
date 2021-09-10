@@ -7,8 +7,7 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/db/badger"
-	"github.com/Worldcoin/hubble-commander/db/postgres"
+	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
@@ -28,9 +27,7 @@ func (s *CommanderTestSuite) SetupSuite() {
 
 func (s *CommanderTestSuite) SetupTest() {
 	cfg := config.GetTestConfig()
-	err := postgres.RecreateDatabase(cfg.Postgres)
-	s.NoError(err)
-	err = badger.PruneDatabase(cfg.Badger)
+	err := db.PruneDatabase(cfg.Badger)
 	s.NoError(err)
 	chain, err := GetChainConnection(cfg.Ethereum)
 	s.NoError(err)

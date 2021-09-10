@@ -72,7 +72,7 @@ func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
 		return NewInvalidPubKeyIDError(leaf.PubKeyID)
 	}
 
-	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{Badger: true})
+	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{})
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
 		return ErrInvalidAccountsLength
 	}
 
-	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{Badger: true})
+	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{})
 	if err != nil {
 		return err
 	}

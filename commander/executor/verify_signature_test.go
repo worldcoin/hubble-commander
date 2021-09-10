@@ -20,11 +20,11 @@ import (
 type VerifySignatureTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	transactionExecutor *TransactionExecutor
-	storage             *st.TestStorage
-	client              *eth.TestClient
-	cfg                 *config.RollupConfig
-	wallets             []bls.Wallet
+	executionCtx *ExecutionContext
+	storage      *st.TestStorage
+	client       *eth.TestClient
+	cfg          *config.RollupConfig
+	wallets      []bls.Wallet
 }
 
 func (s *VerifySignatureTestSuite) SetupSuite() {
@@ -41,9 +41,9 @@ func (s *VerifySignatureTestSuite) SetupTest() {
 	var err error
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
-	s.storage, err = st.NewTestStorageWithoutPostgres()
+	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, s.cfg, context.Background())
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg, context.Background())
 	s.addAccounts()
 }
 
@@ -88,7 +88,7 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_ValidSignature() 
 		CombinedSignature: *combinedSignature,
 	}
 
-	err = s.transactionExecutor.verifyTransferSignature(commitment, transfers)
+	err = s.executionCtx.verifyTransferSignature(commitment, transfers)
 	s.NoError(err)
 }
 
@@ -129,7 +129,7 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_InvalidSignature(
 		CombinedSignature: *combinedSignature,
 	}
 
-	err = s.transactionExecutor.verifyTransferSignature(commitment, transfers)
+	err = s.executionCtx.verifyTransferSignature(commitment, transfers)
 
 	var disputableErr *DisputableError
 	s.ErrorAs(err, &disputableErr)
@@ -143,7 +143,7 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_EmptyTransactions
 		CombinedSignature: models.Signature{1, 2, 3},
 	}
 
-	err := s.transactionExecutor.verifyTransferSignature(commitment, transfers)
+	err := s.executionCtx.verifyTransferSignature(commitment, transfers)
 	s.NoError(err)
 }
 
@@ -184,7 +184,7 @@ func (s *VerifySignatureTestSuite) TestVerifyCreate2TransferSignature_ValidSigna
 		CombinedSignature: *combinedSignature,
 	}
 
-	err = s.transactionExecutor.verifyCreate2TransferSignature(commitment, transfers)
+	err = s.executionCtx.verifyCreate2TransferSignature(commitment, transfers)
 	s.NoError(err)
 }
 
@@ -194,7 +194,7 @@ func (s *VerifySignatureTestSuite) TestVerifyCreate2TransfersSignature_EmptyTran
 		CombinedSignature: models.Signature{1, 2, 3},
 	}
 
-	err := s.transactionExecutor.verifyCreate2TransferSignature(commitment, transfers)
+	err := s.executionCtx.verifyCreate2TransferSignature(commitment, transfers)
 	s.NoError(err)
 }
 

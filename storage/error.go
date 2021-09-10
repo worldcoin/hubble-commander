@@ -67,3 +67,23 @@ func NewAccountBatchAlreadyExistsError(accounts []models.AccountLeaf) *AccountBa
 func (e *AccountBatchAlreadyExistsError) Error() string {
 	return fmt.Sprintf("accounts with pubKeyIDs %v already exist", e.Accounts)
 }
+
+type NoVacantSubtreeError struct {
+	subtreeDepth uint8
+}
+
+func NewNoVacantSubtreeError(subtreeDepth uint8) *NoVacantSubtreeError {
+	return &NoVacantSubtreeError{subtreeDepth: subtreeDepth}
+}
+
+func (e *NoVacantSubtreeError) Error() string {
+	return fmt.Sprintf("no vacant slot found in the State Tree for a subtree of depth %d", e.subtreeDepth)
+}
+
+func (e *NoVacantSubtreeError) Is(other error) bool {
+	otherError, ok := other.(*NoVacantSubtreeError)
+	if !ok {
+		return false
+	}
+	return e.subtreeDepth == otherError.subtreeDepth
+}
