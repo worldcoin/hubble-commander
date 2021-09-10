@@ -132,7 +132,7 @@ func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_StoresPendingBatchRecord() {
 	s.Nil(batch.Hash)
 }
 
-func (s *SubmitBatchTestSuite) getCommitments(count int, batchID models.Uint256) []models.Commitment {
+func getCommitments(count int, batchID models.Uint256) []models.Commitment {
 	commitments := make([]models.Commitment, 0, count)
 	for i := 0; i < count; i++ {
 		commitment := baseCommitment
@@ -147,7 +147,7 @@ func (s *SubmitBatchTestSuite) getCommitments(count int, batchID models.Uint256)
 func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_AddsCommitments() {
 	pendingBatch, err := s.executionCtx.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
-	commitments := s.getCommitments(2, pendingBatch.ID)
+	commitments := getCommitments(2, pendingBatch.ID)
 
 	err = s.executionCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
@@ -166,7 +166,7 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_AddsCommitments() {
 func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_AddsCommitments() {
 	pendingBatch, err := s.executionCtx.NewPendingBatch(txtype.Create2Transfer)
 	s.NoError(err)
-	commitments := s.getCommitments(2, pendingBatch.ID)
+	commitments := getCommitments(2, pendingBatch.ID)
 
 	err = s.executionCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
