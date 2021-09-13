@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: chain-spec
+  namespace: production
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      volumes:
+      - name: chain-spec
+        emptyDir:
+          sizeLimit: 1Gi
+      containers:
+      - name: chain-spec
+        image: "ghcr.io/worldcoin/hubble-commander@sha256:f65594ef5814288b2a3f188ca821edd113e3743bb0224c8f5386d25a4ecb1f72"
+        command:
+            - /bin/sh
+            - -c
+            - "/go/src/app/build/hubble deploy -file /chain-spec/chain-spec.yaml; cat /chain-spec/chain-spec.yaml | base64"
+        volumeMounts:
+        - name: chain-spec
+          mountPath: /chain-spec
+      restartPolicy: Never
+  backoffLimit: 0

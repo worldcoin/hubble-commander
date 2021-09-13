@@ -4,7 +4,7 @@ metadata:
   labels:
     app: hubble-commander
   name: hubble-commander
-  namespace: staging
+  namespace: production
 spec:
   replicas: 1
   selector:
@@ -17,7 +17,7 @@ spec:
         admission.datadoghq.com/enabled: "true"
       annotations:
         ad.datadoghq.com/hubble-commander.logs: '[{"source":"go","service":"hubble-commander"}]'
-        ad.datadoghq.com/tags: '{"env":"staging"}'
+        ad.datadoghq.com/tags: '{"env":"production"}'
     spec:
       imagePullSecrets:
         - name: regcred
