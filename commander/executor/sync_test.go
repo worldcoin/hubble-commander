@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Other test suites encapsulate SyncTestSuite. Don't add any tests on SyncTestSuite to avoid repeated runs.
 type SyncTestSuite struct {
 	TestSuiteWithExecutionContext
 	domain  *bls.Domain
