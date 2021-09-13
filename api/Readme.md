@@ -4,7 +4,7 @@ Uses Go-Ethereum API library.
 
 All API calls prefixed by `hubble_`
 
-TODO:
+## TO DO
 
 * Generate API documentation / specificiation
   * See PR for OpenRPC
@@ -17,7 +17,3 @@ TODO:
   * Kubernetes
     * Primary (building batches) (Single proof of authority master)
     * Secondary (only syncing)
-
-* Desirable renames
-  * ProofOfBurn -> ProofOfAuthority
-  * Create2 -> Anything better
