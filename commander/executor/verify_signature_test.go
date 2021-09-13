@@ -6,10 +6,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
@@ -17,39 +15,18 @@ import (
 )
 
 type VerifySignatureTestSuite struct {
-	*require.Assertions
-	suite.Suite
-	executionCtx *ExecutionContext
-	storage      *st.TestStorage
-	client       *eth.TestClient
-	cfg          *config.RollupConfig
-	wallets      []bls.Wallet
+	TestSuiteWithExecutionContext
+	wallets []bls.Wallet
 }
 
-func (s *VerifySignatureTestSuite) SetupSuite() {
-	s.Assertions = require.New(s.T())
-	s.cfg = &config.RollupConfig{
+func (s *VerifySignatureTestSuite) SetupTest() {
+	s.TestSuiteWithExecutionContext.SetupTestWithConfig(config.RollupConfig{
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
 		MaxTxsPerCommitment:    1,
 		DisableSignatures:      false,
-	}
-}
-
-func (s *VerifySignatureTestSuite) SetupTest() {
-	var err error
-	s.client, err = eth.NewTestClient()
-	s.NoError(err)
-	s.storage, err = st.NewTestStorage()
-	s.NoError(err)
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
+	})
 	s.addAccounts()
-}
-
-func (s *VerifySignatureTestSuite) TearDownTest() {
-	err := s.storage.Teardown()
-	s.NoError(err)
-	s.client.Close()
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_ValidSignature() {
