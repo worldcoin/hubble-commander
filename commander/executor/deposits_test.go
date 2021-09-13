@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -29,7 +28,7 @@ func (s *DepositsTestSuite) SetupTest() {
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, &eth.Client{}, nil, context.Background())
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, &eth.Client{}, nil)
 }
 
 func (s *DepositsTestSuite) TearDownTest() {

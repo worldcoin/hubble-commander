@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"context"
 	"math/big"
 	"testing"
 
@@ -45,7 +44,7 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 	s.client, err = eth.NewTestClient()
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, nil, context.Background())
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, nil)
 	s.NoError(err)
 
 	_, err = s.storage.StateTree.Set(0, &models.UserState{

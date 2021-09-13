@@ -58,12 +58,7 @@ func (s *BatchesTestSuite) SetupTest() {
 	s.cmd.storage = s.testStorage.Storage
 	s.cmd.workersContext, s.cmd.stopWorkers = context.WithCancel(context.Background())
 
-	s.executionCtx = executor.NewTestExecutionContext(
-		s.testStorage.Storage,
-		s.testClient.Client,
-		s.cfg.Rollup,
-		context.Background(),
-	)
+	s.executionCtx = executor.NewTestExecutionContext(s.testStorage.Storage, s.testClient.Client, s.cfg.Rollup)
 
 	err = s.cmd.addGenesisBatch()
 	s.NoError(err)
@@ -85,7 +80,7 @@ func (s *BatchesTestSuite) TestUnsafeSyncBatches_DoesNotSyncExistingBatchTwice()
 	tx := testutils.MakeTransfer(0, 1, 0, 400)
 	signTransfer(s.T(), &s.wallets[tx.FromStateID], &tx)
 	clonedStorage, executionCtx := cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
-	s.createAndSubmitTransferBatch(clonedStorage.Storage, executionCtx, &tx)
+	s.submitTransferBatch(clonedStorage.Storage, executionCtx, &tx)
 	teardown(s.Assertions, clonedStorage.Teardown)
 
 	s.syncAllBlocks()
@@ -94,7 +89,7 @@ func (s *BatchesTestSuite) TestUnsafeSyncBatches_DoesNotSyncExistingBatchTwice()
 	signTransfer(s.T(), &s.wallets[tx2.FromStateID], &tx2)
 	clonedStorage, executionCtx = cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
 	defer teardown(s.Assertions, clonedStorage.Teardown)
-	s.createAndSubmitTransferBatch(clonedStorage.Storage, executionCtx, &tx2)
+	s.submitTransferBatch(clonedStorage.Storage, executionCtx, &tx2)
 
 	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
@@ -126,7 +121,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 
 	clonedStorage, executionCtx := cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
 	defer teardown(s.Assertions, clonedStorage.Teardown)
-	s.createAndSubmitTransferBatch(clonedStorage.Storage, executionCtx, &transfers[0])
+	s.submitTransferBatch(clonedStorage.Storage, executionCtx, &transfers[0])
 
 	s.createTransferBatch(&transfers[1])
 
@@ -167,13 +162,13 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 
 func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithTooManyTxs() {
 	transfer := testutils.MakeTransfer(0, 1, 0, 50)
-	s.createAndSubmitTransferBatch(s.testStorage.Storage, s.executionCtx, &transfer)
+	s.submitTransferBatch(s.testStorage.Storage, s.executionCtx, &transfer)
 
 	clonedStorage, executionCtx := cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
 	defer teardown(s.Assertions, clonedStorage.Teardown)
 
 	transfer = testutils.MakeTransfer(0, 1, 1, 100)
-	s.createAndSubmitInvalidTransferBatch(clonedStorage.Storage, executionCtx, &transfer, func(commitment *models.Commitment) {
+	s.submitInvalidTransferBatch(clonedStorage.Storage, executionCtx, &transfer, func(commitment *models.Commitment) {
 		commitment.Transactions = append(commitment.Transactions, commitment.Transactions...)
 	})
 
@@ -192,13 +187,13 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithTooManyTxs() {
 
 func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidPostStateRoot() {
 	transfer := testutils.MakeTransfer(0, 1, 0, 50)
-	s.createAndSubmitTransferBatch(s.testStorage.Storage, s.executionCtx, &transfer)
+	s.submitTransferBatch(s.testStorage.Storage, s.executionCtx, &transfer)
 
 	clonedStorage, executionCtx := cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
 	defer teardown(s.Assertions, clonedStorage.Teardown)
 
 	invalidTransfer := testutils.MakeTransfer(0, 1, 1, 100)
-	s.createAndSubmitInvalidTransferBatch(clonedStorage.Storage, executionCtx, &invalidTransfer, func(commitment *models.Commitment) {
+	s.submitInvalidTransferBatch(clonedStorage.Storage, executionCtx, &invalidTransfer, func(commitment *models.Commitment) {
 		commitment.PostStateRoot = utils.RandomHash()
 	})
 
@@ -222,7 +217,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidSignature
 	defer teardown(s.Assertions, clonedStorage.Teardown)
 
 	invalidTransfer := testutils.MakeTransfer(0, 1, 0, 100)
-	s.createAndSubmitInvalidTransferBatch(clonedStorage.Storage, executionCtx, &invalidTransfer, func(commitment *models.Commitment) {
+	s.submitInvalidTransferBatch(clonedStorage.Storage, executionCtx, &invalidTransfer, func(commitment *models.Commitment) {
 		commitment.CombinedSignature = models.Signature{1, 2, 3}
 	})
 
@@ -243,11 +238,11 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDisputesFr
 		testutils.MakeTransfer(0, 1, 1, 100),
 	}
 
-	s.createAndSubmitTransferBatch(s.testStorage.Storage, s.executionCtx, &transfers[0])
+	s.submitTransferBatch(s.testStorage.Storage, s.executionCtx, &transfers[0])
 
 	clonedStorage, executionCtx := cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
 	defer teardown(s.Assertions, clonedStorage.Teardown)
-	s.createAndSubmitInvalidTransferBatch(clonedStorage.Storage, executionCtx, &transfers[1], func(commitment *models.Commitment) {
+	s.submitInvalidTransferBatch(clonedStorage.Storage, executionCtx, &transfers[1], func(commitment *models.Commitment) {
 		commitment.Transactions = append(commitment.Transactions, commitment.Transactions...)
 	})
 
@@ -274,7 +269,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentCommitmentAfter
 	defer teardown(s.Assertions, clonedStorage.Teardown)
 
 	invalidTransfer := testutils.MakeTransfer(0, 1, 0, 100)
-	s.createAndSubmitInvalidTransferBatch(clonedStorage.Storage, executionCtx, &invalidTransfer, func(commitment *models.Commitment) {
+	s.submitInvalidTransferBatch(clonedStorage.Storage, executionCtx, &invalidTransfer, func(commitment *models.Commitment) {
 		commitment.Transactions = append(commitment.Transactions, commitment.Transactions...)
 	})
 
@@ -302,11 +297,11 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidFeeR
 		testutils.MakeTransfer(0, 1, 1, 100),
 	}
 
-	s.createAndSubmitTransferBatch(s.testStorage.Storage, s.executionCtx, &transfers[0])
+	s.submitTransferBatch(s.testStorage.Storage, s.executionCtx, &transfers[0])
 
 	clonedStorage, executionCtx := cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
 	defer teardown(s.Assertions, clonedStorage.Teardown)
-	s.createAndSubmitInvalidTransferBatch(clonedStorage.Storage, executionCtx, &transfers[1], func(commitment *models.Commitment) {
+	s.submitInvalidTransferBatch(clonedStorage.Storage, executionCtx, &transfers[1], func(commitment *models.Commitment) {
 		commitment.FeeReceiver = 2
 	})
 
@@ -329,11 +324,11 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithoutTransfer
 		testutils.MakeTransfer(0, 1, 1, 100),
 	}
 
-	s.createAndSubmitTransferBatch(s.testStorage.Storage, s.executionCtx, &transfers[0])
+	s.submitTransferBatch(s.testStorage.Storage, s.executionCtx, &transfers[0])
 
 	clonedStorage, executionCtx := cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
 	defer teardown(s.Assertions, clonedStorage.Teardown)
-	s.createAndSubmitInvalidTransferBatch(clonedStorage.Storage, executionCtx, &transfers[1], func(commitment *models.Commitment) {
+	s.submitInvalidTransferBatch(clonedStorage.Storage, executionCtx, &transfers[1], func(commitment *models.Commitment) {
 		commitment.Transactions = []byte{}
 	})
 
@@ -356,11 +351,11 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithNotExisting
 		testutils.MakeTransfer(0, 1, 1, 100),
 	}
 
-	s.createAndSubmitTransferBatch(s.testStorage.Storage, s.executionCtx, &transfers[0])
+	s.submitTransferBatch(s.testStorage.Storage, s.executionCtx, &transfers[0])
 
 	clonedStorage, executionCtx := cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
 	defer teardown(s.Assertions, clonedStorage.Teardown)
-	s.createAndSubmitInvalidTransferBatch(clonedStorage.Storage, executionCtx, &transfers[1], func(commitment *models.Commitment) {
+	s.submitInvalidTransferBatch(clonedStorage.Storage, executionCtx, &transfers[1], func(commitment *models.Commitment) {
 		transfers[1].FromStateID = 10
 		encodedTx, err := encoder.EncodeTransferForCommitment(&transfers[1])
 		s.NoError(err)
@@ -425,13 +420,13 @@ func (s *BatchesTestSuite) TestUnsafeSyncBatches_SyncsBatchesBeforeInvalidOne() 
 		testutils.MakeTransfer(0, 1, 2, 100),
 	}
 
-	s.createAndSubmitTransferBatch(s.testStorage.Storage, s.executionCtx, &transfers[0])
+	s.submitTransferBatch(s.testStorage.Storage, s.executionCtx, &transfers[0])
 
 	clonedStorage, executionCtx := cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
 	defer teardown(s.Assertions, clonedStorage.Teardown)
 
-	invalidBatch := s.createAndSubmitTransferBatch(clonedStorage.Storage, executionCtx, &transfers[1])
-	s.createAndSubmitTransferBatch(clonedStorage.Storage, executionCtx, &transfers[2])
+	invalidBatch := s.submitTransferBatch(clonedStorage.Storage, executionCtx, &transfers[1])
+	s.submitTransferBatch(clonedStorage.Storage, executionCtx, &transfers[2])
 
 	s.cmd.invalidBatchID = &invalidBatch.ID
 
@@ -452,7 +447,7 @@ func (s *BatchesTestSuite) syncAllBlocks() {
 }
 
 // Make sure that the commander and the execution context uses the same storage
-func (s *BatchesTestSuite) createAndSubmitTransferBatch(
+func (s *BatchesTestSuite) submitTransferBatch(
 	storage *st.Storage,
 	executionCtx *executor.ExecutionContext,
 	tx *models.Transfer,
@@ -500,7 +495,7 @@ func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batc
 }
 
 // Make sure that the commander and the execution context uses the same storage
-func (s *BatchesTestSuite) createAndSubmitInvalidTransferBatch(
+func (s *BatchesTestSuite) submitInvalidTransferBatch(
 	storage *st.Storage,
 	executionCtx *executor.ExecutionContext,
 	tx *models.Transfer,
@@ -578,7 +573,7 @@ func cloneStorage(
 	clonedStorage, err := storage.Clone()
 	s.NoError(err)
 
-	executionCtx := executor.NewTestExecutionContext(clonedStorage.Storage, client, cfg.Rollup, context.Background())
+	executionCtx := executor.NewTestExecutionContext(clonedStorage.Storage, client, cfg.Rollup)
 
 	return clonedStorage, executionCtx
 }

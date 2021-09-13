@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
@@ -46,7 +45,7 @@ func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 	err = populateAccounts(s.storage.Storage, genesisBalances)
 	s.NoError(err)
 
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg, context.Background())
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
 }
 
 func (s *Create2TransferCommitmentsTestSuite) TearDownTest() {
@@ -126,7 +125,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 		MaxCommitmentsPerBatch: 3,
 	}
 
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg, context.Background())
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
 
 	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 124)
 
@@ -186,7 +185,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 		MaxCommitmentsPerBatch: 1,
 	}
 
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg, context.Background())
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
 
 	transfers := generateValidCreate2Transfers(2)
 	s.addCreate2Transfers(transfers)

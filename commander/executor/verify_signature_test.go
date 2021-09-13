@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -43,7 +42,7 @@ func (s *VerifySignatureTestSuite) SetupTest() {
 	s.NoError(err)
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg, context.Background())
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
 	s.addAccounts()
 }
 
