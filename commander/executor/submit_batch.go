@@ -11,8 +11,8 @@ var (
 	ErrNoLongerProposer     = NewRollupError("commander is no longer an active proposer")
 )
 
-func (t *ExecutionContext) SubmitBatch(batch *models.Batch, commitments []models.Commitment) error {
-	if len(commitments) < int(t.cfg.MinCommitmentsPerBatch) {
+func (c *ExecutionContext) SubmitBatch(batch *models.Batch, commitments []models.Commitment) error {
+	if len(commitments) < int(c.cfg.MinCommitmentsPerBatch) {
 		return ErrNotEnoughCommitments
 	}
 
@@ -20,32 +20,32 @@ func (t *ExecutionContext) SubmitBatch(batch *models.Batch, commitments []models
 	var err error
 
 	select {
-	case <-t.ctx.Done():
+	case <-c.ctx.Done():
 		return ErrNoLongerProposer
 	default:
 	}
 
 	if batch.Type == txtype.Transfer {
-		tx, err = t.client.SubmitTransfersBatch(commitments)
+		tx, err = c.client.SubmitTransfersBatch(commitments)
 	} else {
-		tx, err = t.client.SubmitCreate2TransfersBatch(commitments)
+		tx, err = c.client.SubmitCreate2TransfersBatch(commitments)
 	}
 	if err != nil {
 		return err
 	}
 
 	batch.TransactionHash = tx.Hash()
-	err = t.storage.AddBatch(batch)
+	err = c.storage.AddBatch(batch)
 	if err != nil {
 		return err
 	}
 
-	return t.addCommitments(commitments)
+	return c.addCommitments(commitments)
 }
 
-func (t *ExecutionContext) addCommitments(commitments []models.Commitment) error {
+func (c *ExecutionContext) addCommitments(commitments []models.Commitment) error {
 	for i := range commitments {
-		err := t.storage.AddCommitment(&commitments[i])
+		err := c.storage.AddCommitment(&commitments[i])
 		if err != nil {
 			return err
 		}

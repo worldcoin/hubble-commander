@@ -7,7 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 )
 
-func (t *ExecutionContext) buildTransferCommitment(
+func (c *ExecutionContext) buildTransferCommitment(
 	appliedTransfers []models.Transfer,
 	commitmentID *models.CommitmentID,
 	feeReceiverStateID uint32,
@@ -23,7 +23,7 @@ func (t *ExecutionContext) buildTransferCommitment(
 		return nil, err
 	}
 
-	commitment, err := t.createCommitment(
+	commitment, err := c.createCommitment(
 		commitmentID,
 		txtype.Transfer,
 		feeReceiverStateID,
@@ -34,7 +34,7 @@ func (t *ExecutionContext) buildTransferCommitment(
 		return nil, err
 	}
 
-	err = t.storage.MarkTransfersAsIncluded(appliedTransfers, commitmentID)
+	err = c.storage.MarkTransfersAsIncluded(appliedTransfers, commitmentID)
 	if err != nil {
 		return nil, err
 	}

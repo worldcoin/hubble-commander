@@ -5,16 +5,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (t *ExecutionContext) RevertBatches(startBatch *models.Batch) error {
-	err := t.storage.StateTree.RevertTo(*startBatch.PrevStateRoot)
+func (c *ExecutionContext) RevertBatches(startBatch *models.Batch) error {
+	err := c.storage.StateTree.RevertTo(*startBatch.PrevStateRoot)
 	if err != nil {
 		return err
 	}
-	return t.revertBatchesFrom(&startBatch.ID)
+	return c.revertBatchesFrom(&startBatch.ID)
 }
 
-func (t *ExecutionContext) revertBatchesFrom(startBatchID *models.Uint256) error {
-	batches, err := t.storage.GetBatchesInRange(startBatchID, nil)
+func (c *ExecutionContext) revertBatchesFrom(startBatchID *models.Uint256) error {
+	batches, err := c.storage.GetBatchesInRange(startBatchID, nil)
 	if err != nil {
 		return err
 	}
@@ -23,22 +23,22 @@ func (t *ExecutionContext) revertBatchesFrom(startBatchID *models.Uint256) error
 	for i := range batches {
 		batchIDs = append(batchIDs, batches[i].ID)
 	}
-	err = t.excludeTransactionsFromCommitment(batchIDs...)
+	err = c.excludeTransactionsFromCommitment(batchIDs...)
 	if err != nil {
 		return err
 	}
-	err = t.storage.DeleteCommitmentsByBatchIDs(batchIDs...)
+	err = c.storage.DeleteCommitmentsByBatchIDs(batchIDs...)
 	if err != nil {
 		return err
 	}
 	logrus.Debugf("Removing %d local batches", numBatches)
-	return t.storage.DeleteBatches(batchIDs...)
+	return c.storage.DeleteBatches(batchIDs...)
 }
 
-func (t *ExecutionContext) excludeTransactionsFromCommitment(batchIDs ...models.Uint256) error {
-	hashes, err := t.storage.GetTransactionHashesByBatchIDs(batchIDs...)
+func (c *ExecutionContext) excludeTransactionsFromCommitment(batchIDs ...models.Uint256) error {
+	hashes, err := c.storage.GetTransactionHashesByBatchIDs(batchIDs...)
 	if err != nil {
 		return err
 	}
-	return t.storage.MarkTransactionsAsPending(hashes)
+	return c.storage.MarkTransactionsAsPending(hashes)
 }
