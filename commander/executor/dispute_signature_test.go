@@ -13,8 +13,8 @@ type DisputeSignatureTestSuite struct {
 	domain *bls.Domain
 }
 
-func (s *DisputeSignatureTestSuite) SetupTest() {
-	s.TestSuiteWithDisputeContext.SetupTest()
+func (s *DisputeSignatureTestSuite) setupTest() {
+	s.NotNil(s.client) // make sure TestSuiteWithDisputeContext.SetupTest was called before
 
 	var err error
 	s.domain, err = s.client.GetDomain()

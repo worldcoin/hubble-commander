@@ -5,6 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
@@ -14,6 +15,11 @@ import (
 
 type DisputeC2TSignatureTestSuite struct {
 	DisputeSignatureTestSuite
+}
+
+func (s *DisputeC2TSignatureTestSuite) SetupTest() {
+	s.TestSuiteWithDisputeContext.SetupTest(txtype.Create2Transfer)
+	s.DisputeSignatureTestSuite.setupTest()
 }
 
 func (s *DisputeC2TSignatureTestSuite) TestSignatureProofWithReceiver() {

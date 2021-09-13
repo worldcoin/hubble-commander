@@ -16,6 +16,10 @@ type DisputeCT2TransitionTestSuite struct {
 	DisputeTransitionTestSuite
 }
 
+func (s *DisputeCT2TransitionTestSuite) SetupTest() {
+	s.DisputeTransitionTestSuite.SetupTest(txtype.Create2Transfer)
+}
+
 func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_RemovesInvalidBatch() {
 	wallets := setUserStates(s.Assertions, s.executionCtx, testDomain)
 
@@ -162,7 +166,7 @@ func (s *DisputeCT2TransitionTestSuite) submitInvalidBatch(
 	commitments := s.createInvalidCommitments(txs, pubKeyIDs, invalidTxHash)
 	s.Len(commitments, len(txs))
 
-	err = s.executionCtx.SubmitBatch(pendingBatch, commitments)
+	err = s.rollupCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.Commit()

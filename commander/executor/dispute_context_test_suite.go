@@ -2,11 +2,12 @@ package executor
 
 import (
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/stretchr/testify/require"
 )
 
 type TestSuiteWithDisputeContext struct {
-	TestSuiteWithExecutionContext
+	TestSuiteWithRollupContext
 	disputeCtx *DisputeContext
 }
 
@@ -14,8 +15,8 @@ func (s *TestSuiteWithDisputeContext) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *TestSuiteWithDisputeContext) SetupTest() {
-	s.TestSuiteWithExecutionContext.SetupTestWithConfig(config.RollupConfig{
+func (s *TestSuiteWithDisputeContext) SetupTest(batchType txtype.TransactionType) {
+	s.TestSuiteWithRollupContext.SetupTestWithConfig(batchType, config.RollupConfig{
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
 		MinTxsPerCommitment:    1,

@@ -4,12 +4,18 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/stretchr/testify/suite"
 )
 
 type DisputeTransferSignatureTestSuite struct {
 	DisputeSignatureTestSuite
+}
+
+func (s *DisputeTransferSignatureTestSuite) SetupTest() {
+	s.TestSuiteWithDisputeContext.SetupTest(txtype.Transfer)
+	s.DisputeSignatureTestSuite.setupTest()
 }
 
 func (s *DisputeTransferSignatureTestSuite) TestSignatureProof() {

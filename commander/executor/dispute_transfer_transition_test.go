@@ -14,6 +14,10 @@ type DisputeTransferTransitionTestSuite struct {
 	DisputeTransitionTestSuite
 }
 
+func (s *DisputeTransferTransitionTestSuite) SetupTest() {
+	s.DisputeTransitionTestSuite.SetupTest(txtype.Transfer)
+}
+
 func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_RemovesInvalidBatch() {
 	setUserStates(s.Assertions, s.executionCtx, testDomain)
 
@@ -138,7 +142,7 @@ func (s *DisputeTransferTransitionTestSuite) submitInvalidBatch(txs [][]models.T
 	commitments := s.createInvalidCommitments(txs, invalidTxHash)
 	s.Len(commitments, len(txs))
 
-	err = s.executionCtx.SubmitBatch(pendingBatch, commitments)
+	err = s.rollupCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.Commit()
