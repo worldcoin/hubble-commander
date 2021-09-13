@@ -16,6 +16,10 @@ type DisputeCT2TransitionTestSuite struct {
 	DisputeTransitionTestSuite
 }
 
+func (s *DisputeCT2TransitionTestSuite) SetupTest() {
+	s.DisputeTransitionTestSuite.SetupTest(txtype.Create2Transfer)
+}
+
 func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_RemovesInvalidBatch() {
 	wallets := setUserStates(s.Assertions, s.executionCtx, testDomain)
 
@@ -58,7 +62,7 @@ func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_FirstCommitment() 
 	pubKeyIDs := [][]uint32{{4}}
 
 	transfer := testutils.MakeCreate2Transfer(0, nil, 0, 50, wallets[1].PublicKey())
-	submitC2TBatch(s.Assertions, s.client, s.executionCtx, &transfer)
+	submitC2TBatch(s.Assertions, s.client, s.rollupCtx, &transfer)
 
 	registrations, unsubscribe, err := s.client.WatchRegistrations(&bind.WatchOpts{})
 	s.NoError(err)
@@ -96,7 +100,7 @@ func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_ValidBatch() {
 	}
 	pubKeyIDs := [][]uint32{{4}}
 
-	submitC2TBatch(s.Assertions, s.client, s.executionCtx, &transfers[0])
+	submitC2TBatch(s.Assertions, s.client, s.rollupCtx, &transfers[0])
 
 	proofs := s.getStateMerkleProofs([][]models.Create2Transfer{{transfers[1]}}, pubKeyIDs)
 
@@ -104,7 +108,7 @@ func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_ValidBatch() {
 	defer s.commitTransaction()
 
 	transfers[1].ToStateID = nil
-	submitC2TBatch(s.Assertions, s.client, s.executionCtx, &transfers[1])
+	submitC2TBatch(s.Assertions, s.client, s.rollupCtx, &transfers[1])
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
@@ -162,7 +166,7 @@ func (s *DisputeCT2TransitionTestSuite) submitInvalidBatch(
 	commitments := s.createInvalidCommitments(txs, pubKeyIDs, invalidTxHash)
 	s.Len(commitments, len(txs))
 
-	err = s.executionCtx.SubmitBatch(pendingBatch, commitments)
+	err = s.rollupCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.Commit()

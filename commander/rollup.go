@@ -57,13 +57,13 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 		return errors.WithStack(err)
 	}
 
-	executionCtx, err := executor.NewExecutionContext(c.storage, c.client, c.cfg.Rollup, ctx)
+	rollupCtx, err := executor.NewRollupContext(c.storage, c.client, c.cfg.Rollup, ctx, *currentBatchType)
 	if err != nil {
 		return err
 	}
-	defer executionCtx.Rollback(&err)
+	defer rollupCtx.Rollback(&err)
 
-	err = executionCtx.CreateAndSubmitBatch(*currentBatchType, c.domain)
+	err = rollupCtx.CreateAndSubmitBatch(*currentBatchType, c.domain)
 	if *currentBatchType == txtype.Transfer {
 		*currentBatchType = txtype.Create2Transfer
 	} else {
@@ -77,7 +77,7 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 		return err
 	}
 
-	return executionCtx.Commit()
+	return rollupCtx.Commit()
 }
 
 func validateStateRoot(storage *st.Storage) error {

@@ -4,12 +4,18 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/stretchr/testify/suite"
 )
 
 type DisputeTransferSignatureTestSuite struct {
 	DisputeSignatureTestSuite
+}
+
+func (s *DisputeTransferSignatureTestSuite) SetupTest() {
+	s.TestSuiteWithDisputeContext.SetupTest(txtype.Transfer)
+	s.DisputeSignatureTestSuite.setupTest()
 }
 
 func (s *DisputeTransferSignatureTestSuite) TestSignatureProof() {
@@ -50,7 +56,7 @@ func (s *DisputeTransferSignatureTestSuite) TestDisputeSignature_DisputesBatchWi
 	transfer := testutils.MakeTransfer(1, 2, 0, 50)
 	signTransfer(s.T(), &wallets[0], &transfer)
 
-	submitTransferBatch(s.Assertions, s.client, s.executionCtx, &transfer)
+	submitTransferBatch(s.Assertions, s.client, s.rollupCtx, &transfer)
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
@@ -68,7 +74,7 @@ func (s *DisputeTransferSignatureTestSuite) TestDisputeSignature_ValidBatch() {
 	transfer := testutils.MakeTransfer(1, 2, 0, 50)
 	signTransfer(s.T(), &wallets[1], &transfer)
 
-	submitTransferBatch(s.Assertions, s.client, s.executionCtx, &transfer)
+	submitTransferBatch(s.Assertions, s.client, s.rollupCtx, &transfer)
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)

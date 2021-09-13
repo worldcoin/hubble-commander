@@ -464,7 +464,8 @@ func (s *BatchesTestSuite) submitTransferBatch(
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	err = executionCtx.SubmitBatch(pendingBatch, commitments)
+	rollupCtx := executor.NewTestRollupContext(executionCtx, txtype.Transfer)
+	err = rollupCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.testClient.Commit()
@@ -515,7 +516,8 @@ func (s *BatchesTestSuite) submitInvalidTransferBatch(
 
 	modifier(&commitments[0])
 
-	err = executionCtx.SubmitBatch(pendingBatch, commitments)
+	rollupCtx := executor.NewTestRollupContext(executionCtx, txtype.Transfer)
+	err = rollupCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.testClient.Commit()

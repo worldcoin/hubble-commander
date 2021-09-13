@@ -5,6 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
@@ -14,6 +15,11 @@ import (
 
 type DisputeC2TSignatureTestSuite struct {
 	DisputeSignatureTestSuite
+}
+
+func (s *DisputeC2TSignatureTestSuite) SetupTest() {
+	s.TestSuiteWithDisputeContext.SetupTest(txtype.Create2Transfer)
+	s.DisputeSignatureTestSuite.setupTest()
 }
 
 func (s *DisputeC2TSignatureTestSuite) TestSignatureProofWithReceiver() {
@@ -78,7 +84,7 @@ func (s *DisputeC2TSignatureTestSuite) TestDisputeSignature_DisputesBatchWithInv
 	transfer := testutils.MakeCreate2Transfer(0, nil, 0, 100, &receiver.PublicKey)
 	signCreate2Transfer(s.T(), &wallets[1], &transfer)
 
-	submitC2TBatch(s.Assertions, s.client, s.executionCtx, &transfer)
+	submitC2TBatch(s.Assertions, s.client, s.rollupCtx, &transfer)
 
 	err := s.executionCtx.storage.AccountTree.SetSingle(receiver)
 	s.NoError(err)
@@ -104,7 +110,7 @@ func (s *DisputeC2TSignatureTestSuite) TestDisputeSignature_ValidBatch() {
 	transfer := testutils.MakeCreate2Transfer(0, nil, 0, 100, &receiver.PublicKey)
 	signCreate2Transfer(s.T(), &wallets[0], &transfer)
 
-	submitC2TBatch(s.Assertions, s.client, s.executionCtx, &transfer)
+	submitC2TBatch(s.Assertions, s.client, s.rollupCtx, &transfer)
 
 	err := s.executionCtx.storage.AccountTree.SetSingle(receiver)
 	s.NoError(err)

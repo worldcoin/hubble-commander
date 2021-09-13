@@ -30,6 +30,7 @@ func (s *DisputeTransitionTestSuite) beginTransaction() {
 	var err error
 	s.executionCtx, err = NewExecutionContext(s.storage.Storage, s.client.Client, s.cfg, context.Background())
 	s.NoError(err)
+	s.rollupCtx = NewTestRollupContext(s.executionCtx, s.rollupCtx.BatchType)
 	s.disputeCtx = NewDisputeContext(s.executionCtx.storage, s.executionCtx.client)
 }
 
