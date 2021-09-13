@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (c *ExecutionContext) CreateAndSubmitBatch(batchType txtype.TransactionType, domain *bls.Domain) (err error) {
+func (c *RollupContext) CreateAndSubmitBatch(batchType txtype.TransactionType, domain *bls.Domain) (err error) {
 	startTime := time.Now()
 	var commitments []models.Commitment
 	batch, err := c.NewPendingBatch(batchType)

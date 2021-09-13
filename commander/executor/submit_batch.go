@@ -2,8 +2,6 @@ package executor
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/ethereum/go-ethereum/core/types"
 )
 
 var (
@@ -11,13 +9,10 @@ var (
 	ErrNoLongerProposer     = NewRollupError("commander is no longer an active proposer")
 )
 
-func (c *ExecutionContext) SubmitBatch(batch *models.Batch, commitments []models.Commitment) error {
+func (c *RollupContext) SubmitBatch(batch *models.Batch, commitments []models.Commitment) error {
 	if len(commitments) < int(c.cfg.MinCommitmentsPerBatch) {
 		return ErrNotEnoughCommitments
 	}
-
-	var tx *types.Transaction
-	var err error
 
 	select {
 	case <-c.ctx.Done():
@@ -25,11 +20,7 @@ func (c *ExecutionContext) SubmitBatch(batch *models.Batch, commitments []models
 	default:
 	}
 
-	if batch.Type == txtype.Transfer {
-		tx, err = c.client.SubmitTransfersBatch(commitments)
-	} else {
-		tx, err = c.client.SubmitCreate2TransfersBatch(commitments)
-	}
+	tx, err := c.Executor.SubmitBatch(c.client, commitments)
 	if err != nil {
 		return err
 	}

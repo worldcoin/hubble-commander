@@ -25,17 +25,16 @@ func NewRollupContext(
 	if err != nil {
 		return nil, err
 	}
+	return newRollupContext(executionCtx, batchType), nil
+}
+
+func NewTestRollupContext(executionCtx *ExecutionContext, batchType txtype.TransactionType) *RollupContext {
+	return newRollupContext(executionCtx, batchType)
+}
+
+func newRollupContext(executionCtx *ExecutionContext, batchType txtype.TransactionType) *RollupContext {
 	return &RollupContext{
 		ExecutionContext: executionCtx,
 		Executor:         CreateTransactionExecutor(batchType),
-	}, nil
-}
-
-func NewTestRollupContext(
-	storage *st.Storage,
-	client *eth.Client,
-	cfg *config.RollupConfig,
-) *RollupContext {
-	executionCtx := NewTestExecutionContext(storage, client, cfg)
-	return &RollupContext{ExecutionContext: executionCtx}
+	}
 }
