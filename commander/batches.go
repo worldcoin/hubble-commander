@@ -117,6 +117,8 @@ func (c *Commander) disputeFraudulentBatch(
 	remoteBatch *eth.DecodedBatch,
 	disputableErr *executor.DisputableError,
 ) error {
+	disputeCtx := executor.NewDisputeContext(c.storage, c.client)
+
 	// TODO execution context may not be needed here. Revisit this when extracting disputer package.
 	executionCtx, err := executor.NewExecutionContext(c.storage, c.client, c.cfg.Rollup, context.Background())
 	if err != nil {
@@ -126,7 +128,7 @@ func (c *Commander) disputeFraudulentBatch(
 
 	switch disputableErr.Type {
 	case executor.Transition:
-		err = executionCtx.DisputeTransition(remoteBatch, disputableErr.CommitmentIndex, disputableErr.Proofs)
+		err = disputeCtx.DisputeTransition(remoteBatch, disputableErr.CommitmentIndex, disputableErr.Proofs)
 	case executor.Signature:
 		err = executionCtx.DisputeSignature(remoteBatch, disputableErr.CommitmentIndex, disputableErr.Proofs)
 	}

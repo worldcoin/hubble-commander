@@ -9,12 +9,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (t *ExecutionContext) previousCommitmentInclusionProof(
+func (c *DisputeContext) previousCommitmentInclusionProof(
 	batch *eth.DecodedBatch,
 	previousCommitmentIndex int,
 ) (*models.CommitmentInclusionProof, error) {
 	if previousCommitmentIndex == -1 {
-		return t.previousBatchCommitmentInclusionProof(batch.ID)
+		return c.previousBatchCommitmentInclusionProof(batch.ID)
 	}
 
 	leafHashes := make([]common.Hash, 0, len(batch.Commitments))
@@ -30,20 +30,20 @@ func (t *ExecutionContext) previousCommitmentInclusionProof(
 	)
 }
 
-func (t *ExecutionContext) previousBatchCommitmentInclusionProof(
+func (c *DisputeContext) previousBatchCommitmentInclusionProof(
 	currentBatchID models.Uint256,
 ) (*models.CommitmentInclusionProof, error) {
 	previousBatchID := currentBatchID.SubN(1)
 	if previousBatchID.IsZero() {
-		return t.genesisBatchCommitmentInclusionProof()
+		return c.genesisBatchCommitmentInclusionProof()
 	}
 
-	previousBatch, err := t.storage.GetBatch(*previousBatchID)
+	previousBatch, err := c.storage.GetBatch(*previousBatchID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	commitments, err := t.storage.GetCommitmentsByBatchID(previousBatch.ID)
+	commitments, err := c.storage.GetCommitmentsByBatchID(previousBatch.ID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -62,8 +62,8 @@ func (t *ExecutionContext) previousBatchCommitmentInclusionProof(
 	)
 }
 
-func (t *ExecutionContext) genesisBatchCommitmentInclusionProof() (*models.CommitmentInclusionProof, error) {
-	previousBatch, err := t.storage.GetBatch(models.MakeUint256(0))
+func (c *DisputeContext) genesisBatchCommitmentInclusionProof() (*models.CommitmentInclusionProof, error) {
+	previousBatch, err := c.storage.GetBatch(models.MakeUint256(0))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -132,12 +132,12 @@ func targetCommitmentInclusionProof(
 	}, nil
 }
 
-func (t *ExecutionContext) DisputeTransition(
+func (c *DisputeContext) DisputeTransition(
 	batch *eth.DecodedBatch,
 	commitmentIndex int,
 	merkleProofs []models.StateMerkleProof,
 ) error {
-	previousCommitmentProof, err := t.previousCommitmentInclusionProof(batch, commitmentIndex-1)
+	previousCommitmentProof, err := c.previousCommitmentInclusionProof(batch, commitmentIndex-1)
 	if err != nil {
 		return err
 	}
@@ -147,14 +147,14 @@ func (t *ExecutionContext) DisputeTransition(
 	}
 
 	if batch.Type == txtype.Transfer {
-		err = t.client.DisputeTransitionTransfer(
+		err = c.client.DisputeTransitionTransfer(
 			&batch.ID,
 			previousCommitmentProof,
 			targetCommitmentProof,
 			merkleProofs,
 		)
 	} else {
-		err = t.client.DisputeTransitionCreate2Transfer(
+		err = c.client.DisputeTransitionCreate2Transfer(
 			&batch.ID,
 			previousCommitmentProof,
 			targetCommitmentProof,

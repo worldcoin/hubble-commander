@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
-	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -22,13 +21,13 @@ import (
 )
 
 type DisputeTransitionTestSuite struct {
-	TestSuiteWithExecutionContext
+	TestSuiteWithDisputeContext
 	decodedCommitments []encoder.DecodedCommitment
 	decodedBatch       eth.DecodedBatch
 }
 
 func (s *DisputeTransitionTestSuite) SetupSuite() {
-	s.TestSuiteWithExecutionContext.SetupSuite()
+	s.TestSuiteWithDisputeContext.SetupSuite()
 
 	s.decodedCommitments = []encoder.DecodedCommitment{
 		{
@@ -57,16 +56,6 @@ func (s *DisputeTransitionTestSuite) SetupSuite() {
 	}
 }
 
-func (s *DisputeTransitionTestSuite) SetupTest() {
-	s.SetupTestWithConfig(config.RollupConfig{
-		MinCommitmentsPerBatch: 1,
-		MaxCommitmentsPerBatch: 32,
-		MinTxsPerCommitment:    1,
-		MaxTxsPerCommitment:    1,
-		DisableSignatures:      false,
-	})
-}
-
 func (s *DisputeTransitionTestSuite) TestPreviousCommitmentInclusionProof_CurrentBatch() {
 	expected := models.CommitmentInclusionProof{
 		StateRoot: s.decodedCommitments[0].StateRoot,
@@ -78,7 +67,7 @@ func (s *DisputeTransitionTestSuite) TestPreviousCommitmentInclusionProof_Curren
 		Witness: []common.Hash{s.decodedCommitments[1].LeafHash(*s.decodedBatch.AccountTreeRoot)},
 	}
 
-	proof, err := s.executionCtx.previousCommitmentInclusionProof(&s.decodedBatch, 0)
+	proof, err := s.disputeCtx.previousCommitmentInclusionProof(&s.decodedBatch, 0)
 	s.NoError(err)
 	s.Equal(expected, *proof)
 }
@@ -142,7 +131,7 @@ func (s *DisputeTransitionTestSuite) TestPreviousCommitmentInclusionProof_Previo
 		Witness: []common.Hash{commitments[0].LeafHash(*batch.AccountTreeRoot)},
 	}
 
-	proof, err := s.executionCtx.previousCommitmentInclusionProof(&s.decodedBatch, -1)
+	proof, err := s.disputeCtx.previousCommitmentInclusionProof(&s.decodedBatch, -1)
 	s.NoError(err)
 	s.Equal(expected, *proof)
 }
@@ -163,7 +152,7 @@ func (s *DisputeTransitionTestSuite) TestGenesisBatchCommitmentInclusionProof() 
 
 	firstBatch := s.decodedBatch
 	firstBatch.ID = models.MakeUint256(1)
-	proof, err := s.executionCtx.previousCommitmentInclusionProof(&firstBatch, -1)
+	proof, err := s.disputeCtx.previousCommitmentInclusionProof(&firstBatch, -1)
 	s.NoError(err)
 	s.Equal(expected, *proof)
 }
@@ -205,7 +194,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_RemovesInval
 
 	proofs := s.getTransferStateMerkleProofs(commitmentTxs)
 
-	s.beginExecutorTransaction()
+	s.beginTransaction()
 	defer s.commitTransaction()
 	s.submitInvalidTransferBatch(commitmentTxs, commitmentTxs[1][1].Hash)
 
@@ -213,7 +202,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_RemovesInval
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.executionCtx.DisputeTransition(&remoteBatches[0], 1, proofs)
+	err = s.disputeCtx.DisputeTransition(&remoteBatches[0], 1, proofs)
 	s.NoError(err)
 
 	s.checkBatchAfterDispute(remoteBatches[0].ID)
@@ -233,7 +222,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_FirstCommitm
 
 	proofs := s.getTransferStateMerkleProofs(commitmentTxs)
 
-	s.beginExecutorTransaction()
+	s.beginTransaction()
 	defer s.commitTransaction()
 	s.submitInvalidTransferBatch(commitmentTxs, commitmentTxs[0][0].Hash)
 
@@ -244,7 +233,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_FirstCommitm
 	err = s.executionCtx.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
 	s.NoError(err)
 
-	err = s.executionCtx.DisputeTransition(&remoteBatches[1], 0, proofs)
+	err = s.disputeCtx.DisputeTransition(&remoteBatches[1], 0, proofs)
 	s.NoError(err)
 
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
@@ -262,7 +251,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_ValidBatch()
 
 	proofs := s.getTransferStateMerkleProofs([][]models.Transfer{{transfers[1]}})
 
-	s.beginExecutorTransaction()
+	s.beginTransaction()
 	defer s.commitTransaction()
 	submitTransferBatch(s.Assertions, s.client, s.executionCtx, &transfers[1])
 
@@ -273,7 +262,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_ValidBatch()
 	err = s.executionCtx.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
 	s.NoError(err)
 
-	err = s.executionCtx.DisputeTransition(&remoteBatches[1], 0, proofs)
+	err = s.disputeCtx.DisputeTransition(&remoteBatches[1], 0, proofs)
 	s.NoError(err)
 	_, err = s.client.GetBatch(&remoteBatches[1].ID)
 	s.NoError(err)
@@ -296,7 +285,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_Remov
 	pubKeyIDs := [][]uint32{{3, 4}, {5, 6}}
 	proofs := s.getC2TStateMerkleProofs(commitmentTxs, pubKeyIDs)
 
-	s.beginExecutorTransaction()
+	s.beginTransaction()
 	defer s.commitTransaction()
 	s.submitInvalidC2TBatch(commitmentTxs, pubKeyIDs, commitmentTxs[1][1].Hash)
 
@@ -304,7 +293,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_Remov
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.executionCtx.DisputeTransition(&remoteBatches[0], 1, proofs)
+	err = s.disputeCtx.DisputeTransition(&remoteBatches[0], 1, proofs)
 	s.NoError(err)
 
 	s.checkBatchAfterDispute(remoteBatches[0].ID)
@@ -333,7 +322,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_First
 
 	proofs := s.getC2TStateMerkleProofs(commitmentTxs, pubKeyIDs)
 
-	s.beginExecutorTransaction()
+	s.beginTransaction()
 	defer s.commitTransaction()
 	s.submitInvalidC2TBatch(commitmentTxs, pubKeyIDs, commitmentTxs[0][0].Hash)
 
@@ -344,7 +333,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_First
 	err = s.executionCtx.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
 	s.NoError(err)
 
-	err = s.executionCtx.DisputeTransition(&remoteBatches[1], 0, proofs)
+	err = s.disputeCtx.DisputeTransition(&remoteBatches[1], 0, proofs)
 	s.NoError(err)
 
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
@@ -363,7 +352,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_Valid
 
 	proofs := s.getC2TStateMerkleProofs([][]models.Create2Transfer{{transfers[1]}}, pubKeyIDs)
 
-	s.beginExecutorTransaction()
+	s.beginTransaction()
 	defer s.commitTransaction()
 
 	transfers[1].ToStateID = nil
@@ -376,7 +365,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_Valid
 	err = s.executionCtx.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
 	s.NoError(err)
 
-	err = s.executionCtx.DisputeTransition(&remoteBatches[1], 0, proofs)
+	err = s.disputeCtx.DisputeTransition(&remoteBatches[1], 0, proofs)
 	s.NoError(err)
 	_, err = s.client.GetBatch(&remoteBatches[1].ID)
 	s.NoError(err)
@@ -401,16 +390,17 @@ func checkRemoteBatchAfterDispute(s *require.Assertions, client *eth.TestClient,
 	s.Equal(eth.MsgInvalidBatchID, err.Error())
 }
 
-func (s *DisputeTransitionTestSuite) beginExecutorTransaction() {
+func (s *DisputeTransitionTestSuite) beginTransaction() {
 	var err error
 	s.executionCtx, err = NewExecutionContext(s.storage.Storage, s.client.Client, s.cfg, context.Background())
 	s.NoError(err)
+	s.disputeCtx = NewDisputeContext(s.executionCtx.storage, s.executionCtx.client)
 }
 
 func (s *DisputeTransitionTestSuite) getTransferStateMerkleProofs(txs [][]models.Transfer) []models.StateMerkleProof {
 	feeReceiverStateID := uint32(0)
 
-	s.beginExecutorTransaction()
+	s.beginTransaction()
 	defer s.executionCtx.Rollback(nil)
 
 	var stateProofs []models.StateMerkleProof
@@ -435,7 +425,7 @@ func (s *DisputeTransitionTestSuite) getC2TStateMerkleProofs(
 ) []models.StateMerkleProof {
 	feeReceiverStateID := uint32(0)
 
-	s.beginExecutorTransaction()
+	s.beginTransaction()
 	defer s.executionCtx.Rollback(nil)
 
 	var stateProofs []models.StateMerkleProof
