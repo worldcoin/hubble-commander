@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
@@ -25,7 +24,7 @@ func (s *ApplyFeeTestSuite) SetupTest() {
 	var err error
 	s.storage, err = storage.NewTestStorage()
 	s.NoError(err)
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, nil, nil, context.Background())
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, nil, nil)
 }
 
 func (s *ApplyFeeTestSuite) TearDownTest() {

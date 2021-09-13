@@ -5,7 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-func (t *ExecutionContext) syncCreate2TransferCommitment(
+func (c *ExecutionContext) syncCreate2TransferCommitment(
 	commitment *encoder.DecodedCommitment,
 ) (models.GenericTransactionArray, error) {
 	deserializedTransfers, pubKeyIDs, err := encoder.DeserializeCreate2Transfers(commitment.Transactions)
@@ -13,26 +13,26 @@ func (t *ExecutionContext) syncCreate2TransferCommitment(
 		return nil, err
 	}
 
-	if uint32(len(deserializedTransfers)) > t.cfg.MaxTxsPerCommitment {
+	if uint32(len(deserializedTransfers)) > c.cfg.MaxTxsPerCommitment {
 		return nil, ErrTooManyTxs
 	}
 
-	appliedTransfers, stateProofs, err := t.ApplyCreate2TransfersForSync(deserializedTransfers, pubKeyIDs, commitment.FeeReceiver)
+	appliedTransfers, stateProofs, err := c.ApplyCreate2TransfersForSync(deserializedTransfers, pubKeyIDs, commitment.FeeReceiver)
 	if err != nil {
 		return nil, err
 	}
 
-	err = t.verifyStateRoot(commitment.StateRoot, stateProofs)
+	err = c.verifyStateRoot(commitment.StateRoot, stateProofs)
 	if err != nil {
 		return nil, err
 	}
 
-	err = t.setPublicKeys(appliedTransfers, pubKeyIDs)
+	err = c.setPublicKeys(appliedTransfers, pubKeyIDs)
 	if err != nil {
 		return nil, err
 	}
-	if !t.cfg.DisableSignatures {
-		err = t.verifyCreate2TransferSignature(commitment, appliedTransfers)
+	if !c.cfg.DisableSignatures {
+		err = c.verifyCreate2TransferSignature(commitment, appliedTransfers)
 		if err != nil {
 			return nil, err
 		}
@@ -41,9 +41,9 @@ func (t *ExecutionContext) syncCreate2TransferCommitment(
 	return models.Create2TransferArray(appliedTransfers), nil
 }
 
-func (t *ExecutionContext) setPublicKeys(transfers []models.Create2Transfer, pubKeyIDs []uint32) error {
+func (c *ExecutionContext) setPublicKeys(transfers []models.Create2Transfer, pubKeyIDs []uint32) error {
 	for i := range transfers {
-		leaf, err := t.storage.AccountTree.Leaf(pubKeyIDs[i])
+		leaf, err := c.storage.AccountTree.Leaf(pubKeyIDs[i])
 		if err != nil {
 			return err
 		}

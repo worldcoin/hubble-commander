@@ -1,57 +1,31 @@
 package executor
 
 import (
-	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
-	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
 type Create2TransferCommitmentsTestSuite struct {
-	*require.Assertions
-	suite.Suite
-	storage                *st.TestStorage
-	client                 *eth.TestClient
-	cfg                    *config.RollupConfig
-	executionCtx           *ExecutionContext
+	TestSuiteWithExecutionContext
 	maxTxBytesInCommitment int
 }
 
-func (s *Create2TransferCommitmentsTestSuite) SetupSuite() {
-	s.Assertions = require.New(s.T())
-}
-
 func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
-	var err error
-	s.storage, err = st.NewTestStorage()
-	s.NoError(err)
-	s.client, err = eth.NewTestClient()
-	s.NoError(err)
-	s.cfg = &config.RollupConfig{
+	s.TestSuiteWithExecutionContext.SetupTestWithConfig(config.RollupConfig{
 		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    4,
 		FeeReceiverPubKeyID:    2,
 		MaxCommitmentsPerBatch: 1,
-	}
+	})
 	s.maxTxBytesInCommitment = encoder.Create2TransferLength * int(s.cfg.MaxTxsPerCommitment)
 
-	err = populateAccounts(s.storage.Storage, genesisBalances)
-	s.NoError(err)
-
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg, context.Background())
-}
-
-func (s *Create2TransferCommitmentsTestSuite) TearDownTest() {
-	s.client.Close()
-	err := s.storage.Teardown()
+	err := populateAccounts(s.storage.Storage, genesisBalances)
 	s.NoError(err)
 }
 
@@ -126,7 +100,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 		MaxCommitmentsPerBatch: 3,
 	}
 
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg, context.Background())
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
 
 	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 124)
 
@@ -186,7 +160,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 		MaxCommitmentsPerBatch: 1,
 	}
 
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg, context.Background())
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
 
 	transfers := generateValidCreate2Transfers(2)
 	s.addCreate2Transfers(transfers)

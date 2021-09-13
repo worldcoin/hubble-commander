@@ -1,16 +1,13 @@
 package executor
 
 import (
-	"context"
 	"math/big"
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -29,26 +26,13 @@ var (
 )
 
 type ApplyCreate2TransferTestSuite struct {
-	*require.Assertions
-	suite.Suite
-	storage      *st.TestStorage
-	executionCtx *ExecutionContext
-	client       *eth.TestClient
-}
-
-func (s *ApplyCreate2TransferTestSuite) SetupSuite() {
-	s.Assertions = require.New(s.T())
+	TestSuiteWithExecutionContext
 }
 
 func (s *ApplyCreate2TransferTestSuite) SetupTest() {
-	var err error
-	s.storage, err = st.NewTestStorage()
-	s.NoError(err)
-	s.client, err = eth.NewTestClient()
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, nil, context.Background())
-	s.NoError(err)
+	s.TestSuiteWithExecutionContext.SetupTest()
 
-	_, err = s.storage.StateTree.Set(0, &models.UserState{
+	_, err := s.storage.StateTree.Set(0, &models.UserState{
 		PubKeyID: 0,
 		TokenID:  feeReceiverTokenID,
 		Balance:  models.MakeUint256(10000),
@@ -61,12 +45,6 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 		Balance:  models.MakeUint256(0),
 		Nonce:    models.MakeUint256(0),
 	})
-	s.NoError(err)
-}
-
-func (s *ApplyCreate2TransferTestSuite) TearDownTest() {
-	s.client.Close()
-	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
