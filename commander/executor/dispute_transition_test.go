@@ -56,6 +56,14 @@ func (s *DisputeTransitionTestSuite) SetupSuite() {
 	}
 }
 
+type DisputeTransferTransitionTestSuite struct {
+	TestSuiteWithDisputeContext
+}
+
+type DisputeCT2TransitionTestSuite struct {
+	TestSuiteWithDisputeContext
+}
+
 func (s *DisputeTransitionTestSuite) TestPreviousCommitmentInclusionProof_CurrentBatch() {
 	expected := models.CommitmentInclusionProof{
 		StateRoot: s.decodedCommitments[0].StateRoot,
@@ -178,7 +186,7 @@ func (s *DisputeTransitionTestSuite) TestTargetCommitmentInclusionProof() {
 	s.Equal(expected, *proof)
 }
 
-func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_RemovesInvalidBatch() {
+func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_RemovesInvalidBatch() {
 	setUserStates(s.Assertions, s.executionCtx, testDomain)
 
 	commitmentTxs := [][]models.Transfer{
@@ -192,7 +200,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_RemovesInval
 		},
 	}
 
-	proofs := s.getTransferStateMerkleProofs(commitmentTxs)
+	proofs := s.getStateMerkleProofs(commitmentTxs)
 
 	s.beginTransaction()
 	defer s.commitTransaction()
@@ -208,7 +216,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_RemovesInval
 	s.checkBatchAfterDispute(remoteBatches[0].ID)
 }
 
-func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_FirstCommitment() {
+func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_FirstCommitment() {
 	setUserStates(s.Assertions, s.executionCtx, testDomain)
 
 	commitmentTxs := [][]models.Transfer{
@@ -220,7 +228,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_FirstCommitm
 	transfer := testutils.MakeTransfer(0, 2, 0, 50)
 	submitTransferBatch(s.Assertions, s.client, s.executionCtx, &transfer)
 
-	proofs := s.getTransferStateMerkleProofs(commitmentTxs)
+	proofs := s.getStateMerkleProofs(commitmentTxs)
 
 	s.beginTransaction()
 	defer s.commitTransaction()
@@ -239,7 +247,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_FirstCommitm
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
 }
 
-func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_ValidBatch() {
+func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_ValidBatch() {
 	setUserStates(s.Assertions, s.executionCtx, testDomain)
 
 	transfers := []models.Transfer{
@@ -249,7 +257,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_ValidBatch()
 
 	submitTransferBatch(s.Assertions, s.client, s.executionCtx, &transfers[0])
 
-	proofs := s.getTransferStateMerkleProofs([][]models.Transfer{{transfers[1]}})
+	proofs := s.getStateMerkleProofs([][]models.Transfer{{transfers[1]}})
 
 	s.beginTransaction()
 	defer s.commitTransaction()
@@ -268,7 +276,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Transfer_ValidBatch()
 	s.NoError(err)
 }
 
-func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_RemovesInvalidBatch() {
+func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_RemovesInvalidBatch() {
 	wallets := setUserStates(s.Assertions, s.executionCtx, testDomain)
 
 	commitmentTxs := [][]models.Create2Transfer{
@@ -283,7 +291,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_Remov
 	}
 
 	pubKeyIDs := [][]uint32{{3, 4}, {5, 6}}
-	proofs := s.getC2TStateMerkleProofs(commitmentTxs, pubKeyIDs)
+	proofs := s.getStateMerkleProofs(commitmentTxs, pubKeyIDs)
 
 	s.beginTransaction()
 	defer s.commitTransaction()
@@ -299,7 +307,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_Remov
 	s.checkBatchAfterDispute(remoteBatches[0].ID)
 }
 
-func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_FirstCommitment() {
+func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_FirstCommitment() {
 	wallets := setUserStates(s.Assertions, s.executionCtx, testDomain)
 
 	commitmentTxs := [][]models.Create2Transfer{
@@ -320,7 +328,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_First
 	s.NoError(err)
 	s.EqualValues(4, *pubKeyID)
 
-	proofs := s.getC2TStateMerkleProofs(commitmentTxs, pubKeyIDs)
+	proofs := s.getStateMerkleProofs(commitmentTxs, pubKeyIDs)
 
 	s.beginTransaction()
 	defer s.commitTransaction()
@@ -339,7 +347,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_First
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
 }
 
-func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_ValidBatch() {
+func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_ValidBatch() {
 	wallets := setUserStates(s.Assertions, s.executionCtx, testDomain)
 
 	transfers := []models.Create2Transfer{
@@ -350,7 +358,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_Valid
 
 	submitC2TBatch(s.Assertions, s.client, s.executionCtx, &transfers[0])
 
-	proofs := s.getC2TStateMerkleProofs([][]models.Create2Transfer{{transfers[1]}}, pubKeyIDs)
+	proofs := s.getStateMerkleProofs([][]models.Create2Transfer{{transfers[1]}}, pubKeyIDs)
 
 	s.beginTransaction()
 	defer s.commitTransaction()
@@ -397,7 +405,7 @@ func (s *DisputeTransitionTestSuite) beginTransaction() {
 	s.disputeCtx = NewDisputeContext(s.executionCtx.storage, s.executionCtx.client)
 }
 
-func (s *DisputeTransitionTestSuite) getTransferStateMerkleProofs(txs [][]models.Transfer) []models.StateMerkleProof {
+func (s *DisputeTransferTransitionTestSuite) getStateMerkleProofs(txs [][]models.Transfer) []models.StateMerkleProof {
 	feeReceiverStateID := uint32(0)
 
 	s.beginTransaction()
@@ -419,7 +427,7 @@ func (s *DisputeTransitionTestSuite) getTransferStateMerkleProofs(txs [][]models
 	return stateProofs
 }
 
-func (s *DisputeTransitionTestSuite) getC2TStateMerkleProofs(
+func (s *DisputeCT2TransitionTestSuite) getStateMerkleProofs(
 	txs [][]models.Create2Transfer,
 	pubKeyIDs [][]uint32,
 ) []models.StateMerkleProof {
@@ -647,4 +655,12 @@ func createUserState(pubKeyID uint32, balance, nonce uint64) *models.UserState {
 
 func TestDisputeTransitionTestSuite(t *testing.T) {
 	suite.Run(t, new(DisputeTransitionTestSuite))
+}
+
+func TestDisputeTransferTransitionTestSuite(t *testing.T) {
+	suite.Run(t, new(DisputeTransferTransitionTestSuite))
+}
+
+func TestDisputeCT2TransitionTestSuite(t *testing.T) {
+	suite.Run(t, new(DisputeCT2TransitionTestSuite))
 }
