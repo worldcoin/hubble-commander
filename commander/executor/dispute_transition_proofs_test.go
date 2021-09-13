@@ -7,21 +7,27 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
 type DisputeTransitionProofsTestSuite struct {
-	DisputeTransitionTestSuite
+	*require.Assertions
+	suite.Suite
+	storage            *st.TestStorage
+	client             *eth.TestClient
+	disputeCtx         *DisputeContext
 	decodedCommitments []encoder.DecodedCommitment
 	decodedBatch       eth.DecodedBatch
 }
 
 func (s *DisputeTransitionProofsTestSuite) SetupSuite() {
-	s.TestSuiteWithDisputeContext.SetupSuite()
+	s.Assertions = require.New(s.T())
 
 	s.decodedCommitments = []encoder.DecodedCommitment{
 		{
@@ -48,6 +54,17 @@ func (s *DisputeTransitionProofsTestSuite) SetupSuite() {
 		},
 		Commitments: s.decodedCommitments,
 	}
+}
+
+func (s *DisputeTransitionProofsTestSuite) SetupTest() {
+	var err error
+	s.storage, err = st.NewTestStorage()
+	s.NoError(err)
+
+	s.client, err = eth.NewTestClient()
+	s.NoError(err)
+
+	s.disputeCtx = NewDisputeContext(s.storage.Storage, s.client.Client)
 }
 
 func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_CurrentBatch() {

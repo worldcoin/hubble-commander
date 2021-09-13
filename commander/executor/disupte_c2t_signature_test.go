@@ -93,7 +93,7 @@ func (s *DisputeC2TSignatureTestSuite) TestDisputeSignature_DisputesBatchWithInv
 	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[0].ID)
 }
 
-func (s *DisputeC2TSignatureTestSuite) TestDisputeSignature_Create2Transfer_ValidBatch() {
+func (s *DisputeC2TSignatureTestSuite) TestDisputeSignature_ValidBatch() {
 	wallets := s.setUserStatesAndAddAccounts()
 
 	receiver := &models.AccountLeaf{
