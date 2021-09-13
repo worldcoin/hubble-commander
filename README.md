@@ -1,5 +1,8 @@
 # Hubble Commander
 
+[![CI](https://github.com/worldcoin/hubble-commander/actions/workflows/ci.yml/badge.svg)](https://github.com/worldcoin/hubble-commander/actions/workflows/ci.yml)
+[![E2E Test](https://github.com/worldcoin/hubble-commander/actions/workflows/e2e.yml/badge.svg)](https://github.com/worldcoin/hubble-commander/actions/workflows/e2e.yml)
+
 ## Overview
 
 |                     path                     |                description                |
