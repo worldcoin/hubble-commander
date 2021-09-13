@@ -11,7 +11,8 @@ import (
 
 type RollupContext struct {
 	*ExecutionContext
-	Executor TransactionExecutor
+	Executor  TransactionExecutor
+	BatchType txtype.TransactionType
 }
 
 func NewRollupContext(
@@ -36,5 +37,6 @@ func newRollupContext(executionCtx *ExecutionContext, batchType txtype.Transacti
 	return &RollupContext{
 		ExecutionContext: executionCtx,
 		Executor:         CreateTransactionExecutor(batchType),
+		BatchType:        batchType,
 	}
 }

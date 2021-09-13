@@ -7,19 +7,20 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/stretchr/testify/suite"
 )
 
 type RevertBatchesTestSuite struct {
-	TestSuiteWithExecutionContext
+	TestSuiteWithRollupContext
 	transfer models.Transfer
 	wallets  []bls.Wallet
 }
 
 func (s *RevertBatchesTestSuite) SetupTest() {
-	s.TestSuiteWithExecutionContext.SetupTestWithConfig(config.RollupConfig{
+	s.TestSuiteWithRollupContext.SetupTestWithConfig(txtype.Transfer, config.RollupConfig{
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
 		MinTxsPerCommitment:    1,
@@ -27,7 +28,7 @@ func (s *RevertBatchesTestSuite) SetupTest() {
 	})
 
 	s.transfer = testutils.MakeTransfer(0, 1, 0, 400)
-	s.setTransferHash(&s.transfer) // TODO
+	s.setTransferHash(&s.transfer)
 
 	domain, err := s.client.GetDomain()
 	s.NoError(err)
@@ -42,7 +43,7 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_RevertsState() {
 	s.NoError(err)
 
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
-	pendingBatch := submitTransferBatch(s.Assertions, s.client, s.executionCtx, &s.transfer)
+	pendingBatch := submitTransferBatch(s.Assertions, s.client, s.rollupCtx, &s.transfer)
 
 	err = s.executionCtx.RevertBatches(pendingBatch)
 	s.NoError(err)
@@ -62,7 +63,7 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_RevertsState() {
 
 func (s *RevertBatchesTestSuite) TestRevertBatches_ExcludesTransactionsFromCommitments() {
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
-	pendingBatch := submitTransferBatch(s.Assertions, s.client, s.executionCtx, &s.transfer)
+	pendingBatch := submitTransferBatch(s.Assertions, s.client, s.rollupCtx, &s.transfer)
 
 	err := s.executionCtx.RevertBatches(pendingBatch)
 	s.NoError(err)
@@ -80,7 +81,7 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_DeletesCommitmentsAndBatches(
 	pendingBatches := make([]models.Batch, 2)
 	for i := range pendingBatches {
 		signTransfer(s.T(), &s.wallets[transfers[i].FromStateID], &transfers[i])
-		pendingBatches[i] = *submitTransferBatch(s.Assertions, s.client, s.executionCtx, &transfers[i])
+		pendingBatches[i] = *submitTransferBatch(s.Assertions, s.client, s.rollupCtx, &transfers[i])
 	}
 
 	latestCommitment, err := s.executionCtx.storage.GetLatestCommitment()

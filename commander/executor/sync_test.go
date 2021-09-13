@@ -10,21 +10,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var syncTestSuiteConfig = config.RollupConfig{
+	MinCommitmentsPerBatch: 1,
+	MaxCommitmentsPerBatch: 32,
+	MinTxsPerCommitment:    1,
+	MaxTxsPerCommitment:    1,
+	DisableSignatures:      false,
+}
+
 // Other test suites encapsulate SyncTestSuite. Don't add any tests on SyncTestSuite to avoid repeated runs.
 type SyncTestSuite struct {
-	TestSuiteWithExecutionContext
+	TestSuiteWithRollupContext
 	domain  *bls.Domain
 	wallets []bls.Wallet
 }
 
-func (s *SyncTestSuite) SetupTest() {
-	s.TestSuiteWithExecutionContext.SetupTestWithConfig(config.RollupConfig{
-		MinCommitmentsPerBatch: 1,
-		MaxCommitmentsPerBatch: 32,
-		MinTxsPerCommitment:    1,
-		MaxTxsPerCommitment:    1,
-		DisableSignatures:      false,
-	})
+func (s *SyncTestSuite) setupTest() {
+	s.NotNil(s.client) // make sure TestSuiteWithRollupContext.SetupTest was called before
 
 	var err error
 	s.domain, err = s.client.GetDomain()

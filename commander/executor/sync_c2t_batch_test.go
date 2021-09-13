@@ -18,10 +18,15 @@ type SyncC2TBatchTestSuite struct {
 	SyncTestSuite
 }
 
+func (s *SyncC2TBatchTestSuite) SetupTest() {
+	s.TestSuiteWithRollupContext.SetupTestWithConfig(txtype.Create2Transfer, syncTestSuiteConfig)
+	s.SyncTestSuite.setupTest()
+}
+
 func (s *SyncC2TBatchTestSuite) TestSyncBatch_TooManyTxsInCommitment() {
 	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, s.wallets[0].PublicKey())
 	s.setTxHashAndSign(&tx)
-	submitC2TBatch(s.Assertions, s.client, s.executionCtx, &tx)
+	submitC2TBatch(s.Assertions, s.client, s.rollupCtx, &tx)
 
 	tx2 := testutils.MakeCreate2Transfer(0, nil, 1, 400, s.wallets[0].PublicKey())
 	s.setTxHashAndSign(&tx2)
@@ -51,15 +56,15 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_TooManyTxsInCommitment() {
 func (s *SyncC2TBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() {
 	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, s.wallets[0].PublicKey())
 	s.setTxHashAndSign(&tx)
-	submitC2TBatch(s.Assertions, s.client, s.executionCtx, &tx)
+	submitC2TBatch(s.Assertions, s.client, s.rollupCtx, &tx)
 
 	tx2 := testutils.MakeCreate2Transfer(0, nil, 1, 400, s.wallets[0].PublicKey())
 	s.setTxHashAndSign(&tx2)
 
-	batch, commitments := createC2TBatch(s.Assertions, s.executionCtx, &tx2, testDomain)
+	batch, commitments := createC2TBatch(s.Assertions, s.rollupCtx, &tx2, testDomain)
 	commitments[0].PostStateRoot = utils.RandomHash()
 
-	err := s.executionCtx.SubmitBatch(batch, commitments)
+	err := s.rollupCtx.SubmitBatch(batch, commitments)
 	s.NoError(err)
 	s.client.Commit()
 
@@ -89,7 +94,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_InvalidTxSignature() {
 	signCreate2Transfer(s.T(), &s.wallets[1], &tx)
 	s.setTxHash(&tx)
 
-	submitC2TBatch(s.Assertions, s.client, s.executionCtx, &tx)
+	submitC2TBatch(s.Assertions, s.client, s.rollupCtx, &tx)
 
 	s.recreateDatabase()
 
@@ -108,7 +113,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_InvalidTxSignature() {
 func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, s.wallets[0].PublicKey())
 	s.setTxHashAndSign(&tx)
-	expectedCommitment := submitC2TBatch(s.Assertions, s.client, s.executionCtx, &tx)
+	expectedCommitment := submitC2TBatch(s.Assertions, s.client, s.rollupCtx, &tx)
 
 	s.recreateDatabase()
 	s.syncAllBatches()
@@ -155,11 +160,11 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_CommitmentWithoutTxs() {
 }
 
 func (s *SyncC2TBatchTestSuite) submitInvalidBatch(tx *models.Create2Transfer) models.Commitment {
-	pendingBatch, commitments := createC2TBatch(s.Assertions, s.executionCtx, tx, testDomain)
+	pendingBatch, commitments := createC2TBatch(s.Assertions, s.rollupCtx, tx, testDomain)
 
 	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)
 
-	err := s.executionCtx.SubmitBatch(pendingBatch, commitments)
+	err := s.rollupCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.Commit()
@@ -182,14 +187,14 @@ func (s *SyncC2TBatchTestSuite) setTxHashAndSign(txs ...*models.Create2Transfer)
 func submitC2TBatch(
 	s *require.Assertions,
 	client *eth.TestClient,
-	executionCtx *ExecutionContext,
+	rollupCtx *RollupContext,
 	tx *models.Create2Transfer,
 ) models.Commitment {
 	domain, err := client.GetDomain()
 	s.NoError(err)
-	pendingBatch, commitments := createC2TBatch(s, executionCtx, tx, domain)
+	pendingBatch, commitments := createC2TBatch(s, rollupCtx, tx, domain)
 
-	err = executionCtx.SubmitBatch(pendingBatch, commitments)
+	err = rollupCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	client.Commit()
@@ -198,17 +203,17 @@ func submitC2TBatch(
 
 func createC2TBatch(
 	s *require.Assertions,
-	executionCtx *ExecutionContext,
+	rollupCtx *RollupContext,
 	tx *models.Create2Transfer,
 	domain *bls.Domain,
 ) (*models.Batch, []models.Commitment) {
-	err := executionCtx.storage.AddCreate2Transfer(tx)
+	err := rollupCtx.storage.AddCreate2Transfer(tx)
 	s.NoError(err)
 
-	pendingBatch, err := executionCtx.NewPendingBatch(txtype.Create2Transfer)
+	pendingBatch, err := rollupCtx.NewPendingBatch(txtype.Create2Transfer)
 	s.NoError(err)
 
-	commitments, err := executionCtx.CreateCreate2TransferCommitments(domain)
+	commitments, err := rollupCtx.CreateCreate2TransferCommitments(domain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 	return pendingBatch, commitments

@@ -58,7 +58,7 @@ func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_FirstCommitme
 	}
 
 	transfer := testutils.MakeTransfer(0, 2, 0, 50)
-	submitTransferBatch(s.Assertions, s.client, s.executionCtx, &transfer)
+	submitTransferBatch(s.Assertions, s.client, s.rollupCtx, &transfer)
 
 	proofs := s.getStateMerkleProofs(commitmentTxs)
 
@@ -87,13 +87,13 @@ func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_ValidBatch() 
 		testutils.MakeTransfer(0, 2, 1, 100),
 	}
 
-	submitTransferBatch(s.Assertions, s.client, s.executionCtx, &transfers[0])
+	submitTransferBatch(s.Assertions, s.client, s.rollupCtx, &transfers[0])
 
 	proofs := s.getStateMerkleProofs([][]models.Transfer{{transfers[1]}})
 
 	s.beginTransaction()
 	defer s.commitTransaction()
-	submitTransferBatch(s.Assertions, s.client, s.executionCtx, &transfers[1])
+	submitTransferBatch(s.Assertions, s.client, s.rollupCtx, &transfers[1])
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)

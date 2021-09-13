@@ -197,7 +197,8 @@ func (s *NewBlockLoopTestSuite) submitTransferBatchInTransaction(tx *models.Tran
 
 		batch, err := executionCtx.NewPendingBatch(txtype.Transfer)
 		s.NoError(err)
-		err = executionCtx.SubmitBatch(batch, commitments)
+		rollupCtx := executor.NewTestRollupContext(executionCtx, txtype.Transfer)
+		err = rollupCtx.SubmitBatch(batch, commitments)
 		s.NoError(err)
 		s.testClient.Commit()
 	})

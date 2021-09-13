@@ -24,5 +24,5 @@ func (s *TestSuiteWithDisputeContext) SetupTest(batchType txtype.TransactionType
 		DisableSignatures:      false,
 	})
 
-	s.disputeCtx = NewDisputeContext(s.storage.Storage, s.client.Client)
+	s.disputeCtx = NewDisputeContext(s.executionCtx.storage, s.executionCtx.client)
 }
