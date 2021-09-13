@@ -116,30 +116,19 @@ func (c *Commander) replaceBatch(localBatch *models.Batch, remoteBatch *eth.Deco
 func (c *Commander) disputeFraudulentBatch(
 	remoteBatch *eth.DecodedBatch,
 	disputableErr *executor.DisputableError,
-) error {
+) (err error) {
 	disputeCtx := executor.NewDisputeContext(c.storage, c.client)
-
-	// TODO execution context may not be needed here. Revisit this when extracting disputer package.
-	executionCtx, err := executor.NewExecutionContext(c.storage, c.client, c.cfg.Rollup, context.Background())
-	if err != nil {
-		return err
-	}
-	defer executionCtx.Rollback(&err)
 
 	switch disputableErr.Type {
 	case executor.Transition:
 		err = disputeCtx.DisputeTransition(remoteBatch, disputableErr.CommitmentIndex, disputableErr.Proofs)
 	case executor.Signature:
-		err = executionCtx.DisputeSignature(remoteBatch, disputableErr.CommitmentIndex, disputableErr.Proofs)
+		err = disputeCtx.DisputeSignature(remoteBatch, disputableErr.CommitmentIndex, disputableErr.Proofs)
 	}
 	if err != nil {
 		return err
 	}
 
-	err = executionCtx.Commit()
-	if err != nil {
-		return err
-	}
 	return ErrRollbackInProgress
 }
 

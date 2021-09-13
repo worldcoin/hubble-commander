@@ -89,3 +89,30 @@ func (t *ExecutionContext) createDisputableSignatureError(reason string, transfe
 	}
 	return NewDisputableErrorWithProofs(Signature, reason, proofs)
 }
+
+func (t *ExecutionContext) stateMerkleProofs(transfers models.GenericTransactionArray) ([]models.StateMerkleProof, error) {
+	proofs := make([]models.StateMerkleProof, 0, transfers.Len())
+	for i := 0; i < transfers.Len(); i++ {
+		stateProof, err := t.userStateProof(transfers.At(i).GetFromStateID())
+		if err != nil {
+			return nil, err
+		}
+		proofs = append(proofs, *stateProof)
+	}
+	return proofs, nil
+}
+
+func (t *ExecutionContext) userStateProof(stateID uint32) (*models.StateMerkleProof, error) {
+	leaf, err := t.storage.StateTree.Leaf(stateID)
+	if err != nil {
+		return nil, err
+	}
+	witness, err := t.storage.StateTree.GetLeafWitness(leaf.StateID)
+	if err != nil {
+		return nil, err
+	}
+	return &models.StateMerkleProof{
+		UserState: &leaf.UserState,
+		Witness:   witness,
+	}, nil
+}

@@ -2,64 +2,28 @@ package executor
 
 import (
 	"testing"
-	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
-	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
-	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
 type DisputeSignatureTestSuite struct {
-	*require.Assertions
-	suite.Suite
-	storage      *st.TestStorage
-	client       *eth.TestClient
-	cfg          *config.RollupConfig
-	executionCtx *ExecutionContext
-	domain       *bls.Domain
-}
-
-func (s *DisputeSignatureTestSuite) SetupSuite() {
-	s.Assertions = require.New(s.T())
-	s.cfg = &config.RollupConfig{
-		MinCommitmentsPerBatch: 1,
-		MaxCommitmentsPerBatch: 32,
-		MinTxsPerCommitment:    1,
-		MaxTxsPerCommitment:    1,
-		DisableSignatures:      false,
-	}
+	TestSuiteWithDisputeContext
+	domain *bls.Domain
 }
 
 func (s *DisputeSignatureTestSuite) SetupTest() {
+	s.TestSuiteWithDisputeContext.SetupTest()
+
 	var err error
-	s.storage, err = st.NewTestStorage()
-	s.NoError(err)
-
-	s.client, err = eth.NewConfiguredTestClient(
-		rollup.DeploymentConfig{},
-		eth.ClientConfig{TxTimeout: ref.Duration(2 * time.Second)},
-	)
-	s.NoError(err)
-
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
-
 	s.domain, err = s.client.GetDomain()
-	s.NoError(err)
-}
-
-func (s *DisputeSignatureTestSuite) TearDownTest() {
-	s.client.Close()
-	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
@@ -82,7 +46,7 @@ func (s *DisputeSignatureTestSuite) TestPublicKeyProof() {
 	err := s.storage.AccountTree.SetSingle(account)
 	s.NoError(err)
 
-	publicKeyProof, err := s.executionCtx.publicKeyProof(account.PubKeyID)
+	publicKeyProof, err := s.disputeCtx.publicKeyProof(account.PubKeyID)
 	s.NoError(err)
 	s.Equal(account.PublicKey, *publicKeyProof.PublicKey)
 	s.Len(publicKeyProof.Witness, 32)
@@ -98,7 +62,7 @@ func (s *DisputeSignatureTestSuite) TestReceiverPublicKeyProof() {
 
 	publicKeyHash := crypto.Keccak256Hash(account.PublicKey.Bytes())
 
-	publicKeyProof, err := s.executionCtx.receiverPublicKeyProof(account.PubKeyID)
+	publicKeyProof, err := s.disputeCtx.receiverPublicKeyProof(account.PubKeyID)
 	s.NoError(err)
 	s.Equal(publicKeyHash, publicKeyProof.PublicKeyHash)
 	s.Len(publicKeyProof.Witness, 32)
@@ -125,7 +89,7 @@ func (s *DisputeSignatureTestSuite) TestSignatureProof() {
 		expectedPublicKeys = append(expectedPublicKeys, account.PublicKey)
 	}
 
-	signatureProof, err := s.executionCtx.signatureProof(stateProofs)
+	signatureProof, err := s.disputeCtx.signatureProof(stateProofs)
 	s.NoError(err)
 	s.Len(signatureProof.UserStates, 3)
 	s.Len(signatureProof.PublicKeys, 3)
@@ -174,7 +138,7 @@ func (s *DisputeSignatureTestSuite) TestSignatureProofWithReceiver() {
 
 	commitment := &encoder.DecodedCommitment{Transactions: serializedTxs}
 
-	signatureProof, err := s.executionCtx.signatureProofWithReceiver(commitment, stateProofs)
+	signatureProof, err := s.disputeCtx.signatureProofWithReceiver(commitment, stateProofs)
 	s.NoError(err)
 	s.Len(signatureProof.UserStates, 3)
 	s.Len(signatureProof.SenderPublicKeys, 3)
@@ -294,7 +258,7 @@ func (s *DisputeSignatureTestSuite) disputeSignature(
 	proofs, err := s.executionCtx.stateMerkleProofs(transfers)
 	s.NoError(err)
 
-	return s.executionCtx.DisputeSignature(batch, 0, proofs)
+	return s.disputeCtx.DisputeSignature(batch, 0, proofs)
 }
 
 func TestDisputeSignatureTestSuite(t *testing.T) {

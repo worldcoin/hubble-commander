@@ -9,28 +9,28 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (t *ExecutionContext) DisputeSignature(
+func (c *DisputeContext) DisputeSignature(
 	batch *eth.DecodedBatch,
 	commitmentIndex int,
 	stateProofs []models.StateMerkleProof,
 ) error {
 	switch batch.Type {
 	case txtype.Transfer:
-		return t.disputeTransferSignature(batch, commitmentIndex, stateProofs)
+		return c.disputeTransferSignature(batch, commitmentIndex, stateProofs)
 	case txtype.Create2Transfer:
-		return t.disputeCreate2TransferSignature(batch, commitmentIndex, stateProofs)
+		return c.disputeCreate2TransferSignature(batch, commitmentIndex, stateProofs)
 	case txtype.Genesis, txtype.MassMigration:
 		return errors.New("unsupported batch type")
 	}
 	return nil
 }
 
-func (t *ExecutionContext) disputeTransferSignature(
+func (c *DisputeContext) disputeTransferSignature(
 	batch *eth.DecodedBatch,
 	commitmentIndex int,
 	stateProofs []models.StateMerkleProof,
 ) error {
-	signatureProof, err := t.signatureProof(stateProofs)
+	signatureProof, err := c.signatureProof(stateProofs)
 	if err != nil {
 		return err
 	}
@@ -40,15 +40,15 @@ func (t *ExecutionContext) disputeTransferSignature(
 		return err
 	}
 
-	return t.client.DisputeSignatureTransfer(&batch.ID, targetCommitmentProof, signatureProof)
+	return c.client.DisputeSignatureTransfer(&batch.ID, targetCommitmentProof, signatureProof)
 }
 
-func (t *ExecutionContext) disputeCreate2TransferSignature(
+func (c *DisputeContext) disputeCreate2TransferSignature(
 	batch *eth.DecodedBatch,
 	commitmentIndex int,
 	stateProofs []models.StateMerkleProof,
 ) error {
-	signatureProof, err := t.signatureProofWithReceiver(&batch.Commitments[commitmentIndex], stateProofs)
+	signatureProof, err := c.signatureProofWithReceiver(&batch.Commitments[commitmentIndex], stateProofs)
 	if err != nil {
 		return err
 	}
@@ -58,17 +58,17 @@ func (t *ExecutionContext) disputeCreate2TransferSignature(
 		return err
 	}
 
-	return t.client.DisputeSignatureCreate2Transfer(&batch.ID, targetCommitmentProof, signatureProof)
+	return c.client.DisputeSignatureCreate2Transfer(&batch.ID, targetCommitmentProof, signatureProof)
 }
 
-func (t *ExecutionContext) signatureProof(stateProofs []models.StateMerkleProof) (*models.SignatureProof, error) {
+func (c *DisputeContext) signatureProof(stateProofs []models.StateMerkleProof) (*models.SignatureProof, error) {
 	proof := &models.SignatureProof{
 		UserStates: stateProofs,
 		PublicKeys: make([]models.PublicKeyProof, 0, len(stateProofs)),
 	}
 
 	for i := range stateProofs {
-		publicKeyProof, err := t.publicKeyProof(stateProofs[i].UserState.PubKeyID)
+		publicKeyProof, err := c.publicKeyProof(stateProofs[i].UserState.PubKeyID)
 		if err != nil {
 			return nil, err
 		}
@@ -77,7 +77,7 @@ func (t *ExecutionContext) signatureProof(stateProofs []models.StateMerkleProof)
 	return proof, nil
 }
 
-func (t *ExecutionContext) signatureProofWithReceiver(
+func (c *DisputeContext) signatureProofWithReceiver(
 	commitment *encoder.DecodedCommitment,
 	stateProofs []models.StateMerkleProof,
 ) (*models.SignatureProofWithReceiver, error) {
@@ -89,11 +89,11 @@ func (t *ExecutionContext) signatureProofWithReceiver(
 		ReceiverPublicKeys: make([]models.ReceiverPublicKeyProof, 0, len(stateProofs)),
 	}
 	for i := range stateProofs {
-		publicKeyProof, err := t.publicKeyProof(stateProofs[i].UserState.PubKeyID)
+		publicKeyProof, err := c.publicKeyProof(stateProofs[i].UserState.PubKeyID)
 		if err != nil {
 			return nil, err
 		}
-		receiverPublicKeyProof, err := t.receiverPublicKeyProof(pubKeyIDs[i])
+		receiverPublicKeyProof, err := c.receiverPublicKeyProof(pubKeyIDs[i])
 		if err != nil {
 			return nil, err
 		}
@@ -104,27 +104,12 @@ func (t *ExecutionContext) signatureProofWithReceiver(
 	return proof, nil
 }
 
-func (t *ExecutionContext) userStateProof(stateID uint32) (*models.StateMerkleProof, error) {
-	leaf, err := t.storage.StateTree.Leaf(stateID)
+func (c *DisputeContext) publicKeyProof(pubKeyID uint32) (*models.PublicKeyProof, error) {
+	account, err := c.storage.AccountTree.Leaf(pubKeyID)
 	if err != nil {
 		return nil, err
 	}
-	witness, err := t.storage.StateTree.GetLeafWitness(leaf.StateID)
-	if err != nil {
-		return nil, err
-	}
-	return &models.StateMerkleProof{
-		UserState: &leaf.UserState,
-		Witness:   witness,
-	}, nil
-}
-
-func (t *ExecutionContext) publicKeyProof(pubKeyID uint32) (*models.PublicKeyProof, error) {
-	account, err := t.storage.AccountTree.Leaf(pubKeyID)
-	if err != nil {
-		return nil, err
-	}
-	witness, err := t.storage.AccountTree.GetWitness(pubKeyID)
+	witness, err := c.storage.AccountTree.GetWitness(pubKeyID)
 	if err != nil {
 		return nil, err
 	}
@@ -135,12 +120,12 @@ func (t *ExecutionContext) publicKeyProof(pubKeyID uint32) (*models.PublicKeyPro
 	}, nil
 }
 
-func (t *ExecutionContext) receiverPublicKeyProof(pubKeyID uint32) (*models.ReceiverPublicKeyProof, error) {
-	account, err := t.storage.AccountTree.Leaf(pubKeyID)
+func (c *DisputeContext) receiverPublicKeyProof(pubKeyID uint32) (*models.ReceiverPublicKeyProof, error) {
+	account, err := c.storage.AccountTree.Leaf(pubKeyID)
 	if err != nil {
 		return nil, err
 	}
-	witness, err := t.storage.AccountTree.GetWitness(pubKeyID)
+	witness, err := c.storage.AccountTree.GetWitness(pubKeyID)
 	if err != nil {
 		return nil, err
 	}
@@ -149,16 +134,4 @@ func (t *ExecutionContext) receiverPublicKeyProof(pubKeyID uint32) (*models.Rece
 		PublicKeyHash: crypto.Keccak256Hash(account.PublicKey.Bytes()),
 		Witness:       witness,
 	}, nil
-}
-
-func (t *ExecutionContext) stateMerkleProofs(transfers models.GenericTransactionArray) ([]models.StateMerkleProof, error) {
-	proofs := make([]models.StateMerkleProof, 0, transfers.Len())
-	for i := 0; i < transfers.Len(); i++ {
-		stateProof, err := t.userStateProof(transfers.At(i).GetFromStateID())
-		if err != nil {
-			return nil, err
-		}
-		proofs = append(proofs, *stateProof)
-	}
-	return proofs, nil
 }
