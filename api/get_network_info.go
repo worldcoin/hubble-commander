@@ -5,7 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 )
 
-var networkInfoAPIErrors = map[error]*ErrorAPI{
+var networkInfoAPIErrors = map[error]*APIError{
 	&storage.NoVacantSubtreeError{}: NewAPIError(
 		99000,
 		"an error occurred while fetching the account count",

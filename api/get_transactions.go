@@ -5,7 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 )
 
-var getTransactionsAPIErrors = map[error]*ErrorAPI{
+var getTransactionsAPIErrors = map[error]*APIError{
 	&storage.NotFoundError{}: NewAPIError(10001, "transactions not found"),
 }
 

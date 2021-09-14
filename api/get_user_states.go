@@ -6,7 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 )
 
-var getUserStatesAPIErrors = map[error]*ErrorAPI{
+var getUserStatesAPIErrors = map[error]*APIError{
 	&storage.NotFoundError{}: NewAPIError(99003, "user states not found"),
 }
 

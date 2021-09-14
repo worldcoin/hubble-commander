@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-var getBatchAPIErrors = map[error]*ErrorAPI{
+var getBatchAPIErrors = map[error]*APIError{
 	&storage.NotFoundError{}: NewAPIError(30000, "batch not found"),
 }
 

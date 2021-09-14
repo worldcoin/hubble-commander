@@ -34,23 +34,23 @@ func (e NotDecimalEncodableError) Error() string {
 	return fmt.Sprintf("%s is not encodable as multi-precission decimal", e.field)
 }
 
-type ErrorAPI struct {
+type APIError struct {
 	Code    int
 	Message string
 }
 
-func (e *ErrorAPI) Error() string {
+func (e *APIError) Error() string {
 	if e.Message == "" {
 		return fmt.Sprintf("error code: %d", e.Code)
 	}
 	return e.Message
 }
 
-func (e *ErrorAPI) ErrorCode() int {
+func (e *APIError) ErrorCode() int {
 	return e.Code
 }
 
-func NewAPIError(code int, message string) *ErrorAPI {
+func NewAPIError(code int, message string) *APIError {
 	if usedErrorCodes == nil {
 		usedErrorCodes = map[int]bool{}
 	}
@@ -61,18 +61,18 @@ func NewAPIError(code int, message string) *ErrorAPI {
 
 	usedErrorCodes[code] = true
 
-	return &ErrorAPI{
+	return &APIError{
 		Code:    code,
 		Message: message,
 	}
 }
 
-func NewUnknownError(err error) *ErrorAPI {
+func NewUnknownError(err error) *APIError {
 	return NewAPIError(999, fmt.Sprintf("unknown error: %s", err.Error()))
 }
 
 type CommanderErrorsToErrorAPI struct {
-	apiError        *ErrorAPI
+	apiError        *APIError
 	commanderErrors []interface{}
 }
 
@@ -99,7 +99,7 @@ var commonErrors = []*CommanderErrorsToErrorAPI{
 	NewCommanderErrorsToErrorAPI(99004, "an error occurred while fetching the domain for signing", []interface{}{bls.ErrInvalidDomainLength}),
 }
 
-func sanitizeError(err error, errMap map[error]*ErrorAPI) *ErrorAPI {
+func sanitizeError(err error, errMap map[error]*APIError) *APIError {
 	for k, v := range errMap {
 		if errors.Is(err, k) {
 			return v
@@ -109,7 +109,7 @@ func sanitizeError(err error, errMap map[error]*ErrorAPI) *ErrorAPI {
 	return sanitizeCommonError(err, commonErrors)
 }
 
-func sanitizeCommonError(err error, errMap []*CommanderErrorsToErrorAPI) *ErrorAPI {
+func sanitizeCommonError(err error, errMap []*CommanderErrorsToErrorAPI) *APIError {
 	for i := range errMap {
 		selectedErrMap := errMap[i]
 		for j := range selectedErrMap.commanderErrors {

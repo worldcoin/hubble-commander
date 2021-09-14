@@ -5,7 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 )
 
-var getPublicKeyAPIErrors = map[error]*ErrorAPI{
+var getPublicKeyAPIErrors = map[error]*APIError{
 	&storage.NotFoundError{}: NewAPIError(
 		99001,
 		"public key not found",

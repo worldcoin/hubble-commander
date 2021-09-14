@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-var getTransactionAPIErrors = map[error]*ErrorAPI{
+var getTransactionAPIErrors = map[error]*APIError{
 	&storage.NotFoundError{}: NewAPIError(10000, "transaction not found"),
 }
 

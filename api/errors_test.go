@@ -12,20 +12,20 @@ func TestSanitizeError_ValidateErrorsFromMap(t *testing.T) {
 	sampleError1 := fmt.Errorf("sample error 1")
 	sampleError2 := fmt.Errorf("sample error 2")
 	sampleError3 := &storage.NotFoundError{}
-	expectedAPIError1 := &ErrorAPI{
+	expectedAPIError1 := &APIError{
 		Code:    123,
 		Message: "api error 1",
 	}
-	expectedAPIError2 := &ErrorAPI{
+	expectedAPIError2 := &APIError{
 		Code:    234,
 		Message: "api error 2",
 	}
-	expectedAPIError3 := &ErrorAPI{
+	expectedAPIError3 := &APIError{
 		Code:    345,
 		Message: "api error 3",
 	}
 
-	errMap := map[error]*ErrorAPI{
+	errMap := map[error]*APIError{
 		sampleError1: expectedAPIError1,
 		sampleError2: expectedAPIError2,
 		sampleError3: expectedAPIError3,
@@ -42,15 +42,15 @@ func TestSanitizeError_ValidateErrorsFromMap(t *testing.T) {
 }
 
 func TestSanitizeCommonError(t *testing.T) {
-	expectedAPIError1 := ErrorAPI{
+	expectedAPIError1 := APIError{
 		Code:    12345,
 		Message: "expected error message 1",
 	}
-	expectedAPIError2 := ErrorAPI{
+	expectedAPIError2 := APIError{
 		Code:    54321,
 		Message: "expected error message 2",
 	}
-	expectedUnknownError := ErrorAPI{
+	expectedUnknownError := APIError{
 		Code:    999,
 		Message: "unknown error: ducks",
 	}

@@ -22,7 +22,7 @@ var (
 	ErrUnsupportedTxType = errors.New("unsupported transaction type")
 )
 
-var sendTransactionAPIErrors = map[error]*ErrorAPI{
+var sendTransactionAPIErrors = map[error]*APIError{
 	&MissingFieldError{}: NewAPIError(
 		10003,
 		"some field is missing, verify the transfer/create2transfer object",

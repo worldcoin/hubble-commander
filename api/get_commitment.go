@@ -7,7 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 )
 
-var getCommitmentAPIErrors = map[error]*ErrorAPI{
+var getCommitmentAPIErrors = map[error]*APIError{
 	&storage.NotFoundError{}: NewAPIError(20000, "commitment not found"),
 }
 
