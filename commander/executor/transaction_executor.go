@@ -3,8 +3,6 @@ package executor
 import (
 	"log"
 
-	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -13,6 +11,7 @@ import (
 )
 
 type TransactionExecutor interface {
+	getPendingTransactions(limit uint32) (models.GenericTransactionArray, error)
 	SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error)
 }
 
@@ -22,16 +21,10 @@ func CreateTransactionExecutor(executionCtx *ExecutionContext, txType txtype.Tra
 	case txtype.Transfer:
 		return &TransferExecutor{
 			storage: executionCtx.storage,
-			tx:      executionCtx.tx,
-			client:  executionCtx.client,
-			cfg:     executionCtx.cfg,
 		}
 	case txtype.Create2Transfer:
 		return &C2TExecutor{
 			storage: executionCtx.storage,
-			tx:      executionCtx.tx,
-			client:  executionCtx.client,
-			cfg:     executionCtx.cfg,
 		}
 	default:
 		log.Fatal("Invalid tx type")
@@ -42,9 +35,14 @@ func CreateTransactionExecutor(executionCtx *ExecutionContext, txType txtype.Tra
 // TransferExecutor implements TransactionExecutor
 type TransferExecutor struct {
 	storage *st.Storage
-	tx      *db.TxController
-	client  *eth.Client
-	cfg     *config.RollupConfig
+}
+
+func (e *TransferExecutor) getPendingTransactions(limit uint32) (models.GenericTransactionArray, error) {
+	pendingTransfers, err := e.storage.GetPendingTransfers(limit)
+	if err != nil {
+		return nil, err
+	}
+	return models.TransferArray(pendingTransfers), nil
 }
 
 func (e *TransferExecutor) SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error) {
@@ -54,9 +52,14 @@ func (e *TransferExecutor) SubmitBatch(client *eth.Client, commitments []models.
 // C2TExecutor implements TransactionExecutor
 type C2TExecutor struct {
 	storage *st.Storage
-	tx      *db.TxController
-	client  *eth.Client
-	cfg     *config.RollupConfig
+}
+
+func (e *C2TExecutor) getPendingTransactions(limit uint32) (models.GenericTransactionArray, error) {
+	pendingTransfers, err := e.storage.GetPendingCreate2Transfers(limit)
+	if err != nil {
+		return nil, err
+	}
+	return models.Create2TransferArray(pendingTransfers), nil
 }
 
 func (e *C2TExecutor) SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error) {

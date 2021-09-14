@@ -18,6 +18,8 @@ type GenericTransaction interface {
 type GenericTransactionArray interface {
 	Len() int
 	At(index int) GenericTransaction
+	ToTransferArray() TransferArray
+	ToCreate2TransferArray() Create2TransferArray
 }
 
 type TransferArray []Transfer
@@ -34,6 +36,14 @@ func (t TransferArray) At(index int) GenericTransaction {
 	return &t[index]
 }
 
+func (t TransferArray) ToTransferArray() TransferArray {
+	return t
+}
+
+func (t TransferArray) ToCreate2TransferArray() Create2TransferArray {
+	panic("TransferArray cannot be cast to Create2TransferArray")
+}
+
 type Create2TransferArray []Create2Transfer
 
 func MakeCreate2TransferArray(create2Transfers ...Create2Transfer) Create2TransferArray {
@@ -46,4 +56,12 @@ func (t Create2TransferArray) Len() int {
 
 func (t Create2TransferArray) At(index int) GenericTransaction {
 	return &t[index]
+}
+
+func (t Create2TransferArray) ToTransferArray() TransferArray {
+	panic("Create2TransferArray cannot be cast to TransferArray")
+}
+
+func (t Create2TransferArray) ToCreate2TransferArray() Create2TransferArray {
+	return t
 }
