@@ -6,7 +6,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/Worldcoin/hubble-commander/utils"
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	bh "github.com/timshannon/badgerhold/v3"
@@ -149,22 +148,24 @@ func (s *Storage) getCreate2TransfersByPublicKey(publicKey *models.PublicKey) (
 		return nil, nil, err
 	}
 
-	stateIDs := make([]uint32, len(leaves))
+	fromStateIDs := make([]interface{}, 0, len(leaves))
+	toStateIDs := make([]uint32, 0, len(leaves))
 	for i := range leaves {
-		stateIDs = append(stateIDs, leaves[i].StateID)
+		fromStateIDs = append(fromStateIDs, leaves[i].StateID)
+		toStateIDs = append(toStateIDs, leaves[i].StateID)
 	}
 
 	txs := make([]models.StoredTx, 0, 1)
 	err = s.database.Badger.Find(
 		&txs,
-		bh.Where("FromStateID").In(utils.ValueToInterfaceSlice(leaves, "StateID")...).Index("FromStateID").
+		bh.Where("FromStateID").In(fromStateIDs...).Index("FromStateID").
 			And("TxType").Eq(txtype.Create2Transfer),
 	)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	txHashes, err := s.getC2THashesByStateIDs(stateIDs)
+	txHashes, err := s.getC2THashesByStateIDs(toStateIDs)
 	if err != nil {
 		return nil, nil, err
 	}
