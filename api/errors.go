@@ -71,21 +71,21 @@ func NewUnknownAPIError(err error) *APIError {
 	return NewAPIError(999, fmt.Sprintf("unknown error: %s", err.Error()))
 }
 
-type CommanderErrorsToErrorAPI struct {
+type InternalToAPIError struct {
 	apiError        *APIError
 	commanderErrors []interface{}
 }
 
-func NewCommanderErrorsToErrorAPI(code int, message string, commanderErrors []interface{}) *CommanderErrorsToErrorAPI {
-	return &CommanderErrorsToErrorAPI{
+func NewInternalToAPIError(code int, message string, commanderErrors []interface{}) *InternalToAPIError {
+	return &InternalToAPIError{
 		apiError:        NewAPIError(code, message),
 		commanderErrors: commanderErrors,
 	}
 }
 
-var commonErrors = []*CommanderErrorsToErrorAPI{
+var commonErrors = []*InternalToAPIError{
 	// Badger
-	NewCommanderErrorsToErrorAPI(
+	NewInternalToAPIError(
 		40000,
 		"an error occurred while saving data to the Badger database",
 		[]interface{}{
@@ -94,9 +94,9 @@ var commonErrors = []*CommanderErrorsToErrorAPI{
 			db.ErrInvalidKeyListMetadataLength,
 		},
 	),
-	NewCommanderErrorsToErrorAPI(40001, "an error occurred while iterating over badger database", []interface{}{db.ErrIteratorFinished}),
+	NewInternalToAPIError(40001, "an error occurred while iterating over badger database", []interface{}{db.ErrIteratorFinished}),
 	// BLS
-	NewCommanderErrorsToErrorAPI(99004, "an error occurred while fetching the domain for signing", []interface{}{bls.ErrInvalidDomainLength}),
+	NewInternalToAPIError(99004, "an error occurred while fetching the domain for signing", []interface{}{bls.ErrInvalidDomainLength}),
 }
 
 func sanitizeError(err error, errMap map[error]*APIError) *APIError {
@@ -109,7 +109,7 @@ func sanitizeError(err error, errMap map[error]*APIError) *APIError {
 	return sanitizeCommonError(err, commonErrors)
 }
 
-func sanitizeCommonError(err error, errMap []*CommanderErrorsToErrorAPI) *APIError {
+func sanitizeCommonError(err error, errMap []*InternalToAPIError) *APIError {
 	for i := range errMap {
 		selectedErrMap := errMap[i]
 		for j := range selectedErrMap.commanderErrors {

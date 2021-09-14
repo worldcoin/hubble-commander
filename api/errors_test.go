@@ -58,8 +58,8 @@ func TestSanitizeCommonError(t *testing.T) {
 	newErr2 := fmt.Errorf("error2")
 	newErr3 := &storage.NotFoundError{}
 
-	testCommonErrors := []*CommanderErrorsToErrorAPI{
-		NewCommanderErrorsToErrorAPI(
+	testCommonErrors := []*InternalToAPIError{
+		NewInternalToAPIError(
 			expectedAPIError1.Code,
 			expectedAPIError1.Message,
 			[]interface{}{
@@ -67,7 +67,7 @@ func TestSanitizeCommonError(t *testing.T) {
 				newErr2,
 			},
 		),
-		NewCommanderErrorsToErrorAPI(
+		NewInternalToAPIError(
 			expectedAPIError2.Code,
 			expectedAPIError2.Message,
 			[]interface{}{
