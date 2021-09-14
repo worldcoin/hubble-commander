@@ -36,7 +36,7 @@ func NewTestRollupContext(executionCtx *ExecutionContext, batchType txtype.Trans
 func newRollupContext(executionCtx *ExecutionContext, batchType txtype.TransactionType) *RollupContext {
 	return &RollupContext{
 		ExecutionContext: executionCtx,
-		Executor:         CreateTransactionExecutor(batchType),
+		Executor:         CreateTransactionExecutor(executionCtx, batchType),
 		BatchType:        batchType,
 	}
 }
