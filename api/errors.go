@@ -67,7 +67,7 @@ func NewAPIError(code int, message string) *APIError {
 	}
 }
 
-func NewUnknownError(err error) *APIError {
+func NewUnknownAPIError(err error) *APIError {
 	return NewAPIError(999, fmt.Sprintf("unknown error: %s", err.Error()))
 }
 
@@ -120,5 +120,5 @@ func sanitizeCommonError(err error, errMap []*CommanderErrorsToErrorAPI) *APIErr
 		}
 	}
 
-	return NewUnknownError(err)
+	return NewUnknownAPIError(err)
 }
