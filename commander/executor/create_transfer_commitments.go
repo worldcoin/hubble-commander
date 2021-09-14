@@ -18,7 +18,7 @@ type FeeReceiver struct {
 	TokenID models.Uint256
 }
 
-func (c *ExecutionContext) CreateTransferCommitments(
+func (c *RollupContext) CreateTransferCommitments(
 	domain *bls.Domain,
 ) (commitments []models.Commitment, err error) {
 	pendingTransfers, err := c.queryPendingTransfers()
