@@ -6,7 +6,7 @@ All API calls prefixed by `hubble_`
 
 ## TO DO
 
-* Generate API documentation / specificiation
+* Generate API documentation / specification
   * See PR for OpenRPC
   * See JSON RPC notion file  HubbleDocs/JsonRpc
   * See Postman collection

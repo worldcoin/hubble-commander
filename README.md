@@ -22,6 +22,29 @@
 | [`main`](main)                               | Command line interface                    |
 | [`e2e`](e2e)                                 | End-to-end tests                          |
 
+<!-- Above table extracted using
+#!/usr/bin/env python3
+from pathlib import Path
+from pytablewriter import MarkdownTableWriter
+import re
+
+value_matrix = []
+for path_object in Path(".").glob('**/Readme.md'):
+    if 'hubble-contracts' in f"{path_object}":
+        continue
+    print(f"Parsing {path_object}")
+    dir = f"{path_object.parent}"
+    readme = path_object.read_text()
+    title = re.match("#\s*(.*?)\n", readme).group(1)
+    value_matrix += [[f"[`{dir}`]({dir})", f"{title}"]]
+
+MarkdownTableWriter(
+    headers=["path", "description"],
+    value_matrix=value_matrix,
+    margin=1
+).write_table()
+-->
+
 ## Prerequisites
 
 ### Bindings
