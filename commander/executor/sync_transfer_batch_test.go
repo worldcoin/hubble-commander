@@ -53,7 +53,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
 		s.NoError(err)
 	}
 
-	expectedCommitments, err := s.executionCtx.CreateTransferCommitments(testDomain)
+	expectedCommitments, err := s.rollupCtx.CreateTransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(expectedCommitments, 2)
 	accountRoots := make([]common.Hash, 2)
