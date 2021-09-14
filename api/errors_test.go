@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/storage"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
 
@@ -34,10 +35,19 @@ func TestSanitizeError_ValidateErrorsFromMap(t *testing.T) {
 	apiError := sanitizeError(sampleError1, errMap)
 	require.Equal(t, *expectedAPIError1, *apiError)
 
+	apiError = sanitizeError(errors.WithStack(sampleError1), errMap)
+	require.Equal(t, *expectedAPIError1, *apiError)
+
 	apiError = sanitizeError(sampleError2, errMap)
 	require.Equal(t, *expectedAPIError2, *apiError)
 
+	apiError = sanitizeError(errors.WithStack(sampleError2), errMap)
+	require.Equal(t, *expectedAPIError2, *apiError)
+
 	apiError = sanitizeError(sampleError3, errMap)
+	require.Equal(t, *expectedAPIError3, *apiError)
+
+	apiError = sanitizeError(errors.WithStack(sampleError3), errMap)
 	require.Equal(t, *expectedAPIError3, *apiError)
 }
 
@@ -79,10 +89,19 @@ func TestSanitizeCommonError(t *testing.T) {
 	apiError := sanitizeCommonError(newErr1, testCommonErrors)
 	require.Equal(t, expectedAPIError1, *apiError)
 
+	apiError = sanitizeCommonError(errors.WithStack(newErr1), testCommonErrors)
+	require.Equal(t, expectedAPIError1, *apiError)
+
 	apiError = sanitizeCommonError(newErr2, testCommonErrors)
 	require.Equal(t, expectedAPIError1, *apiError)
 
+	apiError = sanitizeCommonError(errors.WithStack(newErr2), testCommonErrors)
+	require.Equal(t, expectedAPIError1, *apiError)
+
 	apiError = sanitizeCommonError(newErr3, testCommonErrors)
+	require.Equal(t, expectedAPIError2, *apiError)
+
+	apiError = sanitizeCommonError(errors.WithStack(newErr3), testCommonErrors)
 	require.Equal(t, expectedAPIError2, *apiError)
 
 	apiError = sanitizeCommonError(fmt.Errorf("ducks"), testCommonErrors)
