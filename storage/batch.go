@@ -34,7 +34,7 @@ func (s *BatchStorage) GetBatch(batchID models.Uint256) (*models.Batch, error) {
 	var batch models.Batch
 	err := s.database.Badger.Get(batchID, &batch)
 	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("batch")
+		return nil, errors.WithStack(NewNotFoundError("batch"))
 	}
 	if err != nil {
 		return nil, err

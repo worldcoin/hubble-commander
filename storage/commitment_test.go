@@ -70,7 +70,7 @@ func (s *CommitmentTestSuite) addRandomBatch() models.Uint256 {
 
 func (s *CommitmentTestSuite) TestGetCommitment_NonExistentCommitment() {
 	res, err := s.storage.GetCommitment(&commitment.ID)
-	s.Equal(NewNotFoundError("commitment"), err)
+	s.ErrorIs(err, NewNotFoundError("commitment"))
 	s.Nil(res)
 }
 
@@ -96,7 +96,7 @@ func (s *CommitmentTestSuite) TestGetLatestCommitment() {
 
 func (s *CommitmentTestSuite) TestGetLatestCommitment_NoCommitments() {
 	_, err := s.storage.GetLatestCommitment()
-	s.Equal(NewNotFoundError("commitment"), err)
+	s.ErrorIs(err, NewNotFoundError("commitment"))
 }
 
 func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
@@ -136,7 +136,7 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
 func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID_NonExistentCommitments() {
 	batchID := s.addRandomBatch()
 	commitments, err := s.storage.GetCommitmentsByBatchID(batchID)
-	s.Equal(NewNotFoundError("commitments"), err)
+	s.ErrorIs(err, NewNotFoundError("commitments"))
 	s.Nil(commitments)
 }
 
@@ -174,7 +174,7 @@ func (s *CommitmentTestSuite) TestDeleteCommitmentsByBatchIDs() {
 	s.NoError(err)
 	for i := range batches {
 		_, err = s.storage.GetCommitmentsByBatchID(batches[i].ID)
-		s.Equal(NewNotFoundError("commitments"), err)
+		s.ErrorIs(err, NewNotFoundError("commitments"))
 	}
 }
 
@@ -184,7 +184,7 @@ func (s *CommitmentTestSuite) TestDeleteCommitmentsByBatchIDs_NoCommitments() {
 	s.NoError(err)
 
 	err = s.storage.DeleteCommitmentsByBatchIDs(batchID)
-	s.Equal(NewNotFoundError("commitments"), err)
+	s.ErrorIs(err, NewNotFoundError("commitments"))
 
 	_, err = s.storage.GetCommitment(&commitment.ID)
 	s.NoError(err)

@@ -188,7 +188,7 @@ func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs_NoTransa
 	s.addTransfersInCommitment(models.NewUint256(1), transfers)
 
 	hashes, err := s.storage.GetTransactionHashesByBatchIDs(models.MakeUint256(2))
-	s.Equal(NewNotFoundError("transaction"), err)
+	s.ErrorIs(err, NewNotFoundError("transaction"))
 	s.Nil(hashes)
 }
 

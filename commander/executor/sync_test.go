@@ -550,7 +550,7 @@ func (s *SyncTestSuite) TestRevertBatch_DeletesCommitmentsAndBatches() {
 	s.NoError(err)
 
 	_, err = s.transactionExecutor.storage.GetLatestCommitment()
-	s.Equal(st.NewNotFoundError("commitment"), err)
+	s.ErrorIs(err, st.NewNotFoundError("commitment"))
 
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)

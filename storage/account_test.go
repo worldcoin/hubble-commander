@@ -42,7 +42,7 @@ func (s *AccountTestSuite) TearDownTest() {
 
 func (s *AccountTestSuite) TestGetUnusedPubKeyID_NoAccounts() {
 	_, err := s.storage.GetUnusedPubKeyID(&account1.PublicKey, models.NewUint256(100))
-	s.Equal(NewNotFoundError("account leaves"), err)
+	s.ErrorIs(err, NewNotFoundError("account leaves"))
 }
 
 func (s *AccountTestSuite) TestGetUnusedPubKeyID_ExistingAccountAndNoUserState() {
@@ -72,7 +72,7 @@ func (s *AccountTestSuite) TestGetUnusedPubKeyID_NoUnusedPubKeyIDs() {
 	s.NoError(err)
 
 	_, err = s.storage.GetUnusedPubKeyID(&models.PublicKey{1, 2, 3}, &leaf.TokenID)
-	s.Equal(NewNotFoundError("pub key id"), err)
+	s.ErrorIs(err, NewNotFoundError("pub key id"))
 }
 
 func (s *AccountTestSuite) TestGetUnusedPubKeyID_ReturnsFirstUnusedPubKeyID() {
@@ -187,7 +187,7 @@ func (s *AccountTestSuite) TestGetPublicKeyByStateID() {
 
 func (s *AccountTestSuite) TestGetPublicKeyByStateID_NonExistentStateLeaf() {
 	_, err := s.storage.GetPublicKeyByStateID(1)
-	s.Equal(NewNotFoundError("state leaf"), err)
+	s.ErrorIs(err, NewNotFoundError("state leaf"))
 }
 
 func (s *AccountTestSuite) TestGetPublicKeyByStateID_NonExistentAccountLeaf() {
@@ -200,7 +200,7 @@ func (s *AccountTestSuite) TestGetPublicKeyByStateID_NonExistentAccountLeaf() {
 	s.NoError(err)
 
 	_, err = s.storage.GetPublicKeyByStateID(1)
-	s.Equal(NewNotFoundError("account leaf"), err)
+	s.ErrorIs(err, NewNotFoundError("account leaf"))
 }
 
 func TestAccountTestSuite(t *testing.T) {

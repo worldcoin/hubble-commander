@@ -79,7 +79,7 @@ func (s *TransferTestSuite) TestGetTransfer_DifferentTxType() {
 	s.NoError(err)
 
 	_, err = s.storage.GetTransfer(create2Transfer.Hash)
-	s.Equal(NewNotFoundError("transaction"), err)
+	s.ErrorIs(err, NewNotFoundError("transaction"))
 }
 
 func (s *TransferTestSuite) TestMarkTransfersAsIncluded() {
@@ -164,13 +164,13 @@ func (s *TransferTestSuite) TestBatchAddTransfer() {
 
 func (s *TransferTestSuite) TestBatchAddTransfer_NoTransfers() {
 	err := s.storage.BatchAddTransfer([]models.Transfer{})
-	s.Equal(ErrNoRowsAffected, err)
+	s.ErrorIs(err, ErrNoRowsAffected)
 }
 
 func (s *TransferTestSuite) TestGetTransfer_NonExistentTransfer() {
 	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
 	res, err := s.storage.GetTransfer(hash)
-	s.Equal(NewNotFoundError("transaction"), err)
+	s.ErrorIs(err, NewNotFoundError("transaction"))
 	s.Nil(res)
 }
 
