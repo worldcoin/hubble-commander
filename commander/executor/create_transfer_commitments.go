@@ -123,8 +123,8 @@ func (c *RollupContext) applyTransfersForCommitment(pendingTransfers models.Gene
 			return nil, nil, err
 		}
 
-		appliedTransfers = appliedTransfers.Append(models.TransferArray(transfers.appliedTransfers))
-		invalidTransfers = invalidTransfers.Append(models.TransferArray(transfers.invalidTransfers))
+		appliedTransfers = appliedTransfers.Append(transfers.appliedTransfers)
+		invalidTransfers = invalidTransfers.Append(transfers.invalidTransfers)
 
 		if appliedTransfers.Len() == int(c.cfg.MaxTxsPerCommitment) {
 			newPendingTransfers = removeTransfers(pendingTransfers, appliedTransfers.Append(invalidTransfers))

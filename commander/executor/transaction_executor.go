@@ -11,7 +11,9 @@ import (
 )
 
 type TransactionExecutor interface {
+	//TODO: rename
 	getPendingTransactions(limit uint32) (models.GenericTransactionArray, error)
+	beforeApplyTransaction(tx models.GenericTransaction) (*models.StateLeaf, error)
 	makeTransactionArray(size, capacity uint32) models.GenericTransactionArray
 	SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error)
 }
@@ -51,6 +53,10 @@ func (e *TransferExecutor) getPendingTransactions(limit uint32) (models.GenericT
 	return models.TransferArray(pendingTransfers), nil
 }
 
+func (e *TransferExecutor) beforeApplyTransaction(tx models.GenericTransaction) (*models.StateLeaf, error) {
+	return e.storage.StateTree.Leaf(*tx.GetToStateID())
+}
+
 func (e *TransferExecutor) makeTransactionArray(size, capacity uint32) models.GenericTransactionArray {
 	return make(models.TransferArray, size, capacity)
 }
@@ -70,6 +76,11 @@ func (e *C2TExecutor) getPendingTransactions(limit uint32) (models.GenericTransa
 		return nil, err
 	}
 	return models.Create2TransferArray(pendingTransfers), nil
+}
+
+func (e *C2TExecutor) beforeApplyTransaction(tx models.GenericTransaction) (*models.StateLeaf, error) {
+	// TODO extract from ApplyCreate2Transfers
+	panic("not implemented")
 }
 
 func (e *C2TExecutor) makeTransactionArray(size, capacity uint32) models.GenericTransactionArray {

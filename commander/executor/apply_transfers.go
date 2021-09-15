@@ -5,31 +5,34 @@ import (
 )
 
 type AppliedTransfers struct {
-	appliedTransfers []models.Transfer
-	invalidTransfers []models.Transfer
+	appliedTransfers models.GenericTransactionArray
+	invalidTransfers models.GenericTransactionArray
 }
 
-func (c *ExecutionContext) ApplyTransfers(
-	transfers []models.Transfer,
+func (c *RollupContext) ApplyTransfers(
+	transfers models.GenericTransactionArray,
 	maxApplied uint32,
 	feeReceiver *FeeReceiver,
 ) (*AppliedTransfers, error) {
-	if len(transfers) == 0 {
-		return &AppliedTransfers{}, nil
+	returnStruct := &AppliedTransfers{
+		appliedTransfers: c.Executor.makeTransactionArray(0, 0),
+		invalidTransfers: c.Executor.makeTransactionArray(0, 0),
 	}
 
-	returnStruct := &AppliedTransfers{}
-	returnStruct.appliedTransfers = make([]models.Transfer, 0, c.cfg.MaxTxsPerCommitment)
+	if transfers.Len() == 0 {
+		return returnStruct, nil
+	}
 
+	returnStruct.appliedTransfers = c.Executor.makeTransactionArray(0, c.cfg.MaxTxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
-	for i := range transfers {
-		if len(returnStruct.appliedTransfers) == int(maxApplied) {
+	for i := 0; i < transfers.Len(); i++ {
+		if returnStruct.appliedTransfers.Len() == int(maxApplied) {
 			break
 		}
 
-		transfer := &transfers[i]
-		receiverLeaf, err := c.storage.StateTree.Leaf(transfer.ToStateID)
+		transfer := transfers.At(i)
+		receiverLeaf, err := c.Executor.beforeApplyTransaction(transfer)
 		if err != nil {
 			return nil, err
 		}
@@ -39,16 +42,16 @@ func (c *ExecutionContext) ApplyTransfers(
 			return nil, appError
 		}
 		if transferError != nil {
-			logAndSaveTransactionError(c.storage, &transfer.TransactionBase, transferError)
-			returnStruct.invalidTransfers = append(returnStruct.invalidTransfers, *transfer)
+			logAndSaveTransactionError(c.storage, transfer.GetBase(), transferError)
+			returnStruct.invalidTransfers = returnStruct.invalidTransfers.AppendOne(transfer)
 			continue
 		}
 
-		returnStruct.appliedTransfers = append(returnStruct.appliedTransfers, *transfer)
-		combinedFee = *combinedFee.Add(&transfer.Fee)
+		returnStruct.appliedTransfers = returnStruct.appliedTransfers.AppendOne(transfer)
+		combinedFee = *combinedFee.Add(&transfer.GetBase().Fee)
 	}
 
-	if len(returnStruct.appliedTransfers) > 0 {
+	if returnStruct.appliedTransfers.Len() > 0 {
 		_, err := c.ApplyFee(feeReceiver.StateID, combinedFee)
 		if err != nil {
 			return nil, err

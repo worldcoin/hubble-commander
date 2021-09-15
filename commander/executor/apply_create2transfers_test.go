@@ -207,7 +207,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_Applie
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyCreate2TransfersForSync_ReturnsCorrectStateProofsForZeroFee() {
+func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_ReturnsCorrectStateProofsForZeroFee() {
 	transfers, pubKeyIDs := generateValidCreate2TransfersForSync(2, 5)
 	for i := range transfers {
 		transfers[i].Fee = models.MakeUint256(0)
@@ -218,7 +218,7 @@ func (s *ApplyTransfersTestSuite) TestApplyCreate2TransfersForSync_ReturnsCorrec
 	s.Len(stateProofs, 5)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidFeeReceiverTokenID() {
+func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidFeeReceiverTokenID() {
 	feeReceiver := &FeeReceiver{
 		StateID: 4,
 		TokenID: models.MakeUint256(4),

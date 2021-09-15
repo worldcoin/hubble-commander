@@ -22,6 +22,7 @@ type GenericTransactionArray interface {
 	At(index int) GenericTransaction
 	Set(index int, value GenericTransaction)
 	Append(elems GenericTransactionArray) GenericTransactionArray
+	AppendOne(elem GenericTransaction) GenericTransactionArray
 	Slice(start, end int) GenericTransactionArray
 	ToTransferArray() TransferArray
 	ToCreate2TransferArray() Create2TransferArray
@@ -47,6 +48,10 @@ func (t TransferArray) Set(index int, value GenericTransaction) {
 
 func (t TransferArray) Append(elems GenericTransactionArray) GenericTransactionArray {
 	return append(t, elems.ToTransferArray()...)
+}
+
+func (t TransferArray) AppendOne(elem GenericTransaction) GenericTransactionArray {
+	return append(t, *elem.ToTransfer())
 }
 
 func (t TransferArray) Slice(start, end int) GenericTransactionArray {
@@ -81,6 +86,10 @@ func (t Create2TransferArray) Set(index int, value GenericTransaction) {
 
 func (t Create2TransferArray) Append(elems GenericTransactionArray) GenericTransactionArray {
 	return append(t, elems.ToCreate2TransferArray()...)
+}
+
+func (t Create2TransferArray) AppendOne(elem GenericTransaction) GenericTransactionArray {
+	return append(t, *elem.ToCreate2Transfer())
 }
 
 func (t Create2TransferArray) Slice(start, end int) GenericTransactionArray {
