@@ -5,6 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/storage"
+	"github.com/pkg/errors"
 )
 
 var getCommitmentAPIErrors = map[error]*APIError{
@@ -33,7 +34,7 @@ func (a *API) unsafeGetCommitment(id models.CommitmentID) (*dto.Commitment, erro
 
 	batch, err := a.storage.GetMinedBatch(commitment.ID.BatchID)
 	if storage.IsNotFoundError(err) {
-		return nil, storage.NewNotFoundError("commitment")
+		return nil, errors.WithStack(storage.NewNotFoundError("commitment"))
 	}
 	if err != nil {
 		return nil, err

@@ -2,6 +2,7 @@ package eth
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
@@ -17,7 +18,7 @@ import (
 
 const gasEstimateMultiplier = 1.3
 
-var ErrSubmitBatchAndWait = errors.New("submitBatchAndWait: timeout")
+var ErrSubmitBatchAndWait = fmt.Errorf("submitBatchAndWait: timeout")
 
 type SubmitBatchFunc func(commitments []models.Commitment) (*types.Transaction, error)
 
@@ -81,7 +82,7 @@ func (c *Client) submitBatchAndWait(
 				return c.handleNewBatchEvent(newBatch)
 			}
 		case <-time.After(*c.config.TxTimeout):
-			return nil, ErrSubmitBatchAndWait
+			return nil, errors.WithStack(ErrSubmitBatchAndWait)
 		}
 	}
 }

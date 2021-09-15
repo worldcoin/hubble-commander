@@ -87,5 +87,5 @@ func (t *TransactionExecutor) createDisputableSignatureError(reason string, tran
 	if proofErr != nil {
 		return proofErr
 	}
-	return NewDisputableErrorWithProofs(Signature, reason, proofs)
+	return NewDisputableErrorWithProofs(Signature, reason, proofs) // TODO-API add stacks?
 }

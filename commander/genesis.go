@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -16,8 +17,8 @@ import (
 )
 
 var (
-	ErrRegisterGenesisAccountTimeout = errors.New("timeout")
-	ErrGenesisAccountsUniqueStateID  = errors.New("accounts must have unique state IDs")
+	ErrRegisterGenesisAccountTimeout = fmt.Errorf("timeout")
+	ErrGenesisAccountsUniqueStateID  = fmt.Errorf("accounts must have unique state IDs")
 )
 
 func AssignStateIDs(accounts []models.RegisteredGenesisAccount) []models.PopulatedGenesisAccount {
@@ -43,7 +44,7 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.PopulatedGen
 		account := &accounts[i]
 
 		if seenStateIDs[account.StateID] {
-			return ErrGenesisAccountsUniqueStateID
+			return errors.WithStack(ErrGenesisAccountsUniqueStateID)
 		}
 		seenStateIDs[account.StateID] = true
 
@@ -104,7 +105,7 @@ func RegisterGenesisAccounts(
 		select {
 		case event, ok := <-registrations:
 			if !ok {
-				return nil, eth.ErrAccountWatcherIsClosed
+				return nil, errors.WithStack(eth.ErrAccountWatcherIsClosed)
 			}
 			for i := range txs {
 				if event.Raw.TxHash == txs[i].Hash() {
@@ -121,7 +122,7 @@ func RegisterGenesisAccounts(
 			}
 
 		case <-time.After(deployer.ChainTimeout):
-			return nil, ErrRegisterGenesisAccountTimeout
+			return nil, errors.WithStack(ErrRegisterGenesisAccountTimeout)
 		}
 	}
 }

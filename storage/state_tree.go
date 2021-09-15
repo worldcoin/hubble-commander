@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
@@ -21,7 +22,7 @@ const (
 	StateTreeSize  = int64(1) << StateTreeDepth
 )
 
-var ErrUnexpectedRootAfterRollback = errors.New("unexpected state root after state update rollback")
+var ErrUnexpectedRootAfterRollback = fmt.Errorf("unexpected state root after state update rollback")
 
 type StateTree struct {
 	database   *Database
@@ -103,7 +104,7 @@ func (s *StateTree) NextVacantSubtree(subtreeDepth uint8) (*uint32, error) {
 	if err == db.ErrIteratorFinished { // We finished without finding any gaps, try to append the subtree at the end.
 		roundedNodeIndex := roundAndValidateStateTreeSlot(prevTakenNodeIndex+1, StateTreeSize, subtreeWidth)
 		if roundedNodeIndex == nil {
-			return nil, NewNoVacantSubtreeError(subtreeDepth)
+			return nil, errors.WithStack(NewNoVacantSubtreeError(subtreeDepth))
 		}
 		return ref.Uint32(uint32(*roundedNodeIndex)), nil
 	}
@@ -190,7 +191,7 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 		return err
 	}
 	if *currentRootHash != targetRootHash {
-		return ErrNotExistentState
+		return errors.WithStack(ErrNotExistentState)
 	}
 	return txn.Commit()
 }
@@ -277,7 +278,7 @@ func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, 
 		return nil, err
 	}
 	if *currentRootHash != stateUpdate.PrevRoot {
-		return nil, ErrUnexpectedRootAfterRollback
+		return nil, errors.WithStack(ErrUnexpectedRootAfterRollback)
 	}
 
 	err = s.deleteStateUpdate(stateUpdate.ID)

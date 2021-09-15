@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils"
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
@@ -24,7 +25,7 @@ func (s *TransactionStorage) AddTransfer(t *models.Transfer) error {
 
 func (s *TransactionStorage) BatchAddTransfer(txs []models.Transfer) error {
 	if len(txs) < 1 {
-		return ErrNoRowsAffected
+		return errors.WithStack(ErrNoRowsAffected)
 	}
 
 	for i := range txs {

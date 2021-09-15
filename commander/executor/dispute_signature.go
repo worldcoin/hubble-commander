@@ -1,6 +1,8 @@
 package executor
 
 import (
+	"fmt"
+
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -9,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var ErrUnsupportedBatchType = errors.New("unsupported batch type")
+var ErrUnsupportedBatchType = fmt.Errorf("unsupported batch type")
 
 func (t *TransactionExecutor) DisputeSignature(
 	batch *eth.DecodedBatch,
@@ -22,7 +24,7 @@ func (t *TransactionExecutor) DisputeSignature(
 	case txtype.Create2Transfer:
 		return t.disputeCreate2TransferSignature(batch, commitmentIndex, stateProofs)
 	case txtype.Genesis, txtype.MassMigration:
-		return ErrUnsupportedBatchType
+		return errors.WithStack(ErrUnsupportedBatchType)
 	}
 	return nil
 }

@@ -51,7 +51,7 @@ func DecodeKeyList(data []byte, value *bh.KeyList) error {
 	}
 
 	if metadata.GetKeyListByteLength() != len(data) {
-		return ErrInvalidKeyListLength
+		return errors.WithStack(ErrInvalidKeyListLength)
 	}
 
 	*value = make([][]byte, metadata.ListLen)
@@ -77,7 +77,7 @@ func (m *KeyListMetadata) Bytes() []byte {
 
 func (m *KeyListMetadata) SetBytes(data []byte) error {
 	if len(data) < keyListMetadataLength {
-		return ErrInvalidKeyListMetadataLength
+		return errors.WithStack(ErrInvalidKeyListMetadataLength)
 	}
 	m.ListLen = binary.BigEndian.Uint32(data[0:4])
 	m.ItemLen = binary.BigEndian.Uint32(data[4:8])

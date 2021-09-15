@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	ErrNoRowsAffected   = errors.New("no rows were affected by the update")
-	ErrNotExistentState = errors.New("cannot revert to not existent state")
+	ErrNoRowsAffected   = fmt.Errorf("no rows were affected by the update")
+	ErrNotExistentState = fmt.Errorf("cannot revert to not existent state")
 )
 
 type NotFoundError struct {

@@ -1,6 +1,7 @@
 package eth
 
 import (
+	"fmt"
 	"math/big"
 	"time"
 
@@ -18,9 +19,9 @@ const (
 )
 
 var (
-	ErrInvalidPubKeysLength        = errors.New("invalid public keys length")
-	ErrAccountWatcherIsClosed      = errors.New("account event watcher is closed")
-	ErrRegisterBatchAccountTimeout = errors.New("timeout")
+	ErrInvalidPubKeysLength        = fmt.Errorf("invalid public keys length")
+	ErrAccountWatcherIsClosed      = fmt.Errorf("account event watcher is closed")
+	ErrRegisterBatchAccountTimeout = fmt.Errorf("timeout")
 )
 
 func (c *Client) RegisterBatchAccount(
@@ -28,7 +29,7 @@ func (c *Client) RegisterBatchAccount(
 	ev chan *accountregistry.AccountRegistryBatchPubkeyRegistered,
 ) ([]uint32, error) {
 	if len(publicKeys) != accountBatchSize {
-		return nil, ErrInvalidPubKeysLength
+		return nil, errors.WithStack(ErrInvalidPubKeysLength)
 	}
 
 	var pubkeys [accountBatchSize][4]*big.Int
@@ -66,13 +67,13 @@ func (c *Client) WaitForBatchAccountRegistration(
 		select {
 		case event, ok := <-ev:
 			if !ok {
-				return nil, ErrAccountWatcherIsClosed
+				return nil, errors.WithStack(ErrAccountWatcherIsClosed)
 			}
 			if event.Raw.TxHash == tx.Hash() {
 				return ExtractPubKeyIDsFromBatchAccountEvent(event), nil
 			}
 		case <-time.After(deployer.ChainTimeout):
-			return nil, ErrRegisterBatchAccountTimeout
+			return nil, errors.WithStack(ErrRegisterBatchAccountTimeout)
 		}
 	}
 }

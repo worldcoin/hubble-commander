@@ -1,6 +1,7 @@
 package eth
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
@@ -12,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var ErrSingleAccountTimeout = errors.New("timeout")
+var ErrSingleAccountTimeout = fmt.Errorf("timeout")
 
 func (c *Client) RegisterAccount(
 	publicKey *models.PublicKey,
@@ -58,13 +59,13 @@ func RegisterAccountAndWait(
 		select {
 		case event, ok := <-ev:
 			if !ok {
-				return nil, ErrAccountWatcherIsClosed
+				return nil, errors.WithStack(ErrAccountWatcherIsClosed)
 			}
 			if event.Raw.TxHash == tx.Hash() {
 				return ref.Uint32(uint32(event.PubkeyID.Uint64())), nil
 			}
 		case <-time.After(deployer.ChainTimeout):
-			return nil, ErrSingleAccountTimeout
+			return nil, errors.WithStack(ErrSingleAccountTimeout)
 		}
 	}
 }
