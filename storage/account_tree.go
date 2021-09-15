@@ -80,7 +80,7 @@ func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
 
 	_, err = NewAccountTree(txDatabase).unsafeSet(leaf)
 	if err == bh.ErrKeyExists {
-		return NewAccountAlreadyExistsError(leaf)
+		return errors.WithStack(NewAccountAlreadyExistsError(leaf))
 	}
 	if err != nil {
 		return err
