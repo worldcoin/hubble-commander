@@ -10,10 +10,10 @@ func (c *RollupContext) ApplyTransfers(
 	feeReceiver *FeeReceiver,
 ) (ApplyTxsResult, error) {
 	if transfers.Len() == 0 {
-		return c.Executor.makeApplyTxsResult(0), nil
+		return c.Executor.NewApplyTxsResult(0), nil
 	}
 
-	returnStruct := c.Executor.makeApplyTxsResult(c.cfg.MaxTxsPerCommitment)
+	returnStruct := c.Executor.NewApplyTxsResult(c.cfg.MaxTxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
 	for i := 0; i < transfers.Len(); i++ {

@@ -112,8 +112,8 @@ func (c *RollupContext) applyTransfersForCommitment(pendingTransfers models.Gene
 	newPendingTransfers models.GenericTransactionArray,
 	err error,
 ) {
-	appliedTransfers := c.Executor.makeTransactionArray(0, c.cfg.MaxTxsPerCommitment)
-	invalidTransfers := c.Executor.makeTransactionArray(0, 1)
+	appliedTransfers := c.Executor.NewTxArray(0, c.cfg.MaxTxsPerCommitment)
+	invalidTransfers := c.Executor.NewTxArray(0, 1)
 
 	for {
 		numNeededTransfers := c.cfg.MaxTxsPerCommitment - uint32(appliedTransfers.Len())
@@ -150,7 +150,7 @@ func (c *RollupContext) refillPendingTransfers(pendingTransfers models.GenericTr
 }
 
 func (c *RollupContext) queryPendingTransfers() (models.GenericTransactionArray, error) {
-	pendingTransfers, err := c.Executor.getPendingTransactions(c.cfg.MaxCommitmentsPerBatch * c.cfg.MaxTxsPerCommitment)
+	pendingTransfers, err := c.Executor.GetPendingTxs(c.cfg.MaxCommitmentsPerBatch * c.cfg.MaxTxsPerCommitment)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +162,7 @@ func (c *RollupContext) queryPendingTransfers() (models.GenericTransactionArray,
 
 func (c *RollupContext) queryMorePendingTransfers(appliedTransfers models.GenericTransactionArray) (models.GenericTransactionArray, error) {
 	numAppliedTransfers := uint32(appliedTransfers.Len())
-	pendingTransfers, err := c.Executor.getPendingTransactions(
+	pendingTransfers, err := c.Executor.GetPendingTxs(
 		c.cfg.MaxCommitmentsPerBatch*c.cfg.MaxTxsPerCommitment + numAppliedTransfers,
 	)
 	if err != nil {

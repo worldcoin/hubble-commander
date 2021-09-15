@@ -12,9 +12,9 @@ import (
 )
 
 type TransactionExecutor interface {
-	getPendingTransactions(limit uint32) (models.GenericTransactionArray, error)
-	makeTransactionArray(size, capacity uint32) models.GenericTransactionArray
-	makeApplyTxsResult(capacity uint32) ApplyTxsResult
+	GetPendingTxs(limit uint32) (models.GenericTransactionArray, error)
+	NewTxArray(size, capacity uint32) models.GenericTransactionArray
+	NewApplyTxsResult(capacity uint32) ApplyTxsResult
 	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (transferError, appError error)
 	SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error)
 }
@@ -47,7 +47,7 @@ func NewTransferExecutor(storage *st.Storage) *TransferExecutor {
 	}
 }
 
-func (e *TransferExecutor) getPendingTransactions(limit uint32) (models.GenericTransactionArray, error) {
+func (e *TransferExecutor) GetPendingTxs(limit uint32) (models.GenericTransactionArray, error) {
 	pendingTransfers, err := e.storage.GetPendingTransfers(limit)
 	if err != nil {
 		return nil, err
@@ -55,11 +55,11 @@ func (e *TransferExecutor) getPendingTransactions(limit uint32) (models.GenericT
 	return models.TransferArray(pendingTransfers), nil
 }
 
-func (e *TransferExecutor) makeTransactionArray(size, capacity uint32) models.GenericTransactionArray {
+func (e *TransferExecutor) NewTxArray(size, capacity uint32) models.GenericTransactionArray {
 	return make(models.TransferArray, size, capacity)
 }
 
-func (e *TransferExecutor) makeApplyTxsResult(capacity uint32) ApplyTxsResult {
+func (e *TransferExecutor) NewApplyTxsResult(capacity uint32) ApplyTxsResult {
 	return &AppliedTransfers{
 		appliedTransfers: make(models.TransferArray, 0, capacity),
 		invalidTransfers: make(models.TransferArray, 0),
@@ -91,7 +91,7 @@ func NewC2TExecutor(storage *st.Storage) *C2TExecutor {
 	}
 }
 
-func (e *C2TExecutor) getPendingTransactions(limit uint32) (models.GenericTransactionArray, error) {
+func (e *C2TExecutor) GetPendingTxs(limit uint32) (models.GenericTransactionArray, error) {
 	pendingTransfers, err := e.storage.GetPendingCreate2Transfers(limit)
 	if err != nil {
 		return nil, err
@@ -99,11 +99,11 @@ func (e *C2TExecutor) getPendingTransactions(limit uint32) (models.GenericTransa
 	return models.Create2TransferArray(pendingTransfers), nil
 }
 
-func (e *C2TExecutor) makeTransactionArray(size, capacity uint32) models.GenericTransactionArray {
+func (e *C2TExecutor) NewTxArray(size, capacity uint32) models.GenericTransactionArray {
 	return make(models.Create2TransferArray, size, capacity)
 }
 
-func (e *C2TExecutor) makeApplyTxsResult(capacity uint32) ApplyTxsResult {
+func (e *C2TExecutor) NewApplyTxsResult(capacity uint32) ApplyTxsResult {
 	panic("not implemented")
 }
 
