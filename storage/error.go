@@ -3,6 +3,7 @@ package storage
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/Worldcoin/hubble-commander/models"
 )
@@ -22,6 +23,10 @@ func NewNotFoundError(field string) *NotFoundError {
 
 func (e *NotFoundError) Error() string {
 	return fmt.Sprintf("%s not found", e.field)
+}
+
+func (e NotFoundError) Is(target error) bool {
+	return strings.Contains(e.Error(), target.Error())
 }
 
 func IsNotFoundError(err error) bool {

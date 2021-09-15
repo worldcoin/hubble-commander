@@ -44,10 +44,10 @@ func TestSanitizeError_ValidateErrorsFromMap(t *testing.T) {
 	apiError = sanitizeError(errors.WithStack(sampleError2), errMap)
 	require.Equal(t, *expectedAPIError2, *apiError)
 
-	apiError = sanitizeError(sampleError3, errMap)
+	apiError = sanitizeError(storage.NewNotFoundError("something"), errMap)
 	require.Equal(t, *expectedAPIError3, *apiError)
 
-	apiError = sanitizeError(errors.WithStack(sampleError3), errMap)
+	apiError = sanitizeError(errors.WithStack(storage.NewNotFoundError("something")), errMap)
 	require.Equal(t, *expectedAPIError3, *apiError)
 }
 

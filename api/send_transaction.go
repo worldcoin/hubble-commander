@@ -48,17 +48,26 @@ var sendTransactionAPIErrors = map[error]*APIError{
 		10008,
 		"amount must be greater than 0",
 	),
-	ErrInvalidSignature: NewAPIError(
+	ErrFeeTooLow: NewAPIError(
 		10009,
+		"fee too low",
+	),
+	ErrInvalidSignature: NewAPIError(
+		10010,
 		"invalid signature",
 	),
-	encoder.ErrNotEncodableDecimal: NewAPIError(
-		10010,
-		"some value in the object not encodable as multi-precission decimal",
+	NewNotDecimalEncodableError("amount"): NewAPIError(
+		10011,
+		"amount is not encodable as multi-precission decimal",
+	),
+	NewNotDecimalEncodableError("fee"): NewAPIError(
+		10012,
+		"fee is not encodable as multi-precission decimal",
 	),
 	// TODO-API pretty sure it should return contents or something - verify with Michal
+	// TODO-API delete?
 	&storage.NotFoundError{}: NewAPIError(
-		10011,
+		10013,
 		"not found error",
 	),
 }

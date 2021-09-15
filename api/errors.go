@@ -10,6 +10,8 @@ import (
 
 var usedErrorCodes map[int]bool
 
+const unknownAPIError = 999
+
 type MissingFieldError struct {
 	field string
 }
@@ -32,6 +34,10 @@ func NewNotDecimalEncodableError(field string) *NotDecimalEncodableError {
 
 func (e NotDecimalEncodableError) Error() string {
 	return fmt.Sprintf("%s is not encodable as multi-precission decimal", e.field)
+}
+
+func (e NotDecimalEncodableError) Is(target error) bool {
+	return e.Error() == target.Error()
 }
 
 type APIError struct {
@@ -68,7 +74,16 @@ func NewAPIError(code int, message string) *APIError {
 }
 
 func NewUnknownAPIError(err error) *APIError {
-	return NewAPIError(999, fmt.Sprintf("unknown error: %s", err.Error()))
+	unknownAPIErrorMessage := fmt.Sprintf("unknown error: %s", err.Error())
+
+	if usedErrorCodes[unknownAPIError] {
+		return &APIError{
+			Code:    unknownAPIError,
+			Message: unknownAPIErrorMessage,
+		}
+	}
+
+	return NewAPIError(unknownAPIError, fmt.Sprintf("unknown error: %s", err.Error()))
 }
 
 type InternalToAPIError struct {

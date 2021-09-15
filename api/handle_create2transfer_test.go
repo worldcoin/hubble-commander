@@ -106,8 +106,13 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesNonceToo
 	_, err := s.storage.StateTree.Set(1, userStateWithIncreasedNonce)
 	s.NoError(err)
 
+	apiErr := &APIError{
+		Code:    10005,
+		Message: "nonce too low",
+	}
+
 	_, err = s.api.SendTransaction(dto.MakeTransaction(s.create2Transfer))
-	s.Equal(ErrNonceTooLow, err)
+	s.Equal(apiErr, err)
 }
 
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesNonceTooHigh_NoTransactions() {
@@ -115,8 +120,13 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesNonceToo
 	transferWithIncreasedNonce.Nonce = models.NewUint256(1)
 	transferWithIncreasedNonce = s.signCreate2Transfer(transferWithIncreasedNonce)
 
+	apiErr := &APIError{
+		Code:    10006,
+		Message: "nonce too high",
+	}
+
 	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithIncreasedNonce))
-	s.Equal(ErrNonceTooHigh, err)
+	s.Equal(apiErr, err)
 }
 
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesNonceTooHigh_ExistingTransactions() {
@@ -127,8 +137,13 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesNonceToo
 	transferWithIncreasedNonce.Nonce = models.NewUint256(2)
 	transferWithIncreasedNonce = s.signCreate2Transfer(transferWithIncreasedNonce)
 
+	apiErr := &APIError{
+		Code:    10006,
+		Message: "nonce too high",
+	}
+
 	_, err = s.api.SendTransaction(dto.MakeTransaction(transferWithIncreasedNonce))
-	s.Equal(ErrNonceTooHigh, err)
+	s.Equal(apiErr, err)
 }
 
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesNonceTooLow_ExistingTransactions() {
@@ -145,47 +160,78 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesNonceToo
 	thirdTransfer := s.create2Transfer
 	thirdTransfer = s.signCreate2Transfer(thirdTransfer)
 
+	apiErr := &APIError{
+		Code:    10005,
+		Message: "nonce too low",
+	}
+
 	_, err = s.api.SendTransaction(dto.MakeTransaction(thirdTransfer))
-	s.Equal(ErrNonceTooLow, err)
+	s.Equal(apiErr, err)
 }
 
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesFeeValue() {
 	transferWithZeroFee := s.create2Transfer
 	transferWithZeroFee.Fee = models.NewUint256(0)
 
+	apiErr := &APIError{
+		Code:    10009,
+		Message: "fee too low",
+	}
+
 	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithZeroFee))
-	s.Equal(ErrFeeTooLow, err)
+	s.Equal(apiErr, err)
 }
 
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesFeeEncodability() {
 	transferWithBadFee := s.create2Transfer
 	transferWithBadFee.Fee = models.NewUint256(66666666)
 
+	apiErr := &APIError{
+		Code:    10012,
+		Message: "fee is not encodable as multi-precission decimal",
+	}
+
 	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithBadFee))
-	s.Equal(NewNotDecimalEncodableError("fee"), err)
+	s.Equal(apiErr, err)
 }
 
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesAmountEncodability() {
 	transferWithBadAmount := s.create2Transfer
 	transferWithBadAmount.Amount = models.NewUint256(66666666)
 
+	apiErr := &APIError{
+		Code:    10011,
+		Message: "amount is not encodable as multi-precission decimal",
+	}
+
 	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithBadAmount))
-	s.Equal(NewNotDecimalEncodableError("amount"), err)
+	s.Equal(apiErr, err)
 }
 
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesAmountValue() {
 	transferWithZeroAmount := s.create2Transfer
 	transferWithZeroAmount.Amount = models.NewUint256(0)
 
+	apiErr := &APIError{
+		Code:    10008,
+		Message: "amount must be greater than 0",
+	}
+
 	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithZeroAmount))
-	s.Equal(ErrInvalidAmount, err)
+	s.Equal(apiErr, err)
 }
 
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesBalance() {
 	transferWithHugeAmount := s.create2Transfer
 	transferWithHugeAmount.Amount = models.NewUint256(500)
+
+	apiErr := &APIError{
+		Code:    10007,
+		Message: "not enough balance",
+	}
+
 	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithHugeAmount))
-	s.Equal(ErrNotEnoughBalance, err)
+	s.Equal(apiErr, err)
 }
 
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesSignature() {
@@ -197,8 +243,13 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesSignatur
 	transfer := create2TransferWithoutSignature
 	transfer.Signature = fakeSignature.ModelsSignature()
 
+	apiErr := &APIError{
+		Code:    10010,
+		Message: "invalid signature",
+	}
+
 	_, err = s.api.SendTransaction(dto.MakeTransaction(transfer))
-	s.Equal(ErrInvalidSignature, err)
+	s.Equal(apiErr, err)
 }
 
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesSignature_DisabledSignatures() {

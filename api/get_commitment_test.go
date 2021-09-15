@@ -18,10 +18,11 @@ import (
 type GetCommitmentTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	api        *API
-	storage    *st.TestStorage
-	batch      models.Batch
-	commitment models.Commitment
+	api                      *API
+	storage                  *st.TestStorage
+	batch                    models.Batch
+	commitment               models.Commitment
+	commitmentNotFoundAPIErr *APIError
 }
 
 func (s *GetCommitmentTestSuite) SetupSuite() {
@@ -46,6 +47,11 @@ func (s *GetCommitmentTestSuite) SetupTest() {
 	s.commitment = commitment
 	s.commitment.ID.BatchID = s.batch.ID
 	s.commitment.ID.IndexInBatch = 0
+
+	s.commitmentNotFoundAPIErr = &APIError{
+		Code:    20000,
+		Message: "commitment not found",
+	}
 }
 
 func (s *GetCommitmentTestSuite) TearDownTest() {
@@ -169,13 +175,13 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_PendingBatch() {
 	s.NoError(err)
 
 	commitment, err := s.api.GetCommitment(commitment.ID)
-	s.Equal(st.NewNotFoundError("commitment"), err)
+	s.Equal(s.commitmentNotFoundAPIErr, err)
 	s.Nil(commitment)
 }
 
 func (s *GetCommitmentTestSuite) TestGetCommitment_NotExistingCommitment() {
 	commitment, err := s.api.GetCommitment(commitment.ID)
-	s.Equal(st.NewNotFoundError("commitment"), err)
+	s.Equal(s.commitmentNotFoundAPIErr, err)
 	s.Nil(commitment)
 }
 
