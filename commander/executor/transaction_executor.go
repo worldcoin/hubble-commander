@@ -11,22 +11,10 @@ import (
 )
 
 type TransactionExecutor interface {
-	//TODO: rename
 	getPendingTransactions(limit uint32) (models.GenericTransactionArray, error)
-	beforeApplyTransaction(tx models.GenericTransaction) (*models.StateLeaf, error)
 	makeTransactionArray(size, capacity uint32) models.GenericTransactionArray
+	makeApplyTxsResult(capacity uint32) ApplyTxsResult
 	SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error)
-}
-
-type ApplyCommitmentResult interface {
-	AppliedTransfers() models.GenericTransactionArray
-	NewPendingTransfers() models.GenericTransactionArray
-}
-
-type ApplyTxsResult interface {
-	AppliedTransfers() models.GenericTransactionArray
-	InvalidTransfers() models.GenericTransactionArray
-	AddedPubKeyIDs() models.GenericTransactionArray
 }
 
 func CreateTransactionExecutor(executionCtx *ExecutionContext, txType txtype.TransactionType) TransactionExecutor {
@@ -59,12 +47,15 @@ func (e *TransferExecutor) getPendingTransactions(limit uint32) (models.GenericT
 	return models.TransferArray(pendingTransfers), nil
 }
 
-func (e *TransferExecutor) beforeApplyTransaction(tx models.GenericTransaction) (*models.StateLeaf, error) {
-	return e.storage.StateTree.Leaf(*tx.GetToStateID())
-}
-
 func (e *TransferExecutor) makeTransactionArray(size, capacity uint32) models.GenericTransactionArray {
 	return make(models.TransferArray, size, capacity)
+}
+
+func (e *TransferExecutor) makeApplyTxsResult(capacity uint32) ApplyTxsResult {
+	return &AppliedTransfers{
+		appliedTransfers: make(models.TransferArray, 0, capacity),
+		invalidTransfers: make(models.TransferArray, 0),
+	}
 }
 
 func (e *TransferExecutor) SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error) {
@@ -84,13 +75,12 @@ func (e *C2TExecutor) getPendingTransactions(limit uint32) (models.GenericTransa
 	return models.Create2TransferArray(pendingTransfers), nil
 }
 
-func (e *C2TExecutor) beforeApplyTransaction(tx models.GenericTransaction) (*models.StateLeaf, error) {
-	// TODO extract from ApplyCreate2Transfers
-	panic("not implemented")
-}
-
 func (e *C2TExecutor) makeTransactionArray(size, capacity uint32) models.GenericTransactionArray {
 	return make(models.Create2TransferArray, size, capacity)
+}
+
+func (e *C2TExecutor) makeApplyTxsResult(capacity uint32) ApplyTxsResult {
+	panic("not implemented")
 }
 
 func (e *C2TExecutor) SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error) {

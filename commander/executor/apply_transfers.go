@@ -4,47 +4,25 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-type AppliedTransfers struct {
-	appliedTransfers models.GenericTransactionArray
-	invalidTransfers models.GenericTransactionArray
-}
-
-func (a *AppliedTransfers) AppliedTransfers() models.GenericTransactionArray {
-	return a.appliedTransfers
-}
-
-func (a *AppliedTransfers) InvalidTransfers() models.GenericTransactionArray {
-	return a.invalidTransfers
-}
-
-func (a *AppliedTransfers) AddedPubKeyIDs() models.GenericTransactionArray {
-	return models.TransferArray{}
-}
-
 func (c *RollupContext) ApplyTransfers(
 	transfers models.GenericTransactionArray,
 	maxApplied uint32,
 	feeReceiver *FeeReceiver,
 ) (ApplyTxsResult, error) {
-	returnStruct := &AppliedTransfers{
-		appliedTransfers: c.Executor.makeTransactionArray(0, 0),
-		invalidTransfers: c.Executor.makeTransactionArray(0, 0),
-	}
-
 	if transfers.Len() == 0 {
-		return returnStruct, nil
+		return c.Executor.makeApplyTxsResult(0), nil
 	}
 
-	returnStruct.appliedTransfers = c.Executor.makeTransactionArray(0, c.cfg.MaxTxsPerCommitment)
+	returnStruct := c.Executor.makeApplyTxsResult(c.cfg.MaxTxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
 	for i := 0; i < transfers.Len(); i++ {
-		if returnStruct.appliedTransfers.Len() == int(maxApplied) {
+		if returnStruct.AppliedTxs().Len() == int(maxApplied) {
 			break
 		}
 
 		transfer := transfers.At(i)
-		receiverLeaf, err := c.Executor.beforeApplyTransaction(transfer)
+		receiverLeaf, err := c.storage.StateTree.Leaf(*transfer.GetToStateID())
 		if err != nil {
 			return nil, err
 		}
@@ -55,15 +33,15 @@ func (c *RollupContext) ApplyTransfers(
 		}
 		if transferError != nil {
 			logAndSaveTransactionError(c.storage, transfer.GetBase(), transferError)
-			returnStruct.invalidTransfers = returnStruct.invalidTransfers.AppendOne(transfer)
+			returnStruct.AddInvalidTx(transfer)
 			continue
 		}
 
-		returnStruct.appliedTransfers = returnStruct.appliedTransfers.AppendOne(transfer)
+		returnStruct.AddAppliedTx(transfer)
 		combinedFee = *combinedFee.Add(&transfer.GetBase().Fee)
 	}
 
-	if returnStruct.appliedTransfers.Len() > 0 {
+	if returnStruct.AppliedTxs().Len() > 0 {
 		_, err := c.ApplyFee(feeReceiver.StateID, combinedFee)
 		if err != nil {
 			return nil, err

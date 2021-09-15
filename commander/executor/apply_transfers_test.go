@@ -81,8 +81,8 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_AllValid() {
 	applyTxsResult, err := s.rollupCtx.ApplyTransfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
-	s.Len(applyTxsResult.AppliedTransfers(), 3)
-	s.Len(applyTxsResult.InvalidTransfers(), 0)
+	s.Len(applyTxsResult.AppliedTxs(), 3)
+	s.Len(applyTxsResult.InvalidTxs(), 0)
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfers_SomeValid() {
@@ -92,8 +92,8 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_SomeValid() {
 	applyTxsResult, err := s.rollupCtx.ApplyTransfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
-	s.Len(applyTxsResult.AppliedTransfers(), 2)
-	s.Len(applyTxsResult.InvalidTransfers(), 3)
+	s.Len(applyTxsResult.AppliedTxs(), 2)
+	s.Len(applyTxsResult.InvalidTxs(), 3)
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfers_AppliesNoMoreThanLimit() {
@@ -102,8 +102,8 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_AppliesNoMoreThanLimit() {
 	applyTxsResult, err := s.rollupCtx.ApplyTransfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
-	s.Len(applyTxsResult.AppliedTransfers(), 6)
-	s.Len(applyTxsResult.InvalidTransfers(), 0)
+	s.Len(applyTxsResult.AppliedTxs(), 6)
+	s.Len(applyTxsResult.InvalidTxs(), 0)
 
 	state, err := s.storage.StateTree.Leaf(1)
 	s.NoError(err)
@@ -122,8 +122,8 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_SavesTransferErrors() {
 	applyTxsResult, err := s.rollupCtx.ApplyTransfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
-	s.Len(applyTxsResult.AppliedTransfers(), 3)
-	s.Len(applyTxsResult.InvalidTransfers(), 2)
+	s.Len(applyTxsResult.AppliedTxs(), 3)
+	s.Len(applyTxsResult.InvalidTxs(), 2)
 
 	for i := range generatedTransfers {
 		transfer, err := s.storage.GetTransfer(generatedTransfers[i].Hash)

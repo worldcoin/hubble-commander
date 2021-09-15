@@ -37,7 +37,7 @@ func (c *RollupContext) CreateTransferCommitments(
 		var commitment *models.Commitment
 		commitmentID.IndexInBatch = i
 
-		pendingTransfers, commitment, err = c.createTransferCommitment(pendingTransfers.ToTransferArray(), commitmentID, domain)
+		pendingTransfers, commitment, err = c.createTransferCommitment(pendingTransfers, commitmentID, domain)
 		if err == ErrNotEnoughTransfers {
 			break
 		}
@@ -81,7 +81,7 @@ func (c *RollupContext) createTransferCommitment(
 		return nil, nil, err
 	}
 
-	appliedTransfers, newPendingTransfers, err := c.applyTransfersForCommitment(pendingTransfers.ToTransferArray(), feeReceiver)
+	appliedTransfers, newPendingTransfers, err := c.applyTransfersForCommitment(pendingTransfers, feeReceiver)
 	if err == ErrNotEnoughTransfers {
 		if revertErr := c.storage.StateTree.RevertTo(*initialStateRoot); revertErr != nil {
 			return nil, nil, revertErr
@@ -92,7 +92,7 @@ func (c *RollupContext) createTransferCommitment(
 		return nil, nil, err
 	}
 
-	commitment, err = c.buildTransferCommitment(appliedTransfers.ToTransferArray(), commitmentID, feeReceiver.StateID, domain)
+	commitment, err = c.buildTransferCommitment(appliedTransfers.AppliedTransfers().ToTransferArray(), commitmentID, feeReceiver.StateID, domain)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -100,7 +100,7 @@ func (c *RollupContext) createTransferCommitment(
 	log.Printf(
 		"Created a %s commitment from %d transactions in %s",
 		txtype.Transfer,
-		appliedTransfers.Len(),
+		appliedTransfers.AppliedTransfers().Len(),
 		time.Since(startTime).Round(time.Millisecond).String(),
 	)
 
@@ -108,33 +108,32 @@ func (c *RollupContext) createTransferCommitment(
 }
 
 func (c *RollupContext) applyTransfersForCommitment(pendingTransfers models.GenericTransactionArray, feeReceiver *FeeReceiver) (
-	appliedTransfers, newPendingTransfers models.GenericTransactionArray,
+	result ApplyCommitmentResult,
+	newPendingTransfers models.GenericTransactionArray,
 	err error,
 ) {
-	appliedTransfers = c.Executor.makeTransactionArray(0, c.cfg.MaxTxsPerCommitment)
+	appliedTransfers := c.Executor.makeTransactionArray(0, c.cfg.MaxTxsPerCommitment)
 	invalidTransfers := c.Executor.makeTransactionArray(0, 1)
 
 	for {
-		var applyTxsResult ApplyTxsResult
-
 		numNeededTransfers := c.cfg.MaxTxsPerCommitment - uint32(appliedTransfers.Len())
-		applyTxsResult, err = c.ApplyTransfers(pendingTransfers.ToTransferArray(), numNeededTransfers, feeReceiver)
+		applyTxsResult, err := c.ApplyTransfers(pendingTransfers, numNeededTransfers, feeReceiver)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		appliedTransfers = appliedTransfers.Append(applyTxsResult.AppliedTransfers())
-		invalidTransfers = invalidTransfers.Append(applyTxsResult.InvalidTransfers())
+		appliedTransfers = appliedTransfers.Append(applyTxsResult.AppliedTxs())
+		invalidTransfers = invalidTransfers.Append(applyTxsResult.InvalidTxs())
 
 		if appliedTransfers.Len() == int(c.cfg.MaxTxsPerCommitment) {
 			newPendingTransfers = removeTransfers(pendingTransfers, appliedTransfers.Append(invalidTransfers))
-			return appliedTransfers, newPendingTransfers, nil
+			return NewApplyCommitmentResult(appliedTransfers), newPendingTransfers, nil
 		}
 
 		morePendingTransfers, err := c.queryMorePendingTransfers(appliedTransfers)
 		if err == ErrNotEnoughTransfers {
 			newPendingTransfers = removeTransfers(pendingTransfers, appliedTransfers.Append(invalidTransfers))
-			return appliedTransfers, newPendingTransfers, nil
+			return NewApplyCommitmentResult(appliedTransfers), newPendingTransfers, nil
 		}
 		if err != nil {
 			return nil, nil, err
