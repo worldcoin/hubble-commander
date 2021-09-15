@@ -22,5 +22,14 @@ spec:
         volumeMounts:
         - name: chain-spec
           mountPath: /chain-spec
+        envFrom:
+          - configMapRef:
+              name: hubble-commander
+          - configMapRef:
+              name: primary-hubble-commander
+          - secretRef:
+              name: hubble-commander
+          - secretRef:
+              name: primary-hubble-commander
       restartPolicy: Never
   backoffLimit: 0
