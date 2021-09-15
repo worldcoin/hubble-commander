@@ -112,28 +112,26 @@ func (c *RollupContext) applyTransfersForCommitment(pendingTransfers models.Gene
 	newPendingTransfers models.GenericTransactionArray,
 	err error,
 ) {
-	appliedTransfers := c.Executor.NewTxArray(0, c.cfg.MaxTxsPerCommitment)
-	invalidTransfers := c.Executor.NewTxArray(0, 1)
+	aggregateResult := c.Executor.NewApplyTxsResult(c.cfg.MaxTxsPerCommitment)
 
 	for {
-		numNeededTransfers := c.cfg.MaxTxsPerCommitment - uint32(appliedTransfers.Len())
+		numNeededTransfers := c.cfg.MaxTxsPerCommitment - uint32(aggregateResult.AppliedTxs().Len())
 		applyTxsResult, err := c.ApplyTransfers(pendingTransfers, numNeededTransfers, feeReceiver)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		appliedTransfers = appliedTransfers.Append(applyTxsResult.AppliedTxs())
-		invalidTransfers = invalidTransfers.Append(applyTxsResult.InvalidTxs())
+		aggregateResult.AddTxs(applyTxsResult)
 
-		if appliedTransfers.Len() == int(c.cfg.MaxTxsPerCommitment) {
-			newPendingTransfers = removeTransfers(pendingTransfers, appliedTransfers.Append(invalidTransfers))
-			return NewApplyTxsForCommitmentResult(appliedTransfers), newPendingTransfers, nil
+		if aggregateResult.AppliedTxs().Len() == int(c.cfg.MaxTxsPerCommitment) {
+			newPendingTransfers = removeTransfers(pendingTransfers, aggregateResult.AllTxs())
+			return c.Executor.NewApplyTxsForCommitmentResult(aggregateResult), newPendingTransfers, nil
 		}
 
-		morePendingTransfers, err := c.queryMorePendingTransfers(appliedTransfers)
+		morePendingTransfers, err := c.queryMorePendingTransfers(aggregateResult.AppliedTxs())
 		if err == ErrNotEnoughTransfers {
-			newPendingTransfers = removeTransfers(pendingTransfers, appliedTransfers.Append(invalidTransfers))
-			return NewApplyTxsForCommitmentResult(appliedTransfers), newPendingTransfers, nil
+			newPendingTransfers = removeTransfers(pendingTransfers, aggregateResult.AllTxs())
+			return c.Executor.NewApplyTxsForCommitmentResult(aggregateResult), newPendingTransfers, nil
 		}
 		if err != nil {
 			return nil, nil, err

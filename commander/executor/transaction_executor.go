@@ -15,6 +15,7 @@ type TransactionExecutor interface {
 	GetPendingTxs(limit uint32) (models.GenericTransactionArray, error)
 	NewTxArray(size, capacity uint32) models.GenericTransactionArray
 	NewApplyTxsResult(capacity uint32) ApplyTxsResult
+	NewApplyTxsForCommitmentResult(applyTxsResult ApplyTxsResult) ApplyTxsForCommitmentResult
 	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (transferError, appError error)
 	SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error)
 }
@@ -66,6 +67,12 @@ func (e *TransferExecutor) NewApplyTxsResult(capacity uint32) ApplyTxsResult {
 	}
 }
 
+func (e *TransferExecutor) NewApplyTxsForCommitmentResult(applyTxsResult ApplyTxsResult) ApplyTxsForCommitmentResult {
+	return &ApplyTransfersForCommitmentResult{
+		appliedTransfers: applyTxsResult.AppliedTxs().ToTransferArray(),
+	}
+}
+
 func (e *TransferExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (transferError, appError error) {
 	receiverLeaf, appError := e.storage.StateTree.Leaf(*tx.GetToStateID())
 	if appError != nil {
@@ -105,6 +112,10 @@ func (e *C2TExecutor) NewTxArray(size, capacity uint32) models.GenericTransactio
 
 func (e *C2TExecutor) NewApplyTxsResult(capacity uint32) ApplyTxsResult {
 	panic("not implemented")
+}
+
+func (e *C2TExecutor) NewApplyTxsForCommitmentResult(applyTxsResult ApplyTxsResult) ApplyTxsForCommitmentResult {
+	panic("implement me")
 }
 
 func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (transferError, appError error) {
