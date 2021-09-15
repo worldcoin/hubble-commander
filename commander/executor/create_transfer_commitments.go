@@ -115,16 +115,16 @@ func (c *RollupContext) applyTransfersForCommitment(pendingTransfers models.Gene
 	invalidTransfers := c.Executor.makeTransactionArray(0, 1)
 
 	for {
-		var transfers *AppliedTransfers
+		var applyTxsResult ApplyTxsResult
 
 		numNeededTransfers := c.cfg.MaxTxsPerCommitment - uint32(appliedTransfers.Len())
-		transfers, err = c.ApplyTransfers(pendingTransfers.ToTransferArray(), numNeededTransfers, feeReceiver)
+		applyTxsResult, err = c.ApplyTransfers(pendingTransfers.ToTransferArray(), numNeededTransfers, feeReceiver)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		appliedTransfers = appliedTransfers.Append(transfers.appliedTransfers)
-		invalidTransfers = invalidTransfers.Append(transfers.invalidTransfers)
+		appliedTransfers = appliedTransfers.Append(applyTxsResult.AppliedTransfers())
+		invalidTransfers = invalidTransfers.Append(applyTxsResult.InvalidTransfers())
 
 		if appliedTransfers.Len() == int(c.cfg.MaxTxsPerCommitment) {
 			newPendingTransfers = removeTransfers(pendingTransfers, appliedTransfers.Append(invalidTransfers))

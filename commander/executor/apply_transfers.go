@@ -9,11 +9,23 @@ type AppliedTransfers struct {
 	invalidTransfers models.GenericTransactionArray
 }
 
+func (a *AppliedTransfers) AppliedTransfers() models.GenericTransactionArray {
+	return a.appliedTransfers
+}
+
+func (a *AppliedTransfers) InvalidTransfers() models.GenericTransactionArray {
+	return a.invalidTransfers
+}
+
+func (a *AppliedTransfers) AddedPubKeyIDs() models.GenericTransactionArray {
+	return models.TransferArray{}
+}
+
 func (c *RollupContext) ApplyTransfers(
 	transfers models.GenericTransactionArray,
 	maxApplied uint32,
 	feeReceiver *FeeReceiver,
-) (*AppliedTransfers, error) {
+) (ApplyTxsResult, error) {
 	returnStruct := &AppliedTransfers{
 		appliedTransfers: c.Executor.makeTransactionArray(0, 0),
 		invalidTransfers: c.Executor.makeTransactionArray(0, 0),

@@ -18,9 +18,15 @@ type TransactionExecutor interface {
 	SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error)
 }
 
-type ApplyTxsResult interface {
+type ApplyCommitmentResult interface {
 	AppliedTransfers() models.GenericTransactionArray
 	NewPendingTransfers() models.GenericTransactionArray
+}
+
+type ApplyTxsResult interface {
+	AppliedTransfers() models.GenericTransactionArray
+	InvalidTransfers() models.GenericTransactionArray
+	AddedPubKeyIDs() models.GenericTransactionArray
 }
 
 func CreateTransactionExecutor(executionCtx *ExecutionContext, txType txtype.TransactionType) TransactionExecutor {
