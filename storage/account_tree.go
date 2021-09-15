@@ -69,7 +69,7 @@ func (s *AccountTree) Leaves(publicKey *models.PublicKey) ([]models.AccountLeaf,
 
 func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
 	if leaf.PubKeyID > leftSubtreeMaxValue {
-		return NewInvalidPubKeyIDError(leaf.PubKeyID)
+		return errors.WithStack(NewInvalidPubKeyIDError(leaf.PubKeyID))
 	}
 
 	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{})
@@ -104,7 +104,7 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
 
 	for i := range leaves {
 		if leaves[i].PubKeyID < accountBatchOffset || leaves[i].PubKeyID > rightSubtreeMaxValue {
-			return NewInvalidPubKeyIDError(leaves[i].PubKeyID)
+			return errors.WithStack(NewInvalidPubKeyIDError(leaves[i].PubKeyID))
 		}
 		_, err = accountTree.unsafeSet(&leaves[i])
 		if err == bh.ErrKeyExists {
