@@ -5,7 +5,7 @@
 `rollupLoop` periodically creates `rollupLoopIteration`. Batches have min and max size.
 
 
-`accounts.go`: `syncAccounts` Synchronized on-chain account state to internal state.
+`accounts.go`: `syncAccounts` Synchronizes on-chain account state to internal state.
 
 `batches.go`: `syncBatches` Synchronizes on-chain batch state to internal state.
 
@@ -18,5 +18,5 @@
 
 TODO:
 
-* Currently alternates between Transfer and Create2 batches. In the future allocate
-  base on demand.
+* Currently, alternates between Transfer and Create2 batches. In the future allocate
+  based on demand.
