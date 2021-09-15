@@ -1,4 +1,4 @@
-package executor
+package applier
 
 import (
 	"math/big"
@@ -6,8 +6,10 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -26,13 +28,24 @@ var (
 )
 
 type ApplyCreate2TransferTestSuite struct {
-	TestSuiteWithExecutionContext
+	*require.Assertions
+	suite.Suite
+	storage *st.TestStorage
+	applier *Applier
+}
+
+func (s *ApplyCreate2TransferTestSuite) SetupSuite() {
+	s.Assertions = require.New(s.T())
 }
 
 func (s *ApplyCreate2TransferTestSuite) SetupTest() {
-	s.TestSuiteWithExecutionContext.SetupTest()
+	var err error
+	s.storage, err = st.NewTestStorage()
+	s.NoError(err)
 
-	_, err := s.storage.StateTree.Set(0, &models.UserState{
+	s.applier = NewApplier(s.storage.Storage)
+
+	_, err = s.storage.StateTree.Set(0, &models.UserState{
 		PubKeyID: 0,
 		TokenID:  feeReceiverTokenID,
 		Balance:  models.MakeUint256(10000),
@@ -48,9 +61,14 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 	s.NoError(err)
 }
 
+func (s *ApplyCreate2TransferTestSuite) TearDownTest() {
+	err := s.storage.Teardown()
+	s.NoError(err)
+}
+
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_GetsNextAvailableStateIDAndInsertsNewUserState() {
 	pubKeyID := uint32(2)
-	_, transferError, appError := s.executionCtx.ApplyCreate2Transfer(&create2Transfer, pubKeyID, feeReceiverTokenID)
+	_, transferError, appError := s.applier.ApplyCreate2Transfer(&create2Transfer, pubKeyID, feeReceiverTokenID)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -64,7 +82,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_GetsNextAvailab
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_SetsCorrectToStateIDInReturnedTransfer() {
 	pubKeyID := uint32(2)
-	appliedTransfer, transferError, appError := s.executionCtx.ApplyCreate2Transfer(&create2Transfer, pubKeyID, feeReceiverTokenID)
+	appliedTransfer, transferError, appError := s.applier.ApplyCreate2Transfer(&create2Transfer, pubKeyID, feeReceiverTokenID)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -72,7 +90,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_SetsCorrectToSt
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_AppliesTransfer() {
-	appliedTransfer, transferError, appError := s.executionCtx.ApplyCreate2Transfer(&create2Transfer, 2, feeReceiverTokenID)
+	appliedTransfer, transferError, appError := s.applier.ApplyCreate2Transfer(&create2Transfer, 2, feeReceiverTokenID)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -85,17 +103,17 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_AppliesTransfer
 	s.Equal(uint64(1000), receiverLeaf.Balance.Uint64())
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfer_InvalidTransfer() {
-	transfers := generateInvalidCreate2Transfers(1)
+func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InvalidTransfer() {
+	transfers := testutils.GenerateInvalidCreate2Transfers(1)
 	transfers[0].Amount = models.MakeUint256(500)
 
-	_, transferErr, appErr := s.executionCtx.ApplyCreate2Transfer(&transfers[0], 1, *models.NewUint256(1))
+	_, transferErr, appErr := s.applier.ApplyCreate2Transfer(&transfers[0], 1, feeReceiverTokenID)
 	s.Error(transferErr)
 	s.NoError(appErr)
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_ReturnsErrorOnNilToStateID() {
-	_, transferError, appError := s.executionCtx.ApplyCreate2TransferForSync(&create2Transfer, uint32(2), feeReceiverTokenID)
+	_, transferError, appError := s.applier.ApplyCreate2TransferForSync(&create2Transfer, uint32(2), feeReceiverTokenID)
 	s.NoError(transferError)
 	s.Equal(ErrNilReceiverStateID, appError)
 }
@@ -104,7 +122,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_InsertsN
 	pubKeyID := uint32(2)
 	c2T := create2Transfer
 	c2T.ToStateID = ref.Uint32(5)
-	_, transferError, appError := s.executionCtx.ApplyCreate2TransferForSync(&c2T, pubKeyID, feeReceiverTokenID)
+	_, transferError, appError := s.applier.ApplyCreate2TransferForSync(&c2T, pubKeyID, feeReceiverTokenID)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -121,7 +139,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_InsertsN
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_AppliesTransfer() {
 	c2T := create2Transfer
 	c2T.ToStateID = ref.Uint32(5)
-	_, transferError, appError := s.executionCtx.ApplyCreate2TransferForSync(&c2T, 2, feeReceiverTokenID)
+	_, transferError, appError := s.applier.ApplyCreate2TransferForSync(&c2T, 2, feeReceiverTokenID)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -142,20 +160,20 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_Validate
 	transfer.ToStateID = ref.Uint32(5)
 	transfer.FromStateID = senderLeaf.StateID
 
-	sync, transferError, appError := s.executionCtx.ApplyCreate2TransferForSync(&transfer, 2, feeReceiverTokenID)
+	sync, transferError, appError := s.applier.ApplyCreate2TransferForSync(&transfer, 2, feeReceiverTokenID)
 	s.NoError(appError)
 	s.ErrorIs(transferError, ErrBalanceTooLow)
 	s.Equal(senderLeaf.UserState, *sync.Proofs.SenderStateProof.UserState)
 	s.Len(sync.SenderStateProof.Witness, st.StateTreeDepth)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransferForSync_InvalidTransfer() {
-	transfers := generateValidCreate2Transfers(1)
+func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_InvalidTransfer() {
+	transfers := testutils.GenerateValidCreate2Transfers(1)
 	invalidC2T := transfers[0]
 	invalidC2T.Amount = models.MakeUint256(1_000_000)
 	invalidC2T.ToStateID = ref.Uint32(5)
 
-	_, transferErr, appErr := s.executionCtx.ApplyCreate2TransferForSync(&invalidC2T, 1, *models.NewUint256(1))
+	_, transferErr, appErr := s.applier.ApplyCreate2TransferForSync(&invalidC2T, 1, feeReceiverTokenID)
 	s.Error(transferErr)
 	s.NoError(appErr)
 }

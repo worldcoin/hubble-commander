@@ -218,6 +218,18 @@ func (s *DisputeCT2TransitionTestSuite) createInvalidCommitments(
 	return commitments
 }
 
+func newUserLeaf(stateID, pubKeyID uint32, tokenID models.Uint256) *models.StateLeaf {
+	return &models.StateLeaf{
+		StateID: stateID,
+		UserState: models.UserState{
+			PubKeyID: pubKeyID,
+			TokenID:  tokenID,
+			Balance:  models.MakeUint256(0),
+			Nonce:    models.MakeUint256(0),
+		},
+	}
+}
+
 func TestDisputeCT2TransitionTestSuite(t *testing.T) {
 	suite.Run(t, new(DisputeCT2TransitionTestSuite))
 }

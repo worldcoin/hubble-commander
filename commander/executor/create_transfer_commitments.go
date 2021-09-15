@@ -81,7 +81,7 @@ func (c *RollupContext) createTransferCommitment(
 		return nil, nil, err
 	}
 
-	appliedTransfers, newPendingTransfers, err := c.applyTransfersForCommitment(pendingTransfers, feeReceiver)
+	applyResult, newPendingTransfers, err := c.applyTransfersForCommitment(pendingTransfers, feeReceiver)
 	if err == ErrNotEnoughTransfers {
 		if revertErr := c.storage.StateTree.RevertTo(*initialStateRoot); revertErr != nil {
 			return nil, nil, revertErr
@@ -92,7 +92,7 @@ func (c *RollupContext) createTransferCommitment(
 		return nil, nil, err
 	}
 
-	commitment, err = c.buildTransferCommitment(appliedTransfers.AppliedTransfers().ToTransferArray(), commitmentID, feeReceiver.StateID, domain)
+	commitment, err = c.buildTransferCommitment(applyResult.AppliedTransfers().ToTransferArray(), commitmentID, feeReceiver.StateID, domain)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -100,7 +100,7 @@ func (c *RollupContext) createTransferCommitment(
 	log.Printf(
 		"Created a %s commitment from %d transactions in %s",
 		txtype.Transfer,
-		appliedTransfers.AppliedTransfers().Len(),
+		applyResult.AppliedTransfers().Len(),
 		time.Since(startTime).Round(time.Millisecond).String(),
 	)
 

@@ -37,3 +37,43 @@ func MakeCreate2Transfer(from uint32, to *uint32, nonce, amount uint64, publicKe
 	}
 	return c2t
 }
+
+func GenerateValidCreate2Transfers(transfersAmount uint32) []models.Create2Transfer {
+	transfers := make([]models.Create2Transfer, 0, transfersAmount)
+	for i := 0; i < int(transfersAmount); i++ {
+		transfer := models.Create2Transfer{
+			TransactionBase: models.TransactionBase{
+				Hash:        utils.RandomHash(),
+				TxType:      txtype.Create2Transfer,
+				FromStateID: 1,
+				Amount:      models.MakeUint256(1),
+				Fee:         models.MakeUint256(1),
+				Nonce:       models.MakeUint256(uint64(i)),
+			},
+			ToStateID:   nil,
+			ToPublicKey: models.PublicKey{1, 2, 3},
+		}
+		transfers = append(transfers, transfer)
+	}
+	return transfers
+}
+
+func GenerateInvalidCreate2Transfers(transfersAmount uint64) []models.Create2Transfer {
+	transfers := make([]models.Create2Transfer, 0, transfersAmount)
+	for i := uint64(0); i < transfersAmount; i++ {
+		transfer := models.Create2Transfer{
+			TransactionBase: models.TransactionBase{
+				Hash:        utils.RandomHash(),
+				TxType:      txtype.Create2Transfer,
+				FromStateID: 1,
+				Amount:      models.MakeUint256(1),
+				Fee:         models.MakeUint256(1),
+				Nonce:       models.MakeUint256(0),
+			},
+			ToStateID:   nil,
+			ToPublicKey: models.PublicKey{1, 2, 3},
+		}
+		transfers = append(transfers, transfer)
+	}
+	return transfers
+}

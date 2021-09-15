@@ -1,10 +1,11 @@
-package executor
+package applier
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/storage"
 )
 
-func (c *ExecutionContext) ApplyCreate2Transfer(
+func (c *Applier) ApplyCreate2Transfer(
 	create2Transfer *models.Create2Transfer,
 	pubKeyID uint32,
 	commitmentTokenID models.Uint256,
@@ -16,12 +17,15 @@ func (c *ExecutionContext) ApplyCreate2Transfer(
 	appliedTransfer = create2Transfer.Clone()
 	appliedTransfer.ToStateID = nextAvailableStateID
 
-	receiverLeaf := newUserLeaf(*appliedTransfer.ToStateID, pubKeyID, commitmentTokenID)
+	receiverLeaf, appError := newUserLeaf(*appliedTransfer.ToStateID, pubKeyID, commitmentTokenID)
+	if appError != nil {
+		return nil, nil, appError
+	}
 	transferError, appError = c.ApplyTransfer(appliedTransfer, receiverLeaf, commitmentTokenID)
 	return appliedTransfer, transferError, appError
 }
 
-func (c *ExecutionContext) ApplyCreate2TransferForSync(
+func (c *Applier) ApplyCreate2TransferForSync(
 	create2Transfer *models.Create2Transfer,
 	pubKeyID uint32,
 	commitmentTokenID models.Uint256,
@@ -30,8 +34,10 @@ func (c *ExecutionContext) ApplyCreate2TransferForSync(
 		return nil, nil, ErrNilReceiverStateID
 	}
 
-	//TODO: forbid C2Ts to an already existing user state
-	receiverLeaf := newUserLeaf(*create2Transfer.ToStateID, pubKeyID, commitmentTokenID)
+	receiverLeaf, appError := newUserLeaf(*create2Transfer.ToStateID, pubKeyID, commitmentTokenID)
+	if appError != nil {
+		return nil, nil, appError
+	}
 	genericSynced, transferError, appError := c.applyGenericTransactionForSync(create2Transfer, receiverLeaf, commitmentTokenID)
 	if appError != nil {
 		return nil, nil, appError
@@ -39,14 +45,11 @@ func (c *ExecutionContext) ApplyCreate2TransferForSync(
 	return NewSyncedCreate2TransferFromGeneric(genericSynced), transferError, nil
 }
 
-func newUserLeaf(stateID, pubKeyID uint32, tokenID models.Uint256) *models.StateLeaf {
-	return &models.StateLeaf{
-		StateID: stateID,
-		UserState: models.UserState{
-			PubKeyID: pubKeyID,
-			TokenID:  tokenID,
-			Balance:  models.MakeUint256(0),
-			Nonce:    models.MakeUint256(0),
-		},
-	}
+func newUserLeaf(stateID, pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
+	return storage.NewStateLeaf(stateID, &models.UserState{
+		PubKeyID: pubKeyID,
+		TokenID:  tokenID,
+		Balance:  models.MakeUint256(0),
+		Nonce:    models.MakeUint256(0),
+	})
 }

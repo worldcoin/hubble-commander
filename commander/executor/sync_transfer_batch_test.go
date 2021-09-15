@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -175,7 +176,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() 
 	err = s.executionCtx.SyncBatch(&remoteBatches[1])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Transition, disputableErr.Type)
-	s.Equal(ErrInvalidCommitmentStateRoot.Error(), disputableErr.Reason)
+	s.Equal(applier.ErrInvalidCommitmentStateRoot.Error(), disputableErr.Reason)
 
 	_, err = s.storage.GetBatch(remoteBatches[0].ID)
 	s.NoError(err)

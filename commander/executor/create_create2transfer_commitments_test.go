@@ -30,7 +30,7 @@ func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 }
 
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_WithMinTxsPerCommitment() {
-	transfers := generateValidCreate2Transfers(1)
+	transfers := testutils.GenerateValidCreate2Transfers(1)
 	s.addCreate2Transfers(transfers)
 
 	preRoot, err := s.executionCtx.storage.StateTree.Root()
@@ -49,7 +49,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 }
 
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_WithMoreThanMinTxsPerCommitment() {
-	transfers := generateValidCreate2Transfers(3)
+	transfers := testutils.GenerateValidCreate2Transfers(3)
 	s.addCreate2Transfers(transfers)
 
 	preRoot, err := s.executionCtx.storage.StateTree.Root()
@@ -70,7 +70,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_QueriesForMorePendingTransfersUntilSatisfied() {
 	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 124)
 
-	transfers := generateValidCreate2Transfers(6)
+	transfers := testutils.GenerateValidCreate2Transfers(6)
 	s.invalidateCreate2Transfers(transfers[3:6])
 
 	highNonceTransfer := testutils.MakeCreate2Transfer(124, nil, 10, 1, &models.PublicKey{5, 4, 3, 2, 1})
@@ -104,7 +104,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 
 	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 124)
 
-	transfers := generateValidCreate2Transfers(9)
+	transfers := testutils.GenerateValidCreate2Transfers(9)
 	s.invalidateCreate2Transfers(transfers[7:9])
 
 	highNonceTransfers := []models.Create2Transfer{
@@ -162,7 +162,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 
 	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
 
-	transfers := generateValidCreate2Transfers(2)
+	transfers := testutils.GenerateValidCreate2Transfers(2)
 	s.addCreate2Transfers(transfers)
 
 	pendingTransfers, err := s.storage.GetPendingCreate2Transfers(32)
@@ -264,6 +264,6 @@ func (s *Create2TransferCommitmentsTestSuite) addCreate2Transfers(transfers []mo
 }
 
 func (s *Create2TransferCommitmentsTestSuite) preparePendingCreate2Transfers(transfersAmount uint32) {
-	transfers := generateValidCreate2Transfers(transfersAmount)
+	transfers := testutils.GenerateValidCreate2Transfers(transfersAmount)
 	s.addCreate2Transfers(transfers)
 }

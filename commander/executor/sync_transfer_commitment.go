@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
@@ -53,7 +54,7 @@ func (c *ExecutionContext) verifyStateRoot(commitmentPostState common.Hash, proo
 		return err
 	}
 	if *postStateRoot != commitmentPostState {
-		return NewDisputableErrorWithProofs(Transition, ErrInvalidCommitmentStateRoot.Error(), proofs)
+		return NewDisputableErrorWithProofs(Transition, applier.ErrInvalidCommitmentStateRoot.Error(), proofs)
 	}
 	return nil
 }

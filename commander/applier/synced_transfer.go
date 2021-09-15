@@ -1,4 +1,4 @@
-package executor
+package applier
 
 import "github.com/Worldcoin/hubble-commander/models"
 

@@ -3,6 +3,7 @@ package executor
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -131,7 +132,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_SavesTransferErrors() {
 		if i < 3 {
 			s.Nil(transfer.ErrorMessage)
 		} else {
-			s.Equal(*transfer.ErrorMessage, ErrNonceTooLow.Error())
+			s.Equal(*transfer.ErrorMessage, applier.ErrNonceTooLow.Error())
 		}
 	}
 }
@@ -212,7 +213,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_InvalidFeeReceiverTo
 	var disputableErr *DisputableError
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Transition, disputableErr.Type)
-	s.Equal(ErrInvalidFeeReceiverTokenID.Error(), disputableErr.Reason)
+	s.Equal(applier.ErrInvalidFeeReceiverTokenID.Error(), disputableErr.Reason)
 	s.Len(disputableErr.Proofs, 5)
 }
 

@@ -3,6 +3,7 @@ package executor
 import (
 	"context"
 
+	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -16,6 +17,7 @@ type ExecutionContext struct {
 	tx      *db.TxController
 	client  *eth.Client
 	ctx     context.Context
+	*applier.Applier
 }
 
 // NewExecutionContext creates a ExecutionContext and starts a database transaction.
@@ -36,6 +38,7 @@ func NewExecutionContext(
 		tx:      tx,
 		client:  client,
 		ctx:     ctx,
+		Applier: applier.NewApplier(txStorage),
 	}, nil
 }
 
@@ -47,6 +50,7 @@ func NewTestExecutionContext(storage *st.Storage, client *eth.Client, cfg *confi
 		tx:      nil,
 		client:  client,
 		ctx:     context.Background(),
+		Applier: applier.NewApplier(storage),
 	}
 }
 

@@ -1,4 +1,4 @@
-package executor
+package applier
 
 import (
 	"errors"
@@ -19,7 +19,7 @@ var (
 	ErrInvalidCommitmentStateRoot = errors.New("invalid commitment post state root")
 )
 
-func (c *ExecutionContext) ApplyTransfer(
+func (c *Applier) ApplyTransfer(
 	transfer models.GenericTransaction,
 	receiverLeaf *models.StateLeaf,
 	commitmentTokenID models.Uint256,
@@ -60,7 +60,7 @@ func (c *ExecutionContext) ApplyTransfer(
 	return nil, nil
 }
 
-func (c *ExecutionContext) ApplyTransferForSync(transfer models.GenericTransaction, commitmentTokenID models.Uint256) (
+func (c *Applier) ApplyTransferForSync(transfer models.GenericTransaction, commitmentTokenID models.Uint256) (
 	synced *SyncedTransfer,
 	transferError, appError error,
 ) {
@@ -76,7 +76,7 @@ func (c *ExecutionContext) ApplyTransferForSync(transfer models.GenericTransacti
 	return NewSyncedTransferFromGeneric(genericSynced), transferError, nil
 }
 
-func (c *ExecutionContext) applyGenericTransactionForSync(
+func (c *Applier) applyGenericTransactionForSync(
 	tx models.GenericTransaction,
 	receiverLeaf *models.StateLeaf,
 	commitmentTokenID models.Uint256,
@@ -118,7 +118,7 @@ func (c *ExecutionContext) applyGenericTransactionForSync(
 	return synced, nil, nil
 }
 
-func (c *ExecutionContext) fillSenderWitness(synced *SyncedGenericTransaction, tErr error) (*SyncedGenericTransaction, error, error) {
+func (c *Applier) fillSenderWitness(synced *SyncedGenericTransaction, tErr error) (*SyncedGenericTransaction, error, error) {
 	witness, appError := c.storage.StateTree.GetLeafWitness(synced.Transaction.GetFromStateID())
 	if appError != nil {
 		return nil, nil, appError
@@ -128,14 +128,14 @@ func (c *ExecutionContext) fillSenderWitness(synced *SyncedGenericTransaction, t
 	return synced, tErr, nil
 }
 
-func (c *ExecutionContext) validateSenderTokenID(senderState *models.StateLeaf, commitmentTokenID models.Uint256) error {
+func (c *Applier) validateSenderTokenID(senderState *models.StateLeaf, commitmentTokenID models.Uint256) error {
 	if senderState.TokenID.Cmp(&commitmentTokenID) != 0 {
 		return ErrInvalidSenderTokenID
 	}
 	return nil
 }
 
-func (c *ExecutionContext) validateReceiverTokenID(receiverState *models.StateLeaf, commitmentTokenID models.Uint256) error {
+func (c *Applier) validateReceiverTokenID(receiverState *models.StateLeaf, commitmentTokenID models.Uint256) error {
 	if receiverState.TokenID.Cmp(&commitmentTokenID) != 0 {
 		return ErrInvalidReceiverTokenID
 	}
