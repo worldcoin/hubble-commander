@@ -274,10 +274,10 @@ func (s *TransferCommitmentsTestSuite) TestRemoveTransfer() {
 	transfer2 := createRandomTransferWithHash()
 	transfer3 := createRandomTransferWithHash()
 
-	transfers := []models.Transfer{transfer1, transfer2, transfer3}
-	toRemove := []models.Transfer{transfer2}
+	transfers := models.TransferArray{transfer1, transfer2, transfer3}
+	toRemove := models.TransferArray{transfer2}
 
-	s.Equal([]models.Transfer{transfer1, transfer3}, removeTransfers(transfers, toRemove))
+	s.Equal(models.TransferArray{transfer1, transfer3}, removeTransfers(transfers, toRemove))
 }
 
 func TestTransferCommitmentsTestSuite(t *testing.T) {

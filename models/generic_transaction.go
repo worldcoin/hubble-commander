@@ -13,11 +13,16 @@ type GenericTransaction interface {
 	SetNonce(nonce Uint256)
 	GetSignature() Signature
 	Copy() GenericTransaction
+	ToTransfer() *Transfer
+	ToCreate2Transfer() *Create2Transfer
 }
 
 type GenericTransactionArray interface {
 	Len() int
 	At(index int) GenericTransaction
+	Set(index int, value GenericTransaction)
+	Append(elems GenericTransactionArray) GenericTransactionArray
+	Slice(start, end int) GenericTransactionArray
 	ToTransferArray() TransferArray
 	ToCreate2TransferArray() Create2TransferArray
 }
@@ -34,6 +39,18 @@ func (t TransferArray) Len() int {
 
 func (t TransferArray) At(index int) GenericTransaction {
 	return &t[index]
+}
+
+func (t TransferArray) Set(index int, value GenericTransaction) {
+	t[index] = *value.ToTransfer()
+}
+
+func (t TransferArray) Append(elems GenericTransactionArray) GenericTransactionArray {
+	return append(t, elems.ToTransferArray()...)
+}
+
+func (t TransferArray) Slice(start, end int) GenericTransactionArray {
+	return t[start:end]
 }
 
 func (t TransferArray) ToTransferArray() TransferArray {
@@ -56,6 +73,18 @@ func (t Create2TransferArray) Len() int {
 
 func (t Create2TransferArray) At(index int) GenericTransaction {
 	return &t[index]
+}
+
+func (t Create2TransferArray) Set(index int, value GenericTransaction) {
+	t[index] = *value.ToCreate2Transfer()
+}
+
+func (t Create2TransferArray) Append(elems GenericTransactionArray) GenericTransactionArray {
+	return append(t, elems.ToCreate2TransferArray()...)
+}
+
+func (t Create2TransferArray) Slice(start, end int) GenericTransactionArray {
+	return t[start:end]
 }
 
 func (t Create2TransferArray) ToTransferArray() TransferArray {

@@ -12,7 +12,13 @@ import (
 
 type TransactionExecutor interface {
 	getPendingTransactions(limit uint32) (models.GenericTransactionArray, error)
+	makeTransactionArray(size, capacity uint32) models.GenericTransactionArray
 	SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error)
+}
+
+type ApplyTxsResult interface {
+	AppliedTransfers() models.GenericTransactionArray
+	NewPendingTransfers() models.GenericTransactionArray
 }
 
 func CreateTransactionExecutor(executionCtx *ExecutionContext, txType txtype.TransactionType) TransactionExecutor {
@@ -45,6 +51,10 @@ func (e *TransferExecutor) getPendingTransactions(limit uint32) (models.GenericT
 	return models.TransferArray(pendingTransfers), nil
 }
 
+func (e *TransferExecutor) makeTransactionArray(size, capacity uint32) models.GenericTransactionArray {
+	return make(models.TransferArray, size, capacity)
+}
+
 func (e *TransferExecutor) SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error) {
 	return client.SubmitTransfersBatch(commitments)
 }
@@ -60,6 +70,10 @@ func (e *C2TExecutor) getPendingTransactions(limit uint32) (models.GenericTransa
 		return nil, err
 	}
 	return models.Create2TransferArray(pendingTransfers), nil
+}
+
+func (e *C2TExecutor) makeTransactionArray(size, capacity uint32) models.GenericTransactionArray {
+	return make(models.Create2TransferArray, size, capacity)
 }
 
 func (e *C2TExecutor) SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error) {
