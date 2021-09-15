@@ -126,7 +126,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesNonceTooLow_NoTransact
 	s.NoError(err)
 
 	apiErr := &APIError{
-		Code:    10005,
+		Code:    10004,
 		Message: "nonce too low",
 	}
 
@@ -140,7 +140,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesNonceTooHigh_NoTransac
 	transferWithIncreasedNonce = s.signTransfer(transferWithIncreasedNonce)
 
 	apiErr := &APIError{
-		Code:    10006,
+		Code:    10005,
 		Message: "nonce too high",
 	}
 
@@ -157,7 +157,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesNonceTooHigh_ExistingT
 	transferWithIncreasedNonce = s.signTransfer(transferWithIncreasedNonce)
 
 	apiErr := &APIError{
-		Code:    10006,
+		Code:    10005,
 		Message: "nonce too high",
 	}
 
@@ -180,7 +180,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesNonceTooLow_ExistingTr
 	thirdTransfer = s.signTransfer(thirdTransfer)
 
 	apiErr := &APIError{
-		Code:    10005,
+		Code:    10004,
 		Message: "nonce too low",
 	}
 
@@ -193,7 +193,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesFeeValue() {
 	transferWithZeroFee.Fee = models.NewUint256(0)
 
 	apiErr := &APIError{
-		Code:    10009,
+		Code:    10008,
 		Message: "fee too low",
 	}
 
@@ -206,7 +206,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesFeeEncodability() {
 	transferWithBadFee.Fee = models.NewUint256(66666666)
 
 	apiErr := &APIError{
-		Code:    10012,
+		Code:    10011,
 		Message: "fee is not encodable as multi-precission decimal",
 	}
 
@@ -219,7 +219,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesAmountEncodability() {
 	transferWithBadAmount.Amount = models.NewUint256(66666666)
 
 	apiErr := &APIError{
-		Code:    10011,
+		Code:    10010,
 		Message: "amount is not encodable as multi-precission decimal",
 	}
 
@@ -232,7 +232,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesAmountValue() {
 	transferWithZeroAmount.Amount = models.NewUint256(0)
 
 	apiErr := &APIError{
-		Code:    10008,
+		Code:    10007,
 		Message: "amount must be greater than 0",
 	}
 
@@ -245,7 +245,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesBalance() {
 	transferWithHugeAmount.Amount = models.NewUint256(500)
 
 	apiErr := &APIError{
-		Code:    10007,
+		Code:    10006,
 		Message: "not enough balance",
 	}
 
@@ -263,7 +263,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesSignature() {
 	transfer.Signature = fakeSignature.ModelsSignature()
 
 	apiErr := &APIError{
-		Code:    10010,
+		Code:    10009,
 		Message: "invalid signature",
 	}
 

@@ -109,7 +109,7 @@ var commonErrors = []*InternalToAPIError{
 			db.ErrInvalidKeyListMetadataLength,
 		},
 	),
-	NewInternalToAPIError(40001, "an error occurred while iterating over badger database", []interface{}{db.ErrIteratorFinished}),
+	NewInternalToAPIError(40001, "an error occurred while iterating over Badger database", []interface{}{db.ErrIteratorFinished}),
 	// BLS
 	NewInternalToAPIError(99004, "an error occurred while fetching the domain for signing", []interface{}{bls.ErrInvalidDomainLength}),
 }

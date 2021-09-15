@@ -25,43 +25,43 @@ var (
 
 var sendTransactionAPIErrors = map[error]*APIError{
 	&MissingFieldError{}: NewAPIError(
-		10003,
+		10002,
 		"some field is missing, verify the transfer/create2transfer object",
 	),
 	ErrTransferToSelf: NewAPIError(
-		10004,
+		10003,
 		"invalid recipient, cannot send funds to yourself",
 	),
 	ErrNonceTooLow: NewAPIError(
-		10005,
+		10004,
 		"nonce too low",
 	),
 	ErrNonceTooHigh: NewAPIError(
-		10006,
+		10005,
 		"nonce too high",
 	),
 	ErrNotEnoughBalance: NewAPIError(
-		10007,
+		10006,
 		"not enough balance",
 	),
 	ErrInvalidAmount: NewAPIError(
-		10008,
+		10007,
 		"amount must be greater than 0",
 	),
 	ErrFeeTooLow: NewAPIError(
-		10009,
+		10008,
 		"fee too low",
 	),
 	ErrInvalidSignature: NewAPIError(
-		10010,
+		10009,
 		"invalid signature",
 	),
 	NewNotDecimalEncodableError("amount"): NewAPIError(
-		10011,
+		10010,
 		"amount is not encodable as multi-precission decimal",
 	),
 	NewNotDecimalEncodableError("fee"): NewAPIError(
-		10012,
+		10011,
 		"fee is not encodable as multi-precission decimal",
 	),
 }
