@@ -48,7 +48,7 @@ func (s *StateTree) Leaf(stateID uint32) (stateLeaf *models.StateLeaf, err error
 	var leaf models.FlatStateLeaf
 	err = s.database.Badger.Get(stateID, &leaf)
 	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("state leaf")
+		return nil, errors.WithStack(NewNotFoundError("state leaf"))
 	}
 	if err != nil {
 		return nil, err
@@ -261,7 +261,7 @@ func (s *StateTree) getLeafByPubKeyIDAndTokenID(pubKeyID uint32, tokenID models.
 		return nil, err
 	}
 	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("state leaf")
+		return nil, errors.WithStack(NewNotFoundError("state leaf"))
 	}
 	return leaf.StateLeaf(), nil
 }

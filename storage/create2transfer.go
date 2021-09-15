@@ -43,7 +43,7 @@ func (s *TransactionStorage) GetCreate2Transfer(hash common.Hash) (*models.Creat
 		return nil, err
 	}
 	if tx.TxType != txtype.Create2Transfer {
-		return nil, NewNotFoundError("transaction")
+		return nil, errors.WithStack(NewNotFoundError("transaction"))
 	}
 	return tx.ToCreate2Transfer(txReceipt), nil
 }
@@ -220,7 +220,7 @@ func (s *Storage) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.
 		return nil, err
 	}
 	if tx.TxType != txtype.Create2Transfer {
-		return nil, NewNotFoundError("transaction")
+		return nil, errors.WithStack(NewNotFoundError("transaction"))
 	}
 
 	transfers, err := s.create2TransferToTransfersWithBatchDetails([]*models.StoredTx{tx}, []*models.StoredReceipt{txReceipt})

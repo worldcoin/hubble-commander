@@ -2,6 +2,7 @@ package storage
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
@@ -13,7 +14,7 @@ func (s *StateTree) getStateUpdate(id uint64) (*models.StateUpdate, error) {
 	var stateUpdate models.StateUpdate
 	err := s.database.Badger.Get(id, &stateUpdate)
 	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("state update")
+		return nil, errors.WithStack(NewNotFoundError("state update"))
 	}
 	if err != nil {
 		return nil, err

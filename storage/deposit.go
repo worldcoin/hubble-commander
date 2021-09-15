@@ -2,6 +2,7 @@ package storage
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
@@ -30,7 +31,7 @@ func (s *DepositStorage) GetDeposit(depositID *models.DepositID) (*models.Deposi
 	var deposit models.Deposit
 	err := s.database.Badger.Get(*depositID, &deposit)
 	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("deposit")
+		return nil, errors.WithStack(NewNotFoundError("deposit"))
 	}
 	if err != nil {
 		return nil, err

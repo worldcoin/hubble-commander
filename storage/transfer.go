@@ -43,7 +43,7 @@ func (s *TransactionStorage) GetTransfer(hash common.Hash) (*models.Transfer, er
 		return nil, err
 	}
 	if tx.TxType != txtype.Transfer {
-		return nil, NewNotFoundError("transaction")
+		return nil, errors.WithStack(NewNotFoundError("transaction"))
 	}
 	return tx.ToTransfer(txReceipt), nil
 }
@@ -151,7 +151,7 @@ func (s *Storage) GetTransferWithBatchDetails(hash common.Hash) (*models.Transfe
 		return nil, err
 	}
 	if tx.TxType != txtype.Transfer {
-		return nil, NewNotFoundError("transaction")
+		return nil, errors.WithStack(NewNotFoundError("transaction"))
 	}
 
 	transfers, err := s.transfersToTransfersWithBatchDetails([]models.StoredTx{*tx}, []*models.StoredReceipt{txReceipt})

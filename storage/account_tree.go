@@ -44,7 +44,7 @@ func (s *AccountTree) Leaf(pubKeyID uint32) (*models.AccountLeaf, error) {
 	var leaf models.AccountLeaf
 	err := s.database.Badger.Get(pubKeyID, &leaf)
 	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("account leaf")
+		return nil, errors.WithStack(NewNotFoundError("account leaf"))
 	}
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func (s *AccountTree) Leaves(publicKey *models.PublicKey) ([]models.AccountLeaf,
 		return nil, err
 	}
 	if len(accounts) == 0 {
-		return nil, NewNotFoundError("account leaves")
+		return nil, errors.WithStack(NewNotFoundError("account leaves"))
 	}
 	return accounts, nil
 }

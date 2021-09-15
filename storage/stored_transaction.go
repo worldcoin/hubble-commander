@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
@@ -61,7 +62,7 @@ func (s *TransactionStorage) getStoredTx(hash common.Hash) (*models.StoredTx, er
 	var storedTx models.StoredTx
 	err := s.database.Badger.Get(hash, &storedTx)
 	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("transaction")
+		return nil, errors.WithStack(NewNotFoundError("transaction"))
 	}
 	if err != nil {
 		return nil, err
@@ -86,7 +87,7 @@ func (s *TransactionStorage) getKeyList(indexKey []byte) (*bh.KeyList, error) {
 	err := s.database.Badger.View(func(txn *bdg.Txn) error {
 		item, err := txn.Get(indexKey)
 		if err == bdg.ErrKeyNotFound {
-			return NewNotFoundError("transaction")
+			return errors.WithStack(NewNotFoundError("transaction"))
 		}
 		if err != nil {
 			return err
@@ -117,7 +118,7 @@ func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*
 		return nil, err
 	}
 	if len(txHashes) == 0 {
-		return nil, NewNotFoundError("transaction")
+		return nil, errors.WithStack(NewNotFoundError("transaction"))
 	}
 
 	latestNonce := models.MakeUint256(0)
@@ -226,7 +227,7 @@ func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.U
 		return nil, err
 	}
 	if len(hashes) == 0 {
-		return nil, NewNotFoundError("transaction")
+		return nil, errors.WithStack(NewNotFoundError("transaction"))
 	}
 	return hashes, nil
 }
