@@ -2,27 +2,27 @@ package executor
 
 import "github.com/Worldcoin/hubble-commander/models"
 
-type ApplyCommitmentResult interface {
+type ApplyTxsForCommitmentResult interface {
 	AppliedTransfers() models.GenericTransactionArray
 	AddedPubKeyIDs() []uint32
 }
 
-func NewApplyCommitmentResult(appliedTxs models.GenericTransactionArray) ApplyCommitmentResult {
-	return &AppliedTransferCommitments{
+func NewApplyTxsForCommitmentResult(appliedTxs models.GenericTransactionArray) ApplyTxsForCommitmentResult {
+	return &ApplyTransfersForCommitmentResult{
 		appliedTransfers: appliedTxs.ToTransferArray(),
 	}
 }
 
-type AppliedTransferCommitments struct {
+type ApplyTransfersForCommitmentResult struct {
 	appliedTransfers models.TransferArray
 }
 
-func (a *AppliedTransferCommitments) AppliedTransfers() models.GenericTransactionArray {
+func (a *ApplyTransfersForCommitmentResult) AppliedTransfers() models.GenericTransactionArray {
 	return a.appliedTransfers
 }
 
-func (a *AppliedTransferCommitments) AddedPubKeyIDs() []uint32 {
-	panic("AddedPubKeyIDs cannot be invoked on AppliedTransferCommitments")
+func (a *ApplyTransfersForCommitmentResult) AddedPubKeyIDs() []uint32 {
+	panic("AddedPubKeyIDs cannot be invoked on ApplyTransfersForCommitmentResult")
 }
 
 type ApplyTxsResult interface {
@@ -33,27 +33,27 @@ type ApplyTxsResult interface {
 	AddedPubKeyIDs() []uint32
 }
 
-type AppliedTransfers struct {
+type ApplyTransfersResult struct {
 	appliedTransfers models.GenericTransactionArray
 	invalidTransfers models.GenericTransactionArray
 }
 
-func (a *AppliedTransfers) AppliedTxs() models.GenericTransactionArray {
+func (a *ApplyTransfersResult) AppliedTxs() models.GenericTransactionArray {
 	return a.appliedTransfers
 }
 
-func (a *AppliedTransfers) InvalidTxs() models.GenericTransactionArray {
+func (a *ApplyTransfersResult) InvalidTxs() models.GenericTransactionArray {
 	return a.invalidTransfers
 }
 
-func (a *AppliedTransfers) AddInvalidTx(tx models.GenericTransaction) {
+func (a *ApplyTransfersResult) AddInvalidTx(tx models.GenericTransaction) {
 	a.invalidTransfers = a.invalidTransfers.AppendOne(tx)
 }
 
-func (a *AppliedTransfers) AddAppliedTx(tx models.GenericTransaction) {
+func (a *ApplyTransfersResult) AddAppliedTx(tx models.GenericTransaction) {
 	a.appliedTransfers = a.appliedTransfers.AppendOne(tx)
 }
 
-func (a *AppliedTransfers) AddedPubKeyIDs() []uint32 {
+func (a *ApplyTransfersResult) AddedPubKeyIDs() []uint32 {
 	panic("AddedPubKeyIDs cannot be invoked on AppliedTxs")
 }

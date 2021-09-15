@@ -60,7 +60,7 @@ func (e *TransferExecutor) NewTxArray(size, capacity uint32) models.GenericTrans
 }
 
 func (e *TransferExecutor) NewApplyTxsResult(capacity uint32) ApplyTxsResult {
-	return &AppliedTransfers{
+	return &ApplyTransfersResult{
 		appliedTransfers: make(models.TransferArray, 0, capacity),
 		invalidTransfers: make(models.TransferArray, 0),
 	}

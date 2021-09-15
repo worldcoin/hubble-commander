@@ -108,7 +108,7 @@ func (c *RollupContext) createTransferCommitment(
 }
 
 func (c *RollupContext) applyTransfersForCommitment(pendingTransfers models.GenericTransactionArray, feeReceiver *FeeReceiver) (
-	result ApplyCommitmentResult,
+	result ApplyTxsForCommitmentResult,
 	newPendingTransfers models.GenericTransactionArray,
 	err error,
 ) {
@@ -127,13 +127,13 @@ func (c *RollupContext) applyTransfersForCommitment(pendingTransfers models.Gene
 
 		if appliedTransfers.Len() == int(c.cfg.MaxTxsPerCommitment) {
 			newPendingTransfers = removeTransfers(pendingTransfers, appliedTransfers.Append(invalidTransfers))
-			return NewApplyCommitmentResult(appliedTransfers), newPendingTransfers, nil
+			return NewApplyTxsForCommitmentResult(appliedTransfers), newPendingTransfers, nil
 		}
 
 		morePendingTransfers, err := c.queryMorePendingTransfers(appliedTransfers)
 		if err == ErrNotEnoughTransfers {
 			newPendingTransfers = removeTransfers(pendingTransfers, appliedTransfers.Append(invalidTransfers))
-			return NewApplyCommitmentResult(appliedTransfers), newPendingTransfers, nil
+			return NewApplyTxsForCommitmentResult(appliedTransfers), newPendingTransfers, nil
 		}
 		if err != nil {
 			return nil, nil, err
