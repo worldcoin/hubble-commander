@@ -64,12 +64,6 @@ var sendTransactionAPIErrors = map[error]*APIError{
 		10012,
 		"fee is not encodable as multi-precission decimal",
 	),
-	// TODO-API pretty sure it should return contents or something - verify with Michal
-	// TODO-API delete?
-	&storage.NotFoundError{}: NewAPIError(
-		10013,
-		"not found error",
-	),
 }
 
 func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
