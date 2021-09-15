@@ -9,7 +9,7 @@ type AppliedTransfers struct {
 	invalidTransfers []models.Transfer
 }
 
-func (t *TransactionExecutor) ApplyTransfers(
+func (c *ExecutionContext) ApplyTransfers(
 	transfers []models.Transfer,
 	maxApplied uint32,
 	feeReceiver *FeeReceiver,
@@ -19,7 +19,7 @@ func (t *TransactionExecutor) ApplyTransfers(
 	}
 
 	returnStruct := &AppliedTransfers{}
-	returnStruct.appliedTransfers = make([]models.Transfer, 0, t.cfg.MaxTxsPerCommitment)
+	returnStruct.appliedTransfers = make([]models.Transfer, 0, c.cfg.MaxTxsPerCommitment)
 
 	combinedFee := models.MakeUint256(0)
 
@@ -29,17 +29,17 @@ func (t *TransactionExecutor) ApplyTransfers(
 		}
 
 		transfer := &transfers[i]
-		receiverLeaf, err := t.storage.StateTree.Leaf(transfer.ToStateID)
+		receiverLeaf, err := c.storage.StateTree.Leaf(transfer.ToStateID)
 		if err != nil {
 			return nil, err
 		}
 
-		transferError, appError := t.ApplyTransfer(transfer, receiverLeaf, feeReceiver.TokenID)
+		transferError, appError := c.ApplyTransfer(transfer, receiverLeaf, feeReceiver.TokenID)
 		if appError != nil {
 			return nil, appError
 		}
 		if transferError != nil {
-			logAndSaveTransactionError(t.storage, &transfer.TransactionBase, transferError)
+			logAndSaveTransactionError(c.storage, &transfer.TransactionBase, transferError)
 			returnStruct.invalidTransfers = append(returnStruct.invalidTransfers, *transfer)
 			continue
 		}
@@ -49,7 +49,7 @@ func (t *TransactionExecutor) ApplyTransfers(
 	}
 
 	if len(returnStruct.appliedTransfers) > 0 {
-		_, err := t.ApplyFee(feeReceiver.StateID, combinedFee)
+		_, err := c.ApplyFee(feeReceiver.StateID, combinedFee)
 		if err != nil {
 			return nil, err
 		}
@@ -58,7 +58,7 @@ func (t *TransactionExecutor) ApplyTransfers(
 	return returnStruct, nil
 }
 
-func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer, feeReceiverStateID uint32) (
+func (c *ExecutionContext) ApplyTransfersForSync(transfers []models.Transfer, feeReceiverStateID uint32) (
 	[]models.Transfer,
 	[]models.StateMerkleProof,
 	error,
@@ -68,14 +68,14 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*transfersLen+1)
 	combinedFee := models.NewUint256(0)
 
-	tokenID, err := t.getCommitmentTokenID(models.TransferArray(transfers), feeReceiverStateID)
+	tokenID, err := c.getCommitmentTokenID(models.TransferArray(transfers), feeReceiverStateID)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	for i := range transfers {
 		transfer := &transfers[i]
-		synced, transferError, appError := t.ApplyTransferForSync(transfer, *tokenID)
+		synced, transferError, appError := c.ApplyTransferForSync(transfer, *tokenID)
 		if appError != nil {
 			return nil, nil, appError
 		}
@@ -91,7 +91,7 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 		*combinedFee = *combinedFee.Add(&synced.Transfer.Fee)
 	}
 
-	stateProof, commitmentError, appError := t.ApplyFeeForSync(feeReceiverStateID, tokenID, combinedFee)
+	stateProof, commitmentError, appError := c.ApplyFeeForSync(feeReceiverStateID, tokenID, combinedFee)
 	if appError != nil {
 		return nil, nil, appError
 	}
@@ -103,16 +103,16 @@ func (t *TransactionExecutor) ApplyTransfersForSync(transfers []models.Transfer,
 	return appliedTransfers, stateChangeProofs, nil
 }
 
-func (t *TransactionExecutor) getCommitmentTokenID(transfers models.GenericTransactionArray, feeReceiverStateID uint32) (
+func (c *ExecutionContext) getCommitmentTokenID(transfers models.GenericTransactionArray, feeReceiverStateID uint32) (
 	tokenID *models.Uint256,
 	err error,
 ) {
 	var leaf *models.StateLeaf
 
 	if transfers.Len() > 0 {
-		leaf, err = t.storage.StateTree.LeafOrEmpty(transfers.At(0).GetFromStateID())
+		leaf, err = c.storage.StateTree.LeafOrEmpty(transfers.At(0).GetFromStateID())
 	} else {
-		leaf, err = t.storage.StateTree.LeafOrEmpty(feeReceiverStateID)
+		leaf, err = c.storage.StateTree.LeafOrEmpty(feeReceiverStateID)
 	}
 	if err != nil {
 		return nil, err

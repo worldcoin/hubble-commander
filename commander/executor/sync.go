@@ -16,22 +16,22 @@ var (
 	ErrBatchSubmissionFailed = errors.New("previous submit batch transaction failed")
 )
 
-func (t *TransactionExecutor) SyncBatch(remoteBatch *eth.DecodedBatch) error {
-	localBatch, err := t.storage.GetBatch(remoteBatch.ID)
+func (c *ExecutionContext) SyncBatch(remoteBatch *eth.DecodedBatch) error {
+	localBatch, err := c.storage.GetBatch(remoteBatch.ID)
 	if err != nil && !st.IsNotFoundError(err) {
 		return err
 	}
 
 	if st.IsNotFoundError(err) {
-		return t.syncNewBatch(remoteBatch)
+		return c.syncNewBatch(remoteBatch)
 	} else {
-		return t.syncExistingBatch(remoteBatch, localBatch)
+		return c.syncExistingBatch(remoteBatch, localBatch)
 	}
 }
 
-func (t *TransactionExecutor) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
+func (c *ExecutionContext) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
 	if remoteBatch.TransactionHash == localBatch.TransactionHash {
-		err := t.storage.MarkBatchAsSubmitted(&remoteBatch.Batch)
+		err := c.storage.MarkBatchAsSubmitted(&remoteBatch.Batch)
 		if err != nil {
 			return err
 		}
@@ -42,11 +42,11 @@ func (t *TransactionExecutor) syncExistingBatch(remoteBatch *eth.DecodedBatch, l
 			remoteBatch.Hash,
 		)
 	} else {
-		txSender, err := t.getTransactionSender(remoteBatch.TransactionHash)
+		txSender, err := c.getTransactionSender(remoteBatch.TransactionHash)
 		if err != nil {
 			return err
 		}
-		if *txSender != t.client.ChainConnection.GetAccount().From {
+		if *txSender != c.client.ChainConnection.GetAccount().From {
 			return NewInconsistentBatchError(localBatch)
 		} else {
 			// TODO remove the above check and this error once we use contracts with batchID verification:
@@ -57,46 +57,8 @@ func (t *TransactionExecutor) syncExistingBatch(remoteBatch *eth.DecodedBatch, l
 	return nil
 }
 
-func (t *TransactionExecutor) RevertBatches(startBatch *models.Batch) error {
-	err := t.storage.StateTree.RevertTo(*startBatch.PrevStateRoot)
-	if err != nil {
-		return err
-	}
-	return t.revertBatchesFrom(&startBatch.ID)
-}
-
-func (t *TransactionExecutor) revertBatchesFrom(startBatchID *models.Uint256) error {
-	batches, err := t.storage.GetBatchesInRange(startBatchID, nil)
-	if err != nil {
-		return err
-	}
-	numBatches := len(batches)
-	batchIDs := make([]models.Uint256, 0, numBatches)
-	for i := range batches {
-		batchIDs = append(batchIDs, batches[i].ID)
-	}
-	err = t.excludeTransactionsFromCommitment(batchIDs...)
-	if err != nil {
-		return err
-	}
-	err = t.storage.DeleteCommitmentsByBatchIDs(batchIDs...)
-	if err != nil {
-		return err
-	}
-	log.Debugf("Removing %d local batches", numBatches)
-	return t.storage.DeleteBatches(batchIDs...)
-}
-
-func (t *TransactionExecutor) excludeTransactionsFromCommitment(batchIDs ...models.Uint256) error {
-	hashes, err := t.storage.GetTransactionHashesByBatchIDs(batchIDs...)
-	if err != nil {
-		return err
-	}
-	return t.storage.MarkTransactionsAsPending(hashes)
-}
-
-func (t *TransactionExecutor) getTransactionSender(txHash common.Hash) (*common.Address, error) {
-	tx, _, err := t.client.ChainConnection.GetBackend().TransactionByHash(t.ctx, txHash)
+func (c *ExecutionContext) getTransactionSender(txHash common.Hash) (*common.Address, error) {
+	tx, _, err := c.client.ChainConnection.GetBackend().TransactionByHash(c.ctx, txHash)
 	if err != nil {
 		return nil, err
 	}
@@ -107,15 +69,15 @@ func (t *TransactionExecutor) getTransactionSender(txHash common.Hash) (*common.
 	return &sender, nil
 }
 
-func (t *TransactionExecutor) syncNewBatch(batch *eth.DecodedBatch) error {
+func (c *ExecutionContext) syncNewBatch(batch *eth.DecodedBatch) error {
 	numCommitments := len(batch.Commitments)
 	log.Debugf("Syncing new batch #%s with %d commitment(s) from chain", batch.ID.String(), numCommitments)
-	err := t.storage.AddBatch(&batch.Batch)
+	err := c.storage.AddBatch(&batch.Batch)
 	if err != nil {
 		return err
 	}
 
-	err = t.syncCommitments(batch)
+	err = c.syncCommitments(batch)
 	if err != nil {
 		return err
 	}
@@ -124,10 +86,10 @@ func (t *TransactionExecutor) syncNewBatch(batch *eth.DecodedBatch) error {
 	return nil
 }
 
-func (t *TransactionExecutor) syncCommitments(batch *eth.DecodedBatch) error {
+func (c *ExecutionContext) syncCommitments(batch *eth.DecodedBatch) error {
 	for i := range batch.Commitments {
 		log.WithFields(log.Fields{"batchID": batch.ID.String()}).Debugf("Syncing commitment #%d", i+1)
-		err := t.syncCommitment(batch, &batch.Commitments[i])
+		err := c.syncCommitment(batch, &batch.Commitments[i])
 
 		var disputableErr *DisputableError
 		if errors.As(err, &disputableErr) {
@@ -140,7 +102,7 @@ func (t *TransactionExecutor) syncCommitments(batch *eth.DecodedBatch) error {
 	return nil
 }
 
-func (t *TransactionExecutor) syncCommitment(
+func (c *ExecutionContext) syncCommitment(
 	batch *eth.DecodedBatch,
 	commitment *encoder.DecodedCommitment,
 ) error {
@@ -152,9 +114,9 @@ func (t *TransactionExecutor) syncCommitment(
 	var err error
 	switch batch.Type {
 	case txtype.Transfer:
-		transactions, err = t.syncTransferCommitment(commitment)
+		transactions, err = c.syncTransferCommitment(commitment)
 	case txtype.Create2Transfer:
-		transactions, err = t.syncCreate2TransferCommitment(commitment)
+		transactions, err = c.syncCreate2TransferCommitment(commitment)
 	case txtype.Genesis, txtype.MassMigration:
 		return errors.Errorf("unsupported batch type for sync: %s", batch.Type)
 	}
@@ -162,7 +124,7 @@ func (t *TransactionExecutor) syncCommitment(
 		return err
 	}
 
-	err = t.storage.AddCommitment(&models.Commitment{
+	err = c.storage.AddCommitment(&models.Commitment{
 		ID:                commitment.ID,
 		Type:              batch.Type,
 		Transactions:      commitment.Transactions,
@@ -188,5 +150,5 @@ func (t *TransactionExecutor) syncCommitment(
 	if transactions.Len() == 0 {
 		return nil
 	}
-	return t.storage.BatchAddGenericTransaction(transactions)
+	return c.storage.BatchAddGenericTransaction(transactions)
 }

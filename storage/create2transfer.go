@@ -6,7 +6,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/Worldcoin/hubble-commander/utils"
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
@@ -14,13 +13,15 @@ import (
 )
 
 func (s *TransactionStorage) AddCreate2Transfer(t *models.Create2Transfer) error {
-	if t.CommitmentID != nil || t.ErrorMessage != nil || t.ToStateID != nil {
-		err := s.database.Badger.Insert(t.Hash, models.MakeStoredReceiptFromCreate2Transfer(t))
-		if err != nil {
-			return err
+	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
+		if t.CommitmentID != nil || t.ErrorMessage != nil || t.ToStateID != nil {
+			err := txStorage.database.Badger.Insert(t.Hash, models.MakeStoredReceiptFromCreate2Transfer(t))
+			if err != nil {
+				return err
+			}
 		}
-	}
-	return s.database.Badger.Insert(t.Hash, models.MakeStoredTxFromCreate2Transfer(t))
+		return txStorage.database.Badger.Insert(t.Hash, models.MakeStoredTxFromCreate2Transfer(t))
+	})
 }
 
 func (s *TransactionStorage) BatchAddCreate2Transfer(txs []models.Create2Transfer) error {
@@ -28,13 +29,15 @@ func (s *TransactionStorage) BatchAddCreate2Transfer(txs []models.Create2Transfe
 		return errors.WithStack(ErrNoRowsAffected)
 	}
 
-	for i := range txs {
-		err := s.AddCreate2Transfer(&txs[i])
-		if err != nil {
-			return err
+	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
+		for i := range txs {
+			err := txStorage.AddCreate2Transfer(&txs[i])
+			if err != nil {
+				return err
+			}
 		}
-	}
-	return nil
+		return nil
+	})
 }
 
 func (s *TransactionStorage) GetCreate2Transfer(hash common.Hash) (*models.Create2Transfer, error) {
@@ -48,19 +51,11 @@ func (s *TransactionStorage) GetCreate2Transfer(hash common.Hash) (*models.Creat
 	return tx.ToCreate2Transfer(txReceipt), nil
 }
 
-func (s *TransactionStorage) GetPendingCreate2Transfers(limit uint32) ([]models.Create2Transfer, error) {
-	txController, txStorage, err := s.BeginTransaction(TxOptions{})
-	if err != nil {
-		return nil, err
-	}
-	defer txController.Rollback(&err)
-
-	txs, err := txStorage.unsafeGetPendingCreate2Transfers(limit)
-	if err != nil {
-		return nil, err
-	}
-
-	err = txController.Commit()
+func (s *TransactionStorage) GetPendingCreate2Transfers(limit uint32) (txs []models.Create2Transfer, err error) {
+	err = s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
+		txs, err = txStorage.unsafeGetPendingCreate2Transfers(limit)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -96,40 +91,34 @@ func (s *TransactionStorage) unsafeGetPendingCreate2Transfers(limit uint32) ([]m
 }
 
 func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id *models.CommitmentID) ([]models.Create2Transfer, error) {
-	txController, txStorage, err := s.BeginTransaction(TxOptions{ReadOnly: true})
-	if err != nil {
-		return nil, err
-	}
-	defer txController.Rollback(&err)
-
 	encodeCommitmentID := models.EncodeCommitmentIDPointer(id)
 	indexKey := db.IndexKey(models.StoredReceiptName, "CommitmentID", encodeCommitmentID)
 
-	// queried Badger directly due to nil index decoding problem
 	var transfers []models.Create2Transfer
-	err = txStorage.database.Badger.View(func(txn *bdg.Txn) error {
-		var hashes []common.Hash
-		hashes, err = getTxHashesByIndexKey(txn, indexKey, models.StoredReceiptPrefix)
-		if err != nil {
-			return err
-		}
-
-		transfers = make([]models.Create2Transfer, 0, len(hashes))
-		for i := range hashes {
-			var storedTx *models.StoredTx
-			var storedReceipt *models.StoredReceipt
-			storedTx, storedReceipt, err = txStorage.getStoredTxWithReceipt(hashes[i])
+	err := s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
+		// queried Badger directly due to nil index decoding problem
+		return txStorage.database.Badger.View(func(txn *bdg.Txn) error {
+			hashes, err := getTxHashesByIndexKey(txn, indexKey, models.StoredReceiptPrefix)
+			if err == bdg.ErrKeyNotFound {
+				return nil
+			}
 			if err != nil {
 				return err
 			}
-			if storedTx.TxType == txtype.Create2Transfer {
-				transfers = append(transfers, *storedTx.ToCreate2Transfer(storedReceipt))
-			}
-		}
-		return nil
-	})
 
-	err = txController.Commit()
+			transfers = make([]models.Create2Transfer, 0, len(hashes))
+			for i := range hashes {
+				storedTx, storedReceipt, err := txStorage.getStoredTxWithReceipt(hashes[i])
+				if err != nil {
+					return err
+				}
+				if storedTx.TxType == txtype.Create2Transfer {
+					transfers = append(transfers, *storedTx.ToCreate2Transfer(storedReceipt))
+				}
+			}
+			return nil
+		})
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -137,11 +126,19 @@ func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id *models.Commit
 }
 
 func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([]models.Create2TransferWithBatchDetails, error) {
-	txs, txReceipts, err := s.getCreate2TransfersByPublicKey(publicKey)
+	var transfers []models.Create2TransferWithBatchDetails
+	err := s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
+		txs, txReceipts, err := txStorage.getCreate2TransfersByPublicKey(publicKey)
+		if err != nil {
+			return err
+		}
+		transfers, err = txStorage.create2TransferToTransfersWithBatchDetails(txs, txReceipts)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
-	return s.create2TransferToTransfersWithBatchDetails(txs, txReceipts)
+	return transfers, nil
 }
 
 func (s *Storage) getCreate2TransfersByPublicKey(publicKey *models.PublicKey) (
@@ -151,41 +148,66 @@ func (s *Storage) getCreate2TransfersByPublicKey(publicKey *models.PublicKey) (
 	if err != nil && !IsNotFoundError(err) {
 		return nil, nil, err
 	}
-	stateIDs := utils.ValueToInterfaceSlice(leaves, "StateID")
+
+	fromStateIDs := make([]interface{}, 0, len(leaves))
+	toStateIDs := make([]uint32, 0, len(leaves))
+	for i := range leaves {
+		fromStateIDs = append(fromStateIDs, leaves[i].StateID)
+		toStateIDs = append(toStateIDs, leaves[i].StateID)
+	}
 
 	txs := make([]models.StoredTx, 0, 1)
 	err = s.database.Badger.Find(
 		&txs,
-		bh.Where("FromStateID").In(stateIDs...).Index("FromStateID").
+		bh.Where("FromStateID").In(fromStateIDs...).Index("FromStateID").
 			And("TxType").Eq(txtype.Create2Transfer),
 	)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	receipts := make([]models.StoredReceipt, 0, 1)
-	err = s.database.Badger.Find(
-		&receipts,
-		bh.Where("ToStateID").In(stateIDs...).Index("ToStateID"),
-	)
+	txHashes, err := s.getC2THashesByStateIDs(toStateIDs)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return s.getMissingStoredTxsData(txs, receipts)
+	return s.getMissingStoredTxsData(txs, txHashes)
 }
 
-func (s *Storage) getMissingStoredTxsData(txs []models.StoredTx, receipts []models.StoredReceipt) (
+func (s *TransactionStorage) getC2THashesByStateIDs(stateIDs []uint32) ([]common.Hash, error) {
+	results := make([]common.Hash, 0, len(stateIDs))
+	err := s.database.Badger.View(func(txn *bdg.Txn) error {
+		for i := range stateIDs {
+			encodedStateID := models.EncodeUint32Pointer(&stateIDs[i])
+			indexKey := db.IndexKey(models.StoredReceiptName, "ToStateID", encodedStateID)
+			hashes, err := getTxHashesByIndexKey(txn, indexKey, models.StoredReceiptPrefix)
+			if err == bdg.ErrKeyNotFound {
+				continue
+			}
+			if err != nil {
+				return err
+			}
+			results = append(results, hashes...)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
+func (s *Storage) getMissingStoredTxsData(txs []models.StoredTx, receiptHashes []common.Hash) (
 	[]*models.StoredTx, []*models.StoredReceipt, error,
 ) {
 	hashes := make(map[common.Hash]struct{}, len(txs))
 
-	for i := range txs {
-		hashes[txs[i].Hash] = struct{}{}
+	for i := range receiptHashes {
+		hashes[receiptHashes[i]] = struct{}{}
 	}
 
-	for i := range receipts {
-		hashes[receipts[i].Hash] = struct{}{}
+	for i := range txs {
+		hashes[txs[i].Hash] = struct{}{}
 	}
 
 	resultTxs := make([]*models.StoredTx, 0, len(hashes))
@@ -203,27 +225,33 @@ func (s *Storage) getMissingStoredTxsData(txs []models.StoredTx, receipts []mode
 }
 
 func (s *TransactionStorage) MarkCreate2TransfersAsIncluded(txs []models.Create2Transfer, commitmentID *models.CommitmentID) error {
-	for i := range txs {
-		txReceipt := models.MakeStoredReceiptFromCreate2Transfer(&txs[i])
-		txReceipt.CommitmentID = commitmentID
-		err := s.addStoredReceipt(&txReceipt)
-		if err != nil {
-			return err
+	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
+		for i := range txs {
+			txReceipt := models.MakeStoredReceiptFromCreate2Transfer(&txs[i])
+			txReceipt.CommitmentID = commitmentID
+			err := txStorage.addStoredReceipt(&txReceipt)
+			if err != nil {
+				return err
+			}
 		}
-	}
-	return nil
+		return nil
+	})
 }
 
 func (s *Storage) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.Create2TransferWithBatchDetails, error) {
-	tx, txReceipt, err := s.getStoredTxWithReceipt(hash)
-	if err != nil {
-		return nil, err
-	}
-	if tx.TxType != txtype.Create2Transfer {
-		return nil, errors.WithStack(NewNotFoundError("transaction"))
-	}
+	var transfers []models.Create2TransferWithBatchDetails
+	err := s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
+		tx, txReceipt, err := txStorage.getStoredTxWithReceipt(hash)
+		if err != nil {
+			return err
+		}
+		if tx.TxType != txtype.Create2Transfer {
+			return errors.WithStack(NewNotFoundError("transaction"))
+		}
 
-	transfers, err := s.create2TransferToTransfersWithBatchDetails([]*models.StoredTx{tx}, []*models.StoredReceipt{txReceipt})
+		transfers, err = txStorage.create2TransferToTransfersWithBatchDetails([]*models.StoredTx{tx}, []*models.StoredReceipt{txReceipt})
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}

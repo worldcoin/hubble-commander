@@ -1,65 +1,43 @@
 package executor
 
 import (
-	"context"
+	"log"
 
-	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/eth"
-	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
-// TransactionExecutor executes transactions & syncs batches. Manages a database transaction.
-type TransactionExecutor struct {
-	cfg     *config.RollupConfig
-	storage *st.Storage
-	tx      *db.TxController
-	client  *eth.Client
-	ctx     context.Context
+type TransactionExecutor interface {
+	SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error)
 }
 
-// NewTransactionExecutor creates a TransactionExecutor and starts a database transaction.
-func NewTransactionExecutor(
-	storage *st.Storage,
-	client *eth.Client,
-	cfg *config.RollupConfig,
-	ctx context.Context,
-) (*TransactionExecutor, error) {
-	tx, txStorage, err := storage.BeginTransaction(st.TxOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	return &TransactionExecutor{
-		cfg:     cfg,
-		storage: txStorage,
-		tx:      tx,
-		client:  client,
-		ctx:     ctx,
-	}, nil
-}
-
-// NewTestTransactionExecutor creates a TransactionExecutor without a database transaction.
-func NewTestTransactionExecutor(
-	storage *st.Storage,
-	client *eth.Client,
-	cfg *config.RollupConfig,
-	ctx context.Context,
-) *TransactionExecutor {
-	return &TransactionExecutor{
-		cfg:     cfg,
-		storage: storage,
-		tx:      nil,
-		client:  client,
-		ctx:     ctx,
+func CreateTransactionExecutor(txType txtype.TransactionType) TransactionExecutor {
+	// nolint:exhaustive
+	switch txType {
+	case txtype.Transfer:
+		return &TransferExecutor{}
+	case txtype.Create2Transfer:
+		return &C2TExecutor{}
+	default:
+		log.Fatal("Invalid tx type")
+		return nil
 	}
 }
 
-func (t *TransactionExecutor) Commit() error {
-	return t.tx.Commit()
+// TransferExecutor implements TransactionExecutor
+type TransferExecutor struct {
 }
 
-// nolint:gocritic
-func (t *TransactionExecutor) Rollback(cause *error) {
-	t.tx.Rollback(cause)
+func (e *TransferExecutor) SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error) {
+	return client.SubmitTransfersBatch(commitments)
+}
+
+// C2TExecutor implements TransactionExecutor
+type C2TExecutor struct {
+}
+
+func (e *C2TExecutor) SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error) {
+	return client.SubmitCreate2TransfersBatch(commitments)
 }

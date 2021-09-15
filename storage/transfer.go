@@ -14,13 +14,15 @@ import (
 )
 
 func (s *TransactionStorage) AddTransfer(t *models.Transfer) error {
-	if t.CommitmentID != nil || t.ErrorMessage != nil {
-		err := s.database.Badger.Insert(t.Hash, models.MakeStoredReceiptFromTransfer(t))
-		if err != nil {
-			return err
+	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
+		if t.CommitmentID != nil || t.ErrorMessage != nil {
+			err := txStorage.database.Badger.Insert(t.Hash, models.MakeStoredReceiptFromTransfer(t))
+			if err != nil {
+				return err
+			}
 		}
-	}
-	return s.database.Badger.Insert(t.Hash, models.MakeStoredTxFromTransfer(t))
+		return txStorage.database.Badger.Insert(t.Hash, models.MakeStoredTxFromTransfer(t))
+	})
 }
 
 func (s *TransactionStorage) BatchAddTransfer(txs []models.Transfer) error {
@@ -28,13 +30,15 @@ func (s *TransactionStorage) BatchAddTransfer(txs []models.Transfer) error {
 		return errors.WithStack(ErrNoRowsAffected)
 	}
 
-	for i := range txs {
-		err := s.AddTransfer(&txs[i])
-		if err != nil {
-			return err
+	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
+		for i := range txs {
+			err := txStorage.AddTransfer(&txs[i])
+			if err != nil {
+				return err
+			}
 		}
-	}
-	return nil
+		return nil
+	})
 }
 
 func (s *TransactionStorage) GetTransfer(hash common.Hash) (*models.Transfer, error) {
@@ -48,19 +52,11 @@ func (s *TransactionStorage) GetTransfer(hash common.Hash) (*models.Transfer, er
 	return tx.ToTransfer(txReceipt), nil
 }
 
-func (s *TransactionStorage) GetPendingTransfers(limit uint32) ([]models.Transfer, error) {
-	txController, txStorage, err := s.BeginTransaction(TxOptions{})
-	if err != nil {
-		return nil, err
-	}
-	defer txController.Rollback(&err)
-
-	txs, err := txStorage.unsafeGetPendingTransfers(limit)
-	if err != nil {
-		return nil, err
-	}
-
-	err = txController.Commit()
+func (s *TransactionStorage) GetPendingTransfers(limit uint32) (txs []models.Transfer, err error) {
+	err = s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
+		txs, err = txStorage.unsafeGetPendingTransfers(limit)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -96,37 +92,34 @@ func (s *TransactionStorage) unsafeGetPendingTransfers(limit uint32) ([]models.T
 }
 
 func (s *TransactionStorage) GetTransfersByCommitmentID(id *models.CommitmentID) ([]models.Transfer, error) {
-	txController, txStorage, err := s.BeginTransaction(TxOptions{ReadOnly: true})
-	if err != nil {
-		return nil, err
-	}
-	defer txController.Rollback(&err)
-
 	encodeCommitmentID := models.EncodeCommitmentIDPointer(id)
 	indexKey := db.IndexKey(models.StoredReceiptName, "CommitmentID", encodeCommitmentID)
 
 	var transfers []models.Transfer
-	// queried Badger directly due to nil index decoding problem
-	err = txStorage.database.Badger.View(func(txn *bdg.Txn) error {
-		var hashes []common.Hash
-		hashes, err = getTxHashesByIndexKey(txn, indexKey, models.StoredReceiptPrefix)
-
-		transfers = make([]models.Transfer, 0, len(hashes))
-		for i := range hashes {
-			var storedTx *models.StoredTx
-			var storedReceipt *models.StoredReceipt
-			storedTx, storedReceipt, err = txStorage.getStoredTxWithReceipt(hashes[i])
+	err := s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
+		// queried Badger directly due to nil index decoding problem
+		return txStorage.database.Badger.View(func(txn *bdg.Txn) error {
+			hashes, err := getTxHashesByIndexKey(txn, indexKey, models.StoredReceiptPrefix)
+			if err == bdg.ErrKeyNotFound {
+				return nil
+			}
 			if err != nil {
 				return err
 			}
-			if storedTx.TxType == txtype.Transfer {
-				transfers = append(transfers, *storedTx.ToTransfer(storedReceipt))
-			}
-		}
-		return nil
-	})
 
-	err = txController.Commit()
+			transfers = make([]models.Transfer, 0, len(hashes))
+			for i := range hashes {
+				storedTx, storedReceipt, err := txStorage.getStoredTxWithReceipt(hashes[i])
+				if err != nil {
+					return err
+				}
+				if storedTx.TxType == txtype.Transfer {
+					transfers = append(transfers, *storedTx.ToTransfer(storedReceipt))
+				}
+			}
+			return nil
+		})
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -134,27 +127,34 @@ func (s *TransactionStorage) GetTransfersByCommitmentID(id *models.CommitmentID)
 }
 
 func (s *TransactionStorage) MarkTransfersAsIncluded(txs []models.Transfer, commitmentID *models.CommitmentID) error {
-	for i := range txs {
-		txReceipt := models.MakeStoredReceiptFromTransfer(&txs[i])
-		txReceipt.CommitmentID = commitmentID
-		err := s.addStoredReceipt(&txReceipt)
-		if err != nil {
-			return err
+	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
+		for i := range txs {
+			txReceipt := models.MakeStoredReceiptFromTransfer(&txs[i])
+			txReceipt.CommitmentID = commitmentID
+			err := txStorage.addStoredReceipt(&txReceipt)
+			if err != nil {
+				return err
+			}
 		}
-	}
-	return nil
+		return nil
+	})
 }
 
 func (s *Storage) GetTransferWithBatchDetails(hash common.Hash) (*models.TransferWithBatchDetails, error) {
-	tx, txReceipt, err := s.getStoredTxWithReceipt(hash)
-	if err != nil {
-		return nil, err
-	}
-	if tx.TxType != txtype.Transfer {
-		return nil, errors.WithStack(NewNotFoundError("transaction"))
-	}
+	var transfers []models.TransferWithBatchDetails
+	err := s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
+		tx, txReceipt, err := txStorage.getStoredTxWithReceipt(hash)
+		if err != nil {
+			return err
+		}
+		if tx.TxType != txtype.Transfer {
+			return errors.WithStack(NewNotFoundError("transaction"))
+		}
 
-	transfers, err := s.transfersToTransfersWithBatchDetails([]models.StoredTx{*tx}, []*models.StoredReceipt{txReceipt})
+		transfers, err = txStorage.transfersToTransfersWithBatchDetails([]models.StoredTx{*tx}, []*models.StoredReceipt{txReceipt})
+		return err
+	})
+
 	if err != nil {
 		return nil, err
 	}
@@ -162,11 +162,19 @@ func (s *Storage) GetTransferWithBatchDetails(hash common.Hash) (*models.Transfe
 }
 
 func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models.TransferWithBatchDetails, error) {
-	txs, txReceipts, err := s.getTransfersByPublicKey(publicKey)
+	var transfers []models.TransferWithBatchDetails
+	err := s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
+		txs, txReceipts, err := txStorage.getTransfersByPublicKey(publicKey)
+		if err != nil {
+			return err
+		}
+		transfers, err = txStorage.transfersToTransfersWithBatchDetails(txs, txReceipts)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
-	return s.transfersToTransfersWithBatchDetails(txs, txReceipts)
+	return transfers, nil
 }
 
 func (s *Storage) getTransfersByPublicKey(publicKey *models.PublicKey) (

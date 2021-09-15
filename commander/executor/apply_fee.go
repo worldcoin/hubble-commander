@@ -7,20 +7,20 @@ import (
 
 var ErrInvalidFeeReceiverTokenID = errors.New("invalid fee receiver token ID")
 
-func (t *TransactionExecutor) ApplyFee(feeReceiverStateID uint32, fee models.Uint256) (*models.StateMerkleProof, error) {
-	feeReceiver, err := t.storage.StateTree.Leaf(feeReceiverStateID)
+func (c *ExecutionContext) ApplyFee(feeReceiverStateID uint32, fee models.Uint256) (*models.StateMerkleProof, error) {
+	feeReceiver, err := c.storage.StateTree.Leaf(feeReceiverStateID)
 	if err != nil {
 		return nil, err
 	}
-	return t.applyFee(feeReceiver, fee)
+	return c.applyFee(feeReceiver, fee)
 }
 
-func (t *TransactionExecutor) applyFee(feeReceiver *models.StateLeaf, fee models.Uint256) (*models.StateMerkleProof, error) {
+func (c *ExecutionContext) applyFee(feeReceiver *models.StateLeaf, fee models.Uint256) (*models.StateMerkleProof, error) {
 	initialState := feeReceiver.UserState.Copy()
 
 	feeReceiver.Balance = *feeReceiver.Balance.Add(&fee)
 
-	stateChangeWitness, err := t.storage.StateTree.Set(feeReceiver.StateID, &feeReceiver.UserState)
+	stateChangeWitness, err := c.storage.StateTree.Set(feeReceiver.StateID, &feeReceiver.UserState)
 	if err != nil {
 		return nil, err
 	}
@@ -32,16 +32,16 @@ func (t *TransactionExecutor) applyFee(feeReceiver *models.StateLeaf, fee models
 	return stateProof, nil
 }
 
-func (t *TransactionExecutor) ApplyFeeForSync(feeReceiverStateID uint32, commitmentTokenID, fee *models.Uint256) (
+func (c *ExecutionContext) ApplyFeeForSync(feeReceiverStateID uint32, commitmentTokenID, fee *models.Uint256) (
 	stateProof *models.StateMerkleProof,
 	commitmentError error,
 	appError error,
 ) {
-	feeReceiver, appError := t.storage.StateTree.LeafOrEmpty(feeReceiverStateID)
+	feeReceiver, appError := c.storage.StateTree.LeafOrEmpty(feeReceiverStateID)
 	if appError != nil {
 		return nil, nil, appError
 	}
-	stateProof, appError = t.applyFee(feeReceiver, *fee)
+	stateProof, appError = c.applyFee(feeReceiver, *fee)
 	if appError != nil {
 		return nil, nil, appError
 	}

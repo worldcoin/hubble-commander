@@ -11,7 +11,7 @@ var (
 	ErrTooManyTxs        = NewDisputableError(Transition, "too many transactions in a commitment")
 )
 
-func (t *TransactionExecutor) syncTransferCommitment(
+func (c *ExecutionContext) syncTransferCommitment(
 	commitment *encoder.DecodedCommitment,
 ) (models.GenericTransactionArray, error) {
 	if len(commitment.Transactions)%encoder.TransferLength != 0 {
@@ -23,22 +23,22 @@ func (t *TransactionExecutor) syncTransferCommitment(
 		return nil, err
 	}
 
-	if uint32(len(transfers)) > t.cfg.MaxTxsPerCommitment {
+	if uint32(len(transfers)) > c.cfg.MaxTxsPerCommitment {
 		return nil, ErrTooManyTxs
 	}
 
-	appliedTransfers, stateProofs, err := t.ApplyTransfersForSync(transfers, commitment.FeeReceiver)
+	appliedTransfers, stateProofs, err := c.ApplyTransfersForSync(transfers, commitment.FeeReceiver)
 	if err != nil {
 		return nil, err
 	}
 
-	err = t.verifyStateRoot(commitment.StateRoot, stateProofs)
+	err = c.verifyStateRoot(commitment.StateRoot, stateProofs)
 	if err != nil {
 		return nil, err
 	}
 
-	if !t.cfg.DisableSignatures {
-		err = t.verifyTransferSignature(commitment, appliedTransfers)
+	if !c.cfg.DisableSignatures {
+		err = c.verifyTransferSignature(commitment, appliedTransfers)
 		if err != nil {
 			return nil, err
 		}
@@ -47,8 +47,8 @@ func (t *TransactionExecutor) syncTransferCommitment(
 	return models.TransferArray(appliedTransfers), nil
 }
 
-func (t *TransactionExecutor) verifyStateRoot(commitmentPostState common.Hash, proofs []models.StateMerkleProof) error {
-	postStateRoot, err := t.storage.StateTree.Root()
+func (c *ExecutionContext) verifyStateRoot(commitmentPostState common.Hash, proofs []models.StateMerkleProof) error {
+	postStateRoot, err := c.storage.StateTree.Root()
 	if err != nil {
 		return err
 	}

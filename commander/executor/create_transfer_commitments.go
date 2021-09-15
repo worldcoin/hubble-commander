@@ -18,26 +18,26 @@ type FeeReceiver struct {
 	TokenID models.Uint256
 }
 
-func (t *TransactionExecutor) CreateTransferCommitments(
+func (c *ExecutionContext) CreateTransferCommitments(
 	domain *bls.Domain,
 ) (commitments []models.Commitment, err error) {
-	pendingTransfers, err := t.queryPendingTransfers()
+	pendingTransfers, err := c.queryPendingTransfers()
 	if err != nil {
 		return nil, err
 	}
 
-	commitmentID, err := t.createCommitmentID()
+	commitmentID, err := c.createCommitmentID()
 	if err != nil {
 		return nil, err
 	}
 
-	commitments = make([]models.Commitment, 0, t.cfg.MaxCommitmentsPerBatch)
+	commitments = make([]models.Commitment, 0, c.cfg.MaxCommitmentsPerBatch)
 
-	for i := uint8(0); len(commitments) != int(t.cfg.MaxCommitmentsPerBatch); i++ {
+	for i := uint8(0); len(commitments) != int(c.cfg.MaxCommitmentsPerBatch); i++ {
 		var commitment *models.Commitment
 		commitmentID.IndexInBatch = i
 
-		pendingTransfers, commitment, err = t.createTransferCommitment(pendingTransfers, commitmentID, domain)
+		pendingTransfers, commitment, err = c.createTransferCommitment(pendingTransfers, commitmentID, domain)
 		if err == ErrNotEnoughTransfers {
 			break
 		}
@@ -55,7 +55,7 @@ func (t *TransactionExecutor) CreateTransferCommitments(
 	return commitments, nil
 }
 
-func (t *TransactionExecutor) createTransferCommitment(
+func (c *ExecutionContext) createTransferCommitment(
 	pendingTransfers []models.Transfer,
 	commitmentID *models.CommitmentID,
 	domain *bls.Domain,
@@ -66,24 +66,24 @@ func (t *TransactionExecutor) createTransferCommitment(
 ) {
 	startTime := time.Now()
 
-	pendingTransfers, err = t.refillPendingTransfers(pendingTransfers)
+	pendingTransfers, err = c.refillPendingTransfers(pendingTransfers)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	feeReceiver, err := t.getCommitmentFeeReceiver()
+	feeReceiver, err := c.getCommitmentFeeReceiver()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	initialStateRoot, err := t.storage.StateTree.Root()
+	initialStateRoot, err := c.storage.StateTree.Root()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	appliedTransfers, newPendingTransfers, err := t.applyTransfersForCommitment(pendingTransfers, feeReceiver)
+	appliedTransfers, newPendingTransfers, err := c.applyTransfersForCommitment(pendingTransfers, feeReceiver)
 	if err == ErrNotEnoughTransfers {
-		if revertErr := t.storage.StateTree.RevertTo(*initialStateRoot); revertErr != nil {
+		if revertErr := c.storage.StateTree.RevertTo(*initialStateRoot); revertErr != nil {
 			return nil, nil, revertErr
 		}
 		return nil, nil, err
@@ -92,7 +92,7 @@ func (t *TransactionExecutor) createTransferCommitment(
 		return nil, nil, err
 	}
 
-	commitment, err = t.buildTransferCommitment(appliedTransfers, commitmentID, feeReceiver.StateID, domain)
+	commitment, err = c.buildTransferCommitment(appliedTransfers, commitmentID, feeReceiver.StateID, domain)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -107,18 +107,18 @@ func (t *TransactionExecutor) createTransferCommitment(
 	return newPendingTransfers, commitment, nil
 }
 
-func (t *TransactionExecutor) applyTransfersForCommitment(pendingTransfers []models.Transfer, feeReceiver *FeeReceiver) (
+func (c *ExecutionContext) applyTransfersForCommitment(pendingTransfers []models.Transfer, feeReceiver *FeeReceiver) (
 	appliedTransfers, newPendingTransfers []models.Transfer,
 	err error,
 ) {
-	appliedTransfers = make([]models.Transfer, 0, t.cfg.MaxTxsPerCommitment)
+	appliedTransfers = make([]models.Transfer, 0, c.cfg.MaxTxsPerCommitment)
 	invalidTransfers := make([]models.Transfer, 0, 1)
 
 	for {
 		var transfers *AppliedTransfers
 
-		numNeededTransfers := t.cfg.MaxTxsPerCommitment - uint32(len(appliedTransfers))
-		transfers, err = t.ApplyTransfers(pendingTransfers, numNeededTransfers, feeReceiver)
+		numNeededTransfers := c.cfg.MaxTxsPerCommitment - uint32(len(appliedTransfers))
+		transfers, err = c.ApplyTransfers(pendingTransfers, numNeededTransfers, feeReceiver)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -126,12 +126,12 @@ func (t *TransactionExecutor) applyTransfersForCommitment(pendingTransfers []mod
 		appliedTransfers = append(appliedTransfers, transfers.appliedTransfers...)
 		invalidTransfers = append(invalidTransfers, transfers.invalidTransfers...)
 
-		if len(appliedTransfers) == int(t.cfg.MaxTxsPerCommitment) {
+		if len(appliedTransfers) == int(c.cfg.MaxTxsPerCommitment) {
 			newPendingTransfers = removeTransfers(pendingTransfers, append(appliedTransfers, invalidTransfers...))
 			return appliedTransfers, newPendingTransfers, nil
 		}
 
-		morePendingTransfers, err := t.queryMorePendingTransfers(appliedTransfers)
+		morePendingTransfers, err := c.queryMorePendingTransfers(appliedTransfers)
 		if err == ErrNotEnoughTransfers {
 			newPendingTransfers = removeTransfers(pendingTransfers, append(appliedTransfers, invalidTransfers...))
 			return appliedTransfers, newPendingTransfers, nil
@@ -143,44 +143,44 @@ func (t *TransactionExecutor) applyTransfersForCommitment(pendingTransfers []mod
 	}
 }
 
-func (t *TransactionExecutor) refillPendingTransfers(pendingTransfers []models.Transfer) ([]models.Transfer, error) {
-	if len(pendingTransfers) < int(t.cfg.MaxTxsPerCommitment) {
-		return t.queryPendingTransfers()
+func (c *ExecutionContext) refillPendingTransfers(pendingTransfers []models.Transfer) ([]models.Transfer, error) {
+	if len(pendingTransfers) < int(c.cfg.MaxTxsPerCommitment) {
+		return c.queryPendingTransfers()
 	}
 	return pendingTransfers, nil
 }
 
-func (t *TransactionExecutor) queryPendingTransfers() ([]models.Transfer, error) {
-	pendingTransfers, err := t.storage.GetPendingTransfers(t.cfg.MaxCommitmentsPerBatch * t.cfg.MaxTxsPerCommitment)
+func (c *ExecutionContext) queryPendingTransfers() ([]models.Transfer, error) {
+	pendingTransfers, err := c.storage.GetPendingTransfers(c.cfg.MaxCommitmentsPerBatch * c.cfg.MaxTxsPerCommitment)
 	if err != nil {
 		return nil, err
 	}
-	if len(pendingTransfers) < int(t.cfg.MinTxsPerCommitment) {
+	if len(pendingTransfers) < int(c.cfg.MinTxsPerCommitment) {
 		return nil, ErrNotEnoughTransfers
 	}
 	return pendingTransfers, nil
 }
 
-func (t *TransactionExecutor) queryMorePendingTransfers(appliedTransfers []models.Transfer) ([]models.Transfer, error) {
+func (c *ExecutionContext) queryMorePendingTransfers(appliedTransfers []models.Transfer) ([]models.Transfer, error) {
 	numAppliedTransfers := uint32(len(appliedTransfers))
 	// TODO use SQL Offset instead
-	pendingTransfers, err := t.storage.GetPendingTransfers(
-		t.cfg.MaxCommitmentsPerBatch*t.cfg.MaxTxsPerCommitment + numAppliedTransfers,
+	pendingTransfers, err := c.storage.GetPendingTransfers(
+		c.cfg.MaxCommitmentsPerBatch*c.cfg.MaxTxsPerCommitment + numAppliedTransfers,
 	)
 	if err != nil {
 		return nil, err
 	}
 	pendingTransfers = removeTransfers(pendingTransfers, appliedTransfers)
 
-	if len(pendingTransfers) < int(t.cfg.MinTxsPerCommitment) {
+	if len(pendingTransfers) < int(c.cfg.MinTxsPerCommitment) {
 		return nil, ErrNotEnoughTransfers
 	}
 	return pendingTransfers, nil
 }
 
-func (t *TransactionExecutor) getCommitmentFeeReceiver() (*FeeReceiver, error) {
+func (c *ExecutionContext) getCommitmentFeeReceiver() (*FeeReceiver, error) {
 	commitmentTokenID := models.MakeUint256(0) // TODO support multiple tokens
-	feeReceiverState, err := t.storage.GetFeeReceiverStateLeaf(t.cfg.FeeReceiverPubKeyID, commitmentTokenID)
+	feeReceiverState, err := c.storage.GetFeeReceiverStateLeaf(c.cfg.FeeReceiverPubKeyID, commitmentTokenID)
 	if err != nil {
 		return nil, err
 	}

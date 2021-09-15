@@ -4,12 +4,12 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-func (t *TransactionExecutor) ApplyCreate2Transfer(
+func (c *ExecutionContext) ApplyCreate2Transfer(
 	create2Transfer *models.Create2Transfer,
 	pubKeyID uint32,
 	commitmentTokenID models.Uint256,
 ) (appliedTransfer *models.Create2Transfer, transferError, appError error) {
-	nextAvailableStateID, appError := t.storage.StateTree.NextAvailableStateID()
+	nextAvailableStateID, appError := c.storage.StateTree.NextAvailableStateID()
 	if appError != nil {
 		return appliedTransfer, nil, appError
 	}
@@ -17,11 +17,11 @@ func (t *TransactionExecutor) ApplyCreate2Transfer(
 	appliedTransfer.ToStateID = nextAvailableStateID
 
 	receiverLeaf := newUserLeaf(*appliedTransfer.ToStateID, pubKeyID, commitmentTokenID)
-	transferError, appError = t.ApplyTransfer(appliedTransfer, receiverLeaf, commitmentTokenID)
+	transferError, appError = c.ApplyTransfer(appliedTransfer, receiverLeaf, commitmentTokenID)
 	return appliedTransfer, transferError, appError
 }
 
-func (t *TransactionExecutor) ApplyCreate2TransferForSync(
+func (c *ExecutionContext) ApplyCreate2TransferForSync(
 	create2Transfer *models.Create2Transfer,
 	pubKeyID uint32,
 	commitmentTokenID models.Uint256,
@@ -32,7 +32,7 @@ func (t *TransactionExecutor) ApplyCreate2TransferForSync(
 
 	//TODO: forbid C2Ts to an already existing user state
 	receiverLeaf := newUserLeaf(*create2Transfer.ToStateID, pubKeyID, commitmentTokenID)
-	genericSynced, transferError, appError := t.applyGenericTransactionForSync(create2Transfer, receiverLeaf, commitmentTokenID)
+	genericSynced, transferError, appError := c.applyGenericTransactionForSync(create2Transfer, receiverLeaf, commitmentTokenID)
 	if appError != nil {
 		return nil, nil, appError
 	}

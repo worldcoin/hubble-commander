@@ -9,24 +9,24 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (t *TransactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionType, domain *bls.Domain) (err error) {
+func (c *RollupContext) CreateAndSubmitBatch(batchType txtype.TransactionType, domain *bls.Domain) (err error) {
 	startTime := time.Now()
 	var commitments []models.Commitment
-	batch, err := t.NewPendingBatch(batchType)
+	batch, err := c.NewPendingBatch(batchType)
 	if err != nil {
 		return err
 	}
 
 	if batchType == txtype.Transfer {
-		commitments, err = t.CreateTransferCommitments(domain)
+		commitments, err = c.CreateTransferCommitments(domain)
 	} else {
-		commitments, err = t.CreateCreate2TransferCommitments(domain)
+		commitments, err = c.CreateCreate2TransferCommitments(domain)
 	}
 	if err != nil {
 		return err
 	}
 
-	err = t.SubmitBatch(batch, commitments)
+	err = c.SubmitBatch(batch, commitments)
 	if err != nil {
 		return err
 	}
@@ -42,12 +42,12 @@ func (t *TransactionExecutor) CreateAndSubmitBatch(batchType txtype.TransactionT
 	return nil
 }
 
-func (t *TransactionExecutor) NewPendingBatch(batchType txtype.TransactionType) (*models.Batch, error) {
-	prevStateRoot, err := t.storage.StateTree.Root()
+func (c *ExecutionContext) NewPendingBatch(batchType txtype.TransactionType) (*models.Batch, error) {
+	prevStateRoot, err := c.storage.StateTree.Root()
 	if err != nil {
 		return nil, err
 	}
-	batchID, err := t.storage.GetNextBatchID()
+	batchID, err := c.storage.GetNextBatchID()
 	if err != nil {
 		return nil, err
 	}

@@ -8,8 +8,8 @@ import (
 
 const InvalidSignatureMessage = "invalid commitment signature"
 
-func (t *TransactionExecutor) verifyTransferSignature(commitment *encoder.DecodedCommitment, transfers []models.Transfer) error {
-	domain, err := t.client.GetDomain()
+func (c *ExecutionContext) verifyTransferSignature(commitment *encoder.DecodedCommitment, transfers []models.Transfer) error {
+	domain, err := c.client.GetDomain()
 	if err != nil {
 		return err
 	}
@@ -17,7 +17,7 @@ func (t *TransactionExecutor) verifyTransferSignature(commitment *encoder.Decode
 	messages := make([][]byte, len(transfers))
 	publicKeys := make([]*models.PublicKey, len(transfers))
 	for i := range transfers {
-		publicKeys[i], err = t.storage.GetPublicKeyByStateID(transfers[i].FromStateID)
+		publicKeys[i], err = c.storage.GetPublicKeyByStateID(transfers[i].FromStateID)
 		if err != nil {
 			return err
 		}
@@ -28,14 +28,14 @@ func (t *TransactionExecutor) verifyTransferSignature(commitment *encoder.Decode
 	}
 
 	genericTxs := models.TransferArray(transfers)
-	return t.verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys, genericTxs)
+	return c.verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys, genericTxs)
 }
 
-func (t *TransactionExecutor) verifyCreate2TransferSignature(
+func (c *ExecutionContext) verifyCreate2TransferSignature(
 	commitment *encoder.DecodedCommitment,
 	transfers []models.Create2Transfer,
 ) error {
-	domain, err := t.client.GetDomain()
+	domain, err := c.client.GetDomain()
 	if err != nil {
 		return err
 	}
@@ -43,7 +43,7 @@ func (t *TransactionExecutor) verifyCreate2TransferSignature(
 	messages := make([][]byte, len(transfers))
 	publicKeys := make([]*models.PublicKey, len(transfers))
 	for i := range transfers {
-		publicKeys[i], err = t.storage.GetPublicKeyByStateID(transfers[i].FromStateID)
+		publicKeys[i], err = c.storage.GetPublicKeyByStateID(transfers[i].FromStateID)
 		if err != nil {
 			return err
 		}
@@ -54,10 +54,10 @@ func (t *TransactionExecutor) verifyCreate2TransferSignature(
 	}
 
 	genericTxs := models.Create2TransferArray(transfers)
-	return t.verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys, genericTxs)
+	return c.verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys, genericTxs)
 }
 
-func (t *TransactionExecutor) verifyCommitmentSignature(
+func (c *ExecutionContext) verifyCommitmentSignature(
 	signature *models.Signature,
 	domain *bls.Domain,
 	messages [][]byte,
@@ -69,7 +69,7 @@ func (t *TransactionExecutor) verifyCommitmentSignature(
 	}
 	sig, err := bls.NewSignatureFromBytes(signature.Bytes(), *domain)
 	if err != nil {
-		return t.createDisputableSignatureError(err.Error(), transfers)
+		return c.createDisputableSignatureError(err.Error(), transfers)
 	}
 	aggregatedSignature := bls.AggregatedSignature{Signature: sig}
 	isValid, err := aggregatedSignature.Verify(messages, publicKeys)
@@ -77,15 +77,42 @@ func (t *TransactionExecutor) verifyCommitmentSignature(
 		return err
 	}
 	if !isValid {
-		return t.createDisputableSignatureError(InvalidSignatureMessage, transfers)
+		return c.createDisputableSignatureError(InvalidSignatureMessage, transfers)
 	}
 	return nil
 }
 
-func (t *TransactionExecutor) createDisputableSignatureError(reason string, transfers models.GenericTransactionArray) error {
-	proofs, proofErr := t.stateMerkleProofs(transfers)
+func (c *ExecutionContext) createDisputableSignatureError(reason string, transfers models.GenericTransactionArray) error {
+	proofs, proofErr := c.stateMerkleProofs(transfers)
 	if proofErr != nil {
 		return proofErr
 	}
 	return NewDisputableErrorWithProofs(Signature, reason, proofs)
+}
+
+func (c *ExecutionContext) stateMerkleProofs(transfers models.GenericTransactionArray) ([]models.StateMerkleProof, error) {
+	proofs := make([]models.StateMerkleProof, 0, transfers.Len())
+	for i := 0; i < transfers.Len(); i++ {
+		stateProof, err := c.userStateProof(transfers.At(i).GetFromStateID())
+		if err != nil {
+			return nil, err
+		}
+		proofs = append(proofs, *stateProof)
+	}
+	return proofs, nil
+}
+
+func (c *ExecutionContext) userStateProof(stateID uint32) (*models.StateMerkleProof, error) {
+	leaf, err := c.storage.StateTree.Leaf(stateID)
+	if err != nil {
+		return nil, err
+	}
+	witness, err := c.storage.StateTree.GetLeafWitness(leaf.StateID)
+	if err != nil {
+		return nil, err
+	}
+	return &models.StateMerkleProof{
+		UserState: &leaf.UserState,
+		Witness:   witness,
+	}, nil
 }

@@ -1,16 +1,13 @@
 package executor
 
 import (
-	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
@@ -18,39 +15,18 @@ import (
 )
 
 type VerifySignatureTestSuite struct {
-	*require.Assertions
-	suite.Suite
-	transactionExecutor *TransactionExecutor
-	storage             *st.TestStorage
-	client              *eth.TestClient
-	cfg                 *config.RollupConfig
-	wallets             []bls.Wallet
+	TestSuiteWithExecutionContext
+	wallets []bls.Wallet
 }
 
-func (s *VerifySignatureTestSuite) SetupSuite() {
-	s.Assertions = require.New(s.T())
-	s.cfg = &config.RollupConfig{
+func (s *VerifySignatureTestSuite) SetupTest() {
+	s.TestSuiteWithExecutionContext.SetupTestWithConfig(config.RollupConfig{
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
 		MaxTxsPerCommitment:    1,
 		DisableSignatures:      false,
-	}
-}
-
-func (s *VerifySignatureTestSuite) SetupTest() {
-	var err error
-	s.client, err = eth.NewTestClient()
-	s.NoError(err)
-	s.storage, err = st.NewTestStorage()
-	s.NoError(err)
-	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, s.cfg, context.Background())
+	})
 	s.addAccounts()
-}
-
-func (s *VerifySignatureTestSuite) TearDownTest() {
-	err := s.storage.Teardown()
-	s.NoError(err)
-	s.client.Close()
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_ValidSignature() {
@@ -88,7 +64,7 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_ValidSignature() 
 		CombinedSignature: *combinedSignature,
 	}
 
-	err = s.transactionExecutor.verifyTransferSignature(commitment, transfers)
+	err = s.executionCtx.verifyTransferSignature(commitment, transfers)
 	s.NoError(err)
 }
 
@@ -129,7 +105,7 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_InvalidSignature(
 		CombinedSignature: *combinedSignature,
 	}
 
-	err = s.transactionExecutor.verifyTransferSignature(commitment, transfers)
+	err = s.executionCtx.verifyTransferSignature(commitment, transfers)
 
 	var disputableErr *DisputableError
 	s.ErrorAs(err, &disputableErr)
@@ -143,7 +119,7 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_EmptyTransactions
 		CombinedSignature: models.Signature{1, 2, 3},
 	}
 
-	err := s.transactionExecutor.verifyTransferSignature(commitment, transfers)
+	err := s.executionCtx.verifyTransferSignature(commitment, transfers)
 	s.NoError(err)
 }
 
@@ -184,7 +160,7 @@ func (s *VerifySignatureTestSuite) TestVerifyCreate2TransferSignature_ValidSigna
 		CombinedSignature: *combinedSignature,
 	}
 
-	err = s.transactionExecutor.verifyCreate2TransferSignature(commitment, transfers)
+	err = s.executionCtx.verifyCreate2TransferSignature(commitment, transfers)
 	s.NoError(err)
 }
 
@@ -194,7 +170,7 @@ func (s *VerifySignatureTestSuite) TestVerifyCreate2TransfersSignature_EmptyTran
 		CombinedSignature: models.Signature{1, 2, 3},
 	}
 
-	err := s.transactionExecutor.verifyCreate2TransferSignature(commitment, transfers)
+	err := s.executionCtx.verifyCreate2TransferSignature(commitment, transfers)
 	s.NoError(err)
 }
 

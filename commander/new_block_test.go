@@ -89,13 +89,17 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_StartsRollupLoop() {
 	s.Equal(*latestBlockNumber, uint64(blockNumber))
 }
 
-func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedBeforeStartup() {
+func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAndTokensAddedBeforeStartup() {
 	accounts := []models.AccountLeaf{
 		{PublicKey: *s.wallets[0].PublicKey()},
 		{PublicKey: *s.wallets[1].PublicKey()},
 	}
+	registeredToken := models.RegisteredToken{
+		Contract: s.testClient.ExampleTokenAddress,
+	}
 	s.registerAccounts(accounts)
-	s.createAndSubmitTransferBatchInTransaction(&s.transfer)
+	s.submitTransferBatchInTransaction(&s.transfer)
+	s.registerToken(registeredToken)
 
 	s.startBlockLoop()
 	s.waitForLatestBlockSync()
@@ -110,9 +114,14 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedBef
 	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 1)
+
+	syncedToken, err := s.cmd.storage.GetRegisteredToken(models.MakeUint256(0))
+	s.NoError(err)
+	s.Equal(registeredToken.Contract, syncedToken.Contract)
+	s.Equal(registeredToken.ID, syncedToken.ID)
 }
 
-func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedWhileRunning() {
+func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAndTokensAddedWhileRunning() {
 	s.startBlockLoop()
 	s.waitForLatestBlockSync()
 
@@ -120,8 +129,12 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedWhi
 		{PublicKey: *s.wallets[0].PublicKey()},
 		{PublicKey: *s.wallets[1].PublicKey()},
 	}
+	registeredToken := models.RegisteredToken{
+		Contract: s.testClient.ExampleTokenAddress,
+	}
 	s.registerAccounts(accounts)
-	s.createAndSubmitTransferBatchInTransaction(&s.transfer)
+	s.submitTransferBatchInTransaction(&s.transfer)
+	s.registerToken(registeredToken)
 
 	s.waitForLatestBlockSync()
 
@@ -135,6 +148,11 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAddedWhi
 	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 1)
+
+	syncedToken, err := s.cmd.storage.GetRegisteredToken(models.MakeUint256(0))
+	s.NoError(err)
+	s.Equal(registeredToken.Contract, syncedToken.Contract)
+	s.Equal(registeredToken.ID, syncedToken.ID)
 }
 
 func (s *NewBlockLoopTestSuite) startBlockLoop() {
@@ -160,32 +178,39 @@ func (s *NewBlockLoopTestSuite) registerAccounts(accounts []models.AccountLeaf) 
 	}
 }
 
-func (s *NewBlockLoopTestSuite) createAndSubmitTransferBatchInTransaction(tx *models.Transfer) {
-	s.runInTransaction(func(txStorage *st.Storage, txExecutor *executor.TransactionExecutor) {
+func (s *NewBlockLoopTestSuite) registerToken(token models.RegisteredToken) {
+	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
+	s.NoError(err)
+	RegisterSingleToken(s.Assertions, s.testClient, &token, latestBlockNumber)
+}
+
+func (s *NewBlockLoopTestSuite) submitTransferBatchInTransaction(tx *models.Transfer) {
+	s.runInTransaction(func(txStorage *st.Storage, executionCtx *executor.ExecutionContext) {
 		err := txStorage.AddTransfer(tx)
 		s.NoError(err)
 
 		domain, err := s.testClient.GetDomain()
 		s.NoError(err)
-		commitments, err := txExecutor.CreateTransferCommitments(domain)
+		commitments, err := executionCtx.CreateTransferCommitments(domain)
 		s.NoError(err)
 		s.Len(commitments, 1)
 
-		batch, err := txExecutor.NewPendingBatch(txtype.Transfer)
+		batch, err := executionCtx.NewPendingBatch(txtype.Transfer)
 		s.NoError(err)
-		err = txExecutor.SubmitBatch(batch, commitments)
+		rollupCtx := executor.NewTestRollupContext(executionCtx, txtype.Transfer)
+		err = rollupCtx.SubmitBatch(batch, commitments)
 		s.NoError(err)
 		s.testClient.Commit()
 	})
 }
 
-func (s *NewBlockLoopTestSuite) runInTransaction(handler func(*st.Storage, *executor.TransactionExecutor)) {
+func (s *NewBlockLoopTestSuite) runInTransaction(handler func(*st.Storage, *executor.ExecutionContext)) {
 	txController, txStorage, err := s.testStorage.BeginTransaction(st.TxOptions{})
 	s.NoError(err)
 	defer txController.Rollback(nil)
 
-	txExecutor := executor.NewTestTransactionExecutor(txStorage, s.testClient.Client, s.cfg.Rollup, context.Background())
-	handler(txStorage, txExecutor)
+	executionCtx := executor.NewTestExecutionContext(txStorage, s.testClient.Client, s.cfg.Rollup)
+	handler(txStorage, executionCtx)
 }
 
 func (s *NewBlockLoopTestSuite) waitForLatestBlockSync() {
