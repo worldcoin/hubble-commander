@@ -93,11 +93,7 @@ func (t StoredReceipt) Indexes() map[string]bh.Index {
 				if err != nil {
 					return nil, err
 				}
-
-				if v.ToStateID == nil {
-					return nil, nil
-				}
-				return EncodeUint32(v.ToStateID)
+				return EncodeUint32Pointer(v.ToStateID), nil
 			},
 		},
 	}

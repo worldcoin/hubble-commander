@@ -6,7 +6,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/Worldcoin/hubble-commander/utils"
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	bh "github.com/timshannon/badgerhold/v3"
@@ -148,41 +147,66 @@ func (s *Storage) getCreate2TransfersByPublicKey(publicKey *models.PublicKey) (
 	if err != nil && !IsNotFoundError(err) {
 		return nil, nil, err
 	}
-	stateIDs := utils.ValueToInterfaceSlice(leaves, "StateID")
+
+	fromStateIDs := make([]interface{}, 0, len(leaves))
+	toStateIDs := make([]uint32, 0, len(leaves))
+	for i := range leaves {
+		fromStateIDs = append(fromStateIDs, leaves[i].StateID)
+		toStateIDs = append(toStateIDs, leaves[i].StateID)
+	}
 
 	txs := make([]models.StoredTx, 0, 1)
 	err = s.database.Badger.Find(
 		&txs,
-		bh.Where("FromStateID").In(stateIDs...).Index("FromStateID").
+		bh.Where("FromStateID").In(fromStateIDs...).Index("FromStateID").
 			And("TxType").Eq(txtype.Create2Transfer),
 	)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	receipts := make([]models.StoredReceipt, 0, 1)
-	err = s.database.Badger.Find(
-		&receipts,
-		bh.Where("ToStateID").In(stateIDs...).Index("ToStateID"),
-	)
+	txHashes, err := s.getC2THashesByStateIDs(toStateIDs)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return s.getMissingStoredTxsData(txs, receipts)
+	return s.getMissingStoredTxsData(txs, txHashes)
 }
 
-func (s *Storage) getMissingStoredTxsData(txs []models.StoredTx, receipts []models.StoredReceipt) (
+func (s *TransactionStorage) getC2THashesByStateIDs(stateIDs []uint32) ([]common.Hash, error) {
+	results := make([]common.Hash, 0, len(stateIDs))
+	err := s.database.Badger.View(func(txn *bdg.Txn) error {
+		for i := range stateIDs {
+			encodedStateID := models.EncodeUint32Pointer(&stateIDs[i])
+			indexKey := db.IndexKey(models.StoredReceiptName, "ToStateID", encodedStateID)
+			hashes, err := getTxHashesByIndexKey(txn, indexKey, models.StoredReceiptPrefix)
+			if err == bdg.ErrKeyNotFound {
+				continue
+			}
+			if err != nil {
+				return err
+			}
+			results = append(results, hashes...)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
+func (s *Storage) getMissingStoredTxsData(txs []models.StoredTx, receiptHashes []common.Hash) (
 	[]*models.StoredTx, []*models.StoredReceipt, error,
 ) {
 	hashes := make(map[common.Hash]struct{}, len(txs))
 
-	for i := range txs {
-		hashes[txs[i].Hash] = struct{}{}
+	for i := range receiptHashes {
+		hashes[receiptHashes[i]] = struct{}{}
 	}
 
-	for i := range receipts {
-		hashes[receipts[i].Hash] = struct{}{}
+	for i := range txs {
+		hashes[txs[i].Hash] = struct{}{}
 	}
 
 	resultTxs := make([]*models.StoredTx, 0, len(hashes))
