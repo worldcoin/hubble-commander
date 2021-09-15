@@ -106,7 +106,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_InvalidTxSignature() {
 	err = s.executionCtx.SyncBatch(&remoteBatches[0])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Signature, disputableErr.Type)
-	s.Equal(InvalidSignature, disputableErr.Reason)
+	s.Equal(InvalidSignatureMessage, disputableErr.Reason)
 	s.Equal(0, disputableErr.CommitmentIndex)
 }
 

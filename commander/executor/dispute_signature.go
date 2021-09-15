@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 )
+
 var ErrUnsupportedBatchType = fmt.Errorf("unsupported batch type")
 
 func (c *DisputeContext) DisputeSignature(
