@@ -5,4 +5,5 @@
 
 * Creating batches
 * Syncing batches
-* 
+* Submitting disputes
+* Verifying signatures
