@@ -22,12 +22,7 @@ func (c *RollupContext) ApplyTransfers(
 		}
 
 		transfer := transfers.At(i)
-		receiverLeaf, err := c.storage.StateTree.Leaf(*transfer.GetToStateID())
-		if err != nil {
-			return nil, err
-		}
-
-		transferError, appError := c.ApplyTransfer(transfer, receiverLeaf, feeReceiver.TokenID)
+		transferError, appError := c.Executor.ApplyTx(transfer, feeReceiver.TokenID)
 		if appError != nil {
 			return nil, appError
 		}

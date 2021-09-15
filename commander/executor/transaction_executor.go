@@ -3,6 +3,7 @@ package executor
 import (
 	"log"
 
+	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -14,6 +15,7 @@ type TransactionExecutor interface {
 	getPendingTransactions(limit uint32) (models.GenericTransactionArray, error)
 	makeTransactionArray(size, capacity uint32) models.GenericTransactionArray
 	makeApplyTxsResult(capacity uint32) ApplyTxsResult
+	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (transferError, appError error)
 	SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error)
 }
 
@@ -21,9 +23,7 @@ func CreateTransactionExecutor(executionCtx *ExecutionContext, txType txtype.Tra
 	// nolint:exhaustive
 	switch txType {
 	case txtype.Transfer:
-		return &TransferExecutor{
-			storage: executionCtx.storage,
-		}
+		return NewTransferExecutor(executionCtx.storage)
 	case txtype.Create2Transfer:
 		return &C2TExecutor{
 			storage: executionCtx.storage,
@@ -37,6 +37,14 @@ func CreateTransactionExecutor(executionCtx *ExecutionContext, txType txtype.Tra
 // TransferExecutor implements TransactionExecutor
 type TransferExecutor struct {
 	storage *st.Storage
+	applier *applier.Applier
+}
+
+func NewTransferExecutor(storage *st.Storage) *TransferExecutor {
+	return &TransferExecutor{
+		storage: storage,
+		applier: applier.NewApplier(storage),
+	}
 }
 
 func (e *TransferExecutor) getPendingTransactions(limit uint32) (models.GenericTransactionArray, error) {
@@ -58,6 +66,14 @@ func (e *TransferExecutor) makeApplyTxsResult(capacity uint32) ApplyTxsResult {
 	}
 }
 
+func (e *TransferExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (transferError, appError error) {
+	receiverLeaf, appError := e.storage.StateTree.Leaf(*tx.GetToStateID())
+	if appError != nil {
+		return nil, appError
+	}
+	return e.applier.ApplyTransfer(tx, receiverLeaf, commitmentTokenID)
+}
+
 func (e *TransferExecutor) SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error) {
 	return client.SubmitTransfersBatch(commitments)
 }
@@ -65,6 +81,14 @@ func (e *TransferExecutor) SubmitBatch(client *eth.Client, commitments []models.
 // C2TExecutor implements TransactionExecutor
 type C2TExecutor struct {
 	storage *st.Storage
+	applier *applier.Applier
+}
+
+func NewC2TExecutor(storage *st.Storage) *C2TExecutor {
+	return &C2TExecutor{
+		storage: storage,
+		applier: applier.NewApplier(storage),
+	}
 }
 
 func (e *C2TExecutor) getPendingTransactions(limit uint32) (models.GenericTransactionArray, error) {
@@ -81,6 +105,10 @@ func (e *C2TExecutor) makeTransactionArray(size, capacity uint32) models.Generic
 
 func (e *C2TExecutor) makeApplyTxsResult(capacity uint32) ApplyTxsResult {
 	panic("not implemented")
+}
+
+func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (transferError, appError error) {
+	panic("implement me")
 }
 
 func (e *C2TExecutor) SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error) {
