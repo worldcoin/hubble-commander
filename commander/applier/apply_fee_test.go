@@ -3,6 +3,7 @@ package applier
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/stretchr/testify/require"
@@ -24,7 +25,7 @@ func (s *ApplyFeeTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	s.applier = NewApplier(s.storage.Storage)
+	s.applier = NewApplier(s.storage.Storage, &eth.Client{})
 }
 
 func (s *ApplyFeeTestSuite) TearDownTest() {

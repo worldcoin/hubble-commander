@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -31,6 +32,7 @@ type ApplyCreate2TransferTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage *st.TestStorage
+	client  *eth.TestClient
 	applier *Applier
 }
 
@@ -43,7 +45,10 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 
-	s.applier = NewApplier(s.storage.Storage)
+	s.client, err = eth.NewTestClient()
+	s.NoError(err)
+
+	s.applier = NewApplier(s.storage.Storage, s.client.Client)
 
 	_, err = s.storage.StateTree.Set(0, &models.UserState{
 		PubKeyID: 0,
@@ -62,6 +67,7 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 }
 
 func (s *ApplyCreate2TransferTestSuite) TearDownTest() {
+	s.client.Close()
 	err := s.storage.Teardown()
 	s.NoError(err)
 }

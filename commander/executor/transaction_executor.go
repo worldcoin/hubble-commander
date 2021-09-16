@@ -27,11 +27,9 @@ func CreateTransactionExecutor(executionCtx *ExecutionContext, txType txtype.Tra
 	// nolint:exhaustive
 	switch txType {
 	case txtype.Transfer:
-		return NewTransferExecutor(executionCtx.storage)
+		return NewTransferExecutor(executionCtx.storage, executionCtx.client)
 	case txtype.Create2Transfer:
-		return &C2TExecutor{
-			storage: executionCtx.storage,
-		}
+		return NewC2TExecutor(executionCtx.storage, executionCtx.client)
 	default:
 		log.Fatal("Invalid tx type")
 		return nil
@@ -44,10 +42,10 @@ type TransferExecutor struct {
 	applier *applier.Applier
 }
 
-func NewTransferExecutor(storage *st.Storage) *TransferExecutor {
+func NewTransferExecutor(storage *st.Storage, client *eth.Client) *TransferExecutor {
 	return &TransferExecutor{
 		storage: storage,
-		applier: applier.NewApplier(storage),
+		applier: applier.NewApplier(storage, client),
 	}
 }
 
@@ -106,10 +104,10 @@ type C2TExecutor struct {
 	applier *applier.Applier
 }
 
-func NewC2TExecutor(storage *st.Storage) *C2TExecutor {
+func NewC2TExecutor(storage *st.Storage, client *eth.Client) *C2TExecutor {
 	return &C2TExecutor{
 		storage: storage,
-		applier: applier.NewApplier(storage),
+		applier: applier.NewApplier(storage, client),
 	}
 }
 
@@ -144,7 +142,7 @@ func (e *C2TExecutor) MarkTxsAsIncluded(txs models.GenericTransactionArray, comm
 func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
 	appliedTx models.GenericTransaction, transferError, appError error,
 ) {
-	panic("implement me")
+	return e.applier.ApplyCreate2Transfer(tx.ToCreate2Transfer(), 5, commitmentTokenID)
 }
 
 func (e *C2TExecutor) SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error) {

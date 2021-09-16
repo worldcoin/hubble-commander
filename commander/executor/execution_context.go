@@ -38,7 +38,7 @@ func NewExecutionContext(
 		tx:      tx,
 		client:  client,
 		ctx:     ctx,
-		Applier: applier.NewApplier(txStorage),
+		Applier: applier.NewApplier(txStorage, client),
 	}, nil
 }
 
@@ -50,7 +50,7 @@ func NewTestExecutionContext(storage *st.Storage, client *eth.Client, cfg *confi
 		tx:      nil,
 		client:  client,
 		ctx:     context.Background(),
-		Applier: applier.NewApplier(storage),
+		Applier: applier.NewApplier(storage, client),
 	}
 }
 
