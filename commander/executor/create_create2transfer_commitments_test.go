@@ -30,7 +30,7 @@ func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 	s.NoError(err)
 }
 
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_WithMinTxsPerCommitment() {
+func (s *Create2TransferCommitmentsTestSuite) TestCreateTxCommitments_WithMinTxsPerCommitment() {
 	transfers := testutils.GenerateValidCreate2Transfers(1)
 	s.addCreate2Transfers(transfers)
 
@@ -49,7 +49,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
 }
 
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_WithMoreThanMinTxsPerCommitment() {
+func (s *Create2TransferCommitmentsTestSuite) TestCreateTxCommitments_WithMoreThanMinTxsPerCommitment() {
 	transfers := testutils.GenerateValidCreate2Transfers(3)
 	s.addCreate2Transfers(transfers)
 
@@ -68,7 +68,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
 }
 
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_QueriesForMorePendingTransfersUntilSatisfied() {
+func (s *Create2TransferCommitmentsTestSuite) TestCreateTxCommitments_QueriesForMorePendingTransfersUntilSatisfied() {
 	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 124)
 
 	transfers := testutils.GenerateValidCreate2Transfers(6)
@@ -93,7 +93,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
 }
 
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_ForMultipleCommitmentsInBatch() {
+func (s *Create2TransferCommitmentsTestSuite) TestCreateTxCommitments_ForMultipleCommitmentsInBatch() {
 	s.cfg = &config.RollupConfig{
 		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    4,
@@ -140,7 +140,7 @@ func (s *Create2TransferCommitmentsTestSuite) invalidateCreate2Transfers(transfe
 	}
 }
 
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_ReturnsErrorWhenThereAreNotEnoughPendingTransfers() {
+func (s *Create2TransferCommitmentsTestSuite) TestCreateTxCommitments_ReturnsErrorWhenThereAreNotEnoughPendingTransfers() {
 	preRoot, err := s.executionCtx.storage.StateTree.Root()
 	s.NoError(err)
 
@@ -154,7 +154,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.Equal(preRoot, postRoot)
 }
 
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_ReturnsErrorWhenThereAreNotEnoughValidTransfers() {
+func (s *Create2TransferCommitmentsTestSuite) TestCreateTxCommitments_ReturnsErrorWhenThereAreNotEnoughValidTransfers() {
 	s.cfg = &config.RollupConfig{
 		MinTxsPerCommitment:    32,
 		MaxTxsPerCommitment:    32,
@@ -185,7 +185,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.Equal(preRoot, postRoot)
 }
 
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_StoresCorrectCommitment() {
+func (s *Create2TransferCommitmentsTestSuite) TestCreateTxCommitments_StoresCorrectCommitment() {
 	transfersCount := uint32(4)
 	s.preparePendingCreate2Transfers(transfersCount)
 
@@ -205,7 +205,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
 }
 
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_CreatesMaximallyAsManyCommitmentsAsSpecifiedInConfig() {
+func (s *Create2TransferCommitmentsTestSuite) TestCreateTxCommitments_CreatesMaximallyAsManyCommitmentsAsSpecifiedInConfig() {
 	s.preparePendingCreate2Transfers(5)
 
 	commitments, err := s.rollupCtx.CreateTxCommitments(testDomain)
@@ -213,7 +213,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.Len(commitments, 1)
 }
 
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_UpdateTransfers() {
+func (s *Create2TransferCommitmentsTestSuite) TestCreateTxCommitments_UpdateTransfers() {
 	s.preparePendingCreate2Transfers(2)
 
 	pendingTransfers, err := s.storage.GetPendingCreate2Transfers(2)
@@ -232,7 +232,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	}
 }
 
-func (s *Create2TransferCommitmentsTestSuite) TestRemoveCreate2Transfer() {
+func (s *Create2TransferCommitmentsTestSuite) TestRemoveTxs() {
 	transfer1 := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
 			Hash: utils.RandomHash(),

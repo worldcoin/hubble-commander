@@ -76,7 +76,7 @@ func (s *ApplyTransfersTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTransfers_AllValid() {
+func (s *ApplyTransfersTestSuite) TestApplyTxs_AllValid() {
 	generatedTransfers := generateValidTransfers(3)
 
 	applyTxsResult, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
@@ -86,7 +86,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_AllValid() {
 	s.Len(applyTxsResult.InvalidTxs(), 0)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTransfers_SomeValid() {
+func (s *ApplyTransfersTestSuite) TestApplyTxs_SomeValid() {
 	generatedTransfers := generateValidTransfers(2)
 	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(3)...)
 
@@ -97,7 +97,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_SomeValid() {
 	s.Len(applyTxsResult.InvalidTxs(), 3)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTransfers_AppliesNoMoreThanLimit() {
+func (s *ApplyTransfersTestSuite) TestApplyTxs_AppliesNoMoreThanLimit() {
 	generatedTransfers := generateValidTransfers(13)
 
 	applyTxsResult, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
@@ -111,7 +111,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_AppliesNoMoreThanLimit() {
 	s.Equal(models.MakeUint256(6), state.Nonce)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTransfers_SavesTransferErrors() {
+func (s *ApplyTransfersTestSuite) TestApplyTxs_SavesTransferErrors() {
 	generatedTransfers := generateValidTransfers(3)
 	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(2)...)
 
@@ -137,7 +137,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_SavesTransferErrors() {
 	}
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTransfers_AppliesFee() {
+func (s *ApplyTransfersTestSuite) TestApplyTxs_AppliesFee() {
 	generatedTransfers := generateValidTransfers(3)
 
 	_, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)

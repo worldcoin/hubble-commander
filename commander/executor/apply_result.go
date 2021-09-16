@@ -46,16 +46,16 @@ type ApplyTxsResult interface {
 }
 
 type ApplyTransfersResult struct {
-	appliedTransfers models.GenericTransactionArray
-	invalidTransfers models.GenericTransactionArray
+	appliedTxs models.GenericTransactionArray
+	invalidTxs models.GenericTransactionArray
 }
 
 func (a *ApplyTransfersResult) AppliedTxs() models.GenericTransactionArray {
-	return a.appliedTransfers
+	return a.appliedTxs
 }
 
 func (a *ApplyTransfersResult) InvalidTxs() models.GenericTransactionArray {
-	return a.invalidTransfers
+	return a.invalidTxs
 }
 
 func (a *ApplyTransfersResult) AddedPubKeyIDs() []uint32 {
@@ -63,34 +63,34 @@ func (a *ApplyTransfersResult) AddedPubKeyIDs() []uint32 {
 }
 
 func (a *ApplyTransfersResult) AllTxs() models.GenericTransactionArray {
-	return a.appliedTransfers.Append(a.invalidTransfers)
+	return a.appliedTxs.Append(a.invalidTxs)
 }
 
 func (a *ApplyTransfersResult) AddApplied(singleTxResult applier.SingleTxResult) {
-	a.appliedTransfers = a.appliedTransfers.AppendOne(singleTxResult.AppliedTx())
+	a.appliedTxs = a.appliedTxs.AppendOne(singleTxResult.AppliedTx())
 }
 
 func (a *ApplyTransfersResult) AddInvalidTx(tx models.GenericTransaction) {
-	a.invalidTransfers = a.invalidTransfers.AppendOne(tx)
+	a.invalidTxs = a.invalidTxs.AppendOne(tx)
 }
 
 func (a *ApplyTransfersResult) AddTxs(other ApplyTxsResult) {
-	a.appliedTransfers = a.appliedTransfers.Append(other.AppliedTxs())
-	a.invalidTransfers = a.invalidTransfers.Append(other.InvalidTxs())
+	a.appliedTxs = a.appliedTxs.Append(other.AppliedTxs())
+	a.invalidTxs = a.invalidTxs.Append(other.InvalidTxs())
 }
 
 type ApplyC2TResult struct {
-	appliedTransfers models.GenericTransactionArray
-	invalidTransfers models.GenericTransactionArray
-	addedPubKeyIDs   []uint32
+	appliedTxs     models.GenericTransactionArray
+	invalidTxs     models.GenericTransactionArray
+	addedPubKeyIDs []uint32
 }
 
 func (a *ApplyC2TResult) AppliedTxs() models.GenericTransactionArray {
-	return a.appliedTransfers
+	return a.appliedTxs
 }
 
 func (a *ApplyC2TResult) InvalidTxs() models.GenericTransactionArray {
-	return a.invalidTransfers
+	return a.invalidTxs
 }
 
 func (a *ApplyC2TResult) AddedPubKeyIDs() []uint32 {
@@ -98,20 +98,20 @@ func (a *ApplyC2TResult) AddedPubKeyIDs() []uint32 {
 }
 
 func (a *ApplyC2TResult) AllTxs() models.GenericTransactionArray {
-	return a.appliedTransfers.Append(a.invalidTransfers)
+	return a.appliedTxs.Append(a.invalidTxs)
 }
 
 func (a *ApplyC2TResult) AddApplied(singleTxResult applier.SingleTxResult) {
-	a.appliedTransfers = a.appliedTransfers.AppendOne(singleTxResult.AppliedTx())
+	a.appliedTxs = a.appliedTxs.AppendOne(singleTxResult.AppliedTx())
 	a.addedPubKeyIDs = append(a.addedPubKeyIDs, singleTxResult.AddedPubKeyID())
 }
 
 func (a *ApplyC2TResult) AddInvalidTx(tx models.GenericTransaction) {
-	a.invalidTransfers = a.invalidTransfers.AppendOne(tx)
+	a.invalidTxs = a.invalidTxs.AppendOne(tx)
 }
 
 func (a *ApplyC2TResult) AddTxs(other ApplyTxsResult) {
-	a.appliedTransfers = a.appliedTransfers.Append(other.AppliedTxs())
-	a.invalidTransfers = a.invalidTransfers.Append(other.InvalidTxs())
+	a.appliedTxs = a.appliedTxs.Append(other.AppliedTxs())
+	a.invalidTxs = a.invalidTxs.Append(other.InvalidTxs())
 	a.addedPubKeyIDs = append(a.addedPubKeyIDs, other.AddedPubKeyIDs()...)
 }

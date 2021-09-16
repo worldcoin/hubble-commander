@@ -70,7 +70,7 @@ func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
 	s.TestSuiteWithRollupContext.TearDownTest()
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AllValid() {
+func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_AllValid() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
 
 	transfers, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
@@ -81,7 +81,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AllValid() {
 	s.Len(transfers.AddedPubKeyIDs(), 3)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
+func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_SomeValid() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(2)
 	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidCreate2Transfers(3)...)
 
@@ -93,7 +93,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 	s.Len(transfers.AddedPubKeyIDs(), 2)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AppliesNoMoreThanLimit() {
+func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_AppliesNoMoreThanLimit() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(7)
 
 	transfers, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
@@ -104,7 +104,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AppliesNoMore
 	s.Len(transfers.AddedPubKeyIDs(), 6)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransferErrors() {
+func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_SavesTransferErrors() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
 	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidCreate2Transfers(2)...)
 
@@ -131,7 +131,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 	}
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AppliesFee() {
+func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_AppliesFee() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
 
 	_, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
@@ -142,7 +142,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AppliesFee() 
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_RegistersPublicKeys() {
+func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_RegistersPublicKeys() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
 	generatedTransfers[0].ToPublicKey = models.PublicKey{1, 1, 1}
 	generatedTransfers[1].ToPublicKey = models.PublicKey{2, 2, 2}

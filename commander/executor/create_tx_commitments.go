@@ -5,7 +5,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -64,7 +63,7 @@ func (c *RollupContext) createTxCommitment(
 ) {
 	startTime := time.Now()
 
-	pendingTxs, err = c.refillPendingTransfers(pendingTxs)
+	pendingTxs, err = c.refillPendingTxs(pendingTxs)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -97,7 +96,7 @@ func (c *RollupContext) createTxCommitment(
 
 	log.Printf(
 		"Created a %s commitment from %d transactions in %s",
-		txtype.Transfer,
+		c.BatchType,
 		applyResult.AppliedTxs().Len(),
 		time.Since(startTime).Round(time.Millisecond).String(),
 	)
@@ -138,33 +137,33 @@ func (c *RollupContext) applyTxsForCommitment(pendingTxs models.GenericTransacti
 	}
 }
 
-func (c *RollupContext) refillPendingTransfers(pendingTransfers models.GenericTransactionArray) (models.GenericTransactionArray, error) {
-	if pendingTransfers.Len() < int(c.cfg.MaxTxsPerCommitment) {
+func (c *RollupContext) refillPendingTxs(pendingTxs models.GenericTransactionArray) (models.GenericTransactionArray, error) {
+	if pendingTxs.Len() < int(c.cfg.MaxTxsPerCommitment) {
 		return c.queryPendingTxs()
 	}
-	return pendingTransfers, nil
+	return pendingTxs, nil
 }
 
 func (c *RollupContext) queryPendingTxs() (models.GenericTransactionArray, error) {
-	pendingTransfers, err := c.Executor.GetPendingTxs(c.cfg.MaxCommitmentsPerBatch * c.cfg.MaxTxsPerCommitment)
+	pendingTxs, err := c.Executor.GetPendingTxs(c.cfg.MaxCommitmentsPerBatch * c.cfg.MaxTxsPerCommitment)
 	if err != nil {
 		return nil, err
 	}
-	if pendingTransfers.Len() < int(c.cfg.MinTxsPerCommitment) {
+	if pendingTxs.Len() < int(c.cfg.MinTxsPerCommitment) {
 		return nil, ErrNotEnoughTxs
 	}
-	return pendingTransfers, nil
+	return pendingTxs, nil
 }
 
-func (c *RollupContext) queryMorePendingTxs(appliedTransfers models.GenericTransactionArray) (models.GenericTransactionArray, error) {
-	numAppliedTransfers := uint32(appliedTransfers.Len())
+func (c *RollupContext) queryMorePendingTxs(appliedTxs models.GenericTransactionArray) (models.GenericTransactionArray, error) {
+	numAppliedTransfers := uint32(appliedTxs.Len())
 	pendingTransfers, err := c.Executor.GetPendingTxs(
 		c.cfg.MaxCommitmentsPerBatch*c.cfg.MaxTxsPerCommitment + numAppliedTransfers,
 	)
 	if err != nil {
 		return nil, err
 	}
-	pendingTransfers = removeTxs(pendingTransfers, appliedTransfers)
+	pendingTransfers = removeTxs(pendingTransfers, appliedTxs)
 
 	if pendingTransfers.Len() < int(c.cfg.MinTxsPerCommitment) {
 		return nil, ErrNotEnoughTxs
@@ -188,7 +187,7 @@ func removeTxs(txList, toRemove models.GenericTransactionArray) models.GenericTr
 	outputIndex := 0
 	for i := 0; i < txList.Len(); i++ {
 		tx := txList.At(i)
-		if !transferExists(toRemove, tx) {
+		if !txExists(toRemove, tx) {
 			txList.Set(outputIndex, tx)
 			outputIndex++
 		}
@@ -197,9 +196,9 @@ func removeTxs(txList, toRemove models.GenericTransactionArray) models.GenericTr
 	return txList.Slice(0, outputIndex)
 }
 
-func transferExists(transferList models.GenericTransactionArray, tx models.GenericTransaction) bool {
-	for i := 0; i < transferList.Len(); i++ {
-		if transferList.At(i).GetBase().Hash == tx.GetBase().Hash {
+func txExists(txList models.GenericTransactionArray, tx models.GenericTransaction) bool {
+	for i := 0; i < txList.Len(); i++ {
+		if txList.At(i).GetBase().Hash == tx.GetBase().Hash {
 			return true
 		}
 	}

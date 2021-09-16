@@ -63,8 +63,8 @@ func (e *TransferExecutor) NewTxArray(size, capacity uint32) models.GenericTrans
 
 func (e *TransferExecutor) NewApplyTxsResult(capacity uint32) ApplyTxsResult {
 	return &ApplyTransfersResult{
-		appliedTransfers: make(models.TransferArray, 0, capacity),
-		invalidTransfers: make(models.TransferArray, 0),
+		appliedTxs: make(models.TransferArray, 0, capacity),
+		invalidTxs: make(models.TransferArray, 0),
 	}
 }
 
@@ -106,11 +106,11 @@ func NewC2TExecutor(storage *st.Storage, client *eth.Client) *C2TExecutor {
 }
 
 func (e *C2TExecutor) GetPendingTxs(limit uint32) (models.GenericTransactionArray, error) {
-	pendingTransfers, err := e.storage.GetPendingCreate2Transfers(limit)
+	pendingTxs, err := e.storage.GetPendingCreate2Transfers(limit)
 	if err != nil {
 		return nil, err
 	}
-	return models.Create2TransferArray(pendingTransfers), nil
+	return models.Create2TransferArray(pendingTxs), nil
 }
 
 func (e *C2TExecutor) NewTxArray(size, capacity uint32) models.GenericTransactionArray {
@@ -119,9 +119,9 @@ func (e *C2TExecutor) NewTxArray(size, capacity uint32) models.GenericTransactio
 
 func (e *C2TExecutor) NewApplyTxsResult(capacity uint32) ApplyTxsResult {
 	return &ApplyC2TResult{
-		appliedTransfers: make(models.Create2TransferArray, 0, capacity),
-		invalidTransfers: make(models.Create2TransferArray, 0),
-		addedPubKeyIDs:   make([]uint32, 0, capacity),
+		appliedTxs:     make(models.Create2TransferArray, 0, capacity),
+		invalidTxs:     make(models.Create2TransferArray, 0),
+		addedPubKeyIDs: make([]uint32, 0, capacity),
 	}
 }
 

@@ -269,7 +269,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTxsCommitments_MarksTransfersAs
 	}
 }
 
-func (s *TransferCommitmentsTestSuite) TestRemoveTransfer() {
+func (s *TransferCommitmentsTestSuite) TestRemoveTxs() {
 	transfer1 := createRandomTransferWithHash()
 	transfer2 := createRandomTransferWithHash()
 	transfer3 := createRandomTransferWithHash()
