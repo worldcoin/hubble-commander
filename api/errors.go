@@ -36,8 +36,12 @@ func (e NotDecimalEncodableError) Error() string {
 	return fmt.Sprintf("%s is not encodable as multi-precission decimal", e.field)
 }
 
-func (e NotDecimalEncodableError) Is(target error) bool {
-	return e.Error() == target.Error()
+func (e *NotDecimalEncodableError) Is(other error) bool {
+	otherError, ok := other.(*NotDecimalEncodableError)
+	if !ok {
+		return false
+	}
+	return *e == *otherError
 }
 
 type APIError struct {

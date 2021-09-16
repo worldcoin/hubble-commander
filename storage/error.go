@@ -103,5 +103,5 @@ func (e *NoVacantSubtreeError) Is(other error) bool {
 	if !ok {
 		return false
 	}
-	return e.subtreeDepth == otherError.subtreeDepth
+	return *e == *otherError
 }
