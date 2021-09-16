@@ -118,7 +118,11 @@ func (e *C2TExecutor) NewTxArray(size, capacity uint32) models.GenericTransactio
 }
 
 func (e *C2TExecutor) NewApplyTxsResult(capacity uint32) ApplyTxsResult {
-	panic("not implemented")
+	return &ApplyC2TResult{
+		appliedTransfers: make(models.Create2TransferArray, 0, capacity),
+		invalidTransfers: make(models.Create2TransferArray, 0),
+		addedPubKeyIDs:   make([]uint32, 0, capacity),
+	}
 }
 
 func (e *C2TExecutor) NewApplyTxsForCommitmentResult(applyTxsResult ApplyTxsResult) ApplyTxsForCommitmentResult {

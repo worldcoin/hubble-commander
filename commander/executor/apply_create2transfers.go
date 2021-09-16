@@ -11,54 +11,6 @@ type AppliedC2Transfers struct {
 	addedPubKeyIDs   []uint32
 }
 
-// TODO: can be removed
-func (c *RollupContext) ApplyCreate2Transfers(
-	transfers []models.Create2Transfer,
-	maxApplied uint32,
-	feeReceiver *FeeReceiver,
-) (*AppliedC2Transfers, error) {
-	if len(transfers) == 0 {
-		return &AppliedC2Transfers{}, nil
-	}
-
-	returnStruct := &AppliedC2Transfers{}
-	returnStruct.appliedTransfers = make([]models.Create2Transfer, 0, c.cfg.MaxTxsPerCommitment)
-	returnStruct.addedPubKeyIDs = make([]uint32, 0, c.cfg.MaxTxsPerCommitment)
-
-	combinedFee := models.NewUint256(0)
-
-	for i := range transfers {
-		if uint32(len(returnStruct.appliedTransfers)) == maxApplied {
-			break
-		}
-
-		transfer := &transfers[i]
-		applyResult, transferError, appError := c.Executor.ApplyTx(transfer, feeReceiver.TokenID)
-		if appError != nil {
-			return nil, appError
-		}
-		if transferError != nil {
-			logAndSaveTransactionError(c.storage, applyResult.AppliedTx().GetBase(), transferError)
-			returnStruct.invalidTransfers = append(returnStruct.invalidTransfers, *applyResult.AppliedTx().ToCreate2Transfer())
-			continue
-		}
-
-		returnStruct.appliedTransfers = append(returnStruct.appliedTransfers, *applyResult.AppliedTx().ToCreate2Transfer())
-		returnStruct.addedPubKeyIDs = append(returnStruct.addedPubKeyIDs, applyResult.AddedPubKeyID())
-		//TODO: change GetFee func to return pointer
-		*combinedFee = *combinedFee.Add(&applyResult.AppliedTx().GetBase().Fee)
-	}
-
-	if len(returnStruct.appliedTransfers) > 0 {
-		_, err := c.ApplyFee(feeReceiver.StateID, *combinedFee)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return returnStruct, nil
-}
-
 func (c *ExecutionContext) ApplyCreate2TransfersForSync(
 	transfers []models.Create2Transfer,
 	pubKeyIDs []uint32,

@@ -73,35 +73,35 @@ func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AllValid() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
 
-	transfers, err := s.rollupCtx.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	transfers, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
-	s.Len(transfers.appliedTransfers, 3)
-	s.Len(transfers.invalidTransfers, 0)
-	s.Len(transfers.addedPubKeyIDs, 3)
+	s.Len(transfers.AppliedTxs(), 3)
+	s.Len(transfers.InvalidTxs(), 0)
+	s.Len(transfers.AddedPubKeyIDs(), 3)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(2)
 	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidCreate2Transfers(3)...)
 
-	transfers, err := s.rollupCtx.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	transfers, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
-	s.Len(transfers.appliedTransfers, 2)
-	s.Len(transfers.invalidTransfers, 3)
-	s.Len(transfers.addedPubKeyIDs, 2)
+	s.Len(transfers.AppliedTxs(), 2)
+	s.Len(transfers.InvalidTxs(), 3)
+	s.Len(transfers.AddedPubKeyIDs(), 2)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AppliesNoMoreThanLimit() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(7)
 
-	transfers, err := s.rollupCtx.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	transfers, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
-	s.Len(transfers.appliedTransfers, 6)
-	s.Len(transfers.invalidTransfers, 0)
-	s.Len(transfers.addedPubKeyIDs, 6)
+	s.Len(transfers.AppliedTxs(), 6)
+	s.Len(transfers.InvalidTxs(), 0)
+	s.Len(transfers.AddedPubKeyIDs(), 6)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransferErrors() {
@@ -113,12 +113,12 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 		s.NoError(err)
 	}
 
-	transfers, err := s.rollupCtx.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	transfers, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
-	s.Len(transfers.appliedTransfers, 3)
-	s.Len(transfers.invalidTransfers, 2)
-	s.Len(transfers.addedPubKeyIDs, 3)
+	s.Len(transfers.AppliedTxs(), 3)
+	s.Len(transfers.InvalidTxs(), 2)
+	s.Len(transfers.AddedPubKeyIDs(), 3)
 
 	for i := range generatedTransfers {
 		transfer, err := s.storage.GetCreate2Transfer(generatedTransfers[i].Hash)
@@ -134,7 +134,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AppliesFee() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
 
-	_, err := s.rollupCtx.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	_, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	feeReceiverState, err := s.executionCtx.storage.StateTree.Leaf(s.feeReceiver.StateID)
@@ -151,17 +151,17 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_RegistersPubl
 	latestBlockNumber, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
 
-	transfers, err := s.rollupCtx.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	transfers, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
-	s.Len(transfers.appliedTransfers, 3)
-	s.Len(transfers.invalidTransfers, 0)
-	s.Len(transfers.addedPubKeyIDs, 3)
+	s.Len(transfers.AppliedTxs(), 3)
+	s.Len(transfers.InvalidTxs(), 0)
+	s.Len(transfers.AddedPubKeyIDs(), 3)
 
 	registeredAccounts := s.getRegisteredAccounts(*latestBlockNumber)
 	for i := range generatedTransfers {
 		s.Equal(registeredAccounts[i], models.AccountLeaf{
-			PubKeyID:  transfers.addedPubKeyIDs[i],
+			PubKeyID:  transfers.AddedPubKeyIDs()[i],
 			PublicKey: generatedTransfers[i].ToPublicKey,
 		})
 	}

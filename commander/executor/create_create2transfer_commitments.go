@@ -105,17 +105,17 @@ func (c *RollupContext) applyC2TsForCommitment(pendingTransfers []models.Create2
 	addedPubKeyIDs = make([]uint32, 0, c.cfg.MaxTxsPerCommitment)
 
 	for {
-		var transfers *AppliedC2Transfers
+		var transfers ApplyTxsResult
 
 		numNeededTransfers := c.cfg.MaxTxsPerCommitment - uint32(len(appliedTransfers))
-		transfers, err = c.ApplyCreate2Transfers(pendingTransfers, numNeededTransfers, feeReceiver)
+		transfers, err = c.ApplyTxs(models.Create2TransferArray(pendingTransfers), numNeededTransfers, feeReceiver)
 		if err != nil {
 			return nil, nil, nil, err
 		}
 
-		appliedTransfers = append(appliedTransfers, transfers.appliedTransfers...)
-		invalidTransfers = append(invalidTransfers, transfers.invalidTransfers...)
-		addedPubKeyIDs = append(addedPubKeyIDs, transfers.addedPubKeyIDs...)
+		appliedTransfers = append(appliedTransfers, transfers.AppliedTxs().ToCreate2TransferArray()...)
+		invalidTransfers = append(invalidTransfers, transfers.InvalidTxs().ToCreate2TransferArray()...)
+		addedPubKeyIDs = append(addedPubKeyIDs, transfers.AddedPubKeyIDs()...)
 
 		if len(appliedTransfers) == int(c.cfg.MaxTxsPerCommitment) {
 			newPendingTransfers = removeC2Ts(pendingTransfers, append(appliedTransfers, invalidTransfers...))

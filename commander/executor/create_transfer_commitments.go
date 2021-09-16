@@ -114,7 +114,7 @@ func (c *RollupContext) applyTransfersForCommitment(pendingTransfers models.Gene
 
 	for {
 		numNeededTransfers := c.cfg.MaxTxsPerCommitment - uint32(aggregateResult.AppliedTxs().Len())
-		applyTxsResult, err := c.ApplyTransfers(pendingTransfers, numNeededTransfers, feeReceiver)
+		applyTxsResult, err := c.ApplyTxs(pendingTransfers, numNeededTransfers, feeReceiver)
 		if err != nil {
 			return nil, nil, err
 		}

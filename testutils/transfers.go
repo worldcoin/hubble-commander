@@ -38,8 +38,8 @@ func MakeCreate2Transfer(from uint32, to *uint32, nonce, amount uint64, publicKe
 	return c2t
 }
 
-func GenerateValidCreate2Transfers(transfersAmount uint32) []models.Create2Transfer {
-	transfers := make([]models.Create2Transfer, 0, transfersAmount)
+func GenerateValidCreate2Transfers(transfersAmount uint32) models.Create2TransferArray {
+	transfers := make(models.Create2TransferArray, 0, transfersAmount)
 	for i := 0; i < int(transfersAmount); i++ {
 		transfer := models.Create2Transfer{
 			TransactionBase: models.TransactionBase{
@@ -58,8 +58,8 @@ func GenerateValidCreate2Transfers(transfersAmount uint32) []models.Create2Trans
 	return transfers
 }
 
-func GenerateInvalidCreate2Transfers(transfersAmount uint64) []models.Create2Transfer {
-	transfers := make([]models.Create2Transfer, 0, transfersAmount)
+func GenerateInvalidCreate2Transfers(transfersAmount uint64) models.Create2TransferArray {
+	transfers := make(models.Create2TransferArray, 0, transfersAmount)
 	for i := uint64(0); i < transfersAmount; i++ {
 		transfer := models.Create2Transfer{
 			TransactionBase: models.TransactionBase{
