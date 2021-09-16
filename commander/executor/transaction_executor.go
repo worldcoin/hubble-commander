@@ -19,7 +19,7 @@ type TransactionExecutor interface {
 	NewApplyTxsForCommitmentResult(applyTxsResult ApplyTxsResult) ApplyTxsForCommitmentResult
 	SerializeTxs(results ApplyTxsForCommitmentResult) ([]byte, error)
 	MarkTxsAsIncluded(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error
-	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (transferError, appError error)
+	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (appliedTx models.GenericTransaction, transferError, appError error)
 	SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error)
 }
 
@@ -84,12 +84,16 @@ func (e *TransferExecutor) MarkTxsAsIncluded(txs models.GenericTransactionArray,
 	return e.storage.MarkTransfersAsIncluded(txs.ToTransferArray(), commitmentID)
 }
 
-func (e *TransferExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (transferError, appError error) {
+func (e *TransferExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
+	appliedTx models.GenericTransaction, transferError, appError error,
+) {
 	receiverLeaf, appError := e.storage.StateTree.Leaf(*tx.GetToStateID())
 	if appError != nil {
-		return nil, appError
+		return tx, nil, appError
 	}
-	return e.applier.ApplyTransfer(tx, receiverLeaf, commitmentTokenID)
+
+	transferError, appError = e.applier.ApplyTransfer(tx, receiverLeaf, commitmentTokenID)
+	return tx, transferError, appError
 }
 
 func (e *TransferExecutor) SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error) {
@@ -137,7 +141,9 @@ func (e *C2TExecutor) MarkTxsAsIncluded(txs models.GenericTransactionArray, comm
 	return e.storage.MarkCreate2TransfersAsIncluded(txs.ToCreate2TransferArray(), commitmentID)
 }
 
-func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (transferError, appError error) {
+func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
+	appliedTx models.GenericTransaction, transferError, appError error,
+) {
 	panic("implement me")
 }
 
