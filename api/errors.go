@@ -10,7 +10,7 @@ import (
 
 var usedErrorCodes = map[int]bool{}
 
-const unknownAPIError = 999
+const unknownAPIErrorCode = 999
 
 type MissingFieldError struct {
 	field string
@@ -76,14 +76,14 @@ func NewAPIError(code int, message string) *APIError {
 func NewUnknownAPIError(err error) *APIError {
 	unknownAPIErrorMessage := fmt.Sprintf("unknown error: %s", err.Error())
 
-	if usedErrorCodes[unknownAPIError] {
+	if usedErrorCodes[unknownAPIErrorCode] {
 		return &APIError{
-			Code:    unknownAPIError,
+			Code:    unknownAPIErrorCode,
 			Message: unknownAPIErrorMessage,
 		}
 	}
 
-	return NewAPIError(unknownAPIError, fmt.Sprintf("unknown error: %s", err.Error()))
+	return NewAPIError(unknownAPIErrorCode, fmt.Sprintf("unknown error: %s", err.Error()))
 }
 
 type InternalToAPIError struct {
