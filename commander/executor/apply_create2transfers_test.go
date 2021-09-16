@@ -32,14 +32,14 @@ var (
 )
 
 type ApplyCreate2TransfersTestSuite struct {
-	TestSuiteWithExecutionContext
+	TestSuiteWithRollupContext
 	feeReceiver *FeeReceiver
 	events      chan *accountregistry.AccountRegistrySinglePubkeyRegistered
 	unsubscribe func()
 }
 
 func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
-	s.TestSuiteWithExecutionContext.SetupTestWithConfig(config.RollupConfig{
+	s.TestSuiteWithRollupContext.SetupTestWithConfig(txtype.Create2Transfer, config.RollupConfig{
 		FeeReceiverPubKeyID: 3,
 		MaxTxsPerCommitment: 6,
 	})
@@ -81,13 +81,13 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 
 func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
 	s.unsubscribe()
-	s.TestSuiteWithExecutionContext.TearDownTest()
+	s.TestSuiteWithRollupContext.TearDownTest()
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AllValid() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
 
-	transfers, err := s.executionCtx.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	transfers, err := s.rollupCtx.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 3)
@@ -99,7 +99,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(2)
 	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidCreate2Transfers(3)...)
 
-	transfers, err := s.executionCtx.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	transfers, err := s.rollupCtx.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 2)
@@ -110,7 +110,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AppliesNoMoreThanLimit() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(7)
 
-	transfers, err := s.executionCtx.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	transfers, err := s.rollupCtx.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 6)
@@ -127,7 +127,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 		s.NoError(err)
 	}
 
-	transfers, err := s.executionCtx.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	transfers, err := s.rollupCtx.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 3)
@@ -148,7 +148,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AppliesFee() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
 
-	_, err := s.executionCtx.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	_, err := s.rollupCtx.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	feeReceiverState, err := s.executionCtx.storage.StateTree.Leaf(s.feeReceiver.StateID)
@@ -165,7 +165,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_RegistersPubl
 	latestBlockNumber, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
 
-	transfers, err := s.executionCtx.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	transfers, err := s.rollupCtx.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 3)
@@ -184,7 +184,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_RegistersPubl
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_AllValid() {
 	transfers, pubKeyIDs := generateValidCreate2TransfersForSync(3, 4)
 
-	appliedTransfers, stateProofs, err := s.executionCtx.ApplyCreate2TransfersForSync(transfers, pubKeyIDs, s.feeReceiver.StateID)
+	appliedTransfers, stateProofs, err := s.rollupCtx.ApplyCreate2TransfersForSync(transfers, pubKeyIDs, s.feeReceiver.StateID)
 	s.NoError(err)
 	s.Len(appliedTransfers, 3)
 	s.Len(stateProofs, 7)
@@ -197,7 +197,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_Invali
 	transfers = append(transfers, invalidTxs...)
 	pubKeyIDs = append(pubKeyIDs, invalidPubKeyIDs...)
 
-	appliedTransfers, _, err := s.executionCtx.ApplyCreate2TransfersForSync(transfers, pubKeyIDs, s.feeReceiver.StateID)
+	appliedTransfers, _, err := s.rollupCtx.ApplyCreate2TransfersForSync(transfers, pubKeyIDs, s.feeReceiver.StateID)
 	s.Nil(appliedTransfers)
 
 	var disputableErr *DisputableError
@@ -208,14 +208,14 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_Invali
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidSlicesLength() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
-	_, _, err := s.executionCtx.ApplyCreate2TransfersForSync(generatedTransfers, []uint32{1, 2}, s.feeReceiver.StateID)
+	_, _, err := s.rollupCtx.ApplyCreate2TransfersForSync(generatedTransfers, []uint32{1, 2}, s.feeReceiver.StateID)
 	s.Equal(applier.ErrInvalidSlicesLength, err)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_AppliesFee() {
 	generatedTransfers, pubKeyIDs := generateValidCreate2TransfersForSync(3, 4)
 
-	_, _, err := s.executionCtx.ApplyCreate2TransfersForSync(generatedTransfers, pubKeyIDs, s.feeReceiver.StateID)
+	_, _, err := s.rollupCtx.ApplyCreate2TransfersForSync(generatedTransfers, pubKeyIDs, s.feeReceiver.StateID)
 	s.NoError(err)
 
 	feeReceiverState, err := s.executionCtx.storage.StateTree.Leaf(s.feeReceiver.StateID)
@@ -229,7 +229,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_Return
 		transfers[i].Fee = models.MakeUint256(0)
 	}
 
-	_, stateProofs, err := s.executionCtx.ApplyCreate2TransfersForSync(transfers, pubKeyIDs, s.feeReceiver.StateID)
+	_, stateProofs, err := s.rollupCtx.ApplyCreate2TransfersForSync(transfers, pubKeyIDs, s.feeReceiver.StateID)
 	s.NoError(err)
 	s.Len(stateProofs, 5)
 }
@@ -249,7 +249,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_Invali
 
 	transfers, pubKeyIDs := generateValidCreate2TransfersForSync(2, 5)
 
-	appliedTransfers, _, err := s.executionCtx.ApplyCreate2TransfersForSync(transfers, pubKeyIDs, feeReceiver.StateID)
+	appliedTransfers, _, err := s.rollupCtx.ApplyCreate2TransfersForSync(transfers, pubKeyIDs, feeReceiver.StateID)
 	s.Nil(appliedTransfers)
 
 	var disputableErr *DisputableError

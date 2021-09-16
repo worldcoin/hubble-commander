@@ -13,7 +13,7 @@ var (
 	ErrNotEnoughC2Transfers = NewRollupError("not enough create2transfers")
 )
 
-func (c *ExecutionContext) CreateCreate2TransferCommitments(domain *bls.Domain) (commitments []models.Commitment, err error) {
+func (c *RollupContext) CreateCreate2TransferCommitments(domain *bls.Domain) (commitments []models.Commitment, err error) {
 	pendingTransfers, err := c.queryPendingC2Ts()
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func (c *ExecutionContext) CreateCreate2TransferCommitments(domain *bls.Domain) 
 	return commitments, nil
 }
 
-func (c *ExecutionContext) createC2TCommitment(
+func (c *RollupContext) createC2TCommitment(
 	pendingTransfers []models.Create2Transfer,
 	commitmentID *models.CommitmentID,
 	domain *bls.Domain,
@@ -95,7 +95,7 @@ func (c *ExecutionContext) createC2TCommitment(
 	return newPendingTransfers, commitment, nil
 }
 
-func (c *ExecutionContext) applyC2TsForCommitment(pendingTransfers []models.Create2Transfer, feeReceiver *FeeReceiver) (
+func (c *RollupContext) applyC2TsForCommitment(pendingTransfers []models.Create2Transfer, feeReceiver *FeeReceiver) (
 	appliedTransfers, newPendingTransfers []models.Create2Transfer,
 	addedPubKeyIDs []uint32,
 	err error,

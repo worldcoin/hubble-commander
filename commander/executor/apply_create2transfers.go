@@ -14,7 +14,7 @@ type AppliedC2Transfers struct {
 	addedPubKeyIDs   []uint32
 }
 
-func (c *ExecutionContext) ApplyCreate2Transfers(
+func (c *RollupContext) ApplyCreate2Transfers(
 	transfers []models.Create2Transfer,
 	maxApplied uint32,
 	feeReceiver *FeeReceiver,

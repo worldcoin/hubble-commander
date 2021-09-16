@@ -129,15 +129,15 @@ func (e *C2TExecutor) NewApplyTxsForCommitmentResult(applyTxsResult ApplyTxsResu
 	panic("implement me")
 }
 
-func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (transferError, appError error) {
-	panic("implement me")
-}
-
 func (e *C2TExecutor) SerializeTxs(results ApplyTxsForCommitmentResult) ([]byte, error) {
-	panic("implement me")
+	return encoder.SerializeCreate2Transfers(results.AppliedTransfers().ToCreate2TransferArray(), results.AddedPubKeyIDs())
 }
 
 func (e *C2TExecutor) MarkTxsAsIncluded(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error {
+	return e.storage.MarkCreate2TransfersAsIncluded(txs.ToCreate2TransferArray(), commitmentID)
+}
+
+func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (transferError, appError error) {
 	panic("implement me")
 }
 

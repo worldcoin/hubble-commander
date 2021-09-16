@@ -6,18 +6,19 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/suite"
 )
 
 type Create2TransferCommitmentsTestSuite struct {
-	TestSuiteWithExecutionContext
+	TestSuiteWithRollupContext
 	maxTxBytesInCommitment int
 }
 
 func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
-	s.TestSuiteWithExecutionContext.SetupTestWithConfig(config.RollupConfig{
+	s.TestSuiteWithRollupContext.SetupTestWithConfig(txtype.Create2Transfer, config.RollupConfig{
 		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    4,
 		FeeReceiverPubKeyID:    2,
@@ -37,7 +38,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.NoError(err)
 
 	expectedTxsLength := encoder.Create2TransferLength * len(transfers)
-	commitments, err := s.executionCtx.CreateCreate2TransferCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCreate2TransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, expectedTxsLength)
@@ -56,7 +57,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.NoError(err)
 
 	expectedTxsLength := encoder.Create2TransferLength * len(transfers)
-	commitments, err := s.executionCtx.CreateCreate2TransferCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCreate2TransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, expectedTxsLength)
@@ -81,7 +82,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	preRoot, err := s.executionCtx.storage.StateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.executionCtx.CreateCreate2TransferCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCreate2TransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, s.maxTxBytesInCommitment)
@@ -100,7 +101,8 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 		MaxCommitmentsPerBatch: 3,
 	}
 
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
+	executionCtx := NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
+	s.rollupCtx = NewTestRollupContext(executionCtx, s.rollupCtx.BatchType)
 
 	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 124)
 
@@ -118,7 +120,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	preRoot, err := s.executionCtx.storage.StateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.executionCtx.CreateCreate2TransferCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCreate2TransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 3)
 	s.Len(commitments[0].Transactions, s.maxTxBytesInCommitment)
@@ -142,7 +144,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	preRoot, err := s.executionCtx.storage.StateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.executionCtx.CreateCreate2TransferCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCreate2TransferCommitments(testDomain)
 	s.Nil(commitments)
 	s.Equal(ErrNotEnoughC2Transfers, err)
 
@@ -160,7 +162,8 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 		MaxCommitmentsPerBatch: 1,
 	}
 
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
+	executionCtx := NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
+	s.rollupCtx = NewTestRollupContext(executionCtx, s.rollupCtx.BatchType)
 
 	transfers := testutils.GenerateValidCreate2Transfers(2)
 	s.addCreate2Transfers(transfers)
@@ -172,7 +175,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	preRoot, err := s.executionCtx.storage.StateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.executionCtx.CreateCreate2TransferCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCreate2TransferCommitments(testDomain)
 	s.Nil(commitments)
 	s.Equal(ErrNotEnoughC2Transfers, err)
 
@@ -190,7 +193,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.NoError(err)
 
 	expectedTxsLength := encoder.Create2TransferLength * int(transfersCount)
-	commitments, err := s.executionCtx.CreateCreate2TransferCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCreate2TransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, expectedTxsLength)
@@ -205,7 +208,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_CreatesMaximallyAsManyCommitmentsAsSpecifiedInConfig() {
 	s.preparePendingCreate2Transfers(5)
 
-	commitments, err := s.executionCtx.CreateCreate2TransferCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCreate2TransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 }
@@ -217,7 +220,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.NoError(err)
 	s.Len(pendingTransfers, 2)
 
-	commitments, err := s.executionCtx.CreateCreate2TransferCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCreate2TransferCommitments(testDomain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 
