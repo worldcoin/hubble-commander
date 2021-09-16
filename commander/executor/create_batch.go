@@ -11,17 +11,12 @@ import (
 
 func (c *RollupContext) CreateAndSubmitBatch(domain *bls.Domain) (err error) {
 	startTime := time.Now()
-	var commitments []models.Commitment
 	batch, err := c.NewPendingBatch(c.BatchType)
 	if err != nil {
 		return err
 	}
 
-	if c.BatchType == txtype.Transfer {
-		commitments, err = c.CreateTxCommitments(domain)
-	} else {
-		commitments, err = c.CreateCreate2TransferCommitments(domain)
-	}
+	commitments, err := c.CreateTxCommitments(domain)
 	if err != nil {
 		return err
 	}

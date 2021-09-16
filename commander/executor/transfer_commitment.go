@@ -5,7 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-func (c *RollupContext) buildTransferCommitment(
+func (c *RollupContext) buildTxCommitment(
 	applyResult ApplyTxsForCommitmentResult,
 	commitmentID *models.CommitmentID,
 	feeReceiverStateID uint32,

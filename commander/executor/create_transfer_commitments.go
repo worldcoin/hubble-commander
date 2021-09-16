@@ -90,7 +90,7 @@ func (c *RollupContext) createTxCommitment(
 		return nil, nil, err
 	}
 
-	commitment, err = c.buildTransferCommitment(applyResult, commitmentID, feeReceiver.StateID, domain)
+	commitment, err = c.buildTxCommitment(applyResult, commitmentID, feeReceiver.StateID, domain)
 	if err != nil {
 		return nil, nil, err
 	}
