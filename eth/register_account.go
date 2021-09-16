@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var ErrSingleAccountTimeout = fmt.Errorf("timeout")
+var ErrRegisterAccountTimeout = fmt.Errorf("timeout")
 
 func (c *Client) RegisterAccount(
 	publicKey *models.PublicKey,
@@ -65,7 +65,7 @@ func RegisterAccountAndWait(
 				return ref.Uint32(uint32(event.PubkeyID.Uint64())), nil
 			}
 		case <-time.After(deployer.ChainTimeout):
-			return nil, errors.WithStack(ErrSingleAccountTimeout)
+			return nil, errors.WithStack(ErrRegisterAccountTimeout)
 		}
 	}
 }
