@@ -126,7 +126,7 @@ func setupViper(configPath string) {
 		if strings.Contains(err.Error(), "no such file or directory") {
 			log.Printf("Configuration file not found (%s). Continuing with default config (possibly overridden by env vars).", configPath)
 		} else {
-			log.Fatalf("failed to read in config: %s", err)
+			log.Panicf("failed to read in config: %s", err)
 		}
 	}
 }
@@ -146,13 +146,13 @@ func getTestBadgerPath() string {
 func getLogConfig() *LogConfig {
 	level, err := log.ParseLevel(getString("log.level", "info"))
 	if err != nil {
-		log.Fatalf("invalid log level: %e", err)
+		log.Panicf("invalid log level: %e", err)
 	}
 
 	format := getString("log.format", LogFormatText)
 
 	if format != LogFormatText && format != LogFormatJSON {
-		log.Fatalf("invalid log format: %s", format)
+		log.Panicf("invalid log format: %s", format)
 	}
 
 	return &LogConfig{

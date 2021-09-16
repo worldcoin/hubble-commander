@@ -37,7 +37,7 @@ func NewTestTxsContext(executionCtx *ExecutionContext, batchType batchtype.Batch
 func newTxsContext(executionCtx *ExecutionContext, batchType batchtype.BatchType) *TxsContext {
 	return &TxsContext{
 		ExecutionContext: executionCtx,
-		Executor:         CreateTransactionExecutor(executionCtx, batchType),
+		Executor:         NewTransactionExecutor(executionCtx, batchType),
 		BatchType:        batchType,
 		txErrorsToStore:  make([]models.TxError, 0),
 	}

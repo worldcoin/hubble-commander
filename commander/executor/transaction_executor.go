@@ -1,8 +1,6 @@
 package executor
 
 import (
-	"log"
-
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -26,7 +24,7 @@ type TransactionExecutor interface {
 	GenerateMetaAndWithdrawRoots(batchData BatchData, result CreateCommitmentResult) error
 }
 
-func CreateTransactionExecutor(executionCtx *ExecutionContext, batchType batchtype.BatchType) TransactionExecutor {
+func NewTransactionExecutor(executionCtx *ExecutionContext, batchType batchtype.BatchType) TransactionExecutor {
 	switch batchType {
 	case batchtype.Transfer:
 		return NewTransferExecutor(executionCtx.storage, executionCtx.client)
@@ -35,8 +33,7 @@ func CreateTransactionExecutor(executionCtx *ExecutionContext, batchType batchty
 	case batchtype.MassMigration:
 		return NewMassMigrationExecutor(executionCtx.storage, executionCtx.client)
 	case batchtype.Genesis, batchtype.Deposit:
-		log.Fatal("Invalid batch type")
-		return nil
+		panic("invalid batch type")
 	}
 	return nil
 }

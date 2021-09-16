@@ -2,7 +2,6 @@ package syncer
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/encoder"
@@ -37,8 +36,7 @@ func NewTransactionSyncer(storage *st.Storage, batchType batchtype.BatchType) Tr
 	case batchtype.Create2Transfer:
 		return NewC2TSyncer(storage)
 	case batchtype.Genesis, batchtype.MassMigration, batchtype.Deposit:
-		log.Fatal("Invalid tx type")
-		return nil
+		panic("invalid tx type")
 	}
 	return nil
 }
