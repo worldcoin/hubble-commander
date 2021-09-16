@@ -298,7 +298,7 @@ func (s *SyncTransferBatchTestSuite) submitTransferBatchWithNonexistentFeeReceiv
 
 	receiverLeaf, err := s.executionCtx.storage.StateTree.Leaf(tx.ToStateID)
 	s.NoError(err)
-	txErr, appErr := s.executionCtx.ApplyTransfer(tx, receiverLeaf, commitmentTokenID)
+	txErr, appErr := s.executionCtx.ApplyTx(tx, receiverLeaf, commitmentTokenID)
 	s.NoError(txErr)
 	s.NoError(appErr)
 

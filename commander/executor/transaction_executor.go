@@ -85,13 +85,7 @@ func (e *TransferExecutor) MarkTxsAsIncluded(txs models.GenericTransactionArray,
 func (e *TransferExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
 	applyResult applier.SingleTxResult, transferError, appError error,
 ) {
-	receiverLeaf, appError := e.storage.StateTree.Leaf(*tx.GetToStateID())
-	if appError != nil {
-		return &applier.ApplySingleTransferResult{Tx: tx}, nil, appError
-	}
-
-	transferError, appError = e.applier.ApplyTransfer(tx, receiverLeaf, commitmentTokenID)
-	return &applier.ApplySingleTransferResult{Tx: tx}, transferError, appError
+	return e.applier.ApplyTransfer(tx, commitmentTokenID)
 }
 
 func (e *TransferExecutor) SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error) {

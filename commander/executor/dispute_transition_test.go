@@ -41,7 +41,7 @@ func (s *DisputeTransitionTestSuite) applyTransfer(
 	receiverLeaf *models.StateLeaf,
 ) models.Uint256 {
 	if tx.GetBase().Hash != invalidTxHash {
-		transferError, appError := s.executionCtx.ApplyTransfer(tx, receiverLeaf, models.MakeUint256(0))
+		transferError, appError := s.executionCtx.ApplyTx(tx, receiverLeaf, models.MakeUint256(0))
 		s.NoError(transferError)
 		s.NoError(appError)
 	} else {

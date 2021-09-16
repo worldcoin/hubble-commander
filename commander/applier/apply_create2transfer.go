@@ -30,7 +30,7 @@ func (c *Applier) ApplyCreate2Transfer(
 	if appError != nil {
 		return nil, nil, appError
 	}
-	transferError, appError = c.ApplyTransfer(applyResult.tx, receiverLeaf, commitmentTokenID)
+	transferError, appError = c.ApplyTx(applyResult.tx, receiverLeaf, commitmentTokenID)
 	return applyResult, transferError, appError
 }
 
