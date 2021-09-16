@@ -31,7 +31,7 @@ func (c *RollupContext) ApplyTransfers(
 			continue
 		}
 
-		returnStruct.AddAppliedTx(applyResult.AppliedTx())
+		returnStruct.AddApplied(applyResult)
 		combinedFee = *combinedFee.Add(&applyResult.AppliedTx().GetBase().Fee)
 	}
 

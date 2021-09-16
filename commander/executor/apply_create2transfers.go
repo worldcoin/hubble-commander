@@ -11,6 +11,7 @@ type AppliedC2Transfers struct {
 	addedPubKeyIDs   []uint32
 }
 
+// TODO: can be removed
 func (c *RollupContext) ApplyCreate2Transfers(
 	transfers []models.Create2Transfer,
 	maxApplied uint32,
@@ -32,7 +33,7 @@ func (c *RollupContext) ApplyCreate2Transfers(
 		}
 
 		transfer := &transfers[i]
-		applyResult, transferError, appError := c.ApplyCreate2Transfer(transfer, feeReceiver.TokenID)
+		applyResult, transferError, appError := c.Executor.ApplyTx(transfer, feeReceiver.TokenID)
 		if appError != nil {
 			return nil, appError
 		}
