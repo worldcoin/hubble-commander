@@ -12,7 +12,6 @@ import (
 func TestSanitizeError_ValidateErrorsFromMap(t *testing.T) {
 	sampleError1 := fmt.Errorf("sample error 1")
 	sampleError2 := fmt.Errorf("sample error 2")
-	sampleError3 := &storage.NotFoundError{}
 	expectedAPIError1 := &APIError{
 		Code:    123,
 		Message: "api error 1",
@@ -27,9 +26,9 @@ func TestSanitizeError_ValidateErrorsFromMap(t *testing.T) {
 	}
 
 	errMap := map[error]*APIError{
-		sampleError1: expectedAPIError1,
-		sampleError2: expectedAPIError2,
-		sampleError3: expectedAPIError3,
+		sampleError1:             expectedAPIError1,
+		sampleError2:             expectedAPIError2,
+		storage.AnyNotFoundError: expectedAPIError3,
 	}
 
 	apiError := sanitizeError(sampleError1, errMap)
@@ -66,8 +65,6 @@ func TestSanitizeCommonError(t *testing.T) {
 	}
 	newErr1 := fmt.Errorf("error1")
 	newErr2 := fmt.Errorf("error2")
-	newErr3 := &storage.NotFoundError{}
-
 	testCommonErrors := []*InternalToAPIError{
 		NewInternalToAPIError(
 			expectedAPIError1.Code,
@@ -81,7 +78,7 @@ func TestSanitizeCommonError(t *testing.T) {
 			expectedAPIError2.Code,
 			expectedAPIError2.Message,
 			[]error{
-				newErr3,
+				storage.AnyNotFoundError,
 			},
 		),
 	}
@@ -98,10 +95,10 @@ func TestSanitizeCommonError(t *testing.T) {
 	apiError = sanitizeCommonError(errors.WithStack(newErr2), testCommonErrors)
 	require.Equal(t, expectedAPIError1, *apiError)
 
-	apiError = sanitizeCommonError(newErr3, testCommonErrors)
+	apiError = sanitizeCommonError(storage.NewNotFoundError("something"), testCommonErrors)
 	require.Equal(t, expectedAPIError2, *apiError)
 
-	apiError = sanitizeCommonError(errors.WithStack(newErr3), testCommonErrors)
+	apiError = sanitizeCommonError(errors.WithStack(storage.NewNotFoundError("something")), testCommonErrors)
 	require.Equal(t, expectedAPIError2, *apiError)
 
 	apiError = sanitizeCommonError(fmt.Errorf("ducks"), testCommonErrors)

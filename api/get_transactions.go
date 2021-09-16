@@ -6,7 +6,7 @@ import (
 )
 
 var getTransactionsAPIErrors = map[error]*APIError{
-	&storage.NotFoundError{}: NewAPIError(10001, "transactions not found"),
+	storage.AnyNotFoundError: NewAPIError(10001, "transactions not found"),
 }
 
 func (a *API) GetTransactions(publicKey *models.PublicKey) ([]interface{}, error) {

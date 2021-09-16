@@ -9,7 +9,7 @@ import (
 )
 
 var getCommitmentAPIErrors = map[error]*APIError{
-	&storage.NotFoundError{}: NewAPIError(20000, "commitment not found"),
+	storage.AnyNotFoundError: NewAPIError(20000, "commitment not found"),
 }
 
 func (a *API) GetCommitment(id models.CommitmentID) (*dto.Commitment, error) {

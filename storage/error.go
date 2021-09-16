@@ -3,7 +3,6 @@ package storage
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/Worldcoin/hubble-commander/models"
 )
@@ -11,13 +10,20 @@ import (
 var (
 	ErrNoRowsAffected   = fmt.Errorf("no rows were affected by the update")
 	ErrNotExistentState = fmt.Errorf("cannot revert to not existent state")
+
+	AnyNotFoundError = &NotFoundError{field: anythingField}
 )
+
+const anythingField = "anything"
 
 type NotFoundError struct {
 	field string
 }
 
 func NewNotFoundError(field string) *NotFoundError {
+	if field == anythingField {
+		panic(fmt.Sprintf(`cannot use "%s" field for NotFoundError`, anythingField))
+	}
 	return &NotFoundError{field: field}
 }
 
@@ -25,8 +31,15 @@ func (e *NotFoundError) Error() string {
 	return fmt.Sprintf("%s not found", e.field)
 }
 
-func (e NotFoundError) Is(target error) bool {
-	return strings.Contains(e.Error(), target.Error())
+func (e *NotFoundError) Is(other error) bool {
+	otherError, ok := other.(*NotFoundError)
+	if !ok {
+		return false
+	}
+	if *e == *AnyNotFoundError || *otherError == *AnyNotFoundError {
+		return true
+	}
+	return *e == *otherError
 }
 
 func IsNotFoundError(err error) bool {

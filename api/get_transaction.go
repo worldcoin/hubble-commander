@@ -8,7 +8,7 @@ import (
 )
 
 var getTransactionAPIErrors = map[error]*APIError{
-	&storage.NotFoundError{}: NewAPIError(10000, "transaction not found"),
+	storage.AnyNotFoundError: NewAPIError(10000, "transaction not found"),
 }
 
 func (a *API) GetTransaction(hash common.Hash) (interface{}, error) {

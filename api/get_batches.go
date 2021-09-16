@@ -7,7 +7,7 @@ import (
 )
 
 var getBatchesAPIErrors = map[error]*APIError{
-	&storage.NotFoundError{}: NewAPIError(30001, "batches not found"),
+	storage.AnyNotFoundError: NewAPIError(30001, "batches not found"),
 }
 
 func (a *API) GetBatches(from, to *models.Uint256) ([]dto.Batch, error) {

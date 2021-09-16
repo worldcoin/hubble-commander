@@ -7,7 +7,7 @@ import (
 )
 
 var getUserStatesAPIErrors = map[error]*APIError{
-	&storage.NotFoundError{}: NewAPIError(99003, "user states not found"),
+	storage.AnyNotFoundError: NewAPIError(99003, "user states not found"),
 }
 
 func (a *API) GetUserStates(publicKey *models.PublicKey) ([]dto.UserStateWithID, error) {

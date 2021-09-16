@@ -8,7 +8,7 @@ import (
 )
 
 var getBatchAPIErrors = map[error]*APIError{
-	&storage.NotFoundError{}: NewAPIError(30000, "batch not found"),
+	storage.AnyNotFoundError: NewAPIError(30000, "batch not found"),
 }
 
 func (a *API) GetBatchByHash(hash common.Hash) (*dto.BatchWithRootAndCommitments, error) {

@@ -6,7 +6,7 @@ import (
 )
 
 var getPublicKeyAPIErrors = map[error]*APIError{
-	&storage.NotFoundError{}: NewAPIError(
+	storage.AnyNotFoundError: NewAPIError(
 		99001,
 		"public key not found",
 	),
