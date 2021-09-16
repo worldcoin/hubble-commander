@@ -88,10 +88,10 @@ func NewUnknownAPIError(err error) *APIError {
 
 type InternalToAPIError struct {
 	apiError        *APIError
-	commanderErrors []interface{}
+	commanderErrors []error
 }
 
-func NewInternalToAPIError(code int, message string, commanderErrors []interface{}) *InternalToAPIError {
+func NewInternalToAPIError(code int, message string, commanderErrors []error) *InternalToAPIError {
 	return &InternalToAPIError{
 		apiError:        NewAPIError(code, message),
 		commanderErrors: commanderErrors,
@@ -103,15 +103,15 @@ var commonErrors = []*InternalToAPIError{
 	NewInternalToAPIError(
 		40000,
 		"an error occurred while saving data to the Badger database",
-		[]interface{}{
+		[]error{
 			db.ErrInconsistentItemsLength,
 			db.ErrInvalidKeyListLength,
 			db.ErrInvalidKeyListMetadataLength,
 		},
 	),
-	NewInternalToAPIError(40001, "an error occurred while iterating over Badger database", []interface{}{db.ErrIteratorFinished}),
+	NewInternalToAPIError(40001, "an error occurred while iterating over Badger database", []error{db.ErrIteratorFinished}),
 	// BLS
-	NewInternalToAPIError(99004, "an error occurred while fetching the domain for signing", []interface{}{bls.ErrInvalidDomainLength}),
+	NewInternalToAPIError(99004, "an error occurred while fetching the domain for signing", []error{bls.ErrInvalidDomainLength}),
 }
 
 func sanitizeError(err error, errMap map[error]*APIError) *APIError {
@@ -129,7 +129,7 @@ func sanitizeCommonError(err error, errMap []*InternalToAPIError) *APIError {
 		selectedErrMap := errMap[i]
 		for j := range selectedErrMap.commanderErrors {
 			commanderErr := selectedErrMap.commanderErrors[j]
-			if errors.Is(err, commanderErr.(error)) {
+			if errors.Is(err, commanderErr) {
 				return errMap[i].apiError
 			}
 		}

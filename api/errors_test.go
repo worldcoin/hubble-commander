@@ -72,7 +72,7 @@ func TestSanitizeCommonError(t *testing.T) {
 		NewInternalToAPIError(
 			expectedAPIError1.Code,
 			expectedAPIError1.Message,
-			[]interface{}{
+			[]error{
 				newErr1,
 				newErr2,
 			},
@@ -80,7 +80,7 @@ func TestSanitizeCommonError(t *testing.T) {
 		NewInternalToAPIError(
 			expectedAPIError2.Code,
 			expectedAPIError2.Message,
-			[]interface{}{
+			[]error{
 				newErr3,
 			},
 		),
