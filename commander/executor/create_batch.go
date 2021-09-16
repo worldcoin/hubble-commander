@@ -18,7 +18,7 @@ func (c *RollupContext) CreateAndSubmitBatch(domain *bls.Domain) (err error) {
 	}
 
 	if c.BatchType == txtype.Transfer {
-		commitments, err = c.CreateTransferCommitments(domain)
+		commitments, err = c.CreateTxCommitments(domain)
 	} else {
 		commitments, err = c.CreateCreate2TransferCommitments(domain)
 	}

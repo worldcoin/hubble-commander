@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	ErrNotEnoughTransfers = NewRollupError("not enough transfers")
+	ErrNotEnoughTxs = NewRollupError("not enough transactions")
 )
 
 type FeeReceiver struct {
@@ -18,10 +18,8 @@ type FeeReceiver struct {
 	TokenID models.Uint256
 }
 
-func (c *RollupContext) CreateTransferCommitments(
-	domain *bls.Domain,
-) (commitments []models.Commitment, err error) {
-	pendingTransfers, err := c.queryPendingTransfers()
+func (c *RollupContext) CreateTxCommitments(domain *bls.Domain) ([]models.Commitment, error) {
+	pendingTxs, err := c.queryPendingTxs()
 	if err != nil {
 		return nil, err
 	}
@@ -31,14 +29,14 @@ func (c *RollupContext) CreateTransferCommitments(
 		return nil, err
 	}
 
-	commitments = make([]models.Commitment, 0, c.cfg.MaxCommitmentsPerBatch)
+	commitments := make([]models.Commitment, 0, c.cfg.MaxCommitmentsPerBatch)
 
 	for i := uint8(0); len(commitments) != int(c.cfg.MaxCommitmentsPerBatch); i++ {
 		var commitment *models.Commitment
 		commitmentID.IndexInBatch = i
 
-		pendingTransfers, commitment, err = c.createTransferCommitment(pendingTransfers, commitmentID, domain)
-		if err == ErrNotEnoughTransfers {
+		pendingTxs, commitment, err = c.createTxCommitment(pendingTxs, commitmentID, domain)
+		if err == ErrNotEnoughTxs {
 			break
 		}
 		if err != nil {
@@ -49,24 +47,24 @@ func (c *RollupContext) CreateTransferCommitments(
 	}
 
 	if len(commitments) == 0 {
-		return nil, ErrNotEnoughTransfers
+		return nil, ErrNotEnoughTxs
 	}
 
 	return commitments, nil
 }
 
-func (c *RollupContext) createTransferCommitment(
-	pendingTransfers models.GenericTransactionArray,
+func (c *RollupContext) createTxCommitment(
+	pendingTxs models.GenericTransactionArray,
 	commitmentID *models.CommitmentID,
 	domain *bls.Domain,
 ) (
-	newPendingTransfers models.GenericTransactionArray,
+	newPendingTxs models.GenericTransactionArray,
 	commitment *models.Commitment,
 	err error,
 ) {
 	startTime := time.Now()
 
-	pendingTransfers, err = c.refillPendingTransfers(pendingTransfers)
+	pendingTxs, err = c.refillPendingTransfers(pendingTxs)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -81,8 +79,8 @@ func (c *RollupContext) createTransferCommitment(
 		return nil, nil, err
 	}
 
-	applyResult, newPendingTransfers, err := c.applyTransfersForCommitment(pendingTransfers, feeReceiver)
-	if err == ErrNotEnoughTransfers {
+	applyResult, newPendingTxs, err := c.applyTransfersForCommitment(pendingTxs, feeReceiver)
+	if err == ErrNotEnoughTxs {
 		if revertErr := c.storage.StateTree.RevertTo(*initialStateRoot); revertErr != nil {
 			return nil, nil, revertErr
 		}
@@ -104,7 +102,7 @@ func (c *RollupContext) createTransferCommitment(
 		time.Since(startTime).Round(time.Millisecond).String(),
 	)
 
-	return newPendingTransfers, commitment, nil
+	return newPendingTxs, commitment, nil
 }
 
 func (c *RollupContext) applyTransfersForCommitment(pendingTransfers models.GenericTransactionArray, feeReceiver *FeeReceiver) (
@@ -129,7 +127,7 @@ func (c *RollupContext) applyTransfersForCommitment(pendingTransfers models.Gene
 		}
 
 		morePendingTransfers, err := c.queryMorePendingTransfers(aggregateResult.AppliedTxs())
-		if err == ErrNotEnoughTransfers {
+		if err == ErrNotEnoughTxs {
 			newPendingTransfers = removeTransfers(pendingTransfers, aggregateResult.AllTxs())
 			return c.Executor.NewApplyTxsForCommitmentResult(aggregateResult), newPendingTransfers, nil
 		}
@@ -142,18 +140,18 @@ func (c *RollupContext) applyTransfersForCommitment(pendingTransfers models.Gene
 
 func (c *RollupContext) refillPendingTransfers(pendingTransfers models.GenericTransactionArray) (models.GenericTransactionArray, error) {
 	if pendingTransfers.Len() < int(c.cfg.MaxTxsPerCommitment) {
-		return c.queryPendingTransfers()
+		return c.queryPendingTxs()
 	}
 	return pendingTransfers, nil
 }
 
-func (c *RollupContext) queryPendingTransfers() (models.GenericTransactionArray, error) {
+func (c *RollupContext) queryPendingTxs() (models.GenericTransactionArray, error) {
 	pendingTransfers, err := c.Executor.GetPendingTxs(c.cfg.MaxCommitmentsPerBatch * c.cfg.MaxTxsPerCommitment)
 	if err != nil {
 		return nil, err
 	}
 	if pendingTransfers.Len() < int(c.cfg.MinTxsPerCommitment) {
-		return nil, ErrNotEnoughTransfers
+		return nil, ErrNotEnoughTxs
 	}
 	return pendingTransfers, nil
 }
@@ -169,7 +167,7 @@ func (c *RollupContext) queryMorePendingTransfers(appliedTransfers models.Generi
 	pendingTransfers = removeTransfers(pendingTransfers, appliedTransfers)
 
 	if pendingTransfers.Len() < int(c.cfg.MinTxsPerCommitment) {
-		return nil, ErrNotEnoughTransfers
+		return nil, ErrNotEnoughTxs
 	}
 	return pendingTransfers, nil
 }
