@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/Worldcoin/hubble-commander/commander/applier"
+	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -16,6 +17,8 @@ type TransactionExecutor interface {
 	NewTxArray(size, capacity uint32) models.GenericTransactionArray
 	NewApplyTxsResult(capacity uint32) ApplyTxsResult
 	NewApplyTxsForCommitmentResult(applyTxsResult ApplyTxsResult) ApplyTxsForCommitmentResult
+	SerializeTxs(results ApplyTxsForCommitmentResult) ([]byte, error)
+	MarkTxsAsIncluded(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error
 	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (transferError, appError error)
 	SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error)
 }
@@ -73,6 +76,14 @@ func (e *TransferExecutor) NewApplyTxsForCommitmentResult(applyTxsResult ApplyTx
 	}
 }
 
+func (e *TransferExecutor) SerializeTxs(results ApplyTxsForCommitmentResult) ([]byte, error) {
+	return encoder.SerializeTransfers(results.AppliedTransfers().ToTransferArray())
+}
+
+func (e *TransferExecutor) MarkTxsAsIncluded(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error {
+	return e.storage.MarkTransfersAsIncluded(txs.ToTransferArray(), commitmentID)
+}
+
 func (e *TransferExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (transferError, appError error) {
 	receiverLeaf, appError := e.storage.StateTree.Leaf(*tx.GetToStateID())
 	if appError != nil {
@@ -119,6 +130,14 @@ func (e *C2TExecutor) NewApplyTxsForCommitmentResult(applyTxsResult ApplyTxsResu
 }
 
 func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (transferError, appError error) {
+	panic("implement me")
+}
+
+func (e *C2TExecutor) SerializeTxs(results ApplyTxsForCommitmentResult) ([]byte, error) {
+	panic("implement me")
+}
+
+func (e *C2TExecutor) MarkTxsAsIncluded(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error {
 	panic("implement me")
 }
 

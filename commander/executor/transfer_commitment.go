@@ -2,30 +2,28 @@ package executor
 
 import (
 	"github.com/Worldcoin/hubble-commander/bls"
-	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 )
 
-func (c *ExecutionContext) buildTransferCommitment(
-	appliedTransfers []models.Transfer,
+func (c *RollupContext) buildTransferCommitment(
+	applyResult ApplyTxsForCommitmentResult,
 	commitmentID *models.CommitmentID,
 	feeReceiverStateID uint32,
 	domain *bls.Domain,
 ) (*models.Commitment, error) {
-	serializedTxs, err := encoder.SerializeTransfers(appliedTransfers)
+	serializedTxs, err := c.Executor.SerializeTxs(applyResult)
 	if err != nil {
 		return nil, err
 	}
 
-	combinedSignature, err := CombineSignatures(models.TransferArray(appliedTransfers), domain)
+	combinedSignature, err := CombineSignatures(applyResult.AppliedTransfers(), domain)
 	if err != nil {
 		return nil, err
 	}
 
 	commitment, err := c.createCommitment(
 		commitmentID,
-		txtype.Transfer,
+		c.BatchType,
 		feeReceiverStateID,
 		serializedTxs,
 		combinedSignature,
@@ -34,7 +32,7 @@ func (c *ExecutionContext) buildTransferCommitment(
 		return nil, err
 	}
 
-	err = c.storage.MarkTransfersAsIncluded(appliedTransfers, commitmentID)
+	err = c.Executor.MarkTxsAsIncluded(applyResult.AppliedTransfers(), commitmentID)
 	if err != nil {
 		return nil, err
 	}

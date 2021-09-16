@@ -171,7 +171,10 @@ func (s *DisputeTransferTransitionTestSuite) createInvalidCommitments(
 			s.NoError(err)
 		}
 
-		commitment, err := s.executionCtx.buildTransferCommitment(txs, commitmentID, 0, testDomain)
+		applyResult := &ApplyTransfersForCommitmentResult{
+			appliedTransfers: txs,
+		}
+		commitment, err := s.rollupCtx.buildTransferCommitment(applyResult, commitmentID, 0, testDomain)
 		s.NoError(err)
 		commitments = append(commitments, *commitment)
 	}

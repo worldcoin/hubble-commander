@@ -92,7 +92,7 @@ func (c *RollupContext) createTransferCommitment(
 		return nil, nil, err
 	}
 
-	commitment, err = c.buildTransferCommitment(applyResult.AppliedTransfers().ToTransferArray(), commitmentID, feeReceiver.StateID, domain)
+	commitment, err = c.buildTransferCommitment(applyResult, commitmentID, feeReceiver.StateID, domain)
 	if err != nil {
 		return nil, nil, err
 	}
