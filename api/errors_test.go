@@ -104,3 +104,10 @@ func TestSanitizeCommonError(t *testing.T) {
 	apiError = sanitizeCommonError(fmt.Errorf("ducks"), testCommonErrors)
 	require.Equal(t, expectedUnknownError, *apiError)
 }
+
+func TestNewAPIError(t *testing.T) {
+	_ = NewAPIError(1234, "something")
+	require.Panics(t, func() {
+		_ = NewAPIError(1234, "something")
+	})
+}

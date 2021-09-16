@@ -8,7 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 )
 
-var usedErrorCodes map[int]bool
+var usedErrorCodes = map[int]bool{}
 
 const unknownAPIError = 999
 
@@ -61,10 +61,6 @@ func (e *APIError) ErrorCode() int {
 }
 
 func NewAPIError(code int, message string) *APIError {
-	if usedErrorCodes == nil {
-		usedErrorCodes = map[int]bool{}
-	}
-
 	if usedErrorCodes[code] {
 		panic(fmt.Sprintf("%d API error code is already used", code))
 	}
