@@ -5,12 +5,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-type AppliedC2Transfers struct {
-	appliedTransfers []models.Create2Transfer
-	invalidTransfers []models.Create2Transfer
-	addedPubKeyIDs   []uint32
-}
-
 func (c *ExecutionContext) ApplyCreate2TransfersForSync(
 	transfers []models.Create2Transfer,
 	pubKeyIDs []uint32,

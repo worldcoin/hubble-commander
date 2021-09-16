@@ -277,7 +277,7 @@ func (s *TransferCommitmentsTestSuite) TestRemoveTransfer() {
 	transfers := models.TransferArray{transfer1, transfer2, transfer3}
 	toRemove := models.TransferArray{transfer2}
 
-	s.Equal(models.TransferArray{transfer1, transfer3}, removeTransfers(transfers, toRemove))
+	s.Equal(models.TransferArray{transfer1, transfer3}, removeTxs(transfers, toRemove))
 }
 
 func TestTransferCommitmentsTestSuite(t *testing.T) {

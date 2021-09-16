@@ -70,12 +70,12 @@ func (e *TransferExecutor) NewApplyTxsResult(capacity uint32) ApplyTxsResult {
 
 func (e *TransferExecutor) NewApplyTxsForCommitmentResult(applyTxsResult ApplyTxsResult) ApplyTxsForCommitmentResult {
 	return &ApplyTransfersForCommitmentResult{
-		appliedTransfers: applyTxsResult.AppliedTxs().ToTransferArray(),
+		appliedTxs: applyTxsResult.AppliedTxs().ToTransferArray(),
 	}
 }
 
 func (e *TransferExecutor) SerializeTxs(results ApplyTxsForCommitmentResult) ([]byte, error) {
-	return encoder.SerializeTransfers(results.AppliedTransfers().ToTransferArray())
+	return encoder.SerializeTransfers(results.AppliedTxs().ToTransferArray())
 }
 
 func (e *TransferExecutor) MarkTxsAsIncluded(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error {
@@ -126,11 +126,14 @@ func (e *C2TExecutor) NewApplyTxsResult(capacity uint32) ApplyTxsResult {
 }
 
 func (e *C2TExecutor) NewApplyTxsForCommitmentResult(applyTxsResult ApplyTxsResult) ApplyTxsForCommitmentResult {
-	panic("implement me")
+	return &ApplyC2TForCommitmentResult{
+		appliedTxs:     applyTxsResult.AppliedTxs().ToCreate2TransferArray(),
+		addedPubKeyIDs: applyTxsResult.AddedPubKeyIDs(),
+	}
 }
 
 func (e *C2TExecutor) SerializeTxs(results ApplyTxsForCommitmentResult) ([]byte, error) {
-	return encoder.SerializeCreate2Transfers(results.AppliedTransfers().ToCreate2TransferArray(), results.AddedPubKeyIDs())
+	return encoder.SerializeCreate2Transfers(results.AppliedTxs().ToCreate2TransferArray(), results.AddedPubKeyIDs())
 }
 
 func (e *C2TExecutor) MarkTxsAsIncluded(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error {

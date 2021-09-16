@@ -79,7 +79,7 @@ func (c *RollupContext) createTxCommitment(
 		return nil, nil, err
 	}
 
-	applyResult, newPendingTxs, err := c.applyTransfersForCommitment(pendingTxs, feeReceiver)
+	applyResult, newPendingTxs, err := c.applyTxsForCommitment(pendingTxs, feeReceiver)
 	if err == ErrNotEnoughTxs {
 		if revertErr := c.storage.StateTree.RevertTo(*initialStateRoot); revertErr != nil {
 			return nil, nil, revertErr
@@ -98,23 +98,23 @@ func (c *RollupContext) createTxCommitment(
 	log.Printf(
 		"Created a %s commitment from %d transactions in %s",
 		txtype.Transfer,
-		applyResult.AppliedTransfers().Len(),
+		applyResult.AppliedTxs().Len(),
 		time.Since(startTime).Round(time.Millisecond).String(),
 	)
 
 	return newPendingTxs, commitment, nil
 }
 
-func (c *RollupContext) applyTransfersForCommitment(pendingTransfers models.GenericTransactionArray, feeReceiver *FeeReceiver) (
+func (c *RollupContext) applyTxsForCommitment(pendingTxs models.GenericTransactionArray, feeReceiver *FeeReceiver) (
 	result ApplyTxsForCommitmentResult,
-	newPendingTransfers models.GenericTransactionArray,
+	newPendingTxs models.GenericTransactionArray,
 	err error,
 ) {
 	aggregateResult := c.Executor.NewApplyTxsResult(c.cfg.MaxTxsPerCommitment)
 
 	for {
-		numNeededTransfers := c.cfg.MaxTxsPerCommitment - uint32(aggregateResult.AppliedTxs().Len())
-		applyTxsResult, err := c.ApplyTxs(pendingTransfers, numNeededTransfers, feeReceiver)
+		numNeededTxs := c.cfg.MaxTxsPerCommitment - uint32(aggregateResult.AppliedTxs().Len())
+		applyTxsResult, err := c.ApplyTxs(pendingTxs, numNeededTxs, feeReceiver)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -122,19 +122,19 @@ func (c *RollupContext) applyTransfersForCommitment(pendingTransfers models.Gene
 		aggregateResult.AddTxs(applyTxsResult)
 
 		if aggregateResult.AppliedTxs().Len() == int(c.cfg.MaxTxsPerCommitment) {
-			newPendingTransfers = removeTransfers(pendingTransfers, aggregateResult.AllTxs())
-			return c.Executor.NewApplyTxsForCommitmentResult(aggregateResult), newPendingTransfers, nil
+			newPendingTxs = removeTxs(pendingTxs, aggregateResult.AllTxs())
+			return c.Executor.NewApplyTxsForCommitmentResult(aggregateResult), newPendingTxs, nil
 		}
 
-		morePendingTransfers, err := c.queryMorePendingTransfers(aggregateResult.AppliedTxs())
+		morePendingTransfers, err := c.queryMorePendingTxs(aggregateResult.AppliedTxs())
 		if err == ErrNotEnoughTxs {
-			newPendingTransfers = removeTransfers(pendingTransfers, aggregateResult.AllTxs())
-			return c.Executor.NewApplyTxsForCommitmentResult(aggregateResult), newPendingTransfers, nil
+			newPendingTxs = removeTxs(pendingTxs, aggregateResult.AllTxs())
+			return c.Executor.NewApplyTxsForCommitmentResult(aggregateResult), newPendingTxs, nil
 		}
 		if err != nil {
 			return nil, nil, err
 		}
-		pendingTransfers = morePendingTransfers
+		pendingTxs = morePendingTransfers
 	}
 }
 
@@ -156,7 +156,7 @@ func (c *RollupContext) queryPendingTxs() (models.GenericTransactionArray, error
 	return pendingTransfers, nil
 }
 
-func (c *RollupContext) queryMorePendingTransfers(appliedTransfers models.GenericTransactionArray) (models.GenericTransactionArray, error) {
+func (c *RollupContext) queryMorePendingTxs(appliedTransfers models.GenericTransactionArray) (models.GenericTransactionArray, error) {
 	numAppliedTransfers := uint32(appliedTransfers.Len())
 	pendingTransfers, err := c.Executor.GetPendingTxs(
 		c.cfg.MaxCommitmentsPerBatch*c.cfg.MaxTxsPerCommitment + numAppliedTransfers,
@@ -164,7 +164,7 @@ func (c *RollupContext) queryMorePendingTransfers(appliedTransfers models.Generi
 	if err != nil {
 		return nil, err
 	}
-	pendingTransfers = removeTransfers(pendingTransfers, appliedTransfers)
+	pendingTransfers = removeTxs(pendingTransfers, appliedTransfers)
 
 	if pendingTransfers.Len() < int(c.cfg.MinTxsPerCommitment) {
 		return nil, ErrNotEnoughTxs
@@ -184,17 +184,17 @@ func (c *ExecutionContext) getCommitmentFeeReceiver() (*FeeReceiver, error) {
 	}, nil
 }
 
-func removeTransfers(transferList, toRemove models.GenericTransactionArray) models.GenericTransactionArray {
+func removeTxs(txList, toRemove models.GenericTransactionArray) models.GenericTransactionArray {
 	outputIndex := 0
-	for i := 0; i < transferList.Len(); i++ {
-		tx := transferList.At(i)
+	for i := 0; i < txList.Len(); i++ {
+		tx := txList.At(i)
 		if !transferExists(toRemove, tx) {
-			transferList.Set(outputIndex, tx)
+			txList.Set(outputIndex, tx)
 			outputIndex++
 		}
 	}
 
-	return transferList.Slice(0, outputIndex)
+	return txList.Slice(0, outputIndex)
 }
 
 func transferExists(transferList models.GenericTransactionArray, tx models.GenericTransaction) bool {

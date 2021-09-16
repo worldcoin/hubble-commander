@@ -16,7 +16,7 @@ func (c *RollupContext) buildTransferCommitment(
 		return nil, err
 	}
 
-	combinedSignature, err := CombineSignatures(applyResult.AppliedTransfers(), domain)
+	combinedSignature, err := CombineSignatures(applyResult.AppliedTxs(), domain)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +32,7 @@ func (c *RollupContext) buildTransferCommitment(
 		return nil, err
 	}
 
-	err = c.Executor.MarkTxsAsIncluded(applyResult.AppliedTransfers(), commitmentID)
+	err = c.Executor.MarkTxsAsIncluded(applyResult.AppliedTxs(), commitmentID)
 	if err != nil {
 		return nil, err
 	}

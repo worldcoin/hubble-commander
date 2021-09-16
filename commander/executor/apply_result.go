@@ -6,20 +6,33 @@ import (
 )
 
 type ApplyTxsForCommitmentResult interface {
-	AppliedTransfers() models.GenericTransactionArray
+	AppliedTxs() models.GenericTransactionArray
 	AddedPubKeyIDs() []uint32
 }
 
 type ApplyTransfersForCommitmentResult struct {
-	appliedTransfers models.TransferArray
+	appliedTxs models.TransferArray
 }
 
-func (a *ApplyTransfersForCommitmentResult) AppliedTransfers() models.GenericTransactionArray {
-	return a.appliedTransfers
+func (a *ApplyTransfersForCommitmentResult) AppliedTxs() models.GenericTransactionArray {
+	return a.appliedTxs
 }
 
 func (a *ApplyTransfersForCommitmentResult) AddedPubKeyIDs() []uint32 {
 	panic("AddedPubKeyIDs cannot be invoked on ApplyTransfersForCommitmentResult")
+}
+
+type ApplyC2TForCommitmentResult struct {
+	appliedTxs     models.Create2TransferArray
+	addedPubKeyIDs []uint32
+}
+
+func (a *ApplyC2TForCommitmentResult) AppliedTxs() models.GenericTransactionArray {
+	return a.appliedTxs
+}
+
+func (a *ApplyC2TForCommitmentResult) AddedPubKeyIDs() []uint32 {
+	return a.addedPubKeyIDs
 }
 
 type ApplyTxsResult interface {

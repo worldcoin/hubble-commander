@@ -249,10 +249,10 @@ func (s *Create2TransferCommitmentsTestSuite) TestRemoveCreate2Transfer() {
 		},
 	}
 
-	transfers := []models.Create2Transfer{transfer1, transfer2, transfer3}
-	toRemove := []models.Create2Transfer{transfer2}
+	transfers := models.Create2TransferArray{transfer1, transfer2, transfer3}
+	toRemove := models.Create2TransferArray{transfer2}
 
-	s.Equal([]models.Create2Transfer{transfer1, transfer3}, removeC2Ts(transfers, toRemove))
+	s.Equal(models.Create2TransferArray{transfer1, transfer3}, removeTxs(transfers, toRemove))
 }
 
 func TestCreate2TransferCommitmentsTestSuite(t *testing.T) {
