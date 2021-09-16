@@ -6,16 +6,16 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
-func (c *Applier) ApplyCreate2Transfer(
+func (a *Applier) ApplyCreate2Transfer(
 	create2Transfer *models.Create2Transfer,
 	commitmentTokenID models.Uint256,
 ) (applyResult *ApplySingleC2TResult, transferError, appError error) {
-	pubKeyID, appError := c.getOrRegisterPubKeyID(&create2Transfer.ToPublicKey, commitmentTokenID)
+	pubKeyID, appError := a.getOrRegisterPubKeyID(&create2Transfer.ToPublicKey, commitmentTokenID)
 	if appError != nil {
 		return nil, nil, appError
 	}
 
-	nextAvailableStateID, appError := c.storage.StateTree.NextAvailableStateID()
+	nextAvailableStateID, appError := a.storage.StateTree.NextAvailableStateID()
 	if appError != nil {
 		return nil, nil, appError
 	}
@@ -30,11 +30,11 @@ func (c *Applier) ApplyCreate2Transfer(
 	if appError != nil {
 		return nil, nil, appError
 	}
-	transferError, appError = c.ApplyTx(applyResult.tx, receiverLeaf, commitmentTokenID)
+	transferError, appError = a.ApplyTx(applyResult.tx, receiverLeaf, commitmentTokenID)
 	return applyResult, transferError, appError
 }
 
-func (c *Applier) ApplyCreate2TransferForSync(
+func (a *Applier) ApplyCreate2TransferForSync(
 	create2Transfer *models.Create2Transfer,
 	pubKeyID uint32,
 	commitmentTokenID models.Uint256,
@@ -47,39 +47,39 @@ func (c *Applier) ApplyCreate2TransferForSync(
 	if appError != nil {
 		return nil, nil, appError
 	}
-	genericSynced, transferError, appError := c.applyGenericTransactionForSync(create2Transfer, receiverLeaf, commitmentTokenID)
+	genericSynced, transferError, appError := a.applyGenericTransactionForSync(create2Transfer, receiverLeaf, commitmentTokenID)
 	if appError != nil {
 		return nil, nil, appError
 	}
 	return NewSyncedCreate2TransferFromGeneric(genericSynced), transferError, nil
 }
 
-func (c *Applier) getOrRegisterPubKeyID(
+func (a *Applier) getOrRegisterPubKeyID(
 	publicKey *models.PublicKey,
 	tokenID models.Uint256,
 ) (*uint32, error) {
-	pubKeyID, err := c.storage.GetUnusedPubKeyID(publicKey, &tokenID)
+	pubKeyID, err := a.storage.GetUnusedPubKeyID(publicKey, &tokenID)
 	if err != nil && !st.IsNotFoundError(err) {
 		return nil, err
 	} else if st.IsNotFoundError(err) {
-		return c.registerAccount(publicKey)
+		return a.registerAccount(publicKey)
 	}
 	return pubKeyID, nil
 }
 
-func (c *Applier) registerAccount(publicKey *models.PublicKey) (*uint32, error) {
-	syncedBlock, err := c.storage.GetSyncedBlock()
+func (a *Applier) registerAccount(publicKey *models.PublicKey) (*uint32, error) {
+	syncedBlock, err := a.storage.GetSyncedBlock()
 	if err != nil {
 		return nil, err
 	}
-	events, unsubscribe, err := c.client.WatchRegistrations(&bind.WatchOpts{
+	events, unsubscribe, err := a.client.WatchRegistrations(&bind.WatchOpts{
 		Start: syncedBlock,
 	})
 	if err != nil {
 		return nil, err
 	}
 	defer unsubscribe()
-	return c.client.RegisterAccount(publicKey, events)
+	return a.client.RegisterAccount(publicKey, events)
 }
 
 func newUserLeaf(stateID, pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {

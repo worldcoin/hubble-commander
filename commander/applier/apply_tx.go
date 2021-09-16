@@ -19,22 +19,22 @@ var (
 	ErrInvalidCommitmentStateRoot = errors.New("invalid commitment post state root")
 )
 
-func (c *Applier) ApplyTx(
+func (a *Applier) ApplyTx(
 	tx models.GenericTransaction,
 	receiverLeaf *models.StateLeaf,
 	commitmentTokenID models.Uint256,
 ) (transferError, appError error) {
-	senderLeaf, err := c.storage.StateTree.Leaf(tx.GetFromStateID())
+	senderLeaf, err := a.storage.StateTree.Leaf(tx.GetFromStateID())
 	if err != nil {
 		return nil, err
 	}
 
-	appError = c.validateSenderTokenID(senderLeaf, commitmentTokenID)
+	appError = a.validateSenderTokenID(senderLeaf, commitmentTokenID)
 	if appError != nil {
 		return nil, appError
 	}
 
-	appError = c.validateReceiverTokenID(receiverLeaf, commitmentTokenID)
+	appError = a.validateReceiverTokenID(receiverLeaf, commitmentTokenID)
 	if appError != nil {
 		return nil, appError
 	}
@@ -48,11 +48,11 @@ func (c *Applier) ApplyTx(
 		return tErr, nil
 	}
 
-	_, appError = c.storage.StateTree.Set(senderLeaf.StateID, newSenderState)
+	_, appError = a.storage.StateTree.Set(senderLeaf.StateID, newSenderState)
 	if appError != nil {
 		return nil, appError
 	}
-	_, appError = c.storage.StateTree.Set(receiverLeaf.StateID, newReceiverState)
+	_, appError = a.storage.StateTree.Set(receiverLeaf.StateID, newReceiverState)
 	if appError != nil {
 		return nil, appError
 	}
@@ -60,28 +60,28 @@ func (c *Applier) ApplyTx(
 	return nil, nil
 }
 
-func (c *Applier) ApplyTransferForSync(transfer models.GenericTransaction, commitmentTokenID models.Uint256) (
+func (a *Applier) ApplyTransferForSync(transfer models.GenericTransaction, commitmentTokenID models.Uint256) (
 	synced *SyncedTransfer,
 	transferError, appError error,
 ) {
-	receiverLeaf, err := c.storage.StateTree.LeafOrEmpty(*transfer.GetToStateID())
+	receiverLeaf, err := a.storage.StateTree.LeafOrEmpty(*transfer.GetToStateID())
 	if err != nil {
 		return nil, nil, err
 	}
 
-	genericSynced, transferError, appError := c.applyGenericTransactionForSync(transfer, receiverLeaf, commitmentTokenID)
+	genericSynced, transferError, appError := a.applyGenericTransactionForSync(transfer, receiverLeaf, commitmentTokenID)
 	if appError != nil {
 		return nil, nil, appError
 	}
 	return NewSyncedTransferFromGeneric(genericSynced), transferError, nil
 }
 
-func (c *Applier) applyGenericTransactionForSync(
+func (a *Applier) applyGenericTransactionForSync(
 	tx models.GenericTransaction,
 	receiverLeaf *models.StateLeaf,
 	commitmentTokenID models.Uint256,
 ) (synced *SyncedGenericTransaction, transferError, appError error) {
-	senderLeaf, err := c.storage.StateTree.LeafOrEmpty(tx.GetFromStateID())
+	senderLeaf, err := a.storage.StateTree.LeafOrEmpty(tx.GetFromStateID())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -90,26 +90,26 @@ func (c *Applier) applyGenericTransactionForSync(
 
 	newSenderState, newReceiverState, tErr := calculateStateAfterTransfer(senderLeaf.UserState, receiverLeaf.UserState, tx)
 	if tErr != nil {
-		return c.fillSenderWitness(synced, tErr)
+		return a.fillSenderWitness(synced, tErr)
 	}
 
-	senderWitness, appError := c.storage.StateTree.Set(senderLeaf.StateID, newSenderState)
+	senderWitness, appError := a.storage.StateTree.Set(senderLeaf.StateID, newSenderState)
 	if appError != nil {
 		return nil, nil, appError
 	}
 	synced.SenderStateProof.Witness = senderWitness
 
-	if tErr := c.validateSenderTokenID(senderLeaf, commitmentTokenID); tErr != nil {
+	if tErr := a.validateSenderTokenID(senderLeaf, commitmentTokenID); tErr != nil {
 		return synced, tErr, nil
 	}
 
-	receiverWitness, appError := c.storage.StateTree.Set(receiverLeaf.StateID, newReceiverState)
+	receiverWitness, appError := a.storage.StateTree.Set(receiverLeaf.StateID, newReceiverState)
 	if appError != nil {
 		return nil, nil, appError
 	}
 	synced.ReceiverStateProof.Witness = receiverWitness
 
-	if tErr := c.validateReceiverTokenID(receiverLeaf, commitmentTokenID); tErr != nil {
+	if tErr := a.validateReceiverTokenID(receiverLeaf, commitmentTokenID); tErr != nil {
 		return synced, tErr, nil
 	}
 
@@ -118,8 +118,8 @@ func (c *Applier) applyGenericTransactionForSync(
 	return synced, nil, nil
 }
 
-func (c *Applier) fillSenderWitness(synced *SyncedGenericTransaction, tErr error) (*SyncedGenericTransaction, error, error) {
-	witness, appError := c.storage.StateTree.GetLeafWitness(synced.Transaction.GetFromStateID())
+func (a *Applier) fillSenderWitness(synced *SyncedGenericTransaction, tErr error) (*SyncedGenericTransaction, error, error) {
+	witness, appError := a.storage.StateTree.GetLeafWitness(synced.Transaction.GetFromStateID())
 	if appError != nil {
 		return nil, nil, appError
 	}
@@ -128,14 +128,14 @@ func (c *Applier) fillSenderWitness(synced *SyncedGenericTransaction, tErr error
 	return synced, tErr, nil
 }
 
-func (c *Applier) validateSenderTokenID(senderState *models.StateLeaf, commitmentTokenID models.Uint256) error {
+func (a *Applier) validateSenderTokenID(senderState *models.StateLeaf, commitmentTokenID models.Uint256) error {
 	if senderState.TokenID.Cmp(&commitmentTokenID) != 0 {
 		return ErrInvalidSenderTokenID
 	}
 	return nil
 }
 
-func (c *Applier) validateReceiverTokenID(receiverState *models.StateLeaf, commitmentTokenID models.Uint256) error {
+func (a *Applier) validateReceiverTokenID(receiverState *models.StateLeaf, commitmentTokenID models.Uint256) error {
 	if receiverState.TokenID.Cmp(&commitmentTokenID) != 0 {
 		return ErrInvalidReceiverTokenID
 	}

@@ -2,14 +2,14 @@ package applier
 
 import "github.com/Worldcoin/hubble-commander/models"
 
-func (c *Applier) ApplyTransfer(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
+func (a *Applier) ApplyTransfer(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
 	applyResult SingleTxResult, transferError, appError error,
 ) {
-	receiverLeaf, appError := c.storage.StateTree.Leaf(*tx.GetToStateID())
+	receiverLeaf, appError := a.storage.StateTree.Leaf(*tx.GetToStateID())
 	if appError != nil {
 		return nil, nil, appError
 	}
 
-	transferError, appError = c.ApplyTx(tx, receiverLeaf, commitmentTokenID)
-	return &ApplySingleTransferResult{Tx: tx}, transferError, appError
+	transferError, appError = a.ApplyTx(tx, receiverLeaf, commitmentTokenID)
+	return &ApplySingleTransferResult{tx: tx}, transferError, appError
 }

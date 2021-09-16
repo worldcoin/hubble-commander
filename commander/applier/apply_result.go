@@ -8,11 +8,11 @@ type SingleTxResult interface {
 }
 
 type ApplySingleTransferResult struct {
-	Tx models.GenericTransaction
+	tx models.GenericTransaction
 }
 
 func (a *ApplySingleTransferResult) AppliedTx() models.GenericTransaction {
-	return a.Tx
+	return a.tx
 }
 
 func (a *ApplySingleTransferResult) AddedPubKeyID() uint32 {
