@@ -63,7 +63,7 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 	}
 	defer rollupCtx.Rollback(&err)
 
-	err = rollupCtx.CreateAndSubmitBatch(*currentBatchType, c.domain)
+	err = rollupCtx.CreateAndSubmitBatch(c.domain)
 	if *currentBatchType == txtype.Transfer {
 		*currentBatchType = txtype.Create2Transfer
 	} else {

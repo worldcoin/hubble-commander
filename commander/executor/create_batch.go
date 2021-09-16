@@ -9,15 +9,15 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (c *RollupContext) CreateAndSubmitBatch(batchType txtype.TransactionType, domain *bls.Domain) (err error) {
+func (c *RollupContext) CreateAndSubmitBatch(domain *bls.Domain) (err error) {
 	startTime := time.Now()
 	var commitments []models.Commitment
-	batch, err := c.NewPendingBatch(batchType)
+	batch, err := c.NewPendingBatch(c.BatchType)
 	if err != nil {
 		return err
 	}
 
-	if batchType == txtype.Transfer {
+	if c.BatchType == txtype.Transfer {
 		commitments, err = c.CreateTransferCommitments(domain)
 	} else {
 		commitments, err = c.CreateCreate2TransferCommitments(domain)
@@ -33,7 +33,7 @@ func (c *RollupContext) CreateAndSubmitBatch(batchType txtype.TransactionType, d
 
 	log.Printf(
 		"Submitted a %s batch with %d commitment(s) on chain in %s. Batch ID: %d. Transaction hash: %v",
-		batchType.String(),
+		c.BatchType.String(),
 		len(commitments),
 		time.Since(startTime).Round(time.Millisecond).String(),
 		batch.ID.Uint64(),
