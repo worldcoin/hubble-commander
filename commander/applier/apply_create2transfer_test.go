@@ -182,6 +182,26 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_InvalidT
 	s.NoError(appErr)
 }
 
+func (s *ApplyCreate2TransferTestSuite) TestGetOrRegisterPubKeyID_RegistersPubKeyIDInCaseThereIsNoUnusedOne() {
+	pubKeyID, err := s.applier.getOrRegisterPubKeyID(&create2Transfer.ToPublicKey, feeReceiverTokenID)
+	s.NoError(err)
+	s.Equal(uint32(0), *pubKeyID)
+}
+
+func (s *ApplyCreate2TransferTestSuite) TestGetOrRegisterPubKeyID_ReturnsUnusedPubKeyID() {
+	for i := 1; i <= 10; i++ {
+		err := s.storage.AccountTree.SetSingle(&models.AccountLeaf{
+			PubKeyID:  uint32(i),
+			PublicKey: models.PublicKey{1, 2, 3},
+		})
+		s.NoError(err)
+	}
+
+	pubKeyID, err := s.applier.getOrRegisterPubKeyID(&models.PublicKey{1, 2, 3}, feeReceiverTokenID)
+	s.NoError(err)
+	s.Equal(uint32(2), *pubKeyID)
+}
+
 func TestApplyCreate2TransferTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplyCreate2TransferTestSuite))
 }

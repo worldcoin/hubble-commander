@@ -14,21 +14,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
-)
-
-var (
-	create2Transfer = models.Create2Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash:        common.BigToHash(big.NewInt(1234)),
-			FromStateID: 0,
-			Amount:      models.MakeUint256(1000),
-			Fee:         models.MakeUint256(100),
-			Nonce:       models.MakeUint256(0),
-		},
-		ToPublicKey: models.PublicKey{3, 4, 5},
-	}
 )
 
 type ApplyCreate2TransfersTestSuite struct {
@@ -257,29 +243,6 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_Invali
 	s.Equal(Transition, disputableErr.Type)
 	s.Equal(applier.ErrInvalidFeeReceiverTokenID.Error(), disputableErr.Reason)
 	s.Len(disputableErr.Proofs, 5)
-}
-
-func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_RegistersPubKeyIDInCaseThereIsNoUnusedOne() {
-	pubKeyID, err := s.executionCtx.getOrRegisterPubKeyID(s.events, &create2Transfer, models.MakeUint256(1))
-	s.NoError(err)
-	s.Equal(uint32(0), *pubKeyID)
-}
-
-func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_ReturnsUnusedPubKeyID() {
-	for i := 1; i <= 10; i++ {
-		err := s.storage.AccountTree.SetSingle(&models.AccountLeaf{
-			PubKeyID:  uint32(i),
-			PublicKey: models.PublicKey{1, 2, 3},
-		})
-		s.NoError(err)
-	}
-
-	c2T := create2Transfer
-	c2T.ToPublicKey = models.PublicKey{1, 2, 3}
-
-	pubKeyID, err := s.executionCtx.getOrRegisterPubKeyID(s.events, &c2T, models.MakeUint256(1))
-	s.NoError(err)
-	s.Equal(uint32(4), *pubKeyID)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) getRegisteredAccounts(startBlockNumber uint64) []models.AccountLeaf {

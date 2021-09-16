@@ -2,9 +2,7 @@ package executor
 
 import (
 	"github.com/Worldcoin/hubble-commander/commander/applier"
-	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/models"
-	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
 type AppliedC2Transfers struct {
@@ -108,18 +106,4 @@ func (c *ExecutionContext) ApplyCreate2TransfersForSync(
 	}
 
 	return appliedTransfers, stateChangeProofs, nil
-}
-
-func (c *ExecutionContext) getOrRegisterPubKeyID(
-	events chan *accountregistry.AccountRegistrySinglePubkeyRegistered,
-	transfer *models.Create2Transfer,
-	tokenID models.Uint256,
-) (*uint32, error) {
-	pubKeyID, err := c.storage.GetUnusedPubKeyID(&transfer.ToPublicKey, &tokenID)
-	if err != nil && !st.IsNotFoundError(err) {
-		return nil, err
-	} else if st.IsNotFoundError(err) {
-		return c.client.RegisterAccount(&transfer.ToPublicKey, events)
-	}
-	return pubKeyID, nil
 }
