@@ -21,18 +21,18 @@ func (c *RollupContext) ApplyTransfers(
 			break
 		}
 
-		appliedTx, transferError, appError := c.Executor.ApplyTx(transfers.At(i), feeReceiver.TokenID)
+		applyResult, transferError, appError := c.Executor.ApplyTx(transfers.At(i), feeReceiver.TokenID)
 		if appError != nil {
 			return nil, appError
 		}
 		if transferError != nil {
-			logAndSaveTransactionError(c.storage, appliedTx.GetBase(), transferError)
-			returnStruct.AddInvalidTx(appliedTx)
+			logAndSaveTransactionError(c.storage, applyResult.AppliedTx().GetBase(), transferError)
+			returnStruct.AddInvalidTx(applyResult.AppliedTx())
 			continue
 		}
 
-		returnStruct.AddAppliedTx(appliedTx)
-		combinedFee = *combinedFee.Add(&appliedTx.GetBase().Fee)
+		returnStruct.AddAppliedTx(applyResult.AppliedTx())
+		combinedFee = *combinedFee.Add(&applyResult.AppliedTx().GetBase().Fee)
 	}
 
 	if returnStruct.AppliedTxs().Len() > 0 {

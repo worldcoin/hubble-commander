@@ -5,7 +5,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
 type AppliedC2Transfers struct {
@@ -23,18 +22,6 @@ func (c *RollupContext) ApplyCreate2Transfers(
 		return &AppliedC2Transfers{}, nil
 	}
 
-	syncedBlock, err := c.storage.GetSyncedBlock()
-	if err != nil {
-		return nil, err
-	}
-	events, unsubscribe, err := c.client.WatchRegistrations(&bind.WatchOpts{
-		Start: syncedBlock,
-	})
-	if err != nil {
-		return nil, err
-	}
-	defer unsubscribe()
-
 	returnStruct := &AppliedC2Transfers{}
 	returnStruct.appliedTransfers = make([]models.Create2Transfer, 0, c.cfg.MaxTxsPerCommitment)
 	returnStruct.addedPubKeyIDs = make([]uint32, 0, c.cfg.MaxTxsPerCommitment)
@@ -47,29 +34,24 @@ func (c *RollupContext) ApplyCreate2Transfers(
 		}
 
 		transfer := &transfers[i]
-		var pubKeyID *uint32
-		pubKeyID, err = c.getOrRegisterPubKeyID(events, transfer, feeReceiver.TokenID)
-		if err != nil {
-			return nil, err
-		}
-
-		appliedTransfer, transferError, appError := c.ApplyCreate2Transfer(transfer, *pubKeyID, feeReceiver.TokenID)
+		applyResult, transferError, appError := c.ApplyCreate2Transfer(transfer, feeReceiver.TokenID)
 		if appError != nil {
 			return nil, appError
 		}
 		if transferError != nil {
-			logAndSaveTransactionError(c.storage, &appliedTransfer.TransactionBase, transferError)
-			returnStruct.invalidTransfers = append(returnStruct.invalidTransfers, *appliedTransfer)
+			logAndSaveTransactionError(c.storage, applyResult.AppliedTx().GetBase(), transferError)
+			returnStruct.invalidTransfers = append(returnStruct.invalidTransfers, *applyResult.AppliedTx().ToCreate2Transfer())
 			continue
 		}
 
-		returnStruct.appliedTransfers = append(returnStruct.appliedTransfers, *appliedTransfer)
-		returnStruct.addedPubKeyIDs = append(returnStruct.addedPubKeyIDs, *pubKeyID)
-		*combinedFee = *combinedFee.Add(&appliedTransfer.Fee)
+		returnStruct.appliedTransfers = append(returnStruct.appliedTransfers, *applyResult.AppliedTx().ToCreate2Transfer())
+		returnStruct.addedPubKeyIDs = append(returnStruct.addedPubKeyIDs, applyResult.AddedPubKeyID())
+		//TODO: change GetFee func to return pointer
+		*combinedFee = *combinedFee.Add(&applyResult.AppliedTx().GetBase().Fee)
 	}
 
 	if len(returnStruct.appliedTransfers) > 0 {
-		_, err = c.ApplyFee(feeReceiver.StateID, *combinedFee)
+		_, err := c.ApplyFee(feeReceiver.StateID, *combinedFee)
 		if err != nil {
 			return nil, err
 		}

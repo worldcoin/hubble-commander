@@ -19,7 +19,7 @@ type TransactionExecutor interface {
 	NewApplyTxsForCommitmentResult(applyTxsResult ApplyTxsResult) ApplyTxsForCommitmentResult
 	SerializeTxs(results ApplyTxsForCommitmentResult) ([]byte, error)
 	MarkTxsAsIncluded(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error
-	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (appliedTx models.GenericTransaction, transferError, appError error)
+	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (result applier.SingleTxResult, transferError, appError error)
 	SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error)
 }
 
@@ -83,15 +83,15 @@ func (e *TransferExecutor) MarkTxsAsIncluded(txs models.GenericTransactionArray,
 }
 
 func (e *TransferExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
-	appliedTx models.GenericTransaction, transferError, appError error,
+	applyResult applier.SingleTxResult, transferError, appError error,
 ) {
 	receiverLeaf, appError := e.storage.StateTree.Leaf(*tx.GetToStateID())
 	if appError != nil {
-		return tx, nil, appError
+		return &applier.ApplySingleTransferResult{Tx: tx}, nil, appError
 	}
 
 	transferError, appError = e.applier.ApplyTransfer(tx, receiverLeaf, commitmentTokenID)
-	return tx, transferError, appError
+	return &applier.ApplySingleTransferResult{Tx: tx}, transferError, appError
 }
 
 func (e *TransferExecutor) SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error) {
@@ -140,9 +140,9 @@ func (e *C2TExecutor) MarkTxsAsIncluded(txs models.GenericTransactionArray, comm
 }
 
 func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
-	appliedTx models.GenericTransaction, transferError, appError error,
+	applyResult applier.SingleTxResult, transferError, appError error,
 ) {
-	return e.applier.ApplyCreate2Transfer(tx.ToCreate2Transfer(), 5, commitmentTokenID)
+	return e.applier.ApplyCreate2Transfer(tx.ToCreate2Transfer(), commitmentTokenID)
 }
 
 func (e *C2TExecutor) SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error) {

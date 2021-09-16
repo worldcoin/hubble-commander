@@ -73,36 +73,34 @@ func (s *ApplyCreate2TransferTestSuite) TearDownTest() {
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_GetsNextAvailableStateIDAndInsertsNewUserState() {
-	pubKeyID := uint32(2)
-	_, transferError, appError := s.applier.ApplyCreate2Transfer(&create2Transfer, pubKeyID, feeReceiverTokenID)
+	_, transferError, appError := s.applier.ApplyCreate2Transfer(&create2Transfer, feeReceiverTokenID)
 	s.NoError(appError)
 	s.NoError(transferError)
 
 	leaf, err := s.storage.StateTree.Leaf(2)
 	s.NoError(err)
 	s.NotNil(leaf)
-	s.Equal(pubKeyID, leaf.PubKeyID)
+	s.EqualValues(0, leaf.PubKeyID)
 	s.Equal(feeReceiverTokenID, leaf.TokenID)
 	s.Equal(models.MakeUint256(0), leaf.Nonce)
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_SetsCorrectToStateIDInReturnedTransfer() {
-	pubKeyID := uint32(2)
-	appliedTransfer, transferError, appError := s.applier.ApplyCreate2Transfer(&create2Transfer, pubKeyID, feeReceiverTokenID)
+	applyResult, transferError, appError := s.applier.ApplyCreate2Transfer(&create2Transfer, feeReceiverTokenID)
 	s.NoError(appError)
 	s.NoError(transferError)
 
-	s.Equal(ref.Uint32(2), appliedTransfer.ToStateID)
+	s.Equal(ref.Uint32(2), applyResult.AppliedTx().GetToStateID())
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_AppliesTransfer() {
-	appliedTransfer, transferError, appError := s.applier.ApplyCreate2Transfer(&create2Transfer, 2, feeReceiverTokenID)
+	applyResult, transferError, appError := s.applier.ApplyCreate2Transfer(&create2Transfer, feeReceiverTokenID)
 	s.NoError(appError)
 	s.NoError(transferError)
 
-	senderLeaf, err := s.storage.StateTree.Leaf(appliedTransfer.FromStateID)
+	senderLeaf, err := s.storage.StateTree.Leaf(applyResult.AppliedTx().GetFromStateID())
 	s.NoError(err)
-	receiverLeaf, err := s.storage.StateTree.Leaf(*appliedTransfer.ToStateID)
+	receiverLeaf, err := s.storage.StateTree.Leaf(*applyResult.AppliedTx().GetToStateID())
 	s.NoError(err)
 
 	s.Equal(uint64(8900), senderLeaf.Balance.Uint64())
@@ -113,7 +111,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InvalidTransfer
 	transfers := testutils.GenerateInvalidCreate2Transfers(1)
 	transfers[0].Amount = models.MakeUint256(500)
 
-	_, transferErr, appErr := s.applier.ApplyCreate2Transfer(&transfers[0], 1, feeReceiverTokenID)
+	_, transferErr, appErr := s.applier.ApplyCreate2Transfer(&transfers[0], feeReceiverTokenID)
 	s.Error(transferErr)
 	s.NoError(appErr)
 }
