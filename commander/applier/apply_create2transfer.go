@@ -2,7 +2,7 @@ package applier
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/storage"
+	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
 func (c *Applier) ApplyCreate2Transfer(
@@ -46,7 +46,7 @@ func (c *Applier) ApplyCreate2TransferForSync(
 }
 
 func newUserLeaf(stateID, pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
-	return storage.NewStateLeaf(stateID, &models.UserState{
+	return st.NewStateLeaf(stateID, &models.UserState{
 		PubKeyID: pubKeyID,
 		TokenID:  tokenID,
 		Balance:  models.MakeUint256(0),

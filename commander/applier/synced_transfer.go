@@ -14,7 +14,7 @@ type SyncedTransfer struct {
 
 func NewSyncedTransferFromGeneric(generic *SyncedGenericTransaction) *SyncedTransfer {
 	return &SyncedTransfer{
-		Transfer: generic.Transaction.(*models.Transfer),
+		Transfer: generic.Transaction.ToTransfer(),
 		Proofs:   generic.Proofs,
 	}
 }
@@ -26,7 +26,7 @@ type SyncedCreate2Transfer struct {
 
 func NewSyncedCreate2TransferFromGeneric(generic *SyncedGenericTransaction) *SyncedCreate2Transfer {
 	return &SyncedCreate2Transfer{
-		Transfer: generic.Transaction.(*models.Create2Transfer),
+		Transfer: generic.Transaction.ToCreate2Transfer(),
 		Proofs:   generic.Proofs,
 	}
 }

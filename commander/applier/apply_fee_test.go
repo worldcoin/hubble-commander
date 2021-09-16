@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/storage"
+	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -12,7 +12,7 @@ import (
 type ApplyFeeTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage *storage.TestStorage
+	storage *st.TestStorage
 	applier *Applier
 }
 
@@ -22,7 +22,7 @@ func (s *ApplyFeeTestSuite) SetupSuite() {
 
 func (s *ApplyFeeTestSuite) SetupTest() {
 	var err error
-	s.storage, err = storage.NewTestStorage()
+	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 	s.applier = NewApplier(s.storage.Storage)
 }
