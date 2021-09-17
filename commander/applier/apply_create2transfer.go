@@ -3,7 +3,6 @@ package applier
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
 func (a *Applier) ApplyCreate2Transfer(
@@ -21,7 +20,7 @@ func (a *Applier) ApplyCreate2Transfer(
 	}
 
 	applyResult = &ApplySingleC2TResult{
-		tx:            create2Transfer.Copy().ToCreate2Transfer(),
+		tx:            create2Transfer.Clone(),
 		addedPubKeyID: *pubKeyID,
 	}
 	applyResult.tx.ToStateID = nextAvailableStateID
@@ -62,24 +61,9 @@ func (a *Applier) getOrRegisterPubKeyID(
 	if err != nil && !st.IsNotFoundError(err) {
 		return nil, err
 	} else if st.IsNotFoundError(err) {
-		return a.registerAccount(publicKey)
+		return a.client.RegisterAccountAndWait(publicKey)
 	}
 	return pubKeyID, nil
-}
-
-func (a *Applier) registerAccount(publicKey *models.PublicKey) (*uint32, error) {
-	syncedBlock, err := a.storage.GetSyncedBlock()
-	if err != nil {
-		return nil, err
-	}
-	events, unsubscribe, err := a.client.WatchRegistrations(&bind.WatchOpts{
-		Start: syncedBlock,
-	})
-	if err != nil {
-		return nil, err
-	}
-	defer unsubscribe()
-	return a.client.RegisterAccount(publicKey, events)
 }
 
 func newUserLeaf(stateID, pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
