@@ -3,11 +3,11 @@ package executor
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 )
@@ -21,7 +21,7 @@ func (s *DisputeCT2TransitionTestSuite) SetupTest() {
 }
 
 func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_RemovesInvalidBatch() {
-	wallets := setUserStates(s.Assertions, s.executionCtx, testDomain)
+	wallets := setUserStates(s.Assertions, s.executionCtx, &bls.TestDomain)
 
 	commitmentTxs := [][]models.Create2Transfer{
 		{
@@ -52,7 +52,7 @@ func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_RemovesInvalidBatc
 }
 
 func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_FirstCommitment() {
-	wallets := setUserStates(s.Assertions, s.executionCtx, testDomain)
+	wallets := setUserStates(s.Assertions, s.executionCtx, &bls.TestDomain)
 
 	commitmentTxs := [][]models.Create2Transfer{
 		{
@@ -64,11 +64,7 @@ func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_FirstCommitment() 
 	transfer := testutils.MakeCreate2Transfer(0, nil, 0, 50, wallets[1].PublicKey())
 	submitC2TBatch(s.Assertions, s.client, s.rollupCtx, &transfer)
 
-	registrations, unsubscribe, err := s.client.WatchRegistrations(&bind.WatchOpts{})
-	s.NoError(err)
-	defer unsubscribe()
-
-	pubKeyID, err := s.client.RegisterAccount(wallets[1].PublicKey(), registrations)
+	pubKeyID, err := s.client.RegisterAccountAndWait(wallets[1].PublicKey())
 	s.NoError(err)
 	s.EqualValues(4, *pubKeyID)
 
@@ -92,7 +88,7 @@ func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_FirstCommitment() 
 }
 
 func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_ValidBatch() {
-	wallets := setUserStates(s.Assertions, s.executionCtx, testDomain)
+	wallets := setUserStates(s.Assertions, s.executionCtx, &bls.TestDomain)
 
 	transfers := []models.Create2Transfer{
 		testutils.MakeCreate2Transfer(0, nil, 0, 50, wallets[1].PublicKey()),
@@ -160,7 +156,7 @@ func (s *DisputeCT2TransitionTestSuite) submitInvalidBatch(
 		s.setToStateID(txs[i], stateIDs)
 	}
 
-	pendingBatch, err := s.executionCtx.NewPendingBatch(txtype.Create2Transfer)
+	pendingBatch, err := s.rollupCtx.NewPendingBatch(txtype.Create2Transfer)
 	s.NoError(err)
 
 	commitments := s.createInvalidCommitments(txs, pubKeyIDs, invalidTxHash)
@@ -193,7 +189,7 @@ func (s *DisputeCT2TransitionTestSuite) createInvalidCommitments(
 	pubKeyIDs [][]uint32,
 	invalidTxHash common.Hash,
 ) []models.Commitment {
-	commitmentID, err := s.executionCtx.createCommitmentID()
+	commitmentID, err := s.rollupCtx.nextCommitmentID()
 	s.NoError(err)
 
 	commitments := make([]models.Commitment, 0, len(commitmentTxs))
@@ -210,12 +206,28 @@ func (s *DisputeCT2TransitionTestSuite) createInvalidCommitments(
 			s.NoError(err)
 		}
 
-		commitment, err := s.executionCtx.buildC2TCommitment(txs, pubKeyIDs[i], commitmentID, 0, testDomain)
+		applyResult := &ApplyC2TForCommitmentResult{
+			appliedTxs:     txs,
+			addedPubKeyIDs: pubKeyIDs[i],
+		}
+		commitment, err := s.rollupCtx.buildCommitment(applyResult, commitmentID, 0)
 		s.NoError(err)
 		commitments = append(commitments, *commitment)
 	}
 
 	return commitments
+}
+
+func newUserLeaf(stateID, pubKeyID uint32, tokenID models.Uint256) *models.StateLeaf {
+	return &models.StateLeaf{
+		StateID: stateID,
+		UserState: models.UserState{
+			PubKeyID: pubKeyID,
+			TokenID:  tokenID,
+			Balance:  models.MakeUint256(0),
+			Nonce:    models.MakeUint256(0),
+		},
+	}
 }
 
 func TestDisputeCT2TransitionTestSuite(t *testing.T) {

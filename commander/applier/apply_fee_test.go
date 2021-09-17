@@ -1,10 +1,10 @@
-package executor
+package applier
 
 import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/storage"
+	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -12,8 +12,8 @@ import (
 type ApplyFeeTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage      *storage.TestStorage
-	executionCtx *ExecutionContext
+	storage *st.TestStorage
+	applier *Applier
 }
 
 func (s *ApplyFeeTestSuite) SetupSuite() {
@@ -22,9 +22,9 @@ func (s *ApplyFeeTestSuite) SetupSuite() {
 
 func (s *ApplyFeeTestSuite) SetupTest() {
 	var err error
-	s.storage, err = storage.NewTestStorage()
+	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, nil, nil)
+	s.applier = NewApplier(s.storage.Storage, nil)
 }
 
 func (s *ApplyFeeTestSuite) TearDownTest() {
@@ -37,7 +37,7 @@ func (s *ApplyFeeTestSuite) TestApplyFee() {
 	_, err := s.storage.StateTree.Set(feeReceiverStateID, &receiverState)
 	s.NoError(err)
 
-	stateProof, err := s.executionCtx.ApplyFee(feeReceiverStateID, models.MakeUint256(555))
+	stateProof, err := s.applier.ApplyFee(feeReceiverStateID, models.MakeUint256(555))
 	s.NoError(err)
 	s.Equal(receiverState, *stateProof.UserState)
 
@@ -52,7 +52,7 @@ func (s *ApplyFeeTestSuite) TestApplyFeeForSync_InvalidTokenID() {
 	_, err := s.storage.StateTree.Set(feeReceiver, &receiverState)
 	s.NoError(err)
 
-	stateProof, transferError, appError := s.executionCtx.ApplyFeeForSync(feeReceiver, models.NewUint256(2), models.NewUint256(555))
+	stateProof, transferError, appError := s.applier.ApplyFeeForSync(feeReceiver, models.NewUint256(2), models.NewUint256(555))
 	s.NoError(appError)
 	s.ErrorIs(transferError, ErrInvalidFeeReceiverTokenID)
 	s.Equal(receiverState, *stateProof.UserState)

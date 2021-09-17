@@ -1,4 +1,4 @@
-package executor
+package applier
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
@@ -7,20 +7,20 @@ import (
 
 var ErrInvalidFeeReceiverTokenID = errors.New("invalid fee receiver token ID")
 
-func (c *ExecutionContext) ApplyFee(feeReceiverStateID uint32, fee models.Uint256) (*models.StateMerkleProof, error) {
-	feeReceiver, err := c.storage.StateTree.Leaf(feeReceiverStateID)
+func (a *Applier) ApplyFee(feeReceiverStateID uint32, fee models.Uint256) (*models.StateMerkleProof, error) {
+	feeReceiver, err := a.storage.StateTree.Leaf(feeReceiverStateID)
 	if err != nil {
 		return nil, err
 	}
-	return c.applyFee(feeReceiver, fee)
+	return a.applyFee(feeReceiver, fee)
 }
 
-func (c *ExecutionContext) applyFee(feeReceiver *models.StateLeaf, fee models.Uint256) (*models.StateMerkleProof, error) {
+func (a *Applier) applyFee(feeReceiver *models.StateLeaf, fee models.Uint256) (*models.StateMerkleProof, error) {
 	initialState := feeReceiver.UserState.Copy()
 
 	feeReceiver.Balance = *feeReceiver.Balance.Add(&fee)
 
-	stateChangeWitness, err := c.storage.StateTree.Set(feeReceiver.StateID, &feeReceiver.UserState)
+	stateChangeWitness, err := a.storage.StateTree.Set(feeReceiver.StateID, &feeReceiver.UserState)
 	if err != nil {
 		return nil, err
 	}
@@ -32,16 +32,16 @@ func (c *ExecutionContext) applyFee(feeReceiver *models.StateLeaf, fee models.Ui
 	return stateProof, nil
 }
 
-func (c *ExecutionContext) ApplyFeeForSync(feeReceiverStateID uint32, commitmentTokenID, fee *models.Uint256) (
+func (a *Applier) ApplyFeeForSync(feeReceiverStateID uint32, commitmentTokenID, fee *models.Uint256) (
 	stateProof *models.StateMerkleProof,
 	commitmentError error,
 	appError error,
 ) {
-	feeReceiver, appError := c.storage.StateTree.LeafOrEmpty(feeReceiverStateID)
+	feeReceiver, appError := a.storage.StateTree.LeafOrEmpty(feeReceiverStateID)
 	if appError != nil {
 		return nil, nil, appError
 	}
-	stateProof, appError = c.applyFee(feeReceiver, *fee)
+	stateProof, appError = a.applyFee(feeReceiver, *fee)
 	if appError != nil {
 		return nil, nil, appError
 	}

@@ -1,9 +1,6 @@
 package eth
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -13,21 +10,30 @@ import (
 	"github.com/pkg/errors"
 )
 
-var ErrRegisterAccountTimeout = fmt.Errorf("timeout")
+func (c *Client) RegisterAccountAndWait(publicKey *models.PublicKey) (*uint32, error) {
+	tx, err := RegisterAccount(c.ChainConnection.GetAccount(), c.AccountRegistry, publicKey)
+	if err != nil {
+		return nil, err
+	}
+	receipt, err := deployer.WaitToBeMined(c.ChainConnection.GetBackend(), tx)
+	if err != nil {
+		return nil, err
+	}
 
-func (c *Client) RegisterAccount(
-	publicKey *models.PublicKey,
-	ev chan *accountregistry.AccountRegistrySinglePubkeyRegistered,
-) (*uint32, error) {
-	return RegisterAccountAndWait(c.ChainConnection.GetAccount(), c.AccountRegistry, publicKey, ev)
+	return c.retrieveRegisteredPubKeyID(receipt)
 }
 
-func (c *Client) WatchRegistrations(opts *bind.WatchOpts) (
-	registrations chan *accountregistry.AccountRegistrySinglePubkeyRegistered,
-	unsubscribe func(),
-	err error,
-) {
-	return WatchRegistrations(c.AccountRegistry, opts)
+func (c *Client) retrieveRegisteredPubKeyID(receipt *types.Receipt) (*uint32, error) {
+	if len(receipt.Logs) < 1 || receipt.Logs[0] == nil {
+		return nil, errors.New("single pubkey registered log not found in receipt")
+	}
+
+	event := new(accountregistry.AccountRegistrySinglePubkeyRegistered)
+	err := c.accountRegistryContract.UnpackLog(event, "SinglePubkeyRegistered", *receipt.Logs[0])
+	if err != nil {
+		return nil, err
+	}
+	return ref.Uint32(uint32(event.PubkeyID.Uint64())), nil
 }
 
 func WatchRegistrations(accountRegistry *accountregistry.AccountRegistry, opts *bind.WatchOpts) (
@@ -42,32 +48,6 @@ func WatchRegistrations(accountRegistry *accountregistry.AccountRegistry, opts *
 		return nil, nil, errors.WithStack(err)
 	}
 	return ev, sub.Unsubscribe, nil
-}
-
-func RegisterAccountAndWait(
-	opts *bind.TransactOpts,
-	accountRegistry *accountregistry.AccountRegistry,
-	publicKey *models.PublicKey,
-	ev chan *accountregistry.AccountRegistrySinglePubkeyRegistered,
-) (*uint32, error) {
-	tx, err := RegisterAccount(opts, accountRegistry, publicKey)
-	if err != nil {
-		return nil, err
-	}
-
-	for {
-		select {
-		case event, ok := <-ev:
-			if !ok {
-				return nil, errors.WithStack(ErrAccountWatcherIsClosed)
-			}
-			if event.Raw.TxHash == tx.Hash() {
-				return ref.Uint32(uint32(event.PubkeyID.Uint64())), nil
-			}
-		case <-time.After(deployer.ChainTimeout):
-			return nil, errors.WithStack(ErrRegisterAccountTimeout)
-		}
-	}
 }
 
 func RegisterAccount(

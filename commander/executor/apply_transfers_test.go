@@ -3,8 +3,8 @@ package executor
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/storage"
@@ -16,10 +16,10 @@ import (
 type ApplyTransfersTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage      *storage.TestStorage
-	cfg          *config.RollupConfig
-	executionCtx *ExecutionContext
-	feeReceiver  *FeeReceiver
+	storage     *storage.TestStorage
+	cfg         *config.RollupConfig
+	rollupCtx   *RollupContext
+	feeReceiver *FeeReceiver
 }
 
 func (s *ApplyTransfersTestSuite) SetupSuite() {
@@ -61,7 +61,9 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 	_, err = s.storage.StateTree.Set(3, &feeReceiverState)
 	s.NoError(err)
 
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, &eth.Client{}, s.cfg)
+	executionCtx := NewTestExecutionContext(s.storage.Storage, nil, s.cfg)
+	s.rollupCtx = NewTestRollupContext(executionCtx, txtype.Transfer)
+
 	s.feeReceiver = &FeeReceiver{
 		StateID: 3,
 		TokenID: models.MakeUint256(1),
@@ -73,42 +75,42 @@ func (s *ApplyTransfersTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTransfers_AllValid() {
+func (s *ApplyTransfersTestSuite) TestApplyTxs_AllValid() {
 	generatedTransfers := generateValidTransfers(3)
 
-	transfers, err := s.executionCtx.ApplyTransfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	applyTxsResult, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
-	s.Len(transfers.appliedTransfers, 3)
-	s.Len(transfers.invalidTransfers, 0)
+	s.Len(applyTxsResult.AppliedTxs(), 3)
+	s.Len(applyTxsResult.InvalidTxs(), 0)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTransfers_SomeValid() {
+func (s *ApplyTransfersTestSuite) TestApplyTxs_SomeValid() {
 	generatedTransfers := generateValidTransfers(2)
 	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(3)...)
 
-	transfers, err := s.executionCtx.ApplyTransfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	applyTxsResult, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
-	s.Len(transfers.appliedTransfers, 2)
-	s.Len(transfers.invalidTransfers, 3)
+	s.Len(applyTxsResult.AppliedTxs(), 2)
+	s.Len(applyTxsResult.InvalidTxs(), 3)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTransfers_AppliesNoMoreThanLimit() {
+func (s *ApplyTransfersTestSuite) TestApplyTxs_AppliesNoMoreThanLimit() {
 	generatedTransfers := generateValidTransfers(13)
 
-	transfers, err := s.executionCtx.ApplyTransfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	applyTxsResult, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
-	s.Len(transfers.appliedTransfers, 6)
-	s.Len(transfers.invalidTransfers, 0)
+	s.Len(applyTxsResult.AppliedTxs(), 6)
+	s.Len(applyTxsResult.InvalidTxs(), 0)
 
 	state, err := s.storage.StateTree.Leaf(1)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(6), state.Nonce)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTransfers_SavesTransferErrors() {
+func (s *ApplyTransfersTestSuite) TestApplyTxs_SavesTransferErrors() {
 	generatedTransfers := generateValidTransfers(3)
 	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(2)...)
 
@@ -117,11 +119,11 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_SavesTransferErrors() {
 		s.NoError(err)
 	}
 
-	transfers, err := s.executionCtx.ApplyTransfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	applyTxsResult, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
-	s.Len(transfers.appliedTransfers, 3)
-	s.Len(transfers.invalidTransfers, 2)
+	s.Len(applyTxsResult.AppliedTxs(), 3)
+	s.Len(applyTxsResult.InvalidTxs(), 2)
 
 	for i := range generatedTransfers {
 		transfer, err := s.storage.GetTransfer(generatedTransfers[i].Hash)
@@ -129,18 +131,18 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_SavesTransferErrors() {
 		if i < 3 {
 			s.Nil(transfer.ErrorMessage)
 		} else {
-			s.Equal(*transfer.ErrorMessage, ErrNonceTooLow.Error())
+			s.Equal(*transfer.ErrorMessage, applier.ErrNonceTooLow.Error())
 		}
 	}
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTransfers_AppliesFee() {
+func (s *ApplyTransfersTestSuite) TestApplyTxs_AppliesFee() {
 	generatedTransfers := generateValidTransfers(3)
 
-	_, err := s.executionCtx.ApplyTransfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	_, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
-	feeReceiverState, err := s.executionCtx.storage.StateTree.Leaf(s.feeReceiver.StateID)
+	feeReceiverState, err := s.rollupCtx.storage.StateTree.Leaf(s.feeReceiver.StateID)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }
@@ -148,7 +150,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfers_AppliesFee() {
 func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AllValid() {
 	transfers := generateValidTransfers(3)
 
-	appliedTransfers, stateProofs, err := s.executionCtx.ApplyTransfersForSync(transfers, s.feeReceiver.StateID)
+	appliedTransfers, stateProofs, err := s.rollupCtx.ApplyTransfersForSync(transfers, s.feeReceiver.StateID)
 	s.NoError(err)
 	s.Len(appliedTransfers, 3)
 	s.Len(stateProofs, 7)
@@ -158,7 +160,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_InvalidTransfer() {
 	transfers := generateValidTransfers(2)
 	transfers = append(transfers, generateInvalidTransfers(2)...)
 
-	appliedTransfers, _, err := s.executionCtx.ApplyTransfersForSync(transfers, s.feeReceiver.StateID)
+	appliedTransfers, _, err := s.rollupCtx.ApplyTransfersForSync(transfers, s.feeReceiver.StateID)
 	s.Nil(appliedTransfers)
 
 	var disputableErr *DisputableError
@@ -170,10 +172,10 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_InvalidTransfer() {
 func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AppliesFee() {
 	transfers := generateValidTransfers(3)
 
-	_, _, err := s.executionCtx.ApplyTransfersForSync(transfers, s.feeReceiver.StateID)
+	_, _, err := s.rollupCtx.ApplyTransfersForSync(transfers, s.feeReceiver.StateID)
 	s.NoError(err)
 
-	feeReceiverState, err := s.executionCtx.storage.StateTree.Leaf(s.feeReceiver.StateID)
+	feeReceiverState, err := s.rollupCtx.storage.StateTree.Leaf(s.feeReceiver.StateID)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }
@@ -184,7 +186,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_ReturnsCorrectStateP
 		transfers[i].Fee = models.MakeUint256(0)
 	}
 
-	_, stateProofs, err := s.executionCtx.ApplyTransfersForSync(transfers, s.feeReceiver.StateID)
+	_, stateProofs, err := s.rollupCtx.ApplyTransfersForSync(transfers, s.feeReceiver.StateID)
 	s.NoError(err)
 	s.Len(stateProofs, 5)
 }
@@ -204,17 +206,17 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_InvalidFeeReceiverTo
 
 	transfers := generateValidTransfers(2)
 
-	appliedTransfers, _, err := s.executionCtx.ApplyTransfersForSync(transfers, feeReceiver.StateID)
+	appliedTransfers, _, err := s.rollupCtx.ApplyTransfersForSync(transfers, feeReceiver.StateID)
 	s.Nil(appliedTransfers)
 
 	var disputableErr *DisputableError
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Transition, disputableErr.Type)
-	s.Equal(ErrInvalidFeeReceiverTokenID.Error(), disputableErr.Reason)
+	s.Equal(applier.ErrInvalidFeeReceiverTokenID.Error(), disputableErr.Reason)
 	s.Len(disputableErr.Proofs, 5)
 }
 
-func generateValidTransfers(transfersAmount uint32) []models.Transfer {
+func generateValidTransfers(transfersAmount uint32) models.TransferArray {
 	transfers := make([]models.Transfer, 0, transfersAmount)
 	for i := 0; i < int(transfersAmount); i++ {
 		transfer := models.Transfer{

@@ -41,7 +41,7 @@ func (s *WalletHardhatTestSuite) SetupSuite() {
 }
 
 func (s *WalletHardhatTestSuite) TestSign_VerifySingle() {
-	wallet, err := NewRandomWallet(testDomain)
+	wallet, err := NewRandomWallet(TestDomain)
 	s.NoError(err)
 
 	data, err := hex.DecodeString("deadbeef")
@@ -50,7 +50,7 @@ func (s *WalletHardhatTestSuite) TestSign_VerifySingle() {
 	signature, err := wallet.Sign(data)
 	s.NoError(err)
 
-	point, err := s.testBLS.HashToPoint(nil, testDomain, data)
+	point, err := s.testBLS.HashToPoint(nil, TestDomain, data)
 	s.NoError(err)
 
 	checkSuccess, callSuccess, err := s.testBLS.VerifySingle(
@@ -74,13 +74,13 @@ func (s *WalletHardhatTestSuite) TestSign_VerifyMultiple() {
 		bytes, err := hex.DecodeString(str)
 		s.NoError(err)
 
-		wallet, err := NewRandomWallet(testDomain)
+		wallet, err := NewRandomWallet(TestDomain)
 		s.NoError(err)
 
 		signature, err := wallet.Sign(bytes)
 		s.NoError(err)
 
-		dataPoint, err := s.testBLS.HashToPoint(nil, testDomain, bytes)
+		dataPoint, err := s.testBLS.HashToPoint(nil, TestDomain, bytes)
 		s.NoError(err)
 
 		signatures = append(signatures, signature)
