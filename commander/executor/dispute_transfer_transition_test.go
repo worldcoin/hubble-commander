@@ -154,7 +154,7 @@ func (s *DisputeTransferTransitionTestSuite) createInvalidCommitments(
 	commitmentTxs [][]models.Transfer,
 	invalidTxHash common.Hash,
 ) []models.Commitment {
-	commitmentID, err := s.executionCtx.nextCommitmentID()
+	commitmentID, err := s.rollupCtx.nextCommitmentID()
 	s.NoError(err)
 
 	commitments := make([]models.Commitment, 0, len(commitmentTxs))
