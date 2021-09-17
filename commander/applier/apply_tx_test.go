@@ -3,7 +3,6 @@ package applier
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/stretchr/testify/require"
@@ -51,7 +50,7 @@ func (s *ApplyTxTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	s.applier = NewApplier(s.storage.Storage, &eth.Client{})
+	s.applier = NewApplier(s.storage.Storage, nil)
 
 	s.receiverLeaf = models.StateLeaf{
 		StateID:   receiverState.PubKeyID,

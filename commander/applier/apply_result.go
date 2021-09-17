@@ -2,13 +2,13 @@ package applier
 
 import "github.com/Worldcoin/hubble-commander/models"
 
-type SingleTxResult interface {
+type ApplySingleTxResult interface {
 	AppliedTx() models.GenericTransaction
 	AddedPubKeyID() uint32
 }
 
 type ApplySingleTransferResult struct {
-	tx models.GenericTransaction
+	tx *models.Transfer
 }
 
 func (a *ApplySingleTransferResult) AppliedTx() models.GenericTransaction {
