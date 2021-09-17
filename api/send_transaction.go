@@ -21,49 +21,60 @@ var (
 	ErrTransferToSelf    = fmt.Errorf("transfer to the same state id")
 	ErrInvalidAmount     = fmt.Errorf("amount must be positive")
 	ErrUnsupportedTxType = fmt.Errorf("unsupported transaction type")
+
+	APIErrAnyMissingField = NewAPIError(
+		10002,
+		"some field is missing, verify the transfer/create2transfer object",
+	)
+	APIErrTransferToSelf = NewAPIError(
+		10003,
+		"invalid recipient, cannot send funds to yourself",
+	)
+	APIErrNonceTooLow = NewAPIError(
+		10004,
+		"nonce too low",
+	)
+	APIErrNonceTooHigh = NewAPIError(
+		10005,
+		"nonce too high",
+	)
+	APIErrNotEnoughBalance = NewAPIError(
+		10006,
+		"not enough balance",
+	)
+	APIErrInvalidAmount = NewAPIError(
+		10007,
+		"amount must be greater than 0",
+	)
+	APIErrFeeTooLow = NewAPIError(
+		10008,
+		"fee too low",
+	)
+	APIErrInvalidSignature = NewAPIError(
+		10009,
+		"invalid signature",
+	)
+	APINotDecimalEncodableAmountError = NewAPIError(
+		10010,
+		"amount is not encodable as multi-precission decimal",
+	)
+	APINotDecimalEncodableFeeError = NewAPIError(
+		10011,
+		"fee is not encodable as multi-precission decimal",
+	)
 )
 
 var sendTransactionAPIErrors = map[error]*APIError{
-	AnyMissingFieldError: NewAPIError(
-		10002,
-		"some field is missing, verify the transfer/create2transfer object",
-	),
-	ErrTransferToSelf: NewAPIError(
-		10003,
-		"invalid recipient, cannot send funds to yourself",
-	),
-	ErrNonceTooLow: NewAPIError(
-		10004,
-		"nonce too low",
-	),
-	ErrNonceTooHigh: NewAPIError(
-		10005,
-		"nonce too high",
-	),
-	ErrNotEnoughBalance: NewAPIError(
-		10006,
-		"not enough balance",
-	),
-	ErrInvalidAmount: NewAPIError(
-		10007,
-		"amount must be greater than 0",
-	),
-	ErrFeeTooLow: NewAPIError(
-		10008,
-		"fee too low",
-	),
-	ErrInvalidSignature: NewAPIError(
-		10009,
-		"invalid signature",
-	),
-	NewNotDecimalEncodableError("amount"): NewAPIError(
-		10010,
-		"amount is not encodable as multi-precission decimal",
-	),
-	NewNotDecimalEncodableError("fee"): NewAPIError(
-		10011,
-		"fee is not encodable as multi-precission decimal",
-	),
+	AnyMissingFieldError:                  APIErrAnyMissingField,
+	ErrTransferToSelf:                     APIErrTransferToSelf,
+	ErrNonceTooLow:                        APIErrNonceTooLow,
+	ErrNonceTooHigh:                       APIErrNonceTooHigh,
+	ErrNotEnoughBalance:                   APIErrNotEnoughBalance,
+	ErrInvalidAmount:                      APIErrInvalidAmount,
+	ErrFeeTooLow:                          APIErrFeeTooLow,
+	ErrInvalidSignature:                   APIErrInvalidSignature,
+	NewNotDecimalEncodableError("amount"): APINotDecimalEncodableAmountError,
+	NewNotDecimalEncodableError("fee"):    APINotDecimalEncodableFeeError,
 }
 
 func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
