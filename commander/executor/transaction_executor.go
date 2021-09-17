@@ -24,16 +24,16 @@ type TransactionExecutor interface {
 }
 
 func CreateTransactionExecutor(executionCtx *ExecutionContext, txType txtype.TransactionType) TransactionExecutor {
-	// nolint:exhaustive
 	switch txType {
 	case txtype.Transfer:
 		return NewTransferExecutor(executionCtx.storage, executionCtx.client)
 	case txtype.Create2Transfer:
 		return NewC2TExecutor(executionCtx.storage, executionCtx.client)
-	default:
+	case txtype.Genesis, txtype.MassMigration:
 		log.Fatal("Invalid tx type")
 		return nil
 	}
+	return nil
 }
 
 // TransferExecutor implements TransactionExecutor
