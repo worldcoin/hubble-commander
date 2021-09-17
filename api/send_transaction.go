@@ -24,7 +24,7 @@ var (
 )
 
 var sendTransactionAPIErrors = map[error]*APIError{
-	&MissingFieldError{}: NewAPIError(
+	AnyMissingFieldError: NewAPIError(
 		10002,
 		"some field is missing, verify the transfer/create2transfer object",
 	),

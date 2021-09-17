@@ -8,9 +8,16 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 )
 
-var usedErrorCodes = map[int]bool{}
+var (
+	usedErrorCodes = map[int]bool{}
 
-const unknownAPIErrorCode = 999
+	AnyMissingFieldError = &MissingFieldError{field: anythingField}
+)
+
+const (
+	anythingField       = "anything"
+	unknownAPIErrorCode = 999
+)
 
 type MissingFieldError struct {
 	field string
@@ -22,6 +29,17 @@ func NewMissingFieldError(field string) *MissingFieldError {
 
 func (m MissingFieldError) Error() string {
 	return fmt.Sprintf("missing required %s field", m.field)
+}
+
+func (m *MissingFieldError) Is(other error) bool {
+	otherError, ok := other.(*MissingFieldError)
+	if !ok {
+		return false
+	}
+	if *m == *AnyMissingFieldError || *otherError == *AnyMissingFieldError {
+		return true
+	}
+	return *m == *otherError
 }
 
 type NotDecimalEncodableError struct {
