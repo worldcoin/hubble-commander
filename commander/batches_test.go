@@ -15,7 +15,6 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -543,15 +542,11 @@ func (s *BatchesTestSuite) checkBatchAfterDispute(batchID models.Uint256) {
 }
 
 func (s *BatchesTestSuite) registerAccounts(pubKeyIDs []uint32) {
-	registrations, unsubscribe, err := s.testClient.WatchRegistrations(&bind.WatchOpts{})
-	s.NoError(err)
-	defer unsubscribe()
-
 	for i := range pubKeyIDs {
 		leaf, err := s.testStorage.AccountTree.Leaf(pubKeyIDs[i])
 		s.NoError(err)
 
-		pubKeyID, err := s.testClient.RegisterAccount(&leaf.PublicKey, registrations)
+		pubKeyID, err := s.testClient.RegisterAccountAndWait(&leaf.PublicKey)
 		s.NoError(err)
 		s.Equal(pubKeyIDs[i], *pubKeyID)
 	}

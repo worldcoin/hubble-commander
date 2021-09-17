@@ -1,9 +1,6 @@
 package eth
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -12,13 +9,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
-
-func (c *Client) RegisterAccount(
-	publicKey *models.PublicKey,
-	ev chan *accountregistry.AccountRegistrySinglePubkeyRegistered,
-) (*uint32, error) {
-	return RegisterAccountAndWait(c.ChainConnection.GetAccount(), c.AccountRegistry, publicKey, ev)
-}
 
 func (c *Client) RegisterAccountAndWait(publicKey *models.PublicKey) (*uint32, error) {
 	tx, err := RegisterAccount(c.ChainConnection.GetAccount(), c.AccountRegistry, publicKey)
@@ -46,14 +36,6 @@ func (c *Client) retrieveRegisteredPubKeyID(receipt *types.Receipt) (*uint32, er
 	return ref.Uint32(uint32(event.PubkeyID.Uint64())), nil
 }
 
-func (c *Client) WatchRegistrations(opts *bind.WatchOpts) (
-	registrations chan *accountregistry.AccountRegistrySinglePubkeyRegistered,
-	unsubscribe func(),
-	err error,
-) {
-	return WatchRegistrations(c.AccountRegistry, opts)
-}
-
 func WatchRegistrations(accountRegistry *accountregistry.AccountRegistry, opts *bind.WatchOpts) (
 	registrations chan *accountregistry.AccountRegistrySinglePubkeyRegistered,
 	unsubscribe func(),
@@ -66,32 +48,6 @@ func WatchRegistrations(accountRegistry *accountregistry.AccountRegistry, opts *
 		return nil, nil, errors.WithStack(err)
 	}
 	return ev, sub.Unsubscribe, nil
-}
-
-func RegisterAccountAndWait(
-	opts *bind.TransactOpts,
-	accountRegistry *accountregistry.AccountRegistry,
-	publicKey *models.PublicKey,
-	ev chan *accountregistry.AccountRegistrySinglePubkeyRegistered,
-) (*uint32, error) {
-	tx, err := RegisterAccount(opts, accountRegistry, publicKey)
-	if err != nil {
-		return nil, err
-	}
-
-	for {
-		select {
-		case event, ok := <-ev:
-			if !ok {
-				return nil, errors.WithStack(fmt.Errorf("account event watcher is closed"))
-			}
-			if event.Raw.TxHash == tx.Hash() {
-				return ref.Uint32(uint32(event.PubkeyID.Uint64())), nil
-			}
-		case <-time.After(deployer.ChainTimeout):
-			return nil, errors.WithStack(fmt.Errorf("timeout"))
-		}
-	}
 }
 
 func RegisterAccount(

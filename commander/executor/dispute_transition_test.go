@@ -7,7 +7,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 )
@@ -78,13 +77,10 @@ func setUserStates(s *require.Assertions, executionCtx *ExecutionContext, domain
 		*createUserState(1, 200, 0),
 		*createUserState(2, 100, 0),
 	}
-	registrations, unsubscribe, err := executionCtx.client.WatchRegistrations(&bind.WatchOpts{})
-	s.NoError(err)
-	defer unsubscribe()
 
 	wallets := generateWallets(s, domain, len(userStates))
 	for i := range userStates {
-		pubKeyID, err := executionCtx.client.RegisterAccount(wallets[i].PublicKey(), registrations)
+		pubKeyID, err := executionCtx.client.RegisterAccountAndWait(wallets[i].PublicKey())
 		s.NoError(err)
 		s.Equal(userStates[i].PubKeyID, *pubKeyID)
 

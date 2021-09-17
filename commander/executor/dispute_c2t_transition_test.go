@@ -7,7 +7,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 )
@@ -64,11 +63,7 @@ func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_FirstCommitment() 
 	transfer := testutils.MakeCreate2Transfer(0, nil, 0, 50, wallets[1].PublicKey())
 	submitC2TBatch(s.Assertions, s.client, s.rollupCtx, &transfer)
 
-	registrations, unsubscribe, err := s.client.WatchRegistrations(&bind.WatchOpts{})
-	s.NoError(err)
-	defer unsubscribe()
-
-	pubKeyID, err := s.client.RegisterAccount(wallets[1].PublicKey(), registrations)
+	pubKeyID, err := s.client.RegisterAccountAndWait(wallets[1].PublicKey())
 	s.NoError(err)
 	s.EqualValues(4, *pubKeyID)
 
