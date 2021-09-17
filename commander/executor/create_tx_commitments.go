@@ -23,7 +23,7 @@ func (c *RollupContext) CreateTxCommitments(domain *bls.Domain) ([]models.Commit
 		return nil, err
 	}
 
-	commitmentID, err := c.createCommitmentID()
+	commitmentID, err := c.nextCommitmentID()
 	if err != nil {
 		return nil, err
 	}

@@ -21,7 +21,7 @@ func (c *RollupContext) buildTxCommitment(
 		return nil, err
 	}
 
-	commitment, err := c.createCommitment(
+	commitment, err := c.newCommitment(
 		commitmentID,
 		c.BatchType,
 		feeReceiverStateID,

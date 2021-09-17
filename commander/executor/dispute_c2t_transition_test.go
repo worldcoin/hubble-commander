@@ -188,7 +188,7 @@ func (s *DisputeCT2TransitionTestSuite) createInvalidCommitments(
 	pubKeyIDs [][]uint32,
 	invalidTxHash common.Hash,
 ) []models.Commitment {
-	commitmentID, err := s.executionCtx.createCommitmentID()
+	commitmentID, err := s.executionCtx.nextCommitmentID()
 	s.NoError(err)
 
 	commitments := make([]models.Commitment, 0, len(commitmentTxs))
