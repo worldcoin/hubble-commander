@@ -26,6 +26,9 @@ type MissingFieldError struct {
 }
 
 func NewMissingFieldError(field string) *MissingFieldError {
+	if field == anythingField {
+		panic(fmt.Sprintf(`cannot use "%s" field for MissingFieldError`, anythingField))
+	}
 	return &MissingFieldError{field}
 }
 
