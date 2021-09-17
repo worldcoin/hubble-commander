@@ -5,7 +5,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/storage"
@@ -62,7 +61,7 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 	_, err = s.storage.StateTree.Set(3, &feeReceiverState)
 	s.NoError(err)
 
-	executionCtx := NewTestExecutionContext(s.storage.Storage, &eth.Client{}, s.cfg)
+	executionCtx := NewTestExecutionContext(s.storage.Storage, nil, s.cfg)
 	s.rollupCtx = NewTestRollupContext(executionCtx, txtype.Transfer)
 
 	s.feeReceiver = &FeeReceiver{
