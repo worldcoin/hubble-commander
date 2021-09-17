@@ -26,13 +26,13 @@ func (c *RollupContext) ApplyTxs(
 			return nil, appError
 		}
 		if transferError != nil {
-			logAndSaveTransactionError(c.storage, applyResult.AppliedTx().GetBase(), transferError)
+			logAndSaveTransactionError(c.storage, applyResult.AppliedTx(), transferError)
 			returnStruct.AddInvalidTx(applyResult.AppliedTx())
 			continue
 		}
 
 		returnStruct.AddApplied(applyResult)
-		combinedFee = *combinedFee.Add(&applyResult.AppliedTx().GetBase().Fee)
+		combinedFee = *combinedFee.Add(applyResult.AppliedTx().GetFee())
 	}
 
 	if returnStruct.AppliedTxs().Len() > 0 {

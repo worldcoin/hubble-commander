@@ -160,13 +160,12 @@ func calculateStateAfterTransfer(
 	err error,
 ) {
 	amount := transfer.GetAmount()
-	fee := transfer.GetFee()
 
 	if amount.CmpN(0) <= 0 {
 		return nil, nil, ErrInvalidTokenAmount
 	}
 
-	totalAmount := amount.Add(&fee)
+	totalAmount := amount.Add(transfer.GetFee())
 	if senderState.Balance.Cmp(totalAmount) < 0 {
 		return nil, nil, ErrBalanceTooLow
 	}
