@@ -63,7 +63,7 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 	s.NoError(err)
 
 	executionCtx := NewTestExecutionContext(s.storage.Storage, &eth.Client{}, s.cfg)
-	s.rollupCtx = newRollupContext(executionCtx, txtype.Transfer)
+	s.rollupCtx = NewTestRollupContext(executionCtx, txtype.Transfer)
 
 	s.feeReceiver = &FeeReceiver{
 		StateID: 3,

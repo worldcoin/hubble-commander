@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/Worldcoin/hubble-commander/api"
-	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
@@ -48,7 +47,6 @@ type Commander struct {
 	client    *eth.Client
 	chain     deployer.ChainConnection
 	apiServer *http.Server
-	domain    *bls.Domain
 }
 
 func NewCommander(cfg *config.Config, chain deployer.ChainConnection) *Commander {
@@ -79,11 +77,6 @@ func (c *Commander) Start() (err error) {
 	}
 
 	err = c.addGenesisBatch()
-	if err != nil {
-		return err
-	}
-
-	c.domain, err = c.client.GetDomain()
 	if err != nil {
 		return err
 	}

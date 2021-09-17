@@ -54,7 +54,7 @@ func (s *TransferCommitmentsTestSuite) SetupTest() {
 	s.NoError(err)
 
 	executorCtx := NewTestExecutionContext(s.storage.Storage, &eth.Client{}, s.cfg)
-	s.rollupCtx = newRollupContext(executorCtx, txtype.Transfer)
+	s.rollupCtx = NewTestRollupContext(executorCtx, txtype.Transfer)
 }
 
 func populateAccounts(storage *st.Storage, balances []models.Uint256) error {
