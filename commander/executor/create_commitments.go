@@ -166,7 +166,7 @@ func (c *RollupContext) queryMorePendingTxs(appliedTxs models.GenericTransaction
 	return pendingTransfers, nil
 }
 
-func (c *ExecutionContext) getCommitmentFeeReceiver() (*FeeReceiver, error) {
+func (c *RollupContext) getCommitmentFeeReceiver() (*FeeReceiver, error) {
 	commitmentTokenID := models.MakeUint256(0) // TODO support multiple tokens
 	feeReceiverState, err := c.storage.GetFeeReceiverStateLeaf(c.cfg.FeeReceiverPubKeyID, commitmentTokenID)
 	if err != nil {
