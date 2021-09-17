@@ -181,9 +181,7 @@ func (s *NewBlockLoopTestSuite) submitTransferBatchInTransaction(tx *models.Tran
 		err := txStorage.AddTransfer(tx)
 		s.NoError(err)
 
-		domain, err := s.testClient.GetDomain()
-		s.NoError(err)
-		commitments, err := rollupCtx.CreateCommitments(domain)
+		commitments, err := rollupCtx.CreateCommitments()
 		s.NoError(err)
 		s.Len(commitments, 1)
 

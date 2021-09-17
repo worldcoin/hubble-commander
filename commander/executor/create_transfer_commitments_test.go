@@ -3,9 +3,9 @@ package executor
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -21,7 +21,6 @@ var (
 		models.MakeUint256(1000),
 		models.MakeUint256(1000),
 	}
-	testDomain = &bls.Domain{1, 2, 3, 4}
 )
 
 type TransferCommitmentsTestSuite struct {
@@ -52,7 +51,7 @@ func (s *TransferCommitmentsTestSuite) SetupTest() {
 	err = populateAccounts(s.storage.Storage, genesisBalances)
 	s.NoError(err)
 
-	executionCtx := NewTestExecutionContext(s.storage.Storage, nil, s.cfg)
+	executionCtx := NewTestExecutionContext(s.storage.Storage, eth.DomainOnlyTestClient, s.cfg)
 	s.rollupCtx = NewTestRollupContext(executionCtx, txtype.Transfer)
 }
 
@@ -84,7 +83,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_WithMinTxsPerCommit
 	s.NoError(err)
 
 	expectedTxsLength := encoder.TransferLength * len(transfers)
-	commitments, err := s.rollupCtx.CreateCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, expectedTxsLength)
@@ -103,7 +102,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_WithMoreThanMinTxsP
 	s.NoError(err)
 
 	expectedTxsLength := encoder.TransferLength * len(transfers)
-	commitments, err := s.rollupCtx.CreateCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, expectedTxsLength)
@@ -128,7 +127,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_QueriesForMorePendi
 	preRoot, err := s.rollupCtx.storage.StateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.rollupCtx.CreateCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, s.maxTxBytesInCommitment)
@@ -163,7 +162,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_ForMultipleCommitme
 	preRoot, err := s.rollupCtx.storage.StateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.rollupCtx.CreateCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 3)
 	s.Len(commitments[0].Transactions, s.maxTxBytesInCommitment)
@@ -187,7 +186,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorWhenThe
 	preRoot, err := s.rollupCtx.storage.StateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.rollupCtx.CreateCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCommitments()
 	s.Nil(commitments)
 	s.Equal(ErrNotEnoughTxs, err)
 
@@ -211,7 +210,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorWhenThe
 	preRoot, err := s.rollupCtx.storage.StateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.rollupCtx.CreateCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCommitments()
 	s.Nil(commitments)
 	s.Equal(ErrNotEnoughTxs, err)
 
@@ -229,7 +228,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_StoresCorrectCommit
 	s.NoError(err)
 
 	expectedTxsLength := encoder.TransferLength * int(transfersCount)
-	commitments, err := s.rollupCtx.CreateCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, expectedTxsLength)
@@ -244,7 +243,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_StoresCorrectCommit
 func (s *TransferCommitmentsTestSuite) TestCreateCommitments_CreatesMaximallyAsManyCommitmentsAsSpecifiedInConfig() {
 	s.preparePendingTransfers(5)
 
-	commitments, err := s.rollupCtx.CreateCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
 }
@@ -257,7 +256,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_MarksTransfersAsInc
 	s.NoError(err)
 	s.Len(pendingTransfers, int(transfersCount))
 
-	commitments, err := s.rollupCtx.CreateCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
 

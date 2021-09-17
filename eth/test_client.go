@@ -1,6 +1,7 @@
 package eth
 
 import (
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -13,6 +14,10 @@ type TestClient struct {
 	*simulator.Simulator
 	ExampleTokenAddress common.Address
 }
+
+var (
+	DomainOnlyTestClient = &Client{domain: &bls.TestDomain}
+)
 
 // NewTestClient Sets up a TestClient backed by automining simulator.
 // Remember to call Close() at the end of the test

@@ -3,6 +3,7 @@ package executor
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -20,7 +21,7 @@ func (s *DisputeCT2TransitionTestSuite) SetupTest() {
 }
 
 func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_RemovesInvalidBatch() {
-	wallets := setUserStates(s.Assertions, s.executionCtx, testDomain)
+	wallets := setUserStates(s.Assertions, s.executionCtx, &bls.TestDomain)
 
 	commitmentTxs := [][]models.Create2Transfer{
 		{
@@ -51,7 +52,7 @@ func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_RemovesInvalidBatc
 }
 
 func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_FirstCommitment() {
-	wallets := setUserStates(s.Assertions, s.executionCtx, testDomain)
+	wallets := setUserStates(s.Assertions, s.executionCtx, &bls.TestDomain)
 
 	commitmentTxs := [][]models.Create2Transfer{
 		{
@@ -87,7 +88,7 @@ func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_FirstCommitment() 
 }
 
 func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_ValidBatch() {
-	wallets := setUserStates(s.Assertions, s.executionCtx, testDomain)
+	wallets := setUserStates(s.Assertions, s.executionCtx, &bls.TestDomain)
 
 	transfers := []models.Create2Transfer{
 		testutils.MakeCreate2Transfer(0, nil, 0, 50, wallets[1].PublicKey()),
@@ -209,7 +210,7 @@ func (s *DisputeCT2TransitionTestSuite) createInvalidCommitments(
 			appliedTxs:     txs,
 			addedPubKeyIDs: pubKeyIDs[i],
 		}
-		commitment, err := s.rollupCtx.buildCommitment(applyResult, commitmentID, 0, testDomain)
+		commitment, err := s.rollupCtx.buildCommitment(applyResult, commitmentID, 0)
 		s.NoError(err)
 		commitments = append(commitments, *commitment)
 	}

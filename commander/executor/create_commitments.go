@@ -3,7 +3,6 @@ package executor
 import (
 	"time"
 
-	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
 	log "github.com/sirupsen/logrus"
 )
@@ -17,7 +16,7 @@ type FeeReceiver struct {
 	TokenID models.Uint256
 }
 
-func (c *RollupContext) CreateCommitments(domain *bls.Domain) ([]models.Commitment, error) {
+func (c *RollupContext) CreateCommitments() ([]models.Commitment, error) {
 	pendingTxs, err := c.queryPendingTxs()
 	if err != nil {
 		return nil, err
@@ -34,7 +33,7 @@ func (c *RollupContext) CreateCommitments(domain *bls.Domain) ([]models.Commitme
 		var commitment *models.Commitment
 		commitmentID.IndexInBatch = i
 
-		pendingTxs, commitment, err = c.createCommitment(pendingTxs, commitmentID, domain)
+		pendingTxs, commitment, err = c.createCommitment(pendingTxs, commitmentID)
 		if err == ErrNotEnoughTxs {
 			break
 		}
@@ -52,11 +51,7 @@ func (c *RollupContext) CreateCommitments(domain *bls.Domain) ([]models.Commitme
 	return commitments, nil
 }
 
-func (c *RollupContext) createCommitment(
-	pendingTxs models.GenericTransactionArray,
-	commitmentID *models.CommitmentID,
-	domain *bls.Domain,
-) (
+func (c *RollupContext) createCommitment(pendingTxs models.GenericTransactionArray, commitmentID *models.CommitmentID) (
 	newPendingTxs models.GenericTransactionArray,
 	commitment *models.Commitment,
 	err error,
@@ -89,7 +84,7 @@ func (c *RollupContext) createCommitment(
 		return nil, nil, err
 	}
 
-	commitment, err = c.buildCommitment(applyResult, commitmentID, feeReceiver.StateID, domain)
+	commitment, err = c.buildCommitment(applyResult, commitmentID, feeReceiver.StateID)
 	if err != nil {
 		return nil, nil, err
 	}

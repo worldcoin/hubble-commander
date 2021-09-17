@@ -458,9 +458,7 @@ func (s *BatchesTestSuite) submitTransferBatch(
 	pendingBatch, err := rollupCtx.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
-	domain, err := s.testClient.GetDomain()
-	s.NoError(err)
-	commitments, err := rollupCtx.CreateCommitments(domain)
+	commitments, err := rollupCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -479,9 +477,7 @@ func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batc
 	pendingBatch, err := s.rollupCtx.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
-	domain, err := s.testClient.GetDomain()
-	s.NoError(err)
-	commitments, err := s.rollupCtx.CreateCommitments(domain)
+	commitments, err := s.rollupCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
 	err = s.cmd.storage.AddCommitment(&commitments[0])
@@ -507,9 +503,7 @@ func (s *BatchesTestSuite) submitInvalidTransferBatch(
 	pendingBatch, err := rollupCtx.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
-	domain, err := s.testClient.GetDomain()
-	s.NoError(err)
-	commitments, err := rollupCtx.CreateCommitments(domain)
+	commitments, err := rollupCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
 

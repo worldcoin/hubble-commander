@@ -3,7 +3,6 @@ package executor
 import (
 	"context"
 
-	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -13,7 +12,6 @@ import (
 type RollupContext struct {
 	*ExecutionContext
 	Executor  TransactionExecutor
-	Domain    *bls.Domain
 	BatchType txtype.TransactionType
 }
 
@@ -22,25 +20,23 @@ func NewRollupContext(
 	client *eth.Client,
 	cfg *config.RollupConfig,
 	ctx context.Context,
-	domain *bls.Domain,
 	batchType txtype.TransactionType,
 ) (*RollupContext, error) {
 	executionCtx, err := NewExecutionContext(storage, client, cfg, ctx)
 	if err != nil {
 		return nil, err
 	}
-	return newRollupContext(executionCtx, domain, batchType), nil
+	return newRollupContext(executionCtx, batchType), nil
 }
 
 func NewTestRollupContext(executionCtx *ExecutionContext, batchType txtype.TransactionType) *RollupContext {
-	return newRollupContext(executionCtx, nil, batchType)
+	return newRollupContext(executionCtx, batchType)
 }
 
-func newRollupContext(executionCtx *ExecutionContext, domain *bls.Domain, batchType txtype.TransactionType) *RollupContext {
+func newRollupContext(executionCtx *ExecutionContext, batchType txtype.TransactionType) *RollupContext {
 	return &RollupContext{
 		ExecutionContext: executionCtx,
 		Executor:         CreateTransactionExecutor(executionCtx, batchType),
-		Domain:           domain,
 		BatchType:        batchType,
 	}
 }

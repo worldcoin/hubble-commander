@@ -3,7 +3,6 @@ package executor
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -62,7 +61,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() {
 	tx2 := testutils.MakeCreate2Transfer(0, nil, 1, 400, s.wallets[0].PublicKey())
 	s.setTxHashAndSign(&tx2)
 
-	batch, commitments := createC2TBatch(s.Assertions, s.rollupCtx, &tx2, testDomain)
+	batch, commitments := createC2TBatch(s.Assertions, s.rollupCtx, &tx2)
 	commitments[0].PostStateRoot = utils.RandomHash()
 
 	err := s.rollupCtx.SubmitBatch(batch, commitments)
@@ -161,7 +160,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_CommitmentWithoutTxs() {
 }
 
 func (s *SyncC2TBatchTestSuite) submitInvalidBatch(tx *models.Create2Transfer) models.Commitment {
-	pendingBatch, commitments := createC2TBatch(s.Assertions, s.rollupCtx, tx, testDomain)
+	pendingBatch, commitments := createC2TBatch(s.Assertions, s.rollupCtx, tx)
 
 	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)
 
@@ -191,30 +190,23 @@ func submitC2TBatch(
 	rollupCtx *RollupContext,
 	tx *models.Create2Transfer,
 ) models.Commitment {
-	domain, err := client.GetDomain()
-	s.NoError(err)
-	pendingBatch, commitments := createC2TBatch(s, rollupCtx, tx, domain)
+	pendingBatch, commitments := createC2TBatch(s, rollupCtx, tx)
 
-	err = rollupCtx.SubmitBatch(pendingBatch, commitments)
+	err := rollupCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	client.Commit()
 	return commitments[0]
 }
 
-func createC2TBatch(
-	s *require.Assertions,
-	rollupCtx *RollupContext,
-	tx *models.Create2Transfer,
-	domain *bls.Domain,
-) (*models.Batch, []models.Commitment) {
+func createC2TBatch(s *require.Assertions, rollupCtx *RollupContext, tx *models.Create2Transfer) (*models.Batch, []models.Commitment) {
 	err := rollupCtx.storage.AddCreate2Transfer(tx)
 	s.NoError(err)
 
 	pendingBatch, err := rollupCtx.NewPendingBatch(txtype.Create2Transfer)
 	s.NoError(err)
 
-	commitments, err := rollupCtx.CreateCommitments(domain)
+	commitments, err := rollupCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
 	return pendingBatch, commitments
