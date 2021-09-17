@@ -143,13 +143,14 @@ func calculateStateAfterTx(
 	newSenderState, newReceiverState *models.UserState,
 	err error,
 ) {
+	fee := tx.GetFee()
 	amount := tx.GetAmount()
 
 	if amount.CmpN(0) <= 0 {
 		return nil, nil, ErrInvalidTokenAmount
 	}
 
-	totalAmount := amount.Add(tx.GetFee())
+	totalAmount := amount.Add(&fee)
 	if senderState.Balance.Cmp(totalAmount) < 0 {
 		return nil, nil, ErrBalanceTooLow
 	}

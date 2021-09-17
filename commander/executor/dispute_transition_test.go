@@ -49,7 +49,9 @@ func (s *DisputeTransitionTestSuite) applyTransfer(
 		s.NoError(err)
 		s.calculateStateAfterInvalidTransfer(senderLeaf, receiverLeaf, tx)
 	}
-	return *combinedFee.Add(tx.GetFee())
+
+	fee := tx.GetFee()
+	return *combinedFee.Add(&fee)
 }
 
 func (s *DisputeTransitionTestSuite) calculateStateAfterInvalidTransfer(

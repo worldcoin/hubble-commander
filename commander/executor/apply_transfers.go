@@ -32,7 +32,8 @@ func (c *RollupContext) ApplyTxs(
 		}
 
 		returnStruct.AddApplied(applyResult)
-		combinedFee = *combinedFee.Add(applyResult.AppliedTx().GetFee())
+		fee := applyResult.AppliedTx().GetFee()
+		combinedFee = *combinedFee.Add(&fee)
 	}
 
 	if returnStruct.AppliedTxs().Len() > 0 {

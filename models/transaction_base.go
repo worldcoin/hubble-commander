@@ -28,8 +28,8 @@ func (t *TransactionBase) GetAmount() Uint256 {
 	return t.Amount
 }
 
-func (t *TransactionBase) GetFee() *Uint256 {
-	return &t.Fee
+func (t *TransactionBase) GetFee() Uint256 {
+	return t.Fee
 }
 
 func (t *TransactionBase) GetNonce() Uint256 {
