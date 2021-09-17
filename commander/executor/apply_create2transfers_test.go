@@ -7,7 +7,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -20,8 +19,6 @@ import (
 type ApplyCreate2TransfersTestSuite struct {
 	TestSuiteWithRollupContext
 	feeReceiver *FeeReceiver
-	events      chan *accountregistry.AccountRegistrySinglePubkeyRegistered
-	unsubscribe func()
 }
 
 func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
@@ -56,18 +53,10 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 	_, err = s.storage.StateTree.Set(3, &feeReceiverState)
 	s.NoError(err)
 
-	s.events, s.unsubscribe, err = s.client.WatchRegistrations(&bind.WatchOpts{})
-	s.NoError(err)
-
 	s.feeReceiver = &FeeReceiver{
 		StateID: 3,
 		TokenID: models.MakeUint256(1),
 	}
-}
-
-func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
-	s.unsubscribe()
-	s.TestSuiteWithRollupContext.TearDownTest()
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_AllValid() {

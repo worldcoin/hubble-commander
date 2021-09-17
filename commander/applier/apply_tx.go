@@ -39,11 +39,11 @@ func (a *Applier) ApplyTx(
 		return nil, appError
 	}
 
-	if tErr := validateTransferNonce(&senderLeaf.UserState, tx.GetNonce()); tErr != nil {
+	if tErr := validateTxNonce(&senderLeaf.UserState, tx.GetNonce()); tErr != nil {
 		return tErr, nil
 	}
 
-	newSenderState, newReceiverState, tErr := calculateStateAfterTransfer(senderLeaf.UserState, receiverLeaf.UserState, tx)
+	newSenderState, newReceiverState, tErr := calculateStateAfterTx(senderLeaf.UserState, receiverLeaf.UserState, tx)
 	if tErr != nil {
 		return tErr, nil
 	}
@@ -88,7 +88,7 @@ func (a *Applier) applyGenericTransactionForSync(
 
 	synced = NewPartialSyncedGenericTransaction(tx.Copy(), &senderLeaf.UserState, &receiverLeaf.UserState)
 
-	newSenderState, newReceiverState, tErr := calculateStateAfterTransfer(senderLeaf.UserState, receiverLeaf.UserState, tx)
+	newSenderState, newReceiverState, tErr := calculateStateAfterTx(senderLeaf.UserState, receiverLeaf.UserState, tx)
 	if tErr != nil {
 		return a.fillSenderWitness(synced, tErr)
 	}
@@ -142,8 +142,8 @@ func (a *Applier) validateReceiverTokenID(receiverState *models.StateLeaf, commi
 	return nil
 }
 
-func validateTransferNonce(senderState *models.UserState, transferNonce models.Uint256) error {
-	comparison := transferNonce.Cmp(&senderState.Nonce)
+func validateTxNonce(senderState *models.UserState, txNonce models.Uint256) error {
+	comparison := txNonce.Cmp(&senderState.Nonce)
 	if comparison > 0 {
 		return ErrNonceTooHigh
 	} else if comparison < 0 {
@@ -152,20 +152,20 @@ func validateTransferNonce(senderState *models.UserState, transferNonce models.U
 	return nil
 }
 
-func calculateStateAfterTransfer(
+func calculateStateAfterTx(
 	senderState, receiverState models.UserState, // nolint:gocritic
-	transfer models.GenericTransaction,
+	tx models.GenericTransaction,
 ) (
 	newSenderState, newReceiverState *models.UserState,
 	err error,
 ) {
-	amount := transfer.GetAmount()
+	amount := tx.GetAmount()
 
 	if amount.CmpN(0) <= 0 {
 		return nil, nil, ErrInvalidTokenAmount
 	}
 
-	totalAmount := amount.Add(transfer.GetFee())
+	totalAmount := amount.Add(tx.GetFee())
 	if senderState.Balance.Cmp(totalAmount) < 0 {
 		return nil, nil, ErrBalanceTooLow
 	}

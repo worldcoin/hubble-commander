@@ -64,8 +64,8 @@ func (s *ApplyTxTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *ApplyTxTestSuite) TestCalculateStateAfterTransfer_UpdatesStates() {
-	newSenderState, newReceiverState, err := calculateStateAfterTransfer(
+func (s *ApplyTxTestSuite) TestCalculateStateAfterTx_UpdatesStates() {
+	newSenderState, newReceiverState, err := calculateStateAfterTx(
 		senderState,
 		receiverState,
 		&s.transfer,
@@ -82,10 +82,10 @@ func (s *ApplyTxTestSuite) TestCalculateStateAfterTransfer_UpdatesStates() {
 	s.NotEqual(&newReceiverState, &receiverState)
 }
 
-func (s *ApplyTxTestSuite) TestCalculateStateAfterTransfer_ValidatesTokenAmount() {
+func (s *ApplyTxTestSuite) TestCalculateStateAfterTx_ValidatesTokenAmount() {
 	invalidTransfer := s.transfer
 	invalidTransfer.Amount = models.MakeUint256(0)
-	_, _, err := calculateStateAfterTransfer(
+	_, _, err := calculateStateAfterTx(
 		senderState,
 		receiverState,
 		&invalidTransfer,
@@ -93,11 +93,11 @@ func (s *ApplyTxTestSuite) TestCalculateStateAfterTransfer_ValidatesTokenAmount(
 	s.Equal(ErrInvalidTokenAmount, err)
 }
 
-func (s *ApplyTxTestSuite) TestCalculateStateAfterTransfer_ValidatesBalance() {
+func (s *ApplyTxTestSuite) TestCalculateStateAfterTx_ValidatesBalance() {
 	transferAboveBalance := s.transfer
 	transferAboveBalance.Amount = models.MakeUint256(410)
 
-	_, _, err := calculateStateAfterTransfer(senderState, receiverState, &transferAboveBalance)
+	_, _, err := calculateStateAfterTx(senderState, receiverState, &transferAboveBalance)
 	s.Equal(ErrBalanceTooLow, err)
 }
 
