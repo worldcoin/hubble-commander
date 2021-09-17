@@ -146,7 +146,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_ReturnsError
 
 	commitments, err := s.rollupCtx.CreateCommitments()
 	s.Nil(commitments)
-	s.Equal(ErrNotEnoughTxs, err)
+	s.ErrorIs(err, ErrNotEnoughTxs)
 
 	postRoot, err := s.executionCtx.storage.StateTree.Root()
 	s.NoError(err)
@@ -177,7 +177,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_ReturnsError
 
 	commitments, err := s.rollupCtx.CreateCommitments()
 	s.Nil(commitments)
-	s.Equal(ErrNotEnoughTxs, err)
+	s.ErrorIs(err, ErrNotEnoughTxs)
 
 	postRoot, err := s.executionCtx.storage.StateTree.Root()
 	s.NoError(err)

@@ -184,7 +184,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_Invali
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidSlicesLength() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
 	_, _, err := s.rollupCtx.ApplyCreate2TransfersForSync(generatedTransfers, []uint32{1, 2}, s.feeReceiver.StateID)
-	s.Equal(applier.ErrInvalidSlicesLength, err)
+	s.ErrorIs(err, applier.ErrInvalidSlicesLength)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2TransfersForSync_AppliesFee() {

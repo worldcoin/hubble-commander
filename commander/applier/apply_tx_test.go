@@ -89,7 +89,7 @@ func (s *ApplyTxTestSuite) TestCalculateStateAfterTx_ValidatesTokenAmount() {
 		receiverState,
 		&invalidTransfer,
 	)
-	s.Equal(ErrInvalidTokenAmount, err)
+	s.ErrorIs(err, ErrInvalidTokenAmount)
 }
 
 func (s *ApplyTxTestSuite) TestCalculateStateAfterTx_ValidatesBalance() {
@@ -97,7 +97,7 @@ func (s *ApplyTxTestSuite) TestCalculateStateAfterTx_ValidatesBalance() {
 	transferAboveBalance.Amount = models.MakeUint256(410)
 
 	_, _, err := calculateStateAfterTx(senderState, receiverState, &transferAboveBalance)
-	s.Equal(ErrBalanceTooLow, err)
+	s.ErrorIs(err, ErrBalanceTooLow)
 }
 
 func (s *ApplyTxTestSuite) TestApplyTx_ValidatesSenderTokenID() {
@@ -105,7 +105,7 @@ func (s *ApplyTxTestSuite) TestApplyTx_ValidatesSenderTokenID() {
 
 	transferError, appError := s.applier.ApplyTx(&s.transfer, &s.receiverLeaf, models.MakeUint256(3))
 	s.NoError(transferError)
-	s.Equal(appError, ErrInvalidSenderTokenID)
+	s.ErrorIs(appError, ErrInvalidSenderTokenID)
 }
 
 func (s *ApplyTxTestSuite) TestApplyTx_ValidatesReceiverTokenID() {
@@ -116,7 +116,7 @@ func (s *ApplyTxTestSuite) TestApplyTx_ValidatesReceiverTokenID() {
 
 	transferError, appError := s.applier.ApplyTx(&s.transfer, &receiverWithChangedToken, models.MakeUint256(1))
 	s.NoError(transferError)
-	s.Equal(appError, ErrInvalidReceiverTokenID)
+	s.ErrorIs(appError, ErrInvalidReceiverTokenID)
 }
 
 func (s *ApplyTxTestSuite) TestApplyTx_ValidatesNonce() {
@@ -125,7 +125,7 @@ func (s *ApplyTxTestSuite) TestApplyTx_ValidatesNonce() {
 	setUserStatesInTree(s.Assertions, s.storage)
 
 	transferError, appError := s.applier.ApplyTx(&transferWithBadNonce, &s.receiverLeaf, models.MakeUint256(1))
-	s.Equal(ErrNonceTooHigh, transferError)
+	s.ErrorIs(transferError, ErrNonceTooHigh)
 	s.NoError(appError)
 }
 

@@ -119,7 +119,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InvalidTransfer
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_ReturnsErrorOnNilToStateID() {
 	_, transferError, appError := s.applier.ApplyCreate2TransferForSync(&create2Transfer, uint32(2), feeReceiverTokenID)
 	s.NoError(transferError)
-	s.Equal(ErrNilReceiverStateID, appError)
+	s.ErrorIs(appError, ErrNilReceiverStateID)
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_InsertsNewUserStateAtReceiverStateID() {
