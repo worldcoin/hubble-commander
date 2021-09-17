@@ -13,3 +13,19 @@ func (a *Applier) ApplyTransfer(tx models.GenericTransaction, commitmentTokenID 
 	transferError, appError = a.ApplyTx(tx, receiverLeaf, commitmentTokenID)
 	return &ApplySingleTransferResult{tx: tx}, transferError, appError
 }
+
+func (a *Applier) ApplyTransferForSync(transfer *models.Transfer, commitmentTokenID models.Uint256) (
+	synced *SyncedTransfer,
+	transferError, appError error,
+) {
+	receiverLeaf, err := a.storage.StateTree.LeafOrEmpty(*transfer.GetToStateID())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	genericSynced, transferError, appError := a.applyTxForSync(transfer, receiverLeaf, commitmentTokenID)
+	if appError != nil {
+		return nil, nil, appError
+	}
+	return NewSyncedTransferFromGeneric(genericSynced), transferError, nil
+}

@@ -47,7 +47,7 @@ func (a *Applier) ApplyCreate2TransferForSync(
 	if appError != nil {
 		return nil, nil, appError
 	}
-	genericSynced, transferError, appError := a.applyGenericTransactionForSync(create2Transfer, receiverLeaf, commitmentTokenID)
+	genericSynced, transferError, appError := a.applyTxForSync(create2Transfer, receiverLeaf, commitmentTokenID)
 	if appError != nil {
 		return nil, nil, appError
 	}
