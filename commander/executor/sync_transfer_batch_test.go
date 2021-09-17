@@ -59,7 +59,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
 	accountRoots := make([]common.Hash, 2)
 	for i := range expectedCommitments {
 		var pendingBatch *models.Batch
-		pendingBatch, err = s.executionCtx.NewPendingBatch(txtype.Transfer)
+		pendingBatch, err = s.rollupCtx.NewPendingBatch(txtype.Transfer)
 		s.NoError(err)
 		expectedCommitments[i].ID.BatchID = pendingBatch.ID
 		expectedCommitments[i].ID.IndexInBatch = 0

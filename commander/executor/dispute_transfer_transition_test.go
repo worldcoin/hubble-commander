@@ -137,7 +137,7 @@ func (s *DisputeTransferTransitionTestSuite) submitInvalidBatch(txs [][]models.T
 		s.NoError(err)
 	}
 
-	pendingBatch, err := s.executionCtx.NewPendingBatch(txtype.Transfer)
+	pendingBatch, err := s.rollupCtx.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
 	commitments := s.createInvalidCommitments(txs, invalidTxHash)

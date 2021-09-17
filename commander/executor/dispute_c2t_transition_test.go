@@ -156,7 +156,7 @@ func (s *DisputeCT2TransitionTestSuite) submitInvalidBatch(
 		s.setToStateID(txs[i], stateIDs)
 	}
 
-	pendingBatch, err := s.executionCtx.NewPendingBatch(txtype.Create2Transfer)
+	pendingBatch, err := s.rollupCtx.NewPendingBatch(txtype.Create2Transfer)
 	s.NoError(err)
 
 	commitments := s.createInvalidCommitments(txs, pubKeyIDs, invalidTxHash)

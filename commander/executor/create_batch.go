@@ -36,7 +36,7 @@ func (c *RollupContext) CreateAndSubmitBatch() (err error) {
 	return nil
 }
 
-func (c *ExecutionContext) NewPendingBatch(batchType txtype.TransactionType) (*models.Batch, error) {
+func (c *RollupContext) NewPendingBatch(batchType txtype.TransactionType) (*models.Batch, error) {
 	prevStateRoot, err := c.storage.StateTree.Root()
 	if err != nil {
 		return nil, err
