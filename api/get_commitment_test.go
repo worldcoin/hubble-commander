@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
@@ -33,7 +34,12 @@ func (s *GetCommitmentTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	s.api = &API{storage: s.storage.Storage}
+	s.api = &API{
+		storage: s.storage.Storage,
+		cfg: &config.Config{Log: &config.LogConfig{
+			Level: 0,
+		}},
+	}
 
 	s.batch = models.Batch{
 		ID:                models.MakeUint256(1),

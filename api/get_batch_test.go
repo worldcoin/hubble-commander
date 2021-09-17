@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -36,7 +37,13 @@ func (s *GetBatchTestSuite) SetupTest() {
 	s.NoError(err)
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
-	s.api = &API{storage: s.storage.Storage, client: s.testClient.Client}
+	s.api = &API{
+		storage: s.storage.Storage,
+		client:  s.testClient.Client,
+		cfg: &config.Config{Log: &config.LogConfig{
+			Level: 0,
+		}},
+	}
 
 	s.batch = models.Batch{
 		ID:                models.MakeUint256(1),

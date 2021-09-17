@@ -14,6 +14,7 @@ type TransactionExecutor interface {
 }
 
 func CreateTransactionExecutor(txType txtype.TransactionType) TransactionExecutor {
+	// nolint:exhaustive
 	switch txType {
 	case txtype.Transfer:
 		return &TransferExecutor{}
