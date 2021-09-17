@@ -118,7 +118,7 @@ func (c *RollupContext) applyTxsForCommitment(pendingTxs models.GenericTransacti
 			return nil, nil, err
 		}
 
-		aggregateResult.AddTxs(applyTxsResult)
+		aggregateResult.AddApplyResult(applyTxsResult)
 
 		if aggregateResult.AppliedTxs().Len() == int(c.cfg.MaxTxsPerCommitment) {
 			newPendingTxs = removeTxs(pendingTxs, aggregateResult.AllTxs())

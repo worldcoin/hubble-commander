@@ -40,9 +40,9 @@ type ApplyTxsResult interface {
 	InvalidTxs() models.GenericTransactionArray
 	AddedPubKeyIDs() []uint32
 	AllTxs() models.GenericTransactionArray
-	AddApplied(singleTxResult applier.SingleTxResult)
+	AddApplied(singleTxResult applier.ApplySingleTxResult)
 	AddInvalidTx(tx models.GenericTransaction)
-	AddTxs(other ApplyTxsResult)
+	AddApplyResult(other ApplyTxsResult)
 }
 
 type ApplyTransfersResult struct {
@@ -66,7 +66,7 @@ func (a *ApplyTransfersResult) AllTxs() models.GenericTransactionArray {
 	return a.appliedTxs.Append(a.invalidTxs)
 }
 
-func (a *ApplyTransfersResult) AddApplied(singleTxResult applier.SingleTxResult) {
+func (a *ApplyTransfersResult) AddApplied(singleTxResult applier.ApplySingleTxResult) {
 	a.appliedTxs = a.appliedTxs.AppendOne(singleTxResult.AppliedTx())
 }
 
@@ -74,7 +74,7 @@ func (a *ApplyTransfersResult) AddInvalidTx(tx models.GenericTransaction) {
 	a.invalidTxs = a.invalidTxs.AppendOne(tx)
 }
 
-func (a *ApplyTransfersResult) AddTxs(other ApplyTxsResult) {
+func (a *ApplyTransfersResult) AddApplyResult(other ApplyTxsResult) {
 	a.appliedTxs = a.appliedTxs.Append(other.AppliedTxs())
 	a.invalidTxs = a.invalidTxs.Append(other.InvalidTxs())
 }
@@ -101,7 +101,7 @@ func (a *ApplyC2TResult) AllTxs() models.GenericTransactionArray {
 	return a.appliedTxs.Append(a.invalidTxs)
 }
 
-func (a *ApplyC2TResult) AddApplied(singleTxResult applier.SingleTxResult) {
+func (a *ApplyC2TResult) AddApplied(singleTxResult applier.ApplySingleTxResult) {
 	a.appliedTxs = a.appliedTxs.AppendOne(singleTxResult.AppliedTx())
 	a.addedPubKeyIDs = append(a.addedPubKeyIDs, singleTxResult.AddedPubKeyID())
 }
@@ -110,7 +110,7 @@ func (a *ApplyC2TResult) AddInvalidTx(tx models.GenericTransaction) {
 	a.invalidTxs = a.invalidTxs.AppendOne(tx)
 }
 
-func (a *ApplyC2TResult) AddTxs(other ApplyTxsResult) {
+func (a *ApplyC2TResult) AddApplyResult(other ApplyTxsResult) {
 	a.appliedTxs = a.appliedTxs.Append(other.AppliedTxs())
 	a.invalidTxs = a.invalidTxs.Append(other.InvalidTxs())
 	a.addedPubKeyIDs = append(a.addedPubKeyIDs, other.AddedPubKeyIDs()...)

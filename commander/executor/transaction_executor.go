@@ -19,7 +19,7 @@ type TransactionExecutor interface {
 	NewApplyTxsForCommitmentResult(applyTxsResult ApplyTxsResult) ApplyTxsForCommitmentResult
 	SerializeTxs(results ApplyTxsForCommitmentResult) ([]byte, error)
 	MarkTxsAsIncluded(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error
-	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (result applier.SingleTxResult, transferError, appError error)
+	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (result applier.ApplySingleTxResult, transferError, appError error)
 	SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error)
 }
 
@@ -83,7 +83,7 @@ func (e *TransferExecutor) MarkTxsAsIncluded(txs models.GenericTransactionArray,
 }
 
 func (e *TransferExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
-	applyResult applier.SingleTxResult, transferError, appError error,
+	applyResult applier.ApplySingleTxResult, transferError, appError error,
 ) {
 	return e.applier.ApplyTransfer(tx, commitmentTokenID)
 }
@@ -141,7 +141,7 @@ func (e *C2TExecutor) MarkTxsAsIncluded(txs models.GenericTransactionArray, comm
 }
 
 func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
-	applyResult applier.SingleTxResult, transferError, appError error,
+	applyResult applier.ApplySingleTxResult, transferError, appError error,
 ) {
 	return e.applier.ApplyCreate2Transfer(tx.ToCreate2Transfer(), commitmentTokenID)
 }
