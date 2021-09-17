@@ -13,7 +13,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -164,15 +163,8 @@ func (s *NewBlockLoopTestSuite) startBlockLoop() {
 }
 
 func (s *NewBlockLoopTestSuite) registerAccounts(accounts []models.AccountLeaf) {
-	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
-	s.NoError(err)
-
-	registrations, unsubscribe, err := s.testClient.WatchRegistrations(&bind.WatchOpts{Start: latestBlockNumber})
-	s.NoError(err)
-	defer unsubscribe()
-
 	for i := range accounts {
-		pubKeyID, err := s.testClient.RegisterAccount(&accounts[i].PublicKey, registrations)
+		pubKeyID, err := s.testClient.RegisterAccountAndWait(&accounts[i].PublicKey)
 		s.NoError(err)
 		accounts[i].PubKeyID = *pubKeyID
 	}
@@ -185,32 +177,30 @@ func (s *NewBlockLoopTestSuite) registerToken(token models.RegisteredToken) {
 }
 
 func (s *NewBlockLoopTestSuite) submitTransferBatchInTransaction(tx *models.Transfer) {
-	s.runInTransaction(func(txStorage *st.Storage, executionCtx *executor.ExecutionContext) {
+	s.runInTransaction(func(txStorage *st.Storage, rollupCtx *executor.RollupContext) {
 		err := txStorage.AddTransfer(tx)
 		s.NoError(err)
 
-		domain, err := s.testClient.GetDomain()
-		s.NoError(err)
-		commitments, err := executionCtx.CreateTransferCommitments(domain)
+		commitments, err := rollupCtx.CreateCommitments()
 		s.NoError(err)
 		s.Len(commitments, 1)
 
-		batch, err := executionCtx.NewPendingBatch(txtype.Transfer)
+		batch, err := rollupCtx.NewPendingBatch(txtype.Transfer)
 		s.NoError(err)
-		rollupCtx := executor.NewTestRollupContext(executionCtx, txtype.Transfer)
 		err = rollupCtx.SubmitBatch(batch, commitments)
 		s.NoError(err)
 		s.testClient.Commit()
 	})
 }
 
-func (s *NewBlockLoopTestSuite) runInTransaction(handler func(*st.Storage, *executor.ExecutionContext)) {
+func (s *NewBlockLoopTestSuite) runInTransaction(handler func(*st.Storage, *executor.RollupContext)) {
 	txController, txStorage, err := s.testStorage.BeginTransaction(st.TxOptions{})
 	s.NoError(err)
 	defer txController.Rollback(nil)
 
 	executionCtx := executor.NewTestExecutionContext(txStorage, s.testClient.Client, s.cfg.Rollup)
-	handler(txStorage, executionCtx)
+	rollupCtx := executor.NewTestRollupContext(executionCtx, txtype.Transfer)
+	handler(txStorage, rollupCtx)
 }
 
 func (s *NewBlockLoopTestSuite) waitForLatestBlockSync() {

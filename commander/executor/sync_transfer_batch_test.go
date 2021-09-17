@@ -3,7 +3,7 @@ package executor
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -53,13 +53,13 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
 		s.NoError(err)
 	}
 
-	expectedCommitments, err := s.executionCtx.CreateTransferCommitments(testDomain)
+	expectedCommitments, err := s.rollupCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(expectedCommitments, 2)
 	accountRoots := make([]common.Hash, 2)
 	for i := range expectedCommitments {
 		var pendingBatch *models.Batch
-		pendingBatch, err = s.executionCtx.NewPendingBatch(txtype.Transfer)
+		pendingBatch, err = s.rollupCtx.NewPendingBatch(txtype.Transfer)
 		s.NoError(err)
 		expectedCommitments[i].ID.BatchID = pendingBatch.ID
 		expectedCommitments[i].ID.IndexInBatch = 0
@@ -155,7 +155,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() 
 	tx2 := testutils.MakeTransfer(0, 1, 1, 400)
 	s.setTxHashAndSign(&tx2)
 
-	batch, commitments := createTransferBatch(s.Assertions, s.rollupCtx, &tx2, testDomain)
+	batch, commitments := createTransferBatch(s.Assertions, s.rollupCtx, &tx2)
 	commitments[0].PostStateRoot = utils.RandomHash()
 
 	err := s.rollupCtx.SubmitBatch(batch, commitments)
@@ -175,7 +175,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() 
 	err = s.executionCtx.SyncBatch(&remoteBatches[1])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Transition, disputableErr.Type)
-	s.Equal(ErrInvalidCommitmentStateRoot.Error(), disputableErr.Reason)
+	s.Equal(applier.ErrInvalidCommitmentStateRoot.Error(), disputableErr.Reason)
 
 	_, err = s.storage.GetBatch(remoteBatches[0].ID)
 	s.NoError(err)
@@ -208,7 +208,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_NotValidBLSSignature() {
 	tx := testutils.MakeTransfer(0, 1, 0, 400)
 	s.setTxHash(&tx)
 
-	pendingBatch, commitments := createTransferBatch(s.Assertions, s.rollupCtx, &tx, s.domain)
+	pendingBatch, commitments := createTransferBatch(s.Assertions, s.rollupCtx, &tx)
 	commitments[0].CombinedSignature = models.Signature{1, 2, 3}
 
 	err := s.rollupCtx.SubmitBatch(pendingBatch, commitments)
@@ -281,7 +281,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_CommitmentWithNonexistentFeeR
 }
 
 func (s *SyncTransferBatchTestSuite) submitInvalidBatch(tx *models.Transfer) *models.Batch {
-	pendingBatch, commitments := createTransferBatch(s.Assertions, s.rollupCtx, tx, testDomain)
+	pendingBatch, commitments := createTransferBatch(s.Assertions, s.rollupCtx, tx)
 
 	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)
 
@@ -297,7 +297,7 @@ func (s *SyncTransferBatchTestSuite) submitTransferBatchWithNonexistentFeeReceiv
 
 	receiverLeaf, err := s.executionCtx.storage.StateTree.Leaf(tx.ToStateID)
 	s.NoError(err)
-	txErr, appErr := s.executionCtx.ApplyTransfer(tx, receiverLeaf, commitmentTokenID)
+	txErr, appErr := s.executionCtx.ApplyTx(tx, receiverLeaf, commitmentTokenID)
 	s.NoError(txErr)
 	s.NoError(appErr)
 
@@ -351,30 +351,23 @@ func submitTransferBatch(
 	rollupCtx *RollupContext,
 	tx *models.Transfer,
 ) *models.Batch {
-	domain, err := client.GetDomain()
-	s.NoError(err)
-	pendingBatch, commitments := createTransferBatch(s, rollupCtx, tx, domain)
+	pendingBatch, commitments := createTransferBatch(s, rollupCtx, tx)
 
-	err = rollupCtx.SubmitBatch(pendingBatch, commitments)
+	err := rollupCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	client.Commit()
 	return pendingBatch
 }
 
-func createTransferBatch(
-	s *require.Assertions,
-	rollupCtx *RollupContext,
-	tx *models.Transfer,
-	domain *bls.Domain,
-) (*models.Batch, []models.Commitment) {
+func createTransferBatch(s *require.Assertions, rollupCtx *RollupContext, tx *models.Transfer) (*models.Batch, []models.Commitment) {
 	err := rollupCtx.storage.AddTransfer(tx)
 	s.NoError(err)
 
 	pendingBatch, err := rollupCtx.NewPendingBatch(txtype.Transfer)
 	s.NoError(err)
 
-	commitments, err := rollupCtx.CreateTransferCommitments(domain)
+	commitments, err := rollupCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
 

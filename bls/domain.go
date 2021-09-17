@@ -12,7 +12,7 @@ const DomainLength = 32
 type Domain [DomainLength]byte
 
 var (
-	testDomain = Domain{0x00, 0x00, 0x00, 0x00}
+	TestDomain = Domain{1, 2, 3, 4}
 	domainT    = reflect.TypeOf(Domain{})
 
 	ErrInvalidDomainLength = errors.New("invalid domain length")

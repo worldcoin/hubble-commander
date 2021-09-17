@@ -71,7 +71,7 @@ func (s *SyncTestSuite) createCommitmentWithEmptyTransactions(commitmentType txt
 	stateRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)
 
-	feeReceiver, err := s.executionCtx.getCommitmentFeeReceiver()
+	feeReceiver, err := s.rollupCtx.getCommitmentFeeReceiver()
 	s.NoError(err)
 
 	return models.Commitment{

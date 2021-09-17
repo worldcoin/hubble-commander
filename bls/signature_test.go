@@ -21,7 +21,7 @@ func (s *SignatureTestSuite) SetupSuite() {
 }
 
 func (s *SignatureTestSuite) SetupTest() {
-	wallet, err := NewRandomWallet(testDomain)
+	wallet, err := NewRandomWallet(TestDomain)
 	s.NoError(err)
 	s.wallet = wallet
 
@@ -38,7 +38,7 @@ func (s *SignatureTestSuite) TestVerify() {
 func (s *SignatureTestSuite) TestNewSignatureFromBytes() {
 	bytes := s.signature.Bytes()
 
-	signatureFromBytes, err := NewSignatureFromBytes(bytes, testDomain)
+	signatureFromBytes, err := NewSignatureFromBytes(bytes, TestDomain)
 	s.NoError(err)
 
 	isValid, err := signatureFromBytes.Verify(data, s.wallet.PublicKey())

@@ -4,51 +4,39 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-type AppliedTransfers struct {
-	appliedTransfers []models.Transfer
-	invalidTransfers []models.Transfer
-}
-
-func (c *ExecutionContext) ApplyTransfers(
-	transfers []models.Transfer,
+func (c *RollupContext) ApplyTxs(
+	txs models.GenericTransactionArray,
 	maxApplied uint32,
 	feeReceiver *FeeReceiver,
-) (*AppliedTransfers, error) {
-	if len(transfers) == 0 {
-		return &AppliedTransfers{}, nil
+) (ApplyTxsResult, error) {
+	if txs.Len() == 0 {
+		return c.Executor.NewApplyTxsResult(0), nil
 	}
 
-	returnStruct := &AppliedTransfers{}
-	returnStruct.appliedTransfers = make([]models.Transfer, 0, c.cfg.MaxTxsPerCommitment)
-
+	returnStruct := c.Executor.NewApplyTxsResult(c.cfg.MaxTxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
-	for i := range transfers {
-		if len(returnStruct.appliedTransfers) == int(maxApplied) {
+	for i := 0; i < txs.Len(); i++ {
+		if returnStruct.AppliedTxs().Len() == int(maxApplied) {
 			break
 		}
 
-		transfer := &transfers[i]
-		receiverLeaf, err := c.storage.StateTree.Leaf(transfer.ToStateID)
-		if err != nil {
-			return nil, err
-		}
-
-		transferError, appError := c.ApplyTransfer(transfer, receiverLeaf, feeReceiver.TokenID)
+		applyResult, transferError, appError := c.Executor.ApplyTx(txs.At(i), feeReceiver.TokenID)
 		if appError != nil {
 			return nil, appError
 		}
 		if transferError != nil {
-			logAndSaveTransactionError(c.storage, &transfer.TransactionBase, transferError)
-			returnStruct.invalidTransfers = append(returnStruct.invalidTransfers, *transfer)
+			logAndSaveTransactionError(c.storage, applyResult.AppliedTx(), transferError)
+			returnStruct.AddInvalidTx(applyResult.AppliedTx())
 			continue
 		}
 
-		returnStruct.appliedTransfers = append(returnStruct.appliedTransfers, *transfer)
-		combinedFee = *combinedFee.Add(&transfer.Fee)
+		returnStruct.AddApplied(applyResult)
+		fee := applyResult.AppliedTx().GetFee()
+		combinedFee = *combinedFee.Add(&fee)
 	}
 
-	if len(returnStruct.appliedTransfers) > 0 {
+	if returnStruct.AppliedTxs().Len() > 0 {
 		_, err := c.ApplyFee(feeReceiver.StateID, combinedFee)
 		if err != nil {
 			return nil, err

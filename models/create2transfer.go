@@ -29,6 +29,14 @@ func (t *Create2Transfer) GetToStateID() *uint32 {
 	return t.ToStateID
 }
 
+func (t *Create2Transfer) ToTransfer() *Transfer {
+	panic("Create2Transfer cannot be cast to Transfer")
+}
+
+func (t *Create2Transfer) ToCreate2Transfer() *Create2Transfer {
+	return t
+}
+
 // nolint:gocritic
 func (t Create2Transfer) Copy() GenericTransaction {
 	return &t
