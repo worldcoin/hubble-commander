@@ -3,20 +3,19 @@ package executor
 import (
 	"time"
 
-	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	log "github.com/sirupsen/logrus"
 )
 
-func (c *RollupContext) CreateAndSubmitBatch(domain *bls.Domain) (err error) {
+func (c *RollupContext) CreateAndSubmitBatch() (err error) {
 	startTime := time.Now()
 	batch, err := c.NewPendingBatch(c.BatchType)
 	if err != nil {
 		return err
 	}
 
-	commitments, err := c.CreateCommitments(domain)
+	commitments, err := c.CreateCommitments(c.Domain)
 	if err != nil {
 		return err
 	}

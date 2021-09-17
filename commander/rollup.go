@@ -69,7 +69,7 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 	defer rollupCtx.Rollback(&err)
 
 	switchBatchType(currentBatchType)
-	err = rollupCtx.CreateAndSubmitBatch(rollupCtx.Domain)
+	err = rollupCtx.CreateAndSubmitBatch()
 	if err != nil {
 		var e *executor.RollupError
 		if errors.As(err, &e) {
