@@ -13,7 +13,7 @@ var getBatchesAPIErrors = map[error]*APIError{
 func (a *API) GetBatches(from, to *models.Uint256) ([]dto.Batch, error) {
 	batches, err := a.unsafeGetBatches(from, to)
 	if err != nil {
-		return nil, sanitizeError(err, getBatchesAPIErrors)
+		return nil, sanitizeError(err, getBatchesAPIErrors, a.cfg.Log.Level)
 	}
 
 	return batches, nil

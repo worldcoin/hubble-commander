@@ -12,7 +12,7 @@ var getUserStateAPIErrors = map[error]*APIError{
 func (a *API) GetUserState(id uint32) (*dto.UserStateWithID, error) {
 	userState, err := a.unsafeGetUserState(id)
 	if err != nil {
-		return nil, sanitizeError(err, getUserStateAPIErrors)
+		return nil, sanitizeError(err, getUserStateAPIErrors, a.cfg.Log.Level)
 	}
 
 	return userState, nil

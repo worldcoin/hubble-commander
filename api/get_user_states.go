@@ -13,7 +13,7 @@ var getUserStatesAPIErrors = map[error]*APIError{
 func (a *API) GetUserStates(publicKey *models.PublicKey) ([]dto.UserStateWithID, error) {
 	batch, err := a.unsafeGetUserStates(publicKey)
 	if err != nil {
-		return nil, sanitizeError(err, getUserStatesAPIErrors)
+		return nil, sanitizeError(err, getUserStatesAPIErrors, a.cfg.Log.Level)
 	}
 
 	return batch, nil

@@ -16,7 +16,7 @@ import (
 )
 
 type API struct {
-	cfg               *config.APIConfig
+	cfg               *config.Config
 	storage           *st.Storage
 	client            *eth.Client
 	mockSignature     models.Signature
@@ -24,7 +24,7 @@ type API struct {
 }
 
 func NewAPIServer(cfg *config.Config, storage *st.Storage, client *eth.Client) (*http.Server, error) {
-	server, err := getAPIServer(cfg.API, storage, client, cfg.Rollup.DisableSignatures)
+	server, err := getAPIServer(cfg, storage, client, cfg.Rollup.DisableSignatures)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func NewAPIServer(cfg *config.Config, storage *st.Storage, client *eth.Client) (
 	return &http.Server{Addr: addr, Handler: mux}, nil
 }
 
-func getAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client, disableSignatures bool) (*rpc.Server, error) {
+func getAPIServer(cfg *config.Config, storage *st.Storage, client *eth.Client, disableSignatures bool) (*rpc.Server, error) {
 	api := API{
 		cfg:               cfg,
 		storage:           storage,

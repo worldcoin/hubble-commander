@@ -29,7 +29,7 @@ func TestStartApiServer(t *testing.T) {
 	require.NoError(t, err)
 	defer client.Close()
 
-	cfg := config.APIConfig{Version: "v0123"}
+	cfg := config.Config{API: &config.APIConfig{Version: "v0123"}}
 	server, err := getAPIServer(&cfg, nil, client.Client, false)
 	require.NoError(t, err)
 

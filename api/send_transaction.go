@@ -80,7 +80,7 @@ var sendTransactionAPIErrors = map[error]*APIError{
 func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
 	transactionHash, err := a.unsafeSendTransaction(tx)
 	if err != nil {
-		return nil, sanitizeError(err, sendTransactionAPIErrors)
+		return nil, sanitizeError(err, sendTransactionAPIErrors, a.cfg.Log.Level)
 	}
 
 	return transactionHash, nil

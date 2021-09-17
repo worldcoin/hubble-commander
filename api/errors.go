@@ -1,11 +1,13 @@
 package api
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/db"
+	"github.com/Worldcoin/hubble-commander/storage"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -27,7 +29,7 @@ func NewMissingFieldError(field string) *MissingFieldError {
 	return &MissingFieldError{field}
 }
 
-func (m MissingFieldError) Error() string {
+func (m *MissingFieldError) Error() string {
 	return fmt.Sprintf("missing required %s field", m.field)
 }
 
@@ -65,6 +67,7 @@ func (e *NotDecimalEncodableError) Is(other error) bool {
 type APIError struct {
 	Code    int
 	Message string
+	Data    interface{} `json:",omitempty"`
 }
 
 func (e *APIError) Error() string {
@@ -76,6 +79,10 @@ func (e *APIError) Error() string {
 
 func (e *APIError) ErrorCode() int {
 	return e.Code
+}
+
+func (e *APIError) ErrorData() interface{} {
+	return e.Data
 }
 
 func NewAPIError(code int, message string) *APIError {
@@ -132,14 +139,37 @@ var commonErrors = []*InternalToAPIError{
 	NewInternalToAPIError(99004, "an error occurred while fetching the domain for signing", []error{bls.ErrInvalidDomainLength}),
 }
 
-func sanitizeError(err error, errMap map[error]*APIError) *APIError {
+func sanitizeError(err error, errMap map[error]*APIError, logLevel log.Level) *APIError {
+	if logLevel == log.DebugLevel {
+		log.Debugf("Sanitizing error:\n%+v", err)
+	}
+
 	for k, v := range errMap {
 		if errors.Is(err, k) {
+			if logLevel == log.DebugLevel && isAnyTypeError(k) {
+				v.Data = fmt.Sprintf("%+v", err)
+			}
 			return v
 		}
 	}
 
 	return sanitizeCommonError(err, commonErrors)
+}
+
+func isAnyTypeError(err error) bool {
+	anyTypeErrors := []error{
+		storage.AnyNotFoundError,
+		storage.AnyNoVacantSubtreeError,
+		AnyMissingFieldError,
+	}
+
+	for i := range anyTypeErrors {
+		if errors.Is(err, anyTypeErrors[i]) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func sanitizeCommonError(err error, errMap []*InternalToAPIError) *APIError {
