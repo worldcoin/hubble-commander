@@ -209,7 +209,7 @@ func (s *DisputeCT2TransitionTestSuite) createInvalidCommitments(
 			appliedTxs:     txs,
 			addedPubKeyIDs: pubKeyIDs[i],
 		}
-		commitment, err := s.rollupCtx.buildTxCommitment(applyResult, commitmentID, 0, testDomain)
+		commitment, err := s.rollupCtx.buildCommitment(applyResult, commitmentID, 0, testDomain)
 		s.NoError(err)
 		commitments = append(commitments, *commitment)
 	}
