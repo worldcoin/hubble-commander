@@ -16,7 +16,7 @@ func (c *RollupContext) CreateAndSubmitBatch(domain *bls.Domain) (err error) {
 		return err
 	}
 
-	commitments, err := c.CreateTxCommitments(domain)
+	commitments, err := c.CreateCommitments(domain)
 	if err != nil {
 		return err
 	}

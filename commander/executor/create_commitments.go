@@ -17,7 +17,7 @@ type FeeReceiver struct {
 	TokenID models.Uint256
 }
 
-func (c *RollupContext) CreateTxCommitments(domain *bls.Domain) ([]models.Commitment, error) {
+func (c *RollupContext) CreateCommitments(domain *bls.Domain) ([]models.Commitment, error) {
 	pendingTxs, err := c.queryPendingTxs()
 	if err != nil {
 		return nil, err
@@ -34,7 +34,7 @@ func (c *RollupContext) CreateTxCommitments(domain *bls.Domain) ([]models.Commit
 		var commitment *models.Commitment
 		commitmentID.IndexInBatch = i
 
-		pendingTxs, commitment, err = c.createTxCommitment(pendingTxs, commitmentID, domain)
+		pendingTxs, commitment, err = c.createCommitment(pendingTxs, commitmentID, domain)
 		if err == ErrNotEnoughTxs {
 			break
 		}
@@ -52,7 +52,7 @@ func (c *RollupContext) CreateTxCommitments(domain *bls.Domain) ([]models.Commit
 	return commitments, nil
 }
 
-func (c *RollupContext) createTxCommitment(
+func (c *RollupContext) createCommitment(
 	pendingTxs models.GenericTransactionArray,
 	commitmentID *models.CommitmentID,
 	domain *bls.Domain,

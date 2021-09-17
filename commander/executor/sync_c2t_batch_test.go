@@ -214,7 +214,7 @@ func createC2TBatch(
 	pendingBatch, err := rollupCtx.NewPendingBatch(txtype.Create2Transfer)
 	s.NoError(err)
 
-	commitments, err := rollupCtx.CreateTxCommitments(domain)
+	commitments, err := rollupCtx.CreateCommitments(domain)
 	s.NoError(err)
 	s.Len(commitments, 1)
 	return pendingBatch, commitments
