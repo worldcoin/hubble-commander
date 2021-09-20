@@ -4,7 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -67,7 +67,7 @@ func seedDB(s *require.Assertions, storage *st.Storage, wallets []bls.Wallet) {
 	s.NoError(err)
 }
 
-func (s *SyncTestSuite) createCommitmentWithEmptyTransactions(commitmentType txtype.TransactionType) models.Commitment {
+func (s *SyncTestSuite) createCommitmentWithEmptyTransactions(commitmentType batchtype.BatchType) models.Commitment {
 	stateRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)
 

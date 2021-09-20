@@ -3,7 +3,7 @@ package api
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
@@ -36,11 +36,11 @@ func (a *API) GetCommitment(id models.CommitmentID) (*dto.Commitment, error) {
 
 func (a *API) getTransactionsForCommitment(commitment *models.Commitment) (interface{}, error) {
 	switch commitment.Type {
-	case txtype.Transfer:
+	case batchtype.Transfer:
 		return a.getTransfersForCommitment(&commitment.ID)
-	case txtype.Create2Transfer:
+	case batchtype.Create2Transfer:
 		return a.getCreate2TransfersForCommitment(&commitment.ID)
-	case txtype.Genesis, txtype.MassMigration:
+	case batchtype.Genesis, batchtype.MassMigration, batchtype.Deposit:
 		return nil, dto.ErrNotImplemented
 	}
 	return nil, dto.ErrNotImplemented

@@ -8,7 +8,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
@@ -147,7 +146,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 }
 
 func (s *SyncC2TBatchTestSuite) TestSyncBatch_CommitmentWithoutTxs() {
-	commitment := s.createCommitmentWithEmptyTransactions(txtype.Create2Transfer)
+	commitment := s.createCommitmentWithEmptyTransactions(batchtype.Create2Transfer)
 
 	_, err := s.executionCtx.client.SubmitCreate2TransfersBatchAndWait([]models.Commitment{commitment})
 	s.NoError(err)

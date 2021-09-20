@@ -230,7 +230,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_NotValidBLSSignature() {
 }
 
 func (s *SyncTransferBatchTestSuite) TestSyncBatch_CommitmentWithoutTxs() {
-	commitment := s.createCommitmentWithEmptyTransactions(txtype.Transfer)
+	commitment := s.createCommitmentWithEmptyTransactions(batchtype.Transfer)
 
 	_, err := s.executionCtx.client.SubmitTransfersBatchAndWait([]models.Commitment{commitment})
 	s.NoError(err)
@@ -323,7 +323,7 @@ func (s *SyncTransferBatchTestSuite) submitTransferBatchWithNonexistentFeeReceiv
 			BatchID:      *nextBatchID,
 			IndexInBatch: 0,
 		},
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		Transactions:      serializedTxs,
 		FeeReceiver:       feeReceiverStateID,
 		CombinedSignature: *combinedSignature,

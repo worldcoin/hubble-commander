@@ -3,7 +3,7 @@ package models
 import (
 	"encoding/binary"
 
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -18,7 +18,7 @@ var CommitmentPrefix = getBadgerHoldPrefix(Commitment{})
 
 type Commitment struct {
 	ID                CommitmentID
-	Type              txtype.TransactionType
+	Type              batchtype.BatchType
 	FeeReceiver       uint32
 	CombinedSignature Signature
 	PostStateRoot     common.Hash
@@ -53,7 +53,7 @@ func (c *Commitment) SetBytes(data []byte) error {
 		return err
 	}
 
-	c.Type = txtype.TransactionType(data[0])
+	c.Type = batchtype.BatchType(data[0])
 	c.FeeReceiver = binary.BigEndian.Uint32(data[1:5])
 	c.PostStateRoot.SetBytes(data[69:101])
 	c.Transactions = data[101:]

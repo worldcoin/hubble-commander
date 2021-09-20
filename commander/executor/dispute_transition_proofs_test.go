@@ -7,7 +7,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
@@ -110,7 +109,7 @@ func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_
 				BatchID:      batch.ID,
 				IndexInBatch: 0,
 			},
-			Type:              txtype.Transfer,
+			Type:              batchtype.Transfer,
 			Transactions:      utils.RandomBytes(12),
 			FeeReceiver:       11,
 			CombinedSignature: models.MakeRandomSignature(),
@@ -121,7 +120,7 @@ func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_
 				BatchID:      batch.ID,
 				IndexInBatch: 1,
 			},
-			Type:              txtype.Transfer,
+			Type:              batchtype.Transfer,
 			Transactions:      utils.RandomBytes(12),
 			FeeReceiver:       11,
 			CombinedSignature: models.MakeRandomSignature(),

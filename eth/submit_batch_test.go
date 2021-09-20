@@ -5,7 +5,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/common"
@@ -29,7 +28,7 @@ func (s *SubmitBatchTestSuite) SetupTest() {
 	s.NoError(err)
 	s.client = client
 	s.commitment = models.Commitment{
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		Transactions:      utils.RandomBytes(12),
 		FeeReceiver:       uint32(1234),
 		CombinedSignature: models.MakeRandomSignature(),
@@ -61,7 +60,7 @@ func (s *SubmitBatchTestSuite) TestSubmitTransfersBatchAndWait_ReturnsCorrectBat
 
 func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatchAndWait_ReturnsCorrectBatch() {
 	commitment := s.commitment
-	commitment.Type = txtype.Create2Transfer
+	commitment.Type = batchtype.Create2Transfer
 
 	accountRoot, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
@@ -104,7 +103,7 @@ func (s *SubmitBatchTestSuite) TestSubmitTransfersBatch_SubmitsBatchWithoutWaiti
 
 func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatch_SubmitsBatchWithoutWaitingForItToBeMined() {
 	commitment := s.commitment
-	commitment.Type = txtype.Create2Transfer
+	commitment.Type = batchtype.Create2Transfer
 
 	tx, err := s.client.SubmitCreate2TransfersBatch([]models.Commitment{s.commitment})
 	s.NoError(err)

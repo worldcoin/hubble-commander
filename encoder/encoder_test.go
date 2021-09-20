@@ -8,7 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/test/types"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -76,7 +76,7 @@ func (s *EncoderTestSuite) TestCommitmentBodyHash() {
 	s.NoError(err)
 
 	commitment := models.Commitment{
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		Transactions:      txs,
 		FeeReceiver:       uint32(feeReceiver.Uint64()),
 		CombinedSignature: signature,

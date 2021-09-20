@@ -102,7 +102,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
-	s.commitment.Type = txtype.Create2Transfer
+	s.commitment.Type = batchtype.Create2Transfer
 	err = s.storage.AddCommitment(&s.commitment)
 	s.NoError(err)
 

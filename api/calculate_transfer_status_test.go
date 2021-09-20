@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -17,7 +17,7 @@ import (
 
 var (
 	commitment = models.Commitment{
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		Transactions:      utils.RandomBytes(24),
 		FeeReceiver:       1,
 		CombinedSignature: models.MakeRandomSignature(),

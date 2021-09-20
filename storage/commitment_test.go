@@ -5,7 +5,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
@@ -18,7 +17,7 @@ var (
 			BatchID:      models.MakeUint256(1),
 			IndexInBatch: 0,
 		},
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		FeeReceiver:       uint32(1),
 		CombinedSignature: models.MakeRandomSignature(),
 		PostStateRoot:     utils.RandomHash(),

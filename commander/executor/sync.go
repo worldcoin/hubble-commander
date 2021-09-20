@@ -5,7 +5,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -127,7 +126,7 @@ func (c *ExecutionContext) syncCommitment(
 
 	err = c.storage.AddCommitment(&models.Commitment{
 		ID:                commitment.ID,
-		Type:              txtype.TransactionType(batch.Type),
+		Type:              batch.Type,
 		Transactions:      commitment.Transactions,
 		FeeReceiver:       commitment.FeeReceiver,
 		CombinedSignature: commitment.CombinedSignature,
