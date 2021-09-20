@@ -15,7 +15,7 @@ var getCommitmentAPIErrors = map[error]*APIError{
 func (a *API) GetCommitment(id models.CommitmentID) (*dto.Commitment, error) {
 	commitment, err := a.unsafeGetCommitment(id)
 	if err != nil {
-		return nil, sanitizeError(err, getCommitmentAPIErrors, a.cfg.Log.Level)
+		return nil, sanitizeError(err, getCommitmentAPIErrors)
 	}
 
 	return commitment, nil

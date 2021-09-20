@@ -15,7 +15,7 @@ var networkInfoAPIErrors = map[error]*APIError{
 func (a *API) GetNetworkInfo() (*dto.NetworkInfo, error) {
 	networkInfo, err := a.unsafeGetNetworkInfo()
 	if err != nil {
-		return nil, sanitizeError(err, networkInfoAPIErrors, a.cfg.Log.Level)
+		return nil, sanitizeError(err, networkInfoAPIErrors)
 	}
 
 	return networkInfo, nil

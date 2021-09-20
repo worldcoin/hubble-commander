@@ -6,7 +6,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -32,22 +31,22 @@ func TestSanitizeError_ValidateErrorsFromMap(t *testing.T) {
 		storage.AnyNotFoundError: expectedAPIError3,
 	}
 
-	apiError := sanitizeError(sampleError1, errMap, 0)
+	apiError := sanitizeError(sampleError1, errMap)
 	require.Equal(t, *expectedAPIError1, *apiError)
 
-	apiError = sanitizeError(errors.WithStack(sampleError1), errMap, 0)
+	apiError = sanitizeError(errors.WithStack(sampleError1), errMap)
 	require.Equal(t, *expectedAPIError1, *apiError)
 
-	apiError = sanitizeError(sampleError2, errMap, 0)
+	apiError = sanitizeError(sampleError2, errMap)
 	require.Equal(t, *expectedAPIError2, *apiError)
 
-	apiError = sanitizeError(errors.WithStack(sampleError2), errMap, 0)
+	apiError = sanitizeError(errors.WithStack(sampleError2), errMap)
 	require.Equal(t, *expectedAPIError2, *apiError)
 
-	apiError = sanitizeError(storage.NewNotFoundError("something"), errMap, 0)
+	apiError = sanitizeError(storage.NewNotFoundError("something"), errMap)
 	require.Equal(t, *expectedAPIError3, *apiError)
 
-	apiError = sanitizeError(errors.WithStack(storage.NewNotFoundError("something")), errMap, 0)
+	apiError = sanitizeError(errors.WithStack(storage.NewNotFoundError("something")), errMap)
 	require.Equal(t, *expectedAPIError3, *apiError)
 }
 
@@ -61,10 +60,10 @@ func TestSanitizeError_ReturnsStackTraceInDebugLogLevel(t *testing.T) {
 		storage.AnyNotFoundError: expectedAPIError,
 	}
 
-	apiError := sanitizeError(storage.NewNotFoundError("something"), errMap, 0)
+	apiError := sanitizeError(storage.NewNotFoundError("something"), errMap)
 	require.Nil(t, apiError.Data)
 
-	apiError = sanitizeError(storage.NewNotFoundError("something"), errMap, log.DebugLevel)
+	apiError = sanitizeError(storage.NewNotFoundError("something"), errMap)
 	require.NotNil(t, apiError.Data)
 }
 

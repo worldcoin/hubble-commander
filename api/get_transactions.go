@@ -12,7 +12,7 @@ var getTransactionsAPIErrors = map[error]*APIError{
 func (a *API) GetTransactions(publicKey *models.PublicKey) ([]interface{}, error) {
 	batch, err := a.unsafeGetTransactions(publicKey)
 	if err != nil {
-		return nil, sanitizeError(err, getTransactionsAPIErrors, a.cfg.Log.Level)
+		return nil, sanitizeError(err, getTransactionsAPIErrors)
 	}
 
 	return batch, nil

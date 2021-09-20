@@ -5,7 +5,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/db"
-	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -142,14 +141,14 @@ var commonErrors = []*InternalToAPIError{
 	NewInternalToAPIError(99004, "an error occurred while fetching the domain for signing", []error{bls.ErrInvalidDomainLength}),
 }
 
-func sanitizeError(err error, errMap map[error]*APIError, logLevel log.Level) *APIError {
-	if logLevel == log.DebugLevel {
+func sanitizeError(err error, errMap map[error]*APIError) *APIError {
+	if log.IsLevelEnabled(log.DebugLevel) {
 		log.Debugf("Sanitizing error:\n%+v", err)
 	}
 
 	for k, v := range errMap {
 		if errors.Is(err, k) {
-			if logLevel == log.DebugLevel && isAnyTypeError(k) {
+			if log.IsLevelEnabled(log.DebugLevel) {
 				v.Data = fmt.Sprintf("%+v", err)
 			}
 			return v
@@ -157,22 +156,6 @@ func sanitizeError(err error, errMap map[error]*APIError, logLevel log.Level) *A
 	}
 
 	return sanitizeCommonError(err, commonErrors)
-}
-
-func isAnyTypeError(err error) bool {
-	anyTypeErrors := []error{
-		storage.AnyNotFoundError,
-		storage.AnyNoVacantSubtreeError,
-		AnyMissingFieldError,
-	}
-
-	for i := range anyTypeErrors {
-		if errors.Is(err, anyTypeErrors[i]) {
-			return true
-		}
-	}
-
-	return false
 }
 
 func sanitizeCommonError(err error, errMap []*InternalToAPIError) *APIError {

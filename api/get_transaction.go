@@ -14,7 +14,7 @@ var getTransactionAPIErrors = map[error]*APIError{
 func (a *API) GetTransaction(hash common.Hash) (interface{}, error) {
 	transaction, err := a.unsafeGetTransaction(hash)
 	if err != nil {
-		return nil, sanitizeError(err, getTransactionAPIErrors, a.cfg.Log.Level)
+		return nil, sanitizeError(err, getTransactionAPIErrors)
 	}
 
 	return transaction, nil

@@ -14,7 +14,7 @@ var getBatchAPIErrors = map[error]*APIError{
 func (a *API) GetBatchByHash(hash common.Hash) (*dto.BatchWithRootAndCommitments, error) {
 	batch, err := a.unsafeGetBatchByHash(hash)
 	if err != nil {
-		return nil, sanitizeError(err, getBatchAPIErrors, a.cfg.Log.Level)
+		return nil, sanitizeError(err, getBatchAPIErrors)
 	}
 
 	return batch, nil
@@ -40,7 +40,7 @@ func (a *API) unsafeGetBatchByHash(hash common.Hash) (*dto.BatchWithRootAndCommi
 func (a *API) GetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommitments, error) {
 	batch, err := a.unsafeGetBatchByID(id)
 	if err != nil {
-		return nil, sanitizeError(err, getBatchAPIErrors, a.cfg.Log.Level)
+		return nil, sanitizeError(err, getBatchAPIErrors)
 	}
 
 	return batch, nil

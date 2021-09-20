@@ -15,7 +15,7 @@ var getPublicKeyAPIErrors = map[error]*APIError{
 func (a *API) GetPublicKeyByID(id uint32) (*models.PublicKey, error) {
 	publicKey, err := a.unsafeGetPublicKeyByID(id)
 	if err != nil {
-		return nil, sanitizeError(err, getPublicKeyAPIErrors, a.cfg.Log.Level)
+		return nil, sanitizeError(err, getPublicKeyAPIErrors)
 	}
 
 	return publicKey, nil
@@ -32,7 +32,7 @@ func (a *API) unsafeGetPublicKeyByID(id uint32) (*models.PublicKey, error) {
 func (a *API) GetPublicKeyByStateID(id uint32) (*models.PublicKey, error) {
 	publicKey, err := a.storage.GetPublicKeyByStateID(id)
 	if err != nil {
-		return nil, sanitizeError(err, getPublicKeyAPIErrors, a.cfg.Log.Level)
+		return nil, sanitizeError(err, getPublicKeyAPIErrors)
 	}
 
 	return publicKey, nil
