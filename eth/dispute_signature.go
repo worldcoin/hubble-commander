@@ -17,7 +17,7 @@ func (c *Client) DisputeSignatureTransfer(
 		WithGasLimit(*c.config.SignatureDisputeGasLimit).
 		DisputeSignatureTransfer(
 			batchID.ToBig(),
-			*TransferProofToCalldata(targetProof),
+			*transferProofToCalldata(targetProof),
 			*signatureProofToCalldata(signatureProof),
 		)
 	if err != nil {
@@ -41,7 +41,7 @@ func (c *Client) DisputeSignatureCreate2Transfer(
 		WithGasLimit(*c.config.SignatureDisputeGasLimit).
 		DisputeSignatureCreate2Transfer(
 			batchID.ToBig(),
-			*TransferProofToCalldata(targetProof),
+			*transferProofToCalldata(targetProof),
 			*signatureProofWithReceiverToCalldata(signatureProof),
 		)
 	if err != nil {

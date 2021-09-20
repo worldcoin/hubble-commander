@@ -29,7 +29,7 @@ func CreateTransactionExecutor(executionCtx *ExecutionContext, txType txtype.Tra
 		return NewTransferExecutor(executionCtx.storage, executionCtx.client)
 	case txtype.Create2Transfer:
 		return NewC2TExecutor(executionCtx.storage, executionCtx.client)
-	case txtype.Genesis, txtype.MassMigration:
+	case txtype.Genesis, txtype.MassMigration, txtype.Deposit:
 		log.Fatal("Invalid tx type")
 		return nil
 	}
