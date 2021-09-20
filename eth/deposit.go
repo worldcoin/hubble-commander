@@ -12,6 +12,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	ErrDepositEventWatcherClosed  = fmt.Errorf("deposit event watcher is closed")
+	ErrDepositEventWatcherTimeout = fmt.Errorf("timeout")
+)
+
 func (c *Client) QueueDeposit(
 	toPubKeyID *models.Uint256,
 	l1Amount *models.Uint256,
@@ -60,7 +65,7 @@ func QueueDepositAndWait(
 		select {
 		case event, ok := <-ev:
 			if !ok {
-				return nil, nil, errors.WithStack(fmt.Errorf("deposit event watcher is closed"))
+				return nil, nil, errors.WithStack(ErrDepositEventWatcherClosed)
 			}
 			if event.Raw.TxHash == tx.Hash() {
 				depositID := models.DepositID{
@@ -70,7 +75,7 @@ func QueueDepositAndWait(
 				return &depositID, models.NewUint256FromBig(*event.L2Amount), nil
 			}
 		case <-time.After(deployer.ChainTimeout):
-			return nil, nil, errors.WithStack(fmt.Errorf("timeout"))
+			return nil, nil, errors.WithStack(ErrDepositEventWatcherTimeout)
 		}
 	}
 }
