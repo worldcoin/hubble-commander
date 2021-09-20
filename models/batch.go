@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -12,7 +12,7 @@ var BatchPrefix = getBadgerHoldPrefix(Batch{})
 
 type Batch struct {
 	ID                Uint256
-	Type              txtype.TransactionType
+	Type              batchtype.BatchType
 	TransactionHash   common.Hash
 	Hash              *common.Hash `badgerhold:"index"` // root of tree containing all commitments included in this batch
 	FinalisationBlock *uint32
@@ -45,7 +45,7 @@ func (b *Batch) SetBytes(data []byte) error {
 	}
 
 	b.ID.SetBytes(data[0:32])
-	b.Type = txtype.TransactionType(data[32])
+	b.Type = batchtype.BatchType(data[32])
 	b.TransactionHash.SetBytes(data[33:65])
 	b.Hash = DecodeHashPointer(data[65:98])
 	b.FinalisationBlock = decodeUint32Pointer(data[98:103])

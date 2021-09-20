@@ -6,6 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -155,7 +156,7 @@ func (s *GetTransactionsTestSuite) TestGetTransactions() {
 func (s *GetTransactionsTestSuite) addCommitmentAndBatch() *models.Batch {
 	batch := &models.Batch{
 		ID:                models.MakeUint256(1),
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              ref.Hash(utils.RandomHash()),
 		FinalisationBlock: ref.Uint32(1234),

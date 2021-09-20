@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -21,7 +22,7 @@ type SyncTransferBatchTestSuite struct {
 }
 
 func (s *SyncTransferBatchTestSuite) SetupTest() {
-	s.TestSuiteWithRollupContext.SetupTestWithConfig(txtype.Transfer, syncTestSuiteConfig)
+	s.TestSuiteWithRollupContext.SetupTestWithConfig(batchtype.Transfer, syncTestSuiteConfig)
 	s.SyncTestSuite.setupTest()
 }
 
@@ -59,7 +60,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
 	accountRoots := make([]common.Hash, 2)
 	for i := range expectedCommitments {
 		var pendingBatch *models.Batch
-		pendingBatch, err = s.rollupCtx.NewPendingBatch(txtype.Transfer)
+		pendingBatch, err = s.rollupCtx.NewPendingBatch(batchtype.Transfer)
 		s.NoError(err)
 		expectedCommitments[i].ID.BatchID = pendingBatch.ID
 		expectedCommitments[i].ID.IndexInBatch = 0
@@ -364,7 +365,7 @@ func createTransferBatch(s *require.Assertions, rollupCtx *RollupContext, tx *mo
 	err := rollupCtx.storage.AddTransfer(tx)
 	s.NoError(err)
 
-	pendingBatch, err := rollupCtx.NewPendingBatch(txtype.Transfer)
+	pendingBatch, err := rollupCtx.NewPendingBatch(batchtype.Transfer)
 	s.NoError(err)
 
 	commitments, err := rollupCtx.CreateCommitments()

@@ -6,7 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/suite"
@@ -18,7 +18,7 @@ type Create2TransferCommitmentsTestSuite struct {
 }
 
 func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
-	s.TestSuiteWithRollupContext.SetupTestWithConfig(txtype.Create2Transfer, config.RollupConfig{
+	s.TestSuiteWithRollupContext.SetupTestWithConfig(batchtype.Create2Transfer, config.RollupConfig{
 		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    4,
 		FeeReceiverPubKeyID:    2,

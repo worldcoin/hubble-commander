@@ -11,6 +11,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/stretchr/testify/require"
@@ -185,7 +186,7 @@ func (s *NewBlockLoopTestSuite) submitTransferBatchInTransaction(tx *models.Tran
 		s.NoError(err)
 		s.Len(commitments, 1)
 
-		batch, err := rollupCtx.NewPendingBatch(txtype.Transfer)
+		batch, err := rollupCtx.NewPendingBatch(batchtype.Transfer)
 		s.NoError(err)
 		err = rollupCtx.SubmitBatch(batch, commitments)
 		s.NoError(err)
@@ -199,7 +200,7 @@ func (s *NewBlockLoopTestSuite) runInTransaction(handler func(*st.Storage, *exec
 	defer txController.Rollback(nil)
 
 	executionCtx := executor.NewTestExecutionContext(txStorage, s.testClient.Client, s.cfg.Rollup)
-	rollupCtx := executor.NewTestRollupContext(executionCtx, txtype.Transfer)
+	rollupCtx := executor.NewTestRollupContext(executionCtx, batchtype.Transfer)
 	handler(txStorage, rollupCtx)
 }
 

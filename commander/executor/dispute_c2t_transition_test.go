@@ -5,7 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
@@ -17,7 +17,7 @@ type DisputeCT2TransitionTestSuite struct {
 }
 
 func (s *DisputeCT2TransitionTestSuite) SetupTest() {
-	s.DisputeTransitionTestSuite.SetupTest(txtype.Create2Transfer)
+	s.DisputeTransitionTestSuite.SetupTest(batchtype.Create2Transfer)
 }
 
 func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_RemovesInvalidBatch() {
@@ -156,7 +156,7 @@ func (s *DisputeCT2TransitionTestSuite) submitInvalidBatch(
 		s.setToStateID(txs[i], stateIDs)
 	}
 
-	pendingBatch, err := s.rollupCtx.NewPendingBatch(txtype.Create2Transfer)
+	pendingBatch, err := s.rollupCtx.NewPendingBatch(batchtype.Create2Transfer)
 	s.NoError(err)
 
 	commitments := s.createInvalidCommitments(txs, pubKeyIDs, invalidTxHash)

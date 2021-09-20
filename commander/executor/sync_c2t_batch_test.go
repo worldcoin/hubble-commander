@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -19,7 +20,7 @@ type SyncC2TBatchTestSuite struct {
 }
 
 func (s *SyncC2TBatchTestSuite) SetupTest() {
-	s.TestSuiteWithRollupContext.SetupTestWithConfig(txtype.Create2Transfer, syncTestSuiteConfig)
+	s.TestSuiteWithRollupContext.SetupTestWithConfig(batchtype.Create2Transfer, syncTestSuiteConfig)
 	s.SyncTestSuite.setupTest()
 }
 
@@ -203,7 +204,7 @@ func createC2TBatch(s *require.Assertions, rollupCtx *RollupContext, tx *models.
 	err := rollupCtx.storage.AddCreate2Transfer(tx)
 	s.NoError(err)
 
-	pendingBatch, err := rollupCtx.NewPendingBatch(txtype.Create2Transfer)
+	pendingBatch, err := rollupCtx.NewPendingBatch(batchtype.Create2Transfer)
 	s.NoError(err)
 
 	commitments, err := rollupCtx.CreateCommitments()

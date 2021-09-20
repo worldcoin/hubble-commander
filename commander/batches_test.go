@@ -11,6 +11,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -58,7 +59,7 @@ func (s *BatchesTestSuite) SetupTest() {
 	s.cmd.workersContext, s.cmd.stopWorkers = context.WithCancel(context.Background())
 
 	executionCtx := executor.NewTestExecutionContext(s.testStorage.Storage, s.testClient.Client, s.cfg.Rollup)
-	s.rollupCtx = executor.NewTestRollupContext(executionCtx, txtype.Transfer)
+	s.rollupCtx = executor.NewTestRollupContext(executionCtx, batchtype.Transfer)
 
 	err = s.cmd.addGenesisBatch()
 	s.NoError(err)
@@ -387,7 +388,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_AllowsNonexistentReceiver() {
 	batch := &eth.DecodedBatch{
 		Batch: models.Batch{
 			ID:              models.MakeUint256(1),
-			Type:            txtype.Transfer,
+			Type:            batchtype.Transfer,
 			TransactionHash: common.Hash{1, 2, 3},
 		},
 		Commitments: []encoder.DecodedCommitment{{
@@ -455,7 +456,7 @@ func (s *BatchesTestSuite) submitTransferBatch(
 	err := storage.AddTransfer(tx)
 	s.NoError(err)
 
-	pendingBatch, err := rollupCtx.NewPendingBatch(txtype.Transfer)
+	pendingBatch, err := rollupCtx.NewPendingBatch(batchtype.Transfer)
 	s.NoError(err)
 
 	commitments, err := rollupCtx.CreateCommitments()
@@ -474,7 +475,7 @@ func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batc
 	err := s.cmd.storage.AddTransfer(tx)
 	s.NoError(err)
 
-	pendingBatch, err := s.rollupCtx.NewPendingBatch(txtype.Transfer)
+	pendingBatch, err := s.rollupCtx.NewPendingBatch(batchtype.Transfer)
 	s.NoError(err)
 
 	commitments, err := s.rollupCtx.CreateCommitments()
@@ -500,7 +501,7 @@ func (s *BatchesTestSuite) submitInvalidTransferBatch(
 	err := storage.AddTransfer(tx)
 	s.NoError(err)
 
-	pendingBatch, err := rollupCtx.NewPendingBatch(txtype.Transfer)
+	pendingBatch, err := rollupCtx.NewPendingBatch(batchtype.Transfer)
 	s.NoError(err)
 
 	commitments, err := rollupCtx.CreateCommitments()
@@ -564,7 +565,7 @@ func cloneStorage(
 	s.NoError(err)
 
 	executionCtx := executor.NewTestExecutionContext(clonedStorage.Storage, client, cfg.Rollup)
-	rollupCtx := executor.NewTestRollupContext(executionCtx, txtype.Transfer)
+	rollupCtx := executor.NewTestRollupContext(executionCtx, batchtype.Transfer)
 
 	return clonedStorage, rollupCtx
 }

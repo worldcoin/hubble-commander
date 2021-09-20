@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -102,7 +103,7 @@ func (s *Create2TransferTestSuite) TestMarkCreate2TransfersAsIncluded() {
 func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchDetails() {
 	batch := &models.Batch{
 		ID:              models.MakeUint256(1),
-		Type:            txtype.Create2Transfer,
+		Type:            batchtype.Create2Transfer,
 		TransactionHash: utils.RandomHash(),
 		Hash:            utils.NewRandomHash(),
 		SubmissionTime:  &models.Timestamp{Time: time.Unix(170, 0).UTC()},

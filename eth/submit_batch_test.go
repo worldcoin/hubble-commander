@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
@@ -52,7 +53,7 @@ func (s *SubmitBatchTestSuite) TestSubmitTransfersBatchAndWait_ReturnsCorrectBat
 	s.NoError(err)
 
 	s.Equal(models.MakeUint256(1), batch.ID)
-	s.Equal(txtype.Transfer, batch.Type)
+	s.Equal(batchtype.Transfer, batch.Type)
 	s.Equal(commitmentRoot, *batch.Hash)
 	s.GreaterOrEqual(*batch.FinalisationBlock, minFinalisationBlock)
 	s.Equal(common.BytesToHash(accountRoot[:]), *batch.AccountTreeRoot)
@@ -71,7 +72,7 @@ func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatchAndWait_ReturnsCor
 	s.NoError(err)
 
 	s.Equal(models.MakeUint256(1), batch.ID)
-	s.Equal(txtype.Create2Transfer, batch.Type)
+	s.Equal(batchtype.Create2Transfer, batch.Type)
 	s.Equal(commitmentRoot, *batch.Hash)
 	s.GreaterOrEqual(*batch.FinalisationBlock, minFinalisationBlock)
 	s.Equal(common.BytesToHash(accountRoot[:]), *batch.AccountTreeRoot)

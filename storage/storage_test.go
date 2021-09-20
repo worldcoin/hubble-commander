@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
@@ -31,7 +31,7 @@ func (s *StorageTestSuite) SetupTest() {
 	s.NoError(err)
 	s.batch = &models.Batch{
 		ID:                models.MakeUint256(1),
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(1234),

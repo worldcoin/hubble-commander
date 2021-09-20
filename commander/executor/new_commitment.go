@@ -2,12 +2,13 @@ package executor
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 )
 
 func (c *RollupContext) newCommitment(
 	commitmentID *models.CommitmentID,
-	txType txtype.TransactionType,
+	batchType batchtype.BatchType,
 	feeReceiverStateID uint32,
 	serializedTxs []byte,
 	combinedSignature *models.Signature,
@@ -19,7 +20,7 @@ func (c *RollupContext) newCommitment(
 
 	return &models.Commitment{
 		ID:                *commitmentID,
-		Type:              txType,
+		Type:              txtype.TransactionType(batchType),
 		FeeReceiver:       feeReceiverStateID,
 		CombinedSignature: *combinedSignature,
 		PostStateRoot:     *stateRoot,
