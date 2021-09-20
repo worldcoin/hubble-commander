@@ -37,7 +37,7 @@ func (s *GetTransactionTestSuite) SetupTest() {
 	s.NoError(err)
 
 	s.api = &API{
-		cfg:               &config.Config{},
+		cfg:               &config.APIConfig{},
 		storage:           s.storage.Storage,
 		client:            s.client.Client,
 		disableSignatures: false,

@@ -71,11 +71,9 @@ func (s *SendTransferTestSuite) SetupTest() {
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
 	s.api = &API{
+		cfg:     &config.APIConfig{},
 		storage: s.storage.Storage,
 		client:  s.client.Client,
-		cfg: &config.Config{Log: &config.LogConfig{
-			Level: 0,
-		}},
 	}
 
 	s.domain, err = s.client.GetDomain()

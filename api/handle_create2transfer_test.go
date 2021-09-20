@@ -48,11 +48,9 @@ func (s *SendCreate2TransferTestSuite) SetupTest() {
 	s.NoError(err)
 
 	s.api = &API{
+		cfg:     &config.APIConfig{},
 		storage: s.storage.Storage,
 		client:  s.client.Client,
-		cfg: &config.Config{Log: &config.LogConfig{
-			Level: 0,
-		}},
 	}
 
 	s.domain, err = s.client.GetDomain()
