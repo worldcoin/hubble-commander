@@ -12,6 +12,7 @@ import (
 type TransactionSyncer interface {
 	TxLength() int
 	DeserializeTxs(data []byte) (models.GenericTransactionArray, error)
+	EncodeTxForSigning(tx models.GenericTransaction) ([]byte, error)
 }
 
 func NewTransactionSyncer(executionCtx *ExecutionContext, txType txtype.TransactionType) TransactionSyncer {
@@ -34,16 +35,20 @@ func NewTransferSyncer(storage *st.Storage) *TransferSyncer {
 	return &TransferSyncer{}
 }
 
-func (t *TransferSyncer) TxLength() int {
+func (s *TransferSyncer) TxLength() int {
 	return encoder.TransferLength
 }
 
-func (t *TransferSyncer) DeserializeTxs(data []byte) (models.GenericTransactionArray, error) {
+func (s *TransferSyncer) DeserializeTxs(data []byte) (models.GenericTransactionArray, error) {
 	txs, err := encoder.DeserializeTransfers(data)
 	if err != nil {
 		return nil, err
 	}
 	return models.TransferArray(txs), nil
+}
+
+func (s *TransferSyncer) EncodeTxForSigning(tx models.GenericTransaction) ([]byte, error) {
+	return encoder.EncodeTransferForSigning(tx.ToTransfer())
 }
 
 type C2TSyncer struct {
@@ -53,10 +58,14 @@ func NewC2TSyncer(storage *st.Storage) *C2TSyncer {
 	return &C2TSyncer{}
 }
 
-func (c *C2TSyncer) TxLength() int {
+func (s *C2TSyncer) TxLength() int {
 	panic("implement me")
 }
 
-func (c *C2TSyncer) DeserializeTxs(data []byte) (models.GenericTransactionArray, error) {
+func (s *C2TSyncer) DeserializeTxs(data []byte) (models.GenericTransactionArray, error) {
+	panic("implement me")
+}
+
+func (s *C2TSyncer) EncodeTxForSigning(tx models.GenericTransaction) ([]byte, error) {
 	panic("implement me")
 }

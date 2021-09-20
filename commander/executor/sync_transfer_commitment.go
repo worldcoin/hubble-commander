@@ -15,20 +15,20 @@ var (
 func (c *SyncContext) syncTransferCommitment(
 	commitment *encoder.DecodedCommitment,
 ) (models.GenericTransactionArray, error) {
-	if len(commitment.Transactions)%encoder.TransferLength != 0 {
+	if len(commitment.Transactions)%c.Syncer.TxLength() != 0 {
 		return nil, ErrInvalidDataLength
 	}
 
-	transfers, err := encoder.DeserializeTransfers(commitment.Transactions)
+	transfers, err := c.Syncer.DeserializeTxs(commitment.Transactions)
 	if err != nil {
 		return nil, err
 	}
 
-	if uint32(len(transfers)) > c.cfg.MaxTxsPerCommitment {
+	if uint32(transfers.Len()) > c.cfg.MaxTxsPerCommitment {
 		return nil, ErrTooManyTxs
 	}
 
-	appliedTransfers, stateProofs, err := c.ApplyTransfersForSync(transfers, commitment.FeeReceiver)
+	appliedTransfers, stateProofs, err := c.ApplyTransfersForSync(transfers.ToTransferArray(), commitment.FeeReceiver)
 	if err != nil {
 		return nil, err
 	}
