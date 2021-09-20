@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type DepositsTestSuite struct {
+type QueuedDepositsTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	teardown   func() error
@@ -23,14 +23,14 @@ type DepositsTestSuite struct {
 	tokenID    *models.Uint256
 }
 
-func (s *DepositsTestSuite) SetupSuite() {
+func (s *QueuedDepositsTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *DepositsTestSuite) SetupTest() {
+func (s *QueuedDepositsTestSuite) SetupTest() {
 	testStorage, err := st.NewTestStorage()
 	s.NoError(err)
-	s.teardown = testStorage.Teardown // TODO-D is this needed when we don't use postgres?
+	s.teardown = testStorage.Teardown
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
 	s.cmd = &Commander{
@@ -40,13 +40,13 @@ func (s *DepositsTestSuite) SetupTest() {
 	s.tokenID = models.NewUint256(0) // First registered tokenID
 }
 
-func (s *DepositsTestSuite) TearDownTest() {
+func (s *QueuedDepositsTestSuite) TearDownTest() {
 	s.testClient.Close()
 	err := s.teardown()
 	s.NoError(err)
 }
 
-func (s *DepositsTestSuite) TestSyncQueuedDeposits() {
+func (s *QueuedDepositsTestSuite) TestSyncQueuedDeposits() {
 	s.registerToken()
 	s.approveTokens()
 
@@ -63,7 +63,7 @@ func (s *DepositsTestSuite) TestSyncQueuedDeposits() {
 	s.Equal(deposit, syncedDeposit)
 }
 
-func (s *DepositsTestSuite) registerToken() {
+func (s *QueuedDepositsTestSuite) registerToken() {
 	token := models.RegisteredToken{
 		Contract: s.testClient.ExampleTokenAddress,
 	}
@@ -72,7 +72,7 @@ func (s *DepositsTestSuite) registerToken() {
 	RegisterSingleToken(s.Assertions, s.testClient, &token, latestBlockNumber)
 }
 
-func (s *DepositsTestSuite) approveTokens() {
+func (s *QueuedDepositsTestSuite) approveTokens() {
 	token, err := erc20.NewERC20(s.testClient.ExampleTokenAddress, s.testClient.GetBackend())
 	s.NoError(err)
 
@@ -83,7 +83,7 @@ func (s *DepositsTestSuite) approveTokens() {
 	s.NoError(err)
 }
 
-func (s *DepositsTestSuite) queueDeposit() *models.Deposit {
+func (s *QueuedDepositsTestSuite) queueDeposit() *models.Deposit {
 	deposits, unsubscribe, err := s.testClient.WatchQueuedDeposits(&bind.WatchOpts{Start: nil})
 	s.NoError(err)
 	defer unsubscribe()
@@ -102,6 +102,6 @@ func (s *DepositsTestSuite) queueDeposit() *models.Deposit {
 	}
 }
 
-func TestDepositsTestSuite(t *testing.T) {
-	suite.Run(t, new(DepositsTestSuite))
+func TestQueuedDepositsTestSuite(t *testing.T) {
+	suite.Run(t, new(QueuedDepositsTestSuite))
 }
