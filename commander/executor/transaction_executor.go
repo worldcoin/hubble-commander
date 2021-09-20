@@ -23,8 +23,8 @@ type TransactionExecutor interface {
 	SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error)
 }
 
-func CreateTransactionExecutor(executionCtx *ExecutionContext, txType batchtype.BatchType) TransactionExecutor {
-	switch txType {
+func CreateTransactionExecutor(executionCtx *ExecutionContext, batchType batchtype.BatchType) TransactionExecutor {
+	switch batchType {
 	case batchtype.Transfer:
 		return NewTransferExecutor(executionCtx.storage, executionCtx.client)
 	case batchtype.Create2Transfer:
