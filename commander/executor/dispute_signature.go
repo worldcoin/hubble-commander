@@ -19,7 +19,7 @@ func (c *DisputeContext) DisputeSignature(
 		return c.disputeTransferSignature(batch, commitmentIndex, stateProofs)
 	case batchtype.Create2Transfer:
 		return c.disputeCreate2TransferSignature(batch, commitmentIndex, stateProofs)
-	case batchtype.Genesis, batchtype.MassMigration:
+	case batchtype.Genesis, batchtype.MassMigration, batchtype.Deposit:
 		return errors.New("unsupported batch type")
 	}
 	return nil

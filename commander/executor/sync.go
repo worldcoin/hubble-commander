@@ -118,7 +118,7 @@ func (c *ExecutionContext) syncCommitment(
 		transactions, err = c.syncTransferCommitment(commitment)
 	case batchtype.Create2Transfer:
 		transactions, err = c.syncCreate2TransferCommitment(commitment)
-	case batchtype.Genesis, batchtype.MassMigration:
+	case batchtype.Genesis, batchtype.MassMigration, batchtype.Deposit:
 		return errors.Errorf("unsupported batch type for sync: %s", batch.Type)
 	}
 	if err != nil {

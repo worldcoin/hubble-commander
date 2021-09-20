@@ -29,7 +29,7 @@ func CreateTransactionExecutor(executionCtx *ExecutionContext, txType batchtype.
 		return NewTransferExecutor(executionCtx.storage, executionCtx.client)
 	case batchtype.Create2Transfer:
 		return NewC2TExecutor(executionCtx.storage, executionCtx.client)
-	case batchtype.Genesis, batchtype.MassMigration:
+	case batchtype.Genesis, batchtype.MassMigration, batchtype.Deposit:
 		log.Fatal("Invalid batch type")
 		return nil
 	}
