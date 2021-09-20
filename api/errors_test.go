@@ -6,6 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -62,6 +63,12 @@ func TestSanitizeError_ReturnsStackTraceInDebugLogLevel(t *testing.T) {
 
 	apiError := sanitizeError(storage.NewNotFoundError("something"), errMap)
 	require.Nil(t, apiError.Data)
+
+	currentLevel := log.GetLevel()
+	log.SetLevel(log.DebugLevel)
+	defer func() {
+		log.SetLevel(currentLevel)
+	}()
 
 	apiError = sanitizeError(storage.NewNotFoundError("something"), errMap)
 	require.NotNil(t, apiError.Data)
