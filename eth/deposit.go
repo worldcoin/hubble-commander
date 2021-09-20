@@ -12,8 +12,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// TODO-D - change name of this file?
-
 func (c *Client) QueueDeposit(
 	toPubKeyID *models.Uint256,
 	l1Amount *models.Uint256,
@@ -65,7 +63,6 @@ func QueueDepositAndWait(
 				return nil, nil, errors.WithStack(fmt.Errorf("deposit event watcher is closed"))
 			}
 			if event.Raw.TxHash == tx.Hash() {
-				// TODO - change type of block number and log index?
 				depositID := models.DepositID{
 					BlockNumber: uint32(event.Raw.BlockNumber),
 					LogIndex:    uint32(event.Raw.Index),
