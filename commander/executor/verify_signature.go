@@ -6,7 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-const InvalidSignature = "invalid commitment signature"
+const InvalidSignatureMessage = "invalid commitment signature"
 
 func (c *ExecutionContext) verifyTransferSignature(commitment *encoder.DecodedCommitment, transfers []models.Transfer) error {
 	domain, err := c.client.GetDomain()
@@ -77,7 +77,7 @@ func (c *ExecutionContext) verifyCommitmentSignature(
 		return err
 	}
 	if !isValid {
-		return c.createDisputableSignatureError(InvalidSignature, transfers)
+		return c.createDisputableSignatureError(InvalidSignatureMessage, transfers)
 	}
 	return nil
 }

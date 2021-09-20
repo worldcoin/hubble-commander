@@ -56,7 +56,7 @@ func (s *DepositTestSuite) TestAddDeposit_AddAndRetrieve() {
 
 func (s *DepositTestSuite) TestGetDeposit_NotFound() {
 	_, err := s.storage.GetDeposit(&deposit.ID)
-	s.Equal(NewNotFoundError("deposit"), err)
+	s.ErrorIs(err, NewNotFoundError("deposit"))
 	s.True(IsNotFoundError(err))
 }
 

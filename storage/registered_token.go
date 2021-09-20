@@ -2,6 +2,7 @@ package storage
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
@@ -30,7 +31,7 @@ func (s *RegisteredTokenStorage) GetRegisteredToken(tokenID models.Uint256) (*mo
 	var registeredToken models.RegisteredToken
 	err := s.database.Badger.Get(tokenID, &registeredToken)
 	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("registered token")
+		return nil, errors.WithStack(NewNotFoundError("registered token"))
 	}
 	if err != nil {
 		return nil, err
@@ -50,7 +51,7 @@ func (s *RegisteredTokenStorage) DeleteRegisteredTokens(tokenIds ...models.Uint2
 	for i := range tokenIds {
 		err = txDatabase.Badger.Delete(tokenIds[i], registeredToken)
 		if err == bh.ErrNotFound {
-			return NewNotFoundError("registered token")
+			return errors.WithStack(NewNotFoundError("registered token"))
 		}
 		if err != nil {
 			return err

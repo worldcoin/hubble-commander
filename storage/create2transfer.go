@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
@@ -25,7 +26,7 @@ func (s *TransactionStorage) AddCreate2Transfer(t *models.Create2Transfer) error
 
 func (s *TransactionStorage) BatchAddCreate2Transfer(txs []models.Create2Transfer) error {
 	if len(txs) < 1 {
-		return ErrNoRowsAffected
+		return errors.WithStack(ErrNoRowsAffected)
 	}
 
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
@@ -45,7 +46,7 @@ func (s *TransactionStorage) GetCreate2Transfer(hash common.Hash) (*models.Creat
 		return nil, err
 	}
 	if tx.TxType != txtype.Create2Transfer {
-		return nil, NewNotFoundError("transaction")
+		return nil, errors.WithStack(NewNotFoundError("transaction"))
 	}
 	return tx.ToCreate2Transfer(txReceipt), nil
 }
@@ -245,7 +246,7 @@ func (s *Storage) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.
 			return err
 		}
 		if tx.TxType != txtype.Create2Transfer {
-			return NewNotFoundError("transaction")
+			return errors.WithStack(NewNotFoundError("transaction"))
 		}
 
 		transfers, err = txStorage.create2TransferToTransfersWithBatchDetails([]*models.StoredTx{tx}, []*models.StoredReceipt{txReceipt})

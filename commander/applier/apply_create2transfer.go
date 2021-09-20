@@ -3,6 +3,7 @@ package applier
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/pkg/errors"
 )
 
 func (a *Applier) ApplyCreate2Transfer(
@@ -39,7 +40,7 @@ func (a *Applier) ApplyCreate2TransferForSync(
 	commitmentTokenID models.Uint256,
 ) (synced *SyncedCreate2Transfer, transferError, appError error) {
 	if create2Transfer.ToStateID == nil {
-		return nil, nil, ErrNilReceiverStateID
+		return nil, nil, errors.WithStack(ErrNilReceiverStateID)
 	}
 
 	receiverLeaf, appError := newUserLeaf(*create2Transfer.ToStateID, pubKeyID, commitmentTokenID)

@@ -2,6 +2,7 @@ package storage
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
@@ -26,7 +27,7 @@ func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey, tokenID *models
 		}
 	}
 
-	return nil, NewNotFoundError("pub key id")
+	return nil, errors.WithStack(NewNotFoundError("pub key id"))
 }
 
 func (s *Storage) GetPublicKeyByStateID(stateID uint32) (*models.PublicKey, error) {

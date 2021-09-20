@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils"
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
@@ -26,7 +27,7 @@ func (s *TransactionStorage) AddTransfer(t *models.Transfer) error {
 
 func (s *TransactionStorage) BatchAddTransfer(txs []models.Transfer) error {
 	if len(txs) < 1 {
-		return ErrNoRowsAffected
+		return errors.WithStack(ErrNoRowsAffected)
 	}
 
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
@@ -46,7 +47,7 @@ func (s *TransactionStorage) GetTransfer(hash common.Hash) (*models.Transfer, er
 		return nil, err
 	}
 	if tx.TxType != txtype.Transfer {
-		return nil, NewNotFoundError("transaction")
+		return nil, errors.WithStack(NewNotFoundError("transaction"))
 	}
 	return tx.ToTransfer(txReceipt), nil
 }
@@ -147,7 +148,7 @@ func (s *Storage) GetTransferWithBatchDetails(hash common.Hash) (*models.Transfe
 			return err
 		}
 		if tx.TxType != txtype.Transfer {
-			return NewNotFoundError("transaction")
+			return errors.WithStack(NewNotFoundError("transaction"))
 		}
 
 		transfers, err = txStorage.transfersToTransfersWithBatchDetails([]models.StoredTx{*tx}, []*models.StoredReceipt{txReceipt})

@@ -5,6 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
@@ -33,7 +34,7 @@ func (s *BatchStorage) GetBatch(batchID models.Uint256) (*models.Batch, error) {
 	var batch models.Batch
 	err := s.database.Badger.Get(batchID, &batch)
 	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("batch")
+		return nil, errors.WithStack(NewNotFoundError("batch"))
 	}
 	if err != nil {
 		return nil, err
@@ -51,7 +52,7 @@ func (s *BatchStorage) GetMinedBatch(batchID models.Uint256) (*models.Batch, err
 		return nil, err
 	}
 	if batch.Hash == nil {
-		return nil, NewNotFoundError("batch")
+		return nil, errors.WithStack(NewNotFoundError("batch"))
 	}
 	return batch, nil
 }
@@ -63,7 +64,7 @@ func (s *BatchStorage) GetBatchByHash(batchHash common.Hash) (*models.Batch, err
 		bh.Where("Hash").Eq(batchHash).Index("Hash"),
 	)
 	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("batch")
+		return nil, errors.WithStack(NewNotFoundError("batch"))
 	}
 	if err != nil {
 		return nil, err
@@ -139,7 +140,7 @@ func (s *BatchStorage) DeleteBatches(batchIDs ...models.Uint256) error {
 	for i := range batchIDs {
 		err = txDatabase.Badger.Delete(batchIDs[i], batch)
 		if err == bh.ErrNotFound {
-			return NewNotFoundError("batch")
+			return errors.WithStack(NewNotFoundError("batch"))
 		}
 		if err != nil {
 			return err
@@ -160,7 +161,7 @@ func (s *BatchStorage) reverseIterateBatches(filter func(batch *models.Batch) bo
 		return filter(&batch), nil
 	})
 	if err == db.ErrIteratorFinished {
-		return nil, NewNotFoundError("batch")
+		return nil, errors.WithStack(NewNotFoundError("batch"))
 	}
 	if err != nil {
 		return nil, err

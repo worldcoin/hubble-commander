@@ -1,11 +1,13 @@
 package applier
 
 import (
+	"fmt"
+
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/pkg/errors"
 )
 
-var ErrInvalidFeeReceiverTokenID = errors.New("invalid fee receiver token ID")
+var ErrInvalidFeeReceiverTokenID = fmt.Errorf("invalid fee receiver token ID")
 
 func (a *Applier) ApplyFee(feeReceiverStateID uint32, fee models.Uint256) (*models.StateMerkleProof, error) {
 	feeReceiver, err := a.storage.StateTree.Leaf(feeReceiverStateID)
@@ -47,7 +49,7 @@ func (a *Applier) ApplyFeeForSync(feeReceiverStateID uint32, commitmentTokenID, 
 	}
 
 	if stateProof.UserState.TokenID != *commitmentTokenID {
-		return stateProof, ErrInvalidFeeReceiverTokenID, nil
+		return stateProof, errors.WithStack(ErrInvalidFeeReceiverTokenID), nil
 	}
 
 	return stateProof, nil, nil

@@ -16,6 +16,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	ErrRegisterGenesisAccountTimeout = fmt.Errorf("timeout")
+	ErrGenesisAccountsUniqueStateID  = fmt.Errorf("accounts must have unique state IDs")
+)
+
 func AssignStateIDs(accounts []models.RegisteredGenesisAccount) []models.PopulatedGenesisAccount {
 	populatedAccounts := make([]models.PopulatedGenesisAccount, 0, len(accounts))
 	for i := range accounts {
@@ -39,7 +44,7 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.PopulatedGen
 		account := &accounts[i]
 
 		if seenStateIDs[account.StateID] {
-			return errors.Errorf("accounts must have unique state IDs")
+			return errors.WithStack(ErrGenesisAccountsUniqueStateID)
 		}
 		seenStateIDs[account.StateID] = true
 
@@ -100,7 +105,7 @@ func RegisterGenesisAccounts(
 		select {
 		case event, ok := <-registrations:
 			if !ok {
-				return nil, errors.WithStack(fmt.Errorf("account event watcher is closed"))
+				return nil, errors.WithStack(eth.ErrAccountWatcherIsClosed)
 			}
 			for i := range txs {
 				if event.Raw.TxHash == txs[i].Hash() {
@@ -117,7 +122,7 @@ func RegisterGenesisAccounts(
 			}
 
 		case <-time.After(deployer.ChainTimeout):
-			return nil, errors.WithStack(fmt.Errorf("timeout"))
+			return nil, errors.WithStack(ErrRegisterGenesisAccountTimeout)
 		}
 	}
 }

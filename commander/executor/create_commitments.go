@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -34,7 +35,7 @@ func (c *RollupContext) CreateCommitments() ([]models.Commitment, error) {
 		commitmentID.IndexInBatch = i
 
 		pendingTxs, commitment, err = c.createCommitment(pendingTxs, commitmentID)
-		if err == ErrNotEnoughTxs {
+		if errors.Is(err, ErrNotEnoughTxs) {
 			break
 		}
 		if err != nil {
@@ -45,7 +46,7 @@ func (c *RollupContext) CreateCommitments() ([]models.Commitment, error) {
 	}
 
 	if len(commitments) == 0 {
-		return nil, ErrNotEnoughTxs
+		return nil, errors.WithStack(ErrNotEnoughTxs)
 	}
 
 	return commitments, nil
@@ -74,7 +75,7 @@ func (c *RollupContext) createCommitment(pendingTxs models.GenericTransactionArr
 	}
 
 	applyResult, newPendingTxs, err := c.applyTxsForCommitment(pendingTxs, feeReceiver)
-	if err == ErrNotEnoughTxs {
+	if errors.Is(err, ErrNotEnoughTxs) {
 		if revertErr := c.storage.StateTree.RevertTo(*initialStateRoot); revertErr != nil {
 			return nil, nil, revertErr
 		}
@@ -121,7 +122,7 @@ func (c *RollupContext) applyTxsForCommitment(pendingTxs models.GenericTransacti
 		}
 
 		morePendingTransfers, err := c.queryMorePendingTxs(aggregateResult.AppliedTxs())
-		if err == ErrNotEnoughTxs {
+		if errors.Is(err, ErrNotEnoughTxs) {
 			newPendingTxs = removeTxs(pendingTxs, aggregateResult.AllTxs())
 			return c.Executor.NewApplyTxsForCommitmentResult(aggregateResult), newPendingTxs, nil
 		}
@@ -145,7 +146,7 @@ func (c *RollupContext) queryPendingTxs() (models.GenericTransactionArray, error
 		return nil, err
 	}
 	if pendingTxs.Len() < int(c.cfg.MinTxsPerCommitment) {
-		return nil, ErrNotEnoughTxs
+		return nil, errors.WithStack(ErrNotEnoughTxs)
 	}
 	return pendingTxs, nil
 }
@@ -161,7 +162,7 @@ func (c *RollupContext) queryMorePendingTxs(appliedTxs models.GenericTransaction
 	pendingTransfers = removeTxs(pendingTransfers, appliedTxs)
 
 	if pendingTransfers.Len() < int(c.cfg.MinTxsPerCommitment) {
-		return nil, ErrNotEnoughTxs
+		return nil, errors.WithStack(ErrNotEnoughTxs)
 	}
 	return pendingTransfers, nil
 }

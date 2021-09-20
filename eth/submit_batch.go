@@ -13,9 +13,12 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/pkg/errors"
 )
 
 const gasEstimateMultiplier = 1.3
+
+var ErrSubmitBatchAndWait = fmt.Errorf("submitBatchAndWait: timeout")
 
 type SubmitBatchFunc func() (*types.Transaction, error)
 
@@ -80,7 +83,7 @@ func (c *Client) submitBatchAndWait(submit SubmitBatchFunc) (batch *models.Batch
 				return c.handleNewBatchEvent(newBatch)
 			}
 		case <-time.After(*c.config.TxTimeout):
-			return nil, fmt.Errorf("submitBatchAndWait: timeout")
+			return nil, errors.WithStack(ErrSubmitBatchAndWait)
 		}
 	}
 }

@@ -1,22 +1,23 @@
 package applier
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/pkg/errors"
 )
 
 var (
-	ErrNonceTooLow         = errors.New("nonce too low")
-	ErrNonceTooHigh        = errors.New("nonce too high")
-	ErrInvalidSlicesLength = errors.New("invalid slices length")
-	ErrNilReceiverStateID  = errors.New("transfer receiver state id cannot be nil")
+	ErrNonceTooLow         = fmt.Errorf("nonce too low")
+	ErrNonceTooHigh        = fmt.Errorf("nonce too high")
+	ErrInvalidSlicesLength = fmt.Errorf("invalid slices length")
+	ErrNilReceiverStateID  = fmt.Errorf("transfer receiver state id cannot be nil")
 
-	ErrBalanceTooLow              = errors.New("not enough balance")
-	ErrInvalidSenderTokenID       = errors.New("invalid sender token ID")
-	ErrInvalidReceiverTokenID     = errors.New("invalid receiver token ID")
-	ErrInvalidTokenAmount         = errors.New("amount cannot be equal to 0")
-	ErrInvalidCommitmentStateRoot = errors.New("invalid commitment post state root")
+	ErrBalanceTooLow              = fmt.Errorf("not enough balance")
+	ErrInvalidSenderTokenID       = fmt.Errorf("invalid sender token ID")
+	ErrInvalidReceiverTokenID     = fmt.Errorf("invalid receiver token ID")
+	ErrInvalidTokenAmount         = fmt.Errorf("amount cannot be equal to 0")
+	ErrInvalidCommitmentStateRoot = fmt.Errorf("invalid commitment post state root")
 )
 
 func (a *Applier) ApplyTx(
@@ -114,14 +115,14 @@ func (a *Applier) fillSenderWitness(synced *SyncedGenericTransaction, tErr error
 
 func (a *Applier) validateSenderTokenID(senderState *models.StateLeaf, commitmentTokenID models.Uint256) error {
 	if senderState.TokenID.Cmp(&commitmentTokenID) != 0 {
-		return ErrInvalidSenderTokenID
+		return errors.WithStack(ErrInvalidSenderTokenID)
 	}
 	return nil
 }
 
 func (a *Applier) validateReceiverTokenID(receiverState *models.StateLeaf, commitmentTokenID models.Uint256) error {
 	if receiverState.TokenID.Cmp(&commitmentTokenID) != 0 {
-		return ErrInvalidReceiverTokenID
+		return errors.WithStack(ErrInvalidReceiverTokenID)
 	}
 	return nil
 }
@@ -129,9 +130,9 @@ func (a *Applier) validateReceiverTokenID(receiverState *models.StateLeaf, commi
 func validateTxNonce(senderState *models.UserState, txNonce models.Uint256) error {
 	comparison := txNonce.Cmp(&senderState.Nonce)
 	if comparison > 0 {
-		return ErrNonceTooHigh
+		return errors.WithStack(ErrNonceTooHigh)
 	} else if comparison < 0 {
-		return ErrNonceTooLow
+		return errors.WithStack(ErrNonceTooLow)
 	}
 	return nil
 }
@@ -147,12 +148,12 @@ func calculateStateAfterTx(
 	amount := tx.GetAmount()
 
 	if amount.CmpN(0) <= 0 {
-		return nil, nil, ErrInvalidTokenAmount
+		return nil, nil, errors.WithStack(ErrInvalidTokenAmount)
 	}
 
 	totalAmount := amount.Add(&fee)
 	if senderState.Balance.Cmp(totalAmount) < 0 {
-		return nil, nil, ErrBalanceTooLow
+		return nil, nil, errors.WithStack(ErrBalanceTooLow)
 	}
 
 	newSenderState = &senderState

@@ -2,6 +2,7 @@ package storage
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v3"
 )
 
@@ -13,7 +14,7 @@ func (s *DepositStorage) GetPendingDepositSubTree(subTreeID models.Uint256) (*mo
 	var subTree models.PendingDepositSubTree
 	err := s.database.Badger.Get(subTreeID, &subTree)
 	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("deposit sub tree")
+		return nil, errors.WithStack(NewNotFoundError("deposit sub tree"))
 	}
 	if err != nil {
 		return nil, err
@@ -34,7 +35,7 @@ func (s *DepositStorage) DeletePendingDepositSubTrees(subTreeIDs ...models.Uint2
 	for i := range subTreeIDs {
 		err = txDatabase.Badger.Delete(subTreeIDs[i], models.PendingDepositSubTree{})
 		if err == bh.ErrNotFound {
-			return NewNotFoundError("deposit sub tree")
+			return errors.WithStack(NewNotFoundError("deposit sub tree"))
 		}
 		if err != nil {
 			return err
