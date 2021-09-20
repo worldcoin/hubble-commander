@@ -45,3 +45,36 @@ func (c *Commander) syncQueuedDeposits(start, end uint64) ([]models.Deposit, err
 
 	return queuedDeposits, nil
 }
+
+func (c *Commander) syncDepositSubTrees(start, end uint64) ([]models.PendingDepositSubTree, error) {
+	it, err := c.client.DepositManager.FilterDepositSubTreeReady(&bind.FilterOpts{
+		Start: start,
+		End:   &end,
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = it.Close() }()
+
+	depositSubTrees := make([]models.PendingDepositSubTree, 0, 1)
+
+	for it.Next() {
+		tx, _, err := c.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
+		if err != nil {
+			return nil, err
+		}
+
+		if !bytes.Equal(tx.Data()[:4], c.client.DepositManagerABI.Methods["depositFor"].ID) {
+			continue // TODO handle internal transactions
+		}
+
+		subTree := models.PendingDepositSubTree{
+			ID:   models.MakeUint256FromBig(*it.Event.SubtreeID),
+			Root: it.Event.SubtreeRoot,
+		}
+
+		depositSubTrees = append(depositSubTrees, subTree)
+	}
+
+	return depositSubTrees, nil
+}

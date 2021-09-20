@@ -10,6 +10,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -62,6 +63,28 @@ func (s *DepositsTestSuite) TestSyncQueuedDeposits() {
 	s.Contains(queuedDeposits, *deposit)
 }
 
+func (s *DepositsTestSuite) TestSyncDepositSubTrees() {
+	s.registerToken()
+	s.approveTokens()
+
+	// Smart contract needs 4 deposits to create a subtree
+	s.queueDeposit()
+	s.queueDeposit()
+	s.queueDeposit()
+	s.queueDeposit()
+
+	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
+	s.NoError(err)
+
+	depositSubTrees, err := s.cmd.syncDepositSubTrees(0, *latestBlockNumber)
+	s.NoError(err)
+
+	s.Len(depositSubTrees, 1)
+	s.Equal(depositSubTrees[0].ID, models.MakeUint256(1))
+	s.NotEqual(depositSubTrees[0].Root, common.Hash{})
+	s.Nil(depositSubTrees[0].Deposits)
+}
+
 func (s *DepositsTestSuite) registerToken() {
 	token := models.RegisteredToken{
 		Contract: s.testClient.ExampleTokenAddress,
@@ -75,7 +98,7 @@ func (s *DepositsTestSuite) approveTokens() {
 	token, err := erc20.NewERC20(s.testClient.ExampleTokenAddress, s.testClient.GetBackend())
 	s.NoError(err)
 
-	tx, err := token.Approve(s.testClient.GetAccount(), s.testClient.ChainState.DepositManager, utils.ParseEther("10"))
+	tx, err := token.Approve(s.testClient.GetAccount(), s.testClient.ChainState.DepositManager, utils.ParseEther("100"))
 	s.NoError(err)
 
 	_, err = deployer.WaitToBeMined(s.testClient.GetBackend(), tx)
