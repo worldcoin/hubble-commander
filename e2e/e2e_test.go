@@ -13,8 +13,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
@@ -220,9 +220,9 @@ func testGetBatches(t *testing.T, client jsonrpc.RPCClient) {
 	require.NoError(t, err)
 	require.Len(t, batches, 3)
 	require.Equal(t, models.MakeUint256(1), batches[1].ID)
-	batchTypes := []txtype.TransactionType{batches[1].Type, batches[2].Type}
-	require.Contains(t, batchTypes, txtype.Transfer)
-	require.Contains(t, batchTypes, txtype.Create2Transfer)
+	batchTypes := []batchtype.BatchType{batches[1].Type, batches[2].Type}
+	require.Contains(t, batchTypes, batchtype.Transfer)
+	require.Contains(t, batchTypes, batchtype.Create2Transfer)
 }
 
 func testCommanderRestart(t *testing.T, commander setup.Commander, senderWallet bls.Wallet) {
