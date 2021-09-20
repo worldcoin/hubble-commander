@@ -19,8 +19,8 @@ const (
 var BatchTypes = map[BatchType]string{
 	Genesis:         "GENESIS",
 	Transfer:        "TRANSFER",
-	Create2Transfer: "CREATE2TRANSFER",
 	MassMigration:   "MASS_MIGRATION",
+	Create2Transfer: "CREATE2TRANSFER",
 	Deposit:         "DEPOSIT",
 }
 

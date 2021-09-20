@@ -180,7 +180,7 @@ func txBody(data []byte, transactionType txtype.TransactionType) (TxBody, error)
 		body := new(StoredTxCreate2TransferBody)
 		err := body.SetBytes(data)
 		return body, err
-	case txtype.Genesis, txtype.MassMigration:
+	case txtype.MassMigration:
 		return nil, errors.Errorf("unsupported tx type: %s", transactionType)
 	}
 	return nil, nil
