@@ -54,7 +54,7 @@ func (a *API) getTransactionsForCommitment(commitment *models.Commitment) (inter
 		return a.getTransfersForCommitment(&commitment.ID)
 	case txtype.Create2Transfer:
 		return a.getCreate2TransfersForCommitment(&commitment.ID)
-	case txtype.Genesis, txtype.MassMigration:
+	case txtype.Genesis, txtype.MassMigration, txtype.Deposit:
 		return nil, dto.ErrNotImplemented
 	}
 	return nil, dto.ErrNotImplemented
