@@ -20,13 +20,14 @@ var syncTestSuiteConfig = config.RollupConfig{
 
 // Other test suites encapsulate SyncTestSuite. Don't add any tests on SyncTestSuite to avoid repeated runs.
 type SyncTestSuite struct {
-	TestSuiteWithRollupContext
+	TestSuiteWithSyncContext
+
 	domain  *bls.Domain
 	wallets []bls.Wallet
 }
 
 func (s *SyncTestSuite) setupTest() {
-	s.NotNil(s.client) // make sure TestSuiteWithRollupContext.SetupTest was called before
+	s.NotNil(s.client) // make sure TestSuiteWithSyncContext.SetupTest was called before
 
 	var err error
 	s.domain, err = s.client.GetDomain()
@@ -89,7 +90,7 @@ func (s *SyncTestSuite) syncAllBatches() {
 
 	for i := range newRemoteBatches {
 		remoteBatch := &newRemoteBatches[i]
-		err = s.executionCtx.SyncBatch(remoteBatch)
+		err = s.syncCtx.SyncBatch(remoteBatch)
 		s.NoError(err)
 	}
 }
@@ -101,6 +102,7 @@ func (s *SyncTestSuite) recreateDatabase() {
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
+	s.syncCtx = NewTestSyncContext(s.executionCtx, s.syncCtx.BatchType)
 
 	seedDB(s.Assertions, s.storage.Storage, s.wallets)
 }

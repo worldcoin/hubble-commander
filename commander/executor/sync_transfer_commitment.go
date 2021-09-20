@@ -12,7 +12,7 @@ var (
 	ErrTooManyTxs        = NewDisputableError(Transition, "too many transactions in a commitment")
 )
 
-func (c *ExecutionContext) syncTransferCommitment(
+func (c *SyncContext) syncTransferCommitment(
 	commitment *encoder.DecodedCommitment,
 ) (models.GenericTransactionArray, error) {
 	if len(commitment.Transactions)%encoder.TransferLength != 0 {

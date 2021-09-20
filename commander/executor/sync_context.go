@@ -11,7 +11,7 @@ import (
 
 type SyncContext struct {
 	*ExecutionContext
-	Syncer    TransactionSyncer //TODO-dedu: extract to another ctx
+	Syncer    TransactionSyncer
 	BatchType txtype.TransactionType
 }
 

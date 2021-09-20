@@ -89,17 +89,17 @@ func (c *Commander) syncOrDisputeRemoteBatch(remoteBatch *eth.DecodedBatch) erro
 }
 
 func (c *Commander) syncBatch(remoteBatch *eth.DecodedBatch) error {
-	executionCtx, err := executor.NewExecutionContext(c.storage, c.client, c.cfg.Rollup, context.Background())
+	syncCtx, err := executor.NewSyncContext(c.storage, c.client, c.cfg.Rollup, context.Background(), remoteBatch.Type)
 	if err != nil {
 		return err
 	}
-	defer executionCtx.Rollback(&err)
+	defer syncCtx.Rollback(&err)
 
-	err = executionCtx.SyncBatch(remoteBatch)
+	err = syncCtx.SyncBatch(remoteBatch)
 	if err != nil {
 		return err
 	}
-	return executionCtx.Commit()
+	return syncCtx.Commit()
 }
 
 func (c *Commander) replaceBatch(localBatch *models.Batch, remoteBatch *eth.DecodedBatch) error {
