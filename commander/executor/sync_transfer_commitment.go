@@ -39,7 +39,7 @@ func (c *SyncContext) syncTransferCommitment(
 	}
 
 	if !c.cfg.DisableSignatures {
-		err = c.verifyTransferSignature(commitment, appliedTransfers)
+		err = c.verifyTransferSignature(commitment, models.TransferArray(appliedTransfers))
 		if err != nil {
 			return nil, err
 		}

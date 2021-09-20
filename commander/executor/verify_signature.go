@@ -8,27 +8,26 @@ import (
 
 const InvalidSignatureMessage = "invalid commitment signature"
 
-func (c *ExecutionContext) verifyTransferSignature(commitment *encoder.DecodedCommitment, transfers []models.Transfer) error {
+func (c *SyncContext) verifyTransferSignature(commitment *encoder.DecodedCommitment, txs models.GenericTransactionArray) error {
 	domain, err := c.client.GetDomain()
 	if err != nil {
 		return err
 	}
 
-	messages := make([][]byte, len(transfers))
-	publicKeys := make([]*models.PublicKey, len(transfers))
-	for i := range transfers {
-		publicKeys[i], err = c.storage.GetPublicKeyByStateID(transfers[i].FromStateID)
+	messages := make([][]byte, txs.Len())
+	publicKeys := make([]*models.PublicKey, txs.Len())
+	for i := 0; i < txs.Len(); i++ {
+		publicKeys[i], err = c.storage.GetPublicKeyByStateID(txs.At(i).GetFromStateID())
 		if err != nil {
 			return err
 		}
-		messages[i], err = encoder.EncodeTransferForSigning(&transfers[i])
+		messages[i], err = c.Syncer.EncodeTxForSigning(txs.At(i))
 		if err != nil {
 			return err
 		}
 	}
 
-	genericTxs := models.TransferArray(transfers)
-	return c.verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys, genericTxs)
+	return c.verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys, txs)
 }
 
 func (c *ExecutionContext) verifyCreate2TransferSignature(
