@@ -55,12 +55,11 @@ func (s *DepositsTestSuite) TestSyncQueuedDeposits() {
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)
 
-	err = s.cmd.syncQueuedDeposits(0, *latestBlockNumber)
+	queuedDeposits, err := s.cmd.syncQueuedDeposits(0, *latestBlockNumber)
 	s.NoError(err)
 
-	syncedDeposit, err := s.cmd.storage.GetDeposit(&deposit.ID)
-	s.NoError(err)
-	s.Equal(deposit, syncedDeposit)
+	s.Len(queuedDeposits, 1)
+	s.Contains(queuedDeposits, *deposit)
 }
 
 func (s *DepositsTestSuite) registerToken() {
