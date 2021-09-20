@@ -6,7 +6,7 @@ import (
 )
 
 var networkInfoAPIErrors = map[error]*APIError{
-	storage.AnyNoVacantSubtreeError: NewAPIError(
+	storage.NewNoVacantSubtreeError(0): NewAPIError(
 		99000,
 		"an error occurred while fetching the account count",
 	),

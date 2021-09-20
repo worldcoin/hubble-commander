@@ -11,8 +11,7 @@ var (
 	ErrNoRowsAffected   = fmt.Errorf("no rows were affected by the update")
 	ErrNotExistentState = fmt.Errorf("cannot revert to not existent state")
 
-	AnyNotFoundError        = &NotFoundError{field: anythingField}
-	AnyNoVacantSubtreeError = &NoVacantSubtreeError{subtreeDepth: 0}
+	AnyNotFoundError = &NotFoundError{field: anythingField}
 )
 
 const anythingField = "anything"
@@ -103,9 +102,6 @@ func (e *NoVacantSubtreeError) Is(other error) bool {
 	otherError, ok := other.(*NoVacantSubtreeError)
 	if !ok {
 		return false
-	}
-	if *e == *AnyNoVacantSubtreeError || *otherError == *AnyNoVacantSubtreeError {
-		return true
 	}
 	return *e == *otherError
 }
