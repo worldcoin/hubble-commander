@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	deposit = models.Deposit{
+	deposit = models.PendingDeposit{
 		ID: models.DepositID{
 			BlockNumber: 16,
 			LogIndex:    32,
@@ -45,18 +45,18 @@ func (s *DepositTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *DepositTestSuite) TestAddDeposit_AddAndRetrieve() {
-	err := s.storage.AddDeposit(&deposit)
+func (s *DepositTestSuite) TestAddPendingDeposit_AddAndRetrieve() {
+	err := s.storage.AddPendingDeposit(&deposit)
 	s.NoError(err)
 
-	actual, err := s.storage.GetDeposit(&deposit.ID)
+	actual, err := s.storage.GetPendingDeposit(&deposit.ID)
 	s.NoError(err)
 	s.Equal(deposit, *actual)
 }
 
-func (s *DepositTestSuite) TestGetDeposit_NotFound() {
-	_, err := s.storage.GetDeposit(&deposit.ID)
-	s.ErrorIs(err, NewNotFoundError("deposit"))
+func (s *DepositTestSuite) TestGetPendingDeposit_NotFound() {
+	_, err := s.storage.GetPendingDeposit(&deposit.ID)
+	s.ErrorIs(err, NewNotFoundError("pending deposit"))
 	s.True(IsNotFoundError(err))
 }
 

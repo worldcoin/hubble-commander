@@ -7,13 +7,13 @@ import (
 )
 
 func TestDeposit_InvalidBytesLength(t *testing.T) {
-	deposit := Deposit{}
+	deposit := PendingDeposit{}
 	err := deposit.SetBytes([]byte{1, 2, 3})
 	require.ErrorIs(t, err, ErrInvalidLength)
 }
 
-func TestDeposit_Bytes(t *testing.T) {
-	deposit := Deposit{
+func TestPendingDeposit_Bytes(t *testing.T) {
+	deposit := PendingDeposit{
 		ID: DepositID{
 			BlockNumber: 4321,
 			LogIndex:    63452,
@@ -25,7 +25,7 @@ func TestDeposit_Bytes(t *testing.T) {
 
 	bytes := deposit.Bytes()
 
-	decodedDeposit := Deposit{
+	decodedDeposit := PendingDeposit{
 		ToPubKeyID: 333,
 		TokenID:    MakeUint256(222),
 	}
@@ -37,8 +37,8 @@ func TestDeposit_Bytes(t *testing.T) {
 	require.Equal(t, deposit, decodedDeposit)
 }
 
-func TestDepositInCommitment_Bytes(t *testing.T) {
-	deposit := Deposit{
+func TestPendingDepositInCommitment_Bytes(t *testing.T) {
+	deposit := PendingDeposit{
 		ToPubKeyID: 33,
 		TokenID:    MakeUint256(234),
 		L2Amount:   MakeUint256(62346),
@@ -50,7 +50,7 @@ func TestDepositInCommitment_Bytes(t *testing.T) {
 
 	bytes := deposit.Bytes()
 
-	decodedDeposit := Deposit{
+	decodedDeposit := PendingDeposit{
 		ToPubKeyID: 555,
 		TokenID:    MakeUint256(555),
 	}
@@ -59,13 +59,13 @@ func TestDepositInCommitment_Bytes(t *testing.T) {
 	require.Equal(t, deposit, decodedDeposit)
 }
 
-func TestDepositID_InvalidBytesLength(t *testing.T) {
+func TestPendingDepositID_InvalidBytesLength(t *testing.T) {
 	depositID := DepositID{}
 	err := depositID.SetBytes([]byte{1, 2, 3})
 	require.ErrorIs(t, err, ErrInvalidLength)
 }
 
-func TestDepositID_Bytes(t *testing.T) {
+func TestPendingDepositID_Bytes(t *testing.T) {
 	depositID := DepositID{
 		BlockNumber: 68593,
 		LogIndex:    49102,

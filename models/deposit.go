@@ -17,7 +17,7 @@ type DepositID struct {
 	LogIndex    uint32
 }
 
-type Deposit struct {
+type PendingDeposit struct {
 	ID                   DepositID
 	ToPubKeyID           uint32
 	TokenID              Uint256
@@ -43,7 +43,7 @@ func (d *DepositID) SetBytes(data []byte) error {
 	return nil
 }
 
-func (d *Deposit) Bytes() []byte {
+func (d *PendingDeposit) Bytes() []byte {
 	var b []byte
 
 	if d.IncludedInCommitment != nil {
@@ -60,7 +60,7 @@ func (d *Deposit) Bytes() []byte {
 	return b
 }
 
-func (d *Deposit) SetBytes(data []byte) error {
+func (d *PendingDeposit) SetBytes(data []byte) error {
 	if len(data) != depositDataLength && len(data) != depositInCommitmentDataLength {
 		return ErrInvalidLength
 	}
