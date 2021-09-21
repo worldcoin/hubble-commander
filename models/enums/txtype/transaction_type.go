@@ -3,15 +3,16 @@ package txtype
 import (
 	"encoding/json"
 
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	enumerr "github.com/Worldcoin/hubble-commander/models/enums/errors"
 )
 
 type TransactionType uint8
 
 const (
-	Transfer        TransactionType = 1
-	MassMigration   TransactionType = 2
-	Create2Transfer TransactionType = 3
+	Transfer        = TransactionType(batchtype.Transfer)
+	MassMigration   = TransactionType(batchtype.MassMigration)
+	Create2Transfer = TransactionType(batchtype.Create2Transfer)
 )
 
 var TransactionTypes = map[TransactionType]string{
