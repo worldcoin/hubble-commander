@@ -37,7 +37,5 @@ func (s *DepositStorage) GetPendingDeposit(depositID *models.DepositID) (*models
 		return nil, err
 	}
 
-	deposit.ID = *depositID
-
 	return &deposit, nil
 }

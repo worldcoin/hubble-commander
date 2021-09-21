@@ -32,8 +32,6 @@ func TestPendingDeposit_Bytes(t *testing.T) {
 	err := decodedDeposit.SetBytes(bytes)
 	require.NoError(t, err)
 
-	require.Equal(t, DepositID{}, decodedDeposit.ID)
-	decodedDeposit.ID = deposit.ID
 	require.Equal(t, deposit, decodedDeposit)
 }
 

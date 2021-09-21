@@ -2,12 +2,10 @@ package models
 
 import (
 	"encoding/binary"
-
-	"github.com/Worldcoin/hubble-commander/utils"
 )
 
 const (
-	depositDataLength   = 68
+	depositDataLength   = 76
 	depositIDDataLength = 8
 )
 
@@ -44,9 +42,10 @@ func (d *DepositID) SetBytes(data []byte) error {
 func (d *PendingDeposit) Bytes() []byte {
 	b := make([]byte, depositDataLength)
 
-	binary.BigEndian.PutUint32(b[0:4], d.ToPubKeyID)
-	copy(b[4:36], utils.PadLeft(d.TokenID.Bytes(), 32))
-	copy(b[36:68], utils.PadLeft(d.L2Amount.Bytes(), 32))
+	copy(b[0:8], d.ID.Bytes())
+	binary.BigEndian.PutUint32(b[8:12], d.ToPubKeyID)
+	copy(b[12:44], d.TokenID.Bytes())
+	copy(b[44:76], d.L2Amount.Bytes())
 
 	return b
 }
@@ -56,9 +55,14 @@ func (d *PendingDeposit) SetBytes(data []byte) error {
 		return ErrInvalidLength
 	}
 
-	d.ToPubKeyID = binary.BigEndian.Uint32(data[0:4])
-	d.TokenID.SetBytes(data[4:36])
-	d.L2Amount.SetBytes(data[36:68])
+	err := d.ID.SetBytes(data[0:8])
+	if err != nil {
+		return err
+	}
+
+	d.ToPubKeyID = binary.BigEndian.Uint32(data[8:12])
+	d.TokenID.SetBytes(data[12:44])
+	d.L2Amount.SetBytes(data[44:76])
 
 	return nil
 }
