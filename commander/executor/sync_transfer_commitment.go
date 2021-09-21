@@ -33,15 +33,16 @@ func (c *SyncContext) syncTransferCommitment(
 		return nil, err
 	}
 
-	err = c.Syncer.SetPublicKeys(syncedTxs)
-	if err != nil {
-		return nil, err
-	}
 	err = c.verifyStateRoot(commitment.StateRoot, stateProofs)
 	if err != nil {
 		return nil, err
 	}
 
+	syncedTxs.SetTxs(appliedTransfers)
+	err = c.Syncer.SetPublicKeys(syncedTxs)
+	if err != nil {
+		return nil, err
+	}
 	if !c.cfg.DisableSignatures {
 		err = c.verifyTransferSignature(commitment, appliedTransfers)
 		if err != nil {

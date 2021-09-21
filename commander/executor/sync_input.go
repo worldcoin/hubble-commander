@@ -8,6 +8,7 @@ type SyncedTxs interface {
 	Txs() models.GenericTransactionArray
 	PubKeyIDs() []uint32
 	SyncedTxAt(index int) SyncedTx
+	SetTxs(txs models.GenericTransactionArray)
 }
 
 type SyncedTransfers struct {
@@ -28,6 +29,10 @@ func (a *SyncedTransfers) SyncedTxAt(index int) SyncedTx {
 	}
 }
 
+func (a *SyncedTransfers) SetTxs(txs models.GenericTransactionArray) {
+	a.txs = txs.ToTransferArray()
+}
+
 type SyncedC2Ts struct {
 	txs       models.Create2TransferArray
 	pubKeyIDs []uint32
@@ -46,6 +51,10 @@ func (a *SyncedC2Ts) SyncedTxAt(index int) SyncedTx {
 		tx:       a.txs.At(index).ToCreate2Transfer(),
 		pubKeyID: a.pubKeyIDs[index],
 	}
+}
+
+func (a *SyncedC2Ts) SetTxs(txs models.GenericTransactionArray) {
+	a.txs = txs.ToCreate2TransferArray()
 }
 
 type SyncedTx interface {

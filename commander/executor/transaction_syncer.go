@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/pkg/errors"
 )
 
 type TransactionSyncer interface {
@@ -100,6 +101,10 @@ func (s *C2TSyncer) DeserializeTxs(data []byte) (SyncedTxs, error) {
 	if err != nil {
 		return nil, err
 	}
+	if len(txs) != len(pubKeyIDs) {
+		return nil, errors.WithStack(applier.ErrInvalidSlicesLength)
+	}
+
 	return &SyncedC2Ts{
 		txs:       txs,
 		pubKeyIDs: pubKeyIDs,
@@ -107,7 +112,7 @@ func (s *C2TSyncer) DeserializeTxs(data []byte) (SyncedTxs, error) {
 }
 
 func (s *C2TSyncer) EncodeTxForSigning(tx models.GenericTransaction) ([]byte, error) {
-	return encoder.EncodeCreate2Transfer(tx.ToCreate2Transfer())
+	return encoder.EncodeCreate2TransferForSigning(tx.ToCreate2Transfer())
 }
 
 func (s *C2TSyncer) NewTxArray(size, capacity uint32) models.GenericTransactionArray {
