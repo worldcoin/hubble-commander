@@ -7,13 +7,13 @@
 
 `accounts.go`: `syncAccounts` Synchronizes on-chain account state to internal state.
 
+`registered_tokens.go`: `syncTokens` Synchronizes on-chain registered tokens to internal state.
+
 `batches.go`: `syncBatches` Synchronizes on-chain batch state to internal state.
 
 `new_block.go`: `newBlockLoop` Watches for new blocks.
 
 `syncForward`: Sync a batch of blocks (batched for internal efficiency, not visible from the outside).
-
-`syncTokens`: Synchronizes list of tokens.
 
 
 TODO:
