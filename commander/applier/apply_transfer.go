@@ -14,18 +14,14 @@ func (a *Applier) ApplyTransfer(tx models.GenericTransaction, commitmentTokenID 
 	return &ApplySingleTransferResult{tx: tx.ToTransfer()}, transferError, appError
 }
 
-func (a *Applier) ApplyTransferForSync(transfer *models.Transfer, commitmentTokenID models.Uint256) (
-	synced *SyncedTransfer,
+func (a *Applier) ApplyTransferForSync(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
+	synced *SyncedGenericTransaction,
 	transferError, appError error,
 ) {
-	receiverLeaf, err := a.storage.StateTree.LeafOrEmpty(*transfer.GetToStateID())
+	receiverLeaf, err := a.storage.StateTree.LeafOrEmpty(*tx.GetToStateID())
 	if err != nil {
 		return nil, nil, err
 	}
 
-	genericSynced, transferError, appError := a.applyTxForSync(transfer, receiverLeaf, commitmentTokenID)
-	if appError != nil {
-		return nil, nil, appError
-	}
-	return NewSyncedTransferFromGeneric(genericSynced), transferError, nil
+	return a.applyTxForSync(tx, receiverLeaf, commitmentTokenID)
 }

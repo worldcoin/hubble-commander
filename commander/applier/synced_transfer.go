@@ -14,7 +14,7 @@ type SyncedTransfer struct {
 
 func NewSyncedTransferFromGeneric(generic *SyncedGenericTransaction) *SyncedTransfer {
 	return &SyncedTransfer{
-		Transfer: generic.Transaction.ToTransfer(),
+		Transfer: generic.Tx.ToTransfer(),
 		Proofs:   generic.Proofs,
 	}
 }
@@ -26,13 +26,13 @@ type SyncedCreate2Transfer struct {
 
 func NewSyncedCreate2TransferFromGeneric(generic *SyncedGenericTransaction) *SyncedCreate2Transfer {
 	return &SyncedCreate2Transfer{
-		Transfer: generic.Transaction.ToCreate2Transfer(),
+		Transfer: generic.Tx.ToCreate2Transfer(),
 		Proofs:   generic.Proofs,
 	}
 }
 
 type SyncedGenericTransaction struct {
-	Transaction models.GenericTransaction
+	Tx models.GenericTransaction
 	Proofs
 }
 
@@ -41,7 +41,7 @@ func NewPartialSyncedGenericTransaction(
 	senderUserState, receiverUserState *models.UserState,
 ) *SyncedGenericTransaction {
 	return &SyncedGenericTransaction{
-		Transaction: tx,
+		Tx: tx,
 		Proofs: Proofs{
 			SenderStateProof: models.StateMerkleProof{
 				UserState: senderUserState,
