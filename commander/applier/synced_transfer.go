@@ -59,11 +59,11 @@ type SyncedTx interface {
 }
 
 type SyncedTransfer2 struct {
-	tx *models.Transfer
+	Tx *models.Transfer
 }
 
 func (a *SyncedTransfer2) SyncedTx() models.GenericTransaction {
-	return a.tx
+	return a.Tx
 }
 
 func (a *SyncedTransfer2) SyncedPubKeyID() uint32 {

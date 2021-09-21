@@ -61,7 +61,7 @@ func (c *SyncContext) ApplyTransfersForSync(txs SyncedTxs, feeReceiverStateID ui
 	}
 
 	for i := 0; i < txs.Txs().Len(); i++ {
-		synced, transferError, appError := c.Syncer.ApplyTx(txs.Txs().At(i), *tokenID)
+		synced, transferError, appError := c.Syncer.ApplyTx(txs.SyncedTxAt(i), *tokenID)
 		if appError != nil {
 			return nil, nil, appError
 		}
