@@ -7,9 +7,8 @@ import (
 )
 
 const (
-	depositDataLength             = 68
-	depositInCommitmentDataLength = 101
-	depositIDDataLength           = 8
+	depositDataLength   = 68
+	depositIDDataLength = 8
 )
 
 type DepositID struct {
@@ -18,11 +17,10 @@ type DepositID struct {
 }
 
 type PendingDeposit struct {
-	ID                   DepositID
-	ToPubKeyID           uint32
-	TokenID              Uint256
-	L2Amount             Uint256
-	IncludedInCommitment *CommitmentID
+	ID         DepositID
+	ToPubKeyID uint32
+	TokenID    Uint256
+	L2Amount   Uint256
 }
 
 func (d *DepositID) Bytes() []byte {
@@ -44,14 +42,7 @@ func (d *DepositID) SetBytes(data []byte) error {
 }
 
 func (d *PendingDeposit) Bytes() []byte {
-	var b []byte
-
-	if d.IncludedInCommitment != nil {
-		b = make([]byte, depositInCommitmentDataLength)
-		copy(b[68:101], d.IncludedInCommitment.Bytes())
-	} else {
-		b = make([]byte, depositDataLength)
-	}
+	b := make([]byte, depositDataLength)
 
 	binary.BigEndian.PutUint32(b[0:4], d.ToPubKeyID)
 	copy(b[4:36], utils.PadLeft(d.TokenID.Bytes(), 32))
@@ -61,16 +52,8 @@ func (d *PendingDeposit) Bytes() []byte {
 }
 
 func (d *PendingDeposit) SetBytes(data []byte) error {
-	if len(data) != depositDataLength && len(data) != depositInCommitmentDataLength {
+	if len(data) != depositDataLength {
 		return ErrInvalidLength
-	}
-
-	if len(data) == depositInCommitmentDataLength {
-		d.IncludedInCommitment = &CommitmentID{}
-		err := d.IncludedInCommitment.SetBytes(data[68:101])
-		if err != nil {
-			return err
-		}
 	}
 
 	d.ToPubKeyID = binary.BigEndian.Uint32(data[0:4])

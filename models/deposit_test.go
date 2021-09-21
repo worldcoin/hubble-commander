@@ -37,28 +37,6 @@ func TestPendingDeposit_Bytes(t *testing.T) {
 	require.Equal(t, deposit, decodedDeposit)
 }
 
-func TestPendingDepositInCommitment_Bytes(t *testing.T) {
-	deposit := PendingDeposit{
-		ToPubKeyID: 33,
-		TokenID:    MakeUint256(234),
-		L2Amount:   MakeUint256(62346),
-		IncludedInCommitment: &CommitmentID{
-			BatchID:      MakeUint256(432),
-			IndexInBatch: 11,
-		},
-	}
-
-	bytes := deposit.Bytes()
-
-	decodedDeposit := PendingDeposit{
-		ToPubKeyID: 555,
-		TokenID:    MakeUint256(555),
-	}
-	err := decodedDeposit.SetBytes(bytes)
-	require.NoError(t, err)
-	require.Equal(t, deposit, decodedDeposit)
-}
-
 func TestPendingDepositID_InvalidBytesLength(t *testing.T) {
 	depositID := DepositID{}
 	err := depositID.SetBytes([]byte{1, 2, 3})
