@@ -75,7 +75,7 @@ func (s *TransferSyncer) ApplyTx(tx SyncedTx, commitmentTokenID models.Uint256) 
 	return s.applier.ApplyTransferForSync(tx.SyncedTx(), commitmentTokenID)
 }
 
-func (s *TransferSyncer) SetPublicKeys(result SyncedTxs) error {
+func (s *TransferSyncer) SetPublicKeys(_ SyncedTxs) error {
 	return nil
 }
 
