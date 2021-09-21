@@ -72,7 +72,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_NonexistentReceiver() {
 
 	_, transferError, appError := s.applier.ApplyTransfer(&transfer, s.receiverLeaf.TokenID)
 	s.NoError(transferError)
-	s.Equal(st.NewNotFoundError("state leaf"), appError)
+	s.ErrorIs(appError, st.NewNotFoundError("state leaf"))
 }
 
 func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ReturnsSenderProofForCalculateStateAfterTransferValidations() {
@@ -83,7 +83,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ReturnsSenderProofForC
 
 	synced, transferError, appError := s.applier.ApplyTransferForSync(&bigTransfer, models.MakeUint256(1))
 	s.NotNil(synced)
-	s.Equal(ErrBalanceTooLow, transferError)
+	s.ErrorIs(transferError, ErrBalanceTooLow)
 	s.NoError(appError)
 
 	s.Equal(&bigTransfer, synced.Transfer)
@@ -96,7 +96,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ValidatesSenderTokenID
 
 	synced, transferError, appError := s.applier.ApplyTransferForSync(&s.transfer, models.MakeUint256(3))
 	s.NotNil(synced)
-	s.Equal(ErrInvalidSenderTokenID, transferError)
+	s.ErrorIs(transferError, ErrInvalidSenderTokenID)
 	s.NoError(appError)
 
 	s.Equal(&s.transfer, synced.Transfer)
@@ -114,7 +114,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ValidatesReceiverToken
 
 	synced, transferError, appError := s.applier.ApplyTransferForSync(&s.transfer, models.MakeUint256(1))
 	s.NotNil(synced)
-	s.Equal(ErrInvalidReceiverTokenID, transferError)
+	s.ErrorIs(transferError, ErrInvalidReceiverTokenID)
 	s.NoError(appError)
 
 	s.Equal(&s.transfer, synced.Transfer)

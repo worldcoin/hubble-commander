@@ -3,6 +3,7 @@ package executor
 import (
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/pkg/errors"
 )
 
 func (c *ExecutionContext) ApplyCreate2TransfersForSync(
@@ -12,7 +13,7 @@ func (c *ExecutionContext) ApplyCreate2TransfersForSync(
 ) ([]models.Create2Transfer, []models.StateMerkleProof, error) {
 	transfersLen := len(transfers)
 	if transfersLen != len(pubKeyIDs) {
-		return nil, nil, applier.ErrInvalidSlicesLength
+		return nil, nil, errors.WithStack(applier.ErrInvalidSlicesLength)
 	}
 
 	appliedTransfers := make([]models.Create2Transfer, 0, transfersLen)

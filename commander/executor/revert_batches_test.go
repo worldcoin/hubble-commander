@@ -92,7 +92,7 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_DeletesCommitmentsAndBatches(
 	s.NoError(err)
 
 	_, err = s.executionCtx.storage.GetLatestCommitment()
-	s.Equal(st.NewNotFoundError("commitment"), err)
+	s.ErrorIs(err, st.NewNotFoundError("commitment"))
 
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)

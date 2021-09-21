@@ -107,7 +107,7 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesNonceToo
 	s.NoError(err)
 
 	_, err = s.api.SendTransaction(dto.MakeTransaction(s.create2Transfer))
-	s.Equal(ErrNonceTooLow, err)
+	s.Equal(APIErrNonceTooLow, err)
 }
 
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesNonceTooHigh_NoTransactions() {
@@ -116,7 +116,7 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesNonceToo
 	transferWithIncreasedNonce = s.signCreate2Transfer(transferWithIncreasedNonce)
 
 	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithIncreasedNonce))
-	s.Equal(ErrNonceTooHigh, err)
+	s.Equal(APIErrNonceTooHigh, err)
 }
 
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesNonceTooHigh_ExistingTransactions() {
@@ -128,7 +128,7 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesNonceToo
 	transferWithIncreasedNonce = s.signCreate2Transfer(transferWithIncreasedNonce)
 
 	_, err = s.api.SendTransaction(dto.MakeTransaction(transferWithIncreasedNonce))
-	s.Equal(ErrNonceTooHigh, err)
+	s.Equal(APIErrNonceTooHigh, err)
 }
 
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesNonceTooLow_ExistingTransactions() {
@@ -146,7 +146,7 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesNonceToo
 	thirdTransfer = s.signCreate2Transfer(thirdTransfer)
 
 	_, err = s.api.SendTransaction(dto.MakeTransaction(thirdTransfer))
-	s.Equal(ErrNonceTooLow, err)
+	s.Equal(APIErrNonceTooLow, err)
 }
 
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesFeeValue() {
@@ -154,7 +154,7 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesFeeValue
 	transferWithZeroFee.Fee = models.NewUint256(0)
 
 	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithZeroFee))
-	s.Equal(ErrFeeTooLow, err)
+	s.Equal(APIErrFeeTooLow, err)
 }
 
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesFeeEncodability() {
@@ -162,7 +162,7 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesFeeEncod
 	transferWithBadFee.Fee = models.NewUint256(66666666)
 
 	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithBadFee))
-	s.Equal(NewNotDecimalEncodableError("fee"), err)
+	s.Equal(APINotDecimalEncodableFeeError, err)
 }
 
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesAmountEncodability() {
@@ -170,7 +170,7 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesAmountEn
 	transferWithBadAmount.Amount = models.NewUint256(66666666)
 
 	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithBadAmount))
-	s.Equal(NewNotDecimalEncodableError("amount"), err)
+	s.Equal(APINotDecimalEncodableAmountError, err)
 }
 
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesAmountValue() {
@@ -178,14 +178,15 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesAmountVa
 	transferWithZeroAmount.Amount = models.NewUint256(0)
 
 	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithZeroAmount))
-	s.Equal(ErrInvalidAmount, err)
+	s.Equal(APIErrInvalidAmount, err)
 }
 
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesBalance() {
 	transferWithHugeAmount := s.create2Transfer
 	transferWithHugeAmount.Amount = models.NewUint256(500)
+
 	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithHugeAmount))
-	s.Equal(ErrNotEnoughBalance, err)
+	s.Equal(APIErrNotEnoughBalance, err)
 }
 
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesSignature() {
@@ -198,7 +199,7 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesSignatur
 	transfer.Signature = fakeSignature.ModelsSignature()
 
 	_, err = s.api.SendTransaction(dto.MakeTransaction(transfer))
-	s.Equal(ErrInvalidSignature, err)
+	s.Equal(APIErrInvalidSignature, err)
 }
 
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesSignature_DisabledSignatures() {

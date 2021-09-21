@@ -25,7 +25,7 @@ func GetTransactionLength(batchType batchtype.BatchType) int {
 		return TransferLength
 	case batchtype.Create2Transfer:
 		return Create2TransferLength
-	case batchtype.Genesis, batchtype.MassMigration, batchtype.Deposit:
+	case batchtype.Genesis, batchtype.MassMigration:
 		log.Panicf("unsupported tx type: %s", batchType)
 	}
 	return -1

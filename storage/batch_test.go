@@ -102,7 +102,7 @@ func (s *BatchTestSuite) TestGetBatch() {
 
 func (s *BatchTestSuite) TestGetBatch_NonExistentBatch() {
 	res, err := s.storage.GetBatch(models.MakeUint256(42))
-	s.Equal(NewNotFoundError("batch"), err)
+	s.ErrorIs(err, NewNotFoundError("batch"))
 	s.Nil(res)
 }
 
@@ -135,13 +135,13 @@ func (s *BatchTestSuite) TestGetMinedBatch_PendingBatch() {
 	s.NoError(err)
 
 	res, err := s.storage.GetMinedBatch(models.MakeUint256(42))
-	s.Equal(NewNotFoundError("batch"), err)
+	s.ErrorIs(err, NewNotFoundError("batch"))
 	s.Nil(res)
 }
 
 func (s *BatchTestSuite) TestGetMinedBatch_NonExistentBatch() {
 	res, err := s.storage.GetMinedBatch(models.MakeUint256(42))
-	s.Equal(NewNotFoundError("batch"), err)
+	s.ErrorIs(err, NewNotFoundError("batch"))
 	s.Nil(res)
 }
 
@@ -183,7 +183,7 @@ func (s *BatchTestSuite) TestGetLatestSubmittedBatch() {
 
 func (s *BatchTestSuite) TestGetLatestSubmittedBatch_NoBatches() {
 	res, err := s.storage.GetLatestSubmittedBatch()
-	s.Equal(NewNotFoundError("batch"), err)
+	s.ErrorIs(err, NewNotFoundError("batch"))
 	s.Nil(res)
 }
 
@@ -236,7 +236,7 @@ func (s *BatchTestSuite) TestGetLatestFinalisedBatch() {
 
 func (s *BatchTestSuite) TestGetLatestFinalisedBatch_NoBatches() {
 	res, err := s.storage.GetLatestFinalisedBatch(500)
-	s.Equal(NewNotFoundError("batch"), err)
+	s.ErrorIs(err, NewNotFoundError("batch"))
 	s.Nil(res)
 }
 
@@ -342,13 +342,13 @@ func (s *BatchTestSuite) TestDeleteBatches() {
 
 	for i := range batches {
 		_, err = s.storage.GetBatch(batches[i].ID)
-		s.Equal(NewNotFoundError("batch"), err)
+		s.ErrorIs(err, NewNotFoundError("batch"))
 	}
 }
 
 func (s *BatchTestSuite) TestDeleteBatches_NotExistentBatch() {
 	err := s.storage.DeleteBatches(models.MakeUint256(1))
-	s.Equal(NewNotFoundError("batch"), err)
+	s.ErrorIs(err, NewNotFoundError("batch"))
 }
 
 func TestBatchTestSuite(t *testing.T) {

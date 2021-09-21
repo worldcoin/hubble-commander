@@ -48,12 +48,12 @@ func (s *AccountTreeTestSuite) TearDownTest() {
 
 func (s *AccountTreeTestSuite) TestLeaf_NonExistentLeaf() {
 	_, err := s.storage.AccountTree.Leaf(0)
-	s.Equal(NewNotFoundError("account leaf"), err)
+	s.ErrorIs(err, NewNotFoundError("account leaf"))
 }
 
 func (s *AccountTreeTestSuite) TestLeaves_NonExistentLeaves() {
 	_, err := s.storage.AccountTree.Leaves(&models.PublicKey{1, 2, 3})
-	s.Equal(NewNotFoundError("account leaves"), err)
+	s.ErrorIs(err, NewNotFoundError("account leaves"))
 }
 
 func (s *AccountTreeTestSuite) TestLeaves_ReturnsAllLeaves() {
@@ -297,7 +297,7 @@ func (s *AccountTreeTestSuite) TestSetBatch_InvalidPubKeyIDValue() {
 	s.Equal(leaves[7].PubKeyID, invalidPubKeyIDError.value)
 
 	_, err = s.storage.AccountTree.Leaf(leaves[0].PubKeyID)
-	s.Equal(NewNotFoundError("account leaf"), err)
+	s.ErrorIs(err, NewNotFoundError("account leaf"))
 }
 
 func (s *AccountTreeTestSuite) randomPublicKey() models.PublicKey {

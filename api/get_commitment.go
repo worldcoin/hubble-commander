@@ -4,10 +4,24 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/storage"
+	"github.com/pkg/errors"
 )
 
+var getCommitmentAPIErrors = map[error]*APIError{
+	storage.AnyNotFoundError: NewAPIError(20000, "commitment not found"),
+}
+
 func (a *API) GetCommitment(id models.CommitmentID) (*dto.Commitment, error) {
+	commitment, err := a.unsafeGetCommitment(id)
+	if err != nil {
+		return nil, sanitizeError(err, getCommitmentAPIErrors)
+	}
+
+	return commitment, nil
+}
+
+func (a *API) unsafeGetCommitment(id models.CommitmentID) (*dto.Commitment, error) {
 	commitment, err := a.storage.GetCommitment(&id)
 	if err != nil {
 		return nil, err
@@ -19,8 +33,8 @@ func (a *API) GetCommitment(id models.CommitmentID) (*dto.Commitment, error) {
 	}
 
 	batch, err := a.storage.GetMinedBatch(commitment.ID.BatchID)
-	if st.IsNotFoundError(err) {
-		return nil, st.NewNotFoundError("commitment")
+	if storage.IsNotFoundError(err) {
+		return nil, errors.WithStack(storage.NewNotFoundError("commitment"))
 	}
 	if err != nil {
 		return nil, err

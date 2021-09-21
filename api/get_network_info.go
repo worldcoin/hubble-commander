@@ -5,7 +5,23 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 )
 
+var networkInfoAPIErrors = map[error]*APIError{
+	storage.NewNoVacantSubtreeError(0): NewAPIError(
+		99000,
+		"an error occurred while fetching the account count",
+	),
+}
+
 func (a *API) GetNetworkInfo() (*dto.NetworkInfo, error) {
+	networkInfo, err := a.unsafeGetNetworkInfo()
+	if err != nil {
+		return nil, sanitizeError(err, networkInfoAPIErrors)
+	}
+
+	return networkInfo, nil
+}
+
+func (a *API) unsafeGetNetworkInfo() (*dto.NetworkInfo, error) {
 	networkInfo := dto.NetworkInfo{
 		ChainID:                        a.client.ChainState.ChainID,
 		AccountRegistry:                a.client.ChainState.AccountRegistry,

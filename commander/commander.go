@@ -25,11 +25,11 @@ import (
 )
 
 var (
-	inconsistentChainStateErr    = NewCannotBootstrapError("database chain state and file chain state are not the same")
-	missingBootstrapSourceErr    = NewCannotBootstrapError("no chain spec file or bootstrap url specified")
-	inconsistentDBChainIDErr     = NewInconsistentChainIDError("database")
-	inconsistentFileChainIDErr   = NewInconsistentChainIDError("chain spec file")
-	inconsistentRemoteChainIDErr = NewInconsistentChainIDError("fetched chain state")
+	errInconsistentChainState    = NewCannotBootstrapError("database chain state and file chain state are not the same")
+	errMissingBootstrapSource    = NewCannotBootstrapError("no chain spec file or bootstrap url specified")
+	errInconsistentDBChainID     = NewInconsistentChainIDError("database")
+	errInconsistentFileChainID   = NewInconsistentChainIDError("chain spec file")
+	errInconsistentRemoteChainID = NewInconsistentChainIDError("fetched chain state")
 )
 
 type Commander struct {
@@ -170,7 +170,7 @@ func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.
 
 	if dbChainState != nil {
 		if dbChainState.ChainID.String() != cfg.Ethereum.ChainID {
-			return nil, inconsistentDBChainIDErr
+			return nil, errors.WithStack(errInconsistentDBChainID)
 		}
 	}
 
@@ -182,7 +182,7 @@ func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.
 		return bootstrapFromRemoteState(chain, storage, cfg)
 	}
 
-	return nil, missingBootstrapSourceErr
+	return nil, errors.WithStack(errMissingBootstrapSource)
 }
 
 func bootstrapFromChainState(
@@ -211,23 +211,21 @@ func bootstrapFromChainState(
 }
 
 func compareChainStates(chainStateA, chainStateB *models.ChainState) error {
-	compareError := inconsistentChainStateErr
-
 	if chainStateA.ChainID != chainStateB.ChainID ||
 		chainStateA.AccountRegistryDeploymentBlock != chainStateB.AccountRegistryDeploymentBlock ||
 		chainStateA.Rollup != chainStateB.Rollup ||
 		chainStateA.AccountRegistry != chainStateB.AccountRegistry ||
 		chainStateA.TokenRegistry != chainStateB.TokenRegistry ||
 		chainStateA.DepositManager != chainStateB.DepositManager {
-		return compareError
+		return errors.WithStack(errInconsistentChainState)
 	}
 
 	if len(chainStateA.GenesisAccounts) != len(chainStateB.GenesisAccounts) {
-		return compareError
+		return errors.WithStack(errInconsistentChainState)
 	}
 	for i := range chainStateA.GenesisAccounts {
 		if chainStateA.GenesisAccounts[i] != chainStateB.GenesisAccounts[i] {
-			return compareError
+			return errors.WithStack(errInconsistentChainState)
 		}
 	}
 
@@ -242,7 +240,7 @@ func bootstrapChainStateAndCommander(
 ) (*eth.Client, error) {
 	chainID := chain.GetChainID()
 	if chainID != importedChainState.ChainID {
-		return nil, inconsistentFileChainIDErr
+		return nil, errors.WithStack(errInconsistentFileChainID)
 	}
 
 	log.Printf("Bootstrapping genesis state from chain spec file")
@@ -260,7 +258,7 @@ func bootstrapFromRemoteState(
 	}
 
 	if fetchedChainState.ChainID.String() != cfg.Ethereum.ChainID {
-		return nil, inconsistentRemoteChainIDErr
+		return nil, errors.WithStack(errInconsistentRemoteChainID)
 	}
 
 	return setGenesisStateAndCreateClient(chain, storage, fetchedChainState, cfg.Rollup)
