@@ -20,7 +20,6 @@ type ApplyTransfersTestSuite struct {
 	storage     *storage.TestStorage
 	cfg         *config.RollupConfig
 	rollupCtx   *RollupContext
-	syncCtx     *SyncContext
 	feeReceiver *FeeReceiver
 }
 
@@ -65,7 +64,6 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 
 	executionCtx := NewTestExecutionContext(s.storage.Storage, nil, s.cfg)
 	s.rollupCtx = NewTestRollupContext(executionCtx, batchtype.Transfer)
-	s.syncCtx = NewTestSyncContext(executionCtx, txtype.Transfer)
 
 	s.feeReceiver = &FeeReceiver{
 		StateID: 3,
@@ -148,85 +146,6 @@ func (s *ApplyTransfersTestSuite) TestApplyTxs_AppliesFee() {
 	feeReceiverState, err := s.rollupCtx.storage.StateTree.Leaf(s.feeReceiver.StateID)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
-}
-
-func (s *ApplyTransfersTestSuite) TestApplyTxsForSync_AllValid() {
-	input := &SyncedTransfers{
-		txs: generateValidTransfers(3),
-	}
-
-	appliedTransfers, stateProofs, err := s.syncCtx.ApplyTxsForSync(input, s.feeReceiver.StateID)
-	s.NoError(err)
-	s.Len(appliedTransfers, 3)
-	s.Len(stateProofs, 7)
-}
-
-func (s *ApplyTransfersTestSuite) TestApplyTxsForSync_InvalidTransfer() {
-	input := &SyncedTransfers{
-		txs: generateValidTransfers(2),
-	}
-	input.txs = append(input.txs, generateInvalidTransfers(2)...)
-
-	appliedTransfers, _, err := s.syncCtx.ApplyTxsForSync(input, s.feeReceiver.StateID)
-	s.Nil(appliedTransfers)
-
-	var disputableErr *DisputableError
-	s.ErrorAs(err, &disputableErr)
-	s.Equal(Transition, disputableErr.Type)
-	s.Len(disputableErr.Proofs, 6)
-}
-
-func (s *ApplyTransfersTestSuite) TestApplyTxsForSync_AppliesFee() {
-	input := &SyncedTransfers{
-		txs: generateValidTransfers(3),
-	}
-
-	_, _, err := s.syncCtx.ApplyTxsForSync(input, s.feeReceiver.StateID)
-	s.NoError(err)
-
-	feeReceiverState, err := s.rollupCtx.storage.StateTree.Leaf(s.feeReceiver.StateID)
-	s.NoError(err)
-	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
-}
-
-func (s *ApplyTransfersTestSuite) TestApplyTxsForSync_ReturnsCorrectStateProofsForZeroFee() {
-	input := &SyncedTransfers{
-		txs: generateValidTransfers(2),
-	}
-	for i := range input.txs {
-		input.txs[i].Fee = models.MakeUint256(0)
-	}
-
-	_, stateProofs, err := s.syncCtx.ApplyTxsForSync(input, s.feeReceiver.StateID)
-	s.NoError(err)
-	s.Len(stateProofs, 5)
-}
-
-func (s *ApplyTransfersTestSuite) TestApplyTxsForSync_InvalidFeeReceiverTokenID() {
-	feeReceiver := &FeeReceiver{
-		StateID: 4,
-		TokenID: models.MakeUint256(4),
-	}
-	_, err := s.storage.StateTree.Set(feeReceiver.StateID, &models.UserState{
-		PubKeyID: 4,
-		TokenID:  feeReceiver.TokenID,
-		Balance:  models.MakeUint256(420),
-		Nonce:    models.MakeUint256(0),
-	})
-	s.NoError(err)
-
-	input := &SyncedTransfers{
-		txs: generateValidTransfers(2),
-	}
-
-	appliedTransfers, _, err := s.syncCtx.ApplyTxsForSync(input, feeReceiver.StateID)
-	s.Nil(appliedTransfers)
-
-	var disputableErr *DisputableError
-	s.ErrorAs(err, &disputableErr)
-	s.Equal(Transition, disputableErr.Type)
-	s.Equal(applier.ErrInvalidFeeReceiverTokenID.Error(), disputableErr.Reason)
-	s.Len(disputableErr.Proofs, 5)
 }
 
 func generateValidTransfers(transfersAmount uint32) models.TransferArray {

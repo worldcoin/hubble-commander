@@ -101,14 +101,7 @@ func (c *SyncContext) syncCommitments(batch *eth.DecodedBatch) error {
 	return nil
 }
 
-func (c *SyncContext) syncCommitment(
-	batch *eth.DecodedBatch,
-	commitment *encoder.DecodedCommitment,
-) error {
-	if len(commitment.Transactions)%encoder.GetTransactionLength(batch.Type) != 0 {
-		return ErrInvalidDataLength
-	}
-
+func (c *SyncContext) syncCommitment(batch *eth.DecodedBatch, commitment *encoder.DecodedCommitment) error {
 	transactions, err := c.syncTxCommitment(commitment)
 	if err != nil {
 		return err
@@ -140,5 +133,6 @@ func (c *SyncContext) syncCommitment(
 	if transactions.Len() == 0 {
 		return nil
 	}
+	//TODO-dedu: replace with implementation on syncer
 	return c.storage.BatchAddGenericTransaction(transactions)
 }

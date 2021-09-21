@@ -127,11 +127,16 @@ func (s *DisputeCT2TransitionTestSuite) getStateMerkleProofs(
 
 	s.beginTransaction()
 	defer s.executionCtx.Rollback(nil)
+	syncContext := NewTestSyncContext(s.executionCtx, s.rollupCtx.BatchType)
 
 	var stateProofs []models.StateMerkleProof
 	var err error
 	for i := range txs {
-		_, stateProofs, err = s.executionCtx.ApplyCreate2TransfersForSync(txs[i], pubKeyIDs[i], feeReceiverStateID)
+		input := &SyncedC2Ts{
+			txs:       txs[i],
+			pubKeyIDs: pubKeyIDs[i],
+		}
+		_, stateProofs, err = syncContext.ApplyTxsForSync(input, feeReceiverStateID)
 		if err != nil {
 			var disputableErr *DisputableError
 			s.ErrorAs(err, &disputableErr)
