@@ -151,19 +151,23 @@ func (s *ApplyTransfersTestSuite) TestApplyTxs_AppliesFee() {
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AllValid() {
-	transfers := generateValidTransfers(3)
+	input := &SyncedTransfers{
+		txs: generateValidTransfers(3),
+	}
 
-	appliedTransfers, stateProofs, err := s.syncCtx.ApplyTransfersForSync(transfers, s.feeReceiver.StateID)
+	appliedTransfers, stateProofs, err := s.syncCtx.ApplyTransfersForSync(input, s.feeReceiver.StateID)
 	s.NoError(err)
 	s.Len(appliedTransfers, 3)
 	s.Len(stateProofs, 7)
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_InvalidTransfer() {
-	transfers := generateValidTransfers(2)
-	transfers = append(transfers, generateInvalidTransfers(2)...)
+	input := &SyncedTransfers{
+		txs: generateValidTransfers(2),
+	}
+	input.txs = append(input.txs, generateInvalidTransfers(2)...)
 
-	appliedTransfers, _, err := s.syncCtx.ApplyTransfersForSync(transfers, s.feeReceiver.StateID)
+	appliedTransfers, _, err := s.syncCtx.ApplyTransfersForSync(input, s.feeReceiver.StateID)
 	s.Nil(appliedTransfers)
 
 	var disputableErr *DisputableError
@@ -173,9 +177,11 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_InvalidTransfer() {
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AppliesFee() {
-	transfers := generateValidTransfers(3)
+	input := &SyncedTransfers{
+		txs: generateValidTransfers(3),
+	}
 
-	_, _, err := s.syncCtx.ApplyTransfersForSync(transfers, s.feeReceiver.StateID)
+	_, _, err := s.syncCtx.ApplyTransfersForSync(input, s.feeReceiver.StateID)
 	s.NoError(err)
 
 	feeReceiverState, err := s.rollupCtx.storage.StateTree.Leaf(s.feeReceiver.StateID)
@@ -184,12 +190,14 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_AppliesFee() {
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_ReturnsCorrectStateProofsForZeroFee() {
-	transfers := generateValidTransfers(2)
-	for i := range transfers {
-		transfers[i].Fee = models.MakeUint256(0)
+	input := &SyncedTransfers{
+		txs: generateValidTransfers(2),
+	}
+	for i := range input.txs {
+		input.txs[i].Fee = models.MakeUint256(0)
 	}
 
-	_, stateProofs, err := s.syncCtx.ApplyTransfersForSync(transfers, s.feeReceiver.StateID)
+	_, stateProofs, err := s.syncCtx.ApplyTransfersForSync(input, s.feeReceiver.StateID)
 	s.NoError(err)
 	s.Len(stateProofs, 5)
 }
@@ -207,9 +215,11 @@ func (s *ApplyTransfersTestSuite) TestApplyTransfersForSync_InvalidFeeReceiverTo
 	})
 	s.NoError(err)
 
-	transfers := generateValidTransfers(2)
+	input := &SyncedTransfers{
+		txs: generateValidTransfers(2),
+	}
 
-	appliedTransfers, _, err := s.syncCtx.ApplyTransfersForSync(transfers, feeReceiver.StateID)
+	appliedTransfers, _, err := s.syncCtx.ApplyTransfersForSync(input, feeReceiver.StateID)
 	s.Nil(appliedTransfers)
 
 	var disputableErr *DisputableError

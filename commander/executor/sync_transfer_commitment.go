@@ -24,11 +24,11 @@ func (c *SyncContext) syncTransferCommitment(
 		return nil, err
 	}
 
-	if uint32(deserializeResult.AppliedTxs().Len()) > c.cfg.MaxTxsPerCommitment {
+	if uint32(deserializeResult.Txs().Len()) > c.cfg.MaxTxsPerCommitment {
 		return nil, ErrTooManyTxs
 	}
 
-	appliedTransfers, stateProofs, err := c.ApplyTransfersForSync(deserializeResult.AppliedTxs(), commitment.FeeReceiver)
+	appliedTransfers, stateProofs, err := c.ApplyTransfersForSync(deserializeResult, commitment.FeeReceiver)
 	if err != nil {
 		return nil, err
 	}

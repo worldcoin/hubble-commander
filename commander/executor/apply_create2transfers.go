@@ -28,7 +28,12 @@ func (c *ExecutionContext) ApplyCreate2TransfersForSync(
 	for i := range transfers {
 		transfer := &transfers[i]
 
-		synced, transferError, appError := c.ApplyCreate2TransferForSync(transfer, pubKeyIDs[i], *tokenID)
+		input := &applier.SyncedC2T2{
+			Tx:       transfer,
+			PubKeyID: pubKeyIDs[i],
+		}
+
+		synced, transferError, appError := c.ApplyCreate2TransferForSync(input, *tokenID)
 		if appError != nil {
 			return nil, nil, appError
 		}

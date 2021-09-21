@@ -46,22 +46,22 @@ func (c *RollupContext) ApplyTxs(
 	return returnStruct, nil
 }
 
-func (c *SyncContext) ApplyTransfersForSync(txs models.GenericTransactionArray, feeReceiverStateID uint32) (
+func (c *SyncContext) ApplyTransfersForSync(txs SyncedTxs, feeReceiverStateID uint32) (
 	models.GenericTransactionArray,
 	[]models.StateMerkleProof,
 	error,
 ) {
-	appliedTransfers := c.Syncer.NewTxArray(0, uint32(txs.Len()))
-	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*txs.Len()+1)
+	appliedTransfers := c.Syncer.NewTxArray(0, uint32(txs.Txs().Len()))
+	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*txs.Txs().Len()+1)
 	combinedFee := models.NewUint256(0)
 
-	tokenID, err := c.getCommitmentTokenID(txs, feeReceiverStateID)
+	tokenID, err := c.getCommitmentTokenID(txs.Txs(), feeReceiverStateID)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	for i := 0; i < txs.Len(); i++ {
-		synced, transferError, appError := c.Syncer.ApplyTx(txs.At(i), *tokenID)
+	for i := 0; i < txs.Txs().Len(); i++ {
+		synced, transferError, appError := c.Syncer.ApplyTx(txs.Txs().At(i), *tokenID)
 		if appError != nil {
 			return nil, nil, appError
 		}

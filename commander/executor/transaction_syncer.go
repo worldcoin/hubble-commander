@@ -13,13 +13,13 @@ import (
 
 type TransactionSyncer interface {
 	TxLength() int
-	DeserializeTxs(data []byte) (ApplyTxsForCommitmentResult, error)
+	DeserializeTxs(data []byte) (SyncedTxs, error)
 	EncodeTxForSigning(tx models.GenericTransaction) ([]byte, error)
 	NewTxArray(size, capacity uint32) models.GenericTransactionArray
 	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
 		synced *applier.SyncedGenericTransaction, transferError, appError error,
 	)
-	SetPublicKeys(result ApplyTxsForCommitmentResult) error
+	SetPublicKeys(result SyncedTxs) error
 }
 
 func NewTransactionSyncer(executionCtx *ExecutionContext, txType txtype.TransactionType) TransactionSyncer {
@@ -51,13 +51,13 @@ func (s *TransferSyncer) TxLength() int {
 	return encoder.TransferLength
 }
 
-func (s *TransferSyncer) DeserializeTxs(data []byte) (ApplyTxsForCommitmentResult, error) {
+func (s *TransferSyncer) DeserializeTxs(data []byte) (SyncedTxs, error) {
 	txs, err := encoder.DeserializeTransfers(data)
 	if err != nil {
 		return nil, err
 	}
-	return &ApplyTransfersForCommitmentResult{
-		appliedTxs: txs,
+	return &SyncedTransfers{
+		txs: txs,
 	}, nil
 }
 
@@ -75,7 +75,7 @@ func (s *TransferSyncer) ApplyTx(tx models.GenericTransaction, commitmentTokenID
 	return s.applier.ApplyTransferForSync(tx, commitmentTokenID)
 }
 
-func (s *TransferSyncer) SetPublicKeys(result ApplyTxsForCommitmentResult) error {
+func (s *TransferSyncer) SetPublicKeys(result SyncedTxs) error {
 	return nil
 }
 
@@ -95,14 +95,14 @@ func (s *C2TSyncer) TxLength() int {
 	return encoder.Create2TransferLength
 }
 
-func (s *C2TSyncer) DeserializeTxs(data []byte) (ApplyTxsForCommitmentResult, error) {
+func (s *C2TSyncer) DeserializeTxs(data []byte) (SyncedTxs, error) {
 	txs, pubKeyIDs, err := encoder.DeserializeCreate2Transfers(data)
 	if err != nil {
 		return nil, err
 	}
-	return &ApplyC2TForCommitmentResult{
-		appliedTxs:     txs,
-		addedPubKeyIDs: pubKeyIDs,
+	return &SyncedC2Ts{
+		txs:       txs,
+		pubKeyIDs: pubKeyIDs,
 	}, nil
 }
 
@@ -120,10 +120,10 @@ func (s *C2TSyncer) ApplyTx(tx models.GenericTransaction, commitmentTokenID mode
 	panic("implement me")
 }
 
-func (s *C2TSyncer) SetPublicKeys(result ApplyTxsForCommitmentResult) error {
-	txs := result.AppliedTxs().ToCreate2TransferArray()
+func (s *C2TSyncer) SetPublicKeys(result SyncedTxs) error {
+	txs := result.Txs().ToCreate2TransferArray()
 	for i := range txs {
-		leaf, err := s.storage.AccountTree.Leaf(result.AddedPubKeyIDs()[i])
+		leaf, err := s.storage.AccountTree.Leaf(result.PubKeyIDs()[i])
 		if err != nil {
 			return err
 		}
