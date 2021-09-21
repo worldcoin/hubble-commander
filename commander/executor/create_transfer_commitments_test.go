@@ -7,7 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -52,7 +52,7 @@ func (s *TransferCommitmentsTestSuite) SetupTest() {
 	s.NoError(err)
 
 	executionCtx := NewTestExecutionContext(s.storage.Storage, eth.DomainOnlyTestClient, s.cfg)
-	s.rollupCtx = NewTestRollupContext(executionCtx, txtype.Transfer)
+	s.rollupCtx = NewTestRollupContext(executionCtx, batchtype.Transfer)
 }
 
 func populateAccounts(storage *st.Storage, balances []models.Uint256) error {

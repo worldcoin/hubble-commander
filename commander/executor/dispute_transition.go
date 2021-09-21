@@ -3,7 +3,7 @@ package executor
 import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
@@ -146,7 +146,7 @@ func (c *DisputeContext) DisputeTransition(
 		return err
 	}
 
-	if batch.Type == txtype.Transfer {
+	if batch.Type == batchtype.Transfer {
 		err = c.client.DisputeTransitionTransfer(
 			&batch.ID,
 			previousCommitmentProof,

@@ -6,7 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 )
@@ -19,11 +19,11 @@ func (c *DisputeContext) DisputeSignature(
 	stateProofs []models.StateMerkleProof,
 ) error {
 	switch batch.Type {
-	case txtype.Transfer:
+	case batchtype.Transfer:
 		return c.disputeTransferSignature(batch, commitmentIndex, stateProofs)
-	case txtype.Create2Transfer:
+	case batchtype.Create2Transfer:
 		return c.disputeCreate2TransferSignature(batch, commitmentIndex, stateProofs)
-	case txtype.Genesis, txtype.MassMigration, txtype.Deposit:
+	case batchtype.Genesis, batchtype.MassMigration, batchtype.Deposit:
 		return errors.WithStack(ErrUnsupportedBatchType)
 	}
 	return nil

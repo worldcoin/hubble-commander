@@ -4,7 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -113,11 +113,11 @@ func (c *ExecutionContext) syncCommitment(
 	var transactions models.GenericTransactionArray
 	var err error
 	switch batch.Type {
-	case txtype.Transfer:
+	case batchtype.Transfer:
 		transactions, err = c.syncTransferCommitment(commitment)
-	case txtype.Create2Transfer:
+	case batchtype.Create2Transfer:
 		transactions, err = c.syncCreate2TransferCommitment(commitment)
-	case txtype.Genesis, txtype.MassMigration, txtype.Deposit:
+	case batchtype.Genesis, batchtype.MassMigration, batchtype.Deposit:
 		return errors.Errorf("unsupported batch type for sync: %s", batch.Type)
 	}
 	if err != nil {

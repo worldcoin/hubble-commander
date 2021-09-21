@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 )
@@ -15,7 +15,7 @@ type SubmitC2TBatchTestSuite struct {
 }
 
 func (s *SubmitC2TBatchTestSuite) SetupTest() {
-	s.TestSuiteWithRollupContext.SetupTest(txtype.Create2Transfer)
+	s.TestSuiteWithRollupContext.SetupTest(batchtype.Create2Transfer)
 	setupUser(&s.SubmitBatchTestSuite)
 }
 
@@ -27,7 +27,7 @@ func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_SubmitsCommitmentsOnChain() {
 	commitment := baseCommitment
 	commitment.ID.BatchID = models.MakeUint256FromBig(*nextBatchID)
 
-	pendingBatch, err := s.rollupCtx.NewPendingBatch(txtype.Create2Transfer)
+	pendingBatch, err := s.rollupCtx.NewPendingBatch(batchtype.Create2Transfer)
 	s.NoError(err)
 	err = s.rollupCtx.SubmitBatch(pendingBatch, []models.Commitment{commitment})
 	s.NoError(err)
@@ -40,7 +40,7 @@ func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_SubmitsCommitmentsOnChain() {
 }
 
 func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_StoresPendingBatchRecord() {
-	pendingBatch, err := s.rollupCtx.NewPendingBatch(txtype.Create2Transfer)
+	pendingBatch, err := s.rollupCtx.NewPendingBatch(batchtype.Create2Transfer)
 	s.NoError(err)
 
 	commitment := baseCommitment
@@ -59,7 +59,7 @@ func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_StoresPendingBatchRecord() {
 }
 
 func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_AddsCommitments() {
-	pendingBatch, err := s.rollupCtx.NewPendingBatch(txtype.Create2Transfer)
+	pendingBatch, err := s.rollupCtx.NewPendingBatch(batchtype.Create2Transfer)
 	s.NoError(err)
 	commitments := getCommitments(2, pendingBatch.ID)
 

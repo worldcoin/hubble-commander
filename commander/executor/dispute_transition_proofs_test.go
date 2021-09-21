@@ -6,7 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
@@ -46,7 +46,7 @@ func (s *DisputeTransitionProofsTestSuite) SetupSuite() {
 	s.decodedBatch = eth.DecodedBatch{
 		Batch: models.Batch{
 			ID:                models.MakeUint256(2),
-			Type:              txtype.Transfer,
+			Type:              batchtype.Transfer,
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(10),
@@ -94,7 +94,7 @@ func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_
 
 	batch := models.Batch{
 		ID:                models.MakeUint256(1),
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(10),
@@ -109,7 +109,7 @@ func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_
 				BatchID:      batch.ID,
 				IndexInBatch: 0,
 			},
-			Type:              txtype.Transfer,
+			Type:              batchtype.Transfer,
 			Transactions:      utils.RandomBytes(12),
 			FeeReceiver:       11,
 			CombinedSignature: models.MakeRandomSignature(),
@@ -120,7 +120,7 @@ func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_
 				BatchID:      batch.ID,
 				IndexInBatch: 1,
 			},
-			Type:              txtype.Transfer,
+			Type:              batchtype.Transfer,
 			Transactions:      utils.RandomBytes(12),
 			FeeReceiver:       11,
 			CombinedSignature: models.MakeRandomSignature(),

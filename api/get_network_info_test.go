@@ -5,6 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -57,14 +58,14 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo_NoFinalisedBatches() {
 	batches := []models.Batch{
 		{
 			ID:                models.MakeUint256(1234),
-			Type:              txtype.Transfer,
+			Type:              batchtype.Transfer,
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(1234),
 		},
 		{
 			ID:                models.MakeUint256(2000),
-			Type:              txtype.Create2Transfer,
+			Type:              batchtype.Create2Transfer,
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(2000),
@@ -86,14 +87,14 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
 	batches := []models.Batch{
 		{
 			ID:                models.MakeUint256(1234),
-			Type:              txtype.Transfer,
+			Type:              batchtype.Transfer,
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(1),
 		},
 		{
 			ID:                models.MakeUint256(2000),
-			Type:              txtype.Create2Transfer,
+			Type:              batchtype.Create2Transfer,
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(2000),

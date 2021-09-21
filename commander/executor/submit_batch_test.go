@@ -4,14 +4,14 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/suite"
 )
 
 var (
 	baseCommitment = models.Commitment{
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		Transactions:      utils.RandomBytes(24),
 		FeeReceiver:       1,
 		CombinedSignature: models.MakeRandomSignature(),

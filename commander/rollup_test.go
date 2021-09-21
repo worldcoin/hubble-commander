@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -37,7 +37,7 @@ func (s *RollupTestSuite) TestValidateStateRoot_SameStateRootHash() {
 	s.NoError(err)
 
 	commitment := models.Commitment{
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		Transactions:      []byte{1, 2, 3},
 		FeeReceiver:       0,
 		CombinedSignature: models.Signature{},
@@ -52,7 +52,7 @@ func (s *RollupTestSuite) TestValidateStateRoot_SameStateRootHash() {
 
 func (s *RollupTestSuite) TestValidateStateRoot_DifferentStateRootHash() {
 	commitment := models.Commitment{
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		Transactions:      []byte{1, 2, 3},
 		FeeReceiver:       0,
 		CombinedSignature: models.Signature{},

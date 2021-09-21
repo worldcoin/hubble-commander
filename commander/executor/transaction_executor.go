@@ -7,7 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -23,14 +23,14 @@ type TransactionExecutor interface {
 	SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error)
 }
 
-func CreateTransactionExecutor(executionCtx *ExecutionContext, txType txtype.TransactionType) TransactionExecutor {
-	switch txType {
-	case txtype.Transfer:
+func CreateTransactionExecutor(executionCtx *ExecutionContext, batchType batchtype.BatchType) TransactionExecutor {
+	switch batchType {
+	case batchtype.Transfer:
 		return NewTransferExecutor(executionCtx.storage, executionCtx.client)
-	case txtype.Create2Transfer:
+	case batchtype.Create2Transfer:
 		return NewC2TExecutor(executionCtx.storage, executionCtx.client)
-	case txtype.Genesis, txtype.MassMigration, txtype.Deposit:
-		log.Fatal("Invalid tx type")
+	case batchtype.Genesis, batchtype.MassMigration, batchtype.Deposit:
+		log.Fatal("Invalid batch type")
 		return nil
 	}
 	return nil

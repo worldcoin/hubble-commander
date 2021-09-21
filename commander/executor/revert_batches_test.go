@@ -7,7 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/stretchr/testify/suite"
@@ -20,7 +20,7 @@ type RevertBatchesTestSuite struct {
 }
 
 func (s *RevertBatchesTestSuite) SetupTest() {
-	s.TestSuiteWithRollupContext.SetupTestWithConfig(txtype.Transfer, config.RollupConfig{
+	s.TestSuiteWithRollupContext.SetupTestWithConfig(batchtype.Transfer, config.RollupConfig{
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
 		MinTxsPerCommitment:    1,
