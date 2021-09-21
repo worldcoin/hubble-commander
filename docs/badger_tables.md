@@ -42,7 +42,7 @@ Value: {pubKeyID, publicKey} `models.Account`
 
 Key: publicKey `models.PublicKey`
 
-Value: list of pubKeyIDs `[]uint32 ?` 
+Value: list of pubKeyIDs `[]uint32 ?`
 
 ### Chain State
 
@@ -105,7 +105,7 @@ BatchID -> {
 ```go
 <BatchID, IndexInBatch> -> {
 	BatchID           Uint256 // keep it in struct, just not serialize it
-  IndexInBatch      int32   // keep it in struct, just not serialize it  
+	IndexInBatch      int32   // keep it in struct, just not serialize it  
 	Type              txtype.TransactionType
 	Transactions      []byte
 	FeeReceiver       uint32
@@ -152,34 +152,33 @@ type RegisteredToken struct {
 }
 ```
 
-### Deposits
+### Pending Deposits
 
-- Similar to Transactions table. Holds individual deposits.
+- Holds deposits until they are moved into **Pending Deposit SubTrees**
 
-Key: <blockNumber, logIndex> `models.DepositID`
+Key: <blockNumber, logIndex> `models.PendingDepositID`
 
-Value: `models.Deposit`
+Value: `models.PendingDeposit`
 
 ```go
-type DepositID struct {
+type PendingDepositID struct {
 	BlockNumber uint32 // block in which the deposit tx was included
 	LogIndex    uint32 // `DepositQueued` log index in that block
 }
 ```
 
 ```go
-type Deposit struct {
+type PendingDeposit struct {
 	ID                   DepositID
 	ToPubKeyID           uint32
   TokenID              models.Uint256
   L2Amount             models.Uint256
-  IncludedInCommitment *models.CommitmentID // nil for pending deposits
 }
 ```
 
 ### Pending Deposit SubTrees
 
-- FIFO queue for Deposit SubTrees that can be submitted in a new Batch
+- FIFO queue for ready Deposit SubTrees that can be submitted in a new Batch
 
 Key: SubTreeID `models.Uint256`
 
@@ -187,9 +186,9 @@ Value: `models.PendingDepositSubTree`
 
 ```go
 type PendingDepositSubTree struct {
- 	ID       models.Uint256     // assigned in SC
-	Root     common.Hash        // subtree root that will be inserted into the state tree
-  Deposits []models.DepositID // IDs of deposits included in the subtree
+ 	ID       models.Uint256          // assigned in SC
+	Root     common.Hash             // subtree root that will be inserted into the state tree
+	Deposits []models.PendingDeposit // deposits included in the subtree
 }
 ```
 
@@ -197,26 +196,45 @@ type PendingDepositSubTree struct {
 
 - The current Commitment table will need to be updated to support both transaction and deposit commitments
 
-Stored structures (proposal):
+Stored structures (objects persisted to Badger):
 
 ```go
-<BatchID, IndexInBatch> -> {
-	BatchID       models.Uint256 // keep it in struct, just not serialize it
-  IndexInBatch  int32   // keep it in struct, just not serialize it  
-	Type          txtype.TransactionType
+type StoredCommitment struct {
+	ID            models.CommitmentID // keep it in struct, just not serialize it
+	Type          batchtype.BatchType // type added in PR #337
 	PostStateRoot common.Hash
 
-  Body models.CommitmentBody // different body depending on Type
+  Body models.StoredCommitmentBody // interface type, different body depending on `Type`
 }
+
+type StoredCommitmentTxBody struct {
+	FeeReceiver       uint32
+	CombinedSignature models.Signature
+	Transactions      []byte
+}
+
+type StoredCommitmentDepositBody struct {
+	SubTreeID         models.Uint256
+	SubTreeRoot       common.Hash
+	Deposits          []models.Deposit
+}
+
+type Deposit struct {
+	ID                   DepositID
+	ToPubKeyID           uint32
+	TokenID              models.Uint256
+	L2Amount             models.Uint256
+}
+
 ```
 
-Go types (proposal):
+Types for internal use:
 
 ```go
 type CommitmentBase struct {
-  ID                models.CommitmentID
+	ID                models.CommitmentID
 	Type              txtype.TransactionType
-  PostStateRoot     common.Hash
+	PostStateRoot     common.Hash
 }
 
 type TransactionCommitment struct {
@@ -228,8 +246,8 @@ type TransactionCommitment struct {
 
 type DepositCommitment struct {
 	CommitmentBase
-  SubTreeID         models.Uint256
+	SubTreeID         models.Uint256
 	SubTreeRoot       common.Hash
-	Deposits          []models.DepositID // TODO check if this is necessary	
+	Deposits          []models.Deposit	
 }
 ```
