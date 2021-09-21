@@ -120,9 +120,6 @@ func (c *SyncContext) syncCommitment(batch *eth.DecodedBatch, commitment *encode
 	}
 	for i := 0; i < transactions.Len(); i++ {
 		transactions.At(i).GetBase().CommitmentID = &commitment.ID
-	}
-
-	for i := 0; i < transactions.Len(); i++ {
 		hashTransfer, err := c.Syncer.HashTx(transactions.At(i))
 		if err != nil {
 			return err
