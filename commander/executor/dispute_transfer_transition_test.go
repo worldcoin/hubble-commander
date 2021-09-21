@@ -115,10 +115,12 @@ func (s *DisputeTransferTransitionTestSuite) getStateMerkleProofs(txs [][]models
 	s.beginTransaction()
 	defer s.executionCtx.Rollback(nil)
 
+	syncCtx := NewTestSyncContext(s.executionCtx, s.rollupCtx.BatchType)
+
 	var stateProofs []models.StateMerkleProof
 	var err error
 	for i := range txs {
-		_, stateProofs, err = s.executionCtx.ApplyTransfersForSync(txs[i], feeReceiverStateID)
+		_, stateProofs, err = syncCtx.ApplyTransfersForSync(models.TransferArray(txs[i]), feeReceiverStateID)
 		if err != nil {
 			var disputableErr *DisputableError
 			s.ErrorAs(err, &disputableErr)

@@ -46,24 +46,22 @@ func (c *RollupContext) ApplyTxs(
 	return returnStruct, nil
 }
 
-func (c *ExecutionContext) ApplyTransfersForSync(transfers []models.Transfer, feeReceiverStateID uint32) (
-	[]models.Transfer,
+func (c *SyncContext) ApplyTransfersForSync(txs models.GenericTransactionArray, feeReceiverStateID uint32) (
+	models.GenericTransactionArray,
 	[]models.StateMerkleProof,
 	error,
 ) {
-	transfersLen := len(transfers)
-	appliedTransfers := make([]models.Transfer, 0, transfersLen)
-	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*transfersLen+1)
+	appliedTransfers := make(models.TransferArray, 0, txs.Len())
+	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*txs.Len()+1)
 	combinedFee := models.NewUint256(0)
 
-	tokenID, err := c.getCommitmentTokenID(models.TransferArray(transfers), feeReceiverStateID)
+	tokenID, err := c.getCommitmentTokenID(txs, feeReceiverStateID)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	for i := range transfers {
-		transfer := &transfers[i]
-		synced, transferError, appError := c.ApplyTransferForSync(transfer, *tokenID)
+	for i := 0; i < txs.Len(); i++ {
+		synced, transferError, appError := c.ApplyTransferForSync(txs.At(i).ToTransfer(), *tokenID)
 		if appError != nil {
 			return nil, nil, appError
 		}

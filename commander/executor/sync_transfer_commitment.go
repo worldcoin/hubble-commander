@@ -28,7 +28,7 @@ func (c *SyncContext) syncTransferCommitment(
 		return nil, ErrTooManyTxs
 	}
 
-	appliedTransfers, stateProofs, err := c.ApplyTransfersForSync(transfers.ToTransferArray(), commitment.FeeReceiver)
+	appliedTransfers, stateProofs, err := c.ApplyTransfersForSync(transfers, commitment.FeeReceiver)
 	if err != nil {
 		return nil, err
 	}
@@ -39,13 +39,13 @@ func (c *SyncContext) syncTransferCommitment(
 	}
 
 	if !c.cfg.DisableSignatures {
-		err = c.verifyTransferSignature(commitment, models.TransferArray(appliedTransfers))
+		err = c.verifyTransferSignature(commitment, appliedTransfers)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return models.TransferArray(appliedTransfers), nil
+	return appliedTransfers, nil
 }
 
 func (c *ExecutionContext) verifyStateRoot(commitmentPostState common.Hash, proofs []models.StateMerkleProof) error {
