@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 )
 
@@ -21,6 +22,8 @@ type TransactionSyncer interface {
 		synced *applier.SyncedGenericTransaction, transferError, appError error,
 	)
 	SetPublicKeys(result SyncedTxs) error
+	BatchAddTxs(txs models.GenericTransactionArray) error
+	HashTx(tx models.GenericTransaction) (*common.Hash, error)
 }
 
 func NewTransactionSyncer(executionCtx *ExecutionContext, txType txtype.TransactionType) TransactionSyncer {
@@ -80,6 +83,14 @@ func (s *TransferSyncer) SetPublicKeys(_ SyncedTxs) error {
 	return nil
 }
 
+func (s *TransferSyncer) BatchAddTxs(txs models.GenericTransactionArray) error {
+	return s.storage.BatchAddTransfer(txs.ToTransferArray())
+}
+
+func (s *TransferSyncer) HashTx(tx models.GenericTransaction) (*common.Hash, error) {
+	return encoder.HashTransfer(tx.ToTransfer())
+}
+
 type C2TSyncer struct {
 	storage *st.Storage
 	applier *applier.Applier
@@ -135,4 +146,12 @@ func (s *C2TSyncer) SetPublicKeys(result SyncedTxs) error {
 		txs[i].ToPublicKey = leaf.PublicKey
 	}
 	return nil
+}
+
+func (s *C2TSyncer) BatchAddTxs(txs models.GenericTransactionArray) error {
+	return s.storage.BatchAddCreate2Transfer(txs.ToCreate2TransferArray())
+}
+
+func (s *C2TSyncer) HashTx(tx models.GenericTransaction) (*common.Hash, error) {
+	return encoder.HashCreate2Transfer(tx.ToCreate2Transfer())
 }

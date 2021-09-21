@@ -47,7 +47,7 @@ func (c *SyncContext) ApplyTxsForSync(txs SyncedTxs, feeReceiverStateID uint32) 
 	return appliedTxs, stateChangeProofs, nil
 }
 
-func (c *ExecutionContext) getCommitmentTokenID(transfers models.GenericTransactionArray, feeReceiverStateID uint32) (
+func (c *SyncContext) getCommitmentTokenID(transfers models.GenericTransactionArray, feeReceiverStateID uint32) (
 	tokenID *models.Uint256,
 	err error,
 ) {

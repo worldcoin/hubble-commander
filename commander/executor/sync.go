@@ -123,7 +123,7 @@ func (c *SyncContext) syncCommitment(batch *eth.DecodedBatch, commitment *encode
 	}
 
 	for i := 0; i < transactions.Len(); i++ {
-		hashTransfer, err := encoder.HashGenericTransaction(transactions.At(i))
+		hashTransfer, err := c.Syncer.HashTx(transactions.At(i))
 		if err != nil {
 			return err
 		}
@@ -133,6 +133,5 @@ func (c *SyncContext) syncCommitment(batch *eth.DecodedBatch, commitment *encode
 	if transactions.Len() == 0 {
 		return nil
 	}
-	//TODO-dedu: replace with implementation on syncer
-	return c.storage.BatchAddGenericTransaction(transactions)
+	return c.Syncer.BatchAddTxs(transactions)
 }
