@@ -117,24 +117,16 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InvalidTransfer
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_ReturnsErrorOnNilToStateID() {
-	input := &SyncedC2T2{
-		Tx:       &create2Transfer,
-		PubKeyID: 2,
-	}
-	_, transferError, appError := s.applier.ApplyCreate2TransferForSync(input, feeReceiverTokenID)
+	_, transferError, appError := s.applier.ApplyCreate2TransferForSync(&create2Transfer, uint32(2), feeReceiverTokenID)
 	s.NoError(transferError)
 	s.ErrorIs(appError, ErrNilReceiverStateID)
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_InsertsNewUserStateAtReceiverStateID() {
+	pubKeyID := uint32(2)
 	c2T := create2Transfer
 	c2T.ToStateID = ref.Uint32(5)
-	input := &SyncedC2T2{
-		Tx:       &c2T,
-		PubKeyID: 2,
-	}
-
-	_, transferError, appError := s.applier.ApplyCreate2TransferForSync(input, feeReceiverTokenID)
+	_, transferError, appError := s.applier.ApplyCreate2TransferForSync(&c2T, pubKeyID, feeReceiverTokenID)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -143,7 +135,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_InsertsN
 
 	s.NoError(err)
 	s.NotNil(leaf)
-	s.Equal(input.PubKeyID, leaf.PubKeyID)
+	s.Equal(pubKeyID, leaf.PubKeyID)
 	s.Equal(feeReceiverTokenID, leaf.TokenID)
 	s.Equal(models.MakeUint256(0), leaf.Nonce)
 }
@@ -151,12 +143,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_InsertsN
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_AppliesTransfer() {
 	c2T := create2Transfer
 	c2T.ToStateID = ref.Uint32(5)
-	input := &SyncedC2T2{
-		Tx:       &c2T,
-		PubKeyID: 2,
-	}
-
-	_, transferError, appError := s.applier.ApplyCreate2TransferForSync(input, feeReceiverTokenID)
+	_, transferError, appError := s.applier.ApplyCreate2TransferForSync(&c2T, 2, feeReceiverTokenID)
 	s.NoError(appError)
 	s.NoError(transferError)
 
@@ -173,15 +160,11 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_Validate
 	senderLeaf, err := s.storage.StateTree.LeafOrEmpty(10)
 	s.NoError(err)
 
-	c2T := create2Transfer
-	c2T.ToStateID = ref.Uint32(5)
-	c2T.FromStateID = senderLeaf.StateID
-	input := &SyncedC2T2{
-		Tx:       &c2T,
-		PubKeyID: 2,
-	}
+	transfer := create2Transfer
+	transfer.ToStateID = ref.Uint32(5)
+	transfer.FromStateID = senderLeaf.StateID
 
-	sync, transferError, appError := s.applier.ApplyCreate2TransferForSync(input, feeReceiverTokenID)
+	sync, transferError, appError := s.applier.ApplyCreate2TransferForSync(&transfer, 2, feeReceiverTokenID)
 	s.NoError(appError)
 	s.ErrorIs(transferError, ErrBalanceTooLow)
 	s.Equal(senderLeaf.UserState, *sync.Proofs.SenderStateProof.UserState)
@@ -194,12 +177,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_InvalidT
 	invalidC2T.Amount = models.MakeUint256(1_000_000)
 	invalidC2T.ToStateID = ref.Uint32(5)
 
-	input := &SyncedC2T2{
-		Tx:       &invalidC2T,
-		PubKeyID: 1,
-	}
-
-	_, transferErr, appErr := s.applier.ApplyCreate2TransferForSync(input, feeReceiverTokenID)
+	_, transferErr, appErr := s.applier.ApplyCreate2TransferForSync(&invalidC2T, 1, feeReceiverTokenID)
 	s.Error(transferErr)
 	s.NoError(appErr)
 }

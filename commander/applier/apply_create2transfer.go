@@ -35,18 +35,19 @@ func (a *Applier) ApplyCreate2Transfer(
 }
 
 func (a *Applier) ApplyCreate2TransferForSync(
-	input *SyncedC2T2,
+	create2Transfer *models.Create2Transfer,
+	pubKeyID uint32,
 	commitmentTokenID models.Uint256,
 ) (synced *SyncedCreate2Transfer, transferError, appError error) {
-	if input.Tx.ToStateID == nil {
+	if create2Transfer.ToStateID == nil {
 		return nil, nil, errors.WithStack(ErrNilReceiverStateID)
 	}
 
-	receiverLeaf, appError := newUserLeaf(*input.Tx.ToStateID, input.PubKeyID, commitmentTokenID)
+	receiverLeaf, appError := newUserLeaf(*create2Transfer.ToStateID, pubKeyID, commitmentTokenID)
 	if appError != nil {
 		return nil, nil, appError
 	}
-	genericSynced, transferError, appError := a.applyTxForSync(input.Tx, receiverLeaf, commitmentTokenID)
+	genericSynced, transferError, appError := a.applyTxForSync(create2Transfer, receiverLeaf, commitmentTokenID)
 	if appError != nil {
 		return nil, nil, appError
 	}

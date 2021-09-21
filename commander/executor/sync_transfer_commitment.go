@@ -19,21 +19,21 @@ func (c *SyncContext) syncTransferCommitment(
 		return nil, ErrInvalidDataLength
 	}
 
-	deserializeResult, err := c.Syncer.DeserializeTxs(commitment.Transactions)
+	syncedTxs, err := c.Syncer.DeserializeTxs(commitment.Transactions)
 	if err != nil {
 		return nil, err
 	}
 
-	if uint32(deserializeResult.Txs().Len()) > c.cfg.MaxTxsPerCommitment {
+	if uint32(syncedTxs.Txs().Len()) > c.cfg.MaxTxsPerCommitment {
 		return nil, ErrTooManyTxs
 	}
 
-	appliedTransfers, stateProofs, err := c.ApplyTransfersForSync(deserializeResult, commitment.FeeReceiver)
+	appliedTransfers, stateProofs, err := c.ApplyTransfersForSync(syncedTxs, commitment.FeeReceiver)
 	if err != nil {
 		return nil, err
 	}
 
-	err = c.Syncer.SetPublicKeys(deserializeResult)
+	err = c.Syncer.SetPublicKeys(syncedTxs)
 	if err != nil {
 		return nil, err
 	}
