@@ -109,7 +109,7 @@ func (c *SyncContext) syncCommitment(
 		return ErrInvalidDataLength
 	}
 
-	transactions, err := c.syncTransferCommitment(commitment)
+	transactions, err := c.syncTxCommitment(commitment)
 	if err != nil {
 		return err
 	}

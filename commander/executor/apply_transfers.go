@@ -46,12 +46,12 @@ func (c *RollupContext) ApplyTxs(
 	return returnStruct, nil
 }
 
-func (c *SyncContext) ApplyTransfersForSync(txs SyncedTxs, feeReceiverStateID uint32) (
+func (c *SyncContext) ApplyTxsForSync(txs SyncedTxs, feeReceiverStateID uint32) (
 	models.GenericTransactionArray,
 	[]models.StateMerkleProof,
 	error,
 ) {
-	appliedTransfers := c.Syncer.NewTxArray(0, uint32(txs.Txs().Len()))
+	appliedTxs := c.Syncer.NewTxArray(0, uint32(txs.Txs().Len()))
 	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*txs.Txs().Len()+1)
 	combinedFee := models.NewUint256(0)
 
@@ -74,7 +74,7 @@ func (c *SyncContext) ApplyTransfersForSync(txs SyncedTxs, feeReceiverStateID ui
 			return nil, nil, NewDisputableErrorWithProofs(Transition, transferError.Error(), stateChangeProofs)
 		}
 
-		appliedTransfers = appliedTransfers.AppendOne(synced.Tx)
+		appliedTxs = appliedTxs.AppendOne(synced.Tx)
 		fee := synced.Tx.GetFee()
 		*combinedFee = *combinedFee.Add(&fee)
 	}
@@ -88,7 +88,7 @@ func (c *SyncContext) ApplyTransfersForSync(txs SyncedTxs, feeReceiverStateID ui
 		return nil, nil, NewDisputableErrorWithProofs(Transition, commitmentError.Error(), stateChangeProofs)
 	}
 
-	return appliedTransfers, stateChangeProofs, nil
+	return appliedTxs, stateChangeProofs, nil
 }
 
 func (c *ExecutionContext) getCommitmentTokenID(transfers models.GenericTransactionArray, feeReceiverStateID uint32) (

@@ -8,7 +8,7 @@ import (
 
 const InvalidSignatureMessage = "invalid commitment signature"
 
-func (c *SyncContext) verifyTransferSignature(commitment *encoder.DecodedCommitment, txs models.GenericTransactionArray) error {
+func (c *SyncContext) verifyTxSignature(commitment *encoder.DecodedCommitment, txs models.GenericTransactionArray) error {
 	domain, err := c.client.GetDomain()
 	if err != nil {
 		return err

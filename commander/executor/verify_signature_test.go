@@ -91,7 +91,7 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_ValidSignature() 
 		CombinedSignature: *combinedSignature,
 	}
 
-	err = s.syncCtx.verifyTransferSignature(commitment, transfers)
+	err = s.syncCtx.verifyTxSignature(commitment, transfers)
 	s.NoError(err)
 }
 
@@ -134,7 +134,7 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_InvalidSignature(
 		CombinedSignature: *combinedSignature,
 	}
 
-	err = s.syncCtx.verifyTransferSignature(commitment, transfers)
+	err = s.syncCtx.verifyTxSignature(commitment, transfers)
 
 	var disputableErr *DisputableError
 	s.ErrorAs(err, &disputableErr)
@@ -150,7 +150,7 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_EmptyTransactions
 		CombinedSignature: models.Signature{1, 2, 3},
 	}
 
-	err := s.syncCtx.verifyTransferSignature(commitment, transfers)
+	err := s.syncCtx.verifyTxSignature(commitment, transfers)
 	s.NoError(err)
 }
 
