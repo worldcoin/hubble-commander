@@ -117,7 +117,7 @@ func (s *C2TSyncer) NewTxArray(size, capacity uint32) models.GenericTransactionA
 func (s *C2TSyncer) ApplyTx(tx SyncedTx, commitmentTokenID models.Uint256) (
 	synced *applier.SyncedGenericTransaction, transferError, appError error,
 ) {
-	panic("implement me")
+	return s.applier.ApplyCreate2TransferForSync(tx.SyncedTx().ToCreate2Transfer(), tx.SyncedPubKeyID(), commitmentTokenID)
 }
 
 func (s *C2TSyncer) SetPublicKeys(result SyncedTxs) error {

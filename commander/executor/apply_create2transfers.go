@@ -38,8 +38,8 @@ func (c *ExecutionContext) ApplyCreate2TransfersForSync(
 		if transferError != nil {
 			return nil, nil, NewDisputableErrorWithProofs(Transition, transferError.Error(), stateChangeProofs)
 		}
-		appliedTransfers = append(appliedTransfers, *synced.Transfer)
-		*combinedFee = *combinedFee.Add(&synced.Transfer.Fee)
+		appliedTransfers = append(appliedTransfers, *synced.Tx.ToCreate2Transfer())
+		*combinedFee = *combinedFee.Add(&synced.Tx.ToCreate2Transfer().Fee)
 	}
 
 	stateProof, commitmentError, appError := c.ApplyFeeForSync(feeReceiverStateID, tokenID, combinedFee)
