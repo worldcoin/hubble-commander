@@ -13,12 +13,13 @@ import (
 
 type TransactionSyncer interface {
 	TxLength() int
-	DeserializeTxs(data []byte) (models.GenericTransactionArray, error)
+	DeserializeTxs(data []byte) (ApplyTxsForCommitmentResult, error)
 	EncodeTxForSigning(tx models.GenericTransaction) ([]byte, error)
 	NewTxArray(size, capacity uint32) models.GenericTransactionArray
 	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
 		synced *applier.SyncedGenericTransaction, transferError, appError error,
 	)
+	SetPublicKeys(result ApplyTxsForCommitmentResult) error
 }
 
 func NewTransactionSyncer(executionCtx *ExecutionContext, txType txtype.TransactionType) TransactionSyncer {
@@ -50,12 +51,14 @@ func (s *TransferSyncer) TxLength() int {
 	return encoder.TransferLength
 }
 
-func (s *TransferSyncer) DeserializeTxs(data []byte) (models.GenericTransactionArray, error) {
+func (s *TransferSyncer) DeserializeTxs(data []byte) (ApplyTxsForCommitmentResult, error) {
 	txs, err := encoder.DeserializeTransfers(data)
 	if err != nil {
 		return nil, err
 	}
-	return models.TransferArray(txs), nil
+	return &ApplyTransfersForCommitmentResult{
+		appliedTxs: txs,
+	}, nil
 }
 
 func (s *TransferSyncer) EncodeTxForSigning(tx models.GenericTransaction) ([]byte, error) {
@@ -72,6 +75,10 @@ func (s *TransferSyncer) ApplyTx(tx models.GenericTransaction, commitmentTokenID
 	return s.applier.ApplyTransferForSync(tx, commitmentTokenID)
 }
 
+func (s *TransferSyncer) SetPublicKeys(result ApplyTxsForCommitmentResult) error {
+	return nil
+}
+
 type C2TSyncer struct {
 	storage *st.Storage
 	applier *applier.Applier
@@ -85,11 +92,18 @@ func NewC2TSyncer(storage *st.Storage, client *eth.Client) *C2TSyncer {
 }
 
 func (s *C2TSyncer) TxLength() int {
-	panic("implement me")
+	return encoder.Create2TransferLength
 }
 
-func (s *C2TSyncer) DeserializeTxs(data []byte) (models.GenericTransactionArray, error) {
-	panic("implement me")
+func (s *C2TSyncer) DeserializeTxs(data []byte) (ApplyTxsForCommitmentResult, error) {
+	txs, pubKeyIDs, err := encoder.DeserializeCreate2Transfers(data)
+	if err != nil {
+		return nil, err
+	}
+	return &ApplyC2TForCommitmentResult{
+		appliedTxs:     txs,
+		addedPubKeyIDs: pubKeyIDs,
+	}, nil
 }
 
 func (s *C2TSyncer) EncodeTxForSigning(tx models.GenericTransaction) ([]byte, error) {
@@ -104,4 +118,16 @@ func (s *C2TSyncer) ApplyTx(tx models.GenericTransaction, commitmentTokenID mode
 	synced *applier.SyncedGenericTransaction, transferError, appError error,
 ) {
 	panic("implement me")
+}
+
+func (s *C2TSyncer) SetPublicKeys(result ApplyTxsForCommitmentResult) error {
+	txs := result.AppliedTxs().ToCreate2TransferArray()
+	for i := range txs {
+		leaf, err := s.storage.AccountTree.Leaf(result.AddedPubKeyIDs()[i])
+		if err != nil {
+			return err
+		}
+		txs[i].ToPublicKey = leaf.PublicKey
+	}
+	return nil
 }
