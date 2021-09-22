@@ -5,7 +5,6 @@ import (
 	"context"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
@@ -17,6 +16,10 @@ func (c *Commander) syncDeposits(start, end uint64) error {
 	depositSubTrees, err := c.fetchDepositSubTrees(start, end)
 	if err != nil {
 		return err
+	}
+
+	if len(depositSubTrees) > 0 {
+		return c.saveSyncedSubTrees(depositSubTrees)
 	}
 
 	return nil
@@ -35,13 +38,13 @@ func (c *Commander) saveSyncedSubTrees(subTrees []models.PendingDepositSubTree) 
 		subTree := &subTrees[i]
 		subTree.Deposits = deposits
 
-		err := storage.AddPendingDepositSubTree(subTree)
+		err := c.storage.AddPendingDepositSubTree(subTree)
 		if err != nil {
 			return err
 		}
 	}
 
-	return nil
+	return c.storage.RemovePendingDeposits(deposits)
 }
 
 func (c *Commander) syncQueuedDeposits(start, end uint64) error {
