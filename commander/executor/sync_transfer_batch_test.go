@@ -22,7 +22,7 @@ type SyncTransferBatchTestSuite struct {
 }
 
 func (s *SyncTransferBatchTestSuite) SetupTest() {
-	s.TestSuiteWithSyncContext.SetupTestWithConfig(batchtype.Transfer, syncTestSuiteConfig)
+	s.TestSuiteWithSyncAndRollupContext.SetupTestWithConfig(batchtype.Transfer, syncTestSuiteConfig)
 	s.SyncTestSuite.setupTest()
 }
 

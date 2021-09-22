@@ -20,14 +20,14 @@ var syncTestSuiteConfig = config.RollupConfig{
 
 // Other test suites encapsulate SyncTestSuite. Don't add any tests on SyncTestSuite to avoid repeated runs.
 type SyncTestSuite struct {
-	TestSuiteWithSyncContext
+	TestSuiteWithSyncAndRollupContext
 
 	domain  *bls.Domain
 	wallets []bls.Wallet
 }
 
 func (s *SyncTestSuite) setupTest() {
-	s.NotNil(s.client) // make sure TestSuiteWithSyncContext.SetupTest was called before
+	s.NotNil(s.client) // make sure TestSuiteWithSyncAndRollupContext.SetupTest was called before
 
 	var err error
 	s.domain, err = s.client.GetDomain()

@@ -5,19 +5,19 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 )
 
-type TestSuiteWithSyncContext struct {
+type TestSuiteWithSyncAndRollupContext struct {
 	TestSuiteWithExecutionContext
 	rollupCtx *RollupContext
 	syncCtx   *SyncContext
 }
 
-func (s *TestSuiteWithSyncContext) SetupTest(batchType batchtype.BatchType) {
+func (s *TestSuiteWithSyncAndRollupContext) SetupTest(batchType batchtype.BatchType) {
 	s.TestSuiteWithExecutionContext.SetupTest()
 	s.rollupCtx = NewTestRollupContext(s.executionCtx, batchType)
 	s.syncCtx = NewTestSyncContext(s.executionCtx, batchType)
 }
 
-func (s *TestSuiteWithSyncContext) SetupTestWithConfig(batchType batchtype.BatchType, cfg config.RollupConfig) {
+func (s *TestSuiteWithSyncAndRollupContext) SetupTestWithConfig(batchType batchtype.BatchType, cfg config.RollupConfig) {
 	s.TestSuiteWithExecutionContext.SetupTestWithConfig(cfg)
 	s.rollupCtx = NewTestRollupContext(s.executionCtx, batchType)
 	s.syncCtx = NewTestSyncContext(s.executionCtx, batchType)
