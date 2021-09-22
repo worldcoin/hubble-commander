@@ -58,20 +58,20 @@ func (a *SyncedC2Ts) SetTxs(txs models.GenericTransactionArray) {
 }
 
 type SyncedTx interface {
-	SyncedTx() models.GenericTransaction
-	SyncedPubKeyID() uint32
+	Tx() models.GenericTransaction
+	PubKeyID() uint32
 }
 
 type SyncedTransfer struct {
 	tx *models.Transfer
 }
 
-func (a *SyncedTransfer) SyncedTx() models.GenericTransaction {
+func (a *SyncedTransfer) Tx() models.GenericTransaction {
 	return a.tx
 }
 
-func (a *SyncedTransfer) SyncedPubKeyID() uint32 {
-	panic("SyncedPubKeyID cannot be invoked on SyncedTransfer")
+func (a *SyncedTransfer) PubKeyID() uint32 {
+	panic("PubKeyID cannot be invoked on SyncedTransfer")
 }
 
 type SyncedC2T struct {
@@ -79,10 +79,10 @@ type SyncedC2T struct {
 	pubKeyID uint32
 }
 
-func (a *SyncedC2T) SyncedTx() models.GenericTransaction {
+func (a *SyncedC2T) Tx() models.GenericTransaction {
 	return a.tx
 }
 
-func (a *SyncedC2T) SyncedPubKeyID() uint32 {
+func (a *SyncedC2T) PubKeyID() uint32 {
 	return a.pubKeyID
 }

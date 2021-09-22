@@ -18,10 +18,10 @@ type TransactionSyncer interface {
 	DeserializeTxs(data []byte) (SyncedTxs, error)
 	EncodeTxForSigning(tx models.GenericTransaction) ([]byte, error)
 	NewTxArray(size, capacity uint32) models.GenericTransactionArray
-	ApplyTx(tx SyncedTx, commitmentTokenID models.Uint256) (
+	ApplyTx(syncedTx SyncedTx, commitmentTokenID models.Uint256) (
 		synced *applier.SyncedGenericTransaction, transferError, appError error,
 	)
-	SetPublicKeys(result SyncedTxs) error
+	SetPublicKeys(syncedTxs SyncedTxs) error
 	BatchAddTxs(txs models.GenericTransactionArray) error
 	HashTx(tx models.GenericTransaction) (*common.Hash, error)
 }
@@ -73,10 +73,10 @@ func (s *TransferSyncer) NewTxArray(size, capacity uint32) models.GenericTransac
 	return make(models.TransferArray, size, capacity)
 }
 
-func (s *TransferSyncer) ApplyTx(tx SyncedTx, commitmentTokenID models.Uint256) (
+func (s *TransferSyncer) ApplyTx(syncedTx SyncedTx, commitmentTokenID models.Uint256) (
 	synced *applier.SyncedGenericTransaction, transferError, appError error,
 ) {
-	return s.applier.ApplyTransferForSync(tx.SyncedTx(), commitmentTokenID)
+	return s.applier.ApplyTransferForSync(syncedTx.Tx(), commitmentTokenID)
 }
 
 func (s *TransferSyncer) SetPublicKeys(_ SyncedTxs) error {
@@ -130,16 +130,16 @@ func (s *C2TSyncer) NewTxArray(size, capacity uint32) models.GenericTransactionA
 	return make(models.Create2TransferArray, size, capacity)
 }
 
-func (s *C2TSyncer) ApplyTx(tx SyncedTx, commitmentTokenID models.Uint256) (
+func (s *C2TSyncer) ApplyTx(syncedTx SyncedTx, commitmentTokenID models.Uint256) (
 	synced *applier.SyncedGenericTransaction, transferError, appError error,
 ) {
-	return s.applier.ApplyCreate2TransferForSync(tx.SyncedTx().ToCreate2Transfer(), tx.SyncedPubKeyID(), commitmentTokenID)
+	return s.applier.ApplyCreate2TransferForSync(syncedTx.Tx().ToCreate2Transfer(), syncedTx.PubKeyID(), commitmentTokenID)
 }
 
-func (s *C2TSyncer) SetPublicKeys(result SyncedTxs) error {
-	txs := result.Txs().ToCreate2TransferArray()
+func (s *C2TSyncer) SetPublicKeys(syncedTxs SyncedTxs) error {
+	txs := syncedTxs.Txs().ToCreate2TransferArray()
 	for i := range txs {
-		leaf, err := s.storage.AccountTree.Leaf(result.PubKeyIDs()[i])
+		leaf, err := s.storage.AccountTree.Leaf(syncedTxs.PubKeyIDs()[i])
 		if err != nil {
 			return err
 		}
