@@ -17,7 +17,7 @@ func (c *SyncContext) ApplyTxs(txs SyncedTxs, feeReceiverStateID uint32) (
 	}
 
 	for i := 0; i < txs.Txs().Len(); i++ {
-		synced, transferError, appError := c.Syncer.ApplyTx(txs.SyncedTxAt(i), *tokenID)
+		synced, transferError, appError := c.Syncer.ApplyTx(txs.TxAt(i), *tokenID)
 		if appError != nil {
 			return nil, nil, appError
 		}

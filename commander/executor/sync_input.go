@@ -7,7 +7,7 @@ import (
 type SyncedTxs interface {
 	Txs() models.GenericTransactionArray
 	PubKeyIDs() []uint32
-	SyncedTxAt(index int) SyncedTx
+	TxAt(index int) SyncedTx
 	SetTxs(txs models.GenericTransactionArray)
 }
 
@@ -23,7 +23,7 @@ func (a *SyncedTransfers) PubKeyIDs() []uint32 {
 	panic("PubKeyIDs cannot be invoked on SyncedTransfers")
 }
 
-func (a *SyncedTransfers) SyncedTxAt(index int) SyncedTx {
+func (a *SyncedTransfers) TxAt(index int) SyncedTx {
 	return &SyncedTransfer{
 		tx: a.txs.At(index).ToTransfer(),
 	}
@@ -46,7 +46,7 @@ func (a *SyncedC2Ts) PubKeyIDs() []uint32 {
 	return a.pubKeyIDs
 }
 
-func (a *SyncedC2Ts) SyncedTxAt(index int) SyncedTx {
+func (a *SyncedC2Ts) TxAt(index int) SyncedTx {
 	return &SyncedC2T{
 		tx:       a.txs.At(index).ToCreate2Transfer(),
 		pubKeyID: a.pubKeyIDs[index],
