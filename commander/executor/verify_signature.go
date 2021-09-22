@@ -30,33 +30,7 @@ func (c *SyncContext) verifyTxSignature(commitment *encoder.DecodedCommitment, t
 	return c.verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys, txs)
 }
 
-func (c *ExecutionContext) verifyCreate2TransferSignature(
-	commitment *encoder.DecodedCommitment,
-	transfers []models.Create2Transfer,
-) error {
-	domain, err := c.client.GetDomain()
-	if err != nil {
-		return err
-	}
-
-	messages := make([][]byte, len(transfers))
-	publicKeys := make([]*models.PublicKey, len(transfers))
-	for i := range transfers {
-		publicKeys[i], err = c.storage.GetPublicKeyByStateID(transfers[i].FromStateID)
-		if err != nil {
-			return err
-		}
-		messages[i], err = encoder.EncodeCreate2TransferForSigning(&transfers[i])
-		if err != nil {
-			return err
-		}
-	}
-
-	genericTxs := models.Create2TransferArray(transfers)
-	return c.verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys, genericTxs)
-}
-
-func (c *ExecutionContext) verifyCommitmentSignature(
+func (c *SyncContext) verifyCommitmentSignature(
 	signature *models.Signature,
 	domain *bls.Domain,
 	messages [][]byte,
@@ -81,7 +55,7 @@ func (c *ExecutionContext) verifyCommitmentSignature(
 	return nil
 }
 
-func (c *ExecutionContext) createDisputableSignatureError(reason string, transfers models.GenericTransactionArray) error {
+func (c *SyncContext) createDisputableSignatureError(reason string, transfers models.GenericTransactionArray) error {
 	proofs, proofErr := c.stateMerkleProofs(transfers)
 	if proofErr != nil {
 		return proofErr

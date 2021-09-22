@@ -157,7 +157,7 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_EmptyTransactions
 func (s *VerifySignatureTestSuite) TestVerifyCreate2TransferSignature_ValidSignature() {
 	s.syncCtx = NewTestSyncContext(s.executionCtx, txtype.Create2Transfer)
 
-	transfers := []models.Create2Transfer{
+	transfers := models.Create2TransferArray{
 		{
 			TransactionBase: models.TransactionBase{
 				Hash:        utils.RandomHash(),
@@ -187,25 +187,25 @@ func (s *VerifySignatureTestSuite) TestVerifyCreate2TransferSignature_ValidSigna
 		signCreate2Transfer(s.T(), &s.wallets[i], &transfers[i])
 	}
 
-	combinedSignature, err := CombineSignatures(models.Create2TransferArray(transfers), &bls.TestDomain)
+	combinedSignature, err := CombineSignatures(transfers, &bls.TestDomain)
 	s.NoError(err)
 	commitment := &encoder.DecodedCommitment{
 		CombinedSignature: *combinedSignature,
 	}
 
-	err = s.syncCtx.verifyCreate2TransferSignature(commitment, transfers)
+	err = s.syncCtx.verifyTxSignature(commitment, transfers)
 	s.NoError(err)
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyCreate2TransfersSignature_EmptyTransactions() {
 	s.syncCtx = NewTestSyncContext(s.executionCtx, txtype.Create2Transfer)
 
-	var transfers []models.Create2Transfer
+	transfers := make(models.Create2TransferArray, 0)
 	commitment := &encoder.DecodedCommitment{
 		CombinedSignature: models.Signature{1, 2, 3},
 	}
 
-	err := s.syncCtx.verifyCreate2TransferSignature(commitment, transfers)
+	err := s.syncCtx.verifyTxSignature(commitment, transfers)
 	s.NoError(err)
 }
 
