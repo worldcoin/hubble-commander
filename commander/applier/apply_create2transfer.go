@@ -38,7 +38,7 @@ func (a *Applier) ApplyCreate2TransferForSync(
 	create2Transfer *models.Create2Transfer,
 	pubKeyID uint32,
 	commitmentTokenID models.Uint256,
-) (synced *SyncedCreate2Transfer, transferError, appError error) {
+) (synced *SyncedGenericTransaction, transferError, appError error) {
 	if create2Transfer.ToStateID == nil {
 		return nil, nil, errors.WithStack(ErrNilReceiverStateID)
 	}
@@ -51,7 +51,7 @@ func (a *Applier) ApplyCreate2TransferForSync(
 	if appError != nil {
 		return nil, nil, appError
 	}
-	return NewSyncedCreate2TransferFromGeneric(genericSynced), transferError, nil
+	return genericSynced, transferError, nil
 }
 
 func (a *Applier) getOrRegisterPubKeyID(

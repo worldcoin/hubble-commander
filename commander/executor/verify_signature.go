@@ -8,68 +8,41 @@ import (
 
 const InvalidSignatureMessage = "invalid commitment signature"
 
-func (c *ExecutionContext) verifyTransferSignature(commitment *encoder.DecodedCommitment, transfers []models.Transfer) error {
+func (c *SyncContext) verifyTxSignature(commitment *encoder.DecodedCommitment, txs models.GenericTransactionArray) error {
 	domain, err := c.client.GetDomain()
 	if err != nil {
 		return err
 	}
 
-	messages := make([][]byte, len(transfers))
-	publicKeys := make([]*models.PublicKey, len(transfers))
-	for i := range transfers {
-		publicKeys[i], err = c.storage.GetPublicKeyByStateID(transfers[i].FromStateID)
+	messages := make([][]byte, txs.Len())
+	publicKeys := make([]*models.PublicKey, txs.Len())
+	for i := 0; i < txs.Len(); i++ {
+		publicKeys[i], err = c.storage.GetPublicKeyByStateID(txs.At(i).GetFromStateID())
 		if err != nil {
 			return err
 		}
-		messages[i], err = encoder.EncodeTransferForSigning(&transfers[i])
+		messages[i], err = c.Syncer.EncodeTxForSigning(txs.At(i))
 		if err != nil {
 			return err
 		}
 	}
 
-	genericTxs := models.TransferArray(transfers)
-	return c.verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys, genericTxs)
+	return c.verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys, txs)
 }
 
-func (c *ExecutionContext) verifyCreate2TransferSignature(
-	commitment *encoder.DecodedCommitment,
-	transfers []models.Create2Transfer,
-) error {
-	domain, err := c.client.GetDomain()
-	if err != nil {
-		return err
-	}
-
-	messages := make([][]byte, len(transfers))
-	publicKeys := make([]*models.PublicKey, len(transfers))
-	for i := range transfers {
-		publicKeys[i], err = c.storage.GetPublicKeyByStateID(transfers[i].FromStateID)
-		if err != nil {
-			return err
-		}
-		messages[i], err = encoder.EncodeCreate2TransferForSigning(&transfers[i])
-		if err != nil {
-			return err
-		}
-	}
-
-	genericTxs := models.Create2TransferArray(transfers)
-	return c.verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys, genericTxs)
-}
-
-func (c *ExecutionContext) verifyCommitmentSignature(
+func (c *SyncContext) verifyCommitmentSignature(
 	signature *models.Signature,
 	domain *bls.Domain,
 	messages [][]byte,
 	publicKeys []*models.PublicKey,
-	transfers models.GenericTransactionArray,
+	txs models.GenericTransactionArray,
 ) error {
 	if len(messages) == 0 {
 		return nil
 	}
 	sig, err := bls.NewSignatureFromBytes(signature.Bytes(), *domain)
 	if err != nil {
-		return c.createDisputableSignatureError(err.Error(), transfers)
+		return c.createDisputableSignatureError(err.Error(), txs)
 	}
 	aggregatedSignature := bls.AggregatedSignature{Signature: sig}
 	isValid, err := aggregatedSignature.Verify(messages, publicKeys)
@@ -77,23 +50,23 @@ func (c *ExecutionContext) verifyCommitmentSignature(
 		return err
 	}
 	if !isValid {
-		return c.createDisputableSignatureError(InvalidSignatureMessage, transfers)
+		return c.createDisputableSignatureError(InvalidSignatureMessage, txs)
 	}
 	return nil
 }
 
-func (c *ExecutionContext) createDisputableSignatureError(reason string, transfers models.GenericTransactionArray) error {
-	proofs, proofErr := c.stateMerkleProofs(transfers)
+func (c *SyncContext) createDisputableSignatureError(reason string, txs models.GenericTransactionArray) error {
+	proofs, proofErr := c.stateMerkleProofs(txs)
 	if proofErr != nil {
 		return proofErr
 	}
 	return NewDisputableErrorWithProofs(Signature, reason, proofs)
 }
 
-func (c *ExecutionContext) stateMerkleProofs(transfers models.GenericTransactionArray) ([]models.StateMerkleProof, error) {
-	proofs := make([]models.StateMerkleProof, 0, transfers.Len())
-	for i := 0; i < transfers.Len(); i++ {
-		stateProof, err := c.userStateProof(transfers.At(i).GetFromStateID())
+func (c *ExecutionContext) stateMerkleProofs(txs models.GenericTransactionArray) ([]models.StateMerkleProof, error) {
+	proofs := make([]models.StateMerkleProof, 0, txs.Len())
+	for i := 0; i < txs.Len(); i++ {
+		stateProof, err := c.userStateProof(txs.At(i).GetFromStateID())
 		if err != nil {
 			return nil, err
 		}

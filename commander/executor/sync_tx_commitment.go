@@ -12,43 +12,46 @@ var (
 	ErrTooManyTxs        = NewDisputableError(Transition, "too many transactions in a commitment")
 )
 
-func (c *ExecutionContext) syncTransferCommitment(
-	commitment *encoder.DecodedCommitment,
-) (models.GenericTransactionArray, error) {
-	if len(commitment.Transactions)%encoder.TransferLength != 0 {
+func (c *SyncContext) syncTxCommitment(commitment *encoder.DecodedCommitment) (models.GenericTransactionArray, error) {
+	if len(commitment.Transactions)%c.Syncer.TxLength() != 0 {
 		return nil, ErrInvalidDataLength
 	}
 
-	transfers, err := encoder.DeserializeTransfers(commitment.Transactions)
+	syncedTxs, err := c.Syncer.DeserializeTxs(commitment.Transactions)
 	if err != nil {
 		return nil, err
 	}
 
-	if uint32(len(transfers)) > c.cfg.MaxTxsPerCommitment {
+	if uint32(syncedTxs.Txs().Len()) > c.cfg.MaxTxsPerCommitment {
 		return nil, ErrTooManyTxs
 	}
 
-	appliedTransfers, stateProofs, err := c.ApplyTransfersForSync(transfers, commitment.FeeReceiver)
+	appliedTxs, stateProofs, err := c.ApplyTxs(syncedTxs, commitment.FeeReceiver)
 	if err != nil {
 		return nil, err
 	}
+	syncedTxs.SetTxs(appliedTxs)
 
 	err = c.verifyStateRoot(commitment.StateRoot, stateProofs)
 	if err != nil {
 		return nil, err
 	}
 
+	err = c.Syncer.SetPublicKeys(syncedTxs)
+	if err != nil {
+		return nil, err
+	}
 	if !c.cfg.DisableSignatures {
-		err = c.verifyTransferSignature(commitment, appliedTransfers)
+		err = c.verifyTxSignature(commitment, syncedTxs.Txs())
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return models.TransferArray(appliedTransfers), nil
+	return syncedTxs.Txs(), nil
 }
 
-func (c *ExecutionContext) verifyStateRoot(commitmentPostState common.Hash, proofs []models.StateMerkleProof) error {
+func (c *SyncContext) verifyStateRoot(commitmentPostState common.Hash, proofs []models.StateMerkleProof) error {
 	postStateRoot, err := c.storage.StateTree.Root()
 	if err != nil {
 		return err

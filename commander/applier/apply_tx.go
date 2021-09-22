@@ -98,13 +98,13 @@ func (a *Applier) applyTxForSync(
 		return synced, tErr, nil
 	}
 
-	synced.Transaction.SetNonce(senderLeaf.Nonce)
+	synced.Tx.SetNonce(senderLeaf.Nonce)
 
 	return synced, nil, nil
 }
 
 func (a *Applier) fillSenderWitness(synced *SyncedGenericTransaction, tErr error) (*SyncedGenericTransaction, error, error) {
-	witness, appError := a.storage.StateTree.GetLeafWitness(synced.Transaction.GetFromStateID())
+	witness, appError := a.storage.StateTree.GetLeafWitness(synced.Tx.GetFromStateID())
 	if appError != nil {
 		return nil, nil, appError
 	}

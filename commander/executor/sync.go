@@ -4,7 +4,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -16,7 +15,7 @@ var (
 	ErrBatchSubmissionFailed = errors.New("previous submit batch transaction failed")
 )
 
-func (c *ExecutionContext) SyncBatch(remoteBatch *eth.DecodedBatch) error {
+func (c *SyncContext) SyncBatch(remoteBatch *eth.DecodedBatch) error {
 	localBatch, err := c.storage.GetBatch(remoteBatch.ID)
 	if err != nil && !st.IsNotFoundError(err) {
 		return err
@@ -29,7 +28,7 @@ func (c *ExecutionContext) SyncBatch(remoteBatch *eth.DecodedBatch) error {
 	}
 }
 
-func (c *ExecutionContext) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
+func (c *SyncContext) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
 	if remoteBatch.TransactionHash == localBatch.TransactionHash {
 		err := c.storage.MarkBatchAsSubmitted(&remoteBatch.Batch)
 		if err != nil {
@@ -57,7 +56,7 @@ func (c *ExecutionContext) syncExistingBatch(remoteBatch *eth.DecodedBatch, loca
 	return nil
 }
 
-func (c *ExecutionContext) getTransactionSender(txHash common.Hash) (*common.Address, error) {
+func (c *SyncContext) getTransactionSender(txHash common.Hash) (*common.Address, error) {
 	tx, _, err := c.client.ChainConnection.GetBackend().TransactionByHash(c.ctx, txHash)
 	if err != nil {
 		return nil, err
@@ -69,7 +68,7 @@ func (c *ExecutionContext) getTransactionSender(txHash common.Hash) (*common.Add
 	return &sender, nil
 }
 
-func (c *ExecutionContext) syncNewBatch(batch *eth.DecodedBatch) error {
+func (c *SyncContext) syncNewBatch(batch *eth.DecodedBatch) error {
 	numCommitments := len(batch.Commitments)
 	log.Debugf("Syncing new batch #%s with %d commitment(s) from chain", batch.ID.String(), numCommitments)
 	err := c.storage.AddBatch(&batch.Batch)
@@ -86,7 +85,7 @@ func (c *ExecutionContext) syncNewBatch(batch *eth.DecodedBatch) error {
 	return nil
 }
 
-func (c *ExecutionContext) syncCommitments(batch *eth.DecodedBatch) error {
+func (c *SyncContext) syncCommitments(batch *eth.DecodedBatch) error {
 	for i := range batch.Commitments {
 		log.WithFields(log.Fields{"batchID": batch.ID.String()}).Debugf("Syncing commitment #%d", i+1)
 		err := c.syncCommitment(batch, &batch.Commitments[i])
@@ -102,24 +101,8 @@ func (c *ExecutionContext) syncCommitments(batch *eth.DecodedBatch) error {
 	return nil
 }
 
-func (c *ExecutionContext) syncCommitment(
-	batch *eth.DecodedBatch,
-	commitment *encoder.DecodedCommitment,
-) error {
-	if len(commitment.Transactions)%encoder.GetTransactionLength(batch.Type) != 0 {
-		return ErrInvalidDataLength
-	}
-
-	var transactions models.GenericTransactionArray
-	var err error
-	switch batch.Type {
-	case batchtype.Transfer:
-		transactions, err = c.syncTransferCommitment(commitment)
-	case batchtype.Create2Transfer:
-		transactions, err = c.syncCreate2TransferCommitment(commitment)
-	case batchtype.Genesis, batchtype.MassMigration, batchtype.Deposit:
-		return errors.Errorf("unsupported batch type for sync: %s", batch.Type)
-	}
+func (c *SyncContext) syncCommitment(batch *eth.DecodedBatch, commitment *encoder.DecodedCommitment) error {
+	transactions, err := c.syncTxCommitment(commitment)
 	if err != nil {
 		return err
 	}
@@ -137,10 +120,7 @@ func (c *ExecutionContext) syncCommitment(
 	}
 	for i := 0; i < transactions.Len(); i++ {
 		transactions.At(i).GetBase().CommitmentID = &commitment.ID
-	}
-
-	for i := 0; i < transactions.Len(); i++ {
-		hashTransfer, err := encoder.HashGenericTransaction(transactions.At(i))
+		hashTransfer, err := c.Syncer.HashTx(transactions.At(i))
 		if err != nil {
 			return err
 		}
@@ -150,5 +130,5 @@ func (c *ExecutionContext) syncCommitment(
 	if transactions.Len() == 0 {
 		return nil
 	}
-	return c.storage.BatchAddGenericTransaction(transactions)
+	return c.Syncer.BatchAddTxs(transactions)
 }

@@ -19,7 +19,7 @@ type SyncC2TBatchTestSuite struct {
 }
 
 func (s *SyncC2TBatchTestSuite) SetupTest() {
-	s.TestSuiteWithRollupContext.SetupTestWithConfig(batchtype.Create2Transfer, syncTestSuiteConfig)
+	s.TestSuiteWithSyncAndRollupContext.SetupTestWithConfig(batchtype.Create2Transfer, syncTestSuiteConfig)
 	s.SyncTestSuite.setupTest()
 }
 
@@ -38,11 +38,11 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_TooManyTxsInCommitment() {
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.executionCtx.SyncBatch(&remoteBatches[0])
+	err = s.syncCtx.SyncBatch(&remoteBatches[0])
 	s.NoError(err)
 
 	var disputableErr *DisputableError
-	err = s.executionCtx.SyncBatch(&remoteBatches[1])
+	err = s.syncCtx.SyncBatch(&remoteBatches[1])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Transition, disputableErr.Type)
 	s.Equal(ErrTooManyTxs.Reason, disputableErr.Reason)
@@ -74,11 +74,11 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() {
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.executionCtx.SyncBatch(&remoteBatches[0])
+	err = s.syncCtx.SyncBatch(&remoteBatches[0])
 	s.NoError(err)
 
 	var disputableErr *DisputableError
-	err = s.executionCtx.SyncBatch(&remoteBatches[1])
+	err = s.syncCtx.SyncBatch(&remoteBatches[1])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Transition, disputableErr.Type)
 	s.Equal(applier.ErrInvalidCommitmentStateRoot.Error(), disputableErr.Reason)
@@ -103,7 +103,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_InvalidTxSignature() {
 	s.Len(remoteBatches, 1)
 
 	var disputableErr *DisputableError
-	err = s.executionCtx.SyncBatch(&remoteBatches[0])
+	err = s.syncCtx.SyncBatch(&remoteBatches[0])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Signature, disputableErr.Type)
 	s.Equal(InvalidSignatureMessage, disputableErr.Reason)
@@ -155,7 +155,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_CommitmentWithoutTxs() {
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.executionCtx.SyncBatch(&remoteBatches[0])
+	err = s.syncCtx.SyncBatch(&remoteBatches[0])
 	s.NoError(err)
 }
 

@@ -16,7 +16,7 @@ type SubmitC2TBatchTestSuite struct {
 
 func (s *SubmitC2TBatchTestSuite) SetupTest() {
 	s.TestSuiteWithRollupContext.SetupTest(batchtype.Create2Transfer)
-	setupUser(&s.SubmitBatchTestSuite)
+	s.setupUser()
 }
 
 func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_SubmitsCommitmentsOnChain() {
@@ -77,6 +77,6 @@ func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_AddsCommitments() {
 	}
 }
 
-func TestSubmitTransferBatchTestSuite(t *testing.T) {
-	suite.Run(t, new(SubmitTransferBatchTestSuite))
+func TestSubmitC2TBatchTestSuite(t *testing.T) {
+	suite.Run(t, new(SubmitC2TBatchTestSuite))
 }

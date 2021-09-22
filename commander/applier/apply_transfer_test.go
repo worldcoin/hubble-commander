@@ -86,7 +86,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ReturnsSenderProofForC
 	s.ErrorIs(transferError, ErrBalanceTooLow)
 	s.NoError(appError)
 
-	s.Equal(&bigTransfer, synced.Transfer)
+	s.Equal(&bigTransfer, synced.Tx.ToTransfer())
 	s.Equal(senderState, *synced.SenderStateProof.UserState)
 	s.Len(synced.SenderStateProof.Witness, st.StateTreeDepth)
 }
@@ -99,7 +99,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ValidatesSenderTokenID
 	s.ErrorIs(transferError, ErrInvalidSenderTokenID)
 	s.NoError(appError)
 
-	s.Equal(&s.transfer, synced.Transfer)
+	s.Equal(&s.transfer, synced.Tx.ToTransfer())
 	s.Equal(senderState, *synced.SenderStateProof.UserState)
 	s.Len(synced.SenderStateProof.Witness, st.StateTreeDepth)
 }
@@ -117,7 +117,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ValidatesReceiverToken
 	s.ErrorIs(transferError, ErrInvalidReceiverTokenID)
 	s.NoError(appError)
 
-	s.Equal(&s.transfer, synced.Transfer)
+	s.Equal(&s.transfer, synced.Tx.ToTransfer())
 	s.Equal(senderState, *synced.SenderStateProof.UserState)
 	s.Len(synced.SenderStateProof.Witness, st.StateTreeDepth)
 	s.Equal(receiverWithChangedToken, *synced.ReceiverStateProof.UserState)
@@ -135,7 +135,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ReturnsTransferWithUpd
 	s.NoError(transferError)
 
 	s.Equal(models.MakeUint256(1234), transferWithModifiedNonce.Nonce)
-	s.Equal(models.MakeUint256(0), synced.Transfer.GetNonce())
+	s.Equal(models.MakeUint256(0), synced.Tx.ToTransfer().GetNonce())
 }
 
 func (s *ApplyTransferTestSuite) TestApplyTransferForSync_UpdatesStatesCorrectly() {
@@ -221,7 +221,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_SetsNonce() {
 	s.NoError(appError)
 	s.NoError(transferError)
 
-	s.Equal(models.MakeUint256(1), sync.Transfer.GetNonce())
+	s.Equal(models.MakeUint256(1), sync.Tx.ToTransfer().GetNonce())
 }
 
 func TestApplyTransferTestSuite(t *testing.T) {

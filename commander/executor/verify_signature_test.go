@@ -6,8 +6,11 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
@@ -15,22 +18,47 @@ import (
 )
 
 type VerifySignatureTestSuite struct {
-	TestSuiteWithExecutionContext
-	wallets []bls.Wallet
+	*require.Assertions
+	suite.Suite
+	storage      *st.TestStorage
+	cfg          *config.RollupConfig
+	client       *eth.Client
+	executionCtx *ExecutionContext
+	syncCtx      *SyncContext
+	wallets      []bls.Wallet
 }
 
-func (s *VerifySignatureTestSuite) SetupTest() {
-	s.TestSuiteWithExecutionContext.SetupTestWithConfig(config.RollupConfig{
+func (s *VerifySignatureTestSuite) SetupSuite() {
+	s.Assertions = require.New(s.T())
+
+	s.cfg = &config.RollupConfig{
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
 		MaxTxsPerCommitment:    1,
 		DisableSignatures:      false,
-	})
+	}
+}
+
+func (s *VerifySignatureTestSuite) SetupTest() {
+	var err error
+	s.storage, err = st.NewTestStorage()
+	s.NoError(err)
+
+	s.client = eth.DomainOnlyTestClient
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client, s.cfg)
+
 	s.addAccounts()
 }
 
+func (s *VerifySignatureTestSuite) TearDownTest() {
+	err := s.storage.Close()
+	s.NoError(err)
+}
+
 func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_ValidSignature() {
-	transfers := []models.Transfer{
+	s.syncCtx = NewTestSyncContext(s.executionCtx, batchtype.Transfer)
+
+	txs := models.TransferArray{
 		{
 			TransactionBase: models.TransactionBase{
 				Hash:        utils.RandomHash(),
@@ -54,22 +82,24 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_ValidSignature() 
 			ToStateID: 0,
 		},
 	}
-	for i := range transfers {
-		signTransfer(s.T(), &s.wallets[i], &transfers[i])
+	for i := range txs {
+		signTransfer(s.T(), &s.wallets[i], &txs[i])
 	}
 
-	combinedSignature, err := CombineSignatures(models.TransferArray(transfers), &bls.TestDomain)
+	combinedSignature, err := CombineSignatures(txs, &bls.TestDomain)
 	s.NoError(err)
 	commitment := &encoder.DecodedCommitment{
 		CombinedSignature: *combinedSignature,
 	}
 
-	err = s.executionCtx.verifyTransferSignature(commitment, transfers)
+	err = s.syncCtx.verifyTxSignature(commitment, txs)
 	s.NoError(err)
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_InvalidSignature() {
-	transfers := []models.Transfer{
+	s.syncCtx = NewTestSyncContext(s.executionCtx, batchtype.Transfer)
+
+	txs := models.TransferArray{
 		{
 			TransactionBase: models.TransactionBase{
 				Hash:        utils.RandomHash(),
@@ -93,19 +123,19 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_InvalidSignature(
 			ToStateID: 0,
 		},
 	}
-	for i := range transfers {
-		invalidTransfer := transfers[i]
+	for i := range txs {
+		invalidTransfer := txs[i]
 		invalidTransfer.Nonce = models.MakeUint256(4)
 		signTransfer(s.T(), &s.wallets[i], &invalidTransfer)
 	}
 
-	combinedSignature, err := CombineSignatures(models.TransferArray(transfers), &bls.TestDomain)
+	combinedSignature, err := CombineSignatures(txs, &bls.TestDomain)
 	s.NoError(err)
 	commitment := &encoder.DecodedCommitment{
 		CombinedSignature: *combinedSignature,
 	}
 
-	err = s.executionCtx.verifyTransferSignature(commitment, transfers)
+	err = s.syncCtx.verifyTxSignature(commitment, txs)
 
 	var disputableErr *DisputableError
 	s.ErrorAs(err, &disputableErr)
@@ -114,17 +144,21 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_InvalidSignature(
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_EmptyTransactions() {
-	var transfers []models.Transfer
+	s.syncCtx = NewTestSyncContext(s.executionCtx, batchtype.Transfer)
+
+	txs := make(models.TransferArray, 0)
 	commitment := &encoder.DecodedCommitment{
 		CombinedSignature: models.Signature{1, 2, 3},
 	}
 
-	err := s.executionCtx.verifyTransferSignature(commitment, transfers)
+	err := s.syncCtx.verifyTxSignature(commitment, txs)
 	s.NoError(err)
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyCreate2TransferSignature_ValidSignature() {
-	transfers := []models.Create2Transfer{
+	s.syncCtx = NewTestSyncContext(s.executionCtx, batchtype.Create2Transfer)
+
+	txs := models.Create2TransferArray{
 		{
 			TransactionBase: models.TransactionBase{
 				Hash:        utils.RandomHash(),
@@ -150,27 +184,29 @@ func (s *VerifySignatureTestSuite) TestVerifyCreate2TransferSignature_ValidSigna
 			ToPublicKey: *s.wallets[1].PublicKey(),
 		},
 	}
-	for i := range transfers {
-		signCreate2Transfer(s.T(), &s.wallets[i], &transfers[i])
+	for i := range txs {
+		signCreate2Transfer(s.T(), &s.wallets[i], &txs[i])
 	}
 
-	combinedSignature, err := CombineSignatures(models.Create2TransferArray(transfers), &bls.TestDomain)
+	combinedSignature, err := CombineSignatures(txs, &bls.TestDomain)
 	s.NoError(err)
 	commitment := &encoder.DecodedCommitment{
 		CombinedSignature: *combinedSignature,
 	}
 
-	err = s.executionCtx.verifyCreate2TransferSignature(commitment, transfers)
+	err = s.syncCtx.verifyTxSignature(commitment, txs)
 	s.NoError(err)
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyCreate2TransfersSignature_EmptyTransactions() {
-	var transfers []models.Create2Transfer
+	s.syncCtx = NewTestSyncContext(s.executionCtx, batchtype.Create2Transfer)
+
+	txs := make(models.Create2TransferArray, 0)
 	commitment := &encoder.DecodedCommitment{
 		CombinedSignature: models.Signature{1, 2, 3},
 	}
 
-	err := s.executionCtx.verifyCreate2TransferSignature(commitment, transfers)
+	err := s.syncCtx.verifyTxSignature(commitment, txs)
 	s.NoError(err)
 }
 
@@ -215,6 +251,6 @@ func signCreate2Transfer(t *testing.T, wallet *bls.Wallet, transfer *models.Crea
 	transfer.Signature = *signature.ModelsSignature()
 }
 
-func TestSyncTransferCommitmentsTestSuite(t *testing.T) {
+func TestVerifySignatureTestSuite(t *testing.T) {
 	suite.Run(t, new(VerifySignatureTestSuite))
 }
