@@ -26,7 +26,7 @@ func (c *SyncContext) syncTxCommitment(commitment *encoder.DecodedCommitment) (m
 		return nil, ErrTooManyTxs
 	}
 
-	appliedTxs, stateProofs, err := c.ApplyTxsForSync(syncedTxs, commitment.FeeReceiver)
+	appliedTxs, stateProofs, err := c.ApplyTxs(syncedTxs, commitment.FeeReceiver)
 	if err != nil {
 		return nil, err
 	}

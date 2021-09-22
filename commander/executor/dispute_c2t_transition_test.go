@@ -136,7 +136,7 @@ func (s *DisputeCT2TransitionTestSuite) getStateMerkleProofs(
 			txs:       txs[i],
 			pubKeyIDs: pubKeyIDs[i],
 		}
-		_, stateProofs, err = syncContext.ApplyTxsForSync(input, feeReceiverStateID)
+		_, stateProofs, err = syncContext.ApplyTxs(input, feeReceiverStateID)
 		if err != nil {
 			var disputableErr *DisputableError
 			s.ErrorAs(err, &disputableErr)
