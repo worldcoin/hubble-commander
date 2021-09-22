@@ -47,6 +47,39 @@ func (s *DepositsTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
+func (s *DepositsTestSuite) TestSyncDeposits() {
+	s.registerToken()
+	s.approveTokens()
+
+	deposits := make([]models.PendingDeposit, 0, 4)
+
+	// Smart contract needs 4 deposits to create a subtree
+	deposits = append(deposits, *s.queueDeposit())
+	deposits = append(deposits, *s.queueDeposit())
+	deposits = append(deposits, *s.queueDeposit())
+	deposits = append(deposits, *s.queueDeposit())
+
+	s.queueDeposit()
+	s.queueDeposit()
+
+	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
+	s.NoError(err)
+
+	err = s.cmd.syncDeposits(0, *latestBlockNumber)
+	s.NoError(err)
+
+	subTree, err := s.cmd.storage.GetPendingDepositSubTree(models.MakeUint256(1))
+	s.NoError(err)
+
+	_, err = s.cmd.storage.GetPendingDepositSubTree(models.MakeUint256(2))
+	s.True(st.IsNotFoundError(err))
+
+	s.Len(subTree.Deposits, 4)
+	s.Equal(deposits, subTree.Deposits)
+
+	s.validateRemovedDeposits(deposits)
+}
+
 func (s *DepositsTestSuite) TestSyncQueuedDeposits() {
 	s.registerToken()
 	s.approveTokens()
@@ -56,14 +89,15 @@ func (s *DepositsTestSuite) TestSyncQueuedDeposits() {
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)
 
-	queuedDeposits, err := s.cmd.syncQueuedDeposits(0, *latestBlockNumber)
+	err = s.cmd.syncQueuedDeposits(0, *latestBlockNumber)
 	s.NoError(err)
 
-	s.Len(queuedDeposits, 1)
-	s.Contains(queuedDeposits, *deposit)
+	syncedDeposit, err := s.cmd.storage.GetPendingDeposit(&deposit.ID)
+	s.NoError(err)
+	s.Equal(deposit, syncedDeposit)
 }
 
-func (s *DepositsTestSuite) TestSyncDepositSubTrees() {
+func (s *DepositsTestSuite) TestFetchDepositSubTrees() {
 	s.registerToken()
 	s.approveTokens()
 
@@ -76,7 +110,7 @@ func (s *DepositsTestSuite) TestSyncDepositSubTrees() {
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)
 
-	depositSubTrees, err := s.cmd.syncDepositSubTrees(0, *latestBlockNumber)
+	depositSubTrees, err := s.cmd.fetchDepositSubTrees(0, *latestBlockNumber)
 	s.NoError(err)
 
 	s.Len(depositSubTrees, 1)
@@ -105,7 +139,7 @@ func (s *DepositsTestSuite) approveTokens() {
 	s.NoError(err)
 }
 
-func (s *DepositsTestSuite) queueDeposit() *models.Deposit {
+func (s *DepositsTestSuite) queueDeposit() *models.PendingDeposit {
 	deposits, unsubscribe, err := s.testClient.WatchQueuedDeposits(&bind.WatchOpts{Start: nil})
 	s.NoError(err)
 	defer unsubscribe()
@@ -115,12 +149,18 @@ func (s *DepositsTestSuite) queueDeposit() *models.Deposit {
 	depositID, l2Amount, err := s.testClient.QueueDeposit(toPubKeyID, l1Amount, s.tokenID, deposits)
 	s.NoError(err)
 
-	return &models.Deposit{
-		ID:                   *depositID,
-		ToPubKeyID:           uint32(toPubKeyID.Uint64()),
-		TokenID:              *s.tokenID,
-		L2Amount:             *l2Amount,
-		IncludedInCommitment: nil,
+	return &models.PendingDeposit{
+		ID:         *depositID,
+		ToPubKeyID: uint32(toPubKeyID.Uint64()),
+		TokenID:    *s.tokenID,
+		L2Amount:   *l2Amount,
+	}
+}
+
+func (s *DepositsTestSuite) validateRemovedDeposits(deposits []models.PendingDeposit) {
+	for i := range deposits {
+		_, err := s.cmd.storage.GetPendingDeposit(&deposits[i].ID)
+		s.True(st.IsNotFoundError(err))
 	}
 }
 
