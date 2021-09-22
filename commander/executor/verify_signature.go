@@ -35,14 +35,14 @@ func (c *SyncContext) verifyCommitmentSignature(
 	domain *bls.Domain,
 	messages [][]byte,
 	publicKeys []*models.PublicKey,
-	transfers models.GenericTransactionArray,
+	txs models.GenericTransactionArray,
 ) error {
 	if len(messages) == 0 {
 		return nil
 	}
 	sig, err := bls.NewSignatureFromBytes(signature.Bytes(), *domain)
 	if err != nil {
-		return c.createDisputableSignatureError(err.Error(), transfers)
+		return c.createDisputableSignatureError(err.Error(), txs)
 	}
 	aggregatedSignature := bls.AggregatedSignature{Signature: sig}
 	isValid, err := aggregatedSignature.Verify(messages, publicKeys)
@@ -50,23 +50,23 @@ func (c *SyncContext) verifyCommitmentSignature(
 		return err
 	}
 	if !isValid {
-		return c.createDisputableSignatureError(InvalidSignatureMessage, transfers)
+		return c.createDisputableSignatureError(InvalidSignatureMessage, txs)
 	}
 	return nil
 }
 
-func (c *SyncContext) createDisputableSignatureError(reason string, transfers models.GenericTransactionArray) error {
-	proofs, proofErr := c.stateMerkleProofs(transfers)
+func (c *SyncContext) createDisputableSignatureError(reason string, txs models.GenericTransactionArray) error {
+	proofs, proofErr := c.stateMerkleProofs(txs)
 	if proofErr != nil {
 		return proofErr
 	}
 	return NewDisputableErrorWithProofs(Signature, reason, proofs)
 }
 
-func (c *ExecutionContext) stateMerkleProofs(transfers models.GenericTransactionArray) ([]models.StateMerkleProof, error) {
-	proofs := make([]models.StateMerkleProof, 0, transfers.Len())
-	for i := 0; i < transfers.Len(); i++ {
-		stateProof, err := c.userStateProof(transfers.At(i).GetFromStateID())
+func (c *ExecutionContext) stateMerkleProofs(txs models.GenericTransactionArray) ([]models.StateMerkleProof, error) {
+	proofs := make([]models.StateMerkleProof, 0, txs.Len())
+	for i := 0; i < txs.Len(); i++ {
+		stateProof, err := c.userStateProof(txs.At(i).GetFromStateID())
 		if err != nil {
 			return nil, err
 		}

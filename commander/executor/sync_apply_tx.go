@@ -47,14 +47,14 @@ func (c *SyncContext) ApplyTxs(txs SyncedTxs, feeReceiverStateID uint32) (
 	return appliedTxs, stateChangeProofs, nil
 }
 
-func (c *SyncContext) getCommitmentTokenID(transfers models.GenericTransactionArray, feeReceiverStateID uint32) (
+func (c *SyncContext) getCommitmentTokenID(txs models.GenericTransactionArray, feeReceiverStateID uint32) (
 	tokenID *models.Uint256,
 	err error,
 ) {
 	var leaf *models.StateLeaf
 
-	if transfers.Len() > 0 {
-		leaf, err = c.storage.StateTree.LeafOrEmpty(transfers.At(0).GetFromStateID())
+	if txs.Len() > 0 {
+		leaf, err = c.storage.StateTree.LeafOrEmpty(txs.At(0).GetFromStateID())
 	} else {
 		leaf, err = c.storage.StateTree.LeafOrEmpty(feeReceiverStateID)
 	}
