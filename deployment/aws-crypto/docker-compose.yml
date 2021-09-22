@@ -1,24 +1,6 @@
 version: '3'
 
 services:
-  postgres:
-    image: postgres:13.1
-    healthcheck:
-      test: [ "CMD", "pg_isready", "-q", "-d", "postgres", "-U", "root" ]
-      timeout: 45s
-      interval: 10s
-      retries: 10
-    restart: always
-    environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: hubble
-    volumes:
-      - ./postgres-data:/var/lib/postgresql/data
-    ports:
-      - 5433:5433
-    command: -p 5433
-
   geth:
     image: ethereum/client-go:stable
     ports:
@@ -55,11 +37,6 @@ services:
       HUBBLE_ETHEREUM_CHAIN_ID: 1337
       HUBBLE_ETHEREUM_PRIVATE_KEY: ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
       HUBBLE_BOOTSTRAP_CHAIN_SPEC_PATH: /chain-spec/chain-spec.yaml
-      HUBBLE_POSTGRES_HOST: postgres
-      HUBBLE_POSTGRES_PORT: 5433
-      HUBBLE_POSTGRES_USER: root
-      HUBBLE_POSTGRES_PASSWORD: password
-      HUBBLE_POSTGRES_NAME: hubble
       HUBBLE_BADGER_PATH: /db/data/hubble
       HUBBLE_LOG_LEVEL: debug
     ports:
@@ -68,7 +45,6 @@ services:
       - chain-spec-volume:/chain-spec
       - ./badger-data:/db/data/hubble
     depends_on:
-      - postgres
       - geth
 
 volumes:
