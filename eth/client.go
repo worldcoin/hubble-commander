@@ -44,7 +44,7 @@ type Client struct {
 	AccountRegistryABI      *abi.ABI
 	TokenRegistry           *tokenregistry.TokenRegistry
 	DepositManager          *depositmanager.DepositManager
-	DepositManagerABI  *abi.ABI
+	DepositManagerABI       *abi.ABI
 	rollupContract          *bind.BoundContract
 	accountRegistryContract *bind.BoundContract
 	blocksToFinalise        *int64
@@ -79,7 +79,7 @@ func NewClient(chainConnection deployer.ChainConnection, params *NewClientParams
 		AccountRegistryABI:      &accountRegistryAbi,
 		TokenRegistry:           params.TokenRegistry,
 		DepositManager:          params.DepositManager,
-		DepositManagerABI:  &depositManagerAbi,
+		DepositManagerABI:       &depositManagerAbi,
 		rollupContract:          rollupContract,
 		accountRegistryContract: accountRegistryContract,
 	}, nil

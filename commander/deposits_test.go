@@ -58,10 +58,13 @@ func (s *DepositsTestSuite) TestSyncDeposits() {
 	deposits := make([]models.PendingDeposit, 0, 4)
 
 	// Smart contract needs 4 deposits to create a subtree (depth specified in cfg.Rollup.MaxDepositSubTreeDepth)
-	deposits = append(deposits, *s.queueDeposit())
-	deposits = append(deposits, *s.queueDeposit())
-	deposits = append(deposits, *s.queueDeposit())
-	deposits = append(deposits, *s.queueDeposit())
+	deposits = append(
+		deposits,
+		*s.queueDeposit(),
+		*s.queueDeposit(),
+		*s.queueDeposit(),
+		*s.queueDeposit(),
+	)
 
 	s.queueDeposit()
 	s.queueDeposit()
