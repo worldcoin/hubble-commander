@@ -43,6 +43,17 @@ func (s *DepositStorage) GetPendingDeposit(depositID *models.DepositID) (*models
 	return &deposit, nil
 }
 
+func (s *DepositStorage) RemovePendingDeposits(deposits []models.PendingDeposit) error {
+	for i := range deposits {
+		err := s.database.Badger.Delete(deposits[i].ID, models.PendingDeposit{})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (s *DepositStorage) GetFirstPendingDeposits(amount int) ([]models.PendingDeposit, error) {
 	deposits := make([]models.PendingDeposit, 0, amount)
 	err := s.database.Badger.Iterator(models.PendingDepositPrefix, db.KeyIteratorOpts, func(item *bdg.Item) (bool, error) {

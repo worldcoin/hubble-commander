@@ -56,6 +56,36 @@ func (s *DepositTestSuite) TestGetPendingDeposit_NotFound() {
 	s.True(IsNotFoundError(err))
 }
 
+func (s *DepositTestSuite) TestRemovePendingDeposits() {
+	deposits := []models.PendingDeposit{
+		{
+			ID: models.DepositID{
+				BlockNumber: 123,
+				LogIndex:    1,
+			},
+		},
+		{
+			ID: models.DepositID{
+				BlockNumber: 582,
+				LogIndex:    17,
+			},
+		},
+	}
+
+	err := s.storage.AddPendingDeposit(&deposits[0])
+	s.NoError(err)
+	err = s.storage.AddPendingDeposit(&deposits[1])
+	s.NoError(err)
+
+	err = s.storage.RemovePendingDeposits(deposits)
+	s.NoError(err)
+
+	_, err = s.storage.GetPendingDeposit(&deposits[0].ID)
+	s.True(IsNotFoundError(err))
+	_, err = s.storage.GetPendingDeposit(&deposits[1].ID)
+	s.True(IsNotFoundError(err))
+}
+
 func (s *DepositTestSuite) TestGetFirstPendingDeposits() {
 	allDeposits := []models.PendingDeposit{
 		{
