@@ -30,25 +30,25 @@ func (c *SyncContext) syncTxCommitment(commitment *encoder.DecodedCommitment) (m
 	if err != nil {
 		return nil, err
 	}
+	syncedTxs.SetTxs(appliedTxs)
 
 	err = c.verifyStateRoot(commitment.StateRoot, stateProofs)
 	if err != nil {
 		return nil, err
 	}
 
-	syncedTxs.SetTxs(appliedTxs)
 	err = c.Syncer.SetPublicKeys(syncedTxs)
 	if err != nil {
 		return nil, err
 	}
 	if !c.cfg.DisableSignatures {
-		err = c.verifyTxSignature(commitment, appliedTxs)
+		err = c.verifyTxSignature(commitment, syncedTxs.Txs())
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return appliedTxs, nil
+	return syncedTxs.Txs(), nil
 }
 
 func (c *SyncContext) verifyStateRoot(commitmentPostState common.Hash, proofs []models.StateMerkleProof) error {
