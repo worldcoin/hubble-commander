@@ -3,6 +3,7 @@ package storage
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -45,15 +46,9 @@ func (s *DepositTestSuite) TestAddPendingDeposit_AddAndRetrieve() {
 	err := s.storage.AddPendingDeposit(&deposit)
 	s.NoError(err)
 
-	actual, err := s.storage.GetPendingDeposit(&deposit.ID)
+	deposits, err := s.storage.GetFirstPendingDeposits(1)
 	s.NoError(err)
-	s.Equal(deposit, *actual)
-}
-
-func (s *DepositTestSuite) TestGetPendingDeposit_NotFound() {
-	_, err := s.storage.GetPendingDeposit(&deposit.ID)
-	s.ErrorIs(err, NewNotFoundError("pending deposit"))
-	s.True(IsNotFoundError(err))
+	s.Equal(deposit, deposits[0])
 }
 
 func (s *DepositTestSuite) TestRemovePendingDeposits() {
@@ -80,10 +75,8 @@ func (s *DepositTestSuite) TestRemovePendingDeposits() {
 	err = s.storage.RemovePendingDeposits(deposits)
 	s.NoError(err)
 
-	_, err = s.storage.GetPendingDeposit(&deposits[0].ID)
-	s.True(IsNotFoundError(err))
-	_, err = s.storage.GetPendingDeposit(&deposits[1].ID)
-	s.True(IsNotFoundError(err))
+	_, err = s.storage.GetFirstPendingDeposits(2)
+	s.ErrorIs(err, db.ErrIteratorFinished)
 }
 
 func (s *DepositTestSuite) TestGetFirstPendingDeposits() {

@@ -14,15 +14,17 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	bh "github.com/timshannon/badgerhold/v3"
 )
 
 type DepositsTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	teardown   func() error
-	testClient *eth.TestClient
-	cmd        *Commander
-	tokenID    *models.Uint256
+	teardown    func() error
+	testStorage *st.TestStorage
+	testClient  *eth.TestClient
+	cmd         *Commander
+	tokenID     *models.Uint256
 }
 
 func (s *DepositsTestSuite) SetupSuite() {
@@ -32,15 +34,18 @@ func (s *DepositsTestSuite) SetupSuite() {
 func (s *DepositsTestSuite) SetupTest() {
 	testStorage, err := st.NewTestStorage()
 	s.NoError(err)
+	s.testStorage = testStorage
 	s.teardown = testStorage.Teardown
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
 	s.cmd = &Commander{
 		storage: testStorage.Storage,
 		client:  s.testClient.Client,
-		cfg: &config.Config{Rollup: &config.RollupConfig{
-			MaxDepositSubTreeDepth: 2,
-		}},
+		cfg: &config.Config{
+			Rollup: &config.RollupConfig{
+				MaxDepositSubTreeDepth: 2,
+			},
+		},
 	}
 	s.tokenID = models.NewUint256(0) // First registered tokenID
 }
@@ -99,9 +104,9 @@ func (s *DepositsTestSuite) TestSyncQueuedDeposits() {
 	err = s.cmd.syncQueuedDeposits(0, *latestBlockNumber)
 	s.NoError(err)
 
-	syncedDeposit, err := s.cmd.storage.GetPendingDeposit(&deposit.ID)
+	syncedDeposits, err := s.cmd.storage.GetFirstPendingDeposits(1)
 	s.NoError(err)
-	s.Equal(deposit, syncedDeposit)
+	s.Equal(deposit, syncedDeposits[0])
 }
 
 func (s *DepositsTestSuite) TestFetchDepositSubTrees() {
@@ -166,8 +171,9 @@ func (s *DepositsTestSuite) queueDeposit() *models.PendingDeposit {
 
 func (s *DepositsTestSuite) validateRemovedDeposits(deposits []models.PendingDeposit) {
 	for i := range deposits {
-		_, err := s.cmd.storage.GetPendingDeposit(&deposits[i].ID)
-		s.True(st.IsNotFoundError(err))
+		var deposit models.PendingDeposit
+		err := s.testStorage.Database.Badger.Get(deposits[i].ID, &deposit)
+		s.ErrorIs(err, bh.ErrNotFound)
 	}
 }
 

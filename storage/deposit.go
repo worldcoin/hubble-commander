@@ -4,8 +4,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	bdg "github.com/dgraph-io/badger/v3"
-	"github.com/pkg/errors"
-	bh "github.com/timshannon/badgerhold/v4"
 )
 
 type DepositStorage struct {
@@ -27,20 +25,6 @@ func (s *DepositStorage) copyWithNewDatabase(database *Database) *DepositStorage
 
 func (s *DepositStorage) AddPendingDeposit(deposit *models.PendingDeposit) error {
 	return s.database.Badger.Upsert(deposit.ID, *deposit)
-}
-
-// TODO-D is this needed?
-func (s *DepositStorage) GetPendingDeposit(depositID *models.DepositID) (*models.PendingDeposit, error) {
-	var deposit models.PendingDeposit
-	err := s.database.Badger.Get(*depositID, &deposit)
-	if err == bh.ErrNotFound {
-		return nil, errors.WithStack(NewNotFoundError("pending deposit"))
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	return &deposit, nil
 }
 
 func (s *DepositStorage) RemovePendingDeposits(deposits []models.PendingDeposit) error {
