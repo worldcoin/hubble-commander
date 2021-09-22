@@ -12,11 +12,11 @@ import (
 )
 
 type SyncApplyCreate2TransfersTestSuite struct {
-	SyncApplyTxTestSuite
+	SyncApplyTxsTestSuite
 }
 
 func (s *SyncApplyCreate2TransfersTestSuite) SetupTest() {
-	s.SyncApplyTxTestSuite.SetupTest(batchtype.Create2Transfer)
+	s.SyncApplyTxsTestSuite.SetupTest(batchtype.Create2Transfer)
 }
 
 func (s *SyncApplyCreate2TransfersTestSuite) TestApplyTxs_AllValid() {
