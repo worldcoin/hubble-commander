@@ -6,7 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -61,7 +61,7 @@ func (s *SyncApplyTransfersTestSuite) SetupTest() {
 	s.NoError(err)
 
 	executionCtx := NewTestExecutionContext(s.storage.Storage, nil, s.cfg)
-	s.syncCtx = NewTestSyncContext(executionCtx, txtype.Transfer)
+	s.syncCtx = NewTestSyncContext(executionCtx, batchtype.Transfer)
 
 	s.feeReceiver = &FeeReceiver{
 		StateID: 3,

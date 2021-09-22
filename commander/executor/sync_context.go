@@ -5,14 +5,14 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
 type SyncContext struct {
 	*ExecutionContext
 	Syncer    TransactionSyncer
-	BatchType txtype.TransactionType
+	BatchType batchtype.BatchType
 }
 
 func NewSyncContext(
@@ -20,7 +20,7 @@ func NewSyncContext(
 	client *eth.Client,
 	cfg *config.RollupConfig,
 	ctx context.Context,
-	batchType txtype.TransactionType,
+	batchType batchtype.BatchType,
 ) (*SyncContext, error) {
 	executionCtx, err := NewExecutionContext(storage, client, cfg, ctx)
 	if err != nil {
@@ -29,11 +29,11 @@ func NewSyncContext(
 	return newSyncContext(executionCtx, batchType), nil
 }
 
-func NewTestSyncContext(executionCtx *ExecutionContext, batchType txtype.TransactionType) *SyncContext {
+func NewTestSyncContext(executionCtx *ExecutionContext, batchType batchtype.BatchType) *SyncContext {
 	return newSyncContext(executionCtx, batchType)
 }
 
-func newSyncContext(executionCtx *ExecutionContext, batchType txtype.TransactionType) *SyncContext {
+func newSyncContext(executionCtx *ExecutionContext, batchType batchtype.BatchType) *SyncContext {
 	return &SyncContext{
 		ExecutionContext: executionCtx,
 		Syncer:           NewTransactionSyncer(executionCtx, batchType),

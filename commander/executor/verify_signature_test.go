@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -55,7 +56,7 @@ func (s *VerifySignatureTestSuite) TearDownTest() {
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_ValidSignature() {
-	s.syncCtx = NewTestSyncContext(s.executionCtx, txtype.Transfer)
+	s.syncCtx = NewTestSyncContext(s.executionCtx, batchtype.Transfer)
 
 	transfers := models.TransferArray{
 		{
@@ -96,7 +97,7 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_ValidSignature() 
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_InvalidSignature() {
-	s.syncCtx = NewTestSyncContext(s.executionCtx, txtype.Transfer)
+	s.syncCtx = NewTestSyncContext(s.executionCtx, batchtype.Transfer)
 
 	transfers := models.TransferArray{
 		{
@@ -143,7 +144,7 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_InvalidSignature(
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_EmptyTransactions() {
-	s.syncCtx = NewTestSyncContext(s.executionCtx, txtype.Transfer)
+	s.syncCtx = NewTestSyncContext(s.executionCtx, batchtype.Transfer)
 
 	var transfers models.TransferArray
 	commitment := &encoder.DecodedCommitment{
@@ -155,7 +156,7 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_EmptyTransactions
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyCreate2TransferSignature_ValidSignature() {
-	s.syncCtx = NewTestSyncContext(s.executionCtx, txtype.Create2Transfer)
+	s.syncCtx = NewTestSyncContext(s.executionCtx, batchtype.Create2Transfer)
 
 	transfers := models.Create2TransferArray{
 		{
@@ -198,7 +199,7 @@ func (s *VerifySignatureTestSuite) TestVerifyCreate2TransferSignature_ValidSigna
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyCreate2TransfersSignature_EmptyTransactions() {
-	s.syncCtx = NewTestSyncContext(s.executionCtx, txtype.Create2Transfer)
+	s.syncCtx = NewTestSyncContext(s.executionCtx, batchtype.Create2Transfer)
 
 	transfers := make(models.Create2TransferArray, 0)
 	commitment := &encoder.DecodedCommitment{

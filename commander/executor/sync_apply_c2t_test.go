@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -68,7 +69,7 @@ func (s *SyncApplyCreate2TransfersTestSuite) SetupTest() {
 	s.NoError(err)
 
 	executionCtx := NewTestExecutionContext(s.storage.Storage, nil, s.cfg)
-	s.syncCtx = NewTestSyncContext(executionCtx, txtype.Create2Transfer)
+	s.syncCtx = NewTestSyncContext(executionCtx, batchtype.Create2Transfer)
 
 	s.feeReceiver = &FeeReceiver{
 		StateID: 3,
