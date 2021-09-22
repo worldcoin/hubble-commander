@@ -20,11 +20,11 @@ func (a *SyncedTransfers) Txs() models.GenericTransactionArray {
 }
 
 func (a *SyncedTransfers) PubKeyIDs() []uint32 {
-	panic("PubKeyIDs cannot be invoked on ApplyTransfersForCommitmentResult")
+	panic("PubKeyIDs cannot be invoked on SyncedTransfers")
 }
 
 func (a *SyncedTransfers) SyncedTxAt(index int) SyncedTx {
-	return &SyncedTransfer2{
+	return &SyncedTransfer{
 		tx: a.txs.At(index).ToTransfer(),
 	}
 }
@@ -47,7 +47,7 @@ func (a *SyncedC2Ts) PubKeyIDs() []uint32 {
 }
 
 func (a *SyncedC2Ts) SyncedTxAt(index int) SyncedTx {
-	return &SyncedC2T2{
+	return &SyncedC2T{
 		tx:       a.txs.At(index).ToCreate2Transfer(),
 		pubKeyID: a.pubKeyIDs[index],
 	}
@@ -62,27 +62,27 @@ type SyncedTx interface {
 	SyncedPubKeyID() uint32
 }
 
-type SyncedTransfer2 struct {
+type SyncedTransfer struct {
 	tx *models.Transfer
 }
 
-func (a *SyncedTransfer2) SyncedTx() models.GenericTransaction {
+func (a *SyncedTransfer) SyncedTx() models.GenericTransaction {
 	return a.tx
 }
 
-func (a *SyncedTransfer2) SyncedPubKeyID() uint32 {
-	panic("SyncedPubKeyID cannot be invoked on SyncedTransfer2")
+func (a *SyncedTransfer) SyncedPubKeyID() uint32 {
+	panic("SyncedPubKeyID cannot be invoked on SyncedTransfer")
 }
 
-type SyncedC2T2 struct {
+type SyncedC2T struct {
 	tx       *models.Create2Transfer
 	pubKeyID uint32
 }
 
-func (a *SyncedC2T2) SyncedTx() models.GenericTransaction {
+func (a *SyncedC2T) SyncedTx() models.GenericTransaction {
 	return a.tx
 }
 
-func (a *SyncedC2T2) SyncedPubKeyID() uint32 {
+func (a *SyncedC2T) SyncedPubKeyID() uint32 {
 	return a.pubKeyID
 }

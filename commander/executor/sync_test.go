@@ -102,6 +102,7 @@ func (s *SyncTestSuite) recreateDatabase() {
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
+	s.rollupCtx = newRollupContext(s.executionCtx, s.rollupCtx.BatchType)
 	s.syncCtx = NewTestSyncContext(s.executionCtx, s.syncCtx.BatchType)
 
 	seedDB(s.Assertions, s.storage.Storage, s.wallets)

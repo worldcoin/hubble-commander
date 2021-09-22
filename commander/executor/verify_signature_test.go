@@ -250,6 +250,6 @@ func signCreate2Transfer(t *testing.T, wallet *bls.Wallet, transfer *models.Crea
 	transfer.Signature = *signature.ModelsSignature()
 }
 
-func TestSyncTransferCommitmentsTestSuite(t *testing.T) {
+func TestVerifySignatureTestSuite(t *testing.T) {
 	suite.Run(t, new(VerifySignatureTestSuite))
 }

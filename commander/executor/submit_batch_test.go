@@ -1,12 +1,9 @@
 package executor
 
 import (
-	"testing"
-
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/stretchr/testify/suite"
 )
 
 var (
@@ -23,7 +20,7 @@ type SubmitBatchTestSuite struct {
 	TestSuiteWithRollupContext
 }
 
-func setupUser(s *SubmitBatchTestSuite) {
+func (s *SubmitBatchTestSuite) setupUser() {
 	userState := models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(1),
@@ -45,8 +42,4 @@ func getCommitments(count int, batchID models.Uint256) []models.Commitment {
 		commitments = append(commitments, commitment)
 	}
 	return commitments
-}
-
-func TestSubmitC2TBatchTestSuite(t *testing.T) {
-	suite.Run(t, new(SubmitC2TBatchTestSuite))
 }

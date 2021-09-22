@@ -2,10 +2,12 @@ package executor
 
 import (
 	"math/big"
+	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/suite"
 )
 
 type SubmitTransferBatchTestSuite struct {
@@ -14,7 +16,7 @@ type SubmitTransferBatchTestSuite struct {
 
 func (s *SubmitTransferBatchTestSuite) SetupTest() {
 	s.TestSuiteWithRollupContext.SetupTest(batchtype.Transfer)
-	setupUser(&s.SubmitBatchTestSuite)
+	s.setupUser()
 }
 
 func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_ErrorsIfNotEnoughCommitments() {
@@ -80,4 +82,8 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_AddsCommitments() {
 		s.Equal(commitments[i], *commit)
 		s.Equal(batch.ID, commit.ID.BatchID)
 	}
+}
+
+func TestSubmitTransferBatchTestSuite(t *testing.T) {
+	suite.Run(t, new(SubmitTransferBatchTestSuite))
 }
