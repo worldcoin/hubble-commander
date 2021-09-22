@@ -76,6 +76,13 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
+	maxDepositSubTreeDepth, err := c.client.GetMaxSubTreeDepthParam()
+	if err != nil {
+		return err
+	}
+
+	c.cfg.Rollup.MaxDepositSubTreeDepth = *maxDepositSubTreeDepth
+
 	err = c.addGenesisBatch()
 	if err != nil {
 		return err

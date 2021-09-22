@@ -3,6 +3,7 @@ package commander
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/erc20"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
@@ -37,6 +38,9 @@ func (s *DepositsTestSuite) SetupTest() {
 	s.cmd = &Commander{
 		storage: testStorage.Storage,
 		client:  s.testClient.Client,
+		cfg: &config.Config{Rollup: &config.RollupConfig{
+			MaxDepositSubTreeDepth: 2,
+		}},
 	}
 	s.tokenID = models.NewUint256(0) // First registered tokenID
 }
@@ -53,7 +57,7 @@ func (s *DepositsTestSuite) TestSyncDeposits() {
 
 	deposits := make([]models.PendingDeposit, 0, 4)
 
-	// Smart contract needs 4 deposits to create a subtree
+	// Smart contract needs 4 deposits to create a subtree (depth specified in cfg.Rollup.MaxDepositSubTreeDepth)
 	deposits = append(deposits, *s.queueDeposit())
 	deposits = append(deposits, *s.queueDeposit())
 	deposits = append(deposits, *s.queueDeposit())

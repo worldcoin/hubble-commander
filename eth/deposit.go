@@ -93,3 +93,14 @@ func QueueDeposit(
 	}
 	return tx, nil
 }
+
+func (c *Client) GetMaxSubTreeDepthParam() (*uint32, error) {
+	param, err := c.DepositManager.ParamMaxSubtreeDepth(&bind.CallOpts{})
+	if err != nil {
+		return nil, err
+	}
+
+	maxDepositSubTreeDepth := uint32(param.Uint64())
+
+	return &maxDepositSubTreeDepth, nil
+}

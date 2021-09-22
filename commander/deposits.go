@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 
-	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -20,29 +19,21 @@ func (c *Commander) syncDeposits(start, end uint64) error {
 		return err
 	}
 
-	// TODO-D read MaxDepositSubtreeDepth from smart contract
-	depositsAmountRequiredForSubTrees := len(depositSubTrees) * 1 << rollup.DefaultMaxDepositSubtreeDepth
+	return nil
+}
+
+func (c *Commander) saveSyncedSubTrees(subTrees []models.PendingDepositSubTree) error {
+	subTreeLeavesAmount := 1 << c.cfg.Rollup.MaxDepositSubTreeDepth
+	depositsAmountRequiredForSubTrees := len(subTrees) * subTreeLeavesAmount
+
 	deposits, err := c.storage.GetFirstPendingDeposits(depositsAmountRequiredForSubTrees)
 	if err != nil {
 		return err
 	}
 
-	err = saveDepositsInSubTrees(c.storage, depositSubTrees, deposits)
-	if err != nil {
-		return err
-	}
-
-	return c.storage.RemovePendingDeposits(deposits)
-}
-
-func saveDepositsInSubTrees(storage *st.Storage, subTrees []models.PendingDepositSubTree, deposits []models.PendingDeposit) error {
 	for i := range subTrees {
 		subTree := &subTrees[i]
-		subTree.Deposits = make([]models.PendingDeposit, 0, 4)
-
-		for j := i * 4; j < 4+i*4; j++ {
-			subTree.Deposits = append(subTree.Deposits, deposits[j])
-		}
+		subTree.Deposits = deposits
 
 		err := storage.AddPendingDepositSubTree(subTree)
 		if err != nil {
