@@ -19,10 +19,9 @@ func NewSyncContext(
 	storage *st.Storage,
 	client *eth.Client,
 	cfg *config.RollupConfig,
-	ctx context.Context,
 	batchType batchtype.BatchType,
 ) (*SyncContext, error) {
-	executionCtx, err := NewExecutionContext(storage, client, cfg, ctx)
+	executionCtx, err := NewExecutionContext(storage, client, cfg, context.Background())
 	if err != nil {
 		return nil, err
 	}
