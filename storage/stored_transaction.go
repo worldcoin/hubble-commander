@@ -61,12 +61,12 @@ func (s *TransactionStorage) unsafeExecuteInTransaction(opts TxOptions, fn func(
 	return txController.Commit()
 }
 
-func (s *TransactionStorage) addStoredReceipt(txReceipt *models.StoredReceipt) error {
+func (s *TransactionStorage) addStoredTxReceipt(txReceipt *models.StoredTxReceipt) error {
 	return s.database.Badger.Insert(txReceipt.Hash, *txReceipt)
 }
 
 func (s *TransactionStorage) getStoredTxWithReceipt(hash common.Hash) (
-	storedTx *models.StoredTx, txReceipt *models.StoredReceipt, err error,
+	storedTx *models.StoredTx, txReceipt *models.StoredTxReceipt, err error,
 ) {
 	err = s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
 		storedTx, err = txStorage.getStoredTx(hash)
@@ -98,8 +98,8 @@ func (s *TransactionStorage) getStoredTx(hash common.Hash) (*models.StoredTx, er
 	return &storedTx, nil
 }
 
-func (s *TransactionStorage) getStoredTxReceipt(hash common.Hash) (*models.StoredReceipt, error) {
-	var storedTxReceipt models.StoredReceipt
+func (s *TransactionStorage) getStoredTxReceipt(hash common.Hash) (*models.StoredTxReceipt, error) {
+	var storedTxReceipt models.StoredTxReceipt
 	err := s.database.Badger.Get(hash, &storedTxReceipt)
 	if err == bh.ErrNotFound {
 		return nil, nil
@@ -170,7 +170,7 @@ func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*
 }
 
 func (s *TransactionStorage) MarkTransactionsAsPending(txHashes []common.Hash) error {
-	dataType := models.StoredReceipt{}
+	dataType := models.StoredTxReceipt{}
 	return s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
 		for i := range txHashes {
 			err := txStorage.database.Badger.Delete(txHashes[i], dataType)
@@ -183,7 +183,7 @@ func (s *TransactionStorage) MarkTransactionsAsPending(txHashes []common.Hash) e
 }
 
 func (s *TransactionStorage) SetTransactionError(txHash common.Hash, errorMessage string) error {
-	return s.addStoredReceipt(&models.StoredReceipt{
+	return s.addStoredTxReceipt(&models.StoredTxReceipt{
 		Hash:         txHash,
 		ErrorMessage: &errorMessage,
 	})
@@ -199,7 +199,7 @@ func (s *Storage) GetTransactionCount() (*int, error) {
 		if err != nil {
 			return err
 		}
-		seekPrefix := db.IndexKeyPrefix(models.StoredReceiptName, "CommitmentID")
+		seekPrefix := db.IndexKeyPrefix(models.StoredTxReceiptName, "CommitmentID")
 		err = txStorage.database.Badger.Iterator(seekPrefix, db.PrefetchIteratorOpts,
 			func(item *bdg.Item) (bool, error) {
 				var commitmentID *models.CommitmentID
@@ -237,7 +237,7 @@ func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.U
 	hashes := make([]common.Hash, 0, len(batchIDs)*32)
 
 	var keyList bh.KeyList
-	seekPrefix := db.IndexKeyPrefix(models.StoredReceiptName, "CommitmentID")
+	seekPrefix := db.IndexKeyPrefix(models.StoredTxReceiptName, "CommitmentID")
 	err := s.database.Badger.Iterator(seekPrefix, db.ReversePrefetchIteratorOpts,
 		func(item *bdg.Item) (bool, error) {
 			if validForPrefixes(keyValue(seekPrefix, item.Key()), batchPrefixes) {
@@ -247,7 +247,7 @@ func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.U
 				if err != nil {
 					return false, err
 				}
-				txHashes, err := decodeKeyListHashes(models.StoredReceiptPrefix, keyList)
+				txHashes, err := decodeKeyListHashes(models.StoredTxReceiptPrefix, keyList)
 				if err != nil {
 					return false, err
 				}

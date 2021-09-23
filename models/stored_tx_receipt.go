@@ -6,31 +6,31 @@ import (
 	bh "github.com/timshannon/badgerhold/v4"
 )
 
-const storedReceiptBytesLength = 72
+const storedTxReceiptBytesLength = 72
 
 var (
-	StoredReceiptName                = getTypeName(StoredReceipt{})
-	StoredReceiptPrefix              = getBadgerHoldPrefix(StoredReceipt{})
-	errInvalidStoredReceiptIndexType = errors.New("invalid StoredReceipt index type")
+	StoredTxReceiptName                = getTypeName(StoredTxReceipt{})
+	StoredTxReceiptPrefix              = getBadgerHoldPrefix(StoredTxReceipt{})
+	errInvalidStoredTxReceiptIndexType = errors.New("invalid StoredTxReceipt index type")
 )
 
-type StoredReceipt struct {
+type StoredTxReceipt struct {
 	Hash         common.Hash
 	CommitmentID *CommitmentID
 	ToStateID    *uint32 // only for C2T
 	ErrorMessage *string
 }
 
-func MakeStoredReceiptFromTransfer(t *Transfer) StoredReceipt {
-	return StoredReceipt{
+func MakeStoredTxReceiptFromTransfer(t *Transfer) StoredTxReceipt {
+	return StoredTxReceipt{
 		Hash:         t.Hash,
 		CommitmentID: t.CommitmentID,
 		ErrorMessage: t.ErrorMessage,
 	}
 }
 
-func MakeStoredReceiptFromCreate2Transfer(t *Create2Transfer) StoredReceipt {
-	return StoredReceipt{
+func MakeStoredTxReceiptFromCreate2Transfer(t *Create2Transfer) StoredTxReceipt {
+	return StoredTxReceipt{
 		Hash:         t.Hash,
 		CommitmentID: t.CommitmentID,
 		ToStateID:    t.ToStateID,
@@ -38,7 +38,7 @@ func MakeStoredReceiptFromCreate2Transfer(t *Create2Transfer) StoredReceipt {
 	}
 }
 
-func (t *StoredReceipt) Bytes() []byte {
+func (t *StoredTxReceipt) Bytes() []byte {
 	b := make([]byte, t.BytesLen())
 	copy(b[0:32], t.Hash.Bytes())
 	copy(b[32:66], EncodeCommitmentIDPointer(t.CommitmentID))
@@ -47,8 +47,8 @@ func (t *StoredReceipt) Bytes() []byte {
 	return b
 }
 
-func (t *StoredReceipt) SetBytes(data []byte) error {
-	if len(data) < storedReceiptBytesLength {
+func (t *StoredTxReceipt) SetBytes(data []byte) error {
+	if len(data) < storedTxReceiptBytesLength {
 		return ErrInvalidLength
 	}
 	commitmentID, err := DecodeCommitmentIDPointer(data[32:66])
@@ -63,24 +63,24 @@ func (t *StoredReceipt) SetBytes(data []byte) error {
 	return nil
 }
 
-func (t *StoredReceipt) BytesLen() int {
+func (t *StoredTxReceipt) BytesLen() int {
 	if t.ErrorMessage != nil {
-		return storedReceiptBytesLength + len(*t.ErrorMessage)
+		return storedTxReceiptBytesLength + len(*t.ErrorMessage)
 	}
-	return storedReceiptBytesLength
+	return storedTxReceiptBytesLength
 }
 
 // Type implements badgerhold.Storer
-func (t StoredReceipt) Type() string {
-	return string(StoredReceiptName)
+func (t StoredTxReceipt) Type() string {
+	return string(StoredTxReceiptName)
 }
 
 // Indexes implements badgerhold.Storer
-func (t StoredReceipt) Indexes() map[string]bh.Index {
+func (t StoredTxReceipt) Indexes() map[string]bh.Index {
 	return map[string]bh.Index{
 		"CommitmentID": {
 			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
-				v, err := interfaceToStoredReceipt(value)
+				v, err := interfaceToStoredTxReceipt(value)
 				if err != nil {
 					return nil, err
 				}
@@ -89,7 +89,7 @@ func (t StoredReceipt) Indexes() map[string]bh.Index {
 		},
 		"ToStateID": {
 			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
-				v, err := interfaceToStoredReceipt(value)
+				v, err := interfaceToStoredTxReceipt(value)
 				if err != nil {
 					return nil, err
 				}
@@ -99,14 +99,14 @@ func (t StoredReceipt) Indexes() map[string]bh.Index {
 	}
 }
 
-func interfaceToStoredReceipt(value interface{}) (*StoredReceipt, error) {
-	p, ok := value.(*StoredReceipt)
+func interfaceToStoredTxReceipt(value interface{}) (*StoredTxReceipt, error) {
+	p, ok := value.(*StoredTxReceipt)
 	if ok {
 		return p, nil
 	}
-	v, ok := value.(StoredReceipt)
+	v, ok := value.(StoredTxReceipt)
 	if ok {
 		return &v, nil
 	}
-	return nil, errInvalidStoredReceiptIndexType
+	return nil, errInvalidStoredTxReceiptIndexType
 }
