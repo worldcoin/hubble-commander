@@ -126,28 +126,6 @@ func (s *DisputeC2TSignatureTestSuite) TestDisputeSignature_ValidBatch() {
 	s.NoError(err)
 }
 
-func (s *DisputeC2TSignatureTestSuite) submitC2TBatch(tx *models.Create2Transfer) {
-	pendingBatch, commitments := s.createC2TBatch(tx)
-
-	err := s.rollupCtx.SubmitBatch(pendingBatch, commitments)
-	s.NoError(err)
-
-	s.client.Commit()
-}
-
-func (s *DisputeC2TSignatureTestSuite) createC2TBatch(tx *models.Create2Transfer) (*models.Batch, []models.Commitment) {
-	err := s.storage.AddCreate2Transfer(tx)
-	s.NoError(err)
-
-	pendingBatch, err := s.rollupCtx.NewPendingBatch(batchtype.Create2Transfer)
-	s.NoError(err)
-
-	commitments, err := s.rollupCtx.CreateCommitments()
-	s.NoError(err)
-	s.Len(commitments, 1)
-	return pendingBatch, commitments
-}
-
 func (s *DisputeC2TSignatureTestSuite) signCreate2Transfer(wallet *bls.Wallet, transfer *models.Create2Transfer) {
 	encodedTransfer, err := encoder.EncodeCreate2TransferForSigning(transfer)
 	s.NoError(err)

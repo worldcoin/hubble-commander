@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/Worldcoin/hubble-commander/commander/disputer"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/commander/syncer"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -118,7 +119,7 @@ func (c *Commander) disputeFraudulentBatch(
 	remoteBatch *eth.DecodedBatch,
 	disputableErr *syncer.DisputableError,
 ) (err error) {
-	disputeCtx := executor.NewDisputeContext(c.storage, c.client)
+	disputeCtx := disputer.NewDisputeContext(c.storage, c.client)
 
 	switch disputableErr.Type {
 	case syncer.Transition:

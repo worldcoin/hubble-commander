@@ -109,3 +109,25 @@ func (s *TestSuiteWithDisputeContext) createTransferBatch(tx *models.Transfer) (
 
 	return pendingBatch, commitments
 }
+
+func (s *TestSuiteWithDisputeContext) submitC2TBatch(tx *models.Create2Transfer) {
+	pendingBatch, commitments := s.createC2TBatch(tx)
+
+	err := s.rollupCtx.SubmitBatch(pendingBatch, commitments)
+	s.NoError(err)
+
+	s.client.Commit()
+}
+
+func (s *TestSuiteWithDisputeContext) createC2TBatch(tx *models.Create2Transfer) (*models.Batch, []models.Commitment) {
+	err := s.disputeCtx.storage.AddCreate2Transfer(tx)
+	s.NoError(err)
+
+	pendingBatch, err := s.rollupCtx.NewPendingBatch(batchtype.Create2Transfer)
+	s.NoError(err)
+
+	commitments, err := s.rollupCtx.CreateCommitments()
+	s.NoError(err)
+	s.Len(commitments, 1)
+	return pendingBatch, commitments
+}

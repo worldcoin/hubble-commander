@@ -15,6 +15,10 @@ type SyncedTransfers struct {
 	txs models.TransferArray
 }
 
+func NewSyncedTransfers(txs models.TransferArray) *SyncedTransfers {
+	return &SyncedTransfers{txs: txs}
+}
+
 func (a *SyncedTransfers) Txs() models.GenericTransactionArray {
 	return a.txs
 }
@@ -36,6 +40,10 @@ func (a *SyncedTransfers) SetTxs(txs models.GenericTransactionArray) {
 type SyncedC2Ts struct {
 	txs       models.Create2TransferArray
 	pubKeyIDs []uint32
+}
+
+func NewSyncedC2Ts(txs models.Create2TransferArray, pubKeyIDs []uint32) *SyncedC2Ts {
+	return &SyncedC2Ts{txs: txs, pubKeyIDs: pubKeyIDs}
 }
 
 func (a *SyncedC2Ts) Txs() models.GenericTransactionArray {
