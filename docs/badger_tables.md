@@ -1,7 +1,5 @@
 # 🦡 Badger tables
 
-> **Warning:** Badger table name cannot match a prefix of another table, because it breaks iteration over keys! For instance, introducing `StoredTxReceipt` table, breaks iteration over `StoredTx` table keys.
-
 ## Current tables
 
 ### State Leaf
