@@ -10,7 +10,7 @@ import (
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-	bh "github.com/timshannon/badgerhold/v3"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 func (s *TransactionStorage) AddTransfer(t *models.Transfer) error {

@@ -6,7 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils"
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/pkg/errors"
-	bh "github.com/timshannon/badgerhold/v3"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 type CommitmentStorage struct {
