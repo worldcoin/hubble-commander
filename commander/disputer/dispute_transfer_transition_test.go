@@ -1,9 +1,11 @@
-package executor
+package disputer
 
 import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/commander/applier"
+	"github.com/Worldcoin/hubble-commander/commander/syncer"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -20,7 +22,7 @@ func (s *DisputeTransferTransitionTestSuite) SetupTest() {
 }
 
 func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_RemovesInvalidBatch() {
-	setUserStates(s.Assertions, s.executionCtx, &bls.TestDomain)
+	setUserStates(s.Assertions, s.disputeCtx, &bls.TestDomain)
 
 	commitmentTxs := [][]models.Transfer{
 		{
@@ -46,11 +48,11 @@ func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_RemovesInvali
 	err = s.disputeCtx.DisputeTransition(&remoteBatches[0], 1, proofs)
 	s.NoError(err)
 
-	s.checkBatchAfterDispute(remoteBatches[0].ID)
+	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[0].ID)
 }
 
 func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_FirstCommitment() {
-	setUserStates(s.Assertions, s.executionCtx, &bls.TestDomain)
+	setUserStates(s.Assertions, s.disputeCtx, &bls.TestDomain)
 
 	commitmentTxs := [][]models.Transfer{
 		{
@@ -59,7 +61,7 @@ func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_FirstCommitme
 	}
 
 	transfer := testutils.MakeTransfer(0, 2, 0, 50)
-	submitTransferBatch(s.Assertions, s.client, s.rollupCtx, &transfer)
+	s.submitTransferBatch(&transfer)
 
 	proofs := s.getStateMerkleProofs(commitmentTxs)
 
@@ -71,36 +73,36 @@ func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_FirstCommitme
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.executionCtx.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
+	err = s.disputeCtx.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
 	s.NoError(err)
 
 	err = s.disputeCtx.DisputeTransition(&remoteBatches[1], 0, proofs)
 	s.NoError(err)
 
-	s.checkBatchAfterDispute(remoteBatches[1].ID)
+	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[1].ID)
 }
 
 func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_ValidBatch() {
-	setUserStates(s.Assertions, s.executionCtx, &bls.TestDomain)
+	setUserStates(s.Assertions, s.disputeCtx, &bls.TestDomain)
 
 	transfers := []models.Transfer{
 		testutils.MakeTransfer(0, 2, 0, 50),
 		testutils.MakeTransfer(0, 2, 1, 100),
 	}
 
-	submitTransferBatch(s.Assertions, s.client, s.rollupCtx, &transfers[0])
+	s.submitTransferBatch(&transfers[0])
 
 	proofs := s.getStateMerkleProofs([][]models.Transfer{{transfers[1]}})
 
 	s.beginTransaction()
 	defer s.commitTransaction()
-	submitTransferBatch(s.Assertions, s.client, s.rollupCtx, &transfers[1])
+	s.submitTransferBatch(&transfers[1])
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.executionCtx.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
+	err = s.disputeCtx.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
 	s.NoError(err)
 
 	err = s.disputeCtx.DisputeTransition(&remoteBatches[1], 0, proofs)
@@ -113,21 +115,18 @@ func (s *DisputeTransferTransitionTestSuite) getStateMerkleProofs(txs [][]models
 	feeReceiverStateID := uint32(0)
 
 	s.beginTransaction()
-	defer s.executionCtx.Rollback(nil)
-
-	syncCtx := NewTestSyncContext(s.executionCtx, s.rollupCtx.BatchType)
+	defer s.rollback()
 
 	var stateProofs []models.StateMerkleProof
 	var err error
 	for i := range txs {
-		input := &SyncedTransfers{
-			txs: txs[i],
-		}
-		_, stateProofs, err = syncCtx.ApplyTxs(input, feeReceiverStateID)
+		input := &syncer.SyncedTransfers{}
+		input.SetTxs(models.TransferArray(txs[i]))
+		_, stateProofs, err = s.syncCtx.ApplyTxs(input, feeReceiverStateID)
 		if err != nil {
-			var disputableErr *DisputableError
+			var disputableErr *syncer.DisputableError
 			s.ErrorAs(err, &disputableErr)
-			s.Equal(Transition, disputableErr.Type)
+			s.Equal(syncer.Transition, disputableErr.Type)
 			s.Len(disputableErr.Proofs, len(txs[i])*2)
 			return disputableErr.Proofs
 		}
@@ -138,7 +137,7 @@ func (s *DisputeTransferTransitionTestSuite) getStateMerkleProofs(txs [][]models
 
 func (s *DisputeTransferTransitionTestSuite) submitInvalidBatch(txs [][]models.Transfer, invalidTxHash common.Hash) *models.Batch {
 	for i := range txs {
-		err := s.executionCtx.storage.BatchAddTransfer(txs[i])
+		err := s.disputeCtx.storage.BatchAddTransfer(txs[i])
 		s.NoError(err)
 	}
 
@@ -168,19 +167,22 @@ func (s *DisputeTransferTransitionTestSuite) createInvalidCommitments(
 		txs := commitmentTxs[i]
 		combinedFee := models.MakeUint256(0)
 		for j := range txs {
-			receiverLeaf, err := s.executionCtx.storage.StateTree.Leaf(txs[j].ToStateID)
+			receiverLeaf, err := s.disputeCtx.storage.StateTree.Leaf(txs[j].ToStateID)
 			s.NoError(err)
 			combinedFee = s.applyTransfer(&txs[j], invalidTxHash, combinedFee, receiverLeaf)
 		}
 		if combinedFee.CmpN(0) > 0 {
-			_, err := s.executionCtx.ApplyFee(0, combinedFee)
+			_, err := s.rollupCtx.ApplyFee(0, combinedFee)
 			s.NoError(err)
 		}
 
-		applyResult := &ApplyTransfersForCommitmentResult{
-			appliedTxs: txs,
+		//TODO-div: extract
+		applyTxsResult := s.rollupCtx.Executor.NewApplyTxsResult(uint32(len(txs)))
+		for j := range txs {
+			applyTxsResult.AddApplied(&applier.ApplySingleTransferResult{Tx: &txs[j]})
 		}
-		commitment, err := s.rollupCtx.BuildCommitment(applyResult, commitmentID, 0)
+		//TODO-div: check if it's necessary to export this
+		commitment, err := s.rollupCtx.BuildCommitment(applyTxsResult, commitmentID, 0)
 		s.NoError(err)
 		commitments = append(commitments, *commitment)
 	}

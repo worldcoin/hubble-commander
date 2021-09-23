@@ -56,18 +56,17 @@ func (c *SyncContext) verifyCommitmentSignature(
 }
 
 func (c *SyncContext) createDisputableSignatureError(reason string, txs models.GenericTransactionArray) error {
-	proofs, proofErr := c.stateMerkleProofs(txs)
+	proofs, proofErr := c.StateMerkleProofs(txs)
 	if proofErr != nil {
 		return proofErr
 	}
 	return NewDisputableErrorWithProofs(Signature, reason, proofs)
 }
 
-//TODO-div: deduplicate or export for disputer
-func (c *SyncContext) stateMerkleProofs(txs models.GenericTransactionArray) ([]models.StateMerkleProof, error) {
+func (c *SyncContext) StateMerkleProofs(txs models.GenericTransactionArray) ([]models.StateMerkleProof, error) {
 	proofs := make([]models.StateMerkleProof, 0, txs.Len())
 	for i := 0; i < txs.Len(); i++ {
-		stateProof, err := c.userStateProof(txs.At(i).GetFromStateID())
+		stateProof, err := c.UserStateProof(txs.At(i).GetFromStateID())
 		if err != nil {
 			return nil, err
 		}
@@ -76,7 +75,7 @@ func (c *SyncContext) stateMerkleProofs(txs models.GenericTransactionArray) ([]m
 	return proofs, nil
 }
 
-func (c *SyncContext) userStateProof(stateID uint32) (*models.StateMerkleProof, error) {
+func (c *SyncContext) UserStateProof(stateID uint32) (*models.StateMerkleProof, error) {
 	leaf, err := c.storage.StateTree.Leaf(stateID)
 	if err != nil {
 		return nil, err

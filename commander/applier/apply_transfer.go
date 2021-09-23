@@ -11,7 +11,7 @@ func (a *Applier) ApplyTransfer(tx models.GenericTransaction, commitmentTokenID 
 	}
 
 	transferError, appError = a.ApplyTx(tx, receiverLeaf, commitmentTokenID)
-	return &ApplySingleTransferResult{tx: tx.ToTransfer()}, transferError, appError
+	return &ApplySingleTransferResult{Tx: tx.ToTransfer()}, transferError, appError
 }
 
 func (a *Applier) ApplyTransferForSync(tx models.GenericTransaction, commitmentTokenID models.Uint256) (

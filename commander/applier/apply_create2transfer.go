@@ -21,16 +21,16 @@ func (a *Applier) ApplyCreate2Transfer(
 	}
 
 	applyResult = &ApplySingleC2TResult{
-		tx:            create2Transfer.Clone(),
-		addedPubKeyID: *pubKeyID,
+		Tx:       create2Transfer.Clone(),
+		PubKeyID: *pubKeyID,
 	}
-	applyResult.tx.ToStateID = nextAvailableStateID
+	applyResult.Tx.ToStateID = nextAvailableStateID
 
 	receiverLeaf, appError := newUserLeaf(*nextAvailableStateID, *pubKeyID, commitmentTokenID)
 	if appError != nil {
 		return nil, nil, appError
 	}
-	transferError, appError = a.ApplyTx(applyResult.tx, receiverLeaf, commitmentTokenID)
+	transferError, appError = a.ApplyTx(applyResult.Tx, receiverLeaf, commitmentTokenID)
 	return applyResult, transferError, appError
 }
 

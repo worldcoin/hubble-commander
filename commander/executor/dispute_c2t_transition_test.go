@@ -194,7 +194,7 @@ func (s *DisputeCT2TransitionTestSuite) createInvalidCommitments(
 	pubKeyIDs [][]uint32,
 	invalidTxHash common.Hash,
 ) []models.Commitment {
-	commitmentID, err := s.rollupCtx.nextCommitmentID()
+	commitmentID, err := s.rollupCtx.NextCommitmentID()
 	s.NoError(err)
 
 	commitments := make([]models.Commitment, 0, len(commitmentTxs))
@@ -215,7 +215,7 @@ func (s *DisputeCT2TransitionTestSuite) createInvalidCommitments(
 			appliedTxs:     txs,
 			addedPubKeyIDs: pubKeyIDs[i],
 		}
-		commitment, err := s.rollupCtx.buildCommitment(applyResult, commitmentID, 0)
+		commitment, err := s.rollupCtx.BuildCommitment(applyResult, commitmentID, 0)
 		s.NoError(err)
 		commitments = append(commitments, *commitment)
 	}

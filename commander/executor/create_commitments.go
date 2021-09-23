@@ -23,7 +23,7 @@ func (c *RollupContext) CreateCommitments() ([]models.Commitment, error) {
 		return nil, err
 	}
 
-	commitmentID, err := c.nextCommitmentID()
+	commitmentID, err := c.NextCommitmentID()
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (c *RollupContext) createCommitment(pendingTxs models.GenericTransactionArr
 		return nil, nil, err
 	}
 
-	commitment, err = c.buildCommitment(applyResult, commitmentID, feeReceiver.StateID)
+	commitment, err = c.BuildCommitment(applyResult, commitmentID, feeReceiver.StateID)
 	if err != nil {
 		return nil, nil, err
 	}

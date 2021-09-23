@@ -8,11 +8,11 @@ type ApplySingleTxResult interface {
 }
 
 type ApplySingleTransferResult struct {
-	tx *models.Transfer
+	Tx *models.Transfer
 }
 
 func (a *ApplySingleTransferResult) AppliedTx() models.GenericTransaction {
-	return a.tx
+	return a.Tx
 }
 
 func (a *ApplySingleTransferResult) AddedPubKeyID() uint32 {
@@ -20,14 +20,14 @@ func (a *ApplySingleTransferResult) AddedPubKeyID() uint32 {
 }
 
 type ApplySingleC2TResult struct {
-	tx            *models.Create2Transfer
-	addedPubKeyID uint32
+	Tx       *models.Create2Transfer
+	PubKeyID uint32
 }
 
 func (a *ApplySingleC2TResult) AppliedTx() models.GenericTransaction {
-	return a.tx
+	return a.Tx
 }
 
 func (a *ApplySingleC2TResult) AddedPubKeyID() uint32 {
-	return a.addedPubKeyID
+	return a.PubKeyID
 }
