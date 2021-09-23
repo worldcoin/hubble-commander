@@ -6,7 +6,6 @@ import (
 
 type TestStorage struct {
 	*Storage
-	Database *Database
 	Teardown func() error
 }
 
@@ -24,7 +23,6 @@ func NewTestStorage() (*TestStorage, error) {
 
 	return &TestStorage{
 		Storage:  newStorageFromDatabase(database),
-		Database: database,
 		Teardown: badgerTestDB.Teardown,
 	}, nil
 }
