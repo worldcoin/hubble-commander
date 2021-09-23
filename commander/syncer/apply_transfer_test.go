@@ -10,15 +10,15 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type SyncApplyTransfersTestSuite struct {
-	SyncApplyTxsTestSuite
+type ApplyTransfersTestSuite struct {
+	ApplyTxsTestSuite
 }
 
-func (s *SyncApplyTransfersTestSuite) SetupTest() {
-	s.SyncApplyTxsTestSuite.SetupTest(batchtype.Transfer)
+func (s *ApplyTransfersTestSuite) SetupTest() {
+	s.ApplyTxsTestSuite.SetupTest(batchtype.Transfer)
 }
 
-func (s *SyncApplyTransfersTestSuite) TestApplyTxs_AllValid() {
+func (s *ApplyTransfersTestSuite) TestApplyTxs_AllValid() {
 	input := &SyncedTransfers{
 		txs: testutils.GenerateValidTransfers(3),
 	}
@@ -29,7 +29,7 @@ func (s *SyncApplyTransfersTestSuite) TestApplyTxs_AllValid() {
 	s.Len(stateProofs, 7)
 }
 
-func (s *SyncApplyTransfersTestSuite) TestApplyTxs_InvalidTransfer() {
+func (s *ApplyTransfersTestSuite) TestApplyTxs_InvalidTransfer() {
 	input := &SyncedTransfers{
 		txs: testutils.GenerateValidTransfers(2),
 	}
@@ -44,7 +44,7 @@ func (s *SyncApplyTransfersTestSuite) TestApplyTxs_InvalidTransfer() {
 	s.Len(disputableErr.Proofs, 6)
 }
 
-func (s *SyncApplyTransfersTestSuite) TestApplyTxs_AppliesFee() {
+func (s *ApplyTransfersTestSuite) TestApplyTxs_AppliesFee() {
 	input := &SyncedTransfers{
 		txs: testutils.GenerateValidTransfers(3),
 	}
@@ -57,7 +57,7 @@ func (s *SyncApplyTransfersTestSuite) TestApplyTxs_AppliesFee() {
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }
 
-func (s *SyncApplyTransfersTestSuite) TestApplyTxs_ReturnsCorrectStateProofsForZeroFee() {
+func (s *ApplyTransfersTestSuite) TestApplyTxs_ReturnsCorrectStateProofsForZeroFee() {
 	input := &SyncedTransfers{
 		txs: testutils.GenerateValidTransfers(2),
 	}
@@ -70,7 +70,7 @@ func (s *SyncApplyTransfersTestSuite) TestApplyTxs_ReturnsCorrectStateProofsForZ
 	s.Len(stateProofs, 5)
 }
 
-func (s *SyncApplyTransfersTestSuite) TestApplyTxs_InvalidFeeReceiverTokenID() {
+func (s *ApplyTransfersTestSuite) TestApplyTxs_InvalidFeeReceiverTokenID() {
 	feeReceiver := &FeeReceiver{
 		StateID: 4,
 		TokenID: models.MakeUint256(4),
@@ -98,5 +98,5 @@ func (s *SyncApplyTransfersTestSuite) TestApplyTxs_InvalidFeeReceiverTokenID() {
 }
 
 func TestSyncApplyTransfersTestSuite(t *testing.T) {
-	suite.Run(t, new(SyncApplyTransfersTestSuite))
+	suite.Run(t, new(ApplyTransfersTestSuite))
 }
