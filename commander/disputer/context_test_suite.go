@@ -21,7 +21,6 @@ type TestSuiteWithDisputeContext struct {
 	txController *db.TxController
 	cfg          *config.RollupConfig
 	client       *eth.TestClient
-	executionCtx *executor.ExecutionContext
 	rollupCtx    *executor.RollupContext
 	syncCtx      *syncer.Context
 	disputeCtx   *Context
@@ -63,8 +62,8 @@ func (s *TestSuiteWithDisputeContext) TearDownTest() {
 func (s *TestSuiteWithDisputeContext) newContexts(
 	storage *st.Storage, client *eth.Client, cfg *config.RollupConfig, batchType batchtype.BatchType,
 ) {
-	s.executionCtx = executor.NewTestExecutionContext(storage, s.client.Client, s.cfg)
-	s.rollupCtx = executor.NewTestRollupContext(s.executionCtx, batchType)
+	executionCtx := executor.NewTestExecutionContext(storage, s.client.Client, s.cfg)
+	s.rollupCtx = executor.NewTestRollupContext(executionCtx, batchType)
 	s.syncCtx = syncer.NewTestContext(storage, client, cfg, batchType)
 	s.disputeCtx = NewContext(storage, s.client.Client)
 }
