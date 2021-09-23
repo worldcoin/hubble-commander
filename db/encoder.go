@@ -40,9 +40,9 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Bytes(), nil
 	case *models.CommitmentID:
 		return models.EncodeCommitmentIDPointer(v), nil
-	case models.Deposit:
+	case models.PendingDeposit:
 		return v.Bytes(), nil
-	case *models.Deposit:
+	case *models.PendingDeposit:
 		return nil, errors.WithStack(errPassedByPointer)
 	case models.DepositID:
 		return v.Bytes(), nil
@@ -124,7 +124,7 @@ func Decode(data []byte, value interface{}) error {
 		return v.SetBytes(data)
 	case *models.CommitmentID:
 		return decodeCommitmentIDPointer(data, &value, v)
-	case *models.Deposit:
+	case *models.PendingDeposit:
 		return v.SetBytes(data)
 	case *models.DepositID:
 		return v.SetBytes(data)
