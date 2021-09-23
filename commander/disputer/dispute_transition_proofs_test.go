@@ -21,7 +21,7 @@ type DisputeTransitionProofsTestSuite struct {
 	suite.Suite
 	storage            *st.TestStorage
 	client             *eth.TestClient
-	disputeCtx         *DisputeContext
+	disputeCtx         *Context
 	decodedCommitments []encoder.DecodedCommitment
 	decodedBatch       eth.DecodedBatch
 }
@@ -64,7 +64,7 @@ func (s *DisputeTransitionProofsTestSuite) SetupTest() {
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
 
-	s.disputeCtx = NewDisputeContext(s.storage.Storage, s.client.Client)
+	s.disputeCtx = NewContext(s.storage.Storage, s.client.Client)
 }
 
 func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_CurrentBatch() {

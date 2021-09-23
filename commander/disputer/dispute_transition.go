@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (c *DisputeContext) previousCommitmentInclusionProof(
+func (c *Context) previousCommitmentInclusionProof(
 	batch *eth.DecodedBatch,
 	previousCommitmentIndex int,
 ) (*models.CommitmentInclusionProof, error) {
@@ -30,7 +30,7 @@ func (c *DisputeContext) previousCommitmentInclusionProof(
 	)
 }
 
-func (c *DisputeContext) previousBatchCommitmentInclusionProof(
+func (c *Context) previousBatchCommitmentInclusionProof(
 	currentBatchID models.Uint256,
 ) (*models.CommitmentInclusionProof, error) {
 	previousBatchID := currentBatchID.SubN(1)
@@ -62,7 +62,7 @@ func (c *DisputeContext) previousBatchCommitmentInclusionProof(
 	)
 }
 
-func (c *DisputeContext) genesisBatchCommitmentInclusionProof() (*models.CommitmentInclusionProof, error) {
+func (c *Context) genesisBatchCommitmentInclusionProof() (*models.CommitmentInclusionProof, error) {
 	previousBatch, err := c.storage.GetBatch(models.MakeUint256(0))
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -132,7 +132,7 @@ func targetCommitmentInclusionProof(
 	}, nil
 }
 
-func (c *DisputeContext) DisputeTransition(
+func (c *Context) DisputeTransition(
 	batch *eth.DecodedBatch,
 	commitmentIndex int,
 	merkleProofs []models.StateMerkleProof,

@@ -13,7 +13,7 @@ import (
 
 var ErrUnsupportedBatchType = fmt.Errorf("unsupported batch type")
 
-func (c *DisputeContext) DisputeSignature(
+func (c *Context) DisputeSignature(
 	batch *eth.DecodedBatch,
 	commitmentIndex int,
 	stateProofs []models.StateMerkleProof,
@@ -29,7 +29,7 @@ func (c *DisputeContext) DisputeSignature(
 	return nil
 }
 
-func (c *DisputeContext) disputeTransferSignature(
+func (c *Context) disputeTransferSignature(
 	batch *eth.DecodedBatch,
 	commitmentIndex int,
 	stateProofs []models.StateMerkleProof,
@@ -47,7 +47,7 @@ func (c *DisputeContext) disputeTransferSignature(
 	return c.client.DisputeSignatureTransfer(&batch.ID, targetCommitmentProof, signatureProof)
 }
 
-func (c *DisputeContext) disputeCreate2TransferSignature(
+func (c *Context) disputeCreate2TransferSignature(
 	batch *eth.DecodedBatch,
 	commitmentIndex int,
 	stateProofs []models.StateMerkleProof,
@@ -65,7 +65,7 @@ func (c *DisputeContext) disputeCreate2TransferSignature(
 	return c.client.DisputeSignatureCreate2Transfer(&batch.ID, targetCommitmentProof, signatureProof)
 }
 
-func (c *DisputeContext) signatureProof(stateProofs []models.StateMerkleProof) (*models.SignatureProof, error) {
+func (c *Context) signatureProof(stateProofs []models.StateMerkleProof) (*models.SignatureProof, error) {
 	proof := &models.SignatureProof{
 		UserStates: stateProofs,
 		PublicKeys: make([]models.PublicKeyProof, 0, len(stateProofs)),
@@ -81,7 +81,7 @@ func (c *DisputeContext) signatureProof(stateProofs []models.StateMerkleProof) (
 	return proof, nil
 }
 
-func (c *DisputeContext) signatureProofWithReceiver(
+func (c *Context) signatureProofWithReceiver(
 	commitment *encoder.DecodedCommitment,
 	stateProofs []models.StateMerkleProof,
 ) (*models.SignatureProofWithReceiver, error) {
@@ -108,7 +108,7 @@ func (c *DisputeContext) signatureProofWithReceiver(
 	return proof, nil
 }
 
-func (c *DisputeContext) publicKeyProof(pubKeyID uint32) (*models.PublicKeyProof, error) {
+func (c *Context) publicKeyProof(pubKeyID uint32) (*models.PublicKeyProof, error) {
 	account, err := c.storage.AccountTree.Leaf(pubKeyID)
 	if err != nil {
 		return nil, err
@@ -124,7 +124,7 @@ func (c *DisputeContext) publicKeyProof(pubKeyID uint32) (*models.PublicKeyProof
 	}, nil
 }
 
-func (c *DisputeContext) receiverPublicKeyProof(pubKeyID uint32) (*models.ReceiverPublicKeyProof, error) {
+func (c *Context) receiverPublicKeyProof(pubKeyID uint32) (*models.ReceiverPublicKeyProof, error) {
 	account, err := c.storage.AccountTree.Leaf(pubKeyID)
 	if err != nil {
 		return nil, err

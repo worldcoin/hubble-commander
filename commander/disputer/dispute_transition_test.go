@@ -47,7 +47,7 @@ func (s *DisputeTransitionTestSuite) calculateStateAfterInvalidTransfer(
 	s.NoError(err)
 }
 
-func setUserStates(s *require.Assertions, disputeCtx *DisputeContext, domain *bls.Domain) []bls.Wallet {
+func setUserStates(s *require.Assertions, disputeCtx *Context, domain *bls.Domain) []bls.Wallet {
 	userStates := []models.UserState{
 		*createUserState(0, 300, 0),
 		*createUserState(1, 200, 0),

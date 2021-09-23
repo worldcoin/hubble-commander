@@ -119,7 +119,7 @@ func (c *Commander) disputeFraudulentBatch(
 	remoteBatch *eth.DecodedBatch,
 	disputableErr *syncer.DisputableError,
 ) (err error) {
-	disputeCtx := disputer.NewDisputeContext(c.storage, c.client)
+	disputeCtx := disputer.NewContext(c.storage, c.client)
 
 	switch disputableErr.Type {
 	case syncer.Transition:

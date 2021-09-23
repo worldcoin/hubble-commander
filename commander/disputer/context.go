@@ -5,11 +5,11 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-type DisputeContext struct {
+type Context struct {
 	storage *st.Storage
 	client  *eth.Client
 }
 
-func NewDisputeContext(storage *st.Storage, client *eth.Client) *DisputeContext {
-	return &DisputeContext{storage: storage, client: client}
+func NewContext(storage *st.Storage, client *eth.Client) *Context {
+	return &Context{storage: storage, client: client}
 }
