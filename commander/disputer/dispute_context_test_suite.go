@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -86,8 +87,8 @@ func (s *TestSuiteWithDisputeContext) rollback() {
 	s.newContexts(s.storage.Storage, s.client.Client, s.cfg, s.rollupCtx.BatchType)
 }
 
-func (s *TestSuiteWithDisputeContext) submitTransferBatch(tx *models.Transfer) *models.Batch {
-	pendingBatch, commitments := s.createTransferBatch(tx)
+func (s *TestSuiteWithDisputeContext) submitBatch(tx models.GenericTransaction) *models.Batch {
+	pendingBatch, commitments := s.createBatch(tx)
 
 	err := s.rollupCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
@@ -96,38 +97,21 @@ func (s *TestSuiteWithDisputeContext) submitTransferBatch(tx *models.Transfer) *
 	return pendingBatch
 }
 
-func (s *TestSuiteWithDisputeContext) createTransferBatch(tx *models.Transfer) (*models.Batch, []models.Commitment) {
-	err := s.disputeCtx.storage.AddTransfer(tx)
-	s.NoError(err)
+func (s *TestSuiteWithDisputeContext) createBatch(tx models.GenericTransaction) (*models.Batch, []models.Commitment) {
+	if tx.Type() == txtype.Transfer {
+		err := s.disputeCtx.storage.AddTransfer(tx.ToTransfer())
+		s.NoError(err)
+	} else {
+		err := s.disputeCtx.storage.AddCreate2Transfer(tx.ToCreate2Transfer())
+		s.NoError(err)
+	}
 
-	pendingBatch, err := s.rollupCtx.NewPendingBatch(batchtype.Transfer)
-	s.NoError(err)
-
-	commitments, err := s.rollupCtx.CreateCommitments()
-	s.NoError(err)
-	s.Len(commitments, 1)
-
-	return pendingBatch, commitments
-}
-
-func (s *TestSuiteWithDisputeContext) submitC2TBatch(tx *models.Create2Transfer) {
-	pendingBatch, commitments := s.createC2TBatch(tx)
-
-	err := s.rollupCtx.SubmitBatch(pendingBatch, commitments)
-	s.NoError(err)
-
-	s.client.Commit()
-}
-
-func (s *TestSuiteWithDisputeContext) createC2TBatch(tx *models.Create2Transfer) (*models.Batch, []models.Commitment) {
-	err := s.disputeCtx.storage.AddCreate2Transfer(tx)
-	s.NoError(err)
-
-	pendingBatch, err := s.rollupCtx.NewPendingBatch(batchtype.Create2Transfer)
+	pendingBatch, err := s.rollupCtx.NewPendingBatch(s.rollupCtx.BatchType)
 	s.NoError(err)
 
 	commitments, err := s.rollupCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
+
 	return pendingBatch, commitments
 }

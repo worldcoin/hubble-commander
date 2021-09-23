@@ -59,7 +59,7 @@ func (s *DisputeTransferSignatureTestSuite) TestDisputeSignature_DisputesBatchWi
 	transfer := testutils.MakeTransfer(1, 2, 0, 50)
 	signTransfer(s.T(), &wallets[0], &transfer)
 
-	s.submitTransferBatch(&transfer)
+	s.submitBatch(&transfer)
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
@@ -77,7 +77,7 @@ func (s *DisputeTransferSignatureTestSuite) TestDisputeSignature_ValidBatch() {
 	transfer := testutils.MakeTransfer(1, 2, 0, 50)
 	signTransfer(s.T(), &wallets[1], &transfer)
 
-	s.submitTransferBatch(&transfer)
+	s.submitBatch(&transfer)
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)

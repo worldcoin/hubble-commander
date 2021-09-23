@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -110,6 +111,35 @@ func (s *SyncTestSuite) getAccountTreeRoot() common.Hash {
 	rawAccountRoot, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
 	return common.BytesToHash(rawAccountRoot[:])
+}
+
+func (s *SyncTestSuite) submitBatch(tx models.GenericTransaction) *models.Batch {
+	pendingBatch, commitments := s.createBatch(tx)
+
+	err := s.rollupCtx.SubmitBatch(pendingBatch, commitments)
+	s.NoError(err)
+
+	s.client.Commit()
+	return pendingBatch
+}
+
+func (s *SyncTestSuite) createBatch(tx models.GenericTransaction) (*models.Batch, []models.Commitment) {
+	if tx.Type() == txtype.Transfer {
+		err := s.storage.AddTransfer(tx.ToTransfer())
+		s.NoError(err)
+	} else {
+		err := s.storage.AddCreate2Transfer(tx.ToCreate2Transfer())
+		s.NoError(err)
+	}
+
+	pendingBatch, err := s.rollupCtx.NewPendingBatch(s.rollupCtx.BatchType)
+	s.NoError(err)
+
+	commitments, err := s.rollupCtx.CreateCommitments()
+	s.NoError(err)
+	s.Len(commitments, 1)
+
+	return pendingBatch, commitments
 }
 
 func generateWallets(s *require.Assertions, domain *bls.Domain, walletsAmount int) []bls.Wallet {

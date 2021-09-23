@@ -85,7 +85,7 @@ func (s *DisputeC2TSignatureTestSuite) TestDisputeSignature_DisputesBatchWithInv
 	transfer := testutils.MakeCreate2Transfer(0, nil, 0, 100, &receiver.PublicKey)
 	s.signCreate2Transfer(&wallets[1], &transfer)
 
-	s.submitC2TBatch(&transfer)
+	s.submitBatch(&transfer)
 
 	err := s.storage.AccountTree.SetSingle(receiver)
 	s.NoError(err)
@@ -111,7 +111,7 @@ func (s *DisputeC2TSignatureTestSuite) TestDisputeSignature_ValidBatch() {
 	transfer := testutils.MakeCreate2Transfer(0, nil, 0, 100, &receiver.PublicKey)
 	s.signCreate2Transfer(&wallets[0], &transfer)
 
-	s.submitC2TBatch(&transfer)
+	s.submitBatch(&transfer)
 
 	err := s.storage.AccountTree.SetSingle(receiver)
 	s.NoError(err)

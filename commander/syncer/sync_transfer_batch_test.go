@@ -98,7 +98,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_PendingBatch() {
 	accountRoot := s.getAccountTreeRoot()
 	tx := testutils.MakeTransfer(0, 1, 0, 400)
 	s.setTxHashAndSign(&tx)
-	s.submitTransferBatch(&tx)
+	s.submitBatch(&tx)
 
 	pendingBatch, err := s.storage.GetBatch(models.MakeUint256(1))
 	s.NoError(err)
@@ -120,7 +120,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_PendingBatch() {
 func (s *SyncTransferBatchTestSuite) TestSyncBatch_TooManyTxsInCommitment() {
 	tx := testutils.MakeTransfer(0, 1, 0, 400)
 	s.setTxHashAndSign(&tx)
-	s.submitTransferBatch(&tx)
+	s.submitBatch(&tx)
 
 	tx2 := testutils.MakeTransfer(0, 1, 1, 400)
 	s.setTxHashAndSign(&tx2)
@@ -150,12 +150,12 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TooManyTxsInCommitment() {
 func (s *SyncTransferBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() {
 	tx := testutils.MakeTransfer(0, 1, 0, 400)
 	s.setTxHashAndSign(&tx)
-	s.submitTransferBatch(&tx)
+	s.submitBatch(&tx)
 
 	tx2 := testutils.MakeTransfer(0, 1, 1, 400)
 	s.setTxHashAndSign(&tx2)
 
-	batch, commitments := s.createTransferBatch(&tx2)
+	batch, commitments := s.createBatch(&tx2)
 	commitments[0].PostStateRoot = utils.RandomHash()
 
 	err := s.rollupCtx.SubmitBatch(batch, commitments)
@@ -188,7 +188,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_InvalidTxSignature() {
 	signTransfer(s.T(), &s.wallets[1], &tx)
 	s.setTxHash(&tx)
 
-	s.submitTransferBatch(&tx)
+	s.submitBatch(&tx)
 
 	s.recreateDatabase()
 
@@ -208,7 +208,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_NotValidBLSSignature() {
 	tx := testutils.MakeTransfer(0, 1, 0, 400)
 	s.setTxHash(&tx)
 
-	pendingBatch, commitments := s.createTransferBatch(&tx)
+	pendingBatch, commitments := s.createBatch(&tx)
 	commitments[0].CombinedSignature = models.Signature{1, 2, 3}
 
 	err := s.rollupCtx.SubmitBatch(pendingBatch, commitments)
@@ -281,7 +281,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_CommitmentWithNonexistentFeeR
 }
 
 func (s *SyncTransferBatchTestSuite) submitInvalidBatch(tx *models.Transfer) *models.Batch {
-	pendingBatch, commitments := s.createTransferBatch(tx)
+	pendingBatch, commitments := s.createBatch(tx)
 
 	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)
 
@@ -343,31 +343,6 @@ func (s *SyncTransferBatchTestSuite) setTxHashAndSign(txs ...*models.Transfer) {
 		signTransfer(s.T(), &s.wallets[txs[i].FromStateID], txs[i])
 		s.setTxHash(txs[i])
 	}
-}
-
-// TODO-div: deduplicate
-func (s *SyncTransferBatchTestSuite) submitTransferBatch(tx *models.Transfer) *models.Batch {
-	pendingBatch, commitments := s.createTransferBatch(tx)
-
-	err := s.rollupCtx.SubmitBatch(pendingBatch, commitments)
-	s.NoError(err)
-
-	s.client.Commit()
-	return pendingBatch
-}
-
-func (s *SyncTransferBatchTestSuite) createTransferBatch(tx *models.Transfer) (*models.Batch, []models.Commitment) {
-	err := s.storage.AddTransfer(tx)
-	s.NoError(err)
-
-	pendingBatch, err := s.rollupCtx.NewPendingBatch(batchtype.Transfer)
-	s.NoError(err)
-
-	commitments, err := s.rollupCtx.CreateCommitments()
-	s.NoError(err)
-	s.Len(commitments, 1)
-
-	return pendingBatch, commitments
 }
 
 func TestSyncTransferBatchTestSuite(t *testing.T) {
