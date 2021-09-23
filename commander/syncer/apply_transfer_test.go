@@ -97,6 +97,6 @@ func (s *ApplyTransfersTestSuite) TestApplyTxs_InvalidFeeReceiverTokenID() {
 	s.Len(disputableErr.Proofs, 5)
 }
 
-func TestSyncApplyTransfersTestSuite(t *testing.T) {
+func TestApplyTransfersTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplyTransfersTestSuite))
 }

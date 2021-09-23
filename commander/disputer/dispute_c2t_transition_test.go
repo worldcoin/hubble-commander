@@ -211,7 +211,7 @@ func (s *DisputeCT2TransitionTestSuite) createInvalidCommitments(
 
 		applyTxsResult := s.rollupCtx.Executor.NewApplyTxsResult(uint32(len(txs)))
 		for j := range txs {
-			applyTxsResult.AddApplied(&applier.ApplySingleC2TResult{Tx: &txs[j], PubKeyID: pubKeyIDs[i][j]})
+			applyTxsResult.AddApplied(applier.NewApplySingleC2TResult(&txs[j], pubKeyIDs[i][j]))
 		}
 		commitment, err := s.rollupCtx.BuildCommitment(applyTxsResult, commitmentID, 0)
 		s.NoError(err)

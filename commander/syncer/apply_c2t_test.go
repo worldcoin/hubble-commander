@@ -122,6 +122,6 @@ func (s *ApplyCreate2TransfersTestSuite) generateInvalidTxs(txsAmount, startPubK
 	return syncedC2Ts
 }
 
-func TestSyncApplyCreate2TransfersTestSuite(t *testing.T) {
+func TestApplyCreate2TransfersTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplyCreate2TransfersTestSuite))
 }

@@ -175,12 +175,10 @@ func (s *DisputeTransferTransitionTestSuite) createInvalidCommitments(
 			s.NoError(err)
 		}
 
-		//TODO-div: extract
 		applyTxsResult := s.rollupCtx.Executor.NewApplyTxsResult(uint32(len(txs)))
 		for j := range txs {
-			applyTxsResult.AddApplied(&applier.ApplySingleTransferResult{Tx: &txs[j]})
+			applyTxsResult.AddApplied(applier.NewApplySingleTransferResult(&txs[j]))
 		}
-		//TODO-div: check if it's necessary to export this
 		commitment, err := s.rollupCtx.BuildCommitment(applyTxsResult, commitmentID, 0)
 		s.NoError(err)
 		commitments = append(commitments, *commitment)
