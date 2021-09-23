@@ -17,7 +17,7 @@ var (
 	ErrBatchSubmissionFailed = errors.New("previous submit batch transaction failed")
 )
 
-func (c *SyncContext) SyncBatch(remoteBatch *eth.DecodedBatch) error {
+func (c *Context) SyncBatch(remoteBatch *eth.DecodedBatch) error {
 	localBatch, err := c.storage.GetBatch(remoteBatch.ID)
 	if err != nil && !st.IsNotFoundError(err) {
 		return err
@@ -30,7 +30,7 @@ func (c *SyncContext) SyncBatch(remoteBatch *eth.DecodedBatch) error {
 	}
 }
 
-func (c *SyncContext) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
+func (c *Context) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
 	if remoteBatch.TransactionHash == localBatch.TransactionHash {
 		err := c.storage.MarkBatchAsSubmitted(&remoteBatch.Batch)
 		if err != nil {
@@ -58,7 +58,7 @@ func (c *SyncContext) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatc
 	return nil
 }
 
-func (c *SyncContext) getTransactionSender(txHash common.Hash) (*common.Address, error) {
+func (c *Context) getTransactionSender(txHash common.Hash) (*common.Address, error) {
 	tx, _, err := c.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), txHash)
 	if err != nil {
 		return nil, err
@@ -70,7 +70,7 @@ func (c *SyncContext) getTransactionSender(txHash common.Hash) (*common.Address,
 	return &sender, nil
 }
 
-func (c *SyncContext) syncNewBatch(batch *eth.DecodedBatch) error {
+func (c *Context) syncNewBatch(batch *eth.DecodedBatch) error {
 	numCommitments := len(batch.Commitments)
 	log.Debugf("Syncing new batch #%s with %d commitment(s) from chain", batch.ID.String(), numCommitments)
 	err := c.storage.AddBatch(&batch.Batch)
@@ -87,7 +87,7 @@ func (c *SyncContext) syncNewBatch(batch *eth.DecodedBatch) error {
 	return nil
 }
 
-func (c *SyncContext) syncCommitments(batch *eth.DecodedBatch) error {
+func (c *Context) syncCommitments(batch *eth.DecodedBatch) error {
 	for i := range batch.Commitments {
 		log.WithFields(log.Fields{"batchID": batch.ID.String()}).Debugf("Syncing commitment #%d", i+1)
 		err := c.syncCommitment(batch, &batch.Commitments[i])
@@ -103,7 +103,7 @@ func (c *SyncContext) syncCommitments(batch *eth.DecodedBatch) error {
 	return nil
 }
 
-func (c *SyncContext) syncCommitment(batch *eth.DecodedBatch, commitment *encoder.DecodedCommitment) error {
+func (c *Context) syncCommitment(batch *eth.DecodedBatch, commitment *encoder.DecodedCommitment) error {
 	transactions, err := c.syncTxCommitment(commitment)
 	if err != nil {
 		return err

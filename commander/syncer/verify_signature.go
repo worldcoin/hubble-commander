@@ -8,7 +8,7 @@ import (
 
 const InvalidSignatureMessage = "invalid commitment signature"
 
-func (c *SyncContext) verifyTxSignature(commitment *encoder.DecodedCommitment, txs models.GenericTransactionArray) error {
+func (c *Context) verifyTxSignature(commitment *encoder.DecodedCommitment, txs models.GenericTransactionArray) error {
 	domain, err := c.client.GetDomain()
 	if err != nil {
 		return err
@@ -30,7 +30,7 @@ func (c *SyncContext) verifyTxSignature(commitment *encoder.DecodedCommitment, t
 	return c.verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys, txs)
 }
 
-func (c *SyncContext) verifyCommitmentSignature(
+func (c *Context) verifyCommitmentSignature(
 	signature *models.Signature,
 	domain *bls.Domain,
 	messages [][]byte,
@@ -55,7 +55,7 @@ func (c *SyncContext) verifyCommitmentSignature(
 	return nil
 }
 
-func (c *SyncContext) createDisputableSignatureError(reason string, txs models.GenericTransactionArray) error {
+func (c *Context) createDisputableSignatureError(reason string, txs models.GenericTransactionArray) error {
 	proofs, proofErr := c.StateMerkleProofs(txs)
 	if proofErr != nil {
 		return proofErr
@@ -63,7 +63,7 @@ func (c *SyncContext) createDisputableSignatureError(reason string, txs models.G
 	return NewDisputableErrorWithProofs(Signature, reason, proofs)
 }
 
-func (c *SyncContext) StateMerkleProofs(txs models.GenericTransactionArray) ([]models.StateMerkleProof, error) {
+func (c *Context) StateMerkleProofs(txs models.GenericTransactionArray) ([]models.StateMerkleProof, error) {
 	proofs := make([]models.StateMerkleProof, 0, txs.Len())
 	for i := 0; i < txs.Len(); i++ {
 		stateProof, err := c.UserStateProof(txs.At(i).GetFromStateID())
@@ -75,7 +75,7 @@ func (c *SyncContext) StateMerkleProofs(txs models.GenericTransactionArray) ([]m
 	return proofs, nil
 }
 
-func (c *SyncContext) UserStateProof(stateID uint32) (*models.StateMerkleProof, error) {
+func (c *Context) UserStateProof(stateID uint32) (*models.StateMerkleProof, error) {
 	leaf, err := c.storage.StateTree.Leaf(stateID)
 	if err != nil {
 		return nil, err

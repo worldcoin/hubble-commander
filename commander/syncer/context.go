@@ -8,7 +8,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-type SyncContext struct {
+type Context struct {
 	cfg       *config.RollupConfig
 	storage   *st.Storage
 	tx        *db.TxController
@@ -17,33 +17,32 @@ type SyncContext struct {
 	BatchType batchtype.BatchType
 }
 
-func NewSyncContext(
+func NewContext(
 	storage *st.Storage,
 	client *eth.Client,
 	cfg *config.RollupConfig,
 	batchType batchtype.BatchType,
-) (*SyncContext, error) {
-	//TODO-div: extract and reuse new type
+) (*Context, error) {
 	tx, txStorage, err := storage.BeginTransaction(st.TxOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	return newSyncContext(txStorage, tx, client, cfg, batchType), nil
+	return newContext(txStorage, tx, client, cfg, batchType), nil
 }
 
-func NewTestSyncContext(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig, batchType batchtype.BatchType) *SyncContext {
-	return newSyncContext(storage, nil, client, cfg, batchType)
+func NewTestContext(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig, batchType batchtype.BatchType) *Context {
+	return newContext(storage, nil, client, cfg, batchType)
 }
 
-func newSyncContext(
+func newContext(
 	storage *st.Storage,
 	tx *db.TxController,
 	client *eth.Client,
 	cfg *config.RollupConfig,
 	batchType batchtype.BatchType,
-) *SyncContext {
-	return &SyncContext{
+) *Context {
+	return &Context{
 		cfg:       cfg,
 		storage:   storage,
 		tx:        tx,
@@ -53,11 +52,11 @@ func newSyncContext(
 	}
 }
 
-func (c *SyncContext) Commit() error {
+func (c *Context) Commit() error {
 	return c.tx.Commit()
 }
 
 // nolint:gocritic
-func (c *SyncContext) Rollback(cause *error) {
+func (c *Context) Rollback(cause *error) {
 	c.tx.Rollback(cause)
 }

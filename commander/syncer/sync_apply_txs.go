@@ -2,7 +2,7 @@ package syncer
 
 import "github.com/Worldcoin/hubble-commander/models"
 
-func (c *SyncContext) ApplyTxs(txs SyncedTxs, feeReceiverStateID uint32) (
+func (c *Context) ApplyTxs(txs SyncedTxs, feeReceiverStateID uint32) (
 	models.GenericTransactionArray,
 	[]models.StateMerkleProof,
 	error,
@@ -47,7 +47,7 @@ func (c *SyncContext) ApplyTxs(txs SyncedTxs, feeReceiverStateID uint32) (
 	return appliedTxs, stateChangeProofs, nil
 }
 
-func (c *SyncContext) getCommitmentTokenID(txs models.GenericTransactionArray, feeReceiverStateID uint32) (
+func (c *Context) getCommitmentTokenID(txs models.GenericTransactionArray, feeReceiverStateID uint32) (
 	tokenID *models.Uint256,
 	err error,
 ) {

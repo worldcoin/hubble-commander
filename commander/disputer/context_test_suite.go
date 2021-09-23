@@ -23,7 +23,7 @@ type TestSuiteWithDisputeContext struct {
 	client       *eth.TestClient
 	executionCtx *executor.ExecutionContext
 	rollupCtx    *executor.RollupContext
-	syncCtx      *syncer.SyncContext
+	syncCtx      *syncer.Context
 	disputeCtx   *Context
 }
 
@@ -65,7 +65,7 @@ func (s *TestSuiteWithDisputeContext) newContexts(
 ) {
 	s.executionCtx = executor.NewTestExecutionContext(storage, s.client.Client, s.cfg)
 	s.rollupCtx = executor.NewTestRollupContext(s.executionCtx, batchType)
-	s.syncCtx = syncer.NewTestSyncContext(storage, client, cfg, batchType)
+	s.syncCtx = syncer.NewTestContext(storage, client, cfg, batchType)
 	s.disputeCtx = NewContext(storage, s.client.Client)
 }
 

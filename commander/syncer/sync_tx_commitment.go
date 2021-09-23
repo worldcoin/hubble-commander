@@ -12,7 +12,7 @@ var (
 	ErrTooManyTxs        = NewDisputableError(Transition, "too many transactions in a commitment")
 )
 
-func (c *SyncContext) syncTxCommitment(commitment *encoder.DecodedCommitment) (models.GenericTransactionArray, error) {
+func (c *Context) syncTxCommitment(commitment *encoder.DecodedCommitment) (models.GenericTransactionArray, error) {
 	if len(commitment.Transactions)%c.Syncer.TxLength() != 0 {
 		return nil, ErrInvalidDataLength
 	}
@@ -51,7 +51,7 @@ func (c *SyncContext) syncTxCommitment(commitment *encoder.DecodedCommitment) (m
 	return syncedTxs.Txs(), nil
 }
 
-func (c *SyncContext) verifyStateRoot(commitmentPostState common.Hash, proofs []models.StateMerkleProof) error {
+func (c *Context) verifyStateRoot(commitmentPostState common.Hash, proofs []models.StateMerkleProof) error {
 	postStateRoot, err := c.storage.StateTree.Root()
 	if err != nil {
 		return err

@@ -24,7 +24,7 @@ type VerifySignatureTestSuite struct {
 	storage *st.TestStorage
 	cfg     *config.RollupConfig
 	client  *eth.Client
-	syncCtx *SyncContext
+	syncCtx *Context
 	wallets []bls.Wallet
 }
 
@@ -55,7 +55,7 @@ func (s *VerifySignatureTestSuite) TearDownTest() {
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_ValidSignature() {
-	s.syncCtx = NewTestSyncContext(s.storage.Storage, s.client, s.cfg, batchtype.Transfer)
+	s.syncCtx = NewTestContext(s.storage.Storage, s.client, s.cfg, batchtype.Transfer)
 
 	txs := models.TransferArray{
 		{
@@ -96,7 +96,7 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_ValidSignature() 
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_InvalidSignature() {
-	s.syncCtx = NewTestSyncContext(s.storage.Storage, s.client, s.cfg, batchtype.Transfer)
+	s.syncCtx = NewTestContext(s.storage.Storage, s.client, s.cfg, batchtype.Transfer)
 
 	txs := models.TransferArray{
 		{
@@ -143,7 +143,7 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_InvalidSignature(
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_EmptyTransactions() {
-	s.syncCtx = NewTestSyncContext(s.storage.Storage, s.client, s.cfg, batchtype.Transfer)
+	s.syncCtx = NewTestContext(s.storage.Storage, s.client, s.cfg, batchtype.Transfer)
 
 	txs := make(models.TransferArray, 0)
 	commitment := &encoder.DecodedCommitment{
@@ -155,7 +155,7 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_EmptyTransactions
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyCreate2TransferSignature_ValidSignature() {
-	s.syncCtx = NewTestSyncContext(s.storage.Storage, s.client, s.cfg, batchtype.Create2Transfer)
+	s.syncCtx = NewTestContext(s.storage.Storage, s.client, s.cfg, batchtype.Create2Transfer)
 
 	txs := models.Create2TransferArray{
 		{
@@ -198,7 +198,7 @@ func (s *VerifySignatureTestSuite) TestVerifyCreate2TransferSignature_ValidSigna
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyCreate2TransfersSignature_EmptyTransactions() {
-	s.syncCtx = NewTestSyncContext(s.storage.Storage, s.client, s.cfg, batchtype.Create2Transfer)
+	s.syncCtx = NewTestContext(s.storage.Storage, s.client, s.cfg, batchtype.Create2Transfer)
 
 	txs := make(models.Create2TransferArray, 0)
 	commitment := &encoder.DecodedCommitment{
