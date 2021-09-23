@@ -3,7 +3,6 @@ package storage
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -76,7 +75,7 @@ func (s *DepositTestSuite) TestRemovePendingDeposits() {
 	s.NoError(err)
 
 	_, err = s.storage.GetFirstPendingDeposits(2)
-	s.ErrorIs(err, db.ErrIteratorFinished)
+	s.True(IsNotFoundError(err))
 }
 
 func (s *DepositTestSuite) TestGetFirstPendingDeposits() {
@@ -131,6 +130,12 @@ func (s *DepositTestSuite) TestGetFirstPendingDeposits() {
 	s.Equal(allDeposits[0], pendingDeposits[0])
 	s.Equal(allDeposits[1], pendingDeposits[1])
 	s.Equal(allDeposits[2], pendingDeposits[2])
+}
+
+func (s *DepositTestSuite) TestGetFirstPendingDeposits_NoDeposits() {
+	deposits, err := s.storage.GetFirstPendingDeposits(5)
+	s.True(IsNotFoundError(err))
+	s.Nil(deposits)
 }
 
 func TestDepositTestSuite(t *testing.T) {

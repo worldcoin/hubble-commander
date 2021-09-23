@@ -14,17 +14,15 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	bh "github.com/timshannon/badgerhold/v3"
 )
 
 type DepositsTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	teardown    func() error
-	testStorage *st.TestStorage
-	testClient  *eth.TestClient
-	cmd         *Commander
-	tokenID     *models.Uint256
+	teardown   func() error
+	testClient *eth.TestClient
+	cmd        *Commander
+	tokenID    *models.Uint256
 }
 
 func (s *DepositsTestSuite) SetupSuite() {
@@ -34,7 +32,6 @@ func (s *DepositsTestSuite) SetupSuite() {
 func (s *DepositsTestSuite) SetupTest() {
 	testStorage, err := st.NewTestStorage()
 	s.NoError(err)
-	s.testStorage = testStorage
 	s.teardown = testStorage.Teardown
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
@@ -89,7 +86,8 @@ func (s *DepositsTestSuite) TestSyncDeposits() {
 	s.Len(subTree.Deposits, 4)
 	s.Equal(deposits, subTree.Deposits)
 
-	s.validateRemovedDeposits(deposits)
+	_, err = s.cmd.storage.GetFirstPendingDeposits(4)
+	s.True(st.IsNotFoundError(err))
 }
 
 func (s *DepositsTestSuite) TestSyncQueuedDeposits() {
@@ -166,14 +164,6 @@ func (s *DepositsTestSuite) queueDeposit() *models.PendingDeposit {
 		ToPubKeyID: uint32(toPubKeyID.Uint64()),
 		TokenID:    *s.tokenID,
 		L2Amount:   *l2Amount,
-	}
-}
-
-func (s *DepositsTestSuite) validateRemovedDeposits(deposits []models.PendingDeposit) {
-	for i := range deposits {
-		var deposit models.PendingDeposit
-		err := s.testStorage.Database.Badger.Get(deposits[i].ID, &deposit)
-		s.ErrorIs(err, bh.ErrNotFound)
 	}
 }
 

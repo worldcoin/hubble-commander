@@ -48,6 +48,9 @@ func (s *DepositStorage) GetFirstPendingDeposits(amount int) ([]models.PendingDe
 		deposits = append(deposits, *deposit)
 		return len(deposits) == amount, nil
 	})
+	if err == db.ErrIteratorFinished {
+		return nil, NewNotFoundError("pending deposits")
+	}
 	if err != nil {
 		return nil, err
 	}
