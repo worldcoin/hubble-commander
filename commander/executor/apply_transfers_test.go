@@ -7,9 +7,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -77,7 +76,7 @@ func (s *ApplyTransfersTestSuite) TearDownTest() {
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTxs_AllValid() {
-	generatedTransfers := generateValidTransfers(3)
+	generatedTransfers := testutils.GenerateValidTransfers(3)
 
 	applyTxsResult, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
@@ -87,8 +86,8 @@ func (s *ApplyTransfersTestSuite) TestApplyTxs_AllValid() {
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTxs_SomeValid() {
-	generatedTransfers := generateValidTransfers(2)
-	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(3)...)
+	generatedTransfers := testutils.GenerateValidTransfers(2)
+	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidTransfers(3)...)
 
 	applyTxsResult, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
@@ -98,7 +97,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTxs_SomeValid() {
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTxs_AppliesNoMoreThanLimit() {
-	generatedTransfers := generateValidTransfers(13)
+	generatedTransfers := testutils.GenerateValidTransfers(13)
 
 	applyTxsResult, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
@@ -112,8 +111,8 @@ func (s *ApplyTransfersTestSuite) TestApplyTxs_AppliesNoMoreThanLimit() {
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTxs_SavesTransferErrors() {
-	generatedTransfers := generateValidTransfers(3)
-	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(2)...)
+	generatedTransfers := testutils.GenerateValidTransfers(3)
+	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidTransfers(2)...)
 
 	for i := range generatedTransfers {
 		err := s.storage.AddTransfer(&generatedTransfers[i])
@@ -138,7 +137,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTxs_SavesTransferErrors() {
 }
 
 func (s *ApplyTransfersTestSuite) TestApplyTxs_AppliesFee() {
-	generatedTransfers := generateValidTransfers(3)
+	generatedTransfers := testutils.GenerateValidTransfers(3)
 
 	_, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
@@ -146,44 +145,6 @@ func (s *ApplyTransfersTestSuite) TestApplyTxs_AppliesFee() {
 	feeReceiverState, err := s.rollupCtx.storage.StateTree.Leaf(s.feeReceiver.StateID)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
-}
-
-func generateValidTransfers(transfersAmount uint32) models.TransferArray {
-	transfers := make([]models.Transfer, 0, transfersAmount)
-	for i := 0; i < int(transfersAmount); i++ {
-		transfer := models.Transfer{
-			TransactionBase: models.TransactionBase{
-				Hash:        utils.RandomHash(),
-				TxType:      txtype.Transfer,
-				FromStateID: 1,
-				Amount:      models.MakeUint256(1),
-				Fee:         models.MakeUint256(1),
-				Nonce:       models.MakeUint256(uint64(i)),
-			},
-			ToStateID: 2,
-		}
-		transfers = append(transfers, transfer)
-	}
-	return transfers
-}
-
-func generateInvalidTransfers(transfersAmount uint64) []models.Transfer {
-	transfers := make([]models.Transfer, 0, transfersAmount)
-	for i := uint64(0); i < transfersAmount; i++ {
-		transfer := models.Transfer{
-			TransactionBase: models.TransactionBase{
-				Hash:        utils.RandomHash(),
-				TxType:      txtype.Transfer,
-				FromStateID: 1,
-				Amount:      models.MakeUint256(1_000_000),
-				Fee:         models.MakeUint256(1),
-				Nonce:       models.MakeUint256(0),
-			},
-			ToStateID: 2,
-		}
-		transfers = append(transfers, transfer)
-	}
-	return transfers
 }
 
 func TestApplyTransfersTestSuite(t *testing.T) {

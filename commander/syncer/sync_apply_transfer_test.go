@@ -6,8 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -21,7 +20,7 @@ func (s *SyncApplyTransfersTestSuite) SetupTest() {
 
 func (s *SyncApplyTransfersTestSuite) TestApplyTxs_AllValid() {
 	input := &SyncedTransfers{
-		txs: generateValidTransfers(3),
+		txs: testutils.GenerateValidTransfers(3),
 	}
 
 	appliedTransfers, stateProofs, err := s.syncCtx.ApplyTxs(input, s.feeReceiver.StateID)
@@ -32,9 +31,9 @@ func (s *SyncApplyTransfersTestSuite) TestApplyTxs_AllValid() {
 
 func (s *SyncApplyTransfersTestSuite) TestApplyTxs_InvalidTransfer() {
 	input := &SyncedTransfers{
-		txs: generateValidTransfers(2),
+		txs: testutils.GenerateValidTransfers(2),
 	}
-	input.txs = append(input.txs, generateInvalidTransfers(2)...)
+	input.txs = append(input.txs, testutils.GenerateInvalidTransfers(2)...)
 
 	appliedTransfers, _, err := s.syncCtx.ApplyTxs(input, s.feeReceiver.StateID)
 	s.Nil(appliedTransfers)
@@ -47,7 +46,7 @@ func (s *SyncApplyTransfersTestSuite) TestApplyTxs_InvalidTransfer() {
 
 func (s *SyncApplyTransfersTestSuite) TestApplyTxs_AppliesFee() {
 	input := &SyncedTransfers{
-		txs: generateValidTransfers(3),
+		txs: testutils.GenerateValidTransfers(3),
 	}
 
 	_, _, err := s.syncCtx.ApplyTxs(input, s.feeReceiver.StateID)
@@ -60,7 +59,7 @@ func (s *SyncApplyTransfersTestSuite) TestApplyTxs_AppliesFee() {
 
 func (s *SyncApplyTransfersTestSuite) TestApplyTxs_ReturnsCorrectStateProofsForZeroFee() {
 	input := &SyncedTransfers{
-		txs: generateValidTransfers(2),
+		txs: testutils.GenerateValidTransfers(2),
 	}
 	for i := range input.txs {
 		input.txs[i].Fee = models.MakeUint256(0)
@@ -85,7 +84,7 @@ func (s *SyncApplyTransfersTestSuite) TestApplyTxs_InvalidFeeReceiverTokenID() {
 	s.NoError(err)
 
 	input := &SyncedTransfers{
-		txs: generateValidTransfers(2),
+		txs: testutils.GenerateValidTransfers(2),
 	}
 
 	appliedTransfers, _, err := s.syncCtx.ApplyTxs(input, feeReceiver.StateID)
@@ -96,46 +95,6 @@ func (s *SyncApplyTransfersTestSuite) TestApplyTxs_InvalidFeeReceiverTokenID() {
 	s.Equal(Transition, disputableErr.Type)
 	s.Equal(applier.ErrInvalidFeeReceiverTokenID.Error(), disputableErr.Reason)
 	s.Len(disputableErr.Proofs, 5)
-}
-
-// TODO-div: deduplicate
-func generateValidTransfers(transfersAmount uint32) models.TransferArray {
-	transfers := make([]models.Transfer, 0, transfersAmount)
-	for i := 0; i < int(transfersAmount); i++ {
-		transfer := models.Transfer{
-			TransactionBase: models.TransactionBase{
-				Hash:        utils.RandomHash(),
-				TxType:      txtype.Transfer,
-				FromStateID: 1,
-				Amount:      models.MakeUint256(1),
-				Fee:         models.MakeUint256(1),
-				Nonce:       models.MakeUint256(uint64(i)),
-			},
-			ToStateID: 2,
-		}
-		transfers = append(transfers, transfer)
-	}
-	return transfers
-}
-
-// TODO-div: deduplicate
-func generateInvalidTransfers(transfersAmount uint64) []models.Transfer {
-	transfers := make([]models.Transfer, 0, transfersAmount)
-	for i := uint64(0); i < transfersAmount; i++ {
-		transfer := models.Transfer{
-			TransactionBase: models.TransactionBase{
-				Hash:        utils.RandomHash(),
-				TxType:      txtype.Transfer,
-				FromStateID: 1,
-				Amount:      models.MakeUint256(1_000_000),
-				Fee:         models.MakeUint256(1),
-				Nonce:       models.MakeUint256(0),
-			},
-			ToStateID: 2,
-		}
-		transfers = append(transfers, transfer)
-	}
-	return transfers
 }
 
 func TestSyncApplyTransfersTestSuite(t *testing.T) {
