@@ -3,7 +3,7 @@ package storage
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/pkg/errors"
-	bh "github.com/timshannon/badgerhold/v3"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey, tokenID *models.Uint256) (*uint32, error) {

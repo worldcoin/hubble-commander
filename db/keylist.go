@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	bh "github.com/timshannon/badgerhold/v3"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 const (
@@ -89,7 +89,7 @@ func (m *KeyListMetadata) GetKeyListByteLength() int {
 }
 
 func IndexKeyPrefix(typeName []byte, indexName string) []byte {
-	return []byte(bhIndexPrefix + ":" + string(typeName) + ":" + indexName)
+	return []byte(bhIndexPrefix + ":" + string(typeName) + ":" + indexName + ":")
 }
 
 func IndexKey(typeName []byte, indexName string, value []byte) []byte {

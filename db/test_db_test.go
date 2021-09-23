@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	bh "github.com/timshannon/badgerhold/v3"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 type someStruct struct {

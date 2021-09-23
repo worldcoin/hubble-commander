@@ -6,7 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-	bh "github.com/timshannon/badgerhold/v3"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 const (
@@ -115,7 +115,7 @@ func (t *StoredTx) BytesLen() int {
 	return storedTxBytesLength + t.Body.BytesLen()
 }
 
-func (t *StoredTx) ToTransfer(txReceipt *StoredReceipt) *Transfer {
+func (t *StoredTx) ToTransfer(txReceipt *StoredTxReceipt) *Transfer {
 	transferBody, ok := t.Body.(*StoredTxTransferBody)
 	if !ok {
 		panic("invalid transfer body type")
@@ -142,7 +142,7 @@ func (t *StoredTx) ToTransfer(txReceipt *StoredReceipt) *Transfer {
 	return transfer
 }
 
-func (t *StoredTx) ToCreate2Transfer(txReceipt *StoredReceipt) *Create2Transfer {
+func (t *StoredTx) ToCreate2Transfer(txReceipt *StoredTxReceipt) *Create2Transfer {
 	c2tBody, ok := t.Body.(*StoredTxCreate2TransferBody)
 	if !ok {
 		panic("invalid create2Transfer body type")

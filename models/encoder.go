@@ -14,7 +14,7 @@ type ByteEncoder interface {
 }
 
 func getBadgerHoldPrefix(dataType interface{}) []byte {
-	return []byte("bh_" + reflect.TypeOf(dataType).Name())
+	return []byte("bh_" + reflect.TypeOf(dataType).Name() + ":")
 }
 
 func getTypeName(dataType interface{}) []byte {
