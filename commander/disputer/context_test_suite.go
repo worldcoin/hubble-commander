@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type TestSuiteWithDisputeContext struct {
+type TestSuiteWithContexts struct {
 	*require.Assertions
 	suite.Suite
 	storage      *st.TestStorage
@@ -26,11 +26,11 @@ type TestSuiteWithDisputeContext struct {
 	disputeCtx   *Context
 }
 
-func (s *TestSuiteWithDisputeContext) SetupSuite() {
+func (s *TestSuiteWithContexts) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *TestSuiteWithDisputeContext) SetupTest(batchType batchtype.BatchType) {
+func (s *TestSuiteWithContexts) SetupTest(batchType batchtype.BatchType) {
 	s.SetupTestWithConfig(batchType, config.RollupConfig{
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
@@ -40,7 +40,7 @@ func (s *TestSuiteWithDisputeContext) SetupTest(batchType batchtype.BatchType) {
 	})
 }
 
-func (s *TestSuiteWithDisputeContext) SetupTestWithConfig(batchType batchtype.BatchType, cfg config.RollupConfig) {
+func (s *TestSuiteWithContexts) SetupTestWithConfig(batchType batchtype.BatchType, cfg config.RollupConfig) {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
@@ -53,13 +53,13 @@ func (s *TestSuiteWithDisputeContext) SetupTestWithConfig(batchType batchtype.Ba
 	s.newContexts(s.storage.Storage, s.client.Client, s.cfg, batchType)
 }
 
-func (s *TestSuiteWithDisputeContext) TearDownTest() {
+func (s *TestSuiteWithContexts) TearDownTest() {
 	s.client.Close()
 	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
-func (s *TestSuiteWithDisputeContext) newContexts(
+func (s *TestSuiteWithContexts) newContexts(
 	storage *st.Storage, client *eth.Client, cfg *config.RollupConfig, batchType batchtype.BatchType,
 ) {
 	executionCtx := executor.NewTestExecutionContext(storage, s.client.Client, s.cfg)
@@ -68,25 +68,25 @@ func (s *TestSuiteWithDisputeContext) newContexts(
 	s.disputeCtx = NewContext(storage, s.client.Client)
 }
 
-func (s *TestSuiteWithDisputeContext) beginTransaction() {
+func (s *TestSuiteWithContexts) beginTransaction() {
 	txController, txStorage, err := s.storage.BeginTransaction(st.TxOptions{})
 	s.NoError(err)
 	s.txController = txController
 	s.newContexts(txStorage, s.client.Client, s.cfg, s.rollupCtx.BatchType)
 }
 
-func (s *TestSuiteWithDisputeContext) commitTransaction() {
+func (s *TestSuiteWithContexts) commitTransaction() {
 	err := s.txController.Commit()
 	s.NoError(err)
 	s.newContexts(s.storage.Storage, s.client.Client, s.cfg, s.rollupCtx.BatchType)
 }
 
-func (s *TestSuiteWithDisputeContext) rollback() {
+func (s *TestSuiteWithContexts) rollback() {
 	s.txController.Rollback(nil)
 	s.newContexts(s.storage.Storage, s.client.Client, s.cfg, s.rollupCtx.BatchType)
 }
 
-func (s *TestSuiteWithDisputeContext) submitBatch(tx models.GenericTransaction) *models.Batch {
+func (s *TestSuiteWithContexts) submitBatch(tx models.GenericTransaction) *models.Batch {
 	pendingBatch, commitments := s.createBatch(tx)
 
 	err := s.rollupCtx.SubmitBatch(pendingBatch, commitments)
@@ -96,7 +96,7 @@ func (s *TestSuiteWithDisputeContext) submitBatch(tx models.GenericTransaction) 
 	return pendingBatch
 }
 
-func (s *TestSuiteWithDisputeContext) createBatch(tx models.GenericTransaction) (*models.Batch, []models.Commitment) {
+func (s *TestSuiteWithContexts) createBatch(tx models.GenericTransaction) (*models.Batch, []models.Commitment) {
 	if tx.Type() == txtype.Transfer {
 		err := s.disputeCtx.storage.AddTransfer(tx.ToTransfer())
 		s.NoError(err)

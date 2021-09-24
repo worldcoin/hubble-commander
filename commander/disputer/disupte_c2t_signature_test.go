@@ -19,7 +19,7 @@ type DisputeC2TSignatureTestSuite struct {
 }
 
 func (s *DisputeC2TSignatureTestSuite) SetupTest() {
-	s.TestSuiteWithDisputeContext.SetupTest(batchtype.Create2Transfer)
+	s.TestSuiteWithContexts.SetupTest(batchtype.Create2Transfer)
 	s.DisputeSignatureTestSuite.setupTest()
 }
 

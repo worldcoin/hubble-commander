@@ -9,12 +9,12 @@ import (
 // Other test suites encapsulate DisputeSignatureTestSuite.
 // Don't add any tests on DisputeSignatureTestSuite to avoid repeated runs.
 type DisputeSignatureTestSuite struct {
-	TestSuiteWithDisputeContext
+	TestSuiteWithContexts
 	domain *bls.Domain
 }
 
 func (s *DisputeSignatureTestSuite) setupTest() {
-	s.NotNil(s.client) // make sure TestSuiteWithDisputeContext.SetupTest was called before
+	s.NotNil(s.client) // make sure TestSuiteWithContexts.SetupTest was called before
 
 	var err error
 	s.domain, err = s.client.GetDomain()

@@ -11,7 +11,7 @@ import (
 // Other test suites encapsulate DisputeTransitionTestSuite.
 // Don't add any tests on DisputeTransitionTestSuite to avoid repeated runs.
 type DisputeTransitionTestSuite struct {
-	TestSuiteWithDisputeContext
+	TestSuiteWithContexts
 }
 
 func (s *DisputeTransitionTestSuite) applyTransfer(
