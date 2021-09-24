@@ -8,13 +8,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Other test suites encapsulate DisputeTransitionTestSuite.
-// Don't add any tests on DisputeTransitionTestSuite to avoid repeated runs.
-type DisputeTransitionTestSuite struct {
-	TestSuiteWithContexts
+// Other test suites encapsulate disputeTransitionTestSuite.
+// Don't add any tests on disputeTransitionTestSuite to avoid repeated runs.
+type disputeTransitionTestSuite struct {
+	testSuiteWithContexts
 }
 
-func (s *DisputeTransitionTestSuite) applyTransfer(
+func (s *disputeTransitionTestSuite) applyTransfer(
 	tx models.GenericTransaction,
 	invalidTxHash common.Hash,
 	combinedFee models.Uint256,
@@ -34,7 +34,7 @@ func (s *DisputeTransitionTestSuite) applyTransfer(
 	return *combinedFee.Add(&fee)
 }
 
-func (s *DisputeTransitionTestSuite) calculateStateAfterInvalidTransfer(
+func (s *disputeTransitionTestSuite) calculateStateAfterInvalidTransfer(
 	senderState, receiverState *models.StateLeaf,
 	invalidTransfer models.GenericTransaction,
 ) {

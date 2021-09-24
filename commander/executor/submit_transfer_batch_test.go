@@ -11,11 +11,11 @@ import (
 )
 
 type SubmitTransferBatchTestSuite struct {
-	SubmitBatchTestSuite
+	submitBatchTestSuite
 }
 
 func (s *SubmitTransferBatchTestSuite) SetupTest() {
-	s.TestSuiteWithRollupContext.SetupTest(batchtype.Transfer)
+	s.testSuiteWithRollupContext.SetupTest(batchtype.Transfer)
 	s.setupUser()
 }
 

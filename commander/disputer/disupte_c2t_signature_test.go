@@ -15,12 +15,12 @@ import (
 )
 
 type DisputeC2TSignatureTestSuite struct {
-	DisputeSignatureTestSuite
+	disputeSignatureTestSuite
 }
 
 func (s *DisputeC2TSignatureTestSuite) SetupTest() {
-	s.TestSuiteWithContexts.SetupTest(batchtype.Create2Transfer)
-	s.DisputeSignatureTestSuite.setupTest()
+	s.testSuiteWithContexts.SetupTest(batchtype.Create2Transfer)
+	s.disputeSignatureTestSuite.setupTest()
 }
 
 func (s *DisputeC2TSignatureTestSuite) TestSignatureProofWithReceiver() {

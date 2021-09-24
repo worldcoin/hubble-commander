@@ -11,14 +11,12 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// TODO make test suites private
-
 type ApplyCreate2TransfersTestSuite struct {
-	ApplyTxsTestSuite
+	applyTxsTestSuite
 }
 
 func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
-	s.ApplyTxsTestSuite.SetupTest(batchtype.Create2Transfer)
+	s.applyTxsTestSuite.SetupTest(batchtype.Create2Transfer)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_AllValid() {

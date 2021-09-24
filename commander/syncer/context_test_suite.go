@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type TestSuiteWithSyncAndRollupContext struct {
+type testSuiteWithSyncAndRollupContext struct {
 	*require.Assertions
 	suite.Suite
 	storage   *st.TestStorage
@@ -20,18 +20,18 @@ type TestSuiteWithSyncAndRollupContext struct {
 	rollupCtx *executor.RollupContext
 }
 
-func (s *TestSuiteWithSyncAndRollupContext) SetupSuite() {
+func (s *testSuiteWithSyncAndRollupContext) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *TestSuiteWithSyncAndRollupContext) SetupTest(batchType batchtype.BatchType) {
+func (s *testSuiteWithSyncAndRollupContext) SetupTest(batchType batchtype.BatchType) {
 	s.SetupTestWithConfig(batchType, config.RollupConfig{
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
 	})
 }
 
-func (s *TestSuiteWithSyncAndRollupContext) SetupTestWithConfig(batchType batchtype.BatchType, cfg config.RollupConfig) {
+func (s *testSuiteWithSyncAndRollupContext) SetupTestWithConfig(batchType batchtype.BatchType, cfg config.RollupConfig) {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
@@ -46,7 +46,7 @@ func (s *TestSuiteWithSyncAndRollupContext) SetupTestWithConfig(batchType batcht
 	s.syncCtx = NewTestContext(s.storage.Storage, s.client.Client, s.cfg, batchType)
 }
 
-func (s *TestSuiteWithSyncAndRollupContext) TearDownTest() {
+func (s *testSuiteWithSyncAndRollupContext) TearDownTest() {
 	s.client.Close()
 	err := s.storage.Teardown()
 	s.NoError(err)

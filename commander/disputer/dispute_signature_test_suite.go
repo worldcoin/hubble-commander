@@ -6,22 +6,22 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-// Other test suites encapsulate DisputeSignatureTestSuite.
-// Don't add any tests on DisputeSignatureTestSuite to avoid repeated runs.
-type DisputeSignatureTestSuite struct {
-	TestSuiteWithContexts
+// Other test suites encapsulate disputeSignatureTestSuite.
+// Don't add any tests on disputeSignatureTestSuite to avoid repeated runs.
+type disputeSignatureTestSuite struct {
+	testSuiteWithContexts
 	domain *bls.Domain
 }
 
-func (s *DisputeSignatureTestSuite) setupTest() {
-	s.NotNil(s.client) // make sure TestSuiteWithContexts.SetupTest was called before
+func (s *disputeSignatureTestSuite) setupTest() {
+	s.NotNil(s.client) // make sure testSuiteWithContexts.SetupTest was called before
 
 	var err error
 	s.domain, err = s.client.GetDomain()
 	s.NoError(err)
 }
 
-func (s *DisputeSignatureTestSuite) setUserStatesAndAddAccounts() []bls.Wallet {
+func (s *disputeSignatureTestSuite) setUserStatesAndAddAccounts() []bls.Wallet {
 	wallets := setUserStates(s.Assertions, s.disputeCtx, s.domain)
 	for i := range wallets {
 		err := s.storage.AccountTree.SetSingle(&models.AccountLeaf{
@@ -33,7 +33,7 @@ func (s *DisputeSignatureTestSuite) setUserStatesAndAddAccounts() []bls.Wallet {
 	return wallets
 }
 
-func (s *DisputeSignatureTestSuite) disputeSignature(
+func (s *disputeSignatureTestSuite) disputeSignature(
 	batch *eth.DecodedBatch,
 	transfers models.GenericTransactionArray,
 ) error {

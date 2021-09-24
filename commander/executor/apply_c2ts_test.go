@@ -15,12 +15,12 @@ import (
 )
 
 type ApplyCreate2TransfersTestSuite struct {
-	TestSuiteWithRollupContext
+	testSuiteWithRollupContext
 	feeReceiver *FeeReceiver
 }
 
 func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
-	s.TestSuiteWithRollupContext.SetupTestWithConfig(batchtype.Create2Transfer, config.RollupConfig{
+	s.testSuiteWithRollupContext.SetupTestWithConfig(batchtype.Create2Transfer, config.RollupConfig{
 		FeeReceiverPubKeyID: 3,
 		MaxTxsPerCommitment: 6,
 	})

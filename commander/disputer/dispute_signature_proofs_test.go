@@ -10,11 +10,11 @@ import (
 )
 
 type DisputeSignatureProofsTestSuite struct {
-	TestSuiteWithContexts
+	testSuiteWithContexts
 }
 
 func (s *DisputeSignatureProofsTestSuite) SetupTest() {
-	s.TestSuiteWithContexts.SetupTest(batchtype.Transfer)
+	s.testSuiteWithContexts.SetupTest(batchtype.Transfer)
 }
 
 func (s *DisputeSignatureProofsTestSuite) TestUserStateProof() {

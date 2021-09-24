@@ -17,12 +17,12 @@ import (
 )
 
 type SyncTransferBatchTestSuite struct {
-	SyncTestSuite
+	syncTestSuite
 }
 
 func (s *SyncTransferBatchTestSuite) SetupTest() {
-	s.TestSuiteWithSyncAndRollupContext.SetupTestWithConfig(batchtype.Transfer, syncTestSuiteConfig)
-	s.SyncTestSuite.setupTest()
+	s.testSuiteWithSyncAndRollupContext.SetupTestWithConfig(batchtype.Transfer, syncTestSuiteConfig)
+	s.syncTestSuite.setupTest()
 }
 
 func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {

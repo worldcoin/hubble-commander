@@ -20,16 +20,16 @@ var syncTestSuiteConfig = config.RollupConfig{
 	DisableSignatures:      false,
 }
 
-// Other test suites encapsulate SyncTestSuite. Don't add any tests on SyncTestSuite to avoid repeated runs.
-type SyncTestSuite struct {
-	TestSuiteWithSyncAndRollupContext
+// Other test suites encapsulate syncTestSuite. Don't add any tests on syncTestSuite to avoid repeated runs.
+type syncTestSuite struct {
+	testSuiteWithSyncAndRollupContext
 
 	domain  *bls.Domain
 	wallets []bls.Wallet
 }
 
-func (s *SyncTestSuite) setupTest() {
-	s.NotNil(s.client) // make sure TestSuiteWithSyncAndRollupContext.SetupTest was called before
+func (s *syncTestSuite) setupTest() {
+	s.NotNil(s.client) // make sure testSuiteWithSyncAndRollupContext.SetupTest was called before
 
 	var err error
 	s.domain, err = s.client.GetDomain()
@@ -70,7 +70,7 @@ func seedDB(s *require.Assertions, storage *st.Storage, wallets []bls.Wallet) {
 	s.NoError(err)
 }
 
-func (s *SyncTestSuite) createCommitmentWithEmptyTransactions(commitmentType batchtype.BatchType) models.Commitment {
+func (s *syncTestSuite) createCommitmentWithEmptyTransactions(commitmentType batchtype.BatchType) models.Commitment {
 	stateRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)
 
@@ -83,7 +83,7 @@ func (s *SyncTestSuite) createCommitmentWithEmptyTransactions(commitmentType bat
 	}
 }
 
-func (s *SyncTestSuite) syncAllBatches() {
+func (s *syncTestSuite) syncAllBatches() {
 	newRemoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 
@@ -94,7 +94,7 @@ func (s *SyncTestSuite) syncAllBatches() {
 	}
 }
 
-func (s *SyncTestSuite) recreateDatabase() {
+func (s *syncTestSuite) recreateDatabase() {
 	err := s.storage.Teardown()
 	s.NoError(err)
 
@@ -107,13 +107,13 @@ func (s *SyncTestSuite) recreateDatabase() {
 	seedDB(s.Assertions, s.storage.Storage, s.wallets)
 }
 
-func (s *SyncTestSuite) getAccountTreeRoot() common.Hash {
+func (s *syncTestSuite) getAccountTreeRoot() common.Hash {
 	rawAccountRoot, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
 	return common.BytesToHash(rawAccountRoot[:])
 }
 
-func (s *SyncTestSuite) submitBatch(tx models.GenericTransaction) *models.Batch {
+func (s *syncTestSuite) submitBatch(tx models.GenericTransaction) *models.Batch {
 	pendingBatch, commitments := s.createBatch(tx)
 
 	err := s.rollupCtx.SubmitBatch(pendingBatch, commitments)
@@ -123,7 +123,7 @@ func (s *SyncTestSuite) submitBatch(tx models.GenericTransaction) *models.Batch 
 	return pendingBatch
 }
 
-func (s *SyncTestSuite) createBatch(tx models.GenericTransaction) (*models.Batch, []models.Commitment) {
+func (s *syncTestSuite) createBatch(tx models.GenericTransaction) (*models.Batch, []models.Commitment) {
 	if tx.Type() == txtype.Transfer {
 		err := s.storage.AddTransfer(tx.ToTransfer())
 		s.NoError(err)

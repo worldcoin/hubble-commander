@@ -16,11 +16,11 @@ var (
 	}
 )
 
-type SubmitBatchTestSuite struct {
-	TestSuiteWithRollupContext
+type submitBatchTestSuite struct {
+	testSuiteWithRollupContext
 }
 
-func (s *SubmitBatchTestSuite) setupUser() {
+func (s *submitBatchTestSuite) setupUser() {
 	userState := models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(1),

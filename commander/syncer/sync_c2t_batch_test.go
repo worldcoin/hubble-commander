@@ -13,12 +13,12 @@ import (
 )
 
 type SyncC2TBatchTestSuite struct {
-	SyncTestSuite
+	syncTestSuite
 }
 
 func (s *SyncC2TBatchTestSuite) SetupTest() {
-	s.TestSuiteWithSyncAndRollupContext.SetupTestWithConfig(batchtype.Create2Transfer, syncTestSuiteConfig)
-	s.SyncTestSuite.setupTest()
+	s.testSuiteWithSyncAndRollupContext.SetupTestWithConfig(batchtype.Create2Transfer, syncTestSuiteConfig)
+	s.syncTestSuite.setupTest()
 }
 
 func (s *SyncC2TBatchTestSuite) TestSyncBatch_TooManyTxsInCommitment() {

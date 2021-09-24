@@ -15,11 +15,11 @@ import (
 )
 
 type DisputeCT2TransitionTestSuite struct {
-	DisputeTransitionTestSuite
+	disputeTransitionTestSuite
 }
 
 func (s *DisputeCT2TransitionTestSuite) SetupTest() {
-	s.DisputeTransitionTestSuite.SetupTest(batchtype.Create2Transfer)
+	s.disputeTransitionTestSuite.SetupTest(batchtype.Create2Transfer)
 }
 
 func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_RemovesInvalidBatch() {
