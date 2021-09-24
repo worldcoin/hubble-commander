@@ -103,7 +103,7 @@ func (s *DepositsTestSuite) TestSyncQueuedDeposits() {
 
 	syncedDeposits, err := s.cmd.storage.GetFirstPendingDeposits(1)
 	s.NoError(err)
-	s.Equal(deposit, syncedDeposits[0])
+	s.Equal(*deposit, syncedDeposits[0])
 }
 
 func (s *DepositsTestSuite) TestFetchDepositSubTrees() {
