@@ -62,14 +62,14 @@ func (e *TransferExecutor) NewTxArray(size, capacity uint32) models.GenericTrans
 }
 
 func (e *TransferExecutor) NewExecuteTxsResult(capacity uint32) ExecuteTxsResult {
-	return &ApplyTransfersResult{
+	return &ExecuteTransfersResult{
 		appliedTxs: make(models.TransferArray, 0, capacity),
 		invalidTxs: make(models.TransferArray, 0),
 	}
 }
 
 func (e *TransferExecutor) NewExecuteTxsForCommitmentResult(executeTxsResult ExecuteTxsResult) ExecuteTxsForCommitmentResult {
-	return &ApplyTransfersForCommitmentResult{
+	return &ExecuteTransfersForCommitmentResult{
 		appliedTxs: executeTxsResult.AppliedTxs().ToTransferArray(),
 	}
 }
@@ -118,7 +118,7 @@ func (e *C2TExecutor) NewTxArray(size, capacity uint32) models.GenericTransactio
 }
 
 func (e *C2TExecutor) NewExecuteTxsResult(capacity uint32) ExecuteTxsResult {
-	return &ApplyC2TResult{
+	return &ExecuteC2TResult{
 		appliedTxs:     make(models.Create2TransferArray, 0, capacity),
 		invalidTxs:     make(models.Create2TransferArray, 0),
 		addedPubKeyIDs: make([]uint32, 0, capacity),
@@ -126,7 +126,7 @@ func (e *C2TExecutor) NewExecuteTxsResult(capacity uint32) ExecuteTxsResult {
 }
 
 func (e *C2TExecutor) NewExecuteTxsForCommitmentResult(executeTxsResult ExecuteTxsResult) ExecuteTxsForCommitmentResult {
-	return &ApplyC2TForCommitmentResult{
+	return &ExecuteC2TForCommitmentResult{
 		appliedTxs:     executeTxsResult.AppliedTxs().ToCreate2TransferArray(),
 		addedPubKeyIDs: executeTxsResult.AddedPubKeyIDs(),
 	}

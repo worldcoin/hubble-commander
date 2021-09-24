@@ -14,12 +14,12 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type ApplyCreate2TransfersTestSuite struct {
+type ExecuteCreate2TransfersTestSuite struct {
 	testSuiteWithRollupContext
 	feeReceiver *FeeReceiver
 }
 
-func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
+func (s *ExecuteCreate2TransfersTestSuite) SetupTest() {
 	s.testSuiteWithRollupContext.SetupTestWithConfig(batchtype.Create2Transfer, config.RollupConfig{
 		FeeReceiverPubKeyID: 3,
 		MaxTxsPerCommitment: 6,
@@ -57,7 +57,7 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 	}
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_AllValid() {
+func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AllValid() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
 
 	transfers, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
@@ -68,7 +68,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_AllValid() {
 	s.Len(transfers.AddedPubKeyIDs(), 3)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_SomeValid() {
+func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SomeValid() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(2)
 	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidCreate2Transfers(3)...)
 
@@ -80,7 +80,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_SomeValid() {
 	s.Len(transfers.AddedPubKeyIDs(), 2)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_AppliesNoMoreThanLimit() {
+func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_ExecutesNoMoreThanLimit() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(7)
 
 	transfers, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
@@ -91,7 +91,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_AppliesNoMoreThanLimit() {
 	s.Len(transfers.AddedPubKeyIDs(), 6)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_SavesTransferErrors() {
+func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SavesTransferErrors() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
 	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidCreate2Transfers(2)...)
 
@@ -118,7 +118,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_SavesTransferErrors() {
 	}
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_AppliesFee() {
+func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AppliesFee() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
 
 	_, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
@@ -129,7 +129,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_AppliesFee() {
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_RegistersPublicKeys() {
+func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_RegistersPublicKeys() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
 	generatedTransfers[0].ToPublicKey = models.PublicKey{1, 1, 1}
 	generatedTransfers[1].ToPublicKey = models.PublicKey{2, 2, 2}
@@ -154,7 +154,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_RegistersPublicKeys() {
 	}
 }
 
-func (s *ApplyCreate2TransfersTestSuite) getRegisteredAccounts(startBlockNumber uint64) []models.AccountLeaf {
+func (s *ExecuteCreate2TransfersTestSuite) getRegisteredAccounts(startBlockNumber uint64) []models.AccountLeaf {
 	it, err := s.client.AccountRegistry.FilterSinglePubkeyRegistered(&bind.FilterOpts{Start: startBlockNumber})
 	s.NoError(err)
 
@@ -175,6 +175,6 @@ func (s *ApplyCreate2TransfersTestSuite) getRegisteredAccounts(startBlockNumber 
 	return registeredAccounts
 }
 
-func TestApplyCreate2TransfersTestSuite(t *testing.T) {
-	suite.Run(t, new(ApplyCreate2TransfersTestSuite))
+func TestExecuteCreate2TransfersTestSuite(t *testing.T) {
+	suite.Run(t, new(ExecuteCreate2TransfersTestSuite))
 }

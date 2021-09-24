@@ -22,9 +22,9 @@ func (s *SyncCreate2TransfersTestSuite) SetupTest() {
 func (s *SyncCreate2TransfersTestSuite) TestSyncTxs_AllValid() {
 	input := s.generateValidTxs(3, 4)
 
-	appliedTransfers, stateProofs, err := s.syncCtx.SyncTxs(input, s.feeReceiverStateID)
+	syncedTxs, stateProofs, err := s.syncCtx.SyncTxs(input, s.feeReceiverStateID)
 	s.NoError(err)
-	s.Len(appliedTransfers, 3)
+	s.Len(syncedTxs, 3)
 	s.Len(stateProofs, 7)
 }
 
@@ -36,8 +36,8 @@ func (s *SyncCreate2TransfersTestSuite) TestSyncTxs_InvalidTransfer() {
 		pubKeyIDs: append(validC2Ts.pubKeyIDs, invalidC2Ts.pubKeyIDs...),
 	}
 
-	appliedTransfers, _, err := s.syncCtx.SyncTxs(input, s.feeReceiverStateID)
-	s.Nil(appliedTransfers)
+	syncedTxs, _, err := s.syncCtx.SyncTxs(input, s.feeReceiverStateID)
+	s.Nil(syncedTxs)
 
 	var disputableErr *DisputableError
 	s.ErrorAs(err, &disputableErr)
@@ -79,8 +79,8 @@ func (s *SyncCreate2TransfersTestSuite) TestSyncTxs_InvalidFeeReceiverTokenID() 
 
 	input := s.generateValidTxs(2, 5)
 
-	appliedTransfers, _, err := s.syncCtx.SyncTxs(input, feeReceiverStateID)
-	s.Nil(appliedTransfers)
+	syncedTxs, _, err := s.syncCtx.SyncTxs(input, feeReceiverStateID)
+	s.Nil(syncedTxs)
 
 	var disputableErr *DisputableError
 	s.ErrorAs(err, &disputableErr)

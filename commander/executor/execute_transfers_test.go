@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type ApplyTransfersTestSuite struct {
+type ExecuteTransfersTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage     *storage.TestStorage
@@ -22,11 +22,11 @@ type ApplyTransfersTestSuite struct {
 	feeReceiver *FeeReceiver
 }
 
-func (s *ApplyTransfersTestSuite) SetupSuite() {
+func (s *ExecuteTransfersTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *ApplyTransfersTestSuite) SetupTest() {
+func (s *ExecuteTransfersTestSuite) SetupTest() {
 	var err error
 	s.storage, err = storage.NewTestStorage()
 	s.NoError(err)
@@ -70,47 +70,47 @@ func (s *ApplyTransfersTestSuite) SetupTest() {
 	}
 }
 
-func (s *ApplyTransfersTestSuite) TearDownTest() {
+func (s *ExecuteTransfersTestSuite) TearDownTest() {
 	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTxs_AllValid() {
+func (s *ExecuteTransfersTestSuite) TestExecuteTxs_AllValid() {
 	generatedTransfers := testutils.GenerateValidTransfers(3)
 
-	applyTxsResult, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	executeTxsResult, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
-	s.Len(applyTxsResult.AppliedTxs(), 3)
-	s.Len(applyTxsResult.InvalidTxs(), 0)
+	s.Len(executeTxsResult.AppliedTxs(), 3)
+	s.Len(executeTxsResult.InvalidTxs(), 0)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTxs_SomeValid() {
+func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SomeValid() {
 	generatedTransfers := testutils.GenerateValidTransfers(2)
 	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidTransfers(3)...)
 
-	applyTxsResult, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	executeTxsResult, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
-	s.Len(applyTxsResult.AppliedTxs(), 2)
-	s.Len(applyTxsResult.InvalidTxs(), 3)
+	s.Len(executeTxsResult.AppliedTxs(), 2)
+	s.Len(executeTxsResult.InvalidTxs(), 3)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTxs_AppliesNoMoreThanLimit() {
+func (s *ExecuteTransfersTestSuite) TestExecuteTxs_ExecutesNoMoreThanLimit() {
 	generatedTransfers := testutils.GenerateValidTransfers(13)
 
-	applyTxsResult, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	executeTxsResult, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
-	s.Len(applyTxsResult.AppliedTxs(), 6)
-	s.Len(applyTxsResult.InvalidTxs(), 0)
+	s.Len(executeTxsResult.AppliedTxs(), 6)
+	s.Len(executeTxsResult.InvalidTxs(), 0)
 
 	state, err := s.storage.StateTree.Leaf(1)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(6), state.Nonce)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTxs_SavesTransferErrors() {
+func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SavesTransferErrors() {
 	generatedTransfers := testutils.GenerateValidTransfers(3)
 	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidTransfers(2)...)
 
@@ -119,11 +119,11 @@ func (s *ApplyTransfersTestSuite) TestApplyTxs_SavesTransferErrors() {
 		s.NoError(err)
 	}
 
-	applyTxsResult, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	executeTxsResult, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
-	s.Len(applyTxsResult.AppliedTxs(), 3)
-	s.Len(applyTxsResult.InvalidTxs(), 2)
+	s.Len(executeTxsResult.AppliedTxs(), 3)
+	s.Len(executeTxsResult.InvalidTxs(), 2)
 
 	for i := range generatedTransfers {
 		transfer, err := s.storage.GetTransfer(generatedTransfers[i].Hash)
@@ -136,7 +136,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTxs_SavesTransferErrors() {
 	}
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTxs_AppliesFee() {
+func (s *ExecuteTransfersTestSuite) TestExecuteTxs_AppliesFee() {
 	generatedTransfers := testutils.GenerateValidTransfers(3)
 
 	_, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
@@ -147,6 +147,6 @@ func (s *ApplyTransfersTestSuite) TestApplyTxs_AppliesFee() {
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }
 
-func TestApplyTransfersTestSuite(t *testing.T) {
-	suite.Run(t, new(ApplyTransfersTestSuite))
+func TestExecuteTransfersTestSuite(t *testing.T) {
+	suite.Run(t, new(ExecuteTransfersTestSuite))
 }

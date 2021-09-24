@@ -10,28 +10,28 @@ type ExecuteTxsForCommitmentResult interface {
 	AddedPubKeyIDs() []uint32
 }
 
-type ApplyTransfersForCommitmentResult struct {
+type ExecuteTransfersForCommitmentResult struct {
 	appliedTxs models.TransferArray
 }
 
-func (a *ApplyTransfersForCommitmentResult) AppliedTxs() models.GenericTransactionArray {
+func (a *ExecuteTransfersForCommitmentResult) AppliedTxs() models.GenericTransactionArray {
 	return a.appliedTxs
 }
 
-func (a *ApplyTransfersForCommitmentResult) AddedPubKeyIDs() []uint32 {
-	panic("AddedPubKeyIDs cannot be invoked on ApplyTransfersForCommitmentResult")
+func (a *ExecuteTransfersForCommitmentResult) AddedPubKeyIDs() []uint32 {
+	panic("AddedPubKeyIDs cannot be invoked on ExecuteTransfersForCommitmentResult")
 }
 
-type ApplyC2TForCommitmentResult struct {
+type ExecuteC2TForCommitmentResult struct {
 	appliedTxs     models.Create2TransferArray
 	addedPubKeyIDs []uint32
 }
 
-func (a *ApplyC2TForCommitmentResult) AppliedTxs() models.GenericTransactionArray {
+func (a *ExecuteC2TForCommitmentResult) AppliedTxs() models.GenericTransactionArray {
 	return a.appliedTxs
 }
 
-func (a *ApplyC2TForCommitmentResult) AddedPubKeyIDs() []uint32 {
+func (a *ExecuteC2TForCommitmentResult) AddedPubKeyIDs() []uint32 {
 	return a.addedPubKeyIDs
 }
 
@@ -45,72 +45,72 @@ type ExecuteTxsResult interface {
 	AddApplyResult(other ExecuteTxsResult)
 }
 
-type ApplyTransfersResult struct {
+type ExecuteTransfersResult struct {
 	appliedTxs models.GenericTransactionArray
 	invalidTxs models.GenericTransactionArray
 }
 
-func (a *ApplyTransfersResult) AppliedTxs() models.GenericTransactionArray {
+func (a *ExecuteTransfersResult) AppliedTxs() models.GenericTransactionArray {
 	return a.appliedTxs
 }
 
-func (a *ApplyTransfersResult) InvalidTxs() models.GenericTransactionArray {
+func (a *ExecuteTransfersResult) InvalidTxs() models.GenericTransactionArray {
 	return a.invalidTxs
 }
 
-func (a *ApplyTransfersResult) AddedPubKeyIDs() []uint32 {
-	panic("AddedPubKeyIDs cannot be invoked on AppliedTxs")
+func (a *ExecuteTransfersResult) AddedPubKeyIDs() []uint32 {
+	panic("AddedPubKeyIDs cannot be invoked on ExecuteTransfersResult")
 }
 
-func (a *ApplyTransfersResult) AllTxs() models.GenericTransactionArray {
+func (a *ExecuteTransfersResult) AllTxs() models.GenericTransactionArray {
 	return a.appliedTxs.Append(a.invalidTxs)
 }
 
-func (a *ApplyTransfersResult) AddApplied(singleTxResult applier.ApplySingleTxResult) {
+func (a *ExecuteTransfersResult) AddApplied(singleTxResult applier.ApplySingleTxResult) {
 	a.appliedTxs = a.appliedTxs.AppendOne(singleTxResult.AppliedTx())
 }
 
-func (a *ApplyTransfersResult) AddInvalidTx(tx models.GenericTransaction) {
+func (a *ExecuteTransfersResult) AddInvalidTx(tx models.GenericTransaction) {
 	a.invalidTxs = a.invalidTxs.AppendOne(tx)
 }
 
-func (a *ApplyTransfersResult) AddApplyResult(other ExecuteTxsResult) {
+func (a *ExecuteTransfersResult) AddApplyResult(other ExecuteTxsResult) {
 	a.appliedTxs = a.appliedTxs.Append(other.AppliedTxs())
 	a.invalidTxs = a.invalidTxs.Append(other.InvalidTxs())
 }
 
-type ApplyC2TResult struct {
+type ExecuteC2TResult struct {
 	appliedTxs     models.GenericTransactionArray
 	invalidTxs     models.GenericTransactionArray
 	addedPubKeyIDs []uint32
 }
 
-func (a *ApplyC2TResult) AppliedTxs() models.GenericTransactionArray {
+func (a *ExecuteC2TResult) AppliedTxs() models.GenericTransactionArray {
 	return a.appliedTxs
 }
 
-func (a *ApplyC2TResult) InvalidTxs() models.GenericTransactionArray {
+func (a *ExecuteC2TResult) InvalidTxs() models.GenericTransactionArray {
 	return a.invalidTxs
 }
 
-func (a *ApplyC2TResult) AddedPubKeyIDs() []uint32 {
+func (a *ExecuteC2TResult) AddedPubKeyIDs() []uint32 {
 	return a.addedPubKeyIDs
 }
 
-func (a *ApplyC2TResult) AllTxs() models.GenericTransactionArray {
+func (a *ExecuteC2TResult) AllTxs() models.GenericTransactionArray {
 	return a.appliedTxs.Append(a.invalidTxs)
 }
 
-func (a *ApplyC2TResult) AddApplied(singleTxResult applier.ApplySingleTxResult) {
+func (a *ExecuteC2TResult) AddApplied(singleTxResult applier.ApplySingleTxResult) {
 	a.appliedTxs = a.appliedTxs.AppendOne(singleTxResult.AppliedTx())
 	a.addedPubKeyIDs = append(a.addedPubKeyIDs, singleTxResult.AddedPubKeyID())
 }
 
-func (a *ApplyC2TResult) AddInvalidTx(tx models.GenericTransaction) {
+func (a *ExecuteC2TResult) AddInvalidTx(tx models.GenericTransaction) {
 	a.invalidTxs = a.invalidTxs.AppendOne(tx)
 }
 
-func (a *ApplyC2TResult) AddApplyResult(other ExecuteTxsResult) {
+func (a *ExecuteC2TResult) AddApplyResult(other ExecuteTxsResult) {
 	a.appliedTxs = a.appliedTxs.Append(other.AppliedTxs())
 	a.invalidTxs = a.invalidTxs.Append(other.InvalidTxs())
 	a.addedPubKeyIDs = append(a.addedPubKeyIDs, other.AddedPubKeyIDs()...)
