@@ -7,5 +7,4 @@ metadata:
   namespace: production
 data:
   HUBBLE_POSTGRES_NAME: "secondary-hubble-commander"
-  HUBBLE_BOOTSTRAP_NODE_URL: http://localhost:8080
   HUBBLE_API_PORT: "8081"
