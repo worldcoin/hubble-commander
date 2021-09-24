@@ -175,7 +175,7 @@ func (s *DisputeTransferTransitionTestSuite) createInvalidCommitments(
 			s.NoError(err)
 		}
 
-		applyTxsResult := s.rollupCtx.Executor.NewApplyTxsResult(uint32(len(txs)))
+		applyTxsResult := s.rollupCtx.Executor.NewExecuteTxsResult(uint32(len(txs)))
 		for j := range txs {
 			applyTxsResult.AddApplied(applier.NewApplySingleTransferResult(&txs[j]))
 		}

@@ -60,7 +60,7 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_AllValid() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
 
-	transfers, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	transfers, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.AppliedTxs(), 3)
@@ -72,7 +72,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_SomeValid() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(2)
 	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidCreate2Transfers(3)...)
 
-	transfers, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	transfers, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.AppliedTxs(), 2)
@@ -83,7 +83,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_SomeValid() {
 func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_AppliesNoMoreThanLimit() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(7)
 
-	transfers, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	transfers, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.AppliedTxs(), 6)
@@ -100,7 +100,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_SavesTransferErrors() {
 		s.NoError(err)
 	}
 
-	transfers, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	transfers, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.AppliedTxs(), 3)
@@ -121,7 +121,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_SavesTransferErrors() {
 func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_AppliesFee() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
 
-	_, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	_, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	feeReceiverState, err := s.executionCtx.storage.StateTree.Leaf(s.feeReceiver.StateID)
@@ -138,7 +138,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_RegistersPublicKeys() {
 	latestBlockNumber, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
 
-	transfers, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	transfers, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.AppliedTxs(), 3)

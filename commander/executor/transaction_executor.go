@@ -15,9 +15,9 @@ import (
 type TransactionExecutor interface {
 	GetPendingTxs(limit uint32) (models.GenericTransactionArray, error)
 	NewTxArray(size, capacity uint32) models.GenericTransactionArray
-	NewApplyTxsResult(capacity uint32) ApplyTxsResult
-	NewApplyTxsForCommitmentResult(applyTxsResult ApplyTxsResult) ApplyTxsForCommitmentResult
-	SerializeTxs(results ApplyTxsForCommitmentResult) ([]byte, error)
+	NewExecuteTxsResult(capacity uint32) ExecuteTxsResult
+	NewExecuteTxsForCommitmentResult(executeTxsResult ExecuteTxsResult) ExecuteTxsForCommitmentResult
+	SerializeTxs(results ExecuteTxsForCommitmentResult) ([]byte, error)
 	MarkTxsAsIncluded(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error
 	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (result applier.ApplySingleTxResult, transferError, appError error)
 	SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error)
@@ -61,20 +61,20 @@ func (e *TransferExecutor) NewTxArray(size, capacity uint32) models.GenericTrans
 	return make(models.TransferArray, size, capacity)
 }
 
-func (e *TransferExecutor) NewApplyTxsResult(capacity uint32) ApplyTxsResult {
+func (e *TransferExecutor) NewExecuteTxsResult(capacity uint32) ExecuteTxsResult {
 	return &ApplyTransfersResult{
 		appliedTxs: make(models.TransferArray, 0, capacity),
 		invalidTxs: make(models.TransferArray, 0),
 	}
 }
 
-func (e *TransferExecutor) NewApplyTxsForCommitmentResult(applyTxsResult ApplyTxsResult) ApplyTxsForCommitmentResult {
+func (e *TransferExecutor) NewExecuteTxsForCommitmentResult(executeTxsResult ExecuteTxsResult) ExecuteTxsForCommitmentResult {
 	return &ApplyTransfersForCommitmentResult{
-		appliedTxs: applyTxsResult.AppliedTxs().ToTransferArray(),
+		appliedTxs: executeTxsResult.AppliedTxs().ToTransferArray(),
 	}
 }
 
-func (e *TransferExecutor) SerializeTxs(results ApplyTxsForCommitmentResult) ([]byte, error) {
+func (e *TransferExecutor) SerializeTxs(results ExecuteTxsForCommitmentResult) ([]byte, error) {
 	return encoder.SerializeTransfers(results.AppliedTxs().ToTransferArray())
 }
 
@@ -117,7 +117,7 @@ func (e *C2TExecutor) NewTxArray(size, capacity uint32) models.GenericTransactio
 	return make(models.Create2TransferArray, size, capacity)
 }
 
-func (e *C2TExecutor) NewApplyTxsResult(capacity uint32) ApplyTxsResult {
+func (e *C2TExecutor) NewExecuteTxsResult(capacity uint32) ExecuteTxsResult {
 	return &ApplyC2TResult{
 		appliedTxs:     make(models.Create2TransferArray, 0, capacity),
 		invalidTxs:     make(models.Create2TransferArray, 0),
@@ -125,14 +125,14 @@ func (e *C2TExecutor) NewApplyTxsResult(capacity uint32) ApplyTxsResult {
 	}
 }
 
-func (e *C2TExecutor) NewApplyTxsForCommitmentResult(applyTxsResult ApplyTxsResult) ApplyTxsForCommitmentResult {
+func (e *C2TExecutor) NewExecuteTxsForCommitmentResult(executeTxsResult ExecuteTxsResult) ExecuteTxsForCommitmentResult {
 	return &ApplyC2TForCommitmentResult{
-		appliedTxs:     applyTxsResult.AppliedTxs().ToCreate2TransferArray(),
-		addedPubKeyIDs: applyTxsResult.AddedPubKeyIDs(),
+		appliedTxs:     executeTxsResult.AppliedTxs().ToCreate2TransferArray(),
+		addedPubKeyIDs: executeTxsResult.AddedPubKeyIDs(),
 	}
 }
 
-func (e *C2TExecutor) SerializeTxs(results ApplyTxsForCommitmentResult) ([]byte, error) {
+func (e *C2TExecutor) SerializeTxs(results ExecuteTxsForCommitmentResult) ([]byte, error) {
 	return encoder.SerializeCreate2Transfers(results.AppliedTxs().ToCreate2TransferArray(), results.AddedPubKeyIDs())
 }
 

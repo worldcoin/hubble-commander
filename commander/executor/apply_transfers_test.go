@@ -78,7 +78,7 @@ func (s *ApplyTransfersTestSuite) TearDownTest() {
 func (s *ApplyTransfersTestSuite) TestApplyTxs_AllValid() {
 	generatedTransfers := testutils.GenerateValidTransfers(3)
 
-	applyTxsResult, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	applyTxsResult, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(applyTxsResult.AppliedTxs(), 3)
@@ -89,7 +89,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTxs_SomeValid() {
 	generatedTransfers := testutils.GenerateValidTransfers(2)
 	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidTransfers(3)...)
 
-	applyTxsResult, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	applyTxsResult, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(applyTxsResult.AppliedTxs(), 2)
@@ -99,7 +99,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTxs_SomeValid() {
 func (s *ApplyTransfersTestSuite) TestApplyTxs_AppliesNoMoreThanLimit() {
 	generatedTransfers := testutils.GenerateValidTransfers(13)
 
-	applyTxsResult, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	applyTxsResult, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(applyTxsResult.AppliedTxs(), 6)
@@ -119,7 +119,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTxs_SavesTransferErrors() {
 		s.NoError(err)
 	}
 
-	applyTxsResult, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	applyTxsResult, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(applyTxsResult.AppliedTxs(), 3)
@@ -139,7 +139,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTxs_SavesTransferErrors() {
 func (s *ApplyTransfersTestSuite) TestApplyTxs_AppliesFee() {
 	generatedTransfers := testutils.GenerateValidTransfers(3)
 
-	_, err := s.rollupCtx.ApplyTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	_, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	feeReceiverState, err := s.rollupCtx.storage.StateTree.Leaf(s.feeReceiver.StateID)

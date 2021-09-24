@@ -5,7 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-type ApplyTxsForCommitmentResult interface {
+type ExecuteTxsForCommitmentResult interface {
 	AppliedTxs() models.GenericTransactionArray
 	AddedPubKeyIDs() []uint32
 }
@@ -35,14 +35,14 @@ func (a *ApplyC2TForCommitmentResult) AddedPubKeyIDs() []uint32 {
 	return a.addedPubKeyIDs
 }
 
-type ApplyTxsResult interface {
+type ExecuteTxsResult interface {
 	AppliedTxs() models.GenericTransactionArray
 	InvalidTxs() models.GenericTransactionArray
 	AddedPubKeyIDs() []uint32
 	AllTxs() models.GenericTransactionArray
 	AddApplied(singleTxResult applier.ApplySingleTxResult)
 	AddInvalidTx(tx models.GenericTransaction)
-	AddApplyResult(other ApplyTxsResult)
+	AddApplyResult(other ExecuteTxsResult)
 }
 
 type ApplyTransfersResult struct {
@@ -74,7 +74,7 @@ func (a *ApplyTransfersResult) AddInvalidTx(tx models.GenericTransaction) {
 	a.invalidTxs = a.invalidTxs.AppendOne(tx)
 }
 
-func (a *ApplyTransfersResult) AddApplyResult(other ApplyTxsResult) {
+func (a *ApplyTransfersResult) AddApplyResult(other ExecuteTxsResult) {
 	a.appliedTxs = a.appliedTxs.Append(other.AppliedTxs())
 	a.invalidTxs = a.invalidTxs.Append(other.InvalidTxs())
 }
@@ -110,7 +110,7 @@ func (a *ApplyC2TResult) AddInvalidTx(tx models.GenericTransaction) {
 	a.invalidTxs = a.invalidTxs.AppendOne(tx)
 }
 
-func (a *ApplyC2TResult) AddApplyResult(other ApplyTxsResult) {
+func (a *ApplyC2TResult) AddApplyResult(other ExecuteTxsResult) {
 	a.appliedTxs = a.appliedTxs.Append(other.AppliedTxs())
 	a.invalidTxs = a.invalidTxs.Append(other.InvalidTxs())
 	a.addedPubKeyIDs = append(a.addedPubKeyIDs, other.AddedPubKeyIDs()...)

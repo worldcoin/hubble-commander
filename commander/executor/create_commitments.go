@@ -74,7 +74,7 @@ func (c *RollupContext) createCommitment(pendingTxs models.GenericTransactionArr
 		return nil, nil, err
 	}
 
-	applyResult, newPendingTxs, err := c.applyTxsForCommitment(pendingTxs, feeReceiver)
+	applyResult, newPendingTxs, err := c.executeTxsForCommitment(pendingTxs, feeReceiver)
 	if errors.Is(err, ErrNotEnoughTxs) {
 		if revertErr := c.storage.StateTree.RevertTo(*initialStateRoot); revertErr != nil {
 			return nil, nil, revertErr
@@ -101,27 +101,27 @@ func (c *RollupContext) createCommitment(pendingTxs models.GenericTransactionArr
 }
 
 // TODO IDEA: how about renaming:
-//  * applyTxsForCommitment -> executeTxsForCommitment
-//  * ApplyTxs -> ExecuteTxs
-//  * ApplyTxsForCommitmentResult -> ExecuteTxsForCommitmentResult
-//  * ApplyTxsResult -> ExecuteTxsResult
+//  * executeTxsForCommitment -> executeTxsForCommitment
+//  * ExecuteTxs -> ExecuteTxs
+//  * ExecuteTxsForCommitmentResult -> ExecuteTxsForCommitmentResult
+//  * ExecuteTxsResult -> ExecuteTxsResult
 //  This way, we won't have files in `executor` package that have `apply_` prefix which would be reserved for
 //  methods in `applier` package. `ExecuteTxs` method also looks better in `executor` package.
-//  `AppliedTxs()` getters in ApplyTxsForCommitmentResult and ApplyTxsResult can keep their names IMO,
+//  `AppliedTxs()` getters in ExecuteTxsForCommitmentResult and ExecuteTxsResult can keep their names IMO,
 //  because these txs were actually applied to the state tree.
 //  What do you think?
 //  Edit:
 //  Similar rename could also be done for methods in `syncer` package 🤔
-func (c *RollupContext) applyTxsForCommitment(pendingTxs models.GenericTransactionArray, feeReceiver *FeeReceiver) (
-	result ApplyTxsForCommitmentResult,
+func (c *RollupContext) executeTxsForCommitment(pendingTxs models.GenericTransactionArray, feeReceiver *FeeReceiver) (
+	result ExecuteTxsForCommitmentResult,
 	newPendingTxs models.GenericTransactionArray,
 	err error,
 ) {
-	aggregateResult := c.Executor.NewApplyTxsResult(c.cfg.MaxTxsPerCommitment)
+	aggregateResult := c.Executor.NewExecuteTxsResult(c.cfg.MaxTxsPerCommitment)
 
 	for {
 		numNeededTxs := c.cfg.MaxTxsPerCommitment - uint32(aggregateResult.AppliedTxs().Len())
-		applyTxsResult, err := c.ApplyTxs(pendingTxs, numNeededTxs, feeReceiver)
+		applyTxsResult, err := c.ExecuteTxs(pendingTxs, numNeededTxs, feeReceiver)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -130,13 +130,13 @@ func (c *RollupContext) applyTxsForCommitment(pendingTxs models.GenericTransacti
 
 		if aggregateResult.AppliedTxs().Len() == int(c.cfg.MaxTxsPerCommitment) {
 			newPendingTxs = removeTxs(pendingTxs, aggregateResult.AllTxs())
-			return c.Executor.NewApplyTxsForCommitmentResult(aggregateResult), newPendingTxs, nil
+			return c.Executor.NewExecuteTxsForCommitmentResult(aggregateResult), newPendingTxs, nil
 		}
 
 		morePendingTransfers, err := c.queryMorePendingTxs(aggregateResult.AppliedTxs())
 		if errors.Is(err, ErrNotEnoughTxs) {
 			newPendingTxs = removeTxs(pendingTxs, aggregateResult.AllTxs())
-			return c.Executor.NewApplyTxsForCommitmentResult(aggregateResult), newPendingTxs, nil
+			return c.Executor.NewExecuteTxsForCommitmentResult(aggregateResult), newPendingTxs, nil
 		}
 		if err != nil {
 			return nil, nil, err
