@@ -4,6 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 )
@@ -54,7 +55,7 @@ func setUserStates(s *require.Assertions, disputeCtx *Context, domain *bls.Domai
 		*createUserState(2, 100, 0),
 	}
 
-	wallets := generateWallets(s, domain, len(userStates))
+	wallets := testutils.GenerateWallets(s, domain, len(userStates))
 	for i := range userStates {
 		pubKeyID, err := disputeCtx.client.RegisterAccountAndWait(wallets[i].PublicKey())
 		s.NoError(err)
@@ -84,15 +85,4 @@ func checkRemoteBatchAfterDispute(s *require.Assertions, client *eth.TestClient,
 	}
 	s.Error(err)
 	s.Equal(eth.MsgInvalidBatchID, err.Error())
-}
-
-// TODO very similar function in 3 places, move to test utils
-func generateWallets(s *require.Assertions, domain *bls.Domain, walletsAmount int) []bls.Wallet {
-	wallets := make([]bls.Wallet, 0, walletsAmount)
-	for i := 0; i < walletsAmount; i++ {
-		wallet, err := bls.NewRandomWallet(*domain)
-		s.NoError(err)
-		wallets = append(wallets, *wallet)
-	}
-	return wallets
 }

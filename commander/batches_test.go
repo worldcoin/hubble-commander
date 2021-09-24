@@ -65,7 +65,7 @@ func (s *BatchesTestSuite) SetupTest() {
 
 	domain, err := s.testClient.GetDomain()
 	s.NoError(err)
-	s.wallets = generateWallets(s.T(), *domain, 2)
+	s.wallets = testutils.GenerateWallets(s.Assertions, domain, 2)
 	seedDB(s.T(), s.testStorage.Storage, s.wallets)
 }
 

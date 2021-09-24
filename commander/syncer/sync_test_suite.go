@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 )
@@ -35,7 +36,7 @@ func (s *syncTestSuite) setupTest() {
 	s.domain, err = s.client.GetDomain()
 	s.NoError(err)
 
-	s.wallets = generateWallets(s.Assertions, s.domain, 2)
+	s.wallets = testutils.GenerateWallets(s.Assertions, s.domain, 2)
 
 	seedDB(s.Assertions, s.storage.Storage, s.wallets)
 }
@@ -140,14 +141,4 @@ func (s *syncTestSuite) createBatch(tx models.GenericTransaction) (*models.Batch
 	s.Len(commitments, 1)
 
 	return pendingBatch, commitments
-}
-
-func generateWallets(s *require.Assertions, domain *bls.Domain, walletsAmount int) []bls.Wallet {
-	wallets := make([]bls.Wallet, 0, walletsAmount)
-	for i := 0; i < walletsAmount; i++ {
-		wallet, err := bls.NewRandomWallet(*domain)
-		s.NoError(err)
-		wallets = append(wallets, *wallet)
-	}
-	return wallets
 }
