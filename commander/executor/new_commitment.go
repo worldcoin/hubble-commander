@@ -27,7 +27,7 @@ func (c *RollupContext) newCommitment(
 	}, nil
 }
 
-func (c *RollupContext) nextCommitmentID() (*models.CommitmentID, error) {
+func (c *RollupContext) NextCommitmentID() (*models.CommitmentID, error) {
 	nextBatchID, err := c.storage.GetNextBatchID()
 	if err != nil {
 		return nil, err

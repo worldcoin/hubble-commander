@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 
+	"github.com/Worldcoin/hubble-commander/commander/disputer"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
+	"github.com/Worldcoin/hubble-commander/commander/syncer"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -68,7 +70,7 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 }
 
 func (c *Commander) syncRemoteBatch(remoteBatch *eth.DecodedBatch) error {
-	var icError *executor.InconsistentBatchError
+	var icError *syncer.InconsistentBatchError
 
 	err := c.syncOrDisputeRemoteBatch(remoteBatch)
 	if errors.As(err, &icError) {
@@ -78,7 +80,7 @@ func (c *Commander) syncRemoteBatch(remoteBatch *eth.DecodedBatch) error {
 }
 
 func (c *Commander) syncOrDisputeRemoteBatch(remoteBatch *eth.DecodedBatch) error {
-	var disputableErr *executor.DisputableError
+	var disputableErr *syncer.DisputableError
 
 	err := c.syncBatch(remoteBatch)
 	if errors.As(err, &disputableErr) {
@@ -89,7 +91,7 @@ func (c *Commander) syncOrDisputeRemoteBatch(remoteBatch *eth.DecodedBatch) erro
 }
 
 func (c *Commander) syncBatch(remoteBatch *eth.DecodedBatch) error {
-	syncCtx, err := executor.NewSyncContext(c.storage, c.client, c.cfg.Rollup, remoteBatch.Type)
+	syncCtx, err := syncer.NewContext(c.storage, c.client, c.cfg.Rollup, remoteBatch.Type)
 	if err != nil {
 		return err
 	}
@@ -115,14 +117,14 @@ func (c *Commander) replaceBatch(localBatch *models.Batch, remoteBatch *eth.Deco
 
 func (c *Commander) disputeFraudulentBatch(
 	remoteBatch *eth.DecodedBatch,
-	disputableErr *executor.DisputableError,
+	disputableErr *syncer.DisputableError,
 ) (err error) {
-	disputeCtx := executor.NewDisputeContext(c.storage, c.client)
+	disputeCtx := disputer.NewContext(c.storage, c.client)
 
 	switch disputableErr.Type {
-	case executor.Transition:
+	case syncer.Transition:
 		err = disputeCtx.DisputeTransition(remoteBatch, disputableErr.CommitmentIndex, disputableErr.Proofs)
-	case executor.Signature:
+	case syncer.Signature:
 		err = disputeCtx.DisputeSignature(remoteBatch, disputableErr.CommitmentIndex, disputableErr.Proofs)
 	}
 	if err != nil {
