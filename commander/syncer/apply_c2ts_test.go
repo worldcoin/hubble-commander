@@ -22,7 +22,7 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_AllValid() {
 	input := s.generateValidTxs(3, 4)
 
-	appliedTransfers, stateProofs, err := s.syncCtx.ApplyTxs(input, s.feeReceiver.StateID)
+	appliedTransfers, stateProofs, err := s.syncCtx.ApplyTxs(input, s.feeReceiverStateID)
 	s.NoError(err)
 	s.Len(appliedTransfers, 3)
 	s.Len(stateProofs, 7)
@@ -36,7 +36,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_InvalidTransfer() {
 		pubKeyIDs: append(validC2Ts.pubKeyIDs, invalidC2Ts.pubKeyIDs...),
 	}
 
-	appliedTransfers, _, err := s.syncCtx.ApplyTxs(input, s.feeReceiver.StateID)
+	appliedTransfers, _, err := s.syncCtx.ApplyTxs(input, s.feeReceiverStateID)
 	s.Nil(appliedTransfers)
 
 	var disputableErr *DisputableError
@@ -48,10 +48,10 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_InvalidTransfer() {
 func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_AppliesFee() {
 	input := s.generateValidTxs(3, 4)
 
-	_, _, err := s.syncCtx.ApplyTxs(input, s.feeReceiver.StateID)
+	_, _, err := s.syncCtx.ApplyTxs(input, s.feeReceiverStateID)
 	s.NoError(err)
 
-	feeReceiverState, err := s.syncCtx.storage.StateTree.Leaf(s.feeReceiver.StateID)
+	feeReceiverState, err := s.syncCtx.storage.StateTree.Leaf(s.feeReceiverStateID)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(1030), feeReceiverState.Balance)
 }
@@ -62,19 +62,16 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_ReturnsCorrectStateProofsF
 		input.txs[i].Fee = models.MakeUint256(0)
 	}
 
-	_, stateProofs, err := s.syncCtx.ApplyTxs(input, s.feeReceiver.StateID)
+	_, stateProofs, err := s.syncCtx.ApplyTxs(input, s.feeReceiverStateID)
 	s.NoError(err)
 	s.Len(stateProofs, 5)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_InvalidFeeReceiverTokenID() {
-	feeReceiver := &FeeReceiver{
-		StateID: 4,
-		TokenID: models.MakeUint256(4),
-	}
-	_, err := s.storage.StateTree.Set(feeReceiver.StateID, &models.UserState{
-		PubKeyID: 4,
-		TokenID:  feeReceiver.TokenID,
+	feeReceiverStateID := uint32(4)
+	_, err := s.storage.StateTree.Set(feeReceiverStateID, &models.UserState{
+		PubKeyID: feeReceiverStateID,
+		TokenID:  models.MakeUint256(4),
 		Balance:  models.MakeUint256(420),
 		Nonce:    models.MakeUint256(0),
 	})
@@ -82,7 +79,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_InvalidFeeReceiverTokenID(
 
 	input := s.generateValidTxs(2, 5)
 
-	appliedTransfers, _, err := s.syncCtx.ApplyTxs(input, feeReceiver.StateID)
+	appliedTransfers, _, err := s.syncCtx.ApplyTxs(input, feeReceiverStateID)
 	s.Nil(appliedTransfers)
 
 	var disputableErr *DisputableError

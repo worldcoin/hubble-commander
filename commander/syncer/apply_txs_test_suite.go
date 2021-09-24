@@ -14,16 +14,10 @@ import (
 type applyTxsTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage     *storage.TestStorage
-	cfg         *config.RollupConfig
-	syncCtx     *Context
-	feeReceiver *FeeReceiver
-}
-
-// TODO keep only fee receiver state id
-type FeeReceiver struct {
-	StateID uint32
-	TokenID models.Uint256
+	storage            *storage.TestStorage
+	cfg                *config.RollupConfig
+	syncCtx            *Context
+	feeReceiverStateID uint32
 }
 
 func (s *applyTxsTestSuite) SetupSuite() {
@@ -67,10 +61,7 @@ func (s *applyTxsTestSuite) SetupTest(batchType batchtype.BatchType) {
 
 	s.syncCtx = NewTestContext(s.storage.Storage, nil, s.cfg, batchType)
 
-	s.feeReceiver = &FeeReceiver{
-		StateID: 3,
-		TokenID: models.MakeUint256(1),
-	}
+	s.feeReceiverStateID = 3
 }
 
 func (s *applyTxsTestSuite) TearDownTest() {
