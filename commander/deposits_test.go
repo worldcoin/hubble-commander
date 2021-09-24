@@ -110,7 +110,7 @@ func (s *DepositsTestSuite) TestFetchDepositSubTrees() {
 	s.registerToken()
 	s.approveTokens()
 
-	// Smart contract needs 4 deposits to create a subtree
+	// Smart contract needs 4 deposits to create a subtree (depth specified in cfg.Rollup.MaxDepositSubTreeDepth)
 	s.queueDeposit()
 	s.queueDeposit()
 	s.queueDeposit()

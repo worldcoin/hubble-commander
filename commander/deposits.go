@@ -13,6 +13,7 @@ func (c *Commander) syncDeposits(start, end uint64) error {
 	if err != nil {
 		return err
 	}
+
 	depositSubTrees, err := c.fetchDepositSubTrees(start, end)
 	if err != nil {
 		return err
