@@ -11,24 +11,24 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type ApplyCreate2TransfersTestSuite struct {
-	applyTxsTestSuite
+type SyncCreate2TransfersTestSuite struct {
+	syncTxsTestSuite
 }
 
-func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
-	s.applyTxsTestSuite.SetupTest(batchtype.Create2Transfer)
+func (s *SyncCreate2TransfersTestSuite) SetupTest() {
+	s.syncTxsTestSuite.SetupTest(batchtype.Create2Transfer)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_AllValid() {
+func (s *SyncCreate2TransfersTestSuite) TestSyncTxs_AllValid() {
 	input := s.generateValidTxs(3, 4)
 
-	appliedTransfers, stateProofs, err := s.syncCtx.ApplyTxs(input, s.feeReceiverStateID)
+	appliedTransfers, stateProofs, err := s.syncCtx.SyncTxs(input, s.feeReceiverStateID)
 	s.NoError(err)
 	s.Len(appliedTransfers, 3)
 	s.Len(stateProofs, 7)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_InvalidTransfer() {
+func (s *SyncCreate2TransfersTestSuite) TestSyncTxs_InvalidTransfer() {
 	validC2Ts := s.generateValidTxs(2, 4)
 	invalidC2Ts := s.generateInvalidTxs(3, 6)
 	input := &SyncedC2Ts{
@@ -36,7 +36,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_InvalidTransfer() {
 		pubKeyIDs: append(validC2Ts.pubKeyIDs, invalidC2Ts.pubKeyIDs...),
 	}
 
-	appliedTransfers, _, err := s.syncCtx.ApplyTxs(input, s.feeReceiverStateID)
+	appliedTransfers, _, err := s.syncCtx.SyncTxs(input, s.feeReceiverStateID)
 	s.Nil(appliedTransfers)
 
 	var disputableErr *DisputableError
@@ -45,10 +45,10 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_InvalidTransfer() {
 	s.Len(disputableErr.Proofs, 6)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_AppliesFee() {
+func (s *SyncCreate2TransfersTestSuite) TestSyncTxs_AppliesFee() {
 	input := s.generateValidTxs(3, 4)
 
-	_, _, err := s.syncCtx.ApplyTxs(input, s.feeReceiverStateID)
+	_, _, err := s.syncCtx.SyncTxs(input, s.feeReceiverStateID)
 	s.NoError(err)
 
 	feeReceiverState, err := s.syncCtx.storage.StateTree.Leaf(s.feeReceiverStateID)
@@ -56,18 +56,18 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_AppliesFee() {
 	s.Equal(models.MakeUint256(1030), feeReceiverState.Balance)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_ReturnsCorrectStateProofsForZeroFee() {
+func (s *SyncCreate2TransfersTestSuite) TestSyncTxs_ReturnsCorrectStateProofsForZeroFee() {
 	input := s.generateValidTxs(2, 5)
 	for i := range input.txs {
 		input.txs[i].Fee = models.MakeUint256(0)
 	}
 
-	_, stateProofs, err := s.syncCtx.ApplyTxs(input, s.feeReceiverStateID)
+	_, stateProofs, err := s.syncCtx.SyncTxs(input, s.feeReceiverStateID)
 	s.NoError(err)
 	s.Len(stateProofs, 5)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_InvalidFeeReceiverTokenID() {
+func (s *SyncCreate2TransfersTestSuite) TestSyncTxs_InvalidFeeReceiverTokenID() {
 	feeReceiverStateID := uint32(4)
 	_, err := s.storage.StateTree.Set(feeReceiverStateID, &models.UserState{
 		PubKeyID: feeReceiverStateID,
@@ -79,7 +79,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_InvalidFeeReceiverTokenID(
 
 	input := s.generateValidTxs(2, 5)
 
-	appliedTransfers, _, err := s.syncCtx.ApplyTxs(input, feeReceiverStateID)
+	appliedTransfers, _, err := s.syncCtx.SyncTxs(input, feeReceiverStateID)
 	s.Nil(appliedTransfers)
 
 	var disputableErr *DisputableError
@@ -89,7 +89,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyTxs_InvalidFeeReceiverTokenID(
 	s.Len(disputableErr.Proofs, 5)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) generateValidTxs(txsAmount, startPubKeyID uint32) *SyncedC2Ts {
+func (s *SyncCreate2TransfersTestSuite) generateValidTxs(txsAmount, startPubKeyID uint32) *SyncedC2Ts {
 	syncedC2Ts := &SyncedC2Ts{
 		txs:       make([]models.Create2Transfer, 0, txsAmount),
 		pubKeyIDs: make([]uint32, 0, txsAmount),
@@ -104,7 +104,7 @@ func (s *ApplyCreate2TransfersTestSuite) generateValidTxs(txsAmount, startPubKey
 	return syncedC2Ts
 }
 
-func (s *ApplyCreate2TransfersTestSuite) generateInvalidTxs(txsAmount, startPubKeyID uint32) *SyncedC2Ts {
+func (s *SyncCreate2TransfersTestSuite) generateInvalidTxs(txsAmount, startPubKeyID uint32) *SyncedC2Ts {
 	syncedC2Ts := &SyncedC2Ts{
 		txs:       make([]models.Create2Transfer, 0, txsAmount),
 		pubKeyIDs: make([]uint32, 0, txsAmount),
@@ -119,6 +119,6 @@ func (s *ApplyCreate2TransfersTestSuite) generateInvalidTxs(txsAmount, startPubK
 	return syncedC2Ts
 }
 
-func TestApplyCreate2TransfersTestSuite(t *testing.T) {
-	suite.Run(t, new(ApplyCreate2TransfersTestSuite))
+func TestSyncCreate2TransfersTestSuite(t *testing.T) {
+	suite.Run(t, new(SyncCreate2TransfersTestSuite))
 }

@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// Other test suites encapsulate applyTxsTestSuite.
-// Don't add any tests on applyTxsTestSuite to avoid repeated runs.
-type applyTxsTestSuite struct {
+// Other test suites encapsulate syncTxsTestSuite.
+// Don't add any tests on syncTxsTestSuite to avoid repeated runs.
+type syncTxsTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage            *storage.TestStorage
@@ -20,11 +20,11 @@ type applyTxsTestSuite struct {
 	feeReceiverStateID uint32
 }
 
-func (s *applyTxsTestSuite) SetupSuite() {
+func (s *syncTxsTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *applyTxsTestSuite) SetupTest(batchType batchtype.BatchType) {
+func (s *syncTxsTestSuite) SetupTest(batchType batchtype.BatchType) {
 	var err error
 	s.storage, err = storage.NewTestStorage()
 	s.NoError(err)
@@ -64,7 +64,7 @@ func (s *applyTxsTestSuite) SetupTest(batchType batchtype.BatchType) {
 	s.feeReceiverStateID = 3
 }
 
-func (s *applyTxsTestSuite) TearDownTest() {
+func (s *syncTxsTestSuite) TearDownTest() {
 	err := s.storage.Teardown()
 	s.NoError(err)
 }

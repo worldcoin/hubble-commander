@@ -134,7 +134,7 @@ func (s *DisputeCT2TransitionTestSuite) getStateMerkleProofs(
 	var err error
 	for i := range txs {
 		input := syncer.NewSyncedC2Ts(txs[i], pubKeyIDs[i])
-		_, stateProofs, err = s.syncCtx.ApplyTxs(input, feeReceiverStateID)
+		_, stateProofs, err = s.syncCtx.SyncTxs(input, feeReceiverStateID)
 		if err != nil {
 			var disputableErr *syncer.DisputableError
 			s.ErrorAs(err, &disputableErr)

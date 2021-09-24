@@ -10,32 +10,32 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type ApplyTransfersTestSuite struct {
-	applyTxsTestSuite
+type SyncTransfersTestSuite struct {
+	syncTxsTestSuite
 }
 
-func (s *ApplyTransfersTestSuite) SetupTest() {
-	s.applyTxsTestSuite.SetupTest(batchtype.Transfer)
+func (s *SyncTransfersTestSuite) SetupTest() {
+	s.syncTxsTestSuite.SetupTest(batchtype.Transfer)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTxs_AllValid() {
+func (s *SyncTransfersTestSuite) TestSyncTxs_AllValid() {
 	input := &SyncedTransfers{
 		txs: testutils.GenerateValidTransfers(3),
 	}
 
-	appliedTransfers, stateProofs, err := s.syncCtx.ApplyTxs(input, s.feeReceiverStateID)
+	appliedTransfers, stateProofs, err := s.syncCtx.SyncTxs(input, s.feeReceiverStateID)
 	s.NoError(err)
 	s.Len(appliedTransfers, 3)
 	s.Len(stateProofs, 7)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTxs_InvalidTransfer() {
+func (s *SyncTransfersTestSuite) TestSyncTxs_InvalidTransfer() {
 	input := &SyncedTransfers{
 		txs: testutils.GenerateValidTransfers(2),
 	}
 	input.txs = append(input.txs, testutils.GenerateInvalidTransfers(2)...)
 
-	appliedTransfers, _, err := s.syncCtx.ApplyTxs(input, s.feeReceiverStateID)
+	appliedTransfers, _, err := s.syncCtx.SyncTxs(input, s.feeReceiverStateID)
 	s.Nil(appliedTransfers)
 
 	var disputableErr *DisputableError
@@ -44,12 +44,12 @@ func (s *ApplyTransfersTestSuite) TestApplyTxs_InvalidTransfer() {
 	s.Len(disputableErr.Proofs, 6)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTxs_AppliesFee() {
+func (s *SyncTransfersTestSuite) TestSyncTxs_AppliesFee() {
 	input := &SyncedTransfers{
 		txs: testutils.GenerateValidTransfers(3),
 	}
 
-	_, _, err := s.syncCtx.ApplyTxs(input, s.feeReceiverStateID)
+	_, _, err := s.syncCtx.SyncTxs(input, s.feeReceiverStateID)
 	s.NoError(err)
 
 	feeReceiverState, err := s.syncCtx.storage.StateTree.Leaf(s.feeReceiverStateID)
@@ -57,7 +57,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTxs_AppliesFee() {
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTxs_ReturnsCorrectStateProofsForZeroFee() {
+func (s *SyncTransfersTestSuite) TestSyncTxs_ReturnsCorrectStateProofsForZeroFee() {
 	input := &SyncedTransfers{
 		txs: testutils.GenerateValidTransfers(2),
 	}
@@ -65,12 +65,12 @@ func (s *ApplyTransfersTestSuite) TestApplyTxs_ReturnsCorrectStateProofsForZeroF
 		input.txs[i].Fee = models.MakeUint256(0)
 	}
 
-	_, stateProofs, err := s.syncCtx.ApplyTxs(input, s.feeReceiverStateID)
+	_, stateProofs, err := s.syncCtx.SyncTxs(input, s.feeReceiverStateID)
 	s.NoError(err)
 	s.Len(stateProofs, 5)
 }
 
-func (s *ApplyTransfersTestSuite) TestApplyTxs_InvalidFeeReceiverTokenID() {
+func (s *SyncTransfersTestSuite) TestSyncTxs_InvalidFeeReceiverTokenID() {
 	feeReceiverStateID := uint32(4)
 	_, err := s.storage.StateTree.Set(feeReceiverStateID, &models.UserState{
 		PubKeyID: feeReceiverStateID,
@@ -84,7 +84,7 @@ func (s *ApplyTransfersTestSuite) TestApplyTxs_InvalidFeeReceiverTokenID() {
 		txs: testutils.GenerateValidTransfers(2),
 	}
 
-	appliedTransfers, _, err := s.syncCtx.ApplyTxs(input, feeReceiverStateID)
+	appliedTransfers, _, err := s.syncCtx.SyncTxs(input, feeReceiverStateID)
 	s.Nil(appliedTransfers)
 
 	var disputableErr *DisputableError
@@ -94,6 +94,6 @@ func (s *ApplyTransfersTestSuite) TestApplyTxs_InvalidFeeReceiverTokenID() {
 	s.Len(disputableErr.Proofs, 5)
 }
 
-func TestApplyTransfersTestSuite(t *testing.T) {
-	suite.Run(t, new(ApplyTransfersTestSuite))
+func TestSyncTransfersTestSuite(t *testing.T) {
+	suite.Run(t, new(SyncTransfersTestSuite))
 }
