@@ -2,7 +2,6 @@ package eth
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
@@ -13,71 +12,41 @@ import (
 )
 
 var (
-	ErrDepositEventWatcherClosed  = fmt.Errorf("deposit event watcher is closed")
-	ErrDepositEventWatcherTimeout = fmt.Errorf("timeout")
+	ErrDepositQueuedLogNotFound = fmt.Errorf("deposit queued log not found in receipt")
 )
 
-func (c *Client) QueueDeposit(
+func (c *Client) QueueDepositAndWait(
 	toPubKeyID *models.Uint256,
 	l1Amount *models.Uint256,
 	tokenID *models.Uint256,
-	ev chan *depositmanager.DepositManagerDepositQueued,
 ) (*models.DepositID, *models.Uint256, error) {
-	return QueueDepositAndWait(c.ChainConnection.GetAccount(), c.DepositManager, toPubKeyID, l1Amount, tokenID, ev)
-}
-
-func (c *Client) WatchQueuedDeposits(opts *bind.WatchOpts) (
-	deposits chan *depositmanager.DepositManagerDepositQueued,
-	unsubscribe func(),
-	err error,
-) {
-	return WatchQueuedDeposits(c.DepositManager, opts)
-}
-
-func WatchQueuedDeposits(depositManager *depositmanager.DepositManager, opts *bind.WatchOpts) (
-	deposits chan *depositmanager.DepositManagerDepositQueued,
-	unsubscribe func(),
-	err error,
-) {
-	ev := make(chan *depositmanager.DepositManagerDepositQueued)
-
-	sub, err := depositManager.WatchDepositQueued(opts, ev)
+	tx, err := QueueDeposit(c.ChainConnection.GetAccount(), c.DepositManager, toPubKeyID, l1Amount, tokenID)
 	if err != nil {
-		return nil, nil, errors.WithStack(err)
+		return nil, nil, err
 	}
-	return ev, sub.Unsubscribe, nil
+	receipt, err := deployer.WaitToBeMined(c.ChainConnection.GetBackend(), tx)
+	if err != nil {
+		return nil, nil, err
+	}
+	return c.retrieveDepositIDAndL2Amount(receipt)
 }
 
-func QueueDepositAndWait(
-	opts *bind.TransactOpts,
-	depositManager *depositmanager.DepositManager,
-	toPubKeyID *models.Uint256,
-	l1Amount *models.Uint256,
-	tokenID *models.Uint256,
-	ev chan *depositmanager.DepositManagerDepositQueued,
-) (*models.DepositID, *models.Uint256, error) {
-	tx, err := QueueDeposit(opts, depositManager, toPubKeyID, l1Amount, tokenID)
+func (c *Client) retrieveDepositIDAndL2Amount(receipt *types.Receipt) (*models.DepositID, *models.Uint256, error) {
+	if len(receipt.Logs) < 1 || receipt.Logs[0] == nil {
+		return nil, nil, errors.WithStack(ErrDepositQueuedLogNotFound)
+	}
+
+	event := new(depositmanager.DepositManagerDepositQueued)
+	err := c.depositManagerContract.UnpackLog(event, "DepositQueued", *receipt.Logs[2])
 	if err != nil {
 		return nil, nil, err
 	}
 
-	for {
-		select {
-		case event, ok := <-ev:
-			if !ok {
-				return nil, nil, errors.WithStack(ErrDepositEventWatcherClosed)
-			}
-			if event.Raw.TxHash == tx.Hash() {
-				depositID := models.DepositID{
-					BlockNumber: uint32(event.Raw.BlockNumber),
-					LogIndex:    uint32(event.Raw.Index),
-				}
-				return &depositID, models.NewUint256FromBig(*event.L2Amount), nil
-			}
-		case <-time.After(deployer.ChainTimeout):
-			return nil, nil, errors.WithStack(ErrDepositEventWatcherTimeout)
-		}
+	depositID := models.DepositID{
+		BlockNumber: uint32(receipt.BlockNumber.Uint64()),
+		LogIndex:    uint32(receipt.Logs[2].Index),
 	}
+	return &depositID, models.NewUint256FromBig(*event.L2Amount), nil
 }
 
 func QueueDeposit(

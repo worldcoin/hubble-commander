@@ -47,6 +47,7 @@ type Client struct {
 	DepositManagerABI       *abi.ABI
 	rollupContract          *bind.BoundContract
 	accountRegistryContract *bind.BoundContract
+	depositManagerContract  *bind.BoundContract
 	blocksToFinalise        *int64
 	domain                  *bls.Domain
 }
@@ -69,6 +70,7 @@ func NewClient(chainConnection deployer.ChainConnection, params *NewClientParams
 	backend := chainConnection.GetBackend()
 	rollupContract := bind.NewBoundContract(params.ChainState.Rollup, rollupAbi, backend, backend, backend)
 	accountRegistryContract := bind.NewBoundContract(params.ChainState.AccountRegistry, accountRegistryAbi, backend, backend, backend)
+	depositManagerContract := bind.NewBoundContract(params.ChainState.DepositManager, depositManagerAbi, backend, backend, backend)
 	return &Client{
 		config:                  params.ClientConfig,
 		ChainState:              params.ChainState,
@@ -82,6 +84,7 @@ func NewClient(chainConnection deployer.ChainConnection, params *NewClientParams
 		DepositManagerABI:       &depositManagerAbi,
 		rollupContract:          rollupContract,
 		accountRegistryContract: accountRegistryContract,
+		depositManagerContract:  depositManagerContract,
 	}, nil
 }
 

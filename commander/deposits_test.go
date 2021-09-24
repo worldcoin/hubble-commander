@@ -10,7 +10,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -150,13 +149,9 @@ func (s *DepositsTestSuite) approveTokens() {
 }
 
 func (s *DepositsTestSuite) queueDeposit() *models.PendingDeposit {
-	deposits, unsubscribe, err := s.testClient.WatchQueuedDeposits(&bind.WatchOpts{Start: nil})
-	s.NoError(err)
-	defer unsubscribe()
-
 	toPubKeyID := models.NewUint256(1)
 	l1Amount := models.NewUint256FromBig(*utils.ParseEther("10"))
-	depositID, l2Amount, err := s.testClient.QueueDeposit(toPubKeyID, l1Amount, s.tokenID, deposits)
+	depositID, l2Amount, err := s.testClient.QueueDepositAndWait(toPubKeyID, l1Amount, s.tokenID)
 	s.NoError(err)
 
 	return &models.PendingDeposit{
