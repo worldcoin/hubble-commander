@@ -100,6 +100,18 @@ func (c *RollupContext) createCommitment(pendingTxs models.GenericTransactionArr
 	return newPendingTxs, commitment, nil
 }
 
+// TODO IDEA: how about renaming:
+//  * applyTxsForCommitment -> executeTxsForCommitment
+//  * ApplyTxs -> ExecuteTxs
+//  * ApplyTxsForCommitmentResult -> ExecuteTxsForCommitmentResult
+//  * ApplyTxsResult -> ExecuteTxsResult
+//  This way, we won't have files in `executor` package that have `apply_` prefix which would be reserved for
+//  methods in `applier` package. `ExecuteTxs` method also looks better in `executor` package.
+//  `AppliedTxs()` getters in ApplyTxsForCommitmentResult and ApplyTxsResult can keep their names IMO,
+//  because these txs were actually applied to the state tree.
+//  What do you think?
+//  Edit:
+//  Similar rename could also be done for methods in `syncer` package 🤔
 func (c *RollupContext) applyTxsForCommitment(pendingTxs models.GenericTransactionArray, feeReceiver *FeeReceiver) (
 	result ApplyTxsForCommitmentResult,
 	newPendingTxs models.GenericTransactionArray,

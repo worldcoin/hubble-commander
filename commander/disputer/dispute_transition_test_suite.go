@@ -86,6 +86,7 @@ func checkRemoteBatchAfterDispute(s *require.Assertions, client *eth.TestClient,
 	s.Equal(eth.MsgInvalidBatchID, err.Error())
 }
 
+// TODO very similar function in 3 places, move to test utils
 func generateWallets(s *require.Assertions, domain *bls.Domain, walletsAmount int) []bls.Wallet {
 	wallets := make([]bls.Wallet, 0, walletsAmount)
 	for i := 0; i < walletsAmount; i++ {

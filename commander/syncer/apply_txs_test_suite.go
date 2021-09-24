@@ -20,6 +20,7 @@ type ApplyTxsTestSuite struct {
 	feeReceiver *FeeReceiver
 }
 
+// TODO keep only fee receiver state id
 type FeeReceiver struct {
 	StateID uint32
 	TokenID models.Uint256

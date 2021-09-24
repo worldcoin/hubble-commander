@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+// TODO make test suites private
+
 type ApplyCreate2TransfersTestSuite struct {
 	ApplyTxsTestSuite
 }
