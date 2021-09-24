@@ -30,6 +30,22 @@ func (s *Storage) GetUnusedPubKeyID(publicKey *models.PublicKey, tokenID *models
 	return nil, errors.WithStack(NewNotFoundError("pub key id"))
 }
 
+func (s *Storage) GetFirstPubKeyID(publicKey *models.PublicKey) (*uint32, error) {
+	var account models.AccountLeaf
+	err := s.database.Badger.FindOne(
+		&account,
+		bh.Where("PublicKey").Eq(publicKey).Index("PublicKey"),
+	)
+	if err == bh.ErrNotFound {
+		return nil, errors.WithStack(NewNotFoundError("pub key id"))
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &account.PubKeyID, nil
+}
+
 func (s *Storage) GetPublicKeyByStateID(stateID uint32) (*models.PublicKey, error) {
 	stateLeaf, err := s.StateTree.Leaf(stateID)
 	if err != nil {
