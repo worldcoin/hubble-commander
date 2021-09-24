@@ -22,11 +22,11 @@ func (c *Client) QueueDepositAndWait(
 ) (*models.DepositID, *models.Uint256, error) {
 	tx, err := QueueDeposit(c.ChainConnection.GetAccount(), c.DepositManager, toPubKeyID, l1Amount, tokenID)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.WithStack(err)
 	}
 	receipt, err := deployer.WaitToBeMined(c.ChainConnection.GetBackend(), tx)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.WithStack(err)
 	}
 	return c.retrieveDepositIDAndL2Amount(receipt)
 }
@@ -39,7 +39,7 @@ func (c *Client) retrieveDepositIDAndL2Amount(receipt *types.Receipt) (*models.D
 	event := new(depositmanager.DepositManagerDepositQueued)
 	err := c.depositManagerContract.UnpackLog(event, "DepositQueued", *receipt.Logs[2])
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.WithStack(err)
 	}
 
 	depositID := models.DepositID{
@@ -66,7 +66,7 @@ func QueueDeposit(
 func (c *Client) GetMaxSubTreeDepthParam() (*uint32, error) {
 	param, err := c.DepositManager.ParamMaxSubtreeDepth(&bind.CallOpts{})
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	maxDepositSubTreeDepth := uint32(param.Uint64())
