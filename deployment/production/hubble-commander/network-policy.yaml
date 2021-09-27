@@ -20,6 +20,9 @@ spec:
     - podSelector:
         matchLabels:
           app: crypto-sync-transactions
+    - podSelector:
+        matchLabels:
+          app: payments
     ports:
     - protocol: TCP
       port: 8080
