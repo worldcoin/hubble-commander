@@ -1,9 +1,7 @@
 package executor
 
 import (
-	"errors"
-
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
@@ -11,32 +9,40 @@ import (
 type AppliedC2Transfers struct {
 	appliedTransfers []models.Create2Transfer
 	invalidTransfers []models.Create2Transfer
-	addedPubKeyIDs   []uint32
+	pendingAccounts  PendingAccounts
+}
+
+func NewAppliedC2Transfers(pendingAccounts PendingAccounts, capacity uint32) *AppliedC2Transfers {
+	accounts := make(PendingAccounts, 0, uint32(len(pendingAccounts))+capacity)
+	accounts = append(accounts, pendingAccounts...)
+
+	return &AppliedC2Transfers{
+		appliedTransfers: make([]models.Create2Transfer, 0, capacity),
+		invalidTransfers: make([]models.Create2Transfer, 0),
+		pendingAccounts:  accounts,
+	}
 }
 
 func (t *TransactionExecutor) ApplyCreate2Transfers(
-	transfers []models.Create2Transfer,
+	pending *PendingC2Ts,
 	maxApplied uint32,
 	feeReceiver *FeeReceiver,
 ) (*AppliedC2Transfers, error) {
-	if len(transfers) == 0 {
+	if len(pending.Txs) == 0 {
+		//TODO-reg: check if it's ok
 		return &AppliedC2Transfers{}, nil
 	}
 
-	returnStruct := &AppliedC2Transfers{}
-	returnStruct.appliedTransfers = make([]models.Create2Transfer, 0, t.cfg.MaxTxsPerCommitment)
-	returnStruct.addedPubKeyIDs = make([]uint32, 0, t.cfg.MaxTxsPerCommitment)
-
+	returnStruct := NewAppliedC2Transfers(pending.Accounts, t.cfg.MaxTxsPerCommitment)
 	combinedFee := models.NewUint256(0)
 
-	for i := range transfers {
+	for i := range pending.Txs {
 		if uint32(len(returnStruct.appliedTransfers)) == maxApplied {
 			break
 		}
 
-		transfer := &transfers[i]
-		var pubKeyID *uint32
-		pubKeyID, err := t.getOrRegisterPubKeyID(&transfer.ToPublicKey, feeReceiver.TokenID)
+		transfer := &pending.Txs[i]
+		pubKeyID, err := t.getPubKeyID(returnStruct.pendingAccounts, transfer, feeReceiver.TokenID)
 		if err != nil {
 			return nil, err
 		}
@@ -51,8 +57,11 @@ func (t *TransactionExecutor) ApplyCreate2Transfers(
 			continue
 		}
 
+		returnStruct.pendingAccounts = append(returnStruct.pendingAccounts, models.AccountLeaf{
+			PubKeyID:  *pubKeyID,
+			PublicKey: transfer.ToPublicKey,
+		})
 		returnStruct.appliedTransfers = append(returnStruct.appliedTransfers, *appliedTransfer)
-		returnStruct.addedPubKeyIDs = append(returnStruct.addedPubKeyIDs, *pubKeyID)
 		*combinedFee = *combinedFee.Add(&appliedTransfer.Fee)
 	}
 
@@ -116,27 +125,37 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 	return appliedTransfers, stateChangeProofs, nil
 }
 
-func (t *TransactionExecutor) getOrRegisterPubKeyID(
-	publicKey *models.PublicKey,
-	tokenID models.Uint256,
-) (*uint32, error) {
-	pubKeyID, err := t.storage.GetUnusedPubKeyID(publicKey, &tokenID)
-	if st.IsNotFoundError(err) {
-		return t.registerPublicKey(publicKey)
-	}
-	if err != nil {
+func (t *TransactionExecutor) getPubKeyID(registrations PendingAccounts, transfer *models.Create2Transfer, tokenID models.Uint256) (
+	*uint32, error,
+) {
+	pubKeyID, err := t.storage.GetUnusedPubKeyID(&transfer.ToPublicKey, &tokenID)
+	if err != nil && !st.IsNotFoundError(err) {
 		return nil, err
+	} else if st.IsNotFoundError(err) {
+		return registrations.NextPubKeyID(t.client)
 	}
 	return pubKeyID, nil
 }
 
-func (t *TransactionExecutor) registerPublicKey(publicKey *models.PublicKey) (*uint32, error) {
-	pubKeyID, err := t.client.RegisterAccountAndWait(publicKey)
-	if errors.Is(err, deployer.ErrWaitToBeMinedTimeout) {
-		return nil, NewLoggableRollupError(err.Error())
+type PendingC2Ts struct {
+	Txs      []models.Create2Transfer
+	Accounts PendingAccounts
+}
+
+type PendingAccounts []models.AccountLeaf
+
+func (p PendingAccounts) ToPubKeyIDs() []uint32 {
+	pubKeyIds := make([]uint32, 0, len(p))
+	for i := range p {
+		pubKeyIds = append(pubKeyIds, p[i].PubKeyID)
 	}
-	if err != nil {
-		return nil, err
+	return pubKeyIds
+}
+
+func (p PendingAccounts) NextPubKeyID(client *eth.Client) (*uint32, error) {
+	if len(p) == 0 {
+		return client.GetNextSingleRegistrationPubKeyID()
 	}
-	return pubKeyID, nil
+	nextPubKeyID := p[len(p)-1].PubKeyID + 1
+	return &nextPubKeyID, nil
 }

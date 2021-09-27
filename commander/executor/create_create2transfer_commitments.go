@@ -18,13 +18,17 @@ func (t *TransactionExecutor) CreateCreate2TransferCommitments(domain *bls.Domai
 	if err != nil {
 		return nil, err
 	}
+	pending := &PendingC2Ts{
+		Txs: pendingTransfers,
+	}
 
 	commitments = make([]models.Commitment, 0, t.cfg.MaxCommitmentsPerBatch)
 
 	for len(commitments) != int(t.cfg.MaxCommitmentsPerBatch) {
 		var commitment *models.Commitment
 
-		pendingTransfers, commitment, err = t.createC2TCommitment(pendingTransfers, domain)
+		//TODO-reg: append pending instead of replacing in case of error
+		pending, commitment, err = t.createC2TCommitment(pending, domain)
 		if err == ErrNotEnoughC2Transfers {
 			break
 		}
@@ -35,6 +39,8 @@ func (t *TransactionExecutor) CreateCreate2TransferCommitments(domain *bls.Domai
 		commitments = append(commitments, *commitment)
 	}
 
+	//TODO-reg: register accounts here
+
 	if len(commitments) == 0 {
 		return nil, ErrNotEnoughC2Transfers
 	}
@@ -42,14 +48,14 @@ func (t *TransactionExecutor) CreateCreate2TransferCommitments(domain *bls.Domai
 	return commitments, nil
 }
 
-func (t *TransactionExecutor) createC2TCommitment(pendingTransfers []models.Create2Transfer, domain *bls.Domain) (
-	newPendingTransfers []models.Create2Transfer,
+func (t *TransactionExecutor) createC2TCommitment(pending *PendingC2Ts, domain *bls.Domain) (
+	newPending *PendingC2Ts,
 	commitment *models.Commitment,
 	err error,
 ) {
 	startTime := time.Now()
 
-	pendingTransfers, err = t.refillPendingC2Ts(pendingTransfers)
+	pending.Txs, err = t.refillPendingC2Ts(pending.Txs)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -64,7 +70,7 @@ func (t *TransactionExecutor) createC2TCommitment(pendingTransfers []models.Crea
 		return nil, nil, err
 	}
 
-	appliedTransfers, newPendingTransfers, addedPubKeyIDs, err := t.applyC2TsForCommitment(pendingTransfers, feeReceiver)
+	appliedTransfers, newPending, err := t.applyC2TsForCommitment(pending, feeReceiver)
 	if err == ErrNotEnoughC2Transfers {
 		if revertErr := t.storage.StateTree.RevertTo(*initialStateRoot); revertErr != nil {
 			return nil, nil, revertErr
@@ -75,7 +81,7 @@ func (t *TransactionExecutor) createC2TCommitment(pendingTransfers []models.Crea
 		return nil, nil, err
 	}
 
-	commitment, err = t.buildC2TCommitment(appliedTransfers, addedPubKeyIDs, feeReceiver.StateID, domain)
+	commitment, err = t.buildC2TCommitment(appliedTransfers, newPending.Accounts.ToPubKeyIDs(), feeReceiver.StateID, domain)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -87,45 +93,48 @@ func (t *TransactionExecutor) createC2TCommitment(pendingTransfers []models.Crea
 		time.Since(startTime).Round(time.Millisecond).String(),
 	)
 
-	return newPendingTransfers, commitment, nil
+	return newPending, commitment, nil
 }
 
-func (t *TransactionExecutor) applyC2TsForCommitment(pendingTransfers []models.Create2Transfer, feeReceiver *FeeReceiver) (
-	appliedTransfers, newPendingTransfers []models.Create2Transfer,
-	addedPubKeyIDs []uint32,
+func (t *TransactionExecutor) applyC2TsForCommitment(pending *PendingC2Ts, feeReceiver *FeeReceiver) (
+	appliedTransfers []models.Create2Transfer,
+	newPending *PendingC2Ts,
 	err error,
 ) {
 	appliedTransfers = make([]models.Create2Transfer, 0, t.cfg.MaxTxsPerCommitment)
 	invalidTransfers := make([]models.Create2Transfer, 0, 1)
-	addedPubKeyIDs = make([]uint32, 0, t.cfg.MaxTxsPerCommitment)
+	newPending = &PendingC2Ts{
+		Txs:      make([]models.Create2Transfer, 0),
+		Accounts: pending.Accounts,
+	}
 
 	for {
 		var transfers *AppliedC2Transfers
 
 		numNeededTransfers := t.cfg.MaxTxsPerCommitment - uint32(len(appliedTransfers))
-		transfers, err = t.ApplyCreate2Transfers(pendingTransfers, numNeededTransfers, feeReceiver)
+		transfers, err = t.ApplyCreate2Transfers(pending, numNeededTransfers, feeReceiver)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, err
 		}
 
 		appliedTransfers = append(appliedTransfers, transfers.appliedTransfers...)
 		invalidTransfers = append(invalidTransfers, transfers.invalidTransfers...)
-		addedPubKeyIDs = append(addedPubKeyIDs, transfers.addedPubKeyIDs...)
+		newPending.Accounts = append(newPending.Accounts, transfers.pendingAccounts...)
 
 		if len(appliedTransfers) == int(t.cfg.MaxTxsPerCommitment) {
-			newPendingTransfers = removeC2Ts(pendingTransfers, append(appliedTransfers, invalidTransfers...))
-			return appliedTransfers, newPendingTransfers, addedPubKeyIDs, nil
+			newPending.Txs = removeC2Ts(pending.Txs, append(appliedTransfers, invalidTransfers...))
+			return appliedTransfers, newPending, nil
 		}
 
 		morePendingTransfers, err := t.queryMorePendingC2Ts(appliedTransfers)
 		if err == ErrNotEnoughC2Transfers {
-			newPendingTransfers = removeC2Ts(pendingTransfers, append(appliedTransfers, invalidTransfers...))
-			return appliedTransfers, newPendingTransfers, addedPubKeyIDs, nil
+			newPending.Txs = removeC2Ts(pending.Txs, append(appliedTransfers, invalidTransfers...))
+			return appliedTransfers, newPending, nil
 		}
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, err
 		}
-		pendingTransfers = morePendingTransfers
+		pending.Txs = morePendingTransfers
 	}
 }
 
