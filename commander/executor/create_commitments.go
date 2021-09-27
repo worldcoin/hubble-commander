@@ -23,7 +23,7 @@ func (c *RollupContext) CreateCommitments() ([]models.Commitment, error) {
 		return nil, err
 	}
 
-	commitmentID, err := c.nextCommitmentID()
+	commitmentID, err := c.NextCommitmentID()
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (c *RollupContext) createCommitment(pendingTxs models.GenericTransactionArr
 		return nil, nil, err
 	}
 
-	applyResult, newPendingTxs, err := c.applyTxsForCommitment(pendingTxs, feeReceiver)
+	executeResult, newPendingTxs, err := c.executeTxsForCommitment(pendingTxs, feeReceiver)
 	if errors.Is(err, ErrNotEnoughTxs) {
 		if revertErr := c.storage.StateTree.RevertTo(*initialStateRoot); revertErr != nil {
 			return nil, nil, revertErr
@@ -85,7 +85,7 @@ func (c *RollupContext) createCommitment(pendingTxs models.GenericTransactionArr
 		return nil, nil, err
 	}
 
-	commitment, err = c.buildCommitment(applyResult, commitmentID, feeReceiver.StateID)
+	commitment, err = c.BuildCommitment(executeResult, commitmentID, feeReceiver.StateID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -93,38 +93,38 @@ func (c *RollupContext) createCommitment(pendingTxs models.GenericTransactionArr
 	log.Printf(
 		"Created a %s commitment from %d transactions in %s",
 		c.BatchType,
-		applyResult.AppliedTxs().Len(),
+		executeResult.AppliedTxs().Len(),
 		time.Since(startTime).Round(time.Millisecond).String(),
 	)
 
 	return newPendingTxs, commitment, nil
 }
 
-func (c *RollupContext) applyTxsForCommitment(pendingTxs models.GenericTransactionArray, feeReceiver *FeeReceiver) (
-	result ApplyTxsForCommitmentResult,
+func (c *RollupContext) executeTxsForCommitment(pendingTxs models.GenericTransactionArray, feeReceiver *FeeReceiver) (
+	result ExecuteTxsForCommitmentResult,
 	newPendingTxs models.GenericTransactionArray,
 	err error,
 ) {
-	aggregateResult := c.Executor.NewApplyTxsResult(c.cfg.MaxTxsPerCommitment)
+	aggregateResult := c.Executor.NewExecuteTxsResult(c.cfg.MaxTxsPerCommitment)
 
 	for {
 		numNeededTxs := c.cfg.MaxTxsPerCommitment - uint32(aggregateResult.AppliedTxs().Len())
-		applyTxsResult, err := c.ApplyTxs(pendingTxs, numNeededTxs, feeReceiver)
+		executeTxsResult, err := c.ExecuteTxs(pendingTxs, numNeededTxs, feeReceiver)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		aggregateResult.AddApplyResult(applyTxsResult)
+		aggregateResult.AddApplyResult(executeTxsResult)
 
 		if aggregateResult.AppliedTxs().Len() == int(c.cfg.MaxTxsPerCommitment) {
 			newPendingTxs = removeTxs(pendingTxs, aggregateResult.AllTxs())
-			return c.Executor.NewApplyTxsForCommitmentResult(aggregateResult), newPendingTxs, nil
+			return c.Executor.NewExecuteTxsForCommitmentResult(aggregateResult), newPendingTxs, nil
 		}
 
 		morePendingTransfers, err := c.queryMorePendingTxs(aggregateResult.AppliedTxs())
 		if errors.Is(err, ErrNotEnoughTxs) {
 			newPendingTxs = removeTxs(pendingTxs, aggregateResult.AllTxs())
-			return c.Executor.NewApplyTxsForCommitmentResult(aggregateResult), newPendingTxs, nil
+			return c.Executor.NewExecuteTxsForCommitmentResult(aggregateResult), newPendingTxs, nil
 		}
 		if err != nil {
 			return nil, nil, err

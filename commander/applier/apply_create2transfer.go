@@ -21,8 +21,8 @@ func (a *Applier) ApplyCreate2Transfer(
 	}
 
 	applyResult = &ApplySingleC2TResult{
-		tx:            create2Transfer.Clone(),
-		addedPubKeyID: *pubKeyID,
+		tx:       create2Transfer.Clone(),
+		pubKeyID: *pubKeyID,
 	}
 	applyResult.tx.ToStateID = nextAvailableStateID
 

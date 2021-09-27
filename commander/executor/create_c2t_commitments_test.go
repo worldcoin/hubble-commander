@@ -13,12 +13,12 @@ import (
 )
 
 type Create2TransferCommitmentsTestSuite struct {
-	TestSuiteWithRollupContext
+	testSuiteWithRollupContext
 	maxTxBytesInCommitment int
 }
 
 func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
-	s.TestSuiteWithRollupContext.SetupTestWithConfig(batchtype.Create2Transfer, config.RollupConfig{
+	s.testSuiteWithRollupContext.SetupTestWithConfig(batchtype.Create2Transfer, config.RollupConfig{
 		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    4,
 		FeeReceiverPubKeyID:    2,

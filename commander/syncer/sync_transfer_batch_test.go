@@ -1,0 +1,350 @@
+package syncer
+
+import (
+	"testing"
+
+	"github.com/Worldcoin/hubble-commander/commander/applier"
+	"github.com/Worldcoin/hubble-commander/commander/executor"
+	"github.com/Worldcoin/hubble-commander/encoder"
+	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/testutils"
+	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/suite"
+)
+
+type SyncTransferBatchTestSuite struct {
+	syncTestSuite
+}
+
+func (s *SyncTransferBatchTestSuite) SetupTest() {
+	s.testSuiteWithSyncAndRollupContext.SetupTestWithConfig(batchtype.Transfer, syncTestSuiteConfig)
+	s.syncTestSuite.setupTest()
+}
+
+func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
+	txs := []*models.Transfer{
+		{
+			TransactionBase: models.TransactionBase{
+				TxType:      txtype.Transfer,
+				FromStateID: 0,
+				Amount:      models.MakeUint256(400),
+				Fee:         models.MakeUint256(0),
+				Nonce:       models.MakeUint256(0),
+			},
+			ToStateID: 1,
+		}, {
+			TransactionBase: models.TransactionBase{
+				TxType:      txtype.Transfer,
+				FromStateID: 0,
+				Amount:      models.MakeUint256(100),
+				Fee:         models.MakeUint256(0),
+				Nonce:       models.MakeUint256(1),
+			},
+			ToStateID: 1,
+		},
+	}
+	s.setTxHashAndSign(txs...)
+	for i := range txs {
+		err := s.storage.AddTransfer(txs[i])
+		s.NoError(err)
+	}
+
+	expectedCommitments, err := s.rollupCtx.CreateCommitments()
+	s.NoError(err)
+	s.Len(expectedCommitments, 2)
+	accountRoots := make([]common.Hash, 2)
+	for i := range expectedCommitments {
+		var pendingBatch *models.Batch
+		pendingBatch, err = s.rollupCtx.NewPendingBatch(batchtype.Transfer)
+		s.NoError(err)
+		expectedCommitments[i].ID.BatchID = pendingBatch.ID
+		expectedCommitments[i].ID.IndexInBatch = 0
+		err = s.rollupCtx.SubmitBatch(pendingBatch, []models.Commitment{expectedCommitments[i]})
+		s.NoError(err)
+		s.client.Commit()
+
+		accountRoots[i] = s.getAccountTreeRoot()
+	}
+
+	s.recreateDatabase()
+	s.syncAllBatches()
+
+	batches, err := s.storage.GetBatchesInRange(nil, nil)
+	s.NoError(err)
+	s.Len(batches, 2)
+	s.Equal(models.MakeUint256(1), batches[0].ID)
+	s.Equal(models.MakeUint256(2), batches[1].ID)
+	s.Equal(accountRoots[0], *batches[0].AccountTreeRoot)
+	s.Equal(accountRoots[1], *batches[1].AccountTreeRoot)
+
+	for i := range expectedCommitments {
+		commitment, err := s.storage.GetCommitment(&expectedCommitments[i].ID)
+		s.NoError(err)
+		s.Equal(expectedCommitments[i], *commitment)
+
+		actualTx, err := s.storage.GetTransfer(txs[i].Hash)
+		s.NoError(err)
+		txs[i].CommitmentID = &commitment.ID
+		txs[i].Signature = models.Signature{}
+		s.Equal(txs[i], actualTx)
+	}
+}
+
+func (s *SyncTransferBatchTestSuite) TestSyncBatch_PendingBatch() {
+	accountRoot := s.getAccountTreeRoot()
+	tx := testutils.MakeTransfer(0, 1, 0, 400)
+	s.setTxHashAndSign(&tx)
+	s.submitBatch(&tx)
+
+	pendingBatch, err := s.storage.GetBatch(models.MakeUint256(1))
+	s.NoError(err)
+	s.Nil(pendingBatch.Hash)
+	s.Nil(pendingBatch.FinalisationBlock)
+	s.Nil(pendingBatch.AccountTreeRoot)
+
+	s.syncAllBatches()
+
+	batches, err := s.storage.GetBatchesInRange(nil, nil)
+	s.NoError(err)
+	s.Len(batches, 1)
+	s.NotNil(batches[0].Hash)
+	s.NotNil(batches[0].FinalisationBlock)
+
+	s.Equal(accountRoot, *batches[0].AccountTreeRoot)
+}
+
+func (s *SyncTransferBatchTestSuite) TestSyncBatch_TooManyTxsInCommitment() {
+	tx := testutils.MakeTransfer(0, 1, 0, 400)
+	s.setTxHashAndSign(&tx)
+	s.submitBatch(&tx)
+
+	tx2 := testutils.MakeTransfer(0, 1, 1, 400)
+	s.setTxHashAndSign(&tx2)
+	s.submitInvalidBatch(&tx2)
+
+	s.recreateDatabase()
+
+	remoteBatches, err := s.client.GetAllBatches()
+	s.NoError(err)
+	s.Len(remoteBatches, 2)
+
+	err = s.syncCtx.SyncBatch(&remoteBatches[0])
+	s.NoError(err)
+
+	var disputableErr *DisputableError
+	err = s.syncCtx.SyncBatch(&remoteBatches[1])
+	s.ErrorAs(err, &disputableErr)
+	s.Equal(Transition, disputableErr.Type)
+	s.Equal(ErrTooManyTxs.Reason, disputableErr.Reason)
+
+	_, err = s.storage.GetBatch(remoteBatches[0].ID)
+	s.NoError(err)
+	_, err = s.storage.GetBatch(remoteBatches[1].ID)
+	s.NoError(err)
+}
+
+func (s *SyncTransferBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() {
+	tx := testutils.MakeTransfer(0, 1, 0, 400)
+	s.setTxHashAndSign(&tx)
+	s.submitBatch(&tx)
+
+	tx2 := testutils.MakeTransfer(0, 1, 1, 400)
+	s.setTxHashAndSign(&tx2)
+
+	batch, commitments := s.createBatch(&tx2)
+	commitments[0].PostStateRoot = utils.RandomHash()
+
+	err := s.rollupCtx.SubmitBatch(batch, commitments)
+	s.NoError(err)
+	s.client.Commit()
+
+	s.recreateDatabase()
+
+	remoteBatches, err := s.client.GetAllBatches()
+	s.NoError(err)
+	s.Len(remoteBatches, 2)
+
+	err = s.syncCtx.SyncBatch(&remoteBatches[0])
+	s.NoError(err)
+
+	var disputableErr *DisputableError
+	err = s.syncCtx.SyncBatch(&remoteBatches[1])
+	s.ErrorAs(err, &disputableErr)
+	s.Equal(Transition, disputableErr.Type)
+	s.Equal(applier.ErrInvalidCommitmentStateRoot.Error(), disputableErr.Reason)
+
+	_, err = s.storage.GetBatch(remoteBatches[0].ID)
+	s.NoError(err)
+	_, err = s.storage.GetBatch(remoteBatches[1].ID)
+	s.NoError(err)
+}
+
+func (s *SyncTransferBatchTestSuite) TestSyncBatch_InvalidTxSignature() {
+	tx := testutils.MakeTransfer(0, 1, 0, 400)
+	signTransfer(s.T(), &s.wallets[1], &tx)
+	s.setTxHash(&tx)
+
+	s.submitBatch(&tx)
+
+	s.recreateDatabase()
+
+	remoteBatches, err := s.client.GetAllBatches()
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	var disputableErr *DisputableError
+	err = s.syncCtx.SyncBatch(&remoteBatches[0])
+	s.ErrorAs(err, &disputableErr)
+	s.Equal(Signature, disputableErr.Type)
+	s.Equal(InvalidSignatureMessage, disputableErr.Reason)
+	s.Equal(0, disputableErr.CommitmentIndex)
+}
+
+func (s *SyncTransferBatchTestSuite) TestSyncBatch_NotValidBLSSignature() {
+	tx := testutils.MakeTransfer(0, 1, 0, 400)
+	s.setTxHash(&tx)
+
+	pendingBatch, commitments := s.createBatch(&tx)
+	commitments[0].CombinedSignature = models.Signature{1, 2, 3}
+
+	err := s.rollupCtx.SubmitBatch(pendingBatch, commitments)
+	s.NoError(err)
+	s.client.Commit()
+
+	s.recreateDatabase()
+
+	remoteBatches, err := s.client.GetAllBatches()
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	var disputableErr *DisputableError
+	err = s.syncCtx.SyncBatch(&remoteBatches[0])
+	s.ErrorAs(err, &disputableErr)
+	s.Equal(Signature, disputableErr.Type)
+	s.Equal(0, disputableErr.CommitmentIndex)
+}
+
+func (s *SyncTransferBatchTestSuite) TestSyncBatch_CommitmentWithoutTxs() {
+	commitment := s.createCommitmentWithEmptyTransactions(batchtype.Transfer)
+
+	_, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{commitment})
+	s.NoError(err)
+
+	remoteBatches, err := s.client.GetAllBatches()
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	err = s.syncCtx.SyncBatch(&remoteBatches[0])
+	s.NoError(err)
+}
+
+func (s *SyncTransferBatchTestSuite) TestSyncBatch_CommitmentWithNonexistentFeeReceiver() {
+	feeReceiverStateID := uint32(1234)
+	tx := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			TxType:      txtype.Transfer,
+			FromStateID: 0,
+			Amount:      models.MakeUint256(400),
+			Fee:         models.MakeUint256(100),
+			Nonce:       models.MakeUint256(0),
+		},
+		ToStateID: 1,
+	}
+	s.setTxHashAndSign(&tx)
+	s.submitTransferBatchWithNonexistentFeeReceiver(&tx, feeReceiverStateID)
+
+	s.recreateDatabase()
+	s.syncAllBatches()
+
+	expectedNewlyCreatedFeeReceiver, err := st.NewStateLeaf(feeReceiverStateID, &models.UserState{
+		PubKeyID: 0,
+		TokenID:  models.MakeUint256(0),
+		Balance:  models.MakeUint256(100),
+		Nonce:    models.MakeUint256(0),
+	})
+	s.NoError(err)
+
+	feeReceiver, err := s.storage.StateTree.Leaf(feeReceiverStateID)
+	s.NoError(err)
+	sender, err := s.storage.StateTree.Leaf(0)
+	s.NoError(err)
+	receiver, err := s.storage.StateTree.Leaf(1)
+	s.NoError(err)
+
+	s.Equal(expectedNewlyCreatedFeeReceiver, feeReceiver)
+	s.Equal(models.MakeUint256(1000-400-100), sender.Balance)
+	s.Equal(models.MakeUint256(400), receiver.Balance)
+}
+
+func (s *SyncTransferBatchTestSuite) submitInvalidBatch(tx *models.Transfer) *models.Batch {
+	pendingBatch, commitments := s.createBatch(tx)
+
+	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)
+
+	err := s.rollupCtx.SubmitBatch(pendingBatch, commitments)
+	s.NoError(err)
+
+	s.client.Commit()
+	return pendingBatch
+}
+
+func (s *SyncTransferBatchTestSuite) submitTransferBatchWithNonexistentFeeReceiver(tx *models.Transfer, feeReceiverStateID uint32) {
+	commitmentTokenID := models.MakeUint256(0)
+
+	receiverLeaf, err := s.storage.StateTree.Leaf(tx.ToStateID)
+	s.NoError(err)
+	txErr, appErr := s.rollupCtx.ApplyTx(tx, receiverLeaf, commitmentTokenID)
+	s.NoError(txErr)
+	s.NoError(appErr)
+
+	_, commitmentErr, appErr := s.syncCtx.Syncer.ApplyFee(feeReceiverStateID, &commitmentTokenID, &tx.Fee)
+	s.NoError(commitmentErr)
+	s.NoError(appErr)
+
+	serializedTxs, err := encoder.SerializeTransfers([]models.Transfer{*tx})
+	s.NoError(err)
+
+	combinedSignature, err := executor.CombineSignatures(models.MakeTransferArray(*tx), s.domain)
+	s.NoError(err)
+
+	postStateRoot, err := s.storage.StateTree.Root()
+	s.NoError(err)
+
+	nextBatchID, err := s.storage.GetNextBatchID()
+	s.NoError(err)
+
+	commitment := models.Commitment{
+		ID: models.CommitmentID{
+			BatchID:      *nextBatchID,
+			IndexInBatch: 0,
+		},
+		Type:              batchtype.Transfer,
+		Transactions:      serializedTxs,
+		FeeReceiver:       feeReceiverStateID,
+		CombinedSignature: *combinedSignature,
+		PostStateRoot:     *postStateRoot,
+	}
+	_, err = s.client.SubmitTransfersBatchAndWait([]models.Commitment{commitment})
+	s.NoError(err)
+}
+
+func (s *SyncTransferBatchTestSuite) setTxHash(tx *models.Transfer) {
+	hash, err := encoder.HashTransfer(tx)
+	s.NoError(err)
+	tx.Hash = *hash
+}
+
+func (s *SyncTransferBatchTestSuite) setTxHashAndSign(txs ...*models.Transfer) {
+	for i := range txs {
+		signTransfer(s.T(), &s.wallets[txs[i].FromStateID], txs[i])
+		s.setTxHash(txs[i])
+	}
+}
+
+func TestSyncTransferBatchTestSuite(t *testing.T) {
+	suite.Run(t, new(SyncTransferBatchTestSuite))
+}

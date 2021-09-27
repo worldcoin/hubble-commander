@@ -76,7 +76,7 @@ func (s *TransferCommitmentsTestSuite) TearDownTest() {
 }
 
 func (s *TransferCommitmentsTestSuite) TestCreateCommitments_WithMinTxsPerCommitment() {
-	transfers := generateValidTransfers(1)
+	transfers := testutils.GenerateValidTransfers(1)
 	s.addTransfers(transfers)
 
 	preRoot, err := s.rollupCtx.storage.StateTree.Root()
@@ -95,7 +95,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_WithMinTxsPerCommit
 }
 
 func (s *TransferCommitmentsTestSuite) TestCreateCommitments_WithMoreThanMinTxsPerCommitment() {
-	transfers := generateValidTransfers(3)
+	transfers := testutils.GenerateValidTransfers(3)
 	s.addTransfers(transfers)
 
 	preRoot, err := s.rollupCtx.storage.StateTree.Root()
@@ -116,7 +116,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_WithMoreThanMinTxsP
 func (s *TransferCommitmentsTestSuite) TestCreateCommitments_QueriesForMorePendingTransfersUntilSatisfied() {
 	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 123)
 
-	transfers := generateValidTransfers(6)
+	transfers := testutils.GenerateValidTransfers(6)
 	s.invalidateTransfers(transfers[3:6])
 
 	highNonceTransfer := testutils.MakeTransfer(123, 1, 10, 1)
@@ -148,7 +148,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_ForMultipleCommitme
 
 	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 123)
 
-	transfers := generateValidTransfers(9)
+	transfers := testutils.GenerateValidTransfers(9)
 	s.invalidateTransfers(transfers[7:9])
 
 	highNonceTransfers := []models.Transfer{
@@ -204,7 +204,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorWhenThe
 		MaxCommitmentsPerBatch: 1,
 	}
 
-	transfers := generateValidTransfers(2)
+	transfers := testutils.GenerateValidTransfers(2)
 	s.addTransfers(transfers)
 
 	preRoot, err := s.rollupCtx.storage.StateTree.Root()
@@ -290,7 +290,7 @@ func (s *TransferCommitmentsTestSuite) addTransfers(transfers []models.Transfer)
 }
 
 func (s *TransferCommitmentsTestSuite) preparePendingTransfers(transfersAmount uint32) {
-	transfers := generateValidTransfers(transfersAmount)
+	transfers := testutils.GenerateValidTransfers(transfersAmount)
 	s.addTransfers(transfers)
 }
 

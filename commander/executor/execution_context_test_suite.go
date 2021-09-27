@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type TestSuiteWithExecutionContext struct {
+type testSuiteWithExecutionContext struct {
 	*require.Assertions
 	suite.Suite
 	storage      *st.TestStorage
@@ -17,18 +17,18 @@ type TestSuiteWithExecutionContext struct {
 	executionCtx *ExecutionContext
 }
 
-func (s *TestSuiteWithExecutionContext) SetupSuite() {
+func (s *testSuiteWithExecutionContext) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *TestSuiteWithExecutionContext) SetupTest() {
+func (s *testSuiteWithExecutionContext) SetupTest() {
 	s.SetupTestWithConfig(config.RollupConfig{
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
 	})
 }
 
-func (s *TestSuiteWithExecutionContext) SetupTestWithConfig(cfg config.RollupConfig) {
+func (s *testSuiteWithExecutionContext) SetupTestWithConfig(cfg config.RollupConfig) {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
@@ -41,7 +41,7 @@ func (s *TestSuiteWithExecutionContext) SetupTestWithConfig(cfg config.RollupCon
 	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
 }
 
-func (s *TestSuiteWithExecutionContext) TearDownTest() {
+func (s *testSuiteWithExecutionContext) TearDownTest() {
 	s.client.Close()
 	err := s.storage.Teardown()
 	s.NoError(err)

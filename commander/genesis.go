@@ -26,7 +26,7 @@ func AssignStateIDs(accounts []models.RegisteredGenesisAccount) []models.Populat
 	for i := range accounts {
 		account := accounts[i]
 
-		if account.Balance.CmpN(0) == 1 {
+		if account.Balance.CmpN(0) > 0 {
 			populatedAccounts = append(populatedAccounts, models.PopulatedGenesisAccount{
 				PublicKey: account.PublicKey,
 				PubKeyID:  account.PubKeyID,

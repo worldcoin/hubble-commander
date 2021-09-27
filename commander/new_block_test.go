@@ -14,6 +14,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -64,7 +65,7 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 
 	domain, err := s.testClient.GetDomain()
 	s.NoError(err)
-	s.wallets = generateWallets(s.T(), *domain, 2)
+	s.wallets = testutils.GenerateWallets(s.Assertions, domain, 2)
 	seedDB(s.T(), s.testStorage.Storage, s.wallets)
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
 }
@@ -221,16 +222,6 @@ func signTransfer(t *testing.T, wallet *bls.Wallet, transfer *models.Transfer) {
 	signature, err := wallet.Sign(encodedTransfer)
 	require.NoError(t, err)
 	transfer.Signature = *signature.ModelsSignature()
-}
-
-func generateWallets(t *testing.T, domain bls.Domain, walletsAmount int) []bls.Wallet {
-	wallets := make([]bls.Wallet, 0, walletsAmount)
-	for i := 0; i < walletsAmount; i++ {
-		wallet, err := bls.NewRandomWallet(domain)
-		require.NoError(t, err)
-		wallets = append(wallets, *wallet)
-	}
-	return wallets
 }
 
 func seedDB(t *testing.T, storage *st.Storage, wallets []bls.Wallet) {

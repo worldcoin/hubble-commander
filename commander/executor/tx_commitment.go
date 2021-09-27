@@ -5,12 +5,12 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-func (c *RollupContext) buildCommitment(
-	applyResult ApplyTxsForCommitmentResult,
+func (c *RollupContext) BuildCommitment(
+	executeResult ExecuteTxsForCommitmentResult,
 	commitmentID *models.CommitmentID,
 	feeReceiverStateID uint32,
 ) (*models.Commitment, error) {
-	serializedTxs, err := c.Executor.SerializeTxs(applyResult)
+	serializedTxs, err := c.Executor.SerializeTxs(executeResult)
 	if err != nil {
 		return nil, err
 	}
@@ -20,7 +20,7 @@ func (c *RollupContext) buildCommitment(
 		return nil, err
 	}
 
-	combinedSignature, err := CombineSignatures(applyResult.AppliedTxs(), domain)
+	combinedSignature, err := CombineSignatures(executeResult.AppliedTxs(), domain)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +36,7 @@ func (c *RollupContext) buildCommitment(
 		return nil, err
 	}
 
-	err = c.Executor.MarkTxsAsIncluded(applyResult.AppliedTxs(), commitmentID)
+	err = c.Executor.MarkTxsAsIncluded(executeResult.AppliedTxs(), commitmentID)
 	if err != nil {
 		return nil, err
 	}

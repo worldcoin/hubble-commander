@@ -36,8 +36,7 @@ func (a *Applier) applyFee(feeReceiver *models.StateLeaf, fee models.Uint256) (*
 
 func (a *Applier) ApplyFeeForSync(feeReceiverStateID uint32, commitmentTokenID, fee *models.Uint256) (
 	stateProof *models.StateMerkleProof,
-	commitmentError error,
-	appError error,
+	commitmentError, appError error,
 ) {
 	feeReceiver, appError := a.storage.StateTree.LeafOrEmpty(feeReceiverStateID)
 	if appError != nil {
