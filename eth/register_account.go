@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -12,6 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
+
+var ErrRegisterAccountTimeout = executor.NewLoggableRollupError("register account timeout")
 
 func (c *Client) RegisterAccount(
 	publicKey *models.PublicKey,
@@ -63,7 +66,7 @@ func RegisterAccountAndWait(
 				return ref.Uint32(uint32(event.PubkeyID.Uint64())), nil
 			}
 		case <-time.After(deployer.ChainTimeout):
-			return nil, errors.WithStack(fmt.Errorf("timeout"))
+			return nil, ErrRegisterAccountTimeout
 		}
 	}
 }
