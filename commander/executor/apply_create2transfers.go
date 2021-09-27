@@ -2,6 +2,7 @@ package executor
 
 import (
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -136,7 +137,10 @@ func (t *TransactionExecutor) getOrRegisterPubKeyID(
 	if err != nil && !st.IsNotFoundError(err) {
 		return nil, err
 	} else if st.IsNotFoundError(err) {
-		return t.client.RegisterAccount(&transfer.ToPublicKey, events)
+		pubKeyID, err = t.client.RegisterAccount(&transfer.ToPublicKey, events)
+		if err != nil && err == eth.ErrRegisterAccountTimeout {
+			return nil, NewLoggableRollupError(err.Error())
+		}
 	}
-	return pubKeyID, nil
+	return pubKeyID, err
 }
