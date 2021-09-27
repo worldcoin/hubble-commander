@@ -44,17 +44,15 @@ func (s *RegisterAccountTestSuite) TestGetNextSingleRegistrationPubKeyID() {
 	s.NoError(err)
 	defer unsubscribe()
 
-	lastPubKeyID := uint32(0)
+	lastPubKeyID := new(uint32)
 	for i := 0; i < 3; i++ {
-		publicKey := models.PublicKey{1, 2, 3}
-		pubKeyID, err := s.client.RegisterAccount(&publicKey, events)
+		lastPubKeyID, err = s.client.RegisterAccount(&models.PublicKey{1, 2, 3}, events)
 		s.NoError(err)
-		lastPubKeyID = *pubKeyID
 	}
 
 	pubKeyID, err := s.client.GetNextSingleRegistrationPubKeyID()
 	s.NoError(err)
-	s.EqualValues(lastPubKeyID+1, *pubKeyID)
+	s.EqualValues(*lastPubKeyID+1, *pubKeyID)
 }
 
 func (s *RegisterAccountTestSuite) TestGetNextSingleRegistrationPubKeyID_NoAccounts() {
