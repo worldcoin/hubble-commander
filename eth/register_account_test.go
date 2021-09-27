@@ -39,6 +39,30 @@ func (s *RegisterAccountTestSuite) TestRegisterAccountAndWait() {
 	s.Equal(uint32(1), *pubKeyID)
 }
 
+func (s *RegisterAccountTestSuite) TestGetNextSingleRegistrationPubKeyID() {
+	events, unsubscribe, err := s.client.WatchRegistrations(&bind.WatchOpts{})
+	s.NoError(err)
+	defer unsubscribe()
+
+	lastPubKeyID := uint32(0)
+	for i := 0; i < 3; i++ {
+		publicKey := models.PublicKey{1, 2, 3}
+		pubKeyID, err := s.client.RegisterAccount(&publicKey, events)
+		s.NoError(err)
+		lastPubKeyID = *pubKeyID
+	}
+
+	pubKeyID, err := s.client.GetNextSingleRegistrationPubKeyID()
+	s.NoError(err)
+	s.EqualValues(lastPubKeyID+1, *pubKeyID)
+}
+
+func (s *RegisterAccountTestSuite) TestGetNextSingleRegistrationPubKeyID_NoAccounts() {
+	pubKeyID, err := s.client.GetNextSingleRegistrationPubKeyID()
+	s.NoError(err)
+	s.EqualValues(0, *pubKeyID)
+}
+
 func TestRegisterAccountTestSuite(t *testing.T) {
 	suite.Run(t, new(RegisterAccountTestSuite))
 }
