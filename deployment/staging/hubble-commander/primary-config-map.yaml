@@ -7,3 +7,4 @@ metadata:
   namespace: staging
 data:
   HUBBLE_POSTGRES_NAME: "primary-hubble-commander"
+  HUBBLE_BADGER_PATH: "/badger-database"
