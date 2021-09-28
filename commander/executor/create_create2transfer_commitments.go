@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	log "github.com/sirupsen/logrus"
@@ -13,22 +14,18 @@ var (
 	ErrNotEnoughC2Transfers = NewRollupError("not enough create2transfers")
 )
 
-func (t *TransactionExecutor) CreateCreate2TransferCommitments(domain *bls.Domain) (commitments []models.Commitment, err error) {
-	pendingTransfers, err := t.queryPendingC2Ts()
-	if err != nil {
-		return nil, err
+func (t *TransactionExecutor) CreateCreate2TransferCommitments(domain *bls.Domain) ([]models.Commitment, error) {
+	pendingTransfers, queryErr := t.queryPendingC2Ts()
+	if queryErr != nil {
+		return nil, queryErr
 	}
 	pending := &PendingC2Ts{
 		Txs: pendingTransfers,
 	}
 
-	commitments = make([]models.Commitment, 0, t.cfg.MaxCommitmentsPerBatch)
-
+	commitments := make([]models.Commitment, 0, t.cfg.MaxCommitmentsPerBatch)
 	for len(commitments) != int(t.cfg.MaxCommitmentsPerBatch) {
-		var commitment *models.Commitment
-
-		//TODO-reg: append pending instead of replacing in case of error
-		pending, commitment, err = t.createC2TCommitment(pending, domain)
+		newPending, commitment, err := t.createC2TCommitment(pending, domain)
 		if err == ErrNotEnoughC2Transfers {
 			break
 		}
@@ -37,12 +34,15 @@ func (t *TransactionExecutor) CreateCreate2TransferCommitments(domain *bls.Domai
 		}
 
 		commitments = append(commitments, *commitment)
+		pending = newPending
 	}
-
-	//TODO-reg: register accounts here
 
 	if len(commitments) == 0 {
 		return nil, ErrNotEnoughC2Transfers
+	}
+	err := t.registerPendingAccounts(pending.Accounts)
+	if err != nil {
+		return nil, err
 	}
 
 	return commitments, nil
@@ -81,7 +81,12 @@ func (t *TransactionExecutor) createC2TCommitment(pending *PendingC2Ts, domain *
 		return nil, nil, err
 	}
 
-	commitment, err = t.buildC2TCommitment(appliedTransfers, newPending.Accounts.ToPubKeyIDs(), feeReceiver.StateID, domain)
+	commitment, err = t.buildC2TCommitment(
+		appliedTransfers,
+		newPending.Accounts.LastPubKeyIDs(len(appliedTransfers)),
+		feeReceiver.StateID,
+		domain,
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -194,4 +199,14 @@ func create2TransferExists(transferList []models.Create2Transfer, tx *models.Cre
 		}
 	}
 	return false
+}
+
+func (t *TransactionExecutor) registerPendingAccounts(accounts PendingAccounts) error {
+	for i := range accounts {
+		_, err := eth.RegisterAccount(t.client.ChainConnection.GetAccount(), t.client.AccountRegistry, &accounts[i].PublicKey)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

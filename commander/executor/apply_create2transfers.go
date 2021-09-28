@@ -144,9 +144,9 @@ type PendingC2Ts struct {
 
 type PendingAccounts []models.AccountLeaf
 
-func (p PendingAccounts) ToPubKeyIDs() []uint32 {
-	pubKeyIds := make([]uint32, 0, len(p))
-	for i := range p {
+func (p PendingAccounts) LastPubKeyIDs(amount int) []uint32 {
+	pubKeyIds := make([]uint32, 0, amount)
+	for i := len(p) - amount; i < len(p); i++ {
 		pubKeyIds = append(pubKeyIds, p[i].PubKeyID)
 	}
 	return pubKeyIds

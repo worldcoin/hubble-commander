@@ -2,6 +2,7 @@ package executor
 
 import (
 	"context"
+	"math/big"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
@@ -11,6 +12,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -256,6 +258,21 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	}
 }
 
+func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_RegistersAccounts() {
+	transfers := generateValidCreate2Transfers(1)
+	s.addCreate2Transfers(transfers)
+
+	expectedTxsLength := encoder.Create2TransferLength * len(transfers)
+	commitments, err := s.transactionExecutor.CreateCreate2TransferCommitments(testDomain)
+	s.NoError(err)
+	s.Len(commitments, 1)
+	s.Len(commitments[0].Transactions, expectedTxsLength)
+
+	s.client.Commit()
+	accounts := s.getRegisteredAccounts(0)
+	s.Len(accounts, len(transfers))
+}
+
 func (s *Create2TransferCommitmentsTestSuite) TestRemoveCreate2Transfer() {
 	transfer1 := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
@@ -277,6 +294,27 @@ func (s *Create2TransferCommitmentsTestSuite) TestRemoveCreate2Transfer() {
 	toRemove := []models.Create2Transfer{transfer2}
 
 	s.Equal([]models.Create2Transfer{transfer1, transfer3}, removeC2Ts(transfers, toRemove))
+}
+
+func (s *Create2TransferCommitmentsTestSuite) getRegisteredAccounts(startBlockNumber uint64) []models.AccountLeaf {
+	it, err := s.client.AccountRegistry.FilterSinglePubkeyRegistered(&bind.FilterOpts{Start: startBlockNumber})
+	s.NoError(err)
+
+	registeredAccounts := make([]models.AccountLeaf, 0)
+	for it.Next() {
+		tx, _, err := s.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
+		s.NoError(err)
+
+		unpack, err := s.client.AccountRegistryABI.Methods["register"].Inputs.Unpack(tx.Data()[4:])
+		s.NoError(err)
+
+		pubkey := unpack[0].([4]*big.Int)
+		registeredAccounts = append(registeredAccounts, models.AccountLeaf{
+			PubKeyID:  uint32(it.Event.PubkeyID.Uint64()),
+			PublicKey: models.MakePublicKeyFromInts(pubkey),
+		})
+	}
+	return registeredAccounts
 }
 
 func TestCreate2TransferCommitmentsTestSuite(t *testing.T) {
