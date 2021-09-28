@@ -99,7 +99,7 @@ func handleRollupError(err error) error {
 	var rollupErr *executor.RollupError
 	if errors.As(err, &rollupErr) {
 		if rollupErr.IsLoggable {
-			log.Warning(err)
+			log.Warnf("%+v", err)
 		}
 		return nil
 	}
