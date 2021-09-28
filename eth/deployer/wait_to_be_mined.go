@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -46,7 +47,9 @@ func WaitToBeMined(c ChainBackend, tx *types.Transaction) (*types.Receipt, error
 				return receipt, nil
 			}
 		case <-timeout:
-			return nil, ErrWaitToBeMinedTimeout
+			err := errors.WithStack(ErrWaitToBeMinedTimeout)
+			log.Warnf("%+v", err)
+			return nil, err
 		}
 	}
 }

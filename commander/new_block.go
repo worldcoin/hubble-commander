@@ -52,7 +52,7 @@ func (c *Commander) newBlockLoop() error {
 				continue
 			}
 			if errors.Is(err, deployer.ErrWaitToBeMinedTimeout) {
-				log.Debugf("WaitToBeMined timout: %s", err)
+				// Can happen for dispute or keepRollingBack transactions, continue the loop to retry if necessary
 				continue
 			}
 			if err != nil {
