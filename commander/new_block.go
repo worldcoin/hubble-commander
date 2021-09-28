@@ -50,7 +50,7 @@ func (c *Commander) newBlockLoop() error {
 			if errors.Is(err, ErrRollbackInProgress) {
 				continue
 			}
-			if errors.Is(err, deployer.ErrWaitToBeMinedTimeout) {
+			if errors.Is(err, deployer.ErrWaitToBeMinedTimedOut) {
 				// Can happen for dispute or keepRollingBack transactions, continue the loop to retry if necessary
 				continue
 			}
