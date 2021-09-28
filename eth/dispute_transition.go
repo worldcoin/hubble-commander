@@ -94,6 +94,7 @@ func (c *Client) waitForDispute(batchID *models.Uint256, tx *types.Transaction) 
 	return errors.Errorf("dispute of batch #%d failed", batchID.Uint64())
 }
 
+// TODO make this function use batch hash to establish whether batch has already been disputed
 func (c *Client) isBatchAlreadyDisputed(batchID *models.Uint256) error {
 	nextBatchID, err := c.Rollup.NextBatchID(nil)
 	if err != nil {
