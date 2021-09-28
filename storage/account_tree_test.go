@@ -300,6 +300,38 @@ func (s *AccountTreeTestSuite) TestSetBatch_InvalidPubKeyIDValue() {
 	s.Equal(NewNotFoundError("account leaf"), err)
 }
 
+func (s *AccountTreeTestSuite) TestNextBatchAccountPubKeyID() {
+	leaves := make([]models.AccountLeaf, batchSize)
+	for i := range leaves {
+		leaves[i] = models.AccountLeaf{
+			PubKeyID:  uint32(i + accountBatchOffset),
+			PublicKey: models.PublicKey{1, 2, byte(i)},
+		}
+	}
+
+	err := s.storage.AccountTree.SetBatch(leaves)
+	s.NoError(err)
+
+	pubKeyID, err := s.storage.AccountTree.NextBatchAccountPubKeyID()
+	s.NoError(err)
+	s.EqualValues(accountBatchOffset+16, *pubKeyID)
+}
+
+func (s *AccountTreeTestSuite) TestNextBatchAccountPubKeyID_OnlySingleAccountsRegistered() {
+	err := s.storage.AccountTree.SetSingle(s.leaf)
+	s.NoError(err)
+
+	pubKeyID, err := s.storage.AccountTree.NextBatchAccountPubKeyID()
+	s.NoError(err)
+	s.EqualValues(accountBatchOffset, *pubKeyID)
+}
+
+func (s *AccountTreeTestSuite) TestNextBatchAccountPubKeyID_NoAccounts() {
+	pubKeyID, err := s.storage.AccountTree.NextBatchAccountPubKeyID()
+	s.NoError(err)
+	s.EqualValues(accountBatchOffset, *pubKeyID)
+}
+
 func (s *AccountTreeTestSuite) randomPublicKey() models.PublicKey {
 	publicKey := models.PublicKey{}
 	err := publicKey.SetBytes(utils.RandomBytes(models.PublicKeyLength))
