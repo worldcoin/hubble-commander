@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - master
+      - 0.4.0
 
 jobs:
   build-image:
