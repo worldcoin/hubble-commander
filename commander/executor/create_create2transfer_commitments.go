@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	log "github.com/sirupsen/logrus"
@@ -109,8 +108,7 @@ func (t *TransactionExecutor) applyC2TsForCommitment(pending *PendingC2Ts, feeRe
 	appliedTransfers = make([]models.Create2Transfer, 0, t.cfg.MaxTxsPerCommitment)
 	invalidTransfers := make([]models.Create2Transfer, 0, 1)
 	newPending = &PendingC2Ts{
-		Txs:      make([]models.Create2Transfer, 0),
-		Accounts: pending.Accounts,
+		Txs: pending.Txs,
 	}
 
 	for {
@@ -124,16 +122,18 @@ func (t *TransactionExecutor) applyC2TsForCommitment(pending *PendingC2Ts, feeRe
 
 		appliedTransfers = append(appliedTransfers, transfers.appliedTransfers...)
 		invalidTransfers = append(invalidTransfers, transfers.invalidTransfers...)
-		newPending.Accounts = append(newPending.Accounts, transfers.pendingAccounts...)
+		pending.Accounts = transfers.pendingAccounts
 
 		if len(appliedTransfers) == int(t.cfg.MaxTxsPerCommitment) {
 			newPending.Txs = removeC2Ts(pending.Txs, append(appliedTransfers, invalidTransfers...))
+			newPending.Accounts = pending.Accounts
 			return appliedTransfers, newPending, nil
 		}
 
 		morePendingTransfers, err := t.queryMorePendingC2Ts(appliedTransfers)
 		if err == ErrNotEnoughC2Transfers {
 			newPending.Txs = removeC2Ts(pending.Txs, append(appliedTransfers, invalidTransfers...))
+			newPending.Accounts = pending.Accounts
 			return appliedTransfers, newPending, nil
 		}
 		if err != nil {
@@ -202,11 +202,43 @@ func create2TransferExists(transferList []models.Create2Transfer, tx *models.Cre
 }
 
 func (t *TransactionExecutor) registerPendingAccounts(accounts PendingAccounts) error {
+	accounts, err := t.fillMissingAccounts(accounts)
+	if err != nil {
+		return err
+	}
+	publicKeys := make([]models.PublicKey, 0, 16)
 	for i := range accounts {
-		_, err := eth.RegisterAccount(t.client.ChainConnection.GetAccount(), t.client.AccountRegistry, &accounts[i].PublicKey)
-		if err != nil {
-			return err
+		publicKeys = append(publicKeys, accounts[i].PublicKey)
+		if len(publicKeys) == 16 {
+			_, err = t.client.RegisterBatchAccount(publicKeys)
+			if err != nil {
+				return err
+			}
+			err = t.storage.AccountTree.SetBatch(accounts[i-15 : i+1])
+			if err != nil {
+				return err
+			}
+			publicKeys = make([]models.PublicKey, 0, 16)
 		}
 	}
 	return nil
+}
+
+func (t *TransactionExecutor) fillMissingAccounts(accounts PendingAccounts) (PendingAccounts, error) {
+	missingAccounts := len(accounts) % 16
+	if missingAccounts == 0 {
+		return accounts, nil
+	}
+	publicKey := models.PublicKey{1, 2, 3}
+	for i := 0; i < 16-missingAccounts; i++ {
+		pubKeyID, err := accounts.NextPubKeyID(t.storage)
+		if err != nil {
+			return nil, err
+		}
+		accounts = append(accounts, models.AccountLeaf{
+			PubKeyID:  *pubKeyID,
+			PublicKey: publicKey,
+		})
+	}
+	return accounts, nil
 }

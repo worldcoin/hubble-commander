@@ -260,16 +260,24 @@ func (s *ApplyTransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidFeeRec
 	s.Len(disputableErr.Proofs, 5)
 }
 
+func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_GetsPubKeyIDFromAccountTree() {
+	pubKeyID, isPending, err := s.transactionExecutor.getPubKeyID(PendingAccounts{}, &create2Transfer, models.MakeUint256(1))
+	s.NoError(err)
+	s.True(isPending)
+	s.Equal(uint32(2147483648), *pubKeyID)
+}
+
 func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_PredictsPubKeyIDInCaseThereIsNoUnusedOne() {
-	pendingRegistrations := PendingAccounts{
+	pendingAccounts := PendingAccounts{
 		{
-			PubKeyID:  5,
+			PubKeyID:  2147483650,
 			PublicKey: models.PublicKey{1, 2, 3},
 		},
 	}
-	pubKeyID, err := s.transactionExecutor.getPubKeyID(pendingRegistrations, &create2Transfer, models.MakeUint256(1))
+	pubKeyID, isPending, err := s.transactionExecutor.getPubKeyID(pendingAccounts, &create2Transfer, models.MakeUint256(1))
 	s.NoError(err)
-	s.Equal(uint32(6), *pubKeyID)
+	s.True(isPending)
+	s.Equal(uint32(2147483651), *pubKeyID)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_ReturnsUnusedPubKeyID() {
@@ -284,9 +292,9 @@ func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_ReturnsUnused
 	c2T := create2Transfer
 	c2T.ToPublicKey = models.PublicKey{1, 2, 3}
 
-	pendingRegistrations := make(PendingAccounts, 0)
-	pubKeyID, err := s.transactionExecutor.getPubKeyID(pendingRegistrations, &c2T, models.MakeUint256(1))
+	pubKeyID, isPending, err := s.transactionExecutor.getPubKeyID(PendingAccounts{}, &c2T, models.MakeUint256(1))
 	s.NoError(err)
+	s.False(isPending)
 	s.Equal(uint32(4), *pubKeyID)
 }
 

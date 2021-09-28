@@ -270,7 +270,8 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 
 	s.client.Commit()
 	accounts := s.getRegisteredAccounts(0)
-	s.Len(accounts, len(transfers))
+	s.Len(accounts, 16)
+	s.Equal(transfers[0].ToPublicKey, accounts[0].PublicKey)
 }
 
 func (s *Create2TransferCommitmentsTestSuite) TestRemoveCreate2Transfer() {
@@ -297,7 +298,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestRemoveCreate2Transfer() {
 }
 
 func (s *Create2TransferCommitmentsTestSuite) getRegisteredAccounts(startBlockNumber uint64) []models.AccountLeaf {
-	it, err := s.client.AccountRegistry.FilterSinglePubkeyRegistered(&bind.FilterOpts{Start: startBlockNumber})
+	it, err := s.client.AccountRegistry.FilterBatchPubkeyRegistered(&bind.FilterOpts{Start: startBlockNumber})
 	s.NoError(err)
 
 	registeredAccounts := make([]models.AccountLeaf, 0)
@@ -305,14 +306,17 @@ func (s *Create2TransferCommitmentsTestSuite) getRegisteredAccounts(startBlockNu
 		tx, _, err := s.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
 		s.NoError(err)
 
-		unpack, err := s.client.AccountRegistryABI.Methods["register"].Inputs.Unpack(tx.Data()[4:])
+		unpack, err := s.client.AccountRegistryABI.Methods["registerBatch"].Inputs.Unpack(tx.Data()[4:])
 		s.NoError(err)
 
-		pubkey := unpack[0].([4]*big.Int)
-		registeredAccounts = append(registeredAccounts, models.AccountLeaf{
-			PubKeyID:  uint32(it.Event.PubkeyID.Uint64()),
-			PublicKey: models.MakePublicKeyFromInts(pubkey),
-		})
+		pubKeyIDs := eth.ExtractPubKeyIDsFromBatchAccountEvent(it.Event)
+		pubKeys := unpack[0].([16][4]*big.Int)
+		for i := range pubKeys {
+			registeredAccounts = append(registeredAccounts, models.AccountLeaf{
+				PubKeyID:  pubKeyIDs[i],
+				PublicKey: models.MakePublicKeyFromInts(pubKeys[i]),
+			})
+		}
 	}
 	return registeredAccounts
 }

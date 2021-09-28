@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
@@ -42,7 +41,7 @@ func (t *TransactionExecutor) ApplyCreate2Transfers(
 		}
 
 		transfer := &pending.Txs[i]
-		pubKeyID, err := t.getPubKeyID(returnStruct.pendingAccounts, transfer, feeReceiver.TokenID)
+		pubKeyID, isPending, err := t.getPubKeyID(returnStruct.pendingAccounts, transfer, feeReceiver.TokenID)
 		if err != nil {
 			return nil, err
 		}
@@ -57,10 +56,12 @@ func (t *TransactionExecutor) ApplyCreate2Transfers(
 			continue
 		}
 
-		returnStruct.pendingAccounts = append(returnStruct.pendingAccounts, models.AccountLeaf{
-			PubKeyID:  *pubKeyID,
-			PublicKey: transfer.ToPublicKey,
-		})
+		if isPending {
+			returnStruct.pendingAccounts = append(returnStruct.pendingAccounts, models.AccountLeaf{
+				PubKeyID:  *pubKeyID,
+				PublicKey: transfer.ToPublicKey,
+			})
+		}
 		returnStruct.appliedTransfers = append(returnStruct.appliedTransfers, *appliedTransfer)
 		*combinedFee = *combinedFee.Add(&appliedTransfer.Fee)
 	}
@@ -126,15 +127,19 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 }
 
 func (t *TransactionExecutor) getPubKeyID(registrations PendingAccounts, transfer *models.Create2Transfer, tokenID models.Uint256) (
-	*uint32, error,
+	*uint32, bool, error,
 ) {
 	pubKeyID, err := t.storage.GetUnusedPubKeyID(&transfer.ToPublicKey, &tokenID)
 	if err != nil && !st.IsNotFoundError(err) {
-		return nil, err
+		return nil, false, err
 	} else if st.IsNotFoundError(err) {
-		return registrations.NextPubKeyID(t.client)
+		pubKeyID, err = registrations.NextPubKeyID(t.storage)
+		if err != nil {
+			return nil, false, err
+		}
+		return pubKeyID, true, nil
 	}
-	return pubKeyID, nil
+	return pubKeyID, false, nil
 }
 
 type PendingC2Ts struct {
@@ -152,9 +157,9 @@ func (p PendingAccounts) LastPubKeyIDs(amount int) []uint32 {
 	return pubKeyIds
 }
 
-func (p PendingAccounts) NextPubKeyID(client *eth.Client) (*uint32, error) {
+func (p PendingAccounts) NextPubKeyID(storage *st.Storage) (*uint32, error) {
 	if len(p) == 0 {
-		return client.GetNextSingleRegistrationPubKeyID()
+		return storage.AccountTree.NextBatchAccountPubKeyID()
 	}
 	nextPubKeyID := p[len(p)-1].PubKeyID + 1
 	return &nextPubKeyID, nil
