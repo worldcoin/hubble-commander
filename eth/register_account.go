@@ -65,11 +65,3 @@ func RegisterAccount(
 	}
 	return tx, nil
 }
-
-func (c *Client) GetNextSingleRegistrationPubKeyID() (*uint32, error) {
-	nextPubKeyID, err := c.AccountRegistry.LeafIndexLeft(nil)
-	if err != nil {
-		return nil, err
-	}
-	return ref.Uint32(uint32(nextPubKeyID.Uint64())), nil
-}
