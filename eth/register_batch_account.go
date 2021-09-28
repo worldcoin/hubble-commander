@@ -3,12 +3,10 @@ package eth
 import (
 	"fmt"
 	"math/big"
-	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
-	"github.com/Worldcoin/hubble-commander/eth/chain"
+	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
@@ -19,73 +17,50 @@ const (
 )
 
 var (
-	ErrInvalidPubKeysLength        = fmt.Errorf("invalid public keys length")
-	ErrAccountWatcherIsClosed      = fmt.Errorf("account event watcher is closed")
-	ErrRegisterBatchAccountTimeout = fmt.Errorf("timeout")
+	ErrInvalidPubKeysLength             = fmt.Errorf("invalid public keys length")
+	ErrAccountWatcherIsClosed           = fmt.Errorf("account event watcher is closed")
+	ErrBatchPubKeyRegisteredLogNotFound = fmt.Errorf("batch pubkey registered log not found in receipt")
 )
 
 func (c *Client) RegisterBatchAccountAndWait(
 	publicKeys []models.PublicKey,
-	ev chan *accountregistry.AccountRegistryBatchPubkeyRegistered,
 ) ([]uint32, error) {
-	tx, err := c.RegisterBatchAccount(publicKeys)
-	if err != nil {
-		return nil, err
-	}
-
-	return c.WaitForBatchAccountRegistration(tx, ev)
-}
-
-func (c *Client) RegisterBatchAccount(publicKeys []models.PublicKey) (*types.Transaction, error) {
 	if len(publicKeys) != accountBatchSize {
 		return nil, errors.WithStack(ErrInvalidPubKeysLength)
 	}
 
-	var pubkeys [accountBatchSize][4]*big.Int
+	var pubKeys [accountBatchSize][4]*big.Int
 	for i := range publicKeys {
-		pubkeys[i] = publicKeys[i].BigInts()
+		pubKeys[i] = publicKeys[i].BigInts()
 	}
 
-	tx, err := c.accountRegistry().
+	//tx, err := c.AccountRegistry.RegisterBatch(c.ChainConnection.GetAccount(), pubKeys)
+	tx, err := c.AccountRegistry().
 		WithGasLimit(*c.config.BatchAccountRegistrationGasLimit).
 		RegisterBatch(pubkeys)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	return tx, nil
-}
 
-func (c *Client) WatchBatchAccountRegistrations(opts *bind.WatchOpts) (
-	registrations chan *accountregistry.AccountRegistryBatchPubkeyRegistered,
-	unsubscribe func(),
-	err error,
-) {
-	ev := make(chan *accountregistry.AccountRegistryBatchPubkeyRegistered)
-
-	sub, err := c.AccountRegistry.WatchBatchPubkeyRegistered(opts, ev)
+	receipt, err := deployer.WaitToBeMined(c.ChainConnection.GetBackend(), tx)
 	if err != nil {
-		return nil, nil, errors.WithStack(err)
+		return nil, err
 	}
-	return ev, sub.Unsubscribe, nil
+
+	return c.retrieveRegisteredPubKeyIDs(receipt)
 }
 
-func (c *Client) WaitForBatchAccountRegistration(
-	tx *types.Transaction,
-	ev chan *accountregistry.AccountRegistryBatchPubkeyRegistered,
-) ([]uint32, error) {
-	for {
-		select {
-		case event, ok := <-ev:
-			if !ok {
-				return nil, errors.WithStack(ErrAccountWatcherIsClosed)
-			}
-			if event.Raw.TxHash == tx.Hash() {
-				return ExtractPubKeyIDsFromBatchAccountEvent(event), nil
-			}
-		case <-time.After(chain.MineTimeout):
-			return nil, errors.WithStack(ErrRegisterBatchAccountTimeout)
-		}
+func (c *Client) retrieveRegisteredPubKeyIDs(receipt *types.Receipt) ([]uint32, error) {
+	if len(receipt.Logs) < 1 || receipt.Logs[0] == nil {
+		return nil, errors.WithStack(ErrBatchPubKeyRegisteredLogNotFound)
 	}
+
+	event := new(accountregistry.AccountRegistryBatchPubkeyRegistered)
+	err := c.accountRegistryContract.UnpackLog(event, "BatchPubkeyRegistered", *receipt.Logs[0])
+	if err != nil {
+		return nil, err
+	}
+	return ExtractPubKeyIDsFromBatchAccountEvent(event), nil
 }
 
 func ExtractPubKeyIDsFromBatchAccountEvent(ev *accountregistry.AccountRegistryBatchPubkeyRegistered) []uint32 {
