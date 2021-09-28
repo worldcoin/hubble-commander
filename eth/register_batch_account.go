@@ -20,7 +20,7 @@ const (
 
 var ErrInvalidPubKeysLength = errors.New("invalid public keys length")
 
-func (c *Client) RegisterBatchAccount(
+func (c *Client) RegisterBatchAccountAndWait(
 	publicKeys []models.PublicKey,
 	ev chan *accountregistry.AccountRegistryBatchPubkeyRegistered,
 ) ([]uint32, error) {
