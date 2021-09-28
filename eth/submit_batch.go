@@ -2,23 +2,19 @@ package eth
 
 import (
 	"context"
-	"fmt"
-	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/encoder"
+	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/pkg/errors"
 )
 
 const gasEstimateMultiplier = 1.3
-
-var ErrSubmitBatchAndWait = fmt.Errorf("submitBatchAndWait: timeout")
 
 type SubmitBatchFunc func() (*types.Transaction, error)
 
@@ -76,16 +72,18 @@ func (c *Client) submitBatchAndWait(submit SubmitBatchFunc) (batch *models.Batch
 		return
 	}
 
-	for {
-		select {
-		case newBatch := <-sink:
-			if newBatch.Raw.TxHash == tx.Hash() {
-				return c.handleNewBatchEvent(newBatch)
-			}
-		case <-time.After(*c.config.TxTimeout):
-			return nil, errors.WithStack(ErrSubmitBatchAndWait)
-		}
+	receipt, err := deployer.WaitToBeMined(c.ChainConnection.GetBackend(), tx)
+	if err != nil {
+		return nil, err
 	}
+
+	event := new(rollup.RollupNewBatch)
+	err = c.rollupContract.UnpackLog(event, "NewBatch", *receipt.Logs[0])
+	if err != nil {
+		return nil, err
+	}
+
+	return c.handleNewBatchEvent(event)
 }
 
 func (c *Client) handleNewBatchEvent(event *rollup.RollupNewBatch) (*models.Batch, error) {
