@@ -47,7 +47,12 @@ func deployContractsAndSetupGenesisState(
 	chain deployer.ChainConnection,
 	accounts []models.GenesisAccount,
 ) (*models.ChainState, error) {
-	accountRegistryAddress, accountRegistryDeploymentBlock, accountRegistry, err := deployer.DeployAccountRegistry(chain)
+	proofOfBurnAddress, _, err := deployer.DeployProofOfBurn(chain)
+	if err != nil {
+		return nil, err
+	}
+
+	accountRegistryAddress, accountRegistryDeploymentBlock, accountRegistry, err := deployer.DeployAccountRegistry(chain, proofOfBurnAddress)
 	if err != nil {
 		return nil, err
 	}

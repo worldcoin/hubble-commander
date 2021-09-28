@@ -81,21 +81,15 @@ func DeployRollup(c deployer.ChainConnection) (*RollupContracts, error) {
 // nolint:funlen,gocyclo
 func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig) (*RollupContracts, error) {
 	fillWithDefaults(&config.Params)
-	err := deployMissing(&config.Dependencies, c)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
 
-	log.Println("Deploying ProofOfBurn")
-	proofOfBurnAddress, tx, proofOfBurn, err := proofofburn.DeployProofOfBurn(c.GetAccount(), c.GetBackend())
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	c.Commit()
-	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
+	proofOfBurnAddress, proofOfBurn, err := deployer.DeployProofOfBurn(c)
 	if err != nil {
 		return nil, err
+	}
+
+	err = deployMissing(&config.Dependencies, c, proofOfBurnAddress)
+	if err != nil {
+		return nil, errors.WithStack(err)
 	}
 
 	log.Println("Deploying TokenRegistry")
@@ -181,7 +175,7 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 	rollupAddress, tx, rollupContract, err := rollup.DeployRollup(
 		c.GetAccount(),
 		c.GetBackend(),
-		proofOfBurnAddress,
+		*proofOfBurnAddress,
 		depositManagerAddress,
 		*config.AccountRegistry,
 		txHelpers.TransferAddress,
@@ -310,9 +304,9 @@ func fillWithDefaults(params *Params) {
 	}
 }
 
-func deployMissing(dependencies *Dependencies, c deployer.ChainConnection) error {
+func deployMissing(dependencies *Dependencies, c deployer.ChainConnection, chooser *common.Address) error {
 	if dependencies.AccountRegistry == nil {
-		accountRegistryAddress, _, _, err := deployer.DeployAccountRegistry(c)
+		accountRegistryAddress, _, _, err := deployer.DeployAccountRegistry(c, chooser)
 		if err != nil {
 			return err
 		}
