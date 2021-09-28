@@ -12,7 +12,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-var ErrSingleRegisteredPubKeyLogNotFound = fmt.Errorf("single pubkey registered log not found in receipt")
+var (
+	ErrSingleRegisteredPubKeyLogNotFound = fmt.Errorf("single pubkey registered log not found in receipt")
+	ErrRegisterAccountTimeout            = fmt.Errorf("register account timeout")
+)
 
 func (c *Client) RegisterAccountAndWait(publicKey *models.PublicKey) (*uint32, error) {
 	tx, err := RegisterAccount(c.ChainConnection.GetAccount(), c.AccountRegistry, publicKey)

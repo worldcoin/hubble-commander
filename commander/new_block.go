@@ -5,6 +5,7 @@ import (
 	stdErrors "errors"
 	"math/big"
 
+	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -47,6 +48,10 @@ func (c *Commander) newBlockLoop() error {
 				return nil
 			}
 			if errors.Is(err, ErrRollbackInProgress) {
+				continue
+			}
+			if errors.Is(err, deployer.ErrWaitToBeMinedTimeout) {
+				// Can happen for dispute or keepRollingBack transactions, continue the loop to retry if necessary
 				continue
 			}
 			if err != nil {

@@ -6,7 +6,7 @@ import (
 
 var (
 	ErrNotEnoughCommitments = NewRollupError("not enough commitments")
-	ErrNoLongerProposer     = NewRollupError("commander is no longer an active proposer")
+	ErrNoLongerProposer     = NewLoggableRollupError("commander is no longer an active proposer")
 )
 
 func (c *RollupContext) SubmitBatch(batch *models.Batch, commitments []models.Commitment) error {
