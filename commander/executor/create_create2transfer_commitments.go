@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	st "github.com/Worldcoin/hubble-commander/storage"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -209,31 +210,31 @@ func (t *TransactionExecutor) registerPendingAccounts(accounts PendingAccounts) 
 	if err != nil {
 		return err
 	}
-	publicKeys := make([]models.PublicKey, 0, 16)
+	publicKeys := make([]models.PublicKey, 0, st.AccountBatchSize)
 	for i := range accounts {
 		publicKeys = append(publicKeys, accounts[i].PublicKey)
-		if len(publicKeys) == 16 {
+		if len(publicKeys) == st.AccountBatchSize {
 			_, err = t.client.RegisterBatchAccount(publicKeys)
 			if err != nil {
 				return err
 			}
-			err = t.storage.AccountTree.SetBatch(accounts[i-15 : i+1])
+			err = t.storage.AccountTree.SetBatch(accounts[i+1-st.AccountBatchSize : i+1])
 			if err != nil {
 				return err
 			}
-			publicKeys = make([]models.PublicKey, 0, 16)
+			publicKeys = make([]models.PublicKey, 0, st.AccountBatchSize)
 		}
 	}
 	return nil
 }
 
 func (t *TransactionExecutor) fillMissingAccounts(accounts PendingAccounts) (PendingAccounts, error) {
-	missingAccounts := len(accounts) % 16
+	missingAccounts := len(accounts) % st.AccountBatchSize
 	if missingAccounts == 0 {
 		return accounts, nil
 	}
 	publicKey := models.PublicKey{1, 2, 3}
-	for i := 0; i < 16-missingAccounts; i++ {
+	for i := 0; i < st.AccountBatchSize-missingAccounts; i++ {
 		pubKeyID, err := accounts.NextPubKeyID(t.storage)
 		if err != nil {
 			return nil, err
