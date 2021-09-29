@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - 0.4.0
+      - michal/aws-staging-setup
 
 jobs:
   build-image:
