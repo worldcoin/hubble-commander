@@ -1,6 +1,9 @@
 package executor
 
 import (
+	"errors"
+
+	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
@@ -118,10 +121,22 @@ func (t *TransactionExecutor) getOrRegisterPubKeyID(
 	tokenID models.Uint256,
 ) (*uint32, error) {
 	pubKeyID, err := t.storage.GetUnusedPubKeyID(publicKey, &tokenID)
-	if err != nil && !st.IsNotFoundError(err) {
+	if st.IsNotFoundError(err) {
+		return t.registerPublicKey(publicKey)
+	}
+	if err != nil {
 		return nil, err
-	} else if st.IsNotFoundError(err) {
-		return t.client.RegisterAccountAndWait(publicKey)
+	}
+	return pubKeyID, nil
+}
+
+func (t *TransactionExecutor) registerPublicKey(publicKey *models.PublicKey) (*uint32, error) {
+	pubKeyID, err := t.client.RegisterAccountAndWait(publicKey)
+	if errors.Is(err, deployer.ErrWaitToBeMinedTimeout) {
+		return nil, NewLoggableRollupError(err.Error())
+	}
+	if err != nil {
+		return nil, err
 	}
 	return pubKeyID, nil
 }
