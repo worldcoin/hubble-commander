@@ -232,7 +232,7 @@ func (c *DockerCommander) Restart() error {
 	}
 
 	cmd, err := StartDockerCommander(StartOptions{
-		Image:           "ghcr.io/worldcoin/hubble-commander:latest",
+		Image:           CommanderImage,
 		Prune:           false,
 		DeployContracts: false,
 	})
