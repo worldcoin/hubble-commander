@@ -298,12 +298,12 @@ func (s *Create2TransferCommitmentsTestSuite) TestRemoveCreate2Transfer() {
 }
 
 func (s *Create2TransferCommitmentsTestSuite) TestRegisterPendingAccounts_RegistersAccountsAndAddsToAccountTree() {
-	pendingAccounts := make(PendingAccounts, 0, st.AccountBatchOffset)
+	pendingAccounts := make([]models.AccountLeaf, st.AccountBatchSize)
 	for i := range pendingAccounts {
-		pendingAccounts = append(pendingAccounts, models.AccountLeaf{
+		pendingAccounts[i] = models.AccountLeaf{
 			PubKeyID:  uint32(st.AccountBatchOffset + i),
 			PublicKey: models.PublicKey{byte(i), 8, 9},
-		})
+		}
 	}
 
 	err := s.transactionExecutor.registerPendingAccounts(pendingAccounts)
@@ -311,7 +311,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestRegisterPendingAccounts_Regist
 	s.client.Commit()
 
 	registeredAccounts := s.getRegisteredAccounts(0)
-	s.Equal(pendingAccounts, PendingAccounts(registeredAccounts))
+	s.Equal(pendingAccounts, registeredAccounts)
 
 	for i := range pendingAccounts {
 		account, err := s.storage.AccountTree.Leaf(pendingAccounts[i].PubKeyID)
