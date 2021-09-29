@@ -51,7 +51,7 @@ type APIConfig struct {
 
 type PostgresConfig struct {
 	Host           *string `json:"-"`
-	Port           *string
+	Port           *string `json:"-"`
 	Name           string
 	User           *string `json:"-"`
 	Password       *string `json:"-"`
