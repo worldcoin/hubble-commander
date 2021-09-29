@@ -50,11 +50,11 @@ type APIConfig struct {
 }
 
 type PostgresConfig struct {
-	Host           *string
-	Port           *string
+	Host           *string `json:"-"`
+	Port           *string `json:"-"`
 	Name           string
-	User           *string
-	Password       *string
+	User           *string `json:"-"`
+	Password       *string `json:"-"`
 	MigrationsPath string
 }
 
@@ -63,7 +63,7 @@ type BadgerConfig struct {
 }
 
 type EthereumConfig struct {
-	RPCURL     string
-	PrivateKey string
+	RPCURL     string `json:"-"`
+	PrivateKey string `json:"-"`
 	ChainID    string
 }
