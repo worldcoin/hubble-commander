@@ -1,11 +1,11 @@
 package executor
 
 import (
-	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
-	"github.com/Worldcoin/hubble-commander/eth"
+	"errors"
+
+	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
 type AppliedC2Transfers struct {
@@ -23,18 +23,6 @@ func (t *TransactionExecutor) ApplyCreate2Transfers(
 		return &AppliedC2Transfers{}, nil
 	}
 
-	syncedBlock, err := t.storage.GetSyncedBlock()
-	if err != nil {
-		return nil, err
-	}
-	events, unsubscribe, err := t.client.WatchRegistrations(&bind.WatchOpts{
-		Start: syncedBlock,
-	})
-	if err != nil {
-		return nil, err
-	}
-	defer unsubscribe()
-
 	returnStruct := &AppliedC2Transfers{}
 	returnStruct.appliedTransfers = make([]models.Create2Transfer, 0, t.cfg.MaxTxsPerCommitment)
 	returnStruct.addedPubKeyIDs = make([]uint32, 0, t.cfg.MaxTxsPerCommitment)
@@ -48,7 +36,7 @@ func (t *TransactionExecutor) ApplyCreate2Transfers(
 
 		transfer := &transfers[i]
 		var pubKeyID *uint32
-		pubKeyID, err = t.getOrRegisterPubKeyID(events, transfer, feeReceiver.TokenID)
+		pubKeyID, err := t.getOrRegisterPubKeyID(&transfer.ToPublicKey, feeReceiver.TokenID)
 		if err != nil {
 			return nil, err
 		}
@@ -69,7 +57,7 @@ func (t *TransactionExecutor) ApplyCreate2Transfers(
 	}
 
 	if len(returnStruct.appliedTransfers) > 0 {
-		_, err = t.ApplyFee(feeReceiver.StateID, *combinedFee)
+		_, err := t.ApplyFee(feeReceiver.StateID, *combinedFee)
 		if err != nil {
 			return nil, err
 		}
@@ -129,18 +117,26 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 }
 
 func (t *TransactionExecutor) getOrRegisterPubKeyID(
-	events chan *accountregistry.AccountRegistrySinglePubkeyRegistered,
-	transfer *models.Create2Transfer,
+	publicKey *models.PublicKey,
 	tokenID models.Uint256,
 ) (*uint32, error) {
-	pubKeyID, err := t.storage.GetUnusedPubKeyID(&transfer.ToPublicKey, &tokenID)
-	if err != nil && !st.IsNotFoundError(err) {
-		return nil, err
-	} else if st.IsNotFoundError(err) {
-		pubKeyID, err = t.client.RegisterAccount(&transfer.ToPublicKey, events)
-		if err != nil && err == eth.ErrRegisterAccountTimeout {
-			return nil, NewLoggableRollupError(err.Error())
-		}
+	pubKeyID, err := t.storage.GetUnusedPubKeyID(publicKey, &tokenID)
+	if st.IsNotFoundError(err) {
+		return t.registerPublicKey(publicKey)
 	}
-	return pubKeyID, err
+	if err != nil {
+		return nil, err
+	}
+	return pubKeyID, nil
+}
+
+func (t *TransactionExecutor) registerPublicKey(publicKey *models.PublicKey) (*uint32, error) {
+	pubKeyID, err := t.client.RegisterAccountAndWait(publicKey)
+	if errors.Is(err, deployer.ErrWaitToBeMinedTimeout) {
+		return nil, NewLoggableRollupError(err.Error())
+	}
+	if err != nil {
+		return nil, err
+	}
+	return pubKeyID, nil
 }

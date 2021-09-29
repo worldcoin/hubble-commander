@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -29,17 +28,13 @@ func (s *RegisterAccountTestSuite) TearDownTest() {
 	s.client.Close()
 }
 
-func (s *RegisterAccountTestSuite) TestRegisterAccount() {
-	events, unsubscribe, err := s.client.WatchRegistrations(&bind.WatchOpts{})
-	s.NoError(err)
-	defer unsubscribe()
-
+func (s *RegisterAccountTestSuite) TestRegisterAccountAndWait() {
 	publicKey := models.PublicKey{1, 2, 3}
-	pubKeyID, err := s.client.RegisterAccount(&publicKey, events)
+	pubKeyID, err := s.client.RegisterAccountAndWait(&publicKey)
 	s.NoError(err)
 	s.Equal(uint32(0), *pubKeyID)
 
-	pubKeyID, err = s.client.RegisterAccount(&publicKey, events)
+	pubKeyID, err = s.client.RegisterAccountAndWait(&publicKey)
 	s.NoError(err)
 	s.Equal(uint32(1), *pubKeyID)
 }

@@ -31,16 +31,17 @@ type ClientConfig struct {
 }
 
 type Client struct {
-	config             ClientConfig
-	ChainState         models.ChainState
-	ChainConnection    deployer.ChainConnection
-	Rollup             *rollup.Rollup
-	RollupABI          *abi.ABI
-	AccountRegistry    *accountregistry.AccountRegistry
-	AccountRegistryABI *abi.ABI
-	boundContract      *bind.BoundContract
-	blocksToFinalise   *int64
-	domain             *bls.Domain
+	config                  ClientConfig
+	ChainState              models.ChainState
+	ChainConnection         deployer.ChainConnection
+	Rollup                  *rollup.Rollup
+	RollupABI               *abi.ABI
+	AccountRegistry         *accountregistry.AccountRegistry
+	AccountRegistryABI      *abi.ABI
+	boundContract           *bind.BoundContract
+	accountRegistryContract *bind.BoundContract
+	blocksToFinalise        *int64
+	domain                  *bls.Domain
 }
 
 func NewClient(chainConnection deployer.ChainConnection, params *NewClientParams) (*Client, error) {
@@ -56,15 +57,17 @@ func NewClient(chainConnection deployer.ChainConnection, params *NewClientParams
 	}
 	backend := chainConnection.GetBackend()
 	boundContract := bind.NewBoundContract(params.ChainState.Rollup, rollupAbi, backend, backend, backend)
+	accountRegistryContract := bind.NewBoundContract(params.ChainState.AccountRegistry, accountRegistryAbi, backend, backend, backend)
 	return &Client{
-		config:             params.ClientConfig,
-		ChainState:         params.ChainState,
-		ChainConnection:    chainConnection,
-		Rollup:             params.Rollup,
-		RollupABI:          &rollupAbi,
-		AccountRegistry:    params.AccountRegistry,
-		AccountRegistryABI: &accountRegistryAbi,
-		boundContract:      boundContract,
+		config:                  params.ClientConfig,
+		ChainState:              params.ChainState,
+		ChainConnection:         chainConnection,
+		Rollup:                  params.Rollup,
+		RollupABI:               &rollupAbi,
+		AccountRegistry:         params.AccountRegistry,
+		AccountRegistryABI:      &accountRegistryAbi,
+		boundContract:           boundContract,
+		accountRegistryContract: accountRegistryContract,
 	}, nil
 }
 
