@@ -53,7 +53,7 @@ type PostgresConfig struct {
 	Host           *string `json:"-"`
 	Port           *string
 	Name           string
-	User           *string
+	User           *string `json:"-"`
 	Password       *string `json:"-"`
 	MigrationsPath string
 }
