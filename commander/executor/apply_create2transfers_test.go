@@ -91,6 +91,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AllValid() {
 	s.Len(transfers.appliedTransfers, 3)
 	s.Len(transfers.invalidTransfers, 0)
 	s.Len(transfers.pendingAccounts, 3)
+	s.Len(transfers.addedPubKeyIDs, 3)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
@@ -105,6 +106,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 	s.Len(transfers.appliedTransfers, 2)
 	s.Len(transfers.invalidTransfers, 3)
 	s.Len(transfers.pendingAccounts, 2)
+	s.Len(transfers.addedPubKeyIDs, 2)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AppliesNoMoreThanLimit() {
@@ -118,6 +120,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AppliesNoMore
 	s.Len(transfers.appliedTransfers, 6)
 	s.Len(transfers.invalidTransfers, 0)
 	s.Len(transfers.pendingAccounts, 6)
+	s.Len(transfers.addedPubKeyIDs, 6)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransferErrors() {
@@ -137,6 +140,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 	s.Len(transfers.appliedTransfers, 3)
 	s.Len(transfers.invalidTransfers, 2)
 	s.Len(transfers.pendingAccounts, 3)
+	s.Len(transfers.addedPubKeyIDs, 3)
 
 	for i := range pending.Txs {
 		transfer, err := s.storage.GetCreate2Transfer(pending.Txs[i].Hash)
@@ -176,6 +180,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AddsPendingAc
 	s.Len(transfers.appliedTransfers, 3)
 	s.Len(transfers.invalidTransfers, 0)
 	s.Len(transfers.pendingAccounts, 3)
+	s.Len(transfers.addedPubKeyIDs, 3)
 
 	for i := range pending.Txs {
 		s.Equal(pending.Txs[i].ToPublicKey, transfers.pendingAccounts[i].PublicKey)

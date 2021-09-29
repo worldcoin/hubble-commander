@@ -334,14 +334,14 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_First
 			testutils.MakeCreate2Transfer(0, ref.Uint32(4), 0, 500, wallets[1].PublicKey()),
 		},
 	}
-	pubKeyIDs := [][]uint32{{4}}
+	pubKeyIDs := [][]uint32{{st.AccountBatchOffset}}
 
 	transfer := testutils.MakeCreate2Transfer(0, ref.Uint32(3), 0, 50, wallets[1].PublicKey())
 	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &transfer)
 
 	pubKeyID, err := s.client.RegisterAccountAndWait(wallets[1].PublicKey())
 	s.NoError(err)
-	s.EqualValues(4, *pubKeyID)
+	s.EqualValues(3, *pubKeyID)
 
 	proofs := s.getC2TStateMerkleProofs(commitmentTxs, pubKeyIDs)
 

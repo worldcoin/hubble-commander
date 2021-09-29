@@ -8,6 +8,7 @@ import (
 type AppliedC2Transfers struct {
 	appliedTransfers []models.Create2Transfer
 	invalidTransfers []models.Create2Transfer
+	addedPubKeyIDs   []uint32
 	pendingAccounts  PendingAccounts
 }
 
@@ -28,8 +29,7 @@ func (t *TransactionExecutor) ApplyCreate2Transfers(
 	feeReceiver *FeeReceiver,
 ) (*AppliedC2Transfers, error) {
 	if len(pending.Txs) == 0 {
-		//TODO-reg: check if it's ok
-		return &AppliedC2Transfers{}, nil
+		return &AppliedC2Transfers{pendingAccounts: pending.Accounts}, nil
 	}
 
 	returnStruct := NewAppliedC2Transfers(pending.Accounts, t.cfg.MaxTxsPerCommitment)
@@ -63,6 +63,7 @@ func (t *TransactionExecutor) ApplyCreate2Transfers(
 			})
 		}
 		returnStruct.appliedTransfers = append(returnStruct.appliedTransfers, *appliedTransfer)
+		returnStruct.addedPubKeyIDs = append(returnStruct.addedPubKeyIDs, *pubKeyID)
 		*combinedFee = *combinedFee.Add(&appliedTransfer.Fee)
 	}
 
@@ -127,9 +128,9 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 }
 
 func (t *TransactionExecutor) getPubKeyID(registrations PendingAccounts, transfer *models.Create2Transfer, tokenID models.Uint256) (
-	*uint32, bool, error,
+	pubKeyID *uint32, isPending bool, err error,
 ) {
-	pubKeyID, err := t.storage.GetUnusedPubKeyID(&transfer.ToPublicKey, &tokenID)
+	pubKeyID, err = t.storage.GetUnusedPubKeyID(&transfer.ToPublicKey, &tokenID)
 	if err != nil && !st.IsNotFoundError(err) {
 		return nil, false, err
 	} else if st.IsNotFoundError(err) {
@@ -148,14 +149,6 @@ type PendingC2Ts struct {
 }
 
 type PendingAccounts []models.AccountLeaf
-
-func (p PendingAccounts) LastPubKeyIDs(amount int) []uint32 {
-	pubKeyIds := make([]uint32, 0, amount)
-	for i := len(p) - amount; i < len(p); i++ {
-		pubKeyIds = append(pubKeyIds, p[i].PubKeyID)
-	}
-	return pubKeyIds
-}
 
 func (p PendingAccounts) NextPubKeyID(storage *st.Storage) (*uint32, error) {
 	if len(p) == 0 {

@@ -16,9 +16,9 @@ const (
 	AccountTreeDepth = merkletree.MaxDepth
 
 	batchSize            = 1 << 4
-	accountBatchOffset   = 1 << 31
-	leftSubtreeMaxValue  = accountBatchOffset - 2
-	rightSubtreeMaxValue = accountBatchOffset*2 - 18
+	AccountBatchOffset   = 1 << 31
+	leftSubtreeMaxValue  = AccountBatchOffset - 2
+	rightSubtreeMaxValue = AccountBatchOffset*2 - 18
 )
 
 var (
@@ -109,7 +109,7 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
 	accountTree := NewAccountTree(txDatabase)
 
 	for i := range leaves {
-		if leaves[i].PubKeyID < accountBatchOffset || leaves[i].PubKeyID > rightSubtreeMaxValue {
+		if leaves[i].PubKeyID < AccountBatchOffset || leaves[i].PubKeyID > rightSubtreeMaxValue {
 			return NewInvalidPubKeyIDError(leaves[i].PubKeyID)
 		}
 		_, err = accountTree.unsafeSet(&leaves[i])
@@ -145,7 +145,7 @@ func (s *AccountTree) unsafeSet(leaf *models.AccountLeaf) (models.Witness, error
 }
 
 func (s *AccountTree) NextBatchAccountPubKeyID() (*uint32, error) {
-	nextPubKeyID := uint32(accountBatchOffset)
+	nextPubKeyID := uint32(AccountBatchOffset)
 	err := s.database.Badger.View(func(txn *bdg.Txn) error {
 		opts := bdg.IteratorOptions{
 			PrefetchValues: false,
@@ -168,7 +168,7 @@ func (s *AccountTree) NextBatchAccountPubKeyID() (*uint32, error) {
 			return err
 		}
 
-		if account.PubKeyID < accountBatchOffset {
+		if account.PubKeyID < AccountBatchOffset {
 			return nil
 		}
 		nextPubKeyID = account.PubKeyID + 1
