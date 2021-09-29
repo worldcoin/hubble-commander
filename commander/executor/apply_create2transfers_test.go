@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -26,8 +25,6 @@ type ApplyCreate2TransfersTestSuite struct {
 	client              *eth.TestClient
 	transactionExecutor *TransactionExecutor
 	feeReceiver         *FeeReceiver
-	events              chan *accountregistry.AccountRegistrySinglePubkeyRegistered
-	unsubscribe         func()
 }
 
 func (s *ApplyCreate2TransfersTestSuite) SetupSuite() {
@@ -71,9 +68,6 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 	_, err = s.storage.StateTree.Set(3, &feeReceiverState)
 	s.NoError(err)
 
-	s.events, s.unsubscribe, err = s.client.WatchRegistrations(&bind.WatchOpts{})
-	s.NoError(err)
-
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, s.cfg, context.Background())
 	s.feeReceiver = &FeeReceiver{
 		StateID: 3,
@@ -82,7 +76,6 @@ func (s *ApplyCreate2TransfersTestSuite) SetupTest() {
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
-	s.unsubscribe()
 	s.client.Close()
 	err := s.storage.Teardown()
 	s.NoError(err)
@@ -264,7 +257,7 @@ func (s *ApplyTransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidFeeRec
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_RegistersPubKeyIDInCaseThereIsNoUnusedOne() {
-	pubKeyID, err := s.transactionExecutor.getOrRegisterPubKeyID(s.events, &create2Transfer, models.MakeUint256(1))
+	pubKeyID, err := s.transactionExecutor.getOrRegisterPubKeyID(&create2Transfer.ToPublicKey, models.MakeUint256(1))
 	s.NoError(err)
 	s.Equal(uint32(0), *pubKeyID)
 }
@@ -281,7 +274,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_ReturnsUnused
 	c2T := create2Transfer
 	c2T.ToPublicKey = models.PublicKey{1, 2, 3}
 
-	pubKeyID, err := s.transactionExecutor.getOrRegisterPubKeyID(s.events, &c2T, models.MakeUint256(1))
+	pubKeyID, err := s.transactionExecutor.getOrRegisterPubKeyID(&c2T.ToPublicKey, models.MakeUint256(1))
 	s.NoError(err)
 	s.Equal(uint32(4), *pubKeyID)
 }
