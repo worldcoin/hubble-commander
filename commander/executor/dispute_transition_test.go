@@ -17,7 +17,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -340,11 +339,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_First
 	transfer := testutils.MakeCreate2Transfer(0, ref.Uint32(3), 0, 50, wallets[1].PublicKey())
 	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &transfer)
 
-	registrations, unsubscribe, err := s.client.WatchRegistrations(&bind.WatchOpts{})
-	s.NoError(err)
-	defer unsubscribe()
-
-	pubKeyID, err := s.client.RegisterAccount(wallets[1].PublicKey(), registrations)
+	pubKeyID, err := s.client.RegisterAccountAndWait(wallets[1].PublicKey())
 	s.NoError(err)
 	s.EqualValues(4, *pubKeyID)
 
@@ -618,13 +613,10 @@ func setUserStates(s *require.Assertions, txExecutor *TransactionExecutor, domai
 		*createUserState(1, 200, 0),
 		*createUserState(2, 100, 0),
 	}
-	registrations, unsubscribe, err := txExecutor.client.WatchRegistrations(&bind.WatchOpts{})
-	s.NoError(err)
-	defer unsubscribe()
 
 	wallets := generateWallets(s, domain, len(userStates))
 	for i := range userStates {
-		pubKeyID, err := txExecutor.client.RegisterAccount(wallets[i].PublicKey(), registrations)
+		pubKeyID, err := txExecutor.client.RegisterAccountAndWait(wallets[i].PublicKey())
 		s.NoError(err)
 		s.Equal(userStates[i].PubKeyID, *pubKeyID)
 
