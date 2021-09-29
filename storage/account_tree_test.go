@@ -209,7 +209,7 @@ func (s *AccountTreeTestSuite) TestUnsafeSet_ReturnsWitness() {
 }
 
 func (s *AccountTreeTestSuite) TestSetBatch_AddsAccountLeaves() {
-	leaves := make([]models.AccountLeaf, batchSize)
+	leaves := make([]models.AccountLeaf, AccountBatchSize)
 	for i := range leaves {
 		leaves[i] = models.AccountLeaf{
 			PubKeyID:  uint32(i + AccountBatchOffset),
@@ -228,7 +228,7 @@ func (s *AccountTreeTestSuite) TestSetBatch_AddsAccountLeaves() {
 }
 
 func (s *AccountTreeTestSuite) TestSetBatch_ChangesStateRoot() {
-	leaves := make([]models.AccountLeaf, batchSize)
+	leaves := make([]models.AccountLeaf, AccountBatchSize)
 	for i := range leaves {
 		leaves[i] = models.AccountLeaf{
 			PubKeyID:  uint32(i + AccountBatchOffset),
@@ -262,7 +262,7 @@ func (s *AccountTreeTestSuite) TestSetBatch_InvalidLeavesLength() {
 }
 
 func (s *AccountTreeTestSuite) TestSetBatch_ReturnsErrorOnSettingAlreadySetLeaf() {
-	leaves := make([]models.AccountLeaf, batchSize)
+	leaves := make([]models.AccountLeaf, AccountBatchSize)
 	for i := range leaves {
 		leaves[i] = models.AccountLeaf{
 			PubKeyID:  uint32(i + AccountBatchOffset),
@@ -280,7 +280,7 @@ func (s *AccountTreeTestSuite) TestSetBatch_ReturnsErrorOnSettingAlreadySetLeaf(
 }
 
 func (s *AccountTreeTestSuite) TestSetBatch_InvalidPubKeyIDValue() {
-	leaves := make([]models.AccountLeaf, batchSize)
+	leaves := make([]models.AccountLeaf, AccountBatchSize)
 	for i := range leaves {
 		leaves[i] = models.AccountLeaf{
 			PubKeyID:  uint32(i + AccountBatchOffset),
@@ -301,7 +301,7 @@ func (s *AccountTreeTestSuite) TestSetBatch_InvalidPubKeyIDValue() {
 }
 
 func (s *AccountTreeTestSuite) TestNextBatchAccountPubKeyID() {
-	leaves := make([]models.AccountLeaf, batchSize)
+	leaves := make([]models.AccountLeaf, AccountBatchSize)
 	for i := range leaves {
 		leaves[i] = models.AccountLeaf{
 			PubKeyID:  uint32(i + AccountBatchOffset),
