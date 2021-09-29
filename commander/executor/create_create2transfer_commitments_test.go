@@ -297,6 +297,48 @@ func (s *Create2TransferCommitmentsTestSuite) TestRemoveCreate2Transfer() {
 	s.Equal([]models.Create2Transfer{transfer1, transfer3}, removeC2Ts(transfers, toRemove))
 }
 
+func (s *Create2TransferCommitmentsTestSuite) TestRegisterPendingAccounts_RegistersAccountsAndAddsToAccountTree() {
+	pendingAccounts := make(PendingAccounts, 0, st.AccountBatchOffset)
+	for i := range pendingAccounts {
+		pendingAccounts = append(pendingAccounts, models.AccountLeaf{
+			PubKeyID:  uint32(st.AccountBatchOffset + i),
+			PublicKey: models.PublicKey{byte(i), 8, 9},
+		})
+	}
+
+	err := s.transactionExecutor.registerPendingAccounts(pendingAccounts)
+	s.NoError(err)
+	s.client.Commit()
+
+	registeredAccounts := s.getRegisteredAccounts(0)
+	s.Equal(pendingAccounts, PendingAccounts(registeredAccounts))
+
+	for i := range pendingAccounts {
+		account, err := s.storage.AccountTree.Leaf(pendingAccounts[i].PubKeyID)
+		s.NoError(err)
+		s.Equal(pendingAccounts[i], *account)
+	}
+}
+
+func (s *Create2TransferCommitmentsTestSuite) TestRegisterPendingAccounts_FillsMissingAccounts() {
+	pendingAccounts := PendingAccounts{
+		{
+			PubKeyID:  st.AccountBatchOffset,
+			PublicKey: models.PublicKey{9, 8, 7},
+		},
+	}
+
+	err := s.transactionExecutor.registerPendingAccounts(pendingAccounts)
+	s.NoError(err)
+	s.client.Commit()
+
+	registeredAccounts := s.getRegisteredAccounts(0)
+	s.Equal(pendingAccounts[0], registeredAccounts[0])
+	for i := 1; i < len(pendingAccounts); i++ {
+		s.Equal(models.PublicKey{1, 2, 3}, registeredAccounts[i].PublicKey)
+	}
+}
+
 func (s *Create2TransferCommitmentsTestSuite) getRegisteredAccounts(startBlockNumber uint64) []models.AccountLeaf {
 	it, err := s.client.AccountRegistry.FilterBatchPubkeyRegistered(&bind.FilterOpts{Start: startBlockNumber})
 	s.NoError(err)
@@ -310,7 +352,7 @@ func (s *Create2TransferCommitmentsTestSuite) getRegisteredAccounts(startBlockNu
 		s.NoError(err)
 
 		pubKeyIDs := eth.ExtractPubKeyIDsFromBatchAccountEvent(it.Event)
-		pubKeys := unpack[0].([16][4]*big.Int)
+		pubKeys := unpack[0].([st.AccountBatchSize][4]*big.Int)
 		for i := range pubKeys {
 			registeredAccounts = append(registeredAccounts, models.AccountLeaf{
 				PubKeyID:  pubKeyIDs[i],
