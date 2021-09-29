@@ -6,7 +6,7 @@ on:
 
 jobs:
   build-image:
-    name: Build Docker image
+    name: Build Docker image with latest tag
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
@@ -70,7 +70,7 @@ jobs:
           HUBBLE_E2E=docker make test-e2e
 
   deploy:
-    name: Deploy to AWS
+    name: Deploy to AWS Crypto machine
     needs: e2e
     runs-on: ubuntu-20.04
     steps:
