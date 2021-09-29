@@ -1,12 +1,12 @@
-name: E2E Test
+name: E2E Test (0.4.0)
 on:
   push:
     branches:
-      - master
+      - 0.4.0
 
 jobs:
   build-image:
-    name: Build Docker image with latest tag
+    name: Build Docker image with latest-0.4.0 tag
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
@@ -24,7 +24,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ghcr.io/worldcoin/hubble-commander:latest
+          tags: ghcr.io/worldcoin/hubble-commander:latest-0.4.0
   e2e:
     name: Run E2E test
     needs: build-image
@@ -63,24 +63,25 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Pull the commander image
-        run: docker pull ghcr.io/worldcoin/hubble-commander:latest
+        run: docker pull ghcr.io/worldcoin/hubble-commander:latest-0.4.0
       - name: Run E2E tests
         run: |
           make setup-geth &
           HUBBLE_E2E=docker make test-e2e
 
   deploy:
-    name: Deploy to AWS Crypto machine
+    name: Deploy to AWS Staging machine
     needs: e2e
     runs-on: ubuntu-20.04
     steps:
       - name: Deploy to AWS
         uses: appleboy/ssh-action@master
         with:
-          host: ec2-3-237-17-229.compute-1.amazonaws.com
+          host: staging.hubble.worldcoin-distributors.com
           username: ec2-user
-          key: ${{ secrets.AWS_SSH_KEY }}
+          key: ${{ secrets.AWS_HUBBLE_CONSUMER_BACKEND_SSH_KEY }}
           script: |
+            cd deployment/
             docker-compose pull
-            docker-compose up -d
-            docker images -f "before=ghcr.io/worldcoin/hubble-commander:latest" -f "dangling=true" -q ghcr.io/worldcoin/hubble-commander | xargs docker image rm || true
+            docker-compose up -d commander
+            docker images -f "before=ghcr.io/worldcoin/hubble-commander:latest-0.4.0" -f "dangling=true" -q ghcr.io/worldcoin/hubble-commander | xargs docker image rm || true
