@@ -11,7 +11,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -265,14 +264,14 @@ func (s *ApplyTransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidFeeRec
 	s.Len(disputableErr.Proofs, 5)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_GetsPubKeyIDFromAccountTree() {
+func (s *ApplyCreate2TransfersTestSuite) TestGetPubKeyID_GetsPubKeyIDFromAccountTree() {
 	pubKeyID, isPending, err := s.transactionExecutor.getPubKeyID(PendingAccounts{}, &create2Transfer, models.MakeUint256(1))
 	s.NoError(err)
 	s.True(isPending)
 	s.Equal(uint32(2147483648), *pubKeyID)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_PredictsPubKeyIDInCaseThereIsNoUnusedOne() {
+func (s *ApplyCreate2TransfersTestSuite) TestGetPubKeyID_PredictsPubKeyIDInCaseThereIsNoUnusedOne() {
 	pendingAccounts := PendingAccounts{
 		{
 			PubKeyID:  2147483650,
@@ -285,7 +284,7 @@ func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_PredictsPubKe
 	s.Equal(uint32(2147483651), *pubKeyID)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_ReturnsUnusedPubKeyID() {
+func (s *ApplyCreate2TransfersTestSuite) TestGetPubKeyID_ReturnsUnusedPubKeyID() {
 	for i := 1; i <= 10; i++ {
 		err := s.storage.AccountTree.SetSingle(&models.AccountLeaf{
 			PubKeyID:  uint32(i),
