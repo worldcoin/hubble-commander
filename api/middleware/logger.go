@@ -53,7 +53,7 @@ func logBatchRequest(body []byte, start time.Time) {
 func extractMethodNames(decoded []payload) string {
 	methods := make([]string, 0, len(decoded))
 	for i := range decoded {
-		if len(decoded[i].Method) == 0 {
+		if decoded[i].Method == "" {
 			decoded[i].Method = "invalid request"
 		}
 		methods = append(methods, decoded[i].Method)
