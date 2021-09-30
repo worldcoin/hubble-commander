@@ -77,7 +77,7 @@ jobs:
       - name: Deploy to AWS
         uses: appleboy/ssh-action@master
         with:
-          host: staging.hubble.worldcoin-distributors.com
+          host: ${{ secrets.AWS_STAGING_HOST }}
           username: ec2-user
           key: ${{ secrets.AWS_HUBBLE_CONSUMER_BACKEND_SSH_KEY }}
           script: |
