@@ -20,10 +20,19 @@ const (
 
 var ErrInvalidPubKeysLength = errors.New("invalid public keys length")
 
-func (c *Client) RegisterBatchAccount(
+func (c *Client) RegisterBatchAccountAndWait(
 	publicKeys []models.PublicKey,
 	ev chan *accountregistry.AccountRegistryBatchPubkeyRegistered,
 ) ([]uint32, error) {
+	tx, err := c.RegisterBatchAccount(publicKeys)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.WaitForBatchAccountRegistration(tx, ev)
+}
+
+func (c *Client) RegisterBatchAccount(publicKeys []models.PublicKey) (*types.Transaction, error) {
 	if len(publicKeys) != accountBatchSize {
 		return nil, ErrInvalidPubKeysLength
 	}
@@ -35,10 +44,9 @@ func (c *Client) RegisterBatchAccount(
 
 	tx, err := c.AccountRegistry.RegisterBatch(c.ChainConnection.GetAccount(), pubkeys)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
-
-	return c.WaitForBatchAccountRegistration(tx, ev)
+	return tx, nil
 }
 
 func (c *Client) WatchBatchAccountRegistrations(opts *bind.WatchOpts) (
