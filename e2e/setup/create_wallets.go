@@ -12,6 +12,10 @@ func CreateWallets(domain bls.Domain) ([]bls.Wallet, error) {
 	walletsSeen := make(map[string]bool)
 	wallets := make([]bls.Wallet, 0, len(accounts))
 	for i := range accounts {
+		if accounts[i].PrivateKey == nil {
+			panic("genesis accounts for e2e tests require private keys")
+		}
+
 		wallet, err := bls.NewWallet(accounts[i].PrivateKey[:], domain)
 		if err != nil {
 			return nil, err
