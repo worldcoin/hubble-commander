@@ -11,6 +11,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var ErrNoPublicKeysInGenesisAccounts = fmt.Errorf("genesis accounts for deployment require public keys")
+
 func Deploy(cfg *config.Config, chain deployer.ChainConnection) (chainSpec *string, err error) {
 	tempStorage, err := st.NewTemporaryStorage()
 	if err != nil {
@@ -47,6 +49,11 @@ func deployContractsAndSetupGenesisState(
 	chain deployer.ChainConnection,
 	accounts []models.GenesisAccount,
 ) (*models.ChainState, error) {
+	err := validateGenesisAccounts(accounts)
+	if err != nil {
+		return nil, err
+	}
+
 	proofOfBurnAddress, _, err := deployer.DeployProofOfBurn(chain)
 	if err != nil {
 		return nil, err
@@ -92,4 +99,14 @@ func deployContractsAndSetupGenesisState(
 	}
 
 	return chainState, nil
+}
+
+func validateGenesisAccounts(accounts []models.GenesisAccount) error {
+	for i := range accounts {
+		if accounts[i].PublicKey == nil {
+			return ErrNoPublicKeysInGenesisAccounts
+		}
+	}
+
+	return nil
 }

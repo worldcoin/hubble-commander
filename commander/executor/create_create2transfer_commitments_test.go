@@ -2,6 +2,7 @@ package executor
 
 import (
 	"context"
+	"math/big"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
@@ -11,6 +12,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -256,6 +258,22 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	}
 }
 
+func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_RegistersAccounts() {
+	transfers := generateValidCreate2Transfers(1)
+	s.addCreate2Transfers(transfers)
+
+	expectedTxsLength := encoder.Create2TransferLength * len(transfers)
+	commitments, err := s.transactionExecutor.CreateCreate2TransferCommitments(testDomain)
+	s.NoError(err)
+	s.Len(commitments, 1)
+	s.Len(commitments[0].Transactions, expectedTxsLength)
+
+	s.client.Commit()
+	accounts := s.getRegisteredAccounts(0)
+	s.Len(accounts, 16)
+	s.Equal(transfers[0].ToPublicKey, accounts[0].PublicKey)
+}
+
 func (s *Create2TransferCommitmentsTestSuite) TestRemoveCreate2Transfer() {
 	transfer1 := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
@@ -277,6 +295,72 @@ func (s *Create2TransferCommitmentsTestSuite) TestRemoveCreate2Transfer() {
 	toRemove := []models.Create2Transfer{transfer2}
 
 	s.Equal([]models.Create2Transfer{transfer1, transfer3}, removeC2Ts(transfers, toRemove))
+}
+
+func (s *Create2TransferCommitmentsTestSuite) TestRegisterPendingAccounts_RegistersAccountsAndAddsToAccountTree() {
+	pendingAccounts := make([]models.AccountLeaf, st.AccountBatchSize)
+	for i := range pendingAccounts {
+		pendingAccounts[i] = models.AccountLeaf{
+			PubKeyID:  uint32(st.AccountBatchOffset + i),
+			PublicKey: models.PublicKey{byte(i), 8, 9},
+		}
+	}
+
+	err := s.transactionExecutor.registerPendingAccounts(pendingAccounts)
+	s.NoError(err)
+	s.client.Commit()
+
+	registeredAccounts := s.getRegisteredAccounts(0)
+	s.Equal(pendingAccounts, registeredAccounts)
+
+	for i := range pendingAccounts {
+		account, err := s.storage.AccountTree.Leaf(pendingAccounts[i].PubKeyID)
+		s.NoError(err)
+		s.Equal(pendingAccounts[i], *account)
+	}
+}
+
+func (s *Create2TransferCommitmentsTestSuite) TestRegisterPendingAccounts_FillsMissingAccounts() {
+	pendingAccounts := PendingAccounts{
+		{
+			PubKeyID:  st.AccountBatchOffset,
+			PublicKey: models.PublicKey{9, 8, 7},
+		},
+	}
+
+	err := s.transactionExecutor.registerPendingAccounts(pendingAccounts)
+	s.NoError(err)
+	s.client.Commit()
+
+	registeredAccounts := s.getRegisteredAccounts(0)
+	s.Equal(pendingAccounts[0], registeredAccounts[0])
+	for i := 1; i < len(pendingAccounts); i++ {
+		s.Equal(models.PublicKey{1, 2, 3}, registeredAccounts[i].PublicKey)
+	}
+}
+
+func (s *Create2TransferCommitmentsTestSuite) getRegisteredAccounts(startBlockNumber uint64) []models.AccountLeaf {
+	it, err := s.client.AccountRegistry.FilterBatchPubkeyRegistered(&bind.FilterOpts{Start: startBlockNumber})
+	s.NoError(err)
+
+	registeredAccounts := make([]models.AccountLeaf, 0)
+	for it.Next() {
+		tx, _, err := s.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
+		s.NoError(err)
+
+		unpack, err := s.client.AccountRegistryABI.Methods["registerBatch"].Inputs.Unpack(tx.Data()[4:])
+		s.NoError(err)
+
+		pubKeyIDs := eth.ExtractPubKeyIDsFromBatchAccountEvent(it.Event)
+		pubKeys := unpack[0].([st.AccountBatchSize][4]*big.Int)
+		for i := range pubKeys {
+			registeredAccounts = append(registeredAccounts, models.AccountLeaf{
+				PubKeyID:  pubKeyIDs[i],
+				PublicKey: models.MakePublicKeyFromInts(pubKeys[i]),
+			})
+		}
+	}
+	return registeredAccounts
 }
 
 func TestCreate2TransferCommitmentsTestSuite(t *testing.T) {
