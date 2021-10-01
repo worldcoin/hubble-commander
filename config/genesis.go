@@ -27,18 +27,31 @@ func decodeRawGenesisAccounts(rawGenesisAccounts []models.RawGenesisAccount) ([]
 	genesisAccounts := make([]models.GenesisAccount, 0, len(rawGenesisAccounts))
 
 	for i := range rawGenesisAccounts {
-		var privateKey [32]byte
-
-		decodedPrivateKey, err := hex.DecodeString(rawGenesisAccounts[i].PrivateKey)
-		if err != nil {
-			return nil, err
-		}
-		copy(privateKey[:], decodedPrivateKey)
-
-		genesisAccounts = append(genesisAccounts, models.GenesisAccount{
-			PrivateKey: privateKey,
+		account := models.GenesisAccount{
+			PublicKey:  nil,
+			PrivateKey: nil,
 			Balance:    models.MakeUint256(rawGenesisAccounts[i].Balance),
-		})
+		}
+
+		if rawGenesisAccounts[i].PublicKey != "" {
+			decodedPublicKey, err := hex.DecodeString(rawGenesisAccounts[i].PublicKey)
+			if err != nil {
+				return nil, err
+			}
+			account.PublicKey = &models.PublicKey{}
+			copy(account.PublicKey[:], decodedPublicKey)
+		}
+
+		if rawGenesisAccounts[i].PrivateKey != "" {
+			decodedPrivateKey, err := hex.DecodeString(rawGenesisAccounts[i].PrivateKey)
+			if err != nil {
+				return nil, err
+			}
+			account.PrivateKey = &[32]byte{}
+			copy(account.PrivateKey[:], decodedPrivateKey)
+		}
+
+		genesisAccounts = append(genesisAccounts, account)
 	}
 
 	return genesisAccounts, nil

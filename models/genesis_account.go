@@ -9,12 +9,14 @@ import (
 const populatedGenesisAccountByteSize = 168
 
 type RawGenesisAccount struct {
+	PublicKey  string `yaml:"publicKey"`
 	PrivateKey string `yaml:"privateKey"`
 	Balance    uint64 `yaml:"balance"`
 }
 
 type GenesisAccount struct {
-	PrivateKey [32]byte
+	PublicKey  *PublicKey
+	PrivateKey *[32]byte
 	Balance    Uint256
 }
 
