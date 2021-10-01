@@ -8,8 +8,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/utils"
 	log "github.com/sirupsen/logrus"
 )
+
+var disabledAPIMethods = []string{
+	"getVersion",
+	"getNetworkInfo",
+}
 
 type payload struct {
 	Method string `json:"method"`
@@ -31,12 +37,26 @@ func Logger(next http.Handler) http.Handler {
 
 func logRequest(body []byte, start time.Time) {
 	var decoded payload
+
 	err := json.Unmarshal(body, &decoded)
 	if err != nil {
 		logBatchRequest(body, start)
 		return
 	}
-	log.Debugf("API: method: %v, duration: %v", decoded.Method, time.Since(start).Round(time.Millisecond).String())
+
+	if shouldMethodBeLogged(decoded.Method) {
+		log.Debugf("API: method: %v, duration: %v", decoded.Method, time.Since(start).Round(time.Millisecond).String())
+	}
+}
+
+func shouldMethodBeLogged(method string) bool {
+	split := strings.Split(method, "_")
+
+	if len(split) < 2 {
+		return true
+	}
+
+	return !utils.StringInSlice(split[1], disabledAPIMethods)
 }
 
 func logBatchRequest(body []byte, start time.Time) {
