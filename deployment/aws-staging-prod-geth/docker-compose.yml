@@ -24,8 +24,8 @@ services:
     command:
       - --datadir=/root/ethereum
       - --keystore=/root/keystore
-      - --unlock 0x8933394714873724b97a518533a974b3263b1a79
-      - --password ~/.keystore-password
+      - --unlock=0x8933394714873724b97a518533a974b3263b1a79
+      - --password=~/.keystore-password
       - --mine
       - --http
       - --http.addr=0.0.0.0
