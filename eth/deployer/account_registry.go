@@ -10,7 +10,7 @@ import (
 
 func DeployAccountRegistry(c chain.Connection) (*common.Address, *uint64, *accountregistry.AccountRegistry, error) {
 	log.Println("Deploying AccountRegistry")
-	accountRegistryAddress, tx, accountRegistry, err := accountregistry.DeployAccountRegistry(c.GetAccount(), c.GetBackend())
+	accountRegistryAddress, tx, accountRegistry, err := accountregistry.DeployAccountRegistry(c.GetAccount(), c.GetBackend(), *chooser)
 	if err != nil {
 		return nil, nil, nil, errors.WithStack(err)
 	}

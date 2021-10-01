@@ -55,7 +55,12 @@ func deployContractsAndSetupGenesisState(
 		return nil, err
 	}
 
-	accountRegistryAddress, accountRegistryDeploymentBlock, accountRegistry, err := deployer.DeployAccountRegistry(blockchain)
+	proofOfBurnAddress, _, err := deployer.DeployProofOfBurn(blockchain)
+	if err != nil {
+		return nil, err
+	}
+
+	accountRegistryAddress, accountRegistryDeploymentBlock, accountRegistry, err := deployer.DeployAccountRegistry(blockchain, proofOfBurnAddress)
 	if err != nil {
 		return nil, err
 	}
