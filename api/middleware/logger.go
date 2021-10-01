@@ -44,11 +44,19 @@ func logRequest(body []byte, start time.Time) {
 		return
 	}
 
-	method := strings.Split(decoded.Method, "_")[1]
-
-	if !utils.StringInSlice(method, disabledAPIMethods) {
+	if shouldMethodBeLogged(decoded.Method) {
 		log.Debugf("API: method: %v, duration: %v", decoded.Method, time.Since(start).Round(time.Millisecond).String())
 	}
+}
+
+func shouldMethodBeLogged(method string) bool {
+	split := strings.Split(method, "_")
+
+	if len(split) < 2 {
+		return true
+	}
+
+	return !utils.StringInSlice(split[1], disabledAPIMethods)
 }
 
 func logBatchRequest(body []byte, start time.Time) {
