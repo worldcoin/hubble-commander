@@ -1,11 +1,12 @@
 package storage
 
 import (
-	"encoding/json"
+	"encoding/hex"
 	"fmt"
-	"github.com/Worldcoin/hubble-commander/config"
 	"math/big"
 	"testing"
+
+	"github.com/Worldcoin/hubble-commander/config"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -364,7 +365,25 @@ func TestReadAllRegisterAccounts(t *testing.T) {
 		accounts = append(accounts, *leaf)
 	}
 
-	jsonAccounts, err := json.MarshalIndent(accounts, "", "\t")
-	require.NoError(t, err)
-	fmt.Println(string(jsonAccounts))
+	// jsonAccounts, err := json.MarshalIndent(accounts, "", "\t")
+	// require.NoError(t, err)
+	// fmt.Println(string(jsonAccounts))
+
+	for _, account := range accounts {
+		fmt.Printf("%d = 0x%s\n", account.PubKeyID, hex.EncodeToString(account.PublicKey.Bytes()))
+	}
+
+	// counter := 0
+	// for i := range accounts {
+	// 	counter++
+	// 	if counter == 1 {
+	// 		fmt.Printf("%d -", accounts[i].PubKeyID)
+	// 	}
+	// 	if counter == 16 {
+	// 		fmt.Printf(" %d\n", accounts[i].PubKeyID)
+	// 		counter = 0
+	// 	}
+	// }
+
+	fmt.Printf("\n\n\n")
 }

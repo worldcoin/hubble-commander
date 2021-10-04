@@ -200,7 +200,7 @@ func bootstrapFromChainState(
 	if err != nil {
 		return nil, err
 	}
-	importedChainState := newChainStateFromChainSpec(chainSpec)
+	importedChainState := NewChainStateFromChainSpec(chainSpec)
 
 	if dbChainState == nil {
 		return bootstrapChainStateAndCommander(chain, storage, importedChainState, cfg.Rollup)
@@ -212,7 +212,7 @@ func bootstrapFromChainState(
 	}
 
 	log.Printf("Continuing from saved state on ChainID = %s", importedChainState.ChainID.String())
-	return createClientFromChainState(chain, importedChainState, cfg.Rollup)
+	return CreateClientFromChainState(chain, importedChainState, cfg.Rollup)
 }
 
 func compareChainStates(chainStateA, chainStateB *models.ChainState) error {
@@ -285,7 +285,7 @@ func setGenesisStateAndCreateClient(
 		return nil, err
 	}
 
-	client, err := createClientFromChainState(chain, chainState, cfg)
+	client, err := CreateClientFromChainState(chain, chainState, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -323,7 +323,7 @@ func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {
 	}, nil
 }
 
-func createClientFromChainState(
+func CreateClientFromChainState(
 	chain deployer.ChainConnection,
 	chainState *models.ChainState,
 	cfg *config.RollupConfig,

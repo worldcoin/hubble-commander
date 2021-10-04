@@ -44,7 +44,7 @@ func makeChainSpec(chainState *models.ChainState) models.ChainSpec {
 	}
 }
 
-func newChainStateFromChainSpec(chainSpec *models.ChainSpec) *models.ChainState {
+func NewChainStateFromChainSpec(chainSpec *models.ChainSpec) *models.ChainState {
 	return &models.ChainState{
 		ChainID:         chainSpec.ChainID,
 		AccountRegistry: chainSpec.AccountRegistry,
