@@ -15,6 +15,7 @@
 #  max_commitments_per_batch: 32
 #  transition_dispute_gas_limit: 5000000
 #  signature_dispute_gas_limit: 7500000
+#  batch_account_registration_gas_limit: 8000000
 #  commitment_loop_interval: 500ms
 #  batch_loop_interval: 500ms
 #
