@@ -1,0 +1,47 @@
+version: '3'
+
+services:
+  import-geth:
+    image: ethereum/client-go:stable
+    volumes:
+      - ./geth-data-volume:/root/ethereum
+      - ./geth-dump:/root/dump/
+    command:
+      - import
+      - --datadir=/root/ethereum
+      - /root/dump/dump-1
+  geth:
+    image: ethereum/client-go:stable
+    ports:
+      - "8545:8545"
+      - "8546:8546"
+    volumes:
+      - ./geth-data-volume:/root/ethereum
+      - ./geth-keystore:/root/keystore
+    command:
+      - --datadir=/root/ethereum
+      - --keystore=/root/keystore
+      - --dev
+      - --dev.period=1
+      - --http
+      - --http.addr=0.0.0.0
+      - --ws
+      - --ws.addr=0.0.0.0
+
+  postgres:
+    image: postgres:13.1
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-q", "-d", "postgres", "-U", "root" ]
+      timeout: 45s
+      interval: 10s
+      retries: 10
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: hubble
+    volumes:
+      - ./postgres-data-volume:/var/lib/postgresql/data
+    ports:
+      - 5433:5433
+    command: -p 5433
