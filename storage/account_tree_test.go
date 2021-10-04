@@ -1,6 +1,9 @@
 package storage
 
 import (
+	"encoding/json"
+	"fmt"
+	"github.com/Worldcoin/hubble-commander/config"
 	"math/big"
 	"testing"
 
@@ -341,4 +344,27 @@ func (s *AccountTreeTestSuite) randomPublicKey() models.PublicKey {
 
 func TestAccountTreeTestSuite(t *testing.T) {
 	suite.Run(t, new(AccountTreeTestSuite))
+}
+
+func TestReadAllRegisterAccounts(t *testing.T) {
+	cfg := config.GetConfig()
+	//cfg.Badger.Path = "badgerPath"
+	database, err := NewDatabase(cfg)
+	require.NoError(t, err)
+
+	accountTree := NewAccountTree(database)
+
+	accounts := make([]models.AccountLeaf, 0, 100)
+	for i := AccountBatchOffset; ; i++ {
+		leaf, err := accountTree.Leaf(uint32(i))
+		if IsNotFoundError(err) {
+			break
+		}
+		require.NoError(t, err)
+		accounts = append(accounts, *leaf)
+	}
+
+	jsonAccounts, err := json.MarshalIndent(accounts, "", "\t")
+	require.NoError(t, err)
+	fmt.Println(string(jsonAccounts))
 }
