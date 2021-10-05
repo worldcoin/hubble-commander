@@ -204,12 +204,3 @@ Run the E2E tests:
 ```shell
 make test-e2e-locally
 ```
-
-## TODO
-
-* Do not use a genesis but instead construct desired initial state using
-  rollup operations. This avoids the data-availability problem on the genesis.
-
-* Desirable renames
-  * ProofOfBurn -> ProofOfAuthority
-  * Create2 -> Anything better
