@@ -33,6 +33,8 @@ services:
       - --keystore=/root/keystore
       - init
       - /root/genesis/worldcoin.json
+    networks:
+      hubble:
 
   mining-geth:
     image: ethereum/client-go:stable
@@ -50,7 +52,10 @@ services:
       - --unlock=0x8933394714873724b97a518533a974b3263b1a79
       - --password=/root/.keystore-password
       - --mine
-      - --nat=extip:172.21.0.2 # NOTE: must be the current ip of the container, geth broadcasts it to other peers, api-geth uses it to connect to it
+      - --nat=extip:172.20.0.5 # NOTE: must be the current ip of the container, geth broadcasts it to other peers, api-geth uses it to connect to it
+    networks:
+      hubble:
+        ipv4_address: 172.20.0.5
 
   api-geth-init:
     image: ethereum/client-go:stable
@@ -61,6 +66,8 @@ services:
       - --datadir=/root/ethereum
       - init
       - /root/genesis/worldcoin.json
+    networks:
+      hubble:
 
   api-geth:
     image: ethereum/client-go:stable
@@ -81,6 +88,8 @@ services:
       - --port=30305
       # token exported from mining-geth
       - --bootnodes=enr:-KO4QEvqjD2SoIOeJJ1DqT5jcnV0KPzd8RlYMsH6hyvGKXepTlx2ThgD7MgkkR-Tfu-FV06-bK2W0C1IME5avDGOkJSGAXw78bjsg2V0aMfGhBvZ_kKAgmlkgnY0gmlwhKwVAAKJc2VjcDI1NmsxoQIR5xU5Qj0Hs7sdbL8ESPpwafe6KI8_xFBt-hSza9iKSYRzbmFwwIN0Y3CCdl-DdWRwgnZf
+    networks:
+      hubble:
     depends_on:
       - mining-geth
 
@@ -99,8 +108,10 @@ services:
     volumes:
       - postgres-data-volume:/var/lib/postgresql/data
     ports:
-      - 5433:5433
+      - "5433:5433"
     command: -p 5433
+    networks:
+      hubble:
 
   deploy:
     image: ghcr.io/worldcoin/hubble-commander:latest-0.4.0
@@ -112,6 +123,8 @@ services:
     env_file: ~/.private-key.env
     volumes:
       - chain-spec-volume:/chain-spec
+    networks:
+      hubble:
     depends_on:
       - api-geth
 
@@ -131,10 +144,12 @@ services:
       HUBBLE_LOG_LEVEL: debug
     env_file: ~/.private-key.env
     ports:
-      - 5000:8080
+      - "5000:8080"
     volumes:
       - chain-spec-volume:/chain-spec
       - badger-data-volume:/db/data/hubble
+    networks:
+      hubble:
     depends_on:
       - postgres
       - api-geth
@@ -145,3 +160,10 @@ volumes:
   postgres-data-volume:
   chain-spec-volume:
   badger-data-volume:
+
+networks:
+  hubble:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
