@@ -79,15 +79,15 @@ func DeployRollup(c deployer.ChainConnection) (*RollupContracts, error) {
 }
 
 // nolint:funlen,gocyclo
-func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig) (*RollupContracts, error) {
-	fillWithDefaults(&config.Params)
+func DeployConfiguredRollup(c deployer.ChainConnection, cfg DeploymentConfig) (*RollupContracts, error) {
+	fillWithDefaults(&cfg.Params)
 
 	proofOfBurnAddress, proofOfBurn, err := deployer.DeployProofOfBurn(c)
 	if err != nil {
 		return nil, err
 	}
 
-	err = deployMissing(&config.Dependencies, c, proofOfBurnAddress)
+	err = deployMissing(&cfg.Dependencies, c, proofOfBurnAddress)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -139,7 +139,7 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 		c.GetBackend(),
 		tokenRegistryAddress,
 		vaultAddress,
-		config.MaxDepositSubtreeDepth.ToBig(),
+		cfg.MaxDepositSubtreeDepth.ToBig(),
 	)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -151,7 +151,7 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 		return nil, err
 	}
 
-	accountRegistry, err := accountregistry.NewAccountRegistry(*config.AccountRegistry, c.GetBackend())
+	accountRegistry, err := accountregistry.NewAccountRegistry(*cfg.AccountRegistry, c.GetBackend())
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -171,21 +171,21 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 
 	log.Println("Deploying Rollup")
 	stateRoot := [32]byte{}
-	copy(stateRoot[:], config.GenesisStateRoot.Bytes())
+	copy(stateRoot[:], cfg.GenesisStateRoot.Bytes())
 	rollupAddress, tx, rollupContract, err := rollup.DeployRollup(
 		c.GetAccount(),
 		c.GetBackend(),
 		*proofOfBurnAddress,
 		depositManagerAddress,
-		*config.AccountRegistry,
+		*cfg.AccountRegistry,
 		txHelpers.TransferAddress,
 		txHelpers.MassMigrationAddress,
 		txHelpers.Create2TransferAddress,
 		stateRoot,
-		config.StakeAmount.ToBig(),
-		config.BlocksToFinalise.ToBig(),
-		config.MinGasLeft.ToBig(),
-		config.MaxTxsPerCommit.ToBig(),
+		cfg.StakeAmount.ToBig(),
+		cfg.BlocksToFinalise.ToBig(),
+		cfg.MinGasLeft.ToBig(),
+		cfg.MaxTxsPerCommit.ToBig(),
 	)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -198,7 +198,7 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 	}
 
 	return &RollupContracts{
-		Config:          config,
+		Config:          cfg,
 		Chooser:         proofOfBurn,
 		AccountRegistry: accountRegistry,
 		TokenRegistry:   tokenRegistry,
@@ -294,7 +294,7 @@ func fillWithDefaults(params *Params) {
 		params.StakeAmount = models.NewUint256(DefaultStakeAmount)
 	}
 	if params.BlocksToFinalise == nil {
-		params.BlocksToFinalise = models.NewUint256(config.DefaultBlocksToFinalise)
+		params.BlocksToFinalise = models.NewUint256(uint64(config.DefaultBlocksToFinalise))
 	}
 	if params.MinGasLeft == nil {
 		params.MinGasLeft = models.NewUint256(DefaultMinGasLeft)

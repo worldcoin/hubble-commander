@@ -16,7 +16,7 @@ const (
 	SimulatorChainID                 = 1337
 	DefaultTransitionDisputeGasLimit = uint64(5_000_000)
 	DefaultSignatureDisputeGasLimit  = uint64(7_500_000)
-	DefaultBlocksToFinalise          = uint64(7 * 24 * 60 * 4)
+	DefaultBlocksToFinalise          = uint32(7 * 24 * 60 * 4)
 )
 
 func setupViper() {
@@ -42,7 +42,7 @@ func GetConfig() *Config {
 		Bootstrap: &BootstrapConfig{
 			Prune:            getBool("bootstrap.prune", false),
 			GenesisAccounts:  getGenesisAccounts(),
-			BlocksToFinalise: getUint64("bootstrap.blocks_to_finalise", DefaultBlocksToFinalise),
+			BlocksToFinalise: getUint32("bootstrap.blocks_to_finalise", DefaultBlocksToFinalise), // nolint:misspell
 			BootstrapNodeURL: getStringOrNil("bootstrap.node_url"),
 			ChainSpecPath:    getStringOrNil("bootstrap.chain_spec_path"),
 		},

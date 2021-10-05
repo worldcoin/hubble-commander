@@ -47,9 +47,9 @@ func Deploy(cfg *config.Config, chain deployer.ChainConnection) (chainSpec *stri
 func deployContractsAndSetupGenesisState(
 	storage *st.Storage,
 	chain deployer.ChainConnection,
-	config *config.BootstrapConfig,
+	cfg *config.BootstrapConfig,
 ) (*models.ChainState, error) {
-	err := validateGenesisAccounts(config.GenesisAccounts)
+	err := validateGenesisAccounts(cfg.GenesisAccounts)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func deployContractsAndSetupGenesisState(
 		return nil, err
 	}
 
-	registeredAccounts, err := RegisterGenesisAccounts(chain.GetAccount(), accountRegistry, config.GenesisAccounts)
+	registeredAccounts, err := RegisterGenesisAccounts(chain.GetAccount(), accountRegistry, cfg.GenesisAccounts)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func deployContractsAndSetupGenesisState(
 	contracts, err := rollup.DeployConfiguredRollup(chain, rollup.DeploymentConfig{
 		Params: rollup.Params{
 			GenesisStateRoot: stateRoot,
-			BlocksToFinalise: models.NewUint256(config.BlocksToFinalise),
+			BlocksToFinalise: models.NewUint256(uint64(cfg.BlocksToFinalise)),
 		},
 		Dependencies: rollup.Dependencies{AccountRegistry: accountRegistryAddress},
 	})
