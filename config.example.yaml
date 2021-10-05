@@ -3,8 +3,11 @@
 #  format: text
 #
 #bootstrap:
-#  chain_spec_path: chain-spec.yaml  # set this path to bootstrap from a chain spec file
+#  prune: false
+#  genesis_path: genesis.yaml
 #  node_url: http://localhost:8080   # set this url to bootstrap from a remote node
+#  chain_spec_path: chain-spec.yaml  # set this path to bootstrap from a chain spec file
+#  blocks_to_finalise: 40320         # 7 * 24 * 60 * 4
 #
 #rollup:
 #  sync_size: 50
