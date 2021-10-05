@@ -3,6 +3,7 @@ package rollup
 import (
 	"strings"
 
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/create2transfer"
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
@@ -25,7 +26,6 @@ const (
 	DefaultMaxDepositSubtreeDepth = 2
 	DefaultGenesisStateRoot       = "cf277fb80a82478460e8988570b718f1e083ceb76f7e271a1a1497e5975f53ae"
 	DefaultStakeAmount            = 1e17
-	DefaultBlocksToFinalise       = 7 * 24 * 60 * 4
 	DefaultMinGasLeft             = 10_000
 	DefaultMaxTxsPerCommit        = 32
 
@@ -79,23 +79,17 @@ func DeployRollup(c deployer.ChainConnection) (*RollupContracts, error) {
 }
 
 // nolint:funlen,gocyclo
-func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig) (*RollupContracts, error) {
-	fillWithDefaults(&config.Params)
-	err := deployMissing(&config.Dependencies, c)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
+func DeployConfiguredRollup(c deployer.ChainConnection, cfg DeploymentConfig) (*RollupContracts, error) {
+	fillWithDefaults(&cfg.Params)
 
-	log.Println("Deploying ProofOfBurn")
-	proofOfBurnAddress, tx, proofOfBurn, err := proofofburn.DeployProofOfBurn(c.GetAccount(), c.GetBackend())
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	c.Commit()
-	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
+	proofOfBurnAddress, proofOfBurn, err := deployer.DeployProofOfBurn(c)
 	if err != nil {
 		return nil, err
+	}
+
+	err = deployMissing(&cfg.Dependencies, c, proofOfBurnAddress)
+	if err != nil {
+		return nil, errors.WithStack(err)
 	}
 
 	log.Println("Deploying TokenRegistry")
@@ -145,7 +139,7 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 		c.GetBackend(),
 		tokenRegistryAddress,
 		vaultAddress,
-		config.MaxDepositSubtreeDepth.ToBig(),
+		cfg.MaxDepositSubtreeDepth.ToBig(),
 	)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -157,7 +151,7 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 		return nil, err
 	}
 
-	accountRegistry, err := accountregistry.NewAccountRegistry(*config.AccountRegistry, c.GetBackend())
+	accountRegistry, err := accountregistry.NewAccountRegistry(*cfg.AccountRegistry, c.GetBackend())
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -177,21 +171,21 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 
 	log.Println("Deploying Rollup")
 	stateRoot := [32]byte{}
-	copy(stateRoot[:], config.GenesisStateRoot.Bytes())
+	copy(stateRoot[:], cfg.GenesisStateRoot.Bytes())
 	rollupAddress, tx, rollupContract, err := rollup.DeployRollup(
 		c.GetAccount(),
 		c.GetBackend(),
-		proofOfBurnAddress,
+		*proofOfBurnAddress,
 		depositManagerAddress,
-		*config.AccountRegistry,
+		*cfg.AccountRegistry,
 		txHelpers.TransferAddress,
 		txHelpers.MassMigrationAddress,
 		txHelpers.Create2TransferAddress,
 		stateRoot,
-		config.StakeAmount.ToBig(),
-		config.BlocksToFinalise.ToBig(),
-		config.MinGasLeft.ToBig(),
-		config.MaxTxsPerCommit.ToBig(),
+		cfg.StakeAmount.ToBig(),
+		cfg.BlocksToFinalise.ToBig(),
+		cfg.MinGasLeft.ToBig(),
+		cfg.MaxTxsPerCommit.ToBig(),
 	)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -204,7 +198,7 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 	}
 
 	return &RollupContracts{
-		Config:          config,
+		Config:          cfg,
 		Chooser:         proofOfBurn,
 		AccountRegistry: accountRegistry,
 		TokenRegistry:   tokenRegistry,
@@ -300,7 +294,7 @@ func fillWithDefaults(params *Params) {
 		params.StakeAmount = models.NewUint256(DefaultStakeAmount)
 	}
 	if params.BlocksToFinalise == nil {
-		params.BlocksToFinalise = models.NewUint256(DefaultBlocksToFinalise)
+		params.BlocksToFinalise = models.NewUint256(uint64(config.DefaultBlocksToFinalise))
 	}
 	if params.MinGasLeft == nil {
 		params.MinGasLeft = models.NewUint256(DefaultMinGasLeft)
@@ -310,9 +304,9 @@ func fillWithDefaults(params *Params) {
 	}
 }
 
-func deployMissing(dependencies *Dependencies, c deployer.ChainConnection) error {
+func deployMissing(dependencies *Dependencies, c deployer.ChainConnection, chooser *common.Address) error {
 	if dependencies.AccountRegistry == nil {
-		accountRegistryAddress, _, _, err := deployer.DeployAccountRegistry(c)
+		accountRegistryAddress, _, _, err := deployer.DeployAccountRegistry(c, chooser)
 		if err != nil {
 			return err
 		}

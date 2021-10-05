@@ -2,7 +2,6 @@ package executor
 
 import (
 	"context"
-	"math/big"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
@@ -12,7 +11,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -82,57 +80,69 @@ func (s *ApplyCreate2TransfersTestSuite) TearDownTest() {
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AllValid() {
-	generatedTransfers := generateValidCreate2Transfers(3)
+	pending := &PendingC2Ts{
+		Txs: generateValidCreate2Transfers(3),
+	}
 
-	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(pending, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 3)
 	s.Len(transfers.invalidTransfers, 0)
+	s.Len(transfers.pendingAccounts, 3)
 	s.Len(transfers.addedPubKeyIDs, 3)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SomeValid() {
 	generatedTransfers := generateValidCreate2Transfers(2)
-	generatedTransfers = append(generatedTransfers, generateInvalidCreate2Transfers(3)...)
+	pending := &PendingC2Ts{
+		Txs: append(generatedTransfers, generateInvalidCreate2Transfers(3)...),
+	}
 
-	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(pending, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 2)
 	s.Len(transfers.invalidTransfers, 3)
+	s.Len(transfers.pendingAccounts, 2)
 	s.Len(transfers.addedPubKeyIDs, 2)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AppliesNoMoreThanLimit() {
-	generatedTransfers := generateValidCreate2Transfers(7)
+	pending := &PendingC2Ts{
+		Txs: generateValidCreate2Transfers(7),
+	}
 
-	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(pending, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 6)
 	s.Len(transfers.invalidTransfers, 0)
+	s.Len(transfers.pendingAccounts, 6)
 	s.Len(transfers.addedPubKeyIDs, 6)
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransferErrors() {
 	generatedTransfers := generateValidCreate2Transfers(3)
-	generatedTransfers = append(generatedTransfers, generateInvalidCreate2Transfers(2)...)
+	pending := &PendingC2Ts{
+		Txs: append(generatedTransfers, generateInvalidCreate2Transfers(2)...),
+	}
 
-	for i := range generatedTransfers {
-		_, err := s.storage.AddCreate2Transfer(&generatedTransfers[i])
+	for i := range pending.Txs {
+		_, err := s.storage.AddCreate2Transfer(&pending.Txs[i])
 		s.NoError(err)
 	}
 
-	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(pending, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 3)
 	s.Len(transfers.invalidTransfers, 2)
+	s.Len(transfers.pendingAccounts, 3)
 	s.Len(transfers.addedPubKeyIDs, 3)
 
-	for i := range generatedTransfers {
-		transfer, err := s.storage.GetCreate2Transfer(generatedTransfers[i].Hash)
+	for i := range pending.Txs {
+		transfer, err := s.storage.GetCreate2Transfer(pending.Txs[i].Hash)
 		s.NoError(err)
 		if i < 3 {
 			s.Nil(transfer.ErrorMessage)
@@ -143,9 +153,11 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_SavesTransfer
 }
 
 func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AppliesFee() {
-	generatedTransfers := generateValidCreate2Transfers(3)
+	pending := &PendingC2Ts{
+		Txs: generateValidCreate2Transfers(3),
+	}
 
-	_, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	_, err := s.transactionExecutor.ApplyCreate2Transfers(pending, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	feeReceiverState, err := s.transactionExecutor.storage.StateTree.Leaf(s.feeReceiver.StateID)
@@ -153,28 +165,24 @@ func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AppliesFee() 
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_RegistersPublicKeys() {
-	generatedTransfers := generateValidCreate2Transfers(3)
-	generatedTransfers[0].ToPublicKey = models.PublicKey{1, 1, 1}
-	generatedTransfers[1].ToPublicKey = models.PublicKey{2, 2, 2}
-	generatedTransfers[2].ToPublicKey = models.PublicKey{3, 3, 3}
+func (s *ApplyCreate2TransfersTestSuite) TestApplyCreate2Transfers_AddsPendingAccounts() {
+	pending := &PendingC2Ts{
+		Txs: generateValidCreate2Transfers(3),
+	}
+	pending.Txs[0].ToPublicKey = models.PublicKey{1, 1, 1}
+	pending.Txs[1].ToPublicKey = models.PublicKey{2, 2, 2}
+	pending.Txs[2].ToPublicKey = models.PublicKey{3, 3, 3}
 
-	latestBlockNumber, err := s.client.GetLatestBlockNumber()
-	s.NoError(err)
-
-	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
+	transfers, err := s.transactionExecutor.ApplyCreate2Transfers(pending, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.appliedTransfers, 3)
 	s.Len(transfers.invalidTransfers, 0)
+	s.Len(transfers.pendingAccounts, 3)
 	s.Len(transfers.addedPubKeyIDs, 3)
 
-	registeredAccounts := s.getRegisteredAccounts(*latestBlockNumber)
-	for i := range generatedTransfers {
-		s.Equal(registeredAccounts[i], models.AccountLeaf{
-			PubKeyID:  transfers.addedPubKeyIDs[i],
-			PublicKey: generatedTransfers[i].ToPublicKey,
-		})
+	for i := range pending.Txs {
+		s.Equal(pending.Txs[i].ToPublicKey, transfers.pendingAccounts[i].PublicKey)
 	}
 }
 
@@ -256,13 +264,27 @@ func (s *ApplyTransfersTestSuite) TestApplyCreate2TransfersForSync_InvalidFeeRec
 	s.Len(disputableErr.Proofs, 5)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_RegistersPubKeyIDInCaseThereIsNoUnusedOne() {
-	pubKeyID, err := s.transactionExecutor.getOrRegisterPubKeyID(&create2Transfer.ToPublicKey, models.MakeUint256(1))
+func (s *ApplyCreate2TransfersTestSuite) TestGetPubKeyID_GetsPubKeyIDFromAccountTree() {
+	pubKeyID, isPending, err := s.transactionExecutor.getPubKeyID(PendingAccounts{}, &create2Transfer, models.MakeUint256(1))
 	s.NoError(err)
-	s.Equal(uint32(0), *pubKeyID)
+	s.True(isPending)
+	s.Equal(uint32(2147483648), *pubKeyID)
 }
 
-func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_ReturnsUnusedPubKeyID() {
+func (s *ApplyCreate2TransfersTestSuite) TestGetPubKeyID_PredictsPubKeyIDInCaseThereIsNoUnusedOne() {
+	pendingAccounts := PendingAccounts{
+		{
+			PubKeyID:  2147483650,
+			PublicKey: models.PublicKey{1, 2, 3},
+		},
+	}
+	pubKeyID, isPending, err := s.transactionExecutor.getPubKeyID(pendingAccounts, &create2Transfer, models.MakeUint256(1))
+	s.NoError(err)
+	s.True(isPending)
+	s.Equal(uint32(2147483651), *pubKeyID)
+}
+
+func (s *ApplyCreate2TransfersTestSuite) TestGetPubKeyID_ReturnsUnusedPubKeyID() {
 	for i := 1; i <= 10; i++ {
 		err := s.storage.AccountTree.SetSingle(&models.AccountLeaf{
 			PubKeyID:  uint32(i),
@@ -274,30 +296,10 @@ func (s *ApplyCreate2TransfersTestSuite) TestGetOrRegisterPubKeyID_ReturnsUnused
 	c2T := create2Transfer
 	c2T.ToPublicKey = models.PublicKey{1, 2, 3}
 
-	pubKeyID, err := s.transactionExecutor.getOrRegisterPubKeyID(&c2T.ToPublicKey, models.MakeUint256(1))
+	pubKeyID, isPending, err := s.transactionExecutor.getPubKeyID(PendingAccounts{}, &c2T, models.MakeUint256(1))
 	s.NoError(err)
+	s.False(isPending)
 	s.Equal(uint32(4), *pubKeyID)
-}
-
-func (s *ApplyCreate2TransfersTestSuite) getRegisteredAccounts(startBlockNumber uint64) []models.AccountLeaf {
-	it, err := s.client.AccountRegistry.FilterSinglePubkeyRegistered(&bind.FilterOpts{Start: startBlockNumber})
-	s.NoError(err)
-
-	registeredAccounts := make([]models.AccountLeaf, 0)
-	for it.Next() {
-		tx, _, err := s.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
-		s.NoError(err)
-
-		unpack, err := s.client.AccountRegistryABI.Methods["register"].Inputs.Unpack(tx.Data()[4:])
-		s.NoError(err)
-
-		pubkey := unpack[0].([4]*big.Int)
-		registeredAccounts = append(registeredAccounts, models.AccountLeaf{
-			PubKeyID:  uint32(it.Event.PubkeyID.Uint64()),
-			PublicKey: models.MakePublicKeyFromInts(pubkey),
-		})
-	}
-	return registeredAccounts
 }
 
 func generateValidCreate2Transfers(transfersAmount uint32) []models.Create2Transfer {

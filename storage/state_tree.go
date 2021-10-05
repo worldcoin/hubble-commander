@@ -142,6 +142,7 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 		defer it.Close()
 
 		seekPrefix := make([]byte, 0, len(stateUpdatePrefix)+1)
+		seekPrefix = append(seekPrefix, stateUpdatePrefix...)
 		seekPrefix = append(seekPrefix, 0xFF)
 		for it.Seek(seekPrefix); it.ValidForPrefix(stateUpdatePrefix); it.Next() {
 			if *currentRootHash == targetRootHash {

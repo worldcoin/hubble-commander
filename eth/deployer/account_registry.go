@@ -7,9 +7,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func DeployAccountRegistry(c ChainConnection) (*common.Address, *uint64, *accountregistry.AccountRegistry, error) {
+func DeployAccountRegistry(c ChainConnection, chooser *common.Address) (*common.Address, *uint64, *accountregistry.AccountRegistry, error) {
 	log.Println("Deploying AccountRegistry")
-	accountRegistryAddress, tx, accountRegistry, err := accountregistry.DeployAccountRegistry(c.GetAccount(), c.GetBackend())
+	accountRegistryAddress, tx, accountRegistry, err := accountregistry.DeployAccountRegistry(c.GetAccount(), c.GetBackend(), *chooser)
 	if err != nil {
 		return nil, nil, nil, errors.WithStack(err)
 	}

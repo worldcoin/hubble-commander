@@ -1,8 +1,11 @@
 package storage
 
 import (
+	"reflect"
+
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
+	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
@@ -12,13 +15,16 @@ import (
 const (
 	AccountTreeDepth = merkletree.MaxDepth
 
-	batchSize            = 1 << 4
-	accountBatchOffset   = 1 << 31
-	leftSubtreeMaxValue  = accountBatchOffset - 2
-	rightSubtreeMaxValue = accountBatchOffset*2 - 18
+	AccountBatchSize     = 1 << 4
+	AccountBatchOffset   = 1 << 31
+	leftSubtreeMaxValue  = AccountBatchOffset - 2
+	rightSubtreeMaxValue = AccountBatchOffset*2 - 18
 )
 
-var ErrInvalidAccountsLength = errors.New("invalid accounts length")
+var (
+	ErrInvalidAccountsLength = errors.New("invalid accounts length")
+	accountLeafPrefix        = []byte("bh_" + reflect.TypeOf(models.AccountLeaf{}).Name())
+)
 
 type AccountTree struct {
 	database   *Database
@@ -90,7 +96,7 @@ func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
 }
 
 func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
-	if len(leaves) != batchSize {
+	if len(leaves) != AccountBatchSize {
 		return ErrInvalidAccountsLength
 	}
 
@@ -103,7 +109,7 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
 	accountTree := NewAccountTree(txDatabase)
 
 	for i := range leaves {
-		if leaves[i].PubKeyID < accountBatchOffset || leaves[i].PubKeyID > rightSubtreeMaxValue {
+		if leaves[i].PubKeyID < AccountBatchOffset || leaves[i].PubKeyID > rightSubtreeMaxValue {
 			return NewInvalidPubKeyIDError(leaves[i].PubKeyID)
 		}
 		_, err = accountTree.unsafeSet(&leaves[i])
@@ -136,4 +142,40 @@ func (s *AccountTree) unsafeSet(leaf *models.AccountLeaf) (models.Witness, error
 	}
 
 	return witness, nil
+}
+
+func (s *AccountTree) NextBatchAccountPubKeyID() (*uint32, error) {
+	nextPubKeyID := uint32(AccountBatchOffset)
+	err := s.database.Badger.View(func(txn *bdg.Txn) error {
+		opts := bdg.IteratorOptions{
+			PrefetchValues: false,
+			Reverse:        true,
+		}
+		it := txn.NewIterator(opts)
+		defer it.Close()
+
+		seekPrefix := make([]byte, 0, len(accountLeafPrefix)+1)
+		seekPrefix = append(seekPrefix, accountLeafPrefix...)
+		seekPrefix = append(seekPrefix, 0xFF)
+		it.Seek(seekPrefix)
+		if !it.ValidForPrefix(accountLeafPrefix) {
+			return nil
+		}
+
+		var account models.AccountLeaf
+		err := it.Item().Value(account.SetBytes)
+		if err != nil {
+			return err
+		}
+
+		if account.PubKeyID < AccountBatchOffset {
+			return nil
+		}
+		nextPubKeyID = account.PubKeyID + 1
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &nextPubKeyID, nil
 }
