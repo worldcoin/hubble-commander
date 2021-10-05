@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	log "github.com/sirupsen/logrus"
@@ -41,6 +42,7 @@ func GetConfig() *Config {
 		Bootstrap: &BootstrapConfig{
 			Prune:            getBool("bootstrap.prune", false),
 			GenesisAccounts:  getGenesisAccounts(),
+			BlocksToFinalise: getUint64("bootstrap.blocks_to_finalise", rollup.DefaultBlocksToFinalise),
 			BootstrapNodeURL: getStringOrNil("bootstrap.node_url"),
 			ChainSpecPath:    getStringOrNil("bootstrap.chain_spec_path"),
 		},
@@ -87,6 +89,7 @@ func GetTestConfig() *Config {
 		Bootstrap: &BootstrapConfig{
 			Prune:            false,
 			GenesisAccounts:  readGenesisAccounts(getGenesisPath()),
+			BlocksToFinalise: rollup.DefaultBlocksToFinalise,
 			BootstrapNodeURL: nil,
 			ChainSpecPath:    nil,
 		},
