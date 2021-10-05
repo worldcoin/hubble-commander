@@ -72,6 +72,16 @@ services:
     depends_on:
       - postgres
       - geth
+  
+  export-geth:
+    image: ethereum/client-go:stable
+    volumes:
+      - geth-data-volume:/root/ethereum
+      - ./geth-data:/root/dump/
+    command:
+      - export
+      - --datadir=/root/ethereum
+      - /root/dump/dump-1
 
 volumes:
   geth-data-volume:
