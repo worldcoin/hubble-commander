@@ -1,0 +1,147 @@
+version: '3'
+
+# The deployment consists of two geth instaces:
+# - mining-geth - mines blocks, has only p2p ports exposed
+# - api-get - connects to mining geth over p2p and exposes ws and http apis
+#
+# A commander node is also deloyed that connects to api-geth via ws api.
+#
+# Required files:
+# - ~/.keystore-password - holds password used to encrypt the ~/deployment/geth-keystore/UTC--2021-10-01T09-35-54.656211000Z--8933394714873724b97a518533a974b3263b1a79
+# - ~/.private-key.env - holds private key of ethereum account that commander uses
+#
+# Deployment process:
+# 1. initialize mining geth: `docker-compose up mining-geth-init`
+# 2. start mining geth: `docker-compose up -d mining-geth`
+# 3. make sure mining-geth has the external ip specified correctly
+# 4. export the p2p discovery token: `docker exec aws-staging-prod-geth_mining-geth_1 geth attach /root/ethereum/geth.ipc --exec admin.nodeInfo.enr`
+# 5. paste in the token to api-geth config
+# 6. initialize api geth: `docker-compose up api-geth-init`
+# 7. start api geth: `docker-compose up -d api-geth`
+# 8. deploy commander `docker-compose up deploy`
+# 9. start commander `docker-compose up -d commander`
+
+services:
+  mining-geth-init:
+    image: ethereum/client-go:stable
+    volumes:
+      - mining-geth-data-volume:/root/ethereum
+      - ./geth-keystore:/root/keystore
+      - ./genesis:/root/genesis
+    command:
+      - --datadir=/root/ethereum
+      - --keystore=/root/keystore
+      - init
+      - /root/genesis/worldcoin.json
+
+  mining-geth:
+    image: ethereum/client-go:stable
+    ports:
+      - "30303:30303/udp"
+      - "30303:30303/tcp"
+    volumes:
+      - mining-geth-data-volume:/root/ethereum
+      - ./geth-keystore:/root/keystore
+      - ~/.keystore-password:/root/.keystore-password
+    command:
+      - --datadir=/root/ethereum
+      - --keystore=/root/keystore
+      - --networkid=967532646
+      - --unlock=0x8933394714873724b97a518533a974b3263b1a79
+      - --password=/root/.keystore-password
+      - --mine
+      - --nat=extip:172.21.0.2 # NOTE: must be the current ip of the container, geth broadcasts it to other peers, api-geth uses it to connect to it
+
+  api-geth-init:
+    image: ethereum/client-go:stable
+    volumes:
+      - api-geth-data-volume:/root/ethereum
+      - ./genesis:/root/genesis
+    command:
+      - --datadir=/root/ethereum
+      - init
+      - /root/genesis/worldcoin.json
+
+  api-geth:
+    image: ethereum/client-go:stable
+    ports:
+      - "8545:8545"
+      - "8546:8546"
+      - "30305:30305/udp"
+      - "30305:30305/tcp"
+    volumes:
+      - api-geth-data-volume:/root/ethereum
+    command:
+      - --datadir=/root/ethereum
+      - --http
+      - --http.addr=0.0.0.0
+      - --ws
+      - --ws.addr=0.0.0.0
+      - --networkid=967532646
+      - --port=30305
+      # token exported from mining-geth
+      - --bootnodes=enr:-KO4QEvqjD2SoIOeJJ1DqT5jcnV0KPzd8RlYMsH6hyvGKXepTlx2ThgD7MgkkR-Tfu-FV06-bK2W0C1IME5avDGOkJSGAXw78bjsg2V0aMfGhBvZ_kKAgmlkgnY0gmlwhKwVAAKJc2VjcDI1NmsxoQIR5xU5Qj0Hs7sdbL8ESPpwafe6KI8_xFBt-hSza9iKSYRzbmFwwIN0Y3CCdl-DdWRwgnZf
+    depends_on:
+      - mining-geth
+
+  postgres:
+    image: postgres:13.1
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-q", "-d", "postgres", "-U", "root" ]
+      timeout: 45s
+      interval: 10s
+      retries: 10
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: hubble
+    volumes:
+      - postgres-data-volume:/var/lib/postgresql/data
+    ports:
+      - 5433:5433
+    command: -p 5433
+
+  deploy:
+    image: ghcr.io/worldcoin/hubble-commander:latest-0.4.0
+    command: deploy --file /chain-spec/chain-spec.yaml
+    environment:
+      HUBBLE_BOOTSTRAP_BLOCKS_TO_FINALISE: 1209600 # 2 weeks on network with 1s block time
+      HUBBLE_ETHEREUM_RPC_URL: ws://api-geth:8546
+      HUBBLE_ETHEREUM_CHAIN_ID: 967532646 # "worldcoin" typed on mobile phone keypad
+    env_file: ~/.private-key.env
+    volumes:
+      - chain-spec-volume:/chain-spec
+    depends_on:
+      - api-geth
+
+  commander:
+    image: ghcr.io/worldcoin/hubble-commander:latest-0.4.0
+    restart: always
+    environment:
+      HUBBLE_ETHEREUM_RPC_URL: ws://api-geth:8546
+      HUBBLE_ETHEREUM_CHAIN_ID: 967532646
+      HUBBLE_BOOTSTRAP_CHAIN_SPEC_PATH: /chain-spec/chain-spec.yaml
+      HUBBLE_POSTGRES_HOST: postgres
+      HUBBLE_POSTGRES_PORT: 5433
+      HUBBLE_POSTGRES_USER: root
+      HUBBLE_POSTGRES_PASSWORD: password
+      HUBBLE_POSTGRES_NAME: hubble
+      HUBBLE_BADGER_PATH: /db/data/hubble
+      HUBBLE_LOG_LEVEL: debug
+    env_file: ~/.private-key.env
+    ports:
+      - 5000:8080
+    volumes:
+      - chain-spec-volume:/chain-spec
+      - badger-data-volume:/db/data/hubble
+    depends_on:
+      - postgres
+      - api-geth
+
+volumes:
+  mining-geth-data-volume:
+  api-geth-data-volume:
+  postgres-data-volume:
+  chain-spec-volume:
+  badger-data-volume:
