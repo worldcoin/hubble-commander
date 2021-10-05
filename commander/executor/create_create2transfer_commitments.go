@@ -214,10 +214,11 @@ func (t *TransactionExecutor) registerPendingAccounts(accounts PendingAccounts) 
 	for i := range accounts {
 		publicKeys = append(publicKeys, accounts[i].PublicKey)
 		if len(publicKeys) == st.AccountBatchSize {
-			_, err = t.client.RegisterBatchAccount(publicKeys)
+			tx, err := t.client.RegisterBatchAccount(publicKeys)
 			if err != nil {
 				return err
 			}
+			log.Debugf("Submitted a batch account registration transaction. Transaction nonce: %d, hash: %v", tx.Nonce(), tx.Hash())
 			err = t.storage.AccountTree.SetBatch(accounts[i+1-st.AccountBatchSize : i+1])
 			if err != nil {
 				return err
