@@ -7,7 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -18,11 +18,12 @@ import (
 type GetBatchTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	api        *API
-	storage    *st.TestStorage
-	testClient *eth.TestClient
-	commitment models.Commitment
-	batch      models.Batch
+	api                 *API
+	storage             *st.TestStorage
+	testClient          *eth.TestClient
+	commitment          models.Commitment
+	batch               models.Batch
+	batchNotFoundAPIErr *APIError
 }
 
 func (s *GetBatchTestSuite) SetupSuite() {
@@ -39,7 +40,7 @@ func (s *GetBatchTestSuite) SetupTest() {
 
 	s.batch = models.Batch{
 		ID:                models.MakeUint256(1),
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(42000),
@@ -49,6 +50,11 @@ func (s *GetBatchTestSuite) SetupTest() {
 
 	s.commitment = commitment
 	s.commitment.ID.BatchID = s.batch.ID
+
+	s.batchNotFoundAPIErr = &APIError{
+		Code:    30000,
+		Message: "batch not found",
+	}
 }
 
 func (s *GetBatchTestSuite) TearDownTest() {
@@ -84,13 +90,13 @@ func (s *GetBatchTestSuite) TestGetBatchByHash_NoCommitments() {
 	s.NoError(err)
 
 	result, err := s.api.GetBatchByHash(*s.batch.Hash)
-	s.Equal(st.NewNotFoundError("commitments"), err)
+	s.Equal(s.batchNotFoundAPIErr, err)
 	s.Nil(result)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByHash_NonExistentBatch() {
 	result, err := s.api.GetBatchByHash(utils.RandomHash())
-	s.Equal(st.NewNotFoundError("batch"), err)
+	s.Equal(s.batchNotFoundAPIErr, err)
 	s.Nil(result)
 }
 
@@ -120,13 +126,13 @@ func (s *GetBatchTestSuite) TestGetBatchByID_NoCommitments() {
 	s.NoError(err)
 
 	result, err := s.api.GetBatchByID(models.MakeUint256(0))
-	s.Equal(st.NewNotFoundError("batch"), err)
+	s.Equal(s.batchNotFoundAPIErr, err)
 	s.Nil(result)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByID_NonExistentBatch() {
 	result, err := s.api.GetBatchByID(models.MakeUint256(0))
-	s.Equal(st.NewNotFoundError("batch"), err)
+	s.Equal(s.batchNotFoundAPIErr, err)
 	s.Nil(result)
 }
 

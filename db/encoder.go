@@ -6,7 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-	bh "github.com/timshannon/badgerhold/v3"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 var errPassedByPointer = fmt.Errorf("pointer was passed to Encode, pass by value instead")
@@ -40,9 +40,9 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Bytes(), nil
 	case *models.CommitmentID:
 		return models.EncodeCommitmentIDPointer(v), nil
-	case models.Deposit:
+	case models.PendingDeposit:
 		return v.Bytes(), nil
-	case *models.Deposit:
+	case *models.PendingDeposit:
 		return nil, errors.WithStack(errPassedByPointer)
 	case models.DepositID:
 		return v.Bytes(), nil
@@ -76,9 +76,9 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Bytes(), nil
 	case *models.StoredTx:
 		return nil, errors.WithStack(errPassedByPointer)
-	case models.StoredReceipt:
+	case models.StoredTxReceipt:
 		return v.Bytes(), nil
-	case *models.StoredReceipt:
+	case *models.StoredTxReceipt:
 		return nil, errors.WithStack(errPassedByPointer)
 	case models.Uint256:
 		return v.Bytes(), nil
@@ -124,7 +124,7 @@ func Decode(data []byte, value interface{}) error {
 		return v.SetBytes(data)
 	case *models.CommitmentID:
 		return decodeCommitmentIDPointer(data, &value, v)
-	case *models.Deposit:
+	case *models.PendingDeposit:
 		return v.SetBytes(data)
 	case *models.DepositID:
 		return v.SetBytes(data)
@@ -144,7 +144,7 @@ func Decode(data []byte, value interface{}) error {
 		return v.SetBytes(data)
 	case *models.StoredTx:
 		return v.SetBytes(data)
-	case *models.StoredReceipt:
+	case *models.StoredTxReceipt:
 		return v.SetBytes(data)
 	case *models.Uint256:
 		v.SetBytes(data)

@@ -14,13 +14,15 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
-	bh "github.com/timshannon/badgerhold/v3"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 const (
 	StateTreeDepth = merkletree.MaxDepth
 	StateTreeSize  = int64(1) << StateTreeDepth
 )
+
+var ErrUnexpectedRootAfterRollback = fmt.Errorf("unexpected state root after state update rollback")
 
 type StateTree struct {
 	database   *Database
@@ -46,7 +48,7 @@ func (s *StateTree) Leaf(stateID uint32) (stateLeaf *models.StateLeaf, err error
 	var leaf models.FlatStateLeaf
 	err = s.database.Badger.Get(stateID, &leaf)
 	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("state leaf")
+		return nil, errors.WithStack(NewNotFoundError("state leaf"))
 	}
 	if err != nil {
 		return nil, err
@@ -193,7 +195,7 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 		return err
 	}
 	if *currentRootHash != targetRootHash {
-		return ErrNotExistentState
+		return errors.WithStack(ErrNotExistentState)
 	}
 	return txn.Commit()
 }
@@ -263,7 +265,7 @@ func (s *StateTree) getLeafByPubKeyIDAndTokenID(pubKeyID uint32, tokenID models.
 		return nil, err
 	}
 	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("state leaf")
+		return nil, errors.WithStack(NewNotFoundError("state leaf"))
 	}
 	return leaf.StateLeaf(), nil
 }
@@ -280,7 +282,7 @@ func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, 
 		return nil, err
 	}
 	if *currentRootHash != stateUpdate.PrevRoot {
-		return nil, fmt.Errorf("unexpected state root after state update rollback")
+		return nil, errors.WithStack(ErrUnexpectedRootAfterRollback)
 	}
 
 	err = s.deleteStateUpdate(stateUpdate.ID)

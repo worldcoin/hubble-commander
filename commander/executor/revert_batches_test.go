@@ -3,48 +3,57 @@ package executor
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/encoder"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
 type RevertBatchesTestSuite struct {
-	TestSuiteWithRollupContext
-	transfer models.Transfer
-	wallets  []bls.Wallet
+	*require.Assertions
+	suite.Suite
+	storage      *st.TestStorage
+	executionCtx *ExecutionContext
+	rollupCtx    *RollupContext
+	transfer     models.Transfer
+}
+
+func (s *RevertBatchesTestSuite) SetupSuite() {
+	s.Assertions = require.New(s.T())
 }
 
 func (s *RevertBatchesTestSuite) SetupTest() {
-	s.TestSuiteWithRollupContext.SetupTestWithConfig(txtype.Transfer, config.RollupConfig{
+	var err error
+	s.storage, err = st.NewTestStorage()
+	s.NoError(err)
+
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, eth.DomainOnlyTestClient, &config.RollupConfig{
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
 		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    1,
 	})
+	s.rollupCtx = NewTestRollupContext(s.executionCtx, batchtype.Transfer)
 
 	s.transfer = testutils.MakeTransfer(0, 1, 0, 400)
-	s.setTransferHash(&s.transfer)
-
-	domain, err := s.client.GetDomain()
+	err = populateAccounts(s.storage.Storage, []models.Uint256{models.MakeUint256(1000), models.MakeUint256(0)})
 	s.NoError(err)
+}
 
-	s.wallets = generateWallets(s.Assertions, domain, 2)
-
-	seedDB(s.Assertions, s.storage.Storage, s.wallets)
+func (s *RevertBatchesTestSuite) TearDownTest() {
+	err := s.storage.Teardown()
+	s.NoError(err)
 }
 
 func (s *RevertBatchesTestSuite) TestRevertBatches_RevertsState() {
 	initialStateRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)
 
-	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
-	pendingBatch := submitTransferBatch(s.Assertions, s.client, s.rollupCtx, &s.transfer)
-
+	pendingBatch := s.addBatch(&s.transfer)
 	err = s.executionCtx.RevertBatches(pendingBatch)
 	s.NoError(err)
 
@@ -62,9 +71,7 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_RevertsState() {
 }
 
 func (s *RevertBatchesTestSuite) TestRevertBatches_ExcludesTransactionsFromCommitments() {
-	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
-	pendingBatch := submitTransferBatch(s.Assertions, s.client, s.rollupCtx, &s.transfer)
-
+	pendingBatch := s.addBatch(&s.transfer)
 	err := s.executionCtx.RevertBatches(pendingBatch)
 	s.NoError(err)
 
@@ -80,8 +87,7 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_DeletesCommitmentsAndBatches(
 
 	pendingBatches := make([]models.Batch, 2)
 	for i := range pendingBatches {
-		signTransfer(s.T(), &s.wallets[transfers[i].FromStateID], &transfers[i])
-		pendingBatches[i] = *submitTransferBatch(s.Assertions, s.client, s.rollupCtx, &transfers[i])
+		pendingBatches[i] = *s.addBatch(&transfers[i])
 	}
 
 	latestCommitment, err := s.executionCtx.storage.GetLatestCommitment()
@@ -92,17 +98,32 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_DeletesCommitmentsAndBatches(
 	s.NoError(err)
 
 	_, err = s.executionCtx.storage.GetLatestCommitment()
-	s.Equal(st.NewNotFoundError("commitment"), err)
+	s.ErrorIs(err, st.NewNotFoundError("commitment"))
 
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 0)
 }
 
-func (s *RevertBatchesTestSuite) setTransferHash(tx *models.Transfer) {
-	hash, err := encoder.HashTransfer(tx)
+func (s *RevertBatchesTestSuite) addBatch(tx *models.Transfer) *models.Batch {
+	err := s.rollupCtx.storage.AddTransfer(tx)
 	s.NoError(err)
-	tx.Hash = *hash
+
+	pendingBatch, err := s.rollupCtx.NewPendingBatch(s.rollupCtx.BatchType)
+	s.NoError(err)
+
+	commitmentID, err := s.rollupCtx.NextCommitmentID()
+	s.NoError(err)
+	_, commitment, err := s.rollupCtx.createCommitment(models.TransferArray{*tx}, commitmentID)
+	s.NoError(err)
+
+	err = s.storage.AddBatch(pendingBatch)
+	s.NoError(err)
+
+	err = s.rollupCtx.addCommitments([]models.Commitment{*commitment})
+	s.NoError(err)
+
+	return pendingBatch
 }
 
 func TestRevertBatchesTestSuite(t *testing.T) {

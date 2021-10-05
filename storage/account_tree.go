@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
-	bh "github.com/timshannon/badgerhold/v3"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 const (
@@ -44,7 +44,7 @@ func (s *AccountTree) Leaf(pubKeyID uint32) (*models.AccountLeaf, error) {
 	var leaf models.AccountLeaf
 	err := s.database.Badger.Get(pubKeyID, &leaf)
 	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("account leaf")
+		return nil, errors.WithStack(NewNotFoundError("account leaf"))
 	}
 	if err != nil {
 		return nil, err
@@ -62,14 +62,14 @@ func (s *AccountTree) Leaves(publicKey *models.PublicKey) ([]models.AccountLeaf,
 		return nil, err
 	}
 	if len(accounts) == 0 {
-		return nil, NewNotFoundError("account leaves")
+		return nil, errors.WithStack(NewNotFoundError("account leaves"))
 	}
 	return accounts, nil
 }
 
 func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
 	if leaf.PubKeyID > leftSubtreeMaxValue {
-		return NewInvalidPubKeyIDError(leaf.PubKeyID)
+		return errors.WithStack(NewInvalidPubKeyIDError(leaf.PubKeyID))
 	}
 
 	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{})
@@ -80,7 +80,7 @@ func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
 
 	_, err = NewAccountTree(txDatabase).unsafeSet(leaf)
 	if err == bh.ErrKeyExists {
-		return NewAccountAlreadyExistsError(leaf)
+		return errors.WithStack(NewAccountAlreadyExistsError(leaf))
 	}
 	if err != nil {
 		return err
@@ -104,11 +104,11 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
 
 	for i := range leaves {
 		if leaves[i].PubKeyID < accountBatchOffset || leaves[i].PubKeyID > rightSubtreeMaxValue {
-			return NewInvalidPubKeyIDError(leaves[i].PubKeyID)
+			return errors.WithStack(NewInvalidPubKeyIDError(leaves[i].PubKeyID))
 		}
 		_, err = accountTree.unsafeSet(&leaves[i])
 		if err == bh.ErrKeyExists {
-			return NewAccountBatchAlreadyExistsError(leaves)
+			return errors.WithStack(NewAccountBatchAlreadyExistsError(leaves))
 		}
 		if err != nil {
 			return err

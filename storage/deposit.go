@@ -2,7 +2,8 @@ package storage
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
-	bh "github.com/timshannon/badgerhold/v3"
+	"github.com/pkg/errors"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 type DepositStorage struct {
@@ -22,21 +23,19 @@ func (s *DepositStorage) copyWithNewDatabase(database *Database) *DepositStorage
 	return &newDepositStorage
 }
 
-func (s *DepositStorage) AddDeposit(deposit *models.Deposit) error {
+func (s *DepositStorage) AddPendingDeposit(deposit *models.PendingDeposit) error {
 	return s.database.Badger.Upsert(deposit.ID, *deposit)
 }
 
-func (s *DepositStorage) GetDeposit(depositID *models.DepositID) (*models.Deposit, error) {
-	var deposit models.Deposit
+func (s *DepositStorage) GetPendingDeposit(depositID *models.DepositID) (*models.PendingDeposit, error) {
+	var deposit models.PendingDeposit
 	err := s.database.Badger.Get(*depositID, &deposit)
 	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("deposit")
+		return nil, errors.WithStack(NewNotFoundError("pending deposit"))
 	}
 	if err != nil {
 		return nil, err
 	}
-
-	deposit.ID = *depositID
 
 	return &deposit, nil
 }

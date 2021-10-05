@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -79,7 +80,7 @@ func (s *TransferTestSuite) TestGetTransfer_DifferentTxType() {
 	s.NoError(err)
 
 	_, err = s.storage.GetTransfer(create2Transfer.Hash)
-	s.Equal(NewNotFoundError("transaction"), err)
+	s.ErrorIs(err, NewNotFoundError("transaction"))
 }
 
 func (s *TransferTestSuite) TestMarkTransfersAsIncluded() {
@@ -108,7 +109,7 @@ func (s *TransferTestSuite) TestMarkTransfersAsIncluded() {
 func (s *TransferTestSuite) TestGetTransferWithBatchDetails() {
 	batch := &models.Batch{
 		ID:              models.MakeUint256(1),
-		Type:            txtype.Transfer,
+		Type:            batchtype.Transfer,
 		TransactionHash: utils.RandomHash(),
 		Hash:            utils.NewRandomHash(),
 		SubmissionTime:  &models.Timestamp{Time: time.Unix(140, 0).UTC()},
@@ -164,13 +165,13 @@ func (s *TransferTestSuite) TestBatchAddTransfer() {
 
 func (s *TransferTestSuite) TestBatchAddTransfer_NoTransfers() {
 	err := s.storage.BatchAddTransfer([]models.Transfer{})
-	s.Equal(ErrNoRowsAffected, err)
+	s.ErrorIs(err, ErrNoRowsAffected)
 }
 
 func (s *TransferTestSuite) TestGetTransfer_NonExistentTransfer() {
 	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
 	res, err := s.storage.GetTransfer(hash)
-	s.Equal(NewNotFoundError("transaction"), err)
+	s.ErrorIs(err, NewNotFoundError("transaction"))
 	s.Nil(res)
 }
 
@@ -344,7 +345,7 @@ func (s *TransferTestSuite) TestGetTransfersByCommitmentID_NoTransfers() {
 func (s *TransferTestSuite) addBatchAndCommitment() *models.Batch {
 	batch := &models.Batch{
 		ID:              models.MakeUint256(1),
-		Type:            txtype.Transfer,
+		Type:            batchtype.Transfer,
 		TransactionHash: utils.RandomHash(),
 		Hash:            utils.NewRandomHash(),
 		SubmissionTime:  &models.Timestamp{Time: time.Unix(170, 0).UTC()},

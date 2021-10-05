@@ -69,5 +69,5 @@ jobs:
           key: ${{ secrets.AWS_SSH_KEY }}
           script: |
             docker-compose pull
-            docker-compose up -d
+            docker-compose up -d commander
             docker images -f "before=ghcr.io/worldcoin/hubble-commander:latest" -f "dangling=true" -q ghcr.io/worldcoin/hubble-commander | xargs docker image rm || true

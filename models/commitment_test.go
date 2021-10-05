@@ -3,7 +3,7 @@ package models
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +14,7 @@ func TestCommitment_Bytes(t *testing.T) {
 			BatchID:      MakeUint256(123),
 			IndexInBatch: 4,
 		},
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		FeeReceiver:       11,
 		CombinedSignature: MakeRandomSignature(),
 		PostStateRoot:     common.Hash{1, 2, 3, 4},

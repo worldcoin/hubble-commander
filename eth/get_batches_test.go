@@ -8,7 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -30,7 +30,7 @@ func (s *GetBatchesTestSuite) SetupSuite() {
 				BatchID:      models.MakeUint256(1),
 				IndexInBatch: 0,
 			},
-			Type:              txtype.Transfer,
+			Type:              batchtype.Transfer,
 			Transactions:      []uint8{0, 0, 0, 0, 0, 0, 0, 1, 32, 4, 0, 0},
 			FeeReceiver:       0,
 			CombinedSignature: *s.mockSignature(),
@@ -40,7 +40,7 @@ func (s *GetBatchesTestSuite) SetupSuite() {
 				BatchID:      models.MakeUint256(2),
 				IndexInBatch: 0,
 			},
-			Type:              txtype.Transfer,
+			Type:              batchtype.Transfer,
 			Transactions:      []uint8{0, 0, 1, 0, 0, 0, 0, 0, 32, 1, 0, 0},
 			FeeReceiver:       0,
 			CombinedSignature: *s.mockSignature(),

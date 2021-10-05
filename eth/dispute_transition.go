@@ -32,9 +32,9 @@ func (c *Client) DisputeTransitionTransfer(
 		WithGasLimit(*c.config.TransitionDisputeGasLimit).
 		DisputeTransitionTransfer(
 			batchID.ToBig(),
-			*CommitmentProofToCalldata(previous),
-			*TransferProofToCalldata(target),
-			StateMerkleProofsToCalldata(proofs),
+			*commitmentProofToCalldata(previous),
+			*transferProofToCalldata(target),
+			stateMerkleProofsToCalldata(proofs),
 		)
 	if err != nil {
 		return handleDisputeTransitionError(err)
@@ -58,9 +58,9 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 		WithGasLimit(*c.config.TransitionDisputeGasLimit).
 		DisputeTransitionCreate2Transfer(
 			batchID.ToBig(),
-			*CommitmentProofToCalldata(previous),
-			*TransferProofToCalldata(target),
-			StateMerkleProofsToCalldata(proofs),
+			*commitmentProofToCalldata(previous),
+			*transferProofToCalldata(target),
+			stateMerkleProofsToCalldata(proofs),
 		)
 	if err != nil {
 		return handleDisputeTransitionError(err)
@@ -126,7 +126,7 @@ func handleDisputeTransitionError(err error) error {
 	return err
 }
 
-func CommitmentProofToCalldata(proof *models.CommitmentInclusionProof) *rollup.TypesCommitmentInclusionProof {
+func commitmentProofToCalldata(proof *models.CommitmentInclusionProof) *rollup.TypesCommitmentInclusionProof {
 	return &rollup.TypesCommitmentInclusionProof{
 		Commitment: rollup.TypesCommitment{
 			StateRoot: proof.StateRoot,
@@ -137,7 +137,7 @@ func CommitmentProofToCalldata(proof *models.CommitmentInclusionProof) *rollup.T
 	}
 }
 
-func TransferProofToCalldata(proof *models.TransferCommitmentInclusionProof) *rollup.TypesTransferCommitmentInclusionProof {
+func transferProofToCalldata(proof *models.TransferCommitmentInclusionProof) *rollup.TypesTransferCommitmentInclusionProof {
 	return &rollup.TypesTransferCommitmentInclusionProof{
 		Commitment: rollup.TypesTransferCommitment{
 			StateRoot: proof.StateRoot,
@@ -153,7 +153,7 @@ func TransferProofToCalldata(proof *models.TransferCommitmentInclusionProof) *ro
 	}
 }
 
-func StateMerkleProofsToCalldata(proofs []models.StateMerkleProof) []rollup.TypesStateMerkleProof {
+func stateMerkleProofsToCalldata(proofs []models.StateMerkleProof) []rollup.TypesStateMerkleProof {
 	result := make([]rollup.TypesStateMerkleProof, 0, len(proofs))
 	for i := range proofs {
 		result = append(result, *stateMerkleProofToCalldata(&proofs[i]))

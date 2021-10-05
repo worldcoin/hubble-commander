@@ -18,7 +18,7 @@ func TestAggregatedSignature_Verify(t *testing.T) {
 	signatures := make([]*Signature, 0, 3)
 
 	for _, msg := range messages {
-		wallet, err := NewRandomWallet(testDomain)
+		wallet, err := NewRandomWallet(TestDomain)
 		require.NoError(t, err)
 
 		sig, err := wallet.Sign(msg)

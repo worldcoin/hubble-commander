@@ -3,6 +3,7 @@ package commander
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -13,6 +14,8 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
+
+var ErrAccountLeavesInconsistency = fmt.Errorf("inconsistency in account leaves between the database and the contract")
 
 func (c *Commander) syncAccounts(start, end uint64) error {
 	newAccountsSingle, err := c.syncSingleAccounts(start, end)
@@ -152,7 +155,7 @@ func validateExistingAccounts(accountTree *storage.AccountTree, accounts ...mode
 			return err
 		}
 		if existingAccount.PublicKey != accounts[i].PublicKey {
-			return errors.New("inconsistency in account leaves between the database and the contract")
+			return errors.WithStack(ErrAccountLeavesInconsistency)
 		}
 	}
 	return nil

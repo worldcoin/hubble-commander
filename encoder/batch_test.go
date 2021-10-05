@@ -6,7 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/stretchr/testify/require"
@@ -18,7 +18,7 @@ func TestDecodeBatchCalldata(t *testing.T) {
 
 	batchID := models.NewUint256(1)
 	commitment := models.Commitment{
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		Transactions:      utils.RandomBytes(12),
 		FeeReceiver:       uint32(1234),
 		CombinedSignature: models.MakeRandomSignature(),

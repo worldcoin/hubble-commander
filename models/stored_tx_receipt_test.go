@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestStoredReceipt_Bytes(t *testing.T) {
-	txReceipt := StoredReceipt{
+func TestStoredTxReceipt_Bytes(t *testing.T) {
+	txReceipt := StoredTxReceipt{
 		Hash: utils.RandomHash(),
 		CommitmentID: &CommitmentID{
 			BatchID:      MakeUint256(10),
@@ -21,7 +21,7 @@ func TestStoredReceipt_Bytes(t *testing.T) {
 
 	bytes := txReceipt.Bytes()
 
-	decodedStoredTxReceipt := StoredReceipt{}
+	decodedStoredTxReceipt := StoredTxReceipt{}
 	err := decodedStoredTxReceipt.SetBytes(bytes)
 	require.NoError(t, err)
 	require.EqualValues(t, txReceipt, decodedStoredTxReceipt)

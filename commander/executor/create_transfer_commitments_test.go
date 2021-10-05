@@ -3,11 +3,11 @@ package executor
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -21,7 +21,6 @@ var (
 		models.MakeUint256(1000),
 		models.MakeUint256(1000),
 	}
-	testDomain = &bls.Domain{1, 2, 3, 4}
 )
 
 type TransferCommitmentsTestSuite struct {
@@ -29,7 +28,7 @@ type TransferCommitmentsTestSuite struct {
 	suite.Suite
 	storage                *st.TestStorage
 	cfg                    *config.RollupConfig
-	executionCtx           *ExecutionContext
+	rollupCtx              *RollupContext
 	maxTxBytesInCommitment int
 }
 
@@ -52,7 +51,8 @@ func (s *TransferCommitmentsTestSuite) SetupTest() {
 	err = populateAccounts(s.storage.Storage, genesisBalances)
 	s.NoError(err)
 
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, &eth.Client{}, s.cfg)
+	executionCtx := NewTestExecutionContext(s.storage.Storage, eth.DomainOnlyTestClient, s.cfg)
+	s.rollupCtx = NewTestRollupContext(executionCtx, batchtype.Transfer)
 }
 
 func populateAccounts(storage *st.Storage, balances []models.Uint256) error {
@@ -75,48 +75,48 @@ func (s *TransferCommitmentsTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_WithMinTxsPerCommitment() {
-	transfers := generateValidTransfers(1)
+func (s *TransferCommitmentsTestSuite) TestCreateCommitments_WithMinTxsPerCommitment() {
+	transfers := testutils.GenerateValidTransfers(1)
 	s.addTransfers(transfers)
 
-	preRoot, err := s.executionCtx.storage.StateTree.Root()
+	preRoot, err := s.rollupCtx.storage.StateTree.Root()
 	s.NoError(err)
 
 	expectedTxsLength := encoder.TransferLength * len(transfers)
-	commitments, err := s.executionCtx.CreateTransferCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, expectedTxsLength)
 
-	postRoot, err := s.executionCtx.storage.StateTree.Root()
+	postRoot, err := s.rollupCtx.storage.StateTree.Root()
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
 }
 
-func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_WithMoreThanMinTxsPerCommitment() {
-	transfers := generateValidTransfers(3)
+func (s *TransferCommitmentsTestSuite) TestCreateCommitments_WithMoreThanMinTxsPerCommitment() {
+	transfers := testutils.GenerateValidTransfers(3)
 	s.addTransfers(transfers)
 
-	preRoot, err := s.executionCtx.storage.StateTree.Root()
+	preRoot, err := s.rollupCtx.storage.StateTree.Root()
 	s.NoError(err)
 
 	expectedTxsLength := encoder.TransferLength * len(transfers)
-	commitments, err := s.executionCtx.CreateTransferCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, expectedTxsLength)
 
-	postRoot, err := s.executionCtx.storage.StateTree.Root()
+	postRoot, err := s.rollupCtx.storage.StateTree.Root()
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
 }
 
-func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_QueriesForMorePendingTransfersUntilSatisfied() {
+func (s *TransferCommitmentsTestSuite) TestCreateCommitments_QueriesForMorePendingTransfersUntilSatisfied() {
 	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 123)
 
-	transfers := generateValidTransfers(6)
+	transfers := testutils.GenerateValidTransfers(6)
 	s.invalidateTransfers(transfers[3:6])
 
 	highNonceTransfer := testutils.MakeTransfer(123, 1, 10, 1)
@@ -124,33 +124,31 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_QueriesForM
 
 	s.addTransfers(transfers)
 
-	preRoot, err := s.executionCtx.storage.StateTree.Root()
+	preRoot, err := s.rollupCtx.storage.StateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.executionCtx.CreateTransferCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, s.maxTxBytesInCommitment)
 
-	postRoot, err := s.executionCtx.storage.StateTree.Root()
+	postRoot, err := s.rollupCtx.storage.StateTree.Root()
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
 }
 
-func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_ForMultipleCommitmentsInBatch() {
-	s.cfg = &config.RollupConfig{
+func (s *TransferCommitmentsTestSuite) TestCreateCommitments_ForMultipleCommitmentsInBatch() {
+	s.rollupCtx.cfg = &config.RollupConfig{
 		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    4,
 		FeeReceiverPubKeyID:    2,
 		MaxCommitmentsPerBatch: 3,
 	}
 
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, &eth.Client{}, s.cfg)
-
 	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 123)
 
-	transfers := generateValidTransfers(9)
+	transfers := testutils.GenerateValidTransfers(9)
 	s.invalidateTransfers(transfers[7:9])
 
 	highNonceTransfers := []models.Transfer{
@@ -161,17 +159,17 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_ForMultiple
 	transfers = append(transfers, highNonceTransfers...)
 	s.addTransfers(transfers)
 
-	preRoot, err := s.executionCtx.storage.StateTree.Root()
+	preRoot, err := s.rollupCtx.storage.StateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.executionCtx.CreateTransferCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 3)
 	s.Len(commitments[0].Transactions, s.maxTxBytesInCommitment)
 	s.Len(commitments[1].Transactions, s.maxTxBytesInCommitment)
 	s.Len(commitments[2].Transactions, encoder.TransferLength)
 
-	postRoot, err := s.executionCtx.storage.StateTree.Root()
+	postRoot, err := s.rollupCtx.storage.StateTree.Root()
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
 	s.Equal(commitments[2].PostStateRoot, *postRoot)
@@ -184,75 +182,73 @@ func (s *TransferCommitmentsTestSuite) invalidateTransfers(transfers []models.Tr
 	}
 }
 
-func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_ReturnsErrorWhenThereAreNotEnoughPendingTransfers() {
-	preRoot, err := s.executionCtx.storage.StateTree.Root()
+func (s *TransferCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorWhenThereAreNotEnoughPendingTransfers() {
+	preRoot, err := s.rollupCtx.storage.StateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.executionCtx.CreateTransferCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCommitments()
 	s.Nil(commitments)
-	s.Equal(ErrNotEnoughTransfers, err)
+	s.ErrorIs(err, ErrNotEnoughTxs)
 
-	postRoot, err := s.executionCtx.storage.StateTree.Root()
+	postRoot, err := s.rollupCtx.storage.StateTree.Root()
 	s.NoError(err)
 
 	s.Equal(preRoot, postRoot)
 }
 
-func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_ReturnsErrorWhenThereAreNotEnoughValidTransfers() {
-	s.cfg = &config.RollupConfig{
+func (s *TransferCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorWhenThereAreNotEnoughValidTransfers() {
+	s.rollupCtx.cfg = &config.RollupConfig{
 		MinTxsPerCommitment:    32,
 		MaxTxsPerCommitment:    32,
 		FeeReceiverPubKeyID:    2,
 		MaxCommitmentsPerBatch: 1,
 	}
 
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, &eth.Client{}, s.cfg)
-
-	transfers := generateValidTransfers(2)
+	transfers := testutils.GenerateValidTransfers(2)
 	s.addTransfers(transfers)
 
-	preRoot, err := s.executionCtx.storage.StateTree.Root()
+	preRoot, err := s.rollupCtx.storage.StateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.executionCtx.CreateTransferCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCommitments()
 	s.Nil(commitments)
-	s.Equal(ErrNotEnoughTransfers, err)
+	s.ErrorIs(err, ErrNotEnoughTxs)
 
-	postRoot, err := s.executionCtx.storage.StateTree.Root()
+	postRoot, err := s.rollupCtx.storage.StateTree.Root()
 	s.NoError(err)
 
 	s.Equal(preRoot, postRoot)
 }
 
-func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_StoresCorrectCommitment() {
+func (s *TransferCommitmentsTestSuite) TestCreateCommitments_StoresCorrectCommitment() {
 	transfersCount := uint32(4)
 	s.preparePendingTransfers(transfersCount)
 
-	preRoot, err := s.executionCtx.storage.StateTree.Root()
+	preRoot, err := s.rollupCtx.storage.StateTree.Root()
 	s.NoError(err)
 
 	expectedTxsLength := encoder.TransferLength * int(transfersCount)
-	commitments, err := s.executionCtx.CreateTransferCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, expectedTxsLength)
 	s.Equal(commitments[0].FeeReceiver, uint32(2))
 
-	postRoot, err := s.executionCtx.storage.StateTree.Root()
+	postRoot, err := s.rollupCtx.storage.StateTree.Root()
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
 }
 
-func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_CreatesMaximallyAsManyCommitmentsAsSpecifiedInConfig() {
+func (s *TransferCommitmentsTestSuite) TestCreateCommitments_CreatesMaximallyAsManyCommitmentsAsSpecifiedInConfig() {
 	s.preparePendingTransfers(5)
 
-	commitments, err := s.executionCtx.CreateTransferCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
 }
 
-func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_MarksTransfersAsIncludedInCommitment() {
+func (s *TransferCommitmentsTestSuite) TestCreateCommitments_MarksTransfersAsIncludedInCommitment() {
 	transfersCount := uint32(4)
 	s.preparePendingTransfers(transfersCount)
 
@@ -260,7 +256,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_MarksTransf
 	s.NoError(err)
 	s.Len(pendingTransfers, int(transfersCount))
 
-	commitments, err := s.executionCtx.CreateTransferCommitments(testDomain)
+	commitments, err := s.rollupCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -271,15 +267,15 @@ func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_MarksTransf
 	}
 }
 
-func (s *TransferCommitmentsTestSuite) TestRemoveTransfer() {
+func (s *TransferCommitmentsTestSuite) TestRemoveTxs() {
 	transfer1 := createRandomTransferWithHash()
 	transfer2 := createRandomTransferWithHash()
 	transfer3 := createRandomTransferWithHash()
 
-	transfers := []models.Transfer{transfer1, transfer2, transfer3}
-	toRemove := []models.Transfer{transfer2}
+	transfers := models.TransferArray{transfer1, transfer2, transfer3}
+	toRemove := models.TransferArray{transfer2}
 
-	s.Equal([]models.Transfer{transfer1, transfer3}, removeTransfers(transfers, toRemove))
+	s.Equal(models.TransferArray{transfer1, transfer3}, removeTxs(transfers, toRemove))
 }
 
 func TestTransferCommitmentsTestSuite(t *testing.T) {
@@ -294,7 +290,7 @@ func (s *TransferCommitmentsTestSuite) addTransfers(transfers []models.Transfer)
 }
 
 func (s *TransferCommitmentsTestSuite) preparePendingTransfers(transfersAmount uint32) {
-	transfers := generateValidTransfers(transfersAmount)
+	transfers := testutils.GenerateValidTransfers(transfersAmount)
 	s.addTransfers(transfers)
 }
 

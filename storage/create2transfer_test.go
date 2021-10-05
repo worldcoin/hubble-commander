@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -69,7 +70,7 @@ func (s *Create2TransferTestSuite) TestGetCreate2Transfer_DifferentTxType() {
 	s.NoError(err)
 
 	_, err = s.storage.GetCreate2Transfer(transfer.Hash)
-	s.Equal(NewNotFoundError("transaction"), err)
+	s.ErrorIs(err, NewNotFoundError("transaction"))
 }
 
 func (s *Create2TransferTestSuite) TestMarkCreate2TransfersAsIncluded() {
@@ -102,7 +103,7 @@ func (s *Create2TransferTestSuite) TestMarkCreate2TransfersAsIncluded() {
 func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchDetails() {
 	batch := &models.Batch{
 		ID:              models.MakeUint256(1),
-		Type:            txtype.Create2Transfer,
+		Type:            batchtype.Create2Transfer,
 		TransactionHash: utils.RandomHash(),
 		Hash:            utils.NewRandomHash(),
 		SubmissionTime:  &models.Timestamp{Time: time.Unix(170, 0).UTC()},
@@ -162,13 +163,13 @@ func (s *Create2TransferTestSuite) TestBatchAddCreate2Transfer() {
 
 func (s *Create2TransferTestSuite) TestBatchAddCreate2Transfer_NoTransfers() {
 	err := s.storage.BatchAddCreate2Transfer([]models.Create2Transfer{})
-	s.Equal(ErrNoRowsAffected, err)
+	s.ErrorIs(err, ErrNoRowsAffected)
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2Transfer_NonExistentTransaction() {
 	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
 	res, err := s.storage.GetCreate2Transfer(hash)
-	s.Equal(NewNotFoundError("transaction"), err)
+	s.ErrorIs(err, NewNotFoundError("transaction"))
 	s.Nil(res)
 }
 

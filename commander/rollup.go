@@ -6,7 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -33,7 +33,7 @@ func (c *Commander) rollupLoop(ctx context.Context) (err error) {
 	ticker := time.NewTicker(c.cfg.Rollup.BatchLoopInterval)
 	defer ticker.Stop()
 
-	currentBatchType := txtype.Transfer
+	currentBatchType := batchtype.Transfer
 
 	for {
 		select {
@@ -48,7 +48,7 @@ func (c *Commander) rollupLoop(ctx context.Context) (err error) {
 	}
 }
 
-func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *txtype.TransactionType) (err error) {
+func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *batchtype.BatchType) (err error) {
 	c.stateMutex.Lock()
 	defer c.stateMutex.Unlock()
 
@@ -63,12 +63,8 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 	}
 	defer rollupCtx.Rollback(&err)
 
-	err = rollupCtx.CreateAndSubmitBatch(*currentBatchType, c.domain)
-	if *currentBatchType == txtype.Transfer {
-		*currentBatchType = txtype.Create2Transfer
-	} else {
-		*currentBatchType = txtype.Transfer
-	}
+	switchBatchType(currentBatchType)
+	err = rollupCtx.CreateAndSubmitBatch()
 	if err != nil {
 		var e *executor.RollupError
 		if errors.As(err, &e) {
@@ -78,6 +74,14 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 	}
 
 	return rollupCtx.Commit()
+}
+
+func switchBatchType(batchType *batchtype.BatchType) {
+	if *batchType == batchtype.Transfer {
+		*batchType = batchtype.Create2Transfer
+	} else {
+		*batchType = batchtype.Transfer
+	}
 }
 
 func validateStateRoot(storage *st.Storage) error {

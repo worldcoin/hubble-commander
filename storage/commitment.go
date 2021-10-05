@@ -5,7 +5,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	bdg "github.com/dgraph-io/badger/v3"
-	bh "github.com/timshannon/badgerhold/v3"
+	"github.com/pkg/errors"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 type CommitmentStorage struct {
@@ -35,7 +36,7 @@ func (s *CommitmentStorage) GetCommitment(key *models.CommitmentID) (*models.Com
 	}
 	err := s.database.Badger.Get(*key, &commitment)
 	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("commitment")
+		return nil, errors.WithStack(NewNotFoundError("commitment"))
 	}
 	if err != nil {
 		return nil, err
@@ -51,7 +52,7 @@ func (s *CommitmentStorage) GetLatestCommitment() (*models.Commitment, error) {
 		return true, err
 	})
 	if err == db.ErrIteratorFinished {
-		return nil, NewNotFoundError("commitment")
+		return nil, errors.WithStack(NewNotFoundError("commitment"))
 	}
 	if err != nil {
 		return nil, err
@@ -78,7 +79,7 @@ func (s *CommitmentStorage) DeleteCommitmentsByBatchIDs(batchIDs ...models.Uint2
 	}
 
 	if len(ids) == 0 {
-		return NewNotFoundError("commitments")
+		return errors.WithStack(NewNotFoundError("commitments"))
 	}
 
 	var commitment models.Commitment
@@ -124,7 +125,7 @@ func (s *Storage) GetCommitmentsByBatchID(batchID models.Uint256) ([]models.Comm
 		return nil, err
 	}
 	if len(commitments) == 0 {
-		return nil, NewNotFoundError("commitments")
+		return nil, errors.WithStack(NewNotFoundError("commitments"))
 	}
 
 	commitmentsWithToken := make([]models.CommitmentWithTokenID, 0, len(commitments))
