@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -143,7 +144,11 @@ func (e *C2TExecutor) MarkTxsAsIncluded(txs models.GenericTransactionArray, comm
 func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
 	applyResult applier.ApplySingleTxResult, transferError, appError error,
 ) {
-	return e.applier.ApplyCreate2Transfer(tx.ToCreate2Transfer(), commitmentTokenID)
+	applyResult, transferError, appError = e.applier.ApplyCreate2Transfer(tx.ToCreate2Transfer(), commitmentTokenID)
+	if appError == deployer.ErrWaitToBeMinedTimedOut {
+		return nil, nil, NewLoggableRollupError(appError.Error())
+	}
+	return applyResult, transferError, appError
 }
 
 func (e *C2TExecutor) SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error) {
