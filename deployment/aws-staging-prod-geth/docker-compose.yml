@@ -13,13 +13,12 @@ version: '3'
 # Deployment process:
 # 1. initialize mining geth: `docker-compose up mining-geth-init`
 # 2. start mining geth: `docker-compose up -d mining-geth`
-# 3. make sure mining-geth has the external ip specified correctly
-# 4. export the p2p discovery token: `docker exec aws-staging-prod-geth_mining-geth_1 geth attach /root/ethereum/geth.ipc --exec admin.nodeInfo.enr`
-# 5. paste in the token to api-geth config
-# 6. initialize api geth: `docker-compose up api-geth-init`
-# 7. start api geth: `docker-compose up -d api-geth`
-# 8. deploy commander `docker-compose up deploy`
-# 9. start commander `docker-compose up -d commander`
+# 3. export the p2p discovery token: `docker exec aws-staging-prod-geth_mining-geth_1 geth attach /root/ethereum/geth.ipc --exec admin.nodeInfo.enr`
+# 4. make sure the token matches the one used in api-geth config
+# 5. initialize api geth: `docker-compose up api-geth-init`
+# 6. start api geth: `docker-compose up -d api-geth`
+# 7. deploy rollup contracts `docker-compose up deploy`
+# 8. start commander `docker-compose up -d commander`
 
 services:
   mining-geth-init:
