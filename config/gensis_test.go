@@ -65,3 +65,17 @@ func TestDecodeRawGenesisAccounts(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expected, genesisAccounts)
 }
+
+func TestDecodeRawGenesisAccounts_InvalidPublicKeyLength(t *testing.T) {
+	rawGenesisAccounts := []models.RawGenesisAccount{
+		{
+			PublicKey:  "26d1",
+			PrivateKey: "",
+			Balance:    1024,
+		},
+	}
+
+	_, err := decodeRawGenesisAccounts(rawGenesisAccounts)
+	require.Error(t, err)
+	require.Equal(t, models.ErrInvalidPublicKeyLength, err)
+}

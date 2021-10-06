@@ -38,8 +38,11 @@ func decodeRawGenesisAccounts(rawGenesisAccounts []models.RawGenesisAccount) ([]
 			if err != nil {
 				return nil, err
 			}
-			account.PublicKey = &models.PublicKey{}
-			copy(account.PublicKey[:], decodedPublicKey)
+			account.PublicKey = new(models.PublicKey)
+			err = account.PublicKey.SetBytes(decodedPublicKey)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		if rawGenesisAccounts[i].PrivateKey != "" {
