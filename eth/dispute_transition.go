@@ -97,7 +97,6 @@ func (c *Client) waitForDispute(batchID *models.Uint256, batchHash *common.Hash,
 	return errors.Errorf("dispute of batch #%d failed", batchID.Uint64())
 }
 
-// TODO make this function use batch hash to establish whether batch has already been disputed
 func (c *Client) isBatchAlreadyDisputed(batchID *models.Uint256, batchHash *common.Hash) error {
 	contractBatch, err := c.GetBatch(batchID)
 	if err != nil {
