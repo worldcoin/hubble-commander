@@ -87,7 +87,7 @@ services:
       - --networkid=967532646
       - --port=30305
       # token exported from mining-geth
-      - --bootnodes=enr:-KO4QEvqjD2SoIOeJJ1DqT5jcnV0KPzd8RlYMsH6hyvGKXepTlx2ThgD7MgkkR-Tfu-FV06-bK2W0C1IME5avDGOkJSGAXw78bjsg2V0aMfGhBvZ_kKAgmlkgnY0gmlwhKwVAAKJc2VjcDI1NmsxoQIR5xU5Qj0Hs7sdbL8ESPpwafe6KI8_xFBt-hSza9iKSYRzbmFwwIN0Y3CCdl-DdWRwgnZf
+      - --bootnodes=enr:-KO4QDY12AyAARHx-kd2VIPQMZo7tpYPMHDhGjyIUM9zOV78cowQS6wr7UCdoeYAD_YiCQotEXHDrQsedPCGVnhRdwmGAXxQoJTDg2V0aMfGhBvZ_kKAgmlkgnY0gmlwhKwUAAWJc2VjcDI1NmsxoQOhtRfhOKT3d6yFzcWFruV0ua1Nm1JnIFE_ciP3mL5BO4RzbmFwwIN0Y3CCdl-DdWRwgnZf
     networks:
       hubble:
     depends_on:
