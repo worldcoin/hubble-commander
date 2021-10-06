@@ -1,10 +1,10 @@
 version: '3'
 
-# The deployment consists of two geth instaces:
+# The deployment consists of two geth instances:
 # - mining-geth - mines blocks, has only p2p ports exposed
 # - api-get - connects to mining geth over p2p and exposes ws and http apis
 #
-# A commander node is also deloyed that connects to api-geth via ws api.
+# A commander node is also deployed that connects to api-geth via ws api.
 #
 # Required files:
 # - ~/.keystore-password - holds password used to encrypt the ~/deployment/geth-keystore/UTC--2021-10-01T09-35-54.656211000Z--8933394714873724b97a518533a974b3263b1a79
@@ -13,13 +13,12 @@ version: '3'
 # Deployment process:
 # 1. initialize mining geth: `docker-compose up mining-geth-init`
 # 2. start mining geth: `docker-compose up -d mining-geth`
-# 3. make sure mining-geth has the external ip specified correctly
-# 4. export the p2p discovery token: `docker exec aws-staging-prod-geth_mining-geth_1 geth attach /root/ethereum/geth.ipc --exec admin.nodeInfo.enr`
-# 5. paste in the token to api-geth config
-# 6. initialize api geth: `docker-compose up api-geth-init`
-# 7. start api geth: `docker-compose up -d api-geth`
-# 8. deploy commander `docker-compose up deploy`
-# 9. start commander `docker-compose up -d commander`
+# 3. export the p2p discovery token: `docker exec aws-staging-prod-geth_mining-geth_1 geth attach /root/ethereum/geth.ipc --exec admin.nodeInfo.enr`
+# 4. make sure the token matches the one used in api-geth config
+# 5. initialize api geth: `docker-compose up api-geth-init`
+# 6. start api geth: `docker-compose up -d api-geth`
+# 7. deploy rollup contracts `docker-compose up deploy`
+# 8. start commander `docker-compose up -d commander`
 
 services:
   mining-geth-init:
@@ -33,6 +32,8 @@ services:
       - --keystore=/root/keystore
       - init
       - /root/genesis/worldcoin.json
+    networks:
+      hubble:
 
   mining-geth:
     image: ethereum/client-go:stable
@@ -50,7 +51,10 @@ services:
       - --unlock=0x8933394714873724b97a518533a974b3263b1a79
       - --password=/root/.keystore-password
       - --mine
-      - --nat=extip:172.21.0.2 # NOTE: must be the current ip of the container, geth broadcasts it to other peers, api-geth uses it to connect to it
+      - --nat=extip:172.20.0.5 # NOTE: must be the current ip of the container, geth broadcasts it to other peers, api-geth uses it to connect to it
+    networks:
+      hubble:
+        ipv4_address: 172.20.0.5
 
   api-geth-init:
     image: ethereum/client-go:stable
@@ -61,6 +65,8 @@ services:
       - --datadir=/root/ethereum
       - init
       - /root/genesis/worldcoin.json
+    networks:
+      hubble:
 
   api-geth:
     image: ethereum/client-go:stable
@@ -80,7 +86,9 @@ services:
       - --networkid=967532646
       - --port=30305
       # token exported from mining-geth
-      - --bootnodes=enr:-KO4QEvqjD2SoIOeJJ1DqT5jcnV0KPzd8RlYMsH6hyvGKXepTlx2ThgD7MgkkR-Tfu-FV06-bK2W0C1IME5avDGOkJSGAXw78bjsg2V0aMfGhBvZ_kKAgmlkgnY0gmlwhKwVAAKJc2VjcDI1NmsxoQIR5xU5Qj0Hs7sdbL8ESPpwafe6KI8_xFBt-hSza9iKSYRzbmFwwIN0Y3CCdl-DdWRwgnZf
+      - --bootnodes=enr:-KO4QDY12AyAARHx-kd2VIPQMZo7tpYPMHDhGjyIUM9zOV78cowQS6wr7UCdoeYAD_YiCQotEXHDrQsedPCGVnhRdwmGAXxQoJTDg2V0aMfGhBvZ_kKAgmlkgnY0gmlwhKwUAAWJc2VjcDI1NmsxoQOhtRfhOKT3d6yFzcWFruV0ua1Nm1JnIFE_ciP3mL5BO4RzbmFwwIN0Y3CCdl-DdWRwgnZf
+    networks:
+      hubble:
     depends_on:
       - mining-geth
 
@@ -99,8 +107,10 @@ services:
     volumes:
       - postgres-data-volume:/var/lib/postgresql/data
     ports:
-      - 5433:5433
+      - "5433:5433"
     command: -p 5433
+    networks:
+      hubble:
 
   deploy:
     image: ghcr.io/worldcoin/hubble-commander:latest-0.4.0
@@ -112,6 +122,8 @@ services:
     env_file: ~/.private-key.env
     volumes:
       - chain-spec-volume:/chain-spec
+    networks:
+      hubble:
     depends_on:
       - api-geth
 
@@ -131,10 +143,12 @@ services:
       HUBBLE_LOG_LEVEL: debug
     env_file: ~/.private-key.env
     ports:
-      - 5000:8080
+      - "5000:8080"
     volumes:
       - chain-spec-volume:/chain-spec
       - badger-data-volume:/db/data/hubble
+    networks:
+      hubble:
     depends_on:
       - postgres
       - api-geth
@@ -145,3 +159,10 @@ volumes:
   postgres-data-volume:
   chain-spec-volume:
   badger-data-volume:
+
+networks:
+  hubble:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
