@@ -102,7 +102,7 @@ func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int,
 			return nil, err
 		}
 
-		publicKeys := unpack[0].([16][4]*big.Int)
+		publicKeys := unpack[0].([storage.AccountBatchSize][4]*big.Int)
 		pubKeyIDs := eth.ExtractPubKeyIDsFromBatchAccountEvent(it.Event)
 
 		accounts := make([]models.AccountLeaf, 0, len(publicKeys))

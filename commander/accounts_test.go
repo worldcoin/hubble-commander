@@ -76,7 +76,7 @@ func (s *AccountsTestSuite) TestSyncBatchAccounts() {
 	s.NoError(err)
 	newAccountsCount, err := s.cmd.syncBatchAccounts(0, *latestBlockNumber)
 	s.NoError(err)
-	s.Equal(ref.Int(16), newAccountsCount)
+	s.Equal(ref.Int(st.AccountBatchSize), newAccountsCount)
 
 	s.validateAccountsAfterSync(accounts)
 }
@@ -96,7 +96,7 @@ func (s *AccountsTestSuite) registerBatchAccount() []models.AccountLeaf {
 	s.NoError(err)
 	defer unsubscribe()
 
-	publicKeys := make([]models.PublicKey, 16)
+	publicKeys := make([]models.PublicKey, st.AccountBatchSize)
 	for i := range publicKeys {
 		publicKeys[i] = models.PublicKey{1, 1, byte(i)}
 	}
@@ -104,7 +104,7 @@ func (s *AccountsTestSuite) registerBatchAccount() []models.AccountLeaf {
 	pubKeyIDs, err := s.testClient.RegisterBatchAccount(publicKeys, registrations)
 	s.NoError(err)
 
-	accounts := make([]models.AccountLeaf, 16)
+	accounts := make([]models.AccountLeaf, st.AccountBatchSize)
 	for i := range accounts {
 		accounts[i] = models.AccountLeaf{
 			PubKeyID:  pubKeyIDs[i],
