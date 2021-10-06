@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"errors"
 	"log"
 
 	"github.com/Worldcoin/hubble-commander/commander/applier"
@@ -145,7 +146,7 @@ func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID mo
 	applyResult applier.ApplySingleTxResult, transferError, appError error,
 ) {
 	applyResult, transferError, appError = e.applier.ApplyCreate2Transfer(tx.ToCreate2Transfer(), commitmentTokenID)
-	if appError == deployer.ErrWaitToBeMinedTimedOut {
+	if errors.Is(appError, deployer.ErrWaitToBeMinedTimedOut) {
 		return nil, nil, NewLoggableRollupError(appError.Error())
 	}
 	return applyResult, transferError, appError
