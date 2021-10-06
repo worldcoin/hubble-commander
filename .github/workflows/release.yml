@@ -68,7 +68,7 @@ jobs:
           host: ${{ matrix.host }}
           username: ec2-user
           key: ${{ secrets.AWS_SSH_KEY }}
-          script: |
+          script_stop: |
             docker-compose pull
             docker-compose up -d
             docker images -f "before=ghcr.io/worldcoin/hubble-commander:stable" -f "dangling=true" -q ghcr.io/worldcoin/hubble-commander | xargs docker image rm || true
