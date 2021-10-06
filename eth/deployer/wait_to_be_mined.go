@@ -2,17 +2,19 @@ package deployer
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
 	PollInterval             = 500 * time.Millisecond
 	ChainTimeout             = 5 * time.Minute
-	ErrWaitToBeMinedTimedOut = errors.New("timeout on waiting for transaction to be mined")
+	ErrWaitToBeMinedTimedOut = fmt.Errorf("timeout on waiting for transaction to be mined")
 )
 
 func WaitToBeMined(r ReceiptProvider, tx *types.Transaction) (*types.Receipt, error) {
@@ -31,7 +33,9 @@ func WaitToBeMined(r ReceiptProvider, tx *types.Transaction) (*types.Receipt, er
 
 		select {
 		case <-timeout:
-			return nil, errors.WithStack(ErrWaitToBeMinedTimedOut)
+			err = errors.WithStack(ErrWaitToBeMinedTimedOut)
+			log.Warnf("%+v", err)
+			return nil, err
 		case <-ticker.C:
 		}
 	}
