@@ -1,8 +1,10 @@
 package storage
 
 import (
+	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
+	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
@@ -12,10 +14,10 @@ import (
 const (
 	AccountTreeDepth = merkletree.MaxDepth
 
-	batchSize            = 1 << 4
-	accountBatchOffset   = 1 << 31
-	leftSubtreeMaxValue  = accountBatchOffset - 2
-	rightSubtreeMaxValue = accountBatchOffset*2 - 18
+	AccountBatchSize     = 1 << 4
+	AccountBatchOffset   = 1 << 31
+	leftSubtreeMaxValue  = AccountBatchOffset - 2
+	rightSubtreeMaxValue = AccountBatchOffset*2 - 18
 )
 
 var ErrInvalidAccountsLength = errors.New("invalid accounts length")
@@ -90,7 +92,7 @@ func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
 }
 
 func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
-	if len(leaves) != batchSize {
+	if len(leaves) != AccountBatchSize {
 		return ErrInvalidAccountsLength
 	}
 
@@ -103,7 +105,7 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
 	accountTree := NewAccountTree(txDatabase)
 
 	for i := range leaves {
-		if leaves[i].PubKeyID < accountBatchOffset || leaves[i].PubKeyID > rightSubtreeMaxValue {
+		if leaves[i].PubKeyID < AccountBatchOffset || leaves[i].PubKeyID > rightSubtreeMaxValue {
 			return errors.WithStack(NewInvalidPubKeyIDError(leaves[i].PubKeyID))
 		}
 		_, err = accountTree.unsafeSet(&leaves[i])
@@ -136,4 +138,25 @@ func (s *AccountTree) unsafeSet(leaf *models.AccountLeaf) (models.Witness, error
 	}
 
 	return witness, nil
+}
+
+func (s *AccountTree) NextBatchAccountPubKeyID() (*uint32, error) {
+	nextPubKeyID := uint32(AccountBatchOffset)
+	err := s.database.Badger.Iterator(models.AccountLeafPrefix, db.ReverseKeyIteratorOpts, func(item *bdg.Item) (bool, error) {
+		var account models.AccountLeaf
+		err := item.Value(account.SetBytes)
+		if err != nil {
+			return false, err
+		}
+
+		if account.PubKeyID < AccountBatchOffset {
+			return true, nil
+		}
+		nextPubKeyID = account.PubKeyID + 1
+		return true, nil
+	})
+	if err != nil && err != db.ErrIteratorFinished {
+		return nil, err
+	}
+	return &nextPubKeyID, nil
 }
