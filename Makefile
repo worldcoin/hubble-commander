@@ -65,7 +65,7 @@ bench-e2e: clean-testcache
 	HUBBLE_E2E=local go test -v -tags e2e -run TestBenchmarkSuite ./e2e
 
 bench-creation-profile: clean-testcache
-	HUBBLE_E2E=in-process go test -cpuprofile creation.prof -v -tags e2e -run TestBenchmarkSuite/TestBenchCommander ./e2e
+	HUBBLE_E2E=in-process go test -cpuprofile creation.prof -v -tags e2e -run TestBenchmarkSuite/TestBenchMixedCommander ./e2e
 
 bench-sync-profile: clean-testcache
 	HUBBLE_E2E=in-process go test -cpuprofile sync.prof -v -tags e2e -run TestBenchmarkSuite/TestBenchSyncCommander ./e2e
