@@ -1,10 +1,10 @@
 version: '3'
 
-# The deployment consists of two geth instaces:
+# The deployment consists of two geth instances:
 # - mining-geth - mines blocks, has only p2p ports exposed
 # - api-get - connects to mining geth over p2p and exposes ws and http apis
 #
-# A commander node is also deloyed that connects to api-geth via ws api.
+# A commander node is also deployed that connects to api-geth via ws api.
 #
 # Required files:
 # - ~/.keystore-password - holds password used to encrypt the ~/deployment/geth-keystore/UTC--2021-10-01T09-35-54.656211000Z--8933394714873724b97a518533a974b3263b1a79
