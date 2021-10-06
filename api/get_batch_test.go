@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -73,7 +73,7 @@ func (s *GetBatchTestSuite) TestGetBatchByHash() {
 	s.Equal(s.batch.Hash, result.Hash)
 	s.Equal(s.batch.Type, result.Type)
 	s.Equal(s.batch.TransactionHash, result.TransactionHash)
-	s.Equal(*s.batch.FinalisationBlock-rollup.DefaultBlocksToFinalise, result.SubmissionBlock)
+	s.Equal(*s.batch.FinalisationBlock-config.DefaultBlocksToFinalise, result.SubmissionBlock)
 	s.Equal(s.batch.FinalisationBlock, result.FinalisationBlock)
 	s.Equal(s.batch.SubmissionTime, result.SubmissionTime)
 }
@@ -110,7 +110,7 @@ func (s *GetBatchTestSuite) TestGetBatchByID() {
 	s.Equal(s.batch.Hash, result.Hash)
 	s.Equal(s.batch.Type, result.Type)
 	s.Equal(s.batch.TransactionHash, result.TransactionHash)
-	s.Equal(*s.batch.FinalisationBlock-rollup.DefaultBlocksToFinalise, result.SubmissionBlock)
+	s.Equal(*s.batch.FinalisationBlock-config.DefaultBlocksToFinalise, result.SubmissionBlock)
 	s.Equal(s.batch.FinalisationBlock, result.FinalisationBlock)
 	s.Equal(s.batch.SubmissionTime, result.SubmissionTime)
 }

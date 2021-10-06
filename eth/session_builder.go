@@ -3,6 +3,7 @@ package eth
 import (
 	"math/big"
 
+	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 )
 
@@ -25,4 +26,25 @@ func (c *Client) rollup() *rollupSessionBuilder {
 		Contract:     c.Rollup,
 		TransactOpts: *c.ChainConnection.GetAccount(),
 	}}
+}
+
+type accountRegistrySessionBuilder struct {
+	accountregistry.AccountRegistrySession
+}
+
+func (c *Client) accountRegistry() *accountRegistrySessionBuilder {
+	return &accountRegistrySessionBuilder{accountregistry.AccountRegistrySession{
+		Contract:     c.AccountRegistry,
+		TransactOpts: *c.ChainConnection.GetAccount(),
+	}}
+}
+
+func (b *accountRegistrySessionBuilder) WithValue(value big.Int) *accountRegistrySessionBuilder {
+	b.TransactOpts.Value = &value
+	return b
+}
+
+func (b *accountRegistrySessionBuilder) WithGasLimit(gasLimit uint64) *accountRegistrySessionBuilder {
+	b.TransactOpts.GasLimit = gasLimit
+	return b
 }
