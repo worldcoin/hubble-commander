@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"io/ioutil"
 
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
 	"gopkg.in/yaml.v2"
 )
@@ -54,8 +55,25 @@ func decodeRawGenesisAccounts(rawGenesisAccounts []models.RawGenesisAccount) ([]
 			copy(account.PrivateKey[:], decodedPrivateKey)
 		}
 
+		if account.PrivateKey != nil && account.PublicKey != nil {
+			if err := validateKeysMatch(*account.PrivateKey, *account.PublicKey); err != nil {
+				return nil, err
+			}
+		}
+
 		genesisAccounts = append(genesisAccounts, account)
 	}
 
 	return genesisAccounts, nil
+}
+
+func validateKeysMatch(privateKey [32]byte, publicKey models.PublicKey) error {
+	derivedPublicKey, err := bls.PrivateToPublicKey(privateKey)
+	if err != nil {
+		return err
+	}
+	if publicKey != *derivedPublicKey {
+		return NewErrNonMatchingKeys(publicKey.String())
+	}
+	return nil
 }

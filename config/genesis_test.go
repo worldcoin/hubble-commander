@@ -79,3 +79,25 @@ func TestDecodeRawGenesisAccounts_InvalidPublicKeyLength(t *testing.T) {
 	require.Error(t, err)
 	require.Equal(t, models.ErrInvalidPublicKeyLength, err)
 }
+
+func TestTestDecodeRawGenesisAccounts_ValidatesThatKeysMatch(t *testing.T) {
+	matchingKeys := []models.RawGenesisAccount{
+		{
+			PublicKey:  "0df68cb87856229b0bc3f158fff8b82b04deb1a4c23dadbf3ed2da4ec6f6efcb1c165c6b47d8c89ab2ddb0831c182237b27a4b3d9701775ad6c180303f87ef260566cb2f0bcc7b89c2260de2fee8ec29d7b5e575a1e36eb4bcead52a74a511b7188d7df7c9d08f94b9daa9d89105fbdf22bf14e30b84f8adefb3695ebff00e88",
+			PrivateKey: "2f7a559b2d2d4ec1e3babc0122e7ef0c6a45cdb4ccd167f456caca521123fe9e",
+			Balance:    1024,
+		},
+	}
+	_, err := decodeRawGenesisAccounts(matchingKeys)
+	require.NoError(t, err)
+
+	nonMatchingKeys := []models.RawGenesisAccount{
+		{
+			PublicKey:  "0df68cb87856229b0bc3f158fff8b82b04deb1a4c23dadbf3ed2da4ec6f6efcb1c165c6b47d8c89ab2ddb0831c182237b27a4b3d9701775ad6c180303f87ef260566cb2f0bcc7b89c2260de2fee8ec29d7b5e575a1e36eb4bcead52a74a511b7188d7df7c9d08f94b9daa9d89105fbdf22bf14e30b84f8adefb3695ebff00e88",
+			PrivateKey: "0131b1f02f2504a60a30261fa3665ca12ed542ab01f73debb19bafa996790272",
+			Balance:    1024,
+		},
+	}
+	_, err = decodeRawGenesisAccounts(nonMatchingKeys)
+	require.ErrorIs(t, err, NewErrNonMatchingKeys("0x"+nonMatchingKeys[0].PublicKey))
+}
