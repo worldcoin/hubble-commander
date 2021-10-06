@@ -10,7 +10,7 @@ func (a *Applier) ApplyCreate2Transfer(
 	create2Transfer *models.Create2Transfer,
 	commitmentTokenID models.Uint256,
 ) (applyResult *ApplySingleC2TResult, transferError, appError error) {
-	pubKeyID, appError := a.getOrRegisterPubKeyID(&create2Transfer.ToPublicKey, commitmentTokenID)
+	pubKeyID, isPending, appError := a.getPubKeyID(&create2Transfer.ToPublicKey, commitmentTokenID)
 	if appError != nil {
 		return nil, nil, appError
 	}
@@ -25,6 +25,13 @@ func (a *Applier) ApplyCreate2Transfer(
 		pubKeyID: *pubKeyID,
 	}
 	applyResult.tx.ToStateID = nextAvailableStateID
+
+	if isPending {
+		applyResult.pendingAccount = &models.AccountLeaf{
+			PubKeyID:  *pubKeyID,
+			PublicKey: create2Transfer.ToPublicKey,
+		}
+	}
 
 	receiverLeaf, appError := newUserLeaf(*nextAvailableStateID, *pubKeyID, commitmentTokenID)
 	if appError != nil {
@@ -54,17 +61,21 @@ func (a *Applier) ApplyCreate2TransferForSync(
 	return genericSynced, transferError, nil
 }
 
-func (a *Applier) getOrRegisterPubKeyID(
+func (a *Applier) getPubKeyID(
 	publicKey *models.PublicKey,
 	tokenID models.Uint256,
-) (*uint32, error) {
-	pubKeyID, err := a.storage.GetUnusedPubKeyID(publicKey, &tokenID)
+) (pubKeyID *uint32, isPending bool, err error) {
+	pubKeyID, err = a.storage.GetUnusedPubKeyID(publicKey, &tokenID)
 	if err != nil && !st.IsNotFoundError(err) {
-		return nil, err
+		return nil, false, err
 	} else if st.IsNotFoundError(err) {
-		return a.client.RegisterAccountAndWait(publicKey)
+		pubKeyID, err = a.storage.AccountTree.NextBatchAccountPubKeyID()
+		if err != nil {
+			return nil, false, err
+		}
+		return pubKeyID, true, err
 	}
-	return pubKeyID, nil
+	return pubKeyID, false, nil
 }
 
 func newUserLeaf(stateID, pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
