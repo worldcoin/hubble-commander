@@ -1,3 +1,4 @@
+//go:build e2e
 // +build e2e
 
 package e2e
@@ -197,7 +198,7 @@ func register32Accounts(t *testing.T, ethClient *eth.Client, wallets []bls.Walle
 			publicKeyBatch[j] = *wallets[walletIndex].PublicKey()
 			walletIndex++
 		}
-		pubKeyIDs, err := ethClient.RegisterBatchAccount(publicKeyBatch, registrations)
+		pubKeyIDs, err := ethClient.RegisterBatchAccountAndWait(publicKeyBatch, registrations)
 		require.NoError(t, err)
 		registeredPubKeyIDs = append(registeredPubKeyIDs, pubKeyIDs...)
 	}
