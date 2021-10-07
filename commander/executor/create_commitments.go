@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -29,12 +30,13 @@ func (c *RollupContext) CreateCommitments() ([]models.Commitment, error) {
 	}
 
 	commitments := make([]models.Commitment, 0, c.cfg.MaxCommitmentsPerBatch)
+	pendingAccounts := make([]models.AccountLeaf, 0)
 
 	for i := uint8(0); len(commitments) != int(c.cfg.MaxCommitmentsPerBatch); i++ {
-		var commitment *models.Commitment
+		var result CreateCommitmentResult
 		commitmentID.IndexInBatch = i
 
-		pendingTxs, commitment, err = c.createCommitment(pendingTxs, commitmentID)
+		result, err = c.createCommitment(pendingTxs, commitmentID)
 		if errors.Is(err, ErrNotEnoughTxs) {
 			break
 		}
@@ -42,54 +44,57 @@ func (c *RollupContext) CreateCommitments() ([]models.Commitment, error) {
 			return nil, err
 		}
 
-		commitments = append(commitments, *commitment)
+		pendingTxs = result.PendingTxs()
+		commitments = append(commitments, *result.Commitment())
+		pendingAccounts = append(pendingAccounts, result.PendingAccounts()...)
 	}
-
-	//TODO-reg: register accounts here
 
 	if len(commitments) == 0 {
 		return nil, errors.WithStack(ErrNotEnoughTxs)
+	}
+
+	err = c.registerPendingAccounts(pendingAccounts)
+	if err != nil {
+		return nil, err
 	}
 
 	return commitments, nil
 }
 
 func (c *RollupContext) createCommitment(pendingTxs models.GenericTransactionArray, commitmentID *models.CommitmentID) (
-	newPendingTxs models.GenericTransactionArray,
-	commitment *models.Commitment,
-	err error,
+	CreateCommitmentResult, error,
 ) {
 	startTime := time.Now()
 
-	pendingTxs, err = c.refillPendingTxs(pendingTxs)
+	pendingTxs, err := c.refillPendingTxs(pendingTxs)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	feeReceiver, err := c.getCommitmentFeeReceiver()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	initialStateRoot, err := c.storage.StateTree.Root()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	executeResult, newPendingTxs, err := c.executeTxsForCommitment(pendingTxs, feeReceiver)
 	if errors.Is(err, ErrNotEnoughTxs) {
 		if revertErr := c.storage.StateTree.RevertTo(*initialStateRoot); revertErr != nil {
-			return nil, nil, revertErr
+			return nil, revertErr
 		}
-		return nil, nil, err
+		return nil, err
 	}
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	commitment, err = c.BuildCommitment(executeResult, commitmentID, feeReceiver.StateID)
+	commitment, err := c.BuildCommitment(executeResult, commitmentID, feeReceiver.StateID)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	log.Printf(
@@ -99,7 +104,7 @@ func (c *RollupContext) createCommitment(pendingTxs models.GenericTransactionArr
 		time.Since(startTime).Round(time.Millisecond).String(),
 	)
 
-	return newPendingTxs, commitment, nil
+	return c.Executor.NewCreateCommitmentResult(executeResult, commitment, newPendingTxs), nil
 }
 
 func (c *RollupContext) executeTxsForCommitment(pendingTxs models.GenericTransactionArray, feeReceiver *FeeReceiver) (
@@ -201,4 +206,43 @@ func txExists(txList models.GenericTransactionArray, tx models.GenericTransactio
 		}
 	}
 	return false
+}
+
+func (c *RollupContext) registerPendingAccounts(accounts []models.AccountLeaf) error {
+	accounts, err := c.fillMissingAccounts(accounts)
+	if err != nil {
+		return err
+	}
+	publicKeys := make([]models.PublicKey, 0, st.AccountBatchSize)
+	for i := range accounts {
+		publicKeys = append(publicKeys, accounts[i].PublicKey)
+		if len(publicKeys) == st.AccountBatchSize {
+			_, err = c.client.RegisterBatchAccount(publicKeys)
+			if err != nil {
+				return err
+			}
+			publicKeys = make([]models.PublicKey, 0, st.AccountBatchSize)
+		}
+	}
+	return nil
+}
+
+func (c *RollupContext) fillMissingAccounts(accounts []models.AccountLeaf) ([]models.AccountLeaf, error) {
+	missingAccounts := st.AccountBatchSize - len(accounts)%st.AccountBatchSize
+	if missingAccounts == st.AccountBatchSize {
+		return accounts, nil
+	}
+	publicKey := models.PublicKey{1, 2, 3}
+	for i := 0; i < missingAccounts; i++ {
+		accounts = append(accounts, models.AccountLeaf{
+			PubKeyID:  accounts[len(accounts)-1].PubKeyID + 1,
+			PublicKey: publicKey,
+		})
+	}
+
+	err := c.storage.AccountTree.SetInBatch(accounts[len(accounts)-missingAccounts:]...)
+	if err != nil {
+		return nil, err
+	}
+	return accounts, nil
 }

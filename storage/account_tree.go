@@ -74,7 +74,21 @@ func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
 		return errors.WithStack(NewInvalidPubKeyIDError(leaf.PubKeyID))
 	}
 
-	return s.setSingle(leaf)
+	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{})
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(&err)
+
+	_, err = NewAccountTree(txDatabase).unsafeSet(leaf)
+	if err == bh.ErrKeyExists {
+		return errors.WithStack(NewAccountAlreadyExistsError(leaf))
+	}
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
@@ -82,6 +96,10 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
 		return ErrInvalidAccountsLength
 	}
 
+	return s.SetInBatch(leaves...)
+}
+
+func (s *AccountTree) SetInBatch(leaves ...models.AccountLeaf) error {
 	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{})
 	if err != nil {
 		return err
@@ -101,32 +119,6 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
 		if err != nil {
 			return err
 		}
-	}
-
-	return tx.Commit()
-}
-
-func (s *AccountTree) SetOneInBatch(leaf *models.AccountLeaf) error {
-	if isValidBatchAccount(leaf) {
-		return errors.WithStack(NewInvalidPubKeyIDError(leaf.PubKeyID))
-	}
-
-	return s.setSingle(leaf)
-}
-
-func (s *AccountTree) setSingle(leaf *models.AccountLeaf) error {
-	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{})
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(&err)
-
-	_, err = NewAccountTree(txDatabase).unsafeSet(leaf)
-	if err == bh.ErrKeyExists {
-		return errors.WithStack(NewAccountAlreadyExistsError(leaf))
-	}
-	if err != nil {
-		return err
 	}
 
 	return tx.Commit()
