@@ -58,7 +58,7 @@ func (d *RPCChainConnection) GetAccount() *bind.TransactOpts {
 	return d.account
 }
 
-func (d *RPCChainConnection) GetBackend() ChainBackend {
+func (d *RPCChainConnection) GetBackend() Backend {
 	return d.backend
 }
 

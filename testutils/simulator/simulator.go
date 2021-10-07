@@ -135,7 +135,7 @@ func (sim *Simulator) GetAccount() *bind.TransactOpts {
 	return sim.Account
 }
 
-func (sim *Simulator) GetBackend() chain.ChainBackend {
+func (sim *Simulator) GetBackend() chain.Backend {
 	return sim.Backend
 }
 

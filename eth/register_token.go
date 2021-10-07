@@ -82,7 +82,7 @@ func RequestRegisterTokenAndWait(
 	opts *bind.TransactOpts,
 	tokenRegistry *tokenregistry.TokenRegistry,
 	tokenContract common.Address,
-	chainBackend chain.ChainBackend,
+	chainBackend chain.Backend,
 ) error {
 	tx, err := RequestRegisterToken(opts, tokenRegistry, tokenContract)
 	if err != nil {
@@ -99,7 +99,7 @@ func FinalizeRegisterTokenAndWait(
 	opts *bind.TransactOpts,
 	tokenRegistry *tokenregistry.TokenRegistry,
 	tokenContract common.Address,
-	chainBackend chain.ChainBackend,
+	chainBackend chain.Backend,
 ) error {
 	tx, err := FinalizeRegisterToken(opts, tokenRegistry, tokenContract)
 	if err != nil {
