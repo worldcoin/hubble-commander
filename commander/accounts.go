@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -97,20 +96,9 @@ func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int,
 			continue // TODO handle internal transactions
 		}
 
-		unpack, err := c.client.AccountRegistryABI.Methods["registerBatch"].Inputs.Unpack(tx.Data()[4:])
+		accounts, err := c.client.ExtractAccountsBatch(tx.Data(), it.Event)
 		if err != nil {
 			return nil, err
-		}
-
-		publicKeys := unpack[0].([storage.AccountBatchSize][4]*big.Int)
-		pubKeyIDs := eth.ExtractPubKeyIDsFromBatchAccountEvent(it.Event)
-
-		accounts := make([]models.AccountLeaf, 0, len(publicKeys))
-		for i := range pubKeyIDs {
-			accounts = append(accounts, models.AccountLeaf{
-				PubKeyID:  pubKeyIDs[i],
-				PublicKey: models.MakePublicKeyFromInts(publicKeys[i]),
-			})
 		}
 
 		isNewAccount, err := saveSyncedBatchAccounts(c.storage.AccountTree, accounts)
@@ -118,7 +106,7 @@ func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int,
 			return nil, err
 		}
 		if *isNewAccount {
-			*newAccountsCount += len(pubKeyIDs)
+			*newAccountsCount += len(accounts)
 		}
 	}
 	return newAccountsCount, nil

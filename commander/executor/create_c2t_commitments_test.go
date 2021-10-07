@@ -2,12 +2,10 @@ package executor
 
 import (
 	"context"
-	"math/big"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -335,17 +333,10 @@ func (s *Create2TransferCommitmentsTestSuite) getRegisteredAccounts(startBlockNu
 		tx, _, err := s.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
 		s.NoError(err)
 
-		unpack, err := s.client.AccountRegistryABI.Methods["registerBatch"].Inputs.Unpack(tx.Data()[4:])
+		accounts, err := s.client.ExtractAccountsBatch(tx.Data(), it.Event)
 		s.NoError(err)
 
-		pubKeyIDs := eth.ExtractPubKeyIDsFromBatchAccountEvent(it.Event)
-		pubKeys := unpack[0].([st.AccountBatchSize][4]*big.Int)
-		for i := range pubKeys {
-			registeredAccounts = append(registeredAccounts, models.AccountLeaf{
-				PubKeyID:  pubKeyIDs[i],
-				PublicKey: models.MakePublicKeyFromInts(pubKeys[i]),
-			})
-		}
+		registeredAccounts = append(registeredAccounts, accounts...)
 	}
 	return registeredAccounts
 }
