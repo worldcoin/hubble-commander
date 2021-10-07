@@ -116,7 +116,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InvalidTransfer
 	s.NoError(appErr)
 }
 
-func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ReturnsPendingAccount() {
+func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ReturnsPendingAccountWhenPublicKeyIsUnknown() {
 	applyResult, transferError, appError := s.applier.ApplyCreate2Transfer(&create2Transfer, feeReceiverTokenID)
 	s.NoError(appError)
 	s.NoError(transferError)
@@ -129,7 +129,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_ReturnsPendingA
 	s.Equal(expectedAccount, *applyResult.PendingAccount())
 }
 
-func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_() {
+func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_DoesNotReturnPendingAccountWhenPublicKeyIsRegistered() {
 	err := s.applier.storage.AccountTree.SetSingle(&models.AccountLeaf{
 		PubKeyID:  2,
 		PublicKey: create2Transfer.ToPublicKey,
