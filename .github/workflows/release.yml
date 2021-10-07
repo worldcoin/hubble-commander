@@ -68,6 +68,7 @@ jobs:
           host: ${{ matrix.host }}
           username: ec2-user
           key: ${{ secrets.AWS_SSH_KEY }}
+          script_stop: true
           script: |
             docker-compose pull
             docker-compose up -d
