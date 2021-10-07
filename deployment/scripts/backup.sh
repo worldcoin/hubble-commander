@@ -1,0 +1,50 @@
+#!/bin/bash
+
+if [ "$#" -ne 5 ]; then
+    echo "Script used for backing up the current state of the commander."
+    echo "This script generates a .tgz file with a compressed backup."
+    echo "Use the unpigz.sh script to decompress a backup file."
+    echo "Use the restore.sh script to restore a commander state from a backup file."
+    echo ""
+    echo "Script requires 5 arguments:"
+    echo "  1. commander directory path"
+    echo "  2. badger database directory path"
+    echo "  3. geth chaindata directory path"
+    echo "  4. path to the pigz tool"
+    echo "  5. path to the pg_dump tool"
+    echo ""
+    echo "Example usage:"
+    echo "$0 ./commander ./commander/db/badger/data ./commander/e2e/geth-data/geth/chaindata /usr/local/bin/pigz /usr/local/bin/pg_dump"
+    exit 0
+fi
+
+COMMANDER_DIR_PATH=$1
+BADGER_DATA_DIR_PATH=$2
+GETH_CHAINDATA_DIR_PATH=$3
+PIGZ_PATH=$4
+PG_DUMP_PATH=$5
+
+# Prepare paths
+SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+BACKUP_DIR=$(date +"%Y-%m-%d_%H:%M:%S")
+BACKUP_DIR_PATH="${SCRIPT_PATH}/../../backups/${BACKUP_DIR}"
+COMPRESSED_BACKUP_DIR_PATH="${BACKUP_DIR_PATH}.tgz"
+
+# Create a new backup directory based on the current time
+mkdir -p $BACKUP_DIR_PATH
+
+# Backup badger data
+rsync -a $BADGER_DATA_DIR_PATH/* $BACKUP_DIR_PATH/badger
+
+# Backup geth chain data
+rsync -a $GETH_CHAINDATA_DIR_PATH $BACKUP_DIR_PATH/geth
+
+# Dump postgres data
+POSTGRES_IP=$(cut -d' ' -f1 <<<$(hostname -I))
+PGPASSWORD="password" $PG_DUMP_PATH -h $POSTGRES_IP -U root -p 5433 -C hubble -Fc -Z0 > $BACKUP_DIR_PATH/postgres.sql
+
+# Compress all the files
+tar --use-compress-program="${PIGZ_PATH}" -cf $COMPRESSED_BACKUP_DIR_PATH -C $COMMANDER_DIR_PATH ./backups/$BACKUP_DIR
+
+# Remove redundant uncompressed directory
+rm -rf $BACKUP_DIR_PATH
