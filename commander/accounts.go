@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
@@ -15,6 +14,8 @@ import (
 )
 
 var ErrAccountLeavesInconsistency = fmt.Errorf("inconsistency in account leaves between the database and the contract")
+
+// TODO extract event filtering logic to eth.Client
 
 func (c *Commander) syncAccounts(start, end uint64) error {
 	newAccountsSingle, err := c.syncSingleAccounts(start, end)
@@ -51,16 +52,9 @@ func (c *Commander) syncSingleAccounts(start, end uint64) (newAccountsCount *int
 			continue // TODO handle internal transactions
 		}
 
-		unpack, err := c.client.AccountRegistryABI.Methods["register"].Inputs.Unpack(tx.Data()[4:])
+		account, err := c.client.ExtractSingleAccount(tx.Data(), it.Event)
 		if err != nil {
 			return nil, err
-		}
-
-		publicKey := unpack[0].([4]*big.Int)
-		pubKeyID := uint32(it.Event.PubkeyID.Uint64())
-		account := &models.AccountLeaf{
-			PubKeyID:  pubKeyID,
-			PublicKey: models.MakePublicKeyFromInts(publicKey),
 		}
 
 		isNewAccount, err := saveSyncedSingleAccount(c.storage.AccountTree, account)

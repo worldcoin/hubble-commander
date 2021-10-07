@@ -8,6 +8,25 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 )
 
+func (c *Client) ExtractSingleAccount(
+	calldata []byte,
+	event *accountregistry.AccountRegistrySinglePubkeyRegistered,
+) (*models.AccountLeaf, error) {
+	unpack, err := c.AccountRegistryABI.Methods["register"].Inputs.Unpack(calldata[4:])
+	if err != nil {
+		return nil, err
+	}
+
+	pubKeyID := uint32(event.PubkeyID.Uint64())
+	publicKey := unpack[0].([4]*big.Int)
+	account := &models.AccountLeaf{
+		PubKeyID:  pubKeyID,
+		PublicKey: models.MakePublicKeyFromInts(publicKey),
+	}
+
+	return account, nil
+}
+
 func (c *Client) ExtractAccountsBatch(
 	calldata []byte,
 	event *accountregistry.AccountRegistryBatchPubkeyRegistered,
