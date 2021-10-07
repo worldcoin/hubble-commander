@@ -216,7 +216,7 @@ func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_RegistersPubKeyIDInCaseT
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_ReturnsUnusedPubKeyID() {
-	for i := 1; i <= 10; i++ {
+	for i := 1; i <= 3; i++ {
 		err := s.storage.AccountTree.SetSingle(&models.AccountLeaf{
 			PubKeyID:  uint32(i),
 			PublicKey: models.PublicKey{1, 2, 3},
