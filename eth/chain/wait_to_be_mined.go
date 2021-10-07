@@ -1,11 +1,10 @@
-package deployer
+package chain
 
 import (
 	"context"
 	"fmt"
 	"time"
 
-	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
@@ -18,7 +17,7 @@ var (
 	ErrWaitToBeMinedTimedOut = fmt.Errorf("timeout on waiting for transaction to be mined")
 )
 
-func WaitToBeMined(r chain.ReceiptProvider, tx *types.Transaction) (*types.Receipt, error) {
+func WaitToBeMined(r ReceiptProvider, tx *types.Transaction) (*types.Receipt, error) {
 	timeout := time.After(ChainTimeout)
 	ticker := time.NewTicker(PollInterval)
 	defer ticker.Stop()

@@ -18,7 +18,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -356,7 +355,7 @@ func submitC2TBatch(t *testing.T, ethClient *eth.Client, commitments []models.Co
 }
 
 func waitForSubmittedBatch(t *testing.T, ethClient *eth.Client, transaction *types.Transaction, batchID uint64) {
-	_, err := deployer.WaitToBeMined(ethClient.Blockchain.GetBackend(), transaction)
+	_, err := chain.WaitToBeMined(ethClient.Blockchain.GetBackend(), transaction)
 	require.NoError(t, err)
 
 	_, err = ethClient.GetBatch(models.NewUint256(batchID))

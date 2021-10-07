@@ -7,7 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -182,7 +182,7 @@ func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID mo
 	applyResult applier.ApplySingleTxResult, transferError, appError error,
 ) {
 	applyResult, transferError, appError = e.applier.ApplyCreate2Transfer(tx.ToCreate2Transfer(), commitmentTokenID)
-	if errors.Is(appError, deployer.ErrWaitToBeMinedTimedOut) {
+	if errors.Is(appError, chain.ErrWaitToBeMinedTimedOut) {
 		return nil, nil, NewLoggableRollupError(appError.Error())
 	}
 	return applyResult, transferError, appError

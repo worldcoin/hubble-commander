@@ -16,7 +16,7 @@ func DeployAccountRegistry(c chain.Connection) (*common.Address, *uint64, *accou
 	}
 
 	c.Commit()
-	txReceipt, err := WaitToBeMined(c.GetBackend(), tx)
+	txReceipt, err := chain.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, nil, nil, errors.WithStack(err)
 	}

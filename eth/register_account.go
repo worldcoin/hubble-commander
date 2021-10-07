@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -19,7 +19,7 @@ func (c *Client) RegisterAccountAndWait(publicKey *models.PublicKey) (*uint32, e
 	if err != nil {
 		return nil, err
 	}
-	receipt, err := deployer.WaitToBeMined(c.Blockchain.GetBackend(), tx)
+	receipt, err := chain.WaitToBeMined(c.Blockchain.GetBackend(), tx)
 	if err != nil {
 		return nil, err
 	}

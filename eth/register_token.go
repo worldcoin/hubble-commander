@@ -3,7 +3,6 @@ package eth
 import (
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -88,7 +87,7 @@ func RequestRegisterTokenAndWait(
 	if err != nil {
 		return err
 	}
-	_, err = deployer.WaitToBeMined(chainBackend, tx)
+	_, err = chain.WaitToBeMined(chainBackend, tx)
 	if err != nil {
 		return err
 	}
@@ -105,7 +104,7 @@ func FinalizeRegisterTokenAndWait(
 	if err != nil {
 		return err
 	}
-	_, err = deployer.WaitToBeMined(chainBackend, tx)
+	_, err = chain.WaitToBeMined(chainBackend, tx)
 	if err != nil {
 		return err
 	}

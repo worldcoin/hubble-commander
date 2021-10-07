@@ -98,7 +98,7 @@ func DeployConfiguredRollup(c chain.Connection, config DeploymentConfig) (*Rollu
 	}
 
 	c.Commit()
-	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
+	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func DeployConfiguredRollup(c chain.Connection, config DeploymentConfig) (*Rollu
 	}
 
 	c.Commit()
-	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
+	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func DeployConfiguredRollup(c chain.Connection, config DeploymentConfig) (*Rollu
 	}
 
 	c.Commit()
-	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
+	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +139,7 @@ func DeployConfiguredRollup(c chain.Connection, config DeploymentConfig) (*Rollu
 	}
 
 	c.Commit()
-	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
+	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +157,7 @@ func DeployConfiguredRollup(c chain.Connection, config DeploymentConfig) (*Rollu
 	}
 
 	c.Commit()
-	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
+	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +171,7 @@ func DeployConfiguredRollup(c chain.Connection, config DeploymentConfig) (*Rollu
 	}
 
 	c.Commit()
-	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
+	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +217,7 @@ func DeployConfiguredRollup(c chain.Connection, config DeploymentConfig) (*Rollu
 	}
 
 	c.Commit()
-	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
+	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
 	}
@@ -249,7 +249,7 @@ func deployCostEstimator(c chain.Connection) (*common.Address, error) {
 	}
 
 	c.Commit()
-	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
+	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
 	}
@@ -270,7 +270,7 @@ func deployTransactionHelperContracts(c chain.Connection) (*txHelperContracts, e
 	}
 
 	c.Commit()
-	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
+	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
 	}
@@ -282,7 +282,7 @@ func deployTransactionHelperContracts(c chain.Connection) (*txHelperContracts, e
 	}
 
 	c.Commit()
-	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
+	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
 	}
@@ -294,7 +294,7 @@ func deployTransactionHelperContracts(c chain.Connection) (*txHelperContracts, e
 	}
 
 	c.Commit()
-	_, err = deployer.WaitToBeMined(c.GetBackend(), tx)
+	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
 	}

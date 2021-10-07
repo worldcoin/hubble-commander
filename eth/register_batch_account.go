@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -80,7 +80,7 @@ func (c *Client) WaitForBatchAccountRegistration(
 			if event.Raw.TxHash == tx.Hash() {
 				return ExtractPubKeyIDsFromBatchAccountEvent(event), nil
 			}
-		case <-time.After(deployer.ChainTimeout):
+		case <-time.After(chain.ChainTimeout):
 			return nil, errors.WithStack(ErrRegisterBatchAccountTimeout)
 		}
 	}
