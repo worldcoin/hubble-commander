@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/suite"
@@ -128,7 +129,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 	state2, err := s.storage.StateTree.Leaf(2)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(400), state2.Balance)
-	s.Equal(uint32(0), state2.PubKeyID)
+	s.Equal(uint32(st.AccountBatchOffset), state2.PubKeyID)
 
 	treeRoot := s.getAccountTreeRoot()
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
