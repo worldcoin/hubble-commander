@@ -326,6 +326,19 @@ func (s *AccountTreeTestSuite) TestNextBatchAccountPubKeyID_OnlySingleAccountsRe
 	s.EqualValues(AccountBatchOffset, *pubKeyID)
 }
 
+func (s *AccountTreeTestSuite) TestNextBatchAccountPubKeyID_OnlySingleAccountFromBatchRegistered() {
+	leaf := models.AccountLeaf{
+		PubKeyID:  AccountBatchOffset,
+		PublicKey: models.PublicKey{1, 2, 3},
+	}
+	err := s.storage.AccountTree.SetInBatch(leaf)
+	s.NoError(err)
+
+	pubKeyID, err := s.storage.AccountTree.NextBatchAccountPubKeyID()
+	s.NoError(err)
+	s.EqualValues(AccountBatchOffset+1, *pubKeyID)
+}
+
 func (s *AccountTreeTestSuite) TestNextBatchAccountPubKeyID_NoAccounts() {
 	pubKeyID, err := s.storage.AccountTree.NextBatchAccountPubKeyID()
 	s.NoError(err)
