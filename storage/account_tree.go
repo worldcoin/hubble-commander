@@ -146,9 +146,9 @@ func (s *AccountTree) unsafeSet(leaf *models.AccountLeaf) (models.Witness, error
 
 func (s *AccountTree) NextBatchAccountPubKeyID() (*uint32, error) {
 	nextPubKeyID := uint32(AccountBatchOffset)
-	err := s.database.Badger.Iterator(models.AccountLeafPrefix, db.ReverseKeyIteratorOpts, func(item *bdg.Item) (bool, error) {
+	err := s.database.Badger.Iterator(models.AccountLeafPrefix, db.ReverseKeyIteratorOpts, func(item *bdg.Item) (finish bool, err error) {
 		var account models.AccountLeaf
-		err := item.Value(account.SetBytes)
+		err = item.Value(account.SetBytes)
 		if err != nil {
 			return false, err
 		}
