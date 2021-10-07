@@ -87,8 +87,8 @@ func (s *CommanderTestSuite) TestStart_SetsCorrectSyncedBlock() {
 	s.NoError(err)
 }
 
-func (s *CommanderTestSuite) prepareContracts(cfg *config.Config, chain chain.Connection) {
-	yamlChainSpec, err := Deploy(cfg, chain)
+func (s *CommanderTestSuite) prepareContracts(cfg *config.Config, blockchain chain.Connection) {
+	yamlChainSpec, err := Deploy(cfg, blockchain)
 	s.NoError(err)
 
 	file, err := ioutil.TempFile("", "chain_spec_commander_test")

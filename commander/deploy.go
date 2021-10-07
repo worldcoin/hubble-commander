@@ -14,7 +14,7 @@ import (
 
 var ErrNoPublicKeysInGenesisAccounts = fmt.Errorf("genesis accounts for deployment require public keys")
 
-func Deploy(cfg *config.Config, chain chain.Connection) (chainSpec *string, err error) {
+func Deploy(cfg *config.Config, blockchain chain.Connection) (chainSpec *string, err error) {
 	tempStorage, err := st.NewTemporaryStorage()
 	if err != nil {
 		return nil, err
@@ -32,7 +32,7 @@ func Deploy(cfg *config.Config, chain chain.Connection) (chainSpec *string, err 
 		len(cfg.Bootstrap.GenesisAccounts),
 		cfg.Ethereum.ChainID,
 	)
-	chainState, err := deployContractsAndSetupGenesisState(tempStorage.Storage, chain, cfg.Bootstrap.GenesisAccounts)
+	chainState, err := deployContractsAndSetupGenesisState(tempStorage.Storage, blockchain, cfg.Bootstrap.GenesisAccounts)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func Deploy(cfg *config.Config, chain chain.Connection) (chainSpec *string, err 
 
 func deployContractsAndSetupGenesisState(
 	storage *st.Storage,
-	chain chain.Connection,
+	blockchain chain.Connection,
 	accounts []models.GenesisAccount,
 ) (*models.ChainState, error) {
 	err := validateGenesisAccounts(accounts)
@@ -55,12 +55,12 @@ func deployContractsAndSetupGenesisState(
 		return nil, err
 	}
 
-	accountRegistryAddress, accountRegistryDeploymentBlock, accountRegistry, err := deployer.DeployAccountRegistry(chain)
+	accountRegistryAddress, accountRegistryDeploymentBlock, accountRegistry, err := deployer.DeployAccountRegistry(blockchain)
 	if err != nil {
 		return nil, err
 	}
 
-	registeredAccounts, err := RegisterGenesisAccounts(chain.GetAccount(), accountRegistry, accounts)
+	registeredAccounts, err := RegisterGenesisAccounts(blockchain.GetAccount(), accountRegistry, accounts)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func deployContractsAndSetupGenesisState(
 		return nil, err
 	}
 
-	contracts, err := rollup.DeployConfiguredRollup(chain, rollup.DeploymentConfig{
+	contracts, err := rollup.DeployConfiguredRollup(blockchain, rollup.DeploymentConfig{
 		Params:       rollup.Params{GenesisStateRoot: stateRoot},
 		Dependencies: rollup.Dependencies{AccountRegistry: accountRegistryAddress},
 	})
@@ -86,7 +86,7 @@ func deployContractsAndSetupGenesisState(
 	}
 
 	chainState := &models.ChainState{
-		ChainID:                        chain.GetChainID(),
+		ChainID:                        blockchain.GetChainID(),
 		AccountRegistry:                *accountRegistryAddress,
 		AccountRegistryDeploymentBlock: *accountRegistryDeploymentBlock,
 		TokenRegistry:                  contracts.TokenRegistryAddress,

@@ -32,12 +32,12 @@ func (s *WalletHardhatTestSuite) SetupSuite() {
 		ChainID:    123,
 	}
 
-	dep, err := chain.NewRPCCConnection(cfg.Ethereum)
+	blockchain, err := chain.NewRPCCConnection(cfg.Ethereum)
 	s.NoError(err)
 
-	opts := *dep.GetAccount()
+	opts := *blockchain.GetAccount()
 	opts.GasLimit = 3_000_000
-	_, _, testBLS, err := testbls.DeployTestBLS(&opts, dep.GetBackend())
+	_, _, testBLS, err := testbls.DeployTestBLS(&opts, blockchain.GetBackend())
 	s.NoError(err)
 	s.testBLS = testBLS
 }

@@ -381,16 +381,18 @@ func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
 	blockchain, err := chain.NewRPCCConnection(cfg.Ethereum)
 	require.NoError(t, err)
 
-	accountRegistry, err := accountregistry.NewAccountRegistry(chainState.AccountRegistry, blockchain.GetBackend())
+	backend := blockchain.GetBackend()
+
+	accountRegistry, err := accountregistry.NewAccountRegistry(chainState.AccountRegistry, backend)
 	require.NoError(t, err)
 
-	tokenRegistry, err := tokenregistry.NewTokenRegistry(chainState.TokenRegistry, blockchain.GetBackend())
+	tokenRegistry, err := tokenregistry.NewTokenRegistry(chainState.TokenRegistry, backend)
 	require.NoError(t, err)
 
-	depositManager, err := depositmanager.NewDepositManager(chainState.DepositManager, blockchain.GetBackend())
+	depositManager, err := depositmanager.NewDepositManager(chainState.DepositManager, backend)
 	require.NoError(t, err)
 
-	rollupContract, err := rollup.NewRollup(chainState.Rollup, blockchain.GetBackend())
+	rollupContract, err := rollup.NewRollup(chainState.Rollup, backend)
 	require.NoError(t, err)
 
 	ethClient, err := eth.NewClient(blockchain, &eth.NewClientParams{

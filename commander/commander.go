@@ -43,16 +43,16 @@ type Commander struct {
 	rollupLoopRunning bool
 	stateMutex        sync.Mutex
 
-	storage   *st.Storage
-	client    *eth.Client
-	chain     chain.Connection
-	apiServer *http.Server
+	storage    *st.Storage
+	client     *eth.Client
+	blockchain chain.Connection
+	apiServer  *http.Server
 }
 
-func NewCommander(cfg *config.Config, chain chain.Connection) *Commander {
+func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
 	return &Commander{
 		cfg:                 cfg,
-		chain:               chain,
+		blockchain:          blockchain,
 		releaseStartAndWait: func() {}, // noop
 	}
 }
@@ -71,7 +71,7 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.client, err = getClient(c.chain, c.storage, c.cfg)
+	c.client, err = getClient(c.blockchain, c.storage, c.cfg)
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func (c *Commander) Stop() error {
 }
 
 func (c *Commander) resetCommander() {
-	*c = *NewCommander(c.cfg, c.chain)
+	*c = *NewCommander(c.cfg, c.blockchain)
 }
 
 func GetChainConnection(cfg *config.EthereumConfig) (chain.Connection, error) {
@@ -158,7 +158,7 @@ func GetChainConnection(cfg *config.EthereumConfig) (chain.Connection, error) {
 	return chain.NewRPCCConnection(cfg)
 }
 
-func getClient(chain chain.Connection, storage *st.Storage, cfg *config.Config) (*eth.Client, error) {
+func getClient(blockchain chain.Connection, storage *st.Storage, cfg *config.Config) (*eth.Client, error) {
 	if cfg.Ethereum == nil {
 		log.Fatal("no Ethereum config")
 	}
@@ -175,18 +175,18 @@ func getClient(chain chain.Connection, storage *st.Storage, cfg *config.Config) 
 	}
 
 	if cfg.Bootstrap.ChainSpecPath != nil {
-		return bootstrapFromChainState(chain, dbChainState, storage, cfg)
+		return bootstrapFromChainState(blockchain, dbChainState, storage, cfg)
 	}
 	if cfg.Bootstrap.BootstrapNodeURL != nil {
 		log.Printf("Bootstrapping genesis state from node %s", *cfg.Bootstrap.BootstrapNodeURL)
-		return bootstrapFromRemoteState(chain, storage, cfg)
+		return bootstrapFromRemoteState(blockchain, storage, cfg)
 	}
 
 	return nil, errors.WithStack(errMissingBootstrapSource)
 }
 
 func bootstrapFromChainState(
-	chain chain.Connection,
+	blockchain chain.Connection,
 	dbChainState *models.ChainState,
 	storage *st.Storage,
 	cfg *config.Config,
@@ -198,7 +198,7 @@ func bootstrapFromChainState(
 	importedChainState := newChainStateFromChainSpec(chainSpec)
 
 	if dbChainState == nil {
-		return bootstrapChainStateAndCommander(chain, storage, importedChainState, cfg.Rollup)
+		return bootstrapChainStateAndCommander(blockchain, storage, importedChainState, cfg.Rollup)
 	}
 
 	err = compareChainStates(importedChainState, dbChainState)
@@ -207,7 +207,7 @@ func bootstrapFromChainState(
 	}
 
 	log.Printf("Continuing from saved state on ChainID = %s", importedChainState.ChainID.String())
-	return createClientFromChainState(chain, importedChainState, cfg.Rollup)
+	return createClientFromChainState(blockchain, importedChainState, cfg.Rollup)
 }
 
 func compareChainStates(chainStateA, chainStateB *models.ChainState) error {
@@ -233,22 +233,22 @@ func compareChainStates(chainStateA, chainStateB *models.ChainState) error {
 }
 
 func bootstrapChainStateAndCommander(
-	chain chain.Connection,
+	blockchain chain.Connection,
 	storage *st.Storage,
 	importedChainState *models.ChainState,
 	cfg *config.RollupConfig,
 ) (*eth.Client, error) {
-	chainID := chain.GetChainID()
+	chainID := blockchain.GetChainID()
 	if chainID != importedChainState.ChainID {
 		return nil, errors.WithStack(errInconsistentFileChainID)
 	}
 
 	log.Printf("Bootstrapping genesis state from chain spec file")
-	return setGenesisStateAndCreateClient(chain, storage, importedChainState, cfg)
+	return setGenesisStateAndCreateClient(blockchain, storage, importedChainState, cfg)
 }
 
 func bootstrapFromRemoteState(
-	chain chain.Connection,
+	blockchain chain.Connection,
 	storage *st.Storage,
 	cfg *config.Config,
 ) (*eth.Client, error) {
@@ -261,11 +261,11 @@ func bootstrapFromRemoteState(
 		return nil, errors.WithStack(errInconsistentRemoteChainID)
 	}
 
-	return setGenesisStateAndCreateClient(chain, storage, fetchedChainState, cfg.Rollup)
+	return setGenesisStateAndCreateClient(blockchain, storage, fetchedChainState, cfg.Rollup)
 }
 
 func setGenesisStateAndCreateClient(
-	chain chain.Connection,
+	blockchain chain.Connection,
 	storage *st.Storage,
 	chainState *models.ChainState,
 	cfg *config.RollupConfig,
@@ -280,7 +280,7 @@ func setGenesisStateAndCreateClient(
 		return nil, err
 	}
 
-	client, err := createClientFromChainState(chain, chainState, cfg)
+	client, err := createClientFromChainState(blockchain, chainState, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -321,7 +321,7 @@ func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {
 }
 
 func createClientFromChainState(
-	chain chain.Connection,
+	blockchain chain.Connection,
 	chainState *models.ChainState,
 	cfg *config.RollupConfig,
 ) (*eth.Client, error) {
@@ -330,27 +330,29 @@ func createClientFromChainState(
 		return nil, err
 	}
 
-	accountRegistry, err := accountregistry.NewAccountRegistry(chainState.AccountRegistry, chain.GetBackend())
+	backend := blockchain.GetBackend()
+
+	accountRegistry, err := accountregistry.NewAccountRegistry(chainState.AccountRegistry, backend)
 	if err != nil {
 		return nil, err
 	}
 
-	tokenRegistry, err := tokenregistry.NewTokenRegistry(chainState.TokenRegistry, chain.GetBackend())
+	tokenRegistry, err := tokenregistry.NewTokenRegistry(chainState.TokenRegistry, backend)
 	if err != nil {
 		return nil, err
 	}
 
-	depositManager, err := depositmanager.NewDepositManager(chainState.DepositManager, chain.GetBackend())
+	depositManager, err := depositmanager.NewDepositManager(chainState.DepositManager, backend)
 	if err != nil {
 		return nil, err
 	}
 
-	rollupContract, err := rollup.NewRollup(chainState.Rollup, chain.GetBackend())
+	rollupContract, err := rollup.NewRollup(chainState.Rollup, backend)
 	if err != nil {
 		return nil, err
 	}
 
-	client, err := eth.NewClient(chain, &eth.NewClientParams{
+	client, err := eth.NewClient(blockchain, &eth.NewClientParams{
 		ChainState:      *chainState,
 		Rollup:          rollupContract,
 		AccountRegistry: accountRegistry,
