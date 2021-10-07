@@ -66,16 +66,17 @@ func (a *Applier) getPubKeyID(
 	tokenID models.Uint256,
 ) (pubKeyID *uint32, isPending bool, err error) {
 	pubKeyID, err = a.storage.GetUnusedPubKeyID(publicKey, &tokenID)
-	if err != nil && !st.IsNotFoundError(err) {
-		return nil, false, err
-	} else if st.IsNotFoundError(err) {
+	if err == nil {
+		return pubKeyID, false, nil
+	}
+	if st.IsNotFoundError(err) {
 		pubKeyID, err = a.storage.AccountTree.NextBatchAccountPubKeyID()
 		if err != nil {
 			return nil, false, err
 		}
 		return pubKeyID, true, err
 	}
-	return pubKeyID, false, nil
+	return nil, false, err
 }
 
 func newUserLeaf(stateID, pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
