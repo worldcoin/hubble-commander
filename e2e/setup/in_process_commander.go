@@ -16,7 +16,7 @@ type InProcessCommander struct {
 	client    jsonrpc.RPCClient
 	commander *commander.Commander
 	cfg       *config.Config
-	chain     chain.ChainConnection
+	chain     chain.Connection
 }
 
 func CreateInProcessCommander() (*InProcessCommander, error) {

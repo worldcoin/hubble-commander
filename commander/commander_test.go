@@ -87,7 +87,7 @@ func (s *CommanderTestSuite) TestStart_SetsCorrectSyncedBlock() {
 	s.NoError(err)
 }
 
-func (s *CommanderTestSuite) prepareContracts(cfg *config.Config, chain chain.ChainConnection) {
+func (s *CommanderTestSuite) prepareContracts(cfg *config.Config, chain chain.Connection) {
 	yamlChainSpec, err := Deploy(cfg, chain)
 	s.NoError(err)
 

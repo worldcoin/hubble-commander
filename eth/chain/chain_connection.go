@@ -22,7 +22,7 @@ type Backend interface {
 	HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error)
 }
 
-type ChainConnection interface {
+type Connection interface {
 	GetAccount() *bind.TransactOpts
 
 	GetBackend() Backend

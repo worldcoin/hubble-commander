@@ -79,12 +79,12 @@ type txHelperContracts struct {
 	Create2Transfer        *create2transfer.Create2Transfer
 }
 
-func DeployRollup(c chain.ChainConnection) (*RollupContracts, error) {
+func DeployRollup(c chain.Connection) (*RollupContracts, error) {
 	return DeployConfiguredRollup(c, DeploymentConfig{})
 }
 
 // nolint:funlen,gocyclo
-func DeployConfiguredRollup(c chain.ChainConnection, config DeploymentConfig) (*RollupContracts, error) {
+func DeployConfiguredRollup(c chain.Connection, config DeploymentConfig) (*RollupContracts, error) {
 	fillWithDefaults(&config.Params)
 	err := deployMissing(&config.Dependencies, c)
 	if err != nil {
@@ -241,7 +241,7 @@ func DeployConfiguredRollup(c chain.ChainConnection, config DeploymentConfig) (*
 	}, nil
 }
 
-func deployCostEstimator(c chain.ChainConnection) (*common.Address, error) {
+func deployCostEstimator(c chain.Connection) (*common.Address, error) {
 	log.Println("Deploying BNPairingPrecompileCostEstimator")
 	estimatorAddress, tx, costEstimator, err := estimator.DeployCostEstimator(c.GetAccount(), c.GetBackend())
 	if err != nil {
@@ -262,7 +262,7 @@ func deployCostEstimator(c chain.ChainConnection) (*common.Address, error) {
 	return &estimatorAddress, nil
 }
 
-func deployTransactionHelperContracts(c chain.ChainConnection) (*txHelperContracts, error) {
+func deployTransactionHelperContracts(c chain.Connection) (*txHelperContracts, error) {
 	log.Println("Deploying Transfer")
 	transferAddress, tx, transferContract, err := transfer.DeployTransfer(c.GetAccount(), c.GetBackend())
 	if err != nil {
@@ -332,7 +332,7 @@ func fillWithDefaults(params *Params) {
 	}
 }
 
-func deployMissing(dependencies *Dependencies, c chain.ChainConnection) error {
+func deployMissing(dependencies *Dependencies, c chain.Connection) error {
 	if dependencies.AccountRegistry == nil {
 		accountRegistryAddress, _, _, err := deployer.DeployAccountRegistry(c)
 		if err != nil {

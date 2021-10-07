@@ -45,11 +45,11 @@ type Commander struct {
 
 	storage   *st.Storage
 	client    *eth.Client
-	chain     chain.ChainConnection
+	chain     chain.Connection
 	apiServer *http.Server
 }
 
-func NewCommander(cfg *config.Config, chain chain.ChainConnection) *Commander {
+func NewCommander(cfg *config.Config, chain chain.Connection) *Commander {
 	return &Commander{
 		cfg:                 cfg,
 		chain:               chain,
@@ -148,7 +148,7 @@ func (c *Commander) resetCommander() {
 	*c = *NewCommander(c.cfg, c.chain)
 }
 
-func GetChainConnection(cfg *config.EthereumConfig) (chain.ChainConnection, error) {
+func GetChainConnection(cfg *config.EthereumConfig) (chain.Connection, error) {
 	if cfg.RPCURL == "simulator" {
 		return simulator.NewConfiguredSimulator(simulator.Config{
 			FirstAccountPrivateKey: ref.String(cfg.PrivateKey),
@@ -158,7 +158,7 @@ func GetChainConnection(cfg *config.EthereumConfig) (chain.ChainConnection, erro
 	return chain.NewRPCChainConnection(cfg)
 }
 
-func getClient(chain chain.ChainConnection, storage *st.Storage, cfg *config.Config) (*eth.Client, error) {
+func getClient(chain chain.Connection, storage *st.Storage, cfg *config.Config) (*eth.Client, error) {
 	if cfg.Ethereum == nil {
 		log.Fatal("no Ethereum config")
 	}
@@ -186,7 +186,7 @@ func getClient(chain chain.ChainConnection, storage *st.Storage, cfg *config.Con
 }
 
 func bootstrapFromChainState(
-	chain chain.ChainConnection,
+	chain chain.Connection,
 	dbChainState *models.ChainState,
 	storage *st.Storage,
 	cfg *config.Config,
@@ -233,7 +233,7 @@ func compareChainStates(chainStateA, chainStateB *models.ChainState) error {
 }
 
 func bootstrapChainStateAndCommander(
-	chain chain.ChainConnection,
+	chain chain.Connection,
 	storage *st.Storage,
 	importedChainState *models.ChainState,
 	cfg *config.RollupConfig,
@@ -248,7 +248,7 @@ func bootstrapChainStateAndCommander(
 }
 
 func bootstrapFromRemoteState(
-	chain chain.ChainConnection,
+	chain chain.Connection,
 	storage *st.Storage,
 	cfg *config.Config,
 ) (*eth.Client, error) {
@@ -265,7 +265,7 @@ func bootstrapFromRemoteState(
 }
 
 func setGenesisStateAndCreateClient(
-	chain chain.ChainConnection,
+	chain chain.Connection,
 	storage *st.Storage,
 	chainState *models.ChainState,
 	cfg *config.RollupConfig,
@@ -321,7 +321,7 @@ func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {
 }
 
 func createClientFromChainState(
-	chain chain.ChainConnection,
+	chain chain.Connection,
 	chainState *models.ChainState,
 	cfg *config.RollupConfig,
 ) (*eth.Client, error) {

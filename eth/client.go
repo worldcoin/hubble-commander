@@ -37,7 +37,7 @@ type ClientConfig struct {
 type Client struct {
 	config                  ClientConfig
 	ChainState              models.ChainState
-	ChainConnection         chain.ChainConnection
+	ChainConnection         chain.Connection
 	Rollup                  *rollup.Rollup
 	RollupABI               *abi.ABI
 	AccountRegistry         *accountregistry.AccountRegistry
@@ -51,7 +51,7 @@ type Client struct {
 }
 
 //goland:noinspection GoDeprecation
-func NewClient(chainConnection chain.ChainConnection, params *NewClientParams) (*Client, error) {
+func NewClient(chainConnection chain.Connection, params *NewClientParams) (*Client, error) {
 	fillWithDefaults(&params.ClientConfig)
 
 	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))

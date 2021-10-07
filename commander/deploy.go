@@ -14,7 +14,7 @@ import (
 
 var ErrNoPublicKeysInGenesisAccounts = fmt.Errorf("genesis accounts for deployment require public keys")
 
-func Deploy(cfg *config.Config, chain chain.ChainConnection) (chainSpec *string, err error) {
+func Deploy(cfg *config.Config, chain chain.Connection) (chainSpec *string, err error) {
 	tempStorage, err := st.NewTemporaryStorage()
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func Deploy(cfg *config.Config, chain chain.ChainConnection) (chainSpec *string,
 
 func deployContractsAndSetupGenesisState(
 	storage *st.Storage,
-	chain chain.ChainConnection,
+	chain chain.Connection,
 	accounts []models.GenesisAccount,
 ) (*models.ChainState, error) {
 	err := validateGenesisAccounts(accounts)
