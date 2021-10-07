@@ -234,8 +234,9 @@ func (c *RollupContext) fillMissingAccounts(accounts []models.AccountLeaf) ([]mo
 		return accounts, nil
 	}
 	for i := 0; i < missingAccounts; i++ {
+		lastAccount := &accounts[len(accounts)-1]
 		accounts = append(accounts, models.AccountLeaf{
-			PubKeyID:  accounts[len(accounts)-1].PubKeyID + 1,
+			PubKeyID:  lastAccount.PubKeyID + 1,
 			PublicKey: mockPublicKey,
 		})
 	}
