@@ -114,7 +114,7 @@ func RegisterGenesisAccounts(
 				return registeredAccounts, nil
 			}
 
-		case <-time.After(chain.ChainTimeout):
+		case <-time.After(chain.MineTimeout):
 			return nil, errors.WithStack(ErrRegisterGenesisAccountTimeout)
 		}
 	}

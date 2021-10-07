@@ -80,7 +80,7 @@ func (c *Client) WaitForBatchAccountRegistration(
 			if event.Raw.TxHash == tx.Hash() {
 				return ExtractPubKeyIDsFromBatchAccountEvent(event), nil
 			}
-		case <-time.After(chain.ChainTimeout):
+		case <-time.After(chain.MineTimeout):
 			return nil, errors.WithStack(ErrRegisterBatchAccountTimeout)
 		}
 	}

@@ -54,7 +54,7 @@ Outer:
 				tokenID = event.TokenID
 				break Outer
 			}
-		case <-time.After(chain.ChainTimeout):
+		case <-time.After(chain.MineTimeout):
 			s.Fail("Token registry event watcher timed out")
 		}
 	}

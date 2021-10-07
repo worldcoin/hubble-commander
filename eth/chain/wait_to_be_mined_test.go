@@ -96,9 +96,9 @@ func (s *WaitToBeMinedTestSuite) TestWaitToBeMined_MakesTheSecondCallAfterInterv
 }
 
 func withChainTimeout(timeout time.Duration, fn func()) {
-	initialChainTimeout := ChainTimeout
-	ChainTimeout = timeout
-	defer func() { ChainTimeout = initialChainTimeout }()
+	initialChainTimeout := MineTimeout
+	MineTimeout = timeout
+	defer func() { MineTimeout = initialChainTimeout }()
 	fn()
 }
 
