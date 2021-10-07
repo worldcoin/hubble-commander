@@ -16,14 +16,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-type RPCChainConnection struct {
+type RPCConnection struct {
 	account *bind.TransactOpts
 	backend *ethclient.Client
 	rpc     *rpc.Client
 	chainID *big.Int
 }
 
-func NewRPCChainConnection(cfg *config.EthereumConfig) (*RPCChainConnection, error) {
+func NewRPCCConnection(cfg *config.EthereumConfig) (*RPCConnection, error) {
 	chainID, ok := big.NewInt(0).SetString(cfg.ChainID, 10)
 	if !ok {
 		return nil, errors.Errorf("invalid chain id")
@@ -46,7 +46,7 @@ func NewRPCChainConnection(cfg *config.EthereumConfig) (*RPCChainConnection, err
 
 	backend := ethclient.NewClient(rpcClient)
 
-	return &RPCChainConnection{
+	return &RPCConnection{
 		account,
 		backend,
 		rpcClient,
@@ -54,23 +54,23 @@ func NewRPCChainConnection(cfg *config.EthereumConfig) (*RPCChainConnection, err
 	}, nil
 }
 
-func (d *RPCChainConnection) GetAccount() *bind.TransactOpts {
+func (d *RPCConnection) GetAccount() *bind.TransactOpts {
 	return d.account
 }
 
-func (d *RPCChainConnection) GetBackend() Backend {
+func (d *RPCConnection) GetBackend() Backend {
 	return d.backend
 }
 
-func (d *RPCChainConnection) Commit() {
+func (d *RPCConnection) Commit() {
 	// NOOP
 }
 
-func (d *RPCChainConnection) GetChainID() models.Uint256 {
+func (d *RPCConnection) GetChainID() models.Uint256 {
 	return models.MakeUint256FromBig(*d.chainID)
 }
 
-func (d *RPCChainConnection) GetLatestBlockNumber() (*uint64, error) {
+func (d *RPCConnection) GetLatestBlockNumber() (*uint64, error) {
 	blockNumber, err := d.backend.BlockNumber(context.Background())
 	if err != nil {
 		return nil, err
@@ -78,10 +78,10 @@ func (d *RPCChainConnection) GetLatestBlockNumber() (*uint64, error) {
 	return ref.Uint64(blockNumber), nil
 }
 
-func (d *RPCChainConnection) SubscribeNewHead(ch chan<- *types.Header) (ethereum.Subscription, error) {
+func (d *RPCConnection) SubscribeNewHead(ch chan<- *types.Header) (ethereum.Subscription, error) {
 	return d.backend.SubscribeNewHead(context.Background(), ch)
 }
 
-func (d *RPCChainConnection) EstimateGas(ctx context.Context, msg *ethereum.CallMsg) (uint64, error) {
+func (d *RPCConnection) EstimateGas(ctx context.Context, msg *ethereum.CallMsg) (uint64, error) {
 	return d.backend.EstimateGas(ctx, *msg)
 }

@@ -32,7 +32,7 @@ func (s *WalletHardhatTestSuite) SetupSuite() {
 		ChainID:    "123",
 	}
 
-	dep, err := chain.NewRPCChainConnection(cfg.Ethereum)
+	dep, err := chain.NewRPCCConnection(cfg.Ethereum)
 	s.NoError(err)
 
 	opts := *dep.GetAccount()
