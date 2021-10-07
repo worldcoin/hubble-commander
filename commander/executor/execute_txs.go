@@ -31,6 +31,11 @@ func (c *RollupContext) ExecuteTxs(
 			continue
 		}
 
+		err := c.Executor.AddPendingAccount(applyResult)
+		if err != nil {
+			return nil, err
+		}
+
 		returnStruct.AddApplied(applyResult)
 		fee := applyResult.AppliedTx().GetFee()
 		combinedFee = *combinedFee.Add(&fee)

@@ -45,6 +45,8 @@ func (c *RollupContext) CreateCommitments() ([]models.Commitment, error) {
 		commitments = append(commitments, *commitment)
 	}
 
+	//TODO-reg: register accounts here
+
 	if len(commitments) == 0 {
 		return nil, errors.WithStack(ErrNotEnoughTxs)
 	}

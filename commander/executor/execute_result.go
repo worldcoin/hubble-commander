@@ -39,6 +39,7 @@ type ExecuteTxsResult interface {
 	AppliedTxs() models.GenericTransactionArray
 	InvalidTxs() models.GenericTransactionArray
 	AddedPubKeyIDs() []uint32
+	PendingAccounts() []models.AccountLeaf
 	AllTxs() models.GenericTransactionArray
 	AddApplied(singleTxResult applier.ApplySingleTxResult)
 	AddInvalidTx(tx models.GenericTransaction)
@@ -62,6 +63,10 @@ func (a *ExecuteTransfersResult) AddedPubKeyIDs() []uint32 {
 	panic("AddedPubKeyIDs cannot be invoked on ExecuteTransfersResult")
 }
 
+func (a *ExecuteTransfersResult) PendingAccounts() []models.AccountLeaf {
+	panic("PendingAccounts cannot be invoked on ExecuteTransfersResult")
+}
+
 func (a *ExecuteTransfersResult) AllTxs() models.GenericTransactionArray {
 	return a.appliedTxs.Append(a.invalidTxs)
 }
@@ -80,9 +85,10 @@ func (a *ExecuteTransfersResult) AddApplyResult(other ExecuteTxsResult) {
 }
 
 type ExecuteC2TResult struct {
-	appliedTxs     models.GenericTransactionArray
-	invalidTxs     models.GenericTransactionArray
-	addedPubKeyIDs []uint32
+	appliedTxs      models.GenericTransactionArray
+	invalidTxs      models.GenericTransactionArray
+	addedPubKeyIDs  []uint32
+	pendingAccounts []models.AccountLeaf
 }
 
 func (a *ExecuteC2TResult) AppliedTxs() models.GenericTransactionArray {
@@ -97,6 +103,10 @@ func (a *ExecuteC2TResult) AddedPubKeyIDs() []uint32 {
 	return a.addedPubKeyIDs
 }
 
+func (a *ExecuteC2TResult) PendingAccounts() []models.AccountLeaf {
+	return a.pendingAccounts
+}
+
 func (a *ExecuteC2TResult) AllTxs() models.GenericTransactionArray {
 	return a.appliedTxs.Append(a.invalidTxs)
 }
@@ -104,6 +114,10 @@ func (a *ExecuteC2TResult) AllTxs() models.GenericTransactionArray {
 func (a *ExecuteC2TResult) AddApplied(singleTxResult applier.ApplySingleTxResult) {
 	a.appliedTxs = a.appliedTxs.AppendOne(singleTxResult.AppliedTx())
 	a.addedPubKeyIDs = append(a.addedPubKeyIDs, singleTxResult.AddedPubKeyID())
+
+	if singleTxResult.PendingAccount() != nil {
+		a.pendingAccounts = append(a.pendingAccounts, *singleTxResult.PendingAccount())
+	}
 }
 
 func (a *ExecuteC2TResult) AddInvalidTx(tx models.GenericTransaction) {

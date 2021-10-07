@@ -19,6 +19,7 @@ type TransactionExecutor interface {
 	NewExecuteTxsForCommitmentResult(executeTxsResult ExecuteTxsResult) ExecuteTxsForCommitmentResult
 	SerializeTxs(results ExecuteTxsForCommitmentResult) ([]byte, error)
 	MarkTxsAsIncluded(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error
+	AddPendingAccount(result applier.ApplySingleTxResult) error
 	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (result applier.ApplySingleTxResult, transferError, appError error)
 	SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error)
 }
@@ -82,6 +83,10 @@ func (e *TransferExecutor) MarkTxsAsIncluded(txs models.GenericTransactionArray,
 	return e.storage.MarkTransfersAsIncluded(txs.ToTransferArray(), commitmentID)
 }
 
+func (e *TransferExecutor) AddPendingAccount(_ applier.ApplySingleTxResult) error {
+	return nil
+}
+
 func (e *TransferExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
 	applyResult applier.ApplySingleTxResult, transferError, appError error,
 ) {
@@ -119,9 +124,10 @@ func (e *C2TExecutor) NewTxArray(size, capacity uint32) models.GenericTransactio
 
 func (e *C2TExecutor) NewExecuteTxsResult(capacity uint32) ExecuteTxsResult {
 	return &ExecuteC2TResult{
-		appliedTxs:     make(models.Create2TransferArray, 0, capacity),
-		invalidTxs:     make(models.Create2TransferArray, 0),
-		addedPubKeyIDs: make([]uint32, 0, capacity),
+		appliedTxs:      make(models.Create2TransferArray, 0, capacity),
+		invalidTxs:      make(models.Create2TransferArray, 0),
+		addedPubKeyIDs:  make([]uint32, 0, capacity),
+		pendingAccounts: make([]models.AccountLeaf, 0, capacity),
 	}
 }
 
@@ -138,6 +144,13 @@ func (e *C2TExecutor) SerializeTxs(results ExecuteTxsForCommitmentResult) ([]byt
 
 func (e *C2TExecutor) MarkTxsAsIncluded(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error {
 	return e.storage.MarkCreate2TransfersAsIncluded(txs.ToCreate2TransferArray(), commitmentID)
+}
+
+func (e *C2TExecutor) AddPendingAccount(result applier.ApplySingleTxResult) error {
+	if result.PendingAccount() == nil {
+		return nil
+	}
+	return e.storage.AccountTree.SetOneInBatch(result.PendingAccount())
 }
 
 func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (

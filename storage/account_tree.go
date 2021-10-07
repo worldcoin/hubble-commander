@@ -74,21 +74,7 @@ func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
 		return errors.WithStack(NewInvalidPubKeyIDError(leaf.PubKeyID))
 	}
 
-	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{})
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(&err)
-
-	_, err = NewAccountTree(txDatabase).unsafeSet(leaf)
-	if err == bh.ErrKeyExists {
-		return errors.WithStack(NewAccountAlreadyExistsError(leaf))
-	}
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit()
+	return s.setSingle(leaf)
 }
 
 func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
@@ -105,7 +91,7 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
 	accountTree := NewAccountTree(txDatabase)
 
 	for i := range leaves {
-		if leaves[i].PubKeyID < AccountBatchOffset || leaves[i].PubKeyID > rightSubtreeMaxValue {
+		if isValidBatchAccount(&leaves[i]) {
 			return errors.WithStack(NewInvalidPubKeyIDError(leaves[i].PubKeyID))
 		}
 		_, err = accountTree.unsafeSet(&leaves[i])
@@ -115,6 +101,32 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	return tx.Commit()
+}
+
+func (s *AccountTree) SetOneInBatch(leaf *models.AccountLeaf) error {
+	if isValidBatchAccount(leaf) {
+		return errors.WithStack(NewInvalidPubKeyIDError(leaf.PubKeyID))
+	}
+
+	return s.setSingle(leaf)
+}
+
+func (s *AccountTree) setSingle(leaf *models.AccountLeaf) error {
+	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{})
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(&err)
+
+	_, err = NewAccountTree(txDatabase).unsafeSet(leaf)
+	if err == bh.ErrKeyExists {
+		return errors.WithStack(NewAccountAlreadyExistsError(leaf))
+	}
+	if err != nil {
+		return err
 	}
 
 	return tx.Commit()
@@ -159,4 +171,8 @@ func (s *AccountTree) NextBatchAccountPubKeyID() (*uint32, error) {
 		return nil, err
 	}
 	return &nextPubKeyID, nil
+}
+
+func isValidBatchAccount(leaf *models.AccountLeaf) bool {
+	return leaf.PubKeyID < AccountBatchOffset || leaf.PubKeyID > rightSubtreeMaxValue
 }
