@@ -14,20 +14,20 @@ func (c *Client) RequestRegisterToken(
 	tokenContract common.Address,
 ) error {
 	return RequestRegisterTokenAndWait(
-		c.ChainConnection.GetAccount(),
+		c.Blockchain.GetAccount(),
 		c.TokenRegistry,
 		tokenContract,
-		c.ChainConnection.GetBackend(),
+		c.Blockchain.GetBackend(),
 	)
 }
 
 func (c *Client) FinalizeRegisterToken(
 	tokenContract common.Address,
 ) error {
-	return FinalizeRegisterTokenAndWait(c.ChainConnection.GetAccount(),
+	return FinalizeRegisterTokenAndWait(c.Blockchain.GetAccount(),
 		c.TokenRegistry,
 		tokenContract,
-		c.ChainConnection.GetBackend(),
+		c.Blockchain.GetBackend(),
 	)
 }
 

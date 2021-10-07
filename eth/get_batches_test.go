@@ -111,7 +111,7 @@ func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchExists() {
 	s.NoError(err)
 	s.client.Commit()
 
-	transaction, _, err := s.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), tx.Hash())
+	transaction, _, err := s.client.Blockchain.GetBackend().TransactionByHash(context.Background(), tx.Hash())
 	s.NoError(err)
 
 	event := &rollup.RollupNewBatch{
@@ -132,7 +132,7 @@ func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchNotExists() {
 	s.NoError(err)
 	s.client.Commit()
 
-	transaction, _, err := s.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), tx.Hash())
+	transaction, _, err := s.client.Blockchain.GetBackend().TransactionByHash(context.Background(), tx.Hash())
 	s.NoError(err)
 
 	event := &rollup.RollupNewBatch{
@@ -151,7 +151,7 @@ func (s *GetBatchesTestSuite) TestGetBatchIfExists_DifferentBatchHash() {
 	s.NoError(err)
 	s.client.Commit()
 
-	transaction, _, err := s.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), tx.Hash())
+	transaction, _, err := s.client.Blockchain.GetBackend().TransactionByHash(context.Background(), tx.Hash())
 	s.NoError(err)
 
 	event := &rollup.RollupNewBatch{

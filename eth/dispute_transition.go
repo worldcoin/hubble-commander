@@ -75,7 +75,7 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 }
 
 func (c *Client) waitForDispute(batchID *models.Uint256, tx *types.Transaction) error {
-	receipt, err := deployer.WaitToBeMined(c.ChainConnection.GetBackend(), tx)
+	receipt, err := deployer.WaitToBeMined(c.Blockchain.GetBackend(), tx)
 	if err != nil {
 		return err
 	}

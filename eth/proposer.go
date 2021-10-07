@@ -11,7 +11,7 @@ func (c *Client) IsActiveProposer() (bool, error) {
 		return false, err
 	}
 
-	chooserContract, err := chooser.NewChooser(chooserAddress, c.ChainConnection.GetBackend())
+	chooserContract, err := chooser.NewChooser(chooserAddress, c.Blockchain.GetBackend())
 	if err != nil {
 		return false, err
 	}
@@ -21,7 +21,7 @@ func (c *Client) IsActiveProposer() (bool, error) {
 		return false, err
 	}
 
-	currentAddress := c.ChainConnection.GetAccount().From
+	currentAddress := c.Blockchain.GetAccount().From
 
 	return currentAddress == currentProposer, nil
 }

@@ -37,7 +37,7 @@ type ClientConfig struct {
 type Client struct {
 	config                  ClientConfig
 	ChainState              models.ChainState
-	ChainConnection         chain.Connection
+	Blockchain              chain.Connection
 	Rollup                  *rollup.Rollup
 	RollupABI               *abi.ABI
 	AccountRegistry         *accountregistry.AccountRegistry
@@ -51,7 +51,7 @@ type Client struct {
 }
 
 //goland:noinspection GoDeprecation
-func NewClient(chainConnection chain.Connection, params *NewClientParams) (*Client, error) {
+func NewClient(blockchain chain.Connection, params *NewClientParams) (*Client, error) {
 	fillWithDefaults(&params.ClientConfig)
 
 	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
@@ -62,13 +62,13 @@ func NewClient(chainConnection chain.Connection, params *NewClientParams) (*Clie
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	backend := chainConnection.GetBackend()
+	backend := blockchain.GetBackend()
 	rollupContract := bind.NewBoundContract(params.ChainState.Rollup, rollupAbi, backend, backend, backend)
 	accountRegistryContract := bind.NewBoundContract(params.ChainState.AccountRegistry, accountRegistryAbi, backend, backend, backend)
 	return &Client{
 		config:                  params.ClientConfig,
 		ChainState:              params.ChainState,
-		ChainConnection:         chainConnection,
+		Blockchain:              blockchain,
 		Rollup:                  params.Rollup,
 		RollupABI:               &rollupAbi,
 		AccountRegistry:         params.AccountRegistry,

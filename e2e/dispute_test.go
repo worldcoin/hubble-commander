@@ -191,7 +191,7 @@ func testRollbackCompletion(
 				return false
 			case rollbackStatus := <-sink:
 				if rollbackStatus.Completed {
-					receipt, err := ethClient.ChainConnection.GetBackend().TransactionReceipt(context.Background(), rollbackStatus.Raw.TxHash)
+					receipt, err := ethClient.Blockchain.GetBackend().TransactionReceipt(context.Background(), rollbackStatus.Raw.TxHash)
 					require.NoError(t, err)
 					logrus.Infof("Rollback gas used: %d", receipt.GasUsed)
 					return true
@@ -356,7 +356,7 @@ func submitC2TBatch(t *testing.T, ethClient *eth.Client, commitments []models.Co
 }
 
 func waitForSubmittedBatch(t *testing.T, ethClient *eth.Client, transaction *types.Transaction, batchID uint64) {
-	_, err := deployer.WaitToBeMined(ethClient.ChainConnection.GetBackend(), transaction)
+	_, err := deployer.WaitToBeMined(ethClient.Blockchain.GetBackend(), transaction)
 	require.NoError(t, err)
 
 	_, err = ethClient.GetBatch(models.NewUint256(batchID))

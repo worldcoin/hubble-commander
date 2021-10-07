@@ -98,7 +98,7 @@ func (c *Client) handleNewBatchEvent(event *rollup.RollupNewBatch) (*models.Batc
 }
 
 func (c *Client) estimateBatchSubmissionGasLimit(input []byte) (uint64, error) {
-	account := c.ChainConnection.GetAccount()
+	account := c.Blockchain.GetAccount()
 	msg := &ethereum.CallMsg{
 		From:     account.From,
 		To:       &c.ChainState.Rollup,
@@ -106,7 +106,7 @@ func (c *Client) estimateBatchSubmissionGasLimit(input []byte) (uint64, error) {
 		Value:    c.config.StakeAmount.ToBig(),
 		Data:     input,
 	}
-	estimatedGas, err := c.ChainConnection.EstimateGas(context.Background(), msg)
+	estimatedGas, err := c.Blockchain.EstimateGas(context.Background(), msg)
 	if err != nil {
 		return 0, err
 	}

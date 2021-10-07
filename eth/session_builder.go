@@ -23,6 +23,6 @@ func (b *rollupSessionBuilder) WithGasLimit(gasLimit uint64) *rollupSessionBuild
 func (c *Client) rollup() *rollupSessionBuilder {
 	return &rollupSessionBuilder{rollup.RollupSession{
 		Contract:     c.Rollup,
-		TransactOpts: *c.ChainConnection.GetAccount(),
+		TransactOpts: *c.Blockchain.GetAccount(),
 	}}
 }

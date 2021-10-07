@@ -15,11 +15,11 @@ import (
 var ErrSingleRegisteredPubKeyLogNotFound = fmt.Errorf("single pubkey registered log not found in receipt")
 
 func (c *Client) RegisterAccountAndWait(publicKey *models.PublicKey) (*uint32, error) {
-	tx, err := RegisterAccount(c.ChainConnection.GetAccount(), c.AccountRegistry, publicKey)
+	tx, err := RegisterAccount(c.Blockchain.GetAccount(), c.AccountRegistry, publicKey)
 	if err != nil {
 		return nil, err
 	}
-	receipt, err := deployer.WaitToBeMined(c.ChainConnection.GetBackend(), tx)
+	receipt, err := deployer.WaitToBeMined(c.Blockchain.GetBackend(), tx)
 	if err != nil {
 		return nil, err
 	}

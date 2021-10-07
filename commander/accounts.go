@@ -43,7 +43,7 @@ func (c *Commander) syncSingleAccounts(start, end uint64) (newAccountsCount *int
 	newAccountsCount = ref.Int(0)
 
 	for it.Next() {
-		tx, _, err := c.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
+		tx, _, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
 		if err != nil {
 			return nil, err
 		}
@@ -81,7 +81,7 @@ func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int,
 	newAccountsCount = ref.Int(0)
 
 	for it.Next() {
-		tx, _, err := c.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
+		tx, _, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
 		if err != nil {
 			return nil, err
 		}
