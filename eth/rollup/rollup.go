@@ -15,6 +15,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/transfer"
 	"github.com/Worldcoin/hubble-commander/contracts/vault"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
@@ -78,12 +79,12 @@ type txHelperContracts struct {
 	Create2Transfer        *create2transfer.Create2Transfer
 }
 
-func DeployRollup(c deployer.ChainConnection) (*RollupContracts, error) {
+func DeployRollup(c chain.ChainConnection) (*RollupContracts, error) {
 	return DeployConfiguredRollup(c, DeploymentConfig{})
 }
 
 // nolint:funlen,gocyclo
-func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig) (*RollupContracts, error) {
+func DeployConfiguredRollup(c chain.ChainConnection, config DeploymentConfig) (*RollupContracts, error) {
 	fillWithDefaults(&config.Params)
 	err := deployMissing(&config.Dependencies, c)
 	if err != nil {
@@ -240,7 +241,7 @@ func DeployConfiguredRollup(c deployer.ChainConnection, config DeploymentConfig)
 	}, nil
 }
 
-func deployCostEstimator(c deployer.ChainConnection) (*common.Address, error) {
+func deployCostEstimator(c chain.ChainConnection) (*common.Address, error) {
 	log.Println("Deploying BNPairingPrecompileCostEstimator")
 	estimatorAddress, tx, costEstimator, err := estimator.DeployCostEstimator(c.GetAccount(), c.GetBackend())
 	if err != nil {
@@ -261,7 +262,7 @@ func deployCostEstimator(c deployer.ChainConnection) (*common.Address, error) {
 	return &estimatorAddress, nil
 }
 
-func deployTransactionHelperContracts(c deployer.ChainConnection) (*txHelperContracts, error) {
+func deployTransactionHelperContracts(c chain.ChainConnection) (*txHelperContracts, error) {
 	log.Println("Deploying Transfer")
 	transferAddress, tx, transferContract, err := transfer.DeployTransfer(c.GetAccount(), c.GetBackend())
 	if err != nil {
@@ -331,7 +332,7 @@ func fillWithDefaults(params *Params) {
 	}
 }
 
-func deployMissing(dependencies *Dependencies, c deployer.ChainConnection) error {
+func deployMissing(dependencies *Dependencies, c chain.ChainConnection) error {
 	if dependencies.AccountRegistry == nil {
 		accountRegistryAddress, _, _, err := deployer.DeployAccountRegistry(c)
 		if err != nil {
@@ -342,6 +343,7 @@ func deployMissing(dependencies *Dependencies, c deployer.ChainConnection) error
 	return nil
 }
 
+//goland:noinspection GoDeprecation
 func withReplacedCostEstimatorAddress(newCostEstimator common.Address, fn func()) {
 	targetString := strings.ToLower(newCostEstimator.String()[2:])
 	originalTransferBin := transfer.TransferBin

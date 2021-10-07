@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/eth/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -13,7 +14,7 @@ import (
 
 var ErrNoPublicKeysInGenesisAccounts = fmt.Errorf("genesis accounts for deployment require public keys")
 
-func Deploy(cfg *config.Config, chain deployer.ChainConnection) (chainSpec *string, err error) {
+func Deploy(cfg *config.Config, chain chain.ChainConnection) (chainSpec *string, err error) {
 	tempStorage, err := st.NewTemporaryStorage()
 	if err != nil {
 		return nil, err
@@ -46,7 +47,7 @@ func Deploy(cfg *config.Config, chain deployer.ChainConnection) (chainSpec *stri
 
 func deployContractsAndSetupGenesisState(
 	storage *st.Storage,
-	chain deployer.ChainConnection,
+	chain chain.ChainConnection,
 	accounts []models.GenesisAccount,
 ) (*models.ChainState, error) {
 	err := validateGenesisAccounts(accounts)

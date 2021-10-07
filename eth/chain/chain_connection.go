@@ -1,4 +1,4 @@
-package deployer
+package chain
 
 import (
 	"context"

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -135,7 +135,7 @@ func (sim *Simulator) GetAccount() *bind.TransactOpts {
 	return sim.Account
 }
 
-func (sim *Simulator) GetBackend() deployer.ChainBackend {
+func (sim *Simulator) GetBackend() chain.ChainBackend {
 	return sim.Backend
 }
 

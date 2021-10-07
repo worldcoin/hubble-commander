@@ -7,7 +7,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/commander"
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/pkg/errors"
 	"github.com/ybbus/jsonrpc/v2"
 )
@@ -16,7 +16,7 @@ type InProcessCommander struct {
 	client    jsonrpc.RPCClient
 	commander *commander.Commander
 	cfg       *config.Config
-	chain     deployer.ChainConnection
+	chain     chain.ChainConnection
 }
 
 func CreateInProcessCommander() (*InProcessCommander, error) {
@@ -27,12 +27,12 @@ func CreateInProcessCommander() (*InProcessCommander, error) {
 
 func CreateInProcessCommanderWithConfig(cfg *config.Config, deployContracts bool) (*InProcessCommander, error) {
 	cfg.Rollup.MinTxsPerCommitment = cfg.Rollup.MaxTxsPerCommitment
-	chain, err := commander.GetChainConnection(cfg.Ethereum)
+	blockchain, err := commander.GetChainConnection(cfg.Ethereum)
 	if err != nil {
 		return nil, err
 	}
 
-	cmd := commander.NewCommander(cfg, chain)
+	cmd := commander.NewCommander(cfg, blockchain)
 	endpoint := fmt.Sprintf("http://localhost:%s", cfg.API.Port)
 	client := jsonrpc.NewClient(endpoint)
 
@@ -45,7 +45,7 @@ func CreateInProcessCommanderWithConfig(cfg *config.Config, deployContracts bool
 		chainSpecPath := file.Name()
 		cfg.Bootstrap.ChainSpecPath = &chainSpecPath
 
-		chainSpec, err := commander.Deploy(cfg, chain)
+		chainSpec, err := commander.Deploy(cfg, blockchain)
 		if err != nil {
 			return nil, err
 		}
@@ -60,7 +60,7 @@ func CreateInProcessCommanderWithConfig(cfg *config.Config, deployContracts bool
 		client:    client,
 		commander: cmd,
 		cfg:       cfg,
-		chain:     chain,
+		chain:     blockchain,
 	}, nil
 }
 

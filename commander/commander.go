@@ -13,7 +13,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -45,11 +45,11 @@ type Commander struct {
 
 	storage   *st.Storage
 	client    *eth.Client
-	chain     deployer.ChainConnection
+	chain     chain.ChainConnection
 	apiServer *http.Server
 }
 
-func NewCommander(cfg *config.Config, chain deployer.ChainConnection) *Commander {
+func NewCommander(cfg *config.Config, chain chain.ChainConnection) *Commander {
 	return &Commander{
 		cfg:                 cfg,
 		chain:               chain,
@@ -148,17 +148,17 @@ func (c *Commander) resetCommander() {
 	*c = *NewCommander(c.cfg, c.chain)
 }
 
-func GetChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, error) {
+func GetChainConnection(cfg *config.EthereumConfig) (chain.ChainConnection, error) {
 	if cfg.RPCURL == "simulator" {
 		return simulator.NewConfiguredSimulator(simulator.Config{
 			FirstAccountPrivateKey: ref.String(cfg.PrivateKey),
 			AutomineEnabled:        ref.Bool(true),
 		})
 	}
-	return deployer.NewRPCChainConnection(cfg)
+	return chain.NewRPCChainConnection(cfg)
 }
 
-func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.Config) (*eth.Client, error) {
+func getClient(chain chain.ChainConnection, storage *st.Storage, cfg *config.Config) (*eth.Client, error) {
 	if cfg.Ethereum == nil {
 		log.Fatal("no Ethereum config")
 	}
@@ -186,7 +186,7 @@ func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.
 }
 
 func bootstrapFromChainState(
-	chain deployer.ChainConnection,
+	chain chain.ChainConnection,
 	dbChainState *models.ChainState,
 	storage *st.Storage,
 	cfg *config.Config,
@@ -233,7 +233,7 @@ func compareChainStates(chainStateA, chainStateB *models.ChainState) error {
 }
 
 func bootstrapChainStateAndCommander(
-	chain deployer.ChainConnection,
+	chain chain.ChainConnection,
 	storage *st.Storage,
 	importedChainState *models.ChainState,
 	cfg *config.RollupConfig,
@@ -248,7 +248,7 @@ func bootstrapChainStateAndCommander(
 }
 
 func bootstrapFromRemoteState(
-	chain deployer.ChainConnection,
+	chain chain.ChainConnection,
 	storage *st.Storage,
 	cfg *config.Config,
 ) (*eth.Client, error) {
@@ -265,7 +265,7 @@ func bootstrapFromRemoteState(
 }
 
 func setGenesisStateAndCreateClient(
-	chain deployer.ChainConnection,
+	chain chain.ChainConnection,
 	storage *st.Storage,
 	chainState *models.ChainState,
 	cfg *config.RollupConfig,
@@ -321,7 +321,7 @@ func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {
 }
 
 func createClientFromChainState(
-	chain deployer.ChainConnection,
+	chain chain.ChainConnection,
 	chainState *models.ChainState,
 	cfg *config.RollupConfig,
 ) (*eth.Client, error) {

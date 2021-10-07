@@ -1,3 +1,4 @@
+//go:build e2e
 // +build e2e
 
 package e2e
@@ -16,6 +17,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
@@ -376,22 +378,22 @@ func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
 	}
 
 	cfg := config.GetConfig()
-	chain, err := deployer.NewRPCChainConnection(cfg.Ethereum)
+	blockchain, err := chain.NewRPCChainConnection(cfg.Ethereum)
 	require.NoError(t, err)
 
-	accountRegistry, err := accountregistry.NewAccountRegistry(chainState.AccountRegistry, chain.GetBackend())
+	accountRegistry, err := accountregistry.NewAccountRegistry(chainState.AccountRegistry, blockchain.GetBackend())
 	require.NoError(t, err)
 
-	tokenRegistry, err := tokenregistry.NewTokenRegistry(chainState.TokenRegistry, chain.GetBackend())
+	tokenRegistry, err := tokenregistry.NewTokenRegistry(chainState.TokenRegistry, blockchain.GetBackend())
 	require.NoError(t, err)
 
-	depositManager, err := depositmanager.NewDepositManager(chainState.DepositManager, chain.GetBackend())
+	depositManager, err := depositmanager.NewDepositManager(chainState.DepositManager, blockchain.GetBackend())
 	require.NoError(t, err)
 
-	rollupContract, err := rollup.NewRollup(chainState.Rollup, chain.GetBackend())
+	rollupContract, err := rollup.NewRollup(chainState.Rollup, blockchain.GetBackend())
 	require.NoError(t, err)
 
-	ethClient, err := eth.NewClient(chain, &eth.NewClientParams{
+	ethClient, err := eth.NewClient(blockchain, &eth.NewClientParams{
 		ChainState:      chainState,
 		AccountRegistry: accountRegistry,
 		TokenRegistry:   tokenRegistry,

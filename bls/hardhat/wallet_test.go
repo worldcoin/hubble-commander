@@ -11,7 +11,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	testbls "github.com/Worldcoin/hubble-commander/contracts/test/bls"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -32,7 +32,7 @@ func (s *WalletHardhatTestSuite) SetupSuite() {
 		ChainID:    "123",
 	}
 
-	dep, err := deployer.NewRPCChainConnection(cfg.Ethereum)
+	dep, err := chain.NewRPCChainConnection(cfg.Ethereum)
 	s.NoError(err)
 
 	opts := *dep.GetAccount()

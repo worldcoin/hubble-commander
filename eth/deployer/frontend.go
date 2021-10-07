@@ -5,6 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/massmigration"
 	"github.com/Worldcoin/hubble-commander/contracts/frontend/transfer"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 )
 
 type FrontendContracts struct {
@@ -14,7 +15,7 @@ type FrontendContracts struct {
 	FrontendCreate2Transfer *create2transfer.FrontendCreate2Transfer
 }
 
-func DeployFrontend(c ChainConnection) (*FrontendContracts, error) {
+func DeployFrontend(c chain.ChainConnection) (*FrontendContracts, error) {
 	_, _, genericContract, err := generic.DeployFrontendGeneric(c.GetAccount(), c.GetBackend())
 	if err != nil {
 		return nil, err
