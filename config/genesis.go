@@ -56,7 +56,7 @@ func decodeRawGenesisAccounts(rawGenesisAccounts []models.RawGenesisAccount) ([]
 		}
 
 		if account.PrivateKey != nil && account.PublicKey != nil {
-			if err := validateKeysMatch(*account.PrivateKey, *account.PublicKey); err != nil {
+			if err := validateKeysMatch(*account.PrivateKey, account.PublicKey); err != nil {
 				return nil, err
 			}
 		}
@@ -67,12 +67,12 @@ func decodeRawGenesisAccounts(rawGenesisAccounts []models.RawGenesisAccount) ([]
 	return genesisAccounts, nil
 }
 
-func validateKeysMatch(privateKey [32]byte, publicKey models.PublicKey) error {
+func validateKeysMatch(privateKey [32]byte, publicKey *models.PublicKey) error {
 	derivedPublicKey, err := bls.PrivateToPublicKey(privateKey)
 	if err != nil {
 		return err
 	}
-	if publicKey != *derivedPublicKey {
+	if *publicKey != *derivedPublicKey {
 		return NewErrNonMatchingKeys(publicKey.String())
 	}
 	return nil
