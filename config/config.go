@@ -2,7 +2,6 @@ package config
 
 import (
 	"path"
-	"strconv"
 	"strings"
 	"time"
 
@@ -104,7 +103,7 @@ func GetTestConfig() *Config {
 		},
 		Ethereum: &EthereumConfig{
 			RPCURL:     "simulator",
-			ChainID:    strconv.Itoa(SimulatorChainID),
+			ChainID:    SimulatorChainID,
 			PrivateKey: "ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82",
 		},
 	}
@@ -162,13 +161,13 @@ func getEthereumConfig() *EthereumConfig {
 	if rpcURL == nil {
 		return &EthereumConfig{
 			RPCURL:     "simulator",
-			ChainID:    strconv.Itoa(SimulatorChainID),
+			ChainID:    SimulatorChainID,
 			PrivateKey: getString("ethereum.private_key", "ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82"),
 		}
 	}
 	return &EthereumConfig{
 		RPCURL:     *rpcURL,
-		ChainID:    getStringOrThrow("ethereum.chain_id"),
+		ChainID:    getUint64OrThrow("ethereum.chain_id"),
 		PrivateKey: getStringOrThrow("ethereum.private_key"),
 	}
 }

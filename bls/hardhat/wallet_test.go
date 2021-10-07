@@ -29,7 +29,7 @@ func (s *WalletHardhatTestSuite) SetupSuite() {
 	cfg.Ethereum = &config.EthereumConfig{
 		RPCURL:     "http://localhost:8545",
 		PrivateKey: "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80", // hardhat node 1st account private key
-		ChainID:    "123",
+		ChainID:    123,
 	}
 
 	dep, err := chain.NewRPCCConnection(cfg.Ethereum)

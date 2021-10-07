@@ -169,7 +169,7 @@ func getClient(chain chain.Connection, storage *st.Storage, cfg *config.Config) 
 	}
 
 	if dbChainState != nil {
-		if dbChainState.ChainID.String() != cfg.Ethereum.ChainID {
+		if dbChainState.ChainID.CmpN(cfg.Ethereum.ChainID) != 0 {
 			return nil, errors.WithStack(errInconsistentDBChainID)
 		}
 	}
@@ -257,7 +257,7 @@ func bootstrapFromRemoteState(
 		return nil, err
 	}
 
-	if fetchedChainState.ChainID.String() != cfg.Ethereum.ChainID {
+	if fetchedChainState.ChainID.CmpN(cfg.Ethereum.ChainID) != 0 {
 		return nil, errors.WithStack(errInconsistentRemoteChainID)
 	}
 

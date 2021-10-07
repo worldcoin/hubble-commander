@@ -24,10 +24,7 @@ type RPCConnection struct {
 }
 
 func NewRPCCConnection(cfg *config.EthereumConfig) (*RPCConnection, error) {
-	chainID, ok := big.NewInt(0).SetString(cfg.ChainID, 10)
-	if !ok {
-		return nil, errors.Errorf("invalid chain id")
-	}
+	chainID := big.NewInt(0).SetUint64(cfg.ChainID)
 
 	key, err := crypto.HexToECDSA(cfg.PrivateKey)
 	if err != nil {

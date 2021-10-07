@@ -28,7 +28,7 @@ func Deploy(cfg *config.Config, chain chain.Connection) (chainSpec *string, err 
 	}()
 
 	log.Printf(
-		"Bootstrapping genesis state with %d accounts on chainId = %s",
+		"Bootstrapping genesis state with %d accounts on chainId = %d",
 		len(cfg.Bootstrap.GenesisAccounts),
 		cfg.Ethereum.ChainID,
 	)
