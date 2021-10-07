@@ -11,6 +11,7 @@ import (
 
 var (
 	ErrNotEnoughTxs = NewRollupError("not enough transactions")
+	mockPublicKey   = models.PublicKey{1, 2, 3}
 )
 
 type FeeReceiver struct {
@@ -232,11 +233,10 @@ func (c *RollupContext) fillMissingAccounts(accounts []models.AccountLeaf) ([]mo
 	if missingAccounts == st.AccountBatchSize {
 		return accounts, nil
 	}
-	publicKey := models.PublicKey{1, 2, 3}
 	for i := 0; i < missingAccounts; i++ {
 		accounts = append(accounts, models.AccountLeaf{
 			PubKeyID:  accounts[len(accounts)-1].PubKeyID + 1,
-			PublicKey: publicKey,
+			PublicKey: mockPublicKey,
 		})
 	}
 

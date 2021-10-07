@@ -254,7 +254,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestRegisterPendingAccounts_Regist
 	for i := len(pendingAccounts); i < st.AccountBatchSize; i++ {
 		expectedAccounts = append(expectedAccounts, models.AccountLeaf{
 			PubKeyID:  uint32(st.AccountBatchOffset + i),
-			PublicKey: models.PublicKey{1, 2, 3},
+			PublicKey: mockPublicKey,
 		})
 	}
 
@@ -283,7 +283,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestRegisterPendingAccounts_FillsM
 	registeredAccounts := s.getRegisteredAccounts(0)
 	s.Equal(pendingAccounts[0], registeredAccounts[0])
 	for i := 1; i < len(pendingAccounts); i++ {
-		s.Equal(models.PublicKey{1, 2, 3}, registeredAccounts[i].PublicKey)
+		s.Equal(mockPublicKey, registeredAccounts[i].PublicKey)
 	}
 }
 
