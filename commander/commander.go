@@ -359,8 +359,9 @@ func createClientFromChainState(
 		TokenRegistry:   tokenRegistry,
 		DepositManager:  depositManager,
 		ClientConfig: eth.ClientConfig{
-			TransitionDisputeGasLimit: ref.Uint64(cfg.TransitionDisputeGasLimit),
-			SignatureDisputeGasLimit:  ref.Uint64(cfg.SignatureDisputeGasLimit),
+			TransitionDisputeGasLimit:        ref.Uint64(cfg.TransitionDisputeGasLimit),
+			SignatureDisputeGasLimit:         ref.Uint64(cfg.SignatureDisputeGasLimit),
+			BatchAccountRegistrationGasLimit: ref.Uint64(cfg.BatchAccountRegistrationGasLimit),
 		},
 	})
 	if err != nil {

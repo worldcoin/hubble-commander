@@ -36,17 +36,18 @@ type BootstrapConfig struct {
 }
 
 type RollupConfig struct {
-	SyncSize                  uint32
-	FeeReceiverPubKeyID       uint32
-	MinTxsPerCommitment       uint32
-	MaxTxsPerCommitment       uint32
-	MinCommitmentsPerBatch    uint32
-	MaxCommitmentsPerBatch    uint32
-	TransitionDisputeGasLimit uint64
-	SignatureDisputeGasLimit  uint64
-	CommitmentLoopInterval    time.Duration
-	BatchLoopInterval         time.Duration
-	DisableSignatures         bool
+	SyncSize                         uint32
+	FeeReceiverPubKeyID              uint32
+	MinTxsPerCommitment              uint32
+	MaxTxsPerCommitment              uint32
+	MinCommitmentsPerBatch           uint32
+	MaxCommitmentsPerBatch           uint32
+	TransitionDisputeGasLimit        uint64
+	SignatureDisputeGasLimit         uint64
+	BatchAccountRegistrationGasLimit uint64
+	CommitmentLoopInterval           time.Duration
+	BatchLoopInterval                time.Duration
+	DisableSignatures                bool
 }
 
 type APIConfig struct {
