@@ -309,7 +309,10 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_Remov
 		},
 	}
 
-	pubKeyIDs := [][]uint32{{3, 4}, {5, 6}}
+	pubKeyIDs := [][]uint32{
+		{st.AccountBatchOffset, st.AccountBatchOffset + 1},
+		{st.AccountBatchOffset + 2, st.AccountBatchOffset + 3},
+	}
 	proofs := s.getC2TStateMerkleProofs(commitmentTxs, pubKeyIDs)
 
 	s.beginExecutorTransaction()
@@ -369,7 +372,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransition_Create2Transfer_Valid
 		testutils.MakeCreate2Transfer(0, ref.Uint32(3), 0, 50, wallets[1].PublicKey()),
 		testutils.MakeCreate2Transfer(0, ref.Uint32(4), 1, 100, wallets[1].PublicKey()),
 	}
-	pubKeyIDs := [][]uint32{{4}}
+	pubKeyIDs := [][]uint32{{st.AccountBatchOffset + st.AccountBatchSize}}
 
 	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &transfers[0])
 
