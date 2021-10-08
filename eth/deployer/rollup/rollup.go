@@ -3,6 +3,7 @@ package rollup
 import (
 	"strings"
 
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/create2transfer"
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
@@ -27,7 +28,6 @@ const (
 	DefaultMaxDepositSubtreeDepth = 2
 	DefaultGenesisStateRoot       = "cf277fb80a82478460e8988570b718f1e083ceb76f7e271a1a1497e5975f53ae"
 	DefaultStakeAmount            = 1e17
-	DefaultBlocksToFinalise       = 7 * 24 * 60 * 4
 	DefaultMinGasLeft             = 10_000
 	DefaultMaxTxsPerCommit        = 32
 
@@ -50,24 +50,26 @@ type Params struct {
 
 type Dependencies struct {
 	AccountRegistry *common.Address
+	Chooser         *common.Address
 }
 
 type RollupContracts struct {
-	Config                DeploymentConfig
-	Chooser               *proofofburn.ProofOfBurn
-	AccountRegistry       *accountregistry.AccountRegistry
-	TokenRegistry         *tokenregistry.TokenRegistry
-	TokenRegistryAddress  common.Address
-	SpokeRegistry         *spokeregistry.SpokeRegistry
-	Vault                 *vault.Vault
-	DepositManager        *depositmanager.DepositManager
-	DepositManagerAddress common.Address
-	Transfer              *transfer.Transfer
-	MassMigration         *massmigration.MassMigration
-	Create2Transfer       *create2transfer.Create2Transfer
-	Rollup                *rollup.Rollup
-	RollupAddress         common.Address
-	ExampleTokenAddress   common.Address
+	Config                 DeploymentConfig
+	Chooser                *proofofburn.ProofOfBurn
+	AccountRegistry        *accountregistry.AccountRegistry
+	AccountRegistryAddress common.Address
+	TokenRegistry          *tokenregistry.TokenRegistry
+	TokenRegistryAddress   common.Address
+	SpokeRegistry          *spokeregistry.SpokeRegistry
+	Vault                  *vault.Vault
+	DepositManager         *depositmanager.DepositManager
+	DepositManagerAddress  common.Address
+	Transfer               *transfer.Transfer
+	MassMigration          *massmigration.MassMigration
+	Create2Transfer        *create2transfer.Create2Transfer
+	Rollup                 *rollup.Rollup
+	RollupAddress          common.Address
+	ExampleTokenAddress    common.Address
 }
 
 type txHelperContracts struct {
@@ -84,23 +86,12 @@ func DeployRollup(c chain.Connection) (*RollupContracts, error) {
 }
 
 // nolint:funlen,gocyclo
-func DeployConfiguredRollup(c chain.Connection, config DeploymentConfig) (*RollupContracts, error) {
-	fillWithDefaults(&config.Params)
-	err := deployMissing(&config.Dependencies, c)
+func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupContracts, error) {
+	fillWithDefaults(&cfg.Params)
+
+	err := deployMissing(&cfg.Dependencies, c)
 	if err != nil {
 		return nil, errors.WithStack(err)
-	}
-
-	log.Println("Deploying ProofOfBurn")
-	proofOfBurnAddress, tx, proofOfBurn, err := proofofburn.DeployProofOfBurn(c.GetAccount(), c.GetBackend())
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	c.Commit()
-	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
-	if err != nil {
-		return nil, err
 	}
 
 	log.Println("Deploying TokenRegistry")
@@ -150,7 +141,7 @@ func DeployConfiguredRollup(c chain.Connection, config DeploymentConfig) (*Rollu
 		c.GetBackend(),
 		tokenRegistryAddress,
 		vaultAddress,
-		config.MaxDepositSubtreeDepth.ToBig(),
+		cfg.MaxDepositSubtreeDepth.ToBig(),
 	)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -176,7 +167,12 @@ func DeployConfiguredRollup(c chain.Connection, config DeploymentConfig) (*Rollu
 		return nil, err
 	}
 
-	accountRegistry, err := accountregistry.NewAccountRegistry(*config.AccountRegistry, c.GetBackend())
+	proofOfBurn, err := proofofburn.NewProofOfBurn(*cfg.Chooser, c.GetBackend())
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	accountRegistry, err := accountregistry.NewAccountRegistry(*cfg.AccountRegistry, c.GetBackend())
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -196,21 +192,21 @@ func DeployConfiguredRollup(c chain.Connection, config DeploymentConfig) (*Rollu
 
 	log.Println("Deploying Rollup")
 	stateRoot := [32]byte{}
-	copy(stateRoot[:], config.GenesisStateRoot.Bytes())
+	copy(stateRoot[:], cfg.GenesisStateRoot.Bytes())
 	rollupAddress, tx, rollupContract, err := rollup.DeployRollup(
 		c.GetAccount(),
 		c.GetBackend(),
-		proofOfBurnAddress,
+		*cfg.Chooser,
 		depositManagerAddress,
-		*config.AccountRegistry,
+		*cfg.AccountRegistry,
 		txHelpers.TransferAddress,
 		txHelpers.MassMigrationAddress,
 		txHelpers.Create2TransferAddress,
 		stateRoot,
-		config.StakeAmount.ToBig(),
-		config.BlocksToFinalise.ToBig(),
-		config.MinGasLeft.ToBig(),
-		config.MaxTxsPerCommit.ToBig(),
+		cfg.StakeAmount.ToBig(),
+		cfg.BlocksToFinalise.ToBig(),
+		cfg.MinGasLeft.ToBig(),
+		cfg.MaxTxsPerCommit.ToBig(),
 	)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -223,21 +219,22 @@ func DeployConfiguredRollup(c chain.Connection, config DeploymentConfig) (*Rollu
 	}
 
 	return &RollupContracts{
-		Config:                config,
-		Chooser:               proofOfBurn,
-		AccountRegistry:       accountRegistry,
-		TokenRegistry:         tokenRegistry,
-		TokenRegistryAddress:  tokenRegistryAddress,
-		SpokeRegistry:         spokeRegistry,
-		Vault:                 vaultContract,
-		DepositManager:        depositManager,
-		DepositManagerAddress: depositManagerAddress,
-		Transfer:              txHelpers.Transfer,
-		MassMigration:         txHelpers.MassMigration,
-		Create2Transfer:       txHelpers.Create2Transfer,
-		Rollup:                rollupContract,
-		RollupAddress:         rollupAddress,
-		ExampleTokenAddress:   exampleTokenAddress,
+		Config:                 cfg,
+		Chooser:                proofOfBurn,
+		AccountRegistry:        accountRegistry,
+		AccountRegistryAddress: *cfg.AccountRegistry,
+		TokenRegistry:          tokenRegistry,
+		TokenRegistryAddress:   tokenRegistryAddress,
+		SpokeRegistry:          spokeRegistry,
+		Vault:                  vaultContract,
+		DepositManager:         depositManager,
+		DepositManagerAddress:  depositManagerAddress,
+		Transfer:               txHelpers.Transfer,
+		MassMigration:          txHelpers.MassMigration,
+		Create2Transfer:        txHelpers.Create2Transfer,
+		Rollup:                 rollupContract,
+		RollupAddress:          rollupAddress,
+		ExampleTokenAddress:    exampleTokenAddress,
 	}, nil
 }
 
@@ -322,7 +319,7 @@ func fillWithDefaults(params *Params) {
 		params.StakeAmount = models.NewUint256(DefaultStakeAmount)
 	}
 	if params.BlocksToFinalise == nil {
-		params.BlocksToFinalise = models.NewUint256(DefaultBlocksToFinalise)
+		params.BlocksToFinalise = models.NewUint256(uint64(config.DefaultBlocksToFinalise))
 	}
 	if params.MinGasLeft == nil {
 		params.MinGasLeft = models.NewUint256(DefaultMinGasLeft)
@@ -333,8 +330,15 @@ func fillWithDefaults(params *Params) {
 }
 
 func deployMissing(dependencies *Dependencies, c chain.Connection) error {
+	if dependencies.Chooser == nil {
+		proofOfBurnAddress, _, err := deployer.DeployProofOfBurn(c)
+		if err != nil {
+			return err
+		}
+		dependencies.Chooser = proofOfBurnAddress
+	}
 	if dependencies.AccountRegistry == nil {
-		accountRegistryAddress, _, _, err := deployer.DeployAccountRegistry(c)
+		accountRegistryAddress, _, _, err := deployer.DeployAccountRegistry(c, dependencies.Chooser)
 		if err != nil {
 			return err
 		}
