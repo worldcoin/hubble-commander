@@ -13,10 +13,10 @@ import (
 )
 
 type InProcessCommander struct {
-	client    jsonrpc.RPCClient
-	commander *commander.Commander
-	cfg       *config.Config
-	chain     chain.Connection
+	client     jsonrpc.RPCClient
+	commander  *commander.Commander
+	cfg        *config.Config
+	blockchain chain.Connection
 }
 
 func CreateInProcessCommander() (*InProcessCommander, error) {
@@ -57,10 +57,10 @@ func CreateInProcessCommanderWithConfig(cfg *config.Config, deployContracts bool
 	}
 
 	return &InProcessCommander{
-		client:    client,
-		commander: cmd,
-		cfg:       cfg,
-		chain:     blockchain,
+		client:     client,
+		commander:  cmd,
+		cfg:        cfg,
+		blockchain: blockchain,
 	}, nil
 }
 
@@ -98,7 +98,7 @@ func (e *InProcessCommander) Restart() error {
 		return err
 	}
 	e.cfg.Bootstrap.Prune = false
-	e.commander = commander.NewCommander(e.cfg, e.chain)
+	e.commander = commander.NewCommander(e.cfg, e.blockchain)
 	return e.Start()
 }
 
