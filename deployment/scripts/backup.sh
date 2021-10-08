@@ -46,4 +46,4 @@ PGPASSWORD="password" $PG_DUMP_PATH -h $POSTGRES_IP -U root -p 5433 -C hubble -F
 tar --use-compress-program="${PIGZ_PATH}" -cf $COMPRESSED_BACKUP_DIR_PATH -C $COMMANDER_DIR_PATH ./backups/$BACKUP_DIR
 
 # Remove redundant uncompressed directory
-rm -rf $BACKUP_DIR_PATH
+rm -r $BACKUP_DIR_PATH

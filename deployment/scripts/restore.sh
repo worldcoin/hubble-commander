@@ -43,4 +43,4 @@ PGPASSWORD="${POSTGRES_PASSWORD}" pg_restore -h "${POSTGRES_IP}" -p "${POSTGRES_
 rsync -a "$BADGER_BACKUP_PATH" "$(dirname "${BADGER_DATA_DIR_PATH}")"
 
 # Remove redundant decompressed backup directory
-rm -rf "$DECOMPRESSED_BACKUP_PATH"
+rm -r "$DECOMPRESSED_BACKUP_PATH"
