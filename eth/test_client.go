@@ -3,6 +3,7 @@ package eth
 import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
+	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
@@ -31,8 +32,16 @@ func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig
 		return nil, err
 	}
 
+	//TODO-sc: remove because DeployConfiguredRollup does the same thing
+	if cfg.Dependencies.Chooser == nil {
+		proofOfBurnAddress, _, deployErr := deployer.DeployProofOfBurn(sim)
+		if deployErr != nil {
+			return nil, err
+		}
+		cfg.Dependencies.Chooser = proofOfBurnAddress
+	}
 	if cfg.Dependencies.AccountRegistry == nil {
-		accountRegistryAddress, _, _, deployErr := accountregistry.DeployAccountRegistry(sim.GetAccount(), sim.GetBackend())
+		accountRegistryAddress, _, _, deployErr := accountregistry.DeployAccountRegistry(sim.GetAccount(), sim.GetBackend(), *cfg.Dependencies.Chooser)
 		if deployErr != nil {
 			return nil, deployErr
 		}

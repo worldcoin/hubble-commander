@@ -50,6 +50,7 @@ type Params struct {
 
 type Dependencies struct {
 	AccountRegistry *common.Address
+	Chooser         *common.Address
 }
 
 type RollupContracts struct {
@@ -87,12 +88,7 @@ func DeployRollup(c chain.Connection) (*RollupContracts, error) {
 func DeployConfiguredRollup(c chain.Connection, config DeploymentConfig) (*RollupContracts, error) {
 	fillWithDefaults(&config.Params)
 
-	proofOfBurnAddress, proofOfBurn, err := deployer.DeployProofOfBurn(c)
-	if err != nil {
-		return nil, err
-	}
-
-	err = deployMissing(&config.Dependencies, c, proofOfBurnAddress)
+	err := deployMissing(&config.Dependencies, c)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -170,6 +166,11 @@ func DeployConfiguredRollup(c chain.Connection, config DeploymentConfig) (*Rollu
 		return nil, err
 	}
 
+	proofOfBurn, err := proofofburn.NewProofOfBurn(*config.Chooser, c.GetBackend())
+	if err != nil {
+		return nil, err
+	}
+
 	accountRegistry, err := accountregistry.NewAccountRegistry(*config.AccountRegistry, c.GetBackend())
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -194,7 +195,7 @@ func DeployConfiguredRollup(c chain.Connection, config DeploymentConfig) (*Rollu
 	rollupAddress, tx, rollupContract, err := rollup.DeployRollup(
 		c.GetAccount(),
 		c.GetBackend(),
-		*proofOfBurnAddress,
+		*config.Chooser,
 		depositManagerAddress,
 		*config.AccountRegistry,
 		txHelpers.TransferAddress,
@@ -326,9 +327,16 @@ func fillWithDefaults(params *Params) {
 	}
 }
 
-func deployMissing(dependencies *Dependencies, c chain.Connection, chooser *common.Address) error {
+func deployMissing(dependencies *Dependencies, c chain.Connection) error {
+	if dependencies.Chooser == nil {
+		proofOfBurnAddress, _, err := deployer.DeployProofOfBurn(c)
+		if err != nil {
+			return err
+		}
+		dependencies.Chooser = proofOfBurnAddress
+	}
 	if dependencies.AccountRegistry == nil {
-		accountRegistryAddress, _, _, err := deployer.DeployAccountRegistry(c, chooser)
+		accountRegistryAddress, _, _, err := deployer.DeployAccountRegistry(c, dependencies.Chooser)
 		if err != nil {
 			return err
 		}

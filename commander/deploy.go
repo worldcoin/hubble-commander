@@ -83,8 +83,11 @@ func deployContractsAndSetupGenesisState(
 	}
 
 	contracts, err := rollup.DeployConfiguredRollup(blockchain, rollup.DeploymentConfig{
-		Params:       rollup.Params{GenesisStateRoot: stateRoot},
-		Dependencies: rollup.Dependencies{AccountRegistry: accountRegistryAddress},
+		Params: rollup.Params{GenesisStateRoot: stateRoot},
+		Dependencies: rollup.Dependencies{
+			AccountRegistry: accountRegistryAddress,
+			Chooser:         proofOfBurnAddress,
+		},
 	})
 	if err != nil {
 		return nil, err
