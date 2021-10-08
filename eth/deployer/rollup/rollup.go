@@ -54,21 +54,22 @@ type Dependencies struct {
 }
 
 type RollupContracts struct {
-	Config                DeploymentConfig
-	Chooser               *proofofburn.ProofOfBurn
-	AccountRegistry       *accountregistry.AccountRegistry
-	TokenRegistry         *tokenregistry.TokenRegistry
-	TokenRegistryAddress  common.Address
-	SpokeRegistry         *spokeregistry.SpokeRegistry
-	Vault                 *vault.Vault
-	DepositManager        *depositmanager.DepositManager
-	DepositManagerAddress common.Address
-	Transfer              *transfer.Transfer
-	MassMigration         *massmigration.MassMigration
-	Create2Transfer       *create2transfer.Create2Transfer
-	Rollup                *rollup.Rollup
-	RollupAddress         common.Address
-	ExampleTokenAddress   common.Address
+	Config                 DeploymentConfig
+	Chooser                *proofofburn.ProofOfBurn
+	AccountRegistry        *accountregistry.AccountRegistry
+	AccountRegistryAddress common.Address
+	TokenRegistry          *tokenregistry.TokenRegistry
+	TokenRegistryAddress   common.Address
+	SpokeRegistry          *spokeregistry.SpokeRegistry
+	Vault                  *vault.Vault
+	DepositManager         *depositmanager.DepositManager
+	DepositManagerAddress  common.Address
+	Transfer               *transfer.Transfer
+	MassMigration          *massmigration.MassMigration
+	Create2Transfer        *create2transfer.Create2Transfer
+	Rollup                 *rollup.Rollup
+	RollupAddress          common.Address
+	ExampleTokenAddress    common.Address
 }
 
 type txHelperContracts struct {
@@ -218,21 +219,22 @@ func DeployConfiguredRollup(c chain.Connection, config DeploymentConfig) (*Rollu
 	}
 
 	return &RollupContracts{
-		Config:                config,
-		Chooser:               proofOfBurn,
-		AccountRegistry:       accountRegistry,
-		TokenRegistry:         tokenRegistry,
-		TokenRegistryAddress:  tokenRegistryAddress,
-		SpokeRegistry:         spokeRegistry,
-		Vault:                 vaultContract,
-		DepositManager:        depositManager,
-		DepositManagerAddress: depositManagerAddress,
-		Transfer:              txHelpers.Transfer,
-		MassMigration:         txHelpers.MassMigration,
-		Create2Transfer:       txHelpers.Create2Transfer,
-		Rollup:                rollupContract,
-		RollupAddress:         rollupAddress,
-		ExampleTokenAddress:   exampleTokenAddress,
+		Config:                 config,
+		Chooser:                proofOfBurn,
+		AccountRegistry:        accountRegistry,
+		AccountRegistryAddress: *config.AccountRegistry,
+		TokenRegistry:          tokenRegistry,
+		TokenRegistryAddress:   tokenRegistryAddress,
+		SpokeRegistry:          spokeRegistry,
+		Vault:                  vaultContract,
+		DepositManager:         depositManager,
+		DepositManagerAddress:  depositManagerAddress,
+		Transfer:               txHelpers.Transfer,
+		MassMigration:          txHelpers.MassMigration,
+		Create2Transfer:        txHelpers.Create2Transfer,
+		Rollup:                 rollupContract,
+		RollupAddress:          rollupAddress,
+		ExampleTokenAddress:    exampleTokenAddress,
 	}, nil
 }
 
