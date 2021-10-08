@@ -5,7 +5,7 @@ import (
 	stdErrors "errors"
 	"math/big"
 
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -17,7 +17,7 @@ var (
 )
 
 func (c *Commander) newBlockLoop() error {
-	latestBlockNumber, err := c.client.ChainConnection.GetLatestBlockNumber()
+	latestBlockNumber, err := c.client.Blockchain.GetLatestBlockNumber()
 	if err != nil {
 		return err
 	}
@@ -25,7 +25,7 @@ func (c *Commander) newBlockLoop() error {
 
 	blocks := make(chan *types.Header, 5)
 	blocks <- &types.Header{Number: new(big.Int).SetUint64(*latestBlockNumber)}
-	subscription, err := c.client.ChainConnection.SubscribeNewHead(blocks)
+	subscription, err := c.client.Blockchain.SubscribeNewHead(blocks)
 	if err != nil {
 		return err
 	}
@@ -50,7 +50,7 @@ func (c *Commander) newBlockLoop() error {
 			if errors.Is(err, ErrRollbackInProgress) {
 				continue
 			}
-			if errors.Is(err, deployer.ErrWaitToBeMinedTimedOut) {
+			if errors.Is(err, chain.ErrWaitToBeMinedTimedOut) {
 				// Can happen for dispute or keepRollingBack transactions, continue the loop to retry if necessary
 				continue
 			}
@@ -128,7 +128,7 @@ func (c *Commander) syncToLatestBlock() (err error) {
 }
 
 func (c *Commander) updateLatestBlockNumber() (*uint64, error) {
-	latestBlockNumber, err := c.client.ChainConnection.GetLatestBlockNumber()
+	latestBlockNumber, err := c.client.Blockchain.GetLatestBlockNumber()
 	if err != nil {
 		return nil, err
 	}

@@ -11,7 +11,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	testbls "github.com/Worldcoin/hubble-commander/contracts/test/bls"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -29,15 +29,15 @@ func (s *WalletHardhatTestSuite) SetupSuite() {
 	cfg.Ethereum = &config.EthereumConfig{
 		RPCURL:     "http://localhost:8545",
 		PrivateKey: "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80", // hardhat node 1st account private key
-		ChainID:    "123",
+		ChainID:    123,
 	}
 
-	dep, err := deployer.NewRPCChainConnection(cfg.Ethereum)
+	blockchain, err := chain.NewRPCCConnection(cfg.Ethereum)
 	s.NoError(err)
 
-	opts := *dep.GetAccount()
+	opts := *blockchain.GetAccount()
 	opts.GasLimit = 3_000_000
-	_, _, testBLS, err := testbls.DeployTestBLS(&opts, dep.GetBackend())
+	_, _, testBLS, err := testbls.DeployTestBLS(&opts, blockchain.GetBackend())
 	s.NoError(err)
 	s.testBLS = testBLS
 }

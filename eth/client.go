@@ -10,7 +10,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -37,7 +37,7 @@ type ClientConfig struct {
 type Client struct {
 	config                  ClientConfig
 	ChainState              models.ChainState
-	ChainConnection         deployer.ChainConnection
+	Blockchain              chain.Connection
 	Rollup                  *rollup.Rollup
 	RollupABI               *abi.ABI
 	AccountRegistry         *accountregistry.AccountRegistry
@@ -50,7 +50,8 @@ type Client struct {
 	domain                  *bls.Domain
 }
 
-func NewClient(chainConnection deployer.ChainConnection, params *NewClientParams) (*Client, error) {
+//goland:noinspection GoDeprecation
+func NewClient(blockchain chain.Connection, params *NewClientParams) (*Client, error) {
 	fillWithDefaults(&params.ClientConfig)
 
 	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
@@ -61,13 +62,13 @@ func NewClient(chainConnection deployer.ChainConnection, params *NewClientParams
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	backend := chainConnection.GetBackend()
+	backend := blockchain.GetBackend()
 	rollupContract := bind.NewBoundContract(params.ChainState.Rollup, rollupAbi, backend, backend, backend)
 	accountRegistryContract := bind.NewBoundContract(params.ChainState.AccountRegistry, accountRegistryAbi, backend, backend, backend)
 	return &Client{
 		config:                  params.ClientConfig,
 		ChainState:              params.ChainState,
-		ChainConnection:         chainConnection,
+		Blockchain:              blockchain,
 		Rollup:                  params.Rollup,
 		RollupABI:               &rollupAbi,
 		AccountRegistry:         params.AccountRegistry,

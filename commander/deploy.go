@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
-	"github.com/Worldcoin/hubble-commander/eth/rollup"
+	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	log "github.com/sirupsen/logrus"
@@ -13,7 +14,7 @@ import (
 
 var ErrNoPublicKeysInGenesisAccounts = fmt.Errorf("genesis accounts for deployment require public keys")
 
-func Deploy(cfg *config.Config, chain deployer.ChainConnection) (chainSpec *string, err error) {
+func Deploy(cfg *config.Config, blockchain chain.Connection) (chainSpec *string, err error) {
 	tempStorage, err := st.NewTemporaryStorage()
 	if err != nil {
 		return nil, err
@@ -27,11 +28,11 @@ func Deploy(cfg *config.Config, chain deployer.ChainConnection) (chainSpec *stri
 	}()
 
 	log.Printf(
-		"Bootstrapping genesis state with %d accounts on chainId = %s",
+		"Bootstrapping genesis state with %d accounts on chainId = %d",
 		len(cfg.Bootstrap.GenesisAccounts),
 		cfg.Ethereum.ChainID,
 	)
-	chainState, err := deployContractsAndSetupGenesisState(tempStorage.Storage, chain, cfg.Bootstrap.GenesisAccounts)
+	chainState, err := deployContractsAndSetupGenesisState(tempStorage.Storage, blockchain, cfg.Bootstrap.GenesisAccounts)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +47,7 @@ func Deploy(cfg *config.Config, chain deployer.ChainConnection) (chainSpec *stri
 
 func deployContractsAndSetupGenesisState(
 	storage *st.Storage,
-	chain deployer.ChainConnection,
+	blockchain chain.Connection,
 	accounts []models.GenesisAccount,
 ) (*models.ChainState, error) {
 	err := validateGenesisAccounts(accounts)
@@ -54,12 +55,12 @@ func deployContractsAndSetupGenesisState(
 		return nil, err
 	}
 
-	accountRegistryAddress, accountRegistryDeploymentBlock, accountRegistry, err := deployer.DeployAccountRegistry(chain)
+	accountRegistryAddress, accountRegistryDeploymentBlock, accountRegistry, err := deployer.DeployAccountRegistry(blockchain)
 	if err != nil {
 		return nil, err
 	}
 
-	registeredAccounts, err := RegisterGenesisAccounts(chain.GetAccount(), accountRegistry, accounts)
+	registeredAccounts, err := RegisterGenesisAccounts(blockchain.GetAccount(), accountRegistry, accounts)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +77,7 @@ func deployContractsAndSetupGenesisState(
 		return nil, err
 	}
 
-	contracts, err := rollup.DeployConfiguredRollup(chain, rollup.DeploymentConfig{
+	contracts, err := rollup.DeployConfiguredRollup(blockchain, rollup.DeploymentConfig{
 		Params:       rollup.Params{GenesisStateRoot: stateRoot},
 		Dependencies: rollup.Dependencies{AccountRegistry: accountRegistryAddress},
 	})
@@ -85,7 +86,7 @@ func deployContractsAndSetupGenesisState(
 	}
 
 	chainState := &models.ChainState{
-		ChainID:                        chain.GetChainID(),
+		ChainID:                        blockchain.GetChainID(),
 		AccountRegistry:                *accountRegistryAddress,
 		AccountRegistryDeploymentBlock: *accountRegistryDeploymentBlock,
 		TokenRegistry:                  contracts.TokenRegistryAddress,

@@ -330,7 +330,7 @@ func (s *Create2TransferCommitmentsTestSuite) getRegisteredAccounts(startBlockNu
 
 	registeredAccounts := make([]models.AccountLeaf, 0)
 	for it.Next() {
-		tx, _, err := s.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
+		tx, _, err := s.client.Blockchain.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
 		s.NoError(err)
 
 		accounts, err := s.client.ExtractAccountsBatch(tx.Data(), it.Event)

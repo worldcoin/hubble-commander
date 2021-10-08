@@ -4,7 +4,7 @@ import (
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
@@ -75,7 +75,7 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 }
 
 func (c *Client) waitForDispute(batchID *models.Uint256, tx *types.Transaction) error {
-	receipt, err := deployer.WaitToBeMined(c.ChainConnection.GetBackend(), tx)
+	receipt, err := chain.WaitToBeMined(c.Blockchain.GetBackend(), tx)
 	if err != nil {
 		return err
 	}

@@ -59,6 +59,6 @@ type BadgerConfig struct {
 
 type EthereumConfig struct {
 	RPCURL     string `json:"-"`
+	ChainID    uint64
 	PrivateKey string `json:"-"`
-	ChainID    string
 }

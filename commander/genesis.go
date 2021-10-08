@@ -6,7 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -114,7 +114,7 @@ func RegisterGenesisAccounts(
 				return registeredAccounts, nil
 			}
 
-		case <-time.After(deployer.ChainTimeout):
+		case <-time.After(chain.MineTimeout):
 			return nil, errors.WithStack(ErrRegisterGenesisAccountTimeout)
 		}
 	}

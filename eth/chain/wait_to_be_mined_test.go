@@ -1,4 +1,4 @@
-package deployer
+package chain
 
 import (
 	"context"
@@ -95,10 +95,10 @@ func (s *WaitToBeMinedTestSuite) TestWaitToBeMined_MakesTheSecondCallAfterInterv
 	s.WithinDuration(expected, secondCallTime, 20*time.Millisecond)
 }
 
-func withChainTimeout(timeout time.Duration, fn func()) {
-	initialChainTimeout := ChainTimeout
-	ChainTimeout = timeout
-	defer func() { ChainTimeout = initialChainTimeout }()
+func withMineTimeout(timeout time.Duration, fn func()) {
+	initialMineTimeout := MineTimeout
+	MineTimeout = timeout
+	defer func() { MineTimeout = initialMineTimeout }()
 	fn()
 }
 
@@ -112,7 +112,7 @@ func (s *WaitToBeMinedTestSuite) TestWaitToBeMined_EventuallyTimesOut() {
 	testTimeout := 50 * time.Millisecond
 	expected := time.Now().Add(testTimeout)
 
-	withChainTimeout(testTimeout, func() {
+	withMineTimeout(testTimeout, func() {
 		_, err := WaitToBeMined(rp, s.tx)
 		s.ErrorIs(err, ErrWaitToBeMinedTimedOut)
 	})
