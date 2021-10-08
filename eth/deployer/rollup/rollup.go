@@ -168,7 +168,7 @@ func DeployConfiguredRollup(c chain.Connection, config DeploymentConfig) (*Rollu
 
 	proofOfBurn, err := proofofburn.NewProofOfBurn(*config.Chooser, c.GetBackend())
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	accountRegistry, err := accountregistry.NewAccountRegistry(*config.AccountRegistry, c.GetBackend())
