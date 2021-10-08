@@ -39,7 +39,7 @@ rsync -a $BADGER_DATA_DIR_PATH/* $BACKUP_DIR_PATH/badger
 rsync -a $GETH_CHAINDATA_DIR_PATH $BACKUP_DIR_PATH/geth
 
 # Dump postgres data
-POSTGRES_IP=$(cut -d' ' -f1 <<<$(hostname -I))
+POSTGRES_IP=$(cut -d' ' -f1 <<<$(hostname -I)) # Hardcode your machine IP here to be able to use this script on Mac
 PGPASSWORD="password" $PG_DUMP_PATH -h $POSTGRES_IP -U root -p 5433 -C hubble -Fc -Z0 > $BACKUP_DIR_PATH/postgres.sql
 
 # Compress all the files
