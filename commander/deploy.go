@@ -55,12 +55,12 @@ func deployContractsAndSetupGenesisState(
 		return nil, err
 	}
 
-	proofOfBurnAddress, _, err := deployer.DeployProofOfBurn(blockchain)
+	chooserAddress, _, err := deployer.DeployProofOfBurn(blockchain)
 	if err != nil {
 		return nil, err
 	}
 
-	accountRegistryAddress, accountRegistryDeploymentBlock, accountRegistry, err := deployer.DeployAccountRegistry(blockchain, proofOfBurnAddress)
+	accountRegistryAddress, accountRegistryDeploymentBlock, accountRegistry, err := deployer.DeployAccountRegistry(blockchain, chooserAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func deployContractsAndSetupGenesisState(
 		Params: rollup.Params{GenesisStateRoot: stateRoot},
 		Dependencies: rollup.Dependencies{
 			AccountRegistry: accountRegistryAddress,
-			Chooser:         proofOfBurnAddress,
+			Chooser:         chooserAddress,
 		},
 	})
 	if err != nil {
