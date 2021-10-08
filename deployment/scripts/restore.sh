@@ -17,19 +17,30 @@ if [ "$#" -ne 7 ]; then
     exit 0
 fi
 
-BACKUP_EXTENSION_LENGTH=$(echo "$1" | awk -F. '{print length($NF)}')
-DECOMPRESSED_BACKUP_PATH=$(echo "$1" | rev | cut -c$((BACKUP_EXTENSION_LENGTH+2))- | rev)
+COMPRESSED_BACKUP_DIR_PATH=$1
+BADGER_DATA_DIR_PATH=$2
+POSTGRES_IP=$3
+POSTGRES_PORT=$4
+POSTGRES_USER=$5
+POSTGRES_PASSWORD=$6
+POSTGRES_DBNAME=$7
+
+# These 2 lines cut the extension from COMPRESSED_BACKUP_DIR_PATH
+BACKUP_EXTENSION_LENGTH=$(echo "${COMPRESSED_BACKUP_DIR_PATH}" | awk -F. '{print length($NF)}')
+DECOMPRESSED_BACKUP_PATH=$(echo "${COMPRESSED_BACKUP_DIR_PATH}" | rev | cut -c$((BACKUP_EXTENSION_LENGTH+2))- | rev)
+
+# Prepare paths
 POSTGRES_BACKUP_PATH=$DECOMPRESSED_BACKUP_PATH/postgres.sql
 BADGER_BACKUP_PATH=$DECOMPRESSED_BACKUP_PATH/badger
 
 # Decompress the compressed backup file
-./unpigz.sh "$1"
+./unpigz.sh "${COMPRESSED_BACKUP_DIR_PATH}"
 
 # Restore postgres state
-PGPASSWORD="$6" pg_restore -h "$3" -p "$4" -U "$5" -d "$7" -1 "$POSTGRES_BACKUP_PATH"
+PGPASSWORD="${POSTGRES_PASSWORD}" pg_restore -h "${POSTGRES_IP}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d "${POSTGRES_DBNAME}" -1 "$POSTGRES_BACKUP_PATH"
 
 # Restore badger state
-rsync -a "$BADGER_BACKUP_PATH" "$(dirname "$2")"
+rsync -a "$BADGER_BACKUP_PATH" "$(dirname "${BADGER_DATA_DIR_PATH}")"
 
 # Remove redundant decompressed backup directory
 rm -rf "$DECOMPRESSED_BACKUP_PATH"
