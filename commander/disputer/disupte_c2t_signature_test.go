@@ -7,7 +7,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
@@ -78,12 +77,7 @@ func (s *DisputeC2TSignatureTestSuite) TestSignatureProofWithReceiver() {
 func (s *DisputeC2TSignatureTestSuite) TestDisputeSignature_DisputesBatchWithInvalidSignature() {
 	wallets := s.setUserStatesAndAddAccounts()
 
-	receiver := &models.AccountLeaf{
-		PubKeyID:  st.AccountBatchOffset,
-		PublicKey: *wallets[2].PublicKey(),
-	}
-
-	transfer := testutils.MakeCreate2Transfer(0, nil, 0, 100, &receiver.PublicKey)
+	transfer := testutils.MakeCreate2Transfer(0, nil, 0, 100, wallets[2].PublicKey())
 	s.signCreate2Transfer(&wallets[1], &transfer)
 
 	s.submitBatch(&transfer)
@@ -101,18 +95,10 @@ func (s *DisputeC2TSignatureTestSuite) TestDisputeSignature_DisputesBatchWithInv
 func (s *DisputeC2TSignatureTestSuite) TestDisputeSignature_ValidBatch() {
 	wallets := s.setUserStatesAndAddAccounts()
 
-	receiver := &models.AccountLeaf{
-		PubKeyID:  3,
-		PublicKey: *wallets[2].PublicKey(),
-	}
-
-	transfer := testutils.MakeCreate2Transfer(0, nil, 0, 100, &receiver.PublicKey)
+	transfer := testutils.MakeCreate2Transfer(0, nil, 0, 100, wallets[2].PublicKey())
 	s.signCreate2Transfer(&wallets[0], &transfer)
 
 	s.submitBatch(&transfer)
-
-	err := s.storage.AccountTree.SetSingle(receiver)
-	s.NoError(err)
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
