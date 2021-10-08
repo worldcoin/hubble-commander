@@ -44,7 +44,7 @@ func (c *Context) disputeTransferSignature(
 		return err
 	}
 
-	return c.client.DisputeSignatureTransfer(&batch.ID, targetCommitmentProof, signatureProof)
+	return c.client.DisputeSignatureTransfer(&batch.ID, batch.Hash, targetCommitmentProof, signatureProof)
 }
 
 func (c *Context) disputeCreate2TransferSignature(
@@ -62,7 +62,7 @@ func (c *Context) disputeCreate2TransferSignature(
 		return err
 	}
 
-	return c.client.DisputeSignatureCreate2Transfer(&batch.ID, targetCommitmentProof, signatureProof)
+	return c.client.DisputeSignatureCreate2Transfer(&batch.ID, batch.Hash, targetCommitmentProof, signatureProof)
 }
 
 func (c *Context) signatureProof(stateProofs []models.StateMerkleProof) (*models.SignatureProof, error) {
