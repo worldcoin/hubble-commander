@@ -25,9 +25,8 @@ PIGZ_PATH=$4
 PG_DUMP_PATH=$5
 
 # Prepare paths
-SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 BACKUP_DIR=$(date +"%Y-%m-%d_%H:%M:%S")
-BACKUP_DIR_PATH="${SCRIPT_PATH}/../../backups/${BACKUP_DIR}"
+BACKUP_DIR_PATH="${COMMANDER_DIR_PATH}/backups/${BACKUP_DIR}"
 COMPRESSED_BACKUP_DIR_PATH="${BACKUP_DIR_PATH}.tgz"
 
 # Create a new backup directory based on the current time
