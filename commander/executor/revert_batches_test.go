@@ -114,13 +114,13 @@ func (s *RevertBatchesTestSuite) addBatch(tx *models.Transfer) *models.Batch {
 
 	commitmentID, err := s.rollupCtx.NextCommitmentID()
 	s.NoError(err)
-	_, commitment, err := s.rollupCtx.createCommitment(models.TransferArray{*tx}, commitmentID)
+	result, err := s.rollupCtx.createCommitment(models.TransferArray{*tx}, commitmentID)
 	s.NoError(err)
 
 	err = s.storage.AddBatch(pendingBatch)
 	s.NoError(err)
 
-	err = s.rollupCtx.addCommitments([]models.Commitment{*commitment})
+	err = s.rollupCtx.addCommitments([]models.Commitment{*result.Commitment()})
 	s.NoError(err)
 
 	return pendingBatch

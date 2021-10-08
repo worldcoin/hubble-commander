@@ -24,10 +24,19 @@ var (
 	ErrRegisterBatchAccountTimeout = fmt.Errorf("timeout")
 )
 
-func (c *Client) RegisterBatchAccount(
+func (c *Client) RegisterBatchAccountAndWait(
 	publicKeys []models.PublicKey,
 	ev chan *accountregistry.AccountRegistryBatchPubkeyRegistered,
 ) ([]uint32, error) {
+	tx, err := c.RegisterBatchAccount(publicKeys)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.WaitForBatchAccountRegistration(tx, ev)
+}
+
+func (c *Client) RegisterBatchAccount(publicKeys []models.PublicKey) (*types.Transaction, error) {
 	if len(publicKeys) != accountBatchSize {
 		return nil, errors.WithStack(ErrInvalidPubKeysLength)
 	}
@@ -41,8 +50,7 @@ func (c *Client) RegisterBatchAccount(
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-
-	return c.WaitForBatchAccountRegistration(tx, ev)
+	return tx, nil
 }
 
 func (c *Client) WatchBatchAccountRegistrations(opts *bind.WatchOpts) (

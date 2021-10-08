@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
@@ -78,7 +79,7 @@ func (s *DisputeC2TSignatureTestSuite) TestDisputeSignature_DisputesBatchWithInv
 	wallets := s.setUserStatesAndAddAccounts()
 
 	receiver := &models.AccountLeaf{
-		PubKeyID:  3,
+		PubKeyID:  st.AccountBatchOffset,
 		PublicKey: *wallets[2].PublicKey(),
 	}
 
@@ -86,9 +87,6 @@ func (s *DisputeC2TSignatureTestSuite) TestDisputeSignature_DisputesBatchWithInv
 	s.signCreate2Transfer(&wallets[1], &transfer)
 
 	s.submitBatch(&transfer)
-
-	err := s.storage.AccountTree.SetSingle(receiver)
-	s.NoError(err)
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)

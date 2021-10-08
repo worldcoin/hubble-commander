@@ -29,7 +29,7 @@ func (s *RegisterBatchAccountTestSuite) TearDownTest() {
 	s.client.Close()
 }
 
-func (s *RegisterBatchAccountTestSuite) TestRegisterBatchAccount() {
+func (s *RegisterBatchAccountTestSuite) TestRegisterBatchAccountAndWait() {
 	events, unsubscribe, err := s.client.WatchBatchAccountRegistrations(&bind.WatchOpts{})
 	s.NoError(err)
 	defer unsubscribe()
@@ -41,7 +41,7 @@ func (s *RegisterBatchAccountTestSuite) TestRegisterBatchAccount() {
 		expectedPubKeyIDs[i] = uint32(accountBatchOffset + i)
 	}
 
-	pubKeyIDs, err := s.client.RegisterBatchAccount(publicKeys, events)
+	pubKeyIDs, err := s.client.RegisterBatchAccountAndWait(publicKeys, events)
 	s.NoError(err)
 	s.Len(pubKeyIDs, accountBatchSize)
 	s.Equal(expectedPubKeyIDs, pubKeyIDs)
@@ -51,14 +51,14 @@ func (s *RegisterBatchAccountTestSuite) TestRegisterBatchAccount() {
 	s.EqualValues(accountBatchSize, rightIndex.Uint64())
 }
 
-func (s *RegisterBatchAccountTestSuite) TestRegisterBatchAccount_InvalidPubKeysLength() {
+func (s *RegisterBatchAccountTestSuite) TestRegisterBatchAccountAndWait_InvalidPubKeysLength() {
 	events, unsubscribe, err := s.client.WatchBatchAccountRegistrations(&bind.WatchOpts{})
 	s.NoError(err)
 	defer unsubscribe()
 
 	publicKeys := []models.PublicKey{{1, 2, 3}}
 
-	_, err = s.client.RegisterBatchAccount(publicKeys, events)
+	_, err = s.client.RegisterBatchAccountAndWait(publicKeys, events)
 	s.ErrorIs(err, ErrInvalidPubKeysLength)
 }
 
