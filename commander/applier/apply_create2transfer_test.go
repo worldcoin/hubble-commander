@@ -208,14 +208,14 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_InvalidT
 	s.NoError(appErr)
 }
 
-func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_RegistersPubKeyIDInCaseThereIsNoUnusedOne() {
-	pubKeyID, isPending, err := s.applier.getPubKeyID(&create2Transfer.ToPublicKey, feeReceiverTokenID)
+func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_WhenPubKeyIsNotRegistered_PredictsPubKeyID() {
+	pubKeyID, isPending, err := s.applier.getPubKeyID(&create2Transfer.ToPublicKey)
 	s.NoError(err)
 	s.True(isPending)
 	s.Equal(uint32(st.AccountBatchOffset), *pubKeyID)
 }
 
-func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_ReturnsUnusedPubKeyID() {
+func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_WhenPubKeyIsRegistered_ReturnsFirstPubKeyID() {
 	for i := 1; i <= 3; i++ {
 		err := s.storage.AccountTree.SetSingle(&models.AccountLeaf{
 			PubKeyID:  uint32(i),
@@ -224,10 +224,10 @@ func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_ReturnsUnusedPubKeyID() 
 		s.NoError(err)
 	}
 
-	pubKeyID, isPending, err := s.applier.getPubKeyID(&models.PublicKey{1, 2, 3}, feeReceiverTokenID)
+	pubKeyID, isPending, err := s.applier.getPubKeyID(&models.PublicKey{1, 2, 3})
 	s.NoError(err)
 	s.False(isPending)
-	s.Equal(uint32(2), *pubKeyID)
+	s.Equal(uint32(1), *pubKeyID)
 }
 
 func TestApplyCreate2TransferTestSuite(t *testing.T) {

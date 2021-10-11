@@ -100,7 +100,7 @@ func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_ValidBatch() {
 		testutils.MakeCreate2Transfer(0, nil, 0, 50, wallets[1].PublicKey()),
 		testutils.MakeCreate2Transfer(0, ref.Uint32(4), 1, 100, wallets[1].PublicKey()),
 	}
-	pubKeyIDs := [][]uint32{{st.AccountBatchOffset + st.AccountBatchSize}}
+	pubKeyIDs := [][]uint32{{st.AccountBatchOffset}}
 
 	s.submitBatch(&transfers[0])
 

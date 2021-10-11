@@ -10,7 +10,7 @@ func (a *Applier) ApplyCreate2Transfer(
 	create2Transfer *models.Create2Transfer,
 	commitmentTokenID models.Uint256,
 ) (applyResult *ApplySingleC2TResult, transferError, appError error) {
-	pubKeyID, isPending, appError := a.getPubKeyID(&create2Transfer.ToPublicKey, commitmentTokenID)
+	pubKeyID, isPending, appError := a.getPubKeyID(&create2Transfer.ToPublicKey)
 	if appError != nil {
 		return nil, nil, appError
 	}
@@ -61,11 +61,8 @@ func (a *Applier) ApplyCreate2TransferForSync(
 	return genericSynced, transferError, nil
 }
 
-func (a *Applier) getPubKeyID(
-	publicKey *models.PublicKey,
-	tokenID models.Uint256,
-) (pubKeyID *uint32, isPending bool, err error) {
-	pubKeyID, err = a.storage.GetUnusedPubKeyID(publicKey, &tokenID)
+func (a *Applier) getPubKeyID(publicKey *models.PublicKey) (pubKeyID *uint32, isPending bool, err error) {
+	pubKeyID, err = a.storage.GetFirstPubKeyID(publicKey)
 	if err == nil {
 		return pubKeyID, false, nil
 	}
