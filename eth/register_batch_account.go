@@ -70,10 +70,10 @@ func (c *Client) retrieveRegisteredPubKeyIDs(receipt *types.Receipt) ([]uint32, 
 	if err != nil {
 		return nil, err
 	}
-	return ExtractPubKeyIDsFromBatchAccountEvent(event), nil
+	return extractPubKeyIDsFromBatchAccountEvent(event), nil
 }
 
-func ExtractPubKeyIDsFromBatchAccountEvent(ev *accountregistry.AccountRegistryBatchPubkeyRegistered) []uint32 {
+func extractPubKeyIDsFromBatchAccountEvent(ev *accountregistry.AccountRegistryBatchPubkeyRegistered) []uint32 {
 	startID := ev.StartID.Uint64()
 	endID := ev.EndID.Uint64()
 

@@ -36,7 +36,7 @@ func (c *Client) ExtractAccountsBatch(
 		return nil, err
 	}
 
-	pubKeyIDs := ExtractPubKeyIDsFromBatchAccountEvent(event)
+	pubKeyIDs := extractPubKeyIDsFromBatchAccountEvent(event)
 	publicKeys := unpack[0].([storage.AccountBatchSize][4]*big.Int)
 	accounts := make([]models.AccountLeaf, 0, len(publicKeys))
 
