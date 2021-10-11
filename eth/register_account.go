@@ -7,7 +7,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
@@ -15,7 +14,7 @@ import (
 var ErrSingleRegisteredPubKeyLogNotFound = fmt.Errorf("single pubkey registered log not found in receipt")
 
 func (a *AccountManager) RegisterAccountAndWait(publicKey *models.PublicKey) (*uint32, error) {
-	tx, err := RegisterAccount(a.Blockchain.GetAccount(), a.AccountRegistry, publicKey)
+	tx, err := a.RegisterAccount(publicKey)
 	if err != nil {
 		return nil, err
 	}
@@ -40,32 +39,10 @@ func (a *AccountManager) RetrieveRegisteredPubKeyID(receipt *types.Receipt) (*ui
 	return ref.Uint32(uint32(event.PubkeyID.Uint64())), nil
 }
 
-func WatchRegistrations(accountRegistry *accountregistry.AccountRegistry, opts *bind.WatchOpts) (
-	registrations chan *accountregistry.AccountRegistrySinglePubkeyRegistered,
-	unsubscribe func(),
-	err error,
-) {
-	ev := make(chan *accountregistry.AccountRegistrySinglePubkeyRegistered)
-
-	sub, err := accountRegistry.WatchSinglePubkeyRegistered(opts, ev)
-	if err != nil {
-		return nil, nil, errors.WithStack(err)
-	}
-	return ev, sub.Unsubscribe, nil
-}
-
-func RegisterAccount(
-	opts *bind.TransactOpts,
-	accountRegistry *accountregistry.AccountRegistry,
-	publicKey *models.PublicKey,
-) (*types.Transaction, error) {
-	tx, err := accountRegistry.Register(opts, publicKey.BigInts())
+func (a *AccountManager) RegisterAccount(publicKey *models.PublicKey) (*types.Transaction, error) {
+	tx, err := a.AccountRegistry.Register(a.Blockchain.GetAccount(), publicKey.BigInts())
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 	return tx, nil
-}
-
-func (a *AccountManager) RegisterAccount(publicKey *models.PublicKey) (*types.Transaction, error) {
-	return RegisterAccount(a.Blockchain.GetAccount(), a.AccountRegistry, publicKey)
 }
