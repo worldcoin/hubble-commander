@@ -21,6 +21,22 @@ version: '3'
 # 8. start commander `docker-compose up -d commander`
 
 services:
+  datadog:
+    container_name: datadog-agent
+    image: gcr.io/datadoghq/agent:latest
+    environment:
+      DD_LOGS_ENABLED: "true"
+      DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL: "true"
+      DD_LOGS_CONFIG_DOCKER_CONTAINER_USE_FILE: "true"
+      DD_CONTAINER_EXCLUDE: "name:datadog-agent"
+    env_file: ~/.datadog-key.env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /proc/:/host/proc/:ro
+      - /opt/datadog-agent/run:/opt/datadog-agent/run:rw
+      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+
   mining-geth-init:
     image: ethereum/client-go:stable
     volumes:
@@ -34,6 +50,8 @@ services:
       - /root/genesis/worldcoin.json
     networks:
       hubble:
+    depends_on:
+      - datadog
 
   mining-geth:
     image: ethereum/client-go:stable
@@ -55,6 +73,8 @@ services:
     networks:
       hubble:
         ipv4_address: 172.20.0.5
+    depends_on:
+      - datadog
 
   api-geth-init:
     image: ethereum/client-go:stable
@@ -67,6 +87,8 @@ services:
       - /root/genesis/worldcoin.json
     networks:
       hubble:
+    depends_on:
+      - datadog
 
   api-geth:
     image: ethereum/client-go:stable
@@ -91,6 +113,7 @@ services:
       hubble:
     depends_on:
       - mining-geth
+      - datadog
 
   postgres:
     image: postgres:13.1
@@ -119,6 +142,8 @@ services:
       HUBBLE_BOOTSTRAP_BLOCKS_TO_FINALISE: 1209600 # 2 weeks on network with 1s block time
       HUBBLE_ETHEREUM_RPC_URL: ws://api-geth:8546
       HUBBLE_ETHEREUM_CHAIN_ID: 967532646 # "worldcoin" typed on mobile phone keypad
+      HUBBLE_LOG_LEVEL: debug
+      HUBBLE_LOG_FORMAT: json
     env_file: ~/.private-key.env
     volumes:
       - chain-spec-volume:/chain-spec
@@ -126,6 +151,7 @@ services:
       hubble:
     depends_on:
       - api-geth
+      - datadog
 
   commander:
     image: ghcr.io/worldcoin/hubble-commander:latest-0.4.0
@@ -141,6 +167,7 @@ services:
       HUBBLE_POSTGRES_NAME: hubble
       HUBBLE_BADGER_PATH: /db/data/hubble
       HUBBLE_LOG_LEVEL: debug
+      HUBBLE_LOG_FORMAT: json
     env_file: ~/.private-key.env
     ports:
       - "5000:8080"
@@ -152,6 +179,7 @@ services:
     depends_on:
       - postgres
       - api-geth
+      - datadog
 
 volumes:
   mining-geth-data-volume:
