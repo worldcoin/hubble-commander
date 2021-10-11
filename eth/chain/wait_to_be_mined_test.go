@@ -120,6 +120,77 @@ func (s *WaitToBeMinedTestSuite) TestWaitToBeMined_EventuallyTimesOut() {
 	s.WithinDuration(expected, time.Now(), 20*time.Millisecond)
 }
 
+func (s *WaitToBeMinedTestSuite) TestWaitForMultiple_WaitsForAllTransactions() {
+	txs := make([]types.Transaction, 2)
+	for i := range txs {
+		txs[i] = *types.NewTx(&types.DynamicFeeTx{
+			ChainID:   big.NewInt(1),
+			Nonce:     0,
+			To:        ref.Address(utils.RandomAddress()),
+			Gas:       123457,
+			GasFeeCap: big.NewInt(12_500_000),
+		})
+	}
+	expectedReceipts := make([]types.Receipt, len(txs))
+	expectedReceipts[0] = types.Receipt{BlockNumber: big.NewInt(0)}
+	expectedReceipts[1] = types.Receipt{BlockNumber: big.NewInt(1)}
+
+	calls := make([]bool, len(txs))
+	rp := new(MockReceiptProvider)
+	rp.On("TransactionReceipt", mock.Anything, txs[0].Hash()).
+		Return(&expectedReceipts[0], nil).
+		Run(func(args mock.Arguments) {
+			time.Sleep(50 * time.Millisecond)
+			calls[0] = true
+		})
+
+	rp.On("TransactionReceipt", mock.Anything, txs[1].Hash()).
+		Return(&expectedReceipts[1], nil).
+		Run(func(args mock.Arguments) { calls[1] = true })
+
+	receipts, err := WaitForMultiple(rp, txs)
+	s.NoError(err)
+	s.Equal([]bool{true, true}, calls)
+	s.Contains(receipts, expectedReceipts[0])
+	s.Contains(receipts, expectedReceipts[1])
+}
+
+func (s *WaitToBeMinedTestSuite) TestWaitForMultiple_FinishesOnTimeout() {
+	txs := make([]types.Transaction, 2)
+	for i := range txs {
+		txs[i] = *types.NewTx(&types.DynamicFeeTx{
+			ChainID:   big.NewInt(1),
+			Nonce:     0,
+			To:        ref.Address(utils.RandomAddress()),
+			Gas:       123457,
+			GasFeeCap: big.NewInt(12_500_000),
+		})
+	}
+
+	var nilReceipt *types.Receipt
+
+	calls := make([]bool, len(txs))
+	rp := new(MockReceiptProvider)
+	rp.On("TransactionReceipt", mock.Anything, txs[0].Hash()).
+		Return(nilReceipt, ethereum.NotFound)
+
+	rp.On("TransactionReceipt", mock.Anything, txs[1].Hash()).
+		Return(s.minedReceipt, nil).
+		Run(func(args mock.Arguments) { calls[1] = true })
+
+	testTimeout := 50 * time.Millisecond
+	expected := time.Now().Add(testTimeout)
+
+	withMineTimeout(testTimeout, func() {
+		receipts, err := WaitForMultiple(rp, txs)
+		s.ErrorIs(err, ErrWaitToBeMinedTimedOut)
+		s.Nil(receipts)
+	})
+
+	s.WithinDuration(expected, time.Now(), 20*time.Millisecond)
+	s.True(calls[1])
+}
+
 func TestWaitToBeMinedTestSuite(t *testing.T) {
 	suite.Run(t, new(WaitToBeMinedTestSuite))
 }
