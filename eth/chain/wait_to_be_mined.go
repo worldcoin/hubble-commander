@@ -3,12 +3,13 @@ package chain
 import (
 	"context"
 	"fmt"
+	log "github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -18,12 +19,18 @@ var (
 )
 
 func WaitToBeMined(r ReceiptProvider, tx *types.Transaction) (*types.Receipt, error) {
-	timeout := time.After(MineTimeout)
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(MineTimeout))
+	defer cancel()
+
+	return WaitToBeMinedCtx(ctx, r, tx)
+}
+
+func WaitToBeMinedCtx(ctx context.Context, r ReceiptProvider, tx *types.Transaction) (*types.Receipt, error) {
 	ticker := time.NewTicker(PollInterval)
 	defer ticker.Stop()
 
 	for {
-		receipt, err := r.TransactionReceipt(context.Background(), tx.Hash())
+		receipt, err := r.TransactionReceipt(ctx, tx.Hash())
 		if err != nil && err != ethereum.NotFound {
 			return nil, errors.WithStack(err)
 		}
@@ -32,11 +39,41 @@ func WaitToBeMined(r ReceiptProvider, tx *types.Transaction) (*types.Receipt, er
 		}
 
 		select {
-		case <-timeout:
-			err = errors.WithStack(ErrWaitToBeMinedTimedOut)
-			log.Warnf("%+v", err)
+		case <-ctx.Done():
+			err = ctx.Err()
+			if errors.Is(err, context.DeadlineExceeded) {
+				err = errors.WithStack(ErrWaitToBeMinedTimedOut)
+				log.Warnf("%+v", err)
+			}
 			return nil, err
 		case <-ticker.C:
 		}
 	}
+}
+
+func WaitForMultiple(r ReceiptProvider, txs []types.Transaction) ([]types.Receipt, error) {
+	receiptChan := make(chan types.Receipt, len(txs))
+	group, ctx := errgroup.WithContext(context.Background())
+	for i := range txs {
+		j := i
+		group.Go(func() error {
+			receipt, err := WaitToBeMinedCtx(ctx, r, &txs[j])
+			if err != nil {
+				return err
+			}
+			receiptChan <- *receipt
+			return nil
+		})
+	}
+
+	if err := group.Wait(); err != nil {
+		return nil, err
+	}
+
+	close(receiptChan)
+	receipts := make([]types.Receipt, 0, len(txs))
+	for receipt := range receiptChan {
+		receipts = append(receipts, receipt)
+	}
+	return receipts, nil
 }
