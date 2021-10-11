@@ -37,7 +37,10 @@ func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_RemovesInvalidBatc
 		},
 	}
 
-	pubKeyIDs := [][]uint32{{3, 4}, {5, 6}}
+	pubKeyIDs := [][]uint32{
+		{st.AccountBatchOffset, st.AccountBatchOffset + 1},
+		{st.AccountBatchOffset + 2, st.AccountBatchOffset + 3},
+	}
 	proofs := s.getStateMerkleProofs(commitmentTxs, pubKeyIDs)
 
 	s.beginTransaction()
@@ -97,7 +100,7 @@ func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_ValidBatch() {
 		testutils.MakeCreate2Transfer(0, nil, 0, 50, wallets[1].PublicKey()),
 		testutils.MakeCreate2Transfer(0, ref.Uint32(4), 1, 100, wallets[1].PublicKey()),
 	}
-	pubKeyIDs := [][]uint32{{4}}
+	pubKeyIDs := [][]uint32{{st.AccountBatchOffset + st.AccountBatchSize}}
 
 	s.submitBatch(&transfers[0])
 
