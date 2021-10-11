@@ -114,36 +114,40 @@ func (s *WaitToBeMinedTestSuite) TestWaitToBeMined_EventuallyTimesOut() {
 	s.WithinDuration(expected, time.Now(), 20*time.Millisecond)
 }
 
-func (s *WaitToBeMinedTestSuite) TestWaitForMultiple_WaitsForAllTransactions() {
+func (s *WaitToBeMinedTestSuite) TestWaitToBeMined_TimedOutOnFirstTransactionReceiptCall() {
+	var nilReceipt *types.Receipt
+
+	rp := new(MockReceiptProvider)
+	rp.On(transactionReceiptMethod, mock.Anything, mock.Anything).
+		Return(nilReceipt, context.DeadlineExceeded)
+
+	_, err := WaitToBeMined(rp, s.tx)
+	s.ErrorIs(err, ErrWaitToBeMinedTimedOut)
+}
+
+func (s *WaitToBeMinedTestSuite) TestWaitForMultipleTxs_WaitsForAllTransactions() {
 	txs := make([]types.Transaction, 2)
+	expectedReceipts := make([]types.Receipt, len(txs))
 	for i := range txs {
 		txs[i] = *newTx()
+		expectedReceipts[i] = types.Receipt{BlockNumber: big.NewInt(int64(i))}
 	}
-	expectedReceipts := make([]types.Receipt, len(txs))
-	expectedReceipts[0] = types.Receipt{BlockNumber: big.NewInt(0)}
-	expectedReceipts[1] = types.Receipt{BlockNumber: big.NewInt(1)}
 
-	calls := make([]bool, len(txs))
 	rp := new(MockReceiptProvider)
 	rp.On(transactionReceiptMethod, mock.Anything, txs[0].Hash()).
 		Return(&expectedReceipts[0], nil).
-		Run(func(args mock.Arguments) {
-			time.Sleep(50 * time.Millisecond)
-			calls[0] = true
-		})
+		Run(func(args mock.Arguments) { time.Sleep(50 * time.Millisecond) })
 
 	rp.On(transactionReceiptMethod, mock.Anything, txs[1].Hash()).
-		Return(&expectedReceipts[1], nil).
-		Run(func(args mock.Arguments) { calls[1] = true })
+		Return(&expectedReceipts[1], nil)
 
-	receipts, err := WaitForMultiple(rp, txs)
+	receipts, err := WaitForMultipleTxs(rp, txs)
 	s.NoError(err)
-	s.Equal([]bool{true, true}, calls)
 	s.Contains(receipts, expectedReceipts[0])
 	s.Contains(receipts, expectedReceipts[1])
 }
 
-func (s *WaitToBeMinedTestSuite) TestWaitForMultiple_FinishesOnTimeout() {
+func (s *WaitToBeMinedTestSuite) TestWaitForMultipleTxs_FinishesOnTimeout() {
 	txs := make([]types.Transaction, 2)
 	for i := range txs {
 		txs[i] = *newTx()
@@ -164,7 +168,7 @@ func (s *WaitToBeMinedTestSuite) TestWaitForMultiple_FinishesOnTimeout() {
 	expected := time.Now().Add(testTimeout)
 
 	withMineTimeout(testTimeout, func() {
-		receipts, err := WaitForMultiple(rp, txs)
+		receipts, err := WaitForMultipleTxs(rp, txs)
 		s.ErrorIs(err, ErrWaitToBeMinedTimedOut)
 		s.Nil(receipts)
 	})

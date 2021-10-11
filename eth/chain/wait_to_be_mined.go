@@ -32,7 +32,7 @@ func WaitToBeMinedCtx(ctx context.Context, r ReceiptProvider, tx *types.Transact
 	for {
 		receipt, err := r.TransactionReceipt(ctx, tx.Hash())
 		if err != nil && err != ethereum.NotFound {
-			return nil, errors.WithStack(err)
+			return nil, handleWaitToBeMinedError(err)
 		}
 		if receipt != nil && receipt.BlockNumber != nil {
 			return receipt, nil
@@ -40,18 +40,22 @@ func WaitToBeMinedCtx(ctx context.Context, r ReceiptProvider, tx *types.Transact
 
 		select {
 		case <-ctx.Done():
-			err = ctx.Err()
-			if errors.Is(err, context.DeadlineExceeded) {
-				err = errors.WithStack(ErrWaitToBeMinedTimedOut)
-				log.Warnf("%+v", err)
-			}
-			return nil, err
+			return nil, handleWaitToBeMinedError(ctx.Err())
 		case <-ticker.C:
 		}
 	}
 }
 
-func WaitForMultiple(r ReceiptProvider, txs []types.Transaction) ([]types.Receipt, error) {
+func handleWaitToBeMinedError(err error) error {
+	if errors.Is(err, context.DeadlineExceeded) {
+		err = errors.WithStack(ErrWaitToBeMinedTimedOut)
+		log.Warnf("%+v", err)
+		return err
+	}
+	return errors.WithStack(err)
+}
+
+func WaitForMultipleTxs(r ReceiptProvider, txs []types.Transaction) ([]types.Receipt, error) {
 	receiptChan := make(chan types.Receipt, len(txs))
 	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), MineTimeout)
 	defer cancel()
