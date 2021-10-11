@@ -9,7 +9,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -26,6 +25,22 @@ var (
 func (c *Client) RegisterBatchAccountAndWait(
 	publicKeys []models.PublicKey,
 ) ([]uint32, error) {
+	tx, err := c.RegisterBatchAccount(publicKeys)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	receipt, err := chain.WaitToBeMined(c.Blockchain.GetBackend(), tx)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.retrieveRegisteredPubKeyIDs(receipt)
+}
+
+func (c *Client) RegisterBatchAccount(
+	publicKeys []models.PublicKey,
+) (*types.Transaction, error) {
 	if len(publicKeys) != accountBatchSize {
 		return nil, errors.WithStack(ErrInvalidPubKeysLength)
 	}
@@ -42,14 +57,7 @@ func (c *Client) RegisterBatchAccountAndWait(
 		return nil, errors.WithStack(err)
 	}
 
-	log.Debugf("Submitted a batch account registration transaction. Transaction nonce: %d, hash: %v", tx.Nonce(), tx.Hash())
-
-	receipt, err := chain.WaitToBeMined(c.Blockchain.GetBackend(), tx)
-	if err != nil {
-		return nil, err
-	}
-
-	return c.retrieveRegisteredPubKeyIDs(receipt)
+	return tx, nil
 }
 
 func (c *Client) retrieveRegisteredPubKeyIDs(receipt *types.Receipt) ([]uint32, error) {
