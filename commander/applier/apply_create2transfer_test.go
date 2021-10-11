@@ -208,14 +208,14 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_InvalidT
 	s.NoError(appErr)
 }
 
-func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_RegistersPubKeyIDInCaseThereIsNoUnusedOne() {
+func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_WhenPubKeyIsNotRegistered_PredictsPubKeyID() {
 	pubKeyID, isPending, err := s.applier.getPubKeyID(&create2Transfer.ToPublicKey)
 	s.NoError(err)
 	s.True(isPending)
 	s.Equal(uint32(st.AccountBatchOffset), *pubKeyID)
 }
 
-func (s *ApplyCreate2TransferTestSuite) TestGetOrRegisterPubKeyID_ReturnsFirstPubKeyID() {
+func (s *ApplyCreate2TransferTestSuite) TestGetPubKeyID_WhenPubKeyIsRegistered_ReturnsFirstPubKeyID() {
 	for i := 1; i <= 3; i++ {
 		err := s.storage.AccountTree.SetSingle(&models.AccountLeaf{
 			PubKeyID:  uint32(i),
