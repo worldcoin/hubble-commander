@@ -5,10 +5,11 @@ import (
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -34,15 +35,16 @@ func (c *Client) RegisterBatchAccountAndWait(
 		pubKeys[i] = publicKeys[i].BigInts()
 	}
 
-	//tx, err := c.AccountRegistry.RegisterBatch(c.ChainConnection.GetAccount(), pubKeys)
-	tx, err := c.AccountRegistry().
+	tx, err := c.accountRegistry().
 		WithGasLimit(*c.config.BatchAccountRegistrationGasLimit).
-		RegisterBatch(pubkeys)
+		RegisterBatch(pubKeys)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	receipt, err := deployer.WaitToBeMined(c.ChainConnection.GetBackend(), tx)
+	log.Debugf("Submitted a batch account registration transaction. Transaction nonce: %d, hash: %v", tx.Nonce(), tx.Hash())
+
+	receipt, err := chain.WaitToBeMined(c.Blockchain.GetBackend(), tx)
 	if err != nil {
 		return nil, err
 	}

@@ -218,11 +218,10 @@ func (c *RollupContext) registerPendingAccounts(accounts []models.AccountLeaf) e
 	for i := range accounts {
 		publicKeys = append(publicKeys, accounts[i].PublicKey)
 		if len(publicKeys) == st.AccountBatchSize {
-			tx, err := c.client.RegisterBatchAccount(publicKeys)
+			_, err := c.client.RegisterBatchAccountAndWait(publicKeys)
 			if err != nil {
 				return err
 			}
-			log.Debugf("Submitted a batch account registration transaction. Transaction nonce: %d, hash: %v", tx.Nonce(), tx.Hash())
 			publicKeys = make([]models.PublicKey, 0, st.AccountBatchSize)
 		}
 	}
