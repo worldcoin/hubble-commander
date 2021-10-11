@@ -3,13 +3,13 @@ package chain
 import (
 	"context"
 	"fmt"
-	log "github.com/sirupsen/logrus"
-	"golang.org/x/sync/errgroup"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 )
 
 var (

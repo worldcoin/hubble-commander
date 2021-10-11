@@ -14,26 +14,26 @@ import (
 
 var ErrSingleRegisteredPubKeyLogNotFound = fmt.Errorf("single pubkey registered log not found in receipt")
 
-func (c *Client) RegisterAccountAndWait(publicKey *models.PublicKey) (*uint32, error) {
-	tx, err := RegisterAccount(c.Blockchain.GetAccount(), c.AccountRegistry, publicKey)
+func (a *AccountManager) RegisterAccountAndWait(publicKey *models.PublicKey) (*uint32, error) {
+	tx, err := RegisterAccount(a.Blockchain.GetAccount(), a.AccountRegistry, publicKey)
 	if err != nil {
 		return nil, err
 	}
-	receipt, err := chain.WaitToBeMined(c.Blockchain.GetBackend(), tx)
+	receipt, err := chain.WaitToBeMined(a.Blockchain.GetBackend(), tx)
 	if err != nil {
 		return nil, err
 	}
 
-	return c.retrieveRegisteredPubKeyID(receipt)
+	return a.retrieveRegisteredPubKeyID(receipt)
 }
 
-func (c *Client) retrieveRegisteredPubKeyID(receipt *types.Receipt) (*uint32, error) {
+func (a *AccountManager) retrieveRegisteredPubKeyID(receipt *types.Receipt) (*uint32, error) {
 	if len(receipt.Logs) < 1 || receipt.Logs[0] == nil {
 		return nil, errors.WithStack(ErrSingleRegisteredPubKeyLogNotFound)
 	}
 
 	event := new(accountregistry.AccountRegistrySinglePubkeyRegistered)
-	err := c.accountRegistryContract.UnpackLog(event, "SinglePubkeyRegistered", *receipt.Logs[0])
+	err := a.accountRegistryContract.UnpackLog(event, "SinglePubkeyRegistered", *receipt.Logs[0])
 	if err != nil {
 		return nil, err
 	}
