@@ -24,10 +24,10 @@ func (a *AccountManager) RegisterAccountAndWait(publicKey *models.PublicKey) (*u
 		return nil, err
 	}
 
-	return a.retrieveRegisteredPubKeyID(receipt)
+	return a.RetrieveRegisteredPubKeyID(receipt)
 }
 
-func (a *AccountManager) retrieveRegisteredPubKeyID(receipt *types.Receipt) (*uint32, error) {
+func (a *AccountManager) RetrieveRegisteredPubKeyID(receipt *types.Receipt) (*uint32, error) {
 	if len(receipt.Logs) < 1 || receipt.Logs[0] == nil {
 		return nil, errors.WithStack(ErrSingleRegisteredPubKeyLogNotFound)
 	}
@@ -64,4 +64,8 @@ func RegisterAccount(
 		return nil, errors.WithStack(err)
 	}
 	return tx, nil
+}
+
+func (a *AccountManager) RegisterAccount(publicKey *models.PublicKey) (*types.Transaction, error) {
+	return RegisterAccount(a.Blockchain.GetAccount(), a.AccountRegistry, publicKey)
 }
