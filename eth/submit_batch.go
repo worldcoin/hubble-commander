@@ -9,7 +9,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -60,13 +59,6 @@ func (c *Client) SubmitCreate2TransfersBatchAndWait(commitments []models.Commitm
 }
 
 func (c *Client) submitBatchAndWait(submit SubmitBatchFunc) (batch *models.Batch, err error) {
-	sink := make(chan *rollup.RollupNewBatch)
-	subscription, err := c.Rollup.WatchNewBatch(&bind.WatchOpts{}, sink)
-	if err != nil {
-		return
-	}
-	defer subscription.Unsubscribe()
-
 	tx, err := submit()
 	if err != nil {
 		return
