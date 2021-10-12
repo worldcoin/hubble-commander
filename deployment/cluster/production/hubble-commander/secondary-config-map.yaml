@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: hubble-commander
+  name: secondary-hubble-commander
+  namespace: production
+data:
+  HUBBLE_POSTGRES_NAME: "secondary-hubble-commander"
+  HUBBLE_API_PORT: "8081"

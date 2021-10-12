@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: hubble-commander
+  labels:
+    app: hubble-commander
+  namespace: production
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-production"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  tls:
+  - hosts:
+    - production.api.worldcoin-distributors.com
+    secretName: hubble-commander-secret
+  rules:
+  - host: production.api.worldcoin-distributors.com
+    http:
+      paths:
+        - path: /hubble/primary(/|$)
+          pathType: Exact
+          backend:
+            serviceName: hubble-commander
+            servicePort: 80
+        - path: /hubble/secondary(/|$)
+          pathType: Exact
+          backend:
+            serviceName: hubble-commander
+            servicePort: 81

@@ -21,16 +21,36 @@ spec:
     spec:
       imagePullSecrets:
         - name: regcred
+      volumes:
+      - name: chain-spec-yaml
+        secret:
+          secretName: chain-spec
+          items:
+          - key: chain-spec.yaml
+            path: chain-spec.yaml
+      - name: badger-database
+        awsElasticBlockStore:
+          volumeID: vol-009263434c36c3384
+          fsType: ext4
       containers:
         - name: primary-hubble-commander
-          image: "ghcr.io/worldcoin/hubble-commander:stable"
+          image: "ghcr.io/worldcoin/hubble-commander@sha256:f65594ef5814288b2a3f188ca821edd113e3743bb0224c8f5386d25a4ecb1f72"
           imagePullPolicy: Always
+          volumeMounts:
+          - name: chain-spec-yaml
+            mountPath: /chain-spec
+          - name: badger-database
+            mountPath: /badger-database
           ports:
             - containerPort: 8080
           envFrom:
             - configMapRef:
                 name: hubble-commander
             - configMapRef:
+                name: primary-hubble-commander
+            - secretRef:
+                name: hubble-commander
+            - secretRef:
                 name: primary-hubble-commander
           livenessProbe:
             exec:
@@ -48,12 +68,19 @@ spec:
               memory: "6144Mi"
               cpu: "1500m"
         - name: secondary-hubble-commander
-          image: "ghcr.io/worldcoin/hubble-commander:stable"
+          image: "ghcr.io/worldcoin/hubble-commander@sha256:f65594ef5814288b2a3f188ca821edd113e3743bb0224c8f5386d25a4ecb1f72"
           imagePullPolicy: Always
+          volumeMounts:
+          - name: chain-spec-yaml
+            mountPath: /chain-spec
           envFrom:
             - configMapRef:
                 name: hubble-commander
             - configMapRef:
+                name: secondary-hubble-commander
+            - secretRef:
+                name: hubble-commander
+            - secretRef:
                 name: secondary-hubble-commander
           livenessProbe:
             exec:
@@ -70,3 +97,12 @@ spec:
             limits:
               memory: "6144Mi"
               cpu: "1500m"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: eks.amazonaws.com/nodegroup
+                operator: In
+                values:
+                - crypto-dev

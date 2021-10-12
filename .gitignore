@@ -9,3 +9,7 @@ config.yaml
 e2e/geth-data/geth
 chain-spec.yaml
 backups/
+
+# Kubernetes
+kustomization.yaml
+secrets.yaml

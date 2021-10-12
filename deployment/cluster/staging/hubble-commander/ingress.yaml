@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: hubble-commander
@@ -13,10 +13,10 @@ metadata:
 spec:
   tls:
   - hosts:
-    - new.api.worldcoin-distributors.com
+    - staging.api.worldcoin-distributors.com
     secretName: hubble-commander-secret
   rules:
-  - host: new.api.worldcoin-distributors.com
+  - host: staging.api.worldcoin-distributors.com
     http:
       paths:
         - path: /hubble/primary(/|$)
