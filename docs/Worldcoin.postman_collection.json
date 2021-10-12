@@ -259,13 +259,13 @@
             "response": []
         },
         {
-            "name": "hubble_getPublicKeyByID",
+            "name": "hubble_getPublicKeyByPubKeyID",
             "request": {
                 "method": "POST",
                 "header": [],
                 "body": {
                     "mode": "raw",
-                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getPublicKeyByID\",\n    \"params\": [1],\n    \"id\": 1\n}",
+                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getPublicKeyByPubKeyID\",\n    \"params\": [1],\n    \"id\": 1\n}",
                     "options": {
                         "raw": {
                             "language": "json"
