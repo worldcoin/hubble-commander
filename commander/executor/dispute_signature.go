@@ -40,7 +40,7 @@ func (t *TransactionExecutor) disputeTransferSignature(
 		return err
 	}
 
-	return t.client.DisputeSignatureTransfer(&batch.ID, targetCommitmentProof, signatureProof)
+	return t.client.DisputeSignatureTransfer(&batch.ID, batch.Hash, targetCommitmentProof, signatureProof)
 }
 
 func (t *TransactionExecutor) disputeCreate2TransferSignature(
@@ -58,7 +58,7 @@ func (t *TransactionExecutor) disputeCreate2TransferSignature(
 		return err
 	}
 
-	return t.client.DisputeSignatureCreate2Transfer(&batch.ID, targetCommitmentProof, signatureProof)
+	return t.client.DisputeSignatureCreate2Transfer(&batch.ID, batch.Hash, targetCommitmentProof, signatureProof)
 }
 
 func (t *TransactionExecutor) signatureProof(stateProofs []models.StateMerkleProof) (*models.SignatureProof, error) {

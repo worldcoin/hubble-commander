@@ -67,23 +67,31 @@ func (s *SyncTestSuite) setupDB() {
 	s.NoError(err)
 	s.transactionExecutor = NewTestTransactionExecutor(s.storage.Storage, s.client.Client, s.cfg, context.Background())
 
-	seedDB(s.Assertions, s.storage.Storage, s.wallets)
+	s.seedDB(s.wallets)
 }
 
-func seedDB(s *require.Assertions, storage *st.Storage, wallets []bls.Wallet) {
-	err := storage.AccountTree.SetSingle(&models.AccountLeaf{
+func (s *SyncTestSuite) seedDB(wallets []bls.Wallet) {
+	err := s.storage.AccountTree.SetSingle(&models.AccountLeaf{
 		PubKeyID:  0,
 		PublicKey: *wallets[0].PublicKey(),
 	})
 	s.NoError(err)
 
-	err = storage.AccountTree.SetSingle(&models.AccountLeaf{
+	err = s.storage.AccountTree.SetSingle(&models.AccountLeaf{
 		PubKeyID:  1,
 		PublicKey: *wallets[1].PublicKey(),
 	})
 	s.NoError(err)
 
-	_, err = storage.StateTree.Set(0, &models.UserState{
+	pendingAccounts, err := s.transactionExecutor.fillMissingAccounts([]models.AccountLeaf{{
+		PubKeyID:  st.AccountBatchOffset,
+		PublicKey: *s.wallets[0].PublicKey(),
+	}})
+	s.NoError(err)
+	err = s.storage.AccountTree.SetBatch(pendingAccounts)
+	s.NoError(err)
+
+	_, err = s.storage.StateTree.Set(0, &models.UserState{
 		PubKeyID: 0,
 		TokenID:  models.MakeUint256(0),
 		Balance:  models.MakeUint256(1000),
@@ -91,7 +99,7 @@ func seedDB(s *require.Assertions, storage *st.Storage, wallets []bls.Wallet) {
 	})
 	s.NoError(err)
 
-	_, err = storage.StateTree.Set(1, &models.UserState{
+	_, err = s.storage.StateTree.Set(1, &models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(0),
 		Balance:  models.MakeUint256(0),
@@ -410,7 +418,7 @@ func (s *SyncTestSuite) TestSyncBatch_Create2TransferBatch() {
 	state2, err := s.storage.StateTree.Leaf(2)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(400), state2.Balance)
-	s.Equal(uint32(0), state2.PubKeyID)
+	s.Equal(uint32(st.AccountBatchOffset), state2.PubKeyID)
 
 	treeRoot := s.getAccountTreeRoot()
 	batches, err := s.storage.GetBatchesInRange(nil, nil)

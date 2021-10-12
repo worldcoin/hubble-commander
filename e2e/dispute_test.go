@@ -262,11 +262,7 @@ func sendC2TBatchWithInvalidAmount(t *testing.T, ethClient *eth.Client, toPublic
 		ToStateID: ref.Uint32(6),
 	}
 
-	registrations, unsubscribe, err := ethClient.WatchRegistrations(&bind.WatchOpts{})
-	require.NoError(t, err)
-	defer unsubscribe()
-
-	pubKeyID, err := ethClient.RegisterAccount(toPublicKey, registrations)
+	pubKeyID, err := ethClient.RegisterAccountAndWait(toPublicKey)
 	require.NoError(t, err)
 
 	encodedTransfer, err := encoder.EncodeCreate2TransferForCommitment(&transfer, *pubKeyID)
@@ -285,11 +281,7 @@ func sendC2TBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client, toPub
 		ToStateID: ref.Uint32(38),
 	}
 
-	registrations, unsubscribe, err := ethClient.WatchRegistrations(&bind.WatchOpts{})
-	require.NoError(t, err)
-	defer unsubscribe()
-
-	pubKeyID, err := ethClient.RegisterAccount(toPublicKey, registrations)
+	pubKeyID, err := ethClient.RegisterAccountAndWait(toPublicKey)
 	require.NoError(t, err)
 
 	encodedTransfer, err := encoder.EncodeCreate2TransferForCommitment(&transfer, *pubKeyID)
@@ -308,11 +300,7 @@ func sendC2TBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, toPub
 		ToStateID: ref.Uint32(6),
 	}
 
-	registrations, unsubscribe, err := ethClient.WatchRegistrations(&bind.WatchOpts{})
-	require.NoError(t, err)
-	defer unsubscribe()
-
-	pubKeyID, err := ethClient.RegisterAccount(toPublicKey, registrations)
+	pubKeyID, err := ethClient.RegisterAccountAndWait(toPublicKey)
 	require.NoError(t, err)
 
 	encodedTransfer, err := encoder.EncodeCreate2TransferForCommitment(&transfer, *pubKeyID)

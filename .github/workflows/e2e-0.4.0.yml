@@ -1,0 +1,87 @@
+name: E2E Test (0.4.0)
+on:
+  push:
+    branches:
+      - 0.4.0
+
+jobs:
+  build-image:
+    name: Build Docker image with latest-0.4.0 tag
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build docker image
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ghcr.io/worldcoin/hubble-commander:latest-0.4.0
+  e2e:
+    name: Run E2E test
+    needs: build-image
+    runs-on: ubuntu-20.04
+    services:
+      postgres:
+        image: postgres:13.1
+        env:
+          POSTGRES_USER: hubble
+          POSTGRES_PASSWORD: root
+        ports:
+          - 5432:5432
+        # Needed because the postgres container does not provide a health check
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      HUBBLE_POSTGRES_HOST: localhost
+      HUBBLE_POSTGRES_USER: hubble
+      HUBBLE_POSTGRES_PASSWORD: root
+      HUBBLE_ETHEREUM_RPC_URL: ws://localhost:8546
+      HUBBLE_ETHEREUM_CHAIN_ID: 1337
+      HUBBLE_ETHEREUM_PRIVATE_KEY: ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
+      HUBBLE_ROLLUP_MIN_TXS_PER_COMMITMENT: 32
+      HUBBLE_ROLLUP_MAX_TXS_PER_COMMITMENT: 32
+
+    steps:
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Pull the commander image
+        run: docker pull ghcr.io/worldcoin/hubble-commander:latest-0.4.0
+      - name: Run E2E tests
+        run: |
+          make setup-geth &
+          HUBBLE_E2E=docker make test-e2e
+
+  deploy:
+    name: Deploy to AWS Staging machine
+    needs: e2e
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Deploy to AWS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.AWS_STAGING_HOST }}
+          username: ec2-user
+          key: ${{ secrets.AWS_HUBBLE_CONSUMER_BACKEND_SSH_KEY }}
+          script: |
+            cd deployment/
+            docker-compose pull
+            docker-compose up -d commander
+            docker images -f "before=ghcr.io/worldcoin/hubble-commander:latest-0.4.0" -f "dangling=true" -q ghcr.io/worldcoin/hubble-commander | xargs docker image rm || true

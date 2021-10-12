@@ -14,11 +14,13 @@ type Commander interface {
 	Client() jsonrpc.RPCClient
 }
 
+const CommanderImage = "ghcr.io/worldcoin/hubble-commander:latest-0.4.0"
+
 func NewCommanderFromEnv(prune bool) (Commander, error) {
 	switch os.Getenv("HUBBLE_E2E") {
 	case "", "docker":
 		return StartDockerCommander(StartOptions{
-			Image:           "ghcr.io/worldcoin/hubble-commander:latest",
+			Image:           CommanderImage,
 			Prune:           prune,
 			DeployContracts: true,
 		})

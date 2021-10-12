@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
@@ -79,18 +78,12 @@ func RegisterGenesisAccounts(
 	txs := make([]types.Transaction, 0, len(accounts))
 	txHashToPubKey := make(map[common.Hash]models.PublicKey)
 	for i := range accounts {
-		account := &accounts[i]
-		publicKey, err := bls.PrivateToPublicKey(account.PrivateKey)
-		if err != nil {
-			return nil, err
-		}
-
-		tx, err := eth.RegisterAccount(opts, accountRegistry, publicKey)
+		tx, err := eth.RegisterAccount(opts, accountRegistry, accounts[i].PublicKey)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
 
-		txHashToPubKey[tx.Hash()] = *publicKey
+		txHashToPubKey[tx.Hash()] = *accounts[i].PublicKey
 		txs = append(txs, *tx)
 	}
 

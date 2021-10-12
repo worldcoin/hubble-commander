@@ -1,53 +1,47 @@
 package executor
 
 import (
-	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
 type AppliedC2Transfers struct {
 	appliedTransfers []models.Create2Transfer
 	invalidTransfers []models.Create2Transfer
 	addedPubKeyIDs   []uint32
+	pendingAccounts  PendingAccounts
+}
+
+func NewAppliedC2Transfers(pendingAccounts PendingAccounts, capacity uint32) *AppliedC2Transfers {
+	accounts := make(PendingAccounts, 0, uint32(len(pendingAccounts))+capacity)
+	accounts = append(accounts, pendingAccounts...)
+
+	return &AppliedC2Transfers{
+		appliedTransfers: make([]models.Create2Transfer, 0, capacity),
+		invalidTransfers: make([]models.Create2Transfer, 0),
+		pendingAccounts:  accounts,
+	}
 }
 
 func (t *TransactionExecutor) ApplyCreate2Transfers(
-	transfers []models.Create2Transfer,
+	pending *PendingC2Ts,
 	maxApplied uint32,
 	feeReceiver *FeeReceiver,
 ) (*AppliedC2Transfers, error) {
-	if len(transfers) == 0 {
-		return &AppliedC2Transfers{}, nil
+	if len(pending.Txs) == 0 {
+		return &AppliedC2Transfers{pendingAccounts: pending.Accounts}, nil
 	}
 
-	syncedBlock, err := t.storage.GetSyncedBlock()
-	if err != nil {
-		return nil, err
-	}
-	events, unsubscribe, err := t.client.WatchRegistrations(&bind.WatchOpts{
-		Start: syncedBlock,
-	})
-	if err != nil {
-		return nil, err
-	}
-	defer unsubscribe()
-
-	returnStruct := &AppliedC2Transfers{}
-	returnStruct.appliedTransfers = make([]models.Create2Transfer, 0, t.cfg.MaxTxsPerCommitment)
-	returnStruct.addedPubKeyIDs = make([]uint32, 0, t.cfg.MaxTxsPerCommitment)
-
+	returnStruct := NewAppliedC2Transfers(pending.Accounts, t.cfg.MaxTxsPerCommitment)
 	combinedFee := models.NewUint256(0)
 
-	for i := range transfers {
+	for i := range pending.Txs {
 		if uint32(len(returnStruct.appliedTransfers)) == maxApplied {
 			break
 		}
 
-		transfer := &transfers[i]
-		var pubKeyID *uint32
-		pubKeyID, err = t.getOrRegisterPubKeyID(events, transfer, feeReceiver.TokenID)
+		transfer := &pending.Txs[i]
+		pubKeyID, isPending, err := t.getPubKeyID(returnStruct.pendingAccounts, transfer, feeReceiver.TokenID)
 		if err != nil {
 			return nil, err
 		}
@@ -62,13 +56,19 @@ func (t *TransactionExecutor) ApplyCreate2Transfers(
 			continue
 		}
 
+		if isPending {
+			returnStruct.pendingAccounts = append(returnStruct.pendingAccounts, models.AccountLeaf{
+				PubKeyID:  *pubKeyID,
+				PublicKey: transfer.ToPublicKey,
+			})
+		}
 		returnStruct.appliedTransfers = append(returnStruct.appliedTransfers, *appliedTransfer)
 		returnStruct.addedPubKeyIDs = append(returnStruct.addedPubKeyIDs, *pubKeyID)
 		*combinedFee = *combinedFee.Add(&appliedTransfer.Fee)
 	}
 
 	if len(returnStruct.appliedTransfers) > 0 {
-		_, err = t.ApplyFee(feeReceiver.StateID, *combinedFee)
+		_, err := t.ApplyFee(feeReceiver.StateID, *combinedFee)
 		if err != nil {
 			return nil, err
 		}
@@ -127,16 +127,33 @@ func (t *TransactionExecutor) ApplyCreate2TransfersForSync(
 	return appliedTransfers, stateChangeProofs, nil
 }
 
-func (t *TransactionExecutor) getOrRegisterPubKeyID(
-	events chan *accountregistry.AccountRegistrySinglePubkeyRegistered,
-	transfer *models.Create2Transfer,
-	tokenID models.Uint256,
-) (*uint32, error) {
-	pubKeyID, err := t.storage.GetUnusedPubKeyID(&transfer.ToPublicKey, &tokenID)
+func (t *TransactionExecutor) getPubKeyID(registrations PendingAccounts, transfer *models.Create2Transfer, tokenID models.Uint256) (
+	pubKeyID *uint32, isPending bool, err error,
+) {
+	pubKeyID, err = t.storage.GetUnusedPubKeyID(&transfer.ToPublicKey, &tokenID)
 	if err != nil && !st.IsNotFoundError(err) {
-		return nil, err
+		return nil, false, err
 	} else if st.IsNotFoundError(err) {
-		return t.client.RegisterAccount(&transfer.ToPublicKey, events)
+		pubKeyID, err = registrations.NextPubKeyID(t.storage)
+		if err != nil {
+			return nil, false, err
+		}
+		return pubKeyID, true, nil
 	}
-	return pubKeyID, nil
+	return pubKeyID, false, nil
+}
+
+type PendingC2Ts struct {
+	Txs      []models.Create2Transfer
+	Accounts PendingAccounts
+}
+
+type PendingAccounts []models.AccountLeaf
+
+func (p PendingAccounts) NextPubKeyID(storage *st.Storage) (*uint32, error) {
+	if len(p) == 0 {
+		return storage.AccountTree.NextBatchAccountPubKeyID()
+	}
+	nextPubKeyID := p[len(p)-1].PubKeyID + 1
+	return &nextPubKeyID, nil
 }

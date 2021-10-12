@@ -82,12 +82,8 @@ func (s *AccountsTestSuite) TestSyncBatchAccounts() {
 }
 
 func (s *AccountsTestSuite) registerSingleAccount() models.AccountLeaf {
-	registrations, unsubscribe, err := s.testClient.WatchRegistrations(&bind.WatchOpts{Start: nil})
-	s.NoError(err)
-	defer unsubscribe()
-
 	publicKey := models.PublicKey{2, 3, 4}
-	pubKeyID, err := s.testClient.RegisterAccount(&publicKey, registrations)
+	pubKeyID, err := s.testClient.RegisterAccountAndWait(&publicKey)
 	s.NoError(err)
 	return models.AccountLeaf{
 		PubKeyID:  *pubKeyID,
@@ -105,7 +101,7 @@ func (s *AccountsTestSuite) registerBatchAccount() []models.AccountLeaf {
 		publicKeys[i] = models.PublicKey{1, 1, byte(i)}
 	}
 
-	pubKeyIDs, err := s.testClient.RegisterBatchAccount(publicKeys, registrations)
+	pubKeyIDs, err := s.testClient.RegisterBatchAccountAndWait(publicKeys, registrations)
 	s.NoError(err)
 
 	accounts := make([]models.AccountLeaf, 16)

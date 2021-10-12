@@ -210,7 +210,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_DisputesC2TBatchWithInv
 	wallets := s.setUserStatesAndAddAccounts()
 
 	receiver := &models.AccountLeaf{
-		PubKeyID:  3,
+		PubKeyID:  st.AccountBatchOffset,
 		PublicKey: *wallets[2].PublicKey(),
 	}
 
@@ -218,9 +218,6 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_DisputesC2TBatchWithInv
 	signCreate2Transfer(s.T(), &wallets[1], &transfer)
 
 	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &transfer)
-
-	err := s.transactionExecutor.storage.AccountTree.SetSingle(receiver)
-	s.NoError(err)
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
@@ -254,7 +251,7 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Create2Transfer_ValidBa
 	wallets := s.setUserStatesAndAddAccounts()
 
 	receiver := &models.AccountLeaf{
-		PubKeyID:  3,
+		PubKeyID:  st.AccountBatchOffset,
 		PublicKey: *wallets[2].PublicKey(),
 	}
 
@@ -262,9 +259,6 @@ func (s *DisputeSignatureTestSuite) TestDisputeSignature_Create2Transfer_ValidBa
 	signCreate2Transfer(s.T(), &wallets[0], &transfer)
 
 	createAndSubmitC2TBatch(s.Assertions, s.client, s.transactionExecutor, &transfer)
-
-	err := s.transactionExecutor.storage.AccountTree.SetSingle(receiver)
-	s.NoError(err)
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
