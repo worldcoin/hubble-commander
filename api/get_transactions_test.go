@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -123,7 +122,6 @@ func (s *GetTransactionsTestSuite) TestGetTransactions() {
 	create2Transfers := s.addCreate2Transfers()
 
 	txs, err := s.api.GetTransactions(&models.PublicKey{1, 1, 1})
-	fmt.Printf("Txs: %v\n", txs)
 	s.NoError(err)
 
 	newTransferReceipt := func(transfer models.Transfer) *dto.TransferReceipt {
