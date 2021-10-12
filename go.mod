@@ -32,6 +32,7 @@ require (
 	github.com/timshannon/badgerhold/v4 v4.0.1
 	github.com/ybbus/jsonrpc/v2 v2.1.6
 	golang.org/x/crypto v0.0.0-20210812204632-0ba0e8f03122 // indirect
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e // indirect
 	google.golang.org/genproto v0.0.0-20201030142918-24207fddd1c3 // indirect
 	gopkg.in/yaml.v2 v2.3.0

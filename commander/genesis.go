@@ -2,23 +2,16 @@ package commander
 
 import (
 	"fmt"
-	"time"
 
-	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
 
-var (
-	ErrRegisterGenesisAccountTimeout = fmt.Errorf("timeout")
-	ErrGenesisAccountsUniqueStateID  = fmt.Errorf("accounts must have unique state IDs")
-)
+var ErrGenesisAccountsUniqueStateID = fmt.Errorf("accounts must have unique state IDs")
 
 func AssignStateIDs(accounts []models.RegisteredGenesisAccount) []models.PopulatedGenesisAccount {
 	populatedAccounts := make([]models.PopulatedGenesisAccount, 0, len(accounts))
@@ -69,55 +62,36 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.PopulatedGen
 	return nil
 }
 
-func RegisterGenesisAccounts(
-	opts *bind.TransactOpts,
-	accountRegistry *accountregistry.AccountRegistry,
-	accounts []models.GenesisAccount,
-) ([]models.RegisteredGenesisAccount, error) {
-	registrations, unsubscribe, err := eth.WatchRegistrations(accountRegistry, &bind.WatchOpts{})
+func RegisterGenesisAccounts(accountMgr *eth.AccountManager, accounts []models.GenesisAccount) ([]models.RegisteredGenesisAccount, error) {
+	txs := make([]types.Transaction, 0, len(accounts))
+	for i := range accounts {
+		tx, err := accountMgr.RegisterAccount(accounts[i].PublicKey)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		txs = append(txs, *tx)
+	}
+
+	receipts, err := chain.WaitForMultipleTxs(accountMgr.Blockchain.GetBackend(), txs)
 	if err != nil {
 		return nil, err
 	}
-	defer unsubscribe()
 
-	txs := make([]types.Transaction, 0, len(accounts))
-	txHashToPubKey := make(map[common.Hash]models.PublicKey)
+	registeredAccounts := make([]models.RegisteredGenesisAccount, 0, len(accounts))
 	for i := range accounts {
-		tx, err := eth.RegisterAccount(opts, accountRegistry, accounts[i].PublicKey)
+		pubKeyID, err := accountMgr.RetrieveRegisteredPubKeyID(&receipts[i])
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
 
-		txHashToPubKey[tx.Hash()] = *accounts[i].PublicKey
-		txs = append(txs, *tx)
+		registeredAccounts = append(registeredAccounts, models.RegisteredGenesisAccount{
+			GenesisAccount: accounts[i],
+			PublicKey:      *accounts[i].PublicKey,
+			PubKeyID:       *pubKeyID,
+		})
 	}
 
-	registeredAccounts := make([]models.RegisteredGenesisAccount, len(accounts))
-	accountsRegistered := 0
-	for {
-		select {
-		case event, ok := <-registrations:
-			if !ok {
-				return nil, errors.WithStack(eth.ErrAccountWatcherIsClosed)
-			}
-			for i := range txs {
-				if event.Raw.TxHash == txs[i].Hash() {
-					registeredAccounts[i] = models.RegisteredGenesisAccount{
-						GenesisAccount: accounts[i],
-						PublicKey:      txHashToPubKey[event.Raw.TxHash],
-						PubKeyID:       uint32(event.PubkeyID.Uint64()),
-					}
-					accountsRegistered += 1
-				}
-			}
-			if accountsRegistered >= len(accounts) {
-				return registeredAccounts, nil
-			}
-
-		case <-time.After(chain.MineTimeout):
-			return nil, errors.WithStack(ErrRegisterGenesisAccountTimeout)
-		}
-	}
+	return registeredAccounts, nil
 }
 
 func (c *Commander) addGenesisBatch() error {
