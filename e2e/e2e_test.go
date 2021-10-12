@@ -75,7 +75,7 @@ func testGetUserStates(t *testing.T, client jsonrpc.RPCClient, wallet bls.Wallet
 
 func testGetPublicKey(t *testing.T, client jsonrpc.RPCClient, state *dto.UserStateWithID, wallet bls.Wallet) {
 	var publicKey models.PublicKey
-	err := client.CallFor(&publicKey, "hubble_getPublicKeyByID", []interface{}{state.PubKeyID})
+	err := client.CallFor(&publicKey, "hubble_getPublicKeyByPubKeyID", []interface{}{state.PubKeyID})
 	require.NoError(t, err)
 	require.Equal(t, *wallet.PublicKey(), publicKey)
 
