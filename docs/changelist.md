@@ -1,4 +1,4 @@
-# Changelist 0.4.0 -> master (f79d205b0cf01c46b5123e8c774e6d32437e5595)
+# Changelist 0.4.0 -> master (b43d41eca3598515a687253beb08fd2cc5e8fca5)
 
 ## Changes
 
@@ -28,6 +28,7 @@
             - refer to the API change made to `hubble_getTransactions` endpoint for an example
 
 - API changes:
+    - `hubble_getPublicKeyByID` endpoint renamed to `hubble_getPublicKeyByPubKeyID`
     - `hubble_getNetworkInfo`
         - New output - refer to the changes made to the `NetworkInfo` data model
             - Before:
