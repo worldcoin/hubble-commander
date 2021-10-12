@@ -114,15 +114,21 @@ func (s *WaitToBeMinedTestSuite) TestWaitToBeMined_EventuallyTimesOut() {
 	s.WithinDuration(expected, time.Now(), 20*time.Millisecond)
 }
 
-func (s *WaitToBeMinedTestSuite) TestWaitToBeMined_TimedOutOnFirstTransactionReceiptCall() {
+func (s *WaitToBeMinedTestSuite) TestWaitToBeMined_HandlesTransactionReceiptCallTimeouts() {
 	var nilReceipt *types.Receipt
 
 	rp := new(MockReceiptProvider)
 	rp.On(transactionReceiptMethod, mock.Anything, mock.Anything).
 		Return(nilReceipt, context.DeadlineExceeded)
 
-	_, err := WaitToBeMined(rp, s.tx)
-	s.ErrorIs(err, ErrWaitToBeMinedTimedOut)
+	callTime := time.Now()
+
+	withMineTimeout(500*time.Millisecond, func() {
+		_, err := WaitToBeMined(rp, s.tx)
+		s.ErrorIs(err, ErrWaitToBeMinedTimedOut)
+	})
+
+	s.WithinDuration(callTime, time.Now(), 20*time.Millisecond)
 }
 
 func (s *WaitToBeMinedTestSuite) TestWaitForMultipleTxs_WaitsForAllTransactions() {
