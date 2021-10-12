@@ -18,7 +18,7 @@ if [ "$#" -ne 2 ]; then
     echo "  2. command"
     echo ""
     echo "Example usage:"
-    echo "$0 \"5 */1 * * *\" \"bash /home/user/script.sh argument1 argument 2\""
+    echo "bash $0 \"5 */1 * * *\" \"bash /home/user/script.sh argument1 argument 2\""
     exit 0
 fi
 

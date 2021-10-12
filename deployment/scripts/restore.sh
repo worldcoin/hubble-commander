@@ -13,7 +13,7 @@ if [ "$#" -ne 7 ]; then
     echo "  7. postgres dbname"
     echo ""
     echo "Example usage:"
-    echo "$0 ./backups/2021-10-05_16:00:19.tgz ./deployment/db/badger 192.168.0.81 5433 root password hubble"
+    echo "bash $0 ./backups/2021-10-05_16:00:19.tgz ./deployment/db/badger 192.168.0.81 5433 root password hubble"
     exit 0
 fi
 

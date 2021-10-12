@@ -1,8 +1,9 @@
 #!/bin/bash
 
-if [ "$#" -ne 5 ]; then
+if [[ "$#" -ne 5 && "$#" -ne 6 ]]; then
     echo "Script used for backing up the current state of the commander."
     echo "This script generates a .tgz file with a compressed backup."
+    echo "Optionally, it can upload said backup to an AWS S3 bucket."
     echo "Use the unpigz.sh script to decompress a backup file."
     echo "Use the restore.sh script to restore a commander state from a backup file."
     echo ""
@@ -12,9 +13,10 @@ if [ "$#" -ne 5 ]; then
     echo "  3. geth chaindata directory path"
     echo "  4. path to the pigz tool"
     echo "  5. path to the pg_dump tool"
+    echo "  6. aws bucket [optional]"
     echo ""
     echo "Example usage:"
-    echo "$0 ./commander ./commander/db/badger/data ./commander/e2e/geth-data/geth/chaindata /usr/local/bin/pigz /usr/local/bin/pg_dump"
+    echo "bash $0 ./commander ./commander/db/badger/data ./commander/e2e/geth-data/geth/chaindata /usr/local/bin/pigz /usr/local/bin/pg_dump backup-aws-bucket"
     exit 0
 fi
 
@@ -23,6 +25,7 @@ BADGER_DATA_DIR_PATH=$2
 GETH_CHAINDATA_DIR_PATH=$3
 PIGZ_PATH=$4
 PG_DUMP_PATH=$5
+AWS_S3_BUCKET=$6
 
 # Prepare paths
 BACKUP_DIR=$(date +"%Y-%m-%d_%H:%M:%S")
@@ -30,20 +33,26 @@ BACKUP_DIR_PATH="${COMMANDER_DIR_PATH}/backups/${BACKUP_DIR}"
 COMPRESSED_BACKUP_DIR_PATH="${BACKUP_DIR_PATH}.tgz"
 
 # Create a new backup directory based on the current time
-mkdir -p $BACKUP_DIR_PATH
+mkdir -p "${BACKUP_DIR_PATH}"
 
 # Backup badger data
-rsync -a $BADGER_DATA_DIR_PATH/* $BACKUP_DIR_PATH/badger
+rsync -a "${BADGER_DATA_DIR_PATH}"/* "${BACKUP_DIR_PATH}/badger"
 
 # Backup geth chain data
-rsync -a $GETH_CHAINDATA_DIR_PATH $BACKUP_DIR_PATH/geth
+rsync -a "${GETH_CHAINDATA_DIR_PATH}" "${BACKUP_DIR_PATH}/geth"
 
 # Dump postgres data
-POSTGRES_IP=$(cut -d' ' -f1 <<<$(hostname -I)) # Hardcode your machine IP here to be able to use this script on Mac
-PGPASSWORD="password" $PG_DUMP_PATH -h $POSTGRES_IP -U root -p 5433 -C hubble -Fc -Z0 > $BACKUP_DIR_PATH/postgres.sql
+POSTGRES_IP=$(cut -d' ' -f1 <<<"$(hostname -I)") # Hardcode your machine IP here to be able to use this script on Mac
+PGPASSWORD="password" $PG_DUMP_PATH -h "${POSTGRES_IP}" -U root -p 5433 -C hubble -Fc -Z0 > "${BACKUP_DIR_PATH}/postgres.sql"
 
 # Compress all the files
-tar --use-compress-program="${PIGZ_PATH}" -cf $COMPRESSED_BACKUP_DIR_PATH -C $COMMANDER_DIR_PATH ./backups/$BACKUP_DIR
+tar --use-compress-program="${PIGZ_PATH}" -cf "${COMPRESSED_BACKUP_DIR_PATH}" -C "${COMMANDER_DIR_PATH}" "./backups/${BACKUP_DIR}"
 
 # Remove redundant uncompressed directory
-rm -r $BACKUP_DIR_PATH
+rm -r "${BACKUP_DIR_PATH}"
+
+# If AWS_S3_BUCKET is provided then upload the backup to a S3 bucket and remove the backup file from the local disk
+if [[ -n ${AWS_S3_BUCKET:+x} ]]; then
+    aws s3 cp "${COMPRESSED_BACKUP_DIR_PATH}" s3://"${AWS_S3_BUCKET}" >/dev/null
+    rm -r "${COMPRESSED_BACKUP_DIR_PATH}"
+fi
