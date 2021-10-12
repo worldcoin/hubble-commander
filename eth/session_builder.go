@@ -32,10 +32,10 @@ type accountRegistrySessionBuilder struct {
 	accountregistry.AccountRegistrySession
 }
 
-func (c *Client) accountRegistry() *accountRegistrySessionBuilder {
+func (a *AccountManager) accountRegistry() *accountRegistrySessionBuilder {
 	return &accountRegistrySessionBuilder{accountregistry.AccountRegistrySession{
-		Contract:     c.AccountRegistry,
-		TransactOpts: *c.Blockchain.GetAccount(),
+		Contract:     a.AccountRegistry,
+		TransactOpts: *a.Blockchain.GetAccount(),
 	}}
 }
 
