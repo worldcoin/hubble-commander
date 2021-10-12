@@ -22,10 +22,10 @@ func WaitToBeMined(r ReceiptProvider, tx *types.Transaction) (*types.Receipt, er
 	ctx, cancel := context.WithTimeout(context.Background(), MineTimeout)
 	defer cancel()
 
-	return WaitToBeMinedCtx(ctx, r, tx)
+	return waitToBeMinedWithCtx(ctx, r, tx)
 }
 
-func WaitToBeMinedCtx(ctx context.Context, r ReceiptProvider, tx *types.Transaction) (*types.Receipt, error) {
+func waitToBeMinedWithCtx(ctx context.Context, r ReceiptProvider, tx *types.Transaction) (*types.Receipt, error) {
 	ticker := time.NewTicker(PollInterval)
 	defer ticker.Stop()
 
@@ -64,7 +64,7 @@ func WaitForMultipleTxs(r ReceiptProvider, txs []types.Transaction) ([]types.Rec
 	for i := range txs {
 		j := i
 		group.Go(func() error {
-			receipt, err := WaitToBeMinedCtx(ctx, r, &txs[j])
+			receipt, err := waitToBeMinedWithCtx(ctx, r, &txs[j])
 			if err != nil {
 				return err
 			}
