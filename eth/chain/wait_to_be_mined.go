@@ -55,8 +55,13 @@ func handleWaitToBeMinedError(err error) error {
 	return errors.WithStack(err)
 }
 
+type orderedReceipt struct {
+	index   int
+	receipt *types.Receipt
+}
+
 func WaitForMultipleTxs(r ReceiptProvider, txs []types.Transaction) ([]types.Receipt, error) {
-	receiptChan := make(chan types.Receipt, len(txs))
+	orChan := make(chan orderedReceipt, len(txs))
 	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), MineTimeout)
 	defer cancel()
 
@@ -68,7 +73,7 @@ func WaitForMultipleTxs(r ReceiptProvider, txs []types.Transaction) ([]types.Rec
 			if err != nil {
 				return err
 			}
-			receiptChan <- *receipt
+			orChan <- orderedReceipt{j, receipt}
 			return nil
 		})
 	}
@@ -77,10 +82,10 @@ func WaitForMultipleTxs(r ReceiptProvider, txs []types.Transaction) ([]types.Rec
 		return nil, err
 	}
 
-	close(receiptChan)
-	receipts := make([]types.Receipt, 0, len(txs))
-	for receipt := range receiptChan {
-		receipts = append(receipts, receipt)
+	close(orChan)
+	result := make([]types.Receipt, len(txs))
+	for or := range orChan {
+		result[or.index] = *or.receipt
 	}
-	return receipts, nil
+	return result, nil
 }

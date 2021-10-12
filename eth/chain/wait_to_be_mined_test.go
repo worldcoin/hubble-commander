@@ -131,7 +131,7 @@ func (s *WaitToBeMinedTestSuite) TestWaitToBeMined_HandlesTransactionReceiptCall
 	s.WithinDuration(callTime, time.Now(), 20*time.Millisecond)
 }
 
-func (s *WaitToBeMinedTestSuite) TestWaitForMultipleTxs_WaitsForAllTransactions() {
+func (s *WaitToBeMinedTestSuite) TestWaitForMultipleTxs_WaitsForAllTransactionsAndReturnsReceiptsInOrder() {
 	txs := make([]types.Transaction, 2)
 	expectedReceipts := make([]types.Receipt, len(txs))
 	for i := range txs {
@@ -149,8 +149,17 @@ func (s *WaitToBeMinedTestSuite) TestWaitForMultipleTxs_WaitsForAllTransactions(
 
 	receipts, err := WaitForMultipleTxs(rp, txs)
 	s.NoError(err)
-	s.Contains(receipts, expectedReceipts[0])
-	s.Contains(receipts, expectedReceipts[1])
+	s.Equal(receipts, []types.Receipt{expectedReceipts[0], expectedReceipts[1]})
+}
+
+func (s *WaitToBeMinedTestSuite) TestWaitForMultipleTxs_WorksForDuplicatedTransactions() {
+	rp := new(MockReceiptProvider)
+	rp.On(transactionReceiptMethod, mock.Anything, mock.Anything).
+		Return(s.minedReceipt, nil)
+
+	receipts, err := WaitForMultipleTxs(rp, []types.Transaction{*s.tx, *s.tx})
+	s.NoError(err)
+	s.Equal(receipts, []types.Receipt{*s.minedReceipt, *s.minedReceipt})
 }
 
 func (s *WaitToBeMinedTestSuite) TestWaitForMultipleTxs_FinishesOnTimeout() {
