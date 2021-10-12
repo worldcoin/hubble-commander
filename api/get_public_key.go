@@ -12,7 +12,7 @@ var getPublicKeyAPIErrors = map[error]*APIError{
 	),
 }
 
-func (a *API) GetPublicKeyByID(id uint32) (*models.PublicKey, error) {
+func (a *API) GetPublicKeyByPubKeyID(id uint32) (*models.PublicKey, error) {
 	publicKey, err := a.unsafeGetPublicKeyByID(id)
 	if err != nil {
 		return nil, sanitizeError(err, getPublicKeyAPIErrors)
