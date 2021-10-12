@@ -58,9 +58,9 @@ func (s *WaitToBeMinedTestSuite) TestWaitToBeMined_CallsTransactionReceiptImmedi
 }
 
 func withPollInterval(interval time.Duration, fn func()) {
-	initialPollInterval := PollInterval
-	PollInterval = interval
-	defer func() { PollInterval = initialPollInterval }()
+	initialPollInterval := pollInterval
+	pollInterval = interval
+	defer func() { pollInterval = initialPollInterval }()
 	fn()
 }
 

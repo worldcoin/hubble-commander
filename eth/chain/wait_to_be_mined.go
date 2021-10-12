@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	PollInterval             = 500 * time.Millisecond
+	pollInterval             = 500 * time.Millisecond
 	MineTimeout              = 5 * time.Minute
 	ErrWaitToBeMinedTimedOut = fmt.Errorf("timeout on waiting for transaction to be mined")
 )
@@ -26,7 +26,7 @@ func WaitToBeMined(r ReceiptProvider, tx *types.Transaction) (*types.Receipt, er
 }
 
 func waitToBeMinedWithCtx(ctx context.Context, r ReceiptProvider, tx *types.Transaction) (*types.Receipt, error) {
-	ticker := time.NewTicker(PollInterval)
+	ticker := time.NewTicker(pollInterval)
 	defer ticker.Stop()
 
 	for {
