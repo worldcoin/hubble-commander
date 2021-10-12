@@ -60,7 +60,7 @@ func NewClient(blockchain chain.Connection, params *NewClientParams) (*Client, e
 	}
 	backend := blockchain.GetBackend()
 	rollupContract := bind.NewBoundContract(params.ChainState.Rollup, rollupAbi, backend, backend, backend)
-	accountMgn, err := NewAccountManager(blockchain, &AccountManagerParams{
+	accountManager, err := NewAccountManager(blockchain, &AccountManagerParams{
 		AccountRegistry:                  params.AccountRegistry,
 		AccountRegistryAddress:           params.ChainState.AccountRegistry,
 		BatchAccountRegistrationGasLimit: params.BatchAccountRegistrationGasLimit,
@@ -77,7 +77,7 @@ func NewClient(blockchain chain.Connection, params *NewClientParams) (*Client, e
 		TokenRegistry:  params.TokenRegistry,
 		DepositManager: params.DepositManager,
 		rollupContract: rollupContract,
-		AccountManager: accountMgn,
+		AccountManager: accountManager,
 	}, nil
 }
 
