@@ -5,11 +5,13 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/ethereum/go-ethereum/common"
 	log "github.com/sirupsen/logrus"
 )
 
 func (c *Client) DisputeSignatureTransfer(
 	batchID *models.Uint256,
+	batchHash *common.Hash,
 	targetProof *models.TransferCommitmentInclusionProof,
 	signatureProof *models.SignatureProof,
 ) error {
@@ -17,14 +19,14 @@ func (c *Client) DisputeSignatureTransfer(
 		WithGasLimit(*c.config.SignatureDisputeGasLimit).
 		DisputeSignatureTransfer(
 			batchID.ToBig(),
-			*TransferProofToCalldata(targetProof),
+			*transferProofToCalldata(targetProof),
 			*signatureProofToCalldata(signatureProof),
 		)
 	if err != nil {
 		return handleDisputeSignatureError(err)
 	}
 
-	err = c.waitForDispute(batchID, transaction)
+	err = c.waitForDispute(batchID, batchHash, transaction)
 	if err == ErrBatchAlreadyDisputed || err == ErrRollbackInProcess {
 		log.Info(err)
 		return nil
@@ -34,6 +36,7 @@ func (c *Client) DisputeSignatureTransfer(
 
 func (c *Client) DisputeSignatureCreate2Transfer(
 	batchID *models.Uint256,
+	batchHash *common.Hash,
 	targetProof *models.TransferCommitmentInclusionProof,
 	signatureProof *models.SignatureProofWithReceiver,
 ) error {
@@ -41,14 +44,14 @@ func (c *Client) DisputeSignatureCreate2Transfer(
 		WithGasLimit(*c.config.SignatureDisputeGasLimit).
 		DisputeSignatureCreate2Transfer(
 			batchID.ToBig(),
-			*TransferProofToCalldata(targetProof),
+			*transferProofToCalldata(targetProof),
 			*signatureProofWithReceiverToCalldata(signatureProof),
 		)
 	if err != nil {
 		return handleDisputeSignatureError(err)
 	}
 
-	err = c.waitForDispute(batchID, transaction)
+	err = c.waitForDispute(batchID, batchHash, transaction)
 	if err == ErrBatchAlreadyDisputed || err == ErrRollbackInProcess {
 		log.Info(err)
 		return nil

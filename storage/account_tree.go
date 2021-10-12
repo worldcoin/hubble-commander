@@ -1,21 +1,23 @@
 package storage
 
 import (
+	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
+	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
-	bh "github.com/timshannon/badgerhold/v3"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 const (
 	AccountTreeDepth = merkletree.MaxDepth
 
-	batchSize            = 1 << 4
-	accountBatchOffset   = 1 << 31
-	leftSubtreeMaxValue  = accountBatchOffset - 2
-	rightSubtreeMaxValue = accountBatchOffset*2 - 18
+	AccountBatchSize     = 1 << 4
+	AccountBatchOffset   = 1 << 31
+	leftSubtreeMaxValue  = AccountBatchOffset - 2
+	rightSubtreeMaxValue = AccountBatchOffset*2 - 18
 )
 
 var ErrInvalidAccountsLength = errors.New("invalid accounts length")
@@ -44,7 +46,7 @@ func (s *AccountTree) Leaf(pubKeyID uint32) (*models.AccountLeaf, error) {
 	var leaf models.AccountLeaf
 	err := s.database.Badger.Get(pubKeyID, &leaf)
 	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("account leaf")
+		return nil, errors.WithStack(NewNotFoundError("account leaf"))
 	}
 	if err != nil {
 		return nil, err
@@ -62,14 +64,14 @@ func (s *AccountTree) Leaves(publicKey *models.PublicKey) ([]models.AccountLeaf,
 		return nil, err
 	}
 	if len(accounts) == 0 {
-		return nil, NewNotFoundError("account leaves")
+		return nil, errors.WithStack(NewNotFoundError("account leaves"))
 	}
 	return accounts, nil
 }
 
 func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
 	if leaf.PubKeyID > leftSubtreeMaxValue {
-		return NewInvalidPubKeyIDError(leaf.PubKeyID)
+		return errors.WithStack(NewInvalidPubKeyIDError(leaf.PubKeyID))
 	}
 
 	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{})
@@ -80,7 +82,7 @@ func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
 
 	_, err = NewAccountTree(txDatabase).unsafeSet(leaf)
 	if err == bh.ErrKeyExists {
-		return NewAccountAlreadyExistsError(leaf)
+		return errors.WithStack(NewAccountAlreadyExistsError(leaf))
 	}
 	if err != nil {
 		return err
@@ -90,10 +92,14 @@ func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
 }
 
 func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
-	if len(leaves) != batchSize {
+	if len(leaves) != AccountBatchSize {
 		return ErrInvalidAccountsLength
 	}
 
+	return s.SetInBatch(leaves...)
+}
+
+func (s *AccountTree) SetInBatch(leaves ...models.AccountLeaf) error {
 	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{})
 	if err != nil {
 		return err
@@ -103,12 +109,12 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
 	accountTree := NewAccountTree(txDatabase)
 
 	for i := range leaves {
-		if leaves[i].PubKeyID < accountBatchOffset || leaves[i].PubKeyID > rightSubtreeMaxValue {
-			return NewInvalidPubKeyIDError(leaves[i].PubKeyID)
+		if isValidBatchAccount(&leaves[i]) {
+			return errors.WithStack(NewInvalidPubKeyIDError(leaves[i].PubKeyID))
 		}
 		_, err = accountTree.unsafeSet(&leaves[i])
 		if err == bh.ErrKeyExists {
-			return NewAccountBatchAlreadyExistsError(leaves)
+			return errors.WithStack(NewAccountBatchAlreadyExistsError(leaves))
 		}
 		if err != nil {
 			return err
@@ -136,4 +142,29 @@ func (s *AccountTree) unsafeSet(leaf *models.AccountLeaf) (models.Witness, error
 	}
 
 	return witness, nil
+}
+
+func (s *AccountTree) NextBatchAccountPubKeyID() (*uint32, error) {
+	nextPubKeyID := uint32(AccountBatchOffset)
+	err := s.database.Badger.Iterator(models.AccountLeafPrefix, db.ReverseKeyIteratorOpts, func(item *bdg.Item) (finish bool, err error) {
+		var account models.AccountLeaf
+		err = item.Value(account.SetBytes)
+		if err != nil {
+			return false, err
+		}
+
+		if account.PubKeyID < AccountBatchOffset {
+			return true, nil
+		}
+		nextPubKeyID = account.PubKeyID + 1
+		return true, nil
+	})
+	if err != nil && err != db.ErrIteratorFinished {
+		return nil, err
+	}
+	return &nextPubKeyID, nil
+}
+
+func isValidBatchAccount(leaf *models.AccountLeaf) bool {
+	return leaf.PubKeyID < AccountBatchOffset || leaf.PubKeyID > rightSubtreeMaxValue
 }

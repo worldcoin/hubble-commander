@@ -1,8 +1,8 @@
 package eth
 
 import (
-	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
-	"github.com/Worldcoin/hubble-commander/eth/rollup"
+	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/ethereum/go-ethereum/common"
@@ -13,6 +13,10 @@ type TestClient struct {
 	*simulator.Simulator
 	ExampleTokenAddress common.Address
 }
+
+var (
+	DomainOnlyTestClient = &Client{domain: &bls.TestDomain}
+)
 
 // NewTestClient Sets up a TestClient backed by automining simulator.
 // Remember to call Close() at the end of the test
@@ -26,15 +30,6 @@ func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig
 		return nil, err
 	}
 
-	if cfg.Dependencies.AccountRegistry == nil {
-		accountRegistryAddress, _, _, deployErr := accountregistry.DeployAccountRegistry(sim.GetAccount(), sim.GetBackend())
-		if deployErr != nil {
-			return nil, deployErr
-		}
-
-		cfg.Dependencies.AccountRegistry = &accountRegistryAddress
-	}
-
 	contracts, err := rollup.DeployConfiguredRollup(sim, cfg)
 	if err != nil {
 		return nil, err
@@ -43,7 +38,7 @@ func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig
 	client, err := NewClient(sim, &NewClientParams{
 		ChainState: models.ChainState{
 			ChainID:                        sim.GetChainID(),
-			AccountRegistry:                *cfg.AccountRegistry,
+			AccountRegistry:                contracts.AccountRegistryAddress,
 			AccountRegistryDeploymentBlock: 0,
 			TokenRegistry:                  contracts.TokenRegistryAddress,
 			DepositManager:                 contracts.DepositManagerAddress,

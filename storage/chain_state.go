@@ -2,7 +2,8 @@ package storage
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
-	bh "github.com/timshannon/badgerhold/v3"
+	"github.com/pkg/errors"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 type ChainStateStorage struct {
@@ -28,7 +29,7 @@ func (s *ChainStateStorage) GetChainState() (*models.ChainState, error) {
 	var chainState models.ChainState
 	err := s.database.Badger.Get("ChainState", &chainState)
 	if err == bh.ErrNotFound {
-		return nil, NewNotFoundError("chain state")
+		return nil, errors.WithStack(NewNotFoundError("chain state"))
 	}
 	if err != nil {
 		return nil, err

@@ -9,7 +9,7 @@ import (
 func TestNewWallet(t *testing.T) {
 	data := []byte{1, 2, 3}
 
-	wallet, err := NewRandomWallet(testDomain)
+	wallet, err := NewRandomWallet(TestDomain)
 	require.NoError(t, err)
 
 	signature, err := wallet.Sign(data)
@@ -17,7 +17,7 @@ func TestNewWallet(t *testing.T) {
 
 	privateKey, _ := wallet.Bytes()
 
-	newWallet, err := NewWallet(privateKey, testDomain)
+	newWallet, err := NewWallet(privateKey, TestDomain)
 	require.NoError(t, err)
 
 	isValid, err := signature.Verify(data, newWallet.PublicKey())

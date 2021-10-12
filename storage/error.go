@@ -8,20 +8,38 @@ import (
 )
 
 var (
-	ErrNoRowsAffected   = errors.New("no rows were affected by the update")
-	ErrNotExistentState = errors.New("cannot revert to not existent state")
+	ErrNoRowsAffected   = fmt.Errorf("no rows were affected by the update")
+	ErrNotExistentState = fmt.Errorf("cannot revert to not existent state")
+
+	AnyNotFoundError = &NotFoundError{field: anythingField}
 )
+
+const anythingField = "anything"
 
 type NotFoundError struct {
 	field string
 }
 
 func NewNotFoundError(field string) *NotFoundError {
+	if field == anythingField {
+		panic(fmt.Sprintf(`cannot use "%s" field for NotFoundError`, anythingField))
+	}
 	return &NotFoundError{field: field}
 }
 
 func (e *NotFoundError) Error() string {
 	return fmt.Sprintf("%s not found", e.field)
+}
+
+func (e *NotFoundError) Is(other error) bool {
+	otherError, ok := other.(*NotFoundError)
+	if !ok {
+		return false
+	}
+	if *e == *AnyNotFoundError || *otherError == *AnyNotFoundError {
+		return true
+	}
+	return *e == *otherError
 }
 
 func IsNotFoundError(err error) bool {
@@ -85,5 +103,5 @@ func (e *NoVacantSubtreeError) Is(other error) bool {
 	if !ok {
 		return false
 	}
-	return e.subtreeDepth == otherError.subtreeDepth
+	return *e == *otherError
 }

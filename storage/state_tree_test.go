@@ -72,7 +72,7 @@ func (s *StateTreeTestSuite) TestLeaf_ReturnsCorrectStruct() {
 
 func (s *StateTreeTestSuite) TestLeaf_NonExistentLeaf() {
 	_, err := s.storage.StateTree.Leaf(0)
-	s.Equal(NewNotFoundError("state leaf"), err)
+	s.ErrorIs(err, NewNotFoundError("state leaf"))
 }
 
 func (s *StateTreeTestSuite) setStateLeaves(stateIDs ...uint32) {
@@ -437,7 +437,7 @@ func (s *StateTreeTestSuite) TestRevertTo_NotExistentRootHash() {
 	}
 
 	err := s.storage.StateTree.RevertTo(common.Hash{1, 2, 3})
-	s.Equal(ErrNotExistentState, err)
+	s.ErrorIs(err, ErrNotExistentState)
 }
 
 func TestStateTreeTestSuite(t *testing.T) {

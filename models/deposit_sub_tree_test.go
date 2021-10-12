@@ -17,10 +17,17 @@ func TestPendingDepositSubTree_SetBytes_UpdatesDeposits(t *testing.T) {
 	initialSubTree := PendingDepositSubTree{
 		ID:   MakeUint256(1),
 		Root: utils.RandomHash(),
-		Deposits: []DepositID{{
-			BlockNumber: 1,
-			LogIndex:    2,
-		}},
+		Deposits: []PendingDeposit{
+			{
+				ID: DepositID{
+					BlockNumber: 1,
+					LogIndex:    2,
+				},
+				ToPubKeyID: 3,
+				TokenID:    MakeUint256(4),
+				L2Amount:   MakeUint256(500),
+			},
+		},
 	}
 
 	newSubTree := PendingDepositSubTree{
@@ -37,14 +44,24 @@ func TestPendingDepositSubTree_SetBytes_UpdatesDeposits(t *testing.T) {
 func TestPendingDepositSubTree_Bytes(t *testing.T) {
 	subTree := PendingDepositSubTree{
 		Root: utils.RandomHash(),
-		Deposits: []DepositID{
+		Deposits: []PendingDeposit{
 			{
-				BlockNumber: 1,
-				LogIndex:    2,
+				ID: DepositID{
+					BlockNumber: 1,
+					LogIndex:    2,
+				},
+				ToPubKeyID: 3,
+				TokenID:    MakeUint256(4),
+				L2Amount:   MakeUint256(500),
 			},
 			{
-				BlockNumber: 3,
-				LogIndex:    4,
+				ID: DepositID{
+					BlockNumber: 6,
+					LogIndex:    7,
+				},
+				ToPubKeyID: 8,
+				TokenID:    MakeUint256(9),
+				L2Amount:   MakeUint256(1000),
 			},
 		},
 	}
@@ -53,10 +70,15 @@ func TestPendingDepositSubTree_Bytes(t *testing.T) {
 
 	decodedSubTree := PendingDepositSubTree{
 		Root: utils.RandomHash(),
-		Deposits: []DepositID{
+		Deposits: []PendingDeposit{
 			{
-				BlockNumber: 999,
-				LogIndex:    999,
+				ID: DepositID{
+					BlockNumber: 999,
+					LogIndex:    999,
+				},
+				ToPubKeyID: 999,
+				TokenID:    MakeUint256(999),
+				L2Amount:   MakeUint256(999),
 			},
 		},
 	}

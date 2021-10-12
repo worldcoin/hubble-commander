@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/common"
@@ -28,7 +28,7 @@ func (s *SubmitBatchTestSuite) SetupTest() {
 	s.NoError(err)
 	s.client = client
 	s.commitment = models.Commitment{
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		Transactions:      utils.RandomBytes(12),
 		FeeReceiver:       uint32(1234),
 		CombinedSignature: models.MakeRandomSignature(),
@@ -52,7 +52,7 @@ func (s *SubmitBatchTestSuite) TestSubmitTransfersBatchAndWait_ReturnsCorrectBat
 	s.NoError(err)
 
 	s.Equal(models.MakeUint256(1), batch.ID)
-	s.Equal(txtype.Transfer, batch.Type)
+	s.Equal(batchtype.Transfer, batch.Type)
 	s.Equal(commitmentRoot, *batch.Hash)
 	s.GreaterOrEqual(*batch.FinalisationBlock, minFinalisationBlock)
 	s.Equal(common.BytesToHash(accountRoot[:]), *batch.AccountTreeRoot)
@@ -60,7 +60,7 @@ func (s *SubmitBatchTestSuite) TestSubmitTransfersBatchAndWait_ReturnsCorrectBat
 
 func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatchAndWait_ReturnsCorrectBatch() {
 	commitment := s.commitment
-	commitment.Type = txtype.Create2Transfer
+	commitment.Type = batchtype.Create2Transfer
 
 	accountRoot, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
@@ -71,14 +71,14 @@ func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatchAndWait_ReturnsCor
 	s.NoError(err)
 
 	s.Equal(models.MakeUint256(1), batch.ID)
-	s.Equal(txtype.Create2Transfer, batch.Type)
+	s.Equal(batchtype.Create2Transfer, batch.Type)
 	s.Equal(commitmentRoot, *batch.Hash)
 	s.GreaterOrEqual(*batch.FinalisationBlock, minFinalisationBlock)
 	s.Equal(common.BytesToHash(accountRoot[:]), *batch.AccountTreeRoot)
 }
 
 func (s *SubmitBatchTestSuite) getMinFinalisationBlock() uint32 {
-	latestBlockNumber, err := s.client.ChainConnection.GetLatestBlockNumber()
+	latestBlockNumber, err := s.client.Blockchain.GetLatestBlockNumber()
 	s.NoError(err)
 	blocksToFinalise, err := s.client.GetBlocksToFinalise()
 	s.NoError(err)
@@ -103,7 +103,7 @@ func (s *SubmitBatchTestSuite) TestSubmitTransfersBatch_SubmitsBatchWithoutWaiti
 
 func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatch_SubmitsBatchWithoutWaitingForItToBeMined() {
 	commitment := s.commitment
-	commitment.Type = txtype.Create2Transfer
+	commitment.Type = batchtype.Create2Transfer
 
 	tx, err := s.client.SubmitCreate2TransfersBatch([]models.Commitment{s.commitment})
 	s.NoError(err)

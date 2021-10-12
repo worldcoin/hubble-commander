@@ -4,8 +4,9 @@ import (
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -24,6 +25,7 @@ var (
 
 func (c *Client) DisputeTransitionTransfer(
 	batchID *models.Uint256,
+	batchHash *common.Hash,
 	previous *models.CommitmentInclusionProof,
 	target *models.TransferCommitmentInclusionProof,
 	proofs []models.StateMerkleProof,
@@ -32,15 +34,15 @@ func (c *Client) DisputeTransitionTransfer(
 		WithGasLimit(*c.config.TransitionDisputeGasLimit).
 		DisputeTransitionTransfer(
 			batchID.ToBig(),
-			*CommitmentProofToCalldata(previous),
-			*TransferProofToCalldata(target),
-			StateMerkleProofsToCalldata(proofs),
+			*commitmentProofToCalldata(previous),
+			*transferProofToCalldata(target),
+			stateMerkleProofsToCalldata(proofs),
 		)
 	if err != nil {
 		return handleDisputeTransitionError(err)
 	}
 
-	err = c.waitForDispute(batchID, transaction)
+	err = c.waitForDispute(batchID, batchHash, transaction)
 	if err == ErrBatchAlreadyDisputed || err == ErrRollbackInProcess {
 		log.Info(err)
 		return nil
@@ -50,6 +52,7 @@ func (c *Client) DisputeTransitionTransfer(
 
 func (c *Client) DisputeTransitionCreate2Transfer(
 	batchID *models.Uint256,
+	batchHash *common.Hash,
 	previous *models.CommitmentInclusionProof,
 	target *models.TransferCommitmentInclusionProof,
 	proofs []models.StateMerkleProof,
@@ -58,15 +61,15 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 		WithGasLimit(*c.config.TransitionDisputeGasLimit).
 		DisputeTransitionCreate2Transfer(
 			batchID.ToBig(),
-			*CommitmentProofToCalldata(previous),
-			*TransferProofToCalldata(target),
-			StateMerkleProofsToCalldata(proofs),
+			*commitmentProofToCalldata(previous),
+			*transferProofToCalldata(target),
+			stateMerkleProofsToCalldata(proofs),
 		)
 	if err != nil {
 		return handleDisputeTransitionError(err)
 	}
 
-	err = c.waitForDispute(batchID, transaction)
+	err = c.waitForDispute(batchID, batchHash, transaction)
 	if err == ErrBatchAlreadyDisputed || err == ErrRollbackInProcess {
 		log.Info(err)
 		return nil
@@ -74,8 +77,8 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 	return err
 }
 
-func (c *Client) waitForDispute(batchID *models.Uint256, tx *types.Transaction) error {
-	receipt, err := deployer.WaitToBeMined(c.ChainConnection.GetBackend(), tx)
+func (c *Client) waitForDispute(batchID *models.Uint256, batchHash *common.Hash, tx *types.Transaction) error {
+	receipt, err := chain.WaitToBeMined(c.Blockchain.GetBackend(), tx)
 	if err != nil {
 		return err
 	}
@@ -87,20 +90,19 @@ func (c *Client) waitForDispute(batchID *models.Uint256, tx *types.Transaction) 
 	if err != nil {
 		return err
 	}
-	err = c.isBatchAlreadyDisputed(batchID)
+	err = c.isBatchAlreadyDisputed(batchID, batchHash)
 	if err != nil {
 		return err
 	}
 	return errors.Errorf("dispute of batch #%d failed", batchID.Uint64())
 }
 
-func (c *Client) isBatchAlreadyDisputed(batchID *models.Uint256) error {
-	nextBatchID, err := c.Rollup.NextBatchID(nil)
+func (c *Client) isBatchAlreadyDisputed(batchID *models.Uint256, batchHash *common.Hash) error {
+	contractBatch, err := c.GetBatch(batchID)
 	if err != nil {
 		return err
 	}
-
-	if batchID.CmpN(nextBatchID.Uint64()) < 0 {
+	if *contractBatch.Hash != *batchHash {
 		return ErrBatchAlreadyDisputed
 	}
 	return nil
@@ -126,7 +128,7 @@ func handleDisputeTransitionError(err error) error {
 	return err
 }
 
-func CommitmentProofToCalldata(proof *models.CommitmentInclusionProof) *rollup.TypesCommitmentInclusionProof {
+func commitmentProofToCalldata(proof *models.CommitmentInclusionProof) *rollup.TypesCommitmentInclusionProof {
 	return &rollup.TypesCommitmentInclusionProof{
 		Commitment: rollup.TypesCommitment{
 			StateRoot: proof.StateRoot,
@@ -137,7 +139,7 @@ func CommitmentProofToCalldata(proof *models.CommitmentInclusionProof) *rollup.T
 	}
 }
 
-func TransferProofToCalldata(proof *models.TransferCommitmentInclusionProof) *rollup.TypesTransferCommitmentInclusionProof {
+func transferProofToCalldata(proof *models.TransferCommitmentInclusionProof) *rollup.TypesTransferCommitmentInclusionProof {
 	return &rollup.TypesTransferCommitmentInclusionProof{
 		Commitment: rollup.TypesTransferCommitment{
 			StateRoot: proof.StateRoot,
@@ -153,7 +155,7 @@ func TransferProofToCalldata(proof *models.TransferCommitmentInclusionProof) *ro
 	}
 }
 
-func StateMerkleProofsToCalldata(proofs []models.StateMerkleProof) []rollup.TypesStateMerkleProof {
+func stateMerkleProofsToCalldata(proofs []models.StateMerkleProof) []rollup.TypesStateMerkleProof {
 	result := make([]rollup.TypesStateMerkleProof, 0, len(proofs))
 	for i := range proofs {
 		result = append(result, *stateMerkleProofToCalldata(&proofs[i]))

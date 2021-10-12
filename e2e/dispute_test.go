@@ -1,3 +1,4 @@
+//go:build e2e
 // +build e2e
 
 package e2e
@@ -16,7 +17,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -189,7 +190,7 @@ func testRollbackCompletion(
 				return false
 			case rollbackStatus := <-sink:
 				if rollbackStatus.Completed {
-					receipt, err := ethClient.ChainConnection.GetBackend().TransactionReceipt(context.Background(), rollbackStatus.Raw.TxHash)
+					receipt, err := ethClient.Blockchain.GetBackend().TransactionReceipt(context.Background(), rollbackStatus.Raw.TxHash)
 					require.NoError(t, err)
 					logrus.Infof("Rollback gas used: %d", receipt.GasUsed)
 					return true
@@ -264,11 +265,7 @@ func sendC2TBatchWithInvalidAmount(t *testing.T, ethClient *eth.Client, toPublic
 		ToStateID: ref.Uint32(6),
 	}
 
-	registrations, unsubscribe, err := ethClient.WatchRegistrations(&bind.WatchOpts{})
-	require.NoError(t, err)
-	defer unsubscribe()
-
-	pubKeyID, err := ethClient.RegisterAccount(toPublicKey, registrations)
+	pubKeyID, err := ethClient.RegisterAccountAndWait(toPublicKey)
 	require.NoError(t, err)
 
 	encodedTransfer, err := encoder.EncodeCreate2TransferForCommitment(&transfer, *pubKeyID)
@@ -287,11 +284,7 @@ func sendC2TBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client, toPub
 		ToStateID: ref.Uint32(38),
 	}
 
-	registrations, unsubscribe, err := ethClient.WatchRegistrations(&bind.WatchOpts{})
-	require.NoError(t, err)
-	defer unsubscribe()
-
-	pubKeyID, err := ethClient.RegisterAccount(toPublicKey, registrations)
+	pubKeyID, err := ethClient.RegisterAccountAndWait(toPublicKey)
 	require.NoError(t, err)
 
 	encodedTransfer, err := encoder.EncodeCreate2TransferForCommitment(&transfer, *pubKeyID)
@@ -310,11 +303,7 @@ func sendC2TBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, toPub
 		ToStateID: ref.Uint32(6),
 	}
 
-	registrations, unsubscribe, err := ethClient.WatchRegistrations(&bind.WatchOpts{})
-	require.NoError(t, err)
-	defer unsubscribe()
-
-	pubKeyID, err := ethClient.RegisterAccount(toPublicKey, registrations)
+	pubKeyID, err := ethClient.RegisterAccountAndWait(toPublicKey)
 	require.NoError(t, err)
 
 	encodedTransfer, err := encoder.EncodeCreate2TransferForCommitment(&transfer, *pubKeyID)
@@ -366,7 +355,7 @@ func submitC2TBatch(t *testing.T, ethClient *eth.Client, commitments []models.Co
 }
 
 func waitForSubmittedBatch(t *testing.T, ethClient *eth.Client, transaction *types.Transaction, batchID uint64) {
-	_, err := deployer.WaitToBeMined(ethClient.ChainConnection.GetBackend(), transaction)
+	_, err := chain.WaitToBeMined(ethClient.Blockchain.GetBackend(), transaction)
 	require.NoError(t, err)
 
 	_, err = ethClient.GetBatch(models.NewUint256(batchID))
@@ -388,22 +377,24 @@ func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
 	}
 
 	cfg := config.GetConfig()
-	chain, err := deployer.NewRPCChainConnection(cfg.Ethereum)
+	blockchain, err := chain.NewRPCCConnection(cfg.Ethereum)
 	require.NoError(t, err)
 
-	accountRegistry, err := accountregistry.NewAccountRegistry(chainState.AccountRegistry, chain.GetBackend())
+	backend := blockchain.GetBackend()
+
+	accountRegistry, err := accountregistry.NewAccountRegistry(chainState.AccountRegistry, backend)
 	require.NoError(t, err)
 
-	tokenRegistry, err := tokenregistry.NewTokenRegistry(chainState.TokenRegistry, chain.GetBackend())
+	tokenRegistry, err := tokenregistry.NewTokenRegistry(chainState.TokenRegistry, backend)
 	require.NoError(t, err)
 
-	depositManager, err := depositmanager.NewDepositManager(chainState.DepositManager, chain.GetBackend())
+	depositManager, err := depositmanager.NewDepositManager(chainState.DepositManager, backend)
 	require.NoError(t, err)
 
-	rollupContract, err := rollup.NewRollup(chainState.Rollup, chain.GetBackend())
+	rollupContract, err := rollup.NewRollup(chainState.Rollup, backend)
 	require.NoError(t, err)
 
-	ethClient, err := eth.NewClient(chain, &eth.NewClientParams{
+	ethClient, err := eth.NewClient(blockchain, &eth.NewClientParams{
 		ChainState:      chainState,
 		AccountRegistry: accountRegistry,
 		TokenRegistry:   tokenRegistry,

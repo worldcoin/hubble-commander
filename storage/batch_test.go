@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
@@ -37,7 +37,7 @@ func (s *BatchTestSuite) TestAddBatch_AddAndRetrieve() {
 	submissionTime := &models.Timestamp{Time: time.Unix(140, 0).UTC()}
 	batch := &models.Batch{
 		ID:                models.MakeUint256(1),
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(1234),
@@ -59,7 +59,7 @@ func (s *BatchTestSuite) TestAddBatch_AddAndRetrieve() {
 func (s *BatchTestSuite) TestMarkBatchAsSubmitted() {
 	pendingBatch := &models.Batch{
 		ID:              models.MakeUint256(124),
-		Type:            txtype.Transfer,
+		Type:            batchtype.Transfer,
 		TransactionHash: utils.RandomHash(),
 	}
 	err := s.storage.AddBatch(pendingBatch)
@@ -85,7 +85,7 @@ func (s *BatchTestSuite) TestMarkBatchAsSubmitted() {
 func (s *BatchTestSuite) TestGetBatch() {
 	batch := &models.Batch{
 		ID:                models.MakeUint256(1234),
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(1234),
@@ -102,14 +102,14 @@ func (s *BatchTestSuite) TestGetBatch() {
 
 func (s *BatchTestSuite) TestGetBatch_NonExistentBatch() {
 	res, err := s.storage.GetBatch(models.MakeUint256(42))
-	s.Equal(NewNotFoundError("batch"), err)
+	s.ErrorIs(err, NewNotFoundError("batch"))
 	s.Nil(res)
 }
 
 func (s *BatchTestSuite) TestGetMindedBatch() {
 	batch := &models.Batch{
 		ID:                models.MakeUint256(1234),
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(1234),
@@ -127,7 +127,7 @@ func (s *BatchTestSuite) TestGetMindedBatch() {
 func (s *BatchTestSuite) TestGetMinedBatch_PendingBatch() {
 	batch := &models.Batch{
 		ID:              models.MakeUint256(1234),
-		Type:            txtype.Transfer,
+		Type:            batchtype.Transfer,
 		TransactionHash: utils.RandomHash(),
 		AccountTreeRoot: utils.NewRandomHash(),
 	}
@@ -135,13 +135,13 @@ func (s *BatchTestSuite) TestGetMinedBatch_PendingBatch() {
 	s.NoError(err)
 
 	res, err := s.storage.GetMinedBatch(models.MakeUint256(42))
-	s.Equal(NewNotFoundError("batch"), err)
+	s.ErrorIs(err, NewNotFoundError("batch"))
 	s.Nil(res)
 }
 
 func (s *BatchTestSuite) TestGetMinedBatch_NonExistentBatch() {
 	res, err := s.storage.GetMinedBatch(models.MakeUint256(42))
-	s.Equal(NewNotFoundError("batch"), err)
+	s.ErrorIs(err, NewNotFoundError("batch"))
 	s.Nil(res)
 }
 
@@ -150,7 +150,7 @@ func (s *BatchTestSuite) TestGetLatestSubmittedBatch() {
 		{
 			ID:                models.MakeUint256(1234),
 			Hash:              utils.NewRandomHash(),
-			Type:              txtype.Transfer,
+			Type:              batchtype.Transfer,
 			FinalisationBlock: ref.Uint32(1234),
 			TransactionHash:   utils.RandomHash(),
 			AccountTreeRoot:   utils.NewRandomHash(),
@@ -158,7 +158,7 @@ func (s *BatchTestSuite) TestGetLatestSubmittedBatch() {
 		{
 			ID:                models.MakeUint256(2000),
 			Hash:              utils.NewRandomHash(),
-			Type:              txtype.Create2Transfer,
+			Type:              batchtype.Create2Transfer,
 			FinalisationBlock: ref.Uint32(1234),
 			TransactionHash:   utils.RandomHash(),
 			AccountTreeRoot:   utils.NewRandomHash(),
@@ -166,7 +166,7 @@ func (s *BatchTestSuite) TestGetLatestSubmittedBatch() {
 	}
 	pendingBatch := models.Batch{
 		ID:   models.MakeUint256(2005),
-		Type: txtype.Create2Transfer,
+		Type: batchtype.Create2Transfer,
 	}
 	err := s.storage.AddBatch(&batches[0])
 	s.NoError(err)
@@ -183,7 +183,7 @@ func (s *BatchTestSuite) TestGetLatestSubmittedBatch() {
 
 func (s *BatchTestSuite) TestGetLatestSubmittedBatch_NoBatches() {
 	res, err := s.storage.GetLatestSubmittedBatch()
-	s.Equal(NewNotFoundError("batch"), err)
+	s.ErrorIs(err, NewNotFoundError("batch"))
 	s.Nil(res)
 }
 
@@ -191,7 +191,7 @@ func (s *BatchTestSuite) TestGetLatestFinalisedBatch() {
 	batches := []models.Batch{
 		{
 			ID:                models.MakeUint256(1234),
-			Type:              txtype.Transfer,
+			Type:              batchtype.Transfer,
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(1234),
@@ -199,7 +199,7 @@ func (s *BatchTestSuite) TestGetLatestFinalisedBatch() {
 		},
 		{
 			ID:                models.MakeUint256(1800),
-			Type:              txtype.Create2Transfer,
+			Type:              batchtype.Create2Transfer,
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(1800),
@@ -207,7 +207,7 @@ func (s *BatchTestSuite) TestGetLatestFinalisedBatch() {
 		},
 		{
 			ID:                models.MakeUint256(2000),
-			Type:              txtype.Create2Transfer,
+			Type:              batchtype.Create2Transfer,
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(2000),
@@ -216,7 +216,7 @@ func (s *BatchTestSuite) TestGetLatestFinalisedBatch() {
 	}
 	pendingBatch := models.Batch{
 		ID:              models.MakeUint256(2005),
-		Type:            txtype.Create2Transfer,
+		Type:            batchtype.Create2Transfer,
 		TransactionHash: utils.RandomHash(),
 	}
 
@@ -236,7 +236,7 @@ func (s *BatchTestSuite) TestGetLatestFinalisedBatch() {
 
 func (s *BatchTestSuite) TestGetLatestFinalisedBatch_NoBatches() {
 	res, err := s.storage.GetLatestFinalisedBatch(500)
-	s.Equal(NewNotFoundError("batch"), err)
+	s.ErrorIs(err, NewNotFoundError("batch"))
 	s.Nil(res)
 }
 
@@ -298,7 +298,7 @@ func (s *BatchTestSuite) TestGetBatchesInRange_ReturnsAllBatchesUpUntilUpperBoun
 func (s *BatchTestSuite) TestGetBatchByHash_AddAndRetrieve() {
 	batch := &models.Batch{
 		ID:                models.MakeUint256(1),
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(1234),
@@ -321,13 +321,13 @@ func (s *BatchTestSuite) TestDeleteBatches() {
 	batches := []models.Batch{
 		{
 			ID:              models.MakeUint256(1),
-			Type:            txtype.Transfer,
+			Type:            batchtype.Transfer,
 			TransactionHash: utils.RandomHash(),
 			Hash:            utils.NewRandomHash(),
 		},
 		{
 			ID:              models.MakeUint256(2),
-			Type:            txtype.Create2Transfer,
+			Type:            batchtype.Create2Transfer,
 			TransactionHash: utils.RandomHash(),
 			Hash:            utils.NewRandomHash(),
 		},
@@ -342,13 +342,13 @@ func (s *BatchTestSuite) TestDeleteBatches() {
 
 	for i := range batches {
 		_, err = s.storage.GetBatch(batches[i].ID)
-		s.Equal(NewNotFoundError("batch"), err)
+		s.ErrorIs(err, NewNotFoundError("batch"))
 	}
 }
 
 func (s *BatchTestSuite) TestDeleteBatches_NotExistentBatch() {
 	err := s.storage.DeleteBatches(models.MakeUint256(1))
-	s.Equal(NewNotFoundError("batch"), err)
+	s.ErrorIs(err, NewNotFoundError("batch"))
 }
 
 func TestBatchTestSuite(t *testing.T) {

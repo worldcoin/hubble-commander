@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
@@ -31,7 +31,7 @@ func (s *StorageTestSuite) SetupTest() {
 	s.NoError(err)
 	s.batch = &models.Batch{
 		ID:                models.MakeUint256(1),
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(1234),
@@ -63,11 +63,11 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	s.NoError(err)
 
 	res, err := s.storage.StateTree.Leaf(leaf.StateID)
-	s.Equal(NewNotFoundError("state leaf"), err)
+	s.ErrorIs(err, NewNotFoundError("state leaf"))
 	s.Nil(res)
 
 	batch, err := s.storage.GetBatch(s.batch.ID)
-	s.Equal(NewNotFoundError("batch"), err)
+	s.ErrorIs(err, NewNotFoundError("batch"))
 	s.Nil(batch)
 
 	err = tx.Commit()
@@ -105,11 +105,11 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 	s.Nil(errors.Unwrap(err))
 
 	res, err := s.storage.StateTree.Leaf(leaf.StateID)
-	s.Equal(NewNotFoundError("state leaf"), err)
+	s.ErrorIs(err, NewNotFoundError("state leaf"))
 	s.Nil(res)
 
 	batch, err := s.storage.GetBatch(s.batch.ID)
-	s.Equal(NewNotFoundError("batch"), err)
+	s.ErrorIs(err, NewNotFoundError("batch"))
 	s.Nil(batch)
 }
 
@@ -146,7 +146,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 	s.NoError(err)
 
 	res, err := s.storage.StateTree.Leaf(leafOne.StateID)
-	s.Equal(NewNotFoundError("state leaf"), err)
+	s.ErrorIs(err, NewNotFoundError("state leaf"))
 	s.Nil(res)
 
 	err = tx.Commit()

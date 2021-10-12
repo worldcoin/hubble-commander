@@ -6,6 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -18,10 +19,11 @@ import (
 type GetCommitmentTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	api        *API
-	storage    *st.TestStorage
-	batch      models.Batch
-	commitment models.Commitment
+	api                      *API
+	storage                  *st.TestStorage
+	batch                    models.Batch
+	commitment               models.Commitment
+	commitmentNotFoundAPIErr *APIError
 }
 
 func (s *GetCommitmentTestSuite) SetupSuite() {
@@ -36,7 +38,7 @@ func (s *GetCommitmentTestSuite) SetupTest() {
 
 	s.batch = models.Batch{
 		ID:                models.MakeUint256(1),
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(113),
@@ -46,6 +48,11 @@ func (s *GetCommitmentTestSuite) SetupTest() {
 	s.commitment = commitment
 	s.commitment.ID.BatchID = s.batch.ID
 	s.commitment.ID.IndexInBatch = 0
+
+	s.commitmentNotFoundAPIErr = &APIError{
+		Code:    20000,
+		Message: "commitment not found",
+	}
 }
 
 func (s *GetCommitmentTestSuite) TearDownTest() {
@@ -101,7 +108,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
-	s.commitment.Type = txtype.Create2Transfer
+	s.commitment.Type = batchtype.Create2Transfer
 	err = s.storage.AddCommitment(&s.commitment)
 	s.NoError(err)
 
@@ -169,13 +176,13 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_PendingBatch() {
 	s.NoError(err)
 
 	commitment, err := s.api.GetCommitment(commitment.ID)
-	s.Equal(st.NewNotFoundError("commitment"), err)
+	s.Equal(s.commitmentNotFoundAPIErr, err)
 	s.Nil(commitment)
 }
 
 func (s *GetCommitmentTestSuite) TestGetCommitment_NotExistingCommitment() {
 	commitment, err := s.api.GetCommitment(commitment.ID)
-	s.Equal(st.NewNotFoundError("commitment"), err)
+	s.Equal(s.commitmentNotFoundAPIErr, err)
 	s.Nil(commitment)
 }
 

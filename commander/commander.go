@@ -7,14 +7,13 @@ import (
 	"sync"
 
 	"github.com/Worldcoin/hubble-commander/api"
-	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -26,11 +25,11 @@ import (
 )
 
 var (
-	inconsistentChainStateErr    = NewCannotBootstrapError("database chain state and file chain state are not the same")
-	missingBootstrapSourceErr    = NewCannotBootstrapError("no chain spec file or bootstrap url specified")
-	inconsistentDBChainIDErr     = NewInconsistentChainIDError("database")
-	inconsistentFileChainIDErr   = NewInconsistentChainIDError("chain spec file")
-	inconsistentRemoteChainIDErr = NewInconsistentChainIDError("fetched chain state")
+	errInconsistentChainState    = NewCannotBootstrapError("database chain state and file chain state are not the same")
+	errMissingBootstrapSource    = NewCannotBootstrapError("no chain spec file or bootstrap url specified")
+	errInconsistentDBChainID     = NewInconsistentChainIDError("database")
+	errInconsistentFileChainID   = NewInconsistentChainIDError("chain spec file")
+	errInconsistentRemoteChainID = NewInconsistentChainIDError("fetched chain state")
 )
 
 type Commander struct {
@@ -44,17 +43,16 @@ type Commander struct {
 	rollupLoopRunning bool
 	stateMutex        sync.Mutex
 
-	storage   *st.Storage
-	client    *eth.Client
-	chain     deployer.ChainConnection
-	apiServer *http.Server
-	domain    *bls.Domain
+	storage    *st.Storage
+	client     *eth.Client
+	blockchain chain.Connection
+	apiServer  *http.Server
 }
 
-func NewCommander(cfg *config.Config, chain deployer.ChainConnection) *Commander {
+func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
 	return &Commander{
 		cfg:                 cfg,
-		chain:               chain,
+		blockchain:          blockchain,
 		releaseStartAndWait: func() {}, // noop
 	}
 }
@@ -73,17 +71,12 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.client, err = getClient(c.chain, c.storage, c.cfg)
+	c.client, err = getClient(c.blockchain, c.storage, c.cfg)
 	if err != nil {
 		return err
 	}
 
 	err = c.addGenesisBatch()
-	if err != nil {
-		return err
-	}
-
-	c.domain, err = c.client.GetDomain()
 	if err != nil {
 		return err
 	}
@@ -152,20 +145,20 @@ func (c *Commander) Stop() error {
 }
 
 func (c *Commander) resetCommander() {
-	*c = *NewCommander(c.cfg, c.chain)
+	*c = *NewCommander(c.cfg, c.blockchain)
 }
 
-func GetChainConnection(cfg *config.EthereumConfig) (deployer.ChainConnection, error) {
+func GetChainConnection(cfg *config.EthereumConfig) (chain.Connection, error) {
 	if cfg.RPCURL == "simulator" {
 		return simulator.NewConfiguredSimulator(simulator.Config{
 			FirstAccountPrivateKey: ref.String(cfg.PrivateKey),
 			AutomineEnabled:        ref.Bool(true),
 		})
 	}
-	return deployer.NewRPCChainConnection(cfg)
+	return chain.NewRPCCConnection(cfg)
 }
 
-func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.Config) (*eth.Client, error) {
+func getClient(blockchain chain.Connection, storage *st.Storage, cfg *config.Config) (*eth.Client, error) {
 	if cfg.Ethereum == nil {
 		log.Fatal("no Ethereum config")
 	}
@@ -176,24 +169,24 @@ func getClient(chain deployer.ChainConnection, storage *st.Storage, cfg *config.
 	}
 
 	if dbChainState != nil {
-		if dbChainState.ChainID.String() != cfg.Ethereum.ChainID {
-			return nil, inconsistentDBChainIDErr
+		if dbChainState.ChainID.CmpN(cfg.Ethereum.ChainID) != 0 {
+			return nil, errors.WithStack(errInconsistentDBChainID)
 		}
 	}
 
 	if cfg.Bootstrap.ChainSpecPath != nil {
-		return bootstrapFromChainState(chain, dbChainState, storage, cfg)
+		return bootstrapFromChainState(blockchain, dbChainState, storage, cfg)
 	}
 	if cfg.Bootstrap.BootstrapNodeURL != nil {
 		log.Printf("Bootstrapping genesis state from node %s", *cfg.Bootstrap.BootstrapNodeURL)
-		return bootstrapFromRemoteState(chain, storage, cfg)
+		return bootstrapFromRemoteState(blockchain, storage, cfg)
 	}
 
-	return nil, missingBootstrapSourceErr
+	return nil, errors.WithStack(errMissingBootstrapSource)
 }
 
 func bootstrapFromChainState(
-	chain deployer.ChainConnection,
+	blockchain chain.Connection,
 	dbChainState *models.ChainState,
 	storage *st.Storage,
 	cfg *config.Config,
@@ -205,7 +198,7 @@ func bootstrapFromChainState(
 	importedChainState := newChainStateFromChainSpec(chainSpec)
 
 	if dbChainState == nil {
-		return bootstrapChainStateAndCommander(chain, storage, importedChainState, cfg.Rollup)
+		return bootstrapChainStateAndCommander(blockchain, storage, importedChainState, cfg.Rollup)
 	}
 
 	err = compareChainStates(importedChainState, dbChainState)
@@ -214,27 +207,25 @@ func bootstrapFromChainState(
 	}
 
 	log.Printf("Continuing from saved state on ChainID = %s", importedChainState.ChainID.String())
-	return createClientFromChainState(chain, importedChainState, cfg.Rollup)
+	return createClientFromChainState(blockchain, importedChainState, cfg.Rollup)
 }
 
 func compareChainStates(chainStateA, chainStateB *models.ChainState) error {
-	compareError := inconsistentChainStateErr
-
 	if chainStateA.ChainID != chainStateB.ChainID ||
 		chainStateA.AccountRegistryDeploymentBlock != chainStateB.AccountRegistryDeploymentBlock ||
 		chainStateA.Rollup != chainStateB.Rollup ||
 		chainStateA.AccountRegistry != chainStateB.AccountRegistry ||
 		chainStateA.TokenRegistry != chainStateB.TokenRegistry ||
 		chainStateA.DepositManager != chainStateB.DepositManager {
-		return compareError
+		return errors.WithStack(errInconsistentChainState)
 	}
 
 	if len(chainStateA.GenesisAccounts) != len(chainStateB.GenesisAccounts) {
-		return compareError
+		return errors.WithStack(errInconsistentChainState)
 	}
 	for i := range chainStateA.GenesisAccounts {
 		if chainStateA.GenesisAccounts[i] != chainStateB.GenesisAccounts[i] {
-			return compareError
+			return errors.WithStack(errInconsistentChainState)
 		}
 	}
 
@@ -242,22 +233,22 @@ func compareChainStates(chainStateA, chainStateB *models.ChainState) error {
 }
 
 func bootstrapChainStateAndCommander(
-	chain deployer.ChainConnection,
+	blockchain chain.Connection,
 	storage *st.Storage,
 	importedChainState *models.ChainState,
 	cfg *config.RollupConfig,
 ) (*eth.Client, error) {
-	chainID := chain.GetChainID()
+	chainID := blockchain.GetChainID()
 	if chainID != importedChainState.ChainID {
-		return nil, inconsistentFileChainIDErr
+		return nil, errors.WithStack(errInconsistentFileChainID)
 	}
 
 	log.Printf("Bootstrapping genesis state from chain spec file")
-	return setGenesisStateAndCreateClient(chain, storage, importedChainState, cfg)
+	return setGenesisStateAndCreateClient(blockchain, storage, importedChainState, cfg)
 }
 
 func bootstrapFromRemoteState(
-	chain deployer.ChainConnection,
+	blockchain chain.Connection,
 	storage *st.Storage,
 	cfg *config.Config,
 ) (*eth.Client, error) {
@@ -266,15 +257,15 @@ func bootstrapFromRemoteState(
 		return nil, err
 	}
 
-	if fetchedChainState.ChainID.String() != cfg.Ethereum.ChainID {
-		return nil, inconsistentRemoteChainIDErr
+	if fetchedChainState.ChainID.CmpN(cfg.Ethereum.ChainID) != 0 {
+		return nil, errors.WithStack(errInconsistentRemoteChainID)
 	}
 
-	return setGenesisStateAndCreateClient(chain, storage, fetchedChainState, cfg.Rollup)
+	return setGenesisStateAndCreateClient(blockchain, storage, fetchedChainState, cfg.Rollup)
 }
 
 func setGenesisStateAndCreateClient(
-	chain deployer.ChainConnection,
+	blockchain chain.Connection,
 	storage *st.Storage,
 	chainState *models.ChainState,
 	cfg *config.RollupConfig,
@@ -289,7 +280,7 @@ func setGenesisStateAndCreateClient(
 		return nil, err
 	}
 
-	client, err := createClientFromChainState(chain, chainState, cfg)
+	client, err := createClientFromChainState(blockchain, chainState, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -330,7 +321,7 @@ func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {
 }
 
 func createClientFromChainState(
-	chain deployer.ChainConnection,
+	blockchain chain.Connection,
 	chainState *models.ChainState,
 	cfg *config.RollupConfig,
 ) (*eth.Client, error) {
@@ -339,35 +330,38 @@ func createClientFromChainState(
 		return nil, err
 	}
 
-	accountRegistry, err := accountregistry.NewAccountRegistry(chainState.AccountRegistry, chain.GetBackend())
+	backend := blockchain.GetBackend()
+
+	accountRegistry, err := accountregistry.NewAccountRegistry(chainState.AccountRegistry, backend)
 	if err != nil {
 		return nil, err
 	}
 
-	tokenRegistry, err := tokenregistry.NewTokenRegistry(chainState.TokenRegistry, chain.GetBackend())
+	tokenRegistry, err := tokenregistry.NewTokenRegistry(chainState.TokenRegistry, backend)
 	if err != nil {
 		return nil, err
 	}
 
-	depositManager, err := depositmanager.NewDepositManager(chainState.DepositManager, chain.GetBackend())
+	depositManager, err := depositmanager.NewDepositManager(chainState.DepositManager, backend)
 	if err != nil {
 		return nil, err
 	}
 
-	rollupContract, err := rollup.NewRollup(chainState.Rollup, chain.GetBackend())
+	rollupContract, err := rollup.NewRollup(chainState.Rollup, backend)
 	if err != nil {
 		return nil, err
 	}
 
-	client, err := eth.NewClient(chain, &eth.NewClientParams{
+	client, err := eth.NewClient(blockchain, &eth.NewClientParams{
 		ChainState:      *chainState,
 		Rollup:          rollupContract,
 		AccountRegistry: accountRegistry,
 		TokenRegistry:   tokenRegistry,
 		DepositManager:  depositManager,
 		ClientConfig: eth.ClientConfig{
-			TransitionDisputeGasLimit: ref.Uint64(cfg.TransitionDisputeGasLimit),
-			SignatureDisputeGasLimit:  ref.Uint64(cfg.SignatureDisputeGasLimit),
+			TransitionDisputeGasLimit:        ref.Uint64(cfg.TransitionDisputeGasLimit),
+			SignatureDisputeGasLimit:         ref.Uint64(cfg.SignatureDisputeGasLimit),
+			BatchAccountRegistrationGasLimit: ref.Uint64(cfg.BatchAccountRegistrationGasLimit),
 		},
 	})
 	if err != nil {

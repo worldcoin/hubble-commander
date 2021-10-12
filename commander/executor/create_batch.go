@@ -3,25 +3,19 @@ package executor
 import (
 	"time"
 
-	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	log "github.com/sirupsen/logrus"
 )
 
-func (c *RollupContext) CreateAndSubmitBatch(batchType txtype.TransactionType, domain *bls.Domain) (err error) {
+func (c *RollupContext) CreateAndSubmitBatch() (err error) {
 	startTime := time.Now()
-	var commitments []models.Commitment
-	batch, err := c.NewPendingBatch(batchType)
+	batch, err := c.NewPendingBatch(c.BatchType)
 	if err != nil {
 		return err
 	}
 
-	if batchType == txtype.Transfer {
-		commitments, err = c.CreateTransferCommitments(domain)
-	} else {
-		commitments, err = c.CreateCreate2TransferCommitments(domain)
-	}
+	commitments, err := c.CreateCommitments()
 	if err != nil {
 		return err
 	}
@@ -33,7 +27,7 @@ func (c *RollupContext) CreateAndSubmitBatch(batchType txtype.TransactionType, d
 
 	log.Printf(
 		"Submitted a %s batch with %d commitment(s) on chain in %s. Batch ID: %d. Transaction hash: %v",
-		batchType.String(),
+		c.BatchType.String(),
 		len(commitments),
 		time.Since(startTime).Round(time.Millisecond).String(),
 		batch.ID.Uint64(),
@@ -42,7 +36,7 @@ func (c *RollupContext) CreateAndSubmitBatch(batchType txtype.TransactionType, d
 	return nil
 }
 
-func (c *ExecutionContext) NewPendingBatch(batchType txtype.TransactionType) (*models.Batch, error) {
+func (c *RollupContext) NewPendingBatch(batchType batchtype.BatchType) (*models.Batch, error) {
 	prevStateRoot, err := c.storage.StateTree.Root()
 	if err != nil {
 		return nil, err

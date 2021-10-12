@@ -3,9 +3,8 @@ package commander
 import (
 	"bytes"
 	"context"
-	"math/big"
+	"fmt"
 
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -13,6 +12,10 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
+
+var ErrAccountLeavesInconsistency = fmt.Errorf("inconsistency in account leaves between the database and the contract")
+
+// TODO extract event filtering logic to eth.Client
 
 func (c *Commander) syncAccounts(start, end uint64) error {
 	newAccountsSingle, err := c.syncSingleAccounts(start, end)
@@ -40,7 +43,7 @@ func (c *Commander) syncSingleAccounts(start, end uint64) (newAccountsCount *int
 	newAccountsCount = ref.Int(0)
 
 	for it.Next() {
-		tx, _, err := c.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
+		tx, _, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
 		if err != nil {
 			return nil, err
 		}
@@ -49,16 +52,9 @@ func (c *Commander) syncSingleAccounts(start, end uint64) (newAccountsCount *int
 			continue // TODO handle internal transactions
 		}
 
-		unpack, err := c.client.AccountRegistryABI.Methods["register"].Inputs.Unpack(tx.Data()[4:])
+		account, err := c.client.ExtractSingleAccount(tx.Data(), it.Event)
 		if err != nil {
 			return nil, err
-		}
-
-		publicKey := unpack[0].([4]*big.Int)
-		pubKeyID := uint32(it.Event.PubkeyID.Uint64())
-		account := &models.AccountLeaf{
-			PubKeyID:  pubKeyID,
-			PublicKey: models.MakePublicKeyFromInts(publicKey),
 		}
 
 		isNewAccount, err := saveSyncedSingleAccount(c.storage.AccountTree, account)
@@ -85,7 +81,7 @@ func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int,
 	newAccountsCount = ref.Int(0)
 
 	for it.Next() {
-		tx, _, err := c.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
+		tx, _, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
 		if err != nil {
 			return nil, err
 		}
@@ -94,20 +90,9 @@ func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int,
 			continue // TODO handle internal transactions
 		}
 
-		unpack, err := c.client.AccountRegistryABI.Methods["registerBatch"].Inputs.Unpack(tx.Data()[4:])
+		accounts, err := c.client.ExtractAccountsBatch(tx.Data(), it.Event)
 		if err != nil {
 			return nil, err
-		}
-
-		publicKeys := unpack[0].([16][4]*big.Int)
-		pubKeyIDs := eth.ExtractPubKeyIDsFromBatchAccountEvent(it.Event)
-
-		accounts := make([]models.AccountLeaf, 0, len(publicKeys))
-		for i := range pubKeyIDs {
-			accounts = append(accounts, models.AccountLeaf{
-				PubKeyID:  pubKeyIDs[i],
-				PublicKey: models.MakePublicKeyFromInts(publicKeys[i]),
-			})
 		}
 
 		isNewAccount, err := saveSyncedBatchAccounts(c.storage.AccountTree, accounts)
@@ -115,7 +100,7 @@ func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int,
 			return nil, err
 		}
 		if *isNewAccount {
-			*newAccountsCount += len(pubKeyIDs)
+			*newAccountsCount += len(accounts)
 		}
 	}
 	return newAccountsCount, nil
@@ -152,7 +137,7 @@ func validateExistingAccounts(accountTree *storage.AccountTree, accounts ...mode
 			return err
 		}
 		if existingAccount.PublicKey != accounts[i].PublicKey {
-			return errors.New("inconsistency in account leaves between the database and the contract")
+			return errors.WithStack(ErrAccountLeavesInconsistency)
 		}
 	}
 	return nil

@@ -3,7 +3,6 @@ package executor
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -28,7 +27,7 @@ func (s *DepositsTestSuite) SetupTest() {
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, &eth.Client{}, nil)
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, nil, nil)
 }
 
 func (s *DepositsTestSuite) TearDownTest() {

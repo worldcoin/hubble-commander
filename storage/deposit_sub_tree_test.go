@@ -13,14 +13,24 @@ var (
 	depositSubTree = models.PendingDepositSubTree{
 		ID:   models.MakeUint256(932),
 		Root: utils.RandomHash(),
-		Deposits: []models.DepositID{
+		Deposits: []models.PendingDeposit{
 			{
-				BlockNumber: 1,
-				LogIndex:    2,
+				ID: models.DepositID{
+					BlockNumber: 1,
+					LogIndex:    2,
+				},
+				ToPubKeyID: 3,
+				TokenID:    models.MakeUint256(4),
+				L2Amount:   models.MakeUint256(500),
 			},
 			{
-				BlockNumber: 3,
-				LogIndex:    4,
+				ID: models.DepositID{
+					BlockNumber: 6,
+					LogIndex:    7,
+				},
+				ToPubKeyID: 8,
+				TokenID:    models.MakeUint256(9),
+				L2Amount:   models.MakeUint256(1000),
 			},
 		},
 	}
@@ -58,7 +68,7 @@ func (s *DepositSubTreeTestSuite) TestAddPendingDepositSubTree_AddAndRetrieve() 
 
 func (s *DepositSubTreeTestSuite) TestGetPendingDepositSubTree_NonExistentTree() {
 	_, err := s.storage.GetPendingDepositSubTree(depositSubTree.ID)
-	s.Equal(NewNotFoundError("deposit sub tree"), err)
+	s.ErrorIs(err, NewNotFoundError("deposit sub tree"))
 	s.True(IsNotFoundError(err))
 }
 
@@ -67,20 +77,30 @@ func (s *DepositSubTreeTestSuite) TestDeletePendingDepositSubTrees() {
 		{
 			ID:   models.MakeUint256(1),
 			Root: utils.RandomHash(),
-			Deposits: []models.DepositID{
+			Deposits: []models.PendingDeposit{
 				{
-					BlockNumber: 2,
-					LogIndex:    3,
+					ID: models.DepositID{
+						BlockNumber: 1,
+						LogIndex:    2,
+					},
+					ToPubKeyID: 3,
+					TokenID:    models.MakeUint256(4),
+					L2Amount:   models.MakeUint256(500),
 				},
 			},
 		},
 		{
 			ID:   models.MakeUint256(4),
 			Root: utils.RandomHash(),
-			Deposits: []models.DepositID{
+			Deposits: []models.PendingDeposit{
 				{
-					BlockNumber: 5,
-					LogIndex:    6,
+					ID: models.DepositID{
+						BlockNumber: 6,
+						LogIndex:    7,
+					},
+					ToPubKeyID: 8,
+					TokenID:    models.MakeUint256(9),
+					L2Amount:   models.MakeUint256(1000),
 				},
 			},
 		},
@@ -95,13 +115,13 @@ func (s *DepositSubTreeTestSuite) TestDeletePendingDepositSubTrees() {
 
 	for i := range subTrees {
 		_, err = s.storage.GetPendingDepositSubTree(subTrees[i].ID)
-		s.Equal(NewNotFoundError("deposit sub tree"), err)
+		s.ErrorIs(err, NewNotFoundError("deposit sub tree"))
 	}
 }
 
 func (s *DepositSubTreeTestSuite) TestDeletePendingDepositSubTrees_NonExistentTree() {
 	err := s.storage.DeletePendingDepositSubTrees(models.MakeUint256(1))
-	s.Equal(NewNotFoundError("deposit sub tree"), err)
+	s.ErrorIs(err, NewNotFoundError("deposit sub tree"))
 }
 
 func TestDepositSubTreeTestSuite(t *testing.T) {

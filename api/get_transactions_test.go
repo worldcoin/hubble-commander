@@ -6,9 +6,10 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
@@ -87,68 +88,30 @@ func (s *GetTransactionsTestSuite) addUserStates() {
 	}
 }
 
-func (s *GetTransactionsTestSuite) makeTransfer(fromStateID, toStateID uint32) models.Transfer {
-	return models.Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash:        utils.RandomHash(),
-			TxType:      txtype.Transfer,
-			FromStateID: fromStateID,
-			Amount:      models.MakeUint256(10),
-			Fee:         models.MakeUint256(1),
-			Nonce:       models.MakeUint256(0),
-			Signature:   models.MakeRandomSignature(),
-		},
-		ToStateID: toStateID,
-	}
-}
-
 func (s *GetTransactionsTestSuite) addTransfers() []models.Transfer {
 	transfers := []models.Transfer{
-		s.makeTransfer(0, 2),
-		s.makeTransfer(1, 2),
-		s.makeTransfer(2, 4),
-		s.makeTransfer(2, 0),
-		s.makeTransfer(3, 4),
-		s.makeTransfer(4, 3),
+		testutils.MakeTransfer(0, 2, 0, 10),
+		testutils.MakeTransfer(1, 2, 0, 10),
+		testutils.MakeTransfer(2, 4, 0, 10),
+		testutils.MakeTransfer(2, 0, 0, 10),
+		testutils.MakeTransfer(3, 4, 0, 10),
+		testutils.MakeTransfer(4, 3, 0, 10),
 	}
 
-	for i := range transfers {
-		err := s.storage.AddTransfer(&transfers[i])
-		s.NoError(err)
-	}
+	err := s.storage.BatchAddTransfer(transfers)
+	s.NoError(err)
 	return transfers
-}
-
-func (s *GetTransactionsTestSuite) makeCreate2Transfer(
-	fromStateID, toStateID uint32,
-	toPublicKey *models.PublicKey,
-) models.Create2Transfer {
-	return models.Create2Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash:        utils.RandomHash(),
-			TxType:      txtype.Create2Transfer,
-			FromStateID: fromStateID,
-			Amount:      models.MakeUint256(10),
-			Fee:         models.MakeUint256(1),
-			Nonce:       models.MakeUint256(1),
-			Signature:   models.MakeRandomSignature(),
-		},
-		ToStateID:   ref.Uint32(toStateID),
-		ToPublicKey: *toPublicKey,
-	}
 }
 
 func (s *GetTransactionsTestSuite) addCreate2Transfers() []models.Create2Transfer {
 	transfers := []models.Create2Transfer{
-		s.makeCreate2Transfer(0, 5, &models.PublicKey{3, 4, 5}),
-		s.makeCreate2Transfer(4, 6, &models.PublicKey{3, 4, 5}),
-		s.makeCreate2Transfer(4, 3, &models.PublicKey{3, 4, 5}),
+		testutils.MakeCreate2Transfer(0, ref.Uint32(5), 0, 10, &models.PublicKey{3, 4, 5}),
+		testutils.MakeCreate2Transfer(4, ref.Uint32(6), 0, 10, &models.PublicKey{3, 4, 5}),
+		testutils.MakeCreate2Transfer(4, ref.Uint32(3), 0, 10, &models.PublicKey{3, 4, 5}),
 	}
 
-	for i := range transfers {
-		err := s.storage.AddCreate2Transfer(&transfers[i])
-		s.NoError(err)
-	}
+	err := s.storage.BatchAddCreate2Transfer(transfers)
+	s.NoError(err)
 	return transfers
 }
 
@@ -192,7 +155,7 @@ func (s *GetTransactionsTestSuite) TestGetTransactions() {
 func (s *GetTransactionsTestSuite) addCommitmentAndBatch() *models.Batch {
 	batch := &models.Batch{
 		ID:                models.MakeUint256(1),
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              ref.Hash(utils.RandomHash()),
 		FinalisationBlock: ref.Uint32(1234),
@@ -208,7 +171,7 @@ func (s *GetTransactionsTestSuite) addCommitmentAndBatch() *models.Batch {
 			BatchID:      batch.ID,
 			IndexInBatch: 0,
 		},
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		Transactions:      utils.RandomBytes(12),
 		FeeReceiver:       1234,
 		CombinedSignature: models.MakeRandomSignature(),
@@ -221,7 +184,7 @@ func (s *GetTransactionsTestSuite) addCommitmentAndBatch() *models.Batch {
 }
 
 func (s *GetTransactionsTestSuite) addIncludedTransfer() models.Transfer {
-	transfer := s.makeTransfer(0, 2)
+	transfer := testutils.MakeTransfer(0, 2, 0, 10)
 	transfer.CommitmentID = &models.CommitmentID{
 		BatchID:      models.MakeUint256(1),
 		IndexInBatch: 0,
@@ -232,7 +195,7 @@ func (s *GetTransactionsTestSuite) addIncludedTransfer() models.Transfer {
 }
 
 func (s *GetTransactionsTestSuite) addIncludedCreate2Transfer() models.Create2Transfer {
-	create2Transfer := s.makeCreate2Transfer(0, 5, &models.PublicKey{3, 4, 5})
+	create2Transfer := testutils.MakeCreate2Transfer(0, ref.Uint32(5), 0, 10, &models.PublicKey{3, 4, 5})
 	create2Transfer.CommitmentID = &models.CommitmentID{
 		BatchID:      models.MakeUint256(1),
 		IndexInBatch: 0,
@@ -303,6 +266,34 @@ func (s *GetTransactionsTestSuite) TestGetTransactions_NoTransactions() {
 
 	s.NotNil(userTransfers)
 	s.Len(userTransfers, 0)
+}
+
+func (s *GetTransactionsTestSuite) TestGetTransactions_SingleCreate2Transfer() {
+	s.addAccounts()
+	s.addUserStates()
+
+	c2t := testutils.MakeCreate2Transfer(0, nil, 0, 10, &models.PublicKey{1, 1, 1})
+	err := s.storage.AddCreate2Transfer(&c2t)
+	s.NoError(err)
+
+	txs, err := s.api.GetTransactions(&models.PublicKey{1, 1, 1})
+	s.NoError(err)
+
+	s.Len(txs, 1)
+}
+
+func (s *GetTransactionsTestSuite) TestGetTransactions_SingleTransfer() {
+	s.addAccounts()
+	s.addUserStates()
+
+	transfer := testutils.MakeTransfer(0, 2, 0, 10)
+	err := s.storage.AddTransfer(&transfer)
+	s.NoError(err)
+
+	txs, err := s.api.GetTransactions(&models.PublicKey{1, 1, 1})
+	s.NoError(err)
+
+	s.Len(txs, 1)
 }
 
 func TestGetTransactionsTestSuite(t *testing.T) {

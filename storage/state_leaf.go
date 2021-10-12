@@ -3,7 +3,8 @@ package storage
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
-	bh "github.com/timshannon/badgerhold/v3"
+	"github.com/pkg/errors"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 func (s *StateTree) upsertStateLeaf(leaf *models.StateLeaf) error {
@@ -29,7 +30,7 @@ func (s *Storage) GetStateLeavesByPublicKey(publicKey *models.PublicKey) (stateL
 	}
 	numLeaves := len(flatStateLeaves)
 	if numLeaves == 0 {
-		return nil, NewNotFoundError("user states")
+		return nil, errors.WithStack(NewNotFoundError("user states"))
 	}
 
 	stateLeaves = make([]models.StateLeaf, 0, numLeaves)

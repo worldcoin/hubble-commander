@@ -2,14 +2,14 @@ package dto
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/ethereum/go-ethereum/common"
 )
 
 type Batch struct {
 	ID                models.Uint256
 	Hash              *common.Hash
-	Type              txtype.TransactionType
+	Type              batchtype.BatchType
 	TransactionHash   common.Hash
 	SubmissionBlock   uint32
 	SubmissionTime    *models.Timestamp

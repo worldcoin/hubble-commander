@@ -13,11 +13,14 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/pkg/errors"
 )
 
 const gasEstimateMultiplier = 1.3
 
-type SubmitBatchFunc func(commitments []models.Commitment) (*types.Transaction, error)
+var ErrSubmitBatchAndWait = fmt.Errorf("submitBatchAndWait: timeout")
+
+type SubmitBatchFunc func() (*types.Transaction, error)
 
 func (c *Client) SubmitTransfersBatch(commitments []models.Commitment) (
 	*types.Transaction,
@@ -49,17 +52,18 @@ func (c *Client) SubmitCreate2TransfersBatch(commitments []models.Commitment) (
 	return c.RawTransact(c.config.StakeAmount.ToBig(), estimate, input)
 }
 
-func (c *Client) SubmitTransfersBatchAndWait(commitments []models.Commitment) (batch *models.Batch, err error) {
-	return c.submitBatchAndWait(commitments, c.SubmitTransfersBatch)
+func (c *Client) SubmitTransfersBatchAndWait(commitments []models.Commitment) (*models.Batch, error) {
+	return c.submitBatchAndWait(func() (*types.Transaction, error) {
+		return c.SubmitTransfersBatch(commitments)
+	})
 }
-func (c *Client) SubmitCreate2TransfersBatchAndWait(commitments []models.Commitment) (batch *models.Batch, err error) {
-	return c.submitBatchAndWait(commitments, c.SubmitCreate2TransfersBatch)
+func (c *Client) SubmitCreate2TransfersBatchAndWait(commitments []models.Commitment) (*models.Batch, error) {
+	return c.submitBatchAndWait(func() (*types.Transaction, error) {
+		return c.SubmitCreate2TransfersBatch(commitments)
+	})
 }
 
-func (c *Client) submitBatchAndWait(
-	commitments []models.Commitment,
-	submit SubmitBatchFunc,
-) (batch *models.Batch, err error) {
+func (c *Client) submitBatchAndWait(submit SubmitBatchFunc) (batch *models.Batch, err error) {
 	sink := make(chan *rollup.RollupNewBatch)
 	subscription, err := c.Rollup.WatchNewBatch(&bind.WatchOpts{}, sink)
 	if err != nil {
@@ -67,7 +71,7 @@ func (c *Client) submitBatchAndWait(
 	}
 	defer subscription.Unsubscribe()
 
-	tx, err := submit(commitments)
+	tx, err := submit()
 	if err != nil {
 		return
 	}
@@ -79,7 +83,7 @@ func (c *Client) submitBatchAndWait(
 				return c.handleNewBatchEvent(newBatch)
 			}
 		case <-time.After(*c.config.TxTimeout):
-			return nil, fmt.Errorf("submitBatchAndWait: timeout")
+			return nil, errors.WithStack(ErrSubmitBatchAndWait)
 		}
 	}
 }
@@ -94,7 +98,7 @@ func (c *Client) handleNewBatchEvent(event *rollup.RollupNewBatch) (*models.Batc
 }
 
 func (c *Client) estimateBatchSubmissionGasLimit(input []byte) (uint64, error) {
-	account := c.ChainConnection.GetAccount()
+	account := c.Blockchain.GetAccount()
 	msg := &ethereum.CallMsg{
 		From:     account.From,
 		To:       &c.ChainState.Rollup,
@@ -102,7 +106,7 @@ func (c *Client) estimateBatchSubmissionGasLimit(input []byte) (uint64, error) {
 		Value:    c.config.StakeAmount.ToBig(),
 		Data:     input,
 	}
-	estimatedGas, err := c.ChainConnection.EstimateGas(context.Background(), msg)
+	estimatedGas, err := c.Blockchain.EstimateGas(context.Background(), msg)
 	if err != nil {
 		return 0, err
 	}

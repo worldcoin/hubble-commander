@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
@@ -17,7 +17,7 @@ var (
 			BatchID:      models.MakeUint256(1),
 			IndexInBatch: 0,
 		},
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		FeeReceiver:       uint32(1),
 		CombinedSignature: models.MakeRandomSignature(),
 		PostStateRoot:     utils.RandomHash(),
@@ -58,7 +58,7 @@ func (s *CommitmentTestSuite) TestAddCommitment_AddAndRetrieve() {
 func (s *CommitmentTestSuite) addRandomBatch() models.Uint256 {
 	batch := models.Batch{
 		ID:                models.MakeUint256(123),
-		Type:              txtype.Transfer,
+		Type:              batchtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(1234),
@@ -70,7 +70,7 @@ func (s *CommitmentTestSuite) addRandomBatch() models.Uint256 {
 
 func (s *CommitmentTestSuite) TestGetCommitment_NonExistentCommitment() {
 	res, err := s.storage.GetCommitment(&commitment.ID)
-	s.Equal(NewNotFoundError("commitment"), err)
+	s.ErrorIs(err, NewNotFoundError("commitment"))
 	s.Nil(res)
 }
 
@@ -96,7 +96,7 @@ func (s *CommitmentTestSuite) TestGetLatestCommitment() {
 
 func (s *CommitmentTestSuite) TestGetLatestCommitment_NoCommitments() {
 	_, err := s.storage.GetLatestCommitment()
-	s.Equal(NewNotFoundError("commitment"), err)
+	s.ErrorIs(err, NewNotFoundError("commitment"))
 }
 
 func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
@@ -136,7 +136,7 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
 func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID_NonExistentCommitments() {
 	batchID := s.addRandomBatch()
 	commitments, err := s.storage.GetCommitmentsByBatchID(batchID)
-	s.Equal(NewNotFoundError("commitments"), err)
+	s.ErrorIs(err, NewNotFoundError("commitments"))
 	s.Nil(commitments)
 }
 
@@ -144,14 +144,14 @@ func (s *CommitmentTestSuite) TestDeleteCommitmentsByBatchIDs() {
 	batches := []models.Batch{
 		{
 			ID:                models.MakeUint256(111),
-			Type:              txtype.Transfer,
+			Type:              batchtype.Transfer,
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(1234),
 		},
 		{
 			ID:                models.MakeUint256(5),
-			Type:              txtype.Create2Transfer,
+			Type:              batchtype.Create2Transfer,
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(2345),
@@ -174,7 +174,7 @@ func (s *CommitmentTestSuite) TestDeleteCommitmentsByBatchIDs() {
 	s.NoError(err)
 	for i := range batches {
 		_, err = s.storage.GetCommitmentsByBatchID(batches[i].ID)
-		s.Equal(NewNotFoundError("commitments"), err)
+		s.ErrorIs(err, NewNotFoundError("commitments"))
 	}
 }
 
@@ -184,7 +184,7 @@ func (s *CommitmentTestSuite) TestDeleteCommitmentsByBatchIDs_NoCommitments() {
 	s.NoError(err)
 
 	err = s.storage.DeleteCommitmentsByBatchIDs(batchID)
-	s.Equal(NewNotFoundError("commitments"), err)
+	s.ErrorIs(err, NewNotFoundError("commitments"))
 
 	_, err = s.storage.GetCommitment(&commitment.ID)
 	s.NoError(err)

@@ -76,18 +76,14 @@ func (s *AccountsTestSuite) TestSyncBatchAccounts() {
 	s.NoError(err)
 	newAccountsCount, err := s.cmd.syncBatchAccounts(0, *latestBlockNumber)
 	s.NoError(err)
-	s.Equal(ref.Int(16), newAccountsCount)
+	s.Equal(ref.Int(st.AccountBatchSize), newAccountsCount)
 
 	s.validateAccountsAfterSync(accounts)
 }
 
 func (s *AccountsTestSuite) registerSingleAccount() models.AccountLeaf {
-	registrations, unsubscribe, err := s.testClient.WatchRegistrations(&bind.WatchOpts{Start: nil})
-	s.NoError(err)
-	defer unsubscribe()
-
 	publicKey := models.PublicKey{2, 3, 4}
-	pubKeyID, err := s.testClient.RegisterAccount(&publicKey, registrations)
+	pubKeyID, err := s.testClient.RegisterAccountAndWait(&publicKey)
 	s.NoError(err)
 	return models.AccountLeaf{
 		PubKeyID:  *pubKeyID,
@@ -100,15 +96,15 @@ func (s *AccountsTestSuite) registerBatchAccount() []models.AccountLeaf {
 	s.NoError(err)
 	defer unsubscribe()
 
-	publicKeys := make([]models.PublicKey, 16)
+	publicKeys := make([]models.PublicKey, st.AccountBatchSize)
 	for i := range publicKeys {
 		publicKeys[i] = models.PublicKey{1, 1, byte(i)}
 	}
 
-	pubKeyIDs, err := s.testClient.RegisterBatchAccount(publicKeys, registrations)
+	pubKeyIDs, err := s.testClient.RegisterBatchAccountAndWait(publicKeys, registrations)
 	s.NoError(err)
 
-	accounts := make([]models.AccountLeaf, 16)
+	accounts := make([]models.AccountLeaf, st.AccountBatchSize)
 	for i := range accounts {
 		accounts[i] = models.AccountLeaf{
 			PubKeyID:  pubKeyIDs[i],

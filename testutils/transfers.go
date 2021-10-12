@@ -37,3 +37,81 @@ func MakeCreate2Transfer(from uint32, to *uint32, nonce, amount uint64, publicKe
 	}
 	return c2t
 }
+
+func GenerateValidCreate2Transfers(transfersAmount uint32) models.Create2TransferArray {
+	transfers := make(models.Create2TransferArray, 0, transfersAmount)
+	for i := 0; i < int(transfersAmount); i++ {
+		transfer := models.Create2Transfer{
+			TransactionBase: models.TransactionBase{
+				Hash:        utils.RandomHash(),
+				TxType:      txtype.Create2Transfer,
+				FromStateID: 1,
+				Amount:      models.MakeUint256(1),
+				Fee:         models.MakeUint256(1),
+				Nonce:       models.MakeUint256(uint64(i)),
+			},
+			ToStateID:   nil,
+			ToPublicKey: models.PublicKey{1, 2, 3},
+		}
+		transfers = append(transfers, transfer)
+	}
+	return transfers
+}
+
+func GenerateInvalidCreate2Transfers(transfersAmount uint64) models.Create2TransferArray {
+	transfers := make(models.Create2TransferArray, 0, transfersAmount)
+	for i := uint64(0); i < transfersAmount; i++ {
+		transfer := models.Create2Transfer{
+			TransactionBase: models.TransactionBase{
+				Hash:        utils.RandomHash(),
+				TxType:      txtype.Create2Transfer,
+				FromStateID: 1,
+				Amount:      models.MakeUint256(1),
+				Fee:         models.MakeUint256(1),
+				Nonce:       models.MakeUint256(0),
+			},
+			ToStateID:   nil,
+			ToPublicKey: models.PublicKey{1, 2, 3},
+		}
+		transfers = append(transfers, transfer)
+	}
+	return transfers
+}
+
+func GenerateValidTransfers(transfersAmount uint32) models.TransferArray {
+	transfers := make([]models.Transfer, 0, transfersAmount)
+	for i := 0; i < int(transfersAmount); i++ {
+		transfer := models.Transfer{
+			TransactionBase: models.TransactionBase{
+				Hash:        utils.RandomHash(),
+				TxType:      txtype.Transfer,
+				FromStateID: 1,
+				Amount:      models.MakeUint256(1),
+				Fee:         models.MakeUint256(1),
+				Nonce:       models.MakeUint256(uint64(i)),
+			},
+			ToStateID: 2,
+		}
+		transfers = append(transfers, transfer)
+	}
+	return transfers
+}
+
+func GenerateInvalidTransfers(transfersAmount uint64) []models.Transfer {
+	transfers := make([]models.Transfer, 0, transfersAmount)
+	for i := uint64(0); i < transfersAmount; i++ {
+		transfer := models.Transfer{
+			TransactionBase: models.TransactionBase{
+				Hash:        utils.RandomHash(),
+				TxType:      txtype.Transfer,
+				FromStateID: 1,
+				Amount:      models.MakeUint256(1_000_000),
+				Fee:         models.MakeUint256(1),
+				Nonce:       models.MakeUint256(0),
+			},
+			ToStateID: 2,
+		}
+		transfers = append(transfers, transfer)
+	}
+	return transfers
+}
