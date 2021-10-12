@@ -51,7 +51,7 @@ tar --use-compress-program="${PIGZ_PATH}" -cf "${COMPRESSED_BACKUP_DIR_PATH}" -C
 # Remove redundant uncompressed directory
 rm -r "${BACKUP_DIR_PATH}"
 
-# If AWS_S3_BUCKET is provided then upload the backup to an AWS bucket and remove the backup file from the local disk
+# If AWS_S3_BUCKET is provided then upload the backup to a S3 bucket and remove the backup file from the local disk
 if [[ -n ${AWS_S3_BUCKET:+x} ]]; then
     aws s3 cp "${COMPRESSED_BACKUP_DIR_PATH}" s3://"${AWS_S3_BUCKET}" >/dev/null
     rm -r "${COMPRESSED_BACKUP_DIR_PATH}"
