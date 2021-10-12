@@ -26,6 +26,7 @@ func EncodeDecimal(value models.Uint256) (uint16, error) {
 			break
 		}
 	}
+	fmt.Printf("Mantissa %v, exponent %v\n", mantissa, exponent)
 
 	if mantissa.Cmp(big.NewInt(0xfff)) > 0 {
 		return 0, errors.WithStack(ErrNotEncodableDecimal)

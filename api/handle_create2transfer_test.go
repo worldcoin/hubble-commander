@@ -22,6 +22,18 @@ var (
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(0),
 	}
+	secondCreate2TransferWithoutSignature = dto.Create2Transfer{
+		FromStateID: ref.Uint32(1),
+		Amount:      models.NewUint256(50),
+		Fee:         models.NewUint256(10),
+		Nonce:       models.NewUint256(1),
+	}
+	thirdCreate2TransferWithoutSignature = dto.Create2Transfer{
+		FromStateID: ref.Uint32(1),
+		Amount:      models.NewUint256(50),
+		Fee:         models.NewUint256(10),
+		Nonce:       models.NewUint256(2),
+	}
 )
 
 type SendCreate2TransferTestSuite struct {
@@ -78,6 +90,8 @@ func (s *SendCreate2TransferTestSuite) SetupTest() {
 	s.NoError(err)
 
 	create2TransferWithoutSignature.ToPublicKey = receiverWallet.PublicKey()
+	secondCreate2TransferWithoutSignature.ToPublicKey = receiverWallet.PublicKey()
+	thirdCreate2TransferWithoutSignature.ToPublicKey = receiverWallet.PublicKey()
 	s.create2Transfer = s.signCreate2Transfer(create2TransferWithoutSignature)
 }
 
@@ -95,6 +109,20 @@ func (s *SendCreate2TransferTestSuite) TearDownTest() {
 
 func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ReturnsNonNilHash() {
 	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.create2Transfer))
+	s.NoError(err)
+	s.NotNil(hash)
+}
+
+func (s *SendCreate2TransferTestSuite) TestSendManyCreate2Transfer() {
+	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.create2Transfer))
+	s.NoError(err)
+	s.NotNil(hash)
+	secondCreate2Transfer := s.signCreate2Transfer(secondCreate2TransferWithoutSignature)
+	hash, err = s.api.SendTransaction(dto.MakeTransaction(secondCreate2Transfer))
+	s.NoError(err)
+	s.NotNil(hash)
+	thirdCreate2Transfer := s.signCreate2Transfer(thirdCreate2TransferWithoutSignature)
+	hash, err = s.api.SendTransaction(dto.MakeTransaction(thirdCreate2Transfer))
 	s.NoError(err)
 	s.NotNil(hash)
 }
