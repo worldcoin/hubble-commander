@@ -7,7 +7,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
@@ -65,14 +64,11 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.PopulatedGen
 
 func RegisterGenesisAccounts(accountMgr *eth.AccountManager, accounts []models.GenesisAccount) ([]models.RegisteredGenesisAccount, error) {
 	txs := make([]types.Transaction, 0, len(accounts))
-	txHashToAccount := make(map[common.Hash]models.GenesisAccount, len(accounts))
 	for i := range accounts {
 		tx, err := accountMgr.RegisterAccount(accounts[i].PublicKey)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
-
-		txHashToAccount[tx.Hash()] = accounts[i]
 		txs = append(txs, *tx)
 	}
 
@@ -81,27 +77,20 @@ func RegisterGenesisAccounts(accountMgr *eth.AccountManager, accounts []models.G
 		return nil, err
 	}
 
-	return extractRegisteredAccounts(accountMgr, receipts, txHashToAccount)
-}
-
-func extractRegisteredAccounts(
-	accountMgr *eth.AccountManager, receipts []types.Receipt, accounts map[common.Hash]models.GenesisAccount,
-) ([]models.RegisteredGenesisAccount, error) {
 	registeredAccounts := make([]models.RegisteredGenesisAccount, 0, len(accounts))
-	for i := range receipts {
-		registeredAccount := accounts[receipts[i].TxHash]
-
+	for i := range accounts {
 		pubKeyID, err := accountMgr.RetrieveRegisteredPubKeyID(&receipts[i])
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
 
 		registeredAccounts = append(registeredAccounts, models.RegisteredGenesisAccount{
-			GenesisAccount: registeredAccount,
-			PublicKey:      *registeredAccount.PublicKey,
+			GenesisAccount: accounts[i],
+			PublicKey:      *accounts[i].PublicKey,
 			PubKeyID:       *pubKeyID,
 		})
 	}
+
 	return registeredAccounts, nil
 }
 
