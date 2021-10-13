@@ -18,13 +18,10 @@ const (
 
 var (
 	ErrInvalidPubKeysLength             = fmt.Errorf("invalid public keys length")
-	ErrAccountWatcherIsClosed           = fmt.Errorf("account event watcher is closed")
 	ErrBatchPubKeyRegisteredLogNotFound = fmt.Errorf("batch pubkey registered log not found in receipt")
 )
 
-func (a *AccountManager) RegisterBatchAccountAndWait(
-	publicKeys []models.PublicKey,
-) ([]uint32, error) {
+func (a *AccountManager) RegisterBatchAccountAndWait(publicKeys []models.PublicKey) ([]uint32, error) {
 	tx, err := a.RegisterBatchAccount(publicKeys)
 	if err != nil {
 		return nil, err
@@ -38,9 +35,7 @@ func (a *AccountManager) RegisterBatchAccountAndWait(
 	return a.retrieveRegisteredPubKeyIDs(receipt)
 }
 
-func (a *AccountManager) RegisterBatchAccount(
-	publicKeys []models.PublicKey,
-) (*types.Transaction, error) {
+func (a *AccountManager) RegisterBatchAccount(publicKeys []models.PublicKey) (*types.Transaction, error) {
 	if len(publicKeys) != accountBatchSize {
 		return nil, errors.WithStack(ErrInvalidPubKeysLength)
 	}
@@ -51,7 +46,7 @@ func (a *AccountManager) RegisterBatchAccount(
 	}
 
 	tx, err := a.accountRegistry().
-		WithGasLimit(*a.config.BatchAccountRegistrationGasLimit).
+		WithGasLimit(*a.batchAccountRegistrationGasLimit).
 		RegisterBatch(pubKeys)
 	if err != nil {
 		return nil, errors.WithStack(err)
