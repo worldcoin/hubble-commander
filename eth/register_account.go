@@ -27,7 +27,7 @@ func (a *AccountManager) RegisterAccountAndWait(publicKey *models.PublicKey) (*u
 }
 
 func (a *AccountManager) RetrieveRegisteredPubKeyID(receipt *types.Receipt) (*uint32, error) {
-	if len(receipt.Logs) < 1 || receipt.Logs[0] == nil {
+	if receiptContainsLogs(receipt) {
 		return nil, errors.WithStack(ErrSingleRegisteredPubKeyLogNotFound)
 	}
 

@@ -73,7 +73,7 @@ func (c *Client) submitBatchAndWait(submit SubmitBatchFunc) (batch *models.Batch
 		return nil, err
 	}
 
-	if len(receipt.Logs) < 1 || receipt.Logs[0] == nil {
+	if receiptContainsLogs(receipt) {
 		return nil, errors.WithStack(ErrNewBatchLogNotFound)
 	}
 

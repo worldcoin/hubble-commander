@@ -56,7 +56,7 @@ func (a *AccountManager) RegisterBatchAccount(publicKeys []models.PublicKey) (*t
 }
 
 func (a *AccountManager) retrieveRegisteredPubKeyIDs(receipt *types.Receipt) ([]uint32, error) {
-	if len(receipt.Logs) < 1 || receipt.Logs[0] == nil {
+	if receiptContainsLogs(receipt) {
 		return nil, errors.WithStack(ErrBatchPubKeyRegisteredLogNotFound)
 	}
 
