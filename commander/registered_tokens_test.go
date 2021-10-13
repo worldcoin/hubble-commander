@@ -2,13 +2,10 @@ package commander
 
 import (
 	"testing"
-	"time"
 
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -61,34 +58,19 @@ func (s *RegisteredTokensTestSuite) registerSingleToken() models.RegisteredToken
 	token := models.RegisteredToken{
 		Contract: s.testClient.ExampleTokenAddress,
 	}
-	RegisterSingleToken(s.Assertions, s.testClient, &token, ref.Uint64(0))
+	tokenID := RegisterSingleToken(s.Assertions, s.testClient, &token)
+	token.ID = *tokenID
 	return token
 }
 
-func RegisterSingleToken(s *require.Assertions, testClient *eth.TestClient, token *models.RegisteredToken, latestBlockNumber *uint64) {
-	registrations, unsubscribe, err := testClient.WatchTokenRegistrations(&bind.WatchOpts{Start: latestBlockNumber})
-	s.NoError(err)
-	defer unsubscribe()
-
-	err = testClient.RequestRegisterToken(token.Contract)
+func RegisterSingleToken(s *require.Assertions, testClient *eth.TestClient, token *models.RegisteredToken) *models.Uint256 {
+	err := testClient.RequestRegisterTokenAndWait(token.Contract)
 	s.NoError(err)
 
-	err = testClient.FinalizeRegisterToken(token.Contract)
+	tokenID, err := testClient.FinalizeRegisterTokenAndWait(token.Contract)
 	s.NoError(err)
-	for {
-		select {
-		case event, ok := <-registrations:
-			if !ok {
-				s.Fail("Token registry event watcher is closed")
-			}
-			if event.TokenContract == testClient.ExampleTokenAddress {
-				token.ID = models.MakeUint256FromBig(*event.TokenID)
-				return
-			}
-		case <-time.After(100 * time.Millisecond):
-			s.Fail("Token registry event watcher timed out")
-		}
-	}
+
+	return tokenID
 }
 
 func TestRegisteredTokensTestSuite(t *testing.T) {
