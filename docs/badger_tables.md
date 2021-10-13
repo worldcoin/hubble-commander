@@ -123,11 +123,11 @@ Hash -> {
 	Fee                  Uint256
 	Nonce                Uint256
 	Signature            Signature
-	ReceiveTime          *Timestamp 
-	IncludedInCommitment *{BatchID: Uint256, IndexInBatch: uint8}
+	ReceiveTime          *Timestamp
+	CommitmentID *{BatchID: Uint256, IndexInBatch: uint8}
 	ErrorMessage         *string
-
-  Body TransactionBody
+	
+	Body TransactionBody
 }
 ```
 
@@ -169,8 +169,8 @@ type PendingDepositID struct {
 type PendingDeposit struct {
 	ID                   DepositID
 	ToPubKeyID           uint32
-  TokenID              models.Uint256
-  L2Amount             models.Uint256
+	TokenID              models.Uint256
+	L2Amount             models.Uint256
 }
 ```
 
@@ -201,8 +201,8 @@ type StoredCommitment struct {
 	ID            models.CommitmentID // keep it in struct, just not serialize it
 	Type          batchtype.BatchType // type added in PR #337
 	PostStateRoot common.Hash
-
-  Body models.StoredCommitmentBody // interface type, different body depending on `Type`
+	
+	Body models.StoredCommitmentBody // interface type, different body depending on `Type`
 }
 
 type StoredCommitmentTxBody struct {
