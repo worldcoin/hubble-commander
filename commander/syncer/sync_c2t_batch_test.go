@@ -125,7 +125,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_NonExistentReceiverPublicKey() {
 	err = s.syncCtx.SyncBatch(&remoteBatches[0])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Signature, disputableErr.Type)
-	s.Equal(InvalidSignatureMessage, disputableErr.Reason)
+	s.Equal(NotExistingReceiverMessage, disputableErr.Reason)
 	s.Equal(0, disputableErr.CommitmentIndex)
 }
 
