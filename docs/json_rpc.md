@@ -17,7 +17,7 @@ Example result:
 This returns a number of datapoints about the current state of the system:
 
 - ethereum network chain id
-- AccountRegistry, TokenRegistry and Rollup contract addresses
+- AccountRegistry, TokenRegistry, DepositManager and Rollup contract addresses
 - Block at which contracts were deployed (for new instance of commander to know where to start syncing events from)
 - Current ethereum block number
 - Number of transactions and accounts
@@ -29,16 +29,17 @@ Example result:
 
 ```json
 {
-    "ChainID": "1616067554748",
-    "AccountRegistry": "0x61e655cac5ac4f224501a8e578852c1919c119c5",
-		"AccountRegistryDeploymentBlock": 20,
-		"DepositManager": "0x2d72f696d6b1fecdfa1e55f5f8778953509e5329",
-    "Rollup": "0x568fcd21edc59900314a944175805e9fc61d1bdd",
-    "BlockNumber": 48,
-		"TransactionCount": 65,
-		"AccountCount": 38,
-    "LatestBatch": "12",
-    "LatestFinalisedBatch": "10",
+    "ChainID": "1337",
+    "AccountRegistry": "0x10bd6732fe3908b8a816f6a1b271e0864de78ca1",
+    "AccountRegistryDeploymentBlock": 74,
+    "TokenRegistry": "0x07389715ae1f0a891fba82e65099f6a3fa7da593",
+    "DepositManager": "0xa3accd1cfabc8b09aea4d0e25f21f25c526c9be8",
+    "Rollup": "0xf2a409ccf78e6e32e02d5e3a3ac274ca6880d9ac",
+    "BlockNumber": 2146,
+    "TransactionCount": 2,
+    "AccountCount": 6,
+    "LatestBatch": "2",
+    "LatestFinalisedBatch": "0",
     "SignatureDomain": "0x123123abc..."
 }
 ```
@@ -94,12 +95,16 @@ Example result (TRANSFER):
     "Fee": "1",
     "Nonce": "0",
     "Signature": "0x19721d261934684e37c582a1cbd69eb406eb430e56c1865e0bd071d350728c5225fc666aeb79165b6b29616a1018aabf0d317d60b0feb5668e372d7810081d96",
-    "IncludedInCommitment": null,
+    "ReceiveTime": 1625153276, // timestamp at which the tx was received by the coordinator for inclusion in batch. Can be null, when the tx was synced from blockchain.
+    "CommitmentID": {
+        "BatchID": "1",
+        "IndexInBatch": 0
+    },
     "ErrorMessage": null,
     "ToStateID": 2,
-    "ReceiveTime": 1625153276, // timestamp at which the tx was received by the coordinator for inclusion in batch. Can be null, when the tx was synced from blockchain.
-		"BatchTime": 1645153276, // timestamp at which the tx was included in a batch submitted on chain. Can be null, when the tx hasn't been included yet.
-    "Status": "PENDING"
+    "BatchHash": "0xeb590ba0ce14d821caebc56514fe867521da78b46b7b78ce4810a353e619f315",
+    "BatchTime": 1633692591, // timestamp at which the tx was included in a batch submitted on chain. Can be null, when the tx hasn't been included yet.
+    "Status": "FINALISED"
 }
 ```
 
@@ -109,18 +114,22 @@ Example result (CREATE2TRANSFER):
 {
     "Hash": "0x6cbc0e7428308e2f0397e5f35d6f5eb8922cd67bdd2eda39d55bfd379c2f2f1a",
     "TxType": "CREATE2TRANSFER",
-    "FromStateID": 2,
+    "FromStateID": 1,
     "Amount": "50",
     "Fee": "1",
     "Nonce": "0",
     "Signature": "0x06e788fb9494da058be2c6d3e078d4833401fcf992f410ffe98ff88a02b833d828f399d33b5368ccd3f03c6d6d1aa6b7b36f398210abf056434b4b15b3462c59",
-    "IncludedInCommitment": null,
+    "ReceiveTime": 1625153276, // timestamp at which the tx was received by the coordinator for inclusion in batch. Can be null, when the tx was synced from blockchain.
+    "CommitmentID": {
+        "BatchID": "1",
+        "IndexInBatch": 0
+    },
     "ErrorMessage": null,
     "ToStateID": 0,
     "ToPublicKey": "0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc",
-    "ReceiveTime": 1625153276, // timestamp at which the tx was received by the coordinator for inclusion in batch. Can be null, when the tx was synced from blockchain.
-		"BatchTime": 1645153276, // timestamp at which the tx was included in a batch submitted on chain. Can be null, when the tx hasn't been included yet.
-    "Status": "PENDING"
+    "BatchHash": "0xeb590ba0ce14d821caebc56514fe867521da78b46b7b78ce4810a353e619f315",
+    "BatchTime": 1633692591, // timestamp at which the tx was included in a batch submitted on chain. Can be null, when the tx hasn't been included yet.
+    "Status": "FINALISED"
 }
 ```
 
@@ -163,7 +172,7 @@ Return all UserState objects related to a public key
 ]
 ```
 
-### `hubble_getPublicKeyByID(pubkeyId)`
+### `hubble_getPublicKeyByPubKeyID(pubKeyId)`
 
 ```json
 {
@@ -189,15 +198,15 @@ Example result:
 
 ```json
 [
-   {
-	    "ID": "1",
-	    "Hash": "0xb1786be90de852376032956f0ed165011bf4ef3a6f6a0753a1f9f1f59e99441f",
-	    "Type": "TRANSFER",
-	    "TransactionHash": "0xa680c859cbe25b6a26f0cd017318fe51d7a195d32cd004f6a8862dbe0a348f94",
-	    "SubmissionBlock": 59,
-			"SubmissionTime": 1645153276,
-	    "FinalisationBlock": 40379
-   }
+    {
+        "ID": "1",
+        "Hash": "0xeb590ba0ce14d821caebc56514fe867521da78b46b7b78ce4810a353e619f315",
+        "Type": "TRANSFER",
+        "TransactionHash": "0xf341a59fa9d525e17e264a5256f2f9a62e9a4a0a034f0742625d06d72971d807",
+        "SubmissionBlock": 243,
+        "SubmissionTime": 1633692591,
+        "FinalisationBlock": 40563
+    }
 ]
 ```
 
@@ -209,22 +218,25 @@ Example result:
 
 ```json
 {
-		"ID": "1",
-    "Hash": "0x05dc2502909e415e5f6c6b3d71e94192c277274816f65cd4fba000fda4706372",
+    "ID": "1",
+    "Hash": "0xeb590ba0ce14d821caebc56514fe867521da78b46b7b78ce4810a353e619f315",
     "Type": "TRANSFER",
-		"TransactionHash": "0xa680c859cbe25b6a26f0cd017318fe51d7a195d32cd004f6a8862dbe0a348f94"
-    "FinalisationBlock": 40363,
-    "SubmissionBlock": 268,
-		"SubmissionTime": 1645153276,
-    "AccountTreeRoot": "0xce31f2b7478a42b23e5661eda2c7665488e0b51b55e24e60a129110b28db4d68",
+    "TransactionHash": "0xf341a59fa9d525e17e264a5256f2f9a62e9a4a0a034f0742625d06d72971d807",
+    "SubmissionBlock": 243,
+    "SubmissionTime": 1633692591,
+    "FinalisationBlock": 40563,
+    "AccountTreeRoot": "0xb261c40259ad5dbaf32efb2256225bbf03dcda8e84cffdfe67e68b958e3c7a95",
     "Commitments": [
         {
-            "ID": 1,
-            "LeafHash": "0x8d394d5d9f1223e729571f8727b46a6e3dd8e4799bb5dfcdd7d44a1a7391c126",
+            "ID": {
+                "BatchID": "1",
+                "IndexInBatch": 0
+            },
+            "LeafHash": "0x0ac0612b86133439657556401f18b5b433dd0fe1faf7cef92e3882197f93ba6c",
             "TokenID": "0",
             "FeeReceiverStateID": 0,
-            "CombinedSignature": "0x1b111c3fdeddc3326a326fb180c8a825b8919959dfbcccf5cf51cb76fb2d9a9c066bcbabb65792f9c9b7cfce8cc484de8e0a06c2703b023d69fa93f8bdfc8f44",
-            "PostStateRoot": "0xfb2f86a3c7d96a560f88f3e22522195a5c96fd5df74690ecd0256c4a3c4a0836"
+            "CombinedSignature": "0x1152450e7da64c68023921d3a37ea750df4158bb17203317bf7af9ac7d8c6a3216d982a417c204593c82dc1f64851cad49361a4a4175636e0c062497c7ef2f9c",
+            "PostStateRoot": "0x81cf78ec55d3393ff2e9c0e081dc6ced3cd4a7e9e42f3c6e441b035035a6839a"
         }
     ]
 }
@@ -234,7 +246,7 @@ Example result:
 
 Same as hubble_getBatchByHash(hash)
 
-### `hubble_getCommitment(id)`
+### `hubble_getCommitment(commitmentID: {BatchID: string, IndexInBatch: uint8})`
 
 Returns commitment information and list of included transactions
 
@@ -242,25 +254,26 @@ Example result:
 
 ```json
 {
-    "ID": 1,
+    "ID": {
+        "BatchID": "1",
+        "IndexInBatch": 0
+    },
     "Type": "TRANSFER",
     "FeeReceiver": 0,
-    "CombinedSignature": "0x1b111c3fdeddc3326a326fb180c8a825b8919959dfbcccf5cf51cb76fb2d9a9c066bcbabb65792f9c9b7cfce8cc484de8e0a06c2703b023d69fa93f8bdfc8f44",
-    "PostStateRoot": "0xfb2f86a3c7d96a560f88f3e22522195a5c96fd5df74690ecd0256c4a3c4a0836",
-    "AccountTreeRoot": "0xce31f2b7478a42b23e5661eda2c7665488e0b51b55e24e60a129110b28db4d68",
-    "IncludedInBatch": "0x05dc2502909e415e5f6c6b3d71e94192c277274816f65cd4fba000fda4706372",
-    "Status": "IN_BATCH",
-		"BatchTime": 1645153276,
+    "CombinedSignature": "0x1152450e7da64c68023921d3a37ea750df4158bb17203317bf7af9ac7d8c6a3216d982a417c204593c82dc1f64851cad49361a4a4175636e0c062497c7ef2f9c",
+    "PostStateRoot": "0x81cf78ec55d3393ff2e9c0e081dc6ced3cd4a7e9e42f3c6e441b035035a6839a",
+    "Status": "FINALISED",
+    "BatchTime": 1633692591,
     "Transactions": [
         {
-            "Hash": "0x4cabb7314775aae932fb3995315298b5241f1793753fd4fd4b5c5405f5dc18e6",
+            "Hash": "0x9b442316136f46247a399169aff5b9931060331f4b66971766a81b77765cfb36",
             "FromStateID": 1,
-            "Amount": "90",
-            "Fee": "10",
+            "Amount": "50",
+            "Fee": "1",
             "Nonce": "0",
             "Signature": "0x28c71cc24191b4fd335bc5b2045d27e723820dc1071ad20882f2ec4347cccfff302d354a7adb570b1a53aebd6a59537271648391eb20e72c8fe4d83a2e6e4df6",
+            "ReceiveTime": 1625153276, // timestamp at which the tx was received by the coordinator for inclusion in batch. Can be null, when the tx was synced from blockchain.
             "ToStateID": 2
-            "ReceiveTime": 1625153276 // timestamp at which the tx was received by the coordinator for inclusion in batch. Can be null, when the tx was synced from blockchain.
         }
     ]
 }
@@ -271,10 +284,9 @@ Example result:
 ## Sending a transaction
 
 1. Call `hubble_getUserStates(senderPubkey)` to list sender's accounts. Pick one with an appropriate token index and balance.
-
-1. Call `hubble_getUserStates(recipientPubkey)` to list recipients accounts pick one with an appropriate token index.
-2. Call `hubble_sendTransaction` with `txType=TRANSFER` using the state indexes from steps 1 & 2 and nonce from step 1.
-3. Call `hubble_getTransfer(Hash)` with the hash from step 3 to monitor transaction progress.
+2. Call `hubble_getUserStates(recipientPubkey)` to list recipients accounts pick one with an appropriate token index.
+3. Call `hubble_sendTransaction` with `txType=TRANSFER` using the state indexes from steps 1 & 2 and nonce from step 1.
+4. Call `hubble_getTransfer(Hash)` with the hash from step 3 to monitor transaction progress.
 
 ## Alternative: Recipient doesn't have a state leaf for a given token
 
