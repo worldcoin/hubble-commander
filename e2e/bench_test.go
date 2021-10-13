@@ -34,6 +34,9 @@ const txBatchSize = 32
 // Maximum number of tx batches in queue.
 const maxQueuedBatchesCount = 20
 
+// Maximum number of workers that send transactions.
+const maxConcurrentWorkers = 4
+
 // TxTypeDistribution distribution of the transaction types sent by the test script
 // example: { txtype.Create2Transfer: 0.2, txtype.Transfer: 0.8 } would mean 20% C2T, 80% transfers
 type TxTypeDistribution = map[txtype.TransactionType]float32
@@ -50,8 +53,9 @@ type BenchmarkSuite struct {
 	waitGroup sync.WaitGroup
 
 	// Only use atomic operations to increment those two counters.
-	transfersSent int64
-	txsQueued     int64
+	txsSent             int64
+	txsQueued           int64
+	lastReportedTxCount int64
 }
 
 func (s *BenchmarkSuite) SetupSuite() {
@@ -150,11 +154,17 @@ func (s *BenchmarkSuite) sendTransactions(distribution TxTypeDistribution) {
 
 		fmt.Printf("%d states found for wallet %s\n", len(userStates), wallet.PublicKey().String())
 
+		workers := 0
 		for _, state := range userStates {
 			s.stateIds = append(s.stateIds, state.StateID)
 
 			s.waitGroup.Add(1)
 			go s.runForWallet(wallet, state.StateID, distribution)
+
+			workers += 1
+			if workers >= maxConcurrentWorkers {
+				break
+			}
 		}
 	}
 
@@ -169,7 +179,7 @@ func (s *BenchmarkSuite) runForWallet(senderWallet bls.Wallet, senderStateID uin
 	txsToWatch := make([]common.Hash, 0, maxQueuedBatchesCount)
 	nonce := models.MakeUint256(0)
 
-	for s.transfersSent < txCount {
+	for s.txsSent < txCount {
 
 		// Send phase
 		for len(txsToWatch) <= maxQueuedBatchesCount {
@@ -177,8 +187,6 @@ func (s *BenchmarkSuite) runForWallet(senderWallet bls.Wallet, senderStateID uin
 			for i := 0; i < txBatchSize; i++ {
 
 				txType := pickTxType(distribution)
-
-				fmt.Printf("Sending %s", txtype.TransactionTypes[txType])
 
 				switch txType {
 				case txtype.Transfer:
@@ -208,12 +216,14 @@ func (s *BenchmarkSuite) runForWallet(senderWallet bls.Wallet, senderStateID uin
 		continueChecking := true
 		for _, tx := range txsToWatch {
 			if continueChecking {
-				var sentTransfer dto.TransferReceipt
-				err := s.commander.Client().CallFor(&sentTransfer, "hubble_getTransaction", []interface{}{tx})
+				var receipt struct {
+					Status txstatus.TransactionStatus
+				}
+				err := s.commander.Client().CallFor(&receipt, "hubble_getTransaction", []interface{}{tx})
 				s.NoError(err)
 
-				if sentTransfer.Status != txstatus.Pending {
-					atomic.AddInt64(&s.transfersSent, txBatchSize)
+				if receipt.Status != txstatus.Pending {
+					atomic.AddInt64(&s.txsSent, txBatchSize)
 					atomic.AddInt64(&s.txsQueued, -txBatchSize)
 				} else {
 					continueChecking = false
@@ -222,11 +232,17 @@ func (s *BenchmarkSuite) runForWallet(senderWallet bls.Wallet, senderStateID uin
 			} else {
 				newTxsToWatch = append(newTxsToWatch, tx)
 			}
+
+			// If we send too many requests at the same time we can run out of OS ports
+			time.Sleep(500 * time.Microsecond)
 		}
 		txsToWatch = newTxsToWatch
 
 		// Report phase
-		fmt.Printf("Transfers sent: %d, throughput: %f tx/s, txs in queue: %d\n", s.transfersSent, float64(s.transfersSent)/(time.Since(s.startTime).Seconds()), s.txsQueued)
+		if s.lastReportedTxCount != s.txsSent {
+			s.lastReportedTxCount = s.txsSent
+			fmt.Printf("Transfers sent: %d, throughput: %f tx/s, txs in queue: %d\n", s.txsSent, float64(s.txsSent)/(time.Since(s.startTime).Seconds()), s.txsQueued)
+		}
 	}
 
 	s.waitGroup.Done()
