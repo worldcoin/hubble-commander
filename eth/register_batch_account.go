@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -24,10 +24,19 @@ var (
 	ErrRegisterBatchAccountTimeout = fmt.Errorf("timeout")
 )
 
-func (c *Client) RegisterBatchAccount(
+func (a *AccountManager) RegisterBatchAccountAndWait(
 	publicKeys []models.PublicKey,
 	ev chan *accountregistry.AccountRegistryBatchPubkeyRegistered,
 ) ([]uint32, error) {
+	tx, err := a.RegisterBatchAccount(publicKeys)
+	if err != nil {
+		return nil, err
+	}
+
+	return a.WaitForBatchAccountRegistration(tx, ev)
+}
+
+func (a *AccountManager) RegisterBatchAccount(publicKeys []models.PublicKey) (*types.Transaction, error) {
 	if len(publicKeys) != accountBatchSize {
 		return nil, errors.WithStack(ErrInvalidPubKeysLength)
 	}
@@ -37,29 +46,30 @@ func (c *Client) RegisterBatchAccount(
 		pubkeys[i] = publicKeys[i].BigInts()
 	}
 
-	tx, err := c.AccountRegistry.RegisterBatch(c.ChainConnection.GetAccount(), pubkeys)
+	tx, err := a.accountRegistry().
+		WithGasLimit(*a.batchAccountRegistrationGasLimit).
+		RegisterBatch(pubkeys)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-
-	return c.WaitForBatchAccountRegistration(tx, ev)
+	return tx, nil
 }
 
-func (c *Client) WatchBatchAccountRegistrations(opts *bind.WatchOpts) (
+func (a *AccountManager) WatchBatchAccountRegistrations(opts *bind.WatchOpts) (
 	registrations chan *accountregistry.AccountRegistryBatchPubkeyRegistered,
 	unsubscribe func(),
 	err error,
 ) {
 	ev := make(chan *accountregistry.AccountRegistryBatchPubkeyRegistered)
 
-	sub, err := c.AccountRegistry.WatchBatchPubkeyRegistered(opts, ev)
+	sub, err := a.AccountRegistry.WatchBatchPubkeyRegistered(opts, ev)
 	if err != nil {
 		return nil, nil, errors.WithStack(err)
 	}
 	return ev, sub.Unsubscribe, nil
 }
 
-func (c *Client) WaitForBatchAccountRegistration(
+func (a *AccountManager) WaitForBatchAccountRegistration(
 	tx *types.Transaction,
 	ev chan *accountregistry.AccountRegistryBatchPubkeyRegistered,
 ) ([]uint32, error) {
@@ -72,7 +82,7 @@ func (c *Client) WaitForBatchAccountRegistration(
 			if event.Raw.TxHash == tx.Hash() {
 				return ExtractPubKeyIDsFromBatchAccountEvent(event), nil
 			}
-		case <-time.After(deployer.ChainTimeout):
+		case <-time.After(chain.MineTimeout):
 			return nil, errors.WithStack(ErrRegisterBatchAccountTimeout)
 		}
 	}

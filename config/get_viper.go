@@ -4,6 +4,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cast"
 	"github.com/spf13/viper"
 )
 
@@ -36,6 +37,14 @@ func getUint32(key string, fallback uint32) uint32 {
 func getUint64(key string, fallback uint64) uint64 {
 	viper.SetDefault(key, fallback)
 	return viper.GetUint64(key)
+}
+
+func getUint64OrThrow(key string) uint64 {
+	value, err := cast.ToUint64E(viper.Get(key))
+	if err != nil {
+		log.Fatalf("failed to read %s config: %v", key, err)
+	}
+	return value
 }
 
 func getBool(key string, fallback bool) bool {

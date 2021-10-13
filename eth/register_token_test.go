@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -54,7 +54,7 @@ Outer:
 				tokenID = event.TokenID
 				break Outer
 			}
-		case <-time.After(deployer.ChainTimeout):
+		case <-time.After(chain.MineTimeout):
 			s.Fail("Token registry event watcher timed out")
 		}
 	}
