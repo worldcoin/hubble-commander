@@ -80,6 +80,7 @@ jobs:
           host: ${{ secrets.AWS_STAGING_HOST }}
           username: ec2-user
           key: ${{ secrets.AWS_HUBBLE_CONSUMER_BACKEND_SSH_KEY }}
+          script_stop: true
           script: |
             cd deployment/
             docker-compose pull

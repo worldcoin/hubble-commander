@@ -80,6 +80,7 @@ jobs:
           host: ec2-3-237-17-229.compute-1.amazonaws.com
           username: ec2-user
           key: ${{ secrets.AWS_SSH_KEY }}
+          script_stop: true
           script: |
             docker-compose pull
             docker-compose up -d
