@@ -16,6 +16,8 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+const transactionReceiptMethod = "TransactionReceipt"
+
 type WaitToBeMinedTestSuite struct {
 	*require.Assertions
 	suite.Suite
@@ -28,15 +30,7 @@ func (s *WaitToBeMinedTestSuite) SetupSuite() {
 }
 
 func (s *WaitToBeMinedTestSuite) SetupTest() {
-	s.tx = types.NewTx(&types.DynamicFeeTx{
-		ChainID:   big.NewInt(1),
-		Nonce:     0,
-		To:        ref.Address(utils.RandomAddress()),
-		Gas:       123457,
-		GasFeeCap: big.NewInt(12_500_000),
-		GasTipCap: big.NewInt(0),
-		Data:      []byte{},
-	})
+	s.tx = newTx()
 	s.minedReceipt = &types.Receipt{BlockNumber: big.NewInt(1234)}
 }
 
@@ -53,7 +47,7 @@ func (s *WaitToBeMinedTestSuite) TestWaitToBeMined_CallsTransactionReceiptImmedi
 	var callTime time.Time
 
 	rp := new(MockReceiptProvider)
-	rp.On("TransactionReceipt", mock.Anything, mock.Anything).
+	rp.On(transactionReceiptMethod, mock.Anything, mock.Anything).
 		Return(s.minedReceipt, nil).
 		Run(func(args mock.Arguments) { callTime = time.Now() })
 
@@ -64,9 +58,9 @@ func (s *WaitToBeMinedTestSuite) TestWaitToBeMined_CallsTransactionReceiptImmedi
 }
 
 func withPollInterval(interval time.Duration, fn func()) {
-	initialPollInterval := PollInterval
-	PollInterval = interval
-	defer func() { PollInterval = initialPollInterval }()
+	initialPollInterval := pollInterval
+	pollInterval = interval
+	defer func() { pollInterval = initialPollInterval }()
 	fn()
 }
 
@@ -75,11 +69,11 @@ func (s *WaitToBeMinedTestSuite) TestWaitToBeMined_MakesTheSecondCallAfterInterv
 	var secondCallTime time.Time
 
 	rp := new(MockReceiptProvider)
-	rp.On("TransactionReceipt", mock.Anything, mock.Anything).
+	rp.On(transactionReceiptMethod, mock.Anything, mock.Anything).
 		Return(nilReceipt, ethereum.NotFound).
 		Once()
 
-	rp.On("TransactionReceipt", mock.Anything, mock.Anything).
+	rp.On(transactionReceiptMethod, mock.Anything, mock.Anything).
 		Return(s.minedReceipt, nil).
 		Run(func(args mock.Arguments) { secondCallTime = time.Now() }).
 		Once()
@@ -106,7 +100,7 @@ func (s *WaitToBeMinedTestSuite) TestWaitToBeMined_EventuallyTimesOut() {
 	var nilReceipt *types.Receipt
 
 	rp := new(MockReceiptProvider)
-	rp.On("TransactionReceipt", mock.Anything, mock.Anything).
+	rp.On(transactionReceiptMethod, mock.Anything, mock.Anything).
 		Return(nilReceipt, ethereum.NotFound)
 
 	testTimeout := 50 * time.Millisecond
@@ -118,6 +112,95 @@ func (s *WaitToBeMinedTestSuite) TestWaitToBeMined_EventuallyTimesOut() {
 	})
 
 	s.WithinDuration(expected, time.Now(), 20*time.Millisecond)
+}
+
+func (s *WaitToBeMinedTestSuite) TestWaitToBeMined_HandlesTransactionReceiptCallTimeouts() {
+	var nilReceipt *types.Receipt
+
+	rp := new(MockReceiptProvider)
+	rp.On(transactionReceiptMethod, mock.Anything, mock.Anything).
+		Return(nilReceipt, context.DeadlineExceeded)
+
+	callTime := time.Now()
+
+	withMineTimeout(500*time.Millisecond, func() {
+		_, err := WaitToBeMined(rp, s.tx)
+		s.ErrorIs(err, ErrWaitToBeMinedTimedOut)
+	})
+
+	s.WithinDuration(callTime, time.Now(), 20*time.Millisecond)
+}
+
+func (s *WaitToBeMinedTestSuite) TestWaitForMultipleTxs_WaitsForAllTransactionsAndReturnsReceiptsInOrder() {
+	txs := make([]types.Transaction, 2)
+	expectedReceipts := make([]types.Receipt, len(txs))
+	for i := range txs {
+		txs[i] = *newTx()
+		expectedReceipts[i] = types.Receipt{BlockNumber: big.NewInt(int64(i))}
+	}
+
+	rp := new(MockReceiptProvider)
+	rp.On(transactionReceiptMethod, mock.Anything, txs[0].Hash()).
+		Return(&expectedReceipts[0], nil).
+		Run(func(args mock.Arguments) { time.Sleep(50 * time.Millisecond) })
+
+	rp.On(transactionReceiptMethod, mock.Anything, txs[1].Hash()).
+		Return(&expectedReceipts[1], nil)
+
+	receipts, err := WaitForMultipleTxs(rp, txs)
+	s.NoError(err)
+	s.Equal(receipts, []types.Receipt{expectedReceipts[0], expectedReceipts[1]})
+}
+
+func (s *WaitToBeMinedTestSuite) TestWaitForMultipleTxs_WorksForDuplicatedTransactions() {
+	rp := new(MockReceiptProvider)
+	rp.On(transactionReceiptMethod, mock.Anything, mock.Anything).
+		Return(s.minedReceipt, nil)
+
+	receipts, err := WaitForMultipleTxs(rp, []types.Transaction{*s.tx, *s.tx})
+	s.NoError(err)
+	s.Equal(receipts, []types.Receipt{*s.minedReceipt, *s.minedReceipt})
+}
+
+func (s *WaitToBeMinedTestSuite) TestWaitForMultipleTxs_FinishesOnTimeout() {
+	txs := make([]types.Transaction, 2)
+	for i := range txs {
+		txs[i] = *newTx()
+	}
+
+	var nilReceipt *types.Receipt
+
+	calls := make([]bool, len(txs))
+	rp := new(MockReceiptProvider)
+	rp.On(transactionReceiptMethod, mock.Anything, txs[0].Hash()).
+		Return(nilReceipt, ethereum.NotFound)
+
+	rp.On(transactionReceiptMethod, mock.Anything, txs[1].Hash()).
+		Return(s.minedReceipt, nil).
+		Run(func(args mock.Arguments) { calls[1] = true })
+
+	testTimeout := 50 * time.Millisecond
+	expected := time.Now().Add(testTimeout)
+
+	withMineTimeout(testTimeout, func() {
+		receipts, err := WaitForMultipleTxs(rp, txs)
+		s.ErrorIs(err, ErrWaitToBeMinedTimedOut)
+		s.Nil(receipts)
+	})
+
+	s.WithinDuration(expected, time.Now(), 20*time.Millisecond)
+	s.True(calls[1])
+}
+
+func newTx() *types.Transaction {
+	return types.NewTx(&types.DynamicFeeTx{
+		ChainID:   big.NewInt(1),
+		Nonce:     0,
+		To:        ref.Address(utils.RandomAddress()),
+		Gas:       123457,
+		GasFeeCap: big.NewInt(12_500_000),
+		Data:      []byte{},
+	})
 }
 
 func TestWaitToBeMinedTestSuite(t *testing.T) {

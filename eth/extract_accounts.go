@@ -8,11 +8,11 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 )
 
-func (c *Client) ExtractSingleAccount(
+func (a *AccountManager) ExtractSingleAccount(
 	calldata []byte,
 	event *accountregistry.AccountRegistrySinglePubkeyRegistered,
 ) (*models.AccountLeaf, error) {
-	unpack, err := c.AccountRegistryABI.Methods["register"].Inputs.Unpack(calldata[4:])
+	unpack, err := a.AccountRegistryABI.Methods["register"].Inputs.Unpack(calldata[4:])
 	if err != nil {
 		return nil, err
 	}
@@ -27,11 +27,11 @@ func (c *Client) ExtractSingleAccount(
 	return account, nil
 }
 
-func (c *Client) ExtractAccountsBatch(
+func (a *AccountManager) ExtractAccountsBatch(
 	calldata []byte,
 	event *accountregistry.AccountRegistryBatchPubkeyRegistered,
 ) ([]models.AccountLeaf, error) {
-	unpack, err := c.AccountRegistryABI.Methods["registerBatch"].Inputs.Unpack(calldata[4:])
+	unpack, err := a.AccountRegistryABI.Methods["registerBatch"].Inputs.Unpack(calldata[4:])
 	if err != nil {
 		return nil, err
 	}

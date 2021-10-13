@@ -36,19 +36,18 @@ type ClientConfig struct {
 }
 
 type Client struct {
-	config                  ClientConfig
-	ChainState              models.ChainState
-	Blockchain              chain.Connection
-	Rollup                  *rollup.Rollup
-	RollupABI               *abi.ABI
-	AccountRegistry         *accountregistry.AccountRegistry
-	AccountRegistryABI      *abi.ABI
-	TokenRegistry           *tokenregistry.TokenRegistry
-	DepositManager          *depositmanager.DepositManager
-	rollupContract          *bind.BoundContract
-	accountRegistryContract *bind.BoundContract
-	blocksToFinalise        *int64
-	domain                  *bls.Domain
+	config           ClientConfig
+	ChainState       models.ChainState
+	Blockchain       chain.Connection
+	Rollup           *rollup.Rollup
+	RollupABI        *abi.ABI
+	TokenRegistry    *tokenregistry.TokenRegistry
+	DepositManager   *depositmanager.DepositManager
+	rollupContract   *bind.BoundContract
+	blocksToFinalise *int64
+	domain           *bls.Domain
+
+	*AccountManager
 }
 
 //goland:noinspection GoDeprecation
@@ -59,25 +58,26 @@ func NewClient(blockchain chain.Connection, params *NewClientParams) (*Client, e
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	accountRegistryAbi, err := abi.JSON(strings.NewReader(accountregistry.AccountRegistryABI))
+	backend := blockchain.GetBackend()
+	rollupContract := bind.NewBoundContract(params.ChainState.Rollup, rollupAbi, backend, backend, backend)
+	accountManager, err := NewAccountManager(blockchain, &AccountManagerParams{
+		AccountRegistry:                  params.AccountRegistry,
+		AccountRegistryAddress:           params.ChainState.AccountRegistry,
+		BatchAccountRegistrationGasLimit: params.BatchAccountRegistrationGasLimit,
+	})
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	backend := blockchain.GetBackend()
-	rollupContract := bind.NewBoundContract(params.ChainState.Rollup, rollupAbi, backend, backend, backend)
-	accountRegistryContract := bind.NewBoundContract(params.ChainState.AccountRegistry, accountRegistryAbi, backend, backend, backend)
 	return &Client{
-		config:                  params.ClientConfig,
-		ChainState:              params.ChainState,
-		Blockchain:              blockchain,
-		Rollup:                  params.Rollup,
-		RollupABI:               &rollupAbi,
-		AccountRegistry:         params.AccountRegistry,
-		AccountRegistryABI:      &accountRegistryAbi,
-		TokenRegistry:           params.TokenRegistry,
-		DepositManager:          params.DepositManager,
-		rollupContract:          rollupContract,
-		accountRegistryContract: accountRegistryContract,
+		config:         params.ClientConfig,
+		ChainState:     params.ChainState,
+		Blockchain:     blockchain,
+		Rollup:         params.Rollup,
+		RollupABI:      &rollupAbi,
+		TokenRegistry:  params.TokenRegistry,
+		DepositManager: params.DepositManager,
+		rollupContract: rollupContract,
+		AccountManager: accountManager,
 	}, nil
 }
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
@@ -65,7 +66,15 @@ func deployContractsAndSetupGenesisState(
 		return nil, err
 	}
 
-	registeredAccounts, err := RegisterGenesisAccounts(blockchain.GetAccount(), accountRegistry, cfg.GenesisAccounts)
+	accountManager, err := eth.NewAccountManager(blockchain, &eth.AccountManagerParams{
+		AccountRegistry:        accountRegistry,
+		AccountRegistryAddress: *accountRegistryAddress,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	registeredAccounts, err := RegisterGenesisAccounts(accountManager, cfg.GenesisAccounts)
 	if err != nil {
 		return nil, err
 	}

@@ -22,23 +22,23 @@ var (
 	ErrBatchPubKeyRegisteredLogNotFound = fmt.Errorf("batch pubkey registered log not found in receipt")
 )
 
-func (c *Client) RegisterBatchAccountAndWait(
+func (a *AccountManager) RegisterBatchAccountAndWait(
 	publicKeys []models.PublicKey,
 ) ([]uint32, error) {
-	tx, err := c.RegisterBatchAccount(publicKeys)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	receipt, err := chain.WaitToBeMined(c.Blockchain.GetBackend(), tx)
+	tx, err := a.RegisterBatchAccount(publicKeys)
 	if err != nil {
 		return nil, err
 	}
 
-	return c.retrieveRegisteredPubKeyIDs(receipt)
+	receipt, err := chain.WaitToBeMined(a.Blockchain.GetBackend(), tx)
+	if err != nil {
+		return nil, err
+	}
+
+	return a.retrieveRegisteredPubKeyIDs(receipt)
 }
 
-func (c *Client) RegisterBatchAccount(
+func (a *AccountManager) RegisterBatchAccount(
 	publicKeys []models.PublicKey,
 ) (*types.Transaction, error) {
 	if len(publicKeys) != accountBatchSize {
@@ -50,8 +50,8 @@ func (c *Client) RegisterBatchAccount(
 		pubKeys[i] = publicKeys[i].BigInts()
 	}
 
-	tx, err := c.accountRegistry().
-		WithGasLimit(*c.config.BatchAccountRegistrationGasLimit).
+	tx, err := a.accountRegistry().
+		WithGasLimit(*a.config.BatchAccountRegistrationGasLimit).
 		RegisterBatch(pubKeys)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -60,13 +60,13 @@ func (c *Client) RegisterBatchAccount(
 	return tx, nil
 }
 
-func (c *Client) retrieveRegisteredPubKeyIDs(receipt *types.Receipt) ([]uint32, error) {
+func (a *AccountManager) retrieveRegisteredPubKeyIDs(receipt *types.Receipt) ([]uint32, error) {
 	if len(receipt.Logs) < 1 || receipt.Logs[0] == nil {
 		return nil, errors.WithStack(ErrBatchPubKeyRegisteredLogNotFound)
 	}
 
 	event := new(accountregistry.AccountRegistryBatchPubkeyRegistered)
-	err := c.accountRegistryContract.UnpackLog(event, "BatchPubkeyRegistered", *receipt.Logs[0])
+	err := a.accountRegistryContract.UnpackLog(event, "BatchPubkeyRegistered", *receipt.Logs[0])
 	if err != nil {
 		return nil, err
 	}
