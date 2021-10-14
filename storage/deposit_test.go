@@ -8,18 +8,6 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-var (
-	deposit = models.PendingDeposit{
-		ID: models.DepositID{
-			BlockNumber: 16,
-			LogIndex:    32,
-		},
-		ToPubKeyID: 4,
-		TokenID:    models.MakeUint256(4),
-		L2Amount:   models.MakeUint256(1024),
-	}
-)
-
 type DepositTestSuite struct {
 	*require.Assertions
 	suite.Suite
@@ -42,36 +30,20 @@ func (s *DepositTestSuite) TearDownTest() {
 }
 
 func (s *DepositTestSuite) TestAddPendingDeposit_AddAndRetrieve() {
-	err := s.storage.AddPendingDeposit(&deposit)
-	s.NoError(err)
+	exampleDeposit := s.addPendingDeposit(16, 32)
 
 	deposits, err := s.storage.GetFirstPendingDeposits(1)
 	s.NoError(err)
-	s.Equal(deposit, deposits[0])
+	s.Equal(exampleDeposit, deposits[0])
 }
 
 func (s *DepositTestSuite) TestRemovePendingDeposits() {
 	deposits := []models.PendingDeposit{
-		{
-			ID: models.DepositID{
-				BlockNumber: 123,
-				LogIndex:    1,
-			},
-		},
-		{
-			ID: models.DepositID{
-				BlockNumber: 582,
-				LogIndex:    17,
-			},
-		},
+		s.addPendingDeposit(123, 1),
+		s.addPendingDeposit(582, 17),
 	}
 
-	err := s.storage.AddPendingDeposit(&deposits[0])
-	s.NoError(err)
-	err = s.storage.AddPendingDeposit(&deposits[1])
-	s.NoError(err)
-
-	err = s.storage.RemovePendingDeposits(deposits)
+	err := s.storage.RemovePendingDeposits(deposits)
 	s.NoError(err)
 
 	_, err = s.storage.GetFirstPendingDeposits(2)
@@ -80,47 +52,10 @@ func (s *DepositTestSuite) TestRemovePendingDeposits() {
 
 func (s *DepositTestSuite) TestGetFirstPendingDeposits() {
 	allDeposits := []models.PendingDeposit{
-		{
-			ID: models.DepositID{
-				BlockNumber: 1,
-				LogIndex:    0,
-			},
-			ToPubKeyID: 4,
-			TokenID:    models.MakeUint256(4),
-			L2Amount:   models.MakeUint256(1024),
-		},
-		{
-			ID: models.DepositID{
-				BlockNumber: 1,
-				LogIndex:    2,
-			},
-			ToPubKeyID: 4,
-			TokenID:    models.MakeUint256(4),
-			L2Amount:   models.MakeUint256(1024),
-		},
-		{
-			ID: models.DepositID{
-				BlockNumber: 3,
-				LogIndex:    7,
-			},
-			ToPubKeyID: 4,
-			TokenID:    models.MakeUint256(4),
-			L2Amount:   models.MakeUint256(1024),
-		},
-		{
-			ID: models.DepositID{
-				BlockNumber: 3,
-				LogIndex:    12,
-			},
-			ToPubKeyID: 4,
-			TokenID:    models.MakeUint256(4),
-			L2Amount:   models.MakeUint256(1024),
-		},
-	}
-
-	for i := range allDeposits {
-		err := s.storage.AddPendingDeposit(&allDeposits[i])
-		s.NoError(err)
+		s.addPendingDeposit(1, 0),
+		s.addPendingDeposit(1, 2),
+		s.addPendingDeposit(3, 7),
+		s.addPendingDeposit(3, 12),
 	}
 
 	amount := 3
@@ -136,6 +71,21 @@ func (s *DepositTestSuite) TestGetFirstPendingDeposits_NoDeposits() {
 	deposits, err := s.storage.GetFirstPendingDeposits(1)
 	s.True(IsNotFoundError(err))
 	s.Nil(deposits)
+}
+
+func (s *DepositTestSuite) addPendingDeposit(blockNumber, logIndex uint32) models.PendingDeposit {
+	deposit := models.PendingDeposit{
+		ID: models.DepositID{
+			BlockNumber: blockNumber,
+			LogIndex:    logIndex,
+		},
+		ToPubKeyID: 4,
+		TokenID:    models.MakeUint256(4),
+		L2Amount:   models.MakeUint256(1024),
+	}
+	err := s.storage.AddPendingDeposit(&deposit)
+	s.NoError(err)
+	return deposit
 }
 
 func TestDepositTestSuite(t *testing.T) {
