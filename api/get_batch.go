@@ -25,7 +25,7 @@ func (a *API) unsafeGetBatchByHash(hash common.Hash) (*dto.BatchWithRootAndCommi
 	if err != nil {
 		return nil, err
 	}
-	submissionBlock, err := a.getSubmissionBlock(*batch.FinalisationBlock)
+	submissionBlock, err := a.getSubmissionBlock(batch)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (a *API) unsafeGetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommit
 	if err != nil {
 		return nil, err
 	}
-	submissionBlock, err := a.getSubmissionBlock(*batch.FinalisationBlock)
+	submissionBlock, err := a.getSubmissionBlock(batch)
 	if err != nil {
 		return nil, err
 	}
@@ -74,17 +74,14 @@ func createBatchWithCommitments(
 	return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, commitments), nil
 }
 
-func (a *API) getSubmissionBlock(finalisationBlock uint32) (uint32, error) {
+func (a *API) getSubmissionBlock(batch *models.Batch) (uint32, error) {
+	if batch.ID.IsZero() {
+		return *batch.FinalisationBlock, nil
+	}
+
 	blocks, err := a.client.GetBlocksToFinalise()
 	if err != nil {
 		return 0, err
 	}
-	return calculateSubmissionBlock(finalisationBlock, uint32(*blocks)), nil
-}
-
-func calculateSubmissionBlock(finalisationBlock, blocksToFinalise uint32) uint32 {
-	if finalisationBlock < blocksToFinalise {
-		return finalisationBlock
-	}
-	return finalisationBlock - blocksToFinalise
+	return *batch.FinalisationBlock - uint32(*blocks), nil
 }
