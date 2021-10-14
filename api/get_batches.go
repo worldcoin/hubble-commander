@@ -35,7 +35,7 @@ func (a *API) unsafeGetBatches(from, to *models.Uint256) ([]dto.Batch, error) {
 		if batches[i].Hash == nil {
 			continue
 		}
-		submissionBlock := *batches[i].FinalisationBlock - uint32(*blocksToFinalise)
+		submissionBlock := calculateSubmissionBlock(*batches[i].FinalisationBlock, uint32(*blocksToFinalise))
 		batchesWithSubmission = append(batchesWithSubmission, *dto.MakeBatch(&batches[i], submissionBlock))
 	}
 	return batchesWithSubmission, nil
