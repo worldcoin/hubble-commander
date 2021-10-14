@@ -74,8 +74,39 @@ func (s *DepositsTestSuite) TestSyncDeposits() {
 	_, err = s.cmd.storage.GetPendingDepositSubTree(models.MakeUint256(2))
 	s.True(st.IsNotFoundError(err))
 
-	s.Len(subTree.Deposits, 4)
 	s.Equal(deposits, subTree.Deposits)
+
+	_, err = s.cmd.storage.GetFirstPendingDeposits(4)
+	s.True(st.IsNotFoundError(err))
+}
+
+func (s *DepositsTestSuite) TestSyncDeposits_TwoSubTrees() {
+	s.T().SkipNow() // TODO unskip
+	s.registerToken()
+	s.approveTokens()
+
+	firstSubTreeDeposits := s.queueFourDeposits()
+	secondSubTreeDeposits := s.queueFourDeposits()
+	s.queueDeposit()
+	s.queueDeposit()
+
+	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
+	s.NoError(err)
+
+	err = s.cmd.syncDeposits(0, *latestBlockNumber)
+	s.NoError(err)
+
+	firstSubTree, err := s.cmd.storage.GetPendingDepositSubTree(models.MakeUint256(1))
+	s.NoError(err)
+
+	secondSubTree, err := s.cmd.storage.GetPendingDepositSubTree(models.MakeUint256(2))
+	s.NoError(err)
+
+	_, err = s.cmd.storage.GetPendingDepositSubTree(models.MakeUint256(3))
+	s.True(st.IsNotFoundError(err))
+
+	s.Equal(firstSubTreeDeposits, firstSubTree.Deposits)
+	s.Equal(secondSubTreeDeposits, secondSubTree.Deposits)
 
 	_, err = s.cmd.storage.GetFirstPendingDeposits(4)
 	s.True(st.IsNotFoundError(err))
