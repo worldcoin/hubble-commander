@@ -124,9 +124,6 @@ func (s *Storage) GetCommitmentsByBatchID(batchID models.Uint256) ([]models.Comm
 	if err != nil && err != db.ErrIteratorFinished {
 		return nil, err
 	}
-	if len(commitments) == 0 {
-		return nil, errors.WithStack(NewNotFoundError("commitments"))
-	}
 
 	commitmentsWithToken := make([]models.CommitmentWithTokenID, 0, len(commitments))
 	for i := range commitments {

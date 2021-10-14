@@ -84,14 +84,23 @@ func (s *GetBatchTestSuite) TestGetBatchByHash() {
 	s.Equal(s.batch.SubmissionTime, result.SubmissionTime)
 }
 
-func (s *GetBatchTestSuite) TestGetBatchByHash_NoCommitments() {
-	s.addStateLeaf()
-	err := s.storage.AddBatch(&s.batch)
+func (s *GetBatchTestSuite) TestGetBatchByHash_GenesisBatch() {
+	genesisBatch := models.Batch{
+		ID:                models.MakeUint256(0),
+		Type:              batchtype.Genesis,
+		TransactionHash:   utils.RandomHash(),
+		Hash:              utils.NewRandomHash(),
+		FinalisationBlock: ref.Uint32(10),
+	}
+	err := s.storage.AddBatch(&genesisBatch)
 	s.NoError(err)
 
-	result, err := s.api.GetBatchByHash(*s.batch.Hash)
-	s.Equal(s.batchNotFoundAPIErr, err)
-	s.Nil(result)
+	result, err := s.api.GetBatchByHash(*genesisBatch.Hash)
+	s.NoError(err)
+	s.Equal(genesisBatch.Hash, result.Hash)
+	s.Equal(genesisBatch.Type, result.Type)
+	s.Equal(*genesisBatch.FinalisationBlock, result.SubmissionBlock)
+	s.Len(result.Commitments, 0)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByHash_NonExistentBatch() {
@@ -121,13 +130,23 @@ func (s *GetBatchTestSuite) TestGetBatchByID() {
 	s.Equal(s.batch.SubmissionTime, result.SubmissionTime)
 }
 
-func (s *GetBatchTestSuite) TestGetBatchByID_NoCommitments() {
-	err := s.storage.AddBatch(&s.batch)
+func (s *GetBatchTestSuite) TestGetBatchByID_GenesisBatch() {
+	genesisBatch := models.Batch{
+		ID:                models.MakeUint256(0),
+		Type:              batchtype.Genesis,
+		TransactionHash:   utils.RandomHash(),
+		Hash:              utils.NewRandomHash(),
+		FinalisationBlock: ref.Uint32(10),
+	}
+	err := s.storage.AddBatch(&genesisBatch)
 	s.NoError(err)
 
-	result, err := s.api.GetBatchByID(models.MakeUint256(0))
-	s.Equal(s.batchNotFoundAPIErr, err)
-	s.Nil(result)
+	result, err := s.api.GetBatchByID(genesisBatch.ID)
+	s.NoError(err)
+	s.Equal(genesisBatch.Hash, result.Hash)
+	s.Equal(genesisBatch.Type, result.Type)
+	s.Equal(*genesisBatch.FinalisationBlock, result.SubmissionBlock)
+	s.Len(result.Commitments, 0)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByID_NonExistentBatch() {
