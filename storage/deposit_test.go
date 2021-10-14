@@ -133,7 +133,7 @@ func (s *DepositTestSuite) TestGetFirstPendingDeposits() {
 }
 
 func (s *DepositTestSuite) TestGetFirstPendingDeposits_NoDeposits() {
-	deposits, err := s.storage.GetFirstPendingDeposits(5)
+	deposits, err := s.storage.GetFirstPendingDeposits(1)
 	s.True(IsNotFoundError(err))
 	s.Nil(deposits)
 }
