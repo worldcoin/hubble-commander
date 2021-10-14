@@ -79,5 +79,12 @@ func (a *API) getSubmissionBlock(finalisationBlock uint32) (uint32, error) {
 	if err != nil {
 		return 0, err
 	}
-	return finalisationBlock - uint32(*blocks), nil
+	return calculateSubmissionBlock(finalisationBlock, uint32(*blocks)), nil
+}
+
+func calculateSubmissionBlock(finalisationBlock, blocksToFinalise uint32) uint32 {
+	if finalisationBlock < blocksToFinalise {
+		return finalisationBlock
+	}
+	return finalisationBlock - blocksToFinalise
 }
