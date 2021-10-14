@@ -6,7 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/erc20"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -144,7 +144,7 @@ func (s *DepositsTestSuite) approveTokens() {
 	tx, err := token.Approve(s.testClient.GetAccount(), s.testClient.ChainState.DepositManager, utils.ParseEther("100"))
 	s.NoError(err)
 
-	_, err = deployer.WaitToBeMined(s.testClient.GetBackend(), tx)
+	_, err = chain.WaitToBeMined(s.testClient.GetBackend(), tx)
 	s.NoError(err)
 }
 

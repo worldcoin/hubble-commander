@@ -36,18 +36,18 @@ type ClientConfig struct {
 }
 
 type Client struct {
-	config           ClientConfig
-	ChainState       models.ChainState
-	Blockchain       chain.Connection
-	Rollup           *rollup.Rollup
-	RollupABI        *abi.ABI
-	TokenRegistry    *tokenregistry.TokenRegistry
-	DepositManager   *depositmanager.DepositManager
-	DepositManagerABI       *abi.ABI
-	rollupContract   *bind.BoundContract
-	depositManagerContract  *bind.BoundContract
-	blocksToFinalise *int64
-	domain           *bls.Domain
+	config                 ClientConfig
+	ChainState             models.ChainState
+	Blockchain             chain.Connection
+	Rollup                 *rollup.Rollup
+	RollupABI              *abi.ABI
+	TokenRegistry          *tokenregistry.TokenRegistry
+	DepositManager         *depositmanager.DepositManager
+	DepositManagerABI      *abi.ABI
+	rollupContract         *bind.BoundContract
+	depositManagerContract *bind.BoundContract
+	blocksToFinalise       *int64
+	domain                 *bls.Domain
 
 	*AccountManager
 }
@@ -76,17 +76,17 @@ func NewClient(blockchain chain.Connection, params *NewClientParams) (*Client, e
 		return nil, errors.WithStack(err)
 	}
 	return &Client{
-		config:         params.ClientConfig,
-		ChainState:     params.ChainState,
-		Blockchain:     blockchain,
-		Rollup:         params.Rollup,
-		RollupABI:      &rollupAbi,
-		TokenRegistry:  params.TokenRegistry,
-		DepositManager: params.DepositManager,
-		DepositManagerABI:       &depositManagerAbi,
-		rollupContract: rollupContract,
-		depositManagerContract:  depositManagerContract,
-		AccountManager: accountManager,
+		config:                 params.ClientConfig,
+		ChainState:             params.ChainState,
+		Blockchain:             blockchain,
+		Rollup:                 params.Rollup,
+		RollupABI:              &rollupAbi,
+		TokenRegistry:          params.TokenRegistry,
+		DepositManager:         params.DepositManager,
+		DepositManagerABI:      &depositManagerAbi,
+		rollupContract:         rollupContract,
+		depositManagerContract: depositManagerContract,
+		AccountManager:         accountManager,
 	}, nil
 }
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -20,11 +20,11 @@ func (c *Client) QueueDepositAndWait(
 	l1Amount *models.Uint256,
 	tokenID *models.Uint256,
 ) (*models.DepositID, *models.Uint256, error) {
-	tx, err := QueueDeposit(c.ChainConnection.GetAccount(), c.DepositManager, toPubKeyID, l1Amount, tokenID)
+	tx, err := QueueDeposit(c.Blockchain.GetAccount(), c.DepositManager, toPubKeyID, l1Amount, tokenID)
 	if err != nil {
 		return nil, nil, errors.WithStack(err)
 	}
-	receipt, err := deployer.WaitToBeMined(c.ChainConnection.GetBackend(), tx)
+	receipt, err := chain.WaitToBeMined(c.Blockchain.GetBackend(), tx)
 	if err != nil {
 		return nil, nil, errors.WithStack(err)
 	}

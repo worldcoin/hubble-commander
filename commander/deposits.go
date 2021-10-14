@@ -59,7 +59,7 @@ func (c *Commander) syncQueuedDeposits(start, end uint64) error {
 	defer func() { _ = it.Close() }()
 
 	for it.Next() {
-		tx, _, err := c.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
+		tx, _, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
 		if err != nil {
 			return err
 		}
@@ -100,7 +100,7 @@ func (c *Commander) fetchDepositSubTrees(start, end uint64) ([]models.PendingDep
 	depositSubTrees := make([]models.PendingDepositSubTree, 0, 1)
 
 	for it.Next() {
-		tx, _, err := c.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
+		tx, _, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
 		if err != nil {
 			return nil, err
 		}
