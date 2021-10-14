@@ -54,8 +54,8 @@ func (s *DepositTestSuite) TestGetFirstPendingDeposits() {
 	allDeposits := []models.PendingDeposit{
 		s.addPendingDeposit(1, 0),
 		s.addPendingDeposit(1, 2),
+		s.addPendingDeposit(3, 12), // not in order on purpose
 		s.addPendingDeposit(3, 7),
-		s.addPendingDeposit(3, 12),
 	}
 
 	amount := 3
@@ -64,7 +64,7 @@ func (s *DepositTestSuite) TestGetFirstPendingDeposits() {
 	s.Len(pendingDeposits, amount)
 	s.Equal(allDeposits[0], pendingDeposits[0])
 	s.Equal(allDeposits[1], pendingDeposits[1])
-	s.Equal(allDeposits[2], pendingDeposits[2])
+	s.Equal(allDeposits[3], pendingDeposits[2])
 }
 
 func (s *DepositTestSuite) TestGetFirstPendingDeposits_NoDeposits() {
