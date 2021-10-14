@@ -56,16 +56,8 @@ func (s *DepositsTestSuite) TestSyncDeposits() {
 	s.registerToken()
 	s.approveTokens()
 
-	deposits := make([]models.PendingDeposit, 0, 4)
-
 	// Smart contract needs 4 deposits to create a subtree (depth specified in cfg.Rollup.MaxDepositSubTreeDepth)
-	deposits = append(
-		deposits,
-		*s.queueDeposit(),
-		*s.queueDeposit(),
-		*s.queueDeposit(),
-		*s.queueDeposit(),
-	)
+	deposits := s.queueFourDeposits()
 
 	s.queueDeposit()
 	s.queueDeposit()
@@ -111,10 +103,7 @@ func (s *DepositsTestSuite) TestFetchDepositSubTrees() {
 	s.approveTokens()
 
 	// Smart contract needs 4 deposits to create a subtree (depth specified in cfg.Rollup.MaxDepositSubTreeDepth)
-	s.queueDeposit()
-	s.queueDeposit()
-	s.queueDeposit()
-	s.queueDeposit()
+	s.queueFourDeposits()
 
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)
@@ -159,6 +148,15 @@ func (s *DepositsTestSuite) queueDeposit() *models.PendingDeposit {
 		ToPubKeyID: uint32(toPubKeyID.Uint64()),
 		TokenID:    *s.tokenID,
 		L2Amount:   *l2Amount,
+	}
+}
+
+func (s *DepositsTestSuite) queueFourDeposits() []models.PendingDeposit {
+	return []models.PendingDeposit{
+		*s.queueDeposit(),
+		*s.queueDeposit(),
+		*s.queueDeposit(),
+		*s.queueDeposit(),
 	}
 }
 
