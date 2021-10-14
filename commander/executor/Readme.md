@@ -1,9 +1,9 @@
 # Executor
 
-
-`ExecutionContext` Single use struct on every Rollup iteration. Creates a database transaction.
-
+* Executing transactions
+* Creating commitments
 * Creating batches
-* Syncing batches
-* Submitting disputes
-* Verifying signatures
+* Submitting batches on chain
+
+`ExecutionContext` Wraps common dependencies and manages a database transaction.
+`RollupContext` Single use struct created on every Rollup Loop iteration.
