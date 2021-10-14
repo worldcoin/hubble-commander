@@ -1,27 +1,77 @@
 # Hubble Commander
 
+[![CI](https://github.com/worldcoin/hubble-commander/actions/workflows/ci.yml/badge.svg)](https://github.com/worldcoin/hubble-commander/actions/workflows/ci.yml)
+[![E2E Test](https://github.com/worldcoin/hubble-commander/actions/workflows/e2e.yml/badge.svg)](https://github.com/worldcoin/hubble-commander/actions/workflows/e2e.yml)
+
+## Overview
+
+|                     path                     |                description                |
+| -------------------------------------------- | ----------------------------------------- |
+| [`commander`](commander)                     | Main application struct                   |
+| [`config`](config)                           | Config loading code                       |
+| [`contracts`](contracts)                     | Smart contract wrappers                   |
+| [`utils`](utils)                             | Utilities                                 |
+| [`models`](models)                           | Repository of types                       |
+| [`storage`](storage)                         | Storage                                   |
+| [`deployment`](deployment)                   | Kubernetes deployment files               |
+| [`bls`](bls)                                 | BLS Signature library                     |
+| [`bls/sdk`](bls/sdk)                         | BLS Wrapper for Mobile client             |
+| [`db`](db)                                   | Database abstraction                      |
+| [`api`](api)                                 | API Package                               |
+| [`eth`](eth)                                 | Ethereum client                           |
+| [`main`](main)                               | Command line interface                    |
+| [`e2e`](e2e)                                 | End-to-end tests                          |
+
+<!-- Above table extracted using
+#!/usr/bin/env python3
+from pathlib import Path
+from pytablewriter import MarkdownTableWriter
+import re
+
+value_matrix = []
+for path_object in Path(".").glob('**/Readme.md'):
+    if 'hubble-contracts' in f"{path_object}":
+        continue
+    print(f"Parsing {path_object}")
+    dir = f"{path_object.parent}"
+    readme = path_object.read_text()
+    title = re.match("#\s*(.*?)\n", readme).group(1)
+    value_matrix += [[f"[`{dir}`]({dir})", f"{title}"]]
+
+MarkdownTableWriter(
+    headers=["path", "description"],
+    value_matrix=value_matrix,
+    margin=1
+).write_table()
+-->
+
 ## Prerequisites
 
 ### Bindings
+
 In order to generate Go bindings for smart contracts `abigen` tool needs to be installed locally. 
 It comes along with Geth which can be installed on macOS using:
+
 ```shell
 brew tap ethereum/ethereum
 brew install ethereum
 ```
-For other environments refer to: https://geth.ethereum.org/docs/install-and-build/installing-geth
 
-You also need python3 installed: https://www.python.org/
+For other environments refer to: <https://geth.ethereum.org/docs/install-and-build/installing-geth>
+
+You also need python3 installed: <https://www.python.org/>
 
 ### golangci-lint
 
 For the lint script to work `golangci-lint` must be installed locally.
 On macOS run:
+
 ```shell
 brew install golangci-lint
 brew upgrade golangci-lint
 ```
-For other environments refer to: https://golangci-lint.run/usage/install/#local-installation
+
+For other environments refer to: <https://golangci-lint.run/usage/install/#local-installation>
 
 ## Running the commander
 
@@ -30,6 +80,7 @@ and it requires deployed smart contracts to work. It can connect to said smart c
 their addresses either from a chain spec file or from an already running commander. The path to a chain spec file
 and the url of a remote commander node can be set in the config file (see `config.example.yaml` file for reference)
 or with env variables:
+
 ```shell
 # Environmental variables
 HUBBLE_BOOTSTRAP_CHAIN_SPEC_PATH=chain-spec.yaml
@@ -71,6 +122,7 @@ There is a number of scripts defined in the Makefile:
 ## Running with Go-Ethereum (Geth)
 
 Start Geth either locally or with Docker:
+
 ```shell
 # Starts geth locally
 make start-geth-locally
@@ -80,6 +132,7 @@ make setup-geth
 ```
 
 Use the following config to make commander connect to the local node:
+
 ```shell
 HUBBLE_ETHEREUM_RPC_URL=ws://127.0.0.1:8546
 HUBBLE_ETHEREUM_CHAIN_ID=1337
@@ -87,8 +140,10 @@ HUBBLE_ETHEREUM_PRIVATE_KEY=ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d8024
 ```
 
 ## Running docker image on Docker for Mac
+
 Create `.env.docker` file and set necessary env variables:
-```
+
+```shell
 HUBBLE_ETHEREUM_RPC_URL=ws://docker.for.mac.localhost:8546
 HUBBLE_ETHEREUM_CHAIN_ID=1337
 HUBBLE_ETHEREUM_PRIVATE_KEY=ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
@@ -97,16 +152,19 @@ HUBBLE_ROLLUP_MAX_TXS_PER_COMMITMENT=32
 ```
 
 Create `chain-spec` directory with:
+
 ```shell
 mkdir chain-spec
 ```
 
 Then run this command to deploy the smart contracts and create a chain spec file:
+
 ```shell
 docker run -it -v $(pwd)/chain-spec:/go/src/app/chain-spec -p 8080:8080 --env-file .env.docker ghcr.io/worldcoin/hubble-commander:latest deploy -file /go/src/app/chain-spec/chain-spec.yaml
 ```
 
 Afterwards, run this to start the commander:
+
 ```shell
 docker run -it -v $(pwd)/chain-spec:/go/src/app/chain-spec -p 8080:8080 --env-file .env.docker ghcr.io/worldcoin/hubble-commander:latest start
 ```
@@ -114,29 +172,35 @@ docker run -it -v $(pwd)/chain-spec:/go/src/app/chain-spec -p 8080:8080 --env-fi
 ## Running E2E tests against a Docker image
 
 Build the docker image:
+
 ```shell
 docker build . -t ghcr.io/worldcoin/hubble-commander:latest
 ```
 
 Export variables from the `.env.docker` to the currently running shell:
+
 ```shell
 export $(grep -v '#.*' .env.docker | xargs)
 ```
 
 Run the E2E tests:
+
 ```shell
 make test-e2e
 ```
+
 The Docker container will be started and stopped automatically.
 
 ## Running E2E tests locally
 
 Start commander in a separate terminal window and wait until it finished bootstrapping:
+
 ```shell
 make run-prune
 ```
 
 Run the E2E tests:
+
 ```shell
 make test-e2e-locally
 ```
