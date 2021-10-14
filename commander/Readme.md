@@ -14,9 +14,3 @@
 `new_block.go`: `newBlockLoop` Watches for new blocks. Triggers syncing methods.
 
 `syncForward`: Sync a batch of blocks (batched for internal efficiency, not visible from the outside).
-
-
-TODO:
-
-* Currently, alternates between Transfer and Create2 batches. In the future allocate
-  based on demand.

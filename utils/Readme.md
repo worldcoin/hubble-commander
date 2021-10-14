@@ -1,8 +1,5 @@
 # Utilities
 
+`ref` syntax sugar for creating references to values.
 
-`ref` syntax suggar for create references to values.
-
-`merkletree` 
-
-Todo: Find StoredMerkleTree which is partially in database.
+`merkletree` in-memory merkle tree implementation
