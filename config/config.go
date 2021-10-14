@@ -60,7 +60,7 @@ func GetConfig() *Config {
 			DisableSignatures:                getBool("rollup.disable_signatures", false),
 		},
 		API: &APIConfig{
-			Version: "0.0.1",
+			Version: "0.5.0-rc2",
 			Port:    getString("api.port", "8080"),
 		},
 		Badger: &BadgerConfig{
@@ -99,7 +99,7 @@ func GetTestConfig() *Config {
 			DisableSignatures:                true,
 		},
 		API: &APIConfig{
-			Version: "dev-0.0.1",
+			Version: "dev-0.5.0-rc2",
 			Port:    "8080",
 		},
 		Badger: &BadgerConfig{
