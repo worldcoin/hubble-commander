@@ -66,7 +66,7 @@ jobs:
         with:
           host: ${{ secrets.AWS_CRYPTO_HOST }}
           username: ec2-user
-          key: ${{ secrets.AWS_SSH_KEY }}
+          key: ${{ secrets.AWS_CRYPTO_SSH_KEY }}
           script_stop: true
           script: |
             cd deployment/
