@@ -26,28 +26,6 @@ func (c *Commander) syncDeposits(start, end uint64) error {
 	return nil
 }
 
-func (c *Commander) saveSyncedSubTrees(subTrees []models.PendingDepositSubTree) error {
-	subTreeLeavesAmount := 1 << c.cfg.Rollup.MaxDepositSubTreeDepth
-	depositsAmountRequiredForSubTrees := len(subTrees) * subTreeLeavesAmount
-
-	deposits, err := c.storage.GetFirstPendingDeposits(depositsAmountRequiredForSubTrees)
-	if err != nil {
-		return err
-	}
-
-	for i := range subTrees {
-		subTree := &subTrees[i]
-		subTree.Deposits = deposits
-
-		err := c.storage.AddPendingDepositSubTree(subTree)
-		if err != nil {
-			return err
-		}
-	}
-
-	return c.storage.RemovePendingDeposits(deposits)
-}
-
 func (c *Commander) syncQueuedDeposits(start, end uint64) error {
 	it, err := c.client.DepositManager.FilterDepositQueued(&bind.FilterOpts{
 		Start: start,
@@ -118,4 +96,26 @@ func (c *Commander) fetchDepositSubTrees(start, end uint64) ([]models.PendingDep
 	}
 
 	return depositSubTrees, nil
+}
+
+func (c *Commander) saveSyncedSubTrees(subTrees []models.PendingDepositSubTree) error {
+	subTreeLeavesAmount := 1 << c.cfg.Rollup.MaxDepositSubTreeDepth
+	depositsAmountRequiredForSubTrees := len(subTrees) * subTreeLeavesAmount
+
+	deposits, err := c.storage.GetFirstPendingDeposits(depositsAmountRequiredForSubTrees)
+	if err != nil {
+		return err
+	}
+
+	for i := range subTrees {
+		subTree := &subTrees[i]
+		subTree.Deposits = deposits
+
+		err := c.storage.AddPendingDepositSubTree(subTree)
+		if err != nil {
+			return err
+		}
+	}
+
+	return c.storage.RemovePendingDeposits(deposits)
 }
