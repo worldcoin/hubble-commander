@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
+	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -92,6 +93,24 @@ func (s *DisputeC2TSignatureTestSuite) TestDisputeSignature_DisputesBatchWithInv
 	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[0].ID)
 }
 
+func (s *DisputeC2TSignatureTestSuite) TestDisputeSignature_DisputesBatchToNonexistentReceiver() {
+	wallets := s.setUserStatesAndAddAccounts()
+
+	transfer := testutils.MakeCreate2Transfer(0, nil, 0, 100, wallets[2].PublicKey())
+	s.signC2TWithPublicKeyHash(&wallets[0], &transfer, merkletree.GetZeroHash(0))
+
+	s.submitBatchWithNonexistentAccount(&transfer)
+
+	remoteBatches, err := s.client.GetAllBatches()
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	err = s.disputeSignature(&remoteBatches[0], models.Create2TransferArray{transfer})
+	s.NoError(err)
+
+	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[0].ID)
+}
+
 func (s *DisputeC2TSignatureTestSuite) TestDisputeSignature_ValidBatch() {
 	wallets := s.setUserStatesAndAddAccounts()
 
@@ -116,6 +135,48 @@ func (s *DisputeC2TSignatureTestSuite) signCreate2Transfer(wallet *bls.Wallet, t
 	signature, err := wallet.Sign(encodedTransfer)
 	s.NoError(err)
 	transfer.Signature = *signature.ModelsSignature()
+}
+
+func (s *DisputeC2TSignatureTestSuite) signC2TWithPublicKeyHash(
+	wallet *bls.Wallet, transfer *models.Create2Transfer, publicKeyHash common.Hash,
+) {
+	encodedTransfer, err := encoder.EncodeCreate2TransferForSigning(transfer)
+	s.NoError(err)
+	copy(encodedTransfer[32*2:32*3], publicKeyHash.Bytes())
+
+	signature, err := wallet.Sign(encodedTransfer)
+	s.NoError(err)
+	transfer.Signature = *signature.ModelsSignature()
+}
+
+func (s *DisputeC2TSignatureTestSuite) submitBatchWithNonexistentAccount(tx models.GenericTransaction) {
+	pendingBatch, commitments := s.createBatch(tx)
+
+	c2t, _, err := encoder.DecodeCreate2TransferFromCommitment(commitments[0].Transactions)
+	s.NoError(err)
+
+	receiverPubKeyID := uint32(1000)
+
+	_, err = s.disputeCtx.storage.StateTree.Set(*c2t.ToStateID, &models.UserState{
+		PubKeyID: receiverPubKeyID,
+		TokenID:  models.MakeUint256(0),
+		Balance:  tx.GetAmount(),
+		Nonce:    models.MakeUint256(0),
+	})
+	s.NoError(err)
+
+	root, err := s.disputeCtx.storage.StateTree.Root()
+	s.NoError(err)
+	commitments[0].PostStateRoot = *root
+
+	encodedC2T, err := encoder.EncodeCreate2TransferForCommitment(c2t, receiverPubKeyID)
+	s.NoError(err)
+	commitments[0].Transactions = encodedC2T
+
+	err = s.rollupCtx.SubmitBatch(pendingBatch, commitments)
+	s.NoError(err)
+
+	s.client.Commit()
 }
 
 func TestDisputeC2TSignatureTestSuite(t *testing.T) {
