@@ -25,25 +25,16 @@ func (a *API) unsafeGetBatches(from, to *models.Uint256) ([]dto.Batch, error) {
 		return []dto.Batch{}, err
 	}
 
-	blocksToFinalise, err := a.client.GetBlocksToFinalise()
-	if err != nil {
-		return nil, err
-	}
-
 	batchesWithSubmission := make([]dto.Batch, 0, len(batches))
 	for i := range batches {
 		if batches[i].Hash == nil {
 			continue
 		}
-		submissionBlock := calculateSubmissionBlock(&batches[i], uint32(*blocksToFinalise))
+		submissionBlock, err := a.getSubmissionBlock(&batches[i])
+		if err != nil {
+			return nil, err
+		}
 		batchesWithSubmission = append(batchesWithSubmission, *dto.MakeBatch(&batches[i], submissionBlock))
 	}
 	return batchesWithSubmission, nil
-}
-
-func calculateSubmissionBlock(batch *models.Batch, blocksToFinalise uint32) uint32 {
-	if batch.ID.IsZero() {
-		return *batch.FinalisationBlock
-	}
-	return *batch.FinalisationBlock - blocksToFinalise
 }
