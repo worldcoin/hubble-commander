@@ -5,11 +5,22 @@ import (
 )
 
 type RollupError struct {
-	Reason string
+	Reason     string
+	IsLoggable bool
 }
 
 func NewRollupError(reason string) *RollupError {
-	return &RollupError{Reason: reason}
+	return &RollupError{
+		Reason:     reason,
+		IsLoggable: false,
+	}
+}
+
+func NewLoggableRollupError(reason string) *RollupError {
+	return &RollupError{
+		Reason:     reason,
+		IsLoggable: true,
+	}
 }
 
 func (e RollupError) Error() string {

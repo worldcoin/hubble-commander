@@ -4,14 +4,18 @@ import (
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
-	"github.com/Worldcoin/hubble-commander/eth/rollup"
+	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	log "github.com/sirupsen/logrus"
 )
 
-func Deploy(cfg *config.Config, chain deployer.ChainConnection) (chainSpec *string, err error) {
+var ErrNoPublicKeysInGenesisAccounts = fmt.Errorf("genesis accounts for deployment require public keys")
+
+func Deploy(cfg *config.Config, blockchain chain.Connection) (chainSpec *string, err error) {
 	tempStorage, err := st.NewTemporaryStorage()
 	if err != nil {
 		return nil, err
@@ -25,11 +29,11 @@ func Deploy(cfg *config.Config, chain deployer.ChainConnection) (chainSpec *stri
 	}()
 
 	log.Printf(
-		"Bootstrapping genesis state with %d accounts on chainId = %s",
+		"Bootstrapping genesis state with %d accounts on chainId = %d",
 		len(cfg.Bootstrap.GenesisAccounts),
 		cfg.Ethereum.ChainID,
 	)
-	chainState, err := deployContractsAndSetupGenesisState(tempStorage.Storage, chain, cfg.Bootstrap.GenesisAccounts)
+	chainState, err := deployContractsAndSetupGenesisState(tempStorage.Storage, blockchain, cfg.Bootstrap)
 	if err != nil {
 		return nil, err
 	}
@@ -44,15 +48,33 @@ func Deploy(cfg *config.Config, chain deployer.ChainConnection) (chainSpec *stri
 
 func deployContractsAndSetupGenesisState(
 	storage *st.Storage,
-	chain deployer.ChainConnection,
-	accounts []models.GenesisAccount,
+	blockchain chain.Connection,
+	cfg *config.BootstrapConfig,
 ) (*models.ChainState, error) {
-	accountRegistryAddress, accountRegistryDeploymentBlock, accountRegistry, err := deployer.DeployAccountRegistry(chain)
+	err := validateGenesisAccounts(cfg.GenesisAccounts)
 	if err != nil {
 		return nil, err
 	}
 
-	registeredAccounts, err := RegisterGenesisAccounts(chain.GetAccount(), accountRegistry, accounts)
+	chooserAddress, _, err := deployer.DeployProofOfBurn(blockchain)
+	if err != nil {
+		return nil, err
+	}
+
+	accountRegistryAddress, accountRegistryDeploymentBlock, accountRegistry, err := deployer.DeployAccountRegistry(blockchain, chooserAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	accountManager, err := eth.NewAccountManager(blockchain, &eth.AccountManagerParams{
+		AccountRegistry:        accountRegistry,
+		AccountRegistryAddress: *accountRegistryAddress,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	registeredAccounts, err := RegisterGenesisAccounts(accountManager, cfg.GenesisAccounts)
 	if err != nil {
 		return nil, err
 	}
@@ -69,16 +91,22 @@ func deployContractsAndSetupGenesisState(
 		return nil, err
 	}
 
-	contracts, err := rollup.DeployConfiguredRollup(chain, rollup.DeploymentConfig{
-		Params:       rollup.Params{GenesisStateRoot: stateRoot},
-		Dependencies: rollup.Dependencies{AccountRegistry: accountRegistryAddress},
+	contracts, err := rollup.DeployConfiguredRollup(blockchain, rollup.DeploymentConfig{
+		Params: rollup.Params{
+			GenesisStateRoot: stateRoot,
+			BlocksToFinalise: models.NewUint256(uint64(cfg.BlocksToFinalise)),
+		},
+		Dependencies: rollup.Dependencies{
+			AccountRegistry: accountRegistryAddress,
+			Chooser:         chooserAddress,
+		},
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	chainState := &models.ChainState{
-		ChainID:                        chain.GetChainID(),
+		ChainID:                        blockchain.GetChainID(),
 		AccountRegistry:                *accountRegistryAddress,
 		AccountRegistryDeploymentBlock: *accountRegistryDeploymentBlock,
 		TokenRegistry:                  contracts.TokenRegistryAddress,
@@ -89,4 +117,14 @@ func deployContractsAndSetupGenesisState(
 	}
 
 	return chainState, nil
+}
+
+func validateGenesisAccounts(accounts []models.GenesisAccount) error {
+	for i := range accounts {
+		if accounts[i].PublicKey == nil {
+			return ErrNoPublicKeysInGenesisAccounts
+		}
+	}
+
+	return nil
 }

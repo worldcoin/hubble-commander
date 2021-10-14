@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/commander/syncer"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
@@ -36,7 +37,10 @@ func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_RemovesInvalidBatc
 		},
 	}
 
-	pubKeyIDs := [][]uint32{{3, 4}, {5, 6}}
+	pubKeyIDs := [][]uint32{
+		{st.AccountBatchOffset, st.AccountBatchOffset + 1},
+		{st.AccountBatchOffset + 2, st.AccountBatchOffset + 3},
+	}
 	proofs := s.getStateMerkleProofs(commitmentTxs, pubKeyIDs)
 
 	s.beginTransaction()
@@ -61,14 +65,14 @@ func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_FirstCommitment() 
 			testutils.MakeCreate2Transfer(0, ref.Uint32(4), 0, 500, wallets[1].PublicKey()),
 		},
 	}
-	pubKeyIDs := [][]uint32{{4}}
+	pubKeyIDs := [][]uint32{{st.AccountBatchOffset}}
 
 	transfer := testutils.MakeCreate2Transfer(0, nil, 0, 50, wallets[1].PublicKey())
 	s.submitBatch(&transfer)
 
 	pubKeyID, err := s.client.RegisterAccountAndWait(wallets[1].PublicKey())
 	s.NoError(err)
-	s.EqualValues(4, *pubKeyID)
+	s.EqualValues(3, *pubKeyID)
 
 	proofs := s.getStateMerkleProofs(commitmentTxs, pubKeyIDs)
 
@@ -96,7 +100,7 @@ func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_ValidBatch() {
 		testutils.MakeCreate2Transfer(0, nil, 0, 50, wallets[1].PublicKey()),
 		testutils.MakeCreate2Transfer(0, ref.Uint32(4), 1, 100, wallets[1].PublicKey()),
 	}
-	pubKeyIDs := [][]uint32{{4}}
+	pubKeyIDs := [][]uint32{{st.AccountBatchOffset}}
 
 	s.submitBatch(&transfers[0])
 

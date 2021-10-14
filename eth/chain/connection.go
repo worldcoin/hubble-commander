@@ -1,4 +1,4 @@
-package deployer
+package chain
 
 import (
 	"context"
@@ -15,17 +15,17 @@ type ReceiptProvider interface {
 	TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error)
 }
 
-type ChainBackend interface {
+type Backend interface {
 	bind.ContractBackend
 	ReceiptProvider
 	TransactionByHash(ctx context.Context, hash common.Hash) (tx *types.Transaction, isPending bool, err error)
 	HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error)
 }
 
-type ChainConnection interface {
+type Connection interface {
 	GetAccount() *bind.TransactOpts
 
-	GetBackend() ChainBackend
+	GetBackend() Backend
 
 	// Commit force a block creation if running on a simulator. Noop otherwise.
 	Commit()

@@ -48,7 +48,7 @@ test:
 	go test -v ./...
 
 test-hardhat:
-	go test -v -tags hardhat -run TestWalletHardhatTestSuite ./bls
+	go test -v -tags hardhat ./bls/hardhat
 
 test-e2e: clean-testcache
 	mkdir -p "e2e-data"

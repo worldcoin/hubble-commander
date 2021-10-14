@@ -53,7 +53,7 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 		}
 
 		txHash := events[i].Raw.TxHash
-		tx, _, err := c.ChainConnection.GetBackend().TransactionByHash(context.Background(), txHash)
+		tx, _, err := c.Blockchain.GetBackend().TransactionByHash(context.Background(), txHash)
 		if err != nil {
 			return nil, err
 		}
@@ -71,7 +71,7 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 			return nil, err
 		}
 
-		header, err := c.ChainConnection.GetBackend().HeaderByNumber(context.Background(), new(big.Int).SetUint64(events[i].Raw.BlockNumber))
+		header, err := c.Blockchain.GetBackend().HeaderByNumber(context.Background(), new(big.Int).SetUint64(events[i].Raw.BlockNumber))
 		if err != nil {
 			return nil, err
 		}
