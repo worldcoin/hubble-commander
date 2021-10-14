@@ -13,9 +13,9 @@
 | [`utils`](utils)                             | Utilities                                 |
 | [`models`](models)                           | Repository of types                       |
 | [`storage`](storage)                         | Storage                                   |
-| [`sdk`](sdk)                                 | BLS Wrapper for Mobile client             |
 | [`deployment`](deployment)                   | Kubernetes deployment files               |
 | [`bls`](bls)                                 | BLS Signature library                     |
+| [`bls/sdk`](bls/sdk)                         | BLS Wrapper for Mobile client             |
 | [`db`](db)                                   | Database abstraction                      |
 | [`api`](api)                                 | API Package                               |
 | [`eth`](eth)                                 | Ethereum client                           |
