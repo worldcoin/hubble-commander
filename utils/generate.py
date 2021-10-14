@@ -17,21 +17,21 @@ def generate_bindings(path, type, pkg, filename):
 
 
 def generate(artifact, name):
-    base = Path('hubble-contracts/artifacts')
+    base = Path('../hubble-contracts/artifacts')
     path = base / artifact
     lower = name.lower()
-    os.makedirs(Path("contracts") / lower, exist_ok=True)
-    filename = (Path('contracts') / lower / lower).with_suffix('.go')
+    os.makedirs(Path("../contracts") / lower, exist_ok=True)
+    filename = (Path('../contracts') / lower / lower).with_suffix('.go')
     generate_bindings(path, name, lower, filename)
 
 
 def generate_subdir(subdir, artifact, name):
-    base = Path('hubble-contracts/artifacts')
+    base = Path('../hubble-contracts/artifacts')
     path = base / artifact
     prefix_len = len(subdir)
     pkg = name[prefix_len:].lower()
-    os.makedirs(Path("contracts") / subdir / pkg, exist_ok=True)
-    filename = (Path('contracts') / subdir / pkg / pkg).with_suffix('.go')
+    os.makedirs(Path("../contracts") / subdir / pkg, exist_ok=True)
+    filename = (Path('../contracts') / subdir / pkg / pkg).with_suffix('.go')
     generate_bindings(path, name, pkg, filename)
 
 
