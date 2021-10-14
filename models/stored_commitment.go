@@ -28,15 +28,16 @@ type StoredCommitment struct {
 	Body StoredCommitmentBody
 }
 
-func MakeStoredCommitmentFromTransaction(t *GenericTransaction) StoredCommitment {
+func MakeStoredCommitmentFromCommitment(c Commitment) StoredCommitment {
 	return StoredCommitment{
-		ID: CommitmentID{
-			BatchID:      Uint256{},
-			IndexInBatch: 0,
-		},
+		ID:            c.ID,
 		Type:          c.Type,
 		PostStateRoot: c.PostStateRoot,
-		Body:          nil,
+		Body: &StoredCommitmentTxBody{
+			FeeReceiver:       c.FeeReceiver,
+			CombinedSignature: c.CombinedSignature,
+			Transactions:      c.Transactions,
+		},
 	}
 }
 
@@ -51,25 +52,23 @@ func (c *StoredCommitment) Bytes() []byte {
 }
 
 func (c *StoredCommitment) SetBytes(data []byte) error {
-	if len(data) < storedCommitmentTxBodyLength {
+	if len(data) < storedCommitmentBytesLength {
 		return ErrInvalidLength
 	}
-
 	err := c.ID.SetBytes(data[0:33])
 	if err != nil {
 		return err
 	}
 
-	c.Type = batchtype.BatchType(data[33])
-	c.PostStateRoot.SetBytes(data[34:66])
-
-	body, err := commitmentBody(data[66:], c.Type)
+	commitmentType := batchtype.BatchType(data[33])
+	body, err := commitmentBody(data[66:], commitmentType)
 	if err != nil {
 		return err
 	}
 
+	c.Type = commitmentType
+	c.PostStateRoot.SetBytes(data[34:66])
 	c.Body = body
-
 	return nil
 }
 
@@ -83,8 +82,7 @@ func commitmentBody(data []byte, commitmentType batchtype.BatchType) (StoredComm
 		body := new(StoredCommitmentDepositBody)
 		err := body.SetBytes(data)
 		return body, err
-	case batchtype.Transfer:
-	case batchtype.Create2Transfer:
+	case batchtype.Transfer, batchtype.Create2Transfer:
 		body := new(StoredCommitmentTxBody)
 		err := body.SetBytes(data)
 		return body, err
@@ -115,11 +113,12 @@ func (c *StoredCommitmentTxBody) Bytes() []byte {
 }
 
 func (c *StoredCommitmentTxBody) SetBytes(data []byte) error {
-	c.FeeReceiver = binary.BigEndian.Uint32(data[0:4])
 	err := c.CombinedSignature.SetBytes(data[4:68])
 	if err != nil {
 		return err
 	}
+
+	c.FeeReceiver = binary.BigEndian.Uint32(data[0:4])
 	c.Transactions = data[68:]
 	return nil
 }
