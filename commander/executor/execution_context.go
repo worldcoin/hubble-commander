@@ -10,7 +10,6 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-// ExecutionContext executes transactions & syncs batches. Manages a database transaction.
 type ExecutionContext struct {
 	cfg     *config.RollupConfig
 	storage *st.Storage
