@@ -56,12 +56,11 @@ func GetConfig() *Config {
 			TransitionDisputeGasLimit:        getUint64("rollup.transition_dispute_gas_limit", DefaultTransitionDisputeGasLimit),
 			SignatureDisputeGasLimit:         getUint64("rollup.signature_dispute_gas_limit", DefaultSignatureDisputeGasLimit),
 			BatchAccountRegistrationGasLimit: getUint64("rollup.batch_account_registration_gas_limit", DefaultBatchAccountRegistrationGasLimit),
-			CommitmentLoopInterval:           getDuration("rollup.commitment_loop_interval", 500*time.Millisecond),
 			BatchLoopInterval:                getDuration("rollup.batch_loop_interval", 500*time.Millisecond),
 			DisableSignatures:                getBool("rollup.disable_signatures", false),
 		},
 		API: &APIConfig{
-			Version: "0.0.1",
+			Version: "0.5.0-rc2",
 			Port:    getString("api.port", "8080"),
 		},
 		Badger: &BadgerConfig{
@@ -96,12 +95,11 @@ func GetTestConfig() *Config {
 			TransitionDisputeGasLimit:        DefaultTransitionDisputeGasLimit,
 			SignatureDisputeGasLimit:         DefaultSignatureDisputeGasLimit,
 			BatchAccountRegistrationGasLimit: DefaultBatchAccountRegistrationGasLimit,
-			CommitmentLoopInterval:           500 * time.Millisecond,
 			BatchLoopInterval:                500 * time.Millisecond,
 			DisableSignatures:                true,
 		},
 		API: &APIConfig{
-			Version: "dev-0.0.1",
+			Version: "dev-0.5.0-rc2",
 			Port:    "8080",
 		},
 		Badger: &BadgerConfig{

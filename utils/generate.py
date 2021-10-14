@@ -3,6 +3,8 @@ import json
 import shutil
 from pathlib import Path
 
+source_path = Path('../hubble-contracts/artifacts')
+output_path = Path("../contracts")
 
 def generate_bindings(path, type, pkg, filename):
     with open(path, 'r') as f:
@@ -17,21 +19,19 @@ def generate_bindings(path, type, pkg, filename):
 
 
 def generate(artifact, name):
-    base = Path('hubble-contracts/artifacts')
-    path = base / artifact
+    path = source_path / artifact
     lower = name.lower()
-    os.makedirs(Path("contracts") / lower, exist_ok=True)
-    filename = (Path('contracts') / lower / lower).with_suffix('.go')
+    os.makedirs(output_path / lower, exist_ok=True)
+    filename = (output_path / lower / lower).with_suffix('.go')
     generate_bindings(path, name, lower, filename)
 
 
 def generate_subdir(subdir, artifact, name):
-    base = Path('hubble-contracts/artifacts')
-    path = base / artifact
+    path = source_path / artifact
     prefix_len = len(subdir)
     pkg = name[prefix_len:].lower()
-    os.makedirs(Path("contracts") / subdir / pkg, exist_ok=True)
-    filename = (Path('contracts') / subdir / pkg / pkg).with_suffix('.go')
+    os.makedirs(output_path / subdir / pkg, exist_ok=True)
+    filename = (output_path / subdir / pkg / pkg).with_suffix('.go')
     generate_bindings(path, name, pkg, filename)
 
 
