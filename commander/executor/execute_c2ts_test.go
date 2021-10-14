@@ -1,8 +1,6 @@
 package executor
 
 import (
-	"context"
-	"math/big"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/commander/applier"
@@ -10,7 +8,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -66,6 +63,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AllValid() {
 	s.Len(transfers.AppliedTxs(), 3)
 	s.Len(transfers.InvalidTxs(), 0)
 	s.Len(transfers.AddedPubKeyIDs(), 3)
+	s.Len(transfers.PendingAccounts(), 1)
 }
 
 func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SomeValid() {
@@ -78,6 +76,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SomeValid() {
 	s.Len(transfers.AppliedTxs(), 2)
 	s.Len(transfers.InvalidTxs(), 3)
 	s.Len(transfers.AddedPubKeyIDs(), 2)
+	s.Len(transfers.PendingAccounts(), 1)
 }
 
 func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_ExecutesNoMoreThanLimit() {
@@ -89,6 +88,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_ExecutesNoMoreThanLimi
 	s.Len(transfers.AppliedTxs(), 6)
 	s.Len(transfers.InvalidTxs(), 0)
 	s.Len(transfers.AddedPubKeyIDs(), 6)
+	s.Len(transfers.PendingAccounts(), 1)
 }
 
 func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SavesTransferErrors() {
@@ -106,6 +106,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SavesTransferErrors() 
 	s.Len(transfers.AppliedTxs(), 3)
 	s.Len(transfers.InvalidTxs(), 2)
 	s.Len(transfers.AddedPubKeyIDs(), 3)
+	s.Len(transfers.PendingAccounts(), 1)
 
 	for i := range generatedTransfers {
 		transfer, err := s.storage.GetCreate2Transfer(generatedTransfers[i].Hash)
@@ -129,14 +130,11 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AppliesFee() {
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }
 
-func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_RegistersPublicKeys() {
+func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AddsAccountsToAccountTree() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
 	generatedTransfers[0].ToPublicKey = models.PublicKey{1, 1, 1}
 	generatedTransfers[1].ToPublicKey = models.PublicKey{2, 2, 2}
 	generatedTransfers[2].ToPublicKey = models.PublicKey{3, 3, 3}
-
-	latestBlockNumber, err := s.client.GetLatestBlockNumber()
-	s.NoError(err)
 
 	transfers, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.cfg.MaxTxsPerCommitment, s.feeReceiver)
 	s.NoError(err)
@@ -144,35 +142,14 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_RegistersPublicKeys() 
 	s.Len(transfers.AppliedTxs(), 3)
 	s.Len(transfers.InvalidTxs(), 0)
 	s.Len(transfers.AddedPubKeyIDs(), 3)
+	s.Len(transfers.PendingAccounts(), 3)
 
-	registeredAccounts := s.getRegisteredAccounts(*latestBlockNumber)
 	for i := range generatedTransfers {
-		s.Equal(registeredAccounts[i], models.AccountLeaf{
+		s.Equal(transfers.PendingAccounts()[i], models.AccountLeaf{
 			PubKeyID:  transfers.AddedPubKeyIDs()[i],
 			PublicKey: generatedTransfers[i].ToPublicKey,
 		})
 	}
-}
-
-func (s *ExecuteCreate2TransfersTestSuite) getRegisteredAccounts(startBlockNumber uint64) []models.AccountLeaf {
-	it, err := s.client.AccountRegistry.FilterSinglePubkeyRegistered(&bind.FilterOpts{Start: startBlockNumber})
-	s.NoError(err)
-
-	registeredAccounts := make([]models.AccountLeaf, 0)
-	for it.Next() {
-		tx, _, err := s.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
-		s.NoError(err)
-
-		unpack, err := s.client.AccountRegistryABI.Methods["register"].Inputs.Unpack(tx.Data()[4:])
-		s.NoError(err)
-
-		pubkey := unpack[0].([4]*big.Int)
-		registeredAccounts = append(registeredAccounts, models.AccountLeaf{
-			PubKeyID:  uint32(it.Event.PubkeyID.Uint64()),
-			PublicKey: models.MakePublicKeyFromInts(pubkey),
-		})
-	}
-	return registeredAccounts
 }
 
 func TestExecuteCreate2TransfersTestSuite(t *testing.T) {

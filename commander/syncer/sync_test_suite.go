@@ -10,7 +10,6 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/stretchr/testify/require"
 )
 
 var syncTestSuiteConfig = config.RollupConfig{
@@ -38,23 +37,25 @@ func (s *syncTestSuite) setupTest() {
 
 	s.wallets = testutils.GenerateWallets(s.Assertions, s.domain, 2)
 
-	seedDB(s.Assertions, s.storage.Storage, s.wallets)
+	s.seedDB(s.wallets)
 }
 
-func seedDB(s *require.Assertions, storage *st.Storage, wallets []bls.Wallet) {
-	err := storage.AccountTree.SetSingle(&models.AccountLeaf{
+func (s *syncTestSuite) seedDB(wallets []bls.Wallet) {
+	err := s.storage.AccountTree.SetSingle(&models.AccountLeaf{
 		PubKeyID:  0,
 		PublicKey: *wallets[0].PublicKey(),
 	})
 	s.NoError(err)
 
-	err = storage.AccountTree.SetSingle(&models.AccountLeaf{
+	err = s.storage.AccountTree.SetSingle(&models.AccountLeaf{
 		PubKeyID:  1,
 		PublicKey: *wallets[1].PublicKey(),
 	})
 	s.NoError(err)
 
-	_, err = storage.StateTree.Set(0, &models.UserState{
+	s.setBatchAccounts()
+
+	_, err = s.storage.StateTree.Set(0, &models.UserState{
 		PubKeyID: 0,
 		TokenID:  models.MakeUint256(0),
 		Balance:  models.MakeUint256(1000),
@@ -62,12 +63,29 @@ func seedDB(s *require.Assertions, storage *st.Storage, wallets []bls.Wallet) {
 	})
 	s.NoError(err)
 
-	_, err = storage.StateTree.Set(1, &models.UserState{
+	_, err = s.storage.StateTree.Set(1, &models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(0),
 		Balance:  models.MakeUint256(0),
 		Nonce:    models.MakeUint256(0),
 	})
+	s.NoError(err)
+}
+
+func (s *syncTestSuite) setBatchAccounts() {
+	accounts := make([]models.AccountLeaf, st.AccountBatchSize)
+	accounts[0] = models.AccountLeaf{
+		PubKeyID:  st.AccountBatchOffset,
+		PublicKey: *s.wallets[0].PublicKey(),
+	}
+
+	for i := 1; i < len(accounts); i++ {
+		accounts[i] = models.AccountLeaf{
+			PubKeyID:  uint32(st.AccountBatchOffset + i),
+			PublicKey: *s.wallets[0].PublicKey(),
+		}
+	}
+	err := s.storage.AccountTree.SetBatch(accounts)
 	s.NoError(err)
 }
 
@@ -105,7 +123,7 @@ func (s *syncTestSuite) recreateDatabase() {
 	s.rollupCtx = executor.NewTestRollupContext(executionCtx, s.rollupCtx.BatchType)
 	s.syncCtx = NewTestContext(s.storage.Storage, s.client.Client, s.cfg, s.syncCtx.BatchType)
 
-	seedDB(s.Assertions, s.storage.Storage, s.wallets)
+	s.seedDB(s.wallets)
 }
 
 func (s *syncTestSuite) getAccountTreeRoot() common.Hash {

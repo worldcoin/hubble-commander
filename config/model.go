@@ -30,23 +30,25 @@ type LogConfig struct {
 type BootstrapConfig struct {
 	Prune            bool
 	GenesisAccounts  []models.GenesisAccount `json:"-"`
+	BlocksToFinalise uint32
 	BootstrapNodeURL *string
 	ChainSpecPath    *string
 }
 
 type RollupConfig struct {
-	SyncSize                  uint32
-	FeeReceiverPubKeyID       uint32
-	MinTxsPerCommitment       uint32
-	MaxTxsPerCommitment       uint32
-	MinCommitmentsPerBatch    uint32
-	MaxCommitmentsPerBatch    uint32
+	SyncSize                         uint32
+	FeeReceiverPubKeyID              uint32
+	MinTxsPerCommitment              uint32
+	MaxTxsPerCommitment              uint32
+	MinCommitmentsPerBatch           uint32
+	MaxCommitmentsPerBatch           uint32
 	MaxDepositSubTreeDepth    uint32
-	TransitionDisputeGasLimit uint64
-	SignatureDisputeGasLimit  uint64
-	CommitmentLoopInterval    time.Duration
-	BatchLoopInterval         time.Duration
-	DisableSignatures         bool
+	TransitionDisputeGasLimit        uint64
+	SignatureDisputeGasLimit         uint64
+	BatchAccountRegistrationGasLimit uint64
+	CommitmentLoopInterval           time.Duration
+	BatchLoopInterval                time.Duration
+	DisableSignatures                bool
 }
 
 type APIConfig struct {
@@ -59,7 +61,7 @@ type BadgerConfig struct {
 }
 
 type EthereumConfig struct {
-	RPCURL     string
-	PrivateKey string
-	ChainID    string
+	RPCURL     string `json:"-"`
+	ChainID    uint64
+	PrivateKey string `json:"-"`
 }

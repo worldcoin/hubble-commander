@@ -8,7 +8,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -29,10 +29,10 @@ func (s *CommanderTestSuite) SetupTest() {
 	cfg := config.GetTestConfig()
 	err := db.PruneDatabase(cfg.Badger)
 	s.NoError(err)
-	chain, err := GetChainConnection(cfg.Ethereum)
+	blockchain, err := GetChainConnection(cfg.Ethereum)
 	s.NoError(err)
-	s.prepareContracts(cfg, chain)
-	s.cmd = NewCommander(cfg, chain)
+	s.prepareContracts(cfg, blockchain)
+	s.cmd = NewCommander(cfg, blockchain)
 }
 
 func (s *CommanderTestSuite) TearDownTest() {
@@ -87,8 +87,8 @@ func (s *CommanderTestSuite) TestStart_SetsCorrectSyncedBlock() {
 	s.NoError(err)
 }
 
-func (s *CommanderTestSuite) prepareContracts(cfg *config.Config, chain deployer.ChainConnection) {
-	yamlChainSpec, err := Deploy(cfg, chain)
+func (s *CommanderTestSuite) prepareContracts(cfg *config.Config, blockchain chain.Connection) {
+	yamlChainSpec, err := Deploy(cfg, blockchain)
 	s.NoError(err)
 
 	file, err := ioutil.TempFile("", "chain_spec_commander_test")

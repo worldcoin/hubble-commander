@@ -78,7 +78,7 @@ func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatchAndWait_ReturnsCor
 }
 
 func (s *SubmitBatchTestSuite) getMinFinalisationBlock() uint32 {
-	latestBlockNumber, err := s.client.ChainConnection.GetLatestBlockNumber()
+	latestBlockNumber, err := s.client.Blockchain.GetLatestBlockNumber()
 	s.NoError(err)
 	blocksToFinalise, err := s.client.GetBlocksToFinalise()
 	s.NoError(err)

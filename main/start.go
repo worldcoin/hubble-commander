@@ -12,12 +12,12 @@ import (
 
 func startCommander() error {
 	cfg := config.GetConfigAndSetupLogger()
-	chain, err := commander.GetChainConnection(cfg.Ethereum)
+	blockchain, err := commander.GetChainConnection(cfg.Ethereum)
 	if err != nil {
 		return err
 	}
 
-	cmd := commander.NewCommander(cfg, chain)
+	cmd := commander.NewCommander(cfg, blockchain)
 	setupCloseHandler(cmd)
 
 	return cmd.StartAndWait()

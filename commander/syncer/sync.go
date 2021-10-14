@@ -47,7 +47,7 @@ func (c *Context) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *m
 		if err != nil {
 			return err
 		}
-		if *txSender != c.client.ChainConnection.GetAccount().From {
+		if *txSender != c.client.Blockchain.GetAccount().From {
 			return NewInconsistentBatchError(localBatch)
 		} else {
 			// TODO remove the above check and this error once we use contracts with batchID verification:
@@ -59,7 +59,7 @@ func (c *Context) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *m
 }
 
 func (c *Context) getTransactionSender(txHash common.Hash) (*common.Address, error) {
-	tx, _, err := c.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), txHash)
+	tx, _, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), txHash)
 	if err != nil {
 		return nil, err
 	}

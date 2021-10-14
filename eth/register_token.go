@@ -2,7 +2,7 @@ package eth
 
 import (
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
-	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -13,20 +13,20 @@ func (c *Client) RequestRegisterToken(
 	tokenContract common.Address,
 ) error {
 	return RequestRegisterTokenAndWait(
-		c.ChainConnection.GetAccount(),
+		c.Blockchain.GetAccount(),
 		c.TokenRegistry,
 		tokenContract,
-		c.ChainConnection.GetBackend(),
+		c.Blockchain.GetBackend(),
 	)
 }
 
 func (c *Client) FinalizeRegisterToken(
 	tokenContract common.Address,
 ) error {
-	return FinalizeRegisterTokenAndWait(c.ChainConnection.GetAccount(),
+	return FinalizeRegisterTokenAndWait(c.Blockchain.GetAccount(),
 		c.TokenRegistry,
 		tokenContract,
-		c.ChainConnection.GetBackend(),
+		c.Blockchain.GetBackend(),
 	)
 }
 
@@ -81,13 +81,13 @@ func RequestRegisterTokenAndWait(
 	opts *bind.TransactOpts,
 	tokenRegistry *tokenregistry.TokenRegistry,
 	tokenContract common.Address,
-	chainBackend deployer.ChainBackend,
+	chainBackend chain.Backend,
 ) error {
 	tx, err := RequestRegisterToken(opts, tokenRegistry, tokenContract)
 	if err != nil {
 		return err
 	}
-	_, err = deployer.WaitToBeMined(chainBackend, tx)
+	_, err = chain.WaitToBeMined(chainBackend, tx)
 	if err != nil {
 		return err
 	}
@@ -98,13 +98,13 @@ func FinalizeRegisterTokenAndWait(
 	opts *bind.TransactOpts,
 	tokenRegistry *tokenregistry.TokenRegistry,
 	tokenContract common.Address,
-	chainBackend deployer.ChainBackend,
+	chainBackend chain.Backend,
 ) error {
 	tx, err := FinalizeRegisterToken(opts, tokenRegistry, tokenContract)
 	if err != nil {
 		return err
 	}
-	_, err = deployer.WaitToBeMined(chainBackend, tx)
+	_, err = chain.WaitToBeMined(chainBackend, tx)
 	if err != nil {
 		return err
 	}

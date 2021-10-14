@@ -6,6 +6,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+var AccountLeafPrefix = getBadgerHoldPrefix(AccountLeaf{})
+
 type AccountLeaf struct {
 	PubKeyID  uint32
 	PublicKey PublicKey `badgerhold:"index"`
