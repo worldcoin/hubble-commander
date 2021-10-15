@@ -126,7 +126,7 @@ func GetDeployerConfig() *DeployerConfig {
 
 	return &DeployerConfig{
 		Bootstrap: &DeployerBootstrapConfig{
-			BlocksToFinalise: getUint32("bootstrap.blocks_to_finalise", DefaultBlocksToFinalise),
+			BlocksToFinalise: getUint32("bootstrap.blocks_to_finalise", DefaultBlocksToFinalise), // nolint:misspell
 			GenesisAccounts:  getGenesisAccounts("bootstrap.genesis_path"),
 		},
 		Ethereum: getEthereumConfig(),
