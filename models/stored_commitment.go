@@ -14,12 +14,6 @@ const (
 	storedCommitmentDepositBodyLength = 64
 )
 
-var (
-	StoredCommitmentName                = getTypeName(StoredCommitment{})
-	StoredCommitmentPrefix              = getBadgerHoldPrefix(StoredCommitment{})
-	errInvalidStoredCommitmentIndexType = errors.New("invalid StoredCommitment index type")
-)
-
 type StoredCommitment struct {
 	ID            CommitmentID
 	Type          batchtype.BatchType
