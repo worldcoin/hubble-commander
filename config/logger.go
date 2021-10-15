@@ -10,7 +10,7 @@ import (
 
 func GetCommanderConfigAndSetupLogger() *Config {
 	cfg := GetConfig()
-	setupLogger(cfg)
+	setupCommanderLogger(cfg)
 	logCommanderConfig(cfg)
 	return cfg
 }
@@ -22,7 +22,7 @@ func GetDeployerConfigAndSetupLogger() *DeployerConfig {
 	return cfg
 }
 
-func setupLogger(cfg *Config) {
+func setupCommanderLogger(cfg *Config) {
 	if cfg.Log.Format == LogFormatJSON {
 		log.SetFormatter(&log.JSONFormatter{})
 	}
