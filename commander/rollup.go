@@ -69,8 +69,15 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 	} else {
 		*currentBatchType = txtype.Transfer
 	}
+	var rollupErr *executor.RollupError
+	if errors.As(err, &rollupErr) {
+		if rollupErr.IsLoggable {
+			log.Warnf("%+v", err)
+		}
+		return transactionExecutor.Commit()
+	}
 	if err != nil {
-		return handleRollupError(err)
+		return err
 	}
 
 	return transactionExecutor.Commit()
@@ -93,17 +100,6 @@ func validateStateRoot(storage *st.Storage) error {
 		return ErrInvalidStateRoot
 	}
 	return nil
-}
-
-func handleRollupError(err error) error {
-	var rollupErr *executor.RollupError
-	if errors.As(err, &rollupErr) {
-		if rollupErr.IsLoggable {
-			log.Warnf("%+v", err)
-		}
-		return nil
-	}
-	return err
 }
 
 func logLatestCommitment(latestCommitment *models.Commitment) {
