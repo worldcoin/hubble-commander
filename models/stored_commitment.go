@@ -112,12 +112,14 @@ func (c *StoredCommitment) ToDepositCommitment() *DepositCommitment {
 	}
 
 	return &DepositCommitment{
-		ID:            c.ID,
-		Type:          c.Type,
-		PostStateRoot: c.PostStateRoot,
-		SubTreeID:     depositCommitmentBody.SubTreeID,
-		SubTreeRoot:   depositCommitmentBody.SubTreeRoot,
-		Deposits:      depositCommitmentBody.Deposits,
+		CommitmentBase: CommitmentBase{
+			ID:            c.ID,
+			Type:          c.Type,
+			PostStateRoot: c.PostStateRoot,
+		},
+		SubTreeID:   depositCommitmentBody.SubTreeID,
+		SubTreeRoot: depositCommitmentBody.SubTreeRoot,
+		Deposits:    depositCommitmentBody.Deposits,
 	}
 }
 
@@ -131,7 +133,7 @@ func commitmentBody(data []byte, commitmentType batchtype.BatchType) (StoredComm
 		body := new(StoredCommitmentTxBody)
 		err := body.SetBytes(data)
 		return body, err
-	case batchtype.MassMigration:
+	case batchtype.Genesis, batchtype.MassMigration:
 		return nil, errors.Errorf("unsupported commitment type: %s", commitmentType)
 	}
 
