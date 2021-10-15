@@ -39,7 +39,6 @@ type DeployerBootstrapConfig struct {
 
 type CommanderBootstrapConfig struct {
 	Prune            bool
-	GenesisAccounts  []models.GenesisAccount `json:"-"`
 	BlocksToFinalise uint32
 	BootstrapNodeURL *string
 	ChainSpecPath    *string
