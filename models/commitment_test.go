@@ -10,23 +10,27 @@ import (
 
 func TestCommitment_Bytes(t *testing.T) {
 	commitment := Commitment{
-		ID: CommitmentID{
-			BatchID:      MakeUint256(123),
-			IndexInBatch: 4,
+		CommitmentBase: CommitmentBase{
+			ID: CommitmentID{
+				BatchID:      MakeUint256(123),
+				IndexInBatch: 4,
+			},
+			Type:          batchtype.Transfer,
+			PostStateRoot: common.Hash{1, 2, 3, 4},
 		},
-		Type:              batchtype.Transfer,
 		FeeReceiver:       11,
 		CombinedSignature: MakeRandomSignature(),
-		PostStateRoot:     common.Hash{1, 2, 3, 4},
 		Transactions:      []byte{5, 6, 1, 2, 6},
 	}
 
 	bytes := commitment.Bytes()
 
 	decodedCommitment := Commitment{
-		ID: CommitmentID{
-			BatchID:      MakeUint256(123),
-			IndexInBatch: 4,
+		CommitmentBase: CommitmentBase{
+			ID: CommitmentID{
+				BatchID:      MakeUint256(123),
+				IndexInBatch: 4,
+			},
 		},
 	}
 	err := decodedCommitment.SetBytes(bytes)

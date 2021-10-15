@@ -318,15 +318,17 @@ func (s *SyncTransferBatchTestSuite) submitTransferBatchWithNonexistentFeeReceiv
 	s.NoError(err)
 
 	commitment := models.Commitment{
-		ID: models.CommitmentID{
-			BatchID:      *nextBatchID,
-			IndexInBatch: 0,
+		CommitmentBase: models.CommitmentBase{
+			ID: models.CommitmentID{
+				BatchID:      *nextBatchID,
+				IndexInBatch: 0,
+			},
+			Type:          batchtype.Transfer,
+			PostStateRoot: *postStateRoot,
 		},
-		Type:              batchtype.Transfer,
 		Transactions:      serializedTxs,
 		FeeReceiver:       feeReceiverStateID,
 		CombinedSignature: *combinedSignature,
-		PostStateRoot:     *postStateRoot,
 	}
 	_, err = s.client.SubmitTransfersBatchAndWait([]models.Commitment{commitment})
 	s.NoError(err)

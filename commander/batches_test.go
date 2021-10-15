@@ -140,15 +140,17 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 	s.Equal(batches[0].Batch, *batch)
 
 	expectedCommitment := models.Commitment{
-		ID: models.CommitmentID{
-			BatchID:      batch.ID,
-			IndexInBatch: 0,
+		CommitmentBase: models.CommitmentBase{
+			ID: models.CommitmentID{
+				BatchID:      batch.ID,
+				IndexInBatch: 0,
+			},
+			Type:          batchtype.Transfer,
+			PostStateRoot: batches[0].Commitments[0].StateRoot,
 		},
-		Type:              batchtype.Transfer,
 		Transactions:      batches[0].Commitments[0].Transactions,
 		FeeReceiver:       batches[0].Commitments[0].FeeReceiver,
 		CombinedSignature: batches[0].Commitments[0].CombinedSignature,
-		PostStateRoot:     batches[0].Commitments[0].StateRoot,
 	}
 	commitment, err := s.cmd.storage.GetCommitment(&expectedCommitment.ID)
 	s.NoError(err)

@@ -96,9 +96,11 @@ func (c *StoredCommitment) ToTxCommitment() *Commitment {
 	}
 
 	return &Commitment{
-		ID:                c.ID,
-		Type:              c.Type,
-		PostStateRoot:     c.PostStateRoot,
+		CommitmentBase: CommitmentBase{
+			ID:            c.ID,
+			Type:          c.Type,
+			PostStateRoot: c.PostStateRoot,
+		},
 		FeeReceiver:       txCommitmentBody.FeeReceiver,
 		CombinedSignature: txCommitmentBody.CombinedSignature,
 		Transactions:      txCommitmentBody.Transactions,

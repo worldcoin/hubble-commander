@@ -28,11 +28,13 @@ func (s *SubmitBatchTestSuite) SetupTest() {
 	s.NoError(err)
 	s.client = client
 	s.commitment = models.Commitment{
-		Type:              batchtype.Transfer,
+		CommitmentBase: models.CommitmentBase{
+			Type:          batchtype.Transfer,
+			PostStateRoot: utils.RandomHash(),
+		},
 		Transactions:      utils.RandomBytes(12),
 		FeeReceiver:       uint32(1234),
 		CombinedSignature: models.MakeRandomSignature(),
-		PostStateRoot:     utils.RandomHash(),
 	}
 }
 

@@ -32,7 +32,9 @@ func (s *CommitmentStorage) AddCommitment(commitment *models.Commitment) error {
 
 func (s *CommitmentStorage) GetCommitment(key *models.CommitmentID) (*models.Commitment, error) {
 	commitment := models.Commitment{
-		ID: *key,
+		CommitmentBase: models.CommitmentBase{
+			ID: *key,
+		},
 	}
 	err := s.database.Badger.Get(*key, &commitment)
 	if err == bh.ErrNotFound {

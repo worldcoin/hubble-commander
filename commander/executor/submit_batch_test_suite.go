@@ -8,11 +8,13 @@ import (
 
 var (
 	baseCommitment = models.Commitment{
-		Type:              batchtype.Transfer,
+		CommitmentBase: models.CommitmentBase{
+			Type:          batchtype.Transfer,
+			PostStateRoot: utils.RandomHash(),
+		},
 		Transactions:      utils.RandomBytes(24),
 		FeeReceiver:       1,
 		CombinedSignature: models.MakeRandomSignature(),
-		PostStateRoot:     utils.RandomHash(),
 	}
 )
 

@@ -17,11 +17,9 @@ const (
 var CommitmentPrefix = getBadgerHoldPrefix(Commitment{})
 
 type Commitment struct {
-	ID                CommitmentID
-	Type              batchtype.BatchType
+	CommitmentBase
 	FeeReceiver       uint32
 	CombinedSignature Signature
-	PostStateRoot     common.Hash
 	Transactions      []byte
 }
 

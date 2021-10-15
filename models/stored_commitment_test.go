@@ -10,14 +10,16 @@ import (
 
 func TestStoredCommitment_Bytes_Tx(t *testing.T) {
 	commitment := &Commitment{
-		ID: CommitmentID{
-			BatchID:      MakeUint256(1),
-			IndexInBatch: 4,
+		CommitmentBase: CommitmentBase{
+			ID: CommitmentID{
+				BatchID:      MakeUint256(1),
+				IndexInBatch: 4,
+			},
+			Type:          batchtype.Transfer,
+			PostStateRoot: utils.RandomHash(),
 		},
-		Type:              batchtype.Transfer,
 		FeeReceiver:       3,
 		CombinedSignature: Signature{1, 2, 3, 4, 5},
-		PostStateRoot:     utils.RandomHash(),
 		Transactions:      []byte{3, 2, 1},
 	}
 

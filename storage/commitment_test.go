@@ -13,14 +13,16 @@ import (
 
 var (
 	commitment = models.Commitment{
-		ID: models.CommitmentID{
-			BatchID:      models.MakeUint256(1),
-			IndexInBatch: 0,
+		CommitmentBase: models.CommitmentBase{
+			ID: models.CommitmentID{
+				BatchID:      models.MakeUint256(1),
+				IndexInBatch: 0,
+			},
+			Type:          batchtype.Transfer,
+			PostStateRoot: utils.RandomHash(),
 		},
-		Type:              batchtype.Transfer,
 		FeeReceiver:       uint32(1),
 		CombinedSignature: models.MakeRandomSignature(),
-		PostStateRoot:     utils.RandomHash(),
 		Transactions:      []byte{1, 2, 3},
 	}
 )

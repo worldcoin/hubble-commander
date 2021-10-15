@@ -18,11 +18,13 @@ func (c *RollupContext) newCommitment(
 	}
 
 	return &models.Commitment{
-		ID:                *commitmentID,
-		Type:              batchType,
+		CommitmentBase: models.CommitmentBase{
+			ID:            *commitmentID,
+			Type:          batchType,
+			PostStateRoot: *stateRoot,
+		},
 		FeeReceiver:       feeReceiverStateID,
 		CombinedSignature: *combinedSignature,
-		PostStateRoot:     *stateRoot,
 		Transactions:      serializedTxs,
 	}, nil
 }

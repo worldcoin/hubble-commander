@@ -94,11 +94,13 @@ func (s *syncTestSuite) createCommitmentWithEmptyTransactions(commitmentType bat
 	s.NoError(err)
 
 	return models.Commitment{
-		Type:              commitmentType,
+		CommitmentBase: models.CommitmentBase{
+			Type:          commitmentType,
+			PostStateRoot: *stateRoot,
+		},
 		Transactions:      []byte{},
 		FeeReceiver:       0,
 		CombinedSignature: models.Signature{},
-		PostStateRoot:     *stateRoot,
 	}
 }
 
