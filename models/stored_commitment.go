@@ -28,7 +28,7 @@ type StoredCommitment struct {
 	Body StoredCommitmentBody
 }
 
-func MakeStoredCommitmentFromCommitment(c Commitment) StoredCommitment {
+func MakeStoredCommitmentFromTxCommitment(c *Commitment) StoredCommitment {
 	return StoredCommitment{
 		ID:            c.ID,
 		Type:          c.Type,
@@ -37,6 +37,19 @@ func MakeStoredCommitmentFromCommitment(c Commitment) StoredCommitment {
 			FeeReceiver:       c.FeeReceiver,
 			CombinedSignature: c.CombinedSignature,
 			Transactions:      c.Transactions,
+		},
+	}
+}
+
+func MakeStoredCommitmentFromDepositCommitment(c *DepositCommitment) StoredCommitment {
+	return StoredCommitment{
+		ID:            c.ID,
+		Type:          c.Type,
+		PostStateRoot: c.PostStateRoot,
+		Body: &StoredCommitmentDepositBody{
+			SubTreeID:   c.SubTreeID,
+			SubTreeRoot: c.SubTreeRoot,
+			Deposits:    c.Deposits,
 		},
 	}
 }
@@ -76,6 +89,38 @@ func (c *StoredCommitment) BytesLen() int {
 	return storedCommitmentBytesLength + c.Body.BytesLen()
 }
 
+func (c *StoredCommitment) ToTxCommitment() *Commitment {
+	txCommitmentBody, ok := c.Body.(*StoredCommitmentTxBody)
+	if !ok {
+		panic("invalid TxCommitment body type")
+	}
+
+	return &Commitment{
+		ID:                c.ID,
+		Type:              c.Type,
+		PostStateRoot:     c.PostStateRoot,
+		FeeReceiver:       txCommitmentBody.FeeReceiver,
+		CombinedSignature: txCommitmentBody.CombinedSignature,
+		Transactions:      txCommitmentBody.Transactions,
+	}
+}
+
+func (c *StoredCommitment) ToDepositCommitment() *DepositCommitment {
+	depositCommitmentBody, ok := c.Body.(*StoredCommitmentDepositBody)
+	if !ok {
+		panic("invalid DepositCommitment body type")
+	}
+
+	return &DepositCommitment{
+		ID:            c.ID,
+		Type:          c.Type,
+		PostStateRoot: c.PostStateRoot,
+		SubTreeID:     depositCommitmentBody.SubTreeID,
+		SubTreeRoot:   depositCommitmentBody.SubTreeRoot,
+		Deposits:      depositCommitmentBody.Deposits,
+	}
+}
+
 func commitmentBody(data []byte, commitmentType batchtype.BatchType) (StoredCommitmentBody, error) {
 	switch commitmentType {
 	case batchtype.Deposit:
@@ -105,7 +150,7 @@ type StoredCommitmentTxBody struct {
 }
 
 func (c *StoredCommitmentTxBody) Bytes() []byte {
-	b := make([]byte, storedCommitmentTxBodyLength)
+	b := make([]byte, c.BytesLen())
 	binary.BigEndian.PutUint32(b[0:4], c.FeeReceiver)
 	copy(b[4:68], c.CombinedSignature.Bytes())
 	copy(b[68:], c.Transactions)
@@ -134,7 +179,7 @@ type StoredCommitmentDepositBody struct {
 }
 
 func (c *StoredCommitmentDepositBody) Bytes() []byte {
-	b := make([]byte, storedCommitmentTxBodyLength)
+	b := make([]byte, c.BytesLen())
 	copy(b[0:32], c.SubTreeID.Bytes())
 	copy(b[32:64], c.SubTreeRoot.Bytes())
 
@@ -182,5 +227,5 @@ func (c *StoredCommitmentDepositBody) SetBytes(data []byte) error {
 }
 
 func (c *StoredCommitmentDepositBody) BytesLen() int {
-	return storedCommitmentDepositBodyLength + len(c.Deposits)
+	return storedCommitmentDepositBodyLength + len(c.Deposits)*depositDataLength
 }
