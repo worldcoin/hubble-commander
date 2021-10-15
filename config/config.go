@@ -49,7 +49,6 @@ func GetConfig() *Config {
 		Log: getLogConfig(),
 		Bootstrap: &CommanderBootstrapConfig{
 			Prune:            getBool("bootstrap.prune", false),
-			BlocksToFinalise: getUint32("bootstrap.blocks_to_finalise", DefaultBlocksToFinalise), // nolint:misspell
 			BootstrapNodeURL: getStringOrNil("bootstrap.node_url"),
 			ChainSpecPath:    getStringOrNil("bootstrap.chain_spec_path"),
 		},
@@ -87,7 +86,6 @@ func GetTestConfig() *Config {
 		},
 		Bootstrap: &CommanderBootstrapConfig{
 			Prune:            false,
-			BlocksToFinalise: DefaultBlocksToFinalise,
 			BootstrapNodeURL: nil,
 			ChainSpecPath:    nil,
 		},
