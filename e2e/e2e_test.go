@@ -195,7 +195,7 @@ func testSenderStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, sende
 	senderState, err := getUserState(userStates, 1)
 	require.NoError(t, err)
 
-	initialBalance := config.GetConfig().Bootstrap.GenesisAccounts[1].Balance
+	initialBalance := config.GetDeployerConfig().Bootstrap.GenesisAccounts[1].Balance
 	require.Equal(t, models.MakeUint256(32+32), senderState.Nonce)
 	require.Equal(t, *initialBalance.SubN(32*100 + 32*100), senderState.Balance)
 }
@@ -208,7 +208,7 @@ func testFeeReceiverStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, 
 	feeReceiverState, err := getUserState(userStates, 0)
 	require.NoError(t, err)
 
-	initialBalance := config.GetConfig().Bootstrap.GenesisAccounts[1].Balance
+	initialBalance := config.GetDeployerConfig().Bootstrap.GenesisAccounts[1].Balance
 	require.Equal(t, *initialBalance.AddN(32*10 + 32*10), feeReceiverState.Balance)
 	require.Equal(t, models.MakeUint256(0), feeReceiverState.Nonce)
 }
