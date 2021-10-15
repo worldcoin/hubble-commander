@@ -14,7 +14,7 @@ type Commander interface {
 	Client() jsonrpc.RPCClient
 }
 
-const CommanderImage = "ghcr.io/worldcoin/hubble-commander:latest-0.4.0"
+const CommanderImage = "ghcr.io/worldcoin/hubble-commander:latest-aws-testnet"
 
 func NewCommanderFromEnv(prune bool) (Commander, error) {
 	switch os.Getenv("HUBBLE_E2E") {
