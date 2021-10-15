@@ -27,6 +27,17 @@ type LogConfig struct {
 	Format string
 }
 
+type DeployerConfig struct {
+	Bootstrap *DeployerBootstrapConfig
+	Ethereum  *EthereumConfig
+}
+
+type DeployerBootstrapConfig struct {
+	GenesisAccounts  []models.GenesisAccount `json:"-"`
+	BlocksToFinalise uint32
+}
+
+// TODO - rename to CommanderBootstrapConfig
 type BootstrapConfig struct {
 	Prune            bool
 	GenesisAccounts  []models.GenesisAccount `json:"-"`

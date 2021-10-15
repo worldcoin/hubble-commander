@@ -15,7 +15,7 @@ import (
 
 var ErrNoPublicKeysInGenesisAccounts = fmt.Errorf("genesis accounts for deployment require public keys")
 
-func Deploy(cfg *config.Config, blockchain chain.Connection) (chainSpec *string, err error) {
+func Deploy(cfg *config.DeployerConfig, blockchain chain.Connection) (chainSpec *string, err error) {
 	tempStorage, err := st.NewTemporaryStorage()
 	if err != nil {
 		return nil, err
@@ -33,7 +33,7 @@ func Deploy(cfg *config.Config, blockchain chain.Connection) (chainSpec *string,
 		len(cfg.Bootstrap.GenesisAccounts),
 		cfg.Ethereum.ChainID,
 	)
-	chainState, err := deployContractsAndSetupGenesisState(tempStorage.Storage, blockchain, cfg.Bootstrap)
+	chainState, err := deployContractsAndSetupGenesisState(tempStorage.Storage, blockchain, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -49,9 +49,9 @@ func Deploy(cfg *config.Config, blockchain chain.Connection) (chainSpec *string,
 func deployContractsAndSetupGenesisState(
 	storage *st.Storage,
 	blockchain chain.Connection,
-	cfg *config.BootstrapConfig,
+	cfg *config.DeployerConfig,
 ) (*models.ChainState, error) {
-	err := validateGenesisAccounts(cfg.GenesisAccounts)
+	err := validateGenesisAccounts(cfg.Bootstrap.GenesisAccounts)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func deployContractsAndSetupGenesisState(
 		return nil, err
 	}
 
-	registeredAccounts, err := RegisterGenesisAccounts(accountManager, cfg.GenesisAccounts)
+	registeredAccounts, err := RegisterGenesisAccounts(accountManager, cfg.Bootstrap.GenesisAccounts)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func deployContractsAndSetupGenesisState(
 	contracts, err := rollup.DeployConfiguredRollup(blockchain, rollup.DeploymentConfig{
 		Params: rollup.Params{
 			GenesisStateRoot: stateRoot,
-			BlocksToFinalise: models.NewUint256(uint64(cfg.BlocksToFinalise)),
+			BlocksToFinalise: models.NewUint256(uint64(cfg.Bootstrap.BlocksToFinalise)),
 		},
 		Dependencies: rollup.Dependencies{
 			AccountRegistry: accountRegistryAddress,
