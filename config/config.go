@@ -47,7 +47,7 @@ func GetConfig() *Config {
 
 	return &Config{
 		Log: getLogConfig(),
-		Bootstrap: &BootstrapConfig{
+		Bootstrap: &CommanderBootstrapConfig{
 			Prune:            getBool("bootstrap.prune", false),
 			GenesisAccounts:  getGenesisAccounts("bootstrap.genesis_path"),
 			BlocksToFinalise: getUint32("bootstrap.blocks_to_finalise", DefaultBlocksToFinalise), // nolint:misspell
@@ -86,7 +86,7 @@ func GetTestConfig() *Config {
 			Level:  log.InfoLevel,
 			Format: LogFormatText,
 		},
-		Bootstrap: &BootstrapConfig{
+		Bootstrap: &CommanderBootstrapConfig{
 			Prune:            false,
 			GenesisAccounts:  readGenesisAccounts(getGenesisPath()),
 			BlocksToFinalise: DefaultBlocksToFinalise,

@@ -14,7 +14,7 @@ const (
 
 type Config struct {
 	Log       *LogConfig
-	Bootstrap *BootstrapConfig
+	Bootstrap *CommanderBootstrapConfig
 	Rollup    *RollupConfig
 	API       *APIConfig
 	Badger    *BadgerConfig
@@ -37,8 +37,7 @@ type DeployerBootstrapConfig struct {
 	BlocksToFinalise uint32
 }
 
-// TODO - rename to CommanderBootstrapConfig
-type BootstrapConfig struct {
+type CommanderBootstrapConfig struct {
 	Prune            bool
 	GenesisAccounts  []models.GenesisAccount `json:"-"`
 	BlocksToFinalise uint32
