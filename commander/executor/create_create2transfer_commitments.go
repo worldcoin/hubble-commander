@@ -119,6 +119,9 @@ func (t *TransactionExecutor) applyC2TsForCommitment(pendingTransfers []models.C
 
 		morePendingTransfers, err := t.queryMorePendingC2Ts(appliedTransfers)
 		if err == ErrNotEnoughC2Transfers {
+			if len(appliedTransfers) == 0 {
+				return nil, nil, nil, err
+			}
 			newPendingTransfers = removeC2Ts(pendingTransfers, append(appliedTransfers, invalidTransfers...))
 			return appliedTransfers, newPendingTransfers, addedPubKeyIDs, nil
 		}
