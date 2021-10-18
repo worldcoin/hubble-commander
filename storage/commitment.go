@@ -5,19 +5,19 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 )
 
-func (s *CommitmentStorage) AddCommitment(commitment *models.TxCommitment) error {
+func (s *CommitmentStorage) AddTxCommitment(commitment *models.TxCommitment) error {
 	return s.database.Badger.Insert(commitment.ID, models.MakeStoredCommitmentFromTxCommitment(commitment))
 }
 
-func (s *CommitmentStorage) GetCommitment(id *models.CommitmentID) (*models.TxCommitment, error) {
-	commitment, err := s.GetStoredCommitment(id)
+func (s *CommitmentStorage) GetTxCommitment(id *models.CommitmentID) (*models.TxCommitment, error) {
+	commitment, err := s.getStoredCommitment(id)
 	if err != nil {
 		return nil, err
 	}
 	return commitment.ToTxCommitment(), nil
 }
 
-func (s *Storage) GetCommitmentsByBatchID(batchID models.Uint256) ([]models.CommitmentWithTokenID, error) {
+func (s *Storage) GetTxCommitmentsByBatchID(batchID models.Uint256) ([]models.CommitmentWithTokenID, error) {
 	commitments, err := s.getStoredCommitmentsByBatchID(batchID)
 	if err != nil {
 		return nil, err

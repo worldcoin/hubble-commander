@@ -82,7 +82,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
 	s.Equal(accountRoots[1], *batches[1].AccountTreeRoot)
 
 	for i := range expectedCommitments {
-		commitment, err := s.storage.GetCommitment(&expectedCommitments[i].ID)
+		commitment, err := s.storage.GetTxCommitment(&expectedCommitments[i].ID)
 		s.NoError(err)
 		s.Equal(expectedCommitments[i], *commitment)
 

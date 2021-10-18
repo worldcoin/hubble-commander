@@ -152,7 +152,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 		FeeReceiver:       batches[0].Commitments[0].FeeReceiver,
 		CombinedSignature: batches[0].Commitments[0].CombinedSignature,
 	}
-	commitment, err := s.cmd.storage.GetCommitment(&expectedCommitment.ID)
+	commitment, err := s.cmd.storage.GetTxCommitment(&expectedCommitment.ID)
 	s.NoError(err)
 	s.Equal(expectedCommitment, *commitment)
 
@@ -512,7 +512,7 @@ func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batc
 	commitments, err := s.rollupCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
-	err = s.cmd.storage.AddCommitment(&commitments[0])
+	err = s.cmd.storage.AddTxCommitment(&commitments[0])
 	s.NoError(err)
 
 	pendingBatch.TransactionHash = utils.RandomHash()

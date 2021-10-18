@@ -25,7 +25,7 @@ func (s *CommitmentStorage) copyWithNewDatabase(database *Database) *CommitmentS
 	return &newCommitmentStorage
 }
 
-func (s *CommitmentStorage) GetStoredCommitment(id *models.CommitmentID) (*models.StoredCommitment, error) {
+func (s *CommitmentStorage) getStoredCommitment(id *models.CommitmentID) (*models.StoredCommitment, error) {
 	commitment := &models.StoredCommitment{
 		CommitmentBase: models.CommitmentBase{
 			ID: *id,

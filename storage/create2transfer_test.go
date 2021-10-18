@@ -114,7 +114,7 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchDetails() {
 	commitmentInBatch := commitment
 	commitmentInBatch.ID.BatchID = batch.ID
 	commitmentInBatch.ID.IndexInBatch = 0
-	err = s.storage.AddCommitment(&commitmentInBatch)
+	err = s.storage.AddTxCommitment(&commitmentInBatch)
 	s.NoError(err)
 
 	transferInBatch := create2Transfer
@@ -175,7 +175,7 @@ func (s *Create2TransferTestSuite) TestGetCreate2Transfer_NonexistentTransaction
 
 func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers() {
 	commitment := &models.TxCommitment{}
-	err := s.storage.AddCommitment(commitment)
+	err := s.storage.AddTxCommitment(commitment)
 	s.NoError(err)
 
 	create2Transfer2 := create2Transfer

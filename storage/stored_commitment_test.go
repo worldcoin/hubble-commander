@@ -36,14 +36,14 @@ func (s *StoredCommitmentTestSuite) TestGetLatestCommitment() {
 	expected := commitment
 	for i := 0; i < 2; i++ {
 		expected.ID.IndexInBatch = uint8(i)
-		err := s.storage.AddCommitment(&expected)
+		err := s.storage.AddTxCommitment(&expected)
 		s.NoError(err)
 	}
 
 	expected.ID.BatchID = models.MakeUint256(5)
 	for i := 0; i < 2; i++ {
 		expected.ID.IndexInBatch = uint8(i)
-		err := s.storage.AddCommitment(&expected)
+		err := s.storage.AddTxCommitment(&expected)
 		s.NoError(err)
 	}
 
@@ -82,7 +82,7 @@ func (s *StoredCommitmentTestSuite) TestDeleteCommitmentsByBatchIDs() {
 			commitmentInBatch := commitment
 			commitmentInBatch.ID.BatchID = batches[i].ID
 			commitmentInBatch.ID.IndexInBatch = uint8(j)
-			err = s.storage.AddCommitment(&commitmentInBatch)
+			err = s.storage.AddTxCommitment(&commitmentInBatch)
 			s.NoError(err)
 		}
 	}
@@ -97,13 +97,13 @@ func (s *StoredCommitmentTestSuite) TestDeleteCommitmentsByBatchIDs() {
 
 func (s *StoredCommitmentTestSuite) TestDeleteCommitmentsByBatchIDs_NoCommitments() {
 	batchID := s.addRandomBatch()
-	err := s.storage.AddCommitment(&commitment)
+	err := s.storage.AddTxCommitment(&commitment)
 	s.NoError(err)
 
 	err = s.storage.DeleteCommitmentsByBatchIDs(batchID)
 	s.ErrorIs(err, NewNotFoundError("commitments"))
 
-	_, err = s.storage.GetCommitment(&commitment.ID)
+	_, err = s.storage.GetTxCommitment(&commitment.ID)
 	s.NoError(err)
 }
 

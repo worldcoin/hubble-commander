@@ -133,7 +133,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, s.wallets[0].PublicKey())
 	s.setTxHashAndSign(&tx)
 	batch := s.submitBatch(&tx)
-	expectedCommitment, err := s.storage.GetCommitment(&models.CommitmentID{
+	expectedCommitment, err := s.storage.GetTxCommitment(&models.CommitmentID{
 		BatchID:      batch.ID,
 		IndexInBatch: 0,
 	})
@@ -157,7 +157,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 	s.Len(batches, 1)
 	s.Equal(treeRoot, *batches[0].AccountTreeRoot)
 
-	commitment, err := s.storage.GetCommitment(&expectedCommitment.ID)
+	commitment, err := s.storage.GetTxCommitment(&expectedCommitment.ID)
 	s.NoError(err)
 	s.Equal(*expectedCommitment, *commitment)
 

@@ -49,10 +49,10 @@ func (s *CommitmentTestSuite) TearDownTest() {
 }
 
 func (s *CommitmentTestSuite) TestAddCommitment_AddAndRetrieve() {
-	err := s.storage.AddCommitment(&commitment)
+	err := s.storage.AddTxCommitment(&commitment)
 	s.NoError(err)
 
-	actual, err := s.storage.GetCommitment(&commitment.ID)
+	actual, err := s.storage.GetTxCommitment(&commitment.ID)
 	s.NoError(err)
 	s.Equal(commitment, *actual)
 }
@@ -71,13 +71,13 @@ func (s *CommitmentTestSuite) addRandomBatch() models.Uint256 {
 }
 
 func (s *CommitmentTestSuite) TestGetCommitment_NonexistentCommitment() {
-	res, err := s.storage.GetCommitment(&commitment.ID)
+	res, err := s.storage.GetTxCommitment(&commitment.ID)
 	s.ErrorIs(err, NewNotFoundError("commitment"))
 	s.Nil(res)
 }
 
 func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
-	err := s.storage.AddCommitment(&commitment)
+	err := s.storage.AddTxCommitment(&commitment)
 	s.NoError(err)
 
 	batchID := s.addRandomBatch()
@@ -88,7 +88,7 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
 	expectedCommitments := make([]models.CommitmentWithTokenID, 2)
 	for i := 0; i < 2; i++ {
 		includedCommitment.ID.IndexInBatch = uint8(i)
-		err = s.storage.AddCommitment(&includedCommitment)
+		err = s.storage.AddTxCommitment(&includedCommitment)
 		s.NoError(err)
 
 		expectedCommitments[i] = models.CommitmentWithTokenID{
@@ -103,7 +103,7 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
 
 	s.addStateLeaf()
 
-	commitments, err := s.storage.GetCommitmentsByBatchID(batchID)
+	commitments, err := s.storage.GetTxCommitmentsByBatchID(batchID)
 	s.NoError(err)
 	s.Len(commitments, 2)
 	s.Contains(commitments, expectedCommitments[0])
@@ -112,7 +112,7 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
 
 func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID_NonexistentCommitments() {
 	batchID := s.addRandomBatch()
-	commitments, err := s.storage.GetCommitmentsByBatchID(batchID)
+	commitments, err := s.storage.GetTxCommitmentsByBatchID(batchID)
 	s.NoError(err)
 	s.Len(commitments, 0)
 }

@@ -132,7 +132,7 @@ func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_
 		},
 	}
 	for i := range commitments {
-		err = s.storage.AddCommitment(&commitments[i])
+		err = s.storage.AddTxCommitment(&commitments[i])
 		s.NoError(err)
 	}
 

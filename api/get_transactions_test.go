@@ -180,7 +180,7 @@ func (s *GetTransactionsTestSuite) addCommitmentAndBatch() *models.Batch {
 		CombinedSignature: models.MakeRandomSignature(),
 	}
 
-	err = s.storage.AddCommitment(commitment)
+	err = s.storage.AddTxCommitment(commitment)
 	s.NoError(err)
 	return batch
 }

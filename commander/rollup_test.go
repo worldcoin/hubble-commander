@@ -45,7 +45,7 @@ func (s *RollupTestSuite) TestValidateStateRoot_SameStateRootHash() {
 		FeeReceiver:       0,
 		CombinedSignature: models.Signature{},
 	}
-	err = s.storage.AddCommitment(&commitment)
+	err = s.storage.AddTxCommitment(&commitment)
 	s.NoError(err)
 
 	err = validateStateRoot(s.storage.Storage)
@@ -62,7 +62,7 @@ func (s *RollupTestSuite) TestValidateStateRoot_DifferentStateRootHash() {
 		FeeReceiver:       0,
 		CombinedSignature: models.Signature{},
 	}
-	err := s.storage.AddCommitment(&commitment)
+	err := s.storage.AddTxCommitment(&commitment)
 	s.NoError(err)
 
 	err = validateStateRoot(s.storage.Storage)

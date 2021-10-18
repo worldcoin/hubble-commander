@@ -22,7 +22,7 @@ func (a *API) GetCommitment(id models.CommitmentID) (*dto.Commitment, error) {
 }
 
 func (a *API) unsafeGetCommitment(id models.CommitmentID) (*dto.Commitment, error) {
-	commitment, err := a.storage.GetCommitment(&id)
+	commitment, err := a.storage.GetTxCommitment(&id)
 	if err != nil {
 		return nil, err
 	}

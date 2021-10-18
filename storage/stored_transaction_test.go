@@ -131,7 +131,7 @@ func (s *StoredTransactionTestSuite) TestGetTransactionCount() {
 
 	commitmentInBatch := commitment
 	commitmentInBatch.ID.BatchID = batch.ID
-	err = s.storage.AddCommitment(&commitmentInBatch)
+	err = s.storage.AddTxCommitment(&commitmentInBatch)
 	s.NoError(err)
 
 	transferInCommitment := transferTransaction

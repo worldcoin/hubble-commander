@@ -36,7 +36,7 @@ func (c *RollupContext) SubmitBatch(batch *models.Batch, commitments []models.Tx
 
 func (c *RollupContext) addCommitments(commitments []models.TxCommitment) error {
 	for i := range commitments {
-		err := c.storage.AddCommitment(&commitments[i])
+		err := c.storage.AddTxCommitment(&commitments[i])
 		if err != nil {
 			return err
 		}
