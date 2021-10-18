@@ -68,7 +68,7 @@ func (s *CommitmentTestSuite) addRandomBatch() models.Uint256 {
 	return batch.ID
 }
 
-func (s *CommitmentTestSuite) TestGetCommitment_NonExistentCommitment() {
+func (s *CommitmentTestSuite) TestGetCommitment_NonexistentCommitment() {
 	res, err := s.storage.GetCommitment(&commitment.ID)
 	s.ErrorIs(err, NewNotFoundError("commitment"))
 	s.Nil(res)
@@ -133,7 +133,7 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
 	s.Contains(commitments, expectedCommitments[1])
 }
 
-func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID_NonExistentCommitments() {
+func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID_NonexistentCommitments() {
 	batchID := s.addRandomBatch()
 	commitments, err := s.storage.GetCommitmentsByBatchID(batchID)
 	s.NoError(err)

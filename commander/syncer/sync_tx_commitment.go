@@ -4,6 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
+	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -38,6 +39,9 @@ func (c *Context) syncTxCommitment(commitment *encoder.DecodedCommitment) (model
 	}
 
 	err = c.Syncer.SetPublicKeys(syncedTxs)
+	if st.IsNotFoundError(err) {
+		return nil, c.createDisputableSignatureError(NonexistentReceiverMessage, syncedTxs.Txs())
+	}
 	if err != nil {
 		return nil, err
 	}
