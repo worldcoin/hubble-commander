@@ -3,18 +3,10 @@ package models
 import (
 	"encoding/binary"
 
-	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
-
-const (
-	commitmentDataLength   = 101
-	commitmentIDDataLength = 33
-)
-
-var TxCommitmentPrefix = getBadgerHoldPrefix(TxCommitment{})
 
 type TxCommitment struct {
 	CommitmentBase
@@ -29,56 +21,6 @@ func (c *TxCommitment) BodyHash(accountRoot common.Hash) common.Hash {
 
 func (c *TxCommitment) LeafHash(accountRoot common.Hash) common.Hash {
 	return utils.HashTwo(c.PostStateRoot, c.BodyHash(accountRoot))
-}
-
-func (c *TxCommitment) Bytes() []byte {
-	encoded := make([]byte, commitmentDataLength+len(c.Transactions))
-	encoded[0] = byte(c.Type)
-	binary.BigEndian.PutUint32(encoded[1:5], c.FeeReceiver)
-	copy(encoded[5:69], c.CombinedSignature.Bytes())
-	copy(encoded[69:101], c.PostStateRoot.Bytes())
-	copy(encoded[101:], c.Transactions)
-
-	return encoded
-}
-
-func (c *TxCommitment) SetBytes(data []byte) error {
-	if len(data) < commitmentDataLength {
-		return ErrInvalidLength
-	}
-	err := c.CombinedSignature.SetBytes(data[5:69])
-	if err != nil {
-		return err
-	}
-
-	c.Type = batchtype.BatchType(data[0])
-	c.FeeReceiver = binary.BigEndian.Uint32(data[1:5])
-	c.PostStateRoot.SetBytes(data[69:101])
-	c.Transactions = data[101:]
-	return nil
-}
-
-type CommitmentID struct {
-	BatchID      Uint256
-	IndexInBatch uint8
-}
-
-func (c *CommitmentID) Bytes() []byte {
-	encoded := make([]byte, commitmentIDDataLength)
-	copy(encoded[0:32], utils.PadLeft(c.BatchID.Bytes(), 32))
-	encoded[32] = c.IndexInBatch
-
-	return encoded
-}
-
-func (c *CommitmentID) SetBytes(data []byte) error {
-	if len(data) != commitmentIDDataLength {
-		return ErrInvalidLength
-	}
-
-	c.BatchID.SetBytes(data[0:32])
-	c.IndexInBatch = data[32]
-	return nil
 }
 
 type CommitmentWithTokenID struct {
