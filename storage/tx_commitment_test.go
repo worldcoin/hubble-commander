@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	commitment = models.TxCommitment{
+	txCommitment = models.TxCommitment{
 		CommitmentBase: models.CommitmentBase{
 			ID: models.CommitmentID{
 				BatchID:      models.MakeUint256(1),
@@ -27,37 +27,37 @@ var (
 	}
 )
 
-type CommitmentTestSuite struct {
+type TxCommitmentTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage *TestStorage
 }
 
-func (s *CommitmentTestSuite) SetupSuite() {
+func (s *TxCommitmentTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *CommitmentTestSuite) SetupTest() {
+func (s *TxCommitmentTestSuite) SetupTest() {
 	var err error
 	s.storage, err = NewTestStorage()
 	s.NoError(err)
 }
 
-func (s *CommitmentTestSuite) TearDownTest() {
+func (s *TxCommitmentTestSuite) TearDownTest() {
 	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
-func (s *CommitmentTestSuite) TestAddCommitment_AddAndRetrieve() {
-	err := s.storage.AddTxCommitment(&commitment)
+func (s *TxCommitmentTestSuite) TestAddTxCommitment_AddAndRetrieve() {
+	err := s.storage.AddTxCommitment(&txCommitment)
 	s.NoError(err)
 
-	actual, err := s.storage.GetTxCommitment(&commitment.ID)
+	actual, err := s.storage.GetTxCommitment(&txCommitment.ID)
 	s.NoError(err)
-	s.Equal(commitment, *actual)
+	s.Equal(txCommitment, *actual)
 }
 
-func (s *CommitmentTestSuite) addRandomBatch() models.Uint256 {
+func (s *TxCommitmentTestSuite) addRandomBatch() models.Uint256 {
 	batch := models.Batch{
 		ID:                models.MakeUint256(123),
 		Type:              batchtype.Transfer,
@@ -71,17 +71,17 @@ func (s *CommitmentTestSuite) addRandomBatch() models.Uint256 {
 }
 
 func (s *CommitmentTestSuite) TestGetCommitment_NonexistentCommitment() {
-	res, err := s.storage.GetTxCommitment(&commitment.ID)
+	res, err := s.storage.GetTxCommitment(&txCommitment.ID)
 	s.ErrorIs(err, NewNotFoundError("commitment"))
 	s.Nil(res)
 }
 
-func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
-	err := s.storage.AddTxCommitment(&commitment)
+func (s *TxCommitmentTestSuite) TestGetTxCommitmentsByBatchID() {
+	err := s.storage.AddTxCommitment(&txCommitment)
 	s.NoError(err)
 
 	batchID := s.addRandomBatch()
-	includedCommitment := commitment
+	includedCommitment := txCommitment
 	includedCommitment.ID.BatchID = batchID
 	includedCommitment.FeeReceiver = 0
 
@@ -117,7 +117,7 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID_NonexistentCommitments
 	s.Len(commitments, 0)
 }
 
-func (s *CommitmentTestSuite) addStateLeaf() {
+func (s *TxCommitmentTestSuite) addStateLeaf() {
 	_, err := s.storage.StateTree.Set(uint32(0), &models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(1),
@@ -127,6 +127,6 @@ func (s *CommitmentTestSuite) addStateLeaf() {
 	s.NoError(err)
 }
 
-func TestCommitmentTestSuite(t *testing.T) {
-	suite.Run(t, new(CommitmentTestSuite))
+func TestTxCommitmentTestSuite(t *testing.T) {
+	suite.Run(t, new(TxCommitmentTestSuite))
 }

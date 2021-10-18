@@ -111,14 +111,14 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchDetails() {
 	err := s.storage.AddBatch(batch)
 	s.NoError(err)
 
-	commitmentInBatch := commitment
+	commitmentInBatch := txCommitment
 	commitmentInBatch.ID.BatchID = batch.ID
 	commitmentInBatch.ID.IndexInBatch = 0
 	err = s.storage.AddTxCommitment(&commitmentInBatch)
 	s.NoError(err)
 
 	transferInBatch := create2Transfer
-	transferInBatch.CommitmentID = &commitment.ID
+	transferInBatch.CommitmentID = &txCommitment.ID
 	err = s.storage.AddCreate2Transfer(&transferInBatch)
 	s.NoError(err)
 
@@ -262,11 +262,11 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey_NoCreate2T
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID() {
 	transfer1 := create2Transfer
-	transfer1.CommitmentID = &commitment.ID
+	transfer1.CommitmentID = &txCommitment.ID
 	err := s.storage.AddCreate2Transfer(&transfer1)
 	s.NoError(err)
 
-	otherCommitmentID := commitment.ID
+	otherCommitmentID := txCommitment.ID
 	otherCommitmentID.IndexInBatch += 1
 	transfer2 := create2Transfer
 	transfer2.Hash = utils.RandomHash()
@@ -274,14 +274,14 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID() {
 	err = s.storage.AddCreate2Transfer(&transfer2)
 	s.NoError(err)
 
-	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(&commitment.ID)
+	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(&txCommitment.ID)
 	s.NoError(err)
 	s.Len(transfers, 1)
 	s.Equal(transfer1, transfers[0])
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID_NoCreate2Transfers() {
-	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(&commitment.ID)
+	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(&txCommitment.ID)
 	s.NoError(err)
 	s.Len(transfers, 0)
 }
