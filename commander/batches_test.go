@@ -16,6 +16,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -359,6 +360,57 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithNonexistent
 	s.submitInvalidBatch(clonedStorage.Storage, rollupCtx, &transfers[1], func(commitment *models.Commitment) {
 		transfers[1].FromStateID = 10
 		encodedTx, err := encoder.EncodeTransferForCommitment(&transfers[1])
+		s.NoError(err)
+		commitment.Transactions = encodedTx
+	})
+
+	remoteBatches, err := s.testClient.GetAllBatches()
+	s.NoError(err)
+	s.Len(remoteBatches, 2)
+
+	err = s.cmd.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
+	s.NoError(err)
+
+	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
+	s.ErrorIs(err, ErrRollbackInProgress)
+
+	s.checkBatchAfterDispute(remoteBatches[1].ID)
+}
+
+func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesC2TWithNonRegisteredReceiverPublicKey() {
+	// Change batch type used in RollupContext
+	executionCtx := executor.NewTestExecutionContext(s.testStorage.Storage, s.testClient.Client, s.cfg.Rollup)
+	s.rollupCtx = executor.NewTestRollupContext(executionCtx, batchtype.Create2Transfer)
+
+	// Register public keys added to the account tree for signature disputes to work
+	for i := range s.wallets {
+		_, err := s.testClient.RegisterAccountAndWait(s.wallets[i].PublicKey())
+		s.NoError(err)
+	}
+
+	// Submit a single batch to override genesis state root
+	firstC2T := testutils.MakeCreate2Transfer(0, nil, 0, 100, &models.PublicKey{1, 2, 3})
+	s.submitBatch(s.testStorage.Storage, s.rollupCtx, &firstC2T)
+
+	invalidC2T := testutils.MakeCreate2Transfer(0, nil, 1, 100, &models.PublicKey{1, 2, 3})
+	clonedStorage, rollupCtx := s.cloneStorage()
+	defer teardown(s.Assertions, clonedStorage.Teardown)
+	s.submitInvalidBatch(clonedStorage.Storage, rollupCtx, &invalidC2T, func(commitment *models.Commitment) {
+		// Fix post state root
+		_, err := clonedStorage.Storage.StateTree.Set(3, &models.UserState{
+			PubKeyID: 1234,
+			TokenID:  models.MakeUint256(0),
+			Balance:  invalidC2T.Amount,
+			Nonce:    models.MakeUint256(0),
+		})
+		s.NoError(err)
+		root, err := clonedStorage.Storage.StateTree.Root()
+		s.NoError(err)
+		commitment.PostStateRoot = *root
+
+		// Replace toStateID and toPubKeyID in C2T
+		invalidC2T.ToStateID = ref.Uint32(3)
+		encodedTx, err := encoder.EncodeCreate2TransferForCommitment(&invalidC2T, 1234)
 		s.NoError(err)
 		commitment.Transactions = encodedTx
 	})
