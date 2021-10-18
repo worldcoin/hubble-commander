@@ -167,7 +167,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ReturnsProofs() {
 	s.Len(sync.ReceiverStateProof.Witness, st.StateTreeDepth)
 }
 
-func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ValidatesNotExistingSenderState() {
+func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ValidatesNonexistentSenderState() {
 	setUserStatesInTree(s.Assertions, s.storage)
 
 	senderLeaf, err := s.storage.StateTree.LeafOrEmpty(10)
@@ -183,7 +183,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ValidatesNotExistingSe
 	s.Len(sync.SenderStateProof.Witness, st.StateTreeDepth)
 }
 
-func (s *ApplyTransferTestSuite) TestApplyTransferForSync_AllowsNotExistingReceiverState() {
+func (s *ApplyTransferTestSuite) TestApplyTransferForSync_AllowsNonexistentReceiverState() {
 	_, err := s.storage.StateTree.Set(s.transfer.FromStateID, &models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(0),
