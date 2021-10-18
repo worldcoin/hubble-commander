@@ -210,7 +210,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidPostState
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
 }
 
-func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidSignature() {
+func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidSignature() {
 	s.registerAccounts([]uint32{0, 1})
 
 	clonedStorage, rollupCtx := cloneStorage(s.Assertions, s.cfg, s.testStorage, s.testClient.Client)
