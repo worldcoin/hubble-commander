@@ -8,7 +8,7 @@ if [ "$#" -ne 9 ]; then
     echo "  1. unpigz.sh script path"
     echo "  2. backups .tgz file path"
     echo "  3. badger database directory path"
-    echo "  4. chain-spec directory path"
+    echo "  4. chain-spec.yaml file path"
     echo "  5. postgres host"
     echo "  6. postgres port"
     echo "  7. postgres user"
@@ -16,14 +16,14 @@ if [ "$#" -ne 9 ]; then
     echo "  9. postgres dbname"
     echo ""
     echo "Example usage:"
-    echo "bash $0 ./deployment/scripts/unpigz.sh ./backups/2021-10-05_16:00:19.tgz ./deployment/db/badger ./deployment/chain-spec 192.168.0.81 5433 root password hubble"
+    echo "bash $0 ./deployment/scripts/unpigz.sh ./backups/2021-10-05_16:00:19.tgz ./deployment/db/badger ./deployment/chain-spec.yaml 192.168.0.81 5433 root password hubble"
     exit 0
 fi
 
 UNPIGZ_SCRIPT_PATH=$1
 COMPRESSED_BACKUP_DIR_PATH=$2
 BADGER_DATA_DIR_PATH=$3
-CHAIN_SPEC_DIR_PATH=$4
+CHAIN_SPEC_FILE_PATH=$4
 POSTGRES_IP=$5
 POSTGRES_PORT=$6
 POSTGRES_USER=$7
@@ -37,7 +37,7 @@ DECOMPRESSED_BACKUP_PATH=$(echo "${COMPRESSED_BACKUP_DIR_PATH}" | rev | cut -c$(
 # Prepare paths
 POSTGRES_BACKUP_PATH=$DECOMPRESSED_BACKUP_PATH/postgres.sql
 BADGER_BACKUP_PATH=$DECOMPRESSED_BACKUP_PATH/badger/
-CHAIN_SPEC_BACKUP_PATH=$DECOMPRESSED_BACKUP_PATH/chain-spec/
+CHAIN_SPEC_BACKUP_PATH=$DECOMPRESSED_BACKUP_PATH/chain-spec.yaml
 
 # Decompress the compressed backup file using the unpigz.sh script
 bash "${UNPIGZ_SCRIPT_PATH}" "${COMPRESSED_BACKUP_DIR_PATH}"
@@ -49,7 +49,7 @@ PGPASSWORD="${POSTGRES_PASSWORD}" pg_restore -h "${POSTGRES_IP}" -p "${POSTGRES_
 rsync -a "${BADGER_BACKUP_PATH}" "${BADGER_DATA_DIR_PATH}"
 
 # Restore chain-spec data
-rsync -a "${CHAIN_SPEC_BACKUP_PATH}" "${CHAIN_SPEC_DIR_PATH}"
+rsync -a "${CHAIN_SPEC_BACKUP_PATH}" "${CHAIN_SPEC_FILE_PATH}"
 
 # Remove redundant decompressed backup directory
 rm -r "${DECOMPRESSED_BACKUP_PATH}"

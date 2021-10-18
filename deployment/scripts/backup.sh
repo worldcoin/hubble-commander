@@ -8,22 +8,22 @@ if [[ "$#" -ne 6 && "$#" -ne 7 ]]; then
     echo "Use the restore.sh script to restore a commander state from a backup file."
     echo ""
     echo "Script requires following arguments:"
-    echo "  1. commander directory path"
+    echo "  1. backups directory path"
     echo "  2. badger database directory path"
-    echo "  3. chain-spec directory path"
+    echo "  3. chain-spec file path"
     echo "  4. geth chaindata directory path"
     echo "  5. path to the pigz tool"
     echo "  6. path to the pg_dump tool"
     echo "  7. aws bucket [optional]"
     echo ""
     echo "Example usage:"
-    echo "bash $0 ./commander ./commander/db/badger/data ./commander/chain-spec ./commander/e2e/geth-data/geth/chaindata /usr/local/bin/pigz /usr/local/bin/pg_dump backup-aws-bucket"
+    echo "bash $0 ./commander/backups ./commander/db/badger/data ./commander/chain-spec.yaml ./commander/e2e/geth-data/geth/chaindata /usr/local/bin/pigz /usr/local/bin/pg_dump backup-aws-bucket"
     exit 0
 fi
 
-COMMANDER_DIR_PATH=$1
+BACKUPS_TARGET_DIR_PATH=$1
 BADGER_DATA_DIR_PATH=$2
-CHAIN_SPEC_DIR_PATH=$3
+CHAIN_SPEC_FILE_PATH=$3
 GETH_CHAINDATA_DIR_PATH=$4
 PIGZ_PATH=$5
 PG_DUMP_PATH=$6
@@ -31,7 +31,7 @@ AWS_S3_BUCKET=$7
 
 # Prepare paths
 BACKUP_DIR=$(date +"%Y-%m-%d_%H:%M:%S")
-BACKUP_DIR_PATH="${COMMANDER_DIR_PATH}/backups/${BACKUP_DIR}"
+BACKUP_DIR_PATH="${BACKUPS_TARGET_DIR_PATH}/${BACKUP_DIR}"
 COMPRESSED_BACKUP_DIR_PATH="${BACKUP_DIR_PATH}.tgz"
 
 # Create a new backup directory based on the current time
@@ -41,7 +41,7 @@ mkdir -p "${BACKUP_DIR_PATH}"
 rsync -a "${BADGER_DATA_DIR_PATH}"/* "${BACKUP_DIR_PATH}/badger/"
 
 # Chain-spec data
-rsync -a "${CHAIN_SPEC_DIR_PATH}"/* "${BACKUP_DIR_PATH}/chain-spec/"
+rsync -a "${CHAIN_SPEC_FILE_PATH}" "${BACKUP_DIR_PATH}/chain-spec.yaml"
 
 # Backup geth chain data
 rsync -a "${GETH_CHAINDATA_DIR_PATH}" "${BACKUP_DIR_PATH}/geth/"
@@ -51,7 +51,7 @@ POSTGRES_IP=$(cut -d' ' -f1 <<<"$(hostname -I)") # Hardcode your machine IP here
 PGPASSWORD="password" "${PG_DUMP_PATH}" -h "${POSTGRES_IP}" -U root -p 5433 -C hubble -Fc -Z0 > "${BACKUP_DIR_PATH}/postgres.sql"
 
 # Compress all the files
-tar --use-compress-program="${PIGZ_PATH}" -cf "${COMPRESSED_BACKUP_DIR_PATH}" -C "${COMMANDER_DIR_PATH}" "./backups/${BACKUP_DIR}"
+tar --use-compress-program="${PIGZ_PATH}" -cf "${COMPRESSED_BACKUP_DIR_PATH}" -C "${BACKUPS_TARGET_DIR_PATH}" "./${BACKUP_DIR}"
 
 # Remove redundant uncompressed directory
 rm -r "${BACKUP_DIR_PATH}"
