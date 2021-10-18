@@ -138,7 +138,9 @@ func (s *DisputeC2TSignatureTestSuite) signCreate2Transfer(wallet *bls.Wallet, t
 }
 
 func (s *DisputeC2TSignatureTestSuite) signC2TWithPublicKeyHash(
-	wallet *bls.Wallet, transfer *models.Create2Transfer, publicKeyHash common.Hash,
+	wallet *bls.Wallet,
+	transfer *models.Create2Transfer,
+	publicKeyHash common.Hash,
 ) {
 	encodedTransfer, err := encoder.EncodeCreate2TransferForSigning(transfer)
 	s.NoError(err)

@@ -375,7 +375,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithNotExisting
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
 }
 
-func (s *BatchesTestSuite) TestSyncRemoteBatch_AllowsNonexistentReceiver() {
+func (s *BatchesTestSuite) TestSyncRemoteBatch_AllowsTransferToNonexistentReceiver() {
 	transfer := testutils.MakeTransfer(0, 2, 0, 100)
 	s.setTransferHashAndSign(&transfer)
 
