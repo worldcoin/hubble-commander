@@ -40,7 +40,7 @@ func (c *Context) syncTxCommitment(commitment *encoder.DecodedCommitment) (model
 
 	err = c.Syncer.SetPublicKeys(syncedTxs)
 	if st.IsNotFoundError(err) {
-		return nil, c.createDisputableSignatureError(NotExistingReceiverMessage, syncedTxs.Txs())
+		return nil, c.createDisputableSignatureError(NonexistentReceiverMessage, syncedTxs.Txs())
 	}
 	if err != nil {
 		return nil, err

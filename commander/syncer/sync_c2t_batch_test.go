@@ -108,7 +108,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_InvalidTxSignature() {
 	s.Equal(0, disputableErr.CommitmentIndex)
 }
 
-func (s *SyncC2TBatchTestSuite) TestSyncBatch_NonExistentReceiverPublicKey() {
+func (s *SyncC2TBatchTestSuite) TestSyncBatch_NonexistentReceiverPublicKey() {
 	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, &models.PublicKey{1, 2, 3})
 	signCreate2Transfer(s.T(), &s.wallets[1], &tx)
 	s.setTxHash(&tx)
@@ -125,7 +125,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_NonExistentReceiverPublicKey() {
 	err = s.syncCtx.SyncBatch(&remoteBatches[0])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Signature, disputableErr.Type)
-	s.Equal(NotExistingReceiverMessage, disputableErr.Reason)
+	s.Equal(NonexistentReceiverMessage, disputableErr.Reason)
 	s.Equal(0, disputableErr.CommitmentIndex)
 }
 
