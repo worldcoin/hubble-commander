@@ -72,6 +72,10 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Bytes(), nil
 	case *models.StateUpdate:
 		return nil, errors.WithStack(errPassedByPointer)
+	case models.StoredCommitment:
+		return v.Bytes(), nil
+	case *models.StoredCommitment:
+		return nil, errors.WithStack(errPassedByPointer)
 	case models.StoredTx:
 		return v.Bytes(), nil
 	case *models.StoredTx:
@@ -141,6 +145,8 @@ func Decode(data []byte, value interface{}) error {
 	case *models.FlatStateLeaf:
 		return v.SetBytes(data)
 	case *models.StateUpdate:
+		return v.SetBytes(data)
+	case *models.StoredCommitment:
 		return v.SetBytes(data)
 	case *models.StoredTx:
 		return v.SetBytes(data)
