@@ -2,7 +2,6 @@ package models
 
 import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -23,7 +22,7 @@ type Batch struct {
 
 func (b *Batch) Bytes() []byte {
 	encoded := make([]byte, batchDataLength)
-	copy(encoded[0:32], utils.PadLeft(b.ID.Bytes(), 32))
+	copy(encoded[0:32], b.ID.Bytes())
 	encoded[32] = byte(b.Type)
 	copy(encoded[33:65], b.TransactionHash.Bytes())
 	copy(encoded[65:98], EncodeHashPointer(b.Hash))

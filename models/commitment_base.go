@@ -2,7 +2,6 @@ package models
 
 import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -21,7 +20,7 @@ type CommitmentID struct {
 
 func (c *CommitmentID) Bytes() []byte {
 	encoded := make([]byte, commitmentIDDataLength)
-	copy(encoded[0:32], utils.PadLeft(c.BatchID.Bytes(), 32))
+	copy(encoded[0:32], c.BatchID.Bytes())
 	encoded[32] = c.IndexInBatch
 
 	return encoded
