@@ -26,12 +26,12 @@ func (s *CommitmentStorage) copyWithNewDatabase(database *Database) *CommitmentS
 	return &newCommitmentStorage
 }
 
-func (s *CommitmentStorage) AddCommitment(commitment *models.Commitment) error {
+func (s *CommitmentStorage) AddCommitment(commitment *models.TxCommitment) error {
 	return s.database.Badger.Insert(commitment.ID, *commitment)
 }
 
-func (s *CommitmentStorage) GetCommitment(key *models.CommitmentID) (*models.Commitment, error) {
-	commitment := models.Commitment{
+func (s *CommitmentStorage) GetCommitment(key *models.CommitmentID) (*models.TxCommitment, error) {
+	commitment := models.TxCommitment{
 		CommitmentBase: models.CommitmentBase{
 			ID: *key,
 		},
@@ -46,10 +46,10 @@ func (s *CommitmentStorage) GetCommitment(key *models.CommitmentID) (*models.Com
 	return &commitment, nil
 }
 
-func (s *CommitmentStorage) GetLatestCommitment() (*models.Commitment, error) {
-	var commitment *models.Commitment
+func (s *CommitmentStorage) GetLatestCommitment() (*models.TxCommitment, error) {
+	var commitment *models.TxCommitment
 	var err error
-	err = s.database.Badger.Iterator(models.CommitmentPrefix, db.ReversePrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
+	err = s.database.Badger.Iterator(models.TxCommitmentPrefix, db.ReversePrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
 		commitment, err = decodeCommitment(item)
 		return true, err
 	})
@@ -84,7 +84,7 @@ func (s *CommitmentStorage) DeleteCommitmentsByBatchIDs(batchIDs ...models.Uint2
 		return errors.WithStack(NewNotFoundError("commitments"))
 	}
 
-	var commitment models.Commitment
+	var commitment models.TxCommitment
 	for i := range ids {
 		err = txDatabase.Badger.Delete(ids[i], commitment)
 		if err != nil {
@@ -99,7 +99,7 @@ func getCommitmentIDsByBatchID(txn *Database, opts bdg.IteratorOptions, batchID 
 	prefix := getCommitmentPrefixWithBatchID(&batchID)
 	err := txn.Badger.Iterator(prefix, opts, func(item *bdg.Item) (bool, error) {
 		var id models.CommitmentID
-		err := db.DecodeKey(item.Key(), &id, models.CommitmentPrefix)
+		err := db.DecodeKey(item.Key(), &id, models.TxCommitmentPrefix)
 		if err != nil {
 			return false, err
 		}
@@ -113,7 +113,7 @@ func getCommitmentIDsByBatchID(txn *Database, opts bdg.IteratorOptions, batchID 
 }
 
 func (s *Storage) GetCommitmentsByBatchID(batchID models.Uint256) ([]models.CommitmentWithTokenID, error) {
-	commitments := make([]models.Commitment, 0, 32)
+	commitments := make([]models.TxCommitment, 0, 32)
 	prefix := getCommitmentPrefixWithBatchID(&batchID)
 	err := s.database.Badger.Iterator(prefix, bdg.DefaultIteratorOptions, func(item *bdg.Item) (bool, error) {
 		commitment, err := decodeCommitment(item)
@@ -146,8 +146,8 @@ func (s *Storage) GetCommitmentsByBatchID(batchID models.Uint256) ([]models.Comm
 	return commitmentsWithToken, nil
 }
 
-func decodeCommitment(item *bdg.Item) (*models.Commitment, error) {
-	var commitment models.Commitment
+func decodeCommitment(item *bdg.Item) (*models.TxCommitment, error) {
+	var commitment models.TxCommitment
 	err := item.Value(func(v []byte) error {
 		return db.Decode(v, &commitment)
 	})
@@ -155,7 +155,7 @@ func decodeCommitment(item *bdg.Item) (*models.Commitment, error) {
 		return nil, err
 	}
 
-	err = db.DecodeKey(item.Key(), &commitment.ID, models.CommitmentPrefix)
+	err = db.DecodeKey(item.Key(), &commitment.ID, models.TxCommitmentPrefix)
 	if err != nil {
 		return nil, err
 	}
@@ -163,9 +163,9 @@ func decodeCommitment(item *bdg.Item) (*models.Commitment, error) {
 }
 
 func getCommitmentPrefixWithBatchID(batchID *models.Uint256) []byte {
-	commitmentPrefixLen := len(models.CommitmentPrefix)
+	commitmentPrefixLen := len(models.TxCommitmentPrefix)
 	prefix := make([]byte, commitmentPrefixLen+32)
-	copy(prefix[:commitmentPrefixLen], models.CommitmentPrefix)
+	copy(prefix[:commitmentPrefixLen], models.TxCommitmentPrefix)
 	copy(prefix[commitmentPrefixLen:], utils.PadLeft(batchID.Bytes(), 32))
 	return prefix
 }

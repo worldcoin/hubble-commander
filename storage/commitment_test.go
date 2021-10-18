@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	commitment = models.Commitment{
+	commitment = models.TxCommitment{
 		CommitmentBase: models.CommitmentBase{
 			ID: models.CommitmentID{
 				BatchID:      models.MakeUint256(1),

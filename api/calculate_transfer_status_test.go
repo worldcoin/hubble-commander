@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	commitment = models.Commitment{
+	commitment = models.TxCommitment{
 		CommitmentBase: models.CommitmentBase{
 			Type:          batchtype.Transfer,
 			PostStateRoot: utils.RandomHash(),

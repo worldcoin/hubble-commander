@@ -103,7 +103,7 @@ func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_
 	err = s.storage.AddBatch(&batch)
 	s.NoError(err)
 
-	commitments := []models.Commitment{
+	commitments := []models.TxCommitment{
 		{
 			CommitmentBase: models.CommitmentBase{
 				ID: models.CommitmentID{
@@ -203,7 +203,6 @@ func (s *DisputeTransitionProofsTestSuite) addGenesisBatch() *models.Batch {
 
 	err = s.storage.AddBatch(batch)
 	s.NoError(err)
-
 	return batch
 }
 

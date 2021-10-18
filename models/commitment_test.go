@@ -9,7 +9,7 @@ import (
 )
 
 func TestCommitment_Bytes(t *testing.T) {
-	commitment := Commitment{
+	commitment := TxCommitment{
 		CommitmentBase: CommitmentBase{
 			ID: CommitmentID{
 				BatchID:      MakeUint256(123),
@@ -25,7 +25,7 @@ func TestCommitment_Bytes(t *testing.T) {
 
 	bytes := commitment.Bytes()
 
-	decodedCommitment := Commitment{
+	decodedCommitment := TxCommitment{
 		CommitmentBase: CommitmentBase{
 			ID: CommitmentID{
 				BatchID:      MakeUint256(123),

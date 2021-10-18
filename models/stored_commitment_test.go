@@ -9,7 +9,7 @@ import (
 )
 
 func TestStoredCommitment_Bytes_Tx(t *testing.T) {
-	commitment := &Commitment{
+	commitment := &TxCommitment{
 		CommitmentBase: CommitmentBase{
 			ID: CommitmentID{
 				BatchID:      MakeUint256(1),
@@ -90,7 +90,7 @@ func TestStoredCommitment_ToTxCommitment_InvalidType(t *testing.T) {
 }
 
 func TestStoredCommitment_ToDepositCommitment_InvalidType(t *testing.T) {
-	commitment := MakeStoredCommitmentFromTxCommitment(&Commitment{})
+	commitment := MakeStoredCommitmentFromTxCommitment(&TxCommitment{})
 
 	require.Panics(t, func() {
 		commitment.ToDepositCommitment()

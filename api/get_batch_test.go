@@ -21,7 +21,7 @@ type GetBatchTestSuite struct {
 	api                 *API
 	storage             *st.TestStorage
 	testClient          *eth.TestClient
-	commitment          models.Commitment
+	commitment          models.TxCommitment
 	batch               models.Batch
 	batchNotFoundAPIErr *APIError
 }

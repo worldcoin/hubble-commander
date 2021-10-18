@@ -9,7 +9,7 @@ func (c *RollupContext) BuildCommitment(
 	executeResult ExecuteTxsForCommitmentResult,
 	commitmentID *models.CommitmentID,
 	feeReceiverStateID uint32,
-) (*models.Commitment, error) {
+) (*models.TxCommitment, error) {
 	serializedTxs, err := c.Executor.SerializeTxs(executeResult)
 	if err != nil {
 		return nil, err

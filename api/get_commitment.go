@@ -41,14 +41,14 @@ func (a *API) unsafeGetCommitment(id models.CommitmentID) (*dto.Commitment, erro
 	}
 
 	return &dto.Commitment{
-		Commitment:   *commitment,
+		TxCommitment: *commitment,
 		Status:       *calculateFinalisedStatus(a.storage.GetLatestBlockNumber(), *batch.FinalisationBlock),
 		BatchTime:    batch.SubmissionTime,
 		Transactions: transactions,
 	}, nil
 }
 
-func (a *API) getTransactionsForCommitment(commitment *models.Commitment) (interface{}, error) {
+func (a *API) getTransactionsForCommitment(commitment *models.TxCommitment) (interface{}, error) {
 	switch commitment.Type {
 	case batchtype.Transfer:
 		return a.getTransfersForCommitment(&commitment.ID)

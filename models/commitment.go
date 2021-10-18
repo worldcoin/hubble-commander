@@ -14,24 +14,24 @@ const (
 	commitmentIDDataLength = 33
 )
 
-var CommitmentPrefix = getBadgerHoldPrefix(Commitment{})
+var TxCommitmentPrefix = getBadgerHoldPrefix(TxCommitment{})
 
-type Commitment struct {
+type TxCommitment struct {
 	CommitmentBase
 	FeeReceiver       uint32
 	CombinedSignature Signature
 	Transactions      []byte
 }
 
-func (c *Commitment) BodyHash(accountRoot common.Hash) common.Hash {
+func (c *TxCommitment) BodyHash(accountRoot common.Hash) common.Hash {
 	return calcBodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, accountRoot.Bytes())
 }
 
-func (c *Commitment) LeafHash(accountRoot common.Hash) common.Hash {
+func (c *TxCommitment) LeafHash(accountRoot common.Hash) common.Hash {
 	return utils.HashTwo(c.PostStateRoot, c.BodyHash(accountRoot))
 }
 
-func (c *Commitment) Bytes() []byte {
+func (c *TxCommitment) Bytes() []byte {
 	encoded := make([]byte, commitmentDataLength+len(c.Transactions))
 	encoded[0] = byte(c.Type)
 	binary.BigEndian.PutUint32(encoded[1:5], c.FeeReceiver)
@@ -42,7 +42,7 @@ func (c *Commitment) Bytes() []byte {
 	return encoded
 }
 
-func (c *Commitment) SetBytes(data []byte) error {
+func (c *TxCommitment) SetBytes(data []byte) error {
 	if len(data) < commitmentDataLength {
 		return ErrInvalidLength
 	}

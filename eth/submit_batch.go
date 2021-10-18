@@ -22,7 +22,7 @@ var ErrSubmitBatchAndWait = fmt.Errorf("submitBatchAndWait: timeout")
 
 type SubmitBatchFunc func() (*types.Transaction, error)
 
-func (c *Client) SubmitTransfersBatch(commitments []models.Commitment) (
+func (c *Client) SubmitTransfersBatch(commitments []models.TxCommitment) (
 	*types.Transaction,
 	error,
 ) {
@@ -37,7 +37,7 @@ func (c *Client) SubmitTransfersBatch(commitments []models.Commitment) (
 	return c.RawTransact(c.config.StakeAmount.ToBig(), estimate, input)
 }
 
-func (c *Client) SubmitCreate2TransfersBatch(commitments []models.Commitment) (
+func (c *Client) SubmitCreate2TransfersBatch(commitments []models.TxCommitment) (
 	*types.Transaction,
 	error,
 ) {
@@ -52,12 +52,12 @@ func (c *Client) SubmitCreate2TransfersBatch(commitments []models.Commitment) (
 	return c.RawTransact(c.config.StakeAmount.ToBig(), estimate, input)
 }
 
-func (c *Client) SubmitTransfersBatchAndWait(commitments []models.Commitment) (*models.Batch, error) {
+func (c *Client) SubmitTransfersBatchAndWait(commitments []models.TxCommitment) (*models.Batch, error) {
 	return c.submitBatchAndWait(func() (*types.Transaction, error) {
 		return c.SubmitTransfersBatch(commitments)
 	})
 }
-func (c *Client) SubmitCreate2TransfersBatchAndWait(commitments []models.Commitment) (*models.Batch, error) {
+func (c *Client) SubmitCreate2TransfersBatchAndWait(commitments []models.TxCommitment) (*models.Batch, error) {
 	return c.submitBatchAndWait(func() (*types.Transaction, error) {
 		return c.SubmitCreate2TransfersBatch(commitments)
 	})
@@ -113,7 +113,7 @@ func (c *Client) estimateBatchSubmissionGasLimit(input []byte) (uint64, error) {
 	return uint64(float64(estimatedGas) * gasEstimateMultiplier), nil
 }
 
-func (c *Client) packCommitments(method string, commitments []models.Commitment) ([]byte, error) {
+func (c *Client) packCommitments(method string, commitments []models.TxCommitment) ([]byte, error) {
 	stateRoots, signatures, feeReceivers, transactions := encoder.CommitmentToCalldataFields(commitments)
 	return c.RollupABI.Pack(method, stateRoots, signatures, feeReceivers, transactions)
 }

@@ -174,7 +174,7 @@ func (s *Create2TransferTestSuite) TestGetCreate2Transfer_NonexistentTransaction
 }
 
 func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers() {
-	commitment := &models.Commitment{}
+	commitment := &models.TxCommitment{}
 	err := s.storage.AddCommitment(commitment)
 	s.NoError(err)
 

@@ -22,7 +22,7 @@ type StoredCommitment struct {
 	Body StoredCommitmentBody
 }
 
-func MakeStoredCommitmentFromTxCommitment(c *Commitment) StoredCommitment {
+func MakeStoredCommitmentFromTxCommitment(c *TxCommitment) StoredCommitment {
 	return StoredCommitment{
 		ID:            c.ID,
 		Type:          c.Type,
@@ -83,13 +83,13 @@ func (c *StoredCommitment) BytesLen() int {
 	return storedCommitmentBytesLength + c.Body.BytesLen()
 }
 
-func (c *StoredCommitment) ToTxCommitment() *Commitment {
+func (c *StoredCommitment) ToTxCommitment() *TxCommitment {
 	txCommitmentBody, ok := c.Body.(*StoredCommitmentTxBody)
 	if !ok {
 		panic("invalid TxCommitment body type")
 	}
 
-	return &Commitment{
+	return &TxCommitment{
 		CommitmentBase: CommitmentBase{
 			ID:            c.ID,
 			Type:          c.Type,

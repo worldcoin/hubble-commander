@@ -36,7 +36,7 @@ func (s *RollupTestSuite) TestValidateStateRoot_SameStateRootHash() {
 	root, err := s.storage.StateTree.Root()
 	s.NoError(err)
 
-	commitment := models.Commitment{
+	commitment := models.TxCommitment{
 		CommitmentBase: models.CommitmentBase{
 			Type:          batchtype.Transfer,
 			PostStateRoot: *root,
@@ -53,7 +53,7 @@ func (s *RollupTestSuite) TestValidateStateRoot_SameStateRootHash() {
 }
 
 func (s *RollupTestSuite) TestValidateStateRoot_DifferentStateRootHash() {
-	commitment := models.Commitment{
+	commitment := models.TxCommitment{
 		CommitmentBase: models.CommitmentBase{
 			Type:          batchtype.Transfer,
 			PostStateRoot: common.Hash{1, 2, 3},

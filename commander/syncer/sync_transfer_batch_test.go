@@ -63,7 +63,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
 		s.NoError(err)
 		expectedCommitments[i].ID.BatchID = pendingBatch.ID
 		expectedCommitments[i].ID.IndexInBatch = 0
-		err = s.rollupCtx.SubmitBatch(pendingBatch, []models.Commitment{expectedCommitments[i]})
+		err = s.rollupCtx.SubmitBatch(pendingBatch, []models.TxCommitment{expectedCommitments[i]})
 		s.NoError(err)
 		s.client.Commit()
 
@@ -231,7 +231,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_NotValidBLSSignature() {
 func (s *SyncTransferBatchTestSuite) TestSyncBatch_CommitmentWithoutTxs() {
 	commitment := s.createCommitmentWithEmptyTransactions(batchtype.Transfer)
 
-	_, err := s.client.SubmitTransfersBatchAndWait([]models.Commitment{commitment})
+	_, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitment{commitment})
 	s.NoError(err)
 
 	remoteBatches, err := s.client.GetAllBatches()
@@ -317,7 +317,7 @@ func (s *SyncTransferBatchTestSuite) submitTransferBatchWithNonexistentFeeReceiv
 	nextBatchID, err := s.storage.GetNextBatchID()
 	s.NoError(err)
 
-	commitment := models.Commitment{
+	commitment := models.TxCommitment{
 		CommitmentBase: models.CommitmentBase{
 			ID: models.CommitmentID{
 				BatchID:      *nextBatchID,
@@ -330,7 +330,7 @@ func (s *SyncTransferBatchTestSuite) submitTransferBatchWithNonexistentFeeReceiv
 		FeeReceiver:       feeReceiverStateID,
 		CombinedSignature: *combinedSignature,
 	}
-	_, err = s.client.SubmitTransfersBatchAndWait([]models.Commitment{commitment})
+	_, err = s.client.SubmitTransfersBatchAndWait([]models.TxCommitment{commitment})
 	s.NoError(err)
 }
 

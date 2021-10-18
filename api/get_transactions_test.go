@@ -166,7 +166,7 @@ func (s *GetTransactionsTestSuite) addCommitmentAndBatch() *models.Batch {
 	err := s.storage.AddBatch(batch)
 	s.NoError(err)
 
-	commitment := &models.Commitment{
+	commitment := &models.TxCommitment{
 		CommitmentBase: models.CommitmentBase{
 			ID: models.CommitmentID{
 				BatchID:      batch.ID,
