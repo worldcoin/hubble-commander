@@ -100,7 +100,7 @@ func (s *BatchTestSuite) TestGetBatch() {
 	s.Equal(batch, actual)
 }
 
-func (s *BatchTestSuite) TestGetBatch_NonExistentBatch() {
+func (s *BatchTestSuite) TestGetBatch_NonexistentBatch() {
 	res, err := s.storage.GetBatch(models.MakeUint256(42))
 	s.ErrorIs(err, NewNotFoundError("batch"))
 	s.Nil(res)
@@ -139,7 +139,7 @@ func (s *BatchTestSuite) TestGetMinedBatch_PendingBatch() {
 	s.Nil(res)
 }
 
-func (s *BatchTestSuite) TestGetMinedBatch_NonExistentBatch() {
+func (s *BatchTestSuite) TestGetMinedBatch_NonexistentBatch() {
 	res, err := s.storage.GetMinedBatch(models.MakeUint256(42))
 	s.ErrorIs(err, NewNotFoundError("batch"))
 	s.Nil(res)

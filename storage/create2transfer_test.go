@@ -166,7 +166,7 @@ func (s *Create2TransferTestSuite) TestBatchAddCreate2Transfer_NoTransfers() {
 	s.ErrorIs(err, ErrNoRowsAffected)
 }
 
-func (s *Create2TransferTestSuite) TestGetCreate2Transfer_NonExistentTransaction() {
+func (s *Create2TransferTestSuite) TestGetCreate2Transfer_NonexistentTransaction() {
 	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
 	res, err := s.storage.GetCreate2Transfer(hash)
 	s.ErrorIs(err, NewNotFoundError("transaction"))

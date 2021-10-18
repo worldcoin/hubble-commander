@@ -70,7 +70,7 @@ func (s *StateTreeTestSuite) TestLeaf_ReturnsCorrectStruct() {
 	s.Equal(leaf, actual)
 }
 
-func (s *StateTreeTestSuite) TestLeaf_NonExistentLeaf() {
+func (s *StateTreeTestSuite) TestLeaf_NonexistentLeaf() {
 	_, err := s.storage.StateTree.Leaf(0)
 	s.ErrorIs(err, NewNotFoundError("state leaf"))
 }
