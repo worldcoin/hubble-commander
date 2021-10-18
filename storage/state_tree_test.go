@@ -410,7 +410,7 @@ func (s *StateTreeTestSuite) TestRevertTo() {
 	s.Equal(states[0], leaf.UserState)
 }
 
-func (s *StateTreeTestSuite) TestRevertTo_NotExistentRootHash() {
+func (s *StateTreeTestSuite) TestRevertTo_NonexistentRootHash() {
 	states := []models.UserState{
 		{
 			PubKeyID: 1,
@@ -437,7 +437,7 @@ func (s *StateTreeTestSuite) TestRevertTo_NotExistentRootHash() {
 	}
 
 	err := s.storage.StateTree.RevertTo(common.Hash{1, 2, 3})
-	s.ErrorIs(err, ErrNotExistentState)
+	s.ErrorIs(err, ErrNonexistentState)
 }
 
 func TestStateTreeTestSuite(t *testing.T) {
