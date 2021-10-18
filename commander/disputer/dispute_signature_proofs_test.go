@@ -5,6 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
 )
@@ -50,11 +51,16 @@ func (s *DisputeSignatureProofsTestSuite) TestReceiverPublicKeyProof() {
 	err := s.storage.AccountTree.SetSingle(account)
 	s.NoError(err)
 
-	publicKeyHash := crypto.Keccak256Hash(account.PublicKey.Bytes())
-
 	publicKeyProof, err := s.disputeCtx.receiverPublicKeyProof(account.PubKeyID)
 	s.NoError(err)
-	s.Equal(publicKeyHash, publicKeyProof.PublicKeyHash)
+	s.Equal(crypto.Keccak256Hash(account.PublicKey.Bytes()), publicKeyProof.PublicKeyHash)
+	s.Len(publicKeyProof.Witness, 32)
+}
+
+func (s *DisputeSignatureProofsTestSuite) TestReceiverPublicKeyProof_NonexistentAccount() {
+	publicKeyProof, err := s.disputeCtx.receiverPublicKeyProof(1)
+	s.NoError(err)
+	s.Equal(merkletree.GetZeroHash(0), publicKeyProof.PublicKeyHash)
 	s.Len(publicKeyProof.Witness, 32)
 }
 

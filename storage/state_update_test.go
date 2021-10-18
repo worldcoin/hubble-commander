@@ -54,7 +54,7 @@ func (s *StateUpdateTestSuite) TestAddStateUpdate_AddAndRetrieve() {
 	s.Equal(update, res)
 }
 
-func (s *StateUpdateTestSuite) TestGetStateUpdateByRootHash_NonExistentUpdate() {
+func (s *StateUpdateTestSuite) TestGetStateUpdateByRootHash_NonexistentUpdate() {
 	res, err := s.storage.StateTree.getStateUpdate(10)
 	s.ErrorIs(err, NewNotFoundError("state update"))
 	s.Nil(res)

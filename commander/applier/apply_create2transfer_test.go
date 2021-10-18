@@ -182,7 +182,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_AppliesT
 	s.Equal(uint64(1000), receiverLeaf.Balance.Uint64())
 }
 
-func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_ValidatesNotExistingSenderState() {
+func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2TransferForSync_ValidatesNonexistentSenderState() {
 	senderLeaf, err := s.storage.StateTree.LeafOrEmpty(10)
 	s.NoError(err)
 

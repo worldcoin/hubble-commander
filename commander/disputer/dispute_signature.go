@@ -7,6 +7,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 )
@@ -125,11 +127,17 @@ func (c *Context) publicKeyProof(pubKeyID uint32) (*models.PublicKeyProof, error
 }
 
 func (c *Context) receiverPublicKeyProof(pubKeyID uint32) (*models.ReceiverPublicKeyProof, error) {
-	account, err := c.storage.AccountTree.Leaf(pubKeyID)
+	witness, err := c.storage.AccountTree.GetWitness(pubKeyID)
 	if err != nil {
 		return nil, err
 	}
-	witness, err := c.storage.AccountTree.GetWitness(pubKeyID)
+	account, err := c.storage.AccountTree.Leaf(pubKeyID)
+	if st.IsNotFoundError(err) {
+		return &models.ReceiverPublicKeyProof{
+			PublicKeyHash: merkletree.GetZeroHash(0),
+			Witness:       witness,
+		}, nil
+	}
 	if err != nil {
 		return nil, err
 	}

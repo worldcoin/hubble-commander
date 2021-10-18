@@ -103,7 +103,7 @@ func (s *GetBatchTestSuite) TestGetBatchByHash_GenesisBatch() {
 	s.Len(result.Commitments, 0)
 }
 
-func (s *GetBatchTestSuite) TestGetBatchByHash_NonExistentBatch() {
+func (s *GetBatchTestSuite) TestGetBatchByHash_NonexistentBatch() {
 	result, err := s.api.GetBatchByHash(utils.RandomHash())
 	s.Equal(s.batchNotFoundAPIErr, err)
 	s.Nil(result)
@@ -149,7 +149,7 @@ func (s *GetBatchTestSuite) TestGetBatchByID_GenesisBatch() {
 	s.Len(result.Commitments, 0)
 }
 
-func (s *GetBatchTestSuite) TestGetBatchByID_NonExistentBatch() {
+func (s *GetBatchTestSuite) TestGetBatchByID_NonexistentBatch() {
 	result, err := s.api.GetBatchByID(models.MakeUint256(0))
 	s.Equal(s.batchNotFoundAPIErr, err)
 	s.Nil(result)

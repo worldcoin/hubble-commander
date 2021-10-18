@@ -180,7 +180,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_PendingBatch() {
 	s.Nil(commitment)
 }
 
-func (s *GetCommitmentTestSuite) TestGetCommitment_NotExistingCommitment() {
+func (s *GetCommitmentTestSuite) TestGetCommitment_NonexistentCommitment() {
 	commitment, err := s.api.GetCommitment(commitment.ID)
 	s.Equal(s.commitmentNotFoundAPIErr, err)
 	s.Nil(commitment)
