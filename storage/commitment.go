@@ -5,23 +5,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 )
 
-type CommitmentStorage struct {
-	database *Database
-}
-
-func NewCommitmentStorage(database *Database) *CommitmentStorage {
-	return &CommitmentStorage{
-		database: database,
-	}
-}
-
-func (s *CommitmentStorage) copyWithNewDatabase(database *Database) *CommitmentStorage {
-	newCommitmentStorage := *s
-	newCommitmentStorage.database = database
-
-	return &newCommitmentStorage
-}
-
 func (s *CommitmentStorage) AddCommitment(commitment *models.TxCommitment) error {
 	return s.database.Badger.Insert(commitment.ID, models.MakeStoredCommitmentFromTxCommitment(commitment))
 }
