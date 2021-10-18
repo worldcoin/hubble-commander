@@ -76,6 +76,24 @@ func (s *CommitmentTestSuite) TestGetCommitment_NonexistentCommitment() {
 	s.Nil(res)
 }
 
+func (s *TxCommitmentTestSuite) TestGetTxCommitment_InvalidCommitmentType() {
+	depositCommitment := &models.DepositCommitment{
+		CommitmentBase: models.CommitmentBase{
+			ID: models.CommitmentID{
+				BatchID:      models.MakeUint256(1),
+				IndexInBatch: 1,
+			},
+			Type: batchtype.Deposit,
+		},
+	}
+	err := s.storage.AddDepositCommitment(depositCommitment)
+	s.NoError(err)
+
+	res, err := s.storage.GetTxCommitment(&depositCommitment.ID)
+	s.ErrorIs(err, NewNotFoundError("commitment"))
+	s.Nil(res)
+}
+
 func (s *TxCommitmentTestSuite) TestGetTxCommitmentsByBatchID() {
 	err := s.storage.AddTxCommitment(&txCommitment)
 	s.NoError(err)

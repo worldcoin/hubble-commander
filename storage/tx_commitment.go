@@ -3,6 +3,7 @@ package storage
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/pkg/errors"
 )
 
 func (s *CommitmentStorage) AddTxCommitment(commitment *models.TxCommitment) error {
@@ -13,6 +14,9 @@ func (s *CommitmentStorage) GetTxCommitment(id *models.CommitmentID) (*models.Tx
 	commitment, err := s.getStoredCommitment(id)
 	if err != nil {
 		return nil, err
+	}
+	if !s.isTxCommitmentType(commitment.Type) {
+		return nil, errors.WithStack(NewNotFoundError("commitment"))
 	}
 	return commitment.ToTxCommitment(), nil
 }
@@ -25,7 +29,7 @@ func (s *Storage) GetTxCommitmentsByBatchID(batchID models.Uint256) ([]models.Co
 
 	commitmentsWithToken := make([]models.CommitmentWithTokenID, 0, len(commitments))
 	for i := range commitments {
-		if commitments[i].Type != batchtype.Transfer && commitments[i].Type != batchtype.Create2Transfer {
+		if !s.isTxCommitmentType(commitments[i].Type) {
 			continue
 		}
 		commitment := commitments[i].ToTxCommitment()
@@ -44,4 +48,8 @@ func (s *Storage) GetTxCommitmentsByBatchID(batchID models.Uint256) ([]models.Co
 	}
 
 	return commitmentsWithToken, nil
+}
+
+func (s *CommitmentStorage) isTxCommitmentType(commitmentType batchtype.BatchType) bool {
+	return commitmentType == batchtype.Transfer || commitmentType == batchtype.Create2Transfer
 }

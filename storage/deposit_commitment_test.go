@@ -65,8 +65,9 @@ func (s *DepositCommitmentTestSuite) TestAddDepositCommitment_InvalidCommitmentT
 	err := s.storage.AddTxCommitment(&txCommitment)
 	s.NoError(err)
 
-	_, err = s.storage.GetDepositCommitment(&s.commitment.ID)
+	res, err := s.storage.GetDepositCommitment(&s.commitment.ID)
 	s.ErrorIs(err, NewNotFoundError("commitment"))
+	s.Nil(res)
 }
 
 func TestDepositCommitmentTestSuite(t *testing.T) {
