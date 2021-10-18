@@ -345,7 +345,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithoutTransfer
 	s.checkBatchAfterDispute(remoteBatches[1].ID)
 }
 
-func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithNotExistingSender() {
+func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithNonexistentSender() {
 	transfers := []models.Transfer{
 		testutils.MakeTransfer(0, 1, 0, 50),
 		testutils.MakeTransfer(0, 1, 1, 100),

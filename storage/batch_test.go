@@ -312,7 +312,7 @@ func (s *BatchTestSuite) TestGetBatchByHash_AddAndRetrieve() {
 	s.Equal(batch, actual)
 }
 
-func (s *BatchTestSuite) TestGetBatchByHash_NotExistingBatch() {
+func (s *BatchTestSuite) TestGetBatchByHash_NonexistentBatch() {
 	_, err := s.storage.GetBatchByHash(utils.RandomHash())
 	s.True(IsNotFoundError(err))
 }
