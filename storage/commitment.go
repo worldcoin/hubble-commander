@@ -6,7 +6,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils"
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/pkg/errors"
-	bh "github.com/timshannon/badgerhold/v4"
 )
 
 type CommitmentStorage struct {
@@ -27,40 +26,15 @@ func (s *CommitmentStorage) copyWithNewDatabase(database *Database) *CommitmentS
 }
 
 func (s *CommitmentStorage) AddCommitment(commitment *models.TxCommitment) error {
-	return s.database.Badger.Insert(commitment.ID, *commitment)
+	return s.database.Badger.Insert(commitment.ID, models.MakeStoredCommitmentFromTxCommitment(commitment))
 }
 
-func (s *CommitmentStorage) GetCommitment(key *models.CommitmentID) (*models.TxCommitment, error) {
-	commitment := models.TxCommitment{
-		CommitmentBase: models.CommitmentBase{
-			ID: *key,
-		},
-	}
-	err := s.database.Badger.Get(*key, &commitment)
-	if err == bh.ErrNotFound {
-		return nil, errors.WithStack(NewNotFoundError("commitment"))
-	}
+func (s *CommitmentStorage) GetCommitment(id *models.CommitmentID) (*models.TxCommitment, error) {
+	commitment, err := s.GetStoredCommitment(id)
 	if err != nil {
 		return nil, err
 	}
-	return &commitment, nil
-}
-
-func (s *CommitmentStorage) GetLatestCommitment() (*models.TxCommitment, error) {
-	var commitment *models.TxCommitment
-	var err error
-	err = s.database.Badger.Iterator(models.TxCommitmentPrefix, db.ReversePrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
-		commitment, err = decodeCommitment(item)
-		return true, err
-	})
-	if err == db.ErrIteratorFinished {
-		return nil, errors.WithStack(NewNotFoundError("commitment"))
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	return commitment, nil
+	return commitment.ToTxCommitment(), nil
 }
 
 func (s *CommitmentStorage) DeleteCommitmentsByBatchIDs(batchIDs ...models.Uint256) error {

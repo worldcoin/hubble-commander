@@ -76,31 +76,6 @@ func (s *CommitmentTestSuite) TestGetCommitment_NonexistentCommitment() {
 	s.Nil(res)
 }
 
-func (s *CommitmentTestSuite) TestGetLatestCommitment() {
-	expected := commitment
-	for i := 0; i < 2; i++ {
-		expected.ID.IndexInBatch = uint8(i)
-		err := s.storage.AddCommitment(&expected)
-		s.NoError(err)
-	}
-
-	expected.ID.BatchID = models.MakeUint256(5)
-	for i := 0; i < 2; i++ {
-		expected.ID.IndexInBatch = uint8(i)
-		err := s.storage.AddCommitment(&expected)
-		s.NoError(err)
-	}
-
-	latestCommitment, err := s.storage.GetLatestCommitment()
-	s.NoError(err)
-	s.Equal(expected, *latestCommitment)
-}
-
-func (s *CommitmentTestSuite) TestGetLatestCommitment_NoCommitments() {
-	_, err := s.storage.GetLatestCommitment()
-	s.ErrorIs(err, NewNotFoundError("commitment"))
-}
-
 func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID() {
 	err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)

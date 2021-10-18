@@ -14,19 +14,23 @@ const (
 	storedCommitmentDepositBodyLength = 64
 )
 
+var (
+	StoredCommitmentPrefix = getBadgerHoldPrefix(StoredCommitment{})
+)
+
 type StoredCommitment struct {
-	ID            CommitmentID
-	Type          batchtype.BatchType
-	PostStateRoot common.Hash
+	CommitmentBase
 
 	Body StoredCommitmentBody
 }
 
 func MakeStoredCommitmentFromTxCommitment(c *TxCommitment) StoredCommitment {
 	return StoredCommitment{
-		ID:            c.ID,
-		Type:          c.Type,
-		PostStateRoot: c.PostStateRoot,
+		CommitmentBase: CommitmentBase{
+			ID:            c.ID,
+			Type:          c.Type,
+			PostStateRoot: c.PostStateRoot,
+		},
 		Body: &StoredCommitmentTxBody{
 			FeeReceiver:       c.FeeReceiver,
 			CombinedSignature: c.CombinedSignature,
@@ -37,9 +41,11 @@ func MakeStoredCommitmentFromTxCommitment(c *TxCommitment) StoredCommitment {
 
 func MakeStoredCommitmentFromDepositCommitment(c *DepositCommitment) StoredCommitment {
 	return StoredCommitment{
-		ID:            c.ID,
-		Type:          c.Type,
-		PostStateRoot: c.PostStateRoot,
+		CommitmentBase: CommitmentBase{
+			ID:            c.ID,
+			Type:          c.Type,
+			PostStateRoot: c.PostStateRoot,
+		},
 		Body: &StoredCommitmentDepositBody{
 			SubTreeID:   c.SubTreeID,
 			SubTreeRoot: c.SubTreeRoot,
