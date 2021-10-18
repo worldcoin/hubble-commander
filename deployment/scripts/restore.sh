@@ -6,7 +6,7 @@ if [ "$#" -ne 9 ]; then
     echo ""
     echo "Script requires 9 arguments:"
     echo "  1. unpigz.sh script path"
-    echo "  2. backups .tgz file path"
+    echo "  2. backup .tgz file path"
     echo "  3. badger database directory path"
     echo "  4. chain-spec.yaml file path"
     echo "  5. postgres host"
@@ -48,7 +48,7 @@ PGPASSWORD="${POSTGRES_PASSWORD}" pg_restore -h "${POSTGRES_IP}" -p "${POSTGRES_
 # Restore badger state
 rsync -a "${BADGER_BACKUP_PATH}" "${BADGER_DATA_DIR_PATH}"
 
-# Restore chain-spec data
+# Restore chain-spec file data
 rsync -a "${CHAIN_SPEC_BACKUP_PATH}" "${CHAIN_SPEC_FILE_PATH}"
 
 # Remove redundant decompressed backup directory

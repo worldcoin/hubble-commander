@@ -40,7 +40,7 @@ mkdir -p "${BACKUP_DIR_PATH}"
 # Backup badger data
 rsync -a "${BADGER_DATA_DIR_PATH}"/* "${BACKUP_DIR_PATH}/badger/"
 
-# Chain-spec data
+# Chain-spec file data
 rsync -a "${CHAIN_SPEC_FILE_PATH}" "${BACKUP_DIR_PATH}/chain-spec.yaml"
 
 # Backup geth chain data
