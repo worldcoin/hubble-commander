@@ -148,12 +148,7 @@ func (s *DepositsTestSuite) TestFetchDepositSubTrees() {
 }
 
 func (s *DepositsTestSuite) registerToken() {
-	token := models.RegisteredToken{
-		Contract: s.testClient.ExampleTokenAddress,
-	}
-	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
-	s.NoError(err)
-	RegisterSingleToken(s.Assertions, s.testClient, &token, latestBlockNumber)
+	RegisterSingleToken(s.Assertions, s.testClient, s.testClient.ExampleTokenAddress)
 }
 
 func (s *DepositsTestSuite) approveTokens() {
