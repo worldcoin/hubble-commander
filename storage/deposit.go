@@ -9,7 +9,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-var ErrRanOutOfPendingDeposits = fmt.Errorf("the commander ran out of the pending deposits for already built deposit sub trees on chain - this should never happen")
+var ErrRanOutOfPendingDeposits = fmt.Errorf(
+	"the commander ran out of the pending deposits for already built deposit sub trees on chain" +
+		" - this should never happen",
+)
 
 type DepositStorage struct {
 	database *Database
