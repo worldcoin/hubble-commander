@@ -18,7 +18,6 @@ var eventTopics = map[string]common.Hash{
 
 var (
 	ErrReceiptWithoutLogs = fmt.Errorf("the receipt contains no logs")
-	ErrLogNotFound        = fmt.Errorf("log not found in the receipt")
 )
 
 func retrieveLog(receipt *types.Receipt, logName string) (*types.Log, error) {
@@ -33,5 +32,5 @@ func retrieveLog(receipt *types.Receipt, logName string) (*types.Log, error) {
 		}
 	}
 
-	return nil, errors.WithStack(ErrLogNotFound)
+	return nil, errors.WithStack(NewLogNotFoundError(logName))
 }
