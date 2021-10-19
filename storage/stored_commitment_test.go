@@ -135,8 +135,9 @@ func (s *StoredCommitmentTestSuite) TestDeleteCommitmentsByBatchIDs() {
 	err = s.storage.DeleteCommitmentsByBatchIDs(batches[0].ID, batches[1].ID)
 	s.NoError(err)
 	for i := range batches {
-		_, err = s.storage.getStoredCommitmentsByBatchID(batches[i].ID)
-		s.ErrorIs(err, NewNotFoundError("commitments"))
+		commitments, err := s.storage.getStoredCommitmentsByBatchID(batches[i].ID)
+		s.NoError(err)
+		s.Len(commitments, 0)
 	}
 }
 

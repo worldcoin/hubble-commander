@@ -103,10 +103,6 @@ func (s *CommitmentStorage) getStoredCommitmentsByBatchID(batchID models.Uint256
 	if err != nil && err != db.ErrIteratorFinished {
 		return nil, err
 	}
-	if len(commitments) == 0 {
-		return nil, errors.WithStack(NewNotFoundError("commitments"))
-	}
-
 	return commitments, nil
 }
 
