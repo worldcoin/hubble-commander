@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestStoredCommitment_Bytes_Tx(t *testing.T) {
+func TestStoredCommitment_Bytes_TxCommitment(t *testing.T) {
 	commitment := &TxCommitment{
 		CommitmentBase: CommitmentBase{
 			ID: CommitmentID{
@@ -35,7 +35,7 @@ func TestStoredCommitment_Bytes_Tx(t *testing.T) {
 	require.Equal(t, *commitment, *decodedCommitment)
 }
 
-func TestStoredCommitment_Bytes_Deposit(t *testing.T) {
+func TestStoredCommitment_Bytes_DepositCommitment(t *testing.T) {
 	commitment := &DepositCommitment{
 		CommitmentBase: CommitmentBase{
 			ID: CommitmentID{
@@ -79,6 +79,29 @@ func TestStoredCommitment_Bytes_Deposit(t *testing.T) {
 
 	decodedCommitment := decodedStoredCommitment.ToDepositCommitment()
 	require.Equal(t, *commitment, *decodedCommitment)
+}
+
+func TestStoredCommitment_Bytes_DepositCommitmentWithoutPendingDeposits(t *testing.T) {
+	commitment := &DepositCommitment{
+		CommitmentBase: CommitmentBase{
+			ID: CommitmentID{
+				BatchID:      MakeUint256(1),
+				IndexInBatch: 4,
+			},
+			Type:          batchtype.Deposit,
+			PostStateRoot: utils.RandomHash(),
+		},
+		SubTreeID:   MakeUint256(5),
+		SubTreeRoot: utils.RandomHash(),
+		Deposits:    []PendingDeposit{},
+	}
+
+	storedCommitment := MakeStoredCommitmentFromDepositCommitment(commitment)
+	bytes := storedCommitment.Bytes()
+
+	var decodedStoredCommitment StoredCommitment
+	err := decodedStoredCommitment.SetBytes(bytes)
+	require.ErrorIs(t, err, ErrInvalidLength)
 }
 
 func TestStoredCommitment_ToTxCommitment_InvalidType(t *testing.T) {

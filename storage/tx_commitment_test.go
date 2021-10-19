@@ -85,6 +85,14 @@ func (s *TxCommitmentTestSuite) TestGetTxCommitment_InvalidCommitmentType() {
 			},
 			Type: batchtype.Deposit,
 		},
+		Deposits: []models.PendingDeposit{
+			{
+				ID: models.DepositID{
+					BlockNumber: 1,
+					LogIndex:    1,
+				},
+			},
+		},
 	}
 	err := s.storage.AddDepositCommitment(depositCommitment)
 	s.NoError(err)
