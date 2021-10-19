@@ -77,7 +77,7 @@ func (s *DepositsTestSuite) TestSyncDeposits() {
 	s.Equal(deposits, subTree.Deposits)
 
 	_, err = s.cmd.storage.GetFirstPendingDeposits(4)
-	s.True(st.IsNotFoundError(err))
+	s.ErrorIs(err, st.ErrRanOutOfPendingDeposits)
 }
 
 func (s *DepositsTestSuite) TestSyncDeposits_TwoSubTrees() {

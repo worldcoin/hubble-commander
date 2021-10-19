@@ -1,10 +1,15 @@
 package storage
 
 import (
+	"fmt"
+
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	bdg "github.com/dgraph-io/badger/v3"
+	"github.com/pkg/errors"
 )
+
+var ErrRanOutOfPendingDeposits = fmt.Errorf("the commander ran out of the pending deposits for already built deposit sub trees on chain - this should never happen")
 
 type DepositStorage struct {
 	database *Database
@@ -49,7 +54,7 @@ func (s *DepositStorage) GetFirstPendingDeposits(amount int) ([]models.PendingDe
 		return len(deposits) == amount, nil
 	})
 	if err == db.ErrIteratorFinished {
-		return nil, NewNotFoundError("pending deposits")
+		return nil, errors.WithStack(ErrRanOutOfPendingDeposits)
 	}
 	if err != nil {
 		return nil, err
