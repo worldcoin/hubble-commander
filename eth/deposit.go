@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
@@ -64,12 +65,15 @@ func QueueDeposit(
 }
 
 func (c *Client) GetMaxSubTreeDepthParam() (*uint32, error) {
+	if c.maxDepositSubTreeDepth != nil {
+		return c.maxDepositSubTreeDepth, nil
+	}
+
 	param, err := c.DepositManager.ParamMaxSubtreeDepth(&bind.CallOpts{})
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	maxDepositSubTreeDepth := uint32(param.Uint64())
-
-	return &maxDepositSubTreeDepth, nil
+	c.maxDepositSubTreeDepth = ref.Uint32(uint32(param.Uint64()))
+	return c.maxDepositSubTreeDepth, nil
 }

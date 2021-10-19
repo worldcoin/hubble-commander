@@ -47,6 +47,7 @@ type Client struct {
 	rollupContract         *bind.BoundContract
 	depositManagerContract *bind.BoundContract
 	blocksToFinalise       *int64
+	maxDepositSubTreeDepth *uint32
 	domain                 *bls.Domain
 
 	*AccountManager
