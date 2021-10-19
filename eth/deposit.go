@@ -1,8 +1,6 @@
 package eth
 
 import (
-	"fmt"
-
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -10,10 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
-)
-
-var (
-	ErrDepositQueuedLogNotFound = fmt.Errorf("deposit queued log not found in receipt")
 )
 
 func (c *Client) QueueDepositAndWait(
@@ -33,19 +27,22 @@ func (c *Client) QueueDepositAndWait(
 }
 
 func (c *Client) retrieveDepositIDAndL2Amount(receipt *types.Receipt) (*models.DepositID, *models.Uint256, error) {
-	if len(receipt.Logs) < 1 || receipt.Logs[0] == nil {
-		return nil, nil, errors.WithStack(ErrDepositQueuedLogNotFound)
+	eventName := "DepositQueued"
+
+	log, err := retrieveLog(receipt, eventName)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	event := new(depositmanager.DepositManagerDepositQueued)
-	err := c.depositManagerContract.UnpackLog(event, "DepositQueued", *receipt.Logs[2])
+	err = c.depositManagerContract.UnpackLog(event, eventName, *log)
 	if err != nil {
 		return nil, nil, errors.WithStack(err)
 	}
 
 	depositID := models.DepositID{
 		BlockNumber: uint32(receipt.BlockNumber.Uint64()),
-		LogIndex:    uint32(receipt.Logs[2].Index),
+		LogIndex:    uint32(log.Index),
 	}
 	return &depositID, models.NewUint256FromBig(*event.L2Amount), nil
 }
