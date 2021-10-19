@@ -81,7 +81,6 @@ func (s *DepositsTestSuite) TestSyncDeposits() {
 }
 
 func (s *DepositsTestSuite) TestSyncDeposits_TwoSubTrees() {
-	s.T().SkipNow() // TODO unskip
 	s.registerToken()
 	s.approveTokens()
 
@@ -109,7 +108,7 @@ func (s *DepositsTestSuite) TestSyncDeposits_TwoSubTrees() {
 	s.Equal(secondSubTreeDeposits, secondSubTree.Deposits)
 
 	_, err = s.cmd.storage.GetFirstPendingDeposits(4)
-	s.True(st.IsNotFoundError(err))
+	s.ErrorIs(err, st.ErrRanOutOfPendingDeposits)
 }
 
 func (s *DepositsTestSuite) TestSyncQueuedDeposits() {
