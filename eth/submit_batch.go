@@ -2,7 +2,6 @@ package eth
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/encoder"
@@ -12,12 +11,9 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/pkg/errors"
 )
 
 const gasEstimateMultiplier = 1.3
-
-var ErrNewBatchLogNotFound = fmt.Errorf("new batch log not found in receipt")
 
 type SubmitBatchFunc func() (*types.Transaction, error)
 
@@ -68,17 +64,20 @@ func (c *Client) submitBatchAndWait(submit SubmitBatchFunc) (batch *models.Batch
 		return
 	}
 
+	eventName := "NewBatch"
+
 	receipt, err := chain.WaitToBeMined(c.Blockchain.GetBackend(), tx)
 	if err != nil {
 		return nil, err
 	}
 
-	if receiptContainsLogs(receipt) {
-		return nil, errors.WithStack(ErrNewBatchLogNotFound)
+	log, err := retrieveLog(receipt, eventName)
+	if err != nil {
+		return nil, err
 	}
 
 	event := new(rollup.RollupNewBatch)
-	err = c.rollupContract.UnpackLog(event, "NewBatch", *receipt.Logs[0])
+	err = c.rollupContract.UnpackLog(event, eventName, *log)
 	if err != nil {
 		return nil, err
 	}

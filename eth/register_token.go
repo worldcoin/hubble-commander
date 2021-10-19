@@ -1,8 +1,6 @@
 package eth
 
 import (
-	"fmt"
-
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -10,8 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
-
-var ErrRegisteredTokenLogNotFound = fmt.Errorf("registered token log not found in receipt")
 
 func (c *Client) RequestRegisterTokenAndWait(tokenContract common.Address) error {
 	tx, err := c.RequestRegisterToken(tokenContract)
@@ -56,12 +52,15 @@ func (c *Client) FinalizeRegisterToken(tokenContract common.Address) (*types.Tra
 }
 
 func (c *Client) retrieveRegisteredTokenID(receipt *types.Receipt) (*models.Uint256, error) {
-	if receiptContainsLogs(receipt) {
-		return nil, errors.WithStack(ErrRegisteredTokenLogNotFound)
+	eventName := "RegisteredToken"
+
+	log, err := retrieveLog(receipt, eventName)
+	if err != nil {
+		return nil, err
 	}
 
 	event := new(tokenregistry.TokenRegistryRegisteredToken)
-	err := c.tokenRegistryContract.UnpackLog(event, "RegisteredToken", *receipt.Logs[0])
+	err = c.tokenRegistryContract.UnpackLog(event, eventName, *log)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

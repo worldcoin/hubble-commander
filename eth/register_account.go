@@ -1,8 +1,6 @@
 package eth
 
 import (
-	"fmt"
-
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -10,8 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
-
-var ErrSingleRegisteredPubKeyLogNotFound = fmt.Errorf("single pubkey registered log not found in receipt")
 
 func (a *AccountManager) RegisterAccountAndWait(publicKey *models.PublicKey) (*uint32, error) {
 	tx, err := a.RegisterAccount(publicKey)
@@ -27,12 +23,15 @@ func (a *AccountManager) RegisterAccountAndWait(publicKey *models.PublicKey) (*u
 }
 
 func (a *AccountManager) RetrieveRegisteredPubKeyID(receipt *types.Receipt) (*uint32, error) {
-	if receiptContainsLogs(receipt) {
-		return nil, errors.WithStack(ErrSingleRegisteredPubKeyLogNotFound)
+	eventName := "SinglePubkeyRegistered"
+
+	log, err := retrieveLog(receipt, eventName)
+	if err != nil {
+		return nil, err
 	}
 
 	event := new(accountregistry.AccountRegistrySinglePubkeyRegistered)
-	err := a.accountRegistryContract.UnpackLog(event, "SinglePubkeyRegistered", *receipt.Logs[0])
+	err = a.accountRegistryContract.UnpackLog(event, eventName, *log)
 	if err != nil {
 		return nil, err
 	}

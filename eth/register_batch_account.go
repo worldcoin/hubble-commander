@@ -17,8 +17,7 @@ const (
 )
 
 var (
-	ErrInvalidPubKeysLength             = fmt.Errorf("invalid public keys length")
-	ErrBatchPubKeyRegisteredLogNotFound = fmt.Errorf("batch pubkey registered log not found in receipt")
+	ErrInvalidPubKeysLength = fmt.Errorf("invalid public keys length")
 )
 
 func (a *AccountManager) RegisterBatchAccountAndWait(publicKeys []models.PublicKey) ([]uint32, error) {
@@ -56,12 +55,15 @@ func (a *AccountManager) RegisterBatchAccount(publicKeys []models.PublicKey) (*t
 }
 
 func (a *AccountManager) retrieveRegisteredPubKeyIDs(receipt *types.Receipt) ([]uint32, error) {
-	if receiptContainsLogs(receipt) {
-		return nil, errors.WithStack(ErrBatchPubKeyRegisteredLogNotFound)
+	eventName := "BatchPubkeyRegistered"
+
+	log, err := retrieveLog(receipt, eventName)
+	if err != nil {
+		return nil, err
 	}
 
 	event := new(accountregistry.AccountRegistryBatchPubkeyRegistered)
-	err := a.accountRegistryContract.UnpackLog(event, "BatchPubkeyRegistered", *receipt.Logs[0])
+	err = a.accountRegistryContract.UnpackLog(event, eventName, *log)
 	if err != nil {
 		return nil, err
 	}
