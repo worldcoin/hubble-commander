@@ -51,7 +51,10 @@ func (s *DepositStorage) RemovePendingDeposits(deposits []models.PendingDeposit)
 
 func (s *DepositStorage) GetFirstPendingDeposits(amount int) ([]models.PendingDeposit, error) {
 	deposits := make([]models.PendingDeposit, 0, amount)
-	err := s.database.Badger.Iterator(models.PendingDepositPrefix, db.KeyIteratorOpts, func(item *bdg.Item) (bool, error) {
+	keyIteratorOpts := bdg.IteratorOptions{
+		PrefetchSize: amount, // prefetch pending deposits for performance
+	}
+	err := s.database.Badger.Iterator(models.PendingDepositPrefix, keyIteratorOpts, func(item *bdg.Item) (bool, error) {
 		deposit, err := decodeDeposit(item)
 		if err != nil {
 			return false, err
