@@ -100,7 +100,8 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAndToken
 	}
 	s.registerAccounts(accounts)
 	s.submitTransferBatchInTransaction(&s.transfer)
-	s.registerToken(registeredToken)
+	tokenID := RegisterSingleToken(s.Assertions, s.testClient, &registeredToken)
+	registeredToken.ID = *tokenID
 
 	s.startBlockLoop()
 	s.waitForLatestBlockSync()
@@ -135,7 +136,8 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAndToken
 	}
 	s.registerAccounts(accounts)
 	s.submitTransferBatchInTransaction(&s.transfer)
-	s.registerToken(registeredToken)
+	tokenID := RegisterSingleToken(s.Assertions, s.testClient, &registeredToken)
+	registeredToken.ID = *tokenID
 
 	s.waitForLatestBlockSync()
 
@@ -170,12 +172,6 @@ func (s *NewBlockLoopTestSuite) registerAccounts(accounts []models.AccountLeaf) 
 		s.NoError(err)
 		accounts[i].PubKeyID = *pubKeyID
 	}
-}
-
-func (s *NewBlockLoopTestSuite) registerToken(token models.RegisteredToken) {
-	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
-	s.NoError(err)
-	RegisterSingleToken(s.Assertions, s.testClient, &token, latestBlockNumber)
 }
 
 func (s *NewBlockLoopTestSuite) submitTransferBatchInTransaction(tx *models.Transfer) {

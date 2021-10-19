@@ -2,23 +2,18 @@ package eth
 
 import (
 	"context"
-	"fmt"
-	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/encoder"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/pkg/errors"
 )
 
 const gasEstimateMultiplier = 1.3
-
-var ErrSubmitBatchAndWait = fmt.Errorf("submitBatchAndWait: timeout")
 
 type SubmitBatchFunc func() (*types.Transaction, error)
 
@@ -64,28 +59,30 @@ func (c *Client) SubmitCreate2TransfersBatchAndWait(commitments []models.Commitm
 }
 
 func (c *Client) submitBatchAndWait(submit SubmitBatchFunc) (batch *models.Batch, err error) {
-	sink := make(chan *rollup.RollupNewBatch)
-	subscription, err := c.Rollup.WatchNewBatch(&bind.WatchOpts{}, sink)
-	if err != nil {
-		return
-	}
-	defer subscription.Unsubscribe()
-
 	tx, err := submit()
 	if err != nil {
 		return
 	}
 
-	for {
-		select {
-		case newBatch := <-sink:
-			if newBatch.Raw.TxHash == tx.Hash() {
-				return c.handleNewBatchEvent(newBatch)
-			}
-		case <-time.After(*c.config.TxTimeout):
-			return nil, errors.WithStack(ErrSubmitBatchAndWait)
-		}
+	eventName := "NewBatch"
+
+	receipt, err := chain.WaitToBeMined(c.Blockchain.GetBackend(), tx)
+	if err != nil {
+		return nil, err
 	}
+
+	log, err := retrieveLog(receipt, eventName)
+	if err != nil {
+		return nil, err
+	}
+
+	event := new(rollup.RollupNewBatch)
+	err = c.rollupContract.UnpackLog(event, eventName, *log)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.handleNewBatchEvent(event)
 }
 
 func (c *Client) handleNewBatchEvent(event *rollup.RollupNewBatch) (*models.Batch, error) {
