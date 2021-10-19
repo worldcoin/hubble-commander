@@ -47,7 +47,7 @@ func (s *DepositTestSuite) TestRemovePendingDeposits() {
 	s.NoError(err)
 
 	_, err = s.storage.GetFirstPendingDeposits(2)
-	s.True(IsNotFoundError(err))
+	s.ErrorIs(err, ErrRanOutOfPendingDeposits)
 }
 
 func (s *DepositTestSuite) TestGetFirstPendingDeposits() {
