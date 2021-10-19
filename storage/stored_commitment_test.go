@@ -14,11 +14,32 @@ import (
 type StoredCommitmentTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage *TestStorage
+	storage           *TestStorage
+	depositCommitment models.DepositCommitment
 }
 
 func (s *StoredCommitmentTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
+
+	s.depositCommitment = models.DepositCommitment{
+		CommitmentBase: models.CommitmentBase{
+			ID: models.CommitmentID{
+				BatchID:      models.MakeUint256(5),
+				IndexInBatch: 1,
+			},
+			Type: batchtype.Deposit,
+		},
+		SubTreeID:   models.MakeUint256(1),
+		SubTreeRoot: utils.RandomHash(),
+		Deposits: []models.PendingDeposit{
+			{
+				ID: models.DepositID{
+					BlockNumber: 1,
+					LogIndex:    1,
+				},
+			},
+		},
+	}
 }
 
 func (s *StoredCommitmentTestSuite) SetupTest() {
@@ -50,6 +71,22 @@ func (s *StoredCommitmentTestSuite) TestGetLatestCommitment() {
 	latestCommitment, err := s.storage.GetLatestCommitment()
 	s.NoError(err)
 	s.Equal(models.MakeStoredCommitmentFromTxCommitment(&expected), *latestCommitment)
+}
+
+func (s *StoredCommitmentTestSuite) TestGetLatestCommitment_LatestDepositCommitment() {
+	for i := 0; i < 2; i++ {
+		commitment := txCommitment
+		commitment.ID.IndexInBatch = uint8(i)
+		err := s.storage.AddTxCommitment(&commitment)
+		s.NoError(err)
+	}
+
+	err := s.storage.AddDepositCommitment(&s.depositCommitment)
+	s.NoError(err)
+
+	latestCommitment, err := s.storage.GetLatestCommitment()
+	s.NoError(err)
+	s.Equal(models.MakeStoredCommitmentFromDepositCommitment(&s.depositCommitment), *latestCommitment)
 }
 
 func (s *StoredCommitmentTestSuite) TestGetLatestCommitment_NoCommitments() {
@@ -87,7 +124,15 @@ func (s *StoredCommitmentTestSuite) TestDeleteCommitmentsByBatchIDs() {
 		}
 	}
 
-	err := s.storage.DeleteCommitmentsByBatchIDs(batches[0].ID, batches[1].ID)
+	depositCommitment := s.depositCommitment
+	depositCommitment.ID = models.CommitmentID{
+		BatchID:      batches[0].ID,
+		IndexInBatch: 2,
+	}
+	err := s.storage.AddDepositCommitment(&depositCommitment)
+	s.NoError(err)
+
+	err = s.storage.DeleteCommitmentsByBatchIDs(batches[0].ID, batches[1].ID)
 	s.NoError(err)
 	for i := range batches {
 		_, err = s.storage.getStoredCommitmentsByBatchID(batches[i].ID)
