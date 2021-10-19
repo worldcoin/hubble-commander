@@ -6,7 +6,10 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-const InvalidSignatureMessage = "invalid commitment signature"
+const (
+	InvalidSignatureMessage    = "invalid commitment signature"
+	NonexistentReceiverMessage = "nonexistent receiver"
+)
 
 func (c *Context) verifyTxSignature(commitment *encoder.DecodedCommitment, txs models.GenericTransactionArray) error {
 	domain, err := c.client.GetDomain()

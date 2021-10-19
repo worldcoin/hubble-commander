@@ -9,7 +9,7 @@ import (
 
 var (
 	ErrNoRowsAffected   = fmt.Errorf("no rows were affected by the update")
-	ErrNotExistentState = fmt.Errorf("cannot revert to not existent state")
+	ErrNonexistentState = fmt.Errorf("cannot revert to nonexistent state")
 
 	AnyNotFoundError = &NotFoundError{field: anythingField}
 )

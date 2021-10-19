@@ -45,7 +45,7 @@ func (s *RegisteredTokenTestSuite) TestAddRegisteredToken_AddAndRetrieve() {
 	s.Equal(registeredToken, actual)
 }
 
-func (s *RegisteredTokenTestSuite) TestGetRegisteredToken_NonExistentToken() {
+func (s *RegisteredTokenTestSuite) TestGetRegisteredToken_NonexistentToken() {
 	res, err := s.storage.GetRegisteredToken(models.MakeUint256(42))
 	s.ErrorIs(err, NewNotFoundError("registered token"))
 	s.Nil(res)
@@ -76,7 +76,7 @@ func (s *RegisteredTokenTestSuite) TestDeleteRegisteredTokens() {
 	}
 }
 
-func (s *RegisteredTokenTestSuite) TestDeleteRegisteredTokens_NonExistentToken() {
+func (s *RegisteredTokenTestSuite) TestDeleteRegisteredTokens_NonexistentToken() {
 	err := s.storage.DeleteRegisteredTokens(models.MakeUint256(1))
 	s.ErrorIs(err, NewNotFoundError("registered token"))
 }
