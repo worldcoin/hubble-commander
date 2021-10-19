@@ -4,6 +4,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+var PendingDepositSubTreePrefix = getBadgerHoldPrefix(PendingDepositSubTree{})
+
 type PendingDepositSubTree struct {
 	ID       Uint256
 	Root     common.Hash
