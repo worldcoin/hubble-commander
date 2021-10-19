@@ -3,108 +3,18 @@ package eth
 import (
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
 
-func (c *Client) RequestRegisterToken(
-	tokenContract common.Address,
-) error {
-	return RequestRegisterTokenAndWait(
-		c.Blockchain.GetAccount(),
-		c.TokenRegistry,
-		tokenContract,
-		c.Blockchain.GetBackend(),
-	)
-}
-
-func (c *Client) FinalizeRegisterToken(
-	tokenContract common.Address,
-) error {
-	return FinalizeRegisterTokenAndWait(c.Blockchain.GetAccount(),
-		c.TokenRegistry,
-		tokenContract,
-		c.Blockchain.GetBackend(),
-	)
-}
-
-func (c *Client) WatchTokenRegistrationRequests(opts *bind.WatchOpts) (
-	registrations chan *tokenregistry.TokenRegistryRegistrationRequest,
-	unsubscribe func(),
-	err error,
-) {
-	return WatchTokenRegistrationRequests(c.TokenRegistry, opts)
-}
-
-func (c *Client) WatchTokenRegistrations(opts *bind.WatchOpts) (
-	registrations chan *tokenregistry.TokenRegistryRegisteredToken,
-	unsubscribe func(),
-	err error,
-) {
-	return WatchTokenRegistrations(c.TokenRegistry, opts)
-}
-
-func WatchTokenRegistrationRequests(tokenRegistry *tokenregistry.TokenRegistry, opts *bind.WatchOpts) (
-	registrations chan *tokenregistry.TokenRegistryRegistrationRequest,
-	unsubscribe func(),
-	err error,
-) {
-	ev := make(chan *tokenregistry.TokenRegistryRegistrationRequest)
-
-	sub, err := tokenRegistry.WatchRegistrationRequest(opts, ev)
-	if err != nil {
-		return nil, nil, errors.WithStack(err)
-	}
-	return ev, sub.Unsubscribe, nil
-}
-
-func WatchTokenRegistrations(
-	tokenRegistry *tokenregistry.TokenRegistry,
-	opts *bind.WatchOpts,
-) (
-	registrations chan *tokenregistry.TokenRegistryRegisteredToken,
-	unsubscribe func(),
-	err error,
-) {
-	ev := make(chan *tokenregistry.TokenRegistryRegisteredToken)
-
-	sub, err := tokenRegistry.WatchRegisteredToken(opts, ev)
-	if err != nil {
-		return nil, nil, errors.WithStack(err)
-	}
-	return ev, sub.Unsubscribe, nil
-}
-
-func RequestRegisterTokenAndWait(
-	opts *bind.TransactOpts,
-	tokenRegistry *tokenregistry.TokenRegistry,
-	tokenContract common.Address,
-	chainBackend chain.Backend,
-) error {
-	tx, err := RequestRegisterToken(opts, tokenRegistry, tokenContract)
+func (c *Client) RequestRegisterTokenAndWait(tokenContract common.Address) error {
+	tx, err := c.RequestRegisterToken(tokenContract)
 	if err != nil {
 		return err
 	}
-	_, err = chain.WaitToBeMined(chainBackend, tx)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func FinalizeRegisterTokenAndWait(
-	opts *bind.TransactOpts,
-	tokenRegistry *tokenregistry.TokenRegistry,
-	tokenContract common.Address,
-	chainBackend chain.Backend,
-) error {
-	tx, err := FinalizeRegisterToken(opts, tokenRegistry, tokenContract)
-	if err != nil {
-		return err
-	}
-	_, err = chain.WaitToBeMined(chainBackend, tx)
+	_, err = chain.WaitToBeMined(c.Blockchain.GetBackend(), tx)
 	if err != nil {
 		return err
 	}
@@ -112,26 +22,50 @@ func FinalizeRegisterTokenAndWait(
 	return nil
 }
 
-func RequestRegisterToken(
-	opts *bind.TransactOpts,
-	tokenRegistry *tokenregistry.TokenRegistry,
-	tokenContract common.Address,
-) (*types.Transaction, error) {
-	tx, err := tokenRegistry.RequestRegistration(opts, tokenContract)
+func (c *Client) RequestRegisterToken(tokenContract common.Address) (*types.Transaction, error) {
+	tx, err := c.TokenRegistry.RequestRegistration(c.Blockchain.GetAccount(), tokenContract)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 	return tx, nil
 }
 
-func FinalizeRegisterToken(
-	opts *bind.TransactOpts,
-	tokenRegistry *tokenregistry.TokenRegistry,
-	tokenContract common.Address,
-) (*types.Transaction, error) {
-	tx, err := tokenRegistry.FinaliseRegistration(opts, tokenContract)
+func (c *Client) FinalizeRegisterTokenAndWait(tokenContract common.Address) (*models.Uint256, error) {
+	tx, err := c.FinalizeRegisterToken(tokenContract)
+	if err != nil {
+		return nil, err
+	}
+	receipt, err := chain.WaitToBeMined(c.Blockchain.GetBackend(), tx)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.retrieveRegisteredTokenID(receipt)
+}
+
+func (c *Client) FinalizeRegisterToken(tokenContract common.Address) (*types.Transaction, error) {
+	tx, err := c.TokenRegistry.FinaliseRegistration(c.Blockchain.GetAccount(), tokenContract)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 	return tx, nil
+}
+
+func (c *Client) retrieveRegisteredTokenID(receipt *types.Receipt) (*models.Uint256, error) {
+	eventName := "RegisteredToken"
+
+	log, err := retrieveLog(receipt, eventName)
+	if err != nil {
+		return nil, err
+	}
+
+	event := new(tokenregistry.TokenRegistryRegisteredToken)
+	err = c.tokenRegistryContract.UnpackLog(event, eventName, *log)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	tokenID := models.MakeUint256FromBig(*event.TokenID)
+
+	return &tokenID, nil
 }

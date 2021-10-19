@@ -45,6 +45,7 @@ type Client struct {
 	DepositManager         *depositmanager.DepositManager
 	DepositManagerABI      *abi.ABI
 	rollupContract         *bind.BoundContract
+	tokenRegistryContract  *bind.BoundContract
 	depositManagerContract *bind.BoundContract
 	blocksToFinalise       *int64
 	maxDepositSubTreeDepth *uint32
@@ -61,12 +62,17 @@ func NewClient(blockchain chain.Connection, params *NewClientParams) (*Client, e
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	tokenRegistryAbi, err := abi.JSON(strings.NewReader(tokenregistry.TokenRegistryABI))
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
 	depositManagerAbi, err := abi.JSON(strings.NewReader(depositmanager.DepositManagerABI))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 	backend := blockchain.GetBackend()
 	rollupContract := bind.NewBoundContract(params.ChainState.Rollup, rollupAbi, backend, backend, backend)
+	tokenRegistryContract := bind.NewBoundContract(params.ChainState.TokenRegistry, tokenRegistryAbi, backend, backend, backend)
 	depositManagerContract := bind.NewBoundContract(params.ChainState.DepositManager, depositManagerAbi, backend, backend, backend)
 	accountManager, err := NewAccountManager(blockchain, &AccountManagerParams{
 		AccountRegistry:                  params.AccountRegistry,
@@ -86,6 +92,7 @@ func NewClient(blockchain chain.Connection, params *NewClientParams) (*Client, e
 		DepositManager:         params.DepositManager,
 		DepositManagerABI:      &depositManagerAbi,
 		rollupContract:         rollupContract,
+		tokenRegistryContract:  tokenRegistryContract,
 		depositManagerContract: depositManagerContract,
 		AccountManager:         accountManager,
 	}, nil
