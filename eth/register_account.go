@@ -23,15 +23,13 @@ func (a *AccountManager) RegisterAccountAndWait(publicKey *models.PublicKey) (*u
 }
 
 func (a *AccountManager) RetrieveRegisteredPubKeyID(receipt *types.Receipt) (*uint32, error) {
-	eventName := "SinglePubkeyRegistered"
-
-	log, err := retrieveLog(receipt, eventName)
+	log, err := retrieveLog(receipt, SinglePubkeyRegisteredEvent)
 	if err != nil {
 		return nil, err
 	}
 
 	event := new(accountregistry.AccountRegistrySinglePubkeyRegistered)
-	err = a.accountRegistryContract.UnpackLog(event, eventName, *log)
+	err = a.accountRegistryContract.UnpackLog(event, SinglePubkeyRegisteredEvent, *log)
 	if err != nil {
 		return nil, err
 	}

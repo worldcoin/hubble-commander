@@ -64,20 +64,18 @@ func (c *Client) submitBatchAndWait(submit SubmitBatchFunc) (batch *models.Batch
 		return
 	}
 
-	eventName := "NewBatch"
-
 	receipt, err := chain.WaitToBeMined(c.Blockchain.GetBackend(), tx)
 	if err != nil {
 		return nil, err
 	}
 
-	log, err := retrieveLog(receipt, eventName)
+	log, err := retrieveLog(receipt, NewBatchEvent)
 	if err != nil {
 		return nil, err
 	}
 
 	event := new(rollup.RollupNewBatch)
-	err = c.rollupContract.UnpackLog(event, eventName, *log)
+	err = c.rollupContract.UnpackLog(event, NewBatchEvent, *log)
 	if err != nil {
 		return nil, err
 	}

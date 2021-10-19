@@ -9,12 +9,20 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	NewBatchEvent               = "NewBatch"
+	SinglePubkeyRegisteredEvent = "SinglePubkeyRegistered"
+	BatchPubkeyRegisteredEvent  = "BatchPubkeyRegistered"
+	RegisteredTokenEvent        = "RegisteredToken"
+	DepositQueuedEvent          = "DepositQueued"
+)
+
 var eventTopics = map[string]common.Hash{
-	"NewBatch":               crypto.Keccak256Hash([]byte("NewBatch(uint256,bytes32,uint8)")),
-	"SinglePubkeyRegistered": crypto.Keccak256Hash([]byte("SinglePubkeyRegistered(uint256)")),
-	"BatchPubkeyRegistered":  crypto.Keccak256Hash([]byte("BatchPubkeyRegistered(uint256,uint256)")),
-	"RegisteredToken":        crypto.Keccak256Hash([]byte("RegisteredToken(uint256,address)")),
-	"DepositQueued":          crypto.Keccak256Hash([]byte("DepositQueued(uint256,uint256,uint256)")),
+	NewBatchEvent:               crypto.Keccak256Hash([]byte("NewBatch(uint256,bytes32,uint8)")),
+	SinglePubkeyRegisteredEvent: crypto.Keccak256Hash([]byte("SinglePubkeyRegistered(uint256)")),
+	BatchPubkeyRegisteredEvent:  crypto.Keccak256Hash([]byte("BatchPubkeyRegistered(uint256,uint256)")),
+	RegisteredTokenEvent:        crypto.Keccak256Hash([]byte("RegisteredToken(uint256,address)")),
+	DepositQueuedEvent:          crypto.Keccak256Hash([]byte("DepositQueued(uint256,uint256,uint256)")),
 }
 
 var (

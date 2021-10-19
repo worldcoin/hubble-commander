@@ -27,15 +27,13 @@ func (c *Client) QueueDepositAndWait(
 }
 
 func (c *Client) retrieveDepositIDAndL2Amount(receipt *types.Receipt) (*models.DepositID, *models.Uint256, error) {
-	eventName := "DepositQueued"
-
-	log, err := retrieveLog(receipt, eventName)
+	log, err := retrieveLog(receipt, DepositQueuedEvent)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	event := new(depositmanager.DepositManagerDepositQueued)
-	err = c.depositManagerContract.UnpackLog(event, eventName, *log)
+	err = c.depositManagerContract.UnpackLog(event, DepositQueuedEvent, *log)
 	if err != nil {
 		return nil, nil, errors.WithStack(err)
 	}
