@@ -76,7 +76,31 @@ func (s *TransactionBaseTestSuite) TestSetTransactionError() {
 	s.Equal(errorMessage, res.ErrorMessage)
 }
 
-func (s *TransactionBaseTestSuite) TestGetLatestTransactionNonce() {
+func (s *TransactionBaseTestSuite) TestGetLatestTransactionNonce_ReturnsHighestNonceRegardlessOfInsertionOrder() {
+	tx1 := transferTransaction
+	tx1.Hash = utils.RandomHash()
+	tx1.Nonce = models.MakeUint256(3)
+
+	tx2 := transferTransaction
+	tx2.Hash = utils.RandomHash()
+	tx2.Nonce = models.MakeUint256(5)
+
+	tx3 := transferTransaction
+	tx3.Hash = utils.RandomHash()
+	tx3.Nonce = models.MakeUint256(1)
+
+	txs := []models.Transfer{tx1, tx2, tx3}
+	for i := range txs {
+		_, err := s.storage.AddTransfer(&txs[i])
+		s.NoError(err)
+	}
+
+	userTransactions, err := s.storage.GetLatestTransactionNonce(1)
+	s.NoError(err)
+	s.Equal(models.NewUint256(5), userTransactions)
+}
+
+func (s *TransactionBaseTestSuite) TestGetLatestTransactionNonce_ReturnsHighestNonceRegardlessOfTxType() {
 	tx1 := transferTransaction
 	tx1.Hash = utils.RandomHash()
 	tx1.Nonce = models.MakeUint256(3)
@@ -85,15 +109,9 @@ func (s *TransactionBaseTestSuite) TestGetLatestTransactionNonce() {
 	tx2.Hash = utils.RandomHash()
 	tx2.Nonce = models.MakeUint256(5)
 
-	tx3 := transferTransaction
-	tx3.Hash = utils.RandomHash()
-	tx3.Nonce = models.MakeUint256(1)
-
 	_, err := s.storage.AddTransfer(&tx1)
 	s.NoError(err)
 	_, err = s.storage.AddCreate2Transfer(&tx2)
-	s.NoError(err)
-	_, err = s.storage.AddTransfer(&tx3)
 	s.NoError(err)
 
 	userTransactions, err := s.storage.GetLatestTransactionNonce(1)
@@ -101,8 +119,33 @@ func (s *TransactionBaseTestSuite) TestGetLatestTransactionNonce() {
 	s.Equal(models.NewUint256(5), userTransactions)
 }
 
+func (s *TransactionBaseTestSuite) TestGetLatestTransactionNonce_DisregardsTransactionsFromOtherStateIDs() {
+	tx1 := transferTransaction
+	tx1.Hash = utils.RandomHash()
+	tx1.Nonce = models.MakeUint256(3)
+
+	tx2 := transferTransaction
+	tx2.FromStateID = 10
+	tx2.Hash = utils.RandomHash()
+	tx2.Nonce = models.MakeUint256(5)
+
+	tx3 := transferTransaction
+	tx3.FromStateID = 20
+	tx3.Hash = utils.RandomHash()
+	tx3.Nonce = models.MakeUint256(7)
+
+	txs := []models.Transfer{tx1, tx2, tx3}
+	for i := range txs {
+		_, err := s.storage.AddTransfer(&txs[i])
+		s.NoError(err)
+	}
+
+	userTransactions, err := s.storage.GetLatestTransactionNonce(1)
+	s.NoError(err)
+	s.Equal(models.NewUint256(3), userTransactions)
+}
+
 func (s *TransactionBaseTestSuite) TestGetLatestTransactionNonce_DisregardsFailedTransactions() {
-	s.T().SkipNow() // TODO fix
 	tx1 := transferTransaction
 	tx1.Hash = utils.RandomHash()
 	tx1.Nonce = models.MakeUint256(1)
