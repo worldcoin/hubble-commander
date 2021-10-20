@@ -61,7 +61,9 @@ type BenchmarkSuite struct {
 
 func (s *BenchmarkSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
+}
 
+func (s *BenchmarkSuite) SetupTest() {
 	commander, err := setup.NewCommanderFromEnv(true)
 	s.NoError(err)
 
