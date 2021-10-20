@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (c *RollupContext) CreateAndSubmitBatch() (err error) {
+func (c *RollupContext) CreateAndSubmitBatch() error {
 	startTime := time.Now()
 	batch, err := c.NewPendingBatch(c.BatchType)
 	if err != nil {
@@ -36,7 +36,7 @@ func (c *RollupContext) CreateAndSubmitBatch() (err error) {
 	return nil
 }
 
-func (c *RollupContext) NewPendingBatch(batchType batchtype.BatchType) (*models.Batch, error) {
+func (c *ExecutionContext) NewPendingBatch(batchType batchtype.BatchType) (*models.Batch, error) {
 	prevStateRoot, err := c.storage.StateTree.Root()
 	if err != nil {
 		return nil, err
