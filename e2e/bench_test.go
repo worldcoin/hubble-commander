@@ -61,7 +61,9 @@ type BenchmarkSuite struct {
 
 func (s *BenchmarkSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
+}
 
+func (s *BenchmarkSuite) SetupTest() {
 	commander, err := setup.NewCommanderFromEnv(true)
 	s.NoError(err)
 
@@ -77,7 +79,7 @@ func (s *BenchmarkSuite) SetupSuite() {
 	s.stateIds = make([]uint32, 0)
 }
 
-func (s *BenchmarkSuite) TearDownSuite() {
+func (s *BenchmarkSuite) TearDownTest() {
 	s.NoError(s.commander.Stop())
 }
 
