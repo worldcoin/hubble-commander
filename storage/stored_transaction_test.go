@@ -95,9 +95,9 @@ func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_ReturnsHighes
 		s.NoError(err)
 	}
 
-	userTransactions, err := s.storage.GetLatestTransactionNonce(1)
+	latestNonce, err := s.storage.GetLatestTransactionNonce(1)
 	s.NoError(err)
-	s.Equal(models.NewUint256(5), userTransactions)
+	s.Equal(models.NewUint256(5), latestNonce)
 }
 
 func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_ReturnsHighestNonceRegardlessOfTxType() {
@@ -114,9 +114,9 @@ func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_ReturnsHighes
 	err = s.storage.AddCreate2Transfer(&tx2)
 	s.NoError(err)
 
-	userTransactions, err := s.storage.GetLatestTransactionNonce(1)
+	latestNonce, err := s.storage.GetLatestTransactionNonce(1)
 	s.NoError(err)
-	s.Equal(models.NewUint256(5), userTransactions)
+	s.Equal(models.NewUint256(5), latestNonce)
 }
 
 func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_DisregardsTransactionsFromOtherStateIDs() {
@@ -140,9 +140,9 @@ func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_DisregardsTra
 		s.NoError(err)
 	}
 
-	userTransactions, err := s.storage.GetLatestTransactionNonce(1)
+	latestNonce, err := s.storage.GetLatestTransactionNonce(1)
 	s.NoError(err)
-	s.Equal(models.NewUint256(3), userTransactions)
+	s.Equal(models.NewUint256(3), latestNonce)
 }
 
 func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_DisregardsFailedTransactions() {
@@ -165,9 +165,9 @@ func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_DisregardsFai
 		s.NoError(err)
 	}
 
-	userTransactions, err := s.storage.GetLatestTransactionNonce(1)
+	latestNonce, err := s.storage.GetLatestTransactionNonce(1)
 	s.NoError(err)
-	s.Equal(models.NewUint256(2), userTransactions)
+	s.Equal(models.NewUint256(2), latestNonce)
 }
 
 func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_NoTransactionsForGivenStateID() {
