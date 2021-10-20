@@ -3,8 +3,6 @@ package proofer
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/encoder"
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
@@ -13,20 +11,18 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type SingatureProofsTestSuite struct {
+type SignatureProofsTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage            *st.TestStorage
-	prooferCtx         *Context
-	decodedCommitments []encoder.DecodedCommitment
-	decodedBatch       eth.DecodedBatch
+	storage    *st.TestStorage
+	prooferCtx *Context
 }
 
-func (s *SingatureProofsTestSuite) SetupSuite() {
+func (s *SignatureProofsTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *SingatureProofsTestSuite) SetupTest() {
+func (s *SignatureProofsTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
@@ -34,12 +30,12 @@ func (s *SingatureProofsTestSuite) SetupTest() {
 	s.prooferCtx = NewContext(s.storage.Storage)
 }
 
-func (s *SingatureProofsTestSuite) TearDownTest() {
+func (s *SignatureProofsTestSuite) TearDownTest() {
 	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
-func (s *SingatureProofsTestSuite) TestPublicKeyProof() {
+func (s *SignatureProofsTestSuite) TestPublicKeyProof() {
 	account := &models.AccountLeaf{
 		PubKeyID:  1,
 		PublicKey: models.PublicKey{1, 2, 3},
@@ -53,7 +49,7 @@ func (s *SingatureProofsTestSuite) TestPublicKeyProof() {
 	s.Len(publicKeyProof.Witness, 32)
 }
 
-func (s *SingatureProofsTestSuite) TestReceiverPublicKeyProof() {
+func (s *SignatureProofsTestSuite) TestReceiverPublicKeyProof() {
 	account := &models.AccountLeaf{
 		PubKeyID:  1,
 		PublicKey: models.PublicKey{1, 2, 3},
@@ -67,7 +63,7 @@ func (s *SingatureProofsTestSuite) TestReceiverPublicKeyProof() {
 	s.Len(publicKeyProof.Witness, 32)
 }
 
-func (s *SingatureProofsTestSuite) TestReceiverPublicKeyProof_NonexistentAccount() {
+func (s *SignatureProofsTestSuite) TestReceiverPublicKeyProof_NonexistentAccount() {
 	publicKeyProof, err := s.prooferCtx.receiverPublicKeyProof(1)
 	s.NoError(err)
 	s.Equal(merkletree.GetZeroHash(0), publicKeyProof.PublicKeyHash)
@@ -75,5 +71,5 @@ func (s *SingatureProofsTestSuite) TestReceiverPublicKeyProof_NonexistentAccount
 }
 
 func TestSignatureProofs(t *testing.T) {
-	suite.Run(t, new(SingatureProofsTestSuite))
+	suite.Run(t, new(SignatureProofsTestSuite))
 }

@@ -13,7 +13,7 @@ func (c *Context) PreviousCommitmentInclusionProof(
 	previousCommitmentIndex int,
 ) (*models.CommitmentInclusionProof, error) {
 	if previousCommitmentIndex == -1 {
-		return c.previousBatchCommitmentInclusionProof(batch.ID)
+		return c.PreviousBatchCommitmentInclusionProof(batch.ID)
 	}
 
 	leafHashes := make([]common.Hash, 0, len(batch.Commitments))
@@ -29,7 +29,7 @@ func (c *Context) PreviousCommitmentInclusionProof(
 	)
 }
 
-func (c *Context) previousBatchCommitmentInclusionProof(
+func (c *Context) PreviousBatchCommitmentInclusionProof(
 	currentBatchID models.Uint256,
 ) (*models.CommitmentInclusionProof, error) {
 	previousBatchID := currentBatchID.SubN(1)
