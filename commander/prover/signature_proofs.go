@@ -1,4 +1,4 @@
-package proofer
+package prover
 
 import (
 	"github.com/Worldcoin/hubble-commander/encoder"

@@ -1,4 +1,4 @@
-package proofer
+package prover
 
 import (
 	st "github.com/Worldcoin/hubble-commander/storage"

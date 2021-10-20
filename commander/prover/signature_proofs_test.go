@@ -1,4 +1,4 @@
-package proofer
+package prover
 
 import (
 	"testing"
@@ -14,8 +14,8 @@ import (
 type SignatureProofsTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage    *st.TestStorage
-	prooferCtx *Context
+	storage   *st.TestStorage
+	proverCtx *Context
 }
 
 func (s *SignatureProofsTestSuite) SetupSuite() {
@@ -27,7 +27,7 @@ func (s *SignatureProofsTestSuite) SetupTest() {
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 
-	s.prooferCtx = NewContext(s.storage.Storage)
+	s.proverCtx = NewContext(s.storage.Storage)
 }
 
 func (s *SignatureProofsTestSuite) TearDownTest() {
@@ -43,7 +43,7 @@ func (s *SignatureProofsTestSuite) TestPublicKeyProof() {
 	err := s.storage.AccountTree.SetSingle(account)
 	s.NoError(err)
 
-	publicKeyProof, err := s.prooferCtx.publicKeyProof(account.PubKeyID)
+	publicKeyProof, err := s.proverCtx.publicKeyProof(account.PubKeyID)
 	s.NoError(err)
 	s.Equal(account.PublicKey, *publicKeyProof.PublicKey)
 	s.Len(publicKeyProof.Witness, 32)
@@ -57,14 +57,14 @@ func (s *SignatureProofsTestSuite) TestReceiverPublicKeyProof() {
 	err := s.storage.AccountTree.SetSingle(account)
 	s.NoError(err)
 
-	publicKeyProof, err := s.prooferCtx.receiverPublicKeyProof(account.PubKeyID)
+	publicKeyProof, err := s.proverCtx.receiverPublicKeyProof(account.PubKeyID)
 	s.NoError(err)
 	s.Equal(crypto.Keccak256Hash(account.PublicKey.Bytes()), publicKeyProof.PublicKeyHash)
 	s.Len(publicKeyProof.Witness, 32)
 }
 
 func (s *SignatureProofsTestSuite) TestReceiverPublicKeyProof_NonexistentAccount() {
-	publicKeyProof, err := s.prooferCtx.receiverPublicKeyProof(1)
+	publicKeyProof, err := s.proverCtx.receiverPublicKeyProof(1)
 	s.NoError(err)
 	s.Equal(merkletree.GetZeroHash(0), publicKeyProof.PublicKeyHash)
 	s.Len(publicKeyProof.Witness, 32)

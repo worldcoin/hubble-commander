@@ -62,7 +62,7 @@ func (s *DisputeC2TSignatureTestSuite) TestSignatureProofWithReceiver() {
 
 	commitment := &encoder.DecodedCommitment{Transactions: serializedTxs}
 
-	signatureProof, err := s.disputeCtx.prooferCtx.SignatureProofWithReceiver(commitment, stateProofs)
+	signatureProof, err := s.disputeCtx.proverCtx.SignatureProofWithReceiver(commitment, stateProofs)
 	s.NoError(err)
 	s.Len(signatureProof.UserStates, 3)
 	s.Len(signatureProof.SenderPublicKeys, 3)

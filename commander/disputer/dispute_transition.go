@@ -11,11 +11,11 @@ func (c *Context) DisputeTransition(
 	commitmentIndex int,
 	merkleProofs []models.StateMerkleProof,
 ) error {
-	previousCommitmentProof, err := c.prooferCtx.PreviousCommitmentInclusionProof(batch, commitmentIndex-1)
+	previousCommitmentProof, err := c.proverCtx.PreviousCommitmentInclusionProof(batch, commitmentIndex-1)
 	if err != nil {
 		return err
 	}
-	targetCommitmentProof, err := c.prooferCtx.TargetCommitmentInclusionProof(batch, uint32(commitmentIndex))
+	targetCommitmentProof, err := c.proverCtx.TargetCommitmentInclusionProof(batch, uint32(commitmentIndex))
 	if err != nil {
 		return err
 	}

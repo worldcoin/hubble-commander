@@ -3,7 +3,7 @@ package executor
 import (
 	"time"
 
-	"github.com/Worldcoin/hubble-commander/commander/proofer"
+	"github.com/Worldcoin/hubble-commander/commander/prover"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -102,8 +102,8 @@ func (c *ExecutionContext) getDepositSubtreeVacancyProof() (*uint32, *models.Sub
 }
 
 func (c *ExecutionContext) SubmitDepositBatch(batch *models.Batch, vacancyProof *models.SubtreeVacancyProof) error {
-	prooferCtx := proofer.NewContext(c.storage)
-	commitmentInclusionProof, err := prooferCtx.PreviousBatchCommitmentInclusionProof(batch.ID)
+	proverCtx := prover.NewContext(c.storage)
+	commitmentInclusionProof, err := proverCtx.PreviousBatchCommitmentInclusionProof(batch.ID)
 	if err != nil {
 		return err
 	}

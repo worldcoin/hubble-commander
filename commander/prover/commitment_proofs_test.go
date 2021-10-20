@@ -1,4 +1,4 @@
-package proofer
+package prover
 
 import (
 	"testing"
@@ -20,7 +20,7 @@ type CommitmentProofsTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage            *st.TestStorage
-	prooferCtx         *Context
+	proverCtx          *Context
 	decodedCommitments []encoder.DecodedCommitment
 	decodedBatch       eth.DecodedBatch
 }
@@ -60,7 +60,7 @@ func (s *CommitmentProofsTestSuite) SetupTest() {
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 
-	s.prooferCtx = NewContext(s.storage.Storage)
+	s.proverCtx = NewContext(s.storage.Storage)
 }
 
 func (s *CommitmentProofsTestSuite) TearDownTest() {
@@ -79,7 +79,7 @@ func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_Current
 		Witness: []common.Hash{s.decodedCommitments[1].LeafHash(*s.decodedBatch.AccountTreeRoot)},
 	}
 
-	proof, err := s.prooferCtx.PreviousCommitmentInclusionProof(&s.decodedBatch, 0)
+	proof, err := s.proverCtx.PreviousCommitmentInclusionProof(&s.decodedBatch, 0)
 	s.NoError(err)
 	s.Equal(expected, *proof)
 }
@@ -143,7 +143,7 @@ func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_Previou
 		Witness: []common.Hash{commitments[0].LeafHash(*batch.AccountTreeRoot)},
 	}
 
-	proof, err := s.prooferCtx.PreviousCommitmentInclusionProof(&s.decodedBatch, -1)
+	proof, err := s.proverCtx.PreviousCommitmentInclusionProof(&s.decodedBatch, -1)
 	s.NoError(err)
 	s.Equal(expected, *proof)
 }
@@ -164,7 +164,7 @@ func (s *CommitmentProofsTestSuite) TestGenesisBatchCommitmentInclusionProof() {
 
 	firstBatch := s.decodedBatch
 	firstBatch.ID = models.MakeUint256(1)
-	proof, err := s.prooferCtx.PreviousCommitmentInclusionProof(&firstBatch, -1)
+	proof, err := s.proverCtx.PreviousCommitmentInclusionProof(&firstBatch, -1)
 	s.NoError(err)
 	s.Equal(expected, *proof)
 }
@@ -185,7 +185,7 @@ func (s *CommitmentProofsTestSuite) TestTargetCommitmentInclusionProof() {
 		Witness: []common.Hash{s.decodedCommitments[0].LeafHash(*s.decodedBatch.AccountTreeRoot)},
 	}
 
-	proof, err := s.prooferCtx.TargetCommitmentInclusionProof(&s.decodedBatch, 1)
+	proof, err := s.proverCtx.TargetCommitmentInclusionProof(&s.decodedBatch, 1)
 	s.NoError(err)
 	s.Equal(expected, *proof)
 }

@@ -32,12 +32,12 @@ func (c *Context) disputeTransferSignature(
 	commitmentIndex int,
 	stateProofs []models.StateMerkleProof,
 ) error {
-	signatureProof, err := c.prooferCtx.SignatureProof(stateProofs)
+	signatureProof, err := c.proverCtx.SignatureProof(stateProofs)
 	if err != nil {
 		return err
 	}
 
-	targetCommitmentProof, err := c.prooferCtx.TargetCommitmentInclusionProof(batch, uint32(commitmentIndex))
+	targetCommitmentProof, err := c.proverCtx.TargetCommitmentInclusionProof(batch, uint32(commitmentIndex))
 	if err != nil {
 		return err
 	}
@@ -50,12 +50,12 @@ func (c *Context) disputeCreate2TransferSignature(
 	commitmentIndex int,
 	stateProofs []models.StateMerkleProof,
 ) error {
-	signatureProof, err := c.prooferCtx.SignatureProofWithReceiver(&batch.Commitments[commitmentIndex], stateProofs)
+	signatureProof, err := c.proverCtx.SignatureProofWithReceiver(&batch.Commitments[commitmentIndex], stateProofs)
 	if err != nil {
 		return err
 	}
 
-	targetCommitmentProof, err := c.prooferCtx.TargetCommitmentInclusionProof(batch, uint32(commitmentIndex))
+	targetCommitmentProof, err := c.proverCtx.TargetCommitmentInclusionProof(batch, uint32(commitmentIndex))
 	if err != nil {
 		return err
 	}
