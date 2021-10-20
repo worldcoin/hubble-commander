@@ -96,7 +96,7 @@ func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*
 	err := s.database.Postgres.Query(
 		s.database.QB.Select("transaction_base.nonce").
 			From("transaction_base").
-			Where(squirrel.Eq{"from_state_id": accountStateID}).
+			Where(squirrel.Eq{"from_state_id": accountStateID, "error_message": nil}).
 			OrderBy("nonce DESC").
 			Limit(1),
 	).Into(&res)
