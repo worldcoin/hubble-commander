@@ -102,7 +102,6 @@ func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce() {
 }
 
 func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_DisregardsFailedTransactions() {
-	s.T().SkipNow() // TODO fix
 	tx1 := transferTransaction
 	tx1.Hash = utils.RandomHash()
 	tx1.Nonce = models.MakeUint256(1)
