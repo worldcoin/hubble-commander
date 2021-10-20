@@ -99,7 +99,7 @@ func createCommitmentInclusionProof(
 	return &proof, nil
 }
 
-func targetCommitmentInclusionProof(
+func (c *Context) TargetCommitmentInclusionProof(
 	batch *eth.DecodedBatch,
 	commitmentIndex uint32,
 ) (*models.TransferCommitmentInclusionProof, error) {

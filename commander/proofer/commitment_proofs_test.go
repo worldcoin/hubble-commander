@@ -185,7 +185,7 @@ func (s *CommitmentProofsTestSuite) TestTargetCommitmentInclusionProof() {
 		Witness: []common.Hash{s.decodedCommitments[0].LeafHash(*s.decodedBatch.AccountTreeRoot)},
 	}
 
-	proof, err := targetCommitmentInclusionProof(&s.decodedBatch, 1)
+	proof, err := s.prooferCtx.TargetCommitmentInclusionProof(&s.decodedBatch, 1)
 	s.NoError(err)
 	s.Equal(expected, *proof)
 }
