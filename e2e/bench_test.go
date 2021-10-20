@@ -77,6 +77,10 @@ func (s *BenchmarkSuite) SetupTest() {
 	s.commander = commander
 	s.wallets = wallets
 	s.stateIds = make([]uint32, 0)
+	s.waitGroup = sync.WaitGroup{}
+	s.txsSent = 0
+	s.txsQueued = 0
+	s.lastReportedTxCount = 0
 }
 
 func (s *BenchmarkSuite) TearDownTest() {
