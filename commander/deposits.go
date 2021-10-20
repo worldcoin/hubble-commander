@@ -5,6 +5,7 @@ import (
 	"context"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
@@ -102,24 +103,38 @@ func (c *Commander) saveSyncedSubTrees(subTrees []models.PendingDepositSubTree) 
 	subTreeLeavesAmount := 1 << c.cfg.Rollup.MaxDepositSubTreeDepth
 
 	for i := range subTrees {
-		deposits, err := c.storage.GetFirstPendingDeposits(subTreeLeavesAmount)
-		if err != nil {
-			return err
-		}
-
-		subTree := &subTrees[i]
-		subTree.Deposits = deposits
-
-		err = c.storage.AddPendingDepositSubTree(subTree)
-		if err != nil {
-			return err
-		}
-
-		err = c.storage.RemovePendingDeposits(deposits)
+		err := c.unsafeSaveSyncedSubTree(&subTrees[i], subTreeLeavesAmount)
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func (c *Commander) unsafeSaveSyncedSubTree(subTree *models.PendingDepositSubTree, subTreeLeavesAmount int) error {
+	tx, txStorage, err := c.storage.BeginTransaction(storage.TxOptions{})
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(&err)
+
+	deposits, err := txStorage.GetFirstPendingDeposits(subTreeLeavesAmount)
+	if err != nil {
+		return err
+	}
+
+	subTree.Deposits = deposits
+
+	err = txStorage.AddPendingDepositSubTree(subTree)
+	if err != nil {
+		return err
+	}
+
+	err = txStorage.RemovePendingDeposits(deposits)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
