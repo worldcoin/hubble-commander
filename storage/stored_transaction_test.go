@@ -182,6 +182,18 @@ func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_NoTransaction
 	s.Nil(latestNonce)
 }
 
+func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_NoValidTransactionsForGivenStateID() {
+	tx1 := transferTransaction
+	tx1.ErrorMessage = ref.String("error")
+
+	err := s.storage.AddTransfer(&tx1)
+	s.NoError(err)
+
+	latestNonce, err := s.storage.GetLatestTransactionNonce(1)
+	s.ErrorIs(err, NewNotFoundError("transaction"))
+	s.Nil(latestNonce)
+}
+
 func (s *StoredTransactionTestSuite) TestMarkTransactionsAsPending() {
 	txs := make([]models.Transfer, 2)
 	for i := 0; i < len(txs); i++ {

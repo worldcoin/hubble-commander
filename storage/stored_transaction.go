@@ -131,7 +131,7 @@ func (s *TransactionStorage) getKeyList(indexKey []byte) (*bh.KeyList, error) {
 }
 
 func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*models.Uint256, error) {
-	latestNonce := models.NewUint256(0)
+	var latestNonce *models.Uint256
 
 	err := s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
 		encodedStateID, err := models.EncodeUint32(&accountStateID)
@@ -157,7 +157,7 @@ func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*
 			if err != nil {
 				return err
 			}
-			if receipt == nil && tx.Nonce.Cmp(latestNonce) > 0 {
+			if receipt == nil && (latestNonce == nil || tx.Nonce.Cmp(latestNonce) > 0) {
 				latestNonce = &tx.Nonce
 			}
 		}
