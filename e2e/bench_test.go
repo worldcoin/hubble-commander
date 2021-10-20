@@ -79,7 +79,7 @@ func (s *BenchmarkSuite) SetupTest() {
 	s.stateIds = make([]uint32, 0)
 }
 
-func (s *BenchmarkSuite) TearDownSuite() {
+func (s *BenchmarkSuite) TearDownTest() {
 	s.NoError(s.commander.Stop())
 }
 
