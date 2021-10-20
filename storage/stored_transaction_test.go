@@ -101,6 +101,32 @@ func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce() {
 	s.Equal(models.NewUint256(5), userTransactions)
 }
 
+func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_DisregardsFailedTransactions() {
+	s.T().SkipNow() // TODO fix
+	tx1 := transferTransaction
+	tx1.Hash = utils.RandomHash()
+	tx1.Nonce = models.MakeUint256(1)
+
+	tx2 := transferTransaction
+	tx2.Hash = utils.RandomHash()
+	tx2.Nonce = models.MakeUint256(2)
+
+	tx3 := transferTransaction
+	tx3.Hash = utils.RandomHash()
+	tx3.Nonce = models.MakeUint256(3)
+	tx3.ErrorMessage = ref.String("error")
+
+	txs := []models.Transfer{tx1, tx2, tx3}
+	for i := range txs {
+		err := s.storage.AddTransfer(&txs[i])
+		s.NoError(err)
+	}
+
+	userTransactions, err := s.storage.GetLatestTransactionNonce(1)
+	s.NoError(err)
+	s.Equal(models.NewUint256(2), userTransactions)
+}
+
 func (s *StoredTransactionTestSuite) TestMarkTransactionsAsPending() {
 	txs := make([]models.Transfer, 2)
 	for i := 0; i < len(txs); i++ {
