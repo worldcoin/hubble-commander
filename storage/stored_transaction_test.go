@@ -26,6 +26,18 @@ var (
 		},
 		ToStateID: 2,
 	}
+	create2TransferTransaction = models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			Hash:        common.BigToHash(big.NewInt(1234)),
+			TxType:      txtype.Create2Transfer,
+			FromStateID: 1,
+			Amount:      models.MakeUint256(1000),
+			Fee:         models.MakeUint256(100),
+			Nonce:       models.MakeUint256(0),
+			Signature:   models.MakeRandomSignature(),
+		},
+		ToPublicKey: models.PublicKey{1, 2, 3},
+	}
 )
 
 type StoredTransactionTestSuite struct {
@@ -65,33 +77,26 @@ func (s *StoredTransactionTestSuite) TestSetTransactionError() {
 }
 
 func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce() {
-	account := models.AccountLeaf{
-		PubKeyID:  1,
-		PublicKey: models.PublicKey{1, 2, 3},
-	}
-
-	err := s.storage.AccountTree.SetSingle(&account)
-	s.NoError(err)
-
 	tx1 := transferTransaction
 	tx1.Hash = utils.RandomHash()
-	tx1.Nonce = models.MakeUint256(1)
-	tx2 := transferTransaction
+	tx1.Nonce = models.MakeUint256(3)
+
+	tx2 := create2TransferTransaction
 	tx2.Hash = utils.RandomHash()
-	tx2.FromStateID = 10
-	tx2.Nonce = models.MakeUint256(7)
+	tx2.Nonce = models.MakeUint256(5)
+
 	tx3 := transferTransaction
 	tx3.Hash = utils.RandomHash()
-	tx3.Nonce = models.MakeUint256(5)
+	tx3.Nonce = models.MakeUint256(1)
 
-	err = s.storage.AddTransfer(&tx1)
+	err := s.storage.AddTransfer(&tx1)
 	s.NoError(err)
-	err = s.storage.AddTransfer(&tx2)
+	err = s.storage.AddCreate2Transfer(&tx2)
 	s.NoError(err)
 	err = s.storage.AddTransfer(&tx3)
 	s.NoError(err)
 
-	userTransactions, err := s.storage.GetLatestTransactionNonce(account.PubKeyID)
+	userTransactions, err := s.storage.GetLatestTransactionNonce(1)
 	s.NoError(err)
 	s.Equal(models.NewUint256(5), userTransactions)
 }
