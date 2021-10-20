@@ -144,6 +144,7 @@ func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_DisregardsTra
 	s.NoError(err)
 	s.Equal(models.NewUint256(3), userTransactions)
 }
+
 func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_DisregardsFailedTransactions() {
 	tx1 := transferTransaction
 	tx1.Hash = utils.RandomHash()
@@ -167,6 +168,18 @@ func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_DisregardsFai
 	userTransactions, err := s.storage.GetLatestTransactionNonce(1)
 	s.NoError(err)
 	s.Equal(models.NewUint256(2), userTransactions)
+}
+
+func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_NoTransactionsForGivenStateID() {
+	tx1 := transferTransaction
+	tx1.FromStateID = 10
+
+	err := s.storage.AddTransfer(&tx1)
+	s.NoError(err)
+
+	latestNonce, err := s.storage.GetLatestTransactionNonce(1)
+	s.ErrorIs(err, NewNotFoundError("transaction"))
+	s.Nil(latestNonce)
 }
 
 func (s *StoredTransactionTestSuite) TestMarkTransactionsAsPending() {
