@@ -46,12 +46,12 @@ func (s *AccountTreeTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *AccountTreeTestSuite) TestLeaf_NonExistentLeaf() {
+func (s *AccountTreeTestSuite) TestLeaf_NonexistentLeaf() {
 	_, err := s.storage.AccountTree.Leaf(0)
 	s.ErrorIs(err, NewNotFoundError("account leaf"))
 }
 
-func (s *AccountTreeTestSuite) TestLeaves_NonExistentLeaves() {
+func (s *AccountTreeTestSuite) TestLeaves_NonexistentLeaves() {
 	_, err := s.storage.AccountTree.Leaves(&models.PublicKey{1, 2, 3})
 	s.ErrorIs(err, NewNotFoundError("account leaves"))
 }

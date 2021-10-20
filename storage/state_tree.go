@@ -195,7 +195,7 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 		return err
 	}
 	if *currentRootHash != targetRootHash {
-		return errors.WithStack(ErrNotExistentState)
+		return errors.WithStack(ErrNonexistentState)
 	}
 	return txn.Commit()
 }

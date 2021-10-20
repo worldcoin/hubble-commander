@@ -14,7 +14,7 @@ compile:
 generate:
 	cd hubble-contracts && npm ci
 	cd hubble-contracts && npm run compile
-	go generate
+	go generate utils/generate.go
 
 build: clean compile
 
