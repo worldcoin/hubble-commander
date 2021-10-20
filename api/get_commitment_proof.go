@@ -3,12 +3,25 @@ package api
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 )
 
-func (a *API) GetCommitmentProof(commitmentID *models.CommitmentID) (*dto.TransferCommitmentInclusionProof, error) {
+var getCommitmentProofAPIErrors = map[error]*APIError{
+	storage.AnyNotFoundError: NewAPIError(20001, "commitment not found"),
+}
+
+func (a *API) GetCommitmentProof(commitmentID models.CommitmentID) (*dto.TransferCommitmentInclusionProof, error) {
+	commitmentProof, err := a.unsafeGetCommitmentProof(commitmentID)
+	if err != nil {
+		return nil, sanitizeError(err, getCommitmentProofAPIErrors)
+	}
+	return commitmentProof, nil
+}
+
+func (a *API) unsafeGetCommitmentProof(commitmentID models.CommitmentID) (*dto.TransferCommitmentInclusionProof, error) {
 	commitments, err := a.storage.GetCommitmentsByBatchID(commitmentID.BatchID)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -33,7 +46,7 @@ func (a *API) GetCommitmentProof(commitmentID *models.CommitmentID) (*dto.Transf
 		Depth: tree.Depth(),
 	}
 
-	commitment, err := a.storage.GetCommitment(commitmentID)
+	commitment, err := a.storage.GetCommitment(&commitmentID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
