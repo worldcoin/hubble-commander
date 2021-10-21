@@ -64,7 +64,7 @@ func (s *CommitmentStorage) DeleteCommitmentsByBatchIDs(batchIDs ...models.Uint2
 	var commitmentIDs []models.CommitmentID
 	ids := make([]models.CommitmentID, 0, len(batchIDs))
 	for i := range batchIDs {
-		commitmentIDs, err = getCommitmentIDsByBatchID(txDatabase, db.ReverseKeyIteratorOpts, batchIDs[i])
+		commitmentIDs, err = getCommitmentIDsByBatchID(txDatabase, batchIDs[i])
 		if err != nil {
 			return err
 		}
@@ -111,10 +111,10 @@ func decodeStoredCommitment(item *bdg.Item) (*models.StoredCommitment, error) {
 	return &commitment, nil
 }
 
-func getCommitmentIDsByBatchID(txn *Database, opts bdg.IteratorOptions, batchID models.Uint256) ([]models.CommitmentID, error) {
+func getCommitmentIDsByBatchID(txn *Database, batchID models.Uint256) ([]models.CommitmentID, error) {
 	ids := make([]models.CommitmentID, 0, 32)
 	prefix := getCommitmentPrefixWithBatchID(&batchID)
-	err := txn.Badger.Iterator(prefix, opts, func(item *bdg.Item) (bool, error) {
+	err := txn.Badger.Iterator(prefix, db.KeyIteratorOpts, func(item *bdg.Item) (bool, error) {
 		var id models.CommitmentID
 		err := db.DecodeKey(item.Key(), &id, models.StoredCommitmentPrefix)
 		if err != nil {
