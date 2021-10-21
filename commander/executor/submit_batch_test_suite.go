@@ -7,12 +7,14 @@ import (
 )
 
 var (
-	baseCommitment = models.Commitment{
-		Type:              batchtype.Transfer,
+	baseCommitment = models.TxCommitment{
+		CommitmentBase: models.CommitmentBase{
+			Type:          batchtype.Transfer,
+			PostStateRoot: utils.RandomHash(),
+		},
 		Transactions:      utils.RandomBytes(24),
 		FeeReceiver:       1,
 		CombinedSignature: models.MakeRandomSignature(),
-		PostStateRoot:     utils.RandomHash(),
 	}
 )
 
@@ -32,8 +34,8 @@ func (s *submitBatchTestSuite) setupUser() {
 	s.NoError(err)
 }
 
-func getCommitments(count int, batchID models.Uint256) []models.Commitment {
-	commitments := make([]models.Commitment, 0, count)
+func getCommitments(count int, batchID models.Uint256) []models.TxCommitment {
+	commitments := make([]models.TxCommitment, 0, count)
 	for i := 0; i < count; i++ {
 		commitment := baseCommitment
 		commitment.ID.BatchID = batchID

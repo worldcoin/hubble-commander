@@ -11,18 +11,20 @@ func (c *RollupContext) newCommitment(
 	feeReceiverStateID uint32,
 	serializedTxs []byte,
 	combinedSignature *models.Signature,
-) (*models.Commitment, error) {
+) (*models.TxCommitment, error) {
 	stateRoot, err := c.storage.StateTree.Root()
 	if err != nil {
 		return nil, err
 	}
 
-	return &models.Commitment{
-		ID:                *commitmentID,
-		Type:              batchType,
+	return &models.TxCommitment{
+		CommitmentBase: models.CommitmentBase{
+			ID:            *commitmentID,
+			Type:          batchType,
+			PostStateRoot: *stateRoot,
+		},
 		FeeReceiver:       feeReceiverStateID,
 		CombinedSignature: *combinedSignature,
-		PostStateRoot:     *stateRoot,
 		Transactions:      serializedTxs,
 	}, nil
 }

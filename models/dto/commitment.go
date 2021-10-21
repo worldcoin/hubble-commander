@@ -6,7 +6,7 @@ import (
 )
 
 type Commitment struct {
-	models.Commitment
+	models.TxCommitment
 	Status       txstatus.TransactionStatus
 	BatchTime    *models.Timestamp
 	Transactions interface{}

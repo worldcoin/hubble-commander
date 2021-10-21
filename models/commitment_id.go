@@ -1,0 +1,26 @@
+package models
+
+const commitmentIDDataLength = 33
+
+type CommitmentID struct {
+	BatchID      Uint256
+	IndexInBatch uint8
+}
+
+func (c *CommitmentID) Bytes() []byte {
+	encoded := make([]byte, commitmentIDDataLength)
+	copy(encoded[0:32], c.BatchID.Bytes())
+	encoded[32] = c.IndexInBatch
+
+	return encoded
+}
+
+func (c *CommitmentID) SetBytes(data []byte) error {
+	if len(data) != commitmentIDDataLength {
+		return ErrInvalidLength
+	}
+
+	c.BatchID.SetBytes(data[0:32])
+	c.IndexInBatch = data[32]
+	return nil
+}
