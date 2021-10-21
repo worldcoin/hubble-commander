@@ -3,7 +3,6 @@ package executor
 import (
 	"time"
 
-	"github.com/Worldcoin/hubble-commander/commander/prover"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -11,7 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (c *ExecutionContext) GetVacancyProof(startStateID uint32, subtreeDepth uint8) (*models.SubtreeVacancyProof, error) {
+func (c *DepositContext) GetVacancyProof(startStateID uint32, subtreeDepth uint8) (*models.SubtreeVacancyProof, error) {
 	path := models.MerklePath{
 		Path:  startStateID >> subtreeDepth,
 		Depth: st.StateTreeDepth - subtreeDepth,
@@ -27,7 +26,7 @@ func (c *ExecutionContext) GetVacancyProof(startStateID uint32, subtreeDepth uin
 	}, nil
 }
 
-func (c *ExecutionContext) CreateAndSubmitDepositBatch() error {
+func (c *DepositContext) CreateAndSubmitBatch() error {
 	startTime := time.Now()
 	batch, err := c.NewPendingBatch(batchtype.Deposit)
 	if err != nil {
@@ -39,7 +38,7 @@ func (c *ExecutionContext) CreateAndSubmitDepositBatch() error {
 		return errors.WithStack(err)
 	}
 
-	err = c.SubmitDepositBatch(batch, vacancyProof)
+	err = c.SubmitBatch(batch, vacancyProof)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -55,7 +54,7 @@ func (c *ExecutionContext) CreateAndSubmitDepositBatch() error {
 	return nil
 }
 
-func (c *ExecutionContext) ExecuteDeposits() (*models.SubtreeVacancyProof, error) {
+func (c *DepositContext) ExecuteDeposits() (*models.SubtreeVacancyProof, error) {
 	depositSubTree, err := c.storage.GetFirstPendingDepositSubTree()
 	if st.IsNotFoundError(err) {
 		//TODO-dep: return error that will be omitted
@@ -83,7 +82,7 @@ func (c *ExecutionContext) ExecuteDeposits() (*models.SubtreeVacancyProof, error
 	return vacancyProof, nil
 }
 
-func (c *ExecutionContext) getDepositSubtreeVacancyProof() (*uint32, *models.SubtreeVacancyProof, error) {
+func (c *DepositContext) getDepositSubtreeVacancyProof() (*uint32, *models.SubtreeVacancyProof, error) {
 	subtreeDepth, err := c.client.GetDepositSubtreeDepth()
 	if err != nil {
 		return nil, nil, err
@@ -101,9 +100,8 @@ func (c *ExecutionContext) getDepositSubtreeVacancyProof() (*uint32, *models.Sub
 	return startStateID, vacancyProof, nil
 }
 
-func (c *ExecutionContext) SubmitDepositBatch(batch *models.Batch, vacancyProof *models.SubtreeVacancyProof) error {
-	proverCtx := prover.NewContext(c.storage)
-	commitmentInclusionProof, err := proverCtx.PreviousBatchCommitmentInclusionProof(batch.ID)
+func (c *DepositContext) SubmitBatch(batch *models.Batch, vacancyProof *models.SubtreeVacancyProof) error {
+	commitmentInclusionProof, err := c.proverCtx.PreviousBatchCommitmentInclusionProof(batch.ID)
 	if err != nil {
 		return err
 	}
