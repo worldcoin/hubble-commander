@@ -42,7 +42,7 @@ func (c *Context) PreviousBatchCommitmentInclusionProof(
 		return nil, errors.WithStack(err)
 	}
 
-	commitments, err := c.storage.GetCommitmentsByBatchID(previousBatch.ID)
+	commitments, err := c.storage.GetTxCommitmentsByBatchID(previousBatch.ID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

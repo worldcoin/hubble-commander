@@ -84,7 +84,7 @@ func (c *DepositContext) ExecuteDeposits() (*models.SubtreeVacancyProof, error) 
 }
 
 func (c *DepositContext) getDepositSubtreeVacancyProof() (*uint32, *models.SubtreeVacancyProof, error) {
-	subtreeDepth, err := c.client.GetDepositSubtreeDepth()
+	subtreeDepth, err := c.client.GetMaxSubTreeDepthParam()
 	if err != nil {
 		return nil, nil, err
 	}

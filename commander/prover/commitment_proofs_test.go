@@ -104,32 +104,36 @@ func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_Previou
 	err = s.storage.AddBatch(&batch)
 	s.NoError(err)
 
-	commitments := []models.Commitment{
+	commitments := []models.TxCommitment{
 		{
-			ID: models.CommitmentID{
-				BatchID:      batch.ID,
-				IndexInBatch: 0,
+			CommitmentBase: models.CommitmentBase{
+				ID: models.CommitmentID{
+					BatchID:      batch.ID,
+					IndexInBatch: 0,
+				},
+				Type:          batchtype.Transfer,
+				PostStateRoot: utils.RandomHash(),
 			},
-			Type:              batchtype.Transfer,
 			Transactions:      utils.RandomBytes(12),
 			FeeReceiver:       11,
 			CombinedSignature: models.MakeRandomSignature(),
-			PostStateRoot:     utils.RandomHash(),
 		},
 		{
-			ID: models.CommitmentID{
-				BatchID:      batch.ID,
-				IndexInBatch: 1,
+			CommitmentBase: models.CommitmentBase{
+				ID: models.CommitmentID{
+					BatchID:      batch.ID,
+					IndexInBatch: 1,
+				},
+				Type:          batchtype.Transfer,
+				PostStateRoot: utils.RandomHash(),
 			},
-			Type:              batchtype.Transfer,
 			Transactions:      utils.RandomBytes(12),
 			FeeReceiver:       11,
 			CombinedSignature: models.MakeRandomSignature(),
-			PostStateRoot:     utils.RandomHash(),
 		},
 	}
 	for i := range commitments {
-		err = s.storage.AddCommitment(&commitments[i])
+		err = s.storage.AddTxCommitment(&commitments[i])
 		s.NoError(err)
 	}
 
