@@ -190,10 +190,6 @@ func encodeCreate2Transfers(t *testing.T, transfer *models.Create2Transfer, regi
 }
 
 func register32Accounts(t *testing.T, ethClient *eth.Client, wallets []bls.Wallet) []uint32 {
-	registrations, unsubscribe, err := ethClient.WatchBatchAccountRegistrations(&bind.WatchOpts{})
-	require.NoError(t, err)
-	defer unsubscribe()
-
 	publicKeyBatch := make([]models.PublicKey, 16)
 	registeredPubKeyIDs := make([]uint32, 0, 32)
 	walletIndex := len(wallets) - 32
@@ -202,7 +198,7 @@ func register32Accounts(t *testing.T, ethClient *eth.Client, wallets []bls.Walle
 			publicKeyBatch[j] = *wallets[walletIndex].PublicKey()
 			walletIndex++
 		}
-		pubKeyIDs, err := ethClient.RegisterBatchAccountAndWait(publicKeyBatch, registrations)
+		pubKeyIDs, err := ethClient.RegisterBatchAccountAndWait(publicKeyBatch)
 		require.NoError(t, err)
 		registeredPubKeyIDs = append(registeredPubKeyIDs, pubKeyIDs...)
 	}
