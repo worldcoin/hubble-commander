@@ -52,15 +52,13 @@ func (c *Client) FinalizeRegisterToken(tokenContract common.Address) (*types.Tra
 }
 
 func (c *Client) retrieveRegisteredTokenID(receipt *types.Receipt) (*models.Uint256, error) {
-	eventName := "RegisteredToken"
-
-	log, err := retrieveLog(receipt, eventName)
+	log, err := retrieveLog(receipt, RegisteredTokenEvent)
 	if err != nil {
 		return nil, err
 	}
 
 	event := new(tokenregistry.TokenRegistryRegisteredToken)
-	err = c.tokenRegistryContract.UnpackLog(event, eventName, *log)
+	err = c.tokenRegistryContract.UnpackLog(event, RegisteredTokenEvent, *log)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

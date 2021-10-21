@@ -42,6 +42,7 @@ type RollupConfig struct {
 	MaxTxsPerCommitment              uint32
 	MinCommitmentsPerBatch           uint32
 	MaxCommitmentsPerBatch           uint32
+	MaxDepositSubTreeDepth           uint32
 	TransitionDisputeGasLimit        uint64
 	SignatureDisputeGasLimit         uint64
 	BatchAccountRegistrationGasLimit uint64
