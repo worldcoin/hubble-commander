@@ -57,7 +57,7 @@ func (c *Client) QueueDeposit(
 	return tx, nil
 }
 
-func (c *Client) GetMaxSubTreeDepthParam() (*uint32, error) {
+func (c *Client) GetMaxSubTreeDepthParam() (*uint8, error) {
 	if c.maxDepositSubTreeDepth != nil {
 		return c.maxDepositSubTreeDepth, nil
 	}
@@ -67,6 +67,6 @@ func (c *Client) GetMaxSubTreeDepthParam() (*uint32, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	c.maxDepositSubTreeDepth = ref.Uint32(uint32(param.Uint64()))
+	c.maxDepositSubTreeDepth = ref.Uint8(uint8(param.Uint64()))
 	return c.maxDepositSubTreeDepth, nil
 }

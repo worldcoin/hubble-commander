@@ -37,11 +37,7 @@ func (s *DepositsTestSuite) SetupTest() {
 	s.cmd = &Commander{
 		storage: testStorage.Storage,
 		client:  s.testClient.Client,
-		cfg: &config.Config{
-			Rollup: &config.RollupConfig{
-				MaxDepositSubTreeDepth: 2,
-			},
-		},
+		cfg:     &config.Config{},
 	}
 	s.tokenID = models.NewUint256(0) // First registered tokenID
 }
@@ -56,7 +52,7 @@ func (s *DepositsTestSuite) TestSyncDeposits() {
 	s.registerToken()
 	s.approveTokens()
 
-	// Smart contract needs 4 deposits to create a subtree (depth specified in cfg.Rollup.MaxDepositSubTreeDepth)
+	// Smart contract needs 4 deposits to create a subtree (depth specified in rollup contract deployment)
 	deposits := s.queueFourDeposits()
 
 	s.queueDeposit()
