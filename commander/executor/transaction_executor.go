@@ -1,13 +1,11 @@
 package executor
 
 import (
-	"errors"
 	"log"
 
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -181,11 +179,7 @@ func (e *C2TExecutor) AddPendingAccount(result applier.ApplySingleTxResult) erro
 func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
 	applyResult applier.ApplySingleTxResult, transferError, appError error,
 ) {
-	applyResult, transferError, appError = e.applier.ApplyCreate2Transfer(tx.ToCreate2Transfer(), commitmentTokenID)
-	if errors.Is(appError, chain.ErrWaitToBeMinedTimedOut) {
-		return nil, nil, NewLoggableRollupError(appError.Error())
-	}
-	return applyResult, transferError, appError
+	return e.applier.ApplyCreate2Transfer(tx.ToCreate2Transfer(), commitmentTokenID)
 }
 
 func (e *C2TExecutor) SubmitBatch(client *eth.Client, commitments []models.TxCommitment) (*types.Transaction, error) {
