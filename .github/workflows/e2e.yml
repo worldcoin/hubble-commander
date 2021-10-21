@@ -53,7 +53,7 @@ jobs:
         run: docker pull ghcr.io/worldcoin/hubble-commander:latest
       - name: Run E2E tests
         run: |
-          make setup-geth &
+          make setup-geth > /dev/null &
           HUBBLE_E2E=docker make test-e2e
 
   deploy:
