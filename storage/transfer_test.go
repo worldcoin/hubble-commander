@@ -319,25 +319,25 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey_NoTransfers() {
 }
 
 func (s *TransferTestSuite) TestGetTransfersByCommitmentID() {
-	err := s.storage.AddCommitment(&commitment)
+	err := s.storage.AddTxCommitment(&txCommitment)
 	s.NoError(err)
 
 	transfer1 := transfer
-	transfer1.CommitmentID = &commitment.ID
+	transfer1.CommitmentID = &txCommitment.ID
 
 	err = s.storage.AddTransfer(&transfer1)
 	s.NoError(err)
 
-	transfers, err := s.storage.GetTransfersByCommitmentID(&commitment.ID)
+	transfers, err := s.storage.GetTransfersByCommitmentID(&txCommitment.ID)
 	s.NoError(err)
 	s.Len(transfers, 1)
 }
 
 func (s *TransferTestSuite) TestGetTransfersByCommitmentID_NoTransfers() {
-	err := s.storage.AddCommitment(&commitment)
+	err := s.storage.AddTxCommitment(&txCommitment)
 	s.NoError(err)
 
-	transfers, err := s.storage.GetTransfersByCommitmentID(&commitment.ID)
+	transfers, err := s.storage.GetTransfersByCommitmentID(&txCommitment.ID)
 	s.NoError(err)
 	s.Len(transfers, 0)
 }
@@ -353,9 +353,9 @@ func (s *TransferTestSuite) addBatchAndCommitment() *models.Batch {
 	err := s.storage.AddBatch(batch)
 	s.NoError(err)
 
-	commitmentInBatch := commitment
+	commitmentInBatch := txCommitment
 	commitmentInBatch.ID.BatchID = batch.ID
-	err = s.storage.AddCommitment(&commitmentInBatch)
+	err = s.storage.AddTxCommitment(&commitmentInBatch)
 	s.NoError(err)
 
 	return batch

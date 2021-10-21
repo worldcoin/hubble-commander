@@ -109,13 +109,15 @@ func (c *Context) syncCommitment(batch *eth.DecodedBatch, commitment *encoder.De
 		return err
 	}
 
-	err = c.storage.AddCommitment(&models.Commitment{
-		ID:                commitment.ID,
-		Type:              batch.Type,
+	err = c.storage.AddTxCommitment(&models.TxCommitment{
+		CommitmentBase: models.CommitmentBase{
+			ID:            commitment.ID,
+			Type:          batch.Type,
+			PostStateRoot: commitment.StateRoot,
+		},
 		Transactions:      commitment.Transactions,
 		FeeReceiver:       commitment.FeeReceiver,
 		CombinedSignature: commitment.CombinedSignature,
-		PostStateRoot:     commitment.StateRoot,
 	})
 	if err != nil {
 		return err

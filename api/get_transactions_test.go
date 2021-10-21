@@ -166,19 +166,21 @@ func (s *GetTransactionsTestSuite) addCommitmentAndBatch() *models.Batch {
 	err := s.storage.AddBatch(batch)
 	s.NoError(err)
 
-	commitment := &models.Commitment{
-		ID: models.CommitmentID{
-			BatchID:      batch.ID,
-			IndexInBatch: 0,
+	commitment := &models.TxCommitment{
+		CommitmentBase: models.CommitmentBase{
+			ID: models.CommitmentID{
+				BatchID:      batch.ID,
+				IndexInBatch: 0,
+			},
+			Type:          batchtype.Transfer,
+			PostStateRoot: utils.RandomHash(),
 		},
-		Type:              batchtype.Transfer,
 		Transactions:      utils.RandomBytes(12),
 		FeeReceiver:       1234,
 		CombinedSignature: models.MakeRandomSignature(),
-		PostStateRoot:     utils.RandomHash(),
 	}
 
-	err = s.storage.AddCommitment(commitment)
+	err = s.storage.AddTxCommitment(commitment)
 	s.NoError(err)
 	return batch
 }

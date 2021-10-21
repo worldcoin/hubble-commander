@@ -22,7 +22,7 @@ func (s *SubmitTransferBatchTestSuite) SetupTest() {
 func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_ErrorsIfNotEnoughCommitments() {
 	pendingBatch, err := s.rollupCtx.NewPendingBatch(batchtype.Transfer)
 	s.NoError(err)
-	err = s.rollupCtx.SubmitBatch(pendingBatch, []models.Commitment{})
+	err = s.rollupCtx.SubmitBatch(pendingBatch, []models.TxCommitment{})
 	s.Equal(ErrNotEnoughCommitments, err)
 }
 
@@ -36,7 +36,7 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_SubmitsCommitmentsOnChain
 
 	pendingBatch, err := s.rollupCtx.NewPendingBatch(batchtype.Transfer)
 	s.NoError(err)
-	err = s.rollupCtx.SubmitBatch(pendingBatch, []models.Commitment{commitment})
+	err = s.rollupCtx.SubmitBatch(pendingBatch, []models.TxCommitment{commitment})
 	s.NoError(err)
 
 	s.client.Commit()
@@ -53,7 +53,7 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_StoresPendingBatchRecord(
 	commitment := baseCommitment
 	commitment.ID.BatchID = pendingBatch.ID
 
-	err = s.rollupCtx.SubmitBatch(pendingBatch, []models.Commitment{commitment})
+	err = s.rollupCtx.SubmitBatch(pendingBatch, []models.TxCommitment{commitment})
 	s.NoError(err)
 
 	batch, err := s.storage.GetBatch(models.MakeUint256(1))
@@ -77,7 +77,7 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_AddsCommitments() {
 	s.NoError(err)
 
 	for i := range commitments {
-		commit, err := s.storage.GetCommitment(&commitments[i].ID)
+		commit, err := s.storage.GetTxCommitment(&commitments[i].ID)
 		s.NoError(err)
 		s.Equal(commitments[i], *commit)
 		s.Equal(batch.ID, commit.ID.BatchID)

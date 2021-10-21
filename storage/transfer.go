@@ -142,7 +142,7 @@ func (s *TransactionStorage) MarkTransfersAsIncluded(txs []models.Transfer, comm
 
 func (s *Storage) GetTransferWithBatchDetails(hash common.Hash) (*models.TransferWithBatchDetails, error) {
 	var transfers []models.TransferWithBatchDetails
-	err := s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
+	err := s.ExecuteInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
 		tx, txReceipt, err := txStorage.getStoredTxWithReceipt(hash)
 		if err != nil {
 			return err
@@ -163,7 +163,7 @@ func (s *Storage) GetTransferWithBatchDetails(hash common.Hash) (*models.Transfe
 
 func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models.TransferWithBatchDetails, error) {
 	var transfers []models.TransferWithBatchDetails
-	err := s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
+	err := s.ExecuteInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
 		txs, txReceipts, err := txStorage.getTransfersByPublicKey(publicKey)
 		if err != nil {
 			return err

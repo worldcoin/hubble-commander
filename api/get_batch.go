@@ -30,7 +30,7 @@ func (a *API) unsafeGetBatchByHash(hash common.Hash) (*dto.BatchWithRootAndCommi
 		return nil, err
 	}
 
-	commitments, err := a.storage.GetCommitmentsByBatchID(batch.ID)
+	commitments, err := a.storage.GetTxCommitmentsByBatchID(batch.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (a *API) unsafeGetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommit
 		return nil, err
 	}
 
-	commitments, err := a.storage.GetCommitmentsByBatchID(batch.ID)
+	commitments, err := a.storage.GetTxCommitmentsByBatchID(batch.ID)
 	if err != nil {
 		return nil, err
 	}

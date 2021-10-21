@@ -36,14 +36,16 @@ func (s *RollupTestSuite) TestValidateStateRoot_SameStateRootHash() {
 	root, err := s.storage.StateTree.Root()
 	s.NoError(err)
 
-	commitment := models.Commitment{
-		Type:              batchtype.Transfer,
+	commitment := models.TxCommitment{
+		CommitmentBase: models.CommitmentBase{
+			Type:          batchtype.Transfer,
+			PostStateRoot: *root,
+		},
 		Transactions:      []byte{1, 2, 3},
 		FeeReceiver:       0,
 		CombinedSignature: models.Signature{},
-		PostStateRoot:     *root,
 	}
-	err = s.storage.AddCommitment(&commitment)
+	err = s.storage.AddTxCommitment(&commitment)
 	s.NoError(err)
 
 	err = validateStateRoot(s.storage.Storage)
@@ -51,14 +53,16 @@ func (s *RollupTestSuite) TestValidateStateRoot_SameStateRootHash() {
 }
 
 func (s *RollupTestSuite) TestValidateStateRoot_DifferentStateRootHash() {
-	commitment := models.Commitment{
-		Type:              batchtype.Transfer,
+	commitment := models.TxCommitment{
+		CommitmentBase: models.CommitmentBase{
+			Type:          batchtype.Transfer,
+			PostStateRoot: common.Hash{1, 2, 3},
+		},
 		Transactions:      []byte{1, 2, 3},
 		FeeReceiver:       0,
 		CombinedSignature: models.Signature{},
-		PostStateRoot:     common.Hash{1, 2, 3},
 	}
-	err := s.storage.AddCommitment(&commitment)
+	err := s.storage.AddTxCommitment(&commitment)
 	s.NoError(err)
 
 	err = validateStateRoot(s.storage.Storage)

@@ -17,14 +17,16 @@ func TestDecodeBatchCalldata(t *testing.T) {
 	require.NoError(t, err)
 
 	batchID := models.NewUint256(1)
-	commitment := models.Commitment{
-		Type:              batchtype.Transfer,
+	commitment := models.TxCommitment{
+		CommitmentBase: models.CommitmentBase{
+			Type:          batchtype.Transfer,
+			PostStateRoot: utils.RandomHash(),
+		},
 		Transactions:      utils.RandomBytes(12),
 		FeeReceiver:       uint32(1234),
 		CombinedSignature: models.MakeRandomSignature(),
-		PostStateRoot:     utils.RandomHash(),
 	}
-	arg1, arg2, arg3, arg4 := CommitmentToCalldataFields([]models.Commitment{commitment})
+	arg1, arg2, arg3, arg4 := CommitmentToCalldataFields([]models.TxCommitment{commitment})
 	calldata, err := rollupAbi.Pack("submitTransfer", arg1, arg2, arg3, arg4)
 	require.NoError(t, err)
 

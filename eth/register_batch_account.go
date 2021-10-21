@@ -55,15 +55,13 @@ func (a *AccountManager) RegisterBatchAccount(publicKeys []models.PublicKey) (*t
 }
 
 func (a *AccountManager) retrieveRegisteredPubKeyIDs(receipt *types.Receipt) ([]uint32, error) {
-	eventName := "BatchPubkeyRegistered"
-
-	log, err := retrieveLog(receipt, eventName)
+	log, err := retrieveLog(receipt, BatchPubkeyRegisteredEvent)
 	if err != nil {
 		return nil, err
 	}
 
 	event := new(accountregistry.AccountRegistryBatchPubkeyRegistered)
-	err = a.accountRegistryContract.UnpackLog(event, eventName, *log)
+	err = a.accountRegistryContract.UnpackLog(event, BatchPubkeyRegisteredEvent, *log)
 	if err != nil {
 		return nil, err
 	}
