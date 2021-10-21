@@ -74,6 +74,19 @@ services:
       - postgres
       - geth
 
+  backup:
+    build:
+      context: .
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
+    volumes:
+      - chain-spec-volume:/root/chain-spec
+      - badger-data-volume:/root/badger
+      - geth-data-volume:/root/geth
+      - ./../scripts:/root/scripts
+
 volumes:
   geth-data-volume:
   postgres-data-volume:
