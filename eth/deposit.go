@@ -15,7 +15,7 @@ func (c *Client) QueueDepositAndWait(
 	l1Amount *models.Uint256,
 	tokenID *models.Uint256,
 ) (*models.DepositID, *models.Uint256, error) {
-	tx, err := QueueDeposit(c.Blockchain.GetAccount(), c.DepositManager, toPubKeyID, l1Amount, tokenID)
+	tx, err := c.QueueDeposit(toPubKeyID, l1Amount, tokenID)
 	if err != nil {
 		return nil, nil, errors.WithStack(err)
 	}
@@ -45,14 +45,12 @@ func (c *Client) retrieveDepositIDAndL2Amount(receipt *types.Receipt) (*models.D
 	return &depositID, models.NewUint256FromBig(*event.L2Amount), nil
 }
 
-func QueueDeposit(
-	opts *bind.TransactOpts,
-	depositManager *depositmanager.DepositManager,
+func (c *Client) QueueDeposit(
 	toPubKeyID *models.Uint256,
 	l1Amount *models.Uint256,
 	tokenID *models.Uint256,
 ) (*types.Transaction, error) {
-	tx, err := depositManager.DepositFor(opts, toPubKeyID.ToBig(), l1Amount.ToBig(), tokenID.ToBig())
+	tx, err := c.depositManager().DepositFor(toPubKeyID.ToBig(), l1Amount.ToBig(), tokenID.ToBig())
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
