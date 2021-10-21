@@ -26,11 +26,7 @@ func (s *CommitmentStorage) copyWithNewDatabase(database *Database) *CommitmentS
 }
 
 func (s *CommitmentStorage) getStoredCommitment(id *models.CommitmentID) (*models.StoredCommitment, error) {
-	commitment := &models.StoredCommitment{
-		CommitmentBase: models.CommitmentBase{
-			ID: *id,
-		},
-	}
+	commitment := new(models.StoredCommitment)
 	err := s.database.Badger.Get(*id, commitment)
 	if err == bh.ErrNotFound {
 		return nil, errors.WithStack(NewNotFoundError("commitment"))
@@ -108,14 +104,7 @@ func (s *CommitmentStorage) getStoredCommitmentsByBatchID(batchID models.Uint256
 
 func decodeStoredCommitment(item *bdg.Item) (*models.StoredCommitment, error) {
 	var commitment models.StoredCommitment
-	err := item.Value(func(v []byte) error {
-		return db.Decode(v, &commitment)
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	err = db.DecodeKey(item.Key(), &commitment.ID, models.StoredCommitmentPrefix)
+	err := item.Value(commitment.SetBytes)
 	if err != nil {
 		return nil, err
 	}
