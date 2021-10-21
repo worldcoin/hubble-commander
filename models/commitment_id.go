@@ -1,5 +1,7 @@
 package models
 
+const commitmentIDDataLength = 33
+
 type CommitmentID struct {
 	BatchID      Uint256
 	IndexInBatch uint8
