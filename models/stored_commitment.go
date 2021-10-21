@@ -103,13 +103,12 @@ func (c *StoredCommitment) ToDepositCommitment() *DepositCommitment {
 }
 
 func NewStoredCommitmentBody(commitmentType batchtype.BatchType) (StoredCommitmentBody, error) {
+	// nolint:exhaustive
 	switch commitmentType {
 	case batchtype.Deposit:
 		return new(StoredDepositCommitmentBody), nil
 	case batchtype.Transfer, batchtype.Create2Transfer:
 		return new(StoredTxCommitmentBody), nil
-	case batchtype.Genesis, batchtype.MassMigration:
-		fallthrough
 	default:
 		return nil, errors.Errorf("unsupported commitment type: %s", commitmentType)
 	}
