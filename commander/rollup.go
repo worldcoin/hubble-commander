@@ -76,9 +76,12 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *b
 }
 
 func switchBatchType(batchType *batchtype.BatchType) {
-	if *batchType == batchtype.Transfer {
+	switch *batchType {
+	case batchtype.Transfer:
 		*batchType = batchtype.Create2Transfer
-	} else {
+	case batchtype.Create2Transfer:
+		*batchType = batchtype.Deposit
+	case batchtype.Deposit:
 		*batchType = batchtype.Transfer
 	}
 }
