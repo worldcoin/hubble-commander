@@ -9,7 +9,6 @@ import (
 )
 
 const (
-	storedCommitmentBytesLength       = 66
 	storedTxCommitmentBodyLength      = 68
 	storedDepositCommitmentBodyLength = 64
 )
@@ -45,37 +44,34 @@ func MakeStoredCommitmentFromDepositCommitment(c *DepositCommitment) StoredCommi
 
 func (c *StoredCommitment) Bytes() []byte {
 	b := make([]byte, c.BytesLen())
-	copy(b[0:33], c.ID.Bytes())
-	b[33] = byte(c.Type)
-	copy(b[34:66], c.PostStateRoot.Bytes())
-	copy(b[66:], c.Body.Bytes())
-
+	copy(b[:commitmentBaseDataLength], c.CommitmentBase.Bytes())
+	copy(b[commitmentBaseDataLength:], c.Body.Bytes())
 	return b
 }
 
 func (c *StoredCommitment) SetBytes(data []byte) error {
-	if len(data) < storedCommitmentBytesLength {
-		return ErrInvalidLength
-	}
-	err := c.ID.SetBytes(data[0:33])
+	err := c.CommitmentBase.SetBytes(data[:commitmentBaseDataLength])
 	if err != nil {
 		return err
 	}
+	return c.setBodyBytes(data[commitmentBaseDataLength:])
+}
 
-	commitmentType := batchtype.BatchType(data[33])
-	body, err := commitmentBody(data[66:], commitmentType)
+func (c *StoredCommitment) setBodyBytes(data []byte) error {
+	body, err := NewStoredCommitmentBody(c.Type)
 	if err != nil {
 		return err
 	}
-
-	c.Type = commitmentType
-	c.PostStateRoot.SetBytes(data[34:66])
+	err = body.SetBytes(data)
+	if err != nil {
+		return err
+	}
 	c.Body = body
 	return nil
 }
 
 func (c *StoredCommitment) BytesLen() int {
-	return storedCommitmentBytesLength + c.Body.BytesLen()
+	return commitmentBaseDataLength + c.Body.BytesLen()
 }
 
 func (c *StoredCommitment) ToTxCommitment() *TxCommitment {
@@ -106,21 +102,17 @@ func (c *StoredCommitment) ToDepositCommitment() *DepositCommitment {
 	}
 }
 
-func commitmentBody(data []byte, commitmentType batchtype.BatchType) (StoredCommitmentBody, error) {
+func NewStoredCommitmentBody(commitmentType batchtype.BatchType) (StoredCommitmentBody, error) {
 	switch commitmentType {
 	case batchtype.Deposit:
-		body := new(StoredDepositCommitmentBody)
-		err := body.SetBytes(data)
-		return body, err
+		return new(StoredDepositCommitmentBody), nil
 	case batchtype.Transfer, batchtype.Create2Transfer:
-		body := new(StoredTxCommitmentBody)
-		err := body.SetBytes(data)
-		return body, err
+		return new(StoredTxCommitmentBody), nil
 	case batchtype.Genesis, batchtype.MassMigration:
+		fallthrough
+	default:
 		return nil, errors.Errorf("unsupported commitment type: %s", commitmentType)
 	}
-
-	return nil, nil
 }
 
 type StoredCommitmentBody interface {

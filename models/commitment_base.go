@@ -3,6 +3,7 @@ package models
 import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 )
 
 const commitmentBaseDataLength = commitmentIDDataLength + 1 + 32
@@ -23,6 +24,9 @@ func (c *CommitmentBase) Bytes() []byte {
 }
 
 func (c *CommitmentBase) SetBytes(data []byte) error {
+	if len(data) != commitmentBaseDataLength {
+		return errors.WithStack(ErrInvalidLength)
+	}
 	err := c.ID.SetBytes(data[0:33])
 	if err != nil {
 		return err

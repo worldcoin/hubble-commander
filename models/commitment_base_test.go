@@ -25,3 +25,9 @@ func TestCommitmentBase_Bytes(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, base, decodedBase)
 }
+
+func TestCommitmentBase_Bytes_InvalidLength(t *testing.T) {
+	var decodedBase CommitmentBase
+	err := decodedBase.SetBytes([]byte{1, 2, 3})
+	require.ErrorIs(t, err, ErrInvalidLength)
+}
