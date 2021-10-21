@@ -103,7 +103,7 @@ func (c *Commander) saveSyncedSubTrees(subTrees []models.PendingDepositSubTree) 
 	subTreeLeavesAmount := 1 << c.cfg.Rollup.MaxDepositSubTreeDepth
 
 	for i := range subTrees {
-		err := c.unsafeSaveSyncedSubTree(&subTrees[i], subTreeLeavesAmount)
+		err := c.saveSingleSubTree(&subTrees[i], subTreeLeavesAmount)
 		if err != nil {
 			return err
 		}
@@ -112,7 +112,7 @@ func (c *Commander) saveSyncedSubTrees(subTrees []models.PendingDepositSubTree) 
 	return nil
 }
 
-func (c *Commander) unsafeSaveSyncedSubTree(subTree *models.PendingDepositSubTree, subTreeLeavesAmount int) error {
+func (c *Commander) saveSingleSubTree(subTree *models.PendingDepositSubTree, subTreeLeavesAmount int) error {
 	tx, txStorage, err := c.storage.BeginTransaction(storage.TxOptions{})
 	if err != nil {
 		return err
