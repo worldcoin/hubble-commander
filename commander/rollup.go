@@ -110,7 +110,7 @@ func handleRollupError(err error) error {
 	return err
 }
 
-func logLatestCommitment(latestCommitment *models.StoredCommitment) {
+func logLatestCommitment(latestCommitment *models.CommitmentBase) {
 	fields := log.Fields{
 		"latestBatchID":      latestCommitment.ID.BatchID.String(),
 		"latestCommitmentID": latestCommitment.ID.IndexInBatch,

@@ -70,7 +70,7 @@ func (s *StoredCommitmentTestSuite) TestGetLatestCommitment() {
 
 	latestCommitment, err := s.storage.GetLatestCommitment()
 	s.NoError(err)
-	s.Equal(models.MakeStoredCommitmentFromTxCommitment(&expected), *latestCommitment)
+	s.Equal(expected.CommitmentBase, *latestCommitment)
 }
 
 func (s *StoredCommitmentTestSuite) TestGetLatestCommitment_LatestDepositCommitment() {
@@ -86,7 +86,7 @@ func (s *StoredCommitmentTestSuite) TestGetLatestCommitment_LatestDepositCommitm
 
 	latestCommitment, err := s.storage.GetLatestCommitment()
 	s.NoError(err)
-	s.Equal(models.MakeStoredCommitmentFromDepositCommitment(&s.depositCommitment), *latestCommitment)
+	s.Equal(s.depositCommitment.CommitmentBase, *latestCommitment)
 }
 
 func (s *StoredCommitmentTestSuite) TestGetLatestCommitment_NoCommitments() {

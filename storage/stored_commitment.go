@@ -37,10 +37,10 @@ func (s *CommitmentStorage) getStoredCommitment(id *models.CommitmentID) (*model
 	return commitment, nil
 }
 
-func (s *CommitmentStorage) GetLatestCommitment() (*models.StoredCommitment, error) {
+func (s *CommitmentStorage) GetLatestCommitment() (*models.CommitmentBase, error) {
 	var commitment *models.StoredCommitment
 	var err error
-	err = s.database.Badger.Iterator(models.StoredCommitmentPrefix, db.ReversePrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
+	err = s.database.Badger.Iterator(models.StoredCommitmentPrefix, db.ReverseKeyIteratorOpts, func(item *bdg.Item) (bool, error) {
 		commitment, err = decodeStoredCommitment(item)
 		return true, err
 	})
@@ -51,7 +51,7 @@ func (s *CommitmentStorage) GetLatestCommitment() (*models.StoredCommitment, err
 		return nil, err
 	}
 
-	return commitment, nil
+	return &commitment.CommitmentBase, nil
 }
 
 func (s *CommitmentStorage) DeleteCommitmentsByBatchIDs(batchIDs ...models.Uint256) error {
