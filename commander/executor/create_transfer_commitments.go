@@ -126,6 +126,9 @@ func (t *TransactionExecutor) applyTransfersForCommitment(pendingTransfers []mod
 
 		morePendingTransfers, err := t.queryMorePendingTransfers(appliedTransfers)
 		if err == ErrNotEnoughTransfers {
+			if len(appliedTransfers) == 0 {
+				return nil, nil, err
+			}
 			newPendingTransfers = removeTransfers(pendingTransfers, append(appliedTransfers, invalidTransfers...))
 			return appliedTransfers, newPendingTransfers, nil
 		}
