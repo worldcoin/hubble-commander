@@ -127,7 +127,7 @@ func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id *models.Commit
 
 func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([]models.Create2TransferWithBatchDetails, error) {
 	var transfers []models.Create2TransferWithBatchDetails
-	err := s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
+	err := s.ExecuteInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
 		txs, txReceipts, err := txStorage.getCreate2TransfersByPublicKey(publicKey)
 		if err != nil {
 			return err
@@ -240,7 +240,7 @@ func (s *TransactionStorage) MarkCreate2TransfersAsIncluded(txs []models.Create2
 
 func (s *Storage) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.Create2TransferWithBatchDetails, error) {
 	var transfers []models.Create2TransferWithBatchDetails
-	err := s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
+	err := s.ExecuteInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
 		tx, txReceipt, err := txStorage.getStoredTxWithReceipt(hash)
 		if err != nil {
 			return err
