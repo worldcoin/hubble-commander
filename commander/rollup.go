@@ -38,7 +38,7 @@ func (c *Commander) rollupLoop(ctx context.Context) (err error) {
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
-			err := c.rollupLoopIteration(ctx, &currentBatchType)
+			err = c.rollupLoopIteration(ctx, &currentBatchType)
 			if err != nil {
 				return err
 			}
@@ -83,6 +83,7 @@ func switchBatchType(batchType *batchtype.BatchType) {
 		*batchType = batchtype.Deposit
 	case batchtype.Deposit:
 		*batchType = batchtype.Transfer
+	case batchtype.Genesis, batchtype.MassMigration:
 	}
 }
 

@@ -10,6 +10,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var ErrNotEnoughDeposits = NewRollupError("not enough deposits")
+
 func (c *DepositContext) GetVacancyProof(startStateID uint32, subtreeDepth uint8) (*models.SubtreeVacancyProof, error) {
 	path := models.MerklePath{
 		Path:  startStateID >> subtreeDepth,
@@ -57,8 +59,7 @@ func (c *DepositContext) CreateAndSubmitBatch() error {
 func (c *DepositContext) ExecuteDeposits() (*models.SubtreeVacancyProof, error) {
 	depositSubTree, err := c.storage.GetFirstPendingDepositSubTree()
 	if st.IsNotFoundError(err) {
-		//TODO-dep: return error that will be omitted
-		return nil, nil
+		return nil, ErrNotEnoughDeposits
 	}
 	if err != nil {
 		return nil, errors.WithStack(err)

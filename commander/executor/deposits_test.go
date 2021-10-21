@@ -128,9 +128,9 @@ func (s *DepositsTestSuite) TestGetVacancyProof_ProducesCorrectWitness() {
 	s.Equal(vacancyProof.Witness[1], secondWitness)
 }
 
-//TestSubmitBatch_SubmitsCommitmentsOnChain
-//TestSubmitBatch_StoresPendingBatchRecord
-//TestSubmitBatch_AddsCommitments
+// TestSubmitBatch_SubmitsCommitmentsOnChain
+// TestSubmitBatch_StoresPendingBatchRecord
+// TestSubmitBatch_AddsCommitments
 
 func (s *DepositsTestSuite) TestExecuteDeposits_SetsUserStates() {
 	err := s.storage.AddPendingDepositSubTree(&s.depositSubtree)
@@ -168,6 +168,14 @@ func (s *DepositsTestSuite) TestExecuteDeposits_ReturnsCorrectVacancyProof() {
 	vacancyProof, err := s.depositCtx.ExecuteDeposits()
 	s.NoError(err)
 	s.EqualValues(1, vacancyProof.PathAtDepth)
+}
+
+func (s *DepositsTestSuite) TestExecuteDeposits_NotEnoughDeposits() {
+	_, err := s.depositCtx.storage.StateTree.Set(0, &models.UserState{})
+	s.NoError(err)
+
+	_, err = s.depositCtx.ExecuteDeposits()
+	s.ErrorIs(err, ErrNotEnoughDeposits)
 }
 
 func (s *DepositsTestSuite) TestSubmitDepositBatch_SubmitsBatchOnChain() {
