@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	storedTxCommitmentBodyLength      = 68
-	storedDepositCommitmentBodyLength = 64
+	storedTxCommitmentBodyBaseLength      = 68
+	storedDepositCommitmentBodyBaseLength = 64
 )
 
 type StoredCommitmentBody interface {
@@ -56,7 +56,7 @@ func (c *StoredTxCommitmentBody) SetBytes(data []byte) error {
 }
 
 func (c *StoredTxCommitmentBody) BytesLen() int {
-	return storedTxCommitmentBodyLength + len(c.Transactions)
+	return storedTxCommitmentBodyBaseLength + len(c.Transactions)
 }
 
 type StoredDepositCommitmentBody struct {
@@ -70,7 +70,7 @@ func (c *StoredDepositCommitmentBody) Bytes() []byte {
 	copy(b[0:32], c.SubTreeID.Bytes())
 	copy(b[32:64], c.SubTreeRoot.Bytes())
 
-	startIndex := storedDepositCommitmentBodyLength
+	startIndex := storedDepositCommitmentBodyBaseLength
 	for i := range c.Deposits {
 		startIndex += copy(b[startIndex:startIndex+depositDataLength], c.Deposits[i].Bytes())
 	}
@@ -79,14 +79,15 @@ func (c *StoredDepositCommitmentBody) Bytes() []byte {
 }
 
 func (c *StoredDepositCommitmentBody) SetBytes(data []byte) error {
-	if len(data) <= storedDepositCommitmentBodyLength || (len(data)-storedDepositCommitmentBodyLength)%depositDataLength != 0 {
+	overallDepositsLength := len(data) - storedDepositCommitmentBodyBaseLength
+	if len(data) <= storedDepositCommitmentBodyBaseLength || overallDepositsLength%depositDataLength != 0 {
 		return ErrInvalidLength
 	}
 
-	depositCount := (len(data) - storedDepositCommitmentBodyLength) / depositDataLength
+	depositCount := overallDepositsLength / depositDataLength
 	c.Deposits = make([]PendingDeposit, 0, depositCount)
 
-	startIndex := storedDepositCommitmentBodyLength
+	startIndex := storedDepositCommitmentBodyBaseLength
 	for i := 0; i < depositCount; i++ {
 		endIndex := startIndex + depositDataLength
 		deposit := PendingDeposit{}
@@ -104,5 +105,5 @@ func (c *StoredDepositCommitmentBody) SetBytes(data []byte) error {
 }
 
 func (c *StoredDepositCommitmentBody) BytesLen() int {
-	return storedDepositCommitmentBodyLength + len(c.Deposits)*depositDataLength
+	return storedDepositCommitmentBodyBaseLength + len(c.Deposits)*depositDataLength
 }
