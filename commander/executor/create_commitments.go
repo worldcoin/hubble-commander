@@ -131,6 +131,9 @@ func (c *RollupContext) executeTxsForCommitment(pendingTxs models.GenericTransac
 
 		morePendingTransfers, err := c.queryMorePendingTxs(aggregateResult.AppliedTxs())
 		if errors.Is(err, ErrNotEnoughTxs) {
+			if aggregateResult.AppliedTxs().Len() == 0 {
+				return nil, nil, err
+			}
 			newPendingTxs = removeTxs(pendingTxs, aggregateResult.AllTxs())
 			return c.Executor.NewExecuteTxsForCommitmentResult(aggregateResult), newPendingTxs, nil
 		}
