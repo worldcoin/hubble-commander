@@ -7,12 +7,9 @@ import (
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
-
-var ErrInvalidStateRoot = errors.New("current state tree root doesn't match latest commitment post state root")
 
 func (c *Commander) manageRollupLoop(cancel context.CancelFunc, isProposer bool) context.CancelFunc {
 	if isProposer && !c.rollupLoopRunning {
@@ -85,25 +82,6 @@ func switchBatchType(batchType *batchtype.BatchType) {
 	} else {
 		*batchType = batchtype.Transfer
 	}
-}
-
-func validateStateRoot(storage *st.Storage) error {
-	latestCommitment, err := storage.GetLatestCommitment()
-	if st.IsNotFoundError(err) {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	stateRoot, err := storage.StateTree.Root()
-	if err != nil {
-		return err
-	}
-	if latestCommitment.PostStateRoot != *stateRoot {
-		logLatestCommitment(latestCommitment)
-		return ErrInvalidStateRoot
-	}
-	return nil
 }
 
 func handleRollupError(rollupErr *executor.RollupError) {
