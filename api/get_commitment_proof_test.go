@@ -53,7 +53,7 @@ func (s *GetCommitmentProofTestSuite) SetupTest() {
 
 	s.commitmentProofNotFoundAPIErr = &APIError{
 		Code:    20001,
-		Message: "commitment not found",
+		Message: "commitment proof not found",
 	}
 }
 

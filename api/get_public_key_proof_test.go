@@ -33,7 +33,7 @@ func (s *GetPublicKeyProofTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *GetPublicKeyProofTestSuite) TestGetPublicKeyProofByID() {
+func (s *GetPublicKeyProofTestSuite) TestGetPublicKeyProofByPubKeyID() {
 	account := models.AccountLeaf{
 		PubKeyID:  1,
 		PublicKey: models.PublicKey{1, 2, 3},
@@ -62,10 +62,17 @@ func (s *GetPublicKeyProofTestSuite) TestGetPublicKeyProofByID() {
 			Witness:   witness,
 		},
 	}
-	publicKeyProof, err := s.api.GetPublicKeyProofByID(account.PubKeyID)
-
+	publicKeyProof, err := s.api.GetPublicKeyProofByPubKeyID(account.PubKeyID)
 	s.NoError(err)
 	s.Equal(expectedPublicKeyProof, publicKeyProof)
+}
+
+func (s *GetPublicKeyProofTestSuite) TestGetPublicKeyProofByPubKeyID_NonexistentAccount() {
+	_, err := s.api.GetPublicKeyProofByPubKeyID(1)
+	s.Equal(&APIError{
+		Code:    99005,
+		Message: "public key proof not found",
+	}, err)
 }
 
 func TestGetPublicKeyProofTestSuite(t *testing.T) {

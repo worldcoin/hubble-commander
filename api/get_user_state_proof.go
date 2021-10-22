@@ -8,7 +8,7 @@ import (
 )
 
 var getUserStateProofAPIErrors = map[error]*APIError{
-	storage.AnyNotFoundError: NewAPIError(20002, "user state not found"),
+	storage.AnyNotFoundError: NewAPIError(99006, "user state proof not found"),
 }
 
 func (a *API) GetUserStateProof(id uint32) (*dto.StateMerkleProof, error) {
