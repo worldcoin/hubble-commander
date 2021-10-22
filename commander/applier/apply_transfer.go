@@ -11,14 +11,17 @@ func (a *Applier) ApplyTransfer(tx models.GenericTransaction, commitmentTokenID 
 	receiverLeaf, appError := a.storage.StateTree.Leaf(*tx.GetToStateID())
 	if st.IsNotFoundError(appError) {
 		transferError = appError
-		return &ApplySingleTransferResult{tx: tx.ToTransfer()}, transferError, nil
+		return nil, transferError, nil
 	}
 	if appError != nil {
 		return nil, nil, appError
 	}
 
 	transferError, appError = a.ApplyTx(tx, receiverLeaf, commitmentTokenID)
-	return &ApplySingleTransferResult{tx: tx.ToTransfer()}, transferError, appError
+	if transferError != nil || appError != nil {
+		return nil, transferError, appError
+	}
+	return &ApplySingleTransferResult{tx: tx.ToTransfer()}, nil, nil
 }
 
 func (a *Applier) ApplyTransferForSync(tx models.GenericTransaction, commitmentTokenID models.Uint256) (

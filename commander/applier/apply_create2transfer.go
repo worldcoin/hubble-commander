@@ -20,11 +20,23 @@ func (a *Applier) ApplyCreate2Transfer(
 		return nil, nil, appError
 	}
 
+	receiverLeaf, appError := newUserLeaf(*nextAvailableStateID, *pubKeyID, commitmentTokenID)
+	if appError != nil {
+		return nil, nil, appError
+	}
+
+	transferError, appError = a.ApplyTx(create2Transfer, receiverLeaf, commitmentTokenID)
+	if transferError != nil || appError != nil {
+		return nil, transferError, appError
+	}
+
+	updatedCreate2Transfer := create2Transfer.Clone()
+	updatedCreate2Transfer.ToStateID = nextAvailableStateID
+
 	applyResult = &ApplySingleC2TResult{
-		tx:       create2Transfer.Clone(),
+		tx:       updatedCreate2Transfer,
 		pubKeyID: *pubKeyID,
 	}
-	applyResult.tx.ToStateID = nextAvailableStateID
 
 	if isPending {
 		applyResult.pendingAccount = &models.AccountLeaf{
@@ -33,12 +45,7 @@ func (a *Applier) ApplyCreate2Transfer(
 		}
 	}
 
-	receiverLeaf, appError := newUserLeaf(*nextAvailableStateID, *pubKeyID, commitmentTokenID)
-	if appError != nil {
-		return nil, nil, appError
-	}
-	transferError, appError = a.ApplyTx(applyResult.tx, receiverLeaf, commitmentTokenID)
-	return applyResult, transferError, appError
+	return applyResult, nil, nil
 }
 
 func (a *Applier) ApplyCreate2TransferForSync(
