@@ -35,7 +35,7 @@ func (c *DepositContext) CreateAndSubmitBatch() error {
 		return errors.WithStack(err)
 	}
 
-	vacancyProof, err := c.ExecuteDeposits()
+	vacancyProof, err := c.createCommitment(batch.ID)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -56,31 +56,52 @@ func (c *DepositContext) CreateAndSubmitBatch() error {
 	return nil
 }
 
-func (c *DepositContext) ExecuteDeposits() (*models.SubtreeVacancyProof, error) {
-	depositSubTree, err := c.storage.GetFirstPendingDepositSubTree()
+func (c *DepositContext) createCommitment(batchID models.Uint256) (*models.SubtreeVacancyProof, error) {
+	depositSubtree, err := c.storage.GetFirstPendingDepositSubTree()
 	if st.IsNotFoundError(err) {
-		return nil, ErrNotEnoughDeposits
+		return nil, errors.WithStack(ErrNotEnoughDeposits)
 	}
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
+	vacancyProof, err := c.ExecuteDeposits(depositSubtree)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	err = c.addCommitment(batchID, depositSubtree)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return vacancyProof, nil
+}
+
+func (c *DepositContext) ExecuteDeposits(depositSubtree *models.PendingDepositSubTree) (*models.SubtreeVacancyProof, error) {
 	startStateID, vacancyProof, err := c.getDepositSubtreeVacancyProof()
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	err = c.ApplyDeposits(*startStateID, depositSubTree.Deposits)
+	err = c.ApplyDeposits(*startStateID, depositSubtree.Deposits)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	//TODO-dep: create and insert commitment after merging branch that introduce it
-	err = c.storage.DeletePendingDepositSubTrees(depositSubTree.ID)
+	err = c.storage.DeletePendingDepositSubTrees(depositSubtree.ID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 	return vacancyProof, nil
+}
+
+func (c *DepositContext) addCommitment(batchID models.Uint256, depositSubtree *models.PendingDepositSubTree) error {
+	commitment, err := c.newCommitment(batchID, depositSubtree)
+	if err != nil {
+		return err
+	}
+	return c.storage.AddDepositCommitment(commitment)
 }
 
 func (c *DepositContext) getDepositSubtreeVacancyProof() (*uint32, *models.SubtreeVacancyProof, error) {
