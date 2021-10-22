@@ -30,6 +30,11 @@ func waitToBeMinedWithCtx(ctx context.Context, r ReceiptProvider, tx *types.Tran
 	ticker := time.NewTicker(pollInterval)
 	defer ticker.Stop()
 
+	now := time.Now()
+	defer func() {
+		fmt.Println(time.Since(now))
+	}()
+
 	for {
 		receipt, err := r.TransactionReceipt(ctx, tx.Hash())
 		if err != nil && err != ethereum.NotFound {

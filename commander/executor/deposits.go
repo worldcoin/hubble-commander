@@ -65,7 +65,7 @@ func (c *DepositContext) createCommitment(batchID models.Uint256) (*models.Subtr
 		return nil, errors.WithStack(err)
 	}
 
-	vacancyProof, err := c.ExecuteDeposits(depositSubtree)
+	vacancyProof, err := c.executeDeposits(depositSubtree)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -78,7 +78,7 @@ func (c *DepositContext) createCommitment(batchID models.Uint256) (*models.Subtr
 	return vacancyProof, nil
 }
 
-func (c *DepositContext) ExecuteDeposits(depositSubtree *models.PendingDepositSubTree) (*models.SubtreeVacancyProof, error) {
+func (c *DepositContext) executeDeposits(depositSubtree *models.PendingDepositSubTree) (*models.SubtreeVacancyProof, error) {
 	startStateID, vacancyProof, err := c.getDepositSubtreeVacancyProof()
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -123,6 +123,12 @@ func (c *DepositContext) getDepositSubtreeVacancyProof() (*uint32, *models.Subtr
 }
 
 func (c *DepositContext) SubmitBatch(batch *models.Batch, vacancyProof *models.SubtreeVacancyProof) error {
+	select {
+	case <-c.ctx.Done():
+		return ErrNoLongerProposer
+	default:
+	}
+
 	commitmentInclusionProof, err := c.proverCtx.PreviousBatchCommitmentInclusionProof(batch.ID)
 	if err != nil {
 		return err

@@ -130,11 +130,39 @@ func (s *DepositsTestSuite) TestGetVacancyProof_ProducesCorrectWitness() {
 	s.Equal(vacancyProof.Witness[1], secondWitness)
 }
 
+func (s *DepositsTestSuite) TestCreateCommitment_AddsCommitment() {
+	err := s.storage.AddPendingDepositSubTree(&s.depositSubtree)
+	s.NoError(err)
+
+	batchID := models.MakeUint256(1)
+	_, err = s.depositCtx.createCommitment(batchID)
+	s.NoError(err)
+
+	root, err := s.storage.StateTree.Root()
+	s.NoError(err)
+
+	commitment, err := s.storage.GetDepositCommitment(&models.CommitmentID{
+		BatchID:      batchID,
+		IndexInBatch: 0,
+	})
+	s.NoError(err)
+	s.Equal(*root, commitment.PostStateRoot)
+	s.Equal(s.depositSubtree.ID, commitment.SubTreeID)
+	s.Equal(s.depositSubtree.Root, commitment.SubTreeRoot)
+	s.Equal(s.depositSubtree.Deposits, commitment.Deposits)
+}
+
+func (s *DepositsTestSuite) TestCreateCommitment_NotEnoughDeposits() {
+	vacancyProof, err := s.depositCtx.createCommitment(models.MakeUint256(1))
+	s.ErrorIs(err, ErrNotEnoughDeposits)
+	s.Nil(vacancyProof)
+}
+
 func (s *DepositsTestSuite) TestExecuteDeposits_SetsUserStates() {
 	err := s.storage.AddPendingDepositSubTree(&s.depositSubtree)
 	s.NoError(err)
 
-	_, err = s.depositCtx.ExecuteDeposits(&s.depositSubtree)
+	_, err = s.depositCtx.executeDeposits(&s.depositSubtree)
 	s.NoError(err)
 
 	for i := range s.depositSubtree.Deposits {
@@ -148,7 +176,7 @@ func (s *DepositsTestSuite) TestExecuteDeposits_RemovesDepositSubtree() {
 	err := s.storage.AddPendingDepositSubTree(&s.depositSubtree)
 	s.NoError(err)
 
-	_, err = s.depositCtx.ExecuteDeposits(&s.depositSubtree)
+	_, err = s.depositCtx.executeDeposits(&s.depositSubtree)
 	s.NoError(err)
 
 	subtree, err := s.storage.GetPendingDepositSubTree(s.depositSubtree.ID)
@@ -163,7 +191,7 @@ func (s *DepositsTestSuite) TestExecuteDeposits_ReturnsCorrectVacancyProof() {
 	err = s.storage.AddPendingDepositSubTree(&s.depositSubtree)
 	s.NoError(err)
 
-	vacancyProof, err := s.depositCtx.ExecuteDeposits(&s.depositSubtree)
+	vacancyProof, err := s.depositCtx.executeDeposits(&s.depositSubtree)
 	s.NoError(err)
 	s.EqualValues(1, vacancyProof.PathAtDepth)
 }
