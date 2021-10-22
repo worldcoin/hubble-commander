@@ -341,7 +341,7 @@ Returns the latest batch, see below.
     "TransactionHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
     "SubmissionBlock": 59,
     "FinalisationBlock": 40379
-},
+}
 ```
 
 ### `hubble_getUserStateProof(stateId)`
@@ -393,7 +393,7 @@ Returns the merkle proof of the state tree and associated user state for the req
 }
 ```
 
-### `hubble_getPublicKeyProofByID(pubKeyID)`
+### `hubble_getPublicKeyProofByPubKeyID(pubKeyID)`
 
 Returns the merkle path and associated public key for the requested public key ID, see below.
 

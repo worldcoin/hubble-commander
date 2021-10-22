@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
@@ -35,7 +36,10 @@ func (s *GetCommitmentProofTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	s.api = &API{storage: s.storage.Storage}
+	s.api = &API{
+		storage: s.storage.Storage,
+		cfg:     &config.APIConfig{EnableProofEndpoints: true},
+	}
 
 	s.batch = models.Batch{
 		ID:                models.MakeUint256(1),
@@ -149,8 +153,8 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_Create2TransferType
 		Path:    path,
 		Witness: tree.GetWitness(uint32(s.commitment.ID.IndexInBatch)),
 	}
-	commitmentProof, err := s.api.GetCommitmentProof(s.commitment.ID)
 
+	commitmentProof, err := s.api.GetCommitmentProof(s.commitment.ID)
 	s.NoError(err)
 	s.Equal(expectedCommitmentProof, commitmentProof)
 }

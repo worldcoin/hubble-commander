@@ -3,6 +3,7 @@ package api
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -13,8 +14,8 @@ import (
 type GetPublicKeyProofTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	api      *API
-	teardown func() error
+	api     *API
+	storage *st.TestStorage
 }
 
 func (s *GetPublicKeyProofTestSuite) SetupSuite() {
@@ -22,14 +23,17 @@ func (s *GetPublicKeyProofTestSuite) SetupSuite() {
 }
 
 func (s *GetPublicKeyProofTestSuite) SetupTest() {
-	testStorage, err := st.NewTestStorage()
+	var err error
+	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	s.teardown = testStorage.Teardown
-	s.api = &API{storage: testStorage.Storage}
+	s.api = &API{
+		storage: s.storage.Storage,
+		cfg:     &config.APIConfig{EnableProofEndpoints: true},
+	}
 }
 
 func (s *GetPublicKeyProofTestSuite) TearDownTest() {
-	err := s.teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 

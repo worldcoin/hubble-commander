@@ -62,7 +62,7 @@ func GetConfig() *Config {
 		API: &APIConfig{
 			Version:              "0.5.0-rc2",
 			Port:                 getString("api.port", "8080"),
-			EnableProofEndpoints: getBool("api.allow_proof_endpoints", false),
+			EnableProofEndpoints: getBool("api.enable_proof_endpoints", false),
 		},
 		Badger: &BadgerConfig{
 			Path: getString("badger.path", getBadgerPath()),
