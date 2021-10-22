@@ -94,9 +94,9 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_TransferType() {
 		Depth: tree.Depth(),
 	}
 
-	expectedCommitmentProof := &dto.TransferCommitmentInclusionProof{
+	expectedCommitmentProof := &dto.CommitmentInclusionProof{
 		StateRoot: s.commitment.PostStateRoot,
-		Body: &dto.TransferBody{
+		Body: &dto.CommitmentProofBody{
 			AccountRoot: *s.batch.AccountTreeRoot,
 			Signature:   s.commitment.CombinedSignature,
 			FeeReceiver: s.commitment.FeeReceiver,
@@ -136,9 +136,9 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_Create2TransferType
 		Depth: tree.Depth(),
 	}
 
-	expectedCommitmentProof := &dto.TransferCommitmentInclusionProof{
+	expectedCommitmentProof := &dto.CommitmentInclusionProof{
 		StateRoot: s.commitment.PostStateRoot,
-		Body: &dto.TransferBody{
+		Body: &dto.CommitmentProofBody{
 			AccountRoot: *s.batch.AccountTreeRoot,
 			Signature:   s.commitment.CombinedSignature,
 			FeeReceiver: s.commitment.FeeReceiver,

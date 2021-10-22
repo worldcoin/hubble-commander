@@ -5,9 +5,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type TransferCommitmentInclusionProof struct {
+type CommitmentInclusionProof struct {
 	StateRoot common.Hash
-	Body      *TransferBody
+	Body      *CommitmentProofBody
 	Path      *models.MerklePath
 	Witness   models.Witness
 }
@@ -20,7 +20,7 @@ type PublicKeyProof struct {
 	models.PublicKeyProof
 }
 
-type TransferBody struct {
+type CommitmentProofBody struct {
 	AccountRoot  common.Hash
 	Signature    models.Signature
 	FeeReceiver  uint32

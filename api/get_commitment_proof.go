@@ -16,7 +16,7 @@ var (
 	}
 )
 
-func (a *API) GetCommitmentProof(commitmentID models.CommitmentID) (*dto.TransferCommitmentInclusionProof, error) {
+func (a *API) GetCommitmentProof(commitmentID models.CommitmentID) (*dto.CommitmentInclusionProof, error) {
 	if !a.cfg.EnableProofEndpoints {
 		return nil, errProofEndpointsDisabled
 	}
@@ -27,7 +27,7 @@ func (a *API) GetCommitmentProof(commitmentID models.CommitmentID) (*dto.Transfe
 	return commitmentProof, nil
 }
 
-func (a *API) unsafeGetCommitmentProof(commitmentID models.CommitmentID) (*dto.TransferCommitmentInclusionProof, error) {
+func (a *API) unsafeGetCommitmentProof(commitmentID models.CommitmentID) (*dto.CommitmentInclusionProof, error) {
 	batch, err := a.storage.GetMinedBatch(commitmentID.BatchID)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -62,9 +62,9 @@ func (a *API) unsafeGetCommitmentProof(commitmentID models.CommitmentID) (*dto.T
 		return nil, errors.WithStack(err)
 	}
 
-	return &dto.TransferCommitmentInclusionProof{
+	return &dto.CommitmentInclusionProof{
 		StateRoot: commitment.PostStateRoot,
-		Body: &dto.TransferBody{
+		Body: &dto.CommitmentProofBody{
 			AccountRoot:  *batch.AccountTreeRoot,
 			Signature:    commitment.CombinedSignature,
 			FeeReceiver:  commitment.FeeReceiver,
