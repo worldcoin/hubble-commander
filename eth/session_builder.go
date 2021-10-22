@@ -4,6 +4,7 @@ import (
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
+	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 )
 
@@ -45,6 +46,27 @@ func (b *accountRegistrySessionBuilder) WithValue(value big.Int) *accountRegistr
 }
 
 func (b *accountRegistrySessionBuilder) WithGasLimit(gasLimit uint64) *accountRegistrySessionBuilder {
+	b.TransactOpts.GasLimit = gasLimit
+	return b
+}
+
+type depositManagerSessionBuilder struct {
+	depositmanager.DepositManagerSession
+}
+
+func (c *Client) depositManager() *depositManagerSessionBuilder {
+	return &depositManagerSessionBuilder{depositmanager.DepositManagerSession{
+		Contract:     c.DepositManager,
+		TransactOpts: *c.Blockchain.GetAccount(),
+	}}
+}
+
+func (b *depositManagerSessionBuilder) WithValue(value big.Int) *depositManagerSessionBuilder {
+	b.TransactOpts.Value = &value
+	return b
+}
+
+func (b *depositManagerSessionBuilder) WithGasLimit(gasLimit uint64) *depositManagerSessionBuilder {
 	b.TransactOpts.GasLimit = gasLimit
 	return b
 }

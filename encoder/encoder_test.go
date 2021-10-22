@@ -75,8 +75,10 @@ func (s *EncoderTestSuite) TestCommitmentBodyHash() {
 	})
 	s.NoError(err)
 
-	commitment := models.Commitment{
-		Type:              batchtype.Transfer,
+	commitment := models.TxCommitment{
+		CommitmentBase: models.CommitmentBase{
+			Type: batchtype.Transfer,
+		},
 		Transactions:      txs,
 		FeeReceiver:       uint32(feeReceiver.Uint64()),
 		CombinedSignature: signature,

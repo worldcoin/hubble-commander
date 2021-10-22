@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -55,19 +56,18 @@ func (s *RegisteredTokensTestSuite) TestSyncSingleToken() {
 }
 
 func (s *RegisteredTokensTestSuite) registerSingleToken() models.RegisteredToken {
-	token := models.RegisteredToken{
+	tokenID := RegisterSingleToken(s.Assertions, s.testClient, s.testClient.ExampleTokenAddress)
+	return models.RegisteredToken{
+		ID:       *tokenID,
 		Contract: s.testClient.ExampleTokenAddress,
 	}
-	tokenID := RegisterSingleToken(s.Assertions, s.testClient, &token)
-	token.ID = *tokenID
-	return token
 }
 
-func RegisterSingleToken(s *require.Assertions, testClient *eth.TestClient, token *models.RegisteredToken) *models.Uint256 {
-	err := testClient.RequestRegisterTokenAndWait(token.Contract)
+func RegisterSingleToken(s *require.Assertions, testClient *eth.TestClient, tokenAddress common.Address) *models.Uint256 {
+	err := testClient.RequestRegisterTokenAndWait(tokenAddress)
 	s.NoError(err)
 
-	tokenID, err := testClient.FinalizeRegisterTokenAndWait(token.Contract)
+	tokenID, err := testClient.FinalizeRegisterTokenAndWait(tokenAddress)
 	s.NoError(err)
 
 	return tokenID

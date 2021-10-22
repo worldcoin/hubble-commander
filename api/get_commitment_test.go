@@ -22,7 +22,7 @@ type GetCommitmentTestSuite struct {
 	api                      *API
 	storage                  *st.TestStorage
 	batch                    models.Batch
-	commitment               models.Commitment
+	commitment               models.TxCommitment
 	commitmentNotFoundAPIErr *APIError
 }
 
@@ -64,7 +64,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
-	err = s.storage.AddCommitment(&s.commitment)
+	err = s.storage.AddTxCommitment(&s.commitment)
 	s.NoError(err)
 
 	transfer := models.Transfer{
@@ -84,9 +84,9 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 	s.NoError(err)
 
 	expectedCommitment := &dto.Commitment{
-		Commitment: s.commitment,
-		Status:     txstatus.InBatch,
-		BatchTime:  s.batch.SubmissionTime,
+		TxCommitment: s.commitment,
+		Status:       txstatus.InBatch,
+		BatchTime:    s.batch.SubmissionTime,
 		Transactions: []dto.TransferForCommitment{{
 			Hash:        transfer.Hash,
 			FromStateID: transfer.FromStateID,
@@ -109,7 +109,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 	s.NoError(err)
 
 	s.commitment.Type = batchtype.Create2Transfer
-	err = s.storage.AddCommitment(&s.commitment)
+	err = s.storage.AddTxCommitment(&s.commitment)
 	s.NoError(err)
 
 	transfer := models.Create2Transfer{
@@ -129,9 +129,9 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 	s.NoError(err)
 
 	expectedCommitment := &dto.Commitment{
-		Commitment: s.commitment,
-		Status:     txstatus.InBatch,
-		BatchTime:  s.batch.SubmissionTime,
+		TxCommitment: s.commitment,
+		Status:       txstatus.InBatch,
+		BatchTime:    s.batch.SubmissionTime,
 		Transactions: []dto.Create2TransferForCommitment{{
 			Hash:        transfer.Hash,
 			FromStateID: transfer.FromStateID,
@@ -157,7 +157,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_PendingBatch() {
 	err := s.storage.AddBatch(&pendingBatch)
 	s.NoError(err)
 
-	err = s.storage.AddCommitment(&s.commitment)
+	err = s.storage.AddTxCommitment(&s.commitment)
 	s.NoError(err)
 
 	transfer := models.Transfer{

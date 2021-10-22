@@ -9,6 +9,8 @@ const (
 	depositIDDataLength = 8
 )
 
+var PendingDepositPrefix = getBadgerHoldPrefix(PendingDeposit{})
+
 type DepositID struct {
 	BlockNumber uint32
 	LogIndex    uint32

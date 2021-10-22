@@ -17,7 +17,7 @@ const gasEstimateMultiplier = 1.3
 
 type SubmitBatchFunc func() (*types.Transaction, error)
 
-func (c *Client) SubmitTransfersBatch(commitments []models.Commitment) (
+func (c *Client) SubmitTransfersBatch(commitments []models.TxCommitment) (
 	*types.Transaction,
 	error,
 ) {
@@ -32,7 +32,7 @@ func (c *Client) SubmitTransfersBatch(commitments []models.Commitment) (
 	return c.RawTransact(c.config.StakeAmount.ToBig(), estimate, input)
 }
 
-func (c *Client) SubmitCreate2TransfersBatch(commitments []models.Commitment) (
+func (c *Client) SubmitCreate2TransfersBatch(commitments []models.TxCommitment) (
 	*types.Transaction,
 	error,
 ) {
@@ -47,12 +47,12 @@ func (c *Client) SubmitCreate2TransfersBatch(commitments []models.Commitment) (
 	return c.RawTransact(c.config.StakeAmount.ToBig(), estimate, input)
 }
 
-func (c *Client) SubmitTransfersBatchAndWait(commitments []models.Commitment) (*models.Batch, error) {
+func (c *Client) SubmitTransfersBatchAndWait(commitments []models.TxCommitment) (*models.Batch, error) {
 	return c.submitBatchAndWait(func() (*types.Transaction, error) {
 		return c.SubmitTransfersBatch(commitments)
 	})
 }
-func (c *Client) SubmitCreate2TransfersBatchAndWait(commitments []models.Commitment) (*models.Batch, error) {
+func (c *Client) SubmitCreate2TransfersBatchAndWait(commitments []models.TxCommitment) (*models.Batch, error) {
 	return c.submitBatchAndWait(func() (*types.Transaction, error) {
 		return c.SubmitCreate2TransfersBatch(commitments)
 	})
@@ -64,20 +64,18 @@ func (c *Client) submitBatchAndWait(submit SubmitBatchFunc) (batch *models.Batch
 		return
 	}
 
-	eventName := "NewBatch"
-
 	receipt, err := chain.WaitToBeMined(c.Blockchain.GetBackend(), tx)
 	if err != nil {
 		return nil, err
 	}
 
-	log, err := retrieveLog(receipt, eventName)
+	log, err := retrieveLog(receipt, NewBatchEvent)
 	if err != nil {
 		return nil, err
 	}
 
 	event := new(rollup.RollupNewBatch)
-	err = c.rollupContract.UnpackLog(event, eventName, *log)
+	err = c.rollupContract.UnpackLog(event, NewBatchEvent, *log)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +108,7 @@ func (c *Client) estimateBatchSubmissionGasLimit(input []byte) (uint64, error) {
 	return uint64(float64(estimatedGas) * gasEstimateMultiplier), nil
 }
 
-func (c *Client) packCommitments(method string, commitments []models.Commitment) ([]byte, error) {
+func (c *Client) packCommitments(method string, commitments []models.TxCommitment) ([]byte, error) {
 	stateRoots, signatures, feeReceivers, transactions := encoder.CommitmentToCalldataFields(commitments)
 	return c.RollupABI.Pack(method, stateRoots, signatures, feeReceivers, transactions)
 }

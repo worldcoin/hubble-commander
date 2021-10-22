@@ -194,7 +194,7 @@ func (s *TransactionStorage) SetTransactionError(txHash common.Hash, errorMessag
 
 func (s *Storage) GetTransactionCount() (*int, error) {
 	count := new(int)
-	err := s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
+	err := s.ExecuteInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
 		latestBatch, err := txStorage.GetLatestSubmittedBatch()
 		if IsNotFoundError(err) {
 			return nil

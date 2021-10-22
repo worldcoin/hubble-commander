@@ -8,18 +8,6 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-var (
-	deposit = models.PendingDeposit{
-		ID: models.DepositID{
-			BlockNumber: 16,
-			LogIndex:    32,
-		},
-		ToPubKeyID: 4,
-		TokenID:    models.MakeUint256(4),
-		L2Amount:   models.MakeUint256(1024),
-	}
-)
-
 type DepositTestSuite struct {
 	*require.Assertions
 	suite.Suite
@@ -42,18 +30,62 @@ func (s *DepositTestSuite) TearDownTest() {
 }
 
 func (s *DepositTestSuite) TestAddPendingDeposit_AddAndRetrieve() {
-	err := s.storage.AddPendingDeposit(&deposit)
-	s.NoError(err)
+	exampleDeposit := s.addPendingDeposit(16, 32)
 
-	actual, err := s.storage.GetPendingDeposit(&deposit.ID)
+	deposits, err := s.storage.GetFirstPendingDeposits(1)
 	s.NoError(err)
-	s.Equal(deposit, *actual)
+	s.Equal(exampleDeposit, deposits[0])
 }
 
-func (s *DepositTestSuite) TestGetPendingDeposit_NotFound() {
-	_, err := s.storage.GetPendingDeposit(&deposit.ID)
-	s.ErrorIs(err, NewNotFoundError("pending deposit"))
-	s.True(IsNotFoundError(err))
+func (s *DepositTestSuite) TestRemovePendingDeposits() {
+	deposits := []models.PendingDeposit{
+		s.addPendingDeposit(123, 1),
+		s.addPendingDeposit(582, 17),
+	}
+
+	err := s.storage.RemovePendingDeposits(deposits)
+	s.NoError(err)
+
+	_, err = s.storage.GetFirstPendingDeposits(2)
+	s.ErrorIs(err, ErrRanOutOfPendingDeposits)
+}
+
+func (s *DepositTestSuite) TestGetFirstPendingDeposits() {
+	allDeposits := []models.PendingDeposit{
+		s.addPendingDeposit(1, 0),
+		s.addPendingDeposit(1, 2),
+		s.addPendingDeposit(3, 12), // not in order on purpose
+		s.addPendingDeposit(3, 7),
+	}
+
+	amount := 3
+	pendingDeposits, err := s.storage.GetFirstPendingDeposits(amount)
+	s.NoError(err)
+	s.Len(pendingDeposits, amount)
+	s.Equal(allDeposits[0], pendingDeposits[0])
+	s.Equal(allDeposits[1], pendingDeposits[1])
+	s.Equal(allDeposits[3], pendingDeposits[2])
+}
+
+func (s *DepositTestSuite) TestGetFirstPendingDeposits_NoDeposits() {
+	deposits, err := s.storage.GetFirstPendingDeposits(1)
+	s.ErrorIs(err, ErrRanOutOfPendingDeposits)
+	s.Nil(deposits)
+}
+
+func (s *DepositTestSuite) addPendingDeposit(blockNumber, logIndex uint32) models.PendingDeposit {
+	deposit := models.PendingDeposit{
+		ID: models.DepositID{
+			BlockNumber: blockNumber,
+			LogIndex:    logIndex,
+		},
+		ToPubKeyID: 4,
+		TokenID:    models.MakeUint256(4),
+		L2Amount:   models.MakeUint256(1024),
+	}
+	err := s.storage.AddPendingDeposit(&deposit)
+	s.NoError(err)
+	return deposit
 }
 
 func TestDepositTestSuite(t *testing.T) {

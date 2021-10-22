@@ -1,13 +1,11 @@
 package executor
 
 import (
-	"errors"
 	"log"
 
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -23,10 +21,10 @@ type TransactionExecutor interface {
 	MarkTxsAsIncluded(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error
 	AddPendingAccount(result applier.ApplySingleTxResult) error
 	NewCreateCommitmentResult(
-		result ExecuteTxsForCommitmentResult, commitment *models.Commitment, pendingTxs models.GenericTransactionArray,
+		result ExecuteTxsForCommitmentResult, commitment *models.TxCommitment, pendingTxs models.GenericTransactionArray,
 	) CreateCommitmentResult
 	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (result applier.ApplySingleTxResult, transferError, appError error)
-	SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error)
+	SubmitBatch(client *eth.Client, commitments []models.TxCommitment) (*types.Transaction, error)
 }
 
 func CreateTransactionExecutor(executionCtx *ExecutionContext, batchType batchtype.BatchType) TransactionExecutor {
@@ -81,7 +79,7 @@ func (e *TransferExecutor) NewExecuteTxsForCommitmentResult(executeTxsResult Exe
 }
 
 func (e *TransferExecutor) NewCreateCommitmentResult(
-	_ ExecuteTxsForCommitmentResult, commitment *models.Commitment, pendingTxs models.GenericTransactionArray,
+	_ ExecuteTxsForCommitmentResult, commitment *models.TxCommitment, pendingTxs models.GenericTransactionArray,
 ) CreateCommitmentResult {
 	return &CreateTransferCommitmentResult{
 		newPendingTxs: pendingTxs,
@@ -107,7 +105,7 @@ func (e *TransferExecutor) ApplyTx(tx models.GenericTransaction, commitmentToken
 	return e.applier.ApplyTransfer(tx, commitmentTokenID)
 }
 
-func (e *TransferExecutor) SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error) {
+func (e *TransferExecutor) SubmitBatch(client *eth.Client, commitments []models.TxCommitment) (*types.Transaction, error) {
 	return client.SubmitTransfersBatch(commitments)
 }
 
@@ -154,7 +152,7 @@ func (e *C2TExecutor) NewExecuteTxsForCommitmentResult(executeTxsResult ExecuteT
 }
 
 func (e *C2TExecutor) NewCreateCommitmentResult(
-	result ExecuteTxsForCommitmentResult, commitment *models.Commitment, pendingTxs models.GenericTransactionArray,
+	result ExecuteTxsForCommitmentResult, commitment *models.TxCommitment, pendingTxs models.GenericTransactionArray,
 ) CreateCommitmentResult {
 	return &CreateC2TCommitmentResult{
 		newPendingTxs:   pendingTxs,
@@ -181,13 +179,9 @@ func (e *C2TExecutor) AddPendingAccount(result applier.ApplySingleTxResult) erro
 func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
 	applyResult applier.ApplySingleTxResult, transferError, appError error,
 ) {
-	applyResult, transferError, appError = e.applier.ApplyCreate2Transfer(tx.ToCreate2Transfer(), commitmentTokenID)
-	if errors.Is(appError, chain.ErrWaitToBeMinedTimedOut) {
-		return nil, nil, NewLoggableRollupError(appError.Error())
-	}
-	return applyResult, transferError, appError
+	return e.applier.ApplyCreate2Transfer(tx.ToCreate2Transfer(), commitmentTokenID)
 }
 
-func (e *C2TExecutor) SubmitBatch(client *eth.Client, commitments []models.Commitment) (*types.Transaction, error) {
+func (e *C2TExecutor) SubmitBatch(client *eth.Client, commitments []models.TxCommitment) (*types.Transaction, error) {
 	return client.SubmitCreate2TransfersBatch(commitments)
 }

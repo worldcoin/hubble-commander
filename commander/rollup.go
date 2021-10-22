@@ -64,9 +64,16 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *b
 	defer rollupCtx.Rollback(&err)
 
 	switchBatchType(currentBatchType)
+
 	err = rollupCtx.CreateAndSubmitBatch()
+
+	var rollupError *executor.RollupError
+	if errors.As(err, &rollupError) {
+		handleRollupError(rollupError)
+		return rollupCtx.Commit()
+	}
 	if err != nil {
-		return handleRollupError(err)
+		return err
 	}
 
 	return rollupCtx.Commit()
@@ -99,18 +106,13 @@ func validateStateRoot(storage *st.Storage) error {
 	return nil
 }
 
-func handleRollupError(err error) error {
-	var rollupErr *executor.RollupError
-	if errors.As(err, &rollupErr) {
-		if rollupErr.IsLoggable {
-			log.Warnf("%+v", err)
-		}
-		return nil
+func handleRollupError(rollupErr *executor.RollupError) {
+	if rollupErr.IsLoggable {
+		log.Warnf("%+v", rollupErr)
 	}
-	return err
 }
 
-func logLatestCommitment(latestCommitment *models.Commitment) {
+func logLatestCommitment(latestCommitment *models.CommitmentBase) {
 	fields := log.Fields{
 		"latestBatchID":      latestCommitment.ID.BatchID.String(),
 		"latestCommitmentID": latestCommitment.ID.IndexInBatch,

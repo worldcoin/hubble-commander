@@ -32,10 +32,6 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Bytes(), nil
 	case *models.ChainState:
 		return nil, errors.WithStack(errPassedByPointer)
-	case models.Commitment:
-		return v.Bytes(), nil
-	case *models.Commitment:
-		return nil, errors.WithStack(errPassedByPointer)
 	case models.CommitmentID:
 		return v.Bytes(), nil
 	case *models.CommitmentID:
@@ -71,6 +67,10 @@ func Encode(value interface{}) ([]byte, error) {
 	case models.StateUpdate:
 		return v.Bytes(), nil
 	case *models.StateUpdate:
+		return nil, errors.WithStack(errPassedByPointer)
+	case models.StoredCommitment:
+		return v.Bytes(), nil
+	case *models.StoredCommitment:
 		return nil, errors.WithStack(errPassedByPointer)
 	case models.StoredTx:
 		return v.Bytes(), nil
@@ -120,8 +120,6 @@ func Decode(data []byte, value interface{}) error {
 		return v.SetBytes(data)
 	case *models.ChainState:
 		return v.SetBytes(data)
-	case *models.Commitment:
-		return v.SetBytes(data)
 	case *models.CommitmentID:
 		return decodeCommitmentIDPointer(data, &value, v)
 	case *models.PendingDeposit:
@@ -141,6 +139,8 @@ func Decode(data []byte, value interface{}) error {
 	case *models.FlatStateLeaf:
 		return v.SetBytes(data)
 	case *models.StateUpdate:
+		return v.SetBytes(data)
+	case *models.StoredCommitment:
 		return v.SetBytes(data)
 	case *models.StoredTx:
 		return v.SetBytes(data)
