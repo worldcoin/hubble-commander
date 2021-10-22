@@ -22,12 +22,12 @@ func (a *API) GetCommitmentProof(commitmentID models.CommitmentID) (*dto.Transfe
 }
 
 func (a *API) unsafeGetCommitmentProof(commitmentID models.CommitmentID) (*dto.TransferCommitmentInclusionProof, error) {
-	commitments, err := a.storage.GetTxCommitmentsByBatchID(commitmentID.BatchID)
+	batch, err := a.storage.GetMinedBatch(commitmentID.BatchID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	batch, err := a.storage.GetBatch(commitmentID.BatchID)
+	commitments, err := a.storage.GetTxCommitmentsByBatchID(commitmentID.BatchID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

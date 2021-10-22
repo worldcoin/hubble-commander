@@ -106,11 +106,11 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_TransferType() {
 	}
 
 	expectedCommitmentProof := &dto.TransferCommitmentInclusionProof{
-		StateRoot: commitment.PostStateRoot,
+		StateRoot: s.commitment.PostStateRoot,
 		Body: &dto.TransferBody{
 			AccountRoot: *s.batch.AccountTreeRoot,
-			Signature:   commitment.CombinedSignature,
-			FeeReceiver: commitment.FeeReceiver,
+			Signature:   s.commitment.CombinedSignature,
+			FeeReceiver: s.commitment.FeeReceiver,
 			Transactions: []dto.TransferForCommitment{{
 				Hash:        transfer.Hash,
 				FromStateID: transfer.FromStateID,
@@ -123,7 +123,7 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_TransferType() {
 			}},
 		},
 		Path:    path,
-		Witness: tree.GetWitness(uint32(commitment.ID.IndexInBatch)),
+		Witness: tree.GetWitness(uint32(s.commitment.ID.IndexInBatch)),
 	}
 	commitmentProof, err := s.api.GetCommitmentProof(s.commitment.ID)
 
@@ -166,11 +166,11 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_Create2TransferType
 	}
 
 	expectedCommitmentProof := &dto.TransferCommitmentInclusionProof{
-		StateRoot: commitment.PostStateRoot,
+		StateRoot: s.commitment.PostStateRoot,
 		Body: &dto.TransferBody{
 			AccountRoot: *s.batch.AccountTreeRoot,
-			Signature:   commitment.CombinedSignature,
-			FeeReceiver: commitment.FeeReceiver,
+			Signature:   s.commitment.CombinedSignature,
+			FeeReceiver: s.commitment.FeeReceiver,
 			Transactions: []dto.Create2TransferForCommitment{{
 				Hash:        transfer.Hash,
 				FromStateID: transfer.FromStateID,
@@ -184,7 +184,7 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_Create2TransferType
 			}},
 		},
 		Path:    path,
-		Witness: tree.GetWitness(uint32(commitment.ID.IndexInBatch)),
+		Witness: tree.GetWitness(uint32(s.commitment.ID.IndexInBatch)),
 	}
 	commitmentProof, err := s.api.GetCommitmentProof(s.commitment.ID)
 
@@ -219,13 +219,13 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_PendingBatch() {
 	err = s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 
-	commitmentProof, err := s.api.GetCommitmentProof(commitment.ID)
+	commitmentProof, err := s.api.GetCommitmentProof(s.commitment.ID)
 	s.Equal(s.commitmentProofNotFoundAPIErr, err)
 	s.Nil(commitmentProof)
 }
 
 func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_NonexistentCommitment() {
-	commitmentProof, err := s.api.GetCommitmentProof(commitment.ID)
+	commitmentProof, err := s.api.GetCommitmentProof(s.commitment.ID)
 	s.Equal(s.commitmentProofNotFoundAPIErr, err)
 	s.Nil(commitmentProof)
 }
