@@ -1,11 +1,18 @@
 package applier
 
-import "github.com/Worldcoin/hubble-commander/models"
+import (
+	"github.com/Worldcoin/hubble-commander/models"
+	st "github.com/Worldcoin/hubble-commander/storage"
+)
 
 func (a *Applier) ApplyTransfer(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
 	applyResult ApplySingleTxResult, transferError, appError error,
 ) {
 	receiverLeaf, appError := a.storage.StateTree.Leaf(*tx.GetToStateID())
+	if st.IsNotFoundError(appError) {
+		transferError = appError
+		return &ApplySingleTransferResult{tx: tx.ToTransfer()}, transferError, nil
+	}
 	if appError != nil {
 		return nil, nil, appError
 	}

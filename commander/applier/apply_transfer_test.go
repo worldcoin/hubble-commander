@@ -71,8 +71,8 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_NonexistentReceiver() {
 	transfer.ToStateID = 10
 
 	_, transferError, appError := s.applier.ApplyTransfer(&transfer, s.receiverLeaf.TokenID)
-	s.NoError(transferError)
-	s.ErrorIs(appError, st.NewNotFoundError("state leaf"))
+	s.NoError(appError)
+	s.ErrorIs(transferError, st.NewNotFoundError("state leaf"))
 }
 
 func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ReturnsSenderProofForCalculateStateAfterTransferValidations() {
