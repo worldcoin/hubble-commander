@@ -8,10 +8,13 @@ import (
 )
 
 var getPublicKeyProofAPIErrors = map[error]*APIError{
-	storage.AnyNotFoundError: NewAPIError(50001, "public key proof not found"),
+	storage.AnyNotFoundError: NewAPIError(50002, "public key proof not found"),
 }
 
 func (a *API) GetPublicKeyProofByPubKeyID(id uint32) (*dto.PublicKeyProof, error) {
+	if !a.cfg.EnableProofEndpoints {
+		return nil, errProofEndpointsDisabled
+	}
 	publicKeyProof, err := a.unsafeGetPublicKeyProofByPubKeyID(id)
 	if err != nil {
 		return nil, sanitizeError(err, getPublicKeyProofAPIErrors)

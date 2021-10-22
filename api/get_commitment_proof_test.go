@@ -52,7 +52,7 @@ func (s *GetCommitmentProofTestSuite) SetupTest() {
 	s.commitment.ID.IndexInBatch = 0
 
 	s.commitmentProofNotFoundAPIErr = &APIError{
-		Code:    50000,
+		Code:    50001,
 		Message: "commitment proof not found",
 	}
 }

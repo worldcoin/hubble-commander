@@ -63,7 +63,7 @@ func (s *GetUserStateProofTestSuite) TestGetUserState() {
 func (s *GetUserStateProofTestSuite) TestGetUserState_NonexistentStateLeaf() {
 	_, err := s.api.GetUserStateProof(1)
 	s.Equal(&APIError{
-		Code:    50002,
+		Code:    50003,
 		Message: "user state proof not found",
 	}, err)
 }

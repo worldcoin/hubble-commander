@@ -9,11 +9,17 @@ import (
 	"github.com/pkg/errors"
 )
 
-var getCommitmentProofAPIErrors = map[error]*APIError{
-	storage.AnyNotFoundError: NewAPIError(50000, "commitment proof not found"),
-}
+var (
+	errProofEndpointsDisabled   = NewAPIError(50000, "proof endpoints disabled")
+	getCommitmentProofAPIErrors = map[error]*APIError{
+		storage.AnyNotFoundError: NewAPIError(50001, "commitment proof not found"),
+	}
+)
 
 func (a *API) GetCommitmentProof(commitmentID models.CommitmentID) (*dto.TransferCommitmentInclusionProof, error) {
+	if !a.cfg.EnableProofEndpoints {
+		return nil, errProofEndpointsDisabled
+	}
 	commitmentProof, err := a.unsafeGetCommitmentProof(commitmentID)
 	if err != nil {
 		return nil, sanitizeError(err, getCommitmentProofAPIErrors)
