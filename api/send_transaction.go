@@ -61,17 +61,22 @@ var (
 		10011,
 		"fee is not encodable as multi-precission decimal",
 	)
+	APISenderDoesNotExistError = NewAPIError(
+		10012,
+		"sender does not exist",
+	)
 )
 
 var sendTransactionAPIErrors = map[error]*APIError{
+	storage.AnyNotFoundError:              APISenderDoesNotExistError,
 	AnyMissingFieldError:                  APIErrAnyMissingField,
+	AnyInvalidSignatureError:              APIErrInvalidSignature,
 	ErrTransferToSelf:                     APIErrTransferToSelf,
 	ErrNonceTooLow:                        APIErrNonceTooLow,
 	ErrNonceTooHigh:                       APIErrNonceTooHigh,
 	ErrNotEnoughBalance:                   APIErrNotEnoughBalance,
 	ErrInvalidAmount:                      APIErrInvalidAmount,
 	ErrFeeTooLow:                          APIErrFeeTooLow,
-	AnyInvalidSignatureError:              APIErrInvalidSignature,
 	NewNotDecimalEncodableError("amount"): APINotDecimalEncodableAmountError,
 	NewNotDecimalEncodableError("fee"):    APINotDecimalEncodableFeeError,
 }
