@@ -7,8 +7,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -81,19 +81,8 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_TransferType() {
 
 	s.addStateLeaf()
 
-	transfer := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash:         utils.RandomHash(),
-			TxType:       txtype.Transfer,
-			FromStateID:  1,
-			Amount:       models.MakeUint256(50),
-			Fee:          models.MakeUint256(10),
-			Nonce:        models.MakeUint256(0),
-			Signature:    models.MakeRandomSignature(),
-			CommitmentID: &s.commitment.ID,
-		},
-		ToStateID: 2,
-	}
+	transfer := testutils.MakeTransfer(1, 2, 0, 50)
+	transfer.CommitmentID = &s.commitment.ID
 	err = s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 
@@ -111,16 +100,9 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_TransferType() {
 			AccountRoot: *s.batch.AccountTreeRoot,
 			Signature:   s.commitment.CombinedSignature,
 			FeeReceiver: s.commitment.FeeReceiver,
-			Transactions: []dto.TransferForCommitment{{
-				Hash:        transfer.Hash,
-				FromStateID: transfer.FromStateID,
-				Amount:      transfer.Amount,
-				Fee:         transfer.Fee,
-				Nonce:       transfer.Nonce,
-				Signature:   transfer.Signature,
-				ReceiveTime: transfer.ReceiveTime,
-				ToStateID:   transfer.ToStateID,
-			}},
+			Transactions: []dto.TransferForCommitment{
+				dto.MakeTransferForCommitment(&transfer),
+			},
 		},
 		Path:    path,
 		Witness: tree.GetWitness(uint32(s.commitment.ID.IndexInBatch)),
@@ -141,19 +123,8 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_Create2TransferType
 
 	s.addStateLeaf()
 
-	transfer := models.Create2Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash:         utils.RandomHash(),
-			TxType:       txtype.Create2Transfer,
-			FromStateID:  1,
-			Amount:       models.MakeUint256(50),
-			Fee:          models.MakeUint256(10),
-			Nonce:        models.MakeUint256(0),
-			CommitmentID: &s.commitment.ID,
-		},
-		ToStateID:   ref.Uint32(2),
-		ToPublicKey: models.PublicKey{2, 3, 4},
-	}
+	transfer := testutils.MakeCreate2Transfer(1, ref.Uint32(2), 0, 50, &models.PublicKey{2, 3, 4})
+	transfer.CommitmentID = &s.commitment.ID
 	err = s.storage.AddCreate2Transfer(&transfer)
 	s.NoError(err)
 
@@ -171,17 +142,9 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_Create2TransferType
 			AccountRoot: *s.batch.AccountTreeRoot,
 			Signature:   s.commitment.CombinedSignature,
 			FeeReceiver: s.commitment.FeeReceiver,
-			Transactions: []dto.Create2TransferForCommitment{{
-				Hash:        transfer.Hash,
-				FromStateID: transfer.FromStateID,
-				Amount:      transfer.Amount,
-				Fee:         transfer.Fee,
-				Nonce:       transfer.Nonce,
-				Signature:   transfer.Signature,
-				ReceiveTime: transfer.ReceiveTime,
-				ToStateID:   transfer.ToStateID,
-				ToPublicKey: transfer.ToPublicKey,
-			}},
+			Transactions: []dto.Create2TransferForCommitment{
+				dto.MakeCreate2TransferForCommitment(&transfer),
+			},
 		},
 		Path:    path,
 		Witness: tree.GetWitness(uint32(s.commitment.ID.IndexInBatch)),
@@ -204,18 +167,8 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_PendingBatch() {
 
 	s.addStateLeaf()
 
-	transfer := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash:         utils.RandomHash(),
-			TxType:       txtype.Transfer,
-			FromStateID:  1,
-			Amount:       models.MakeUint256(50),
-			Fee:          models.MakeUint256(10),
-			Nonce:        models.MakeUint256(0),
-			CommitmentID: &s.commitment.ID,
-		},
-		ToStateID: 2,
-	}
+	transfer := testutils.MakeTransfer(1, 2, 0, 50)
+	transfer.CommitmentID = &s.commitment.ID
 	err = s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 
