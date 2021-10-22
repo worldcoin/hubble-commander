@@ -12,7 +12,8 @@ import (
 var (
 	usedErrorCodes = map[int]bool{}
 
-	AnyMissingFieldError = &MissingFieldError{field: anythingField}
+	AnyMissingFieldError     = &MissingFieldError{field: anythingField}
+	AnyInvalidSignatureError = &InvalidSignatureError{}
 )
 
 const (
@@ -64,6 +65,23 @@ func (e *NotDecimalEncodableError) Is(other error) bool {
 		return false
 	}
 	return *e == *otherError
+}
+
+type InvalidSignatureError struct {
+	reason string
+}
+
+func NewInvalidSignatureError(reason string) *InvalidSignatureError {
+	return &InvalidSignatureError{reason: reason}
+}
+
+func (e InvalidSignatureError) Error() string {
+	return fmt.Sprintf("invalid signature: %s", e.reason)
+}
+
+func (e *InvalidSignatureError) Is(other error) bool {
+	var invalidSignatureErr *InvalidSignatureError
+	return errors.As(other, &invalidSignatureErr)
 }
 
 type APIError struct {
