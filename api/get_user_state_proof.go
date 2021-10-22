@@ -4,6 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/storage"
+	"github.com/pkg/errors"
 )
 
 var getUserStateProofAPIErrors = map[error]*APIError{
@@ -20,15 +21,13 @@ func (a *API) GetUserStateProof(id uint32) (*dto.StateMerkleProof, error) {
 
 func (a *API) unsafeGetUserStateProof(id uint32) (*dto.StateMerkleProof, error) {
 	leaf, err := a.storage.StateTree.Leaf(id)
-
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	witness, err := a.storage.StateTree.GetLeafWitness(id)
-
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	return &dto.StateMerkleProof{

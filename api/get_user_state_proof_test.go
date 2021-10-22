@@ -33,27 +33,20 @@ func (s *GetUserStateProofTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *GetUserStateProofTestSuite) TestGetUserStates() {
-	account := models.AccountLeaf{
-		PubKeyID:  1,
-		PublicKey: models.PublicKey{1, 2, 3},
-	}
-	err := s.api.storage.AccountTree.SetSingle(&account)
-	s.NoError(err)
-
+func (s *GetUserStateProofTestSuite) TestGetUserState() {
 	leaf := models.StateLeaf{
 		StateID: 0,
 		UserState: models.UserState{
-			PubKeyID: account.PubKeyID,
+			PubKeyID: 1,
 			TokenID:  models.MakeUint256(1),
 			Balance:  models.MakeUint256(420),
 			Nonce:    models.MakeUint256(0),
 		},
 	}
-	_, err = s.api.storage.StateTree.Set(leaf.StateID, &leaf.UserState)
+	_, err := s.api.storage.StateTree.Set(leaf.StateID, &leaf.UserState)
 	s.NoError(err)
 
-	witness, err := s.api.storage.StateTree.GetLeafWitness(0)
+	witness, err := s.api.storage.StateTree.GetLeafWitness(leaf.StateID)
 	s.NoError(err)
 
 	expectedUserStateProof := &dto.StateMerkleProof{
@@ -62,10 +55,17 @@ func (s *GetUserStateProofTestSuite) TestGetUserStates() {
 			Witness:   witness,
 		},
 	}
-	userStateProof, err := s.api.GetUserStateProof(0)
-
+	userStateProof, err := s.api.GetUserStateProof(leaf.StateID)
 	s.NoError(err)
 	s.Equal(expectedUserStateProof, userStateProof)
+}
+
+func (s *GetUserStateProofTestSuite) TestGetUserState_NonexistentStateLeaf() {
+	_, err := s.api.GetUserStateProof(1)
+	s.Equal(&APIError{
+		Code:    20002,
+		Message: "user state not found",
+	}, err)
 }
 
 func TestGetUserStateProofTestSuite(t *testing.T) {
