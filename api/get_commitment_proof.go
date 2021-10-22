@@ -22,7 +22,7 @@ func (a *API) GetCommitmentProof(commitmentID models.CommitmentID) (*dto.Transfe
 }
 
 func (a *API) unsafeGetCommitmentProof(commitmentID models.CommitmentID) (*dto.TransferCommitmentInclusionProof, error) {
-	commitments, err := a.storage.GetCommitmentsByBatchID(commitmentID.BatchID)
+	commitments, err := a.storage.GetTxCommitmentsByBatchID(commitmentID.BatchID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -46,7 +46,7 @@ func (a *API) unsafeGetCommitmentProof(commitmentID models.CommitmentID) (*dto.T
 		Depth: tree.Depth(),
 	}
 
-	commitment, err := a.storage.GetCommitment(&commitmentID)
+	commitment, err := a.storage.GetTxCommitment(&commitmentID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

@@ -23,7 +23,7 @@ type GetCommitmentProofTestSuite struct {
 	api                           *API
 	storage                       *st.TestStorage
 	batch                         models.Batch
-	commitment                    models.Commitment
+	commitment                    models.TxCommitment
 	commitmentProofNotFoundAPIErr *APIError
 }
 
@@ -76,7 +76,7 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_TransferType() {
 	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
-	err = s.storage.AddCommitment(&s.commitment)
+	err = s.storage.AddTxCommitment(&s.commitment)
 	s.NoError(err)
 
 	s.addStateLeaf()
@@ -136,7 +136,7 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_Create2TransferType
 	s.NoError(err)
 
 	s.commitment.Type = batchtype.Create2Transfer
-	err = s.storage.AddCommitment(&s.commitment)
+	err = s.storage.AddTxCommitment(&s.commitment)
 	s.NoError(err)
 
 	s.addStateLeaf()
@@ -199,7 +199,7 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_PendingBatch() {
 	err := s.storage.AddBatch(&pendingBatch)
 	s.NoError(err)
 
-	err = s.storage.AddCommitment(&s.commitment)
+	err = s.storage.AddTxCommitment(&s.commitment)
 	s.NoError(err)
 
 	s.addStateLeaf()
