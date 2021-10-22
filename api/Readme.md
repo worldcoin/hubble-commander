@@ -5,6 +5,7 @@
 - `20XXX` - Commitment Errors
 - `30XXX` - Batch Errors
 - `40XXX` - Badger Errors
+- `50XXX` - Proof Errors
 - `99XXX` - Uncategorized Errors like NetworkInfo, BLS, UserStates etc.
 
 ## API Errors
@@ -25,15 +26,15 @@
 | `10010`      | `amount is not encodable as multi-precission decimal`               |
 | `10011`      | `fee is not encodable as multi-precission decimal`                  |
 | `20000`      | `commitment not found`                                              |
-| `20001`      | `commitment proof not found`                                        |
 | `30000`      | `batch not found`                                                   |
 | `30001`      | `batches not found`                                                 |
 | `40000`      | `an error occurred while saving data to the Badger database`        |
 | `40001`      | `an error occurred while iterating over Badger database`            |
+| `50000`      | `commitment proof not found`                                        |
+| `50001`      | `public key proof not found`                                        |
+| `50002`      | `user state proof not found`                                        |
 | `99000`      | `an error occurred while fetching the account count`                |
 | `99001`      | `public key not found`                                              |
 | `99002`      | `user state not found`                                              |
 | `99003`      | `user states not found`                                             |
 | `99004`      | `an error occurred while fetching the domain for signing`           |
-| `99005`      | `public key proof not found`                                        |
-| `99006`      | `user state proof not found`                                        |

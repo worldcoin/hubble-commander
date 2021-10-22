@@ -70,7 +70,7 @@ func (s *GetPublicKeyProofTestSuite) TestGetPublicKeyProofByPubKeyID() {
 func (s *GetPublicKeyProofTestSuite) TestGetPublicKeyProofByPubKeyID_NonexistentAccount() {
 	_, err := s.api.GetPublicKeyProofByPubKeyID(1)
 	s.Equal(&APIError{
-		Code:    99005,
+		Code:    50001,
 		Message: "public key proof not found",
 	}, err)
 }

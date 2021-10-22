@@ -10,7 +10,7 @@ import (
 )
 
 var getCommitmentProofAPIErrors = map[error]*APIError{
-	storage.AnyNotFoundError: NewAPIError(20001, "commitment proof not found"),
+	storage.AnyNotFoundError: NewAPIError(50000, "commitment proof not found"),
 }
 
 func (a *API) GetCommitmentProof(commitmentID models.CommitmentID) (*dto.TransferCommitmentInclusionProof, error) {

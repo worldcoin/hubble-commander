@@ -4,10 +4,11 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/storage"
+	"github.com/pkg/errors"
 )
 
 var getPublicKeyProofAPIErrors = map[error]*APIError{
-	storage.AnyNotFoundError: NewAPIError(99005, "public key proof not found"),
+	storage.AnyNotFoundError: NewAPIError(50001, "public key proof not found"),
 }
 
 func (a *API) GetPublicKeyProofByPubKeyID(id uint32) (*dto.PublicKeyProof, error) {
@@ -21,12 +22,12 @@ func (a *API) GetPublicKeyProofByPubKeyID(id uint32) (*dto.PublicKeyProof, error
 func (a *API) unsafeGetPublicKeyProofByPubKeyID(id uint32) (*dto.PublicKeyProof, error) {
 	leaf, err := a.storage.AccountTree.Leaf(id)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	witness, err := a.storage.AccountTree.GetWitness(id)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	return &dto.PublicKeyProof{
