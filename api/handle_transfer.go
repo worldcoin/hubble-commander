@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -85,6 +86,9 @@ func (a *API) validateTransfer(transfer *models.Transfer) error {
 	}
 
 	senderState, err := a.storage.StateTree.Leaf(transfer.FromStateID)
+	if storage.IsNotFoundError(err) {
+		return errors.WithStack(ErrSenderDoesNotExist)
+	}
 	if err != nil {
 		return err
 	}
