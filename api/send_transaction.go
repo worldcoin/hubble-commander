@@ -13,13 +13,14 @@ import (
 )
 
 var (
-	ErrFeeTooLow         = fmt.Errorf("fee must be greater than 0")
-	ErrNonceTooLow       = fmt.Errorf("nonce too low")
-	ErrNonceTooHigh      = fmt.Errorf("nonce too high")
-	ErrNotEnoughBalance  = fmt.Errorf("not enough balance")
-	ErrTransferToSelf    = fmt.Errorf("transfer to the same state id")
-	ErrInvalidAmount     = fmt.Errorf("amount must be positive")
-	ErrUnsupportedTxType = fmt.Errorf("unsupported transaction type")
+	ErrFeeTooLow          = fmt.Errorf("fee must be greater than 0")
+	ErrNonceTooLow        = fmt.Errorf("nonce too low")
+	ErrNonceTooHigh       = fmt.Errorf("nonce too high")
+	ErrNotEnoughBalance   = fmt.Errorf("not enough balance")
+	ErrTransferToSelf     = fmt.Errorf("transfer to the same state id")
+	ErrInvalidAmount      = fmt.Errorf("amount must be positive")
+	ErrUnsupportedTxType  = fmt.Errorf("unsupported transaction type")
+	ErrSenderDoesNotExist = fmt.Errorf("sender with given ID does not exist")
 
 	APIErrAnyMissingField = NewAPIError(
 		10002,
@@ -63,14 +64,14 @@ var (
 	)
 	APISenderDoesNotExistError = NewAPIError(
 		10012,
-		"sender does not exist",
+		"sender with given ID does not exist",
 	)
 )
 
 var sendTransactionAPIErrors = map[error]*APIError{
-	storage.AnyNotFoundError:              APISenderDoesNotExistError,
 	AnyMissingFieldError:                  APIErrAnyMissingField,
 	AnyInvalidSignatureError:              APIErrInvalidSignature,
+	ErrSenderDoesNotExist:                 APISenderDoesNotExistError,
 	ErrTransferToSelf:                     APIErrTransferToSelf,
 	ErrNonceTooLow:                        APIErrNonceTooLow,
 	ErrNonceTooHigh:                       APIErrNonceTooHigh,
