@@ -63,7 +63,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCreateCommitme
 
 	commitments, err := s.rollupCtx.CreateCommitments()
 	s.Nil(commitments)
-	s.ErrorIs(err, ErrNotEnoughTxs)
+	s.ErrorIs(err, ErrNotEnoughCommitments)
 
 	postStateRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)
