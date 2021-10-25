@@ -50,8 +50,14 @@ func (c *RollupContext) CreateCommitments() ([]models.TxCommitment, error) {
 		pendingAccounts = append(pendingAccounts, result.PendingAccounts()...)
 	}
 
-	if len(commitments) == 0 {
-		return nil, errors.WithStack(ErrNotEnoughTxs)
+	if len(commitments) < int(c.cfg.MinCommitmentsPerBatch) {
+		return nil, errors.WithStack(ErrNotEnoughCommitments)
+	}
+
+	select {
+	case <-c.ctx.Done():
+		return nil, errors.WithStack(ErrNoLongerProposer)
+	default:
 	}
 
 	err = c.registerPendingAccounts(pendingAccounts)

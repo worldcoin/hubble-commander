@@ -56,6 +56,21 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCreateCommitme
 	s.Equal(preStateRoot, postStateRoot)
 }
 
+func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorIfCouldNotCreateEnoughCommitments() {
+	s.cfg.MinTxsPerCommitment = 1
+	s.cfg.MaxTxsPerCommitment = 1
+	s.cfg.MinCommitmentsPerBatch = 2
+
+	validTransfer := testutils.MakeTransfer(1, 2, 0, 100)
+	s.hashSignAndAddTransfer(&s.wallets[0], &validTransfer)
+	invalidTransfer := testutils.MakeTransfer(2, 1, 1234, 100)
+	s.hashSignAndAddTransfer(&s.wallets[1], &invalidTransfer)
+
+	commitments, err := s.rollupCtx.CreateCommitments()
+	s.Nil(commitments)
+	s.ErrorIs(err, ErrNotEnoughCommitments)
+}
+
 func (s *CreateCommitmentsTestSuite) hashSignAndAddTransfer(wallet *bls.Wallet, transfer *models.Transfer) {
 	hash, err := encoder.HashTransfer(transfer)
 	s.NoError(err)
