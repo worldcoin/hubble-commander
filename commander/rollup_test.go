@@ -64,7 +64,6 @@ func (s *RollupTestSuite) TearDownTest() {
 }
 
 func (s *RollupTestSuite) TestRollupLoopIteration_RollbacksStateOnRollupErrorButStoresInvalidTransactionErrorMessages() {
-	s.T().SkipNow() // TODO unskip
 	validTransfer := testutils.MakeTransfer(1, 2, 0, 100)
 	s.setTxHashAndSign(&s.wallets[0], &validTransfer)
 	invalidTransfer := testutils.MakeTransfer(2, 1, 1234, 100)
@@ -93,7 +92,6 @@ func (s *RollupTestSuite) TestRollupLoopIteration_RollbacksStateOnRollupErrorBut
 	s.Equal("nonce too high", *storedInvalidTransfer.ErrorMessage)
 }
 
-// nolint:unused // TODO remove
 func (s *RollupTestSuite) setTxHashAndSign(wallet *bls.Wallet, transfer *models.Transfer) {
 	hash, err := encoder.HashTransfer(transfer)
 	s.NoError(err)

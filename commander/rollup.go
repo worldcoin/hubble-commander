@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -67,7 +68,8 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *b
 	var rollupError *executor.RollupError
 	if errors.As(err, &rollupError) {
 		handleRollupError(rollupError)
-		return rollupCtx.Commit()
+		rollupCtx.Rollback(&err)
+		return saveTxErrors(c.storage, rollupCtx.TxErrors)
 	}
 	if err != nil {
 		return err
@@ -96,4 +98,15 @@ func logLatestCommitment(latestCommitment *models.CommitmentBase) {
 		"latestCommitmentID": latestCommitment.ID.IndexInBatch,
 	}
 	log.WithFields(fields).Error("rollupLoop: Sanity check on state tree root failed")
+}
+
+func saveTxErrors(storage *st.Storage, txErrors []models.TransactionError) error {
+	for _, txErr := range txErrors {
+		err := storage.SetTransactionError(txErr.Hash, txErr.ErrorMessage)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

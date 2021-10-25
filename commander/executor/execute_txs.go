@@ -28,6 +28,10 @@ func (c *RollupContext) ExecuteTxs(
 		if transferError != nil {
 			logAndSaveTransactionError(c.storage, applyResult.AppliedTx(), transferError)
 			returnStruct.AddInvalidTx(applyResult.AppliedTx())
+			c.TxErrors = append(c.TxErrors, models.TransactionError{
+				Hash:         applyResult.AppliedTx().GetBase().Hash,
+				ErrorMessage: transferError.Error(),
+			})
 			continue
 		}
 
