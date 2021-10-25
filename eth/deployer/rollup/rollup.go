@@ -100,7 +100,6 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 		return nil, errors.WithStack(err)
 	}
 
-	c.GetBackend().Commit()
 	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
@@ -112,7 +111,6 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 		return nil, errors.WithStack(err)
 	}
 
-	c.GetBackend().Commit()
 	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
@@ -129,7 +127,6 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 		return nil, errors.WithStack(err)
 	}
 
-	c.GetBackend().Commit()
 	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
@@ -147,7 +144,6 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 		return nil, errors.WithStack(err)
 	}
 
-	c.GetBackend().Commit()
 	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
@@ -161,7 +157,6 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 		return nil, errors.WithStack(err)
 	}
 
-	c.GetBackend().Commit()
 	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
@@ -212,7 +207,6 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 		return nil, errors.WithStack(err)
 	}
 
-	c.GetBackend().Commit()
 	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
@@ -245,7 +239,6 @@ func deployCostEstimator(c chain.Connection) (*common.Address, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	c.GetBackend().Commit()
 	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
@@ -266,7 +259,6 @@ func deployTransactionHelperContracts(c chain.Connection) (*txHelperContracts, e
 		return nil, errors.WithStack(err)
 	}
 
-	c.GetBackend().Commit()
 	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
@@ -278,7 +270,6 @@ func deployTransactionHelperContracts(c chain.Connection) (*txHelperContracts, e
 		return nil, errors.WithStack(err)
 	}
 
-	c.GetBackend().Commit()
 	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
@@ -290,7 +281,6 @@ func deployTransactionHelperContracts(c chain.Connection) (*txHelperContracts, e
 		return nil, errors.WithStack(err)
 	}
 
-	c.GetBackend().Commit()
 	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err
