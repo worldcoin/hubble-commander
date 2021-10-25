@@ -20,6 +20,7 @@ type Backend interface {
 	ReceiptProvider
 	TransactionByHash(ctx context.Context, hash common.Hash) (tx *types.Transaction, isPending bool, err error)
 	HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error)
+	Commit()
 }
 
 type Connection interface {
