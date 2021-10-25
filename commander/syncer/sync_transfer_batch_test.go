@@ -65,7 +65,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
 		expectedCommitments[i].ID.IndexInBatch = 0
 		err = s.rollupCtx.SubmitBatch(pendingBatch, []models.TxCommitment{expectedCommitments[i]})
 		s.NoError(err)
-		s.client.Commit()
+		s.client.GetBackend().Commit()
 
 		accountRoots[i] = s.getAccountTreeRoot()
 	}
@@ -160,7 +160,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() 
 
 	err := s.rollupCtx.SubmitBatch(batch, commitments)
 	s.NoError(err)
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 
 	s.recreateDatabase()
 
@@ -213,7 +213,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_NotValidBLSSignature() {
 
 	err := s.rollupCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 
 	s.recreateDatabase()
 
@@ -288,7 +288,7 @@ func (s *SyncTransferBatchTestSuite) submitInvalidBatch(tx *models.Transfer) *mo
 	err := s.rollupCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 	return pendingBatch
 }
 
