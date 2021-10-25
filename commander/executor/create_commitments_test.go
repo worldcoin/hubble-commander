@@ -38,7 +38,6 @@ func (s *CreateCommitmentsTestSuite) SetupTest() {
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCreateCommitmentsWithLessTxsThenRequired() {
-	s.T().SkipNow() // TODO unskip
 	validTransfer := testutils.MakeTransfer(1, 2, 0, 100)
 	s.hashSignAndAddTransfer(&s.wallets[0], &validTransfer)
 	invalidTransfer := testutils.MakeTransfer(2, 1, 1234, 100)
@@ -57,7 +56,6 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCreateCommitme
 	s.Equal(preStateRoot, postStateRoot)
 }
 
-// nolint:unused // TODO remove
 func (s *CreateCommitmentsTestSuite) hashSignAndAddTransfer(wallet *bls.Wallet, transfer *models.Transfer) {
 	hash, err := encoder.HashTransfer(transfer)
 	s.NoError(err)
