@@ -13,6 +13,9 @@ import (
 
 type ReceiptProvider interface {
 	TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error)
+
+	// Commit force a block creation if running on a simulator. Noop otherwise.
+	Commit()
 }
 
 type Backend interface {
@@ -20,22 +23,13 @@ type Backend interface {
 	ReceiptProvider
 	TransactionByHash(ctx context.Context, hash common.Hash) (tx *types.Transaction, isPending bool, err error)
 	HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error)
-	Commit()
 }
 
 type Connection interface {
 	GetAccount() *bind.TransactOpts
-
 	GetBackend() Backend
-
-	// Commit force a block creation if running on a simulator. Noop otherwise.
-	Commit()
-
 	GetChainID() models.Uint256
-
 	GetLatestBlockNumber() (*uint64, error)
-
 	SubscribeNewHead(ch chan<- *types.Header) (ethereum.Subscription, error)
-
 	EstimateGas(ctx context.Context, msg *ethereum.CallMsg) (uint64, error)
 }

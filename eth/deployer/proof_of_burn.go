@@ -15,7 +15,7 @@ func DeployProofOfBurn(c chain.Connection) (*common.Address, *proofofburn.ProofO
 		return nil, nil, errors.WithStack(err)
 	}
 
-	c.Commit()
+	c.GetBackend().Commit()
 	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, nil, errors.WithStack(err)
