@@ -42,8 +42,8 @@ func (s *RollupTestSuite) SetupTest() {
 		client:  s.testClient.Client,
 		cfg: &config.Config{
 			Rollup: &config.RollupConfig{
-				MinTxsPerCommitment:    2,
-				MaxTxsPerCommitment:    32,
+				MinTxsPerCommitment:    1,
+				MaxTxsPerCommitment:    1,
 				MinCommitmentsPerBatch: 2,
 				MaxCommitmentsPerBatch: 32,
 			},
