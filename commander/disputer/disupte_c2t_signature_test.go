@@ -178,7 +178,7 @@ func (s *DisputeC2TSignatureTestSuite) submitBatchWithNonexistentAccount(tx mode
 	err = s.rollupCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 }
 
 func TestDisputeC2TSignatureTestSuite(t *testing.T) {

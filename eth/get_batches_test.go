@@ -113,7 +113,7 @@ func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBatchID() {
 func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchExists() {
 	tx, err := s.client.SubmitTransfersBatch(s.commitments)
 	s.NoError(err)
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 
 	transaction, _, err := s.client.Blockchain.GetBackend().TransactionByHash(context.Background(), tx.Hash())
 	s.NoError(err)
@@ -134,7 +134,7 @@ func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchExists() {
 func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchNotExists() {
 	tx, err := s.client.SubmitTransfersBatch(s.commitments)
 	s.NoError(err)
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 
 	transaction, _, err := s.client.Blockchain.GetBackend().TransactionByHash(context.Background(), tx.Hash())
 	s.NoError(err)
@@ -153,7 +153,7 @@ func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchNotExists() {
 func (s *GetBatchesTestSuite) TestGetBatchIfExists_DifferentBatchHash() {
 	tx, err := s.client.SubmitTransfersBatch(s.commitments)
 	s.NoError(err)
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 
 	transaction, _, err := s.client.Blockchain.GetBackend().TransactionByHash(context.Background(), tx.Hash())
 	s.NoError(err)

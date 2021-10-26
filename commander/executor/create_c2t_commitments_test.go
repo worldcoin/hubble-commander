@@ -246,7 +246,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestRegisterPendingAccounts_Regist
 
 	err := s.rollupCtx.registerPendingAccounts(pendingAccounts)
 	s.NoError(err)
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 
 	expectedAccounts := pendingAccounts
 	for i := len(pendingAccounts); i < st.AccountBatchSize; i++ {
@@ -276,7 +276,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestRegisterPendingAccounts_FillsM
 
 	err := s.rollupCtx.registerPendingAccounts(pendingAccounts)
 	s.NoError(err)
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 
 	registeredAccounts := s.getRegisteredAccounts(0)
 	s.Equal(pendingAccounts[0], registeredAccounts[0])
@@ -295,7 +295,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, expectedTxsLength)
 
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 	accounts := s.getRegisteredAccounts(0)
 	s.Len(accounts, 16)
 	s.Equal(transfers[0].ToPublicKey, accounts[0].PublicKey)
