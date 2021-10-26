@@ -37,7 +37,7 @@ func (a *AccountManager) RetrieveRegisteredPubKeyID(receipt *types.Receipt) (*ui
 }
 
 func (a *AccountManager) RegisterAccount(publicKey *models.PublicKey) (*types.Transaction, error) {
-	tx, err := a.AccountRegistry.Register(a.Blockchain.GetAccount(), publicKey.BigInts())
+	tx, err := a.accountRegistry().Register(publicKey.BigInts())
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
