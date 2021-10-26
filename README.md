@@ -78,7 +78,7 @@ For other environments refer to: <https://golangci-lint.run/usage/install/#local
 The commander can be started by running the binary with a `start` subcommand, e.g. `commander start`,
 and it requires deployed smart contracts to work. It can connect to said smart contracts by fetching
 their addresses either from a chain spec file or from an already running commander. The path to a chain spec file
-and the url of a remote commander node can be set in the config file (see `config.example.yaml` file for reference)
+and the url of a remote commander node can be set in the config file (see `commander-config.example.yaml` file for reference)
 or with env variables:
 
 ```shell
@@ -88,7 +88,8 @@ HUBBLE_BOOTSTRAP_NODE_URL=http://localhost:8080
 ```
 
 The smart contracts can be deployed by using the binary with a `deploy` subcommand, e.g. `commander deploy`.
-After successful deployment, a chain spec file will be generated which can be used to start the commander.
+The subcommand uses its own config (see `deployer-config.example.yaml` file for reference).
+After a successful deployment, a chain spec file will be generated which can be used to start the commander.
 Additionally, the path to a chain spec file can be provided with `file` flag, e.g. `commander deploy -file chain-spec.yaml`.
 
 ## Scripts
