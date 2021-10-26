@@ -22,6 +22,7 @@ func WaitToBeMined(r ReceiptProvider, tx *types.Transaction) (*types.Receipt, er
 	ctx, cancel := context.WithTimeout(context.Background(), MineTimeout)
 	defer cancel()
 
+	r.Commit()
 	return waitToBeMinedWithCtx(ctx, r, tx)
 }
 
@@ -64,6 +65,8 @@ func WaitForMultipleTxs(r ReceiptProvider, txs []types.Transaction) ([]types.Rec
 	orChan := make(chan orderedReceipt, len(txs))
 	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), MineTimeout)
 	defer cancel()
+
+	r.Commit()
 
 	group, ctx := errgroup.WithContext(ctxWithTimeout)
 	for i := range txs {

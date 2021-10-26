@@ -12,8 +12,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var ErrInvalidStateRoot = errors.New("current state tree root doesn't match latest commitment post state root")
-
 func (c *Commander) manageRollupLoop(cancel context.CancelFunc, isProposer bool) context.CancelFunc {
 	if isProposer && !c.rollupLoopRunning {
 		log.Debugf("Commander is an active proposer, starting rollupLoop")
@@ -67,7 +65,8 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *b
 	var rollupError *executor.RollupError
 	if errors.As(err, &rollupError) {
 		handleRollupError(rollupError)
-		return rollupCtx.Commit()
+		rollupCtx.Rollback(&err)
+		return saveTxErrors(c.storage, rollupCtx.TxErrorsToStore)
 	}
 	if err != nil {
 		return err
@@ -84,25 +83,6 @@ func switchBatchType(batchType *batchtype.BatchType) {
 	}
 }
 
-func validateStateRoot(storage *st.Storage) error {
-	latestCommitment, err := storage.GetLatestCommitment()
-	if st.IsNotFoundError(err) {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	stateRoot, err := storage.StateTree.Root()
-	if err != nil {
-		return err
-	}
-	if latestCommitment.PostStateRoot != *stateRoot {
-		logLatestCommitment(latestCommitment)
-		return ErrInvalidStateRoot
-	}
-	return nil
-}
-
 func handleRollupError(rollupErr *executor.RollupError) {
 	if rollupErr.IsLoggable {
 		log.Warnf("%+v", rollupErr)
@@ -115,4 +95,16 @@ func logLatestCommitment(latestCommitment *models.CommitmentBase) {
 		"latestCommitmentID": latestCommitment.ID.IndexInBatch,
 	}
 	log.WithFields(fields).Error("rollupLoop: Sanity check on state tree root failed")
+}
+
+func saveTxErrors(storage *st.Storage, txErrors []models.TransactionError) error {
+	return storage.ExecuteInTransaction(st.TxOptions{}, func(txStorage *st.Storage) error {
+		for _, txErr := range txErrors {
+			err := txStorage.SetTransactionError(txErr.Hash, txErr.ErrorMessage)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
