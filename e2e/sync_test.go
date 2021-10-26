@@ -34,7 +34,7 @@ func TestCommanderSync(t *testing.T) {
 		require.NoError(t, os.Remove(*cfg.Bootstrap.ChainSpecPath))
 	}()
 
-	domain := getDomain(t, activeCommander.Client())
+	domain := GetDomain(t, activeCommander.Client())
 
 	wallets, err := setup.CreateWallets(domain)
 	require.NoError(t, err)
