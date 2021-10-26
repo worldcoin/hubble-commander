@@ -12,9 +12,9 @@ import (
 
 type RollupContext struct {
 	*ExecutionContext
-	Executor  TransactionExecutor
-	BatchType batchtype.BatchType
-	TxErrors  []models.TransactionError
+	Executor        TransactionExecutor
+	BatchType       batchtype.BatchType
+	TxErrorsToStore []models.TransactionError
 }
 
 func NewRollupContext(
@@ -40,6 +40,6 @@ func newRollupContext(executionCtx *ExecutionContext, batchType batchtype.BatchT
 		ExecutionContext: executionCtx,
 		Executor:         CreateTransactionExecutor(executionCtx, batchType),
 		BatchType:        batchType,
-		TxErrors:         make([]models.TransactionError, 0),
+		TxErrorsToStore:  make([]models.TransactionError, 0),
 	}
 }

@@ -69,7 +69,7 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *b
 	if errors.As(err, &rollupError) {
 		handleRollupError(rollupError)
 		rollupCtx.Rollback(&err)
-		return saveTxErrors(c.storage, rollupCtx.TxErrors)
+		return saveTxErrors(c.storage, rollupCtx.TxErrorsToStore)
 	}
 	if err != nil {
 		return err
