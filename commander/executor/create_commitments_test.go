@@ -52,7 +52,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments() {
 	s.Len(commitments[0].Transactions, 3*encoder.TransferLength)
 }
 
-func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCreateCommitmentsWithLessTxsThenRequired() {
+func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCreateCommitmentsWithLessTxsThanRequired() {
 	validTransfer := testutils.MakeTransfer(1, 2, 0, 100)
 	s.hashSignAndAddTransfer(&s.wallets[0], &validTransfer)
 	invalidTransfer := testutils.MakeTransfer(2, 1, 1234, 100)
