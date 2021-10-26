@@ -64,7 +64,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() {
 
 	err := s.rollupCtx.SubmitBatch(batch, commitments)
 	s.NoError(err)
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 
 	s.recreateDatabase()
 
@@ -191,7 +191,7 @@ func (s *SyncC2TBatchTestSuite) submitInvalidBatch(tx *models.Create2Transfer) m
 	err := s.rollupCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 	return commitments[0]
 }
 

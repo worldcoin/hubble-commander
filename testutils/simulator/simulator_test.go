@@ -99,7 +99,7 @@ func (s *SimulatorTestSuite) TestSubscribeNewHead() {
 	s.NoError(err)
 	defer subscription.Unsubscribe()
 
-	s.sim.Commit()
+	s.sim.GetBackend().Commit()
 	timeout := time.After(*s.sim.Config.AutomineInterval * 2)
 
 	select {
