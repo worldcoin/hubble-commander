@@ -134,7 +134,7 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_Fin
 		BatchID: batch.ID,
 	}
 
-	s.sim.Commit()
+	s.sim.GetBackend().Commit()
 	latestBlockNumber, err := s.sim.GetLatestBlockNumber()
 	s.NoError(err)
 

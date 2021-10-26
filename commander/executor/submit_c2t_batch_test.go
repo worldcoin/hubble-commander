@@ -32,7 +32,7 @@ func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_SubmitsCommitmentsOnChain() {
 	err = s.rollupCtx.SubmitBatch(pendingBatch, []models.TxCommitment{commitment})
 	s.NoError(err)
 
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 
 	nextBatchID, err = s.client.Rollup.NextBatchID(nil)
 	s.NoError(err)

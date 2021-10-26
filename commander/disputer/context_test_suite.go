@@ -92,7 +92,7 @@ func (s *testSuiteWithContexts) submitBatch(tx models.GenericTransaction) *model
 	err := s.rollupCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 	return pendingBatch
 }
 

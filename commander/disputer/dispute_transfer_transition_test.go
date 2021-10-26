@@ -149,7 +149,7 @@ func (s *DisputeTransferTransitionTestSuite) submitInvalidBatch(txs [][]models.T
 	err = s.rollupCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 	return pendingBatch
 }
 

@@ -11,14 +11,13 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/pkg/errors"
 )
 
 type RPCConnection struct {
 	account *bind.TransactOpts
-	backend *ethclient.Client
+	backend *RPCBackend
 	rpc     *rpc.Client
 	chainID *big.Int
 }
@@ -41,7 +40,7 @@ func NewRPCCConnection(cfg *config.EthereumConfig) (*RPCConnection, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	backend := ethclient.NewClient(rpcClient)
+	backend := NewRPCBackend(rpcClient)
 
 	return &RPCConnection{
 		account,
