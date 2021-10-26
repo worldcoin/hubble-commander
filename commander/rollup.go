@@ -101,12 +101,13 @@ func logLatestCommitment(latestCommitment *models.CommitmentBase) {
 }
 
 func saveTxErrors(storage *st.Storage, txErrors []models.TransactionError) error {
-	for _, txErr := range txErrors {
-		err := storage.SetTransactionError(txErr.Hash, txErr.ErrorMessage)
-		if err != nil {
-			return err
+	return storage.ExecuteInTransaction(st.TxOptions{}, func(txStorage *st.Storage) error {
+		for _, txErr := range txErrors {
+			err := txStorage.SetTransactionError(txErr.Hash, txErr.ErrorMessage)
+			if err != nil {
+				return err
+			}
 		}
-	}
-
-	return nil
+		return nil
+	})
 }
