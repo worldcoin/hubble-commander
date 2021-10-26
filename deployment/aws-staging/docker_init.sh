@@ -1,7 +1,13 @@
 #!/bin/bash
 
-# Prepare directory for the AWS config and credentials
-mkdir /root/.aws
+# Prepare the ~/.aws directory for the AWS config and credentials
+# Remove cron jobs if the directory exists (this is the case only when restarting the container)
+AWS_CONFIG_DIR=/root/.aws
+if [[ ! -e ${AWS_CONFIG_DIR} ]]; then
+    mkdir -p ${AWS_CONFIG_DIR}
+else
+    crontab -r
+fi
 
 # Create the AWS credentials file
 echo "[default]
@@ -14,8 +20,6 @@ echo "[default]
 region=${AWS_REGION}
 output=json
 " > /root/.aws/config
-
-# Maybe verify that you have access to the aws bucket before doing anything further?
 
 # Run the script that initiates backups of the commander state data
 bash /root/scripts/start_commander_backups.sh
