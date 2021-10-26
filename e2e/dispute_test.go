@@ -41,7 +41,7 @@ func TestCommanderDispute(t *testing.T) {
 		require.NoError(t, cmd.Stop())
 	}()
 
-	domain := getDomain(t, cmd.Client())
+	domain := GetDomain(t, cmd.Client())
 	wallets, err := setup.CreateWallets(domain)
 	require.NoError(t, err)
 

@@ -1,7 +1,7 @@
 //go:build e2e
 // +build e2e
 
-package e2e
+package bench
 
 import (
 	"fmt"
@@ -15,6 +15,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/e2e"
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
@@ -70,7 +71,7 @@ func (s *BenchmarkSuite) SetupTest() {
 	err = commander.Start()
 	s.NoError(err)
 
-	domain := getDomain(s.T(), commander.Client())
+	domain := e2e.GetDomain(s.T(), commander.Client())
 	wallets, err := setup.CreateWallets(domain)
 	s.NoError(err)
 

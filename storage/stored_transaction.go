@@ -111,7 +111,7 @@ func (s *TransactionStorage) getKeyList(indexKey []byte) (*bh.KeyList, error) {
 }
 
 func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*models.Uint256, error) {
-	latestNonce := models.MakeUint256(0)
+	var latestNonce *models.Uint256
 
 	err := s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
 		encodedStateID, err := models.EncodeUint32(&accountStateID)
@@ -133,12 +133,12 @@ func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*
 		}
 
 		for i := range txHashes {
-			tx, err := txStorage.getStoredTx(txHashes[i])
+			tx, receipt, err := txStorage.getStoredTxWithReceipt(txHashes[i])
 			if err != nil {
 				return err
 			}
-			if tx.Nonce.Cmp(&latestNonce) > 0 {
-				latestNonce = tx.Nonce
+			if receipt == nil && (latestNonce == nil || tx.Nonce.Cmp(latestNonce) > 0) {
+				latestNonce = &tx.Nonce
 			}
 		}
 		return nil
@@ -146,7 +146,10 @@ func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*
 	if err != nil {
 		return nil, err
 	}
-	return &latestNonce, nil
+	if latestNonce == nil {
+		return nil, errors.WithStack(NewNotFoundError("transaction"))
+	}
+	return latestNonce, nil
 }
 
 func (s *TransactionStorage) MarkTransactionsAsPending(txHashes []common.Hash) error {
