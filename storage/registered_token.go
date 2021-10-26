@@ -41,18 +41,17 @@ func (s *RegisteredTokenStorage) GetRegisteredToken(tokenID models.Uint256) (*mo
 }
 
 func (s *RegisteredTokenStorage) DeleteRegisteredTokens(tokenIds ...models.Uint256) (err error) {
-	tx, txDatabase := s.database.BeginTransaction(TxOptions{})
-	defer tx.Rollback(&err)
-
-	registeredToken := models.RegisteredToken{}
-	for i := range tokenIds {
-		err = txDatabase.Badger.Delete(tokenIds[i], registeredToken)
-		if err == bh.ErrNotFound {
-			return errors.WithStack(NewNotFoundError("registered token"))
+	return s.database.ExecuteInTransaction(TxOptions{}, func(txDatabase *Database) error {
+		registeredToken := models.RegisteredToken{}
+		for i := range tokenIds {
+			err = txDatabase.Badger.Delete(tokenIds[i], registeredToken)
+			if err == bh.ErrNotFound {
+				return errors.WithStack(NewNotFoundError("registered token"))
+			}
+			if err != nil {
+				return err
+			}
 		}
-		if err != nil {
-			return err
-		}
-	}
-	return tx.Commit()
+		return nil
+	})
 }

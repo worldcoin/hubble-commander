@@ -134,15 +134,10 @@ func roundAndValidateStateTreeSlot(rangeStart, rangeEnd, subtreeWidth int64) *in
 
 // Set returns a witness containing 32 elements for the current set operation
 func (s *StateTree) Set(id uint32, state *models.UserState) (witness models.Witness, err error) {
-	tx, txDatabase := s.database.BeginTransaction(TxOptions{})
-	defer tx.Rollback(&err)
-
-	witness, err = NewStateTree(txDatabase).unsafeSet(id, state)
-	if err != nil {
-		return nil, err
-	}
-
-	err = tx.Commit()
+	err = s.database.ExecuteInTransaction(TxOptions{}, func(txDatabase *Database) error {
+		witness, err = NewStateTree(txDatabase).unsafeSet(id, state)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -158,40 +153,39 @@ func (s *StateTree) GetNodeWitness(path models.MerklePath) (models.Witness, erro
 	return s.merkleTree.GetWitness(path)
 }
 
-func (s *StateTree) RevertTo(targetRootHash common.Hash) (err error) {
-	txn, txDatabase := s.database.BeginTransaction(TxOptions{})
-	defer txn.Rollback(&err)
+func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
+	return s.database.ExecuteInTransaction(TxOptions{}, func(txDatabase *Database) (err error) {
+		stateTree := NewStateTree(txDatabase)
+		var currentRootHash *common.Hash
+		err = txDatabase.Badger.Iterator(models.StateUpdatePrefix, db.ReversePrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
+			currentRootHash, err = stateTree.Root()
+			if err != nil {
+				return false, err
+			}
+			if *currentRootHash == targetRootHash {
+				return true, nil
+			}
 
-	stateTree := NewStateTree(txDatabase)
-	var currentRootHash *common.Hash
-	err = txDatabase.Badger.Iterator(models.StateUpdatePrefix, db.ReversePrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
-		currentRootHash, err = stateTree.Root()
-		if err != nil {
+			var stateUpdate *models.StateUpdate
+			stateUpdate, err = decodeStateUpdate(item)
+			if err != nil {
+				return false, err
+			}
+			if stateUpdate.CurrentRoot != *currentRootHash {
+				panic("invalid current root of a previous state update, this should never happen")
+			}
+
+			currentRootHash, err = stateTree.revertState(stateUpdate)
 			return false, err
+		})
+		if err != nil && err != db.ErrIteratorFinished {
+			return err
 		}
-		if *currentRootHash == targetRootHash {
-			return true, nil
+		if *currentRootHash != targetRootHash {
+			return errors.WithStack(ErrNonexistentState)
 		}
-
-		var stateUpdate *models.StateUpdate
-		stateUpdate, err = decodeStateUpdate(item)
-		if err != nil {
-			return false, err
-		}
-		if stateUpdate.CurrentRoot != *currentRootHash {
-			panic("invalid current root of a previous state update, this should never happen")
-		}
-
-		currentRootHash, err = stateTree.revertState(stateUpdate)
-		return false, err
+		return nil
 	})
-	if err != nil && err != db.ErrIteratorFinished {
-		return err
-	}
-	if *currentRootHash != targetRootHash {
-		return errors.WithStack(ErrNonexistentState)
-	}
-	return txn.Commit()
 }
 
 func decodeStateUpdate(item *bdg.Item) (*models.StateUpdate, error) {

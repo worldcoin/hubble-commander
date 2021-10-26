@@ -35,18 +35,16 @@ func (s *DepositStorage) AddPendingDeposit(deposit *models.PendingDeposit) error
 	return s.database.Badger.Upsert(deposit.ID, *deposit)
 }
 
-func (s *DepositStorage) RemovePendingDeposits(deposits []models.PendingDeposit) (err error) {
-	tx, txDatabase := s.database.BeginTransaction(TxOptions{})
-	defer tx.Rollback(&err)
-
-	for i := range deposits {
-		err := txDatabase.Badger.Delete(deposits[i].ID, models.PendingDeposit{})
-		if err != nil {
-			return err
+func (s *DepositStorage) RemovePendingDeposits(deposits []models.PendingDeposit) error {
+	return s.database.ExecuteInTransaction(TxOptions{}, func(txDatabase *Database) error {
+		for i := range deposits {
+			err := txDatabase.Badger.Delete(deposits[i].ID, models.PendingDeposit{})
+			if err != nil {
+				return err
+			}
 		}
-	}
-
-	return tx.Commit()
+		return nil
+	})
 }
 
 func (s *DepositStorage) GetFirstPendingDeposits(amount int) ([]models.PendingDeposit, error) {
