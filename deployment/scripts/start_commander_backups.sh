@@ -3,7 +3,8 @@
 # NOTE:
 # Remember to use only absolute paths in this script!
 
-CRON_SCHEDULE_EXPRESSION=""
+# Runs the cron job every 20 minutes
+CRON_SCHEDULE_EXPRESSION="*/20 * * * *"
 
 BACKUP_SCRIPT_PATH=""
 COMMANDER_DIR_PATH=""
