@@ -133,14 +133,11 @@ func roundAndValidateStateTreeSlot(rangeStart, rangeEnd, subtreeWidth int64) *in
 }
 
 // Set returns a witness containing 32 elements for the current set operation
-func (s *StateTree) Set(id uint32, state *models.UserState) (models.Witness, error) {
-	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{})
-	if err != nil {
-		return nil, err
-	}
+func (s *StateTree) Set(id uint32, state *models.UserState) (witness models.Witness, err error) {
+	tx, txDatabase := s.database.BeginTransaction(TxOptions{})
 	defer tx.Rollback(&err)
 
-	witness, err := NewStateTree(txDatabase).unsafeSet(id, state)
+	witness, err = NewStateTree(txDatabase).unsafeSet(id, state)
 	if err != nil {
 		return nil, err
 	}
@@ -161,11 +158,8 @@ func (s *StateTree) GetNodeWitness(path models.MerklePath) (models.Witness, erro
 	return s.merkleTree.GetWitness(path)
 }
 
-func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
-	txn, txDatabase, err := s.database.BeginTransaction(TxOptions{})
-	if err != nil {
-		return err
-	}
+func (s *StateTree) RevertTo(targetRootHash common.Hash) (err error) {
+	txn, txDatabase := s.database.BeginTransaction(TxOptions{})
 	defer txn.Rollback(&err)
 
 	stateTree := NewStateTree(txDatabase)

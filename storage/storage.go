@@ -94,10 +94,7 @@ func (s *Storage) copyWithNewDatabase(database *Database) *Storage {
 }
 
 func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, error) {
-	txController, txDatabase, err := s.database.BeginTransaction(opts)
-	if err != nil {
-		return nil, nil, err
-	}
+	txController, txDatabase := s.database.BeginTransaction(opts)
 
 	txStorage := s.copyWithNewDatabase(txDatabase)
 

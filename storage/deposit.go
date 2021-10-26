@@ -35,11 +35,8 @@ func (s *DepositStorage) AddPendingDeposit(deposit *models.PendingDeposit) error
 	return s.database.Badger.Upsert(deposit.ID, *deposit)
 }
 
-func (s *DepositStorage) RemovePendingDeposits(deposits []models.PendingDeposit) error {
-	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{})
-	if err != nil {
-		return err
-	}
+func (s *DepositStorage) RemovePendingDeposits(deposits []models.PendingDeposit) (err error) {
+	tx, txDatabase := s.database.BeginTransaction(TxOptions{})
 	defer tx.Rollback(&err)
 
 	for i := range deposits {

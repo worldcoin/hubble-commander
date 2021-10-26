@@ -54,11 +54,8 @@ func (s *CommitmentStorage) GetLatestCommitment() (*models.CommitmentBase, error
 	return &commitment.CommitmentBase, nil
 }
 
-func (s *CommitmentStorage) DeleteCommitmentsByBatchIDs(batchIDs ...models.Uint256) error {
-	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{})
-	if err != nil {
-		return err
-	}
+func (s *CommitmentStorage) DeleteCommitmentsByBatchIDs(batchIDs ...models.Uint256) (err error) {
+	tx, txDatabase := s.database.BeginTransaction(TxOptions{})
 	defer tx.Rollback(&err)
 
 	var commitmentIDs []models.CommitmentID

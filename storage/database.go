@@ -31,13 +31,13 @@ func NewDatabase(cfg *config.Config) (*Database, error) {
 	return database, nil
 }
 
-func (d *Database) BeginTransaction(opts TxOptions) (*db.TxController, *Database, error) {
+func (d *Database) BeginTransaction(opts TxOptions) (*db.TxController, *Database) {
 	database := *d
 
 	badgerTx, badgerDB := d.Badger.BeginTransaction(!opts.ReadOnly)
 	database.Badger = badgerDB
 
-	return badgerTx, &database, nil
+	return badgerTx, &database
 }
 
 func (d *Database) Close() error {

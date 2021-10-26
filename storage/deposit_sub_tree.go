@@ -26,11 +26,8 @@ func (s *DepositStorage) GetPendingDepositSubTree(subTreeID models.Uint256) (*mo
 	return &subTree, nil
 }
 
-func (s *DepositStorage) DeletePendingDepositSubTrees(subTreeIDs ...models.Uint256) error {
-	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{})
-	if err != nil {
-		return err
-	}
+func (s *DepositStorage) DeletePendingDepositSubTrees(subTreeIDs ...models.Uint256) (err error) {
+	tx, txDatabase := s.database.BeginTransaction(TxOptions{})
 	defer tx.Rollback(&err)
 
 	for i := range subTreeIDs {

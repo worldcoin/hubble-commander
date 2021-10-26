@@ -69,15 +69,12 @@ func (s *AccountTree) Leaves(publicKey *models.PublicKey) ([]models.AccountLeaf,
 	return accounts, nil
 }
 
-func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
+func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) (err error) {
 	if leaf.PubKeyID > leftSubtreeMaxValue {
 		return errors.WithStack(NewInvalidPubKeyIDError(leaf.PubKeyID))
 	}
 
-	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{})
-	if err != nil {
-		return err
-	}
+	tx, txDatabase := s.database.BeginTransaction(TxOptions{})
 	defer tx.Rollback(&err)
 
 	_, err = NewAccountTree(txDatabase).unsafeSet(leaf)
@@ -99,11 +96,8 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
 	return s.SetInBatch(leaves...)
 }
 
-func (s *AccountTree) SetInBatch(leaves ...models.AccountLeaf) error {
-	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{})
-	if err != nil {
-		return err
-	}
+func (s *AccountTree) SetInBatch(leaves ...models.AccountLeaf) (err error) {
+	tx, txDatabase := s.database.BeginTransaction(TxOptions{})
 	defer tx.Rollback(&err)
 
 	accountTree := NewAccountTree(txDatabase)
