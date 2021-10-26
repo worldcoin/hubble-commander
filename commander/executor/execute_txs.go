@@ -21,15 +21,16 @@ func (c *RollupContext) ExecuteTxs(
 			break
 		}
 
-		applyResult, transferError, appError := c.Executor.ApplyTx(txs.At(i), feeReceiver.TokenID)
+		tx := txs.At(i)
+		applyResult, transferError, appError := c.Executor.ApplyTx(tx, feeReceiver.TokenID)
 		if appError != nil {
 			return nil, appError
 		}
 		if transferError != nil {
-			logAndSaveTransactionError(c.storage, txs.At(i), transferError)
-			returnStruct.AddInvalidTx(txs.At(i))
+			logAndSaveTransactionError(c.storage, tx, transferError)
+			returnStruct.AddInvalidTx(tx)
 			c.TxErrorsToStore = append(c.TxErrorsToStore, models.TransactionError{
-				Hash:         txs.At(i).GetBase().Hash,
+				Hash:         tx.GetBase().Hash,
 				ErrorMessage: transferError.Error(),
 			})
 			continue
