@@ -19,14 +19,13 @@ type ExecutionContext struct {
 	*applier.Applier
 }
 
-//TODO-exe:remove returned error
 // NewExecutionContext creates a ExecutionContext and starts a database transaction.
 func NewExecutionContext(
 	storage *st.Storage,
 	client *eth.Client,
 	cfg *config.RollupConfig,
 	ctx context.Context,
-) (*ExecutionContext, error) {
+) *ExecutionContext {
 	tx, txStorage := storage.BeginTransaction(st.TxOptions{})
 
 	return &ExecutionContext{
@@ -36,7 +35,7 @@ func NewExecutionContext(
 		client:  client,
 		ctx:     ctx,
 		Applier: applier.NewApplier(txStorage, client),
-	}, nil
+	}
 }
 
 // NewTestExecutionContext creates a ExecutionContext without a database transaction.

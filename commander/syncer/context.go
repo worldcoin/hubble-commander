@@ -17,16 +17,14 @@ type Context struct {
 	BatchType batchtype.BatchType
 }
 
-//TODO-exe: remove returned error
 func NewContext(
 	storage *st.Storage,
 	client *eth.Client,
 	cfg *config.RollupConfig,
 	batchType batchtype.BatchType,
-) (*Context, error) {
+) *Context {
 	tx, txStorage := storage.BeginTransaction(st.TxOptions{})
-
-	return newContext(txStorage, tx, client, cfg, batchType), nil
+	return newContext(txStorage, tx, client, cfg, batchType)
 }
 
 func NewTestContext(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig, batchType batchtype.BatchType) *Context {
