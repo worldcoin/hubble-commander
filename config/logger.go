@@ -11,14 +11,14 @@ import (
 func GetCommanderConfigAndSetupLogger() *Config {
 	cfg := GetConfig()
 	setupCommanderLogger(cfg)
-	logCommanderConfig(cfg)
+	logConfig(cfg)
 	return cfg
 }
 
 func GetDeployerConfigAndSetupLogger() *DeployerConfig {
 	cfg := GetDeployerConfig()
 	setupDeployerLogger()
-	logDeployerConfig(cfg)
+	logConfig(cfg)
 	return cfg
 }
 
@@ -35,15 +35,7 @@ func setupDeployerLogger() {
 	log.SetLevel(log.DebugLevel)
 }
 
-func logCommanderConfig(cfg *Config) {
-	jsonCfg, err := json.Marshal(cfg)
-	if err != nil {
-		log.Fatalf("%+v", errors.WithStack(err))
-	}
-	log.Debugf("Loaded config: %s", string(jsonCfg))
-}
-
-func logDeployerConfig(cfg *DeployerConfig) {
+func logConfig(cfg interface{}) {
 	jsonCfg, err := json.Marshal(cfg)
 	if err != nil {
 		log.Fatalf("%+v", errors.WithStack(err))
