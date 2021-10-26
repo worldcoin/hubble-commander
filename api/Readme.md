@@ -5,12 +5,13 @@
 - `20XXX` - Commitment Errors
 - `30XXX` - Batch Errors
 - `40XXX` - Badger Errors
+- `50XXX` - Proof Errors
 - `99XXX` - Uncategorized Errors like NetworkInfo, BLS, UserStates etc.
 
 ## API Errors
 
 |  Error code  |                                Message                              |
-| -------------| ------------------------------------------------------------------- |
+| ------------ | ------------------------------------------------------------------- |
 | `999`        | `unknown error: COMMANDER_ERROR`                                    |
 | `10000`      | `transaction not found`                                             |
 | `10001`      | `transactions not found`                                            |
@@ -29,6 +30,10 @@
 | `30001`      | `batches not found`                                                 |
 | `40000`      | `an error occurred while saving data to the Badger database`        |
 | `40001`      | `an error occurred while iterating over Badger database`            |
+| `50000`      | `proof endpoints disabled`                                          |
+| `50001`      | `commitment proof not found`                                        |
+| `50002`      | `public key proof not found`                                        |
+| `50003`      | `user state proof not found`                                        |
 | `99000`      | `an error occurred while fetching the account count`                |
 | `99001`      | `public key not found`                                              |
 | `99002`      | `user state not found`                                              |
