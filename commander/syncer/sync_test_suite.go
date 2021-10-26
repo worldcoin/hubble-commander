@@ -140,7 +140,7 @@ func (s *syncTestSuite) submitBatch(tx models.GenericTransaction) *models.Batch 
 	err := s.rollupCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 	return pendingBatch
 }
 

@@ -96,7 +96,7 @@ func (s *SubmitBatchTestSuite) TestSubmitTransfersBatch_SubmitsBatchWithoutWaiti
 	s.NoError(err)
 	s.Len(batches, 0)
 
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 
 	batches, err = s.client.GetAllBatches()
 	s.NoError(err)
@@ -115,7 +115,7 @@ func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatch_SubmitsBatchWitho
 	s.NoError(err)
 	s.Len(batches, 0)
 
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 
 	batches, err = s.client.GetAllBatches()
 	s.NoError(err)

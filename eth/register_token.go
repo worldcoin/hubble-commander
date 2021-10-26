@@ -23,7 +23,7 @@ func (c *Client) RequestRegisterTokenAndWait(tokenContract common.Address) error
 }
 
 func (c *Client) RequestRegisterToken(tokenContract common.Address) (*types.Transaction, error) {
-	tx, err := c.TokenRegistry.RequestRegistration(c.Blockchain.GetAccount(), tokenContract)
+	tx, err := c.tokenRegistry().RequestRegistration(tokenContract)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -44,7 +44,7 @@ func (c *Client) FinalizeRegisterTokenAndWait(tokenContract common.Address) (*mo
 }
 
 func (c *Client) FinalizeRegisterToken(tokenContract common.Address) (*types.Transaction, error) {
-	tx, err := c.TokenRegistry.FinaliseRegistration(c.Blockchain.GetAccount(), tokenContract)
+	tx, err := c.tokenRegistry().FinaliseRegistration(tokenContract)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

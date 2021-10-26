@@ -25,12 +25,8 @@ func TestStartApiServer(t *testing.T) {
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
 
-	client, err := eth.NewTestClient()
-	require.NoError(t, err)
-	defer client.Close()
-
 	cfg := config.APIConfig{Version: "v0123"}
-	server, err := getAPIServer(&cfg, nil, client.Client, false)
+	server, err := getAPIServer(&cfg, nil, eth.DomainOnlyTestClient, false)
 	require.NoError(t, err)
 
 	w := httptest.NewRecorder()
