@@ -10,10 +10,6 @@ var (
 )
 
 func (c *RollupContext) SubmitBatch(batch *models.Batch, commitments []models.TxCommitment) error {
-	if len(commitments) < int(c.cfg.MinCommitmentsPerBatch) {
-		return ErrNotEnoughCommitments
-	}
-
 	select {
 	case <-c.ctx.Done():
 		return ErrNoLongerProposer

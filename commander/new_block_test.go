@@ -179,7 +179,7 @@ func (s *NewBlockLoopTestSuite) submitTransferBatchInTransaction(tx *models.Tran
 		s.NoError(err)
 		err = rollupCtx.SubmitBatch(batch, commitments)
 		s.NoError(err)
-		s.testClient.Commit()
+		s.testClient.GetBackend().Commit()
 	})
 }
 

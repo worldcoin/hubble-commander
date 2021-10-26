@@ -43,6 +43,10 @@ func (m *MockReceiptProvider) TransactionReceipt(ctx context.Context, txHash com
 	return args.Get(0).(*types.Receipt), args.Error(1)
 }
 
+func (m *MockReceiptProvider) Commit() {
+	// NOOP
+}
+
 func (s *WaitToBeMinedTestSuite) TestWaitToBeMined_CallsTransactionReceiptImmediately() {
 	var callTime time.Time
 
