@@ -127,26 +127,6 @@ func (d *Database) Prune() error {
 	return d.store.Badger().DropAll()
 }
 
-func (d *Database) ExecuteInTransaction(update bool, fn func(txStorage *Database) error) error {
-	err := d.unsafeExecuteInTransaction(update, fn)
-	if err == badger.ErrConflict {
-		return d.ExecuteInTransaction(update, fn)
-	}
-	return err
-}
-
-func (d *Database) unsafeExecuteInTransaction(update bool, fn func(txStorage *Database) error) (err error) {
-	txController, txDatabase := d.BeginTransaction(update)
-	defer txController.Rollback(&err)
-
-	err = fn(txDatabase)
-	if err != nil {
-		return err
-	}
-
-	return txController.Commit()
-}
-
 func PruneDatabase(cfg *config.BadgerConfig) error {
 	database, err := NewDatabase(cfg)
 	if err != nil {
