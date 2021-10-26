@@ -55,8 +55,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	})
 	s.NoError(err)
 
-	tx, txStorage, err := s.storage.BeginTransaction(TxOptions{})
-	s.NoError(err)
+	tx, txStorage := s.storage.BeginTransaction(TxOptions{})
 	_, err = txStorage.StateTree.Set(leaf.StateID, &leaf.UserState)
 	s.NoError(err)
 	err = txStorage.AddBatch(s.batch)
@@ -94,9 +93,8 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 		},
 	}
 
-	tx, txStorage, err := s.storage.BeginTransaction(TxOptions{})
-	s.NoError(err)
-	_, err = txStorage.StateTree.Set(leaf.StateID, &leaf.UserState)
+	tx, txStorage := s.storage.BeginTransaction(TxOptions{})
+	_, err := txStorage.StateTree.Set(leaf.StateID, &leaf.UserState)
 	s.NoError(err)
 	err = txStorage.AddBatch(s.batch)
 	s.NoError(err)
@@ -130,14 +128,12 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 	})
 	s.NoError(err)
 
-	tx, txStorage, err := s.storage.BeginTransaction(TxOptions{})
-	s.NoError(err)
+	tx, txStorage := s.storage.BeginTransaction(TxOptions{})
 
 	_, err = txStorage.StateTree.Set(leafOne.StateID, &leafOne.UserState)
 	s.NoError(err)
 
-	nestedTx, nestedStorage, err := txStorage.BeginTransaction(TxOptions{})
-	s.NoError(err)
+	nestedTx, nestedStorage := txStorage.BeginTransaction(TxOptions{})
 
 	_, err = nestedStorage.StateTree.Set(leafTwo.StateID, &leafTwo.UserState)
 	s.NoError(err)

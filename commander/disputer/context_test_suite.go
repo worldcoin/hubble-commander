@@ -69,8 +69,7 @@ func (s *testSuiteWithContexts) newContexts(
 }
 
 func (s *testSuiteWithContexts) beginTransaction() {
-	txController, txStorage, err := s.storage.BeginTransaction(st.TxOptions{})
-	s.NoError(err)
+	txController, txStorage := s.storage.BeginTransaction(st.TxOptions{})
 	s.txController = txController
 	s.newContexts(txStorage, s.client.Client, s.cfg, s.rollupCtx.BatchType)
 }

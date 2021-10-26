@@ -93,12 +93,10 @@ func (s *Storage) copyWithNewDatabase(database *Database) *Storage {
 	}
 }
 
-func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, error) {
+func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage) {
 	txController, txDatabase := s.database.BeginTransaction(opts)
 
-	txStorage := s.copyWithNewDatabase(txDatabase)
-
-	return txController, txStorage, nil
+	return txController, s.copyWithNewDatabase(txDatabase)
 }
 
 func (s *Storage) Close() error {
@@ -113,11 +111,8 @@ func (s *Storage) ExecuteInTransaction(opts TxOptions, fn func(txStorage *Storag
 	return err
 }
 
-func (s *Storage) unsafeExecuteInTransaction(opts TxOptions, fn func(txStorage *Storage) error) error {
-	txController, txStorage, err := s.BeginTransaction(opts)
-	if err != nil {
-		return err
-	}
+func (s *Storage) unsafeExecuteInTransaction(opts TxOptions, fn func(txStorage *Storage) error) (err error) {
+	txController, txStorage := s.BeginTransaction(opts)
 	defer txController.Rollback(&err)
 
 	err = fn(txStorage)
