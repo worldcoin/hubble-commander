@@ -98,12 +98,12 @@ func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage) 
 	return txController, s.copyWithNewDatabase(txDatabase)
 }
 
-func (s *Storage) Close() error {
-	return s.database.Close()
-}
-
 func (s *Storage) ExecuteInTransaction(opts TxOptions, fn func(txStorage *Storage) error) error {
 	return s.database.ExecuteInTransaction(opts, func(txDatabase *Database) error {
 		return fn(s.copyWithNewDatabase(txDatabase))
 	})
+}
+
+func (s *Storage) Close() error {
+	return s.database.Close()
 }

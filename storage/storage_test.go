@@ -157,6 +157,36 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 	s.Equal(leafTwo, res)
 }
 
+func (s *StorageTestSuite) TestExecuteInTransaction_RepliesTransactionOnConflict() {
+	secondBatch := *s.batch
+	secondBatch.ID = models.MakeUint256(2)
+
+	err := s.storage.AddBatch(s.batch)
+	s.NoError(err)
+
+	txCounter := 0
+	err = s.storage.ExecuteInTransaction(TxOptions{}, func(txStorage *Storage) error {
+		if txCounter == 0 {
+			err = s.storage.DeleteBatches(s.batch.ID)
+			s.NoError(err)
+		}
+
+		err = txStorage.AddBatch(&secondBatch)
+		s.NoError(err)
+		if err != nil {
+			return err
+		}
+		txCounter++
+		return nil
+	})
+	s.NoError(err)
+	s.Equal(2, txCounter)
+
+	batch, err := s.storage.GetBatch(secondBatch.ID)
+	s.NoError(err)
+	s.Equal(secondBatch, *batch)
+}
+
 func TestStorageTestSuite(t *testing.T) {
 	suite.Run(t, new(StorageTestSuite))
 }
