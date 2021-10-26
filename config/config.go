@@ -123,7 +123,7 @@ func GetDeployerConfig() *DeployerConfig {
 	return &DeployerConfig{
 		Bootstrap: &DeployerBootstrapConfig{
 			BlocksToFinalise: getUint32("bootstrap.blocks_to_finalise", DefaultBlocksToFinalise), // nolint:misspell
-			GenesisAccounts:  getGenesisAccounts("bootstrap.genesis_path"),
+			GenesisAccounts:  getGenesisAccounts(),
 		},
 		Ethereum: getEthereumConfig(),
 	}
@@ -137,8 +137,8 @@ func getDeployerConfigPath() string {
 	return path.Join(utils.GetProjectRoot(), "deployer-config.yaml")
 }
 
-func getGenesisAccounts(key string) []models.GenesisAccount {
-	filename := getString(key, getGenesisPath())
+func getGenesisAccounts() []models.GenesisAccount {
+	filename := getString("bootstrap.genesis_path", getGenesisPath())
 	return readGenesisAccounts(filename)
 }
 
