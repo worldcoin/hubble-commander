@@ -1,11 +1,13 @@
 package eth
 
 import (
+	"context"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
@@ -94,7 +96,25 @@ func (c *Client) waitForDispute(batchID *models.Uint256, batchHash *common.Hash,
 	if err != nil {
 		return err
 	}
+	err = c.getDisputeFailMessage(tx, receipt)
+	if err != nil {
+		return err
+	}
 	return errors.Errorf("dispute of batch #%d failed", batchID.Uint64())
+}
+
+func (c *Client) getDisputeFailMessage(tx *types.Transaction, txReceipt *types.Receipt) error {
+	callMsg := ethereum.CallMsg{
+		From:     c.Blockchain.GetAccount().From,
+		To:       tx.To(),
+		Gas:      tx.Gas(),
+		GasPrice: tx.GasPrice(),
+		Value:    tx.Value(),
+		Data:     tx.Data(),
+	}
+
+	_, err := c.Blockchain.GetBackend().CallContract(context.Background(), callMsg, txReceipt.BlockNumber)
+	return err
 }
 
 func (c *Client) isBatchAlreadyDisputed(batchID *models.Uint256, batchHash *common.Hash) error {
