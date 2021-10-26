@@ -36,7 +36,7 @@ func DeployFrontend(c chain.Connection) (*FrontendContracts, error) {
 		return nil, err
 	}
 
-	c.Commit()
+	c.GetBackend().Commit()
 
 	return &FrontendContracts{
 		FrontendGeneric:         genericContract,
