@@ -36,26 +36,9 @@ func (s *TransactionStorage) BeginTransaction(opts TxOptions) (*db.TxController,
 }
 
 func (s *TransactionStorage) executeInTransaction(opts TxOptions, fn func(txStorage *TransactionStorage) error) error {
-	err := s.unsafeExecuteInTransaction(opts, fn)
-	if err == bdg.ErrConflict {
-		return s.executeInTransaction(opts, fn)
-	}
-	return err
-}
-
-func (s *TransactionStorage) unsafeExecuteInTransaction(opts TxOptions, fn func(txStorage *TransactionStorage) error) error {
-	txController, txStorage, err := s.BeginTransaction(opts)
-	if err != nil {
-		return err
-	}
-	defer txController.Rollback(&err)
-
-	err = fn(txStorage)
-	if err != nil {
-		return err
-	}
-
-	return txController.Commit()
+	return s.database.ExecuteInTransaction(opts, func(txDatabase *Database) error {
+		return fn(s.copyWithNewDatabase(txDatabase))
+	})
 }
 
 func (s *TransactionStorage) addStoredTxReceipt(txReceipt *models.StoredTxReceipt) error {

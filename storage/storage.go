@@ -4,7 +4,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/utils"
-	bdg "github.com/dgraph-io/badger/v3"
 )
 
 type Storage struct {
@@ -104,21 +103,7 @@ func (s *Storage) Close() error {
 }
 
 func (s *Storage) ExecuteInTransaction(opts TxOptions, fn func(txStorage *Storage) error) error {
-	err := s.unsafeExecuteInTransaction(opts, fn)
-	if err == bdg.ErrConflict {
-		return s.ExecuteInTransaction(opts, fn)
-	}
-	return err
-}
-
-func (s *Storage) unsafeExecuteInTransaction(opts TxOptions, fn func(txStorage *Storage) error) (err error) {
-	txController, txStorage := s.BeginTransaction(opts)
-	defer txController.Rollback(&err)
-
-	err = fn(txStorage)
-	if err != nil {
-		return err
-	}
-
-	return txController.Commit()
+	return s.database.ExecuteInTransaction(opts, func(txDatabase *Database) error {
+		return fn(s.copyWithNewDatabase(txDatabase))
+	})
 }
