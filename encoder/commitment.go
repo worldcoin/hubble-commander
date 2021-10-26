@@ -33,7 +33,7 @@ func (c *DecodedCommitment) LeafHash(accountRoot common.Hash) common.Hash {
 	return utils.HashTwo(c.StateRoot, c.BodyHash(accountRoot))
 }
 
-func CommitmentToCalldataFields(commitments []models.Commitment) (
+func CommitmentToCalldataFields(commitments []models.TxCommitment) (
 	stateRoots [][32]byte,
 	signatures [][2]*big.Int,
 	feeReceivers []*big.Int,

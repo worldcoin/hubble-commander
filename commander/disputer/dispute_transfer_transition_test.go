@@ -149,18 +149,18 @@ func (s *DisputeTransferTransitionTestSuite) submitInvalidBatch(txs [][]models.T
 	err = s.rollupCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 	return pendingBatch
 }
 
 func (s *DisputeTransferTransitionTestSuite) createInvalidCommitments(
 	commitmentTxs [][]models.Transfer,
 	invalidTxHash common.Hash,
-) []models.Commitment {
+) []models.TxCommitment {
 	commitmentID, err := s.rollupCtx.NextCommitmentID()
 	s.NoError(err)
 
-	commitments := make([]models.Commitment, 0, len(commitmentTxs))
+	commitments := make([]models.TxCommitment, 0, len(commitmentTxs))
 	for i := range commitmentTxs {
 		commitmentID.IndexInBatch = uint8(i)
 		txs := commitmentTxs[i]

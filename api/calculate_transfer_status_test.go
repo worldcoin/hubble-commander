@@ -16,12 +16,14 @@ import (
 )
 
 var (
-	commitment = models.Commitment{
-		Type:              batchtype.Transfer,
+	commitment = models.TxCommitment{
+		CommitmentBase: models.CommitmentBase{
+			Type:          batchtype.Transfer,
+			PostStateRoot: utils.RandomHash(),
+		},
 		Transactions:      utils.RandomBytes(24),
 		FeeReceiver:       1,
 		CombinedSignature: models.MakeRandomSignature(),
-		PostStateRoot:     utils.RandomHash(),
 	}
 )
 
@@ -132,7 +134,7 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_Fin
 		BatchID: batch.ID,
 	}
 
-	s.sim.Commit()
+	s.sim.GetBackend().Commit()
 	latestBlockNumber, err := s.sim.GetLatestBlockNumber()
 	s.NoError(err)
 

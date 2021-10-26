@@ -1,3 +1,4 @@
+//go:build e2e
 // +build e2e
 
 package e2e
@@ -28,7 +29,7 @@ func TestMeasureDisputeGasUsage(t *testing.T) {
 		require.NoError(t, cmd.Stop())
 	}()
 
-	domain := getDomain(t, cmd.Client())
+	domain := GetDomain(t, cmd.Client())
 	wallets, err := setup.CreateWallets(domain)
 	require.NoError(t, err)
 
@@ -139,13 +140,15 @@ func send32TransfersBatchWithInvalidSignature(t *testing.T, ethClient *eth.Clien
 	require.NoError(t, err)
 	postStateRoot := common.Hash{45, 76, 35, 230, 155, 178, 7, 67, 241, 86, 195, 114, 225, 244, 169, 166, 182, 213, 46, 60, 106, 107, 252, 125, 107, 78, 157, 106, 126, 38, 160, 137}
 
-	commitment := models.Commitment{
+	commitment := models.TxCommitment{
+		CommitmentBase: models.CommitmentBase{
+			PostStateRoot: postStateRoot,
+		},
 		Transactions:      bytes.Repeat(encodedTransfer, 32),
 		FeeReceiver:       0,
 		CombinedSignature: models.Signature{},
-		PostStateRoot:     postStateRoot,
 	}
-	submitTransfersBatch(t, ethClient, []models.Commitment{commitment}, 1)
+	submitTransfersBatch(t, ethClient, []models.TxCommitment{commitment}, 1)
 }
 
 func send32C2TBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, wallets []bls.Wallet) {
@@ -163,13 +166,15 @@ func send32C2TBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, wal
 
 	postStateRoot := common.Hash{9, 165, 135, 45, 162, 158, 64, 129, 26, 232, 17, 209, 169, 198, 175, 189, 42, 40, 119, 15, 11, 78, 238, 158, 35, 163, 205, 164, 23, 120, 249, 253}
 
-	commitment := models.Commitment{
+	commitment := models.TxCommitment{
+		CommitmentBase: models.CommitmentBase{
+			PostStateRoot: postStateRoot,
+		},
 		Transactions:      encodedTransfers,
 		FeeReceiver:       0,
 		CombinedSignature: models.Signature{},
-		PostStateRoot:     postStateRoot,
 	}
-	submitC2TBatch(t, ethClient, []models.Commitment{commitment}, 1)
+	submitC2TBatch(t, ethClient, []models.TxCommitment{commitment}, 1)
 }
 
 func encodeCreate2Transfers(t *testing.T, transfer *models.Create2Transfer, registeredPubKeyIDs []uint32, startStateID uint32) []byte {
@@ -185,10 +190,6 @@ func encodeCreate2Transfers(t *testing.T, transfer *models.Create2Transfer, regi
 }
 
 func register32Accounts(t *testing.T, ethClient *eth.Client, wallets []bls.Wallet) []uint32 {
-	registrations, unsubscribe, err := ethClient.WatchBatchAccountRegistrations(&bind.WatchOpts{})
-	require.NoError(t, err)
-	defer unsubscribe()
-
 	publicKeyBatch := make([]models.PublicKey, 16)
 	registeredPubKeyIDs := make([]uint32, 0, 32)
 	walletIndex := len(wallets) - 32
@@ -197,7 +198,7 @@ func register32Accounts(t *testing.T, ethClient *eth.Client, wallets []bls.Walle
 			publicKeyBatch[j] = *wallets[walletIndex].PublicKey()
 			walletIndex++
 		}
-		pubKeyIDs, err := ethClient.RegisterBatchAccountAndWait(publicKeyBatch, registrations)
+		pubKeyIDs, err := ethClient.RegisterBatchAccountAndWait(publicKeyBatch)
 		require.NoError(t, err)
 		registeredPubKeyIDs = append(registeredPubKeyIDs, pubKeyIDs...)
 	}

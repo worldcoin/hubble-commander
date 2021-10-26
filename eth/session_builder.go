@@ -4,7 +4,9 @@ import (
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
+	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
+	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 )
 
 type rollupSessionBuilder struct {
@@ -45,6 +47,48 @@ func (b *accountRegistrySessionBuilder) WithValue(value big.Int) *accountRegistr
 }
 
 func (b *accountRegistrySessionBuilder) WithGasLimit(gasLimit uint64) *accountRegistrySessionBuilder {
+	b.TransactOpts.GasLimit = gasLimit
+	return b
+}
+
+type depositManagerSessionBuilder struct {
+	depositmanager.DepositManagerSession
+}
+
+func (c *Client) depositManager() *depositManagerSessionBuilder {
+	return &depositManagerSessionBuilder{depositmanager.DepositManagerSession{
+		Contract:     c.DepositManager,
+		TransactOpts: *c.Blockchain.GetAccount(),
+	}}
+}
+
+func (b *depositManagerSessionBuilder) WithValue(value big.Int) *depositManagerSessionBuilder {
+	b.TransactOpts.Value = &value
+	return b
+}
+
+func (b *depositManagerSessionBuilder) WithGasLimit(gasLimit uint64) *depositManagerSessionBuilder {
+	b.TransactOpts.GasLimit = gasLimit
+	return b
+}
+
+type tokenRegistrySessionBuilder struct {
+	tokenregistry.TokenRegistrySession
+}
+
+func (c *Client) tokenRegistry() *tokenRegistrySessionBuilder {
+	return &tokenRegistrySessionBuilder{tokenregistry.TokenRegistrySession{
+		Contract:     c.TokenRegistry,
+		TransactOpts: *c.Blockchain.GetAccount(),
+	}}
+}
+
+func (b *tokenRegistrySessionBuilder) WithValue(value big.Int) *tokenRegistrySessionBuilder {
+	b.TransactOpts.Value = &value
+	return b
+}
+
+func (b *tokenRegistrySessionBuilder) WithGasLimit(gasLimit uint64) *tokenRegistrySessionBuilder {
 	b.TransactOpts.GasLimit = gasLimit
 	return b
 }

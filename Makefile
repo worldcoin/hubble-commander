@@ -50,28 +50,23 @@ test:
 test-hardhat:
 	go test -v -tags hardhat ./bls/hardhat
 
-test-e2e: clean-testcache
-	mkdir -p "e2e-data"
-	go test -v -tags e2e ./e2e
-	rm -r "e2e-data"
-
 test-e2e-in-process: clean-testcache
 	HUBBLE_E2E=in-process go test -v -tags e2e ./e2e
 
 test-e2e-locally: clean-testcache
 	HUBBLE_E2E=local go test -v -tags e2e -run=^$(TEST)$$ ./e2e
 
-bench-e2e: clean-testcache
-	HUBBLE_E2E=local go test -v -tags e2e -run TestBenchmarkSuite ./e2e
+bench-e2e-in-process: clean-testcache
+	HUBBLE_E2E=in-process go test -v -tags e2e ./e2e/bench
+
+bench-e2e-locally: clean-testcache
+	HUBBLE_E2E=in-process go test -v -tags e2e -run=^$(TEST)$$ ./e2e/bench
 
 bench-creation-profile: clean-testcache
-	HUBBLE_E2E=in-process go test -cpuprofile creation.prof -v -tags e2e -run TestBenchmarkSuite/TestBenchCommander ./e2e
+	HUBBLE_E2E=in-process go test -cpuprofile creation.prof -v -tags e2e -run TestBenchmarkSuite/TestBenchMixedCommander ./e2e/bench
 
 bench-sync-profile: clean-testcache
-	HUBBLE_E2E=in-process go test -cpuprofile sync.prof -v -tags e2e -run TestBenchmarkSuite/TestBenchSyncCommander ./e2e
-
-measure-dispute-gas: clean-testcache
-	HUBBLE_E2E=in-process go test -v -tags e2e -run TestMeasureDisputeGasUsage ./e2e
+	HUBBLE_E2E=in-process go test -cpuprofile sync.prof -v -tags e2e -run TestBenchmarkSuite/TestBenchSyncCommander ./e2e/bench
 
 .PHONY:
 	install
@@ -90,10 +85,9 @@ measure-dispute-gas: clean-testcache
 	lint
 	test
 	test-hardhat
-	test-e2e
 	test-e2e-in-process
 	test-e2e-locally
-	bench-e2e
+	bench-e2e-in-process
+	bench-e2e-locally
 	bench-creation-profile
 	bench-sync-profile
-	measure-dispute-gas

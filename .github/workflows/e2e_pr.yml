@@ -4,14 +4,15 @@ on:
     branches-ignore:
       - master
 
+env:
+  HUBBLE_ETHEREUM_RPC_URL: ws://localhost:8546
+  HUBBLE_ETHEREUM_CHAIN_ID: 1337
+  HUBBLE_ETHEREUM_PRIVATE_KEY: ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
+
 jobs:
-  e2e:
-    name: Run E2E test
+  e2e-tests:
+    name: Run E2E tests
     runs-on: ubuntu-20.04
-    env:
-      HUBBLE_ETHEREUM_RPC_URL: ws://localhost:8546
-      HUBBLE_ETHEREUM_CHAIN_ID: 1337
-      HUBBLE_ETHEREUM_PRIVATE_KEY: ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
     steps:
       - name: Setup Go
         uses: actions/setup-go@v2
@@ -19,7 +20,39 @@ jobs:
           go-version: 1.16
       - name: Checkout code
         uses: actions/checkout@v2
+      - name: Restore cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
       - name: Run E2E tests
         run: |
-          make setup-geth &
+          make setup-geth > /dev/null &
           make test-e2e-in-process
+  e2e-benchmarks:
+    name: Run E2E benchmarks
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Restore cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Run E2E tests
+        run: |
+          make setup-geth > /dev/null &
+          make bench-e2e-in-process

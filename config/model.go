@@ -50,6 +50,7 @@ type RollupConfig struct {
 	MaxTxsPerCommitment              uint32
 	MinCommitmentsPerBatch           uint32
 	MaxCommitmentsPerBatch           uint32
+	MaxDepositSubTreeDepth           uint32
 	TransitionDisputeGasLimit        uint64
 	SignatureDisputeGasLimit         uint64
 	BatchAccountRegistrationGasLimit uint64
@@ -58,8 +59,9 @@ type RollupConfig struct {
 }
 
 type APIConfig struct {
-	Version string
-	Port    string
+	Version              string
+	Port                 string
+	EnableProofEndpoints bool
 }
 
 type BadgerConfig struct {

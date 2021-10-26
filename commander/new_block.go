@@ -169,6 +169,11 @@ func (c *Commander) syncRange(startBlock, endBlock uint64) error {
 		return errors.WithStack(err)
 	}
 
+	err = c.syncDeposits(startBlock, endBlock)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	err = c.syncBatches(startBlock, endBlock)
 	if err != nil {
 		return errors.WithStack(err)

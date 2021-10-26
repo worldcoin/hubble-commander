@@ -7,7 +7,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -92,16 +91,12 @@ func (s *AccountsTestSuite) registerSingleAccount() models.AccountLeaf {
 }
 
 func (s *AccountsTestSuite) registerBatchAccount() []models.AccountLeaf {
-	registrations, unsubscribe, err := s.testClient.WatchBatchAccountRegistrations(&bind.WatchOpts{})
-	s.NoError(err)
-	defer unsubscribe()
-
 	publicKeys := make([]models.PublicKey, st.AccountBatchSize)
 	for i := range publicKeys {
 		publicKeys[i] = models.PublicKey{1, 1, byte(i)}
 	}
 
-	pubKeyIDs, err := s.testClient.RegisterBatchAccountAndWait(publicKeys, registrations)
+	pubKeyIDs, err := s.testClient.RegisterBatchAccountAndWait(publicKeys)
 	s.NoError(err)
 
 	accounts := make([]models.AccountLeaf, st.AccountBatchSize)

@@ -9,11 +9,7 @@ var (
 	ErrNoLongerProposer     = NewLoggableRollupError("commander is no longer an active proposer")
 )
 
-func (c *RollupContext) SubmitBatch(batch *models.Batch, commitments []models.Commitment) error {
-	if len(commitments) < int(c.cfg.MinCommitmentsPerBatch) {
-		return ErrNotEnoughCommitments
-	}
-
+func (c *RollupContext) SubmitBatch(batch *models.Batch, commitments []models.TxCommitment) error {
 	select {
 	case <-c.ctx.Done():
 		return ErrNoLongerProposer
@@ -34,9 +30,9 @@ func (c *RollupContext) SubmitBatch(batch *models.Batch, commitments []models.Co
 	return c.addCommitments(commitments)
 }
 
-func (c *RollupContext) addCommitments(commitments []models.Commitment) error {
+func (c *RollupContext) addCommitments(commitments []models.TxCommitment) error {
 	for i := range commitments {
-		err := c.storage.AddCommitment(&commitments[i])
+		err := c.storage.AddTxCommitment(&commitments[i])
 		if err != nil {
 			return err
 		}

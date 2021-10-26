@@ -92,11 +92,11 @@ func (s *testSuiteWithContexts) submitBatch(tx models.GenericTransaction) *model
 	err := s.rollupCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 	return pendingBatch
 }
 
-func (s *testSuiteWithContexts) createBatch(tx models.GenericTransaction) (*models.Batch, []models.Commitment) {
+func (s *testSuiteWithContexts) createBatch(tx models.GenericTransaction) (*models.Batch, []models.TxCommitment) {
 	if tx.Type() == txtype.Transfer {
 		err := s.disputeCtx.storage.AddTransfer(tx.ToTransfer())
 		s.NoError(err)

@@ -64,7 +64,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() {
 
 	err := s.rollupCtx.SubmitBatch(batch, commitments)
 	s.NoError(err)
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 
 	s.recreateDatabase()
 
@@ -133,7 +133,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, s.wallets[0].PublicKey())
 	s.setTxHashAndSign(&tx)
 	batch := s.submitBatch(&tx)
-	expectedCommitment, err := s.storage.GetCommitment(&models.CommitmentID{
+	expectedCommitment, err := s.storage.GetTxCommitment(&models.CommitmentID{
 		BatchID:      batch.ID,
 		IndexInBatch: 0,
 	})
@@ -157,7 +157,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 	s.Len(batches, 1)
 	s.Equal(treeRoot, *batches[0].AccountTreeRoot)
 
-	commitment, err := s.storage.GetCommitment(&expectedCommitment.ID)
+	commitment, err := s.storage.GetTxCommitment(&expectedCommitment.ID)
 	s.NoError(err)
 	s.Equal(*expectedCommitment, *commitment)
 
@@ -172,7 +172,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 func (s *SyncC2TBatchTestSuite) TestSyncBatch_CommitmentWithoutTxs() {
 	commitment := s.createCommitmentWithEmptyTransactions(batchtype.Create2Transfer)
 
-	_, err := s.client.SubmitCreate2TransfersBatchAndWait([]models.Commitment{commitment})
+	_, err := s.client.SubmitCreate2TransfersBatchAndWait([]models.TxCommitment{commitment})
 	s.NoError(err)
 
 	remoteBatches, err := s.client.GetAllBatches()
@@ -183,7 +183,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_CommitmentWithoutTxs() {
 	s.NoError(err)
 }
 
-func (s *SyncC2TBatchTestSuite) submitInvalidBatch(tx *models.Create2Transfer) models.Commitment {
+func (s *SyncC2TBatchTestSuite) submitInvalidBatch(tx *models.Create2Transfer) models.TxCommitment {
 	pendingBatch, commitments := s.createBatch(tx)
 
 	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)
@@ -191,7 +191,7 @@ func (s *SyncC2TBatchTestSuite) submitInvalidBatch(tx *models.Create2Transfer) m
 	err := s.rollupCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 	return commitments[0]
 }
 

@@ -21,7 +21,7 @@ type GetBatchTestSuite struct {
 	api                 *API
 	storage             *st.TestStorage
 	testClient          *eth.TestClient
-	commitment          models.Commitment
+	commitment          models.TxCommitment
 	batch               models.Batch
 	batchNotFoundAPIErr *APIError
 }
@@ -68,7 +68,7 @@ func (s *GetBatchTestSuite) TestGetBatchByHash() {
 	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
-	err = s.storage.AddCommitment(&s.commitment)
+	err = s.storage.AddTxCommitment(&s.commitment)
 	s.NoError(err)
 
 	result, err := s.api.GetBatchByHash(*s.batch.Hash)
@@ -114,7 +114,7 @@ func (s *GetBatchTestSuite) TestGetBatchByID() {
 	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
-	err = s.storage.AddCommitment(&s.commitment)
+	err = s.storage.AddTxCommitment(&s.commitment)
 	s.NoError(err)
 
 	result, err := s.api.GetBatchByID(s.batch.ID)

@@ -108,10 +108,10 @@ func (s *Storage) Close() error {
 	return s.database.Close()
 }
 
-func (s *Storage) executeInTransaction(opts TxOptions, fn func(txStorage *Storage) error) error {
+func (s *Storage) ExecuteInTransaction(opts TxOptions, fn func(txStorage *Storage) error) error {
 	err := s.unsafeExecuteInTransaction(opts, fn)
 	if err == bdg.ErrConflict {
-		return s.executeInTransaction(opts, fn)
+		return s.ExecuteInTransaction(opts, fn)
 	}
 	return err
 }
