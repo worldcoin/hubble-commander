@@ -19,13 +19,6 @@ func (s *SubmitTransferBatchTestSuite) SetupTest() {
 	s.setupUser()
 }
 
-func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_ErrorsIfNotEnoughCommitments() {
-	pendingBatch, err := s.rollupCtx.NewPendingBatch(batchtype.Transfer)
-	s.NoError(err)
-	err = s.rollupCtx.SubmitBatch(pendingBatch, []models.TxCommitment{})
-	s.Equal(ErrNotEnoughCommitments, err)
-}
-
 func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_SubmitsCommitmentsOnChain() {
 	nextBatchID, err := s.client.Rollup.NextBatchID(nil)
 	s.NoError(err)
