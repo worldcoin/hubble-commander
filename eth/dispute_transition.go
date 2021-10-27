@@ -98,7 +98,7 @@ func (c *Client) waitForDispute(batchID *models.Uint256, batchHash *common.Hash,
 	}
 	err = c.getDisputeFailMessage(tx, receipt)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	return errors.Errorf("dispute of batch #%d failed", batchID.Uint64())
 }
