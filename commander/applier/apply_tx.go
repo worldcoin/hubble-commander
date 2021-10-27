@@ -8,16 +8,12 @@ import (
 )
 
 var (
-	ErrNonceTooLow         = fmt.Errorf("nonce too low")
-	ErrNonceTooHigh        = fmt.Errorf("nonce too high")
-	ErrInvalidSlicesLength = fmt.Errorf("invalid slices length")
-	ErrNilReceiverStateID  = fmt.Errorf("transfer receiver state id cannot be nil")
-
-	ErrBalanceTooLow              = fmt.Errorf("not enough balance")
-	ErrInvalidSenderTokenID       = fmt.Errorf("invalid sender token ID")
-	ErrInvalidReceiverTokenID     = fmt.Errorf("invalid receiver token ID")
-	ErrInvalidTokenAmount         = fmt.Errorf("amount cannot be equal to 0")
-	ErrInvalidCommitmentStateRoot = fmt.Errorf("invalid commitment post state root")
+	ErrNonceTooLow            = fmt.Errorf("nonce too low")
+	ErrNonceTooHigh           = fmt.Errorf("nonce too high")
+	ErrBalanceTooLow          = fmt.Errorf("not enough balance")
+	ErrInvalidSenderTokenID   = fmt.Errorf("invalid sender token ID")
+	ErrInvalidReceiverTokenID = fmt.Errorf("invalid receiver token ID")
+	ErrInvalidTokenAmount     = fmt.Errorf("amount cannot be equal to 0")
 )
 
 func (a *Applier) ApplyTx(

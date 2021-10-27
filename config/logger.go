@@ -8,14 +8,21 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func GetConfigAndSetupLogger() *Config {
+func GetCommanderConfigAndSetupLogger() *Config {
 	cfg := GetConfig()
-	setupLogger(cfg)
+	setupCommanderLogger(cfg)
 	logConfig(cfg)
 	return cfg
 }
 
-func setupLogger(cfg *Config) {
+func GetDeployerConfigAndSetupLogger() *DeployerConfig {
+	cfg := GetDeployerConfig()
+	setupDeployerLogger()
+	logConfig(cfg)
+	return cfg
+}
+
+func setupCommanderLogger(cfg *Config) {
 	if cfg.Log.Format == LogFormatJSON {
 		log.SetFormatter(&log.JSONFormatter{})
 	}
@@ -23,7 +30,12 @@ func setupLogger(cfg *Config) {
 	log.SetLevel(cfg.Log.Level)
 }
 
-func logConfig(cfg *Config) {
+func setupDeployerLogger() {
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.DebugLevel)
+}
+
+func logConfig(cfg interface{}) {
 	jsonCfg, err := json.Marshal(cfg)
 	if err != nil {
 		log.Fatalf("%+v", errors.WithStack(err))
