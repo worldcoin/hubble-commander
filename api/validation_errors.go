@@ -4,12 +4,11 @@ import (
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/pkg/errors"
 )
 
 var (
-	AnyMissingFieldError, anyMissingFieldErrorSupport = utils.NewAnyError(&MissingFieldError{})
-	AnyInvalidSignatureError                          = &InvalidSignatureError{}
+	AnyMissingFieldError, anyMissingFieldErrorSupport         = utils.NewAnyError(&MissingFieldError{})
+	AnyInvalidSignatureError, anyInvalidSignatureErrorSupport = utils.NewAnyError(&InvalidSignatureError{})
 )
 
 type MissingFieldError struct {
@@ -53,18 +52,21 @@ func (e *NotDecimalEncodableError) Is(other error) bool {
 }
 
 type InvalidSignatureError struct {
+	*utils.AnyErrorSupport
 	reason string
 }
 
 func NewInvalidSignatureError(reason string) *InvalidSignatureError {
-	return &InvalidSignatureError{reason: reason}
+	return &InvalidSignatureError{
+		AnyErrorSupport: anyInvalidSignatureErrorSupport,
+		reason:          reason,
+	}
 }
 
-func (e InvalidSignatureError) Error() string {
+func (e *InvalidSignatureError) Unwrap() error {
+	return e.AnyErrorSupport
+}
+
+func (e *InvalidSignatureError) Error() string {
 	return fmt.Sprintf("invalid signature: %s", e.reason)
-}
-
-func (e *InvalidSignatureError) Is(other error) bool {
-	var invalidSignatureErr *InvalidSignatureError
-	return errors.As(other, &invalidSignatureErr)
 }
