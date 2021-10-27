@@ -171,7 +171,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_ReturnsError
 	transfers := testutils.GenerateValidCreate2Transfers(2)
 	s.addCreate2Transfers(transfers)
 
-	pendingTransfers, err := s.storage.GetPendingCreate2Transfers(32)
+	pendingTransfers, err := s.storage.GetPendingCreate2Transfers()
 	s.NoError(err)
 	s.Len(pendingTransfers, 2)
 
@@ -219,7 +219,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_CreatesMaxim
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_UpdateTransfers() {
 	s.preparePendingCreate2Transfers(2)
 
-	pendingTransfers, err := s.storage.GetPendingCreate2Transfers(2)
+	pendingTransfers, err := s.storage.GetPendingCreate2Transfers()
 	s.NoError(err)
 	s.Len(pendingTransfers, 2)
 

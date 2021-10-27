@@ -123,7 +123,7 @@ func NewC2TExecutor(storage *st.Storage, client *eth.Client) *C2TExecutor {
 }
 
 func (e *C2TExecutor) GetPendingTxs(limit uint32) (models.GenericTransactionArray, error) {
-	pendingTxs, err := e.storage.GetPendingCreate2Transfers(limit)
+	pendingTxs, err := e.storage.GetPendingCreate2Transfers()
 	if err != nil {
 		return nil, err
 	}
