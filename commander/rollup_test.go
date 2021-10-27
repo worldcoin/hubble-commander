@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -89,7 +90,7 @@ func (s *RollupTestSuite) TestRollupLoopIteration_RollbacksStateOnRollupErrorBut
 	storedInvalidTransfer, err := s.testStorage.GetTransfer(invalidTransfer.Hash)
 	s.NoError(err)
 	s.NotNil(storedInvalidTransfer.ErrorMessage)
-	s.Equal("nonce too high", *storedInvalidTransfer.ErrorMessage)
+	s.Equal(applier.ErrNonceTooHigh.Error(), *storedInvalidTransfer.ErrorMessage)
 }
 
 func (s *RollupTestSuite) setTxHashAndSign(wallet *bls.Wallet, transfer *models.Transfer) {

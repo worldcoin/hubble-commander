@@ -7,8 +7,7 @@ import (
 )
 
 const (
-	InvalidSignatureMessage    = "invalid commitment signature"
-	NonexistentReceiverMessage = "nonexistent receiver"
+	InvalidSignatureMessage = "invalid commitment signature"
 )
 
 func (c *Context) verifyTxSignature(commitment *encoder.DecodedCommitment, txs models.GenericTransactionArray) error {

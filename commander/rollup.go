@@ -55,10 +55,7 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *b
 		return errors.WithStack(err)
 	}
 
-	rollupCtx, err := executor.NewRollupContext(c.storage, c.client, c.cfg.Rollup, ctx, *currentBatchType)
-	if err != nil {
-		return err
-	}
+	rollupCtx := executor.NewRollupContext(c.storage, c.client, c.cfg.Rollup, ctx, *currentBatchType)
 	defer rollupCtx.Rollback(&err)
 
 	switchBatchType(currentBatchType)

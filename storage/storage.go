@@ -4,7 +4,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/utils"
-	bdg "github.com/dgraph-io/badger/v3"
 )
 
 type Storage struct {
@@ -93,40 +92,18 @@ func (s *Storage) copyWithNewDatabase(database *Database) *Storage {
 	}
 }
 
-func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage, error) {
-	txController, txDatabase, err := s.database.BeginTransaction(opts)
-	if err != nil {
-		return nil, nil, err
-	}
+func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage) {
+	txController, txDatabase := s.database.BeginTransaction(opts)
 
-	txStorage := s.copyWithNewDatabase(txDatabase)
+	return txController, s.copyWithNewDatabase(txDatabase)
+}
 
-	return txController, txStorage, nil
+func (s *Storage) ExecuteInTransaction(opts TxOptions, fn func(txStorage *Storage) error) error {
+	return s.database.ExecuteInTransaction(opts, func(txDatabase *Database) error {
+		return fn(s.copyWithNewDatabase(txDatabase))
+	})
 }
 
 func (s *Storage) Close() error {
 	return s.database.Close()
-}
-
-func (s *Storage) ExecuteInTransaction(opts TxOptions, fn func(txStorage *Storage) error) error {
-	err := s.unsafeExecuteInTransaction(opts, fn)
-	if err == bdg.ErrConflict {
-		return s.ExecuteInTransaction(opts, fn)
-	}
-	return err
-}
-
-func (s *Storage) unsafeExecuteInTransaction(opts TxOptions, fn func(txStorage *Storage) error) error {
-	txController, txStorage, err := s.BeginTransaction(opts)
-	if err != nil {
-		return err
-	}
-	defer txController.Rollback(&err)
-
-	err = fn(txStorage)
-	if err != nil {
-		return err
-	}
-
-	return txController.Commit()
 }

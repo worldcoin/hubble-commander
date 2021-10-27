@@ -184,8 +184,7 @@ func (s *NewBlockLoopTestSuite) submitTransferBatchInTransaction(tx *models.Tran
 }
 
 func (s *NewBlockLoopTestSuite) runInTransaction(handler func(*st.Storage, *executor.RollupContext)) {
-	txController, txStorage, err := s.testStorage.BeginTransaction(st.TxOptions{})
-	s.NoError(err)
+	txController, txStorage := s.testStorage.BeginTransaction(st.TxOptions{})
 	defer txController.Rollback(nil)
 
 	executionCtx := executor.NewTestExecutionContext(txStorage, s.testClient.Client, s.cfg.Rollup)

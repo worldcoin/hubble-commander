@@ -22,13 +22,9 @@ func NewContext(
 	client *eth.Client,
 	cfg *config.RollupConfig,
 	batchType batchtype.BatchType,
-) (*Context, error) {
-	tx, txStorage, err := storage.BeginTransaction(st.TxOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	return newContext(txStorage, tx, client, cfg, batchType), nil
+) *Context {
+	tx, txStorage := storage.BeginTransaction(st.TxOptions{})
+	return newContext(txStorage, tx, client, cfg, batchType)
 }
 
 func NewTestContext(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig, batchType batchtype.BatchType) *Context {

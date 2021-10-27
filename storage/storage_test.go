@@ -55,8 +55,7 @@ func (s *StorageTestSuite) TestBeginTransaction_Commit() {
 	})
 	s.NoError(err)
 
-	tx, txStorage, err := s.storage.BeginTransaction(TxOptions{})
-	s.NoError(err)
+	tx, txStorage := s.storage.BeginTransaction(TxOptions{})
 	_, err = txStorage.StateTree.Set(leaf.StateID, &leaf.UserState)
 	s.NoError(err)
 	err = txStorage.AddBatch(s.batch)
@@ -94,9 +93,8 @@ func (s *StorageTestSuite) TestBeginTransaction_Rollback() {
 		},
 	}
 
-	tx, txStorage, err := s.storage.BeginTransaction(TxOptions{})
-	s.NoError(err)
-	_, err = txStorage.StateTree.Set(leaf.StateID, &leaf.UserState)
+	tx, txStorage := s.storage.BeginTransaction(TxOptions{})
+	_, err := txStorage.StateTree.Set(leaf.StateID, &leaf.UserState)
 	s.NoError(err)
 	err = txStorage.AddBatch(s.batch)
 	s.NoError(err)
@@ -130,14 +128,12 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 	})
 	s.NoError(err)
 
-	tx, txStorage, err := s.storage.BeginTransaction(TxOptions{})
-	s.NoError(err)
+	tx, txStorage := s.storage.BeginTransaction(TxOptions{})
 
 	_, err = txStorage.StateTree.Set(leafOne.StateID, &leafOne.UserState)
 	s.NoError(err)
 
-	nestedTx, nestedStorage, err := txStorage.BeginTransaction(TxOptions{})
-	s.NoError(err)
+	nestedTx, nestedStorage := txStorage.BeginTransaction(TxOptions{})
 
 	_, err = nestedStorage.StateTree.Set(leafTwo.StateID, &leafTwo.UserState)
 	s.NoError(err)
@@ -159,6 +155,39 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 	res, err = s.storage.StateTree.Leaf(leafTwo.StateID)
 	s.NoError(err)
 	s.Equal(leafTwo, res)
+}
+
+func (s *StorageTestSuite) TestExecuteInTransaction_RepliesTransactionOnConflict() {
+	state := &models.ChainState{
+		ChainID: models.MakeUint256(1),
+	}
+	err := s.storage.SetChainState(state)
+	s.NoError(err)
+
+	executions := 0
+	err = s.storage.ExecuteInTransaction(TxOptions{}, func(txStorage *Storage) error {
+		if executions == 0 {
+			// Use s.storage to start a new DB transaction that commits before the tx started by ExecuteInTransaction
+			// call above. This will cause a Transaction Conflict error.
+			state.ChainID = models.MakeUint256(2)
+			err = s.storage.SetChainState(state)
+			s.NoError(err)
+		}
+
+		state.ChainID = models.MakeUint256(3)
+		err = txStorage.SetChainState(state)
+		s.NoError(err)
+
+		executions++
+		return nil
+	})
+	s.NoError(err)
+	s.Equal(2, executions)
+
+	retrievedState, err := s.storage.GetChainState()
+	s.NoError(err)
+
+	s.Equal(state, retrievedState)
 }
 
 func TestStorageTestSuite(t *testing.T) {

@@ -25,11 +25,8 @@ func NewExecutionContext(
 	client *eth.Client,
 	cfg *config.RollupConfig,
 	ctx context.Context,
-) (*ExecutionContext, error) {
-	tx, txStorage, err := storage.BeginTransaction(st.TxOptions{})
-	if err != nil {
-		return nil, err
-	}
+) *ExecutionContext {
+	tx, txStorage := storage.BeginTransaction(st.TxOptions{})
 
 	return &ExecutionContext{
 		cfg:     cfg,
@@ -38,7 +35,7 @@ func NewExecutionContext(
 		client:  client,
 		ctx:     ctx,
 		Applier: applier.NewApplier(txStorage, client),
-	}, nil
+	}
 }
 
 // NewTestExecutionContext creates a ExecutionContext without a database transaction.
