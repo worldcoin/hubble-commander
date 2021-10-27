@@ -87,7 +87,7 @@ func (a *API) validateTransfer(transfer *models.Transfer) error {
 
 	senderState, err := a.storage.StateTree.Leaf(transfer.FromStateID)
 	if storage.IsNotFoundError(err) {
-		return errors.WithStack(ErrSenderDoesNotExist)
+		return errors.WithStack(ErrNonexistentSender)
 	}
 	if err != nil {
 		return err
