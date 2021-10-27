@@ -100,7 +100,7 @@ func (c *Client) waitForDispute(batchID *models.Uint256, batchHash *common.Hash,
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	return errors.Errorf("dispute of batch #%d failed", batchID.Uint64())
+	return NewDisputeTxFailedError(batchID.Uint64())
 }
 
 func (c *Client) getDisputeFailMessage(tx *types.Transaction, txReceipt *types.Receipt) error {

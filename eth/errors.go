@@ -13,3 +13,17 @@ func NewLogNotFoundError(logName string) *LogNotFoundError {
 func (e LogNotFoundError) Error() string {
 	return fmt.Sprintf("log not found in the receipt: %s", e.logName)
 }
+
+type DisputeTxFailedError struct {
+	batchID uint64
+}
+
+func NewDisputeTxFailedError(batchID uint64) *DisputeTxFailedError {
+	return &DisputeTxFailedError{
+		batchID: batchID,
+	}
+}
+
+func (e DisputeTxFailedError) Error() string {
+	return fmt.Sprintf("dispute of batch #%d failed", e.batchID)
+}
