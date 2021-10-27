@@ -8,10 +8,8 @@ import (
 )
 
 var (
-	ErrNonceTooLow         = fmt.Errorf("nonce too low")
-	ErrNonceTooHigh        = fmt.Errorf("nonce too high")
-	ErrInvalidSlicesLength = fmt.Errorf("invalid slices length")
-
+	ErrNonceTooLow                = fmt.Errorf("nonce too low")
+	ErrNonceTooHigh               = fmt.Errorf("nonce too high")
 	ErrBalanceTooLow              = fmt.Errorf("not enough balance")
 	ErrInvalidSenderTokenID       = fmt.Errorf("invalid sender token ID")
 	ErrInvalidReceiverTokenID     = fmt.Errorf("invalid receiver token ID")
