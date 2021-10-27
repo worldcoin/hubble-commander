@@ -54,7 +54,7 @@ func NewTransferExecutor(storage *st.Storage, client *eth.Client) *TransferExecu
 }
 
 func (e *TransferExecutor) GetPendingTxs(limit uint32) (models.GenericTransactionArray, error) {
-	pendingTransfers, err := e.storage.GetPendingTransfers(limit)
+	pendingTransfers, err := e.storage.GetPendingTransfers()
 	if err != nil {
 		return nil, err
 	}

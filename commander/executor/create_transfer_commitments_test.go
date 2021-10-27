@@ -252,7 +252,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_MarksTransfersAsInc
 	transfersCount := uint32(4)
 	s.preparePendingTransfers(transfersCount)
 
-	pendingTransfers, err := s.storage.GetPendingTransfers(transfersCount)
+	pendingTransfers, err := s.storage.GetPendingTransfers()
 	s.NoError(err)
 	s.Len(pendingTransfers, int(transfersCount))
 
