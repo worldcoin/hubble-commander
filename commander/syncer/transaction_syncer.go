@@ -1,6 +1,7 @@
 package syncer
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/Worldcoin/hubble-commander/commander/applier"
@@ -12,6 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 )
+
+var ErrInvalidSlicesLength = fmt.Errorf("invalid slices length")
 
 type TransactionSyncer interface {
 	TxLength() int
@@ -122,7 +125,7 @@ func (s *C2TSyncer) DeserializeTxs(data []byte) (SyncedTxs, error) {
 		return nil, err
 	}
 	if len(txs) != len(pubKeyIDs) {
-		return nil, errors.WithStack(applier.ErrInvalidSlicesLength)
+		return nil, errors.WithStack(ErrInvalidSlicesLength)
 	}
 
 	return &SyncedC2Ts{

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -84,6 +85,23 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorIfCouldNo
 	commitments, err := s.rollupCtx.CreateCommitments()
 	s.Nil(commitments)
 	s.ErrorIs(err, ErrNotEnoughCommitments)
+}
+
+func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresErrorMessagesOfInvalidTransactions() {
+	s.cfg.MinTxsPerCommitment = 1
+
+	invalidTransfer := testutils.MakeTransfer(1, 1234, 0, 100)
+	s.hashSignAndAddTransfer(&s.wallets[0], &invalidTransfer)
+
+	commitments, err := s.rollupCtx.CreateCommitments()
+	s.Nil(commitments)
+	s.ErrorIs(err, ErrNotEnoughCommitments)
+
+	transfer, err := s.storage.GetTransfer(invalidTransfer.Hash)
+	s.NoError(err)
+
+	s.NotNil(transfer.ErrorMessage)
+	s.Equal(applier.ErrNonexistentReceiver.Error(), *transfer.ErrorMessage)
 }
 
 func (s *CreateCommitmentsTestSuite) hashSignAndAddTransfer(wallet *bls.Wallet, transfer *models.Transfer) {
