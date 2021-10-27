@@ -3,40 +3,33 @@ package api
 import (
 	"fmt"
 
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/pkg/errors"
 )
 
 var (
-	AnyMissingFieldError     = &MissingFieldError{field: anythingField}
-	AnyInvalidSignatureError = &InvalidSignatureError{}
+	AnyMissingFieldError, anyMissingFieldErrorSupport = utils.NewAnyError(&MissingFieldError{})
+	AnyInvalidSignatureError                          = &InvalidSignatureError{}
 )
 
-const anythingField = "anything"
-
 type MissingFieldError struct {
+	*utils.AnyErrorSupport
 	field string
 }
 
 func NewMissingFieldError(field string) *MissingFieldError {
-	if field == anythingField {
-		panic(fmt.Sprintf(`cannot use "%s" field for MissingFieldError`, anythingField))
+	return &MissingFieldError{
+		AnyErrorSupport: anyMissingFieldErrorSupport,
+		field:           field,
 	}
-	return &MissingFieldError{field}
 }
 
-func (m *MissingFieldError) Error() string {
-	return fmt.Sprintf("missing required %s field", m.field)
+func (e *MissingFieldError) Unwrap() error {
+	return e.AnyErrorSupport
 }
 
-func (m *MissingFieldError) Is(other error) bool {
-	otherError, ok := other.(*MissingFieldError)
-	if !ok {
-		return false
-	}
-	if *m == *AnyMissingFieldError || *otherError == *AnyMissingFieldError {
-		return true
-	}
-	return *m == *otherError
+func (e *MissingFieldError) Error() string {
+	return fmt.Sprintf("missing required %s field", e.field)
 }
 
 type NotDecimalEncodableError struct {
