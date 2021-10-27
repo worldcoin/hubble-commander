@@ -1,7 +1,6 @@
 package syncer
 
 import (
-	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -11,6 +10,10 @@ import (
 var (
 	ErrInvalidDataLength = NewDisputableError(Transition, "invalid data length")
 	ErrTooManyTxs        = NewDisputableError(Transition, "too many transactions in a commitment")
+)
+
+const (
+	InvalidCommitmentStateRootMessage = "invalid commitment post state root"
 )
 
 func (c *Context) syncTxCommitment(commitment *encoder.DecodedCommitment) (models.GenericTransactionArray, error) {
@@ -61,7 +64,7 @@ func (c *Context) verifyStateRoot(commitmentPostState common.Hash, proofs []mode
 		return err
 	}
 	if *postStateRoot != commitmentPostState {
-		return NewDisputableErrorWithProofs(Transition, applier.ErrInvalidCommitmentStateRoot.Error(), proofs)
+		return NewDisputableErrorWithProofs(Transition, InvalidCommitmentStateRootMessage, proofs)
 	}
 	return nil
 }
