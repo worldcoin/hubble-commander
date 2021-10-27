@@ -1,10 +1,14 @@
 package applier
 
 import (
+	"fmt"
+
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
 )
+
+var ErrNilReceiverStateID = fmt.Errorf("transfer receiver state id cannot be nil")
 
 func (a *Applier) ApplyCreate2Transfer(
 	create2Transfer *models.Create2Transfer,
