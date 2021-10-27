@@ -14,16 +14,16 @@ func (e LogNotFoundError) Error() string {
 	return fmt.Sprintf("log not found in the receipt: %s", e.logName)
 }
 
-type DisputeTxFailedError struct {
+type DisputeTxRevertedError struct {
 	batchID uint64
 }
 
-func NewDisputeTxFailedError(batchID uint64) *DisputeTxFailedError {
-	return &DisputeTxFailedError{
+func NewDisputeTxRevertedError(batchID uint64) *DisputeTxRevertedError {
+	return &DisputeTxRevertedError{
 		batchID: batchID,
 	}
 }
 
-func (e DisputeTxFailedError) Error() string {
+func (e DisputeTxRevertedError) Error() string {
 	return fmt.Sprintf("dispute of batch #%d failed", e.batchID)
 }
