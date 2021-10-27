@@ -158,33 +158,36 @@ func (s *StorageTestSuite) TestBeginTransaction_Lock() {
 }
 
 func (s *StorageTestSuite) TestExecuteInTransaction_RepliesTransactionOnConflict() {
-	secondBatch := *s.batch
-	secondBatch.ID = models.MakeUint256(2)
-
-	err := s.storage.AddBatch(s.batch)
+	state := &models.ChainState{
+		ChainID: models.MakeUint256(1),
+	}
+	err := s.storage.SetChainState(state)
 	s.NoError(err)
 
-	txCounter := 0
+	executions := 0
 	err = s.storage.ExecuteInTransaction(TxOptions{}, func(txStorage *Storage) error {
-		if txCounter == 0 {
-			err = s.storage.DeleteBatches(s.batch.ID)
+		if executions == 0 {
+			// Use s.storage to start a new DB transaction that commits before the tx started by ExecuteInTransaction
+			// call above. This will cause a Transaction Conflict error.
+			state.ChainID = models.MakeUint256(2)
+			err = s.storage.SetChainState(state)
 			s.NoError(err)
 		}
 
-		err = txStorage.AddBatch(&secondBatch)
+		state.ChainID = models.MakeUint256(3)
+		err = txStorage.SetChainState(state)
 		s.NoError(err)
-		if err != nil {
-			return err
-		}
-		txCounter++
+
+		executions++
 		return nil
 	})
 	s.NoError(err)
-	s.Equal(2, txCounter)
+	s.Equal(2, executions)
 
-	batch, err := s.storage.GetBatch(secondBatch.ID)
+	retrievedState, err := s.storage.GetChainState()
 	s.NoError(err)
-	s.Equal(secondBatch, *batch)
+
+	s.Equal(state, retrievedState)
 }
 
 func TestStorageTestSuite(t *testing.T) {
