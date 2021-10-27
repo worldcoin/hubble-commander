@@ -23,12 +23,9 @@ func NewRollupContext(
 	cfg *config.RollupConfig,
 	ctx context.Context,
 	batchType batchtype.BatchType,
-) (*RollupContext, error) {
-	executionCtx, err := NewExecutionContext(storage, client, cfg, ctx)
-	if err != nil {
-		return nil, err
-	}
-	return newRollupContext(executionCtx, batchType), nil
+) *RollupContext {
+	executionCtx := NewExecutionContext(storage, client, cfg, ctx)
+	return newRollupContext(executionCtx, batchType)
 }
 
 func NewTestRollupContext(executionCtx *ExecutionContext, batchType batchtype.BatchType) *RollupContext {

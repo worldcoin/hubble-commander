@@ -3,6 +3,7 @@ package storage
 import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
+	bdg "github.com/dgraph-io/badger/v3"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -31,13 +32,33 @@ func NewDatabase(cfg *config.Config) (*Database, error) {
 	return database, nil
 }
 
-func (d *Database) BeginTransaction(opts TxOptions) (*db.TxController, *Database, error) {
+func (d *Database) BeginTransaction(opts TxOptions) (*db.TxController, *Database) {
 	database := *d
 
 	badgerTx, badgerDB := d.Badger.BeginTransaction(!opts.ReadOnly)
 	database.Badger = badgerDB
 
-	return badgerTx, &database, nil
+	return badgerTx, &database
+}
+
+func (d *Database) ExecuteInTransaction(opts TxOptions, fn func(txDatabase *Database) error) error {
+	err := d.unsafeExecuteInTransaction(opts, fn)
+	if err == bdg.ErrConflict {
+		return d.ExecuteInTransaction(opts, fn)
+	}
+	return err
+}
+
+func (d *Database) unsafeExecuteInTransaction(opts TxOptions, fn func(txDatabase *Database) error) (err error) {
+	txController, txDatabase := d.BeginTransaction(opts)
+	defer txController.Rollback(&err)
+
+	err = fn(txDatabase)
+	if err != nil {
+		return err
+	}
+
+	return txController.Commit()
 }
 
 func (d *Database) Close() error {

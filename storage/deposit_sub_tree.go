@@ -27,20 +27,16 @@ func (s *DepositStorage) GetPendingDepositSubTree(subTreeID models.Uint256) (*mo
 }
 
 func (s *DepositStorage) DeletePendingDepositSubTrees(subTreeIDs ...models.Uint256) error {
-	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{})
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(&err)
-
-	for i := range subTreeIDs {
-		err = txDatabase.Badger.Delete(subTreeIDs[i], models.PendingDepositSubTree{})
-		if err == bh.ErrNotFound {
-			return errors.WithStack(NewNotFoundError("deposit sub tree"))
+	return s.database.ExecuteInTransaction(TxOptions{}, func(txDatabase *Database) error {
+		for i := range subTreeIDs {
+			err := txDatabase.Badger.Delete(subTreeIDs[i], models.PendingDepositSubTree{})
+			if err == bh.ErrNotFound {
+				return errors.WithStack(NewNotFoundError("deposit sub tree"))
+			}
+			if err != nil {
+				return err
+			}
 		}
-		if err != nil {
-			return err
-		}
-	}
-	return tx.Commit()
+		return nil
+	})
 }

@@ -74,21 +74,13 @@ func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
 		return errors.WithStack(NewInvalidPubKeyIDError(leaf.PubKeyID))
 	}
 
-	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{})
-	if err != nil {
+	return s.database.ExecuteInTransaction(TxOptions{}, func(txDatabase *Database) error {
+		_, err := NewAccountTree(txDatabase).unsafeSet(leaf)
+		if err == bh.ErrKeyExists {
+			return errors.WithStack(NewAccountAlreadyExistsError(leaf))
+		}
 		return err
-	}
-	defer tx.Rollback(&err)
-
-	_, err = NewAccountTree(txDatabase).unsafeSet(leaf)
-	if err == bh.ErrKeyExists {
-		return errors.WithStack(NewAccountAlreadyExistsError(leaf))
-	}
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit()
+	})
 }
 
 func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
@@ -100,28 +92,23 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
 }
 
 func (s *AccountTree) SetInBatch(leaves ...models.AccountLeaf) error {
-	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{})
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(&err)
+	return s.database.ExecuteInTransaction(TxOptions{}, func(txDatabase *Database) error {
+		accountTree := NewAccountTree(txDatabase)
 
-	accountTree := NewAccountTree(txDatabase)
-
-	for i := range leaves {
-		if isValidBatchAccount(&leaves[i]) {
-			return errors.WithStack(NewInvalidPubKeyIDError(leaves[i].PubKeyID))
+		for i := range leaves {
+			if isValidBatchAccount(&leaves[i]) {
+				return errors.WithStack(NewInvalidPubKeyIDError(leaves[i].PubKeyID))
+			}
+			_, err := accountTree.unsafeSet(&leaves[i])
+			if err == bh.ErrKeyExists {
+				return errors.WithStack(NewAccountBatchAlreadyExistsError(leaves))
+			}
+			if err != nil {
+				return err
+			}
 		}
-		_, err = accountTree.unsafeSet(&leaves[i])
-		if err == bh.ErrKeyExists {
-			return errors.WithStack(NewAccountBatchAlreadyExistsError(leaves))
-		}
-		if err != nil {
-			return err
-		}
-	}
-
-	return tx.Commit()
+		return nil
+	})
 }
 
 func (s *AccountTree) GetWitness(pubKeyID uint32) (models.Witness, error) {

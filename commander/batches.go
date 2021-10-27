@@ -90,11 +90,8 @@ func (c *Commander) syncOrDisputeRemoteBatch(remoteBatch *eth.DecodedBatch) erro
 	return err
 }
 
-func (c *Commander) syncBatch(remoteBatch *eth.DecodedBatch) error {
-	syncCtx, err := syncer.NewContext(c.storage, c.client, c.cfg.Rollup, remoteBatch.Type)
-	if err != nil {
-		return err
-	}
+func (c *Commander) syncBatch(remoteBatch *eth.DecodedBatch) (err error) {
+	syncCtx := syncer.NewContext(c.storage, c.client, c.cfg.Rollup, remoteBatch.Type)
 	defer syncCtx.Rollback(&err)
 
 	err = syncCtx.SyncBatch(remoteBatch)
@@ -134,11 +131,8 @@ func (c *Commander) disputeFraudulentBatch(
 	return ErrRollbackInProgress
 }
 
-func (c *Commander) revertBatches(startBatch *models.Batch) error {
-	executionCtx, err := executor.NewExecutionContext(c.storage, c.client, c.cfg.Rollup, context.Background())
-	if err != nil {
-		return err
-	}
+func (c *Commander) revertBatches(startBatch *models.Batch) (err error) {
+	executionCtx := executor.NewExecutionContext(c.storage, c.client, c.cfg.Rollup, context.Background())
 	defer executionCtx.Rollback(&err)
 
 	err = executionCtx.RevertBatches(startBatch)

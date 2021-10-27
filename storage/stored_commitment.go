@@ -55,34 +55,29 @@ func (s *CommitmentStorage) GetLatestCommitment() (*models.CommitmentBase, error
 }
 
 func (s *CommitmentStorage) DeleteCommitmentsByBatchIDs(batchIDs ...models.Uint256) error {
-	tx, txDatabase, err := s.database.BeginTransaction(TxOptions{})
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(&err)
-
-	var commitmentIDs []models.CommitmentID
-	ids := make([]models.CommitmentID, 0, len(batchIDs))
-	for i := range batchIDs {
-		commitmentIDs, err = getCommitmentIDsByBatchID(txDatabase, batchIDs[i])
-		if err != nil {
-			return err
+	return s.database.ExecuteInTransaction(TxOptions{}, func(txDatabase *Database) error {
+		ids := make([]models.CommitmentID, 0, len(batchIDs))
+		for i := range batchIDs {
+			commitmentIDs, err := getCommitmentIDsByBatchID(txDatabase, batchIDs[i])
+			if err != nil {
+				return err
+			}
+			ids = append(ids, commitmentIDs...)
 		}
-		ids = append(ids, commitmentIDs...)
-	}
 
-	if len(ids) == 0 {
-		return errors.WithStack(NewNotFoundError("commitments"))
-	}
-
-	var commitment models.StoredCommitment
-	for i := range ids {
-		err = txDatabase.Badger.Delete(ids[i], commitment)
-		if err != nil {
-			return err
+		if len(ids) == 0 {
+			return errors.WithStack(NewNotFoundError("commitments"))
 		}
-	}
-	return tx.Commit()
+
+		var commitment models.StoredCommitment
+		for i := range ids {
+			err := txDatabase.Badger.Delete(ids[i], commitment)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func (s *CommitmentStorage) getStoredCommitmentsByBatchID(batchID models.Uint256) ([]models.StoredCommitment, error) {
