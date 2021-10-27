@@ -98,9 +98,9 @@ func (c *Client) waitForDispute(batchID *models.Uint256, batchHash *common.Hash,
 	}
 	err = c.getDisputeRevertMessage(tx, receipt)
 	if err != nil {
-		return errors.WithStack(err)
+		return NewDisputeTxRevertedError(batchID.Uint64(), err.Error())
 	}
-	return NewDisputeTxRevertedError(batchID.Uint64())
+	return NewUnknownDisputeTxRevertedError(batchID.Uint64())
 }
 
 func (c *Client) getDisputeRevertMessage(tx *types.Transaction, txReceipt *types.Receipt) error {
