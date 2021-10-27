@@ -19,15 +19,23 @@ const (
 	DefaultBlocksToFinalise                 = uint32(7 * 24 * 60 * 4)
 )
 
-func setupViper() {
-	viper.SetConfigFile(getConfigPath())
+func setupViperForCommander() {
+	setupViper(getCommanderConfigPath())
+}
+
+func setupViperForDeployer() {
+	setupViper(getDeployerConfigPath())
+}
+
+func setupViper(configPath string) {
+	viper.SetConfigFile(configPath)
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("HUBBLE")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	err := viper.ReadInConfig()
 	if err != nil {
 		if strings.Contains(err.Error(), "no such file or directory") {
-			log.Printf("Configuration file not found (%s). Continuing with default config (possibly overridden by env vars).", getConfigPath())
+			log.Printf("Configuration file not found (%s). Continuing with default config (possibly overridden by env vars).", configPath)
 		} else {
 			log.Fatalf("failed to read in config: %s", err)
 		}
@@ -35,14 +43,12 @@ func setupViper() {
 }
 
 func GetConfig() *Config {
-	setupViper()
+	setupViperForCommander()
 
 	return &Config{
 		Log: getLogConfig(),
-		Bootstrap: &BootstrapConfig{
+		Bootstrap: &CommanderBootstrapConfig{
 			Prune:            getBool("bootstrap.prune", false),
-			GenesisAccounts:  getGenesisAccounts(),
-			BlocksToFinalise: getUint32("bootstrap.blocks_to_finalise", DefaultBlocksToFinalise), // nolint:misspell
 			BootstrapNodeURL: getStringOrNil("bootstrap.node_url"),
 			ChainSpecPath:    getStringOrNil("bootstrap.chain_spec_path"),
 		},
@@ -60,8 +66,9 @@ func GetConfig() *Config {
 			DisableSignatures:                getBool("rollup.disable_signatures", false),
 		},
 		API: &APIConfig{
-			Version: "0.5.0-rc2",
-			Port:    getString("api.port", "8080"),
+			Version:              "0.5.0-rc2",
+			Port:                 getString("api.port", "8080"),
+			EnableProofEndpoints: getBool("api.enable_proof_endpoints", false),
 		},
 		Badger: &BadgerConfig{
 			Path: getString("badger.path", getBadgerPath()),
@@ -71,17 +78,15 @@ func GetConfig() *Config {
 }
 
 func GetTestConfig() *Config {
-	setupViper()
+	setupViperForCommander()
 
 	return &Config{
 		Log: &LogConfig{
 			Level:  log.InfoLevel,
 			Format: LogFormatText,
 		},
-		Bootstrap: &BootstrapConfig{
+		Bootstrap: &CommanderBootstrapConfig{
 			Prune:            false,
-			GenesisAccounts:  readGenesisAccounts(getGenesisPath()),
-			BlocksToFinalise: DefaultBlocksToFinalise,
 			BootstrapNodeURL: nil,
 			ChainSpecPath:    nil,
 		},
@@ -113,8 +118,24 @@ func GetTestConfig() *Config {
 	}
 }
 
-func getConfigPath() string {
-	return path.Join(utils.GetProjectRoot(), "config.yaml")
+func GetDeployerConfig() *DeployerConfig {
+	setupViperForDeployer()
+
+	return &DeployerConfig{
+		Bootstrap: &DeployerBootstrapConfig{
+			BlocksToFinalise: getUint32("bootstrap.blocks_to_finalise", DefaultBlocksToFinalise), // nolint:misspell
+			GenesisAccounts:  getGenesisAccounts(),
+		},
+		Ethereum: getEthereumConfig(),
+	}
+}
+
+func getCommanderConfigPath() string {
+	return path.Join(utils.GetProjectRoot(), "commander-config.yaml")
+}
+
+func getDeployerConfigPath() string {
+	return path.Join(utils.GetProjectRoot(), "deployer-config.yaml")
 }
 
 func getGenesisAccounts() []models.GenesisAccount {

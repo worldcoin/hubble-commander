@@ -16,7 +16,7 @@ type Commander interface {
 
 func NewCommanderFromEnv(prune bool) (Commander, error) {
 	switch os.Getenv("HUBBLE_E2E") {
-	case "", "docker":
+	case "docker":
 		return StartDockerCommander(StartOptions{
 			Image:           "ghcr.io/worldcoin/hubble-commander:latest",
 			Prune:           prune,

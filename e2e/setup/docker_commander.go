@@ -133,14 +133,14 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 }
 
 func deployContractsAndStoreChainSpec() error {
-	cfg := config.GetConfig()
+	deployerCfg := config.GetDeployerConfig()
 
-	blockchain, err := commander.GetChainConnection(cfg.Ethereum)
+	blockchain, err := commander.GetChainConnection(deployerCfg.Ethereum)
 	if err != nil {
 		return err
 	}
 
-	chainSpec, err := commander.Deploy(cfg, blockchain)
+	chainSpec, err := commander.Deploy(deployerCfg, blockchain)
 	if err != nil {
 		return err
 	}

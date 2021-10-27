@@ -14,7 +14,7 @@ const (
 
 type Config struct {
 	Log       *LogConfig
-	Bootstrap *BootstrapConfig
+	Bootstrap *CommanderBootstrapConfig
 	Rollup    *RollupConfig
 	API       *APIConfig
 	Badger    *BadgerConfig
@@ -27,10 +27,18 @@ type LogConfig struct {
 	Format string
 }
 
-type BootstrapConfig struct {
-	Prune            bool
+type DeployerConfig struct {
+	Bootstrap *DeployerBootstrapConfig
+	Ethereum  *EthereumConfig
+}
+
+type DeployerBootstrapConfig struct {
 	GenesisAccounts  []models.GenesisAccount `json:"-"`
 	BlocksToFinalise uint32
+}
+
+type CommanderBootstrapConfig struct {
+	Prune            bool
 	BootstrapNodeURL *string
 	ChainSpecPath    *string
 }
@@ -51,8 +59,9 @@ type RollupConfig struct {
 }
 
 type APIConfig struct {
-	Version string
-	Port    string
+	Version              string
+	Port                 string
+	EnableProofEndpoints bool
 }
 
 type BadgerConfig struct {

@@ -26,6 +26,18 @@ var (
 		},
 		ToStateID: 2,
 	}
+	create2TransferTransaction = models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
+			Hash:        common.BigToHash(big.NewInt(1234)),
+			TxType:      txtype.Create2Transfer,
+			FromStateID: 1,
+			Amount:      models.MakeUint256(1000),
+			Fee:         models.MakeUint256(100),
+			Nonce:       models.MakeUint256(0),
+			Signature:   models.MakeRandomSignature(),
+		},
+		ToPublicKey: models.PublicKey{1, 2, 3},
+	}
 )
 
 type StoredTransactionTestSuite struct {
@@ -64,36 +76,122 @@ func (s *StoredTransactionTestSuite) TestSetTransactionError() {
 	s.Equal(errorMessage, res.ErrorMessage)
 }
 
-func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce() {
-	account := models.AccountLeaf{
-		PubKeyID:  1,
-		PublicKey: models.PublicKey{1, 2, 3},
+func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_ReturnsHighestNonceRegardlessOfInsertionOrder() {
+	tx1 := transferTransaction
+	tx1.Hash = utils.RandomHash()
+	tx1.Nonce = models.MakeUint256(3)
+
+	tx2 := transferTransaction
+	tx2.Hash = utils.RandomHash()
+	tx2.Nonce = models.MakeUint256(5)
+
+	tx3 := transferTransaction
+	tx3.Hash = utils.RandomHash()
+	tx3.Nonce = models.MakeUint256(1)
+
+	txs := []models.Transfer{tx1, tx2, tx3}
+	for i := range txs {
+		err := s.storage.AddTransfer(&txs[i])
+		s.NoError(err)
 	}
 
-	err := s.storage.AccountTree.SetSingle(&account)
+	latestNonce, err := s.storage.GetLatestTransactionNonce(1)
+	s.NoError(err)
+	s.Equal(models.NewUint256(5), latestNonce)
+}
+
+func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_ReturnsHighestNonceRegardlessOfTxType() {
+	tx1 := transferTransaction
+	tx1.Hash = utils.RandomHash()
+	tx1.Nonce = models.MakeUint256(3)
+
+	tx2 := create2TransferTransaction
+	tx2.Hash = utils.RandomHash()
+	tx2.Nonce = models.MakeUint256(5)
+
+	err := s.storage.AddTransfer(&tx1)
+	s.NoError(err)
+	err = s.storage.AddCreate2Transfer(&tx2)
 	s.NoError(err)
 
+	latestNonce, err := s.storage.GetLatestTransactionNonce(1)
+	s.NoError(err)
+	s.Equal(models.NewUint256(5), latestNonce)
+}
+
+func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_DisregardsTransactionsFromOtherStateIDs() {
+	tx1 := transferTransaction
+	tx1.Hash = utils.RandomHash()
+	tx1.Nonce = models.MakeUint256(3)
+
+	tx2 := transferTransaction
+	tx2.FromStateID = 10
+	tx2.Hash = utils.RandomHash()
+	tx2.Nonce = models.MakeUint256(5)
+
+	tx3 := transferTransaction
+	tx3.FromStateID = 20
+	tx3.Hash = utils.RandomHash()
+	tx3.Nonce = models.MakeUint256(7)
+
+	txs := []models.Transfer{tx1, tx2, tx3}
+	for i := range txs {
+		err := s.storage.AddTransfer(&txs[i])
+		s.NoError(err)
+	}
+
+	latestNonce, err := s.storage.GetLatestTransactionNonce(1)
+	s.NoError(err)
+	s.Equal(models.NewUint256(3), latestNonce)
+}
+
+func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_DisregardsFailedTransactions() {
 	tx1 := transferTransaction
 	tx1.Hash = utils.RandomHash()
 	tx1.Nonce = models.MakeUint256(1)
+
 	tx2 := transferTransaction
 	tx2.Hash = utils.RandomHash()
-	tx2.FromStateID = 10
-	tx2.Nonce = models.MakeUint256(7)
+	tx2.Nonce = models.MakeUint256(2)
+
 	tx3 := transferTransaction
 	tx3.Hash = utils.RandomHash()
-	tx3.Nonce = models.MakeUint256(5)
+	tx3.Nonce = models.MakeUint256(3)
+	tx3.ErrorMessage = ref.String("error")
 
-	err = s.storage.AddTransfer(&tx1)
+	txs := []models.Transfer{tx1, tx2, tx3}
+	for i := range txs {
+		err := s.storage.AddTransfer(&txs[i])
+		s.NoError(err)
+	}
+
+	latestNonce, err := s.storage.GetLatestTransactionNonce(1)
 	s.NoError(err)
-	err = s.storage.AddTransfer(&tx2)
-	s.NoError(err)
-	err = s.storage.AddTransfer(&tx3)
+	s.Equal(models.NewUint256(2), latestNonce)
+}
+
+func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_NoTransactionsForGivenStateID() {
+	tx1 := transferTransaction
+	tx1.FromStateID = 10
+
+	err := s.storage.AddTransfer(&tx1)
 	s.NoError(err)
 
-	userTransactions, err := s.storage.GetLatestTransactionNonce(account.PubKeyID)
+	latestNonce, err := s.storage.GetLatestTransactionNonce(1)
+	s.ErrorIs(err, NewNotFoundError("transaction"))
+	s.Nil(latestNonce)
+}
+
+func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_NoValidTransactionsForGivenStateID() {
+	tx1 := transferTransaction
+	tx1.ErrorMessage = ref.String("error")
+
+	err := s.storage.AddTransfer(&tx1)
 	s.NoError(err)
-	s.Equal(models.NewUint256(5), userTransactions)
+
+	latestNonce, err := s.storage.GetLatestTransactionNonce(1)
+	s.ErrorIs(err, NewNotFoundError("transaction"))
+	s.Nil(latestNonce)
 }
 
 func (s *StoredTransactionTestSuite) TestMarkTransactionsAsPending() {
