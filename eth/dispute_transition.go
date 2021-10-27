@@ -96,14 +96,14 @@ func (c *Client) waitForDispute(batchID *models.Uint256, batchHash *common.Hash,
 	if err != nil {
 		return err
 	}
-	err = c.getDisputeFailMessage(tx, receipt)
+	err = c.getDisputeRevertMessage(tx, receipt)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 	return NewDisputeTxRevertedError(batchID.Uint64())
 }
 
-func (c *Client) getDisputeFailMessage(tx *types.Transaction, txReceipt *types.Receipt) error {
+func (c *Client) getDisputeRevertMessage(tx *types.Transaction, txReceipt *types.Receipt) error {
 	callMsg := ethereum.CallMsg{
 		From:     c.Blockchain.GetAccount().From,
 		To:       tx.To(),
