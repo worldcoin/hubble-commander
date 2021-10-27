@@ -8,7 +8,7 @@ import (
 )
 
 func deployCommanderContracts(filePath string) error {
-	cfg := config.GetConfigAndSetupLogger()
+	cfg := config.GetDeployerConfigAndSetupLogger()
 	blockchain, err := commander.GetChainConnection(cfg.Ethereum)
 	if err != nil {
 		return err
