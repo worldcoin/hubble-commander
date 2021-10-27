@@ -64,7 +64,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer() {
 	s.Equal(uint64(100), receiverLeaf.Balance.Uint64())
 }
 
-func (s *ApplyTransferTestSuite) TestApplyTransfer_NonexistentReceiver() {
+func (s *ApplyTransferTestSuite) TestApplyTransfer_ValidatesReceiverStateID() {
 	setUserStatesInTree(s.Assertions, s.storage)
 
 	transfer := s.transfer
@@ -72,7 +72,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransfer_NonexistentReceiver() {
 
 	_, transferError, appError := s.applier.ApplyTransfer(&transfer, s.receiverLeaf.TokenID)
 	s.NoError(appError)
-	s.ErrorIs(transferError, st.NewNotFoundError("state leaf"))
+	s.ErrorIs(transferError, ErrNonexistentReceiver)
 }
 
 func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ReturnsSenderProofForCalculateStateAfterTransferValidations() {
