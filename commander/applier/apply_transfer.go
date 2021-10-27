@@ -1,17 +1,32 @@
 package applier
 
-import "github.com/Worldcoin/hubble-commander/models"
+import (
+	"fmt"
+
+	"github.com/Worldcoin/hubble-commander/models"
+	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/pkg/errors"
+)
+
+var ErrNonexistentReceiver = fmt.Errorf("receiver state ID does not exist")
 
 func (a *Applier) ApplyTransfer(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
 	applyResult ApplySingleTxResult, transferError, appError error,
 ) {
 	receiverLeaf, appError := a.storage.StateTree.Leaf(*tx.GetToStateID())
+	if st.IsNotFoundError(appError) {
+		transferError = errors.WithStack(ErrNonexistentReceiver)
+		return nil, transferError, nil
+	}
 	if appError != nil {
 		return nil, nil, appError
 	}
 
 	transferError, appError = a.ApplyTx(tx, receiverLeaf, commitmentTokenID)
-	return &ApplySingleTransferResult{tx: tx.ToTransfer()}, transferError, appError
+	if transferError != nil || appError != nil {
+		return nil, transferError, appError
+	}
+	return &ApplySingleTransferResult{tx: tx.ToTransfer()}, nil, nil
 }
 
 func (a *Applier) ApplyTransferForSync(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
