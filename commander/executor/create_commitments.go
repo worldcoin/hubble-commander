@@ -156,7 +156,7 @@ func (c *RollupContext) refillPendingTxs(pendingTxs models.GenericTransactionArr
 }
 
 func (c *RollupContext) queryPendingTxs() (models.GenericTransactionArray, error) {
-	pendingTxs, err := c.Executor.GetPendingTxs(c.cfg.MaxCommitmentsPerBatch * c.cfg.MaxTxsPerCommitment)
+	pendingTxs, err := c.Executor.GetPendingTxs()
 	if err != nil {
 		return nil, err
 	}
@@ -182,9 +182,7 @@ func (c *RollupContext) queryMorePendingTxs(appliedTxs models.GenericTransaction
 }
 
 func (c *RollupContext) queryNewPendingTxs(appliedTxs models.GenericTransactionArray) (models.GenericTransactionArray, error) {
-	pendingTxs, err := c.Executor.GetPendingTxs(
-		c.cfg.MaxCommitmentsPerBatch*c.cfg.MaxTxsPerCommitment + uint32(appliedTxs.Len()),
-	)
+	pendingTxs, err := c.Executor.GetPendingTxs()
 	if err != nil {
 		return nil, err
 	}

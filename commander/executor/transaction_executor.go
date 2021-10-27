@@ -13,7 +13,7 @@ import (
 )
 
 type TransactionExecutor interface {
-	GetPendingTxs(limit uint32) (models.GenericTransactionArray, error)
+	GetPendingTxs() (models.GenericTransactionArray, error)
 	NewTxArray(size, capacity uint32) models.GenericTransactionArray
 	NewExecuteTxsResult(capacity uint32) ExecuteTxsResult
 	NewExecuteTxsForCommitmentResult(executeTxsResult ExecuteTxsResult) ExecuteTxsForCommitmentResult
@@ -53,7 +53,7 @@ func NewTransferExecutor(storage *st.Storage, client *eth.Client) *TransferExecu
 	}
 }
 
-func (e *TransferExecutor) GetPendingTxs(limit uint32) (models.GenericTransactionArray, error) {
+func (e *TransferExecutor) GetPendingTxs() (models.GenericTransactionArray, error) {
 	pendingTransfers, err := e.storage.GetPendingTransfers()
 	if err != nil {
 		return nil, err
@@ -122,7 +122,7 @@ func NewC2TExecutor(storage *st.Storage, client *eth.Client) *C2TExecutor {
 	}
 }
 
-func (e *C2TExecutor) GetPendingTxs(limit uint32) (models.GenericTransactionArray, error) {
+func (e *C2TExecutor) GetPendingTxs() (models.GenericTransactionArray, error) {
 	pendingTxs, err := e.storage.GetPendingCreate2Transfers()
 	if err != nil {
 		return nil, err
