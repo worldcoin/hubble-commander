@@ -28,7 +28,7 @@ type Config struct {
 }
 
 type Simulator struct {
-	Backend  *backends.SimulatedBackend
+	Backend  *Backend
 	Config   *Config
 	Account  *bind.TransactOpts
 	Accounts []*bind.TransactOpts
@@ -77,7 +77,7 @@ func NewConfiguredSimulator(cfg Config) (sim *Simulator, err error) {
 	}
 
 	sim = &Simulator{
-		Backend:  backends.NewSimulatedBackend(genesisAccounts, *cfg.BlockGasLimit),
+		Backend:  NewBackend(backends.NewSimulatedBackend(genesisAccounts, *cfg.BlockGasLimit)),
 		Config:   &cfg,
 		Account:  accounts[0],
 		Accounts: accounts,
@@ -128,7 +128,7 @@ func (sim *Simulator) StopAutomine() {
 
 func (sim *Simulator) Close() {
 	sim.StopAutomine()
-	sim.Backend.Close() // ignore error, it is always nil
+	_ = sim.Backend.Close() // ignore error, it is always nil
 }
 
 func (sim *Simulator) GetAccount() *bind.TransactOpts {

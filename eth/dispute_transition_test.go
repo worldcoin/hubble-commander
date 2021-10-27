@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -31,6 +32,19 @@ func (s *DisputeTransitionTestSuite) TearDownTest() {
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransitionTransfer_ReturnsRevertMessage() {
+	commitment := models.TxCommitment{
+		CommitmentBase: models.CommitmentBase{
+			Type:          batchtype.Transfer,
+			PostStateRoot: utils.RandomHash(),
+		},
+		Transactions:      utils.RandomBytes(12),
+		FeeReceiver:       uint32(1234),
+		CombinedSignature: models.MakeRandomSignature(),
+	}
+
+	batch, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitment{commitment})
+	s.NoError(err)
+
 	merklePath := models.MakeMerklePathFromLeafID(1)
 	previousCommitmentProof := &models.CommitmentInclusionProof{
 		StateRoot: utils.RandomHash(),
@@ -50,15 +64,16 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransitionTransfer_ReturnsRevert
 		Witness: []common.Hash{},
 	}
 
-	err := s.client.DisputeTransitionTransfer(
+	err = s.client.DisputeTransitionTransfer(
 		models.NewUint256(1),
-		utils.NewRandomHash(),
+		batch.Hash,
 		previousCommitmentProof,
 		targetCommitmentProof,
 		[]models.StateMerkleProof{},
 	)
-	s.Error(err)
-	s.Equal(err.Error(), "execution reverted: Batch id greater than total number of batches, invalid batch id")
+	var disputeError *DisputeTxRevertedError
+	s.ErrorAs(err, &disputeError)
+	s.Equal("dispute of batch #1 failed: execution reverted: previous commitment has wrong path", err.Error())
 }
 
 func TestDisputeTransitionTestSuite(t *testing.T) {
