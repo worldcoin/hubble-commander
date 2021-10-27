@@ -14,6 +14,7 @@ var (
 
 const (
 	InvalidCommitmentStateRootMessage = "invalid commitment post state root"
+	NonexistentReceiverMessage        = "nonexistent receiver"
 )
 
 func (c *Context) syncTxCommitment(commitment *encoder.DecodedCommitment) (models.GenericTransactionArray, error) {
