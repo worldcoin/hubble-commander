@@ -292,7 +292,8 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTo
 	s.Len(commitments, 1)
 
 	for i := 0; i < 2; i++ {
-		tx, err := s.storage.GetCreate2Transfer(pendingTransfers[i].Hash)
+		var tx *models.Create2Transfer
+		tx, err = s.storage.GetCreate2Transfer(pendingTransfers[i].Hash)
 		s.NoError(err)
 		s.Equal(commitments[0].ID, *tx.CommitmentID)
 	}

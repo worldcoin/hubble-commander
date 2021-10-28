@@ -262,7 +262,8 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTooHighTx
 	s.Len(commitments, 1)
 
 	for i := 0; i < transfersCount; i++ {
-		tx, err := s.storage.GetTransfer(pendingTransfers[i].Hash)
+		var tx *models.Transfer
+		tx, err = s.storage.GetTransfer(pendingTransfers[i].Hash)
 		s.NoError(err)
 		s.Equal(commitments[0].ID, *tx.CommitmentID)
 	}
