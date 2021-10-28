@@ -217,7 +217,6 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 		return nil, errors.WithStack(err)
 	}
 
-	c.Commit()
 	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
 	if err != nil {
 		return nil, err

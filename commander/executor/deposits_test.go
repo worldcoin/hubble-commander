@@ -211,7 +211,7 @@ func (s *DepositsTestSuite) TestSubmitDepositBatch_SubmitsBatchOnChain() {
 	err = s.depositCtx.SubmitBatch(pendingBatch, vacancyProof)
 	s.NoError(err)
 
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 
 	nextBatchID, err := s.client.Rollup.NextBatchID(nil)
 	s.NoError(err)
@@ -233,7 +233,7 @@ func (s *DepositsTestSuite) TestSubmitDepositBatch_StoresPendingBatch() {
 	err = s.depositCtx.SubmitBatch(pendingBatch, vacancyProof)
 	s.NoError(err)
 
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 
 	batch, err := s.storage.GetBatch(pendingBatch.ID)
 	s.NoError(err)
@@ -273,7 +273,7 @@ func (s *DepositsTestSuite) approveTokens() {
 	_, err = token.Approve(s.client.GetAccount(), s.client.ChainState.DepositManager, utils.ParseEther("100"))
 	s.NoError(err)
 
-	s.client.Commit()
+	s.client.GetBackend().Commit()
 }
 
 func (s *DepositsTestSuite) queueFourDeposits() []models.PendingDeposit {

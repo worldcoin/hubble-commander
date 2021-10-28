@@ -19,12 +19,9 @@ func NewDepositContext(
 	client *eth.Client,
 	cfg *config.RollupConfig,
 	ctx context.Context,
-) (*DepositContext, error) {
-	executionCtx, err := NewExecutionContext(storage, client, cfg, ctx)
-	if err != nil {
-		return nil, err
-	}
-	return newDepositContext(executionCtx), nil
+) *DepositContext {
+	executionCtx := NewExecutionContext(storage, client, cfg, ctx)
+	return newDepositContext(executionCtx)
 }
 
 func NewTestDepositContext(executionCtx *ExecutionContext) *DepositContext {

@@ -22,7 +22,7 @@ func NewRollupLoopContext(
 	cfg *config.RollupConfig,
 	ctx context.Context,
 	batchType batchtype.BatchType,
-) (RollupLoopContext, error) {
+) RollupLoopContext {
 	switch batchType {
 	case batchtype.Transfer, batchtype.Create2Transfer:
 		return NewRollupContext(storage, client, cfg, ctx, batchType)
@@ -30,7 +30,7 @@ func NewRollupLoopContext(
 		return NewDepositContext(storage, client, cfg, ctx)
 	case batchtype.Genesis, batchtype.MassMigration:
 		log.Fatal("Invalid batch type")
-		return nil, nil
+		return nil
 	}
-	return nil, nil
+	return nil
 }
