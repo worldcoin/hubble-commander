@@ -67,7 +67,7 @@ func (s *RollupTestSuite) TearDownTest() {
 func (s *RollupTestSuite) TestRollupLoopIteration_RollbacksStateOnRollupErrorButStoresInvalidTransactionErrorMessages() {
 	validTransfer := testutils.MakeTransfer(1, 2, 0, 100)
 	s.setTxHashAndSign(&s.wallets[0], &validTransfer)
-	invalidTransfer := testutils.MakeTransfer(2, 1, 1234, 100)
+	invalidTransfer := testutils.MakeTransfer(0, 1, 0, 100)
 	s.setTxHashAndSign(&s.wallets[1], &invalidTransfer)
 
 	err := s.testStorage.AddTransfer(&validTransfer)
@@ -90,7 +90,7 @@ func (s *RollupTestSuite) TestRollupLoopIteration_RollbacksStateOnRollupErrorBut
 	storedInvalidTransfer, err := s.testStorage.GetTransfer(invalidTransfer.Hash)
 	s.NoError(err)
 	s.NotNil(storedInvalidTransfer.ErrorMessage)
-	s.Equal(applier.ErrNonceTooHigh.Error(), *storedInvalidTransfer.ErrorMessage)
+	s.Equal(applier.ErrBalanceTooLow.Error(), *storedInvalidTransfer.ErrorMessage)
 }
 
 func (s *RollupTestSuite) setTxHashAndSign(wallet *bls.Wallet, transfer *models.Transfer) {

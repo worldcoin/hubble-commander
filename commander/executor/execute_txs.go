@@ -1,7 +1,9 @@
 package executor
 
 import (
+	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/pkg/errors"
 )
 
 func (c *RollupContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiver *FeeReceiver) (ExecuteTxsResult, error) {
@@ -23,6 +25,10 @@ func (c *RollupContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiv
 			return nil, appError
 		}
 		if transferError != nil {
+			if errors.Is(transferError, applier.ErrNonceTooHigh) {
+				//TODO-ski: add to skipped txs
+				continue
+			}
 			logAndSaveTransactionError(c.storage, tx, transferError)
 			returnStruct.AddInvalidTx(tx)
 			c.TxErrorsToStore = append(c.TxErrorsToStore, models.TransactionError{

@@ -69,6 +69,7 @@ type ExecuteTxsResult interface {
 type ExecuteTransfersResult struct {
 	appliedTxs models.GenericTransactionArray
 	invalidTxs models.GenericTransactionArray
+	skippedTxs models.GenericTransactionArray
 }
 
 func (a *ExecuteTransfersResult) AppliedTxs() models.GenericTransactionArray {
@@ -102,6 +103,7 @@ func (a *ExecuteTransfersResult) AddInvalidTx(tx models.GenericTransaction) {
 type ExecuteC2TResult struct {
 	appliedTxs      models.GenericTransactionArray
 	invalidTxs      models.GenericTransactionArray
+	skippedTxs      models.GenericTransactionArray
 	addedPubKeyIDs  []uint32
 	pendingAccounts []models.AccountLeaf
 }
