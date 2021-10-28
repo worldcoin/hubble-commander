@@ -104,8 +104,9 @@ func GetTestConfig() *Config {
 			DisableSignatures:                true,
 		},
 		API: &APIConfig{
-			Version: "dev-0.5.0-rc2",
-			Port:    "8080",
+			Version:            "dev-0.5.0-rc2",
+			Port:               "8080",
+			EnableProofMethods: true,
 		},
 		Badger: &BadgerConfig{
 			Path: getTestBadgerPath(),
