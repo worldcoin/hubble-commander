@@ -32,6 +32,7 @@ type TransferCommitmentsTestSuite struct {
 	cfg                    *config.RollupConfig
 	transactionExecutor    *TransactionExecutor
 	maxTxBytesInCommitment int
+	wallets                []bls.Wallet
 }
 
 func (s *TransferCommitmentsTestSuite) SetupSuite() {
@@ -49,6 +50,8 @@ func (s *TransferCommitmentsTestSuite) SetupTest() {
 		MaxCommitmentsPerBatch: 1,
 	}
 	s.maxTxBytesInCommitment = encoder.TransferLength * int(s.cfg.MaxTxsPerCommitment)
+
+	s.wallets = testutils.GenerateWallets(s.Assertions, testDomain, 2)
 
 	err = populateAccounts(s.storage.Storage, genesisBalances)
 	s.NoError(err)
@@ -74,6 +77,38 @@ func populateAccounts(storage *st.Storage, balances []models.Uint256) error {
 func (s *TransferCommitmentsTestSuite) TearDownTest() {
 	err := s.storage.Teardown()
 	s.NoError(err)
+}
+
+func (s *TransferCommitmentsTestSuite) hashSignAndAddTransfer(wallet *bls.Wallet, transfer *models.Transfer) {
+	hash, err := encoder.HashTransfer(transfer)
+	s.NoError(err)
+	transfer.Hash = *hash
+
+	encodedTransfer, err := encoder.EncodeTransferForSigning(transfer)
+	s.NoError(err)
+	signature, err := wallet.Sign(encodedTransfer)
+	s.NoError(err)
+	transfer.Signature = *signature.ModelsSignature()
+
+	_, err = s.storage.AddTransfer(transfer)
+	s.NoError(err)
+}
+
+func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_StoresErrorMessagesOfInvalidTransactions() {
+	s.cfg.MinTxsPerCommitment = 1
+
+	invalidTransfer := testutils.MakeTransfer(1, 1234, 0, 100)
+	s.hashSignAndAddTransfer(&s.wallets[0], &invalidTransfer)
+
+	commitments, err := s.transactionExecutor.CreateTransferCommitments(testDomain)
+	s.Nil(commitments)
+	s.ErrorIs(err, ErrNotEnoughTransfers)
+
+	transfer, err := s.storage.GetTransfer(invalidTransfer.Hash)
+	s.NoError(err)
+
+	s.NotNil(transfer.ErrorMessage)
+	s.Equal(ErrNonexistentReceiver.Error(), *transfer.ErrorMessage)
 }
 
 func (s *TransferCommitmentsTestSuite) TestCreateTransferCommitments_WithMinTxsPerCommitment() {

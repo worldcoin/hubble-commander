@@ -2,6 +2,7 @@ package executor
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
+	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
 type AppliedTransfers struct {
@@ -29,9 +30,14 @@ func (t *TransactionExecutor) ApplyTransfers(
 		}
 
 		transfer := &transfers[i]
-		receiverLeaf, err := t.storage.StateTree.Leaf(transfer.ToStateID)
-		if err != nil {
-			return nil, err
+		receiverLeaf, appError := t.storage.StateTree.Leaf(transfer.ToStateID)
+		if st.IsNotFoundError(appError) {
+			logAndSaveTransactionError(t.storage, &transfer.TransactionBase, ErrNonexistentReceiver)
+			returnStruct.invalidTransfers = append(returnStruct.invalidTransfers, *transfer)
+			continue
+		}
+		if appError != nil {
+			return nil, appError
 		}
 
 		transferError, appError := t.ApplyTransfer(transfer, receiverLeaf, feeReceiver.TokenID)
