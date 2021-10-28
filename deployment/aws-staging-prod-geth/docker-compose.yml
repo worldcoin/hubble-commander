@@ -181,6 +181,25 @@ services:
       - api-geth
       - datadog
 
+  backup:
+    build:
+      context: .
+    init: true
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
+    volumes:
+      - chain-spec-volume:/root/chain-spec
+      - badger-data-volume:/root/badger
+      - geth-data-volume:/root/geth
+      - ./../scripts:/root/scripts
+    networks:
+      hubble:
+    depends_on:
+      - postgres
+      - datadog
+
 volumes:
   mining-geth-data-volume:
   api-geth-data-volume:
