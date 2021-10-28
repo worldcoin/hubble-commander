@@ -25,16 +25,7 @@ func (c *RollupContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiv
 			return nil, appError
 		}
 		if transferError != nil {
-			if errors.Is(transferError, applier.ErrNonceTooHigh) {
-				//TODO-ski: add to skipped txs
-				continue
-			}
-			logAndSaveTransactionError(c.storage, tx, transferError)
-			returnStruct.AddInvalidTx(tx)
-			c.TxErrorsToStore = append(c.TxErrorsToStore, models.TransactionError{
-				Hash:         tx.GetBase().Hash,
-				ErrorMessage: transferError.Error(),
-			})
+			c.handleTransactionError(returnStruct, tx, transferError)
 			continue
 		}
 
@@ -56,4 +47,18 @@ func (c *RollupContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiv
 	}
 
 	return returnStruct, nil
+}
+
+func (c *RollupContext) handleTransactionError(result ExecuteTxsResult, tx models.GenericTransaction, err error) {
+	if errors.Is(err, applier.ErrNonceTooHigh) {
+		result.AddSkippedTx(tx)
+		return
+	}
+
+	logAndSaveTransactionError(c.storage, tx, err)
+	result.AddInvalidTx(tx)
+	c.TxErrorsToStore = append(c.TxErrorsToStore, models.TransactionError{
+		Hash:         tx.GetBase().Hash,
+		ErrorMessage: err.Error(),
+	})
 }
