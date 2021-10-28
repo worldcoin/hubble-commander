@@ -53,7 +53,6 @@ type ExecuteTxsResult interface {
 	AllTxs() models.GenericTransactionArray
 	AddApplied(singleTxResult applier.ApplySingleTxResult)
 	AddInvalidTx(tx models.GenericTransaction)
-	AddApplyResult(other ExecuteTxsResult)
 }
 
 type ExecuteTransfersResult struct {
@@ -87,11 +86,6 @@ func (a *ExecuteTransfersResult) AddApplied(singleTxResult applier.ApplySingleTx
 
 func (a *ExecuteTransfersResult) AddInvalidTx(tx models.GenericTransaction) {
 	a.invalidTxs = a.invalidTxs.AppendOne(tx)
-}
-
-func (a *ExecuteTransfersResult) AddApplyResult(other ExecuteTxsResult) {
-	a.appliedTxs = a.appliedTxs.Append(other.AppliedTxs())
-	a.invalidTxs = a.invalidTxs.Append(other.InvalidTxs())
 }
 
 type ExecuteC2TResult struct {
@@ -132,11 +126,4 @@ func (a *ExecuteC2TResult) AddApplied(singleTxResult applier.ApplySingleTxResult
 
 func (a *ExecuteC2TResult) AddInvalidTx(tx models.GenericTransaction) {
 	a.invalidTxs = a.invalidTxs.AppendOne(tx)
-}
-
-func (a *ExecuteC2TResult) AddApplyResult(other ExecuteTxsResult) {
-	a.appliedTxs = a.appliedTxs.Append(other.AppliedTxs())
-	a.invalidTxs = a.invalidTxs.Append(other.InvalidTxs())
-	a.addedPubKeyIDs = append(a.addedPubKeyIDs, other.AddedPubKeyIDs()...)
-	a.pendingAccounts = append(a.pendingAccounts, other.PendingAccounts()...)
 }
