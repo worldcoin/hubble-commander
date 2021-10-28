@@ -118,8 +118,7 @@ func (c *RollupContext) executeTxsForCommitment(pendingTxs models.GenericTransac
 		return nil, nil, ErrNotEnoughTxs
 	}
 
-	newPendingTxs = pendingTxs
-	executeTxsResult, err := c.ExecuteTxs(newPendingTxs, feeReceiver)
+	executeTxsResult, err := c.ExecuteTxs(pendingTxs, feeReceiver)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -127,7 +126,7 @@ func (c *RollupContext) executeTxsForCommitment(pendingTxs models.GenericTransac
 		return nil, nil, ErrNotEnoughTxs
 	}
 
-	newPendingTxs = removeTxs(newPendingTxs, executeTxsResult.AllTxs())
+	newPendingTxs = removeTxs(pendingTxs, executeTxsResult.AllTxs())
 	return c.Executor.NewExecuteTxsForCommitmentResult(executeTxsResult), newPendingTxs, nil
 }
 
