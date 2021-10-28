@@ -38,7 +38,7 @@ func (s *GetCommitmentProofTestSuite) SetupTest() {
 	s.NoError(err)
 	s.api = &API{
 		storage: s.storage.Storage,
-		cfg:     &config.APIConfig{EnableProofEndpoints: true},
+		cfg:     &config.APIConfig{EnableProofMethods: true},
 	}
 
 	s.batch = models.Batch{
