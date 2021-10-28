@@ -9,10 +9,12 @@ type ExecuteTxsForCommitmentResult interface {
 	AppliedTxs() models.GenericTransactionArray
 	AddedPubKeyIDs() []uint32
 	PendingAccounts() []models.AccountLeaf
+	PendingTxs() models.GenericTransactionArray
 }
 
 type ExecuteTransfersForCommitmentResult struct {
 	appliedTxs models.TransferArray
+	pendingTxs models.TransferArray
 }
 
 func (a *ExecuteTransfersForCommitmentResult) AppliedTxs() models.GenericTransactionArray {
@@ -27,10 +29,15 @@ func (a *ExecuteTransfersForCommitmentResult) PendingAccounts() []models.Account
 	panic("PendingAccounts cannot be invoked on ExecuteTransfersForCommitmentResult")
 }
 
+func (a *ExecuteTransfersForCommitmentResult) PendingTxs() models.GenericTransactionArray {
+	return a.pendingTxs
+}
+
 type ExecuteC2TForCommitmentResult struct {
 	appliedTxs      models.Create2TransferArray
 	addedPubKeyIDs  []uint32
 	pendingAccounts []models.AccountLeaf
+	pendingTxs      models.Create2TransferArray
 }
 
 func (a *ExecuteC2TForCommitmentResult) AppliedTxs() models.GenericTransactionArray {
@@ -43,6 +50,10 @@ func (a *ExecuteC2TForCommitmentResult) AddedPubKeyIDs() []uint32 {
 
 func (a *ExecuteC2TForCommitmentResult) PendingAccounts() []models.AccountLeaf {
 	return a.pendingAccounts
+}
+
+func (a *ExecuteC2TForCommitmentResult) PendingTxs() models.GenericTransactionArray {
+	return a.pendingTxs
 }
 
 type ExecuteTxsResult interface {

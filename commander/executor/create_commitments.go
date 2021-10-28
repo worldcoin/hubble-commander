@@ -83,7 +83,7 @@ func (c *RollupContext) createCommitment(pendingTxs models.GenericTransactionArr
 		return nil, err
 	}
 
-	executeResult, newPendingTxs, err := c.executeTxsForCommitment(pendingTxs, feeReceiver)
+	executeResult, err := c.executeTxsForCommitment(pendingTxs, feeReceiver)
 	if errors.Is(err, ErrNotEnoughTxs) {
 		if revertErr := c.storage.StateTree.RevertTo(*initialStateRoot); revertErr != nil {
 			return nil, revertErr
@@ -106,28 +106,27 @@ func (c *RollupContext) createCommitment(pendingTxs models.GenericTransactionArr
 		time.Since(startTime).Round(time.Millisecond).String(),
 	)
 
-	return c.Executor.NewCreateCommitmentResult(executeResult, commitment, newPendingTxs), nil
+	return c.Executor.NewCreateCommitmentResult(executeResult, commitment, executeResult.PendingTxs()), nil
 }
 
 func (c *RollupContext) executeTxsForCommitment(pendingTxs models.GenericTransactionArray, feeReceiver *FeeReceiver) (
 	result ExecuteTxsForCommitmentResult,
-	newPendingTxs models.GenericTransactionArray,
 	err error,
 ) {
 	if pendingTxs.Len() < int(c.cfg.MinTxsPerCommitment) {
-		return nil, nil, ErrNotEnoughTxs
+		return nil, ErrNotEnoughTxs
 	}
 
 	executeTxsResult, err := c.ExecuteTxs(pendingTxs, feeReceiver)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if executeTxsResult.AppliedTxs().Len() < int(c.cfg.MinTxsPerCommitment) {
-		return nil, nil, ErrNotEnoughTxs
+		return nil, ErrNotEnoughTxs
 	}
 
-	newPendingTxs = removeTxs(pendingTxs, executeTxsResult.AllTxs())
-	return c.Executor.NewExecuteTxsForCommitmentResult(executeTxsResult), newPendingTxs, nil
+	newPendingTxs := removeTxs(pendingTxs, executeTxsResult.AllTxs())
+	return c.Executor.NewExecuteTxsForCommitmentResult(executeTxsResult, newPendingTxs), nil
 }
 
 func (c *RollupContext) queryPendingTxs() (models.GenericTransactionArray, error) {
