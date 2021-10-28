@@ -4,11 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-func (c *RollupContext) ExecuteTxs(
-	txs models.GenericTransactionArray,
-	maxApplied uint32,
-	feeReceiver *FeeReceiver,
-) (ExecuteTxsResult, error) {
+func (c *RollupContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiver *FeeReceiver) (ExecuteTxsResult, error) {
 	if txs.Len() == 0 {
 		return c.Executor.NewExecuteTxsResult(0), nil
 	}
@@ -17,7 +13,7 @@ func (c *RollupContext) ExecuteTxs(
 	combinedFee := models.MakeUint256(0)
 
 	for i := 0; i < txs.Len(); i++ {
-		if returnStruct.AppliedTxs().Len() == int(maxApplied) {
+		if returnStruct.AppliedTxs().Len() == int(c.cfg.MaxTxsPerCommitment) {
 			break
 		}
 

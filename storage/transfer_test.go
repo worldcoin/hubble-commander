@@ -187,7 +187,7 @@ func (s *TransferTestSuite) TestGetPendingTransfers() {
 	err := s.storage.BatchAddTransfer(transfers)
 	s.NoError(err)
 
-	res, err := s.storage.GetPendingTransfers(32)
+	res, err := s.storage.GetPendingTransfers()
 	s.NoError(err)
 
 	s.Len(res, 2)
@@ -222,7 +222,7 @@ func (s *TransferTestSuite) TestGetPendingTransfers_OrdersTransfersByNonceAndTxH
 	err := s.storage.BatchAddTransfer(transfers)
 	s.NoError(err)
 
-	res, err := s.storage.GetPendingTransfers(32)
+	res, err := s.storage.GetPendingTransfers()
 	s.NoError(err)
 
 	s.Equal([]models.Transfer{transfer, transfer2, transfer5, transfer4, transfer3}, res)

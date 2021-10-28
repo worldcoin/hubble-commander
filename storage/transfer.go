@@ -52,9 +52,9 @@ func (s *TransactionStorage) GetTransfer(hash common.Hash) (*models.Transfer, er
 	return tx.ToTransfer(txReceipt), nil
 }
 
-func (s *TransactionStorage) GetPendingTransfers(limit uint32) (txs []models.Transfer, err error) {
+func (s *TransactionStorage) GetPendingTransfers() (txs []models.Transfer, err error) {
 	err = s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
-		txs, err = txStorage.unsafeGetPendingTransfers(limit)
+		txs, err = txStorage.unsafeGetPendingTransfers()
 		return err
 	})
 	if err != nil {
@@ -63,7 +63,7 @@ func (s *TransactionStorage) GetPendingTransfers(limit uint32) (txs []models.Tra
 	return txs, nil
 }
 
-func (s *TransactionStorage) unsafeGetPendingTransfers(limit uint32) ([]models.Transfer, error) {
+func (s *TransactionStorage) unsafeGetPendingTransfers() ([]models.Transfer, error) {
 	txs := make([]models.Transfer, 0, 32)
 	var storedTx models.StoredTx
 	err := s.database.Badger.Iterator(models.StoredTxPrefix, db.KeyIteratorOpts,
@@ -85,10 +85,7 @@ func (s *TransactionStorage) unsafeGetPendingTransfers(limit uint32) ([]models.T
 		return txs[i].Nonce.Cmp(&txs[j].Nonce) < 0
 	})
 
-	if len(txs) <= int(limit) {
-		return txs, nil
-	}
-	return txs[:limit], nil
+	return txs, nil
 }
 
 func (s *TransactionStorage) GetTransfersByCommitmentID(id *models.CommitmentID) ([]models.Transfer, error) {
