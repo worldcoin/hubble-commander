@@ -126,13 +126,13 @@ func (s *StateLeafTestSuite) TestGetStateLeavesByPublicKey() {
 			Nonce:    models.MakeUint256(0),
 		},
 		{
-			PubKeyID: 1,
+			PubKeyID: 3,
 			TokenID:  models.MakeUint256(25),
 			Balance:  models.MakeUint256(1),
 			Nonce:    models.MakeUint256(73),
 		},
 		{
-			PubKeyID: 3,
+			PubKeyID: 1,
 			TokenID:  models.MakeUint256(25),
 			Balance:  models.MakeUint256(1),
 			Nonce:    models.MakeUint256(73),
@@ -154,9 +154,9 @@ func (s *StateLeafTestSuite) TestGetStateLeavesByPublicKey() {
 	s.NoError(err)
 
 	s.Len(returnUserStates, 3)
-	s.Contains(returnUserStates, stateLeaves[0])
-	s.Contains(returnUserStates, stateLeaves[2])
-	s.Contains(returnUserStates, stateLeaves[3])
+	s.Equal(returnUserStates[0], stateLeaves[0])
+	s.Equal(returnUserStates[1], stateLeaves[2])
+	s.Equal(returnUserStates[2], stateLeaves[3])
 }
 
 func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf() {

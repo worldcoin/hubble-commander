@@ -23,17 +23,16 @@ func (s *Storage) GetStateLeavesByPublicKey(publicKey *models.PublicKey) (stateL
 	flatStateLeaves := make([]models.FlatStateLeaf, 0, 1)
 	err = s.database.Badger.Find(
 		&flatStateLeaves,
-		bh.Where("PubKeyID").In(pubKeyIDs...).Index("PubKeyID"),
+		bh.Where("PubKeyID").In(pubKeyIDs...).Index("PubKeyID").SortBy("StateID"),
 	)
 	if err != nil {
 		return nil, err
 	}
-	numLeaves := len(flatStateLeaves)
-	if numLeaves == 0 {
+	if len(flatStateLeaves) == 0 {
 		return nil, errors.WithStack(NewNotFoundError("user states"))
 	}
 
-	stateLeaves = make([]models.StateLeaf, 0, numLeaves)
+	stateLeaves = make([]models.StateLeaf, 0, len(flatStateLeaves))
 	for i := range flatStateLeaves {
 		stateLeaves = append(stateLeaves, *flatStateLeaves[i].StateLeaf())
 	}
