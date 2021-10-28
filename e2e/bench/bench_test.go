@@ -12,9 +12,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/crypto"
 	"github.com/Worldcoin/hubble-commander/e2e"
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -258,7 +258,7 @@ func (s *BenchmarkSuite) runForWallet(senderWallet bls.Wallet, senderStateID uin
 }
 
 func (s *BenchmarkSuite) sendTransfer(wallet bls.Wallet, from, to uint32, nonce models.Uint256) common.Hash {
-	transfer, err := api.SignTransfer(&wallet, dto.Transfer{
+	transfer, err := crypto.SignTransfer(&wallet, dto.Transfer{
 		FromStateID: &from,
 		ToStateID:   &to,
 		Amount:      models.NewUint256(1),
@@ -276,7 +276,7 @@ func (s *BenchmarkSuite) sendTransfer(wallet bls.Wallet, from, to uint32, nonce 
 }
 
 func (s *BenchmarkSuite) sendC2T(wallet bls.Wallet, from uint32, to *models.PublicKey, nonce models.Uint256) common.Hash {
-	transfer, err := api.SignCreate2Transfer(&wallet, dto.Create2Transfer{
+	transfer, err := crypto.SignCreate2Transfer(&wallet, dto.Create2Transfer{
 		FromStateID: &from,
 		ToPublicKey: to,
 		Amount:      models.NewUint256(1),

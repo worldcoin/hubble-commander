@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/crypto"
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
@@ -86,7 +86,7 @@ func testGetPublicKey(t *testing.T, client jsonrpc.RPCClient, state *dto.UserSta
 }
 
 func testSendTransfer(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, nonce uint64) common.Hash {
-	transfer, err := api.SignTransfer(&senderWallet, dto.Transfer{
+	transfer, err := crypto.SignTransfer(&senderWallet, dto.Transfer{
 		FromStateID: ref.Uint32(1),
 		ToStateID:   ref.Uint32(2),
 		Amount:      models.NewUint256(90),
@@ -109,7 +109,7 @@ func testSendCreate2Transfer(
 	targetPublicKey *models.PublicKey,
 	nonce uint64,
 ) common.Hash {
-	transfer, err := api.SignCreate2Transfer(&senderWallet, dto.Create2Transfer{
+	transfer, err := crypto.SignCreate2Transfer(&senderWallet, dto.Create2Transfer{
 		FromStateID: ref.Uint32(1),
 		ToPublicKey: targetPublicKey,
 		Amount:      models.NewUint256(90),
@@ -135,7 +135,7 @@ func testGetTransaction(t *testing.T, client jsonrpc.RPCClient, txHash common.Ha
 
 func send31MoreTransfers(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, startNonce uint64) {
 	for nonce := startNonce; nonce < startNonce+31; nonce++ {
-		transfer, err := api.SignTransfer(&senderWallet, dto.Transfer{
+		transfer, err := crypto.SignTransfer(&senderWallet, dto.Transfer{
 			FromStateID: ref.Uint32(1),
 			ToStateID:   ref.Uint32(2),
 			Amount:      models.NewUint256(90),
@@ -161,7 +161,7 @@ func send31MoreCreate2Transfers(
 	walletIndex := len(wallets) - 31
 	for nonce := startNonce; nonce < startNonce+31; nonce++ {
 		receiverWallet := wallets[walletIndex]
-		transfer, err := api.SignCreate2Transfer(&senderWallet, dto.Create2Transfer{
+		transfer, err := crypto.SignCreate2Transfer(&senderWallet, dto.Create2Transfer{
 			FromStateID: ref.Uint32(1),
 			ToPublicKey: receiverWallet.PublicKey(),
 			Amount:      models.NewUint256(90),

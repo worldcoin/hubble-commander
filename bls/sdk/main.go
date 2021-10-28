@@ -6,8 +6,8 @@ import (
 	"encoding/hex"
 	"math/big"
 
-	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/crypto"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -87,7 +87,7 @@ func SignTransfer(from, to C.uint, amount, fee, nonce, privateKey, domain *C.cha
 	nonceBigInt := new(big.Int)
 	nonceBigInt.SetString(C.GoString(nonce), 10)
 
-	transfer, err := api.SignTransfer(wallet, dto.Transfer{
+	transfer, err := crypto.SignTransfer(wallet, dto.Transfer{
 		FromStateID: ref.Uint32(uint32(from)),
 		ToStateID:   ref.Uint32(uint32(to)),
 		Amount:      models.NewUint256FromBig(*amountBigInt),
@@ -130,7 +130,7 @@ func SignCreate2Transfer(from C.uint, toPubKey, amount, fee, nonce, privateKey, 
 	var toPublicKey models.PublicKey
 	copy(toPublicKey[:], toPublicKeyBytes)
 
-	transfer, err := api.SignCreate2Transfer(wallet, dto.Create2Transfer{
+	transfer, err := crypto.SignCreate2Transfer(wallet, dto.Create2Transfer{
 		FromStateID: ref.Uint32(uint32(from)),
 		ToPublicKey: &toPublicKey,
 		Amount:      models.NewUint256FromBig(*amountBigInt),

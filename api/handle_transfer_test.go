@@ -5,6 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/crypto"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
@@ -98,7 +99,7 @@ func (s *SendTransferTestSuite) SetupTest() {
 }
 
 func (s *SendTransferTestSuite) signTransfer(transfer dto.Transfer) dto.Transfer {
-	signedTransfer, err := SignTransfer(s.wallet, transfer)
+	signedTransfer, err := crypto.SignTransfer(s.wallet, transfer)
 	s.NoError(err)
 	return *signedTransfer
 }

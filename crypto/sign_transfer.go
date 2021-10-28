@@ -1,4 +1,4 @@
-package api
+package crypto
 
 import (
 	"github.com/Worldcoin/hubble-commander/bls"
