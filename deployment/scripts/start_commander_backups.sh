@@ -7,19 +7,24 @@
 CRON_SCHEDULE_EXPRESSION="*/20 * * * *"
 
 BACKUP_SCRIPT_PATH=""
-COMMANDER_DIR_PATH=""
+BACKUPS_DIR_PATH=""
 BADGER_DIR_PATH=""
 CHAIN_SPEC_DIR_PATH=""
 GETH_CHAINDATA_DIR_PATH=""
 
 PIGZ_PATH=""
 PG_DUMP_PATH=""
+AWS_PATH=""
 
 AWS_S3_BUCKET=""
 
 CRON_SCRIPT_PATH=""
 
-BACKUP_COMMAND="bash ${BACKUP_SCRIPT_PATH} ${COMMANDER_DIR_PATH} ${BADGER_DIR_PATH} ${CHAIN_SPEC_DIR_PATH} ${GETH_CHAINDATA_DIR_PATH} ${PIGZ_PATH} ${PG_DUMP_PATH} ${AWS_S3_BUCKET}"
+# Initial message for easier logs readability
+echo "Starting the docker container for running backups..."
+
+# Schedule backups
+BACKUP_COMMAND="bash ${BACKUP_SCRIPT_PATH} ${BACKUPS_DIR_PATH} ${BADGER_DIR_PATH} ${CHAIN_SPEC_DIR_PATH} ${GETH_CHAINDATA_DIR_PATH} ${PIGZ_PATH} ${PG_DUMP_PATH} ${AWS_PATH} ${AWS_S3_BUCKET} > /proc/1/fd/1 2>&1"
 
 # Check the credentials, permission and connection to the AWS S3 bucket
 touch ./test_status
