@@ -73,6 +73,8 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *t
 	if errors.As(err, &rollupErr) {
 		if rollupErr.IsLoggable {
 			log.Warnf("%+v", err)
+			transactionExecutor.Rollback(&err)
+			return nil
 		}
 		return transactionExecutor.Commit()
 	}
