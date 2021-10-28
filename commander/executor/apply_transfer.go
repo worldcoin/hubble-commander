@@ -11,6 +11,7 @@ var (
 	ErrNonceTooHigh        = errors.New("nonce too high")
 	ErrInvalidSlicesLength = errors.New("invalid slices length")
 	ErrNilReceiverStateID  = errors.New("transfer receiver state id cannot be nil")
+	ErrNonexistentReceiver = errors.New("receiver state ID does not exist")
 
 	ErrBalanceTooLow              = errors.New("not enough balance")
 	ErrInvalidSenderTokenID       = errors.New("invalid sender token ID")
