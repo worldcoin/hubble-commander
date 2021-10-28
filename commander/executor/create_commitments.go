@@ -114,14 +114,12 @@ func (c *RollupContext) executeTxsForCommitment(pendingTxs models.GenericTransac
 	newPendingTxs models.GenericTransactionArray,
 	err error,
 ) {
-	newPendingTxs = pendingTxs
-
-	if newPendingTxs.Len() < int(c.cfg.MinTxsPerCommitment) {
+	if pendingTxs.Len() < int(c.cfg.MinTxsPerCommitment) {
 		return nil, nil, ErrNotEnoughTxs
 	}
 
-	//TODO-rem: remove second arg from function
-	executeTxsResult, err := c.ExecuteTxs(newPendingTxs, c.cfg.MaxTxsPerCommitment, feeReceiver)
+	newPendingTxs = pendingTxs
+	executeTxsResult, err := c.ExecuteTxs(newPendingTxs, feeReceiver)
 	if err != nil {
 		return nil, nil, err
 	}
