@@ -29,21 +29,20 @@ func (t *TransactionExecutor) ApplyTransfers(
 			break
 		}
 
-		var transferError error
-
 		transfer := &transfers[i]
 		receiverLeaf, appError := t.storage.StateTree.Leaf(transfer.ToStateID)
 		if st.IsNotFoundError(appError) {
-			transferError = ErrNonexistentReceiver
-		} else if appError != nil {
+			logAndSaveTransactionError(t.storage, &transfer.TransactionBase, ErrNonexistentReceiver)
+			returnStruct.invalidTransfers = append(returnStruct.invalidTransfers, *transfer)
+			continue
+		}
+		if appError != nil {
 			return nil, appError
 		}
 
-		if transferError == nil {
-			transferError, appError = t.ApplyTransfer(transfer, receiverLeaf, feeReceiver.TokenID)
-			if appError != nil {
-				return nil, appError
-			}
+		transferError, appError := t.ApplyTransfer(transfer, receiverLeaf, feeReceiver.TokenID)
+		if appError != nil {
+			return nil, appError
 		}
 		if transferError != nil {
 			logAndSaveTransactionError(t.storage, &transfer.TransactionBase, transferError)
