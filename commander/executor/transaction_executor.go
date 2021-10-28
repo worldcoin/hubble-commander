@@ -20,9 +20,7 @@ type TransactionExecutor interface {
 	SerializeTxs(results ExecuteTxsForCommitmentResult) ([]byte, error)
 	MarkTxsAsIncluded(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error
 	AddPendingAccount(result applier.ApplySingleTxResult) error
-	NewCreateCommitmentResult(
-		result ExecuteTxsForCommitmentResult, commitment *models.TxCommitment, pendingTxs models.GenericTransactionArray,
-	) CreateCommitmentResult
+	NewCreateCommitmentResult(result ExecuteTxsForCommitmentResult, commitment *models.TxCommitment) CreateCommitmentResult
 	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (result applier.ApplySingleTxResult, transferError, appError error)
 	SubmitBatch(client *eth.Client, commitments []models.TxCommitment) (*types.Transaction, error)
 }
@@ -79,11 +77,9 @@ func (e *TransferExecutor) NewExecuteTxsForCommitmentResult(executeTxsResult Exe
 	}
 }
 
-func (e *TransferExecutor) NewCreateCommitmentResult(
-	_ ExecuteTxsForCommitmentResult, commitment *models.TxCommitment, pendingTxs models.GenericTransactionArray,
-) CreateCommitmentResult {
+func (e *TransferExecutor) NewCreateCommitmentResult(result ExecuteTxsForCommitmentResult, commitment *models.TxCommitment) CreateCommitmentResult {
 	return &CreateTransferCommitmentResult{
-		newPendingTxs: pendingTxs,
+		newPendingTxs: result.PendingTxs(),
 		commitment:    commitment,
 	}
 }
@@ -153,11 +149,9 @@ func (e *C2TExecutor) NewExecuteTxsForCommitmentResult(executeTxsResult ExecuteT
 	}
 }
 
-func (e *C2TExecutor) NewCreateCommitmentResult(
-	result ExecuteTxsForCommitmentResult, commitment *models.TxCommitment, pendingTxs models.GenericTransactionArray,
-) CreateCommitmentResult {
+func (e *C2TExecutor) NewCreateCommitmentResult(result ExecuteTxsForCommitmentResult, commitment *models.TxCommitment) CreateCommitmentResult {
 	return &CreateC2TCommitmentResult{
-		newPendingTxs:   pendingTxs,
+		newPendingTxs:   result.PendingTxs(),
 		pendingAccounts: result.PendingAccounts(),
 		commitment:      commitment,
 	}

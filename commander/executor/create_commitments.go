@@ -106,7 +106,7 @@ func (c *RollupContext) createCommitment(pendingTxs models.GenericTransactionArr
 		time.Since(startTime).Round(time.Millisecond).String(),
 	)
 
-	return c.Executor.NewCreateCommitmentResult(executeResult, commitment, executeResult.PendingTxs()), nil
+	return c.Executor.NewCreateCommitmentResult(executeResult, commitment), nil
 }
 
 func (c *RollupContext) executeTxsForCommitment(pendingTxs models.GenericTransactionArray, feeReceiver *FeeReceiver) (
