@@ -72,31 +72,6 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_WithMoreThan
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
 }
 
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_QueriesForMorePendingTransfersUntilSatisfied() {
-	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 124)
-
-	transfers := testutils.GenerateValidCreate2Transfers(6)
-	s.invalidateCreate2Transfers(transfers[3:6])
-
-	highNonceTransfer := testutils.MakeCreate2Transfer(124, nil, 10, 1, &models.PublicKey{5, 4, 3, 2, 1})
-	transfers = append(transfers, highNonceTransfer)
-
-	s.addCreate2Transfers(transfers)
-
-	preRoot, err := s.executionCtx.storage.StateTree.Root()
-	s.NoError(err)
-
-	commitments, err := s.rollupCtx.CreateCommitments()
-	s.NoError(err)
-	s.Len(commitments, 1)
-	s.Len(commitments[0].Transactions, s.maxTxBytesInCommitment)
-
-	postRoot, err := s.executionCtx.storage.StateTree.Root()
-	s.NoError(err)
-	s.NotEqual(preRoot, postRoot)
-	s.Equal(commitments[0].PostStateRoot, *postRoot)
-}
-
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_ForMultipleCommitmentsInBatch() {
 	s.cfg = &config.RollupConfig{
 		MinTxsPerCommitment:    1,

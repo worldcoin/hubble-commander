@@ -114,31 +114,6 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_WithMoreThanMinTxsP
 	s.Equal(commitments[0].PostStateRoot, *postRoot)
 }
 
-func (s *TransferCommitmentsTestSuite) TestCreateCommitments_QueriesForMorePendingTransfersUntilSatisfied() {
-	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 123)
-
-	transfers := testutils.GenerateValidTransfers(6)
-	s.invalidateTransfers(transfers[3:6])
-
-	highNonceTransfer := testutils.MakeTransfer(123, 1, 10, 1)
-	transfers = append(transfers, highNonceTransfer)
-
-	s.addTransfers(transfers)
-
-	preRoot, err := s.rollupCtx.storage.StateTree.Root()
-	s.NoError(err)
-
-	commitments, err := s.rollupCtx.CreateCommitments()
-	s.NoError(err)
-	s.Len(commitments, 1)
-	s.Len(commitments[0].Transactions, s.maxTxBytesInCommitment)
-
-	postRoot, err := s.rollupCtx.storage.StateTree.Root()
-	s.NoError(err)
-	s.NotEqual(preRoot, postRoot)
-	s.Equal(commitments[0].PostStateRoot, *postRoot)
-}
-
 func (s *TransferCommitmentsTestSuite) TestCreateCommitments_ForMultipleCommitmentsInBatch() {
 	s.rollupCtx.cfg = &config.RollupConfig{
 		MinTxsPerCommitment:    1,
