@@ -179,7 +179,7 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 			return false, err
 		})
 		if err != nil && err != db.ErrIteratorFinished {
-			return err
+			return errors.WithStack(err)
 		}
 		if *currentRootHash != targetRootHash {
 			return errors.WithStack(ErrNonexistentState)
