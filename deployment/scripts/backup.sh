@@ -36,7 +36,7 @@ BACKUP_DIR=$(date +"%Y-%m-%d_%H:%M:%S")
 BACKUP_DIR_PATH="${BACKUPS_TARGET_DIR_PATH}/${BACKUP_DIR}"
 COMPRESSED_BACKUP_DIR_PATH="${BACKUP_DIR_PATH}.tgz"
 
-# Save timestamp before running backup
+# Save timestamp before running the backup
 INIT_TIMESTAMP=$(date +%s)
 
 # Create a new backup directory based on the current time
