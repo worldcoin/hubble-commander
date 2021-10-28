@@ -292,10 +292,8 @@ func TestTransferCommitmentsTestSuite(t *testing.T) {
 }
 
 func (s *TransferCommitmentsTestSuite) addTransfers(transfers []models.Transfer) {
-	for i := range transfers {
-		err := s.storage.AddTransfer(&transfers[i])
-		s.NoError(err)
-	}
+	err := s.storage.BatchAddTransfer(transfers)
+	s.NoError(err)
 }
 
 func (s *TransferCommitmentsTestSuite) preparePendingTransfers(transfersAmount uint32) {
