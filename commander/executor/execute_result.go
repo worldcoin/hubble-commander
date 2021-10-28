@@ -59,11 +59,13 @@ func (a *ExecuteC2TForCommitmentResult) PendingTxs() models.GenericTransactionAr
 type ExecuteTxsResult interface {
 	AppliedTxs() models.GenericTransactionArray
 	InvalidTxs() models.GenericTransactionArray
+	SkippedTxs() models.GenericTransactionArray
 	AddedPubKeyIDs() []uint32
 	PendingAccounts() []models.AccountLeaf
 	AllTxs() models.GenericTransactionArray
 	AddApplied(singleTxResult applier.ApplySingleTxResult)
 	AddInvalidTx(tx models.GenericTransaction)
+	AddSkippedTx(tx models.GenericTransaction)
 }
 
 type ExecuteTransfersResult struct {
@@ -80,6 +82,10 @@ func (a *ExecuteTransfersResult) InvalidTxs() models.GenericTransactionArray {
 	return a.invalidTxs
 }
 
+func (a *ExecuteTransfersResult) SkippedTxs() models.GenericTransactionArray {
+	return a.skippedTxs
+}
+
 func (a *ExecuteTransfersResult) AddedPubKeyIDs() []uint32 {
 	panic("AddedPubKeyIDs cannot be invoked on ExecuteTransfersResult")
 }
@@ -89,7 +95,7 @@ func (a *ExecuteTransfersResult) PendingAccounts() []models.AccountLeaf {
 }
 
 func (a *ExecuteTransfersResult) AllTxs() models.GenericTransactionArray {
-	return a.appliedTxs.Append(a.invalidTxs)
+	return a.appliedTxs.Append(a.invalidTxs.Append(a.skippedTxs))
 }
 
 func (a *ExecuteTransfersResult) AddApplied(singleTxResult applier.ApplySingleTxResult) {
@@ -98,6 +104,10 @@ func (a *ExecuteTransfersResult) AddApplied(singleTxResult applier.ApplySingleTx
 
 func (a *ExecuteTransfersResult) AddInvalidTx(tx models.GenericTransaction) {
 	a.invalidTxs = a.invalidTxs.AppendOne(tx)
+}
+
+func (a *ExecuteTransfersResult) AddSkippedTx(tx models.GenericTransaction) {
+	a.skippedTxs = a.skippedTxs.AppendOne(tx)
 }
 
 type ExecuteC2TResult struct {
@@ -116,6 +126,10 @@ func (a *ExecuteC2TResult) InvalidTxs() models.GenericTransactionArray {
 	return a.invalidTxs
 }
 
+func (a *ExecuteC2TResult) SkippedTxs() models.GenericTransactionArray {
+	return a.skippedTxs
+}
+
 func (a *ExecuteC2TResult) AddedPubKeyIDs() []uint32 {
 	return a.addedPubKeyIDs
 }
@@ -125,7 +139,7 @@ func (a *ExecuteC2TResult) PendingAccounts() []models.AccountLeaf {
 }
 
 func (a *ExecuteC2TResult) AllTxs() models.GenericTransactionArray {
-	return a.appliedTxs.Append(a.invalidTxs)
+	return a.appliedTxs.Append(a.invalidTxs.Append(a.skippedTxs))
 }
 
 func (a *ExecuteC2TResult) AddApplied(singleTxResult applier.ApplySingleTxResult) {
@@ -139,4 +153,8 @@ func (a *ExecuteC2TResult) AddApplied(singleTxResult applier.ApplySingleTxResult
 
 func (a *ExecuteC2TResult) AddInvalidTx(tx models.GenericTransaction) {
 	a.invalidTxs = a.invalidTxs.AppendOne(tx)
+}
+
+func (a *ExecuteC2TResult) AddSkippedTx(tx models.GenericTransaction) {
+	a.skippedTxs = a.skippedTxs.AppendOne(tx)
 }
