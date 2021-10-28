@@ -44,6 +44,7 @@ func (s *TransferCommitmentsTestSuite) SetupTest() {
 		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    4,
 		FeeReceiverPubKeyID:    2,
+		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 1,
 	}
 	s.maxTxBytesInCommitment = encoder.TransferLength * int(s.cfg.MaxTxsPerCommitment)
@@ -201,6 +202,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorWhenThe
 		MinTxsPerCommitment:    32,
 		MaxTxsPerCommitment:    32,
 		FeeReceiverPubKeyID:    2,
+		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 1,
 	}
 

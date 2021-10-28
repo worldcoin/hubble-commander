@@ -25,6 +25,7 @@ func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    4,
 		FeeReceiverPubKeyID:    2,
+		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 1,
 	})
 	s.maxTxBytesInCommitment = encoder.Create2TransferLength * int(s.cfg.MaxTxsPerCommitment)
@@ -163,6 +164,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_ReturnsError
 		MaxTxsPerCommitment:    32,
 		FeeReceiverPubKeyID:    2,
 		MaxCommitmentsPerBatch: 1,
+		MinCommitmentsPerBatch: 1,
 	}
 
 	executionCtx := NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
