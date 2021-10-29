@@ -24,22 +24,9 @@ func (s *DepositsTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 
 	s.depositSubtree = models.PendingDepositSubTree{
-		ID:   models.MakeUint256(1),
-		Root: utils.RandomHash(),
-		Deposits: []models.PendingDeposit{
-			{
-				ID:         models.DepositID{BlockNumber: 1, LogIndex: 0},
-				ToPubKeyID: 1,
-				TokenID:    models.MakeUint256(0),
-				L2Amount:   models.MakeUint256(50),
-			},
-			{
-				ID:         models.DepositID{BlockNumber: 1, LogIndex: 1},
-				ToPubKeyID: 1,
-				TokenID:    models.MakeUint256(0),
-				L2Amount:   models.MakeUint256(50),
-			},
-		},
+		ID:       models.MakeUint256(1),
+		Root:     utils.RandomHash(),
+		Deposits: getFourDeposits(),
 	}
 }
 

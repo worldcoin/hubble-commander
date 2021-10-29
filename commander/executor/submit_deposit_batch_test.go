@@ -28,22 +28,9 @@ func (s *SubmitDepositBatchTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 
 	s.depositSubtree = models.PendingDepositSubTree{
-		ID:   models.MakeUint256(1),
-		Root: utils.RandomHash(),
-		Deposits: []models.PendingDeposit{
-			{
-				ID:         models.DepositID{BlockNumber: 1, LogIndex: 0},
-				ToPubKeyID: 1,
-				TokenID:    models.MakeUint256(0),
-				L2Amount:   models.MakeUint256(50),
-			},
-			{
-				ID:         models.DepositID{BlockNumber: 1, LogIndex: 1},
-				ToPubKeyID: 1,
-				TokenID:    models.MakeUint256(0),
-				L2Amount:   models.MakeUint256(50),
-			},
-		},
+		ID:       models.MakeUint256(1),
+		Root:     utils.RandomHash(),
+		Deposits: getFourDeposits(),
 	}
 }
 
@@ -66,10 +53,7 @@ func (s *SubmitDepositBatchTestSuite) TearDownTest() {
 }
 
 func (s *SubmitDepositBatchTestSuite) TestSubmitDepositBatch_SubmitsBatchOnChain() {
-	s.registerToken(s.client.ExampleTokenAddress)
-	s.approveTokens()
-	s.queueFourDeposits()
-	s.addGenesisBatch()
+	s.prepareDeposits()
 
 	pendingBatch, err := s.depositCtx.NewPendingBatch(batchtype.Deposit)
 	s.NoError(err)
@@ -88,10 +72,7 @@ func (s *SubmitDepositBatchTestSuite) TestSubmitDepositBatch_SubmitsBatchOnChain
 }
 
 func (s *SubmitDepositBatchTestSuite) TestSubmitDepositBatch_StoresPendingBatch() {
-	s.registerToken(s.client.ExampleTokenAddress)
-	s.approveTokens()
-	s.queueFourDeposits()
-	s.addGenesisBatch()
+	s.prepareDeposits()
 
 	pendingBatch, err := s.depositCtx.NewPendingBatch(batchtype.Deposit)
 	s.NoError(err)
@@ -111,6 +92,13 @@ func (s *SubmitDepositBatchTestSuite) TestSubmitDepositBatch_StoresPendingBatch(
 	s.Equal(pendingBatch.ID, batch.ID)
 	s.Equal(pendingBatch.PrevStateRoot, batch.PrevStateRoot)
 	s.Nil(batch.Hash)
+}
+
+func (s *SubmitDepositBatchTestSuite) prepareDeposits() {
+	s.registerToken(s.client.ExampleTokenAddress)
+	s.approveTokens()
+	s.queueFourDeposits()
+	s.addGenesisBatch()
 }
 
 func (s *SubmitDepositBatchTestSuite) addGenesisBatch() {
@@ -145,13 +133,23 @@ func (s *SubmitDepositBatchTestSuite) approveTokens() {
 	s.client.GetBackend().Commit()
 }
 
-func (s *SubmitDepositBatchTestSuite) queueFourDeposits() []models.PendingDeposit {
-	return []models.PendingDeposit{
-		*s.queueDeposit(),
-		*s.queueDeposit(),
-		*s.queueDeposit(),
-		*s.queueDeposit(),
+func (s *SubmitDepositBatchTestSuite) queueFourDeposits() {
+	for i := 0; i < 4; i++ {
+		s.queueDeposit()
 	}
+}
+
+func getFourDeposits() []models.PendingDeposit {
+	deposits := make([]models.PendingDeposit, 4)
+	for i := range deposits {
+		deposits[i] = models.PendingDeposit{
+			ID:         models.DepositID{BlockNumber: 1, LogIndex: uint32(i)},
+			ToPubKeyID: 1,
+			TokenID:    models.MakeUint256(0),
+			L2Amount:   models.MakeUint256(10000000000),
+		}
+	}
+	return deposits
 }
 
 func (s *SubmitDepositBatchTestSuite) queueDeposit() *models.PendingDeposit {
