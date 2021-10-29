@@ -25,12 +25,13 @@
 | `10009`      | `invalid signature`                                                 |
 | `10010`      | `amount is not encodable as multi-precission decimal`               |
 | `10011`      | `fee is not encodable as multi-precission decimal`                  |
+| `10012`      | `sender state ID does not exist`                                    |
 | `20000`      | `commitment not found`                                              |
 | `30000`      | `batch not found`                                                   |
 | `30001`      | `batches not found`                                                 |
 | `40000`      | `an error occurred while saving data to the Badger database`        |
 | `40001`      | `an error occurred while iterating over Badger database`            |
-| `50000`      | `proof endpoints disabled`                                          |
+| `50000`      | `proof methods disabled`                                            |
 | `50001`      | `commitment proof not found`                                        |
 | `50002`      | `public key proof not found`                                        |
 | `50003`      | `user state proof not found`                                        |

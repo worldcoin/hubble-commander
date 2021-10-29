@@ -59,9 +59,9 @@ type RollupConfig struct {
 }
 
 type APIConfig struct {
-	Version              string
-	Port                 string
-	EnableProofEndpoints bool
+	Version            string
+	Port               string
+	EnableProofMethods bool
 }
 
 type BadgerConfig struct {
