@@ -21,7 +21,7 @@
 #
 #api:
 #  port: 8080
-#  enable_proof_endpoints: false
+#  enable_proof_methods: false
 #
 #badger:
 #  path: db/data/hubble

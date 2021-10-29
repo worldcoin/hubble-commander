@@ -126,13 +126,13 @@ func (s *StateLeafTestSuite) TestGetStateLeavesByPublicKey() {
 			Nonce:    models.MakeUint256(0),
 		},
 		{
-			PubKeyID: 1,
+			PubKeyID: 3,
 			TokenID:  models.MakeUint256(25),
 			Balance:  models.MakeUint256(1),
 			Nonce:    models.MakeUint256(73),
 		},
 		{
-			PubKeyID: 3,
+			PubKeyID: 1,
 			TokenID:  models.MakeUint256(25),
 			Balance:  models.MakeUint256(1),
 			Nonce:    models.MakeUint256(73),
@@ -154,9 +154,70 @@ func (s *StateLeafTestSuite) TestGetStateLeavesByPublicKey() {
 	s.NoError(err)
 
 	s.Len(returnUserStates, 3)
-	s.Contains(returnUserStates, stateLeaves[0])
-	s.Contains(returnUserStates, stateLeaves[2])
-	s.Contains(returnUserStates, stateLeaves[3])
+	s.Equal(returnUserStates[0], stateLeaves[0])
+	s.Equal(returnUserStates[1], stateLeaves[2])
+	s.Equal(returnUserStates[2], stateLeaves[3])
+}
+
+func (s *StateLeafTestSuite) TestGetStateLeavesByPublicKey_SortsStateLeaves() {
+	accounts := []models.AccountLeaf{
+		{
+			PubKeyID:  1,
+			PublicKey: models.PublicKey{1, 2, 3},
+		},
+		{
+			PubKeyID:  2,
+			PublicKey: models.PublicKey{1, 2, 3},
+		},
+	}
+
+	for i := range accounts {
+		err := s.storage.AccountTree.SetSingle(&accounts[i])
+		s.NoError(err)
+	}
+
+	stateLeaves := []models.StateLeaf{
+		{
+			StateID: 2,
+			UserState: models.UserState{
+				PubKeyID: 1,
+				TokenID:  models.MakeUint256(1),
+				Balance:  models.MakeUint256(420),
+				Nonce:    models.MakeUint256(0),
+			},
+		},
+		{
+			StateID: 0,
+			UserState: models.UserState{
+				PubKeyID: 2,
+				TokenID:  models.MakeUint256(2),
+				Balance:  models.MakeUint256(500),
+				Nonce:    models.MakeUint256(0),
+			},
+		},
+		{
+			StateID: 1,
+			UserState: models.UserState{
+				PubKeyID: 1,
+				TokenID:  models.MakeUint256(25),
+				Balance:  models.MakeUint256(1),
+				Nonce:    models.MakeUint256(73),
+			},
+		},
+	}
+
+	for i := range stateLeaves {
+		_, err := s.storage.StateTree.Set(stateLeaves[i].StateID, &stateLeaves[i].UserState)
+		s.NoError(err)
+	}
+
+	returnUserStates, err := s.storage.GetStateLeavesByPublicKey(&accounts[0].PublicKey)
+	s.NoError(err)
+
+	s.Len(returnUserStates, 3)
+	s.EqualValues(0, returnUserStates[0].StateID)
+	s.EqualValues(1, returnUserStates[1].StateID)
+	s.EqualValues(2, returnUserStates[2].StateID)
 }
 
 func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf() {

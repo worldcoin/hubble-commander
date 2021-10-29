@@ -17,10 +17,10 @@ var (
 	ErrNonceTooLow       = fmt.Errorf("nonce too low")
 	ErrNonceTooHigh      = fmt.Errorf("nonce too high")
 	ErrNotEnoughBalance  = fmt.Errorf("not enough balance")
-	ErrInvalidSignature  = fmt.Errorf("invalid signature")
 	ErrTransferToSelf    = fmt.Errorf("transfer to the same state id")
 	ErrInvalidAmount     = fmt.Errorf("amount must be positive")
 	ErrUnsupportedTxType = fmt.Errorf("unsupported transaction type")
+	ErrNonexistentSender = fmt.Errorf("sender state ID does not exist")
 
 	APIErrAnyMissingField = NewAPIError(
 		10002,
@@ -62,17 +62,22 @@ var (
 		10011,
 		"fee is not encodable as multi-precission decimal",
 	)
+	APISenderDoesNotExistError = NewAPIError(
+		10012,
+		"sender with given ID does not exist",
+	)
 )
 
 var sendTransactionAPIErrors = map[error]*APIError{
 	AnyMissingFieldError:                  APIErrAnyMissingField,
+	AnyInvalidSignatureError:              APIErrInvalidSignature,
+	ErrNonexistentSender:                  APISenderDoesNotExistError,
 	ErrTransferToSelf:                     APIErrTransferToSelf,
 	ErrNonceTooLow:                        APIErrNonceTooLow,
 	ErrNonceTooHigh:                       APIErrNonceTooHigh,
 	ErrNotEnoughBalance:                   APIErrNotEnoughBalance,
 	ErrInvalidAmount:                      APIErrInvalidAmount,
 	ErrFeeTooLow:                          APIErrFeeTooLow,
-	ErrInvalidSignature:                   APIErrInvalidSignature,
 	NewNotDecimalEncodableError("amount"): APINotDecimalEncodableAmountError,
 	NewNotDecimalEncodableError("fee"):    APINotDecimalEncodableFeeError,
 }
@@ -155,7 +160,7 @@ func validateBalance(transactionAmount, transactionFee *models.Uint256, senderSt
 func (a *API) validateSignature(encodedTransaction []byte, transactionSignature *models.Signature, senderState *models.UserState) error {
 	senderAccount, err := a.storage.AccountTree.Leaf(senderState.PubKeyID)
 	if err != nil {
-		return err
+		return errors.WithStack(NewInvalidSignatureError(err.Error()))
 	}
 
 	domain, err := a.client.GetDomain()
@@ -164,15 +169,15 @@ func (a *API) validateSignature(encodedTransaction []byte, transactionSignature 
 	}
 	signature, err := bls.NewSignatureFromBytes(transactionSignature.Bytes(), *domain)
 	if err != nil {
-		return err
+		return errors.WithStack(NewInvalidSignatureError(err.Error()))
 	}
 
 	isValid, err := signature.Verify(encodedTransaction, &senderAccount.PublicKey)
 	if err != nil {
-		return err
+		return errors.WithStack(NewInvalidSignatureError(err.Error()))
 	}
 	if !isValid {
-		return errors.WithStack(ErrInvalidSignature)
+		return errors.WithStack(NewInvalidSignatureError("the signature hasn't passed the verification process"))
 	}
 	return nil
 }

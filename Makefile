@@ -41,6 +41,8 @@ run-prune:
 run-dev:
 	HUBBLE_BOOTSTRAP_PRUNE=true HUBBLE_ROLLUP_DISABLE_SIGNATURES=true go run ./main start
 
+start-dev: deploy run-dev
+
 lint:
 	golangci-lint run ./...
 
@@ -82,6 +84,7 @@ bench-sync-profile: clean-testcache
 	run
 	run-prune
 	run-dev
+	start-dev
 	lint
 	test
 	test-hardhat
