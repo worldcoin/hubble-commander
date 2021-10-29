@@ -245,8 +245,8 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_MarksTransfersAsInc
 }
 
 func (s *TransferCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTooHighTx() {
-	transfersCount := 4
-	s.preparePendingTransfers(uint32(transfersCount))
+	validTransfersCount := 4
+	s.preparePendingTransfers(uint32(validTransfersCount))
 
 	nonceTooHighTx := testutils.GenerateValidTransfers(1)[0]
 	nonceTooHighTx.Nonce = models.MakeUint256(21)
@@ -255,13 +255,13 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTooHighTx
 
 	pendingTransfers, err := s.storage.GetPendingTransfers()
 	s.NoError(err)
-	s.Len(pendingTransfers, transfersCount+1)
+	s.Len(pendingTransfers, validTransfersCount+1)
 
 	commitments, err := s.rollupCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	for i := 0; i < transfersCount; i++ {
+	for i := 0; i < validTransfersCount; i++ {
 		var tx *models.Transfer
 		tx, err = s.storage.GetTransfer(pendingTransfers[i].Hash)
 		s.NoError(err)
