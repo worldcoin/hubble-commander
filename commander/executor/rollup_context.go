@@ -5,16 +5,21 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/ethereum/go-ethereum/common"
 )
+
+type TransactionError struct {
+	Hash         common.Hash
+	ErrorMessage string
+}
 
 type RollupContext struct {
 	*ExecutionContext
 	Executor        TransactionExecutor
 	BatchType       batchtype.BatchType
-	txErrorsToStore []models.TransactionError
+	txErrorsToStore []TransactionError
 }
 
 func NewRollupContext(
@@ -37,10 +42,10 @@ func newRollupContext(executionCtx *ExecutionContext, batchType batchtype.BatchT
 		ExecutionContext: executionCtx,
 		Executor:         CreateTransactionExecutor(executionCtx, batchType),
 		BatchType:        batchType,
-		txErrorsToStore:  make([]models.TransactionError, 0),
+		txErrorsToStore:  make([]TransactionError, 0),
 	}
 }
 
-func (c *RollupContext) GetErrorsToStore() []models.TransactionError {
+func (c *RollupContext) GetErrorsToStore() []TransactionError {
 	return c.txErrorsToStore
 }
