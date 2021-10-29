@@ -13,11 +13,11 @@ import (
 type testSuiteWithSyncAndRollupContext struct {
 	*require.Assertions
 	suite.Suite
-	storage   *st.TestStorage
-	client    *eth.TestClient
-	cfg       *config.RollupConfig
-	syncCtx   *Context
-	rollupCtx *executor.RollupContext
+	storage         *st.TestStorage
+	client          *eth.TestClient
+	cfg             *config.RollupConfig
+	syncCtx         *Context
+	transactionsCtx *executor.TransactionsContext
 }
 
 func (s *testSuiteWithSyncAndRollupContext) SetupSuite() {
@@ -42,7 +42,7 @@ func (s *testSuiteWithSyncAndRollupContext) SetupTestWithConfig(batchType batcht
 	s.NoError(err)
 
 	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
-	s.rollupCtx = executor.NewTestRollupContext(executionCtx, batchType)
+	s.transactionsCtx = executor.NewTestTransactionsContext(executionCtx, batchType)
 	s.syncCtx = NewTestContext(s.storage.Storage, s.client.Client, s.cfg, batchType)
 }
 

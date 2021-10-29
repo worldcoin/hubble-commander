@@ -5,7 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 )
 
-func (c *RollupContext) newCommitment(
+func (c *TransactionsContext) newCommitment(
 	commitmentID *models.CommitmentID,
 	batchType batchtype.BatchType,
 	feeReceiverStateID uint32,
@@ -55,7 +55,7 @@ func (c *DepositContext) newCommitment(
 	}, nil
 }
 
-func (c *RollupContext) NextCommitmentID() (*models.CommitmentID, error) {
+func (c *TransactionsContext) NextCommitmentID() (*models.CommitmentID, error) {
 	nextBatchID, err := c.storage.GetNextBatchID()
 	if err != nil {
 		return nil, err

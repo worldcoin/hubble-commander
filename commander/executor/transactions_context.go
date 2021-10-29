@@ -15,30 +15,30 @@ type TransactionError struct {
 	ErrorMessage string
 }
 
-type RollupContext struct {
+type TransactionsContext struct {
 	*ExecutionContext
 	Executor        TransactionExecutor
 	BatchType       batchtype.BatchType
 	txErrorsToStore []TransactionError
 }
 
-func NewRollupContext(
+func NewTransactionsContext(
 	storage *st.Storage,
 	client *eth.Client,
 	cfg *config.RollupConfig,
 	ctx context.Context,
 	batchType batchtype.BatchType,
-) *RollupContext {
+) *TransactionsContext {
 	executionCtx := NewExecutionContext(storage, client, cfg, ctx)
-	return newRollupContext(executionCtx, batchType)
+	return newTransactionsContext(executionCtx, batchType)
 }
 
-func NewTestRollupContext(executionCtx *ExecutionContext, batchType batchtype.BatchType) *RollupContext {
-	return newRollupContext(executionCtx, batchType)
+func NewTestTransactionsContext(executionCtx *ExecutionContext, batchType batchtype.BatchType) *TransactionsContext {
+	return newTransactionsContext(executionCtx, batchType)
 }
 
-func newRollupContext(executionCtx *ExecutionContext, batchType batchtype.BatchType) *RollupContext {
-	return &RollupContext{
+func newTransactionsContext(executionCtx *ExecutionContext, batchType batchtype.BatchType) *TransactionsContext {
+	return &TransactionsContext{
 		ExecutionContext: executionCtx,
 		Executor:         CreateTransactionExecutor(executionCtx, batchType),
 		BatchType:        batchType,
@@ -46,6 +46,6 @@ func newRollupContext(executionCtx *ExecutionContext, batchType batchtype.BatchT
 	}
 }
 
-func (c *RollupContext) GetErrorsToStore() []TransactionError {
+func (c *TransactionsContext) GetErrorsToStore() []TransactionError {
 	return c.txErrorsToStore
 }

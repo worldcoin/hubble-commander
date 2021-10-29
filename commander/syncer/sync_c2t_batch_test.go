@@ -61,7 +61,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() {
 	batch, commitments := s.createBatch(&tx2)
 	commitments[0].PostStateRoot = utils.RandomHash()
 
-	err := s.rollupCtx.SubmitBatch(batch, commitments)
+	err := s.transactionsCtx.SubmitBatch(batch, commitments)
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 
@@ -184,7 +184,7 @@ func (s *SyncC2TBatchTestSuite) submitInvalidBatch(tx *models.Create2Transfer) m
 
 	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)
 
-	err := s.rollupCtx.SubmitBatch(pendingBatch, commitments)
+	err := s.transactionsCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()

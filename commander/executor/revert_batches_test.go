@@ -16,10 +16,10 @@ import (
 type RevertBatchesTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage      *st.TestStorage
-	executionCtx *ExecutionContext
-	rollupCtx    *RollupContext
-	transfer     models.Transfer
+	storage         *st.TestStorage
+	executionCtx    *ExecutionContext
+	transactionsCtx *TransactionsContext
+	transfer        models.Transfer
 }
 
 func (s *RevertBatchesTestSuite) SetupSuite() {
@@ -37,7 +37,7 @@ func (s *RevertBatchesTestSuite) SetupTest() {
 		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    1,
 	})
-	s.rollupCtx = NewTestRollupContext(s.executionCtx, batchtype.Transfer)
+	s.transactionsCtx = NewTestTransactionsContext(s.executionCtx, batchtype.Transfer)
 
 	s.transfer = testutils.MakeTransfer(0, 1, 0, 400)
 	err = populateAccounts(s.storage.Storage, []models.Uint256{models.MakeUint256(1000), models.MakeUint256(0)})
@@ -106,21 +106,21 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_DeletesCommitmentsAndBatches(
 }
 
 func (s *RevertBatchesTestSuite) addBatch(tx *models.Transfer) *models.Batch {
-	err := s.rollupCtx.storage.AddTransfer(tx)
+	err := s.transactionsCtx.storage.AddTransfer(tx)
 	s.NoError(err)
 
-	pendingBatch, err := s.rollupCtx.NewPendingBatch(s.rollupCtx.BatchType)
+	pendingBatch, err := s.transactionsCtx.NewPendingBatch(s.transactionsCtx.BatchType)
 	s.NoError(err)
 
-	commitmentID, err := s.rollupCtx.NextCommitmentID()
+	commitmentID, err := s.transactionsCtx.NextCommitmentID()
 	s.NoError(err)
-	result, err := s.rollupCtx.createCommitment(models.TransferArray{*tx}, commitmentID)
+	result, err := s.transactionsCtx.createCommitment(models.TransferArray{*tx}, commitmentID)
 	s.NoError(err)
 
 	err = s.storage.AddBatch(pendingBatch)
 	s.NoError(err)
 
-	err = s.rollupCtx.addCommitments([]models.CommitmentWithTxs{*result.Commitment()})
+	err = s.transactionsCtx.addCommitments([]models.CommitmentWithTxs{*result.Commitment()})
 	s.NoError(err)
 
 	return pendingBatch

@@ -140,13 +140,13 @@ func (s *DisputeTransferTransitionTestSuite) submitInvalidBatch(txs [][]models.T
 		s.NoError(err)
 	}
 
-	pendingBatch, err := s.rollupCtx.NewPendingBatch(batchtype.Transfer)
+	pendingBatch, err := s.transactionsCtx.NewPendingBatch(batchtype.Transfer)
 	s.NoError(err)
 
 	commitments := s.createInvalidCommitments(txs, invalidTxHash)
 	s.Len(commitments, len(txs))
 
-	err = s.rollupCtx.SubmitBatch(pendingBatch, commitments)
+	err = s.transactionsCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
@@ -157,7 +157,7 @@ func (s *DisputeTransferTransitionTestSuite) createInvalidCommitments(
 	commitmentTxs [][]models.Transfer,
 	invalidTxHash common.Hash,
 ) []models.CommitmentWithTxs {
-	commitmentID, err := s.rollupCtx.NextCommitmentID()
+	commitmentID, err := s.transactionsCtx.NextCommitmentID()
 	s.NoError(err)
 
 	commitments := make([]models.CommitmentWithTxs, 0, len(commitmentTxs))
@@ -171,16 +171,16 @@ func (s *DisputeTransferTransitionTestSuite) createInvalidCommitments(
 			combinedFee = s.applyTransfer(&txs[j], invalidTxHash, combinedFee, receiverLeaf)
 		}
 		if combinedFee.CmpN(0) > 0 {
-			_, err := s.rollupCtx.ApplyFee(0, combinedFee)
+			_, err := s.transactionsCtx.ApplyFee(0, combinedFee)
 			s.NoError(err)
 		}
 
-		executeTxsResult := s.rollupCtx.Executor.NewExecuteTxsResult(uint32(len(txs)))
+		executeTxsResult := s.transactionsCtx.Executor.NewExecuteTxsResult(uint32(len(txs)))
 		for j := range txs {
 			executeTxsResult.AddApplied(applier.NewApplySingleTransferResult(&txs[j]))
 		}
-		executeTxsForCommitmentResult := s.rollupCtx.Executor.NewExecuteTxsForCommitmentResult(executeTxsResult, models.MakeTransferArray())
-		commitment, err := s.rollupCtx.BuildCommitment(executeTxsForCommitmentResult, commitmentID, 0)
+		executeTxsForCommitmentResult := s.transactionsCtx.Executor.NewExecuteTxsForCommitmentResult(executeTxsResult, models.MakeTransferArray())
+		commitment, err := s.transactionsCtx.BuildCommitment(executeTxsForCommitmentResult, commitmentID, 0)
 		s.NoError(err)
 		commitments = append(commitments, *commitment)
 	}
