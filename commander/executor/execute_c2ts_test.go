@@ -152,6 +152,18 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AddsAccountsToAccountT
 	}
 }
 
+func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SkipsNonceTooHighTx() {
+	generatedTransfers := testutils.GenerateValidCreate2Transfers(2)
+	generatedTransfers[1].Nonce = models.MakeUint256(21)
+
+	executeTxsResult, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	s.NoError(err)
+
+	s.Len(executeTxsResult.AppliedTxs(), 1)
+	s.Len(executeTxsResult.SkippedTxs(), 1)
+	s.Equal(*executeTxsResult.SkippedTxs().At(0).ToCreate2Transfer(), generatedTransfers[1])
+}
+
 func TestExecuteCreate2TransfersTestSuite(t *testing.T) {
 	suite.Run(t, new(ExecuteCreate2TransfersTestSuite))
 }

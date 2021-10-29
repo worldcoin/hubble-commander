@@ -1,7 +1,9 @@
 package executor
 
 import (
+	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/pkg/errors"
 )
 
 func (c *RollupContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiver *FeeReceiver) (ExecuteTxsResult, error) {
@@ -23,12 +25,7 @@ func (c *RollupContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiv
 			return nil, appError
 		}
 		if transferError != nil {
-			logAndSaveTransactionError(c.storage, tx, transferError)
-			returnStruct.AddInvalidTx(tx)
-			c.TxErrorsToStore = append(c.TxErrorsToStore, TransactionError{
-				Hash:         tx.GetBase().Hash,
-				ErrorMessage: transferError.Error(),
-			})
+			c.handleTransactionError(returnStruct, tx, transferError)
 			continue
 		}
 
@@ -50,4 +47,18 @@ func (c *RollupContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiv
 	}
 
 	return returnStruct, nil
+}
+
+func (c *RollupContext) handleTransactionError(result ExecuteTxsResult, tx models.GenericTransaction, err error) {
+	if errors.Is(err, applier.ErrNonceTooHigh) {
+		result.AddSkippedTx(tx)
+		return
+	}
+
+	logAndSaveTransactionError(c.storage, tx, err)
+	result.AddInvalidTx(tx)
+	c.TxErrorsToStore = append(c.TxErrorsToStore, TransactionError{
+		Hash:         tx.GetBase().Hash,
+		ErrorMessage: err.Error(),
+	})
 }

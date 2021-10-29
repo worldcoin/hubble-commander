@@ -244,6 +244,39 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_MarksTransfersAsInc
 	}
 }
 
+func (s *TransferCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTooHighTx() {
+	validTransfersCount := 4
+	s.preparePendingTransfers(uint32(validTransfersCount))
+
+	nonceTooHighTx := testutils.GenerateValidTransfers(1)[0]
+	nonceTooHighTx.Nonce = models.MakeUint256(21)
+	err := s.storage.AddTransfer(&nonceTooHighTx)
+	s.NoError(err)
+
+	pendingTransfers, err := s.storage.GetPendingTransfers()
+	s.NoError(err)
+	s.Len(pendingTransfers, validTransfersCount+1)
+
+	commitments, err := s.rollupCtx.CreateCommitments()
+	s.NoError(err)
+	s.Len(commitments, 1)
+
+	for i := 0; i < validTransfersCount; i++ {
+		var tx *models.Transfer
+		tx, err = s.storage.GetTransfer(pendingTransfers[i].Hash)
+		s.NoError(err)
+		s.Equal(commitments[0].ID, *tx.CommitmentID)
+	}
+
+	tx, err := s.storage.GetTransfer(nonceTooHighTx.Hash)
+	s.NoError(err)
+	s.Nil(tx.CommitmentID)
+
+	pendingTransfers, err = s.storage.GetPendingTransfers()
+	s.NoError(err)
+	s.Len(pendingTransfers, 1)
+}
+
 func (s *TransferCommitmentsTestSuite) TestRemoveTxs() {
 	transfer1 := createRandomTransferWithHash()
 	transfer2 := createRandomTransferWithHash()
@@ -260,10 +293,8 @@ func TestTransferCommitmentsTestSuite(t *testing.T) {
 }
 
 func (s *TransferCommitmentsTestSuite) addTransfers(transfers []models.Transfer) {
-	for i := range transfers {
-		err := s.storage.AddTransfer(&transfers[i])
-		s.NoError(err)
-	}
+	err := s.storage.BatchAddTransfer(transfers)
+	s.NoError(err)
 }
 
 func (s *TransferCommitmentsTestSuite) preparePendingTransfers(transfersAmount uint32) {

@@ -278,6 +278,35 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitmen
 	s.Equal(transfers[0].ToPublicKey, accounts[0].PublicKey)
 }
 
+func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTooHighTx() {
+	transfers := testutils.GenerateValidCreate2Transfers(3)
+	transfers[2].Nonce = models.MakeUint256(21)
+	s.addCreate2Transfers(transfers)
+
+	pendingTransfers, err := s.storage.GetPendingCreate2Transfers()
+	s.NoError(err)
+	s.Len(pendingTransfers, 3)
+
+	commitments, err := s.rollupCtx.CreateCommitments()
+	s.NoError(err)
+	s.Len(commitments, 1)
+
+	for i := 0; i < 2; i++ {
+		var tx *models.Create2Transfer
+		tx, err = s.storage.GetCreate2Transfer(pendingTransfers[i].Hash)
+		s.NoError(err)
+		s.Equal(commitments[0].ID, *tx.CommitmentID)
+	}
+
+	tx, err := s.storage.GetCreate2Transfer(transfers[2].Hash)
+	s.NoError(err)
+	s.Nil(tx.CommitmentID)
+
+	pendingTransfers, err = s.storage.GetPendingCreate2Transfers()
+	s.NoError(err)
+	s.Len(pendingTransfers, 1)
+}
+
 func (s *Create2TransferCommitmentsTestSuite) TestRemoveTxs() {
 	transfer1 := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
@@ -323,10 +352,8 @@ func TestCreate2TransferCommitmentsTestSuite(t *testing.T) {
 }
 
 func (s *Create2TransferCommitmentsTestSuite) addCreate2Transfers(transfers []models.Create2Transfer) {
-	for i := range transfers {
-		err := s.storage.AddCreate2Transfer(&transfers[i])
-		s.NoError(err)
-	}
+	err := s.storage.BatchAddCreate2Transfer(transfers)
+	s.NoError(err)
 }
 
 func (s *Create2TransferCommitmentsTestSuite) preparePendingCreate2Transfers(transfersAmount uint32) {
