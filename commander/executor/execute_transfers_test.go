@@ -147,6 +147,18 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_AppliesFee() {
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }
 
+func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SkipsNonceTooHighTx() {
+	generatedTransfers := testutils.GenerateValidTransfers(2)
+	generatedTransfers[1].Nonce = models.MakeUint256(21)
+
+	executeTxsResult, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	s.NoError(err)
+
+	s.Len(executeTxsResult.AppliedTxs(), 1)
+	s.Len(executeTxsResult.SkippedTxs(), 1)
+	s.Equal(*executeTxsResult.SkippedTxs().At(0).ToTransfer(), generatedTransfers[1])
+}
+
 func TestExecuteTransfersTestSuite(t *testing.T) {
 	suite.Run(t, new(ExecuteTransfersTestSuite))
 }
