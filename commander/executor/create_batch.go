@@ -25,15 +25,19 @@ func (c *RollupContext) CreateAndSubmitBatch() error {
 		return err
 	}
 
+	logCreatedBatch(batch, len(commitments), startTime)
+	return nil
+}
+
+func logCreatedBatch(batch *models.Batch, commitmentsCount int, startTime time.Time) {
 	log.Printf(
 		"Submitted a %s batch with %d commitment(s) on chain in %s. Batch ID: %d. Transaction hash: %v",
-		c.BatchType.String(),
-		len(commitments),
+		batch.Type.String(),
+		commitmentsCount,
 		time.Since(startTime).Round(time.Millisecond).String(),
 		batch.ID.Uint64(),
 		batch.TransactionHash,
 	)
-	return nil
 }
 
 func (c *ExecutionContext) NewPendingBatch(batchType batchtype.BatchType) (*models.Batch, error) {

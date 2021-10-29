@@ -7,7 +7,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 var ErrNotEnoughDeposits = NewRollupError("not enough deposits")
@@ -45,14 +44,7 @@ func (c *DepositContext) CreateAndSubmitBatch() error {
 		return errors.WithStack(err)
 	}
 
-	log.Printf(
-		"Submitted a %s batch with %d commitment(s) on chain in %s. Batch ID: %d. Transaction hash: %v",
-		batchtype.Deposit.String(),
-		1,
-		time.Since(startTime).Round(time.Millisecond).String(),
-		batch.ID.Uint64(),
-		batch.TransactionHash,
-	)
+	logCreatedBatch(batch, 1, startTime)
 	return nil
 }
 
