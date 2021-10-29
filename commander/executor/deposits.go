@@ -11,22 +11,6 @@ import (
 
 var ErrNotEnoughDeposits = NewRollupError("not enough deposits")
 
-func (c *DepositContext) GetVacancyProof(startStateID uint32, subtreeDepth uint8) (*models.SubtreeVacancyProof, error) {
-	path := models.MerklePath{
-		Path:  startStateID >> subtreeDepth,
-		Depth: st.StateTreeDepth - subtreeDepth,
-	}
-	witness, err := c.storage.StateTree.GetNodeWitness(path)
-	if err != nil {
-		return nil, err
-	}
-
-	return &models.SubtreeVacancyProof{
-		PathAtDepth: path.Path,
-		Witness:     witness,
-	}, nil
-}
-
 func (c *DepositContext) CreateAndSubmitBatch() error {
 	startTime := time.Now()
 	batch, err := c.NewPendingBatch(batchtype.Deposit)
@@ -107,7 +91,7 @@ func (c *DepositContext) getDepositSubtreeVacancyProof() (*uint32, *models.Subtr
 		return nil, nil, err
 	}
 
-	vacancyProof, err := c.GetVacancyProof(*startStateID, *subtreeDepth)
+	vacancyProof, err := c.proverCtx.GetVacancyProof(*startStateID, *subtreeDepth)
 	if err != nil {
 		return nil, nil, err
 	}
