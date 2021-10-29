@@ -33,7 +33,7 @@ import (
 )
 
 func TestCommanderDispute(t *testing.T) {
-	cmd, err := setup.NewCommanderFromEnv(true)
+	cmd, err := setup.NewCommanderFromEnv()
 	require.NoError(t, err)
 	err = cmd.Start()
 	require.NoError(t, err)

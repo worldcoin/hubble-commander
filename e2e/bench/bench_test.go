@@ -65,7 +65,7 @@ func (s *BenchmarkSuite) SetupSuite() {
 }
 
 func (s *BenchmarkSuite) SetupTest() {
-	commander, err := setup.NewCommanderFromEnv(true)
+	commander, err := setup.NewCommanderFromEnv()
 	s.NoError(err)
 
 	err = commander.Start()

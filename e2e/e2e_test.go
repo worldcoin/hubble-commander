@@ -24,7 +24,7 @@ import (
 )
 
 func TestCommander(t *testing.T) {
-	commander, err := setup.NewCommanderFromEnv(true)
+	commander, err := setup.NewCommanderFromEnv()
 	require.NoError(t, err)
 	err = commander.Start()
 	require.NoError(t, err)
