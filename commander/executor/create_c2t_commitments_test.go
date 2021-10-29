@@ -25,6 +25,7 @@ func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    4,
 		FeeReceiverPubKeyID:    2,
+		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 1,
 	})
 	s.maxTxBytesInCommitment = encoder.Create2TransferLength * int(s.cfg.MaxTxsPerCommitment)
@@ -64,31 +65,6 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_WithMoreThan
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].Transactions, expectedTxsLength)
-
-	postRoot, err := s.executionCtx.storage.StateTree.Root()
-	s.NoError(err)
-	s.NotEqual(preRoot, postRoot)
-	s.Equal(commitments[0].PostStateRoot, *postRoot)
-}
-
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_QueriesForMorePendingTransfersUntilSatisfied() {
-	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 124)
-
-	transfers := testutils.GenerateValidCreate2Transfers(6)
-	s.invalidateCreate2Transfers(transfers[3:6])
-
-	highNonceTransfer := testutils.MakeCreate2Transfer(124, nil, 10, 1, &models.PublicKey{5, 4, 3, 2, 1})
-	transfers = append(transfers, highNonceTransfer)
-
-	s.addCreate2Transfers(transfers)
-
-	preRoot, err := s.executionCtx.storage.StateTree.Root()
-	s.NoError(err)
-
-	commitments, err := s.rollupCtx.CreateCommitments()
-	s.NoError(err)
-	s.Len(commitments, 1)
-	s.Len(commitments[0].Transactions, s.maxTxBytesInCommitment)
 
 	postRoot, err := s.executionCtx.storage.StateTree.Root()
 	s.NoError(err)
@@ -163,6 +139,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_ReturnsError
 		MaxTxsPerCommitment:    32,
 		FeeReceiverPubKeyID:    2,
 		MaxCommitmentsPerBatch: 1,
+		MinCommitmentsPerBatch: 1,
 	}
 
 	executionCtx := NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
@@ -171,7 +148,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_ReturnsError
 	transfers := testutils.GenerateValidCreate2Transfers(2)
 	s.addCreate2Transfers(transfers)
 
-	pendingTransfers, err := s.storage.GetPendingCreate2Transfers(32)
+	pendingTransfers, err := s.storage.GetPendingCreate2Transfers()
 	s.NoError(err)
 	s.Len(pendingTransfers, 2)
 
@@ -219,7 +196,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_CreatesMaxim
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_UpdateTransfers() {
 	s.preparePendingCreate2Transfers(2)
 
-	pendingTransfers, err := s.storage.GetPendingCreate2Transfers(2)
+	pendingTransfers, err := s.storage.GetPendingCreate2Transfers()
 	s.NoError(err)
 	s.Len(pendingTransfers, 2)
 

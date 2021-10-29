@@ -31,7 +31,7 @@
 | `30001`      | `batches not found`                                                 |
 | `40000`      | `an error occurred while saving data to the Badger database`        |
 | `40001`      | `an error occurred while iterating over Badger database`            |
-| `50000`      | `proof endpoints disabled`                                          |
+| `50000`      | `proof methods disabled`                                            |
 | `50001`      | `commitment proof not found`                                        |
 | `50002`      | `public key proof not found`                                        |
 | `50003`      | `user state proof not found`                                        |

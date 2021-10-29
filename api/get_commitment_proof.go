@@ -10,15 +10,15 @@ import (
 )
 
 var (
-	errProofEndpointsDisabled   = NewAPIError(50000, "proof endpoints disabled")
+	errProofMethodsDisabled     = NewAPIError(50000, "proof methods disabled")
 	getCommitmentProofAPIErrors = map[error]*APIError{
 		storage.AnyNotFoundError: NewAPIError(50001, "commitment proof not found"),
 	}
 )
 
 func (a *API) GetCommitmentProof(commitmentID models.CommitmentID) (*dto.CommitmentInclusionProof, error) {
-	if !a.cfg.EnableProofEndpoints {
-		return nil, errProofEndpointsDisabled
+	if !a.cfg.EnableProofMethods {
+		return nil, errProofMethodsDisabled
 	}
 	commitmentProof, err := a.unsafeGetCommitmentProof(commitmentID)
 	if err != nil {

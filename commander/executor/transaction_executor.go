@@ -13,16 +13,14 @@ import (
 )
 
 type TransactionExecutor interface {
-	GetPendingTxs(limit uint32) (models.GenericTransactionArray, error)
+	GetPendingTxs() (models.GenericTransactionArray, error)
 	NewTxArray(size, capacity uint32) models.GenericTransactionArray
 	NewExecuteTxsResult(capacity uint32) ExecuteTxsResult
-	NewExecuteTxsForCommitmentResult(executeTxsResult ExecuteTxsResult) ExecuteTxsForCommitmentResult
+	NewExecuteTxsForCommitmentResult(result ExecuteTxsResult, newPendingTxs models.GenericTransactionArray) ExecuteTxsForCommitmentResult
 	SerializeTxs(results ExecuteTxsForCommitmentResult) ([]byte, error)
 	MarkTxsAsIncluded(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error
 	AddPendingAccount(result applier.ApplySingleTxResult) error
-	NewCreateCommitmentResult(
-		result ExecuteTxsForCommitmentResult, commitment *models.TxCommitment, pendingTxs models.GenericTransactionArray,
-	) CreateCommitmentResult
+	NewCreateCommitmentResult(result ExecuteTxsForCommitmentResult, commitment *models.TxCommitment) CreateCommitmentResult
 	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (result applier.ApplySingleTxResult, transferError, appError error)
 	SubmitBatch(client *eth.Client, commitments []models.TxCommitment) (*types.Transaction, error)
 }
@@ -53,8 +51,8 @@ func NewTransferExecutor(storage *st.Storage, client *eth.Client) *TransferExecu
 	}
 }
 
-func (e *TransferExecutor) GetPendingTxs(limit uint32) (models.GenericTransactionArray, error) {
-	pendingTransfers, err := e.storage.GetPendingTransfers(limit)
+func (e *TransferExecutor) GetPendingTxs() (models.GenericTransactionArray, error) {
+	pendingTransfers, err := e.storage.GetPendingTransfers()
 	if err != nil {
 		return nil, err
 	}
@@ -72,17 +70,22 @@ func (e *TransferExecutor) NewExecuteTxsResult(capacity uint32) ExecuteTxsResult
 	}
 }
 
-func (e *TransferExecutor) NewExecuteTxsForCommitmentResult(executeTxsResult ExecuteTxsResult) ExecuteTxsForCommitmentResult {
+func (e *TransferExecutor) NewExecuteTxsForCommitmentResult(
+	result ExecuteTxsResult,
+	newPendingTxs models.GenericTransactionArray,
+) ExecuteTxsForCommitmentResult {
 	return &ExecuteTransfersForCommitmentResult{
-		appliedTxs: executeTxsResult.AppliedTxs().ToTransferArray(),
+		appliedTxs: result.AppliedTxs().ToTransferArray(),
+		pendingTxs: newPendingTxs.ToTransferArray(),
 	}
 }
 
 func (e *TransferExecutor) NewCreateCommitmentResult(
-	_ ExecuteTxsForCommitmentResult, commitment *models.TxCommitment, pendingTxs models.GenericTransactionArray,
+	result ExecuteTxsForCommitmentResult,
+	commitment *models.TxCommitment,
 ) CreateCommitmentResult {
 	return &CreateTransferCommitmentResult{
-		newPendingTxs: pendingTxs,
+		newPendingTxs: result.PendingTxs(),
 		commitment:    commitment,
 	}
 }
@@ -122,8 +125,8 @@ func NewC2TExecutor(storage *st.Storage, client *eth.Client) *C2TExecutor {
 	}
 }
 
-func (e *C2TExecutor) GetPendingTxs(limit uint32) (models.GenericTransactionArray, error) {
-	pendingTxs, err := e.storage.GetPendingCreate2Transfers(limit)
+func (e *C2TExecutor) GetPendingTxs() (models.GenericTransactionArray, error) {
+	pendingTxs, err := e.storage.GetPendingCreate2Transfers()
 	if err != nil {
 		return nil, err
 	}
@@ -143,19 +146,24 @@ func (e *C2TExecutor) NewExecuteTxsResult(capacity uint32) ExecuteTxsResult {
 	}
 }
 
-func (e *C2TExecutor) NewExecuteTxsForCommitmentResult(executeTxsResult ExecuteTxsResult) ExecuteTxsForCommitmentResult {
+func (e *C2TExecutor) NewExecuteTxsForCommitmentResult(
+	result ExecuteTxsResult,
+	newPendingTxs models.GenericTransactionArray,
+) ExecuteTxsForCommitmentResult {
 	return &ExecuteC2TForCommitmentResult{
-		appliedTxs:      executeTxsResult.AppliedTxs().ToCreate2TransferArray(),
-		addedPubKeyIDs:  executeTxsResult.AddedPubKeyIDs(),
-		pendingAccounts: executeTxsResult.PendingAccounts(),
+		appliedTxs:      result.AppliedTxs().ToCreate2TransferArray(),
+		addedPubKeyIDs:  result.AddedPubKeyIDs(),
+		pendingAccounts: result.PendingAccounts(),
+		pendingTxs:      newPendingTxs.ToCreate2TransferArray(),
 	}
 }
 
 func (e *C2TExecutor) NewCreateCommitmentResult(
-	result ExecuteTxsForCommitmentResult, commitment *models.TxCommitment, pendingTxs models.GenericTransactionArray,
+	result ExecuteTxsForCommitmentResult,
+	commitment *models.TxCommitment,
 ) CreateCommitmentResult {
 	return &CreateC2TCommitmentResult{
-		newPendingTxs:   pendingTxs,
+		newPendingTxs:   result.PendingTxs(),
 		pendingAccounts: result.PendingAccounts(),
 		commitment:      commitment,
 	}

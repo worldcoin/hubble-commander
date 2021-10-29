@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -16,34 +15,10 @@ const (
 	DefaultTransitionDisputeGasLimit        = uint64(5_000_000)
 	DefaultSignatureDisputeGasLimit         = uint64(7_500_000)
 	DefaultBatchAccountRegistrationGasLimit = uint64(8_000_000)
-	DefaultBlocksToFinalise                 = uint32(7 * 24 * 60 * 4)
 )
 
-func setupViperForCommander() {
-	setupViper(getCommanderConfigPath())
-}
-
-func setupViperForDeployer() {
-	setupViper(getDeployerConfigPath())
-}
-
-func setupViper(configPath string) {
-	viper.SetConfigFile(configPath)
-	viper.AutomaticEnv()
-	viper.SetEnvPrefix("HUBBLE")
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	err := viper.ReadInConfig()
-	if err != nil {
-		if strings.Contains(err.Error(), "no such file or directory") {
-			log.Printf("Configuration file not found (%s). Continuing with default config (possibly overridden by env vars).", configPath)
-		} else {
-			log.Fatalf("failed to read in config: %s", err)
-		}
-	}
-}
-
 func GetConfig() *Config {
-	setupViperForCommander()
+	setupViper(getCommanderConfigPath())
 
 	return &Config{
 		Log: getLogConfig(),
@@ -66,9 +41,9 @@ func GetConfig() *Config {
 			DisableSignatures:                getBool("rollup.disable_signatures", false),
 		},
 		API: &APIConfig{
-			Version:              "0.5.0-rc2",
-			Port:                 getString("api.port", "8080"),
-			EnableProofEndpoints: getBool("api.enable_proof_endpoints", false),
+			Version:            "0.5.0-rc2",
+			Port:               getString("api.port", "8080"),
+			EnableProofMethods: getBool("api.enable_proof_methods", false),
 		},
 		Badger: &BadgerConfig{
 			Path: getString("badger.path", getBadgerPath()),
@@ -78,7 +53,7 @@ func GetConfig() *Config {
 }
 
 func GetTestConfig() *Config {
-	setupViperForCommander()
+	setupViper(getCommanderConfigPath())
 
 	return &Config{
 		Log: &LogConfig{
@@ -104,8 +79,9 @@ func GetTestConfig() *Config {
 			DisableSignatures:                true,
 		},
 		API: &APIConfig{
-			Version: "dev-0.5.0-rc2",
-			Port:    "8080",
+			Version:            "dev-0.5.0-rc2",
+			Port:               "8080",
+			EnableProofMethods: true,
 		},
 		Badger: &BadgerConfig{
 			Path: getTestBadgerPath(),
@@ -118,41 +94,23 @@ func GetTestConfig() *Config {
 	}
 }
 
-func GetDeployerConfig() *DeployerConfig {
-	setupViperForDeployer()
-
-	return &DeployerConfig{
-		Bootstrap: &DeployerBootstrapConfig{
-			BlocksToFinalise: getUint32("bootstrap.blocks_to_finalise", DefaultBlocksToFinalise), // nolint:misspell
-			GenesisAccounts:  getGenesisAccounts(),
-		},
-		Ethereum: getEthereumConfig(),
+func setupViper(configPath string) {
+	viper.SetConfigFile(configPath)
+	viper.AutomaticEnv()
+	viper.SetEnvPrefix("HUBBLE")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	err := viper.ReadInConfig()
+	if err != nil {
+		if strings.Contains(err.Error(), "no such file or directory") {
+			log.Printf("Configuration file not found (%s). Continuing with default config (possibly overridden by env vars).", configPath)
+		} else {
+			log.Fatalf("failed to read in config: %s", err)
+		}
 	}
 }
 
 func getCommanderConfigPath() string {
 	return path.Join(utils.GetProjectRoot(), "commander-config.yaml")
-}
-
-func getDeployerConfigPath() string {
-	return path.Join(utils.GetProjectRoot(), "deployer-config.yaml")
-}
-
-func getGenesisAccounts() []models.GenesisAccount {
-	filename := getString("bootstrap.genesis_path", getGenesisPath())
-	return readGenesisAccounts(filename)
-}
-
-func readGenesisAccounts(filename string) []models.GenesisAccount {
-	genesisAccounts, err := readGenesisFile(filename)
-	if err != nil {
-		log.Fatalf("error reading genesis file: %s", err.Error())
-	}
-	return genesisAccounts
-}
-
-func getGenesisPath() string {
-	return path.Join(utils.GetProjectRoot(), "genesis.yaml")
 }
 
 func getBadgerPath() string {
