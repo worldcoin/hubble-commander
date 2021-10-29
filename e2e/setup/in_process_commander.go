@@ -19,9 +19,12 @@ type InProcessCommander struct {
 	blockchain chain.Connection
 }
 
-func CreateInProcessCommander() (*InProcessCommander, error) {
+func CreateInProcessCommander(rollupCfg *config.RollupConfig) (*InProcessCommander, error) {
 	cfg := config.GetConfig()
 	cfg.Bootstrap.Prune = true
+	if rollupCfg != nil {
+		cfg.Rollup = rollupCfg
+	}
 	return CreateInProcessCommanderWithConfig(cfg, true)
 }
 
