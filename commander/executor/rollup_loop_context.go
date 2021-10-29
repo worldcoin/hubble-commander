@@ -5,6 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	log "github.com/sirupsen/logrus"
@@ -14,6 +15,7 @@ type RollupLoopContext interface {
 	CreateAndSubmitBatch() error
 	Rollback(cause *error)
 	Commit() error
+	GetErrorsToStore() []models.TransactionError
 }
 
 func NewRollupLoopContext(

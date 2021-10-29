@@ -55,7 +55,7 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *b
 		return errors.WithStack(err)
 	}
 
-	rollupCtx := executor.NewRollupContext(c.storage, c.client, c.cfg.Rollup, ctx, *currentBatchType)
+	rollupCtx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, ctx, *currentBatchType)
 	defer rollupCtx.Rollback(&err)
 
 	switchBatchType(currentBatchType)
@@ -66,7 +66,7 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *b
 	if errors.As(err, &rollupError) {
 		handleRollupError(rollupError)
 		rollupCtx.Rollback(&err)
-		return saveTxErrors(c.storage, rollupCtx.TxErrorsToStore)
+		return saveTxErrors(c.storage, rollupCtx.GetErrorsToStore())
 	}
 	if err != nil {
 		return err
@@ -102,6 +102,10 @@ func logLatestCommitment(latestCommitment *models.CommitmentBase) {
 }
 
 func saveTxErrors(storage *st.Storage, txErrors []executor.TransactionError) error {
+	if len(txErrors) == 0 {
+		return nil
+	}
+
 	return storage.ExecuteInTransaction(st.TxOptions{}, func(txStorage *st.Storage) error {
 		for _, txErr := range txErrors {
 			err := txStorage.SetTransactionError(txErr.Hash, txErr.ErrorMessage)
