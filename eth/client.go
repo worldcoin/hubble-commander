@@ -42,6 +42,7 @@ type Client struct {
 	Rollup                 *rollup.Rollup
 	RollupABI              *abi.ABI
 	TokenRegistry          *tokenregistry.TokenRegistry
+	TokenRegistryABI       *abi.ABI
 	DepositManager         *depositmanager.DepositManager
 	DepositManagerABI      *abi.ABI
 	rollupContract         *bind.BoundContract
@@ -89,6 +90,7 @@ func NewClient(blockchain chain.Connection, params *NewClientParams) (*Client, e
 		Rollup:                 params.Rollup,
 		RollupABI:              &rollupAbi,
 		TokenRegistry:          params.TokenRegistry,
+		TokenRegistryABI:       &tokenRegistryAbi,
 		DepositManager:         params.DepositManager,
 		DepositManagerABI:      &depositManagerAbi,
 		rollupContract:         rollupContract,
