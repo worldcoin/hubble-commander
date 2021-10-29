@@ -5,26 +5,30 @@ import (
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils"
 )
 
 var (
 	ErrNoRowsAffected   = fmt.Errorf("no rows were affected by the update")
 	ErrNonexistentState = fmt.Errorf("cannot revert to nonexistent state")
 
-	AnyNotFoundError = &NotFoundError{field: anythingField}
+	AnyNotFoundError, anyNotFoundErrorSupport = utils.NewAnyError(&NotFoundError{})
 )
 
-const anythingField = "anything"
-
 type NotFoundError struct {
+	*utils.AnyErrorSupport
 	field string
 }
 
 func NewNotFoundError(field string) *NotFoundError {
-	if field == anythingField {
-		panic(fmt.Sprintf(`cannot use "%s" field for NotFoundError`, anythingField))
+	return &NotFoundError{
+		AnyErrorSupport: anyNotFoundErrorSupport,
+		field:           field,
 	}
-	return &NotFoundError{field: field}
+}
+
+func (e *NotFoundError) Unwrap() error {
+	return e.AnyErrorSupport
 }
 
 func (e *NotFoundError) Error() string {
@@ -35,9 +39,6 @@ func (e *NotFoundError) Is(other error) bool {
 	otherError, ok := other.(*NotFoundError)
 	if !ok {
 		return false
-	}
-	if *e == *AnyNotFoundError || *otherError == *AnyNotFoundError {
-		return true
 	}
 	return *e == *otherError
 }
