@@ -39,3 +39,24 @@ func (c *RollupContext) addCommitments(commitments []models.CommitmentWithTxs) e
 	}
 	return nil
 }
+
+func (c *DepositContext) SubmitBatch(batch *models.Batch, vacancyProof *models.SubtreeVacancyProof) error {
+	select {
+	case <-c.ctx.Done():
+		return ErrNoLongerProposer
+	default:
+	}
+
+	commitmentInclusionProof, err := c.proverCtx.PreviousBatchCommitmentInclusionProof(batch.ID)
+	if err != nil {
+		return err
+	}
+
+	tx, err := c.client.SubmitDeposits(commitmentInclusionProof, vacancyProof)
+	if err != nil {
+		return err
+	}
+
+	batch.TransactionHash = tx.Hash()
+	return c.storage.AddBatch(batch)
+}

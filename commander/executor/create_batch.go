@@ -25,11 +25,11 @@ func (c *RollupContext) CreateAndSubmitBatch() error {
 		return err
 	}
 
-	logCreatedBatch(batch, len(commitments), startTime)
+	logNewBatch(batch, len(commitments), startTime)
 	return nil
 }
 
-func logCreatedBatch(batch *models.Batch, commitmentsCount int, startTime time.Time) {
+func logNewBatch(batch *models.Batch, commitmentsCount int, startTime time.Time) {
 	log.Printf(
 		"Submitted a %s batch with %d commitment(s) on chain in %s. Batch ID: %d. Transaction hash: %v",
 		batch.Type.String(),

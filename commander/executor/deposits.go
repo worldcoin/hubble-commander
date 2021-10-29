@@ -28,7 +28,7 @@ func (c *DepositContext) CreateAndSubmitBatch() error {
 		return errors.WithStack(err)
 	}
 
-	logCreatedBatch(batch, 1, startTime)
+	logNewBatch(batch, 1, startTime)
 	return nil
 }
 
@@ -96,25 +96,4 @@ func (c *DepositContext) getDepositSubtreeVacancyProof() (*uint32, *models.Subtr
 		return nil, nil, err
 	}
 	return startStateID, vacancyProof, nil
-}
-
-func (c *DepositContext) SubmitBatch(batch *models.Batch, vacancyProof *models.SubtreeVacancyProof) error {
-	select {
-	case <-c.ctx.Done():
-		return ErrNoLongerProposer
-	default:
-	}
-
-	commitmentInclusionProof, err := c.proverCtx.PreviousBatchCommitmentInclusionProof(batch.ID)
-	if err != nil {
-		return err
-	}
-
-	tx, err := c.client.SubmitDeposits(commitmentInclusionProof, vacancyProof)
-	if err != nil {
-		return err
-	}
-
-	batch.TransactionHash = tx.Hash()
-	return c.storage.AddBatch(batch)
 }
