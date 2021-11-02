@@ -33,7 +33,12 @@ import (
 )
 
 func TestCommanderDispute(t *testing.T) {
-	cmd, err := setup.NewCommanderFromEnv(true)
+	cfg := config.GetConfig().Rollup
+	cfg.MinTxsPerCommitment = 32
+	cfg.MaxTxsPerCommitment = 32
+	cfg.MinCommitmentsPerBatch = 1
+
+	cmd, err := setup.NewConfiguredCommanderFromEnv(cfg)
 	require.NoError(t, err)
 	err = cmd.Start()
 	require.NoError(t, err)

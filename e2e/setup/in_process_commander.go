@@ -19,14 +19,16 @@ type InProcessCommander struct {
 	blockchain chain.Connection
 }
 
-func CreateInProcessCommander() (*InProcessCommander, error) {
+func CreateInProcessCommander(rollupCfg *config.RollupConfig) (*InProcessCommander, error) {
 	cfg := config.GetConfig()
 	cfg.Bootstrap.Prune = true
+	if rollupCfg != nil {
+		cfg.Rollup = rollupCfg
+	}
 	return CreateInProcessCommanderWithConfig(cfg, true)
 }
 
 func CreateInProcessCommanderWithConfig(cfg *config.Config, deployContracts bool) (*InProcessCommander, error) {
-	cfg.Rollup.MinTxsPerCommitment = cfg.Rollup.MaxTxsPerCommitment
 	blockchain, err := commander.GetChainConnection(cfg.Ethereum)
 	if err != nil {
 		return nil, err

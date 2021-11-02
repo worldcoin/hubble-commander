@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
 	"github.com/Worldcoin/hubble-commander/encoder"
@@ -21,7 +22,12 @@ import (
 )
 
 func TestMeasureDisputeGasUsage(t *testing.T) {
-	cmd, err := setup.NewCommanderFromEnv(true)
+	cfg := config.GetConfig().Rollup
+	cfg.MinTxsPerCommitment = 32
+	cfg.MaxTxsPerCommitment = 32
+	cfg.MinCommitmentsPerBatch = 1
+
+	cmd, err := setup.NewConfiguredCommanderFromEnv(cfg)
 	require.NoError(t, err)
 	err = cmd.Start()
 	require.NoError(t, err)
