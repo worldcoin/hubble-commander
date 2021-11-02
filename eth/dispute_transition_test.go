@@ -32,7 +32,7 @@ func (s *DisputeTransitionTestSuite) TearDownTest() {
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransitionTransfer_ReturnsRevertMessage() {
-	commitment := models.TxCommitment{
+	commitment := models.TxCommitmentWithTxs{
 		CommitmentBase: models.CommitmentBase{
 			Type:          batchtype.Transfer,
 			PostStateRoot: utils.RandomHash(),
@@ -42,7 +42,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransitionTransfer_ReturnsRevert
 		CombinedSignature: models.MakeRandomSignature(),
 	}
 
-	batch, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitment{commitment})
+	batch, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitmentWithTxs{commitment})
 	s.NoError(err)
 
 	merklePath := models.MakeMerklePathFromLeafID(1)

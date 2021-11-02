@@ -19,7 +19,7 @@ type FeeReceiver struct {
 	TokenID models.Uint256
 }
 
-func (c *RollupContext) CreateCommitments() ([]models.TxCommitment, error) {
+func (c *RollupContext) CreateCommitments() ([]models.TxCommitmentWithTxs, error) {
 	pendingTxs, err := c.queryPendingTxs()
 	if err != nil {
 		return nil, err
@@ -30,7 +30,7 @@ func (c *RollupContext) CreateCommitments() ([]models.TxCommitment, error) {
 		return nil, err
 	}
 
-	commitments := make([]models.TxCommitment, 0, c.cfg.MaxCommitmentsPerBatch)
+	commitments := make([]models.TxCommitmentWithTxs, 0, c.cfg.MaxCommitmentsPerBatch)
 	pendingAccounts := make([]models.AccountLeaf, 0)
 
 	for i := uint8(0); len(commitments) != int(c.cfg.MaxCommitmentsPerBatch); i++ {

@@ -29,7 +29,7 @@ func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_SubmitsCommitmentsOnChain() {
 
 	pendingBatch, err := s.rollupCtx.NewPendingBatch(batchtype.Create2Transfer)
 	s.NoError(err)
-	err = s.rollupCtx.SubmitBatch(pendingBatch, []models.TxCommitment{commitment})
+	err = s.rollupCtx.SubmitBatch(pendingBatch, []models.TxCommitmentWithTxs{commitment})
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
@@ -46,7 +46,7 @@ func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_StoresPendingBatchRecord() {
 	commitment := baseCommitment
 	commitment.ID.BatchID = pendingBatch.ID
 
-	err = s.rollupCtx.SubmitBatch(pendingBatch, []models.TxCommitment{commitment})
+	err = s.rollupCtx.SubmitBatch(pendingBatch, []models.TxCommitmentWithTxs{commitment})
 	s.NoError(err)
 
 	batch, err := s.storage.GetBatch(models.MakeUint256(1))
@@ -72,7 +72,7 @@ func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_AddsCommitments() {
 	for i := range commitments {
 		commit, err := s.storage.GetTxCommitment(&commitments[i].ID)
 		s.NoError(err)
-		s.Equal(commitments[i], *commit)
+		s.Equal(*commitments[i].ToTxCommitment(), *commit)
 		s.Equal(batch.ID, commit.ID.BatchID)
 	}
 }

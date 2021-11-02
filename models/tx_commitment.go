@@ -33,3 +33,27 @@ func calcBodyHash(feeReceiver uint32, combinedSignature Signature, transactions,
 
 	return crypto.Keccak256Hash(arr)
 }
+
+type TxCommitmentWithTxs struct {
+	CommitmentBase
+	FeeReceiver       uint32
+	CombinedSignature Signature
+	Transactions      []byte
+}
+
+func (c *TxCommitmentWithTxs) CalcBodyHash(accountRoot common.Hash) common.Hash {
+	return calcBodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, accountRoot.Bytes())
+}
+
+func (c *TxCommitmentWithTxs) LeafHash() common.Hash {
+	return utils.HashTwo(c.PostStateRoot, *c.BodyHash)
+}
+
+func (c *TxCommitmentWithTxs) ToTxCommitment() *TxCommitment {
+	return &TxCommitment{
+		CommitmentBase:    c.CommitmentBase,
+		FeeReceiver:       c.FeeReceiver,
+		CombinedSignature: c.CombinedSignature,
+		Transactions:      c.Transactions,
+	}
+}

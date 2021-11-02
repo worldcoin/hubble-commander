@@ -95,7 +95,7 @@ func (s *testSuiteWithContexts) submitBatch(tx models.GenericTransaction) *model
 	return pendingBatch
 }
 
-func (s *testSuiteWithContexts) createBatch(tx models.GenericTransaction) (*models.Batch, []models.TxCommitment) {
+func (s *testSuiteWithContexts) createBatch(tx models.GenericTransaction) (*models.Batch, []models.TxCommitmentWithTxs) {
 	if tx.Type() == txtype.Transfer {
 		err := s.disputeCtx.storage.AddTransfer(tx.ToTransfer())
 		s.NoError(err)

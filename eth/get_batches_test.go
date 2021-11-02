@@ -19,12 +19,12 @@ type GetBatchesTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	client      *TestClient
-	commitments []models.TxCommitment
+	commitments []models.TxCommitmentWithTxs
 }
 
 func (s *GetBatchesTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
-	s.commitments = []models.TxCommitment{
+	s.commitments = []models.TxCommitmentWithTxs{
 		{
 			CommitmentBase: models.CommitmentBase{
 				ID: models.CommitmentID{
@@ -63,9 +63,9 @@ func (s *GetBatchesTestSuite) TearDownTest() {
 }
 
 func (s *GetBatchesTestSuite) TestGetAllBatches() {
-	batch1, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitment{s.commitments[0]})
+	batch1, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitmentWithTxs{s.commitments[0]})
 	s.NoError(err)
-	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitment{s.commitments[1]})
+	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitmentWithTxs{s.commitments[1]})
 	s.NoError(err)
 
 	batches, err := s.client.GetAllBatches()
@@ -79,9 +79,9 @@ func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBlockNumber() {
 	finalisationBlocks, err := s.client.GetBlocksToFinalise()
 	s.NoError(err)
 
-	batch1, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitment{s.commitments[0]})
+	batch1, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitmentWithTxs{s.commitments[0]})
 	s.NoError(err)
-	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitment{s.commitments[1]})
+	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitmentWithTxs{s.commitments[1]})
 	s.NoError(err)
 
 	batches, err := s.client.GetBatches(&BatchesFilters{
@@ -95,9 +95,9 @@ func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBlockNumber() {
 }
 
 func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBatchID() {
-	batch1, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitment{s.commitments[0]})
+	batch1, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitmentWithTxs{s.commitments[0]})
 	s.NoError(err)
-	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitment{s.commitments[1]})
+	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitmentWithTxs{s.commitments[1]})
 	s.NoError(err)
 
 	batches, err := s.client.GetBatches(&BatchesFilters{

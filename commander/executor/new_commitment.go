@@ -11,13 +11,13 @@ func (c *RollupContext) newCommitment(
 	feeReceiverStateID uint32,
 	serializedTxs []byte,
 	combinedSignature *models.Signature,
-) (*models.TxCommitment, error) {
+) (*models.TxCommitmentWithTxs, error) {
 	stateRoot, err := c.storage.StateTree.Root()
 	if err != nil {
 		return nil, err
 	}
 
-	return &models.TxCommitment{
+	return &models.TxCommitmentWithTxs{
 		CommitmentBase: models.CommitmentBase{
 			ID:            *commitmentID,
 			Type:          batchType,
