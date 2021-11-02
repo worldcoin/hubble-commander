@@ -22,10 +22,10 @@ type CommitmentWithTokenID struct {
 	PostStateRoot      common.Hash
 }
 
-func MakeCommitmentWithTokenID(commitment *models.TxCommitment, accountRoot common.Hash, tokenID models.Uint256) CommitmentWithTokenID {
+func MakeCommitmentWithTokenID(commitment *models.TxCommitment, tokenID models.Uint256) CommitmentWithTokenID {
 	return CommitmentWithTokenID{
 		ID:                 commitment.ID,
-		LeafHash:           commitment.LeafHash(accountRoot),
+		LeafHash:           commitment.LeafHash(),
 		TokenID:            tokenID,
 		FeeReceiverStateID: commitment.FeeReceiver,
 		CombinedSignature:  commitment.CombinedSignature,

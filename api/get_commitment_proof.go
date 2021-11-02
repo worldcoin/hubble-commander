@@ -40,7 +40,7 @@ func (a *API) unsafeGetCommitmentProof(commitmentID models.CommitmentID) (*dto.C
 
 	leafHashes := make([]common.Hash, 0, len(commitments))
 	for i := range commitments {
-		leafHashes = append(leafHashes, commitments[i].LeafHash(*batch.AccountTreeRoot))
+		leafHashes = append(leafHashes, commitments[i].LeafHash())
 	}
 	tree, err := merkletree.NewMerkleTree(leafHashes)
 	if err != nil {

@@ -74,7 +74,7 @@ func (a *API) createBatchWithCommitments(
 		if err != nil {
 			return nil, err
 		}
-		batchCommitments = append(batchCommitments, dto.MakeCommitmentWithTokenID(&commitments[i], *batch.AccountTreeRoot, stateLeaf.TokenID))
+		batchCommitments = append(batchCommitments, dto.MakeCommitmentWithTokenID(&commitments[i], stateLeaf.TokenID))
 	}
 	return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, batchCommitments), nil
 }

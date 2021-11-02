@@ -50,7 +50,7 @@ func (c *Context) previousBatchCommitmentInclusionProof(
 
 	leafHashes := make([]common.Hash, 0, len(commitments))
 	for i := range commitments {
-		leafHashes = append(leafHashes, commitments[i].LeafHash(*previousBatch.AccountTreeRoot))
+		leafHashes = append(leafHashes, commitments[i].LeafHash())
 	}
 
 	previousCommitmentIndex := len(commitments) - 1

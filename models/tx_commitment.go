@@ -19,8 +19,8 @@ func (c *TxCommitment) CalcBodyHash(accountRoot common.Hash) common.Hash {
 	return calcBodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, accountRoot.Bytes())
 }
 
-func (c *TxCommitment) LeafHash(accountRoot common.Hash) common.Hash {
-	return utils.HashTwo(c.PostStateRoot, c.CalcBodyHash(accountRoot))
+func (c *TxCommitment) LeafHash() common.Hash {
+	return utils.HashTwo(c.PostStateRoot, *c.BodyHash)
 }
 
 func calcBodyHash(feeReceiver uint32, combinedSignature Signature, transactions, accountTreeRoot []byte) common.Hash {

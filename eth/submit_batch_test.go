@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -47,7 +48,8 @@ func (s *SubmitBatchTestSuite) TestSubmitTransfersBatchAndWait_ReturnsCorrectBat
 
 	accountRoot, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
-	commitmentRoot := utils.HashTwo(commitment.LeafHash(accountRoot), merkletree.GetZeroHash(0))
+	commitment.BodyHash = ref.Hash(commitment.CalcBodyHash(accountRoot))
+	commitmentRoot := utils.HashTwo(commitment.LeafHash(), merkletree.GetZeroHash(0))
 	minFinalisationBlock := s.getMinFinalisationBlock()
 
 	batch, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitment{commitment})
@@ -66,7 +68,8 @@ func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatchAndWait_ReturnsCor
 
 	accountRoot, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
-	commitmentRoot := utils.HashTwo(commitment.LeafHash(accountRoot), merkletree.GetZeroHash(0))
+	commitment.BodyHash = ref.Hash(commitment.CalcBodyHash(accountRoot))
+	commitmentRoot := utils.HashTwo(commitment.LeafHash(), merkletree.GetZeroHash(0))
 	minFinalisationBlock := s.getMinFinalisationBlock()
 
 	batch, err := s.client.SubmitCreate2TransfersBatchAndWait([]models.TxCommitment{commitment})

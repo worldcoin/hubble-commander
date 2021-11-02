@@ -145,7 +145,7 @@ func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_
 			Path:  1,
 			Depth: 2,
 		},
-		Witness: []common.Hash{commitments[0].LeafHash(*batch.AccountTreeRoot)},
+		Witness: []common.Hash{commitments[0].LeafHash()},
 	}
 
 	proof, err := s.disputeCtx.previousCommitmentInclusionProof(&s.decodedBatch, -1)
