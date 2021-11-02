@@ -37,7 +37,10 @@ func (c *Context) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *m
 		if err != nil {
 			return err
 		}
-		//TODO-sto: set commitment BodyHash
+		err = c.setCommitmentsBodyHash(remoteBatch)
+		if err != nil {
+			return err
+		}
 
 		log.Printf(
 			"Synced new existing batch. Batch ID: %d. Batch Hash: %v",
@@ -70,6 +73,18 @@ func (c *Context) getTransactionSender(txHash common.Hash) (*common.Address, err
 		return nil, err
 	}
 	return &sender, nil
+}
+
+func (c *Context) setCommitmentsBodyHash(batch *eth.DecodedBatch) error {
+	commitments, err := c.storage.GetTxCommitmentsByBatchID(batch.ID)
+	if err != nil {
+		return err
+	}
+	for i := range commitments {
+		commitments[i].BodyHash = ref.Hash(commitments[i].CalcBodyHash(*batch.AccountTreeRoot))
+	}
+
+	return c.storage.UpdateCommitments(commitments)
 }
 
 func (c *Context) syncNewBatch(batch *eth.DecodedBatch) error {

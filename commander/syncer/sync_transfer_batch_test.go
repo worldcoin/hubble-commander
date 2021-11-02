@@ -95,7 +95,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
 	}
 }
 
-func (s *SyncTransferBatchTestSuite) TestSyncBatch_PendingBatch() {
+func (s *SyncTransferBatchTestSuite) TestSyncBatch_SyncsExistingBatch() {
 	accountRoot := s.getAccountTreeRoot()
 	tx := testutils.MakeTransfer(0, 1, 0, 400)
 	s.setTxHashAndSign(&tx)
@@ -114,8 +114,12 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_PendingBatch() {
 	s.Len(batches, 1)
 	s.NotNil(batches[0].Hash)
 	s.NotNil(batches[0].FinalisationBlock)
-
 	s.Equal(accountRoot, *batches[0].AccountTreeRoot)
+
+	commitments, err := s.storage.GetTxCommitmentsByBatchID(batches[0].ID)
+	s.NoError(err)
+	s.Len(commitments, 1)
+	s.NotNil(commitments[0].BodyHash)
 }
 
 func (s *SyncTransferBatchTestSuite) TestSyncBatch_TooManyTxsInCommitment() {
