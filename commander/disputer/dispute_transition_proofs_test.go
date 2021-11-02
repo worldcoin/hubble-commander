@@ -138,7 +138,7 @@ func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_
 
 	expected := models.CommitmentInclusionProof{
 		StateRoot: commitments[1].PostStateRoot,
-		BodyRoot:  commitments[1].BodyHash(*batch.AccountTreeRoot),
+		BodyRoot:  commitments[1].CalcBodyHash(*batch.AccountTreeRoot),
 		Path: &models.MerklePath{
 			Path:  1,
 			Depth: 2,

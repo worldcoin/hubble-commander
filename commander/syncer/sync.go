@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
@@ -36,6 +37,7 @@ func (c *Context) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *m
 		if err != nil {
 			return err
 		}
+		//TODO-sto: set commitment BodyHash
 
 		log.Printf(
 			"Synced new existing batch. Batch ID: %d. Batch Hash: %v",
@@ -109,16 +111,7 @@ func (c *Context) syncCommitment(batch *eth.DecodedBatch, commitment *encoder.De
 		return err
 	}
 
-	err = c.storage.AddTxCommitment(&models.TxCommitment{
-		CommitmentBase: models.CommitmentBase{
-			ID:            commitment.ID,
-			Type:          batch.Type,
-			PostStateRoot: commitment.StateRoot,
-		},
-		Transactions:      commitment.Transactions,
-		FeeReceiver:       commitment.FeeReceiver,
-		CombinedSignature: commitment.CombinedSignature,
-	})
+	err = c.addTxCommitment(batch, commitment)
 	if err != nil {
 		return err
 	}
@@ -135,4 +128,20 @@ func (c *Context) syncCommitment(batch *eth.DecodedBatch, commitment *encoder.De
 		return nil
 	}
 	return c.Syncer.BatchAddTxs(transactions)
+}
+
+func (c *Context) addTxCommitment(batch *eth.DecodedBatch, decodedCommitment *encoder.DecodedCommitment) error {
+	commitment := &models.TxCommitment{
+		CommitmentBase: models.CommitmentBase{
+			ID:            decodedCommitment.ID,
+			Type:          batch.Type,
+			PostStateRoot: decodedCommitment.StateRoot,
+		},
+		Transactions:      decodedCommitment.Transactions,
+		FeeReceiver:       decodedCommitment.FeeReceiver,
+		CombinedSignature: decodedCommitment.CombinedSignature,
+	}
+	commitment.CommitmentBase.BodyHash = ref.Hash(commitment.CalcBodyHash(*batch.AccountTreeRoot))
+
+	return c.storage.AddTxCommitment(commitment)
 }

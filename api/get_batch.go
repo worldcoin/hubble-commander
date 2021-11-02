@@ -34,7 +34,7 @@ func (a *API) unsafeGetBatchByHash(hash common.Hash) (*dto.BatchWithRootAndCommi
 	if err != nil {
 		return nil, err
 	}
-	return createBatchWithCommitments(batch, submissionBlock, commitments)
+	return a.createBatchWithCommitments(batch, submissionBlock, commitments)
 }
 
 func (a *API) GetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommitments, error) {
@@ -60,18 +60,23 @@ func (a *API) unsafeGetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommit
 	if err != nil {
 		return nil, err
 	}
-	return createBatchWithCommitments(batch, submissionBlock, commitments)
+	return a.createBatchWithCommitments(batch, submissionBlock, commitments)
 }
 
-func createBatchWithCommitments(
+func (a *API) createBatchWithCommitments(
 	batch *models.Batch,
 	submissionBlock uint32,
-	commitments []models.CommitmentWithTokenID,
+	commitments []models.TxCommitment,
 ) (*dto.BatchWithRootAndCommitments, error) {
+	batchCommitments := make([]dto.CommitmentWithTokenID, 0, len(commitments))
 	for i := range commitments {
-		commitments[i].LeafHash = commitments[i].CalcLeafHash(batch.AccountTreeRoot)
+		stateLeaf, err := a.storage.StateTree.Leaf(commitments[i].FeeReceiver)
+		if err != nil {
+			return nil, err
+		}
+		batchCommitments = append(batchCommitments, dto.MakeCommitmentWithTokenID(&commitments[i], *batch.AccountTreeRoot, stateLeaf.TokenID))
 	}
-	return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, commitments), nil
+	return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, batchCommitments), nil
 }
 
 func (a *API) getSubmissionBlock(batch *models.Batch) (uint32, error) {

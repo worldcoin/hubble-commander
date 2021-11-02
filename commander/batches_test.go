@@ -152,6 +152,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 		FeeReceiver:       batches[0].Commitments[0].FeeReceiver,
 		CombinedSignature: batches[0].Commitments[0].CombinedSignature,
 	}
+	expectedCommitment.BodyHash = ref.Hash(expectedCommitment.CalcBodyHash(*batch.AccountTreeRoot))
 	commitment, err := s.cmd.storage.GetTxCommitment(&expectedCommitment.ID)
 	s.NoError(err)
 	s.Equal(expectedCommitment, *commitment)
@@ -444,6 +445,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_AllowsTransferToNonexistentReceiv
 			ID:              models.MakeUint256(1),
 			Type:            batchtype.Transfer,
 			TransactionHash: common.Hash{1, 2, 3},
+			AccountTreeRoot: &common.Hash{1, 2, 3},
 		},
 		Commitments: []encoder.DecodedCommitment{{
 			StateRoot:         stateRoot,

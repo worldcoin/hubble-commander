@@ -109,25 +109,15 @@ func (s *TxCommitmentTestSuite) TestGetTxCommitmentsByBatchID() {
 	batchID := s.addRandomBatch()
 	includedCommitment := txCommitment
 	includedCommitment.ID.BatchID = batchID
-	includedCommitment.FeeReceiver = 0
 
-	expectedCommitments := make([]models.CommitmentWithTokenID, 2)
+	expectedCommitments := make([]models.TxCommitment, 2)
 	for i := 0; i < 2; i++ {
 		includedCommitment.ID.IndexInBatch = uint8(i)
 		err = s.storage.AddTxCommitment(&includedCommitment)
 		s.NoError(err)
 
-		expectedCommitments[i] = models.CommitmentWithTokenID{
-			ID:                 includedCommitment.ID,
-			Transactions:       includedCommitment.Transactions,
-			TokenID:            models.MakeUint256(1),
-			FeeReceiverStateID: includedCommitment.FeeReceiver,
-			CombinedSignature:  includedCommitment.CombinedSignature,
-			PostStateRoot:      includedCommitment.PostStateRoot,
-		}
+		expectedCommitments[i] = includedCommitment
 	}
-
-	s.addStateLeaf()
 
 	commitments, err := s.storage.GetTxCommitmentsByBatchID(batchID)
 	s.NoError(err)
@@ -141,16 +131,6 @@ func (s *TxCommitmentTestSuite) TestGetTxCommitmentsByBatchID_NonexistentCommitm
 	commitments, err := s.storage.GetTxCommitmentsByBatchID(batchID)
 	s.NoError(err)
 	s.Len(commitments, 0)
-}
-
-func (s *TxCommitmentTestSuite) addStateLeaf() {
-	_, err := s.storage.StateTree.Set(uint32(0), &models.UserState{
-		PubKeyID: 1,
-		TokenID:  models.MakeUint256(1),
-		Balance:  models.MakeUint256(420),
-		Nonce:    models.MakeUint256(0),
-	})
-	s.NoError(err)
 }
 
 func TestTxCommitmentTestSuite(t *testing.T) {

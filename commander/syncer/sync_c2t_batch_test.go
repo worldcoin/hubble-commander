@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -137,6 +138,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 		IndexInBatch: 0,
 	})
 	s.NoError(err)
+	expectedCommitment.BodyHash = ref.Hash(expectedCommitment.CalcBodyHash(s.getAccountTreeRoot()))
 
 	s.recreateDatabase()
 	s.syncAllBatches()

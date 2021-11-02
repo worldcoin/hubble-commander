@@ -84,7 +84,7 @@ func (s *EncoderTestSuite) TestCommitmentBodyHash() {
 		CombinedSignature: signature,
 	}
 
-	s.Equal(expectedHash[:], commitment.BodyHash(accountRoot).Bytes())
+	s.Equal(expectedHash[:], commitment.CalcBodyHash(accountRoot).Bytes())
 }
 
 func TestEncoderTestSuite(t *testing.T) {

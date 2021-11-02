@@ -15,31 +15,12 @@ type TxCommitment struct {
 	Transactions      []byte
 }
 
-func (c *TxCommitment) BodyHash(accountRoot common.Hash) common.Hash {
+func (c *TxCommitment) CalcBodyHash(accountRoot common.Hash) common.Hash {
 	return calcBodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, accountRoot.Bytes())
 }
 
 func (c *TxCommitment) LeafHash(accountRoot common.Hash) common.Hash {
-	return utils.HashTwo(c.PostStateRoot, c.BodyHash(accountRoot))
-}
-
-type CommitmentWithTokenID struct {
-	ID                 CommitmentID
-	LeafHash           common.Hash
-	Transactions       []byte `json:"-"`
-	TokenID            Uint256
-	FeeReceiverStateID uint32
-	CombinedSignature  Signature
-	PostStateRoot      common.Hash
-}
-
-func (c *CommitmentWithTokenID) BodyHash(accountRoot common.Hash) common.Hash {
-	return calcBodyHash(c.FeeReceiverStateID, c.CombinedSignature, c.Transactions, accountRoot.Bytes())
-}
-
-func (c *CommitmentWithTokenID) CalcLeafHash(accountTreeRoot *common.Hash) common.Hash {
-	bodyHash := calcBodyHash(c.FeeReceiverStateID, c.CombinedSignature, c.Transactions, accountTreeRoot.Bytes())
-	return utils.HashTwo(c.PostStateRoot, bodyHash)
+	return utils.HashTwo(c.PostStateRoot, c.CalcBodyHash(accountRoot))
 }
 
 func calcBodyHash(feeReceiver uint32, combinedSignature Signature, transactions, accountTreeRoot []byte) common.Hash {
