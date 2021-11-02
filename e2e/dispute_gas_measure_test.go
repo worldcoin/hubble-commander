@@ -144,7 +144,8 @@ func send32TransfersBatchWithInvalidSignature(t *testing.T, ethClient *eth.Clien
 
 	encodedTransfer, err := encoder.EncodeTransferForCommitment(&transfer)
 	require.NoError(t, err)
-	postStateRoot := common.Hash{45, 76, 35, 230, 155, 178, 7, 67, 241, 86, 195, 114, 225, 244, 169, 166, 182, 213, 46, 60, 106, 107, 252, 125, 107, 78, 157, 106, 126, 38, 160, 137}
+	postStateRoot := common.Hash{45, 76, 35, 230, 155, 178, 7, 67, 241, 86, 195, 114, 225, 244, 169, 166, 182, 213, 46, 60, 106, 107, 252,
+		125, 107, 78, 157, 106, 126, 38, 160, 137}
 
 	commitment := models.TxCommitment{
 		CommitmentBase: models.CommitmentBase{
@@ -170,7 +171,8 @@ func send32C2TBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, wal
 	registeredPubKeyIDs := register32Accounts(t, ethClient, wallets)
 	encodedTransfers := encodeCreate2Transfers(t, &transfer, registeredPubKeyIDs, 6)
 
-	postStateRoot := common.Hash{9, 165, 135, 45, 162, 158, 64, 129, 26, 232, 17, 209, 169, 198, 175, 189, 42, 40, 119, 15, 11, 78, 238, 158, 35, 163, 205, 164, 23, 120, 249, 253}
+	postStateRoot := common.Hash{9, 165, 135, 45, 162, 158, 64, 129, 26, 232, 17, 209, 169, 198, 175, 189, 42, 40, 119, 15, 11, 78, 238,
+		158, 35, 163, 205, 164, 23, 120, 249, 253}
 
 	commitment := models.TxCommitment{
 		CommitmentBase: models.CommitmentBase{
