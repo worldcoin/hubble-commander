@@ -33,11 +33,7 @@ func (c *Context) SyncBatch(remoteBatch *eth.DecodedBatch) error {
 
 func (c *Context) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
 	if remoteBatch.TransactionHash == localBatch.TransactionHash {
-		err := c.storage.MarkBatchAsSubmitted(&remoteBatch.Batch)
-		if err != nil {
-			return err
-		}
-		err = c.setCommitmentsBodyHash(remoteBatch)
+		err := c.UpdateExistingBatchAndCommitments(remoteBatch)
 		if err != nil {
 			return err
 		}
@@ -61,6 +57,14 @@ func (c *Context) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *m
 		}
 	}
 	return nil
+}
+
+func (c *Context) UpdateExistingBatchAndCommitments(batch *eth.DecodedBatch) error {
+	err := c.storage.MarkBatchAsSubmitted(&batch.Batch)
+	if err != nil {
+		return err
+	}
+	return c.setCommitmentsBodyHash(batch)
 }
 
 func (c *Context) getTransactionSender(txHash common.Hash) (*common.Address, error) {

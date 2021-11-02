@@ -181,8 +181,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithTooManyTxs() {
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.cmd.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
-	s.NoError(err)
+	s.updateBatchAfterSubmission(&remoteBatches[0])
 
 	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
 	s.ErrorIs(err, ErrRollbackInProgress)
@@ -206,8 +205,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidPostState
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.cmd.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
-	s.NoError(err)
+	s.updateBatchAfterSubmission(&remoteBatches[0])
 
 	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
 	s.ErrorIs(err, ErrRollbackInProgress)
@@ -257,8 +255,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDisputesFr
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.cmd.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
-	s.NoError(err)
+	s.updateBatchAfterSubmission(&remoteBatches[0])
 
 	s.client.Account = s.client.Accounts[1]
 	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
@@ -314,8 +311,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidFeeR
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.cmd.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
-	s.NoError(err)
+	s.updateBatchAfterSubmission(&remoteBatches[0])
 
 	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
 	s.ErrorIs(err, ErrRollbackInProgress)
@@ -341,8 +337,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithoutTransfer
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.cmd.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
-	s.NoError(err)
+	s.updateBatchAfterSubmission(&remoteBatches[0])
 
 	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
 	s.ErrorIs(err, ErrRollbackInProgress)
@@ -371,8 +366,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithNonexistent
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.cmd.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
-	s.NoError(err)
+	s.updateBatchAfterSubmission(&remoteBatches[0])
 
 	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
 	s.ErrorIs(err, ErrRollbackInProgress)
@@ -422,8 +416,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesC2TWithNonRegisteredRecei
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.cmd.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
-	s.NoError(err)
+	s.updateBatchAfterSubmission(&remoteBatches[0])
 
 	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
 	s.ErrorIs(err, ErrRollbackInProgress)
@@ -570,6 +563,20 @@ func (s *BatchesTestSuite) setTransferHashAndSign(txs ...*models.Transfer) {
 		s.NoError(err)
 		txs[i].Hash = *hash
 	}
+}
+
+func (s *BatchesTestSuite) updateBatchAfterSubmission(batch *eth.DecodedBatch) {
+	err := s.cmd.storage.MarkBatchAsSubmitted(&batch.Batch)
+	s.NoError(err)
+
+	commitments, err := s.cmd.storage.GetTxCommitmentsByBatchID(batch.ID)
+	s.NoError(err)
+	for i := range commitments {
+		commitments[i].BodyHash = ref.Hash(commitments[i].CalcBodyHash(*batch.AccountTreeRoot))
+	}
+
+	err = s.cmd.storage.UpdateCommitments(commitments)
+	s.NoError(err)
 }
 
 func (s *BatchesTestSuite) checkBatchAfterDispute(batchID models.Uint256) {

@@ -112,6 +112,7 @@ func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_
 				},
 				Type:          batchtype.Transfer,
 				PostStateRoot: utils.RandomHash(),
+				BodyHash:      utils.NewRandomHash(),
 			},
 			Transactions:      utils.RandomBytes(12),
 			FeeReceiver:       11,
@@ -125,6 +126,7 @@ func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_
 				},
 				Type:          batchtype.Transfer,
 				PostStateRoot: utils.RandomHash(),
+				BodyHash:      utils.NewRandomHash(),
 			},
 			Transactions:      utils.RandomBytes(12),
 			FeeReceiver:       11,
@@ -138,7 +140,7 @@ func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_
 
 	expected := models.CommitmentInclusionProof{
 		StateRoot: commitments[1].PostStateRoot,
-		BodyRoot:  commitments[1].CalcBodyHash(*batch.AccountTreeRoot),
+		BodyRoot:  *commitments[1].BodyHash,
 		Path: &models.MerklePath{
 			Path:  1,
 			Depth: 2,
