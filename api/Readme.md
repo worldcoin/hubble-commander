@@ -7,8 +7,9 @@
 - `40XXX` - Badger Errors
 - `50XXX` - Proof Errors
 - `99XXX` - Uncategorized Errors like NetworkInfo, BLS, UserStates etc.
+- `-32XXX` - JSON-RPC library errors
 
-## API Errors
+## Commander API errors
 
 |  Error code  |                                Message                              |
 | ------------ | ------------------------------------------------------------------- |
@@ -40,3 +41,16 @@
 | `99002`      | `user state not found`                                              |
 | `99003`      | `user states not found`                                             |
 | `99004`      | `an error occurred while fetching the domain for signing`           |
+
+## JSON-RPC library errors
+
+|      Error code      |        Type        |                    Example messages                    |
+| -------------------- | ------------------ | ------------------------------------------------------ |
+| `-32700`             | `Parse error`      | `"parse error"`                                        |
+| `-32600`             | `Invalid request`  | `"empty batch"` or `"invalid request"`                 |
+| `-32601`             | `Method not found` | `"the method foo_bar does not exist/is not available"` |
+| `-32602`             | `Invalid params`   | `"invalid argument 0: error unmarshalling Uint256"`    |
+| `-32603`             | `Internal error`   | *reserved error code (probably unused)*                |
+| `-32099` to `-32000` | `Internal error`   | *reserved error code range (probably unused)*          |
+
+Read more about default errors in JSON-RPC 2.0 specification [here](https://www.jsonrpc.org/specification).
