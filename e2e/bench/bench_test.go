@@ -146,7 +146,13 @@ func (s *BenchmarkSuite) benchSyncing() {
 
 		txCount := networkInfo.TransactionCount
 
-		fmt.Printf("Transfers synced: %d, throughput: %f tx/s, batches synced: %d/%d\n", txCount, float64(txCount)/(time.Since(startTime).Seconds()), lastSyncedBatch, latestBatch)
+		fmt.Printf(
+			"Transfers synced: %d, throughput: %f tx/s, batches synced: %d/%d\n",
+			txCount,
+			float64(txCount)/(time.Since(startTime).Seconds()),
+			lastSyncedBatch,
+			latestBatch,
+		)
 	}
 }
 
@@ -188,29 +194,29 @@ func (s *BenchmarkSuite) runForWallet(senderWallet bls.Wallet, senderStateID uin
 	nonce := models.MakeUint256(0)
 
 	for s.txsSent < txCount {
-
 		// Send phase
 		for len(txsToWatch) <= maxQueuedBatchesCount {
 			var lastTxHash common.Hash
-			for i := 0; i < txBatchSize; i++ {
 
+			for i := 0; i < txBatchSize; i++ {
 				txType := pickTxType(distribution)
 
 				switch txType {
 				case txtype.Transfer:
 					// Pick random receiver id that's different from sender's.
-					to := s.stateIds[rand.Intn(len(s.stateIds))]
+					to := s.stateIds[randomInt(len(s.stateIds))]
 					for to == senderStateID {
-						to = s.stateIds[rand.Intn(len(s.stateIds))]
+						to = s.stateIds[randomInt(len(s.stateIds))]
 					}
 
 					lastTxHash = s.sendTransfer(senderWallet, senderStateID, to, nonce)
-					break
 				case txtype.Create2Transfer:
 					// Pick random receiver pubkey
-					to := s.wallets[rand.Intn(len(s.wallets))].PublicKey()
+					to := s.wallets[randomInt(len(s.wallets))].PublicKey()
 
 					lastTxHash = s.sendC2T(senderWallet, senderStateID, to, nonce)
+				case txtype.MassMigration:
+					panic("Not supported")
 				}
 
 				nonce = *nonce.AddN(1)
@@ -249,7 +255,12 @@ func (s *BenchmarkSuite) runForWallet(senderWallet bls.Wallet, senderStateID uin
 		// Report phase
 		if s.lastReportedTxCount != s.txsSent {
 			s.lastReportedTxCount = s.txsSent
-			fmt.Printf("Transfers sent: %d, throughput: %f tx/s, txs in queue: %d\n", s.txsSent, float64(s.txsSent)/(time.Since(s.startTime).Seconds()), s.txsQueued)
+			fmt.Printf(
+				"Transfers sent: %d, throughput: %f tx/s, txs in queue: %d\n",
+				s.txsSent,
+				float64(s.txsSent)/(time.Since(s.startTime).Seconds()),
+				s.txsQueued,
+			)
 		}
 	}
 
@@ -299,7 +310,7 @@ func pickTxType(distribution TxTypeDistribution) txtype.TransactionType {
 		sum += weight
 	}
 
-	pick := rand.Float32() * sum
+	pick := randomFloat32() * sum
 
 	for txType, weight := range distribution {
 		if weight >= pick {
@@ -311,6 +322,16 @@ func pickTxType(distribution TxTypeDistribution) txtype.TransactionType {
 
 	log.Fatal("Unreachable")
 	return txtype.Transfer
+}
+
+func randomInt(n int) int {
+	//nolint:gosec
+	return rand.Intn(n)
+}
+
+func randomFloat32() float32 {
+	//nolint:gosec
+	return rand.Float32()
 }
 
 func TestBenchmarkSuite(t *testing.T) {
