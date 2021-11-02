@@ -40,3 +40,16 @@
 | `99002`      | `user state not found`                                              |
 | `99003`      | `user states not found`                                             |
 | `99004`      | `an error occurred while fetching the domain for signing`           |
+
+## Default JSON-RPC 2.0 Specification Errors
+
+|      Error code      |        Type        |                    Example message                     |
+| -------------------- | ------------------ | ------------------------------------------------------ |
+| `-32700`             | `Parse error`      | `"parse error"`                                        |
+| `-32600`             | `Invalid request`  | `-`                                                    |
+| `-32601`             | `Method not found` | `"the method foo_bar does not exist/is not available"` |
+| `-32602`             | `Invalid params`   | `"invalid argument 0: error unmarshalling Uint256"`    |
+| `-32603`             | `Internal error`   | `-`                                                    |
+| `-32099` to `-32000` | `Internal error`   | `-`                                                    |
+
+Read more about JSON-RPC 2.0 specification in depth [here](https://www.jsonrpc.org/specification).
