@@ -61,7 +61,7 @@ func (s *EncoderTestSuite) TestEncodeUserState() {
 	s.Equal(expected, bytes)
 }
 
-func (s *EncoderTestSuite) TestCommitmentBodyHash() {
+func (s *EncoderTestSuite) TestCommitmentWithTxs_CalcBodyHash() {
 	accountRoot := utils.RandomHash()
 	signature := models.MakeRandomSignature()
 	feeReceiver := models.MakeUint256(1234)
