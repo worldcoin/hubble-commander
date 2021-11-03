@@ -565,7 +565,7 @@ func (s *BatchesTestSuite) setTransferHashAndSign(txs ...*models.Transfer) {
 }
 
 func (s *BatchesTestSuite) updateBatchAfterSubmission(batch *eth.DecodedBatch) {
-	err := s.cmd.storage.MarkBatchAsSubmitted(&batch.Batch)
+	err := s.cmd.storage.UpdateBatch(&batch.Batch)
 	s.NoError(err)
 
 	commitments, err := s.cmd.storage.GetTxCommitmentsByBatchID(batch.ID)

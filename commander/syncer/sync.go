@@ -59,7 +59,7 @@ func (c *Context) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *m
 }
 
 func (c *Context) UpdateExistingBatchAndCommitments(batch *eth.DecodedBatch) error {
-	err := c.storage.MarkBatchAsSubmitted(&batch.Batch)
+	err := c.storage.UpdateBatch(&batch.Batch)
 	if err != nil {
 		return err
 	}

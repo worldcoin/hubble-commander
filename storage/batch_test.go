@@ -56,7 +56,7 @@ func (s *BatchTestSuite) TestAddBatch_AddAndRetrieve() {
 	s.EqualValues(140, actualUnixTime)
 }
 
-func (s *BatchTestSuite) TestMarkBatchAsSubmitted() {
+func (s *BatchTestSuite) TestUpdateBatch() {
 	pendingBatch := &models.Batch{
 		ID:              models.MakeUint256(124),
 		Type:            batchtype.Transfer,
@@ -74,12 +74,22 @@ func (s *BatchTestSuite) TestMarkBatchAsSubmitted() {
 		FinalisationBlock: ref.Uint32(1234),
 		AccountTreeRoot:   utils.NewRandomHash(),
 	}
-	err = s.storage.MarkBatchAsSubmitted(batch)
+	err = s.storage.UpdateBatch(batch)
 	s.NoError(err)
 
 	actual, err := s.storage.GetBatch(pendingBatch.ID)
 	s.NoError(err)
 	s.Equal(batch, actual)
+}
+
+func (s *BatchTestSuite) TestUpdateBatch_NonexistentBatch() {
+	batch := &models.Batch{
+		ID:              models.MakeUint256(124),
+		Type:            batchtype.Transfer,
+		TransactionHash: utils.RandomHash(),
+	}
+	err := s.storage.UpdateBatch(batch)
+	s.ErrorIs(err, NewNotFoundError("batch"))
 }
 
 func (s *BatchTestSuite) TestGetBatch() {
