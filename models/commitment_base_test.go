@@ -16,7 +16,6 @@ func TestCommitmentBase_Bytes(t *testing.T) {
 		},
 		Type:          batchtype.Create2Transfer,
 		PostStateRoot: utils.RandomHash(),
-		BodyHash:      utils.NewRandomHash(),
 	}
 
 	bytes := base.Bytes()

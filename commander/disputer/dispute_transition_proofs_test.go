@@ -112,10 +112,10 @@ func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_
 				},
 				Type:          batchtype.Transfer,
 				PostStateRoot: utils.RandomHash(),
-				BodyHash:      utils.NewRandomHash(),
 			},
 			FeeReceiver:       11,
 			CombinedSignature: models.MakeRandomSignature(),
+			BodyHash:          utils.NewRandomHash(),
 		},
 		{
 			CommitmentBase: models.CommitmentBase{
@@ -125,10 +125,10 @@ func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_
 				},
 				Type:          batchtype.Transfer,
 				PostStateRoot: utils.RandomHash(),
-				BodyHash:      utils.NewRandomHash(),
 			},
 			FeeReceiver:       11,
 			CombinedSignature: models.MakeRandomSignature(),
+			BodyHash:          utils.NewRandomHash(),
 		},
 	}
 	for i := range commitments {

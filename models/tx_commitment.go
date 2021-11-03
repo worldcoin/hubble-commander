@@ -13,6 +13,7 @@ type TxCommitment struct {
 	CommitmentBase
 	FeeReceiver       uint32
 	CombinedSignature Signature
+	BodyHash          *common.Hash
 }
 
 func (c *TxCommitment) LeafHash() common.Hash {

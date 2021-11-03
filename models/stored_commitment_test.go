@@ -17,10 +17,10 @@ func TestStoredCommitment_Bytes_TxCommitment(t *testing.T) {
 			},
 			Type:          batchtype.Transfer,
 			PostStateRoot: utils.RandomHash(),
-			BodyHash:      utils.NewRandomHash(),
 		},
 		FeeReceiver:       3,
 		CombinedSignature: Signature{1, 2, 3, 4, 5},
+		BodyHash:          utils.NewRandomHash(),
 	}
 
 	storedCommitment := MakeStoredCommitmentFromTxCommitment(commitment)
@@ -44,7 +44,6 @@ func TestStoredCommitment_Bytes_DepositCommitment(t *testing.T) {
 			},
 			Type:          batchtype.Deposit,
 			PostStateRoot: utils.RandomHash(),
-			BodyHash:      utils.NewRandomHash(),
 		},
 		SubTreeID:   MakeUint256(5),
 		SubTreeRoot: utils.RandomHash(),
