@@ -68,7 +68,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
 		s.client.GetBackend().Commit()
 
 		accountRoots[i] = s.getAccountTreeRoot()
-		commitments[i].BodyHash = commitments[i].CalcBodyHash(accountRoots[i])
+		commitments[i].SetBodyHash(accountRoots[i])
 		expectedCommitments = append(expectedCommitments, commitments[i].TxCommitment)
 	}
 

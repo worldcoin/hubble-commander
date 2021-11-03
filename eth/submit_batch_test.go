@@ -49,7 +49,7 @@ func (s *SubmitBatchTestSuite) TestSubmitTransfersBatchAndWait_ReturnsCorrectBat
 
 	accountRoot, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
-	commitment.BodyHash = commitment.CalcBodyHash(accountRoot)
+	commitment.SetBodyHash(accountRoot)
 	commitmentRoot := utils.HashTwo(commitment.LeafHash(), merkletree.GetZeroHash(0))
 	minFinalisationBlock := s.getMinFinalisationBlock()
 
@@ -69,7 +69,7 @@ func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatchAndWait_ReturnsCor
 
 	accountRoot, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
-	commitment.BodyHash = commitment.CalcBodyHash(accountRoot)
+	commitment.SetBodyHash(accountRoot)
 	commitmentRoot := utils.HashTwo(commitment.LeafHash(), merkletree.GetZeroHash(0))
 	minFinalisationBlock := s.getMinFinalisationBlock()
 

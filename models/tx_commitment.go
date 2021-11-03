@@ -25,6 +25,10 @@ type CommitmentWithTxs struct {
 	Transactions []byte
 }
 
+func (c *CommitmentWithTxs) SetBodyHash(accountRoot common.Hash) {
+	c.BodyHash = calcBodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, accountRoot.Bytes())
+}
+
 func (c *CommitmentWithTxs) CalcBodyHash(accountRoot common.Hash) *common.Hash {
 	return calcBodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, accountRoot.Bytes())
 }
