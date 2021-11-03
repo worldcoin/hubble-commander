@@ -151,7 +151,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 		FeeReceiver:       batches[0].Commitments[0].FeeReceiver,
 		CombinedSignature: batches[0].Commitments[0].CombinedSignature,
 	}
-	expectedCommitment.BodyHash = ref.Hash(batches[0].Commitments[0].BodyHash(*batch.AccountTreeRoot))
+	expectedCommitment.BodyHash = batches[0].Commitments[0].BodyHash(*batch.AccountTreeRoot)
 	commitment, err := s.cmd.storage.GetTxCommitment(&expectedCommitment.ID)
 	s.NoError(err)
 	s.Equal(expectedCommitment, *commitment)
@@ -571,7 +571,7 @@ func (s *BatchesTestSuite) updateBatchAfterSubmission(batch *eth.DecodedBatch) {
 	commitments, err := s.cmd.storage.GetTxCommitmentsByBatchID(batch.ID)
 	s.NoError(err)
 	for i := range commitments {
-		commitments[i].BodyHash = ref.Hash(batch.Commitments[i].BodyHash(*batch.AccountTreeRoot))
+		commitments[i].BodyHash = batch.Commitments[i].BodyHash(*batch.AccountTreeRoot)
 	}
 
 	err = s.cmd.storage.UpdateCommitments(commitments)

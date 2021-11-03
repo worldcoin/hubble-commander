@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -23,11 +24,11 @@ type TxCommitmentWithTxs struct {
 	Transactions []byte
 }
 
-func (c *TxCommitmentWithTxs) CalcBodyHash(accountRoot common.Hash) common.Hash {
+func (c *TxCommitmentWithTxs) CalcBodyHash(accountRoot common.Hash) *common.Hash {
 	return calcBodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, accountRoot.Bytes())
 }
 
-func calcBodyHash(feeReceiver uint32, combinedSignature Signature, transactions, accountTreeRoot []byte) common.Hash {
+func calcBodyHash(feeReceiver uint32, combinedSignature Signature, transactions, accountTreeRoot []byte) *common.Hash {
 	arr := make([]byte, 32+64+32+len(transactions))
 
 	copy(arr[0:32], accountTreeRoot)
@@ -35,5 +36,5 @@ func calcBodyHash(feeReceiver uint32, combinedSignature Signature, transactions,
 	binary.BigEndian.PutUint32(arr[124:128], feeReceiver)
 	copy(arr[128:], transactions)
 
-	return crypto.Keccak256Hash(arr)
+	return ref.Hash(crypto.Keccak256Hash(arr))
 }

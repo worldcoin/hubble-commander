@@ -6,6 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -18,7 +19,7 @@ type DecodedCommitment struct {
 	Transactions      []byte
 }
 
-func (c *DecodedCommitment) BodyHash(accountRoot common.Hash) common.Hash {
+func (c *DecodedCommitment) BodyHash(accountRoot common.Hash) *common.Hash {
 	arr := make([]byte, 32+64+32+len(c.Transactions))
 
 	copy(arr[0:32], accountRoot.Bytes())
@@ -26,11 +27,11 @@ func (c *DecodedCommitment) BodyHash(accountRoot common.Hash) common.Hash {
 	binary.BigEndian.PutUint32(arr[124:128], c.FeeReceiver)
 	copy(arr[128:], c.Transactions)
 
-	return crypto.Keccak256Hash(arr)
+	return ref.Hash(crypto.Keccak256Hash(arr))
 }
 
 func (c *DecodedCommitment) LeafHash(accountRoot common.Hash) common.Hash {
-	return utils.HashTwo(c.StateRoot, c.BodyHash(accountRoot))
+	return utils.HashTwo(c.StateRoot, *c.BodyHash(accountRoot))
 }
 
 func CommitmentToCalldataFields(commitments []models.TxCommitmentWithTxs) (

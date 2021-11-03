@@ -11,7 +11,6 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 )
@@ -69,7 +68,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
 		s.client.GetBackend().Commit()
 
 		accountRoots[i] = s.getAccountTreeRoot()
-		commitments[i].BodyHash = ref.Hash(commitments[i].CalcBodyHash(accountRoots[i]))
+		commitments[i].BodyHash = commitments[i].CalcBodyHash(accountRoots[i])
 		expectedCommitments = append(expectedCommitments, commitments[i].TxCommitment)
 	}
 

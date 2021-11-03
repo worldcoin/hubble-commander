@@ -26,7 +26,7 @@ func (c *Context) previousCommitmentInclusionProof(
 		leafHashes,
 		uint32(previousCommitmentIndex),
 		batch.Commitments[previousCommitmentIndex].StateRoot,
-		batch.Commitments[previousCommitmentIndex].BodyHash(*batch.AccountTreeRoot),
+		*batch.Commitments[previousCommitmentIndex].BodyHash(*batch.AccountTreeRoot),
 	)
 }
 

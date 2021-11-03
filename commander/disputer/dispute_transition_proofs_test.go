@@ -70,7 +70,7 @@ func (s *DisputeTransitionProofsTestSuite) SetupTest() {
 func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_CurrentBatch() {
 	expected := models.CommitmentInclusionProof{
 		StateRoot: s.decodedCommitments[0].StateRoot,
-		BodyRoot:  s.decodedCommitments[0].BodyHash(*s.decodedBatch.AccountTreeRoot),
+		BodyRoot:  *s.decodedCommitments[0].BodyHash(*s.decodedBatch.AccountTreeRoot),
 		Path: &models.MerklePath{
 			Path:  0,
 			Depth: 2,

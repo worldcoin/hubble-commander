@@ -7,7 +7,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
@@ -85,7 +84,7 @@ func (c *Context) setCommitmentsBodyHash(batch *eth.DecodedBatch) error {
 		return err
 	}
 	for i := range commitments {
-		commitments[i].BodyHash = ref.Hash(batch.Commitments[i].BodyHash(*batch.AccountTreeRoot))
+		commitments[i].BodyHash = batch.Commitments[i].BodyHash(*batch.AccountTreeRoot)
 	}
 
 	return c.storage.UpdateCommitments(commitments)
@@ -159,7 +158,7 @@ func (c *Context) addTxCommitment(batch *eth.DecodedBatch, decodedCommitment *en
 		FeeReceiver:       decodedCommitment.FeeReceiver,
 		CombinedSignature: decodedCommitment.CombinedSignature,
 	}
-	commitment.CommitmentBase.BodyHash = ref.Hash(decodedCommitment.BodyHash(*batch.AccountTreeRoot))
+	commitment.CommitmentBase.BodyHash = decodedCommitment.BodyHash(*batch.AccountTreeRoot)
 
 	return c.storage.AddTxCommitment(commitment)
 }
