@@ -85,7 +85,7 @@ func (c *Context) setCommitmentsBodyHash(batch *eth.DecodedBatch) error {
 		return err
 	}
 	for i := range commitments {
-		commitments[i].BodyHash = ref.Hash(commitments[i].CalcBodyHash(*batch.AccountTreeRoot))
+		commitments[i].BodyHash = ref.Hash(batch.Commitments[i].BodyHash(*batch.AccountTreeRoot))
 	}
 
 	return c.storage.UpdateCommitments(commitments)
@@ -156,11 +156,10 @@ func (c *Context) addTxCommitment(batch *eth.DecodedBatch, decodedCommitment *en
 			Type:          batch.Type,
 			PostStateRoot: decodedCommitment.StateRoot,
 		},
-		Transactions:      decodedCommitment.Transactions,
 		FeeReceiver:       decodedCommitment.FeeReceiver,
 		CombinedSignature: decodedCommitment.CombinedSignature,
 	}
-	commitment.CommitmentBase.BodyHash = ref.Hash(commitment.CalcBodyHash(*batch.AccountTreeRoot))
+	commitment.CommitmentBase.BodyHash = ref.Hash(decodedCommitment.BodyHash(*batch.AccountTreeRoot))
 
 	return c.storage.AddTxCommitment(commitment)
 }

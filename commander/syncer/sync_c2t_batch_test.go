@@ -132,13 +132,9 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_NonexistentReceiverPublicKey() {
 func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, s.wallets[0].PublicKey())
 	s.setTxHashAndSign(&tx)
-	batch := s.submitBatch(&tx)
-	expectedCommitment, err := s.storage.GetTxCommitment(&models.CommitmentID{
-		BatchID:      batch.ID,
-		IndexInBatch: 0,
-	})
-	s.NoError(err)
-	expectedCommitment.BodyHash = ref.Hash(expectedCommitment.CalcBodyHash(s.getAccountTreeRoot()))
+	_, commitments := s.submitBatch(&tx)
+	expectedCommitment := commitments[0].ToTxCommitment()
+	expectedCommitment.BodyHash = ref.Hash(commitments[0].CalcBodyHash(s.getAccountTreeRoot()))
 
 	s.recreateDatabase()
 	s.syncAllBatches()

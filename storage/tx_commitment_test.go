@@ -23,7 +23,6 @@ var (
 		},
 		FeeReceiver:       uint32(1),
 		CombinedSignature: models.MakeRandomSignature(),
-		Transactions:      []byte{1, 2, 3},
 	}
 )
 

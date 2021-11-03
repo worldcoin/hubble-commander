@@ -79,12 +79,11 @@ func (s *EncoderTestSuite) TestCommitmentBodyHash() {
 		CommitmentBase: models.CommitmentBase{
 			Type: batchtype.Transfer,
 		},
-		Transactions:      txs,
 		FeeReceiver:       uint32(feeReceiver.Uint64()),
 		CombinedSignature: signature,
 	}
 
-	s.Equal(expectedHash[:], commitment.CalcBodyHash(accountRoot).Bytes())
+	s.Equal(expectedHash[:], commitment.CalcBodyHash(txs, accountRoot).Bytes())
 }
 
 func TestEncoderTestSuite(t *testing.T) {

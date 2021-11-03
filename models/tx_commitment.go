@@ -12,11 +12,10 @@ type TxCommitment struct {
 	CommitmentBase
 	FeeReceiver       uint32
 	CombinedSignature Signature
-	Transactions      []byte
 }
 
-func (c *TxCommitment) CalcBodyHash(accountRoot common.Hash) common.Hash {
-	return calcBodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, accountRoot.Bytes())
+func (c *TxCommitment) CalcBodyHash(txs []byte, accountRoot common.Hash) common.Hash {
+	return calcBodyHash(c.FeeReceiver, c.CombinedSignature, txs, accountRoot.Bytes())
 }
 
 func (c *TxCommitment) LeafHash() common.Hash {
@@ -54,6 +53,5 @@ func (c *TxCommitmentWithTxs) ToTxCommitment() *TxCommitment {
 		CommitmentBase:    c.CommitmentBase,
 		FeeReceiver:       c.FeeReceiver,
 		CombinedSignature: c.CombinedSignature,
-		Transactions:      c.Transactions,
 	}
 }

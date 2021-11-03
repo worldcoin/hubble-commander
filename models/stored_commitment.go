@@ -13,7 +13,6 @@ func MakeStoredCommitmentFromTxCommitment(c *TxCommitment) StoredCommitment {
 		Body: &StoredTxCommitmentBody{
 			FeeReceiver:       c.FeeReceiver,
 			CombinedSignature: c.CombinedSignature,
-			Transactions:      c.Transactions,
 		},
 	}
 }
@@ -71,7 +70,6 @@ func (c *StoredCommitment) ToTxCommitment() *TxCommitment {
 		CommitmentBase:    c.CommitmentBase,
 		FeeReceiver:       txCommitmentBody.FeeReceiver,
 		CombinedSignature: txCommitmentBody.CombinedSignature,
-		Transactions:      txCommitmentBody.Transactions,
 	}
 }
 

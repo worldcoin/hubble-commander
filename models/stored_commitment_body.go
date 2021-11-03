@@ -33,14 +33,12 @@ func NewStoredCommitmentBody(commitmentType batchtype.BatchType) (StoredCommitme
 type StoredTxCommitmentBody struct {
 	FeeReceiver       uint32
 	CombinedSignature Signature
-	Transactions      []byte
 }
 
 func (c *StoredTxCommitmentBody) Bytes() []byte {
 	b := make([]byte, c.BytesLen())
 	binary.BigEndian.PutUint32(b[0:4], c.FeeReceiver)
 	copy(b[4:68], c.CombinedSignature.Bytes())
-	copy(b[68:], c.Transactions)
 	return b
 }
 
@@ -51,12 +49,11 @@ func (c *StoredTxCommitmentBody) SetBytes(data []byte) error {
 	}
 
 	c.FeeReceiver = binary.BigEndian.Uint32(data[0:4])
-	c.Transactions = data[68:]
 	return nil
 }
 
 func (c *StoredTxCommitmentBody) BytesLen() int {
-	return storedTxCommitmentBodyBaseLength + len(c.Transactions)
+	return storedTxCommitmentBodyBaseLength
 }
 
 type StoredDepositCommitmentBody struct {
