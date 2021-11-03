@@ -133,7 +133,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, s.wallets[0].PublicKey())
 	s.setTxHashAndSign(&tx)
 	_, commitments := s.submitBatch(&tx)
-	expectedCommitment := commitments[0].ToTxCommitment()
+	expectedCommitment := commitments[0].TxCommitment
 	expectedCommitment.BodyHash = ref.Hash(commitments[0].CalcBodyHash(s.getAccountTreeRoot()))
 
 	s.recreateDatabase()
@@ -156,7 +156,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 
 	commitment, err := s.storage.GetTxCommitment(&expectedCommitment.ID)
 	s.NoError(err)
-	s.Equal(*expectedCommitment, *commitment)
+	s.Equal(expectedCommitment, *commitment)
 
 	transfer, err := s.storage.GetCreate2Transfer(tx.Hash)
 	s.NoError(err)

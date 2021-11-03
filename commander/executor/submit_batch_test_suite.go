@@ -8,13 +8,15 @@ import (
 
 var (
 	baseCommitment = models.TxCommitmentWithTxs{
-		CommitmentBase: models.CommitmentBase{
-			Type:          batchtype.Transfer,
-			PostStateRoot: utils.RandomHash(),
+		TxCommitment: models.TxCommitment{
+			CommitmentBase: models.CommitmentBase{
+				Type:          batchtype.Transfer,
+				PostStateRoot: utils.RandomHash(),
+			},
+			FeeReceiver:       1,
+			CombinedSignature: models.MakeRandomSignature(),
 		},
-		Transactions:      utils.RandomBytes(24),
-		FeeReceiver:       1,
-		CombinedSignature: models.MakeRandomSignature(),
+		Transactions: utils.RandomBytes(24),
 	}
 )
 

@@ -506,7 +506,7 @@ func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batc
 	commitments, err := s.rollupCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
-	err = s.cmd.storage.AddTxCommitment(commitments[0].ToTxCommitment())
+	err = s.cmd.storage.AddTxCommitment(&commitments[0].TxCommitment)
 	s.NoError(err)
 
 	pendingBatch.TransactionHash = utils.RandomHash()

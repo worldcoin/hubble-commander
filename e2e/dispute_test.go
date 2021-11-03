@@ -220,15 +220,17 @@ func sendTransferBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client) 
 	postStateRoot := common.Hash{223, 216, 112, 56, 113, 248, 202, 217, 207, 95, 115, 189, 153, 14, 156, 202, 27, 160, 133, 14, 118, 218,
 		161, 109, 17, 61, 77, 118, 7, 252, 42, 18}
 
-	commitment := models.TxCommitment{
-		CommitmentBase: models.CommitmentBase{
-			PostStateRoot: postStateRoot,
+	commitment := models.TxCommitmentWithTxs{
+		TxCommitment: models.TxCommitment{
+			CommitmentBase: models.CommitmentBase{
+				PostStateRoot: postStateRoot,
+			},
+			FeeReceiver:       0,
+			CombinedSignature: models.Signature{},
 		},
-		Transactions:      encodedTransfer,
-		FeeReceiver:       0,
-		CombinedSignature: models.Signature{},
+		Transactions: encodedTransfer,
 	}
-	submitTransfersBatch(t, ethClient, []models.TxCommitment{commitment}, 1)
+	submitTransfersBatch(t, ethClient, []models.TxCommitmentWithTxs{commitment}, 1)
 }
 
 func sendTransferBatchWithInvalidAmount(t *testing.T, ethClient *eth.Client) {
@@ -319,30 +321,34 @@ func sendC2TBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, toPub
 	postStateRoot := common.Hash{5, 64, 118, 3, 181, 231, 59, 98, 230, 215, 146, 132, 59, 141, 73, 132, 133, 23, 149, 118, 59, 118, 88, 153,
 		150, 65, 112, 215, 128, 132, 47, 58}
 
-	commitment := models.TxCommitment{
-		CommitmentBase: models.CommitmentBase{
-			PostStateRoot: postStateRoot,
+	commitment := models.TxCommitmentWithTxs{
+		TxCommitment: models.TxCommitment{
+			CommitmentBase: models.CommitmentBase{
+				PostStateRoot: postStateRoot,
+			},
+			FeeReceiver:       0,
+			CombinedSignature: models.Signature{},
 		},
-		Transactions:      encodedTransfer,
-		FeeReceiver:       0,
-		CombinedSignature: models.Signature{},
+		Transactions: encodedTransfer,
 	}
-	submitC2TBatch(t, ethClient, []models.TxCommitment{commitment}, 1)
+	submitC2TBatch(t, ethClient, []models.TxCommitmentWithTxs{commitment}, 1)
 }
 
 func sendTransferCommitment(t *testing.T, ethClient *eth.Client, encodedTransfer []byte, batchID uint64) {
-	commitment := models.TxCommitment{
-		CommitmentBase: models.CommitmentBase{
-			PostStateRoot: utils.RandomHash(),
+	commitment := models.TxCommitmentWithTxs{
+		TxCommitment: models.TxCommitment{
+			CommitmentBase: models.CommitmentBase{
+				PostStateRoot: utils.RandomHash(),
+			},
+			FeeReceiver:       0,
+			CombinedSignature: models.Signature{},
 		},
-		Transactions:      encodedTransfer,
-		FeeReceiver:       0,
-		CombinedSignature: models.Signature{},
+		Transactions: encodedTransfer,
 	}
-	submitTransfersBatch(t, ethClient, []models.TxCommitment{commitment}, batchID)
+	submitTransfersBatch(t, ethClient, []models.TxCommitmentWithTxs{commitment}, batchID)
 }
 
-func submitTransfersBatch(t *testing.T, ethClient *eth.Client, commitments []models.TxCommitment, batchID uint64) {
+func submitTransfersBatch(t *testing.T, ethClient *eth.Client, commitments []models.TxCommitmentWithTxs, batchID uint64) {
 	transaction, err := ethClient.SubmitTransfersBatch(commitments)
 	require.NoError(t, err)
 
@@ -350,19 +356,21 @@ func submitTransfersBatch(t *testing.T, ethClient *eth.Client, commitments []mod
 }
 
 func sendC2TCommitment(t *testing.T, ethClient *eth.Client, encodedTransfer []byte, batchID uint64) {
-	commitment := models.TxCommitment{
-		CommitmentBase: models.CommitmentBase{
-			PostStateRoot: utils.RandomHash(),
+	commitment := models.TxCommitmentWithTxs{
+		TxCommitment: models.TxCommitment{
+			CommitmentBase: models.CommitmentBase{
+				PostStateRoot: utils.RandomHash(),
+			},
+			FeeReceiver:       0,
+			CombinedSignature: models.Signature{},
 		},
-		Transactions:      encodedTransfer,
-		FeeReceiver:       0,
-		CombinedSignature: models.Signature{},
+		Transactions: encodedTransfer,
 	}
 
-	submitC2TBatch(t, ethClient, []models.TxCommitment{commitment}, batchID)
+	submitC2TBatch(t, ethClient, []models.TxCommitmentWithTxs{commitment}, batchID)
 }
 
-func submitC2TBatch(t *testing.T, ethClient *eth.Client, commitments []models.TxCommitment, batchID uint64) {
+func submitC2TBatch(t *testing.T, ethClient *eth.Client, commitments []models.TxCommitmentWithTxs, batchID uint64) {
 	transaction, err := ethClient.SubmitCreate2TransfersBatch(commitments)
 	require.NoError(t, err)
 

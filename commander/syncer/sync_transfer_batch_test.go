@@ -70,7 +70,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
 
 		accountRoots[i] = s.getAccountTreeRoot()
 		commitments[i].BodyHash = ref.Hash(commitments[i].CalcBodyHash(accountRoots[i]))
-		expectedCommitments = append(expectedCommitments, *commitments[i].ToTxCommitment())
+		expectedCommitments = append(expectedCommitments, commitments[i].TxCommitment)
 	}
 
 	s.recreateDatabase()
@@ -325,17 +325,19 @@ func (s *SyncTransferBatchTestSuite) submitTransferBatchWithNonexistentFeeReceiv
 	s.NoError(err)
 
 	commitment := models.TxCommitmentWithTxs{
-		CommitmentBase: models.CommitmentBase{
-			ID: models.CommitmentID{
-				BatchID:      *nextBatchID,
-				IndexInBatch: 0,
+		TxCommitment: models.TxCommitment{
+			CommitmentBase: models.CommitmentBase{
+				ID: models.CommitmentID{
+					BatchID:      *nextBatchID,
+					IndexInBatch: 0,
+				},
+				Type:          batchtype.Transfer,
+				PostStateRoot: *postStateRoot,
 			},
-			Type:          batchtype.Transfer,
-			PostStateRoot: *postStateRoot,
+			FeeReceiver:       feeReceiverStateID,
+			CombinedSignature: *combinedSignature,
 		},
-		Transactions:      serializedTxs,
-		FeeReceiver:       feeReceiverStateID,
-		CombinedSignature: *combinedSignature,
+		Transactions: serializedTxs,
 	}
 	_, err = s.client.SubmitTransfersBatchAndWait([]models.TxCommitmentWithTxs{commitment})
 	s.NoError(err)

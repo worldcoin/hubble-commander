@@ -72,7 +72,7 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_AddsCommitments() {
 	for i := range commitments {
 		commit, err := s.storage.GetTxCommitment(&commitments[i].ID)
 		s.NoError(err)
-		s.Equal(*commitments[i].ToTxCommitment(), *commit)
+		s.Equal(commitments[i].TxCommitment, *commit)
 		s.Equal(batch.ID, commit.ID.BatchID)
 	}
 }

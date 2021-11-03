@@ -33,13 +33,15 @@ func (s *DisputeTransitionTestSuite) TearDownTest() {
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransitionTransfer_ReturnsRevertMessage() {
 	commitment := models.TxCommitmentWithTxs{
-		CommitmentBase: models.CommitmentBase{
-			Type:          batchtype.Transfer,
-			PostStateRoot: utils.RandomHash(),
+		TxCommitment: models.TxCommitment{
+			CommitmentBase: models.CommitmentBase{
+				Type:          batchtype.Transfer,
+				PostStateRoot: utils.RandomHash(),
+			},
+			FeeReceiver:       uint32(1234),
+			CombinedSignature: models.MakeRandomSignature(),
 		},
-		Transactions:      utils.RandomBytes(12),
-		FeeReceiver:       uint32(1234),
-		CombinedSignature: models.MakeRandomSignature(),
+		Transactions: utils.RandomBytes(12),
 	}
 
 	batch, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitmentWithTxs{commitment})
