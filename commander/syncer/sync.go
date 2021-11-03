@@ -157,8 +157,8 @@ func (c *Context) addTxCommitment(batch *eth.DecodedBatch, decodedCommitment *en
 		},
 		FeeReceiver:       decodedCommitment.FeeReceiver,
 		CombinedSignature: decodedCommitment.CombinedSignature,
+		BodyHash:          decodedCommitment.BodyHash(*batch.AccountTreeRoot),
 	}
-	commitment.BodyHash = decodedCommitment.BodyHash(*batch.AccountTreeRoot)
 
 	return c.storage.AddTxCommitment(commitment)
 }
