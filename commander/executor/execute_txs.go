@@ -57,7 +57,7 @@ func (c *RollupContext) handleTransactionError(result ExecuteTxsResult, tx model
 
 	logAndSaveTransactionError(c.storage, tx, err)
 	result.AddInvalidTx(tx)
-	c.TxErrorsToStore = append(c.TxErrorsToStore, TransactionError{
+	c.txErrorsToStore = append(c.txErrorsToStore, TransactionError{
 		Hash:         tx.GetBase().Hash,
 		ErrorMessage: err.Error(),
 	})
