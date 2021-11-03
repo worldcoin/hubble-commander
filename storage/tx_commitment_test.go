@@ -23,6 +23,7 @@ var (
 		},
 		FeeReceiver:       uint32(1),
 		CombinedSignature: models.MakeRandomSignature(),
+		BodyHash:          utils.NewRandomHash(),
 	}
 )
 
