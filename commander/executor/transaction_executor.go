@@ -20,9 +20,9 @@ type TransactionExecutor interface {
 	SerializeTxs(results ExecuteTxsForCommitmentResult) ([]byte, error)
 	MarkTxsAsIncluded(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error
 	AddPendingAccount(result applier.ApplySingleTxResult) error
-	NewCreateCommitmentResult(result ExecuteTxsForCommitmentResult, commitment *models.TxCommitment) CreateCommitmentResult
+	NewCreateCommitmentResult(result ExecuteTxsForCommitmentResult, commitment *models.CommitmentWithTxs) CreateCommitmentResult
 	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (result applier.ApplySingleTxResult, transferError, appError error)
-	SubmitBatch(client *eth.Client, commitments []models.TxCommitment) (*types.Transaction, error)
+	SubmitBatch(client *eth.Client, commitments []models.CommitmentWithTxs) (*types.Transaction, error)
 }
 
 func CreateTransactionExecutor(executionCtx *ExecutionContext, batchType batchtype.BatchType) TransactionExecutor {
@@ -83,7 +83,7 @@ func (e *TransferExecutor) NewExecuteTxsForCommitmentResult(
 
 func (e *TransferExecutor) NewCreateCommitmentResult(
 	result ExecuteTxsForCommitmentResult,
-	commitment *models.TxCommitment,
+	commitment *models.CommitmentWithTxs,
 ) CreateCommitmentResult {
 	return &CreateTransferCommitmentResult{
 		newPendingTxs: result.PendingTxs(),
@@ -109,7 +109,7 @@ func (e *TransferExecutor) ApplyTx(tx models.GenericTransaction, commitmentToken
 	return e.applier.ApplyTransfer(tx, commitmentTokenID)
 }
 
-func (e *TransferExecutor) SubmitBatch(client *eth.Client, commitments []models.TxCommitment) (*types.Transaction, error) {
+func (e *TransferExecutor) SubmitBatch(client *eth.Client, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
 	return client.SubmitTransfersBatch(commitments)
 }
 
@@ -162,7 +162,7 @@ func (e *C2TExecutor) NewExecuteTxsForCommitmentResult(
 
 func (e *C2TExecutor) NewCreateCommitmentResult(
 	result ExecuteTxsForCommitmentResult,
-	commitment *models.TxCommitment,
+	commitment *models.CommitmentWithTxs,
 ) CreateCommitmentResult {
 	return &CreateC2TCommitmentResult{
 		newPendingTxs:   result.PendingTxs(),
@@ -192,6 +192,6 @@ func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID mo
 	return e.applier.ApplyCreate2Transfer(tx.ToCreate2Transfer(), commitmentTokenID)
 }
 
-func (e *C2TExecutor) SubmitBatch(client *eth.Client, commitments []models.TxCommitment) (*types.Transaction, error) {
+func (e *C2TExecutor) SubmitBatch(client *eth.Client, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
 	return client.SubmitCreate2TransfersBatch(commitments)
 }

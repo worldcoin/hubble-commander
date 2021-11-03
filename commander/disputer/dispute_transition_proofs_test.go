@@ -70,7 +70,7 @@ func (s *DisputeTransitionProofsTestSuite) SetupTest() {
 func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_CurrentBatch() {
 	expected := models.CommitmentInclusionProof{
 		StateRoot: s.decodedCommitments[0].StateRoot,
-		BodyRoot:  s.decodedCommitments[0].BodyHash(*s.decodedBatch.AccountTreeRoot),
+		BodyRoot:  *s.decodedCommitments[0].BodyHash(*s.decodedBatch.AccountTreeRoot),
 		Path: &models.MerklePath{
 			Path:  0,
 			Depth: 2,
@@ -113,9 +113,9 @@ func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_
 				Type:          batchtype.Transfer,
 				PostStateRoot: utils.RandomHash(),
 			},
-			Transactions:      utils.RandomBytes(12),
 			FeeReceiver:       11,
 			CombinedSignature: models.MakeRandomSignature(),
+			BodyHash:          utils.NewRandomHash(),
 		},
 		{
 			CommitmentBase: models.CommitmentBase{
@@ -126,9 +126,9 @@ func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_
 				Type:          batchtype.Transfer,
 				PostStateRoot: utils.RandomHash(),
 			},
-			Transactions:      utils.RandomBytes(12),
 			FeeReceiver:       11,
 			CombinedSignature: models.MakeRandomSignature(),
+			BodyHash:          utils.NewRandomHash(),
 		},
 	}
 	for i := range commitments {
@@ -138,12 +138,12 @@ func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_
 
 	expected := models.CommitmentInclusionProof{
 		StateRoot: commitments[1].PostStateRoot,
-		BodyRoot:  commitments[1].BodyHash(*batch.AccountTreeRoot),
+		BodyRoot:  *commitments[1].BodyHash,
 		Path: &models.MerklePath{
 			Path:  1,
 			Depth: 2,
 		},
-		Witness: []common.Hash{commitments[0].LeafHash(*batch.AccountTreeRoot)},
+		Witness: []common.Hash{commitments[0].LeafHash()},
 	}
 
 	proof, err := s.disputeCtx.previousCommitmentInclusionProof(&s.decodedBatch, -1)

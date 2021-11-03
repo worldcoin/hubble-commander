@@ -131,12 +131,9 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_NonexistentReceiverPublicKey() {
 func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, s.wallets[0].PublicKey())
 	s.setTxHashAndSign(&tx)
-	batch := s.submitBatch(&tx)
-	expectedCommitment, err := s.storage.GetTxCommitment(&models.CommitmentID{
-		BatchID:      batch.ID,
-		IndexInBatch: 0,
-	})
-	s.NoError(err)
+	_, commitments := s.submitBatch(&tx)
+	expectedCommitment := commitments[0].TxCommitment
+	expectedCommitment.BodyHash = commitments[0].CalcBodyHash(s.getAccountTreeRoot())
 
 	s.recreateDatabase()
 	s.syncAllBatches()
@@ -158,7 +155,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 
 	commitment, err := s.storage.GetTxCommitment(&expectedCommitment.ID)
 	s.NoError(err)
-	s.Equal(*expectedCommitment, *commitment)
+	s.Equal(expectedCommitment, *commitment)
 
 	transfer, err := s.storage.GetCreate2Transfer(tx.Hash)
 	s.NoError(err)
@@ -171,7 +168,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 func (s *SyncC2TBatchTestSuite) TestSyncBatch_CommitmentWithoutTxs() {
 	commitment := s.createCommitmentWithEmptyTransactions(batchtype.Create2Transfer)
 
-	_, err := s.client.SubmitCreate2TransfersBatchAndWait([]models.TxCommitment{commitment})
+	_, err := s.client.SubmitCreate2TransfersBatchAndWait([]models.CommitmentWithTxs{commitment})
 	s.NoError(err)
 
 	remoteBatches, err := s.client.GetAllBatches()
@@ -182,7 +179,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_CommitmentWithoutTxs() {
 	s.NoError(err)
 }
 
-func (s *SyncC2TBatchTestSuite) submitInvalidBatch(tx *models.Create2Transfer) models.TxCommitment {
+func (s *SyncC2TBatchTestSuite) submitInvalidBatch(tx *models.Create2Transfer) models.CommitmentWithTxs {
 	pendingBatch, commitments := s.createBatch(tx)
 
 	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)

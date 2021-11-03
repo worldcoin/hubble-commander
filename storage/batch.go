@@ -42,8 +42,12 @@ func (s *BatchStorage) GetBatch(batchID models.Uint256) (*models.Batch, error) {
 	return &batch, nil
 }
 
-func (s *BatchStorage) MarkBatchAsSubmitted(batch *models.Batch) error {
-	return s.database.Badger.Upsert(batch.ID, *batch)
+func (s *BatchStorage) UpdateBatch(batch *models.Batch) error {
+	err := s.database.Badger.Update(batch.ID, *batch)
+	if err == bh.ErrNotFound {
+		return errors.WithStack(NewNotFoundError("batch"))
+	}
+	return err
 }
 
 func (s *BatchStorage) GetMinedBatch(batchID models.Uint256) (*models.Batch, error) {

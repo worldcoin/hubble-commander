@@ -32,7 +32,7 @@ func (c *Context) SyncBatch(remoteBatch *eth.DecodedBatch) error {
 
 func (c *Context) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
 	if remoteBatch.TransactionHash == localBatch.TransactionHash {
-		err := c.storage.MarkBatchAsSubmitted(&remoteBatch.Batch)
+		err := c.UpdateExistingBatchAndCommitments(remoteBatch)
 		if err != nil {
 			return err
 		}
@@ -58,6 +58,14 @@ func (c *Context) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *m
 	return nil
 }
 
+func (c *Context) UpdateExistingBatchAndCommitments(batch *eth.DecodedBatch) error {
+	err := c.storage.UpdateBatch(&batch.Batch)
+	if err != nil {
+		return err
+	}
+	return c.setCommitmentsBodyHash(batch)
+}
+
 func (c *Context) getTransactionSender(txHash common.Hash) (*common.Address, error) {
 	tx, _, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), txHash)
 	if err != nil {
@@ -68,6 +76,18 @@ func (c *Context) getTransactionSender(txHash common.Hash) (*common.Address, err
 		return nil, err
 	}
 	return &sender, nil
+}
+
+func (c *Context) setCommitmentsBodyHash(batch *eth.DecodedBatch) error {
+	commitments, err := c.storage.GetTxCommitmentsByBatchID(batch.ID)
+	if err != nil {
+		return err
+	}
+	for i := range commitments {
+		commitments[i].BodyHash = batch.Commitments[i].BodyHash(*batch.AccountTreeRoot)
+	}
+
+	return c.storage.UpdateCommitments(commitments)
 }
 
 func (c *Context) syncNewBatch(batch *eth.DecodedBatch) error {
@@ -109,16 +129,7 @@ func (c *Context) syncCommitment(batch *eth.DecodedBatch, commitment *encoder.De
 		return err
 	}
 
-	err = c.storage.AddTxCommitment(&models.TxCommitment{
-		CommitmentBase: models.CommitmentBase{
-			ID:            commitment.ID,
-			Type:          batch.Type,
-			PostStateRoot: commitment.StateRoot,
-		},
-		Transactions:      commitment.Transactions,
-		FeeReceiver:       commitment.FeeReceiver,
-		CombinedSignature: commitment.CombinedSignature,
-	})
+	err = c.addTxCommitment(batch, commitment)
 	if err != nil {
 		return err
 	}
@@ -135,4 +146,19 @@ func (c *Context) syncCommitment(batch *eth.DecodedBatch, commitment *encoder.De
 		return nil
 	}
 	return c.Syncer.BatchAddTxs(transactions)
+}
+
+func (c *Context) addTxCommitment(batch *eth.DecodedBatch, decodedCommitment *encoder.DecodedCommitment) error {
+	commitment := &models.TxCommitment{
+		CommitmentBase: models.CommitmentBase{
+			ID:            decodedCommitment.ID,
+			Type:          batch.Type,
+			PostStateRoot: decodedCommitment.StateRoot,
+		},
+		FeeReceiver:       decodedCommitment.FeeReceiver,
+		CombinedSignature: decodedCommitment.CombinedSignature,
+		BodyHash:          decodedCommitment.BodyHash(*batch.AccountTreeRoot),
+	}
+
+	return c.storage.AddTxCommitment(commitment)
 }

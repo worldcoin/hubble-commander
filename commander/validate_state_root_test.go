@@ -41,7 +41,6 @@ func (s *ValidateStateRootTestSuite) TestValidateStateRoot_SameStateRootHash() {
 			Type:          batchtype.Transfer,
 			PostStateRoot: *root,
 		},
-		Transactions:      []byte{1, 2, 3},
 		FeeReceiver:       0,
 		CombinedSignature: models.Signature{},
 	}
@@ -58,7 +57,6 @@ func (s *ValidateStateRootTestSuite) TestValidateStateRoot_DifferentStateRootHas
 			Type:          batchtype.Transfer,
 			PostStateRoot: common.Hash{1, 2, 3},
 		},
-		Transactions:      []byte{1, 2, 3},
 		FeeReceiver:       0,
 		CombinedSignature: models.Signature{},
 	}

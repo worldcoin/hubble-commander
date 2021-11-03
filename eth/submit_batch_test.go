@@ -16,7 +16,7 @@ type SubmitBatchTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	client     *TestClient
-	commitment models.TxCommitment
+	commitment models.CommitmentWithTxs
 }
 
 func (s *SubmitBatchTestSuite) SetupSuite() {
@@ -27,14 +27,16 @@ func (s *SubmitBatchTestSuite) SetupTest() {
 	client, err := NewTestClient()
 	s.NoError(err)
 	s.client = client
-	s.commitment = models.TxCommitment{
-		CommitmentBase: models.CommitmentBase{
-			Type:          batchtype.Transfer,
-			PostStateRoot: utils.RandomHash(),
+	s.commitment = models.CommitmentWithTxs{
+		TxCommitment: models.TxCommitment{
+			CommitmentBase: models.CommitmentBase{
+				Type:          batchtype.Transfer,
+				PostStateRoot: utils.RandomHash(),
+			},
+			FeeReceiver:       uint32(1234),
+			CombinedSignature: models.MakeRandomSignature(),
 		},
-		Transactions:      utils.RandomBytes(12),
-		FeeReceiver:       uint32(1234),
-		CombinedSignature: models.MakeRandomSignature(),
+		Transactions: utils.RandomBytes(12),
 	}
 }
 
@@ -47,10 +49,11 @@ func (s *SubmitBatchTestSuite) TestSubmitTransfersBatchAndWait_ReturnsCorrectBat
 
 	accountRoot, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
-	commitmentRoot := utils.HashTwo(commitment.LeafHash(accountRoot), merkletree.GetZeroHash(0))
+	commitment.SetBodyHash(accountRoot)
+	commitmentRoot := utils.HashTwo(commitment.LeafHash(), merkletree.GetZeroHash(0))
 	minFinalisationBlock := s.getMinFinalisationBlock()
 
-	batch, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitment{commitment})
+	batch, err := s.client.SubmitTransfersBatchAndWait([]models.CommitmentWithTxs{commitment})
 	s.NoError(err)
 
 	s.Equal(models.MakeUint256(1), batch.ID)
@@ -66,10 +69,11 @@ func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatchAndWait_ReturnsCor
 
 	accountRoot, err := s.client.AccountRegistry.Root(nil)
 	s.NoError(err)
-	commitmentRoot := utils.HashTwo(commitment.LeafHash(accountRoot), merkletree.GetZeroHash(0))
+	commitment.SetBodyHash(accountRoot)
+	commitmentRoot := utils.HashTwo(commitment.LeafHash(), merkletree.GetZeroHash(0))
 	minFinalisationBlock := s.getMinFinalisationBlock()
 
-	batch, err := s.client.SubmitCreate2TransfersBatchAndWait([]models.TxCommitment{commitment})
+	batch, err := s.client.SubmitCreate2TransfersBatchAndWait([]models.CommitmentWithTxs{commitment})
 	s.NoError(err)
 
 	s.Equal(models.MakeUint256(1), batch.ID)
@@ -88,7 +92,7 @@ func (s *SubmitBatchTestSuite) getMinFinalisationBlock() uint32 {
 }
 
 func (s *SubmitBatchTestSuite) TestSubmitTransfersBatch_SubmitsBatchWithoutWaitingForItToBeMined() {
-	tx, err := s.client.SubmitTransfersBatch([]models.TxCommitment{s.commitment})
+	tx, err := s.client.SubmitTransfersBatch([]models.CommitmentWithTxs{s.commitment})
 	s.NoError(err)
 	s.NotNil(tx)
 
@@ -107,7 +111,7 @@ func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatch_SubmitsBatchWitho
 	commitment := s.commitment
 	commitment.Type = batchtype.Create2Transfer
 
-	tx, err := s.client.SubmitCreate2TransfersBatch([]models.TxCommitment{s.commitment})
+	tx, err := s.client.SubmitCreate2TransfersBatch([]models.CommitmentWithTxs{s.commitment})
 	s.NoError(err)
 	s.NotNil(tx)
 

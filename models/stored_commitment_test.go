@@ -20,7 +20,7 @@ func TestStoredCommitment_Bytes_TxCommitment(t *testing.T) {
 		},
 		FeeReceiver:       3,
 		CombinedSignature: Signature{1, 2, 3, 4, 5},
-		Transactions:      []byte{3, 2, 1},
+		BodyHash:          utils.NewRandomHash(),
 	}
 
 	storedCommitment := MakeStoredCommitmentFromTxCommitment(commitment)
