@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	storedTxCommitmentBodyBaseLength      = 4 + 64 + 33
+	storedTxCommitmentBodyLength          = 4 + 64 + 33
 	storedDepositCommitmentBodyBaseLength = 32 + 32
 )
 
@@ -45,7 +45,7 @@ func (c *StoredTxCommitmentBody) Bytes() []byte {
 }
 
 func (c *StoredTxCommitmentBody) SetBytes(data []byte) error {
-	if len(data) != storedTxCommitmentBodyBaseLength {
+	if len(data) != storedTxCommitmentBodyLength {
 		return ErrInvalidLength
 	}
 	err := c.CombinedSignature.SetBytes(data[4:68])
@@ -59,7 +59,7 @@ func (c *StoredTxCommitmentBody) SetBytes(data []byte) error {
 }
 
 func (c *StoredTxCommitmentBody) BytesLen() int {
-	return storedTxCommitmentBodyBaseLength
+	return storedTxCommitmentBodyLength
 }
 
 type StoredDepositCommitmentBody struct {
