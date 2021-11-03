@@ -89,11 +89,11 @@ func (s *syncTestSuite) setBatchAccounts() {
 	s.NoError(err)
 }
 
-func (s *syncTestSuite) createCommitmentWithEmptyTransactions(commitmentType batchtype.BatchType) models.TxCommitmentWithTxs {
+func (s *syncTestSuite) createCommitmentWithEmptyTransactions(commitmentType batchtype.BatchType) models.CommitmentWithTxs {
 	stateRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)
 
-	return models.TxCommitmentWithTxs{
+	return models.CommitmentWithTxs{
 		TxCommitment: models.TxCommitment{
 			CommitmentBase: models.CommitmentBase{
 				Type:          commitmentType,
@@ -136,7 +136,7 @@ func (s *syncTestSuite) getAccountTreeRoot() common.Hash {
 	return common.BytesToHash(rawAccountRoot[:])
 }
 
-func (s *syncTestSuite) submitBatch(tx models.GenericTransaction) (*models.Batch, []models.TxCommitmentWithTxs) {
+func (s *syncTestSuite) submitBatch(tx models.GenericTransaction) (*models.Batch, []models.CommitmentWithTxs) {
 	pendingBatch, commitments := s.createBatch(tx)
 
 	err := s.rollupCtx.SubmitBatch(pendingBatch, commitments)
@@ -146,7 +146,7 @@ func (s *syncTestSuite) submitBatch(tx models.GenericTransaction) (*models.Batch
 	return pendingBatch, commitments
 }
 
-func (s *syncTestSuite) createBatch(tx models.GenericTransaction) (*models.Batch, []models.TxCommitmentWithTxs) {
+func (s *syncTestSuite) createBatch(tx models.GenericTransaction) (*models.Batch, []models.CommitmentWithTxs) {
 	if tx.Type() == txtype.Transfer {
 		err := s.storage.AddTransfer(tx.ToTransfer())
 		s.NoError(err)

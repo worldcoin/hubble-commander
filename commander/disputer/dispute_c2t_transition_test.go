@@ -195,11 +195,11 @@ func (s *DisputeCT2TransitionTestSuite) createInvalidCommitments(
 	commitmentTxs [][]models.Create2Transfer,
 	pubKeyIDs [][]uint32,
 	invalidTxHash common.Hash,
-) []models.TxCommitmentWithTxs {
+) []models.CommitmentWithTxs {
 	commitmentID, err := s.rollupCtx.NextCommitmentID()
 	s.NoError(err)
 
-	commitments := make([]models.TxCommitmentWithTxs, 0, len(commitmentTxs))
+	commitments := make([]models.CommitmentWithTxs, 0, len(commitmentTxs))
 	for i := range commitmentTxs {
 		commitmentID.IndexInBatch = uint8(i)
 		txs := commitmentTxs[i]

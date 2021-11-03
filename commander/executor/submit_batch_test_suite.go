@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	baseCommitment = models.TxCommitmentWithTxs{
+	baseCommitment = models.CommitmentWithTxs{
 		TxCommitment: models.TxCommitment{
 			CommitmentBase: models.CommitmentBase{
 				Type:          batchtype.Transfer,
@@ -36,8 +36,8 @@ func (s *submitBatchTestSuite) setupUser() {
 	s.NoError(err)
 }
 
-func getCommitments(count int, batchID models.Uint256) []models.TxCommitmentWithTxs {
-	commitments := make([]models.TxCommitmentWithTxs, 0, count)
+func getCommitments(count int, batchID models.Uint256) []models.CommitmentWithTxs {
+	commitments := make([]models.CommitmentWithTxs, 0, count)
 	for i := 0; i < count; i++ {
 		commitment := baseCommitment
 		commitment.ID.BatchID = batchID
