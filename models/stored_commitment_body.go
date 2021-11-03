@@ -43,6 +43,9 @@ func (c *StoredTxCommitmentBody) Bytes() []byte {
 }
 
 func (c *StoredTxCommitmentBody) SetBytes(data []byte) error {
+	if len(data) != storedTxCommitmentBodyBaseLength {
+		return ErrInvalidLength
+	}
 	err := c.CombinedSignature.SetBytes(data[4:68])
 	if err != nil {
 		return err
