@@ -128,7 +128,7 @@ jobs:
 
   build-image:
     name: Build Docker image
-    needs: [e2e-tests, e2e-benchmarks]
+    needs: [ e2e-tests, e2e-benchmarks ]
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
