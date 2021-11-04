@@ -50,6 +50,14 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *b
 	c.stateMutex.Lock()
 	defer c.stateMutex.Unlock()
 
+	err = c.unsafeRollupLoopIteration(ctx, currentBatchType)
+	if errors.Is(err, executor.ErrNotEnoughDeposits) {
+		return c.unsafeRollupLoopIteration(ctx, currentBatchType)
+	}
+	return err
+}
+
+func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchType *batchtype.BatchType) (err error) {
 	err = validateStateRoot(c.storage)
 	if err != nil {
 		return errors.WithStack(err)
@@ -64,8 +72,11 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *b
 
 	var rollupError *executor.RollupError
 	if errors.As(err, &rollupError) {
-		handleRollupError(rollupError)
 		rollupCtx.Rollback(&err)
+		err = handleRollupError(rollupError)
+		if err != nil {
+			return err
+		}
 		return saveTxErrors(c.storage, rollupCtx.GetErrorsToStore())
 	}
 	if err != nil {
@@ -88,10 +99,15 @@ func switchBatchType(batchType *batchtype.BatchType) {
 	}
 }
 
-func handleRollupError(rollupErr *executor.RollupError) {
+func handleRollupError(rollupErr *executor.RollupError) error {
+	if errors.Is(rollupErr, executor.ErrNotEnoughDeposits) {
+		return rollupErr
+	}
+
 	if rollupErr.IsLoggable {
 		log.Warnf("%+v", rollupErr)
 	}
+	return nil
 }
 
 func logLatestCommitment(latestCommitment *models.CommitmentBase) {
