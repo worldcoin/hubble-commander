@@ -126,7 +126,9 @@ func (s *benchmarkTestSuite) sendC2T(wallet bls.Wallet, from uint32, to *models.
 	return transferHash
 }
 
-func (s *benchmarkTestSuite) prepareWorkers(actionForWorkers func(senderWallet bls.Wallet, senderStateID uint32, nonce models.Uint256) common.Hash) {
+func (s *benchmarkTestSuite) prepareWorkers(
+	actionForWorkers func(senderWallet bls.Wallet, senderStateID uint32, nonce models.Uint256) common.Hash,
+) {
 	s.startTime = time.Now()
 
 	for _, wallet := range s.wallets {
@@ -162,7 +164,11 @@ func (s *benchmarkTestSuite) prepareWorkers(actionForWorkers func(senderWallet b
 	s.waitGroup.Wait()
 }
 
-func (s *benchmarkTestSuite) runForWallet(senderWallet bls.Wallet, senderStateID uint32, action func(senderWallet bls.Wallet, senderStateID uint32, nonce models.Uint256) common.Hash) {
+func (s *benchmarkTestSuite) runForWallet(
+	senderWallet bls.Wallet,
+	senderStateID uint32,
+	action func(senderWallet bls.Wallet, senderStateID uint32, nonce models.Uint256) common.Hash,
+) {
 	fmt.Printf("Starting worker on stateId %d address=%s\n", senderStateID, senderWallet.PublicKey().String())
 
 	txsToWatch := make([]common.Hash, 0, s.benchConfig.MaxQueuedBatchesAmount)
