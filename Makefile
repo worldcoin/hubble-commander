@@ -64,6 +64,18 @@ bench-e2e-in-process: clean-testcache
 bench-e2e-locally: clean-testcache
 	HUBBLE_E2E=in-process go test -v -tags e2e -run=^$(TEST)$$ ./e2e/bench
 
+bench-e2e-in-process-part-1: clean-testcache
+	HUBBLE_E2E=in-process go test -v -tags e2e -run "BenchmarkTransactionsSuite/(?:TestBenchTransfersCommander|TestBenchCreate2TransfersCommander)" ./e2e/bench
+
+bench-e2e-in-process-part-2: clean-testcache
+	HUBBLE_E2E=in-process go test -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchMixedCommander ./e2e/bench
+
+bench-e2e-in-process-part-3: clean-testcache
+	HUBBLE_E2E=in-process go test -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchSyncCommander ./e2e/bench
+
+bench-e2e-in-process-part-4: clean-testcache
+	HUBBLE_E2E=in-process go test -v -tags e2e -run BenchmarkPubKeyRegistrationSuite/TestBenchPubKeysRegistration ./e2e/bench
+
 bench-creation-profile: clean-testcache
 	HUBBLE_E2E=in-process go test -cpuprofile creation.prof -v -tags e2e -run TestBenchmarkSuite/TestBenchMixedCommander ./e2e/bench
 
@@ -92,5 +104,9 @@ bench-sync-profile: clean-testcache
 	test-e2e-locally
 	bench-e2e-in-process
 	bench-e2e-locally
+	bench-e2e-in-process-part-1
+	bench-e2e-in-process-part-2
+	bench-e2e-in-process-part-3
+	bench-e2e-in-process-part-4
 	bench-creation-profile
 	bench-sync-profile
