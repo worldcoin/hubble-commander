@@ -6,7 +6,7 @@ import (
 
 var (
 	ErrNotEnoughCommitments  = NewRollupError("not enough commitments")
-	ErrRollupContextCanceled = NewLoggableRollupError("rollup context cancelled")
+	ErrRollupContextCanceled = NewLoggableRollupError("rollup context canceled")
 )
 
 func (c *RollupContext) SubmitBatch(batch *models.Batch, commitments []models.CommitmentWithTxs) error {
