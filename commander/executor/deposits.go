@@ -60,7 +60,7 @@ func (c *DepositsContext) executeDeposits(depositSubtree *models.PendingDepositS
 		return nil, err
 	}
 
-	err = c.ApplyDeposits(*startStateID, depositSubtree.Deposits)
+	err = c.Applier.ApplyDeposits(*startStateID, depositSubtree.Deposits)
 	if err != nil {
 		return nil, err
 	}

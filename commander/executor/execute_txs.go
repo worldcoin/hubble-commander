@@ -40,7 +40,7 @@ func (c *TxsContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiver 
 	}
 
 	if returnStruct.AppliedTxs().Len() > 0 {
-		_, err := c.ApplyFee(feeReceiver.StateID, combinedFee)
+		_, err := c.Applier.ApplyFee(feeReceiver.StateID, combinedFee)
 		if err != nil {
 			return nil, err
 		}

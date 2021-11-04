@@ -11,12 +11,12 @@ import (
 )
 
 type ExecutionContext struct {
-	cfg              *config.RollupConfig
-	storage          *st.Storage
-	tx               *db.TxController
-	client           *eth.Client
-	ctx              context.Context
-	*applier.Applier // TODO add as field
+	cfg     *config.RollupConfig
+	storage *st.Storage
+	tx      *db.TxController
+	client  *eth.Client
+	ctx     context.Context
+	Applier *applier.Applier
 }
 
 // NewExecutionContext creates a ExecutionContext and starts a database transaction.

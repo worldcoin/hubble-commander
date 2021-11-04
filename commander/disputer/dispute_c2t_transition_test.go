@@ -209,7 +209,7 @@ func (s *DisputeCT2TransitionTestSuite) createInvalidCommitments(
 			combinedFee = s.applyTransfer(&txs[j], invalidTxHash, combinedFee, receiverLeaf)
 		}
 		if combinedFee.CmpN(0) > 0 {
-			_, err := s.txsCtx.ApplyFee(0, combinedFee)
+			_, err := s.txsCtx.Applier.ApplyFee(0, combinedFee)
 			s.NoError(err)
 		}
 
