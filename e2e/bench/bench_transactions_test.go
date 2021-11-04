@@ -5,6 +5,7 @@ package bench
 
 import (
 	"fmt"
+	"math/rand"
 	"testing"
 	"time"
 
@@ -152,6 +153,16 @@ func pickTxType(distribution TxTypeDistribution) txtype.TransactionType {
 
 	log.Fatal("Unreachable")
 	return txtype.Transfer
+}
+
+func randomInt(n int) int {
+	//nolint:gosec
+	return rand.Intn(n)
+}
+
+func randomFloat32() float32 {
+	//nolint:gosec
+	return rand.Float32()
 }
 
 func TestBenchmarkTransactionsSuite(t *testing.T) {

@@ -2,7 +2,6 @@ package bench
 
 import (
 	"fmt"
-	"math/rand"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -227,14 +226,4 @@ func (s *benchmarkTestSuite) runForWallet(
 	}
 
 	s.waitGroup.Done()
-}
-
-func randomInt(n int) int {
-	//nolint:gosec
-	return rand.Intn(n)
-}
-
-func randomFloat32() float32 {
-	//nolint:gosec
-	return rand.Float32()
 }
