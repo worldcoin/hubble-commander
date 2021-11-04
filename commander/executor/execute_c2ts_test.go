@@ -91,7 +91,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_ExecutesNoMoreThanLimi
 	s.Len(transfers.PendingAccounts(), 1)
 }
 
-func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SavesTransferErrors() {
+func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SavesTxErrors() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
 	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidCreate2Transfers(2)...)
 
