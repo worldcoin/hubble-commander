@@ -59,7 +59,7 @@ test-e2e-locally: clean-testcache
 	HUBBLE_E2E=local go test -v -tags e2e -run=^$(TEST)$$ ./e2e
 
 bench-e2e-in-process: clean-testcache
-	HUBBLE_E2E=in-process go test -v -tags e2e ./e2e/bench go test -timeout 1200s
+	HUBBLE_E2E=in-process go test -v -tags e2e ./e2e/bench -timeout 1200s
 
 bench-e2e-locally: clean-testcache
 	HUBBLE_E2E=in-process go test -v -tags e2e -run=^$(TEST)$$ ./e2e/bench
