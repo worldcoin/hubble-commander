@@ -262,7 +262,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestRegisterPendingAccounts_FillsM
 	}
 }
 
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCreate2TransferCommitments_RegistersAccounts() {
+func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_RegistersAccounts() {
 	transfers := testutils.GenerateValidCreate2Transfers(1)
 	s.addCreate2Transfers(transfers)
 
