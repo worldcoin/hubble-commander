@@ -11,7 +11,7 @@ import (
 
 var ErrNotEnoughDeposits = NewRollupError("not enough deposits")
 
-func (c *DepositContext) CreateAndSubmitBatch() error {
+func (c *DepositsContext) CreateAndSubmitBatch() error {
 	startTime := time.Now()
 	batch, err := c.NewPendingBatch(batchtype.Deposit)
 	if err != nil {
@@ -32,7 +32,7 @@ func (c *DepositContext) CreateAndSubmitBatch() error {
 	return nil
 }
 
-func (c *DepositContext) createCommitment(batchID models.Uint256) (*models.SubtreeVacancyProof, error) {
+func (c *DepositsContext) createCommitment(batchID models.Uint256) (*models.SubtreeVacancyProof, error) {
 	depositSubtree, err := c.storage.GetFirstPendingDepositSubTree()
 	if st.IsNotFoundError(err) {
 		return nil, errors.WithStack(ErrNotEnoughDeposits)
@@ -54,7 +54,7 @@ func (c *DepositContext) createCommitment(batchID models.Uint256) (*models.Subtr
 	return vacancyProof, nil
 }
 
-func (c *DepositContext) executeDeposits(depositSubtree *models.PendingDepositSubTree) (*models.SubtreeVacancyProof, error) {
+func (c *DepositsContext) executeDeposits(depositSubtree *models.PendingDepositSubTree) (*models.SubtreeVacancyProof, error) {
 	startStateID, vacancyProof, err := c.getDepositSubtreeVacancyProof()
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -72,7 +72,7 @@ func (c *DepositContext) executeDeposits(depositSubtree *models.PendingDepositSu
 	return vacancyProof, nil
 }
 
-func (c *DepositContext) addCommitment(batchID models.Uint256, depositSubtree *models.PendingDepositSubTree) error {
+func (c *DepositsContext) addCommitment(batchID models.Uint256, depositSubtree *models.PendingDepositSubTree) error {
 	commitment, err := c.newCommitment(batchID, depositSubtree)
 	if err != nil {
 		return err
@@ -80,7 +80,7 @@ func (c *DepositContext) addCommitment(batchID models.Uint256, depositSubtree *m
 	return c.storage.AddDepositCommitment(commitment)
 }
 
-func (c *DepositContext) getDepositSubtreeVacancyProof() (*uint32, *models.SubtreeVacancyProof, error) {
+func (c *DepositsContext) getDepositSubtreeVacancyProof() (*uint32, *models.SubtreeVacancyProof, error) {
 	subtreeDepth, err := c.client.GetMaxSubTreeDepthParam()
 	if err != nil {
 		return nil, nil, err

@@ -20,7 +20,7 @@ type SubmitDepositBatchTestSuite struct {
 	suite.Suite
 	storage        *st.TestStorage
 	client         *eth.TestClient
-	depositCtx     *DepositContext
+	depositsCtx    *DepositsContext
 	depositSubtree models.PendingDepositSubTree
 }
 
@@ -43,7 +43,7 @@ func (s *SubmitDepositBatchTestSuite) SetupTest() {
 	s.NoError(err)
 
 	executionCtx := NewTestExecutionContext(s.storage.Storage, s.client.Client, nil)
-	s.depositCtx = NewTestDepositContext(executionCtx)
+	s.depositsCtx = NewTestDepositsContext(executionCtx)
 }
 
 func (s *SubmitDepositBatchTestSuite) TearDownTest() {
@@ -163,13 +163,13 @@ func (s *SubmitDepositBatchTestSuite) submitBatch() *models.Batch {
 	err := s.storage.AddPendingDepositSubTree(&s.depositSubtree)
 	s.NoError(err)
 
-	pendingBatch, err := s.depositCtx.NewPendingBatch(batchtype.Deposit)
+	pendingBatch, err := s.depositsCtx.NewPendingBatch(batchtype.Deposit)
 	s.NoError(err)
 
-	vacancyProof, err := s.depositCtx.createCommitment(pendingBatch.ID)
+	vacancyProof, err := s.depositsCtx.createCommitment(pendingBatch.ID)
 	s.NoError(err)
 
-	err = s.depositCtx.SubmitBatch(pendingBatch, vacancyProof)
+	err = s.depositsCtx.SubmitBatch(pendingBatch, vacancyProof)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()

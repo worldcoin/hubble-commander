@@ -31,7 +31,7 @@ func (c *TransactionsContext) newCommitment(
 	}, nil
 }
 
-func (c *DepositContext) newCommitment(
+func (c *DepositsContext) newCommitment(
 	batchID models.Uint256,
 	depositSubtree *models.PendingDepositSubTree,
 ) (*models.DepositCommitment, error) {

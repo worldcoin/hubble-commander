@@ -40,7 +40,7 @@ func (c *TransactionsContext) addCommitments(commitments []models.CommitmentWith
 	return nil
 }
 
-func (c *DepositContext) SubmitBatch(batch *models.Batch, vacancyProof *models.SubtreeVacancyProof) error {
+func (c *DepositsContext) SubmitBatch(batch *models.Batch, vacancyProof *models.SubtreeVacancyProof) error {
 	select {
 	case <-c.ctx.Done():
 		return ErrNoLongerProposer
