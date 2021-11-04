@@ -7,6 +7,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/zerohash"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -22,7 +23,7 @@ var (
 )
 
 func init() {
-	zeroHashes[0] = models.ZeroHash
+	zeroHashes[0] = zerohash.ZeroHash
 	for i := 1; i <= MaxDepth; i++ {
 		zeroHashes[i] = utils.HashTwo(zeroHashes[i-1], zeroHashes[i-1])
 	}

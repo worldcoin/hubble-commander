@@ -1,4 +1,4 @@
-package models
+package zerohash
 
 import "github.com/ethereum/go-ethereum/common"
 

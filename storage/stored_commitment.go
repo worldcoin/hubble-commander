@@ -133,24 +133,27 @@ func getCommitmentPrefixWithBatchID(batchID *models.Uint256) []byte {
 	return prefix
 }
 
-func (s *CommitmentStorage) GetCommitmentsByBatchID(batchID models.Uint256, commitmentType batchtype.BatchType) ([]models.Commitment, error) {
-	if s.isTxCommitmentType(commitmentType) {
-		txCommitments, err := s.GetTxCommitmentsByBatchID(batchID)
+func (s *CommitmentStorage) GetCommitmentsByBatchID(batchID models.Uint256, commitmentType batchtype.BatchType) (
+	[]models.Commitment,
+	error,
+) {
+	if commitmentType == batchtype.Deposit {
+		commitment, err := s.GetDepositCommitment(&models.CommitmentID{
+			BatchID:      batchID,
+			IndexInBatch: 0,
+		})
 		if err != nil {
 			return nil, err
 		}
-		commitments := make([]models.Commitment, 0, len(txCommitments))
-		for i := range txCommitments {
-			commitments = append(commitments, &txCommitments[i])
-		}
-		return commitments, nil
+		return []models.Commitment{commitment}, nil
 	}
-	commitment, err := s.GetDepositCommitment(&models.CommitmentID{
-		BatchID:      batchID,
-		IndexInBatch: 0,
-	})
+	txCommitments, err := s.GetTxCommitmentsByBatchID(batchID)
 	if err != nil {
 		return nil, err
 	}
-	return []models.Commitment{commitment}, nil
+	commitments := make([]models.Commitment, 0, len(txCommitments))
+	for i := range txCommitments {
+		commitments = append(commitments, &txCommitments[i])
+	}
+	return commitments, nil
 }
