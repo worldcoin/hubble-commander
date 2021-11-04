@@ -7,7 +7,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	log "github.com/sirupsen/logrus"
 )
 
 type RollupLoopContext interface {
@@ -30,8 +29,7 @@ func NewRollupLoopContext(
 	case batchtype.Deposit:
 		return NewDepositsContext(storage, client, cfg, ctx)
 	case batchtype.Genesis, batchtype.MassMigration:
-		log.Fatal("Invalid batch type")
-		return nil
+		panic("invalid batch type")
 	}
 	return nil
 }
