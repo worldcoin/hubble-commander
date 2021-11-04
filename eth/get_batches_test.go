@@ -19,35 +19,39 @@ type GetBatchesTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	client      *TestClient
-	commitments []models.TxCommitment
+	commitments []models.CommitmentWithTxs
 }
 
 func (s *GetBatchesTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
-	s.commitments = []models.TxCommitment{
+	s.commitments = []models.CommitmentWithTxs{
 		{
-			CommitmentBase: models.CommitmentBase{
-				ID: models.CommitmentID{
-					BatchID:      models.MakeUint256(1),
-					IndexInBatch: 0,
+			TxCommitment: models.TxCommitment{
+				CommitmentBase: models.CommitmentBase{
+					ID: models.CommitmentID{
+						BatchID:      models.MakeUint256(1),
+						IndexInBatch: 0,
+					},
+					Type: batchtype.Transfer,
 				},
-				Type: batchtype.Transfer,
+				FeeReceiver:       0,
+				CombinedSignature: *s.mockSignature(),
 			},
-			Transactions:      []uint8{0, 0, 0, 0, 0, 0, 0, 1, 32, 4, 0, 0},
-			FeeReceiver:       0,
-			CombinedSignature: *s.mockSignature(),
+			Transactions: []uint8{0, 0, 0, 0, 0, 0, 0, 1, 32, 4, 0, 0},
 		},
 		{
-			CommitmentBase: models.CommitmentBase{
-				ID: models.CommitmentID{
-					BatchID:      models.MakeUint256(2),
-					IndexInBatch: 0,
+			TxCommitment: models.TxCommitment{
+				CommitmentBase: models.CommitmentBase{
+					ID: models.CommitmentID{
+						BatchID:      models.MakeUint256(2),
+						IndexInBatch: 0,
+					},
+					Type: batchtype.Transfer,
 				},
-				Type: batchtype.Transfer,
+				FeeReceiver:       0,
+				CombinedSignature: *s.mockSignature(),
 			},
-			Transactions:      []uint8{0, 0, 1, 0, 0, 0, 0, 0, 32, 1, 0, 0},
-			FeeReceiver:       0,
-			CombinedSignature: *s.mockSignature(),
+			Transactions: []uint8{0, 0, 1, 0, 0, 0, 0, 0, 32, 1, 0, 0},
 		},
 	}
 }
@@ -63,9 +67,9 @@ func (s *GetBatchesTestSuite) TearDownTest() {
 }
 
 func (s *GetBatchesTestSuite) TestGetAllBatches() {
-	batch1, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitment{s.commitments[0]})
+	batch1, err := s.client.SubmitTransfersBatchAndWait([]models.CommitmentWithTxs{s.commitments[0]})
 	s.NoError(err)
-	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitment{s.commitments[1]})
+	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.CommitmentWithTxs{s.commitments[1]})
 	s.NoError(err)
 
 	batches, err := s.client.GetAllBatches()
@@ -79,9 +83,9 @@ func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBlockNumber() {
 	finalisationBlocks, err := s.client.GetBlocksToFinalise()
 	s.NoError(err)
 
-	batch1, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitment{s.commitments[0]})
+	batch1, err := s.client.SubmitTransfersBatchAndWait([]models.CommitmentWithTxs{s.commitments[0]})
 	s.NoError(err)
-	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitment{s.commitments[1]})
+	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.CommitmentWithTxs{s.commitments[1]})
 	s.NoError(err)
 
 	batches, err := s.client.GetBatches(&BatchesFilters{
@@ -95,9 +99,9 @@ func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBlockNumber() {
 }
 
 func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBatchID() {
-	batch1, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitment{s.commitments[0]})
+	batch1, err := s.client.SubmitTransfersBatchAndWait([]models.CommitmentWithTxs{s.commitments[0]})
 	s.NoError(err)
-	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitment{s.commitments[1]})
+	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.CommitmentWithTxs{s.commitments[1]})
 	s.NoError(err)
 
 	batches, err := s.client.GetBatches(&BatchesFilters{

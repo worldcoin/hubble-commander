@@ -50,6 +50,7 @@ func (s *GetBatchTestSuite) SetupTest() {
 
 	s.commitment = commitment
 	s.commitment.ID.BatchID = s.batch.ID
+	s.commitment.BodyHash = utils.NewRandomHash()
 
 	s.batchNotFoundAPIErr = &APIError{
 		Code:    30000,

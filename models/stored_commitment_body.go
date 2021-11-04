@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	storedTxCommitmentBodyBaseLength      = 68
-	storedDepositCommitmentBodyBaseLength = 64
+	storedTxCommitmentBodyLength          = 4 + 64 + 33
+	storedDepositCommitmentBodyBaseLength = 32 + 32
 )
 
 type StoredCommitmentBody interface {
@@ -33,30 +33,33 @@ func NewStoredCommitmentBody(commitmentType batchtype.BatchType) (StoredCommitme
 type StoredTxCommitmentBody struct {
 	FeeReceiver       uint32
 	CombinedSignature Signature
-	Transactions      []byte
+	BodyHash          *common.Hash
 }
 
 func (c *StoredTxCommitmentBody) Bytes() []byte {
 	b := make([]byte, c.BytesLen())
 	binary.BigEndian.PutUint32(b[0:4], c.FeeReceiver)
 	copy(b[4:68], c.CombinedSignature.Bytes())
-	copy(b[68:], c.Transactions)
+	copy(b[68:101], EncodeHashPointer(c.BodyHash))
 	return b
 }
 
 func (c *StoredTxCommitmentBody) SetBytes(data []byte) error {
+	if len(data) != storedTxCommitmentBodyLength {
+		return ErrInvalidLength
+	}
 	err := c.CombinedSignature.SetBytes(data[4:68])
 	if err != nil {
 		return err
 	}
 
 	c.FeeReceiver = binary.BigEndian.Uint32(data[0:4])
-	c.Transactions = data[68:]
+	c.BodyHash = DecodeHashPointer(data[68:101])
 	return nil
 }
 
 func (c *StoredTxCommitmentBody) BytesLen() int {
-	return storedTxCommitmentBodyBaseLength + len(c.Transactions)
+	return storedTxCommitmentBodyLength
 }
 
 type StoredDepositCommitmentBody struct {

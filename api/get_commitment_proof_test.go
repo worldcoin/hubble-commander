@@ -54,6 +54,7 @@ func (s *GetCommitmentProofTestSuite) SetupTest() {
 	s.commitment = commitment
 	s.commitment.ID.BatchID = s.batch.ID
 	s.commitment.ID.IndexInBatch = 0
+	s.commitment.BodyHash = utils.NewRandomHash()
 
 	s.commitmentProofNotFoundAPIErr = &APIError{
 		Code:    50001,
@@ -90,7 +91,7 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_TransferType() {
 	err = s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 
-	tree, err := merkletree.NewMerkleTree([]common.Hash{s.commitment.LeafHash(*s.batch.AccountTreeRoot)})
+	tree, err := merkletree.NewMerkleTree([]common.Hash{s.commitment.LeafHash()})
 	s.NoError(err)
 
 	path := &models.MerklePath{
@@ -132,7 +133,7 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_Create2TransferType
 	err = s.storage.AddCreate2Transfer(&transfer)
 	s.NoError(err)
 
-	tree, err := merkletree.NewMerkleTree([]common.Hash{s.commitment.LeafHash(*s.batch.AccountTreeRoot)})
+	tree, err := merkletree.NewMerkleTree([]common.Hash{s.commitment.LeafHash()})
 	s.NoError(err)
 
 	path := &models.MerklePath{

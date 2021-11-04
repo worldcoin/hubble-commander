@@ -84,7 +84,7 @@ func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_FirstCommitment() 
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.disputeCtx.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
+	err = s.syncCtx.UpdateExistingBatchAndCommitments(&remoteBatches[0])
 	s.NoError(err)
 
 	err = s.disputeCtx.DisputeTransition(&remoteBatches[1], 0, proofs)
@@ -116,7 +116,7 @@ func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_ValidBatch() {
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.disputeCtx.storage.MarkBatchAsSubmitted(&remoteBatches[0].Batch)
+	err = s.syncCtx.UpdateExistingBatchAndCommitments(&remoteBatches[0])
 	s.NoError(err)
 
 	err = s.disputeCtx.DisputeTransition(&remoteBatches[1], 0, proofs)
@@ -195,11 +195,11 @@ func (s *DisputeCT2TransitionTestSuite) createInvalidCommitments(
 	commitmentTxs [][]models.Create2Transfer,
 	pubKeyIDs [][]uint32,
 	invalidTxHash common.Hash,
-) []models.TxCommitment {
+) []models.CommitmentWithTxs {
 	commitmentID, err := s.rollupCtx.NextCommitmentID()
 	s.NoError(err)
 
-	commitments := make([]models.TxCommitment, 0, len(commitmentTxs))
+	commitments := make([]models.CommitmentWithTxs, 0, len(commitmentTxs))
 	for i := range commitmentTxs {
 		commitmentID.IndexInBatch = uint8(i)
 		txs := commitmentTxs[i]

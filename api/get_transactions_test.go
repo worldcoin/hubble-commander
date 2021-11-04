@@ -175,7 +175,6 @@ func (s *GetTransactionsTestSuite) addCommitmentAndBatch() *models.Batch {
 			Type:          batchtype.Transfer,
 			PostStateRoot: utils.RandomHash(),
 		},
-		Transactions:      utils.RandomBytes(12),
 		FeeReceiver:       1234,
 		CombinedSignature: models.MakeRandomSignature(),
 	}

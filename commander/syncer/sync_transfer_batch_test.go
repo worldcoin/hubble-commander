@@ -52,21 +52,24 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
 		s.NoError(err)
 	}
 
-	expectedCommitments, err := s.rollupCtx.CreateCommitments()
+	commitments, err := s.rollupCtx.CreateCommitments()
 	s.NoError(err)
-	s.Len(expectedCommitments, 2)
-	accountRoots := make([]common.Hash, 2)
-	for i := range expectedCommitments {
+	s.Len(commitments, 2)
+	accountRoots := make([]common.Hash, len(commitments))
+	expectedCommitments := make([]models.TxCommitment, 0, len(commitments))
+	for i := range commitments {
 		var pendingBatch *models.Batch
 		pendingBatch, err = s.rollupCtx.NewPendingBatch(batchtype.Transfer)
 		s.NoError(err)
-		expectedCommitments[i].ID.BatchID = pendingBatch.ID
-		expectedCommitments[i].ID.IndexInBatch = 0
-		err = s.rollupCtx.SubmitBatch(pendingBatch, []models.TxCommitment{expectedCommitments[i]})
+		commitments[i].ID.BatchID = pendingBatch.ID
+		commitments[i].ID.IndexInBatch = 0
+		err = s.rollupCtx.SubmitBatch(pendingBatch, []models.CommitmentWithTxs{commitments[i]})
 		s.NoError(err)
 		s.client.GetBackend().Commit()
 
 		accountRoots[i] = s.getAccountTreeRoot()
+		commitments[i].SetBodyHash(accountRoots[i])
+		expectedCommitments = append(expectedCommitments, commitments[i].TxCommitment)
 	}
 
 	s.recreateDatabase()
@@ -81,7 +84,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
 	s.Equal(accountRoots[1], *batches[1].AccountTreeRoot)
 
 	for i := range expectedCommitments {
-		commitment, err := s.storage.GetTxCommitment(&expectedCommitments[i].ID)
+		commitment, err := s.storage.GetTxCommitment(&commitments[i].ID)
 		s.NoError(err)
 		s.Equal(expectedCommitments[i], *commitment)
 
@@ -93,7 +96,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
 	}
 }
 
-func (s *SyncTransferBatchTestSuite) TestSyncBatch_PendingBatch() {
+func (s *SyncTransferBatchTestSuite) TestSyncBatch_SyncsExistingBatch() {
 	accountRoot := s.getAccountTreeRoot()
 	tx := testutils.MakeTransfer(0, 1, 0, 400)
 	s.setTxHashAndSign(&tx)
@@ -112,8 +115,12 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_PendingBatch() {
 	s.Len(batches, 1)
 	s.NotNil(batches[0].Hash)
 	s.NotNil(batches[0].FinalisationBlock)
-
 	s.Equal(accountRoot, *batches[0].AccountTreeRoot)
+
+	commitments, err := s.storage.GetTxCommitmentsByBatchID(batches[0].ID)
+	s.NoError(err)
+	s.Len(commitments, 1)
+	s.NotNil(commitments[0].BodyHash)
 }
 
 func (s *SyncTransferBatchTestSuite) TestSyncBatch_TooManyTxsInCommitment() {
@@ -230,7 +237,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_NotValidBLSSignature() {
 func (s *SyncTransferBatchTestSuite) TestSyncBatch_CommitmentWithoutTxs() {
 	commitment := s.createCommitmentWithEmptyTransactions(batchtype.Transfer)
 
-	_, err := s.client.SubmitTransfersBatchAndWait([]models.TxCommitment{commitment})
+	_, err := s.client.SubmitTransfersBatchAndWait([]models.CommitmentWithTxs{commitment})
 	s.NoError(err)
 
 	remoteBatches, err := s.client.GetAllBatches()
@@ -316,20 +323,22 @@ func (s *SyncTransferBatchTestSuite) submitTransferBatchWithNonexistentFeeReceiv
 	nextBatchID, err := s.storage.GetNextBatchID()
 	s.NoError(err)
 
-	commitment := models.TxCommitment{
-		CommitmentBase: models.CommitmentBase{
-			ID: models.CommitmentID{
-				BatchID:      *nextBatchID,
-				IndexInBatch: 0,
+	commitment := models.CommitmentWithTxs{
+		TxCommitment: models.TxCommitment{
+			CommitmentBase: models.CommitmentBase{
+				ID: models.CommitmentID{
+					BatchID:      *nextBatchID,
+					IndexInBatch: 0,
+				},
+				Type:          batchtype.Transfer,
+				PostStateRoot: *postStateRoot,
 			},
-			Type:          batchtype.Transfer,
-			PostStateRoot: *postStateRoot,
+			FeeReceiver:       feeReceiverStateID,
+			CombinedSignature: *combinedSignature,
 		},
-		Transactions:      serializedTxs,
-		FeeReceiver:       feeReceiverStateID,
-		CombinedSignature: *combinedSignature,
+		Transactions: serializedTxs,
 	}
-	_, err = s.client.SubmitTransfersBatchAndWait([]models.TxCommitment{commitment})
+	_, err = s.client.SubmitTransfersBatchAndWait([]models.CommitmentWithTxs{commitment})
 	s.NoError(err)
 }
 

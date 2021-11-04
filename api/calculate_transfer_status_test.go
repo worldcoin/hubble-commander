@@ -21,7 +21,6 @@ var (
 			Type:          batchtype.Transfer,
 			PostStateRoot: utils.RandomHash(),
 		},
-		Transactions:      utils.RandomBytes(24),
 		FeeReceiver:       1,
 		CombinedSignature: models.MakeRandomSignature(),
 	}
