@@ -124,7 +124,7 @@ func (s *syncTestSuite) recreateDatabase() {
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
-	s.rollupCtx = executor.NewTestRollupContext(executionCtx, s.rollupCtx.BatchType)
+	s.txsCtx = executor.NewTestTxsContext(executionCtx, s.txsCtx.BatchType)
 	s.syncCtx = NewTestContext(s.storage.Storage, s.client.Client, s.cfg, s.syncCtx.BatchType)
 
 	s.seedDB(s.wallets)
@@ -139,7 +139,7 @@ func (s *syncTestSuite) getAccountTreeRoot() common.Hash {
 func (s *syncTestSuite) submitBatch(tx models.GenericTransaction) (*models.Batch, []models.CommitmentWithTxs) {
 	pendingBatch, commitments := s.createBatch(tx)
 
-	err := s.rollupCtx.SubmitBatch(pendingBatch, commitments)
+	err := s.txsCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
@@ -155,10 +155,10 @@ func (s *syncTestSuite) createBatch(tx models.GenericTransaction) (*models.Batch
 		s.NoError(err)
 	}
 
-	pendingBatch, err := s.rollupCtx.NewPendingBatch(s.rollupCtx.BatchType)
+	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
 	s.NoError(err)
 
-	commitments, err := s.rollupCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
 

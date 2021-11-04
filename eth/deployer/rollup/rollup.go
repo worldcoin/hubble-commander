@@ -212,6 +212,16 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 		return nil, err
 	}
 
+	tx, err = depositManager.SetRollupAddress(c.GetAccount(), rollupAddress)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
+	if err != nil {
+		return nil, err
+	}
+
 	return &RollupContracts{
 		Config:                 cfg,
 		Chooser:                proofOfBurn,

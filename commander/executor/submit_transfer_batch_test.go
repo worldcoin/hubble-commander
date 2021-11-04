@@ -15,7 +15,7 @@ type SubmitTransferBatchTestSuite struct {
 }
 
 func (s *SubmitTransferBatchTestSuite) SetupTest() {
-	s.testSuiteWithRollupContext.SetupTest(batchtype.Transfer)
+	s.testSuiteWithTxsContext.SetupTest(batchtype.Transfer)
 	s.setupUser()
 }
 
@@ -27,9 +27,9 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_SubmitsCommitmentsOnChain
 	commitment := baseCommitment
 	commitment.ID.BatchID = models.MakeUint256FromBig(*nextBatchID)
 
-	pendingBatch, err := s.rollupCtx.NewPendingBatch(batchtype.Transfer)
+	pendingBatch, err := s.txsCtx.NewPendingBatch(batchtype.Transfer)
 	s.NoError(err)
-	err = s.rollupCtx.SubmitBatch(pendingBatch, []models.CommitmentWithTxs{commitment})
+	err = s.txsCtx.SubmitBatch(pendingBatch, []models.CommitmentWithTxs{commitment})
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
@@ -40,13 +40,13 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_SubmitsCommitmentsOnChain
 }
 
 func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_StoresPendingBatchRecord() {
-	pendingBatch, err := s.rollupCtx.NewPendingBatch(batchtype.Transfer)
+	pendingBatch, err := s.txsCtx.NewPendingBatch(batchtype.Transfer)
 	s.NoError(err)
 
 	commitment := baseCommitment
 	commitment.ID.BatchID = pendingBatch.ID
 
-	err = s.rollupCtx.SubmitBatch(pendingBatch, []models.CommitmentWithTxs{commitment})
+	err = s.txsCtx.SubmitBatch(pendingBatch, []models.CommitmentWithTxs{commitment})
 	s.NoError(err)
 
 	batch, err := s.storage.GetBatch(models.MakeUint256(1))
@@ -59,11 +59,11 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_StoresPendingBatchRecord(
 }
 
 func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_AddsCommitments() {
-	pendingBatch, err := s.rollupCtx.NewPendingBatch(batchtype.Transfer)
+	pendingBatch, err := s.txsCtx.NewPendingBatch(batchtype.Transfer)
 	s.NoError(err)
 	commitments := getCommitments(2, pendingBatch.ID)
 
-	err = s.rollupCtx.SubmitBatch(pendingBatch, commitments)
+	err = s.txsCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	batch, err := s.storage.GetBatch(models.MakeUint256(1))

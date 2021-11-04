@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (c *RollupContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiver *FeeReceiver) (ExecuteTxsResult, error) {
+func (c *TxsContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiver *FeeReceiver) (ExecuteTxsResult, error) {
 	if txs.Len() == 0 {
 		return c.Executor.NewExecuteTxsResult(0), nil
 	}
@@ -40,7 +40,7 @@ func (c *RollupContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiv
 	}
 
 	if returnStruct.AppliedTxs().Len() > 0 {
-		_, err := c.ApplyFee(feeReceiver.StateID, combinedFee)
+		_, err := c.Applier.ApplyFee(feeReceiver.StateID, combinedFee)
 		if err != nil {
 			return nil, err
 		}
@@ -49,7 +49,7 @@ func (c *RollupContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiv
 	return returnStruct, nil
 }
 
-func (c *RollupContext) handleTransactionError(result ExecuteTxsResult, tx models.GenericTransaction, err error) {
+func (c *TxsContext) handleTransactionError(result ExecuteTxsResult, tx models.GenericTransaction, err error) {
 	if errors.Is(err, applier.ErrNonceTooHigh) {
 		result.AddSkippedTx(tx)
 		return
@@ -57,7 +57,7 @@ func (c *RollupContext) handleTransactionError(result ExecuteTxsResult, tx model
 
 	logAndSaveTransactionError(c.storage, tx, err)
 	result.AddInvalidTx(tx)
-	c.TxErrorsToStore = append(c.TxErrorsToStore, TransactionError{
+	c.txErrorsToStore = append(c.txErrorsToStore, TransactionError{
 		Hash:         tx.GetBase().Hash,
 		ErrorMessage: err.Error(),
 	})

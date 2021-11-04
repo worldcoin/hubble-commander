@@ -1,22 +1,99 @@
 package executor
 
 import (
+	"time"
+
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/pkg/errors"
 )
 
-func (c *ExecutionContext) GetVacancyProof(startStateID uint32, subtreeDepth uint8) (*models.SubtreeVacancyProof, error) {
-	path := models.MerklePath{
-		Path:  startStateID >> subtreeDepth,
-		Depth: storage.StateTreeDepth - subtreeDepth,
+var ErrNotEnoughDeposits = NewRollupError("not enough deposits")
+
+func (c *DepositsContext) CreateAndSubmitBatch() error {
+	startTime := time.Now()
+	batch, err := c.NewPendingBatch(batchtype.Deposit)
+	if err != nil {
+		return err
 	}
-	witness, err := c.storage.StateTree.GetNodeWitness(path)
+
+	vacancyProof, err := c.createCommitment(batch.ID)
+	if err != nil {
+		return err
+	}
+
+	err = c.SubmitBatch(batch, vacancyProof)
+	if err != nil {
+		return err
+	}
+
+	logNewBatch(batch, 1, startTime)
+	return nil
+}
+
+func (c *DepositsContext) createCommitment(batchID models.Uint256) (*models.SubtreeVacancyProof, error) {
+	depositSubtree, err := c.storage.GetFirstPendingDepositSubTree()
+	if st.IsNotFoundError(err) {
+		return nil, errors.WithStack(ErrNotEnoughDeposits)
+	}
 	if err != nil {
 		return nil, err
 	}
 
-	return &models.SubtreeVacancyProof{
-		PathAtDepth: path.Path,
-		Witness:     witness,
-	}, nil
+	vacancyProof, err := c.executeDeposits(depositSubtree)
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.addCommitment(batchID, depositSubtree)
+	if err != nil {
+		return nil, err
+	}
+
+	return vacancyProof, nil
+}
+
+func (c *DepositsContext) executeDeposits(depositSubtree *models.PendingDepositSubTree) (*models.SubtreeVacancyProof, error) {
+	startStateID, vacancyProof, err := c.getDepositSubtreeVacancyProof()
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.Applier.ApplyDeposits(*startStateID, depositSubtree.Deposits)
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.storage.DeletePendingDepositSubTrees(depositSubtree.ID)
+	if err != nil {
+		return nil, err
+	}
+	return vacancyProof, nil
+}
+
+func (c *DepositsContext) addCommitment(batchID models.Uint256, depositSubtree *models.PendingDepositSubTree) error {
+	commitment, err := c.newCommitment(batchID, depositSubtree)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return c.storage.AddDepositCommitment(commitment)
+}
+
+func (c *DepositsContext) getDepositSubtreeVacancyProof() (*uint32, *models.SubtreeVacancyProof, error) {
+	subtreeDepth, err := c.client.GetMaxSubTreeDepthParam()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	startStateID, err := c.storage.StateTree.NextVacantSubtree(*subtreeDepth)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	vacancyProof, err := c.proverCtx.GetVacancyProof(*startStateID, *subtreeDepth)
+	if err != nil {
+		return nil, nil, err
+	}
+	return startStateID, vacancyProof, nil
 }

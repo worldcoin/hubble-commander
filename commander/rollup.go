@@ -38,7 +38,7 @@ func (c *Commander) rollupLoop(ctx context.Context) (err error) {
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
-			err := c.rollupLoopIteration(ctx, &currentBatchType)
+			err = c.rollupLoopIteration(ctx, &currentBatchType)
 			if err != nil {
 				return err
 			}
@@ -50,12 +50,20 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *b
 	c.stateMutex.Lock()
 	defer c.stateMutex.Unlock()
 
+	err = c.unsafeRollupLoopIteration(ctx, currentBatchType)
+	if errors.Is(err, executor.ErrNotEnoughDeposits) {
+		return c.unsafeRollupLoopIteration(ctx, currentBatchType)
+	}
+	return err
+}
+
+func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchType *batchtype.BatchType) (err error) {
 	err = validateStateRoot(c.storage)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	rollupCtx := executor.NewRollupContext(c.storage, c.client, c.cfg.Rollup, ctx, *currentBatchType)
+	rollupCtx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, ctx, *currentBatchType)
 	defer rollupCtx.Rollback(&err)
 
 	switchBatchType(currentBatchType)
@@ -64,9 +72,8 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *b
 
 	var rollupError *executor.RollupError
 	if errors.As(err, &rollupError) {
-		handleRollupError(rollupError)
 		rollupCtx.Rollback(&err)
-		return saveTxErrors(c.storage, rollupCtx.TxErrorsToStore)
+		return c.handleRollupError(rollupError, rollupCtx)
 	}
 	if err != nil {
 		return err
@@ -76,17 +83,28 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *b
 }
 
 func switchBatchType(batchType *batchtype.BatchType) {
-	if *batchType == batchtype.Transfer {
+	switch *batchType {
+	case batchtype.Transfer:
 		*batchType = batchtype.Create2Transfer
-	} else {
+	case batchtype.Create2Transfer:
+		*batchType = batchtype.Deposit
+	case batchtype.Deposit:
 		*batchType = batchtype.Transfer
+	case batchtype.Genesis, batchtype.MassMigration:
+		panic("Not supported")
 	}
 }
 
-func handleRollupError(rollupErr *executor.RollupError) {
+func (c *Commander) handleRollupError(rollupErr *executor.RollupError, rollupCtx executor.RollupLoopContext) error {
+	if errors.Is(rollupErr, executor.ErrNotEnoughDeposits) {
+		return rollupErr
+	}
+
 	if rollupErr.IsLoggable {
 		log.Warnf("%+v", rollupErr)
 	}
+
+	return saveTxErrors(c.storage, rollupCtx.GetErrorsToStore())
 }
 
 func logLatestCommitment(latestCommitment *models.CommitmentBase) {
@@ -98,6 +116,10 @@ func logLatestCommitment(latestCommitment *models.CommitmentBase) {
 }
 
 func saveTxErrors(storage *st.Storage, txErrors []executor.TransactionError) error {
+	if len(txErrors) == 0 {
+		return nil
+	}
+
 	return storage.ExecuteInTransaction(st.TxOptions{}, func(txStorage *st.Storage) error {
 		for _, txErr := range txErrors {
 			err := txStorage.SetTransactionError(txErr.Hash, txErr.ErrorMessage)

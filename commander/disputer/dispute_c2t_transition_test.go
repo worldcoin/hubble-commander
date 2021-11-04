@@ -163,13 +163,13 @@ func (s *DisputeCT2TransitionTestSuite) submitInvalidBatch(
 		s.setToStateID(txs[i], stateIDs)
 	}
 
-	pendingBatch, err := s.rollupCtx.NewPendingBatch(batchtype.Create2Transfer)
+	pendingBatch, err := s.txsCtx.NewPendingBatch(batchtype.Create2Transfer)
 	s.NoError(err)
 
 	commitments := s.createInvalidCommitments(txs, pubKeyIDs, invalidTxHash)
 	s.Len(commitments, len(txs))
 
-	err = s.rollupCtx.SubmitBatch(pendingBatch, commitments)
+	err = s.txsCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
@@ -196,7 +196,7 @@ func (s *DisputeCT2TransitionTestSuite) createInvalidCommitments(
 	pubKeyIDs [][]uint32,
 	invalidTxHash common.Hash,
 ) []models.CommitmentWithTxs {
-	commitmentID, err := s.rollupCtx.NextCommitmentID()
+	commitmentID, err := s.txsCtx.NextCommitmentID()
 	s.NoError(err)
 
 	commitments := make([]models.CommitmentWithTxs, 0, len(commitmentTxs))
@@ -209,19 +209,19 @@ func (s *DisputeCT2TransitionTestSuite) createInvalidCommitments(
 			combinedFee = s.applyTransfer(&txs[j], invalidTxHash, combinedFee, receiverLeaf)
 		}
 		if combinedFee.CmpN(0) > 0 {
-			_, err := s.rollupCtx.ApplyFee(0, combinedFee)
+			_, err := s.txsCtx.Applier.ApplyFee(0, combinedFee)
 			s.NoError(err)
 		}
 
-		executeTxsResult := s.rollupCtx.Executor.NewExecuteTxsResult(uint32(len(txs)))
+		executeTxsResult := s.txsCtx.Executor.NewExecuteTxsResult(uint32(len(txs)))
 		for j := range txs {
 			executeTxsResult.AddApplied(applier.NewApplySingleC2TResult(&txs[j], pubKeyIDs[i][j]))
 		}
-		executeTxsForCommitmentResult := s.rollupCtx.Executor.NewExecuteTxsForCommitmentResult(
+		executeTxsForCommitmentResult := s.txsCtx.Executor.NewExecuteTxsForCommitmentResult(
 			executeTxsResult,
 			models.MakeCreate2TransferArray(),
 		)
-		commitment, err := s.rollupCtx.BuildCommitment(executeTxsForCommitmentResult, commitmentID, 0)
+		commitment, err := s.txsCtx.BuildCommitment(executeTxsForCommitmentResult, commitmentID, 0)
 		s.NoError(err)
 		commitments = append(commitments, *commitment)
 	}

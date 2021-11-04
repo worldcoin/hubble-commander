@@ -21,7 +21,7 @@ var (
 )
 
 type submitBatchTestSuite struct {
-	testSuiteWithRollupContext
+	testSuiteWithTxsContext
 }
 
 func (s *submitBatchTestSuite) setupUser() {

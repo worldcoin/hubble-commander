@@ -1,4 +1,4 @@
-package disputer
+package prover
 
 import (
 	"testing"
@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/consts"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
@@ -16,17 +17,16 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type DisputeTransitionProofsTestSuite struct {
+type CommitmentProofsTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage            *st.TestStorage
-	client             *eth.TestClient
-	disputeCtx         *Context
+	proverCtx          *Context
 	decodedCommitments []encoder.DecodedCommitment
 	decodedBatch       eth.DecodedBatch
 }
 
-func (s *DisputeTransitionProofsTestSuite) SetupSuite() {
+func (s *CommitmentProofsTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 
 	s.decodedCommitments = []encoder.DecodedCommitment{
@@ -56,18 +56,20 @@ func (s *DisputeTransitionProofsTestSuite) SetupSuite() {
 	}
 }
 
-func (s *DisputeTransitionProofsTestSuite) SetupTest() {
+func (s *CommitmentProofsTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 
-	s.client, err = eth.NewTestClient()
-	s.NoError(err)
-
-	s.disputeCtx = NewContext(s.storage.Storage, s.client.Client)
+	s.proverCtx = NewContext(s.storage.Storage)
 }
 
-func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_CurrentBatch() {
+func (s *CommitmentProofsTestSuite) TearDownTest() {
+	err := s.storage.Teardown()
+	s.NoError(err)
+}
+
+func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_CurrentBatch() {
 	expected := models.CommitmentInclusionProof{
 		StateRoot: s.decodedCommitments[0].StateRoot,
 		BodyRoot:  *s.decodedCommitments[0].BodyHash(*s.decodedBatch.AccountTreeRoot),
@@ -78,20 +80,12 @@ func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_
 		Witness: []common.Hash{s.decodedCommitments[1].LeafHash(*s.decodedBatch.AccountTreeRoot)},
 	}
 
-	proof, err := s.disputeCtx.previousCommitmentInclusionProof(&s.decodedBatch, 0)
+	proof, err := s.proverCtx.PreviousCommitmentInclusionProof(&s.decodedBatch, 0)
 	s.NoError(err)
 	s.Equal(expected, *proof)
 }
 
-func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_PreviousBatch() {
-	_, err := s.storage.StateTree.Set(11, &models.UserState{
-		PubKeyID: 1,
-		TokenID:  models.MakeUint256(1),
-		Balance:  models.MakeUint256(100),
-		Nonce:    models.MakeUint256(0),
-	})
-	s.NoError(err)
-
+func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_PreviousTransactionBatch() {
 	batch := models.Batch{
 		ID:                models.MakeUint256(1),
 		Type:              batchtype.Transfer,
@@ -100,7 +94,7 @@ func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_
 		FinalisationBlock: ref.Uint32(10),
 		AccountTreeRoot:   utils.NewRandomHash(),
 	}
-	err = s.storage.AddBatch(&batch)
+	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
 
 	commitments := []models.TxCommitment{
@@ -146,12 +140,64 @@ func (s *DisputeTransitionProofsTestSuite) TestPreviousCommitmentInclusionProof_
 		Witness: []common.Hash{commitments[0].LeafHash()},
 	}
 
-	proof, err := s.disputeCtx.previousCommitmentInclusionProof(&s.decodedBatch, -1)
+	proof, err := s.proverCtx.PreviousCommitmentInclusionProof(&s.decodedBatch, -1)
 	s.NoError(err)
 	s.Equal(expected, *proof)
 }
 
-func (s *DisputeTransitionProofsTestSuite) TestGenesisBatchCommitmentInclusionProof() {
+func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_PreviousDepositBatch() {
+	batch := models.Batch{
+		ID:                models.MakeUint256(1),
+		Type:              batchtype.Deposit,
+		TransactionHash:   utils.RandomHash(),
+		Hash:              utils.NewRandomHash(),
+		FinalisationBlock: ref.Uint32(10),
+		AccountTreeRoot:   utils.NewRandomHash(),
+	}
+	err := s.storage.AddBatch(&batch)
+	s.NoError(err)
+
+	commitment := models.DepositCommitment{
+		CommitmentBase: models.CommitmentBase{
+			ID: models.CommitmentID{
+				BatchID:      batch.ID,
+				IndexInBatch: 0,
+			},
+			Type: batchtype.Deposit,
+		},
+		SubTreeID:   models.MakeUint256(1),
+		SubTreeRoot: common.Hash{1, 2, 3},
+		Deposits: []models.PendingDeposit{
+			{
+				ID: models.DepositID{
+					BlockNumber: 1,
+					LogIndex:    1,
+				},
+				ToPubKeyID: 1,
+				TokenID:    models.MakeUint256(0),
+				L2Amount:   models.MakeUint256(10),
+			},
+		},
+	}
+	err = s.storage.AddDepositCommitment(&commitment)
+	s.NoError(err)
+
+	expected := models.CommitmentInclusionProof{
+		StateRoot: commitment.PostStateRoot,
+		BodyRoot:  commitment.GetBodyHash(),
+		Path: &models.MerklePath{
+			Path:  0,
+			Depth: 2,
+		},
+		Witness: []common.Hash{consts.ZeroHash},
+	}
+
+	proof, err := s.proverCtx.PreviousCommitmentInclusionProof(&s.decodedBatch, -1)
+	s.NoError(err)
+	s.Equal(expected, *proof)
+}
+
+func (s *CommitmentProofsTestSuite) TestGenesisBatchCommitmentInclusionProof() {
 	genesisBatch := s.addGenesisBatch()
 	zeroHash := merkletree.GetZeroHash(0)
 
@@ -167,12 +213,12 @@ func (s *DisputeTransitionProofsTestSuite) TestGenesisBatchCommitmentInclusionPr
 
 	firstBatch := s.decodedBatch
 	firstBatch.ID = models.MakeUint256(1)
-	proof, err := s.disputeCtx.previousCommitmentInclusionProof(&firstBatch, -1)
+	proof, err := s.proverCtx.PreviousCommitmentInclusionProof(&firstBatch, -1)
 	s.NoError(err)
 	s.Equal(expected, *proof)
 }
 
-func (s *DisputeTransitionProofsTestSuite) TestTargetCommitmentInclusionProof() {
+func (s *CommitmentProofsTestSuite) TestTargetCommitmentInclusionProof() {
 	expected := models.TransferCommitmentInclusionProof{
 		StateRoot: s.decodedCommitments[1].StateRoot,
 		Body: &models.TransferBody{
@@ -188,24 +234,29 @@ func (s *DisputeTransitionProofsTestSuite) TestTargetCommitmentInclusionProof() 
 		Witness: []common.Hash{s.decodedCommitments[0].LeafHash(*s.decodedBatch.AccountTreeRoot)},
 	}
 
-	proof, err := targetCommitmentInclusionProof(&s.decodedBatch, 1)
+	proof, err := s.proverCtx.TargetCommitmentInclusionProof(&s.decodedBatch, 1)
 	s.NoError(err)
 	s.Equal(expected, *proof)
 }
 
-func (s *DisputeTransitionProofsTestSuite) addGenesisBatch() *models.Batch {
+func (s *CommitmentProofsTestSuite) addGenesisBatch() *models.Batch {
 	root, err := s.storage.StateTree.Root()
 	s.NoError(err)
 
-	batch, err := s.client.GetBatch(models.NewUint256(0))
-	s.NoError(err)
-	batch.PrevStateRoot = root
+	batch := &models.Batch{
+		ID:              models.MakeUint256(0),
+		Type:            batchtype.Genesis,
+		TransactionHash: common.Hash{},
+		Hash:            utils.NewRandomHash(),
+		PrevStateRoot:   root,
+	}
 
 	err = s.storage.AddBatch(batch)
 	s.NoError(err)
+
 	return batch
 }
 
-func TestDisputeTransitionProofsTestSuite(t *testing.T) {
-	suite.Run(t, new(DisputeTransitionProofsTestSuite))
+func TestCommitmentProofsTestSuite(t *testing.T) {
+	suite.Run(t, new(CommitmentProofsTestSuite))
 }

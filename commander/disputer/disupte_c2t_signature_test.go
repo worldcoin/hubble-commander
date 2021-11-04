@@ -62,7 +62,7 @@ func (s *DisputeC2TSignatureTestSuite) TestSignatureProofWithReceiver() {
 
 	commitment := &encoder.DecodedCommitment{Transactions: serializedTxs}
 
-	signatureProof, err := s.disputeCtx.signatureProofWithReceiver(commitment, stateProofs)
+	signatureProof, err := s.disputeCtx.proverCtx.SignatureProofWithReceiver(commitment, stateProofs)
 	s.NoError(err)
 	s.Len(signatureProof.UserStates, 3)
 	s.Len(signatureProof.SenderPublicKeys, 3)
@@ -175,7 +175,7 @@ func (s *DisputeC2TSignatureTestSuite) submitBatchWithNonexistentAccount(tx mode
 	s.NoError(err)
 	commitments[0].Transactions = encodedC2T
 
-	err = s.rollupCtx.SubmitBatch(pendingBatch, commitments)
+	err = s.txsCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()

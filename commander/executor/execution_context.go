@@ -16,7 +16,7 @@ type ExecutionContext struct {
 	tx      *db.TxController
 	client  *eth.Client
 	ctx     context.Context
-	*applier.Applier
+	Applier *applier.Applier
 }
 
 // NewExecutionContext creates a ExecutionContext and starts a database transaction.

@@ -100,7 +100,12 @@ func (c *Commander) fetchDepositSubTrees(start, end uint64) ([]models.PendingDep
 }
 
 func (c *Commander) saveSyncedSubTrees(subTrees []models.PendingDepositSubTree) error {
-	subTreeLeavesAmount := 1 << c.cfg.Rollup.MaxDepositSubTreeDepth
+	maxDepositSubTreeDepth, err := c.client.GetMaxSubTreeDepthParam()
+	if err != nil {
+		return err
+	}
+
+	subTreeLeavesAmount := 1 << *maxDepositSubTreeDepth
 
 	for i := range subTrees {
 		err := c.saveSingleSubTree(&subTrees[i], subTreeLeavesAmount)

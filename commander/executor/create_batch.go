@@ -5,10 +5,11 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
-func (c *RollupContext) CreateAndSubmitBatch() (err error) {
+func (c *TxsContext) CreateAndSubmitBatch() error {
 	startTime := time.Now()
 	batch, err := c.NewPendingBatch(c.BatchType)
 	if err != nil {
@@ -25,25 +26,29 @@ func (c *RollupContext) CreateAndSubmitBatch() (err error) {
 		return err
 	}
 
+	logNewBatch(batch, len(commitments), startTime)
+	return nil
+}
+
+func logNewBatch(batch *models.Batch, commitmentsCount int, startTime time.Time) {
 	log.Printf(
 		"Submitted a %s batch with %d commitment(s) on chain in %s. Batch ID: %d. Transaction hash: %v",
-		c.BatchType.String(),
-		len(commitments),
+		batch.Type.String(),
+		commitmentsCount,
 		time.Since(startTime).Round(time.Millisecond).String(),
 		batch.ID.Uint64(),
 		batch.TransactionHash,
 	)
-	return nil
 }
 
-func (c *RollupContext) NewPendingBatch(batchType batchtype.BatchType) (*models.Batch, error) {
+func (c *ExecutionContext) NewPendingBatch(batchType batchtype.BatchType) (*models.Batch, error) {
 	prevStateRoot, err := c.storage.StateTree.Root()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	batchID, err := c.storage.GetNextBatchID()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	return &models.Batch{
 		ID:            *batchID,

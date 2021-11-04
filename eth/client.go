@@ -49,7 +49,7 @@ type Client struct {
 	tokenRegistryContract  *bind.BoundContract
 	depositManagerContract *bind.BoundContract
 	blocksToFinalise       *int64
-	maxDepositSubTreeDepth *uint32
+	maxDepositSubTreeDepth *uint8
 	domain                 *bls.Domain
 
 	*AccountManager

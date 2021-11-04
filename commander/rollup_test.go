@@ -93,6 +93,24 @@ func (s *RollupTestSuite) TestRollupLoopIteration_RollbacksStateOnRollupErrorBut
 	s.Equal(applier.ErrBalanceTooLow.Error(), *storedInvalidTransfer.ErrorMessage)
 }
 
+func (s *RollupTestSuite) TestRollupLoopIteration_RerunIterationWhenNotEnoughDeposits() {
+	s.commander.cfg.Rollup.MinCommitmentsPerBatch = 1
+	validTransfer := testutils.MakeTransfer(1, 2, 0, 100)
+	s.setTxHashAndSign(&s.wallets[0], &validTransfer)
+
+	err := s.testStorage.AddTransfer(&validTransfer)
+	s.NoError(err)
+
+	currentBatchType := batchtype.Deposit
+	err = s.commander.rollupLoopIteration(context.Background(), &currentBatchType)
+	s.NoError(err)
+
+	batches, err := s.commander.storage.GetBatchesInRange(nil, nil)
+	s.NoError(err)
+	s.Len(batches, 1)
+	s.Equal(batchtype.Create2Transfer, currentBatchType)
+}
+
 func (s *RollupTestSuite) setTxHashAndSign(wallet *bls.Wallet, transfer *models.Transfer) {
 	hash, err := encoder.HashTransfer(transfer)
 	s.NoError(err)
