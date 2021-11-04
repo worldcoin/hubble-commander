@@ -5,7 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-func (c *TransactionsContext) BuildCommitment(
+func (c *TxsContext) BuildCommitment(
 	executeResult ExecuteTxsForCommitmentResult,
 	commitmentID *models.CommitmentID,
 	feeReceiverStateID uint32,

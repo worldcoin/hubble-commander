@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (c *TransactionsContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiver *FeeReceiver) (ExecuteTxsResult, error) {
+func (c *TxsContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiver *FeeReceiver) (ExecuteTxsResult, error) {
 	if txs.Len() == 0 {
 		return c.Executor.NewExecuteTxsResult(0), nil
 	}
@@ -49,7 +49,7 @@ func (c *TransactionsContext) ExecuteTxs(txs models.GenericTransactionArray, fee
 	return returnStruct, nil
 }
 
-func (c *TransactionsContext) handleTransactionError(result ExecuteTxsResult, tx models.GenericTransaction, err error) {
+func (c *TxsContext) handleTransactionError(result ExecuteTxsResult, tx models.GenericTransaction, err error) {
 	if errors.Is(err, applier.ErrNonceTooHigh) {
 		result.AddSkippedTx(tx)
 		return

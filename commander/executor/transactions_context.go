@@ -15,30 +15,30 @@ type TransactionError struct {
 	ErrorMessage string
 }
 
-type TransactionsContext struct {
+type TxsContext struct {
 	*ExecutionContext
 	Executor        TransactionExecutor
 	BatchType       batchtype.BatchType
 	txErrorsToStore []TransactionError
 }
 
-func NewTransactionsContext(
+func NewTxsContext(
 	storage *st.Storage,
 	client *eth.Client,
 	cfg *config.RollupConfig,
 	ctx context.Context,
 	batchType batchtype.BatchType,
-) *TransactionsContext {
+) *TxsContext {
 	executionCtx := NewExecutionContext(storage, client, cfg, ctx)
-	return newTransactionsContext(executionCtx, batchType)
+	return newTxsContext(executionCtx, batchType)
 }
 
-func NewTestTransactionsContext(executionCtx *ExecutionContext, batchType batchtype.BatchType) *TransactionsContext {
-	return newTransactionsContext(executionCtx, batchType)
+func NewTestTxsContext(executionCtx *ExecutionContext, batchType batchtype.BatchType) *TxsContext {
+	return newTxsContext(executionCtx, batchType)
 }
 
-func newTransactionsContext(executionCtx *ExecutionContext, batchType batchtype.BatchType) *TransactionsContext {
-	return &TransactionsContext{
+func newTxsContext(executionCtx *ExecutionContext, batchType batchtype.BatchType) *TxsContext {
+	return &TxsContext{
 		ExecutionContext: executionCtx,
 		Executor:         CreateTransactionExecutor(executionCtx, batchType),
 		BatchType:        batchType,
@@ -46,6 +46,6 @@ func newTransactionsContext(executionCtx *ExecutionContext, batchType batchtype.
 	}
 }
 
-func (c *TransactionsContext) GetErrorsToStore() []TransactionError {
+func (c *TxsContext) GetErrorsToStore() []TransactionError {
 	return c.txErrorsToStore
 }

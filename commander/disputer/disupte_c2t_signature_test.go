@@ -175,7 +175,7 @@ func (s *DisputeC2TSignatureTestSuite) submitBatchWithNonexistentAccount(tx mode
 	s.NoError(err)
 	commitments[0].Transactions = encodedC2T
 
-	err = s.transactionsCtx.SubmitBatch(pendingBatch, commitments)
+	err = s.txsCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()

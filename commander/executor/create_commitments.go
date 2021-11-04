@@ -19,7 +19,7 @@ type FeeReceiver struct {
 	TokenID models.Uint256
 }
 
-func (c *TransactionsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
+func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
 	pendingTxs, err := c.queryPendingTxs()
 	if err != nil {
 		return nil, err
@@ -68,7 +68,7 @@ func (c *TransactionsContext) CreateCommitments() ([]models.CommitmentWithTxs, e
 	return commitments, nil
 }
 
-func (c *TransactionsContext) createCommitment(pendingTxs models.GenericTransactionArray, commitmentID *models.CommitmentID) (
+func (c *TxsContext) createCommitment(pendingTxs models.GenericTransactionArray, commitmentID *models.CommitmentID) (
 	CreateCommitmentResult, error,
 ) {
 	startTime := time.Now()
@@ -109,7 +109,7 @@ func (c *TransactionsContext) createCommitment(pendingTxs models.GenericTransact
 	return c.Executor.NewCreateCommitmentResult(executeResult, commitment), nil
 }
 
-func (c *TransactionsContext) executeTxsForCommitment(pendingTxs models.GenericTransactionArray, feeReceiver *FeeReceiver) (
+func (c *TxsContext) executeTxsForCommitment(pendingTxs models.GenericTransactionArray, feeReceiver *FeeReceiver) (
 	result ExecuteTxsForCommitmentResult,
 	err error,
 ) {
@@ -129,7 +129,7 @@ func (c *TransactionsContext) executeTxsForCommitment(pendingTxs models.GenericT
 	return c.Executor.NewExecuteTxsForCommitmentResult(executeTxsResult, newPendingTxs), nil
 }
 
-func (c *TransactionsContext) queryPendingTxs() (models.GenericTransactionArray, error) {
+func (c *TxsContext) queryPendingTxs() (models.GenericTransactionArray, error) {
 	pendingTxs, err := c.Executor.GetPendingTxs()
 	if err != nil {
 		return nil, err
@@ -140,7 +140,7 @@ func (c *TransactionsContext) queryPendingTxs() (models.GenericTransactionArray,
 	return pendingTxs, nil
 }
 
-func (c *TransactionsContext) getCommitmentFeeReceiver() (*FeeReceiver, error) {
+func (c *TxsContext) getCommitmentFeeReceiver() (*FeeReceiver, error) {
 	commitmentTokenID := models.MakeUint256(0) // TODO support multiple tokens
 	feeReceiverState, err := c.storage.GetFeeReceiverStateLeaf(c.cfg.FeeReceiverPubKeyID, commitmentTokenID)
 	if err != nil {
@@ -174,7 +174,7 @@ func txExists(txList models.GenericTransactionArray, tx models.GenericTransactio
 	return false
 }
 
-func (c *TransactionsContext) registerPendingAccounts(accounts []models.AccountLeaf) error {
+func (c *TxsContext) registerPendingAccounts(accounts []models.AccountLeaf) error {
 	accounts, err := c.fillMissingAccounts(accounts)
 	if err != nil {
 		return err
@@ -194,7 +194,7 @@ func (c *TransactionsContext) registerPendingAccounts(accounts []models.AccountL
 	return nil
 }
 
-func (c *TransactionsContext) fillMissingAccounts(accounts []models.AccountLeaf) ([]models.AccountLeaf, error) {
+func (c *TxsContext) fillMissingAccounts(accounts []models.AccountLeaf) ([]models.AccountLeaf, error) {
 	missingAccounts := st.AccountBatchSize - len(accounts)%st.AccountBatchSize
 	if missingAccounts == st.AccountBatchSize {
 		return accounts, nil

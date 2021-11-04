@@ -17,13 +17,13 @@ import (
 type testSuiteWithContexts struct {
 	*require.Assertions
 	suite.Suite
-	storage         *st.TestStorage
-	txController    *db.TxController
-	cfg             *config.RollupConfig
-	client          *eth.TestClient
-	transactionsCtx *executor.TransactionsContext
-	syncCtx         *syncer.Context
-	disputeCtx      *Context
+	storage      *st.TestStorage
+	txController *db.TxController
+	cfg          *config.RollupConfig
+	client       *eth.TestClient
+	txsCtx       *executor.TxsContext
+	syncCtx      *syncer.Context
+	disputeCtx   *Context
 }
 
 func (s *testSuiteWithContexts) SetupSuite() {
@@ -63,7 +63,7 @@ func (s *testSuiteWithContexts) newContexts(
 	storage *st.Storage, client *eth.Client, cfg *config.RollupConfig, batchType batchtype.BatchType,
 ) {
 	executionCtx := executor.NewTestExecutionContext(storage, s.client.Client, s.cfg)
-	s.transactionsCtx = executor.NewTestTransactionsContext(executionCtx, batchType)
+	s.txsCtx = executor.NewTestTxsContext(executionCtx, batchType)
 	s.syncCtx = syncer.NewTestContext(storage, client, cfg, batchType)
 	s.disputeCtx = NewContext(storage, s.client.Client)
 }
@@ -71,24 +71,24 @@ func (s *testSuiteWithContexts) newContexts(
 func (s *testSuiteWithContexts) beginTransaction() {
 	txController, txStorage := s.storage.BeginTransaction(st.TxOptions{})
 	s.txController = txController
-	s.newContexts(txStorage, s.client.Client, s.cfg, s.transactionsCtx.BatchType)
+	s.newContexts(txStorage, s.client.Client, s.cfg, s.txsCtx.BatchType)
 }
 
 func (s *testSuiteWithContexts) commitTransaction() {
 	err := s.txController.Commit()
 	s.NoError(err)
-	s.newContexts(s.storage.Storage, s.client.Client, s.cfg, s.transactionsCtx.BatchType)
+	s.newContexts(s.storage.Storage, s.client.Client, s.cfg, s.txsCtx.BatchType)
 }
 
 func (s *testSuiteWithContexts) rollback() {
 	s.txController.Rollback(nil)
-	s.newContexts(s.storage.Storage, s.client.Client, s.cfg, s.transactionsCtx.BatchType)
+	s.newContexts(s.storage.Storage, s.client.Client, s.cfg, s.txsCtx.BatchType)
 }
 
 func (s *testSuiteWithContexts) submitBatch(tx models.GenericTransaction) *models.Batch {
 	pendingBatch, commitments := s.createBatch(tx)
 
-	err := s.transactionsCtx.SubmitBatch(pendingBatch, commitments)
+	err := s.txsCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
@@ -104,10 +104,10 @@ func (s *testSuiteWithContexts) createBatch(tx models.GenericTransaction) (*mode
 		s.NoError(err)
 	}
 
-	pendingBatch, err := s.transactionsCtx.NewPendingBatch(s.transactionsCtx.BatchType)
+	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
 	s.NoError(err)
 
-	commitments, err := s.transactionsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
 

@@ -25,7 +25,7 @@ func NewRollupLoopContext(
 ) RollupLoopContext {
 	switch batchType {
 	case batchtype.Transfer, batchtype.Create2Transfer:
-		return NewTransactionsContext(storage, client, cfg, ctx, batchType)
+		return NewTxsContext(storage, client, cfg, ctx, batchType)
 	case batchtype.Deposit:
 		return NewDepositsContext(storage, client, cfg, ctx)
 	case batchtype.Genesis, batchtype.MassMigration:

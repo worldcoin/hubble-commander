@@ -15,7 +15,7 @@ import (
 )
 
 type CreateCommitmentsTestSuite struct {
-	testSuiteWithTransactionsContext
+	testSuiteWithTxsContext
 	wallets []bls.Wallet
 }
 
@@ -24,7 +24,7 @@ func (s *CreateCommitmentsTestSuite) SetupSuite() {
 }
 
 func (s *CreateCommitmentsTestSuite) SetupTest() {
-	s.testSuiteWithTransactionsContext.SetupTestWithConfig(batchtype.Transfer, config.RollupConfig{
+	s.testSuiteWithTxsContext.SetupTestWithConfig(batchtype.Transfer, config.RollupConfig{
 		MinTxsPerCommitment:    2,
 		MaxTxsPerCommitment:    32,
 		MinCommitmentsPerBatch: 1,
@@ -47,7 +47,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCreateCommitme
 	preStateRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.transactionsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments()
 	s.Nil(commitments)
 	s.ErrorIs(err, ErrNotEnoughCommitments)
 
@@ -67,7 +67,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorIfCouldNo
 	invalidTransfer := testutils.MakeTransfer(2, 1, 1234, 100)
 	s.hashSignAndAddTransfer(&s.wallets[1], &invalidTransfer)
 
-	commitments, err := s.transactionsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments()
 	s.Nil(commitments)
 	s.ErrorIs(err, ErrNotEnoughCommitments)
 }
@@ -78,7 +78,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresErrorMessagesOf
 	invalidTransfer := testutils.MakeTransfer(1, 1234, 0, 100)
 	s.hashSignAndAddTransfer(&s.wallets[0], &invalidTransfer)
 
-	commitments, err := s.transactionsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments()
 	s.Nil(commitments)
 	s.ErrorIs(err, ErrNotEnoughCommitments)
 

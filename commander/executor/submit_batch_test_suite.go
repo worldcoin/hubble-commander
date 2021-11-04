@@ -21,7 +21,7 @@ var (
 )
 
 type submitBatchTestSuite struct {
-	testSuiteWithTransactionsContext
+	testSuiteWithTxsContext
 }
 
 func (s *submitBatchTestSuite) setupUser() {

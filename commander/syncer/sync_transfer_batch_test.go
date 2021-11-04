@@ -52,18 +52,18 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
 		s.NoError(err)
 	}
 
-	commitments, err := s.transactionsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 2)
 	accountRoots := make([]common.Hash, len(commitments))
 	expectedCommitments := make([]models.TxCommitment, 0, len(commitments))
 	for i := range commitments {
 		var pendingBatch *models.Batch
-		pendingBatch, err = s.transactionsCtx.NewPendingBatch(batchtype.Transfer)
+		pendingBatch, err = s.txsCtx.NewPendingBatch(batchtype.Transfer)
 		s.NoError(err)
 		commitments[i].ID.BatchID = pendingBatch.ID
 		commitments[i].ID.IndexInBatch = 0
-		err = s.transactionsCtx.SubmitBatch(pendingBatch, []models.CommitmentWithTxs{commitments[i]})
+		err = s.txsCtx.SubmitBatch(pendingBatch, []models.CommitmentWithTxs{commitments[i]})
 		s.NoError(err)
 		s.client.GetBackend().Commit()
 
@@ -164,7 +164,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() 
 	batch, commitments := s.createBatch(&tx2)
 	commitments[0].PostStateRoot = utils.RandomHash()
 
-	err := s.transactionsCtx.SubmitBatch(batch, commitments)
+	err := s.txsCtx.SubmitBatch(batch, commitments)
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 
@@ -217,7 +217,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_NotValidBLSSignature() {
 	pendingBatch, commitments := s.createBatch(&tx)
 	commitments[0].CombinedSignature = models.Signature{1, 2, 3}
 
-	err := s.transactionsCtx.SubmitBatch(pendingBatch, commitments)
+	err := s.txsCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 
@@ -291,7 +291,7 @@ func (s *SyncTransferBatchTestSuite) submitInvalidBatch(tx *models.Transfer) *mo
 
 	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)
 
-	err := s.transactionsCtx.SubmitBatch(pendingBatch, commitments)
+	err := s.txsCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
@@ -303,7 +303,7 @@ func (s *SyncTransferBatchTestSuite) submitTransferBatchWithNonexistentFeeReceiv
 
 	receiverLeaf, err := s.storage.StateTree.Leaf(tx.ToStateID)
 	s.NoError(err)
-	txErr, appErr := s.transactionsCtx.ApplyTx(tx, receiverLeaf, commitmentTokenID)
+	txErr, appErr := s.txsCtx.ApplyTx(tx, receiverLeaf, commitmentTokenID)
 	s.NoError(txErr)
 	s.NoError(appErr)
 

@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (c *TransactionsContext) CreateAndSubmitBatch() error {
+func (c *TxsContext) CreateAndSubmitBatch() error {
 	startTime := time.Now()
 	batch, err := c.NewPendingBatch(c.BatchType)
 	if err != nil {

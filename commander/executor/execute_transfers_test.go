@@ -16,10 +16,10 @@ import (
 type ExecuteTransfersTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage         *storage.TestStorage
-	cfg             *config.RollupConfig
-	transactionsCtx *TransactionsContext
-	feeReceiver     *FeeReceiver
+	storage     *storage.TestStorage
+	cfg         *config.RollupConfig
+	txsCtx      *TxsContext
+	feeReceiver *FeeReceiver
 }
 
 func (s *ExecuteTransfersTestSuite) SetupSuite() {
@@ -62,7 +62,7 @@ func (s *ExecuteTransfersTestSuite) SetupTest() {
 	s.NoError(err)
 
 	executionCtx := NewTestExecutionContext(s.storage.Storage, nil, s.cfg)
-	s.transactionsCtx = NewTestTransactionsContext(executionCtx, batchtype.Transfer)
+	s.txsCtx = NewTestTxsContext(executionCtx, batchtype.Transfer)
 
 	s.feeReceiver = &FeeReceiver{
 		StateID: 3,
@@ -78,7 +78,7 @@ func (s *ExecuteTransfersTestSuite) TearDownTest() {
 func (s *ExecuteTransfersTestSuite) TestExecuteTxs_AllValid() {
 	generatedTransfers := testutils.GenerateValidTransfers(3)
 
-	executeTxsResult, err := s.transactionsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	executeTxsResult, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(executeTxsResult.AppliedTxs(), 3)
@@ -89,7 +89,7 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SomeValid() {
 	generatedTransfers := testutils.GenerateValidTransfers(2)
 	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidTransfers(3)...)
 
-	executeTxsResult, err := s.transactionsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	executeTxsResult, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(executeTxsResult.AppliedTxs(), 2)
@@ -99,7 +99,7 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SomeValid() {
 func (s *ExecuteTransfersTestSuite) TestExecuteTxs_ExecutesNoMoreThanLimit() {
 	generatedTransfers := testutils.GenerateValidTransfers(13)
 
-	executeTxsResult, err := s.transactionsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	executeTxsResult, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(executeTxsResult.AppliedTxs(), 6)
@@ -119,7 +119,7 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SavesTransferErrors() {
 		s.NoError(err)
 	}
 
-	executeTxsResult, err := s.transactionsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	executeTxsResult, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(executeTxsResult.AppliedTxs(), 3)
@@ -139,10 +139,10 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SavesTransferErrors() {
 func (s *ExecuteTransfersTestSuite) TestExecuteTxs_AppliesFee() {
 	generatedTransfers := testutils.GenerateValidTransfers(3)
 
-	_, err := s.transactionsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	_, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
 	s.NoError(err)
 
-	feeReceiverState, err := s.transactionsCtx.storage.StateTree.Leaf(s.feeReceiver.StateID)
+	feeReceiverState, err := s.txsCtx.storage.StateTree.Leaf(s.feeReceiver.StateID)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(1003), feeReceiverState.Balance)
 }
@@ -151,7 +151,7 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SkipsNonceTooHighTx() {
 	generatedTransfers := testutils.GenerateValidTransfers(2)
 	generatedTransfers[1].Nonce = models.MakeUint256(21)
 
-	executeTxsResult, err := s.transactionsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	executeTxsResult, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(executeTxsResult.AppliedTxs(), 1)
