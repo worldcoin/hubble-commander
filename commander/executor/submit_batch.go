@@ -5,14 +5,14 @@ import (
 )
 
 var (
-	ErrNotEnoughCommitments = NewRollupError("not enough commitments")
-	ErrNoLongerProposer     = NewLoggableRollupError("commander is no longer an active proposer")
+	ErrNotEnoughCommitments  = NewRollupError("not enough commitments")
+	ErrRollupContextCanceled = NewLoggableRollupError("rollup context cancelled")
 )
 
 func (c *RollupContext) SubmitBatch(batch *models.Batch, commitments []models.TxCommitment) error {
 	select {
 	case <-c.ctx.Done():
-		return ErrNoLongerProposer
+		return ErrRollupContextCanceled
 	default:
 	}
 
