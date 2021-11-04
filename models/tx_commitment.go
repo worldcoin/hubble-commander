@@ -16,6 +16,10 @@ type TxCommitment struct {
 	BodyHash          *common.Hash
 }
 
+func (c *TxCommitment) GetBodyHash() common.Hash {
+	return *c.BodyHash
+}
+
 func (c *TxCommitment) LeafHash() common.Hash {
 	return utils.HashTwo(c.PostStateRoot, *c.BodyHash)
 }

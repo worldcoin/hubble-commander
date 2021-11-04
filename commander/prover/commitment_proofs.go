@@ -42,7 +42,7 @@ func (c *Context) PreviousBatchCommitmentInclusionProof(
 		return nil, errors.WithStack(err)
 	}
 
-	commitments, err := c.storage.GetTxCommitmentsByBatchID(previousBatch.ID)
+	commitments, err := c.storage.GetCommitmentsByBatchID(previousBatch.ID, previousBatch.Type)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -56,8 +56,8 @@ func (c *Context) PreviousBatchCommitmentInclusionProof(
 	return createCommitmentInclusionProof(
 		leafHashes,
 		uint32(previousCommitmentIndex),
-		commitments[previousCommitmentIndex].PostStateRoot,
-		*commitments[previousCommitmentIndex].BodyHash,
+		commitments[previousCommitmentIndex].GetPostStateRoot(),
+		commitments[previousCommitmentIndex].GetBodyHash(),
 	)
 }
 

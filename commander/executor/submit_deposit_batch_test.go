@@ -54,17 +54,7 @@ func (s *SubmitDepositBatchTestSuite) TearDownTest() {
 
 func (s *SubmitDepositBatchTestSuite) TestSubmitDepositBatch_SubmitsBatchOnChain() {
 	s.prepareDeposits()
-
-	pendingBatch, err := s.depositCtx.NewPendingBatch(batchtype.Deposit)
-	s.NoError(err)
-
-	_, vacancyProof, err := s.depositCtx.getDepositSubtreeVacancyProof()
-	s.NoError(err)
-
-	err = s.depositCtx.SubmitBatch(pendingBatch, vacancyProof)
-	s.NoError(err)
-
-	s.client.GetBackend().Commit()
+	s.submitBatch()
 
 	nextBatchID, err := s.client.Rollup.NextBatchID(nil)
 	s.NoError(err)
@@ -73,17 +63,7 @@ func (s *SubmitDepositBatchTestSuite) TestSubmitDepositBatch_SubmitsBatchOnChain
 
 func (s *SubmitDepositBatchTestSuite) TestSubmitDepositBatch_StoresPendingBatch() {
 	s.prepareDeposits()
-
-	pendingBatch, err := s.depositCtx.NewPendingBatch(batchtype.Deposit)
-	s.NoError(err)
-
-	_, vacancyProof, err := s.depositCtx.getDepositSubtreeVacancyProof()
-	s.NoError(err)
-
-	err = s.depositCtx.SubmitBatch(pendingBatch, vacancyProof)
-	s.NoError(err)
-
-	s.client.GetBackend().Commit()
+	pendingBatch := s.submitBatch()
 
 	batch, err := s.storage.GetBatch(pendingBatch.ID)
 	s.NoError(err)
@@ -96,30 +76,10 @@ func (s *SubmitDepositBatchTestSuite) TestSubmitDepositBatch_StoresPendingBatch(
 
 func (s *SubmitDepositBatchTestSuite) TestSubmitDepositBatch_TwoBatches() {
 	s.prepareDeposits()
-
-	pendingBatch, err := s.depositCtx.NewPendingBatch(batchtype.Deposit)
-	s.NoError(err)
-
-	_, vacancyProof, err := s.depositCtx.getDepositSubtreeVacancyProof()
-	s.NoError(err)
-
-	err = s.depositCtx.SubmitBatch(pendingBatch, vacancyProof)
-	s.NoError(err)
-
-	s.client.GetBackend().Commit()
+	s.submitBatch()
 
 	s.queueFourDeposits()
-
-	pendingBatch, err = s.depositCtx.NewPendingBatch(batchtype.Deposit)
-	s.NoError(err)
-
-	_, vacancyProof, err = s.depositCtx.getDepositSubtreeVacancyProof()
-	s.NoError(err)
-
-	err = s.depositCtx.SubmitBatch(pendingBatch, vacancyProof)
-	s.NoError(err)
-
-	s.client.GetBackend().Commit()
+	s.submitBatch()
 
 	nextBatchID, err := s.client.Rollup.NextBatchID(nil)
 	s.NoError(err)
@@ -197,6 +157,24 @@ func (s *SubmitDepositBatchTestSuite) queueDeposit() *models.PendingDeposit {
 		TokenID:    *tokenID,
 		L2Amount:   *l2Amount,
 	}
+}
+
+func (s *SubmitDepositBatchTestSuite) submitBatch() *models.Batch {
+	err := s.storage.AddPendingDepositSubTree(&s.depositSubtree)
+	s.NoError(err)
+
+	pendingBatch, err := s.depositCtx.NewPendingBatch(batchtype.Deposit)
+	s.NoError(err)
+
+	vacancyProof, err := s.depositCtx.createCommitment(pendingBatch.ID)
+	s.NoError(err)
+
+	err = s.depositCtx.SubmitBatch(pendingBatch, vacancyProof)
+	s.NoError(err)
+
+	s.client.GetBackend().Commit()
+
+	return pendingBatch
 }
 
 func TestSubmitDepositBatchTestSuite(t *testing.T) {

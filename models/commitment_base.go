@@ -14,6 +14,10 @@ type CommitmentBase struct {
 	PostStateRoot common.Hash
 }
 
+func (c *CommitmentBase) GetPostStateRoot() common.Hash {
+	return c.PostStateRoot
+}
+
 func (c *CommitmentBase) Bytes() []byte {
 	b := make([]byte, commitmentBaseDataLength)
 	copy(b[0:33], c.ID.Bytes())
