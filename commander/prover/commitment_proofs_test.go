@@ -9,9 +9,9 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/consts"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/Worldcoin/hubble-commander/utils/zerohash"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -189,7 +189,7 @@ func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_Previou
 			Path:  0,
 			Depth: 2,
 		},
-		Witness: []common.Hash{zerohash.ZeroHash},
+		Witness: []common.Hash{consts.ZeroHash},
 	}
 
 	proof, err := s.proverCtx.PreviousCommitmentInclusionProof(&s.decodedBatch, -1)
