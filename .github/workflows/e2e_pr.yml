@@ -55,7 +55,7 @@ jobs:
       - name: Run E2E tests
         run: |
           make setup-geth > /dev/null &
-          make bench-e2e-in-process-part-1
+          make bench-e2e-ci-part-1
   e2e-benchmarks-2:
     name: Run E2E benchmarks (Mixed transactions)
     runs-on: ubuntu-20.04
@@ -78,7 +78,7 @@ jobs:
       - name: Run E2E tests
         run: |
           make setup-geth > /dev/null &
-          make bench-e2e-in-process-part-2
+          make bench-e2e-ci-part-2
   e2e-benchmarks-3:
     name: Run E2E benchmarks (Syncing)
     runs-on: ubuntu-20.04
@@ -101,7 +101,7 @@ jobs:
       - name: Run E2E tests
         run: |
           make setup-geth > /dev/null &
-          make bench-e2e-in-process-part-3
+          make bench-e2e-ci-part-3
   e2e-benchmarks-4:
     name: Run E2E benchmarks (Public keys registration)
     runs-on: ubuntu-20.04
@@ -124,4 +124,4 @@ jobs:
       - name: Run E2E tests
         run: |
           make setup-geth > /dev/null &
-          make bench-e2e-in-process-part-4
+          make bench-e2e-ci-part-4
