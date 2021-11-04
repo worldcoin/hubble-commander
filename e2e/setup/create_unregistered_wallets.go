@@ -5,19 +5,21 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 )
 
-func CreateUnregisteredWalletsForBenchmark(txCountPerAccount int, domain bls.Domain) ([]bls.Wallet, error) {
+const InitialGenesisBalance = 1000000000000000000
+
+func CreateUnregisteredWalletsForBenchmark(txAmount int64, domain bls.Domain) ([]bls.Wallet, error) {
 	cfg := config.GetDeployerConfig()
 	accounts := cfg.Bootstrap.GenesisAccounts
 
 	validAccounts := 0
 
 	for _, account := range accounts {
-		if account.Balance.CmpN(0) != 0 {
+		if account.Balance.CmpN(InitialGenesisBalance) == 0 {
 			validAccounts++
 		}
 	}
 
-	numberOfNeededWallets := txCountPerAccount * validAccounts
+	numberOfNeededWallets := int(txAmount) * validAccounts
 	wallets := make([]bls.Wallet, 0, numberOfNeededWallets)
 
 	for i := 0; i < numberOfNeededWallets; i++ {
