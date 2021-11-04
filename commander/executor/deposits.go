@@ -15,17 +15,17 @@ func (c *DepositsContext) CreateAndSubmitBatch() error {
 	startTime := time.Now()
 	batch, err := c.NewPendingBatch(batchtype.Deposit)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	vacancyProof, err := c.createCommitment(batch.ID)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	err = c.SubmitBatch(batch, vacancyProof)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	logNewBatch(batch, 1, startTime)
@@ -38,17 +38,17 @@ func (c *DepositsContext) createCommitment(batchID models.Uint256) (*models.Subt
 		return nil, errors.WithStack(ErrNotEnoughDeposits)
 	}
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 
 	vacancyProof, err := c.executeDeposits(depositSubtree)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 
 	err = c.addCommitment(batchID, depositSubtree)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 
 	return vacancyProof, nil
@@ -57,17 +57,17 @@ func (c *DepositsContext) createCommitment(batchID models.Uint256) (*models.Subt
 func (c *DepositsContext) executeDeposits(depositSubtree *models.PendingDepositSubTree) (*models.SubtreeVacancyProof, error) {
 	startStateID, vacancyProof, err := c.getDepositSubtreeVacancyProof()
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 
 	err = c.ApplyDeposits(*startStateID, depositSubtree.Deposits)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 
 	err = c.storage.DeletePendingDepositSubTrees(depositSubtree.ID)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 	return vacancyProof, nil
 }
@@ -75,7 +75,7 @@ func (c *DepositsContext) executeDeposits(depositSubtree *models.PendingDepositS
 func (c *DepositsContext) addCommitment(batchID models.Uint256, depositSubtree *models.PendingDepositSubTree) error {
 	commitment, err := c.newCommitment(batchID, depositSubtree)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	return c.storage.AddDepositCommitment(commitment)
 }

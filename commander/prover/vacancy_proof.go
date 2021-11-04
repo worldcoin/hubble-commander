@@ -3,6 +3,7 @@ package prover
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/pkg/errors"
 )
 
 func (c *Context) GetVacancyProof(startStateID uint32, subtreeDepth uint8) (*models.SubtreeVacancyProof, error) {
@@ -12,7 +13,7 @@ func (c *Context) GetVacancyProof(startStateID uint32, subtreeDepth uint8) (*mod
 	}
 	witness, err := c.storage.StateTree.GetNodeWitness(path)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	return &models.SubtreeVacancyProof{

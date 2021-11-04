@@ -5,6 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -43,11 +44,11 @@ func logNewBatch(batch *models.Batch, commitmentsCount int, startTime time.Time)
 func (c *ExecutionContext) NewPendingBatch(batchType batchtype.BatchType) (*models.Batch, error) {
 	prevStateRoot, err := c.storage.StateTree.Root()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	batchID, err := c.storage.GetNextBatchID()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	return &models.Batch{
 		ID:            *batchID,
