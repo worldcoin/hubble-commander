@@ -12,7 +12,6 @@ func (s *DepositStorage) AddPendingDepositSubTree(subTree *models.PendingDeposit
 	return s.database.Badger.Upsert(subTree.ID, *subTree)
 }
 
-// TODO - replace with a proper getter when implementing submit deposit batches
 func (s *DepositStorage) GetPendingDepositSubTree(subTreeID models.Uint256) (*models.PendingDepositSubTree, error) {
 	var subTree models.PendingDepositSubTree
 	err := s.database.Badger.Get(subTreeID, &subTree)
@@ -39,10 +38,7 @@ func (s *DepositStorage) GetFirstPendingDepositSubTree() (subTree *models.Pendin
 	if err == db.ErrIteratorFinished {
 		return nil, errors.WithStack(NewNotFoundError("deposit sub tree"))
 	}
-	if err != nil {
-		return nil, err
-	}
-	return subTree, nil
+	return subTree, err
 }
 
 func (s *DepositStorage) DeletePendingDepositSubTrees(subTreeIDs ...models.Uint256) error {
