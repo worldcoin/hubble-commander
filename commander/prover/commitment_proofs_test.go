@@ -11,6 +11,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
+	"github.com/Worldcoin/hubble-commander/utils/zerohash"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -84,15 +85,7 @@ func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_Current
 	s.Equal(expected, *proof)
 }
 
-func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_PreviousBatch() {
-	_, err := s.storage.StateTree.Set(11, &models.UserState{
-		PubKeyID: 1,
-		TokenID:  models.MakeUint256(1),
-		Balance:  models.MakeUint256(100),
-		Nonce:    models.MakeUint256(0),
-	})
-	s.NoError(err)
-
+func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_PreviousTransactionBatch() {
 	batch := models.Batch{
 		ID:                models.MakeUint256(1),
 		Type:              batchtype.Transfer,
@@ -101,7 +94,7 @@ func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_Previou
 		FinalisationBlock: ref.Uint32(10),
 		AccountTreeRoot:   utils.NewRandomHash(),
 	}
-	err = s.storage.AddBatch(&batch)
+	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
 
 	commitments := []models.TxCommitment{
@@ -145,6 +138,58 @@ func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_Previou
 			Depth: 2,
 		},
 		Witness: []common.Hash{commitments[0].LeafHash()},
+	}
+
+	proof, err := s.proverCtx.PreviousCommitmentInclusionProof(&s.decodedBatch, -1)
+	s.NoError(err)
+	s.Equal(expected, *proof)
+}
+
+func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_PreviousDepositBatch() {
+	batch := models.Batch{
+		ID:                models.MakeUint256(1),
+		Type:              batchtype.Deposit,
+		TransactionHash:   utils.RandomHash(),
+		Hash:              utils.NewRandomHash(),
+		FinalisationBlock: ref.Uint32(10),
+		AccountTreeRoot:   utils.NewRandomHash(),
+	}
+	err := s.storage.AddBatch(&batch)
+	s.NoError(err)
+
+	commitment := models.DepositCommitment{
+		CommitmentBase: models.CommitmentBase{
+			ID: models.CommitmentID{
+				BatchID:      batch.ID,
+				IndexInBatch: 0,
+			},
+			Type: batchtype.Deposit,
+		},
+		SubTreeID:   models.MakeUint256(1),
+		SubTreeRoot: common.Hash{1, 2, 3},
+		Deposits: []models.PendingDeposit{
+			{
+				ID: models.DepositID{
+					BlockNumber: 1,
+					LogIndex:    1,
+				},
+				ToPubKeyID: 1,
+				TokenID:    models.MakeUint256(0),
+				L2Amount:   models.MakeUint256(10),
+			},
+		},
+	}
+	err = s.storage.AddDepositCommitment(&commitment)
+	s.NoError(err)
+
+	expected := models.CommitmentInclusionProof{
+		StateRoot: commitment.PostStateRoot,
+		BodyRoot:  commitment.GetBodyHash(),
+		Path: &models.MerklePath{
+			Path:  0,
+			Depth: 2,
+		},
+		Witness: []common.Hash{zerohash.ZeroHash},
 	}
 
 	proof, err := s.proverCtx.PreviousCommitmentInclusionProof(&s.decodedBatch, -1)
