@@ -8,7 +8,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -69,17 +68,16 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedTxBatch, error) {
 		if err != nil {
 			return nil, err
 		}
-		batch := decodedBatch.ToDecodedTxBatch()
 
 		header, err := c.Blockchain.GetBackend().HeaderByNumber(context.Background(), new(big.Int).SetUint64(events[i].Raw.BlockNumber))
 		if err != nil {
 			return nil, err
 		}
 
-		batch.TransactionHash = txHash
-		batch.SubmissionTime = models.NewTimestamp(time.Unix(int64(header.Time), 0).UTC())
+		decodedBatch.GetBatch().TransactionHash = txHash
+		decodedBatch.GetBatch().SubmissionTime = models.NewTimestamp(time.Unix(int64(header.Time), 0).UTC())
 
-		res = append(res, *batch)
+		res = append(res, *decodedBatch.ToDecodedTxBatch())
 	}
 
 	return res, nil
@@ -103,30 +101,12 @@ func (c *Client) getBatchIfExists(event *rollup.RollupNewBatch, tx *types.Transa
 		return nil, err
 	}
 
-	//TODO-sync: do the same for deposit batch
-	err = verifyBatchHash(decodedBatch)
+	err = decodedBatch.verifyBatchHash()
 	if err != nil {
 		return nil, err
 	}
 
 	return decodedBatch, nil
-}
-
-func verifyBatchHash(decodedBatch DecodedBatch) error {
-	batch := decodedBatch.ToDecodedTxBatch()
-	leafHashes := make([]common.Hash, 0, len(batch.Commitments))
-	for i := range batch.Commitments {
-		leafHashes = append(leafHashes, batch.Commitments[i].LeafHash(*batch.AccountTreeRoot))
-	}
-	tree, err := merkletree.NewMerkleTree(leafHashes)
-	if err != nil {
-		return err
-	}
-
-	if tree.Root() != *batch.Hash {
-		return errBatchAlreadyRolledBack
-	}
-	return nil
 }
 
 func logBatchesCount(count int) {

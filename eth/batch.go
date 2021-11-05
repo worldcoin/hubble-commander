@@ -4,6 +4,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/utils/merkletree"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type DecodedBatch interface {
@@ -11,6 +13,7 @@ type DecodedBatch interface {
 	ToDecodedTxBatch() *DecodedTxBatch
 	ToDecodedDepositBatch() *DecodedDepositBatch
 	SetCalldata(calldata []byte) error
+	verifyBatchHash() error
 }
 
 func newDecodedBatch(batch *models.Batch) DecodedBatch {
@@ -34,15 +37,6 @@ type DecodedTxBatch struct {
 	Commitments []encoder.DecodedCommitment
 }
 
-func (b *DecodedTxBatch) SetCalldata(calldata []byte) error {
-	commitments, err := encoder.DecodeBatchCalldata(calldata, &b.ID)
-	if err != nil {
-		return err
-	}
-	b.Commitments = commitments
-	return nil
-}
-
 func (b *DecodedTxBatch) GetBatch() *models.Batch {
 	return &b.Batch
 }
@@ -55,18 +49,34 @@ func (b *DecodedTxBatch) ToDecodedTxBatch() *DecodedTxBatch {
 	return b
 }
 
-type DecodedDepositBatch struct {
-	models.Batch
-	PathAtDepth uint32
-}
-
-func (b *DecodedDepositBatch) SetCalldata(calldata []byte) error {
-	pathAtDepth, err := encoder.DecodeDepositBatchCalldata(calldata)
+func (b *DecodedTxBatch) SetCalldata(calldata []byte) error {
+	commitments, err := encoder.DecodeBatchCalldata(calldata, &b.ID)
 	if err != nil {
 		return err
 	}
-	b.PathAtDepth = *pathAtDepth
+	b.Commitments = commitments
 	return nil
+}
+
+func (b *DecodedTxBatch) verifyBatchHash() error {
+	leafHashes := make([]common.Hash, 0, len(b.Commitments))
+	for i := range b.Commitments {
+		leafHashes = append(leafHashes, b.Commitments[i].LeafHash(*b.AccountTreeRoot))
+	}
+	tree, err := merkletree.NewMerkleTree(leafHashes)
+	if err != nil {
+		return err
+	}
+
+	if tree.Root() != *b.Hash {
+		return errBatchAlreadyRolledBack
+	}
+	return nil
+}
+
+type DecodedDepositBatch struct {
+	models.Batch
+	PathAtDepth uint32
 }
 
 func (b *DecodedDepositBatch) GetBatch() *models.Batch {
@@ -79,4 +89,18 @@ func (b *DecodedDepositBatch) ToDecodedDepositBatch() *DecodedDepositBatch {
 
 func (b *DecodedDepositBatch) ToDecodedTxBatch() *DecodedTxBatch {
 	panic("ToDecodedTxBatch cannot be invoked on DecodedDepositBatch")
+}
+
+func (b *DecodedDepositBatch) SetCalldata(calldata []byte) error {
+	pathAtDepth, err := encoder.DecodeDepositBatchCalldata(calldata)
+	if err != nil {
+		return err
+	}
+	b.PathAtDepth = *pathAtDepth
+	return nil
+}
+
+func (b *DecodedDepositBatch) verifyBatchHash() error {
+	// cannot verify deposit batch hash at this point
+	return nil
 }
