@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
-	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -63,13 +62,14 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 			continue // TODO handle internal transactions
 		}
 
-		batch, err := c.getBatchIfExists(events[i], tx)
+		decodedBatch, err := c.getBatchIfExists(events[i], tx)
 		if errors.Is(err, errBatchAlreadyRolledBack) {
 			continue
 		}
 		if err != nil {
 			return nil, err
 		}
+		batch := decodedBatch.ToDecodedTxBatch()
 
 		header, err := c.Blockchain.GetBackend().HeaderByNumber(context.Background(), new(big.Int).SetUint64(events[i].Raw.BlockNumber))
 		if err != nil {
@@ -85,7 +85,7 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 	return res, nil
 }
 
-func (c *Client) getBatchIfExists(event *rollup.RollupNewBatch, tx *types.Transaction) (*DecodedBatch, error) {
+func (c *Client) getBatchIfExists(event *rollup.RollupNewBatch, tx *types.Transaction) (DecodedBatchInt, error) {
 	batch, err := c.GetBatch(models.NewUint256FromBig(*event.BatchID))
 	if err != nil {
 		if err.Error() == MsgInvalidBatchID {
@@ -97,26 +97,26 @@ func (c *Client) getBatchIfExists(event *rollup.RollupNewBatch, tx *types.Transa
 	accountRoot := common.BytesToHash(event.AccountRoot[:])
 	batch.AccountTreeRoot = &accountRoot
 
-	commitments, err := encoder.DecodeBatchCalldata(tx.Data(), &batch.ID)
+	decodedBatch := newDecodedBatch(batch)
+	err = decodedBatch.SetCalldata(tx.Data())
 	if err != nil {
 		return nil, err
 	}
 
-	err = verifyBatchHash(batch, commitments)
+	//TODO-sync: do the same for deposit batch
+	err = verifyBatchHash(decodedBatch)
 	if err != nil {
 		return nil, err
 	}
 
-	return &DecodedBatch{
-		Batch:       *batch,
-		Commitments: commitments,
-	}, nil
+	return decodedBatch, nil
 }
 
-func verifyBatchHash(batch *models.Batch, commitments []encoder.DecodedCommitment) error {
-	leafHashes := make([]common.Hash, 0, len(commitments))
-	for i := range commitments {
-		leafHashes = append(leafHashes, commitments[i].LeafHash(*batch.AccountTreeRoot))
+func verifyBatchHash(decodedBatch DecodedBatchInt) error {
+	batch := decodedBatch.ToDecodedTxBatch()
+	leafHashes := make([]common.Hash, 0, len(batch.Commitments))
+	for i := range batch.Commitments {
+		leafHashes = append(leafHashes, batch.Commitments[i].LeafHash(*batch.AccountTreeRoot))
 	}
 	tree, err := merkletree.NewMerkleTree(leafHashes)
 	if err != nil {
@@ -133,9 +133,4 @@ func logBatchesCount(count int) {
 	if count > 0 {
 		log.Printf("Found %d batch(es)", count)
 	}
-}
-
-type DecodedBatch struct {
-	models.Batch
-	Commitments []encoder.DecodedCommitment
 }

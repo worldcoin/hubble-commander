@@ -128,8 +128,9 @@ func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchExists() {
 		BatchType:   1,
 	}
 
-	batch, err := s.client.getBatchIfExists(event, transaction)
+	decodedBatch, err := s.client.getBatchIfExists(event, transaction)
 	s.NoError(err)
+	batch := decodedBatch.ToDecodedTxBatch()
 	s.Equal(models.MakeUint256(1), batch.ID)
 	s.Len(batch.Commitments, len(s.commitments))
 	s.EqualValues(event.AccountRoot, *batch.AccountTreeRoot)
