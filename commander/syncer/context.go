@@ -8,6 +8,29 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
+type SyncContext interface {
+	SyncBatch(batch eth.DecodedBatch) error
+	Commit() error
+	Rollback(cause *error)
+}
+
+func NewSyncContext(
+	storage *st.Storage,
+	client *eth.Client,
+	cfg *config.RollupConfig,
+	batchType batchtype.BatchType,
+) SyncContext {
+	switch batchType {
+	case batchtype.Transfer, batchtype.Create2Transfer:
+		return NewContext(storage, client, cfg, batchType)
+	case batchtype.Deposit:
+		return NewDepositsContext(storage, client, cfg)
+	case batchtype.Genesis, batchtype.MassMigration:
+		panic("invalid batch type")
+	}
+	return nil
+}
+
 type Context struct {
 	cfg       *config.RollupConfig
 	storage   *st.Storage

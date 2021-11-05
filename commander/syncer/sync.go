@@ -17,7 +17,8 @@ var (
 	ErrBatchSubmissionFailed = errors.New("previous submit batch transaction failed")
 )
 
-func (c *Context) SyncBatch(remoteBatch *eth.DecodedTxBatch) error {
+func (c *Context) SyncBatch(batch eth.DecodedBatch) error {
+	remoteBatch := batch.ToDecodedTxBatch()
 	localBatch, err := c.storage.GetBatch(remoteBatch.ID)
 	if err != nil && !st.IsNotFoundError(err) {
 		return err
