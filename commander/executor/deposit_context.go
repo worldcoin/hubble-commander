@@ -35,6 +35,6 @@ func newDepositsContext(executionCtx *ExecutionContext) *DepositsContext {
 	}
 }
 
-func (c *DepositsContext) GetErrorsToStore() []TransactionError {
-	return []TransactionError{}
+func (c *DepositsContext) GetErrorsToStore() []TxError {
+	return []TxError{}
 }

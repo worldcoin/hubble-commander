@@ -13,7 +13,7 @@ type RollupLoopContext interface {
 	CreateAndSubmitBatch() error
 	Rollback(cause *error)
 	Commit() error
-	GetErrorsToStore() []TransactionError
+	GetErrorsToStore() []TxError
 }
 
 func NewRollupLoopContext(
