@@ -26,10 +26,19 @@ type BatchesFilters struct {
 }
 
 func (c *TestClient) GetAllBatches() ([]DecodedTxBatch, error) {
-	return c.GetBatches(&BatchesFilters{})
+	batches, err := c.GetBatches(&BatchesFilters{})
+	if err != nil {
+		return nil, err
+	}
+
+	txBatches := make([]DecodedTxBatch, 0, len(batches))
+	for i := range batches {
+		txBatches = append(txBatches, *batches[i].ToDecodedTxBatch())
+	}
+	return txBatches, nil
 }
 
-func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedTxBatch, error) {
+func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 	it, err := c.Rollup.FilterNewBatch(&bind.FilterOpts{
 		Start: filters.StartBlockInclusive,
 		End:   filters.EndBlockInclusive,
@@ -44,7 +53,7 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedTxBatch, error) {
 	}
 	logBatchesCount(len(events))
 
-	res := make([]DecodedTxBatch, 0, len(events))
+	res := make([]DecodedBatch, 0, len(events))
 	for i := range events {
 		if filters.FilterByBatchID != nil && !filters.FilterByBatchID(models.NewUint256FromBig(*events[i].BatchID)) {
 			continue
@@ -77,7 +86,7 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedTxBatch, error) {
 		decodedBatch.GetBatch().TransactionHash = txHash
 		decodedBatch.GetBatch().SubmissionTime = models.NewTimestamp(time.Unix(int64(header.Time), 0).UTC())
 
-		res = append(res, *decodedBatch.ToDecodedTxBatch())
+		res = append(res, decodedBatch)
 	}
 
 	return res, nil

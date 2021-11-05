@@ -93,9 +93,9 @@ func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBlockNumber() {
 	})
 	s.NoError(err)
 	s.Len(batches, 1)
-	s.Equal(batch2.ID, batches[0].ID)
-	s.NotEqual(common.Hash{}, batches[0].TransactionHash)
-	s.Equal(s.getAccountRoot(), *batches[0].AccountTreeRoot)
+	s.Equal(batch2.ID, batches[0].GetBatch().ID)
+	s.NotEqual(common.Hash{}, batches[0].GetBatch().TransactionHash)
+	s.Equal(s.getAccountRoot(), *batches[0].GetBatch().AccountTreeRoot)
 }
 
 func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBatchID() {
@@ -111,7 +111,7 @@ func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBatchID() {
 	})
 	s.NoError(err)
 	s.Len(batches, 1)
-	s.EqualValues(batch1.ID, batches[0].ID)
+	s.EqualValues(batch1.ID, batches[0].GetBatch().ID)
 }
 
 func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchExists() {

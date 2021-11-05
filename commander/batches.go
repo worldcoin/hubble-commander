@@ -53,7 +53,7 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 	}
 
 	for i := range newRemoteBatches {
-		err = c.syncRemoteBatch(&newRemoteBatches[i])
+		err = c.syncRemoteBatch(newRemoteBatches[i].ToDecodedTxBatch())
 		if err != nil {
 			return err
 		}
