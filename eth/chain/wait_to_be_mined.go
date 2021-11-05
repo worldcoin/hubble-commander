@@ -61,7 +61,7 @@ type orderedReceipt struct {
 	receipt *types.Receipt
 }
 
-func WaitForMultipleTxs(r ReceiptProvider, txs []types.Transaction) ([]types.Receipt, error) {
+func WaitForMultipleTxs(r ReceiptProvider, txs ...types.Transaction) ([]types.Receipt, error) {
 	orChan := make(chan orderedReceipt, len(txs))
 	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), MineTimeout)
 	defer cancel()

@@ -72,7 +72,7 @@ func RegisterGenesisAccounts(accountMgr *eth.AccountManager, accounts []models.G
 		txs = append(txs, *tx)
 	}
 
-	receipts, err := chain.WaitForMultipleTxs(accountMgr.Blockchain.GetBackend(), txs)
+	receipts, err := chain.WaitForMultipleTxs(accountMgr.Blockchain.GetBackend(), txs...)
 	if err != nil {
 		return nil, err
 	}
