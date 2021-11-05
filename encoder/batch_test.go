@@ -1,6 +1,7 @@
 package encoder
 
 import (
+	"math/big"
 	"strings"
 	"testing"
 
@@ -43,4 +44,33 @@ func TestDecodeBatchCalldata(t *testing.T) {
 	require.Equal(t, commitment.Transactions, decoded.Transactions)
 	require.Equal(t, *batchID, decoded.ID.BatchID)
 	require.EqualValues(t, 0, decoded.ID.IndexInBatch)
+}
+
+func TestDecodeBatchBatchCalldata(t *testing.T) {
+	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
+	require.NoError(t, err)
+
+	commitmentInclusionProof := rollup.TypesCommitmentInclusionProof{
+		Commitment: rollup.TypesCommitment{},
+		Path:       new(big.Int).SetUint64(4),
+		Witness: [][32]byte{
+			utils.RandomHash(),
+			utils.RandomHash(),
+		},
+	}
+
+	expectedPathAtDepth := uint32(3)
+	subtreeVacancyProof := rollup.TypesSubtreeVacancyProof{
+		PathAtDepth: new(big.Int).SetUint64(uint64(expectedPathAtDepth)),
+		Witness: [][32]byte{
+			utils.RandomHash(),
+			utils.RandomHash(),
+		},
+	}
+	calldata, err := rollupAbi.Pack("submitDeposits", commitmentInclusionProof, subtreeVacancyProof)
+	require.NoError(t, err)
+
+	pathAtDepth, err := DecodeDepositBatchCalldata(calldata)
+	require.NoError(t, err)
+	require.Equal(t, expectedPathAtDepth, *pathAtDepth)
 }
