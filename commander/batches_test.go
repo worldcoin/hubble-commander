@@ -432,7 +432,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_AllowsTransferToNonexistentReceiv
 
 	stateRoot := common.HexToHash("0x09de852e52fff821a7384b6bce2d5c51e9f0d32484e14c2fa29fb140d54ae8e8")
 
-	batch := &eth.DecodedBatch{
+	batch := &eth.DecodedTxBatch{
 		Batch: models.Batch{
 			ID:              models.MakeUint256(1),
 			Type:            batchtype.Transfer,
@@ -564,7 +564,7 @@ func (s *BatchesTestSuite) setTransferHashAndSign(txs ...*models.Transfer) {
 	}
 }
 
-func (s *BatchesTestSuite) updateBatchAfterSubmission(batch *eth.DecodedBatch) {
+func (s *BatchesTestSuite) updateBatchAfterSubmission(batch *eth.DecodedTxBatch) {
 	err := s.cmd.storage.UpdateBatch(&batch.Batch)
 	s.NoError(err)
 

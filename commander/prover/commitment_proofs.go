@@ -9,7 +9,7 @@ import (
 )
 
 func (c *Context) PreviousCommitmentInclusionProof(
-	batch *eth.DecodedBatch,
+	batch *eth.DecodedTxBatch,
 	previousCommitmentIndex int,
 ) (*models.CommitmentInclusionProof, error) {
 	if previousCommitmentIndex == -1 {
@@ -100,7 +100,7 @@ func createCommitmentInclusionProof(
 }
 
 func (c *Context) TargetCommitmentInclusionProof(
-	batch *eth.DecodedBatch,
+	batch *eth.DecodedTxBatch,
 	commitmentIndex uint32,
 ) (*models.TransferCommitmentInclusionProof, error) {
 	leafHashes := make([]common.Hash, 0, len(batch.Commitments))

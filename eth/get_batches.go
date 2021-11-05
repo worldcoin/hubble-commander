@@ -26,11 +26,11 @@ type BatchesFilters struct {
 	FilterByBatchID     func(batchID *models.Uint256) bool
 }
 
-func (c *TestClient) GetAllBatches() ([]DecodedBatch, error) {
+func (c *TestClient) GetAllBatches() ([]DecodedTxBatch, error) {
 	return c.GetBatches(&BatchesFilters{})
 }
 
-func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
+func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedTxBatch, error) {
 	it, err := c.Rollup.FilterNewBatch(&bind.FilterOpts{
 		Start: filters.StartBlockInclusive,
 		End:   filters.EndBlockInclusive,
@@ -45,7 +45,7 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 	}
 	logBatchesCount(len(events))
 
-	res := make([]DecodedBatch, 0, len(events))
+	res := make([]DecodedTxBatch, 0, len(events))
 	for i := range events {
 		if filters.FilterByBatchID != nil && !filters.FilterByBatchID(models.NewUint256FromBig(*events[i].BatchID)) {
 			continue
@@ -85,7 +85,7 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 	return res, nil
 }
 
-func (c *Client) getBatchIfExists(event *rollup.RollupNewBatch, tx *types.Transaction) (DecodedBatchInt, error) {
+func (c *Client) getBatchIfExists(event *rollup.RollupNewBatch, tx *types.Transaction) (DecodedBatch, error) {
 	batch, err := c.GetBatch(models.NewUint256FromBig(*event.BatchID))
 	if err != nil {
 		if err.Error() == MsgInvalidBatchID {
@@ -112,7 +112,7 @@ func (c *Client) getBatchIfExists(event *rollup.RollupNewBatch, tx *types.Transa
 	return decodedBatch, nil
 }
 
-func verifyBatchHash(decodedBatch DecodedBatchInt) error {
+func verifyBatchHash(decodedBatch DecodedBatch) error {
 	batch := decodedBatch.ToDecodedTxBatch()
 	leafHashes := make([]common.Hash, 0, len(batch.Commitments))
 	for i := range batch.Commitments {

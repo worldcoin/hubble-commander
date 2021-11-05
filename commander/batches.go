@@ -69,7 +69,7 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 	return nil
 }
 
-func (c *Commander) syncRemoteBatch(remoteBatch *eth.DecodedBatch) error {
+func (c *Commander) syncRemoteBatch(remoteBatch *eth.DecodedTxBatch) error {
 	var icError *syncer.InconsistentBatchError
 
 	err := c.syncOrDisputeRemoteBatch(remoteBatch)
@@ -79,7 +79,7 @@ func (c *Commander) syncRemoteBatch(remoteBatch *eth.DecodedBatch) error {
 	return err
 }
 
-func (c *Commander) syncOrDisputeRemoteBatch(remoteBatch *eth.DecodedBatch) error {
+func (c *Commander) syncOrDisputeRemoteBatch(remoteBatch *eth.DecodedTxBatch) error {
 	var disputableErr *syncer.DisputableError
 
 	err := c.syncBatch(remoteBatch)
@@ -90,7 +90,7 @@ func (c *Commander) syncOrDisputeRemoteBatch(remoteBatch *eth.DecodedBatch) erro
 	return err
 }
 
-func (c *Commander) syncBatch(remoteBatch *eth.DecodedBatch) (err error) {
+func (c *Commander) syncBatch(remoteBatch *eth.DecodedTxBatch) (err error) {
 	syncCtx := syncer.NewContext(c.storage, c.client, c.cfg.Rollup, remoteBatch.Type)
 	defer syncCtx.Rollback(&err)
 
@@ -101,7 +101,7 @@ func (c *Commander) syncBatch(remoteBatch *eth.DecodedBatch) (err error) {
 	return syncCtx.Commit()
 }
 
-func (c *Commander) replaceBatch(localBatch *models.Batch, remoteBatch *eth.DecodedBatch) error {
+func (c *Commander) replaceBatch(localBatch *models.Batch, remoteBatch *eth.DecodedTxBatch) error {
 	log.WithFields(log.Fields{"batchID": localBatch.ID.String()}).
 		Debug("Local batch inconsistent with remote batch, reverting local batch(es)")
 
@@ -113,7 +113,7 @@ func (c *Commander) replaceBatch(localBatch *models.Batch, remoteBatch *eth.Deco
 }
 
 func (c *Commander) disputeFraudulentBatch(
-	remoteBatch *eth.DecodedBatch,
+	remoteBatch *eth.DecodedTxBatch,
 	disputableErr *syncer.DisputableError,
 ) (err error) {
 	disputeCtx := disputer.NewContext(c.storage, c.client)
@@ -152,7 +152,7 @@ func (c *Commander) getLatestBatchID() (*models.Uint256, error) {
 	return &latestBatch.ID, nil
 }
 
-func logFraudulentBatch(batch *eth.DecodedBatch, reason string) {
+func logFraudulentBatch(batch *eth.DecodedTxBatch, reason string) {
 	log.WithFields(log.Fields{"batchID": batch.ID.String()}).
 		Infof("Found fraudulent batch. Reason: %s", reason)
 }

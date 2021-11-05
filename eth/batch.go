@@ -6,18 +6,17 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 )
 
-//TODO-sync: rename
-type DecodedBatchInt interface {
+type DecodedBatch interface {
 	GetBatch() *models.Batch
-	ToDecodedTxBatch() *DecodedBatch
+	ToDecodedTxBatch() *DecodedTxBatch
 	ToDecodedDepositBatch() *DecodedDepositBatch
 	SetCalldata(calldata []byte) error
 }
 
-func newDecodedBatch(batch *models.Batch) DecodedBatchInt {
+func newDecodedBatch(batch *models.Batch) DecodedBatch {
 	switch batch.Type {
 	case batchtype.Transfer, batchtype.Create2Transfer:
-		return &DecodedBatch{
+		return &DecodedTxBatch{
 			Batch: *batch,
 		}
 	case batchtype.Deposit:
@@ -30,12 +29,12 @@ func newDecodedBatch(batch *models.Batch) DecodedBatchInt {
 	return nil
 }
 
-type DecodedBatch struct {
+type DecodedTxBatch struct {
 	models.Batch
 	Commitments []encoder.DecodedCommitment
 }
 
-func (b *DecodedBatch) SetCalldata(calldata []byte) error {
+func (b *DecodedTxBatch) SetCalldata(calldata []byte) error {
 	commitments, err := encoder.DecodeBatchCalldata(calldata, &b.ID)
 	if err != nil {
 		return err
@@ -44,15 +43,15 @@ func (b *DecodedBatch) SetCalldata(calldata []byte) error {
 	return nil
 }
 
-func (b *DecodedBatch) GetBatch() *models.Batch {
+func (b *DecodedTxBatch) GetBatch() *models.Batch {
 	return &b.Batch
 }
 
-func (b *DecodedBatch) ToDecodedDepositBatch() *DecodedDepositBatch {
-	panic("ToDecodedDepositBatch cannot be invoked on DecodedBatch")
+func (b *DecodedTxBatch) ToDecodedDepositBatch() *DecodedDepositBatch {
+	panic("ToDecodedDepositBatch cannot be invoked on DecodedTxBatch")
 }
 
-func (b *DecodedBatch) ToDecodedTxBatch() *DecodedBatch {
+func (b *DecodedTxBatch) ToDecodedTxBatch() *DecodedTxBatch {
 	return b
 }
 
@@ -78,6 +77,6 @@ func (b *DecodedDepositBatch) ToDecodedDepositBatch() *DecodedDepositBatch {
 	return b
 }
 
-func (b *DecodedDepositBatch) ToDecodedTxBatch() *DecodedBatch {
+func (b *DecodedDepositBatch) ToDecodedTxBatch() *DecodedTxBatch {
 	panic("ToDecodedTxBatch cannot be invoked on DecodedDepositBatch")
 }

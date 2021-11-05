@@ -23,7 +23,7 @@ type CommitmentProofsTestSuite struct {
 	storage            *st.TestStorage
 	proverCtx          *Context
 	decodedCommitments []encoder.DecodedCommitment
-	decodedBatch       eth.DecodedBatch
+	decodedBatch       eth.DecodedTxBatch
 }
 
 func (s *CommitmentProofsTestSuite) SetupSuite() {
@@ -43,7 +43,7 @@ func (s *CommitmentProofsTestSuite) SetupSuite() {
 			Transactions:      utils.RandomBytes(12),
 		},
 	}
-	s.decodedBatch = eth.DecodedBatch{
+	s.decodedBatch = eth.DecodedTxBatch{
 		Batch: models.Batch{
 			ID:                models.MakeUint256(2),
 			Type:              batchtype.Transfer,

@@ -17,7 +17,7 @@ var (
 	ErrBatchSubmissionFailed = errors.New("previous submit batch transaction failed")
 )
 
-func (c *Context) SyncBatch(remoteBatch *eth.DecodedBatch) error {
+func (c *Context) SyncBatch(remoteBatch *eth.DecodedTxBatch) error {
 	localBatch, err := c.storage.GetBatch(remoteBatch.ID)
 	if err != nil && !st.IsNotFoundError(err) {
 		return err
@@ -30,7 +30,7 @@ func (c *Context) SyncBatch(remoteBatch *eth.DecodedBatch) error {
 	}
 }
 
-func (c *Context) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
+func (c *Context) syncExistingBatch(remoteBatch *eth.DecodedTxBatch, localBatch *models.Batch) error {
 	if remoteBatch.TransactionHash == localBatch.TransactionHash {
 		err := c.UpdateExistingBatchAndCommitments(remoteBatch)
 		if err != nil {
@@ -58,7 +58,7 @@ func (c *Context) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *m
 	return nil
 }
 
-func (c *Context) UpdateExistingBatchAndCommitments(batch *eth.DecodedBatch) error {
+func (c *Context) UpdateExistingBatchAndCommitments(batch *eth.DecodedTxBatch) error {
 	err := c.storage.UpdateBatch(&batch.Batch)
 	if err != nil {
 		return err
@@ -78,7 +78,7 @@ func (c *Context) getTransactionSender(txHash common.Hash) (*common.Address, err
 	return &sender, nil
 }
 
-func (c *Context) setCommitmentsBodyHash(batch *eth.DecodedBatch) error {
+func (c *Context) setCommitmentsBodyHash(batch *eth.DecodedTxBatch) error {
 	commitments, err := c.storage.GetTxCommitmentsByBatchID(batch.ID)
 	if err != nil {
 		return err
@@ -90,7 +90,7 @@ func (c *Context) setCommitmentsBodyHash(batch *eth.DecodedBatch) error {
 	return c.storage.UpdateCommitments(commitments)
 }
 
-func (c *Context) syncNewBatch(batch *eth.DecodedBatch) error {
+func (c *Context) syncNewBatch(batch *eth.DecodedTxBatch) error {
 	numCommitments := len(batch.Commitments)
 	log.Debugf("Syncing new batch #%s with %d commitment(s) from chain", batch.ID.String(), numCommitments)
 	err := c.storage.AddBatch(&batch.Batch)
@@ -107,7 +107,7 @@ func (c *Context) syncNewBatch(batch *eth.DecodedBatch) error {
 	return nil
 }
 
-func (c *Context) syncCommitments(batch *eth.DecodedBatch) error {
+func (c *Context) syncCommitments(batch *eth.DecodedTxBatch) error {
 	for i := range batch.Commitments {
 		log.WithFields(log.Fields{"batchID": batch.ID.String()}).Debugf("Syncing commitment #%d", i+1)
 		err := c.syncCommitment(batch, &batch.Commitments[i])
@@ -123,7 +123,7 @@ func (c *Context) syncCommitments(batch *eth.DecodedBatch) error {
 	return nil
 }
 
-func (c *Context) syncCommitment(batch *eth.DecodedBatch, commitment *encoder.DecodedCommitment) error {
+func (c *Context) syncCommitment(batch *eth.DecodedTxBatch, commitment *encoder.DecodedCommitment) error {
 	transactions, err := c.syncTxCommitment(commitment)
 	if err != nil {
 		return err
@@ -148,7 +148,7 @@ func (c *Context) syncCommitment(batch *eth.DecodedBatch, commitment *encoder.De
 	return c.Syncer.BatchAddTxs(transactions)
 }
 
-func (c *Context) addTxCommitment(batch *eth.DecodedBatch, decodedCommitment *encoder.DecodedCommitment) error {
+func (c *Context) addTxCommitment(batch *eth.DecodedTxBatch, decodedCommitment *encoder.DecodedCommitment) error {
 	commitment := &models.TxCommitment{
 		CommitmentBase: models.CommitmentBase{
 			ID:            decodedCommitment.ID,

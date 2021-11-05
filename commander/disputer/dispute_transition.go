@@ -7,7 +7,7 @@ import (
 )
 
 func (c *Context) DisputeTransition(
-	batch *eth.DecodedBatch,
+	batch *eth.DecodedTxBatch,
 	commitmentIndex int,
 	merkleProofs []models.StateMerkleProof,
 ) error {
