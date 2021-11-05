@@ -17,7 +17,7 @@ func (c *Context) SyncTxs(txs SyncedTxs, feeReceiverStateID uint32) (
 	}
 
 	for i := 0; i < txs.Txs().Len(); i++ {
-		synced, transferError, appError := c.Syncer.ApplyTx(txs.TxAt(i), *tokenID)
+		synced, txError, appError := c.Syncer.ApplyTx(txs.TxAt(i), *tokenID)
 		if appError != nil {
 			return nil, nil, appError
 		}
@@ -26,8 +26,8 @@ func (c *Context) SyncTxs(txs SyncedTxs, feeReceiverStateID uint32) (
 			synced.SenderStateProof,
 			synced.ReceiverStateProof,
 		)
-		if transferError != nil {
-			return nil, nil, NewDisputableErrorWithProofs(Transition, transferError.Error(), stateChangeProofs)
+		if txError != nil {
+			return nil, nil, NewDisputableErrorWithProofs(Transition, txError.Error(), stateChangeProofs)
 		}
 
 		appliedTxs = appliedTxs.AppendOne(synced.Tx)

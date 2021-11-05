@@ -110,7 +110,7 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_ExecutesNoMoreThanLimit() {
 	s.Equal(models.MakeUint256(6), state.Nonce)
 }
 
-func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SavesTransferErrors() {
+func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SavesTxErrors() {
 	generatedTransfers := testutils.GenerateValidTransfers(3)
 	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidTransfers(2)...)
 

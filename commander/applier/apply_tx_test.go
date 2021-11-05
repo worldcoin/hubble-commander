@@ -103,8 +103,8 @@ func (s *ApplyTxTestSuite) TestCalculateStateAfterTx_ValidatesBalance() {
 func (s *ApplyTxTestSuite) TestApplyTx_ValidatesSenderTokenID() {
 	setUserStatesInTree(s.Assertions, s.storage)
 
-	transferError, appError := s.applier.ApplyTx(&s.transfer, &s.receiverLeaf, models.MakeUint256(3))
-	s.NoError(transferError)
+	txError, appError := s.applier.ApplyTx(&s.transfer, &s.receiverLeaf, models.MakeUint256(3))
+	s.NoError(txError)
 	s.ErrorIs(appError, ErrInvalidSenderTokenID)
 }
 
@@ -114,8 +114,8 @@ func (s *ApplyTxTestSuite) TestApplyTx_ValidatesReceiverTokenID() {
 	receiverWithChangedToken := s.receiverLeaf
 	receiverWithChangedToken.TokenID = models.MakeUint256(2)
 
-	transferError, appError := s.applier.ApplyTx(&s.transfer, &receiverWithChangedToken, models.MakeUint256(1))
-	s.NoError(transferError)
+	txError, appError := s.applier.ApplyTx(&s.transfer, &receiverWithChangedToken, models.MakeUint256(1))
+	s.NoError(txError)
 	s.ErrorIs(appError, ErrInvalidReceiverTokenID)
 }
 
@@ -124,17 +124,17 @@ func (s *ApplyTxTestSuite) TestApplyTx_ValidatesNonce() {
 	transferWithBadNonce.Nonce = models.MakeUint256(1)
 	setUserStatesInTree(s.Assertions, s.storage)
 
-	transferError, appError := s.applier.ApplyTx(&transferWithBadNonce, &s.receiverLeaf, models.MakeUint256(1))
-	s.ErrorIs(transferError, ErrNonceTooHigh)
+	txError, appError := s.applier.ApplyTx(&transferWithBadNonce, &s.receiverLeaf, models.MakeUint256(1))
+	s.ErrorIs(txError, ErrNonceTooHigh)
 	s.NoError(appError)
 }
 
 func (s *ApplyTxTestSuite) TestApplyTx_UpdatesStatesCorrectly() {
 	setUserStatesInTree(s.Assertions, s.storage)
 
-	transferError, appError := s.applier.ApplyTx(&s.transfer, &s.receiverLeaf, models.MakeUint256(1))
+	txError, appError := s.applier.ApplyTx(&s.transfer, &s.receiverLeaf, models.MakeUint256(1))
 	s.NoError(appError)
-	s.NoError(transferError)
+	s.NoError(txError)
 
 	senderLeaf, err := s.storage.StateTree.Leaf(1)
 	s.NoError(err)

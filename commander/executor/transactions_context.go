@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type TransactionError struct {
+type TxError struct {
 	Hash         common.Hash
 	ErrorMessage string
 }
@@ -19,7 +19,7 @@ type TxsContext struct {
 	*ExecutionContext
 	Executor        TransactionExecutor
 	BatchType       batchtype.BatchType
-	txErrorsToStore []TransactionError
+	txErrorsToStore []TxError
 }
 
 func NewTxsContext(
@@ -42,10 +42,10 @@ func newTxsContext(executionCtx *ExecutionContext, batchType batchtype.BatchType
 		ExecutionContext: executionCtx,
 		Executor:         CreateTransactionExecutor(executionCtx, batchType),
 		BatchType:        batchType,
-		txErrorsToStore:  make([]TransactionError, 0),
+		txErrorsToStore:  make([]TxError, 0),
 	}
 }
 
-func (c *TxsContext) GetErrorsToStore() []TransactionError {
+func (c *TxsContext) GetErrorsToStore() []TxError {
 	return c.txErrorsToStore
 }

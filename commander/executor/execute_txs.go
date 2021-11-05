@@ -20,12 +20,12 @@ func (c *TxsContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiver 
 		}
 
 		tx := txs.At(i)
-		applyResult, transferError, appError := c.Executor.ApplyTx(tx, feeReceiver.TokenID)
+		applyResult, txError, appError := c.Executor.ApplyTx(tx, feeReceiver.TokenID)
 		if appError != nil {
 			return nil, appError
 		}
-		if transferError != nil {
-			c.handleTransactionError(returnStruct, tx, transferError)
+		if txError != nil {
+			c.handleTxError(returnStruct, tx, txError)
 			continue
 		}
 
@@ -49,15 +49,15 @@ func (c *TxsContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiver 
 	return returnStruct, nil
 }
 
-func (c *TxsContext) handleTransactionError(result ExecuteTxsResult, tx models.GenericTransaction, err error) {
+func (c *TxsContext) handleTxError(result ExecuteTxsResult, tx models.GenericTransaction, err error) {
 	if errors.Is(err, applier.ErrNonceTooHigh) {
 		result.AddSkippedTx(tx)
 		return
 	}
 
-	logAndSaveTransactionError(c.storage, tx, err)
+	logAndSaveTxError(c.storage, tx, err)
 	result.AddInvalidTx(tx)
-	c.txErrorsToStore = append(c.txErrorsToStore, TransactionError{
+	c.txErrorsToStore = append(c.txErrorsToStore, TxError{
 		Hash:         tx.GetBase().Hash,
 		ErrorMessage: err.Error(),
 	})

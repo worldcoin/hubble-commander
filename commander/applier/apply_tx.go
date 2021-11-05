@@ -20,7 +20,7 @@ func (a *Applier) ApplyTx(
 	tx models.GenericTransaction,
 	receiverLeaf *models.StateLeaf,
 	commitmentTokenID models.Uint256,
-) (transferError, appError error) {
+) (txError, appError error) {
 	senderLeaf, err := a.storage.StateTree.Leaf(tx.GetFromStateID())
 	if err != nil {
 		return nil, err
@@ -40,9 +40,9 @@ func (a *Applier) ApplyTx(
 		return tErr, nil
 	}
 
-	newSenderState, newReceiverState, tErr := calculateStateAfterTx(senderLeaf.UserState, receiverLeaf.UserState, tx)
-	if tErr != nil {
-		return tErr, nil
+	newSenderState, newReceiverState, txErr := calculateStateAfterTx(senderLeaf.UserState, receiverLeaf.UserState, tx)
+	if txErr != nil {
+		return txErr, nil
 	}
 
 	_, appError = a.storage.StateTree.Set(senderLeaf.StateID, newSenderState)
@@ -61,7 +61,7 @@ func (a *Applier) applyTxForSync(
 	tx models.GenericTransaction,
 	receiverLeaf *models.StateLeaf,
 	commitmentTokenID models.Uint256,
-) (synced *SyncedGenericTransaction, transferError, appError error) {
+) (synced *SyncedGenericTransaction, txError, appError error) {
 	senderLeaf, err := a.storage.StateTree.LeafOrEmpty(tx.GetFromStateID())
 	if err != nil {
 		return nil, nil, err
@@ -69,9 +69,9 @@ func (a *Applier) applyTxForSync(
 
 	synced = NewPartialSyncedGenericTransaction(tx.Copy(), &senderLeaf.UserState, &receiverLeaf.UserState)
 
-	newSenderState, newReceiverState, tErr := calculateStateAfterTx(senderLeaf.UserState, receiverLeaf.UserState, tx)
-	if tErr != nil {
-		return a.fillSenderWitness(synced, tErr)
+	newSenderState, newReceiverState, txErr := calculateStateAfterTx(senderLeaf.UserState, receiverLeaf.UserState, tx)
+	if txErr != nil {
+		return a.fillSenderWitness(synced, txErr)
 	}
 
 	senderWitness, appError := a.storage.StateTree.Set(senderLeaf.StateID, newSenderState)
