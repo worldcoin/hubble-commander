@@ -43,7 +43,7 @@ func (c *TxsContext) addCommitments(commitments []models.CommitmentWithTxs) erro
 func (c *DepositsContext) SubmitBatch(batch *models.Batch, vacancyProof *models.SubtreeVacancyProof) error {
 	select {
 	case <-c.ctx.Done():
-		return ErrNoLongerProposer
+		return ErrRollupContextCanceled
 	default:
 	}
 
