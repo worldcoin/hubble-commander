@@ -56,7 +56,7 @@ func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
 
 	select {
 	case <-c.ctx.Done():
-		return nil, errors.WithStack(ErrNoLongerProposer)
+		return nil, errors.WithStack(ErrRollupContextCanceled)
 	default:
 	}
 
