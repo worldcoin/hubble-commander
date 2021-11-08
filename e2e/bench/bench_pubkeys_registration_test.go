@@ -16,8 +16,7 @@ import (
 type BenchmarkPubKeyRegistrationSuite struct {
 	benchmarkTestSuite
 
-	unregisteredWallets      []bls.Wallet
-	unregisteredWalletsIndex int64
+	unregisteredWallets []bls.Wallet
 }
 
 func (s *BenchmarkPubKeyRegistrationSuite) SetupTest() {
@@ -32,13 +31,13 @@ func (s *BenchmarkPubKeyRegistrationSuite) SetupTest() {
 	s.NoError(err)
 
 	s.unregisteredWallets = unregisteredWallets
-	s.unregisteredWalletsIndex = 0
 }
 
 func (s *BenchmarkPubKeyRegistrationSuite) TestBenchPubKeysRegistration() {
-	s.prepareWorkers(func(senderWallet bls.Wallet, senderStateID uint32, nonce models.Uint256) common.Hash {
-		to := s.unregisteredWallets[s.unregisteredWalletsIndex].PublicKey()
-		s.unregisteredWalletsIndex++
+	unregisteredWalletsIndex := 0
+	s.sendTransactions(func(senderWallet bls.Wallet, senderStateID uint32, nonce models.Uint256) common.Hash {
+		to := s.unregisteredWallets[unregisteredWalletsIndex].PublicKey()
+		unregisteredWalletsIndex++
 
 		return s.sendC2T(senderWallet, senderStateID, to, nonce)
 	})
