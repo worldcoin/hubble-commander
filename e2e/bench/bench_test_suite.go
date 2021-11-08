@@ -125,8 +125,8 @@ func (s *benchmarkTestSuite) sendC2T(wallet bls.Wallet, from uint32, to *models.
 	return transferHash
 }
 
-func (s *benchmarkTestSuite) prepareWorkers(
-	actionForWorkers func(senderWallet bls.Wallet, senderStateID uint32, nonce models.Uint256) common.Hash,
+func (s *benchmarkTestSuite) sendTransactions(
+	walletAction func(senderWallet bls.Wallet, senderStateID uint32, nonce models.Uint256) common.Hash,
 ) {
 	s.startTime = time.Now()
 
@@ -148,8 +148,7 @@ func (s *benchmarkTestSuite) prepareWorkers(
 			s.stateIds = append(s.stateIds, state.StateID)
 
 			s.waitGroup.Add(1)
-
-			go s.runForWallet(wallet, state.StateID, actionForWorkers)
+			go s.runForWallet(wallet, state.StateID, walletAction)
 
 			workers += 1
 			if workers >= int(s.benchConfig.MaxConcurrentWorkers) {

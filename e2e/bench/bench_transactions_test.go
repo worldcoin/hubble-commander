@@ -39,19 +39,19 @@ func (s *BenchmarkTransactionsSuite) SetupTest() {
 }
 
 func (s *BenchmarkTransactionsSuite) TestBenchTransfersCommander() {
-	s.sendTransactions(TxTypeDistribution{txtype.Transfer: 1.0})
+	s.sendTransactionsWithDistribution(TxTypeDistribution{txtype.Transfer: 1.0})
 }
 
 func (s *BenchmarkTransactionsSuite) TestBenchCreate2TransfersCommander() {
-	s.sendTransactions(TxTypeDistribution{txtype.Create2Transfer: 1.0})
+	s.sendTransactionsWithDistribution(TxTypeDistribution{txtype.Create2Transfer: 1.0})
 }
 
 func (s *BenchmarkTransactionsSuite) TestBenchMixedCommander() {
-	s.sendTransactions(TxTypeDistribution{txtype.Create2Transfer: 0.2, txtype.Transfer: 0.8}) // 20% C2T, 80% transfers
+	s.sendTransactionsWithDistribution(TxTypeDistribution{txtype.Create2Transfer: 0.2, txtype.Transfer: 0.8}) // 20% C2T, 80% transfers
 }
 
 func (s *BenchmarkTransactionsSuite) TestBenchSyncCommander() {
-	s.sendTransactions(TxTypeDistribution{txtype.Create2Transfer: 0.2, txtype.Transfer: 0.8})
+	s.sendTransactionsWithDistribution(TxTypeDistribution{txtype.Create2Transfer: 0.2, txtype.Transfer: 0.8})
 	s.benchSyncing()
 }
 
@@ -106,8 +106,8 @@ func (s *BenchmarkTransactionsSuite) benchSyncing() {
 	}
 }
 
-func (s *BenchmarkTransactionsSuite) sendTransactions(distribution TxTypeDistribution) {
-	s.prepareWorkers(func(senderWallet bls.Wallet, senderStateID uint32, nonce models.Uint256) common.Hash {
+func (s *BenchmarkTransactionsSuite) sendTransactionsWithDistribution(distribution TxTypeDistribution) {
+	s.sendTransactions(func(senderWallet bls.Wallet, senderStateID uint32, nonce models.Uint256) common.Hash {
 		var lastTxHash common.Hash
 
 		txType := pickTxType(distribution)
