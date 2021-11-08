@@ -9,6 +9,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 var ErrGenesisAccountsUniqueStateID = fmt.Errorf("accounts must have unique state IDs")
@@ -63,6 +64,7 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.PopulatedGen
 }
 
 func RegisterGenesisAccounts(accountMgr *eth.AccountManager, accounts []models.GenesisAccount) ([]models.RegisteredGenesisAccount, error) {
+	log.Println("Registering genesis accounts")
 	txs := make([]types.Transaction, 0, len(accounts))
 	for i := range accounts {
 		tx, err := accountMgr.RegisterAccount(accounts[i].PublicKey)
@@ -72,7 +74,7 @@ func RegisterGenesisAccounts(accountMgr *eth.AccountManager, accounts []models.G
 		txs = append(txs, *tx)
 	}
 
-	receipts, err := chain.WaitForMultipleTxs(accountMgr.Blockchain.GetBackend(), txs)
+	receipts, err := chain.WaitForMultipleTxs(accountMgr.Blockchain.GetBackend(), txs...)
 	if err != nil {
 		return nil, err
 	}

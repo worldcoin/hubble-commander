@@ -9,27 +9,27 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type DeployerTestSuite struct {
+type RollupDeployerTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	sim *simulator.Simulator
 }
 
-func (s *DeployerTestSuite) SetupSuite() {
+func (s *RollupDeployerTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *DeployerTestSuite) SetupTest() {
+func (s *RollupDeployerTestSuite) SetupTest() {
 	sim, err := simulator.NewSimulator()
 	s.NoError(err)
 	s.sim = sim
 }
 
-func (s *DeployerTestSuite) TearDownTest() {
+func (s *RollupDeployerTestSuite) TearDownTest() {
 	s.sim.Close()
 }
 
-func (s *DeployerTestSuite) TestNewRollup() {
+func (s *RollupDeployerTestSuite) TestDeployRollup() {
 	rollupContracts, err := DeployRollup(s.sim)
 	s.NoError(err)
 
@@ -40,6 +40,6 @@ func (s *DeployerTestSuite) TestNewRollup() {
 	s.NotEqual(emptyBytes, id)
 }
 
-func TestDeployerTestSuite(t *testing.T) {
-	suite.Run(t, new(DeployerTestSuite))
+func TestRollupDeployerTestSuite(t *testing.T) {
+	suite.Run(t, new(RollupDeployerTestSuite))
 }
