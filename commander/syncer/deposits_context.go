@@ -1,6 +1,7 @@
 package syncer
 
 import (
+	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -12,6 +13,7 @@ type DepositsContext struct {
 	storage *st.Storage
 	tx      *db.TxController
 	client  *eth.Client
+	applier *applier.Applier
 }
 
 func NewDepositsContext(
@@ -38,6 +40,7 @@ func newDepositsContext(
 		storage: storage,
 		tx:      tx,
 		client:  client,
+		applier: applier.NewApplier(storage, client),
 	}
 }
 
