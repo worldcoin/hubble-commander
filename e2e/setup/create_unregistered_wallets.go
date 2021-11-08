@@ -11,17 +11,15 @@ func CreateUnregisteredWalletsForBenchmark(txAmount int64, domain bls.Domain) ([
 	cfg := config.GetDeployerConfig()
 	accounts := cfg.Bootstrap.GenesisAccounts
 
-	validAccounts := 0
-
+	registeredAccounts := 0
 	for _, account := range accounts {
 		if account.Balance.CmpN(InitialGenesisBalance) == 0 {
-			validAccounts++
+			registeredAccounts++
 		}
 	}
 
-	numberOfNeededWallets := int(txAmount) * validAccounts
+	numberOfNeededWallets := int(txAmount) * registeredAccounts
 	wallets := make([]bls.Wallet, 0, numberOfNeededWallets)
-
 	for i := 0; i < numberOfNeededWallets; i++ {
 		newRandomWallet, err := bls.NewRandomWallet(domain)
 		if err != nil {
