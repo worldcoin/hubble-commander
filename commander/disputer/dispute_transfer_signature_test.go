@@ -42,7 +42,7 @@ func (s *DisputeTransferSignatureTestSuite) TestSignatureProof() {
 		expectedPublicKeys = append(expectedPublicKeys, account.PublicKey)
 	}
 
-	signatureProof, err := s.disputeCtx.signatureProof(stateProofs)
+	signatureProof, err := s.disputeCtx.proverCtx.SignatureProof(stateProofs)
 	s.NoError(err)
 	s.Len(signatureProof.UserStates, 3)
 	s.Len(signatureProof.PublicKeys, 3)

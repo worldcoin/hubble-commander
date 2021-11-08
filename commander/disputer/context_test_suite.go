@@ -21,7 +21,7 @@ type testSuiteWithContexts struct {
 	txController *db.TxController
 	cfg          *config.RollupConfig
 	client       *eth.TestClient
-	rollupCtx    *executor.RollupContext
+	txsCtx       *executor.TxsContext
 	syncCtx      *syncer.Context
 	disputeCtx   *Context
 }
@@ -63,7 +63,7 @@ func (s *testSuiteWithContexts) newContexts(
 	storage *st.Storage, client *eth.Client, cfg *config.RollupConfig, batchType batchtype.BatchType,
 ) {
 	executionCtx := executor.NewTestExecutionContext(storage, s.client.Client, s.cfg)
-	s.rollupCtx = executor.NewTestRollupContext(executionCtx, batchType)
+	s.txsCtx = executor.NewTestTxsContext(executionCtx, batchType)
 	s.syncCtx = syncer.NewTestContext(storage, client, cfg, batchType)
 	s.disputeCtx = NewContext(storage, s.client.Client)
 }
@@ -71,24 +71,24 @@ func (s *testSuiteWithContexts) newContexts(
 func (s *testSuiteWithContexts) beginTransaction() {
 	txController, txStorage := s.storage.BeginTransaction(st.TxOptions{})
 	s.txController = txController
-	s.newContexts(txStorage, s.client.Client, s.cfg, s.rollupCtx.BatchType)
+	s.newContexts(txStorage, s.client.Client, s.cfg, s.txsCtx.BatchType)
 }
 
 func (s *testSuiteWithContexts) commitTransaction() {
 	err := s.txController.Commit()
 	s.NoError(err)
-	s.newContexts(s.storage.Storage, s.client.Client, s.cfg, s.rollupCtx.BatchType)
+	s.newContexts(s.storage.Storage, s.client.Client, s.cfg, s.txsCtx.BatchType)
 }
 
 func (s *testSuiteWithContexts) rollback() {
 	s.txController.Rollback(nil)
-	s.newContexts(s.storage.Storage, s.client.Client, s.cfg, s.rollupCtx.BatchType)
+	s.newContexts(s.storage.Storage, s.client.Client, s.cfg, s.txsCtx.BatchType)
 }
 
 func (s *testSuiteWithContexts) submitBatch(tx models.GenericTransaction) *models.Batch {
 	pendingBatch, commitments := s.createBatch(tx)
 
-	err := s.rollupCtx.SubmitBatch(pendingBatch, commitments)
+	err := s.txsCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
@@ -104,10 +104,10 @@ func (s *testSuiteWithContexts) createBatch(tx models.GenericTransaction) (*mode
 		s.NoError(err)
 	}
 
-	pendingBatch, err := s.rollupCtx.NewPendingBatch(s.rollupCtx.BatchType)
+	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
 	s.NoError(err)
 
-	commitments, err := s.rollupCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
 

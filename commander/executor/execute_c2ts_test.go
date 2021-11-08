@@ -12,12 +12,12 @@ import (
 )
 
 type ExecuteCreate2TransfersTestSuite struct {
-	testSuiteWithRollupContext
+	testSuiteWithTxsContext
 	feeReceiver *FeeReceiver
 }
 
 func (s *ExecuteCreate2TransfersTestSuite) SetupTest() {
-	s.testSuiteWithRollupContext.SetupTestWithConfig(batchtype.Create2Transfer, config.RollupConfig{
+	s.testSuiteWithTxsContext.SetupTestWithConfig(batchtype.Create2Transfer, config.RollupConfig{
 		FeeReceiverPubKeyID: 3,
 		MaxTxsPerCommitment: 6,
 	})
@@ -57,7 +57,7 @@ func (s *ExecuteCreate2TransfersTestSuite) SetupTest() {
 func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AllValid() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
 
-	transfers, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	transfers, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.AppliedTxs(), 3)
@@ -70,7 +70,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SomeValid() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(2)
 	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidCreate2Transfers(3)...)
 
-	transfers, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	transfers, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.AppliedTxs(), 2)
@@ -82,7 +82,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SomeValid() {
 func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_ExecutesNoMoreThanLimit() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(7)
 
-	transfers, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	transfers, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.AppliedTxs(), 6)
@@ -91,7 +91,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_ExecutesNoMoreThanLimi
 	s.Len(transfers.PendingAccounts(), 1)
 }
 
-func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SavesTransferErrors() {
+func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SavesTxErrors() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
 	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidCreate2Transfers(2)...)
 
@@ -100,7 +100,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SavesTransferErrors() 
 		s.NoError(err)
 	}
 
-	transfers, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	transfers, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.AppliedTxs(), 3)
@@ -122,7 +122,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SavesTransferErrors() 
 func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AppliesFee() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
 
-	_, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	_, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
 	s.NoError(err)
 
 	feeReceiverState, err := s.executionCtx.storage.StateTree.Leaf(s.feeReceiver.StateID)
@@ -136,7 +136,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AddsAccountsToAccountT
 	generatedTransfers[1].ToPublicKey = models.PublicKey{2, 2, 2}
 	generatedTransfers[2].ToPublicKey = models.PublicKey{3, 3, 3}
 
-	transfers, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	transfers, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.AppliedTxs(), 3)
@@ -156,7 +156,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SkipsNonceTooHighTx() 
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(2)
 	generatedTransfers[1].Nonce = models.MakeUint256(21)
 
-	executeTxsResult, err := s.rollupCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	executeTxsResult, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(executeTxsResult.AppliedTxs(), 1)

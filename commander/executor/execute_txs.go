@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (c *RollupContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiver *FeeReceiver) (ExecuteTxsResult, error) {
+func (c *TxsContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiver *FeeReceiver) (ExecuteTxsResult, error) {
 	if txs.Len() == 0 {
 		return c.Executor.NewExecuteTxsResult(0), nil
 	}
@@ -20,12 +20,12 @@ func (c *RollupContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiv
 		}
 
 		tx := txs.At(i)
-		applyResult, transferError, appError := c.Executor.ApplyTx(tx, feeReceiver.TokenID)
+		applyResult, txError, appError := c.Executor.ApplyTx(tx, feeReceiver.TokenID)
 		if appError != nil {
 			return nil, appError
 		}
-		if transferError != nil {
-			c.handleTransactionError(returnStruct, tx, transferError)
+		if txError != nil {
+			c.handleTxError(returnStruct, tx, txError)
 			continue
 		}
 
@@ -40,7 +40,7 @@ func (c *RollupContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiv
 	}
 
 	if returnStruct.AppliedTxs().Len() > 0 {
-		_, err := c.ApplyFee(feeReceiver.StateID, combinedFee)
+		_, err := c.Applier.ApplyFee(feeReceiver.StateID, combinedFee)
 		if err != nil {
 			return nil, err
 		}
@@ -49,15 +49,15 @@ func (c *RollupContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiv
 	return returnStruct, nil
 }
 
-func (c *RollupContext) handleTransactionError(result ExecuteTxsResult, tx models.GenericTransaction, err error) {
+func (c *TxsContext) handleTxError(result ExecuteTxsResult, tx models.GenericTransaction, err error) {
 	if errors.Is(err, applier.ErrNonceTooHigh) {
 		result.AddSkippedTx(tx)
 		return
 	}
 
-	logAndSaveTransactionError(c.storage, tx, err)
+	logAndSaveTxError(c.storage, tx, err)
 	result.AddInvalidTx(tx)
-	c.TxErrorsToStore = append(c.TxErrorsToStore, TransactionError{
+	c.txErrorsToStore = append(c.txErrorsToStore, TxError{
 		Hash:         tx.GetBase().Hash,
 		ErrorMessage: err.Error(),
 	})

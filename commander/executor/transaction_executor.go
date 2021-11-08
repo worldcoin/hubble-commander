@@ -21,7 +21,7 @@ type TransactionExecutor interface {
 	MarkTxsAsIncluded(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error
 	AddPendingAccount(result applier.ApplySingleTxResult) error
 	NewCreateCommitmentResult(result ExecuteTxsForCommitmentResult, commitment *models.CommitmentWithTxs) CreateCommitmentResult
-	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (result applier.ApplySingleTxResult, transferError, appError error)
+	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (result applier.ApplySingleTxResult, txError, appError error)
 	SubmitBatch(client *eth.Client, commitments []models.CommitmentWithTxs) (*types.Transaction, error)
 }
 
@@ -104,7 +104,7 @@ func (e *TransferExecutor) AddPendingAccount(_ applier.ApplySingleTxResult) erro
 }
 
 func (e *TransferExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
-	applyResult applier.ApplySingleTxResult, transferError, appError error,
+	applyResult applier.ApplySingleTxResult, txError, appError error,
 ) {
 	return e.applier.ApplyTransfer(tx, commitmentTokenID)
 }
@@ -187,7 +187,7 @@ func (e *C2TExecutor) AddPendingAccount(result applier.ApplySingleTxResult) erro
 }
 
 func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
-	applyResult applier.ApplySingleTxResult, transferError, appError error,
+	applyResult applier.ApplySingleTxResult, txError, appError error,
 ) {
 	return e.applier.ApplyCreate2Transfer(tx.ToCreate2Transfer(), commitmentTokenID)
 }

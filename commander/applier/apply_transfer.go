@@ -11,27 +11,27 @@ import (
 var ErrNonexistentReceiver = fmt.Errorf("receiver state ID does not exist")
 
 func (a *Applier) ApplyTransfer(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
-	applyResult ApplySingleTxResult, transferError, appError error,
+	applyResult ApplySingleTxResult, txError, appError error,
 ) {
 	receiverLeaf, appError := a.storage.StateTree.Leaf(*tx.GetToStateID())
 	if st.IsNotFoundError(appError) {
-		transferError = errors.WithStack(ErrNonexistentReceiver)
-		return nil, transferError, nil
+		txError = errors.WithStack(ErrNonexistentReceiver)
+		return nil, txError, nil
 	}
 	if appError != nil {
 		return nil, nil, appError
 	}
 
-	transferError, appError = a.ApplyTx(tx, receiverLeaf, commitmentTokenID)
-	if transferError != nil || appError != nil {
-		return nil, transferError, appError
+	txError, appError = a.ApplyTx(tx, receiverLeaf, commitmentTokenID)
+	if txError != nil || appError != nil {
+		return nil, txError, appError
 	}
 	return &ApplySingleTransferResult{tx: tx.ToTransfer()}, nil, nil
 }
 
 func (a *Applier) ApplyTransferForSync(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
 	synced *SyncedGenericTransaction,
-	transferError, appError error,
+	txError, appError error,
 ) {
 	receiverLeaf, err := a.storage.StateTree.LeafOrEmpty(*tx.GetToStateID())
 	if err != nil {

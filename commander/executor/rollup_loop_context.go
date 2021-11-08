@@ -7,41 +7,29 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/common"
 )
 
-type TransactionError struct {
-	Hash         common.Hash
-	ErrorMessage string
+type RollupLoopContext interface {
+	CreateAndSubmitBatch() error
+	Rollback(cause *error)
+	Commit() error
+	GetErrorsToStore() []TxError
 }
 
-type RollupContext struct {
-	*ExecutionContext
-	Executor        TransactionExecutor
-	BatchType       batchtype.BatchType
-	TxErrorsToStore []TransactionError
-}
-
-func NewRollupContext(
+func NewRollupLoopContext(
 	storage *st.Storage,
 	client *eth.Client,
 	cfg *config.RollupConfig,
 	ctx context.Context,
 	batchType batchtype.BatchType,
-) *RollupContext {
-	executionCtx := NewExecutionContext(storage, client, cfg, ctx)
-	return newRollupContext(executionCtx, batchType)
-}
-
-func NewTestRollupContext(executionCtx *ExecutionContext, batchType batchtype.BatchType) *RollupContext {
-	return newRollupContext(executionCtx, batchType)
-}
-
-func newRollupContext(executionCtx *ExecutionContext, batchType batchtype.BatchType) *RollupContext {
-	return &RollupContext{
-		ExecutionContext: executionCtx,
-		Executor:         CreateTransactionExecutor(executionCtx, batchType),
-		BatchType:        batchType,
-		TxErrorsToStore:  make([]TransactionError, 0),
+) RollupLoopContext {
+	switch batchType {
+	case batchtype.Transfer, batchtype.Create2Transfer:
+		return NewTxsContext(storage, client, cfg, ctx, batchType)
+	case batchtype.Deposit:
+		return NewDepositsContext(storage, client, cfg, ctx)
+	case batchtype.Genesis, batchtype.MassMigration:
+		panic("invalid batch type")
 	}
+	return nil
 }

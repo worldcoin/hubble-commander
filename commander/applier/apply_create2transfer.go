@@ -13,7 +13,7 @@ var ErrNilReceiverStateID = fmt.Errorf("transfer receiver state id cannot be nil
 func (a *Applier) ApplyCreate2Transfer(
 	create2Transfer *models.Create2Transfer,
 	commitmentTokenID models.Uint256,
-) (applyResult *ApplySingleC2TResult, transferError, appError error) {
+) (applyResult *ApplySingleC2TResult, txError, appError error) {
 	pubKeyID, isPending, appError := a.getPubKeyID(&create2Transfer.ToPublicKey)
 	if appError != nil {
 		return nil, nil, appError
@@ -29,9 +29,9 @@ func (a *Applier) ApplyCreate2Transfer(
 		return nil, nil, appError
 	}
 
-	transferError, appError = a.ApplyTx(create2Transfer, receiverLeaf, commitmentTokenID)
-	if transferError != nil || appError != nil {
-		return nil, transferError, appError
+	txError, appError = a.ApplyTx(create2Transfer, receiverLeaf, commitmentTokenID)
+	if txError != nil || appError != nil {
+		return nil, txError, appError
 	}
 
 	updatedCreate2Transfer := create2Transfer.Clone()
@@ -56,7 +56,7 @@ func (a *Applier) ApplyCreate2TransferForSync(
 	create2Transfer *models.Create2Transfer,
 	pubKeyID uint32,
 	commitmentTokenID models.Uint256,
-) (synced *SyncedGenericTransaction, transferError, appError error) {
+) (synced *SyncedGenericTransaction, txError, appError error) {
 	if create2Transfer.ToStateID == nil {
 		return nil, nil, errors.WithStack(ErrNilReceiverStateID)
 	}
@@ -65,11 +65,11 @@ func (a *Applier) ApplyCreate2TransferForSync(
 	if appError != nil {
 		return nil, nil, appError
 	}
-	genericSynced, transferError, appError := a.applyTxForSync(create2Transfer, receiverLeaf, commitmentTokenID)
+	genericSynced, txError, appError := a.applyTxForSync(create2Transfer, receiverLeaf, commitmentTokenID)
 	if appError != nil {
 		return nil, nil, appError
 	}
-	return genericSynced, transferError, nil
+	return genericSynced, txError, nil
 }
 
 func (a *Applier) getPubKeyID(publicKey *models.PublicKey) (pubKeyID *uint32, isPending bool, err error) {

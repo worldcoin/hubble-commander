@@ -209,6 +209,24 @@ func (s *VerifySignatureTestSuite) TestVerifyCreate2TransfersSignature_EmptyTran
 	s.NoError(err)
 }
 
+func (s *VerifySignatureTestSuite) TestUserStateProof() {
+	s.syncCtx = NewTestContext(s.storage.Storage, s.client, s.cfg, batchtype.Transfer)
+
+	userState := &models.UserState{
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(0),
+		Balance:  models.MakeUint256(300),
+		Nonce:    models.MakeUint256(1),
+	}
+	witness, err := s.storage.StateTree.Set(1, userState)
+	s.NoError(err)
+
+	stateProof, err := s.syncCtx.UserStateProof(1)
+	s.NoError(err)
+	s.Equal(userState, stateProof.UserState)
+	s.Equal(witness, stateProof.Witness)
+}
+
 func (s *VerifySignatureTestSuite) addAccounts() {
 	domain, err := s.client.GetDomain()
 	s.NoError(err)
