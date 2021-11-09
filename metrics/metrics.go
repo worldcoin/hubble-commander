@@ -14,8 +14,8 @@ type CommanderMetrics struct {
 	registry *prometheus.Registry
 
 	// API
-	ApiTotalRequestsCounter *prometheus.Counter
-	ApiRequestDuration      *prometheus.Histogram
+	ApiTotalRequestsCounter prometheus.Counter
+	ApiRequestDuration      prometheus.Histogram
 }
 
 func (c *CommanderMetrics) NewMetricsServer(cfg *config.MetricsConfig) *http.Server {
@@ -69,17 +69,7 @@ func NewCommanderMetrics() *CommanderMetrics {
 
 	return &CommanderMetrics{
 		registry:                registry,
-		ApiTotalRequestsCounter: &apiTotalRequestsCounter,
-		ApiRequestDuration:      &apiRequestDuration,
+		ApiTotalRequestsCounter: apiTotalRequestsCounter,
+		ApiRequestDuration:      apiRequestDuration,
 	}
-}
-
-func IncrementCounter(counter *prometheus.Counter) {
-	dereferencedCounter := *counter
-	dereferencedCounter.Inc()
-}
-
-func ObserveHistogram(histogram *prometheus.Histogram, value float64) {
-	dereferencedHistogram := *histogram
-	dereferencedHistogram.Observe(value)
 }
