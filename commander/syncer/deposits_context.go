@@ -3,7 +3,6 @@ package syncer
 import (
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/eth"
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
@@ -11,44 +10,23 @@ import (
 type DepositsContext struct {
 	cfg     *config.RollupConfig
 	storage *st.Storage
-	tx      *db.TxController
 	client  *eth.Client
 	applier *applier.Applier
 }
 
-func NewDepositsContext(
-	storage *st.Storage,
-	client *eth.Client,
-	cfg *config.RollupConfig,
-) *DepositsContext {
-	tx, txStorage := storage.BeginTransaction(st.TxOptions{})
-	return newDepositsContext(txStorage, tx, client, cfg)
-}
-
 func NewTestDepositsContext(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) *DepositsContext {
-	return newDepositsContext(storage, nil, client, cfg)
+	return newDepositsContext(storage, client, cfg)
 }
 
 func newDepositsContext(
 	storage *st.Storage,
-	tx *db.TxController,
 	client *eth.Client,
 	cfg *config.RollupConfig,
 ) *DepositsContext {
 	return &DepositsContext{
 		cfg:     cfg,
 		storage: storage,
-		tx:      tx,
 		client:  client,
 		applier: applier.NewApplier(storage, client),
 	}
-}
-
-func (c *DepositsContext) Commit() error {
-	return c.tx.Commit()
-}
-
-// nolint:gocritic
-func (c *DepositsContext) Rollback(cause *error) {
-	c.tx.Rollback(cause)
 }

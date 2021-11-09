@@ -25,7 +25,7 @@ func (c *Context) SyncBatch(batch eth.DecodedBatch) error {
 	}
 
 	if st.IsNotFoundError(err) {
-		return c.syncNewBatch(remoteBatch)
+		return c.SyncNewBatch(remoteBatch)
 	} else {
 		return c.syncExistingBatch(remoteBatch, localBatch)
 	}
@@ -33,7 +33,7 @@ func (c *Context) SyncBatch(batch eth.DecodedBatch) error {
 
 func (c *Context) syncExistingBatch(remoteBatch *eth.DecodedTxBatch, localBatch *models.Batch) error {
 	if remoteBatch.TransactionHash == localBatch.TransactionHash {
-		err := c.UpdateExistingBatchAndCommitments(remoteBatch)
+		err := c.UpdateExistingBatch(remoteBatch)
 		if err != nil {
 			return err
 		}
@@ -59,12 +59,13 @@ func (c *Context) syncExistingBatch(remoteBatch *eth.DecodedTxBatch, localBatch 
 	return nil
 }
 
-func (c *Context) UpdateExistingBatchAndCommitments(batch *eth.DecodedTxBatch) error {
-	err := c.storage.UpdateBatch(&batch.Batch)
+func (c *Context) UpdateExistingBatch(batch eth.DecodedBatch) error {
+	txBatch := batch.ToDecodedTxBatch()
+	err := c.storage.UpdateBatch(&txBatch.Batch)
 	if err != nil {
 		return err
 	}
-	return c.setCommitmentsBodyHash(batch)
+	return c.setCommitmentsBodyHash(txBatch)
 }
 
 func (c *Context) getTransactionSender(txHash common.Hash) (*common.Address, error) {
@@ -91,7 +92,8 @@ func (c *Context) setCommitmentsBodyHash(batch *eth.DecodedTxBatch) error {
 	return c.storage.UpdateCommitments(commitments)
 }
 
-func (c *Context) syncNewBatch(batch *eth.DecodedTxBatch) error {
+func (c *Context) SyncNewBatch(remoteBatch eth.DecodedBatch) error {
+	batch := remoteBatch.ToDecodedTxBatch()
 	numCommitments := len(batch.Commitments)
 	log.Debugf("Syncing new batch #%s with %d commitment(s) from chain", batch.ID.String(), numCommitments)
 	err := c.storage.AddBatch(&batch.Batch)

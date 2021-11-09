@@ -73,7 +73,7 @@ func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_FirstCommitme
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.syncCtx.UpdateExistingBatchAndCommitments(&remoteBatches[0])
+	err = s.syncCtx.UpdateExistingBatch(&remoteBatches[0])
 	s.NoError(err)
 
 	err = s.disputeCtx.DisputeTransition(&remoteBatches[1], 0, proofs)
@@ -102,7 +102,7 @@ func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_ValidBatch() 
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.syncCtx.UpdateExistingBatchAndCommitments(&remoteBatches[0])
+	err = s.syncCtx.UpdateExistingBatch(&remoteBatches[0])
 	s.NoError(err)
 
 	err = s.disputeCtx.DisputeTransition(&remoteBatches[1], 0, proofs)

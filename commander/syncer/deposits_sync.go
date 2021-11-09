@@ -6,9 +6,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 )
 
-func (c *DepositsContext) SyncBatch(remoteBatch eth.DecodedBatch) error {
+func (c *DepositsContext) SyncNewBatch(remoteBatch eth.DecodedBatch) error {
 	batch := remoteBatch.ToDecodedDepositBatch()
-
 	startStateID, depositSubtree, err := c.getDepositSubtree(batch)
 	if err != nil {
 		return err
@@ -25,6 +24,10 @@ func (c *DepositsContext) SyncBatch(remoteBatch eth.DecodedBatch) error {
 	}
 
 	return c.storage.AddBatch(batch.GetBatch())
+}
+
+func (c *DepositsContext) UpdateExistingBatch(batch eth.DecodedBatch) error {
+	return c.storage.UpdateBatch(batch.GetBatch())
 }
 
 func (c *DepositsContext) getDepositSubtree(batch *eth.DecodedDepositBatch) (uint32, *models.PendingDepositSubTree, error) {

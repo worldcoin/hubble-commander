@@ -104,7 +104,7 @@ func (s *SyncDepositBatchTestSuite) syncBatches() {
 	s.NoError(err)
 
 	for i := range remoteBatches {
-		err = s.syncCtx.SyncBatch(remoteBatches[i].ToDecodedDepositBatch())
+		err = s.syncCtx.SyncNewBatch(remoteBatches[i].ToDecodedDepositBatch())
 		s.NoError(err)
 	}
 }
