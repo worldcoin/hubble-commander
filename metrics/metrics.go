@@ -18,21 +18,17 @@ type CommanderMetrics struct {
 	ApiRequestDuration      *prometheus.Histogram
 }
 
-func NewMetricsServer(cfg *config.MetricsConfig) (*http.Server, *prometheus.Registry) {
-	registry := prometheus.NewRegistry()
-
-	handler := promhttp.HandlerFor(registry, promhttp.HandlerOpts{})
+func (c *CommanderMetrics) NewMetricsServer(cfg *config.MetricsConfig) *http.Server {
+	handler := promhttp.HandlerFor(c.registry, promhttp.HandlerOpts{})
 
 	mux := http.NewServeMux()
 	mux.Handle(cfg.Endpoint, handler)
 
 	addr := fmt.Sprintf(":%s", cfg.Port)
-	server := &http.Server{Addr: addr, Handler: mux}
-
-	return server, registry
+	return &http.Server{Addr: addr, Handler: mux}
 }
 
-func NewCommanderMetrics(metrics *CommanderMetrics, registry *prometheus.Registry) {
+func NewCommanderMetrics() *CommanderMetrics {
 	apiTotalRequestsCounter := prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: "api",
 		Subsystem: "general",
@@ -47,10 +43,15 @@ func NewCommanderMetrics(metrics *CommanderMetrics, registry *prometheus.Registr
 		Help:      "Histogram of API requests duration",
 		Buckets: []float64{
 			0.0,
+			50.0,
 			100.0,
+			150.0,
 			200.0,
+			250.0,
 			300.0,
+			350.0,
 			400.0,
+			450.0,
 			500.0,
 			600.0,
 			700.0,
@@ -60,17 +61,25 @@ func NewCommanderMetrics(metrics *CommanderMetrics, registry *prometheus.Registr
 		},
 	})
 
+	registry := prometheus.NewRegistry()
 	registry.MustRegister(
 		apiTotalRequestsCounter,
 		apiRequestDuration,
 	)
 
-	metrics.registry = registry
-	metrics.ApiTotalRequestsCounter = &apiTotalRequestsCounter
-	metrics.ApiRequestDuration = &apiRequestDuration
+	return &CommanderMetrics{
+		registry:                registry,
+		ApiTotalRequestsCounter: &apiTotalRequestsCounter,
+		ApiRequestDuration:      &apiRequestDuration,
+	}
 }
 
 func IncrementCounter(counter *prometheus.Counter) {
 	dereferencedCounter := *counter
 	dereferencedCounter.Inc()
+}
+
+func ObserveHistogram(histogram *prometheus.Histogram, value float64) {
+	dereferencedHistogram := *histogram
+	dereferencedHistogram.Observe(value)
 }
