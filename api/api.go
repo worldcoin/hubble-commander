@@ -24,17 +24,17 @@ type API struct {
 	disableSignatures bool
 }
 
-func NewAPIServer(cfg *config.Config, storage *st.Storage, client *eth.Client, metrics *metrics.CommanderMetrics) (*http.Server, error) {
-	server, err := getAPIServer(cfg.API, storage, client, cfg.Rollup.DisableSignatures)
+func NewAPIServer(cfg *config.Config, storage *st.Storage, client *eth.Client, commanderMetrics *metrics.CommanderMetrics) (*http.Server, error) {
+	server, err := getAPIServer(cfg.API, storage, client, commanderMetrics, cfg.Rollup.DisableSignatures)
 	if err != nil {
 		return nil, err
 	}
 
 	mux := http.NewServeMux()
 	if log.IsLevelEnabled(log.DebugLevel) {
-		mux.Handle("/", middleware.Logger(server, metrics))
+		mux.Handle("/", middleware.Logger(server, commanderMetrics))
 	} else {
-		mux.Handle("/", middleware.DefaultHandler(server, metrics))
+		mux.Handle("/", middleware.DefaultHandler(server, commanderMetrics))
 	}
 
 	addr := fmt.Sprintf(":%s", cfg.API.Port)
