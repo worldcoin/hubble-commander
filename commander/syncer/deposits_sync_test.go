@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/erc20"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
@@ -20,7 +21,7 @@ type SyncDepositBatchTestSuite struct {
 	suite.Suite
 	storage        *st.TestStorage
 	client         *eth.TestClient
-	syncCtx        *DepositsContext
+	syncCtx        *Context
 	depositsCtx    *executor.DepositsContext
 	depositSubtree models.PendingDepositSubTree
 }
@@ -46,7 +47,7 @@ func (s *SyncDepositBatchTestSuite) SetupTest() {
 	s.prepareDeposits()
 
 	s.depositsCtx = executor.NewDepositsContext(s.storage.Storage, s.client.Client, nil, context.Background())
-	s.syncCtx = NewTestDepositsContext(s.storage.Storage, s.client.Client, nil)
+	s.syncCtx = NewTestContext(s.storage.Storage, s.client.Client, nil, batchtype.Deposit)
 }
 
 func (s *SyncDepositBatchTestSuite) TearDownTest() {
@@ -104,7 +105,7 @@ func (s *SyncDepositBatchTestSuite) syncBatches() {
 	s.NoError(err)
 
 	for i := range remoteBatches {
-		err = s.syncCtx.SyncNewBatch(remoteBatches[i].ToDecodedDepositBatch())
+		err = s.syncCtx.SyncBatch(remoteBatches[i].ToDecodedDepositBatch())
 		s.NoError(err)
 	}
 }

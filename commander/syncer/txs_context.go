@@ -8,7 +8,7 @@ import (
 )
 
 type batchContext interface {
-	SyncNewBatch(batch eth.DecodedBatch) error
+	SyncCommitments(batch eth.DecodedBatch) error
 	UpdateExistingBatch(batch eth.DecodedBatch) error
 }
 

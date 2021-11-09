@@ -8,21 +8,20 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (c *TxsContext) SyncNewBatch(remoteBatch eth.DecodedBatch) error {
+func (c *TxsContext) SyncCommitments(remoteBatch eth.DecodedBatch) error {
 	batch := remoteBatch.ToDecodedTxBatch()
-	numCommitments := len(batch.Commitments)
-	log.Debugf("Syncing new batch #%s with %d commitment(s) from chain", batch.ID.String(), numCommitments)
-	err := c.storage.AddBatch(&batch.Batch)
-	if err != nil {
-		return err
-	}
+	for i := range batch.Commitments {
+		log.WithFields(log.Fields{"batchID": batch.ID.String()}).Debugf("Syncing commitment #%d", i+1)
+		err := c.syncCommitment(batch, &batch.Commitments[i])
 
-	err = c.syncCommitments(batch)
-	if err != nil {
-		return err
+		var disputableErr *DisputableError
+		if errors.As(err, &disputableErr) {
+			return disputableErr.WithCommitmentIndex(i)
+		}
+		if err != nil {
+			return err
+		}
 	}
-
-	log.Printf("Synced new batch #%s with %d commitment(s) from chain", batch.ID.String(), numCommitments)
 	return nil
 }
 
@@ -45,22 +44,6 @@ func (c *TxsContext) setCommitmentsBodyHash(batch *eth.DecodedTxBatch) error {
 	}
 
 	return c.storage.UpdateCommitments(commitments)
-}
-
-func (c *TxsContext) syncCommitments(batch *eth.DecodedTxBatch) error {
-	for i := range batch.Commitments {
-		log.WithFields(log.Fields{"batchID": batch.ID.String()}).Debugf("Syncing commitment #%d", i+1)
-		err := c.syncCommitment(batch, &batch.Commitments[i])
-
-		var disputableErr *DisputableError
-		if errors.As(err, &disputableErr) {
-			return disputableErr.WithCommitmentIndex(i)
-		}
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (c *TxsContext) syncCommitment(batch *eth.DecodedTxBatch, commitment *encoder.DecodedCommitment) error {

@@ -34,15 +34,6 @@ func NewTestContext(
 	return newContext(storage, nil, client, cfg, batchType)
 }
 
-func (c *Context) Commit() error {
-	return c.tx.Commit()
-}
-
-// nolint:gocritic
-func (c *Context) Rollback(cause *error) {
-	c.tx.Rollback(cause)
-}
-
 func newContext(
 	txStorage *st.Storage,
 	tx *db.TxController,
@@ -55,7 +46,7 @@ func newContext(
 	case batchtype.Transfer, batchtype.Create2Transfer:
 		batchCtx = newTxsContext(txStorage, client, cfg, batchType)
 	case batchtype.Deposit:
-		batchCtx = newDepositsContext(txStorage, client, cfg)
+		batchCtx = newDepositsContext(txStorage, client)
 	case batchtype.Genesis, batchtype.MassMigration:
 		panic("invalid batch type")
 	}
@@ -65,4 +56,13 @@ func newContext(
 		client:   client,
 		batchCtx: batchCtx,
 	}
+}
+
+func (c *Context) Commit() error {
+	return c.tx.Commit()
+}
+
+// nolint:gocritic
+func (c *Context) Rollback(cause *error) {
+	c.tx.Rollback(cause)
 }

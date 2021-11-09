@@ -13,6 +13,7 @@ type DecodedBatch interface {
 	ToDecodedTxBatch() *DecodedTxBatch
 	ToDecodedDepositBatch() *DecodedDepositBatch
 	SetCalldata(calldata []byte) error
+	GetCommitmentsLength() int
 	verifyBatchHash() error
 }
 
@@ -58,6 +59,10 @@ func (b *DecodedTxBatch) SetCalldata(calldata []byte) error {
 	return nil
 }
 
+func (b *DecodedTxBatch) GetCommitmentsLength() int {
+	return len(b.Commitments)
+}
+
 func (b *DecodedTxBatch) verifyBatchHash() error {
 	leafHashes := make([]common.Hash, 0, len(b.Commitments))
 	for i := range b.Commitments {
@@ -98,6 +103,10 @@ func (b *DecodedDepositBatch) SetCalldata(calldata []byte) error {
 	}
 	b.PathAtDepth = *pathAtDepth
 	return nil
+}
+
+func (b *DecodedDepositBatch) GetCommitmentsLength() int {
+	return 1
 }
 
 func (b *DecodedDepositBatch) verifyBatchHash() error {

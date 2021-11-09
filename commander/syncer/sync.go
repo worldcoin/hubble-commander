@@ -21,10 +21,27 @@ func (c *Context) SyncBatch(remoteBatch eth.DecodedBatch) error {
 	}
 
 	if st.IsNotFoundError(err) {
-		return c.batchCtx.SyncNewBatch(remoteBatch)
+		return c.syncNewBatch(remoteBatch)
 	} else {
 		return c.syncExistingBatch(remoteBatch, localBatch)
 	}
+}
+
+func (c *Context) syncNewBatch(remoteBatch eth.DecodedBatch) error {
+	batch := remoteBatch.GetBatch()
+	log.Debugf("Syncing new %s batch #%s with %d commitment(s) from chain", batch.Type.String(), batch.ID.String(), remoteBatch.GetCommitmentsLength())
+	err := c.storage.AddBatch(batch)
+	if err != nil {
+		return err
+	}
+
+	err = c.batchCtx.SyncCommitments(remoteBatch)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Synced new %s batch #%s with %d commitment(s) from chain", batch.Type.String(), batch.ID.String(), remoteBatch.GetCommitmentsLength())
+	return nil
 }
 
 func (c *Context) syncExistingBatch(remoteBatch eth.DecodedBatch, localBatch *models.Batch) error {
