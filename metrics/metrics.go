@@ -43,7 +43,9 @@ func NewCommanderMetrics() *CommanderMetrics {
 		Help:      "Histogram of API requests duration",
 		Buckets: []float64{
 			0.0,
+			25.0,
 			50.0,
+			75.0,
 			100.0,
 			150.0,
 			200.0,
