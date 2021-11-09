@@ -91,7 +91,7 @@ func (c *Commander) syncOrDisputeRemoteBatch(remoteBatch eth.DecodedBatch) error
 }
 
 func (c *Commander) syncBatch(remoteBatch eth.DecodedBatch) (err error) {
-	syncCtx := syncer.NewGeneralContext(c.storage, c.client, c.cfg.Rollup, remoteBatch.GetBatch().Type)
+	syncCtx := syncer.NewContext(c.storage, c.client, c.cfg.Rollup, remoteBatch.GetBatch().Type)
 	defer syncCtx.Rollback(&err)
 
 	err = syncCtx.SyncBatch(remoteBatch)

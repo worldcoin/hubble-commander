@@ -16,7 +16,7 @@ type testSuiteWithSyncAndRollupContext struct {
 	storage *st.TestStorage
 	client  *eth.TestClient
 	cfg     *config.RollupConfig
-	syncCtx *Context
+	syncCtx *TxsContext
 	txsCtx  *executor.TxsContext
 }
 
@@ -43,7 +43,7 @@ func (s *testSuiteWithSyncAndRollupContext) SetupTestWithConfig(batchType batcht
 
 	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
 	s.txsCtx = executor.NewTestTxsContext(executionCtx, batchType)
-	s.syncCtx = NewTestContext(s.storage.Storage, s.client.Client, s.cfg, batchType)
+	s.syncCtx = NewTestTxsContext(s.storage.Storage, s.client.Client, s.cfg, batchType)
 }
 
 func (s *testSuiteWithSyncAndRollupContext) TearDownTest() {

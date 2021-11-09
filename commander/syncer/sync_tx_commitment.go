@@ -17,7 +17,7 @@ const (
 	NonexistentReceiverMessage        = "nonexistent receiver"
 )
 
-func (c *Context) syncTxCommitment(commitment *encoder.DecodedCommitment) (models.GenericTransactionArray, error) {
+func (c *TxsContext) syncTxCommitment(commitment *encoder.DecodedCommitment) (models.GenericTransactionArray, error) {
 	if len(commitment.Transactions)%c.Syncer.TxLength() != 0 {
 		return nil, ErrInvalidDataLength
 	}
@@ -59,7 +59,7 @@ func (c *Context) syncTxCommitment(commitment *encoder.DecodedCommitment) (model
 	return syncedTxs.Txs(), nil
 }
 
-func (c *Context) verifyStateRoot(commitmentPostState common.Hash, proofs []models.StateMerkleProof) error {
+func (c *TxsContext) verifyStateRoot(commitmentPostState common.Hash, proofs []models.StateMerkleProof) error {
 	postStateRoot, err := c.storage.StateTree.Root()
 	if err != nil {
 		return err
