@@ -31,6 +31,7 @@ func (c *TestClient) GetAllBatches() ([]DecodedTxBatch, error) {
 		return nil, err
 	}
 
+	//TODO-sync: change to return DecodedBatches
 	txBatches := make([]DecodedTxBatch, 0, len(batches))
 	for i := range batches {
 		txBatches = append(txBatches, *batches[i].ToDecodedTxBatch())
@@ -66,7 +67,8 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 		}
 
 		if !bytes.Equal(tx.Data()[:4], c.RollupABI.Methods["submitTransfer"].ID) &&
-			!bytes.Equal(tx.Data()[:4], c.RollupABI.Methods["submitCreate2Transfer"].ID) {
+			!bytes.Equal(tx.Data()[:4], c.RollupABI.Methods["submitCreate2Transfer"].ID) &&
+			!bytes.Equal(tx.Data()[:4], c.RollupABI.Methods["submitDeposits"].ID) {
 			continue // TODO handle internal transactions
 		}
 
