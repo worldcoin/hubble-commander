@@ -89,7 +89,7 @@ func Encode(value interface{}) ([]byte, error) {
 	case *common.Hash:
 		return models.EncodeHashPointer(v), nil
 	case string:
-		return models.EncodeString(&v)
+		return models.EncodeString(v), nil
 	case *string:
 		return nil, errors.WithStack(errPassedByPointer)
 	case uint32:

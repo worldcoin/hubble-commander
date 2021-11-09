@@ -3,7 +3,6 @@ package models
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 )
@@ -41,11 +40,10 @@ func TestEncodeUint64(t *testing.T) {
 }
 
 func TestEncodeString(t *testing.T) {
-	encoded, err := EncodeString(ref.String(testMessage))
-	require.NoError(t, err)
+	encoded := EncodeString(testMessage)
 
 	var decoded string
-	err = DecodeString(encoded, &decoded)
+	err := DecodeString(encoded, &decoded)
 	require.NoError(t, err)
 	require.Equal(t, testMessage, decoded)
 }
