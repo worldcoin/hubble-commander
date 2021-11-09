@@ -66,6 +66,10 @@ func (s *TransactionStorage) getStoredTxWithReceipt(hash common.Hash) (
 	return storedTx, txReceipt, nil
 }
 
+func (s *TransactionStorage) addStoredTx(tx *models.StoredTx) error {
+	return s.database.Badger.Insert(tx.Hash, *tx)
+}
+
 func (s *TransactionStorage) getStoredTx(hash common.Hash) (*models.StoredTx, error) {
 	var storedTx models.StoredTx
 	err := s.database.Badger.Get(hash, &storedTx)
