@@ -30,11 +30,10 @@ func TestEncodeUint32(t *testing.T) {
 func TestEncodeUint64(t *testing.T) {
 	value := uint64(123456789)
 
-	encoded, err := EncodeUint64(&value)
-	require.NoError(t, err)
+	encoded := EncodeUint64(value)
 
 	var decoded uint64
-	err = DecodeUint64(encoded, &decoded)
+	err := DecodeUint64(encoded, &decoded)
 	require.NoError(t, err)
 	require.Equal(t, value, decoded)
 }

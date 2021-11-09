@@ -97,7 +97,7 @@ func Encode(value interface{}) ([]byte, error) {
 	case *uint32:
 		return models.EncodeUint32Pointer(v), nil
 	case uint64:
-		return models.EncodeUint64(&v)
+		return models.EncodeUint64(v), nil
 	case *uint64:
 		return nil, errors.WithStack(errPassedByPointer)
 	case models.RegisteredToken:

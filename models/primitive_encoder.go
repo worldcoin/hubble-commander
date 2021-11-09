@@ -27,10 +27,10 @@ func DecodeUint32(data []byte, number *uint32) error {
 	return nil
 }
 
-func EncodeUint64(value *uint64) ([]byte, error) {
+func EncodeUint64(value uint64) []byte {
 	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b[0:8], *value)
-	return b, nil
+	binary.BigEndian.PutUint64(b[0:8], value)
+	return b
 }
 
 func DecodeUint64(data []byte, value *uint64) error {
