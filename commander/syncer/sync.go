@@ -8,8 +8,11 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
+
+var ErrBatchSubmissionFailed = errors.New("previous submit batch transaction failed")
 
 func (c *Context) SyncBatch(remoteBatch eth.DecodedBatch) error {
 	localBatch, err := c.storage.GetBatch(remoteBatch.GetBatch().ID)

@@ -50,34 +50,28 @@ func (c *DepositsContext) syncCommitment(batchID models.Uint256, depositSubtree 
 		return err
 	}
 
-	commitment, err := c.newCommitment(batchID, depositSubtree)
+	return c.addCommitment(batchID, depositSubtree)
+}
+
+func (c *DepositsContext) addCommitment(batchID models.Uint256, depositSubtree *models.PendingDepositSubTree) error {
+	stateRoot, err := c.storage.StateTree.Root()
 	if err != nil {
 		return err
 	}
 
-	return c.storage.AddDepositCommitment(commitment)
-}
-
-func (c *DepositsContext) newCommitment(
-	batchID models.Uint256,
-	depositSubtree *models.PendingDepositSubTree,
-) (*models.DepositCommitment, error) {
-	stateRoot, err := c.storage.StateTree.Root()
-	if err != nil {
-		return nil, err
-	}
-
-	return &models.DepositCommitment{
-		CommitmentBase: models.CommitmentBase{
-			ID: models.CommitmentID{
-				BatchID:      batchID,
-				IndexInBatch: 0,
+	return c.storage.AddDepositCommitment(
+		&models.DepositCommitment{
+			CommitmentBase: models.CommitmentBase{
+				ID: models.CommitmentID{
+					BatchID:      batchID,
+					IndexInBatch: 0,
+				},
+				Type:          batchtype.Deposit,
+				PostStateRoot: *stateRoot,
 			},
-			Type:          batchtype.Deposit,
-			PostStateRoot: *stateRoot,
+			SubTreeID:   depositSubtree.ID,
+			SubTreeRoot: depositSubtree.Root,
+			Deposits:    depositSubtree.Deposits,
 		},
-		SubTreeID:   depositSubtree.ID,
-		SubTreeRoot: depositSubtree.Root,
-		Deposits:    depositSubtree.Deposits,
-	}, nil
+	)
 }
