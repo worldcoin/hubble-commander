@@ -114,12 +114,7 @@ func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*
 	var latestNonce *models.Uint256
 
 	err := s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
-		encodedStateID, err := models.EncodeUint32(&accountStateID)
-		if err != nil {
-			return err
-		}
-
-		indexKey := db.IndexKey(models.StoredTxName, "FromStateID", encodedStateID)
+		indexKey := db.IndexKey(models.StoredTxName, "FromStateID", models.EncodeUint32(accountStateID))
 		keyList, err := txStorage.getKeyList(indexKey)
 		if err != nil {
 			return err

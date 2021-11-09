@@ -202,7 +202,7 @@ func (t StoredTx) Indexes() map[string]bh.Index {
 				if err != nil {
 					return nil, err
 				}
-				return EncodeUint32(&v.FromStateID)
+				return EncodeUint32(v.FromStateID), nil
 			},
 		},
 		"ToStateID": {
