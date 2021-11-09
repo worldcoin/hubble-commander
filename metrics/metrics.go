@@ -3,8 +3,10 @@ package metrics
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -16,6 +18,7 @@ type CommanderMetrics struct {
 	// API
 	ApiTotalRequestsCounter prometheus.Counter
 	ApiRequestDuration      prometheus.Histogram
+	ApiTotalTransactions    *prometheus.CounterVec
 }
 
 func (c *CommanderMetrics) NewMetricsServer(cfg *config.MetricsConfig) *http.Server {
@@ -63,15 +66,37 @@ func NewCommanderMetrics() *CommanderMetrics {
 		},
 	})
 
+	apiTotalTransactions := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "api",
+		Subsystem: "general",
+		Name:      "transactions_total",
+		Help:      "Total number of transactions sent to the commander API",
+	},
+		[]string{"type"},
+	)
+
+	// Makes total transactions metrics visible on the commander startup
+	lowercaseTransfer := strings.ToLower(txtype.Transfer.String())
+	apiTotalTransactions.With(prometheus.Labels{"type": lowercaseTransfer}).Add(0)
+	lowercaseC2T := strings.ToLower(txtype.Create2Transfer.String())
+	apiTotalTransactions.With(prometheus.Labels{"type": lowercaseC2T}).Add(0)
+
 	registry := prometheus.NewRegistry()
 	registry.MustRegister(
 		apiTotalRequestsCounter,
 		apiRequestDuration,
+		apiTotalTransactions,
 	)
 
 	return &CommanderMetrics{
 		registry:                registry,
 		ApiTotalRequestsCounter: apiTotalRequestsCounter,
 		ApiRequestDuration:      apiRequestDuration,
+		ApiTotalTransactions:    apiTotalTransactions,
 	}
+}
+
+func (c *CommanderMetrics) CountTransaction(transactionType txtype.TransactionType) {
+	lowercaseTxType := strings.ToLower(transactionType.String())
+	c.ApiTotalTransactions.With(prometheus.Labels{"type": lowercaseTxType}).Inc()
 }

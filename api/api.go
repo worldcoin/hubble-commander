@@ -21,6 +21,7 @@ type API struct {
 	storage           *st.Storage
 	client            *eth.Client
 	mockSignature     models.Signature
+	commanderMetrics  *metrics.CommanderMetrics
 	disableSignatures bool
 }
 
@@ -41,11 +42,18 @@ func NewAPIServer(cfg *config.Config, storage *st.Storage, client *eth.Client, c
 	return &http.Server{Addr: addr, Handler: mux}, nil
 }
 
-func getAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client, disableSignatures bool) (*rpc.Server, error) {
+func getAPIServer(
+	cfg *config.APIConfig,
+	storage *st.Storage,
+	client *eth.Client,
+	commanderMetrics *metrics.CommanderMetrics,
+	disableSignatures bool,
+) (*rpc.Server, error) {
 	api := API{
 		cfg:               cfg,
 		storage:           storage,
 		client:            client,
+		commanderMetrics:  commanderMetrics,
 		disableSignatures: disableSignatures,
 	}
 	if err := api.initSignature(); err != nil {
