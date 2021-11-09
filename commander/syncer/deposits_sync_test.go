@@ -100,12 +100,30 @@ func (s *SyncDepositBatchTestSuite) TestSyncBatch_SetsUserStates() {
 	}
 }
 
+func (s *SyncDepositBatchTestSuite) TestSyncBatch_SyncsExistingBatch() {
+	err := s.depositsCtx.CreateAndSubmitBatch()
+	s.NoError(err)
+	s.client.GetBackend().Commit()
+	err = s.depositsCtx.Commit()
+	s.NoError(err)
+
+	s.syncBatches()
+
+	batches, err := s.storage.GetBatchesInRange(nil, nil)
+	s.NoError(err)
+	s.Len(batches, 2)
+
+	batch, err := s.storage.GetBatch(batches[1].ID)
+	s.NoError(err)
+	s.NotNil(batch.Hash)
+}
+
 func (s *SyncDepositBatchTestSuite) syncBatches() {
-	remoteBatches, err := s.client.GetBatches(&eth.BatchesFilters{})
+	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 
 	for i := range remoteBatches {
-		err = s.syncCtx.SyncBatch(remoteBatches[i].ToDecodedDepositBatch())
+		err = s.syncCtx.SyncBatch(remoteBatches[i])
 		s.NoError(err)
 	}
 }
