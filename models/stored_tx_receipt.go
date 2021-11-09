@@ -21,16 +21,16 @@ type StoredTxReceipt struct {
 	ErrorMessage *string
 }
 
-func MakeStoredTxReceiptFromTransfer(t *Transfer) StoredTxReceipt {
-	return StoredTxReceipt{
+func NewStoredTxReceiptFromTransfer(t *Transfer) *StoredTxReceipt {
+	return &StoredTxReceipt{
 		Hash:         t.Hash,
 		CommitmentID: t.CommitmentID,
 		ErrorMessage: t.ErrorMessage,
 	}
 }
 
-func MakeStoredTxReceiptFromCreate2Transfer(t *Create2Transfer) StoredTxReceipt {
-	return StoredTxReceipt{
+func NewStoredTxReceiptFromCreate2Transfer(t *Create2Transfer) *StoredTxReceipt {
+	return &StoredTxReceipt{
 		Hash:         t.Hash,
 		CommitmentID: t.CommitmentID,
 		ToStateID:    t.ToStateID,

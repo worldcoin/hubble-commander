@@ -15,7 +15,7 @@ import (
 func (s *TransactionStorage) AddCreate2Transfer(t *models.Create2Transfer) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
 		if t.CommitmentID != nil || t.ErrorMessage != nil || t.ToStateID != nil {
-			err := txStorage.database.Badger.Insert(t.Hash, models.MakeStoredTxReceiptFromCreate2Transfer(t))
+			err := txStorage.database.Badger.Insert(t.Hash, *models.NewStoredTxReceiptFromCreate2Transfer(t))
 			if err != nil {
 				return err
 			}
@@ -224,9 +224,9 @@ func (s *Storage) getMissingStoredTxsData(txs []models.StoredTx, receiptHashes [
 func (s *TransactionStorage) MarkCreate2TransfersAsIncluded(txs []models.Create2Transfer, commitmentID *models.CommitmentID) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
 		for i := range txs {
-			txReceipt := models.MakeStoredTxReceiptFromCreate2Transfer(&txs[i])
+			txReceipt := models.NewStoredTxReceiptFromCreate2Transfer(&txs[i])
 			txReceipt.CommitmentID = commitmentID
-			err := txStorage.addStoredTxReceipt(&txReceipt)
+			err := txStorage.addStoredTxReceipt(txReceipt)
 			if err != nil {
 				return err
 			}

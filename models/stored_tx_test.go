@@ -38,8 +38,8 @@ func TestStoredTx_Bytes_Transfer(t *testing.T) {
 	require.NoError(t, err)
 	require.EqualValues(t, storedTransaction, decodedStoredTx)
 
-	storedTxReceipt := MakeStoredTxReceiptFromTransfer(transfer)
-	decodedTransfer := decodedStoredTx.ToTransfer(&storedTxReceipt)
+	storedTxReceipt := NewStoredTxReceiptFromTransfer(transfer)
+	decodedTransfer := decodedStoredTx.ToTransfer(storedTxReceipt)
 	require.Equal(t, *transfer, *decodedTransfer)
 }
 
@@ -72,25 +72,25 @@ func TestStoredTx_Bytes_Create2Transfer(t *testing.T) {
 	require.NoError(t, err)
 	require.EqualValues(t, storedTransaction, decodedStoredTx)
 
-	storedTxReceipt := MakeStoredTxReceiptFromCreate2Transfer(transfer)
-	decodedTransfer := decodedStoredTx.ToCreate2Transfer(&storedTxReceipt)
+	storedTxReceipt := NewStoredTxReceiptFromCreate2Transfer(transfer)
+	decodedTransfer := decodedStoredTx.ToCreate2Transfer(storedTxReceipt)
 	require.Equal(t, *transfer, *decodedTransfer)
 }
 
 func TestStoredTx_ToTransfer_InvalidType(t *testing.T) {
 	tx := MakeStoredTxFromCreate2Transfer(&Create2Transfer{})
-	txReceipt := MakeStoredTxReceiptFromCreate2Transfer(&Create2Transfer{})
+	txReceipt := NewStoredTxReceiptFromCreate2Transfer(&Create2Transfer{})
 
 	require.Panics(t, func() {
-		tx.ToTransfer(&txReceipt)
+		tx.ToTransfer(txReceipt)
 	})
 }
 
 func TestStoredTx_ToCreate2Transfer_InvalidType(t *testing.T) {
 	tx := MakeStoredTxFromTransfer(&Transfer{})
-	txReceipt := MakeStoredTxReceiptFromTransfer(&Transfer{})
+	txReceipt := NewStoredTxReceiptFromTransfer(&Transfer{})
 
 	require.Panics(t, func() {
-		tx.ToCreate2Transfer(&txReceipt)
+		tx.ToCreate2Transfer(txReceipt)
 	})
 }

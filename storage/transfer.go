@@ -16,7 +16,7 @@ import (
 func (s *TransactionStorage) AddTransfer(t *models.Transfer) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
 		if t.CommitmentID != nil || t.ErrorMessage != nil {
-			err := txStorage.database.Badger.Insert(t.Hash, models.MakeStoredTxReceiptFromTransfer(t))
+			err := txStorage.database.Badger.Insert(t.Hash, *models.NewStoredTxReceiptFromTransfer(t))
 			if err != nil {
 				return err
 			}
@@ -126,9 +126,9 @@ func (s *TransactionStorage) GetTransfersByCommitmentID(id *models.CommitmentID)
 func (s *TransactionStorage) MarkTransfersAsIncluded(txs []models.Transfer, commitmentID *models.CommitmentID) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
 		for i := range txs {
-			txReceipt := models.MakeStoredTxReceiptFromTransfer(&txs[i])
+			txReceipt := models.NewStoredTxReceiptFromTransfer(&txs[i])
 			txReceipt.CommitmentID = commitmentID
-			err := txStorage.addStoredTxReceipt(&txReceipt)
+			err := txStorage.addStoredTxReceipt(txReceipt)
 			if err != nil {
 				return err
 			}
