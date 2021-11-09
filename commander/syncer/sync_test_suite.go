@@ -111,8 +111,7 @@ func (s *syncTestSuite) syncAllBatches() {
 	s.NoError(err)
 
 	for i := range newRemoteBatches {
-		remoteBatch := &newRemoteBatches[i]
-		err = s.syncCtx.SyncBatch(remoteBatch)
+		err = s.syncCtx.SyncBatch(newRemoteBatches[i])
 		s.NoError(err)
 	}
 }

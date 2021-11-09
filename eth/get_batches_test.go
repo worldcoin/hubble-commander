@@ -75,8 +75,8 @@ func (s *GetBatchesTestSuite) TestGetAllBatches() {
 	batches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(batches, 2)
-	s.Equal(batch1.ID, batches[0].ID)
-	s.Equal(batch2.ID, batches[1].ID)
+	s.Equal(batch1.ID, batches[0].GetID())
+	s.Equal(batch2.ID, batches[1].GetID())
 }
 
 func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBlockNumber() {

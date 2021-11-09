@@ -25,18 +25,13 @@ type BatchesFilters struct {
 	FilterByBatchID     func(batchID *models.Uint256) bool
 }
 
-func (c *TestClient) GetAllBatches() ([]DecodedTxBatch, error) {
+func (c *TestClient) GetAllBatches() ([]DecodedBatch, error) {
 	batches, err := c.GetBatches(&BatchesFilters{})
 	if err != nil {
 		return nil, err
 	}
 
-	//TODO-sync: change to return DecodedBatches
-	txBatches := make([]DecodedTxBatch, 0, len(batches))
-	for i := range batches {
-		txBatches = append(txBatches, *batches[i].ToDecodedTxBatch())
-	}
-	return txBatches, nil
+	return batches, nil
 }
 
 func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {

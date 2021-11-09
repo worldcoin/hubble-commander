@@ -9,6 +9,7 @@ import (
 )
 
 type DecodedBatch interface {
+	GetID() models.Uint256
 	GetBatch() *models.Batch
 	ToDecodedTxBatch() *DecodedTxBatch
 	ToDecodedDepositBatch() *DecodedDepositBatch
@@ -36,6 +37,10 @@ func newDecodedBatch(batch *models.Batch) DecodedBatch {
 type DecodedTxBatch struct {
 	models.Batch
 	Commitments []encoder.DecodedCommitment
+}
+
+func (b *DecodedTxBatch) GetID() models.Uint256 {
+	return b.Batch.ID
 }
 
 func (b *DecodedTxBatch) GetBatch() *models.Batch {
@@ -82,6 +87,10 @@ func (b *DecodedTxBatch) verifyBatchHash() error {
 type DecodedDepositBatch struct {
 	models.Batch
 	PathAtDepth uint32
+}
+
+func (b *DecodedDepositBatch) GetID() models.Uint256 {
+	return b.Batch.ID
 }
 
 func (b *DecodedDepositBatch) GetBatch() *models.Batch {

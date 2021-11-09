@@ -132,13 +132,14 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 	s.Len(batches, 1)
 
 	s.client.Account = s.client.Accounts[1]
-	err = s.cmd.syncRemoteBatch(&batches[0])
+	err = s.cmd.syncRemoteBatch(batches[0])
 	s.NoError(err)
 
-	batch, err := s.cmd.storage.GetBatch(batches[0].ID)
+	batch, err := s.cmd.storage.GetBatch(batches[0].GetID())
 	s.NoError(err)
-	s.Equal(batches[0].Batch, *batch)
+	s.Equal(*batches[0].GetBatch(), *batch)
 
+	txBatch := batches[0].ToDecodedTxBatch()
 	expectedCommitment := models.TxCommitment{
 		CommitmentBase: models.CommitmentBase{
 			ID: models.CommitmentID{
@@ -146,12 +147,12 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 				IndexInBatch: 0,
 			},
 			Type:          batchtype.Transfer,
-			PostStateRoot: batches[0].Commitments[0].StateRoot,
+			PostStateRoot: txBatch.Commitments[0].StateRoot,
 		},
-		FeeReceiver:       batches[0].Commitments[0].FeeReceiver,
-		CombinedSignature: batches[0].Commitments[0].CombinedSignature,
+		FeeReceiver:       txBatch.Commitments[0].FeeReceiver,
+		CombinedSignature: txBatch.Commitments[0].CombinedSignature,
 	}
-	expectedCommitment.BodyHash = batches[0].Commitments[0].BodyHash(*batch.AccountTreeRoot)
+	expectedCommitment.BodyHash = txBatch.Commitments[0].BodyHash(*batch.AccountTreeRoot)
 	commitment, err := s.cmd.storage.GetTxCommitment(&expectedCommitment.ID)
 	s.NoError(err)
 	s.Equal(expectedCommitment, *commitment)
@@ -180,12 +181,12 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithTooManyTxs() {
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	s.updateBatchAfterSubmission(&remoteBatches[0])
+	s.updateBatchAfterSubmission(remoteBatches[0].ToDecodedTxBatch())
 
-	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
+	err = s.cmd.syncRemoteBatch(remoteBatches[1])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
-	s.checkBatchAfterDispute(remoteBatches[1].ID)
+	s.checkBatchAfterDispute(remoteBatches[1].GetID())
 }
 
 func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidPostStateRoot() {
@@ -204,12 +205,12 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidPostState
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	s.updateBatchAfterSubmission(&remoteBatches[0])
+	s.updateBatchAfterSubmission(remoteBatches[0].ToDecodedTxBatch())
 
-	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
+	err = s.cmd.syncRemoteBatch(remoteBatches[1])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
-	s.checkBatchAfterDispute(remoteBatches[1].ID)
+	s.checkBatchAfterDispute(remoteBatches[1].GetID())
 }
 
 func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidSignature() {
@@ -227,10 +228,10 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidSign
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.cmd.syncRemoteBatch(&remoteBatches[0])
+	err = s.cmd.syncRemoteBatch(remoteBatches[0])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
-	s.checkBatchAfterDispute(remoteBatches[0].ID)
+	s.checkBatchAfterDispute(remoteBatches[0].GetID())
 }
 
 func (s *BatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDisputesFraudulentOne() {
@@ -254,13 +255,13 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDisputesFr
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	s.updateBatchAfterSubmission(&remoteBatches[0])
+	s.updateBatchAfterSubmission(remoteBatches[0].ToDecodedTxBatch())
 
 	s.client.Account = s.client.Accounts[1]
-	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
+	err = s.cmd.syncRemoteBatch(remoteBatches[1])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
-	s.checkBatchAfterDispute(remoteBatches[1].ID)
+	s.checkBatchAfterDispute(remoteBatches[1].GetID())
 	_, err = s.cmd.storage.GetBatch(localBatch.ID)
 	s.True(st.IsNotFoundError(err))
 }
@@ -278,10 +279,10 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentCommitmentAfter
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.cmd.syncRemoteBatch(&remoteBatches[0])
+	err = s.cmd.syncRemoteBatch(remoteBatches[0])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
-	s.checkBatchAfterDispute(remoteBatches[0].ID)
+	s.checkBatchAfterDispute(remoteBatches[0].GetID())
 }
 
 func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidFeeReceiverTokenID() {
@@ -310,12 +311,12 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidFeeR
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	s.updateBatchAfterSubmission(&remoteBatches[0])
+	s.updateBatchAfterSubmission(remoteBatches[0].ToDecodedTxBatch())
 
-	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
+	err = s.cmd.syncRemoteBatch(remoteBatches[1])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
-	s.checkBatchAfterDispute(remoteBatches[1].ID)
+	s.checkBatchAfterDispute(remoteBatches[1].GetID())
 }
 
 func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithoutTransfersAndInvalidPostStateRoot() {
@@ -336,12 +337,12 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithoutTransfer
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	s.updateBatchAfterSubmission(&remoteBatches[0])
+	s.updateBatchAfterSubmission(remoteBatches[0].ToDecodedTxBatch())
 
-	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
+	err = s.cmd.syncRemoteBatch(remoteBatches[1])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
-	s.checkBatchAfterDispute(remoteBatches[1].ID)
+	s.checkBatchAfterDispute(remoteBatches[1].GetID())
 }
 
 func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithNonexistentSender() {
@@ -365,12 +366,12 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithNonexistent
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	s.updateBatchAfterSubmission(&remoteBatches[0])
+	s.updateBatchAfterSubmission(remoteBatches[0].ToDecodedTxBatch())
 
-	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
+	err = s.cmd.syncRemoteBatch(remoteBatches[1])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
-	s.checkBatchAfterDispute(remoteBatches[1].ID)
+	s.checkBatchAfterDispute(remoteBatches[1].GetID())
 }
 
 func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesC2TWithNonRegisteredReceiverPublicKey() {
@@ -415,12 +416,12 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesC2TWithNonRegisteredRecei
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	s.updateBatchAfterSubmission(&remoteBatches[0])
+	s.updateBatchAfterSubmission(remoteBatches[0].ToDecodedTxBatch())
 
-	err = s.cmd.syncRemoteBatch(&remoteBatches[1])
+	err = s.cmd.syncRemoteBatch(remoteBatches[1])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
-	s.checkBatchAfterDispute(remoteBatches[1].ID)
+	s.checkBatchAfterDispute(remoteBatches[1].GetID())
 }
 
 func (s *BatchesTestSuite) TestSyncRemoteBatch_AllowsTransferToNonexistentReceiver() {
