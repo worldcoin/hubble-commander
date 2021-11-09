@@ -22,25 +22,16 @@ func NewContext(
 	batchType batchtype.BatchType,
 ) *Context {
 	tx, txStorage := storage.BeginTransaction(st.TxOptions{})
-
-	switch batchType {
-	case batchtype.Transfer, batchtype.Create2Transfer:
-		return newContext(txStorage, tx, client, newTxsContext(txStorage, client, cfg, batchType))
-	case batchtype.Deposit:
-		return newContext(txStorage, tx, client, newDepositsContext(txStorage, client, cfg))
-	case batchtype.Genesis, batchtype.MassMigration:
-		panic("invalid batch type")
-	}
-	return nil
+	return newContext(txStorage, tx, client, cfg, batchType)
 }
 
 func NewTestContext(
 	storage *st.Storage,
-	tx *db.TxController,
 	client *eth.Client,
-	syncCtx batchContext,
+	cfg *config.RollupConfig,
+	batchType batchtype.BatchType,
 ) *Context {
-	return newContext(storage, tx, client, syncCtx)
+	return newContext(storage, nil, client, cfg, batchType)
 }
 
 func (c *Context) Commit() error {
@@ -53,15 +44,25 @@ func (c *Context) Rollback(cause *error) {
 }
 
 func newContext(
-	storage *st.Storage,
+	txStorage *st.Storage,
 	tx *db.TxController,
 	client *eth.Client,
-	syncCtx batchContext,
+	cfg *config.RollupConfig,
+	batchType batchtype.BatchType,
 ) *Context {
+	var batchCtx batchContext
+	switch batchType {
+	case batchtype.Transfer, batchtype.Create2Transfer:
+		batchCtx = newTxsContext(txStorage, client, cfg, batchType)
+	case batchtype.Deposit:
+		batchCtx = newDepositsContext(txStorage, client, cfg)
+	case batchtype.Genesis, batchtype.MassMigration:
+		panic("invalid batch type")
+	}
 	return &Context{
-		storage:  storage,
+		storage:  txStorage,
 		tx:       tx,
 		client:   client,
-		batchCtx: syncCtx,
+		batchCtx: batchCtx,
 	}
 }
