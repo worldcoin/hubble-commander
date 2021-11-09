@@ -15,7 +15,7 @@ import (
 var ErrBatchSubmissionFailed = errors.New("previous submit batch transaction failed")
 
 func (c *Context) SyncBatch(remoteBatch eth.DecodedBatch) error {
-	localBatch, err := c.storage.GetBatch(remoteBatch.GetBatch().ID)
+	localBatch, err := c.storage.GetBatch(remoteBatch.GetID())
 	if err != nil && !st.IsNotFoundError(err) {
 		return err
 	}
@@ -29,7 +29,7 @@ func (c *Context) SyncBatch(remoteBatch eth.DecodedBatch) error {
 
 func (c *Context) syncNewBatch(remoteBatch eth.DecodedBatch) error {
 	batch := remoteBatch.GetBatch()
-	log.Debugf("Syncing new %s batch #%s with %d commitment(s) from chain", batch.Type.String(), batch.ID.String(), remoteBatch.GetCommitmentsLength())
+	logSyncingBatch(batch, remoteBatch.GetCommitmentsLength())
 	err := c.storage.AddBatch(batch)
 	if err != nil {
 		return err
@@ -40,8 +40,24 @@ func (c *Context) syncNewBatch(remoteBatch eth.DecodedBatch) error {
 		return err
 	}
 
-	log.Printf("Synced new %s batch #%s with %d commitment(s) from chain", batch.Type.String(), batch.ID.String(), remoteBatch.GetCommitmentsLength())
+	logSyncedBatch(batch, remoteBatch.GetCommitmentsLength())
 	return nil
+}
+
+func logSyncingBatch(batch *models.Batch, commitmentLength int) {
+	log.Debugf("Syncing new %s batch #%s with %d commitment(s) from chain",
+		batch.Type.String(),
+		batch.ID.String(),
+		commitmentLength,
+	)
+}
+
+func logSyncedBatch(batch *models.Batch, commitmentLength int) {
+	log.Printf("Synced new %s batch #%s with %d commitment(s) from chain",
+		batch.Type.String(),
+		batch.ID.String(),
+		commitmentLength,
+	)
 }
 
 func (c *Context) syncExistingBatch(remoteBatch eth.DecodedBatch, localBatch *models.Batch) error {
