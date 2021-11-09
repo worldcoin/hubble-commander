@@ -15,7 +15,7 @@ import (
 func (s *TransactionStorage) AddCreate2Transfer(t *models.Create2Transfer) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
 		if t.CommitmentID != nil || t.ErrorMessage != nil || t.ToStateID != nil {
-			err := txStorage.database.Badger.Insert(t.Hash, *models.NewStoredTxReceiptFromCreate2Transfer(t))
+			err := txStorage.addStoredTxReceipt(models.NewStoredTxReceiptFromCreate2Transfer(t))
 			if err != nil {
 				return err
 			}

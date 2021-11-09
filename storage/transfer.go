@@ -16,7 +16,7 @@ import (
 func (s *TransactionStorage) AddTransfer(t *models.Transfer) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
 		if t.CommitmentID != nil || t.ErrorMessage != nil {
-			err := txStorage.database.Badger.Insert(t.Hash, *models.NewStoredTxReceiptFromTransfer(t))
+			err := txStorage.addStoredTxReceipt(models.NewStoredTxReceiptFromTransfer(t))
 			if err != nil {
 				return err
 			}
