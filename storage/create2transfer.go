@@ -20,7 +20,7 @@ func (s *TransactionStorage) AddCreate2Transfer(t *models.Create2Transfer) error
 				return err
 			}
 		}
-		return txStorage.database.Badger.Insert(t.Hash, models.MakeStoredTxFromCreate2Transfer(t))
+		return txStorage.database.Badger.Insert(t.Hash, *models.NewStoredTxFromCreate2Transfer(t))
 	})
 }
 

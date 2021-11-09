@@ -34,8 +34,8 @@ type StoredTx struct {
 	Body TxBody
 }
 
-func MakeStoredTxFromTransfer(t *Transfer) StoredTx {
-	return StoredTx{
+func NewStoredTxFromTransfer(t *Transfer) *StoredTx {
+	return &StoredTx{
 		Hash:        t.Hash,
 		TxType:      t.TxType,
 		FromStateID: t.FromStateID,
@@ -50,8 +50,8 @@ func MakeStoredTxFromTransfer(t *Transfer) StoredTx {
 	}
 }
 
-func MakeStoredTxFromCreate2Transfer(t *Create2Transfer) StoredTx {
-	return StoredTx{
+func NewStoredTxFromCreate2Transfer(t *Create2Transfer) *StoredTx {
+	return &StoredTx{
 		Hash:        t.Hash,
 		TxType:      t.TxType,
 		FromStateID: t.FromStateID,
