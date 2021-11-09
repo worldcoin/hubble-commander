@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/utils"
 	log "github.com/sirupsen/logrus"
 )
@@ -21,8 +22,10 @@ type payload struct {
 	Method string `json:"method"`
 }
 
-func Logger(next http.Handler) http.Handler {
+func Logger(next http.Handler, commanderMetrics *metrics.CommanderMetrics) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		countRequest(commanderMetrics)
+
 		start := time.Now()
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {

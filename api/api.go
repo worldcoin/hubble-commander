@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -23,7 +24,7 @@ type API struct {
 	disableSignatures bool
 }
 
-func NewAPIServer(cfg *config.Config, storage *st.Storage, client *eth.Client) (*http.Server, error) {
+func NewAPIServer(cfg *config.Config, storage *st.Storage, client *eth.Client, metrics *metrics.CommanderMetrics) (*http.Server, error) {
 	server, err := getAPIServer(cfg.API, storage, client, cfg.Rollup.DisableSignatures)
 	if err != nil {
 		return nil, err
@@ -31,9 +32,9 @@ func NewAPIServer(cfg *config.Config, storage *st.Storage, client *eth.Client) (
 
 	mux := http.NewServeMux()
 	if log.IsLevelEnabled(log.DebugLevel) {
-		mux.Handle("/", middleware.Logger(server))
+		mux.Handle("/", middleware.Logger(server, metrics))
 	} else {
-		mux.HandleFunc("/", server.ServeHTTP)
+		mux.Handle("/", middleware.DefaultHandler(server, metrics))
 	}
 
 	addr := fmt.Sprintf(":%s", cfg.API.Port)

@@ -85,12 +85,17 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.apiServer, err = api.NewAPIServer(c.cfg, c.storage, c.client)
+	c.metrics = &metrics.CommanderMetrics{}
+
+	c.apiServer, err = api.NewAPIServer(c.cfg, c.storage, c.client, c.metrics)
 	if err != nil {
 		return err
 	}
 
-	c.metricsServer, c.metrics = metrics.NewMetricsServer(c.cfg.Metrics)
+	metricsServer, registry := metrics.NewMetricsServer(c.cfg.Metrics)
+	c.metricsServer = metricsServer
+
+	metrics.NewCommanderMetrics(c.metrics, registry)
 
 	c.workersContext, c.stopWorkers = context.WithCancel(context.Background())
 
