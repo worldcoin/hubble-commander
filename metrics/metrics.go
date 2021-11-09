@@ -15,6 +15,7 @@ type CommanderMetrics struct {
 
 	// API
 	ApiTotalRequestsCounter *prometheus.Counter
+	ApiRequestDuration      *prometheus.Histogram
 }
 
 func NewMetricsServer(cfg *config.MetricsConfig) (*http.Server, *prometheus.Registry) {
@@ -39,12 +40,34 @@ func NewCommanderMetrics(metrics *CommanderMetrics, registry *prometheus.Registr
 		Help:      "Number of total requests made to the commander API",
 	})
 
+	apiRequestDuration := prometheus.NewHistogram(prometheus.HistogramOpts{
+		Namespace: "api",
+		Subsystem: "general",
+		Name:      "request_duration_milliseconds",
+		Help:      "Histogram of API requests duration",
+		Buckets: []float64{
+			0.0,
+			100.0,
+			200.0,
+			300.0,
+			400.0,
+			500.0,
+			600.0,
+			700.0,
+			800.0,
+			900.0,
+			1000.0,
+		},
+	})
+
 	registry.MustRegister(
 		apiTotalRequestsCounter,
+		apiRequestDuration,
 	)
 
 	metrics.registry = registry
 	metrics.ApiTotalRequestsCounter = &apiTotalRequestsCounter
+	metrics.ApiRequestDuration = &apiRequestDuration
 }
 
 func IncrementCounter(counter *prometheus.Counter) {

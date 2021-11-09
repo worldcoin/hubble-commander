@@ -33,22 +33,25 @@ func Logger(next http.Handler, commanderMetrics *metrics.CommanderMetrics) http.
 		}
 		r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 
-		defer logRequest(body, start)
+		defer func() {
+			duration := measureRequestDuration(start, commanderMetrics)
+			logRequest(body, duration)
+		}()
 		next.ServeHTTP(w, r)
 	})
 }
 
-func logRequest(body []byte, start time.Time) {
+func logRequest(body []byte, duration time.Duration) {
 	var decoded payload
 
 	err := json.Unmarshal(body, &decoded)
 	if err != nil {
-		logBatchRequest(body, start)
+		logBatchRequest(body, duration)
 		return
 	}
 
 	if shouldMethodBeLogged(decoded.Method) {
-		log.Debugf("API: method: %v, duration: %v", decoded.Method, time.Since(start).Round(time.Millisecond).String())
+		log.Debugf("API: method: %v, duration: %v", decoded.Method, duration.String())
 	}
 }
 
@@ -62,7 +65,7 @@ func shouldMethodBeLogged(method string) bool {
 	return !utils.StringInSlice(split[1], disabledAPIMethods)
 }
 
-func logBatchRequest(body []byte, start time.Time) {
+func logBatchRequest(body []byte, duration time.Duration) {
 	var decoded []payload
 	err := json.Unmarshal(body, &decoded)
 	if err != nil {
@@ -70,7 +73,7 @@ func logBatchRequest(body []byte, start time.Time) {
 		return
 	}
 	methodsArray := extractMethodNames(decoded)
-	log.Debugf("API: batch call, methods: %s, duration: %v", methodsArray, time.Since(start).Round(time.Millisecond).String())
+	log.Debugf("API: batch call, methods: %s, duration: %v", methodsArray, duration.String())
 }
 
 func extractMethodNames(decoded []payload) string {

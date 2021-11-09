@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/metrics"
 )
@@ -10,6 +11,15 @@ func DefaultHandler(next http.Handler, commanderMetrics *metrics.CommanderMetric
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		countRequest(commanderMetrics)
 
+		start := time.Now()
+		defer measureRequestDuration(start, commanderMetrics)
+
 		next.ServeHTTP(w, r)
 	})
+}
+
+func measureRequestDuration(start time.Time, commanderMetrics *metrics.CommanderMetrics) time.Duration {
+	duration := time.Since(start).Round(time.Millisecond)
+	metrics.ObserveHistogram(commanderMetrics.ApiRequestDuration, float64(duration))
+	return duration
 }
