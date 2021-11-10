@@ -24,7 +24,7 @@ type payload struct {
 
 func Logger(next http.Handler, commanderMetrics *metrics.CommanderMetrics) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		countRequest(commanderMetrics)
+		commanderMetrics.APITotalRequests.Inc()
 
 		start := time.Now()
 		body, err := ioutil.ReadAll(r.Body)

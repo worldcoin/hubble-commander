@@ -9,7 +9,7 @@ import (
 
 func DefaultHandler(next http.Handler, commanderMetrics *metrics.CommanderMetrics) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		countRequest(commanderMetrics)
+		commanderMetrics.APITotalRequests.Inc()
 
 		start := time.Now()
 		defer measureRequestDuration(start, commanderMetrics)

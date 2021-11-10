@@ -75,7 +75,7 @@ func (c *CommanderMetrics) initializeMetricsForAPI() {
 		totalFailedTransactions,
 	)
 
-	c.APITotalRequestsCounter = totalRequests
+	c.APITotalRequests = totalRequests
 	c.APIRequestDuration = requestsDuration
 	c.APITotalTransactions = totalTransactions
 	c.APITotalFailedTransactions = totalFailedTransactions

@@ -9,7 +9,7 @@ type CommanderMetrics struct {
 	registry *prometheus.Registry
 
 	// API
-	APITotalRequestsCounter    prometheus.Counter
+	APITotalRequests           prometheus.Counter
 	APIRequestDuration         prometheus.Histogram
 	APITotalTransactions       *prometheus.CounterVec
 	APITotalFailedTransactions prometheus.Counter
