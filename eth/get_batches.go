@@ -69,6 +69,7 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 
 		decodedBatch, err := c.getBatchIfExists(events[i], tx)
 		if errors.Is(err, errBatchAlreadyRolledBack) {
+			// TODO: handle deposit rollbacks after https://github.com/thehubbleproject/hubble-contracts/issues/671
 			continue
 		}
 		if err != nil {

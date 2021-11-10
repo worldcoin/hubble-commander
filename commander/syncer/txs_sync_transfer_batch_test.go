@@ -307,7 +307,6 @@ func (s *SyncTransferBatchTestSuite) submitTransferBatchWithNonexistentFeeReceiv
 	s.NoError(txErr)
 	s.NoError(appErr)
 
-	//TODO-sync: change to use syncer safely
 	_, commitmentErr, appErr := s.syncCtx.batchSyncer.(*TxsContext).Syncer.ApplyFee(feeReceiverStateID, &commitmentTokenID, &tx.Fee)
 	s.NoError(commitmentErr)
 	s.NoError(appErr)

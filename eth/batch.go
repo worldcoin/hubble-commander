@@ -119,6 +119,5 @@ func (b *DecodedDepositBatch) GetCommitmentsLength() int {
 }
 
 func (b *DecodedDepositBatch) verifyBatchHash() error {
-	// cannot verify deposit batch hash at this point
 	return nil
 }
