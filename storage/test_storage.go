@@ -21,8 +21,13 @@ func NewTestStorage() (*TestStorage, error) {
 		Badger: badgerTestDB.DB,
 	}
 
+	storage, err := newStorageFromDatabase(database)
+	if err != nil {
+		return nil, err
+	}
+
 	return &TestStorage{
-		Storage:  newStorageFromDatabase(database),
+		Storage:  storage,
 		Teardown: badgerTestDB.Teardown,
 	}, nil
 }

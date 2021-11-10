@@ -15,10 +15,33 @@ type TransactionStorage struct {
 	database *Database
 }
 
-func NewTransactionStorage(database *Database) *TransactionStorage {
+func NewTransactionStorage(database *Database) (*TransactionStorage, error) {
+	err := initializeIndex(database, models.StoredTxReceiptName, "ToStateID", uint32(0))
+	if err != nil {
+		return nil, err
+	}
+
 	return &TransactionStorage{
 		database: database,
+	}, nil
+}
+
+func initializeIndex(database *Database, typeName []byte, indexName string, zeroValue interface{}) error {
+	encodedZeroValue, err := db.Encode(zeroValue)
+	if err != nil {
+		return err
 	}
+	zeroValueIndexKey := db.IndexKey(typeName, indexName, encodedZeroValue)
+
+	emptyKeyList := make(bh.KeyList, 0)
+	encodedEmptyKeyList, err := db.Encode(emptyKeyList)
+	if err != nil {
+		return err
+	}
+
+	return database.Badger.RawUpdate(func(txn *bdg.Txn) error {
+		return txn.Set(zeroValueIndexKey, encodedEmptyKeyList)
+	})
 }
 
 func (s *TransactionStorage) copyWithNewDatabase(database *Database) *TransactionStorage {
@@ -28,13 +51,18 @@ func (s *TransactionStorage) copyWithNewDatabase(database *Database) *Transactio
 	return &newTransactionStorage
 }
 
+// TODO remove unused
 func (s *TransactionStorage) BeginTransaction(opts TxOptions) (*db.TxController, *TransactionStorage, error) {
 	txController, txDatabase := s.database.BeginTransaction(opts)
 
-	txTransactionStorage := NewTransactionStorage(txDatabase)
+	txTransactionStorage, err := NewTransactionStorage(txDatabase)
+	if err != nil {
+		return nil, nil, err
+	}
 	return txController, txTransactionStorage, nil
 }
 
+// TODO deduplicate
 func (s *TransactionStorage) executeInTransaction(opts TxOptions, fn func(txStorage *TransactionStorage) error) error {
 	return s.database.ExecuteInTransaction(opts, func(txDatabase *Database) error {
 		return fn(s.copyWithNewDatabase(txDatabase))

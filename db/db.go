@@ -61,6 +61,13 @@ func (d *Database) View(fn func(txn *badger.Txn) error) error {
 	return d.store.Badger().View(fn)
 }
 
+func (d *Database) RawUpdate(fn func(txn *badger.Txn) error) error {
+	if d.duringUpdateTransaction() {
+		return fn(d.txn)
+	}
+	return d.store.Badger().Update(fn)
+}
+
 func (d *Database) Find(result interface{}, query *bh.Query) error {
 	if d.duringTransaction() {
 		return d.store.TxFind(d.txn, result, query)

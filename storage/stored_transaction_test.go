@@ -299,7 +299,8 @@ func (s *StoredTransactionTestSuite) TestAddStoredTxReceipt_IndexOnToStateIDWork
 	s.addStoredTxReceipt(ref.Uint32(1))
 
 	indexValues := s.getToStateIDIndexValues()
-	s.Len(indexValues, 2)
+	s.Len(indexValues, 3)
+	s.Len(indexValues[0], 0) // value set due to index initialization, see NewTransactionStorage
 	s.Len(indexValues[1], 2)
 	s.Len(indexValues[2], 1)
 }
@@ -308,7 +309,8 @@ func (s *StoredTransactionTestSuite) TestAddStoredTxReceipt_ValuesWithNilToState
 	s.addStoredTxReceipt(nil)
 
 	indexValues := s.getToStateIDIndexValues()
-	s.Len(indexValues, 0)
+	s.Len(indexValues, 1)
+	s.Len(indexValues[0], 0) // value set due to index initialization, see NewTransactionStorage
 }
 
 // TODO do the same test for StoredTx
@@ -317,7 +319,6 @@ func (s *StoredTransactionTestSuite) TestAddStoredTxReceipt_ValuesWithNilToState
 //   * StoredTxReceipt.Indexes() method
 //   * indexExists() function in BadgerHold (https://github.com/timshannon/badgerhold/blob/v4.0.1/index.go#L148)
 func (s *StoredTransactionTestSuite) TestStoredTxReceipt_FindUsingIndexWorksWhenThereAreOnlyStoredTxReceiptsWithNilToStateID() {
-	s.T().SkipNow() // TODO unskip
 	err := s.storage.addStoredTxReceipt(&models.StoredTxReceipt{Hash: utils.RandomHash()})
 	s.NoError(err)
 
