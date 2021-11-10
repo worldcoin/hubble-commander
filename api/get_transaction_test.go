@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
@@ -37,6 +38,7 @@ func (s *GetTransactionTestSuite) SetupTest() {
 		cfg:               &config.APIConfig{},
 		storage:           s.storage.Storage,
 		client:            eth.DomainOnlyTestClient,
+		commanderMetrics:  metrics.NewCommanderMetrics(),
 		disableSignatures: false,
 	}
 

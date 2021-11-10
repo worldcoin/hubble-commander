@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -45,9 +46,10 @@ func (s *SendCreate2TransferTestSuite) SetupTest() {
 	s.NoError(err)
 
 	s.api = &API{
-		cfg:     &config.APIConfig{},
-		storage: s.storage.Storage,
-		client:  eth.DomainOnlyTestClient,
+		cfg:              &config.APIConfig{},
+		storage:          s.storage.Storage,
+		client:           eth.DomainOnlyTestClient,
+		commanderMetrics: metrics.NewCommanderMetrics(),
 	}
 
 	s.domain, err = s.api.client.GetDomain()
