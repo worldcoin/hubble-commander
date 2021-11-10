@@ -2,6 +2,7 @@ package executor
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,12 +19,12 @@ func (c *ExecutionContext) revertBatchesFrom(startBatchID *models.Uint256) error
 	if err != nil {
 		return err
 	}
-	numBatches := len(batches)
-	batchIDs := make([]models.Uint256, 0, numBatches)
+
+	batchIDs := make([]models.Uint256, 0, len(batches))
 	for i := range batches {
 		batchIDs = append(batchIDs, batches[i].ID)
 	}
-	err = c.excludeTransactionsFromCommitment(batchIDs...)
+	err = c.revertCommitments(batches)
 	if err != nil {
 		return err
 	}
@@ -31,11 +32,48 @@ func (c *ExecutionContext) revertBatchesFrom(startBatchID *models.Uint256) error
 	if err != nil {
 		return err
 	}
-	logrus.Debugf("Removing %d local batches", numBatches)
+	logrus.Debugf("Removing %d local batches", len(batches))
 	return c.storage.DeleteBatches(batchIDs...)
 }
 
+func (c *ExecutionContext) revertCommitments(batches []models.Batch) error {
+	txBatchIDs := make([]models.Uint256, 0, len(batches))
+	for i := range batches {
+		switch batches[i].Type {
+		case batchtype.Transfer, batchtype.Create2Transfer:
+			txBatchIDs = append(txBatchIDs, batches[i].ID)
+		case batchtype.Deposit:
+			err := c.revertDepositCommitment(batches[i].ID)
+			if err != nil {
+				return err
+			}
+		case batchtype.Genesis, batchtype.MassMigration:
+			panic("batch types not supported")
+		}
+	}
+	return c.excludeTransactionsFromCommitment(txBatchIDs...)
+}
+
+func (c *ExecutionContext) revertDepositCommitment(batchID models.Uint256) error {
+	commitment, err := c.storage.GetDepositCommitment(&models.CommitmentID{
+		BatchID:      batchID,
+		IndexInBatch: 0,
+	})
+	if err != nil {
+		return err
+	}
+
+	return c.storage.AddPendingDepositSubTree(&models.PendingDepositSubTree{
+		ID:       commitment.SubTreeID,
+		Root:     commitment.SubTreeRoot,
+		Deposits: commitment.Deposits,
+	})
+}
+
 func (c *ExecutionContext) excludeTransactionsFromCommitment(batchIDs ...models.Uint256) error {
+	if len(batchIDs) == 0 {
+		return nil
+	}
 	hashes, err := c.storage.GetTransactionHashesByBatchIDs(batchIDs...)
 	if err != nil {
 		return err
