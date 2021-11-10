@@ -4,13 +4,16 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
+	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 var (
@@ -290,6 +293,17 @@ func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs_NoTransa
 	s.Nil(hashes)
 }
 
+func (s *StoredTransactionTestSuite) TestAddStoredTxReceipt_IndexOnToStateIDWorks() {
+	s.addStoredTxReceipt(ref.Uint32(1))
+	s.addStoredTxReceipt(ref.Uint32(2))
+	s.addStoredTxReceipt(ref.Uint32(1))
+
+	indexValues := s.getToStateIDIndexValues()
+	s.Len(indexValues, 2)
+	s.Len(indexValues[1], 2)
+	s.Len(indexValues[2], 1)
+}
+
 func (s *StoredTransactionTestSuite) addTransfersInCommitment(batchID *models.Uint256, transfers []models.Transfer) {
 	for i := range transfers {
 		transfers[i].CommitmentID = &models.CommitmentID{
@@ -299,6 +313,41 @@ func (s *StoredTransactionTestSuite) addTransfersInCommitment(batchID *models.Ui
 		err := s.storage.AddTransfer(&transfers[i])
 		s.NoError(err)
 	}
+}
+
+func (s *StoredTransactionTestSuite) addStoredTxReceipt(toStateID *uint32) {
+	receipt := &models.StoredTxReceipt{
+		Hash:      utils.RandomHash(),
+		ToStateID: toStateID,
+	}
+	err := s.storage.addStoredTxReceipt(receipt)
+	s.NoError(err)
+}
+
+func (s *StoredTransactionTestSuite) getToStateIDIndexValues() map[uint32]bh.KeyList {
+	indexValues := make(map[uint32]bh.KeyList)
+
+	indexPrefix := db.IndexKeyPrefix(models.StoredTxReceiptName, "ToStateID")
+	err := s.storage.database.Badger.Iterator(indexPrefix, db.PrefetchIteratorOpts, func(item *bdg.Item) (finish bool, err error) {
+		// Decode key
+		encodedToStateID := item.Key()[len(indexPrefix):]
+		var toStateID uint32
+		err = db.Decode(encodedToStateID, &toStateID)
+		s.NoError(err)
+
+		// Decode value
+		var keyList bh.KeyList
+		err = item.Value(func(val []byte) error {
+			return db.Decode(val, &keyList)
+		})
+		s.NoError(err)
+
+		indexValues[toStateID] = keyList
+		return false, nil
+	})
+	s.ErrorIs(err, db.ErrIteratorFinished)
+
+	return indexValues
 }
 
 func TestStoredTransactionTestSuite(t *testing.T) {
