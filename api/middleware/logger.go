@@ -34,7 +34,7 @@ func Logger(next http.Handler, commanderMetrics *metrics.CommanderMetrics) http.
 		r.Body = io.NopCloser(bytes.NewBuffer(body))
 
 		defer func() {
-			duration := metrics.MeasureDuration(start, commanderMetrics.APIRequestDuration)
+			duration := measureRequestDuration(start, commanderMetrics)
 			logRequest(body, duration)
 		}()
 		next.ServeHTTP(w, r)
