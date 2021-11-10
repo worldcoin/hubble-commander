@@ -7,11 +7,6 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-type batchContext interface {
-	SyncCommitments(batch eth.DecodedBatch) error
-	UpdateExistingBatch(batch eth.DecodedBatch) error
-}
-
 type TxsContext struct {
 	cfg       *config.RollupConfig
 	storage   *st.Storage

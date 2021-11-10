@@ -35,7 +35,7 @@ func (c *Context) syncNewBatch(remoteBatch eth.DecodedBatch) error {
 		return err
 	}
 
-	err = c.batchCtx.SyncCommitments(remoteBatch)
+	err = c.batchSyncer.SyncCommitments(remoteBatch)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func logSyncedBatch(batch *models.Batch, commitmentLength int) {
 func (c *Context) syncExistingBatch(remoteBatch eth.DecodedBatch, localBatch *models.Batch) error {
 	batch := remoteBatch.GetBatch()
 	if batch.TransactionHash == localBatch.TransactionHash {
-		err := c.batchCtx.UpdateExistingBatch(remoteBatch)
+		err := c.batchSyncer.UpdateExistingBatch(remoteBatch)
 		if err != nil {
 			return err
 		}
