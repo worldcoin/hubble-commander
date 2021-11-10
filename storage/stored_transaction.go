@@ -51,18 +51,6 @@ func (s *TransactionStorage) copyWithNewDatabase(database *Database) *Transactio
 	return &newTransactionStorage
 }
 
-// TODO remove unused
-func (s *TransactionStorage) BeginTransaction(opts TxOptions) (*db.TxController, *TransactionStorage, error) {
-	txController, txDatabase := s.database.BeginTransaction(opts)
-
-	txTransactionStorage, err := NewTransactionStorage(txDatabase)
-	if err != nil {
-		return nil, nil, err
-	}
-	return txController, txTransactionStorage, nil
-}
-
-// TODO deduplicate
 func (s *TransactionStorage) executeInTransaction(opts TxOptions, fn func(txStorage *TransactionStorage) error) error {
 	return s.database.ExecuteInTransaction(opts, func(txDatabase *Database) error {
 		return fn(s.copyWithNewDatabase(txDatabase))
