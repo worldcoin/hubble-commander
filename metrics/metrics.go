@@ -109,8 +109,3 @@ func NewCommanderMetrics() *CommanderMetrics {
 		ApiTotalFailedTransactions: apiTotalFailedTransactions,
 	}
 }
-
-func (c *CommanderMetrics) CountTransaction(transactionType txtype.TransactionType) {
-	lowercaseTxType := strings.ToLower(transactionType.String())
-	c.ApiTotalTransactions.With(prometheus.Labels{"type": lowercaseTxType}).Inc()
-}
