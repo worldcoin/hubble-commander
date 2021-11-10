@@ -266,6 +266,15 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey_NoCreate2T
 	s.Len(transfers, 0)
 }
 
+func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey_NoCreate2TransfersButSomeTransfers() {
+	err := s.storage.AddTransfer(&transfer)
+	s.NoError(err)
+
+	transfers, err := s.storage.GetCreate2TransfersByPublicKey(&account2.PublicKey)
+	s.NoError(err)
+	s.Len(transfers, 0)
+}
+
 func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID() {
 	transfer1 := create2Transfer
 	transfer1.CommitmentID = &txCommitment.ID
