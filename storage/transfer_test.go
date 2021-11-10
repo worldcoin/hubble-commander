@@ -310,9 +310,27 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 	s.Contains(userTransactions, transfers[4])
 }
 
-func (s *TransferTestSuite) TestGetTransfersByPublicKey_NoTransfers() {
+func (s *TransferTestSuite) TestGetTransfersByPublicKey_NoTransfersUnregisteredAccount() {
+	userTransfers, err := s.storage.GetTransfersByPublicKey(&models.PublicKey{9, 9, 9})
+	s.NoError(err)
+	s.Len(userTransfers, 0)
+}
+
+func (s *TransferTestSuite) TestGetTransfersByPublicKey_NoTransfersRegisteredAccount() {
 	err := s.storage.AccountTree.SetSingle(&account2)
 	s.NoError(err)
+	userTransfers, err := s.storage.GetTransfersByPublicKey(&account2.PublicKey)
+	s.NoError(err)
+	s.Len(userTransfers, 0)
+}
+
+func (s *TransferTestSuite) TestGetTransfersByPublicKey_NoTransfersButSomeCreate2Transfers() {
+	err := s.storage.AccountTree.SetSingle(&account2)
+	s.NoError(err)
+
+	err = s.storage.AddCreate2Transfer(&create2Transfer)
+	s.NoError(err)
+
 	userTransfers, err := s.storage.GetTransfersByPublicKey(&account2.PublicKey)
 	s.NoError(err)
 	s.Len(userTransfers, 0)
