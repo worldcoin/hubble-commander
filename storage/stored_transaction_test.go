@@ -313,7 +313,6 @@ func (s *StoredTransactionTestSuite) TestAddStoredTxReceipt_ValuesWithNilToState
 	s.Len(indexValues[0], 0) // value set due to index initialization, see NewTransactionStorage
 }
 
-// TODO do the same test for StoredTx
 // This test checks an edge case that we introduced by indexing ToStateID field which can be nil.
 // See: NewTransactionStorage
 func (s *StoredTransactionTestSuite) TestStoredTxReceipt_FindUsingIndexWorksWhenThereAreOnlyStoredTxReceiptsWithNilToStateID() {
