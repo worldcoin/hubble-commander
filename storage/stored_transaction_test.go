@@ -315,11 +315,12 @@ func (s *StoredTransactionTestSuite) TestAddStoredTxReceipt_ValuesWithNilToState
 
 // TODO do the same test for StoredTx
 // This test checks an edge case that we introduced by indexing ToStateID field which can be nil.
-// For reference see:
-//   * StoredTxReceipt.Indexes() method
-//   * indexExists() function in BadgerHold (https://github.com/timshannon/badgerhold/blob/v4.0.1/index.go#L148)
+// See: NewTransactionStorage
 func (s *StoredTransactionTestSuite) TestStoredTxReceipt_FindUsingIndexWorksWhenThereAreOnlyStoredTxReceiptsWithNilToStateID() {
-	err := s.storage.addStoredTxReceipt(&models.StoredTxReceipt{Hash: utils.RandomHash()})
+	err := s.storage.addStoredTxReceipt(&models.StoredTxReceipt{
+		Hash:      utils.RandomHash(),
+		ToStateID: nil, // nil values are not indexed
+	})
 	s.NoError(err)
 
 	receipts := make([]models.StoredTxReceipt, 0, 1)
