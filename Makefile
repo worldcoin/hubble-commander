@@ -104,9 +104,9 @@ bench-e2e-ci-part-4: clean-testcache
 	test-e2e-locally
 	bench-e2e-in-process
 	bench-e2e-locally
+	bench-creation-profile
+	bench-sync-profile
 	bench-e2e-ci-part-1
 	bench-e2e-ci-part-2
 	bench-e2e-ci-part-3
 	bench-e2e-ci-part-4
-	bench-creation-profile
-	bench-sync-profile
