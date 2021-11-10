@@ -79,6 +79,10 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 		return err
 	}
 
+	err = saveTxErrors(c.storage, rollupCtx.GetErrorsToStore())
+	if err != nil {
+		return err
+	}
 	return rollupCtx.Commit()
 }
 

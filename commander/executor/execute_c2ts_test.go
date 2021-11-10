@@ -100,22 +100,18 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SavesTxErrors() {
 		s.NoError(err)
 	}
 
-	transfers, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	result, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
 	s.NoError(err)
 
-	s.Len(transfers.AppliedTxs(), 3)
-	s.Len(transfers.InvalidTxs(), 2)
-	s.Len(transfers.AddedPubKeyIDs(), 3)
-	s.Len(transfers.PendingAccounts(), 1)
+	s.Len(result.AppliedTxs(), 3)
+	s.Len(result.InvalidTxs(), 2)
+	s.Len(result.AddedPubKeyIDs(), 3)
+	s.Len(result.PendingAccounts(), 1)
+	s.Len(s.txsCtx.txErrorsToStore, 2)
 
-	for i := range generatedTransfers {
-		transfer, err := s.storage.GetCreate2Transfer(generatedTransfers[i].Hash)
-		s.NoError(err)
-		if i < 3 {
-			s.Nil(transfer.ErrorMessage)
-		} else {
-			s.Equal(*transfer.ErrorMessage, applier.ErrNonceTooLow.Error())
-		}
+	for i := 0; i < result.InvalidTxs().Len(); i++ {
+		s.Equal(generatedTransfers[i+3].Hash, s.txsCtx.txErrorsToStore[i].Hash)
+		s.Equal(applier.ErrNonceTooLow.Error(), s.txsCtx.txErrorsToStore[i].ErrorMessage)
 	}
 }
 

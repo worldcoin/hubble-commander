@@ -114,25 +114,19 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SavesTxErrors() {
 	generatedTransfers := testutils.GenerateValidTransfers(3)
 	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidTransfers(2)...)
 
-	for i := range generatedTransfers {
-		err := s.storage.AddTransfer(&generatedTransfers[i])
-		s.NoError(err)
-	}
-
-	executeTxsResult, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	err := s.storage.BatchAddTransfer(generatedTransfers)
 	s.NoError(err)
 
-	s.Len(executeTxsResult.AppliedTxs(), 3)
-	s.Len(executeTxsResult.InvalidTxs(), 2)
+	result, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	s.NoError(err)
 
-	for i := range generatedTransfers {
-		transfer, err := s.storage.GetTransfer(generatedTransfers[i].Hash)
-		s.NoError(err)
-		if i < 3 {
-			s.Nil(transfer.ErrorMessage)
-		} else {
-			s.Equal(*transfer.ErrorMessage, applier.ErrNonceTooLow.Error())
-		}
+	s.Len(result.AppliedTxs(), 3)
+	s.Len(result.InvalidTxs(), 2)
+	s.Len(s.txsCtx.txErrorsToStore, 2)
+
+	for i := 0; i < result.InvalidTxs().Len(); i++ {
+		s.Equal(generatedTransfers[i+3].Hash, s.txsCtx.txErrorsToStore[i].Hash)
+		s.Equal(applier.ErrNonceTooLow.Error(), s.txsCtx.txErrorsToStore[i].ErrorMessage)
 	}
 }
 
