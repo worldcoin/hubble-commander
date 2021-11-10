@@ -304,6 +304,14 @@ func (s *StoredTransactionTestSuite) TestAddStoredTxReceipt_IndexOnToStateIDWork
 	s.Len(indexValues[2], 1)
 }
 
+func (s *StoredTransactionTestSuite) TestAddStoredTxReceipt_ValuesWithNilToStateIDAreNotIndexed() {
+	s.T().SkipNow() // TODO unskip
+	s.addStoredTxReceipt(nil)
+
+	indexValues := s.getToStateIDIndexValues()
+	s.Len(indexValues, 0)
+}
+
 func (s *StoredTransactionTestSuite) addTransfersInCommitment(batchID *models.Uint256, transfers []models.Transfer) {
 	for i := range transfers {
 		transfers[i].CommitmentID = &models.CommitmentID{
