@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/dgraph-io/badger/v3"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -119,17 +120,26 @@ func logLatestCommitment(latestCommitment *models.CommitmentBase) {
 	log.WithFields(fields).Error("rollupLoop: Sanity check on state tree root failed")
 }
 
-func saveTxErrors(storage *st.Storage, txErrors []executor.TxError) error {
+func saveTxErrors(storage *st.Storage, txErrors []executor.TxError) (err error) {
 	if len(txErrors) == 0 {
 		return nil
 	}
-	return storage.ExecuteInTransaction(st.TxOptions{}, func(txStorage *st.Storage) error {
-		for _, txErr := range txErrors {
-			err := txStorage.SetTransactionError(txErr.Hash, txErr.ErrorMessage)
+
+	txController, txStorage := storage.BeginTransaction(st.TxOptions{})
+	defer txController.Rollback(&err)
+
+	for i := range txErrors {
+		err = txStorage.SetTransactionError(txErrors[i].Hash, txErrors[i].ErrorMessage)
+		if err == badger.ErrTxnTooBig {
+			err = txController.Commit()
 			if err != nil {
 				return err
 			}
+			txController, txStorage = storage.BeginTransaction(st.TxOptions{})
 		}
-		return nil
-	})
+		if err != nil {
+			return err
+		}
+	}
+	return txController.Commit()
 }
