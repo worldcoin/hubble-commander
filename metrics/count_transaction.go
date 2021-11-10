@@ -9,5 +9,5 @@ import (
 
 func (c *CommanderMetrics) CountTransaction(transactionType txtype.TransactionType) {
 	lowercaseTxType := strings.ToLower(transactionType.String())
-	c.ApiTotalTransactions.With(prometheus.Labels{"type": lowercaseTxType}).Inc()
+	c.APITotalTransactions.With(prometheus.Labels{"type": lowercaseTxType}).Inc()
 }

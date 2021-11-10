@@ -25,7 +25,12 @@ type API struct {
 	disableSignatures bool
 }
 
-func NewAPIServer(cfg *config.Config, storage *st.Storage, client *eth.Client, commanderMetrics *metrics.CommanderMetrics) (*http.Server, error) {
+func NewAPIServer(
+	cfg *config.Config,
+	storage *st.Storage,
+	client *eth.Client,
+	commanderMetrics *metrics.CommanderMetrics,
+) (*http.Server, error) {
 	server, err := getAPIServer(cfg.API, storage, client, commanderMetrics, cfg.Rollup.DisableSignatures)
 	if err != nil {
 		return nil, err

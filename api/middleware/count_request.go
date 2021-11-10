@@ -3,5 +3,5 @@ package middleware
 import "github.com/Worldcoin/hubble-commander/metrics"
 
 func countRequest(commanderMetrics *metrics.CommanderMetrics) {
-	commanderMetrics.ApiTotalRequestsCounter.Inc()
+	commanderMetrics.APITotalRequestsCounter.Inc()
 }
