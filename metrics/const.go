@@ -4,7 +4,8 @@ const (
 	namespace = "hubble"
 
 	// Subsystems
-	apiSubsystem = "api"
+	apiSubsystem   = "api"
+	batchSubsystem = "batch"
 )
 
 // API metrics

@@ -28,7 +28,7 @@ func (c *DepositsContext) CreateAndSubmitBatch() error {
 		return err
 	}
 
-	logNewBatch(batch, 1, startTime)
+	logNewBatch(batch, 1, time.Since(startTime).Round(time.Millisecond))
 	return nil
 }
 
