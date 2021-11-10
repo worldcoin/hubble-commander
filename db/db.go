@@ -17,7 +17,7 @@ type Database struct {
 func NewDatabase(cfg *config.BadgerConfig) (*Database, error) {
 	options := badger.DefaultOptions(cfg.Path).
 		WithLoggingLevel(badger.WARNING).
-		WithMemTableSize(64 << 24) // TODO split large transactions and go back to default MemTableSize
+		WithMemTableSize(64 << 22)
 	return newConfiguredDatabase(&options)
 }
 
