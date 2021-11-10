@@ -67,7 +67,7 @@ func (c *CommanderMetrics) initializeMetricsForAPI() {
 		Subsystem: DefaultAPIMetricsSubsystem,
 		Name:      "failed_transactions_total",
 		Help:      "Number of transactions sent to the API which haven't passed the sanitization/validation",
-		// There's a change that this label is used incorrectly. Verify when adding more metrics.
+		// There's a chance that this label is used incorrectly. Verify when adding more metrics.
 		ConstLabels: prometheus.Labels{
 			"type": "transfer|create2transfer",
 		},
