@@ -175,7 +175,10 @@ func (s *TransactionStorage) getC2THashesByStateIDs(stateIDs []uint32) ([]common
 	results := make([]common.Hash, 0, len(stateIDs))
 	err := s.database.Badger.View(func(txn *bdg.Txn) error {
 		for i := range stateIDs {
-			encodedStateID := models.EncodeUint32Pointer(&stateIDs[i])
+			encodedStateID, err := db.Encode(stateIDs[i])
+			if err != nil {
+				return err
+			}
 			indexKey := db.IndexKey(models.StoredTxReceiptName, "ToStateID", encodedStateID)
 			hashes, err := getTxHashesByIndexKey(txn, indexKey, models.StoredTxReceiptPrefix)
 			if err == bdg.ErrKeyNotFound {

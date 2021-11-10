@@ -305,7 +305,6 @@ func (s *StoredTransactionTestSuite) TestAddStoredTxReceipt_IndexOnToStateIDWork
 }
 
 func (s *StoredTransactionTestSuite) TestAddStoredTxReceipt_ValuesWithNilToStateIDAreNotIndexed() {
-	s.T().SkipNow() // TODO unskip
 	s.addStoredTxReceipt(nil)
 
 	indexValues := s.getToStateIDIndexValues()
