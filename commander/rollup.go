@@ -79,11 +79,11 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 		return err
 	}
 
-	err = saveTxErrors(c.storage, rollupCtx.GetErrorsToStore())
+	err = rollupCtx.Commit()
 	if err != nil {
 		return err
 	}
-	return rollupCtx.Commit()
+	return saveTxErrors(c.storage, rollupCtx.GetErrorsToStore())
 }
 
 func switchBatchType(batchType *batchtype.BatchType) {
