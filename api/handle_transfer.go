@@ -16,10 +16,12 @@ import (
 func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 	transfer, err := sanitizeTransfer(transferDTO)
 	if err != nil {
+		a.commanderMetrics.ApiTotalFailedTransactions.Inc()
 		return nil, err
 	}
 
 	if vErr := a.validateTransfer(transfer); vErr != nil {
+		a.commanderMetrics.ApiTotalFailedTransactions.Inc()
 		return nil, vErr
 	}
 

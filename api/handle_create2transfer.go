@@ -14,10 +14,12 @@ import (
 func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*common.Hash, error) {
 	create2Transfer, err := sanitizeCreate2Transfer(create2TransferDTO)
 	if err != nil {
+		a.commanderMetrics.ApiTotalFailedTransactions.Inc()
 		return nil, err
 	}
 
 	if vErr := a.validateCreate2Transfer(create2Transfer); vErr != nil {
+		a.commanderMetrics.ApiTotalFailedTransactions.Inc()
 		return nil, vErr
 	}
 

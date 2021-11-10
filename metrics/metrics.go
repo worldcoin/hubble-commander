@@ -11,14 +11,15 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-// Metrics naming conventions https://prometheus.io/docs/practices/naming/
+// Metrics and labels naming conventions https://prometheus.io/docs/practices/naming/.
 type CommanderMetrics struct {
 	registry *prometheus.Registry
 
 	// API
-	ApiTotalRequestsCounter prometheus.Counter
-	ApiRequestDuration      prometheus.Histogram
-	ApiTotalTransactions    *prometheus.CounterVec
+	ApiTotalRequestsCounter    prometheus.Counter
+	ApiRequestDuration         prometheus.Histogram
+	ApiTotalTransactions       *prometheus.CounterVec
+	ApiTotalFailedTransactions prometheus.Counter
 }
 
 func (c *CommanderMetrics) NewMetricsServer(cfg *config.MetricsConfig) *http.Server {
@@ -32,7 +33,7 @@ func (c *CommanderMetrics) NewMetricsServer(cfg *config.MetricsConfig) *http.Ser
 }
 
 func NewCommanderMetrics() *CommanderMetrics {
-	apiTotalRequestsCounter := prometheus.NewCounter(prometheus.CounterOpts{
+	apiTotalRequests := prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: "api",
 		Subsystem: "general",
 		Name:      "requests_total",
@@ -75,24 +76,37 @@ func NewCommanderMetrics() *CommanderMetrics {
 		[]string{"type"},
 	)
 
-	// Makes total transactions metrics visible on the commander startup
+	// Makes total transactions metrics visible on the commander startup.
 	lowercaseTransfer := strings.ToLower(txtype.Transfer.String())
 	apiTotalTransactions.With(prometheus.Labels{"type": lowercaseTransfer}).Add(0)
 	lowercaseC2T := strings.ToLower(txtype.Create2Transfer.String())
 	apiTotalTransactions.With(prometheus.Labels{"type": lowercaseC2T}).Add(0)
 
+	apiTotalFailedTransactions := prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: "api",
+		Subsystem: "general",
+		Name:      "failed_transactions_total",
+		Help:      "Number of transactions that haven't passed the API transaction sanitization/validation",
+		// There's a change that this label is used incorrectly. Verify when adding more metrics.
+		ConstLabels: prometheus.Labels{
+			"type": "transfer|create2transfer",
+		},
+	})
+
 	registry := prometheus.NewRegistry()
 	registry.MustRegister(
-		apiTotalRequestsCounter,
+		apiTotalRequests,
 		apiRequestDuration,
 		apiTotalTransactions,
+		apiTotalFailedTransactions,
 	)
 
 	return &CommanderMetrics{
-		registry:                registry,
-		ApiTotalRequestsCounter: apiTotalRequestsCounter,
-		ApiRequestDuration:      apiRequestDuration,
-		ApiTotalTransactions:    apiTotalTransactions,
+		registry:                   registry,
+		ApiTotalRequestsCounter:    apiTotalRequests,
+		ApiRequestDuration:         apiRequestDuration,
+		ApiTotalTransactions:       apiTotalTransactions,
+		ApiTotalFailedTransactions: apiTotalFailedTransactions,
 	}
 }
 
