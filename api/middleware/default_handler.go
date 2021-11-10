@@ -12,7 +12,7 @@ func DefaultHandler(next http.Handler, commanderMetrics *metrics.CommanderMetric
 		commanderMetrics.APITotalRequests.Inc()
 
 		start := time.Now()
-		defer measureRequestDuration(start, commanderMetrics)
+		defer metrics.MeasureDuration(start, commanderMetrics.APIRequestDuration)
 
 		next.ServeHTTP(w, r)
 	})
