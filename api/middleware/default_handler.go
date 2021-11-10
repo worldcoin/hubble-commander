@@ -17,9 +17,3 @@ func DefaultHandler(next http.Handler, commanderMetrics *metrics.CommanderMetric
 		next.ServeHTTP(w, r)
 	})
 }
-
-func measureRequestDuration(start time.Time, commanderMetrics *metrics.CommanderMetrics) time.Duration {
-	duration := time.Since(start).Round(time.Millisecond)
-	commanderMetrics.APIRequestDuration.Observe(float64(duration.Milliseconds()))
-	return duration
-}
