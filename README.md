@@ -13,7 +13,6 @@
 | [`utils`](utils)                             | Utilities                                 |
 | [`models`](models)                           | Repository of types                       |
 | [`storage`](storage)                         | Storage                                   |
-| [`deployment`](deployment)                   | Kubernetes deployment files               |
 | [`bls`](bls)                                 | BLS Signature library                     |
 | [`bls/sdk`](bls/sdk)                         | BLS Wrapper for Mobile client             |
 | [`db`](db)                                   | Database abstraction                      |
@@ -119,6 +118,8 @@ There is a number of scripts defined in the Makefile:
 * `make bench-e2e-locally` - run an E2E benchmark on a local commander instance (set `TEST` env var to the name of the test)
 * `make bench-creation-profile` - start commander and run E2E batch creation benchmark in the same process with CPU profiling
 * `make bench-sync-profile` - start commander and run E2E butch sync benchmark in the same process with CPU profiling
+
+Other scripts defined in the Makefile file are used on the CI.
 
 ## Running with Go-Ethereum (Geth)
 

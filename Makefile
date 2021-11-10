@@ -70,6 +70,18 @@ bench-creation-profile: clean-testcache
 bench-sync-profile: clean-testcache
 	HUBBLE_E2E=in-process go test -cpuprofile sync.prof -v -tags e2e -run TestBenchmarkSuite/TestBenchSyncCommander ./e2e/bench
 
+bench-e2e-ci-part-1: clean-testcache
+	HUBBLE_E2E=in-process go test -v -tags e2e -run "BenchmarkTransactionsSuite/(?:TestBenchTransfersCommander|TestBenchCreate2TransfersCommander)" ./e2e/bench
+
+bench-e2e-ci-part-2: clean-testcache
+	HUBBLE_E2E=in-process go test -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchMixedCommander ./e2e/bench
+
+bench-e2e-ci-part-3: clean-testcache
+	HUBBLE_E2E=in-process go test -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchSyncCommander ./e2e/bench
+
+bench-e2e-ci-part-4: clean-testcache
+	HUBBLE_E2E=in-process go test -v -tags e2e -run BenchmarkPubKeyRegistrationSuite/TestBenchPubKeysRegistration ./e2e/bench
+
 .PHONY:
 	install
 	clean
@@ -94,3 +106,7 @@ bench-sync-profile: clean-testcache
 	bench-e2e-locally
 	bench-creation-profile
 	bench-sync-profile
+	bench-e2e-ci-part-1
+	bench-e2e-ci-part-2
+	bench-e2e-ci-part-3
+	bench-e2e-ci-part-4
