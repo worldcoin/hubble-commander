@@ -10,7 +10,7 @@ import (
 
 type DecodedBatch interface {
 	GetID() models.Uint256
-	GetBatch() *DecodedBatchBase
+	GetBase() *DecodedBatchBase
 	ToDecodedTxBatch() *DecodedTxBatch
 	ToDecodedDepositBatch() *DecodedDepositBatch
 	GetCommitmentsLength() int
@@ -60,7 +60,7 @@ func (b *DecodedTxBatch) GetID() models.Uint256 {
 	return b.DecodedBatchBase.ID
 }
 
-func (b *DecodedTxBatch) GetBatch() *DecodedBatchBase {
+func (b *DecodedTxBatch) GetBase() *DecodedBatchBase {
 	return &b.DecodedBatchBase
 }
 
@@ -102,7 +102,7 @@ func (b *DecodedDepositBatch) GetID() models.Uint256 {
 	return b.DecodedBatchBase.ID
 }
 
-func (b *DecodedDepositBatch) GetBatch() *DecodedBatchBase {
+func (b *DecodedDepositBatch) GetBase() *DecodedBatchBase {
 	return &b.DecodedBatchBase
 }
 

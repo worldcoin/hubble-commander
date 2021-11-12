@@ -94,8 +94,8 @@ func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBlockNumber() {
 	s.NoError(err)
 	s.Len(batches, 1)
 	s.Equal(batch2.ID, batches[0].GetID())
-	s.NotEqual(common.Hash{}, batches[0].GetBatch().TransactionHash)
-	s.Equal(s.getAccountRoot(), batches[0].GetBatch().AccountTreeRoot)
+	s.NotEqual(common.Hash{}, batches[0].GetBase().TransactionHash)
+	s.Equal(s.getAccountRoot(), batches[0].GetBase().AccountTreeRoot)
 }
 
 func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBatchID() {

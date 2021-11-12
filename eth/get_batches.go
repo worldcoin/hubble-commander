@@ -166,7 +166,7 @@ func (c *Client) setSubmissionTime(decodedBatch DecodedBatch, blockNumber uint64
 	if err != nil {
 		return err
 	}
-	decodedBatch.GetBatch().SubmissionTime = *models.NewTimestamp(time.Unix(int64(header.Time), 0).UTC())
+	decodedBatch.GetBase().SubmissionTime = *models.NewTimestamp(time.Unix(int64(header.Time), 0).UTC())
 	return nil
 }
 

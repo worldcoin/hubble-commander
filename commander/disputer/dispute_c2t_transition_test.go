@@ -54,7 +54,7 @@ func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_RemovesInvalidBatc
 	err = s.disputeCtx.DisputeTransition(remoteBatches[0].ToDecodedTxBatch(), 1, proofs)
 	s.NoError(err)
 
-	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[0].GetBatch().ID)
+	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[0].GetBase().ID)
 }
 
 func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_FirstCommitment() {
@@ -90,7 +90,7 @@ func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_FirstCommitment() 
 	err = s.disputeCtx.DisputeTransition(remoteBatches[1].ToDecodedTxBatch(), 0, proofs)
 	s.NoError(err)
 
-	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[1].GetBatch().ID)
+	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[1].GetBase().ID)
 }
 
 func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_ValidBatch() {
@@ -121,7 +121,7 @@ func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_ValidBatch() {
 
 	err = s.disputeCtx.DisputeTransition(remoteBatches[1].ToDecodedTxBatch(), 0, proofs)
 	s.NoError(err)
-	_, err = s.client.GetBatch(&remoteBatches[1].GetBatch().ID)
+	_, err = s.client.GetBatch(&remoteBatches[1].GetBase().ID)
 	s.NoError(err)
 }
 

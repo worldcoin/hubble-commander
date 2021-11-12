@@ -90,7 +90,7 @@ func (s *DisputeC2TSignatureTestSuite) TestDisputeSignature_DisputesBatchWithInv
 	err = s.disputeSignature(remoteBatches[0].ToDecodedTxBatch(), models.Create2TransferArray{transfer})
 	s.NoError(err)
 
-	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[0].GetBatch().ID)
+	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[0].GetBase().ID)
 }
 
 func (s *DisputeC2TSignatureTestSuite) TestDisputeSignature_DisputesBatchToNonexistentReceiver() {
@@ -108,7 +108,7 @@ func (s *DisputeC2TSignatureTestSuite) TestDisputeSignature_DisputesBatchToNonex
 	err = s.disputeSignature(remoteBatches[0].ToDecodedTxBatch(), models.Create2TransferArray{transfer})
 	s.NoError(err)
 
-	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[0].GetBatch().ID)
+	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[0].GetBase().ID)
 }
 
 func (s *DisputeC2TSignatureTestSuite) TestDisputeSignature_ValidBatch() {
@@ -125,7 +125,7 @@ func (s *DisputeC2TSignatureTestSuite) TestDisputeSignature_ValidBatch() {
 
 	err = s.disputeSignature(remoteBatches[0].ToDecodedTxBatch(), models.Create2TransferArray{transfer})
 	s.NoError(err)
-	_, err = s.client.GetBatch(&remoteBatches[0].GetBatch().ID)
+	_, err = s.client.GetBatch(&remoteBatches[0].GetBase().ID)
 	s.NoError(err)
 }
 

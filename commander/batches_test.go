@@ -140,7 +140,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 
 	batch, err := s.cmd.storage.GetBatch(batches[0].GetID())
 	s.NoError(err)
-	s.Equal(*batches[0].GetBatch().ToBatch(*root), *batch)
+	s.Equal(*batches[0].GetBase().ToBatch(*root), *batch)
 
 	txBatch := batches[0].ToDecodedTxBatch()
 	expectedCommitment := models.TxCommitment{
