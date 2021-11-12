@@ -30,9 +30,9 @@ func TestEventBefore(t *testing.T) {
 	require.False(t, EventBefore(third, first))
 	require.False(t, EventBefore(third, second))
 
-	firstCopy := &*first
-	require.False(t, EventBefore(first, firstCopy))
-	require.False(t, EventBefore(firstCopy, first))
+	firstCopy := *first
+	require.False(t, EventBefore(first, &firstCopy))
+	require.False(t, EventBefore(&firstCopy, first))
 }
 
 func TestEventBefore_SortsWell(t *testing.T) {
