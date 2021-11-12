@@ -6,7 +6,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
@@ -50,23 +49,4 @@ func DecodeBatchCalldata(calldata []byte, batchID *models.Uint256) ([]DecodedCom
 	}
 
 	return commitments, nil
-}
-
-func DecodeDepositBatchCalldata(calldata []byte) (*uint32, error) {
-	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	unpacked, err := rollupAbi.Methods["submitDeposits"].Inputs.Unpack(calldata[4:])
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	vacancyProof := unpacked[1].(struct {
-		PathAtDepth *big.Int   `json:"pathAtDepth"`
-		Witness     [][32]byte `json:"witness"`
-	})
-
-	return ref.Uint32(uint32(vacancyProof.PathAtDepth.Uint64())), nil
 }

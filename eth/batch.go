@@ -16,22 +16,6 @@ type DecodedBatch interface {
 	GetCommitmentsLength() int
 }
 
-func newDecodedBatch(batch *models.Batch, transactionHash, accountRoot common.Hash) DecodedBatch {
-	switch batch.Type {
-	case batchtype.Transfer, batchtype.Create2Transfer:
-		return &DecodedTxBatch{
-			DecodedBatchBase: *NewDecodedBatchBase(batch, transactionHash, accountRoot),
-		}
-	case batchtype.Deposit:
-		return &DecodedDepositBatch{
-			DecodedBatchBase: *NewDecodedBatchBase(batch, transactionHash, accountRoot),
-		}
-	case batchtype.Genesis, batchtype.MassMigration:
-		panic("batch type not supported")
-	}
-	return nil
-}
-
 type DecodedBatchBase struct {
 	ID                models.Uint256
 	Type              batchtype.BatchType
@@ -130,19 +114,6 @@ func (b *DecodedDepositBatch) ToDecodedTxBatch() *DecodedTxBatch {
 	panic("ToDecodedTxBatch cannot be invoked on DecodedDepositBatch")
 }
 
-func (b *DecodedDepositBatch) SetCalldata(calldata []byte) error {
-	pathAtDepth, err := encoder.DecodeDepositBatchCalldata(calldata)
-	if err != nil {
-		return err
-	}
-	b.PathAtDepth = *pathAtDepth
-	return nil
-}
-
 func (b *DecodedDepositBatch) GetCommitmentsLength() int {
 	return 1
-}
-
-func (b *DecodedDepositBatch) verifyBatchHash() error {
-	return nil
 }
