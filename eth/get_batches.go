@@ -177,13 +177,22 @@ func (c *Client) getBatchDetails(batchEvent *rollup.RollupNewBatch) (*models.Bat
 	return batch, err
 }
 
+func (c *Client) getBlockTimestamp(blockNumber uint64) (*models.Timestamp, error) {
+	header, err := c.Blockchain.GetBackend().HeaderByNumber(context.Background(), new(big.Int).SetUint64(blockNumber))
+	if err != nil {
+		return nil, err
+	}
+	utcTime := time.Unix(int64(header.Time), 0).UTC()
+	return models.NewTimestamp(utcTime), nil
+}
+
 // TODO refactor to getSubmissionTime
 func (c *Client) setSubmissionTime(decodedBatch DecodedBatch, blockNumber uint64) error {
-	header, err := c.Blockchain.GetBackend().HeaderByNumber(context.Background(), new(big.Int).SetUint64(blockNumber))
+	timestamp, err := c.getBlockTimestamp(blockNumber)
 	if err != nil {
 		return err
 	}
-	decodedBatch.GetBase().SubmissionTime = *models.NewTimestamp(time.Unix(int64(header.Time), 0).UTC())
+	decodedBatch.GetBase().SubmissionTime = *timestamp
 	return nil
 }
 
