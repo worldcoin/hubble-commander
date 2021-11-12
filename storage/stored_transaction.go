@@ -233,10 +233,11 @@ func (s *TransactionStorage) SetTransactionErrors(txErrors ...models.TxError) er
 
 	operations := make([]dbOperation, errorsCount)
 	for i := range txErrors {
+		txError := txErrors[i]
 		operations[i] = func(txStorage *TransactionStorage) error {
 			return txStorage.addStoredTxReceipt(&models.StoredTxReceipt{
-				Hash:         txErrors[i].TxHash,
-				ErrorMessage: &txErrors[i].ErrorMessage,
+				Hash:         txError.TxHash,
+				ErrorMessage: &txError.ErrorMessage,
 			})
 		}
 	}
