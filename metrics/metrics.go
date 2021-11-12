@@ -16,6 +16,9 @@ type CommanderMetrics struct {
 	// Rollup
 	CommitmentBuildDuration         *prometheus.HistogramVec
 	BatchBuildAndSubmissionDuration *prometheus.HistogramVec
+
+	// Syncing
+	SyncingAccountsDuration prometheus.Histogram
 }
 
 func NewCommanderMetrics() *CommanderMetrics {
@@ -25,6 +28,7 @@ func NewCommanderMetrics() *CommanderMetrics {
 
 	commanderMetrics.initializeAPIMetrics()
 	commanderMetrics.initializeRollupLoopMetrics()
+	commanderMetrics.initializeSyncingMetrics()
 
 	return commanderMetrics
 }

@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -18,6 +20,8 @@ var ErrAccountLeavesInconsistency = fmt.Errorf("inconsistency in account leaves 
 // TODO extract event filtering logic to eth.Client
 
 func (c *Commander) syncAccounts(start, end uint64) error {
+	startTime := time.Now()
+
 	newAccountsSingle, err := c.syncSingleAccounts(start, end)
 	if err != nil {
 		return err
@@ -26,7 +30,13 @@ func (c *Commander) syncAccounts(start, end uint64) error {
 	if err != nil {
 		return err
 	}
-	logAccountsCount(*newAccountsSingle + *newAccountsBatch)
+
+	newAccountsCount := *newAccountsSingle + *newAccountsBatch
+	if newAccountsCount > 0 {
+		measureAccountsSyncingDuration(startTime, c.metrics)
+		logNewSyncedAccountsCount(newAccountsCount)
+	}
+
 	return nil
 }
 
@@ -143,8 +153,15 @@ func validateExistingAccounts(accountTree *storage.AccountTree, accounts ...mode
 	return nil
 }
 
-func logAccountsCount(newAccountsCount int) {
-	if newAccountsCount > 0 {
-		log.Printf("Found %d new account(s)", newAccountsCount)
-	}
+func measureAccountsSyncingDuration(
+	start time.Time,
+	commanderMetrics *metrics.CommanderMetrics,
+) time.Duration {
+	duration := time.Since(start).Round(time.Millisecond)
+	commanderMetrics.SyncingAccountsDuration.Observe(float64(duration.Milliseconds()))
+	return duration
+}
+
+func logNewSyncedAccountsCount(newAccountsCount int) {
+	log.Printf("Found %d new account(s)", newAccountsCount)
 }
