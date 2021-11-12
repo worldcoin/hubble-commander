@@ -121,11 +121,8 @@ func (c *Client) directBatchSubmission(tx *types.Transaction) bool {
 }
 
 func (c *Client) getTxBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transaction) (DecodedBatch, error) {
-	batch, err := c.GetBatch(models.NewUint256FromBig(*batchEvent.BatchID))
+	batch, err := c.getBatchDetails(batchEvent)
 	if err != nil {
-		if err.Error() == MsgInvalidBatchID {
-			return nil, errBatchAlreadyRolledBack
-		}
 		return nil, err
 	}
 
@@ -154,11 +151,8 @@ func (c *Client) getDepositBatch(
 	depositEvent *rollup.RollupDepositsFinalised,
 	tx *types.Transaction,
 ) (DecodedBatch, error) {
-	batch, err := c.GetBatch(models.NewUint256FromBig(*batchEvent.BatchID))
+	batch, err := c.getBatchDetails(batchEvent)
 	if err != nil {
-		if err.Error() == MsgInvalidBatchID {
-			return nil, errBatchAlreadyRolledBack
-		}
 		return nil, err
 	}
 
@@ -172,6 +166,15 @@ func (c *Client) getDepositBatch(
 		return nil, err
 	}
 	return decodedBatch, nil
+}
+
+func (c *Client) getBatchDetails(batchEvent *rollup.RollupNewBatch) (*models.Batch, error) {
+	batchID := models.NewUint256FromBig(*batchEvent.BatchID)
+	batch, err := c.GetBatch(batchID)
+	if err != nil && err.Error() == MsgInvalidBatchID {
+		return nil, errBatchAlreadyRolledBack
+	}
+	return batch, err
 }
 
 // TODO refactor to getSubmissionTime
