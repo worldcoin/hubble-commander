@@ -62,11 +62,15 @@ func (s *SyncDepositBatchTestSuite) TestSyncBatch_SingleBatch() {
 	s.client.GetBackend().Commit()
 	s.depositsCtx.Rollback(nil)
 
+	prevStateRoot, err := s.storage.StateTree.Root()
+	s.NoError(err)
+
 	s.syncBatches()
 
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 2)
+	s.Equal(prevStateRoot, batches[1].PrevStateRoot)
 
 	_, err = s.storage.GetFirstPendingDepositSubTree()
 	s.True(st.IsNotFoundError(err))
@@ -116,6 +120,7 @@ func (s *SyncDepositBatchTestSuite) TestSyncBatch_SyncsExistingBatch() {
 	batch, err := s.storage.GetBatch(batches[1].ID)
 	s.NoError(err)
 	s.NotNil(batch.Hash)
+	s.NotNil(batch.PrevStateRoot)
 }
 
 func (s *SyncDepositBatchTestSuite) syncBatches() {
