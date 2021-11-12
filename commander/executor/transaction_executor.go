@@ -13,7 +13,6 @@ import (
 )
 
 type TransactionExecutor interface {
-	GetPendingTxs() (models.GenericTransactionArray, error)
 	NewTxArray(size, capacity uint32) models.GenericTransactionArray
 	NewExecuteTxsResult(capacity uint32) ExecuteTxsResult
 	NewExecuteTxsForCommitmentResult(result ExecuteTxsResult, newPendingTxs models.GenericTransactionArray) ExecuteTxsForCommitmentResult
@@ -49,10 +48,6 @@ func NewTransferExecutor(storage *st.Storage, client *eth.Client) *TransferExecu
 		storage: storage,
 		applier: applier.NewApplier(storage, client),
 	}
-}
-
-func (e *TransferExecutor) GetPendingTxs() (models.GenericTransactionArray, error) {
-	return e.storage.GetPendingTransfers()
 }
 
 func (e *TransferExecutor) NewTxArray(size, capacity uint32) models.GenericTransactionArray {
@@ -120,10 +115,6 @@ func NewC2TExecutor(storage *st.Storage, client *eth.Client) *C2TExecutor {
 		storage: storage,
 		applier: applier.NewApplier(storage, client),
 	}
-}
-
-func (e *C2TExecutor) GetPendingTxs() (models.GenericTransactionArray, error) {
-	return e.storage.GetPendingCreate2Transfers()
 }
 
 func (e *C2TExecutor) NewTxArray(size, capacity uint32) models.GenericTransactionArray {
