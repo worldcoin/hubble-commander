@@ -34,7 +34,11 @@ func (c *TxsContext) CreateAndSubmitBatch() error {
 	return nil
 }
 
-func measureBatchBuildAndSubmissionTime(start time.Time, commanderMetrics *metrics.CommanderMetrics, batchType batchtype.BatchType) time.Duration {
+func measureBatchBuildAndSubmissionTime(
+	start time.Time,
+	commanderMetrics *metrics.CommanderMetrics,
+	batchType batchtype.BatchType,
+) time.Duration {
 	duration := time.Since(start).Round(time.Millisecond)
 
 	lowercaseBatchType := strings.ToLower(batchType.String())
