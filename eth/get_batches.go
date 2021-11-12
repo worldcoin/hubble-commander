@@ -30,6 +30,7 @@ func (c *TestClient) GetAllBatches() ([]DecodedBatch, error) {
 }
 
 func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
+	// TODO filter DepositsFinalised events and return subtreeID as part of DecodedCommitment
 	it, err := c.Rollup.FilterNewBatch(&bind.FilterOpts{
 		Start: filters.StartBlockInclusive,
 		End:   filters.EndBlockInclusive,
@@ -86,7 +87,7 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 }
 
 func (c *Client) getBatchIfExists(event *rollup.RollupNewBatch, tx *types.Transaction) (DecodedBatch, error) {
-	batch, err := c.GetBatch(models.NewUint256FromBig(*event.BatchID))
+	batch, err := c.GetBatch(models.NewUint256FromBig(*event.BatchID)) // TODO figure out whether GetBatch should return models.Batch or something less
 	if err != nil {
 		if err.Error() == MsgInvalidBatchID {
 			return nil, errBatchAlreadyRolledBack

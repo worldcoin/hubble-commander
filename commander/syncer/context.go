@@ -8,6 +8,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
+// TODO rename to batchContext
 type batchSyncer interface {
 	SyncCommitments(batch eth.DecodedBatch) error
 	UpdateExistingBatch(batch eth.DecodedBatch) error

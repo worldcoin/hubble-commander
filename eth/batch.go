@@ -85,8 +85,8 @@ func (b *DecodedTxBatch) verifyBatchHash() error {
 }
 
 type DecodedDepositBatch struct {
-	models.Batch
-	PathAtDepth uint32
+	models.Batch // TODO create and use eth.DecodedBatchBase type here
+	PathAtDepth  uint32
 }
 
 func (b *DecodedDepositBatch) GetID() models.Uint256 {

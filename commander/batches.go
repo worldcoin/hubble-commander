@@ -53,7 +53,7 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 	}
 
 	for i := range newRemoteBatches {
-		err = c.syncRemoteBatch(newRemoteBatches[i].ToDecodedTxBatch())
+		err = c.syncRemoteBatch(newRemoteBatches[i]) // TODO add a test for syncing deposits
 		if err != nil {
 			return err
 		}

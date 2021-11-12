@@ -56,6 +56,8 @@ func (c *TxsContext) syncCommitment(batch *eth.DecodedTxBatch, commitment *encod
 	if err != nil {
 		return err
 	}
+
+	// TODO move adding transactions to syncTxCommitment
 	for i := 0; i < transactions.Len(); i++ {
 		transactions.At(i).GetBase().CommitmentID = &commitment.ID
 		hashTransfer, err := c.Syncer.HashTx(transactions.At(i))
