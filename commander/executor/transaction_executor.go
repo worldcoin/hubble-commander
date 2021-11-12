@@ -13,7 +13,6 @@ import (
 )
 
 type TransactionExecutor interface {
-	NewTxArray(size, capacity uint32) models.GenericTransactionArray
 	NewExecuteTxsResult(capacity uint32) ExecuteTxsResult
 	NewExecuteTxsForCommitmentResult(result ExecuteTxsResult, newPendingTxs models.GenericTransactionArray) ExecuteTxsForCommitmentResult
 	SerializeTxs(results ExecuteTxsForCommitmentResult) ([]byte, error)
@@ -48,10 +47,6 @@ func NewTransferExecutor(storage *st.Storage, client *eth.Client) *TransferExecu
 		storage: storage,
 		applier: applier.NewApplier(storage, client),
 	}
-}
-
-func (e *TransferExecutor) NewTxArray(size, capacity uint32) models.GenericTransactionArray {
-	return make(models.TransferArray, size, capacity)
 }
 
 func (e *TransferExecutor) NewExecuteTxsResult(capacity uint32) ExecuteTxsResult {
@@ -115,10 +110,6 @@ func NewC2TExecutor(storage *st.Storage, client *eth.Client) *C2TExecutor {
 		storage: storage,
 		applier: applier.NewApplier(storage, client),
 	}
-}
-
-func (e *C2TExecutor) NewTxArray(size, capacity uint32) models.GenericTransactionArray {
-	return make(models.Create2TransferArray, size, capacity)
 }
 
 func (e *C2TExecutor) NewExecuteTxsResult(capacity uint32) ExecuteTxsResult {
