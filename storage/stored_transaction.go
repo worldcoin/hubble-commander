@@ -59,7 +59,7 @@ func (s *TransactionStorage) copyWithNewDatabase(database *Database) *Transactio
 	return &newTransactionStorage
 }
 
-func (s *TransactionStorage) BeginTransaction(opts TxOptions) (*db.TxController, *TransactionStorage) {
+func (s *TransactionStorage) beginTransaction(opts TxOptions) (*db.TxController, *TransactionStorage) {
 	txController, txDatabase := s.database.BeginTransaction(opts)
 	return txController, s.copyWithNewDatabase(txDatabase)
 }
@@ -198,7 +198,7 @@ func (s *TransactionStorage) SetTransactionErrors(txErrors ...models.TxError) (e
 		return nil
 	}
 
-	txController, txStorage := s.BeginTransaction(TxOptions{})
+	txController, txStorage := s.beginTransaction(TxOptions{})
 	defer txController.Rollback(&err)
 
 	for i := range txErrors {
@@ -211,7 +211,7 @@ func (s *TransactionStorage) SetTransactionErrors(txErrors ...models.TxError) (e
 			if err != nil {
 				return err
 			}
-			txController, txStorage = s.BeginTransaction(TxOptions{})
+			txController, txStorage = s.beginTransaction(TxOptions{})
 		}
 		if err != nil {
 			return err
