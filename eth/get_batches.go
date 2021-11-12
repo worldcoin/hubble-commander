@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"context"
 	"math/big"
+	"sort"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -97,6 +99,11 @@ func (c *Client) getBatchEvents(filters *BatchesFilters) ([]*rollup.RollupNewBat
 		events = append(events, batchIterator.Event)
 	}
 
+	// Sort for sanity
+	sort.Slice(events, func(i, j int) bool {
+		return utils.EventBefore(&events[i].Raw, &events[j].Raw)
+	})
+
 	depositIterator, err := c.Rollup.FilterDepositsFinalised(&bind.FilterOpts{
 		Start: filters.StartBlockInclusive,
 		End:   filters.EndBlockInclusive,
@@ -109,7 +116,10 @@ func (c *Client) getBatchEvents(filters *BatchesFilters) ([]*rollup.RollupNewBat
 		depositEvents = append(depositEvents, depositIterator.Event)
 	}
 
-	// TODO Sort logs for sanity
+	// Sort for sanity
+	sort.Slice(depositEvents, func(i, j int) bool {
+		return utils.EventBefore(&events[i].Raw, &events[j].Raw)
+	})
 
 	return events, depositEvents, nil
 }
