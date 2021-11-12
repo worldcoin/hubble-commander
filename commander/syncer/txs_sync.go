@@ -27,12 +27,11 @@ func (c *TxsContext) SyncCommitments(remoteBatch eth.DecodedBatch) error {
 }
 
 func (c *TxsContext) UpdateExistingBatch(batch eth.DecodedBatch, prevStateRoot common.Hash) error {
-	txBatch := batch.ToDecodedTxBatch()
-	err := c.storage.UpdateBatch(txBatch.ToBatch(prevStateRoot))
+	err := c.storage.UpdateBatch(batch.ToBatch(prevStateRoot))
 	if err != nil {
 		return err
 	}
-	return c.setCommitmentsBodyHash(txBatch)
+	return c.setCommitmentsBodyHash(batch.ToDecodedTxBatch())
 }
 
 func (c *TxsContext) setCommitmentsBodyHash(batch *eth.DecodedTxBatch) error {

@@ -13,6 +13,7 @@ type DecodedBatch interface {
 	GetBase() *DecodedBatchBase
 	ToDecodedTxBatch() *DecodedTxBatch
 	ToDecodedDepositBatch() *DecodedDepositBatch
+	ToBatch(prevStateRoot common.Hash) *models.Batch
 	GetCommitmentsLength() int
 }
 

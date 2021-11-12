@@ -140,7 +140,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 
 	batch, err := s.cmd.storage.GetBatch(batches[0].GetID())
 	s.NoError(err)
-	s.Equal(*batches[0].GetBase().ToBatch(*root), *batch)
+	s.Equal(*batches[0].ToBatch(*root), *batch)
 
 	txBatch := batches[0].ToDecodedTxBatch()
 	expectedCommitment := models.TxCommitment{
@@ -569,7 +569,7 @@ func (s *BatchesTestSuite) setTransferHashAndSign(txs ...*models.Transfer) {
 }
 
 func (s *BatchesTestSuite) updateBatchAfterSubmission(batch *eth.DecodedTxBatch) {
-	err := s.cmd.storage.UpdateBatch(batch.DecodedBatchBase.ToBatch(utils.RandomHash()))
+	err := s.cmd.storage.UpdateBatch(batch.ToBatch(utils.RandomHash()))
 	s.NoError(err)
 
 	commitments, err := s.cmd.storage.GetTxCommitmentsByBatchID(batch.ID)

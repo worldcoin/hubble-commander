@@ -28,7 +28,7 @@ func (c *DepositsContext) SyncCommitments(remoteBatch eth.DecodedBatch) error {
 }
 
 func (c *DepositsContext) UpdateExistingBatch(batch eth.DecodedBatch, prevStateRoot common.Hash) error {
-	return c.storage.UpdateBatch(batch.ToDecodedDepositBatch().ToBatch(prevStateRoot))
+	return c.storage.UpdateBatch(batch.ToBatch(prevStateRoot))
 }
 
 func (c *DepositsContext) getDepositSubtree(batch *eth.DecodedDepositBatch) (uint32, *models.PendingDepositSubTree, error) {

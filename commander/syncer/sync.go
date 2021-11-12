@@ -28,15 +28,14 @@ func (c *Context) SyncBatch(remoteBatch eth.DecodedBatch) error {
 }
 
 func (c *Context) syncNewBatch(remoteBatch eth.DecodedBatch) error {
-	batch := remoteBatch.GetBase()
-	logSyncingBatch(batch, remoteBatch.GetCommitmentsLength())
+	logSyncStart(remoteBatch)
 
 	root, err := c.storage.StateTree.Root()
 	if err != nil {
 		return err
 	}
 
-	err = c.storage.AddBatch(batch.ToBatch(*root))
+	err = c.storage.AddBatch(remoteBatch.ToBatch(*root))
 	if err != nil {
 		return err
 	}
@@ -46,23 +45,23 @@ func (c *Context) syncNewBatch(remoteBatch eth.DecodedBatch) error {
 		return err
 	}
 
-	logSyncedBatch(batch, remoteBatch.GetCommitmentsLength())
+	logSyncSuccess(remoteBatch)
 	return nil
 }
 
-func logSyncingBatch(batch *eth.DecodedBatchBase, commitmentLength int) {
+func logSyncStart(batch eth.DecodedBatch) {
 	log.Debugf("Syncing new %s batch #%s with %d commitment(s) from chain",
-		batch.Type.String(),
-		batch.ID.String(),
-		commitmentLength,
+		batch.GetBase().Type.String(),
+		batch.GetBase().ID.String(),
+		batch.GetCommitmentsLength(),
 	)
 }
 
-func logSyncedBatch(batch *eth.DecodedBatchBase, commitmentLength int) {
+func logSyncSuccess(batch eth.DecodedBatch) {
 	log.Printf("Synced new %s batch #%s with %d commitment(s) from chain",
-		batch.Type.String(),
-		batch.ID.String(),
-		commitmentLength,
+		batch.GetBase().Type.String(),
+		batch.GetBase().ID.String(),
+		batch.GetCommitmentsLength(),
 	)
 }
 
