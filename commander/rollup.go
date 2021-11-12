@@ -7,8 +7,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/dgraph-io/badger/v3"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -84,7 +82,7 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 	if err != nil {
 		return err
 	}
-	return saveTxErrors(c.storage, rollupCtx.GetErrorsToStore())
+	return c.storage.SetTransactionErrors(rollupCtx.GetErrorsToStore()...)
 }
 
 func switchBatchType(batchType *batchtype.BatchType) {
@@ -109,7 +107,7 @@ func (c *Commander) handleRollupError(rollupErr *executor.RollupError, rollupCtx
 		log.Warnf("%+v", rollupErr)
 	}
 
-	return saveTxErrors(c.storage, rollupCtx.GetErrorsToStore())
+	return c.storage.SetTransactionErrors(rollupCtx.GetErrorsToStore()...)
 }
 
 func logLatestCommitment(latestCommitment *models.CommitmentBase) {
@@ -118,28 +116,4 @@ func logLatestCommitment(latestCommitment *models.CommitmentBase) {
 		"latestCommitmentID": latestCommitment.ID.IndexInBatch,
 	}
 	log.WithFields(fields).Error("rollupLoop: Sanity check on state tree root failed")
-}
-
-func saveTxErrors(storage *st.Storage, txErrors []models.TxError) (err error) {
-	if len(txErrors) == 0 {
-		return nil
-	}
-
-	txController, txStorage := storage.BeginTransaction(st.TxOptions{})
-	defer txController.Rollback(&err)
-
-	for i := range txErrors {
-		err = txStorage.SetTransactionError(txErrors[i].Hash, txErrors[i].ErrorMessage)
-		if err == badger.ErrTxnTooBig {
-			err = txController.Commit()
-			if err != nil {
-				return err
-			}
-			txController, txStorage = storage.BeginTransaction(st.TxOptions{})
-		}
-		if err != nil {
-			return err
-		}
-	}
-	return txController.Commit()
 }

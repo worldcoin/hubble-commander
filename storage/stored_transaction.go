@@ -59,6 +59,11 @@ func (s *TransactionStorage) copyWithNewDatabase(database *Database) *Transactio
 	return &newTransactionStorage
 }
 
+func (s *TransactionStorage) BeginTransaction(opts TxOptions) (*db.TxController, *TransactionStorage) {
+	txController, txDatabase := s.database.BeginTransaction(opts)
+	return txController, s.copyWithNewDatabase(txDatabase)
+}
+
 func (s *TransactionStorage) executeInTransaction(opts TxOptions, fn func(txStorage *TransactionStorage) error) error {
 	return s.database.ExecuteInTransaction(opts, func(txDatabase *Database) error {
 		return fn(s.copyWithNewDatabase(txDatabase))
@@ -188,11 +193,31 @@ func (s *TransactionStorage) MarkTransactionsAsPending(txHashes []common.Hash) e
 	})
 }
 
-func (s *TransactionStorage) SetTransactionError(txHash common.Hash, errorMessage string) error {
-	return s.addStoredTxReceipt(&models.StoredTxReceipt{
-		Hash:         txHash,
-		ErrorMessage: &errorMessage,
-	})
+func (s *TransactionStorage) SetTransactionErrors(txErrors ...models.TxError) (err error) {
+	if len(txErrors) == 0 {
+		return nil
+	}
+
+	txController, txStorage := s.BeginTransaction(TxOptions{})
+	defer txController.Rollback(&err)
+
+	for i := range txErrors {
+		err = txStorage.addStoredTxReceipt(&models.StoredTxReceipt{
+			Hash:         txErrors[i].Hash,
+			ErrorMessage: &txErrors[i].ErrorMessage,
+		})
+		if err == bdg.ErrTxnTooBig {
+			err = txController.Commit()
+			if err != nil {
+				return err
+			}
+			txController, txStorage = s.BeginTransaction(TxOptions{})
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return txController.Commit()
 }
 
 func (s *Storage) GetTransactionCount() (*int, error) {

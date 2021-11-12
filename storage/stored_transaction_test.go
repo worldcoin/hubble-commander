@@ -64,19 +64,22 @@ func (s *StoredTransactionTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *StoredTransactionTestSuite) TestSetTransactionError() {
+func (s *StoredTransactionTestSuite) TestSetTransactionErrors() {
 	err := s.storage.AddTransfer(&transferTransaction)
 	s.NoError(err)
 
-	errorMessage := ref.String("Quack")
+	txError := models.TxError{
+		Hash:         transferTransaction.Hash,
+		ErrorMessage: "Quack",
+	}
 
-	err = s.storage.SetTransactionError(transferTransaction.Hash, *errorMessage)
+	err = s.storage.SetTransactionErrors(txError)
 	s.NoError(err)
 
 	res, err := s.storage.GetTransfer(transferTransaction.Hash)
 	s.NoError(err)
 
-	s.Equal(errorMessage, res.ErrorMessage)
+	s.Equal(txError.ErrorMessage, *res.ErrorMessage)
 }
 
 func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_ReturnsHighestNonceRegardlessOfInsertionOrder() {
