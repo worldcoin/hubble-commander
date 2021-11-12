@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -130,7 +131,7 @@ func (c *TxsContext) executeTxsForCommitment(pendingTxs models.GenericTransactio
 }
 
 func (c *TxsContext) queryPendingTxs() (models.GenericTransactionArray, error) {
-	pendingTxs, err := c.Executor.GetPendingTxs()
+	pendingTxs, err := c.storage.GetPendingTransactions(txtype.TransactionType(c.BatchType))
 	if err != nil {
 		return nil, err
 	}

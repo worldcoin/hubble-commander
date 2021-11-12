@@ -52,11 +52,7 @@ func NewTransferExecutor(storage *st.Storage, client *eth.Client) *TransferExecu
 }
 
 func (e *TransferExecutor) GetPendingTxs() (models.GenericTransactionArray, error) {
-	pendingTransfers, err := e.storage.GetPendingTransfers()
-	if err != nil {
-		return nil, err
-	}
-	return models.TransferArray(pendingTransfers), nil
+	return e.storage.GetPendingTransfers()
 }
 
 func (e *TransferExecutor) NewTxArray(size, capacity uint32) models.GenericTransactionArray {
@@ -127,11 +123,7 @@ func NewC2TExecutor(storage *st.Storage, client *eth.Client) *C2TExecutor {
 }
 
 func (e *C2TExecutor) GetPendingTxs() (models.GenericTransactionArray, error) {
-	pendingTxs, err := e.storage.GetPendingCreate2Transfers()
-	if err != nil {
-		return nil, err
-	}
-	return models.Create2TransferArray(pendingTxs), nil
+	return e.storage.GetPendingCreate2Transfers()
 }
 
 func (e *C2TExecutor) NewTxArray(size, capacity uint32) models.GenericTransactionArray {
