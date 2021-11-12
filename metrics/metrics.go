@@ -13,7 +13,8 @@ type CommanderMetrics struct {
 	APIRequestDuration   prometheus.Histogram
 	APITotalTransactions *prometheus.CounterVec
 
-	// Batch
+	// Rollup
+	CommitmentBuildDuration      *prometheus.HistogramVec
 	BatchBuildAndSubmissionTimes *prometheus.HistogramVec
 }
 

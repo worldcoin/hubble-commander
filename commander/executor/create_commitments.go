@@ -1,9 +1,12 @@
 package executor
 
 import (
+	"strings"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
@@ -100,14 +103,24 @@ func (c *TxsContext) createCommitment(pendingTxs models.GenericTransactionArray,
 		return nil, err
 	}
 
+	duration := measureCommitmentBuildDuration(startTime, c.commanderMetrics, c.BatchType)
+
 	log.Printf(
 		"Created a %s commitment from %d transactions in %s",
 		c.BatchType,
 		executeResult.AppliedTxs().Len(),
-		time.Since(startTime).Round(time.Millisecond).String(),
+		duration,
 	)
 
 	return c.Executor.NewCreateCommitmentResult(executeResult, commitment), nil
+}
+
+func measureCommitmentBuildDuration(start time.Time, commanderMetrics *metrics.CommanderMetrics, batchType batchtype.BatchType) time.Duration {
+	duration := time.Since(start).Round(time.Millisecond)
+
+	lowercaseBatchType := strings.ToLower(batchType.String())
+	commanderMetrics.CommitmentBuildDuration.WithLabelValues(lowercaseBatchType).Observe(float64(duration.Milliseconds()))
+	return duration
 }
 
 func (c *TxsContext) executeTxsForCommitment(pendingTxs models.GenericTransactionArray, feeReceiver *FeeReceiver) (
