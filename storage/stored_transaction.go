@@ -6,6 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
@@ -324,6 +325,30 @@ func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.U
 		return nil, errors.WithStack(NewNotFoundError("transaction"))
 	}
 	return hashes, nil
+}
+
+func (s *TransactionStorage) GetPendingTransactions(txType txtype.TransactionType) (models.GenericTransactionArray, error) {
+	switch txType {
+	case txtype.Transfer:
+		return s.GetPendingTransfers()
+	case txtype.Create2Transfer:
+		return s.GetPendingCreate2Transfers()
+	case txtype.MassMigration:
+		panic("MassMigration not implemented")
+	}
+	return nil, nil
+}
+
+func (s *TransactionStorage) MarkTransactionsAsIncluded(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error {
+	switch txs.Type() {
+	case txtype.Transfer:
+		return s.MarkTransfersAsIncluded(txs.ToTransferArray(), commitmentID)
+	case txtype.Create2Transfer:
+		return s.MarkCreate2TransfersAsIncluded(txs.ToCreate2TransferArray(), commitmentID)
+	case txtype.MassMigration:
+		panic("MassMigration not implemented")
+	}
+	return nil
 }
 
 func (s *TransactionStorage) getStoredTxFromItem(item *bdg.Item, storedTx *models.StoredTx) (bool, error) {

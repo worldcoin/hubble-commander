@@ -235,7 +235,7 @@ func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers_OrdersTransfer
 	res, err := s.storage.GetPendingCreate2Transfers()
 	s.NoError(err)
 
-	s.Equal([]models.Create2Transfer{create2Transfer, create2Transfer2, create2Transfer5, create2Transfer4, create2Transfer3}, res)
+	s.Equal(models.Create2TransferArray{create2Transfer, create2Transfer2, create2Transfer5, create2Transfer4, create2Transfer3}, res)
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey() {

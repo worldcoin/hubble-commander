@@ -225,7 +225,7 @@ func (s *TransferTestSuite) TestGetPendingTransfers_OrdersTransfersByNonceAndTxH
 	res, err := s.storage.GetPendingTransfers()
 	s.NoError(err)
 
-	s.Equal([]models.Transfer{transfer, transfer2, transfer5, transfer4, transfer3}, res)
+	s.Equal(models.TransferArray{transfer, transfer2, transfer5, transfer4, transfer3}, res)
 }
 
 func (s *TransferTestSuite) TestGetTransfersByPublicKey() {

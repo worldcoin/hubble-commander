@@ -52,7 +52,7 @@ func (s *TransactionStorage) GetTransfer(hash common.Hash) (*models.Transfer, er
 	return tx.ToTransfer(txReceipt), nil
 }
 
-func (s *TransactionStorage) GetPendingTransfers() (txs []models.Transfer, err error) {
+func (s *TransactionStorage) GetPendingTransfers() (txs models.TransferArray, err error) {
 	err = s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
 		txs, err = txStorage.unsafeGetPendingTransfers()
 		return err

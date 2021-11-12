@@ -51,7 +51,7 @@ func (s *TransactionStorage) GetCreate2Transfer(hash common.Hash) (*models.Creat
 	return tx.ToCreate2Transfer(txReceipt), nil
 }
 
-func (s *TransactionStorage) GetPendingCreate2Transfers() (txs []models.Create2Transfer, err error) {
+func (s *TransactionStorage) GetPendingCreate2Transfers() (txs models.Create2TransferArray, err error) {
 	err = s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
 		txs, err = txStorage.unsafeGetPendingCreate2Transfers()
 		return err
