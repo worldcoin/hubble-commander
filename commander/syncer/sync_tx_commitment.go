@@ -17,46 +17,46 @@ const (
 	NonexistentReceiverMessage        = "nonexistent receiver"
 )
 
-func (c *TxsContext) syncTxCommitment(commitment *encoder.DecodedCommitment) (models.GenericTransactionArray, error) {
+func (c *TxsContext) syncTxCommitment(commitment *encoder.DecodedCommitment) error {
 	if len(commitment.Transactions)%c.Syncer.TxLength() != 0 {
-		return nil, ErrInvalidDataLength
+		return ErrInvalidDataLength
 	}
 
 	syncedTxs, err := c.Syncer.DeserializeTxs(commitment.Transactions)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if uint32(syncedTxs.Txs().Len()) > c.cfg.MaxTxsPerCommitment {
-		return nil, ErrTooManyTxs
+		return ErrTooManyTxs
 	}
 
 	appliedTxs, stateProofs, err := c.SyncTxs(syncedTxs, commitment.FeeReceiver)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	syncedTxs.SetTxs(appliedTxs)
 
 	err = c.verifyStateRoot(commitment.StateRoot, stateProofs)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = c.Syncer.SetPublicKeys(syncedTxs)
 	if st.IsNotFoundError(err) {
-		return nil, c.createDisputableSignatureError(NonexistentReceiverMessage, syncedTxs.Txs())
+		return c.createDisputableSignatureError(NonexistentReceiverMessage, syncedTxs.Txs())
 	}
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if !c.cfg.DisableSignatures {
 		err = c.verifyTxSignature(commitment, syncedTxs.Txs())
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
-	return syncedTxs.Txs(), nil
+	return c.addTxs(syncedTxs.Txs(), &commitment.ID)
 }
 
 func (c *TxsContext) verifyStateRoot(commitmentPostState common.Hash, proofs []models.StateMerkleProof) error {
@@ -68,4 +68,20 @@ func (c *TxsContext) verifyStateRoot(commitmentPostState common.Hash, proofs []m
 		return NewDisputableErrorWithProofs(Transition, InvalidCommitmentStateRootMessage, proofs)
 	}
 	return nil
+}
+
+func (c *TxsContext) addTxs(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error {
+	if txs.Len() == 0 {
+		return nil
+	}
+
+	for i := 0; i < txs.Len(); i++ {
+		txs.At(i).GetBase().CommitmentID = commitmentID
+		hashTransfer, err := c.Syncer.HashTx(txs.At(i))
+		if err != nil {
+			return err
+		}
+		txs.At(i).GetBase().Hash = *hashTransfer
+	}
+	return c.Syncer.BatchAddTxs(txs)
 }

@@ -47,30 +47,12 @@ func (c *TxsContext) setCommitmentsBodyHash(batch *eth.DecodedTxBatch) error {
 }
 
 func (c *TxsContext) syncCommitment(batch *eth.DecodedTxBatch, commitment *encoder.DecodedCommitment) error {
-	transactions, err := c.syncTxCommitment(commitment)
+	err := c.syncTxCommitment(commitment)
 	if err != nil {
 		return err
 	}
 
-	err = c.addCommitment(batch, commitment)
-	if err != nil {
-		return err
-	}
-
-	// TODO move adding transactions to syncTxCommitment
-	for i := 0; i < transactions.Len(); i++ {
-		transactions.At(i).GetBase().CommitmentID = &commitment.ID
-		hashTransfer, err := c.Syncer.HashTx(transactions.At(i))
-		if err != nil {
-			return err
-		}
-		transactions.At(i).GetBase().Hash = *hashTransfer
-	}
-
-	if transactions.Len() == 0 {
-		return nil
-	}
-	return c.Syncer.BatchAddTxs(transactions)
+	return c.addCommitment(batch, commitment)
 }
 
 func (c *TxsContext) addCommitment(batch *eth.DecodedTxBatch, decodedCommitment *encoder.DecodedCommitment) error {
