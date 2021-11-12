@@ -58,6 +58,7 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 		}
 
 		var decodedBatch DecodedBatch
+		// nolint: exhaustive
 		switch batchtype.BatchType(batchEvents[i].BatchType) {
 		case batchtype.Transfer, batchtype.Create2Transfer:
 			decodedBatch, err = c.getTxBatch(batchEvents[i], tx)
@@ -135,7 +136,11 @@ func (c *Client) getTxBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transac
 	return decodedBatch, nil
 }
 
-func (c *Client) getDepositBatch(batchEvent *rollup.RollupNewBatch, depositEvent *rollup.RollupDepositsFinalised, tx *types.Transaction) (DecodedBatch, error) {
+func (c *Client) getDepositBatch(
+	batchEvent *rollup.RollupNewBatch,
+	depositEvent *rollup.RollupDepositsFinalised,
+	tx *types.Transaction,
+) (DecodedBatch, error) {
 	batch, err := c.GetBatch(models.NewUint256FromBig(*batchEvent.BatchID))
 	if err != nil {
 		if err.Error() == MsgInvalidBatchID {

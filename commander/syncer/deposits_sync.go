@@ -38,7 +38,7 @@ func (c *DepositsContext) getDepositSubtree(batch *eth.DecodedDepositBatch) (uin
 	}
 	startStateID := batch.PathAtDepth << *subtreeDepth
 
-	depositSubtree, err := c.storage.GetFirstPendingDepositSubTree() // TODO use SubtreeID from DecodedDepositBatch to query directly with GetPendingDepositSubTree
+	depositSubtree, err := c.storage.GetPendingDepositSubTree(batch.SubtreeID)
 	if err != nil {
 		return 0, nil, err
 	}
