@@ -82,11 +82,9 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresErrorMessagesOf
 	s.Nil(commitments)
 	s.ErrorIs(err, ErrNotEnoughCommitments)
 
-	transfer, err := s.storage.GetTransfer(invalidTransfer.Hash)
-	s.NoError(err)
-
-	s.NotNil(transfer.ErrorMessage)
-	s.Equal(applier.ErrNonexistentReceiver.Error(), *transfer.ErrorMessage)
+	s.Len(s.txsCtx.txErrorsToStore, 1)
+	s.Equal(invalidTransfer.Hash, s.txsCtx.txErrorsToStore[0].TxHash)
+	s.Equal(applier.ErrNonexistentReceiver.Error(), s.txsCtx.txErrorsToStore[0].ErrorMessage)
 }
 
 func (s *CreateCommitmentsTestSuite) hashSignAndAddTransfer(wallet *bls.Wallet, transfer *models.Transfer) {

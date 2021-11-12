@@ -20,7 +20,6 @@ type TransactionSyncer interface {
 	TxLength() int
 	DeserializeTxs(data []byte) (SyncedTxs, error)
 	EncodeTxForSigning(tx models.GenericTransaction) ([]byte, error)
-	NewTxArray(size, capacity uint32) models.GenericTransactionArray
 	ApplyTx(syncedTx SyncedTx, commitmentTokenID models.Uint256) (
 		synced *applier.SyncedGenericTransaction, txError, appError error,
 	)
@@ -73,10 +72,6 @@ func (s *TransferSyncer) DeserializeTxs(data []byte) (SyncedTxs, error) {
 
 func (s *TransferSyncer) EncodeTxForSigning(tx models.GenericTransaction) ([]byte, error) {
 	return encoder.EncodeTransferForSigning(tx.ToTransfer())
-}
-
-func (s *TransferSyncer) NewTxArray(size, capacity uint32) models.GenericTransactionArray {
-	return make(models.TransferArray, size, capacity)
 }
 
 func (s *TransferSyncer) ApplyTx(syncedTx SyncedTx, commitmentTokenID models.Uint256) (
@@ -136,10 +131,6 @@ func (s *C2TSyncer) DeserializeTxs(data []byte) (SyncedTxs, error) {
 
 func (s *C2TSyncer) EncodeTxForSigning(tx models.GenericTransaction) ([]byte, error) {
 	return encoder.EncodeCreate2TransferForSigning(tx.ToCreate2Transfer())
-}
-
-func (s *C2TSyncer) NewTxArray(size, capacity uint32) models.GenericTransactionArray {
-	return make(models.Create2TransferArray, size, capacity)
 }
 
 func (s *C2TSyncer) ApplyTx(syncedTx SyncedTx, commitmentTokenID models.Uint256) (

@@ -1,13 +1,16 @@
 package syncer
 
-import "github.com/Worldcoin/hubble-commander/models"
+import (
+	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+)
 
 func (c *TxsContext) SyncTxs(txs SyncedTxs, feeReceiverStateID uint32) (
 	models.GenericTransactionArray,
 	[]models.StateMerkleProof,
 	error,
 ) {
-	appliedTxs := c.Syncer.NewTxArray(0, uint32(txs.Txs().Len()))
+	appliedTxs := models.NewGenericTransactionArray(txtype.TransactionType(c.BatchType), 0, txs.Txs().Len())
 	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*txs.Txs().Len()+1)
 	combinedFee := models.NewUint256(0)
 

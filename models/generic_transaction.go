@@ -24,8 +24,21 @@ type GenericTransactionArray interface {
 	Append(elems GenericTransactionArray) GenericTransactionArray
 	AppendOne(elem GenericTransaction) GenericTransactionArray
 	Slice(start, end int) GenericTransactionArray
+	Type() txtype.TransactionType
 	ToTransferArray() TransferArray
 	ToCreate2TransferArray() Create2TransferArray
+}
+
+func NewGenericTransactionArray(txType txtype.TransactionType, size, capacity int) GenericTransactionArray {
+	switch txType {
+	case txtype.Transfer:
+		return make(TransferArray, size, capacity)
+	case txtype.Create2Transfer:
+		return make(Create2TransferArray, size, capacity)
+	case txtype.MassMigration:
+		panic("MassMigration not implemented")
+	}
+	return nil
 }
 
 type TransferArray []Transfer
@@ -56,6 +69,10 @@ func (t TransferArray) AppendOne(elem GenericTransaction) GenericTransactionArra
 
 func (t TransferArray) Slice(start, end int) GenericTransactionArray {
 	return t[start:end]
+}
+
+func (t TransferArray) Type() txtype.TransactionType {
+	return txtype.Transfer
 }
 
 func (t TransferArray) ToTransferArray() TransferArray {
@@ -94,6 +111,10 @@ func (t Create2TransferArray) AppendOne(elem GenericTransaction) GenericTransact
 
 func (t Create2TransferArray) Slice(start, end int) GenericTransactionArray {
 	return t[start:end]
+}
+
+func (t Create2TransferArray) Type() txtype.TransactionType {
+	return txtype.Create2Transfer
 }
 
 func (t Create2TransferArray) ToTransferArray() TransferArray {
