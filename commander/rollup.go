@@ -72,7 +72,7 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 	var rollupError *executor.RollupError
 	if errors.As(err, &rollupError) {
 		rollupCtx.Rollback(&err)
-		return c.handleRollupError(rollupError, rollupCtx)
+		return c.handleRollupError(rollupError, rollupCtx.GetErrorsToStore())
 	}
 	if err != nil {
 		return err
@@ -98,16 +98,16 @@ func switchBatchType(batchType *batchtype.BatchType) {
 	}
 }
 
-func (c *Commander) handleRollupError(rollupErr *executor.RollupError, rollupCtx executor.RollupLoopContext) error {
-	if errors.Is(rollupErr, executor.ErrNotEnoughDeposits) {
-		return rollupErr
+func (c *Commander) handleRollupError(err *executor.RollupError, errorsToStore []models.TxError) error {
+	if err.IsLoggable {
+		log.Warnf("%+v", err)
 	}
 
-	if rollupErr.IsLoggable {
-		log.Warnf("%+v", rollupErr)
+	if errors.Is(err, executor.ErrNotEnoughDeposits) {
+		return err
 	}
 
-	return c.storage.SetTransactionErrors(rollupCtx.GetErrorsToStore()...)
+	return c.storage.SetTransactionErrors(errorsToStore...)
 }
 
 func logLatestCommitment(latestCommitment *models.CommitmentBase) {
