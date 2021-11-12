@@ -4,7 +4,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -79,23 +78,6 @@ func (b *DecodedTxBatch) ToDecodedTxBatch() *DecodedTxBatch {
 
 func (b *DecodedTxBatch) GetCommitmentsLength() int {
 	return len(b.Commitments)
-}
-
-// TODO Move out of DecodedTxBatch wtf why here?
-func (b *DecodedTxBatch) verifyBatchHash() error {
-	leafHashes := make([]common.Hash, 0, len(b.Commitments))
-	for i := range b.Commitments {
-		leafHashes = append(leafHashes, b.Commitments[i].LeafHash(b.AccountTreeRoot))
-	}
-	tree, err := merkletree.NewMerkleTree(leafHashes)
-	if err != nil {
-		return err
-	}
-
-	if tree.Root() != b.Hash {
-		return errBatchAlreadyRolledBack
-	}
-	return nil
 }
 
 type DecodedDepositBatch struct {

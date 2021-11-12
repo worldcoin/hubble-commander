@@ -10,6 +10,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -125,25 +126,30 @@ func (c *Client) getTxBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transac
 	if err != nil {
 		return nil, err
 	}
+	commitments, err := encoder.DecodeBatchCalldata(tx.Data(), &batch.ID)
+	if err != nil {
+		return nil, err
+	}
+	accountRoot := common.BytesToHash(batchEvent.AccountRoot[:])
+
+	if vErr := verifyBatchHash(*batch.Hash, accountRoot, commitments); vErr != nil {
+		return nil, vErr
+	}
+
 	timestamp, err := c.getBlockTimestamp(batchEvent.Raw.BlockNumber)
 	if err != nil {
 		return nil, err
 	}
 
-	decodedBatch := &DecodedTxBatch{
-		DecodedBatchBase: *NewDecodedBatchBase(batch, tx.Hash(), common.BytesToHash(batchEvent.AccountRoot[:]), timestamp),
-	}
-	decodedBatch.Commitments, err = encoder.DecodeBatchCalldata(tx.Data(), &decodedBatch.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	err = decodedBatch.verifyBatchHash()
-	if err != nil {
-		return nil, err
-	}
-
-	return decodedBatch, nil
+	return &DecodedTxBatch{
+		DecodedBatchBase: *NewDecodedBatchBase(
+			batch,
+			tx.Hash(),
+			accountRoot,
+			timestamp,
+		),
+		Commitments: commitments,
+	}, nil
 }
 
 func (c *Client) getDepositBatch(
@@ -155,13 +161,15 @@ func (c *Client) getDepositBatch(
 	if err != nil {
 		return nil, err
 	}
+	accountRoot := common.BytesToHash(batchEvent.AccountRoot[:])
+
 	timestamp, err := c.getBlockTimestamp(batchEvent.Raw.BlockNumber)
 	if err != nil {
 		return nil, err
 	}
 
 	return &DecodedDepositBatch{
-		DecodedBatchBase: *NewDecodedBatchBase(batch, tx.Hash(), common.BytesToHash(batchEvent.AccountRoot[:]), timestamp),
+		DecodedBatchBase: *NewDecodedBatchBase(batch, tx.Hash(), accountRoot, timestamp),
 		SubtreeID:        models.MakeUint256FromBig(*depositEvent.SubtreeID),
 		PathAtDepth:      uint32(depositEvent.PathToSubTree.Uint64()),
 	}, nil
@@ -183,6 +191,22 @@ func (c *Client) getBlockTimestamp(blockNumber uint64) (*models.Timestamp, error
 	}
 	utcTime := time.Unix(int64(header.Time), 0).UTC()
 	return models.NewTimestamp(utcTime), nil
+}
+
+func verifyBatchHash(batchHash, accountRoot common.Hash, commitments []encoder.DecodedCommitment) error {
+	leafHashes := make([]common.Hash, 0, len(commitments))
+	for i := range commitments {
+		leafHashes = append(leafHashes, commitments[i].LeafHash(accountRoot))
+	}
+	tree, err := merkletree.NewMerkleTree(leafHashes)
+	if err != nil {
+		return err
+	}
+
+	if tree.Root() != batchHash {
+		return errBatchAlreadyRolledBack
+	}
+	return nil
 }
 
 func logBatchesCount(count int) {
