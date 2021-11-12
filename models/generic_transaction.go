@@ -28,6 +28,18 @@ type GenericTransactionArray interface {
 	ToCreate2TransferArray() Create2TransferArray
 }
 
+func NewGenericTransactionArray(txType txtype.TransactionType, size, capacity int) GenericTransactionArray {
+	switch txType {
+	case txtype.Transfer:
+		return make(TransferArray, size, capacity)
+	case txtype.Create2Transfer:
+		return make(Create2TransferArray, size, capacity)
+	case txtype.MassMigration:
+		panic("MassMigration not implemented")
+	}
+	return nil
+}
+
 type TransferArray []Transfer
 
 func MakeTransferArray(transfers ...Transfer) TransferArray {
