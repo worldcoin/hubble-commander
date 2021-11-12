@@ -4,6 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 func (c *TxsContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiver *FeeReceiver) (ExecuteTxsResult, error) {
@@ -55,10 +56,11 @@ func (c *TxsContext) handleTxError(result ExecuteTxsResult, tx models.GenericTra
 		return
 	}
 
-	logAndSaveTxError(c.storage, tx, err)
+	log.WithField("tx_hash", tx.GetBase().Hash.String()).
+		Errorf("%s failed: %s", tx.Type().String(), err)
 	result.AddInvalidTx(tx)
-	c.txErrorsToStore = append(c.txErrorsToStore, TxError{
-		Hash:         tx.GetBase().Hash,
+	c.txErrorsToStore = append(c.txErrorsToStore, models.TxError{
+		TxHash:       tx.GetBase().Hash,
 		ErrorMessage: err.Error(),
 	})
 }

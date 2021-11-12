@@ -5,21 +5,16 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/common"
 )
-
-type TxError struct {
-	Hash         common.Hash
-	ErrorMessage string
-}
 
 type TxsContext struct {
 	*ExecutionContext
 	Executor        TransactionExecutor
 	BatchType       batchtype.BatchType
-	txErrorsToStore []TxError
+	txErrorsToStore []models.TxError
 }
 
 func NewTxsContext(
@@ -42,10 +37,10 @@ func newTxsContext(executionCtx *ExecutionContext, batchType batchtype.BatchType
 		ExecutionContext: executionCtx,
 		Executor:         CreateTransactionExecutor(executionCtx, batchType),
 		BatchType:        batchType,
-		txErrorsToStore:  make([]TxError, 0),
+		txErrorsToStore:  make([]models.TxError, 0),
 	}
 }
 
-func (c *TxsContext) GetErrorsToStore() []TxError {
+func (c *TxsContext) GetErrorsToStore() []models.TxError {
 	return c.txErrorsToStore
 }

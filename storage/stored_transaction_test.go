@@ -31,7 +31,7 @@ var (
 	}
 	create2TransferTransaction = models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
-			Hash:        common.BigToHash(big.NewInt(1234)),
+			Hash:        common.BigToHash(big.NewInt(5678)),
 			TxType:      txtype.Create2Transfer,
 			FromStateID: 1,
 			Amount:      models.MakeUint256(1000),
@@ -64,19 +64,32 @@ func (s *StoredTransactionTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *StoredTransactionTestSuite) TestSetTransactionError() {
+func (s *StoredTransactionTestSuite) TestSetTransactionErrors() {
 	err := s.storage.AddTransfer(&transferTransaction)
 	s.NoError(err)
-
-	errorMessage := ref.String("Quack")
-
-	err = s.storage.SetTransactionError(transferTransaction.Hash, *errorMessage)
+	err = s.storage.AddCreate2Transfer(&create2TransferTransaction)
 	s.NoError(err)
 
-	res, err := s.storage.GetTransfer(transferTransaction.Hash)
+	transferError := models.TxError{
+		TxHash:       transferTransaction.Hash,
+		ErrorMessage: "Quack",
+	}
+
+	c2tError := models.TxError{
+		TxHash:       create2TransferTransaction.Hash,
+		ErrorMessage: "C2T Quack",
+	}
+
+	err = s.storage.SetTransactionErrors(transferError, c2tError)
 	s.NoError(err)
 
-	s.Equal(errorMessage, res.ErrorMessage)
+	storedTransfer, err := s.storage.GetTransfer(transferTransaction.Hash)
+	s.NoError(err)
+	s.Equal(transferError.ErrorMessage, *storedTransfer.ErrorMessage)
+
+	storedC2T, err := s.storage.GetCreate2Transfer(create2TransferTransaction.Hash)
+	s.NoError(err)
+	s.Equal(c2tError.ErrorMessage, *storedC2T.ErrorMessage)
 }
 
 func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_ReturnsHighestNonceRegardlessOfInsertionOrder() {
