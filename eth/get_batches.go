@@ -26,12 +26,7 @@ type BatchesFilters struct {
 }
 
 func (c *TestClient) GetAllBatches() ([]DecodedBatch, error) {
-	batches, err := c.GetBatches(&BatchesFilters{})
-	if err != nil {
-		return nil, err
-	}
-
-	return batches, nil
+	return c.GetBatches(&BatchesFilters{})
 }
 
 func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
