@@ -16,7 +16,6 @@ type TransactionExecutor interface {
 	NewExecuteTxsResult(capacity uint32) ExecuteTxsResult
 	NewExecuteTxsForCommitmentResult(result ExecuteTxsResult, newPendingTxs models.GenericTransactionArray) ExecuteTxsForCommitmentResult
 	SerializeTxs(results ExecuteTxsForCommitmentResult) ([]byte, error)
-	MarkTxsAsIncluded(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error
 	AddPendingAccount(result applier.ApplySingleTxResult) error
 	NewCreateCommitmentResult(result ExecuteTxsForCommitmentResult, commitment *models.CommitmentWithTxs) CreateCommitmentResult
 	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (result applier.ApplySingleTxResult, txError, appError error)
@@ -81,10 +80,6 @@ func (e *TransferExecutor) SerializeTxs(results ExecuteTxsForCommitmentResult) (
 	return encoder.SerializeTransfers(results.AppliedTxs().ToTransferArray())
 }
 
-func (e *TransferExecutor) MarkTxsAsIncluded(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error {
-	return e.storage.MarkTransfersAsIncluded(txs.ToTransferArray(), commitmentID)
-}
-
 func (e *TransferExecutor) AddPendingAccount(_ applier.ApplySingleTxResult) error {
 	return nil
 }
@@ -147,10 +142,6 @@ func (e *C2TExecutor) NewCreateCommitmentResult(
 
 func (e *C2TExecutor) SerializeTxs(results ExecuteTxsForCommitmentResult) ([]byte, error) {
 	return encoder.SerializeCreate2Transfers(results.AppliedTxs().ToCreate2TransferArray(), results.AddedPubKeyIDs())
-}
-
-func (e *C2TExecutor) MarkTxsAsIncluded(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error {
-	return e.storage.MarkCreate2TransfersAsIncluded(txs.ToCreate2TransferArray(), commitmentID)
 }
 
 func (e *C2TExecutor) AddPendingAccount(result applier.ApplySingleTxResult) error {

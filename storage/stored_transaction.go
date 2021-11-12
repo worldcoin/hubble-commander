@@ -283,6 +283,18 @@ func (s *TransactionStorage) GetPendingTransactions(txType txtype.TransactionTyp
 	return nil, nil
 }
 
+func (s *TransactionStorage) MarkTransactionsAsIncluded(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error {
+	switch txs.Type() {
+	case txtype.Transfer:
+		return s.MarkTransfersAsIncluded(txs.ToTransferArray(), commitmentID)
+	case txtype.Create2Transfer:
+		return s.MarkCreate2TransfersAsIncluded(txs.ToCreate2TransferArray(), commitmentID)
+	case txtype.MassMigration:
+		panic("MassMigration not implemented")
+	}
+	return nil
+}
+
 func (s *TransactionStorage) getStoredTxFromItem(item *bdg.Item, storedTx *models.StoredTx) (bool, error) {
 	var hash common.Hash
 	err := db.DecodeKey(item.Key(), &hash, models.StoredTxPrefix)

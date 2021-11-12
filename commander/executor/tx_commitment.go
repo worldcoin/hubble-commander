@@ -36,7 +36,7 @@ func (c *TxsContext) BuildCommitment(
 		return nil, err
 	}
 
-	err = c.Executor.MarkTxsAsIncluded(executeResult.AppliedTxs(), commitmentID)
+	err = c.storage.MarkTransactionsAsIncluded(executeResult.AppliedTxs(), commitmentID)
 	if err != nil {
 		return nil, err
 	}
