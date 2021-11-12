@@ -43,7 +43,7 @@ func (c *Context) syncNewBatch(remoteBatch eth.DecodedBatch) error {
 		return err
 	}
 
-	err = c.batchSyncer.SyncCommitments(remoteBatch)
+	err = c.batchCtx.SyncCommitments(remoteBatch)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func (c *Context) syncExistingBatch(remoteBatch eth.DecodedBatch, localBatch *mo
 	batch := remoteBatch.GetBatch()
 	if batch.TransactionHash == localBatch.TransactionHash {
 		batch.PrevStateRoot = localBatch.PrevStateRoot
-		err := c.batchSyncer.UpdateExistingBatch(remoteBatch)
+		err := c.batchCtx.UpdateExistingBatch(remoteBatch)
 		if err != nil {
 			return err
 		}

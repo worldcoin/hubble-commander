@@ -8,17 +8,16 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-// TODO rename to batchContext
-type batchSyncer interface {
+type batchContext interface {
 	SyncCommitments(batch eth.DecodedBatch) error
 	UpdateExistingBatch(batch eth.DecodedBatch) error
 }
 
 type Context struct {
-	storage     *st.Storage
-	tx          *db.TxController
-	client      *eth.Client
-	batchSyncer batchSyncer
+	storage  *st.Storage
+	tx       *db.TxController
+	client   *eth.Client
+	batchCtx batchContext
 }
 
 func NewContext(
@@ -47,20 +46,20 @@ func newContext(
 	cfg *config.RollupConfig,
 	batchType batchtype.BatchType,
 ) *Context {
-	var syncer batchSyncer
+	var batchCtx batchContext
 	switch batchType {
 	case batchtype.Transfer, batchtype.Create2Transfer:
-		syncer = newTxsContext(txStorage, client, cfg, batchType)
+		batchCtx = newTxsContext(txStorage, client, cfg, batchType)
 	case batchtype.Deposit:
-		syncer = newDepositsContext(txStorage, client)
+		batchCtx = newDepositsContext(txStorage, client)
 	case batchtype.Genesis, batchtype.MassMigration:
 		panic("invalid batch type")
 	}
 	return &Context{
-		storage:     txStorage,
-		tx:          tx,
-		client:      client,
-		batchSyncer: syncer,
+		storage:  txStorage,
+		tx:       tx,
+		client:   client,
+		batchCtx: batchCtx,
 	}
 }
 

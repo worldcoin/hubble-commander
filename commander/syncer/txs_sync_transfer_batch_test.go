@@ -307,7 +307,7 @@ func (s *SyncTransferBatchTestSuite) submitTransferBatchWithNonexistentFeeReceiv
 	s.NoError(txErr)
 	s.NoError(appErr)
 
-	_, commitmentErr, appErr := s.syncCtx.batchSyncer.(*TxsContext).Syncer.ApplyFee(feeReceiverStateID, &commitmentTokenID, &tx.Fee)
+	_, commitmentErr, appErr := s.syncCtx.batchCtx.(*TxsContext).Syncer.ApplyFee(feeReceiverStateID, &commitmentTokenID, &tx.Fee)
 	s.NoError(commitmentErr)
 	s.NoError(appErr)
 
