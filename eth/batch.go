@@ -13,9 +13,7 @@ type DecodedBatch interface {
 	GetBatch() *DecodedBatchBase
 	ToDecodedTxBatch() *DecodedTxBatch
 	ToDecodedDepositBatch() *DecodedDepositBatch
-	SetCalldata(calldata []byte) error
 	GetCommitmentsLength() int
-	verifyBatchHash() error
 }
 
 func newDecodedBatch(batch *models.Batch, transactionHash, accountRoot common.Hash) DecodedBatch {
@@ -90,15 +88,6 @@ func (b *DecodedTxBatch) ToDecodedTxBatch() *DecodedTxBatch {
 	return b
 }
 
-func (b *DecodedTxBatch) SetCalldata(calldata []byte) error {
-	commitments, err := encoder.DecodeBatchCalldata(calldata, &b.ID)
-	if err != nil {
-		return err
-	}
-	b.Commitments = commitments
-	return nil
-}
-
 func (b *DecodedTxBatch) GetCommitmentsLength() int {
 	return len(b.Commitments)
 }
@@ -121,6 +110,7 @@ func (b *DecodedTxBatch) verifyBatchHash() error {
 
 type DecodedDepositBatch struct {
 	DecodedBatchBase
+	SubtreeID   models.Uint256
 	PathAtDepth uint32
 }
 

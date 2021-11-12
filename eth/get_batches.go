@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
+	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -31,27 +33,20 @@ func (c *TestClient) GetAllBatches() ([]DecodedBatch, error) {
 
 func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 	// TODO filter DepositsFinalised events and return subtreeID as part of DecodedCommitment
-	it, err := c.Rollup.FilterNewBatch(&bind.FilterOpts{
-		Start: filters.StartBlockInclusive,
-		End:   filters.EndBlockInclusive,
-	})
+	batchEvents, depositEvents, err := c.getBatchEvents(filters)
 	if err != nil {
 		return nil, err
 	}
+	logBatchesCount(len(batchEvents))
 
-	events := make([]*rollup.RollupNewBatch, 0)
-	for it.Next() {
-		events = append(events, it.Event)
-	}
-	logBatchesCount(len(events))
-
-	res := make([]DecodedBatch, 0, len(events))
-	for i := range events {
-		if filters.FilterByBatchID != nil && !filters.FilterByBatchID(models.NewUint256FromBig(*events[i].BatchID)) {
+	depositIndex := 0
+	res := make([]DecodedBatch, 0, len(batchEvents))
+	for i := range batchEvents {
+		if filters.FilterByBatchID != nil && !filters.FilterByBatchID(models.NewUint256FromBig(*batchEvents[i].BatchID)) {
 			continue
 		}
 
-		tx, _, err := c.Blockchain.GetBackend().TransactionByHash(context.Background(), events[i].Raw.TxHash)
+		tx, _, err := c.Blockchain.GetBackend().TransactionByHash(context.Background(), batchEvents[i].Raw.TxHash)
 		if err != nil {
 			return nil, err
 		}
@@ -62,7 +57,14 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 			continue // TODO handle internal transactions
 		}
 
-		decodedBatch, err := c.getBatchIfExists(events[i], tx)
+		var decodedBatch DecodedBatch
+		switch batchtype.BatchType(batchEvents[i].BatchType) {
+		case batchtype.Transfer, batchtype.Create2Transfer:
+			decodedBatch, err = c.getTxBatch(batchEvents[i], tx)
+		case batchtype.Deposit:
+			decodedBatch, err = c.getDepositBatch(batchEvents[i], depositEvents[depositIndex], tx)
+			depositIndex++
+		}
 		if errors.Is(err, errBatchAlreadyRolledBack) {
 			// TODO: handle deposit rollbacks after https://github.com/thehubbleproject/hubble-contracts/issues/671
 			continue
@@ -77,8 +79,35 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 	return res, nil
 }
 
-func (c *Client) getBatchIfExists(event *rollup.RollupNewBatch, tx *types.Transaction) (DecodedBatch, error) {
-	batch, err := c.GetBatch(models.NewUint256FromBig(*event.BatchID))
+func (c *Client) getBatchEvents(filters *BatchesFilters) ([]*rollup.RollupNewBatch, []*rollup.RollupDepositsFinalised, error) {
+	batchIterator, err := c.Rollup.FilterNewBatch(&bind.FilterOpts{
+		Start: filters.StartBlockInclusive,
+		End:   filters.EndBlockInclusive,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	events := make([]*rollup.RollupNewBatch, 0)
+	for batchIterator.Next() {
+		events = append(events, batchIterator.Event)
+	}
+
+	depositIterator, err := c.Rollup.FilterDepositsFinalised(&bind.FilterOpts{
+		Start: filters.StartBlockInclusive,
+		End:   filters.EndBlockInclusive,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	depositEvents := make([]*rollup.RollupDepositsFinalised, 0)
+	for depositIterator.Next() {
+		depositEvents = append(depositEvents, depositIterator.Event)
+	}
+	return events, depositEvents, nil
+}
+
+func (c *Client) getTxBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transaction) (DecodedBatch, error) {
+	batch, err := c.GetBatch(models.NewUint256FromBig(*batchEvent.BatchID))
 	if err != nil {
 		if err.Error() == MsgInvalidBatchID {
 			return nil, errBatchAlreadyRolledBack
@@ -86,8 +115,10 @@ func (c *Client) getBatchIfExists(event *rollup.RollupNewBatch, tx *types.Transa
 		return nil, err
 	}
 
-	decodedBatch := newDecodedBatch(batch, tx.Hash(), common.BytesToHash(event.AccountRoot[:]))
-	err = decodedBatch.SetCalldata(tx.Data())
+	decodedBatch := &DecodedTxBatch{
+		DecodedBatchBase: *NewDecodedBatchBase(batch, tx.Hash(), common.BytesToHash(batchEvent.AccountRoot[:])),
+	}
+	decodedBatch.Commitments, err = encoder.DecodeBatchCalldata(tx.Data(), &decodedBatch.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -97,13 +128,41 @@ func (c *Client) getBatchIfExists(event *rollup.RollupNewBatch, tx *types.Transa
 		return nil, err
 	}
 
-	header, err := c.Blockchain.GetBackend().HeaderByNumber(context.Background(), new(big.Int).SetUint64(event.Raw.BlockNumber))
+	err = c.setSubmissionTime(decodedBatch, batchEvent.Raw.BlockNumber)
 	if err != nil {
 		return nil, err
 	}
-
-	decodedBatch.GetBatch().SubmissionTime = *models.NewTimestamp(time.Unix(int64(header.Time), 0).UTC())
 	return decodedBatch, nil
+}
+
+func (c *Client) getDepositBatch(batchEvent *rollup.RollupNewBatch, depositEvent *rollup.RollupDepositsFinalised, tx *types.Transaction) (DecodedBatch, error) {
+	batch, err := c.GetBatch(models.NewUint256FromBig(*batchEvent.BatchID))
+	if err != nil {
+		if err.Error() == MsgInvalidBatchID {
+			return nil, errBatchAlreadyRolledBack
+		}
+		return nil, err
+	}
+
+	decodedBatch := &DecodedDepositBatch{
+		DecodedBatchBase: *NewDecodedBatchBase(batch, tx.Hash(), common.BytesToHash(batchEvent.AccountRoot[:])),
+		SubtreeID:        models.MakeUint256FromBig(*depositEvent.SubtreeID),
+		PathAtDepth:      uint32(depositEvent.PathToSubTree.Uint64()),
+	}
+	err = c.setSubmissionTime(decodedBatch, batchEvent.Raw.BlockNumber)
+	if err != nil {
+		return nil, err
+	}
+	return decodedBatch, nil
+}
+
+func (c *Client) setSubmissionTime(decodedBatch DecodedBatch, blockNumber uint64) error {
+	header, err := c.Blockchain.GetBackend().HeaderByNumber(context.Background(), new(big.Int).SetUint64(blockNumber))
+	if err != nil {
+		return err
+	}
+	decodedBatch.GetBatch().SubmissionTime = *models.NewTimestamp(time.Unix(int64(header.Time), 0).UTC())
+	return nil
 }
 
 func logBatchesCount(count int) {
