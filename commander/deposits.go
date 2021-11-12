@@ -3,13 +3,17 @@ package commander
 import (
 	"bytes"
 	"context"
+	"time"
 
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
 func (c *Commander) syncDeposits(start, end uint64) error {
+	startTime := time.Now()
+
 	err := c.syncQueuedDeposits(start, end)
 	if err != nil {
 		return err
@@ -21,10 +25,12 @@ func (c *Commander) syncDeposits(start, end uint64) error {
 	}
 
 	if len(depositSubTrees) > 0 {
+		defer measureDepositsAndSubTreesSyncingDuration(startTime, c.metrics)
 		return c.saveSyncedSubTrees(depositSubTrees)
+	} else {
+		measureDepositsSyncingDuration(startTime, c.metrics)
+		return nil
 	}
-
-	return nil
 }
 
 func (c *Commander) syncQueuedDeposits(start, end uint64) error {
@@ -133,4 +139,20 @@ func (c *Commander) saveSingleSubTree(subTree *models.PendingDepositSubTree, sub
 
 		return txStorage.RemovePendingDeposits(deposits)
 	})
+}
+
+func measureDepositsSyncingDuration(
+	start time.Time,
+	commanderMetrics *metrics.CommanderMetrics,
+) {
+	duration := time.Since(start).Round(time.Millisecond)
+	commanderMetrics.SyncingDepositsDuration.WithLabelValues("deposits").Observe(float64(duration.Milliseconds()))
+}
+
+func measureDepositsAndSubTreesSyncingDuration(
+	start time.Time,
+	commanderMetrics *metrics.CommanderMetrics,
+) {
+	duration := time.Since(start).Round(time.Millisecond)
+	commanderMetrics.SyncingDepositsDuration.WithLabelValues("deposits_and_sub_trees").Observe(float64(duration.Milliseconds()))
 }

@@ -20,6 +20,7 @@ type CommanderMetrics struct {
 	// Syncing
 	SyncingAccountsDuration prometheus.Histogram
 	SyncingTokensDuration   prometheus.Histogram
+	SyncingDepositsDuration *prometheus.HistogramVec
 	SyncingBatchesDuration  prometheus.Histogram
 }
 
