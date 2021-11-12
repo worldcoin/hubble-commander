@@ -52,7 +52,7 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 			return nil, err
 		}
 
-		if !c.directBatchSubmission(tx) {
+		if !c.isDirectBatchSubmission(tx) {
 			continue // TODO handle internal transactions
 		}
 
@@ -114,7 +114,7 @@ func (c *Client) getBatchEvents(filters *BatchesFilters) ([]*rollup.RollupNewBat
 	return events, depositEvents, nil
 }
 
-func (c *Client) directBatchSubmission(tx *types.Transaction) bool {
+func (c *Client) isDirectBatchSubmission(tx *types.Transaction) bool {
 	methodID := tx.Data()[:4]
 	return bytes.Equal(methodID, c.RollupABI.Methods["submitTransfer"].ID) ||
 		bytes.Equal(methodID, c.RollupABI.Methods["submitCreate2Transfer"].ID) ||
