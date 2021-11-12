@@ -27,6 +27,7 @@ type DecodedBatchBase struct {
 	SubmissionTime    models.Timestamp
 }
 
+// TODO refactor to include submissionTime
 func NewDecodedBatchBase(batch *models.Batch, transactionHash, accountRoot common.Hash) *DecodedBatchBase {
 	return &DecodedBatchBase{
 		ID:                batch.ID,
@@ -77,6 +78,7 @@ func (b *DecodedTxBatch) GetCommitmentsLength() int {
 	return len(b.Commitments)
 }
 
+// TODO Move out of DecodedTxBatch wtf why here?
 func (b *DecodedTxBatch) verifyBatchHash() error {
 	leafHashes := make([]common.Hash, 0, len(b.Commitments))
 	for i := range b.Commitments {

@@ -32,7 +32,6 @@ func (c *TestClient) GetAllBatches() ([]DecodedBatch, error) {
 }
 
 func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
-	// TODO filter DepositsFinalised events and return subtreeID as part of DecodedCommitment
 	batchEvents, depositEvents, err := c.getBatchEvents(filters)
 	if err != nil {
 		return nil, err
@@ -42,30 +41,34 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 	depositIndex := 0
 	res := make([]DecodedBatch, 0, len(batchEvents))
 	for i := range batchEvents {
-		if filters.FilterByBatchID != nil && !filters.FilterByBatchID(models.NewUint256FromBig(*batchEvents[i].BatchID)) {
+		event := batchEvents[i]
+		if filters.FilterByBatchID != nil && !filters.FilterByBatchID(models.NewUint256FromBig(*event.BatchID)) {
 			continue
 		}
 
-		tx, _, err := c.Blockchain.GetBackend().TransactionByHash(context.Background(), batchEvents[i].Raw.TxHash)
+		tx, _, err := c.Blockchain.GetBackend().TransactionByHash(context.Background(), event.Raw.TxHash)
 		if err != nil {
 			return nil, err
 		}
 
-		if !bytes.Equal(tx.Data()[:4], c.RollupABI.Methods["submitTransfer"].ID) &&
-			!bytes.Equal(tx.Data()[:4], c.RollupABI.Methods["submitCreate2Transfer"].ID) &&
-			!bytes.Equal(tx.Data()[:4], c.RollupABI.Methods["submitDeposits"].ID) {
+		if !c.directBatchSubmission(tx) {
 			continue // TODO handle internal transactions
 		}
 
 		var decodedBatch DecodedBatch
-		// nolint: exhaustive
-		switch batchtype.BatchType(batchEvents[i].BatchType) {
+
+		switch batchtype.BatchType(event.BatchType) {
 		case batchtype.Transfer, batchtype.Create2Transfer:
-			decodedBatch, err = c.getTxBatch(batchEvents[i], tx)
+			decodedBatch, err = c.getTxBatch(event, tx)
 		case batchtype.Deposit:
-			decodedBatch, err = c.getDepositBatch(batchEvents[i], depositEvents[depositIndex], tx)
+			decodedBatch, err = c.getDepositBatch(event, depositEvents[depositIndex], tx)
 			depositIndex++
+		case batchtype.MassMigration:
+			panic("syncing MassMigration batches is not supported yet")
+		case batchtype.Genesis:
+			panic("syncing genesis batch should have been skipped")
 		}
+
 		if errors.Is(err, errBatchAlreadyRolledBack) {
 			// TODO: handle deposit rollbacks after https://github.com/thehubbleproject/hubble-contracts/issues/671
 			continue
@@ -104,7 +107,17 @@ func (c *Client) getBatchEvents(filters *BatchesFilters) ([]*rollup.RollupNewBat
 	for depositIterator.Next() {
 		depositEvents = append(depositEvents, depositIterator.Event)
 	}
+
+	// TODO Sort logs for sanity
+
 	return events, depositEvents, nil
+}
+
+func (c *Client) directBatchSubmission(tx *types.Transaction) bool {
+	methodID := tx.Data()[:4]
+	return bytes.Equal(methodID, c.RollupABI.Methods["submitTransfer"].ID) ||
+		bytes.Equal(methodID, c.RollupABI.Methods["submitCreate2Transfer"].ID) ||
+		bytes.Equal(methodID, c.RollupABI.Methods["submitDeposits"].ID)
 }
 
 func (c *Client) getTxBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transaction) (DecodedBatch, error) {
@@ -161,6 +174,7 @@ func (c *Client) getDepositBatch(
 	return decodedBatch, nil
 }
 
+// TODO refactor to getSubmissionTime
 func (c *Client) setSubmissionTime(decodedBatch DecodedBatch, blockNumber uint64) error {
 	header, err := c.Blockchain.GetBackend().HeaderByNumber(context.Background(), new(big.Int).SetUint64(blockNumber))
 	if err != nil {
