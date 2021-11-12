@@ -4,6 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -25,9 +26,9 @@ func (c *TxsContext) SyncCommitments(remoteBatch eth.DecodedBatch) error {
 	return nil
 }
 
-func (c *TxsContext) UpdateExistingBatch(batch eth.DecodedBatch) error {
+func (c *TxsContext) UpdateExistingBatch(batch eth.DecodedBatch, prevStateRoot common.Hash) error {
 	txBatch := batch.ToDecodedTxBatch()
-	err := c.storage.UpdateBatch(&txBatch.Batch)
+	err := c.storage.UpdateBatch(txBatch.ToBatch(prevStateRoot))
 	if err != nil {
 		return err
 	}
@@ -40,7 +41,7 @@ func (c *TxsContext) setCommitmentsBodyHash(batch *eth.DecodedTxBatch) error {
 		return err
 	}
 	for i := range commitments {
-		commitments[i].BodyHash = batch.Commitments[i].BodyHash(*batch.AccountTreeRoot)
+		commitments[i].BodyHash = batch.Commitments[i].BodyHash(batch.AccountTreeRoot)
 	}
 
 	return c.storage.UpdateCommitments(commitments)
@@ -64,7 +65,7 @@ func (c *TxsContext) addCommitment(batch *eth.DecodedTxBatch, decodedCommitment 
 		},
 		FeeReceiver:       decodedCommitment.FeeReceiver,
 		CombinedSignature: decodedCommitment.CombinedSignature,
-		BodyHash:          decodedCommitment.BodyHash(*batch.AccountTreeRoot),
+		BodyHash:          decodedCommitment.BodyHash(batch.AccountTreeRoot),
 	}
 
 	return c.storage.AddTxCommitment(commitment)

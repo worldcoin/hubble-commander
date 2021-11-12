@@ -10,7 +10,7 @@ import (
 
 type DecodedBatch interface {
 	GetID() models.Uint256
-	GetBatch() *models.Batch
+	GetBatch() *DecodedBatchBase
 	ToDecodedTxBatch() *DecodedTxBatch
 	ToDecodedDepositBatch() *DecodedDepositBatch
 	SetCalldata(calldata []byte) error
@@ -18,15 +18,15 @@ type DecodedBatch interface {
 	verifyBatchHash() error
 }
 
-func newDecodedBatch(batch *models.Batch) DecodedBatch {
+func newDecodedBatch(batch *models.Batch, transactionHash, accountRoot common.Hash) DecodedBatch {
 	switch batch.Type {
 	case batchtype.Transfer, batchtype.Create2Transfer:
 		return &DecodedTxBatch{
-			Batch: *batch,
+			DecodedBatchBase: *NewDecodedBatchBase(batch, transactionHash, accountRoot),
 		}
 	case batchtype.Deposit:
 		return &DecodedDepositBatch{
-			Batch: *batch,
+			DecodedBatchBase: *NewDecodedBatchBase(batch, transactionHash, accountRoot),
 		}
 	case batchtype.Genesis, batchtype.MassMigration:
 		panic("batch type not supported")
@@ -34,17 +34,52 @@ func newDecodedBatch(batch *models.Batch) DecodedBatch {
 	return nil
 }
 
+type DecodedBatchBase struct {
+	ID                models.Uint256
+	Type              batchtype.BatchType
+	TransactionHash   common.Hash
+	Hash              common.Hash
+	FinalisationBlock uint32
+	AccountTreeRoot   common.Hash
+	SubmissionTime    models.Timestamp
+}
+
+func NewDecodedBatchBase(batch *models.Batch, transactionHash, accountRoot common.Hash) *DecodedBatchBase {
+	return &DecodedBatchBase{
+		ID:                batch.ID,
+		Type:              batch.Type,
+		TransactionHash:   transactionHash,
+		Hash:              *batch.Hash,
+		FinalisationBlock: *batch.FinalisationBlock,
+		AccountTreeRoot:   accountRoot,
+		SubmissionTime:    models.Timestamp{},
+	}
+}
+
+func (b *DecodedBatchBase) ToBatch(prevStateRoot common.Hash) *models.Batch {
+	return &models.Batch{
+		ID:                b.ID,
+		Type:              b.Type,
+		TransactionHash:   b.TransactionHash,
+		Hash:              &b.Hash,
+		FinalisationBlock: &b.FinalisationBlock,
+		AccountTreeRoot:   &b.AccountTreeRoot,
+		SubmissionTime:    &b.SubmissionTime,
+		PrevStateRoot:     &prevStateRoot,
+	}
+}
+
 type DecodedTxBatch struct {
-	models.Batch
+	DecodedBatchBase
 	Commitments []encoder.DecodedCommitment
 }
 
 func (b *DecodedTxBatch) GetID() models.Uint256 {
-	return b.Batch.ID
+	return b.DecodedBatchBase.ID
 }
 
-func (b *DecodedTxBatch) GetBatch() *models.Batch {
-	return &b.Batch
+func (b *DecodedTxBatch) GetBatch() *DecodedBatchBase {
+	return &b.DecodedBatchBase
 }
 
 func (b *DecodedTxBatch) ToDecodedDepositBatch() *DecodedDepositBatch {
@@ -71,30 +106,30 @@ func (b *DecodedTxBatch) GetCommitmentsLength() int {
 func (b *DecodedTxBatch) verifyBatchHash() error {
 	leafHashes := make([]common.Hash, 0, len(b.Commitments))
 	for i := range b.Commitments {
-		leafHashes = append(leafHashes, b.Commitments[i].LeafHash(*b.AccountTreeRoot))
+		leafHashes = append(leafHashes, b.Commitments[i].LeafHash(b.AccountTreeRoot))
 	}
 	tree, err := merkletree.NewMerkleTree(leafHashes)
 	if err != nil {
 		return err
 	}
 
-	if tree.Root() != *b.Hash {
+	if tree.Root() != b.Hash {
 		return errBatchAlreadyRolledBack
 	}
 	return nil
 }
 
 type DecodedDepositBatch struct {
-	models.Batch // TODO create and use eth.DecodedBatchBase type here
-	PathAtDepth  uint32
+	DecodedBatchBase
+	PathAtDepth uint32
 }
 
 func (b *DecodedDepositBatch) GetID() models.Uint256 {
-	return b.Batch.ID
+	return b.DecodedBatchBase.ID
 }
 
-func (b *DecodedDepositBatch) GetBatch() *models.Batch {
-	return &b.Batch
+func (b *DecodedDepositBatch) GetBatch() *DecodedBatchBase {
+	return &b.DecodedBatchBase
 }
 
 func (b *DecodedDepositBatch) ToDecodedDepositBatch() *DecodedDepositBatch {

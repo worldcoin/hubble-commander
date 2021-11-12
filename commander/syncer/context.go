@@ -6,11 +6,12 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type batchContext interface {
 	SyncCommitments(batch eth.DecodedBatch) error
-	UpdateExistingBatch(batch eth.DecodedBatch) error
+	UpdateExistingBatch(batch eth.DecodedBatch, prevStateRoot common.Hash) error
 }
 
 type Context struct {

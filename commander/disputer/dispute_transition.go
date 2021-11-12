@@ -21,9 +21,9 @@ func (c *Context) DisputeTransition(
 	}
 
 	if batch.Type == batchtype.Transfer {
-		err = c.client.DisputeTransitionTransfer(&batch.ID, batch.Hash, previousCommitmentProof, targetCommitmentProof, merkleProofs)
+		err = c.client.DisputeTransitionTransfer(&batch.ID, &batch.Hash, previousCommitmentProof, targetCommitmentProof, merkleProofs)
 	} else {
-		err = c.client.DisputeTransitionCreate2Transfer(&batch.ID, batch.Hash, previousCommitmentProof, targetCommitmentProof, merkleProofs)
+		err = c.client.DisputeTransitionCreate2Transfer(&batch.ID, &batch.Hash, previousCommitmentProof, targetCommitmentProof, merkleProofs)
 	}
 	return err
 }

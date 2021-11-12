@@ -125,6 +125,9 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 	defer teardown(s.Assertions, clonedStorage.Teardown)
 	s.submitBatch(clonedStorage.Storage, txsCtx, &transfers[0])
 
+	root, err := s.cmd.storage.StateTree.Root()
+	s.NoError(err)
+
 	s.createTransferBatch(&transfers[1])
 
 	batches, err := s.client.GetAllBatches()
@@ -137,7 +140,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() 
 
 	batch, err := s.cmd.storage.GetBatch(batches[0].GetID())
 	s.NoError(err)
-	s.Equal(*batches[0].GetBatch(), *batch)
+	s.Equal(*batches[0].GetBatch().ToBatch(*root), *batch)
 
 	txBatch := batches[0].ToDecodedTxBatch()
 	expectedCommitment := models.TxCommitment{
@@ -434,11 +437,11 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_AllowsTransferToNonexistentReceiv
 	stateRoot := common.HexToHash("0x09de852e52fff821a7384b6bce2d5c51e9f0d32484e14c2fa29fb140d54ae8e8")
 
 	batch := &eth.DecodedTxBatch{
-		Batch: models.Batch{
+		DecodedBatchBase: eth.DecodedBatchBase{
 			ID:              models.MakeUint256(1),
 			Type:            batchtype.Transfer,
 			TransactionHash: common.Hash{1, 2, 3},
-			AccountTreeRoot: &common.Hash{1, 2, 3},
+			AccountTreeRoot: common.Hash{1, 2, 3},
 		},
 		Commitments: []encoder.DecodedCommitment{{
 			StateRoot:         stateRoot,
@@ -566,13 +569,13 @@ func (s *BatchesTestSuite) setTransferHashAndSign(txs ...*models.Transfer) {
 }
 
 func (s *BatchesTestSuite) updateBatchAfterSubmission(batch *eth.DecodedTxBatch) {
-	err := s.cmd.storage.UpdateBatch(&batch.Batch)
+	err := s.cmd.storage.UpdateBatch(batch.DecodedBatchBase.ToBatch(utils.RandomHash()))
 	s.NoError(err)
 
 	commitments, err := s.cmd.storage.GetTxCommitmentsByBatchID(batch.ID)
 	s.NoError(err)
 	for i := range commitments {
-		commitments[i].BodyHash = batch.Commitments[i].BodyHash(*batch.AccountTreeRoot)
+		commitments[i].BodyHash = batch.Commitments[i].BodyHash(batch.AccountTreeRoot)
 	}
 
 	err = s.cmd.storage.UpdateCommitments(commitments)

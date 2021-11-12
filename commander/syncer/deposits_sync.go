@@ -4,6 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 func (c *DepositsContext) SyncCommitments(remoteBatch eth.DecodedBatch) error {
@@ -26,8 +27,8 @@ func (c *DepositsContext) SyncCommitments(remoteBatch eth.DecodedBatch) error {
 	return c.addCommitment(batch.ID, depositSubtree)
 }
 
-func (c *DepositsContext) UpdateExistingBatch(batch eth.DecodedBatch) error {
-	return c.storage.UpdateBatch(batch.GetBatch())
+func (c *DepositsContext) UpdateExistingBatch(batch eth.DecodedBatch, prevStateRoot common.Hash) error {
+	return c.storage.UpdateBatch(batch.ToDecodedDepositBatch().ToBatch(prevStateRoot))
 }
 
 func (c *DepositsContext) getDepositSubtree(batch *eth.DecodedDepositBatch) (uint32, *models.PendingDepositSubTree, error) {

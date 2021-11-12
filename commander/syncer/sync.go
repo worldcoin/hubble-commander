@@ -36,9 +36,7 @@ func (c *Context) syncNewBatch(remoteBatch eth.DecodedBatch) error {
 		return err
 	}
 
-	batch.PrevStateRoot = root
-
-	err = c.storage.AddBatch(batch)
+	err = c.storage.AddBatch(batch.ToBatch(*root))
 	if err != nil {
 		return err
 	}
@@ -52,7 +50,7 @@ func (c *Context) syncNewBatch(remoteBatch eth.DecodedBatch) error {
 	return nil
 }
 
-func logSyncingBatch(batch *models.Batch, commitmentLength int) {
+func logSyncingBatch(batch *eth.DecodedBatchBase, commitmentLength int) {
 	log.Debugf("Syncing new %s batch #%s with %d commitment(s) from chain",
 		batch.Type.String(),
 		batch.ID.String(),
@@ -60,7 +58,7 @@ func logSyncingBatch(batch *models.Batch, commitmentLength int) {
 	)
 }
 
-func logSyncedBatch(batch *models.Batch, commitmentLength int) {
+func logSyncedBatch(batch *eth.DecodedBatchBase, commitmentLength int) {
 	log.Printf("Synced new %s batch #%s with %d commitment(s) from chain",
 		batch.Type.String(),
 		batch.ID.String(),
@@ -71,8 +69,7 @@ func logSyncedBatch(batch *models.Batch, commitmentLength int) {
 func (c *Context) syncExistingBatch(remoteBatch eth.DecodedBatch, localBatch *models.Batch) error {
 	batch := remoteBatch.GetBatch()
 	if batch.TransactionHash == localBatch.TransactionHash {
-		batch.PrevStateRoot = localBatch.PrevStateRoot
-		err := c.batchCtx.UpdateExistingBatch(remoteBatch)
+		err := c.batchCtx.UpdateExistingBatch(remoteBatch, *localBatch.PrevStateRoot)
 		if err != nil {
 			return err
 		}

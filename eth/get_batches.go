@@ -51,8 +51,7 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 			continue
 		}
 
-		txHash := events[i].Raw.TxHash
-		tx, _, err := c.Blockchain.GetBackend().TransactionByHash(context.Background(), txHash)
+		tx, _, err := c.Blockchain.GetBackend().TransactionByHash(context.Background(), events[i].Raw.TxHash)
 		if err != nil {
 			return nil, err
 		}
@@ -72,14 +71,6 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 			return nil, err
 		}
 
-		header, err := c.Blockchain.GetBackend().HeaderByNumber(context.Background(), new(big.Int).SetUint64(events[i].Raw.BlockNumber))
-		if err != nil {
-			return nil, err
-		}
-
-		decodedBatch.GetBatch().TransactionHash = txHash
-		decodedBatch.GetBatch().SubmissionTime = models.NewTimestamp(time.Unix(int64(header.Time), 0).UTC())
-
 		res = append(res, decodedBatch)
 	}
 
@@ -87,7 +78,7 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 }
 
 func (c *Client) getBatchIfExists(event *rollup.RollupNewBatch, tx *types.Transaction) (DecodedBatch, error) {
-	batch, err := c.GetBatch(models.NewUint256FromBig(*event.BatchID)) // TODO figure out whether GetBatch should return models.Batch or something less
+	batch, err := c.GetBatch(models.NewUint256FromBig(*event.BatchID))
 	if err != nil {
 		if err.Error() == MsgInvalidBatchID {
 			return nil, errBatchAlreadyRolledBack
@@ -95,10 +86,7 @@ func (c *Client) getBatchIfExists(event *rollup.RollupNewBatch, tx *types.Transa
 		return nil, err
 	}
 
-	accountRoot := common.BytesToHash(event.AccountRoot[:])
-	batch.AccountTreeRoot = &accountRoot
-
-	decodedBatch := newDecodedBatch(batch)
+	decodedBatch := newDecodedBatch(batch, tx.Hash(), common.BytesToHash(event.AccountRoot[:]))
 	err = decodedBatch.SetCalldata(tx.Data())
 	if err != nil {
 		return nil, err
@@ -109,6 +97,12 @@ func (c *Client) getBatchIfExists(event *rollup.RollupNewBatch, tx *types.Transa
 		return nil, err
 	}
 
+	header, err := c.Blockchain.GetBackend().HeaderByNumber(context.Background(), new(big.Int).SetUint64(event.Raw.BlockNumber))
+	if err != nil {
+		return nil, err
+	}
+
+	decodedBatch.GetBatch().SubmissionTime = *models.NewTimestamp(time.Unix(int64(header.Time), 0).UTC())
 	return decodedBatch, nil
 }
 

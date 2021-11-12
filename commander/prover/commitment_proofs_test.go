@@ -44,13 +44,13 @@ func (s *CommitmentProofsTestSuite) SetupSuite() {
 		},
 	}
 	s.decodedBatch = eth.DecodedTxBatch{
-		Batch: models.Batch{
+		DecodedBatchBase: eth.DecodedBatchBase{
 			ID:                models.MakeUint256(2),
 			Type:              batchtype.Transfer,
 			TransactionHash:   utils.RandomHash(),
-			Hash:              utils.NewRandomHash(),
-			FinalisationBlock: ref.Uint32(10),
-			AccountTreeRoot:   utils.NewRandomHash(),
+			Hash:              utils.RandomHash(),
+			FinalisationBlock: 10,
+			AccountTreeRoot:   utils.RandomHash(),
 		},
 		Commitments: s.decodedCommitments,
 	}
@@ -72,12 +72,12 @@ func (s *CommitmentProofsTestSuite) TearDownTest() {
 func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_CurrentBatch() {
 	expected := models.CommitmentInclusionProof{
 		StateRoot: s.decodedCommitments[0].StateRoot,
-		BodyRoot:  *s.decodedCommitments[0].BodyHash(*s.decodedBatch.AccountTreeRoot),
+		BodyRoot:  *s.decodedCommitments[0].BodyHash(s.decodedBatch.AccountTreeRoot),
 		Path: &models.MerklePath{
 			Path:  0,
 			Depth: 2,
 		},
-		Witness: []common.Hash{s.decodedCommitments[1].LeafHash(*s.decodedBatch.AccountTreeRoot)},
+		Witness: []common.Hash{s.decodedCommitments[1].LeafHash(s.decodedBatch.AccountTreeRoot)},
 	}
 
 	proof, err := s.proverCtx.PreviousCommitmentInclusionProof(&s.decodedBatch, 0)
@@ -222,7 +222,7 @@ func (s *CommitmentProofsTestSuite) TestTargetCommitmentInclusionProof() {
 	expected := models.TransferCommitmentInclusionProof{
 		StateRoot: s.decodedCommitments[1].StateRoot,
 		Body: &models.TransferBody{
-			AccountRoot:  *s.decodedBatch.AccountTreeRoot,
+			AccountRoot:  s.decodedBatch.AccountTreeRoot,
 			Signature:    s.decodedCommitments[1].CombinedSignature,
 			FeeReceiver:  s.decodedCommitments[1].FeeReceiver,
 			Transactions: s.decodedCommitments[1].Transactions,
@@ -231,7 +231,7 @@ func (s *CommitmentProofsTestSuite) TestTargetCommitmentInclusionProof() {
 			Path:  1,
 			Depth: 2,
 		},
-		Witness: []common.Hash{s.decodedCommitments[0].LeafHash(*s.decodedBatch.AccountTreeRoot)},
+		Witness: []common.Hash{s.decodedCommitments[0].LeafHash(s.decodedBatch.AccountTreeRoot)},
 	}
 
 	proof, err := s.proverCtx.TargetCommitmentInclusionProof(&s.decodedBatch, 1)
