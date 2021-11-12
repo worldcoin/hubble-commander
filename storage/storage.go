@@ -29,17 +29,18 @@ func NewStorage(cfg *config.Config) (*Storage, error) {
 		return nil, err
 	}
 
-	storage := newStorageFromDatabase(database)
-
-	return storage, nil
+	return newStorageFromDatabase(database)
 }
 
-func newStorageFromDatabase(database *Database) *Storage {
+func newStorageFromDatabase(database *Database) (*Storage, error) {
 	batchStorage := NewBatchStorage(database)
 
 	commitmentStorage := NewCommitmentStorage(database)
 
-	transactionStorage := NewTransactionStorage(database)
+	transactionStorage, err := NewTransactionStorage(database)
+	if err != nil {
+		return nil, err
+	}
 
 	depositStorage := NewDepositStorage(database)
 
@@ -58,7 +59,7 @@ func newStorageFromDatabase(database *Database) *Storage {
 		AccountTree:            NewAccountTree(database),
 		database:               database,
 		feeReceiverStateIDs:    make(map[string]uint32),
-	}
+	}, nil
 }
 
 func (s *Storage) copyWithNewDatabase(database *Database) *Storage {

@@ -21,16 +21,16 @@ type StoredTxReceipt struct {
 	ErrorMessage *string
 }
 
-func MakeStoredTxReceiptFromTransfer(t *Transfer) StoredTxReceipt {
-	return StoredTxReceipt{
+func NewStoredTxReceiptFromTransfer(t *Transfer) *StoredTxReceipt {
+	return &StoredTxReceipt{
 		Hash:         t.Hash,
 		CommitmentID: t.CommitmentID,
 		ErrorMessage: t.ErrorMessage,
 	}
 }
 
-func MakeStoredTxReceiptFromCreate2Transfer(t *Create2Transfer) StoredTxReceipt {
-	return StoredTxReceipt{
+func NewStoredTxReceiptFromCreate2Transfer(t *Create2Transfer) *StoredTxReceipt {
+	return &StoredTxReceipt{
 		Hash:         t.Hash,
 		CommitmentID: t.CommitmentID,
 		ToStateID:    t.ToStateID,
@@ -93,7 +93,10 @@ func (t StoredTxReceipt) Indexes() map[string]bh.Index {
 				if err != nil {
 					return nil, err
 				}
-				return EncodeUint32Pointer(v.ToStateID), nil
+				if v.ToStateID == nil {
+					return nil, nil
+				}
+				return EncodeUint32(*v.ToStateID), nil
 			},
 		},
 	}

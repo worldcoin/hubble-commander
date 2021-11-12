@@ -254,7 +254,22 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey() {
 	s.Len(transfers, 1)
 }
 
-func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey_NoCreate2Transfers() {
+func (s *Create2TransferTestSuite) Test_GetCreate2TransfersByPublicKey_NoCreate2TransfersUnregisteredAccount() {
+	transfers, err := s.storage.GetCreate2TransfersByPublicKey(&models.PublicKey{9, 9, 9})
+	s.NoError(err)
+	s.Len(transfers, 0)
+}
+
+func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey_NoCreate2TransfersRegisteredAccount() {
+	transfers, err := s.storage.GetCreate2TransfersByPublicKey(&account2.PublicKey)
+	s.NoError(err)
+	s.Len(transfers, 0)
+}
+
+func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey_NoCreate2TransfersButSomeTransfers() {
+	err := s.storage.AddTransfer(&transfer)
+	s.NoError(err)
+
 	transfers, err := s.storage.GetCreate2TransfersByPublicKey(&account2.PublicKey)
 	s.NoError(err)
 	s.Len(transfers, 0)

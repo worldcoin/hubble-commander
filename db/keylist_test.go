@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	bh "github.com/timshannon/badgerhold/v4"
 )
@@ -74,9 +73,7 @@ func TestIndexKeyPrefix(t *testing.T) {
 }
 
 func TestIndexKey(t *testing.T) {
-	value, err := models.EncodeUint32(ref.Uint32(1))
-	require.NoError(t, err)
-
+	value := models.EncodeUint32(1)
 	prefix := IndexKey(models.StoredTxName, "CommitmentID", value)
 	require.Equal(t, append([]byte("_bhIndex:StoredTx:CommitmentID:"), value...), prefix)
 }

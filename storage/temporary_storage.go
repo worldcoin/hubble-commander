@@ -18,7 +18,10 @@ func NewTemporaryStorage() (*TemporaryStorage, error) {
 		Badger: badgerDB,
 	}
 
-	storage := newStorageFromDatabase(database)
+	storage, err := newStorageFromDatabase(database)
+	if err != nil {
+		return nil, err
+	}
 
 	tempStorage := TemporaryStorage{storage}
 
