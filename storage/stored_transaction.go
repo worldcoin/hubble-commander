@@ -2,18 +2,22 @@ package storage
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	bh "github.com/timshannon/badgerhold/v4"
 )
 
 type TransactionStorage struct {
 	database *Database
 }
+
+type dbOperation func(txStorage *TransactionStorage) error
 
 func NewTransactionStorage(database *Database) (*TransactionStorage, error) {
 	// We need to "initialize" the indices on fields of pointer type to make them work with bh.Find operations.
@@ -68,6 +72,34 @@ func (s *TransactionStorage) executeInTransaction(opts TxOptions, fn func(txStor
 	return s.database.ExecuteInTransaction(opts, func(txDatabase *Database) error {
 		return fn(s.copyWithNewDatabase(txDatabase))
 	})
+}
+
+func (s *TransactionStorage) updateInMultipleTransactions(operations []dbOperation) (txCount uint, err error) {
+	txController, txStorage := s.beginTransaction(TxOptions{})
+	defer txController.Rollback(&err)
+	txCount = 1
+
+	for _, op := range operations {
+		err = op(txStorage)
+		if errors.Is(err, bdg.ErrTxnTooBig) {
+			// Commit and start new DB transaction
+			err = txController.Commit()
+			if err != nil {
+				return txCount, err
+			}
+			txController, txStorage = s.beginTransaction(TxOptions{})
+			txCount++
+
+			// Retry operation
+			err = op(txStorage)
+		}
+		if err != nil {
+			// Either the error was different than bdg.ErrTxnTooBig or retry failed
+			return txCount, err
+		}
+	}
+
+	return txCount, txController.Commit()
 }
 
 func (s *TransactionStorage) addStoredTxReceipt(txReceipt *models.StoredTxReceipt) error {
@@ -193,31 +225,29 @@ func (s *TransactionStorage) MarkTransactionsAsPending(txHashes []common.Hash) e
 	})
 }
 
-func (s *TransactionStorage) SetTransactionErrors(txErrors ...models.TxError) (err error) {
-	if len(txErrors) == 0 {
+func (s *TransactionStorage) SetTransactionErrors(txErrors ...models.TxError) error {
+	errorsCount := len(txErrors)
+	if errorsCount == 0 {
 		return nil
 	}
 
-	txController, txStorage := s.beginTransaction(TxOptions{})
-	defer txController.Rollback(&err)
-
+	operations := make([]dbOperation, errorsCount)
 	for i := range txErrors {
-		err = txStorage.addStoredTxReceipt(&models.StoredTxReceipt{
-			Hash:         txErrors[i].TxHash,
-			ErrorMessage: &txErrors[i].ErrorMessage,
-		})
-		if err == bdg.ErrTxnTooBig {
-			err = txController.Commit()
-			if err != nil {
-				return err
-			}
-			txController, txStorage = s.beginTransaction(TxOptions{})
-		}
-		if err != nil {
-			return err
+		operations[i] = func(txStorage *TransactionStorage) error {
+			return txStorage.addStoredTxReceipt(&models.StoredTxReceipt{
+				Hash:         txErrors[i].TxHash,
+				ErrorMessage: &txErrors[i].ErrorMessage,
+			})
 		}
 	}
-	return txController.Commit()
+
+	dbTxsCount, err := s.updateInMultipleTransactions(operations)
+	if err != nil {
+		err = fmt.Errorf("storing %d tx error(s) failed during database transaction #%d because of: %w", errorsCount, dbTxsCount, err)
+		return errors.WithStack(err)
+	}
+	log.Debugf("Stored %d tx error(s) in %d database transaction(s)", errorsCount, dbTxsCount)
+	return nil
 }
 
 func (s *Storage) GetTransactionCount() (*int, error) {
