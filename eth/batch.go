@@ -27,8 +27,11 @@ type DecodedBatchBase struct {
 	SubmissionTime    models.Timestamp
 }
 
-// TODO refactor to include submissionTime
-func NewDecodedBatchBase(batch *models.Batch, transactionHash, accountRoot common.Hash) *DecodedBatchBase {
+func NewDecodedBatchBase(
+	batch *models.Batch,
+	transactionHash, accountRoot common.Hash,
+	submissionTime *models.Timestamp,
+) *DecodedBatchBase {
 	return &DecodedBatchBase{
 		ID:                batch.ID,
 		Type:              batch.Type,
@@ -36,7 +39,7 @@ func NewDecodedBatchBase(batch *models.Batch, transactionHash, accountRoot commo
 		Hash:              *batch.Hash,
 		FinalisationBlock: *batch.FinalisationBlock,
 		AccountTreeRoot:   accountRoot,
-		SubmissionTime:    models.Timestamp{},
+		SubmissionTime:    *submissionTime,
 	}
 }
 

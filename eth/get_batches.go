@@ -125,9 +125,13 @@ func (c *Client) getTxBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transac
 	if err != nil {
 		return nil, err
 	}
+	timestamp, err := c.getBlockTimestamp(batchEvent.Raw.BlockNumber)
+	if err != nil {
+		return nil, err
+	}
 
 	decodedBatch := &DecodedTxBatch{
-		DecodedBatchBase: *NewDecodedBatchBase(batch, tx.Hash(), common.BytesToHash(batchEvent.AccountRoot[:])),
+		DecodedBatchBase: *NewDecodedBatchBase(batch, tx.Hash(), common.BytesToHash(batchEvent.AccountRoot[:]), timestamp),
 	}
 	decodedBatch.Commitments, err = encoder.DecodeBatchCalldata(tx.Data(), &decodedBatch.ID)
 	if err != nil {
@@ -139,10 +143,6 @@ func (c *Client) getTxBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transac
 		return nil, err
 	}
 
-	err = c.setSubmissionTime(decodedBatch, batchEvent.Raw.BlockNumber)
-	if err != nil {
-		return nil, err
-	}
 	return decodedBatch, nil
 }
 
@@ -155,17 +155,16 @@ func (c *Client) getDepositBatch(
 	if err != nil {
 		return nil, err
 	}
-
-	decodedBatch := &DecodedDepositBatch{
-		DecodedBatchBase: *NewDecodedBatchBase(batch, tx.Hash(), common.BytesToHash(batchEvent.AccountRoot[:])),
-		SubtreeID:        models.MakeUint256FromBig(*depositEvent.SubtreeID),
-		PathAtDepth:      uint32(depositEvent.PathToSubTree.Uint64()),
-	}
-	err = c.setSubmissionTime(decodedBatch, batchEvent.Raw.BlockNumber)
+	timestamp, err := c.getBlockTimestamp(batchEvent.Raw.BlockNumber)
 	if err != nil {
 		return nil, err
 	}
-	return decodedBatch, nil
+
+	return &DecodedDepositBatch{
+		DecodedBatchBase: *NewDecodedBatchBase(batch, tx.Hash(), common.BytesToHash(batchEvent.AccountRoot[:]), timestamp),
+		SubtreeID:        models.MakeUint256FromBig(*depositEvent.SubtreeID),
+		PathAtDepth:      uint32(depositEvent.PathToSubTree.Uint64()),
+	}, nil
 }
 
 func (c *Client) getBatchDetails(batchEvent *rollup.RollupNewBatch) (*models.Batch, error) {
@@ -184,16 +183,6 @@ func (c *Client) getBlockTimestamp(blockNumber uint64) (*models.Timestamp, error
 	}
 	utcTime := time.Unix(int64(header.Time), 0).UTC()
 	return models.NewTimestamp(utcTime), nil
-}
-
-// TODO refactor to getSubmissionTime
-func (c *Client) setSubmissionTime(decodedBatch DecodedBatch, blockNumber uint64) error {
-	timestamp, err := c.getBlockTimestamp(blockNumber)
-	if err != nil {
-		return err
-	}
-	decodedBatch.GetBase().SubmissionTime = *timestamp
-	return nil
 }
 
 func logBatchesCount(count int) {
