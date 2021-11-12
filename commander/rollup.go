@@ -120,7 +120,7 @@ func logLatestCommitment(latestCommitment *models.CommitmentBase) {
 	log.WithFields(fields).Error("rollupLoop: Sanity check on state tree root failed")
 }
 
-func saveTxErrors(storage *st.Storage, txErrors []executor.TxError) (err error) {
+func saveTxErrors(storage *st.Storage, txErrors []models.TxError) (err error) {
 	if len(txErrors) == 0 {
 		return nil
 	}
