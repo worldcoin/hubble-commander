@@ -16,7 +16,7 @@ type syncTxsTestSuite struct {
 	suite.Suite
 	storage            *storage.TestStorage
 	cfg                *config.RollupConfig
-	syncCtx            *Context
+	syncCtx            *TxsContext
 	feeReceiverStateID uint32
 }
 
@@ -59,7 +59,7 @@ func (s *syncTxsTestSuite) SetupTest(batchType batchtype.BatchType) {
 	_, err = s.storage.StateTree.Set(3, &feeReceiverState)
 	s.NoError(err)
 
-	s.syncCtx = NewTestContext(s.storage.Storage, nil, s.cfg, batchType)
+	s.syncCtx = NewTestTxsContext(s.storage.Storage, nil, s.cfg, batchType)
 
 	s.feeReceiverStateID = 3
 }

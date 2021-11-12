@@ -53,7 +53,7 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 	}
 
 	for i := range newRemoteBatches {
-		err = c.syncRemoteBatch(&newRemoteBatches[i])
+		err = c.syncRemoteBatch(newRemoteBatches[i])
 		if err != nil {
 			return err
 		}
@@ -69,7 +69,7 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 	return nil
 }
 
-func (c *Commander) syncRemoteBatch(remoteBatch *eth.DecodedBatch) error {
+func (c *Commander) syncRemoteBatch(remoteBatch eth.DecodedBatch) error {
 	var icError *syncer.InconsistentBatchError
 
 	err := c.syncOrDisputeRemoteBatch(remoteBatch)
@@ -79,19 +79,19 @@ func (c *Commander) syncRemoteBatch(remoteBatch *eth.DecodedBatch) error {
 	return err
 }
 
-func (c *Commander) syncOrDisputeRemoteBatch(remoteBatch *eth.DecodedBatch) error {
+func (c *Commander) syncOrDisputeRemoteBatch(remoteBatch eth.DecodedBatch) error {
 	var disputableErr *syncer.DisputableError
 
 	err := c.syncBatch(remoteBatch)
 	if errors.As(err, &disputableErr) {
-		logFraudulentBatch(remoteBatch, disputableErr.Reason)
-		return c.disputeFraudulentBatch(remoteBatch, disputableErr)
+		logFraudulentBatch(&remoteBatch.GetBase().ID, disputableErr.Reason)
+		return c.disputeFraudulentBatch(remoteBatch.ToDecodedTxBatch(), disputableErr)
 	}
 	return err
 }
 
-func (c *Commander) syncBatch(remoteBatch *eth.DecodedBatch) (err error) {
-	syncCtx := syncer.NewContext(c.storage, c.client, c.cfg.Rollup, remoteBatch.Type)
+func (c *Commander) syncBatch(remoteBatch eth.DecodedBatch) (err error) {
+	syncCtx := syncer.NewContext(c.storage, c.client, c.cfg.Rollup, remoteBatch.GetBase().Type)
 	defer syncCtx.Rollback(&err)
 
 	err = syncCtx.SyncBatch(remoteBatch)
@@ -101,7 +101,7 @@ func (c *Commander) syncBatch(remoteBatch *eth.DecodedBatch) (err error) {
 	return syncCtx.Commit()
 }
 
-func (c *Commander) replaceBatch(localBatch *models.Batch, remoteBatch *eth.DecodedBatch) error {
+func (c *Commander) replaceBatch(localBatch *models.Batch, remoteBatch eth.DecodedBatch) error {
 	log.WithFields(log.Fields{"batchID": localBatch.ID.String()}).
 		Debug("Local batch inconsistent with remote batch, reverting local batch(es)")
 
@@ -113,7 +113,7 @@ func (c *Commander) replaceBatch(localBatch *models.Batch, remoteBatch *eth.Deco
 }
 
 func (c *Commander) disputeFraudulentBatch(
-	remoteBatch *eth.DecodedBatch,
+	remoteBatch *eth.DecodedTxBatch,
 	disputableErr *syncer.DisputableError,
 ) (err error) {
 	disputeCtx := disputer.NewContext(c.storage, c.client)
@@ -152,7 +152,7 @@ func (c *Commander) getLatestBatchID() (*models.Uint256, error) {
 	return &latestBatch.ID, nil
 }
 
-func logFraudulentBatch(batch *eth.DecodedBatch, reason string) {
-	log.WithFields(log.Fields{"batchID": batch.ID.String()}).
+func logFraudulentBatch(batchID *models.Uint256, reason string) {
+	log.WithFields(log.Fields{"batchID": batchID.String()}).
 		Infof("Found fraudulent batch. Reason: %s", reason)
 }

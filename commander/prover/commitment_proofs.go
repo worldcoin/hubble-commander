@@ -9,7 +9,7 @@ import (
 )
 
 func (c *Context) PreviousCommitmentInclusionProof(
-	batch *eth.DecodedBatch,
+	batch *eth.DecodedTxBatch,
 	previousCommitmentIndex int,
 ) (*models.CommitmentInclusionProof, error) {
 	if previousCommitmentIndex == -1 {
@@ -18,14 +18,14 @@ func (c *Context) PreviousCommitmentInclusionProof(
 
 	leafHashes := make([]common.Hash, 0, len(batch.Commitments))
 	for i := range batch.Commitments {
-		leafHashes = append(leafHashes, batch.Commitments[i].LeafHash(*batch.AccountTreeRoot))
+		leafHashes = append(leafHashes, batch.Commitments[i].LeafHash(batch.AccountTreeRoot))
 	}
 
 	return createCommitmentInclusionProof(
 		leafHashes,
 		uint32(previousCommitmentIndex),
 		batch.Commitments[previousCommitmentIndex].StateRoot,
-		*batch.Commitments[previousCommitmentIndex].BodyHash(*batch.AccountTreeRoot),
+		*batch.Commitments[previousCommitmentIndex].BodyHash(batch.AccountTreeRoot),
 	)
 }
 
@@ -100,12 +100,12 @@ func createCommitmentInclusionProof(
 }
 
 func (c *Context) TargetCommitmentInclusionProof(
-	batch *eth.DecodedBatch,
+	batch *eth.DecodedTxBatch,
 	commitmentIndex uint32,
 ) (*models.TransferCommitmentInclusionProof, error) {
 	leafHashes := make([]common.Hash, 0, len(batch.Commitments))
 	for i := range batch.Commitments {
-		leafHashes = append(leafHashes, batch.Commitments[i].LeafHash(*batch.AccountTreeRoot))
+		leafHashes = append(leafHashes, batch.Commitments[i].LeafHash(batch.AccountTreeRoot))
 	}
 	tree, err := merkletree.NewMerkleTree(leafHashes)
 	if err != nil {
@@ -121,7 +121,7 @@ func (c *Context) TargetCommitmentInclusionProof(
 	return &models.TransferCommitmentInclusionProof{
 		StateRoot: commitment.StateRoot,
 		Body: &models.TransferBody{
-			AccountRoot:  *batch.AccountTreeRoot,
+			AccountRoot:  batch.AccountTreeRoot,
 			Signature:    commitment.CombinedSignature,
 			FeeReceiver:  commitment.FeeReceiver,
 			Transactions: commitment.Transactions,
