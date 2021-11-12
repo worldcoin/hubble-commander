@@ -15,10 +15,41 @@ type TransactionStorage struct {
 	database *Database
 }
 
-func NewTransactionStorage(database *Database) *TransactionStorage {
+func NewTransactionStorage(database *Database) (*TransactionStorage, error) {
+	// We need to "initialize" the indices on fields of pointer type to make them work with bh.Find operations.
+	// The problem originates in `indexExists` function in BadgerHold (https://github.com/timshannon/badgerhold/blob/v4.0.1/index.go#L148).
+	// Badger assumes that if there is a value for some data type, then there must exist at least one index entry.
+	// If you don't index nil values the way we did for models.StoredTxReceipt.ToStateID it can be the case that there is some
+	// StoredTxReceipt stored, but there is no index entry. To work around this we set an empty index entry.
+	// See:
+	// 	 * models.StoredTxReceipt Indexes() method
+	//   * StoredTransactionTestSuite.TestStoredTxReceipt_FindUsingIndexWorksWhenThereAreOnlyStoredTxReceiptsWithNilToStateID
+	err := initializeIndex(database, models.StoredTxReceiptName, "ToStateID", uint32(0))
+	if err != nil {
+		return nil, err
+	}
+
 	return &TransactionStorage{
 		database: database,
+	}, nil
+}
+
+func initializeIndex(database *Database, typeName []byte, indexName string, zeroValue interface{}) error {
+	encodedZeroValue, err := db.Encode(zeroValue)
+	if err != nil {
+		return err
 	}
+	zeroValueIndexKey := db.IndexKey(typeName, indexName, encodedZeroValue)
+
+	emptyKeyList := make(bh.KeyList, 0)
+	encodedEmptyKeyList, err := db.Encode(emptyKeyList)
+	if err != nil {
+		return err
+	}
+
+	return database.Badger.RawUpdate(func(txn *bdg.Txn) error {
+		return txn.Set(zeroValueIndexKey, encodedEmptyKeyList)
+	})
 }
 
 func (s *TransactionStorage) copyWithNewDatabase(database *Database) *TransactionStorage {
@@ -26,13 +57,6 @@ func (s *TransactionStorage) copyWithNewDatabase(database *Database) *Transactio
 	newTransactionStorage.database = database
 
 	return &newTransactionStorage
-}
-
-func (s *TransactionStorage) BeginTransaction(opts TxOptions) (*db.TxController, *TransactionStorage, error) {
-	txController, txDatabase := s.database.BeginTransaction(opts)
-
-	txTransactionStorage := NewTransactionStorage(txDatabase)
-	return txController, txTransactionStorage, nil
 }
 
 func (s *TransactionStorage) executeInTransaction(opts TxOptions, fn func(txStorage *TransactionStorage) error) error {
@@ -64,6 +88,10 @@ func (s *TransactionStorage) getStoredTxWithReceipt(hash common.Hash) (
 		return nil, nil, err
 	}
 	return storedTx, txReceipt, nil
+}
+
+func (s *TransactionStorage) addStoredTx(tx *models.StoredTx) error {
+	return s.database.Badger.Insert(tx.Hash, *tx)
 }
 
 func (s *TransactionStorage) getStoredTx(hash common.Hash) (*models.StoredTx, error) {
@@ -114,12 +142,7 @@ func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*
 	var latestNonce *models.Uint256
 
 	err := s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
-		encodedStateID, err := models.EncodeUint32(&accountStateID)
-		if err != nil {
-			return err
-		}
-
-		indexKey := db.IndexKey(models.StoredTxName, "FromStateID", encodedStateID)
+		indexKey := db.IndexKey(models.StoredTxName, "FromStateID", models.EncodeUint32(accountStateID))
 		keyList, err := txStorage.getKeyList(indexKey)
 		if err != nil {
 			return err

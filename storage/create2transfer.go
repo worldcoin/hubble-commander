@@ -15,12 +15,12 @@ import (
 func (s *TransactionStorage) AddCreate2Transfer(t *models.Create2Transfer) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
 		if t.CommitmentID != nil || t.ErrorMessage != nil || t.ToStateID != nil {
-			err := txStorage.database.Badger.Insert(t.Hash, models.MakeStoredTxReceiptFromCreate2Transfer(t))
+			err := txStorage.addStoredTxReceipt(models.NewStoredTxReceiptFromCreate2Transfer(t))
 			if err != nil {
 				return err
 			}
 		}
-		return txStorage.database.Badger.Insert(t.Hash, models.MakeStoredTxFromCreate2Transfer(t))
+		return txStorage.addStoredTx(models.NewStoredTxFromCreate2Transfer(t))
 	})
 }
 
@@ -142,7 +142,10 @@ func (s *Storage) getCreate2TransfersByPublicKey(publicKey *models.PublicKey) (
 	[]*models.StoredTx, []*models.StoredTxReceipt, error,
 ) {
 	leaves, err := s.GetStateLeavesByPublicKey(publicKey)
-	if err != nil && !IsNotFoundError(err) {
+	if IsNotFoundError(err) {
+		return nil, nil, nil
+	}
+	if err != nil {
 		return nil, nil, err
 	}
 
@@ -175,7 +178,10 @@ func (s *TransactionStorage) getC2THashesByStateIDs(stateIDs []uint32) ([]common
 	results := make([]common.Hash, 0, len(stateIDs))
 	err := s.database.Badger.View(func(txn *bdg.Txn) error {
 		for i := range stateIDs {
-			encodedStateID := models.EncodeUint32Pointer(&stateIDs[i])
+			encodedStateID, err := db.Encode(stateIDs[i])
+			if err != nil {
+				return err
+			}
 			indexKey := db.IndexKey(models.StoredTxReceiptName, "ToStateID", encodedStateID)
 			hashes, err := getTxHashesByIndexKey(txn, indexKey, models.StoredTxReceiptPrefix)
 			if err == bdg.ErrKeyNotFound {
@@ -224,9 +230,9 @@ func (s *Storage) getMissingStoredTxsData(txs []models.StoredTx, receiptHashes [
 func (s *TransactionStorage) MarkCreate2TransfersAsIncluded(txs []models.Create2Transfer, commitmentID *models.CommitmentID) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
 		for i := range txs {
-			txReceipt := models.MakeStoredTxReceiptFromCreate2Transfer(&txs[i])
+			txReceipt := models.NewStoredTxReceiptFromCreate2Transfer(&txs[i])
 			txReceipt.CommitmentID = commitmentID
-			err := txStorage.addStoredTxReceipt(&txReceipt)
+			err := txStorage.addStoredTxReceipt(txReceipt)
 			if err != nil {
 				return err
 			}
