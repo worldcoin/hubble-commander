@@ -59,7 +59,7 @@ func (c *TxsContext) handleTxError(result ExecuteTxsResult, tx models.GenericTra
 	log.Errorf("%s failed: %s", tx.Type().String(), err)
 	result.AddInvalidTx(tx)
 	c.txErrorsToStore = append(c.txErrorsToStore, models.TxError{
-		Hash:         tx.GetBase().Hash,
+		TxHash:       tx.GetBase().Hash,
 		ErrorMessage: err.Error(),
 	})
 }

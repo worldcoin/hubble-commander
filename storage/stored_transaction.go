@@ -203,7 +203,7 @@ func (s *TransactionStorage) SetTransactionErrors(txErrors ...models.TxError) (e
 
 	for i := range txErrors {
 		err = txStorage.addStoredTxReceipt(&models.StoredTxReceipt{
-			Hash:         txErrors[i].Hash,
+			Hash:         txErrors[i].TxHash,
 			ErrorMessage: &txErrors[i].ErrorMessage,
 		})
 		if err == bdg.ErrTxnTooBig {

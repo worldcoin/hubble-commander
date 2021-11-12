@@ -69,7 +69,7 @@ func (s *StoredTransactionTestSuite) TestSetTransactionErrors() {
 	s.NoError(err)
 
 	txError := models.TxError{
-		Hash:         transferTransaction.Hash,
+		TxHash:       transferTransaction.Hash,
 		ErrorMessage: "Quack",
 	}
 

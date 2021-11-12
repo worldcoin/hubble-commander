@@ -83,7 +83,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresErrorMessagesOf
 	s.ErrorIs(err, ErrNotEnoughCommitments)
 
 	s.Len(s.txsCtx.txErrorsToStore, 1)
-	s.Equal(invalidTransfer.Hash, s.txsCtx.txErrorsToStore[0].Hash)
+	s.Equal(invalidTransfer.Hash, s.txsCtx.txErrorsToStore[0].TxHash)
 	s.Equal(applier.ErrNonexistentReceiver.Error(), s.txsCtx.txErrorsToStore[0].ErrorMessage)
 }
 

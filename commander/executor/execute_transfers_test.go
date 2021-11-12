@@ -125,7 +125,7 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SavesTxErrors() {
 	s.Len(s.txsCtx.txErrorsToStore, 2)
 
 	for i := 0; i < result.InvalidTxs().Len(); i++ {
-		s.Equal(generatedTransfers[i+3].Hash, s.txsCtx.txErrorsToStore[i].Hash)
+		s.Equal(generatedTransfers[i+3].Hash, s.txsCtx.txErrorsToStore[i].TxHash)
 		s.Equal(applier.ErrNonceTooLow.Error(), s.txsCtx.txErrorsToStore[i].ErrorMessage)
 	}
 }
