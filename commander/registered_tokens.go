@@ -3,7 +3,9 @@ package commander
 import (
 	"bytes"
 	"context"
+	"time"
 
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -12,6 +14,8 @@ import (
 )
 
 func (c *Commander) syncTokens(startBlock, endBlock uint64) error {
+	startTime := time.Now()
+
 	it, err := c.client.TokenRegistry.FilterRegisteredToken(&bind.FilterOpts{
 		Start: startBlock,
 		End:   &endBlock,
@@ -48,7 +52,11 @@ func (c *Commander) syncTokens(startBlock, endBlock uint64) error {
 		}
 	}
 
-	logRegisteredTokensCount(newTokensCount)
+	if newTokensCount > 0 {
+		measureRegisteredTokensSyncingDuration(startTime, c.metrics)
+		logNewRegisteredTokensCount(newTokensCount)
+	}
+
 	return nil
 }
 
@@ -72,8 +80,14 @@ func saveSyncedToken(
 	}
 }
 
-func logRegisteredTokensCount(newTokensCount int) {
-	if newTokensCount > 0 {
-		log.Printf("Found %d new registered token(s)", newTokensCount)
-	}
+func measureRegisteredTokensSyncingDuration(
+	start time.Time,
+	commanderMetrics *metrics.CommanderMetrics,
+) {
+	duration := time.Since(start).Round(time.Millisecond)
+	commanderMetrics.SyncingTokensDuration.Observe(float64(duration.Milliseconds()))
+}
+
+func logNewRegisteredTokensCount(newTokensCount int) {
+	log.Printf("Found %d new registered token(s)", newTokensCount)
 }

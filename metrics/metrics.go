@@ -19,6 +19,7 @@ type CommanderMetrics struct {
 
 	// Syncing
 	SyncingAccountsDuration prometheus.Histogram
+	SyncingTokensDuration   prometheus.Histogram
 }
 
 func NewCommanderMetrics() *CommanderMetrics {

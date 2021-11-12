@@ -156,10 +156,9 @@ func validateExistingAccounts(accountTree *storage.AccountTree, accounts ...mode
 func measureAccountsSyncingDuration(
 	start time.Time,
 	commanderMetrics *metrics.CommanderMetrics,
-) time.Duration {
+) {
 	duration := time.Since(start).Round(time.Millisecond)
 	commanderMetrics.SyncingAccountsDuration.Observe(float64(duration.Milliseconds()))
-	return duration
 }
 
 func logNewSyncedAccountsCount(newAccountsCount int) {
