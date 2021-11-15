@@ -3,11 +3,13 @@ package commander
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/commander/disputer"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/commander/syncer"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	log "github.com/sirupsen/logrus"
@@ -22,6 +24,8 @@ func (c *Commander) syncBatches(startBlock, endBlock uint64) error {
 }
 
 func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
+	startTime := time.Now()
+
 	latestBatchID, err := c.getLatestBatchID()
 	if err != nil {
 		return err
@@ -65,6 +69,8 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 			continue
 		}
 	}
+
+	measureBatchesSyncingDuration(startTime, c.metrics)
 
 	return nil
 }
@@ -155,4 +161,12 @@ func (c *Commander) getLatestBatchID() (*models.Uint256, error) {
 func logFraudulentBatch(batchID *models.Uint256, reason string) {
 	log.WithFields(log.Fields{"batchID": batchID.String()}).
 		Infof("Found fraudulent batch. Reason: %s", reason)
+}
+
+func measureBatchesSyncingDuration(
+	start time.Time,
+	commanderMetrics *metrics.CommanderMetrics,
+) {
+	duration := time.Since(start).Round(time.Millisecond)
+	commanderMetrics.SyncingBatchesDuration.Observe(float64(duration.Milliseconds()))
 }
