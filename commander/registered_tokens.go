@@ -52,10 +52,8 @@ func (c *Commander) syncTokens(startBlock, endBlock uint64) error {
 		}
 	}
 
-	if newTokensCount > 0 {
-		measureRegisteredTokensSyncingDuration(startTime, c.metrics)
-		logNewRegisteredTokensCount(newTokensCount)
-	}
+	measureRegisteredTokensSyncingDuration(startTime, c.metrics)
+	logNewRegisteredTokensCount(newTokensCount)
 
 	return nil
 }
@@ -89,5 +87,7 @@ func measureRegisteredTokensSyncingDuration(
 }
 
 func logNewRegisteredTokensCount(newTokensCount int) {
-	log.Printf("Found %d new registered token(s)", newTokensCount)
+	if newTokensCount > 0 {
+		log.Printf("Found %d new registered token(s)", newTokensCount)
+	}
 }
