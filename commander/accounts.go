@@ -31,11 +31,10 @@ func (c *Commander) syncAccounts(start, end uint64) error {
 		return err
 	}
 
+	measureAccountsSyncingDuration(startTime, c.metrics)
+
 	newAccountsCount := *newAccountsSingle + *newAccountsBatch
-	if newAccountsCount > 0 {
-		measureAccountsSyncingDuration(startTime, c.metrics)
-		logNewSyncedAccountsCount(newAccountsCount)
-	}
+	logNewSyncedAccountsCount(newAccountsCount)
 
 	return nil
 }
@@ -162,5 +161,7 @@ func measureAccountsSyncingDuration(
 }
 
 func logNewSyncedAccountsCount(newAccountsCount int) {
-	log.Printf("Found %d new account(s)", newAccountsCount)
+	if newAccountsCount > 0 {
+		log.Printf("Found %d new account(s)", newAccountsCount)
+	}
 }
