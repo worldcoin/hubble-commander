@@ -4,8 +4,10 @@ import (
 	"context"
 	stdErrors "errors"
 	"math/big"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/eth/chain"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -159,6 +161,8 @@ func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
 func (c *Commander) syncRange(startBlock, endBlock uint64) error {
 	logSyncedBlocks(startBlock, endBlock)
 
+	startTime := time.Now()
+
 	err := c.syncAccounts(startBlock, endBlock)
 	if err != nil {
 		return errors.WithStack(err)
@@ -178,6 +182,8 @@ func (c *Commander) syncRange(startBlock, endBlock uint64) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
+
+	measureSyncRangeDuration(startTime, c.metrics)
 	return nil
 }
 
@@ -187,6 +193,14 @@ func logSyncedBlocks(startBlock, endBlock uint64) {
 	} else {
 		log.Printf("Syncing blocks from %d to %d", startBlock, endBlock)
 	}
+}
+
+func measureSyncRangeDuration(
+	start time.Time,
+	commanderMetrics *metrics.CommanderMetrics,
+) {
+	duration := time.Since(start).Round(time.Millisecond)
+	commanderMetrics.SyncingSyncRangeDuration.Observe(float64(duration.Milliseconds()))
 }
 
 func min(x, y uint64) uint64 {
