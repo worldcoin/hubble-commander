@@ -8,20 +8,19 @@ import (
 )
 
 const (
-	DefaultAPIMetricsNamespace = "api"
 	DefaultAPIMetricsSubsystem = "general"
 )
 
 func (c *CommanderMetrics) initializeMetricsForAPI() {
 	totalRequests := prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: DefaultAPIMetricsNamespace,
+		Namespace: namespace,
 		Subsystem: DefaultAPIMetricsSubsystem,
 		Name:      "requests_total",
 		Help:      "Number of requests made to the commander API",
 	})
 
 	requestsDuration := prometheus.NewHistogram(prometheus.HistogramOpts{
-		Namespace: DefaultAPIMetricsNamespace,
+		Namespace: namespace,
 		Subsystem: DefaultAPIMetricsSubsystem,
 		Name:      "request_duration_milliseconds",
 		Help:      "API requests duration",
@@ -48,7 +47,7 @@ func (c *CommanderMetrics) initializeMetricsForAPI() {
 	})
 
 	totalTransactions := prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: DefaultAPIMetricsNamespace,
+		Namespace: namespace,
 		Subsystem: DefaultAPIMetricsSubsystem,
 		Name:      "transactions_total",
 		Help:      "Number of transactions sent to the commander API",
@@ -63,7 +62,7 @@ func (c *CommanderMetrics) initializeMetricsForAPI() {
 	totalTransactions.With(prometheus.Labels{"type": lowercaseC2TType}).Add(0)
 
 	totalFailedTransactions := prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: DefaultAPIMetricsNamespace,
+		Namespace: namespace,
 		Subsystem: DefaultAPIMetricsSubsystem,
 		Name:      "failed_transactions_total",
 		Help:      "Number of transactions sent to the API which haven't passed the sanitization/validation",
