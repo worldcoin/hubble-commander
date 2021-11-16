@@ -58,10 +58,7 @@ func (s *DepositBatchesTestSuite) SetupTest() {
 }
 
 func (s *DepositBatchesTestSuite) newClientWithGenesisState() {
-	s.wallets = testutils.GenerateWallets(s.Assertions, &bls.TestDomain, 2)
-
-	seedDB(s.T(), s.storage.Storage, s.wallets)
-
+	setStateLeaves(s.T(), s.storage.Storage)
 	genesisRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)
 
