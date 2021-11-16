@@ -132,19 +132,12 @@ func (s *SubmitDepositBatchTestSuite) queueFourDeposits() {
 	}
 }
 
-func (s *SubmitDepositBatchTestSuite) queueDeposit() *models.PendingDeposit {
+func (s *SubmitDepositBatchTestSuite) queueDeposit() {
 	toPubKeyID := models.NewUint256(1)
 	tokenID := models.NewUint256(0)
 	l1Amount := models.NewUint256FromBig(*utils.ParseEther("10"))
-	depositID, l2Amount, err := s.client.QueueDepositAndWait(toPubKeyID, l1Amount, tokenID)
+	_, _, err := s.client.QueueDepositAndWait(toPubKeyID, l1Amount, tokenID)
 	s.NoError(err)
-
-	return &models.PendingDeposit{
-		ID:         *depositID,
-		ToPubKeyID: uint32(toPubKeyID.Uint64()),
-		TokenID:    *tokenID,
-		L2Amount:   *l2Amount,
-	}
 }
 
 func (s *SubmitDepositBatchTestSuite) submitBatch() *models.Batch {
