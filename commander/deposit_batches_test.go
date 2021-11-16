@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/erc20"
@@ -27,7 +26,6 @@ type DepositBatchesTestSuite struct {
 	storage        *st.TestStorage
 	depositSubtree models.PendingDepositSubTree
 	cfg            *config.Config
-	wallets        []bls.Wallet
 }
 
 func (s *DepositBatchesTestSuite) SetupSuite() {
