@@ -7,21 +7,17 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-const (
-	DefaultAPIMetricsSubsystem = "general"
-)
-
 func (c *CommanderMetrics) initializeMetricsForAPI() {
 	totalRequests := prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: namespace,
-		Subsystem: DefaultAPIMetricsSubsystem,
+		Subsystem: apiSubsystem,
 		Name:      "requests_total",
 		Help:      "Number of requests made to the commander API",
 	})
 
 	requestsDuration := prometheus.NewHistogram(prometheus.HistogramOpts{
 		Namespace: namespace,
-		Subsystem: DefaultAPIMetricsSubsystem,
+		Subsystem: apiSubsystem,
 		Name:      "request_duration_milliseconds",
 		Help:      "API requests duration",
 		Buckets: []float64{
@@ -48,7 +44,7 @@ func (c *CommanderMetrics) initializeMetricsForAPI() {
 
 	totalTransactions := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
-		Subsystem: DefaultAPIMetricsSubsystem,
+		Subsystem: apiSubsystem,
 		Name:      "transactions_total",
 		Help:      "Number of transactions sent to the commander API",
 	},
@@ -63,7 +59,7 @@ func (c *CommanderMetrics) initializeMetricsForAPI() {
 
 	totalFailedTransactions := prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: namespace,
-		Subsystem: DefaultAPIMetricsSubsystem,
+		Subsystem: apiSubsystem,
 		Name:      "failed_transactions_total",
 		Help:      "Number of transactions sent to the API which haven't passed the sanitization/validation",
 		// There's a chance that this label is used incorrectly. Verify when adding more metrics.
