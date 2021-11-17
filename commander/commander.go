@@ -87,7 +87,7 @@ func (c *Commander) Start() (err error) {
 
 	c.metrics = metrics.NewCommanderMetrics()
 
-	c.metricsServer = c.metrics.NewMetricsServer(c.cfg.Metrics)
+	c.metricsServer = c.metrics.NewServer(c.cfg.Metrics)
 
 	c.apiServer, err = api.NewAPIServer(c.cfg, c.storage, c.client, c.metrics)
 	if err != nil {

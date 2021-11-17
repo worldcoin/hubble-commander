@@ -8,7 +8,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-func (c *CommanderMetrics) NewMetricsServer(cfg *config.MetricsConfig) *http.Server {
+func (c *CommanderMetrics) NewServer(cfg *config.MetricsConfig) *http.Server {
 	handler := promhttp.HandlerFor(c.registry, promhttp.HandlerOpts{})
 
 	mux := http.NewServeMux()
