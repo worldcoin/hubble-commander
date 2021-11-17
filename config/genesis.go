@@ -2,7 +2,7 @@ package config
 
 import (
 	"encoding/hex"
-	"io/ioutil"
+	"os"
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -12,7 +12,7 @@ import (
 func readGenesisFile(filepath string) ([]models.GenesisAccount, error) {
 	var rawGenesisAccounts []models.RawGenesisAccount
 
-	yamlFile, err := ioutil.ReadFile(filepath)
+	yamlFile, err := os.ReadFile(filepath)
 	if err != nil {
 		return nil, err
 	}

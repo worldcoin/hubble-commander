@@ -1,7 +1,6 @@
 package commander
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -69,7 +68,7 @@ func (s *ChainSpecTestSuite) TestReadChainSpecFile() {
 	yamlChainSpec, err := GenerateChainSpec(s.chainState)
 	s.NoError(err)
 
-	file, err := ioutil.TempFile("", "chain_spec_test")
+	file, err := os.CreateTemp("", "chain_spec_test")
 	s.NoError(err)
 	defer func() {
 		err = os.Remove(file.Name())
