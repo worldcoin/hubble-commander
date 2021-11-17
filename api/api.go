@@ -25,7 +25,7 @@ type API struct {
 	disableSignatures bool
 }
 
-func NewAPIServer(
+func NewServer(
 	cfg *config.Config,
 	storage *st.Storage,
 	client *eth.Client,
