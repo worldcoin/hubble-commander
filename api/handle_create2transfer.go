@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/Worldcoin/hubble-commander/encoder"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -14,12 +15,12 @@ import (
 func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*common.Hash, error) {
 	create2Transfer, err := sanitizeCreate2Transfer(create2TransferDTO)
 	if err != nil {
-		a.commanderMetrics.APITotalFailedTransactions.Inc()
+		a.countRejectedCreate2Transfer()
 		return nil, err
 	}
 
 	if vErr := a.validateCreate2Transfer(create2Transfer); vErr != nil {
-		a.commanderMetrics.APITotalFailedTransactions.Inc()
+		a.countRejectedCreate2Transfer()
 		return nil, vErr
 	}
 
@@ -35,6 +36,7 @@ func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*co
 		return nil, err
 	}
 
+	a.countAcceptedCreate2Transfer()
 	logReceivedCreate2Transfer(create2TransferDTO)
 
 	return &create2Transfer.Hash, nil
@@ -103,6 +105,14 @@ func (a *API) validateCreate2Transfer(create2Transfer *models.Create2Transfer) e
 		return nil
 	}
 	return a.validateSignature(encodedCreate2Transfer, &create2Transfer.Signature, &senderState.UserState)
+}
+
+func (a *API) countAcceptedCreate2Transfer() {
+	countTransactionWithStatus(a.commanderMetrics, txtype.Create2Transfer, metrics.AcceptedTxStatus)
+}
+
+func (a *API) countRejectedCreate2Transfer() {
+	countTransactionWithStatus(a.commanderMetrics, txtype.Create2Transfer, metrics.RejectedTxStatus)
 }
 
 func logReceivedCreate2Transfer(transfer dto.Create2Transfer) {

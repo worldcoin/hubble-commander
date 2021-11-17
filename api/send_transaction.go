@@ -7,7 +7,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
@@ -95,10 +94,8 @@ func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
 func (a *API) unsafeSendTransaction(tx dto.Transaction) (*common.Hash, error) {
 	switch t := tx.Parsed.(type) {
 	case dto.Transfer:
-		a.commanderMetrics.CountTransaction(txtype.Transfer)
 		return a.handleTransfer(t)
 	case dto.Create2Transfer:
-		a.commanderMetrics.CountTransaction(txtype.Create2Transfer)
 		return a.handleCreate2Transfer(t)
 	default:
 		return nil, errors.WithStack(ErrUnsupportedTxType)

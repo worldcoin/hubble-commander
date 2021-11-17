@@ -1,9 +1,6 @@
 package metrics
 
 import (
-	"strings"
-
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -42,41 +39,23 @@ func (c *CommanderMetrics) initializeMetricsForAPI() {
 		},
 	})
 
-	totalTransactions := prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: namespace,
-		Subsystem: apiSubsystem,
-		Name:      "transactions_total",
-		Help:      "Number of transactions sent to the commander API",
-	},
-		[]string{"type"},
-	)
-
-	// Makes total transactions metrics visible on the commander startup.
-	lowercaseTransferType := strings.ToLower(txtype.Transfer.String())
-	totalTransactions.With(prometheus.Labels{"type": lowercaseTransferType}).Add(0)
-	lowercaseC2TType := strings.ToLower(txtype.Create2Transfer.String())
-	totalTransactions.With(prometheus.Labels{"type": lowercaseC2TType}).Add(0)
-
-	totalFailedTransactions := prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: namespace,
-		Subsystem: apiSubsystem,
-		Name:      "failed_transactions_total",
-		Help:      "Number of transactions sent to the API which haven't passed the sanitization/validation",
-		// There's a chance that this label is used incorrectly. Verify when adding more metrics.
-		ConstLabels: prometheus.Labels{
-			"type": "transfer|create2transfer",
+	totalTransactions := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: namespace,
+			Subsystem: apiSubsystem,
+			Name:      "transactions_total",
+			Help:      "Number of transactions sent to the commander API",
 		},
-	})
+		[]string{"type", "status"},
+	)
 
 	c.registry.MustRegister(
 		totalRequests,
 		requestsDuration,
 		totalTransactions,
-		totalFailedTransactions,
 	)
 
 	c.APITotalRequests = totalRequests
 	c.APIRequestDuration = requestsDuration
 	c.APITotalTransactions = totalTransactions
-	c.APITotalFailedTransactions = totalFailedTransactions
 }

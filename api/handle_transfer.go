@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/Worldcoin/hubble-commander/encoder"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -16,12 +17,12 @@ import (
 func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 	transfer, err := sanitizeTransfer(transferDTO)
 	if err != nil {
-		a.commanderMetrics.APITotalFailedTransactions.Inc()
+		a.countRejectedTransfer()
 		return nil, err
 	}
 
 	if vErr := a.validateTransfer(transfer); vErr != nil {
-		a.commanderMetrics.APITotalFailedTransactions.Inc()
+		a.countRejectedTransfer()
 		return nil, vErr
 	}
 
@@ -37,6 +38,7 @@ func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 		return nil, err
 	}
 
+	a.countAcceptedTransfer()
 	logReceivedTransfer(transferDTO)
 
 	return &transfer.Hash, nil
@@ -118,6 +120,14 @@ func (a *API) validateFromTo(transfer *models.Transfer) error {
 		return errors.WithStack(ErrTransferToSelf)
 	}
 	return nil
+}
+
+func (a *API) countAcceptedTransfer() {
+	countTransactionWithStatus(a.commanderMetrics, txtype.Transfer, metrics.AcceptedTxStatus)
+}
+
+func (a *API) countRejectedTransfer() {
+	countTransactionWithStatus(a.commanderMetrics, txtype.Transfer, metrics.RejectedTxStatus)
 }
 
 func logReceivedTransfer(transfer dto.Transfer) {

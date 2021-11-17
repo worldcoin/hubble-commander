@@ -9,10 +9,9 @@ type CommanderMetrics struct {
 	registry *prometheus.Registry
 
 	// API
-	APITotalRequests           prometheus.Counter
-	APIRequestDuration         prometheus.Histogram
-	APITotalTransactions       *prometheus.CounterVec
-	APITotalFailedTransactions prometheus.Counter
+	APITotalRequests     prometheus.Counter
+	APIRequestDuration   prometheus.Histogram
+	APITotalTransactions *prometheus.CounterVec
 }
 
 func NewCommanderMetrics() *CommanderMetrics {
