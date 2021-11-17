@@ -42,7 +42,7 @@ func TestCreate2Transfer_MarshalJSON(t *testing.T) {
 	require.NoError(t, err)
 
 	expected := fmt.Sprintf(
-		`{"Type":"CREATE2TRANSFER","FromStateID":1,"ToPublicKey":"%s","Amount":"50","Fee":"10","Nonce":"0","Signature":"%s"}`,
+		`{"Type":"CREATE2TRANSFER","FromStateID":1,"ToPublicKey":%q,"Amount":"50","Fee":"10","Nonce":"0","Signature":%q}`,
 		examplePublicKeyHex,
 		exampleSignatureHex,
 	)

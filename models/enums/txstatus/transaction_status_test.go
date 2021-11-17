@@ -29,7 +29,7 @@ func TestTransactionStatus_UnmarshalJSON_UnsupportedStatus(t *testing.T) {
 
 func TestTransactionStatus_MarshalJSON_SupportedStatus(t *testing.T) {
 	input := InBatch
-	expected := fmt.Sprintf(`"%s"`, TransactionStatuses[input])
+	expected := fmt.Sprintf(`%q`, TransactionStatuses[input])
 	bytes, err := json.Marshal(input)
 	require.NoError(t, err)
 	require.Equal(t, expected, string(bytes))
