@@ -147,12 +147,9 @@ func getLogConfig() *LogConfig {
 }
 
 func getMetricsConfig() *MetricsConfig {
-	port := getString("metrics.port", DefaultMetricsPort)
-	endpoint := getString("metrics.endpoint", DefaultMetricsEndpoint)
-
 	return &MetricsConfig{
-		Port:     port,
-		Endpoint: endpoint,
+		Port:     getString("metrics.port", DefaultMetricsPort),
+		Endpoint: getString("metrics.endpoint", DefaultMetricsEndpoint),
 	}
 }
 
