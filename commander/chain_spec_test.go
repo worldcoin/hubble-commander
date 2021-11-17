@@ -75,7 +75,7 @@ func (s *ChainSpecTestSuite) TestReadChainSpecFile() {
 		s.NoError(err)
 	}()
 
-	_, err = file.Write([]byte(*yamlChainSpec))
+	_, err = file.WriteString(*yamlChainSpec)
 	s.NoError(err)
 
 	chainSpec, err := ReadChainSpecFile(file.Name())

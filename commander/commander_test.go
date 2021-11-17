@@ -94,7 +94,7 @@ func (s *CommanderTestSuite) prepareContracts(cfg *config.Config, blockchain cha
 	file, err := os.CreateTemp("", "chain_spec_commander_test")
 	s.NoError(err)
 
-	_, err = file.Write([]byte(*yamlChainSpec))
+	_, err = file.WriteString(*yamlChainSpec)
 	s.NoError(err)
 
 	s.chainSpecFile = file.Name()
