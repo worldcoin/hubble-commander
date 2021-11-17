@@ -66,6 +66,59 @@ Key: BatchID `models.Uint256`
 
 Value: `models.Batch`
 
+### Transaction
+Key: transaction hash `common.Hash`
+Value: `models.StoredTx`
+
+```go
+type StoredTx struct {
+	Hash        common.Hash
+	TxType      txtype.TransactionType
+	FromStateID uint32
+	Amount      Uint256
+	Fee         Uint256
+	Nonce       Uint256
+	Signature   Signature
+	ReceiveTime *Timestamp
+
+	Body TxBody
+}
+```
+
+#### Transfer Body
+```go
+type StoredTxTransferBody struct {
+	ToStateID uint32
+}
+```
+
+#### Create2Transfer Body
+```go
+type StoredTxCreate2TransferBody struct {
+	ToPublicKey PublicKey
+}
+```
+
+#### MassMigration Body
+```go
+type StoredTxMassMigrationBody struct {
+    SpokeID Uint256
+}
+```
+
+### Transaction Receipt
+Key: transaction hash `common.Hash`
+Value: `models.StoredTxReceipt`
+
+```go
+type StoredTxReceipt struct {
+	Hash         common.Hash
+	CommitmentID *CommitmentID
+	ToStateID    *uint32 // nil for Transfers and MassMigrations, non-nil for C2Ts
+	ErrorMessage *string
+}
+```
+
 ## Migrating Postgres tables to Badger
 
 - Draft docs for implementation purposes
