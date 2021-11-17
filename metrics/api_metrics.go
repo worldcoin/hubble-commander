@@ -4,7 +4,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func (c *CommanderMetrics) initializeMetricsForAPI() {
+func (c *CommanderMetrics) initializeAPIMetrics() {
 	totalRequests := prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: apiSubsystem,

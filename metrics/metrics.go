@@ -21,7 +21,7 @@ func NewCommanderMetrics() *CommanderMetrics {
 		registry: registry,
 	}
 
-	commanderMetrics.initializeMetricsForAPI()
+	commanderMetrics.initializeAPIMetrics()
 
 	return commanderMetrics
 }
