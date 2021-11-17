@@ -22,7 +22,7 @@ type testSuiteWithContexts struct {
 	cfg          *config.RollupConfig
 	client       *eth.TestClient
 	txsCtx       *executor.TxsContext
-	syncCtx      *syncer.Context
+	syncCtx      *syncer.TxsContext
 	disputeCtx   *Context
 }
 
@@ -64,7 +64,7 @@ func (s *testSuiteWithContexts) newContexts(
 ) {
 	executionCtx := executor.NewTestExecutionContext(storage, s.client.Client, s.cfg)
 	s.txsCtx = executor.NewTestTxsContext(executionCtx, batchType)
-	s.syncCtx = syncer.NewTestContext(storage, client, cfg, batchType)
+	s.syncCtx = syncer.NewTestTxsContext(storage, client, cfg, batchType)
 	s.disputeCtx = NewContext(storage, s.client.Client)
 }
 

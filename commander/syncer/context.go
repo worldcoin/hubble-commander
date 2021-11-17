@@ -6,15 +6,19 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/ethereum/go-ethereum/common"
 )
 
+type batchContext interface {
+	SyncCommitments(batch eth.DecodedBatch) error
+	UpdateExistingBatch(batch eth.DecodedBatch, prevStateRoot common.Hash) error
+}
+
 type Context struct {
-	cfg       *config.RollupConfig
-	storage   *st.Storage
-	tx        *db.TxController
-	client    *eth.Client
-	Syncer    TransactionSyncer
-	BatchType batchtype.BatchType
+	storage  *st.Storage
+	tx       *db.TxController
+	client   *eth.Client
+	batchCtx batchContext
 }
 
 func NewContext(
@@ -27,24 +31,36 @@ func NewContext(
 	return newContext(txStorage, tx, client, cfg, batchType)
 }
 
-func NewTestContext(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig, batchType batchtype.BatchType) *Context {
+func NewTestContext(
+	storage *st.Storage,
+	client *eth.Client,
+	cfg *config.RollupConfig,
+	batchType batchtype.BatchType,
+) *Context {
 	return newContext(storage, nil, client, cfg, batchType)
 }
 
 func newContext(
-	storage *st.Storage,
+	txStorage *st.Storage,
 	tx *db.TxController,
 	client *eth.Client,
 	cfg *config.RollupConfig,
 	batchType batchtype.BatchType,
 ) *Context {
+	var batchCtx batchContext
+	switch batchType {
+	case batchtype.Transfer, batchtype.Create2Transfer:
+		batchCtx = newTxsContext(txStorage, client, cfg, batchType)
+	case batchtype.Deposit:
+		batchCtx = newDepositsContext(txStorage, client)
+	case batchtype.Genesis, batchtype.MassMigration:
+		panic("invalid batch type")
+	}
 	return &Context{
-		cfg:       cfg,
-		storage:   storage,
-		tx:        tx,
-		client:    client,
-		Syncer:    NewTransactionSyncer(storage, client, batchType),
-		BatchType: batchType,
+		storage:  txStorage,
+		tx:       tx,
+		client:   client,
+		batchCtx: batchCtx,
 	}
 }
 

@@ -138,18 +138,18 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TooManyTxsInCommitment() {
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.syncCtx.SyncBatch(&remoteBatches[0])
+	err = s.syncCtx.SyncBatch(remoteBatches[0])
 	s.NoError(err)
 
 	var disputableErr *DisputableError
-	err = s.syncCtx.SyncBatch(&remoteBatches[1])
+	err = s.syncCtx.SyncBatch(remoteBatches[1])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Transition, disputableErr.Type)
 	s.Equal(ErrTooManyTxs.Reason, disputableErr.Reason)
 
-	_, err = s.storage.GetBatch(remoteBatches[0].ID)
+	_, err = s.storage.GetBatch(remoteBatches[0].GetID())
 	s.NoError(err)
-	_, err = s.storage.GetBatch(remoteBatches[1].ID)
+	_, err = s.storage.GetBatch(remoteBatches[1].GetID())
 	s.NoError(err)
 }
 
@@ -174,18 +174,18 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() 
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.syncCtx.SyncBatch(&remoteBatches[0])
+	err = s.syncCtx.SyncBatch(remoteBatches[0])
 	s.NoError(err)
 
 	var disputableErr *DisputableError
-	err = s.syncCtx.SyncBatch(&remoteBatches[1])
+	err = s.syncCtx.SyncBatch(remoteBatches[1])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Transition, disputableErr.Type)
 	s.Equal(InvalidCommitmentStateRootMessage, disputableErr.Reason)
 
-	_, err = s.storage.GetBatch(remoteBatches[0].ID)
+	_, err = s.storage.GetBatch(remoteBatches[0].GetID())
 	s.NoError(err)
-	_, err = s.storage.GetBatch(remoteBatches[1].ID)
+	_, err = s.storage.GetBatch(remoteBatches[1].GetID())
 	s.NoError(err)
 }
 
@@ -203,7 +203,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_InvalidTxSignature() {
 	s.Len(remoteBatches, 1)
 
 	var disputableErr *DisputableError
-	err = s.syncCtx.SyncBatch(&remoteBatches[0])
+	err = s.syncCtx.SyncBatch(remoteBatches[0])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Signature, disputableErr.Type)
 	s.Equal(InvalidSignatureMessage, disputableErr.Reason)
@@ -228,7 +228,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_NotValidBLSSignature() {
 	s.Len(remoteBatches, 1)
 
 	var disputableErr *DisputableError
-	err = s.syncCtx.SyncBatch(&remoteBatches[0])
+	err = s.syncCtx.SyncBatch(remoteBatches[0])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Signature, disputableErr.Type)
 	s.Equal(0, disputableErr.CommitmentIndex)
@@ -244,7 +244,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_CommitmentWithoutTxs() {
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.syncCtx.SyncBatch(&remoteBatches[0])
+	err = s.syncCtx.SyncBatch(remoteBatches[0])
 	s.NoError(err)
 }
 
@@ -307,7 +307,7 @@ func (s *SyncTransferBatchTestSuite) submitTransferBatchWithNonexistentFeeReceiv
 	s.NoError(txErr)
 	s.NoError(appErr)
 
-	_, commitmentErr, appErr := s.syncCtx.Syncer.ApplyFee(feeReceiverStateID, &commitmentTokenID, &tx.Fee)
+	_, commitmentErr, appErr := s.syncCtx.batchCtx.(*TxsContext).Syncer.ApplyFee(feeReceiverStateID, &commitmentTokenID, &tx.Fee)
 	s.NoError(commitmentErr)
 	s.NoError(appErr)
 

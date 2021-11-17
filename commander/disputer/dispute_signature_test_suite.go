@@ -34,7 +34,7 @@ func (s *disputeSignatureTestSuite) setUserStatesAndAddAccounts() []bls.Wallet {
 }
 
 func (s *disputeSignatureTestSuite) disputeSignature(
-	batch *eth.DecodedBatch,
+	batch *eth.DecodedTxBatch,
 	transfers models.GenericTransactionArray,
 ) error {
 	proofs, err := s.syncCtx.StateMerkleProofs(transfers)

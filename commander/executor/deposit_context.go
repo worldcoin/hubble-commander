@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/commander/prover"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
@@ -35,6 +36,6 @@ func newDepositsContext(executionCtx *ExecutionContext) *DepositsContext {
 	}
 }
 
-func (c *DepositsContext) GetErrorsToStore() []TxError {
-	return []TxError{}
+func (c *DepositsContext) GetErrorsToStore() []models.TxError {
+	return []models.TxError{}
 }

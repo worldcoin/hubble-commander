@@ -12,7 +12,7 @@ import (
 var ErrUnsupportedBatchType = fmt.Errorf("unsupported batch type")
 
 func (c *Context) DisputeSignature(
-	batch *eth.DecodedBatch,
+	batch *eth.DecodedTxBatch,
 	commitmentIndex int,
 	stateProofs []models.StateMerkleProof,
 ) error {
@@ -28,7 +28,7 @@ func (c *Context) DisputeSignature(
 }
 
 func (c *Context) disputeTransferSignature(
-	batch *eth.DecodedBatch,
+	batch *eth.DecodedTxBatch,
 	commitmentIndex int,
 	stateProofs []models.StateMerkleProof,
 ) error {
@@ -42,11 +42,11 @@ func (c *Context) disputeTransferSignature(
 		return err
 	}
 
-	return c.client.DisputeSignatureTransfer(&batch.ID, batch.Hash, targetCommitmentProof, signatureProof)
+	return c.client.DisputeSignatureTransfer(&batch.ID, &batch.Hash, targetCommitmentProof, signatureProof)
 }
 
 func (c *Context) disputeCreate2TransferSignature(
-	batch *eth.DecodedBatch,
+	batch *eth.DecodedTxBatch,
 	commitmentIndex int,
 	stateProofs []models.StateMerkleProof,
 ) error {
@@ -60,5 +60,5 @@ func (c *Context) disputeCreate2TransferSignature(
 		return err
 	}
 
-	return c.client.DisputeSignatureCreate2Transfer(&batch.ID, batch.Hash, targetCommitmentProof, signatureProof)
+	return c.client.DisputeSignatureCreate2Transfer(&batch.ID, &batch.Hash, targetCommitmentProof, signatureProof)
 }

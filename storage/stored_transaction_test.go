@@ -4,13 +4,16 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
+	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 var (
@@ -28,7 +31,7 @@ var (
 	}
 	create2TransferTransaction = models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
-			Hash:        common.BigToHash(big.NewInt(1234)),
+			Hash:        common.BigToHash(big.NewInt(5678)),
 			TxType:      txtype.Create2Transfer,
 			FromStateID: 1,
 			Amount:      models.MakeUint256(1000),
@@ -61,19 +64,32 @@ func (s *StoredTransactionTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *StoredTransactionTestSuite) TestSetTransactionError() {
+func (s *StoredTransactionTestSuite) TestSetTransactionErrors() {
 	err := s.storage.AddTransfer(&transferTransaction)
 	s.NoError(err)
-
-	errorMessage := ref.String("Quack")
-
-	err = s.storage.SetTransactionError(transferTransaction.Hash, *errorMessage)
+	err = s.storage.AddCreate2Transfer(&create2TransferTransaction)
 	s.NoError(err)
 
-	res, err := s.storage.GetTransfer(transferTransaction.Hash)
+	transferError := models.TxError{
+		TxHash:       transferTransaction.Hash,
+		ErrorMessage: "Quack",
+	}
+
+	c2tError := models.TxError{
+		TxHash:       create2TransferTransaction.Hash,
+		ErrorMessage: "C2T Quack",
+	}
+
+	err = s.storage.SetTransactionErrors(transferError, c2tError)
 	s.NoError(err)
 
-	s.Equal(errorMessage, res.ErrorMessage)
+	storedTransfer, err := s.storage.GetTransfer(transferTransaction.Hash)
+	s.NoError(err)
+	s.Equal(transferError.ErrorMessage, *storedTransfer.ErrorMessage)
+
+	storedC2T, err := s.storage.GetCreate2Transfer(create2TransferTransaction.Hash)
+	s.NoError(err)
+	s.Equal(c2tError.ErrorMessage, *storedC2T.ErrorMessage)
 }
 
 func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_ReturnsHighestNonceRegardlessOfInsertionOrder() {
@@ -290,6 +306,44 @@ func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs_NoTransa
 	s.Nil(hashes)
 }
 
+func (s *StoredTransactionTestSuite) TestAddStoredTxReceipt_IndexOnToStateIDWorks() {
+	s.addStoredTxReceipt(ref.Uint32(1))
+	s.addStoredTxReceipt(ref.Uint32(2))
+	s.addStoredTxReceipt(ref.Uint32(1))
+
+	indexValues := s.getToStateIDIndexValues()
+	s.Len(indexValues, 3)
+	s.Len(indexValues[0], 0) // value set due to index initialization, see NewTransactionStorage
+	s.Len(indexValues[1], 2)
+	s.Len(indexValues[2], 1)
+}
+
+func (s *StoredTransactionTestSuite) TestAddStoredTxReceipt_ValuesWithNilToStateIDAreNotIndexed() {
+	s.addStoredTxReceipt(nil)
+
+	indexValues := s.getToStateIDIndexValues()
+	s.Len(indexValues, 1)
+	s.Len(indexValues[0], 0) // value set due to index initialization, see NewTransactionStorage
+}
+
+// This test checks an edge case that we introduced by indexing ToStateID field which can be nil.
+// See: NewTransactionStorage
+func (s *StoredTransactionTestSuite) TestStoredTxReceipt_FindUsingIndexWorksWhenThereAreOnlyStoredTxReceiptsWithNilToStateID() {
+	err := s.storage.addStoredTxReceipt(&models.StoredTxReceipt{
+		Hash:      utils.RandomHash(),
+		ToStateID: nil, // nil values are not indexed
+	})
+	s.NoError(err)
+
+	receipts := make([]models.StoredTxReceipt, 0, 1)
+	err = s.storage.database.Badger.Find(
+		&receipts,
+		bh.Where("ToStateID").Eq(uint32(1)).Index("ToStateID"),
+	)
+	s.NoError(err)
+	s.Len(receipts, 0)
+}
+
 func (s *StoredTransactionTestSuite) addTransfersInCommitment(batchID *models.Uint256, transfers []models.Transfer) {
 	for i := range transfers {
 		transfers[i].CommitmentID = &models.CommitmentID{
@@ -299,6 +353,41 @@ func (s *StoredTransactionTestSuite) addTransfersInCommitment(batchID *models.Ui
 		err := s.storage.AddTransfer(&transfers[i])
 		s.NoError(err)
 	}
+}
+
+func (s *StoredTransactionTestSuite) addStoredTxReceipt(toStateID *uint32) {
+	receipt := &models.StoredTxReceipt{
+		Hash:      utils.RandomHash(),
+		ToStateID: toStateID,
+	}
+	err := s.storage.addStoredTxReceipt(receipt)
+	s.NoError(err)
+}
+
+func (s *StoredTransactionTestSuite) getToStateIDIndexValues() map[uint32]bh.KeyList {
+	indexValues := make(map[uint32]bh.KeyList)
+
+	indexPrefix := db.IndexKeyPrefix(models.StoredTxReceiptName, "ToStateID")
+	err := s.storage.database.Badger.Iterator(indexPrefix, db.PrefetchIteratorOpts, func(item *bdg.Item) (finish bool, err error) {
+		// Decode key
+		encodedToStateID := item.Key()[len(indexPrefix):]
+		var toStateID uint32
+		err = db.Decode(encodedToStateID, &toStateID)
+		s.NoError(err)
+
+		// Decode value
+		var keyList bh.KeyList
+		err = item.Value(func(val []byte) error {
+			return db.Decode(val, &keyList)
+		})
+		s.NoError(err)
+
+		indexValues[toStateID] = keyList
+		return false, nil
+	})
+	s.ErrorIs(err, db.ErrIteratorFinished)
+
+	return indexValues
 }
 
 func TestStoredTransactionTestSuite(t *testing.T) {

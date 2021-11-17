@@ -45,10 +45,10 @@ func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_RemovesInvali
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.disputeCtx.DisputeTransition(&remoteBatches[0], 1, proofs)
+	err = s.disputeCtx.DisputeTransition(remoteBatches[0].ToDecodedTxBatch(), 1, proofs)
 	s.NoError(err)
 
-	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[0].ID)
+	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[0].GetBase().ID)
 }
 
 func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_FirstCommitment() {
@@ -73,13 +73,13 @@ func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_FirstCommitme
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.syncCtx.UpdateExistingBatchAndCommitments(&remoteBatches[0])
+	err = s.syncCtx.UpdateExistingBatch(remoteBatches[0], common.Hash{1, 2, 3})
 	s.NoError(err)
 
-	err = s.disputeCtx.DisputeTransition(&remoteBatches[1], 0, proofs)
+	err = s.disputeCtx.DisputeTransition(remoteBatches[1].ToDecodedTxBatch(), 0, proofs)
 	s.NoError(err)
 
-	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[1].ID)
+	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[1].GetBase().ID)
 }
 
 func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_ValidBatch() {
@@ -102,12 +102,12 @@ func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_ValidBatch() 
 	s.NoError(err)
 	s.Len(remoteBatches, 2)
 
-	err = s.syncCtx.UpdateExistingBatchAndCommitments(&remoteBatches[0])
+	err = s.syncCtx.UpdateExistingBatch(remoteBatches[0], common.Hash{1, 2, 3})
 	s.NoError(err)
 
-	err = s.disputeCtx.DisputeTransition(&remoteBatches[1], 0, proofs)
+	err = s.disputeCtx.DisputeTransition(remoteBatches[1].ToDecodedTxBatch(), 0, proofs)
 	s.NoError(err)
-	_, err = s.client.GetBatch(&remoteBatches[1].ID)
+	_, err = s.client.GetBatch(&remoteBatches[1].GetBase().ID)
 	s.NoError(err)
 }
 

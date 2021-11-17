@@ -7,7 +7,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -73,13 +72,17 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 	var rollupError *executor.RollupError
 	if errors.As(err, &rollupError) {
 		rollupCtx.Rollback(&err)
-		return c.handleRollupError(rollupError, rollupCtx)
+		return c.handleRollupError(rollupError, rollupCtx.GetErrorsToStore())
 	}
 	if err != nil {
 		return err
 	}
 
-	return rollupCtx.Commit()
+	err = rollupCtx.Commit()
+	if err != nil {
+		return err
+	}
+	return c.storage.SetTransactionErrors(rollupCtx.GetErrorsToStore()...)
 }
 
 func switchBatchType(batchType *batchtype.BatchType) {
@@ -95,16 +98,16 @@ func switchBatchType(batchType *batchtype.BatchType) {
 	}
 }
 
-func (c *Commander) handleRollupError(rollupErr *executor.RollupError, rollupCtx executor.RollupLoopContext) error {
-	if errors.Is(rollupErr, executor.ErrNotEnoughDeposits) {
-		return rollupErr
+func (c *Commander) handleRollupError(err *executor.RollupError, errorsToStore []models.TxError) error {
+	if err.IsLoggable {
+		log.Warnf("%+v", err)
 	}
 
-	if rollupErr.IsLoggable {
-		log.Warnf("%+v", rollupErr)
+	if errors.Is(err, executor.ErrNotEnoughDeposits) {
+		return err
 	}
 
-	return saveTxErrors(c.storage, rollupCtx.GetErrorsToStore())
+	return c.storage.SetTransactionErrors(errorsToStore...)
 }
 
 func logLatestCommitment(latestCommitment *models.CommitmentBase) {
@@ -113,19 +116,4 @@ func logLatestCommitment(latestCommitment *models.CommitmentBase) {
 		"latestCommitmentID": latestCommitment.ID.IndexInBatch,
 	}
 	log.WithFields(fields).Error("rollupLoop: Sanity check on state tree root failed")
-}
-
-func saveTxErrors(storage *st.Storage, txErrors []executor.TxError) error {
-	if len(txErrors) == 0 {
-		return nil
-	}
-	return storage.ExecuteInTransaction(st.TxOptions{}, func(txStorage *st.Storage) error {
-		for _, txErr := range txErrors {
-			err := txStorage.SetTransactionError(txErr.Hash, txErr.ErrorMessage)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
 }

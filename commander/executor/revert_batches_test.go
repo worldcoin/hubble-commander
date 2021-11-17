@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -53,7 +54,7 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_RevertsState() {
 	initialStateRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)
 
-	pendingBatch := s.addBatch(&s.transfer)
+	pendingBatch := s.addTxBatch(&s.transfer)
 	err = s.executionCtx.RevertBatches(pendingBatch)
 	s.NoError(err)
 
@@ -71,7 +72,7 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_RevertsState() {
 }
 
 func (s *RevertBatchesTestSuite) TestRevertBatches_ExcludesTransactionsFromCommitments() {
-	pendingBatch := s.addBatch(&s.transfer)
+	pendingBatch := s.addTxBatch(&s.transfer)
 	err := s.executionCtx.RevertBatches(pendingBatch)
 	s.NoError(err)
 
@@ -87,7 +88,7 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_DeletesCommitmentsAndBatches(
 
 	pendingBatches := make([]models.Batch, 2)
 	for i := range pendingBatches {
-		pendingBatches[i] = *s.addBatch(&transfers[i])
+		pendingBatches[i] = *s.addTxBatch(&transfers[i])
 	}
 
 	latestCommitment, err := s.executionCtx.storage.GetLatestCommitment()
@@ -105,24 +106,68 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_DeletesCommitmentsAndBatches(
 	s.Len(batches, 0)
 }
 
-func (s *RevertBatchesTestSuite) addBatch(tx *models.Transfer) *models.Batch {
+func (s *RevertBatchesTestSuite) TestRevertBatches_AddsPendingDepositSubtree() {
+	subtree := &models.PendingDepositSubTree{
+		ID:       models.MakeUint256(1),
+		Root:     utils.RandomHash(),
+		Deposits: getFourDeposits(),
+	}
+	pendingBatch := s.addDepositBatch(subtree)
+	err := s.executionCtx.RevertBatches(pendingBatch)
+	s.NoError(err)
+
+	depositSubtree, err := s.storage.GetPendingDepositSubTree(subtree.ID)
+	s.NoError(err)
+	s.Equal(subtree.Root, depositSubtree.Root)
+	s.Equal(subtree.Deposits, depositSubtree.Deposits)
+}
+
+func (s *RevertBatchesTestSuite) addTxBatch(tx *models.Transfer) *models.Batch {
 	err := s.txsCtx.storage.AddTransfer(tx)
 	s.NoError(err)
 
 	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
 	s.NoError(err)
 
-	commitmentID, err := s.txsCtx.NextCommitmentID()
-	s.NoError(err)
-	result, err := s.txsCtx.createCommitment(models.TransferArray{*tx}, commitmentID)
+	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
 
 	err = s.storage.AddBatch(pendingBatch)
 	s.NoError(err)
 
-	err = s.txsCtx.addCommitments([]models.CommitmentWithTxs{*result.Commitment()})
+	err = s.txsCtx.addCommitments(commitments)
 	s.NoError(err)
 
+	return pendingBatch
+}
+
+func (s *RevertBatchesTestSuite) addDepositBatch(subtree *models.PendingDepositSubTree) *models.Batch {
+	pendingBatch, err := s.executionCtx.NewPendingBatch(batchtype.Deposit)
+	s.NoError(err)
+
+	deposits := getFourDeposits()
+	err = s.executionCtx.Applier.ApplyDeposits(2, deposits)
+	s.NoError(err)
+
+	root, err := s.executionCtx.storage.StateTree.Root()
+	s.NoError(err)
+
+	err = s.storage.AddBatch(pendingBatch)
+	s.NoError(err)
+
+	err = s.executionCtx.storage.AddDepositCommitment(&models.DepositCommitment{
+		CommitmentBase: models.CommitmentBase{
+			ID: models.CommitmentID{
+				BatchID: pendingBatch.ID,
+			},
+			Type:          batchtype.Deposit,
+			PostStateRoot: *root,
+		},
+		SubTreeID:   subtree.ID,
+		SubTreeRoot: subtree.Root,
+		Deposits:    subtree.Deposits,
+	})
+	s.NoError(err)
 	return pendingBatch
 }
 

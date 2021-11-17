@@ -10,7 +10,7 @@ const (
 	InvalidSignatureMessage = "invalid commitment signature"
 )
 
-func (c *Context) verifyTxSignature(commitment *encoder.DecodedCommitment, txs models.GenericTransactionArray) error {
+func (c *TxsContext) verifyTxSignature(commitment *encoder.DecodedCommitment, txs models.GenericTransactionArray) error {
 	domain, err := c.client.GetDomain()
 	if err != nil {
 		return err
@@ -32,7 +32,7 @@ func (c *Context) verifyTxSignature(commitment *encoder.DecodedCommitment, txs m
 	return c.verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys, txs)
 }
 
-func (c *Context) verifyCommitmentSignature(
+func (c *TxsContext) verifyCommitmentSignature(
 	signature *models.Signature,
 	domain *bls.Domain,
 	messages [][]byte,
@@ -57,7 +57,7 @@ func (c *Context) verifyCommitmentSignature(
 	return nil
 }
 
-func (c *Context) createDisputableSignatureError(reason string, txs models.GenericTransactionArray) error {
+func (c *TxsContext) createDisputableSignatureError(reason string, txs models.GenericTransactionArray) error {
 	proofs, proofErr := c.StateMerkleProofs(txs)
 	if proofErr != nil {
 		return proofErr
@@ -65,7 +65,7 @@ func (c *Context) createDisputableSignatureError(reason string, txs models.Gener
 	return NewDisputableErrorWithProofs(Signature, reason, proofs)
 }
 
-func (c *Context) StateMerkleProofs(txs models.GenericTransactionArray) ([]models.StateMerkleProof, error) {
+func (c *TxsContext) StateMerkleProofs(txs models.GenericTransactionArray) ([]models.StateMerkleProof, error) {
 	proofs := make([]models.StateMerkleProof, 0, txs.Len())
 	for i := 0; i < txs.Len(); i++ {
 		stateProof, err := c.UserStateProof(txs.At(i).GetFromStateID())
@@ -77,7 +77,7 @@ func (c *Context) StateMerkleProofs(txs models.GenericTransactionArray) ([]model
 	return proofs, nil
 }
 
-func (c *Context) UserStateProof(stateID uint32) (*models.StateMerkleProof, error) {
+func (c *TxsContext) UserStateProof(stateID uint32) (*models.StateMerkleProof, error) {
 	leaf, err := c.storage.StateTree.Leaf(stateID)
 	if err != nil {
 		return nil, err

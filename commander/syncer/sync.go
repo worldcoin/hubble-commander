@@ -3,7 +3,6 @@ package syncer
 import (
 	"context"
 
-	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -13,12 +12,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var (
-	ErrBatchSubmissionFailed = errors.New("previous submit batch transaction failed")
-)
+var ErrBatchSubmissionFailed = errors.New("previous submit batch transaction failed")
 
-func (c *Context) SyncBatch(remoteBatch *eth.DecodedBatch) error {
-	localBatch, err := c.storage.GetBatch(remoteBatch.ID)
+func (c *Context) SyncBatch(remoteBatch eth.DecodedBatch) error {
+	localBatch, err := c.storage.GetBatch(remoteBatch.GetID())
 	if err != nil && !st.IsNotFoundError(err) {
 		return err
 	}
@@ -30,20 +27,59 @@ func (c *Context) SyncBatch(remoteBatch *eth.DecodedBatch) error {
 	}
 }
 
-func (c *Context) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *models.Batch) error {
-	if remoteBatch.TransactionHash == localBatch.TransactionHash {
-		err := c.UpdateExistingBatchAndCommitments(remoteBatch)
+func (c *Context) syncNewBatch(remoteBatch eth.DecodedBatch) error {
+	logSyncStart(remoteBatch)
+
+	root, err := c.storage.StateTree.Root()
+	if err != nil {
+		return err
+	}
+
+	err = c.storage.AddBatch(remoteBatch.ToBatch(*root))
+	if err != nil {
+		return err
+	}
+
+	err = c.batchCtx.SyncCommitments(remoteBatch)
+	if err != nil {
+		return err
+	}
+
+	logSyncSuccess(remoteBatch)
+	return nil
+}
+
+func logSyncStart(batch eth.DecodedBatch) {
+	log.Debugf("Syncing new %s batch #%s with %d commitment(s) from chain",
+		batch.GetBase().Type.String(),
+		batch.GetBase().ID.String(),
+		batch.GetCommitmentsLength(),
+	)
+}
+
+func logSyncSuccess(batch eth.DecodedBatch) {
+	log.Printf("Synced new %s batch #%s with %d commitment(s) from chain",
+		batch.GetBase().Type.String(),
+		batch.GetBase().ID.String(),
+		batch.GetCommitmentsLength(),
+	)
+}
+
+func (c *Context) syncExistingBatch(remoteBatch eth.DecodedBatch, localBatch *models.Batch) error {
+	batch := remoteBatch.GetBase()
+	if batch.TransactionHash == localBatch.TransactionHash {
+		err := c.batchCtx.UpdateExistingBatch(remoteBatch, *localBatch.PrevStateRoot)
 		if err != nil {
 			return err
 		}
 
 		log.Printf(
 			"Synced new existing batch. Batch ID: %d. Batch Hash: %v",
-			remoteBatch.ID.Uint64(),
-			remoteBatch.Hash,
+			batch.ID.Uint64(),
+			batch.Hash,
 		)
 	} else {
-		txSender, err := c.getTransactionSender(remoteBatch.TransactionHash)
+		txSender, err := c.getTransactionSender(batch.TransactionHash)
 		if err != nil {
 			return err
 		}
@@ -58,14 +94,6 @@ func (c *Context) syncExistingBatch(remoteBatch *eth.DecodedBatch, localBatch *m
 	return nil
 }
 
-func (c *Context) UpdateExistingBatchAndCommitments(batch *eth.DecodedBatch) error {
-	err := c.storage.UpdateBatch(&batch.Batch)
-	if err != nil {
-		return err
-	}
-	return c.setCommitmentsBodyHash(batch)
-}
-
 func (c *Context) getTransactionSender(txHash common.Hash) (*common.Address, error) {
 	tx, _, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), txHash)
 	if err != nil {
@@ -76,89 +104,4 @@ func (c *Context) getTransactionSender(txHash common.Hash) (*common.Address, err
 		return nil, err
 	}
 	return &sender, nil
-}
-
-func (c *Context) setCommitmentsBodyHash(batch *eth.DecodedBatch) error {
-	commitments, err := c.storage.GetTxCommitmentsByBatchID(batch.ID)
-	if err != nil {
-		return err
-	}
-	for i := range commitments {
-		commitments[i].BodyHash = batch.Commitments[i].BodyHash(*batch.AccountTreeRoot)
-	}
-
-	return c.storage.UpdateCommitments(commitments)
-}
-
-func (c *Context) syncNewBatch(batch *eth.DecodedBatch) error {
-	numCommitments := len(batch.Commitments)
-	log.Debugf("Syncing new batch #%s with %d commitment(s) from chain", batch.ID.String(), numCommitments)
-	err := c.storage.AddBatch(&batch.Batch)
-	if err != nil {
-		return err
-	}
-
-	err = c.syncCommitments(batch)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("Synced new batch #%s with %d commitment(s) from chain", batch.ID.String(), numCommitments)
-	return nil
-}
-
-func (c *Context) syncCommitments(batch *eth.DecodedBatch) error {
-	for i := range batch.Commitments {
-		log.WithFields(log.Fields{"batchID": batch.ID.String()}).Debugf("Syncing commitment #%d", i+1)
-		err := c.syncCommitment(batch, &batch.Commitments[i])
-
-		var disputableErr *DisputableError
-		if errors.As(err, &disputableErr) {
-			return disputableErr.WithCommitmentIndex(i)
-		}
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (c *Context) syncCommitment(batch *eth.DecodedBatch, commitment *encoder.DecodedCommitment) error {
-	transactions, err := c.syncTxCommitment(commitment)
-	if err != nil {
-		return err
-	}
-
-	err = c.addTxCommitment(batch, commitment)
-	if err != nil {
-		return err
-	}
-	for i := 0; i < transactions.Len(); i++ {
-		transactions.At(i).GetBase().CommitmentID = &commitment.ID
-		hashTransfer, err := c.Syncer.HashTx(transactions.At(i))
-		if err != nil {
-			return err
-		}
-		transactions.At(i).GetBase().Hash = *hashTransfer
-	}
-
-	if transactions.Len() == 0 {
-		return nil
-	}
-	return c.Syncer.BatchAddTxs(transactions)
-}
-
-func (c *Context) addTxCommitment(batch *eth.DecodedBatch, decodedCommitment *encoder.DecodedCommitment) error {
-	commitment := &models.TxCommitment{
-		CommitmentBase: models.CommitmentBase{
-			ID:            decodedCommitment.ID,
-			Type:          batch.Type,
-			PostStateRoot: decodedCommitment.StateRoot,
-		},
-		FeeReceiver:       decodedCommitment.FeeReceiver,
-		CombinedSignature: decodedCommitment.CombinedSignature,
-		BodyHash:          decodedCommitment.BodyHash(*batch.AccountTreeRoot),
-	}
-
-	return c.storage.AddTxCommitment(commitment)
 }

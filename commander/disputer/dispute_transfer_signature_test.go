@@ -65,10 +65,10 @@ func (s *DisputeTransferSignatureTestSuite) TestDisputeSignature_DisputesBatchWi
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.disputeSignature(&remoteBatches[0], models.TransferArray{transfer})
+	err = s.disputeSignature(remoteBatches[0].ToDecodedTxBatch(), models.TransferArray{transfer})
 	s.NoError(err)
 
-	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[0].ID)
+	checkRemoteBatchAfterDispute(s.Assertions, s.client, &remoteBatches[0].GetBase().ID)
 }
 
 func (s *DisputeTransferSignatureTestSuite) TestDisputeSignature_ValidBatch() {
@@ -83,9 +83,9 @@ func (s *DisputeTransferSignatureTestSuite) TestDisputeSignature_ValidBatch() {
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.disputeSignature(&remoteBatches[0], models.TransferArray{transfer})
+	err = s.disputeSignature(remoteBatches[0].ToDecodedTxBatch(), models.TransferArray{transfer})
 	s.NoError(err)
-	_, err = s.client.GetBatch(&remoteBatches[0].ID)
+	_, err = s.client.GetBatch(&remoteBatches[0].GetBase().ID)
 	s.NoError(err)
 }
 

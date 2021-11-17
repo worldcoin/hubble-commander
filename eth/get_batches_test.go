@@ -75,8 +75,8 @@ func (s *GetBatchesTestSuite) TestGetAllBatches() {
 	batches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(batches, 2)
-	s.Equal(batch1.ID, batches[0].ID)
-	s.Equal(batch2.ID, batches[1].ID)
+	s.Equal(batch1.ID, batches[0].GetID())
+	s.Equal(batch2.ID, batches[1].GetID())
 }
 
 func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBlockNumber() {
@@ -93,9 +93,9 @@ func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBlockNumber() {
 	})
 	s.NoError(err)
 	s.Len(batches, 1)
-	s.Equal(batch2.ID, batches[0].ID)
-	s.NotEqual(common.Hash{}, batches[0].TransactionHash)
-	s.Equal(s.getAccountRoot(), *batches[0].AccountTreeRoot)
+	s.Equal(batch2.ID, batches[0].GetID())
+	s.NotEqual(common.Hash{}, batches[0].GetBase().TransactionHash)
+	s.Equal(s.getAccountRoot(), batches[0].GetBase().AccountTreeRoot)
 }
 
 func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBatchID() {
@@ -111,7 +111,7 @@ func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBatchID() {
 	})
 	s.NoError(err)
 	s.Len(batches, 1)
-	s.EqualValues(batch1.ID, batches[0].ID)
+	s.EqualValues(batch1.ID, batches[0].GetID())
 }
 
 func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchExists() {
@@ -128,11 +128,12 @@ func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchExists() {
 		BatchType:   1,
 	}
 
-	batch, err := s.client.getBatchIfExists(event, transaction)
+	decodedBatch, err := s.client.getTxBatch(event, transaction)
 	s.NoError(err)
+	batch := decodedBatch.ToDecodedTxBatch()
 	s.Equal(models.MakeUint256(1), batch.ID)
 	s.Len(batch.Commitments, len(s.commitments))
-	s.EqualValues(event.AccountRoot, *batch.AccountTreeRoot)
+	s.EqualValues(event.AccountRoot, batch.AccountTreeRoot)
 }
 
 func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchNotExists() {
@@ -149,7 +150,7 @@ func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchNotExists() {
 		BatchType:   1,
 	}
 
-	batch, err := s.client.getBatchIfExists(event, transaction)
+	batch, err := s.client.getTxBatch(event, transaction)
 	s.Nil(batch)
 	s.ErrorIs(err, errBatchAlreadyRolledBack)
 }
@@ -168,7 +169,7 @@ func (s *GetBatchesTestSuite) TestGetBatchIfExists_DifferentBatchHash() {
 		BatchType:   1,
 	}
 
-	batch, err := s.client.getBatchIfExists(event, transaction)
+	batch, err := s.client.getTxBatch(event, transaction)
 	s.Nil(batch)
 	s.ErrorIs(err, errBatchAlreadyRolledBack)
 }

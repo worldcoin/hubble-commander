@@ -15,10 +15,10 @@ func DecodeDataHash(data []byte, dataHash *common.Hash) error {
 	return nil
 }
 
-func EncodeUint32(number *uint32) ([]byte, error) {
+func EncodeUint32(number uint32) []byte {
 	b := make([]byte, 4)
-	binary.BigEndian.PutUint32(b[0:4], *number)
-	return b, nil
+	binary.BigEndian.PutUint32(b[0:4], number)
+	return b
 }
 
 func DecodeUint32(data []byte, number *uint32) error {
@@ -27,10 +27,10 @@ func DecodeUint32(data []byte, number *uint32) error {
 	return nil
 }
 
-func EncodeUint64(value *uint64) ([]byte, error) {
+func EncodeUint64(value uint64) []byte {
 	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b[0:8], *value)
-	return b, nil
+	binary.BigEndian.PutUint64(b[0:8], value)
+	return b
 }
 
 func DecodeUint64(data []byte, value *uint64) error {
@@ -39,8 +39,8 @@ func DecodeUint64(data []byte, value *uint64) error {
 	return nil
 }
 
-func EncodeString(value *string) ([]byte, error) {
-	return []byte(*value), nil
+func EncodeString(value string) []byte {
+	return []byte(value)
 }
 
 func DecodeString(data []byte, value *string) error {
