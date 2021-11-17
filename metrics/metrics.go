@@ -15,10 +15,8 @@ type CommanderMetrics struct {
 }
 
 func NewCommanderMetrics() *CommanderMetrics {
-	registry := prometheus.NewRegistry()
-
 	commanderMetrics := &CommanderMetrics{
-		registry: registry,
+		registry: prometheus.NewRegistry(),
 	}
 
 	commanderMetrics.initializeAPIMetrics()
