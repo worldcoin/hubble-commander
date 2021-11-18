@@ -42,7 +42,7 @@ func measureBatchBuildAndSubmissionTime(
 	duration := time.Since(start).Round(time.Millisecond)
 
 	lowercaseBatchType := strings.ToLower(batchType.String())
-	commanderMetrics.BatchBuildAndSubmissionTimes.WithLabelValues(lowercaseBatchType).Observe(duration.Seconds())
+	commanderMetrics.BatchBuildAndSubmissionTimes.WithLabelValues(lowercaseBatchType).Observe(float64(duration.Milliseconds()))
 	return duration
 }
 
