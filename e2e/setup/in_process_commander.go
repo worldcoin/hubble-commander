@@ -2,7 +2,7 @@ package setup
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/commander"
@@ -39,7 +39,7 @@ func CreateInProcessCommanderWithConfig(cfg *config.Config, deployContracts bool
 	client := jsonrpc.NewClient(endpoint)
 
 	if deployContracts {
-		file, err := ioutil.TempFile("", "in_process_commander")
+		file, err := os.CreateTemp("", "in_process_commander")
 		if err != nil {
 			return nil, err
 		}
@@ -53,7 +53,7 @@ func CreateInProcessCommanderWithConfig(cfg *config.Config, deployContracts bool
 			return nil, err
 		}
 
-		err = ioutil.WriteFile(*cfg.Bootstrap.ChainSpecPath, []byte(*chainSpec), 0600)
+		err = os.WriteFile(*cfg.Bootstrap.ChainSpecPath, []byte(*chainSpec), 0600)
 		if err != nil {
 			return nil, err
 		}

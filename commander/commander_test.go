@@ -1,7 +1,6 @@
 package commander
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -92,10 +91,10 @@ func (s *CommanderTestSuite) prepareContracts(cfg *config.Config, blockchain cha
 	yamlChainSpec, err := Deploy(deployerCfg, blockchain)
 	s.NoError(err)
 
-	file, err := ioutil.TempFile("", "chain_spec_commander_test")
+	file, err := os.CreateTemp("", "chain_spec_commander_test")
 	s.NoError(err)
 
-	_, err = file.Write([]byte(*yamlChainSpec))
+	_, err = file.WriteString(*yamlChainSpec)
 	s.NoError(err)
 
 	s.chainSpecFile = file.Name()

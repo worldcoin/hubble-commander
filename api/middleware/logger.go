@@ -3,7 +3,7 @@ package middleware
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -27,11 +27,11 @@ func Logger(next http.Handler, commanderMetrics *metrics.CommanderMetrics) http.
 		commanderMetrics.APITotalRequests.Inc()
 
 		start := time.Now()
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			log.Errorf("API: failed to read request body: %s", err)
 		}
-		r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+		r.Body = io.NopCloser(bytes.NewBuffer(body))
 
 		defer func() {
 			duration := measureRequestDuration(start, commanderMetrics)
