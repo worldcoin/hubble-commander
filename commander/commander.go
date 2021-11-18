@@ -14,6 +14,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -43,10 +44,13 @@ type Commander struct {
 	rollupLoopRunning bool
 	stateMutex        sync.Mutex
 
-	storage    *st.Storage
-	client     *eth.Client
-	blockchain chain.Connection
-	apiServer  *http.Server
+	storage       *st.Storage
+	client        *eth.Client
+	blockchain    chain.Connection
+	apiServer     *http.Server
+	metricsServer *http.Server
+
+	metrics *metrics.CommanderMetrics
 }
 
 func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
@@ -81,7 +85,11 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.apiServer, err = api.NewAPIServer(c.cfg, c.storage, c.client)
+	c.metrics = metrics.NewCommanderMetrics()
+
+	c.metricsServer = c.metrics.NewServer(c.cfg.Metrics)
+
+	c.apiServer, err = api.NewServer(c.cfg, c.storage, c.client, c.metrics)
 	if err != nil {
 		return err
 	}
@@ -90,6 +98,13 @@ func (c *Commander) Start() (err error) {
 
 	c.startWorker(func() error {
 		err = c.apiServer.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
+			return err
+		}
+		return nil
+	})
+	c.startWorker(func() error {
+		err = c.metricsServer.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
 			return err
 		}
@@ -129,6 +144,9 @@ func (c *Commander) Stop() error {
 	}
 
 	if err := c.apiServer.Close(); err != nil {
+		return err
+	}
+	if err := c.metricsServer.Close(); err != nil {
 		return err
 	}
 	c.stopWorkers()

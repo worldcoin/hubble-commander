@@ -14,6 +14,7 @@ const (
 
 type Config struct {
 	Log       *LogConfig
+	Metrics   *MetricsConfig
 	Bootstrap *CommanderBootstrapConfig
 	Rollup    *RollupConfig
 	API       *APIConfig
@@ -25,6 +26,11 @@ type LogConfig struct {
 	Level logrus.Level
 	// "json" or "text" (default)
 	Format string
+}
+
+type MetricsConfig struct {
+	Port     string
+	Endpoint string
 }
 
 type DeployerConfig struct {
