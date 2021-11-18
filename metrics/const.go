@@ -10,8 +10,8 @@ const (
 // API metrics
 const (
 	// Transaction labels
-	TransferTxLabel = "transfer"
-	C2TTxLabel      = "create2transfer"
+	TransferLabel = "transfer"
+	C2TLabel      = "create2transfer"
 
 	// Transaction statuses
 	AcceptedTxStatus = "accepted"

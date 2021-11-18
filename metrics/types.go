@@ -10,9 +10,9 @@ func TxTypeToMetricsTxType(transactionType txtype.TransactionType) string {
 	// nolint:exhaustive
 	switch transactionType {
 	case txtype.Transfer:
-		return TransferTxLabel
+		return TransferLabel
 	case txtype.Create2Transfer:
-		return C2TTxLabel
+		return C2TLabel
 	default:
 		return strings.ToLower(transactionType.String())
 	}
