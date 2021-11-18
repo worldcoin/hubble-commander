@@ -18,7 +18,7 @@
         - [Index on `FromStateID`](#Index-on-FromStateID)
     - [Stored Transaction Receipt](#Stored-Transaction-Receipt)
         - [Index on `CommitmentID`](#Index-on-CommitmentID)
-        - [Index on `ToStateID`](#Index-on-ToStateID2)
+        - [Index on `ToStateID`](#Index-on-ToStateID-1)
 - Deposits
     - [Pending Deposit](#Pending-Deposit)
     - [Pending Deposit SubTree](#Pending-Deposit-SubTree)
