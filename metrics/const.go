@@ -17,4 +17,8 @@ const (
 	// Transaction statuses
 	AcceptedTxStatus = "accepted"
 	RejectedTxStatus = "rejected"
+
+	// Batch labels
+	TransferBatchLabel = "transfer"
+	C2TBatchLabel      = "create2transfer"
 )

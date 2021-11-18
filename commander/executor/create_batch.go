@@ -1,7 +1,7 @@
 package executor
 
 import (
-	"strings"
+	"github.com/prometheus/client_golang/prometheus"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/metrics"
@@ -12,38 +12,47 @@ import (
 )
 
 func (c *TxsContext) CreateAndSubmitBatch() error {
-	startTime := time.Now()
-	batch, err := c.NewPendingBatch(c.BatchType)
+	var batch *models.Batch
+	var commitments []models.Commitment
+
+	duration, err := metrics.MeasureDuration(func() error {
+		batch, err := c.NewPendingBatch(c.BatchType)
+		if err != nil {
+			return err
+		}
+
+		commitments, err := c.CreateCommitments()
+		if err != nil {
+			return err
+		}
+
+		err = c.SubmitBatch(batch, commitments)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
 		return err
 	}
 
-	commitments, err := c.CreateCommitments()
-	if err != nil {
-		return err
-	}
-
-	err = c.SubmitBatch(batch, commitments)
-	if err != nil {
-		return err
-	}
-
-	duration := measureBatchBuildAndSubmissionTime(startTime, c.commanderMetrics, batch.Type)
-	logNewBatch(batch, len(commitments), duration)
+	saveBatchBuildAndSubmissionDurationMeasurement(*duration, c.commanderMetrics, batch.Type)
+	logNewBatch(batch, len(commitments), *duration)
 
 	return nil
 }
 
-func measureBatchBuildAndSubmissionTime(
-	start time.Time,
+func saveBatchBuildAndSubmissionDurationMeasurement(
+	duration time.Duration,
 	commanderMetrics *metrics.CommanderMetrics,
 	batchType batchtype.BatchType,
-) time.Duration {
-	duration := time.Since(start).Round(time.Millisecond)
-
-	lowercaseBatchType := strings.ToLower(batchType.String())
-	commanderMetrics.BatchBuildAndSubmissionTimes.WithLabelValues(lowercaseBatchType).Observe(float64(duration.Milliseconds()))
-	return duration
+) {
+	commanderMetrics.BatchBuildAndSubmissionTimes.
+		With(prometheus.Labels{
+			"type": metrics.BatchTypeToMetricsBatchType(batchType),
+		}).
+		Observe(float64(duration.Milliseconds()))
 }
 
 func logNewBatch(batch *models.Batch, commitmentsCount int, duration time.Duration) {

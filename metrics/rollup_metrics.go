@@ -5,12 +5,12 @@ import (
 )
 
 func (c *CommanderMetrics) initializeRollupLoopMetrics() {
-	buildAndSubmissionTimes := prometheus.NewHistogramVec(
+	batchBuildAndSubmissionDuration := prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: rollupSubsystem,
-			Name:      "batch_build_and_submission_time_milliseconds",
-			Help:      "Batch build and submission times",
+			Name:      "batch_build_and_submission_duration_milliseconds",
+			Help:      "Batch build and submission durations",
 			Buckets: []float64{
 				0.0,
 				50.0,
@@ -34,7 +34,7 @@ func (c *CommanderMetrics) initializeRollupLoopMetrics() {
 		[]string{"type"},
 	)
 
-	buildDurations := prometheus.NewHistogramVec(
+	commitmentBuildDurations := prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: rollupSubsystem,
@@ -65,10 +65,10 @@ func (c *CommanderMetrics) initializeRollupLoopMetrics() {
 	)
 
 	c.registry.MustRegister(
-		buildAndSubmissionTimes,
-		buildDurations,
+		batchBuildAndSubmissionDuration,
+		commitmentBuildDurations,
 	)
 
-	c.BatchBuildAndSubmissionTimes = buildAndSubmissionTimes
-	c.CommitmentBuildDuration = buildDurations
+	c.BatchBuildAndSubmissionTimes = batchBuildAndSubmissionDuration
+	c.CommitmentBuildDuration = commitmentBuildDurations
 }
