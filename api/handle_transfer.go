@@ -16,10 +16,12 @@ import (
 func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 	transfer, err := sanitizeTransfer(transferDTO)
 	if err != nil {
+		a.countRejectedTx(transfer.TxType)
 		return nil, err
 	}
 
 	if vErr := a.validateTransfer(transfer); vErr != nil {
+		a.countRejectedTx(transfer.TxType)
 		return nil, vErr
 	}
 
@@ -35,6 +37,7 @@ func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 		return nil, err
 	}
 
+	a.countAcceptedTx(transfer.TxType)
 	logReceivedTransfer(transferDTO)
 
 	return &transfer.Hash, nil

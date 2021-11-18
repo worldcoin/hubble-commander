@@ -15,13 +15,16 @@ const (
 	DefaultTransitionDisputeGasLimit        = uint64(5_000_000)
 	DefaultSignatureDisputeGasLimit         = uint64(7_500_000)
 	DefaultBatchAccountRegistrationGasLimit = uint64(8_000_000)
+	DefaultMetricsPort                      = "2112"
+	DefaultMetricsEndpoint                  = "/metrics"
 )
 
 func GetConfig() *Config {
 	setupViper(getCommanderConfigPath())
 
 	return &Config{
-		Log: getLogConfig(),
+		Log:     getLogConfig(),
+		Metrics: getMetricsConfig(),
 		Bootstrap: &CommanderBootstrapConfig{
 			Prune:            getBool("bootstrap.prune", false),
 			BootstrapNodeURL: getStringOrNil("bootstrap.node_url"),
@@ -59,6 +62,10 @@ func GetTestConfig() *Config {
 		Log: &LogConfig{
 			Level:  log.InfoLevel,
 			Format: LogFormatText,
+		},
+		Metrics: &MetricsConfig{
+			Port:     DefaultMetricsPort,
+			Endpoint: DefaultMetricsEndpoint,
 		},
 		Bootstrap: &CommanderBootstrapConfig{
 			Prune:            false,
@@ -136,6 +143,13 @@ func getLogConfig() *LogConfig {
 	return &LogConfig{
 		Level:  level,
 		Format: format,
+	}
+}
+
+func getMetricsConfig() *MetricsConfig {
+	return &MetricsConfig{
+		Port:     getString("metrics.port", DefaultMetricsPort),
+		Endpoint: getString("metrics.endpoint", DefaultMetricsEndpoint),
 	}
 }
 

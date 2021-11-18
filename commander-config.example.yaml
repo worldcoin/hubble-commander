@@ -23,6 +23,10 @@
 #  port: 8080
 #  enable_proof_methods: false
 #
+#metrics:
+#  port: 2112
+#  endpoint: /metrics
+#
 #badger:
 #  path: db/data/hubble
 #
