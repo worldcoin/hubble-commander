@@ -3,8 +3,9 @@ package commander
 import (
 	"context"
 	"errors"
-	"github.com/prometheus/client_golang/prometheus"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/Worldcoin/hubble-commander/commander/disputer"
 	"github.com/Worldcoin/hubble-commander/commander/executor"

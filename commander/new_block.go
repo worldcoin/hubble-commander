@@ -3,9 +3,10 @@ package commander
 import (
 	"context"
 	stdErrors "errors"
-	"github.com/prometheus/client_golang/prometheus"
 	"math/big"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/metrics"
