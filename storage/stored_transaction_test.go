@@ -307,7 +307,7 @@ func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs_NoTransa
 }
 
 func (s *StoredTransactionTestSuite) TestStoredTxReceipt_IndexOnToCommitmentIDWorks() {
-	zeroId := models.CommitmentID{BatchID: models.MakeUint256(0), IndexInBatch: 0}
+	zeroID := models.CommitmentID{BatchID: models.MakeUint256(0), IndexInBatch: 0}
 	id1 := models.CommitmentID{BatchID: models.MakeUint256(1), IndexInBatch: 0}
 	id2 := models.CommitmentID{BatchID: models.MakeUint256(2), IndexInBatch: 0}
 	s.addStoredTxReceipt(nil, &id1)
@@ -316,18 +316,18 @@ func (s *StoredTransactionTestSuite) TestStoredTxReceipt_IndexOnToCommitmentIDWo
 
 	indexValues := s.getCommitmentIDIndexValues()
 	s.Len(indexValues, 3)
-	s.Len(indexValues[zeroId], 0) // value set due to index initialization, see NewTransactionStorage
+	s.Len(indexValues[zeroID], 0) // value set due to index initialization, see NewTransactionStorage
 	s.Len(indexValues[id1], 2)
 	s.Len(indexValues[id2], 1)
 }
 
 func (s *StoredTransactionTestSuite) TestStoredTxReceipt_ValuesWithNilCommitmentIDAreNotIndexed() {
-	zeroId := models.CommitmentID{BatchID: models.MakeUint256(0), IndexInBatch: 0}
+	zeroID := models.CommitmentID{BatchID: models.MakeUint256(0), IndexInBatch: 0}
 	s.addStoredTxReceipt(nil, nil)
 
 	indexValues := s.getCommitmentIDIndexValues()
 	s.Len(indexValues, 1)
-	s.Len(indexValues[zeroId], 0) // value set due to index initialization, see NewTransactionStorage
+	s.Len(indexValues[zeroID], 0) // value set due to index initialization, see NewTransactionStorage
 }
 
 // This test checks an edge case that we introduced by indexing CommitmentID field which can be nil.
