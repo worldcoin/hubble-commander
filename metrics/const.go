@@ -24,3 +24,8 @@ const (
 	C2TBatchLabel      = "create2transfer"
 	DepositBatchLabel  = "deposit"
 )
+
+// Syncing metrics
+const (
+	SyncAccountsMethod = "sync_accounts"
+)

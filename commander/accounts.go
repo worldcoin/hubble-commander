@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/metrics"
@@ -20,18 +21,28 @@ var ErrAccountLeavesInconsistency = fmt.Errorf("inconsistency in account leaves 
 // TODO extract event filtering logic to eth.Client
 
 func (c *Commander) syncAccounts(start, end uint64) error {
-	startTime := time.Now()
+	var newAccountsSingle *int
+	var newAccountsBatch *int
 
-	newAccountsSingle, err := c.syncSingleAccounts(start, end)
+	duration, err := metrics.MeasureDuration(func() error {
+		var err error
+
+		newAccountsSingle, err = c.syncSingleAccounts(start, end)
+		if err != nil {
+			return err
+		}
+		newAccountsBatch, err = c.syncBatchAccounts(start, end)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
 		return err
 	}
-	newAccountsBatch, err := c.syncBatchAccounts(start, end)
-	if err != nil {
-		return err
-	}
 
-	measureAccountsSyncingDuration(startTime, c.metrics)
+	saveSyncAccountsDurationMeasurement(*duration, c.metrics)
 
 	newAccountsCount := *newAccountsSingle + *newAccountsBatch
 	logNewSyncedAccountsCount(newAccountsCount)
@@ -152,12 +163,15 @@ func validateExistingAccounts(accountTree *storage.AccountTree, accounts ...mode
 	return nil
 }
 
-func measureAccountsSyncingDuration(
-	start time.Time,
+func saveSyncAccountsDurationMeasurement(
+	duration time.Duration,
 	commanderMetrics *metrics.CommanderMetrics,
 ) {
-	duration := time.Since(start).Round(time.Millisecond)
-	commanderMetrics.SyncingMethodDuration.WithLabelValues("sync_accounts").Observe(float64(duration.Milliseconds()))
+	commanderMetrics.BatchBuildAndSubmissionDuration.
+		With(prometheus.Labels{
+			"method": metrics.SyncAccountsMethod,
+		}).
+		Observe(float64(duration.Milliseconds()))
 }
 
 func logNewSyncedAccountsCount(newAccountsCount int) {
