@@ -21,62 +21,63 @@ var ErrSyncedFraudulentBatch = errors.New("commander synced fraudulent batch")
 func (c *Commander) syncBatches(startBlock, endBlock uint64) error {
 	c.stateMutex.Lock()
 	defer c.stateMutex.Unlock()
-	return c.unsafeSyncBatches(startBlock, endBlock)
-}
 
-func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 	duration, err := metrics.MeasureDuration(func() error {
-		latestBatchID, err := c.getLatestBatchID()
-		if err != nil {
-			return err
-		}
-
-		if c.invalidBatchID != nil && latestBatchID.Cmp(c.invalidBatchID) >= 0 {
-			return ErrSyncedFraudulentBatch
-		}
-
-		filter := func(batchID *models.Uint256) bool {
-			if batchID.Cmp(latestBatchID) <= 0 {
-				log.Printf("Batch #%d already synced. Skipping...", batchID.Uint64())
-				return false
-			}
-			if c.invalidBatchID != nil && batchID.Cmp(c.invalidBatchID) >= 0 {
-				log.Printf("Batch #%d after dispute. Skipping...", batchID.Uint64())
-				return false
-			}
-			return true
-		}
-
-		newRemoteBatches, err := c.client.GetBatches(&eth.BatchesFilters{
-			StartBlockInclusive: startBlock,
-			EndBlockInclusive:   &endBlock,
-			FilterByBatchID:     filter,
-		})
-		if err != nil {
-			return err
-		}
-
-		for i := range newRemoteBatches {
-			err = c.syncRemoteBatch(newRemoteBatches[i])
-			if err != nil {
-				return err
-			}
-
-			select {
-			case <-c.workersContext.Done():
-				return ErrIncompleteBlockRangeSync
-			default:
-				continue
-			}
-		}
-
-		return nil
+		return c.unsafeSyncBatches(startBlock, endBlock)
 	})
 	if err != nil {
 		return err
 	}
 
 	saveSyncBatchesDurationMeasurement(*duration, c.metrics)
+
+	return nil
+}
+
+func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
+	latestBatchID, err := c.getLatestBatchID()
+	if err != nil {
+		return err
+	}
+
+	if c.invalidBatchID != nil && latestBatchID.Cmp(c.invalidBatchID) >= 0 {
+		return ErrSyncedFraudulentBatch
+	}
+
+	filter := func(batchID *models.Uint256) bool {
+		if batchID.Cmp(latestBatchID) <= 0 {
+			log.Printf("Batch #%d already synced. Skipping...", batchID.Uint64())
+			return false
+		}
+		if c.invalidBatchID != nil && batchID.Cmp(c.invalidBatchID) >= 0 {
+			log.Printf("Batch #%d after dispute. Skipping...", batchID.Uint64())
+			return false
+		}
+		return true
+	}
+
+	newRemoteBatches, err := c.client.GetBatches(&eth.BatchesFilters{
+		StartBlockInclusive: startBlock,
+		EndBlockInclusive:   &endBlock,
+		FilterByBatchID:     filter,
+	})
+	if err != nil {
+		return err
+	}
+
+	for i := range newRemoteBatches {
+		err = c.syncRemoteBatch(newRemoteBatches[i])
+		if err != nil {
+			return err
+		}
+
+		select {
+		case <-c.workersContext.Done():
+			return ErrIncompleteBlockRangeSync
+		default:
+			continue
+		}
+	}
 
 	return nil
 }
