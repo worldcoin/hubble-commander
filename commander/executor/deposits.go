@@ -1,8 +1,7 @@
 package executor
 
 import (
-	"time"
-
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -12,24 +11,34 @@ import (
 var ErrNotEnoughDeposits = NewRollupError("not enough deposits")
 
 func (c *DepositsContext) CreateAndSubmitBatch() error {
-	startTime := time.Now()
-	batch, err := c.NewPendingBatch(batchtype.Deposit)
+	var batch *models.Batch
+
+	duration, err := metrics.MeasureDuration(func() error {
+		var err error
+
+		batch, err = c.NewPendingBatch(batchtype.Deposit)
+		if err != nil {
+			return err
+		}
+
+		vacancyProof, err := c.createCommitment(batch.ID)
+		if err != nil {
+			return err
+		}
+
+		err = c.SubmitBatch(batch, vacancyProof)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
 		return err
 	}
 
-	vacancyProof, err := c.createCommitment(batch.ID)
-	if err != nil {
-		return err
-	}
-
-	err = c.SubmitBatch(batch, vacancyProof)
-	if err != nil {
-		return err
-	}
-
-	duration := measureBatchBuildAndSubmissionTime(startTime, c.commanderMetrics, batch.Type)
-	logNewBatch(batch, 1, duration)
+	saveBatchBuildAndSubmissionDurationMeasurement(*duration, c.commanderMetrics, batch.Type)
+	logNewBatch(batch, 1, *duration)
 
 	return nil
 }
