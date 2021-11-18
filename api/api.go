@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -20,31 +21,44 @@ type API struct {
 	storage           *st.Storage
 	client            *eth.Client
 	mockSignature     models.Signature
+	commanderMetrics  *metrics.CommanderMetrics
 	disableSignatures bool
 }
 
-func NewAPIServer(cfg *config.Config, storage *st.Storage, client *eth.Client) (*http.Server, error) {
-	server, err := getAPIServer(cfg.API, storage, client, cfg.Rollup.DisableSignatures)
+func NewServer(
+	cfg *config.Config,
+	storage *st.Storage,
+	client *eth.Client,
+	commanderMetrics *metrics.CommanderMetrics,
+) (*http.Server, error) {
+	server, err := getAPIServer(cfg.API, storage, client, commanderMetrics, cfg.Rollup.DisableSignatures)
 	if err != nil {
 		return nil, err
 	}
 
 	mux := http.NewServeMux()
 	if log.IsLevelEnabled(log.DebugLevel) {
-		mux.Handle("/", middleware.Logger(server))
+		mux.Handle("/", middleware.Logger(server, commanderMetrics))
 	} else {
-		mux.HandleFunc("/", server.ServeHTTP)
+		mux.Handle("/", middleware.DefaultHandler(server, commanderMetrics))
 	}
 
 	addr := fmt.Sprintf(":%s", cfg.API.Port)
 	return &http.Server{Addr: addr, Handler: mux}, nil
 }
 
-func getAPIServer(cfg *config.APIConfig, storage *st.Storage, client *eth.Client, disableSignatures bool) (*rpc.Server, error) {
+func getAPIServer(
+	cfg *config.APIConfig,
+	storage *st.Storage,
+	client *eth.Client,
+	commanderMetrics *metrics.CommanderMetrics,
+	disableSignatures bool,
+) (*rpc.Server, error) {
 	api := API{
 		cfg:               cfg,
 		storage:           storage,
 		client:            client,
+		commanderMetrics:  commanderMetrics,
 		disableSignatures: disableSignatures,
 	}
 	if err := api.initSignature(); err != nil {

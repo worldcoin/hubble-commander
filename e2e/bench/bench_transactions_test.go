@@ -60,6 +60,7 @@ func (s *BenchmarkTransactionsSuite) benchSyncing() {
 
 	cfg.Bootstrap.Prune = true
 	cfg.API.Port = "5002"
+	cfg.Metrics.Port = "2002"
 	cfg.Badger.Path += "_passive"
 	cfg.Bootstrap.ChainSpecPath = nil
 	cfg.Bootstrap.BootstrapNodeURL = ref.String("http://localhost:8080")
