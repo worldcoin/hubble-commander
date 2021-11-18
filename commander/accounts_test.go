@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -32,6 +33,7 @@ func (s *AccountsTestSuite) SetupTest() {
 	s.cmd = &Commander{
 		storage: testStorage.Storage,
 		client:  s.testClient.Client,
+		metrics: metrics.NewCommanderMetrics(),
 	}
 }
 

@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
@@ -38,6 +39,7 @@ func (s *DepositsTestSuite) SetupTest() {
 		storage: testStorage.Storage,
 		client:  s.testClient.Client,
 		cfg:     &config.Config{},
+		metrics: metrics.NewCommanderMetrics(),
 	}
 	s.tokenID = models.NewUint256(0) // First registered tokenID
 }

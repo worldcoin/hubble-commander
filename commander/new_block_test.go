@@ -2,6 +2,7 @@ package commander
 
 import (
 	"context"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"testing"
 	"time"
 
@@ -61,6 +62,7 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	s.cmd = NewCommander(s.cfg, nil)
 	s.cmd.client = s.testClient.Client
 	s.cmd.storage = s.testStorage.Storage
+	s.cmd.metrics = metrics.NewCommanderMetrics()
 	s.cmd.workersContext, s.cmd.stopWorkers = context.WithCancel(context.Background())
 
 	domain, err := s.testClient.GetDomain()
