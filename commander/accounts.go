@@ -167,7 +167,7 @@ func saveSyncAccountsDurationMeasurement(
 	duration time.Duration,
 	commanderMetrics *metrics.CommanderMetrics,
 ) {
-	commanderMetrics.BatchBuildAndSubmissionDuration.
+	commanderMetrics.SyncingMethodDuration.
 		With(prometheus.Labels{
 			"method": metrics.SyncAccountsMethod,
 		}).

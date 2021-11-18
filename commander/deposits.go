@@ -163,7 +163,7 @@ func saveSyncDepositsWithNoNewSubTreesDurationMeasurement(
 	duration time.Duration,
 	commanderMetrics *metrics.CommanderMetrics,
 ) {
-	commanderMetrics.BatchBuildAndSubmissionDuration.
+	commanderMetrics.SyncingMethodDuration.
 		With(prometheus.Labels{
 			"method": metrics.SyncDepositsWithNoNewSubTreesMethod,
 		}).
@@ -174,7 +174,7 @@ func saveSyncDepositsWithNewSubTreesDurationMeasurement(
 	duration time.Duration,
 	commanderMetrics *metrics.CommanderMetrics,
 ) {
-	commanderMetrics.BatchBuildAndSubmissionDuration.
+	commanderMetrics.SyncingMethodDuration.
 		With(prometheus.Labels{
 			"method": metrics.SyncDepositsWithNewSubTreesMethod,
 		}).
