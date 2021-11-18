@@ -1,9 +1,9 @@
 package metrics
 
 import (
-	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"strings"
 
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 )
 
