@@ -21,4 +21,5 @@ const (
 	// Batch labels
 	TransferBatchLabel = "transfer"
 	C2TBatchLabel      = "create2transfer"
+	DepositBatchLabel  = "deposit"
 )

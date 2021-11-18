@@ -26,6 +26,8 @@ func BatchTypeToMetricsBatchType(batchType batchtype.BatchType) string {
 		return TransferBatchLabel
 	case batchtype.Create2Transfer:
 		return C2TBatchLabel
+	case batchtype.Deposit:
+		return DepositBatchLabel
 	default:
 		return strings.ToLower(batchType.String())
 	}
