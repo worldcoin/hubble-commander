@@ -410,25 +410,13 @@ func (s *StoredTransactionTestSuite) addStoredTxReceipt(toStateID *uint32, commi
 func (s *StoredTransactionTestSuite) getToStateIDIndexValues() map[uint32]bh.KeyList {
 	indexValues := make(map[uint32]bh.KeyList)
 
-	indexPrefix := db.IndexKeyPrefix(models.StoredTxReceiptName, "ToStateID")
-	err := s.storage.database.Badger.Iterator(indexPrefix, db.PrefetchIteratorOpts, func(item *bdg.Item) (finish bool, err error) {
-		// Decode key
-		encodedToStateID := item.Key()[len(indexPrefix):]
+	s.iterateIndex(models.StoredTxReceiptName, "ToStateID", func(encodedKey []byte, keyList bh.KeyList) {
 		var toStateID uint32
-		err = db.Decode(encodedToStateID, &toStateID)
-		s.NoError(err)
-
-		// Decode value
-		var keyList bh.KeyList
-		err = item.Value(func(val []byte) error {
-			return db.Decode(val, &keyList)
-		})
+		err := db.Decode(encodedKey, &toStateID)
 		s.NoError(err)
 
 		indexValues[toStateID] = keyList
-		return false, nil
 	})
-	s.ErrorIs(err, db.ErrIteratorFinished)
 
 	return indexValues
 }
@@ -436,13 +424,22 @@ func (s *StoredTransactionTestSuite) getToStateIDIndexValues() map[uint32]bh.Key
 func (s *StoredTransactionTestSuite) getCommitmentIDIndexValues() map[models.CommitmentID]bh.KeyList {
 	indexValues := make(map[models.CommitmentID]bh.KeyList)
 
-	indexPrefix := db.IndexKeyPrefix(models.StoredTxReceiptName, "CommitmentID")
-	err := s.storage.database.Badger.Iterator(indexPrefix, db.PrefetchIteratorOpts, func(item *bdg.Item) (finish bool, err error) {
-		// Decode key
-		encodedCommitmentID := item.Key()[len(indexPrefix):]
+	s.iterateIndex(models.StoredTxReceiptName, "CommitmentID", func(encodedKey []byte, keyList bh.KeyList) {
 		var commitmentID models.CommitmentID
-		err = db.Decode(encodedCommitmentID, &commitmentID)
+		err := db.Decode(encodedKey, &commitmentID)
 		s.NoError(err)
+
+		indexValues[commitmentID] = keyList
+	})
+
+	return indexValues
+}
+
+func (s *StoredTransactionTestSuite) iterateIndex(typeName []byte, indexName string, visit func(encodedKey []byte, keyList bh.KeyList)) {
+	indexPrefix := db.IndexKeyPrefix(typeName, indexName)
+	err := s.storage.database.Badger.Iterator(indexPrefix, db.PrefetchIteratorOpts, func(item *bdg.Item) (finish bool, err error) {
+		// Get key value
+		encodedKeyValue := item.Key()[len(indexPrefix):]
 
 		// Decode value
 		var keyList bh.KeyList
@@ -451,12 +448,10 @@ func (s *StoredTransactionTestSuite) getCommitmentIDIndexValues() map[models.Com
 		})
 		s.NoError(err)
 
-		indexValues[commitmentID] = keyList
+		visit(encodedKeyValue, keyList)
 		return false, nil
 	})
 	s.ErrorIs(err, db.ErrIteratorFinished)
-
-	return indexValues
 }
 
 func TestStoredTransactionTestSuite(t *testing.T) {

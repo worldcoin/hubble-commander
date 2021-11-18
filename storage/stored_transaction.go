@@ -270,27 +270,26 @@ func (s *Storage) GetTransactionCount() (*int, error) {
 			return err
 		}
 		seekPrefix := db.IndexKeyPrefix(models.StoredTxReceiptName, "CommitmentID")
-		err = txStorage.database.Badger.Iterator(seekPrefix, db.PrefetchIteratorOpts,
-			func(item *bdg.Item) (bool, error) {
-				var commitmentID models.CommitmentID
-				err = db.Decode(keyValue(seekPrefix, item.Key()), &commitmentID)
-				if err != nil {
-					return false, err
-				}
-				if commitmentID.BatchID.Cmp(&latestBatch.ID) > 0 {
-					return false, nil
-				}
-
-				var keyList bh.KeyList
-				err = item.Value(func(val []byte) error {
-					return db.Decode(val, &keyList)
-				})
-				if err != nil {
-					return false, err
-				}
-				count += len(keyList)
+		err = txStorage.database.Badger.Iterator(seekPrefix, db.PrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
+			var commitmentID models.CommitmentID
+			err = db.Decode(keyValue(seekPrefix, item.Key()), &commitmentID)
+			if err != nil {
+				return false, err
+			}
+			if commitmentID.BatchID.Cmp(&latestBatch.ID) > 0 {
 				return false, nil
+			}
+
+			var keyList bh.KeyList
+			err = item.Value(func(val []byte) error {
+				return db.Decode(val, &keyList)
 			})
+			if err != nil {
+				return false, err
+			}
+			count += len(keyList)
+			return false, nil
+		})
 		if err != nil && err != db.ErrIteratorFinished {
 			return err
 		}
@@ -308,23 +307,22 @@ func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.U
 
 	var keyList bh.KeyList
 	seekPrefix := db.IndexKeyPrefix(models.StoredTxReceiptName, "CommitmentID")
-	err := s.database.Badger.Iterator(seekPrefix, db.ReversePrefetchIteratorOpts,
-		func(item *bdg.Item) (bool, error) {
-			if validForPrefixes(keyValue(seekPrefix, item.Key()), batchPrefixes) {
-				err := item.Value(func(val []byte) error {
-					return db.Decode(val, &keyList)
-				})
-				if err != nil {
-					return false, err
-				}
-				txHashes, err := decodeKeyListHashes(models.StoredTxReceiptPrefix, keyList)
-				if err != nil {
-					return false, err
-				}
-				hashes = append(hashes, txHashes...)
+	err := s.database.Badger.Iterator(seekPrefix, db.ReversePrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
+		if validForPrefixes(keyValue(seekPrefix, item.Key()), batchPrefixes) {
+			err := item.Value(func(val []byte) error {
+				return db.Decode(val, &keyList)
+			})
+			if err != nil {
+				return false, err
 			}
-			return false, nil
-		})
+			txHashes, err := decodeKeyListHashes(models.StoredTxReceiptPrefix, keyList)
+			if err != nil {
+				return false, err
+			}
+			hashes = append(hashes, txHashes...)
+		}
+		return false, nil
+	})
 	if err != nil && err != db.ErrIteratorFinished {
 		return nil, err
 	}
