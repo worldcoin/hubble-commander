@@ -3,6 +3,7 @@ package commander
 import (
 	"context"
 	stdErrors "errors"
+	"github.com/prometheus/client_golang/prometheus"
 	"math/big"
 	"time"
 
@@ -146,7 +147,9 @@ func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
 	startBlock := *syncedBlock + 1
 	endBlock := min(latestBlockNumber, startBlock+uint64(c.cfg.Rollup.SyncSize))
 
-	err = c.syncRange(startBlock, endBlock)
+	duration, err := metrics.MeasureDuration(func() error {
+		return c.syncRange(startBlock, endBlock)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -155,13 +158,14 @@ func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+
+	saveSyncRangeDurationMeasurement(*duration, c.metrics)
+
 	return &endBlock, nil
 }
 
 func (c *Commander) syncRange(startBlock, endBlock uint64) error {
 	logSyncedBlocks(startBlock, endBlock)
-
-	startTime := time.Now()
 
 	err := c.syncAccounts(startBlock, endBlock)
 	if err != nil {
@@ -183,7 +187,6 @@ func (c *Commander) syncRange(startBlock, endBlock uint64) error {
 		return errors.WithStack(err)
 	}
 
-	measureSyncRangeDuration(startTime, c.metrics)
 	return nil
 }
 
@@ -195,12 +198,15 @@ func logSyncedBlocks(startBlock, endBlock uint64) {
 	}
 }
 
-func measureSyncRangeDuration(
-	start time.Time,
+func saveSyncRangeDurationMeasurement(
+	duration time.Duration,
 	commanderMetrics *metrics.CommanderMetrics,
 ) {
-	duration := time.Since(start).Round(time.Millisecond)
-	commanderMetrics.SyncingMethodDuration.WithLabelValues("sync_range").Observe(float64(duration.Milliseconds()))
+	commanderMetrics.SyncingMethodDuration.
+		With(prometheus.Labels{
+			"method": metrics.SyncRangeMethod,
+		}).
+		Observe(float64(duration.Milliseconds()))
 }
 
 func min(x, y uint64) uint64 {
