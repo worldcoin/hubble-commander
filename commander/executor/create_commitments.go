@@ -1,7 +1,7 @@
 package executor
 
 import (
-	"strings"
+	"github.com/prometheus/client_golang/prometheus"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/metrics"
@@ -75,35 +75,43 @@ func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
 func (c *TxsContext) createCommitment(pendingTxs models.GenericTransactionArray, commitmentID *models.CommitmentID) (
 	CreateCommitmentResult, error,
 ) {
-	startTime := time.Now()
+	var commitment *models.CommitmentWithTxs
+	var executeResult ExecuteTxsForCommitmentResult
 
-	feeReceiver, err := c.getCommitmentFeeReceiver()
-	if err != nil {
-		return nil, err
-	}
-
-	initialStateRoot, err := c.storage.StateTree.Root()
-	if err != nil {
-		return nil, err
-	}
-
-	executeResult, err := c.executeTxsForCommitment(pendingTxs, feeReceiver)
-	if errors.Is(err, ErrNotEnoughTxs) {
-		if revertErr := c.storage.StateTree.RevertTo(*initialStateRoot); revertErr != nil {
-			return nil, revertErr
+	duration, err := metrics.MeasureDuration(func() error {
+		feeReceiver, err := c.getCommitmentFeeReceiver()
+		if err != nil {
+			return err
 		}
-		return nil, err
-	}
+
+		initialStateRoot, err := c.storage.StateTree.Root()
+		if err != nil {
+			return err
+		}
+
+		executeResult, err = c.executeTxsForCommitment(pendingTxs, feeReceiver)
+		if errors.Is(err, ErrNotEnoughTxs) {
+			if revertErr := c.storage.StateTree.RevertTo(*initialStateRoot); revertErr != nil {
+				return revertErr
+			}
+			return err
+		}
+		if err != nil {
+			return err
+		}
+
+		commitment, err = c.BuildCommitment(executeResult, commitmentID, feeReceiver.StateID)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	commitment, err := c.BuildCommitment(executeResult, commitmentID, feeReceiver.StateID)
-	if err != nil {
-		return nil, err
-	}
-
-	duration := measureCommitmentBuildDuration(startTime, c.commanderMetrics, c.BatchType)
+	saveCommitmentBuildDurationMeasurement(*duration, c.commanderMetrics, commitment.Type)
 
 	log.Printf(
 		"Created a %s commitment from %d transactions in %s",
@@ -115,16 +123,16 @@ func (c *TxsContext) createCommitment(pendingTxs models.GenericTransactionArray,
 	return c.Executor.NewCreateCommitmentResult(executeResult, commitment), nil
 }
 
-func measureCommitmentBuildDuration(
-	start time.Time,
+func saveCommitmentBuildDurationMeasurement(
+	duration time.Duration,
 	commanderMetrics *metrics.CommanderMetrics,
 	batchType batchtype.BatchType,
-) time.Duration {
-	duration := time.Since(start).Round(time.Millisecond)
-
-	lowercaseBatchType := strings.ToLower(batchType.String())
-	commanderMetrics.CommitmentBuildDuration.WithLabelValues(lowercaseBatchType).Observe(float64(duration.Milliseconds()))
-	return duration
+) {
+	commanderMetrics.CommitmentBuildDuration.
+		With(prometheus.Labels{
+			"type": metrics.BatchTypeToMetricsBatchType(batchType),
+		}).
+		Observe(float64(duration.Milliseconds()))
 }
 
 func (c *TxsContext) executeTxsForCommitment(pendingTxs models.GenericTransactionArray, feeReceiver *FeeReceiver) (

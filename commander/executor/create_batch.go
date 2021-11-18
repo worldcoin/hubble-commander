@@ -13,15 +13,17 @@ import (
 
 func (c *TxsContext) CreateAndSubmitBatch() error {
 	var batch *models.Batch
-	var commitments []models.Commitment
+	var commitments []models.CommitmentWithTxs
 
 	duration, err := metrics.MeasureDuration(func() error {
-		batch, err := c.NewPendingBatch(c.BatchType)
+		var err error
+
+		batch, err = c.NewPendingBatch(c.BatchType)
 		if err != nil {
 			return err
 		}
 
-		commitments, err := c.CreateCommitments()
+		commitments, err = c.CreateCommitments()
 		if err != nil {
 			return err
 		}
