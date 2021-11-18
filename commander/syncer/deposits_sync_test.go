@@ -2,6 +2,7 @@ package syncer
 
 import (
 	"context"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/commander/executor"
@@ -46,7 +47,7 @@ func (s *SyncDepositBatchTestSuite) SetupTest() {
 
 	s.prepareDeposits()
 
-	s.depositsCtx = executor.NewDepositsContext(s.storage.Storage, s.client.Client, nil, context.Background())
+	s.depositsCtx = executor.NewDepositsContext(s.storage.Storage, s.client.Client, nil, metrics.NewCommanderMetrics(), context.Background())
 	s.syncCtx = NewTestContext(s.storage.Storage, s.client.Client, nil, batchtype.Deposit)
 }
 
