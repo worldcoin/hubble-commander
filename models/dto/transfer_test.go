@@ -42,7 +42,7 @@ func TestTransfer_MarshalJSON(t *testing.T) {
 	require.NoError(t, err)
 
 	expected := fmt.Sprintf(
-		`{"Type":"TRANSFER","FromStateID":1,"ToStateID":2,"Amount":"50","Fee":"10","Nonce":"0","Signature":"%s"}`,
+		`{"Type":"TRANSFER","FromStateID":1,"ToStateID":2,"Amount":"50","Fee":"10","Nonce":"0","Signature":%q}`,
 		exampleSignatureHex,
 	)
 	require.Equal(t, expected, string(data))

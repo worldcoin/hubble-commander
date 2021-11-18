@@ -1,7 +1,7 @@
 package commander
 
 import (
-	"io/ioutil"
+	"os"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -9,7 +9,7 @@ import (
 )
 
 func ReadChainSpecFile(path string) (*models.ChainSpec, error) {
-	yamlFile, err := ioutil.ReadFile(path)
+	yamlFile, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
