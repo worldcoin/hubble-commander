@@ -14,8 +14,8 @@ type CommanderMetrics struct {
 	APITotalTransactions *prometheus.CounterVec
 
 	// Rollup
-	CommitmentBuildDuration      *prometheus.HistogramVec
-	BatchBuildAndSubmissionTimes *prometheus.HistogramVec
+	CommitmentBuildDuration         *prometheus.HistogramVec
+	BatchBuildAndSubmissionDuration *prometheus.HistogramVec
 }
 
 func NewCommanderMetrics() *CommanderMetrics {

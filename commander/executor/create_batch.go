@@ -48,7 +48,7 @@ func saveBatchBuildAndSubmissionDurationMeasurement(
 	commanderMetrics *metrics.CommanderMetrics,
 	batchType batchtype.BatchType,
 ) {
-	commanderMetrics.BatchBuildAndSubmissionTimes.
+	commanderMetrics.BatchBuildAndSubmissionDuration.
 		With(prometheus.Labels{
 			"type": metrics.BatchTypeToMetricsBatchType(batchType),
 		}).
