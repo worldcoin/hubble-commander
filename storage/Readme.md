@@ -4,7 +4,7 @@ Badger is a key-value database with transaction support.
 
 `badgerhold` Creates indices on top of Badger.
 
-Tables are documented in [Badger tables](../docs/badger_tables.md)
+See [Badger Data Structures](../docs/badger_data_structures.md) to learn what we store.
 
 
 
