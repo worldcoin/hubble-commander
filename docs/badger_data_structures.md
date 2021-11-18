@@ -44,6 +44,11 @@
   Such index entry can quickly grow in size.
   Thus, for structs that have indices on fields of pointer type we implement `Indexes()` method and specify our own `IndexFunc`.
   Returning `nil` from such `IndexFunc` for `nil` field values prevents creation of the `nil` index entry.
+- All transaction details were previously held in a single **Transaction** structure. 
+  We had to split transaction details between **Stored Transaction** and **Stored Transaction Receipt** because of conflict 
+  between API `hubble_sendTransaction` method and Rollup loop iterations. If we kept all data in the same structure the API method would be 
+  adding new keys updating the indices. At the same time Rollup loop would be modifying the stored transactions updating the same indices.
+  As a result some DB transactions would error with `bh.ErrConflict`.
 
 ## State Tree
 
