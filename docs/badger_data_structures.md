@@ -1,5 +1,6 @@
 # 🦡 Badger data structures
 
+## Stored structures
 - State Tree
     - [State Leaf](#State-Leaf)
         - [Index on `PubKeyID`](#Index-on-PubKeyID)
@@ -32,7 +33,17 @@
     - [Chain State](#Chain-State)
     - [Registered Token](#Registered-Token)
 
+## Notes and design rationale
+- Some indices are specified using badgerhold tags on struct fields.
+  Others by implementing the `Indexes()` method of `bh.Storer` interface.
+- Badger does not support indices on fields of pointer types well.
+  By default, it would add IDs of all structs that have the indexed field set to `nil` to a single index entry, for instance: 
 
+  `_bhIndex:StoredTxReceipt:ToStateID:nil -> bh.KeyList{ txHash1, txHash2, ... }`  
+
+  Such index entry can quickly grow in size.
+  Thus, for structs that have indices on fields of pointer type we implement `Indexes()` method and specify our own `IndexFunc`.
+  Returning `nil` from such `IndexFunc` for `nil` field values prevents creation of the `nil` index entry.
 
 ## State Tree
 
@@ -103,8 +114,6 @@ type UserState struct {
 }
 ```
 
-
-
 ## Account Tree
 
 ### Account Leaf
@@ -133,8 +142,6 @@ Key: node path `models.NamespacedMerklePath`
 Prefix: `bh_MerkleTreeNode:account`
 
 Value: node `common.Hash` (through clever encoding of `models.MerkleTreeNode`)
-
-
 
 ## Transactions
 
@@ -204,7 +211,6 @@ Key: from state ID `uint32`
 Prefix: `_bhIndex:StoredTx:FromStateID:`
 
 Value: list of tx hashes `bh.KeyList`
-
 
 ### Stored Transaction Receipt
 - Stores transactions details known only after it is mined
