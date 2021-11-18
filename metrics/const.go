@@ -27,6 +27,8 @@ const (
 
 // Syncing metrics
 const (
-	SyncAccountsMethod = "sync_accounts"
-	SyncBatchesMethod  = "sync_batches"
+	SyncAccountsMethod                  = "sync_accounts"
+	SyncBatchesMethod                   = "sync_batches"
+	SyncDepositsWithNoNewSubTreesMethod = "sync_deposits_no_new_sub_trees"
+	SyncDepositsWithNewSubTreesMethod   = "sync_deposits_with_new_sub_trees"
 )

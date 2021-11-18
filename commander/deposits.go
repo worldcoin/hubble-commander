@@ -3,6 +3,7 @@ package commander
 import (
 	"bytes"
 	"context"
+	"github.com/prometheus/client_golang/prometheus"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/metrics"
@@ -12,25 +13,42 @@ import (
 )
 
 func (c *Commander) syncDeposits(start, end uint64) error {
-	startTime := time.Now()
+	var depositSubTrees []models.PendingDepositSubTree
 
-	err := c.syncQueuedDeposits(start, end)
-	if err != nil {
-		return err
-	}
+	syncDepositsAndFetchSubTreesDuration, err := metrics.MeasureDuration(func() error {
+		var err error
 
-	depositSubTrees, err := c.fetchDepositSubTrees(start, end)
+		err = c.syncQueuedDeposits(start, end)
+		if err != nil {
+			return err
+		}
+
+		depositSubTrees, err = c.fetchDepositSubTrees(start, end)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
 		return err
 	}
 
 	if len(depositSubTrees) > 0 {
-		defer measureDepositsAndSubTreesSyncingDuration(startTime, c.metrics)
-		return c.saveSyncedSubTrees(depositSubTrees)
+		syncSubTreesDuration, err := metrics.MeasureDuration(func() error {
+			return c.saveSyncedSubTrees(depositSubTrees)
+		})
+		if err != nil {
+			return err
+		}
+
+		totalDuration := time.Duration(syncDepositsAndFetchSubTreesDuration.Milliseconds() + syncSubTreesDuration.Milliseconds())
+		saveSyncDepositsWithNewSubTreesDurationMeasurement(totalDuration, c.metrics)
 	} else {
-		measureDepositsSyncingDuration(startTime, c.metrics)
-		return nil
+		saveSyncDepositsWithNoNewSubTreesDurationMeasurement(*syncDepositsAndFetchSubTreesDuration, c.metrics)
 	}
+
+	return nil
 }
 
 func (c *Commander) syncQueuedDeposits(start, end uint64) error {
@@ -141,18 +159,24 @@ func (c *Commander) saveSingleSubTree(subTree *models.PendingDepositSubTree, sub
 	})
 }
 
-func measureDepositsSyncingDuration(
-	start time.Time,
+func saveSyncDepositsWithNoNewSubTreesDurationMeasurement(
+	duration time.Duration,
 	commanderMetrics *metrics.CommanderMetrics,
 ) {
-	duration := time.Since(start).Round(time.Millisecond)
-	commanderMetrics.SyncingMethodDuration.WithLabelValues("sync_deposits_no_sub_trees").Observe(float64(duration.Milliseconds()))
+	commanderMetrics.BatchBuildAndSubmissionDuration.
+		With(prometheus.Labels{
+			"method": metrics.SyncDepositsWithNoNewSubTreesMethod,
+		}).
+		Observe(float64(duration.Milliseconds()))
 }
 
-func measureDepositsAndSubTreesSyncingDuration(
-	start time.Time,
+func saveSyncDepositsWithNewSubTreesDurationMeasurement(
+	duration time.Duration,
 	commanderMetrics *metrics.CommanderMetrics,
 ) {
-	duration := time.Since(start).Round(time.Millisecond)
-	commanderMetrics.SyncingMethodDuration.WithLabelValues("sync_deposits_with_sub_trees").Observe(float64(duration.Milliseconds()))
+	commanderMetrics.BatchBuildAndSubmissionDuration.
+		With(prometheus.Labels{
+			"method": metrics.SyncDepositsWithNewSubTreesMethod,
+		}).
+		Observe(float64(duration.Milliseconds()))
 }
