@@ -3,6 +3,7 @@ package commander
 import (
 	"bytes"
 	"context"
+	"github.com/prometheus/client_golang/prometheus"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/metrics"
@@ -14,22 +15,44 @@ import (
 )
 
 func (c *Commander) syncTokens(startBlock, endBlock uint64) error {
-	startTime := time.Now()
+	var newTokensCount *int
+
+	duration, err := metrics.MeasureDuration(func() error {
+		var err error
+
+		newTokensCount, err = c.unmeasuredSyncTokens(startBlock, endBlock)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	saveSyncTokensDurationMeasurement(*duration, c.metrics)
+	logNewRegisteredTokensCount(*newTokensCount)
+
+	return nil
+}
+
+func (c *Commander) unmeasuredSyncTokens(startBlock, endBlock uint64) (*int, error) {
+	newTokensCount := 0
 
 	it, err := c.client.TokenRegistry.FilterRegisteredToken(&bind.FilterOpts{
 		Start: startBlock,
 		End:   &endBlock,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer func() { _ = it.Close() }()
-	newTokensCount := 0
 
 	for it.Next() {
 		tx, _, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if !bytes.Equal(tx.Data()[:4], c.client.TokenRegistryABI.Methods["finaliseRegistration"].ID) {
@@ -45,17 +68,14 @@ func (c *Commander) syncTokens(startBlock, endBlock uint64) error {
 
 		isNewToken, err := saveSyncedToken(c.storage.RegisteredTokenStorage, registeredToken)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if *isNewToken {
 			newTokensCount++
 		}
 	}
 
-	measureRegisteredTokensSyncingDuration(startTime, c.metrics)
-	logNewRegisteredTokensCount(newTokensCount)
-
-	return nil
+	return &newTokensCount, nil
 }
 
 func saveSyncedToken(
@@ -78,12 +98,15 @@ func saveSyncedToken(
 	}
 }
 
-func measureRegisteredTokensSyncingDuration(
-	start time.Time,
+func saveSyncTokensDurationMeasurement(
+	duration time.Duration,
 	commanderMetrics *metrics.CommanderMetrics,
 ) {
-	duration := time.Since(start).Round(time.Millisecond)
-	commanderMetrics.SyncingMethodDuration.WithLabelValues("sync_tokens").Observe(float64(duration.Milliseconds()))
+	commanderMetrics.SyncingMethodDuration.
+		With(prometheus.Labels{
+			"method": metrics.SyncTokensMethod,
+		}).
+		Observe(float64(duration.Milliseconds()))
 }
 
 func logNewRegisteredTokensCount(newTokensCount int) {
