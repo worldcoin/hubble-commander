@@ -88,9 +88,8 @@ func (s *TransactionStorage) unsafeGetPendingTransfers() ([]models.Transfer, err
 	return txs, nil
 }
 
-func (s *TransactionStorage) GetTransfersByCommitmentID(id *models.CommitmentID) ([]models.Transfer, error) {
-	encodeCommitmentID := models.EncodeCommitmentIDPointer(id)
-	indexKey := db.IndexKey(models.StoredTxReceiptName, "CommitmentID", encodeCommitmentID)
+func (s *TransactionStorage) GetTransfersByCommitmentID(id models.CommitmentID) ([]models.Transfer, error) {
+	indexKey := db.IndexKey(models.StoredTxReceiptName, "CommitmentID", id.Bytes())
 
 	var transfers []models.Transfer
 	err := s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {

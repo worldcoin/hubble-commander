@@ -33,6 +33,13 @@ func NewTransactionStorage(database *Database) (*TransactionStorage, error) {
 	if err != nil {
 		return nil, err
 	}
+	err = initializeIndex(database, models.StoredTxReceiptName, "CommitmentID", models.CommitmentID{
+		BatchID:      models.MakeUint256(0),
+		IndexInBatch: 0,
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	return &TransactionStorage{
 		database: database,
@@ -253,7 +260,7 @@ func (s *TransactionStorage) SetTransactionErrors(txErrors ...models.TxError) er
 }
 
 func (s *Storage) GetTransactionCount() (*int, error) {
-	count := new(int)
+	count := 0
 	err := s.ExecuteInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
 		latestBatch, err := txStorage.GetLatestSubmittedBatch()
 		if IsNotFoundError(err) {
@@ -265,23 +272,23 @@ func (s *Storage) GetTransactionCount() (*int, error) {
 		seekPrefix := db.IndexKeyPrefix(models.StoredTxReceiptName, "CommitmentID")
 		err = txStorage.database.Badger.Iterator(seekPrefix, db.PrefetchIteratorOpts,
 			func(item *bdg.Item) (bool, error) {
-				var commitmentID *models.CommitmentID
-				commitmentID, err = models.DecodeCommitmentIDPointer(keyValue(seekPrefix, item.Key()))
+				var commitmentID models.CommitmentID
+				err = db.Decode(keyValue(seekPrefix, item.Key()), &commitmentID)
 				if err != nil {
 					return false, err
 				}
-				if commitmentID == nil || commitmentID.BatchID.Cmp(&latestBatch.ID) > 0 {
+				if commitmentID.BatchID.Cmp(&latestBatch.ID) > 0 {
 					return false, nil
 				}
 
 				var keyList bh.KeyList
 				err = item.Value(func(val []byte) error {
-					return db.DecodeKeyList(val, &keyList)
+					return db.Decode(val, &keyList)
 				})
 				if err != nil {
 					return false, err
 				}
-				*count += len(keyList)
+				count += len(keyList)
 				return false, nil
 			})
 		if err != nil && err != db.ErrIteratorFinished {
@@ -292,7 +299,7 @@ func (s *Storage) GetTransactionCount() (*int, error) {
 	if err != nil {
 		return nil, err
 	}
-	return count, nil
+	return &count, nil
 }
 
 func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.Uint256) ([]common.Hash, error) {
@@ -305,7 +312,7 @@ func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.U
 		func(item *bdg.Item) (bool, error) {
 			if validForPrefixes(keyValue(seekPrefix, item.Key()), batchPrefixes) {
 				err := item.Value(func(val []byte) error {
-					return db.DecodeKeyList(val, &keyList)
+					return db.Decode(val, &keyList)
 				})
 				if err != nil {
 					return false, err
@@ -401,7 +408,7 @@ func decodeKeyListHashes(keyPrefix []byte, keyList bh.KeyList) ([]common.Hash, e
 func batchIdsToBatchPrefixes(batchIDs []models.Uint256) [][]byte {
 	batchPrefixes := make([][]byte, 0, len(batchIDs))
 	for i := range batchIDs {
-		batchPrefixes = append(batchPrefixes, append([]byte{1}, batchIDs[i].Bytes()...))
+		batchPrefixes = append(batchPrefixes, batchIDs[i].Bytes())
 	}
 	return batchPrefixes
 }

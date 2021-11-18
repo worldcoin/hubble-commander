@@ -306,10 +306,52 @@ func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs_NoTransa
 	s.Nil(hashes)
 }
 
-func (s *StoredTransactionTestSuite) TestAddStoredTxReceipt_IndexOnToStateIDWorks() {
-	s.addStoredTxReceipt(ref.Uint32(1))
-	s.addStoredTxReceipt(ref.Uint32(2))
-	s.addStoredTxReceipt(ref.Uint32(1))
+func (s *StoredTransactionTestSuite) TestStoredTxReceipt_IndexOnToCommitmentIDWorks() {
+	zeroId := models.CommitmentID{BatchID: models.MakeUint256(0), IndexInBatch: 0}
+	id1 := models.CommitmentID{BatchID: models.MakeUint256(1), IndexInBatch: 0}
+	id2 := models.CommitmentID{BatchID: models.MakeUint256(2), IndexInBatch: 0}
+	s.addStoredTxReceipt(nil, &id1)
+	s.addStoredTxReceipt(nil, &id2)
+	s.addStoredTxReceipt(nil, &id1)
+
+	indexValues := s.getCommitmentIDIndexValues()
+	s.Len(indexValues, 3)
+	s.Len(indexValues[zeroId], 0) // value set due to index initialization, see NewTransactionStorage
+	s.Len(indexValues[id1], 2)
+	s.Len(indexValues[id2], 1)
+}
+
+func (s *StoredTransactionTestSuite) TestStoredTxReceipt_ValuesWithNilCommitmentIDAreNotIndexed() {
+	zeroId := models.CommitmentID{BatchID: models.MakeUint256(0), IndexInBatch: 0}
+	s.addStoredTxReceipt(nil, nil)
+
+	indexValues := s.getCommitmentIDIndexValues()
+	s.Len(indexValues, 1)
+	s.Len(indexValues[zeroId], 0) // value set due to index initialization, see NewTransactionStorage
+}
+
+// This test checks an edge case that we introduced by indexing CommitmentID field which can be nil.
+// See: NewTransactionStorage
+func (s *StoredTransactionTestSuite) TestStoredTxReceipt_FindUsingIndexWorksWhenThereAreOnlyStoredTxReceiptsWithNilCommitmentID() {
+	err := s.storage.addStoredTxReceipt(&models.StoredTxReceipt{
+		Hash:         utils.RandomHash(),
+		CommitmentID: nil, // nil values are not indexed
+	})
+	s.NoError(err)
+
+	receipts := make([]models.StoredTxReceipt, 0, 1)
+	err = s.storage.database.Badger.Find(
+		&receipts,
+		bh.Where("CommitmentID").Eq(uint32(1)).Index("CommitmentID"),
+	)
+	s.NoError(err)
+	s.Len(receipts, 0)
+}
+
+func (s *StoredTransactionTestSuite) TestStoredTxReceipt_IndexOnToStateIDWorks() {
+	s.addStoredTxReceipt(ref.Uint32(1), nil)
+	s.addStoredTxReceipt(ref.Uint32(2), nil)
+	s.addStoredTxReceipt(ref.Uint32(1), nil)
 
 	indexValues := s.getToStateIDIndexValues()
 	s.Len(indexValues, 3)
@@ -318,8 +360,8 @@ func (s *StoredTransactionTestSuite) TestAddStoredTxReceipt_IndexOnToStateIDWork
 	s.Len(indexValues[2], 1)
 }
 
-func (s *StoredTransactionTestSuite) TestAddStoredTxReceipt_ValuesWithNilToStateIDAreNotIndexed() {
-	s.addStoredTxReceipt(nil)
+func (s *StoredTransactionTestSuite) TestStoredTxReceipt_ValuesWithNilToStateIDAreNotIndexed() {
+	s.addStoredTxReceipt(nil, nil)
 
 	indexValues := s.getToStateIDIndexValues()
 	s.Len(indexValues, 1)
@@ -355,10 +397,11 @@ func (s *StoredTransactionTestSuite) addTransfersInCommitment(batchID *models.Ui
 	}
 }
 
-func (s *StoredTransactionTestSuite) addStoredTxReceipt(toStateID *uint32) {
+func (s *StoredTransactionTestSuite) addStoredTxReceipt(toStateID *uint32, commitmentID *models.CommitmentID) {
 	receipt := &models.StoredTxReceipt{
-		Hash:      utils.RandomHash(),
-		ToStateID: toStateID,
+		Hash:         utils.RandomHash(),
+		ToStateID:    toStateID,
+		CommitmentID: commitmentID,
 	}
 	err := s.storage.addStoredTxReceipt(receipt)
 	s.NoError(err)
@@ -383,6 +426,32 @@ func (s *StoredTransactionTestSuite) getToStateIDIndexValues() map[uint32]bh.Key
 		s.NoError(err)
 
 		indexValues[toStateID] = keyList
+		return false, nil
+	})
+	s.ErrorIs(err, db.ErrIteratorFinished)
+
+	return indexValues
+}
+
+func (s *StoredTransactionTestSuite) getCommitmentIDIndexValues() map[models.CommitmentID]bh.KeyList {
+	indexValues := make(map[models.CommitmentID]bh.KeyList)
+
+	indexPrefix := db.IndexKeyPrefix(models.StoredTxReceiptName, "CommitmentID")
+	err := s.storage.database.Badger.Iterator(indexPrefix, db.PrefetchIteratorOpts, func(item *bdg.Item) (finish bool, err error) {
+		// Decode key
+		encodedCommitmentID := item.Key()[len(indexPrefix):]
+		var commitmentID models.CommitmentID
+		err = db.Decode(encodedCommitmentID, &commitmentID)
+		s.NoError(err)
+
+		// Decode value
+		var keyList bh.KeyList
+		err = item.Value(func(val []byte) error {
+			return db.Decode(val, &keyList)
+		})
+		s.NoError(err)
+
+		indexValues[commitmentID] = keyList
 		return false, nil
 	})
 	s.ErrorIs(err, db.ErrIteratorFinished)

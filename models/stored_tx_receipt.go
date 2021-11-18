@@ -84,7 +84,10 @@ func (t StoredTxReceipt) Indexes() map[string]bh.Index {
 				if err != nil {
 					return nil, err
 				}
-				return EncodeCommitmentIDPointer(v.CommitmentID), nil
+				if v.CommitmentID == nil {
+					return nil, nil
+				}
+				return v.CommitmentID.Bytes(), nil
 			},
 		},
 		"ToStateID": {

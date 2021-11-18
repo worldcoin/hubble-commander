@@ -346,7 +346,7 @@ func (s *TransferTestSuite) TestGetTransfersByCommitmentID() {
 	err = s.storage.AddTransfer(&transfer1)
 	s.NoError(err)
 
-	transfers, err := s.storage.GetTransfersByCommitmentID(&txCommitment.ID)
+	transfers, err := s.storage.GetTransfersByCommitmentID(txCommitment.ID)
 	s.NoError(err)
 	s.Len(transfers, 1)
 }
@@ -355,7 +355,7 @@ func (s *TransferTestSuite) TestGetTransfersByCommitmentID_NoTransfers() {
 	err := s.storage.AddTxCommitment(&txCommitment)
 	s.NoError(err)
 
-	transfers, err := s.storage.GetTransfersByCommitmentID(&txCommitment.ID)
+	transfers, err := s.storage.GetTransfersByCommitmentID(txCommitment.ID)
 	s.NoError(err)
 	s.Len(transfers, 0)
 }
