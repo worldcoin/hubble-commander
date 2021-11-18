@@ -168,5 +168,5 @@ func measureBatchesSyncingDuration(
 	commanderMetrics *metrics.CommanderMetrics,
 ) {
 	duration := time.Since(start).Round(time.Millisecond)
-	commanderMetrics.SyncingBatchesDuration.Observe(float64(duration.Milliseconds()))
+	commanderMetrics.SyncingMethodDuration.WithLabelValues("sync_batches").Observe(float64(duration.Milliseconds()))
 }

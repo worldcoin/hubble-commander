@@ -146,7 +146,7 @@ func measureDepositsSyncingDuration(
 	commanderMetrics *metrics.CommanderMetrics,
 ) {
 	duration := time.Since(start).Round(time.Millisecond)
-	commanderMetrics.SyncingDepositsDuration.WithLabelValues("deposits").Observe(float64(duration.Milliseconds()))
+	commanderMetrics.SyncingMethodDuration.WithLabelValues("sync_deposits_no_sub_trees").Observe(float64(duration.Milliseconds()))
 }
 
 func measureDepositsAndSubTreesSyncingDuration(
@@ -154,5 +154,5 @@ func measureDepositsAndSubTreesSyncingDuration(
 	commanderMetrics *metrics.CommanderMetrics,
 ) {
 	duration := time.Since(start).Round(time.Millisecond)
-	commanderMetrics.SyncingDepositsDuration.WithLabelValues("deposits_and_sub_trees").Observe(float64(duration.Milliseconds()))
+	commanderMetrics.SyncingMethodDuration.WithLabelValues("sync_deposits_with_sub_trees").Observe(float64(duration.Milliseconds()))
 }

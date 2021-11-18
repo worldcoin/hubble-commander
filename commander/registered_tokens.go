@@ -83,7 +83,7 @@ func measureRegisteredTokensSyncingDuration(
 	commanderMetrics *metrics.CommanderMetrics,
 ) {
 	duration := time.Since(start).Round(time.Millisecond)
-	commanderMetrics.SyncingTokensDuration.Observe(float64(duration.Milliseconds()))
+	commanderMetrics.SyncingMethodDuration.WithLabelValues("sync_tokens").Observe(float64(duration.Milliseconds()))
 }
 
 func logNewRegisteredTokensCount(newTokensCount int) {

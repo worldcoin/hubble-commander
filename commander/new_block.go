@@ -200,7 +200,7 @@ func measureSyncRangeDuration(
 	commanderMetrics *metrics.CommanderMetrics,
 ) {
 	duration := time.Since(start).Round(time.Millisecond)
-	commanderMetrics.SyncingSyncRangeDuration.Observe(float64(duration.Milliseconds()))
+	commanderMetrics.SyncingMethodDuration.WithLabelValues("sync_range").Observe(float64(duration.Milliseconds()))
 }
 
 func min(x, y uint64) uint64 {

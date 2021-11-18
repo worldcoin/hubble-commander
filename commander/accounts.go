@@ -157,7 +157,7 @@ func measureAccountsSyncingDuration(
 	commanderMetrics *metrics.CommanderMetrics,
 ) {
 	duration := time.Since(start).Round(time.Millisecond)
-	commanderMetrics.SyncingAccountsDuration.Observe(float64(duration.Milliseconds()))
+	commanderMetrics.SyncingMethodDuration.WithLabelValues("sync_accounts").Observe(float64(duration.Milliseconds()))
 }
 
 func logNewSyncedAccountsCount(newAccountsCount int) {

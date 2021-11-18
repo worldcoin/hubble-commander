@@ -18,11 +18,7 @@ type CommanderMetrics struct {
 	BatchBuildAndSubmissionDuration *prometheus.HistogramVec
 
 	// Syncing
-	SyncingSyncRangeDuration prometheus.Histogram
-	SyncingAccountsDuration  prometheus.Histogram
-	SyncingTokensDuration    prometheus.Histogram
-	SyncingDepositsDuration  *prometheus.HistogramVec
-	SyncingBatchesDuration   prometheus.Histogram
+	SyncingMethodDuration *prometheus.HistogramVec
 }
 
 func NewCommanderMetrics() *CommanderMetrics {
