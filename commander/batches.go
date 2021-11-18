@@ -3,6 +3,7 @@ package commander
 import (
 	"context"
 	"errors"
+	"github.com/prometheus/client_golang/prometheus"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/commander/disputer"
@@ -24,53 +25,58 @@ func (c *Commander) syncBatches(startBlock, endBlock uint64) error {
 }
 
 func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
-	startTime := time.Now()
-
-	latestBatchID, err := c.getLatestBatchID()
-	if err != nil {
-		return err
-	}
-
-	if c.invalidBatchID != nil && latestBatchID.Cmp(c.invalidBatchID) >= 0 {
-		return ErrSyncedFraudulentBatch
-	}
-
-	filter := func(batchID *models.Uint256) bool {
-		if batchID.Cmp(latestBatchID) <= 0 {
-			log.Printf("Batch #%d already synced. Skipping...", batchID.Uint64())
-			return false
+	duration, err := metrics.MeasureDuration(func() error {
+		latestBatchID, err := c.getLatestBatchID()
+		if err != nil {
+			return err
 		}
-		if c.invalidBatchID != nil && batchID.Cmp(c.invalidBatchID) >= 0 {
-			log.Printf("Batch #%d after dispute. Skipping...", batchID.Uint64())
-			return false
-		}
-		return true
-	}
 
-	newRemoteBatches, err := c.client.GetBatches(&eth.BatchesFilters{
-		StartBlockInclusive: startBlock,
-		EndBlockInclusive:   &endBlock,
-		FilterByBatchID:     filter,
+		if c.invalidBatchID != nil && latestBatchID.Cmp(c.invalidBatchID) >= 0 {
+			return ErrSyncedFraudulentBatch
+		}
+
+		filter := func(batchID *models.Uint256) bool {
+			if batchID.Cmp(latestBatchID) <= 0 {
+				log.Printf("Batch #%d already synced. Skipping...", batchID.Uint64())
+				return false
+			}
+			if c.invalidBatchID != nil && batchID.Cmp(c.invalidBatchID) >= 0 {
+				log.Printf("Batch #%d after dispute. Skipping...", batchID.Uint64())
+				return false
+			}
+			return true
+		}
+
+		newRemoteBatches, err := c.client.GetBatches(&eth.BatchesFilters{
+			StartBlockInclusive: startBlock,
+			EndBlockInclusive:   &endBlock,
+			FilterByBatchID:     filter,
+		})
+		if err != nil {
+			return err
+		}
+
+		for i := range newRemoteBatches {
+			err = c.syncRemoteBatch(newRemoteBatches[i])
+			if err != nil {
+				return err
+			}
+
+			select {
+			case <-c.workersContext.Done():
+				return ErrIncompleteBlockRangeSync
+			default:
+				continue
+			}
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
 	}
 
-	for i := range newRemoteBatches {
-		err = c.syncRemoteBatch(newRemoteBatches[i])
-		if err != nil {
-			return err
-		}
-
-		select {
-		case <-c.workersContext.Done():
-			return ErrIncompleteBlockRangeSync
-		default:
-			continue
-		}
-	}
-
-	measureBatchesSyncingDuration(startTime, c.metrics)
+	saveSyncBatchesDurationMeasurement(*duration, c.metrics)
 
 	return nil
 }
@@ -158,15 +164,18 @@ func (c *Commander) getLatestBatchID() (*models.Uint256, error) {
 	return &latestBatch.ID, nil
 }
 
+func saveSyncBatchesDurationMeasurement(
+	duration time.Duration,
+	commanderMetrics *metrics.CommanderMetrics,
+) {
+	commanderMetrics.BatchBuildAndSubmissionDuration.
+		With(prometheus.Labels{
+			"method": metrics.SyncBatchesMethod,
+		}).
+		Observe(float64(duration.Milliseconds()))
+}
+
 func logFraudulentBatch(batchID *models.Uint256, reason string) {
 	log.WithFields(log.Fields{"batchID": batchID.String()}).
 		Infof("Found fraudulent batch. Reason: %s", reason)
-}
-
-func measureBatchesSyncingDuration(
-	start time.Time,
-	commanderMetrics *metrics.CommanderMetrics,
-) {
-	duration := time.Since(start).Round(time.Millisecond)
-	commanderMetrics.SyncingMethodDuration.WithLabelValues("sync_batches").Observe(float64(duration.Milliseconds()))
 }

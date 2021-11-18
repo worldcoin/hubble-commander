@@ -28,4 +28,5 @@ const (
 // Syncing metrics
 const (
 	SyncAccountsMethod = "sync_accounts"
+	SyncBatchesMethod  = "sync_batches"
 )
