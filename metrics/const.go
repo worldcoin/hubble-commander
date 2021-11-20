@@ -4,9 +4,10 @@ const (
 	namespace = "hubble"
 
 	// Subsystems
-	apiSubsystem     = "api"
-	rollupSubsystem  = "rollup"
-	syncingSubsystem = "syncing"
+	apiSubsystem        = "api"
+	rollupSubsystem     = "rollup"
+	syncingSubsystem    = "syncing"
+	blockchainSubsystem = "blockchain"
 )
 
 // API metrics
@@ -34,4 +35,10 @@ const (
 	SyncRangeMethod    = "sync_range"
 	SyncDepositsMethod = "sync_deposits"
 	SyncTokensMethod   = "sync_tokens"
+)
+
+// Blockchain metrics
+const (
+	SinglePubkeyRegisteredLogRetrievalCall = "single_pubkey_registered_log_retrieval_call"
+	BatchPubkeyRegisteredLogRetrievalCall  = "batch_pubkey_registered_log_retrieval_call"
 )

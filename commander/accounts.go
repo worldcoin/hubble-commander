@@ -5,13 +5,15 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
-	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -52,13 +54,22 @@ func (c *Commander) syncAccounts(start, end uint64) error {
 }
 
 func (c *Commander) syncSingleAccounts(start, end uint64) (newAccountsCount *int, err error) {
-	it, err := c.client.AccountRegistry.FilterSinglePubkeyRegistered(&bind.FilterOpts{
-		Start: start,
-		End:   &end,
+	var it *accountregistry.AccountRegistrySinglePubkeyRegisteredIterator
+
+	duration, err := metrics.MeasureDuration(func() error {
+		var err error
+
+		it, err = c.client.AccountRegistry.FilterSinglePubkeyRegistered(&bind.FilterOpts{
+			Start: start,
+			End:   &end,
+		})
+
+		return err
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	defer func() { _ = it.Close() }()
 
 	newAccountsCount = ref.Int(0)
@@ -86,17 +97,29 @@ func (c *Commander) syncSingleAccounts(start, end uint64) (newAccountsCount *int
 			*newAccountsCount++
 		}
 	}
+
+	c.metrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.SinglePubkeyRegisteredLogRetrievalCall)
+
 	return newAccountsCount, nil
 }
 
 func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int, err error) {
-	it, err := c.client.AccountRegistry.FilterBatchPubkeyRegistered(&bind.FilterOpts{
-		Start: start,
-		End:   &end,
+	var it *accountregistry.AccountRegistryBatchPubkeyRegisteredIterator
+
+	duration, err := metrics.MeasureDuration(func() error {
+		var err error
+
+		it, err = c.client.AccountRegistry.FilterBatchPubkeyRegistered(&bind.FilterOpts{
+			Start: start,
+			End:   &end,
+		})
+
+		return err
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	defer func() { _ = it.Close() }()
 
 	newAccountsCount = ref.Int(0)
@@ -124,6 +147,9 @@ func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int,
 			*newAccountsCount += len(accounts)
 		}
 	}
+
+	c.metrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.BatchPubkeyRegisteredLogRetrievalCall)
+
 	return newAccountsCount, nil
 }
 
