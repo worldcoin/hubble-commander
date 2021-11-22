@@ -16,7 +16,7 @@ import (
 func (c *Commander) syncDeposits(start, end uint64) error {
 	var depositSubTrees []models.PendingDepositSubTree
 
-	syncDepositsAndFetchSubTreesDuration, err := metrics.MeasureDuration(func() error {
+	duration, err := metrics.MeasureDuration(func() error {
 		var err error
 
 		err = c.syncQueuedDeposits(start, end)
@@ -29,25 +29,17 @@ func (c *Commander) syncDeposits(start, end uint64) error {
 			return err
 		}
 
+		if len(depositSubTrees) > 0 {
+			return c.saveSyncedSubTrees(depositSubTrees)
+		}
+
 		return nil
 	})
 	if err != nil {
 		return err
 	}
 
-	if len(depositSubTrees) > 0 {
-		syncSubTreesDuration, err := metrics.MeasureDuration(func() error {
-			return c.saveSyncedSubTrees(depositSubTrees)
-		})
-		if err != nil {
-			return err
-		}
-
-		totalDuration := time.Duration(syncDepositsAndFetchSubTreesDuration.Milliseconds() + syncSubTreesDuration.Milliseconds())
-		saveSyncDepositsWithNewSubTreesDurationMeasurement(totalDuration, c.metrics)
-	} else {
-		saveSyncDepositsWithNoNewSubTreesDurationMeasurement(*syncDepositsAndFetchSubTreesDuration, c.metrics)
-	}
+	saveSyncDepositsDurationMeasurement(*duration, c.metrics)
 
 	return nil
 }
@@ -160,24 +152,13 @@ func (c *Commander) saveSingleSubTree(subTree *models.PendingDepositSubTree, sub
 	})
 }
 
-func saveSyncDepositsWithNoNewSubTreesDurationMeasurement(
+func saveSyncDepositsDurationMeasurement(
 	duration time.Duration,
 	commanderMetrics *metrics.CommanderMetrics,
 ) {
 	commanderMetrics.SyncingMethodDuration.
 		With(prometheus.Labels{
-			"method": metrics.SyncDepositsWithNoNewSubTreesMethod,
-		}).
-		Observe(float64(duration.Milliseconds()))
-}
-
-func saveSyncDepositsWithNewSubTreesDurationMeasurement(
-	duration time.Duration,
-	commanderMetrics *metrics.CommanderMetrics,
-) {
-	commanderMetrics.SyncingMethodDuration.
-		With(prometheus.Labels{
-			"method": metrics.SyncDepositsWithNewSubTreesMethod,
+			"method": metrics.SyncDepositsMethod,
 		}).
 		Observe(float64(duration.Milliseconds()))
 }
