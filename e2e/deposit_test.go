@@ -26,6 +26,11 @@ import (
 const queueDepositGasLimit = 600_000
 
 func testSendDepositBatch(t *testing.T, cmd setup.Commander) {
+	sendDepositBatch(t, cmd)
+	waitForDepositBatch(t, cmd.Client(), models.MakeUint256(3))
+}
+
+func sendDepositBatch(t *testing.T, cmd setup.Commander) {
 	ethClient := newEthClient(t, cmd.Client())
 
 	tokenAddress := deployExampleToken(t, ethClient)
@@ -45,8 +50,6 @@ func testSendDepositBatch(t *testing.T, cmd setup.Commander) {
 	}
 	_, err = chain.WaitForMultipleTxs(ethClient.Blockchain.GetBackend(), txs...)
 	require.NoError(t, err)
-
-	waitForDepositBatch(t, cmd.Client(), models.MakeUint256(3))
 }
 
 func registerToken(t *testing.T, ethClient *eth.Client, tokenAddress common.Address) *models.Uint256 {
