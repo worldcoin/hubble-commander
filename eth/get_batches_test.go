@@ -2,6 +2,7 @@ package eth
 
 import (
 	"context"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"math/big"
 	"testing"
 
@@ -18,8 +19,9 @@ import (
 type GetBatchesTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	client      *TestClient
-	commitments []models.CommitmentWithTxs
+	client           *TestClient
+	commitments      []models.CommitmentWithTxs
+	commanderMetrics *metrics.CommanderMetrics
 }
 
 func (s *GetBatchesTestSuite) SetupSuite() {
@@ -54,6 +56,7 @@ func (s *GetBatchesTestSuite) SetupSuite() {
 			Transactions: []uint8{0, 0, 1, 0, 0, 0, 0, 0, 32, 1, 0, 0},
 		},
 	}
+	s.commanderMetrics = metrics.NewCommanderMetrics()
 }
 
 func (s *GetBatchesTestSuite) SetupTest() {
@@ -88,9 +91,12 @@ func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBlockNumber() {
 	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.CommitmentWithTxs{s.commitments[1]})
 	s.NoError(err)
 
-	batches, err := s.client.GetBatches(&BatchesFilters{
-		StartBlockInclusive: uint64(*batch1.FinalisationBlock - uint32(*finalisationBlocks) + 1),
-	})
+	batches, err := s.client.GetBatches(
+		&BatchesFilters{
+			StartBlockInclusive: uint64(*batch1.FinalisationBlock - uint32(*finalisationBlocks) + 1),
+		},
+		s.commanderMetrics,
+	)
 	s.NoError(err)
 	s.Len(batches, 1)
 	s.Equal(batch2.ID, batches[0].GetID())
@@ -104,11 +110,14 @@ func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBatchID() {
 	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.CommitmentWithTxs{s.commitments[1]})
 	s.NoError(err)
 
-	batches, err := s.client.GetBatches(&BatchesFilters{
-		FilterByBatchID: func(batchID *models.Uint256) bool {
-			return batchID.CmpN(0) > 0 && batchID.Cmp(&batch2.ID) < 0
+	batches, err := s.client.GetBatches(
+		&BatchesFilters{
+			FilterByBatchID: func(batchID *models.Uint256) bool {
+				return batchID.CmpN(0) > 0 && batchID.Cmp(&batch2.ID) < 0
+			},
 		},
-	})
+		s.commanderMetrics,
+	)
 	s.NoError(err)
 	s.Len(batches, 1)
 	s.EqualValues(batch1.ID, batches[0].GetID())
