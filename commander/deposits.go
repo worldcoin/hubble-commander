@@ -47,23 +47,11 @@ func (c *Commander) syncDeposits(start, end uint64) error {
 }
 
 func (c *Commander) syncQueuedDeposits(start, end uint64) error {
-	var it *depositmanager.DepositManagerDepositQueuedIterator
-
-	duration, err := metrics.MeasureDuration(func() (err error) {
-		it, err = c.client.DepositManager.FilterDepositQueued(&bind.FilterOpts{
-			Start: start,
-			End:   &end,
-		})
-
-		return err
-	})
+	it, err := c.getDepositManagerDepositQueuedIterator(start, end)
 	if err != nil {
 		return err
 	}
-
 	defer func() { _ = it.Close() }()
-
-	c.metrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.DepositQueuedLogRetrievalCall)
 
 	for it.Next() {
 		tx, _, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
@@ -95,23 +83,11 @@ func (c *Commander) syncQueuedDeposits(start, end uint64) error {
 }
 
 func (c *Commander) fetchDepositSubTrees(start, end uint64) ([]models.PendingDepositSubTree, error) {
-	var it *depositmanager.DepositManagerDepositSubTreeReadyIterator
-
-	duration, err := metrics.MeasureDuration(func() (err error) {
-		it, err = c.client.DepositManager.FilterDepositSubTreeReady(&bind.FilterOpts{
-			Start: start,
-			End:   &end,
-		})
-
-		return err
-	})
+	it, err := c.getDepositManagerDepositSubTreeReadyIterator(start, end)
 	if err != nil {
 		return nil, err
 	}
-
 	defer func() { _ = it.Close() }()
-
-	c.metrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.DepositSubTreeReadyLogRetrievalCall)
 
 	depositSubTrees := make([]models.PendingDepositSubTree, 0, 1)
 
@@ -134,6 +110,42 @@ func (c *Commander) fetchDepositSubTrees(start, end uint64) ([]models.PendingDep
 	}
 
 	return depositSubTrees, nil
+}
+
+func (c *Commander) getDepositManagerDepositQueuedIterator(start, end uint64) (it *depositmanager.DepositManagerDepositQueuedIterator, err error) {
+	duration, err := metrics.MeasureDuration(func() error {
+		it, err = c.client.DepositManager.FilterDepositQueued(&bind.FilterOpts{
+			Start: start,
+			End:   &end,
+		})
+
+		return err
+	})
+	if err != nil {
+		return
+	}
+
+	c.metrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.DepositQueuedLogRetrievalCall)
+
+	return
+}
+
+func (c *Commander) getDepositManagerDepositSubTreeReadyIterator(start, end uint64) (it *depositmanager.DepositManagerDepositSubTreeReadyIterator, err error) {
+	duration, err := metrics.MeasureDuration(func() error {
+		it, err = c.client.DepositManager.FilterDepositSubTreeReady(&bind.FilterOpts{
+			Start: start,
+			End:   &end,
+		})
+
+		return err
+	})
+	if err != nil {
+		return
+	}
+
+	c.metrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.DepositSubTreeReadyLogRetrievalCall)
+
+	return
 }
 
 func (c *Commander) saveSyncedSubTrees(subTrees []models.PendingDepositSubTree) error {
