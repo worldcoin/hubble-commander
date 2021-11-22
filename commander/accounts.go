@@ -72,7 +72,7 @@ func (c *Commander) syncSingleAccounts(start, end uint64) (newAccountsCount *int
 
 	defer func() { _ = it.Close() }()
 
-	c.metrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.SinglePubkeyRegisteredLogRetrievalCall)
+	c.metrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.SinglePubKeyRegisteredLogRetrievalCall)
 
 	newAccountsCount = ref.Int(0)
 
@@ -148,7 +148,7 @@ func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int,
 		}
 	}
 
-	c.metrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.BatchPubkeyRegisteredLogRetrievalCall)
+	c.metrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.BatchPubKeyRegisteredLogRetrievalCall)
 
 	return newAccountsCount, nil
 }

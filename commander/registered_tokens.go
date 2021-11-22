@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"context"
 
+	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -40,16 +42,24 @@ func (c *Commander) syncTokens(startBlock, endBlock uint64) error {
 }
 
 func (c *Commander) unmeasuredSyncTokens(startBlock, endBlock uint64) (*int, error) {
+	var it *tokenregistry.TokenRegistryRegisteredTokenIterator
 	newTokensCount := 0
 
-	it, err := c.client.TokenRegistry.FilterRegisteredToken(&bind.FilterOpts{
-		Start: startBlock,
-		End:   &endBlock,
+	duration, err := metrics.MeasureDuration(func() (err error) {
+		it, err = c.client.TokenRegistry.FilterRegisteredToken(&bind.FilterOpts{
+			Start: startBlock,
+			End:   &endBlock,
+		})
+
+		return err
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	defer func() { _ = it.Close() }()
+
+	c.metrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.RegisteredTokenLogRetrievalCall)
 
 	for it.Next() {
 		tx, _, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
