@@ -19,7 +19,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/ybbus/jsonrpc/v2"
 )
@@ -28,21 +27,21 @@ const queueDepositGasLimit = 600_000
 
 func testSendDepositBatch(t *testing.T, cmd setup.Commander) {
 	ethClient := newEthClient(t, cmd.Client())
-	subtreeDepth, err := ethClient.GetMaxSubTreeDepthParam()
-	require.NoError(t, err)
-	depositCount := 1 << *subtreeDepth
 
 	tokenAddress := deployExampleToken(t, ethClient)
 	tokenID := registerToken(t, ethClient, tokenAddress)
 	approveToken(t, ethClient, tokenAddress)
 	amount := models.NewUint256FromBig(*utils.ParseEther("10"))
 
+	subtreeDepth, err := ethClient.GetMaxSubTreeDepthParam()
+	require.NoError(t, err)
+	depositCount := 1 << *subtreeDepth
 	txs := make([]types.Transaction, 0, depositCount)
 	for i := 0; i < depositCount; i++ {
-		tx, err := ethClient.QueueDeposit(queueDepositGasLimit, models.NewUint256(1), amount, tokenID)
+		var tx *types.Transaction
+		tx, err = ethClient.QueueDeposit(queueDepositGasLimit, models.NewUint256(1), amount, tokenID)
 		require.NoError(t, err)
 		txs = append(txs, *tx)
-		log.Info(tx.Nonce())
 	}
 	_, err = chain.WaitForMultipleTxs(ethClient.Blockchain.GetBackend(), txs...)
 	require.NoError(t, err)
