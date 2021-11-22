@@ -95,14 +95,23 @@ func (c *Commander) syncQueuedDeposits(start, end uint64) error {
 }
 
 func (c *Commander) fetchDepositSubTrees(start, end uint64) ([]models.PendingDepositSubTree, error) {
-	it, err := c.client.DepositManager.FilterDepositSubTreeReady(&bind.FilterOpts{
-		Start: start,
-		End:   &end,
+	var it *depositmanager.DepositManagerDepositSubTreeReadyIterator
+
+	duration, err := metrics.MeasureDuration(func() (err error) {
+		it, err = c.client.DepositManager.FilterDepositSubTreeReady(&bind.FilterOpts{
+			Start: start,
+			End:   &end,
+		})
+
+		return err
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	defer func() { _ = it.Close() }()
+
+	c.metrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.DepositSubTreeReadyLogRetrievalCall)
 
 	depositSubTrees := make([]models.PendingDepositSubTree, 0, 1)
 

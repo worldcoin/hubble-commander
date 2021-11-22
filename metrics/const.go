@@ -43,4 +43,5 @@ const (
 	BatchPubkeyRegisteredLogRetrievalCall  = "batch_pubkey_registered_log_retrieval_call"
 	NewBatchLogRetrievalCall               = "new_batch_log_retrieval_call"
 	DepositQueuedLogRetrievalCall          = "deposit_queued_log_retrieval_call"
+	DepositSubTreeReadyLogRetrievalCall    = "deposit_sub_tree_ready_log_retrieval_call"
 )
