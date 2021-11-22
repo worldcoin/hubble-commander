@@ -53,6 +53,8 @@ func TestCommander(t *testing.T) {
 	firstC2TWallet := wallets[len(wallets)-32]
 	testSendC2TBatch(t, commander.Client(), senderWallet, wallets, firstC2TWallet.PublicKey(), 32)
 
+	testSendDepositBatch(t, commander)
+
 	testSenderStateAfterTransfers(t, commander.Client(), senderWallet)
 	testFeeReceiverStateAfterTransfers(t, commander.Client(), feeReceiverWallet)
 	testGetBatches(t, commander.Client())
