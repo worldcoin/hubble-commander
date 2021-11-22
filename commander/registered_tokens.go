@@ -18,9 +18,7 @@ import (
 func (c *Commander) syncTokens(startBlock, endBlock uint64) error {
 	var newTokensCount *int
 
-	duration, err := metrics.MeasureDuration(func() error {
-		var err error
-
+	duration, err := metrics.MeasureDuration(func() (err error) {
 		newTokensCount, err = c.unmeasuredSyncTokens(startBlock, endBlock)
 		if err != nil {
 			return err

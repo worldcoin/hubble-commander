@@ -25,9 +25,7 @@ func (c *Commander) syncAccounts(start, end uint64) error {
 	var newAccountsSingle *int
 	var newAccountsBatch *int
 
-	duration, err := metrics.MeasureDuration(func() error {
-		var err error
-
+	duration, err := metrics.MeasureDuration(func() (err error) {
 		newAccountsSingle, err = c.syncSingleAccounts(start, end)
 		if err != nil {
 			return err
