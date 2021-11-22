@@ -87,7 +87,7 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 	return res, nil
 }
 
-func isFilteredOut(batchID *models.Uint256, nextBatchID *models.Uint256, filters *BatchesFilters) bool {
+func isFilteredOut(batchID, nextBatchID *models.Uint256, filters *BatchesFilters) bool {
 	return (filters.FilterByBatchID != nil && !filters.FilterByBatchID(batchID)) ||
 		(nextBatchID != nil && batchID.Cmp(nextBatchID) < 0)
 }
