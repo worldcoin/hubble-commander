@@ -150,10 +150,8 @@ func (c *Client) getDepositsFinalisedEvents(
 func (c *Client) getNewBatchLogIterator(
 	filters *BatchesFilters,
 	commanderMetrics *metrics.CommanderMetrics,
-) (*rollup.RollupNewBatchIterator, error) {
-	var it *rollup.RollupNewBatchIterator
-
-	duration, err := metrics.MeasureDuration(func() (err error) {
+) (it *rollup.RollupNewBatchIterator, err error) {
+	duration, err := metrics.MeasureDuration(func() error {
 		it, err = c.Rollup.FilterNewBatch(&bind.FilterOpts{
 			Start: filters.StartBlockInclusive,
 			End:   filters.EndBlockInclusive,
@@ -162,21 +160,19 @@ func (c *Client) getNewBatchLogIterator(
 		return err
 	})
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	commanderMetrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.NewBatchLogRetrievalCall)
 
-	return it, nil
+	return
 }
 
 func (c *Client) getDepositsFinalisedLogIterator(
 	filters *BatchesFilters,
 	commanderMetrics *metrics.CommanderMetrics,
-) (*rollup.RollupDepositsFinalisedIterator, error) {
-	var it *rollup.RollupDepositsFinalisedIterator
-
-	duration, err := metrics.MeasureDuration(func() (err error) {
+) (it *rollup.RollupDepositsFinalisedIterator, err error) {
+	duration, err := metrics.MeasureDuration(func() error {
 		it, err = c.Rollup.FilterDepositsFinalised(&bind.FilterOpts{
 			Start: filters.StartBlockInclusive,
 			End:   filters.EndBlockInclusive,
@@ -185,12 +181,12 @@ func (c *Client) getDepositsFinalisedLogIterator(
 		return err
 	})
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	commanderMetrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.DepositsFinalisedLogRetrievalCall)
 
-	return it, nil
+	return
 }
 
 func (c *Client) isDirectBatchSubmission(tx *types.Transaction) bool {
