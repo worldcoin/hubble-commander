@@ -537,6 +537,19 @@ func (s *TxsBatchesTestSuite) submitInvalidBatch(
 	tx models.GenericTransaction,
 	modifier func(commitment *models.CommitmentWithTxs),
 ) *models.Batch {
+	pendingBatch := submitInvalidTxsBatch(s.Assertions, storage, txsCtx, tx, modifier)
+
+	s.client.GetBackend().Commit()
+	return pendingBatch
+}
+
+func submitInvalidTxsBatch(
+	s *require.Assertions,
+	storage *st.Storage,
+	txsCtx *executor.TxsContext,
+	tx models.GenericTransaction,
+	modifier func(commitment *models.CommitmentWithTxs),
+) *models.Batch {
 	if tx.Type() == txtype.Transfer {
 		err := storage.AddTransfer(tx.ToTransfer())
 		s.NoError(err)
@@ -557,7 +570,6 @@ func (s *TxsBatchesTestSuite) submitInvalidBatch(
 	err = txsCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
-	s.client.GetBackend().Commit()
 	return pendingBatch
 }
 

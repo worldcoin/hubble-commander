@@ -74,7 +74,7 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 		}
 
 		if errors.Is(err, errBatchAlreadyRolledBack) {
-			nextCorrectBatchID = decodedBatch.GetID()
+			nextCorrectBatchID = models.MakeUint256FromBig(*event.BatchID)
 			continue
 		}
 		if err != nil {
