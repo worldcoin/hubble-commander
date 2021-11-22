@@ -123,7 +123,10 @@ func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int,
 	return newAccountsCount, nil
 }
 
-func (c *Commander) getAccountRegistrySinglePubKeyRegisteredIterator(start, end uint64) (it *accountregistry.AccountRegistrySinglePubkeyRegisteredIterator, err error) {
+func (c *Commander) getAccountRegistrySinglePubKeyRegisteredIterator(start, end uint64) (
+	it *accountregistry.AccountRegistrySinglePubkeyRegisteredIterator,
+	err error,
+) {
 	duration, err := metrics.MeasureDuration(func() error {
 		it, err = c.client.AccountRegistry.FilterSinglePubkeyRegistered(&bind.FilterOpts{
 			Start: start,
@@ -141,7 +144,10 @@ func (c *Commander) getAccountRegistrySinglePubKeyRegisteredIterator(start, end 
 	return
 }
 
-func (c *Commander) getAccountRegistryBatchPubKeyRegisteredIterator(start, end uint64) (it *accountregistry.AccountRegistryBatchPubkeyRegisteredIterator, err error) {
+func (c *Commander) getAccountRegistryBatchPubKeyRegisteredIterator(start, end uint64) (
+	it *accountregistry.AccountRegistryBatchPubkeyRegisteredIterator,
+	err error,
+) {
 	duration, err := metrics.MeasureDuration(func() error {
 		it, err = c.client.AccountRegistry.FilterBatchPubkeyRegistered(&bind.FilterOpts{
 			Start: start,

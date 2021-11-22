@@ -112,7 +112,10 @@ func (c *Commander) fetchDepositSubTrees(start, end uint64) ([]models.PendingDep
 	return depositSubTrees, nil
 }
 
-func (c *Commander) getDepositManagerDepositQueuedIterator(start, end uint64) (it *depositmanager.DepositManagerDepositQueuedIterator, err error) {
+func (c *Commander) getDepositManagerDepositQueuedIterator(start, end uint64) (
+	it *depositmanager.DepositManagerDepositQueuedIterator,
+	err error,
+) {
 	duration, err := metrics.MeasureDuration(func() error {
 		it, err = c.client.DepositManager.FilterDepositQueued(&bind.FilterOpts{
 			Start: start,
@@ -130,7 +133,10 @@ func (c *Commander) getDepositManagerDepositQueuedIterator(start, end uint64) (i
 	return
 }
 
-func (c *Commander) getDepositManagerDepositSubTreeReadyIterator(start, end uint64) (it *depositmanager.DepositManagerDepositSubTreeReadyIterator, err error) {
+func (c *Commander) getDepositManagerDepositSubTreeReadyIterator(start, end uint64) (
+	it *depositmanager.DepositManagerDepositSubTreeReadyIterator,
+	err error,
+) {
 	duration, err := metrics.MeasureDuration(func() error {
 		it, err = c.client.DepositManager.FilterDepositSubTreeReady(&bind.FilterOpts{
 			Start: start,

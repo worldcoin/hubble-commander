@@ -46,7 +46,6 @@ func (c *Commander) unmeasuredSyncTokens(startBlock, endBlock uint64) (*int, err
 	if err != nil {
 		return nil, err
 	}
-
 	defer func() { _ = it.Close() }()
 
 	for it.Next() {
@@ -78,7 +77,10 @@ func (c *Commander) unmeasuredSyncTokens(startBlock, endBlock uint64) (*int, err
 	return &newTokensCount, nil
 }
 
-func (c *Commander) getTokenRegistryRegisteredTokenIterator(start, end uint64) (it *tokenregistry.TokenRegistryRegisteredTokenIterator, err error) {
+func (c *Commander) getTokenRegistryRegisteredTokenIterator(start, end uint64) (
+	it *tokenregistry.TokenRegistryRegisteredTokenIterator,
+	err error,
+) {
 	duration, err := metrics.MeasureDuration(func() error {
 		it, err = c.client.TokenRegistry.FilterRegisteredToken(&bind.FilterOpts{
 			Start: start,
