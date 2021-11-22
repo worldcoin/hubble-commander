@@ -52,23 +52,11 @@ func (c *Commander) syncAccounts(start, end uint64) error {
 }
 
 func (c *Commander) syncSingleAccounts(start, end uint64) (newAccountsCount *int, err error) {
-	var it *accountregistry.AccountRegistrySinglePubkeyRegisteredIterator
-
-	duration, err := metrics.MeasureDuration(func() error {
-		it, err = c.client.AccountRegistry.FilterSinglePubkeyRegistered(&bind.FilterOpts{
-			Start: start,
-			End:   &end,
-		})
-
-		return err
-	})
+	it, err := c.getAccountRegistrySinglePubKeyRegisteredIterator(start, end)
 	if err != nil {
 		return nil, err
 	}
-
 	defer func() { _ = it.Close() }()
-
-	c.metrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.SinglePubKeyRegisteredLogRetrievalCall)
 
 	newAccountsCount = ref.Int(0)
 
@@ -100,20 +88,10 @@ func (c *Commander) syncSingleAccounts(start, end uint64) (newAccountsCount *int
 }
 
 func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int, err error) {
-	var it *accountregistry.AccountRegistryBatchPubkeyRegisteredIterator
-
-	duration, err := metrics.MeasureDuration(func() error {
-		it, err = c.client.AccountRegistry.FilterBatchPubkeyRegistered(&bind.FilterOpts{
-			Start: start,
-			End:   &end,
-		})
-
-		return err
-	})
+	it, err := c.getAccountRegistryBatchPubKeyRegisteredIterator(start, end)
 	if err != nil {
 		return nil, err
 	}
-
 	defer func() { _ = it.Close() }()
 
 	newAccountsCount = ref.Int(0)
@@ -142,9 +120,43 @@ func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int,
 		}
 	}
 
+	return newAccountsCount, nil
+}
+
+func (c *Commander) getAccountRegistrySinglePubKeyRegisteredIterator(start, end uint64) (it *accountregistry.AccountRegistrySinglePubkeyRegisteredIterator, err error) {
+	duration, err := metrics.MeasureDuration(func() error {
+		it, err = c.client.AccountRegistry.FilterSinglePubkeyRegistered(&bind.FilterOpts{
+			Start: start,
+			End:   &end,
+		})
+
+		return err
+	})
+	if err != nil {
+		return
+	}
+
+	c.metrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.SinglePubKeyRegisteredLogRetrievalCall)
+
+	return
+}
+
+func (c *Commander) getAccountRegistryBatchPubKeyRegisteredIterator(start, end uint64) (it *accountregistry.AccountRegistryBatchPubkeyRegisteredIterator, err error) {
+	duration, err := metrics.MeasureDuration(func() error {
+		it, err = c.client.AccountRegistry.FilterBatchPubkeyRegistered(&bind.FilterOpts{
+			Start: start,
+			End:   &end,
+		})
+
+		return err
+	})
+	if err != nil {
+		return
+	}
+
 	c.metrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.BatchPubKeyRegisteredLogRetrievalCall)
 
-	return newAccountsCount, nil
+	return
 }
 
 func saveSyncedSingleAccount(accountTree *storage.AccountTree, account *models.AccountLeaf) (isNewAccount *bool, err error) {
