@@ -18,8 +18,10 @@ const (
 	// Transaction statuses
 	AcceptedTxStatus = "accepted"
 	RejectedTxStatus = "rejected"
+)
 
-	// Batch labels
+// Rollup metrics
+const (
 	TransferBatchLabel = "transfer"
 	C2TBatchLabel      = "create2transfer"
 	DepositBatchLabel  = "deposit"
