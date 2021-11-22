@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/prometheus/client_golang/prometheus"
-
 	"github.com/Worldcoin/hubble-commander/commander/disputer"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/commander/syncer"
@@ -13,6 +11,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 

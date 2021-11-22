@@ -5,12 +5,11 @@ import (
 	stdErrors "errors"
 	"math/big"
 
-	"github.com/prometheus/client_golang/prometheus"
-
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
