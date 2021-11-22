@@ -4,7 +4,6 @@ import (
 	"context"
 	stdErrors "errors"
 	"math/big"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -160,7 +159,9 @@ func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	saveSyncRangeDurationMeasurement(*duration, c.metrics)
+	metrics.SaveHistogramMeasurementInMilliseconds(duration, c.metrics.SyncingMethodDuration, prometheus.Labels{
+		"method": metrics.SyncRangeMethod,
+	})
 
 	return &endBlock, nil
 }
@@ -197,17 +198,6 @@ func logSyncedBlocks(startBlock, endBlock uint64) {
 	} else {
 		log.Printf("Syncing blocks from %d to %d", startBlock, endBlock)
 	}
-}
-
-func saveSyncRangeDurationMeasurement(
-	duration time.Duration,
-	commanderMetrics *metrics.CommanderMetrics,
-) {
-	commanderMetrics.SyncingMethodDuration.
-		With(prometheus.Labels{
-			"method": metrics.SyncRangeMethod,
-		}).
-		Observe(float64(duration.Milliseconds()))
 }
 
 func min(x, y uint64) uint64 {

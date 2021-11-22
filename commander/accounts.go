@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -43,7 +42,9 @@ func (c *Commander) syncAccounts(start, end uint64) error {
 		return err
 	}
 
-	saveSyncAccountsDurationMeasurement(*duration, c.metrics)
+	metrics.SaveHistogramMeasurementInMilliseconds(duration, c.metrics.SyncingMethodDuration, prometheus.Labels{
+		"method": metrics.SyncAccountsMethod,
+	})
 
 	newAccountsCount := *newAccountsSingle + *newAccountsBatch
 	logNewSyncedAccountsCount(newAccountsCount)
@@ -162,17 +163,6 @@ func validateExistingAccounts(accountTree *storage.AccountTree, accounts ...mode
 		}
 	}
 	return nil
-}
-
-func saveSyncAccountsDurationMeasurement(
-	duration time.Duration,
-	commanderMetrics *metrics.CommanderMetrics,
-) {
-	commanderMetrics.SyncingMethodDuration.
-		With(prometheus.Labels{
-			"method": metrics.SyncAccountsMethod,
-		}).
-		Observe(float64(duration.Milliseconds()))
 }
 
 func logNewSyncedAccountsCount(newAccountsCount int) {

@@ -3,7 +3,6 @@ package commander
 import (
 	"bytes"
 	"context"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -32,7 +31,10 @@ func (c *Commander) syncTokens(startBlock, endBlock uint64) error {
 		return err
 	}
 
-	saveSyncTokensDurationMeasurement(*duration, c.metrics)
+	metrics.SaveHistogramMeasurementInMilliseconds(duration, c.metrics.SyncingMethodDuration, prometheus.Labels{
+		"method": metrics.SyncTokensMethod,
+	})
+
 	logNewRegisteredTokensCount(*newTokensCount)
 
 	return nil
@@ -97,17 +99,6 @@ func saveSyncedToken(
 	} else {
 		return ref.Bool(false), nil
 	}
-}
-
-func saveSyncTokensDurationMeasurement(
-	duration time.Duration,
-	commanderMetrics *metrics.CommanderMetrics,
-) {
-	commanderMetrics.SyncingMethodDuration.
-		With(prometheus.Labels{
-			"method": metrics.SyncTokensMethod,
-		}).
-		Observe(float64(duration.Milliseconds()))
 }
 
 func logNewRegisteredTokensCount(newTokensCount int) {

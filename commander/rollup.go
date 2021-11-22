@@ -87,7 +87,10 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 		return err
 	}
 
-	saveBatchBuildAndSubmissionDurationMeasurement(*duration, c.metrics, batch.Type)
+	metrics.SaveHistogramMeasurementInMilliseconds(duration, c.metrics.BatchBuildAndSubmissionDuration, prometheus.Labels{
+		"method": metrics.BatchTypeToMetricsBatchType(batch.Type),
+	})
+
 	logNewBatch(batch, commitmentsCount, duration)
 
 	err = rollupCtx.Commit()
@@ -120,18 +123,6 @@ func (c *Commander) handleRollupError(err *executor.RollupError, errorsToStore [
 	}
 
 	return c.storage.SetTransactionErrors(errorsToStore...)
-}
-
-func saveBatchBuildAndSubmissionDurationMeasurement(
-	duration time.Duration,
-	commanderMetrics *metrics.CommanderMetrics,
-	batchType batchtype.BatchType,
-) {
-	commanderMetrics.BatchBuildAndSubmissionDuration.
-		With(prometheus.Labels{
-			"type": metrics.BatchTypeToMetricsBatchType(batchType),
-		}).
-		Observe(float64(duration.Milliseconds()))
 }
 
 func logNewBatch(batch *models.Batch, commitmentsCount *int, duration *time.Duration) {

@@ -3,7 +3,6 @@ package commander
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -30,7 +29,9 @@ func (c *Commander) syncBatches(startBlock, endBlock uint64) error {
 		return err
 	}
 
-	saveSyncBatchesDurationMeasurement(*duration, c.metrics)
+	metrics.SaveHistogramMeasurementInMilliseconds(duration, c.metrics.SyncingMethodDuration, prometheus.Labels{
+		"method": metrics.SyncBatchesMethod,
+	})
 
 	return nil
 }
@@ -164,17 +165,6 @@ func (c *Commander) getLatestBatchID() (*models.Uint256, error) {
 		return nil, err
 	}
 	return &latestBatch.ID, nil
-}
-
-func saveSyncBatchesDurationMeasurement(
-	duration time.Duration,
-	commanderMetrics *metrics.CommanderMetrics,
-) {
-	commanderMetrics.SyncingMethodDuration.
-		With(prometheus.Labels{
-			"method": metrics.SyncBatchesMethod,
-		}).
-		Observe(float64(duration.Milliseconds()))
 }
 
 func logFraudulentBatch(batchID *models.Uint256, reason string) {

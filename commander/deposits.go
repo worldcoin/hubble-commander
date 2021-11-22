@@ -3,7 +3,6 @@ package commander
 import (
 	"bytes"
 	"context"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -39,7 +38,9 @@ func (c *Commander) syncDeposits(start, end uint64) error {
 		return err
 	}
 
-	saveSyncDepositsDurationMeasurement(*duration, c.metrics)
+	metrics.SaveHistogramMeasurementInMilliseconds(duration, c.metrics.SyncingMethodDuration, prometheus.Labels{
+		"method": metrics.SyncDepositsMethod,
+	})
 
 	return nil
 }
@@ -150,15 +151,4 @@ func (c *Commander) saveSingleSubTree(subTree *models.PendingDepositSubTree, sub
 
 		return txStorage.RemovePendingDeposits(deposits)
 	})
-}
-
-func saveSyncDepositsDurationMeasurement(
-	duration time.Duration,
-	commanderMetrics *metrics.CommanderMetrics,
-) {
-	commanderMetrics.SyncingMethodDuration.
-		With(prometheus.Labels{
-			"method": metrics.SyncDepositsMethod,
-		}).
-		Observe(float64(duration.Milliseconds()))
 }
