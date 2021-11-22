@@ -89,8 +89,9 @@ func (c *Client) GetBatches(filters *BatchesFilters, commanderMetrics *metrics.C
 
 func (c *Client) getBatchEvents(filters *BatchesFilters, commanderMetrics *metrics.CommanderMetrics) ([]*rollup.RollupNewBatch, []*rollup.RollupDepositsFinalised, error) {
 	var batchIterator *rollup.RollupNewBatchIterator
+	var depositIterator *rollup.RollupDepositsFinalisedIterator
 
-	duration, err := metrics.MeasureDuration(func() (err error) {
+	batchDuration, err := metrics.MeasureDuration(func() (err error) {
 		batchIterator, err = c.Rollup.FilterNewBatch(&bind.FilterOpts{
 			Start: filters.StartBlockInclusive,
 			End:   filters.EndBlockInclusive,
@@ -105,7 +106,7 @@ func (c *Client) getBatchEvents(filters *BatchesFilters, commanderMetrics *metri
 
 	defer func() { _ = batchIterator.Close() }()
 
-	commanderMetrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.NewBatchLogRetrievalCall)
+	commanderMetrics.SaveBlockchainCallDurationMeasurement(*batchDuration, metrics.NewBatchLogRetrievalCall)
 
 	events := make([]*rollup.RollupNewBatch, 0)
 	for batchIterator.Next() {
@@ -117,13 +118,22 @@ func (c *Client) getBatchEvents(filters *BatchesFilters, commanderMetrics *metri
 		return utils.EventBefore(&events[i].Raw, &events[j].Raw)
 	})
 
-	depositIterator, err := c.Rollup.FilterDepositsFinalised(&bind.FilterOpts{
-		Start: filters.StartBlockInclusive,
-		End:   filters.EndBlockInclusive,
+	depositDuration, err := metrics.MeasureDuration(func() (err error) {
+		depositIterator, err = c.Rollup.FilterDepositsFinalised(&bind.FilterOpts{
+			Start: filters.StartBlockInclusive,
+			End:   filters.EndBlockInclusive,
+		})
+
+		return err
 	})
 	if err != nil {
 		return nil, nil, err
 	}
+
+	defer func() { _ = depositIterator.Close() }()
+
+	commanderMetrics.SaveBlockchainCallDurationMeasurement(*depositDuration, metrics.DepositsFinalisedLogRetrievalCall)
+
 	depositEvents := make([]*rollup.RollupDepositsFinalised, 0)
 	for depositIterator.Next() {
 		depositEvents = append(depositEvents, depositIterator.Event)
