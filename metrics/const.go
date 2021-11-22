@@ -42,4 +42,5 @@ const (
 	SinglePubkeyRegisteredLogRetrievalCall = "single_pubkey_registered_log_retrieval_call"
 	BatchPubkeyRegisteredLogRetrievalCall  = "batch_pubkey_registered_log_retrieval_call"
 	NewBatchLogRetrievalCall               = "new_batch_log_retrieval_call"
+	DepositQueuedLogRetrievalCall          = "deposit_queued_log_retrieval_call"
 )

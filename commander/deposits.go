@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 
+	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 func (c *Commander) syncDeposits(start, end uint64) error {
@@ -45,14 +47,23 @@ func (c *Commander) syncDeposits(start, end uint64) error {
 }
 
 func (c *Commander) syncQueuedDeposits(start, end uint64) error {
-	it, err := c.client.DepositManager.FilterDepositQueued(&bind.FilterOpts{
-		Start: start,
-		End:   &end,
+	var it *depositmanager.DepositManagerDepositQueuedIterator
+
+	duration, err := metrics.MeasureDuration(func() (err error) {
+		it, err = c.client.DepositManager.FilterDepositQueued(&bind.FilterOpts{
+			Start: start,
+			End:   &end,
+		})
+
+		return err
 	})
 	if err != nil {
 		return err
 	}
+
 	defer func() { _ = it.Close() }()
+
+	c.metrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.DepositQueuedLogRetrievalCall)
 
 	for it.Next() {
 		tx, _, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
