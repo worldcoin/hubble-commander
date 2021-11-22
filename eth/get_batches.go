@@ -88,25 +88,43 @@ func (c *Client) GetBatches(filters *BatchesFilters, commanderMetrics *metrics.C
 }
 
 func (c *Client) getBatchEvents(filters *BatchesFilters, commanderMetrics *metrics.CommanderMetrics) ([]*rollup.RollupNewBatch, []*rollup.RollupDepositsFinalised, error) {
-	newBatchIterator, err := c.getNewBatchLogIterator(filters, commanderMetrics)
+	batchEvents, err := c.getNewBatchEvents(filters, commanderMetrics)
 	if err != nil {
 		return nil, nil, err
 	}
-	defer func() { _ = newBatchIterator.Close() }()
 
-	batchEvents := make([]*rollup.RollupNewBatch, 0)
-	for newBatchIterator.Next() {
-		batchEvents = append(batchEvents, newBatchIterator.Event)
+	depositEvents, err := c.getDepositsFinalisedEvents(batchEvents, filters, commanderMetrics)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return batchEvents, depositEvents, nil
+}
+
+func (c *Client) getNewBatchEvents(filters *BatchesFilters, commanderMetrics *metrics.CommanderMetrics) ([]*rollup.RollupNewBatch, error) {
+	it, err := c.getNewBatchLogIterator(filters, commanderMetrics)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = it.Close() }()
+
+	events := make([]*rollup.RollupNewBatch, 0)
+	for it.Next() {
+		events = append(events, it.Event)
 	}
 
 	// Sort for sanity
-	sort.Slice(batchEvents, func(i, j int) bool {
-		return utils.EventBefore(&batchEvents[i].Raw, &batchEvents[j].Raw)
+	sort.Slice(events, func(i, j int) bool {
+		return utils.EventBefore(&events[i].Raw, &events[j].Raw)
 	})
 
+	return events, nil
+}
+
+func (c *Client) getDepositsFinalisedEvents(batchEvents []*rollup.RollupNewBatch, filters *BatchesFilters, commanderMetrics *metrics.CommanderMetrics) ([]*rollup.RollupDepositsFinalised, error) {
 	depositsFinalisedIterator, err := c.getDepositsFinalisedLogIterator(filters, commanderMetrics)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	defer func() { _ = depositsFinalisedIterator.Close() }()
 
@@ -120,7 +138,7 @@ func (c *Client) getBatchEvents(filters *BatchesFilters, commanderMetrics *metri
 		return utils.EventBefore(&batchEvents[i].Raw, &batchEvents[j].Raw)
 	})
 
-	return batchEvents, depositEvents, nil
+	return depositEvents, nil
 }
 
 func (c *Client) getNewBatchLogIterator(filters *BatchesFilters, commanderMetrics *metrics.CommanderMetrics) (*rollup.RollupNewBatchIterator, error) {
@@ -142,6 +160,7 @@ func (c *Client) getNewBatchLogIterator(filters *BatchesFilters, commanderMetric
 
 	return it, nil
 }
+
 func (c *Client) getDepositsFinalisedLogIterator(filters *BatchesFilters, commanderMetrics *metrics.CommanderMetrics) (*rollup.RollupDepositsFinalisedIterator, error) {
 	var it *rollup.RollupDepositsFinalisedIterator
 
