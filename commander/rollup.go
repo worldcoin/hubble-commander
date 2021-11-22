@@ -88,7 +88,7 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 	}
 
 	metrics.SaveHistogramMeasurementInMilliseconds(duration, c.metrics.BatchBuildAndSubmissionDuration, prometheus.Labels{
-		"method": metrics.BatchTypeToMetricsBatchType(batch.Type),
+		"type": metrics.BatchTypeToMetricsBatchType(batch.Type),
 	})
 
 	logNewBatch(batch, commitmentsCount, duration)
