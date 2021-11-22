@@ -57,8 +57,6 @@ func (c *Commander) syncSingleAccounts(start, end uint64) (newAccountsCount *int
 	var it *accountregistry.AccountRegistrySinglePubkeyRegisteredIterator
 
 	duration, err := metrics.MeasureDuration(func() error {
-		var err error
-
 		it, err = c.client.AccountRegistry.FilterSinglePubkeyRegistered(&bind.FilterOpts{
 			Start: start,
 			End:   &end,
@@ -107,8 +105,6 @@ func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int,
 	var it *accountregistry.AccountRegistryBatchPubkeyRegisteredIterator
 
 	duration, err := metrics.MeasureDuration(func() error {
-		var err error
-
 		it, err = c.client.AccountRegistry.FilterBatchPubkeyRegistered(&bind.FilterOpts{
 			Start: start,
 			End:   &end,

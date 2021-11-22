@@ -2,7 +2,6 @@ package commander
 
 import (
 	"context"
-	"github.com/Worldcoin/hubble-commander/metrics"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -11,6 +10,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"

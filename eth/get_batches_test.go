@@ -2,12 +2,12 @@ package eth
 
 import (
 	"context"
-	"github.com/Worldcoin/hubble-commander/metrics"
 	"math/big"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils"

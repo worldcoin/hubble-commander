@@ -3,13 +3,13 @@ package eth
 import (
 	"bytes"
 	"context"
-	"github.com/Worldcoin/hubble-commander/metrics"
 	"math/big"
 	"sort"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/encoder"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -87,7 +87,10 @@ func (c *Client) GetBatches(filters *BatchesFilters, commanderMetrics *metrics.C
 	return res, nil
 }
 
-func (c *Client) getBatchEvents(filters *BatchesFilters, commanderMetrics *metrics.CommanderMetrics) ([]*rollup.RollupNewBatch, []*rollup.RollupDepositsFinalised, error) {
+func (c *Client) getBatchEvents(
+	filters *BatchesFilters,
+	commanderMetrics *metrics.CommanderMetrics,
+) ([]*rollup.RollupNewBatch, []*rollup.RollupDepositsFinalised, error) {
 	batchEvents, err := c.getNewBatchEvents(filters, commanderMetrics)
 	if err != nil {
 		return nil, nil, err
@@ -121,7 +124,10 @@ func (c *Client) getNewBatchEvents(filters *BatchesFilters, commanderMetrics *me
 	return events, nil
 }
 
-func (c *Client) getDepositsFinalisedEvents(filters *BatchesFilters, commanderMetrics *metrics.CommanderMetrics) ([]*rollup.RollupDepositsFinalised, error) {
+func (c *Client) getDepositsFinalisedEvents(
+	filters *BatchesFilters,
+	commanderMetrics *metrics.CommanderMetrics,
+) ([]*rollup.RollupDepositsFinalised, error) {
 	it, err := c.getDepositsFinalisedLogIterator(filters, commanderMetrics)
 	if err != nil {
 		return nil, err
@@ -141,7 +147,10 @@ func (c *Client) getDepositsFinalisedEvents(filters *BatchesFilters, commanderMe
 	return events, nil
 }
 
-func (c *Client) getNewBatchLogIterator(filters *BatchesFilters, commanderMetrics *metrics.CommanderMetrics) (*rollup.RollupNewBatchIterator, error) {
+func (c *Client) getNewBatchLogIterator(
+	filters *BatchesFilters,
+	commanderMetrics *metrics.CommanderMetrics,
+) (*rollup.RollupNewBatchIterator, error) {
 	var it *rollup.RollupNewBatchIterator
 
 	duration, err := metrics.MeasureDuration(func() (err error) {
@@ -161,7 +170,10 @@ func (c *Client) getNewBatchLogIterator(filters *BatchesFilters, commanderMetric
 	return it, nil
 }
 
-func (c *Client) getDepositsFinalisedLogIterator(filters *BatchesFilters, commanderMetrics *metrics.CommanderMetrics) (*rollup.RollupDepositsFinalisedIterator, error) {
+func (c *Client) getDepositsFinalisedLogIterator(
+	filters *BatchesFilters,
+	commanderMetrics *metrics.CommanderMetrics,
+) (*rollup.RollupDepositsFinalisedIterator, error) {
 	var it *rollup.RollupDepositsFinalisedIterator
 
 	duration, err := metrics.MeasureDuration(func() (err error) {
