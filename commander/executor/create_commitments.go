@@ -108,7 +108,7 @@ func (c *TxsContext) createCommitment(pendingTxs models.GenericTransactionArray,
 		return nil, err
 	}
 
-	metrics.SaveHistogramMeasurementInMilliseconds(duration, c.commanderMetrics.CommitmentBuildDuration, prometheus.Labels{
+	metrics.SaveHistogramMeasurement(duration, c.commanderMetrics.CommitmentBuildDuration, prometheus.Labels{
 		"type": metrics.BatchTypeToMetricsBatchType(commitment.Type),
 	})
 

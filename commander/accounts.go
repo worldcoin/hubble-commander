@@ -41,7 +41,7 @@ func (c *Commander) syncAccounts(start, end uint64) error {
 		return err
 	}
 
-	metrics.SaveHistogramMeasurementInMilliseconds(duration, c.metrics.SyncingMethodDuration, prometheus.Labels{
+	metrics.SaveHistogramMeasurement(duration, c.metrics.SyncingMethodDuration, prometheus.Labels{
 		"method": metrics.SyncAccountsMethod,
 	})
 

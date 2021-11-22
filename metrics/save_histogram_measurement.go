@@ -6,7 +6,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func SaveHistogramMeasurementInMilliseconds(
+func SaveHistogramMeasurement(
 	duration *time.Duration,
 	metric *prometheus.HistogramVec,
 	labels prometheus.Labels,

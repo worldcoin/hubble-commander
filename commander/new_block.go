@@ -158,7 +158,7 @@ func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	metrics.SaveHistogramMeasurementInMilliseconds(duration, c.metrics.SyncingMethodDuration, prometheus.Labels{
+	metrics.SaveHistogramMeasurement(duration, c.metrics.SyncingMethodDuration, prometheus.Labels{
 		"method": metrics.SyncRangeMethod,
 	})
 

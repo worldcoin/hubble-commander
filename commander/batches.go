@@ -28,7 +28,7 @@ func (c *Commander) syncBatches(startBlock, endBlock uint64) error {
 		return err
 	}
 
-	metrics.SaveHistogramMeasurementInMilliseconds(duration, c.metrics.SyncingMethodDuration, prometheus.Labels{
+	metrics.SaveHistogramMeasurement(duration, c.metrics.SyncingMethodDuration, prometheus.Labels{
 		"method": metrics.SyncBatchesMethod,
 	})
 
