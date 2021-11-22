@@ -8,8 +8,10 @@ import (
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/commander/syncer"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -18,7 +20,19 @@ var ErrSyncedFraudulentBatch = errors.New("commander synced fraudulent batch")
 func (c *Commander) syncBatches(startBlock, endBlock uint64) error {
 	c.stateMutex.Lock()
 	defer c.stateMutex.Unlock()
-	return c.unsafeSyncBatches(startBlock, endBlock)
+
+	duration, err := metrics.MeasureDuration(func() error {
+		return c.unsafeSyncBatches(startBlock, endBlock)
+	})
+	if err != nil {
+		return err
+	}
+
+	metrics.SaveHistogramMeasurement(duration, c.metrics.SyncingMethodDuration, prometheus.Labels{
+		"method": metrics.SyncBatchesMethod,
+	})
+
+	return nil
 }
 
 func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {

@@ -1,11 +1,8 @@
 package executor
 
 import (
-	"time"
-
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
@@ -111,7 +108,9 @@ func (c *TxsContext) createCommitment(pendingTxs models.GenericTransactionArray,
 		return nil, err
 	}
 
-	saveCommitmentBuildDurationMeasurement(*duration, c.commanderMetrics, commitment.Type)
+	metrics.SaveHistogramMeasurement(duration, c.commanderMetrics.CommitmentBuildDuration, prometheus.Labels{
+		"type": metrics.BatchTypeToMetricsBatchType(commitment.Type),
+	})
 
 	log.Printf(
 		"Created a %s commitment from %d transactions in %s",
@@ -121,18 +120,6 @@ func (c *TxsContext) createCommitment(pendingTxs models.GenericTransactionArray,
 	)
 
 	return c.Executor.NewCreateCommitmentResult(executeResult, commitment), nil
-}
-
-func saveCommitmentBuildDurationMeasurement(
-	duration time.Duration,
-	commanderMetrics *metrics.CommanderMetrics,
-	batchType batchtype.BatchType,
-) {
-	commanderMetrics.CommitmentBuildDuration.
-		With(prometheus.Labels{
-			"type": metrics.BatchTypeToMetricsBatchType(batchType),
-		}).
-		Observe(float64(duration.Milliseconds()))
 }
 
 func (c *TxsContext) executeTxsForCommitment(pendingTxs models.GenericTransactionArray, feeReceiver *FeeReceiver) (

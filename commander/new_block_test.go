@@ -10,6 +10,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -61,6 +62,7 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	s.cmd = NewCommander(s.cfg, nil)
 	s.cmd.client = s.testClient.Client
 	s.cmd.storage = s.testStorage.Storage
+	s.cmd.metrics = metrics.NewCommanderMetrics()
 	s.cmd.workersContext, s.cmd.stopWorkers = context.WithCancel(context.Background())
 
 	domain, err := s.testClient.GetDomain()
