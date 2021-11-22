@@ -40,24 +40,14 @@ func (c *Commander) syncTokens(startBlock, endBlock uint64) error {
 }
 
 func (c *Commander) unmeasuredSyncTokens(startBlock, endBlock uint64) (*int, error) {
-	var it *tokenregistry.TokenRegistryRegisteredTokenIterator
 	newTokensCount := 0
 
-	duration, err := metrics.MeasureDuration(func() (err error) {
-		it, err = c.client.TokenRegistry.FilterRegisteredToken(&bind.FilterOpts{
-			Start: startBlock,
-			End:   &endBlock,
-		})
-
-		return err
-	})
+	it, err := c.getTokenRegistryRegisteredTokenIterator(startBlock, endBlock)
 	if err != nil {
 		return nil, err
 	}
 
 	defer func() { _ = it.Close() }()
-
-	c.metrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.RegisteredTokenLogRetrievalCall)
 
 	for it.Next() {
 		tx, _, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
@@ -86,6 +76,24 @@ func (c *Commander) unmeasuredSyncTokens(startBlock, endBlock uint64) (*int, err
 	}
 
 	return &newTokensCount, nil
+}
+
+func (c *Commander) getTokenRegistryRegisteredTokenIterator(start, end uint64) (it *tokenregistry.TokenRegistryRegisteredTokenIterator, err error) {
+	duration, err := metrics.MeasureDuration(func() error {
+		it, err = c.client.TokenRegistry.FilterRegisteredToken(&bind.FilterOpts{
+			Start: start,
+			End:   &end,
+		})
+
+		return err
+	})
+	if err != nil {
+		return
+	}
+
+	c.metrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.RegisteredTokenLogRetrievalCall)
+
+	return
 }
 
 func saveSyncedToken(
