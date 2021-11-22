@@ -12,7 +12,7 @@ import (
 )
 
 type RollupLoopContext interface {
-	CreateAndSubmitBatch() error
+	CreateAndSubmitBatch() (*models.Batch, *int, error)
 	Rollback(cause *error)
 	Commit() error
 	GetErrorsToStore() []models.TxError

@@ -1,46 +1,32 @@
 package executor
 
 import (
-	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/pkg/errors"
 )
 
 var ErrNotEnoughDeposits = NewRollupError("not enough deposits")
 
-func (c *DepositsContext) CreateAndSubmitBatch() error {
-	var batch *models.Batch
-
-	duration, err := metrics.MeasureDuration(func() error {
-		var err error
-
-		batch, err = c.NewPendingBatch(batchtype.Deposit)
-		if err != nil {
-			return err
-		}
-
-		vacancyProof, err := c.createCommitment(batch.ID)
-		if err != nil {
-			return err
-		}
-
-		err = c.SubmitBatch(batch, vacancyProof)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (c *DepositsContext) CreateAndSubmitBatch() (*models.Batch, *int, error) {
+	batch, err := c.NewPendingBatch(batchtype.Deposit)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	saveBatchBuildAndSubmissionDurationMeasurement(*duration, c.commanderMetrics, batch.Type)
-	logNewBatch(batch, 1, *duration)
+	vacancyProof, err := c.createCommitment(batch.ID)
+	if err != nil {
+		return nil, nil, err
+	}
 
-	return nil
+	err = c.SubmitBatch(batch, vacancyProof)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return batch, ref.Int(1), nil
 }
 
 func (c *DepositsContext) createCommitment(batchID models.Uint256) (*models.SubtreeVacancyProof, error) {

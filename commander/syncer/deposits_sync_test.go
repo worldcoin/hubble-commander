@@ -58,7 +58,7 @@ func (s *SyncDepositBatchTestSuite) TearDownTest() {
 }
 
 func (s *SyncDepositBatchTestSuite) TestSyncBatch_SingleBatch() {
-	err := s.depositsCtx.CreateAndSubmitBatch()
+	_, _, err := s.depositsCtx.CreateAndSubmitBatch()
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 	s.depositsCtx.Rollback(nil)
@@ -85,7 +85,7 @@ func (s *SyncDepositBatchTestSuite) TestSyncBatch_SingleBatch() {
 }
 
 func (s *SyncDepositBatchTestSuite) TestSyncBatch_SetsUserStates() {
-	err := s.depositsCtx.CreateAndSubmitBatch()
+	_, _, err := s.depositsCtx.CreateAndSubmitBatch()
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 	s.depositsCtx.Rollback(nil)
@@ -106,7 +106,7 @@ func (s *SyncDepositBatchTestSuite) TestSyncBatch_SetsUserStates() {
 }
 
 func (s *SyncDepositBatchTestSuite) TestSyncBatch_SyncsExistingBatch() {
-	err := s.depositsCtx.CreateAndSubmitBatch()
+	_, _, err := s.depositsCtx.CreateAndSubmitBatch()
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 	err = s.depositsCtx.Commit()

@@ -1,71 +1,29 @@
 package executor
 
 import (
-	"time"
-
-	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/pkg/errors"
-	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
 )
 
-func (c *TxsContext) CreateAndSubmitBatch() error {
-	var batch *models.Batch
-	var commitments []models.CommitmentWithTxs
-
-	duration, err := metrics.MeasureDuration(func() error {
-		var err error
-
-		batch, err = c.NewPendingBatch(c.BatchType)
-		if err != nil {
-			return err
-		}
-
-		commitments, err = c.CreateCommitments()
-		if err != nil {
-			return err
-		}
-
-		err = c.SubmitBatch(batch, commitments)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (c *TxsContext) CreateAndSubmitBatch() (*models.Batch, *int, error) {
+	batch, err := c.NewPendingBatch(c.BatchType)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	saveBatchBuildAndSubmissionDurationMeasurement(*duration, c.commanderMetrics, batch.Type)
-	logNewBatch(batch, len(commitments), *duration)
+	commitments, err := c.CreateCommitments()
+	if err != nil {
+		return nil, nil, err
+	}
 
-	return nil
-}
+	err = c.SubmitBatch(batch, commitments)
+	if err != nil {
+		return nil, nil, err
+	}
 
-func saveBatchBuildAndSubmissionDurationMeasurement(
-	duration time.Duration,
-	commanderMetrics *metrics.CommanderMetrics,
-	batchType batchtype.BatchType,
-) {
-	commanderMetrics.BatchBuildAndSubmissionDuration.
-		With(prometheus.Labels{
-			"type": metrics.BatchTypeToMetricsBatchType(batchType),
-		}).
-		Observe(float64(duration.Milliseconds()))
-}
-
-func logNewBatch(batch *models.Batch, commitmentsCount int, duration time.Duration) {
-	log.Printf(
-		"Submitted a %s batch with %d commitment(s) on chain in %s. Batch ID: %d. Transaction hash: %v",
-		batch.Type.String(),
-		commitmentsCount,
-		duration,
-		batch.ID.Uint64(),
-		batch.TransactionHash,
-	)
+	return batch, ref.Int(len(commitments)), nil
 }
 
 func (c *ExecutionContext) NewPendingBatch(batchType batchtype.BatchType) (*models.Batch, error) {
