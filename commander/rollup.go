@@ -87,7 +87,7 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 		return err
 	}
 
-	saveBatchBuildAndSubmissionDurationMeasurement(*duration, c.metrics, *currentBatchType)
+	saveBatchBuildAndSubmissionDurationMeasurement(*duration, c.metrics, batch.Type)
 	logNewBatch(batch, commitmentsCount, duration)
 
 	err = rollupCtx.Commit()
