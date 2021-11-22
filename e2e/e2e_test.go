@@ -226,11 +226,11 @@ func testGetBatches(t *testing.T, client jsonrpc.RPCClient) {
 	err := client.CallFor(&batches, "hubble_getBatches", []interface{}{nil, nil})
 
 	require.NoError(t, err)
-	require.Len(t, batches, 3)
+	require.Len(t, batches, 4)
 	require.Equal(t, models.MakeUint256(1), batches[1].ID)
-	batchTypes := []batchtype.BatchType{batches[1].Type, batches[2].Type}
-	require.Contains(t, batchTypes, batchtype.Transfer)
-	require.Contains(t, batchTypes, batchtype.Create2Transfer)
+	require.Equal(t, batches[1].Type, batchtype.Transfer)
+	require.Equal(t, batches[2].Type, batchtype.Create2Transfer)
+	require.Equal(t, batches[3].Type, batchtype.Deposit)
 }
 
 func testCommanderRestart(t *testing.T, commander setup.Commander, senderWallet bls.Wallet) {
