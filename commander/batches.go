@@ -132,7 +132,7 @@ func (c *Commander) disputeFraudulentBatch(
 }
 
 func (c *Commander) revertBatches(startBatch *models.Batch) (err error) {
-	executionCtx := executor.NewExecutionContext(c.storage, c.client, c.cfg.Rollup, context.Background())
+	executionCtx := executor.NewExecutionContext(c.storage, c.client, c.cfg.Rollup, c.metrics, context.Background())
 	defer executionCtx.Rollback(&err)
 
 	err = executionCtx.RevertBatches(startBatch)

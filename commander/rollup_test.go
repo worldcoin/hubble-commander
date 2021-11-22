@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/storage"
@@ -39,8 +40,6 @@ func (s *RollupTestSuite) SetupTest() {
 	s.NoError(err)
 
 	s.commander = &Commander{
-		storage: s.testStorage.Storage,
-		client:  s.testClient.Client,
 		cfg: &config.Config{
 			Rollup: &config.RollupConfig{
 				MinTxsPerCommitment:    1,
@@ -49,6 +48,9 @@ func (s *RollupTestSuite) SetupTest() {
 				MaxCommitmentsPerBatch: 32,
 			},
 		},
+		storage: s.testStorage.Storage,
+		client:  s.testClient.Client,
+		metrics: metrics.NewCommanderMetrics(),
 	}
 
 	domain, err := s.testClient.GetDomain()

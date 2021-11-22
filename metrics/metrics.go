@@ -12,6 +12,10 @@ type CommanderMetrics struct {
 	APITotalRequests     prometheus.Counter
 	APIRequestDuration   prometheus.Histogram
 	APITotalTransactions *prometheus.CounterVec
+
+	// Rollup
+	CommitmentBuildDuration         *prometheus.HistogramVec
+	BatchBuildAndSubmissionDuration *prometheus.HistogramVec
 }
 
 func NewCommanderMetrics() *CommanderMetrics {
@@ -20,6 +24,7 @@ func NewCommanderMetrics() *CommanderMetrics {
 	}
 
 	commanderMetrics.initializeAPIMetrics()
+	commanderMetrics.initializeRollupLoopMetrics()
 
 	return commanderMetrics
 }
