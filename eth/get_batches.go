@@ -88,29 +88,15 @@ func (c *Client) GetBatches(filters *BatchesFilters, commanderMetrics *metrics.C
 }
 
 func (c *Client) getBatchEvents(filters *BatchesFilters, commanderMetrics *metrics.CommanderMetrics) ([]*rollup.RollupNewBatch, []*rollup.RollupDepositsFinalised, error) {
-	var batchIterator *rollup.RollupNewBatchIterator
-	var depositIterator *rollup.RollupDepositsFinalisedIterator
-
-	batchDuration, err := metrics.MeasureDuration(func() (err error) {
-		batchIterator, err = c.Rollup.FilterNewBatch(&bind.FilterOpts{
-			Start: filters.StartBlockInclusive,
-			End:   filters.EndBlockInclusive,
-		})
-
-		return err
-	})
+	newBatchIterator, err := c.getNewBatchLogIterator(filters, commanderMetrics)
 	if err != nil {
-
 		return nil, nil, err
 	}
-
-	defer func() { _ = batchIterator.Close() }()
-
-	commanderMetrics.SaveBlockchainCallDurationMeasurement(*batchDuration, metrics.NewBatchLogRetrievalCall)
+	defer func() { _ = newBatchIterator.Close() }()
 
 	events := make([]*rollup.RollupNewBatch, 0)
-	for batchIterator.Next() {
-		events = append(events, batchIterator.Event)
+	for newBatchIterator.Next() {
+		events = append(events, newBatchIterator.Event)
 	}
 
 	// Sort for sanity
@@ -118,25 +104,15 @@ func (c *Client) getBatchEvents(filters *BatchesFilters, commanderMetrics *metri
 		return utils.EventBefore(&events[i].Raw, &events[j].Raw)
 	})
 
-	depositDuration, err := metrics.MeasureDuration(func() (err error) {
-		depositIterator, err = c.Rollup.FilterDepositsFinalised(&bind.FilterOpts{
-			Start: filters.StartBlockInclusive,
-			End:   filters.EndBlockInclusive,
-		})
-
-		return err
-	})
+	depositsFinalisedIterator, err := c.getDepositsFinalisedLogIterator(filters, commanderMetrics)
 	if err != nil {
 		return nil, nil, err
 	}
-
-	defer func() { _ = depositIterator.Close() }()
-
-	commanderMetrics.SaveBlockchainCallDurationMeasurement(*depositDuration, metrics.DepositsFinalisedLogRetrievalCall)
+	defer func() { _ = depositsFinalisedIterator.Close() }()
 
 	depositEvents := make([]*rollup.RollupDepositsFinalised, 0)
-	for depositIterator.Next() {
-		depositEvents = append(depositEvents, depositIterator.Event)
+	for depositsFinalisedIterator.Next() {
+		depositEvents = append(depositEvents, depositsFinalisedIterator.Event)
 	}
 
 	// Sort for sanity
@@ -145,6 +121,45 @@ func (c *Client) getBatchEvents(filters *BatchesFilters, commanderMetrics *metri
 	})
 
 	return events, depositEvents, nil
+}
+
+func (c *Client) getNewBatchLogIterator(filters *BatchesFilters, commanderMetrics *metrics.CommanderMetrics) (*rollup.RollupNewBatchIterator, error) {
+	var it *rollup.RollupNewBatchIterator
+
+	duration, err := metrics.MeasureDuration(func() (err error) {
+		it, err = c.Rollup.FilterNewBatch(&bind.FilterOpts{
+			Start: filters.StartBlockInclusive,
+			End:   filters.EndBlockInclusive,
+		})
+
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	commanderMetrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.NewBatchLogRetrievalCall)
+
+	return it, nil
+}
+func (c *Client) getDepositsFinalisedLogIterator(filters *BatchesFilters, commanderMetrics *metrics.CommanderMetrics) (*rollup.RollupDepositsFinalisedIterator, error) {
+	var it *rollup.RollupDepositsFinalisedIterator
+
+	duration, err := metrics.MeasureDuration(func() (err error) {
+		it, err = c.Rollup.FilterDepositsFinalised(&bind.FilterOpts{
+			Start: filters.StartBlockInclusive,
+			End:   filters.EndBlockInclusive,
+		})
+
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	commanderMetrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.DepositsFinalisedLogRetrievalCall)
+
+	return it, nil
 }
 
 func (c *Client) isDirectBatchSubmission(tx *types.Transaction) bool {
