@@ -41,11 +41,12 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 	}
 	logBatchesCount(len(batchEvents))
 
+	nextCorrectBatchID := models.MakeUint256(0)
 	depositIndex := 0
 	res := make([]DecodedBatch, 0, len(batchEvents))
 	for i := range batchEvents {
 		event := batchEvents[i]
-		if filters.FilterByBatchID != nil && !filters.FilterByBatchID(models.NewUint256FromBig(*event.BatchID)) {
+		if isFilteredOut(models.NewUint256FromBig(*event.BatchID), &nextCorrectBatchID, filters) {
 			continue
 		}
 
@@ -73,7 +74,7 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 		}
 
 		if errors.Is(err, errBatchAlreadyRolledBack) {
-			// TODO: handle deposit rollbacks after https://github.com/thehubbleproject/hubble-contracts/issues/671
+			nextCorrectBatchID = decodedBatch.GetID()
 			continue
 		}
 		if err != nil {
@@ -84,6 +85,11 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 	}
 
 	return res, nil
+}
+
+func isFilteredOut(batchID *models.Uint256, nextBatchID *models.Uint256, filters *BatchesFilters) bool {
+	return (filters.FilterByBatchID != nil && !filters.FilterByBatchID(batchID)) ||
+		(nextBatchID != nil && batchID.Cmp(nextBatchID) < 0)
 }
 
 func (c *Client) getBatchEvents(filters *BatchesFilters) ([]*rollup.RollupNewBatch, []*rollup.RollupDepositsFinalised, error) {
