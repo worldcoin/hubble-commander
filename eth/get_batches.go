@@ -3,6 +3,7 @@ package eth
 import (
 	"bytes"
 	"context"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"math/big"
 	"sort"
 	"time"
@@ -31,11 +32,11 @@ type BatchesFilters struct {
 }
 
 func (c *TestClient) GetAllBatches() ([]DecodedBatch, error) {
-	return c.GetBatches(&BatchesFilters{})
+	return c.GetBatches(&BatchesFilters{}, c.CommanderMetrics)
 }
 
-func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
-	batchEvents, depositEvents, err := c.getBatchEvents(filters)
+func (c *Client) GetBatches(filters *BatchesFilters, commanderMetrics *metrics.CommanderMetrics) ([]DecodedBatch, error) {
+	batchEvents, depositEvents, err := c.getBatchEvents(filters, commanderMetrics)
 	if err != nil {
 		return nil, err
 	}
@@ -86,14 +87,26 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 	return res, nil
 }
 
-func (c *Client) getBatchEvents(filters *BatchesFilters) ([]*rollup.RollupNewBatch, []*rollup.RollupDepositsFinalised, error) {
-	batchIterator, err := c.Rollup.FilterNewBatch(&bind.FilterOpts{
-		Start: filters.StartBlockInclusive,
-		End:   filters.EndBlockInclusive,
+func (c *Client) getBatchEvents(filters *BatchesFilters, commanderMetrics *metrics.CommanderMetrics) ([]*rollup.RollupNewBatch, []*rollup.RollupDepositsFinalised, error) {
+	var batchIterator *rollup.RollupNewBatchIterator
+
+	duration, err := metrics.MeasureDuration(func() (err error) {
+		batchIterator, err = c.Rollup.FilterNewBatch(&bind.FilterOpts{
+			Start: filters.StartBlockInclusive,
+			End:   filters.EndBlockInclusive,
+		})
+
+		return err
 	})
 	if err != nil {
+
 		return nil, nil, err
 	}
+
+	defer func() { _ = batchIterator.Close() }()
+
+	commanderMetrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.NewBatchLogRetrievalCall)
+
 	events := make([]*rollup.RollupNewBatch, 0)
 	for batchIterator.Next() {
 		events = append(events, batchIterator.Event)

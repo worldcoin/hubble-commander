@@ -57,11 +57,14 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 		return true
 	}
 
-	newRemoteBatches, err := c.client.GetBatches(&eth.BatchesFilters{
-		StartBlockInclusive: startBlock,
-		EndBlockInclusive:   &endBlock,
-		FilterByBatchID:     filter,
-	})
+	newRemoteBatches, err := c.client.GetBatches(
+		&eth.BatchesFilters{
+			StartBlockInclusive: startBlock,
+			EndBlockInclusive:   &endBlock,
+			FilterByBatchID:     filter,
+		},
+		c.metrics,
+	)
 	if err != nil {
 		return err
 	}
