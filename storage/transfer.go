@@ -105,16 +105,16 @@ func (s *TransactionStorage) GetTransfersByCommitmentID(id models.CommitmentID) 
 
 func (s *TransactionStorage) iterateTxsByCommitmentID(
 	id models.CommitmentID,
-	visit func(storedTx *models.StoredTx, storedTxReceipt *models.StoredTxReceipt),
+	handleTx func(storedTx *models.StoredTx, storedTxReceipt *models.StoredTxReceipt),
 ) error {
 	return s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
-		return txStorage.unsafeIterateTxsByCommitmentID(id, visit)
+		return txStorage.unsafeIterateTxsByCommitmentID(id, handleTx)
 	})
 }
 
 func (s *TransactionStorage) unsafeIterateTxsByCommitmentID(
 	id models.CommitmentID,
-	visit func(storedTx *models.StoredTx, storedTxReceipt *models.StoredTxReceipt),
+	handleTx func(storedTx *models.StoredTx, storedTxReceipt *models.StoredTxReceipt),
 ) error {
 	receipts := make([]models.StoredTxReceipt, 0, 1)
 	err := s.database.Badger.Find(
@@ -130,7 +130,7 @@ func (s *TransactionStorage) unsafeIterateTxsByCommitmentID(
 		if err != nil {
 			return err
 		}
-		visit(storedTx, storedTxReceipt)
+		handleTx(storedTx, storedTxReceipt)
 	}
 	return nil
 }
