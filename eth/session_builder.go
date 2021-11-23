@@ -25,7 +25,7 @@ func (b *rollupSessionBuilder) WithGasLimit(gasLimit uint64) *rollupSessionBuild
 
 func (c *Client) rollup() *rollupSessionBuilder {
 	return &rollupSessionBuilder{rollup.RollupSession{
-		Contract:     c.Rollup,
+		Contract:     c.Rollup.Rollup,
 		TransactOpts: *c.Blockchain.GetAccount(),
 	}}
 }

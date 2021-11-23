@@ -75,7 +75,7 @@ func (c *Client) submitBatchAndWait(submit SubmitBatchFunc) (batch *models.Batch
 	}
 
 	event := new(rollup.RollupNewBatch)
-	err = c.rollupContract.UnpackLog(event, NewBatchEvent, *log)
+	err = c.Rollup.BoundContract.UnpackLog(event, NewBatchEvent, *log)
 	if err != nil {
 		return nil, err
 	}
@@ -110,5 +110,5 @@ func (c *Client) estimateBatchSubmissionGasLimit(input []byte) (uint64, error) {
 
 func (c *Client) packCommitments(method string, commitments []models.CommitmentWithTxs) ([]byte, error) {
 	stateRoots, signatures, feeReceivers, transactions := encoder.CommitmentToCalldataFields(commitments)
-	return c.RollupABI.Pack(method, stateRoots, signatures, feeReceivers, transactions)
+	return c.Rollup.ABI.Pack(method, stateRoots, signatures, feeReceivers, transactions)
 }

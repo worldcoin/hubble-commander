@@ -39,13 +39,11 @@ type Client struct {
 	config                 ClientConfig
 	ChainState             models.ChainState
 	Blockchain             chain.Connection
-	Rollup                 *rollup.Rollup
-	RollupABI              *abi.ABI
+	Rollup                 *Rollup
 	TokenRegistry          *tokenregistry.TokenRegistry
 	TokenRegistryABI       *abi.ABI
 	DepositManager         *depositmanager.DepositManager
 	DepositManagerABI      *abi.ABI
-	rollupContract         *bind.BoundContract
 	tokenRegistryContract  *bind.BoundContract
 	depositManagerContract *bind.BoundContract
 	blocksToFinalise       *int64
@@ -84,16 +82,20 @@ func NewClient(blockchain chain.Connection, params *NewClientParams) (*Client, e
 		return nil, errors.WithStack(err)
 	}
 	return &Client{
-		config:                 params.ClientConfig,
-		ChainState:             params.ChainState,
-		Blockchain:             blockchain,
-		Rollup:                 params.Rollup,
-		RollupABI:              &rollupAbi,
+		config:     params.ClientConfig,
+		ChainState: params.ChainState,
+		Blockchain: blockchain,
+		Rollup: &Rollup{
+			Rollup: params.Rollup,
+			Contract: Contract{
+				ABI:           &rollupAbi,
+				BoundContract: rollupContract,
+			},
+		},
 		TokenRegistry:          params.TokenRegistry,
 		TokenRegistryABI:       &tokenRegistryAbi,
 		DepositManager:         params.DepositManager,
 		DepositManagerABI:      &depositManagerAbi,
-		rollupContract:         rollupContract,
 		tokenRegistryContract:  tokenRegistryContract,
 		depositManagerContract: depositManagerContract,
 		AccountManager:         accountManager,

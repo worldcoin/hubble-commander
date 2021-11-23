@@ -191,9 +191,9 @@ func (c *Client) getDepositsFinalisedLogIterator(
 
 func (c *Client) isDirectBatchSubmission(tx *types.Transaction) bool {
 	methodID := tx.Data()[:4]
-	return bytes.Equal(methodID, c.RollupABI.Methods["submitTransfer"].ID) ||
-		bytes.Equal(methodID, c.RollupABI.Methods["submitCreate2Transfer"].ID) ||
-		bytes.Equal(methodID, c.RollupABI.Methods["submitDeposits"].ID)
+	return bytes.Equal(methodID, c.Rollup.ABI.Methods["submitTransfer"].ID) ||
+		bytes.Equal(methodID, c.Rollup.ABI.Methods["submitCreate2Transfer"].ID) ||
+		bytes.Equal(methodID, c.Rollup.ABI.Methods["submitDeposits"].ID)
 }
 
 func (c *Client) getTxBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transaction) (DecodedBatch, error) {
