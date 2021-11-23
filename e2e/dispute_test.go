@@ -262,7 +262,7 @@ func sendTransferBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client) 
 	encodedTransfer, err := encoder.EncodeTransferForCommitment(&transfer)
 	require.NoError(t, err)
 
-	sendTransferCommitment(t, ethClient, encodedTransfer, 2)
+	sendTransferCommitment(t, ethClient, encodedTransfer, 4)
 }
 
 func sendC2TBatchWithInvalidAmount(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey) {
