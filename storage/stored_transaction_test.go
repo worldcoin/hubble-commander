@@ -435,7 +435,11 @@ func (s *StoredTransactionTestSuite) getCommitmentIDIndexValues() map[models.Com
 	return indexValues
 }
 
-func (s *StoredTransactionTestSuite) iterateIndex(typeName []byte, indexName string, visit func(encodedKey []byte, keyList bh.KeyList)) {
+func (s *StoredTransactionTestSuite) iterateIndex(
+	typeName []byte,
+	indexName string,
+	handleIndex func(encodedKey []byte, keyList bh.KeyList),
+) {
 	indexPrefix := db.IndexKeyPrefix(typeName, indexName)
 	err := s.storage.database.Badger.Iterator(indexPrefix, db.PrefetchIteratorOpts, func(item *bdg.Item) (finish bool, err error) {
 		// Get key value
@@ -448,7 +452,7 @@ func (s *StoredTransactionTestSuite) iterateIndex(typeName []byte, indexName str
 		})
 		s.NoError(err)
 
-		visit(encodedKeyValue, keyList)
+		handleIndex(encodedKeyValue, keyList)
 		return false, nil
 	})
 	s.ErrorIs(err, db.ErrIteratorFinished)
