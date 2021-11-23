@@ -88,39 +88,51 @@ func (s *TransactionStorage) unsafeGetPendingTransfers() ([]models.Transfer, err
 	return txs, nil
 }
 
-func (s *TransactionStorage) GetTransfersByCommitmentID(id *models.CommitmentID) ([]models.Transfer, error) {
-	encodeCommitmentID := models.EncodeCommitmentIDPointer(id)
-	indexKey := db.IndexKey(models.StoredTxReceiptName, "CommitmentID", encodeCommitmentID)
+func (s *TransactionStorage) GetTransfersByCommitmentID(id models.CommitmentID) ([]models.Transfer, error) {
+	transfers := make([]models.Transfer, 0, 1)
 
-	var transfers []models.Transfer
-	err := s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
-		// queried Badger directly due to nil index decoding problem
-		return txStorage.database.Badger.View(func(txn *bdg.Txn) error {
-			hashes, err := getTxHashesByIndexKey(txn, indexKey, models.StoredTxReceiptPrefix)
-			if err == bdg.ErrKeyNotFound {
-				return nil
-			}
-			if err != nil {
-				return err
-			}
-
-			transfers = make([]models.Transfer, 0, len(hashes))
-			for i := range hashes {
-				storedTx, storedTxReceipt, err := txStorage.getStoredTxWithReceipt(hashes[i])
-				if err != nil {
-					return err
-				}
-				if storedTx.TxType == txtype.Transfer {
-					transfers = append(transfers, *storedTx.ToTransfer(storedTxReceipt))
-				}
-			}
-			return nil
-		})
+	err := s.iterateTxsByCommitmentID(id, func(storedTx *models.StoredTx, storedTxReceipt *models.StoredTxReceipt) {
+		if storedTx.TxType == txtype.Transfer {
+			transfers = append(transfers, *storedTx.ToTransfer(storedTxReceipt))
+		}
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	return transfers, nil
+}
+
+func (s *TransactionStorage) iterateTxsByCommitmentID(
+	id models.CommitmentID,
+	handleTx func(storedTx *models.StoredTx, storedTxReceipt *models.StoredTxReceipt),
+) error {
+	return s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
+		return txStorage.unsafeIterateTxsByCommitmentID(id, handleTx)
+	})
+}
+
+func (s *TransactionStorage) unsafeIterateTxsByCommitmentID(
+	id models.CommitmentID,
+	handleTx func(storedTx *models.StoredTx, storedTxReceipt *models.StoredTxReceipt),
+) error {
+	receipts := make([]models.StoredTxReceipt, 0, 1)
+	err := s.database.Badger.Find(
+		&receipts,
+		bh.Where("CommitmentID").Eq(id).Index("CommitmentID"),
+	)
+	if err != nil {
+		return err
+	}
+
+	for i := range receipts {
+		storedTx, storedTxReceipt, err := s.getStoredTxWithReceipt(receipts[i].Hash)
+		if err != nil {
+			return err
+		}
+		handleTx(storedTx, storedTxReceipt)
+	}
+	return nil
 }
 
 func (s *TransactionStorage) MarkTransfersAsIncluded(txs []models.Transfer, commitmentID *models.CommitmentID) error {
