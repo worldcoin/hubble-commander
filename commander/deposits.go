@@ -58,7 +58,7 @@ func (c *Commander) syncQueuedDeposits(start, end uint64) error {
 			return err
 		}
 
-		if !bytes.Equal(tx.Data()[:4], c.client.DepositManagerABI.Methods["depositFor"].ID) {
+		if !bytes.Equal(tx.Data()[:4], c.client.DepositManager.ABI.Methods["depositFor"].ID) {
 			continue // TODO handle internal transactions
 		}
 
@@ -96,7 +96,7 @@ func (c *Commander) fetchDepositSubTrees(start, end uint64) ([]models.PendingDep
 			return nil, err
 		}
 
-		if !bytes.Equal(tx.Data()[:4], c.client.DepositManagerABI.Methods["depositFor"].ID) {
+		if !bytes.Equal(tx.Data()[:4], c.client.DepositManager.ABI.Methods["depositFor"].ID) {
 			continue // TODO handle internal transactions
 		}
 

@@ -57,7 +57,7 @@ type depositManagerSessionBuilder struct {
 
 func (c *Client) depositManager() *depositManagerSessionBuilder {
 	return &depositManagerSessionBuilder{depositmanager.DepositManagerSession{
-		Contract:     c.DepositManager,
+		Contract:     c.DepositManager.DepositManager,
 		TransactOpts: *c.Blockchain.GetAccount(),
 	}}
 }

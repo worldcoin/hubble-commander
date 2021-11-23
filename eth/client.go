@@ -41,9 +41,7 @@ type Client struct {
 	Blockchain             chain.Connection
 	Rollup                 *Rollup
 	TokenRegistry          *TokenRegistry
-	DepositManager         *depositmanager.DepositManager
-	DepositManagerABI      *abi.ABI
-	depositManagerContract *bind.BoundContract
+	DepositManager         *DepositManager
 	blocksToFinalise       *int64
 	maxDepositSubTreeDepth *uint8
 	domain                 *bls.Domain
@@ -68,21 +66,22 @@ func NewClient(blockchain chain.Connection, params *NewClientParams) (*Client, e
 		return nil, errors.WithStack(err)
 	}
 	backend := blockchain.GetBackend()
-	rollupContract := bind.NewBoundContract(params.ChainState.Rollup, rollupAbi, backend, backend, backend)
-	tokenRegistryContract := bind.NewBoundContract(params.ChainState.TokenRegistry, tokenRegistryAbi, backend, backend, backend)
-	depositManagerContract := bind.NewBoundContract(params.ChainState.DepositManager, depositManagerAbi, backend, backend, backend)
 	accountManager, err := NewAccountManager(blockchain, &AccountManagerParams{
 		AccountRegistry:                  params.AccountRegistry,
 		AccountRegistryAddress:           params.ChainState.AccountRegistry,
 		BatchAccountRegistrationGasLimit: params.BatchAccountRegistrationGasLimit,
 	})
+	rollupContract := bind.NewBoundContract(params.ChainState.Rollup, rollupAbi, backend, backend, backend)
+	tokenRegistryContract := bind.NewBoundContract(params.ChainState.TokenRegistry, tokenRegistryAbi, backend, backend, backend)
+	depositManagerContract := bind.NewBoundContract(params.ChainState.DepositManager, depositManagerAbi, backend, backend, backend)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 	return &Client{
-		config:     params.ClientConfig,
-		ChainState: params.ChainState,
-		Blockchain: blockchain,
+		config:         params.ClientConfig,
+		ChainState:     params.ChainState,
+		Blockchain:     blockchain,
+		AccountManager: accountManager,
 		Rollup: &Rollup{
 			Rollup: params.Rollup,
 			Contract: Contract{
@@ -97,10 +96,13 @@ func NewClient(blockchain chain.Connection, params *NewClientParams) (*Client, e
 				BoundContract: tokenRegistryContract,
 			},
 		},
-		DepositManager:         params.DepositManager,
-		DepositManagerABI:      &depositManagerAbi,
-		depositManagerContract: depositManagerContract,
-		AccountManager:         accountManager,
+		DepositManager: &DepositManager{
+			DepositManager: params.DepositManager,
+			Contract: Contract{
+				ABI:           &depositManagerAbi,
+				BoundContract: depositManagerContract,
+			},
+		},
 	}, nil
 }
 
