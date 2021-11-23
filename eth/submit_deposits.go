@@ -15,6 +15,7 @@ func (c *Client) SubmitDeposits(
 ) (*types.Transaction, error) {
 	transaction, err := c.rollup().
 		WithValue(c.config.StakeAmount).
+		WithGasLimit(*c.config.DepositBatchSubmissionGasLimit).
 		SubmitDeposits(
 			batchID.ToBig(),
 			*commitmentProofToCalldata(previous),
