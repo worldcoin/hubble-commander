@@ -5,9 +5,11 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/commander/executor"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -62,12 +64,19 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 		return errors.WithStack(err)
 	}
 
-	rollupCtx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, ctx, *currentBatchType)
+	rollupCtx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, c.metrics, ctx, *currentBatchType)
 	defer rollupCtx.Rollback(&err)
 
 	switchBatchType(currentBatchType)
 
-	err = rollupCtx.CreateAndSubmitBatch()
+	var (
+		batch            *models.Batch
+		commitmentsCount *int
+	)
+	duration, err := metrics.MeasureDuration(func() error {
+		batch, commitmentsCount, err = rollupCtx.CreateAndSubmitBatch()
+		return err
+	})
 
 	var rollupError *executor.RollupError
 	if errors.As(err, &rollupError) {
@@ -77,6 +86,12 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 	if err != nil {
 		return err
 	}
+
+	metrics.SaveHistogramMeasurement(duration, c.metrics.BatchBuildAndSubmissionDuration, prometheus.Labels{
+		"type": metrics.BatchTypeToMetricsBatchType(batch.Type),
+	})
+
+	logNewBatch(batch, commitmentsCount, duration)
 
 	err = rollupCtx.Commit()
 	if err != nil {
@@ -108,6 +123,17 @@ func (c *Commander) handleRollupError(err *executor.RollupError, errorsToStore [
 	}
 
 	return c.storage.SetTransactionErrors(errorsToStore...)
+}
+
+func logNewBatch(batch *models.Batch, commitmentsCount *int, duration *time.Duration) {
+	log.Printf(
+		"Submitted a %s batch with %d commitment(s) on chain in %s. Batch ID: %d. Transaction hash: %v",
+		batch.Type.String(),
+		commitmentsCount,
+		duration,
+		batch.ID.Uint64(),
+		batch.TransactionHash,
+	)
 }
 
 func logLatestCommitment(latestCommitment *models.CommitmentBase) {

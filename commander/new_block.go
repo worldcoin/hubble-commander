@@ -6,8 +6,10 @@ import (
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/eth/chain"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -144,7 +146,9 @@ func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
 	startBlock := *syncedBlock + 1
 	endBlock := min(latestBlockNumber, startBlock+uint64(c.cfg.Rollup.SyncSize))
 
-	err = c.syncRange(startBlock, endBlock)
+	duration, err := metrics.MeasureDuration(func() error {
+		return c.syncRange(startBlock, endBlock)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -153,6 +157,11 @@ func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+
+	metrics.SaveHistogramMeasurement(duration, c.metrics.SyncingMethodDuration, prometheus.Labels{
+		"method": metrics.SyncRangeMethod,
+	})
+
 	return &endBlock, nil
 }
 
@@ -178,6 +187,7 @@ func (c *Commander) syncRange(startBlock, endBlock uint64) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
+
 	return nil
 }
 

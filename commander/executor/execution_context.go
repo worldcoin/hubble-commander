@@ -7,16 +7,18 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
 type ExecutionContext struct {
-	cfg     *config.RollupConfig
-	storage *st.Storage
-	tx      *db.TxController
-	client  *eth.Client
-	ctx     context.Context
-	Applier *applier.Applier
+	cfg              *config.RollupConfig
+	storage          *st.Storage
+	tx               *db.TxController
+	client           *eth.Client
+	ctx              context.Context
+	commanderMetrics *metrics.CommanderMetrics
+	Applier          *applier.Applier
 }
 
 // NewExecutionContext creates a ExecutionContext and starts a database transaction.
@@ -24,29 +26,32 @@ func NewExecutionContext(
 	storage *st.Storage,
 	client *eth.Client,
 	cfg *config.RollupConfig,
+	commanderMetrics *metrics.CommanderMetrics,
 	ctx context.Context,
 ) *ExecutionContext {
 	tx, txStorage := storage.BeginTransaction(st.TxOptions{})
 
 	return &ExecutionContext{
-		cfg:     cfg,
-		storage: txStorage,
-		tx:      tx,
-		client:  client,
-		ctx:     ctx,
-		Applier: applier.NewApplier(txStorage, client),
+		cfg:              cfg,
+		storage:          txStorage,
+		tx:               tx,
+		client:           client,
+		ctx:              ctx,
+		commanderMetrics: commanderMetrics,
+		Applier:          applier.NewApplier(txStorage, client),
 	}
 }
 
 // NewTestExecutionContext creates a ExecutionContext without a database transaction.
 func NewTestExecutionContext(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig) *ExecutionContext {
 	return &ExecutionContext{
-		cfg:     cfg,
-		storage: storage,
-		tx:      nil,
-		client:  client,
-		ctx:     context.Background(),
-		Applier: applier.NewApplier(storage, client),
+		cfg:              cfg,
+		storage:          storage,
+		tx:               nil,
+		client:           client,
+		ctx:              context.Background(),
+		commanderMetrics: metrics.NewCommanderMetrics(),
+		Applier:          applier.NewApplier(storage, client),
 	}
 }
 

@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/erc20"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -38,6 +39,7 @@ func (s *DepositsTestSuite) SetupTest() {
 		storage: testStorage.Storage,
 		client:  s.testClient.Client,
 		cfg:     &config.Config{},
+		metrics: metrics.NewCommanderMetrics(),
 	}
 	s.tokenID = models.NewUint256(0) // First registered tokenID
 }
