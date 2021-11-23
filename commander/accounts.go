@@ -66,7 +66,7 @@ func (c *Commander) syncSingleAccounts(start, end uint64) (newAccountsCount *int
 			return nil, err
 		}
 
-		if !bytes.Equal(tx.Data()[:4], c.client.AccountRegistryABI.Methods["register"].ID) {
+		if !bytes.Equal(tx.Data()[:4], c.client.AccountRegistry.ABI.Methods["register"].ID) {
 			continue // TODO handle internal transactions
 		}
 
@@ -102,7 +102,7 @@ func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int,
 			return nil, err
 		}
 
-		if !bytes.Equal(tx.Data()[:4], c.client.AccountRegistryABI.Methods["registerBatch"].ID) {
+		if !bytes.Equal(tx.Data()[:4], c.client.AccountRegistry.ABI.Methods["registerBatch"].ID) {
 			continue // TODO handle internal transactions
 		}
 

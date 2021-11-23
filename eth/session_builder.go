@@ -36,7 +36,7 @@ type accountRegistrySessionBuilder struct {
 
 func (a *AccountManager) accountRegistry() *accountRegistrySessionBuilder {
 	return &accountRegistrySessionBuilder{accountregistry.AccountRegistrySession{
-		Contract:     a.AccountRegistry,
+		Contract:     a.AccountRegistry.AccountRegistry,
 		TransactOpts: *a.Blockchain.GetAccount(),
 	}}
 }
