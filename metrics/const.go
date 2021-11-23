@@ -36,14 +36,3 @@ const (
 	SyncDepositsMethod = "sync_deposits"
 	SyncTokensMethod   = "sync_tokens"
 )
-
-// Blockchain metrics
-const (
-	SinglePubKeyRegisteredLogRetrievalCall = "single_pubkey_registered_log_retrieval_call"
-	BatchPubKeyRegisteredLogRetrievalCall  = "batch_pubkey_registered_log_retrieval_call"
-	NewBatchLogRetrievalCall               = "new_batch_log_retrieval_call"
-	DepositsFinalisedLogRetrievalCall      = "deposits_finalized_log_retrieval_call"
-	DepositQueuedLogRetrievalCall          = "deposit_queued_log_retrieval_call"
-	DepositSubTreeReadyLogRetrievalCall    = "deposit_sub_tree_ready_log_retrieval_call"
-	RegisteredTokenLogRetrievalCall        = "registered_token_log_retrieval_call"
-)

@@ -11,6 +11,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -42,6 +43,7 @@ type Client struct {
 	Rollup                 *Rollup
 	TokenRegistry          *TokenRegistry
 	DepositManager         *DepositManager
+	Metrics                *metrics.CommanderMetrics
 	blocksToFinalise       *int64
 	maxDepositSubTreeDepth *uint8
 	domain                 *bls.Domain
