@@ -18,7 +18,12 @@ const gasEstimateMultiplier = 1.3
 
 type SubmitBatchFunc func() (*types.Transaction, error)
 
-func (c *Client) SubmitTxBatch(batchType batchtype.BatchType, batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
+func (c *Client) SubmitTxBatch(
+	batchType batchtype.BatchType,
+	batchID *models.Uint256,
+	commitments []models.CommitmentWithTxs,
+) (*types.Transaction, error) {
+	// nolint:exhaustive
 	switch batchType {
 	case batchtype.Transfer:
 		return c.SubmitTransfersBatch(batchID, commitments)
@@ -60,7 +65,10 @@ func (c *Client) SubmitTransfersBatchAndWait(batchID *models.Uint256, commitment
 		return c.SubmitTransfersBatch(batchID, commitments)
 	})
 }
-func (c *Client) SubmitCreate2TransfersBatchAndWait(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*models.Batch, error) {
+func (c *Client) SubmitCreate2TransfersBatchAndWait(
+	batchID *models.Uint256,
+	commitments []models.CommitmentWithTxs,
+) (*models.Batch, error) {
 	return c.submitBatchAndWait(func() (*types.Transaction, error) {
 		return c.SubmitCreate2TransfersBatch(batchID, commitments)
 	})

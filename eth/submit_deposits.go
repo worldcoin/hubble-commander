@@ -8,7 +8,11 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-func (c *Client) SubmitDeposits(batchID *models.Uint256, previous *models.CommitmentInclusionProof, proof *models.SubtreeVacancyProof) (*types.Transaction, error) {
+func (c *Client) SubmitDeposits(
+	batchID *models.Uint256,
+	previous *models.CommitmentInclusionProof,
+	proof *models.SubtreeVacancyProof,
+) (*types.Transaction, error) {
 	transaction, err := c.rollup().
 		WithValue(*c.config.StakeAmount.ToBig()).
 		SubmitDeposits(
@@ -22,9 +26,11 @@ func (c *Client) SubmitDeposits(batchID *models.Uint256, previous *models.Commit
 	return transaction, nil
 }
 
-func (c *Client) SubmitDepositsAndWait(batchID *models.Uint256, previous *models.CommitmentInclusionProof, proof *models.SubtreeVacancyProof) (
-	*models.Batch, error,
-) {
+func (c *Client) SubmitDepositsAndWait(
+	batchID *models.Uint256,
+	previous *models.CommitmentInclusionProof,
+	proof *models.SubtreeVacancyProof,
+) (*models.Batch, error) {
 	return c.submitBatchAndWait(func() (*types.Transaction, error) {
 		return c.SubmitDeposits(batchID, previous, proof)
 	})
