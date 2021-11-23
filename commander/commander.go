@@ -176,7 +176,12 @@ func GetChainConnection(cfg *config.EthereumConfig) (chain.Connection, error) {
 	return chain.NewRPCCConnection(cfg)
 }
 
-func getClient(blockchain chain.Connection, storage *st.Storage, cfg *config.Config, commanderMetrics *metrics.CommanderMetrics) (*eth.Client, error) {
+func getClient(
+	blockchain chain.Connection,
+	storage *st.Storage,
+	cfg *config.Config,
+	commanderMetrics *metrics.CommanderMetrics,
+) (*eth.Client, error) {
 	if cfg.Ethereum == nil {
 		log.Fatal("no Ethereum config")
 	}

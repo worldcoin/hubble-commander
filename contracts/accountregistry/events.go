@@ -10,7 +10,12 @@ type SinglePubKeyRegisteredIterator struct {
 	AccountRegistrySinglePubkeyRegisteredIterator
 }
 
-func (i *SinglePubKeyRegisteredIterator) SetData(contract *bind.BoundContract, event string, logs chan types.Log, sub ethereum.Subscription) {
+func (i *SinglePubKeyRegisteredIterator) SetData(
+	contract *bind.BoundContract,
+	event string,
+	logs chan types.Log,
+	sub ethereum.Subscription,
+) {
 	i.AccountRegistrySinglePubkeyRegisteredIterator.contract = contract
 	i.AccountRegistrySinglePubkeyRegisteredIterator.event = event
 	i.AccountRegistrySinglePubkeyRegisteredIterator.logs = logs
@@ -21,7 +26,12 @@ type BatchPubKeyRegisteredIterator struct {
 	AccountRegistryBatchPubkeyRegisteredIterator
 }
 
-func (i *BatchPubKeyRegisteredIterator) SetData(contract *bind.BoundContract, event string, logs chan types.Log, sub ethereum.Subscription) {
+func (i *BatchPubKeyRegisteredIterator) SetData(
+	contract *bind.BoundContract,
+	event string,
+	logs chan types.Log,
+	sub ethereum.Subscription,
+) {
 	i.AccountRegistryBatchPubkeyRegisteredIterator.contract = contract
 	i.AccountRegistryBatchPubkeyRegisteredIterator.event = event
 	i.AccountRegistryBatchPubkeyRegisteredIterator.logs = logs
