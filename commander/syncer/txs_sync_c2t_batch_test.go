@@ -16,7 +16,7 @@ type SyncC2TBatchTestSuite struct {
 }
 
 func (s *SyncC2TBatchTestSuite) SetupTest() {
-	s.testSuiteWithSyncAndRollupContext.SetupTestWithConfig(batchtype.Create2Transfer, syncTestSuiteConfig)
+	s.testSuiteWithSyncAndRollupContext.SetupTestWithConfig(batchtype.Create2Transfer, &syncTestSuiteConfig)
 	s.syncTestSuite.setupTest()
 }
 
