@@ -7,6 +7,7 @@ type GenericTransaction interface {
 	GetBase() *TransactionBase
 	GetFromStateID() uint32
 	GetToStateID() *uint32
+	GetSpokeID() *Uint256
 	GetAmount() Uint256
 	GetFee() Uint256
 	GetNonce() Uint256
@@ -15,6 +16,7 @@ type GenericTransaction interface {
 	Copy() GenericTransaction
 	ToTransfer() *Transfer
 	ToCreate2Transfer() *Create2Transfer
+	ToMassMigration() *MassMigration
 }
 
 type GenericTransactionArray interface {
