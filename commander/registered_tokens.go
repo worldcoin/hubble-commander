@@ -78,9 +78,9 @@ func (c *Commander) unmeasuredSyncTokens(startBlock, endBlock uint64) (*int, err
 }
 
 func (c *Commander) getRegisteredTokenIterator(start, end uint64) (*tokenregistry.RegisteredTokenIterator, error) {
-	var it *tokenregistry.RegisteredTokenIterator
+	it := &tokenregistry.RegisteredTokenIterator{}
 
-	err := c.client.FilterLogs(c.client.DepositManager.BoundContract, "RegisteredToken", &bind.FilterOpts{
+	err := c.client.FilterLogs(c.client.TokenRegistry.BoundContract, "RegisteredToken", &bind.FilterOpts{
 		Start: start,
 		End:   &end,
 	}, it)

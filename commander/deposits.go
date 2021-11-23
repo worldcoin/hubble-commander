@@ -112,7 +112,7 @@ func (c *Commander) fetchDepositSubTrees(start, end uint64) ([]models.PendingDep
 }
 
 func (c *Commander) getDepositQueuedIterator(start, end uint64) (*depositmanager.DepositQueuedIterator, error) {
-	var it *depositmanager.DepositQueuedIterator
+	it := &depositmanager.DepositQueuedIterator{}
 
 	err := c.client.FilterLogs(c.client.DepositManager.BoundContract, "DepositQueued", &bind.FilterOpts{
 		Start: start,
@@ -126,7 +126,7 @@ func (c *Commander) getDepositQueuedIterator(start, end uint64) (*depositmanager
 }
 
 func (c *Commander) getDepositSubTreeReadyIterator(start, end uint64) (*depositmanager.DepositSubTreeReadyIterator, error) {
-	var it *depositmanager.DepositSubTreeReadyIterator
+	it := &depositmanager.DepositSubTreeReadyIterator{}
 
 	err := c.client.FilterLogs(c.client.DepositManager.BoundContract, "DepositSubTreeReady", &bind.FilterOpts{
 		Start: start,

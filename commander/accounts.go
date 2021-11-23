@@ -124,7 +124,7 @@ func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int,
 }
 
 func (c *Commander) getSinglePubKeyRegisteredIterator(start, end uint64) (*accountregistry.SinglePubKeyRegisteredIterator, error) {
-	var it *accountregistry.SinglePubKeyRegisteredIterator
+	it := &accountregistry.SinglePubKeyRegisteredIterator{}
 
 	err := c.client.FilterLogs(c.client.AccountRegistry.BoundContract, "SinglePubkeyRegistered", &bind.FilterOpts{
 		Start: start,
@@ -138,7 +138,7 @@ func (c *Commander) getSinglePubKeyRegisteredIterator(start, end uint64) (*accou
 }
 
 func (c *Commander) getBatchPubKeyRegisteredIterator(start, end uint64) (*accountregistry.BatchPubKeyRegisteredIterator, error) {
-	var it *accountregistry.BatchPubKeyRegisteredIterator
+	it := &accountregistry.BatchPubKeyRegisteredIterator{}
 
 	err := c.client.FilterLogs(c.client.AccountRegistry.BoundContract, "BatchPubkeyRegistered", &bind.FilterOpts{
 		Start: start,
