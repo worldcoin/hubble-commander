@@ -37,7 +37,7 @@ func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig
 		return nil, err
 	}
 
-	client, err := NewClient(sim, &NewClientParams{
+	client, err := NewClient(sim, metrics.NewCommanderMetrics(), &NewClientParams{
 		ChainState: models.ChainState{
 			ChainID:                        sim.GetChainID(),
 			AccountRegistry:                contracts.AccountRegistryAddress,

@@ -40,10 +40,10 @@ type Client struct {
 	config                 ClientConfig
 	ChainState             models.ChainState
 	Blockchain             chain.Connection
+	Metrics                *metrics.CommanderMetrics
 	Rollup                 *Rollup
 	TokenRegistry          *TokenRegistry
 	DepositManager         *DepositManager
-	Metrics                *metrics.CommanderMetrics
 	blocksToFinalise       *int64
 	maxDepositSubTreeDepth *uint8
 	domain                 *bls.Domain
@@ -52,7 +52,7 @@ type Client struct {
 }
 
 //goland:noinspection GoDeprecation
-func NewClient(blockchain chain.Connection, params *NewClientParams) (*Client, error) {
+func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderMetrics, params *NewClientParams) (*Client, error) {
 	fillWithDefaults(&params.ClientConfig)
 
 	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
@@ -83,6 +83,7 @@ func NewClient(blockchain chain.Connection, params *NewClientParams) (*Client, e
 		config:         params.ClientConfig,
 		ChainState:     params.ChainState,
 		Blockchain:     blockchain,
+		Metrics:        commanderMetrics,
 		AccountManager: accountManager,
 		Rollup: &Rollup{
 			Rollup: params.Rollup,
