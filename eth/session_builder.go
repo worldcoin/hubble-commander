@@ -1,20 +1,19 @@
 package eth
 
 import (
-	"math/big"
-
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
+	"github.com/Worldcoin/hubble-commander/models"
 )
 
 type rollupSessionBuilder struct {
 	rollup.RollupSession
 }
 
-func (b *rollupSessionBuilder) WithValue(value big.Int) *rollupSessionBuilder {
-	b.TransactOpts.Value = &value
+func (b *rollupSessionBuilder) WithValue(value *models.Uint256) *rollupSessionBuilder {
+	b.TransactOpts.Value = value.ToBig()
 	return b
 }
 
@@ -41,8 +40,8 @@ func (a *AccountManager) accountRegistry() *accountRegistrySessionBuilder {
 	}}
 }
 
-func (b *accountRegistrySessionBuilder) WithValue(value big.Int) *accountRegistrySessionBuilder {
-	b.TransactOpts.Value = &value
+func (b *accountRegistrySessionBuilder) WithValue(value *models.Uint256) *accountRegistrySessionBuilder {
+	b.TransactOpts.Value = value.ToBig()
 	return b
 }
 
@@ -62,8 +61,8 @@ func (c *Client) depositManager() *depositManagerSessionBuilder {
 	}}
 }
 
-func (b *depositManagerSessionBuilder) WithValue(value big.Int) *depositManagerSessionBuilder {
-	b.TransactOpts.Value = &value
+func (b *depositManagerSessionBuilder) WithValue(value *models.Uint256) *depositManagerSessionBuilder {
+	b.TransactOpts.Value = value.ToBig()
 	return b
 }
 
@@ -83,8 +82,8 @@ func (c *Client) tokenRegistry() *tokenRegistrySessionBuilder {
 	}}
 }
 
-func (b *tokenRegistrySessionBuilder) WithValue(value big.Int) *tokenRegistrySessionBuilder {
-	b.TransactOpts.Value = &value
+func (b *tokenRegistrySessionBuilder) WithValue(value *models.Uint256) *tokenRegistrySessionBuilder {
+	b.TransactOpts.Value = value.ToBig()
 	return b
 }
 

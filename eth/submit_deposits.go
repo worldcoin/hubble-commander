@@ -14,7 +14,7 @@ func (c *Client) SubmitDeposits(
 	proof *models.SubtreeVacancyProof,
 ) (*types.Transaction, error) {
 	transaction, err := c.rollup().
-		WithValue(*c.config.StakeAmount.ToBig()).
+		WithValue(c.config.StakeAmount).
 		SubmitDeposits(
 			batchID.ToBig(),
 			*commitmentProofToCalldata(previous),
