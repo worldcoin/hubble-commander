@@ -91,7 +91,7 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 		"type": metrics.BatchTypeToMetricsBatchType(batch.Type),
 	})
 
-	logNewBatch(batch, commitmentsCount, duration)
+	logNewBatch(batch, *commitmentsCount, duration)
 
 	err = rollupCtx.Commit()
 	if err != nil {
@@ -125,7 +125,7 @@ func (c *Commander) handleRollupError(err *executor.RollupError, errorsToStore [
 	return c.storage.SetTransactionErrors(errorsToStore...)
 }
 
-func logNewBatch(batch *models.Batch, commitmentsCount *int, duration *time.Duration) {
+func logNewBatch(batch *models.Batch, commitmentsCount int, duration *time.Duration) {
 	log.Printf(
 		"Submitted a %s batch with %d commitment(s) on chain in %s. Batch ID: %d. Transaction hash: %v",
 		batch.Type.String(),
