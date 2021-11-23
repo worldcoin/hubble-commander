@@ -52,7 +52,7 @@ func (c *Commander) syncAccounts(start, end uint64) error {
 }
 
 func (c *Commander) syncSingleAccounts(start, end uint64) (newAccountsCount *int, err error) {
-	it, err := c.getAccountRegistrySinglePubKeyRegisteredIterator(start, end)
+	it, err := c.getSinglePubKeyRegisteredIterator(start, end)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func (c *Commander) syncSingleAccounts(start, end uint64) (newAccountsCount *int
 }
 
 func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int, err error) {
-	it, err := c.getAccountRegistryBatchPubKeyRegisteredIterator(start, end)
+	it, err := c.getBatchPubKeyRegisteredIterator(start, end)
 	if err != nil {
 		return nil, err
 	}
@@ -123,46 +123,32 @@ func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int,
 	return newAccountsCount, nil
 }
 
-func (c *Commander) getAccountRegistrySinglePubKeyRegisteredIterator(start, end uint64) (
-	it *accountregistry.AccountRegistrySinglePubkeyRegisteredIterator,
-	err error,
-) {
-	duration, err := metrics.MeasureDuration(func() error {
-		it, err = c.client.AccountRegistry.FilterSinglePubkeyRegistered(&bind.FilterOpts{
-			Start: start,
-			End:   &end,
-		})
+func (c *Commander) getSinglePubKeyRegisteredIterator(start, end uint64) (*accountregistry.SinglePubKeyRegisteredIterator, error) {
+	var it *accountregistry.SinglePubKeyRegisteredIterator
 
-		return err
-	})
+	err := c.client.FilterLogs(c.client.AccountRegistry.BoundContract, "SinglePubkeyRegistered", &bind.FilterOpts{
+		Start: start,
+		End:   &end,
+	}, it)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	c.metrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.SinglePubKeyRegisteredLogRetrievalCall)
-
-	return
+	return it, nil
 }
 
-func (c *Commander) getAccountRegistryBatchPubKeyRegisteredIterator(start, end uint64) (
-	it *accountregistry.AccountRegistryBatchPubkeyRegisteredIterator,
-	err error,
-) {
-	duration, err := metrics.MeasureDuration(func() error {
-		it, err = c.client.AccountRegistry.FilterBatchPubkeyRegistered(&bind.FilterOpts{
-			Start: start,
-			End:   &end,
-		})
+func (c *Commander) getBatchPubKeyRegisteredIterator(start, end uint64) (*accountregistry.BatchPubKeyRegisteredIterator, error) {
+	var it *accountregistry.BatchPubKeyRegisteredIterator
 
-		return err
-	})
+	err := c.client.FilterLogs(c.client.AccountRegistry.BoundContract, "BatchPubkeyRegistered", &bind.FilterOpts{
+		Start: start,
+		End:   &end,
+	}, it)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	c.metrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.BatchPubKeyRegisteredLogRetrievalCall)
-
-	return
+	return it, nil
 }
 
 func saveSyncedSingleAccount(accountTree *storage.AccountTree, account *models.AccountLeaf) (isNewAccount *bool, err error) {

@@ -46,7 +46,7 @@ func (c *Commander) syncDeposits(start, end uint64) error {
 }
 
 func (c *Commander) syncQueuedDeposits(start, end uint64) error {
-	it, err := c.getDepositManagerDepositQueuedIterator(start, end)
+	it, err := c.getDepositQueuedIterator(start, end)
 	if err != nil {
 		return err
 	}
@@ -82,7 +82,7 @@ func (c *Commander) syncQueuedDeposits(start, end uint64) error {
 }
 
 func (c *Commander) fetchDepositSubTrees(start, end uint64) ([]models.PendingDepositSubTree, error) {
-	it, err := c.getDepositManagerDepositSubTreeReadyIterator(start, end)
+	it, err := c.getDepositSubTreeReadyIterator(start, end)
 	if err != nil {
 		return nil, err
 	}
@@ -111,46 +111,32 @@ func (c *Commander) fetchDepositSubTrees(start, end uint64) ([]models.PendingDep
 	return depositSubTrees, nil
 }
 
-func (c *Commander) getDepositManagerDepositQueuedIterator(start, end uint64) (
-	it *depositmanager.DepositManagerDepositQueuedIterator,
-	err error,
-) {
-	duration, err := metrics.MeasureDuration(func() error {
-		it, err = c.client.DepositManager.FilterDepositQueued(&bind.FilterOpts{
-			Start: start,
-			End:   &end,
-		})
+func (c *Commander) getDepositQueuedIterator(start, end uint64) (*depositmanager.DepositQueuedIterator, error) {
+	var it *depositmanager.DepositQueuedIterator
 
-		return err
-	})
+	err := c.client.FilterLogs(c.client.DepositManager.BoundContract, "DepositQueued", &bind.FilterOpts{
+		Start: start,
+		End:   &end,
+	}, it)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	c.metrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.DepositQueuedLogRetrievalCall)
-
-	return
+	return it, nil
 }
 
-func (c *Commander) getDepositManagerDepositSubTreeReadyIterator(start, end uint64) (
-	it *depositmanager.DepositManagerDepositSubTreeReadyIterator,
-	err error,
-) {
-	duration, err := metrics.MeasureDuration(func() error {
-		it, err = c.client.DepositManager.FilterDepositSubTreeReady(&bind.FilterOpts{
-			Start: start,
-			End:   &end,
-		})
+func (c *Commander) getDepositSubTreeReadyIterator(start, end uint64) (*depositmanager.DepositSubTreeReadyIterator, error) {
+	var it *depositmanager.DepositSubTreeReadyIterator
 
-		return err
-	})
+	err := c.client.FilterLogs(c.client.DepositManager.BoundContract, "DepositSubTreeReady", &bind.FilterOpts{
+		Start: start,
+		End:   &end,
+	}, it)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	c.metrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.DepositSubTreeReadyLogRetrievalCall)
-
-	return
+	return it, nil
 }
 
 func (c *Commander) saveSyncedSubTrees(subTrees []models.PendingDepositSubTree) error {

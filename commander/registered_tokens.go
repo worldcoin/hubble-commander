@@ -42,7 +42,7 @@ func (c *Commander) syncTokens(startBlock, endBlock uint64) error {
 func (c *Commander) unmeasuredSyncTokens(startBlock, endBlock uint64) (*int, error) {
 	newTokensCount := 0
 
-	it, err := c.getTokenRegistryRegisteredTokenIterator(startBlock, endBlock)
+	it, err := c.getRegisteredTokenIterator(startBlock, endBlock)
 	if err != nil {
 		return nil, err
 	}
@@ -77,25 +77,18 @@ func (c *Commander) unmeasuredSyncTokens(startBlock, endBlock uint64) (*int, err
 	return &newTokensCount, nil
 }
 
-func (c *Commander) getTokenRegistryRegisteredTokenIterator(start, end uint64) (
-	it *tokenregistry.TokenRegistryRegisteredTokenIterator,
-	err error,
-) {
-	duration, err := metrics.MeasureDuration(func() error {
-		it, err = c.client.TokenRegistry.FilterRegisteredToken(&bind.FilterOpts{
-			Start: start,
-			End:   &end,
-		})
+func (c *Commander) getRegisteredTokenIterator(start, end uint64) (*tokenregistry.RegisteredTokenIterator, error) {
+	var it *tokenregistry.RegisteredTokenIterator
 
-		return err
-	})
+	err := c.client.FilterLogs(c.client.DepositManager.BoundContract, "RegisteredToken", &bind.FilterOpts{
+		Start: start,
+		End:   &end,
+	}, it)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	c.metrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.RegisteredTokenLogRetrievalCall)
-
-	return
+	return it, nil
 }
 
 func saveSyncedToken(

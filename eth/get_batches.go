@@ -9,7 +9,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/encoder"
-	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -32,11 +31,11 @@ type BatchesFilters struct {
 }
 
 func (c *TestClient) GetAllBatches() ([]DecodedBatch, error) {
-	return c.GetBatches(&BatchesFilters{}, c.CommanderMetrics)
+	return c.GetBatches(&BatchesFilters{})
 }
 
-func (c *Client) GetBatches(filters *BatchesFilters, commanderMetrics *metrics.CommanderMetrics) ([]DecodedBatch, error) {
-	batchEvents, depositEvents, err := c.getBatchEvents(filters, commanderMetrics)
+func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
+	batchEvents, depositEvents, err := c.getBatchEvents(filters)
 	if err != nil {
 		return nil, err
 	}
@@ -87,16 +86,13 @@ func (c *Client) GetBatches(filters *BatchesFilters, commanderMetrics *metrics.C
 	return res, nil
 }
 
-func (c *Client) getBatchEvents(
-	filters *BatchesFilters,
-	commanderMetrics *metrics.CommanderMetrics,
-) ([]*rollup.RollupNewBatch, []*rollup.RollupDepositsFinalised, error) {
-	batchEvents, err := c.getNewBatchEvents(filters, commanderMetrics)
+func (c *Client) getBatchEvents(filters *BatchesFilters) ([]*rollup.RollupNewBatch, []*rollup.RollupDepositsFinalised, error) {
+	batchEvents, err := c.getNewBatchEvents(filters)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	depositEvents, err := c.getDepositsFinalisedEvents(filters, commanderMetrics)
+	depositEvents, err := c.getDepositsFinalisedEvents(filters)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -104,8 +100,8 @@ func (c *Client) getBatchEvents(
 	return batchEvents, depositEvents, nil
 }
 
-func (c *Client) getNewBatchEvents(filters *BatchesFilters, commanderMetrics *metrics.CommanderMetrics) ([]*rollup.RollupNewBatch, error) {
-	it, err := c.getNewBatchLogIterator(filters, commanderMetrics)
+func (c *Client) getNewBatchEvents(filters *BatchesFilters) ([]*rollup.RollupNewBatch, error) {
+	it, err := c.getNewBatchLogIterator(filters)
 	if err != nil {
 		return nil, err
 	}
@@ -124,11 +120,8 @@ func (c *Client) getNewBatchEvents(filters *BatchesFilters, commanderMetrics *me
 	return events, nil
 }
 
-func (c *Client) getDepositsFinalisedEvents(
-	filters *BatchesFilters,
-	commanderMetrics *metrics.CommanderMetrics,
-) ([]*rollup.RollupDepositsFinalised, error) {
-	it, err := c.getDepositsFinalisedLogIterator(filters, commanderMetrics)
+func (c *Client) getDepositsFinalisedEvents(filters *BatchesFilters) ([]*rollup.RollupDepositsFinalised, error) {
+	it, err := c.getDepositsFinalisedLogIterator(filters)
 	if err != nil {
 		return nil, err
 	}
@@ -147,46 +140,32 @@ func (c *Client) getDepositsFinalisedEvents(
 	return events, nil
 }
 
-func (c *Client) getNewBatchLogIterator(
-	filters *BatchesFilters,
-	commanderMetrics *metrics.CommanderMetrics,
-) (it *rollup.RollupNewBatchIterator, err error) {
-	duration, err := metrics.MeasureDuration(func() error {
-		it, err = c.Rollup.FilterNewBatch(&bind.FilterOpts{
-			Start: filters.StartBlockInclusive,
-			End:   filters.EndBlockInclusive,
-		})
+func (c *Client) getNewBatchLogIterator(filters *BatchesFilters) (*rollup.NewBatchIterator, error) {
+	var it *rollup.NewBatchIterator
 
-		return err
-	})
+	err := c.FilterLogs(c.Rollup.BoundContract, "NewBatch", &bind.FilterOpts{
+		Start: filters.StartBlockInclusive,
+		End:   filters.EndBlockInclusive,
+	}, it)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	commanderMetrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.NewBatchLogRetrievalCall)
-
-	return
+	return it, nil
 }
 
-func (c *Client) getDepositsFinalisedLogIterator(
-	filters *BatchesFilters,
-	commanderMetrics *metrics.CommanderMetrics,
-) (it *rollup.RollupDepositsFinalisedIterator, err error) {
-	duration, err := metrics.MeasureDuration(func() error {
-		it, err = c.Rollup.FilterDepositsFinalised(&bind.FilterOpts{
-			Start: filters.StartBlockInclusive,
-			End:   filters.EndBlockInclusive,
-		})
+func (c *Client) getDepositsFinalisedLogIterator(filters *BatchesFilters) (*rollup.DepositsFinalisedIterator, error) {
+	var it *rollup.DepositsFinalisedIterator
 
-		return err
-	})
+	err := c.FilterLogs(c.Rollup.BoundContract, "DepositsFinalised", &bind.FilterOpts{
+		Start: filters.StartBlockInclusive,
+		End:   filters.EndBlockInclusive,
+	}, it)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	commanderMetrics.SaveBlockchainCallDurationMeasurement(*duration, metrics.DepositsFinalisedLogRetrievalCall)
-
-	return
+	return it, nil
 }
 
 func (c *Client) isDirectBatchSubmission(tx *types.Transaction) bool {
