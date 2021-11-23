@@ -5,7 +5,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/Worldcoin/hubble-commander/utils"
 )
 
 func TxTypeToMetricsTxType(transactionType txtype.TransactionType) string {
@@ -32,8 +31,4 @@ func BatchTypeToMetricsBatchType(batchType batchtype.BatchType) string {
 	default:
 		return strings.ToLower(batchType.String())
 	}
-}
-
-func EventNameToMetricsEventFilterCallLabel(eventName string) string {
-	return utils.CamelCaseToSnakeCase(eventName) + "_filter_log_call"
 }
