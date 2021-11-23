@@ -52,7 +52,7 @@ func (c *DepositsContext) SubmitBatch(batch *models.Batch, vacancyProof *models.
 		return err
 	}
 
-	tx, err := c.client.SubmitDeposits(commitmentInclusionProof, vacancyProof)
+	tx, err := c.client.SubmitDeposits(&batch.ID, commitmentInclusionProof, vacancyProof)
 	if err != nil {
 		return err
 	}
