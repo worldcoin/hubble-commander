@@ -22,7 +22,7 @@ var eventTopics = map[string]common.Hash{
 	SinglePubkeyRegisteredEvent: crypto.Keccak256Hash([]byte("SinglePubkeyRegistered(uint256)")),
 	BatchPubkeyRegisteredEvent:  crypto.Keccak256Hash([]byte("BatchPubkeyRegistered(uint256,uint256)")),
 	RegisteredTokenEvent:        crypto.Keccak256Hash([]byte("RegisteredToken(uint256,address)")),
-	DepositQueuedEvent:          crypto.Keccak256Hash([]byte("DepositQueued(uint256,uint256,uint256)")),
+	DepositQueuedEvent:          crypto.Keccak256Hash([]byte("DepositQueued(uint256,uint256,uint256,uint256,uint256)")),
 }
 
 var (
