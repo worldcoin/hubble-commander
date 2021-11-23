@@ -2,9 +2,7 @@ package encoder
 
 import (
 	"math/big"
-	"strings"
 
-	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -17,13 +15,8 @@ import (
 //   uint256[2][] signatures,
 //   uint256[] feeReceivers,
 //   bytes[] txss
-func DecodeBatchCalldata(calldata []byte) ([]DecodedCommitment, error) {
-	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	unpacked, err := rollupAbi.Methods["submitTransfer"].Inputs.Unpack(calldata[4:])
+func DecodeBatchCalldata(rollupABI *abi.ABI, calldata []byte) ([]DecodedCommitment, error) {
+	unpacked, err := rollupABI.Methods["submitTransfer"].Inputs.Unpack(calldata[4:])
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
