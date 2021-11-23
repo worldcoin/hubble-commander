@@ -28,8 +28,8 @@ func TestDecodeBatchCalldata(t *testing.T) {
 		},
 		Transactions: utils.RandomBytes(12),
 	}
-	arg1, arg2, arg3, arg4 := CommitmentToCalldataFields([]models.CommitmentWithTxs{commitment})
-	calldata, err := rollupAbi.Pack("submitTransfer", batchID.ToBig(), arg1, arg2, arg3, arg4)
+	arg1, arg2, arg3, arg4, arg5 := CommitmentsToSubmitBatchFields(batchID, []models.CommitmentWithTxs{commitment})
+	calldata, err := rollupAbi.Pack("submitTransfer", arg1, arg2, arg3, arg4, arg5)
 	require.NoError(t, err)
 
 	decodedCommitments, err := DecodeBatchCalldata(calldata)

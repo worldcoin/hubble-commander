@@ -11,8 +11,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// TODO move to eth.Client and reuse rollupAbi
-
 // DecodeBatchCalldata
 //   uint256 batchID
 //   bytes32[] stateRoots,
@@ -53,4 +51,29 @@ func DecodeBatchCalldata(calldata []byte) ([]DecodedCommitment, error) {
 	}
 
 	return commitments, nil
+}
+
+func CommitmentsToSubmitBatchFields(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (
+	bigBatchID *big.Int,
+	stateRoots [][32]byte,
+	signatures [][2]*big.Int,
+	feeReceivers []*big.Int,
+	transactions [][]byte,
+) {
+	bigBatchID = batchID.ToBig()
+
+	count := len(commitments)
+
+	stateRoots = make([][32]byte, 0, count)
+	signatures = make([][2]*big.Int, 0, count)
+	feeReceivers = make([]*big.Int, 0, count)
+	transactions = make([][]byte, 0, count)
+
+	for i := range commitments {
+		stateRoots = append(stateRoots, commitments[i].PostStateRoot)
+		signatures = append(signatures, commitments[i].CombinedSignature.BigInts())
+		feeReceivers = append(feeReceivers, new(big.Int).SetUint64(uint64(commitments[i].FeeReceiver)))
+		transactions = append(transactions, commitments[i].Transactions)
+	}
+	return
 }
