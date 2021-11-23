@@ -58,7 +58,7 @@ func (c *Client) retrieveRegisteredTokenID(receipt *types.Receipt) (*models.Uint
 	}
 
 	event := new(tokenregistry.TokenRegistryRegisteredToken)
-	err = c.tokenRegistryContract.UnpackLog(event, RegisteredTokenEvent, *log)
+	err = c.TokenRegistry.BoundContract.UnpackLog(event, RegisteredTokenEvent, *log)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

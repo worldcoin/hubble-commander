@@ -78,7 +78,7 @@ type tokenRegistrySessionBuilder struct {
 
 func (c *Client) tokenRegistry() *tokenRegistrySessionBuilder {
 	return &tokenRegistrySessionBuilder{tokenregistry.TokenRegistrySession{
-		Contract:     c.TokenRegistry,
+		Contract:     c.TokenRegistry.TokenRegistry,
 		TransactOpts: *c.Blockchain.GetAccount(),
 	}}
 }

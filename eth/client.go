@@ -40,11 +40,9 @@ type Client struct {
 	ChainState             models.ChainState
 	Blockchain             chain.Connection
 	Rollup                 *Rollup
-	TokenRegistry          *tokenregistry.TokenRegistry
-	TokenRegistryABI       *abi.ABI
+	TokenRegistry          *TokenRegistry
 	DepositManager         *depositmanager.DepositManager
 	DepositManagerABI      *abi.ABI
-	tokenRegistryContract  *bind.BoundContract
 	depositManagerContract *bind.BoundContract
 	blocksToFinalise       *int64
 	maxDepositSubTreeDepth *uint8
@@ -92,11 +90,15 @@ func NewClient(blockchain chain.Connection, params *NewClientParams) (*Client, e
 				BoundContract: rollupContract,
 			},
 		},
-		TokenRegistry:          params.TokenRegistry,
-		TokenRegistryABI:       &tokenRegistryAbi,
+		TokenRegistry: &TokenRegistry{
+			TokenRegistry: params.TokenRegistry,
+			Contract: Contract{
+				ABI:           &tokenRegistryAbi,
+				BoundContract: tokenRegistryContract,
+			},
+		},
 		DepositManager:         params.DepositManager,
 		DepositManagerABI:      &depositManagerAbi,
-		tokenRegistryContract:  tokenRegistryContract,
 		depositManagerContract: depositManagerContract,
 		AccountManager:         accountManager,
 	}, nil

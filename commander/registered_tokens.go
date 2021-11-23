@@ -54,7 +54,7 @@ func (c *Commander) unmeasuredSyncTokens(startBlock, endBlock uint64) (*int, err
 			return nil, err
 		}
 
-		if !bytes.Equal(tx.Data()[:4], c.client.TokenRegistryABI.Methods["finaliseRegistration"].ID) {
+		if !bytes.Equal(tx.Data()[:4], c.client.TokenRegistry.ABI.Methods["finaliseRegistration"].ID) {
 			continue // TODO handle internal transactions
 		}
 
