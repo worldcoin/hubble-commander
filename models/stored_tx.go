@@ -13,6 +13,7 @@ const (
 	storedTxBytesLength               = 213
 	storedTxTransferBodyLength        = 4
 	storedTxCreate2TransferBodyLength = PublicKeyLength
+	storedTxMassMigrationBodyLength   = 32
 )
 
 var (
@@ -272,4 +273,21 @@ func (t *StoredTxCreate2TransferBody) SetBytes(data []byte) error {
 
 func (t *StoredTxCreate2TransferBody) BytesLen() int {
 	return storedTxCreate2TransferBodyLength
+}
+
+type StoredTxMassMigrationBody struct {
+	SpokeID Uint256
+}
+
+func (t *StoredTxMassMigrationBody) Bytes() []byte {
+	return t.SpokeID.Bytes()
+}
+
+func (t *StoredTxMassMigrationBody) SetBytes(data []byte) error {
+	t.SpokeID.SetBytes(data)
+	return nil
+}
+
+func (t *StoredTxMassMigrationBody) BytesLen() int {
+	return storedTxMassMigrationBodyLength
 }
