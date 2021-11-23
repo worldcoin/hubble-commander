@@ -11,12 +11,15 @@ import (
 	"github.com/pkg/errors"
 )
 
+// TODO move to eth.Client and reuse rollupAbi
+
 // DecodeBatchCalldata
+//   uint256 batchID
 //   bytes32[] stateRoots,
 //   uint256[2][] signatures,
 //   uint256[] feeReceivers,
 //   bytes[] txss
-func DecodeBatchCalldata(calldata []byte, batchID *models.Uint256) ([]DecodedCommitment, error) {
+func DecodeBatchCalldata(calldata []byte) ([]DecodedCommitment, error) {
 	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -27,10 +30,11 @@ func DecodeBatchCalldata(calldata []byte, batchID *models.Uint256) ([]DecodedCom
 		return nil, errors.WithStack(err)
 	}
 
-	stateRoots := unpacked[0].([][32]uint8)
-	signatures := unpacked[1].([][2]*big.Int)
-	feeReceivers := unpacked[2].([]*big.Int)
-	txss := unpacked[3].([][]uint8)
+	batchID := unpacked[0].(*big.Int)
+	stateRoots := unpacked[1].([][32]uint8)
+	signatures := unpacked[2].([][2]*big.Int)
+	feeReceivers := unpacked[3].([]*big.Int)
+	txss := unpacked[4].([][]uint8)
 
 	size := len(stateRoots)
 
@@ -38,7 +42,7 @@ func DecodeBatchCalldata(calldata []byte, batchID *models.Uint256) ([]DecodedCom
 	for i := 0; i < size; i++ {
 		commitments[i] = DecodedCommitment{
 			ID: models.CommitmentID{
-				BatchID:      *batchID,
+				BatchID:      models.MakeUint256FromBig(*batchID),
 				IndexInBatch: uint8(i),
 			},
 			StateRoot:         common.BytesToHash(stateRoots[i][:]),

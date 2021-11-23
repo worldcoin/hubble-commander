@@ -16,7 +16,7 @@ func (c *TxsContext) SubmitBatch(batch *models.Batch, commitments []models.Commi
 	default:
 	}
 
-	tx, err := c.Executor.SubmitBatch(c.client, commitments)
+	tx, err := c.client.SubmitTxBatch(batch.Type, &batch.ID, commitments)
 	if err != nil {
 		return err
 	}

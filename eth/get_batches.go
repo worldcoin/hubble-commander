@@ -136,7 +136,7 @@ func (c *Client) getTxBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transac
 	if err != nil {
 		return nil, err
 	}
-	commitments, err := encoder.DecodeBatchCalldata(tx.Data(), &batch.ID)
+	commitments, err := encoder.DecodeBatchCalldata(tx.Data())
 	if err != nil {
 		return nil, err
 	}
