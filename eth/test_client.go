@@ -13,7 +13,6 @@ type TestClient struct {
 	*Client
 	*simulator.Simulator
 	ExampleTokenAddress common.Address
-	CommanderMetrics    *metrics.CommanderMetrics
 }
 
 var (
@@ -62,6 +61,5 @@ func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig
 		Client:              client,
 		Simulator:           sim,
 		ExampleTokenAddress: contracts.ExampleTokenAddress,
-		CommanderMetrics:    metrics.NewCommanderMetrics(),
 	}, nil
 }
