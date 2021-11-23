@@ -12,7 +12,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/proofofburn"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/contracts/spokeregistry"
-	"github.com/Worldcoin/hubble-commander/contracts/test/exampletoken"
+	"github.com/Worldcoin/hubble-commander/contracts/test/customtoken"
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/transfer"
 	"github.com/Worldcoin/hubble-commander/contracts/vault"
@@ -214,10 +214,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 	}
 
 	log.Println("Deploying TestExampleToken")
-	exampleTokenAddress, exampleTokenTx, _, err := exampletoken.DeployTestExampleToken(
-		c.GetAccount(),
-		c.GetBackend(),
-	)
+	exampleTokenAddress, exampleTokenTx, _, err := customtoken.DeployTestCustomToken(c.GetAccount(), c.GetBackend(), "ExampleToken", "EXP")
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
