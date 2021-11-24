@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/erc20"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -96,10 +97,16 @@ func (s *DepositBatchesTestSuite) TestSyncRemoteBatch_SyncsDepositBatch() {
 func (s *DepositBatchesTestSuite) submitBatch() {
 	s.queueFourDeposits()
 
-	depositsCtx := executor.NewDepositsContext(s.storage.Storage, s.client.Client, s.cfg.Rollup, context.Background())
+	depositsCtx := executor.NewDepositsContext(
+		s.storage.Storage,
+		s.client.Client,
+		s.cfg.Rollup,
+		metrics.NewCommanderMetrics(),
+		context.Background(),
+	)
 	defer depositsCtx.Rollback(nil)
 
-	err := depositsCtx.CreateAndSubmitBatch()
+	_, _, err := depositsCtx.CreateAndSubmitBatch()
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
