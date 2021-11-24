@@ -24,7 +24,7 @@ import (
 
 const queueDepositGasLimit = 600_000
 
-func testSendDepositBatch(t *testing.T, client jsonrpc.RPCClient) {
+func testSubmitDepositBatch(t *testing.T, client jsonrpc.RPCClient) {
 	sendDepositBatch(t, client)
 	waitForBatch(t, client, models.MakeUint256(3))
 }
