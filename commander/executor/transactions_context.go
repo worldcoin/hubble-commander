@@ -5,6 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -21,10 +22,11 @@ func NewTxsContext(
 	storage *st.Storage,
 	client *eth.Client,
 	cfg *config.RollupConfig,
+	commanderMetrics *metrics.CommanderMetrics,
 	ctx context.Context,
 	batchType batchtype.BatchType,
 ) *TxsContext {
-	executionCtx := NewExecutionContext(storage, client, cfg, ctx)
+	executionCtx := NewExecutionContext(storage, client, cfg, commanderMetrics, ctx)
 	return newTxsContext(executionCtx, batchType)
 }
 

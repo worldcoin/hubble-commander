@@ -4,16 +4,34 @@ const (
 	namespace = "hubble"
 
 	// Subsystems
-	apiSubsystem = "api"
+	apiSubsystem     = "api"
+	rollupSubsystem  = "rollup"
+	syncingSubsystem = "syncing"
 )
 
 // API metrics
 const (
 	// Transaction labels
-	TransferLabel = "transfer"
-	C2TLabel      = "create2transfer"
+	TransferTxLabel = "transfer"
+	C2TTxLabel      = "create2transfer"
 
 	// Transaction statuses
 	AcceptedTxStatus = "accepted"
 	RejectedTxStatus = "rejected"
+)
+
+// Rollup metrics
+const (
+	TransferBatchLabel = "transfer"
+	C2TBatchLabel      = "create2transfer"
+	DepositBatchLabel  = "deposit"
+)
+
+// Syncing metrics
+const (
+	SyncAccountsMethod = "sync_accounts"
+	SyncBatchesMethod  = "sync_batches"
+	SyncRangeMethod    = "sync_range"
+	SyncDepositsMethod = "sync_deposits"
+	SyncTokensMethod   = "sync_tokens"
 )

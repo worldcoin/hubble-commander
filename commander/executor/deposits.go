@@ -1,35 +1,32 @@
 package executor
 
 import (
-	"time"
-
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/pkg/errors"
 )
 
 var ErrNotEnoughDeposits = NewRollupError("not enough deposits")
 
-func (c *DepositsContext) CreateAndSubmitBatch() error {
-	startTime := time.Now()
+func (c *DepositsContext) CreateAndSubmitBatch() (*models.Batch, *int, error) {
 	batch, err := c.NewPendingBatch(batchtype.Deposit)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	vacancyProof, err := c.createCommitment(batch.ID)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	err = c.SubmitBatch(batch, vacancyProof)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	logNewBatch(batch, 1, startTime)
-	return nil
+	return batch, ref.Int(1), nil
 }
 
 func (c *DepositsContext) createCommitment(batchID models.Uint256) (*models.SubtreeVacancyProof, error) {

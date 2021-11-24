@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/contracts/erc20"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -47,7 +48,7 @@ func (s *SyncDepositBatchTestSuite) SetupTest() {
 
 	s.prepareDeposits()
 
-	s.depositsCtx = executor.NewDepositsContext(s.storage.Storage, s.client.Client, nil, context.Background())
+	s.depositsCtx = executor.NewDepositsContext(s.storage.Storage, s.client.Client, nil, metrics.NewCommanderMetrics(), context.Background())
 	s.syncCtx = NewTestContext(s.storage.Storage, s.client.Client, nil, batchtype.Deposit)
 }
 
@@ -58,7 +59,7 @@ func (s *SyncDepositBatchTestSuite) TearDownTest() {
 }
 
 func (s *SyncDepositBatchTestSuite) TestSyncBatch_SingleBatch() {
-	err := s.depositsCtx.CreateAndSubmitBatch()
+	_, _, err := s.depositsCtx.CreateAndSubmitBatch()
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 	s.depositsCtx.Rollback(nil)
@@ -85,7 +86,7 @@ func (s *SyncDepositBatchTestSuite) TestSyncBatch_SingleBatch() {
 }
 
 func (s *SyncDepositBatchTestSuite) TestSyncBatch_SetsUserStates() {
-	err := s.depositsCtx.CreateAndSubmitBatch()
+	_, _, err := s.depositsCtx.CreateAndSubmitBatch()
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 	s.depositsCtx.Rollback(nil)
@@ -106,7 +107,7 @@ func (s *SyncDepositBatchTestSuite) TestSyncBatch_SetsUserStates() {
 }
 
 func (s *SyncDepositBatchTestSuite) TestSyncBatch_SyncsExistingBatch() {
-	err := s.depositsCtx.CreateAndSubmitBatch()
+	_, _, err := s.depositsCtx.CreateAndSubmitBatch()
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 	err = s.depositsCtx.Commit()

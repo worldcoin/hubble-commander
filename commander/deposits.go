@@ -4,25 +4,42 @@ import (
 	"bytes"
 	"context"
 
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func (c *Commander) syncDeposits(start, end uint64) error {
-	err := c.syncQueuedDeposits(start, end)
+	var depositSubTrees []models.PendingDepositSubTree
+
+	duration, err := metrics.MeasureDuration(func() error {
+		var err error
+
+		err = c.syncQueuedDeposits(start, end)
+		if err != nil {
+			return err
+		}
+
+		depositSubTrees, err = c.fetchDepositSubTrees(start, end)
+		if err != nil {
+			return err
+		}
+
+		if len(depositSubTrees) > 0 {
+			return c.saveSyncedSubTrees(depositSubTrees)
+		}
+
+		return nil
+	})
 	if err != nil {
 		return err
 	}
 
-	depositSubTrees, err := c.fetchDepositSubTrees(start, end)
-	if err != nil {
-		return err
-	}
-
-	if len(depositSubTrees) > 0 {
-		return c.saveSyncedSubTrees(depositSubTrees)
-	}
+	metrics.SaveHistogramMeasurement(duration, c.metrics.SyncingMethodDuration, prometheus.Labels{
+		"method": metrics.SyncDepositsMethod,
+	})
 
 	return nil
 }

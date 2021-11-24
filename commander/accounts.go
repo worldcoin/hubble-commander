@@ -5,11 +5,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -18,15 +20,34 @@ var ErrAccountLeavesInconsistency = fmt.Errorf("inconsistency in account leaves 
 // TODO extract event filtering logic to eth.Client
 
 func (c *Commander) syncAccounts(start, end uint64) error {
-	newAccountsSingle, err := c.syncSingleAccounts(start, end)
+	var newAccountsSingle *int
+	var newAccountsBatch *int
+
+	duration, err := metrics.MeasureDuration(func() error {
+		var err error
+
+		newAccountsSingle, err = c.syncSingleAccounts(start, end)
+		if err != nil {
+			return err
+		}
+		newAccountsBatch, err = c.syncBatchAccounts(start, end)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
 		return err
 	}
-	newAccountsBatch, err := c.syncBatchAccounts(start, end)
-	if err != nil {
-		return err
-	}
-	logAccountsCount(*newAccountsSingle + *newAccountsBatch)
+
+	metrics.SaveHistogramMeasurement(duration, c.metrics.SyncingMethodDuration, prometheus.Labels{
+		"method": metrics.SyncAccountsMethod,
+	})
+
+	newAccountsCount := *newAccountsSingle + *newAccountsBatch
+	logNewSyncedAccountsCount(newAccountsCount)
+
 	return nil
 }
 
@@ -143,7 +164,7 @@ func validateExistingAccounts(accountTree *storage.AccountTree, accounts ...mode
 	return nil
 }
 
-func logAccountsCount(newAccountsCount int) {
+func logNewSyncedAccountsCount(newAccountsCount int) {
 	if newAccountsCount > 0 {
 		log.Printf("Found %d new account(s)", newAccountsCount)
 	}

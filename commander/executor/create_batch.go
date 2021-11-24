@@ -1,44 +1,29 @@
 package executor
 
 import (
-	"time"
-
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
-func (c *TxsContext) CreateAndSubmitBatch() error {
-	startTime := time.Now()
+func (c *TxsContext) CreateAndSubmitBatch() (*models.Batch, *int, error) {
 	batch, err := c.NewPendingBatch(c.BatchType)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	commitments, err := c.CreateCommitments()
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	err = c.SubmitBatch(batch, commitments)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	logNewBatch(batch, len(commitments), startTime)
-	return nil
-}
-
-func logNewBatch(batch *models.Batch, commitmentsCount int, startTime time.Time) {
-	log.Printf(
-		"Submitted a %s batch with %d commitment(s) on chain in %s. Batch ID: %d. Transaction hash: %v",
-		batch.Type.String(),
-		commitmentsCount,
-		time.Since(startTime).Round(time.Millisecond).String(),
-		batch.ID.Uint64(),
-		batch.TransactionHash,
-	)
+	return batch, ref.Int(len(commitments)), nil
 }
 
 func (c *ExecutionContext) NewPendingBatch(batchType batchtype.BatchType) (*models.Batch, error) {
