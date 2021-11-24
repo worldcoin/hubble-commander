@@ -1,12 +1,12 @@
 package executor
 
 import (
-	"time"
-
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -72,39 +72,51 @@ func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
 func (c *TxsContext) createCommitment(pendingTxs models.GenericTransactionArray, commitmentID *models.CommitmentID) (
 	CreateCommitmentResult, error,
 ) {
-	startTime := time.Now()
+	var commitment *models.CommitmentWithTxs
+	var executeResult ExecuteTxsForCommitmentResult
 
-	feeReceiver, err := c.getCommitmentFeeReceiver()
-	if err != nil {
-		return nil, err
-	}
-
-	initialStateRoot, err := c.storage.StateTree.Root()
-	if err != nil {
-		return nil, err
-	}
-
-	executeResult, err := c.executeTxsForCommitment(pendingTxs, feeReceiver)
-	if errors.Is(err, ErrNotEnoughTxs) {
-		if revertErr := c.storage.StateTree.RevertTo(*initialStateRoot); revertErr != nil {
-			return nil, revertErr
+	duration, err := metrics.MeasureDuration(func() error {
+		feeReceiver, err := c.getCommitmentFeeReceiver()
+		if err != nil {
+			return err
 		}
-		return nil, err
-	}
+
+		initialStateRoot, err := c.storage.StateTree.Root()
+		if err != nil {
+			return err
+		}
+
+		executeResult, err = c.executeTxsForCommitment(pendingTxs, feeReceiver)
+		if errors.Is(err, ErrNotEnoughTxs) {
+			if revertErr := c.storage.StateTree.RevertTo(*initialStateRoot); revertErr != nil {
+				return revertErr
+			}
+			return err
+		}
+		if err != nil {
+			return err
+		}
+
+		commitment, err = c.BuildCommitment(executeResult, commitmentID, feeReceiver.StateID)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	commitment, err := c.BuildCommitment(executeResult, commitmentID, feeReceiver.StateID)
-	if err != nil {
-		return nil, err
-	}
+	metrics.SaveHistogramMeasurement(duration, c.commanderMetrics.CommitmentBuildDuration, prometheus.Labels{
+		"type": metrics.BatchTypeToMetricsBatchType(commitment.Type),
+	})
 
 	log.Printf(
 		"Created a %s commitment from %d transactions in %s",
 		c.BatchType,
 		executeResult.AppliedTxs().Len(),
-		time.Since(startTime).Round(time.Millisecond).String(),
+		duration,
 	)
 
 	return c.Executor.NewCreateCommitmentResult(executeResult, commitment), nil

@@ -46,10 +46,10 @@ func (b *Batch) SetBytes(data []byte) error {
 	b.ID.SetBytes(data[0:32])
 	b.Type = batchtype.BatchType(data[32])
 	b.TransactionHash.SetBytes(data[33:65])
-	b.Hash = DecodeHashPointer(data[65:98])
+	b.Hash = decodeHashPointer(data[65:98])
 	b.FinalisationBlock = decodeUint32Pointer(data[98:103])
-	b.AccountTreeRoot = DecodeHashPointer(data[103:136])
-	b.PrevStateRoot = DecodeHashPointer(data[136:169])
+	b.AccountTreeRoot = decodeHashPointer(data[103:136])
+	b.PrevStateRoot = decodeHashPointer(data[136:169])
 	b.SubmissionTime = timestamp
 	return nil
 }

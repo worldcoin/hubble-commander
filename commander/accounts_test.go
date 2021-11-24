@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -32,6 +33,7 @@ func (s *AccountsTestSuite) SetupTest() {
 	s.cmd = &Commander{
 		storage: testStorage.Storage,
 		client:  s.testClient.Client,
+		metrics: metrics.NewCommanderMetrics(),
 	}
 }
 

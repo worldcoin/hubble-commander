@@ -10,6 +10,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -61,6 +62,7 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	s.cmd = NewCommander(s.cfg, nil)
 	s.cmd.client = s.testClient.Client
 	s.cmd.storage = s.testStorage.Storage
+	s.cmd.metrics = metrics.NewCommanderMetrics()
 	s.cmd.workersContext, s.cmd.stopWorkers = context.WithCancel(context.Background())
 
 	domain, err := s.testClient.GetDomain()
@@ -218,7 +220,12 @@ func seedDB(t *testing.T, storage *st.Storage, wallets []bls.Wallet) {
 	})
 	require.NoError(t, err)
 
-	err = storage.AccountTree.SetSingle(&models.AccountLeaf{
+	setAccountLeaves(t, storage, wallets)
+	setStateLeaves(t, storage)
+}
+
+func setAccountLeaves(t *testing.T, storage *st.Storage, wallets []bls.Wallet) {
+	err := storage.AccountTree.SetSingle(&models.AccountLeaf{
 		PubKeyID:  0,
 		PublicKey: *wallets[0].PublicKey(),
 	})
@@ -229,8 +236,10 @@ func seedDB(t *testing.T, storage *st.Storage, wallets []bls.Wallet) {
 		PublicKey: *wallets[1].PublicKey(),
 	})
 	require.NoError(t, err)
+}
 
-	_, err = storage.StateTree.Set(0, &models.UserState{
+func setStateLeaves(t *testing.T, storage *st.Storage) {
+	_, err := storage.StateTree.Set(0, &models.UserState{
 		PubKeyID: 0,
 		TokenID:  models.MakeUint256(0),
 		Balance:  models.MakeUint256(1000),

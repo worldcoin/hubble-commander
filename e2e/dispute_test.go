@@ -18,6 +18,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -417,7 +418,7 @@ func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
 	rollupContract, err := rollup.NewRollup(chainState.Rollup, backend)
 	require.NoError(t, err)
 
-	ethClient, err := eth.NewClient(blockchain, &eth.NewClientParams{
+	ethClient, err := eth.NewClient(blockchain, metrics.NewCommanderMetrics(), &eth.NewClientParams{
 		ChainState:      chainState,
 		AccountRegistry: accountRegistry,
 		TokenRegistry:   tokenRegistry,

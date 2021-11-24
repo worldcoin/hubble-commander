@@ -33,7 +33,7 @@ func (c *Client) retrieveDepositIDAndL2Amount(receipt *types.Receipt) (*models.D
 	}
 
 	event := new(depositmanager.DepositManagerDepositQueued)
-	err = c.depositManagerContract.UnpackLog(event, DepositQueuedEvent, *log)
+	err = c.DepositManager.BoundContract.UnpackLog(event, DepositQueuedEvent, *log)
 	if err != nil {
 		return nil, nil, errors.WithStack(err)
 	}
