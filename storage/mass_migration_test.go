@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -47,7 +48,7 @@ func (s *MassMigrationTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *TransferTestSuite) TestAddMassMigration_AddAndRetrieve() {
+func (s *MassMigrationTestSuite) TestAddMassMigration_AddAndRetrieve() {
 	err := s.storage.AddMassMigration(&massMigration)
 	s.NoError(err)
 
@@ -58,7 +59,7 @@ func (s *TransferTestSuite) TestAddMassMigration_AddAndRetrieve() {
 	s.Equal(expected, *res)
 }
 
-func (s *TransferTestSuite) TestAddMassMigration_AddAndRetrieveIncludedMassMigration() {
+func (s *MassMigrationTestSuite) TestAddMassMigration_AddAndRetrieveIncludedMassMigration() {
 	includedMassMigration := massMigration
 	includedMassMigration.CommitmentID = &models.CommitmentID{
 		BatchID:      models.MakeUint256(3),
@@ -72,14 +73,7 @@ func (s *TransferTestSuite) TestAddMassMigration_AddAndRetrieveIncludedMassMigra
 	s.Equal(includedMassMigration, *res)
 }
 
-func (s *TransferTestSuite) TestGetMassMigration_NonexistentMassMigration() {
-	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
-	res, err := s.storage.GetMassMigration(hash)
-	s.ErrorIs(err, NewNotFoundError("transaction"))
-	s.Nil(res)
-}
-
-func (s *TransferTestSuite) TestBatchAddMassMigration() {
+func (s *MassMigrationTestSuite) TestBatchAddMassMigration() {
 	txs := make([]models.MassMigration, 2)
 	txs[0] = massMigration
 	txs[0].Hash = utils.RandomHash()
@@ -97,9 +91,75 @@ func (s *TransferTestSuite) TestBatchAddMassMigration() {
 	s.Equal(txs[1], *massMigration)
 }
 
-func (s *TransferTestSuite) TestBatchAddMassMigration_NoTransfers() {
+func (s *MassMigrationTestSuite) TestBatchAddMassMigration_NoTransfers() {
 	err := s.storage.BatchAddMassMigration([]models.MassMigration{})
 	s.ErrorIs(err, ErrNoRowsAffected)
+}
+
+func (s *MassMigrationTestSuite) TestGetMassMigration_NonexistentMassMigration() {
+	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
+	res, err := s.storage.GetMassMigration(hash)
+	s.ErrorIs(err, NewNotFoundError("transaction"))
+	s.Nil(res)
+}
+
+func (s *MassMigrationTestSuite) TestGetPendingMassMigrations() {
+	massMigrations := make([]models.MassMigration, 4)
+	for i := range massMigrations {
+		massMigrations[i] = massMigration
+		massMigrations[i].Hash = utils.RandomHash()
+	}
+	massMigrations[2].CommitmentID = &models.CommitmentID{BatchID: models.MakeUint256(3)}
+	massMigrations[3].ErrorMessage = ref.String("A very boring error message")
+
+	err := s.storage.BatchAddMassMigration(massMigrations)
+	s.NoError(err)
+
+	res, err := s.storage.GetPendingMassMigrations()
+	s.NoError(err)
+
+	s.Len(res, 2)
+	s.Contains(res, massMigrations[0])
+	s.Contains(res, massMigrations[1])
+}
+
+func (s *MassMigrationTestSuite) TestGetPendingMassMigration_OrdersMassMigrationsByNonceAndTxHashAscending() {
+	massMigration.Nonce = models.MakeUint256(1)
+	massMigration.Hash = utils.RandomHash()
+	massMigration2 := massMigration
+	massMigration2.Nonce = models.MakeUint256(4)
+	massMigration2.Hash = utils.RandomHash()
+	massMigration3 := massMigration
+	massMigration3.Nonce = models.MakeUint256(7)
+	massMigration3.Hash = utils.RandomHash()
+	massMigration4 := massMigration
+	massMigration4.Nonce = models.MakeUint256(5)
+	massMigration4.Hash = common.Hash{66, 66, 66, 66}
+	massMigration5 := massMigration
+	massMigration5.Nonce = models.MakeUint256(5)
+	massMigration5.Hash = common.Hash{65, 65, 65, 65}
+
+	massMigrations := []models.MassMigration{
+		massMigration,
+		massMigration2,
+		massMigration3,
+		massMigration4,
+		massMigration5,
+	}
+
+	err := s.storage.BatchAddMassMigration(massMigrations)
+	s.NoError(err)
+
+	res, err := s.storage.GetPendingMassMigrations()
+	s.NoError(err)
+
+	s.Equal(models.MassMigrationArray{
+		massMigration,
+		massMigration2,
+		massMigration5,
+		massMigration4,
+		massMigration3,
+	}, res)
 }
 
 func TestMassMigrationTestSuite(t *testing.T) {
