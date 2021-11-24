@@ -171,28 +171,6 @@ Afterwards, run this to start the commander:
 docker run -it -v $(pwd)/chain-spec:/go/src/app/chain-spec -p 8080:8080 --env-file .env.docker ghcr.io/worldcoin/hubble-commander:latest start
 ```
 
-## Running E2E tests against a Docker image
-
-Build the docker image:
-
-```shell
-docker build . -t ghcr.io/worldcoin/hubble-commander:latest
-```
-
-Export variables from the `.env.docker` to the currently running shell:
-
-```shell
-export $(grep -v '#.*' .env.docker | xargs)
-```
-
-Run the E2E tests:
-
-```shell
-make test-e2e
-```
-
-The Docker container will be started and stopped automatically.
-
 ## Running E2E tests locally
 
 Start commander in a separate terminal window and wait until it finished bootstrapping:
