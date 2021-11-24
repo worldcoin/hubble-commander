@@ -17,7 +17,7 @@ var (
 type StoredTxReceipt struct {
 	Hash         common.Hash
 	CommitmentID *CommitmentID
-	ToStateID    *uint32 // only for C2T
+	ToStateID    *uint32 // specified for C2Ts, nil for Transfers and MassMigrations
 	ErrorMessage *string
 }
 
@@ -35,6 +35,15 @@ func NewStoredTxReceiptFromCreate2Transfer(t *Create2Transfer) *StoredTxReceipt 
 		CommitmentID: t.CommitmentID,
 		ToStateID:    t.ToStateID,
 		ErrorMessage: t.ErrorMessage,
+	}
+}
+
+func NewStoredTxReceiptFromMassMigration(m *MassMigration) *StoredTxReceipt {
+	return &StoredTxReceipt{
+		Hash:         m.Hash,
+		CommitmentID: m.CommitmentID,
+		ToStateID:    nil,
+		ErrorMessage: m.ErrorMessage,
 	}
 }
 
