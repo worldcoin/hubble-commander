@@ -25,11 +25,11 @@ import (
 const queueDepositGasLimit = 600_000
 
 func testSubmitDepositBatch(t *testing.T, client jsonrpc.RPCClient) {
-	sendDepositBatch(t, client)
+	makeDeposits(t, client)
 	waitForBatch(t, client, models.MakeUint256(3))
 }
 
-func sendDepositBatch(t *testing.T, client jsonrpc.RPCClient) {
+func makeDeposits(t *testing.T, client jsonrpc.RPCClient) {
 	ethClient := newEthClient(t, client)
 
 	tokenAddress := deployExampleToken(t, ethClient)
