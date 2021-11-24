@@ -162,6 +162,29 @@ func (s *MassMigrationTestSuite) TestGetPendingMassMigration_OrdersMassMigration
 	}, res)
 }
 
+func (s *TransferTestSuite) TestMarkMassMigrationsAsIncluded() {
+	txs := make([]models.MassMigration, 2)
+	for i := 0; i < len(txs); i++ {
+		txs[i] = massMigration
+		txs[i].Hash = utils.RandomHash()
+		err := s.storage.AddMassMigration(&txs[i])
+		s.NoError(err)
+	}
+
+	commitmentID := models.CommitmentID{
+		BatchID:      models.MakeUint256(1),
+		IndexInBatch: 1,
+	}
+	err := s.storage.MarkMassMigrationsAsIncluded(txs, &commitmentID)
+	s.NoError(err)
+
+	for i := range txs {
+		tx, err := s.storage.GetMassMigration(txs[i].Hash)
+		s.NoError(err)
+		s.Equal(commitmentID, *tx.CommitmentID)
+	}
+}
+
 func TestMassMigrationTestSuite(t *testing.T) {
 	suite.Run(t, new(MassMigrationTestSuite))
 }

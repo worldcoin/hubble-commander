@@ -85,3 +85,17 @@ func (s *TransactionStorage) unsafeGetPendingMassMigrations() ([]models.MassMigr
 
 	return txs, nil
 }
+
+func (s *TransactionStorage) MarkMassMigrationsAsIncluded(txs []models.MassMigration, commitmentID *models.CommitmentID) error {
+	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
+		for i := range txs {
+			txReceipt := models.NewStoredTxReceiptFromMassMigration(&txs[i])
+			txReceipt.CommitmentID = commitmentID
+			err := txStorage.addStoredTxReceipt(txReceipt)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
