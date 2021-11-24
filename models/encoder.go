@@ -31,7 +31,7 @@ func EncodeHashPointer(value *common.Hash) []byte {
 	return b
 }
 
-func DecodeHashPointer(data []byte) *common.Hash {
+func decodeHashPointer(data []byte) *common.Hash {
 	if data[0] == 0 {
 		return nil
 	}
@@ -105,7 +105,7 @@ func EncodeCommitmentIDPointer(id *CommitmentID) []byte {
 	return b
 }
 
-func DecodeCommitmentIDPointer(data []byte) (*CommitmentID, error) {
+func decodeCommitmentIDPointer(data []byte) (*CommitmentID, error) {
 	if data[0] == 0 {
 		return nil, nil
 	}
