@@ -9,7 +9,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/contracts/erc20"
 	"github.com/Worldcoin/hubble-commander/contracts/test/exampletoken"
-	"github.com/Worldcoin/hubble-commander/e2e/setup"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -25,13 +24,13 @@ import (
 
 const queueDepositGasLimit = 600_000
 
-func testSendDepositBatch(t *testing.T, cmd setup.Commander) {
-	sendDepositBatch(t, cmd)
-	waitForDepositBatch(t, cmd.Client(), models.MakeUint256(3))
+func testSendDepositBatch(t *testing.T, client jsonrpc.RPCClient) {
+	sendDepositBatch(t, client)
+	waitForDepositBatch(t, client, models.MakeUint256(3))
 }
 
-func sendDepositBatch(t *testing.T, cmd setup.Commander) {
-	ethClient := newEthClient(t, cmd.Client())
+func sendDepositBatch(t *testing.T, client jsonrpc.RPCClient) {
+	ethClient := newEthClient(t, client)
 
 	tokenAddress := deployExampleToken(t, ethClient)
 	tokenID := registerToken(t, ethClient, tokenAddress)

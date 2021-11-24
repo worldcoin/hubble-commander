@@ -55,7 +55,7 @@ func TestCommanderSync(t *testing.T) {
 	testGetTransaction(t, activeCommander.Client(), firstCreate2TransferHash)
 	send31MoreCreate2Transfers(t, activeCommander.Client(), senderWallet, wallets, 33)
 
-	sendDepositBatch(t, activeCommander)
+	sendDepositBatch(t, activeCommander.Client())
 
 	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstTransferHash)
 	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstCreate2TransferHash)
