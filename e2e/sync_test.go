@@ -59,7 +59,7 @@ func TestCommanderSync(t *testing.T) {
 
 	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstTransferHash)
 	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstCreate2TransferHash)
-	waitForDepositBatch(t, activeCommander.Client(), models.MakeUint256(3))
+	waitForBatch(t, activeCommander.Client(), models.MakeUint256(3))
 
 	cfg.Bootstrap.Prune = true
 	cfg.API.Port = "5002"

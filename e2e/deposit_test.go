@@ -26,7 +26,7 @@ const queueDepositGasLimit = 600_000
 
 func testSendDepositBatch(t *testing.T, client jsonrpc.RPCClient) {
 	sendDepositBatch(t, client)
-	waitForDepositBatch(t, client, models.MakeUint256(3))
+	waitForBatch(t, client, models.MakeUint256(3))
 }
 
 func sendDepositBatch(t *testing.T, client jsonrpc.RPCClient) {
@@ -85,7 +85,7 @@ func deployExampleToken(t *testing.T, ethClient *eth.Client) common.Address {
 	return tokenAddress
 }
 
-func waitForDepositBatch(t *testing.T, client jsonrpc.RPCClient, batchID models.Uint256) {
+func waitForBatch(t *testing.T, client jsonrpc.RPCClient, batchID models.Uint256) {
 	require.Eventually(t, func() bool {
 		var batch dto.BatchWithRootAndCommitments
 		var rpcError *jsonrpc.RPCError
