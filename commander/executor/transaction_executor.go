@@ -69,7 +69,7 @@ func (e *TransferExecutor) NewCreateCommitmentResult(
 	commitment *models.CommitmentWithTxs,
 ) CreateCommitmentResult {
 	return &CreateTransferCommitmentResult{
-		commitment:    commitment,
+		commitment: commitment,
 	}
 }
 

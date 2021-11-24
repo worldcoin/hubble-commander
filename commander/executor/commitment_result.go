@@ -8,7 +8,7 @@ type CreateCommitmentResult interface {
 }
 
 type CreateTransferCommitmentResult struct {
-	commitment    *models.CommitmentWithTxs
+	commitment *models.CommitmentWithTxs
 }
 
 func (c *CreateTransferCommitmentResult) PendingAccounts() []models.AccountLeaf {

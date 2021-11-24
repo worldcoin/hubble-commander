@@ -1,25 +1,24 @@
 package executor
 
 import (
+	"testing"
+
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"testing"
 )
-
 
 type TxQueueTestSuite struct {
 	*require.Assertions
 	suite.Suite
 }
 
-
 func (s *TxQueueTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func(s *TxQueueTestSuite) RemoveFromQueueTransfer() {
+func (s *TxQueueTestSuite) RemoveFromQueueTransfer() {
 	transfer1 := createRandomTransferWithHash()
 	transfer2 := createRandomTransferWithHash()
 	transfer3 := createRandomTransferWithHash()
@@ -32,7 +31,7 @@ func(s *TxQueueTestSuite) RemoveFromQueueTransfer() {
 	s.Equal(models.TransferArray{transfer1, transfer3}, transfers.PickTxsForCommitment())
 }
 
-func(s *TxQueueTestSuite) TestTxQueue_RemoveFromQueue_C2T() {
+func (s *TxQueueTestSuite) TestTxQueue_RemoveFromQueue_C2T() {
 	transfer1 := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
 			Hash: utils.RandomHash(),

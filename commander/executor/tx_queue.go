@@ -14,8 +14,7 @@ func (q *TxQueue) PickTxsForCommitment() models.GenericTransactionArray {
 	return q.transactions
 }
 
-
-func (q *TxQueue) RemoveFromQueue(toRemove models.GenericTransactionArray)  {
+func (q *TxQueue) RemoveFromQueue(toRemove models.GenericTransactionArray) {
 	outputIndex := 0
 	for i := 0; i < q.transactions.Len(); i++ {
 		tx := q.transactions.At(i)
