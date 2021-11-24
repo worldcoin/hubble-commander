@@ -11,6 +11,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -33,7 +34,7 @@ func (s *SyncDepositBatchTestSuite) SetupSuite() {
 	s.depositSubtree = models.PendingDepositSubTree{
 		ID:       models.MakeUint256(1),
 		Root:     utils.RandomHash(),
-		Deposits: getFourDeposits(),
+		Deposits: testutils.GetFourDeposits(),
 	}
 }
 
@@ -180,19 +181,6 @@ func (s *SyncDepositBatchTestSuite) queueFourDeposits() {
 	for i := 0; i < 4; i++ {
 		s.queueDeposit()
 	}
-}
-
-func getFourDeposits() []models.PendingDeposit {
-	deposits := make([]models.PendingDeposit, 4)
-	for i := range deposits {
-		deposits[i] = models.PendingDeposit{
-			ID:         models.DepositID{BlockNumber: 1, LogIndex: uint32(i)},
-			ToPubKeyID: 1,
-			TokenID:    models.MakeUint256(0),
-			L2Amount:   models.MakeUint256(10000000000),
-		}
-	}
-	return deposits
 }
 
 func (s *SyncDepositBatchTestSuite) queueDeposit() *models.PendingDeposit {
