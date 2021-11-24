@@ -79,6 +79,29 @@ func (s *TransferTestSuite) TestGetMassMigration_NonexistentMassMigration() {
 	s.Nil(res)
 }
 
+func (s *TransferTestSuite) TestBatchAddMassMigration() {
+	txs := make([]models.MassMigration, 2)
+	txs[0] = massMigration
+	txs[0].Hash = utils.RandomHash()
+	txs[1] = massMigration
+	txs[1].Hash = utils.RandomHash()
+
+	err := s.storage.BatchAddMassMigration(txs)
+	s.NoError(err)
+
+	massMigration, err := s.storage.GetMassMigration(txs[0].Hash)
+	s.NoError(err)
+	s.Equal(txs[0], *massMigration)
+	massMigration, err = s.storage.GetMassMigration(txs[1].Hash)
+	s.NoError(err)
+	s.Equal(txs[1], *massMigration)
+}
+
+func (s *TransferTestSuite) TestBatchAddMassMigration_NoTransfers() {
+	err := s.storage.BatchAddMassMigration([]models.MassMigration{})
+	s.ErrorIs(err, ErrNoRowsAffected)
+}
+
 func TestMassMigrationTestSuite(t *testing.T) {
 	suite.Run(t, new(MassMigrationTestSuite))
 }
