@@ -19,6 +19,9 @@ type CommanderMetrics struct {
 
 	// Syncing
 	SyncingMethodDuration *prometheus.HistogramVec
+
+	// Blockchain
+	BlockchainCallDuration *prometheus.HistogramVec
 }
 
 func NewCommanderMetrics() *CommanderMetrics {
@@ -29,6 +32,7 @@ func NewCommanderMetrics() *CommanderMetrics {
 	commanderMetrics.initializeAPIMetrics()
 	commanderMetrics.initializeRollupLoopMetrics()
 	commanderMetrics.initializeSyncingMetrics()
+	commanderMetrics.initializeBlockchainMetrics()
 
 	return commanderMetrics
 }

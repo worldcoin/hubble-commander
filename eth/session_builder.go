@@ -25,7 +25,7 @@ func (b *rollupSessionBuilder) WithGasLimit(gasLimit uint64) *rollupSessionBuild
 
 func (c *Client) rollup() *rollupSessionBuilder {
 	return &rollupSessionBuilder{rollup.RollupSession{
-		Contract:     c.Rollup,
+		Contract:     c.Rollup.Rollup,
 		TransactOpts: *c.Blockchain.GetAccount(),
 	}}
 }
@@ -36,7 +36,7 @@ type accountRegistrySessionBuilder struct {
 
 func (a *AccountManager) accountRegistry() *accountRegistrySessionBuilder {
 	return &accountRegistrySessionBuilder{accountregistry.AccountRegistrySession{
-		Contract:     a.AccountRegistry,
+		Contract:     a.AccountRegistry.AccountRegistry,
 		TransactOpts: *a.Blockchain.GetAccount(),
 	}}
 }
@@ -57,7 +57,7 @@ type depositManagerSessionBuilder struct {
 
 func (c *Client) depositManager() *depositManagerSessionBuilder {
 	return &depositManagerSessionBuilder{depositmanager.DepositManagerSession{
-		Contract:     c.DepositManager,
+		Contract:     c.DepositManager.DepositManager,
 		TransactOpts: *c.Blockchain.GetAccount(),
 	}}
 }
@@ -78,7 +78,7 @@ type tokenRegistrySessionBuilder struct {
 
 func (c *Client) tokenRegistry() *tokenRegistrySessionBuilder {
 	return &tokenRegistrySessionBuilder{tokenregistry.TokenRegistrySession{
-		Contract:     c.TokenRegistry,
+		Contract:     c.TokenRegistry.TokenRegistry,
 		TransactOpts: *c.Blockchain.GetAccount(),
 	}}
 }

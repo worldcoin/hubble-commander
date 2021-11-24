@@ -61,7 +61,7 @@ func (a *AccountManager) retrieveRegisteredPubKeyIDs(receipt *types.Receipt) ([]
 	}
 
 	event := new(accountregistry.AccountRegistryBatchPubkeyRegistered)
-	err = a.accountRegistryContract.UnpackLog(event, BatchPubkeyRegisteredEvent, *log)
+	err = a.AccountRegistry.BoundContract.UnpackLog(event, BatchPubkeyRegisteredEvent, *log)
 	if err != nil {
 		return nil, err
 	}
