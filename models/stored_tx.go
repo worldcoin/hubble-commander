@@ -190,7 +190,7 @@ func (t *StoredTx) ToCreate2Transfer(txReceipt *StoredTxReceipt) *Create2Transfe
 func (t *StoredTx) ToMassMigration(txReceipt *StoredTxReceipt) *MassMigration {
 	massMigrationBody, ok := t.Body.(*StoredTxMassMigrationBody)
 	if !ok {
-		panic("invalid massMigration body type")
+		panic("invalid mass migration body type")
 	}
 
 	massMigration := &MassMigration{

@@ -91,7 +91,7 @@ func (s *MassMigrationTestSuite) TestBatchAddMassMigration() {
 	s.Equal(txs[1], *massMigration)
 }
 
-func (s *MassMigrationTestSuite) TestBatchAddMassMigration_NoTransfers() {
+func (s *MassMigrationTestSuite) TestBatchAddMassMigration_NoMassMigrations() {
 	err := s.storage.BatchAddMassMigration([]models.MassMigration{})
 	s.ErrorIs(err, ErrNoRowsAffected)
 }

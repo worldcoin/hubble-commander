@@ -42,7 +42,6 @@ func NewStoredTxReceiptFromMassMigration(m *MassMigration) *StoredTxReceipt {
 	return &StoredTxReceipt{
 		Hash:         m.Hash,
 		CommitmentID: m.CommitmentID,
-		ToStateID:    nil,
 		ErrorMessage: m.ErrorMessage,
 	}
 }
