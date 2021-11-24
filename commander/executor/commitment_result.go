@@ -3,18 +3,12 @@ package executor
 import "github.com/Worldcoin/hubble-commander/models"
 
 type CreateCommitmentResult interface {
-	PendingTxs() models.GenericTransactionArray
 	PendingAccounts() []models.AccountLeaf
 	Commitment() *models.CommitmentWithTxs
 }
 
 type CreateTransferCommitmentResult struct {
-	newPendingTxs models.GenericTransactionArray
 	commitment    *models.CommitmentWithTxs
-}
-
-func (c *CreateTransferCommitmentResult) PendingTxs() models.GenericTransactionArray {
-	return c.newPendingTxs
 }
 
 func (c *CreateTransferCommitmentResult) PendingAccounts() []models.AccountLeaf {

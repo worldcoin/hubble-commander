@@ -277,17 +277,6 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTooHighTx
 	s.Len(pendingTransfers, 1)
 }
 
-func (s *TransferCommitmentsTestSuite) TestRemoveTxs() {
-	transfer1 := createRandomTransferWithHash()
-	transfer2 := createRandomTransferWithHash()
-	transfer3 := createRandomTransferWithHash()
-
-	transfers := models.TransferArray{transfer1, transfer2, transfer3}
-	toRemove := models.TransferArray{transfer2}
-
-	s.Equal(models.TransferArray{transfer1, transfer3}, removeTxs(transfers, toRemove))
-}
-
 func TestTransferCommitmentsTestSuite(t *testing.T) {
 	suite.Run(t, new(TransferCommitmentsTestSuite))
 }
