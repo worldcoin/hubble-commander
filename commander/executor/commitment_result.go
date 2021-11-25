@@ -20,13 +20,8 @@ func (c *CreateTransferCommitmentResult) Commitment() *models.CommitmentWithTxs 
 }
 
 type CreateC2TCommitmentResult struct {
-	newPendingTxs   models.GenericTransactionArray
 	pendingAccounts []models.AccountLeaf
 	commitment      *models.CommitmentWithTxs
-}
-
-func (c *CreateC2TCommitmentResult) PendingTxs() models.GenericTransactionArray {
-	return c.newPendingTxs
 }
 
 func (c *CreateC2TCommitmentResult) PendingAccounts() []models.AccountLeaf {
