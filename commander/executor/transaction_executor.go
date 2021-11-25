@@ -14,7 +14,7 @@ import (
 
 type TransactionExecutor interface {
 	NewExecuteTxsResult(capacity uint32) ExecuteTxsResult
-	NewExecuteTxsForCommitmentResult(result ExecuteTxsResult, newPendingTxs models.GenericTransactionArray) ExecuteTxsForCommitmentResult
+	NewExecuteTxsForCommitmentResult(result ExecuteTxsResult) ExecuteTxsForCommitmentResult
 	SerializeTxs(results ExecuteTxsForCommitmentResult) ([]byte, error)
 	AddPendingAccount(result applier.ApplySingleTxResult) error
 	NewCreateCommitmentResult(result ExecuteTxsForCommitmentResult, commitment *models.CommitmentWithTxs) CreateCommitmentResult
@@ -58,11 +58,9 @@ func (e *TransferExecutor) NewExecuteTxsResult(capacity uint32) ExecuteTxsResult
 
 func (e *TransferExecutor) NewExecuteTxsForCommitmentResult(
 	result ExecuteTxsResult,
-	newPendingTxs models.GenericTransactionArray,
 ) ExecuteTxsForCommitmentResult {
 	return &ExecuteTransfersForCommitmentResult{
 		appliedTxs: result.AppliedTxs().ToTransferArray(),
-		pendingTxs: newPendingTxs.ToTransferArray(),
 	}
 }
 
@@ -71,8 +69,7 @@ func (e *TransferExecutor) NewCreateCommitmentResult(
 	commitment *models.CommitmentWithTxs,
 ) CreateCommitmentResult {
 	return &CreateTransferCommitmentResult{
-		newPendingTxs: result.PendingTxs(),
-		commitment:    commitment,
+		commitment: commitment,
 	}
 }
 
@@ -119,13 +116,11 @@ func (e *C2TExecutor) NewExecuteTxsResult(capacity uint32) ExecuteTxsResult {
 
 func (e *C2TExecutor) NewExecuteTxsForCommitmentResult(
 	result ExecuteTxsResult,
-	newPendingTxs models.GenericTransactionArray,
 ) ExecuteTxsForCommitmentResult {
 	return &ExecuteC2TForCommitmentResult{
 		appliedTxs:      result.AppliedTxs().ToCreate2TransferArray(),
 		addedPubKeyIDs:  result.AddedPubKeyIDs(),
 		pendingAccounts: result.PendingAccounts(),
-		pendingTxs:      newPendingTxs.ToCreate2TransferArray(),
 	}
 }
 
@@ -134,7 +129,6 @@ func (e *C2TExecutor) NewCreateCommitmentResult(
 	commitment *models.CommitmentWithTxs,
 ) CreateCommitmentResult {
 	return &CreateC2TCommitmentResult{
-		newPendingTxs:   result.PendingTxs(),
 		pendingAccounts: result.PendingAccounts(),
 		commitment:      commitment,
 	}
