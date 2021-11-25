@@ -18,7 +18,7 @@ func (s *TxQueueTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *TxQueueTestSuite) RemoveFromQueueTransfer() {
+func (s *TxQueueTestSuite) TestTxQueue_RemoveFromQueue_Transfer() {
 	transfer1 := createRandomTransferWithHash()
 	transfer2 := createRandomTransferWithHash()
 	transfer3 := createRandomTransferWithHash()
