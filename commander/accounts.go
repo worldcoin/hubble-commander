@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
@@ -23,9 +24,7 @@ func (c *Commander) syncAccounts(start, end uint64) error {
 	var newAccountsSingle *int
 	var newAccountsBatch *int
 
-	duration, err := metrics.MeasureDuration(func() error {
-		var err error
-
+	duration, err := metrics.MeasureDuration(func() (err error) {
 		newAccountsSingle, err = c.syncSingleAccounts(start, end)
 		if err != nil {
 			return err
@@ -52,10 +51,7 @@ func (c *Commander) syncAccounts(start, end uint64) error {
 }
 
 func (c *Commander) syncSingleAccounts(start, end uint64) (newAccountsCount *int, err error) {
-	it, err := c.client.AccountRegistry.FilterSinglePubkeyRegistered(&bind.FilterOpts{
-		Start: start,
-		End:   &end,
-	})
+	it, err := c.getSinglePubKeyRegisteredIterator(start, end)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +65,7 @@ func (c *Commander) syncSingleAccounts(start, end uint64) (newAccountsCount *int
 			return nil, err
 		}
 
-		if !bytes.Equal(tx.Data()[:4], c.client.AccountRegistryABI.Methods["register"].ID) {
+		if !bytes.Equal(tx.Data()[:4], c.client.AccountRegistry.ABI.Methods["register"].ID) {
 			continue // TODO handle internal transactions
 		}
 
@@ -86,14 +82,12 @@ func (c *Commander) syncSingleAccounts(start, end uint64) (newAccountsCount *int
 			*newAccountsCount++
 		}
 	}
+
 	return newAccountsCount, nil
 }
 
 func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int, err error) {
-	it, err := c.client.AccountRegistry.FilterBatchPubkeyRegistered(&bind.FilterOpts{
-		Start: start,
-		End:   &end,
-	})
+	it, err := c.getBatchPubKeyRegisteredIterator(start, end)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +101,7 @@ func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int,
 			return nil, err
 		}
 
-		if !bytes.Equal(tx.Data()[:4], c.client.AccountRegistryABI.Methods["registerBatch"].ID) {
+		if !bytes.Equal(tx.Data()[:4], c.client.AccountRegistry.ABI.Methods["registerBatch"].ID) {
 			continue // TODO handle internal transactions
 		}
 
@@ -124,7 +118,36 @@ func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int,
 			*newAccountsCount += len(accounts)
 		}
 	}
+
 	return newAccountsCount, nil
+}
+
+func (c *Commander) getSinglePubKeyRegisteredIterator(start, end uint64) (*accountregistry.SinglePubKeyRegisteredIterator, error) {
+	it := &accountregistry.SinglePubKeyRegisteredIterator{}
+
+	err := c.client.FilterLogs(c.client.AccountRegistry.BoundContract, "SinglePubkeyRegistered", &bind.FilterOpts{
+		Start: start,
+		End:   &end,
+	}, it)
+	if err != nil {
+		return nil, err
+	}
+
+	return it, nil
+}
+
+func (c *Commander) getBatchPubKeyRegisteredIterator(start, end uint64) (*accountregistry.BatchPubKeyRegisteredIterator, error) {
+	it := &accountregistry.BatchPubKeyRegisteredIterator{}
+
+	err := c.client.FilterLogs(c.client.AccountRegistry.BoundContract, "BatchPubkeyRegistered", &bind.FilterOpts{
+		Start: start,
+		End:   &end,
+	}, it)
+	if err != nil {
+		return nil, err
+	}
+
+	return it, nil
 }
 
 func saveSyncedSingleAccount(accountTree *storage.AccountTree, account *models.AccountLeaf) (isNewAccount *bool, err error) {

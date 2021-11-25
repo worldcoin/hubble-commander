@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -26,7 +27,7 @@ func (s *DepositsTestSuite) SetupSuite() {
 	s.depositSubtree = models.PendingDepositSubTree{
 		ID:       models.MakeUint256(1),
 		Root:     utils.RandomHash(),
-		Deposits: getFourDeposits(),
+		Deposits: testutils.GetFourDeposits(),
 	}
 }
 

@@ -11,6 +11,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -39,15 +40,10 @@ type Client struct {
 	config                 ClientConfig
 	ChainState             models.ChainState
 	Blockchain             chain.Connection
-	Rollup                 *rollup.Rollup
-	RollupABI              *abi.ABI
-	TokenRegistry          *tokenregistry.TokenRegistry
-	TokenRegistryABI       *abi.ABI
-	DepositManager         *depositmanager.DepositManager
-	DepositManagerABI      *abi.ABI
-	rollupContract         *bind.BoundContract
-	tokenRegistryContract  *bind.BoundContract
-	depositManagerContract *bind.BoundContract
+	Metrics                *metrics.CommanderMetrics
+	Rollup                 *Rollup
+	TokenRegistry          *TokenRegistry
+	DepositManager         *DepositManager
 	blocksToFinalise       *int64
 	maxDepositSubTreeDepth *uint8
 	domain                 *bls.Domain
@@ -56,7 +52,7 @@ type Client struct {
 }
 
 //goland:noinspection GoDeprecation
-func NewClient(blockchain chain.Connection, params *NewClientParams) (*Client, error) {
+func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderMetrics, params *NewClientParams) (*Client, error) {
 	fillWithDefaults(&params.ClientConfig)
 
 	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
@@ -72,9 +68,6 @@ func NewClient(blockchain chain.Connection, params *NewClientParams) (*Client, e
 		return nil, errors.WithStack(err)
 	}
 	backend := blockchain.GetBackend()
-	rollupContract := bind.NewBoundContract(params.ChainState.Rollup, rollupAbi, backend, backend, backend)
-	tokenRegistryContract := bind.NewBoundContract(params.ChainState.TokenRegistry, tokenRegistryAbi, backend, backend, backend)
-	depositManagerContract := bind.NewBoundContract(params.ChainState.DepositManager, depositManagerAbi, backend, backend, backend)
 	accountManager, err := NewAccountManager(blockchain, &AccountManagerParams{
 		AccountRegistry:                  params.AccountRegistry,
 		AccountRegistryAddress:           params.ChainState.AccountRegistry,
@@ -83,20 +76,36 @@ func NewClient(blockchain chain.Connection, params *NewClientParams) (*Client, e
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	rollupContract := bind.NewBoundContract(params.ChainState.Rollup, rollupAbi, backend, backend, backend)
+	tokenRegistryContract := bind.NewBoundContract(params.ChainState.TokenRegistry, tokenRegistryAbi, backend, backend, backend)
+	depositManagerContract := bind.NewBoundContract(params.ChainState.DepositManager, depositManagerAbi, backend, backend, backend)
 	return &Client{
-		config:                 params.ClientConfig,
-		ChainState:             params.ChainState,
-		Blockchain:             blockchain,
-		Rollup:                 params.Rollup,
-		RollupABI:              &rollupAbi,
-		TokenRegistry:          params.TokenRegistry,
-		TokenRegistryABI:       &tokenRegistryAbi,
-		DepositManager:         params.DepositManager,
-		DepositManagerABI:      &depositManagerAbi,
-		rollupContract:         rollupContract,
-		tokenRegistryContract:  tokenRegistryContract,
-		depositManagerContract: depositManagerContract,
-		AccountManager:         accountManager,
+		config:         params.ClientConfig,
+		ChainState:     params.ChainState,
+		Blockchain:     blockchain,
+		Metrics:        commanderMetrics,
+		AccountManager: accountManager,
+		Rollup: &Rollup{
+			Rollup: params.Rollup,
+			Contract: Contract{
+				ABI:           &rollupAbi,
+				BoundContract: rollupContract,
+			},
+		},
+		TokenRegistry: &TokenRegistry{
+			TokenRegistry: params.TokenRegistry,
+			Contract: Contract{
+				ABI:           &tokenRegistryAbi,
+				BoundContract: tokenRegistryContract,
+			},
+		},
+		DepositManager: &DepositManager{
+			DepositManager: params.DepositManager,
+			Contract: Contract{
+				ABI:           &depositManagerAbi,
+				BoundContract: depositManagerContract,
+			},
+		},
 	}, nil
 }
 
