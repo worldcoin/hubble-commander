@@ -213,7 +213,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 		return nil, errors.WithStack(err)
 	}
 
-	log.Println("Deploying TestExampleToken")
+	log.Println("Deploying TestCustomToken")
 	exampleTokenAddress, exampleTokenTx, _, err := customtoken.DeployTestCustomToken(c.GetAccount(), c.GetBackend(), "ExampleToken", "EXP")
 	if err != nil {
 		return nil, errors.WithStack(err)
