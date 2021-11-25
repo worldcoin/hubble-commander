@@ -180,7 +180,7 @@ func (c *Client) getTxBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transac
 	if err != nil {
 		return nil, err
 	}
-	commitments, err := encoder.DecodeBatchCalldata(c.RollupABI, tx.Data())
+	commitments, err := encoder.DecodeBatchCalldata(c.Rollup.ABI, tx.Data())
 	if err != nil {
 		return nil, err
 	}
