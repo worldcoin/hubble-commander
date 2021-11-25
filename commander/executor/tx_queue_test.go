@@ -32,21 +32,9 @@ func (s *TxQueueTestSuite) TestTxQueue_RemoveFromQueue_Transfer() {
 }
 
 func (s *TxQueueTestSuite) TestTxQueue_RemoveFromQueue_C2T() {
-	transfer1 := models.Create2Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash: utils.RandomHash(),
-		},
-	}
-	transfer2 := models.Create2Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash: utils.RandomHash(),
-		},
-	}
-	transfer3 := models.Create2Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash: utils.RandomHash(),
-		},
-	}
+	transfer1 := createRandomC2TWithHash()
+	transfer2 := createRandomC2TWithHash()
+	transfer3 := createRandomC2TWithHash()
 
 	transfers := NewTxQueue(models.Create2TransferArray{transfer1, transfer2, transfer3})
 	toRemove := models.Create2TransferArray{transfer2}
@@ -58,6 +46,14 @@ func (s *TxQueueTestSuite) TestTxQueue_RemoveFromQueue_C2T() {
 
 func createRandomTransferWithHash() models.Transfer {
 	return models.Transfer{
+		TransactionBase: models.TransactionBase{
+			Hash: utils.RandomHash(),
+		},
+	}
+}
+
+func createRandomC2TWithHash() models.Create2Transfer {
+	return models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
 			Hash: utils.RandomHash(),
 		},
