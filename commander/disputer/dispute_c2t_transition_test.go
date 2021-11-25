@@ -217,10 +217,7 @@ func (s *DisputeCT2TransitionTestSuite) createInvalidCommitments(
 		for j := range txs {
 			executeTxsResult.AddApplied(applier.NewApplySingleC2TResult(&txs[j], pubKeyIDs[i][j]))
 		}
-		executeTxsForCommitmentResult := s.txsCtx.Executor.NewExecuteTxsForCommitmentResult(
-			executeTxsResult,
-			models.MakeCreate2TransferArray(),
-		)
+		executeTxsForCommitmentResult := s.txsCtx.Executor.NewExecuteTxsForCommitmentResult(executeTxsResult)
 		commitment, err := s.txsCtx.BuildCommitment(executeTxsForCommitmentResult, commitmentID, 0)
 		s.NoError(err)
 		commitments = append(commitments, *commitment)

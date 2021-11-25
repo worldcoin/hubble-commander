@@ -76,7 +76,7 @@ func (c *Client) submitBatchAndWait(submit SubmitBatchFunc) (batch *models.Batch
 	}
 
 	event := new(rollup.RollupNewBatch)
-	err = c.rollupContract.UnpackLog(event, NewBatchEvent, *log)
+	err = c.Rollup.BoundContract.UnpackLog(event, NewBatchEvent, *log)
 	if err != nil {
 		return nil, err
 	}

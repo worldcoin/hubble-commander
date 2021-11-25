@@ -117,6 +117,7 @@ jobs:
       - name: Move existing files
         run: |
           find contracts -type f ! -name '*.go' -exec rm {} \;
+          find contracts -type f -name 'events.go' -exec rm {} \;
           mv contracts tmp-contracts
       - name: Generate bindings
         run: make generate

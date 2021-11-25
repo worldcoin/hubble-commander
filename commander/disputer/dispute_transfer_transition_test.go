@@ -179,7 +179,7 @@ func (s *DisputeTransferTransitionTestSuite) createInvalidCommitments(
 		for j := range txs {
 			executeTxsResult.AddApplied(applier.NewApplySingleTransferResult(&txs[j]))
 		}
-		executeTxsForCommitmentResult := s.txsCtx.Executor.NewExecuteTxsForCommitmentResult(executeTxsResult, models.MakeTransferArray())
+		executeTxsForCommitmentResult := s.txsCtx.Executor.NewExecuteTxsForCommitmentResult(executeTxsResult)
 		commitment, err := s.txsCtx.BuildCommitment(executeTxsForCommitmentResult, commitmentID, 0)
 		s.NoError(err)
 		commitments = append(commitments, *commitment)

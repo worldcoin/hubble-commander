@@ -15,7 +15,7 @@ func (c *Client) QueueDepositAndWait(
 	l1Amount *models.Uint256,
 	tokenID *models.Uint256,
 ) (*models.DepositID, *models.Uint256, error) {
-	tx, err := c.QueueDeposit(toPubKeyID, l1Amount, tokenID)
+	tx, err := c.QueueDeposit(c.Blockchain.GetAccount().GasLimit, toPubKeyID, l1Amount, tokenID)
 	if err != nil {
 		return nil, nil, errors.WithStack(err)
 	}
@@ -33,7 +33,7 @@ func (c *Client) retrieveDepositIDAndL2Amount(receipt *types.Receipt) (*models.D
 	}
 
 	event := new(depositmanager.DepositManagerDepositQueued)
-	err = c.depositManagerContract.UnpackLog(event, DepositQueuedEvent, *log)
+	err = c.DepositManager.BoundContract.UnpackLog(event, DepositQueuedEvent, *log)
 	if err != nil {
 		return nil, nil, errors.WithStack(err)
 	}
@@ -46,11 +46,14 @@ func (c *Client) retrieveDepositIDAndL2Amount(receipt *types.Receipt) (*models.D
 }
 
 func (c *Client) QueueDeposit(
+	gasLimit uint64,
 	toPubKeyID *models.Uint256,
 	l1Amount *models.Uint256,
 	tokenID *models.Uint256,
 ) (*types.Transaction, error) {
-	tx, err := c.depositManager().DepositFor(toPubKeyID.ToBig(), l1Amount.ToBig(), tokenID.ToBig())
+	tx, err := c.depositManager().
+		WithGasLimit(gasLimit).
+		DepositFor(toPubKeyID.ToBig(), l1Amount.ToBig(), tokenID.ToBig())
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
