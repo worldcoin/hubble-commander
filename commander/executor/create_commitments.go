@@ -21,7 +21,7 @@ type FeeReceiver struct {
 }
 
 func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
-	pendingTxs, err := c.queryPendingTxs()
+	txQueue, err := c.queryPendingTxs()
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
 		var result CreateCommitmentResult
 		commitmentID.IndexInBatch = i
 
-		result, err = c.createCommitment(pendingTxs, commitmentID)
+		result, err = c.createCommitment(txQueue, commitmentID)
 		if errors.Is(err, ErrNotEnoughTxs) {
 			break
 		}
