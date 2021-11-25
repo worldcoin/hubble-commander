@@ -31,8 +31,6 @@ func (c *Client) SubmitTxBatch(
 	}
 }
 
-// TODO extract gas limits to config
-
 func (c *Client) SubmitTransfersBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
 	return c.rollup().
 		WithValue(c.config.StakeAmount).
