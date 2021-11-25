@@ -56,6 +56,14 @@ func (s *TxQueueTestSuite) TestTxQueue_RemoveFromQueue_C2T() {
 	s.Equal(models.Create2TransferArray{transfer1, transfer3}, transfers.PickTxsForCommitment())
 }
 
+func createRandomTransferWithHash() models.Transfer {
+	return models.Transfer{
+		TransactionBase: models.TransactionBase{
+			Hash: utils.RandomHash(),
+		},
+	}
+}
+
 func TestTxQueueTestSuite(t *testing.T) {
 	suite.Run(t, new(TxQueueTestSuite))
 }

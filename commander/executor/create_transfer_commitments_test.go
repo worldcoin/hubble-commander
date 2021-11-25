@@ -10,7 +10,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
-	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -299,12 +298,4 @@ func addAccountWithHighNonce(s *require.Assertions, storage *st.Storage, stateID
 		Nonce:    models.MakeUint256(10),
 	})
 	s.NoError(err)
-}
-
-func createRandomTransferWithHash() models.Transfer {
-	return models.Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash: utils.RandomHash(),
-		},
-	}
 }
