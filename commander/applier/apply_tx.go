@@ -90,7 +90,7 @@ func (a *Applier) applyTxForSync(
 		return synced, tErr, nil
 	}
 
-	if newReceiverState == newSenderState {
+	if newReceiverState != newSenderState {
 		receiverWitness, appError := a.storage.StateTree.Set(receiverLeaf.StateID, newReceiverState)
 		if appError != nil {
 			return nil, nil, appError
