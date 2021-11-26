@@ -40,6 +40,10 @@ func NewTransactionStorage(database *Database) (*TransactionStorage, error) {
 	if err != nil {
 		return nil, err
 	}
+	err = initializeIndex(database, models.StoredTxName, "ToStateID", uint32(0))
+	if err != nil {
+		return nil, err
+	}
 
 	return &TransactionStorage{
 		database: database,

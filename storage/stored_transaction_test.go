@@ -312,7 +312,8 @@ func (s *StoredTransactionTestSuite) TestStoredTx_IndexOnToStateIDWorks() {
 	s.addStoredTx(txtype.Transfer, ref.Uint32(1))
 
 	indexValues := s.getToStateIDIndexValues(models.StoredTxName)
-	s.Len(indexValues, 2)
+	s.Len(indexValues, 3)
+	s.Len(indexValues[0], 0) // value set due to index initialization, see NewTransactionStorage
 	s.Len(indexValues[1], 2)
 	s.Len(indexValues[2], 1)
 }
@@ -321,7 +322,22 @@ func (s *StoredTransactionTestSuite) TestStoredTx_ValuesWithoutToStateIDAreNotIn
 	s.addStoredTx(txtype.Create2Transfer, nil)
 
 	indexValues := s.getToStateIDIndexValues(models.StoredTxName)
-	s.Len(indexValues, 0)
+	s.Len(indexValues, 1)
+	s.Len(indexValues[0], 0) // value set due to index initialization, see NewTransactionStorage
+}
+
+// This test checks an edge case that we introduced by indexing ToStateID field which is only available in Transfer transactions.
+// See: NewTransactionStorage
+func (s *StoredTransactionTestSuite) TestStoredTx_FindUsingIndexWorksWhenThereAreOnlyStoredTxsWithoutToStateID() {
+	s.addStoredTx(txtype.Create2Transfer, nil)
+
+	txs := make([]models.StoredTx, 0, 1)
+	err := s.storage.database.Badger.Find(
+		&txs,
+		bh.Where("ToStateID").Eq(uint32(1)).Index("ToStateID"),
+	)
+	s.NoError(err)
+	s.Len(txs, 0)
 }
 
 func (s *StoredTransactionTestSuite) TestStoredTxReceipt_IndexOnToCommitmentIDWorks() {
