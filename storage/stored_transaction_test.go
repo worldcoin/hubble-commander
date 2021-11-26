@@ -306,7 +306,7 @@ func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs_NoTransa
 	s.Nil(hashes)
 }
 
-func (s *StoredTransactionTestSuite) TestStoredTx_IndexOnToStateIDWorks() {
+func (s *StoredTransactionTestSuite) TestStoredTx_ToStateID_IndexWorks() {
 	s.addStoredTx(txtype.Transfer, ref.Uint32(1))
 	s.addStoredTx(txtype.Transfer, ref.Uint32(2))
 	s.addStoredTx(txtype.Transfer, ref.Uint32(1))
@@ -318,7 +318,7 @@ func (s *StoredTransactionTestSuite) TestStoredTx_IndexOnToStateIDWorks() {
 	s.Len(indexValues[2], 1)
 }
 
-func (s *StoredTransactionTestSuite) TestStoredTx_ValuesWithoutToStateIDAreNotIndexed() {
+func (s *StoredTransactionTestSuite) TestStoredTx_ToStateID_ValuesWithoutThisFieldAreNotIndexed() {
 	s.addStoredTx(txtype.Create2Transfer, nil)
 
 	indexValues := s.getToStateIDIndexValues(models.StoredTxName)
@@ -328,7 +328,7 @@ func (s *StoredTransactionTestSuite) TestStoredTx_ValuesWithoutToStateIDAreNotIn
 
 // This test checks an edge case that we introduced by indexing ToStateID field which is only available in Transfer transactions.
 // See: NewTransactionStorage
-func (s *StoredTransactionTestSuite) TestStoredTx_FindUsingIndexWorksWhenThereAreOnlyStoredTxsWithoutToStateID() {
+func (s *StoredTransactionTestSuite) TestStoredTx_ToStateID_FindUsingIndexWorksWhenThereAreOnlyValuesWithoutThisField() {
 	s.addStoredTx(txtype.Create2Transfer, nil)
 
 	txs := make([]models.StoredTx, 0, 1)
@@ -340,7 +340,7 @@ func (s *StoredTransactionTestSuite) TestStoredTx_FindUsingIndexWorksWhenThereAr
 	s.Len(txs, 0)
 }
 
-func (s *StoredTransactionTestSuite) TestStoredTxReceipt_IndexOnToCommitmentIDWorks() {
+func (s *StoredTransactionTestSuite) TestStoredTxReceipt_CommitmentID_IndexWorks() {
 	zeroID := models.CommitmentID{BatchID: models.MakeUint256(0), IndexInBatch: 0}
 	id1 := models.CommitmentID{BatchID: models.MakeUint256(1), IndexInBatch: 0}
 	id2 := models.CommitmentID{BatchID: models.MakeUint256(2), IndexInBatch: 0}
@@ -355,7 +355,7 @@ func (s *StoredTransactionTestSuite) TestStoredTxReceipt_IndexOnToCommitmentIDWo
 	s.Len(indexValues[id2], 1)
 }
 
-func (s *StoredTransactionTestSuite) TestStoredTxReceipt_ValuesWithNilCommitmentIDAreNotIndexed() {
+func (s *StoredTransactionTestSuite) TestStoredTxReceipt_CommitmentID_ValuesWithThisFieldSetToNilAreNotIndexed() {
 	zeroID := models.CommitmentID{BatchID: models.MakeUint256(0), IndexInBatch: 0}
 	s.addStoredTxReceipt(nil, nil)
 
@@ -366,7 +366,7 @@ func (s *StoredTransactionTestSuite) TestStoredTxReceipt_ValuesWithNilCommitment
 
 // This test checks an edge case that we introduced by indexing CommitmentID field which can be nil.
 // See: NewTransactionStorage
-func (s *StoredTransactionTestSuite) TestStoredTxReceipt_FindUsingIndexWorksWhenThereAreOnlyStoredTxReceiptsWithNilCommitmentID() {
+func (s *StoredTransactionTestSuite) TestStoredTxReceipt_CommitmentID_FindUsingIndexWorksWhenThereAreOnlyValuesWithThisFieldSetToNil() {
 	err := s.storage.addStoredTxReceipt(&models.StoredTxReceipt{
 		Hash:         utils.RandomHash(),
 		CommitmentID: nil, // nil values are not indexed
@@ -382,7 +382,7 @@ func (s *StoredTransactionTestSuite) TestStoredTxReceipt_FindUsingIndexWorksWhen
 	s.Len(receipts, 0)
 }
 
-func (s *StoredTransactionTestSuite) TestStoredTxReceipt_IndexOnToStateIDWorks() {
+func (s *StoredTransactionTestSuite) TestStoredTxReceipt_ToStateID_IndexWorks() {
 	s.addStoredTxReceipt(ref.Uint32(1), nil)
 	s.addStoredTxReceipt(ref.Uint32(2), nil)
 	s.addStoredTxReceipt(ref.Uint32(1), nil)
@@ -394,7 +394,7 @@ func (s *StoredTransactionTestSuite) TestStoredTxReceipt_IndexOnToStateIDWorks()
 	s.Len(indexValues[2], 1)
 }
 
-func (s *StoredTransactionTestSuite) TestStoredTxReceipt_ValuesWithNilToStateIDAreNotIndexed() {
+func (s *StoredTransactionTestSuite) TestStoredTxReceipt_ToStateID_ValuesWithThisFieldSetToNilAreNotIndexed() {
 	s.addStoredTxReceipt(nil, nil)
 
 	indexValues := s.getToStateIDIndexValues(models.StoredTxReceiptName)
@@ -404,7 +404,7 @@ func (s *StoredTransactionTestSuite) TestStoredTxReceipt_ValuesWithNilToStateIDA
 
 // This test checks an edge case that we introduced by indexing ToStateID field which can be nil.
 // See: NewTransactionStorage
-func (s *StoredTransactionTestSuite) TestStoredTxReceipt_FindUsingIndexWorksWhenThereAreOnlyStoredTxReceiptsWithNilToStateID() {
+func (s *StoredTransactionTestSuite) TestStoredTxReceipt_ToStateID_FindUsingIndexWorksWhenThereAreOnlyValuesWithThisFieldSetToNil() {
 	err := s.storage.addStoredTxReceipt(&models.StoredTxReceipt{
 		Hash:      utils.RandomHash(),
 		ToStateID: nil, // nil values are not indexed
