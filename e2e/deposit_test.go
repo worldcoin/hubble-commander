@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/erc20"
-	"github.com/Worldcoin/hubble-commander/contracts/test/exampletoken"
+	"github.com/Worldcoin/hubble-commander/contracts/test/customtoken"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -73,9 +73,11 @@ func approveToken(t *testing.T, ethClient *eth.Client, tokenAddress common.Addre
 }
 
 func deployExampleToken(t *testing.T, ethClient *eth.Client) common.Address {
-	tokenAddress, tx, _, err := exampletoken.DeployTestExampleToken(
+	tokenAddress, tx, _, err := customtoken.DeployTestCustomToken(
 		ethClient.Blockchain.GetAccount(),
 		ethClient.Blockchain.GetBackend(),
+		"ExampleToken",
+		"EXP",
 	)
 	require.NoError(t, err)
 

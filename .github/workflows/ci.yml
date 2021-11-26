@@ -74,7 +74,7 @@ jobs:
         run: npm run generate
         working-directory: hubble-contracts
       - name: Run node in the background
-        run: npm run node &
+        run: npm run hardhat:node &
         working-directory: hubble-contracts
       - name: Deploy gas estimator contracts
         run: npm run keyless:deploy

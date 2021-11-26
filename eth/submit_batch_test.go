@@ -45,6 +45,7 @@ func (s *SubmitBatchTestSuite) TearDownTest() {
 }
 
 func (s *SubmitBatchTestSuite) TestSubmitTransfersBatchAndWait_ReturnsCorrectBatch() {
+	batchID := models.MakeUint256(1)
 	commitment := s.commitment
 
 	accountRoot, err := s.client.AccountRegistry.Root(nil)
@@ -53,10 +54,10 @@ func (s *SubmitBatchTestSuite) TestSubmitTransfersBatchAndWait_ReturnsCorrectBat
 	commitmentRoot := utils.HashTwo(commitment.LeafHash(), merkletree.GetZeroHash(0))
 	minFinalisationBlock := s.getMinFinalisationBlock()
 
-	batch, err := s.client.SubmitTransfersBatchAndWait([]models.CommitmentWithTxs{commitment})
+	batch, err := s.client.SubmitTransfersBatchAndWait(&batchID, []models.CommitmentWithTxs{commitment})
 	s.NoError(err)
 
-	s.Equal(models.MakeUint256(1), batch.ID)
+	s.Equal(batchID, batch.ID)
 	s.Equal(batchtype.Transfer, batch.Type)
 	s.Equal(commitmentRoot, *batch.Hash)
 	s.GreaterOrEqual(*batch.FinalisationBlock, minFinalisationBlock)
@@ -64,6 +65,7 @@ func (s *SubmitBatchTestSuite) TestSubmitTransfersBatchAndWait_ReturnsCorrectBat
 }
 
 func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatchAndWait_ReturnsCorrectBatch() {
+	batchID := models.MakeUint256(1)
 	commitment := s.commitment
 	commitment.Type = batchtype.Create2Transfer
 
@@ -73,10 +75,10 @@ func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatchAndWait_ReturnsCor
 	commitmentRoot := utils.HashTwo(commitment.LeafHash(), merkletree.GetZeroHash(0))
 	minFinalisationBlock := s.getMinFinalisationBlock()
 
-	batch, err := s.client.SubmitCreate2TransfersBatchAndWait([]models.CommitmentWithTxs{commitment})
+	batch, err := s.client.SubmitCreate2TransfersBatchAndWait(&batchID, []models.CommitmentWithTxs{commitment})
 	s.NoError(err)
 
-	s.Equal(models.MakeUint256(1), batch.ID)
+	s.Equal(batchID, batch.ID)
 	s.Equal(batchtype.Create2Transfer, batch.Type)
 	s.Equal(commitmentRoot, *batch.Hash)
 	s.GreaterOrEqual(*batch.FinalisationBlock, minFinalisationBlock)
@@ -92,7 +94,7 @@ func (s *SubmitBatchTestSuite) getMinFinalisationBlock() uint32 {
 }
 
 func (s *SubmitBatchTestSuite) TestSubmitTransfersBatch_SubmitsBatchWithoutWaitingForItToBeMined() {
-	tx, err := s.client.SubmitTransfersBatch([]models.CommitmentWithTxs{s.commitment})
+	tx, err := s.client.SubmitTransfersBatch(models.NewUint256(1), []models.CommitmentWithTxs{s.commitment})
 	s.NoError(err)
 	s.NotNil(tx)
 
@@ -111,7 +113,7 @@ func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatch_SubmitsBatchWitho
 	commitment := s.commitment
 	commitment.Type = batchtype.Create2Transfer
 
-	tx, err := s.client.SubmitCreate2TransfersBatch([]models.CommitmentWithTxs{s.commitment})
+	tx, err := s.client.SubmitCreate2TransfersBatch(models.NewUint256(1), []models.CommitmentWithTxs{s.commitment})
 	s.NoError(err)
 	s.NotNil(tx)
 

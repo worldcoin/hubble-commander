@@ -263,7 +263,7 @@ func sendTransferBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client) 
 	encodedTransfer, err := encoder.EncodeTransferForCommitment(&transfer)
 	require.NoError(t, err)
 
-	sendTransferCommitment(t, ethClient, encodedTransfer, 2)
+	sendTransferCommitment(t, ethClient, encodedTransfer, 4)
 }
 
 func sendC2TBatchWithInvalidAmount(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey) {
@@ -350,7 +350,7 @@ func sendTransferCommitment(t *testing.T, ethClient *eth.Client, encodedTransfer
 }
 
 func submitTransfersBatch(t *testing.T, ethClient *eth.Client, commitments []models.CommitmentWithTxs, batchID uint64) {
-	transaction, err := ethClient.SubmitTransfersBatch(commitments)
+	transaction, err := ethClient.SubmitTransfersBatch(models.NewUint256(batchID), commitments)
 	require.NoError(t, err)
 
 	waitForSubmittedBatch(t, ethClient, transaction, batchID)
@@ -372,7 +372,7 @@ func sendC2TCommitment(t *testing.T, ethClient *eth.Client, encodedTransfer []by
 }
 
 func submitC2TBatch(t *testing.T, ethClient *eth.Client, commitments []models.CommitmentWithTxs, batchID uint64) {
-	transaction, err := ethClient.SubmitCreate2TransfersBatch(commitments)
+	transaction, err := ethClient.SubmitCreate2TransfersBatch(models.NewUint256(batchID), commitments)
 	require.NoError(t, err)
 
 	waitForSubmittedBatch(t, ethClient, transaction, batchID)

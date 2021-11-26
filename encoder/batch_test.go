@@ -13,7 +13,7 @@ import (
 )
 
 func TestDecodeBatchCalldata(t *testing.T) {
-	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
+	rollupABI, err := abi.JSON(strings.NewReader(rollup.RollupABI))
 	require.NoError(t, err)
 
 	batchID := models.NewUint256(1)
@@ -28,11 +28,11 @@ func TestDecodeBatchCalldata(t *testing.T) {
 		},
 		Transactions: utils.RandomBytes(12),
 	}
-	arg1, arg2, arg3, arg4 := CommitmentToCalldataFields([]models.CommitmentWithTxs{commitment})
-	calldata, err := rollupAbi.Pack("submitTransfer", arg1, arg2, arg3, arg4)
+	arg1, arg2, arg3, arg4, arg5 := CommitmentsToSubmitBatchFields(batchID, []models.CommitmentWithTxs{commitment})
+	calldata, err := rollupABI.Pack("submitTransfer", arg1, arg2, arg3, arg4, arg5)
 	require.NoError(t, err)
 
-	decodedCommitments, err := DecodeBatchCalldata(calldata, batchID)
+	decodedCommitments, err := DecodeBatchCalldata(&rollupABI, calldata)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(decodedCommitments))
 

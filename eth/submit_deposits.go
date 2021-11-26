@@ -8,13 +8,16 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-func (c *Client) SubmitDeposits(previous *models.CommitmentInclusionProof, proof *models.SubtreeVacancyProof) (
-	*types.Transaction,
-	error,
-) {
+func (c *Client) SubmitDeposits(
+	batchID *models.Uint256,
+	previous *models.CommitmentInclusionProof,
+	proof *models.SubtreeVacancyProof,
+) (*types.Transaction, error) {
 	transaction, err := c.rollup().
-		WithValue(*c.config.StakeAmount.ToBig()).
+		WithValue(c.config.StakeAmount).
+		WithGasLimit(*c.config.DepositBatchSubmissionGasLimit).
 		SubmitDeposits(
+			batchID.ToBig(),
 			*commitmentProofToCalldata(previous),
 			*subtreeVacancyProofToCalldata(proof),
 		)
@@ -24,11 +27,13 @@ func (c *Client) SubmitDeposits(previous *models.CommitmentInclusionProof, proof
 	return transaction, nil
 }
 
-func (c *Client) SubmitDepositsAndWait(previous *models.CommitmentInclusionProof, proof *models.SubtreeVacancyProof) (
-	*models.Batch, error,
-) {
+func (c *Client) SubmitDepositsAndWait(
+	batchID *models.Uint256,
+	previous *models.CommitmentInclusionProof,
+	proof *models.SubtreeVacancyProof,
+) (*models.Batch, error) {
 	return c.submitBatchAndWait(func() (*types.Transaction, error) {
-		return c.SubmitDeposits(previous, proof)
+		return c.SubmitDeposits(batchID, previous, proof)
 	})
 }
 

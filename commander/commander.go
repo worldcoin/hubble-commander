@@ -387,6 +387,9 @@ func createClientFromChainState(
 		TokenRegistry:   tokenRegistry,
 		DepositManager:  depositManager,
 		ClientConfig: eth.ClientConfig{
+			TransferBatchSubmissionGasLimit:  ref.Uint64(cfg.TransferBatchSubmissionGasLimit),
+			C2TBatchSubmissionGasLimit:       ref.Uint64(cfg.C2TBatchSubmissionGasLimit),
+			DepositBatchSubmissionGasLimit:   ref.Uint64(cfg.DepositBatchSubmissionGasLimit),
 			TransitionDisputeGasLimit:        ref.Uint64(cfg.TransitionDisputeGasLimit),
 			SignatureDisputeGasLimit:         ref.Uint64(cfg.SignatureDisputeGasLimit),
 			BatchAccountRegistrationGasLimit: ref.Uint64(cfg.BatchAccountRegistrationGasLimit),

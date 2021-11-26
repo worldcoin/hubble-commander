@@ -17,7 +17,7 @@ type ExecuteCreate2TransfersTestSuite struct {
 }
 
 func (s *ExecuteCreate2TransfersTestSuite) SetupTest() {
-	s.testSuiteWithTxsContext.SetupTestWithConfig(batchtype.Create2Transfer, config.RollupConfig{
+	s.testSuiteWithTxsContext.SetupTestWithConfig(batchtype.Create2Transfer, &config.RollupConfig{
 		FeeReceiverPubKeyID: 3,
 		MaxTxsPerCommitment: 6,
 	})

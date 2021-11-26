@@ -9,7 +9,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type TransactionExecutor interface {
@@ -19,7 +18,6 @@ type TransactionExecutor interface {
 	AddPendingAccount(result applier.ApplySingleTxResult) error
 	NewCreateCommitmentResult(result ExecuteTxsForCommitmentResult, commitment *models.CommitmentWithTxs) CreateCommitmentResult
 	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (result applier.ApplySingleTxResult, txError, appError error)
-	SubmitBatch(client *eth.Client, commitments []models.CommitmentWithTxs) (*types.Transaction, error)
 }
 
 func CreateTransactionExecutor(executionCtx *ExecutionContext, batchType batchtype.BatchType) TransactionExecutor {
@@ -87,10 +85,6 @@ func (e *TransferExecutor) ApplyTx(tx models.GenericTransaction, commitmentToken
 	return e.applier.ApplyTransfer(tx, commitmentTokenID)
 }
 
-func (e *TransferExecutor) SubmitBatch(client *eth.Client, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
-	return client.SubmitTransfersBatch(commitments)
-}
-
 // C2TExecutor implements TransactionExecutor
 type C2TExecutor struct {
 	storage *st.Storage
@@ -149,8 +143,4 @@ func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID mo
 	applyResult applier.ApplySingleTxResult, txError, appError error,
 ) {
 	return e.applier.ApplyCreate2Transfer(tx.ToCreate2Transfer(), commitmentTokenID)
-}
-
-func (e *C2TExecutor) SubmitBatch(client *eth.Client, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
-	return client.SubmitCreate2TransfersBatch(commitments)
 }

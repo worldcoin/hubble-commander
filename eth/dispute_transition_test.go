@@ -44,7 +44,7 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransitionTransfer_ReturnsRevert
 		Transactions: utils.RandomBytes(12),
 	}
 
-	batch, err := s.client.SubmitTransfersBatchAndWait([]models.CommitmentWithTxs{commitment})
+	batch, err := s.client.SubmitTransfersBatchAndWait(models.NewUint256(1), []models.CommitmentWithTxs{commitment})
 	s.NoError(err)
 
 	merklePath := models.MakeMerklePathFromLeafID(1)

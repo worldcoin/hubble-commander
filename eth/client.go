@@ -31,6 +31,9 @@ type NewClientParams struct {
 type ClientConfig struct {
 	TxTimeout                        *time.Duration  // default 60s
 	StakeAmount                      *models.Uint256 // default 0.1 ether
+	TransferBatchSubmissionGasLimit  *uint64         // default 400_000 gas
+	C2TBatchSubmissionGasLimit       *uint64         // default 500_000 gas
+	DepositBatchSubmissionGasLimit   *uint64         // default 220_000 gas
 	TransitionDisputeGasLimit        *uint64         // default 5_000_000 gas
 	SignatureDisputeGasLimit         *uint64         // default 7_500_000 gas
 	BatchAccountRegistrationGasLimit *uint64         // default 8_000_000 gas
@@ -115,6 +118,15 @@ func fillWithDefaults(c *ClientConfig) {
 	}
 	if c.StakeAmount == nil {
 		c.StakeAmount = models.NewUint256(1e17)
+	}
+	if c.TransferBatchSubmissionGasLimit == nil {
+		c.TransferBatchSubmissionGasLimit = ref.Uint64(config.DefaultTransferBatchSubmissionGasLimit)
+	}
+	if c.C2TBatchSubmissionGasLimit == nil {
+		c.C2TBatchSubmissionGasLimit = ref.Uint64(config.DefaultC2TBatchSubmissionGasLimit)
+	}
+	if c.DepositBatchSubmissionGasLimit == nil {
+		c.DepositBatchSubmissionGasLimit = ref.Uint64(config.DefaultDepositBatchSubmissionGasLimit)
 	}
 	if c.TransitionDisputeGasLimit == nil {
 		c.TransitionDisputeGasLimit = ref.Uint64(config.DefaultTransitionDisputeGasLimit)
