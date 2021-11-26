@@ -7,11 +7,13 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 const MassMigrationLength = 77
 
-func EncodeMassMigration(tx *models.MassMigration) ([]byte, error) {
+func EncodeMassMigration(massMigration *models.MassMigration) ([]byte, error) {
 	arguments := abi.Arguments{
 		{Name: "txType", Type: tUint256},
 		{Name: "fromIndex", Type: tUint256},
@@ -22,23 +24,32 @@ func EncodeMassMigration(tx *models.MassMigration) ([]byte, error) {
 	}
 	return arguments.Pack(
 		big.NewInt(int64(txtype.MassMigration)),
-		big.NewInt(int64(tx.FromStateID)),
-		tx.Amount.ToBig(),
-		tx.Fee.ToBig(),
-		tx.SpokeID.ToBig(),
-		tx.Nonce.ToBig(),
+		big.NewInt(int64(massMigration.FromStateID)),
+		massMigration.Amount.ToBig(),
+		massMigration.Fee.ToBig(),
+		massMigration.SpokeID.ToBig(),
+		massMigration.Nonce.ToBig(),
 	)
 }
 
-func EncodeMassMigrationForSigning(tx *models.MassMigration) ([]byte, error) {
+func EncodeMassMigrationForSigning(massMigration *models.MassMigration) ([]byte, error) {
 	b := make([]byte, MassMigrationLength)
 
 	b[0] = uint8(txtype.MassMigration)
-	binary.BigEndian.PutUint32(b[1:5], tx.FromStateID)
-	copy(b[5:37], tx.Amount.Bytes())
-	copy(b[37:69], tx.Fee.Bytes())
-	binary.BigEndian.PutUint32(b[69:73], uint32(tx.Nonce.Uint64()))
-	binary.BigEndian.PutUint32(b[73:77], uint32(tx.SpokeID.Uint64()))
+	binary.BigEndian.PutUint32(b[1:5], massMigration.FromStateID)
+	copy(b[5:37], massMigration.Amount.Bytes())
+	copy(b[37:69], massMigration.Fee.Bytes())
+	binary.BigEndian.PutUint32(b[69:73], uint32(massMigration.Nonce.Uint64()))
+	binary.BigEndian.PutUint32(b[73:77], uint32(massMigration.SpokeID.Uint64()))
 
 	return b, nil
+}
+
+func HashMassMigration(massMigration *models.MassMigration) (*common.Hash, error) {
+	encodedMassMigration, err := EncodeMassMigration(massMigration)
+	if err != nil {
+		return nil, err
+	}
+	hash := crypto.Keccak256Hash(encodedMassMigration)
+	return &hash, nil
 }

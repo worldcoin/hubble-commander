@@ -1,8 +1,6 @@
 package api
 
 import (
-	"encoding/json"
-
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
@@ -10,7 +8,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
@@ -38,7 +35,7 @@ func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 	}
 
 	a.countAcceptedTx(transfer.TxType)
-	logReceivedTransfer(transferDTO)
+	logReceivedTransaction(transferDTO)
 
 	return &transfer.Hash, nil
 }
@@ -119,15 +116,4 @@ func (a *API) validateFromTo(transfer *models.Transfer) error {
 		return errors.WithStack(ErrTransferToSelf)
 	}
 	return nil
-}
-
-func logReceivedTransfer(transfer dto.Transfer) {
-	if log.IsLevelEnabled(log.DebugLevel) {
-		jsonTransfer, err := json.Marshal(transfer)
-		if err != nil {
-			log.Errorln("Marshaling received transaction failed")
-			return
-		}
-		log.Debugf("API: received new transaction: %s", string(jsonTransfer))
-	}
 }

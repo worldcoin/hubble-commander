@@ -97,6 +97,8 @@ func (a *API) unsafeSendTransaction(tx dto.Transaction) (*common.Hash, error) {
 		return a.handleTransfer(t)
 	case dto.Create2Transfer:
 		return a.handleCreate2Transfer(t)
+	case dto.MassMigration:
+		return a.handleMassMigration(t)
 	default:
 		return nil, errors.WithStack(ErrUnsupportedTxType)
 	}

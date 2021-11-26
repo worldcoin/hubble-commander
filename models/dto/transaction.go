@@ -39,7 +39,7 @@ func (tx *Transaction) UnmarshalJSON(bytes []byte) error {
 	case txtype.Create2Transfer:
 		return tx.unmarshalCreate2Transfer(bytes)
 	case txtype.MassMigration:
-		return ErrNotImplemented
+		return tx.unmarshalMassMigration(bytes)
 	default:
 		return ErrNotImplemented
 	}
@@ -57,6 +57,16 @@ func (tx *Transaction) unmarshalTransfer(bytes []byte) error {
 
 func (tx *Transaction) unmarshalCreate2Transfer(bytes []byte) error {
 	var transfer Create2Transfer
+	err := json.Unmarshal(bytes, &transfer)
+	if err != nil {
+		return err
+	}
+	tx.Parsed = transfer
+	return nil
+}
+
+func (tx *Transaction) unmarshalMassMigration(bytes []byte) error {
+	var transfer MassMigration
 	err := json.Unmarshal(bytes, &transfer)
 	if err != nil {
 		return err
