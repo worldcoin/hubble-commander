@@ -69,9 +69,15 @@ func (a *Applier) applyTxForSync(
 
 	synced = NewPartialSyncedGenericTransaction(tx.Copy(), &senderLeaf.UserState, &receiverLeaf.UserState)
 
-	newSenderState, newReceiverState, txErr := calculateStateAfterTx(senderLeaf.UserState, receiverLeaf.UserState, tx)
-	if txErr != nil {
-		return a.fillSenderWitness(synced, txErr)
+	var newSenderState, newReceiverState *models.UserState
+	if receiverLeaf.StateID != senderLeaf.StateID {
+		newSenderState, newReceiverState, txError = calculateStateAfterTx(senderLeaf.UserState, receiverLeaf.UserState, tx)
+	} else {
+		newSenderState, txError = calculateFeeOfSenderStateAfterTx(senderLeaf.UserState, tx)
+		newReceiverState = newSenderState
+	}
+	if txError != nil {
+		return a.fillSenderWitness(synced, txError)
 	}
 
 	senderWitness, appError := a.storage.StateTree.Set(senderLeaf.StateID, newSenderState)
@@ -84,14 +90,18 @@ func (a *Applier) applyTxForSync(
 		return synced, tErr, nil
 	}
 
-	receiverWitness, appError := a.storage.StateTree.Set(receiverLeaf.StateID, newReceiverState)
-	if appError != nil {
-		return nil, nil, appError
-	}
-	synced.ReceiverStateProof.Witness = receiverWitness
+	if newReceiverState == newSenderState {
+		receiverWitness, appError := a.storage.StateTree.Set(receiverLeaf.StateID, newReceiverState)
+		if appError != nil {
+			return nil, nil, appError
+		}
+		synced.ReceiverStateProof.Witness = receiverWitness
 
-	if tErr := a.validateReceiverTokenID(receiverLeaf, commitmentTokenID); tErr != nil {
-		return synced, tErr, nil
+		if tErr := a.validateReceiverTokenID(receiverLeaf, commitmentTokenID); tErr != nil {
+			return synced, tErr, nil
+		}
+	} else {
+		synced.ReceiverStateProof.Witness = senderWitness
 	}
 
 	synced.Tx.SetNonce(senderLeaf.Nonce)
