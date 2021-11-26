@@ -27,7 +27,7 @@
 | `10010`      | `amount is not encodable as multi-precission decimal`               |
 | `10011`      | `fee is not encodable as multi-precission decimal`                  |
 | `10012`      | `sender state ID does not exist`                                    |
-| `10013`      | `spoke ID is not encodable as multi-precission decimal`                  |
+| `10013`      | `spoke ID is not encodable as multi-precission decimal`             |
 | `20000`      | `commitment not found`                                              |
 | `30000`      | `batch not found`                                                   |
 | `30001`      | `batches not found`                                                 |
