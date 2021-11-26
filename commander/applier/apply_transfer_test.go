@@ -224,6 +224,37 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_SetsNonce() {
 	s.Equal(models.MakeUint256(1), sync.Tx.ToTransfer().GetNonce())
 }
 
+func (s *ApplyTransferTestSuite) TestApplyTransferForSync_AllowTheSameFromTo() {
+	_, err := s.storage.StateTree.Set(s.transfer.FromStateID, &models.UserState{
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(0),
+		Balance:  models.MakeUint256(400),
+		Nonce:    models.MakeUint256(0),
+	})
+	s.NoError(err)
+
+	transfer := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(100),
+			Fee:         models.MakeUint256(10),
+			Nonce:       models.MakeUint256(0),
+		},
+		ToStateID: 1,
+	}
+	_, txError, appError := s.applier.ApplyTransferForSync(&transfer, models.MakeUint256(0))
+	s.NoError(appError)
+	s.NoError(txError)
+
+	senderLeaf, err := s.storage.StateTree.Leaf(transfer.FromStateID)
+	s.NoError(err)
+	receiverLeaf, err := s.storage.StateTree.Leaf(transfer.ToStateID)
+	s.NoError(err)
+
+	s.Equal(uint64(390), senderLeaf.Balance.Uint64())
+	s.Equal(receiverLeaf, senderLeaf)
+}
+
 func TestApplyTransferTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplyTransferTestSuite))
 }
