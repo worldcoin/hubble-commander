@@ -41,6 +41,18 @@ var (
 		},
 		ToPublicKey: models.PublicKey{1, 2, 3},
 	}
+	massMigrationTransaction = models.MassMigration{
+		TransactionBase: models.TransactionBase{
+			Hash:        utils.RandomHash(),
+			TxType:      txtype.MassMigration,
+			FromStateID: 1,
+			Amount:      models.MakeUint256(1000),
+			Fee:         models.MakeUint256(100),
+			Nonce:       models.MakeUint256(0),
+			Signature:   models.MakeRandomSignature(),
+		},
+		SpokeID: models.MakeUint256(5),
+	}
 )
 
 type StoredTransactionTestSuite struct {
@@ -69,6 +81,8 @@ func (s *StoredTransactionTestSuite) TestSetTransactionErrors() {
 	s.NoError(err)
 	err = s.storage.AddCreate2Transfer(&create2TransferTransaction)
 	s.NoError(err)
+	err = s.storage.AddMassMigration(&massMigrationTransaction)
+	s.NoError(err)
 
 	transferError := models.TxError{
 		TxHash:       transferTransaction.Hash,
@@ -80,7 +94,12 @@ func (s *StoredTransactionTestSuite) TestSetTransactionErrors() {
 		ErrorMessage: "C2T Quack",
 	}
 
-	err = s.storage.SetTransactionErrors(transferError, c2tError)
+	mmError := models.TxError{
+		TxHash:       massMigrationTransaction.Hash,
+		ErrorMessage: "MM Quack",
+	}
+
+	err = s.storage.SetTransactionErrors(transferError, c2tError, mmError)
 	s.NoError(err)
 
 	storedTransfer, err := s.storage.GetTransfer(transferTransaction.Hash)
@@ -90,6 +109,10 @@ func (s *StoredTransactionTestSuite) TestSetTransactionErrors() {
 	storedC2T, err := s.storage.GetCreate2Transfer(create2TransferTransaction.Hash)
 	s.NoError(err)
 	s.Equal(c2tError.ErrorMessage, *storedC2T.ErrorMessage)
+
+	storedMM, err := s.storage.GetMassMigration(massMigrationTransaction.Hash)
+	s.NoError(err)
+	s.Equal(mmError.ErrorMessage, *storedMM.ErrorMessage)
 }
 
 func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_ReturnsHighestNonceRegardlessOfInsertionOrder() {
@@ -125,9 +148,15 @@ func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_ReturnsHighes
 	tx2.Hash = utils.RandomHash()
 	tx2.Nonce = models.MakeUint256(5)
 
+	tx3 := massMigrationTransaction
+	tx3.Hash = utils.RandomHash()
+	tx3.Nonce = models.MakeUint256(4)
+
 	err := s.storage.AddTransfer(&tx1)
 	s.NoError(err)
 	err = s.storage.AddCreate2Transfer(&tx2)
+	s.NoError(err)
+	err = s.storage.AddMassMigration(&tx3)
 	s.NoError(err)
 
 	latestNonce, err := s.storage.GetLatestTransactionNonce(1)
@@ -256,15 +285,21 @@ func (s *StoredTransactionTestSuite) TestGetTransactionCount() {
 	err = s.storage.AddTransfer(&transferTransaction)
 	s.NoError(err)
 
-	c2t := create2Transfer
+	c2t := create2TransferTransaction
 	c2t.Hash = common.Hash{3, 4, 5}
 	c2t.CommitmentID = &commitmentInBatch.ID
 	err = s.storage.AddCreate2Transfer(&c2t)
 	s.NoError(err)
 
+	mm := massMigrationTransaction
+	mm.Hash = common.Hash{6, 7, 8}
+	mm.CommitmentID = &commitmentInBatch.ID
+	err = s.storage.AddMassMigration(&mm)
+	s.NoError(err)
+
 	count, err := s.storage.GetTransactionCount()
 	s.NoError(err)
-	s.Equal(2, *count)
+	s.Equal(3, *count)
 }
 
 func (s *StoredTransactionTestSuite) TestGetTransactionCount_NoTransactions() {
@@ -278,9 +313,9 @@ func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs() {
 	expectedHashes := make([]common.Hash, 0, 4)
 	for i := range batchIDs {
 		transfers := make([]models.Transfer, 2)
-		transfers[0] = transfer
+		transfers[0] = transferTransaction
 		transfers[0].Hash = utils.RandomHash()
-		transfers[1] = transfer
+		transfers[1] = transferTransaction
 		transfers[1].Hash = utils.RandomHash()
 		s.addTransfersInCommitment(&batchIDs[i], transfers)
 		expectedHashes = append(expectedHashes, transfers[0].Hash, transfers[1].Hash)
@@ -296,8 +331,8 @@ func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs() {
 
 func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs_NoTransactions() {
 	transfers := make([]models.Transfer, 2)
-	transfers[0] = transfer
-	transfers[1] = transfer
+	transfers[0] = transferTransaction
+	transfers[1] = transferTransaction
 	transfers[1].Hash = utils.RandomHash()
 	s.addTransfersInCommitment(models.NewUint256(1), transfers)
 

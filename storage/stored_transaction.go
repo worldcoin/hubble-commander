@@ -343,7 +343,7 @@ func (s *TransactionStorage) GetPendingTransactions(txType txtype.TransactionTyp
 	case txtype.Create2Transfer:
 		return s.GetPendingCreate2Transfers()
 	case txtype.MassMigration:
-		panic("MassMigration not implemented")
+		return s.GetPendingMassMigrations()
 	}
 	return nil, nil
 }
