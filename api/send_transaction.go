@@ -66,20 +66,25 @@ var (
 		10012,
 		"sender with given ID does not exist",
 	)
+	APINotDecimalEncodableSpokeIDError = NewAPIError(
+		10013,
+		"spoke ID is not encodable as multi-precission decimal",
+	)
 )
 
 var sendTransactionAPIErrors = map[error]*APIError{
-	AnyMissingFieldError:                  APIErrAnyMissingField,
-	AnyInvalidSignatureError:              APIErrInvalidSignature,
-	ErrNonexistentSender:                  APISenderDoesNotExistError,
-	ErrTransferToSelf:                     APIErrTransferToSelf,
-	ErrNonceTooLow:                        APIErrNonceTooLow,
-	ErrNonceTooHigh:                       APIErrNonceTooHigh,
-	ErrNotEnoughBalance:                   APIErrNotEnoughBalance,
-	ErrInvalidAmount:                      APIErrInvalidAmount,
-	ErrFeeTooLow:                          APIErrFeeTooLow,
-	NewNotDecimalEncodableError("amount"): APINotDecimalEncodableAmountError,
-	NewNotDecimalEncodableError("fee"):    APINotDecimalEncodableFeeError,
+	AnyMissingFieldError:                   APIErrAnyMissingField,
+	AnyInvalidSignatureError:               APIErrInvalidSignature,
+	ErrNonexistentSender:                   APISenderDoesNotExistError,
+	ErrTransferToSelf:                      APIErrTransferToSelf,
+	ErrNonceTooLow:                         APIErrNonceTooLow,
+	ErrNonceTooHigh:                        APIErrNonceTooHigh,
+	ErrNotEnoughBalance:                    APIErrNotEnoughBalance,
+	ErrInvalidAmount:                       APIErrInvalidAmount,
+	ErrFeeTooLow:                           APIErrFeeTooLow,
+	NewNotDecimalEncodableError("amount"):  APINotDecimalEncodableAmountError,
+	NewNotDecimalEncodableError("fee"):     APINotDecimalEncodableFeeError,
+	NewNotDecimalEncodableError("spokeID"): APINotDecimalEncodableSpokeIDError,
 }
 
 func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {

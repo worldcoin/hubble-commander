@@ -80,6 +80,9 @@ func (a *API) validateMassMigration(massMigration *models.MassMigration) error {
 	if vErr := validateFee(&massMigration.Fee); vErr != nil {
 		return vErr
 	}
+	if vErr := validateSpokeID(&massMigration.SpokeID); vErr != nil {
+		return vErr
+	}
 
 	senderState, err := a.storage.StateTree.Leaf(massMigration.FromStateID)
 	if storage.IsNotFoundError(err) {
@@ -105,4 +108,12 @@ func (a *API) validateMassMigration(massMigration *models.MassMigration) error {
 		return nil
 	}
 	return a.validateSignature(encodedTransfer, &massMigration.Signature, &senderState.UserState)
+}
+
+func validateSpokeID(spokeID *models.Uint256) error {
+	_, err := encoder.EncodeDecimal(*spokeID)
+	if err != nil {
+		return errors.WithStack(NewNotDecimalEncodableError("spokeID"))
+	}
+	return nil
 }
