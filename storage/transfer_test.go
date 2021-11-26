@@ -86,7 +86,7 @@ func (s *TransferTestSuite) TestGetTransfer_DifferentTxType() {
 func (s *TransferTestSuite) TestMarkTransfersAsIncluded() {
 	txs := make([]models.Transfer, 2)
 	for i := 0; i < len(txs); i++ {
-		txs[i] = transferTransaction
+		txs[i] = transfer
 		txs[i].Hash = utils.RandomHash()
 		err := s.storage.AddTransfer(&txs[i])
 		s.NoError(err)

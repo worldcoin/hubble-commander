@@ -36,6 +36,10 @@ func (t *Transfer) ToCreate2Transfer() *Create2Transfer {
 	panic("Transfer cannot be cast to Create2Transfer")
 }
 
+func (t *Transfer) ToMassMigration() *MassMigration {
+	panic("Transfer cannot be cast to MassMigration")
+}
+
 // nolint:gocritic
 func (t Transfer) Copy() GenericTransaction {
 	return &t

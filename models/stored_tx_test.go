@@ -77,6 +77,39 @@ func TestStoredTx_Bytes_Create2Transfer(t *testing.T) {
 	require.Equal(t, *transfer, *decodedTransfer)
 }
 
+func TestStoredTx_Bytes_MassMigration(t *testing.T) {
+	massMigration := &MassMigration{
+		TransactionBase: TransactionBase{
+			Hash:        utils.RandomHash(),
+			TxType:      txtype.MassMigration,
+			FromStateID: 11,
+			Amount:      MakeUint256(10),
+			Fee:         MakeUint256(111),
+			Nonce:       MakeUint256(1),
+			Signature:   Signature{1, 2, 3, 4, 5},
+			ReceiveTime: NewTimestamp(time.Unix(10, 0).UTC()),
+			CommitmentID: &CommitmentID{
+				BatchID:      MakeUint256(10),
+				IndexInBatch: 2,
+			},
+			ErrorMessage: ref.String("some error message"),
+		},
+		SpokeID: MakeUint256(5),
+	}
+
+	storedTransaction := NewStoredTxFromMassMigration(massMigration)
+	bytes := storedTransaction.Bytes()
+
+	decodedStoredTx := StoredTx{}
+	err := decodedStoredTx.SetBytes(bytes)
+	require.NoError(t, err)
+	require.EqualValues(t, *storedTransaction, decodedStoredTx)
+
+	storedTxReceipt := NewStoredTxReceiptFromMassMigration(massMigration)
+	decodedTransfer := decodedStoredTx.ToMassMigration(storedTxReceipt)
+	require.Equal(t, *massMigration, *decodedTransfer)
+}
+
 func TestStoredTx_ToTransfer_InvalidType(t *testing.T) {
 	tx := NewStoredTxFromCreate2Transfer(&Create2Transfer{})
 	txReceipt := NewStoredTxReceiptFromCreate2Transfer(&Create2Transfer{})
@@ -92,5 +125,14 @@ func TestStoredTx_ToCreate2Transfer_InvalidType(t *testing.T) {
 
 	require.Panics(t, func() {
 		tx.ToCreate2Transfer(txReceipt)
+	})
+}
+
+func TestStoredTx_ToMassMigration_InvalidType(t *testing.T) {
+	tx := NewStoredTxFromMassMigration(&MassMigration{})
+	txReceipt := NewStoredTxReceiptFromMassMigration(&MassMigration{})
+
+	require.Panics(t, func() {
+		tx.ToTransfer(txReceipt)
 	})
 }

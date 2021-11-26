@@ -13,6 +13,7 @@ const (
 	storedTxBytesLength               = 213
 	storedTxTransferBodyLength        = 4
 	storedTxCreate2TransferBodyLength = PublicKeyLength
+	storedTxMassMigrationBodyLength   = 32
 )
 
 var (
@@ -62,6 +63,22 @@ func NewStoredTxFromCreate2Transfer(t *Create2Transfer) *StoredTx {
 		ReceiveTime: t.ReceiveTime,
 		Body: &StoredTxCreate2TransferBody{
 			ToPublicKey: t.ToPublicKey,
+		},
+	}
+}
+
+func NewStoredTxFromMassMigration(m *MassMigration) *StoredTx {
+	return &StoredTx{
+		Hash:        m.Hash,
+		TxType:      m.TxType,
+		FromStateID: m.FromStateID,
+		Amount:      m.Amount,
+		Fee:         m.Fee,
+		Nonce:       m.Nonce,
+		Signature:   m.Signature,
+		ReceiveTime: m.ReceiveTime,
+		Body: &StoredTxMassMigrationBody{
+			SpokeID: m.SpokeID,
 		},
 	}
 }
@@ -170,6 +187,33 @@ func (t *StoredTx) ToCreate2Transfer(txReceipt *StoredTxReceipt) *Create2Transfe
 	return transfer
 }
 
+func (t *StoredTx) ToMassMigration(txReceipt *StoredTxReceipt) *MassMigration {
+	massMigrationBody, ok := t.Body.(*StoredTxMassMigrationBody)
+	if !ok {
+		panic("invalid mass migration body type")
+	}
+
+	massMigration := &MassMigration{
+		TransactionBase: TransactionBase{
+			Hash:        t.Hash,
+			TxType:      t.TxType,
+			FromStateID: t.FromStateID,
+			Amount:      t.Amount,
+			Fee:         t.Fee,
+			Nonce:       t.Nonce,
+			Signature:   t.Signature,
+			ReceiveTime: t.ReceiveTime,
+		},
+		SpokeID: massMigrationBody.SpokeID,
+	}
+
+	if txReceipt != nil {
+		massMigration.CommitmentID = txReceipt.CommitmentID
+		massMigration.ErrorMessage = txReceipt.ErrorMessage
+	}
+	return massMigration
+}
+
 func txBody(data []byte, transactionType txtype.TransactionType) (TxBody, error) {
 	switch transactionType {
 	case txtype.Transfer:
@@ -181,7 +225,9 @@ func txBody(data []byte, transactionType txtype.TransactionType) (TxBody, error)
 		err := body.SetBytes(data)
 		return body, err
 	case txtype.MassMigration:
-		return nil, errors.Errorf("unsupported tx type: %s", transactionType)
+		body := new(StoredTxMassMigrationBody)
+		err := body.SetBytes(data)
+		return body, err
 	}
 	return nil, nil
 }
@@ -272,4 +318,21 @@ func (t *StoredTxCreate2TransferBody) SetBytes(data []byte) error {
 
 func (t *StoredTxCreate2TransferBody) BytesLen() int {
 	return storedTxCreate2TransferBodyLength
+}
+
+type StoredTxMassMigrationBody struct {
+	SpokeID Uint256
+}
+
+func (t *StoredTxMassMigrationBody) Bytes() []byte {
+	return t.SpokeID.Bytes()
+}
+
+func (t *StoredTxMassMigrationBody) SetBytes(data []byte) error {
+	t.SpokeID.SetBytes(data)
+	return nil
+}
+
+func (t *StoredTxMassMigrationBody) BytesLen() int {
+	return storedTxMassMigrationBodyLength
 }
