@@ -24,7 +24,7 @@ func (s *CreateCommitmentsTestSuite) SetupSuite() {
 }
 
 func (s *CreateCommitmentsTestSuite) SetupTest() {
-	s.testSuiteWithTxsContext.SetupTestWithConfig(batchtype.Transfer, config.RollupConfig{
+	s.testSuiteWithTxsContext.SetupTestWithConfig(batchtype.Transfer, &config.RollupConfig{
 		MinTxsPerCommitment:    2,
 		MaxTxsPerCommitment:    32,
 		MinCommitmentsPerBatch: 1,

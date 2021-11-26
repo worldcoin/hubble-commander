@@ -9,17 +9,15 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type TransactionExecutor interface {
 	NewExecuteTxsResult(capacity uint32) ExecuteTxsResult
-	NewExecuteTxsForCommitmentResult(result ExecuteTxsResult, newPendingTxs models.GenericTransactionArray) ExecuteTxsForCommitmentResult
+	NewExecuteTxsForCommitmentResult(result ExecuteTxsResult) ExecuteTxsForCommitmentResult
 	SerializeTxs(results ExecuteTxsForCommitmentResult) ([]byte, error)
 	AddPendingAccount(result applier.ApplySingleTxResult) error
 	NewCreateCommitmentResult(result ExecuteTxsForCommitmentResult, commitment *models.CommitmentWithTxs) CreateCommitmentResult
 	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (result applier.ApplySingleTxResult, txError, appError error)
-	SubmitBatch(client *eth.Client, commitments []models.CommitmentWithTxs) (*types.Transaction, error)
 }
 
 func CreateTransactionExecutor(executionCtx *ExecutionContext, batchType batchtype.BatchType) TransactionExecutor {
@@ -58,11 +56,9 @@ func (e *TransferExecutor) NewExecuteTxsResult(capacity uint32) ExecuteTxsResult
 
 func (e *TransferExecutor) NewExecuteTxsForCommitmentResult(
 	result ExecuteTxsResult,
-	newPendingTxs models.GenericTransactionArray,
 ) ExecuteTxsForCommitmentResult {
 	return &ExecuteTransfersForCommitmentResult{
 		appliedTxs: result.AppliedTxs().ToTransferArray(),
-		pendingTxs: newPendingTxs.ToTransferArray(),
 	}
 }
 
@@ -71,8 +67,7 @@ func (e *TransferExecutor) NewCreateCommitmentResult(
 	commitment *models.CommitmentWithTxs,
 ) CreateCommitmentResult {
 	return &CreateTransferCommitmentResult{
-		newPendingTxs: result.PendingTxs(),
-		commitment:    commitment,
+		commitment: commitment,
 	}
 }
 
@@ -88,10 +83,6 @@ func (e *TransferExecutor) ApplyTx(tx models.GenericTransaction, commitmentToken
 	applyResult applier.ApplySingleTxResult, txError, appError error,
 ) {
 	return e.applier.ApplyTransfer(tx, commitmentTokenID)
-}
-
-func (e *TransferExecutor) SubmitBatch(client *eth.Client, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
-	return client.SubmitTransfersBatch(commitments)
 }
 
 // C2TExecutor implements TransactionExecutor
@@ -119,13 +110,11 @@ func (e *C2TExecutor) NewExecuteTxsResult(capacity uint32) ExecuteTxsResult {
 
 func (e *C2TExecutor) NewExecuteTxsForCommitmentResult(
 	result ExecuteTxsResult,
-	newPendingTxs models.GenericTransactionArray,
 ) ExecuteTxsForCommitmentResult {
 	return &ExecuteC2TForCommitmentResult{
 		appliedTxs:      result.AppliedTxs().ToCreate2TransferArray(),
 		addedPubKeyIDs:  result.AddedPubKeyIDs(),
 		pendingAccounts: result.PendingAccounts(),
-		pendingTxs:      newPendingTxs.ToCreate2TransferArray(),
 	}
 }
 
@@ -134,7 +123,6 @@ func (e *C2TExecutor) NewCreateCommitmentResult(
 	commitment *models.CommitmentWithTxs,
 ) CreateCommitmentResult {
 	return &CreateC2TCommitmentResult{
-		newPendingTxs:   result.PendingTxs(),
 		pendingAccounts: result.PendingAccounts(),
 		commitment:      commitment,
 	}
@@ -155,8 +143,4 @@ func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID mo
 	applyResult applier.ApplySingleTxResult, txError, appError error,
 ) {
 	return e.applier.ApplyCreate2Transfer(tx.ToCreate2Transfer(), commitmentTokenID)
-}
-
-func (e *C2TExecutor) SubmitBatch(client *eth.Client, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
-	return client.SubmitCreate2TransfersBatch(commitments)
 }

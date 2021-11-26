@@ -74,7 +74,7 @@ jobs:
         run: npm run generate
         working-directory: hubble-contracts
       - name: Run node in the background
-        run: npm run node &
+        run: npm run hardhat:node &
         working-directory: hubble-contracts
       - name: Deploy gas estimator contracts
         run: npm run keyless:deploy
@@ -117,6 +117,7 @@ jobs:
       - name: Move existing files
         run: |
           find contracts -type f ! -name '*.go' -exec rm {} \;
+          find contracts -type f -name 'events.go' -exec rm {} \;
           mv contracts tmp-contracts
       - name: Generate bindings
         run: make generate

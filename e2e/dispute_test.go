@@ -18,6 +18,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -90,7 +91,7 @@ func testDisputeSignatureC2T(t *testing.T, client jsonrpc.RPCClient, ethClient *
 }
 
 func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, senderWallet bls.Wallet) {
-	testSendTransferBatch(t, client, senderWallet, 0)
+	testSubmitTransferBatch(t, client, senderWallet, 0)
 
 	sink := make(chan *rollup.RollupRollbackStatus)
 	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
@@ -102,7 +103,7 @@ func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethCl
 
 	testBatchesAfterDispute(t, client, 2)
 
-	testSendTransferBatch(t, client, senderWallet, 32)
+	testSubmitTransferBatch(t, client, senderWallet, 32)
 }
 
 func testDisputeTransitionTransferInvalidStateRoot(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
@@ -135,7 +136,7 @@ func testDisputeTransitionC2T(
 
 	testBatchesAfterDispute(t, client, 3)
 
-	testSendC2TBatch(t, client, senderWallet, wallets, firstC2TWallet.PublicKey(), 64)
+	testSubmitC2TBatch(t, client, senderWallet, wallets, firstC2TWallet.PublicKey(), 64)
 }
 
 func testDisputeTransitionC2TInvalidStateRoot(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, receiverWallet bls.Wallet) {
@@ -150,7 +151,7 @@ func testDisputeTransitionC2TInvalidStateRoot(t *testing.T, client jsonrpc.RPCCl
 	testBatchesAfterDispute(t, client, 4)
 }
 
-func testSendTransferBatch(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, startNonce uint64) {
+func testSubmitTransferBatch(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, startNonce uint64) {
 	firstTransferHash := testSendTransfer(t, client, senderWallet, startNonce)
 	testGetTransaction(t, client, firstTransferHash)
 	send31MoreTransfers(t, client, senderWallet, startNonce+1)
@@ -158,7 +159,7 @@ func testSendTransferBatch(t *testing.T, client jsonrpc.RPCClient, senderWallet 
 	waitForTxToBeIncludedInBatch(t, client, firstTransferHash)
 }
 
-func testSendC2TBatch(
+func testSubmitC2TBatch(
 	t *testing.T,
 	client jsonrpc.RPCClient,
 	senderWallet bls.Wallet,
@@ -262,7 +263,7 @@ func sendTransferBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client) 
 	encodedTransfer, err := encoder.EncodeTransferForCommitment(&transfer)
 	require.NoError(t, err)
 
-	sendTransferCommitment(t, ethClient, encodedTransfer, 2)
+	sendTransferCommitment(t, ethClient, encodedTransfer, 4)
 }
 
 func sendC2TBatchWithInvalidAmount(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey) {
@@ -349,7 +350,7 @@ func sendTransferCommitment(t *testing.T, ethClient *eth.Client, encodedTransfer
 }
 
 func submitTransfersBatch(t *testing.T, ethClient *eth.Client, commitments []models.CommitmentWithTxs, batchID uint64) {
-	transaction, err := ethClient.SubmitTransfersBatch(commitments)
+	transaction, err := ethClient.SubmitTransfersBatch(models.NewUint256(batchID), commitments)
 	require.NoError(t, err)
 
 	waitForSubmittedBatch(t, ethClient, transaction, batchID)
@@ -371,7 +372,7 @@ func sendC2TCommitment(t *testing.T, ethClient *eth.Client, encodedTransfer []by
 }
 
 func submitC2TBatch(t *testing.T, ethClient *eth.Client, commitments []models.CommitmentWithTxs, batchID uint64) {
-	transaction, err := ethClient.SubmitCreate2TransfersBatch(commitments)
+	transaction, err := ethClient.SubmitCreate2TransfersBatch(models.NewUint256(batchID), commitments)
 	require.NoError(t, err)
 
 	waitForSubmittedBatch(t, ethClient, transaction, batchID)
@@ -417,7 +418,7 @@ func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
 	rollupContract, err := rollup.NewRollup(chainState.Rollup, backend)
 	require.NoError(t, err)
 
-	ethClient, err := eth.NewClient(blockchain, &eth.NewClientParams{
+	ethClient, err := eth.NewClient(blockchain, metrics.NewCommanderMetrics(), &eth.NewClientParams{
 		ChainState:      chainState,
 		AccountRegistry: accountRegistry,
 		TokenRegistry:   tokenRegistry,

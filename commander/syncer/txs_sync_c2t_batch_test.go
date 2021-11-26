@@ -16,7 +16,7 @@ type SyncC2TBatchTestSuite struct {
 }
 
 func (s *SyncC2TBatchTestSuite) SetupTest() {
-	s.testSuiteWithSyncAndRollupContext.SetupTestWithConfig(batchtype.Create2Transfer, syncTestSuiteConfig)
+	s.testSuiteWithSyncAndRollupContext.SetupTestWithConfig(batchtype.Create2Transfer, &syncTestSuiteConfig)
 	s.syncTestSuite.setupTest()
 }
 
@@ -168,7 +168,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 func (s *SyncC2TBatchTestSuite) TestSyncBatch_CommitmentWithoutTxs() {
 	commitment := s.createCommitmentWithEmptyTransactions(batchtype.Create2Transfer)
 
-	_, err := s.client.SubmitCreate2TransfersBatchAndWait([]models.CommitmentWithTxs{commitment})
+	_, err := s.client.SubmitCreate2TransfersBatchAndWait(models.NewUint256(1), []models.CommitmentWithTxs{commitment})
 	s.NoError(err)
 
 	remoteBatches, err := s.client.GetAllBatches()

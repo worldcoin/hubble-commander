@@ -12,6 +12,9 @@ import (
 
 const (
 	SimulatorChainID                        = 1337
+	DefaultTransferBatchSubmissionGasLimit  = uint64(400_000)
+	DefaultC2TBatchSubmissionGasLimit       = uint64(500_000)
+	DefaultDepositBatchSubmissionGasLimit   = uint64(220_000)
 	DefaultTransitionDisputeGasLimit        = uint64(5_000_000)
 	DefaultSignatureDisputeGasLimit         = uint64(7_500_000)
 	DefaultBatchAccountRegistrationGasLimit = uint64(8_000_000)
@@ -37,6 +40,9 @@ func GetConfig() *Config {
 			MaxTxsPerCommitment:              getUint32("rollup.max_txs_per_commitment", 32),
 			MinCommitmentsPerBatch:           getUint32("rollup.min_commitments_per_batch", 1),
 			MaxCommitmentsPerBatch:           getUint32("rollup.max_commitments_per_batch", 32),
+			TransferBatchSubmissionGasLimit:  getUint64("rollup.transfer_batch_submission_gas_limit", DefaultTransferBatchSubmissionGasLimit),
+			C2TBatchSubmissionGasLimit:       getUint64("rollup.c2t_batch_submission_gas_limit", DefaultC2TBatchSubmissionGasLimit),
+			DepositBatchSubmissionGasLimit:   getUint64("rollup.deposit_batch_submission_gas_limit", DefaultDepositBatchSubmissionGasLimit),
 			TransitionDisputeGasLimit:        getUint64("rollup.transition_dispute_gas_limit", DefaultTransitionDisputeGasLimit),
 			SignatureDisputeGasLimit:         getUint64("rollup.signature_dispute_gas_limit", DefaultSignatureDisputeGasLimit),
 			BatchAccountRegistrationGasLimit: getUint64("rollup.batch_account_registration_gas_limit", DefaultBatchAccountRegistrationGasLimit),
@@ -79,6 +85,9 @@ func GetTestConfig() *Config {
 			MaxTxsPerCommitment:              2,
 			MinCommitmentsPerBatch:           1,
 			MaxCommitmentsPerBatch:           32,
+			TransferBatchSubmissionGasLimit:  DefaultTransferBatchSubmissionGasLimit,
+			C2TBatchSubmissionGasLimit:       DefaultC2TBatchSubmissionGasLimit,
+			DepositBatchSubmissionGasLimit:   DefaultDepositBatchSubmissionGasLimit,
 			TransitionDisputeGasLimit:        DefaultTransitionDisputeGasLimit,
 			SignatureDisputeGasLimit:         DefaultSignatureDisputeGasLimit,
 			BatchAccountRegistrationGasLimit: DefaultBatchAccountRegistrationGasLimit,
