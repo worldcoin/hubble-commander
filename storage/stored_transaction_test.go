@@ -306,6 +306,17 @@ func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs_NoTransa
 	s.Nil(hashes)
 }
 
+func (s *StoredTransactionTestSuite) TestStoredTx_IndexOnToStateIDWorks() {
+	s.addStoredTx(txtype.Transfer, ref.Uint32(1))
+	s.addStoredTx(txtype.Transfer, ref.Uint32(2))
+	s.addStoredTx(txtype.Transfer, ref.Uint32(1))
+
+	indexValues := s.getToStateIDIndexValues(models.StoredTxName)
+	s.Len(indexValues, 2)
+	s.Len(indexValues[1], 2)
+	s.Len(indexValues[2], 1)
+}
+
 func (s *StoredTransactionTestSuite) TestStoredTxReceipt_IndexOnToCommitmentIDWorks() {
 	zeroID := models.CommitmentID{BatchID: models.MakeUint256(0), IndexInBatch: 0}
 	id1 := models.CommitmentID{BatchID: models.MakeUint256(1), IndexInBatch: 0}
@@ -353,7 +364,7 @@ func (s *StoredTransactionTestSuite) TestStoredTxReceipt_IndexOnToStateIDWorks()
 	s.addStoredTxReceipt(ref.Uint32(2), nil)
 	s.addStoredTxReceipt(ref.Uint32(1), nil)
 
-	indexValues := s.getToStateIDIndexValues()
+	indexValues := s.getToStateIDIndexValues(models.StoredTxReceiptName)
 	s.Len(indexValues, 3)
 	s.Len(indexValues[0], 0) // value set due to index initialization, see NewTransactionStorage
 	s.Len(indexValues[1], 2)
@@ -363,7 +374,7 @@ func (s *StoredTransactionTestSuite) TestStoredTxReceipt_IndexOnToStateIDWorks()
 func (s *StoredTransactionTestSuite) TestStoredTxReceipt_ValuesWithNilToStateIDAreNotIndexed() {
 	s.addStoredTxReceipt(nil, nil)
 
-	indexValues := s.getToStateIDIndexValues()
+	indexValues := s.getToStateIDIndexValues(models.StoredTxReceiptName)
 	s.Len(indexValues, 1)
 	s.Len(indexValues[0], 0) // value set due to index initialization, see NewTransactionStorage
 }
@@ -397,6 +408,28 @@ func (s *StoredTransactionTestSuite) addTransfersInCommitment(batchID *models.Ui
 	}
 }
 
+func (s *StoredTransactionTestSuite) addStoredTx(txType txtype.TransactionType, toStateID *uint32) {
+	switch txType {
+	case txtype.Transfer:
+		err := s.storage.addStoredTx(models.NewStoredTxFromTransfer(&models.Transfer{
+			TransactionBase: models.TransactionBase{
+				Hash: utils.RandomHash(),
+			},
+			ToStateID: *toStateID,
+		}))
+		s.NoError(err)
+	case txtype.Create2Transfer:
+		err := s.storage.addStoredTx(models.NewStoredTxFromCreate2Transfer(&models.Create2Transfer{
+			TransactionBase: models.TransactionBase{
+				Hash: utils.RandomHash(),
+			},
+		}))
+		s.NoError(err)
+	default:
+		panic("not implemented")
+	}
+}
+
 func (s *StoredTransactionTestSuite) addStoredTxReceipt(toStateID *uint32, commitmentID *models.CommitmentID) {
 	receipt := &models.StoredTxReceipt{
 		Hash:         utils.RandomHash(),
@@ -407,10 +440,10 @@ func (s *StoredTransactionTestSuite) addStoredTxReceipt(toStateID *uint32, commi
 	s.NoError(err)
 }
 
-func (s *StoredTransactionTestSuite) getToStateIDIndexValues() map[uint32]bh.KeyList {
+func (s *StoredTransactionTestSuite) getToStateIDIndexValues(typeName []byte) map[uint32]bh.KeyList {
 	indexValues := make(map[uint32]bh.KeyList)
 
-	s.iterateIndex(models.StoredTxReceiptName, "ToStateID", func(encodedKey []byte, keyList bh.KeyList) {
+	s.iterateIndex(typeName, "ToStateID", func(encodedKey []byte, keyList bh.KeyList) {
 		var toStateID uint32
 		err := db.Decode(encodedKey, &toStateID)
 		s.NoError(err)
