@@ -83,8 +83,7 @@ func (s *MassMigrationTestSuite) TestEncodeMassMigrationForSigning() {
 	expected, err := s.massMigration.SignBytes(nil, encodedMassMigration)
 	s.NoError(err)
 
-	actual, err := EncodeMassMigrationForSigning(txMassMigration)
-	s.NoError(err)
+	actual := EncodeMassMigrationForSigning(txMassMigration)
 	s.Equal(expected, actual)
 }
 

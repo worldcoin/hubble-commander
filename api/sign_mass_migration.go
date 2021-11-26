@@ -8,7 +8,7 @@ import (
 )
 
 func SignMassMigration(wallet *bls.Wallet, massMigration dto.MassMigration) (*dto.MassMigration, error) {
-	encodedMassMigration, err := encoder.EncodeMassMigrationForSigning(&models.MassMigration{
+	encodedMassMigration := encoder.EncodeMassMigrationForSigning(&models.MassMigration{
 		TransactionBase: models.TransactionBase{
 			FromStateID: *massMigration.FromStateID,
 			Amount:      *massMigration.Amount,
@@ -17,9 +17,6 @@ func SignMassMigration(wallet *bls.Wallet, massMigration dto.MassMigration) (*dt
 		},
 		SpokeID: *massMigration.SpokeID,
 	})
-	if err != nil {
-		return nil, err
-	}
 
 	signature, err := wallet.Sign(encodedMassMigration)
 	if err != nil {

@@ -98,10 +98,7 @@ func (a *API) validateMassMigration(massMigration *models.MassMigration) error {
 	if vErr := validateBalance(&massMigration.Amount, &massMigration.Fee, &senderState.UserState); vErr != nil {
 		return vErr
 	}
-	encodedTransfer, err := encoder.EncodeMassMigrationForSigning(massMigration)
-	if err != nil {
-		return err
-	}
+	encodedTransfer := encoder.EncodeMassMigrationForSigning(massMigration)
 
 	if a.disableSignatures {
 		massMigration.Signature = a.mockSignature
