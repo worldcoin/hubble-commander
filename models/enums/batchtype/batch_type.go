@@ -9,11 +9,11 @@ import (
 type BatchType uint8
 
 const (
-	Genesis BatchType = iota
-	Transfer
-	MassMigration
-	Create2Transfer
-	Deposit
+	Genesis         BatchType = 0
+	Transfer        BatchType = 1
+	Create2Transfer BatchType = 3
+	MassMigration   BatchType = 5
+	Deposit         BatchType = 7
 )
 
 var BatchTypes = map[BatchType]string{
