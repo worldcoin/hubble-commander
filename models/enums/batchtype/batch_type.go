@@ -12,16 +12,16 @@ const (
 	Genesis         BatchType = 0
 	Transfer        BatchType = 1
 	Create2Transfer BatchType = 3
+	Deposit         BatchType = 4
 	MassMigration   BatchType = 5
-	Deposit         BatchType = 7
 )
 
 var BatchTypes = map[BatchType]string{
 	Genesis:         "GENESIS",
 	Transfer:        "TRANSFER",
-	MassMigration:   "MASS_MIGRATION",
 	Create2Transfer: "CREATE2TRANSFER",
 	Deposit:         "DEPOSIT",
+	MassMigration:   "MASS_MIGRATION",
 }
 
 func (s BatchType) Ref() *BatchType {

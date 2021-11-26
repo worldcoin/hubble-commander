@@ -11,14 +11,14 @@ type TransactionType uint8
 
 const (
 	Transfer        = TransactionType(batchtype.Transfer)
-	MassMigration   = TransactionType(batchtype.MassMigration)
 	Create2Transfer = TransactionType(batchtype.Create2Transfer)
+	MassMigration   = TransactionType(batchtype.MassMigration)
 )
 
 var TransactionTypes = map[TransactionType]string{
 	Transfer:        "TRANSFER",
-	MassMigration:   "MASS_MIGRATION",
 	Create2Transfer: "CREATE2TRANSFER",
+	MassMigration:   "MASS_MIGRATION",
 }
 
 func (s TransactionType) Ref() *TransactionType {
