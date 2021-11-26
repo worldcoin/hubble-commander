@@ -448,7 +448,7 @@ func (s *StoredTransactionTestSuite) addStoredTx(txType txtype.TransactionType, 
 			},
 		}))
 		s.NoError(err)
-	default:
+	case txtype.MassMigration:
 		panic("not implemented")
 	}
 }
