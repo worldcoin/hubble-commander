@@ -317,6 +317,13 @@ func (s *StoredTransactionTestSuite) TestStoredTx_IndexOnToStateIDWorks() {
 	s.Len(indexValues[2], 1)
 }
 
+func (s *StoredTransactionTestSuite) TestStoredTx_ValuesWithoutToStateIDAreNotIndexed() {
+	s.addStoredTx(txtype.Create2Transfer, nil)
+
+	indexValues := s.getToStateIDIndexValues(models.StoredTxName)
+	s.Len(indexValues, 0)
+}
+
 func (s *StoredTransactionTestSuite) TestStoredTxReceipt_IndexOnToCommitmentIDWorks() {
 	zeroID := models.CommitmentID{BatchID: models.MakeUint256(0), IndexInBatch: 0}
 	id1 := models.CommitmentID{BatchID: models.MakeUint256(1), IndexInBatch: 0}
