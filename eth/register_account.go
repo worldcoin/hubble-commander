@@ -29,7 +29,7 @@ func (a *AccountManager) RetrieveRegisteredPubKeyID(receipt *types.Receipt) (*ui
 	}
 
 	event := new(accountregistry.AccountRegistrySinglePubkeyRegistered)
-	err = a.accountRegistryContract.UnpackLog(event, SinglePubkeyRegisteredEvent, *log)
+	err = a.AccountRegistry.BoundContract.UnpackLog(event, SinglePubkeyRegisteredEvent, *log)
 	if err != nil {
 		return nil, err
 	}

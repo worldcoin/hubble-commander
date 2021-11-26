@@ -22,18 +22,18 @@ func (s *testSuiteWithExecutionContext) SetupSuite() {
 }
 
 func (s *testSuiteWithExecutionContext) SetupTest() {
-	s.SetupTestWithConfig(config.RollupConfig{
+	s.SetupTestWithConfig(&config.RollupConfig{
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
 	})
 }
 
-func (s *testSuiteWithExecutionContext) SetupTestWithConfig(cfg config.RollupConfig) {
+func (s *testSuiteWithExecutionContext) SetupTestWithConfig(cfg *config.RollupConfig) {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 
-	s.cfg = &cfg
+	s.cfg = cfg
 
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)

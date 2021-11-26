@@ -2,7 +2,6 @@ package encoder
 
 import (
 	"encoding/binary"
-	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -32,26 +31,4 @@ func (c *DecodedCommitment) BodyHash(accountRoot common.Hash) *common.Hash {
 
 func (c *DecodedCommitment) LeafHash(accountRoot common.Hash) common.Hash {
 	return utils.HashTwo(c.StateRoot, *c.BodyHash(accountRoot))
-}
-
-func CommitmentToCalldataFields(commitments []models.CommitmentWithTxs) (
-	stateRoots [][32]byte,
-	signatures [][2]*big.Int,
-	feeReceivers []*big.Int,
-	transactions [][]byte,
-) {
-	count := len(commitments)
-
-	stateRoots = make([][32]byte, 0, count)
-	signatures = make([][2]*big.Int, 0, count)
-	feeReceivers = make([]*big.Int, 0, count)
-	transactions = make([][]byte, 0, count)
-
-	for i := range commitments {
-		stateRoots = append(stateRoots, commitments[i].PostStateRoot)
-		signatures = append(signatures, commitments[i].CombinedSignature.BigInts())
-		feeReceivers = append(feeReceivers, new(big.Int).SetUint64(uint64(commitments[i].FeeReceiver)))
-		transactions = append(transactions, commitments[i].Transactions)
-	}
-	return
 }

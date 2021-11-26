@@ -3,6 +3,7 @@ package eth
 import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/ethereum/go-ethereum/common"
@@ -35,7 +36,7 @@ func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig
 		return nil, err
 	}
 
-	client, err := NewClient(sim, &NewClientParams{
+	client, err := NewClient(sim, metrics.NewCommanderMetrics(), &NewClientParams{
 		ChainState: models.ChainState{
 			ChainID:                        sim.GetChainID(),
 			AccountRegistry:                contracts.AccountRegistryAddress,

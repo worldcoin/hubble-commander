@@ -4,9 +4,10 @@ const (
 	namespace = "hubble"
 
 	// Subsystems
-	apiSubsystem     = "api"
-	rollupSubsystem  = "rollup"
-	syncingSubsystem = "syncing"
+	apiSubsystem        = "api"
+	rollupSubsystem     = "rollup"
+	syncingSubsystem    = "syncing"
+	blockchainSubsystem = "blockchain"
 )
 
 // API metrics

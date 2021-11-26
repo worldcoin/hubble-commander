@@ -11,6 +11,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -30,6 +31,9 @@ type NewClientParams struct {
 type ClientConfig struct {
 	TxTimeout                        *time.Duration  // default 60s
 	StakeAmount                      *models.Uint256 // default 0.1 ether
+	TransferBatchSubmissionGasLimit  *uint64         // default 400_000 gas
+	C2TBatchSubmissionGasLimit       *uint64         // default 500_000 gas
+	DepositBatchSubmissionGasLimit   *uint64         // default 220_000 gas
 	TransitionDisputeGasLimit        *uint64         // default 5_000_000 gas
 	SignatureDisputeGasLimit         *uint64         // default 7_500_000 gas
 	BatchAccountRegistrationGasLimit *uint64         // default 8_000_000 gas
@@ -39,15 +43,10 @@ type Client struct {
 	config                 ClientConfig
 	ChainState             models.ChainState
 	Blockchain             chain.Connection
-	Rollup                 *rollup.Rollup
-	RollupABI              *abi.ABI
-	TokenRegistry          *tokenregistry.TokenRegistry
-	TokenRegistryABI       *abi.ABI
-	DepositManager         *depositmanager.DepositManager
-	DepositManagerABI      *abi.ABI
-	rollupContract         *bind.BoundContract
-	tokenRegistryContract  *bind.BoundContract
-	depositManagerContract *bind.BoundContract
+	Metrics                *metrics.CommanderMetrics
+	Rollup                 *Rollup
+	TokenRegistry          *TokenRegistry
+	DepositManager         *DepositManager
 	blocksToFinalise       *int64
 	maxDepositSubTreeDepth *uint8
 	domain                 *bls.Domain
@@ -56,7 +55,7 @@ type Client struct {
 }
 
 //goland:noinspection GoDeprecation
-func NewClient(blockchain chain.Connection, params *NewClientParams) (*Client, error) {
+func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderMetrics, params *NewClientParams) (*Client, error) {
 	fillWithDefaults(&params.ClientConfig)
 
 	rollupAbi, err := abi.JSON(strings.NewReader(rollup.RollupABI))
@@ -72,9 +71,6 @@ func NewClient(blockchain chain.Connection, params *NewClientParams) (*Client, e
 		return nil, errors.WithStack(err)
 	}
 	backend := blockchain.GetBackend()
-	rollupContract := bind.NewBoundContract(params.ChainState.Rollup, rollupAbi, backend, backend, backend)
-	tokenRegistryContract := bind.NewBoundContract(params.ChainState.TokenRegistry, tokenRegistryAbi, backend, backend, backend)
-	depositManagerContract := bind.NewBoundContract(params.ChainState.DepositManager, depositManagerAbi, backend, backend, backend)
 	accountManager, err := NewAccountManager(blockchain, &AccountManagerParams{
 		AccountRegistry:                  params.AccountRegistry,
 		AccountRegistryAddress:           params.ChainState.AccountRegistry,
@@ -83,20 +79,36 @@ func NewClient(blockchain chain.Connection, params *NewClientParams) (*Client, e
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	rollupContract := bind.NewBoundContract(params.ChainState.Rollup, rollupAbi, backend, backend, backend)
+	tokenRegistryContract := bind.NewBoundContract(params.ChainState.TokenRegistry, tokenRegistryAbi, backend, backend, backend)
+	depositManagerContract := bind.NewBoundContract(params.ChainState.DepositManager, depositManagerAbi, backend, backend, backend)
 	return &Client{
-		config:                 params.ClientConfig,
-		ChainState:             params.ChainState,
-		Blockchain:             blockchain,
-		Rollup:                 params.Rollup,
-		RollupABI:              &rollupAbi,
-		TokenRegistry:          params.TokenRegistry,
-		TokenRegistryABI:       &tokenRegistryAbi,
-		DepositManager:         params.DepositManager,
-		DepositManagerABI:      &depositManagerAbi,
-		rollupContract:         rollupContract,
-		tokenRegistryContract:  tokenRegistryContract,
-		depositManagerContract: depositManagerContract,
-		AccountManager:         accountManager,
+		config:         params.ClientConfig,
+		ChainState:     params.ChainState,
+		Blockchain:     blockchain,
+		Metrics:        commanderMetrics,
+		AccountManager: accountManager,
+		Rollup: &Rollup{
+			Rollup: params.Rollup,
+			Contract: Contract{
+				ABI:           &rollupAbi,
+				BoundContract: rollupContract,
+			},
+		},
+		TokenRegistry: &TokenRegistry{
+			TokenRegistry: params.TokenRegistry,
+			Contract: Contract{
+				ABI:           &tokenRegistryAbi,
+				BoundContract: tokenRegistryContract,
+			},
+		},
+		DepositManager: &DepositManager{
+			DepositManager: params.DepositManager,
+			Contract: Contract{
+				ABI:           &depositManagerAbi,
+				BoundContract: depositManagerContract,
+			},
+		},
 	}, nil
 }
 
@@ -106,6 +118,15 @@ func fillWithDefaults(c *ClientConfig) {
 	}
 	if c.StakeAmount == nil {
 		c.StakeAmount = models.NewUint256(1e17)
+	}
+	if c.TransferBatchSubmissionGasLimit == nil {
+		c.TransferBatchSubmissionGasLimit = ref.Uint64(config.DefaultTransferBatchSubmissionGasLimit)
+	}
+	if c.C2TBatchSubmissionGasLimit == nil {
+		c.C2TBatchSubmissionGasLimit = ref.Uint64(config.DefaultC2TBatchSubmissionGasLimit)
+	}
+	if c.DepositBatchSubmissionGasLimit == nil {
+		c.DepositBatchSubmissionGasLimit = ref.Uint64(config.DefaultDepositBatchSubmissionGasLimit)
 	}
 	if c.TransitionDisputeGasLimit == nil {
 		c.TransitionDisputeGasLimit = ref.Uint64(config.DefaultTransitionDisputeGasLimit)

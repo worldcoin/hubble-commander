@@ -14,6 +14,9 @@
 #  max_txs_per_commitment: 32
 #  min_commitments_per_batch: 1
 #  max_commitments_per_batch: 32
+#  transfer_batch_submission_gas_limit: 400000
+#  c2t_batch_submission_gas_limit: 500000
+#  deposit_batch_submission_gas_limit: 220000
 #  transition_dispute_gas_limit: 5000000
 #  signature_dispute_gas_limit: 7500000
 #  batch_account_registration_gas_limit: 8000000

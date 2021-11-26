@@ -87,38 +87,18 @@ func (s *TransactionStorage) unsafeGetPendingCreate2Transfers() ([]models.Create
 	return txs, nil
 }
 
-func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id *models.CommitmentID) ([]models.Create2Transfer, error) {
-	encodeCommitmentID := models.EncodeCommitmentIDPointer(id)
-	indexKey := db.IndexKey(models.StoredTxReceiptName, "CommitmentID", encodeCommitmentID)
+func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id models.CommitmentID) ([]models.Create2Transfer, error) {
+	transfers := make([]models.Create2Transfer, 0, 1)
 
-	var transfers []models.Create2Transfer
-	err := s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
-		// queried Badger directly due to nil index decoding problem
-		return txStorage.database.Badger.View(func(txn *bdg.Txn) error {
-			hashes, err := getTxHashesByIndexKey(txn, indexKey, models.StoredTxReceiptPrefix)
-			if err == bdg.ErrKeyNotFound {
-				return nil
-			}
-			if err != nil {
-				return err
-			}
-
-			transfers = make([]models.Create2Transfer, 0, len(hashes))
-			for i := range hashes {
-				storedTx, storedTxReceipt, err := txStorage.getStoredTxWithReceipt(hashes[i])
-				if err != nil {
-					return err
-				}
-				if storedTx.TxType == txtype.Create2Transfer {
-					transfers = append(transfers, *storedTx.ToCreate2Transfer(storedTxReceipt))
-				}
-			}
-			return nil
-		})
+	err := s.iterateTxsByCommitmentID(id, func(storedTx *models.StoredTx, storedTxReceipt *models.StoredTxReceipt) {
+		if storedTx.TxType == txtype.Create2Transfer {
+			transfers = append(transfers, *storedTx.ToCreate2Transfer(storedTxReceipt))
+		}
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	return transfers, nil
 }
 

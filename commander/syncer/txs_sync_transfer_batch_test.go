@@ -20,7 +20,7 @@ type SyncTransferBatchTestSuite struct {
 }
 
 func (s *SyncTransferBatchTestSuite) SetupTest() {
-	s.testSuiteWithSyncAndRollupContext.SetupTestWithConfig(batchtype.Transfer, syncTestSuiteConfig)
+	s.testSuiteWithSyncAndRollupContext.SetupTestWithConfig(batchtype.Transfer, &syncTestSuiteConfig)
 	s.syncTestSuite.setupTest()
 }
 
@@ -237,7 +237,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_NotValidBLSSignature() {
 func (s *SyncTransferBatchTestSuite) TestSyncBatch_CommitmentWithoutTxs() {
 	commitment := s.createCommitmentWithEmptyTransactions(batchtype.Transfer)
 
-	_, err := s.client.SubmitTransfersBatchAndWait([]models.CommitmentWithTxs{commitment})
+	_, err := s.client.SubmitTransfersBatchAndWait(models.NewUint256(1), []models.CommitmentWithTxs{commitment})
 	s.NoError(err)
 
 	remoteBatches, err := s.client.GetAllBatches()
@@ -338,7 +338,7 @@ func (s *SyncTransferBatchTestSuite) submitTransferBatchWithNonexistentFeeReceiv
 		},
 		Transactions: serializedTxs,
 	}
-	_, err = s.client.SubmitTransfersBatchAndWait([]models.CommitmentWithTxs{commitment})
+	_, err = s.client.SubmitTransfersBatchAndWait(models.NewUint256(1), []models.CommitmentWithTxs{commitment})
 	s.NoError(err)
 }
 

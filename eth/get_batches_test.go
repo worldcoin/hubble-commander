@@ -67,9 +67,9 @@ func (s *GetBatchesTestSuite) TearDownTest() {
 }
 
 func (s *GetBatchesTestSuite) TestGetAllBatches() {
-	batch1, err := s.client.SubmitTransfersBatchAndWait([]models.CommitmentWithTxs{s.commitments[0]})
+	batch1, err := s.client.SubmitTransfersBatchAndWait(models.NewUint256(1), []models.CommitmentWithTxs{s.commitments[0]})
 	s.NoError(err)
-	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.CommitmentWithTxs{s.commitments[1]})
+	batch2, err := s.client.SubmitTransfersBatchAndWait(models.NewUint256(2), []models.CommitmentWithTxs{s.commitments[1]})
 	s.NoError(err)
 
 	batches, err := s.client.GetAllBatches()
@@ -83,9 +83,9 @@ func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBlockNumber() {
 	finalisationBlocks, err := s.client.GetBlocksToFinalise()
 	s.NoError(err)
 
-	batch1, err := s.client.SubmitTransfersBatchAndWait([]models.CommitmentWithTxs{s.commitments[0]})
+	batch1, err := s.client.SubmitTransfersBatchAndWait(models.NewUint256(1), []models.CommitmentWithTxs{s.commitments[0]})
 	s.NoError(err)
-	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.CommitmentWithTxs{s.commitments[1]})
+	batch2, err := s.client.SubmitTransfersBatchAndWait(models.NewUint256(2), []models.CommitmentWithTxs{s.commitments[1]})
 	s.NoError(err)
 
 	batches, err := s.client.GetBatches(&BatchesFilters{
@@ -99,9 +99,9 @@ func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBlockNumber() {
 }
 
 func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBatchID() {
-	batch1, err := s.client.SubmitTransfersBatchAndWait([]models.CommitmentWithTxs{s.commitments[0]})
+	batch1, err := s.client.SubmitTransfersBatchAndWait(models.NewUint256(1), []models.CommitmentWithTxs{s.commitments[0]})
 	s.NoError(err)
-	batch2, err := s.client.SubmitTransfersBatchAndWait([]models.CommitmentWithTxs{s.commitments[1]})
+	batch2, err := s.client.SubmitTransfersBatchAndWait(models.NewUint256(2), []models.CommitmentWithTxs{s.commitments[1]})
 	s.NoError(err)
 
 	batches, err := s.client.GetBatches(&BatchesFilters{
@@ -114,8 +114,9 @@ func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBatchID() {
 	s.EqualValues(batch1.ID, batches[0].GetID())
 }
 
-func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchExists() {
-	tx, err := s.client.SubmitTransfersBatch(s.commitments)
+func (s *GetBatchesTestSuite) TestGetTxBatch_BatchExists() {
+	batchID := models.MakeUint256(1)
+	tx, err := s.client.SubmitTransfersBatch(&batchID, s.commitments)
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 
@@ -123,21 +124,21 @@ func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchExists() {
 	s.NoError(err)
 
 	event := &rollup.RollupNewBatch{
-		BatchID:     big.NewInt(1),
+		BatchID:     batchID.ToBig(),
 		AccountRoot: s.getAccountRoot(),
-		BatchType:   1,
+		BatchType:   uint8(batchtype.Transfer),
 	}
 
 	decodedBatch, err := s.client.getTxBatch(event, transaction)
 	s.NoError(err)
-	batch := decodedBatch.ToDecodedTxBatch()
-	s.Equal(models.MakeUint256(1), batch.ID)
-	s.Len(batch.Commitments, len(s.commitments))
-	s.EqualValues(event.AccountRoot, batch.AccountTreeRoot)
+	decodedTxBatch := decodedBatch.ToDecodedTxBatch()
+	s.Equal(batchID, decodedTxBatch.ID)
+	s.Len(decodedTxBatch.Commitments, len(s.commitments))
+	s.EqualValues(event.AccountRoot, decodedTxBatch.AccountTreeRoot)
 }
 
-func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchNotExists() {
-	tx, err := s.client.SubmitTransfersBatch(s.commitments)
+func (s *GetBatchesTestSuite) TestGetTxBatch_BatchNotExists() {
+	tx, err := s.client.SubmitTransfersBatch(models.NewUint256(1), s.commitments)
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 
@@ -147,7 +148,7 @@ func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchNotExists() {
 	event := &rollup.RollupNewBatch{
 		BatchID:     big.NewInt(5),
 		AccountRoot: s.getAccountRoot(),
-		BatchType:   1,
+		BatchType:   uint8(batchtype.Transfer),
 	}
 
 	batch, err := s.client.getTxBatch(event, transaction)
@@ -155,8 +156,9 @@ func (s *GetBatchesTestSuite) TestGetBatchIfExists_BatchNotExists() {
 	s.ErrorIs(err, errBatchAlreadyRolledBack)
 }
 
-func (s *GetBatchesTestSuite) TestGetBatchIfExists_DifferentBatchHash() {
-	tx, err := s.client.SubmitTransfersBatch(s.commitments)
+func (s *GetBatchesTestSuite) TestGetTxBatch_DifferentBatchHash() {
+	batchID := models.NewUint256(1)
+	tx, err := s.client.SubmitTransfersBatch(batchID, s.commitments)
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 
@@ -164,9 +166,9 @@ func (s *GetBatchesTestSuite) TestGetBatchIfExists_DifferentBatchHash() {
 	s.NoError(err)
 
 	event := &rollup.RollupNewBatch{
-		BatchID:     big.NewInt(1),
+		BatchID:     batchID.ToBig(),
 		AccountRoot: [32]byte{1, 2, 3},
-		BatchType:   1,
+		BatchType:   uint8(batchtype.Transfer),
 	}
 
 	batch, err := s.client.getTxBatch(event, transaction)

@@ -10,7 +10,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
-	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/suite"
 )
@@ -21,7 +20,7 @@ type Create2TransferCommitmentsTestSuite struct {
 }
 
 func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
-	s.testSuiteWithTxsContext.SetupTestWithConfig(batchtype.Create2Transfer, config.RollupConfig{
+	s.testSuiteWithTxsContext.SetupTestWithConfig(batchtype.Create2Transfer, &config.RollupConfig{
 		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    4,
 		FeeReceiverPubKeyID:    2,
@@ -305,29 +304,6 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTo
 	pendingTransfers, err = s.storage.GetPendingCreate2Transfers()
 	s.NoError(err)
 	s.Len(pendingTransfers, 1)
-}
-
-func (s *Create2TransferCommitmentsTestSuite) TestRemoveTxs() {
-	transfer1 := models.Create2Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash: utils.RandomHash(),
-		},
-	}
-	transfer2 := models.Create2Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash: utils.RandomHash(),
-		},
-	}
-	transfer3 := models.Create2Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash: utils.RandomHash(),
-		},
-	}
-
-	transfers := models.Create2TransferArray{transfer1, transfer2, transfer3}
-	toRemove := models.Create2TransferArray{transfer2}
-
-	s.Equal(models.Create2TransferArray{transfer1, transfer3}, removeTxs(transfers, toRemove))
 }
 
 func (s *Create2TransferCommitmentsTestSuite) getRegisteredAccounts(startBlockNumber uint64) []models.AccountLeaf {

@@ -54,7 +54,7 @@ func (c *StoredTxCommitmentBody) SetBytes(data []byte) error {
 	}
 
 	c.FeeReceiver = binary.BigEndian.Uint32(data[0:4])
-	c.BodyHash = DecodeHashPointer(data[68:101])
+	c.BodyHash = decodeHashPointer(data[68:101])
 	return nil
 }
 

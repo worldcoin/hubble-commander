@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 
+	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -45,10 +46,7 @@ func (c *Commander) syncDeposits(start, end uint64) error {
 }
 
 func (c *Commander) syncQueuedDeposits(start, end uint64) error {
-	it, err := c.client.DepositManager.FilterDepositQueued(&bind.FilterOpts{
-		Start: start,
-		End:   &end,
-	})
+	it, err := c.getDepositQueuedIterator(start, end)
 	if err != nil {
 		return err
 	}
@@ -60,7 +58,7 @@ func (c *Commander) syncQueuedDeposits(start, end uint64) error {
 			return err
 		}
 
-		if !bytes.Equal(tx.Data()[:4], c.client.DepositManagerABI.Methods["depositFor"].ID) {
+		if !bytes.Equal(tx.Data()[:4], c.client.DepositManager.ABI.Methods["depositFor"].ID) {
 			continue // TODO handle internal transactions
 		}
 
@@ -84,10 +82,7 @@ func (c *Commander) syncQueuedDeposits(start, end uint64) error {
 }
 
 func (c *Commander) fetchDepositSubTrees(start, end uint64) ([]models.PendingDepositSubTree, error) {
-	it, err := c.client.DepositManager.FilterDepositSubTreeReady(&bind.FilterOpts{
-		Start: start,
-		End:   &end,
-	})
+	it, err := c.getDepositSubTreeReadyIterator(start, end)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +96,7 @@ func (c *Commander) fetchDepositSubTrees(start, end uint64) ([]models.PendingDep
 			return nil, err
 		}
 
-		if !bytes.Equal(tx.Data()[:4], c.client.DepositManagerABI.Methods["depositFor"].ID) {
+		if !bytes.Equal(tx.Data()[:4], c.client.DepositManager.ABI.Methods["depositFor"].ID) {
 			continue // TODO handle internal transactions
 		}
 
@@ -114,6 +109,34 @@ func (c *Commander) fetchDepositSubTrees(start, end uint64) ([]models.PendingDep
 	}
 
 	return depositSubTrees, nil
+}
+
+func (c *Commander) getDepositQueuedIterator(start, end uint64) (*depositmanager.DepositQueuedIterator, error) {
+	it := &depositmanager.DepositQueuedIterator{}
+
+	err := c.client.FilterLogs(c.client.DepositManager.BoundContract, "DepositQueued", &bind.FilterOpts{
+		Start: start,
+		End:   &end,
+	}, it)
+	if err != nil {
+		return nil, err
+	}
+
+	return it, nil
+}
+
+func (c *Commander) getDepositSubTreeReadyIterator(start, end uint64) (*depositmanager.DepositSubTreeReadyIterator, error) {
+	it := &depositmanager.DepositSubTreeReadyIterator{}
+
+	err := c.client.FilterLogs(c.client.DepositManager.BoundContract, "DepositSubTreeReady", &bind.FilterOpts{
+		Start: start,
+		End:   &end,
+	}, it)
+	if err != nil {
+		return nil, err
+	}
+
+	return it, nil
 }
 
 func (c *Commander) saveSyncedSubTrees(subTrees []models.PendingDepositSubTree) error {

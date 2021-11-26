@@ -220,7 +220,12 @@ func seedDB(t *testing.T, storage *st.Storage, wallets []bls.Wallet) {
 	})
 	require.NoError(t, err)
 
-	err = storage.AccountTree.SetSingle(&models.AccountLeaf{
+	setAccountLeaves(t, storage, wallets)
+	setStateLeaves(t, storage)
+}
+
+func setAccountLeaves(t *testing.T, storage *st.Storage, wallets []bls.Wallet) {
+	err := storage.AccountTree.SetSingle(&models.AccountLeaf{
 		PubKeyID:  0,
 		PublicKey: *wallets[0].PublicKey(),
 	})
@@ -231,8 +236,10 @@ func seedDB(t *testing.T, storage *st.Storage, wallets []bls.Wallet) {
 		PublicKey: *wallets[1].PublicKey(),
 	})
 	require.NoError(t, err)
+}
 
-	_, err = storage.StateTree.Set(0, &models.UserState{
+func setStateLeaves(t *testing.T, storage *st.Storage) {
+	_, err := storage.StateTree.Set(0, &models.UserState{
 		PubKeyID: 0,
 		TokenID:  models.MakeUint256(0),
 		Balance:  models.MakeUint256(1000),

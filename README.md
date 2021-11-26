@@ -81,7 +81,7 @@ and the url of a remote commander node can be set in the config file (see `comma
 or with env variables:
 
 ```shell
-# Environmental variables
+# Environment variables
 HUBBLE_BOOTSTRAP_CHAIN_SPEC_PATH=chain-spec.yaml
 HUBBLE_BOOTSTRAP_NODE_URL=http://localhost:8080
 ```
@@ -121,27 +121,37 @@ There is a number of scripts defined in the Makefile:
 
 Other scripts defined in the Makefile file are used on the CI.
 
-## Running with Go-Ethereum (Geth)
+## Running commander with Go-Ethereum (Geth)
 
-Start Geth either locally or with Docker:
+Start local Geth either natively or with Docker:
 
 ```shell
-# Starts geth locally
+# Starts native Geth
 make start-geth-locally
 
-# Stars geth in docker container
+# Starts Geth in Docker container
 make setup-geth
 ```
 
-Use the following config to make commander connect to the local node:
+Use the following config to make commander scripts connect to the local node:
 
 ```shell
-HUBBLE_ETHEREUM_RPC_URL=ws://127.0.0.1:8546
+HUBBLE_ETHEREUM_RPC_URL=ws://localhost:8546
 HUBBLE_ETHEREUM_CHAIN_ID=1337
 HUBBLE_ETHEREUM_PRIVATE_KEY=ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
 ```
 
-## Running docker image on Docker for Mac
+Deploy smart contracts:
+```shell
+make deploy
+```
+
+Start commander:
+```shell
+make run
+```
+
+## Running commander image on Docker for Mac
 
 Create `.env.docker` file and set necessary env variables:
 
@@ -149,8 +159,6 @@ Create `.env.docker` file and set necessary env variables:
 HUBBLE_ETHEREUM_RPC_URL=ws://docker.for.mac.localhost:8546
 HUBBLE_ETHEREUM_CHAIN_ID=1337
 HUBBLE_ETHEREUM_PRIVATE_KEY=ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
-HUBBLE_ROLLUP_MIN_TXS_PER_COMMITMENT=32
-HUBBLE_ROLLUP_MAX_TXS_PER_COMMITMENT=32
 ```
 
 Create `chain-spec` directory with:
@@ -171,38 +179,19 @@ Afterwards, run this to start the commander:
 docker run -it -v $(pwd)/chain-spec:/go/src/app/chain-spec -p 8080:8080 --env-file .env.docker ghcr.io/worldcoin/hubble-commander:latest start
 ```
 
-## Running E2E tests against a Docker image
-
-Build the docker image:
-
+## Running E2E tests and benchmarks
+Start Geth in a separate terminal window:
 ```shell
-docker build . -t ghcr.io/worldcoin/hubble-commander:latest
+make start-geth-locally
+# OR
+make setup-geth
+```
+Run E2E tests:
+```shell
+make test-e2e-in-process
 ```
 
-Export variables from the `.env.docker` to the currently running shell:
-
+Run E2E benchmarks:
 ```shell
-export $(grep -v '#.*' .env.docker | xargs)
-```
-
-Run the E2E tests:
-
-```shell
-make test-e2e
-```
-
-The Docker container will be started and stopped automatically.
-
-## Running E2E tests locally
-
-Start commander in a separate terminal window and wait until it finished bootstrapping:
-
-```shell
-make run-prune
-```
-
-Run the E2E tests:
-
-```shell
-make test-e2e-locally
+make bench-e2e-in-process
 ```

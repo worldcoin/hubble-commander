@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 
+	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -16,9 +17,7 @@ import (
 func (c *Commander) syncTokens(startBlock, endBlock uint64) error {
 	var newTokensCount *int
 
-	duration, err := metrics.MeasureDuration(func() error {
-		var err error
-
+	duration, err := metrics.MeasureDuration(func() (err error) {
 		newTokensCount, err = c.unmeasuredSyncTokens(startBlock, endBlock)
 		if err != nil {
 			return err
@@ -42,10 +41,7 @@ func (c *Commander) syncTokens(startBlock, endBlock uint64) error {
 func (c *Commander) unmeasuredSyncTokens(startBlock, endBlock uint64) (*int, error) {
 	newTokensCount := 0
 
-	it, err := c.client.TokenRegistry.FilterRegisteredToken(&bind.FilterOpts{
-		Start: startBlock,
-		End:   &endBlock,
-	})
+	it, err := c.getRegisteredTokenIterator(startBlock, endBlock)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +53,7 @@ func (c *Commander) unmeasuredSyncTokens(startBlock, endBlock uint64) (*int, err
 			return nil, err
 		}
 
-		if !bytes.Equal(tx.Data()[:4], c.client.TokenRegistryABI.Methods["finaliseRegistration"].ID) {
+		if !bytes.Equal(tx.Data()[:4], c.client.TokenRegistry.ABI.Methods["finaliseRegistration"].ID) {
 			continue // TODO handle internal transactions
 		}
 
@@ -78,6 +74,20 @@ func (c *Commander) unmeasuredSyncTokens(startBlock, endBlock uint64) (*int, err
 	}
 
 	return &newTokensCount, nil
+}
+
+func (c *Commander) getRegisteredTokenIterator(start, end uint64) (*tokenregistry.RegisteredTokenIterator, error) {
+	it := &tokenregistry.RegisteredTokenIterator{}
+
+	err := c.client.FilterLogs(c.client.TokenRegistry.BoundContract, "RegisteredToken", &bind.FilterOpts{
+		Start: start,
+		End:   &end,
+	}, it)
+	if err != nil {
+		return nil, err
+	}
+
+	return it, nil
 }
 
 func saveSyncedToken(

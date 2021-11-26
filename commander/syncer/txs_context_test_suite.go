@@ -25,18 +25,18 @@ func (s *testSuiteWithSyncAndRollupContext) SetupSuite() {
 }
 
 func (s *testSuiteWithSyncAndRollupContext) SetupTest(batchType batchtype.BatchType) {
-	s.SetupTestWithConfig(batchType, config.RollupConfig{
+	s.SetupTestWithConfig(batchType, &config.RollupConfig{
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
 	})
 }
 
-func (s *testSuiteWithSyncAndRollupContext) SetupTestWithConfig(batchType batchtype.BatchType, cfg config.RollupConfig) {
+func (s *testSuiteWithSyncAndRollupContext) SetupTestWithConfig(batchType batchtype.BatchType, cfg *config.RollupConfig) {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 
-	s.cfg = &cfg
+	s.cfg = cfg
 
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)

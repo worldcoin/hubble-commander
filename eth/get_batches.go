@@ -87,16 +87,29 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 }
 
 func (c *Client) getBatchEvents(filters *BatchesFilters) ([]*rollup.RollupNewBatch, []*rollup.RollupDepositsFinalised, error) {
-	batchIterator, err := c.Rollup.FilterNewBatch(&bind.FilterOpts{
-		Start: filters.StartBlockInclusive,
-		End:   filters.EndBlockInclusive,
-	})
+	batchEvents, err := c.getNewBatchEvents(filters)
 	if err != nil {
 		return nil, nil, err
 	}
+
+	depositEvents, err := c.getDepositsFinalisedEvents(filters)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return batchEvents, depositEvents, nil
+}
+
+func (c *Client) getNewBatchEvents(filters *BatchesFilters) ([]*rollup.RollupNewBatch, error) {
+	it, err := c.getNewBatchLogIterator(filters)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = it.Close() }()
+
 	events := make([]*rollup.RollupNewBatch, 0)
-	for batchIterator.Next() {
-		events = append(events, batchIterator.Event)
+	for it.Next() {
+		events = append(events, it.Event)
 	}
 
 	// Sort for sanity
@@ -104,31 +117,62 @@ func (c *Client) getBatchEvents(filters *BatchesFilters) ([]*rollup.RollupNewBat
 		return utils.EventBefore(&events[i].Raw, &events[j].Raw)
 	})
 
-	depositIterator, err := c.Rollup.FilterDepositsFinalised(&bind.FilterOpts{
-		Start: filters.StartBlockInclusive,
-		End:   filters.EndBlockInclusive,
-	})
+	return events, nil
+}
+
+func (c *Client) getDepositsFinalisedEvents(filters *BatchesFilters) ([]*rollup.RollupDepositsFinalised, error) {
+	it, err := c.getDepositsFinalisedLogIterator(filters)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	depositEvents := make([]*rollup.RollupDepositsFinalised, 0)
-	for depositIterator.Next() {
-		depositEvents = append(depositEvents, depositIterator.Event)
+	defer func() { _ = it.Close() }()
+
+	events := make([]*rollup.RollupDepositsFinalised, 0)
+	for it.Next() {
+		events = append(events, it.Event)
 	}
 
 	// Sort for sanity
-	sort.Slice(depositEvents, func(i, j int) bool {
+	sort.Slice(events, func(i, j int) bool {
 		return utils.EventBefore(&events[i].Raw, &events[j].Raw)
 	})
 
-	return events, depositEvents, nil
+	return events, nil
+}
+
+func (c *Client) getNewBatchLogIterator(filters *BatchesFilters) (*rollup.NewBatchIterator, error) {
+	it := &rollup.NewBatchIterator{}
+
+	err := c.FilterLogs(c.Rollup.BoundContract, "NewBatch", &bind.FilterOpts{
+		Start: filters.StartBlockInclusive,
+		End:   filters.EndBlockInclusive,
+	}, it)
+	if err != nil {
+		return nil, err
+	}
+
+	return it, nil
+}
+
+func (c *Client) getDepositsFinalisedLogIterator(filters *BatchesFilters) (*rollup.DepositsFinalisedIterator, error) {
+	it := &rollup.DepositsFinalisedIterator{}
+
+	err := c.FilterLogs(c.Rollup.BoundContract, "DepositsFinalised", &bind.FilterOpts{
+		Start: filters.StartBlockInclusive,
+		End:   filters.EndBlockInclusive,
+	}, it)
+	if err != nil {
+		return nil, err
+	}
+
+	return it, nil
 }
 
 func (c *Client) isDirectBatchSubmission(tx *types.Transaction) bool {
 	methodID := tx.Data()[:4]
-	return bytes.Equal(methodID, c.RollupABI.Methods["submitTransfer"].ID) ||
-		bytes.Equal(methodID, c.RollupABI.Methods["submitCreate2Transfer"].ID) ||
-		bytes.Equal(methodID, c.RollupABI.Methods["submitDeposits"].ID)
+	return bytes.Equal(methodID, c.Rollup.ABI.Methods["submitTransfer"].ID) ||
+		bytes.Equal(methodID, c.Rollup.ABI.Methods["submitCreate2Transfer"].ID) ||
+		bytes.Equal(methodID, c.Rollup.ABI.Methods["submitDeposits"].ID)
 }
 
 func (c *Client) getTxBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transaction) (DecodedBatch, error) {
@@ -136,7 +180,7 @@ func (c *Client) getTxBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transac
 	if err != nil {
 		return nil, err
 	}
-	commitments, err := encoder.DecodeBatchCalldata(tx.Data(), &batch.ID)
+	commitments, err := encoder.DecodeBatchCalldata(c.Rollup.ABI, tx.Data())
 	if err != nil {
 		return nil, err
 	}

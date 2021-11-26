@@ -162,7 +162,7 @@ func (s *MassMigrationTestSuite) TestGetPendingMassMigration_OrdersMassMigration
 	}, res)
 }
 
-func (s *TransferTestSuite) TestMarkMassMigrationsAsIncluded() {
+func (s *MassMigrationTestSuite) TestMarkMassMigrationsAsIncluded() {
 	txs := make([]models.MassMigration, 2)
 	for i := 0; i < len(txs); i++ {
 		txs[i] = massMigration

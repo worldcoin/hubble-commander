@@ -7,7 +7,6 @@ type GenericTransaction interface {
 	GetBase() *TransactionBase
 	GetFromStateID() uint32
 	GetToStateID() *uint32
-	GetSpokeID() *Uint256
 	GetAmount() Uint256
 	GetFee() Uint256
 	GetNonce() Uint256
@@ -163,7 +162,7 @@ func (m MassMigrationArray) Slice(start, end int) GenericTransactionArray {
 }
 
 func (m MassMigrationArray) Type() txtype.TransactionType {
-	return txtype.Transfer
+	return txtype.MassMigration
 }
 
 func (m MassMigrationArray) ToTransferArray() TransferArray {

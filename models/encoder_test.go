@@ -16,7 +16,7 @@ func TestEncodeHashPointer(t *testing.T) {
 	bytes := EncodeHashPointer(hash)
 	require.EqualValues(t, 1, bytes[0])
 
-	decodedValue := DecodeHashPointer(bytes)
+	decodedValue := decodeHashPointer(bytes)
 	require.Equal(t, *hash, *decodedValue)
 }
 
@@ -25,7 +25,7 @@ func TestEncodeHashPointer_NilValue(t *testing.T) {
 	bytes := EncodeHashPointer(hash)
 	require.EqualValues(t, 0, bytes[0])
 
-	decodedValue := DecodeHashPointer(bytes)
+	decodedValue := decodeHashPointer(bytes)
 	require.Nil(t, decodedValue)
 }
 
@@ -92,7 +92,7 @@ func TestEncodeCommitmentIDPointer(t *testing.T) {
 	bytes := EncodeCommitmentIDPointer(id)
 	require.EqualValues(t, 1, bytes[0])
 
-	decodedID, err := DecodeCommitmentIDPointer(bytes)
+	decodedID, err := decodeCommitmentIDPointer(bytes)
 	require.NoError(t, err)
 	require.Equal(t, *id, *decodedID)
 }
@@ -102,7 +102,7 @@ func TestEncodeCommitmentIDPointer_NilValue(t *testing.T) {
 	bytes := EncodeCommitmentIDPointer(id)
 	require.EqualValues(t, 0, bytes[0])
 
-	decodedID, err := DecodeCommitmentIDPointer(bytes)
+	decodedID, err := decodeCommitmentIDPointer(bytes)
 	require.NoError(t, err)
 	require.Nil(t, decodedID)
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -30,7 +31,7 @@ func (s *SubmitDepositBatchTestSuite) SetupSuite() {
 	s.depositSubtree = models.PendingDepositSubTree{
 		ID:       models.MakeUint256(1),
 		Root:     utils.RandomHash(),
-		Deposits: getFourDeposits(),
+		Deposits: testutils.GetFourDeposits(),
 	}
 }
 
@@ -131,32 +132,12 @@ func (s *SubmitDepositBatchTestSuite) queueFourDeposits() {
 	}
 }
 
-func getFourDeposits() []models.PendingDeposit {
-	deposits := make([]models.PendingDeposit, 4)
-	for i := range deposits {
-		deposits[i] = models.PendingDeposit{
-			ID:         models.DepositID{BlockNumber: 1, LogIndex: uint32(i)},
-			ToPubKeyID: 1,
-			TokenID:    models.MakeUint256(0),
-			L2Amount:   models.MakeUint256(10000000000),
-		}
-	}
-	return deposits
-}
-
-func (s *SubmitDepositBatchTestSuite) queueDeposit() *models.PendingDeposit {
+func (s *SubmitDepositBatchTestSuite) queueDeposit() {
 	toPubKeyID := models.NewUint256(1)
 	tokenID := models.NewUint256(0)
 	l1Amount := models.NewUint256FromBig(*utils.ParseEther("10"))
-	depositID, l2Amount, err := s.client.QueueDepositAndWait(toPubKeyID, l1Amount, tokenID)
+	_, _, err := s.client.QueueDepositAndWait(toPubKeyID, l1Amount, tokenID)
 	s.NoError(err)
-
-	return &models.PendingDeposit{
-		ID:         *depositID,
-		ToPubKeyID: uint32(toPubKeyID.Uint64()),
-		TokenID:    *tokenID,
-		L2Amount:   *l2Amount,
-	}
 }
 
 func (s *SubmitDepositBatchTestSuite) submitBatch() *models.Batch {

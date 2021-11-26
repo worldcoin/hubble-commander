@@ -337,25 +337,30 @@ func (s *TransferTestSuite) TestGetTransfersByPublicKey_NoTransfersButSomeCreate
 }
 
 func (s *TransferTestSuite) TestGetTransfersByCommitmentID() {
-	err := s.storage.AddTxCommitment(&txCommitment)
-	s.NoError(err)
-
 	transfer1 := transfer
 	transfer1.CommitmentID = &txCommitment.ID
 
-	err = s.storage.AddTransfer(&transfer1)
+	err := s.storage.AddTransfer(&transfer1)
 	s.NoError(err)
 
-	transfers, err := s.storage.GetTransfersByCommitmentID(&txCommitment.ID)
+	transfers, err := s.storage.GetTransfersByCommitmentID(txCommitment.ID)
 	s.NoError(err)
 	s.Len(transfers, 1)
 }
 
-func (s *TransferTestSuite) TestGetTransfersByCommitmentID_NoTransfers() {
-	err := s.storage.AddTxCommitment(&txCommitment)
+func (s *TransferTestSuite) TestGetTransfersByCommitmentID_NoTransactions() {
+	transfers, err := s.storage.GetTransfersByCommitmentID(txCommitment.ID)
+	s.NoError(err)
+	s.Len(transfers, 0)
+}
+
+func (s *TransferTestSuite) TestGetTransfersByCommitmentID_NoTransfersButSomeCreate2Transfers() {
+	c2t := create2Transfer
+	c2t.CommitmentID = &txCommitment.ID
+	err := s.storage.AddCreate2Transfer(&c2t)
 	s.NoError(err)
 
-	transfers, err := s.storage.GetTransfersByCommitmentID(&txCommitment.ID)
+	transfers, err := s.storage.GetTransfersByCommitmentID(txCommitment.ID)
 	s.NoError(err)
 	s.Len(transfers, 0)
 }

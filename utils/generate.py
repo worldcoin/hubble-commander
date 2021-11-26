@@ -57,7 +57,7 @@ generate_subdir('frontend', 'contracts/client/FrontendCreate2Transfer.sol/Fronte
 generate_subdir('test', 'contracts/test/TestTx.sol/TestTx.json', 'TestTx')
 generate_subdir('test', 'contracts/test/TestTypes.sol/TestTypes.json', 'TestTypes')
 generate_subdir('test', 'contracts/test/TestBLS.sol/TestBLS.json', 'TestBLS')
-generate_subdir('test', 'contracts/test/ExampleToken.sol/ExampleToken.json', 'TestExampleToken')
+generate_subdir('test', 'contracts/test/CustomToken.sol/CustomToken.json', 'TestCustomToken')
 
 generate_subdir('libs', 'contracts/libs/BNPairingPrecompileCostEstimator.sol/BNPairingPrecompileCostEstimator.json', 'CostEstimator')
 

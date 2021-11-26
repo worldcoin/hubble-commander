@@ -10,6 +10,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	log "github.com/sirupsen/logrus"
@@ -54,8 +55,11 @@ func TestCommanderSync(t *testing.T) {
 	testGetTransaction(t, activeCommander.Client(), firstCreate2TransferHash)
 	send31MoreCreate2Transfers(t, activeCommander.Client(), senderWallet, wallets, 33)
 
+	makeDeposits(t, activeCommander.Client())
+
 	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstTransferHash)
 	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstCreate2TransferHash)
+	waitForBatch(t, activeCommander.Client(), models.MakeUint256(3))
 
 	cfg.Bootstrap.Prune = true
 	cfg.API.Port = "5002"

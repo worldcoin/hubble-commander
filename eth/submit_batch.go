@@ -1,60 +1,61 @@
 package eth
 
 import (
-	"context"
-
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-const gasEstimateMultiplier = 1.3
-
 type SubmitBatchFunc func() (*types.Transaction, error)
 
-func (c *Client) SubmitTransfersBatch(commitments []models.CommitmentWithTxs) (
-	*types.Transaction,
-	error,
-) {
-	input, err := c.packCommitments("submitTransfer", commitments)
-	if err != nil {
-		return nil, err
+func (c *Client) SubmitTxBatch(
+	batchType batchtype.BatchType,
+	batchID *models.Uint256,
+	commitments []models.CommitmentWithTxs,
+) (*types.Transaction, error) {
+	// nolint:exhaustive
+	switch batchType {
+	case batchtype.Transfer:
+		return c.SubmitTransfersBatch(batchID, commitments)
+	case batchtype.Create2Transfer:
+		return c.SubmitCreate2TransfersBatch(batchID, commitments)
+	case batchtype.MassMigration:
+		panic("not implemented")
+	default:
+		panic("invalid batch type")
 	}
-	estimate, err := c.estimateBatchSubmissionGasLimit(input)
-	if err != nil {
-		return nil, err
-	}
-	return c.RawTransact(c.config.StakeAmount.ToBig(), estimate, input)
 }
 
-func (c *Client) SubmitCreate2TransfersBatch(commitments []models.CommitmentWithTxs) (
-	*types.Transaction,
-	error,
-) {
-	input, err := c.packCommitments("submitCreate2Transfer", commitments)
-	if err != nil {
-		return nil, err
-	}
-	estimate, err := c.estimateBatchSubmissionGasLimit(input)
-	if err != nil {
-		return nil, err
-	}
-	return c.RawTransact(c.config.StakeAmount.ToBig(), estimate, input)
+func (c *Client) SubmitTransfersBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
+	return c.rollup().
+		WithValue(c.config.StakeAmount).
+		WithGasLimit(*c.config.TransferBatchSubmissionGasLimit).
+		SubmitTransfer(encoder.CommitmentsToSubmitBatchFields(batchID, commitments))
 }
 
-func (c *Client) SubmitTransfersBatchAndWait(commitments []models.CommitmentWithTxs) (*models.Batch, error) {
+func (c *Client) SubmitCreate2TransfersBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
+	return c.rollup().
+		WithValue(c.config.StakeAmount).
+		WithGasLimit(*c.config.C2TBatchSubmissionGasLimit).
+		SubmitCreate2Transfer(encoder.CommitmentsToSubmitBatchFields(batchID, commitments))
+}
+
+func (c *Client) SubmitTransfersBatchAndWait(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*models.Batch, error) {
 	return c.submitBatchAndWait(func() (*types.Transaction, error) {
-		return c.SubmitTransfersBatch(commitments)
+		return c.SubmitTransfersBatch(batchID, commitments)
 	})
 }
-func (c *Client) SubmitCreate2TransfersBatchAndWait(commitments []models.CommitmentWithTxs) (*models.Batch, error) {
+func (c *Client) SubmitCreate2TransfersBatchAndWait(
+	batchID *models.Uint256,
+	commitments []models.CommitmentWithTxs,
+) (*models.Batch, error) {
 	return c.submitBatchAndWait(func() (*types.Transaction, error) {
-		return c.SubmitCreate2TransfersBatch(commitments)
+		return c.SubmitCreate2TransfersBatch(batchID, commitments)
 	})
 }
 
@@ -75,7 +76,7 @@ func (c *Client) submitBatchAndWait(submit SubmitBatchFunc) (batch *models.Batch
 	}
 
 	event := new(rollup.RollupNewBatch)
-	err = c.rollupContract.UnpackLog(event, NewBatchEvent, *log)
+	err = c.Rollup.BoundContract.UnpackLog(event, NewBatchEvent, *log)
 	if err != nil {
 		return nil, err
 	}
@@ -90,25 +91,4 @@ func (c *Client) handleNewBatchEvent(event *rollup.RollupNewBatch) (*models.Batc
 	}
 	batch.AccountTreeRoot = ref.Hash(common.BytesToHash(event.AccountRoot[:]))
 	return batch, nil
-}
-
-func (c *Client) estimateBatchSubmissionGasLimit(input []byte) (uint64, error) {
-	account := c.Blockchain.GetAccount()
-	msg := &ethereum.CallMsg{
-		From:     account.From,
-		To:       &c.ChainState.Rollup,
-		GasPrice: account.GasPrice,
-		Value:    c.config.StakeAmount.ToBig(),
-		Data:     input,
-	}
-	estimatedGas, err := c.Blockchain.EstimateGas(context.Background(), msg)
-	if err != nil {
-		return 0, err
-	}
-	return uint64(float64(estimatedGas) * gasEstimateMultiplier), nil
-}
-
-func (c *Client) packCommitments(method string, commitments []models.CommitmentWithTxs) ([]byte, error) {
-	stateRoots, signatures, feeReceivers, transactions := encoder.CommitmentToCalldataFields(commitments)
-	return c.RollupABI.Pack(method, stateRoots, signatures, feeReceivers, transactions)
 }

@@ -46,7 +46,7 @@ func TestMeasureDisputeGasUsage(t *testing.T) {
 	measureDisputeSignatureTransfer(t, cmd.Client(), ethClient)
 	measureDisputeSignatureC2T(t, cmd.Client(), ethClient, wallets)
 
-	testSendTransferBatch(t, cmd.Client(), senderWallet, 0)
+	testSubmitTransferBatch(t, cmd.Client(), senderWallet, 0)
 
 	measureDisputeTransitionTransferInvalidStateRoot(t, cmd.Client(), ethClient)
 	measureDisputeTransitionC2TInvalidStateRoot(t, cmd.Client(), ethClient, wallets)

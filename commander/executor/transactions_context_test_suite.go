@@ -15,7 +15,7 @@ func (s *testSuiteWithTxsContext) SetupTest(batchType batchtype.BatchType) {
 	s.txsCtx = NewTestTxsContext(s.executionCtx, batchType)
 }
 
-func (s *testSuiteWithTxsContext) SetupTestWithConfig(batchType batchtype.BatchType, cfg config.RollupConfig) {
+func (s *testSuiteWithTxsContext) SetupTestWithConfig(batchType batchtype.BatchType, cfg *config.RollupConfig) {
 	s.testSuiteWithExecutionContext.SetupTestWithConfig(cfg)
 	s.txsCtx = NewTestTxsContext(s.executionCtx, batchType)
 }

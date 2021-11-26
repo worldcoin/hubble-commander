@@ -116,8 +116,7 @@ func (c *Commander) syncBatch(remoteBatch eth.DecodedBatch) (err error) {
 }
 
 func (c *Commander) replaceBatch(localBatch *models.Batch, remoteBatch eth.DecodedBatch) error {
-	log.WithFields(log.Fields{"batchID": localBatch.ID.String()}).
-		Debug("Local batch inconsistent with remote batch, reverting local batch(es)")
+	log.Printf("Reverting local batch(es) with ID(s) greater or equal to %v", localBatch.ID)
 
 	err := c.revertBatches(localBatch)
 	if err != nil {

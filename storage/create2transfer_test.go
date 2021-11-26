@@ -289,14 +289,25 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID() {
 	err = s.storage.AddCreate2Transfer(&transfer2)
 	s.NoError(err)
 
-	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(&txCommitment.ID)
+	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(txCommitment.ID)
 	s.NoError(err)
 	s.Len(transfers, 1)
 	s.Equal(transfer1, transfers[0])
 }
 
-func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID_NoCreate2Transfers() {
-	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(&txCommitment.ID)
+func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID_NoTransactions() {
+	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(txCommitment.ID)
+	s.NoError(err)
+	s.Len(transfers, 0)
+}
+
+func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID_NoCreate2TransfersButSomeTransfers() {
+	transferCopy := transfer
+	transferCopy.CommitmentID = &txCommitment.ID
+	err := s.storage.AddTransfer(&transferCopy)
+	s.NoError(err)
+
+	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(txCommitment.ID)
 	s.NoError(err)
 	s.Len(transfers, 0)
 }

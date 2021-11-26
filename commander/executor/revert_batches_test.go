@@ -110,7 +110,7 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_AddsPendingDepositSubtree() {
 	subtree := &models.PendingDepositSubTree{
 		ID:       models.MakeUint256(1),
 		Root:     utils.RandomHash(),
-		Deposits: getFourDeposits(),
+		Deposits: testutils.GetFourDeposits(),
 	}
 	pendingBatch := s.addDepositBatch(subtree)
 	err := s.executionCtx.RevertBatches(pendingBatch)
@@ -145,7 +145,7 @@ func (s *RevertBatchesTestSuite) addDepositBatch(subtree *models.PendingDepositS
 	pendingBatch, err := s.executionCtx.NewPendingBatch(batchtype.Deposit)
 	s.NoError(err)
 
-	deposits := getFourDeposits()
+	deposits := testutils.GetFourDeposits()
 	err = s.executionCtx.Applier.ApplyDeposits(2, deposits)
 	s.NoError(err)
 

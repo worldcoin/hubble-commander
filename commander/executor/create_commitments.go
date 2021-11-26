@@ -21,7 +21,7 @@ type FeeReceiver struct {
 }
 
 func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
-	pendingTxs, err := c.queryPendingTxs()
+	txQueue, err := c.queryPendingTxs()
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
 		var result CreateCommitmentResult
 		commitmentID.IndexInBatch = i
 
-		result, err = c.createCommitment(pendingTxs, commitmentID)
+		result, err = c.createCommitment(txQueue, commitmentID)
 		if errors.Is(err, ErrNotEnoughTxs) {
 			break
 		}
@@ -46,7 +46,6 @@ func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
 			return nil, err
 		}
 
-		pendingTxs = result.PendingTxs()
 		commitments = append(commitments, *result.Commitment())
 		pendingAccounts = append(pendingAccounts, result.PendingAccounts()...)
 	}
@@ -69,7 +68,7 @@ func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
 	return commitments, nil
 }
 
-func (c *TxsContext) createCommitment(pendingTxs models.GenericTransactionArray, commitmentID *models.CommitmentID) (
+func (c *TxsContext) createCommitment(txQueue *TxQueue, commitmentID *models.CommitmentID) (
 	CreateCommitmentResult, error,
 ) {
 	var commitment *models.CommitmentWithTxs
@@ -86,7 +85,7 @@ func (c *TxsContext) createCommitment(pendingTxs models.GenericTransactionArray,
 			return err
 		}
 
-		executeResult, err = c.executeTxsForCommitment(pendingTxs, feeReceiver)
+		executeResult, err = c.executeTxsForCommitment(txQueue, feeReceiver)
 		if errors.Is(err, ErrNotEnoughTxs) {
 			if revertErr := c.storage.StateTree.RevertTo(*initialStateRoot); revertErr != nil {
 				return revertErr
@@ -122,10 +121,12 @@ func (c *TxsContext) createCommitment(pendingTxs models.GenericTransactionArray,
 	return c.Executor.NewCreateCommitmentResult(executeResult, commitment), nil
 }
 
-func (c *TxsContext) executeTxsForCommitment(pendingTxs models.GenericTransactionArray, feeReceiver *FeeReceiver) (
+func (c *TxsContext) executeTxsForCommitment(txQueue *TxQueue, feeReceiver *FeeReceiver) (
 	result ExecuteTxsForCommitmentResult,
 	err error,
 ) {
+	pendingTxs := txQueue.PickTxsForCommitment()
+
 	if pendingTxs.Len() < int(c.cfg.MinTxsPerCommitment) {
 		return nil, ErrNotEnoughTxs
 	}
@@ -138,11 +139,11 @@ func (c *TxsContext) executeTxsForCommitment(pendingTxs models.GenericTransactio
 		return nil, ErrNotEnoughTxs
 	}
 
-	newPendingTxs := removeTxs(pendingTxs, executeTxsResult.AllTxs())
-	return c.Executor.NewExecuteTxsForCommitmentResult(executeTxsResult, newPendingTxs), nil
+	txQueue.RemoveFromQueue(executeTxsResult.AllTxs())
+	return c.Executor.NewExecuteTxsForCommitmentResult(executeTxsResult), nil
 }
 
-func (c *TxsContext) queryPendingTxs() (models.GenericTransactionArray, error) {
+func (c *TxsContext) queryPendingTxs() (*TxQueue, error) {
 	pendingTxs, err := c.storage.GetPendingTransactions(txtype.TransactionType(c.BatchType))
 	if err != nil {
 		return nil, err
@@ -150,7 +151,7 @@ func (c *TxsContext) queryPendingTxs() (models.GenericTransactionArray, error) {
 	if pendingTxs.Len() < int(c.cfg.MinTxsPerCommitment*c.cfg.MinCommitmentsPerBatch) {
 		return nil, errors.WithStack(ErrNotEnoughTxs)
 	}
-	return pendingTxs, nil
+	return NewTxQueue(pendingTxs), nil
 }
 
 func (c *TxsContext) getCommitmentFeeReceiver() (*FeeReceiver, error) {
@@ -163,28 +164,6 @@ func (c *TxsContext) getCommitmentFeeReceiver() (*FeeReceiver, error) {
 		StateID: feeReceiverState.StateID,
 		TokenID: feeReceiverState.TokenID,
 	}, nil
-}
-
-func removeTxs(txList, toRemove models.GenericTransactionArray) models.GenericTransactionArray {
-	outputIndex := 0
-	for i := 0; i < txList.Len(); i++ {
-		tx := txList.At(i)
-		if !txExists(toRemove, tx) {
-			txList.Set(outputIndex, tx)
-			outputIndex++
-		}
-	}
-
-	return txList.Slice(0, outputIndex)
-}
-
-func txExists(txList models.GenericTransactionArray, tx models.GenericTransaction) bool {
-	for i := 0; i < txList.Len(); i++ {
-		if txList.At(i).GetBase().Hash == tx.GetBase().Hash {
-			return true
-		}
-	}
-	return false
 }
 
 func (c *TxsContext) registerPendingAccounts(accounts []models.AccountLeaf) error {

@@ -13,9 +13,7 @@ import (
 
 type AccountManager struct {
 	Blockchain                       chain.Connection
-	AccountRegistry                  *accountregistry.AccountRegistry
-	AccountRegistryABI               *abi.ABI
-	accountRegistryContract          *bind.BoundContract
+	AccountRegistry                  *AccountRegistry
 	batchAccountRegistrationGasLimit *uint64
 }
 
@@ -28,10 +26,14 @@ func NewAccountManager(blockchain chain.Connection, params *AccountManagerParams
 	backend := blockchain.GetBackend()
 	accountRegistryContract := bind.NewBoundContract(params.AccountRegistryAddress, accountRegistryAbi, backend, backend, backend)
 	return &AccountManager{
-		Blockchain:                       blockchain,
-		AccountRegistry:                  params.AccountRegistry,
-		AccountRegistryABI:               &accountRegistryAbi,
-		accountRegistryContract:          accountRegistryContract,
+		Blockchain: blockchain,
+		AccountRegistry: &AccountRegistry{
+			AccountRegistry: params.AccountRegistry,
+			Contract: Contract{
+				ABI:           &accountRegistryAbi,
+				BoundContract: accountRegistryContract,
+			},
+		},
 		batchAccountRegistrationGasLimit: params.BatchAccountRegistrationGasLimit,
 	}, nil
 }

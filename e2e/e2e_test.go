@@ -48,10 +48,12 @@ func TestCommander(t *testing.T) {
 	testGetVersion(t, commander.Client())
 	firstUserState := testGetUserStates(t, commander.Client(), senderWallet)
 	testGetPublicKey(t, commander.Client(), &firstUserState, senderWallet)
-	testSendTransferBatch(t, commander.Client(), senderWallet, 0)
+	testSubmitTransferBatch(t, commander.Client(), senderWallet, 0)
 
 	firstC2TWallet := wallets[len(wallets)-32]
-	testSendC2TBatch(t, commander.Client(), senderWallet, wallets, firstC2TWallet.PublicKey(), 32)
+	testSubmitC2TBatch(t, commander.Client(), senderWallet, wallets, firstC2TWallet.PublicKey(), 32)
+
+	testSubmitDepositBatch(t, commander.Client())
 
 	testSenderStateAfterTransfers(t, commander.Client(), senderWallet)
 	testFeeReceiverStateAfterTransfers(t, commander.Client(), feeReceiverWallet)
@@ -224,11 +226,12 @@ func testGetBatches(t *testing.T, client jsonrpc.RPCClient) {
 	err := client.CallFor(&batches, "hubble_getBatches", []interface{}{nil, nil})
 
 	require.NoError(t, err)
-	require.Len(t, batches, 3)
+	require.Len(t, batches, 4)
 	require.Equal(t, models.MakeUint256(1), batches[1].ID)
-	batchTypes := []batchtype.BatchType{batches[1].Type, batches[2].Type}
+	batchTypes := []batchtype.BatchType{batches[1].Type, batches[2].Type, batches[3].Type}
 	require.Contains(t, batchTypes, batchtype.Transfer)
 	require.Contains(t, batchTypes, batchtype.Create2Transfer)
+	require.Contains(t, batchTypes, batchtype.Deposit)
 }
 
 func testCommanderRestart(t *testing.T, commander setup.Commander, senderWallet bls.Wallet) {

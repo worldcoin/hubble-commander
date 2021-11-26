@@ -10,7 +10,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
-	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -277,17 +276,6 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTooHighTx
 	s.Len(pendingTransfers, 1)
 }
 
-func (s *TransferCommitmentsTestSuite) TestRemoveTxs() {
-	transfer1 := createRandomTransferWithHash()
-	transfer2 := createRandomTransferWithHash()
-	transfer3 := createRandomTransferWithHash()
-
-	transfers := models.TransferArray{transfer1, transfer2, transfer3}
-	toRemove := models.TransferArray{transfer2}
-
-	s.Equal(models.TransferArray{transfer1, transfer3}, removeTxs(transfers, toRemove))
-}
-
 func TestTransferCommitmentsTestSuite(t *testing.T) {
 	suite.Run(t, new(TransferCommitmentsTestSuite))
 }
@@ -310,12 +298,4 @@ func addAccountWithHighNonce(s *require.Assertions, storage *st.Storage, stateID
 		Nonce:    models.MakeUint256(10),
 	})
 	s.NoError(err)
-}
-
-func createRandomTransferWithHash() models.Transfer {
-	return models.Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash: utils.RandomHash(),
-		},
-	}
 }

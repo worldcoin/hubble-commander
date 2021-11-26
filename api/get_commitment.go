@@ -47,16 +47,16 @@ func (a *API) unsafeGetCommitment(id models.CommitmentID) (*dto.Commitment, erro
 func (a *API) getTransactionsForCommitment(commitment *models.TxCommitment) (interface{}, error) {
 	switch commitment.Type {
 	case batchtype.Transfer:
-		return a.getTransfersForCommitment(&commitment.ID)
+		return a.getTransfersForCommitment(commitment.ID)
 	case batchtype.Create2Transfer:
-		return a.getCreate2TransfersForCommitment(&commitment.ID)
+		return a.getCreate2TransfersForCommitment(commitment.ID)
 	case batchtype.Genesis, batchtype.MassMigration, batchtype.Deposit:
 		return nil, dto.ErrNotImplemented
 	}
 	return nil, dto.ErrNotImplemented
 }
 
-func (a *API) getTransfersForCommitment(id *models.CommitmentID) (interface{}, error) {
+func (a *API) getTransfersForCommitment(id models.CommitmentID) (interface{}, error) {
 	transfers, err := a.storage.GetTransfersByCommitmentID(id)
 	if err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func (a *API) getTransfersForCommitment(id *models.CommitmentID) (interface{}, e
 	return txs, nil
 }
 
-func (a *API) getCreate2TransfersForCommitment(id *models.CommitmentID) (interface{}, error) {
+func (a *API) getCreate2TransfersForCommitment(id models.CommitmentID) (interface{}, error) {
 	transfers, err := a.storage.GetCreate2TransfersByCommitmentID(id)
 	if err != nil {
 		return nil, err
