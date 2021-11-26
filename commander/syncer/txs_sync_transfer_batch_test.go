@@ -123,33 +123,6 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_SyncsExistingBatch() {
 	s.NotNil(commitments[0].BodyHash)
 }
 
-func (s *SyncTransferBatchTestSuite) TestSyncBatch_SyncsTransferWithEqualFromTo() {
-	accountRoot := s.getAccountTreeRoot()
-	tx := testutils.MakeTransfer(0, 0, 0, 400)
-	s.setTxHashAndSign(&tx)
-	s.submitBatch(&tx)
-
-	pendingBatch, err := s.storage.GetBatch(models.MakeUint256(1))
-	s.NoError(err)
-	s.Nil(pendingBatch.Hash)
-	s.Nil(pendingBatch.FinalisationBlock)
-	s.Nil(pendingBatch.AccountTreeRoot)
-
-	s.syncAllBatches()
-
-	batches, err := s.storage.GetBatchesInRange(nil, nil)
-	s.NoError(err)
-	s.Len(batches, 1)
-	s.NotNil(batches[0].Hash)
-	s.NotNil(batches[0].FinalisationBlock)
-	s.Equal(accountRoot, *batches[0].AccountTreeRoot)
-
-	commitments, err := s.storage.GetTxCommitmentsByBatchID(batches[0].ID)
-	s.NoError(err)
-	s.Len(commitments, 1)
-	s.NotNil(commitments[0].BodyHash)
-}
-
 func (s *SyncTransferBatchTestSuite) TestSyncBatch_TooManyTxsInCommitment() {
 	tx := testutils.MakeTransfer(0, 1, 0, 400)
 	s.setTxHashAndSign(&tx)
