@@ -7,7 +7,6 @@ type GenericTransaction interface {
 	GetBase() *TransactionBase
 	GetFromStateID() uint32
 	GetToStateID() *uint32
-	GetSpokeID() *Uint256
 	GetAmount() Uint256
 	GetFee() Uint256
 	GetNonce() Uint256

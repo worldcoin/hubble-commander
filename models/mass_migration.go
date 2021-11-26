@@ -21,10 +21,6 @@ func (m *MassMigration) GetToStateID() *uint32 {
 	panic("MassMigration does not contain a ToStateID field")
 }
 
-func (m *MassMigration) GetSpokeID() *Uint256 {
-	return &m.SpokeID
-}
-
 func (m *MassMigration) ToTransfer() *Transfer {
 	panic("MassMigration cannot be cast to Create2Transfer")
 }
