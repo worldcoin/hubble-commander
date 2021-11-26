@@ -255,6 +255,34 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_AllowTheSameFromTo() {
 	s.Equal(receiverLeaf, senderLeaf)
 }
 
+func (s *ApplyTransferTestSuite) TestApplyTransferForSync_AllowTheSameFromToNotLowBalance() {
+	_, err := s.storage.StateTree.Set(s.transfer.FromStateID, &models.UserState{
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(0),
+		Balance:  models.MakeUint256(50),
+		Nonce:    models.MakeUint256(0),
+	})
+	s.NoError(err)
+
+	transfer := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(20),
+			Fee:         models.MakeUint256(100),
+			Nonce:       models.MakeUint256(0),
+		},
+		ToStateID: 1,
+	}
+	_, txError, appError := s.applier.ApplyTransferForSync(&transfer, models.MakeUint256(0))
+	s.ErrorIs(txError, ErrBalanceTooLow)
+	s.NoError(appError)
+
+	senderLeaf, err := s.storage.StateTree.Leaf(transfer.FromStateID)
+	s.NoError(err)
+
+	s.Equal(uint64(50), senderLeaf.Balance.Uint64())
+}
+
 func TestApplyTransferTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplyTransferTestSuite))
 }
