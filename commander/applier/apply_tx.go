@@ -161,3 +161,19 @@ func calculateStateAfterTx(
 
 	return newSenderState, newReceiverState, nil
 }
+
+func calculateFeeOfSenderStateAfterTx(
+	senderState models.UserState, // nolint:gocritic
+	tx models.GenericTransaction,
+) (
+	newSenderState *models.UserState, err error,
+) {
+	fee := tx.GetFee()
+
+	newSenderState = &senderState
+	if senderState.Balance.Cmp(&fee) < 0 {
+		return nil, errors.WithStack(ErrBalanceTooLow)
+	}
+	newSenderState.Balance = *newSenderState.Balance.Sub(&fee)
+	return newSenderState, err
+}
