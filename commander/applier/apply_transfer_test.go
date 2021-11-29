@@ -225,14 +225,6 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_SetsNonce() {
 }
 
 func (s *ApplyTransferTestSuite) TestApplyTransferForSync_AllowTheSameFromTo() {
-	_, err := s.storage.StateTree.Set(s.transfer.FromStateID, &models.UserState{
-		PubKeyID: 1,
-		TokenID:  models.MakeUint256(0),
-		Balance:  models.MakeUint256(400),
-		Nonce:    models.MakeUint256(0),
-	})
-	s.NoError(err)
-
 	transfer := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
@@ -242,6 +234,15 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_AllowTheSameFromTo() {
 		},
 		ToStateID: 1,
 	}
+
+	_, err := s.storage.StateTree.Set(transfer.FromStateID, &models.UserState{
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(0),
+		Balance:  models.MakeUint256(400),
+		Nonce:    models.MakeUint256(0),
+	})
+	s.NoError(err)
+
 	_, txError, appError := s.applier.ApplyTransferForSync(&transfer, models.MakeUint256(0))
 	s.NoError(appError)
 	s.NoError(txError)
@@ -256,14 +257,6 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_AllowTheSameFromTo() {
 }
 
 func (s *ApplyTransferTestSuite) TestApplyTransferForSync_TheSameFromToLowBalance() {
-	_, err := s.storage.StateTree.Set(s.transfer.FromStateID, &models.UserState{
-		PubKeyID: 1,
-		TokenID:  models.MakeUint256(0),
-		Balance:  models.MakeUint256(50),
-		Nonce:    models.MakeUint256(0),
-	})
-	s.NoError(err)
-
 	transfer := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
@@ -273,6 +266,15 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_TheSameFromToLowBalanc
 		},
 		ToStateID: 1,
 	}
+
+	_, err := s.storage.StateTree.Set(transfer.FromStateID, &models.UserState{
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(0),
+		Balance:  models.MakeUint256(50),
+		Nonce:    models.MakeUint256(0),
+	})
+	s.NoError(err)
+
 	_, txError, appError := s.applier.ApplyTransferForSync(&transfer, models.MakeUint256(0))
 	s.ErrorIs(txError, ErrBalanceTooLow)
 	s.NoError(appError)
