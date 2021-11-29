@@ -73,7 +73,7 @@ func (a *Applier) applyTxForSync(
 	if receiverLeaf.StateID != senderLeaf.StateID {
 		newSenderState, newReceiverState, txError = calculateStateAfterTx(senderLeaf.UserState, receiverLeaf.UserState, tx)
 	} else {
-		newSenderState, txError = calculateFeeOfSenderStateAfterTx(senderLeaf.UserState, tx)
+		newSenderState, txError = calculateSenderStateAfterSelfTransfer(senderLeaf.UserState, tx)
 		newReceiverState = newSenderState
 	}
 	if txError != nil {
@@ -172,7 +172,7 @@ func calculateStateAfterTx(
 	return newSenderState, newReceiverState, nil
 }
 
-func calculateFeeOfSenderStateAfterTx(
+func calculateSenderStateAfterSelfTransfer(
 	senderState models.UserState, // nolint:gocritic
 	tx models.GenericTransaction,
 ) (
