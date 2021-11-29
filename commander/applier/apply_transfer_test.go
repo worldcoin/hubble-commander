@@ -255,7 +255,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_AllowTheSameFromTo() {
 	s.Equal(receiverLeaf, senderLeaf)
 }
 
-func (s *ApplyTransferTestSuite) TestApplyTransferForSync_AllowTheSameFromToNotLowBalance() {
+func (s *ApplyTransferTestSuite) TestApplyTransferForSync_TheSameFromToLowBalance() {
 	_, err := s.storage.StateTree.Set(s.transfer.FromStateID, &models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(0),
