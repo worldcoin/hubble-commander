@@ -21,31 +21,12 @@ func (a *Applier) ApplyTx(
 	receiverLeaf *models.StateLeaf,
 	commitmentTokenID models.Uint256,
 ) (txError, appError error) {
-	senderLeaf, err := a.storage.StateTree.Leaf(tx.GetFromStateID())
-	if err != nil {
-		return nil, err
+	newSenderState, newReceiverState, txError, appError := a.validateAndCalculateStateAfterTx(tx, receiverLeaf, commitmentTokenID)
+	if txError != nil || appError != nil {
+		return txError, appError
 	}
 
-	appError = a.validateSenderTokenID(senderLeaf, commitmentTokenID)
-	if appError != nil {
-		return nil, appError
-	}
-
-	appError = a.validateReceiverTokenID(receiverLeaf, commitmentTokenID)
-	if appError != nil {
-		return nil, appError
-	}
-
-	if tErr := validateTxNonce(&senderLeaf.UserState, tx.GetNonce()); tErr != nil {
-		return tErr, nil
-	}
-
-	newSenderState, newReceiverState, txErr := calculateStateAfterTx(senderLeaf.UserState, receiverLeaf.UserState, tx)
-	if txErr != nil {
-		return txErr, nil
-	}
-
-	_, appError = a.storage.StateTree.Set(senderLeaf.StateID, newSenderState)
+	_, appError = a.storage.StateTree.Set(tx.GetFromStateID(), newSenderState)
 	if appError != nil {
 		return nil, appError
 	}
@@ -57,14 +38,46 @@ func (a *Applier) ApplyTx(
 	return nil, nil
 }
 
+func (a *Applier) validateAndCalculateStateAfterTx(
+	tx models.GenericTransaction,
+	receiverLeaf *models.StateLeaf,
+	commitmentTokenID models.Uint256,
+) (newSenderState, newReceiverState *models.UserState, txError, appError error) {
+	senderLeaf, appError := a.storage.StateTree.Leaf(tx.GetFromStateID())
+	if appError != nil {
+		return nil, nil, nil, appError
+	}
+
+	appError = a.validateSenderTokenID(senderLeaf, commitmentTokenID)
+	if appError != nil {
+		return nil, nil, nil, appError
+	}
+
+	appError = a.validateReceiverTokenID(receiverLeaf, commitmentTokenID)
+	if appError != nil {
+		return nil, nil, nil, appError
+	}
+
+	if txErr := validateTxNonce(&senderLeaf.UserState, tx.GetNonce()); txErr != nil {
+		return nil, nil, txErr, nil
+	}
+
+	newSenderState, newReceiverState, txErr := calculateStateAfterTx(senderLeaf.UserState, receiverLeaf.UserState, tx)
+	if txErr != nil {
+		return nil, nil, txErr, nil
+	}
+
+	return newSenderState, newReceiverState, nil, nil
+}
+
 func (a *Applier) applyTxForSync(
 	tx models.GenericTransaction,
 	receiverLeaf *models.StateLeaf,
 	commitmentTokenID models.Uint256,
 ) (synced *SyncedGenericTransaction, txError, appError error) {
-	senderLeaf, err := a.storage.StateTree.LeafOrEmpty(tx.GetFromStateID())
-	if err != nil {
-		return nil, nil, err
+	senderLeaf, appError := a.storage.StateTree.LeafOrEmpty(tx.GetFromStateID())
+	if appError != nil {
+		return nil, nil, appError
 	}
 
 	synced = NewPartialSyncedGenericTransaction(tx.Copy(), &senderLeaf.UserState, &receiverLeaf.UserState)
@@ -80,8 +93,8 @@ func (a *Applier) applyTxForSync(
 	}
 	synced.SenderStateProof.Witness = senderWitness
 
-	if tErr := a.validateSenderTokenID(senderLeaf, commitmentTokenID); tErr != nil {
-		return synced, tErr, nil
+	if txErr = a.validateSenderTokenID(senderLeaf, commitmentTokenID); txErr != nil {
+		return synced, txErr, nil
 	}
 
 	receiverWitness, appError := a.storage.StateTree.Set(receiverLeaf.StateID, newReceiverState)
@@ -93,8 +106,8 @@ func (a *Applier) applyTxForSync(
 	}
 	synced.ReceiverStateProof.Witness = receiverWitness
 
-	if tErr := a.validateReceiverTokenID(receiverLeaf, commitmentTokenID); tErr != nil {
-		return synced, tErr, nil
+	if txErr = a.validateReceiverTokenID(receiverLeaf, commitmentTokenID); txErr != nil {
+		return synced, txErr, nil
 	}
 
 	synced.Tx.SetNonce(senderLeaf.Nonce)
