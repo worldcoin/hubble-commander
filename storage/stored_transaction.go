@@ -44,6 +44,10 @@ func NewTransactionStorage(database *Database) (*TransactionStorage, error) {
 	if err != nil {
 		return nil, err
 	}
+	err = initializeIndex(database, models.StoredBatchName, "Hash", common.Hash{})
+	if err != nil {
+		return nil, err
+	}
 
 	return &TransactionStorage{
 		database: database,

@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/binary"
+	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/common"
@@ -19,7 +20,7 @@ const (
 var (
 	StoredTxName                = getTypeName(StoredTx{})
 	StoredTxPrefix              = getBadgerHoldPrefix(StoredTx{})
-	errInvalidStoredTxIndexType = errors.New("invalid StoredTx index type")
+	errInvalidStoredTxIndexType = fmt.Errorf("invalid StoredTx index type")
 )
 
 type StoredTx struct {
@@ -277,7 +278,7 @@ func interfaceToStoredTx(value interface{}) (*StoredTx, error) {
 	if ok {
 		return &v, nil
 	}
-	return nil, errInvalidStoredTxIndexType
+	return nil, errors.WithStack(errInvalidStoredTxIndexType)
 }
 
 type TxBody interface {
