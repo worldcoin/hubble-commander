@@ -79,7 +79,7 @@ func (s *DepositBatchesTestSuite) TearDownTest() {
 
 func (s *DepositBatchesTestSuite) TestSyncRemoteBatch_SyncsDepositBatch() {
 	s.prepareDeposits()
-	s.submitBatch(s.storage.Storage)
+	s.submitDepositBatch(s.storage.Storage)
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
@@ -108,7 +108,7 @@ func (s *DepositBatchesTestSuite) TestSyncRemoteBatch_OmitsRolledBackBatch() {
 	err = s.cmd.unsafeSyncBatches(0, *latestBlock)
 	s.ErrorIs(err, ErrRollbackInProgress)
 
-	depositBatch := s.submitBatch(s.storage.Storage)
+	depositBatch := s.submitDepositBatch(s.storage.Storage)
 	latestBlock, err = s.client.GetLatestBlockNumber()
 	s.NoError(err)
 
@@ -145,10 +145,10 @@ func (s *DepositBatchesTestSuite) submitInvalidBatches() {
 	err = txsSyncCtx.UpdateExistingBatch(remoteBatches[0], *previousRoot)
 	s.NoError(err)
 
-	s.submitBatch(txStorage)
+	s.submitDepositBatch(txStorage)
 }
 
-func (s *DepositBatchesTestSuite) submitBatch(storage *st.Storage) *models.Batch {
+func (s *DepositBatchesTestSuite) submitDepositBatch(storage *st.Storage) *models.Batch {
 	s.queueFourDeposits()
 
 	depositsCtx := executor.NewDepositsContext(
