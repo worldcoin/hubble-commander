@@ -5,31 +5,12 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type SubmitBatchFunc func() (*types.Transaction, error)
-
-func (c *Client) SubmitTxBatch(
-	batchType batchtype.BatchType,
-	batchID *models.Uint256,
-	commitments []models.CommitmentWithTxs,
-) (*types.Transaction, error) {
-	// nolint:exhaustive
-	switch batchType {
-	case batchtype.Transfer:
-		return c.SubmitTransfersBatch(batchID, commitments)
-	case batchtype.Create2Transfer:
-		return c.SubmitCreate2TransfersBatch(batchID, commitments)
-	case batchtype.MassMigration:
-		panic("not implemented")
-	default:
-		panic("invalid batch type")
-	}
-}
 
 func (c *Client) SubmitTransfersBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
 	return c.rollup().

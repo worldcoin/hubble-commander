@@ -5,9 +5,11 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/encoder"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type TransactionExecutor interface {
@@ -18,6 +20,7 @@ type TransactionExecutor interface {
 	NewCreateCommitmentResult(result ExecuteTxsForCommitmentResult, commitment *models.CommitmentWithTxs) CreateCommitmentResult
 	NewCreateCommitmentsResult(capacity uint32) CreateCommitmentsResult
 	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (result applier.ApplySingleTxResult, txError, appError error)
+	SubmitBatch(batchID *models.Uint256, createCommitmentsResult CreateCommitmentsResult) (*types.Transaction, error)
 }
 
 func CreateTransactionExecutor(executionCtx *ExecutionContext, batchType batchtype.BatchType) TransactionExecutor {
@@ -27,7 +30,7 @@ func CreateTransactionExecutor(executionCtx *ExecutionContext, batchType batchty
 	case batchtype.Create2Transfer:
 		return NewC2TExecutor(executionCtx.storage)
 	case batchtype.MassMigration:
-		return NewMassMigrationExecutor(executionCtx.storage, executionCtx.client)
+		return NewMassMigrationExecutor(executionCtx.storage)
 	case batchtype.Genesis, batchtype.Deposit:
 		log.Fatal("Invalid batch type")
 		return nil
@@ -38,12 +41,14 @@ func CreateTransactionExecutor(executionCtx *ExecutionContext, batchType batchty
 // TransferExecutor implements TransactionExecutor
 type TransferExecutor struct {
 	storage *st.Storage
+	client  *eth.Client
 	applier *applier.Applier
 }
 
 func NewTransferExecutor(storage *st.Storage) *TransferExecutor {
 	return &TransferExecutor{
 		storage: storage,
+		client:  client,
 		applier: applier.NewApplier(storage),
 	}
 }
@@ -94,15 +99,24 @@ func (e *TransferExecutor) NewCreateCommitmentsResult(capacity uint32) CreateCom
 	}
 }
 
+func (e *TransferExecutor) SubmitBatch(
+	batchID *models.Uint256,
+	createCommitmentsResult CreateCommitmentsResult,
+) (*types.Transaction, error) {
+	return e.client.SubmitTransfersBatch(batchID, createCommitmentsResult.Commitments())
+}
+
 // C2TExecutor implements TransactionExecutor
 type C2TExecutor struct {
 	storage *st.Storage
+	client  *eth.Client
 	applier *applier.Applier
 }
 
 func NewC2TExecutor(storage *st.Storage) *C2TExecutor {
 	return &C2TExecutor{
 		storage: storage,
+		client:  client,
 		applier: applier.NewApplier(storage),
 	}
 }
@@ -161,15 +175,21 @@ func (e *C2TExecutor) NewCreateCommitmentsResult(capacity uint32) CreateCommitme
 	}
 }
 
+func (e *C2TExecutor) SubmitBatch(batchID *models.Uint256, createCommitmentsResult CreateCommitmentsResult) (*types.Transaction, error) {
+	return e.client.SubmitCreate2TransfersBatch(batchID, createCommitmentsResult.Commitments())
+}
+
 // MassMigrationExecutor implements TransactionExecutor
 type MassMigrationExecutor struct {
 	storage *st.Storage
+	client  *eth.Client
 	applier *applier.Applier
 }
 
 func NewMassMigrationExecutor(storage *st.Storage) *MassMigrationExecutor {
 	return &MassMigrationExecutor{
 		storage: storage,
+		client:  client,
 		applier: applier.NewApplier(storage),
 	}
 }
@@ -219,4 +239,11 @@ func (e *MassMigrationExecutor) NewCreateCommitmentsResult(capacity uint32) Crea
 		commitments: make([]models.CommitmentWithTxs, 0, capacity),
 		metas:       make([]models.MassMigrationMeta, 0, capacity),
 	}
+}
+
+func (e *MassMigrationExecutor) SubmitBatch(
+	batchID *models.Uint256,
+	createCommitmentsResult CreateCommitmentsResult,
+) (*types.Transaction, error) {
+	return nil, nil
 }

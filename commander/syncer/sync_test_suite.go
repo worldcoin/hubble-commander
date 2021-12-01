@@ -135,14 +135,14 @@ func (s *syncTestSuite) getAccountTreeRoot() common.Hash {
 	return common.BytesToHash(rawAccountRoot[:])
 }
 
-func (s *syncTestSuite) submitBatch(tx models.GenericTransaction) (*models.Batch, []models.CommitmentWithTxs) {
+func (s *syncTestSuite) submitBatch(tx models.GenericTransaction) []models.CommitmentWithTxs {
 	pendingBatch, result := s.createBatch(tx)
 
 	err := s.txsCtx.SubmitBatch(pendingBatch, result)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
-	return pendingBatch, result.Commitments()
+	return result.Commitments()
 }
 
 func (s *syncTestSuite) createBatch(tx models.GenericTransaction) (*models.Batch, executor.CreateCommitmentsResult) {
