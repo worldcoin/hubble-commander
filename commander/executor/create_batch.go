@@ -18,7 +18,7 @@ func (c *TxsContext) CreateAndSubmitBatch() (*models.Batch, *int, error) {
 		return nil, nil, err
 	}
 
-	err = c.SubmitBatch(batch, result.Commitments())
+	err = c.SubmitBatch(batch, result)
 	if err != nil {
 		return nil, nil, err
 	}

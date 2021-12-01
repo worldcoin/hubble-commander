@@ -58,10 +58,10 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() {
 	tx2 := testutils.MakeCreate2Transfer(0, nil, 1, 400, s.wallets[0].PublicKey())
 	s.setTxHashAndSign(&tx2)
 
-	batch, commitments := s.createBatch(&tx2)
-	commitments[0].PostStateRoot = utils.RandomHash()
+	batch, result := s.createBatch(&tx2)
+	result.Commitments()[0].PostStateRoot = utils.RandomHash()
 
-	err := s.txsCtx.SubmitBatch(batch, commitments)
+	err := s.txsCtx.SubmitBatch(batch, result)
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 
@@ -180,11 +180,12 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_CommitmentWithoutTxs() {
 }
 
 func (s *SyncC2TBatchTestSuite) submitInvalidBatch(tx *models.Create2Transfer) models.CommitmentWithTxs {
-	pendingBatch, commitments := s.createBatch(tx)
+	pendingBatch, result := s.createBatch(tx)
+	commitments := result.Commitments()
 
 	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)
 
-	err := s.txsCtx.SubmitBatch(pendingBatch, commitments)
+	err := s.txsCtx.SubmitBatch(pendingBatch, result)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()

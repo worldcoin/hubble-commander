@@ -63,7 +63,10 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
 		s.NoError(err)
 		result.Commitments()[i].ID.BatchID = pendingBatch.ID
 		result.Commitments()[i].ID.IndexInBatch = 0
-		err = s.txsCtx.SubmitBatch(pendingBatch, []models.CommitmentWithTxs{result.Commitments()[i]})
+		submitBatchInput := s.txsCtx.Executor.NewCreateCommitmentsResult(1)
+		submitBatchInput.AddCommitment(&result.Commitments()[i])
+
+		err = s.txsCtx.SubmitBatch(pendingBatch, submitBatchInput)
 		s.NoError(err)
 		s.client.GetBackend().Commit()
 
@@ -161,10 +164,10 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() 
 	tx2 := testutils.MakeTransfer(0, 1, 1, 400)
 	s.setTxHashAndSign(&tx2)
 
-	batch, commitments := s.createBatch(&tx2)
-	commitments[0].PostStateRoot = utils.RandomHash()
+	batch, result := s.createBatch(&tx2)
+	result.Commitments()[0].PostStateRoot = utils.RandomHash()
 
-	err := s.txsCtx.SubmitBatch(batch, commitments)
+	err := s.txsCtx.SubmitBatch(batch, result)
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 
@@ -214,10 +217,10 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_NotValidBLSSignature() {
 	tx := testutils.MakeTransfer(0, 1, 0, 400)
 	s.setTxHash(&tx)
 
-	pendingBatch, commitments := s.createBatch(&tx)
-	commitments[0].CombinedSignature = models.Signature{1, 2, 3}
+	pendingBatch, result := s.createBatch(&tx)
+	result.Commitments()[0].CombinedSignature = models.Signature{1, 2, 3}
 
-	err := s.txsCtx.SubmitBatch(pendingBatch, commitments)
+	err := s.txsCtx.SubmitBatch(pendingBatch, result)
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 
@@ -287,11 +290,12 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_CommitmentWithNonexistentFeeR
 }
 
 func (s *SyncTransferBatchTestSuite) submitInvalidBatch(tx *models.Transfer) *models.Batch {
-	pendingBatch, commitments := s.createBatch(tx)
+	pendingBatch, result := s.createBatch(tx)
+	commitments := result.Commitments()
 
 	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)
 
-	err := s.txsCtx.SubmitBatch(pendingBatch, commitments)
+	err := s.txsCtx.SubmitBatch(pendingBatch, result)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()

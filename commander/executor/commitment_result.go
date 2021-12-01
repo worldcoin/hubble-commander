@@ -64,6 +64,7 @@ type CreateCommitmentsResult interface {
 	Commitments() []models.CommitmentWithTxs
 	Metas() []models.MassMigrationMeta
 	Len() int
+	AddCommitment(commitment *models.CommitmentWithTxs)
 	AddResult(createCommitmentResult CreateCommitmentResult)
 }
 
@@ -83,8 +84,12 @@ func (c *CreateTxCommitmentsResult) Len() int {
 	return len(c.commitments)
 }
 
+func (c *CreateTxCommitmentsResult) AddCommitment(commitment *models.CommitmentWithTxs) {
+	c.commitments = append(c.commitments, *commitment)
+}
+
 func (c *CreateTxCommitmentsResult) AddResult(result CreateCommitmentResult) {
-	c.commitments = append(c.commitments, *result.Commitment())
+	c.AddCommitment(result.Commitment())
 }
 
 type CreateMassMigrationCommitmentsResult struct {
@@ -104,8 +109,12 @@ func (c *CreateMassMigrationCommitmentsResult) Len() int {
 	return len(c.commitments)
 }
 
+func (c *CreateMassMigrationCommitmentsResult) AddCommitment(commitment *models.CommitmentWithTxs) {
+	c.commitments = append(c.commitments, *commitment)
+}
+
 func (c *CreateMassMigrationCommitmentsResult) AddResult(result CreateCommitmentResult) {
-	c.commitments = append(c.commitments, *result.Commitment())
+	c.AddCommitment(result.Commitment())
 
 	txs := result.AppliedTxs().ToMassMigrationArray()
 	totalAmount := models.NewUint256(0)

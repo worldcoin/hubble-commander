@@ -677,7 +677,7 @@ func submitInvalidTxsBatch(
 
 	modifier(&result.Commitments()[0])
 
-	err = txsCtx.SubmitBatch(pendingBatch, result.Commitments())
+	err = txsCtx.SubmitBatch(pendingBatch, result)
 	s.NoError(err)
 
 	return pendingBatch
