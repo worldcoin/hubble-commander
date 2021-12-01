@@ -1,12 +1,12 @@
 {
     "info": {
-        "_postman_id": "fbfbe340-6962-41ba-9dc2-6f719b400b4c",
+        "_postman_id": "a7f03435-4cdb-4561-9a38-4852c43b7cf7",
         "name": "Worldcoin",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
         {
-            "name": "hubble_sendTransfer",
+            "name": "hubble_sendTransaction (Transfer)",
             "request": {
                 "method": "POST",
                 "header": [],
@@ -29,7 +29,7 @@
             "response": []
         },
         {
-            "name": "hubble_sendCreate2Transfer",
+            "name": "hubble_sendTransaction (Create2Transfer)",
             "request": {
                 "method": "POST",
                 "header": [],
@@ -52,7 +52,7 @@
             "response": []
         },
         {
-            "name": "hubble_sendMassMigration",
+            "name": "hubble_sendTransaction (MassMigration)",
             "request": {
                 "method": "POST",
                 "header": [],
