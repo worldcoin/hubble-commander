@@ -126,9 +126,6 @@ func (s *TransferTestSuite) TestDecodeTransferForCommitment() {
 		},
 		ToStateID: 2,
 	}
-	transferHash, err := HashTransfer(transfer)
-	s.NoError(err)
-	transfer.Hash = *transferHash
 
 	encoded, err := EncodeTransferForCommitment(transfer)
 	s.NoError(err)
@@ -185,13 +182,6 @@ func (s *TransferTestSuite) TestDeserializeTransfers() {
 		},
 		ToStateID: 3,
 	}
-
-	transferHash, err := HashTransfer(&transfer)
-	s.NoError(err)
-	transfer.Hash = *transferHash
-	transferHash, err = HashTransfer(&transfer2)
-	s.NoError(err)
-	transfer2.Hash = *transferHash
 
 	serialized, err := s.testTx.TransferSerialize(
 		nil,

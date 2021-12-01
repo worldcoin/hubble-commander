@@ -84,11 +84,6 @@ func DecodeMassMigrationFromCommitment(data []byte) (*models.MassMigration, erro
 			Fee:         fee,
 		},
 	}
-	transferHash, err := HashMassMigration(massMigration)
-	if err != nil {
-		return nil, err
-	}
-	massMigration.Hash = *transferHash
 	return massMigration, nil
 }
 

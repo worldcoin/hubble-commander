@@ -121,9 +121,6 @@ func (s *MassMigrationTestSuite) TestDecodeMassMigrationFromCommitment() {
 			Fee:         models.MakeUint256(10),
 		},
 	}
-	massMigrationHash, err := HashMassMigration(massMigration)
-	s.NoError(err)
-	massMigration.Hash = *massMigrationHash
 
 	encoded, err := EncodeMassMigrationForCommitment(massMigration)
 	s.NoError(err)
@@ -188,12 +185,6 @@ func (s *MassMigrationTestSuite) TestDeserializeMassMigrations() {
 				Fee:         models.MakeUint256(10),
 			},
 		},
-	}
-
-	for i := range massMigrations {
-		hash, err := HashMassMigration(&massMigrations[i])
-		s.NoError(err)
-		massMigrations[i].Hash = *hash
 	}
 
 	serialized, err := SerializeMassMigrations(massMigrations)
