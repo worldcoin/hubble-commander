@@ -41,12 +41,12 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 	}
 	logBatchesCount(len(batchEvents))
 
-	nextCorrectBatchID := models.MakeUint256(0)
+	var rolledBackBatchID *models.Uint256
 	depositIndex := 0
 	res := make([]DecodedBatch, 0, len(batchEvents))
 	for i := range batchEvents {
 		event := batchEvents[i]
-		if isFilteredOut(models.NewUint256FromBig(*event.BatchID), &nextCorrectBatchID, filters) {
+		if !isAcceptable(models.NewUint256FromBig(*event.BatchID), rolledBackBatchID, filters) {
 			continue
 		}
 
@@ -74,22 +74,25 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 		}
 
 		if errors.Is(err, errBatchAlreadyRolledBack) {
-			nextCorrectBatchID = models.MakeUint256FromBig(*event.BatchID)
+			rolledBackBatchID = models.NewUint256FromBig(*event.BatchID)
 			continue
 		}
 		if err != nil {
 			return nil, err
 		}
 
+		if rolledBackBatchID != nil && rolledBackBatchID.Cmp(&decodedBatch.GetBase().ID) == 0 {
+			rolledBackBatchID = nil
+		}
 		res = append(res, decodedBatch)
 	}
 
 	return res, nil
 }
 
-func isFilteredOut(batchID, nextBatchID *models.Uint256, filters *BatchesFilters) bool {
-	return (filters.FilterByBatchID != nil && !filters.FilterByBatchID(batchID)) ||
-		(nextBatchID != nil && batchID.Cmp(nextBatchID) < 0)
+func isAcceptable(batchID, rolledBackBatchID *models.Uint256, filters *BatchesFilters) bool {
+	return (filters.FilterByBatchID == nil || filters.FilterByBatchID(batchID)) &&
+		(rolledBackBatchID == nil || batchID.Cmp(rolledBackBatchID) <= 0)
 }
 
 func (c *Client) getBatchEvents(filters *BatchesFilters) ([]*rollup.RollupNewBatch, []*rollup.RollupDepositsFinalised, error) {
