@@ -25,7 +25,9 @@ func CreateTransactionExecutor(executionCtx *ExecutionContext, batchType batchty
 		return NewTransferExecutor(executionCtx.storage)
 	case batchtype.Create2Transfer:
 		return NewC2TExecutor(executionCtx.storage)
-	case batchtype.Genesis, batchtype.MassMigration, batchtype.Deposit:
+	case batchtype.MassMigration:
+		return NewMassMigrationExecutor(executionCtx.storage, executionCtx.client)
+	case batchtype.Genesis, batchtype.Deposit:
 		log.Fatal("Invalid batch type")
 		return nil
 	}
@@ -142,4 +144,56 @@ func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID mo
 	applyResult applier.ApplySingleTxResult, txError, appError error,
 ) {
 	return e.applier.ApplyCreate2Transfer(tx.ToCreate2Transfer(), commitmentTokenID)
+}
+
+// MassMigrationExecutor implements TransactionExecutor
+type MassMigrationExecutor struct {
+	storage *st.Storage
+	applier *applier.Applier
+}
+
+func NewMassMigrationExecutor(storage *st.Storage) *MassMigrationExecutor {
+	return &MassMigrationExecutor{
+		storage: storage,
+		applier: applier.NewApplier(storage),
+	}
+}
+
+func (e *MassMigrationExecutor) NewExecuteTxsResult(capacity uint32) ExecuteTxsResult {
+	return &ExecuteMassMigrationsResult{
+		appliedTxs: make(models.MassMigrationArray, 0, capacity),
+		invalidTxs: make(models.MassMigrationArray, 0),
+		skippedTxs: make(models.MassMigrationArray, 0),
+	}
+}
+
+func (e *MassMigrationExecutor) NewExecuteTxsForCommitmentResult(
+	result ExecuteTxsResult,
+) ExecuteTxsForCommitmentResult {
+	return &ExecuteMassMigrationsForCommitmentResult{
+		appliedTxs: result.AppliedTxs().ToMassMigrationArray(),
+	}
+}
+
+func (e *MassMigrationExecutor) NewCreateCommitmentResult(
+	_ ExecuteTxsForCommitmentResult,
+	commitment *models.CommitmentWithTxs,
+) CreateCommitmentResult {
+	return &CreateMassMigrationCommitmentResult{
+		commitment: commitment,
+	}
+}
+
+func (e *MassMigrationExecutor) SerializeTxs(results ExecuteTxsForCommitmentResult) ([]byte, error) {
+	return encoder.SerializeMassMigrations(results.AppliedTxs().ToMassMigrationArray())
+}
+
+func (e *MassMigrationExecutor) AddPendingAccount(_ applier.ApplySingleTxResult) error {
+	return nil
+}
+
+func (e *MassMigrationExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
+	applyResult applier.ApplySingleTxResult, txError, appError error,
+) {
+	return e.applier.ApplyMassMigration(tx, commitmentTokenID)
 }

@@ -31,3 +31,15 @@ func (c *CreateC2TCommitmentResult) PendingAccounts() []models.AccountLeaf {
 func (c *CreateC2TCommitmentResult) Commitment() *models.CommitmentWithTxs {
 	return c.commitment
 }
+
+type CreateMassMigrationCommitmentResult struct {
+	commitment *models.CommitmentWithTxs
+}
+
+func (c *CreateMassMigrationCommitmentResult) PendingAccounts() []models.AccountLeaf {
+	return []models.AccountLeaf{}
+}
+
+func (c *CreateMassMigrationCommitmentResult) Commitment() *models.CommitmentWithTxs {
+	return c.commitment
+}
