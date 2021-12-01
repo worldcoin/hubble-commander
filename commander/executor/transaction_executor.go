@@ -62,7 +62,7 @@ func (e *TransferExecutor) NewExecuteTxsForCommitmentResult(
 }
 
 func (e *TransferExecutor) NewCreateCommitmentResult(
-	result ExecuteTxsForCommitmentResult,
+	_ ExecuteTxsForCommitmentResult,
 	commitment *models.CommitmentWithTxs,
 ) CreateCommitmentResult {
 	return &CreateTransferCommitmentResult{
