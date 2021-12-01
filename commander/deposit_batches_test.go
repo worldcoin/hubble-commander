@@ -104,8 +104,13 @@ func (s *DepositBatchesTestSuite) TestSyncRemoteBatch_OmitsRolledBackBatch() {
 	latestBlock, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
 
+	// trigger dispute on fraudulent batch
 	err = s.cmd.unsafeSyncBatches(0, *latestBlock)
 	s.ErrorIs(err, ErrRollbackInProgress)
+
+	depositBatch := s.submitBatch(s.storage.Storage)
+	latestBlock, err = s.client.GetLatestBlockNumber()
+	s.NoError(err)
 
 	// try sync already rolled back batch
 	err = s.cmd.unsafeSyncBatches(0, *latestBlock)
@@ -113,7 +118,8 @@ func (s *DepositBatchesTestSuite) TestSyncRemoteBatch_OmitsRolledBackBatch() {
 
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
-	s.Len(batches, 1)
+	s.Len(batches, 2)
+	s.Equal(depositBatch.TransactionHash, batches[1].TransactionHash)
 }
 
 func (s *DepositBatchesTestSuite) submitInvalidBatches() {
@@ -142,7 +148,7 @@ func (s *DepositBatchesTestSuite) submitInvalidBatches() {
 	s.submitBatch(txStorage)
 }
 
-func (s *DepositBatchesTestSuite) submitBatch(storage *st.Storage) {
+func (s *DepositBatchesTestSuite) submitBatch(storage *st.Storage) *models.Batch {
 	s.queueFourDeposits()
 
 	depositsCtx := executor.NewDepositsContext(
@@ -154,10 +160,11 @@ func (s *DepositBatchesTestSuite) submitBatch(storage *st.Storage) {
 	)
 	defer depositsCtx.Rollback(nil)
 
-	_, _, err := depositsCtx.CreateAndSubmitBatch()
+	batch, _, err := depositsCtx.CreateAndSubmitBatch()
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
+	return batch
 }
 
 func (s *DepositBatchesTestSuite) prepareDeposits() {
