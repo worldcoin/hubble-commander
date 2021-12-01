@@ -214,7 +214,17 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidPostSt
 	s.Equal(result.Ok, s.getDisputeResult()) // invalid post state root emits Result.Ok
 }
 
-func (s *TxsBatchesTestSuite) TestApplySyn_DisputesBatchWithTheSameFromTo() {
+func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_CanDisputeFraudulentBatchWithTransferToSelf() {
+	_, err := s.testStorage.StateTree.Set(2, &models.UserState{
+		PubKeyID: 0,
+		TokenID:  models.MakeUint256(0),
+		Balance:  models.MakeUint256(0),
+		Nonce:    models.MakeUint256(0),
+	})
+
+	transfer := testutils.MakeTransfer(0, 1, 0, 50)
+	s.submitBatch(s.testStorage.Storage, s.txsCtx, &transfer)
+
 	txs := []models.Transfer{
 		testutils.MakeTransfer(0, 0, 0, 100),
 		testutils.MakeTransfer(1, 0, 0, 100),
@@ -227,12 +237,14 @@ func (s *TxsBatchesTestSuite) TestApplySyn_DisputesBatchWithTheSameFromTo() {
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
-	s.Len(remoteBatches, 1)
+	s.Len(remoteBatches, 2)
 
-	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	s.updateBatchAfterSubmission(remoteBatches[0].ToDecodedTxBatch())
+
+	err = s.cmd.syncRemoteBatch(remoteBatches[1])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
-	s.checkBatchAfterDispute(remoteBatches[0].GetID())
+	s.checkBatchAfterDispute(remoteBatches[1].GetID())
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidSignature() {
@@ -573,7 +585,31 @@ func (s *TxsBatchesTestSuite) submitFraudulentTransferBatch(
 	feeReceiverStateID uint32,
 	txs ...models.Transfer,
 ) *models.Batch {
+	executionCtx := executor.NewTestExecutionContext(storage, nil, s.cfg.Rollup)
+	txsCtx := executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
+
 	commitmentTokenID := models.MakeUint256(0)
+
+	_, txErr, appErr := txsCtx.Applier.ApplyTransferForSync(&txs[0], commitmentTokenID)
+	s.NoError(txErr)
+	s.NoError(appErr)
+
+	receiver, err := storage.StateTree.LeafOrEmpty(txs[0].ToStateID)
+	s.NoError(err)
+
+	receiver.Balance = *receiver.Balance.Add(&txs[0].Amount)
+
+	_, err = storage.StateTree.Set(txs[0].ToStateID, &receiver.UserState)
+	s.NoError(err)
+
+	_, err = txsCtx.Applier.ApplyFee(feeReceiverStateID, *txs[0].Fee.Add(&txs[1].Fee))
+	s.NoError(err)
+
+	nextBatchID, err := storage.GetNextBatchID()
+	s.NoError(err)
+
+	postStateRoot, err := storage.StateTree.Root()
+	s.NoError(err)
 
 	domain, err := s.client.GetDomain()
 	s.NoError(err)
@@ -581,45 +617,28 @@ func (s *TxsBatchesTestSuite) submitFraudulentTransferBatch(
 	combinedSignature, err := executor.CombineSignatures(models.MakeTransferArray(txs...), domain)
 	s.NoError(err)
 
-	nextBatchID, err := s.testStorage.GetNextBatchID()
+	serializedTxs, err := encoder.SerializeTransfers(txs)
 	s.NoError(err)
 
-	commitments := make([]models.CommitmentWithTxs, len(txs))
-	for i, tx := range txs {
-		receiverLeaf, err := storage.StateTree.Leaf(tx.ToStateID)
-		s.NoError(err)
-		_, txErr, appErr := s.txsCtx.Applier.ApplyTransferForSync(tx, commitmentTokenID)
-		s.NoError(txErr)
-		s.NoError(appErr)
-
-		err = storage.AddTransfer(tx.ToTransfer())
-		s.NoError(err)
-
-		serializedTxs, err := encoder.SerializeTransfers([]models.Transfer{tx})
-		s.NoError(err)
-
-		postStateRoot, err := s.testStorage.StateTree.Root()
-		s.NoError(err)
-
-		commitments[i] = models.CommitmentWithTxs{
-			TxCommitment: models.TxCommitment{
-				CommitmentBase: models.CommitmentBase{
-					ID: models.CommitmentID{
-						BatchID:      *nextBatchID,
-						IndexInBatch: 0,
-					},
-					Type:          batchtype.Transfer,
-					PostStateRoot: *postStateRoot,
+	commitment := models.CommitmentWithTxs{
+		TxCommitment: models.TxCommitment{
+			CommitmentBase: models.CommitmentBase{
+				ID: models.CommitmentID{
+					BatchID:      *nextBatchID,
+					IndexInBatch: 0,
 				},
-				FeeReceiver:       feeReceiverStateID,
-				CombinedSignature: *combinedSignature,
+				Type:          batchtype.Transfer,
+				PostStateRoot: *postStateRoot,
 			},
-			Transactions: serializedTxs,
-		}
+			FeeReceiver:       feeReceiverStateID,
+			CombinedSignature: *combinedSignature,
+		},
+		Transactions: serializedTxs,
 	}
-	batch, err := s.client.SubmitTransfersBatchAndWait(models.NewUint256(1), commitments)
+
+	batch, err := s.client.SubmitTransfersBatchAndWait(nextBatchID, []models.CommitmentWithTxs{commitment})
 	s.NoError(err)
-	s.client.GetBackend().Commit()
+
 	return batch
 }
 
