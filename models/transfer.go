@@ -28,10 +28,6 @@ func (t *Transfer) GetToStateID() *uint32 {
 	return &t.ToStateID
 }
 
-func (t *Transfer) GetSpokeID() *Uint256 {
-	panic("Transfer does not contain a SpokeID field")
-}
-
 func (t *Transfer) ToTransfer() *Transfer {
 	return t
 }

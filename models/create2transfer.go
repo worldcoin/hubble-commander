@@ -28,9 +28,6 @@ func (t *Create2Transfer) GetBase() *TransactionBase {
 func (t *Create2Transfer) GetToStateID() *uint32 {
 	return t.ToStateID
 }
-func (t *Create2Transfer) GetSpokeID() *Uint256 {
-	panic("Create2Transfer does not contain a SpokeID field")
-}
 
 func (t *Create2Transfer) ToTransfer() *Transfer {
 	panic("Create2Transfer cannot be cast to Transfer")
