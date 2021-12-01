@@ -260,9 +260,9 @@ func (t StoredTx) Indexes() map[string]bh.Index {
 
 				transferBody, ok := v.Body.(*StoredTxTransferBody)
 				if !ok {
-					return EncodeUint32Pointer(nil), nil
+					return nil, nil
 				}
-				return EncodeUint32Pointer(&transferBody.ToStateID), nil
+				return EncodeUint32(transferBody.ToStateID), nil
 			},
 		},
 	}
