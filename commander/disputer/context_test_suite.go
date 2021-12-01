@@ -107,9 +107,9 @@ func (s *testSuiteWithContexts) createBatch(tx models.GenericTransaction) (*mode
 	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
 	s.NoError(err)
 
-	commitments, err := s.txsCtx.CreateCommitments()
+	result, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
-	s.Len(commitments, 1)
+	s.Len(result.Commitments(), 1)
 
-	return pendingBatch, commitments
+	return pendingBatch, result.Commitments()
 }

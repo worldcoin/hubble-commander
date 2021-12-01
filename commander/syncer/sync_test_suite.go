@@ -157,9 +157,9 @@ func (s *syncTestSuite) createBatch(tx models.GenericTransaction) (*models.Batch
 	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
 	s.NoError(err)
 
-	commitments, err := s.txsCtx.CreateCommitments()
+	result, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
-	s.Len(commitments, 1)
+	s.Len(result.Commitments(), 1)
 
-	return pendingBatch, commitments
+	return pendingBatch, result.Commitments()
 }

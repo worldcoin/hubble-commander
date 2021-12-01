@@ -52,24 +52,24 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
 		s.NoError(err)
 	}
 
-	commitments, err := s.txsCtx.CreateCommitments()
+	result, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
-	s.Len(commitments, 2)
-	accountRoots := make([]common.Hash, len(commitments))
-	expectedCommitments := make([]models.TxCommitment, 0, len(commitments))
-	for i := range commitments {
+	s.Len(result.Commitments(), 2)
+	accountRoots := make([]common.Hash, len(result.Commitments()))
+	expectedCommitments := make([]models.TxCommitment, 0, len(result.Commitments()))
+	for i := range result.Commitments() {
 		var pendingBatch *models.Batch
 		pendingBatch, err = s.txsCtx.NewPendingBatch(batchtype.Transfer)
 		s.NoError(err)
-		commitments[i].ID.BatchID = pendingBatch.ID
-		commitments[i].ID.IndexInBatch = 0
-		err = s.txsCtx.SubmitBatch(pendingBatch, []models.CommitmentWithTxs{commitments[i]})
+		result.Commitments()[i].ID.BatchID = pendingBatch.ID
+		result.Commitments()[i].ID.IndexInBatch = 0
+		err = s.txsCtx.SubmitBatch(pendingBatch, []models.CommitmentWithTxs{result.Commitments()[i]})
 		s.NoError(err)
 		s.client.GetBackend().Commit()
 
 		accountRoots[i] = s.getAccountTreeRoot()
-		commitments[i].SetBodyHash(accountRoots[i])
-		expectedCommitments = append(expectedCommitments, commitments[i].TxCommitment)
+		result.Commitments()[i].SetBodyHash(accountRoots[i])
+		expectedCommitments = append(expectedCommitments, result.Commitments()[i].TxCommitment)
 	}
 
 	s.recreateDatabase()
@@ -84,7 +84,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
 	s.Equal(accountRoots[1], *batches[1].AccountTreeRoot)
 
 	for i := range expectedCommitments {
-		commitment, err := s.storage.GetTxCommitment(&commitments[i].ID)
+		commitment, err := s.storage.GetTxCommitment(&result.Commitments()[i].ID)
 		s.NoError(err)
 		s.Equal(expectedCommitments[i], *commitment)
 

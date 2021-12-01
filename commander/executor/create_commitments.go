@@ -13,6 +13,9 @@ import (
 var (
 	ErrNotEnoughTxs = NewRollupError("not enough transactions")
 	mockPublicKey   = models.PublicKey{1, 2, 3}
+
+	// TODO support multiple tokens
+	commitmentTokenID = models.MakeUint256(0)
 )
 
 type FeeReceiver struct {
@@ -20,7 +23,7 @@ type FeeReceiver struct {
 	TokenID models.Uint256
 }
 
-func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
+func (c *TxsContext) CreateCommitments() (CreateCommitmentsResult, error) {
 	txQueue, err := c.queryPendingTxs()
 	if err != nil {
 		return nil, err
@@ -31,10 +34,10 @@ func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
 		return nil, err
 	}
 
-	commitments := make([]models.CommitmentWithTxs, 0, c.cfg.MaxCommitmentsPerBatch)
+	results := c.Executor.NewCreateCommitmentsResult(c.cfg.MaxCommitmentsPerBatch)
 	pendingAccounts := make([]models.AccountLeaf, 0)
 
-	for i := uint8(0); len(commitments) != int(c.cfg.MaxCommitmentsPerBatch); i++ {
+	for i := uint8(0); results.Len() != int(c.cfg.MaxCommitmentsPerBatch); i++ {
 		var result CreateCommitmentResult
 		commitmentID.IndexInBatch = i
 
@@ -46,11 +49,11 @@ func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
 			return nil, err
 		}
 
-		commitments = append(commitments, *result.Commitment())
+		results.AddResult(result)
 		pendingAccounts = append(pendingAccounts, result.PendingAccounts()...)
 	}
 
-	if len(commitments) < int(c.cfg.MinCommitmentsPerBatch) {
+	if results.Len() < int(c.cfg.MinCommitmentsPerBatch) {
 		return nil, errors.WithStack(ErrNotEnoughCommitments)
 	}
 
@@ -65,7 +68,7 @@ func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
 		return nil, err
 	}
 
-	return commitments, nil
+	return results, nil
 }
 
 func (c *TxsContext) createCommitment(txQueue *TxQueue, commitmentID *models.CommitmentID) (
@@ -155,7 +158,6 @@ func (c *TxsContext) queryPendingTxs() (*TxQueue, error) {
 }
 
 func (c *TxsContext) getCommitmentFeeReceiver() (*FeeReceiver, error) {
-	commitmentTokenID := models.MakeUint256(0) // TODO support multiple tokens
 	feeReceiverState, err := c.storage.GetFeeReceiverStateLeaf(c.cfg.FeeReceiverPubKeyID, commitmentTokenID)
 	if err != nil {
 		return nil, err

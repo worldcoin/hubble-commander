@@ -16,6 +16,7 @@ type TransactionExecutor interface {
 	SerializeTxs(results ExecuteTxsForCommitmentResult) ([]byte, error)
 	AddPendingAccount(result applier.ApplySingleTxResult) error
 	NewCreateCommitmentResult(result ExecuteTxsForCommitmentResult, commitment *models.CommitmentWithTxs) CreateCommitmentResult
+	NewCreateCommitmentsResult(capacity uint32) CreateCommitmentsResult
 	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (result applier.ApplySingleTxResult, txError, appError error)
 }
 
@@ -64,10 +65,11 @@ func (e *TransferExecutor) NewExecuteTxsForCommitmentResult(
 }
 
 func (e *TransferExecutor) NewCreateCommitmentResult(
-	_ ExecuteTxsForCommitmentResult,
+	result ExecuteTxsForCommitmentResult,
 	commitment *models.CommitmentWithTxs,
 ) CreateCommitmentResult {
 	return &CreateTransferCommitmentResult{
+		appliedTxs: result.AppliedTxs().ToTransferArray(),
 		commitment: commitment,
 	}
 }
@@ -84,6 +86,12 @@ func (e *TransferExecutor) ApplyTx(tx models.GenericTransaction, commitmentToken
 	applyResult applier.ApplySingleTxResult, txError, appError error,
 ) {
 	return e.applier.ApplyTransfer(tx, commitmentTokenID)
+}
+
+func (e *TransferExecutor) NewCreateCommitmentsResult(capacity uint32) CreateCommitmentsResult {
+	return &CreateTxCommitmentsResult{
+		commitments: make([]models.CommitmentWithTxs, 0, capacity),
+	}
 }
 
 // C2TExecutor implements TransactionExecutor
@@ -124,6 +132,7 @@ func (e *C2TExecutor) NewCreateCommitmentResult(
 	commitment *models.CommitmentWithTxs,
 ) CreateCommitmentResult {
 	return &CreateC2TCommitmentResult{
+		appliedTxs:      result.AppliedTxs().ToCreate2TransferArray(),
 		pendingAccounts: result.PendingAccounts(),
 		commitment:      commitment,
 	}
@@ -144,6 +153,12 @@ func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID mo
 	applyResult applier.ApplySingleTxResult, txError, appError error,
 ) {
 	return e.applier.ApplyCreate2Transfer(tx.ToCreate2Transfer(), commitmentTokenID)
+}
+
+func (e *C2TExecutor) NewCreateCommitmentsResult(capacity uint32) CreateCommitmentsResult {
+	return &CreateTxCommitmentsResult{
+		commitments: make([]models.CommitmentWithTxs, 0, capacity),
+	}
 }
 
 // MassMigrationExecutor implements TransactionExecutor
@@ -176,10 +191,11 @@ func (e *MassMigrationExecutor) NewExecuteTxsForCommitmentResult(
 }
 
 func (e *MassMigrationExecutor) NewCreateCommitmentResult(
-	_ ExecuteTxsForCommitmentResult,
+	result ExecuteTxsForCommitmentResult,
 	commitment *models.CommitmentWithTxs,
 ) CreateCommitmentResult {
 	return &CreateMassMigrationCommitmentResult{
+		appliedTxs: result.AppliedTxs().ToMassMigrationArray(),
 		commitment: commitment,
 	}
 }
@@ -196,4 +212,11 @@ func (e *MassMigrationExecutor) ApplyTx(tx models.GenericTransaction, commitment
 	applyResult applier.ApplySingleTxResult, txError, appError error,
 ) {
 	return e.applier.ApplyMassMigration(tx, commitmentTokenID)
+}
+
+func (e *MassMigrationExecutor) NewCreateCommitmentsResult(capacity uint32) CreateCommitmentsResult {
+	return &CreateMassMigrationCommitmentsResult{
+		commitments: make([]models.CommitmentWithTxs, 0, capacity),
+		metas:       make([]models.MassMigrationMeta, 0, capacity),
+	}
 }
