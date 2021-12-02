@@ -35,10 +35,9 @@ func TestPendingDepositSubTree_SetBytes_UpdatesDeposits(t *testing.T) {
 		Root: utils.RandomHash(),
 	}
 
-	initialCopy := initialSubTree
-	err := initialCopy.SetBytes(newSubTree.Bytes())
+	err := initialSubTree.SetBytes(newSubTree.Bytes())
 	require.NoError(t, err)
-	require.Equal(t, newSubTree, initialCopy)
+	require.Equal(t, newSubTree, initialSubTree)
 }
 
 func TestPendingDepositSubTree_Bytes(t *testing.T) {
