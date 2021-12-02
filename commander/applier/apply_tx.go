@@ -160,28 +160,47 @@ func calculateStateAfterTx(
 		panic("transaction ToStateID is nil")
 	}
 
+	newSenderState, err = calculateSenderStateAfterTx(senderState, tx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if tx.GetFromStateID() == *tx.GetToStateID() {
+		newReceiverState = calculateReceiverStateAfterTx(tx, *newSenderState.Copy())
+	} else {
+		newReceiverState = calculateReceiverStateAfterTx(tx, receiverState)
+	}
+
+	return newSenderState, newReceiverState, nil
+}
+
+func calculateSenderStateAfterTx(senderState models.UserState, tx models.GenericTransaction) (
+	newSenderState *models.UserState,
+	err error,
+) {
 	fee := tx.GetFee()
 	amount := tx.GetAmount()
 
 	if amount.CmpN(0) <= 0 {
-		return nil, nil, errors.WithStack(ErrInvalidTokenAmount)
+		return nil, errors.WithStack(ErrInvalidTokenAmount)
 	}
 
 	totalAmount := amount.Add(&fee)
 	if senderState.Balance.Cmp(totalAmount) < 0 {
-		return nil, nil, errors.WithStack(ErrBalanceTooLow)
+		return nil, errors.WithStack(ErrBalanceTooLow)
 	}
 
 	newSenderState = &senderState
+
 	newSenderState.Nonce = *newSenderState.Nonce.AddN(1)
 	newSenderState.Balance = *newSenderState.Balance.Sub(totalAmount)
 
-	if tx.GetFromStateID() == *tx.GetToStateID() {
-		newReceiverState = newSenderState.Copy()
-	} else {
-		newReceiverState = &receiverState
-	}
-	newReceiverState.Balance = *newReceiverState.Balance.Add(&amount)
+	return newSenderState, nil
+}
 
-	return newSenderState, newReceiverState, nil
+func calculateReceiverStateAfterTx(tx models.GenericTransaction, receiverState models.UserState) *models.UserState {
+	amount := tx.GetAmount()
+	newReceiverState := &receiverState
+	newReceiverState.Balance = *newReceiverState.Balance.Add(&amount)
+	return newReceiverState
 }
