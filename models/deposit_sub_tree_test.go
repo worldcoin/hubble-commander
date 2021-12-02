@@ -69,6 +69,7 @@ func TestPendingDepositSubTree_Bytes(t *testing.T) {
 	bytes := subTree.Bytes()
 
 	decodedSubTree := PendingDepositSubTree{
+		ID:   MakeUint256(1),
 		Root: utils.RandomHash(),
 		Deposits: []PendingDeposit{
 			{
@@ -85,7 +86,7 @@ func TestPendingDepositSubTree_Bytes(t *testing.T) {
 	err := decodedSubTree.SetBytes(bytes)
 	require.NoError(t, err)
 
-	require.Equal(t, Uint256{}, decodedSubTree.ID)
+	require.Equal(t, MakeUint256(1), decodedSubTree.ID)
 	decodedSubTree.ID = subTree.ID
 	require.Equal(t, subTree, decodedSubTree)
 }
