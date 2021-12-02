@@ -16,14 +16,14 @@ func (c *Client) SubmitTransfersBatch(batchID *models.Uint256, commitments []mod
 	return c.rollup().
 		WithValue(c.config.StakeAmount).
 		WithGasLimit(*c.config.TransferBatchSubmissionGasLimit).
-		SubmitTransfer(encoder.CommitmentsToSubmitBatchFields(batchID, commitments))
+		SubmitTransfer(encoder.CommitmentsToTransferAndC2TSubmitBatchFields(batchID, commitments))
 }
 
 func (c *Client) SubmitCreate2TransfersBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
 	return c.rollup().
 		WithValue(c.config.StakeAmount).
 		WithGasLimit(*c.config.C2TBatchSubmissionGasLimit).
-		SubmitCreate2Transfer(encoder.CommitmentsToSubmitBatchFields(batchID, commitments))
+		SubmitCreate2Transfer(encoder.CommitmentsToTransferAndC2TSubmitBatchFields(batchID, commitments))
 }
 
 func (c *Client) SubmitMassMigrationsBatch(

@@ -46,8 +46,7 @@ func DecodeBatchCalldata(rollupABI *abi.ABI, calldata []byte) ([]DecodedCommitme
 	return commitments, nil
 }
 
-// TODO - rename
-func CommitmentsToSubmitBatchFields(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (
+func CommitmentsToTransferAndC2TSubmitBatchFields(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (
 	bigBatchID *big.Int,
 	stateRoots [][32]byte,
 	signatures [][2]*big.Int,
