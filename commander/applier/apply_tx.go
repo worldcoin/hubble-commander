@@ -69,15 +69,9 @@ func (a *Applier) applyTxForSync(
 
 	synced = NewPartialSyncedGenericTransaction(tx.Copy(), &senderLeaf.UserState, &receiverLeaf.UserState)
 
-	var newSenderState, newReceiverState *models.UserState
-	if receiverLeaf.StateID != senderLeaf.StateID {
-		newSenderState, newReceiverState, txError = calculateStateAfterTx(senderLeaf.UserState, receiverLeaf.UserState, tx)
-	} else {
-		newSenderState, txError = calculateSenderStateAfterSelfTransfer(senderLeaf.UserState, tx)
-		newReceiverState = newSenderState
-	}
-	if txError != nil {
-		return a.fillSenderWitness(synced, txError)
+	newSenderState, newReceiverState, txErr := calculateStateAfterTx(senderLeaf.UserState, receiverLeaf.UserState, tx)
+	if txErr != nil {
+		return a.fillSenderWitness(synced, txErr)
 	}
 
 	senderWitness, appError := a.storage.StateTree.Set(senderLeaf.StateID, newSenderState)
@@ -90,18 +84,14 @@ func (a *Applier) applyTxForSync(
 		return synced, tErr, nil
 	}
 
-	if newReceiverState != newSenderState {
-		receiverWitness, appError := a.storage.StateTree.Set(receiverLeaf.StateID, newReceiverState)
-		if appError != nil {
-			return nil, nil, appError
-		}
-		synced.ReceiverStateProof.Witness = receiverWitness
+	receiverWitness, appError := a.storage.StateTree.Set(receiverLeaf.StateID, newReceiverState)
+	if appError != nil {
+		return nil, nil, appError
+	}
+	synced.ReceiverStateProof.Witness = receiverWitness
 
-		if tErr := a.validateReceiverTokenID(receiverLeaf, commitmentTokenID); tErr != nil {
-			return synced, tErr, nil
-		}
-	} else {
-		synced.ReceiverStateProof.Witness = senderWitness
+	if tErr := a.validateReceiverTokenID(receiverLeaf, commitmentTokenID); tErr != nil {
+		return synced, tErr, nil
 	}
 
 	synced.Tx.SetNonce(senderLeaf.Nonce)
@@ -170,20 +160,4 @@ func calculateStateAfterTx(
 	newReceiverState.Balance = *newReceiverState.Balance.Add(&amount)
 
 	return newSenderState, newReceiverState, nil
-}
-
-func calculateSenderStateAfterSelfTransfer(
-	senderState models.UserState, // nolint:gocritic
-	tx models.GenericTransaction,
-) (
-	newSenderState *models.UserState, err error,
-) {
-	fee := tx.GetFee()
-
-	newSenderState = &senderState
-	if senderState.Balance.Cmp(&fee) < 0 {
-		return nil, errors.WithStack(ErrBalanceTooLow)
-	}
-	newSenderState.Balance = *newSenderState.Balance.Sub(&fee)
-	return newSenderState, err
 }
