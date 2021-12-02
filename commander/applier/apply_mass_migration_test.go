@@ -57,6 +57,25 @@ func (s *ApplyMassMigrationTestSuite) TestApplyMassMigration() {
 	s.NoError(err)
 
 	s.Equal(uint64(290), senderLeaf.Balance.Uint64())
+	s.Equal(*s.massMigration.Nonce.AddN(1), senderLeaf.Nonce)
+}
+
+func (s *ApplyMassMigrationTestSuite) TestApplyMassMigration_ValidatesSenderTokenID() {
+	setUserStatesInTree(s.Assertions, s.storage)
+
+	_, txError, appError := s.applier.ApplyMassMigration(&s.massMigration, models.MakeUint256(3))
+	s.NoError(txError)
+	s.ErrorIs(appError, ErrInvalidSenderTokenID)
+}
+
+func (s *ApplyMassMigrationTestSuite) TestApplyMassMigration_ValidatesNonce() {
+	massMigrationWithBadNonce := s.massMigration
+	massMigrationWithBadNonce.Nonce = models.MakeUint256(1)
+	setUserStatesInTree(s.Assertions, s.storage)
+
+	_, txError, appError := s.applier.ApplyMassMigration(&massMigrationWithBadNonce, models.MakeUint256(1))
+	s.ErrorIs(txError, ErrNonceTooHigh)
+	s.NoError(appError)
 }
 
 func TestApplyMassMigrationTestSuite(t *testing.T) {
