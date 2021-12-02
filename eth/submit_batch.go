@@ -34,7 +34,7 @@ func (c *Client) SubmitMassMigrationsBatch(
 ) (*types.Transaction, error) {
 	return c.rollup().
 		WithValue(c.config.StakeAmount).
-		WithGasLimit(10_000_000).
+		WithGasLimit(*c.config.MassMigrationBatchSubmissionGasLimit).
 		SubmitMassMigration(encoder.CommitmentsToSubmitMassMigrationBatchFields(batchID, commitments, metas, withdrawRoot))
 }
 
