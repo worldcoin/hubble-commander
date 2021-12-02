@@ -215,25 +215,10 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidPostSt
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_CanDisputeFraudulentBatchWithTransferToSelf() {
-	_, err := s.testStorage.StateTree.Set(2, &models.UserState{
-		PubKeyID: 0,
-		TokenID:  models.MakeUint256(0),
-		Balance:  models.MakeUint256(0),
-		Nonce:    models.MakeUint256(0),
-	})
-
 	transfer := testutils.MakeTransfer(0, 1, 0, 50)
 	s.submitBatch(s.testStorage.Storage, s.txsCtx, &transfer)
 
-	txs := []models.Transfer{
-		testutils.MakeTransfer(0, 0, 0, 100),
-		testutils.MakeTransfer(1, 0, 0, 100),
-	}
-
-	clonedStorage, _ := s.cloneStorage()
-	defer teardown(s.Assertions, clonedStorage.Teardown)
-
-	s.submitFraudulentTransferBatch(clonedStorage.Storage, 2, txs...)
+	s.submitFraudulentBatchWithTransferToSelf()
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
@@ -245,6 +230,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_CanDisputeFraudulentBatchWithT
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	s.checkBatchAfterDispute(remoteBatches[1].GetID())
+	s.Equal(result.NotEnoughTokenBalance, s.getDisputeResult())
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidSignature() {
@@ -580,31 +566,34 @@ func (s *TxsBatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.B
 	return pendingBatch
 }
 
-func (s *TxsBatchesTestSuite) submitFraudulentTransferBatch(
-	storage *st.Storage,
-	feeReceiverStateID uint32,
-	txs ...models.Transfer,
-) *models.Batch {
-	executionCtx := executor.NewTestExecutionContext(storage, nil, s.cfg.Rollup)
-	txsCtx := executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
+func (s *TxsBatchesTestSuite) submitFraudulentBatchWithTransferToSelf() *models.Batch {
+	storage, txsCtx := s.cloneStorage()
+	defer teardown(s.Assertions, storage.Teardown)
 
+	selfTransfer := testutils.MakeTransfer(0, 0, 0, 100)
+	invalidTransfer := testutils.MakeTransfer(1, 0, 0, 100)
+	txs := []models.Transfer{selfTransfer, invalidTransfer}
+
+	// Apply self transfer
 	commitmentTokenID := models.MakeUint256(0)
-
-	_, txErr, appErr := txsCtx.Applier.ApplyTransferForSync(&txs[0], commitmentTokenID)
+	_, txErr, appErr := txsCtx.Applier.ApplyTransferForSync(&selfTransfer, commitmentTokenID)
 	s.NoError(txErr)
 	s.NoError(appErr)
 
-	receiver, err := storage.StateTree.LeafOrEmpty(txs[0].ToStateID)
+	// Apply invalid transfer
+	receiver, err := storage.StateTree.LeafOrEmpty(invalidTransfer.ToStateID)
 	s.NoError(err)
 
-	receiver.Balance = *receiver.Balance.Add(&txs[0].Amount)
-
-	_, err = storage.StateTree.Set(txs[0].ToStateID, &receiver.UserState)
+	receiver.Balance = *receiver.Balance.Add(&invalidTransfer.Amount)
+	_, err = storage.StateTree.Set(invalidTransfer.ToStateID, &receiver.UserState)
 	s.NoError(err)
 
-	_, err = txsCtx.Applier.ApplyFee(feeReceiverStateID, *txs[0].Fee.Add(&txs[1].Fee))
+	// Apply fee
+	feeReceiverStateID := uint32(0)
+	_, err = txsCtx.Applier.ApplyFee(feeReceiverStateID, *selfTransfer.Fee.Add(&invalidTransfer.Fee))
 	s.NoError(err)
 
+	// Create commitment
 	nextBatchID, err := storage.GetNextBatchID()
 	s.NoError(err)
 
@@ -636,6 +625,7 @@ func (s *TxsBatchesTestSuite) submitFraudulentTransferBatch(
 		Transactions: serializedTxs,
 	}
 
+	// Submit batch
 	batch, err := s.client.SubmitTransfersBatchAndWait(nextBatchID, []models.CommitmentWithTxs{commitment})
 	s.NoError(err)
 
