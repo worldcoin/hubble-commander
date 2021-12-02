@@ -12,29 +12,30 @@ import (
 
 type SubmitC2TBatchTestSuite struct {
 	submitBatchTestSuite
+	baseCommitment models.CommitmentWithTxs
 }
 
 func (s *SubmitC2TBatchTestSuite) SetupTest() {
 	s.testSuiteWithTxsContext.SetupTest(batchtype.Create2Transfer)
 	s.setupUser()
+
+	s.baseCommitment = baseCommitment
+	s.baseCommitment.Type = batchtype.Create2Transfer
 }
 
 func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_SubmitsCommitmentsOnChain() {
-	nextBatchID, err := s.client.Rollup.NextBatchID(nil)
-	s.NoError(err)
-	s.Equal(big.NewInt(1), nextBatchID)
-
-	commitment := baseCommitment
-	commitment.ID.BatchID = models.MakeUint256FromBig(*nextBatchID)
-
 	pendingBatch, err := s.txsCtx.NewPendingBatch(batchtype.Create2Transfer)
 	s.NoError(err)
+
+	commitment := s.baseCommitment
+	commitment.ID.BatchID = pendingBatch.ID
+
 	err = s.txsCtx.SubmitBatch(pendingBatch, &TxBatchData{commitments: []models.CommitmentWithTxs{commitment}})
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
 
-	nextBatchID, err = s.client.Rollup.NextBatchID(nil)
+	nextBatchID, err := s.client.Rollup.NextBatchID(nil)
 	s.NoError(err)
 	s.Equal(big.NewInt(2), nextBatchID)
 }
@@ -43,7 +44,7 @@ func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_StoresPendingBatchRecord() {
 	pendingBatch, err := s.txsCtx.NewPendingBatch(batchtype.Create2Transfer)
 	s.NoError(err)
 
-	commitment := baseCommitment
+	commitment := s.baseCommitment
 	commitment.ID.BatchID = pendingBatch.ID
 
 	err = s.txsCtx.SubmitBatch(pendingBatch, &TxBatchData{commitments: []models.CommitmentWithTxs{commitment}})
@@ -61,7 +62,7 @@ func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_StoresPendingBatchRecord() {
 func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_AddsCommitments() {
 	pendingBatch, err := s.txsCtx.NewPendingBatch(batchtype.Create2Transfer)
 	s.NoError(err)
-	commitments := getCommitments(2, pendingBatch.ID)
+	commitments := getCommitments(2, pendingBatch.ID, batchtype.Create2Transfer)
 
 	err = s.txsCtx.SubmitBatch(pendingBatch, &TxBatchData{commitments: commitments})
 	s.NoError(err)

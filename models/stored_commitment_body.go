@@ -23,7 +23,7 @@ func NewStoredCommitmentBody(commitmentType batchtype.BatchType) (StoredCommitme
 	switch commitmentType {
 	case batchtype.Deposit:
 		return new(StoredDepositCommitmentBody), nil
-	case batchtype.Transfer, batchtype.Create2Transfer:
+	case batchtype.Transfer, batchtype.Create2Transfer, batchtype.MassMigration:
 		return new(StoredTxCommitmentBody), nil
 	default:
 		return nil, errors.Errorf("unsupported commitment type: %s", commitmentType)
