@@ -151,7 +151,7 @@ func (c *TxsContext) executeTxsForCommitment(txQueue *TxQueue, feeReceiver *FeeR
 }
 
 func (c *TxsContext) queryPendingTxs() (*TxQueue, error) {
-	pendingTxs, err := c.storage.GetPendingTransactions(txtype.TransactionType(c.BatchType))
+	pendingTxs, err := c.storage.GetPendingTransactions(txtype.FromBatchType(c.BatchType))
 	if err != nil {
 		return nil, err
 	}

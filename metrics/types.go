@@ -8,7 +8,6 @@ import (
 )
 
 func TxTypeToMetricsTxType(transactionType txtype.TransactionType) string {
-	// nolint:exhaustive
 	switch transactionType {
 	case txtype.Transfer:
 		return TransferTxLabel
