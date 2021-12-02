@@ -173,13 +173,13 @@ func (s *NewBlockLoopTestSuite) submitTransferBatchInTransaction(tx *models.Tran
 		err := txStorage.AddTransfer(tx)
 		s.NoError(err)
 
-		result, err := txsCtx.CreateCommitments()
+		batchData, err := txsCtx.CreateCommitments()
 		s.NoError(err)
-		s.Len(result.Commitments(), 1)
+		s.Len(batchData.Commitments(), 1)
 
 		batch, err := txsCtx.NewPendingBatch(batchtype.Transfer)
 		s.NoError(err)
-		err = txsCtx.SubmitBatch(batch, result)
+		err = txsCtx.SubmitBatch(batch, batchData)
 		s.NoError(err)
 		s.testClient.GetBackend().Commit()
 	})

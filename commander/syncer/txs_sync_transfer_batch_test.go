@@ -52,27 +52,27 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
 		s.NoError(err)
 	}
 
-	result, err := s.txsCtx.CreateCommitments()
+	batchData, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
-	s.Len(result.Commitments(), 2)
-	accountRoots := make([]common.Hash, len(result.Commitments()))
-	expectedCommitments := make([]models.TxCommitment, 0, len(result.Commitments()))
-	for i := range result.Commitments() {
+	s.Len(batchData.Commitments(), 2)
+	accountRoots := make([]common.Hash, len(batchData.Commitments()))
+	expectedCommitments := make([]models.TxCommitment, 0, len(batchData.Commitments()))
+	for i := range batchData.Commitments() {
 		var pendingBatch *models.Batch
 		pendingBatch, err = s.txsCtx.NewPendingBatch(batchtype.Transfer)
 		s.NoError(err)
-		result.Commitments()[i].ID.BatchID = pendingBatch.ID
-		result.Commitments()[i].ID.IndexInBatch = 0
-		submitBatchInput := s.txsCtx.Executor.NewCreateCommitmentsResult(1)
-		submitBatchInput.AddCommitment(&result.Commitments()[i])
+		batchData.Commitments()[i].ID.BatchID = pendingBatch.ID
+		batchData.Commitments()[i].ID.IndexInBatch = 0
+		singleBatchData := s.txsCtx.Executor.NewBatchData(1)
+		singleBatchData.AddCommitment(&batchData.Commitments()[i])
 
-		err = s.txsCtx.SubmitBatch(pendingBatch, submitBatchInput)
+		err = s.txsCtx.SubmitBatch(pendingBatch, singleBatchData)
 		s.NoError(err)
 		s.client.GetBackend().Commit()
 
 		accountRoots[i] = s.getAccountTreeRoot()
-		result.Commitments()[i].SetBodyHash(accountRoots[i])
-		expectedCommitments = append(expectedCommitments, result.Commitments()[i].TxCommitment)
+		batchData.Commitments()[i].SetBodyHash(accountRoots[i])
+		expectedCommitments = append(expectedCommitments, batchData.Commitments()[i].TxCommitment)
 	}
 
 	s.recreateDatabase()
@@ -87,7 +87,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
 	s.Equal(accountRoots[1], *batches[1].AccountTreeRoot)
 
 	for i := range expectedCommitments {
-		commitment, err := s.storage.GetTxCommitment(&result.Commitments()[i].ID)
+		commitment, err := s.storage.GetTxCommitment(&batchData.Commitments()[i].ID)
 		s.NoError(err)
 		s.Equal(expectedCommitments[i], *commitment)
 
@@ -164,10 +164,10 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() 
 	tx2 := testutils.MakeTransfer(0, 1, 1, 400)
 	s.setTxHashAndSign(&tx2)
 
-	batch, result := s.createBatch(&tx2)
-	result.Commitments()[0].PostStateRoot = utils.RandomHash()
+	batch, batchData := s.createBatch(&tx2)
+	batchData.Commitments()[0].PostStateRoot = utils.RandomHash()
 
-	err := s.txsCtx.SubmitBatch(batch, result)
+	err := s.txsCtx.SubmitBatch(batch, batchData)
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 
@@ -217,10 +217,10 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_NotValidBLSSignature() {
 	tx := testutils.MakeTransfer(0, 1, 0, 400)
 	s.setTxHash(&tx)
 
-	pendingBatch, result := s.createBatch(&tx)
-	result.Commitments()[0].CombinedSignature = models.Signature{1, 2, 3}
+	pendingBatch, batchData := s.createBatch(&tx)
+	batchData.Commitments()[0].CombinedSignature = models.Signature{1, 2, 3}
 
-	err := s.txsCtx.SubmitBatch(pendingBatch, result)
+	err := s.txsCtx.SubmitBatch(pendingBatch, batchData)
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 
@@ -290,12 +290,12 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_CommitmentWithNonexistentFeeR
 }
 
 func (s *SyncTransferBatchTestSuite) submitInvalidBatch(tx *models.Transfer) *models.Batch {
-	pendingBatch, result := s.createBatch(tx)
-	commitments := result.Commitments()
+	pendingBatch, batchData := s.createBatch(tx)
+	commitments := batchData.Commitments()
 
 	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)
 
-	err := s.txsCtx.SubmitBatch(pendingBatch, result)
+	err := s.txsCtx.SubmitBatch(pendingBatch, batchData)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()

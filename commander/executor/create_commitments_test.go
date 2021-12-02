@@ -47,8 +47,8 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCreateCommitme
 	preStateRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)
 
-	result, err := s.txsCtx.CreateCommitments()
-	s.Nil(result)
+	batchData, err := s.txsCtx.CreateCommitments()
+	s.Nil(batchData)
 	s.ErrorIs(err, ErrNotEnoughCommitments)
 
 	postStateRoot, err := s.storage.StateTree.Root()
@@ -67,8 +67,8 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorIfCouldNo
 	invalidTransfer := testutils.MakeTransfer(2, 1, 1234, 100)
 	s.hashSignAndAddTransfer(&s.wallets[1], &invalidTransfer)
 
-	result, err := s.txsCtx.CreateCommitments()
-	s.Nil(result)
+	batchData, err := s.txsCtx.CreateCommitments()
+	s.Nil(batchData)
 	s.ErrorIs(err, ErrNotEnoughCommitments)
 }
 
@@ -78,8 +78,8 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresErrorMessagesOf
 	invalidTransfer := testutils.MakeTransfer(1, 1234, 0, 100)
 	s.hashSignAndAddTransfer(&s.wallets[0], &invalidTransfer)
 
-	result, err := s.txsCtx.CreateCommitments()
-	s.Nil(result)
+	batchData, err := s.txsCtx.CreateCommitments()
+	s.Nil(batchData)
 	s.ErrorIs(err, ErrNotEnoughCommitments)
 
 	s.Len(s.txsCtx.txErrorsToStore, 1)

@@ -26,6 +26,18 @@ func (c *Client) SubmitCreate2TransfersBatch(batchID *models.Uint256, commitment
 		SubmitCreate2Transfer(encoder.CommitmentsToSubmitBatchFields(batchID, commitments))
 }
 
+func (c *Client) SubmitMassMigrationsBatch(
+	batchID *models.Uint256,
+	commitments []models.CommitmentWithTxs,
+	metas []models.MassMigrationMeta,
+	withdrawRoot []common.Hash,
+) (*types.Transaction, error) {
+	return c.rollup().
+		WithValue(c.config.StakeAmount).
+		WithGasLimit(10_000_000).
+		SubmitMassMigration(encoder.CommitmentsToSubmitMassMigrationBatchFields(batchID, commitments, metas, withdrawRoot))
+}
+
 func (c *Client) SubmitTransfersBatchAndWait(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*models.Batch, error) {
 	return c.submitBatchAndWait(func() (*types.Transaction, error) {
 		return c.SubmitTransfersBatch(batchID, commitments)

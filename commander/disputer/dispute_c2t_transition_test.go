@@ -196,11 +196,11 @@ func (s *DisputeCT2TransitionTestSuite) createInvalidCommitments(
 	commitmentTxs [][]models.Create2Transfer,
 	pubKeyIDs [][]uint32,
 	invalidTxHash common.Hash,
-) executor.CreateCommitmentsResult {
+) executor.BatchData {
 	commitmentID, err := s.txsCtx.NextCommitmentID()
 	s.NoError(err)
 
-	result := s.txsCtx.Executor.NewCreateCommitmentsResult(uint32(len(commitmentTxs)))
+	batchData := s.txsCtx.Executor.NewBatchData(uint32(len(commitmentTxs)))
 	for i := range commitmentTxs {
 		commitmentID.IndexInBatch = uint8(i)
 		txs := commitmentTxs[i]
@@ -221,10 +221,10 @@ func (s *DisputeCT2TransitionTestSuite) createInvalidCommitments(
 		executeTxsForCommitmentResult := s.txsCtx.Executor.NewExecuteTxsForCommitmentResult(executeTxsResult)
 		commitment, err := s.txsCtx.BuildCommitment(executeTxsForCommitmentResult, commitmentID, 0)
 		s.NoError(err)
-		result.AddCommitment(commitment)
+		batchData.AddCommitment(commitment)
 	}
 
-	return result
+	return batchData
 }
 
 func newUserLeaf(stateID, pubKeyID uint32, tokenID models.Uint256) *models.StateLeaf {

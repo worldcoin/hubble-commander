@@ -1,6 +1,9 @@
 package executor
 
-import "github.com/Worldcoin/hubble-commander/models"
+import (
+	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/ethereum/go-ethereum/common"
+)
 
 type CreateCommitmentResult interface {
 	AppliedTxs() models.GenericTransactionArray
@@ -60,73 +63,78 @@ func (c *CreateMassMigrationCommitmentResult) Commitment() *models.CommitmentWit
 	return c.commitment
 }
 
-type CreateCommitmentsResult interface {
+type BatchData interface {
 	Commitments() []models.CommitmentWithTxs
 	Metas() []models.MassMigrationMeta
+	WithdrawRoots() []common.Hash
 	Len() int
 	AddCommitment(commitment *models.CommitmentWithTxs)
-	AddResult(createCommitmentResult CreateCommitmentResult)
+	AddMeta(meta *models.MassMigrationMeta)
+	AddWithdrawRoot(withdrawRoot common.Hash)
 }
 
-type CreateTxCommitmentsResult struct {
+type TxBatchData struct {
 	commitments []models.CommitmentWithTxs
 }
 
-func (c *CreateTxCommitmentsResult) Commitments() []models.CommitmentWithTxs {
+func (c *TxBatchData) Commitments() []models.CommitmentWithTxs {
 	return c.commitments
 }
 
-func (c *CreateTxCommitmentsResult) Metas() []models.MassMigrationMeta {
-	panic("Meta cannot be invoked on CreateTxCommitmentsResult")
+func (c *TxBatchData) Metas() []models.MassMigrationMeta {
+	panic("Meta cannot be invoked on TxBatchData")
 }
 
-func (c *CreateTxCommitmentsResult) Len() int {
+func (c *TxBatchData) WithdrawRoots() []common.Hash {
+	panic("WithdrawRoots cannot be invoked on TxBatchData")
+}
+
+func (c *TxBatchData) Len() int {
 	return len(c.commitments)
 }
 
-func (c *CreateTxCommitmentsResult) AddCommitment(commitment *models.CommitmentWithTxs) {
+func (c *TxBatchData) AddCommitment(commitment *models.CommitmentWithTxs) {
 	c.commitments = append(c.commitments, *commitment)
 }
 
-func (c *CreateTxCommitmentsResult) AddResult(result CreateCommitmentResult) {
-	c.AddCommitment(result.Commitment())
+func (c *TxBatchData) AddMeta(_ *models.MassMigrationMeta) {
+	panic("AddMeta cannot be invoked on TxBatchData")
 }
 
-type CreateMassMigrationCommitmentsResult struct {
-	commitments []models.CommitmentWithTxs
-	metas       []models.MassMigrationMeta
+func (c *TxBatchData) AddWithdrawRoot(_ common.Hash) {
+	panic("AddWithdrawRoot cannot be invoked on TxBatchData")
 }
 
-func (c *CreateMassMigrationCommitmentsResult) Commitments() []models.CommitmentWithTxs {
+type MassMigrationBatchData struct {
+	commitments   []models.CommitmentWithTxs
+	metas         []models.MassMigrationMeta
+	withdrawRoots []common.Hash
+}
+
+func (c *MassMigrationBatchData) Commitments() []models.CommitmentWithTxs {
 	return c.commitments
 }
 
-func (c *CreateMassMigrationCommitmentsResult) Metas() []models.MassMigrationMeta {
+func (c *MassMigrationBatchData) Metas() []models.MassMigrationMeta {
 	return c.metas
 }
 
-func (c *CreateMassMigrationCommitmentsResult) Len() int {
+func (c *MassMigrationBatchData) WithdrawRoots() []common.Hash {
+	return c.withdrawRoots
+}
+
+func (c *MassMigrationBatchData) Len() int {
 	return len(c.commitments)
 }
 
-func (c *CreateMassMigrationCommitmentsResult) AddCommitment(commitment *models.CommitmentWithTxs) {
+func (c *MassMigrationBatchData) AddCommitment(commitment *models.CommitmentWithTxs) {
 	c.commitments = append(c.commitments, *commitment)
 }
 
-func (c *CreateMassMigrationCommitmentsResult) AddResult(result CreateCommitmentResult) {
-	c.AddCommitment(result.Commitment())
+func (c *MassMigrationBatchData) AddMeta(meta *models.MassMigrationMeta) {
+	c.metas = append(c.metas, *meta)
+}
 
-	txs := result.AppliedTxs().ToMassMigrationArray()
-	totalAmount := models.NewUint256(0)
-	for i := range txs {
-		txAmount := txs.At(i).GetAmount()
-		totalAmount = totalAmount.Add(&txAmount)
-	}
-
-	c.metas = append(c.metas, models.MassMigrationMeta{
-		SpokeID:     uint32(txs.At(0).ToMassMigration().SpokeID.Uint64()),
-		TokenID:     commitmentTokenID, // TODO: support multiple tokens
-		Amount:      *totalAmount,
-		FeeReceiver: result.Commitment().FeeReceiver,
-	})
+func (c *MassMigrationBatchData) AddWithdrawRoot(withdrawRoot common.Hash) {
+	c.withdrawRoots = append(c.withdrawRoots, withdrawRoot)
 }

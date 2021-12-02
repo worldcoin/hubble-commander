@@ -129,13 +129,13 @@ func (s *RevertBatchesTestSuite) addTxBatch(tx *models.Transfer) *models.Batch {
 	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
 	s.NoError(err)
 
-	result, err := s.txsCtx.CreateCommitments()
+	batchData, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
 
 	err = s.storage.AddBatch(pendingBatch)
 	s.NoError(err)
 
-	err = s.txsCtx.addCommitments(result.Commitments())
+	err = s.txsCtx.addCommitments(batchData.Commitments())
 	s.NoError(err)
 
 	return pendingBatch

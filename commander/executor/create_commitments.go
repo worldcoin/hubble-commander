@@ -23,7 +23,7 @@ type FeeReceiver struct {
 	TokenID models.Uint256
 }
 
-func (c *TxsContext) CreateCommitments() (CreateCommitmentsResult, error) {
+func (c *TxsContext) CreateCommitments() (BatchData, error) {
 	txQueue, err := c.queryPendingTxs()
 	if err != nil {
 		return nil, err
@@ -34,10 +34,10 @@ func (c *TxsContext) CreateCommitments() (CreateCommitmentsResult, error) {
 		return nil, err
 	}
 
-	results := c.Executor.NewCreateCommitmentsResult(c.cfg.MaxCommitmentsPerBatch)
+	batchData := c.Executor.NewBatchData(c.cfg.MaxCommitmentsPerBatch)
 	pendingAccounts := make([]models.AccountLeaf, 0)
 
-	for i := uint8(0); results.Len() != int(c.cfg.MaxCommitmentsPerBatch); i++ {
+	for i := uint8(0); batchData.Len() != int(c.cfg.MaxCommitmentsPerBatch); i++ {
 		var result CreateCommitmentResult
 		commitmentID.IndexInBatch = i
 
@@ -49,11 +49,15 @@ func (c *TxsContext) CreateCommitments() (CreateCommitmentsResult, error) {
 			return nil, err
 		}
 
-		results.AddResult(result)
+		batchData.AddCommitment(result.Commitment())
+		err = c.Executor.GenerateMetaAndWithdrawRoots(batchData, result)
+		if err != nil {
+			return nil, err
+		}
 		pendingAccounts = append(pendingAccounts, result.PendingAccounts()...)
 	}
 
-	if results.Len() < int(c.cfg.MinCommitmentsPerBatch) {
+	if batchData.Len() < int(c.cfg.MinCommitmentsPerBatch) {
 		return nil, errors.WithStack(ErrNotEnoughCommitments)
 	}
 
@@ -68,7 +72,7 @@ func (c *TxsContext) CreateCommitments() (CreateCommitmentsResult, error) {
 		return nil, err
 	}
 
-	return results, nil
+	return batchData, nil
 }
 
 func (c *TxsContext) createCommitment(txQueue *TxQueue, commitmentID *models.CommitmentID) (

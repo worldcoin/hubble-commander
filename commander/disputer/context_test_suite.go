@@ -86,16 +86,16 @@ func (s *testSuiteWithContexts) rollback() {
 }
 
 func (s *testSuiteWithContexts) submitBatch(tx models.GenericTransaction) *models.Batch {
-	pendingBatch, result := s.createBatch(tx)
+	pendingBatch, batchData := s.createBatch(tx)
 
-	err := s.txsCtx.SubmitBatch(pendingBatch, result)
+	err := s.txsCtx.SubmitBatch(pendingBatch, batchData)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
 	return pendingBatch
 }
 
-func (s *testSuiteWithContexts) createBatch(tx models.GenericTransaction) (*models.Batch, executor.CreateCommitmentsResult) {
+func (s *testSuiteWithContexts) createBatch(tx models.GenericTransaction) (*models.Batch, executor.BatchData) {
 	if tx.Type() == txtype.Transfer {
 		err := s.disputeCtx.storage.AddTransfer(tx.ToTransfer())
 		s.NoError(err)
@@ -107,9 +107,9 @@ func (s *testSuiteWithContexts) createBatch(tx models.GenericTransaction) (*mode
 	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
 	s.NoError(err)
 
-	result, err := s.txsCtx.CreateCommitments()
+	batchData, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
-	s.Len(result.Commitments(), 1)
+	s.Len(batchData.Commitments(), 1)
 
-	return pendingBatch, result
+	return pendingBatch, batchData
 }

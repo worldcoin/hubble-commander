@@ -9,14 +9,14 @@ var (
 	ErrRollupContextCanceled = NewLoggableRollupError("rollup context canceled")
 )
 
-func (c *TxsContext) SubmitBatch(batch *models.Batch, createCommitmentsResult CreateCommitmentsResult) error {
+func (c *TxsContext) SubmitBatch(batch *models.Batch, batchData BatchData) error {
 	select {
 	case <-c.ctx.Done():
 		return ErrRollupContextCanceled
 	default:
 	}
 
-	tx, err := c.Executor.SubmitBatch(&batch.ID, createCommitmentsResult)
+	tx, err := c.Executor.SubmitBatch(&batch.ID, batchData)
 	if err != nil {
 		return err
 	}
@@ -27,7 +27,7 @@ func (c *TxsContext) SubmitBatch(batch *models.Batch, createCommitmentsResult Cr
 		return err
 	}
 
-	return c.addCommitments(createCommitmentsResult.Commitments())
+	return c.addCommitments(batchData.Commitments())
 }
 
 func (c *TxsContext) addCommitments(commitments []models.CommitmentWithTxs) error {

@@ -9,6 +9,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/utils/merkletree"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
@@ -18,9 +20,10 @@ type TransactionExecutor interface {
 	SerializeTxs(results ExecuteTxsForCommitmentResult) ([]byte, error)
 	AddPendingAccount(result applier.ApplySingleTxResult) error
 	NewCreateCommitmentResult(result ExecuteTxsForCommitmentResult, commitment *models.CommitmentWithTxs) CreateCommitmentResult
-	NewCreateCommitmentsResult(capacity uint32) CreateCommitmentsResult
+	NewBatchData(capacity uint32) BatchData
 	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (result applier.ApplySingleTxResult, txError, appError error)
-	SubmitBatch(batchID *models.Uint256, createCommitmentsResult CreateCommitmentsResult) (*types.Transaction, error)
+	SubmitBatch(batchID *models.Uint256, batchData BatchData) (*types.Transaction, error)
+	GenerateMetaAndWithdrawRoots(batchData BatchData, result CreateCommitmentResult) error
 }
 
 func CreateTransactionExecutor(executionCtx *ExecutionContext, batchType batchtype.BatchType) TransactionExecutor {
@@ -93,17 +96,18 @@ func (e *TransferExecutor) ApplyTx(tx models.GenericTransaction, commitmentToken
 	return e.applier.ApplyTransfer(tx, commitmentTokenID)
 }
 
-func (e *TransferExecutor) NewCreateCommitmentsResult(capacity uint32) CreateCommitmentsResult {
-	return &CreateTxCommitmentsResult{
+func (e *TransferExecutor) NewBatchData(capacity uint32) BatchData {
+	return &TxBatchData{
 		commitments: make([]models.CommitmentWithTxs, 0, capacity),
 	}
 }
 
-func (e *TransferExecutor) SubmitBatch(
-	batchID *models.Uint256,
-	createCommitmentsResult CreateCommitmentsResult,
-) (*types.Transaction, error) {
-	return e.client.SubmitTransfersBatch(batchID, createCommitmentsResult.Commitments())
+func (e *TransferExecutor) SubmitBatch(batchID *models.Uint256, batchData BatchData) (*types.Transaction, error) {
+	return e.client.SubmitTransfersBatch(batchID, batchData.Commitments())
+}
+
+func (e *TransferExecutor) GenerateMetaAndWithdrawRoots(_ BatchData, _ CreateCommitmentResult) error {
+	return nil
 }
 
 // C2TExecutor implements TransactionExecutor
@@ -169,14 +173,18 @@ func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID mo
 	return e.applier.ApplyCreate2Transfer(tx.ToCreate2Transfer(), commitmentTokenID)
 }
 
-func (e *C2TExecutor) NewCreateCommitmentsResult(capacity uint32) CreateCommitmentsResult {
-	return &CreateTxCommitmentsResult{
+func (e *C2TExecutor) NewBatchData(capacity uint32) BatchData {
+	return &TxBatchData{
 		commitments: make([]models.CommitmentWithTxs, 0, capacity),
 	}
 }
 
-func (e *C2TExecutor) SubmitBatch(batchID *models.Uint256, createCommitmentsResult CreateCommitmentsResult) (*types.Transaction, error) {
-	return e.client.SubmitCreate2TransfersBatch(batchID, createCommitmentsResult.Commitments())
+func (e *C2TExecutor) SubmitBatch(batchID *models.Uint256, batchData BatchData) (*types.Transaction, error) {
+	return e.client.SubmitCreate2TransfersBatch(batchID, batchData.Commitments())
+}
+
+func (e *C2TExecutor) GenerateMetaAndWithdrawRoots(_ BatchData, _ CreateCommitmentResult) error {
+	return nil
 }
 
 // MassMigrationExecutor implements TransactionExecutor
@@ -234,8 +242,8 @@ func (e *MassMigrationExecutor) ApplyTx(tx models.GenericTransaction, commitment
 	return e.applier.ApplyMassMigration(tx, commitmentTokenID)
 }
 
-func (e *MassMigrationExecutor) NewCreateCommitmentsResult(capacity uint32) CreateCommitmentsResult {
-	return &CreateMassMigrationCommitmentsResult{
+func (e *MassMigrationExecutor) NewBatchData(capacity uint32) BatchData {
+	return &MassMigrationBatchData{
 		commitments: make([]models.CommitmentWithTxs, 0, capacity),
 		metas:       make([]models.MassMigrationMeta, 0, capacity),
 	}
@@ -243,7 +251,60 @@ func (e *MassMigrationExecutor) NewCreateCommitmentsResult(capacity uint32) Crea
 
 func (e *MassMigrationExecutor) SubmitBatch(
 	batchID *models.Uint256,
-	createCommitmentsResult CreateCommitmentsResult,
+	batchData BatchData,
 ) (*types.Transaction, error) {
-	return nil, nil
+	return e.client.SubmitMassMigrationsBatch(
+		batchID,
+		batchData.Commitments(),
+		batchData.Metas(),
+		batchData.WithdrawRoots(),
+	)
+}
+
+func (e *MassMigrationExecutor) GenerateMetaAndWithdrawRoots(
+	batchData BatchData,
+	result CreateCommitmentResult,
+) error {
+	txs := result.AppliedTxs().ToMassMigrationArray()
+	hashes := make([]common.Hash, 0, txs.Len())
+	meta := &models.MassMigrationMeta{
+		SpokeID:     0,
+		TokenID:     models.MakeUint256(0),
+		Amount:      models.MakeUint256(0),
+		FeeReceiver: result.Commitment().FeeReceiver,
+	}
+
+	for i := range txs {
+		senderLeaf, err := e.storage.StateTree.Leaf(txs.At(i).GetFromStateID())
+		if err != nil {
+			return err
+		}
+		if i == 0 {
+			meta.TokenID = senderLeaf.TokenID
+			meta.SpokeID = uint32(txs.At(0).ToMassMigration().SpokeID.Uint64())
+		}
+
+		hash, err := encoder.HashUserState(&models.UserState{
+			PubKeyID: senderLeaf.PubKeyID,
+			TokenID:  meta.TokenID,
+			Balance:  txs.At(i).GetAmount(),
+			Nonce:    models.MakeUint256(0),
+		})
+		if err != nil {
+			return err
+		}
+		hashes = append(hashes, *hash)
+
+		txAmount := txs.At(i).GetAmount()
+		meta.Amount = *meta.Amount.Add(&txAmount)
+	}
+
+	merkleTree, err := merkletree.NewMerkleTree(hashes)
+	if err != nil {
+		return err
+	}
+
+	batchData.AddWithdrawRoot(merkleTree.Root())
+	batchData.AddMeta(meta)
+	return nil
 }

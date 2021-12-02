@@ -136,16 +136,16 @@ func (s *syncTestSuite) getAccountTreeRoot() common.Hash {
 }
 
 func (s *syncTestSuite) submitBatch(tx models.GenericTransaction) []models.CommitmentWithTxs {
-	pendingBatch, result := s.createBatch(tx)
+	pendingBatch, batchData := s.createBatch(tx)
 
-	err := s.txsCtx.SubmitBatch(pendingBatch, result)
+	err := s.txsCtx.SubmitBatch(pendingBatch, batchData)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
-	return result.Commitments()
+	return batchData.Commitments()
 }
 
-func (s *syncTestSuite) createBatch(tx models.GenericTransaction) (*models.Batch, executor.CreateCommitmentsResult) {
+func (s *syncTestSuite) createBatch(tx models.GenericTransaction) (*models.Batch, executor.BatchData) {
 	if tx.Type() == txtype.Transfer {
 		err := s.storage.AddTransfer(tx.ToTransfer())
 		s.NoError(err)
@@ -157,9 +157,9 @@ func (s *syncTestSuite) createBatch(tx models.GenericTransaction) (*models.Batch
 	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
 	s.NoError(err)
 
-	result, err := s.txsCtx.CreateCommitments()
+	batchData, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
-	s.Len(result.Commitments(), 1)
+	s.Len(batchData.Commitments(), 1)
 
-	return pendingBatch, result
+	return pendingBatch, batchData
 }

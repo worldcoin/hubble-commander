@@ -29,7 +29,7 @@ func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_SubmitsCommitmentsOnChain() {
 
 	pendingBatch, err := s.txsCtx.NewPendingBatch(batchtype.Create2Transfer)
 	s.NoError(err)
-	err = s.txsCtx.SubmitBatch(pendingBatch, &CreateTxCommitmentsResult{commitments: []models.CommitmentWithTxs{commitment}})
+	err = s.txsCtx.SubmitBatch(pendingBatch, &TxBatchData{commitments: []models.CommitmentWithTxs{commitment}})
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
@@ -46,7 +46,7 @@ func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_StoresPendingBatchRecord() {
 	commitment := baseCommitment
 	commitment.ID.BatchID = pendingBatch.ID
 
-	err = s.txsCtx.SubmitBatch(pendingBatch, &CreateTxCommitmentsResult{commitments: []models.CommitmentWithTxs{commitment}})
+	err = s.txsCtx.SubmitBatch(pendingBatch, &TxBatchData{commitments: []models.CommitmentWithTxs{commitment}})
 	s.NoError(err)
 
 	batch, err := s.storage.GetBatch(models.MakeUint256(1))
@@ -63,7 +63,7 @@ func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_AddsCommitments() {
 	s.NoError(err)
 	commitments := getCommitments(2, pendingBatch.ID)
 
-	err = s.txsCtx.SubmitBatch(pendingBatch, &CreateTxCommitmentsResult{commitments: commitments})
+	err = s.txsCtx.SubmitBatch(pendingBatch, &TxBatchData{commitments: commitments})
 	s.NoError(err)
 
 	batch, err := s.storage.GetBatch(models.MakeUint256(1))
