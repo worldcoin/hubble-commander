@@ -253,14 +253,14 @@ Value: list of tx hashes `bh.KeyList`
 
 - Holds individual pending deposits until they are moved into **Pending Deposit SubTrees**. Individual deposits correspond to `DepositQueued` events emitted by the SCs.  
 
-Key: <blockNumber, logIndex> `models.DepositID`
+Key: <subtreeID, depositIndex> `models.DepositID`
 
 Value: `models.PendingDeposit`
 
 ```go
 type DepositID struct {
-    BlockNumber uint32 // block in which the deposit tx was included
-    LogIndex    uint32 // `DepositQueued` log index in that block
+    SubtreeID    Uint256 // the subtree which contains this deposit
+    DepositIndex Uint256 // deposit number in the subtree
 }
 ```
 

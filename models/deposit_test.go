@@ -15,8 +15,8 @@ func TestPendingDeposit_SetBytes_InvalidBytesLength(t *testing.T) {
 func TestPendingDeposit_Bytes(t *testing.T) {
 	deposit := PendingDeposit{
 		ID: DepositID{
-			BlockNumber: 4321,
-			LogIndex:    63452,
+			SubtreeID:    MakeUint256(4321),
+			DepositIndex: MakeUint256(63452),
 		},
 		ToPubKeyID: 16,
 		TokenID:    MakeUint256(44),
@@ -43,8 +43,8 @@ func TestDepositID_SetBytes_InvalidBytesLength(t *testing.T) {
 
 func TestDepositID_Bytes(t *testing.T) {
 	depositID := DepositID{
-		BlockNumber: 68593,
-		LogIndex:    49102,
+		SubtreeID:    MakeUint256(68593),
+		DepositIndex: MakeUint256(49102),
 	}
 
 	bytes := depositID.Bytes()

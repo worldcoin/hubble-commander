@@ -16,8 +16,8 @@ var (
 		Deposits: []models.PendingDeposit{
 			{
 				ID: models.DepositID{
-					BlockNumber: 1,
-					LogIndex:    2,
+					SubtreeID:    models.MakeUint256(932),
+					DepositIndex: models.MakeUint256(0),
 				},
 				ToPubKeyID: 3,
 				TokenID:    models.MakeUint256(4),
@@ -25,8 +25,8 @@ var (
 			},
 			{
 				ID: models.DepositID{
-					BlockNumber: 6,
-					LogIndex:    7,
+					SubtreeID:    models.MakeUint256(932),
+					DepositIndex: models.MakeUint256(1),
 				},
 				ToPubKeyID: 8,
 				TokenID:    models.MakeUint256(9),
@@ -80,8 +80,8 @@ func (s *DepositSubTreeTestSuite) TestDeletePendingDepositSubTrees() {
 			Deposits: []models.PendingDeposit{
 				{
 					ID: models.DepositID{
-						BlockNumber: 1,
-						LogIndex:    2,
+						SubtreeID:    models.MakeUint256(1),
+						DepositIndex: models.MakeUint256(0),
 					},
 					ToPubKeyID: 3,
 					TokenID:    models.MakeUint256(4),
@@ -95,8 +95,8 @@ func (s *DepositSubTreeTestSuite) TestDeletePendingDepositSubTrees() {
 			Deposits: []models.PendingDeposit{
 				{
 					ID: models.DepositID{
-						BlockNumber: 6,
-						LogIndex:    7,
+						SubtreeID:    models.MakeUint256(4),
+						DepositIndex: models.MakeUint256(0),
 					},
 					ToPubKeyID: 8,
 					TokenID:    models.MakeUint256(9),

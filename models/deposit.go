@@ -5,15 +5,15 @@ import (
 )
 
 const (
-	depositDataLength   = 76
-	depositIDDataLength = 8
+	depositDataLength   = 132
+	depositIDDataLength = 64
 )
 
 var PendingDepositPrefix = getBadgerHoldPrefix(PendingDeposit{})
 
 type DepositID struct {
-	BlockNumber uint32
-	LogIndex    uint32
+	SubtreeID    Uint256
+	DepositIndex Uint256
 }
 
 type PendingDeposit struct {
@@ -25,8 +25,8 @@ type PendingDeposit struct {
 
 func (d *DepositID) Bytes() []byte {
 	b := make([]byte, depositIDDataLength)
-	binary.BigEndian.PutUint32(b[0:4], d.BlockNumber)
-	binary.BigEndian.PutUint32(b[4:8], d.LogIndex)
+	copy(b[0:32], d.SubtreeID.Bytes())
+	copy(b[32:64], d.DepositIndex.Bytes())
 	return b
 }
 
@@ -35,8 +35,8 @@ func (d *DepositID) SetBytes(data []byte) error {
 		return ErrInvalidLength
 	}
 
-	d.BlockNumber = binary.BigEndian.Uint32(data[0:4])
-	d.LogIndex = binary.BigEndian.Uint32(data[4:8])
+	d.SubtreeID.SetBytes(data[0:32])
+	d.DepositIndex.SetBytes(data[32:64])
 
 	return nil
 }
@@ -44,10 +44,10 @@ func (d *DepositID) SetBytes(data []byte) error {
 func (d *PendingDeposit) Bytes() []byte {
 	b := make([]byte, depositDataLength)
 
-	copy(b[0:8], d.ID.Bytes())
-	binary.BigEndian.PutUint32(b[8:12], d.ToPubKeyID)
-	copy(b[12:44], d.TokenID.Bytes())
-	copy(b[44:76], d.L2Amount.Bytes())
+	copy(b[0:64], d.ID.Bytes())
+	binary.BigEndian.PutUint32(b[64:68], d.ToPubKeyID)
+	copy(b[68:100], d.TokenID.Bytes())
+	copy(b[100:132], d.L2Amount.Bytes())
 
 	return b
 }
@@ -57,14 +57,14 @@ func (d *PendingDeposit) SetBytes(data []byte) error {
 		return ErrInvalidLength
 	}
 
-	err := d.ID.SetBytes(data[0:8])
+	err := d.ID.SetBytes(data[0:64])
 	if err != nil {
 		return err
 	}
 
-	d.ToPubKeyID = binary.BigEndian.Uint32(data[8:12])
-	d.TokenID.SetBytes(data[12:44])
-	d.L2Amount.SetBytes(data[44:76])
+	d.ToPubKeyID = binary.BigEndian.Uint32(data[64:68])
+	d.TokenID.SetBytes(data[68:100])
+	d.L2Amount.SetBytes(data[100:132])
 
 	return nil
 }
