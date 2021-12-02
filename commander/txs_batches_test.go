@@ -236,6 +236,28 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidS
 	s.Equal(result.BadSignature, s.getDisputeResult())
 }
 
+func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithSignatureInBadFormat() {
+	s.registerAccounts([]uint32{0, 1})
+
+	clonedStorage, txsCtx := s.cloneStorage()
+	defer teardown(s.Assertions, clonedStorage.Teardown)
+
+	invalidTransfer := testutils.MakeTransfer(0, 1, 0, 100)
+	s.submitInvalidBatch(clonedStorage.Storage, txsCtx, &invalidTransfer, func(commitment *models.CommitmentWithTxs) {
+		commitment.CombinedSignature = models.Signature{1, 2, 3}
+	})
+
+	remoteBatches, err := s.client.GetAllBatches()
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	s.ErrorIs(err, ErrRollbackInProgress)
+
+	s.checkBatchAfterDispute(remoteBatches[0].GetID())
+	s.Equal(result.BadPrecompileCall, s.getDisputeResult())
+}
+
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDisputesFraudulentOne() {
 	transfers := []models.Transfer{
 		testutils.MakeTransfer(0, 1, 0, 50),
