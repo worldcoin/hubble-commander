@@ -7,22 +7,26 @@ import (
 func (a *Applier) ApplyMassMigration(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
 	applyResult ApplySingleTxResult, txError, appError error,
 ) {
-	// Empty receiver leaf used just to pass validation
-	// We don't care about the receiver in our state tree for Mass Migration transactions
-	dummyReceiverLeaf := &models.StateLeaf{
-		UserState: models.UserState{
-			TokenID: commitmentTokenID,
-		},
+	senderLeaf, appErr := a.storage.StateTree.Leaf(tx.GetFromStateID())
+	if appErr != nil {
+		return nil, nil, appErr
+	}
+	appErr = a.validateSenderTokenID(senderLeaf, commitmentTokenID)
+	if appErr != nil {
+		return nil, nil, appErr
+	}
+	if txErr := validateTxNonce(&senderLeaf.UserState, tx.GetNonce()); txErr != nil {
+		return nil, txErr, nil
 	}
 
-	newSenderState, _, txError, appError := a.validateAndCalculateStateAfterTx(tx, dummyReceiverLeaf, commitmentTokenID)
-	if txError != nil || appError != nil {
-		return nil, txError, appError
+	newSenderState, txErr := calculateSenderStateAfterTx(senderLeaf.UserState, tx)
+	if txErr != nil {
+		return nil, nil, txErr
 	}
 
-	_, appError = a.storage.StateTree.Set(tx.GetFromStateID(), newSenderState)
-	if appError != nil {
-		return nil, nil, appError
+	_, appErr = a.storage.StateTree.Set(tx.GetFromStateID(), newSenderState)
+	if appErr != nil {
+		return nil, nil, appErr
 	}
 
 	return &ApplySingleMassMigrationResult{tx: tx.ToMassMigration()}, nil, nil

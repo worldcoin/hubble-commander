@@ -120,31 +120,31 @@ func (s *ApplyTxTestSuite) TestCalculateStateAfterTx_ReturnsCorrectLeavesInCaseO
 	s.NotEqual(&newReceiverState, &senderState)
 }
 
-func (s *ApplyTxTestSuite) TestValidateAndCalculateStateAfterTx_ValidatesSenderTokenID() {
+func (s *ApplyTxTestSuite) TestApplyTx_ValidatesSenderTokenID() {
 	setUserStatesInTree(s.Assertions, s.storage)
 
-	_, _, txError, appError := s.applier.validateAndCalculateStateAfterTx(&s.transfer, &s.receiverLeaf, models.MakeUint256(3))
+	txError, appError := s.applier.ApplyTx(&s.transfer, &s.receiverLeaf, models.MakeUint256(3))
 	s.NoError(txError)
 	s.ErrorIs(appError, ErrInvalidSenderTokenID)
 }
 
-func (s *ApplyTxTestSuite) TestValidateAndCalculateStateAfterTx_ValidatesReceiverTokenID() {
+func (s *ApplyTxTestSuite) TestApplyTx_ValidatesReceiverTokenID() {
 	setUserStatesInTree(s.Assertions, s.storage)
 
 	receiverWithChangedToken := s.receiverLeaf
 	receiverWithChangedToken.TokenID = models.MakeUint256(2)
 
-	_, _, txError, appError := s.applier.validateAndCalculateStateAfterTx(&s.transfer, &receiverWithChangedToken, models.MakeUint256(1))
+	txError, appError := s.applier.ApplyTx(&s.transfer, &receiverWithChangedToken, models.MakeUint256(1))
 	s.NoError(txError)
 	s.ErrorIs(appError, ErrInvalidReceiverTokenID)
 }
 
-func (s *ApplyTxTestSuite) TestValidateAndCalculateStateAfterTx_ValidatesNonce() {
+func (s *ApplyTxTestSuite) TestApplyTx_ValidatesNonce() {
 	transferWithBadNonce := s.transfer
 	transferWithBadNonce.Nonce = models.MakeUint256(1)
 	setUserStatesInTree(s.Assertions, s.storage)
 
-	_, _, txError, appError := s.applier.validateAndCalculateStateAfterTx(&transferWithBadNonce, &s.receiverLeaf, models.MakeUint256(1))
+	txError, appError := s.applier.ApplyTx(&transferWithBadNonce, &s.receiverLeaf, models.MakeUint256(1))
 	s.ErrorIs(txError, ErrNonceTooHigh)
 	s.NoError(appError)
 }

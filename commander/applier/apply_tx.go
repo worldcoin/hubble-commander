@@ -21,12 +21,31 @@ func (a *Applier) ApplyTx(
 	receiverLeaf *models.StateLeaf,
 	commitmentTokenID models.Uint256,
 ) (txError, appError error) {
-	newSenderState, newReceiverState, txError, appError := a.validateAndCalculateStateAfterTx(tx, receiverLeaf, commitmentTokenID)
-	if txError != nil || appError != nil {
-		return txError, appError
+	senderLeaf, err := a.storage.StateTree.Leaf(tx.GetFromStateID())
+	if err != nil {
+		return nil, err
 	}
 
-	_, appError = a.storage.StateTree.Set(tx.GetFromStateID(), newSenderState)
+	appError = a.validateSenderTokenID(senderLeaf, commitmentTokenID)
+	if appError != nil {
+		return nil, appError
+	}
+
+	appError = a.validateReceiverTokenID(receiverLeaf, commitmentTokenID)
+	if appError != nil {
+		return nil, appError
+	}
+
+	if tErr := validateTxNonce(&senderLeaf.UserState, tx.GetNonce()); tErr != nil {
+		return tErr, nil
+	}
+
+	newSenderState, newReceiverState, txErr := calculateStateAfterTx(senderLeaf.UserState, receiverLeaf.UserState, tx)
+	if txErr != nil {
+		return txErr, nil
+	}
+
+	_, appError = a.storage.StateTree.Set(senderLeaf.StateID, newSenderState)
 	if appError != nil {
 		return nil, appError
 	}
@@ -36,38 +55,6 @@ func (a *Applier) ApplyTx(
 	}
 
 	return nil, nil
-}
-
-func (a *Applier) validateAndCalculateStateAfterTx(
-	tx models.GenericTransaction,
-	receiverLeaf *models.StateLeaf,
-	commitmentTokenID models.Uint256,
-) (newSenderState, newReceiverState *models.UserState, txError, appError error) {
-	senderLeaf, appError := a.storage.StateTree.Leaf(tx.GetFromStateID())
-	if appError != nil {
-		return nil, nil, nil, appError
-	}
-
-	appError = a.validateSenderTokenID(senderLeaf, commitmentTokenID)
-	if appError != nil {
-		return nil, nil, nil, appError
-	}
-
-	appError = a.validateReceiverTokenID(receiverLeaf, commitmentTokenID)
-	if appError != nil {
-		return nil, nil, nil, appError
-	}
-
-	if txErr := validateTxNonce(&senderLeaf.UserState, tx.GetNonce()); txErr != nil {
-		return nil, nil, txErr, nil
-	}
-
-	newSenderState, newReceiverState, txErr := calculateStateAfterTx(senderLeaf.UserState, receiverLeaf.UserState, tx)
-	if txErr != nil {
-		return nil, nil, txErr, nil
-	}
-
-	return newSenderState, newReceiverState, nil, nil
 }
 
 func (a *Applier) applyTxForSync(
@@ -93,7 +80,8 @@ func (a *Applier) applyTxForSync(
 	}
 	synced.SenderStateProof.Witness = senderWitness
 
-	if txErr = a.validateSenderTokenID(senderLeaf, commitmentTokenID); txErr != nil {
+	txErr = a.validateSenderTokenID(senderLeaf, commitmentTokenID)
+	if txErr != nil {
 		return synced, txErr, nil
 	}
 
@@ -106,7 +94,8 @@ func (a *Applier) applyTxForSync(
 	}
 	synced.ReceiverStateProof.Witness = receiverWitness
 
-	if txErr = a.validateReceiverTokenID(receiverLeaf, commitmentTokenID); txErr != nil {
+	txErr = a.validateReceiverTokenID(receiverLeaf, commitmentTokenID)
+	if txErr != nil {
 		return synced, txErr, nil
 	}
 
@@ -168,16 +157,16 @@ func calculateStateAfterTx(
 	if tx.GetFromStateID() == *tx.GetToStateID() {
 		newReceiverState = calculateReceiverStateAfterTx(tx, *newSenderState.Copy())
 	} else {
-		newReceiverState = calculateReceiverStateAfterTx(tx, receiverState)
+		newReceiverState = calculateReceiverStateAfterTx(receiverState, tx)
 	}
 
 	return newSenderState, newReceiverState, nil
 }
 
-func calculateSenderStateAfterTx(senderState models.UserState, tx models.GenericTransaction) (
-	newSenderState *models.UserState,
-	err error,
-) {
+func calculateSenderStateAfterTx(
+	senderState models.UserState, // nolint:gocritic
+	tx models.GenericTransaction,
+) (newSenderState *models.UserState, err error) {
 	fee := tx.GetFee()
 	amount := tx.GetAmount()
 
@@ -198,7 +187,10 @@ func calculateSenderStateAfterTx(senderState models.UserState, tx models.Generic
 	return newSenderState, nil
 }
 
-func calculateReceiverStateAfterTx(tx models.GenericTransaction, receiverState models.UserState) *models.UserState {
+func calculateReceiverStateAfterTx(
+	receiverState models.UserState, // nolint:gocritic
+	tx models.GenericTransaction,
+) *models.UserState {
 	amount := tx.GetAmount()
 	newReceiverState := &receiverState
 	newReceiverState.Balance = *newReceiverState.Balance.Add(&amount)
