@@ -170,8 +170,8 @@ func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_Previou
 		Deposits: []models.PendingDeposit{
 			{
 				ID: models.DepositID{
-					BlockNumber: 1,
-					LogIndex:    1,
+					SubtreeID:    models.MakeUint256(1),
+					DepositIndex: models.MakeUint256(0),
 				},
 				ToPubKeyID: 1,
 				TokenID:    models.MakeUint256(0),

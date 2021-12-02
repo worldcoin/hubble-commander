@@ -39,8 +39,8 @@ func (c *Client) retrieveDepositIDAndL2Amount(receipt *types.Receipt) (*models.D
 	}
 
 	depositID := models.DepositID{
-		BlockNumber: uint32(receipt.BlockNumber.Uint64()),
-		LogIndex:    uint32(log.Index),
+		SubtreeID:    models.MakeUint256FromBig(*event.SubtreeID),
+		DepositIndex: models.MakeUint256FromBig(*event.DepositID),
 	}
 	return &depositID, models.NewUint256FromBig(*event.L2Amount), nil
 }

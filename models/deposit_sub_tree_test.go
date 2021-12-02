@@ -20,8 +20,8 @@ func TestPendingDepositSubTree_SetBytes_UpdatesDeposits(t *testing.T) {
 		Deposits: []PendingDeposit{
 			{
 				ID: DepositID{
-					BlockNumber: 1,
-					LogIndex:    2,
+					SubtreeID:    MakeUint256(1),
+					DepositIndex: MakeUint256(0),
 				},
 				ToPubKeyID: 3,
 				TokenID:    MakeUint256(4),
@@ -47,8 +47,8 @@ func TestPendingDepositSubTree_Bytes(t *testing.T) {
 		Deposits: []PendingDeposit{
 			{
 				ID: DepositID{
-					BlockNumber: 1,
-					LogIndex:    2,
+					SubtreeID:    MakeUint256(1),
+					DepositIndex: MakeUint256(2),
 				},
 				ToPubKeyID: 3,
 				TokenID:    MakeUint256(4),
@@ -56,8 +56,8 @@ func TestPendingDepositSubTree_Bytes(t *testing.T) {
 			},
 			{
 				ID: DepositID{
-					BlockNumber: 6,
-					LogIndex:    7,
+					SubtreeID:    MakeUint256(6),
+					DepositIndex: MakeUint256(7),
 				},
 				ToPubKeyID: 8,
 				TokenID:    MakeUint256(9),
@@ -73,8 +73,8 @@ func TestPendingDepositSubTree_Bytes(t *testing.T) {
 		Deposits: []PendingDeposit{
 			{
 				ID: DepositID{
-					BlockNumber: 999,
-					LogIndex:    999,
+					SubtreeID:    MakeUint256(999),
+					DepositIndex: MakeUint256(999),
 				},
 				ToPubKeyID: 999,
 				TokenID:    MakeUint256(999),
