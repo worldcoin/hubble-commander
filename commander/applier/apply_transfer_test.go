@@ -224,7 +224,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_SetsNonce() {
 	s.Equal(models.MakeUint256(1), sync.Tx.ToTransfer().GetNonce())
 }
 
-func (s *ApplyTransferTestSuite) TestApplyTransferForSync_AllowTheSameFromTo() {
+func (s *ApplyTransferTestSuite) TestApplyTransferForSync_AllowsSelfTransfer() {
 	selfTransfer := s.transfer
 	selfTransfer.ToStateID = selfTransfer.FromStateID
 
@@ -250,7 +250,7 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_AllowTheSameFromTo() {
 	s.Equal(receiverLeaf, senderLeaf)
 }
 
-func (s *ApplyTransferTestSuite) TestApplyTransferForSync_TheSameFromToLowBalance() {
+func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ValidatesBalanceInCaseOfSelfTransfer() {
 	selfTransfer := s.transfer
 	selfTransfer.ToStateID = selfTransfer.FromStateID
 
