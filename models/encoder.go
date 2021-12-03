@@ -13,11 +13,11 @@ type ByteEncoder interface {
 	SetBytes(data []byte) error
 }
 
-func getBadgerHoldPrefix(dataType interface{}) []byte {
+func GetBadgerHoldPrefix(dataType interface{}) []byte {
 	return []byte("bh_" + reflect.TypeOf(dataType).Name() + ":")
 }
 
-func getTypeName(dataType interface{}) []byte {
+func GetTypeName(dataType interface{}) []byte {
 	return []byte(reflect.TypeOf(dataType).Name())
 }
 
@@ -31,7 +31,7 @@ func EncodeHashPointer(value *common.Hash) []byte {
 	return b
 }
 
-func decodeHashPointer(data []byte) *common.Hash {
+func DecodeHashPointer(data []byte) *common.Hash {
 	if data[0] == 0 {
 		return nil
 	}
@@ -48,14 +48,14 @@ func EncodeUint32Pointer(value *uint32) []byte {
 	return b
 }
 
-func decodeUint32Pointer(data []byte) *uint32 {
+func DecodeUint32Pointer(data []byte) *uint32 {
 	if data[0] == 0 {
 		return nil
 	}
 	return ref.Uint32(binary.BigEndian.Uint32(data[1:]))
 }
 
-func encodeStringPointer(value *string) []byte {
+func EncodeStringPointer(value *string) []byte {
 	if value == nil {
 		return []byte{0}
 	}
@@ -65,14 +65,14 @@ func encodeStringPointer(value *string) []byte {
 	return b
 }
 
-func decodeStringPointer(data []byte) *string {
+func DecodeStringPointer(data []byte) *string {
 	if data[0] == 0 {
 		return nil
 	}
 	return ref.String(string(data[1:]))
 }
 
-func encodeTimestampPointer(timestamp *Timestamp) []byte {
+func EncodeTimestampPointer(timestamp *Timestamp) []byte {
 	b := make([]byte, 16)
 	if timestamp == nil {
 		return b
@@ -82,7 +82,7 @@ func encodeTimestampPointer(timestamp *Timestamp) []byte {
 	return b
 }
 
-func decodeTimestampPointer(data []byte) (*Timestamp, error) {
+func DecodeTimestampPointer(data []byte) (*Timestamp, error) {
 	if data[0] == 0 {
 		return nil, nil
 	}
@@ -105,7 +105,7 @@ func EncodeCommitmentIDPointer(id *CommitmentID) []byte {
 	return b
 }
 
-func decodeCommitmentIDPointer(data []byte) (*CommitmentID, error) {
+func DecodeCommitmentIDPointer(data []byte) (*CommitmentID, error) {
 	if data[0] == 0 {
 		return nil, nil
 	}

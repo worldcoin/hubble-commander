@@ -16,7 +16,7 @@ func TestEncodeHashPointer(t *testing.T) {
 	bytes := EncodeHashPointer(hash)
 	require.EqualValues(t, 1, bytes[0])
 
-	decodedValue := decodeHashPointer(bytes)
+	decodedValue := DecodeHashPointer(bytes)
 	require.Equal(t, *hash, *decodedValue)
 }
 
@@ -25,7 +25,7 @@ func TestEncodeHashPointer_NilValue(t *testing.T) {
 	bytes := EncodeHashPointer(hash)
 	require.EqualValues(t, 0, bytes[0])
 
-	decodedValue := decodeHashPointer(bytes)
+	decodedValue := DecodeHashPointer(bytes)
 	require.Nil(t, decodedValue)
 }
 
@@ -34,7 +34,7 @@ func TestEncodeUint32Pointer(t *testing.T) {
 	bytes := EncodeUint32Pointer(&value)
 	require.EqualValues(t, 1, bytes[0])
 
-	decodedValue := decodeUint32Pointer(bytes)
+	decodedValue := DecodeUint32Pointer(bytes)
 	require.Equal(t, value, *decodedValue)
 }
 
@@ -43,43 +43,43 @@ func TestEncodeUint32Pointer_NilValue(t *testing.T) {
 	bytes := EncodeUint32Pointer(value)
 	require.EqualValues(t, 0, bytes[0])
 
-	decodedValue := decodeUint32Pointer(bytes)
+	decodedValue := DecodeUint32Pointer(bytes)
 	require.Nil(t, decodedValue)
 }
 
 func TestEncodeStringPointer(t *testing.T) {
-	bytes := encodeStringPointer(ref.String(testMessage))
+	bytes := EncodeStringPointer(ref.String(testMessage))
 	require.EqualValues(t, 1, bytes[0])
 
-	decodedValue := decodeStringPointer(bytes)
+	decodedValue := DecodeStringPointer(bytes)
 	require.Equal(t, testMessage, *decodedValue)
 }
 
 func TestEncodeStringPointer_NilValue(t *testing.T) {
 	var value *string
-	bytes := encodeStringPointer(value)
+	bytes := EncodeStringPointer(value)
 	require.EqualValues(t, 0, bytes[0])
 
-	decodedValue := decodeStringPointer(bytes)
+	decodedValue := DecodeStringPointer(bytes)
 	require.Nil(t, decodedValue)
 }
 
 func TestEncodeTimestampPointer(t *testing.T) {
 	timestamp := NewTimestamp(time.Unix(10, 0).UTC())
-	bytes := encodeTimestampPointer(timestamp)
+	bytes := EncodeTimestampPointer(timestamp)
 	require.EqualValues(t, 1, bytes[0])
 
-	decodedTimestamp, err := decodeTimestampPointer(bytes)
+	decodedTimestamp, err := DecodeTimestampPointer(bytes)
 	require.NoError(t, err)
 	require.Equal(t, *timestamp, *decodedTimestamp)
 }
 
 func TestEncodeTimestampPointer_NilValue(t *testing.T) {
 	var timestamp *Timestamp
-	bytes := encodeTimestampPointer(timestamp)
+	bytes := EncodeTimestampPointer(timestamp)
 	require.EqualValues(t, 0, bytes[0])
 
-	decodedTimestamp, err := decodeTimestampPointer(bytes)
+	decodedTimestamp, err := DecodeTimestampPointer(bytes)
 	require.NoError(t, err)
 	require.Nil(t, decodedTimestamp)
 }
@@ -92,7 +92,7 @@ func TestEncodeCommitmentIDPointer(t *testing.T) {
 	bytes := EncodeCommitmentIDPointer(id)
 	require.EqualValues(t, 1, bytes[0])
 
-	decodedID, err := decodeCommitmentIDPointer(bytes)
+	decodedID, err := DecodeCommitmentIDPointer(bytes)
 	require.NoError(t, err)
 	require.Equal(t, *id, *decodedID)
 }
@@ -102,7 +102,7 @@ func TestEncodeCommitmentIDPointer_NilValue(t *testing.T) {
 	bytes := EncodeCommitmentIDPointer(id)
 	require.EqualValues(t, 0, bytes[0])
 
-	decodedID, err := decodeCommitmentIDPointer(bytes)
+	decodedID, err := DecodeCommitmentIDPointer(bytes)
 	require.NoError(t, err)
 	require.Nil(t, decodedID)
 }

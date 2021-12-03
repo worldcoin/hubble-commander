@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/stretchr/testify/require"
 	bh "github.com/timshannon/badgerhold/v4"
 )
@@ -68,12 +69,12 @@ func TestKeyListMetadata_Bytes(t *testing.T) {
 }
 
 func TestIndexKeyPrefix(t *testing.T) {
-	prefix := IndexKeyPrefix(models.StoredTxName, "CommitmentID")
-	require.Equal(t, []byte("_bhIndex:StoredTx:CommitmentID:"), prefix)
+	prefix := IndexKeyPrefix(stored.TxName, "CommitmentID")
+	require.Equal(t, []byte("_bhIndex:Tx:CommitmentID:"), prefix)
 }
 
 func TestIndexKey(t *testing.T) {
 	value := models.EncodeUint32(1)
-	prefix := IndexKey(models.StoredTxName, "CommitmentID", value)
-	require.Equal(t, append([]byte("_bhIndex:StoredTx:CommitmentID:"), value...), prefix)
+	prefix := IndexKey(stored.TxName, "CommitmentID", value)
+	require.Equal(t, append([]byte("_bhIndex:Tx:CommitmentID:"), value...), prefix)
 }

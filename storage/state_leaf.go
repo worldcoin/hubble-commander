@@ -2,13 +2,14 @@ package storage
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v4"
 )
 
 func (s *StateTree) upsertStateLeaf(leaf *models.StateLeaf) error {
-	flatLeaf := models.MakeFlatStateLeaf(leaf)
+	flatLeaf := stored.MakeStateLeaf(leaf)
 	return s.database.Badger.Upsert(leaf.StateID, flatLeaf)
 }
 
@@ -20,7 +21,7 @@ func (s *Storage) GetStateLeavesByPublicKey(publicKey *models.PublicKey) (stateL
 
 	pubKeyIDs := utils.ValueToInterfaceSlice(accounts, "PubKeyID")
 
-	flatStateLeaves := make([]models.FlatStateLeaf, 0, 1)
+	flatStateLeaves := make([]stored.StateLeaf, 0, 1)
 	err = s.database.Badger.Find(
 		&flatStateLeaves,
 		bh.Where("PubKeyID").In(pubKeyIDs...).Index("PubKeyID").SortBy("StateID"),

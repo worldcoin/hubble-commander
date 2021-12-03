@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v4"
@@ -24,9 +25,9 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Bytes(), nil
 	case *models.AccountLeaf:
 		return nil, errors.WithStack(errPassedByPointer)
-	case models.StoredBatch:
+	case stored.Batch:
 		return v.Bytes(), nil
-	case *models.StoredBatch:
+	case *stored.Batch:
 		return nil, errors.WithStack(errPassedByPointer)
 	case models.ChainState:
 		return v.Bytes(), nil
@@ -60,25 +61,25 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Bytes(), nil
 	case *models.PublicKey:
 		return nil, errors.WithStack(errPassedByPointer)
-	case models.FlatStateLeaf:
+	case stored.StateLeaf:
 		return v.Bytes(), nil
-	case *models.FlatStateLeaf:
+	case *stored.StateLeaf:
 		return nil, errors.WithStack(errPassedByPointer)
 	case models.StateUpdate:
 		return v.Bytes(), nil
 	case *models.StateUpdate:
 		return nil, errors.WithStack(errPassedByPointer)
-	case models.StoredCommitment:
+	case stored.Commitment:
 		return v.Bytes(), nil
-	case *models.StoredCommitment:
+	case *stored.Commitment:
 		return nil, errors.WithStack(errPassedByPointer)
-	case models.StoredTx:
+	case stored.Tx:
 		return v.Bytes(), nil
-	case *models.StoredTx:
+	case *stored.Tx:
 		return nil, errors.WithStack(errPassedByPointer)
-	case models.StoredTxReceipt:
+	case stored.TxReceipt:
 		return v.Bytes(), nil
-	case *models.StoredTxReceipt:
+	case *stored.TxReceipt:
 		return nil, errors.WithStack(errPassedByPointer)
 	case models.Uint256:
 		return v.Bytes(), nil
@@ -130,21 +131,21 @@ func Decode(data []byte, value interface{}) error {
 		return v.SetBytes(data)
 	case *models.NamespacedMerklePath:
 		return v.SetBytes(data)
-	case *models.StoredBatch:
+	case *stored.Batch:
 		return v.SetBytes(data)
 	case *models.MerkleTreeNode:
 		return models.DecodeDataHash(data, &v.DataHash)
 	case *models.PublicKey:
 		return v.SetBytes(data)
-	case *models.FlatStateLeaf:
+	case *stored.StateLeaf:
 		return v.SetBytes(data)
 	case *models.StateUpdate:
 		return v.SetBytes(data)
-	case *models.StoredCommitment:
+	case *stored.Commitment:
 		return v.SetBytes(data)
-	case *models.StoredTx:
+	case *stored.Tx:
 		return v.SetBytes(data)
-	case *models.StoredTxReceipt:
+	case *stored.TxReceipt:
 		return v.SetBytes(data)
 	case *models.Uint256:
 		v.SetBytes(data)

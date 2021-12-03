@@ -1,22 +1,25 @@
-package models
+package stored
 
 import (
 	"encoding/binary"
 
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type FlatStateLeaf struct {
+var StateLeafPrefix = models.GetBadgerHoldPrefix(StateLeaf{})
+
+type StateLeaf struct {
 	StateID  uint32
 	DataHash common.Hash
 	PubKeyID uint32 `badgerhold:"index"`
-	TokenID  Uint256
-	Balance  Uint256
-	Nonce    Uint256
+	TokenID  models.Uint256
+	Balance  models.Uint256
+	Nonce    models.Uint256
 }
 
-func MakeFlatStateLeaf(leaf *StateLeaf) FlatStateLeaf {
-	return FlatStateLeaf{
+func MakeStateLeaf(leaf *models.StateLeaf) StateLeaf {
+	return StateLeaf{
 		StateID:  leaf.StateID,
 		DataHash: leaf.DataHash,
 		PubKeyID: leaf.PubKeyID,
@@ -26,11 +29,11 @@ func MakeFlatStateLeaf(leaf *StateLeaf) FlatStateLeaf {
 	}
 }
 
-func (l *FlatStateLeaf) StateLeaf() *StateLeaf {
-	return &StateLeaf{
+func (l *StateLeaf) StateLeaf() *models.StateLeaf {
+	return &models.StateLeaf{
 		StateID:  l.StateID,
 		DataHash: l.DataHash,
-		UserState: UserState{
+		UserState: models.UserState{
 			PubKeyID: l.PubKeyID,
 			TokenID:  l.TokenID,
 			Balance:  l.Balance,
@@ -39,7 +42,7 @@ func (l *FlatStateLeaf) StateLeaf() *StateLeaf {
 	}
 }
 
-func (l *FlatStateLeaf) Bytes() []byte {
+func (l *StateLeaf) Bytes() []byte {
 	b := make([]byte, 136)
 	binary.BigEndian.PutUint32(b[0:4], l.StateID)
 	copy(b[4:36], l.DataHash[:])
@@ -50,7 +53,7 @@ func (l *FlatStateLeaf) Bytes() []byte {
 	return b
 }
 
-func (l *FlatStateLeaf) SetBytes(data []byte) error {
+func (l *StateLeaf) SetBytes(data []byte) error {
 	l.StateID = binary.BigEndian.Uint32(data[0:4])
 	l.DataHash.SetBytes(data[4:36])
 	l.PubKeyID = binary.BigEndian.Uint32(data[36:40])

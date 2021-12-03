@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	bdg "github.com/dgraph-io/badger/v3"
@@ -45,7 +46,7 @@ func (s *StateTree) Root() (*common.Hash, error) {
 }
 
 func (s *StateTree) Leaf(stateID uint32) (stateLeaf *models.StateLeaf, err error) {
-	var leaf models.FlatStateLeaf
+	var leaf stored.StateLeaf
 	err = s.database.Badger.Get(stateID, &leaf)
 	if err == bh.ErrNotFound {
 		return nil, errors.WithStack(NewNotFoundError("state leaf"))
@@ -82,9 +83,9 @@ func (s *StateTree) NextVacantSubtree(subtreeDepth uint8) (*uint32, error) {
 	// The iterator will scan over the state tree left-to-right detecting any gaps along the way.
 	// If a gap is detected its checked if its suitable for the given subtree regarding both alignment and size.
 	// An iterator will return the index of the first such gap it detects.
-	err := s.database.Badger.Iterator(models.FlatStateLeafPrefix, db.KeyIteratorOpts, func(item *bdg.Item) (bool, error) {
+	err := s.database.Badger.Iterator(stored.StateLeafPrefix, db.KeyIteratorOpts, func(item *bdg.Item) (bool, error) {
 		var key uint32
-		err := db.DecodeKey(item.Key(), &key, models.FlatStateLeafPrefix)
+		err := db.DecodeKey(item.Key(), &key, stored.StateLeafPrefix)
 		if err != nil {
 			return false, err
 		}
@@ -243,7 +244,7 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (models.Wit
 }
 
 func (s *StateTree) getLeafByPubKeyIDAndTokenID(pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
-	var leaf models.FlatStateLeaf
+	var leaf stored.StateLeaf
 	err := s.database.Badger.FindOne(
 		&leaf,
 		bh.Where("TokenID").Eq(tokenID).

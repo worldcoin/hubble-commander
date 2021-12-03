@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -346,7 +347,7 @@ func (s *StoredTransactionTestSuite) TestStoredTx_ToStateID_IndexWorks() {
 	s.addStoredTx(txtype.Transfer, ref.Uint32(2))
 	s.addStoredTx(txtype.Transfer, ref.Uint32(1))
 
-	indexValues := s.getToStateIDIndexValues(models.StoredTxName)
+	indexValues := s.getToStateIDIndexValues(stored.TxName)
 	s.Len(indexValues, 3)
 	s.Len(indexValues[0], 0) // value set due to index initialization, see NewTransactionStorage
 	s.Len(indexValues[1], 2)
@@ -356,7 +357,7 @@ func (s *StoredTransactionTestSuite) TestStoredTx_ToStateID_IndexWorks() {
 func (s *StoredTransactionTestSuite) TestStoredTx_ToStateID_ValuesWithoutThisFieldAreNotIndexed() {
 	s.addStoredTx(txtype.Create2Transfer, nil)
 
-	indexValues := s.getToStateIDIndexValues(models.StoredTxName)
+	indexValues := s.getToStateIDIndexValues(stored.TxName)
 	s.Len(indexValues, 1)
 	s.Len(indexValues[0], 0) // value set due to index initialization, see NewTransactionStorage
 }
@@ -366,7 +367,7 @@ func (s *StoredTransactionTestSuite) TestStoredTx_ToStateID_ValuesWithoutThisFie
 func (s *StoredTransactionTestSuite) TestStoredTx_ToStateID_FindUsingIndexWorksWhenThereAreOnlyValuesWithoutThisField() {
 	s.addStoredTx(txtype.Create2Transfer, nil)
 
-	txs := make([]models.StoredTx, 0, 1)
+	txs := make([]stored.Tx, 0, 1)
 	err := s.storage.database.Badger.Find(
 		&txs,
 		bh.Where("ToStateID").Eq(uint32(1)).Index("ToStateID"),
@@ -402,13 +403,13 @@ func (s *StoredTransactionTestSuite) TestStoredTxReceipt_CommitmentID_ValuesWith
 // This test checks an edge case that we introduced by indexing CommitmentID field which can be nil.
 // See: NewTransactionStorage
 func (s *StoredTransactionTestSuite) TestStoredTxReceipt_CommitmentID_FindUsingIndexWorksWhenThereAreOnlyValuesWithThisFieldSetToNil() {
-	err := s.storage.addStoredTxReceipt(&models.StoredTxReceipt{
+	err := s.storage.addStoredTxReceipt(&stored.TxReceipt{
 		Hash:         utils.RandomHash(),
 		CommitmentID: nil, // nil values are not indexed
 	})
 	s.NoError(err)
 
-	receipts := make([]models.StoredTxReceipt, 0, 1)
+	receipts := make([]stored.TxReceipt, 0, 1)
 	err = s.storage.database.Badger.Find(
 		&receipts,
 		bh.Where("CommitmentID").Eq(uint32(1)).Index("CommitmentID"),
@@ -422,7 +423,7 @@ func (s *StoredTransactionTestSuite) TestStoredTxReceipt_ToStateID_IndexWorks() 
 	s.addStoredTxReceipt(ref.Uint32(2), nil)
 	s.addStoredTxReceipt(ref.Uint32(1), nil)
 
-	indexValues := s.getToStateIDIndexValues(models.StoredTxReceiptName)
+	indexValues := s.getToStateIDIndexValues(stored.TxReceiptName)
 	s.Len(indexValues, 3)
 	s.Len(indexValues[0], 0) // value set due to index initialization, see NewTransactionStorage
 	s.Len(indexValues[1], 2)
@@ -432,7 +433,7 @@ func (s *StoredTransactionTestSuite) TestStoredTxReceipt_ToStateID_IndexWorks() 
 func (s *StoredTransactionTestSuite) TestStoredTxReceipt_ToStateID_ValuesWithThisFieldSetToNilAreNotIndexed() {
 	s.addStoredTxReceipt(nil, nil)
 
-	indexValues := s.getToStateIDIndexValues(models.StoredTxReceiptName)
+	indexValues := s.getToStateIDIndexValues(stored.TxReceiptName)
 	s.Len(indexValues, 1)
 	s.Len(indexValues[0], 0) // value set due to index initialization, see NewTransactionStorage
 }
@@ -440,13 +441,13 @@ func (s *StoredTransactionTestSuite) TestStoredTxReceipt_ToStateID_ValuesWithThi
 // This test checks an edge case that we introduced by indexing ToStateID field which can be nil.
 // See: NewTransactionStorage
 func (s *StoredTransactionTestSuite) TestStoredTxReceipt_ToStateID_FindUsingIndexWorksWhenThereAreOnlyValuesWithThisFieldSetToNil() {
-	err := s.storage.addStoredTxReceipt(&models.StoredTxReceipt{
+	err := s.storage.addStoredTxReceipt(&stored.TxReceipt{
 		Hash:      utils.RandomHash(),
 		ToStateID: nil, // nil values are not indexed
 	})
 	s.NoError(err)
 
-	receipts := make([]models.StoredTxReceipt, 0, 1)
+	receipts := make([]stored.TxReceipt, 0, 1)
 	err = s.storage.database.Badger.Find(
 		&receipts,
 		bh.Where("ToStateID").Eq(uint32(1)).Index("ToStateID"),
@@ -469,7 +470,7 @@ func (s *StoredTransactionTestSuite) addTransfersInCommitment(batchID *models.Ui
 func (s *StoredTransactionTestSuite) addStoredTx(txType txtype.TransactionType, toStateID *uint32) {
 	switch txType {
 	case txtype.Transfer:
-		err := s.storage.addStoredTx(models.NewStoredTxFromTransfer(&models.Transfer{
+		err := s.storage.addStoredTx(stored.NewTxFromTransfer(&models.Transfer{
 			TransactionBase: models.TransactionBase{
 				Hash: utils.RandomHash(),
 			},
@@ -477,7 +478,7 @@ func (s *StoredTransactionTestSuite) addStoredTx(txType txtype.TransactionType, 
 		}))
 		s.NoError(err)
 	case txtype.Create2Transfer:
-		err := s.storage.addStoredTx(models.NewStoredTxFromCreate2Transfer(&models.Create2Transfer{
+		err := s.storage.addStoredTx(stored.NewTxFromCreate2Transfer(&models.Create2Transfer{
 			TransactionBase: models.TransactionBase{
 				Hash: utils.RandomHash(),
 			},
@@ -489,7 +490,7 @@ func (s *StoredTransactionTestSuite) addStoredTx(txType txtype.TransactionType, 
 }
 
 func (s *StoredTransactionTestSuite) addStoredTxReceipt(toStateID *uint32, commitmentID *models.CommitmentID) {
-	receipt := &models.StoredTxReceipt{
+	receipt := &stored.TxReceipt{
 		Hash:         utils.RandomHash(),
 		ToStateID:    toStateID,
 		CommitmentID: commitmentID,
@@ -515,7 +516,7 @@ func (s *StoredTransactionTestSuite) getToStateIDIndexValues(typeName []byte) ma
 func (s *StoredTransactionTestSuite) getCommitmentIDIndexValues() map[models.CommitmentID]bh.KeyList {
 	indexValues := make(map[models.CommitmentID]bh.KeyList)
 
-	s.iterateIndex(models.StoredTxReceiptName, "CommitmentID", func(encodedKey []byte, keyList bh.KeyList) {
+	s.iterateIndex(stored.TxReceiptName, "CommitmentID", func(encodedKey []byte, keyList bh.KeyList) {
 		var commitmentID models.CommitmentID
 		err := db.Decode(encodedKey, &commitmentID)
 		s.NoError(err)

@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const commitmentBaseDataLength = commitmentIDDataLength + 1 + 32
+const CommitmentBaseDataLength = commitmentIDDataLength + 1 + 32
 
 type CommitmentBase struct {
 	ID            CommitmentID
@@ -19,7 +19,7 @@ func (c *CommitmentBase) GetPostStateRoot() common.Hash {
 }
 
 func (c *CommitmentBase) Bytes() []byte {
-	b := make([]byte, commitmentBaseDataLength)
+	b := make([]byte, CommitmentBaseDataLength)
 	copy(b[0:33], c.ID.Bytes())
 	b[33] = byte(c.Type)
 	copy(b[34:66], c.PostStateRoot.Bytes())
@@ -28,7 +28,7 @@ func (c *CommitmentBase) Bytes() []byte {
 }
 
 func (c *CommitmentBase) SetBytes(data []byte) error {
-	if len(data) != commitmentBaseDataLength {
+	if len(data) != CommitmentBaseDataLength {
 		return errors.WithStack(ErrInvalidLength)
 	}
 	err := c.ID.SetBytes(data[0:33])
