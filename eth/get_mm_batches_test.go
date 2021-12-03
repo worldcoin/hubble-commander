@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type GetMMBatchTestSuite struct {
+type GetMMBatchesTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	client        *TestClient
@@ -22,7 +22,7 @@ type GetMMBatchTestSuite struct {
 	withdrawRoots []common.Hash
 }
 
-func (s *GetMMBatchTestSuite) SetupSuite() {
+func (s *GetMMBatchesTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 	s.commitments = []models.CommitmentWithTxs{
 		{
@@ -53,17 +53,32 @@ func (s *GetMMBatchTestSuite) SetupSuite() {
 	}
 }
 
-func (s *GetMMBatchTestSuite) SetupTest() {
+func (s *GetMMBatchesTestSuite) SetupTest() {
 	client, err := NewTestClient()
 	s.NoError(err)
 	s.client = client
 }
 
-func (s *GetMMBatchTestSuite) TearDownTest() {
+func (s *GetMMBatchesTestSuite) TearDownTest() {
 	s.client.Close()
 }
 
-func (s *GetMMBatchTestSuite) TestGetMMBatch_BatchExists() {
+func (s *GetMMBatchesTestSuite) TestGetBatches() {
+	batch1, err := s.client.SubmitMassMigrationsBatchAndWait(models.NewUint256(1), s.commitments, s.metas, s.withdrawRoots)
+	s.NoError(err)
+
+	batches, err := s.client.GetBatches(&BatchesFilters{
+		FilterByBatchID: func(batchID *models.Uint256) bool {
+			return batchID.CmpN(0) > 0
+		},
+	})
+	s.NoError(err)
+	s.Len(batches, 1)
+	s.EqualValues(batch1.ID, batches[0].GetID())
+	s.Equal(batch1.Type, batches[0].GetBase().Type)
+}
+
+func (s *GetMMBatchesTestSuite) TestGetMMBatch_BatchExists() {
 	batchID := models.MakeUint256(1)
 	tx, err := s.client.SubmitMassMigrationsBatch(&batchID, s.commitments, s.metas, s.withdrawRoots)
 	s.NoError(err)
@@ -86,7 +101,7 @@ func (s *GetMMBatchTestSuite) TestGetMMBatch_BatchExists() {
 	s.EqualValues(event.AccountRoot, decodedMMBatch.AccountTreeRoot)
 }
 
-func (s *GetMMBatchTestSuite) TestGetMMBatch_BatchNotExists() {
+func (s *GetMMBatchesTestSuite) TestGetMMBatch_BatchNotExists() {
 	tx, err := s.client.SubmitMassMigrationsBatch(models.NewUint256(1), s.commitments, s.metas, s.withdrawRoots)
 	s.NoError(err)
 	s.client.GetBackend().Commit()
@@ -105,7 +120,7 @@ func (s *GetMMBatchTestSuite) TestGetMMBatch_BatchNotExists() {
 	s.ErrorIs(err, errBatchAlreadyRolledBack)
 }
 
-func (s *GetMMBatchTestSuite) TestGetMMBatch_DifferentBatchHash() {
+func (s *GetMMBatchesTestSuite) TestGetMMBatch_DifferentBatchHash() {
 	batchID := models.NewUint256(1)
 	tx, err := s.client.SubmitMassMigrationsBatch(batchID, s.commitments, s.metas, s.withdrawRoots)
 	s.NoError(err)
@@ -125,6 +140,6 @@ func (s *GetMMBatchTestSuite) TestGetMMBatch_DifferentBatchHash() {
 	s.ErrorIs(err, errBatchAlreadyRolledBack)
 }
 
-func TestGetMMBatchTestSuite(t *testing.T) {
-	suite.Run(t, new(GetMMBatchTestSuite))
+func TestGetMMBatchesTestSuite(t *testing.T) {
+	suite.Run(t, new(GetMMBatchesTestSuite))
 }

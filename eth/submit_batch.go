@@ -52,6 +52,17 @@ func (c *Client) SubmitCreate2TransfersBatchAndWait(
 	})
 }
 
+func (c *Client) SubmitMassMigrationsBatchAndWait(
+	batchID *models.Uint256,
+	commitments []models.CommitmentWithTxs,
+	metas []models.MassMigrationMeta,
+	withdrawRoot []common.Hash,
+) (*models.Batch, error) {
+	return c.submitBatchAndWait(func() (*types.Transaction, error) {
+		return c.SubmitMassMigrationsBatch(batchID, commitments, metas, withdrawRoot)
+	})
+}
+
 func (c *Client) submitBatchAndWait(submit SubmitBatchFunc) (batch *models.Batch, err error) {
 	tx, err := submit()
 	if err != nil {
