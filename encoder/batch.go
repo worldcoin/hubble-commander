@@ -46,6 +46,46 @@ func DecodeBatchCalldata(rollupABI *abi.ABI, calldata []byte) ([]DecodedCommitme
 	return commitments, nil
 }
 
+// DecodeMassMigrationBatchCalldata
+//	 uint256 batchID,
+//	 bytes32[] stateRoots,
+//	 uint256[2][] signatures,
+//	 uint256[4][] meta,
+//	 bytes32[] withdrawRoots,
+//	 bytes[] txss
+func DecodeMassMigrationBatchCalldata(rollupABI *abi.ABI, calldata []byte) ([]DecodedMassMigrationCommitment, error) {
+	unpacked, err := rollupABI.Methods["submitMassMigration"].Inputs.Unpack(calldata[4:])
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	batchID := unpacked[0].(*big.Int)
+	stateRoots := unpacked[1].([][32]uint8)
+	signatures := unpacked[2].([][2]*big.Int)
+	meta := unpacked[3].([][4]*big.Int)
+	withdrawRoots := unpacked[4].([][32]uint8)
+	txss := unpacked[5].([][]uint8)
+
+	size := len(stateRoots)
+
+	commitments := make([]DecodedMassMigrationCommitment, size)
+	for i := 0; i < size; i++ {
+		commitments[i] = DecodedMassMigrationCommitment{
+			ID: models.CommitmentID{
+				BatchID:      models.MakeUint256FromBig(*batchID),
+				IndexInBatch: uint8(i),
+			},
+			StateRoot:         common.BytesToHash(stateRoots[i][:]),
+			CombinedSignature: models.MakeSignatureFromBigInts(signatures[i]),
+			Meta:              models.NewMassMigrationMetaFromBigInts(meta[i]),
+			WithdrawRoot:      common.BytesToHash(withdrawRoots[i][:]),
+			Transactions:      txss[i],
+		}
+	}
+
+	return commitments, nil
+}
+
 func CommitmentsToTransferAndC2TSubmitBatchFields(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (
 	bigBatchID *big.Int,
 	stateRoots [][32]byte,
