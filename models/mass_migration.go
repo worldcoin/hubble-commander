@@ -6,7 +6,7 @@ import (
 
 type MassMigration struct {
 	TransactionBase
-	SpokeID Uint256
+	SpokeID uint32
 }
 
 func (m *MassMigration) Type() txtype.TransactionType {

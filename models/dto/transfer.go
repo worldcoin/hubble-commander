@@ -29,7 +29,7 @@ type transferWithType struct {
 
 func (t Transfer) MarshalJSON() ([]byte, error) {
 	transfer := transferWithType{
-		Type:        1,
+		Type:        txtype.Transfer,
 		FromStateID: t.FromStateID,
 		ToStateID:   t.ToStateID,
 		Amount:      t.Amount,

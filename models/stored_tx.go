@@ -13,7 +13,7 @@ const (
 	storedTxBytesLength               = 213
 	storedTxTransferBodyLength        = 4
 	storedTxCreate2TransferBodyLength = PublicKeyLength
-	storedTxMassMigrationBodyLength   = 32
+	storedTxMassMigrationBodyLength   = 4
 )
 
 var (
@@ -321,15 +321,17 @@ func (t *StoredTxCreate2TransferBody) BytesLen() int {
 }
 
 type StoredTxMassMigrationBody struct {
-	SpokeID Uint256
+	SpokeID uint32
 }
 
 func (t *StoredTxMassMigrationBody) Bytes() []byte {
-	return t.SpokeID.Bytes()
+	b := make([]byte, storedTxMassMigrationBodyLength)
+	binary.BigEndian.PutUint32(b, t.SpokeID)
+	return b
 }
 
 func (t *StoredTxMassMigrationBody) SetBytes(data []byte) error {
-	t.SpokeID.SetBytes(data)
+	t.SpokeID = binary.BigEndian.Uint32(data)
 	return nil
 }
 

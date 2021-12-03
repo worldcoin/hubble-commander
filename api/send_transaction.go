@@ -21,6 +21,7 @@ var (
 	ErrInvalidAmount     = fmt.Errorf("amount must be positive")
 	ErrUnsupportedTxType = fmt.Errorf("unsupported transaction type")
 	ErrNonexistentSender = fmt.Errorf("sender state ID does not exist")
+	ErrInvalidSpokeID    = fmt.Errorf("spoke ID must be greater than 0")
 
 	APIErrAnyMissingField = NewAPIError(
 		10002,
@@ -66,6 +67,10 @@ var (
 		10012,
 		"sender with given ID does not exist",
 	)
+	APIErrInvalidSpokeID = NewAPIError(
+		10013,
+		"spoke ID must be greater than 0",
+	)
 )
 
 var sendTransactionAPIErrors = map[error]*APIError{
@@ -80,6 +85,7 @@ var sendTransactionAPIErrors = map[error]*APIError{
 	ErrFeeTooLow:                          APIErrFeeTooLow,
 	NewNotDecimalEncodableError("amount"): APINotDecimalEncodableAmountError,
 	NewNotDecimalEncodableError("fee"):    APINotDecimalEncodableFeeError,
+	ErrInvalidSpokeID:                     APIErrInvalidSpokeID,
 }
 
 func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
@@ -97,6 +103,8 @@ func (a *API) unsafeSendTransaction(tx dto.Transaction) (*common.Hash, error) {
 		return a.handleTransfer(t)
 	case dto.Create2Transfer:
 		return a.handleCreate2Transfer(t)
+	case dto.MassMigration:
+		return a.handleMassMigration(t)
 	default:
 		return nil, errors.WithStack(ErrUnsupportedTxType)
 	}

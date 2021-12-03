@@ -51,7 +51,7 @@ var (
 			Nonce:       models.MakeUint256(0),
 			Signature:   models.MakeRandomSignature(),
 		},
-		SpokeID: models.MakeUint256(5),
+		SpokeID: 5,
 	}
 )
 
