@@ -7,7 +7,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
-	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 )
@@ -135,25 +134,6 @@ func validateFee(fee *models.Uint256) error {
 func (a *API) validateNonce(transaction *models.TransactionBase, senderNonce *models.Uint256) error {
 	if transaction.Nonce.Cmp(senderNonce) < 0 {
 		return errors.WithStack(ErrNonceTooLow)
-	}
-
-	latestNonce, err := a.storage.GetLatestTransactionNonce(transaction.FromStateID)
-	if storage.IsNotFoundError(err) {
-		return checkNonce(&transaction.Nonce, senderNonce)
-	}
-	if err != nil {
-		return err
-	}
-
-	return checkNonce(&transaction.Nonce, latestNonce.AddN(1))
-}
-
-func checkNonce(transactionNonce, executableSenderNonce *models.Uint256) error {
-	if transactionNonce.Cmp(executableSenderNonce) < 0 {
-		return errors.WithStack(ErrNonceTooLow)
-	}
-	if transactionNonce.Cmp(executableSenderNonce) > 0 {
-		return errors.WithStack(ErrNonceTooHigh)
 	}
 	return nil
 }

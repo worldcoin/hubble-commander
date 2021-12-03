@@ -127,45 +127,6 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesNonceTooLow_NoTransact
 	s.Equal(APIErrNonceTooLow, err)
 }
 
-func (s *SendTransferTestSuite) TestSendTransfer_ValidatesNonceTooHigh_NoTransactions() {
-	transferWithIncreasedNonce := s.transfer
-	transferWithIncreasedNonce.Nonce = models.NewUint256(1)
-	transferWithIncreasedNonce = s.signTransfer(transferWithIncreasedNonce)
-
-	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithIncreasedNonce))
-	s.Equal(APIErrNonceTooHigh, err)
-}
-
-func (s *SendTransferTestSuite) TestSendTransfer_ValidatesNonceTooHigh_ExistingTransactions() {
-	_, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
-	s.NoError(err)
-
-	transferWithIncreasedNonce := s.transfer
-	transferWithIncreasedNonce.Nonce = models.NewUint256(2)
-	transferWithIncreasedNonce = s.signTransfer(transferWithIncreasedNonce)
-
-	_, err = s.api.SendTransaction(dto.MakeTransaction(transferWithIncreasedNonce))
-	s.Equal(APIErrNonceTooHigh, err)
-}
-
-func (s *SendTransferTestSuite) TestSendTransfer_ValidatesNonceTooLow_ExistingTransactions() {
-	_, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
-	s.NoError(err)
-
-	secondTransfer := s.transfer
-	secondTransfer.Nonce = models.NewUint256(1)
-	secondTransfer = s.signTransfer(secondTransfer)
-
-	_, err = s.api.SendTransaction(dto.MakeTransaction(secondTransfer))
-	s.NoError(err)
-
-	thirdTransfer := s.transfer
-	thirdTransfer = s.signTransfer(thirdTransfer)
-
-	_, err = s.api.SendTransaction(dto.MakeTransaction(thirdTransfer))
-	s.Equal(APIErrNonceTooLow, err)
-}
-
 func (s *SendTransferTestSuite) TestSendTransfer_ValidatesFeeValue() {
 	transferWithZeroFee := s.transfer
 	transferWithZeroFee.Fee = models.NewUint256(0)

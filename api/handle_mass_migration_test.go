@@ -104,45 +104,6 @@ func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesNonceTooLow_
 	s.Equal(APIErrNonceTooLow, err)
 }
 
-func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesNonceTooHigh_NoTransactions() {
-	massMigrationWithIncreasedNonce := s.massMigration
-	massMigrationWithIncreasedNonce.Nonce = models.NewUint256(1)
-	massMigrationWithIncreasedNonce = s.signMassMigration(massMigrationWithIncreasedNonce)
-
-	_, err := s.api.SendTransaction(dto.MakeTransaction(massMigrationWithIncreasedNonce))
-	s.Equal(APIErrNonceTooHigh, err)
-}
-
-func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesNonceTooHigh_ExistingTransactions() {
-	_, err := s.api.SendTransaction(dto.MakeTransaction(s.massMigration))
-	s.NoError(err)
-
-	massMigrationWithIncreasedNonce := s.massMigration
-	massMigrationWithIncreasedNonce.Nonce = models.NewUint256(2)
-	massMigrationWithIncreasedNonce = s.signMassMigration(massMigrationWithIncreasedNonce)
-
-	_, err = s.api.SendTransaction(dto.MakeTransaction(massMigrationWithIncreasedNonce))
-	s.Equal(APIErrNonceTooHigh, err)
-}
-
-func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesNonceTooLow_ExistingTransactions() {
-	_, err := s.api.SendTransaction(dto.MakeTransaction(s.massMigration))
-	s.NoError(err)
-
-	secondMassMigration := s.massMigration
-	secondMassMigration.Nonce = models.NewUint256(1)
-	secondMassMigration = s.signMassMigration(secondMassMigration)
-
-	_, err = s.api.SendTransaction(dto.MakeTransaction(secondMassMigration))
-	s.NoError(err)
-
-	thirdMassMigration := s.massMigration
-	thirdMassMigration = s.signMassMigration(thirdMassMigration)
-
-	_, err = s.api.SendTransaction(dto.MakeTransaction(thirdMassMigration))
-	s.Equal(APIErrNonceTooLow, err)
-}
-
 func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesFeeValue() {
 	massMigrationWithZeroFee := s.massMigration
 	massMigrationWithZeroFee.Fee = models.NewUint256(0)
