@@ -97,7 +97,7 @@ func (s *DepositBatchesTestSuite) TestSyncRemoteBatch_SyncsDepositBatch() {
 	s.Equal(depositBatch.Type, batches[1].Type)
 }
 
-func (s *DepositBatchesTestSuite) TestSyncRemoteBatch_OmitsRolledBackBatch() {
+func (s *DepositBatchesTestSuite) TestUnsafeSyncBatches_OmitsRolledBackBatch() {
 	s.prepareDeposits()
 	s.submitInvalidBatches()
 
