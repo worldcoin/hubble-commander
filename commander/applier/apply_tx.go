@@ -88,6 +88,9 @@ func (a *Applier) applyTxForSync(
 	if appError != nil {
 		return nil, nil, appError
 	}
+	if senderLeaf.StateID == receiverLeaf.StateID {
+		synced.ReceiverStateProof.UserState = newSenderState
+	}
 	synced.ReceiverStateProof.Witness = receiverWitness
 
 	if tErr := a.validateReceiverTokenID(receiverLeaf, commitmentTokenID); tErr != nil {
@@ -140,6 +143,10 @@ func calculateStateAfterTx(
 	newSenderState, newReceiverState *models.UserState,
 	err error,
 ) {
+	if tx.GetToStateID() == nil {
+		panic("transaction ToStateID is nil")
+	}
+
 	fee := tx.GetFee()
 	amount := tx.GetAmount()
 
@@ -153,10 +160,14 @@ func calculateStateAfterTx(
 	}
 
 	newSenderState = &senderState
-	newReceiverState = &receiverState
-
 	newSenderState.Nonce = *newSenderState.Nonce.AddN(1)
 	newSenderState.Balance = *newSenderState.Balance.Sub(totalAmount)
+
+	if tx.GetFromStateID() == *tx.GetToStateID() {
+		newReceiverState = newSenderState.Copy()
+	} else {
+		newReceiverState = &receiverState
+	}
 	newReceiverState.Balance = *newReceiverState.Balance.Add(&amount)
 
 	return newSenderState, newReceiverState, nil

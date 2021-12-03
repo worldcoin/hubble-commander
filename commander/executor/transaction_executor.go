@@ -5,7 +5,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/encoder"
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -23,9 +22,9 @@ type TransactionExecutor interface {
 func CreateTransactionExecutor(executionCtx *ExecutionContext, batchType batchtype.BatchType) TransactionExecutor {
 	switch batchType {
 	case batchtype.Transfer:
-		return NewTransferExecutor(executionCtx.storage, executionCtx.client)
+		return NewTransferExecutor(executionCtx.storage)
 	case batchtype.Create2Transfer:
-		return NewC2TExecutor(executionCtx.storage, executionCtx.client)
+		return NewC2TExecutor(executionCtx.storage)
 	case batchtype.Genesis, batchtype.MassMigration, batchtype.Deposit:
 		log.Fatal("Invalid batch type")
 		return nil
@@ -39,10 +38,10 @@ type TransferExecutor struct {
 	applier *applier.Applier
 }
 
-func NewTransferExecutor(storage *st.Storage, client *eth.Client) *TransferExecutor {
+func NewTransferExecutor(storage *st.Storage) *TransferExecutor {
 	return &TransferExecutor{
 		storage: storage,
-		applier: applier.NewApplier(storage, client),
+		applier: applier.NewApplier(storage),
 	}
 }
 
@@ -91,10 +90,10 @@ type C2TExecutor struct {
 	applier *applier.Applier
 }
 
-func NewC2TExecutor(storage *st.Storage, client *eth.Client) *C2TExecutor {
+func NewC2TExecutor(storage *st.Storage) *C2TExecutor {
 	return &C2TExecutor{
 		storage: storage,
-		applier: applier.NewApplier(storage, client),
+		applier: applier.NewApplier(storage),
 	}
 }
 

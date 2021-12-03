@@ -29,7 +29,7 @@ func newTxsContext(
 		cfg:       cfg,
 		storage:   storage,
 		client:    client,
-		Syncer:    NewTransactionSyncer(storage, client, batchType),
+		Syncer:    NewTransactionSyncer(storage, batchType),
 		BatchType: batchType,
 	}
 }
