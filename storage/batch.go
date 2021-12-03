@@ -13,10 +13,16 @@ type BatchStorage struct {
 	database *Database
 }
 
-func NewBatchStorage(database *Database) *BatchStorage {
+func NewBatchStorage(database *Database) (*BatchStorage, error) {
+	// see NewTransactionStorage for reasoning
+	err := initializeIndex(database, models.StoredBatchName, "Hash", common.Hash{})
+	if err != nil {
+		return nil, err
+	}
+
 	return &BatchStorage{
 		database: database,
-	}
+	}, nil
 }
 
 func (s *BatchStorage) copyWithNewDatabase(database *Database) *BatchStorage {
