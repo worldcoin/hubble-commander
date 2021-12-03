@@ -113,7 +113,7 @@ func (c *Commander) Start() (err error) {
 	})
 	c.startWorker(func() error { return c.newBlockLoop() })
 
-	go c.waitWorkersErrorToLogFatal()
+	go c.handleWorkerError()
 
 	log.Printf("Commander started and listening on port %s", c.cfg.API.Port)
 
@@ -131,7 +131,7 @@ func (c *Commander) startWorker(fn func() error) {
 	}()
 }
 
-func (c *Commander) waitWorkersErrorToLogFatal() {
+func (c *Commander) handleWorkerError() {
 	<-c.workersContext.Done()
 	if c.workersErr == nil {
 		return
