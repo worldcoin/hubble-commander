@@ -50,8 +50,8 @@ func TestStoredCommitment_Bytes_DepositCommitment(t *testing.T) {
 		Deposits: []PendingDeposit{
 			{
 				ID: DepositID{
-					BlockNumber: 10,
-					LogIndex:    3,
+					SubtreeID:    MakeUint256(32),
+					DepositIndex: MakeUint256(1),
 				},
 				ToPubKeyID: 5,
 				TokenID:    MakeUint256(2),
@@ -59,8 +59,8 @@ func TestStoredCommitment_Bytes_DepositCommitment(t *testing.T) {
 			},
 			{
 				ID: DepositID{
-					BlockNumber: 11,
-					LogIndex:    2,
+					SubtreeID:    MakeUint256(11),
+					DepositIndex: MakeUint256(2),
 				},
 				ToPubKeyID: 2,
 				TokenID:    MakeUint256(3),

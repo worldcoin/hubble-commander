@@ -20,8 +20,8 @@ func TestPendingDepositSubTree_SetBytes_UpdatesDeposits(t *testing.T) {
 		Deposits: []PendingDeposit{
 			{
 				ID: DepositID{
-					BlockNumber: 1,
-					LogIndex:    2,
+					SubtreeID:    MakeUint256(1),
+					DepositIndex: MakeUint256(0),
 				},
 				ToPubKeyID: 3,
 				TokenID:    MakeUint256(4),
@@ -35,10 +35,9 @@ func TestPendingDepositSubTree_SetBytes_UpdatesDeposits(t *testing.T) {
 		Root: utils.RandomHash(),
 	}
 
-	initialCopy := initialSubTree
-	err := initialCopy.SetBytes(newSubTree.Bytes())
+	err := initialSubTree.SetBytes(newSubTree.Bytes())
 	require.NoError(t, err)
-	require.Equal(t, newSubTree, initialCopy)
+	require.Equal(t, newSubTree, initialSubTree)
 }
 
 func TestPendingDepositSubTree_Bytes(t *testing.T) {
@@ -47,8 +46,8 @@ func TestPendingDepositSubTree_Bytes(t *testing.T) {
 		Deposits: []PendingDeposit{
 			{
 				ID: DepositID{
-					BlockNumber: 1,
-					LogIndex:    2,
+					SubtreeID:    MakeUint256(1),
+					DepositIndex: MakeUint256(2),
 				},
 				ToPubKeyID: 3,
 				TokenID:    MakeUint256(4),
@@ -56,8 +55,8 @@ func TestPendingDepositSubTree_Bytes(t *testing.T) {
 			},
 			{
 				ID: DepositID{
-					BlockNumber: 6,
-					LogIndex:    7,
+					SubtreeID:    MakeUint256(6),
+					DepositIndex: MakeUint256(7),
 				},
 				ToPubKeyID: 8,
 				TokenID:    MakeUint256(9),
@@ -69,12 +68,13 @@ func TestPendingDepositSubTree_Bytes(t *testing.T) {
 	bytes := subTree.Bytes()
 
 	decodedSubTree := PendingDepositSubTree{
+		ID:   MakeUint256(1),
 		Root: utils.RandomHash(),
 		Deposits: []PendingDeposit{
 			{
 				ID: DepositID{
-					BlockNumber: 999,
-					LogIndex:    999,
+					SubtreeID:    MakeUint256(999),
+					DepositIndex: MakeUint256(999),
 				},
 				ToPubKeyID: 999,
 				TokenID:    MakeUint256(999),
@@ -85,7 +85,7 @@ func TestPendingDepositSubTree_Bytes(t *testing.T) {
 	err := decodedSubTree.SetBytes(bytes)
 	require.NoError(t, err)
 
-	require.Equal(t, Uint256{}, decodedSubTree.ID)
+	require.Equal(t, MakeUint256(1), decodedSubTree.ID)
 	decodedSubTree.ID = subTree.ID
 	require.Equal(t, subTree, decodedSubTree)
 }
