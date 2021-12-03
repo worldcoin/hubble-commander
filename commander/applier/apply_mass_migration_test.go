@@ -27,7 +27,7 @@ func (s *ApplyMassMigrationTestSuite) SetupSuite() {
 			Fee:         models.MakeUint256(10),
 			Nonce:       models.MakeUint256(0),
 		},
-		SpokeID: models.MakeUint256(2),
+		SpokeID: 2,
 	}
 }
 

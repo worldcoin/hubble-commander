@@ -281,7 +281,7 @@ func (e *MassMigrationExecutor) GenerateMetaAndWithdrawRoots(
 		}
 		if i == 0 {
 			meta.TokenID = senderLeaf.TokenID
-			meta.SpokeID = uint32(txs.At(0).ToMassMigration().SpokeID.Uint64())
+			meta.SpokeID = txs.At(0).ToMassMigration().SpokeID
 		}
 
 		hash, err := encoder.HashUserState(&models.UserState{
