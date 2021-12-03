@@ -252,7 +252,8 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_AllowTheSameFromTo() {
 	receiverLeaf, err := s.storage.StateTree.Leaf(transfer.ToStateID)
 	s.NoError(err)
 
-	s.Equal(uint64(390), senderLeaf.Balance.Uint64())
+	s.EqualValues(390, senderLeaf.Balance.Uint64())
+	s.EqualValues(1, senderLeaf.Nonce.Uint64())
 	s.Equal(receiverLeaf, senderLeaf)
 }
 
@@ -282,7 +283,8 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_TheSameFromToLowBalanc
 	senderLeaf, err := s.storage.StateTree.Leaf(transfer.FromStateID)
 	s.NoError(err)
 
-	s.Equal(uint64(50), senderLeaf.Balance.Uint64())
+	s.EqualValues(50, senderLeaf.Balance.Uint64())
+	s.EqualValues(0, senderLeaf.Nonce.Uint64())
 }
 
 func TestApplyTransferTestSuite(t *testing.T) {
