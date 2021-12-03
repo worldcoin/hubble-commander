@@ -148,63 +148,6 @@ func (s *TransactionStorage) getStoredTxReceipt(hash common.Hash) (*stored.TxRec
 	return &storedTxReceipt, nil
 }
 
-func (s *TransactionStorage) getKeyList(indexKey []byte) (*bh.KeyList, error) {
-	var keyList bh.KeyList
-	err := s.database.Badger.View(func(txn *bdg.Txn) error {
-		item, err := txn.Get(indexKey)
-		if err == bdg.ErrKeyNotFound {
-			return errors.WithStack(NewNotFoundError("transaction"))
-		}
-		if err != nil {
-			return err
-		}
-		return item.Value(func(val []byte) error {
-			return db.DecodeKeyList(val, &keyList)
-		})
-	})
-	if err != nil {
-		return nil, err
-	}
-	return &keyList, nil
-}
-
-func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*models.Uint256, error) {
-	var latestNonce *models.Uint256
-
-	err := s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
-		indexKey := db.IndexKey(stored.TxName, "FromStateID", stored.EncodeUint32(accountStateID))
-		keyList, err := txStorage.getKeyList(indexKey)
-		if err != nil {
-			return err
-		}
-		txHashes, err := decodeKeyListHashes(stored.TxPrefix, *keyList)
-		if err != nil {
-			return err
-		}
-		if len(txHashes) == 0 {
-			return errors.WithStack(NewNotFoundError("transaction"))
-		}
-
-		for i := range txHashes {
-			tx, receipt, err := txStorage.getStoredTxWithReceipt(txHashes[i])
-			if err != nil {
-				return err
-			}
-			if receipt == nil && (latestNonce == nil || tx.Nonce.Cmp(latestNonce) > 0) {
-				latestNonce = &tx.Nonce
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	if latestNonce == nil {
-		return nil, errors.WithStack(NewNotFoundError("transaction"))
-	}
-	return latestNonce, nil
-}
-
 func (s *TransactionStorage) MarkTransactionsAsPending(txHashes []common.Hash) error {
 	dataType := stored.TxReceipt{}
 	return s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
