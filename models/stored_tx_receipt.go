@@ -1,6 +1,8 @@
 package models
 
 import (
+	"fmt"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v4"
@@ -11,7 +13,7 @@ const storedTxReceiptBytesLength = 72
 var (
 	StoredTxReceiptName                = getTypeName(StoredTxReceipt{})
 	StoredTxReceiptPrefix              = getBadgerHoldPrefix(StoredTxReceipt{})
-	errInvalidStoredTxReceiptIndexType = errors.New("invalid StoredTxReceipt index type")
+	errInvalidStoredTxReceiptIndexType = fmt.Errorf("invalid StoredTxReceipt index type")
 )
 
 type StoredTxReceipt struct {
@@ -122,5 +124,5 @@ func interfaceToStoredTxReceipt(value interface{}) (*StoredTxReceipt, error) {
 	if ok {
 		return &v, nil
 	}
-	return nil, errInvalidStoredTxReceiptIndexType
+	return nil, errors.WithStack(errInvalidStoredTxReceiptIndexType)
 }

@@ -7,9 +7,9 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -531,22 +531,7 @@ func (s *StoredTransactionTestSuite) iterateIndex(
 	indexName string,
 	handleIndex func(encodedKey []byte, keyList bh.KeyList),
 ) {
-	indexPrefix := db.IndexKeyPrefix(typeName, indexName)
-	err := s.storage.database.Badger.Iterator(indexPrefix, db.PrefetchIteratorOpts, func(item *bdg.Item) (finish bool, err error) {
-		// Get key value
-		encodedKeyValue := item.Key()[len(indexPrefix):]
-
-		// Decode value
-		var keyList bh.KeyList
-		err = item.Value(func(val []byte) error {
-			return db.Decode(val, &keyList)
-		})
-		s.NoError(err)
-
-		handleIndex(encodedKeyValue, keyList)
-		return false, nil
-	})
-	s.ErrorIs(err, db.ErrIteratorFinished)
+	testutils.IterateIndex(s.Assertions, s.storage.database.Badger, typeName, indexName, handleIndex)
 }
 
 func TestStoredTransactionTestSuite(t *testing.T) {

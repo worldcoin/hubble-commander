@@ -24,9 +24,9 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Bytes(), nil
 	case *models.AccountLeaf:
 		return nil, errors.WithStack(errPassedByPointer)
-	case models.Batch:
+	case models.StoredBatch:
 		return v.Bytes(), nil
-	case *models.Batch:
+	case *models.StoredBatch:
 		return nil, errors.WithStack(errPassedByPointer)
 	case models.ChainState:
 		return v.Bytes(), nil
@@ -130,7 +130,7 @@ func Decode(data []byte, value interface{}) error {
 		return v.SetBytes(data)
 	case *models.NamespacedMerklePath:
 		return v.SetBytes(data)
-	case *models.Batch:
+	case *models.StoredBatch:
 		return v.SetBytes(data)
 	case *models.MerkleTreeNode:
 		return models.DecodeDataHash(data, &v.DataHash)
