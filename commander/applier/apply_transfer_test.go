@@ -40,7 +40,7 @@ func (s *ApplyTransferTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	s.applier = NewApplier(s.storage.Storage, nil)
+	s.applier = NewApplier(s.storage.Storage)
 }
 
 func (s *ApplyTransferTestSuite) TearDownTest() {
@@ -222,6 +222,55 @@ func (s *ApplyTransferTestSuite) TestApplyTransferForSync_SetsNonce() {
 	s.NoError(txError)
 
 	s.Equal(models.MakeUint256(1), sync.Tx.ToTransfer().GetNonce())
+}
+
+func (s *ApplyTransferTestSuite) TestApplyTransferForSync_AllowsSelfTransfer() {
+	selfTransfer := s.transfer
+	selfTransfer.ToStateID = selfTransfer.FromStateID
+
+	_, err := s.storage.StateTree.Set(selfTransfer.FromStateID, &models.UserState{
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(0),
+		Balance:  models.MakeUint256(400),
+		Nonce:    models.MakeUint256(0),
+	})
+	s.NoError(err)
+
+	_, txError, appError := s.applier.ApplyTransferForSync(&selfTransfer, models.MakeUint256(0))
+	s.NoError(appError)
+	s.NoError(txError)
+
+	senderLeaf, err := s.storage.StateTree.Leaf(selfTransfer.FromStateID)
+	s.NoError(err)
+	receiverLeaf, err := s.storage.StateTree.Leaf(selfTransfer.ToStateID)
+	s.NoError(err)
+
+	s.EqualValues(390, senderLeaf.Balance.Uint64())
+	s.EqualValues(1, senderLeaf.Nonce.Uint64())
+	s.Equal(receiverLeaf, senderLeaf)
+}
+
+func (s *ApplyTransferTestSuite) TestApplyTransferForSync_ValidatesBalanceInCaseOfSelfTransfer() {
+	selfTransfer := s.transfer
+	selfTransfer.ToStateID = selfTransfer.FromStateID
+
+	_, err := s.storage.StateTree.Set(selfTransfer.FromStateID, &models.UserState{
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(0),
+		Balance:  models.MakeUint256(50),
+		Nonce:    models.MakeUint256(0),
+	})
+	s.NoError(err)
+
+	_, txError, appError := s.applier.ApplyTransferForSync(&selfTransfer, models.MakeUint256(0))
+	s.ErrorIs(txError, ErrBalanceTooLow)
+	s.NoError(appError)
+
+	senderLeaf, err := s.storage.StateTree.Leaf(selfTransfer.FromStateID)
+	s.NoError(err)
+
+	s.EqualValues(50, senderLeaf.Balance.Uint64())
+	s.EqualValues(0, senderLeaf.Nonce.Uint64())
 }
 
 func TestApplyTransferTestSuite(t *testing.T) {

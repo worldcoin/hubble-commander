@@ -9,10 +9,10 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/result"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -37,10 +37,8 @@ type TxsBatchesTestSuite struct {
 func (s *TxsBatchesTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 	s.cfg = config.GetTestConfig()
-	s.cfg.Rollup.MinCommitmentsPerBatch = 1
-	s.cfg.Rollup.MaxCommitmentsPerBatch = 32
 	s.cfg.Rollup.MinTxsPerCommitment = 1
-	s.cfg.Rollup.MaxTxsPerCommitment = 1
+	s.cfg.Rollup.MaxTxsPerCommitment = 32
 	s.cfg.Rollup.DisableSignatures = false
 }
 
@@ -48,11 +46,7 @@ func (s *TxsBatchesTestSuite) SetupTest() {
 	var err error
 	s.testStorage, err = st.NewTestStorage()
 	s.NoError(err)
-	s.client, err = eth.NewConfiguredTestClient(rollup.DeploymentConfig{
-		Params: rollup.Params{
-			MaxTxsPerCommit: models.NewUint256(1),
-		},
-	}, eth.ClientConfig{})
+	s.client, err = eth.NewTestClient()
 	s.NoError(err)
 
 	s.cmd = NewCommander(s.cfg, nil)
@@ -179,7 +173,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithTooManyTxs() 
 
 	transfer = testutils.MakeTransfer(0, 1, 1, 100)
 	s.submitInvalidBatch(clonedStorage.Storage, txsCtx, &transfer, func(commitment *models.CommitmentWithTxs) {
-		commitment.Transactions = append(commitment.Transactions, commitment.Transactions...)
+		commitment.Transactions = append(commitment.Transactions, make([]byte, 32*encoder.TransferLength)...)
 	})
 
 	remoteBatches, err := s.client.GetAllBatches()
@@ -192,6 +186,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithTooManyTxs() 
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	s.checkBatchAfterDispute(remoteBatches[1].GetID())
+	s.Equal(result.TooManyTx, s.getDisputeResult())
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidPostStateRoot() {
@@ -216,9 +211,51 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidPostSt
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	s.checkBatchAfterDispute(remoteBatches[1].GetID())
+	s.Equal(result.Ok, s.getDisputeResult()) // invalid post state root emits Result.Ok
+}
+
+func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_CanDisputeFraudulentBatchWithTransferToSelf() {
+	transfer := testutils.MakeTransfer(0, 1, 0, 50)
+	s.submitBatch(s.testStorage.Storage, s.txsCtx, &transfer)
+
+	s.submitFraudulentBatchWithTransferToSelf()
+
+	remoteBatches, err := s.client.GetAllBatches()
+	s.NoError(err)
+	s.Len(remoteBatches, 2)
+
+	s.updateBatchAfterSubmission(remoteBatches[0].ToDecodedTxBatch())
+
+	err = s.cmd.syncRemoteBatch(remoteBatches[1])
+	s.ErrorIs(err, ErrRollbackInProgress)
+
+	s.checkBatchAfterDispute(remoteBatches[1].GetID())
+	s.Equal(result.NotEnoughTokenBalance, s.getDisputeResult())
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidSignature() {
+	s.registerAccounts([]uint32{0, 1})
+
+	clonedStorage, txsCtx := s.cloneStorage()
+	defer teardown(s.Assertions, clonedStorage.Teardown)
+
+	invalidTransfer := testutils.MakeTransfer(0, 1, 0, 100)
+	s.submitInvalidBatch(clonedStorage.Storage, txsCtx, &invalidTransfer, func(commitment *models.CommitmentWithTxs) {
+		commitment.CombinedSignature[0] = 0 // break the signature
+	})
+
+	remoteBatches, err := s.client.GetAllBatches()
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	s.ErrorIs(err, ErrRollbackInProgress)
+
+	s.checkBatchAfterDispute(remoteBatches[0].GetID())
+	s.Equal(result.BadSignature, s.getDisputeResult())
+}
+
+func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithSignatureInBadFormat() {
 	s.registerAccounts([]uint32{0, 1})
 
 	clonedStorage, txsCtx := s.cloneStorage()
@@ -237,6 +274,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidS
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	s.checkBatchAfterDispute(remoteBatches[0].GetID())
+	s.Equal(result.BadPrecompileCall, s.getDisputeResult())
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDisputesFraudulentOne() {
@@ -251,7 +289,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDispute
 	clonedStorage, txsCtx := s.cloneStorage()
 	defer teardown(s.Assertions, clonedStorage.Teardown)
 	s.submitInvalidBatch(clonedStorage.Storage, txsCtx, &transfers[1], func(commitment *models.CommitmentWithTxs) {
-		commitment.Transactions = append(commitment.Transactions, commitment.Transactions...)
+		commitment.Transactions = append(commitment.Transactions, 1, 2, 3, 4)
 	})
 
 	localBatch := s.createTransferBatch(&transfers[2])
@@ -267,6 +305,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDispute
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	s.checkBatchAfterDispute(remoteBatches[1].GetID())
+	s.Equal(result.BadCompression, s.getDisputeResult())
 	_, err = s.cmd.storage.GetBatch(localBatch.ID)
 	s.True(st.IsNotFoundError(err))
 }
@@ -277,7 +316,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentCommitmentAf
 
 	invalidTransfer := testutils.MakeTransfer(0, 1, 0, 100)
 	s.submitInvalidBatch(clonedStorage.Storage, txsCtx, &invalidTransfer, func(commitment *models.CommitmentWithTxs) {
-		commitment.Transactions = append(commitment.Transactions, commitment.Transactions...)
+		commitment.Transactions = append(commitment.Transactions, 1, 2, 3, 4)
 	})
 
 	remoteBatches, err := s.client.GetAllBatches()
@@ -288,6 +327,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentCommitmentAf
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	s.checkBatchAfterDispute(remoteBatches[0].GetID())
+	s.Equal(result.BadCompression, s.getDisputeResult())
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidFeeReceiverTokenID() {
@@ -322,6 +362,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidF
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	s.checkBatchAfterDispute(remoteBatches[1].GetID())
+	s.Equal(result.BadToTokenID, s.getDisputeResult())
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithoutTransfersAndInvalidPostStateRoot() {
@@ -348,6 +389,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithoutTrans
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	s.checkBatchAfterDispute(remoteBatches[1].GetID())
+	s.Equal(result.Ok, s.getDisputeResult()) // invalid post state root emits Result.Ok
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithNonexistentSender() {
@@ -377,6 +419,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithNonexist
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	s.checkBatchAfterDispute(remoteBatches[1].GetID())
+	s.Equal(result.NotEnoughTokenBalance, s.getDisputeResult())
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesC2TWithNonRegisteredReceiverPublicKey() {
@@ -427,6 +470,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesC2TWithNonRegisteredRe
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	s.checkBatchAfterDispute(remoteBatches[1].GetID())
+	s.Equal(result.NonexistentReceiver, s.getDisputeResult())
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_AllowsTransferToNonexistentReceiver() {
@@ -522,6 +566,72 @@ func (s *TxsBatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.B
 	return pendingBatch
 }
 
+func (s *TxsBatchesTestSuite) submitFraudulentBatchWithTransferToSelf() *models.Batch {
+	storage, txsCtx := s.cloneStorage()
+	defer teardown(s.Assertions, storage.Teardown)
+
+	selfTransfer := testutils.MakeTransfer(0, 0, 0, 100)
+	invalidTransfer := testutils.MakeTransfer(1, 0, 0, 100)
+	txs := []models.Transfer{selfTransfer, invalidTransfer}
+
+	// Apply self transfer
+	commitmentTokenID := models.MakeUint256(0)
+	_, txErr, appErr := txsCtx.Applier.ApplyTransferForSync(&selfTransfer, commitmentTokenID)
+	s.NoError(txErr)
+	s.NoError(appErr)
+
+	// Apply invalid transfer
+	receiver, err := storage.StateTree.LeafOrEmpty(invalidTransfer.ToStateID)
+	s.NoError(err)
+
+	receiver.Balance = *receiver.Balance.Add(&invalidTransfer.Amount)
+	_, err = storage.StateTree.Set(invalidTransfer.ToStateID, &receiver.UserState)
+	s.NoError(err)
+
+	// Apply fee
+	feeReceiverStateID := uint32(0)
+	_, err = txsCtx.Applier.ApplyFee(feeReceiverStateID, *selfTransfer.Fee.Add(&invalidTransfer.Fee))
+	s.NoError(err)
+
+	// Create commitment
+	nextBatchID, err := storage.GetNextBatchID()
+	s.NoError(err)
+
+	postStateRoot, err := storage.StateTree.Root()
+	s.NoError(err)
+
+	domain, err := s.client.GetDomain()
+	s.NoError(err)
+
+	combinedSignature, err := executor.CombineSignatures(models.MakeTransferArray(txs...), domain)
+	s.NoError(err)
+
+	serializedTxs, err := encoder.SerializeTransfers(txs)
+	s.NoError(err)
+
+	commitment := models.CommitmentWithTxs{
+		TxCommitment: models.TxCommitment{
+			CommitmentBase: models.CommitmentBase{
+				ID: models.CommitmentID{
+					BatchID:      *nextBatchID,
+					IndexInBatch: 0,
+				},
+				Type:          batchtype.Transfer,
+				PostStateRoot: *postStateRoot,
+			},
+			FeeReceiver:       feeReceiverStateID,
+			CombinedSignature: *combinedSignature,
+		},
+		Transactions: serializedTxs,
+	}
+
+	// Submit batch
+	batch, err := s.client.SubmitTransfersBatchAndWait(nextBatchID, []models.CommitmentWithTxs{commitment})
+	s.NoError(err)
+
+	return batch
+}
+
 func (s *TxsBatchesTestSuite) submitBatch(
 	storage *st.Storage,
 	txsCtx *executor.TxsContext,
@@ -604,6 +714,16 @@ func (s *TxsBatchesTestSuite) checkBatchAfterDispute(batchID models.Uint256) {
 	batch, err := s.cmd.storage.GetBatch(batchID)
 	s.Nil(batch)
 	s.True(st.IsNotFoundError(err))
+}
+
+func (s *TxsBatchesTestSuite) getDisputeResult() result.DisputeResult {
+	it, err := s.client.Rollup.FilterRollbackTriggered(nil)
+	s.NoError(err)
+	it.Next()
+	s.NoError(it.Error())
+	res := result.DisputeResult(it.Event.Result)
+	s.False(it.Next())
+	return res
 }
 
 func (s *TxsBatchesTestSuite) registerAccounts(pubKeyIDs []uint32) {

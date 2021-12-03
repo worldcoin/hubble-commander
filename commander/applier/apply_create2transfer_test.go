@@ -48,7 +48,7 @@ func (s *ApplyCreate2TransferTestSuite) SetupTest() {
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
 
-	s.applier = NewApplier(s.storage.Storage, s.client.Client)
+	s.applier = NewApplier(s.storage.Storage)
 
 	_, err = s.storage.StateTree.Set(0, &models.UserState{
 		PubKeyID: 0,

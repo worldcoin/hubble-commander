@@ -50,7 +50,7 @@ func (s *ApplyTxTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	s.applier = NewApplier(s.storage.Storage, nil)
+	s.applier = NewApplier(s.storage.Storage)
 
 	s.receiverLeaf = models.StateLeaf{
 		StateID:   receiverState.PubKeyID,
@@ -98,6 +98,26 @@ func (s *ApplyTxTestSuite) TestCalculateStateAfterTx_ValidatesBalance() {
 
 	_, _, err := calculateStateAfterTx(senderState, receiverState, &transferAboveBalance)
 	s.ErrorIs(err, ErrBalanceTooLow)
+}
+
+func (s *ApplyTxTestSuite) TestCalculateStateAfterTx_ReturnsCorrectLeavesInCaseOfSelfTransfer() {
+	selfTransfer := s.transfer
+	selfTransfer.ToStateID = selfTransfer.FromStateID
+	newSenderState, newReceiverState, err := calculateStateAfterTx(
+		senderState,
+		senderState,
+		&selfTransfer,
+	)
+	s.NoError(err)
+
+	s.Equal(models.MakeUint256(1), newSenderState.Nonce)
+	s.Equal(models.MakeUint256(290), newSenderState.Balance)
+
+	s.Equal(models.MakeUint256(1), newReceiverState.Nonce)
+	s.Equal(models.MakeUint256(390), newReceiverState.Balance)
+
+	s.NotEqual(&newSenderState, &senderState)
+	s.NotEqual(&newReceiverState, &senderState)
 }
 
 func (s *ApplyTxTestSuite) TestApplyTx_ValidatesSenderTokenID() {

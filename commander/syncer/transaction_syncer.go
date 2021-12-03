@@ -6,7 +6,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/encoder"
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -31,12 +30,12 @@ type TransactionSyncer interface {
 	HashTx(tx models.GenericTransaction) (*common.Hash, error)
 }
 
-func NewTransactionSyncer(storage *st.Storage, client *eth.Client, batchType batchtype.BatchType) TransactionSyncer {
+func NewTransactionSyncer(storage *st.Storage, batchType batchtype.BatchType) TransactionSyncer {
 	switch batchType {
 	case batchtype.Transfer:
-		return NewTransferSyncer(storage, client)
+		return NewTransferSyncer(storage)
 	case batchtype.Create2Transfer:
-		return NewC2TSyncer(storage, client)
+		return NewC2TSyncer(storage)
 	case batchtype.Genesis, batchtype.MassMigration, batchtype.Deposit:
 		log.Fatal("Invalid tx type")
 		return nil
@@ -49,10 +48,10 @@ type TransferSyncer struct {
 	applier *applier.Applier
 }
 
-func NewTransferSyncer(storage *st.Storage, client *eth.Client) *TransferSyncer {
+func NewTransferSyncer(storage *st.Storage) *TransferSyncer {
 	return &TransferSyncer{
 		storage: storage,
-		applier: applier.NewApplier(storage, client),
+		applier: applier.NewApplier(storage),
 	}
 }
 
@@ -103,10 +102,10 @@ type C2TSyncer struct {
 	applier *applier.Applier
 }
 
-func NewC2TSyncer(storage *st.Storage, client *eth.Client) *C2TSyncer {
+func NewC2TSyncer(storage *st.Storage) *C2TSyncer {
 	return &C2TSyncer{
 		storage: storage,
-		applier: applier.NewApplier(storage, client),
+		applier: applier.NewApplier(storage),
 	}
 }
 
