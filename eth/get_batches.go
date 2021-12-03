@@ -41,11 +41,12 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 	}
 	logBatchesCount(len(batchEvents))
 
+	var rolledBackBatchID *models.Uint256
 	depositIndex := 0
 	res := make([]DecodedBatch, 0, len(batchEvents))
 	for i := range batchEvents {
 		event := batchEvents[i]
-		if filters.FilterByBatchID != nil && !filters.FilterByBatchID(models.NewUint256FromBig(*event.BatchID)) {
+		if !isAcceptable(models.NewUint256FromBig(*event.BatchID), rolledBackBatchID, filters) {
 			continue
 		}
 
@@ -73,17 +74,25 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 		}
 
 		if errors.Is(err, errBatchAlreadyRolledBack) {
-			// TODO: handle deposit rollbacks after https://github.com/thehubbleproject/hubble-contracts/issues/671
+			rolledBackBatchID = models.NewUint256FromBig(*event.BatchID)
 			continue
 		}
 		if err != nil {
 			return nil, err
 		}
 
+		if rolledBackBatchID != nil && *rolledBackBatchID == decodedBatch.GetBase().ID {
+			rolledBackBatchID = nil
+		}
 		res = append(res, decodedBatch)
 	}
 
 	return res, nil
+}
+
+func isAcceptable(batchID, rolledBackBatchID *models.Uint256, filters *BatchesFilters) bool {
+	return (filters.FilterByBatchID == nil || filters.FilterByBatchID(batchID)) &&
+		(rolledBackBatchID == nil || batchID.Cmp(rolledBackBatchID) <= 0)
 }
 
 func (c *Client) getBatchEvents(filters *BatchesFilters) ([]*rollup.RollupNewBatch, []*rollup.RollupDepositsFinalised, error) {
