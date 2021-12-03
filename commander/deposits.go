@@ -64,8 +64,8 @@ func (c *Commander) syncQueuedDeposits(start, end uint64) error {
 
 		deposit := models.PendingDeposit{
 			ID: models.DepositID{
-				BlockNumber: uint32(it.Event.Raw.BlockNumber),
-				LogIndex:    uint32(it.Event.Raw.Index),
+				SubtreeID:    models.MakeUint256FromBig(*it.Event.SubtreeID),
+				DepositIndex: models.MakeUint256FromBig(*it.Event.DepositID),
 			},
 			ToPubKeyID: uint32(it.Event.PubkeyID.Uint64()),
 			TokenID:    models.MakeUint256FromBig(*it.Event.TokenID),

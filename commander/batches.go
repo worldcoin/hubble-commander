@@ -116,7 +116,7 @@ func (c *Commander) syncBatch(remoteBatch eth.DecodedBatch) (err error) {
 }
 
 func (c *Commander) replaceBatch(localBatch *models.Batch, remoteBatch eth.DecodedBatch) error {
-	log.Printf("Reverting local batch(es) with ID(s) greater or equal to %v", localBatch.ID)
+	log.Warnf("Reverting local batch(es) with ID(s) greater or equal to %s", localBatch.ID.String())
 
 	err := c.revertBatches(localBatch)
 	if err != nil {

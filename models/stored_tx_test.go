@@ -94,7 +94,7 @@ func TestStoredTx_Bytes_MassMigration(t *testing.T) {
 			},
 			ErrorMessage: ref.String("some error message"),
 		},
-		SpokeID: MakeUint256(5),
+		SpokeID: 5,
 	}
 
 	storedTransaction := NewStoredTxFromMassMigration(massMigration)

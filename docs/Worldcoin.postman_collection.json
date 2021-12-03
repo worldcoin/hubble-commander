@@ -1,12 +1,12 @@
 {
     "info": {
-        "_postman_id": "70518534-5857-4ce1-b001-01fa41dba33d",
+        "_postman_id": "a7f03435-4cdb-4561-9a38-4852c43b7cf7",
         "name": "Worldcoin",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
         {
-            "name": "hubble_sendTransfer",
+            "name": "hubble_sendTransaction (Transfer)",
             "request": {
                 "method": "POST",
                 "header": [],
@@ -29,13 +29,36 @@
             "response": []
         },
         {
-            "name": "hubble_sendCreate2Transfer",
+            "name": "hubble_sendTransaction (Create2Transfer)",
             "request": {
                 "method": "POST",
                 "header": [],
                 "body": {
                     "mode": "raw",
                     "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_sendTransaction\",\n    \"params\": [\n        {\n            \"Type\": \"CREATE2TRANSFER\",\n            \"FromStateID\": 2,\n            \"ToPublicKey\": \"0x0097F465FE827CE4DAD751988F6CE5EC747458075992180CA11B0776B9EA3A910C3EE4DCA4A03D06C3863778AFFE91CE38D502138356A35AE12695C565B24EA6151B83EABD41A6090B8AC3BB25E173C84C3B080A5545260B1327495920C342C02D51CAC4418228DB1A3D98AA12E6FD7B3267C703475F5999B2EC7A197AD7D8BC\",\n            \"Amount\": \"50\",\n            \"Nonce\": \"0\",\n            \"Fee\": \"1\",\n            \"Signature\": \"0xABCD0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\"\n        }\n    ],\n    \"id\": 1\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{commander}}",
+                    "host": [
+                        "{{commander}}"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "hubble_sendTransaction (MassMigration)",
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_sendTransaction\",\n    \"params\": [\n        {\n            \"Type\": \"MASS_MIGRATION\",\n            \"FromStateID\": 1,\n            \"SpokeID\": \"2\",\n            \"Amount\": \"50\",\n            \"Nonce\": \"0\",\n            \"Fee\": \"1\",\n            \"Signature\": \"0xABCD0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\"\n        }\n    ],\n    \"id\": 1\n}",
                     "options": {
                         "raw": {
                             "language": "json"
