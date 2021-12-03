@@ -73,11 +73,11 @@ func (s *DepositTestSuite) TestGetFirstPendingDeposits_NoDeposits() {
 	s.Nil(deposits)
 }
 
-func (s *DepositTestSuite) addPendingDeposit(blockNumber, logIndex uint32) models.PendingDeposit {
+func (s *DepositTestSuite) addPendingDeposit(subtreeID, depositIndex uint64) models.PendingDeposit {
 	deposit := models.PendingDeposit{
 		ID: models.DepositID{
-			BlockNumber: blockNumber,
-			LogIndex:    logIndex,
+			SubtreeID:    models.MakeUint256(subtreeID),
+			DepositIndex: models.MakeUint256(depositIndex),
 		},
 		ToPubKeyID: 4,
 		TokenID:    models.MakeUint256(4),

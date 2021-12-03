@@ -11,10 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestBatch_Bytes(t *testing.T) {
-	batch := &Batch{
+func TestStoredBatch_Bytes(t *testing.T) {
+	batch := &StoredBatch{
 		ID:                MakeUint256(10),
-		Type:              batchtype.Transfer,
+		BType:             batchtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              &common.Hash{8, 6, 4},
 		FinalisationBlock: ref.Uint32(25),
@@ -25,8 +25,8 @@ func TestBatch_Bytes(t *testing.T) {
 
 	bytes := batch.Bytes()
 
-	decodedBatch := Batch{}
-	err := decodedBatch.SetBytes(bytes)
+	decodedStoredBatch := StoredBatch{}
+	err := decodedStoredBatch.SetBytes(bytes)
 	require.NoError(t, err)
-	require.EqualValues(t, *batch, decodedBatch)
+	require.EqualValues(t, *batch, decodedStoredBatch)
 }

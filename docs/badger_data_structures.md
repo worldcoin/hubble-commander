@@ -27,7 +27,7 @@
     - [Stored Commitment](#Stored-Commitment)
         - [Transaction Commitment](#Transaction-Commitment)
         - [Deposit Commitment](#Deposit-Commitment)
-    - [Batch](#Batch)
+    - [Stored Batch](#Stored-Batch)
         - [Index on `Hash`](#Index-on-Hash)
 - Other
     - [Chain State](#Chain-State)
@@ -253,14 +253,14 @@ Value: list of tx hashes `bh.KeyList`
 
 - Holds individual pending deposits until they are moved into **Pending Deposit SubTrees**. Individual deposits correspond to `DepositQueued` events emitted by the SCs.  
 
-Key: <blockNumber, logIndex> `models.DepositID`
+Key: <subtreeID, depositIndex> `models.DepositID`
 
 Value: `models.PendingDeposit`
 
 ```go
 type DepositID struct {
-    BlockNumber uint32 // block in which the deposit tx was included
-    LogIndex    uint32 // `DepositQueued` log index in that block
+    SubtreeID    Uint256 // the subtree which contains this deposit
+    DepositIndex Uint256 // deposit number in the subtree
 }
 ```
 
@@ -343,18 +343,18 @@ type StoredDepositCommitmentBody struct {
 ```
 
 
-### Batch
+### Stored Batch
 
 - Hold details of both mined and pending batches. Pending batches have some fields left `nil`.
 
-Key: BatchID `models.Uint256`
+Key: batch ID `models.Uint256`
 
-Value: `models.Batch`
+Value: `models.StoredBatch`
 
 ```go
-type Batch struct {
+type StoredBatch struct {
     ID                Uint256
-    Type              batchtype.BatchType
+    BType             batchtype.BatchType // not named `Type` to avoid collision with Type() method needed to implement bh.Storer interface
     TransactionHash   common.Hash
     Hash              *common.Hash // root of merkle tree of all commitments included in this batch
     FinalisationBlock *uint32

@@ -40,28 +40,14 @@ func NewTransactionStorage(database *Database) (*TransactionStorage, error) {
 	if err != nil {
 		return nil, err
 	}
+	err = initializeIndex(database, models.StoredTxName, "ToStateID", uint32(0))
+	if err != nil {
+		return nil, err
+	}
 
 	return &TransactionStorage{
 		database: database,
 	}, nil
-}
-
-func initializeIndex(database *Database, typeName []byte, indexName string, zeroValue interface{}) error {
-	encodedZeroValue, err := db.Encode(zeroValue)
-	if err != nil {
-		return err
-	}
-	zeroValueIndexKey := db.IndexKey(typeName, indexName, encodedZeroValue)
-
-	emptyKeyList := make(bh.KeyList, 0)
-	encodedEmptyKeyList, err := db.Encode(emptyKeyList)
-	if err != nil {
-		return err
-	}
-
-	return database.Badger.RawUpdate(func(txn *bdg.Txn) error {
-		return txn.Set(zeroValueIndexKey, encodedEmptyKeyList)
-	})
 }
 
 func (s *TransactionStorage) copyWithNewDatabase(database *Database) *TransactionStorage {

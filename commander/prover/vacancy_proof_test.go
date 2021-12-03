@@ -27,13 +27,19 @@ func (s *VacancyProofTestSuite) SetupSuite() {
 		Root: utils.RandomHash(),
 		Deposits: []models.PendingDeposit{
 			{
-				ID:         models.DepositID{BlockNumber: 1, LogIndex: 0},
+				ID: models.DepositID{
+					SubtreeID:    models.MakeUint256(1),
+					DepositIndex: models.MakeUint256(0),
+				},
 				ToPubKeyID: 1,
 				TokenID:    models.MakeUint256(0),
 				L2Amount:   models.MakeUint256(50),
 			},
 			{
-				ID:         models.DepositID{BlockNumber: 1, LogIndex: 1},
+				ID: models.DepositID{
+					SubtreeID:    models.MakeUint256(1),
+					DepositIndex: models.MakeUint256(1),
+				},
 				ToPubKeyID: 1,
 				TokenID:    models.MakeUint256(0),
 				L2Amount:   models.MakeUint256(50),

@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/binary"
+	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/common"
@@ -13,13 +14,13 @@ const (
 	storedTxBytesLength               = 213
 	storedTxTransferBodyLength        = 4
 	storedTxCreate2TransferBodyLength = PublicKeyLength
-	storedTxMassMigrationBodyLength   = 32
+	storedTxMassMigrationBodyLength   = 4
 )
 
 var (
 	StoredTxName                = getTypeName(StoredTx{})
 	StoredTxPrefix              = getBadgerHoldPrefix(StoredTx{})
-	errInvalidStoredTxIndexType = errors.New("invalid StoredTx index type")
+	errInvalidStoredTxIndexType = fmt.Errorf("invalid StoredTx index type")
 )
 
 type StoredTx struct {
@@ -260,9 +261,9 @@ func (t StoredTx) Indexes() map[string]bh.Index {
 
 				transferBody, ok := v.Body.(*StoredTxTransferBody)
 				if !ok {
-					return EncodeUint32Pointer(nil), nil
+					return nil, nil
 				}
-				return EncodeUint32Pointer(&transferBody.ToStateID), nil
+				return EncodeUint32(transferBody.ToStateID), nil
 			},
 		},
 	}
@@ -277,7 +278,7 @@ func interfaceToStoredTx(value interface{}) (*StoredTx, error) {
 	if ok {
 		return &v, nil
 	}
-	return nil, errInvalidStoredTxIndexType
+	return nil, errors.WithStack(errInvalidStoredTxIndexType)
 }
 
 type TxBody interface {
@@ -321,15 +322,17 @@ func (t *StoredTxCreate2TransferBody) BytesLen() int {
 }
 
 type StoredTxMassMigrationBody struct {
-	SpokeID Uint256
+	SpokeID uint32
 }
 
 func (t *StoredTxMassMigrationBody) Bytes() []byte {
-	return t.SpokeID.Bytes()
+	b := make([]byte, storedTxMassMigrationBodyLength)
+	binary.BigEndian.PutUint32(b, t.SpokeID)
+	return b
 }
 
 func (t *StoredTxMassMigrationBody) SetBytes(data []byte) error {
-	t.SpokeID.SetBytes(data)
+	t.SpokeID = binary.BigEndian.Uint32(data)
 	return nil
 }
 

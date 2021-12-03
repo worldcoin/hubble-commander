@@ -7,9 +7,9 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -51,7 +51,7 @@ var (
 			Nonce:       models.MakeUint256(0),
 			Signature:   models.MakeRandomSignature(),
 		},
-		SpokeID: models.MakeUint256(5),
+		SpokeID: 5,
 	}
 )
 
@@ -341,7 +341,41 @@ func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs_NoTransa
 	s.Nil(hashes)
 }
 
-func (s *StoredTransactionTestSuite) TestStoredTxReceipt_IndexOnToCommitmentIDWorks() {
+func (s *StoredTransactionTestSuite) TestStoredTx_ToStateID_IndexWorks() {
+	s.addStoredTx(txtype.Transfer, ref.Uint32(1))
+	s.addStoredTx(txtype.Transfer, ref.Uint32(2))
+	s.addStoredTx(txtype.Transfer, ref.Uint32(1))
+
+	indexValues := s.getToStateIDIndexValues(models.StoredTxName)
+	s.Len(indexValues, 3)
+	s.Len(indexValues[0], 0) // value set due to index initialization, see NewTransactionStorage
+	s.Len(indexValues[1], 2)
+	s.Len(indexValues[2], 1)
+}
+
+func (s *StoredTransactionTestSuite) TestStoredTx_ToStateID_ValuesWithoutThisFieldAreNotIndexed() {
+	s.addStoredTx(txtype.Create2Transfer, nil)
+
+	indexValues := s.getToStateIDIndexValues(models.StoredTxName)
+	s.Len(indexValues, 1)
+	s.Len(indexValues[0], 0) // value set due to index initialization, see NewTransactionStorage
+}
+
+// This test checks an edge case that we introduced by indexing ToStateID field which is only available in Transfer transactions.
+// See: NewTransactionStorage
+func (s *StoredTransactionTestSuite) TestStoredTx_ToStateID_FindUsingIndexWorksWhenThereAreOnlyValuesWithoutThisField() {
+	s.addStoredTx(txtype.Create2Transfer, nil)
+
+	txs := make([]models.StoredTx, 0, 1)
+	err := s.storage.database.Badger.Find(
+		&txs,
+		bh.Where("ToStateID").Eq(uint32(1)).Index("ToStateID"),
+	)
+	s.NoError(err)
+	s.Len(txs, 0)
+}
+
+func (s *StoredTransactionTestSuite) TestStoredTxReceipt_CommitmentID_IndexWorks() {
 	zeroID := models.CommitmentID{BatchID: models.MakeUint256(0), IndexInBatch: 0}
 	id1 := models.CommitmentID{BatchID: models.MakeUint256(1), IndexInBatch: 0}
 	id2 := models.CommitmentID{BatchID: models.MakeUint256(2), IndexInBatch: 0}
@@ -356,7 +390,7 @@ func (s *StoredTransactionTestSuite) TestStoredTxReceipt_IndexOnToCommitmentIDWo
 	s.Len(indexValues[id2], 1)
 }
 
-func (s *StoredTransactionTestSuite) TestStoredTxReceipt_ValuesWithNilCommitmentIDAreNotIndexed() {
+func (s *StoredTransactionTestSuite) TestStoredTxReceipt_CommitmentID_ValuesWithThisFieldSetToNilAreNotIndexed() {
 	zeroID := models.CommitmentID{BatchID: models.MakeUint256(0), IndexInBatch: 0}
 	s.addStoredTxReceipt(nil, nil)
 
@@ -367,7 +401,7 @@ func (s *StoredTransactionTestSuite) TestStoredTxReceipt_ValuesWithNilCommitment
 
 // This test checks an edge case that we introduced by indexing CommitmentID field which can be nil.
 // See: NewTransactionStorage
-func (s *StoredTransactionTestSuite) TestStoredTxReceipt_FindUsingIndexWorksWhenThereAreOnlyStoredTxReceiptsWithNilCommitmentID() {
+func (s *StoredTransactionTestSuite) TestStoredTxReceipt_CommitmentID_FindUsingIndexWorksWhenThereAreOnlyValuesWithThisFieldSetToNil() {
 	err := s.storage.addStoredTxReceipt(&models.StoredTxReceipt{
 		Hash:         utils.RandomHash(),
 		CommitmentID: nil, // nil values are not indexed
@@ -383,29 +417,29 @@ func (s *StoredTransactionTestSuite) TestStoredTxReceipt_FindUsingIndexWorksWhen
 	s.Len(receipts, 0)
 }
 
-func (s *StoredTransactionTestSuite) TestStoredTxReceipt_IndexOnToStateIDWorks() {
+func (s *StoredTransactionTestSuite) TestStoredTxReceipt_ToStateID_IndexWorks() {
 	s.addStoredTxReceipt(ref.Uint32(1), nil)
 	s.addStoredTxReceipt(ref.Uint32(2), nil)
 	s.addStoredTxReceipt(ref.Uint32(1), nil)
 
-	indexValues := s.getToStateIDIndexValues()
+	indexValues := s.getToStateIDIndexValues(models.StoredTxReceiptName)
 	s.Len(indexValues, 3)
 	s.Len(indexValues[0], 0) // value set due to index initialization, see NewTransactionStorage
 	s.Len(indexValues[1], 2)
 	s.Len(indexValues[2], 1)
 }
 
-func (s *StoredTransactionTestSuite) TestStoredTxReceipt_ValuesWithNilToStateIDAreNotIndexed() {
+func (s *StoredTransactionTestSuite) TestStoredTxReceipt_ToStateID_ValuesWithThisFieldSetToNilAreNotIndexed() {
 	s.addStoredTxReceipt(nil, nil)
 
-	indexValues := s.getToStateIDIndexValues()
+	indexValues := s.getToStateIDIndexValues(models.StoredTxReceiptName)
 	s.Len(indexValues, 1)
 	s.Len(indexValues[0], 0) // value set due to index initialization, see NewTransactionStorage
 }
 
 // This test checks an edge case that we introduced by indexing ToStateID field which can be nil.
 // See: NewTransactionStorage
-func (s *StoredTransactionTestSuite) TestStoredTxReceipt_FindUsingIndexWorksWhenThereAreOnlyStoredTxReceiptsWithNilToStateID() {
+func (s *StoredTransactionTestSuite) TestStoredTxReceipt_ToStateID_FindUsingIndexWorksWhenThereAreOnlyValuesWithThisFieldSetToNil() {
 	err := s.storage.addStoredTxReceipt(&models.StoredTxReceipt{
 		Hash:      utils.RandomHash(),
 		ToStateID: nil, // nil values are not indexed
@@ -432,6 +466,28 @@ func (s *StoredTransactionTestSuite) addTransfersInCommitment(batchID *models.Ui
 	}
 }
 
+func (s *StoredTransactionTestSuite) addStoredTx(txType txtype.TransactionType, toStateID *uint32) {
+	switch txType {
+	case txtype.Transfer:
+		err := s.storage.addStoredTx(models.NewStoredTxFromTransfer(&models.Transfer{
+			TransactionBase: models.TransactionBase{
+				Hash: utils.RandomHash(),
+			},
+			ToStateID: *toStateID,
+		}))
+		s.NoError(err)
+	case txtype.Create2Transfer:
+		err := s.storage.addStoredTx(models.NewStoredTxFromCreate2Transfer(&models.Create2Transfer{
+			TransactionBase: models.TransactionBase{
+				Hash: utils.RandomHash(),
+			},
+		}))
+		s.NoError(err)
+	case txtype.MassMigration:
+		panic("not implemented")
+	}
+}
+
 func (s *StoredTransactionTestSuite) addStoredTxReceipt(toStateID *uint32, commitmentID *models.CommitmentID) {
 	receipt := &models.StoredTxReceipt{
 		Hash:         utils.RandomHash(),
@@ -442,10 +498,10 @@ func (s *StoredTransactionTestSuite) addStoredTxReceipt(toStateID *uint32, commi
 	s.NoError(err)
 }
 
-func (s *StoredTransactionTestSuite) getToStateIDIndexValues() map[uint32]bh.KeyList {
+func (s *StoredTransactionTestSuite) getToStateIDIndexValues(typeName []byte) map[uint32]bh.KeyList {
 	indexValues := make(map[uint32]bh.KeyList)
 
-	s.iterateIndex(models.StoredTxReceiptName, "ToStateID", func(encodedKey []byte, keyList bh.KeyList) {
+	s.iterateIndex(typeName, "ToStateID", func(encodedKey []byte, keyList bh.KeyList) {
 		var toStateID uint32
 		err := db.Decode(encodedKey, &toStateID)
 		s.NoError(err)
@@ -475,22 +531,7 @@ func (s *StoredTransactionTestSuite) iterateIndex(
 	indexName string,
 	handleIndex func(encodedKey []byte, keyList bh.KeyList),
 ) {
-	indexPrefix := db.IndexKeyPrefix(typeName, indexName)
-	err := s.storage.database.Badger.Iterator(indexPrefix, db.PrefetchIteratorOpts, func(item *bdg.Item) (finish bool, err error) {
-		// Get key value
-		encodedKeyValue := item.Key()[len(indexPrefix):]
-
-		// Decode value
-		var keyList bh.KeyList
-		err = item.Value(func(val []byte) error {
-			return db.Decode(val, &keyList)
-		})
-		s.NoError(err)
-
-		handleIndex(encodedKeyValue, keyList)
-		return false, nil
-	})
-	s.ErrorIs(err, db.ErrIteratorFinished)
+	testutils.IterateIndex(s.Assertions, s.storage.database.Badger, typeName, indexName, handleIndex)
 }
 
 func TestStoredTransactionTestSuite(t *testing.T) {

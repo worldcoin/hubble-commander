@@ -13,7 +13,7 @@ import (
 
 const TransferLength = 12
 
-func EncodeTransfer(tx *models.Transfer) ([]byte, error) {
+func EncodeTransfer(transfer *models.Transfer) ([]byte, error) {
 	arguments := abi.Arguments{
 		{Name: "txType", Type: tUint256},
 		{Name: "fromIndex", Type: tUint256},
@@ -24,15 +24,15 @@ func EncodeTransfer(tx *models.Transfer) ([]byte, error) {
 	}
 	return arguments.Pack(
 		big.NewInt(int64(txtype.Transfer)),
-		big.NewInt(int64(tx.FromStateID)),
-		big.NewInt(int64(tx.ToStateID)),
-		tx.Amount.ToBig(),
-		tx.Fee.ToBig(),
-		tx.Nonce.ToBig(),
+		big.NewInt(int64(transfer.FromStateID)),
+		big.NewInt(int64(transfer.ToStateID)),
+		transfer.Amount.ToBig(),
+		transfer.Fee.ToBig(),
+		transfer.Nonce.ToBig(),
 	)
 }
 
-func EncodeTransferForSigning(tx *models.Transfer) ([]byte, error) {
+func EncodeTransferForSigning(transfer *models.Transfer) ([]byte, error) {
 	arguments := abi.Arguments{
 		{Name: "txType", Type: tUint256},
 		{Name: "fromIndex", Type: tUint256},
@@ -43,11 +43,11 @@ func EncodeTransferForSigning(tx *models.Transfer) ([]byte, error) {
 	}
 	return arguments.Pack(
 		big.NewInt(int64(txtype.Transfer)),
-		big.NewInt(int64(tx.FromStateID)),
-		big.NewInt(int64(tx.ToStateID)),
-		tx.Nonce.ToBig(),
-		tx.Amount.ToBig(),
-		tx.Fee.ToBig(),
+		big.NewInt(int64(transfer.FromStateID)),
+		big.NewInt(int64(transfer.ToStateID)),
+		transfer.Nonce.ToBig(),
+		transfer.Amount.ToBig(),
+		transfer.Fee.ToBig(),
 	)
 }
 
