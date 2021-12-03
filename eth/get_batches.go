@@ -68,7 +68,7 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 			decodedBatch, err = c.getDepositBatch(event, depositEvents[depositIndex], tx)
 			depositIndex++
 		case batchtype.MassMigration:
-			panic("syncing MassMigration batches is not supported yet")
+			decodedBatch, err = c.getMMBatch(event, tx)
 		case batchtype.Genesis:
 			panic("syncing genesis batch should have been skipped")
 		}
@@ -180,6 +180,7 @@ func (c *Client) getDepositsFinalisedLogIterator(filters *BatchesFilters) (*roll
 func (c *Client) isDirectBatchSubmission(tx *types.Transaction) bool {
 	methodID := tx.Data()[:4]
 	return bytes.Equal(methodID, c.Rollup.ABI.Methods["submitTransfer"].ID) ||
+		bytes.Equal(methodID, c.Rollup.ABI.Methods["submitMassMigration"].ID) ||
 		bytes.Equal(methodID, c.Rollup.ABI.Methods["submitCreate2Transfer"].ID) ||
 		bytes.Equal(methodID, c.Rollup.ABI.Methods["submitDeposits"].ID)
 }
@@ -205,6 +206,37 @@ func (c *Client) getTxBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transac
 	}
 
 	return &DecodedTxBatch{
+		DecodedBatchBase: *NewDecodedBatchBase(
+			batch,
+			tx.Hash(),
+			accountRoot,
+			timestamp,
+		),
+		Commitments: commitments,
+	}, nil
+}
+
+func (c *Client) getMMBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transaction) (DecodedBatch, error) {
+	batch, err := c.getBatchDetails(batchEvent)
+	if err != nil {
+		return nil, err
+	}
+	commitments, err := encoder.DecodeMassMigrationBatchCalldata(c.Rollup.ABI, tx.Data())
+	if err != nil {
+		return nil, err
+	}
+	accountRoot := common.BytesToHash(batchEvent.AccountRoot[:])
+
+	if vErr := verifyMMBatchHash(*batch.Hash, accountRoot, commitments); vErr != nil {
+		return nil, vErr
+	}
+
+	timestamp, err := c.getBlockTimestamp(batchEvent.Raw.BlockNumber)
+	if err != nil {
+		return nil, err
+	}
+
+	return &DecodedMMBatch{
 		DecodedBatchBase: *NewDecodedBatchBase(
 			batch,
 			tx.Hash(),
@@ -257,6 +289,23 @@ func (c *Client) getBlockTimestamp(blockNumber uint64) (*models.Timestamp, error
 }
 
 func verifyBatchHash(batchHash, accountRoot common.Hash, commitments []encoder.DecodedCommitment) error {
+	leafHashes := make([]common.Hash, 0, len(commitments))
+	for i := range commitments {
+		leafHashes = append(leafHashes, commitments[i].LeafHash(accountRoot))
+	}
+	tree, err := merkletree.NewMerkleTree(leafHashes)
+	if err != nil {
+		return err
+	}
+
+	if tree.Root() != batchHash {
+		return errBatchAlreadyRolledBack
+	}
+	return nil
+}
+
+//TODO-sync: create and pass DecodedCommitment interface
+func verifyMMBatchHash(batchHash, accountRoot common.Hash, commitments []encoder.DecodedMassMigrationCommitment) error {
 	leafHashes := make([]common.Hash, 0, len(commitments))
 	for i := range commitments {
 		leafHashes = append(leafHashes, commitments[i].LeafHash(accountRoot))

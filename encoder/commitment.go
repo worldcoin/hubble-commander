@@ -37,7 +37,7 @@ type DecodedMassMigrationCommitment struct {
 	ID                models.CommitmentID
 	StateRoot         common.Hash
 	CombinedSignature models.Signature
-	Meta              models.MassMigrationMeta
+	Meta              *models.MassMigrationMeta
 	WithdrawRoot      common.Hash
 	Transactions      []byte
 }

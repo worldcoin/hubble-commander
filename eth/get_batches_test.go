@@ -35,7 +35,7 @@ func (s *GetBatchesTestSuite) SetupSuite() {
 					Type: batchtype.Transfer,
 				},
 				FeeReceiver:       0,
-				CombinedSignature: *s.mockSignature(),
+				CombinedSignature: *mockSignature(s.Assertions),
 			},
 			Transactions: []uint8{0, 0, 0, 0, 0, 0, 0, 1, 32, 4, 0, 0},
 		},
@@ -49,7 +49,7 @@ func (s *GetBatchesTestSuite) SetupSuite() {
 					Type: batchtype.Transfer,
 				},
 				FeeReceiver:       0,
-				CombinedSignature: *s.mockSignature(),
+				CombinedSignature: *mockSignature(s.Assertions),
 			},
 			Transactions: []uint8{0, 0, 1, 0, 0, 0, 0, 0, 32, 1, 0, 0},
 		},
@@ -95,7 +95,7 @@ func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBlockNumber() {
 	s.Len(batches, 1)
 	s.Equal(batch2.ID, batches[0].GetID())
 	s.NotEqual(common.Hash{}, batches[0].GetBase().TransactionHash)
-	s.Equal(s.getAccountRoot(), batches[0].GetBase().AccountTreeRoot)
+	s.Equal(getAccountRoot(s.Assertions, s.client), batches[0].GetBase().AccountTreeRoot)
 }
 
 func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBatchID() {
@@ -125,7 +125,7 @@ func (s *GetBatchesTestSuite) TestGetTxBatch_BatchExists() {
 
 	event := &rollup.RollupNewBatch{
 		BatchID:     batchID.ToBig(),
-		AccountRoot: s.getAccountRoot(),
+		AccountRoot: getAccountRoot(s.Assertions, s.client),
 		BatchType:   uint8(batchtype.Transfer),
 	}
 
@@ -147,7 +147,7 @@ func (s *GetBatchesTestSuite) TestGetTxBatch_BatchNotExists() {
 
 	event := &rollup.RollupNewBatch{
 		BatchID:     big.NewInt(5),
-		AccountRoot: s.getAccountRoot(),
+		AccountRoot: getAccountRoot(s.Assertions, s.client),
 		BatchType:   uint8(batchtype.Transfer),
 	}
 
@@ -176,13 +176,13 @@ func (s *GetBatchesTestSuite) TestGetTxBatch_DifferentBatchHash() {
 	s.ErrorIs(err, errBatchAlreadyRolledBack)
 }
 
-func (s *GetBatchesTestSuite) getAccountRoot() common.Hash {
-	rawAccountRoot, err := s.client.AccountRegistry.Root(nil)
+func getAccountRoot(s *require.Assertions, client *TestClient) common.Hash {
+	rawAccountRoot, err := client.AccountRegistry.Root(nil)
 	s.NoError(err)
 	return common.BytesToHash(rawAccountRoot[:])
 }
 
-func (s *GetBatchesTestSuite) mockSignature() *models.Signature {
+func mockSignature(s *require.Assertions) *models.Signature {
 	wallet, err := bls.NewRandomWallet(bls.Domain{1, 2, 3, 4})
 	s.NoError(err)
 	signature, err := wallet.Sign(utils.RandomBytes(4))
