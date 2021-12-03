@@ -14,7 +14,6 @@ import (
 var (
 	ErrFeeTooLow         = fmt.Errorf("fee must be greater than 0")
 	ErrNonceTooLow       = fmt.Errorf("nonce too low")
-	ErrNonceTooHigh      = fmt.Errorf("nonce too high")
 	ErrNotEnoughBalance  = fmt.Errorf("not enough balance")
 	ErrTransferToSelf    = fmt.Errorf("transfer to the same state id")
 	ErrInvalidAmount     = fmt.Errorf("amount must be positive")
@@ -33,10 +32,6 @@ var (
 	APIErrNonceTooLow = NewAPIError(
 		10004,
 		"nonce too low",
-	)
-	APIErrNonceTooHigh = NewAPIError(
-		10005,
-		"nonce too high",
 	)
 	APIErrNotEnoughBalance = NewAPIError(
 		10006,
@@ -78,7 +73,6 @@ var sendTransactionAPIErrors = map[error]*APIError{
 	ErrNonexistentSender:                  APISenderDoesNotExistError,
 	ErrTransferToSelf:                     APIErrTransferToSelf,
 	ErrNonceTooLow:                        APIErrNonceTooLow,
-	ErrNonceTooHigh:                       APIErrNonceTooHigh,
 	ErrNotEnoughBalance:                   APIErrNotEnoughBalance,
 	ErrInvalidAmount:                      APIErrInvalidAmount,
 	ErrFeeTooLow:                          APIErrFeeTooLow,
