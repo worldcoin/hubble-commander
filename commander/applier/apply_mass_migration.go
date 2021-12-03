@@ -21,7 +21,7 @@ func (a *Applier) ApplyMassMigration(tx models.GenericTransaction, commitmentTok
 
 	newSenderState, txErr := calculateSenderStateAfterTx(senderLeaf.UserState, tx)
 	if txErr != nil {
-		return nil, nil, txErr
+		return nil, txErr, nil
 	}
 
 	_, appErr = a.storage.StateTree.Set(tx.GetFromStateID(), newSenderState)
