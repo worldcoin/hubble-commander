@@ -326,7 +326,7 @@ type StoredTxMassMigrationBody struct {
 
 func (t *StoredTxMassMigrationBody) Bytes() []byte {
 	b := make([]byte, storedTxMassMigrationBodyLength)
-	binary.BigEndian.PutUint32(b[0:], t.SpokeID)
+	binary.BigEndian.PutUint32(b, t.SpokeID)
 	return b
 }
 
