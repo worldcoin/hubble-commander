@@ -88,6 +88,9 @@ func (a *Applier) applyTxForSync(
 	if appError != nil {
 		return nil, nil, appError
 	}
+	if senderLeaf.StateID == receiverLeaf.StateID {
+		synced.ReceiverStateProof.UserState = newSenderState
+	}
 	synced.ReceiverStateProof.Witness = receiverWitness
 
 	if tErr := a.validateReceiverTokenID(receiverLeaf, commitmentTokenID); tErr != nil {
