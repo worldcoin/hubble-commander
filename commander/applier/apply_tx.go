@@ -140,6 +140,10 @@ func calculateStateAfterTx(
 	newSenderState, newReceiverState *models.UserState,
 	err error,
 ) {
+	if tx.GetToStateID() == nil {
+		panic("transaction ToStateID is nil")
+	}
+
 	fee := tx.GetFee()
 	amount := tx.GetAmount()
 
@@ -153,10 +157,14 @@ func calculateStateAfterTx(
 	}
 
 	newSenderState = &senderState
-	newReceiverState = &receiverState
-
 	newSenderState.Nonce = *newSenderState.Nonce.AddN(1)
 	newSenderState.Balance = *newSenderState.Balance.Sub(totalAmount)
+
+	if tx.GetFromStateID() == *tx.GetToStateID() {
+		newReceiverState = newSenderState.Copy()
+	} else {
+		newReceiverState = &receiverState
+	}
 	newReceiverState.Balance = *newReceiverState.Balance.Add(&amount)
 
 	return newSenderState, newReceiverState, nil

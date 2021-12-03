@@ -29,13 +29,13 @@ func (a *Applier) ApplyCreate2Transfer(
 		return nil, nil, appError
 	}
 
-	txError, appError = a.ApplyTx(create2Transfer, receiverLeaf, commitmentTokenID)
+	updatedCreate2Transfer := create2Transfer.Clone()
+	updatedCreate2Transfer.ToStateID = nextAvailableStateID
+
+	txError, appError = a.ApplyTx(updatedCreate2Transfer, receiverLeaf, commitmentTokenID)
 	if txError != nil || appError != nil {
 		return nil, txError, appError
 	}
-
-	updatedCreate2Transfer := create2Transfer.Clone()
-	updatedCreate2Transfer.ToStateID = nextAvailableStateID
 
 	applyResult = &ApplySingleC2TResult{
 		tx:       updatedCreate2Transfer,
@@ -45,7 +45,7 @@ func (a *Applier) ApplyCreate2Transfer(
 	if isPending {
 		applyResult.pendingAccount = &models.AccountLeaf{
 			PubKeyID:  *pubKeyID,
-			PublicKey: create2Transfer.ToPublicKey,
+			PublicKey: updatedCreate2Transfer.ToPublicKey,
 		}
 	}
 

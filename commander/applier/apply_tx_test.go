@@ -100,6 +100,26 @@ func (s *ApplyTxTestSuite) TestCalculateStateAfterTx_ValidatesBalance() {
 	s.ErrorIs(err, ErrBalanceTooLow)
 }
 
+func (s *ApplyTxTestSuite) TestCalculateStateAfterTx_ReturnsCorrectLeavesInCaseOfSelfTransfer() {
+	selfTransfer := s.transfer
+	selfTransfer.ToStateID = selfTransfer.FromStateID
+	newSenderState, newReceiverState, err := calculateStateAfterTx(
+		senderState,
+		senderState,
+		&selfTransfer,
+	)
+	s.NoError(err)
+
+	s.Equal(models.MakeUint256(1), newSenderState.Nonce)
+	s.Equal(models.MakeUint256(290), newSenderState.Balance)
+
+	s.Equal(models.MakeUint256(1), newReceiverState.Nonce)
+	s.Equal(models.MakeUint256(390), newReceiverState.Balance)
+
+	s.NotEqual(&newSenderState, &senderState)
+	s.NotEqual(&newReceiverState, &senderState)
+}
+
 func (s *ApplyTxTestSuite) TestApplyTx_ValidatesSenderTokenID() {
 	setUserStatesInTree(s.Assertions, s.storage)
 
