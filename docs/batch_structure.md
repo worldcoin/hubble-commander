@@ -8,10 +8,10 @@
 
 ```go
 const (
-Genesis         BatchType = 0
-Transfer        BatchType = 1
-MassMigration   BatchType = 2
-Create2Transfer BatchType = 3
-Deposit         BatchType = 4
+    Genesis         BatchType = 0
+    Transfer        BatchType = 1
+    MassMigration   BatchType = 2
+    Create2Transfer BatchType = 3
+    Deposit         BatchType = 4
 )
 ```
