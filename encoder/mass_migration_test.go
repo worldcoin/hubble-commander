@@ -53,19 +53,19 @@ func (s *MassMigrationTestSuite) TestEncodeMassMigration() {
 			Fee:         models.MakeUint256(5),
 			Nonce:       models.MakeUint256(6),
 		},
-		SpokeID: models.MakeUint256(3),
+		SpokeID: 3,
 	}
 	encodedMassMigration, err := EncodeMassMigration(txMassMigration)
 	s.NoError(err)
 
 	decodedMassMigration, err := s.massMigration.Decode(&bind.CallOpts{}, encodedMassMigration)
 	s.NoError(err)
-	s.Equal(int64(txtype.MassMigration), decodedMassMigration.TxType.Int64())
-	s.Equal(txMassMigration.FromStateID, uint32(decodedMassMigration.FromIndex.Uint64()))
+	s.EqualValues(txtype.MassMigration, decodedMassMigration.TxType.Int64())
+	s.EqualValues(txMassMigration.FromStateID, decodedMassMigration.FromIndex.Uint64())
 	s.Equal(txMassMigration.Amount.ToBig(), decodedMassMigration.Amount)
 	s.Equal(txMassMigration.Fee.ToBig(), decodedMassMigration.Fee)
 	s.Equal(txMassMigration.Nonce.ToBig(), decodedMassMigration.Nonce)
-	s.Equal(txMassMigration.SpokeID.ToBig(), decodedMassMigration.SpokeID)
+	s.EqualValues(txMassMigration.SpokeID, decodedMassMigration.SpokeID.Uint64())
 }
 
 func (s *MassMigrationTestSuite) TestEncodeMassMigrationForSigning() {
@@ -76,7 +76,7 @@ func (s *MassMigrationTestSuite) TestEncodeMassMigrationForSigning() {
 			Fee:         models.MakeUint256(5),
 			Nonce:       models.MakeUint256(6),
 		},
-		SpokeID: models.MakeUint256(3),
+		SpokeID: 3,
 	}
 	encodedMassMigration, err := EncodeMassMigration(txMassMigration)
 	s.NoError(err)

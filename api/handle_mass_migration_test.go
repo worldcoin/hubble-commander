@@ -173,13 +173,6 @@ func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesSpokeID() {
 
 	_, err := s.api.SendTransaction(dto.MakeTransaction(massMigrationWithBadSpokeID))
 	s.Equal(APIErrInvalidSpokeID, err)
-
-	massMigrationWithCorrectSpokeID := s.massMigration
-	massMigrationWithCorrectSpokeID.SpokeID = ref.Uint32(1)
-
-	hash, err := s.api.SendTransaction(dto.MakeTransaction(massMigrationWithCorrectSpokeID))
-	s.Nil(err)
-	s.NotNil(hash)
 }
 
 func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesAmountValue() {

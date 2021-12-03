@@ -331,10 +331,6 @@ func (t *StoredTxMassMigrationBody) Bytes() []byte {
 }
 
 func (t *StoredTxMassMigrationBody) SetBytes(data []byte) error {
-	if len(data) != 4 {
-		return ErrInvalidLength
-	}
-
 	t.SpokeID = binary.BigEndian.Uint32(data)
 	return nil
 }
