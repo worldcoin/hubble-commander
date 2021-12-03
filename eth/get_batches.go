@@ -196,8 +196,9 @@ func (c *Client) getTxBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transac
 	}
 	accountRoot := common.BytesToHash(batchEvent.AccountRoot[:])
 
-	if vErr := verifyBatchHash(*batch.Hash, accountRoot, commitments); vErr != nil {
-		return nil, vErr
+	err = verifyBatchHash(*batch.Hash, accountRoot, decodedTxCommitmentsToCommitments(commitments))
+	if err != nil {
+		return nil, err
 	}
 
 	timestamp, err := c.getBlockTimestamp(batchEvent.Raw.BlockNumber)
@@ -227,8 +228,9 @@ func (c *Client) getMMBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transac
 	}
 	accountRoot := common.BytesToHash(batchEvent.AccountRoot[:])
 
-	if vErr := verifyMMBatchHash(*batch.Hash, accountRoot, commitments); vErr != nil {
-		return nil, vErr
+	err = verifyBatchHash(*batch.Hash, accountRoot, decodedMMCommitmentsToCommitments(commitments))
+	if err != nil {
+		return nil, err
 	}
 
 	timestamp, err := c.getBlockTimestamp(batchEvent.Raw.BlockNumber)
@@ -288,24 +290,7 @@ func (c *Client) getBlockTimestamp(blockNumber uint64) (*models.Timestamp, error
 	return models.NewTimestamp(utcTime), nil
 }
 
-func verifyBatchHash(batchHash, accountRoot common.Hash, commitments []encoder.DecodedCommitment) error {
-	leafHashes := make([]common.Hash, 0, len(commitments))
-	for i := range commitments {
-		leafHashes = append(leafHashes, commitments[i].LeafHash(accountRoot))
-	}
-	tree, err := merkletree.NewMerkleTree(leafHashes)
-	if err != nil {
-		return err
-	}
-
-	if tree.Root() != batchHash {
-		return errBatchAlreadyRolledBack
-	}
-	return nil
-}
-
-//TODO-sync: create and pass DecodedCommitment interface
-func verifyMMBatchHash(batchHash, accountRoot common.Hash, commitments []encoder.DecodedMassMigrationCommitment) error {
+func verifyBatchHash(batchHash, accountRoot common.Hash, commitments []commitment) error {
 	leafHashes := make([]common.Hash, 0, len(commitments))
 	for i := range commitments {
 		leafHashes = append(leafHashes, commitments[i].LeafHash(accountRoot))
