@@ -21,6 +21,7 @@ var (
 	ErrInvalidAmount     = fmt.Errorf("amount must be positive")
 	ErrUnsupportedTxType = fmt.Errorf("unsupported transaction type")
 	ErrNonexistentSender = fmt.Errorf("sender state ID does not exist")
+	ErrInvalidSpokeID    = fmt.Errorf("spoke ID must be greater than 0")
 
 	APIErrAnyMissingField = NewAPIError(
 		10002,
@@ -66,25 +67,25 @@ var (
 		10012,
 		"sender with given ID does not exist",
 	)
-	APINotDecimalEncodableSpokeIDError = NewAPIError(
+	APIErrInvalidSpokeID = NewAPIError(
 		10013,
-		"spoke ID is not encodable as multi-precission decimal",
+		"spoke ID must be greater than 0",
 	)
 )
 
 var sendTransactionAPIErrors = map[error]*APIError{
-	AnyMissingFieldError:                   APIErrAnyMissingField,
-	AnyInvalidSignatureError:               APIErrInvalidSignature,
-	ErrNonexistentSender:                   APISenderDoesNotExistError,
-	ErrTransferToSelf:                      APIErrTransferToSelf,
-	ErrNonceTooLow:                         APIErrNonceTooLow,
-	ErrNonceTooHigh:                        APIErrNonceTooHigh,
-	ErrNotEnoughBalance:                    APIErrNotEnoughBalance,
-	ErrInvalidAmount:                       APIErrInvalidAmount,
-	ErrFeeTooLow:                           APIErrFeeTooLow,
-	NewNotDecimalEncodableError("amount"):  APINotDecimalEncodableAmountError,
-	NewNotDecimalEncodableError("fee"):     APINotDecimalEncodableFeeError,
-	NewNotDecimalEncodableError("spokeID"): APINotDecimalEncodableSpokeIDError,
+	AnyMissingFieldError:                  APIErrAnyMissingField,
+	AnyInvalidSignatureError:              APIErrInvalidSignature,
+	ErrNonexistentSender:                  APISenderDoesNotExistError,
+	ErrTransferToSelf:                     APIErrTransferToSelf,
+	ErrNonceTooLow:                        APIErrNonceTooLow,
+	ErrNonceTooHigh:                       APIErrNonceTooHigh,
+	ErrNotEnoughBalance:                   APIErrNotEnoughBalance,
+	ErrInvalidAmount:                      APIErrInvalidAmount,
+	ErrFeeTooLow:                          APIErrFeeTooLow,
+	NewNotDecimalEncodableError("amount"): APINotDecimalEncodableAmountError,
+	NewNotDecimalEncodableError("fee"):    APINotDecimalEncodableFeeError,
+	ErrInvalidSpokeID:                     APIErrInvalidSpokeID,
 }
 
 func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
