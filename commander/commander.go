@@ -38,6 +38,7 @@ type Commander struct {
 	workersContext      context.Context
 	stopWorkers         context.CancelFunc
 	workers             sync.WaitGroup
+	workersErr          error
 	releaseStartAndWait context.CancelFunc
 
 	invalidBatchID    *models.Uint256
@@ -112,6 +113,8 @@ func (c *Commander) Start() (err error) {
 	})
 	c.startWorker(func() error { return c.newBlockLoop() })
 
+	go c.waitWorkersErrorToLogFatal()
+
 	log.Printf("Commander started and listening on port %s", c.cfg.API.Port)
 
 	return nil
@@ -121,10 +124,22 @@ func (c *Commander) startWorker(fn func() error) {
 	c.workers.Add(1)
 	go func() {
 		if err := fn(); err != nil {
-			log.Fatalf("%+v", err)
+			c.workersErr = err
+			c.stopWorkers()
 		}
 		c.workers.Done()
 	}()
+}
+
+func (c *Commander) waitWorkersErrorToLogFatal() {
+	<-c.workersContext.Done()
+	if c.workersErr == nil {
+		return
+	}
+	if err := c.stopServers(); err != nil {
+		log.Errorf("Error while stopping: %+v", err)
+	}
+	log.Fatalf("%+v", c.workersErr)
 }
 
 func (c *Commander) StartAndWait() error {
@@ -139,6 +154,18 @@ func (c *Commander) StartAndWait() error {
 }
 
 func (c *Commander) Stop() error {
+	if err := c.stopServers(); err != nil {
+		return err
+	}
+
+	log.Warningln("Commander stopped.")
+
+	c.releaseStartAndWait()
+	c.resetCommander()
+	return nil
+}
+
+func (c *Commander) stopServers() error {
 	if !c.IsRunning() {
 		return nil
 	}
@@ -151,15 +178,7 @@ func (c *Commander) Stop() error {
 	}
 	c.stopWorkers()
 	c.workers.Wait()
-	if err := c.storage.Close(); err != nil {
-		return err
-	}
-
-	log.Warningln("Commander stopped.")
-
-	c.releaseStartAndWait()
-	c.resetCommander()
-	return nil
+	return c.storage.Close()
 }
 
 func (c *Commander) resetCommander() {
