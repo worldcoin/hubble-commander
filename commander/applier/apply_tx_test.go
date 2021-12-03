@@ -50,7 +50,7 @@ func (s *ApplyTxTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	s.applier = NewApplier(s.storage.Storage, nil)
+	s.applier = NewApplier(s.storage.Storage)
 
 	s.receiverLeaf = models.StateLeaf{
 		StateID:   receiverState.PubKeyID,
