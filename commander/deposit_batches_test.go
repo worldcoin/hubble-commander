@@ -112,7 +112,7 @@ func (s *DepositBatchesTestSuite) TestUnsafeSyncBatches_OmitsRolledBackBatch() {
 	latestBlock, err = s.client.GetLatestBlockNumber()
 	s.NoError(err)
 
-	// try sync already rolled back batch
+	// try syncing already rolled back batch
 	err = s.cmd.unsafeSyncBatches(0, *latestBlock)
 	s.NoError(err)
 
