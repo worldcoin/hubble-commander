@@ -136,7 +136,7 @@ func (c *Commander) waitWorkersErrorToLogFatal() {
 	if c.workersErr == nil {
 		return
 	}
-	if err := c.stopServers(); err != nil {
+	if err := c.stop(); err != nil {
 		log.Errorf("Error while stopping: %+v", err)
 	}
 	log.Fatalf("%+v", c.workersErr)
@@ -154,7 +154,7 @@ func (c *Commander) StartAndWait() error {
 }
 
 func (c *Commander) Stop() error {
-	if err := c.stopServers(); err != nil {
+	if err := c.stop(); err != nil {
 		return err
 	}
 
@@ -165,7 +165,7 @@ func (c *Commander) Stop() error {
 	return nil
 }
 
-func (c *Commander) stopServers() error {
+func (c *Commander) stop() error {
 	if !c.IsRunning() {
 		return nil
 	}
