@@ -19,7 +19,7 @@ import (
 var (
 	massMigrationWithoutSignature = dto.MassMigration{
 		FromStateID: ref.Uint32(1),
-		SpokeID:     models.NewUint256(2),
+		SpokeID:     ref.Uint32(2),
 		Amount:      models.NewUint256(50),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(0),
@@ -167,9 +167,10 @@ func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesAmountEncoda
 	s.Equal(APINotDecimalEncodableAmountError, err)
 }
 
+// TODO-MM change test
 func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesSpokeIDEncodability() {
 	massMigrationWithBadSpokeID := s.massMigration
-	massMigrationWithBadSpokeID.SpokeID = models.NewUint256(66666666)
+	massMigrationWithBadSpokeID.SpokeID = ref.Uint32(66666666)
 
 	_, err := s.api.SendTransaction(dto.MakeTransaction(massMigrationWithBadSpokeID))
 	s.Equal(APINotDecimalEncodableSpokeIDError, err)

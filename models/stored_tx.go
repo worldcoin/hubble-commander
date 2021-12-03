@@ -321,15 +321,21 @@ func (t *StoredTxCreate2TransferBody) BytesLen() int {
 }
 
 type StoredTxMassMigrationBody struct {
-	SpokeID Uint256
+	SpokeID uint32
 }
 
 func (t *StoredTxMassMigrationBody) Bytes() []byte {
-	return t.SpokeID.Bytes()
+	b := make([]byte, 4)
+	binary.BigEndian.PutUint32(b[0:], t.SpokeID)
+	return b
 }
 
 func (t *StoredTxMassMigrationBody) SetBytes(data []byte) error {
-	t.SpokeID.SetBytes(data)
+	if len(data) != 4 {
+		return ErrInvalidLength
+	}
+
+	t.SpokeID = binary.BigEndian.Uint32(data)
 	return nil
 }
 

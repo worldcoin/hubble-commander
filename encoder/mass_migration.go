@@ -27,7 +27,7 @@ func EncodeMassMigration(massMigration *models.MassMigration) ([]byte, error) {
 		big.NewInt(int64(massMigration.FromStateID)),
 		massMigration.Amount.ToBig(),
 		massMigration.Fee.ToBig(),
-		massMigration.SpokeID.ToBig(),
+		big.NewInt(int64(massMigration.SpokeID)),
 		massMigration.Nonce.ToBig(),
 	)
 }
@@ -40,7 +40,7 @@ func EncodeMassMigrationForSigning(massMigration *models.MassMigration) []byte {
 	copy(b[5:37], massMigration.Amount.Bytes())
 	copy(b[37:69], massMigration.Fee.Bytes())
 	binary.BigEndian.PutUint32(b[69:73], uint32(massMigration.Nonce.Uint64()))
-	binary.BigEndian.PutUint32(b[73:77], uint32(massMigration.SpokeID.Uint64()))
+	binary.BigEndian.PutUint32(b[73:77], massMigration.SpokeID)
 
 	return b
 }

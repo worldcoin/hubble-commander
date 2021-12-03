@@ -107,10 +107,11 @@ func (a *API) validateMassMigration(massMigration *models.MassMigration) error {
 	return a.validateSignature(encodedTransfer, &massMigration.Signature, &senderState.UserState)
 }
 
-func validateSpokeID(spokeID *models.Uint256) error {
-	_, err := encoder.EncodeDecimal(*spokeID)
-	if err != nil {
-		return errors.WithStack(NewNotDecimalEncodableError("spokeID"))
-	}
+// TODO-MM change and adjust test
+func validateSpokeID(spokeID *uint32) error {
+	//_, err := encoder.EncodeDecimal(*spokeID)
+	//if err != nil {
+	//	return errors.WithStack(NewNotDecimalEncodableError("spokeID"))
+	//}
 	return nil
 }

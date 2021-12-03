@@ -13,7 +13,7 @@ import (
 func TestMassMigration_JSONMarshaling(t *testing.T) {
 	massMigration := MassMigration{
 		FromStateID: ref.Uint32(1),
-		SpokeID:     models.NewUint256(5),
+		SpokeID:     ref.Uint32(5),
 		Amount:      models.NewUint256(50),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(0),
@@ -32,7 +32,7 @@ func TestMassMigration_JSONMarshaling(t *testing.T) {
 func TestMassMigration_MarshalJSON(t *testing.T) {
 	massMigration := MassMigration{
 		FromStateID: ref.Uint32(1),
-		SpokeID:     models.NewUint256(5),
+		SpokeID:     ref.Uint32(5),
 		Amount:      models.NewUint256(50),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(0),
@@ -42,7 +42,7 @@ func TestMassMigration_MarshalJSON(t *testing.T) {
 	require.NoError(t, err)
 
 	expected := fmt.Sprintf(
-		`{"Type":"MASS_MIGRATION","FromStateID":1,"SpokeID":"5","Amount":"50","Fee":"10","Nonce":"0","Signature":%q}`,
+		`{"Type":"MASS_MIGRATION","FromStateID":1,"SpokeID":5,"Amount":"50","Fee":"10","Nonce":"0","Signature":%q}`,
 		exampleSignatureHex,
 	)
 	require.Equal(t, expected, string(data))

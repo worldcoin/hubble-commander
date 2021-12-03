@@ -9,7 +9,7 @@ import (
 
 type MassMigration struct {
 	FromStateID *uint32
-	SpokeID     *models.Uint256
+	SpokeID     *uint32
 	Amount      *models.Uint256
 	Fee         *models.Uint256
 	Nonce       *models.Uint256
@@ -19,7 +19,7 @@ type MassMigration struct {
 type massMigrationWithType struct {
 	Type        txtype.TransactionType
 	FromStateID *uint32
-	SpokeID     *models.Uint256
+	SpokeID     *uint32
 	Amount      *models.Uint256
 	Fee         *models.Uint256
 	Nonce       *models.Uint256
